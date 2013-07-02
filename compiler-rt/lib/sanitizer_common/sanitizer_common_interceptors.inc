@@ -1399,6 +1399,24 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
 #define INIT_PTRACE
 #endif
 
+#if SANITIZER_INTERCEPT_SETLOCALE
+INTERCEPTOR(char *, setlocale, int category, char *locale) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, setlocale, category, locale);
+  if (locale)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, locale, REAL(strlen)(locale) + 1);
+  char * res = REAL(setlocale)(category, locale);
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+
+#define INIT_SETLOCALE           \
+  INTERCEPT_FUNCTION(setlocale);
+#else
+#define INIT_SETLOCALE
+#endif
+
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
@@ -1445,4 +1463,5 @@ INTERCEPTOR(uptr, ptrace, int request, int pid, void *addr, void *data) {
   INIT_SYSINFO;                            \
   INIT_READDIR;                            \
   INIT_READDIR64;                          \
-  INIT_PTRACE;
+  INIT_PTRACE;                             \
+  INIT_SETLOCALE;

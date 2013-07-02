@@ -332,6 +332,7 @@ enum StatType {
   StatInt_readdir_r,
   StatInt_readdir64_r,
   StatInt_ptrace,
+  StatInt_setlocale,
 
   // Dynamic annotations.
   StatAnnotation,
