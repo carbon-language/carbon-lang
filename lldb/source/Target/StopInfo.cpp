@@ -667,16 +667,20 @@ protected:
                         {
                             if (!wp_triggers_after)
                             {
+                                StopInfoSP stored_stop_info_sp = thread_sp->GetStopInfo();
+                                assert (stored_stop_info_sp.get() == this);
+                                
                                 ThreadPlan *new_plan = thread_sp->QueueThreadPlanForStepSingleInstruction(false, // step-over
                                                                                                         false, // abort_other_plans
                                                                                                         true); // stop_other_threads
                                 new_plan->SetIsMasterPlan (true);
                                 new_plan->SetOkayToDiscard (false);
+                                new_plan->SetPrivate (true);
                                 process->GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
                                 process->Resume ();
                                 process->WaitForProcessToStop (NULL);
                                 process->GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
-                                MakeStopInfoValid(); // make sure we do not fail to stop because of the single-step taken above
+                                thread_sp->SetStopInfo(stored_stop_info_sp);
                             }
                         }
                     }
