@@ -18,6 +18,6 @@ entry:
 
 ; CHECK: addis [[REG:[0-9]+]], 2, a@got@tlsgd@ha
 ; CHECK-NEXT: addi 3, [[REG]], a@got@tlsgd@l
-; CHECK:      bl __tls_get_addr(a@tlsgd)
+; CHECK:      bl __tls_get_addr(a@TLSGD)
 ; CHECK-NEXT: nop
 

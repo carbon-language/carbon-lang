@@ -573,8 +573,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const GlobalValue *GValue = MO.getGlobal();
     MCSymbol *MOSymbol = Mang->getSymbol(GValue);
     const MCExpr *SymVar =
-      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TLSGD,
-                              OutContext);
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_TLSGD, OutContext);
     OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_TLSGD)
                                 .addExpr(TlsRef)
                                 .addExpr(SymVar));
@@ -625,8 +624,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const GlobalValue *GValue = MO.getGlobal();
     MCSymbol *MOSymbol = Mang->getSymbol(GValue);
     const MCExpr *SymVar =
-      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TLSLD,
-                              OutContext);
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_TLSLD, OutContext);
     OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_TLSLD)
                                 .addExpr(TlsRef)
                                 .addExpr(SymVar));

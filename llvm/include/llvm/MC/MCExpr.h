@@ -216,12 +216,10 @@ public:
     VK_PPC_GOT_TLSGD_LO,   // symbol@got@tlsgd@l
     VK_PPC_GOT_TLSGD_HI,   // symbol@got@tlsgd@h
     VK_PPC_GOT_TLSGD_HA,   // symbol@got@tlsgd@ha
-    VK_PPC_TLSGD,          // symbol@tlsgd
     VK_PPC_GOT_TLSLD,      // symbol@got@tlsld
     VK_PPC_GOT_TLSLD_LO,   // symbol@got@tlsld@l
     VK_PPC_GOT_TLSLD_HI,   // symbol@got@tlsld@h
     VK_PPC_GOT_TLSLD_HA,   // symbol@got@tlsld@ha
-    VK_PPC_TLSLD,          // symbol@tlsld
 
     VK_Mips_GPREL,
     VK_Mips_GOT_CALL,
