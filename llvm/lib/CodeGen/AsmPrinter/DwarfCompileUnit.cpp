@@ -1358,7 +1358,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       unsigned PointerSize = Asm->getDataLayout().getPointerSize();
       assert((PointerSize == 4 || PointerSize == 8) &&
              "Add support for other sizes if necessary");
-      const MCSymbolRefExpr *Ref =
+      const MCExpr *Expr =
           Asm->getObjFileLowering().getDebugThreadLocalSymbol(Sym);
       // Based on GCC's support for TLS:
       if (!DD->useSplitDwarf()) {
@@ -1366,10 +1366,10 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
         addUInt(Block, 0, dwarf::DW_FORM_data1,
                 PointerSize == 4 ? dwarf::DW_OP_const4u : dwarf::DW_OP_const8u);
         // 2) containing the (relocated) address of the TLS variable
-        addExpr(Block, 0, dwarf::DW_FORM_udata, Ref);
+        addExpr(Block, 0, dwarf::DW_FORM_udata, Expr);
       } else {
         addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
-        addUInt(Block, 0, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Ref));
+        addUInt(Block, 0, dwarf::DW_FORM_udata, DU->getAddrPoolIndex(Expr));
       }
       // 3) followed by a custom OP to tell the debugger about TLS (presumably)
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_lo_user);

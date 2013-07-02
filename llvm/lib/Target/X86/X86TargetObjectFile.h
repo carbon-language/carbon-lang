@@ -38,7 +38,7 @@ namespace llvm {
     virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
     /// \brief Describe a TLS variable address within debug info.
-    virtual const MCSymbolRefExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
+    virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
   };
 
 } // end namespace llvm

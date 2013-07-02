@@ -140,7 +140,7 @@ public:
 
   /// \brief Create a symbol reference to describe the given TLS variable when
   /// emitting the address in debug info.
-  virtual const MCSymbolRefExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
+  virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
 
 protected:
   virtual const MCSection *

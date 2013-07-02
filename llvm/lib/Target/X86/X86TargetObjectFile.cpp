@@ -48,7 +48,7 @@ X86LinuxTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM) {
   InitializeELF(TM.Options.UseInitArray);
 }
 
-const MCSymbolRefExpr *
+const MCExpr *
 X86LinuxTargetObjectFile::getDebugThreadLocalSymbol(
     const MCSymbol *Sym) const {
   return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());

@@ -318,7 +318,7 @@ getTTypeReference(const MCSymbolRefExpr *Sym, unsigned Encoding,
   }
 }
 
-const MCSymbolRefExpr *TargetLoweringObjectFile::getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
+const MCExpr *TargetLoweringObjectFile::getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
   // FIXME: It's not clear what, if any, default this should have - perhaps a
   // null return could mean 'no location' & we should just do that here.
   return MCSymbolRefExpr::Create(Sym, *Ctx);
