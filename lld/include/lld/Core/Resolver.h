@@ -87,7 +87,6 @@ private:
     virtual DefinedAtomRange definedAtoms();
 
   private:
-    friend Resolver;
     atom_collection_vector<DefinedAtom>         _definedAtoms;
     atom_collection_vector<UndefinedAtom>       _undefinedAtoms;
     atom_collection_vector<SharedLibraryAtom>   _sharedLibraryAtoms;
