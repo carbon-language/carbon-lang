@@ -244,9 +244,6 @@ private:
     void
     StartLaunchOpThread(LaunchArgs *args, lldb_private::Error &error);
 
-    void
-    StopLaunchOpThread();
-
     static void *
     LaunchOpThread(void *arg);
 
@@ -268,9 +265,6 @@ private:
 
     void
     StartAttachOpThread(AttachArgs *args, lldb_private::Error &error);
-
-    void
-    StopAttachOpThread();
 
     static void *
     AttachOpThread(void *args);
@@ -317,6 +311,10 @@ private:
 
     void 
     StopMonitor();
+
+    /// Stops the operation thread used to attach/launch a process.
+    void
+    StopOpThread();
 
     void
     CloseFD(int &fd);

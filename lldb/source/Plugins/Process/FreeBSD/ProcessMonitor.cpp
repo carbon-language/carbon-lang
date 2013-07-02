@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <poll.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/ptrace.h>
@@ -474,7 +475,13 @@ ResumeOperation::Execute(ProcessMonitor *monitor)
         data = m_signo;
 
     if (PTRACE(PT_CONTINUE, m_tid, (caddr_t)1, data))
+    {
+        Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
+        if (log)
+            log->Printf ("ResumeOperation (%"  PRIu64 ") failed: %s", m_tid, strerror(errno));
         m_result = false;
+    }
     else
         m_result = true;
 }
@@ -601,7 +608,7 @@ KillOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
-/// @class KillOperation
+/// @class DetachOperation
 /// @brief Implements ProcessMonitor::BringProcessIntoLimbo.
 class DetachOperation : public Operation
 {
@@ -725,7 +732,7 @@ WAIT_AGAIN:
     // Check that the launch was a success.
     if (!args->m_error.Success())
     {
-        StopLaunchOpThread();
+        StopOpThread();
         error = args->m_error;
         return;
     }
@@ -781,10 +788,10 @@ WAIT_AGAIN:
         }
     }
 
-    // Check that the launch was a success.
+    // Check that the attach was a success.
     if (!args->m_error.Success())
     {
-        StopAttachOpThread();
+        StopOpThread();
         error = args->m_error;
         return;
     }
@@ -819,18 +826,6 @@ ProcessMonitor::StartLaunchOpThread(LaunchArgs *args, Error &error)
         Host::ThreadCreate(g_thread_name, LaunchOpThread, args, &error);
 }
 
-void
-ProcessMonitor::StopLaunchOpThread()
-{
-    lldb::thread_result_t result;
-
-    if (!IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
-        return;
-
-    Host::ThreadCancel(m_operation_thread, NULL);
-    Host::ThreadJoin(m_operation_thread, &result, NULL);
-}
-
 void *
 ProcessMonitor::LaunchOpThread(void *arg)
 {
@@ -857,13 +852,33 @@ ProcessMonitor::Launch(LaunchArgs *args)
     const char *stdout_path = args->m_stdout_path;
     const char *stderr_path = args->m_stderr_path;
     const char *working_dir = args->m_working_dir;
+
+    lldb_utility::PseudoTerminal terminal;
+    const size_t err_len = 1024;
+    char err_str[err_len];
     lldb::pid_t pid;
 
     lldb::ThreadSP inferior;
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
         envp = const_cast<const char **>(environ);
+
+    // Pseudo terminal setup.
+    if (!terminal.OpenFirstAvailableMaster(O_RDWR | O_NOCTTY, err_str, err_len))
+    {
+        args->m_error.SetErrorToGenericError();
+        args->m_error.SetErrorString("Could not open controlling TTY.");
+        goto FINISH;
+    }
+
+    if ((pid = terminal.Fork(err_str, err_len)) == -1)
+    {
+        args->m_error.SetErrorToGenericError();
+        args->m_error.SetErrorString("Process fork failed.");
+        goto FINISH;
+    }
 
     // Recognized child exit status codes.
     enum {
@@ -874,8 +889,6 @@ ProcessMonitor::Launch(LaunchArgs *args)
         eChdirFailed,
         eExecFailed
     };
-
-    pid = fork();
 
     // Child process.
     if (pid == 0)
@@ -968,10 +981,9 @@ ProcessMonitor::Launch(LaunchArgs *args)
         goto FINISH;
     }
 #endif
-    // XXX - Release the master terminal descriptor and pass it off to the
-    // XXX - ProcessMonitor instance.  Similarly stash the inferior pid.
-    // For now just use stdin fd
-    monitor->m_terminal_fd = ::dup(STDIN_FILENO);
+    // Release the master terminal descriptor and pass it off to the
+    // ProcessMonitor instance.  Similarly stash the inferior pid.
+    monitor->m_terminal_fd = terminal.ReleaseMasterFileDescriptor();
     monitor->m_pid = pid;
 
     // Set the terminal fd to be in non blocking mode (it simplifies the
@@ -982,6 +994,8 @@ ProcessMonitor::Launch(LaunchArgs *args)
 
     // Update the process thread list with this new thread.
     inferior.reset(new POSIXThread(*processSP, pid));
+    if (log)
+        log->Printf ("ProcessMonitor::%s() adding pid = %" PRIu64, __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
 
     // Let our process instance know the thread has stopped.
@@ -1014,12 +1028,6 @@ ProcessMonitor::StartAttachOpThread(AttachArgs *args, lldb_private::Error &error
 
     m_operation_thread =
         Host::ThreadCreate(g_thread_name, AttachOpThread, args, &error);
-}
-
-void
-ProcessMonitor::StopAttachOpThread()
-{
-    assert(!"Not implemented yet!!!");
 }
 
 void *
@@ -1087,9 +1095,21 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
     ProcessMessage message;
     ProcessMonitor *monitor = static_cast<ProcessMonitor*>(callback_baton);
     ProcessFreeBSD *process = monitor->m_process;
+    assert(process);
     bool stop_monitoring;
     siginfo_t info;
     int ptrace_err;
+
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
+    if (exited)
+    {
+        if (log)
+            log->Printf ("ProcessMonitor::%s() got exit signal, tid = %"  PRIu64, __FUNCTION__, pid);
+        message = ProcessMessage::Exit(pid, status);
+        process->SendMessage(message);
+        return pid == process->GetID();
+    }
 
     if (!monitor->GetSignalInfo(pid, &info, ptrace_err))
         stop_monitoring = true; // pid is gone.  Bail.
@@ -1118,6 +1138,8 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
 {
     ProcessMessage message;
 
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
     assert(monitor);
     assert(info && info->si_signo == SIGTRAP && "Unexpected child signal!");
 
@@ -1135,17 +1157,23 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
         unsigned long data = 0;
         if (!monitor->GetEventMessage(pid, &data))
             data = -1;
+        if (log)
+            log->Printf ("ProcessMonitor::%s() received exit? event, data = %lx, pid = %" PRIu64, __FUNCTION__, data, pid);
         message = ProcessMessage::Limbo(pid, (data >> 8));
         break;
     }
 
     case 0:
     case TRAP_TRACE:
+        if (log)
+            log->Printf ("ProcessMonitor::%s() received trace event, pid = %" PRIu64, __FUNCTION__, pid);
         message = ProcessMessage::Trace(pid);
         break;
 
     case SI_KERNEL:
     case TRAP_BRKPT:
+        if (log)
+            log->Printf ("ProcessMonitor::%s() received breakpoint event, pid = %" PRIu64, __FUNCTION__, pid);
         message = ProcessMessage::Break(pid);
         break;
     }
@@ -1160,6 +1188,8 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
     ProcessMessage message;
     int signo = info->si_signo;
 
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
     // POSIX says that process behaviour is undefined after it ignores a SIGFPE,
     // SIGILL, SIGSEGV, or SIGBUS *unless* that signal was generated by a
     // kill(2) or raise(3).  Similarly for tgkill(2) on FreeBSD.
@@ -1170,11 +1200,20 @@ ProcessMonitor::MonitorSignal(ProcessMonitor *monitor,
     // Similarly, ACK signals generated by this monitor.
     if (info->si_code == SI_USER)
     {
+        if (log)
+            log->Printf ("ProcessMonitor::%s() received signal %s with code %s, pid = %d",
+                            __FUNCTION__,
+                            monitor->m_process->GetUnixSignals().GetSignalAsCString (signo),
+                            "SI_USER",
+                            info->si_pid);
         if (info->si_pid == getpid())
             return ProcessMessage::SignalDelivered(pid, signo);
         else
             return ProcessMessage::Signal(pid, signo);
     }
+
+    if (log)
+        log->Printf ("ProcessMonitor::%s() received signal %s", __FUNCTION__, monitor->m_process->GetUnixSignals().GetSignalAsCString (signo));
 
     if (signo == SIGSEGV) {
         lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
@@ -1384,7 +1423,8 @@ ProcessMonitor::ServeOperation(OperationArgs *args)
                 assert(errno == EINTR);
                 goto READ_AGAIN;
             }
-
+            if (status == 0)
+                continue; // Poll again. The connection probably terminated.
             assert(status == sizeof(op));
             op->Execute(monitor);
             write(fdset.fd, &op, sizeof(op));
@@ -1509,8 +1549,15 @@ bool
 ProcessMonitor::Resume(lldb::tid_t tid, uint32_t signo)
 {
     bool result;
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
+    if (log)
+        log->Printf ("ProcessMonitor::%s() resuming thread = %"  PRIu64 " with signal %s", __FUNCTION__, tid,
+                                 m_process->GetUnixSignals().GetSignalAsCString (signo));
     ResumeOperation op(tid, signo, result);
     DoOperation(&op);
+    if (log)
+        log->Printf ("ProcessMonitor::%s() resuming result = %s", __FUNCTION__, result ? "true" : "false");
     return result;
 }
 
@@ -1550,14 +1597,16 @@ ProcessMonitor::GetEventMessage(lldb::tid_t tid, unsigned long *message)
     return result;
 }
 
-Error
+lldb_private::Error
 ProcessMonitor::Detach(lldb::tid_t tid)
 {
-    Error result;
-    DetachOperation op(result);
-    DoOperation(&op);
-    StopMonitor();
-    return result;
+    lldb_private::Error error;
+    if (tid != LLDB_INVALID_THREAD_ID)
+    {
+        DetachOperation op(error);
+        DoOperation(&op);
+    }
+    return error;
 }    
 
 bool
@@ -1588,10 +1637,23 @@ void
 ProcessMonitor::StopMonitor()
 {
     StopMonitoringChildProcess();
-    StopLaunchOpThread();
+    StopOpThread();
     CloseFD(m_terminal_fd);
     CloseFD(m_client_fd);
     CloseFD(m_server_fd);
+}
+
+void
+ProcessMonitor::StopOpThread()
+{
+    lldb::thread_result_t result;
+
+    if (!IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+        return;
+
+    Host::ThreadCancel(m_operation_thread, NULL);
+    Host::ThreadJoin(m_operation_thread, &result, NULL);
+    m_operation_thread = LLDB_INVALID_HOST_THREAD;
 }
 
 void
