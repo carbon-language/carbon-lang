@@ -2387,7 +2387,7 @@ void DwarfDebug::emitDebugStr() {
   Holder.emitStrings(Asm->getObjFileLowering().getDwarfStrSection());
 }
 
-// Emit visible names into a debug loc section.
+// Emit locations into the debug loc section.
 void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
