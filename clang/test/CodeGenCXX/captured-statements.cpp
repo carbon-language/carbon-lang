@@ -165,7 +165,7 @@ void template_capture_lambda() {
 }
 
 void test_capture_lambda() {
-  // CHECK-6: define {{.*}} void @_ZZ23template_capture_lambdaIiEvvENKS_IiEUlvE_clEv
+  // CHECK-6: define {{.*}} void @_ZZ23template_capture_lambdaIiEvvENKUlvE_clEv
   // CHECK-6-NOT: }
   // CHECK-6: store i32*
   // CHECK-6: store i32*
@@ -175,7 +175,7 @@ void test_capture_lambda() {
 }
 
 inline int test_captured_linkage() {
-  // CHECK-7: @_ZN21test_captured_linkage1iE = linkonce_odr global i32 0
+  // CHECK-7: @_ZZ21test_captured_linkagevE1i = linkonce_odr global i32 0
   int j;
   #pragma clang __debug captured
   {
