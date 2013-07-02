@@ -35,6 +35,9 @@ def IIFdivDouble       : InstrItinClass;
 def IIFsqrtSingle      : InstrItinClass;
 def IIFsqrtDouble      : InstrItinClass;
 def IIFrecipFsqrtStep  : InstrItinClass;
+def IIFLoad            : InstrItinClass;
+def IIFStore           : InstrItinClass;
+def IIFmoveC1          : InstrItinClass;
 def IIPseudo           : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
@@ -59,5 +62,8 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<IIFdivDouble       , [InstrStage<36, [ALU]>]>,
   InstrItinData<IIFsqrtSingle      , [InstrStage<54, [ALU]>]>,
   InstrItinData<IIFsqrtDouble      , [InstrStage<12, [ALU]>]>,
-  InstrItinData<IIFrecipFsqrtStep  , [InstrStage<5,  [ALU]>]>
+  InstrItinData<IIFrecipFsqrtStep  , [InstrStage<5,  [ALU]>]>,
+  InstrItinData<IIFLoad            , [InstrStage<3,  [ALU]>]>,
+  InstrItinData<IIFStore           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<IIFmoveC1          , [InstrStage<2,  [ALU]>]>
 ]>;
