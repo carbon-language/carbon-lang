@@ -391,6 +391,20 @@ base:
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_TLSLD16 target 0x0
          addi 3, 3, target@got@tlsld
 
+# CHECK: bl __tls_get_addr(target@TLSGD) # encoding: [0b010010BB,B,B,0bBBBBBB01]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target@TLSGD, kind: fixup_ppc_nofixup
+# CHECK-NEXT:                            #   fixup B - offset: 0, value: __tls_get_addr, kind: fixup_ppc_br24
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TLSGD target 0x0
+# CHECK-REL-NEXT:                        0x{{[0-9A-F]*[048C]}} R_PPC64_REL24 __tls_get_addr 0x0
+         bl __tls_get_addr(target@tlsgd)
+
+# CHECK: bl __tls_get_addr(target@TLSLD) # encoding: [0b010010BB,B,B,0bBBBBBB01]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target@TLSLD, kind: fixup_ppc_nofixup
+# CHECK-NEXT:                            #   fixup B - offset: 0, value: __tls_get_addr, kind: fixup_ppc_br24
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TLSLD target 0x0
+# CHECK-REL-NEXT:                        0x{{[0-9A-F]*[048C]}} R_PPC64_REL24 __tls_get_addr 0x0
+         bl __tls_get_addr(target@tlsld)
+
 
 # Data relocs
 # llvm-mc does not show any "encoding" string for data, so we just check the relocs

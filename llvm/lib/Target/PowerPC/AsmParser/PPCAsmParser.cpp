@@ -940,8 +940,29 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Push the parsed operand into the list of operands
   Operands.push_back(Op);
 
-  // Check for D-form memory operands
-  if (getLexer().is(AsmToken::LParen)) {
+  // Check whether this is a TLS call expression
+  bool TLSCall = false;
+  if (const MCSymbolRefExpr *Ref = dyn_cast<MCSymbolRefExpr>(EVal))
+    TLSCall = Ref->getSymbol().getName() == "__tls_get_addr";
+
+  if (TLSCall && getLexer().is(AsmToken::LParen)) {
+    const MCExpr *TLSSym;
+
+    Parser.Lex(); // Eat the '('.
+    S = Parser.getTok().getLoc();
+    if (ParseExpression(TLSSym))
+      return Error(S, "invalid TLS call expression");
+    if (getLexer().isNot(AsmToken::RParen))
+      return Error(Parser.getTok().getLoc(), "missing ')'");
+    E = Parser.getTok().getLoc();
+    Parser.Lex(); // Eat the ')'.
+
+    Op = PPCOperand::CreateExpr(TLSSym, S, E, isPPC64());
+    Operands.push_back(Op);
+  }
+
+  // Otherwise, check for D-form memory operands
+  if (!TLSCall && getLexer().is(AsmToken::LParen)) {
     Parser.Lex(); // Eat the '('.
     S = Parser.getTok().getLoc();
 

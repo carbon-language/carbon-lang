@@ -116,6 +116,9 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
     def BL8  : IForm<18, 0, 1, (outs), (ins calltarget:$func),
                      "bl $func", BrB, []>;  // See Pat patterns below.
 
+    def BL8_TLS  : IForm<18, 0, 1, (outs), (ins tlscall:$func),
+                         "bl $func", BrB, []>;
+
     def BLA8 : IForm<18, 1, 1, (outs), (ins abscalltarget:$func),
                      "bla $func", BrB, [(PPCcall (i64 imm:$func))]>;
   }
