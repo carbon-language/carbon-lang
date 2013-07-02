@@ -995,6 +995,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
         }
         break;
 
+#ifndef LLDB_DISABLE_PYTHON
     case ePathTypePythonDir:                
         {
             static ConstString g_lldb_python_dir;
@@ -1037,7 +1038,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
             return file_spec.GetDirectory();
         }
         break;
-    
+#endif
+
     case ePathTypeLLDBSystemPlugins:    // System plug-ins directory
         {
 #if defined (__APPLE__)
