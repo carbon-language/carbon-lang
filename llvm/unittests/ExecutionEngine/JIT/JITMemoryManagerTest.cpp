@@ -277,4 +277,27 @@ TEST(JITMemoryManagerTest, TestManyStubs) {
   EXPECT_EQ(3U, MemMgr->GetNumStubSlabs());
 }
 
+// Check section allocation and alignment
+TEST(JITMemoryManagerTest, AllocateSection) {
+  OwningPtr<JITMemoryManager> MemMgr(
+      JITMemoryManager::CreateDefaultMemManager());
+  uint8_t *code1 = MemMgr->allocateCodeSection(256, 0, 1);
+  uint8_t *data1 = MemMgr->allocateDataSection(256, 16, 2, true);
+  uint8_t *code2 = MemMgr->allocateCodeSection(257, 32, 3);
+  uint8_t *data2 = MemMgr->allocateDataSection(256, 64, 4, false);
+  uint8_t *code3 = MemMgr->allocateCodeSection(258, 64, 5);
+
+  EXPECT_NE((uint8_t*)0, code1);
+  EXPECT_NE((uint8_t*)0, code2);
+  EXPECT_NE((uint8_t*)0, data1);
+  EXPECT_NE((uint8_t*)0, data2);
+
+  // Check alignment
+  EXPECT_EQ((uint64_t)code1 & 0xf, 0);
+  EXPECT_EQ((uint64_t)code2 & 0x1f, 0);
+  EXPECT_EQ((uint64_t)code3 & 0x3f, 0);
+  EXPECT_EQ((uint64_t)data1 & 0xf, 0);
+  EXPECT_EQ((uint64_t)data2 & 0x3f, 0);
+}
+
 }
