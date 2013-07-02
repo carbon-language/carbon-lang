@@ -86,3 +86,11 @@ void test() {
   SocketWireProtocolStream stream{};
   JSONWireProtocolReader reader{stream};
 }
+
+// This crashed because the analyzer did not understand AttributedStmts.
+void fallthrough() {
+  switch (1) {
+    case 1:
+      [[clang::fallthrough]];
+  }
+}
