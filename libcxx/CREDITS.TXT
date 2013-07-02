@@ -37,6 +37,10 @@ N: Bill Fisher
 E: william.w.fisher@gmail.com
 D: Regex bug fixes.
 
+N: Matthew Dempsky
+E: matthew@dempsky.org
+D: Minor patches and bug fixes.
+
 N: Google Inc.
 D: Copyright owner and contributor of the CityHash algorithm
 
