@@ -1699,10 +1699,7 @@ Process::SetPrivateState (StateType new_state)
 
     const StateType old_state = m_private_state.GetValueNoLock ();
     state_changed = old_state != new_state;
-    // This code is left commented out in case we ever need to control
-    // the private process state with another run lock. Right now it doesn't
-    // seem like we need to do this, but if we ever do, we can uncomment and
-    // use this code.
+
     const bool old_state_is_stopped = StateIsStoppedState(old_state, false);
     const bool new_state_is_stopped = StateIsStoppedState(new_state, false);
     if (old_state_is_stopped != new_state_is_stopped)
