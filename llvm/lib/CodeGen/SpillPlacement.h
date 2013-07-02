@@ -30,7 +30,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/BlockFrequency.h"
 
 namespace llvm {
 
@@ -58,7 +57,7 @@ class SpillPlacement  : public MachineFunctionPass {
   SmallVector<unsigned, 8> RecentPositive;
 
   // Block frequencies are computed once. Indexed by block number.
-  SmallVector<BlockFrequency, 4> BlockFrequencies;
+  SmallVector<float, 4> BlockFrequency;
 
 public:
   static char ID; // Pass identification, replacement for typeid.
@@ -141,9 +140,7 @@ public:
   /// getBlockFrequency - Return the estimated block execution frequency per
   /// function invocation.
   float getBlockFrequency(unsigned Number) const {
-    // FIXME: Return the BlockFrequency directly.
-    const float Scale = 1.0f / BlockFrequency::getEntryFrequency();
-    return BlockFrequencies[Number].getFrequency() * Scale;
+    return BlockFrequency[Number];
   }
 
 private:
