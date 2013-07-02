@@ -2504,13 +2504,13 @@ else
 fi
 
   # Check for library and headers works
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isl: isl/ast.h in $given_inc_path, and libisl in $given_lib_path" >&5
-$as_echo_n "checking for isl: isl/ast.h in $given_inc_path, and libisl in $given_lib_path... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isl: isl/val.in $given_inc_path, and libisl in $given_lib_path" >&5
+$as_echo_n "checking for isl: isl/val.in $given_inc_path, and libisl in $given_lib_path... " >&6; }
 
   # try to compile a file that includes a header of the library
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <isl/ast.h>
+#include <isl/val.h>
 int
 main ()
 {

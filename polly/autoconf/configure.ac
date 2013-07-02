@@ -80,7 +80,7 @@ find_lib_and_headers([gmp], [gmp.h], [gmp], [required])
 dnl Find Isl
 saved_CXXFLAGS=$CXXFLAGS
 CXXFLAGS="$CXXFLAGS $gmp_inc"
-find_lib_and_headers([isl], [isl/ast.h], [isl], [required])
+find_lib_and_headers([isl], [isl/val.h], [isl], [required])
 CXXFLAGS=$saved_CXXFLAGS
 
 dnl Check that we have cloog.
