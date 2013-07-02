@@ -107,6 +107,10 @@ INTERCEPTOR(void *, memcpy, void *dest, const void *src, SIZE_T n) {
   return __msan_memcpy(dest, src, n);
 }
 
+INTERCEPTOR(void *, mempcpy, void *dest, const void *src, SIZE_T n) {
+  return (char *)__msan_memcpy(dest, src, n) + n;
+}
+
 INTERCEPTOR(void *, memmove, void *dest, const void *src, SIZE_T n) {
   return __msan_memmove(dest, src, n);
 }
@@ -445,6 +449,13 @@ INTERCEPTOR(wchar_t *, wcscpy, wchar_t *dest, const wchar_t *src) {
 INTERCEPTOR(wchar_t *, wmemcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   wchar_t *res = REAL(wmemcpy)(dest, src, n);
+  __msan_copy_poison(dest, src, n * sizeof(wchar_t));
+  return res;
+}
+
+INTERCEPTOR(wchar_t *, wmempcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
+  ENSURE_MSAN_INITED();
+  wchar_t *res = REAL(wmempcpy)(dest, src, n);
   __msan_copy_poison(dest, src, n * sizeof(wchar_t));
   return res;
 }
@@ -1143,10 +1154,12 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(fread_unlocked);
   INTERCEPT_FUNCTION(readlink);
   INTERCEPT_FUNCTION(memcpy);
+  INTERCEPT_FUNCTION(mempcpy);
   INTERCEPT_FUNCTION(memset);
   INTERCEPT_FUNCTION(memmove);
   INTERCEPT_FUNCTION(wmemset);
   INTERCEPT_FUNCTION(wmemcpy);
+  INTERCEPT_FUNCTION(wmempcpy);
   INTERCEPT_FUNCTION(wmemmove);
   INTERCEPT_FUNCTION(strcpy);  // NOLINT
   INTERCEPT_FUNCTION(stpcpy);  // NOLINT

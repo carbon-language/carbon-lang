@@ -2485,6 +2485,7 @@ void MemCpyTest() {
   T *x = new T[N];
   T *y = new T[N];
   T *z = new T[N];
+  T *q = new T[N];
   __msan_poison(x, N * sizeof(T));
   __msan_set_origin(x, N * sizeof(T), ox);
   __msan_set_origin(y, N * sizeof(T), 777777);
@@ -2494,6 +2495,12 @@ void MemCpyTest() {
   EXPECT_POISONED_O(y[0], ox);
   EXPECT_POISONED_O(y[N/2], ox);
   EXPECT_POISONED_O(y[N-1], ox);
+  EXPECT_NOT_POISONED(x);
+  void *res = mempcpy(q, x, N * sizeof(T));
+  ASSERT_EQ(q + N, res);
+  EXPECT_POISONED_O(q[0], ox);
+  EXPECT_POISONED_O(q[N/2], ox);
+  EXPECT_POISONED_O(q[N-1], ox);
   EXPECT_NOT_POISONED(x);
   memmove(z, x, N * sizeof(T));
   EXPECT_POISONED_O(z[0], ox);
