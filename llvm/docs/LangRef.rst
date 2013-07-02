@@ -820,7 +820,7 @@ example:
 ``builtin``
     This indicates that the callee function at a call site should be
     recognized as a built-in function, even though the function's declaration
-    uses the ``nobuiltin'' attribute. This is only valid at call sites for
+    uses the ``nobuiltin`` attribute. This is only valid at call sites for
     direct calls to functions which are declared with the ``nobuiltin``
     attribute.
 ``cold``
