@@ -181,6 +181,15 @@ namespace __sanitizer {
   };
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+  struct __sanitizer_glob_t {
+    uptr gl_pathc;
+    char **gl_pathv;
+  };
+
+  extern int glob_nomatch;
+#endif
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
   extern unsigned struct_user_regs_struct_sz;
   extern unsigned struct_user_fpregs_struct_sz;
   extern unsigned struct_user_fpxregs_struct_sz;

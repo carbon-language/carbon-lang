@@ -58,6 +58,7 @@
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+#include <glob.h>
 #include <net/if_ppp.h>
 #include <netax25/ax25.h>
 #include <netipx/ipx.h>
@@ -161,6 +162,10 @@ namespace __sanitizer {
     else
       return 0;
   }
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+  int glob_nomatch = GLOB_NOMATCH;
+#endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
@@ -732,6 +737,11 @@ CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phdr);
 CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phnum);
 
 COMPILER_CHECK(IOC_SIZE(0x12345678) == _IOC_SIZE(0x12345678));
+
+COMPILER_CHECK(sizeof(__sanitizer_glob_t) <= sizeof(glob_t));
+CHECK_SIZE_AND_OFFSET(glob_t, gl_pathc);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_pathv);
+
 #endif
 
 CHECK_TYPE_SIZE(addrinfo);

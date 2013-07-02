@@ -738,18 +738,13 @@ INTERCEPTOR(int, setitimer, int which, const void *new_value, void *old_value) {
 #define INIT_GETITIMER
 #endif
 
-
 #if SANITIZER_INTERCEPT_GLOB
-struct sanitizer_glob_t {
-  SIZE_T gl_pathc;
-  char **gl_pathv;
-};
-
-static void unpoison_glob_t(void *ctx, sanitizer_glob_t *pglob) {
+static void unpoison_glob_t(void *ctx, __sanitizer_glob_t *pglob) {
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pglob, sizeof(*pglob));
   // +1 for NULL pointer at the end.
-  COMMON_INTERCEPTOR_WRITE_RANGE(
-      ctx, pglob->gl_pathv, (pglob->gl_pathc + 1) * sizeof(*pglob->gl_pathv));
+  if (pglob->gl_pathv)
+    COMMON_INTERCEPTOR_WRITE_RANGE(
+        ctx, pglob->gl_pathv, (pglob->gl_pathc + 1) * sizeof(*pglob->gl_pathv));
   for (SIZE_T i = 0; i < pglob->gl_pathc; ++i) {
     char *p = pglob->gl_pathv[i];
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, REAL(strlen)(p) + 1);
@@ -758,32 +753,29 @@ static void unpoison_glob_t(void *ctx, sanitizer_glob_t *pglob) {
 
 INTERCEPTOR(int, glob, const char *pattern, int flags,
             int (*errfunc)(const char *epath, int eerrno),
-            sanitizer_glob_t *pglob) {
+            __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob, pattern, flags, errfunc, pglob);
   int res = REAL(glob)(pattern, flags, errfunc, pglob);
-  if (res == 0)
-    unpoison_glob_t(ctx, pglob);
+  if ((!res || res == glob_nomatch) && pglob) unpoison_glob_t(ctx, pglob);
   return res;
 }
 
 INTERCEPTOR(int, glob64, const char *pattern, int flags,
             int (*errfunc)(const char *epath, int eerrno),
-            sanitizer_glob_t *pglob) {
+            __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob64, pattern, flags, errfunc, pglob);
   int res = REAL(glob64)(pattern, flags, errfunc, pglob);
-  if (res == 0)
-    unpoison_glob_t(ctx, pglob);
+  if ((!res || res == glob_nomatch) && pglob) unpoison_glob_t(ctx, pglob);
   return res;
 }
-#define INIT_GLOB                               \
-  INTERCEPT_FUNCTION(glob);                     \
+#define INIT_GLOB           \
+  INTERCEPT_FUNCTION(glob); \
   INTERCEPT_FUNCTION(glob64);
-#else // SANITIZER_INTERCEPT_GLOB
+#else  // SANITIZER_INTERCEPT_GLOB
 #define INIT_GLOB
-#endif // SANITIZER_INTERCEPT_GLOB
-
+#endif  // SANITIZER_INTERCEPT_GLOB
 
 #if SANITIZER_INTERCEPT_WAIT
 // According to sys/wait.h, wait(), waitid(), waitpid() may have symbol version
