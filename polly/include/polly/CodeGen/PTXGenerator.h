@@ -186,6 +186,6 @@ private:
   /// @param SubFunction  A pointer to the device code function.
   void eraseUnusedFunctions(Function *SubFunction);
 };
-}      // end namespace polly
+} // end namespace polly
 #endif /* GPU_CODEGEN */
 #endif /* POLLY_CODEGEN_PTXGENERATOR_H */

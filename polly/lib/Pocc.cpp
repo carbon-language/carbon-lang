@@ -76,7 +76,7 @@ bool Pocc::runTransform(Scop &S) {
   // Create the scop file.
   SmallString<128> TempDir;
   SmallString<128> ScopFile;
-  llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/ true, TempDir);
+  llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/true, TempDir);
   ScopFile = TempDir;
   llvm::sys::path::append(ScopFile, "polly.scop");
 
