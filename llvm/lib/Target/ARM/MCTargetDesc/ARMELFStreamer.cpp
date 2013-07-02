@@ -204,7 +204,7 @@ private:
 
   void EmitPersonalityFixup(StringRef Name);
   void FlushPendingOffset();
-  void FlushUnwindOpcodes(bool AllowCompactModel0);
+  void FlushUnwindOpcodes(bool NoHandlerData);
 
   void SwitchToEHSection(const char *Prefix, unsigned Type, unsigned Flags,
                          SectionKind Kind, const MCSymbol &Fn);
@@ -377,7 +377,7 @@ void ARMELFStreamer::FlushPendingOffset() {
   }
 }
 
-void ARMELFStreamer::FlushUnwindOpcodes(bool AllowCompactModel0) {
+void ARMELFStreamer::FlushUnwindOpcodes(bool NoHandlerData) {
   // Emit the unwind opcode to restore $sp.
   if (UsedFP) {
     const MCRegisterInfo *MRI = getContext().getRegisterInfo();
@@ -394,7 +394,7 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool AllowCompactModel0) {
   // For compact model 0, we have to emit the unwind opcodes in the .ARM.exidx
   // section.  Thus, we don't have to create an entry in the .ARM.extab
   // section.
-  if (AllowCompactModel0 && PersonalityIndex == AEABI_UNWIND_CPP_PR0)
+  if (NoHandlerData && PersonalityIndex == AEABI_UNWIND_CPP_PR0)
     return;
 
   // Switch to .ARM.extab section.
@@ -418,6 +418,16 @@ void ARMELFStreamer::FlushUnwindOpcodes(bool AllowCompactModel0) {
   // Emit unwind opcodes
   EmitBytes(StringRef(reinterpret_cast<const char *>(Opcodes.data()),
                       Opcodes.size()), 0);
+
+  // According to ARM EHABI section 9.2, if the __aeabi_unwind_cpp_pr1() or
+  // __aeabi_unwind_cpp_pr2() is used, then the handler data must be emitted
+  // after the unwind opcodes.  The handler data consists of several 32-bit
+  // words, and should be terminated by zero.
+  //
+  // In case that the .handlerdata directive is not specified by the
+  // programmer, we should emit zero to terminate the handler data.
+  if (NoHandlerData && !Personality)
+    EmitIntValue(0, 4);
 }
 
 void ARMELFStreamer::EmitHandlerData() {
