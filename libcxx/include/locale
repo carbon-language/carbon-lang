@@ -357,20 +357,6 @@ size_t __mbsrtowcs_l(wchar_t *__dest, const char **__src, size_t __len,
 }
 
 inline
-int __sprintf_l(char *__s, locale_t __l, const char *__format, ...) {
-  va_list __va;
-  va_start(__va, __format);
-#ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-  int __res = vsprintf_l(__s, __l, __format, __va);
-#else
-  __locale_raii __current(uselocale(__l), uselocale);
-  int __res = vsprintf(__s, __format, __va);
-#endif
-  va_end(__va);
-  return __res;
-}
-
-inline
 int __snprintf_l(char *__s, size_t __n, locale_t __l, const char *__format, ...) {
   va_list __va;
   va_start(__va, __format);
@@ -1803,9 +1789,9 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
+    int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1833,9 +1819,9 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
+    int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1863,9 +1849,9 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
+    int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1893,9 +1879,9 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
                           + 1;
     char __nar[__nbuf];
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
+    int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -2057,9 +2043,9 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     const unsigned __nbuf = 20;
     char __nar[__nbuf];
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    int __nc = sprintf_l(__nar, _LIBCPP_GET_C_LOCALE, __fmt, __v);
+    int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __sprintf_l(__nar, __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
