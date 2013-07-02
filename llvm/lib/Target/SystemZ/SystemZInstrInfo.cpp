@@ -351,8 +351,8 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
   unsigned OpNum = Ops[0];
   unsigned Reg = MI->getOperand(OpNum).getReg();
-  unsigned RegSize = MF.getRegInfo().getRegClass(Reg)->getSize();
-  assert(Size == RegSize && "Invalid size combination");
+  assert(Size == MF.getRegInfo().getRegClass(Reg)->getSize() &&
+         "Invalid size combination");
 
   // Look for cases where the source of a simple store or the destination
   // of a simple load is being spilled.  Try to use MVC instead.
