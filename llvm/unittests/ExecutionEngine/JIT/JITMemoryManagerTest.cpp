@@ -293,11 +293,11 @@ TEST(JITMemoryManagerTest, AllocateSection) {
   EXPECT_NE((uint8_t*)0, data2);
 
   // Check alignment
-  EXPECT_EQ((uint64_t)code1 & 0xf, 0);
-  EXPECT_EQ((uint64_t)code2 & 0x1f, 0);
-  EXPECT_EQ((uint64_t)code3 & 0x3f, 0);
-  EXPECT_EQ((uint64_t)data1 & 0xf, 0);
-  EXPECT_EQ((uint64_t)data2 & 0x3f, 0);
+  EXPECT_EQ((uint64_t)code1 & 0xf, 0u);
+  EXPECT_EQ((uint64_t)code2 & 0x1f, 0u);
+  EXPECT_EQ((uint64_t)code3 & 0x3f, 0u);
+  EXPECT_EQ((uint64_t)data1 & 0xf, 0u);
+  EXPECT_EQ((uint64_t)data2 & 0x3f, 0u);
 }
 
 }
