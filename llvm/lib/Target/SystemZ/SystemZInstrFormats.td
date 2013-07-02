@@ -383,6 +383,19 @@ class InstSIY<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Has20BitOffset = 1;
 }
 
+class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<24> BDL1;
+  bits<16> BD2;
+
+  let Inst{47-40} = op;
+  let Inst{39-16} = BDL1;
+  let Inst{15-0}  = BD2;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definitions with semantics
 //===----------------------------------------------------------------------===//

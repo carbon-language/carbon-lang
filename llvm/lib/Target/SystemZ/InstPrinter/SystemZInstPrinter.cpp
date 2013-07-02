@@ -154,6 +154,17 @@ void SystemZInstPrinter::printBDXAddrOperand(const MCInst *MI, int OpNum,
                MI->getOperand(OpNum + 2).getReg(), O);
 }
 
+void SystemZInstPrinter::printBDLAddrOperand(const MCInst *MI, int OpNum,
+                                             raw_ostream &O) {
+  unsigned Base = MI->getOperand(OpNum).getReg();
+  uint64_t Disp = MI->getOperand(OpNum + 1).getImm();
+  uint64_t Length = MI->getOperand(OpNum + 2).getImm();
+  O << Disp << '(' << Length;
+  if (Base)
+    O << ",%" << getRegisterName(Base);
+  O << ')';
+}
+
 void SystemZInstPrinter::printCond4Operand(const MCInst *MI, int OpNum,
                                            raw_ostream &O) {
   static const char *const CondNames[] = {

@@ -1730,6 +1730,50 @@
 	msy	%r0, -524289
 	msy	%r0, 524288
 
+#CHECK: error: missing length in address
+#CHECK: mvc	0, 0
+#CHECK: error: missing length in address
+#CHECK: mvc	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: mvc	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvc	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvc	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvc	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvc	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvc	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvc	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvc	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvc	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvc	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvc	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: mvc	0(-), 0
+
+	mvc	0, 0
+	mvc	0(%r1), 0(%r1)
+	mvc	0(1,%r1), 0(2,%r1)
+	mvc	0(0,%r1), 0(%r1)
+	mvc	0(257,%r1), 0(%r1)
+	mvc	-1(1,%r1), 0(%r1)
+	mvc	4096(1,%r1), 0(%r1)
+	mvc	0(1,%r1), -1(%r1)
+	mvc	0(1,%r1), 4096(%r1)
+	mvc	0(1,%r0), 0(%r1)
+	mvc	0(1,%r1), 0(%r0)
+	mvc	0(%r1,%r2), 0(%r1)
+	mvc	0(1,%r2), 0(%r1,%r2)
+	mvc	0(-), 0
+
 #CHECK: error: invalid operand
 #CHECK: mvghi	-1, 0
 #CHECK: error: invalid operand

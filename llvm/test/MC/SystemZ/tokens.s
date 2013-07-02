@@ -3,10 +3,16 @@
 
 #CHECK: error: invalid instruction
 #CHECK: foo	100, 200
-#CHECK: error: register expected
+#CHECK: error: unknown token in expression
 #CHECK: foo	100(, 200
+#CHECK: error: invalid instruction
+#CHECK: foo	100(200), 300
 #CHECK: error: register expected
-#CHECK: foo	100(0), 200
+#CHECK: foo	100(200,), 300
+#CHECK: error: %r0 used in an address
+#CHECK: foo	100(200,%r0), 300
+#CHECK: error: invalid instruction
+#CHECK: foo	100(200,%r1), 300
 #CHECK: error: invalid operand
 #CHECK: foo	100(%a0), 200
 #CHECK: error: %r0 used in an address
@@ -48,7 +54,10 @@
 
 	foo	100, 200
 	foo	100(, 200
-	foo	100(0), 200
+	foo	100(200), 300
+	foo	100(200,), 300
+	foo	100(200,%r0), 300
+	foo	100(200,%r1), 300
 	foo	100(%a0), 200
 	foo	100(%r0), 200
 	foo	100(%r1,%a0), 200

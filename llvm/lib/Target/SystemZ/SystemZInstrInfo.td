@@ -282,6 +282,12 @@ def MVHHI : StoreSIL<"mvhhi", 0xE544, truncstorei16, imm32sx16trunc>;
 def MVHI  : StoreSIL<"mvhi",  0xE54C, store,         imm32sx16>;
 def MVGHI : StoreSIL<"mvghi", 0xE548, store,         imm64sx16>;
 
+// Memory-to-memory moves.
+let mayLoad = 1, mayStore = 1 in
+  def MVC : InstSS<0xD2, (outs), (ins bdladdr12onlylen8:$BDL1,
+                                      bdaddr12only:$BD2),
+                   "mvc\t$BDL1, $BD2", []>;
+
 //===----------------------------------------------------------------------===//
 // Sign extensions
 //===----------------------------------------------------------------------===//
