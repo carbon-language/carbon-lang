@@ -26,7 +26,8 @@
 // RUN:        | FileCheck -check-prefix=GIGNORE %s
 //
 // G: "-cc1"
-// G: "-g"
+// Can be -gdwarf.
+// G: "-g
 // 
 // G_D2: "-cc1"
 // G_D2: "-gdwarf-2"
@@ -41,7 +42,7 @@
 //
 // G_ONLY: "-cc1"
 // G_ONLY-NOT: "-gline-tables-only"
-// G_ONLY: "-g"
+// G_ONLY: "-g
 // G_ONLY-NOT: "-gline-tables-only"
 //
 // GLTO_NO: "-cc1"
