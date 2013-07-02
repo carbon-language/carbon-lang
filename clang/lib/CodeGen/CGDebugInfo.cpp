@@ -373,7 +373,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::Void:
     return llvm::DIType();
   case BuiltinType::ObjCClass:
-    if (ClassTy.Verify())
+    if (ClassTy.isType())
       return ClassTy;
     ClassTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
                                          "objc_class", TheCU,
@@ -385,10 +385,10 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     //  Class isa;
     // } *id;
 
-    if (ObjTy.Verify())
+    if (ObjTy.isCompositeType())
       return ObjTy;
 
-    if (!ClassTy.Verify())
+    if (!ClassTy.isType())
       ClassTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
                                            "objc_class", TheCU,
                                            getOrCreateMainFile(), 0);
@@ -406,7 +406,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     return ObjTy;
   }
   case BuiltinType::ObjCSel: {
-    if (SelTy.Verify())
+    if (SelTy.isType())
       return SelTy;
     SelTy =
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
@@ -639,7 +639,7 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
 
 llvm::DIType CGDebugInfo::getOrCreateStructPtrType(StringRef Name,
                                                    llvm::DIType &Cache) {
-  if (Cache.Verify())
+  if (Cache.isType())
     return Cache;
   Cache = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type, Name,
                                      TheCU, getOrCreateMainFile(), 0);
@@ -717,7 +717,7 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit,
   // typedef, make sure to emit the whole chain.
   llvm::DIType Src =
       getOrCreateType(Ty->getDecl()->getUnderlyingType(), Unit, Declaration);
-  if (!Src.Verify())
+  if (!Src.isType())
     return llvm::DIType();
   // We don't set size information, but do specify where the typedef was
   // declared.
@@ -1402,7 +1402,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
 
   llvm::DICompositeType FwdDecl(
       getOrCreateLimitedType(QualType(Ty, 0), DefUnit));
-  assert(FwdDecl.Verify() &&
+  assert(FwdDecl.isCompositeType() &&
          "The debug type of a RecordType should be a llvm::DICompositeType");
 
   if (FwdDecl.isForwardDecl())
@@ -1917,7 +1917,7 @@ void CGDebugInfo::completeFwdDecl(const RecordDecl &RD) {
   QualType QTy = CGM.getContext().getRecordType(&RD);
   llvm::DIType T = getTypeOrNull(QTy);
 
-  if (T.Verify() && T.isForwardDecl())
+  if (T.isType() && T.isForwardDecl())
     getOrCreateType(QTy, getOrCreateFile(RD.getLocation()));
 }
 
@@ -1949,7 +1949,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit,
 
   llvm::DIType T = getCompletedTypeOrNull(Ty);
 
-  if (T.Verify()) {
+  if (T.isType()) {
     // If we're looking for a definition, make sure we have definitions of any
     // underlying types.
     if (const TypedefType* TTy = dyn_cast<TypedefType>(Ty))
@@ -1967,7 +1967,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit,
   TypeCache[TyPtr] = Res;
 
   llvm::DIType TC = getTypeOrNull(Ty);
-  if (TC.Verify() && TC.isForwardDecl())
+  if (TC.isType() && TC.isForwardDecl())
     ReplaceMap.push_back(std::make_pair(TyPtr, static_cast<llvm::Value*>(TC)));
   else if (ObjCInterfaceDecl* Decl = getObjCInterfaceDecl(Ty)) {
     // Interface types may have elements added to them by a
@@ -2126,12 +2126,12 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
   // We may have cached a forward decl when we could have created
   // a non-forward decl. Go ahead and create a non-forward decl
   // now.
-  if (T.Verify() && !T.isForwardDecl()) return T;
+  if (T.isType() && !T.isForwardDecl()) return T;
 
   // Otherwise create the type.
   llvm::DIType Res = CreateLimitedTypeNode(Ty, Unit);
 
-  if (T.Verify() && T.isForwardDecl())
+  if (T.isType() && T.isForwardDecl())
     ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(),
                                         static_cast<llvm::Value*>(T)));
 
@@ -2748,7 +2748,7 @@ void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
 llvm::DIType CGDebugInfo::CreateSelfType(const QualType &QualTy,
                                          llvm::DIType Ty) {
   llvm::DIType CachedTy = getTypeOrNull(QualTy);
-  if (CachedTy.Verify()) Ty = CachedTy;
+  if (CachedTy.isType()) Ty = CachedTy;
   else DEBUG(llvm::dbgs() << "No cached type for self.");
   return DBuilder.createObjectPointerType(Ty);
 }
@@ -3182,7 +3182,7 @@ void CGDebugInfo::finalize() {
         RepTy = llvm::DIType(cast<llvm::MDNode>(V));
     }
 
-    if (Ty.Verify() && Ty.isForwardDecl() && RepTy.Verify())
+    if (Ty.isType() && Ty.isForwardDecl() && RepTy.isType())
       Ty.replaceAllUsesWith(RepTy);
   }
 
