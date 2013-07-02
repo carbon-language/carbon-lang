@@ -5340,7 +5340,7 @@ __time_put::__time_put(const string& nm)
 
 __time_put::~__time_put()
 {
-    if (__loc_)
+    if (__loc_ != _LIBCPP_GET_C_LOCALE)
         freelocale(__loc_);
 }
 
