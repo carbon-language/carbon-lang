@@ -338,6 +338,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_readdir64_r]              = "  readdir64_r                     ";
   name[StatInt_ptrace]                   = "  ptrace                          ";
   name[StatInt_setlocale]                = "  setlocale                       ";
+  name[StatInt_getcwd]                   = "  getcwd                          ";
+  name[StatInt_get_current_dir_name]     = "  get_current_dir_name            ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

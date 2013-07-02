@@ -904,6 +904,13 @@ TEST(MemorySanitizer, getcwd_gnu) {
   free(res);
 }
 
+TEST(MemorySanitizer, get_current_dir_name) {
+  char* res = get_current_dir_name();
+  assert(res);
+  EXPECT_NOT_POISONED(res[0]);
+  free(res);
+}
+
 TEST(MemorySanitizer, readdir) {
   DIR *dir = opendir(".");
   struct dirent *d = readdir(dir);
@@ -1171,6 +1178,24 @@ TEST(MemorySanitizer, wcstombs) {
   EXPECT_EQ(buff[0], 'a');
   EXPECT_EQ(buff[1], 'b');
   EXPECT_EQ(buff[2], 'c');
+}
+
+TEST(MemorySanitizer, mbtowc) {
+  const char *x = "abc";
+  wchar_t wx;
+  int res = mbtowc(&wx, x, 3);
+  EXPECT_GT(res, 0);
+  EXPECT_NOT_POISONED(wx);
+}
+
+TEST(MemorySanitizer, mbrtowc) {
+  const char *x = "abc";
+  wchar_t wx;
+  mbstate_t mbs;
+  memset(&mbs, 0, sizeof(mbs));
+  int res = mbrtowc(&wx, x, 3, &mbs);
+  EXPECT_GT(res, 0);
+  EXPECT_NOT_POISONED(wx);
 }
 
 TEST(MemorySanitizer, gettimeofday) {

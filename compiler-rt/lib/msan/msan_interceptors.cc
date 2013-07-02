@@ -405,6 +405,20 @@ INTERCEPTOR(SIZE_T, mbstowcs, wchar_t *dest, const char *src, SIZE_T n) {
   return res;
 }
 
+INTERCEPTOR(int, mbtowc, wchar_t *dest, const char *src, SIZE_T n) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(mbtowc)(dest, src, n);
+  if (res != -1 && dest) __msan_unpoison(dest, sizeof(wchar_t));
+  return res;
+}
+
+INTERCEPTOR(int, mbrtowc, wchar_t *dest, const char *src, SIZE_T n, void *ps) {
+  ENSURE_MSAN_INITED();
+  SIZE_T res = REAL(mbrtowc)(dest, src, n, ps);
+  if (res != (SIZE_T)-1 && dest) __msan_unpoison(dest, sizeof(wchar_t));
+  return res;
+}
+
 INTERCEPTOR(SIZE_T, wcslen, const wchar_t *s) {
   ENSURE_MSAN_INITED();
   SIZE_T res = REAL(wcslen)(s);
@@ -602,14 +616,6 @@ INTERCEPTOR(char *, fgets_unlocked, char *s, int size, void *stream) {
   char *res = REAL(fgets_unlocked)(s, size, stream);
   if (res)
     __msan_unpoison(s, REAL(strlen)(s) + 1);
-  return res;
-}
-
-INTERCEPTOR(char *, getcwd, char *buf, SIZE_T size) {
-  ENSURE_MSAN_INITED();
-  char *res = REAL(getcwd)(buf, size);
-  if (res)
-    __msan_unpoison(res, REAL(strlen)(res) + 1);
   return res;
 }
 
@@ -1172,6 +1178,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(strftime);
   INTERCEPT_FUNCTION(wcstombs);
   INTERCEPT_FUNCTION(mbstowcs);
+  INTERCEPT_FUNCTION(mbtowc);
+  INTERCEPT_FUNCTION(mbrtowc);
   INTERCEPT_FUNCTION(wcslen);
   INTERCEPT_FUNCTION(wcschr);
   INTERCEPT_FUNCTION(wcscpy);
@@ -1191,7 +1199,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(socketpair);
   INTERCEPT_FUNCTION(fgets);
   INTERCEPT_FUNCTION(fgets_unlocked);
-  INTERCEPT_FUNCTION(getcwd);
   INTERCEPT_FUNCTION(realpath);
   INTERCEPT_FUNCTION(getrlimit);
   INTERCEPT_FUNCTION(getrlimit64);

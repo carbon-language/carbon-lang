@@ -1405,7 +1405,7 @@ INTERCEPTOR(char *, setlocale, int category, char *locale) {
   COMMON_INTERCEPTOR_ENTER(ctx, setlocale, category, locale);
   if (locale)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, locale, REAL(strlen)(locale) + 1);
-  char * res = REAL(setlocale)(category, locale);
+  char *res = REAL(setlocale)(category, locale);
   if (res)
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
   return res;
@@ -1417,6 +1417,36 @@ INTERCEPTOR(char *, setlocale, int category, char *locale) {
 #define INIT_SETLOCALE
 #endif
 
+#if SANITIZER_INTERCEPT_GETCWD
+INTERCEPTOR(char *, getcwd, char *buf, SIZE_T size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getcwd, buf, size);
+  char *res = REAL(getcwd)(buf, size);
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+#define INIT_GETCWD           \
+  INTERCEPT_FUNCTION(getcwd);
+#else
+#define INIT_GETCWD
+#endif
+
+#if SANITIZER_INTERCEPT_GET_CURRENT_DIR_NAME
+INTERCEPTOR(char *, get_current_dir_name) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, get_current_dir_name);
+  char *res = REAL(get_current_dir_name)();
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+
+#define INIT_GET_CURRENT_DIR_NAME           \
+  INTERCEPT_FUNCTION(get_current_dir_name);
+#else
+#define INIT_GET_CURRENT_DIR_NAME
+#endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
@@ -1464,4 +1494,6 @@ INTERCEPTOR(char *, setlocale, int category, char *locale) {
   INIT_READDIR;                            \
   INIT_READDIR64;                          \
   INIT_PTRACE;                             \
-  INIT_SETLOCALE;
+  INIT_SETLOCALE;                          \
+  INIT_GETCWD;                             \
+  INIT_GET_CURRENT_DIR_NAME;
