@@ -134,7 +134,8 @@ private:
 
   void mangleTemplateArgs(const TemplateDecl *TD,
                           const TemplateArgumentList &TemplateArgs);
-
+  void mangleTemplateArg(const TemplateDecl *TD, const TemplateArgument &TA,
+                         int ArgIndex);
 };
 
 /// MicrosoftMangleContext - Overrides the default MangleContext for the
@@ -848,42 +849,55 @@ MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
   unsigned NumTemplateArgs = TemplateArgs.size();
   for (unsigned i = 0; i < NumTemplateArgs; ++i) {
     const TemplateArgument &TA = TemplateArgs[i];
-    switch (TA.getKind()) {
-    case TemplateArgument::Null:
-      llvm_unreachable("Can't mangle null template arguments!");
-    case TemplateArgument::Type: {
-      QualType T = TA.getAsType();
-      mangleType(T, SourceRange(), QMM_Escape);
-      break;
-    }
-    case TemplateArgument::Declaration:
-      mangle(cast<NamedDecl>(TA.getAsDecl()), "$1?");
-      break;
-    case TemplateArgument::Integral:
-      mangleIntegerLiteral(TA.getAsIntegral(),
-                           TA.getIntegralType()->isBooleanType());
-      break;
-    case TemplateArgument::Expression:
-      mangleExpression(TA.getAsExpr());
-      break;
-    case TemplateArgument::Template:
-    case TemplateArgument::TemplateExpansion:
-    case TemplateArgument::NullPtr:
-    case TemplateArgument::Pack: {
-      // Issue a diagnostic.
-      DiagnosticsEngine &Diags = Context.getDiags();
-      unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-        "cannot mangle template argument %0 of kind %select{ERROR|ERROR|"
-        "pointer/reference|nullptr|integral|template|template pack expansion|"
-        "ERROR|parameter pack}1 yet");
-      Diags.Report(TD->getLocation(), DiagID)
-        << i + 1
-        << TA.getKind()
-        << TD->getSourceRange();
-    }
-    }
+    mangleTemplateArg(TD, TA, i);
   }
   Out << '@';
+}
+
+void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
+                                                const TemplateArgument &TA,
+                                                int ArgIndex) {
+  switch (TA.getKind()) {
+  case TemplateArgument::Null:
+    llvm_unreachable("Can't mangle null template arguments!");
+  case TemplateArgument::Type: {
+    QualType T = TA.getAsType();
+    mangleType(T, SourceRange(), QMM_Escape);
+    break;
+  }
+  case TemplateArgument::Declaration:
+    mangle(cast<NamedDecl>(TA.getAsDecl()), "$1?");
+    break;
+  case TemplateArgument::Integral:
+    mangleIntegerLiteral(TA.getAsIntegral(),
+                         TA.getIntegralType()->isBooleanType());
+    break;
+  case TemplateArgument::Expression:
+    mangleExpression(TA.getAsExpr());
+    break;
+  case TemplateArgument::Pack:
+    // Unlike Itanium, there is no character code to indicate an argument pack.
+    // FIXME: ArgIndex will be off, but we only use if for diagnostics that
+    // should ultimately be removed.
+    for (TemplateArgument::pack_iterator I = TA.pack_begin(), E = TA.pack_end();
+         I != E; ++I)
+      mangleTemplateArg(TD, *I, ArgIndex);
+    break;
+  case TemplateArgument::Template:
+  case TemplateArgument::TemplateExpansion:
+  case TemplateArgument::NullPtr: {
+    // Issue a diagnostic.
+    DiagnosticsEngine &Diags = Context.getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
+      "cannot mangle template argument %0 of kind %select{ERROR|ERROR|"
+      "pointer/reference|nullptr|integral|template|template pack expansion|"
+      "ERROR|parameter pack}1 yet");
+    Diags.Report(TD->getLocation(), DiagID)
+      << ArgIndex + 1
+      << TA.getKind()
+      << TD->getSourceRange();
+  }
+  }
 }
 
 void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,

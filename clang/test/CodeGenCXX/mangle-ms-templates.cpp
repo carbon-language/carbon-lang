@@ -133,3 +133,26 @@ void spam() {
 // CHECK: "\01??$FunctionPointerTemplate@$1?spam@@YAXXZ@@YAXXZ"
 // X64: "\01??$FunctionPointerTemplate@$1?spam@@YAXXZ@@YAXXZ"
 }
+
+// Unlike Itanium, there is no character code to indicate an argument pack.
+// Tested with MSVC 2013, the first version which supports variadic templates.
+
+template <typename ...Ts> void variadic_fn_template(const Ts &...args) { }
+void variadic_fn_instantiate() {
+  variadic_fn_template(0, 1, 3, 4);
+  variadic_fn_template(0, 1, 'a', "b");
+}
+// CHECK: "\01??$variadic_fn_template@HHHH@@YAXABH000@Z"
+// CHECK: "\01??$variadic_fn_template@HHD$$BY01D@@YAXABH0ABDAAY01$$CBD@Z"
+
+template <typename ...Ts>
+struct VariadicClass {
+  VariadicClass() { }
+  int x;
+};
+void variadic_class_instantiate() {
+  VariadicClass<int, char, bool> a;
+  VariadicClass<bool, char, int> b;
+}
+// CHECK: call {{.*}} @"\01??0?$VariadicClass@HD_N@@QAE@XZ"
+// CHECK: call {{.*}} @"\01??0?$VariadicClass@_NDH@@QAE@XZ"
