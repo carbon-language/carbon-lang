@@ -1269,18 +1269,23 @@ SDValue SystemZTargetLowering::lowerSDIVREM(SDValue Op,
   SDValue Op1 = Op.getOperand(1);
   EVT VT = Op.getValueType();
   SDLoc DL(Op);
+  unsigned Opcode;
 
   // We use DSGF for 32-bit division.
   if (is32Bit(VT)) {
     Op0 = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i64, Op0);
-    Op1 = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i64, Op1);
-  }
+    Opcode = SystemZISD::SDIVREM32;
+  } else if (DAG.ComputeNumSignBits(Op1) > 32) {
+    Op1 = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Op1);
+    Opcode = SystemZISD::SDIVREM32;
+  } else    
+    Opcode = SystemZISD::SDIVREM64;
 
   // DSG(F) takes a 64-bit dividend, so the even register in the GR128
   // input is "don't care".  The instruction returns the remainder in
   // the even register and the quotient in the odd register.
   SDValue Ops[2];
-  lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, SystemZISD::SDIVREM64,
+  lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, Opcode,
                    Op0, Op1, Ops[1], Ops[0]);
   return DAG.getMergeValues(Ops, 2, DL);
 }

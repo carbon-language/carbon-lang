@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare i32 @foo()
+
 ; Test register division.  The result is in the second of the two registers.
 define void @f1(i32 *%dest, i32 %a, i32 %b) {
 ; CHECK: f1:
@@ -187,4 +189,20 @@ define i32 @f14(i32 %dummy, i32 %a, i64 %src, i64 %index) {
   %b = load i32 *%ptr
   %rem = srem i32 %a, %b
   ret i32 %rem
+}
+
+; Make sure that we still use DSGFR rather than DSGR in cases where
+; a load and division cannot be combined.
+define void @f15(i32 *%dest, i32 *%src) {
+; CHECK: f15:
+; CHECK: l [[B:%r[0-9]+]], 0(%r3)
+; CHECK: brasl %r14, foo@PLT
+; CHECK: lgfr %r1, %r2
+; CHECK: dsgfr %r0, [[B]]
+; CHECK: br %r14
+  %b = load i32 *%src
+  %a = call i32 @foo()
+  %div = sdiv i32 %a, %b
+  store i32 %div, i32 *%dest
+  ret void
 }

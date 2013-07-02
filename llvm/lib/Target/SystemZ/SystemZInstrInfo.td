@@ -750,14 +750,13 @@ def MLG : BinaryRXY<"mlg", 0xE386, z_umul_lohi64, GR128, load>;
 //===----------------------------------------------------------------------===//
 
 // Division and remainder, from registers.
-def DSGFR : BinaryRRE<"dsgfr", 0xB91D, null_frag,   GR128, GR32>;
+def DSGFR : BinaryRRE<"dsgfr", 0xB91D, z_sdivrem32, GR128, GR32>;
 def DSGR  : BinaryRRE<"dsgr",  0xB90D, z_sdivrem64, GR128, GR64>;
 def DLR   : BinaryRRE<"dlr",   0xB997, z_udivrem32, GR128, GR32>;
 def DLGR  : BinaryRRE<"dlgr",  0xB987, z_udivrem64, GR128, GR64>;
-defm : SXB<z_sdivrem64, GR128, DSGFR>;
 
 // Division and remainder, from memory.
-def DSGF : BinaryRXY<"dsgf", 0xE31D, z_sdivrem64, GR128, sextloadi32>;
+def DSGF : BinaryRXY<"dsgf", 0xE31D, z_sdivrem32, GR128, load>;
 def DSG  : BinaryRXY<"dsg",  0xE30D, z_sdivrem64, GR128, load>;
 def DL   : BinaryRXY<"dl",   0xE397, z_udivrem32, GR128, load>;
 def DLG  : BinaryRXY<"dlg",  0xE387, z_udivrem64, GR128, load>;

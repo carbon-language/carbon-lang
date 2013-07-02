@@ -68,6 +68,7 @@ namespace SystemZISD {
     // first input operands are GR128s.  The trailing numbers are the
     // widths of the second operand in bits.
     UMUL_LOHI64,
+    SDIVREM32,
     SDIVREM64,
     UDIVREM32,
     UDIVREM64,
