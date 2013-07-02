@@ -737,11 +737,12 @@ CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phdr);
 CHECK_SIZE_AND_OFFSET(dl_phdr_info, dlpi_phnum);
 
 COMPILER_CHECK(IOC_SIZE(0x12345678) == _IOC_SIZE(0x12345678));
+#endif
 
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
 COMPILER_CHECK(sizeof(__sanitizer_glob_t) <= sizeof(glob_t));
 CHECK_SIZE_AND_OFFSET(glob_t, gl_pathc);
 CHECK_SIZE_AND_OFFSET(glob_t, gl_pathv);
-
 #endif
 
 CHECK_TYPE_SIZE(addrinfo);
