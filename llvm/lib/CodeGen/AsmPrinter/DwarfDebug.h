@@ -407,6 +407,8 @@ class DwarfDebug {
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
 
+  unsigned DwarfVersion;
+
   // Separated Dwarf Variables
   // In general these will all be for bits that are left in the
   // original object file, rather than things that are meant
@@ -650,6 +652,9 @@ public:
   /// \brief Returns whether or not to change the current debug info for the
   /// split dwarf proposal support.
   bool useSplitDwarf() { return HasSplitDwarf; }
+
+  /// Returns the Dwarf Version.
+  unsigned getDwarfVersion() const { return DwarfVersion; }
 };
 } // End of namespace llvm
 

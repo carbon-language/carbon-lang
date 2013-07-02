@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "DIE.h"
+#include "DwarfDebug.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/DataLayout.h"
@@ -329,6 +330,16 @@ void DIEDelta::print(raw_ostream &O) const {
 ///
 void DIEEntry::EmitValue(AsmPrinter *AP, unsigned Form) const {
   AP->EmitInt32(Entry->getOffset());
+}
+
+unsigned DIEEntry::getRefAddrSize(AsmPrinter *AP) {
+  // DWARF4: References that use the attribute form DW_FORM_ref_addr are
+  // specified to be four bytes in the DWARF 32-bit format and eight bytes
+  // in the DWARF 64-bit format, while DWARF Version 2 specifies that such
+  // references have the same size as an address on the target system.
+  if (AP->getDwarfDebug()->getDwarfVersion() == 2)
+    return AP->getDataLayout().getPointerSize();
+  return sizeof(int32_t);
 }
 
 #ifndef NDEBUG

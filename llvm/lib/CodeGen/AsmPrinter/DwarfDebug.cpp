@@ -162,6 +162,21 @@ DIType DbgVariable::getType() const {
 
 } // end llvm namespace
 
+/// Return Dwarf Version by checking module flags.
+static unsigned getDwarfVersionFromModule(const Module *M) {
+  SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
+  M->getModuleFlagsMetadata(ModuleFlags);
+  for (unsigned I = 0, E = ModuleFlags.size(); I < E; ++I) {
+    const Module::ModuleFlagEntry &MFE = ModuleFlags[I];
+    StringRef Key = MFE.Key->getString();
+    Value *Val = MFE.Val;
+
+    if (Key == "Dwarf Version")
+      return cast<ConstantInt>(Val)->getZExtValue();
+  }
+  return dwarf::DWARF_VERSION;
+}
+
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize),
@@ -203,6 +218,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     HasSplitDwarf = false;
   else
     HasSplitDwarf = SplitDwarf == Enable ? true : false;
+
+  DwarfVersion = getDwarfVersionFromModule(MMI->getModule());
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -1900,7 +1917,8 @@ void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
         DwarfUnits &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
         Addr += Holder.getCUOffset(Origin->getCompileUnit());
       }
-      Asm->EmitInt32(Addr);
+      Asm->OutStreamer.EmitIntValue(Addr,
+          Form == dwarf::DW_FORM_ref_addr ? DIEEntry::getRefAddrSize(Asm) : 4);
       break;
     }
     case dwarf::DW_AT_ranges: {
@@ -1984,7 +2002,7 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
     Asm->OutStreamer.AddComment("Length of Compilation Unit Info");
     Asm->EmitInt32(ContentSize);
     Asm->OutStreamer.AddComment("DWARF version number");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->EmitInt16(DD->getDwarfVersion());
     Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
     Asm->EmitSectionOffset(Asm->GetTempSymbol(ASection->getLabelBeginName()),
                            ASectionSym);
@@ -2225,7 +2243,7 @@ void DwarfDebug::emitDebugPubnames() {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("pubnames_begin", ID));
 
     Asm->OutStreamer.AddComment("DWARF Version");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->EmitInt16(DwarfVersion);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
     Asm->EmitSectionOffset(Asm->GetTempSymbol(ISec->getLabelBeginName(), ID),
@@ -2272,7 +2290,7 @@ void DwarfDebug::emitDebugPubTypes() {
                                                   TheCU->getUniqueID()));
 
     if (Asm->isVerbose()) Asm->OutStreamer.AddComment("DWARF Version");
-    Asm->EmitInt16(dwarf::DWARF_VERSION);
+    Asm->EmitInt16(DwarfVersion);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
     const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
@@ -2553,7 +2571,7 @@ void DwarfDebug::emitDebugInlineInfo() {
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_inlined_begin", 1));
 
   Asm->OutStreamer.AddComment("Dwarf Version");
-  Asm->EmitInt16(dwarf::DWARF_VERSION);
+  Asm->EmitInt16(DwarfVersion);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
