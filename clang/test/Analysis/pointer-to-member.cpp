@@ -33,6 +33,7 @@ void testConditionalUse() {
 
 void testComparison() {
   clang_analyzer_eval(&A::getPtr == &A::getPtr); // expected-warning{{TRUE}}
+  clang_analyzer_eval(&A::getPtr == 0); // expected-warning{{FALSE}}
 
   // FIXME: Should be TRUE.
   clang_analyzer_eval(&A::m_ptr == &A::m_ptr); // expected-warning{{UNKNOWN}}
