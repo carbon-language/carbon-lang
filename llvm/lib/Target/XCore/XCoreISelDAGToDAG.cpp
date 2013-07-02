@@ -115,7 +115,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
     if (immMskBitp(N)) {
       // Transformation function: get the size of a mask
       // Look for the first non-zero bit
-      SDValue MskSize = getI32Imm(32 - countLeadingZeros(Val));
+      SDValue MskSize = getI32Imm(32 - countLeadingZeros((uint32_t)Val));
       return CurDAG->getMachineNode(XCore::MKMSK_rus, dl,
                                     MVT::i32, MskSize);
     }

@@ -9,3 +9,11 @@ define i32 @f() {
 entry:
 	ret i32 12345678
 }
+
+define i32 @g() {
+entry:
+; CHECK: g:
+; CHECK: mkmsk r0, 1
+; CHECK: retsp 0
+  ret i32 1;
+}
