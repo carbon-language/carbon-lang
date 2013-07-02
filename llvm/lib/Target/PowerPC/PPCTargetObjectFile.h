@@ -25,6 +25,9 @@ namespace llvm {
     virtual const MCSection *
     SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                            Mangler *Mang, const TargetMachine &TM) const;
+
+    /// \brief Describe a TLS variable address within debug info.
+    virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
   };
 
 }  // end namespace llvm

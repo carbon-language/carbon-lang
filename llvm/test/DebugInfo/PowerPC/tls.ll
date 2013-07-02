@@ -1,10 +1,16 @@
-; RUN: llc -mtriple=powerpc-unknown-unknown -O0 -filetype=asm < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc64-unknown-linux-gnu -O0 -filetype=asm < %s | FileCheck %s
 
 ; FIXME: add relocation and DWARF expression support to llvm-dwarfdump & use
 ; that here instead of raw assembly printing
 
-; CHECK: debug_info
-; CHECK-NOT: tls@DTPOFF
+; 10 bytes of data in this DW_FORM_block1 representation of the location of 'tls'
+; CHECK: .byte  10{{ *}}# DW_AT_location
+; DW_OP_const8u
+; CHECK: .byte  14
+; The debug relocation of the address of the tls variable
+; CHECK: .quad  tls@dtprel+32768
+; DW_OP_GNU_push_tls_address
+; CHECK: .byte  224
 
 @tls = thread_local global i32 7, align 4
 
