@@ -19,3 +19,12 @@ namespace PR6161 {
   };
   numpunct<char>::~numpunct(); // expected-error{{expected the class name after '~' to name a destructor}}
 }
+
+namespace PR12331 {
+  template<typename T> struct S {
+    struct U { static const int n = 5; };
+    enum E { e = U::n }; // expected-note {{implicit instantiation first required here}}
+    int arr[e];
+  };
+  template<> struct S<int>::U { static const int n = sizeof(int); }; // expected-error {{explicit specialization of 'U' after instantiation}}
+}
