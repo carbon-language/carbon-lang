@@ -28,7 +28,7 @@ int main()
     static_assert(std::launch::any == (std::launch::async | std::launch::deferred), "");
     static_assert(std::launch(0) == (std::launch::async & std::launch::deferred), "");
     static_assert(std::launch::any == (std::launch::async ^ std::launch::deferred), "");
-    static_assert(std::launch(~1) == ~std::launch::async, "");
+    static_assert(std::launch::deferred == ~std::launch::async, "");
     std::launch x = std::launch::async;
     x &= std::launch::deferred;
     assert(x == std::launch(0));

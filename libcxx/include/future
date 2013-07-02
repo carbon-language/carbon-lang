@@ -443,7 +443,7 @@ _LIBCPP_CONSTEXPR
 launch
 operator~(launch __x)
 {
-    return static_cast<launch>(~static_cast<__launch_underlying_type>(__x));
+    return static_cast<launch>(~static_cast<__launch_underlying_type>(__x) & 3);
 }
 
 inline _LIBCPP_INLINE_VISIBILITY
