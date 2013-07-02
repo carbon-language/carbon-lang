@@ -837,31 +837,12 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
 SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, NonLoc rhs, QualType resultTy) {
-  
+  assert(!BinaryOperator::isComparisonOp(op) &&
+         "arguments to comparison ops must be of the same type");
+
   // Special case: rhs is a zero constant.
   if (rhs.isZeroConstant())
     return lhs;
-  
-  // Special case: 'rhs' is an integer that has the same width as a pointer and
-  // we are using the integer location in a comparison.  Normally this cannot be
-  // triggered, but transfer functions like those for OSCompareAndSwapBarrier32
-  // can generate comparisons that trigger this code.
-  // FIXME: Are all locations guaranteed to have pointer width?
-  if (BinaryOperator::isComparisonOp(op)) {
-    if (Optional<nonloc::ConcreteInt> rhsInt =
-            rhs.getAs<nonloc::ConcreteInt>()) {
-      const llvm::APSInt *x = &rhsInt->getValue();
-      ASTContext &ctx = Context;
-      if (ctx.getTypeSize(ctx.VoidPtrTy) == x->getBitWidth()) {
-        // Convert the signedness of the integer (if necessary).
-        if (x->isSigned())
-          x = &getBasicValueFactory().getValue(*x, true);
-
-        return evalBinOpLL(state, op, lhs, loc::ConcreteInt(*x), resultTy);
-      }
-    }
-    return UnknownVal();
-  }
   
   // We are dealing with pointer arithmetic.
 
