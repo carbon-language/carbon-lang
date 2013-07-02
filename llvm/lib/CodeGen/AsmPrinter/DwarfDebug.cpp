@@ -251,8 +251,8 @@ unsigned DwarfUnits::getAddrPoolIndex(const MCSymbol *Sym) {
   return getAddrPoolIndex(MCSymbolRefExpr::Create(Sym, Asm->OutContext));
 }
 
-unsigned DwarfUnits::getAddrPoolIndex(const MCSymbolRefExpr *Sym) {
-  std::pair<DenseMap<const MCSymbolRefExpr *, unsigned>::iterator, bool> P =
+unsigned DwarfUnits::getAddrPoolIndex(const MCExpr *Sym) {
+  std::pair<DenseMap<const MCExpr *, unsigned>::iterator, bool> P =
       AddressPool.insert(std::make_pair(Sym, NextAddrPoolNumber));
   if (P.second)
     ++NextAddrPoolNumber;
@@ -2361,9 +2361,9 @@ void DwarfUnits::emitAddresses(const MCSection *AddrSection) {
 
   // Get all of the address pool entries and put them in an array by their ID so
   // we can sort them.
-  SmallVector<std::pair<unsigned, const MCSymbolRefExpr *>, 64> Entries;
+  SmallVector<std::pair<unsigned, const MCExpr *>, 64> Entries;
 
-  for (DenseMap<const MCSymbolRefExpr *, unsigned>::iterator
+  for (DenseMap<const MCExpr *, unsigned>::iterator
            I = AddressPool.begin(),
            E = AddressPool.end();
        I != E; ++I)
@@ -2372,9 +2372,9 @@ void DwarfUnits::emitAddresses(const MCSection *AddrSection) {
   array_pod_sort(Entries.begin(), Entries.end());
 
   for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
-    // Emit a label for reference from debug information entries.
-    if (const MCSymbolRefExpr *Sym = Entries[i].second)
-      Asm->OutStreamer.EmitValue(Sym, Asm->getDataLayout().getPointerSize());
+    // Emit an expression for reference from debug information entries.
+    if (const MCExpr *Expr = Entries[i].second)
+      Asm->OutStreamer.EmitValue(Expr, Asm->getDataLayout().getPointerSize());
     else
       Asm->OutStreamer.EmitIntValue(0, Asm->getDataLayout().getPointerSize());
   }
