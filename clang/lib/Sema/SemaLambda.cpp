@@ -116,6 +116,8 @@ Sema::getCurrentMangleNumberContext(DeclContext *DC,
     //  -- default arguments appearing in class definitions
     return &ExprEvalContexts.back().getMangleNumberingContext();
   }
+
+  llvm_unreachable("unexpected context");
 }
 
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
