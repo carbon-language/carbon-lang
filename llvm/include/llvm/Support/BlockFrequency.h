@@ -36,7 +36,7 @@ public:
   /// \brief Returns the frequency of the entry block of the function.
   static uint64_t getEntryFrequency() { return ENTRY_FREQ; }
 
-  /// \brief Returns the maximum possible prequency, the saturation value.
+  /// \brief Returns the maximum possible frequency, the saturation value.
   static uint64_t getMaxFrequency() { return -1ULL; }
 
   /// \brief Returns the frequency as a fixpoint number scaled by the entry
