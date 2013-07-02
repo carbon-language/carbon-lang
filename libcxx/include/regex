@@ -3913,7 +3913,7 @@ basic_regex<_CharT, _Traits>::__parse_awk_escape(_ForwardIterator __first,
         {
             __val = 8 * __val + *__first - '0';
             if (++__first != __last && ('0' <= *__first && *__first <= '7'))
-                __val = 8 * __val + *__first - '0';
+                __val = 8 * __val + *__first++ - '0';
         }
         if (__str)
             *__str = _CharT(__val);
