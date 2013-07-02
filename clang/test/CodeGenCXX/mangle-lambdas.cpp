@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -std=c++11 -triple x86_64-apple-macosx10.7.0 -emit-llvm -o - %s | FileCheck %s
 
 // CHECK: @_ZZNK7PR12917IJiiEE1nMUlvE_clEvE1n = linkonce_odr global i32 0
-// CHECK: @_ZZN7PR12917IJicdEEC1EicdEd_N1nE = linkonce_odr global i32 0
-// CHECK: @_ZZN7PR12917IJicdEEC1EicdEd0_N1nE = linkonce_odr global i32 0
-// CHECK: @_ZZN7PR12917IJicdEEC1EicdEd1_N1nE = linkonce_odr global i32 0
+// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd_NKUlvE_clEvE1n = linkonce_odr global i32 0
+// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd0_NKUlvE_clEvE1n = linkonce_odr global i32 0
+// CHECK: @_ZZZN7PR12917IJicdEEC1EicdEd1_NKUlvE_clEvE1n = linkonce_odr global i32 0
 
 // CHECK: define linkonce_odr void @_Z11inline_funci
 inline void inline_func(int n) {

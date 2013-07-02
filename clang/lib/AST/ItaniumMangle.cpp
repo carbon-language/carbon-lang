@@ -64,15 +64,13 @@ static const DeclContext *getEffectiveParentContext(const DeclContext *DC) {
   return getEffectiveDeclContext(cast<Decl>(DC));
 }
   
-static const CXXRecordDecl *GetLocalClassDecl(const NamedDecl *ND) {
-  const DeclContext *DC = dyn_cast<DeclContext>(ND);
-  if (!DC)
-    DC = getEffectiveDeclContext(ND);
+static const CXXRecordDecl *GetLocalClassDecl(const Decl *D) {
+  const DeclContext *DC = getEffectiveDeclContext(D);
   while (!DC->isNamespace() && !DC->isTranslationUnit()) {
-    const DeclContext *Parent = getEffectiveDeclContext(cast<Decl>(DC));
-    if (isa<FunctionDecl>(Parent))
-      return dyn_cast<CXXRecordDecl>(DC);
-    DC = Parent;
+    if (isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC) || isa<BlockDecl>(DC))
+      return dyn_cast<CXXRecordDecl>(D);
+    D = cast<Decl>(DC);
+    DC = getEffectiveDeclContext(D);
   }
   return 0;
 }
@@ -1272,16 +1270,21 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   // <local-name> := Z <function encoding> E d [ <parameter number> ] 
   //                 _ <entity name>
   // <discriminator> := _ <non-negative number>
-  const DeclContext *DC = getEffectiveDeclContext(ND);
+  const CXXRecordDecl *RD = GetLocalClassDecl(ND);
+  const DeclContext *DC = getEffectiveDeclContext(RD ? RD : ND);
 
   Out << 'Z';
 
-  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC)) {
-   mangleObjCMethodName(MD);
-  } else if (const CXXRecordDecl *RD = GetLocalClassDecl(ND)) {
-    mangleFunctionEncoding(cast<FunctionDecl>(getEffectiveDeclContext(RD)));
-    Out << 'E';
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC))
+    mangleObjCMethodName(MD);
+  else if (const BlockDecl *BD = dyn_cast<BlockDecl>(DC))
+    manglePrefix(BD); // FIXME: This isn't right.
+  else
+    mangleFunctionEncoding(cast<FunctionDecl>(DC));
 
+  Out << 'E';
+
+  if (RD) {
     // The parameter number is omitted for the last parameter, 0 for the 
     // second-to-last parameter, 1 for the third-to-last parameter, etc. The 
     // <entity name> will of course contain a <closure-type-name>: Its 
@@ -1307,7 +1310,7 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
     if (ND == RD) // equality ok because RD derived from ND above
       mangleUnqualifiedName(ND);
     else
-      mangleNestedName(ND, DC, true /*NoFunction*/);
+      mangleNestedName(ND, getEffectiveDeclContext(ND), true /*NoFunction*/);
 
     if (!SkipDiscriminator) {
       unsigned disc;
@@ -1321,10 +1324,7 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
     
     return;
   }
-  else
-    mangleFunctionEncoding(cast<FunctionDecl>(DC));
 
-  Out << 'E';
   mangleUnqualifiedName(ND);
 }
 
