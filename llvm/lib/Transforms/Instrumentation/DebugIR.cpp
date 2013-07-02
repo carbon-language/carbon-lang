@@ -216,10 +216,10 @@ public:
 
     int FuncFlags = llvm::DIDescriptor::FlagPrototyped;
     assert(CUNode && FileNode);
-    MDNode *Sub = Builder.createFunction(
+    DISubprogram Sub = Builder.createFunction(
         DICompileUnit(CUNode), F.getName(), MangledName, DIFile(FileNode), Line,
         Sig, Local, IsDefinition, ScopeLine, FuncFlags, IsOptimized, &F);
-    assert(DISubprogram(Sub).isSubprogram());
+    assert(Sub.isSubprogram());
     DEBUG(dbgs() << "create subprogram mdnode " << Sub << ": "
                  << "\n");
 

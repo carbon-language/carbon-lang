@@ -863,9 +863,10 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
     ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
   };
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
-  assert(DIType(Node).isType() &&
+  DIType RetTy(Node);
+  assert(RetTy.isType() &&
          "createForwardDecl result should be a DIType");
-  return DIType(Node);
+  return RetTy;
 }
 
 /// getOrCreateArray - Get a DIArray, create one if required.
@@ -978,9 +979,10 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
     NamedMDNode *FnLocals = getOrInsertFnSpecificMDNode(M, Fn);
     FnLocals->addOperand(Node);
   }
-  assert(DIVariable(Node).isVariable() &&
+  DIVariable RetVar(Node);
+  assert(RetVar.isVariable() &&
          "createLocalVariable should return a valid DIVariable");
-  return DIVariable(Node);
+  return RetVar;
 }
 
 /// createComplexVariable - Create a new descriptor for the specified variable
