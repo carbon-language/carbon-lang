@@ -329,13 +329,13 @@ def lines_to_bytes_single_file(file, line_ranges):
     if linenum == r.start:
       byte_start = byte_idx
     if linenum == r.start + r.count:
-      byte_ranges.append(Range(byte_start, byte_idx - byte_start))
+      byte_ranges.append(Range(byte_start, byte_idx - byte_start - 1))
       r = next(line_ranges_iter)
     linenum += 1
     byte_idx += len(line)
   if r is not None:
     # FIXME: Detect and warn if line ranges go past the end of file?
-    byte_ranges.append(Range(byte_start, byte_idx - byte_start))
+    byte_ranges.append(Range(byte_start, byte_idx - byte_start - 1))
   return byte_ranges
 
 
