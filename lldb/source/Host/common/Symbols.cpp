@@ -22,7 +22,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-#if defined (__linux__)
+#if defined (__linux__) || defined (__FreeBSD__)
 
 FileSpec
 Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
