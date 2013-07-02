@@ -705,80 +705,6 @@ static Value *dyn_castZExtVal(Value *V, Type *Ty) {
   return 0;
 }
 
-const unsigned MaxDepth = 6;
-
-// \brief Recursively visits the possible right hand operands of a udiv
-// instruction, seeing through select instructions, to determine if we can
-// replace the udiv with something simpler.  If we find that an operand is not
-// able to simplify the udiv, we abort the entire transformation.
-//
-// Inserts any intermediate instructions used for the simplification into
-// NewInstrs and returns a new instruction that depends upon them.
-static Instruction *visitUDivOperand(Value *Op0, Value *Op1,
-                                     const BinaryOperator &I,
-                                     SmallVectorImpl<Instruction *> &NewInstrs,
-                                     unsigned Depth = 0) {
-  {
-    // X udiv 2^C -> X >> C
-    // Check to see if this is an unsigned division with an exact power of 2,
-    // if so, convert to a right shift.
-    const APInt *C;
-    if (match(Op1, m_Power2(C))) {
-      BinaryOperator *LShr = BinaryOperator::CreateLShr(
-          Op0, ConstantInt::get(Op0->getType(), C->logBase2()));
-      if (I.isExact()) LShr->setIsExact();
-      return LShr;
-    }
-  }
-
-  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
-    // X udiv C, where C >= signbit
-    if (C->getValue().isNegative()) {
-      ICmpInst *IC = new ICmpInst(ICmpInst::ICMP_ULT, Op0, C);
-      NewInstrs.push_back(IC);
-
-      return SelectInst::Create(IC, Constant::getNullValue(I.getType()),
-                                ConstantInt::get(I.getType(), 1));
-    }
-  }
-
-  // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
-  { const APInt *CI; Value *N;
-    if (match(Op1, m_Shl(m_Power2(CI), m_Value(N))) ||
-        match(Op1, m_ZExt(m_Shl(m_Power2(CI), m_Value(N))))) {
-      if (*CI != 1) {
-        N = BinaryOperator::CreateAdd(
-            N, ConstantInt::get(N->getType(), CI->logBase2()));
-        NewInstrs.push_back(cast<Instruction>(N));
-      }
-      if (ZExtInst *Z = dyn_cast<ZExtInst>(Op1)) {
-        N = new ZExtInst(N, Z->getDestTy());
-        NewInstrs.push_back(cast<Instruction>(N));
-      }
-      BinaryOperator *LShr = BinaryOperator::CreateLShr(Op0, N);
-      if (I.isExact()) LShr->setIsExact();
-      return LShr;
-    }
-  }
-
-  // The remaining tests are all recursive, so bail out if we hit the limit.
-  if (Depth++ == MaxDepth)
-    return 0;
-
-  if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
-    if (Instruction *LHS =
-            visitUDivOperand(Op0, SI->getOperand(1), I, NewInstrs)) {
-      NewInstrs.push_back(LHS);
-      if (Instruction *RHS =
-              visitUDivOperand(Op0, SI->getOperand(2), I, NewInstrs)) {
-        NewInstrs.push_back(RHS);
-        return SelectInst::Create(SI->getCondition(), LHS, RHS);
-      }
-    }
-
-  return 0;
-}
-
 Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -788,6 +714,30 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // Handle the integer div common cases
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
+
+  {
+    // X udiv 2^C -> X >> C
+    // Check to see if this is an unsigned division with an exact power of 2,
+    // if so, convert to a right shift.
+    const APInt *C;
+    if (match(Op1, m_Power2(C))) {
+      BinaryOperator *LShr =
+      BinaryOperator::CreateLShr(Op0,
+                                 ConstantInt::get(Op0->getType(),
+                                                  C->logBase2()));
+      if (I.isExact()) LShr->setIsExact();
+      return LShr;
+    }
+  }
+
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
+    // X udiv C, where C >= signbit
+    if (C->getValue().isNegative()) {
+      Value *IC = Builder->CreateICmpULT(Op0, C);
+      return SelectInst::Create(IC, Constant::getNullValue(I.getType()),
+                                ConstantInt::get(I.getType(), 1));
+    }
+  }
 
   // (x lshr C1) udiv C2 --> x udiv (C2 << C1)
   if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
@@ -799,27 +749,44 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     }
   }
 
+  // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
+  { const APInt *CI; Value *N;
+    if (match(Op1, m_Shl(m_Power2(CI), m_Value(N))) ||
+        match(Op1, m_ZExt(m_Shl(m_Power2(CI), m_Value(N))))) {
+      if (*CI != 1)
+        N = Builder->CreateAdd(N,
+                               ConstantInt::get(N->getType(), CI->logBase2()));
+      if (ZExtInst *Z = dyn_cast<ZExtInst>(Op1))
+        N = Builder->CreateZExt(N, Z->getDestTy());
+      if (I.isExact())
+        return BinaryOperator::CreateExactLShr(Op0, N);
+      return BinaryOperator::CreateLShr(Op0, N);
+    }
+  }
+
+  // udiv X, (Select Cond, C1, C2) --> Select Cond, (shr X, C1), (shr X, C2)
+  // where C1&C2 are powers of two.
+  { Value *Cond; const APInt *C1, *C2;
+    if (match(Op1, m_Select(m_Value(Cond), m_Power2(C1), m_Power2(C2)))) {
+      // Construct the "on true" case of the select
+      Value *TSI = Builder->CreateLShr(Op0, C1->logBase2(), Op1->getName()+".t",
+                                       I.isExact());
+
+      // Construct the "on false" case of the select
+      Value *FSI = Builder->CreateLShr(Op0, C2->logBase2(), Op1->getName()+".f",
+                                       I.isExact());
+
+      // construct the select instruction and return it.
+      return SelectInst::Create(Cond, TSI, FSI);
+    }
+  }
+
   // (zext A) udiv (zext B) --> zext (A udiv B)
   if (ZExtInst *ZOp0 = dyn_cast<ZExtInst>(Op0))
     if (Value *ZOp1 = dyn_castZExtVal(Op1, ZOp0->getSrcTy()))
       return new ZExtInst(Builder->CreateUDiv(ZOp0->getOperand(0), ZOp1, "div",
                                               I.isExact()),
                           I.getType());
-
-  // (LHS udiv (select (select (...)))) -> (LHS >> (select (select (...))))
-  SmallVector<Instruction *, 4> NewInstrs;
-  Instruction *RetI = visitUDivOperand(Op0, Op1, I, NewInstrs);
-  for (unsigned i = 0, e = NewInstrs.size(); i != e; i++)
-    // If we managed to replace the UDiv completely, insert the new intermediate
-    // instructions before where the UDiv was.
-    // If we couldn't, we must clean up after ourselves by deleting the new
-    // instructions.
-    if (RetI)
-      NewInstrs[i]->insertBefore(&I);
-    else
-      delete NewInstrs[i];
-  if (RetI)
-    return RetI;
 
   return 0;
 }
