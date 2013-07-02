@@ -71,6 +71,7 @@ namespace {
     unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSRegEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getTLSCallEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
 
@@ -263,6 +264,11 @@ unsigned PPCCodeEmitter::getTLSRegEncoding(const MachineInstr &MI,
   return 0;
 }
 
+unsigned PPCCodeEmitter::getTLSCallEncoding(const MachineInstr &MI,
+                                            unsigned OpNo) const {
+  llvm_unreachable("TLS not supported on the old JIT.");
+  return 0;
+}
 
 unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                            const MachineOperand &MO) const {

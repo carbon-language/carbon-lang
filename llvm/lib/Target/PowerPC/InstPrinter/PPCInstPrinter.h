@@ -52,6 +52,7 @@ public:
   void printU16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printBranchOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printAbsBranchOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printTLSCall(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
   void printcrbitm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 

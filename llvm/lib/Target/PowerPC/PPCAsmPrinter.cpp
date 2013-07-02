@@ -562,7 +562,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::GETtlsADDR: {
     // Transform: %X3 = GETtlsADDR %X3, <ga:@sym>
-    // Into:      BL8_NOP_TLSGD __tls_get_addr(sym@tlsgd)
+    // Into:      BL8_NOP_TLS __tls_get_addr(sym@tlsgd)
     assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
 
     StringRef Name = "__tls_get_addr";
@@ -574,7 +574,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *MOSymbol = Mang->getSymbol(GValue);
     const MCExpr *SymVar =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_TLSGD, OutContext);
-    OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_TLSGD)
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_TLS)
                                 .addExpr(TlsRef)
                                 .addExpr(SymVar));
     return;
@@ -613,7 +613,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case PPC::GETtlsldADDR: {
     // Transform: %X3 = GETtlsldADDR %X3, <ga:@sym>
-    // Into:      BL8_NOP_TLSLD __tls_get_addr(sym@tlsld)
+    // Into:      BL8_NOP_TLS __tls_get_addr(sym@tlsld)
     assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
 
     StringRef Name = "__tls_get_addr";
@@ -625,7 +625,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *MOSymbol = Mang->getSymbol(GValue);
     const MCExpr *SymVar =
       MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_TLSLD, OutContext);
-    OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_TLSLD)
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_TLS)
                                 .addExpr(TlsRef)
                                 .addExpr(SymVar));
     return;

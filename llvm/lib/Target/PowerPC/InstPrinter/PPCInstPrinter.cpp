@@ -273,6 +273,13 @@ void PPCInstPrinter::printMemRegReg(const MCInst *MI, unsigned OpNo,
   printOperand(MI, OpNo+1, O);
 }
 
+void PPCInstPrinter::printTLSCall(const MCInst *MI, unsigned OpNo,
+                                  raw_ostream &O) {
+  printBranchOperand(MI, OpNo, O);
+  O << '(';
+  printOperand(MI, OpNo+1, O);
+  O << ')';
+}
 
 
 /// stripRegisterPrefix - This method strips the character prefix from a
