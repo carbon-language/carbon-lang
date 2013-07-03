@@ -3730,7 +3730,8 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     NewTy = S.Context.LongDoubleTy;
     break;
   case 128:
-    if (!IntegerMode && S.Context.getTargetInfo().getLongDoubleWidth() != 128) {
+    if (!IntegerMode && &S.Context.getTargetInfo().getLongDoubleFormat() !=
+        &llvm::APFloat::PPCDoubleDouble) {
       S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
       return;
     }
