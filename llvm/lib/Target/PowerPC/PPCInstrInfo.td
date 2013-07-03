@@ -1378,6 +1378,10 @@ def LFIWZX : XForm_25<31, 887, (outs f8rc:$frD), (ins memrr:$src),
                       [(set f64:$frD, (PPClfiwzx xoaddr:$src))]>;
 }
 
+// Load Multiple
+def LMW : DForm_1<46, (outs gprc:$rD), (ins memri:$src),
+                  "lmw $rD, $src", LdStLMW, []>;
+
 //===----------------------------------------------------------------------===//
 // PPC32 Store Instructions.
 //
@@ -1507,6 +1511,10 @@ def : Pat<(pre_store f32:$rS, iPTR:$ptrreg, iPTR:$ptroff),
           (STFSUX $rS, $ptrreg, $ptroff)>;
 def : Pat<(pre_store f64:$rS, iPTR:$ptrreg, iPTR:$ptroff),
           (STFDUX $rS, $ptrreg, $ptroff)>;
+
+// Store Multiple
+def STMW : DForm_1<47, (outs), (ins gprc:$rS, memri:$dst),
+                   "stmw $rS, $dst", LdStLMW, []>;
 
 def SYNC : XForm_24_sync<31, 598, (outs), (ins i32imm:$L),
                         "sync $L", LdStSync, []>;

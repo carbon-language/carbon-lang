@@ -177,7 +177,12 @@
 # CHECK: stdbrx 2, 3, 4                  # encoding: [0x7c,0x43,0x25,0x28]
          stdbrx 2, 3, 4
 
-# FIXME: Fixed-point load and store multiple instructions
+# Fixed-point load and store multiple instructions
+
+# CHECK: lmw 2, 128(1)                   # encoding: [0xb8,0x41,0x00,0x80]
+         lmw 2, 128(1)
+# CHECK: stmw 2, 128(1)                  # encoding: [0xbc,0x41,0x00,0x80]
+         stmw 2, 128(1)
 
 # FIXME: Fixed-point move assist instructions
 
