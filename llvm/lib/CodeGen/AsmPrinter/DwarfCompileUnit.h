@@ -267,13 +267,13 @@ public:
                   const MachineLocation &Location, bool Indirect = false);
 
   /// addConstantValue - Add constant value entry in variable DIE.
-  bool addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
-  bool addConstantValue(DIE *Die, const ConstantInt *CI, bool Unsigned);
-  bool addConstantValue(DIE *Die, const APInt &Val, bool Unsigned);
+  void addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
+  void addConstantValue(DIE *Die, const ConstantInt *CI, bool Unsigned);
+  void addConstantValue(DIE *Die, const APInt &Val, bool Unsigned);
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
-  bool addConstantFPValue(DIE *Die, const MachineOperand &MO);
-  bool addConstantFPValue(DIE *Die, const ConstantFP *CFP);
+  void addConstantFPValue(DIE *Die, const MachineOperand &MO);
+  void addConstantFPValue(DIE *Die, const ConstantFP *CFP);
 
   /// addTemplateParams - Add template parameters in buffer.
   void addTemplateParams(DIE &Buffer, DIArray TParams);

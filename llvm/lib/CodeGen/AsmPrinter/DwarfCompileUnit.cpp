@@ -597,7 +597,7 @@ static bool isTypeSigned(DIType Ty, int *SizeInBits) {
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
+void CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
                                    DIType Ty) {
   // FIXME: This is a bit conservative/simple - it emits negative values at
   // their maximum bit width which is a bit unfortunate (& doesn't prefer
@@ -618,11 +618,10 @@ bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
     : addUInt(Block, 0, Form, MO.getImm());
 
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
-  return true;
 }
 
 /// addConstantFPValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
+void CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
   assert (MO.isFPImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   APFloat FPImm = MO.getFPImm()->getValueAPF();
@@ -643,23 +642,21 @@ bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
             (unsigned char)0xFF & FltPtr[Start]);
 
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
-  return true;
 }
 
 /// addConstantFPValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantFPValue(DIE *Die, const ConstantFP *CFP) {
-  return addConstantValue(Die, CFP->getValueAPF().bitcastToAPInt(), false);
+void CompileUnit::addConstantFPValue(DIE *Die, const ConstantFP *CFP) {
+  addConstantValue(Die, CFP->getValueAPF().bitcastToAPInt(), false);
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
+void CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
                                    bool Unsigned) {
-  return addConstantValue(Die, CI->getValue(), Unsigned);
+  addConstantValue(Die, CI->getValue(), Unsigned);
 }
 
 // addConstantValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantValue(DIE *Die, const APInt &Val,
-                                   bool Unsigned) {
+void CompileUnit::addConstantValue(DIE *Die, const APInt &Val, bool Unsigned) {
   unsigned CIBitWidth = Val.getBitWidth();
   if (CIBitWidth <= 64) {
     unsigned form = 0;
@@ -675,7 +672,7 @@ bool CompileUnit::addConstantValue(DIE *Die, const APInt &Val,
       addUInt(Die, dwarf::DW_AT_const_value, form, Val.getZExtValue());
     else
       addSInt(Die, dwarf::DW_AT_const_value, form, Val.getSExtValue());
-    return true;
+    return;
   }
 
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
@@ -697,7 +694,6 @@ bool CompileUnit::addConstantValue(DIE *Die, const APInt &Val,
   }
 
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
-  return true;
 }
 
 /// addTemplateParams - Add template parameters into buffer.
@@ -1564,7 +1560,6 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
 
   // Check if variable is described by a DBG_VALUE instruction.
   if (const MachineInstr *DVInsn = DV->getMInsn()) {
-    bool updated = false;
     assert(DVInsn->getNumOperands() == 3);
     if (DVInsn->getOperand(0).isReg()) {
       const MachineOperand RegOp = DVInsn->getOperand(0);
@@ -1573,21 +1568,14 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
         addVariableAddress(*DV, VariableDie, Location);
       } else if (RegOp.getReg())
         addVariableAddress(*DV, VariableDie, MachineLocation(RegOp.getReg()));
-      updated = true;
     } else if (DVInsn->getOperand(0).isImm())
-      updated =
-          addConstantValue(VariableDie, DVInsn->getOperand(0), DV->getType());
+      addConstantValue(VariableDie, DVInsn->getOperand(0), DV->getType());
     else if (DVInsn->getOperand(0).isFPImm())
-      updated = addConstantFPValue(VariableDie, DVInsn->getOperand(0));
+      addConstantFPValue(VariableDie, DVInsn->getOperand(0));
     else if (DVInsn->getOperand(0).isCImm())
-      updated = addConstantValue(VariableDie, DVInsn->getOperand(0).getCImm(),
-                                 DV->getType().isUnsignedDIType());
-    if (!updated) {
-      // If variableDie is not updated then DBG_VALUE instruction does not
-      // have valid variable info.
-      delete VariableDie;
-      return NULL;
-    }
+      addConstantValue(VariableDie, DVInsn->getOperand(0).getCImm(),
+                       DV->getType().isUnsignedDIType());
+
     DV->setDIE(VariableDie);
     return VariableDie;
   } else {
