@@ -68,7 +68,6 @@ typedef struct DotDebugLocEntry {
   MachineLocation Loc;
   const MDNode *Variable;
   bool Merged;
-  bool Constant;
   enum EntryType {
     E_Location,
     E_Integer,
@@ -82,23 +81,31 @@ typedef struct DotDebugLocEntry {
     const ConstantFP *CFP;
     const ConstantInt *CIP;
   } Constants;
-  DotDebugLocEntry()
-    : Begin(0), End(0), Variable(0), Merged(false),
-      Constant(false) { Constants.Int = 0;}
+  DotDebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {
+    Constants.Int = 0;
+  }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
                    const MDNode *V)
-    : Begin(B), End(E), Loc(L), Variable(V), Merged(false),
-      Constant(false) { Constants.Int = 0; EntryKind = E_Location; }
+      : Begin(B), End(E), Loc(L), Variable(V), Merged(false) {
+    Constants.Int = 0;
+    EntryKind = E_Location;
+  }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
-    : Begin(B), End(E), Variable(0), Merged(false),
-      Constant(true) { Constants.Int = i; EntryKind = E_Integer; }
+      : Begin(B), End(E), Variable(0), Merged(false) {
+    Constants.Int = i;
+    EntryKind = E_Integer;
+  }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
-    : Begin(B), End(E), Variable(0), Merged(false),
-      Constant(true) { Constants.CFP = FPtr; EntryKind = E_ConstantFP; }
+      : Begin(B), End(E), Variable(0), Merged(false) {
+    Constants.CFP = FPtr;
+    EntryKind = E_ConstantFP;
+  }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E,
                    const ConstantInt *IPtr)
-    : Begin(B), End(E), Variable(0), Merged(false),
-      Constant(true) { Constants.CIP = IPtr; EntryKind = E_ConstantInt; }
+      : Begin(B), End(E), Variable(0), Merged(false) {
+    Constants.CIP = IPtr;
+    EntryKind = E_ConstantInt;
+  }
 
   /// \brief Empty entries are also used as a trigger to emit temp label. Such
   /// labels are referenced is used to find debug_loc offset for a given DIE.
