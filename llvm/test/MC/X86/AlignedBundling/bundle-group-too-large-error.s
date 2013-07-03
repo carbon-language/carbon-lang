@@ -1,4 +1,4 @@
-# RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - 2>&1 | FileCheck %s
+# RUN: not llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - 2>&1 | FileCheck %s
 
 # CHECK: ERROR: Fragment can't be larger than a bundle size
 

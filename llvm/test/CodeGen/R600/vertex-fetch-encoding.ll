@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=r600 -show-mc-encoding -mcpu=barts | FileCheck --check-prefix=NI-CHECK %s
-; RUN: llc < %s -march=r600 -show-mc-encoding -mcpu=cayman | FileCheck --check-prefix=CM-CHECK %s
+; RUN: not llc < %s -march=r600 -show-mc-encoding -mcpu=cayman | FileCheck --check-prefix=CM-CHECK %s
 
 ; NI-CHECK: @vtx_fetch32
 ; NI-CHECK: VTX_READ_32 T[[GPR:[0-9]]].X, T[[GPR]].X, 0 ; encoding: [0x40,0x01,0x0[[GPR]],0x10,0x0[[GPR]],0xf0,0x5f,0x13,0x00,0x00,0x08,0x00

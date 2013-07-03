@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=-sse 2>&1 | FileCheck --check-prefix NOSSE %s
+; RUN: not  llc < %s -march=x86-64 -mattr=-sse 2>&1 | FileCheck --check-prefix NOSSE %s
 ; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 ; NOSSE: {{SSE register return with SSE disabled}}

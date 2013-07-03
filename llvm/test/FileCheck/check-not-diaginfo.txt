@@ -1,4 +1,4 @@
-; RUN: FileCheck -input-file %s %s 2>&1 | FileCheck -check-prefix DIAG %s
+; RUN: not FileCheck -input-file %s %s 2>&1 | FileCheck -check-prefix DIAG %s
 
 CHECK-NOT: test
 

@@ -1,4 +1,4 @@
-// RUN: not llvm-mc -triple i386-apple-darwin10 %s 2> %t.err | FileCheck %s
+// RUN: llvm-mc -triple i386-apple-darwin10 %s | FileCheck %s
 
 .macro test1
 .globl "$0 $1 $2 $$3 $n"

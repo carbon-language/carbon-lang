@@ -1,4 +1,4 @@
-@ RUN: llvm-mc %s -triple=armv7-unknown-linux-gnueabi \
+@ RUN: not llvm-mc %s -triple=armv7-unknown-linux-gnueabi \
 @ RUN:   -filetype=obj -o /dev/null 2>&1 | FileCheck %s
 
 @ Check the diagnostics for mismatched .fnend directive

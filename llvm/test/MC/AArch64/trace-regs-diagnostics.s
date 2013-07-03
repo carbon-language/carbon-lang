@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple aarch64-none-linux-gnu < %s 2>&1 | FileCheck %s
+// RUN: not llvm-mc -triple aarch64-none-linux-gnu < %s 2>&1 | FileCheck %s
         // Write-only
         mrs x12, trcoslar
         mrs x10, trclar
