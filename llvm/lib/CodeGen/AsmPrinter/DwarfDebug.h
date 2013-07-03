@@ -62,12 +62,12 @@ public:
 
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
-typedef struct DotDebugLocEntry {
+class DotDebugLocEntry {
+  // Begin and end symbols for the address range that this location is valid.
   const MCSymbol *Begin;
   const MCSymbol *End;
-  MachineLocation Loc;
-  const MDNode *Variable;
-  bool Merged;
+
+  // Type of entry that this represents.
   enum EntryType {
     E_Location,
     E_Integer,
@@ -81,6 +81,17 @@ typedef struct DotDebugLocEntry {
     const ConstantFP *CFP;
     const ConstantInt *CIP;
   } Constants;
+
+  // The location in the machine frame.
+  MachineLocation Loc;
+
+  // The variable to which this location entry corresponds.
+  const MDNode *Variable;
+
+  // Whether this location has been merged.
+  bool Merged;
+
+public:
   DotDebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {
     Constants.Int = 0;
   }
@@ -124,7 +135,11 @@ typedef struct DotDebugLocEntry {
   int64_t getInt() const                    { return Constants.Int; }
   const ConstantFP *getConstantFP() const   { return Constants.CFP; }
   const ConstantInt *getConstantInt() const { return Constants.CIP; }
-} DotDebugLocEntry;
+  const MDNode *getVariable() const { return Variable; }
+  const MCSymbol *getBeginSym() const { return Begin; }
+  const MCSymbol *getEndSym() const { return End; }
+  MachineLocation getLoc() const { return Loc; }
+};
 
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to track local variable information.
