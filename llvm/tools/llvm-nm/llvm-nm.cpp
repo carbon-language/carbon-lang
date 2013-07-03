@@ -121,6 +121,8 @@ namespace {
 
   bool MultipleFiles = false;
 
+  bool HadError = false;
+
   std::string ToolName;
 }
 
@@ -132,6 +134,7 @@ static void error(Twine message, Twine path = Twine()) {
 static bool error(error_code ec, Twine path = Twine()) {
   if (ec) {
     error(ec.message(), path);
+    HadError = true;
     return true;
   }
   return false;
@@ -429,6 +432,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
   } else {
     errs() << ToolName << ": " << Filename << ": "
            << "unrecognizable file type\n";
+    HadError = true;
     return;
   }
 }
@@ -463,5 +467,9 @@ int main(int argc, char **argv) {
 
   std::for_each(InputFilenames.begin(), InputFilenames.end(),
                 DumpSymbolNamesFromFile);
+
+  if (HadError)
+    return 1;
+
   return 0;
 }
