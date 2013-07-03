@@ -2557,8 +2557,18 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG,
                        DAG.getConstant(0, MVT::i32));
   }
 
+  ConstantSDNode *OrdN = cast<ConstantSDNode>(Op.getOperand(1));
+  AtomicOrdering Ord = static_cast<AtomicOrdering>(OrdN->getZExtValue());
+  unsigned Domain = ARM_MB::ISH;
+  if (Subtarget->isSwift() && Ord == Release) {
+    // Swift happens to implement ISHST barriers in a way that's compatible with
+    // Release semantics but weaker than ISH so we'd be fools not to use
+    // it. Beware: other processors probably don't!
+    Domain = ARM_MB::ISHST;
+  }
+
   return DAG.getNode(ARMISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0),
-                     DAG.getConstant(ARM_MB::ISH, MVT::i32));
+                     DAG.getConstant(Domain, MVT::i32));
 }
 
 static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG,
