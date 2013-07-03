@@ -451,7 +451,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
     TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
                    DebugRangeSymbols.size()
                    * Asm->getDataLayout().getPointerSize());
-    for (SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin(),
+    for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
       DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
       DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
@@ -464,7 +464,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   }
 
   // Construct the address range for this DIE.
-  SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
+  SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
   MCSymbol *Start = getLabelBeforeInsn(RI->first);
   MCSymbol *End = getLabelAfterInsn(RI->second);
 
@@ -508,7 +508,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     TheCU->addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_data4,
                    DebugRangeSymbols.size()
                    * Asm->getDataLayout().getPointerSize());
-    for (SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin(),
+    for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
          RE = Ranges.end(); RI != RE; ++RI) {
       DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
       DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
@@ -516,7 +516,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
   } else {
-    SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
+    SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin();
     MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
     MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
@@ -632,7 +632,7 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!ScopeDIE) return NULL;
 
   // Add children
-  for (SmallVector<DIE *, 8>::iterator I = Children.begin(),
+  for (SmallVectorImpl<DIE *>::iterator I = Children.begin(),
          E = Children.end(); I != E; ++I)
     ScopeDIE->addChild(*I);
 
@@ -1099,7 +1099,7 @@ void DwarfDebug::endModule() {
          E = CUMap.end(); I != E; ++I)
     delete I->second;
 
-  for (SmallVector<CompileUnit *, 1>::iterator I = SkeletonCUs.begin(),
+  for (SmallVectorImpl<CompileUnit *>::iterator I = SkeletonCUs.begin(),
          E = SkeletonCUs.end(); I != E; ++I)
     delete *I;
 
@@ -1414,7 +1414,7 @@ void DwarfDebug::identifyScopeMarkers() {
 
     const SmallVector<LexicalScope *, 4> &Children = S->getChildren();
     if (!Children.empty())
-      for (SmallVector<LexicalScope *, 4>::const_iterator SI = Children.begin(),
+      for (SmallVectorImpl<LexicalScope *>::const_iterator SI = Children.begin(),
              SE = Children.end(); SI != SE; ++SI)
         WorkList.push_back(*SI);
 
@@ -1424,7 +1424,7 @@ void DwarfDebug::identifyScopeMarkers() {
     const SmallVector<InsnRange, 4> &Ranges = S->getRanges();
     if (Ranges.empty())
       continue;
-    for (SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin(),
+    for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
            RE = Ranges.end(); RI != RE; ++RI) {
       assert(RI->first && "InsnRange does not have first instruction!");
       assert(RI->second && "InsnRange does not have second instruction!");
