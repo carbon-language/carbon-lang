@@ -63,6 +63,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     return;
   }
   pthread_attr_t attr;
+  pthread_attr_init(&attr);
   CHECK_EQ(pthread_getattr_np(pthread_self(), &attr), 0);
   uptr stacksize = 0;
   void *stackaddr = 0;
