@@ -195,16 +195,6 @@ public:
   DIType getType() const;
 };
 
-
-// A String->Symbol mapping of strings used by indirect
-// references.
-typedef StringMap<std::pair<MCSymbol*, unsigned>,
-                  BumpPtrAllocator&> StrPool;
-
-// A Symbol->unsigned mapping of addresses used by indirect
-// references.
-typedef DenseMap<const MCExpr *, unsigned> AddrPool;
-
 /// \brief Collects and handles information specific to a particular
 /// collection of units.
 class DwarfUnits {
@@ -221,11 +211,18 @@ class DwarfUnits {
   SmallVector<CompileUnit *, 1> CUs;
 
   // Collection of strings for this unit and assorted symbols.
+  // A String->Symbol mapping of strings used by indirect
+  // references.
+  typedef StringMap<std::pair<MCSymbol*, unsigned>,
+                    BumpPtrAllocator&> StrPool;
   StrPool StringPool;
   unsigned NextStringPoolNumber;
   std::string StringPref;
 
   // Collection of addresses for this unit and assorted labels.
+  // A Symbol->unsigned mapping of addresses used by indirect
+  // references.
+  typedef DenseMap<const MCExpr *, unsigned> AddrPool;
   AddrPool AddressPool;
   unsigned NextAddrPoolNumber;
 
