@@ -387,7 +387,7 @@ class DwarfDebug {
   MCSymbol *DwarfAbbrevDWOSectionSym, *DwarfStrDWOSectionSym;
 
   // As an optimization, there is no need to emit an entry in the directory
-  // table for the same directory as DW_at_comp_dir.
+  // table for the same directory as DW_AT_comp_dir.
   StringRef CompilationDir;
 
   // Counter for assigning globally unique IDs for CUs.
