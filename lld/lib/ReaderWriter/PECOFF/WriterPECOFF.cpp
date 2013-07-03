@@ -67,7 +67,7 @@ public:
     kindSection
   };
 
-  Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
+  explicit Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
   virtual ~Chunk() {};
   virtual void write(uint8_t *fileBuffer) = 0;
 
@@ -131,7 +131,7 @@ private:
 /// A PEHeaderChunk represents PE header including COFF header.
 class PEHeaderChunk : public HeaderChunk {
 public:
-  PEHeaderChunk(const PECOFFTargetInfo &targetInfo) : HeaderChunk() {
+  explicit PEHeaderChunk(const PECOFFTargetInfo &targetInfo) : HeaderChunk() {
     // Set the size of the chunk and initialize the header with null bytes.
     _size = sizeof(llvm::COFF::PEMagic) + sizeof(_coffHeader)
         + sizeof(_peHeader);
@@ -585,7 +585,7 @@ private:
   }
 
 public:
-  ExecutableWriter(const PECOFFTargetInfo &targetInfo)
+  explicit ExecutableWriter(const PECOFFTargetInfo &targetInfo)
       : _PECOFFTargetInfo(targetInfo) {}
 
   // Create all chunks that consist of the output file.

@@ -351,7 +351,8 @@ private:
 
 class ReaderCOFF : public Reader {
 public:
-  ReaderCOFF(const TargetInfo &ti) : Reader(ti), _readerArchive(ti, *this) {}
+  explicit ReaderCOFF(const TargetInfo &ti)
+      : Reader(ti), _readerArchive(ti, *this) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File> > &result) const {

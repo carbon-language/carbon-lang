@@ -30,7 +30,7 @@ using llvm::object::coff_symbol;
 /// to be fixed up so that the address points to atom Y's address.
 class COFFReference LLVM_FINAL : public Reference {
 public:
-  COFFReference(Kind kind) : _target(nullptr), _offsetInAtom(0) {
+  explicit COFFReference(Kind kind) : _target(nullptr), _offsetInAtom(0) {
     _kind = kind;
   }
 
