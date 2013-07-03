@@ -166,13 +166,13 @@ public:
   virtual ~LexicalScope() {}
 
   // Accessors.
-  LexicalScope *getParent() const               { return Parent; }
-  const MDNode *getDesc() const                 { return Desc; }
-  const MDNode *getInlinedAt() const            { return InlinedAtLocation; }
-  const MDNode *getScopeNode() const            { return Desc; }
-  bool isAbstractScope() const                  { return AbstractScope; }
-  SmallVector<LexicalScope *, 4> &getChildren() { return Children; }
-  SmallVector<InsnRange, 4> &getRanges()        { return Ranges; }
+  LexicalScope *getParent() const                { return Parent; }
+  const MDNode *getDesc() const                  { return Desc; }
+  const MDNode *getInlinedAt() const             { return InlinedAtLocation; }
+  const MDNode *getScopeNode() const             { return Desc; }
+  bool isAbstractScope() const                   { return AbstractScope; }
+  SmallVectorImpl<LexicalScope *> &getChildren() { return Children; }
+  SmallVectorImpl<InsnRange> &getRanges()        { return Ranges; }
 
   /// addChild - Add a child scope.
   void addChild(LexicalScope *S) { Children.push_back(S); }
