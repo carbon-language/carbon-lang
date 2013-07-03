@@ -23,6 +23,7 @@
 #include "UseNullptr/UseNullptr.h"
 #include "UseAuto/UseAuto.h"
 #include "AddOverride/AddOverride.h"
+#include "ReplaceAutoPtr/ReplaceAutoPtr.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
@@ -105,6 +106,10 @@ int main(int argc, const char **argv) {
   TransformManager.registerTransform(
       "add-override", "Make use of override specifier where possible",
       &ConstructTransform<AddOverrideTransform>);
+  TransformManager.registerTransform(
+      "replace-auto_ptr", "Replace auto_ptr (deprecated) by unique_ptr"
+                          " (EXPERIMENTAL)",
+      &ConstructTransform<ReplaceAutoPtrTransform>);
   // Add more transform options here.
 
   // This causes options to be parsed.

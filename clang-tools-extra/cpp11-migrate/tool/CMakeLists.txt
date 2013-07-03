@@ -19,6 +19,9 @@ list(APPEND Cpp11MigrateSources ${UseAutoSources})
 file(GLOB_RECURSE AddOverrideSources "../AddOverride/*.cpp")
 list(APPEND Cpp11MigrateSources ${AddOverrideSources})
 
+file(GLOB_RECURSE ReplaceAutoPtrSources "../ReplaceAutoPtr/*.cpp")
+list(APPEND Cpp11MigrateSources ${ReplaceAutoPtrSources})
+
 add_clang_executable(cpp11-migrate
   ${Cpp11MigrateSources}
   )

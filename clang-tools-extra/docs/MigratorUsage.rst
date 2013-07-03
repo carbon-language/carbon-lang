@@ -126,3 +126,9 @@ Transform-Specific Command Line Options
   projects that use such macros to maintain build compatibility with non-C++11
   code.
 
+.. option:: -replace-auto_ptr
+
+  Replace ``std::auto_ptr`` (deprecated in C++11) by ``std::unique_ptr`` and
+  wrap calls to the copy constructor and assignment operator with
+  ``std::move()``.
+  See :doc:`ReplaceAutoPtrTransform`.

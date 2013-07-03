@@ -11,6 +11,7 @@ C++11 Migrator User's Manual
    UseNullptrTransform
    LoopConvertTransform
    AddOverrideTransform
+   ReplaceAutoPtrTransform
    MigratorUsage
 
 :program:`cpp11-migrate` is a standalone tool used to automatically convert
@@ -113,3 +114,5 @@ independently enabled. The transforms currently implemented are:
 * :doc:`UseAutoTransform`
 
 * :doc:`AddOverrideTransform`
+
+* :doc:`ReplaceAutoPtrTransform`

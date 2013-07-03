@@ -30,6 +30,8 @@ SOURCES += $(addprefix ../UseAuto/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../UseAut
 BUILT_SOURCES += $(ObjDir)/../UseAuto/.objdir
 SOURCES += $(addprefix ../AddOverride/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../AddOverride/*.cpp)))
 BUILT_SOURCES += $(ObjDir)/../AddOverride/.objdir
+SOURCES += $(addprefix ../ReplaceAutoPtr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../ReplaceAutoPtr/*.cpp)))
+BUILT_SOURCES += $(ObjDir)/../ReplaceAutoPtr/.objdir
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser option
 USEDLIBS = migrateCore.a clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
