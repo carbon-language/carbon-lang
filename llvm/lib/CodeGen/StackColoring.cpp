@@ -310,9 +310,9 @@ void StackColoring::calculateLocalLiveness() {
 
     SmallPtrSet<const MachineBasicBlock*, 8> NextBBSet;
 
-    for (SmallVector<const MachineBasicBlock*, 8>::iterator
-         PI = BasicBlockNumbering.begin(), PE = BasicBlockNumbering.end();
-         PI != PE; ++PI) {
+    for (SmallVectorImpl<const MachineBasicBlock *>::iterator
+           PI = BasicBlockNumbering.begin(), PE = BasicBlockNumbering.end();
+           PI != PE; ++PI) {
 
       const MachineBasicBlock *BB = *PI;
       if (!BBSet.count(BB)) continue;

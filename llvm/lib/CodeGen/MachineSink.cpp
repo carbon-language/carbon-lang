@@ -537,8 +537,8 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       // We give successors with smaller loop depth higher priority.
       SmallVector<MachineBasicBlock*, 4> Succs(MBB->succ_begin(), MBB->succ_end());
       std::stable_sort(Succs.begin(), Succs.end(), SuccessorSorter(LI));
-      for (SmallVector<MachineBasicBlock*, 4>::iterator SI = Succs.begin(),
-           E = Succs.end(); SI != E; ++SI) {
+      for (SmallVectorImpl<MachineBasicBlock *>::iterator SI = Succs.begin(),
+             E = Succs.end(); SI != E; ++SI) {
         MachineBasicBlock *SuccBlock = *SI;
         bool LocalUse = false;
         if (AllUsesDominatedByBlock(Reg, SuccBlock, MBB,
@@ -697,7 +697,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
                        ++MachineBasicBlock::iterator(MI));
 
   // Move debug values.
-  for (SmallVector<MachineInstr *, 2>::iterator DBI = DbgValuesToSink.begin(),
+  for (SmallVectorImpl<MachineInstr *>::iterator DBI = DbgValuesToSink.begin(),
          DBE = DbgValuesToSink.end(); DBI != DBE; ++DBI) {
     MachineInstr *DbgMI = *DBI;
     SuccToSinkTo->splice(InsertPos, ParentBlock,  DbgMI,

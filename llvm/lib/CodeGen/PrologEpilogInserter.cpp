@@ -564,8 +564,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       !RegInfo->needsStackRealignment(Fn)) {
     SmallVector<int, 2> SFIs;
     RS->getScavengingFrameIndices(SFIs);
-    for (SmallVector<int, 2>::iterator I = SFIs.begin(),
-         IE = SFIs.end(); I != IE; ++I)
+    for (SmallVectorImpl<int>::iterator I = SFIs.begin(),
+           IE = SFIs.end(); I != IE; ++I)
       AdjustStackOffset(MFI, *I, StackGrowsDown, Offset, MaxAlign);
   }
 
@@ -649,8 +649,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
              !RegInfo->useFPForScavengingIndex(Fn))) {
     SmallVector<int, 2> SFIs;
     RS->getScavengingFrameIndices(SFIs);
-    for (SmallVector<int, 2>::iterator I = SFIs.begin(),
-         IE = SFIs.end(); I != IE; ++I)
+    for (SmallVectorImpl<int>::iterator I = SFIs.begin(),
+           IE = SFIs.end(); I != IE; ++I)
       AdjustStackOffset(MFI, *I, StackGrowsDown, Offset, MaxAlign);
   }
 

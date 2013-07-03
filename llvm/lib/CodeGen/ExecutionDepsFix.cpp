@@ -573,7 +573,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
   // Kill off any remaining uses that don't match available, and build a list of
   // incoming DomainValues that we want to merge.
   SmallVector<LiveReg, 4> Regs;
-  for (SmallVector<int, 4>::iterator i=used.begin(), e=used.end(); i!=e; ++i) {
+  for (SmallVectorImpl<int>::iterator i=used.begin(), e=used.end(); i!=e; ++i) {
     int rx = *i;
     const LiveReg &LR = LiveRegs[rx];
     // This useless DomainValue could have been missed above.
@@ -583,7 +583,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
     }
     // Sorted insertion.
     bool Inserted = false;
-    for (SmallVector<LiveReg, 4>::iterator i = Regs.begin(), e = Regs.end();
+    for (SmallVectorImpl<LiveReg>::iterator i = Regs.begin(), e = Regs.end();
            i != e && !Inserted; ++i) {
       if (LR.Def < i->Def) {
         Inserted = true;
@@ -614,7 +614,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
       continue;
 
     // If latest didn't merge, it is useless now. Kill all registers using it.
-    for (SmallVector<int,4>::iterator i=used.begin(), e=used.end(); i != e; ++i)
+    for (SmallVectorImpl<int>::iterator i=used.begin(), e=used.end(); i!=e; ++i)
       if (LiveRegs[*i].Value == Latest)
         kill(*i);
   }

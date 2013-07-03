@@ -331,7 +331,7 @@ AnalysisID TargetPassConfig::addPass(AnalysisID PassID) {
   addPass(P); // Ends the lifetime of P.
 
   // Add the passes after the pass P if there is any.
-  for (SmallVector<std::pair<AnalysisID, IdentifyingPassPtr>, 4>::iterator
+  for (SmallVectorImpl<std::pair<AnalysisID, IdentifyingPassPtr> >::iterator
          I = Impl->InsertedPasses.begin(), E = Impl->InsertedPasses.end();
        I != E; ++I) {
     if ((*I).first == PassID) {

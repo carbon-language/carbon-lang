@@ -388,7 +388,7 @@ findSuitableFreeRegister(RegRefIter RegRefBegin,
       continue;
     // If NewReg overlaps any of the forbidden registers, we can't use it.
     bool Forbidden = false;
-    for (SmallVector<unsigned, 2>::iterator it = Forbid.begin(),
+    for (SmallVectorImpl<unsigned>::iterator it = Forbid.begin(),
            ite = Forbid.end(); it != ite; ++it)
       if (TRI->regsOverlap(NewReg, *it)) {
         Forbidden = true;

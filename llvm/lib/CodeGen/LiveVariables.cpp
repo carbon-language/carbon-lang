@@ -609,9 +609,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // if they have PHI nodes, and if so, we simulate an assignment at the end
     // of the current block.
     if (!PHIVarInfo[MBB->getNumber()].empty()) {
-      SmallVector<unsigned, 4>& VarInfoVec = PHIVarInfo[MBB->getNumber()];
+      SmallVectorImpl<unsigned> &VarInfoVec = PHIVarInfo[MBB->getNumber()];
 
-      for (SmallVector<unsigned, 4>::iterator I = VarInfoVec.begin(),
+      for (SmallVectorImpl<unsigned>::iterator I = VarInfoVec.begin(),
              E = VarInfoVec.end(); I != E; ++I)
         // Mark it alive only in the block we are representing.
         MarkVirtRegAliveInBlock(getVarInfo(*I),MRI->getVRegDef(*I)->getParent(),

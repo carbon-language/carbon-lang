@@ -5896,7 +5896,7 @@ void SelectionDAG::TransferDbgValues(SDValue From, SDValue To) {
       ClonedDVs.push_back(Clone);
     }
   }
-  for (SmallVector<SDDbgValue *, 2>::iterator I = ClonedDVs.begin(),
+  for (SmallVectorImpl<SDDbgValue *>::iterator I = ClonedDVs.begin(),
          E = ClonedDVs.end(); I != E; ++I)
     AddDbgValue(*I, ToNode, false);
 }

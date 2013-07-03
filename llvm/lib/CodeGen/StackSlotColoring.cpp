@@ -197,7 +197,7 @@ void StackSlotColoring::InitializeSlots() {
 /// LiveIntervals that have already been assigned to the specified color.
 bool
 StackSlotColoring::OverlapWithAssignments(LiveInterval *li, int Color) const {
-  const SmallVector<LiveInterval*,4> &OtherLIs = Assignments[Color];
+  const SmallVectorImpl<LiveInterval *> &OtherLIs = Assignments[Color];
   for (unsigned i = 0, e = OtherLIs.size(); i != e; ++i) {
     LiveInterval *OtherLI = OtherLIs[i];
     if (OtherLI->overlaps(*li))
@@ -297,7 +297,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
     if (NewFI == -1 || (NewFI == (int)SS))
       continue;
 
-    SmallVector<MachineInstr*, 8> &RefMIs = SSRefs[SS];
+    SmallVectorImpl<MachineInstr*> &RefMIs = SSRefs[SS];
     for (unsigned i = 0, e = RefMIs.size(); i != e; ++i)
       RewriteInstruction(RefMIs[i], SS, NewFI, MF);
   }
@@ -378,7 +378,7 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
     ++I;
   }
 
-  for (SmallVector<MachineInstr*, 4>::iterator I = toErase.begin(),
+  for (SmallVectorImpl<MachineInstr *>::iterator I = toErase.begin(),
        E = toErase.end(); I != E; ++I)
     (*I)->eraseFromParent();
 

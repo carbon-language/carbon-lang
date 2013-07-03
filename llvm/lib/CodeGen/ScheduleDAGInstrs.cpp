@@ -98,7 +98,7 @@ static void getUnderlyingObjects(const Value *V,
     SmallVector<Value *, 4> Objs;
     GetUnderlyingObjects(const_cast<Value *>(V), Objs);
 
-    for (SmallVector<Value *, 4>::iterator I = Objs.begin(), IE = Objs.end();
+    for (SmallVectorImpl<Value *>::iterator I = Objs.begin(), IE = Objs.end();
          I != IE; ++I) {
       V = *I;
       if (!Visited.insert(V))
@@ -137,8 +137,8 @@ static void getUnderlyingObjectsForInstr(const MachineInstr *MI,
   SmallVector<Value *, 4> Objs;
   getUnderlyingObjects(V, Objs);
 
-  for (SmallVector<Value *, 4>::iterator I = Objs.begin(), IE = Objs.end();
-       I != IE; ++I) {
+  for (SmallVectorImpl<Value *>::iterator I = Objs.begin(), IE = Objs.end();
+         I != IE; ++I) {
     bool MayAlias = true;
     V = *I;
 
@@ -465,8 +465,8 @@ static inline bool isUnsafeMemoryObject(MachineInstr *MI,
 
   SmallVector<Value *, 4> Objs;
   getUnderlyingObjects(V, Objs);
-  for (SmallVector<Value *, 4>::iterator I = Objs.begin(),
-       IE = Objs.end(); I != IE; ++I) {
+  for (SmallVectorImpl<Value *>::iterator I = Objs.begin(),
+         IE = Objs.end(); I != IE; ++I) {
     V = *I;
 
     if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {

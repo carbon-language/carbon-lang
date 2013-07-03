@@ -72,7 +72,8 @@ private:
 class SDDbgInfo {
   SmallVector<SDDbgValue*, 32> DbgValues;
   SmallVector<SDDbgValue*, 32> ByvalParmDbgValues;
-  DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgValMap;
+  typedef DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgValMapType;
+  DbgValMapType DbgValMap;
 
   void operator=(const SDDbgInfo&) LLVM_DELETED_FUNCTION;
   SDDbgInfo(const SDDbgInfo&) LLVM_DELETED_FUNCTION;
@@ -98,14 +99,13 @@ public:
   }
 
   ArrayRef<SDDbgValue*> getSDDbgValues(const SDNode *Node) {
-    DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> >::iterator I =
-      DbgValMap.find(Node);
+    DbgValMapType::iterator I = DbgValMap.find(Node);
     if (I != DbgValMap.end())
       return I->second;
     return ArrayRef<SDDbgValue*>();
   }
 
-  typedef SmallVector<SDDbgValue*,32>::iterator DbgIterator;
+  typedef SmallVectorImpl<SDDbgValue*>::iterator DbgIterator;
   DbgIterator DbgBegin() { return DbgValues.begin(); }
   DbgIterator DbgEnd()   { return DbgValues.end(); }
   DbgIterator ByvalParmDbgBegin() { return ByvalParmDbgValues.begin(); }
