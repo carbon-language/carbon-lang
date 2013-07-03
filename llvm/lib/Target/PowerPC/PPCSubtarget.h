@@ -128,7 +128,7 @@ public:
     // documentation are wrong; these are correct (i.e. "what gcc does").
     if (isPPC64() && isSVR4ABI()) {
       if (TargetTriple.getOS() == llvm::Triple::FreeBSD)
-        return "E-p:64:64-f64:64:64-i64:64:64-f128:64:64-v128:128:128-n32:64";
+        return "E-p:64:64-f64:64:64-i64:64:64-v128:128:128-n32:64";
       else
         return "E-p:64:64-f64:64:64-i64:64:64-f128:128:128-v128:128:128-n32:64";
     }
