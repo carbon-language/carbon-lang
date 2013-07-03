@@ -535,10 +535,10 @@ def STWDP_lru6 : _FLRU6<0b010100, (outs), (ins RRegs:$a, i32imm:$b),
 //let Uses = [CP] in ..
 let mayLoad = 1, isReMaterializable = 1, neverHasSideEffects = 1 in {
 def LDWCP_ru6 : _FRU6<0b011011, (outs RRegs:$a), (ins i32imm:$b),
-                        "ldw $a, cp[$b]", []>;
+                      "ldw $a, cp[$b]", []>;
 def LDWCP_lru6: _FLRU6<0b011011, (outs RRegs:$a), (ins i32imm:$b),
-                      "ldw $a, cp[$b]",
-                      [(set RRegs:$a, (load (cprelwrapper tglobaladdr:$b)))]>;
+                       "ldw $a, cp[$b]",
+                       [(set RRegs:$a, (load (cprelwrapper tglobaladdr:$b)))]>;
 }
 
 let Uses = [SP] in {
