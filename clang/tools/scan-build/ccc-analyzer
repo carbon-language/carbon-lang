@@ -427,8 +427,8 @@ my %Uniqued;
 
 # Forward arguments to gcc.
 my $Status = system($Compiler,@ARGV);
-if  (defined $ENV{'CCC_ANALYZER_LOG'}) {
-  print "$Compiler @ARGV\n";
+if (defined $ENV{'CCC_ANALYZER_LOG'}) {
+  print STDERR "$Compiler @ARGV\n";
 }
 if ($Status) { exit($Status >> 8); }
 
@@ -453,8 +453,8 @@ if (!defined $OutputFormat) { $OutputFormat = "html"; }
 
 # Determine the level of verbosity.
 my $Verbose = 0;
-if (defined $ENV{CCC_ANALYZER_VERBOSE}) { $Verbose = 1; }
-if (defined $ENV{CCC_ANALYZER_LOG}) { $Verbose = 2; }
+if (defined $ENV{'CCC_ANALYZER_VERBOSE'}) { $Verbose = 1; }
+if (defined $ENV{'CCC_ANALYZER_LOG'}) { $Verbose = 2; }
 
 # Get the HTML output directory.
 my $HtmlDir = $ENV{'CCC_ANALYZER_HTML'};
