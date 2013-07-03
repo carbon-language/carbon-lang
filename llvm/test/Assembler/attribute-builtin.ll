@@ -5,10 +5,10 @@
 ; rdar://13727199
 
 ; RUN: llvm-as -disable-verify < %s | \
-;      llvm-dis -disable-verify | \
-;      llvm-as -disable-verify | \
-;      llvm-dis -disable-verify | \
-;      FileCheck -check-prefix=ASSEMBLES %s
+; RUN: llvm-dis | \
+; RUN: llvm-as -disable-verify | \
+; RUN: llvm-dis | \
+; RUN: FileCheck -check-prefix=ASSEMBLES %s
 
 ; CHECK-ASSEMBLES: declare i8* @foo(i8*) [[NOBUILTIN:#[0-9]+]]
 ; CHECK-ASSEMBLES: call i8* @foo(i8* %x) [[BUILTIN:#[0-9]+]]
