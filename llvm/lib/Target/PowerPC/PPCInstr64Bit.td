@@ -257,7 +257,11 @@ def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
 // 64-bit CR instructions
 let Interpretation64Bit = 1 in {
 let neverHasSideEffects = 1 in {
-def MTCRF8 : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins g8rc:$rS),
+def MTOCRF8: XFXForm_5a<31, 144, (outs crbitm:$FXM), (ins g8rc:$ST),
+                        "mtocrf $FXM, $ST", BrMCRX>,
+            PPC970_DGroup_First, PPC970_Unit_CRU;
+
+def MTCRF8 : XFXForm_5<31, 144, (outs), (ins i32imm:$FXM, g8rc:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 

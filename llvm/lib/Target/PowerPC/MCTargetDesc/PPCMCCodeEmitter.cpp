@@ -228,7 +228,7 @@ unsigned PPCMCCodeEmitter::
 get_crbitm_encoding(const MCInst &MI, unsigned OpNo,
                     SmallVectorImpl<MCFixup> &Fixups) const {
   const MCOperand &MO = MI.getOperand(OpNo);
-  assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MTCRF8 ||
+  assert((MI.getOpcode() == PPC::MTOCRF || MI.getOpcode() == PPC::MTOCRF8 ||
           MI.getOpcode() == PPC::MFOCRF || MI.getOpcode() == PPC::MFOCRF8) &&
          (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
   return 0x80 >> CTX.getRegisterInfo()->getEncodingValue(MO.getReg());
@@ -239,9 +239,9 @@ unsigned PPCMCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   if (MO.isReg()) {
-    // MTCRF/MFOCRF should go through get_crbitm_encoding for the CR operand.
+    // MTOCRF/MFOCRF should go through get_crbitm_encoding for the CR operand.
     // The GPR operand should come through here though.
-    assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MTCRF8 &&
+    assert((MI.getOpcode() != PPC::MTOCRF && MI.getOpcode() != PPC::MTOCRF8 &&
             MI.getOpcode() != PPC::MFOCRF && MI.getOpcode() != PPC::MFOCRF8) ||
            MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
     return CTX.getRegisterInfo()->getEncodingValue(MO.getReg());

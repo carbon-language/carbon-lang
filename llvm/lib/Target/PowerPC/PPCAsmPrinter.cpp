@@ -676,6 +676,23 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       return;
     }
     break;
+  case PPC::MTOCRF:
+  case PPC::MTOCRF8:
+    if (!Subtarget.hasMFOCRF()) {
+      // Transform: %CR7 = MTOCRF %R3
+      // Into:      MTCRF mask, %R3 ;; cr7
+      unsigned NewOpcode =
+        MI->getOpcode() == PPC::MTOCRF ? PPC::MTCRF : PPC::MTCRF8;
+      unsigned Mask = 0x80 >> OutContext.getRegisterInfo()
+                              ->getEncodingValue(MI->getOperand(0).getReg());
+      OutStreamer.AddComment(PPCInstPrinter::
+                             getRegisterName(MI->getOperand(0).getReg()));
+      OutStreamer.EmitInstruction(MCInstBuilder(NewOpcode)
+                                  .addImm(Mask)
+                                  .addReg(MI->getOperand(1).getReg()));
+      return;
+    }
+    break;
   case PPC::SYNC:
     // In Book E sync is called msync, handle this special case here...
     if (Subtarget.isBookE()) {

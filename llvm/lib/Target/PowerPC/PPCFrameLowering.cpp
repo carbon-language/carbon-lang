@@ -753,7 +753,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
     if (!MustSaveCRs.empty())
       for (unsigned i = 0, e = MustSaveCRs.size(); i != e; ++i)
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::MTCRF8), MustSaveCRs[i])
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::MTOCRF8), MustSaveCRs[i])
           .addReg(PPC::X12, getKillRegState(i == e-1));
 
     if (MustSaveLR)
@@ -1212,7 +1212,7 @@ restoreCRs(bool isPPC64, bool is31,
     MBB.insert(MI, addFrameReference(BuildMI(*MF, DL, TII.get(PPC::LWZ),
 					     PPC::R12),
 				     CSI[CSIIndex].getFrameIdx()));
-    RestoreOp = PPC::MTCRF;
+    RestoreOp = PPC::MTOCRF;
     MoveReg = PPC::R12;
   }
   

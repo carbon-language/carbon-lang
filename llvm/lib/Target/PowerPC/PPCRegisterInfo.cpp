@@ -403,7 +403,7 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
              .addImm(31);
   }
 
-  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTCRF8 : PPC::MTCRF), DestReg)
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTOCRF8 : PPC::MTOCRF), DestReg)
              .addReg(Reg, RegState::Kill);
 
   // Discard the pseudo instruction.

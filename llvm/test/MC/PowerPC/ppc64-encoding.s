@@ -508,12 +508,12 @@
          mtspr 600, 2
 # CHECK: mfspr 2, 600                    # encoding: [0x7c,0x58,0x92,0xa6]
          mfspr 2, 600
-# CHECK: mtcrf 16, 2                     # encoding: [0x7c,0x41,0x01,0x20]
-         mtcrf 16, 2
+# CHECK: mtcrf 123, 2                    # encoding: [0x7c,0x47,0xb1,0x20]
+         mtcrf 123, 2
 # CHECK: mfcr 2                          # encoding: [0x7c,0x40,0x00,0x26]
          mfcr 2
-# FIXME: mtocrf 16, 2
+# CHECK: mtocrf 16, 2                    # encoding: [0x7c,0x51,0x01,0x20]
+         mtocrf 16, 2
 # CHECK: mfocrf 16, 8                    # encoding: [0x7e,0x10,0x80,0x26]
          mfocrf 16, 8
-# FIXME: mcrxr 2
 

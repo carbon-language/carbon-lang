@@ -1986,4 +1986,6 @@
          not 2, 3
 # CHECK: nor. 2, 3, 3                    # encoding: [0x7c,0x62,0x18,0xf9]
          not. 2, 3
+# CHECK: mtcrf 255, 2                    # encoding: [0x7c,0x4f,0xf1,0x20]
+         mtcr 2
 

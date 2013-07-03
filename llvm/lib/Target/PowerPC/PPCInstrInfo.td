@@ -1898,7 +1898,11 @@ def RESTORE_VRSAVE : Pseudo<(outs VRSAVERC:$vrsave), (ins memri:$F),
                      "#RESTORE_VRSAVE", []>;
 
 let neverHasSideEffects = 1 in {
-def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins gprc:$rS),
+def MTOCRF: XFXForm_5a<31, 144, (outs crbitm:$FXM), (ins gprc:$ST),
+                       "mtocrf $FXM, $ST", BrMCRX>,
+            PPC970_DGroup_First, PPC970_Unit_CRU;
+
+def MTCRF : XFXForm_5<31, 144, (outs), (ins i32imm:$FXM, gprc:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 
@@ -2321,6 +2325,8 @@ def : InstAlias<"mr. $rA, $rB", (OR8o g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
 
 def : InstAlias<"not $rA, $rB", (NOR8 g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
 def : InstAlias<"not. $rA, $rB", (NOR8o g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
+
+def : InstAlias<"mtcr $rA", (MTCRF8 255, g8rc:$rA)>;
 
 def LAx : PPCAsmPseudo<"la $rA, $addr", (ins gprc:$rA, memri:$addr)>;
 
