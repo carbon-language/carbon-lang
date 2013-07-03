@@ -143,11 +143,8 @@ public:
 
     void
     SetError (const Error &error, 
-              const char *fallback_error_cstr = NULL);
+              const char *fallback_error_cstr);
 
-    void
-    SetError (const char *error_cstr);
-    
     lldb::ReturnStatus
     GetStatus();
 

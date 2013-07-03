@@ -8,10 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBCommandReturnObject.h"
-#include "lldb/API/SBError.h"
 #include "lldb/API/SBStream.h"
 
-#include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 
@@ -331,21 +329,3 @@ SBCommandReturnObject::Printf(const char* format, ...)
     return 0;
 }
 
-void
-SBCommandReturnObject::SetError (lldb::SBError &error, const char *fallback_error_cstr)
-{
-    if (m_opaque_ap.get())
-    {
-        if (error.IsValid())
-            m_opaque_ap->SetError(error.ref(), fallback_error_cstr);
-        else if (fallback_error_cstr)
-            m_opaque_ap->SetError(Error(), fallback_error_cstr);
-    }
-}
-
-void
-SBCommandReturnObject::SetError (const char *error_cstr)
-{
-    if (m_opaque_ap.get() && error_cstr)
-        m_opaque_ap->SetError(error_cstr);
-}

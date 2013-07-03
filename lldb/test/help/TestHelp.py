@@ -124,7 +124,7 @@ class HelpCommandTestCase(TestBase):
         """Command 'help image du line' is not ambiguous and should work."""
         # 'image' is an alias for 'target modules'.
         self.expect("help image du line",
-            substrs = ['Dump the line table for one or more compilation units'])
+            substrs = ['Dump the debug symbol file for one or more target modules'])
 
     def test_help_target_variable_syntax(self):
         """Command 'help target variable' should display <variable-name> ..."""

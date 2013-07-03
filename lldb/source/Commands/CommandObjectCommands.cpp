@@ -1328,9 +1328,7 @@ protected:
             // Don't change the status if the command already set it...
             if (result.GetStatus() == eReturnStatusInvalid)
             {
-                if (result.GetErrorData() && result.GetErrorData()[0])
-                    result.SetStatus(eReturnStatusFailed);
-                else if (result.GetOutputData() == NULL || result.GetOutputData()[0] == '\0')
+                if (result.GetOutputData() == NULL || result.GetOutputData()[0] == '\0')
                     result.SetStatus(eReturnStatusSuccessFinishNoResult);
                 else
                     result.SetStatus(eReturnStatusSuccessFinishResult);
