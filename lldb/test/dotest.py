@@ -35,6 +35,22 @@ if sys.version_info >= (2, 7):
 else:
     argparse = __import__('argparse_compat')
 
+def parse_args(parser):
+    """ Returns an argument object. LLDB_TEST_ARGUMENTS environment variable can
+        be used to pass additional arguments if a compatible (>=2.7) argparse
+        library is available.
+    """
+    if sys.version_info >= (2, 7):
+        args = ArgParseNamespace()
+
+        if ('LLDB_TEST_ARGUMENTS' in os.environ):
+            print "Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS']
+            args = parser.parse_args([sys.argv[0]].__add__(os.environ['LLDB_TEST_ARGUMENTS'].split()),namespace=args)
+
+        return parser.parse_args(namespace=args)
+    else:
+        return parser.parse_args()
+
 def is_exe(fpath):
     """Returns true if fpath is an executable."""
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
@@ -444,14 +460,7 @@ def parseOptionsAndInitTestdirs():
     group = parser.add_argument_group('Test directories')
     group.add_argument('args', metavar='test-dir', nargs='*', help='Specify a list of directory names to search for test modules named after Test*.py (test discovery). If empty, search from the current working directory instead.')
 
-    args = ArgParseNamespace()
-
-    if ('LLDB_TEST_ARGUMENTS' in os.environ):
-        print "Arguments passed through environment: '%s'" % os.environ['LLDB_TEST_ARGUMENTS']
-        args = parser.parse_args([sys.argv[0]].__add__(os.environ['LLDB_TEST_ARGUMENTS'].split()),namespace=args)
-
-    args = parser.parse_args(namespace=args)
-
+    args = parse_args(parser)
     platform_system = platform.system()
     platform_machine = platform.machine()
     
