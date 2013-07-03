@@ -34,6 +34,9 @@ class Radar9974002DataFormatterTestCase(TestBase):
 
     def data_formatter_commands(self):
         """Test that that file and class static variables display correctly."""
+        if "clang" in self.getCompiler() and "3.4" in self.getCompilerVersion():
+            self.skipTest("llvm.org/pr16214 -- clang emits partial DWARF for structures referenced via typedef")
+
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=True)
