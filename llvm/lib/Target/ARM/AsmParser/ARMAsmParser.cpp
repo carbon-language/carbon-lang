@@ -629,6 +629,20 @@ public:
   bool isITMask() const { return Kind == k_ITCondMask; }
   bool isITCondCode() const { return Kind == k_CondCode; }
   bool isImm() const { return Kind == k_Immediate; }
+  // checks whether this operand is an unsigned offset which fits is a field
+  // of specified width and scaled by a specific number of bits
+  template<unsigned width, unsigned scale>
+  bool isUnsignedOffset() const {
+    if (!isImm()) return false;
+    if (dyn_cast<MCSymbolRefExpr>(Imm.Val)) return true;
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
+      int64_t Val = CE->getValue();
+      int64_t Align = 1LL << scale;
+      int64_t Max = Align * ((1LL << width) - 1);
+      return ((Val % Align) == 0) && (Val >= 0) && (Val <= Max);
+    }
+    return false;
+  }
   bool isFPImm() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -1705,6 +1719,17 @@ public:
     // negation in the assembly source, so twiddle it here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(-CE->getValue()));
+  }
+
+  void addUnsignedOffset_b8s2Operands(MCInst &Inst, unsigned N) const {
+    if(const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm())) {
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue() >> 2));
+      return;
+    }
+
+    const MCSymbolRefExpr *SR = dyn_cast<MCSymbolRefExpr>(Imm.Val);
+    assert(SR && "Unknown value type!");
+    Inst.addOperand(MCOperand::CreateExpr(SR));
   }
 
   void addARMSOImmNotOperands(MCInst &Inst, unsigned N) const {

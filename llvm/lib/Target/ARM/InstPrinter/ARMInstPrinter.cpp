@@ -900,6 +900,7 @@ void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum,
   llvm_unreachable("Unhandled PC-relative pseudo-instruction!");
 }
 
+template<unsigned scale>
 void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
@@ -909,7 +910,7 @@ void ARMInstPrinter::printAdrLabelOperand(const MCInst *MI, unsigned OpNum,
     return;
   }
 
-  int32_t OffImm = (int32_t)MO.getImm();
+  int32_t OffImm = (int32_t)MO.getImm() << scale;
 
   O << markup("<imm:");
   if (OffImm == INT32_MIN)

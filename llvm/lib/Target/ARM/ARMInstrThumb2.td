@@ -173,7 +173,7 @@ def t2ldr_pcrel_imm12 : Operand<i32> {
 // ADR instruction labels.
 def t2adrlabel : Operand<i32> {
   let EncoderMethod = "getT2AdrLabelOpValue";
-  let PrintMethod = "printAdrLabelOperand";
+  let PrintMethod = "printAdrLabelOperand<0>";
 }
 
 // t2addrmode_posimm8  := reg + imm8

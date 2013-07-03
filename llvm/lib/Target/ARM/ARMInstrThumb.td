@@ -69,11 +69,6 @@ def thumb_immshifted_shamt : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
-// ADR instruction labels.
-def t_adrlabel : Operand<i32> {
-  let EncoderMethod = "getThumbAdrLabelOpValue";
-}
-
 // Scaled 4 immediate.
 def t_imm0_1020s4_asmoperand: AsmOperandClass { let Name = "Imm0_1020s4"; }
 def t_imm0_1020s4 : Operand<i32> {
@@ -97,10 +92,25 @@ def t_imm0_508s4_neg : Operand<i32> {
 
 // Define Thumb specific addressing modes.
 
+// unsigned 8-bit, 2-scaled memory offset
+class OperandUnsignedOffset_b8s2 : AsmOperandClass {
+  let Name = "UnsignedOffset_b8s2";
+  let PredicateMethod = "isUnsignedOffset<8, 2>";
+}
+
+def UnsignedOffset_b8s2 : OperandUnsignedOffset_b8s2;
+
 let OperandType = "OPERAND_PCREL" in {
 def t_brtarget : Operand<OtherVT> {
   let EncoderMethod = "getThumbBRTargetOpValue";
   let DecoderMethod = "DecodeThumbBROperand";
+}
+
+// ADR instruction labels.
+def t_adrlabel : Operand<i32> {
+  let EncoderMethod = "getThumbAdrLabelOpValue";
+  let PrintMethod = "printAdrLabelOperand<2>";
+  let ParserMatchClass = UnsignedOffset_b8s2;
 }
 
 def t_bcctarget : Operand<i32> {
@@ -504,6 +514,7 @@ let isBranch = 1, isTerminator = 1 in
   let Inst{11-8} = p;
   let Inst{7-0} = target;
 }
+
 
 // Tail calls
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {

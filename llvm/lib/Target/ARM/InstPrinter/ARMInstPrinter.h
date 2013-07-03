@@ -76,6 +76,7 @@ public:
   void printPKHLSLShiftImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPKHASRShiftImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 
+  template <unsigned scale>
   void printAdrLabelOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbS4ImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printThumbSRImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);

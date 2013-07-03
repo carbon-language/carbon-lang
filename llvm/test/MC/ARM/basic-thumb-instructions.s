@@ -85,11 +85,15 @@ _func:
 @ ADR
 @------------------------------------------------------------------------------
         adr r2, _baz
-        adr	r2, #3
+        adr r5, #0
+        adr r2, #4
+        adr r3, #1020
 
 @ CHECK: adr	r2, _baz                @ encoding: [A,0xa2]
             @   fixup A - offset: 0, value: _baz, kind: fixup_thumb_adr_pcrel_10
-@ CHECK: adr	r2, #3                  @ encoding: [0x03,0xa2]
+@ CHECK: adr	r5, #0                  @ encoding: [0x00,0xa5]
+@ CHECK: adr	r2, #4                  @ encoding: [0x01,0xa2]
+@ CHECK: adr	r3, #1020               @ encoding: [0xff,0xa3]
 
 @------------------------------------------------------------------------------
 @ ASR (immediate)

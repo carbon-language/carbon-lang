@@ -458,7 +458,7 @@ def AdrLabelAsmOperand : AsmOperandClass { let Name = "AdrLabel"; }
 def adrlabel : Operand<i32> {
   let EncoderMethod = "getAdrLabelOpValue";
   let ParserMatchClass = AdrLabelAsmOperand;
-  let PrintMethod = "printAdrLabelOperand";
+  let PrintMethod = "printAdrLabelOperand<0>";
 }
 
 def neon_vcvt_imm32 : Operand<i32> {
