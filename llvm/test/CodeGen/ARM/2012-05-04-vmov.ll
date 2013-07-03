@@ -7,5 +7,8 @@ entry:
   %div = udiv <2 x i32> %A, %B
   ret <2 x i32> %div
 ; A9-CHECK: vmov.32
-; SWIFT-CHECK-NOT: vmov.32
+; vmov.32 should not be used to get a lane:
+; vmov.32 <dst>, <src>[<lane>].
+; but vmov.32 <dst>[<lane>], <src> is fine.
+; SWIFT-CHECK-NOT: vmov.32 {{r[0-9]+}}, {{d[0-9]\[[0-9]+\]}}
 }

@@ -8773,6 +8773,98 @@ static SDValue PerformBUILD_VECTORCombine(SDNode *N,
   return DAG.getNode(ISD::BITCAST, dl, VT, BV);
 }
 
+/// \brief Target-specific dag combine xforms for ARMISD::BUILD_VECTOR.
+static SDValue
+PerformARMBUILD_VECTORCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
+  // ARMISD::BUILD_VECTOR is introduced when legalizing ISD::BUILD_VECTOR.
+  // At that time, we may have inserted bitcasts from integer to float.
+  // If these bitcasts have survived DAGCombine, change the lowering of this
+  // BUILD_VECTOR in something more vector friendly, i.e., that does not
+  // force to use floating point types.
+
+  // Make sure we can change the type of the vector.
+  // This is possible iff:
+  // 1. The vector is only used in a bitcast to a integer type. I.e.,
+  //    1.1. Vector is used only once.
+  //    1.2. Use is a bit convert to an integer type.
+  // 2. The size of its operands are 32-bits (64-bits are not legal).
+  EVT VT = N->getValueType(0);
+  EVT EltVT = VT.getVectorElementType();
+
+  // Check 1.1. and 2.
+  if (EltVT.getSizeInBits() != 32 || !N->hasOneUse())
+    return SDValue();
+
+  // By construction, the input type must be float.
+  assert(EltVT == MVT::f32 && "Unexpected type!");
+
+  // Check 1.2.
+  SDNode *Use = *N->use_begin();
+  if (Use->getOpcode() != ISD::BITCAST ||
+      Use->getValueType(0).isFloatingPoint())
+    return SDValue();
+
+  // Check profitability.
+  // Model is, if more than half of the relevant operands are bitcast from
+  // i32, turn the build_vector into a sequence of insert_vector_elt.
+  // Relevant operands are everything that is not statically
+  // (i.e., at compile time) bitcasted.
+  unsigned NumOfBitCastedElts = 0;
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumOfRelevantElts = NumElts;
+  for (unsigned Idx = 0; Idx < NumElts; ++Idx) {
+    SDValue Elt = N->getOperand(Idx);
+    if (Elt->getOpcode() == ISD::BITCAST) {
+      // Assume only bit cast to i32 will go away.
+      if (Elt->getOperand(0).getValueType() == MVT::i32)
+        ++NumOfBitCastedElts;
+    } else if (Elt.getOpcode() == ISD::UNDEF || isa<ConstantSDNode>(Elt))
+      // Constants are statically casted, thus do not count them as
+      // relevant operands.
+      --NumOfRelevantElts;
+  }
+
+  // Check if more than half of the elements require a non-free bitcast.
+  if (NumOfBitCastedElts <= NumOfRelevantElts / 2)
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  // Create the new vector type.
+  EVT VecVT = EVT::getVectorVT(*DAG.getContext(), MVT::i32, NumElts);
+  // Check if the type is legal.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!TLI.isTypeLegal(VecVT))
+    return SDValue();
+
+  // Combine:
+  // ARMISD::BUILD_VECTOR E1, E2, ..., EN.
+  // => BITCAST INSERT_VECTOR_ELT
+  //                      (INSERT_VECTOR_ELT (...), (BITCAST EN-1), N-1),
+  //                      (BITCAST EN), N.
+  SDValue Vec = DAG.getUNDEF(VecVT);
+  SDLoc dl(N);
+  for (unsigned Idx = 0 ; Idx < NumElts; ++Idx) {
+    SDValue V = N->getOperand(Idx);
+    if (V.getOpcode() == ISD::UNDEF)
+      continue;
+    if (V.getOpcode() == ISD::BITCAST &&
+        V->getOperand(0).getValueType() == MVT::i32)
+      // Fold obvious case.
+      V = V.getOperand(0);
+    else {
+      V = DAG.getNode(ISD::BITCAST, SDLoc(V), MVT::i32, V); 
+      // Make the DAGCombiner fold the bitcasts.
+      DCI.AddToWorklist(V.getNode());
+    }
+    SDValue LaneIdx = DAG.getConstant(Idx, MVT::i32);
+    Vec = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VecVT, Vec, V, LaneIdx);
+  }
+  Vec = DAG.getNode(ISD::BITCAST, dl, VT, Vec);
+  // Make the DAGCombiner fold the bitcasts.
+  DCI.AddToWorklist(Vec.getNode());
+  return Vec;
+}
+
 /// PerformInsertEltCombine - Target-specific dag combine xforms for
 /// ISD::INSERT_VECTOR_ELT.
 static SDValue PerformInsertEltCombine(SDNode *N,
@@ -9709,6 +9801,8 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ARMISD::VLD3DUP:
   case ARMISD::VLD4DUP:
     return CombineBaseUpdate(N, DCI);
+  case ARMISD::BUILD_VECTOR:
+    return PerformARMBUILD_VECTORCombine(N, DCI);
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN:
     switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {

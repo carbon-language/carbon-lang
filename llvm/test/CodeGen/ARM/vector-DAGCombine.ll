@@ -160,3 +160,27 @@ define void @reverse_v16i8(<16 x i8>* %loadaddr, <16 x i8>* %storeaddr) {
   store <16 x i8> %v1, <16 x i8>* %storeaddr
   ret void
 }
+
+; <rdar://problem/14170854>.
+; vldr cannot handle unaligned loads.
+; Fall back to vld1.32, which can, instead of using the general purpose loads
+; followed by a costly sequence of instructions to build the vector register.
+; CHECK: t3
+; CHECK: vld1.32 {[[REG:d[0-9]+]][0]}
+; CHECK: vld1.32 {[[REG]][1]}
+; CHECK: vmull.u8 q{{[0-9]+}}, [[REG]], [[REG]]
+define <8 x i16> @t3(i8 zeroext %xf, i8* nocapture %sp0, i8* nocapture %sp1, i32* nocapture %outp) {
+entry:
+  %pix_sp0.0.cast = bitcast i8* %sp0 to i32*
+  %pix_sp0.0.copyload = load i32* %pix_sp0.0.cast, align 1
+  %pix_sp1.0.cast = bitcast i8* %sp1 to i32*
+  %pix_sp1.0.copyload = load i32* %pix_sp1.0.cast, align 1
+  %vecinit = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
+  %vecinit1 = insertelement <2 x i32> %vecinit, i32 %pix_sp1.0.copyload, i32 1
+  %0 = bitcast <2 x i32> %vecinit1 to <8 x i8>
+  %vmull.i = tail call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %0, <8 x i8> %0)
+  ret <8 x i16> %vmull.i
+}
+
+; Function Attrs: nounwind readnone
+declare <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8>, <8 x i8>)
