@@ -14,5 +14,8 @@ declare i32* @realloc(i32*, i32)
 declare i32 @strcpy(...)
 ; CHECK: declare i32 @strcpy(...)
 
+declare i32 @gettimeofday(i8*, i8*)
+; CHECK: declare i32 @gettimeofday(i8* nocapture, i8* nocapture) [[G0]]
+
 ; CHECK: attributes [[G0]] = { nounwind }
 ; CHECK: attributes [[G1]] = { nounwind readonly }
