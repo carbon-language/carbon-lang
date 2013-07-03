@@ -32,6 +32,7 @@ namespace {
 
 class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateDecl(Decl *D);
+  void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCInterfaceDecl *D);
 
 public:
   std::string MigrateDir;
@@ -42,6 +43,7 @@ public:
   FileRemapper &Remapper;
   FileManager &FileMgr;
   const PPConditionalDirectiveRecord *PPRec;
+  Preprocessor &PP;
   bool IsOutputFile;
 
   ObjCMigrateASTConsumer(StringRef migrateDir,
@@ -50,11 +52,12 @@ public:
                          FileRemapper &remapper,
                          FileManager &fileMgr,
                          const PPConditionalDirectiveRecord *PPRec,
+                         Preprocessor &PP,
                          bool isOutputFile = false)
   : MigrateDir(migrateDir),
     MigrateLiterals(migrateLiterals),
     MigrateSubscripting(migrateSubscripting),
-    Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec),
+    Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
     IsOutputFile(isOutputFile) { }
 
 protected:
@@ -105,7 +108,8 @@ ASTConsumer *ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI,
                                                        MigrateSubscripting,
                                                        Remapper,
                                                     CompInst->getFileManager(),
-                                                       PPRec);
+                                                       PPRec,
+                                                       CompInst->getPreprocessor());
   ASTConsumer *Consumers[] = { MTConsumer, WrappedConsumer };
   return new MultiplexConsumer(Consumers);
 }
@@ -184,6 +188,40 @@ void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
   BodyMigrator(*this).TraverseDecl(D);
 }
 
+void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
+                                                      ObjCInterfaceDecl *D) {
+  for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
+       M != MEnd; ++M) {
+    ObjCMethodDecl *Method = (*M);
+    if (Method->isPropertyAccessor())
+      continue;
+    // Is this method candidate to be a getter?
+    if (Method->param_size() == 0) {
+      QualType GRT = Method->getResultType();
+      if (GRT->isVoidType())
+        continue;
+      Selector GetterSelector = Method->getSelector();
+      IdentifierInfo *getterName = GetterSelector.getIdentifierInfoForSlot(0);
+      Selector SetterSelector =
+        SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                               PP.getSelectorTable(),
+                                               getterName);
+      if (ObjCMethodDecl *SetterMethod = D->lookupMethod(SetterSelector, true)) {
+        // Is this a valid setter, matching the target getter?
+        QualType SRT = SetterMethod->getResultType();
+        if (!SRT->isVoidType())
+          continue;
+        const ParmVarDecl *argDecl = *SetterMethod->param_begin();
+        // FIXME. Can relax rule for matching getter/setter type further.
+        if (!Ctx.hasSameType(argDecl->getType(), GRT))
+          continue;
+        // we have a matching setter/getter pair.
+        // TODO. synthesize a suitable property declaration here.
+      }
+    }
+  }
+}
+
 namespace {
 
 class RewritesReceiver : public edit::EditsReceiver {
@@ -203,6 +241,14 @@ public:
 }
 
 void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
+  
+  TranslationUnitDecl *TU = Ctx.getTranslationUnitDecl();
+  for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
+       D != DEnd; ++D) {
+    if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
+      migrateObjCInterfaceDecl(Ctx, CDecl);
+  }
+  
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
   RewritesReceiver Rec(rewriter);
   Editor->applyRewrites(Rec);
@@ -247,5 +293,6 @@ ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
                                     Remapper,
                                     CI.getFileManager(),
                                     PPRec,
+                                    CI.getPreprocessor(),
                                     /*isOutputFile=*/true); 
 }
