@@ -132,10 +132,10 @@ namespace coff {
 namespace {
 
 /// The defined atom for jump table.
-class FuncAtom : public COFFBaseDefinedAtom {
+class FuncAtom : public COFFLinkerInternalAtom {
 public:
   FuncAtom(const File &file, StringRef symbolName)
-      : COFFBaseDefinedAtom(file, symbolName, &rawContent) {}
+      : COFFLinkerInternalAtom(file, &rawContent, symbolName) {}
 
   virtual uint64_t ordinal() const { return 0; }
   virtual Scope scope() const { return scopeGlobal; }

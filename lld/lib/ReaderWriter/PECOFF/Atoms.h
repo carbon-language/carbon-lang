@@ -107,7 +107,6 @@ public:
 
   virtual const File &file() const { return _file; }
   virtual StringRef name() const { return _name; }
-  virtual uint64_t size() const { return _dataref.size(); }
   virtual Interposable interposable() const { return interposeNo; }
   virtual Merge merge() const { return mergeNo; }
   virtual Alignment alignment() const { return Alignment(1); }
@@ -116,10 +115,8 @@ public:
   virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
   virtual DeadStripKind deadStrip() const { return deadStripNormal; }
   virtual bool isAlias() const { return false; }
-  virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
 
   Kind getKind() const { return _kind; }
-  void setKind(Kind kind) { _kind = kind; }
 
   void addReference(std::unique_ptr<COFFReference> reference) {
     _references.push_back(std::move(reference));
@@ -135,22 +132,8 @@ public:
   }
 
 protected:
-  COFFBaseDefinedAtom(const File &file, StringRef name)
-      : _file(file), _name(name), _kind(Kind::Internal) {}
-
-  COFFBaseDefinedAtom(const File &file, StringRef name, ArrayRef<uint8_t> data)
-      : _file(file), _name(name), _dataref(data), _kind(Kind::Internal) {}
-
-  COFFBaseDefinedAtom(const File &file, StringRef name,
-                      std::vector<uint8_t> *data)
-      : _file(file), _name(name), _dataref(*data),
-        _data(std::unique_ptr<std::vector<uint8_t>>(data)),
-        _kind(Kind::Internal) {}
-
-  void setRawContent(std::vector<uint8_t> *data) {
-    _dataref = *data;
-    _data = std::unique_ptr<std::vector<uint8_t>>(data);
-  }
+  COFFBaseDefinedAtom(const File &file, StringRef name, Kind kind)
+      : _file(file), _name(name), _kind(kind) {}
 
 private:
   virtual const Reference *derefIterator(const void *iter) const {
@@ -165,8 +148,6 @@ private:
 
   const File &_file;
   StringRef _name;
-  ArrayRef<uint8_t> _dataref;
-  std::unique_ptr<std::vector<uint8_t>> _data;
   Kind _kind;
   std::vector<std::unique_ptr<COFFReference>> _references;
 };
@@ -177,14 +158,15 @@ public:
   COFFDefinedAtom(const File &file, StringRef name, const coff_symbol *symbol,
                   const coff_section *section, ArrayRef<uint8_t> data,
                   StringRef sectionName, uint64_t ordinal)
-      : COFFBaseDefinedAtom(file, name, data), _symbol(symbol),
-        _section(section), _sectionName(sectionName), _ordinal(ordinal) {
-    setKind(Kind::File);
-  }
+      : COFFBaseDefinedAtom(file, name, Kind::File), _symbol(symbol),
+        _section(section), _dataref(data), _sectionName(sectionName),
+        _ordinal(ordinal) {}
 
   virtual uint64_t ordinal() const { return _ordinal; }
   uint64_t originalOffset() const { return _symbol->Value; }
   virtual StringRef getSectionName() const { return _sectionName; }
+  virtual uint64_t size() const { return _dataref.size(); }
+  virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
@@ -228,9 +210,29 @@ public:
 private:
   const coff_symbol *_symbol;
   const coff_section *_section;
+  ArrayRef<uint8_t> _dataref;
   StringRef _sectionName;
   std::vector<std::unique_ptr<COFFReference>> _references;
   uint64_t _ordinal;
+};
+
+/// A COFFLinkerInternalAtom represents a defined atom created by the linker,
+/// not read from file.
+class COFFLinkerInternalAtom : public COFFBaseDefinedAtom {
+  public:
+  virtual uint64_t ordinal() const { return 0; }
+  virtual Scope scope() const { return scopeGlobal; }
+  virtual Alignment alignment() const { return Alignment(1); }
+  virtual uint64_t size() const { return _data->size(); }
+  virtual ArrayRef<uint8_t> rawContent() const { return *_data; }
+
+protected:
+  COFFLinkerInternalAtom(const File &file, std::vector<uint8_t> *data,
+                         StringRef symbolName = "")
+      : COFFBaseDefinedAtom(file, symbolName, Kind::Internal), _data(data) {}
+
+private:
+  std::vector<uint8_t> *_data;
 };
 
 class COFFSharedLibraryAtom : public SharedLibraryAtom {
