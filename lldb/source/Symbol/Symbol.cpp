@@ -14,6 +14,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/Symtab.h"
+#include "lldb/Symbol/Function.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Symbol/SymbolVendor.h"
@@ -287,60 +288,72 @@ Symbol::GetPrologueByteSize ()
         if (!m_type_data_resolved)
         {
             m_type_data_resolved = true;
-            ModuleSP module_sp (m_addr_range.GetBaseAddress().GetModule());
-            SymbolContext sc;
-            if (module_sp)
+
+            const Address &base_address = m_addr_range.GetBaseAddress();
+            Function *function = base_address.CalculateSymbolContextFunction();
+            if (function)
             {
-                uint32_t resolved_flags = module_sp->ResolveSymbolContextForAddress (m_addr_range.GetBaseAddress(),
-                                                                                     eSymbolContextLineEntry,
-                                                                                     sc);
-                if (resolved_flags & eSymbolContextLineEntry)
+                // Functions have line entries which can also potentially have end of prologue information.
+                // So if this symbol points to a function, use the prologue information from there.
+                m_type_data = function->GetPrologueByteSize();
+            }
+            else
+            {
+                ModuleSP module_sp (base_address.GetModule());
+                SymbolContext sc;
+                if (module_sp)
                 {
-                    // Default to the end of the first line entry.
-                    m_type_data = sc.line_entry.range.GetByteSize();
-
-                    // Set address for next line.
-                    Address addr (m_addr_range.GetBaseAddress());
-                    addr.Slide (m_type_data);
-
-                    // Check the first few instructions and look for one that has a line number that is
-                    // different than the first entry. This is also done in Function::GetPrologueByteSize().
-                    uint16_t total_offset = m_type_data;
-                    for (int idx = 0; idx < 6; ++idx)
+                    uint32_t resolved_flags = module_sp->ResolveSymbolContextForAddress (base_address,
+                                                                                         eSymbolContextLineEntry,
+                                                                                         sc);
+                    if (resolved_flags & eSymbolContextLineEntry)
                     {
-                        SymbolContext sc_temp;
-                        resolved_flags = module_sp->ResolveSymbolContextForAddress (addr, eSymbolContextLineEntry, sc_temp);
-                        // Make sure we got line number information...
-                        if (!(resolved_flags & eSymbolContextLineEntry))
-                            break;
+                        // Default to the end of the first line entry.
+                        m_type_data = sc.line_entry.range.GetByteSize();
 
-                        // If this line number is different than our first one, use it and we're done.
-                        if (sc_temp.line_entry.line != sc.line_entry.line)
+                        // Set address for next line.
+                        Address addr (base_address);
+                        addr.Slide (m_type_data);
+
+                        // Check the first few instructions and look for one that has a line number that is
+                        // different than the first entry. This is also done in Function::GetPrologueByteSize().
+                        uint16_t total_offset = m_type_data;
+                        for (int idx = 0; idx < 6; ++idx)
                         {
-                            m_type_data = total_offset;
-                            break;
+                            SymbolContext sc_temp;
+                            resolved_flags = module_sp->ResolveSymbolContextForAddress (addr, eSymbolContextLineEntry, sc_temp);
+                            // Make sure we got line number information...
+                            if (!(resolved_flags & eSymbolContextLineEntry))
+                                break;
+
+                            // If this line number is different than our first one, use it and we're done.
+                            if (sc_temp.line_entry.line != sc.line_entry.line)
+                            {
+                                m_type_data = total_offset;
+                                break;
+                            }
+
+                            // Slide addr up to the next line address.
+                            addr.Slide (sc_temp.line_entry.range.GetByteSize());
+                            total_offset += sc_temp.line_entry.range.GetByteSize();
+                            // If we've gone too far, bail out.
+                            if (total_offset >= m_addr_range.GetByteSize())
+                                break;
                         }
 
-                        // Slide addr up to the next line address.
-                        addr.Slide (sc_temp.line_entry.range.GetByteSize());
-                        total_offset += sc_temp.line_entry.range.GetByteSize();
-                        // If we've gone too far, bail out.
-                        if (total_offset >= m_addr_range.GetByteSize())
-                            break;
+                        // Sanity check - this may be a function in the middle of code that has debug information, but
+                        // not for this symbol.  So the line entries surrounding us won't lie inside our function.
+                        // In that case, the line entry will be bigger than we are, so we do that quick check and
+                        // if that is true, we just return 0.
+                        if (m_type_data >= m_addr_range.GetByteSize())
+                            m_type_data = 0;
                     }
-
-                    // Sanity check - this may be a function in the middle of code that has debug information, but
-                    // not for this symbol.  So the line entries surrounding us won't lie inside our function.
-                    // In that case, the line entry will be bigger than we are, so we do that quick check and
-                    // if that is true, we just return 0.
-                    if (m_type_data >= m_addr_range.GetByteSize())
+                    else
+                    {
+                        // TODO: expose something in Process to figure out the
+                        // size of a function prologue.
                         m_type_data = 0;
-                }
-                else
-                {
-                    // TODO: expose something in Process to figure out the
-                    // size of a function prologue.
-                    m_type_data = 0;
+                    }
                 }
             }
         }
