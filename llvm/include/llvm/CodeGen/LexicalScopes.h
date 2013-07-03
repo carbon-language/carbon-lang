@@ -141,8 +141,8 @@ private:
   DenseMap<const MDNode *, LexicalScope *> AbstractScopeMap;
 
   /// AbstractScopesList - Tracks abstract scopes constructed while processing
-  /// a function. 
-  SmallVector<LexicalScope *, 4>AbstractScopesList;
+  /// a function.
+  SmallVector<LexicalScope *, 4> AbstractScopesList;
 
   /// CurrentFnLexicalScope - Top level scope for the current function.
   ///
