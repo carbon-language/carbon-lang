@@ -131,7 +131,7 @@ public:
 
   /// Query whether a frame index is a scavenging frame index.
   bool isScavengingFrameIndex(int FI) const {
-    for (SmallVector<ScavengedInfo, 2>::const_iterator I = Scavenged.begin(),
+    for (SmallVectorImpl<ScavengedInfo>::const_iterator I = Scavenged.begin(),
          IE = Scavenged.end(); I != IE; ++I)
       if (I->FrameIndex == FI)
         return true;
@@ -141,7 +141,7 @@ public:
 
   /// Get an array of scavenging frame indices.
   void getScavengingFrameIndices(SmallVectorImpl<int> &A) const {
-    for (SmallVector<ScavengedInfo, 2>::const_iterator I = Scavenged.begin(),
+    for (SmallVectorImpl<ScavengedInfo>::const_iterator I = Scavenged.begin(),
          IE = Scavenged.end(); I != IE; ++I)
       if (I->FrameIndex >= 0)
         A.push_back(I->FrameIndex);

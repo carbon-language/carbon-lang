@@ -263,10 +263,10 @@ namespace llvm {
     SmallVector<SDep, 4> Preds;  // All sunit predecessors.
     SmallVector<SDep, 4> Succs;  // All sunit successors.
 
-    typedef SmallVector<SDep, 4>::iterator pred_iterator;
-    typedef SmallVector<SDep, 4>::iterator succ_iterator;
-    typedef SmallVector<SDep, 4>::const_iterator const_pred_iterator;
-    typedef SmallVector<SDep, 4>::const_iterator const_succ_iterator;
+    typedef SmallVectorImpl<SDep>::iterator pred_iterator;
+    typedef SmallVectorImpl<SDep>::iterator succ_iterator;
+    typedef SmallVectorImpl<SDep>::const_iterator const_pred_iterator;
+    typedef SmallVectorImpl<SDep>::const_iterator const_succ_iterator;
 
     unsigned NodeNum;                   // Entry # of node in the node vector.
     unsigned NodeQueueId;               // Queue id of node.
