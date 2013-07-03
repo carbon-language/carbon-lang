@@ -402,6 +402,11 @@ class DwarfDebug {
   // Whether or not we're emitting info for older versions of gdb on darwin.
   bool IsDarwinGDBCompat;
 
+  // Holder for imported entities.
+  typedef SmallVector<std::pair<const MDNode *, const MDNode *>, 32>
+    ImportedEntityMap;
+  ImportedEntityMap ScopesWithImportedEntities;
+
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
@@ -424,10 +429,6 @@ class DwarfDebug {
 
   // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
-
-  typedef SmallVector<std::pair<const MDNode *, const MDNode *>, 32>
-    ImportedEntityMap;
-  ImportedEntityMap ScopesWithImportedEntities;
 
 private:
 
