@@ -456,6 +456,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
       DebugRangeSymbols.push_back(getLabelBeforeInsn(RI->first));
       DebugRangeSymbols.push_back(getLabelAfterInsn(RI->second));
     }
+
+    // Terminate the range list.
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
     return ScopeDIE;
