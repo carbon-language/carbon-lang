@@ -219,7 +219,7 @@ private:
 /// A COFFLinkerInternalAtom represents a defined atom created by the linker,
 /// not read from file.
 class COFFLinkerInternalAtom : public COFFBaseDefinedAtom {
-  public:
+public:
   virtual uint64_t ordinal() const { return 0; }
   virtual Scope scope() const { return scopeGlobal; }
   virtual Alignment alignment() const { return Alignment(1); }
@@ -235,24 +235,37 @@ private:
   std::vector<uint8_t> *_data;
 };
 
+// A COFFSharedLibraryAtom represents a symbol for data in an import library.  A
+// reference to a COFFSharedLibraryAtom will be transformed to a real reference
+// to an import address table entry in a pass.
 class COFFSharedLibraryAtom : public SharedLibraryAtom {
 public:
-  COFFSharedLibraryAtom(const File &file, StringRef symbolName,
-                        StringRef originalName, StringRef loadName)
-      : _file(file), _symbolName(symbolName), _loadName(loadName),
-        _originalName(originalName) {}
+  COFFSharedLibraryAtom(const File &file, uint16_t hint,
+                        StringRef symbolName, StringRef loadName)
+      : _file(file), _hint(hint), _unmangledName(symbolName),
+        _loadName(loadName), _mangledName(addImpPrefix(symbolName)) {}
 
   virtual const File &file() const { return _file; }
-  virtual StringRef name() const { return _symbolName; }
+  uint16_t hint() const { return _hint; }
+  virtual StringRef name() const { return _mangledName; }
+  virtual StringRef unmangledName() const { return _unmangledName; }
   virtual StringRef loadName() const { return _loadName; }
   virtual bool canBeNullAtRuntime() const { return false; }
-  virtual StringRef originalName() const { return _originalName; }
 
 private:
+  /// Mangle the symbol name by adding "__imp_" prefix. See the file comment of
+  /// ReaderImportHeader.cpp for details about the prefix.
+  std::string addImpPrefix(StringRef symbolName) {
+    std::string ret("__imp_");
+    ret.append(symbolName);
+    return std::move(ret);
+  }
+
   const File &_file;
-  StringRef _symbolName;
+  uint16_t _hint;
+  StringRef _unmangledName;
   StringRef _loadName;
-  StringRef _originalName;
+  std::string _mangledName;
 };
 
 //===----------------------------------------------------------------------===//

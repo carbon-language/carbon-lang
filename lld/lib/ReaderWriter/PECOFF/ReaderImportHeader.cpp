@@ -178,11 +178,12 @@ public:
       return;
     }
 
+    uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(buf + 16);
     StringRef symbolName(buf + 20);
     StringRef dllName(buf + 20 + symbolName.size() + 1);
 
-    const COFFSharedLibraryAtom *dataAtom = addSharedLibraryAtom(symbolName,
-                                                                 dllName);
+    const COFFSharedLibraryAtom *dataAtom = addSharedLibraryAtom(
+        hint, symbolName, dllName);
     int type = *reinterpret_cast<const support::ulittle16_t *>(buf + 18) >> 16;
     if (type == llvm::COFF::IMPORT_CODE)
       addDefinedAtom(symbolName, dllName, dataAtom);
@@ -209,19 +210,17 @@ public:
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
 
 private:
-  const COFFSharedLibraryAtom *addSharedLibraryAtom(StringRef symbolName,
-                                                    StringRef dllName) {
-    auto *name = new (allocator.Allocate<std::string>()) std::string("__imp_");
-    name->append(symbolName);
-    auto *atom = new (allocator.Allocate<COFFSharedLibraryAtom>())
-        COFFSharedLibraryAtom(*this, *name, symbolName, dllName);
+  const COFFSharedLibraryAtom *addSharedLibraryAtom(
+      uint16_t hint, StringRef symbolName, StringRef dllName) {
+    auto *atom = new (_allocator.Allocate<COFFSharedLibraryAtom>())
+        COFFSharedLibraryAtom(*this, hint, symbolName, dllName);
     _sharedLibraryAtoms._atoms.push_back(atom);
     return atom;
   }
 
   void addDefinedAtom(StringRef symbolName, StringRef dllName,
                       const COFFSharedLibraryAtom *dataAtom) {
-    auto *atom = new (allocator.Allocate<FuncAtom>())
+    auto *atom = new (_allocator.Allocate<FuncAtom>())
         FuncAtom(*this, symbolName);
 
     // The first two byte of the atom is JMP instruction.
@@ -233,7 +232,7 @@ private:
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   const TargetInfo &_targetInfo;
-  mutable llvm::BumpPtrAllocator allocator;
+  mutable llvm::BumpPtrAllocator _allocator;
 };
 
 } // end anonymous namespace
