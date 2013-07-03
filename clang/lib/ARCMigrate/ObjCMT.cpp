@@ -193,32 +193,30 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
   for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
        M != MEnd; ++M) {
     ObjCMethodDecl *Method = (*M);
-    if (Method->isPropertyAccessor())
+    if (Method->isPropertyAccessor() ||  Method->param_size() != 0)
       continue;
     // Is this method candidate to be a getter?
-    if (Method->param_size() == 0) {
-      QualType GRT = Method->getResultType();
-      if (GRT->isVoidType())
+    QualType GRT = Method->getResultType();
+    if (GRT->isVoidType())
+      continue;
+    Selector GetterSelector = Method->getSelector();
+    IdentifierInfo *getterName = GetterSelector.getIdentifierInfoForSlot(0);
+    Selector SetterSelector =
+      SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                             PP.getSelectorTable(),
+                                             getterName);
+    if (ObjCMethodDecl *SetterMethod = D->lookupMethod(SetterSelector, true)) {
+      // Is this a valid setter, matching the target getter?
+      QualType SRT = SetterMethod->getResultType();
+      if (!SRT->isVoidType())
         continue;
-      Selector GetterSelector = Method->getSelector();
-      IdentifierInfo *getterName = GetterSelector.getIdentifierInfoForSlot(0);
-      Selector SetterSelector =
-        SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
-                                               PP.getSelectorTable(),
-                                               getterName);
-      if (ObjCMethodDecl *SetterMethod = D->lookupMethod(SetterSelector, true)) {
-        // Is this a valid setter, matching the target getter?
-        QualType SRT = SetterMethod->getResultType();
-        if (!SRT->isVoidType())
-          continue;
-        const ParmVarDecl *argDecl = *SetterMethod->param_begin();
-        // FIXME. Can relax rule for matching getter/setter type further.
-        if (!Ctx.hasSameType(argDecl->getType(), GRT))
-          continue;
-        // we have a matching setter/getter pair.
-        // TODO. synthesize a suitable property declaration here.
+      const ParmVarDecl *argDecl = *SetterMethod->param_begin();
+      // FIXME. Can relax rule for matching getter/setter type further.
+      if (!Ctx.hasSameType(argDecl->getType(), GRT))
+        continue;
+      // we have a matching setter/getter pair.
+      // TODO. synthesize a suitable property declaration here.
       }
-    }
   }
 }
 
