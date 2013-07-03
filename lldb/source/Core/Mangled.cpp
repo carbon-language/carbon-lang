@@ -8,17 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 
-#if defined(__APPLE__)
-#define USE_BUILTIN_LIBCXXABI_DEMANGLER 1
-#endif
-
-#if defined(USE_BUILTIN_LIBCXXABI_DEMANGLER)
-#include "lldb/Core/cxa_demangle.h"
-#else
 // FreeBSD9-STABLE requires this to know about size_t in cxxabi.h
 #include <cstddef>
 #include <cxxabi.h>
-#endif
 
 
 #include "llvm/ADT/DenseMap.h"
@@ -207,11 +199,7 @@ Mangled::GetDemangledName () const
             {
                 // We didn't already mangle this name, demangle it and if all goes well
                 // add it to our map.
-#if defined(USE_BUILTIN_LIBCXXABI_DEMANGLER)
-                char *demangled_name = lldb_cxxabiv1::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
-#else
                 char *demangled_name = abi::__cxa_demangle (mangled_cstr, NULL, NULL, NULL);
-#endif
 
                 if (demangled_name)
                 {

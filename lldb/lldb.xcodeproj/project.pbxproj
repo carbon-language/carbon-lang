@@ -595,7 +595,6 @@
 		AFF87C89150FF672000E1742 /* com.apple.debugserver-secure.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C88150FF672000E1742 /* com.apple.debugserver-secure.plist */; };
 		AFF87C8F150FF688000E1742 /* com.apple.debugserver.applist.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */; };
 		B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B207C4921429607D00F36E4E /* CommandObjectWatchpoint.cpp */; };
-		B21EB71515CC99F100E60059 /* cxa_demangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B21EB71415CC99F100E60059 /* cxa_demangle.cpp */; settings = {COMPILER_FLAGS = "-frtti"; }; };
 		B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */; };
 		B27318421416AC12006039C8 /* WatchpointList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B27318411416AC12006039C8 /* WatchpointList.cpp */; };
 		B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */; };
@@ -1721,8 +1720,6 @@
 		AFF87C8E150FF688000E1742 /* com.apple.debugserver.applist.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = com.apple.debugserver.applist.plist; path = tools/debugserver/source/com.apple.debugserver.applist.plist; sourceTree = "<group>"; };
 		B207C4921429607D00F36E4E /* CommandObjectWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectWatchpoint.cpp; path = source/Commands/CommandObjectWatchpoint.cpp; sourceTree = "<group>"; };
 		B207C4941429609C00F36E4E /* CommandObjectWatchpoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectWatchpoint.h; path = source/Commands/CommandObjectWatchpoint.h; sourceTree = "<group>"; };
-		B21EB71415CC99F100E60059 /* cxa_demangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cxa_demangle.cpp; path = source/Core/cxa_demangle.cpp; sourceTree = "<group>"; };
-		B21EB71815CC9B7500E60059 /* cxa_demangle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = cxa_demangle.h; path = include/lldb/Core/cxa_demangle.h; sourceTree = "<group>"; };
 		B23DD24F12EDFAC1000C3894 /* ARMUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMUtils.h; path = Utility/ARMUtils.h; sourceTree = "<group>"; };
 		B2462246141AD37D00F3D409 /* OptionGroupWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupWatchpoint.cpp; path = source/Interpreter/OptionGroupWatchpoint.cpp; sourceTree = "<group>"; };
 		B2462248141AD39B00F3D409 /* OptionGroupWatchpoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupWatchpoint.h; path = include/lldb/Interpreter/OptionGroupWatchpoint.h; sourceTree = "<group>"; };
@@ -2611,9 +2608,7 @@
 				26BC7D6810F1B77400F91463 /* Log.h */,
 				26BC7E7F10F1B85900F91463 /* Log.cpp */,
 				26BC7D6910F1B77400F91463 /* Mangled.h */,
-				B21EB71815CC9B7500E60059 /* cxa_demangle.h */,
 				26BC7E8010F1B85900F91463 /* Mangled.cpp */,
-				B21EB71415CC99F100E60059 /* cxa_demangle.cpp */,
 				2682100C143A59AE004BCF2D /* MappedHash.h */,
 				26BC7D6A10F1B77400F91463 /* Module.h */,
 				26BC7E8110F1B85900F91463 /* Module.cpp */,
@@ -4267,7 +4262,6 @@
 				2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */,
 				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
 				26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */,
-				B21EB71515CC99F100E60059 /* cxa_demangle.cpp in Sources */,
 				260CC64815D0440D002BF2E0 /* OptionValueArgs.cpp in Sources */,
 				260CC64915D0440D002BF2E0 /* OptionValueArray.cpp in Sources */,
 				260CC64A15D0440D002BF2E0 /* OptionValueBoolean.cpp in Sources */,
