@@ -367,7 +367,13 @@ SymbolFileDWARFDebugMap::InitOSO()
             {
                 const Symbol *symbol = symtab->SymbolAtIndex(sym_idx);
                 lldb::addr_t file_addr = symbol->GetAddress().GetFileAddress();
-                lldb::addr_t byte_size = symbol->GetByteSize();
+                // The N_GSYM and N_STSYM symbols have a byte size and calling
+                // symbol->GetByteSize() can cause an infinite loop where
+                // InitOSO() gets called over and over if we are in the process
+                // of getting the symbol vendor (module->SymbolVendor()). So
+                // use a safer call for now until we can fix this. This is related
+                // to the unified section/symtab changes that just went in.
+                lldb::addr_t byte_size = symtab->CalculateSymbolSize(const_cast<Symbol *>(symbol));
                 DebugMap::Entry debug_map_entry(file_addr, byte_size, OSOEntry(sym_idx, LLDB_INVALID_ADDRESS));
                 m_debug_map.Append(debug_map_entry);
             }

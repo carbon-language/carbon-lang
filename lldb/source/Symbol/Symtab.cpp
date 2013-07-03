@@ -972,15 +972,8 @@ Symtab::CalculateSymbolSize (Symbol *symbol)
     if (symbol < &m_symbols.front() || symbol > &m_symbols.back())
         return 0;
 
-    // See if this symbol already has a byte size?
-    size_t byte_size = symbol->GetByteSize();
-
-    if (byte_size)
-    {
-        // It does, just return it
-        return byte_size;
-    }
-
+    size_t byte_size = 0;
+    
     // Else if this is an address based symbol, figure out the delta between
     // it and the next address based symbol
     if (symbol->ValueIsAddress())
