@@ -1,4 +1,5 @@
 ; RUN: opt < %s -functionattrs -S | FileCheck %s
+; RUN: opt < %s -mtriple=x86_64-apple-macosx10.8.0 -functionattrs -S | FileCheck -check-prefix=POSIX %s
 
 declare i8* @fopen(i8*, i8*)
 ; CHECK: declare noalias i8* @fopen(i8* nocapture, i8* nocapture) [[G0:#[0-9]]] 
@@ -15,7 +16,8 @@ declare i32 @strcpy(...)
 ; CHECK: declare i32 @strcpy(...)
 
 declare i32 @gettimeofday(i8*, i8*)
-; CHECK: declare i32 @gettimeofday(i8* nocapture, i8* nocapture) [[G0]]
+; CHECK-POSIX: declare i32 @gettimeofday(i8* nocapture, i8* nocapture) [[G0:#[0-9]+]]
 
 ; CHECK: attributes [[G0]] = { nounwind }
 ; CHECK: attributes [[G1]] = { nounwind readonly }
+; CHECK-POSIX: attributes [[G0]] = { nounwind }
