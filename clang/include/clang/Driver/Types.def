@@ -66,7 +66,7 @@ TYPE("objective-c++-header",     ObjCXXHeader, PP_ObjCXXHeader, 0,       "pu")
 // Other languages.
 TYPE("ada",                      Ada,          INVALID,         0,       "u")
 TYPE("assembler",                PP_Asm,       INVALID,         "s",     "au")
-TYPE("assembler-with-cpp",       Asm,          PP_Asm,          0,       "au")
+TYPE("assembler-with-cpp",       Asm,          PP_Asm,          "S",     "au")
 TYPE("f95",                      PP_Fortran,   INVALID,         0,       "u")
 TYPE("f95-cpp-input",            Fortran,      PP_Fortran,      0,       "u")
 TYPE("java",                     Java,         INVALID,         0,       "u")
