@@ -1066,9 +1066,23 @@ private:
       return true;
 
     // If we need to break somewhere inside the LHS of a binary expression, we
-    // should also break after the operator.
+    // should also break after the operator. Otherwise, the formatting would
+    // hide the operator precedence, e.g. in:
+    //   if (aaaaaaaaaaaaaa ==
+    //           bbbbbbbbbbbbbb && c) {..
+    // For comparisons, we only apply this rule, if the LHS is a binary
+    // expression itself as otherwise, the line breaks seem superfluous.
+    // We need special cases for ">>" which we have split into two ">" while
+    // lexing in order to make template parsing easier.
+    bool IsComparison = (Previous.getPrecedence() == prec::Relational ||
+                         Previous.getPrecedence() == prec::Equality) &&
+                        Previous.Previous &&
+                        Previous.Previous->Type != TT_BinaryOperator; // For >>.
+    bool LHSIsBinaryExpr =
+        Previous.Previous && Previous.Previous->FakeRParens > 0;
     if (Previous.Type == TT_BinaryOperator &&
-        Current.Type != TT_BinaryOperator && // Special case for ">>".
+        (!IsComparison || LHSIsBinaryExpr) &&
+        Current.Type != TT_BinaryOperator && // For >>.
         !Current.isTrailingComment() &&
         !Previous.isOneOf(tok::lessless, tok::question) &&
         Previous.getPrecedence() != prec::Assignment &&

@@ -2156,6 +2156,38 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
                "     bbbbbbbbbbbbbbbbbb) && // aaaaaaaaaaaaaaaa\n"
                "    cccccc) {\n}");
 
+  // If the LHS of a comparison is not a binary expression itself, the
+  // additional linebreak confuses many people.
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) > 5) {\n"
+      "}");
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) == 5) {\n"
+      "}");
+  // Even explicit parentheses stress the precedence enough to make the
+  // additional break unnecessary.
+  verifyFormat(
+      "if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) == 5) {\n"
+      "}");
+  // This cases is borderline, but with the indentation it is still readable.
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "        aaaaaaaaaaaaaaa) > aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "                               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
+      "}",
+      getLLVMStyleWithColumns(75));
+
+  // If the LHS is a binary expression, we should still use the additional break
+  // as otherwise the formatting hides the operator precedence.
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ==\n"
+      "    5) {\n"
+      "}");
+
   FormatStyle OnePerLine = getLLVMStyle();
   OnePerLine.BinPackParameters = false;
   verifyFormat(
