@@ -877,7 +877,8 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__REGISTER_PREFIX__", "");
 
   // FIXME: Should be controlled by command line option.
-  Builder.defineMacro("__LONG_DOUBLE_128__");
+  if (LongDoubleWidth == 128)
+    Builder.defineMacro("__LONG_DOUBLE_128__");
 
   if (Opts.AltiVec) {
     Builder.defineMacro("__VEC__", "10206");

@@ -2826,3 +2826,5 @@
 //
 // RUN: %clang_cc1 -triple arm-linux-androideabi -E -dM < /dev/null | FileCheck -check-prefix ANDROID %s
 // ANDROID: __ANDROID__ 1
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-freebsd < /dev/null | FileCheck -check-prefix PPC64-FREEBSD %s
+// PPC64-FREEBSD-NOT: #define __LONG_DOUBLE_128__ 1
