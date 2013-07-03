@@ -1,5 +1,5 @@
-// RUN: %clang -fsyntax-only -std=c++11 %s
-// RUN: %clang -fsyntax-only -std=c++11 -fmodules %s
+// RUN: %clang -ffreestanding -fsyntax-only -std=c++11 %s
+// RUN: %clang -ffreestanding -fsyntax-only -std=c++11 -fmodules %s
 
 #include <stdalign.h>
 
