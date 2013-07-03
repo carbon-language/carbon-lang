@@ -392,7 +392,7 @@ def VCTUXS : VXForm_1<906, (outs vrrc:$vD), (ins u5imm:$UIMM, vrrc:$vB),
 // Defines with the UIM field set to 0 for floating-point
 // to integer (fp_to_sint/fp_to_uint) conversions and integer
 // to floating-point (sint_to_fp/uint_to_fp) conversions.
-let VA = 0 in {
+let isCodeGenOnly = 1, VA = 0 in {
 def VCFSX_0 : VXForm_1<842, (outs vrrc:$vD), (ins vrrc:$vB),
                        "vcfsx $vD, $vB, 0", VecFP,
                        [(set v4f32:$vD,
@@ -664,7 +664,7 @@ def VCMPGTSWo : VCMPo<902, "vcmpgtsw. $vD, $vA, $vB", v4i32>;
 def VCMPGTUW  : VCMP <646, "vcmpgtuw $vD, $vA, $vB" , v4i32>;
 def VCMPGTUWo : VCMPo<646, "vcmpgtuw. $vD, $vA, $vB", v4i32>;
                       
-let isCodeGenOnly = 1 in
+let isCodeGenOnly = 1 in {
 def V_SET0 : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
                       "vxor $vD, $vD, $vD", VecFP,
                       [(set v4i32:$vD, (v4i32 immAllZerosV))]>;
@@ -672,6 +672,7 @@ let IMM=-1 in {
 def V_SETALLONES : VXForm_3<908, (outs vrrc:$vD), (ins),
                       "vspltisw $vD, -1", VecFP,
                       [(set v4i32:$vD, (v4i32 immAllOnesV))]>;
+}
 }
 } // VALU Operations.
 
