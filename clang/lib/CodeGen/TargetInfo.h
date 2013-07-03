@@ -74,6 +74,10 @@ namespace clang {
     ///     through such registers.
     virtual bool extendPointerWithSExt() const { return false; }
 
+    /// Controls whether BIpow* emit an intrinsic call instead of a library
+    /// function call.
+    virtual bool emitIntrinsicForPow() const { return true; }
+
     /// Determines the DWARF register number for the stack pointer, for
     /// exception-handling purposes.  Implements __builtin_dwarf_sp_column.
     ///
