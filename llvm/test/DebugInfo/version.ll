@@ -1,6 +1,10 @@
-; RUN: llc -O0 < %s | FileCheck %s
+; REQUIRES: object-emission
+
+; RUN: llc -O0 -filetype=obj < %s > %t
+; RUN: llvm-dwarfdump %t | FileCheck %s
+
 ; Make sure we are generating DWARF version 3 when module flag says so.
-; CHECK: .short	3 ## DWARF version number
+; CHECK: Compile Unit: length = {{.*}} version = 0x0003
 
 define i32 @main() #0 {
 entry:
