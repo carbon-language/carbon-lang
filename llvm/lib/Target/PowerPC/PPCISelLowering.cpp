@@ -626,7 +626,7 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::RET_FLAG:        return "PPCISD::RET_FLAG";
   case PPCISD::EH_SJLJ_SETJMP:  return "PPCISD::EH_SJLJ_SETJMP";
   case PPCISD::EH_SJLJ_LONGJMP: return "PPCISD::EH_SJLJ_LONGJMP";
-  case PPCISD::MFCR:            return "PPCISD::MFCR";
+  case PPCISD::MFOCRF:          return "PPCISD::MFOCRF";
   case PPCISD::VCMP:            return "PPCISD::VCMP";
   case PPCISD::VCMPo:           return "PPCISD::VCMPo";
   case PPCISD::LBRX:            return "PPCISD::LBRX";
@@ -5539,7 +5539,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   // Now that we have the comparison, emit a copy from the CR to a GPR.
   // This is flagged to the above dot comparison.
-  SDValue Flags = DAG.getNode(PPCISD::MFCR, dl, MVT::i32,
+  SDValue Flags = DAG.getNode(PPCISD::MFOCRF, dl, MVT::i32,
                                 DAG.getRegister(PPC::CR6, MVT::i32),
                                 CompNode.getValue(1));
 
@@ -7293,16 +7293,16 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         }
       }
 
-      // If the user is a MFCR instruction, we know this is safe.  Otherwise we
-      // give up for right now.
-      if (FlagUser->getOpcode() == PPCISD::MFCR)
+      // If the user is a MFOCRF instruction, we know this is safe.
+      // Otherwise we give up for right now.
+      if (FlagUser->getOpcode() == PPCISD::MFOCRF)
         return SDValue(VCMPoNode, 0);
     }
     break;
   }
   case ISD::BR_CC: {
     // If this is a branch on an altivec predicate comparison, lower this so
-    // that we don't have to do a MFCR: instead, branch directly on CR6.  This
+    // that we don't have to do a MFOCRF: instead, branch directly on CR6.  This
     // lowering is done pre-legalize, because the legalizer lowers the predicate
     // compare down to code that is difficult to reassemble.
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();

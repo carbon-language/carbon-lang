@@ -116,11 +116,10 @@ namespace llvm {
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,
 
-      /// R32 = MFCR(CRREG, INFLAG) - Represents the MFCRpseud/MFOCRF
-      /// instructions.  This copies the bits corresponding to the specified
-      /// CRREG into the resultant GPR.  Bits corresponding to other CR regs
-      /// are undefined.
-      MFCR,
+      /// R32 = MFOCRF(CRREG, INFLAG) - Represents the MFOCRF instruction.
+      /// This copies the bits corresponding to the specified CRREG into the
+      /// resultant GPR.  Bits corresponding to other CR regs are undefined.
+      MFOCRF,
 
       // EH_SJLJ_SETJMP - SjLj exception handling setjmp.
       EH_SJLJ_SETJMP,

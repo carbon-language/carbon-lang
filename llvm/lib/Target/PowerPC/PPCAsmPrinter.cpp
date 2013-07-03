@@ -662,15 +662,20 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                                 .addExpr(SymDtprel));
     return;
   }
-  case PPC::MFCRpseud:
-  case PPC::MFCR8pseud:
-    // Transform: %R3 = MFCRpseud %CR7
-    // Into:      %R3 = MFCR      ;; cr7
-    OutStreamer.AddComment(PPCInstPrinter::
-                           getRegisterName(MI->getOperand(1).getReg()));
-    OutStreamer.EmitInstruction(MCInstBuilder(Subtarget.isPPC64() ? PPC::MFCR8 : PPC::MFCR)
-      .addReg(MI->getOperand(0).getReg()));
-    return;
+  case PPC::MFOCRF:
+  case PPC::MFOCRF8:
+    if (!Subtarget.hasMFOCRF()) {
+      // Transform: %R3 = MFOCRF %CR7
+      // Into:      %R3 = MFCR   ;; cr7
+      unsigned NewOpcode =
+        MI->getOpcode() == PPC::MFOCRF ? PPC::MFCR : PPC::MFCR8;
+      OutStreamer.AddComment(PPCInstPrinter::
+                             getRegisterName(MI->getOperand(1).getReg()));
+      OutStreamer.EmitInstruction(MCInstBuilder(NewOpcode)
+                                  .addReg(MI->getOperand(0).getReg()));
+      return;
+    }
+    break;
   case PPC::SYNC:
     // In Book E sync is called msync, handle this special case here...
     if (Subtarget.isBookE()) {

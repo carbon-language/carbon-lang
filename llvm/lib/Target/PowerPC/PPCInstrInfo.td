@@ -1902,30 +1902,14 @@ def MTCRF : XFXForm_5<31, 144, (outs crbitm:$FXM), (ins gprc:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>,
             PPC970_MicroCode, PPC970_Unit_CRU;
 
-// This is a pseudo for MFCR, which implicitly uses all 8 of its subregisters;
-// declaring that here gives the local register allocator problems with this:
-//  vreg = MCRF  CR0
-//  MFCR  <kill of whatever preg got assigned to vreg>
-// while not declaring it breaks DeadMachineInstructionElimination.
-// As it turns out, in all cases where we currently use this,
-// we're only interested in one subregister of it.  Represent this in the
-// instruction to keep the register allocator from becoming confused.
-//
-// FIXME: Make this a real Pseudo instruction when the JIT switches to MC.
-let isCodeGenOnly = 1 in
-def MFCRpseud: XFXForm_3<31, 19, (outs gprc:$rT), (ins crbitm:$FXM),
-                       "#MFCRpseud", SprMFCR>,
-            PPC970_MicroCode, PPC970_Unit_CRU;
-
 def MFOCRF: XFXForm_5a<31, 19, (outs gprc:$rT), (ins crbitm:$FXM),
                        "mfocrf $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
-} // neverHasSideEffects = 1
 
-let neverHasSideEffects = 1 in
 def MFCR : XFXForm_3<31, 19, (outs gprc:$rT), (ins),
                      "mfcr $rT", SprMFCR>,
                      PPC970_MicroCode, PPC970_Unit_CRU;
+} // neverHasSideEffects = 1
 
 // Pseudo instruction to perform FADD in round-to-zero mode.
 let usesCustomInserter = 1, Uses = [RM] in {

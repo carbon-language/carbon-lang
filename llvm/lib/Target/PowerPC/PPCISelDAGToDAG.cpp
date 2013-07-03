@@ -854,12 +854,8 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, CR7Reg, CCReg,
                                InFlag).getValue(1);
 
-  if (PPCSubTarget.hasMFOCRF())
-    IntCR = SDValue(CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32, CR7Reg,
-                                           CCReg), 0);
-  else
-    IntCR = SDValue(CurDAG->getMachineNode(PPC::MFCRpseud, dl, MVT::i32,
-                                           CR7Reg, CCReg), 0);
+  IntCR = SDValue(CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32, CR7Reg,
+                                         CCReg), 0);
 
   SDValue Ops[] = { IntCR, getI32Imm((32-(3-Idx)) & 31),
                       getI32Imm(31), getI32Imm(31) };
@@ -974,15 +970,10 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
                                   getSmallIPtrImm(0));
   }
 
-  case PPCISD::MFCR: {
+  case PPCISD::MFOCRF: {
     SDValue InFlag = N->getOperand(1);
-    // Use MFOCRF if supported.
-    if (PPCSubTarget.hasMFOCRF())
-      return CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32,
-                                    N->getOperand(0), InFlag);
-    else
-      return CurDAG->getMachineNode(PPC::MFCRpseud, dl, MVT::i32,
-                                    N->getOperand(0), InFlag);
+    return CurDAG->getMachineNode(PPC::MFOCRF, dl, MVT::i32,
+                                  N->getOperand(0), InFlag);
   }
 
   case ISD::SDIV: {
