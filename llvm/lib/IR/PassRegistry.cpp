@@ -21,6 +21,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/RWMutex.h"
 #include <vector>
 
 using namespace llvm;
@@ -35,7 +36,7 @@ PassRegistry *PassRegistry::getPassRegistry() {
   return &*PassRegistryObj;
 }
 
-static ManagedStatic<sys::SmartMutex<true> > Lock;
+static ManagedStatic<sys::SmartRWMutex<true> > Lock;
 
 //===----------------------------------------------------------------------===//
 // PassRegistryImpl
@@ -72,7 +73,7 @@ void *PassRegistry::getImpl() const {
 //
 
 PassRegistry::~PassRegistry() {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedWriter<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(pImpl);
   
   for (std::vector<const PassInfo*>::iterator I = Impl->ToFree.begin(),
@@ -84,14 +85,14 @@ PassRegistry::~PassRegistry() {
 }
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedReader<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.find(TI);
   return I != Impl->PassInfoMap.end() ? I->second : 0;
 }
 
 const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedReader<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::StringMapType::const_iterator
     I = Impl->PassInfoStringMap.find(Arg);
@@ -103,7 +104,7 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
 //
 
 void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedWriter<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   bool Inserted =
     Impl->PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
@@ -120,7 +121,7 @@ void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
 }
 
 void PassRegistry::unregisterPass(const PassInfo &PI) {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedWriter<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::MapType::iterator I = 
     Impl->PassInfoMap.find(PI.getTypeInfo());
@@ -132,7 +133,7 @@ void PassRegistry::unregisterPass(const PassInfo &PI) {
 }
 
 void PassRegistry::enumerateWith(PassRegistrationListener *L) {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedReader<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   for (PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.begin(),
        E = Impl->PassInfoMap.end(); I != E; ++I)
@@ -160,7 +161,7 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
     assert(ImplementationInfo &&
            "Must register pass before adding to AnalysisGroup!");
 
-    sys::SmartScopedLock<true> Guard(*Lock);
+    sys::SmartScopedWriter<true> Guard(*Lock);
     
     // Make sure we keep track of the fact that the implementation implements
     // the interface.
@@ -186,13 +187,13 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
 }
 
 void PassRegistry::addRegistrationListener(PassRegistrationListener *L) {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedWriter<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   Impl->Listeners.push_back(L);
 }
 
 void PassRegistry::removeRegistrationListener(PassRegistrationListener *L) {
-  sys::SmartScopedLock<true> Guard(*Lock);
+  sys::SmartScopedWriter<true> Guard(*Lock);
   
   // NOTE: This is necessary, because removeRegistrationListener() can be called
   // as part of the llvm_shutdown sequence.  Since we have no control over the
