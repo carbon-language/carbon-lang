@@ -443,7 +443,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   if (Ranges.empty())
     return 0;
 
-  SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
+  // If we have multiple ranges, emit them into the range section.
   if (Ranges.size() > 1) {
     // .debug_range section has not been laid out yet. Emit offset in
     // .debug_range as a uint, size 4, for now. emitDIE will handle
@@ -463,6 +463,8 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
     return ScopeDIE;
   }
 
+  // Construct the address range for this DIE.
+  SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
   MCSymbol *Start = getLabelBeforeInsn(RI->first);
   MCSymbol *End = getLabelAfterInsn(RI->second);
 
