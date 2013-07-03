@@ -41,7 +41,6 @@ class DIEAbbrev;
 class DIE;
 class DIEBlock;
 class DIEEntry;
-class DwarfDebug;
 
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to record source line correspondence.
