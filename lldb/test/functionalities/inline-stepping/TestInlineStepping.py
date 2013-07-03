@@ -18,9 +18,6 @@ class TestInlineStepping(TestBase):
         self.buildDsym()
         self.inline_stepping()
 
-    @expectedFailureGcc # Some versions of GCC emit DWARF that considers functions to start at the line with the '{' whereas this test
-                        # expects the first line of a function to be the first line of source (i.e. what clang does). As such, this test
-                        # fails with some versions of GCC.
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):
@@ -36,9 +33,6 @@ class TestInlineStepping(TestBase):
         self.buildDsym()
         self.inline_stepping_step_over()
 
-    @expectedFailureGcc # Some versions of GCC emit DWARF that considers functions to start at the line with the '{' whereas this test
-                        # expects the first line of a function to be the first line of source (i.e. what clang does). As such, this test
-                        # fails with some versions of GCC.
     @python_api_test
     @dwarf_test
     def test_step_over_with_dwarf_and_python_api(self):
