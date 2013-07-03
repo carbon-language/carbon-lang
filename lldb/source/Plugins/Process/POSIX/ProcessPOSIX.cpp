@@ -313,9 +313,9 @@ ProcessPOSIX::DoDetach(bool keep_stopped)
     Error error;
     if (keep_stopped)
     {
-        // FIXME: If you want to implement keep_stopped on Linux,
+        // FIXME: If you want to implement keep_stopped,
         // this would be the place to do it.
-        error.SetErrorString("Detaching with keep_stopped true is not currently supported on Linux.");
+        error.SetErrorString("Detaching with keep_stopped true is not currently supported on this platform.");
         return error;
     }
 
