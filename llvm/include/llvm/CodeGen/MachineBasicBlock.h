@@ -296,6 +296,11 @@ public:
   /// is an error to add the same register to the same set more than once.
   void addLiveIn(unsigned Reg)  { LiveIns.push_back(Reg); }
 
+  /// Add PhysReg as live in to this block, and ensure that there is a copy of
+  /// PhysReg to a virtual register of class RC. Return the virtual register
+  /// that is a copy of the live in PhysReg.
+  unsigned addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC);
+
   /// removeLiveIn - Remove the specified register from the live in set.
   ///
   void removeLiveIn(unsigned Reg);

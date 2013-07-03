@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
@@ -339,6 +340,38 @@ void MachineBasicBlock::removeLiveIn(unsigned Reg) {
 bool MachineBasicBlock::isLiveIn(unsigned Reg) const {
   livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
   return I != livein_end();
+}
+
+unsigned
+MachineBasicBlock::addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC) {
+  assert(getParent() && "MBB must be inserted in function");
+  assert(TargetRegisterInfo::isPhysicalRegister(PhysReg) && "Expected physreg");
+  assert(RC && "Register class is required");
+  assert((isLandingPad() || this == &getParent()->front()) &&
+         "Only the entry block and landing pads can have physreg live ins");
+
+  bool LiveIn = isLiveIn(PhysReg);
+  iterator I = getFirstNonPHI(), E = end();
+  MachineRegisterInfo &MRI = getParent()->getRegInfo();
+  const TargetInstrInfo &TII = *getParent()->getTarget().getInstrInfo();
+
+  // Look for an existing copy.
+  if (LiveIn)
+    for (;I != E && I->isCopy(); ++I)
+      if (I->getOperand(1).getReg() == PhysReg) {
+        unsigned VirtReg = I->getOperand(0).getReg();
+        if (!MRI.constrainRegClass(VirtReg, RC))
+          llvm_unreachable("Incompatible live-in register class.");
+        return VirtReg;
+      }
+
+  // No luck, create a virtual register.
+  unsigned VirtReg = MRI.createVirtualRegister(RC);
+  BuildMI(*this, I, DebugLoc(), TII.get(TargetOpcode::COPY), VirtReg)
+    .addReg(PhysReg, RegState::Kill);
+  if (!LiveIn)
+    addLiveIn(PhysReg);
+  return VirtReg;
 }
 
 void MachineBasicBlock::moveBefore(MachineBasicBlock *NewAfter) {
