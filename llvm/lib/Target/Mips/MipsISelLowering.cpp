@@ -346,11 +346,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::FNEG,             MVT::f64,   Expand);
   }
 
-  setOperationAction(ISD::EXCEPTIONADDR,     MVT::i32, Expand);
-  setOperationAction(ISD::EXCEPTIONADDR,     MVT::i64, Expand);
-  setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);
-  setOperationAction(ISD::EHSELECTION,       MVT::i64, Expand);
-
   setOperationAction(ISD::EH_RETURN, MVT::Other, Custom);
 
   setOperationAction(ISD::VAARG,             MVT::Other, Expand);

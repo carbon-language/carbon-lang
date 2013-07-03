@@ -1428,11 +1428,6 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
     setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
 
-    setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
-    setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);
-    setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
-    setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
-
     setOperationAction(ISD::EH_RETURN,     MVT::Other, Custom);
 
     if (TM.getSubtargetImpl()->isSubtargetV2()) {

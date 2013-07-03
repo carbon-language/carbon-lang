@@ -3269,22 +3269,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       Results.push_back(ExpandConstantFP(CFP, true));
     break;
   }
-  case ISD::EHSELECTION: {
-    unsigned Reg = TLI.getExceptionSelectorRegister();
-    assert(Reg && "Can't expand to unknown register!");
-    Results.push_back(DAG.getCopyFromReg(Node->getOperand(1), dl, Reg,
-                                         Node->getValueType(0)));
-    Results.push_back(Results[0].getValue(1));
-    break;
-  }
-  case ISD::EXCEPTIONADDR: {
-    unsigned Reg = TLI.getExceptionPointerRegister();
-    assert(Reg && "Can't expand to unknown register!");
-    Results.push_back(DAG.getCopyFromReg(Node->getOperand(0), dl, Reg,
-                                         Node->getValueType(0)));
-    Results.push_back(Results[0].getValue(1));
-    break;
-  }
   case ISD::FSUB: {
     EVT VT = Node->getValueType(0);
     assert(TLI.isOperationLegalOrCustom(ISD::FADD, VT) &&
