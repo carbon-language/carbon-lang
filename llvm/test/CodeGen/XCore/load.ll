@@ -39,3 +39,12 @@ entry:
 	%2 = zext i8 %1 to i32
 	ret i32 %2
 }
+
+@GConst = external constant i32
+define i32 @load_cp() nounwind {
+entry:
+; CHECK: load_cp:
+; CHECK: ldw r0, cp[GConst]
+  %0 = load i32* @GConst
+  ret i32 %0
+}

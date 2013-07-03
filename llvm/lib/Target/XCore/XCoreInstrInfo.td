@@ -279,12 +279,6 @@ multiclass FRU6_LRU6_backwards_branch<bits<6> opc, string OpcStr> {
                     !strconcat(OpcStr, " $a, $b"), []>;
 }
 
-multiclass FRU6_LRU6_cp<bits<6> opc, string OpcStr> {
-  def _ru6: _FRU6<opc, (outs RRegs:$a), (ins i32imm:$b),
-                  !strconcat(OpcStr, " $a, cp[$b]"), []>;
-  def _lru6: _FLRU6<opc, (outs RRegs:$a), (ins i32imm:$b),
-                    !strconcat(OpcStr, " $a, cp[$b]"), []>;
-}
 
 // U6
 multiclass FU6_LU6<bits<10> opc, string OpcStr, SDNode OpNode> {
@@ -539,8 +533,13 @@ def STWDP_lru6 : _FLRU6<0b010100, (outs), (ins RRegs:$a, i32imm:$b),
                         [(store RRegs:$a, (dprelwrapper tglobaladdr:$b))]>;
 
 //let Uses = [CP] in ..
-let mayLoad = 1, isReMaterializable = 1, neverHasSideEffects = 1 in
-defm LDWCP : FRU6_LRU6_cp<0b011011, "ldw">;
+let mayLoad = 1, isReMaterializable = 1, neverHasSideEffects = 1 in {
+def LDWCP_ru6 : _FRU6<0b011011, (outs RRegs:$a), (ins i32imm:$b),
+                        "ldw $a, cp[$b]", []>;
+def LDWCP_lru6: _FLRU6<0b011011, (outs RRegs:$a), (ins i32imm:$b),
+                      "ldw $a, cp[$b]",
+                      [(set RRegs:$a, (load (cprelwrapper tglobaladdr:$b)))]>;
+}
 
 let Uses = [SP] in {
 let mayStore=1 in {
