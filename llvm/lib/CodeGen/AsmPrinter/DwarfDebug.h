@@ -114,9 +114,9 @@ typedef struct DotDebugLocEntry {
   bool isInt() const         { return EntryKind == E_Integer; }
   bool isConstantFP() const  { return EntryKind == E_ConstantFP; }
   bool isConstantInt() const { return EntryKind == E_ConstantInt; }
-  int64_t getInt()                    { return Constants.Int; }
-  const ConstantFP *getConstantFP()   { return Constants.CFP; }
-  const ConstantInt *getConstantInt() { return Constants.CIP; }
+  int64_t getInt() const                    { return Constants.Int; }
+  const ConstantFP *getConstantFP() const   { return Constants.CFP; }
+  const ConstantInt *getConstantInt() const { return Constants.CIP; }
 } DotDebugLocEntry;
 
 //===----------------------------------------------------------------------===//
