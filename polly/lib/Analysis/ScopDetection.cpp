@@ -276,53 +276,54 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   if (isa<IntToPtrInst>(BaseValue))
     INVALID(Other, "Find bad intToptr prt: " << *BaseValue);
 
-  if (!IgnoreAliasing) {
-    // Check if the base pointer of the memory access does alias with
-    // any other pointer. This cannot be handled at the moment.
-    AliasSet &AS = Context.AST
-        .getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
-                               Inst.getMetadata(LLVMContext::MD_tbaa));
+  if (IgnoreAliasing)
+    return true;
 
-    // INVALID triggers an assertion in verifying mode, if it detects that a
-    // SCoP was detected by SCoP detection and that this SCoP was invalidated by
-    // a pass that stated it would preserve the SCoPs. We disable this check as
-    // the independent blocks pass may create memory references which seem to
-    // alias, if -basicaa is not available. They actually do not, but as we can
-    // not proof this without -basicaa we would fail. We disable this check to
-    // not cause irrelevant verification failures.
-    if (!AS.isMustAlias()) {
-      std::string Message;
-      raw_string_ostream OS(Message);
+  // Check if the base pointer of the memory access does alias with
+  // any other pointer. This cannot be handled at the moment.
+  AliasSet &AS = Context.AST
+    .getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
+                           Inst.getMetadata(LLVMContext::MD_tbaa));
 
-      OS << "Possible aliasing: ";
+  // INVALID triggers an assertion in verifying mode, if it detects that a
+  // SCoP was detected by SCoP detection and that this SCoP was invalidated by
+  // a pass that stated it would preserve the SCoPs. We disable this check as
+  // the independent blocks pass may create memory references which seem to
+  // alias, if -basicaa is not available. They actually do not, but as we can
+  // not proof this without -basicaa we would fail. We disable this check to
+  // not cause irrelevant verification failures.
+  if (!AS.isMustAlias()) {
+    std::string Message;
+    raw_string_ostream OS(Message);
 
-      std::vector<Value *> Pointers;
+    OS << "Possible aliasing: ";
 
-      for (AliasSet::iterator AI = AS.begin(), AE = AS.end(); AI != AE; ++AI)
-        Pointers.push_back(AI.getPointer());
+    std::vector<Value *> Pointers;
 
-      std::sort(Pointers.begin(), Pointers.end());
+    for (AliasSet::iterator AI = AS.begin(), AE = AS.end(); AI != AE; ++AI)
+      Pointers.push_back(AI.getPointer());
 
-      for (std::vector<Value *>::iterator PI = Pointers.begin(),
-                                          PE = Pointers.end();
-           ;) {
-        Value *V = *PI;
+    std::sort(Pointers.begin(), Pointers.end());
 
-        if (V->getName().size() == 0)
-          OS << "\"" << *V << "\"";
-        else
-          OS << "\"" << V->getName() << "\"";
+    for (std::vector<Value *>::iterator PI = Pointers.begin(),
+           PE = Pointers.end();
+         ;) {
+      Value *V = *PI;
 
-        ++PI;
+      if (V->getName().size() == 0)
+        OS << "\"" << *V << "\"";
+      else
+        OS << "\"" << V->getName() << "\"";
 
-        if (PI != PE)
-          OS << ", ";
-        else
-          break;
-      }
+      ++PI;
 
-      INVALID_NOVERIFY(Alias, OS.str());
+      if (PI != PE)
+        OS << ", ";
+      else
+        break;
     }
+
+    INVALID_NOVERIFY(Alias, OS.str());
   }
 
   return true;
