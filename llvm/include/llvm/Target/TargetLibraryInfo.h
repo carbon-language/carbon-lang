@@ -308,6 +308,8 @@ namespace llvm {
       getpwnam,
       /// char *gets(char *s);
       gets,
+      /// int gettimeofday(struct timeval *tp, void *tzp);
+      gettimeofday,
       /// uint32_t htonl(uint32_t hostlong);
       htonl,
       /// uint16_t htons(uint16_t hostshort);
