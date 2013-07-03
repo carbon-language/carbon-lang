@@ -2,6 +2,8 @@
 // RUN:   -verify %s
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -DTEST_64BIT_X86 -fsyntax-only \
 // RUN:   -verify %s
+// RUN: %clang_cc1 -triple powerpc64-pc-linux-gnu -DTEST_64BIT_PPC64 -fsyntax-only \
+// RUN:   -verify %s
 
 typedef int i16_1 __attribute((mode(HI)));
 int i16_1_test[sizeof(i16_1) == 2 ? 1 : -1];
@@ -56,6 +58,13 @@ void test_long_to_ui64(unsigned long long* y) { f_ui64_arg(y); }
 #elif TEST_64BIT_X86
 void test_long_to_i64(long* y) { f_i64_arg(y); }
 void test_long_to_ui64(unsigned long* y) { f_ui64_arg(y); }
+#elif TEST_64BIT_PPC64
+typedef          float f128ibm __attribute__ ((mode (TF)));
+typedef _Complex float c128ibm __attribute__ ((mode (TC)));
+void f_ft128_arg(long double *x);
+void f_ft128_complex_arg(_Complex long double *x);
+void test_TFtype(f128ibm *a) { f_ft128_arg (a); }
+void test_TCtype(c128ibm *a) { f_ft128_complex_arg (a); }
 #else
 #error Unknown test architecture.
 #endif

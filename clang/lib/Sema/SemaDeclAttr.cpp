@@ -3730,14 +3730,17 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     NewTy = S.Context.LongDoubleTy;
     break;
   case 128:
-    if (!IntegerMode) {
+    if (!IntegerMode && S.Context.getTargetInfo().getLongDoubleWidth() != 128) {
       S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode) << Name;
       return;
     }
-    if (OldTy->isSignedIntegerType())
-      NewTy = S.Context.Int128Ty;
-    else
-      NewTy = S.Context.UnsignedInt128Ty;
+    if (IntegerMode) {
+      if (OldTy->isSignedIntegerType())
+        NewTy = S.Context.Int128Ty;
+      else
+        NewTy = S.Context.UnsignedInt128Ty;
+    } else
+      NewTy = S.Context.LongDoubleTy;
     break;
   }
 
