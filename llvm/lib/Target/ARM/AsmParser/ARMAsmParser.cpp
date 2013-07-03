@@ -5076,21 +5076,17 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
       static_cast<ARMOperand*>(Operands[5])->isImm()) {
     // Nest conditions rather than one big 'if' statement for readability.
     //
-    // If either register is a high reg, it's either one of the SP
-    // variants (handled above) or a 32-bit encoding, so we just
-    // check against T3. If the second register is the PC, this is an
-    // alternate form of ADR, which uses encoding T4, so check for that too.
-    if ((!isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) ||
-         !isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg())) &&
-        static_cast<ARMOperand*>(Operands[4])->getReg() != ARM::PC &&
-        static_cast<ARMOperand*>(Operands[5])->isT2SOImm())
-      return false;
     // If both registers are low, we're in an IT block, and the immediate is
     // in range, we should use encoding T1 instead, which has a cc_out.
     if (inITBlock() &&
         isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) &&
         isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()) &&
         static_cast<ARMOperand*>(Operands[5])->isImm0_7())
+      return false;
+    // Check against T3. If the second register is the PC, this is an
+    // alternate form of ADR, which uses encoding T4, so check for that too.
+    if (static_cast<ARMOperand*>(Operands[4])->getReg() != ARM::PC &&
+        static_cast<ARMOperand*>(Operands[5])->isT2SOImm())
       return false;
 
     // Otherwise, we use encoding T4, which does not have a cc_out
