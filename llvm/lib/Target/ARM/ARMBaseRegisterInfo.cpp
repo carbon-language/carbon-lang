@@ -59,14 +59,19 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   }
  
   if (ghcCall)
-    return CSR_GHC_SaveList;
+    // GHC set of callee saved regs is empty as all those regs are
+    // used for passing STG regs around
+    return CSR_NoRegs_SaveList;
   else
     return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
       ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
 }
 
 const uint32_t*
-ARMBaseRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
+ARMBaseRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  if (CC == CallingConv::GHC)
+    // This is academic becase all GHC calls are (supposed to be) tail calls
+    return CSR_NoRegs_RegMask;
   return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
     ? CSR_iOS_RegMask : CSR_AAPCS_RegMask;
 }
@@ -77,14 +82,18 @@ ARMBaseRegisterInfo::getNoPreservedMask() const {
 }
 
 const uint32_t*
-ARMBaseRegisterInfo::getThisReturnPreservedMask(CallingConv::ID) const {
+ARMBaseRegisterInfo::getThisReturnPreservedMask(CallingConv::ID CC) const {
   // This should return a register mask that is the same as that returned by
   // getCallPreservedMask but that additionally preserves the register used for
   // the first i32 argument (which must also be the register used to return a
   // single i32 return value)
   //
   // In case that the calling convention does not use the same register for
-  // both, the function should return NULL (does not currently apply)
+  // both or otherwise does not want to enable this optimization, the function
+  // should return NULL
+  if (CC == CallingConv::GHC)
+    // This is academic becase all GHC calls are (supposed to be) tail calls
+    return NULL;
   return (STI.isTargetIOS() && !STI.isAAPCS_ABI())
     ? CSR_iOS_ThisReturn_RegMask : CSR_AAPCS_ThisReturn_RegMask;
 }
