@@ -439,7 +439,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
-  const SmallVector<InsnRange, 4> &Ranges = Scope->getRanges();
+  const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
   if (Ranges.empty())
     return 0;
 
@@ -483,7 +483,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(CompileUnit *TheCU,
 // represent this concrete inlined copy of the function.
 DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
                                           LexicalScope *Scope) {
-  const SmallVector<InsnRange, 4> &Ranges = Scope->getRanges();
+  const SmallVectorImpl<InsnRange> &Ranges = Scope->getRanges();
   assert(Ranges.empty() == false &&
          "LexicalScope does not have instruction markers!");
 
@@ -589,14 +589,14 @@ DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
         }
 
   // Collect lexical scope children first.
-  const SmallVector<DbgVariable *, 8> &Variables = ScopeVariables.lookup(Scope);
+  const SmallVectorImpl<DbgVariable *> &Variables =ScopeVariables.lookup(Scope);
   for (unsigned i = 0, N = Variables.size(); i < N; ++i)
     if (DIE *Variable =
         TheCU->constructVariableDIE(Variables[i], Scope->isAbstractScope())) {
       Children.push_back(Variable);
       if (Variables[i]->isObjectPointer()) ObjectPointer = Variable;
     }
-  const SmallVector<LexicalScope *, 4> &Scopes = Scope->getChildren();
+  const SmallVectorImpl<LexicalScope *> &Scopes = Scope->getChildren();
   for (unsigned j = 0, M = Scopes.size(); j < M; ++j)
     if (DIE *Nested = constructScopeDIE(TheCU, Scopes[j]))
       Children.push_back(Nested);
@@ -1412,7 +1412,7 @@ void DwarfDebug::identifyScopeMarkers() {
   while (!WorkList.empty()) {
     LexicalScope *S = WorkList.pop_back_val();
 
-    const SmallVector<LexicalScope *, 4> &Children = S->getChildren();
+    const SmallVectorImpl<LexicalScope *> &Children = S->getChildren();
     if (!Children.empty())
       for (SmallVectorImpl<LexicalScope *>::const_iterator SI = Children.begin(),
              SE = Children.end(); SI != SE; ++SI)
@@ -1421,7 +1421,7 @@ void DwarfDebug::identifyScopeMarkers() {
     if (S->isAbstractScope())
       continue;
 
-    const SmallVector<InsnRange, 4> &Ranges = S->getRanges();
+    const SmallVectorImpl<InsnRange> &Ranges = S->getRanges();
     if (Ranges.empty())
       continue;
     for (SmallVectorImpl<InsnRange>::const_iterator RI = Ranges.begin(),
