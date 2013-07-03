@@ -424,12 +424,12 @@ def STRVG : StoreRXY<"strvg", 0xE32F, storeu<bswap, nonvolatile_store>, GR64>;
 
 // Load BDX-style addresses.
 let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isReMaterializable = 1,
-    Function = "la" in {
-  let PairType = "12" in
+    DispKey = "la" in {
+  let DispSize = "12" in
     def LA : InstRX<0x41, (outs GR64:$R1), (ins laaddr12pair:$XBD2),
                     "la\t$R1, $XBD2",
                     [(set GR64:$R1, laaddr12pair:$XBD2)]>;
-  let PairType = "20" in
+  let DispSize = "20" in
     def LAY : InstRXY<0xE371, (outs GR64:$R1), (ins laaddr20pair:$XBD2),
                       "lay\t$R1, $XBD2",
                       [(set GR64:$R1, laaddr20pair:$XBD2)]>;

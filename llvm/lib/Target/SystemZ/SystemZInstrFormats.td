@@ -21,12 +21,12 @@ class InstSystemZ<int size, dag outs, dag ins, string asmstr,
   let Pattern = pattern;
   let AsmString = asmstr;
 
-  // Used to identify a group of related instructions, such as ST and STY.
-  string Function = "";
-
-  // "12" for an instruction that has a ...Y equivalent, "20" for that
-  // ...Y equivalent.
-  string PairType = "none";
+  // Some instructions come in pairs, one having a 12-bit displacement
+  // and the other having a 20-bit displacement.  Both instructions in
+  // the pair have the same DispKey and their DispSizes are "12" and "20"
+  // respectively.
+  string DispKey = "";
+  string DispSize = "none";
 
   // True if this instruction is a simple D(X,B) load of a register
   // (with no sign or zero extension).
@@ -61,8 +61,8 @@ class InstSystemZ<int size, dag outs, dag ins, string asmstr,
 // displacement.
 def getDisp12Opcode : InstrMapping {
   let FilterClass = "InstSystemZ";
-  let RowFields = ["Function"];
-  let ColFields = ["PairType"];
+  let RowFields = ["DispKey"];
+  let ColFields = ["DispSize"];
   let KeyCol = ["20"];
   let ValueCols = [["12"]];
 }
@@ -70,8 +70,8 @@ def getDisp12Opcode : InstrMapping {
 // Return the version of an instruction that has a signed 20-bit displacement.
 def getDisp20Opcode : InstrMapping {
   let FilterClass = "InstSystemZ";
-  let RowFields = ["Function"];
-  let ColFields = ["PairType"];
+  let RowFields = ["DispKey"];
+  let ColFields = ["DispSize"];
   let KeyCol = ["12"];
   let ValueCols = [["20"]];
 }
@@ -509,10 +509,10 @@ class StoreRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 
 multiclass StoreRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
                        SDPatternOperator operator, RegisterOperand cls> {
-  let Function = mnemonic ## #cls in {
-    let PairType = "12" in
+  let DispKey = mnemonic ## #cls in {
+    let DispSize = "12" in
       def "" : StoreRX<mnemonic, rxOpcode, operator, cls, bdxaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : StoreRXY<mnemonic#"y", rxyOpcode, operator, cls, bdxaddr20pair>;
   }
 }
@@ -549,10 +549,10 @@ class StoreSIL<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 
 multiclass StoreSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
                        SDPatternOperator operator, Immediate imm> {
-  let Function = mnemonic in {
-    let PairType = "12" in
+  let DispKey = mnemonic in {
+    let DispSize = "12" in
       def "" : StoreSI<mnemonic, siOpcode, operator, imm, bdaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : StoreSIY<mnemonic#"y", siyOpcode, operator, imm, bdaddr20pair>;
   }
 }
@@ -624,10 +624,10 @@ class UnaryRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 
 multiclass UnaryRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
                        SDPatternOperator operator, RegisterOperand cls> {
-  let Function = mnemonic ## #cls in {
-    let PairType = "12" in
+  let DispKey = mnemonic ## #cls in {
+    let DispSize = "12" in
       def "" : UnaryRX<mnemonic, rxOpcode, operator, cls, bdxaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : UnaryRXY<mnemonic#"y", rxyOpcode, operator, cls, bdxaddr20pair>;
   }
 }
@@ -710,10 +710,10 @@ class BinaryRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 multiclass BinaryRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
                         SDPatternOperator operator, RegisterOperand cls,
                         SDPatternOperator load> {
-  let Function = mnemonic ## #cls in {
-    let PairType = "12" in
+  let DispKey = mnemonic ## #cls in {
+    let DispSize = "12" in
       def "" : BinaryRX<mnemonic, rxOpcode, operator, cls, load, bdxaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : BinaryRXY<mnemonic#"y", rxyOpcode, operator, cls, load,
                          bdxaddr20pair>;
   }
@@ -740,10 +740,10 @@ class BinarySIY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 multiclass BinarySIPair<string mnemonic, bits<8> siOpcode,
                         bits<16> siyOpcode, SDPatternOperator operator,
                         Operand imm> {
-  let Function = mnemonic ## #cls in {
-    let PairType = "12" in
+  let DispKey = mnemonic ## #cls in {
+    let DispSize = "12" in
       def "" : BinarySI<mnemonic, siOpcode, operator, imm, bdaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : BinarySIY<mnemonic#"y", siyOpcode, operator, imm, bdaddr20pair>;
   }
 }
@@ -829,11 +829,11 @@ class CompareRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 multiclass CompareRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
                          SDPatternOperator operator, RegisterOperand cls,
                          SDPatternOperator load> {
-  let Function = mnemonic ## #cls in {
-    let PairType = "12" in
+  let DispKey = mnemonic ## #cls in {
+    let DispSize = "12" in
       def "" : CompareRX<mnemonic, rxOpcode, operator, cls,
                          load, bdxaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : CompareRXY<mnemonic#"y", rxyOpcode, operator, cls,
                           load, bdxaddr20pair>;
   }
@@ -868,10 +868,10 @@ class CompareSIY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 multiclass CompareSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
                          SDPatternOperator operator, SDPatternOperator load,
                          Immediate imm> {
-  let Function = mnemonic in {
-    let PairType = "12" in
+  let DispKey = mnemonic in {
+    let DispSize = "12" in
       def "" : CompareSI<mnemonic, siOpcode, operator, load, imm, bdaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : CompareSIY<mnemonic#"y", siyOpcode, operator, load, imm,
                           bdaddr20pair>;
   }
@@ -922,10 +922,10 @@ class CmpSwapRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 
 multiclass CmpSwapRSPair<string mnemonic, bits<8> rsOpcode, bits<16> rsyOpcode,
                          SDPatternOperator operator, RegisterOperand cls> {
-  let Function = mnemonic ## #cls in {
-    let PairType = "12" in
+  let DispKey = mnemonic ## #cls in {
+    let DispSize = "12" in
       def "" : CmpSwapRS<mnemonic, rsOpcode, operator, cls, bdaddr12pair>;
-    let PairType = "20" in
+    let DispSize = "20" in
       def Y  : CmpSwapRSY<mnemonic#"y", rsyOpcode, operator, cls, bdaddr20pair>;
   }
 }
