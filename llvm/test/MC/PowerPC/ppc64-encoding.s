@@ -504,8 +504,10 @@
 
 # Move to/from system register instructions
 
-# FIXME: mtspr 256, 2
-# FIXME: mfspr 2, 256
+# CHECK: mtspr 600, 2                    # encoding: [0x7c,0x58,0x93,0xa6]
+         mtspr 600, 2
+# CHECK: mfspr 2, 600                    # encoding: [0x7c,0x58,0x92,0xa6]
+         mfspr 2, 600
 # CHECK: mtcrf 16, 2                     # encoding: [0x7c,0x41,0x01,0x20]
          mtcrf 16, 2
 # CHECK: mfcr 2                          # encoding: [0x7c,0x40,0x00,0x26]

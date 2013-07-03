@@ -304,7 +304,7 @@ def MTCTR8loop : XFXForm_7_ext<31, 467, 9, (outs), (ins g8rc:$rS),
                  PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
-let Pattern = [(set i64:$rT, readcyclecounter)] in
+let isCodeGenOnly = 1, Pattern = [(set i64:$rT, readcyclecounter)] in
 def MFTB8 : XFXForm_1_ext<31, 339, 268, (outs g8rc:$rT), (ins),
                           "mfspr $rT, 268", SprMFTB>,
             PPC970_DGroup_First, PPC970_Unit_FXU;

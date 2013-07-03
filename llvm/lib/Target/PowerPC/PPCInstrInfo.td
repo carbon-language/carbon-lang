@@ -1830,6 +1830,12 @@ def CR6UNSET: XLForm_1_ext<19, 193, (outs), (ins),
 
 // XFX-Form instructions.  Instructions that deal with SPRs.
 //
+
+def MFSPR : XFXForm_1<31, 339, (outs gprc:$RT), (ins i32imm:$SPR),
+                      "mfspr $RT, $SPR", SprMFSPR>;
+def MTSPR : XFXForm_1<31, 467, (outs), (ins i32imm:$SPR, gprc:$RT),
+                      "mtspr $SPR, $RT", SprMTSPR>;
+
 let Uses = [CTR] in {
 def MFCTR : XFXForm_1_ext<31, 339, 9, (outs gprc:$rT), (ins),
                           "mfctr $rT", SprMFSPR>,
@@ -1858,17 +1864,17 @@ def MFLR  : XFXForm_1_ext<31, 339, 8, (outs gprc:$rT), (ins),
             PPC970_DGroup_First, PPC970_Unit_FXU;
 }
 
-// Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed like
-// a GPR on the PPC970.  As such, copies in and out have the same performance
-// characteristics as an OR instruction.
-def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (outs), (ins gprc:$rS),
-                             "mtspr 256, $rS", IntGeneral>,
-               PPC970_DGroup_Single, PPC970_Unit_FXU;
-def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs gprc:$rT), (ins),
-                             "mfspr $rT, 256", IntGeneral>,
-               PPC970_DGroup_First, PPC970_Unit_FXU;
-
 let isCodeGenOnly = 1 in {
+  // Move to/from VRSAVE: despite being a SPR, the VRSAVE register is renamed
+  // like a GPR on the PPC970.  As such, copies in and out have the same
+  // performance characteristics as an OR instruction.
+  def MTVRSAVE : XFXForm_7_ext<31, 467, 256, (outs), (ins gprc:$rS),
+                               "mtspr 256, $rS", IntGeneral>,
+                 PPC970_DGroup_Single, PPC970_Unit_FXU;
+  def MFVRSAVE : XFXForm_1_ext<31, 339, 256, (outs gprc:$rT), (ins),
+                               "mfspr $rT, 256", IntGeneral>,
+                 PPC970_DGroup_First, PPC970_Unit_FXU;
+
   def MTVRSAVEv : XFXForm_7_ext<31, 467, 256,
                                 (outs VRSAVERC:$reg), (ins gprc:$rS),
                                 "mtspr 256, $rS", IntGeneral>,
@@ -2320,6 +2326,9 @@ def : InstAlias<"crset $bx", (CREQV crbitrc:$bx, crbitrc:$bx, crbitrc:$bx)>;
 def : InstAlias<"crclr $bx", (CRXOR crbitrc:$bx, crbitrc:$bx, crbitrc:$bx)>;
 def : InstAlias<"crmove $bx, $by", (CROR crbitrc:$bx, crbitrc:$by, crbitrc:$by)>;
 def : InstAlias<"crnot $bx, $by", (CRNOR crbitrc:$bx, crbitrc:$by, crbitrc:$by)>;
+
+def : InstAlias<"mtxer $Rx", (MTSPR 1, gprc:$Rx)>;
+def : InstAlias<"mfxer $Rx", (MFSPR gprc:$Rx, 1)>;
 
 def : InstAlias<"xnop", (XORI R0, R0, 0)>;
 

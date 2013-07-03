@@ -1953,8 +1953,10 @@
 
 # Move to/from special purpose register mnemonics
 
-# FIXME: mtxer 2
-# FIXME: mfxer 2
+# CHECK: mtspr 1, 2                      # encoding: [0x7c,0x41,0x03,0xa6]
+         mtxer 2
+# CHECK: mfspr 2, 1                      # encoding: [0x7c,0x41,0x02,0xa6]
+         mfxer 2
 # CHECK: mtlr 2                          # encoding: [0x7c,0x48,0x03,0xa6]
          mtlr 2
 # CHECK: mflr 2                          # encoding: [0x7c,0x48,0x02,0xa6]
