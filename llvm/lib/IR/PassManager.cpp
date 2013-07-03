@@ -704,7 +704,7 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
 
   // Check the immutable passes. Iterate in reverse order so that we find
   // the most recently registered passes first.
-  for (SmallVector<ImmutablePass *, 8>::reverse_iterator I =
+  for (SmallVectorImpl<ImmutablePass *>::reverse_iterator I =
        ImmutablePasses.rbegin(), E = ImmutablePasses.rend(); I != E; ++I) {
     AnalysisID PI = (*I)->getPassID();
     if (PI == AID)
@@ -741,8 +741,8 @@ void PMTopLevelManager::dumpPasses() const {
   // (sometimes indirectly), but there's no inheritance relationship
   // between PMDataManager and Pass, so we have to getAsPass to get
   // from a PMDataManager* to a Pass*.
-  for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
-         E = PassManagers.end(); I != E; ++I)
+  for (SmallVectorImpl<PMDataManager *>::const_iterator I =
+       PassManagers.begin(), E = PassManagers.end(); I != E; ++I)
     (*I)->getAsPass()->dumpPassStructure(1);
 }
 
@@ -752,7 +752,7 @@ void PMTopLevelManager::dumpArguments() const {
     return;
 
   dbgs() << "Pass Arguments: ";
-  for (SmallVector<ImmutablePass *, 8>::const_iterator I =
+  for (SmallVectorImpl<ImmutablePass *>::const_iterator I =
        ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
     if (const PassInfo *PI =
         PassRegistry::getPassRegistry()->getPassInfo((*I)->getPassID())) {
@@ -760,8 +760,8 @@ void PMTopLevelManager::dumpArguments() const {
       if (!PI->isAnalysisGroup())
         dbgs() << " -" << PI->getPassArgument();
     }
-  for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
-         E = PassManagers.end(); I != E; ++I)
+  for (SmallVectorImpl<PMDataManager *>::const_iterator I =
+       PassManagers.begin(), E = PassManagers.end(); I != E; ++I)
     (*I)->dumpPassArguments();
   dbgs() << "\n";
 }

@@ -755,7 +755,7 @@ namespace llvm {
     bool addType(DIType DT);
 
   public:
-    typedef SmallVector<MDNode *, 8>::const_iterator iterator;
+    typedef SmallVectorImpl<MDNode *>::const_iterator iterator;
     iterator compile_unit_begin()    const { return CUs.begin(); }
     iterator compile_unit_end()      const { return CUs.end(); }
     iterator subprogram_begin()      const { return SPs.begin(); }

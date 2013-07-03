@@ -282,7 +282,7 @@ namespace llvm {
       /// Return pointer to array of integer argument registers.
       const uint16_t *intArgRegs() const;
 
-      typedef SmallVector<ByValArgInfo, 2>::const_iterator byval_iterator;
+      typedef SmallVectorImpl<ByValArgInfo>::const_iterator byval_iterator;
       byval_iterator byval_begin() const { return ByValArgs.begin(); }
       byval_iterator byval_end() const { return ByValArgs.end(); }
 

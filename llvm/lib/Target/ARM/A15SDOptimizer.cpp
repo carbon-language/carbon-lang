@@ -615,7 +615,7 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
   SmallVector<unsigned, 8> Defs = getReadDPRs(MI);
   bool Modified = false;
 
-  for (SmallVector<unsigned, 8>::iterator I = Defs.begin(), E = Defs.end();
+  for (SmallVectorImpl<unsigned>::iterator I = Defs.begin(), E = Defs.end();
      I != E; ++I) {
     // Follow the def-use chain for this DPR through COPYs, and also through
     // PHIs (which are essentially multi-way COPYs). It is because of PHIs that
@@ -630,7 +630,7 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
 
     elideCopiesAndPHIs(Def, DefSrcs);
 
-    for (SmallVector<MachineInstr*, 8>::iterator II = DefSrcs.begin(),
+    for (SmallVectorImpl<MachineInstr *>::iterator II = DefSrcs.begin(),
       EE = DefSrcs.end(); II != EE; ++II) {
       MachineInstr *MI = *II;
 
@@ -655,7 +655,7 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
 
       if (NewReg != 0) {
         Modified = true;
-        for (SmallVector<MachineOperand*, 8>::const_iterator I = Uses.begin(),
+        for (SmallVectorImpl<MachineOperand *>::const_iterator I = Uses.begin(),
                E = Uses.end(); I != E; ++I) {
           DEBUG(dbgs() << "Replacing operand "
                        << **I << " with "

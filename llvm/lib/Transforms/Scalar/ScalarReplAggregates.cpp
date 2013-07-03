@@ -1066,12 +1066,12 @@ public:
 
     LoadAndStorePromoter::run(Insts);
     AI->eraseFromParent();
-    for (SmallVector<DbgDeclareInst *, 4>::iterator I = DDIs.begin(),
+    for (SmallVectorImpl<DbgDeclareInst *>::iterator I = DDIs.begin(),
            E = DDIs.end(); I != E; ++I) {
       DbgDeclareInst *DDI = *I;
       DDI->eraseFromParent();
     }
-    for (SmallVector<DbgValueInst *, 4>::iterator I = DVIs.begin(),
+    for (SmallVectorImpl<DbgValueInst *>::iterator I = DVIs.begin(),
            E = DVIs.end(); I != E; ++I) {
       DbgValueInst *DVI = *I;
       DVI->eraseFromParent();
@@ -1086,7 +1086,7 @@ public:
   }
 
   virtual void updateDebugInfo(Instruction *Inst) const {
-    for (SmallVector<DbgDeclareInst *, 4>::const_iterator I = DDIs.begin(),
+    for (SmallVectorImpl<DbgDeclareInst *>::const_iterator I = DDIs.begin(),
            E = DDIs.end(); I != E; ++I) {
       DbgDeclareInst *DDI = *I;
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
@@ -1094,7 +1094,7 @@ public:
       else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
         ConvertDebugDeclareToDebugValue(DDI, LI, *DIB);
     }
-    for (SmallVector<DbgValueInst *, 4>::const_iterator I = DVIs.begin(),
+    for (SmallVectorImpl<DbgValueInst *>::const_iterator I = DVIs.begin(),
            E = DVIs.end(); I != E; ++I) {
       DbgValueInst *DVI = *I;
       Value *Arg = NULL;
@@ -2189,7 +2189,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
     if (OtherPtr == AI || OtherPtr == NewElts[0]) {
       // This code will run twice for a no-op memcpy -- once for each operand.
       // Put only one reference to MI on the DeadInsts list.
-      for (SmallVector<Value*, 32>::const_iterator I = DeadInsts.begin(),
+      for (SmallVectorImpl<Value *>::const_iterator I = DeadInsts.begin(),
              E = DeadInsts.end(); I != E; ++I)
         if (*I == MI) return;
       DeadInsts.push_back(MI);

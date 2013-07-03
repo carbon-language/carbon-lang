@@ -291,8 +291,8 @@ private:
   bool hasBackEdge(BlockT *curBlock);
   unsigned getLoopDepth  (LoopT *LoopRep);
   int countActiveBlock(
-    typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator IterStart,
-    typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator IterEnd);
+    typename SmallVectorImpl<BlockT *>::const_iterator IterStart,
+    typename SmallVectorImpl<BlockT *>::const_iterator IterEnd);
     BlockT *findNearestCommonPostDom(std::set<BlockT *>&);
   BlockT *findNearestCommonPostDom(BlockT *Block1, BlockT *Block2);
 
@@ -367,7 +367,7 @@ bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass,
   // Remove unconditional branch instr.
   // Add dummy exit block iff there are multiple returns.
 
-  for (typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator
+  for (typename SmallVectorImpl<BlockT *>::const_iterator
        iterBlk = orderedBlks.begin(), iterEndBlk = orderedBlks.end();
        iterBlk != iterEndBlk;
        ++iterBlk) {
@@ -441,12 +441,12 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
              << ", numRemaintedBlk = " << numRemainedBlk << "\n";
     }
 
-    typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator
+    typename SmallVectorImpl<BlockT *>::const_iterator
       iterBlk = orderedBlks.begin();
-    typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator
+    typename SmallVectorImpl<BlockT *>::const_iterator
       iterBlkEnd = orderedBlks.end();
 
-    typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator
+    typename SmallVectorImpl<BlockT *>::const_iterator
       sccBeginIter = iterBlk;
     BlockT *sccBeginBlk = NULL;
     int sccNumBlk = 0;  // The number of active blocks, init to a
@@ -571,7 +571,7 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
 template<class PassT>
 void CFGStructurizer<PassT>::printOrderedBlocks(llvm::raw_ostream &os) {
   size_t i = 0;
-  for (typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::const_iterator
+  for (typename SmallVectorImpl<BlockT *>::const_iterator
       iterBlk = orderedBlks.begin(), iterBlkEnd = orderedBlks.end();
        iterBlk != iterBlkEnd;
        ++iterBlk, ++i) {
@@ -993,7 +993,7 @@ int CFGStructurizer<PassT>::loopcontPatternMatch(LoopT *loopRep,
     }
   }
 
-  for (typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::iterator
+  for (typename SmallVectorImpl<BlockT *>::iterator
        iter = contBlk.begin(), iterEnd = contBlk.end();
        iter != iterEnd; ++iter) {
     (*iter)->removeSuccessor(loopHeader);
@@ -2082,7 +2082,7 @@ void CFGStructurizer<PassT>::addDummyExitBlock(SmallVector<BlockT*,
   funcRep->push_back(dummyExitBlk);  //insert to function
   CFGTraits::insertInstrEnd(dummyExitBlk, AMDGPU::RETURN, passRep);
 
-  for (typename SmallVector<BlockT *, DEFAULT_VEC_SLOTS>::iterator iter =
+  for (typename SmallVectorImpl<BlockT *>::iterator iter =
          retBlks.begin(),
        iterEnd = retBlks.end(); iter != iterEnd; ++iter) {
     BlockT *curBlk = *iter;
@@ -2206,7 +2206,7 @@ CFGStructurizer<PassT>::recordLoopLandBlock(LoopT *loopRep, BlockT *landBlk,
     newLandBlk = funcRep->CreateMachineBasicBlock();
     funcRep->push_back(newLandBlk);  //insert to function
     newLandBlk->addSuccessor(landBlk);
-    for (typename SmallVector<BlockT*, DEFAULT_VEC_SLOTS>::iterator iter =
+    for (typename SmallVectorImpl<BlockT *>::iterator iter =
          inpathBlks.begin(),
          iterEnd = inpathBlks.end(); iter != iterEnd; ++iter) {
       BlockT *curBlk = *iter;
@@ -2370,8 +2370,8 @@ unsigned CFGStructurizer<PassT>::getLoopDepth(LoopT *loopRep) {
 
 template<class PassT>
 int CFGStructurizer<PassT>::countActiveBlock
-(typename SmallVector<BlockT*, DEFAULT_VEC_SLOTS>::const_iterator iterStart,
- typename SmallVector<BlockT*, DEFAULT_VEC_SLOTS>::const_iterator iterEnd) {
+(typename SmallVectorImpl<BlockT *>::const_iterator iterStart,
+ typename SmallVectorImpl<BlockT *>::const_iterator iterEnd) {
   int count = 0;
   while (iterStart != iterEnd) {
     if (!isRetiredBlock(*iterStart)) {

@@ -437,7 +437,7 @@ bool MemDefsUses::hasHazard_(const MachineInstr &MI) {
 
   // Check underlying object list.
   if (getUnderlyingObjects(MI, Objs)) {
-    for (SmallVector<const Value *, 4>::const_iterator I = Objs.begin();
+    for (SmallVectorImpl<const Value *>::const_iterator I = Objs.begin();
          I != Objs.end(); ++I)
       HasHazard |= updateDefsUses(*I, MI.mayStore());
 
@@ -473,7 +473,7 @@ getUnderlyingObjects(const MachineInstr &MI,
   SmallVector<Value *, 4> Objs;
   GetUnderlyingObjects(const_cast<Value *>(V), Objs);
 
-  for (SmallVector<Value*, 4>::iterator I = Objs.begin(), E = Objs.end();
+  for (SmallVectorImpl<Value *>::iterator I = Objs.begin(), E = Objs.end();
        I != E; ++I) {
     if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(*I)) {
       if (PSV->isAliased(MFI))

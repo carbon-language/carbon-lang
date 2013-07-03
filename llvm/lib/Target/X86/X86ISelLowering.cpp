@@ -8837,7 +8837,7 @@ SDValue X86TargetLowering::LowerVectorAllZeroTest(SDValue Op,
   Opnds.push_back(N->getOperand(1));
 
   for (unsigned Slot = 0, e = Opnds.size(); Slot < e; ++Slot) {
-    SmallVector<SDValue, 8>::const_iterator I = Opnds.begin() + Slot;
+    SmallVectorImpl<SDValue>::const_iterator I = Opnds.begin() + Slot;
     // BFS traverse all OR'd operands.
     if (I->getOpcode() == ISD::OR) {
       Opnds.push_back(I->getOperand(0));

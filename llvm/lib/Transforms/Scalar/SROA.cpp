@@ -1301,7 +1301,7 @@ public:
   }
 
   virtual void updateDebugInfo(Instruction *Inst) const {
-    for (SmallVector<DbgDeclareInst *, 4>::const_iterator I = DDIs.begin(),
+    for (SmallVectorImpl<DbgDeclareInst *>::const_iterator I = DDIs.begin(),
            E = DDIs.end(); I != E; ++I) {
       DbgDeclareInst *DDI = *I;
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
@@ -1309,7 +1309,7 @@ public:
       else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
         ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
     }
-    for (SmallVector<DbgValueInst *, 4>::const_iterator I = DVIs.begin(),
+    for (SmallVectorImpl<DbgValueInst *>::const_iterator I = DVIs.begin(),
            E = DVIs.end(); I != E; ++I) {
       DbgValueInst *DVI = *I;
       Value *Arg = 0;

@@ -465,7 +465,7 @@ Instruction *MemCpyOpt::tryMergingIntoMemset(Instruction *StartInst,
       AMemSet->setDebugLoc(Range.TheStores[0]->getDebugLoc());
 
     // Zap all the stores.
-    for (SmallVector<Instruction*, 16>::const_iterator
+    for (SmallVectorImpl<Instruction *>::const_iterator
          SI = Range.TheStores.begin(),
          SE = Range.TheStores.end(); SI != SE; ++SI) {
       MD->removeInstruction(*SI);
