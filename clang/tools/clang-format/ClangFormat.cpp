@@ -162,6 +162,8 @@ static bool format(std::string FileName) {
     llvm::errs() << ec.message() << "\n";
     return true;
   }
+  if (Code->getBufferSize() == 0)
+    return true; // Empty files are formatted correctly.
   FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
   if (Offsets.empty())
     Offsets.push_back(0);
