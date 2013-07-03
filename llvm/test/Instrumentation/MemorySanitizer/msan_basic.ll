@@ -638,6 +638,41 @@ declare void @bar()
 ; CHECK: ret i32
 
 
+; Test that stack allocations are unpoisoned in functions missing
+; sanitize_memory attribute
+
+define i32 @NoSanitizeMemoryAlloca() {
+entry:
+  %p = alloca i32, align 4
+  %x = call i32 @NoSanitizeMemoryAllocaHelper(i32* %p)
+  ret i32 %x
+}
+
+declare i32 @NoSanitizeMemoryAllocaHelper(i32* %p)
+
+; CHECK: @NoSanitizeMemoryAlloca
+; CHECK: call void @llvm.memset.p0i8.i64(i8* {{.*}}, i8 0, i64 4, i32 4, i1 false)
+; CHECK: call i32 @NoSanitizeMemoryAllocaHelper(i32*
+; CHECK: ret i32
+
+
+; Test that undef is unpoisoned in functions missing
+; sanitize_memory attribute
+
+define i32 @NoSanitizeMemoryUndef() {
+entry:
+  %x = call i32 @NoSanitizeMemoryUndefHelper(i32 undef)
+  ret i32 %x
+}
+
+declare i32 @NoSanitizeMemoryUndefHelper(i32 %x)
+
+; CHECK: @NoSanitizeMemoryAlloca
+; CHECK: store i32 0, i32* {{.*}} @__msan_param_tls
+; CHECK: call i32 @NoSanitizeMemoryUndefHelper(i32 undef)
+; CHECK: ret i32
+
+
 ; Test argument shadow alignment
 
 define <2 x i64> @ArgumentShadowAlignment(i64 %a, <2 x i64> %b) sanitize_memory {

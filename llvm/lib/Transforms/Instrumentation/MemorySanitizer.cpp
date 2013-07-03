@@ -425,6 +425,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   ValueMap<Value*, Value*> ShadowMap, OriginMap;
   bool InsertChecks;
   bool LoadShadow;
+  bool PoisonStack;
+  bool PoisonUndef;
   OwningPtr<VarArgHelper> VAHelper;
 
   struct ShadowOriginAndInsertPoint {
@@ -440,10 +442,13 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   MemorySanitizerVisitor(Function &F, MemorySanitizer &MS)
       : F(F), MS(MS), VAHelper(CreateVarArgHelper(F, MS, *this)) {
-    LoadShadow = InsertChecks =
-        !MS.BL->isIn(F) &&
-        F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                       Attribute::SanitizeMemory);
+    bool SanitizeFunction = !MS.BL->isIn(F) && F.getAttributes().hasAttribute(
+                                                   AttributeSet::FunctionIndex,
+                                                   Attribute::SanitizeMemory);
+    InsertChecks = SanitizeFunction;
+    LoadShadow = SanitizeFunction;
+    PoisonStack = SanitizeFunction && ClPoisonStack;
+    PoisonUndef = SanitizeFunction && ClPoisonUndef;
 
     DEBUG(if (!InsertChecks)
           dbgs() << "MemorySanitizer is not inserting checks into '"
@@ -744,7 +749,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       return Shadow;
     }
     if (UndefValue *U = dyn_cast<UndefValue>(V)) {
-      Value *AllOnes = ClPoisonUndef ? getPoisonedShadow(V) : getCleanShadow(V);
+      Value *AllOnes = PoisonUndef ? getPoisonedShadow(V) : getCleanShadow(V);
       DEBUG(dbgs() << "Undef: " << *U << " ==> " << *AllOnes << "\n");
       (void)U;
       return AllOnes;
@@ -1704,20 +1709,19 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   void visitAllocaInst(AllocaInst &I) {
     setShadow(&I, getCleanShadow(&I));
-    if (!ClPoisonStack) return;
     IRBuilder<> IRB(I.getNextNode());
     uint64_t Size = MS.TD->getTypeAllocSize(I.getAllocatedType());
-    if (ClPoisonStackWithCall) {
+    if (PoisonStack && ClPoisonStackWithCall) {
       IRB.CreateCall2(MS.MsanPoisonStackFn,
                       IRB.CreatePointerCast(&I, IRB.getInt8PtrTy()),
                       ConstantInt::get(MS.IntptrTy, Size));
     } else {
       Value *ShadowBase = getShadowPtr(&I, Type::getInt8PtrTy(*MS.C), IRB);
-      IRB.CreateMemSet(ShadowBase, IRB.getInt8(ClPoisonStackPattern),
-                       Size, I.getAlignment());
+      Value *PoisonValue = IRB.getInt8(PoisonStack ? ClPoisonStackPattern : 0);
+      IRB.CreateMemSet(ShadowBase, PoisonValue, Size, I.getAlignment());
     }
 
-    if (MS.TrackOrigins) {
+    if (PoisonStack && MS.TrackOrigins) {
       setOrigin(&I, getCleanOrigin());
       SmallString<2048> StackDescriptionStorage;
       raw_svector_ostream StackDescription(StackDescriptionStorage);
