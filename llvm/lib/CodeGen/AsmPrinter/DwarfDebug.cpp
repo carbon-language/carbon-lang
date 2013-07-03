@@ -1221,7 +1221,7 @@ void
 DwarfDebug::collectVariableInfo(const MachineFunction *MF,
                                 SmallPtrSet<const MDNode *, 16> &Processed) {
 
-  // collection info from MMI table.
+  // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(MF, Processed);
 
   for (SmallVectorImpl<const MDNode*>::const_iterator
