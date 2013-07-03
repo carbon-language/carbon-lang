@@ -229,10 +229,10 @@ class DwarfUnits {
 public:
   DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
              std::vector<DIEAbbrev *> *A, const char *Pref,
-             BumpPtrAllocator &DA) :
-    Asm(AP), AbbreviationsSet(AS), Abbreviations(A),
-    StringPool(DA), NextStringPoolNumber(0), StringPref(Pref),
-    AddressPool(), NextAddrPoolNumber(0) {}
+             BumpPtrAllocator &DA)
+      : Asm(AP), AbbreviationsSet(AS), Abbreviations(A), StringPool(DA),
+        NextStringPoolNumber(0), StringPref(Pref), AddressPool(),
+        NextAddrPoolNumber(0) {}
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
@@ -248,14 +248,15 @@ public:
 
   /// \brief Emit all of the units to the section listed with the given
   /// abbreviation section.
-  void emitUnits(DwarfDebug *, const MCSection *, const MCSection *,
-                 const MCSymbol *);
+  void emitUnits(DwarfDebug *DD, const MCSection *USection,
+                 const MCSection *ASection, const MCSymbol *ASectionSym);
 
   /// \brief Emit all of the strings to the section given.
-  void emitStrings(const MCSection *, const MCSection *, const MCSymbol *);
+  void emitStrings(const MCSection *StrSection, const MCSection *OffsetSection,
+                   const MCSymbol *StrSecSym);
 
   /// \brief Emit all of the addresses to the section given.
-  void emitAddresses(const MCSection *);
+  void emitAddresses(const MCSection *AddrSection);
 
   /// \brief Returns the entry into the start of the pool.
   MCSymbol *getStringPoolSym();
@@ -273,8 +274,8 @@ public:
 
   /// \brief Returns the index into the address pool with the given
   /// label/symbol.
-  unsigned getAddrPoolIndex(const MCExpr *);
-  unsigned getAddrPoolIndex(const MCSymbol *);
+  unsigned getAddrPoolIndex(const MCExpr *Sym);
+  unsigned getAddrPoolIndex(const MCSymbol *Sym);
 
   /// \brief Returns the address pool.
   AddrPool *getAddrPool() { return &AddressPool; }
