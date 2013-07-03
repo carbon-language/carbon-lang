@@ -253,7 +253,7 @@ AWK = awk
 # a given path. svnup() requires one argument: the root to search from.
 define SUB_SVN_DIRS
 svnup() {
-  dirs=`svn status --no-ignore $$1 | awk '/I|\?      / {print $$2}' | LC_ALL=C xargs svn info 2>/dev/null | awk '/^Path:\ / {print $$2}'`;
+  dirs=`svn status --no-ignore $$1 | awk '/^(I|\?) / {print $$2}' | LC_ALL=C xargs svn info 2>/dev/null | awk '/^Path:\ / {print $$2}'`;
   if [ "$$dirs" = "" ]; then
     return;
   fi;
