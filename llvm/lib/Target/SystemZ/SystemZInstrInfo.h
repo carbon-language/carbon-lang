@@ -32,8 +32,14 @@ namespace SystemZII {
     SimpleBDXStore = (1 << 1),
     Has20BitOffset = (1 << 2),
     HasIndex       = (1 << 3),
-    Is128Bit       = (1 << 4)
+    Is128Bit       = (1 << 4),
+    AccessSizeMask = (31 << 5),
+    AccessSizeShift = 5
   };
+  static inline unsigned getAccessSize(unsigned int Flags) {
+    return (Flags & AccessSizeMask) >> AccessSizeShift;
+  }
+
   // SystemZ MachineOperand target flags.
   enum {
     // Masks out the bits for the access model.

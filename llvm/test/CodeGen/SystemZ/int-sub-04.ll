@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare i64 @foo()
+
 ; Check SGR.
 define i64 @f1(i64 %a, i64 %b) {
 ; CHECK: f1:
@@ -91,4 +93,47 @@ define i64 @f8(i64 %a, i64 %src, i64 %index) {
   %b = load i64 *%ptr
   %sub = sub i64 %a, %b
   ret i64 %sub
+}
+
+; Check that subtractions of spilled values can use SG rather than SGR.
+define i64 @f9(i64 *%ptr0) {
+; CHECK: f9:
+; CHECK: brasl %r14, foo@PLT
+; CHECK: sg %r2, 160(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i64 *%ptr0, i64 2
+  %ptr2 = getelementptr i64 *%ptr0, i64 4
+  %ptr3 = getelementptr i64 *%ptr0, i64 6
+  %ptr4 = getelementptr i64 *%ptr0, i64 8
+  %ptr5 = getelementptr i64 *%ptr0, i64 10
+  %ptr6 = getelementptr i64 *%ptr0, i64 12
+  %ptr7 = getelementptr i64 *%ptr0, i64 14
+  %ptr8 = getelementptr i64 *%ptr0, i64 16
+  %ptr9 = getelementptr i64 *%ptr0, i64 18
+
+  %val0 = load i64 *%ptr0
+  %val1 = load i64 *%ptr1
+  %val2 = load i64 *%ptr2
+  %val3 = load i64 *%ptr3
+  %val4 = load i64 *%ptr4
+  %val5 = load i64 *%ptr5
+  %val6 = load i64 *%ptr6
+  %val7 = load i64 *%ptr7
+  %val8 = load i64 *%ptr8
+  %val9 = load i64 *%ptr9
+
+  %ret = call i64 @foo()
+
+  %sub0 = sub i64 %ret, %val0
+  %sub1 = sub i64 %sub0, %val1
+  %sub2 = sub i64 %sub1, %val2
+  %sub3 = sub i64 %sub2, %val3
+  %sub4 = sub i64 %sub3, %val4
+  %sub5 = sub i64 %sub4, %val5
+  %sub6 = sub i64 %sub5, %val6
+  %sub7 = sub i64 %sub6, %val7
+  %sub8 = sub i64 %sub7, %val8
+  %sub9 = sub i64 %sub8, %val9
+
+  ret i64 %sub9
 }

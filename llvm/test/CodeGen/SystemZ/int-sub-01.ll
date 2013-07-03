@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare i32 @foo()
+
 ; Check SR.
 define i32 @f1(i32 %a, i32 %b) {
 ; CHECK: f1:
@@ -126,4 +128,47 @@ define i32 @f11(i32 %a, i64 %src, i64 %index) {
   %b = load i32 *%ptr
   %sub = sub i32 %a, %b
   ret i32 %sub
+}
+
+; Check that subtractions of spilled values can use S rather than SR.
+define i32 @f12(i32 *%ptr0) {
+; CHECK: f12:
+; CHECK: brasl %r14, foo@PLT
+; CHECK: s %r2, 16{{[04]}}(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32 *%ptr0, i64 16
+  %ptr9 = getelementptr i32 *%ptr0, i64 18
+
+  %val0 = load i32 *%ptr0
+  %val1 = load i32 *%ptr1
+  %val2 = load i32 *%ptr2
+  %val3 = load i32 *%ptr3
+  %val4 = load i32 *%ptr4
+  %val5 = load i32 *%ptr5
+  %val6 = load i32 *%ptr6
+  %val7 = load i32 *%ptr7
+  %val8 = load i32 *%ptr8
+  %val9 = load i32 *%ptr9
+
+  %ret = call i32 @foo()
+
+  %sub0 = sub i32 %ret, %val0
+  %sub1 = sub i32 %sub0, %val1
+  %sub2 = sub i32 %sub1, %val2
+  %sub3 = sub i32 %sub2, %val3
+  %sub4 = sub i32 %sub3, %val4
+  %sub5 = sub i32 %sub4, %val5
+  %sub6 = sub i32 %sub5, %val6
+  %sub7 = sub i32 %sub6, %val7
+  %sub8 = sub i32 %sub7, %val8
+  %sub9 = sub i32 %sub8, %val9
+
+  ret i32 %sub9
 }

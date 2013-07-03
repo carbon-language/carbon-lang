@@ -397,6 +397,30 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     }
   }
 
+  // If the spilled operand is the final one, try to change <INSN>R
+  // into <INSN>.
+  int MemOpcode = SystemZ::getMemOpcode(MI->getOpcode());
+  if (MemOpcode >= 0) {
+    unsigned NumOps = MI->getNumExplicitOperands();
+    if (OpNum == NumOps - 1) {
+      const MCInstrDesc &MemDesc = get(MemOpcode);
+      uint64_t AccessBytes = SystemZII::getAccessSize(MemDesc.TSFlags);
+      assert(AccessBytes != 0 && "Size of access should be known");
+      assert(AccessBytes <= Size && "Access outside the frame index");
+      uint64_t Offset = Size - AccessBytes;
+      MachineMemOperand *FrameMMO = getFrameMMO(MF, FrameIndex, Offset,
+                                                MachineMemOperand::MOLoad);
+      MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(MemOpcode));
+      for (unsigned I = 0; I < OpNum; ++I)
+        MIB.addOperand(MI->getOperand(I));
+      MIB.addFrameIndex(FrameIndex).addImm(Offset);
+      if (MemDesc.TSFlags & SystemZII::HasIndex)
+        MIB.addReg(0);
+      MIB.addMemOperand(FrameMMO);
+      return MIB;
+    }
+  }
+
   return 0;
 }
 

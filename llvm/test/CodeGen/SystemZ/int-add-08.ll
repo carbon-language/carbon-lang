@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare i128 *@foo()
+
 ; Test register addition.
 define void @f1(i128 *%ptr) {
 ; CHECK: f1:
@@ -108,3 +110,34 @@ define void @f7(i128 *%aptr, i64 %base) {
   ret void
 }
 
+; Check that additions of spilled values can use ALG and ALCG rather than
+; ALGR and ALCGR.
+define void @f8(i128 *%ptr0) {
+; CHECK: f8:
+; CHECK: brasl %r14, foo@PLT
+; CHECK: alg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
+; CHECK: alcg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i128 *%ptr0, i128 2
+  %ptr2 = getelementptr i128 *%ptr0, i128 4
+  %ptr3 = getelementptr i128 *%ptr0, i128 6
+  %ptr4 = getelementptr i128 *%ptr0, i128 8
+
+  %val0 = load i128 *%ptr0
+  %val1 = load i128 *%ptr1
+  %val2 = load i128 *%ptr2
+  %val3 = load i128 *%ptr3
+  %val4 = load i128 *%ptr4
+
+  %retptr = call i128 *@foo()
+
+  %ret = load i128 *%retptr
+  %add0 = add i128 %ret, %val0
+  %add1 = add i128 %add0, %val1
+  %add2 = add i128 %add1, %val2
+  %add3 = add i128 %add2, %val3
+  %add4 = add i128 %add3, %val4
+  store i128 %add4, i128 *%retptr
+
+  ret void
+}

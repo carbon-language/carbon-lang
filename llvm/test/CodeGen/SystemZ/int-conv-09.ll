@@ -102,3 +102,80 @@ define i64 @f9(i64 %src, i64 %index) {
   %ext = sext i32 %word to i64
   ret i64 %ext
 }
+
+; Test a case where we spill the source of at least one LGFR.  We want
+; to use LGF if possible.
+define void @f10(i64 *%ptr1, i32 *%ptr2) {
+; CHECK: f10:
+; CHECK: lgf {{%r[0-9]+}}, 16{{[04]}}(%r15)
+; CHECK: br %r14
+  %val0 = load volatile i32 *%ptr2
+  %val1 = load volatile i32 *%ptr2
+  %val2 = load volatile i32 *%ptr2
+  %val3 = load volatile i32 *%ptr2
+  %val4 = load volatile i32 *%ptr2
+  %val5 = load volatile i32 *%ptr2
+  %val6 = load volatile i32 *%ptr2
+  %val7 = load volatile i32 *%ptr2
+  %val8 = load volatile i32 *%ptr2
+  %val9 = load volatile i32 *%ptr2
+  %val10 = load volatile i32 *%ptr2
+  %val11 = load volatile i32 *%ptr2
+  %val12 = load volatile i32 *%ptr2
+  %val13 = load volatile i32 *%ptr2
+  %val14 = load volatile i32 *%ptr2
+  %val15 = load volatile i32 *%ptr2
+
+  %ext0 = sext i32 %val0 to i64
+  %ext1 = sext i32 %val1 to i64
+  %ext2 = sext i32 %val2 to i64
+  %ext3 = sext i32 %val3 to i64
+  %ext4 = sext i32 %val4 to i64
+  %ext5 = sext i32 %val5 to i64
+  %ext6 = sext i32 %val6 to i64
+  %ext7 = sext i32 %val7 to i64
+  %ext8 = sext i32 %val8 to i64
+  %ext9 = sext i32 %val9 to i64
+  %ext10 = sext i32 %val10 to i64
+  %ext11 = sext i32 %val11 to i64
+  %ext12 = sext i32 %val12 to i64
+  %ext13 = sext i32 %val13 to i64
+  %ext14 = sext i32 %val14 to i64
+  %ext15 = sext i32 %val15 to i64
+
+  store volatile i32 %val0, i32 *%ptr2
+  store volatile i32 %val1, i32 *%ptr2
+  store volatile i32 %val2, i32 *%ptr2
+  store volatile i32 %val3, i32 *%ptr2
+  store volatile i32 %val4, i32 *%ptr2
+  store volatile i32 %val5, i32 *%ptr2
+  store volatile i32 %val6, i32 *%ptr2
+  store volatile i32 %val7, i32 *%ptr2
+  store volatile i32 %val8, i32 *%ptr2
+  store volatile i32 %val9, i32 *%ptr2
+  store volatile i32 %val10, i32 *%ptr2
+  store volatile i32 %val11, i32 *%ptr2
+  store volatile i32 %val12, i32 *%ptr2
+  store volatile i32 %val13, i32 *%ptr2
+  store volatile i32 %val14, i32 *%ptr2
+  store volatile i32 %val15, i32 *%ptr2
+
+  store volatile i64 %ext0, i64 *%ptr1
+  store volatile i64 %ext1, i64 *%ptr1
+  store volatile i64 %ext2, i64 *%ptr1
+  store volatile i64 %ext3, i64 *%ptr1
+  store volatile i64 %ext4, i64 *%ptr1
+  store volatile i64 %ext5, i64 *%ptr1
+  store volatile i64 %ext6, i64 *%ptr1
+  store volatile i64 %ext7, i64 *%ptr1
+  store volatile i64 %ext8, i64 *%ptr1
+  store volatile i64 %ext9, i64 *%ptr1
+  store volatile i64 %ext10, i64 *%ptr1
+  store volatile i64 %ext11, i64 *%ptr1
+  store volatile i64 %ext12, i64 *%ptr1
+  store volatile i64 %ext13, i64 *%ptr1
+  store volatile i64 %ext14, i64 *%ptr1
+  store volatile i64 %ext15, i64 *%ptr1
+
+  ret void
+}

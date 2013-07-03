@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare i64 @foo()
+
 ; Testg register division.  The result is in the second of the two registers.
 define void @f1(i64 %dummy, i64 %a, i64 %b, i64 *%dest) {
 ; CHECK: f1:
@@ -151,4 +153,50 @@ define i64 @f12(i64 %dummy, i64 %a, i64 %src, i64 %index) {
   %b = load i64 *%ptr
   %rem = srem i64 %a, %b
   ret i64 %rem
+}
+
+; Check that divisions of spilled values can use DSG rather than DSGR.
+define i64 @f13(i64 *%ptr0) {
+; CHECK: f13:
+; CHECK: brasl %r14, foo@PLT
+; CHECK: dsg {{%r[0-9]+}}, 160(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i64 *%ptr0, i64 2
+  %ptr2 = getelementptr i64 *%ptr0, i64 4
+  %ptr3 = getelementptr i64 *%ptr0, i64 6
+  %ptr4 = getelementptr i64 *%ptr0, i64 8
+  %ptr5 = getelementptr i64 *%ptr0, i64 10
+  %ptr6 = getelementptr i64 *%ptr0, i64 12
+  %ptr7 = getelementptr i64 *%ptr0, i64 14
+  %ptr8 = getelementptr i64 *%ptr0, i64 16
+  %ptr9 = getelementptr i64 *%ptr0, i64 18
+  %ptr10 = getelementptr i64 *%ptr0, i64 20
+
+  %val0 = load i64 *%ptr0
+  %val1 = load i64 *%ptr1
+  %val2 = load i64 *%ptr2
+  %val3 = load i64 *%ptr3
+  %val4 = load i64 *%ptr4
+  %val5 = load i64 *%ptr5
+  %val6 = load i64 *%ptr6
+  %val7 = load i64 *%ptr7
+  %val8 = load i64 *%ptr8
+  %val9 = load i64 *%ptr9
+  %val10 = load i64 *%ptr10
+
+  %ret = call i64 @foo()
+
+  %div0 = sdiv i64 %ret, %val0
+  %div1 = sdiv i64 %div0, %val1
+  %div2 = sdiv i64 %div1, %val2
+  %div3 = sdiv i64 %div2, %val3
+  %div4 = sdiv i64 %div3, %val4
+  %div5 = sdiv i64 %div4, %val5
+  %div6 = sdiv i64 %div5, %val6
+  %div7 = sdiv i64 %div6, %val7
+  %div8 = sdiv i64 %div7, %val8
+  %div9 = sdiv i64 %div8, %val9
+  %div10 = sdiv i64 %div9, %val10
+
+  ret i64 %div10
 }

@@ -28,6 +28,12 @@ class InstSystemZ<int size, dag outs, dag ins, string asmstr,
   string DispKey = "";
   string DispSize = "none";
 
+  // Many register-based <INSN>R instructions have a memory-based <INSN>
+  // counterpart.  OpKey uniquely identifies <INSN>, while OpType is
+  // "reg" for <INSN>R and "mem" for <INSN>.
+  string OpKey = "";
+  string OpType = "none";
+
   // True if this instruction is a simple D(X,B) load of a register
   // (with no sign or zero extension).
   bit SimpleBDXLoad = 0;
@@ -46,11 +52,15 @@ class InstSystemZ<int size, dag outs, dag ins, string asmstr,
   // operations.
   bit Is128Bit = 0;
 
+  // The access size of all memory operands in bytes, or 0 if not known.
+  bits<5> AccessBytes = 0;
+
   let TSFlags{0} = SimpleBDXLoad;
   let TSFlags{1} = SimpleBDXStore;
   let TSFlags{2} = Has20BitOffset;
   let TSFlags{3} = HasIndex;
   let TSFlags{4} = Is128Bit;
+  let TSFlags{9-5} = AccessBytes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -74,6 +84,14 @@ def getDisp20Opcode : InstrMapping {
   let ColFields = ["DispSize"];
   let KeyCol = ["12"];
   let ValueCols = [["20"]];
+}
+
+def getMemOpcode : InstrMapping {
+  let FilterClass = "InstSystemZ";
+  let RowFields = ["OpKey"];
+  let ColFields = ["OpType"];
+  let KeyCol = ["reg"];
+  let ValueCols = [["mem"]];
 }
 
 //===----------------------------------------------------------------------===//
@@ -468,7 +486,7 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 class InherentRRE<string mnemonic, bits<16> opcode, RegisterOperand cls,
                   dag src>
   : InstRRE<opcode, (outs cls:$R1), (ins),
-            mnemonic#"\t$R1",
+            mnemonic#"r\t$R1",
             [(set cls:$R1, src)]> {
   let R2 = 0;
 }
@@ -492,28 +510,38 @@ class StoreRILPC<string mnemonic, bits<12> opcode, SDPatternOperator operator,
 }
 
 class StoreRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-              RegisterOperand cls, AddressingMode mode = bdxaddr12only>
+              RegisterOperand cls, bits<5> bytes,
+              AddressingMode mode = bdxaddr12only>
   : InstRX<opcode, (outs), (ins cls:$R1, mode:$XBD2),
            mnemonic#"\t$R1, $XBD2",
            [(operator cls:$R1, mode:$XBD2)]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayStore = 1;
+  let AccessBytes = bytes;
 }
 
 class StoreRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-               RegisterOperand cls, AddressingMode mode = bdxaddr20only>
+               RegisterOperand cls, bits<5> bytes,
+               AddressingMode mode = bdxaddr20only>
   : InstRXY<opcode, (outs), (ins cls:$R1, mode:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(operator cls:$R1, mode:$XBD2)]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayStore = 1;
+  let AccessBytes = bytes;
 }
 
 multiclass StoreRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
-                       SDPatternOperator operator, RegisterOperand cls> {
+                       SDPatternOperator operator, RegisterOperand cls,
+                       bits<5> bytes> {
   let DispKey = mnemonic ## #cls in {
     let DispSize = "12" in
-      def "" : StoreRX<mnemonic, rxOpcode, operator, cls, bdxaddr12pair>;
+      def "" : StoreRX<mnemonic, rxOpcode, operator, cls, bytes, bdxaddr12pair>;
     let DispSize = "20" in
-      def Y  : StoreRXY<mnemonic#"y", rxyOpcode, operator, cls, bdxaddr20pair>;
+      def Y  : StoreRXY<mnemonic#"y", rxyOpcode, operator, cls, bytes,
+                        bdxaddr20pair>;
   }
 }
 
@@ -560,19 +588,28 @@ multiclass StoreSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
 class UnaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
               RegisterOperand cls1, RegisterOperand cls2>
   : InstRR<opcode, (outs cls1:$R1), (ins cls2:$R2),
-           mnemonic#"\t$R1, $R2",
-           [(set cls1:$R1, (operator cls2:$R2))]>;
+           mnemonic#"r\t$R1, $R2",
+           [(set cls1:$R1, (operator cls2:$R2))]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
+}
 
 class UnaryRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                RegisterOperand cls1, RegisterOperand cls2>
   : InstRRE<opcode, (outs cls1:$R1), (ins cls2:$R2),
-            mnemonic#"\t$R1, $R2",
-            [(set cls1:$R1, (operator cls2:$R2))]>;
+            mnemonic#"r\t$R1, $R2",
+            [(set cls1:$R1, (operator cls2:$R2))]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
+}
 
 class UnaryRRF<string mnemonic, bits<16> opcode, RegisterOperand cls1,
                RegisterOperand cls2>
   : InstRRF<opcode, (outs cls1:$R1), (ins uimm8zx4:$R3, cls2:$R2),
-            mnemonic#"\t$R1, $R3, $R2", []>;
+            mnemonic#"r\t$R1, $R3, $R2", []> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
+}
 
 class UnaryRI<string mnemonic, bits<12> opcode, SDPatternOperator operator,
               RegisterOperand cls, Immediate imm>
@@ -599,44 +636,59 @@ class UnaryRILPC<string mnemonic, bits<12> opcode, SDPatternOperator operator,
 }
 
 class UnaryRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-              RegisterOperand cls, AddressingMode mode = bdxaddr12only>
+              RegisterOperand cls, bits<5> bytes,
+              AddressingMode mode = bdxaddr12only>
   : InstRX<opcode, (outs cls:$R1), (ins mode:$XBD2),
            mnemonic#"\t$R1, $XBD2",
            [(set cls:$R1, (operator mode:$XBD2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class UnaryRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-               RegisterOperand cls>
+               RegisterOperand cls, bits<5> bytes>
   : InstRXE<opcode, (outs cls:$R1), (ins bdxaddr12only:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(set cls:$R1, (operator bdxaddr12only:$XBD2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class UnaryRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-               RegisterOperand cls, AddressingMode mode = bdxaddr20only>
+               RegisterOperand cls, bits<5> bytes,
+               AddressingMode mode = bdxaddr20only>
   : InstRXY<opcode, (outs cls:$R1), (ins mode:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(set cls:$R1, (operator mode:$XBD2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 multiclass UnaryRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
-                       SDPatternOperator operator, RegisterOperand cls> {
+                       SDPatternOperator operator, RegisterOperand cls,
+                       bits<5> bytes> {
   let DispKey = mnemonic ## #cls in {
     let DispSize = "12" in
-      def "" : UnaryRX<mnemonic, rxOpcode, operator, cls, bdxaddr12pair>;
+      def "" : UnaryRX<mnemonic, rxOpcode, operator, cls, bytes, bdxaddr12pair>;
     let DispSize = "20" in
-      def Y  : UnaryRXY<mnemonic#"y", rxyOpcode, operator, cls, bdxaddr20pair>;
+      def Y  : UnaryRXY<mnemonic#"y", rxyOpcode, operator, cls, bytes,
+                        bdxaddr20pair>;
   }
 }
 
 class BinaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                RegisterOperand cls1, RegisterOperand cls2>
   : InstRR<opcode, (outs cls1:$R1), (ins cls1:$R1src, cls2:$R2),
-           mnemonic#"\t$R1, $R2",
+           mnemonic#"r\t$R1, $R2",
            [(set cls1:$R1, (operator cls1:$R1src, cls2:$R2))]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
 }
@@ -644,8 +696,10 @@ class BinaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
 class BinaryRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                 RegisterOperand cls1, RegisterOperand cls2>
   : InstRRE<opcode, (outs cls1:$R1), (ins cls1:$R1src, cls2:$R2),
-            mnemonic#"\t$R1, $R2",
+            mnemonic#"r\t$R1, $R2",
             [(set cls1:$R1, (operator cls1:$R1src, cls2:$R2))]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
 }
@@ -653,8 +707,11 @@ class BinaryRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 class BinaryRRF<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                 RegisterOperand cls1, RegisterOperand cls2>
   : InstRRF<opcode, (outs cls1:$R1), (ins cls1:$R3, cls2:$R2),
-            mnemonic#"\t$R1, $R3, $R2",
-            [(set cls1:$R1, (operator cls1:$R3, cls2:$R2))]>;
+            mnemonic#"r\t$R1, $R3, $R2",
+            [(set cls1:$R1, (operator cls1:$R3, cls2:$R2))]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
+}
 
 class BinaryRI<string mnemonic, bits<12> opcode, SDPatternOperator operator,
                RegisterOperand cls, Immediate imm>
@@ -675,46 +732,56 @@ class BinaryRIL<string mnemonic, bits<12> opcode, SDPatternOperator operator,
 }
 
 class BinaryRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-               RegisterOperand cls, SDPatternOperator load,
+               RegisterOperand cls, SDPatternOperator load, bits<5> bytes,
                AddressingMode mode = bdxaddr12only>
   : InstRX<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$XBD2),
            mnemonic#"\t$R1, $XBD2",
            [(set cls:$R1, (operator cls:$R1src, (load mode:$XBD2)))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class BinaryRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-                  RegisterOperand cls, SDPatternOperator load>
+                  RegisterOperand cls, SDPatternOperator load, bits<5> bytes>
   : InstRXE<opcode, (outs cls:$R1), (ins cls:$R1src, bdxaddr12only:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(set cls:$R1, (operator cls:$R1src,
                                      (load bdxaddr12only:$XBD2)))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class BinaryRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-                RegisterOperand cls, SDPatternOperator load,
+                RegisterOperand cls, SDPatternOperator load, bits<5> bytes,
                 AddressingMode mode = bdxaddr20only>
   : InstRXY<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(set cls:$R1, (operator cls:$R1src, (load mode:$XBD2)))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 multiclass BinaryRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
                         SDPatternOperator operator, RegisterOperand cls,
-                        SDPatternOperator load> {
+                        SDPatternOperator load, bits<5> bytes> {
   let DispKey = mnemonic ## #cls in {
     let DispSize = "12" in
-      def "" : BinaryRX<mnemonic, rxOpcode, operator, cls, load, bdxaddr12pair>;
+      def "" : BinaryRX<mnemonic, rxOpcode, operator, cls, load, bytes,
+                        bdxaddr12pair>;
     let DispSize = "20" in
-      def Y  : BinaryRXY<mnemonic#"y", rxyOpcode, operator, cls, load,
+      def Y  : BinaryRXY<mnemonic#"y", rxyOpcode, operator, cls, load, bytes,
                          bdxaddr20pair>;
   }
 }
@@ -767,14 +834,20 @@ class ShiftRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 class CompareRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                 RegisterOperand cls1, RegisterOperand cls2>
   : InstRR<opcode, (outs), (ins cls1:$R1, cls2:$R2),
-           mnemonic#"\t$R1, $R2",
-           [(operator cls1:$R1, cls2:$R2)]>;
+           mnemonic#"r\t$R1, $R2",
+           [(operator cls1:$R1, cls2:$R2)]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
+}
 
 class CompareRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                  RegisterOperand cls1, RegisterOperand cls2>
   : InstRRE<opcode, (outs), (ins cls1:$R1, cls2:$R2),
-            mnemonic#"\t$R1, $R2",
-            [(operator cls1:$R1, cls2:$R2)]>;
+            mnemonic#"r\t$R1, $R2",
+            [(operator cls1:$R1, cls2:$R2)]> {
+  let OpKey = mnemonic ## cls1;
+  let OpType = "reg";
+}
 
 class CompareRI<string mnemonic, bits<12> opcode, SDPatternOperator operator,
                 RegisterOperand cls, Immediate imm>
@@ -801,41 +874,50 @@ class CompareRILPC<string mnemonic, bits<12> opcode, SDPatternOperator operator,
 }
 
 class CompareRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-                RegisterOperand cls, SDPatternOperator load,
+                RegisterOperand cls, SDPatternOperator load, bits<5> bytes,
                 AddressingMode mode = bdxaddr12only>
   : InstRX<opcode, (outs), (ins cls:$R1, mode:$XBD2),
            mnemonic#"\t$R1, $XBD2",
            [(operator cls:$R1, (load mode:$XBD2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class CompareRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-                 RegisterOperand cls, SDPatternOperator load>
+                 RegisterOperand cls, SDPatternOperator load, bits<5> bytes>
   : InstRXE<opcode, (outs), (ins cls:$R1, bdxaddr12only:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(operator cls:$R1, (load bdxaddr12only:$XBD2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class CompareRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-                 RegisterOperand cls, SDPatternOperator load,
+                 RegisterOperand cls, SDPatternOperator load, bits<5> bytes,
                  AddressingMode mode = bdxaddr20only>
   : InstRXY<opcode, (outs), (ins cls:$R1, mode:$XBD2),
             mnemonic#"\t$R1, $XBD2",
             [(operator cls:$R1, (load mode:$XBD2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 multiclass CompareRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
                          SDPatternOperator operator, RegisterOperand cls,
-                         SDPatternOperator load> {
+                         SDPatternOperator load, bits<5> bytes> {
   let DispKey = mnemonic ## #cls in {
     let DispSize = "12" in
       def "" : CompareRX<mnemonic, rxOpcode, operator, cls,
-                         load, bdxaddr12pair>;
+                         load, bytes, bdxaddr12pair>;
     let DispSize = "20" in
       def Y  : CompareRXY<mnemonic#"y", rxyOpcode, operator, cls,
-                          load, bdxaddr20pair>;
+                          load, bytes, bdxaddr20pair>;
   }
 }
 
@@ -880,22 +962,27 @@ multiclass CompareSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
 class TernaryRRD<string mnemonic, bits<16> opcode,
                  SDPatternOperator operator, RegisterOperand cls>
   : InstRRD<opcode, (outs cls:$R1), (ins cls:$R1src, cls:$R3, cls:$R2),
-            mnemonic#"\t$R1, $R3, $R2",
+            mnemonic#"r\t$R1, $R3, $R2",
             [(set cls:$R1, (operator cls:$R1src, cls:$R3, cls:$R2))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "reg";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
 }
 
 class TernaryRXF<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-                 RegisterOperand cls, SDPatternOperator load>
+                 RegisterOperand cls, SDPatternOperator load, bits<5> bytes>
   : InstRXF<opcode, (outs cls:$R1),
             (ins cls:$R1src, cls:$R3, bdxaddr12only:$XBD2),
             mnemonic#"\t$R1, $R3, $XBD2",
             [(set cls:$R1, (operator cls:$R1src, cls:$R3,
                                      (load bdxaddr12only:$XBD2)))]> {
+  let OpKey = mnemonic ## cls;
+  let OpType = "mem";
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
   let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class CmpSwapRS<string mnemonic, bits<8> opcode, SDPatternOperator operator,

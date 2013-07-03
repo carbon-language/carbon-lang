@@ -2,6 +2,8 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
+declare i128 *@foo()
+
 ; Test register addition.
 define void @f1(i128 *%ptr, i64 %high, i64 %low) {
 ; CHECK: f1:
@@ -114,5 +116,37 @@ define void @f7(i64 %base) {
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
   store i128 %sub, i128 *%aptr
+  ret void
+}
+
+; Check that subtractions of spilled values can use SLG and SLBG rather than
+; SLGR and SLBGR.
+define void @f8(i128 *%ptr0) {
+; CHECK: f8:
+; CHECK: brasl %r14, foo@PLT
+; CHECK: slg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
+; CHECK: slbg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
+; CHECK: br %r14
+  %ptr1 = getelementptr i128 *%ptr0, i128 2
+  %ptr2 = getelementptr i128 *%ptr0, i128 4
+  %ptr3 = getelementptr i128 *%ptr0, i128 6
+  %ptr4 = getelementptr i128 *%ptr0, i128 8
+
+  %val0 = load i128 *%ptr0
+  %val1 = load i128 *%ptr1
+  %val2 = load i128 *%ptr2
+  %val3 = load i128 *%ptr3
+  %val4 = load i128 *%ptr4
+
+  %retptr = call i128 *@foo()
+
+  %ret = load i128 *%retptr
+  %sub0 = sub i128 %ret, %val0
+  %sub1 = sub i128 %sub0, %val1
+  %sub2 = sub i128 %sub1, %val2
+  %sub3 = sub i128 %sub2, %val3
+  %sub4 = sub i128 %sub3, %val4
+  store i128 %sub4, i128 *%retptr
+
   ret void
 }
