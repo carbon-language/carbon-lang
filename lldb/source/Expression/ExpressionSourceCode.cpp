@@ -70,8 +70,8 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
                                "{                              \n"
                                "    %s;                        \n" 
                                "}                              \n",
-                               m_prefix.c_str(),
                                g_expression_prefix,
+                               m_prefix.c_str(),
                                m_name.c_str(),
                                m_body.c_str());
             break;
@@ -83,8 +83,8 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
                                "{                                      \n"
                                "    %s;                                \n" 
                                "}                                      \n",
-                               m_prefix.c_str(),
                                g_expression_prefix,
+                               m_prefix.c_str(),
                                m_name.c_str(),
                                (const_object ? "const" : ""),
                                m_body.c_str());
@@ -103,8 +103,8 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
                                    "    %s;                                                 \n"
                                    "}                                                       \n"
                                    "@end                                                    \n",
-                                   m_prefix.c_str(),
                                    g_expression_prefix,
+                                   m_prefix.c_str(),
                                    m_name.c_str(),
                                    m_name.c_str(),
                                    m_body.c_str());
@@ -122,8 +122,8 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
                                    "    %s;                                                \n"
                                    "}                                                      \n"
                                    "@end                                                   \n",
-                                   m_prefix.c_str(),
                                    g_expression_prefix,
+                                   m_prefix.c_str(),
                                    m_name.c_str(),
                                    m_name.c_str(),
                                    m_body.c_str());
