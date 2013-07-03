@@ -14,8 +14,13 @@ target_link_libraries(clangFrontendTool
   clangRewriteCore
   clangRewriteFrontend
   clangCodeGen
-  clangStaticAnalyzerFrontend
-  clangStaticAnalyzerCheckers
-  clangStaticAnalyzerCore
   clangARCMigrate
   )
+
+if(CLANG_ENABLE_STATIC_ANALYZER)
+  target_link_libraries(clangFrontendTool
+    clangStaticAnalyzerFrontend
+    clangStaticAnalyzerCheckers
+    clangStaticAnalyzerCore
+    )
+endif()

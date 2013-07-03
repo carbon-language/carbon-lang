@@ -4,7 +4,9 @@ add_subdirectory(arcmt-test)
 add_subdirectory(c-arcmt-test)
 add_subdirectory(diagtool)
 add_subdirectory(driver)
-add_subdirectory(clang-check)
+if(CLANG_ENABLE_STATIC_ANALYZER)
+  add_subdirectory(clang-check)
+endif()
 add_subdirectory(clang-format)
 
 # We support checking out the clang-tools-extra repository into the 'extra'
