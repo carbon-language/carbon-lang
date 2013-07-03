@@ -15,7 +15,6 @@
 namespace llvm {
 
 class SystemZMachineFunctionInfo : public MachineFunctionInfo {
-  unsigned SavedGPRFrameSize;
   unsigned LowSavedGPR;
   unsigned HighSavedGPR;
   unsigned VarArgsFirstGPR;
@@ -26,14 +25,8 @@ class SystemZMachineFunctionInfo : public MachineFunctionInfo {
 
 public:
   explicit SystemZMachineFunctionInfo(MachineFunction &MF)
-    : SavedGPRFrameSize(0), LowSavedGPR(0), HighSavedGPR(0), VarArgsFirstGPR(0),
-      VarArgsFirstFPR(0), VarArgsFrameIndex(0), RegSaveFrameIndex(0),
-      ManipulatesSP(false) {}
-
-  // Get and set the number of bytes allocated by generic code to store
-  // call-saved GPRs.
-  unsigned getSavedGPRFrameSize() const { return SavedGPRFrameSize; }
-  void setSavedGPRFrameSize(unsigned bytes) { SavedGPRFrameSize = bytes; }
+    : LowSavedGPR(0), HighSavedGPR(0), VarArgsFirstGPR(0), VarArgsFirstFPR(0),
+      VarArgsFrameIndex(0), RegSaveFrameIndex(0), ManipulatesSP(false) {}
 
   // Get and set the first call-saved GPR that should be saved and restored
   // by this function.  This is 0 if no GPRs need to be saved or restored.

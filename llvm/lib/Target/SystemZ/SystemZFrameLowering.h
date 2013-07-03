@@ -29,7 +29,9 @@ public:
   SystemZFrameLowering(const SystemZTargetMachine &tm,
                        const SystemZSubtarget &sti);
 
-  // Override FrameLowering.
+  // Override TargetFrameLowering.
+  virtual const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries) const
+    LLVM_OVERRIDE;
   virtual void
     processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                          RegScavenger *RS) const LLVM_OVERRIDE;
@@ -58,16 +60,6 @@ public:
                                 MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI) const
     LLVM_OVERRIDE;
-
-  // The target-independent code automatically allocates save slots for
-  // call-saved GPRs.  However, we don't need those slots for SystemZ,
-  // because the ABI sets aside GPR save slots in the caller-allocated part
-  // of the frame.  Since the target-independent code puts this unneeded
-  // area at the top of the callee-allocated part of frame, we choose not
-  // to allocate it and adjust the offsets accordingly.  Return the
-  // size of this unallocated area.
-  // FIXME: seems a bit hackish.
-  uint64_t getUnallocatedTopBytes(const MachineFunction &MF) const;
 
   // Return the number of bytes in the callee-allocated part of the frame.
   uint64_t getAllocatedStackSize(const MachineFunction &MF) const;
