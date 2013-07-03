@@ -114,13 +114,19 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   child_iterator i = begin_children(false);
   child_iterator e = end_children();
 
+  if (i == e) {
+    ec = object_error::parse_failed;
+    return;
+  }
+
+  // FIXME: this function should be able to use raw names.
   StringRef name;
   if ((ec = i->getName(name)))
     return;
 
   // Below is the pattern that is used to figure out the archive format
   // GNU archive format
-  //  First member : / (points to the symbol table )
+  //  First member : / (may exist, if it exists, points to the symbol table )
   //  Second member : // (may exist, if it exists, points to the string table)
   //  Note : The string table is used if the filename exceeds 15 characters
   // BSD archive format
@@ -136,40 +142,59 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   //  even if the string table is empty. However, lib.exe does not in fact
   //  seem to create the third member if there's no member whose filename
   //  exceeds 15 characters. So the third member is optional.
+
+  if (name == "__.SYMDEF") {
+    Format = K_BSD;
+    SymbolTable = i;
+    ec = object_error::success;
+    return;
+  }
+
   if (name == "/") {
     SymbolTable = i;
-    StringTable = e;
-    if (i != e) ++i;
+
+    ++i;
     if (i == e) {
       ec = object_error::parse_failed;
       return;
     }
     if ((ec = i->getName(name)))
       return;
-    if (name[0] != '/') {
-      Format = K_GNU;
-    } else if ((name.size() > 1) && (name == "//")) { 
-      Format = K_GNU;
-      StringTable = i;
-      ++i;
-    } else {
-      Format = K_COFF;
-      if (i != e) {
-        SymbolTable = i;
-        ++i;
-      }
-      if (i != e) {
-        if ((ec = i->getName(name)))
-          return;
-        if (name == "//")
-          StringTable = i;
-      }
-    }
-  } else if (name == "__.SYMDEF") {
-    Format = K_BSD;
-    SymbolTable = i;
-    StringTable = e;
-  } 
+  }
+
+  if (name == "//") {
+    Format = K_GNU;
+    StringTable = i;
+    ec = object_error::success;
+    return;
+  }
+
+  if (name[0] != '/') {
+    Format = K_GNU;
+    ec = object_error::success;
+    return;
+  }
+
+  if (name != "/") {
+    ec = object_error::parse_failed;
+    return;
+  }
+
+  Format = K_COFF;
+  SymbolTable = i;
+
+  ++i;
+  if (i == e) {
+    ec = object_error::success;
+    return;
+  }
+
+  if ((ec = i->getName(name)))
+    return;
+
+  if (name == "//")
+    StringTable = i;
+
   ec = object_error::success;
 }
 

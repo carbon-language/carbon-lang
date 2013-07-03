@@ -1,10 +1,13 @@
 RUN: llvm-nm %p/Inputs/archive-test.a-coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF
+
 RUN: llvm-as %p/Inputs/trivial.ll -o=%t1
 RUN: rm -f %t2
 RUN: llvm-ar rcs %t2 %t1
 RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
 
+Test we don't error with an archive with no symtab.
+RUN: llvm-nm %p/Inputs/archive-test.a-gnu-no-symtab
 
 COFF: trivial-object-test.coff-i386:
 COFF-NEXT: 00000000 d .data
