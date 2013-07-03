@@ -27,10 +27,6 @@ D: Exception handling, Windows codegen, ARM EABI
 N: Ted Kremenek
 D: Clang Static Analyzer
 
-N: Chris Matthews
-E: cmatthews5@apple.com
-D: The compiler driver
-
 N: John McCall
 E: rjmccall@apple.com
 D: Clang LLVM IR generation
