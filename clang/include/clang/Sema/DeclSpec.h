@@ -615,6 +615,8 @@ public:
                        const char *&PrevSpec, unsigned &DiagID);
   bool SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
                        const char *&PrevSpec, unsigned &DiagID);
+  bool SetTypeAltiVecBool(bool isAltiVecBool, SourceLocation Loc,
+                       const char *&PrevSpec, unsigned &DiagID);
   bool SetTypeSpecError();
   void UpdateDeclRep(Decl *Rep) {
     assert(isDeclRep((TST) TypeSpecType));

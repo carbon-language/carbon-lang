@@ -488,6 +488,7 @@ void Parser::Initialize() {
   if (getLangOpts().AltiVec) {
     Ident_vector = &PP.getIdentifierTable().get("vector");
     Ident_pixel = &PP.getIdentifierTable().get("pixel");
+    Ident_bool = &PP.getIdentifierTable().get("bool");
   }
 
   Ident_introduced = 0;

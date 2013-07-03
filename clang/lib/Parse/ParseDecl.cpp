@@ -5587,6 +5587,10 @@ bool Parser::TryAltiVecVectorTokenOutOfLine() {
       Tok.setKind(tok::kw___vector);
       return true;
     }
+    if (Next.getIdentifierInfo() == Ident_bool) {
+      Tok.setKind(tok::kw___vector);
+      return true;
+    }
     return false;
   }
 }
@@ -5615,6 +5619,10 @@ bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
         isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
         return true;
       }
+      if (Next.getIdentifierInfo() == Ident_bool) {
+        isInvalid = DS.SetTypeAltiVecVector(true, Loc, PrevSpec, DiagID);
+        return true;
+      }
       break;
     default:
       break;
@@ -5622,6 +5630,10 @@ bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
   } else if ((Tok.getIdentifierInfo() == Ident_pixel) &&
              DS.isTypeAltiVecVector()) {
     isInvalid = DS.SetTypeAltiVecPixel(true, Loc, PrevSpec, DiagID);
+    return true;
+  } else if ((Tok.getIdentifierInfo() == Ident_bool) &&
+             DS.isTypeAltiVecVector()) {
+    isInvalid = DS.SetTypeAltiVecBool(true, Loc, PrevSpec, DiagID);
     return true;
   }
   return false;

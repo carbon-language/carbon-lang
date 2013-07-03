@@ -707,6 +707,20 @@ bool DeclSpec::SetTypeAltiVecPixel(bool isAltiVecPixel, SourceLocation Loc,
   return false;
 }
 
+bool DeclSpec::SetTypeAltiVecBool(bool isAltiVecBool, SourceLocation Loc,
+                          const char *&PrevSpec, unsigned &DiagID) {
+  if (!TypeAltiVecVector || TypeAltiVecBool ||
+      (TypeSpecType != TST_unspecified)) {
+    PrevSpec = DeclSpec::getSpecifierName((TST) TypeSpecType);
+    DiagID = diag::err_invalid_vector_bool_decl_spec;
+    return true;
+  }
+  TypeAltiVecBool = isAltiVecBool;
+  TSTLoc = Loc;
+  TSTNameLoc = Loc;
+  return false;
+}
+
 bool DeclSpec::SetTypeSpecError() {
   TypeSpecType = TST_error;
   TypeSpecOwned = false;
