@@ -293,18 +293,9 @@ private:
   std::vector<SectionChunk *> _sections;
 };
 
-/// A SectionChunk represents a section containing atoms. It consists of a
-/// section header that to be written to PECOFF header and atoms which to be
-/// written to the raw data section.
-class SectionChunk : public Chunk {
+/// An AtomChunk represents a section containing atoms.
+class AtomChunk : public Chunk {
 public:
-  /// Returns the size of the section on disk. The returned value is multiple
-  /// of disk sector, so the size may include the null padding at the end of
-  /// section.
-  virtual uint64_t size() const {
-    return llvm::RoundUpToAlignment(_size, _align);
-  }
-
   virtual void write(uint8_t *fileBuffer) {
     for (const auto *layout : _atomLayouts) {
       const DefinedAtom *atom = dyn_cast<const DefinedAtom>(layout->_atom);
@@ -363,15 +354,41 @@ public:
   // Set the file offset of the beginning of this section.
   virtual void setFileOffset(uint64_t fileOffset) {
     Chunk::setFileOffset(fileOffset);
-    _sectionHeader.PointerToRawData = fileOffset;
     for (AtomLayout *layout : _atomLayouts)
       layout->_fileOffset += fileOffset;
   }
 
   virtual void setVirtualAddress(uint32_t rva) {
-    _sectionHeader.VirtualAddress = rva;
     for (AtomLayout *layout : _atomLayouts)
       layout->_virtualAddr += rva;
+  }
+
+protected:
+  AtomChunk(Kind kind) : Chunk(kind) {}
+  std::vector<AtomLayout *> _atomLayouts;
+};
+
+/// A SectionChunk represents a section containing atoms. It consists of a
+/// section header that to be written to PECOFF header and atoms which to be
+/// written to the raw data section.
+class SectionChunk : public AtomChunk {
+public:
+  /// Returns the size of the section on disk. The returned value is multiple
+  /// of disk sector, so the size may include the null padding at the end of
+  /// section.
+  virtual uint64_t size() const {
+    return llvm::RoundUpToAlignment(_size, _align);
+  }
+
+  // Set the file offset of the beginning of this section.
+  virtual void setFileOffset(uint64_t fileOffset) {
+    AtomChunk::setFileOffset(fileOffset);
+    _sectionHeader.PointerToRawData = fileOffset;
+  }
+
+  virtual void setVirtualAddress(uint32_t rva) {
+    _sectionHeader.VirtualAddress = rva;
+    AtomChunk::setVirtualAddress(rva);
   }
 
   virtual uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
@@ -385,7 +402,7 @@ public:
 protected:
   SectionChunk(SectionHeaderTableChunk *table, StringRef sectionName,
                uint32_t characteristics)
-      : Chunk(kindSection),
+      : AtomChunk(kindSection),
         _sectionHeader(createSectionHeader(sectionName, characteristics)) {
     // The section should be aligned to disk sector.
     _align = SECTOR_SIZE;
@@ -446,7 +463,6 @@ private:
   }
 
   llvm::object::coff_section _sectionHeader;
-  std::vector<AtomLayout *> _atomLayouts;
   mutable llvm::BumpPtrAllocator _storage;
 };
 
