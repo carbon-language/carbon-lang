@@ -566,20 +566,18 @@ private:
     // there's no technical reason to do so, but we'll follow that convention
     // so that we don't produce odd-looking binary. We should update the code
     // (or this comment) once we figure the reason out.
-    uint32_t offset = PAGE_SIZE;
-    uint32_t va = offset;
+    uint32_t rva = PAGE_SIZE;
     for (auto &cp : _chunks) {
       if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp)) {
-        chunk->setVirtualAddress(va);
-
+        chunk->setVirtualAddress(rva);
         // Skip the empty section.
         if (chunk->size() == 0)
           continue;
         numSections++;
-        va = llvm::RoundUpToAlignment(va + chunk->size(), PAGE_SIZE);
+        rva = llvm::RoundUpToAlignment(rva + chunk->size(), PAGE_SIZE);
       }
     }
-    imageSize = va - offset;
+    imageSize = rva;
   }
 
   /// Apply relocations to the output file buffer. This two pass. In the first

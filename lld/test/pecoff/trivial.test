@@ -39,7 +39,7 @@ FILE:   MajorImageVersion: 0
 FILE:   MinorImageVersion: 0
 FILE:   MajorSubsystemVersion: 3
 FILE:   MinorSubsystemVersion: 11
-FILE:   SizeOfImage: 4096
+FILE:   SizeOfImage: 8192
 FILE:   SizeOfHeaders: 512
 FILE:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI (0x3)
 FILE:   Subsystem [ (0x8540)
