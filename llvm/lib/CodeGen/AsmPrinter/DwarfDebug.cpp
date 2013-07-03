@@ -547,8 +547,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   // corresponding the .debug_inlined section entry for this pair.
   if (Asm->MAI->doesDwarfUseInlineInfoSection()) {
     MCSymbol *StartLabel = getLabelBeforeInsn(Ranges.begin()->first);
-    DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator I =
-        InlineInfo.find(InlinedSP);
+    InlineInfoMap::iterator I = InlineInfo.find(InlinedSP);
 
     if (I == InlineInfo.end()) {
       InlineInfo[InlinedSP].push_back(std::make_pair(StartLabel, ScopeDIE));
@@ -1727,7 +1726,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     TheCU->addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
   // Clear debug info
-  for (DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8> >::iterator
+  for (ScopeVariablesMap::iterator
          I = ScopeVariables.begin(), E = ScopeVariables.end(); I != E; ++I)
     DeleteContainerPointers(I->second);
   ScopeVariables.clear();
@@ -2586,8 +2585,7 @@ void DwarfDebug::emitDebugInlineInfo() {
          E = InlinedSPNodes.end(); I != E; ++I) {
 
     const MDNode *Node = *I;
-    DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator II
-      = InlineInfo.find(Node);
+    InlineInfoMap::iterator II = InlineInfo.find(Node);
     SmallVectorImpl<InlineInfoLabels> &Labels = II->second;
     DISubprogram SP(Node);
     StringRef LName = SP.getLinkageName();

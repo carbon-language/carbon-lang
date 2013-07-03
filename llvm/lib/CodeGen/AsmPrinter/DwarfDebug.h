@@ -327,7 +327,9 @@ class DwarfDebug {
   DenseMap<const MDNode *, DIE *> AbstractSPDies;
 
   // Collection of dbg variables of a scope.
-  DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8> > ScopeVariables;
+  typedef DenseMap<LexicalScope *,
+                   SmallVector<DbgVariable *, 8> > ScopeVariablesMap;
+  ScopeVariablesMap ScopeVariables;
 
   // Collection of abstract variables.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
@@ -342,7 +344,9 @@ class DwarfDebug {
   // Keep track of inlined functions and their location.  This
   // information is used to populate the debug_inlined section.
   typedef std::pair<const MCSymbol *, DIE *> InlineInfoLabels;
-  DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> > InlineInfo;
+  typedef DenseMap<const MDNode *,
+                   SmallVector<InlineInfoLabels, 4> > InlineInfoMap;
+  InlineInfoMap InlineInfo;
   SmallVector<const MDNode *, 4> InlinedSPNodes;
 
   // This is a collection of subprogram MDNodes that are processed to
