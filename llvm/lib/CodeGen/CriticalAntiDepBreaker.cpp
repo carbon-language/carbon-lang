@@ -361,7 +361,7 @@ findSuitableFreeRegister(RegRefIter RegRefBegin,
                          unsigned AntiDepReg,
                          unsigned LastNewReg,
                          const TargetRegisterClass *RC,
-                         SmallVector<unsigned, 2> &Forbid)
+                         SmallVectorImpl<unsigned> &Forbid)
 {
   ArrayRef<MCPhysReg> Order = RegClassInfo.getOrder(RC);
   for (unsigned i = 0; i != Order.size(); ++i) {
