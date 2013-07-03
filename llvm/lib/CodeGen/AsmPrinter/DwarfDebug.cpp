@@ -497,18 +497,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     return NULL;
   }
 
-  SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
-  MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
-  MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
-
-  if (StartLabel == 0 || EndLabel == 0) {
-    llvm_unreachable("Unexpected Start and End labels for an inlined scope!");
-  }
-  assert(StartLabel->isDefined() &&
-         "Invalid starting label for an inlined scope!");
-  assert(EndLabel->isDefined() &&
-         "Invalid end label for an inlined scope!");
-
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
   TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin,
                      dwarf::DW_FORM_ref4, OriginDIE);
@@ -528,31 +516,46 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
     DebugRangeSymbols.push_back(NULL);
     DebugRangeSymbols.push_back(NULL);
   } else {
+    SmallVector<InsnRange, 4>::const_iterator RI = Ranges.begin();
+    MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
+    MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
+
+    if (StartLabel == 0 || EndLabel == 0)
+      llvm_unreachable("Unexpected Start and End labels for an inlined scope!");
+
+    assert(StartLabel->isDefined() &&
+           "Invalid starting label for an inlined scope!");
+    assert(EndLabel->isDefined() && "Invalid end label for an inlined scope!");
+
     TheCU->addLabelAddress(ScopeDIE, dwarf::DW_AT_low_pc, StartLabel);
     TheCU->addLabelAddress(ScopeDIE, dwarf::DW_AT_high_pc, EndLabel);
   }
 
   InlinedSubprogramDIEs.insert(OriginDIE);
 
-  // Track the start label for this inlined function.
-  //.debug_inlined section specification does not clearly state how
-  // to emit inlined scope that is split into multiple instruction ranges.
-  // For now, use first instruction range and emit low_pc/high_pc pair and
-  // corresponding .debug_inlined section entry for this pair.
-  DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator
-    I = InlineInfo.find(InlinedSP);
-
-  if (I == InlineInfo.end()) {
-    InlineInfo[InlinedSP].push_back(std::make_pair(StartLabel, ScopeDIE));
-    InlinedSPNodes.push_back(InlinedSP);
-  } else
-    I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
-
+  // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0,
                  getOrCreateSourceID(DL.getFilename(), DL.getDirectory(),
                                      TheCU->getUniqueID()));
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
+
+  // Track the start label for this inlined function.
+  //.debug_inlined section specification does not clearly state how
+  // to emit inlined scopes that are split into multiple instruction ranges.
+  // For now, use the first instruction range and emit low_pc/high_pc pair and
+  // corresponding the .debug_inlined section entry for this pair.
+  if (Asm->MAI->doesDwarfUseInlineInfoSection()) {
+    MCSymbol *StartLabel = getLabelBeforeInsn(Ranges.begin()->first);
+    DenseMap<const MDNode *, SmallVector<InlineInfoLabels, 4> >::iterator I =
+        InlineInfo.find(InlinedSP);
+
+    if (I == InlineInfo.end()) {
+      InlineInfo[InlinedSP].push_back(std::make_pair(StartLabel, ScopeDIE));
+      InlinedSPNodes.push_back(InlinedSP);
+    } else
+      I->second.push_back(std::make_pair(StartLabel, ScopeDIE));
+  }
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
