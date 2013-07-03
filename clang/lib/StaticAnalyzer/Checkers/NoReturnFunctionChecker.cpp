@@ -26,31 +26,29 @@ using namespace ento;
 
 namespace {
 
-class NoReturnFunctionChecker : public Checker< check::PostStmt<CallExpr>,
+class NoReturnFunctionChecker : public Checker< check::PostCall,
                                                 check::PostObjCMessage > {
 public:
-  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPostCall(const CallEvent &CE, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
 
 }
 
-void NoReturnFunctionChecker::checkPostStmt(const CallExpr *CE,
+void NoReturnFunctionChecker::checkPostCall(const CallEvent &CE,
                                             CheckerContext &C) const {
   ProgramStateRef state = C.getState();
-  const Expr *Callee = CE->getCallee();
+  bool BuildSinks = false;
 
-  bool BuildSinks = getFunctionExtInfo(Callee->getType()).getNoReturn();
+  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CE.getDecl()))
+    BuildSinks = FD->getAttr<AnalyzerNoReturnAttr>() || FD->isNoReturn();
 
-  if (!BuildSinks) {
-    SVal L = state->getSVal(Callee, C.getLocationContext());
-    const FunctionDecl *FD = L.getAsFunctionDecl();
-    if (!FD)
-      return;
+  const Expr *Callee = CE.getOriginExpr();
+  if (!BuildSinks && Callee)
+    BuildSinks = getFunctionExtInfo(Callee->getType()).getNoReturn();
 
-    if (FD->getAttr<AnalyzerNoReturnAttr>() || FD->isNoReturn())
-      BuildSinks = true;
-    else if (const IdentifierInfo *II = FD->getIdentifier()) {
+  if (!BuildSinks && CE.isGlobalCFunction()) {
+    if (const IdentifierInfo *II = CE.getCalleeIdentifier()) {
       // HACK: Some functions are not marked noreturn, and don't return.
       //  Here are a few hardwired ones.  If this takes too long, we can
       //  potentially cache these results.
