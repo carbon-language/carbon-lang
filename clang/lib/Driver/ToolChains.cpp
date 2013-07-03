@@ -1949,10 +1949,7 @@ enum Distro {
   Fedora15,
   Fedora16,
   FedoraRawhide,
-  OpenSuse11_3,
-  OpenSuse11_4,
-  OpenSuse12_1,
-  OpenSuse12_2,
+  OpenSUSE,
   UbuntuHardy,
   UbuntuIntrepid,
   UbuntuJaunty,
@@ -1973,8 +1970,8 @@ static bool IsRedhat(enum Distro Distro) {
          (Distro >= RHEL4    && Distro <= RHEL6);
 }
 
-static bool IsOpenSuse(enum Distro Distro) {
-  return Distro >= OpenSuse11_3 && Distro <= OpenSuse12_2;
+static bool IsOpenSUSE(enum Distro Distro) {
+  return Distro == OpenSUSE;
 }
 
 static bool IsDebian(enum Distro Distro) {
@@ -2051,13 +2048,8 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (!llvm::MemoryBuffer::getFile("/etc/SuSE-release", File))
-    return llvm::StringSwitch<Distro>(File.get()->getBuffer())
-      .StartsWith("openSUSE 11.3", OpenSuse11_3)
-      .StartsWith("openSUSE 11.4", OpenSuse11_4)
-      .StartsWith("openSUSE 12.1", OpenSuse12_1)
-      .StartsWith("openSUSE 12.2", OpenSuse12_2)
-      .Default(UnknownDistro);
+  if (llvm::sys::fs::exists("/etc/SuSE-release"))
+    return OpenSUSE;
 
   if (llvm::sys::fs::exists("/etc/exherbo-release"))
     return Exherbo;
@@ -2171,7 +2163,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   llvm::Triple::ArchType Arch = Triple.getArch();
   std::string SysRoot = computeSysRoot(Args);
 
-  // Cross-compiling binutils and GCC installations (vanilla and OpenSuse at
+  // Cross-compiling binutils and GCC installations (vanilla and openSUSE at
   // least) put various tools in a triple-prefixed directory off of the parent
   // of the GCC installation. We use the GCC triple here to ensure that we end
   // up with tools that support the same amount of cross compiling as the
@@ -2187,7 +2179,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   Distro Distro = DetectDistro(Arch);
 
-  if (IsOpenSuse(Distro) || IsUbuntu(Distro)) {
+  if (IsOpenSUSE(Distro) || IsUbuntu(Distro)) {
     ExtraOpts.push_back("-z");
     ExtraOpts.push_back("relro");
   }
@@ -2207,11 +2199,11 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   // ABI requires a mapping between the GOT and the symbol table.
   // Android loader does not support .gnu.hash.
   if (!IsMips && !IsAndroid) {
-    if (IsRedhat(Distro) || IsOpenSuse(Distro) ||
+    if (IsRedhat(Distro) || IsOpenSUSE(Distro) ||
         (IsUbuntu(Distro) && Distro >= UbuntuMaverick))
       ExtraOpts.push_back("--hash-style=gnu");
 
-    if (IsDebian(Distro) || IsOpenSuse(Distro) || Distro == UbuntuLucid ||
+    if (IsDebian(Distro) || IsOpenSUSE(Distro) || Distro == UbuntuLucid ||
         Distro == UbuntuJaunty || Distro == UbuntuKarmic)
       ExtraOpts.push_back("--hash-style=both");
   }
@@ -2220,12 +2212,12 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     ExtraOpts.push_back("--no-add-needed");
 
   if (Distro == DebianSqueeze || Distro == DebianWheezy ||
-      Distro == DebianJessie || IsOpenSuse(Distro) ||
+      Distro == DebianJessie || IsOpenSUSE(Distro) ||
       (IsRedhat(Distro) && Distro != RHEL4 && Distro != RHEL5) ||
       (IsUbuntu(Distro) && Distro >= UbuntuKarmic))
     ExtraOpts.push_back("--build-id");
 
-  if (IsOpenSuse(Distro))
+  if (IsOpenSUSE(Distro))
     ExtraOpts.push_back("--enable-new-dtags");
 
   // The selection of paths to try here is designed to match the patterns which
