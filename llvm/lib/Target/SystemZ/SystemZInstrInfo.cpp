@@ -350,8 +350,8 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     return 0;
 
   unsigned OpNum = Ops[0];
-  unsigned Reg = MI->getOperand(OpNum).getReg();
-  assert(Size == MF.getRegInfo().getRegClass(Reg)->getSize() &&
+  assert(Size == MF.getRegInfo()
+         .getRegClass(MI->getOperand(OpNum).getReg())->getSize() &&
          "Invalid size combination");
 
   // Look for cases where the source of a simple store or the destination
