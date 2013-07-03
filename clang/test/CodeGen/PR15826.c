@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -emit-llvm %s -o %t
+// RUN: %clang_cc1 -verify -emit-llvm-only %s -o %t
 
 /* Testcase for PR15826 - clang hits assert in clang::ASTContext::getASTRecordLayout */
 struct sysctl_req {
