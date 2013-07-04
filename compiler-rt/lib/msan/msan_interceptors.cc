@@ -119,6 +119,10 @@ INTERCEPTOR(void *, memset, void *s, int c, SIZE_T n) {
   return __msan_memset(s, c, n);
 }
 
+INTERCEPTOR(void *, bcopy, const void *src, void *dest, SIZE_T n) {
+  return __msan_memmove(dest, src, n);
+}
+
 INTERCEPTOR(int, posix_memalign, void **memptr, SIZE_T alignment, SIZE_T size) {
   GET_MALLOC_STACK_TRACE;
   CHECK_EQ(alignment & (alignment - 1), 0);
@@ -391,21 +395,6 @@ INTERCEPTOR(SIZE_T, strftime, char *s, SIZE_T max, const char *format,
   ENSURE_MSAN_INITED();
   SIZE_T res = REAL(strftime)(s, max, format, tm);
   if (res) __msan_unpoison(s, res + 1);
-  return res;
-}
-
-INTERCEPTOR(SIZE_T, wcstombs, void *dest, void *src, SIZE_T size) {
-  ENSURE_MSAN_INITED();
-  SIZE_T res = REAL(wcstombs)(dest, src, size);
-  if (res != (SIZE_T)-1) __msan_unpoison(dest, res + 1);
-  return res;
-}
-
-// SIZE_T mbstowcs(wchar_t *dest, const char *src, SIZE_T n);
-INTERCEPTOR(SIZE_T, mbstowcs, wchar_t *dest, const char *src, SIZE_T n) {
-  ENSURE_MSAN_INITED();
-  SIZE_T res = REAL(mbstowcs)(dest, src, n);
-  if (res != (SIZE_T)-1) __msan_unpoison(dest, (res + 1) * sizeof(wchar_t));
   return res;
 }
 
@@ -1157,6 +1146,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(mempcpy);
   INTERCEPT_FUNCTION(memset);
   INTERCEPT_FUNCTION(memmove);
+  INTERCEPT_FUNCTION(bcopy);
   INTERCEPT_FUNCTION(wmemset);
   INTERCEPT_FUNCTION(wmemcpy);
   INTERCEPT_FUNCTION(wmempcpy);
@@ -1189,8 +1179,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(snprintf);
   INTERCEPT_FUNCTION(swprintf);
   INTERCEPT_FUNCTION(strftime);
-  INTERCEPT_FUNCTION(wcstombs);
-  INTERCEPT_FUNCTION(mbstowcs);
   INTERCEPT_FUNCTION(mbtowc);
   INTERCEPT_FUNCTION(mbrtowc);
   INTERCEPT_FUNCTION(wcslen);

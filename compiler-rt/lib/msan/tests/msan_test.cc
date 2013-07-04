@@ -19,6 +19,7 @@
 #include "sanitizer/msan_interface.h"
 #include "msandr_test_so.h"
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -958,6 +959,16 @@ TEST(MemorySanitizer, memmove) {
   EXPECT_POISONED(y[1]);
 }
 
+TEST(MemorySanitizer, bcopy) {
+  char* x = new char[2];
+  char* y = new char[2];
+  x[0] = 1;
+  x[1] = *GetPoisoned<char>();
+  bcopy(x, y, 2);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_POISONED(y[1]);
+}
+
 TEST(MemorySanitizer, strdup) {
   char buf[4] = "abc";
   __msan_poison(buf + 2, sizeof(*buf));
@@ -1077,6 +1088,18 @@ TEST(MemorySanitizer, strtoull) {
   EXPECT_NOT_POISONED((S8) e);
 }
 
+TEST(MemorySanitizer, strtoimax) {
+  char *e;
+  assert(1 == strtoimax("1", &e, 10));
+  EXPECT_NOT_POISONED((S8) e);
+}
+
+TEST(MemorySanitizer, strtoumax) {
+  char *e;
+  assert(1 == strtoumax("1", &e, 10));
+  EXPECT_NOT_POISONED((S8) e);
+}
+
 TEST(MemorySanitizer, strtod) {
   char *e;
   assert(0 != strtod("1.5", &e));
@@ -1178,6 +1201,30 @@ TEST(MemorySanitizer, wcstombs) {
   EXPECT_EQ(buff[0], 'a');
   EXPECT_EQ(buff[1], 'b');
   EXPECT_EQ(buff[2], 'c');
+}
+
+TEST(MemorySanitizer, wcsrtombs) {
+  const wchar_t *x = L"abc";
+  const wchar_t *p = x;
+  char buff[10];
+  mbstate_t mbs;
+  int res = wcsrtombs(buff, &p, 4, &mbs);
+  EXPECT_EQ(res, 3);
+  EXPECT_EQ(buff[0], 'a');
+  EXPECT_EQ(buff[1], 'b');
+  EXPECT_EQ(buff[2], 'c');
+}
+
+TEST(MemorySanitizer, wcsnrtombs) {
+  const wchar_t *x = L"abc";
+  const wchar_t *p = x;
+  char buff[10];
+  mbstate_t mbs;
+  int res = wcsnrtombs(buff, &p, 2, 4, &mbs);
+  EXPECT_EQ(res, 2);
+  EXPECT_EQ(buff[0], 'a');
+  EXPECT_EQ(buff[1], 'b');
+  EXPECT_EQ(buff[2], 0);
 }
 
 TEST(MemorySanitizer, mbtowc) {

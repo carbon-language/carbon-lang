@@ -1440,6 +1440,132 @@ INTERCEPTOR(char *, get_current_dir_name) {
 #define INIT_GET_CURRENT_DIR_NAME
 #endif
 
+#if SANITIZER_INTERCEPT_STRTOIMAX
+INTERCEPTOR(INTMAX_T, strtoimax, const char *nptr, char **endptr, int base) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strtoimax, nptr, endptr, base);
+  INTMAX_T res = REAL(strtoimax)(nptr, endptr, base);
+  if (endptr) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, endptr, sizeof(*endptr));
+  return res;
+}
+
+INTERCEPTOR(INTMAX_T, strtoumax, const char *nptr, char **endptr, int base) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strtoumax, nptr, endptr, base);
+  INTMAX_T res = REAL(strtoumax)(nptr, endptr, base);
+  if (endptr) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, endptr, sizeof(*endptr));
+  return res;
+}
+
+#define INIT_STRTOIMAX           \
+  INTERCEPT_FUNCTION(strtoimax); \
+  INTERCEPT_FUNCTION(strtoumax);
+#else
+#define INIT_STRTOIMAX
+#endif
+
+#if SANITIZER_INTERCEPT_MBSTOWCS
+INTERCEPTOR(SIZE_T, mbstowcs, wchar_t *dest, const char *src, SIZE_T len) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, mbstowcs, dest, src, len);
+  SIZE_T res = REAL(mbstowcs)(dest, src, len);
+  if (res != (SIZE_T) - 1 && dest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, (res + 1) * sizeof(wchar_t));
+  return res;
+}
+
+INTERCEPTOR(SIZE_T, mbsrtowcs, wchar_t *dest, const char **src, SIZE_T len,
+            void *ps) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, mbsrtowcs, dest, src, len, ps);
+  if (src) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  }
+  SIZE_T res = REAL(mbsrtowcs)(dest, src, len, ps);
+  if (res != (SIZE_T) - 1 && dest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, (res + 1) * sizeof(wchar_t));
+  return res;
+}
+
+#define INIT_MBSTOWCS           \
+  INTERCEPT_FUNCTION(mbstowcs); \
+  INTERCEPT_FUNCTION(mbsrtowcs);
+#else
+#define INIT_MBSTOWCS
+#endif
+
+#if SANITIZER_INTERCEPT_MBSNRTOWCS
+
+INTERCEPTOR(SIZE_T, mbsnrtowcs, wchar_t *dest, const char **src, SIZE_T nms,
+            SIZE_T len, void *ps) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, mbsnrtowcs, dest, src, nms, len, ps);
+  if (src) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+    if (nms) COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
+  }
+  SIZE_T res = REAL(mbsnrtowcs)(dest, src, nms, len, ps);
+  if (res != (SIZE_T) - 1 && dest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, (res + 1) * sizeof(wchar_t));
+  return res;
+}
+
+#define INIT_MBSNRTOWCS INTERCEPT_FUNCTION(mbsnrtowcs);
+#else
+#define INIT_MBSNRTOWCS
+#endif
+
+#if SANITIZER_INTERCEPT_WCSTOMBS
+INTERCEPTOR(SIZE_T, wcstombs, char *dest, const wchar_t *src, SIZE_T len) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wcstombs, dest, src, len);
+  SIZE_T res = REAL(wcstombs)(dest, src, len);
+  if (res != (SIZE_T) - 1 && dest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, res + 1);
+  return res;
+}
+
+INTERCEPTOR(SIZE_T, wcsrtombs, char *dest, const wchar_t **src, SIZE_T len,
+            void *ps) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wcsrtombs, dest, src, len, ps);
+  if (src) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  }
+  SIZE_T res = REAL(wcsrtombs)(dest, src, len, ps);
+  if (res != (SIZE_T) - 1 && dest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, res + 1);
+  return res;
+}
+
+#define INIT_WCSTOMBS           \
+  INTERCEPT_FUNCTION(wcstombs); \
+  INTERCEPT_FUNCTION(wcsrtombs);
+#else
+#define INIT_WCSTOMBS
+#endif
+
+#if SANITIZER_INTERCEPT_WCSNRTOMBS
+
+INTERCEPTOR(SIZE_T, wcsnrtombs, char *dest, const wchar_t **src, SIZE_T nms,
+            SIZE_T len, void *ps) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, wcsnrtombs, dest, src, nms, len, ps);
+  if (src) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+    if (nms) COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
+  }
+  SIZE_T res = REAL(wcsnrtombs)(dest, src, nms, len, ps);
+  if (res != (SIZE_T) - 1 && dest)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, res + 1);
+  return res;
+}
+
+#define INIT_WCSNRTOMBS INTERCEPT_FUNCTION(wcsnrtombs);
+#else
+#define INIT_WCSNRTOMBS
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1488,4 +1614,9 @@ INTERCEPTOR(char *, get_current_dir_name) {
   INIT_PTRACE;                             \
   INIT_SETLOCALE;                          \
   INIT_GETCWD;                             \
-  INIT_GET_CURRENT_DIR_NAME;
+  INIT_GET_CURRENT_DIR_NAME;               \
+  INIT_STRTOIMAX;                          \
+  INIT_MBSTOWCS;                           \
+  INIT_MBSNRTOWCS;                         \
+  INIT_WCSTOMBS;                           \
+  INIT_WCSNRTOMBS;
