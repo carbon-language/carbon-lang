@@ -42,10 +42,10 @@ static void replaceFrameIndexes(MachineFunction &MF,
                                 SmallVector<std::pair<int,int64_t>, 16> &FR) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
-  const SmallVectorImpl<std::pair<int,int64_t>>::iterator FRB = FR.begin();
-  const SmallVectorImpl<std::pair<int,int64_t>>::iterator FRE = FR.end();
+  const SmallVectorImpl<std::pair<int,int64_t> >::iterator FRB = FR.begin();
+  const SmallVectorImpl<std::pair<int,int64_t> >::iterator FRE = FR.end();
 
-  SmallVectorImpl<std::pair<int,int64_t>>::iterator FRI = FRB;
+  SmallVectorImpl<std::pair<int,int64_t> >::iterator FRI = FRB;
   for (; FRI != FRE; ++FRI) {
     MFI->RemoveStackObject(FRI->first);
     int NFI = MFI->CreateFixedObject(4, FRI->second, true);
