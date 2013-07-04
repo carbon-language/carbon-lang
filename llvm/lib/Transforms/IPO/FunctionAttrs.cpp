@@ -71,36 +71,36 @@ namespace {
 
     void setDoesNotAccessMemory(Function &F) {
       if (!F.doesNotAccessMemory()) {
-	F.setDoesNotAccessMemory();
-	++NumAnnotated;
+        F.setDoesNotAccessMemory();
+        ++NumAnnotated;
       }
     }
 
     void setOnlyReadsMemory(Function &F) {
       if (!F.onlyReadsMemory()) {
-	F.setOnlyReadsMemory();
-	++NumAnnotated;
+        F.setOnlyReadsMemory();
+        ++NumAnnotated;
       }
     }
 
     void setDoesNotThrow(Function &F) {
       if (!F.doesNotThrow()) {
-	F.setDoesNotThrow();
-	++NumAnnotated;
+        F.setDoesNotThrow();
+        ++NumAnnotated;
       }
     }
 
     void setDoesNotCapture(Function &F, unsigned n) {
       if (!F.doesNotCapture(n)) {
-	F.setDoesNotCapture(n);
-	++NumAnnotated;
+        F.setDoesNotCapture(n);
+        ++NumAnnotated;
       }
     }
 
     void setDoesNotAlias(Function &F, unsigned n) {
       if (!F.doesNotAlias(n)) {
-	F.setDoesNotAlias(n);
-	++NumAnnotated;
+        F.setDoesNotAlias(n);
+        ++NumAnnotated;
       }
     }
 
