@@ -76,15 +76,12 @@ STATISTIC(NumFastIselDead, "Number of dead insts removed on failure");
 void FastISel::startNewBlock() {
   LocalValueMap.clear();
 
+  // Instructions are append to FuncInfo.MBB. If the basic block already
+  // contains labels or copies, use the last instruction as the last local
+  // value.
   EmitStartPt = 0;
-
-  // Advance the emit start point past any EH_LABEL instructions.
-  MachineBasicBlock::iterator
-    I = FuncInfo.MBB->begin(), E = FuncInfo.MBB->end();
-  while (I != E && I->getOpcode() == TargetOpcode::EH_LABEL) {
-    EmitStartPt = I;
-    ++I;
-  }
+  if (!FuncInfo.MBB->empty())
+    EmitStartPt = &FuncInfo.MBB->back();
   LastLocalValue = EmitStartPt;
 }
 
