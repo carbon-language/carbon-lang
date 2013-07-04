@@ -351,7 +351,7 @@ MachineBasicBlock::addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC) {
          "Only the entry block and landing pads can have physreg live ins");
 
   bool LiveIn = isLiveIn(PhysReg);
-  iterator I = getFirstNonPHI(), E = end();
+  iterator I = SkipPHIsAndLabels(begin()), E = end();
   MachineRegisterInfo &MRI = getParent()->getRegInfo();
   const TargetInstrInfo &TII = *getParent()->getTarget().getInstrInfo();
 
