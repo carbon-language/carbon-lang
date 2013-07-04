@@ -705,6 +705,114 @@ static Value *dyn_castZExtVal(Value *V, Type *Ty) {
   return 0;
 }
 
+namespace {
+const unsigned MaxDepth = 6;
+typedef Instruction *(*FoldUDivOperandCb)(Value *Op0, Value *Op1,
+                                          const BinaryOperator &I,
+                                          InstCombiner &IC);
+
+/// \brief Used to maintain state for visitUDivOperand().
+struct UDivFoldAction {
+  FoldUDivOperandCb FoldAction; ///< Informs visitUDiv() how to fold this
+                                ///< operand.  This can be zero if this action
+                                ///< joins two actions together.
+
+  Value *OperandToFold;         ///< Which operand to fold.
+  union {
+    Instruction *FoldResult;    ///< The instruction returned when FoldAction is
+                                ///< invoked.
+
+    size_t SelectLHSIdx;        ///< Stores the LHS action index if this action
+                                ///< joins two actions together.
+  };
+
+  UDivFoldAction(FoldUDivOperandCb FA, Value *InputOperand)
+      : FoldAction(FA), OperandToFold(InputOperand), FoldResult(0) {}
+  UDivFoldAction(FoldUDivOperandCb FA, Value *InputOperand, size_t SLHS)
+      : FoldAction(FA), OperandToFold(InputOperand), SelectLHSIdx(SLHS) {}
+};
+}
+
+// X udiv 2^C -> X >> C
+static Instruction *foldUDivPow2Cst(Value *Op0, Value *Op1,
+                                    const BinaryOperator &I, InstCombiner &IC) {
+  const APInt &C = cast<Constant>(Op1)->getUniqueInteger();
+  BinaryOperator *LShr = BinaryOperator::CreateLShr(
+      Op0, ConstantInt::get(Op0->getType(), C.logBase2()));
+  if (I.isExact()) LShr->setIsExact();
+  return LShr;
+}
+
+// X udiv C, where C >= signbit
+static Instruction *foldUDivNegCst(Value *Op0, Value *Op1,
+                                   const BinaryOperator &I, InstCombiner &IC) {
+  Value *ICI = IC.Builder->CreateICmpULT(Op0, cast<ConstantInt>(Op1));
+
+  return SelectInst::Create(ICI, Constant::getNullValue(I.getType()),
+                            ConstantInt::get(I.getType(), 1));
+}
+
+// X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
+static Instruction *foldUDivShl(Value *Op0, Value *Op1, const BinaryOperator &I,
+                                InstCombiner &IC) {
+  Instruction *ShiftLeft = cast<Instruction>(Op1);
+  if (isa<ZExtInst>(ShiftLeft))
+    ShiftLeft = cast<Instruction>(ShiftLeft->getOperand(0));
+
+  const APInt &CI =
+      cast<Constant>(ShiftLeft->getOperand(0))->getUniqueInteger();
+  Value *N = ShiftLeft->getOperand(1);
+  if (CI != 1)
+    N = IC.Builder->CreateAdd(N, ConstantInt::get(N->getType(), CI.logBase2()));
+  if (ZExtInst *Z = dyn_cast<ZExtInst>(Op1))
+    N = IC.Builder->CreateZExt(N, Z->getDestTy());
+  BinaryOperator *LShr = BinaryOperator::CreateLShr(Op0, N);
+  if (I.isExact()) LShr->setIsExact();
+  return LShr;
+}
+
+// \brief Recursively visits the possible right hand operands of a udiv
+// instruction, seeing through select instructions, to determine if we can
+// replace the udiv with something simpler.  If we find that an operand is not
+// able to simplify the udiv, we abort the entire transformation.
+static size_t visitUDivOperand(Value *Op0, Value *Op1, const BinaryOperator &I,
+                               SmallVectorImpl<UDivFoldAction> &Actions,
+                               unsigned Depth = 0) {
+  // Check to see if this is an unsigned division with an exact power of 2,
+  // if so, convert to a right shift.
+  if (match(Op1, m_Power2())) {
+    Actions.push_back(UDivFoldAction(foldUDivPow2Cst, Op1));
+    return Actions.size();
+  }
+
+  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1))
+    // X udiv C, where C >= signbit
+    if (C->getValue().isNegative()) {
+      Actions.push_back(UDivFoldAction(foldUDivNegCst, C));
+      return Actions.size();
+    }
+
+  // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
+  if (match(Op1, m_Shl(m_Power2(), m_Value())) ||
+      match(Op1, m_ZExt(m_Shl(m_Power2(), m_Value())))) {
+    Actions.push_back(UDivFoldAction(foldUDivShl, Op1));
+    return Actions.size();
+  }
+
+  // The remaining tests are all recursive, so bail out if we hit the limit.
+  if (Depth++ == MaxDepth)
+    return 0;
+
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+    if (size_t LHSIdx = visitUDivOperand(Op0, SI->getOperand(1), I, Actions))
+      if (visitUDivOperand(Op0, SI->getOperand(2), I, Actions)) {
+        Actions.push_back(UDivFoldAction((FoldUDivOperandCb)0, Op1, LHSIdx-1));
+        return Actions.size();
+      }
+
+  return 0;
+}
+
 Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -714,30 +822,6 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // Handle the integer div common cases
   if (Instruction *Common = commonIDivTransforms(I))
     return Common;
-
-  {
-    // X udiv 2^C -> X >> C
-    // Check to see if this is an unsigned division with an exact power of 2,
-    // if so, convert to a right shift.
-    const APInt *C;
-    if (match(Op1, m_Power2(C))) {
-      BinaryOperator *LShr =
-      BinaryOperator::CreateLShr(Op0,
-                                 ConstantInt::get(Op0->getType(),
-                                                  C->logBase2()));
-      if (I.isExact()) LShr->setIsExact();
-      return LShr;
-    }
-  }
-
-  if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
-    // X udiv C, where C >= signbit
-    if (C->getValue().isNegative()) {
-      Value *IC = Builder->CreateICmpULT(Op0, C);
-      return SelectInst::Create(IC, Constant::getNullValue(I.getType()),
-                                ConstantInt::get(I.getType(), 1));
-    }
-  }
 
   // (x lshr C1) udiv C2 --> x udiv (C2 << C1)
   if (ConstantInt *C2 = dyn_cast<ConstantInt>(Op1)) {
@@ -749,44 +833,43 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
     }
   }
 
-  // X udiv (C1 << N), where C1 is "1<<C2"  -->  X >> (N+C2)
-  { const APInt *CI; Value *N;
-    if (match(Op1, m_Shl(m_Power2(CI), m_Value(N))) ||
-        match(Op1, m_ZExt(m_Shl(m_Power2(CI), m_Value(N))))) {
-      if (*CI != 1)
-        N = Builder->CreateAdd(N,
-                               ConstantInt::get(N->getType(), CI->logBase2()));
-      if (ZExtInst *Z = dyn_cast<ZExtInst>(Op1))
-        N = Builder->CreateZExt(N, Z->getDestTy());
-      if (I.isExact())
-        return BinaryOperator::CreateExactLShr(Op0, N);
-      return BinaryOperator::CreateLShr(Op0, N);
-    }
-  }
-
-  // udiv X, (Select Cond, C1, C2) --> Select Cond, (shr X, C1), (shr X, C2)
-  // where C1&C2 are powers of two.
-  { Value *Cond; const APInt *C1, *C2;
-    if (match(Op1, m_Select(m_Value(Cond), m_Power2(C1), m_Power2(C2)))) {
-      // Construct the "on true" case of the select
-      Value *TSI = Builder->CreateLShr(Op0, C1->logBase2(), Op1->getName()+".t",
-                                       I.isExact());
-
-      // Construct the "on false" case of the select
-      Value *FSI = Builder->CreateLShr(Op0, C2->logBase2(), Op1->getName()+".f",
-                                       I.isExact());
-
-      // construct the select instruction and return it.
-      return SelectInst::Create(Cond, TSI, FSI);
-    }
-  }
-
   // (zext A) udiv (zext B) --> zext (A udiv B)
   if (ZExtInst *ZOp0 = dyn_cast<ZExtInst>(Op0))
     if (Value *ZOp1 = dyn_castZExtVal(Op1, ZOp0->getSrcTy()))
       return new ZExtInst(Builder->CreateUDiv(ZOp0->getOperand(0), ZOp1, "div",
                                               I.isExact()),
                           I.getType());
+
+  // (LHS udiv (select (select (...)))) -> (LHS >> (select (select (...))))
+  SmallVector<UDivFoldAction, 6> UDivActions;
+  if (visitUDivOperand(Op0, Op1, I, UDivActions))
+    for (unsigned i = 0, e = UDivActions.size(); i != e; ++i) {
+      FoldUDivOperandCb Action = UDivActions[i].FoldAction;
+      Value *ActionOp1 = UDivActions[i].OperandToFold;
+      Instruction *Inst;
+      if (Action)
+        Inst = Action(Op0, ActionOp1, I, *this);
+      else {
+        // This action joins two actions together.  The RHS of this action is
+        // simply the last action we processed, we saved the LHS action index in
+        // the joining action.
+        size_t SelectRHSIdx = i - 1;
+        Value *SelectRHS = UDivActions[SelectRHSIdx].FoldResult;
+        size_t SelectLHSIdx = UDivActions[i].SelectLHSIdx;
+        Value *SelectLHS = UDivActions[SelectLHSIdx].FoldResult;
+        Inst = SelectInst::Create(cast<SelectInst>(ActionOp1)->getCondition(),
+                                  SelectLHS, SelectRHS);
+      }
+
+      // If this is the last action to process, return it to the InstCombiner.
+      // Otherwise, we insert it before the UDiv and record it so that we may
+      // use it as part of a joining action (i.e., a SelectInst).
+      if (e - i != 1) {
+        Inst->insertBefore(&I);
+        UDivActions[i].FoldResult = Inst;
+      } else
+        return Inst;
+    }
 
   return 0;
 }

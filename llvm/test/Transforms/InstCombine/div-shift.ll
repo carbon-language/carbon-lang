@@ -1,5 +1,4 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
-; XFAIL: *
 
 define i32 @t1(i16 zeroext %x, i32 %y) nounwind {
 entry:
