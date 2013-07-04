@@ -1,7 +1,6 @@
 // This test ensures that, if the section containing a function has a suffix
 // (e.g. .text$foo), its unwind info section also has a suffix (.xdata$foo).
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-win32 %s | llvm-readobj -s -sd | FileCheck %s
-// XFAIL: *
 
 // CHECK:      Name: .xdata$foo
 // CHECK-NEXT: VirtualSize
@@ -16,7 +15,6 @@
 // CHECK-NEXT:   IMAGE_SCN_ALIGN_4BYTES
 // CHECK-NEXT:   IMAGE_SCN_CNT_INITIALIZED_DATA
 // CHECK-NEXT:   IMAGE_SCN_MEM_READ
-// CHECK-NEXT:   IMAGE_SCN_MEM_WRITE
 // CHECK-NEXT: ]
 // CHECK-NEXT: SectionData (
 // CHECK-NEXT:   0000: 01050200 05500402
