@@ -248,7 +248,7 @@ struct FormatToken {
   }
 
   /// \brief Returns the previous token ignoring comments.
-  FormatToken *getPreviousNoneComment() const {
+  FormatToken *getPreviousNonComment() const {
     FormatToken *Tok = Previous;
     while (Tok != NULL && Tok->is(tok::comment))
       Tok = Tok->Previous;
@@ -256,7 +256,7 @@ struct FormatToken {
   }
 
   /// \brief Returns the next token ignoring comments.
-  const FormatToken *getNextNoneComment() const {
+  const FormatToken *getNextNonComment() const {
     const FormatToken *Tok = Next;
     while (Tok != NULL && Tok->is(tok::comment))
       Tok = Tok->Next;
