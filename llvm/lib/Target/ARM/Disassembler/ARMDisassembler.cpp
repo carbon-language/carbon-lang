@@ -456,6 +456,13 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   MI.clear();
+  result = decodeInstruction(DecoderTableVFPV832, MI, insn, Address, this, STI);
+  if (result != MCDisassembler::Fail) {
+    Size = 4;
+    return result;
+  }
+
+  MI.clear();
   result = decodeInstruction(DecoderTableNEONData32, MI, insn, Address,
                              this, STI);
   if (result != MCDisassembler::Fail) {
@@ -762,6 +769,14 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       UpdateThumbVFPPredicate(MI);
       return result;
     }
+  }
+
+  MI.clear();
+  result = decodeInstruction(DecoderTableVFPV832, MI, insn32, Address, this, STI);
+  if (result != MCDisassembler::Fail) {
+    Size = 4;
+    UpdateThumbVFPPredicate(MI);
+    return result;
   }
 
   if (fieldFromInstruction(insn32, 28, 4) == 0xE) {

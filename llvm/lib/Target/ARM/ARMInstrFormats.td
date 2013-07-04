@@ -1548,6 +1548,35 @@ class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
   let Inst{4}     = op4;
 }
 
+// FP, binary, not predicated
+class ADbInp<bits<5> opcod1, bits<2> opcod2, dag oops, dag iops,
+           InstrItinClass itin, string asm, list<dag> pattern>
+  : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone,
+          VFPBinaryFrm, itin, asm, "", pattern>
+{
+  // Instruction operands.
+  bits<5> Dd;
+  bits<5> Dn;
+  bits<5> Dm;
+
+  let Inst{31-28} = 0b1111;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Dm{3-0};
+  let Inst{5}     = Dm{4};
+  let Inst{19-16} = Dn{3-0};
+  let Inst{7}     = Dn{4};
+  let Inst{15-12} = Dd{3-0};
+  let Inst{22}    = Dd{4};
+
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1; // double precision
+  let Inst{6}     = 0;
+  let Inst{4}     = 0;
+}
+
 // Single precision, unary
 class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
            bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,
@@ -1605,6 +1634,35 @@ class ASbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops, dag iops,
   let Inst{8}     = 0;          // Single precision
   let Inst{6}     = op6;
   let Inst{4}     = op4;
+}
+
+// Single precision, binary, not predicated
+class ASbInp<bits<5> opcod1, bits<2> opcod2, dag oops, dag iops,
+           InstrItinClass itin, string asm, list<dag> pattern>
+  : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone,
+          VFPBinaryFrm, itin, asm, "", pattern>
+{
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sn;
+  bits<5> Sm;
+
+  let Inst{31-28} = 0b1111;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{19-16} = Sn{4-1};
+  let Inst{7}     = Sn{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0; // Single precision
+  let Inst{6}     = 0;
+  let Inst{4}     = 0;
 }
 
 // Single precision binary, if no NEON. Same as ASbI except not available if
