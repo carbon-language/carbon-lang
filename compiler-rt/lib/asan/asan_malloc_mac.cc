@@ -50,9 +50,12 @@ INTERCEPTOR(malloc_zone_t *, malloc_create_zone,
                                     &stack, FROM_MALLOC);
   internal_memcpy(new_zone, &asan_zone, sizeof(asan_zone));
   new_zone->zone_name = NULL;  // The name will be changed anyway.
-  // Prevent the client app from overwriting the zone contents.
-  // Library functions that need to modify the zone will set PROT_WRITE on it.
-  mprotect(new_zone, allocated_size, PROT_READ);
+  if (GetMacosVersion() >= MACOS_VERSION_LION) {
+    // Prevent the client app from overwriting the zone contents.
+    // Library functions that need to modify the zone will set PROT_WRITE on it.
+    // This matches the behavior of malloc_create_zone() on OSX 10.7 and higher.
+    mprotect(new_zone, allocated_size, PROT_READ);
+  }
   return new_zone;
 }
 
