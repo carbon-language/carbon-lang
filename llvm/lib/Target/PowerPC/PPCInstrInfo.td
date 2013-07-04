@@ -1238,6 +1238,15 @@ def STWCX : XForm_1<31, 150, (outs), (ins gprc:$rS, memrr:$dst),
 let isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in
 def TRAP  : XForm_24<31, 4, (outs), (ins), "trap", LdStLoad, [(trap)]>;
 
+def TWI : DForm_base<3, (outs), (ins u5imm:$to, gprc:$rA, s16imm:$imm),
+                     "twi $to, $rA, $imm", IntTrapW, []>;
+def TW : XForm_1<31, 4, (outs), (ins u5imm:$to, gprc:$rA, gprc:$rB),
+                 "tw $to, $rA, $rB", IntTrapW, []>;
+def TDI : DForm_base<2, (outs), (ins u5imm:$to, g8rc:$rA, s16imm:$imm),
+                     "tdi $to, $rA, $imm", IntTrapD, []>;
+def TD : XForm_1<31, 68, (outs), (ins u5imm:$to, g8rc:$rA, g8rc:$rB),
+                 "td $to, $rA, $rB", IntTrapD, []>;
+
 //===----------------------------------------------------------------------===//
 // PPC32 Load Instructions.
 //
@@ -2568,4 +2577,26 @@ def : InstAlias<"cmpdi $rA, $imm", (CMPDI CR0, g8rc:$rA, s16imm:$imm)>;
 def : InstAlias<"cmpd $rA, $rB", (CMPD CR0, g8rc:$rA, g8rc:$rB)>;
 def : InstAlias<"cmpldi $rA, $imm", (CMPLDI CR0, g8rc:$rA, u16imm:$imm)>;
 def : InstAlias<"cmpld $rA, $rB", (CMPLD CR0, g8rc:$rA, g8rc:$rB)>;
+
+multiclass TrapExtendedMnemonic<string name, int to> {
+  def : InstAlias<"td"#name#"i $rA, $imm", (TDI to, g8rc:$rA, s16imm:$imm)>;
+  def : InstAlias<"td"#name#" $rA, $rB", (TD to, g8rc:$rA, g8rc:$rB)>;
+  def : InstAlias<"tw"#name#"i $rA, $imm", (TWI to, gprc:$rA, s16imm:$imm)>;
+  def : InstAlias<"tw"#name#" $rA, $rB", (TW to, gprc:$rA, gprc:$rB)>;
+}
+defm : TrapExtendedMnemonic<"lt", 16>;
+defm : TrapExtendedMnemonic<"le", 20>;
+defm : TrapExtendedMnemonic<"eq", 4>;
+defm : TrapExtendedMnemonic<"ge", 12>;
+defm : TrapExtendedMnemonic<"gt", 8>;
+defm : TrapExtendedMnemonic<"nl", 12>;
+defm : TrapExtendedMnemonic<"ne", 24>;
+defm : TrapExtendedMnemonic<"ng", 20>;
+defm : TrapExtendedMnemonic<"llt", 2>;
+defm : TrapExtendedMnemonic<"lle", 6>;
+defm : TrapExtendedMnemonic<"lge", 5>;
+defm : TrapExtendedMnemonic<"lgt", 1>;
+defm : TrapExtendedMnemonic<"lnl", 5>;
+defm : TrapExtendedMnemonic<"lng", 6>;
+defm : TrapExtendedMnemonic<"u", 31>;
 

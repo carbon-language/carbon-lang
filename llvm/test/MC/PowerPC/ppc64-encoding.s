@@ -346,7 +346,16 @@
 
 # FIXME: Fixed-point compare instructions
 
-# FIXME: Fixed-point trap instructions
+# Fixed-point trap instructions
+
+# CHECK: twi 2, 3, 4                     # encoding: [0x0c,0x43,0x00,0x04]
+         twi 2, 3, 4
+# CHECK: tw 2, 3, 4                      # encoding: [0x7c,0x43,0x20,0x08]
+         tw 2, 3, 4
+# CHECK: tdi 2, 3, 4                     # encoding: [0x08,0x43,0x00,0x04]
+         tdi 2, 3, 4
+# CHECK: td 2, 3, 4                      # encoding: [0x7c,0x43,0x20,0x88]
+         td 2, 3, 4
 
 # Fixed-point select
 
