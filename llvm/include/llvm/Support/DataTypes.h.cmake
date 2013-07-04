@@ -101,7 +101,11 @@ typedef short int16_t;
 typedef unsigned short uint16_t;
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
-typedef signed int ssize_t;
+#if defined(_WIN64)
+  typedef signed __int64 ssize_t;
+#else
+  typedef signed int ssize_t;
+#endif
 #ifndef INT8_MAX
 # define INT8_MAX 127
 #endif
