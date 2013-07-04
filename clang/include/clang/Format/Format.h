@@ -110,6 +110,9 @@ struct FormatStyle {
   /// declaration.
   bool AlwaysBreakTemplateDeclarations;
 
+  /// \brief If \c true, always break before multiline string literals.
+  bool AlwaysBreakBeforeMultilineStrings;
+
   /// \brief If true, \c IndentWidth consecutive spaces will be replaced with
   /// tab characters.
   bool UseTab;
@@ -144,6 +147,8 @@ struct FormatStyle {
                R.AllowShortIfStatementsOnASingleLine &&
            AlwaysBreakTemplateDeclarations ==
                R.AlwaysBreakTemplateDeclarations &&
+           AlwaysBreakBeforeMultilineStrings ==
+               R.AlwaysBreakBeforeMultilineStrings &&
            BinPackParameters == R.BinPackParameters &&
            BreakBeforeBraces == R.BreakBeforeBraces &&
            ColumnLimit == R.ColumnLimit &&

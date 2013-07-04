@@ -936,6 +936,13 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     } else if (Current->Previous->ClosesTemplateDeclaration &&
                Style.AlwaysBreakTemplateDeclarations) {
       Current->MustBreakBefore = true;
+    } else if (Style.AlwaysBreakBeforeMultilineStrings &&
+               Current->is(tok::string_literal) &&
+               Current->Previous->isNot(tok::lessless) &&
+               Current->Previous->Type != TT_InlineASMColon &&
+               Current->getNextNoneComment() &&
+               Current->getNextNoneComment()->is(tok::string_literal)) {
+      Current->MustBreakBefore = true;
     } else {
       Current->MustBreakBefore = false;
     }

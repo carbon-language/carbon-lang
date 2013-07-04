@@ -2878,6 +2878,34 @@ TEST_F(FormatTest, AlignsStringLiterals) {
                "  \"jkl\");");
 }
 
+TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
+  FormatStyle NoBreak = getLLVMStyle();
+  NoBreak.AlwaysBreakBeforeMultilineStrings = false;
+  FormatStyle Break = getLLVMStyle();
+  Break.AlwaysBreakBeforeMultilineStrings = true;
+  EXPECT_EQ("aaaa = \"bbbb\"\n"
+            "       \"cccc\";",
+            format("aaaa=\"bbbb\" \"cccc\";", NoBreak));
+  EXPECT_EQ("aaaa =\n"
+            "    \"bbbb\"\n"
+            "    \"cccc\";",
+            format("aaaa=\"bbbb\" \"cccc\";", Break));
+  EXPECT_EQ("aaaa(\"bbbb\"\n"
+            "     \"cccc\");",
+            format("aaaa(\"bbbb\" \"cccc\");", NoBreak));
+  EXPECT_EQ("aaaa(\n"
+            "    \"bbbb\"\n"
+            "    \"cccc\");",
+            format("aaaa(\"bbbb\" \"cccc\");", Break));
+  EXPECT_EQ("aaaa(qqq, \"bbbb\"\n"
+            "          \"cccc\");",
+            format("aaaa(qqq, \"bbbb\" \"cccc\");", NoBreak));
+  EXPECT_EQ("aaaa(qqq,\n"
+            "     \"bbbb\"\n"
+            "     \"cccc\");",
+            format("aaaa(qqq, \"bbbb\" \"cccc\");", Break));
+}
+
 TEST_F(FormatTest, AlignsPipes) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
