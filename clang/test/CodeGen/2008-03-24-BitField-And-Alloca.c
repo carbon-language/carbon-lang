@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -O2 -emit-llvm %s -o - | not grep alloca
-// RUN: %clang_cc1 -m32 -O2 -emit-llvm %s -o - | not grep {store }
+// RUN: %clang_cc1 -triple i686-pc-linux-gnu -O2 -emit-llvm %s -o - | not grep store
 
 enum {
  PP_C,
