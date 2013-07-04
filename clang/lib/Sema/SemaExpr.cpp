@@ -7270,7 +7270,7 @@ static void diagnoseLogicalNotOnLHSofComparison(Sema &S, ExprResult &LHS,
   if (!S.getLangOpts().Bool) return;
 
   // Check that left hand side is !something.
-  UnaryOperator *UO = dyn_cast<UnaryOperator>(LHS.get());
+  UnaryOperator *UO = dyn_cast<UnaryOperator>(LHS.get()->IgnoreImpCasts());
   if (!UO || UO->getOpcode() != UO_LNot) return;
 
   // Only check if the right hand side is non-bool arithmetic type.

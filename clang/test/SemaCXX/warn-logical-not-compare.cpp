@@ -110,3 +110,70 @@ bool test1(int i1, int i2, bool b1, bool b2) {
   ret = !getBool() == b1;
   return ret;
 }
+
+enum E {e1, e2};
+E getE();
+
+bool test2 (E e) {
+  bool ret;
+  ret = e == e1;
+  ret = e == getE();
+  ret = getE() == e1;
+  ret = getE() == getE();
+
+  ret = !e == e1;
+  // expected-warning@-1 {{logical not is only applied to the left hand side of this comparison}}
+  // expected-note@-2 {{add parentheses after the '!' to evaluate the comparison first}}
+  // expected-note@-3 {{add parentheses around left hand side expression to silence this warning}}
+  // CHECK: to evaluate the comparison first
+  // CHECK: fix-it:"{{.*}}":{124:10-124:10}:"("
+  // CHECK: fix-it:"{{.*}}":{124:17-124:17}:")"
+  // CHECK: to silence this warning
+  // CHECK: fix-it:"{{.*}}":{124:9-124:9}:"("
+  // CHECK: fix-it:"{{.*}}":{124:11-124:11}:")"
+
+  ret = !e == getE();
+  // expected-warning@-1 {{logical not is only applied to the left hand side of this comparison}}
+  // expected-note@-2 {{add parentheses after the '!' to evaluate the comparison first}}
+  // expected-note@-3 {{add parentheses around left hand side expression to silence this warning}}
+  // CHECK: to evaluate the comparison first
+  // CHECK: fix-it:"{{.*}}":{135:10-135:10}:"("
+  // CHECK: fix-it:"{{.*}}":{135:21-135:21}:")"
+  // CHECK: to silence this warning
+  // CHECK: fix-it:"{{.*}}":{135:9-135:9}:"("
+  // CHECK: fix-it:"{{.*}}":{135:11-135:11}:")"
+
+  ret = !getE() == e1;
+  // expected-warning@-1 {{logical not is only applied to the left hand side of this comparison}}
+  // expected-note@-2 {{add parentheses after the '!' to evaluate the comparison first}}
+  // expected-note@-3 {{add parentheses around left hand side expression to silence this warning}}
+  // CHECK: to evaluate the comparison first
+  // CHECK: fix-it:"{{.*}}":{146:10-146:10}:"("
+  // CHECK: fix-it:"{{.*}}":{146:22-146:22}:")"
+  // CHECK: to silence this warning
+  // CHECK: fix-it:"{{.*}}":{146:9-146:9}:"("
+  // CHECK: fix-it:"{{.*}}":{146:16-146:16}:")"
+
+  ret = !getE() == getE();
+  // expected-warning@-1 {{logical not is only applied to the left hand side of this comparison}}
+  // expected-note@-2 {{add parentheses after the '!' to evaluate the comparison first}}
+  // expected-note@-3 {{add parentheses around left hand side expression to silence this warning}}
+  // CHECK: to evaluate the comparison first
+  // CHECK: fix-it:"{{.*}}":{157:10-157:10}:"("
+  // CHECK: fix-it:"{{.*}}":{157:26-157:26}:")"
+  // CHECK: to silence this warning
+  // CHECK: fix-it:"{{.*}}":{157:9-157:9}:"("
+  // CHECK: fix-it:"{{.*}}":{157:16-157:16}:")"
+
+  ret = !(e == e1);
+  ret = !(e == getE());
+  ret = !(getE() == e1);
+  ret = !(getE() == getE());
+
+  ret = (!e) == e1;
+  ret = (!e) == getE();
+  ret = (!getE()) == e1;
+  ret = (!getE()) == getE();
+
+  return ret;
+}
