@@ -8,7 +8,7 @@
 
 // CHECK: define void @bar(
 // CHECK: call {{.*}} @func
-// CHECK: define internal {{.*}} i32 @func(
+// CHECK: define internal {{.*}}i32 @func(
 static int func();
 void bar() {
   int func();
