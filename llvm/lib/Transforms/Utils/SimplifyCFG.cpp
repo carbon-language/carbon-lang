@@ -40,12 +40,14 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/NoFolder.h"
+#include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
 #include <map>
 #include <set>
 using namespace llvm;
+using namespace PatternMatch;
 
 static cl::opt<unsigned>
 PHINodeFoldingThreshold("phi-node-folding-threshold", cl::Hidden, cl::init(1),
@@ -432,7 +434,24 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   // If this is an icmp against a constant, handle this as one of the cases.
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
     if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
+      Value *RHSVal;
+      ConstantInt *RHSC;
+
       if (ICI->getPredicate() == (isEQ ? ICmpInst::ICMP_EQ:ICmpInst::ICMP_NE)) {
+        // (x & ~2^x) == y --> x == y || x == y|2^x
+        // This undoes a transformation done by instcombine to fuse 2 compares.
+        if (match(ICI->getOperand(0),
+                  m_And(m_Value(RHSVal), m_ConstantInt(RHSC)))) {
+          APInt Not = ~RHSC->getValue();
+          if (Not.isPowerOf2()) {
+            Vals.push_back(C);
+            Vals.push_back(
+                ConstantInt::get(C->getContext(), C->getValue() | Not));
+            UsedICmps++;
+            return RHSVal;
+          }
+        }
+
         UsedICmps++;
         Vals.push_back(C);
         return I->getOperand(0);
@@ -442,6 +461,13 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
       // the set.
       ConstantRange Span =
         ConstantRange::makeICmpRegion(ICI->getPredicate(), C->getValue());
+
+      // Shift the range if the compare is fed by an add. This is the range
+      // compare idiom as emitted by instcombine.
+      bool hasAdd =
+          match(I->getOperand(0), m_Add(m_Value(RHSVal), m_ConstantInt(RHSC)));
+      if (hasAdd)
+        Span = Span.subtract(RHSC->getValue());
 
       // If this is an and/!= check then we want to optimize "x ugt 2" into
       // x != 0 && x != 1.
@@ -455,7 +481,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
       for (APInt Tmp = Span.getLower(); Tmp != Span.getUpper(); ++Tmp)
         Vals.push_back(ConstantInt::get(V->getContext(), Tmp));
       UsedICmps++;
-      return I->getOperand(0);
+      return hasAdd ? RHSVal : I->getOperand(0);
     }
     return 0;
   }

@@ -479,3 +479,39 @@ return:
 ; CHECK: ret void
 }
 
+define void @test18(i32 %arg) {
+bb:
+  %tmp = and i32 %arg, -2
+  %tmp1 = icmp eq i32 %tmp, 8
+  %tmp2 = icmp eq i32 %arg, 10
+  %tmp3 = or i1 %tmp1, %tmp2
+  %tmp4 = icmp eq i32 %arg, 11
+  %tmp5 = or i1 %tmp3, %tmp4
+  %tmp6 = icmp eq i32 %arg, 12
+  %tmp7 = or i1 %tmp5, %tmp6
+  br i1 %tmp7, label %bb19, label %bb8
+
+bb8:                                              ; preds = %bb
+  %tmp9 = add i32 %arg, -13
+  %tmp10 = icmp ult i32 %tmp9, 2
+  %tmp11 = icmp eq i32 %arg, 16
+  %tmp12 = or i1 %tmp10, %tmp11
+  %tmp13 = icmp eq i32 %arg, 17
+  %tmp14 = or i1 %tmp12, %tmp13
+  %tmp15 = icmp eq i32 %arg, 18
+  %tmp16 = or i1 %tmp14, %tmp15
+  %tmp17 = icmp eq i32 %arg, 15
+  %tmp18 = or i1 %tmp16, %tmp17
+  br i1 %tmp18, label %bb19, label %bb20
+
+bb19:                                             ; preds = %bb8, %bb
+  tail call void @foo1()
+  br label %bb20
+
+bb20:                                             ; preds = %bb19, %bb8
+  ret void
+
+; CHECK: @test18
+; CHECK: %arg.off = add i32 %arg, -8
+; CHECK: icmp ult i32 %arg.off, 11
+}
