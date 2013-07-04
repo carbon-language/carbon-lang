@@ -626,11 +626,21 @@ error_code permissions(const Twine &path, perms prms) {
 }
 
 error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
+#if defined(HAVE_FUTIMENS)
+  timespec Times[2];
+  Times[0].tv_sec = Time.toPosixTime();
+  Times[0].tv_nsec = 0;
+  Times[1] = Times[0];
+  if (::futimens(FD, Times))
+#elif defined(HAVE_FUTIMES)
   timeval Times[2];
   Times[0].tv_sec = Time.toPosixTime();
   Times[0].tv_usec = 0;
   Times[1] = Times[0];
   if (::futimes(FD, Times))
+#else
+#error Missing futimes() and futimens()
+#endif
     return error_code(errno, system_category());
   return error_code::success();
 }

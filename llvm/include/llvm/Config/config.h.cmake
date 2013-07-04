@@ -170,6 +170,12 @@
 /* Define to 1 if you have the `fmodf' function. */
 #cmakedefine HAVE_FMODF ${HAVE_FMODF}
 
+/* Define to 1 if you have the `futimes' function. */
+#cmakedefine HAVE_FUTIMES ${HAVE_FUTIMES}
+
+/* Define to 1 if you have the `futimens' function */
+#cmakedefine HAVE_FUTIMENS ${HAVE_FUTIMENS}
+
 /* Define to 1 if you have the `getcwd' function. */
 #cmakedefine HAVE_GETCWD ${HAVE_GETCWD}
 

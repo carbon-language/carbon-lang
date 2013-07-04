@@ -166,6 +166,12 @@
 /* Define to 1 if you have the `fmodf' function. */
 #undef HAVE_FMODF
 
+/* Define to 1 if you have the `futimens' function. */
+#undef HAVE_FUTIMENS
+
+/* Define to 1 if you have the `futimes' function. */
+#undef HAVE_FUTIMES
+
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
