@@ -151,9 +151,9 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     // We didn't find the left-brace we expected after the
     // constructor initializer; we already printed an error, and it's likely
     // impossible to recover, so don't try to parse this method later.
-    // If we stopped at a semicolon, consume it to avoid an extra warning.
-     if (Tok.is(tok::semi))
-      ConsumeToken();
+    // Skip over the rest of the decl and back to somewhere that looks
+    // reasonable.
+    SkipMalformedDecl();
     delete getCurrentClass().LateParsedDeclarations.back();
     getCurrentClass().LateParsedDeclarations.pop_back();
     return FnD;
@@ -652,83 +652,171 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
 /// the opening brace of the function body. The opening brace will be consumed
 /// if and only if there was no error.
 ///
-/// \return True on error. 
+/// \return True on error.
 bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
   if (Tok.is(tok::kw_try)) {
     Toks.push_back(Tok);
     ConsumeToken();
   }
-  bool ReadInitializer = false;
-  if (Tok.is(tok::colon)) {
-    // Initializers can contain braces too.
+
+  if (Tok.isNot(tok::colon)) {
+    // Easy case, just a function body.
+
+    // Grab any remaining garbage to be diagnosed later. We stop when we reach a
+    // brace: an opening one is the function body, while a closing one probably
+    // means we've reached the end of the class.
+    ConsumeAndStoreUntil(tok::l_brace, tok::r_brace, Toks,
+                         /*StopAtSemi=*/true,
+                         /*ConsumeFinalToken=*/false);
+    if (Tok.isNot(tok::l_brace))
+      return Diag(Tok.getLocation(), diag::err_expected_lbrace);
+
     Toks.push_back(Tok);
-    ConsumeToken();
-
-    while (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) {
-      if (Tok.is(tok::eof) || Tok.is(tok::semi))
-        return Diag(Tok.getLocation(), diag::err_expected_lbrace);
-
-      // Grab the identifier.
-      if (!ConsumeAndStoreUntil(tok::l_paren, tok::l_brace, Toks,
-                                /*StopAtSemi=*/true,
-                                /*ConsumeFinalToken=*/false))
-        return Diag(Tok.getLocation(), diag::err_expected_lparen);
-
-      tok::TokenKind kind = Tok.getKind();
-      Toks.push_back(Tok);
-      bool IsLParen = (kind == tok::l_paren);
-      SourceLocation LOpen = Tok.getLocation();
-
-      if (IsLParen) {
-        ConsumeParen();
-      } else {
-        assert(kind == tok::l_brace && "Must be left paren or brace here.");
-        ConsumeBrace();
-        // In C++03, this has to be the start of the function body, which
-        // means the initializer is malformed; we'll diagnose it later.
-        if (!getLangOpts().CPlusPlus11)
-          return false;
-      }
-
-      // Grab the initializer
-      if (!ConsumeAndStoreUntil(IsLParen ? tok::r_paren : tok::r_brace,
-                                Toks, /*StopAtSemi=*/true)) {
-        Diag(Tok, IsLParen ? diag::err_expected_rparen :
-                             diag::err_expected_rbrace);
-        Diag(LOpen, diag::note_matching) << (IsLParen ? "(" : "{");
-        return true;
-      }
-
-      // Grab pack ellipsis, if present
-      if (Tok.is(tok::ellipsis)) {
-        Toks.push_back(Tok);
-        ConsumeToken();
-      }
-
-      // Grab the separating comma, if any.
-      if (Tok.is(tok::comma)) {
-        Toks.push_back(Tok);
-        ConsumeToken();
-      } else if (Tok.isNot(tok::l_brace)) {
-        ReadInitializer = true;
-        break;
-      }
-    }
-  }
-
-  // Grab any remaining garbage to be diagnosed later. We stop when we reach a
-  // brace: an opening one is the function body, while a closing one probably
-  // means we've reached the end of the class.
-  ConsumeAndStoreUntil(tok::l_brace, tok::r_brace, Toks,
-                       /*StopAtSemi=*/true,
-                       /*ConsumeFinalToken=*/false);
-  if (Tok.isNot(tok::l_brace)) {
-    if (ReadInitializer)
-      return Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
-    return Diag(Tok.getLocation(), diag::err_expected_lbrace);
+    ConsumeBrace();
+    return false;
   }
 
   Toks.push_back(Tok);
-  ConsumeBrace();
-  return false;
+  ConsumeToken();
+
+  // We can't reliably skip over a mem-initializer-id, because it could be
+  // a template-id involving not-yet-declared names. Given:
+  //
+  //   S ( ) : a < b < c > ( e )
+  //
+  // 'e' might be an initializer or part of a template argument, depending
+  // on whether 'b' is a template.
+
+  // Track whether we might be inside a template argument. We can give
+  // significantly better diagnostics if we know that we're not.
+  bool MightBeTemplateArgument = false;
+
+  while (true) {
+    // Skip over the mem-initializer-id, if possible.
+    if (Tok.is(tok::kw_decltype)) {
+      Toks.push_back(Tok);
+      SourceLocation OpenLoc = ConsumeToken();
+      if (Tok.isNot(tok::l_paren))
+        return Diag(Tok.getLocation(), diag::err_expected_lparen_after)
+                 << "decltype";
+      Toks.push_back(Tok);
+      ConsumeParen();
+      if (!ConsumeAndStoreUntil(tok::r_paren, Toks, /*StopAtSemi=*/true)) {
+        Diag(Tok.getLocation(), diag::err_expected_rparen);
+        Diag(OpenLoc, diag::note_matching) << "(";
+        return true;
+      }
+    }
+    do {
+      // Walk over a component of a nested-name-specifier.
+      if (Tok.is(tok::coloncolon)) {
+        Toks.push_back(Tok);
+        ConsumeToken();
+
+        if (Tok.is(tok::kw_template)) {
+          Toks.push_back(Tok);
+          ConsumeToken();
+        }
+      }
+
+      if (Tok.is(tok::identifier) || Tok.is(tok::kw_template)) {
+        Toks.push_back(Tok);
+        ConsumeToken();
+      } else if (Tok.is(tok::code_completion)) {
+        Toks.push_back(Tok);
+        ConsumeCodeCompletionToken();
+        // Consume the rest of the initializers permissively.
+        // FIXME: We should be able to perform code-completion here even if
+        //        there isn't a subsequent '{' token.
+        MightBeTemplateArgument = true;
+        break;
+      } else {
+        break;
+      }
+    } while (Tok.is(tok::coloncolon));
+
+    if (Tok.is(tok::less))
+      MightBeTemplateArgument = true;
+
+    if (MightBeTemplateArgument) {
+      // We may be inside a template argument list. Grab up to the start of the
+      // next parenthesized initializer or braced-init-list. This *might* be the
+      // initializer, or it might be a subexpression in the template argument
+      // list.
+      // FIXME: Count angle brackets, and clear MightBeTemplateArgument
+      //        if all angles are closed.
+      if (!ConsumeAndStoreUntil(tok::l_paren, tok::l_brace, Toks,
+                                /*StopAtSemi=*/true,
+                                /*ConsumeFinalToken=*/false)) {
+        // We're not just missing the initializer, we're also missing the
+        // function body!
+        return Diag(Tok.getLocation(), diag::err_expected_lbrace);
+      }
+    } else if (Tok.isNot(tok::l_paren) && Tok.isNot(tok::l_brace)) {
+      // We found something weird in a mem-initializer-id.
+      return Diag(Tok.getLocation(), getLangOpts().CPlusPlus11
+                                         ? diag::err_expected_lparen_or_lbrace
+                                         : diag::err_expected_lparen);
+    }
+
+    tok::TokenKind kind = Tok.getKind();
+    Toks.push_back(Tok);
+    bool IsLParen = (kind == tok::l_paren);
+    SourceLocation OpenLoc = Tok.getLocation();
+
+    if (IsLParen) {
+      ConsumeParen();
+    } else {
+      assert(kind == tok::l_brace && "Must be left paren or brace here.");
+      ConsumeBrace();
+      // In C++03, this has to be the start of the function body, which
+      // means the initializer is malformed; we'll diagnose it later.
+      if (!getLangOpts().CPlusPlus11)
+        return false;
+    }
+
+    // Grab the initializer (or the subexpression of the template argument).
+    // FIXME: If we support lambdas here, we'll need to set StopAtSemi to false
+    //        if we might be inside the braces of a lambda-expression.
+    if (!ConsumeAndStoreUntil(IsLParen ? tok::r_paren : tok::r_brace,
+                              Toks, /*StopAtSemi=*/true)) {
+      Diag(Tok, IsLParen ? diag::err_expected_rparen :
+                           diag::err_expected_rbrace);
+      Diag(OpenLoc, diag::note_matching) << (IsLParen ? "(" : "{");
+      return true;
+    }
+
+    // Grab pack ellipsis, if present.
+    if (Tok.is(tok::ellipsis)) {
+      Toks.push_back(Tok);
+      ConsumeToken();
+    }
+
+    // If we know we just consumed a mem-initializer, we must have ',' or '{'
+    // next.
+    if (Tok.is(tok::comma)) {
+      Toks.push_back(Tok);
+      ConsumeToken();
+    } else if (Tok.is(tok::l_brace)) {
+      // This is the function body if the ')' or '}' is immediately followed by
+      // a '{'. That cannot happen within a template argument, apart from the
+      // case where a template argument contains a compound literal:
+      //
+      //   S ( ) : a < b < c > ( d ) { }
+      //   // End of declaration, or still inside the template argument?
+      //
+      // ... and the case where the template argument contains a lambda:
+      //
+      //   S ( ) : a < 0 && b < c > ( d ) + [ ] ( ) { return 0; }
+      //     ( ) > ( ) { }
+      //
+      // FIXME: Disambiguate these cases. Note that the latter case is probably
+      //        going to be made ill-formed by core issue 1607.
+      Toks.push_back(Tok);
+      ConsumeBrace();
+      return false;
+    } else if (!MightBeTemplateArgument) {
+      return Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
+    }
+  }
 }
