@@ -757,6 +757,14 @@ namespace MultipleExtension {
   }
 }
 
+namespace PR14130 {
+  struct S { S(int); };
+  struct U { S &&s; };
+  U v { { 0 } };
+  // CHECK: call void @_ZN7PR141301SC1Ei({{.*}} @_ZGRN7PR141301vE, i32 0)
+  // CHECK: store {{.*}} @_ZGRN7PR141301vE, {{.*}} @_ZN7PR141301vE
+}
+
 namespace Ctor {
   struct A { A(); ~A(); };
   void f();
