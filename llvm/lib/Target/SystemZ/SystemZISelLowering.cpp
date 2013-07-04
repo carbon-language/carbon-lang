@@ -200,6 +200,11 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   setOperationAction(ISD::STACKSAVE,    MVT::Other, Custom);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Custom);
 
+  // Expand these using getExceptionSelectorRegister() and
+  // getExceptionPointerRegister().
+  setOperationAction(ISD::EXCEPTIONADDR, PtrVT, Expand);
+  setOperationAction(ISD::EHSELECTION,   PtrVT, Expand);
+
   // Handle floating-point types.
   for (unsigned I = MVT::FIRST_FP_VALUETYPE;
        I <= MVT::LAST_FP_VALUETYPE;

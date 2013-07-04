@@ -717,6 +717,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   if (!Subtarget->isTargetDarwin()) {
     // Non-Darwin platforms may return values in these registers via the
     // personality function.
+    setOperationAction(ISD::EHSELECTION,      MVT::i32,   Expand);
+    setOperationAction(ISD::EXCEPTIONADDR,    MVT::i32,   Expand);
     setExceptionPointerRegister(ARM::R0);
     setExceptionSelectorRegister(ARM::R1);
   }

@@ -249,6 +249,9 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   setTruncStoreAction(MVT::f64, MVT::f16, Expand);
   setTruncStoreAction(MVT::f32, MVT::f16, Expand);
 
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
+  setOperationAction(ISD::EHSELECTION, MVT::i64, Expand);
+
   setExceptionPointerRegister(AArch64::X0);
   setExceptionSelectorRegister(AArch64::X1);
 }

@@ -228,6 +228,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // We cannot sextinreg(i1).  Expand to shifts.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
+  setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
+  setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
+
   // NOTE: EH_SJLJ_SETJMP/_LONGJMP supported here is NOT intended to support
   // SjLj exception handling but a light-weight setjmp/longjmp replacement to
   // support continuation, user-level threading, and etc.. As a result, no

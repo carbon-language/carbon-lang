@@ -563,6 +563,10 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
   }
 
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
+  setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);
+  setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
+  setOperationAction(ISD::EHSELECTION,   MVT::i32, Expand);
   if (Subtarget->is64Bit()) {
     setExceptionPointerRegister(X86::RAX);
     setExceptionSelectorRegister(X86::RDX);
