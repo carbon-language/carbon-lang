@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -emit-llvm -triple i686-apple-darwin8 -fobjc-runtime=macosx-fragile-10.5 -o %t %s
 
 // No object generated
-// RUN: grep OBJC_PROTOCOL_P0 %t | count 0
+// RUN: not grep OBJC_PROTOCOL_P0 %t
 @protocol P0;
 
 // No object generated
-// RUN: grep OBJC_PROTOCOL_P1 %t | count 0
+// RUN: not grep OBJC_PROTOCOL_P1 %t
 @protocol P1 -im1; @end
 
 // Definition triggered by protocol reference.
@@ -16,7 +16,7 @@ void f0() { id x = @protocol(P2); }
 
 // Forward definition triggered by protocol reference.
 // RUN: grep OBJC_PROTOCOL_P3 %t | count 3
-// RUN: grep OBJC_PROTOCOL_INSTANCE_METHODS_P3 %t | count 0
+// RUN: not grep OBJC_PROTOCOL_INSTANCE_METHODS_P3 %t
 @protocol P3;
 void f1() { id x = @protocol(P3); }
 

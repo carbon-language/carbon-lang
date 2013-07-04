@@ -31,4 +31,4 @@
 // RUN: touch %t.o
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -verify -o foo %t.o -g 2> %t
-// RUN: grep "Verify" %t | count 0
+// RUN: not grep "Verify" %t

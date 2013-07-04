@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -o %t %s
-// RUN: grep "_ZN1CC1ERK1C" %t | count 0
-// RUN: grep "_ZN1SC1ERK1S" %t | count 0
+// RUN: not grep "_ZN1CC1ERK1C" %t
+// RUN: not grep "_ZN1SC1ERK1S" %t
 
 extern "C" int printf(...);
 

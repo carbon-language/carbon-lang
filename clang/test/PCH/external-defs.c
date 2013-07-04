@@ -3,7 +3,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -include-pch %t.pch -emit-llvm -o %t %s
 
 // RUN: grep "@x = common global i32 0" %t | count 1
-// RUN: grep "@z" %t | count 0
+// RUN: not grep "@z" %t
 
 // RUN: grep "@x2 = global i32 19" %t | count 1
 int x2 = 19;

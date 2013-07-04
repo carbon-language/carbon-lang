@@ -20,7 +20,7 @@ void foo(X<int> &xi, X<float> *xfp, int i, float f) {
   // RUN: grep "linkonce_odr.*_ZN1XIfE1fEf" %t | count 1
   xfp->f(f);
   
-  // RUN: grep "linkonce_odr.*_ZN1XIfE1hEf" %t | count 0
+  // RUN: not grep "linkonce_odr.*_ZN1XIfE1hEf" %t
   
 }
 

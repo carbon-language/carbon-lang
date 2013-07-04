@@ -35,7 +35,7 @@
 // RUN: touch %t.o
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -o foo %t.o -g 2> %t
-// RUN: grep "Dsymutil" %t | count 0
+// RUN: not grep "Dsymutil" %t
 
 // Check that we put the .dSYM in the right place.
 // RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \

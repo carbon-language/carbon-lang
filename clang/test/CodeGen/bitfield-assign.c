@@ -10,8 +10,8 @@
 
 // Check that we got the right value.
 // RUN: %clang_cc1 -triple i386-unknown-unknown -O3 -emit-llvm -o %t %s
-// RUN: grep 'load ' %t | count 0
-// RUN: grep "@g0" %t | count 0
+// RUN: not grep 'load ' %t
+// RUN: not grep "@g0" %t
 
 struct s0 {
   int f0 : 2;
