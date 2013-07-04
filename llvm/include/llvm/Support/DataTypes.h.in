@@ -101,7 +101,7 @@ typedef unsigned char uint8_t;
 #if defined(_WIN64)
   typedef signed __int64 ssize_t;
 #else
-  typedef signed long ssize_t;
+  typedef signed int ssize_t;
 #endif
 
 #ifndef INT8_MAX
