@@ -185,16 +185,15 @@ StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, std::string path) {
 } // namespace
 
 
-bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
-                               raw_ostream &diagnostics) {
+bool WinLinkDriver::linkPECOFF(int argc, const char *argv[]) {
   PECOFFTargetInfo info;
-  if (parse(argc, argv, info, diagnostics))
+  if (parse(argc, argv, info))
     return true;
-  return link(info, diagnostics);
+  return link(info);
 }
 
 bool WinLinkDriver::parse(int argc, const char *argv[],
-                          PECOFFTargetInfo &info, raw_ostream &diagnostics) {
+                          PECOFFTargetInfo &info) {
   // Arguments after "--" are interpreted as filenames even if they start with
   // a hyphen or a slash. This is not compatible with link.exe but useful for
   // us to test lld on Unix.
@@ -209,9 +208,9 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   parsedArgs.reset(
       table.ParseArgs(&argv[1], &argv[argEnd], missingIndex, missingCount));
   if (missingCount) {
-    diagnostics << "error: missing arg value for '"
-                << parsedArgs->getArgString(missingIndex) << "' expected "
-                << missingCount << " argument(s).\n";
+    llvm::errs() << "error: missing arg value for '"
+                 << parsedArgs->getArgString(missingIndex) << "' expected "
+                 << missingCount << " argument(s).\n";
     return true;
   }
 
@@ -224,8 +223,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Show warning for unknown arguments
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    diagnostics << "warning: ignoring unknown argument: "
-                << (*it)->getAsString(*parsedArgs) << "\n";
+    llvm::errs() << "warning: ignoring unknown argument: "
+                 << (*it)->getAsString(*parsedArgs) << "\n";
   }
 
   // Copy -mllvm
@@ -237,17 +236,17 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Handle -stack
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
-    if (!parseStackOption(info, arg->getValue(), diagnostics))
+    if (!parseStackOption(info, arg->getValue(), llvm::errs()))
       return true;
 
   // Handle -heap
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_heap))
-    if (!parseHeapOption(info, arg->getValue(), diagnostics))
+    if (!parseHeapOption(info, arg->getValue(), llvm::errs()))
       return true;
 
   // Handle -subsystem
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))
-    if (!parseSubsystemOption(info, arg->getValue(), diagnostics))
+    if (!parseSubsystemOption(info, arg->getValue(), llvm::errs()))
       return true;
 
   // Handle -entry
@@ -289,7 +288,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     info.setOutputPath(getDefaultOutputFileName(info, inputPaths[0]));
 
   // Validate the combination of options used.
-  return info.validate(diagnostics);
+  return info.validate(llvm::errs());
 }
 
 } // namespace lld

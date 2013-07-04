@@ -29,7 +29,7 @@
 namespace lld {
 
 /// This is where the link is actually performed.
-bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
+bool Driver::link(const TargetInfo &targetInfo) {
   // Honor -mllvm
   if (!targetInfo.llvmOptions().empty()) {
     unsigned numArgs = targetInfo.llvmOptions().size();
@@ -52,10 +52,10 @@ bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
     if (targetInfo.logInputFiles())
       llvm::outs() << input.getPath() << "\n";
 
-    tg.spawn([&, index] {
+    tg.spawn([ &, index]{
       if (error_code ec = targetInfo.readFile(input.getPath(), files[index])) {
-        diagnostics << "Failed to read file: " << input.getPath()
-                    << ": " << ec.message() << "\n";
+        llvm::errs() << "Failed to read file: " << input.getPath() << ": "
+                     << ec.message() << "\n";
         fail = true;
         return;
       }
@@ -98,8 +98,8 @@ bool Driver::link(const TargetInfo &targetInfo, raw_ostream &diagnostics) {
   // Give linked atoms to Writer to generate output file.
   ScopedTask writeTask(getDefaultDomain(), "Write");
   if (error_code ec = targetInfo.writeFile(merged)) {
-    diagnostics << "Failed to write file '" << targetInfo.outputPath() 
-                << "': " << ec.message() << "\n";
+    llvm::errs() << "Failed to write file '" << targetInfo.outputPath()
+                 << "': " << ec.message() << "\n";
     return true;
   }
 
