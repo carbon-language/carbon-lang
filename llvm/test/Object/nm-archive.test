@@ -9,6 +9,9 @@ RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
 Test we don't error with an archive with no symtab.
 RUN: llvm-nm %p/Inputs/archive-test.a-gnu-no-symtab
 
+Or in an archive with no symtab or string table.
+RUN: llvm-nm %p/Inputs/archive-test.a-gnu-minimal
+
 COFF: trivial-object-test.coff-i386:
 COFF-NEXT: 00000000 d .data
 COFF-NEXT: 00000000 t .text

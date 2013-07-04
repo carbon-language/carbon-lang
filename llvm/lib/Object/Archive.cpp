@@ -104,7 +104,7 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   : Binary(Binary::ID_Archive, source) {
   // Check for sufficient magic.
   if (!source || source->getBufferSize()
-                 < (8 + sizeof(ArchiveMemberHeader) + 2) // Smallest archive.
+                 < (8 + sizeof(ArchiveMemberHeader)) // Smallest archive.
               || StringRef(source->getBufferStart(), 8) != Magic) {
     ec = object_error::invalid_file_type;
     return;
