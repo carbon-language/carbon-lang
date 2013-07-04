@@ -29,7 +29,7 @@ class ManagedStringPool {
 public:
   ManagedStringPool() {}
   ~ManagedStringPool() {
-    SmallVector<std::string *, 8>::iterator Current = Pool.begin();
+    SmallVectorImpl<std::string *>::iterator Current = Pool.begin();
     while (Current != Pool.end()) {
       delete *Current;
       Current++;

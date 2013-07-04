@@ -925,7 +925,7 @@ bool llvm::LowerDbgDeclare(Function &F) {
   if (Dbgs.empty())
     return false;
 
-  for (SmallVector<DbgDeclareInst *, 4>::iterator I = Dbgs.begin(),
+  for (SmallVectorImpl<DbgDeclareInst *>::iterator I = Dbgs.begin(),
          E = Dbgs.end(); I != E; ++I) {
     DbgDeclareInst *DDI = *I;
     if (AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress())) {

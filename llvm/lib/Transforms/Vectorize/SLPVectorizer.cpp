@@ -1444,7 +1444,7 @@ void FuncSLP::optimizeGatherSequence() {
   }
 
   // Erase all of the instructions that we RAUWed.
-  for (SmallVector<Instruction*, 16>::iterator v = ToRemove.begin(),
+  for (SmallVectorImpl<Instruction *>::iterator v = ToRemove.begin(),
        ve = ToRemove.end(); v != ve; ++v) {
     assert((*v)->getNumUses() == 0 && "Can't remove instructions with uses");
     (*v)->eraseFromParent();

@@ -63,7 +63,7 @@ bool GCOVFile::read(GCOVBuffer &Buffer) {
 
 /// dump - Dump GCOVFile content on standard out for debugging purposes.
 void GCOVFile::dump() {
-  for (SmallVector<GCOVFunction *, 16>::iterator I = Functions.begin(),
+  for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
          E = Functions.end(); I != E; ++I)
     (*I)->dump();
 }
@@ -71,7 +71,7 @@ void GCOVFile::dump() {
 /// collectLineCounts - Collect line counts. This must be used after
 /// reading .gcno and .gcda files.
 void GCOVFile::collectLineCounts(FileInfo &FI) {
-  for (SmallVector<GCOVFunction *, 16>::iterator I = Functions.begin(),
+  for (SmallVectorImpl<GCOVFunction *>::iterator I = Functions.begin(),
          E = Functions.end(); I != E; ++I) 
     (*I)->collectLineCounts(FI);
   FI.print();
@@ -155,7 +155,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOV::GCOVFormat Format) {
 /// dump - Dump GCOVFunction content on standard out for debugging purposes.
 void GCOVFunction::dump() {
   outs() <<  "===== " << Name << " @ " << Filename << ":" << LineNumber << "\n";
-  for (SmallVector<GCOVBlock *, 16>::iterator I = Blocks.begin(),
+  for (SmallVectorImpl<GCOVBlock *>::iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
     (*I)->dump();
 }
@@ -163,7 +163,7 @@ void GCOVFunction::dump() {
 /// collectLineCounts - Collect line counts. This must be used after
 /// reading .gcno and .gcda files.
 void GCOVFunction::collectLineCounts(FileInfo &FI) {
-  for (SmallVector<GCOVBlock *, 16>::iterator I = Blocks.begin(),
+  for (SmallVectorImpl<GCOVBlock *>::iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
     (*I)->collectLineCounts(FI);
 }
@@ -197,7 +197,7 @@ void GCOVBlock::dump() {
   outs() << "Block : " << Number << " Counter : " << Counter << "\n";
   if (!Edges.empty()) {
     outs() << "\tEdges : ";
-    for (SmallVector<uint32_t, 16>::iterator I = Edges.begin(), E = Edges.end();
+    for (SmallVectorImpl<uint32_t>::iterator I = Edges.begin(), E = Edges.end();
          I != E; ++I)
       outs() << (*I) << ",";
     outs() << "\n";
@@ -220,14 +220,14 @@ void GCOVBlock::dump() {
 /// reading .gcno and .gcda files.
 void GCOVLines::collectLineCounts(FileInfo &FI, StringRef Filename, 
                                   uint32_t Count) {
-  for (SmallVector<uint32_t, 16>::iterator I = Lines.begin(),
+  for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
          E = Lines.end(); I != E; ++I)
     FI.addLineCount(Filename, *I, Count);
 }
 
 /// dump - Dump GCOVLines content on standard out for debugging purposes.
 void GCOVLines::dump() {
-  for (SmallVector<uint32_t, 16>::iterator I = Lines.begin(),
+  for (SmallVectorImpl<uint32_t>::iterator I = Lines.begin(),
          E = Lines.end(); I != E; ++I)
     outs() << (*I) << ",";
 }

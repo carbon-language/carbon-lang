@@ -384,7 +384,7 @@ void GenericToNVVM::remapNamedMDNode(Module *M, NamedMDNode *N) {
 
   // Replace the old operands with the new operands.
   N->dropAllReferences();
-  for (SmallVector<MDNode *, 16>::iterator I = NewOperands.begin(),
+  for (SmallVectorImpl<MDNode *>::iterator I = NewOperands.begin(),
                                            E = NewOperands.end();
        I != E; ++I) {
     N->addOperand(*I);

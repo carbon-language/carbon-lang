@@ -271,7 +271,7 @@ namespace {
 
       StringKeySort Sorter;
       std::sort(SortedLinesByFile.begin(), SortedLinesByFile.end(), Sorter);
-      for (SmallVector<StringMapEntry<GCOVLines *> *, 32>::iterator
+      for (SmallVectorImpl<StringMapEntry<GCOVLines *> *>::iterator
                I = SortedLinesByFile.begin(), E = SortedLinesByFile.end();
            I != E; ++I) 
         (*I)->getValue()->writeOut();

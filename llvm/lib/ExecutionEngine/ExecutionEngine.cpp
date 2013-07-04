@@ -118,7 +118,7 @@ char *ExecutionEngine::getMemoryForGV(const GlobalVariable *GV) {
 }
 
 bool ExecutionEngine::removeModule(Module *M) {
-  for(SmallVector<Module *, 1>::iterator I = Modules.begin(),
+  for(SmallVectorImpl<Module *>::iterator I = Modules.begin(),
         E = Modules.end(); I != E; ++I) {
     Module *Found = *I;
     if (Found == M) {

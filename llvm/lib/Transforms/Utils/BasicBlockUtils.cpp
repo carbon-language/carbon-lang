@@ -170,7 +170,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
       if (DomTreeNode *DTN = DT->getNode(BB)) {
         DomTreeNode *PredDTN = DT->getNode(PredBB);
         SmallVector<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
-        for (SmallVector<DomTreeNode*, 8>::iterator DI = Children.begin(),
+        for (SmallVectorImpl<DomTreeNode *>::iterator DI = Children.begin(),
              DE = Children.end(); DI != DE; ++DI)
           DT->changeImmediateDominator(*DI, PredDTN);
 

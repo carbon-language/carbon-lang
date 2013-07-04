@@ -354,7 +354,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
     NMD->eraseFromParent();
     NMD = NULL;
 
-    for (SmallVector<MDNode *, 8>::iterator I = MDs.begin(),
+    for (SmallVectorImpl<MDNode *>::iterator I = MDs.begin(),
            E = MDs.end(); I != E; ++I) {
       GlobalVariable *GV = DIGlobalVariable(*I).getGlobal();
       if (GV && M.getGlobalVariable(GV->getName(), true)) {
@@ -381,7 +381,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
     NMD->eraseFromParent();
     NMD = NULL;
 
-    for (SmallVector<MDNode *, 8>::iterator I = MDs.begin(),
+    for (SmallVectorImpl<MDNode *>::iterator I = MDs.begin(),
            E = MDs.end(); I != E; ++I) {
       bool FnIsLive = false;
       if (Function *F = DISubprogram(*I).getFunction())

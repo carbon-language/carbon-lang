@@ -151,8 +151,8 @@ bool BranchProbabilityInfo::calcUnreachableHeuristics(BasicBlock *BB) {
 
   uint32_t UnreachableWeight =
     std::max(UR_TAKEN_WEIGHT / (unsigned)UnreachableEdges.size(), MIN_WEIGHT);
-  for (SmallVector<unsigned, 4>::iterator I = UnreachableEdges.begin(),
-                                          E = UnreachableEdges.end();
+  for (SmallVectorImpl<unsigned>::iterator I = UnreachableEdges.begin(),
+                                           E = UnreachableEdges.end();
        I != E; ++I)
     setEdgeWeight(BB, *I, UnreachableWeight);
 
@@ -161,8 +161,8 @@ bool BranchProbabilityInfo::calcUnreachableHeuristics(BasicBlock *BB) {
   uint32_t ReachableWeight =
     std::max(UR_NONTAKEN_WEIGHT / (unsigned)ReachableEdges.size(),
              NORMAL_WEIGHT);
-  for (SmallVector<unsigned, 4>::iterator I = ReachableEdges.begin(),
-                                          E = ReachableEdges.end();
+  for (SmallVectorImpl<unsigned>::iterator I = ReachableEdges.begin(),
+                                           E = ReachableEdges.end();
        I != E; ++I)
     setEdgeWeight(BB, *I, ReachableWeight);
 
@@ -251,8 +251,8 @@ bool BranchProbabilityInfo::calcColdCallHeuristics(BasicBlock *BB) {
 
   uint32_t ColdWeight =
       std::max(CC_TAKEN_WEIGHT / (unsigned) ColdEdges.size(), MIN_WEIGHT);
-  for (SmallVector<unsigned, 4>::iterator I = ColdEdges.begin(),
-                                          E = ColdEdges.end();
+  for (SmallVectorImpl<unsigned>::iterator I = ColdEdges.begin(),
+                                           E = ColdEdges.end();
        I != E; ++I)
     setEdgeWeight(BB, *I, ColdWeight);
 
@@ -260,8 +260,8 @@ bool BranchProbabilityInfo::calcColdCallHeuristics(BasicBlock *BB) {
     return true;
   uint32_t NormalWeight = std::max(
       CC_NONTAKEN_WEIGHT / (unsigned) NormalEdges.size(), NORMAL_WEIGHT);
-  for (SmallVector<unsigned, 4>::iterator I = NormalEdges.begin(),
-                                          E = NormalEdges.end();
+  for (SmallVectorImpl<unsigned>::iterator I = NormalEdges.begin(),
+                                           E = NormalEdges.end();
        I != E; ++I)
     setEdgeWeight(BB, *I, NormalWeight);
 
@@ -326,7 +326,7 @@ bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
     if (backWeight < NORMAL_WEIGHT)
       backWeight = NORMAL_WEIGHT;
 
-    for (SmallVector<unsigned, 8>::iterator EI = BackEdges.begin(),
+    for (SmallVectorImpl<unsigned>::iterator EI = BackEdges.begin(),
          EE = BackEdges.end(); EI != EE; ++EI) {
       setEdgeWeight(BB, *EI, backWeight);
     }
@@ -337,7 +337,7 @@ bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
     if (inWeight < NORMAL_WEIGHT)
       inWeight = NORMAL_WEIGHT;
 
-    for (SmallVector<unsigned, 8>::iterator EI = InEdges.begin(),
+    for (SmallVectorImpl<unsigned>::iterator EI = InEdges.begin(),
          EE = InEdges.end(); EI != EE; ++EI) {
       setEdgeWeight(BB, *EI, inWeight);
     }
@@ -348,7 +348,7 @@ bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
     if (exitWeight < MIN_WEIGHT)
       exitWeight = MIN_WEIGHT;
 
-    for (SmallVector<unsigned, 8>::iterator EI = ExitingEdges.begin(),
+    for (SmallVectorImpl<unsigned>::iterator EI = ExitingEdges.begin(),
          EE = ExitingEdges.end(); EI != EE; ++EI) {
       setEdgeWeight(BB, *EI, exitWeight);
     }

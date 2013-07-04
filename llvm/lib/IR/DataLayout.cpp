@@ -480,7 +480,7 @@ std::string DataLayout::getStringRepresentation() const {
     addrSpaces.push_back(pib->first);
   }
   std::sort(addrSpaces.begin(), addrSpaces.end());
-  for (SmallVector<unsigned, 8>::iterator asb = addrSpaces.begin(),
+  for (SmallVectorImpl<unsigned>::iterator asb = addrSpaces.begin(),
       ase = addrSpaces.end(); asb != ase; ++asb) {
     const PointerAlignElem &PI = Pointers.find(*asb)->second;
     OS << "-p";

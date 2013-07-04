@@ -43,7 +43,7 @@ BlackList::BlackList(const StringRef Path) {
   SmallVector<StringRef, 16> Lines;
   SplitString(File.take()->getBuffer(), Lines, "\n\r");
   StringMap<std::string> Regexps;
-  for (SmallVector<StringRef, 16>::iterator I = Lines.begin(), E = Lines.end();
+  for (SmallVectorImpl<StringRef>::iterator I = Lines.begin(), E = Lines.end();
        I != E; ++I) {
     // Ignore empty lines and lines starting with "#"
     if (I->empty() || I->startswith("#"))

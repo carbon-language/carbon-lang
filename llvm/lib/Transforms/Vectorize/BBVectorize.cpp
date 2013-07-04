@@ -1602,7 +1602,7 @@ namespace {
         DenseSet<ValuePair> CurrentPairs;
 
         bool CanAdd = true;
-        for (SmallVector<ValuePairWithDepth, 8>::iterator C2
+        for (SmallVectorImpl<ValuePairWithDepth>::iterator C2
               = BestChildren.begin(), E2 = BestChildren.end();
              C2 != E2; ++C2) {
           if (C2->first.first == C->first.first ||
@@ -1642,7 +1642,7 @@ namespace {
         if (!CanAdd) continue;
 
         // And check the queue too...
-        for (SmallVector<ValuePairWithDepth, 32>::iterator C2 = Q.begin(),
+        for (SmallVectorImpl<ValuePairWithDepth>::iterator C2 = Q.begin(),
              E2 = Q.end(); C2 != E2; ++C2) {
           if (C2->first.first == C->first.first ||
               C2->first.first == C->first.second ||
@@ -1691,7 +1691,7 @@ namespace {
         // to an already-selected child. Check for this here, and if a
         // conflict is found, then remove the previously-selected child
         // before adding this one in its place.
-        for (SmallVector<ValuePairWithDepth, 8>::iterator C2
+        for (SmallVectorImpl<ValuePairWithDepth>::iterator C2
               = BestChildren.begin(); C2 != BestChildren.end();) {
           if (C2->first.first == C->first.first ||
               C2->first.first == C->first.second ||
@@ -1706,7 +1706,7 @@ namespace {
         BestChildren.push_back(ValuePairWithDepth(C->first, C->second));
       }
 
-      for (SmallVector<ValuePairWithDepth, 8>::iterator C
+      for (SmallVectorImpl<ValuePairWithDepth>::iterator C
             = BestChildren.begin(), E2 = BestChildren.end();
            C != E2; ++C) {
         size_t DepthF = getDepthFactor(C->first.first);

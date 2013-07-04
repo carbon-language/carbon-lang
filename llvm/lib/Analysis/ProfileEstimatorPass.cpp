@@ -181,7 +181,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     double incoming = BBWeight;
     // Subtract the flow leaving the loop.
     std::set<Edge> ProcessedExits;
-    for (SmallVector<Edge, 8>::iterator ei = ExitEdges.begin(),
+    for (SmallVectorImpl<Edge>::iterator ei = ExitEdges.begin(),
          ee = ExitEdges.end(); ei != ee; ++ei) {
       if (ProcessedExits.insert(*ei).second) {
         double w = getEdgeWeight(*ei);
@@ -216,7 +216,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     // be distributed is split and the rounded, the last edge gets a somewhat
     // bigger value, but we are close enough for an estimation.
     double fraction = floor(incoming/Edges.size());
-    for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
+    for (SmallVectorImpl<Edge>::iterator ei = Edges.begin(), ee = Edges.end();
          ei != ee; ++ei) {
       double w = 0;
       if (ei != (ee-1)) {
@@ -289,7 +289,7 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
   double fraction = Edges.size() ? floor(BBWeight/Edges.size()) : 0.0;
   // Finally we know what flow is still not leaving the block, distribute this
   // flow onto the empty edges.
-  for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
+  for (SmallVectorImpl<Edge>::iterator ei = Edges.begin(), ee = Edges.end();
        ei != ee; ++ei) {
     if (ei != (ee-1)) {
       EdgeInformation[BB->getParent()][*ei] += fraction;

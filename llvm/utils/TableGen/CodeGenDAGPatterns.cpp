@@ -438,7 +438,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
   int OtherIntSize = 0;
   int OtherFPSize = 0;
-  for (SmallVector<MVT::SimpleValueType, 2>::iterator TVI =
+  for (SmallVectorImpl<MVT::SimpleValueType>::iterator TVI =
          Other.TypeVec.begin();
        TVI != Other.TypeVec.end();
        /* NULL */) {
@@ -496,7 +496,7 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
   int IntSize = 0;
   int FPSize = 0;
-  for (SmallVector<MVT::SimpleValueType, 2>::iterator TVI =
+  for (SmallVectorImpl<MVT::SimpleValueType>::iterator TVI =
          TypeVec.begin();
        TVI != TypeVec.end();
        /* NULL */) {

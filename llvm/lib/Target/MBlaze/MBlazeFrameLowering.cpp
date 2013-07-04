@@ -42,10 +42,10 @@ static void replaceFrameIndexes(MachineFunction &MF,
                                 SmallVector<std::pair<int,int64_t>, 16> &FR) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
-  const SmallVector<std::pair<int,int64_t>, 16>::iterator FRB = FR.begin();
-  const SmallVector<std::pair<int,int64_t>, 16>::iterator FRE = FR.end();
+  const SmallVectorImpl<std::pair<int,int64_t>>::iterator FRB = FR.begin();
+  const SmallVectorImpl<std::pair<int,int64_t>>::iterator FRE = FR.end();
 
-  SmallVector<std::pair<int,int64_t>, 16>::iterator FRI = FRB;
+  SmallVectorImpl<std::pair<int,int64_t>>::iterator FRI = FRB;
   for (; FRI != FRE; ++FRI) {
     MFI->RemoveStackObject(FRI->first);
     int NFI = MFI->CreateFixedObject(4, FRI->second, true);
@@ -91,7 +91,7 @@ static void analyzeFrameIndexes(MachineFunction &MF) {
 
   MachineRegisterInfo::livein_iterator LII = MRI.livein_begin();
   MachineRegisterInfo::livein_iterator LIE = MRI.livein_end();
-  const SmallVector<int, 16> &LiveInFI = MBlazeFI->getLiveIn();
+  const SmallVectorImpl<int> &LiveInFI = MBlazeFI->getLiveIn();
   SmallVector<MachineInstr*, 16> EraseInstr;
   SmallVector<std::pair<int,int64_t>, 16> FrameRelocate;
 

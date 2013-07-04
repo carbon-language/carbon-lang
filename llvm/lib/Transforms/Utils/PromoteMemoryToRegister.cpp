@@ -647,7 +647,7 @@ void PromoteMem2Reg::run() {
     // them from the Preds list.
     for (unsigned i = 0, e = SomePHI->getNumIncomingValues(); i != e; ++i) {
       // Do a log(n) search of the Preds list for the entry we want.
-      SmallVector<BasicBlock*, 16>::iterator EntIt =
+      SmallVectorImpl<BasicBlock *>::iterator EntIt =
         std::lower_bound(Preds.begin(), Preds.end(),
                          SomePHI->getIncomingBlock(i));
       assert(EntIt != Preds.end() && *EntIt == SomePHI->getIncomingBlock(i)&&

@@ -402,7 +402,7 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   BasicBlock *CountedExitBlock = 0;
   const SCEV *ExitCount = 0;
   BranchInst *CountedExitBranch = 0;
-  for (SmallVector<BasicBlock*, 4>::iterator I = ExitingBlocks.begin(),
+  for (SmallVectorImpl<BasicBlock *>::iterator I = ExitingBlocks.begin(),
        IE = ExitingBlocks.end(); I != IE; ++I) {
     const SCEV *EC = SE->getExitCount(L, *I);
     DEBUG(dbgs() << "Exit Count for " << *L << " from block " <<

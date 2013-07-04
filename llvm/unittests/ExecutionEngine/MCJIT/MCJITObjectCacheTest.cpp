@@ -28,7 +28,7 @@ public:
 
   virtual ~TestObjectCache() {
     // Free any buffers we've allocated.
-    SmallVector<MemoryBuffer *, 2>::iterator it, end;
+    SmallVectorImpl<MemoryBuffer *>::iterator it, end;
     end = AllocatedBuffers.end();
     for (it = AllocatedBuffers.begin(); it != end; ++it) {
       delete *it;

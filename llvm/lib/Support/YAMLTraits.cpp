@@ -322,7 +322,7 @@ Input::HNode *Input::createHNodes(Node *N) {
 }
 
 bool Input::MapHNode::isValidKey(StringRef Key) {
-  for (SmallVector<const char *, 6>::iterator i = ValidKeys.begin(),
+  for (SmallVectorImpl<const char *>::iterator i = ValidKeys.begin(),
        End = ValidKeys.end(); i != End; ++i) {
     if (Key.equals(*i))
       return true;
