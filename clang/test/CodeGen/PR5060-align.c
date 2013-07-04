@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -verify | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
 // CHECK: @foo.p = internal global i8 0, align 32
 char *foo(void) {
