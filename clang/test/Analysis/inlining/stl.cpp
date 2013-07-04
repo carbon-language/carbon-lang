@@ -27,3 +27,9 @@ void testException(std::exception e) {
   // expected-warning@-4 {{UNKNOWN}}
 #endif
 }
+
+void testList_pop_front(std::list<int> list) {
+  while(!list.empty())
+    list.pop_front();  // no-warning
+}
+
