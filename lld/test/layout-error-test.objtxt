@@ -1,4 +1,4 @@
-# REQUIRES: asserts
+# REQUIRES: debug
 # RUN: lld -core --add-pass layout -mllvm -debug-only=LayoutPass %s 2>&1 \
 # RUN:   | FileCheck %s -check-prefix=CHECK
 
