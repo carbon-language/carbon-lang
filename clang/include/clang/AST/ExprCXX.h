@@ -1401,6 +1401,10 @@ public:
     }
 
     /// \brief Retrieve the field for an init-capture.
+    ///
+    /// This works only for an init-capture.  To retrieve the FieldDecl for
+    /// a captured variable or for a capture of \c this, use
+    /// LambdaExpr::getLambdaClass and CXXRecordDecl::getCaptureFields.
     FieldDecl *getInitCaptureField() const {
       assert(getCaptureKind() == LCK_Init && "no field for non-init-capture");
       return cast<FieldDecl>(DeclAndBits.getPointer());
@@ -1410,8 +1414,8 @@ public:
     /// written between the square brackets introducing the lambda).
     bool isImplicit() const { return DeclAndBits.getInt() & Capture_Implicit; }
 
-    /// \brief Determine whether this was an explicit capture, written
-    /// between the square brackets introducing the lambda.
+    /// \brief Determine whether this was an explicit capture (written
+    /// between the square brackets introducing the lambda).
     bool isExplicit() const { return !isImplicit(); }
 
     /// \brief Retrieve the source location of the capture.

@@ -984,16 +984,17 @@ public:
   bool isLambda() const { return hasDefinition() && data().IsLambda; }
 
   /// \brief For a closure type, retrieve the mapping from captured
-  /// variables and this to the non-static data members that store the
+  /// variables and \c this to the non-static data members that store the
   /// values or references of the captures.
   ///
   /// \param Captures Will be populated with the mapping from captured
   /// variables to the corresponding fields.
   ///
   /// \param ThisCapture Will be set to the field declaration for the
-  /// 'this' capture.
+  /// \c this capture.
   ///
-  /// \note No entries will be added for init-captures.
+  /// \note No entries will be added for init-captures, as they do not capture
+  /// variables.
   void getCaptureFields(llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
                         FieldDecl *&ThisCapture) const;
 
