@@ -103,7 +103,7 @@ public:
                             CharSourceRange::getTokenRange(TokenInnerRange));
   }
 
-  typedef SmallVector<Edit, 8>::const_iterator edit_iterator;
+  typedef SmallVectorImpl<Edit>::const_iterator edit_iterator;
   edit_iterator edit_begin() const { return CachedEdits.begin(); }
   edit_iterator edit_end() const { return CachedEdits.end(); }
 

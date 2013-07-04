@@ -195,12 +195,12 @@ public:
     return CorrectionRange;
   }
 
-  typedef SmallVector<NamedDecl *, 1>::iterator decl_iterator;
+  typedef SmallVectorImpl<NamedDecl *>::iterator decl_iterator;
   decl_iterator begin() {
     return isKeyword() ? CorrectionDecls.end() : CorrectionDecls.begin();
   }
   decl_iterator end() { return CorrectionDecls.end(); }
-  typedef SmallVector<NamedDecl *, 1>::const_iterator const_decl_iterator;
+  typedef SmallVectorImpl<NamedDecl *>::const_iterator const_decl_iterator;
   const_decl_iterator begin() const {
     return isKeyword() ? CorrectionDecls.end() : CorrectionDecls.begin();
   }

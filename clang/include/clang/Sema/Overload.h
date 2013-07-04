@@ -773,7 +773,7 @@ namespace clang {
     /// \brief Clear out all of the candidates.
     void clear();
 
-    typedef SmallVector<OverloadCandidate, 16>::iterator iterator;
+    typedef SmallVectorImpl<OverloadCandidate>::iterator iterator;
     iterator begin() { return Candidates.begin(); }
     iterator end() { return Candidates.end(); }
 

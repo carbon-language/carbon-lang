@@ -251,7 +251,7 @@ public:
     return ReplacementTokens[Tok];
   }
 
-  typedef SmallVector<Token, 8>::const_iterator tokens_iterator;
+  typedef SmallVectorImpl<Token>::const_iterator tokens_iterator;
   tokens_iterator tokens_begin() const { return ReplacementTokens.begin(); }
   tokens_iterator tokens_end() const { return ReplacementTokens.end(); }
   bool tokens_empty() const { return ReplacementTokens.empty(); }

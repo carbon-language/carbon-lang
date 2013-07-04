@@ -36,7 +36,7 @@ static void getTopOverriddenMethods(CXTranslationUnit TU,
     return;
   }
 
-  for (SmallVector<CXCursor, 8>::iterator
+  for (SmallVectorImpl<CXCursor>::iterator
          I = Overridden.begin(), E = Overridden.end(); I != E; ++I)
     getTopOverriddenMethods(TU, cxcursor::getCursorDecl(*I), Methods);
 }

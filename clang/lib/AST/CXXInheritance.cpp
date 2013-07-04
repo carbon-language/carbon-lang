@@ -447,7 +447,7 @@ FindNestedNameSpecifierMember(const CXXBaseSpecifier *Specifier,
 
 void OverridingMethods::add(unsigned OverriddenSubobject, 
                             UniqueVirtualMethod Overriding) {
-  SmallVector<UniqueVirtualMethod, 4> &SubobjectOverrides
+  SmallVectorImpl<UniqueVirtualMethod> &SubobjectOverrides
     = Overrides[OverriddenSubobject];
   if (std::find(SubobjectOverrides.begin(), SubobjectOverrides.end(), 
                 Overriding) == SubobjectOverrides.end())
@@ -650,11 +650,11 @@ CXXRecordDecl::getFinalOverriders(CXXFinalOverriderMap &FinalOverriders) const {
                                   SOEnd = OM->second.end();
          SO != SOEnd; 
          ++SO) {
-      SmallVector<UniqueVirtualMethod, 4> &Overriding = SO->second;
+      SmallVectorImpl<UniqueVirtualMethod> &Overriding = SO->second;
       if (Overriding.size() < 2)
         continue;
 
-      for (SmallVector<UniqueVirtualMethod, 4>::iterator 
+      for (SmallVectorImpl<UniqueVirtualMethod>::iterator
              Pos = Overriding.begin(), PosEnd = Overriding.end();
            Pos != PosEnd;
            /* increment in loop */) {
@@ -669,7 +669,7 @@ CXXRecordDecl::getFinalOverriders(CXXFinalOverriderMap &FinalOverriders) const {
         // in a base class subobject that hides the virtual base class
         // subobject.
         bool Hidden = false;
-        for (SmallVector<UniqueVirtualMethod, 4>::iterator
+        for (SmallVectorImpl<UniqueVirtualMethod>::iterator
                OP = Overriding.begin(), OPEnd = Overriding.end();
              OP != OPEnd && !Hidden; 
              ++OP) {

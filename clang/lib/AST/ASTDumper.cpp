@@ -335,8 +335,8 @@ void ASTDumper::indent() {
     OS << "\n";
 
   ColorScope Color(*this, IndentColor);
-  for (llvm::SmallVector<IndentType, 32>::const_iterator I = Indents.begin(),
-                                                         E = Indents.end();
+  for (SmallVectorImpl<IndentType>::const_iterator I = Indents.begin(),
+                                                   E = Indents.end();
        I != E; ++I) {
     switch (*I) {
     case IT_Child:

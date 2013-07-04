@@ -287,9 +287,9 @@ public:
 
   // Iterate over the set of overriding virtual methods in a given
   // subobject.
-  typedef SmallVector<UniqueVirtualMethod, 4>::iterator 
+  typedef SmallVectorImpl<UniqueVirtualMethod>::iterator
     overriding_iterator;
-  typedef SmallVector<UniqueVirtualMethod, 4>::const_iterator
+  typedef SmallVectorImpl<UniqueVirtualMethod>::const_iterator
     overriding_const_iterator;
 
   // Add a new overriding method for a particular subobject.

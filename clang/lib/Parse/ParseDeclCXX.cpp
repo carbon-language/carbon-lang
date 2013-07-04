@@ -2243,7 +2243,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       SmallVector<SourceRange, 4> Ranges;
       DeclaratorInfo.getCXX11AttributeRanges(Ranges);
       if (!Ranges.empty()) {
-        for (SmallVector<SourceRange, 4>::iterator I = Ranges.begin(), 
+        for (SmallVectorImpl<SourceRange>::iterator I = Ranges.begin(),
              E = Ranges.end(); I != E; ++I) {
           Diag((*I).getBegin(), diag::err_attributes_not_allowed) 
             << *I;

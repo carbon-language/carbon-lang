@@ -3383,7 +3383,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
     // be changed while iterating (e.g. because of deserialization).
     // To be safe we copy the lookup results to a new container.
     SmallVector<NamedDecl*, 16> Ctors(R.begin(), R.end());
-    for (SmallVector<NamedDecl*, 16>::iterator
+    for (SmallVectorImpl<NamedDecl *>::iterator
            CI = Ctors.begin(), CE = Ctors.end(); CI != CE; ++CI) {
       NamedDecl *D = *CI;
       DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
@@ -4009,7 +4009,7 @@ static void TryUserDefinedConversion(Sema &S,
       // be changed while iterating. To be safe we copy the lookup results
       // to a new container.
       SmallVector<NamedDecl*, 8> CopyOfCon(R.begin(), R.end());
-      for (SmallVector<NamedDecl*, 8>::iterator
+      for (SmallVectorImpl<NamedDecl *>::iterator
              Con = CopyOfCon.begin(), ConEnd = CopyOfCon.end();
            Con != ConEnd; ++Con) {
         NamedDecl *D = *Con;
@@ -4716,7 +4716,7 @@ static void LookupCopyAndMoveConstructors(Sema &S,
   // be changed while iterating (e.g. because of deserialization).
   // To be safe we copy the lookup results to a new container.
   SmallVector<NamedDecl*, 16> Ctors(R.begin(), R.end());
-  for (SmallVector<NamedDecl*, 16>::iterator
+  for (SmallVectorImpl<NamedDecl *>::iterator
          CI = Ctors.begin(), CE = Ctors.end(); CI != CE; ++CI) {
     NamedDecl *D = *CI;
     CXXConstructorDecl *Constructor = 0;

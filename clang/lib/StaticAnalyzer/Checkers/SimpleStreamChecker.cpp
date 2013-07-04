@@ -227,8 +227,8 @@ void SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
                                                ExplodedNode *ErrNode) const {
   // Attach bug reports to the leak node.
   // TODO: Identify the leaked file descriptor.
-  for (SmallVector<SymbolRef, 2>::iterator
-      I = LeakedStreams.begin(), E = LeakedStreams.end(); I != E; ++I) {
+  for (SmallVectorImpl<SymbolRef>::iterator
+         I = LeakedStreams.begin(), E = LeakedStreams.end(); I != E; ++I) {
     BugReport *R = new BugReport(*LeakBugType,
         "Opened file is never closed; potential resource leak", ErrNode);
     R->markInteresting(*I);

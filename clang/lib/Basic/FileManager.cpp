@@ -610,7 +610,7 @@ void FileManager::GetUniqueIDMapping(
       UIDToFiles[FE->getValue()->getUID()] = FE->getValue();
   
   // Map virtual file entries
-  for (SmallVector<FileEntry*, 4>::const_iterator 
+  for (SmallVectorImpl<FileEntry *>::const_iterator
          VFE = VirtualFileEntries.begin(), VFEEnd = VirtualFileEntries.end();
        VFE != VFEEnd; ++VFE)
     if (*VFE && *VFE != NON_EXISTENT_FILE)

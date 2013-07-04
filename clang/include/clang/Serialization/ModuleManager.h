@@ -96,9 +96,9 @@ class ModuleManager {
   void returnVisitState(VisitState *State);
 
 public:
-  typedef SmallVector<ModuleFile*, 2>::iterator ModuleIterator;
-  typedef SmallVector<ModuleFile*, 2>::const_iterator ModuleConstIterator;
-  typedef SmallVector<ModuleFile*, 2>::reverse_iterator ModuleReverseIterator;
+  typedef SmallVectorImpl<ModuleFile*>::iterator ModuleIterator;
+  typedef SmallVectorImpl<ModuleFile*>::const_iterator ModuleConstIterator;
+  typedef SmallVectorImpl<ModuleFile*>::reverse_iterator ModuleReverseIterator;
   typedef std::pair<uint32_t, StringRef> ModuleOffset;
   
   explicit ModuleManager(FileManager &FileMgr);

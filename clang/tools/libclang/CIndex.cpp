@@ -308,8 +308,8 @@ bool CursorVisitor::visitDeclsFromFileRegion(FileID File,
 
   bool VisitedAtLeastOnce = false;
   DeclContext *CurDC = 0;
-  SmallVector<Decl *, 16>::iterator DIt = Decls.begin();
-  for (SmallVector<Decl *, 16>::iterator DE = Decls.end(); DIt != DE; ++DIt) {
+  SmallVectorImpl<Decl *>::iterator DIt = Decls.begin();
+  for (SmallVectorImpl<Decl *>::iterator DE = Decls.end(); DIt != DE; ++DIt) {
     Decl *D = *DIt;
     if (D->getSourceRange().isInvalid())
       continue;

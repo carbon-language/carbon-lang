@@ -3470,8 +3470,8 @@ void NamespaceSpecifierSet::SortNamespaces() {
     std::sort(sortedDistances.begin(), sortedDistances.end());
 
   Specifiers.clear();
-  for (SmallVector<unsigned, 4>::iterator DI = sortedDistances.begin(),
-                                       DIEnd = sortedDistances.end();
+  for (SmallVectorImpl<unsigned>::iterator DI = sortedDistances.begin(),
+                                        DIEnd = sortedDistances.end();
        DI != DIEnd; ++DI) {
     SpecifierInfoList &SpecList = DistanceMap[*DI];
     Specifiers.append(SpecList.begin(), SpecList.end());
