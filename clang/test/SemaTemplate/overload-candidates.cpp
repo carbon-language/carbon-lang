@@ -79,3 +79,48 @@ void foo(NS2::array<A>); // expected-note{{candidate template ignored: could not
 void test() {
   foo(NS1::array<int>()); // expected-error{{no matching function for call to 'foo'}}
 }
+
+namespace std {
+  template<bool, typename = void> struct enable_if {};
+  template<typename T> struct enable_if<true, T> { typedef T type; };
+
+  template<typename T, T V> struct integral_constant { static const T value = V; };
+  typedef integral_constant<bool, false> false_type;
+  typedef integral_constant<bool, true> true_type;
+};
+
+namespace PR15673 {
+  template<typename T>
+  struct a_trait : std::false_type {};
+
+  template<typename T,
+           typename Requires = typename std::enable_if<a_trait<T>::value>::type> // expected-warning {{C++11 extension}}
+  // expected-note@-1 {{candidate template ignored: disabled by 'enable_if' [with T = int]}}
+  void foo() {}
+  void bar() { foo<int>(); } // expected-error {{no matching function for call to 'foo'}}
+
+
+  template<typename T>
+  struct some_trait : std::false_type {};
+
+  // FIXME: It would be nice to tunnel the 'disabled by enable_if' diagnostic through here.
+  template<typename T>
+  struct a_pony : std::enable_if<some_trait<T>::value> {};
+
+  template<typename T,
+           typename Requires = typename a_pony<T>::type> // expected-warning {{C++11 extension}}
+  // FIXME: The source location here is poor.
+  void baz() { } // expected-note {{candidate template ignored: substitution failure [with T = int]: no type named 'type' in 'PR15673::a_pony<int>'}}
+  void quux() { baz<int>(); } // expected-error {{no matching function for call to 'baz'}}
+
+
+  // FIXME: This note doesn't make it clear which candidate we rejected.
+  template <typename T>
+  using unicorns = typename std::enable_if<some_trait<T>::value>::type; // expected-warning {{C++11 extension}}
+  // expected-note@-1 {{candidate template ignored: disabled by 'enable_if' [with T = int]}}
+
+  template<typename T,
+           typename Requires = unicorns<T> > // expected-warning {{C++11 extension}}
+  void wibble() {}
+  void wobble() { wibble<int>(); } // expected-error {{no matching function for call to 'wibble'}}
+}

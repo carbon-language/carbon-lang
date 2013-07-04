@@ -2704,18 +2704,21 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
     }
 
     // Substitute into the default template argument, if available.
+    bool HasDefaultArg = false;
     TemplateArgumentLoc DefArg
       = SubstDefaultTemplateArgumentIfAvailable(FunctionTemplate,
                                               FunctionTemplate->getLocation(),
                                   FunctionTemplate->getSourceRange().getEnd(),
                                                 Param,
-                                                Builder);
+                                                Builder, HasDefaultArg);
 
     // If there was no default argument, deduction is incomplete.
     if (DefArg.getArgument().isNull()) {
       Info.Param = makeTemplateParameter(
                          const_cast<NamedDecl *>(TemplateParams->getParam(I)));
-      return TDK_Incomplete;
+      Info.reset(TemplateArgumentList::CreateCopy(Context, Builder.data(),
+                                                  Builder.size()));
+      return HasDefaultArg ? TDK_SubstitutionFailure : TDK_Incomplete;
     }
 
     // Check whether we can actually use the default argument.

@@ -2703,11 +2703,16 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
                                               SourceLocation TemplateLoc,
                                               SourceLocation RAngleLoc,
                                               Decl *Param,
-                      SmallVectorImpl<TemplateArgument> &Converted) {
-   if (TemplateTypeParmDecl *TypeParm = dyn_cast<TemplateTypeParmDecl>(Param)) {
+                                              SmallVectorImpl<TemplateArgument>
+                                                &Converted,
+                                              bool &HasDefaultArg) {
+  HasDefaultArg = false;
+
+  if (TemplateTypeParmDecl *TypeParm = dyn_cast<TemplateTypeParmDecl>(Param)) {
     if (!TypeParm->hasDefaultArgument())
       return TemplateArgumentLoc();
 
+    HasDefaultArg = true;
     TypeSourceInfo *DI = SubstDefaultTemplateArgument(*this, Template,
                                                       TemplateLoc,
                                                       RAngleLoc,
@@ -2724,6 +2729,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
     if (!NonTypeParm->hasDefaultArgument())
       return TemplateArgumentLoc();
 
+    HasDefaultArg = true;
     ExprResult Arg = SubstDefaultTemplateArgument(*this, Template,
                                                   TemplateLoc,
                                                   RAngleLoc,
@@ -2741,7 +2747,7 @@ Sema::SubstDefaultTemplateArgumentIfAvailable(TemplateDecl *Template,
   if (!TempTempParm->hasDefaultArgument())
     return TemplateArgumentLoc();
 
-
+  HasDefaultArg = true;
   NestedNameSpecifierLoc QualifierLoc;
   TemplateName TName = SubstDefaultTemplateArgument(*this, Template,
                                                     TemplateLoc,
