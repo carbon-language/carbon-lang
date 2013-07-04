@@ -74,15 +74,19 @@ public:
 
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
                                                   raw_ostream &diagnostics) {
-  std::unique_ptr<ELFTargetInfo> options(parse(argc, argv, diagnostics));
-  if (!options)
+  std::unique_ptr<ELFTargetInfo> options;
+  bool error = parse(argc, argv, options, diagnostics);
+  if (error)
     return true;
+  if (!options)
+    return false;
 
   return link(*options, diagnostics);
 }
 
-std::unique_ptr<ELFTargetInfo>
-GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
+bool GnuLdDriver::parse(int argc, const char *argv[],
+                        std::unique_ptr<ELFTargetInfo> &targetInfo,
+                        raw_ostream &diagnostics) {
   // Parse command line options using LDOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   GnuLdOptTable table;
@@ -94,7 +98,7 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
-    return nullptr;
+    return true;
   }
 
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
@@ -107,7 +111,7 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
   // Handle --help
   if (parsedArgs->getLastArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
-    return nullptr;
+    return false;
   }
 
   // Use -target or use default target triple to instantiate TargetInfo
@@ -120,7 +124,7 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
 
   if (!options) {
     diagnostics << "unknown target triple\n";
-    return nullptr;
+    return true;
   }
 
   // Handle -e xxx
@@ -251,7 +255,7 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
       if (options->appendLibrary((*it)->getValue())) {
         diagnostics << "Failed to find library for " << (*it)->getValue()
                     << "\n";
-        return nullptr;
+        return true;
       }
       break;
     default:
@@ -261,9 +265,10 @@ GnuLdDriver::parse(int argc, const char *argv[], raw_ostream &diagnostics) {
 
   // Validate the combination of options used.
   if (options->validate(diagnostics))
-    return nullptr;
+    return true;
 
-  return options;
+  targetInfo.swap(options);
+  return false;
 }
 
 /// Get the default target triple based on either the program name

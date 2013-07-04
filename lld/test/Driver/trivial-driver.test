@@ -1,4 +1,7 @@
-RUN: lld -flavor gnu --help | FileCheck %s
+We use a temporary file to check lld's return value.
+FIXME: use pipefail instead.
+RUN: lld -flavor gnu --help > %t
+RUN: cat %t | FileCheck %s
 
 CHECK: -L
 CHECK: -emit-yaml

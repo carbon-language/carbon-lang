@@ -67,8 +67,9 @@ public:
 
   /// Uses gnu/binutils style ld command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static std::unique_ptr<ELFTargetInfo> parse(int argc, const char *argv[],
-                                      raw_ostream &diagnostics = llvm::errs());
+  static bool parse(int argc, const char *argv[],
+                    std::unique_ptr<ELFTargetInfo> &targetInfo,
+                    raw_ostream &diagnostics = llvm::errs());
 
 private:
   static llvm::Triple getDefaultTarget(const char *progName);
