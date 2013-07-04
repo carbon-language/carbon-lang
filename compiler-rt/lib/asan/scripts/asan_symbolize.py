@@ -142,10 +142,13 @@ class UnbufferedLineConverter(object):
   Wrap a child process that responds to each line of input with one line of
   output.  Uses pty to trick the child into providing unbuffered output.
   """
-  def __init__(self, args):
+  def __init__(self, args, close_stderr=False):
     pid, fd = pty.fork()
     if pid == 0:
-      # We're the child.  Transfer control to command.
+      # We're the child. Transfer control to command.
+      if close_stderr:
+        dev_null = os.open('/dev/null', 0)
+        os.dup2(dev_null, 2)
       os.execvp(args[0], args)
     else:
       # Disable echoing.
@@ -179,7 +182,7 @@ class DarwinSymbolizer(Symbolizer):
     if DEBUG:
       print 'atos -o %s -arch %s' % (self.binary, self.arch)
     cmdline = ['atos', '-o', self.binary, '-arch', self.arch]
-    self.atos = UnbufferedLineConverter(cmdline)
+    self.atos = UnbufferedLineConverter(cmdline, close_stderr=True)
 
   def symbolize(self, addr, binary, offset):
     """Overrides Symbolizer.symbolize."""
