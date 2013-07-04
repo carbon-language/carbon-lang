@@ -1619,6 +1619,7 @@ AC_CHECK_FUNCS([mktemp posix_spawn pread realpath sbrk setrlimit strdup ])
 AC_CHECK_FUNCS([strerror strerror_r setenv arc4random ])
 AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_CHECK_FUNCS([setjmp longjmp sigsetjmp siglongjmp writev])
+AC_CHECK_FUNCS([futimes futimens])
 AC_C_PRINTF_A
 AC_FUNC_RAND48
 
