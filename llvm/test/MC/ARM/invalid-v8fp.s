@@ -1,4 +1,4 @@
-@ RUN: llvm-mc -triple armv7 -show-encoding < %s | FileCheck %s
+@ RUN: not llvm-mc -triple armv7 -show-encoding < %s | FileCheck %s
 
 @ VCVT{B,T}
 
