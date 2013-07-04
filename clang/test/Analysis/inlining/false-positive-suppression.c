@@ -84,6 +84,14 @@ void testMultipleStore(void *p) {
 #endif
 }
 
+// Test that div by zero does not get suppressed. This is a policy choice.
+int retZero() {
+  return 0;
+}
+int triggerDivZero () {
+  int y = retZero();
+  return 5/y; // expected-warning {{Division by zero}}
+}
 
 // --------------------------
 // "Suppression suppression"

@@ -532,7 +532,8 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *Succ,
   // If we have an expression that provided the value, try to track where it
   // came from.
   if (InitE) {
-    if (V.isUndef() || V.getAs<loc::ConcreteInt>()) {
+    if (V.isUndef() ||
+        V.getAs<loc::ConcreteInt>() || V.getAs<nonloc::ConcreteInt>()) {
       if (!IsParam)
         InitE = InitE->IgnoreParenCasts();
       bugreporter::trackNullOrUndefValue(StoreSite, InitE, BR, IsParam,
@@ -996,12 +997,15 @@ bool bugreporter::trackNullOrUndefValue(const ExplodedNode *N,
         BugReporterVisitor *ConstraintTracker =
           new TrackConstraintBRVisitor(V.castAs<DefinedSVal>(), false);
         report.addVisitor(ConstraintTracker);
+      }
 
-        // Add visitor, which will suppress inline defensive checks.
-        if (LVState->isNull(V).isConstrainedTrue() &&
-            EnableNullFPSuppression) {
+      // Add visitor, which will suppress inline defensive checks.
+      if (Optional<DefinedSVal> DV = V.getAs<DefinedSVal>()) {
+        if (!DV->isZeroConstant() &&
+          LVState->isNull(*DV).isConstrainedTrue() &&
+          EnableNullFPSuppression) {
           BugReporterVisitor *IDCSuppressor =
-            new SuppressInlineDefensiveChecksVisitor(V.castAs<DefinedSVal>(),
+            new SuppressInlineDefensiveChecksVisitor(*DV,
                                                      LVNode);
           report.addVisitor(IDCSuppressor);
         }
