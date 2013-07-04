@@ -76,7 +76,7 @@ STATISTIC(NumFastIselDead, "Number of dead insts removed on failure");
 void FastISel::startNewBlock() {
   LocalValueMap.clear();
 
-  // Instructions are append to FuncInfo.MBB. If the basic block already
+  // Instructions are appended to FuncInfo.MBB. If the basic block already
   // contains labels or copies, use the last instruction as the last local
   // value.
   EmitStartPt = 0;
