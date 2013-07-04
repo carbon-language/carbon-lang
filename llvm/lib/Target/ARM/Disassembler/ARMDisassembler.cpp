@@ -775,7 +775,6 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   result = decodeInstruction(DecoderTableVFPV832, MI, insn32, Address, this, STI);
   if (result != MCDisassembler::Fail) {
     Size = 4;
-    UpdateThumbVFPPredicate(MI);
     return result;
   }
 
