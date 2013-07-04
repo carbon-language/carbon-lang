@@ -13,6 +13,18 @@
 
 #include <type_traits>
 
+template <class T>
+void test_is_move_assignable()
+{
+    static_assert( std::is_move_assignable<T>::value, "");
+}
+
+template <class T>
+void test_is_not_move_assignable()
+{
+    static_assert(!std::is_move_assignable<T>::value, "");
+}
+
 class Empty
 {
 };
@@ -37,15 +49,18 @@ struct A
 
 int main()
 {
-    static_assert(( std::is_move_assignable<int>::value), "");
-    static_assert((!std::is_move_assignable<const int>::value), "");
-    static_assert((!std::is_move_assignable<int[]>::value), "");
-    static_assert((!std::is_move_assignable<int[3]>::value), "");
-    static_assert((!std::is_move_assignable<int[3]>::value), "");
-    static_assert((!std::is_move_assignable<void>::value), "");
-    static_assert(( std::is_move_assignable<A>::value), "");
-    static_assert(( std::is_move_assignable<bit_zero>::value), "");
-    static_assert(( std::is_move_assignable<Union>::value), "");
-    static_assert(( std::is_move_assignable<NotEmpty>::value), "");
-    static_assert(( std::is_move_assignable<Empty>::value), "");
+    test_is_move_assignable<int> ();
+    test_is_move_assignable<A> ();
+    test_is_move_assignable<bit_zero> ();
+    test_is_move_assignable<Union> ();
+    test_is_move_assignable<NotEmpty> ();
+    test_is_move_assignable<Empty> ();
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    test_is_not_move_assignable<const int> ();
+    test_is_not_move_assignable<int[]> ();
+    test_is_not_move_assignable<int[3]> ();
+    test_is_not_move_assignable<int[3]> ();
+#endif
+    test_is_not_move_assignable<void> ();
 }

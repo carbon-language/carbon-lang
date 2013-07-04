@@ -13,6 +13,18 @@
 
 #include <type_traits>
 
+template <class T, class U>
+void test_is_trivially_assignable()
+{
+    static_assert(( std::is_trivially_assignable<T, U>::value), "");
+}
+
+template <class T, class U>
+void test_is_not_trivially_assignable()
+{
+    static_assert((!std::is_trivially_assignable<T, U>::value), "");
+}
+
 struct A
 {
 };
@@ -24,11 +36,12 @@ struct B
 
 int main()
 {
-    static_assert(( std::is_trivially_assignable<int&, int&>::value), "");
-    static_assert(( std::is_trivially_assignable<int&, int>::value), "");
-    static_assert((!std::is_trivially_assignable<int, int&>::value), "");
-    static_assert((!std::is_trivially_assignable<int, int>::value), "");
-    static_assert(( std::is_trivially_assignable<int&, double>::value), "");
-    static_assert((!std::is_trivially_assignable<B, A>::value), "");
-    static_assert((!std::is_trivially_assignable<A, B>::value), "");
+    test_is_trivially_assignable<int&, int&> ();
+    test_is_trivially_assignable<int&, int> ();
+    test_is_trivially_assignable<int&, double> ();
+
+    test_is_not_trivially_assignable<int, int&> ();
+    test_is_not_trivially_assignable<int, int> ();
+    test_is_not_trivially_assignable<B, A> ();
+    test_is_not_trivially_assignable<A, B> ();
 }

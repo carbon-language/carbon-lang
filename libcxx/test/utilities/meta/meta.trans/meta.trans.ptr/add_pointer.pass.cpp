@@ -17,6 +17,9 @@ template <class T, class U>
 void test_add_pointer()
 {
     static_assert((std::is_same<typename std::add_pointer<T>::type, U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::add_pointer_t<T>,     U>::value), "");
+#endif
 }
 
 int main()

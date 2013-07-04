@@ -137,6 +137,64 @@ namespace std
     template <class> class result_of; // undefined
     template <class Fn, class... ArgTypes> class result_of<Fn(ArgTypes...)>;
 
+    // const-volatile modifications:
+    template <class T>
+      using remove_const_t    = typename remove_const<T>::type;  // C++14
+    template <class T>
+      using remove_volatile_t = typename remove_volatile<T>::type;  // C++14
+    template <class T>
+      using remove_cv_t       = typename remove_cv<T>::type;  // C++14
+    template <class T>
+      using add_const_t       = typename add_const<T>::type;  // C++14
+    template <class T>
+      using add_volatile_t    = typename add_volatile<T>::type;  // C++14
+    template <class T>
+      using add_cv_t          = typename add_cv<T>::type;  // C++14
+  
+    // reference modifications:
+    template <class T>
+      using remove_reference_t     = typename remove_reference<T>::type;  // C++14
+    template <class T>
+      using add_lvalue_reference_t = typename add_lvalue_reference<T>::type;  // C++14
+    template <class T>
+      using add_rvalue_reference_t = typename add_rvalue_reference<T>::type;  // C++14
+  
+    // sign modifications:
+    template <class T>
+      using make_signed_t   = typename make_signed<T>::type;  // C++14
+    template <class T>
+      using make_unsigned_t = typename make_unsigned<T>::type;  // C++14
+  
+    // array modifications:
+    template <class T>
+      using remove_extent_t      = typename remove_extent<T>::type;  // C++14
+    template <class T>
+      using remove_all_extents_t = typename remove_all_extents<T>::type;  // C++14
+
+    // pointer modifications:
+    template <class T>
+      using remove_pointer_t = typename remove_pointer<T>::type;  // C++14
+    template <class T>
+      using add_pointer_t    = typename add_pointer<T>::type;  // C++14
+
+    // other transformations:
+    template <size_t Len, std::size_t Align=default-alignment>
+      using aligned_storage_t = typename aligned_storage<Len,Align>::type;  // C++14
+    template <std::size_t Len, class... Types>
+      using aligned_union_t   = typename aligned_union<Len,Types...>::type;  // C++14
+    template <class T>
+      using decay_t           = typename decay<T>::type;  // C++14
+    template <bool b, class T=void>
+      using enable_if_t       = typename enable_if<b,T>::type;  // C++14
+    template <bool b, class T, class F>
+      using conditional_t     = typename conditional<b,T,F>::type;  // C++14
+    template <class... T>
+      using common_type_t     = typename common_type<T...>::type;  // C++14
+    template <class T>
+      using underlying_type_t = typename underlying_type<T>::type;  // C++14
+    template <class F, class... ArgTypes>
+      using result_of_t       = typename result_of<F(ArgTypes...)>::type;  // C++14
+
 }  // std
 
 */
@@ -154,8 +212,17 @@ template <bool _Bp, class _If, class _Then>
 template <class _If, class _Then>
     struct _LIBCPP_TYPE_VIS conditional<false, _If, _Then> {typedef _Then type;};
 
+#if _LIBCPP_STD_VER > 11
+template <bool _Bp, class _If, class _Then> using conditional_t = typename conditional<_Bp, _If, _Then>::type;
+#endif
+
 template <bool, class _Tp = void> struct _LIBCPP_TYPE_VIS enable_if {};
 template <class _Tp> struct _LIBCPP_TYPE_VIS enable_if<true, _Tp> {typedef _Tp type;};
+
+#if _LIBCPP_STD_VER > 11
+template <bool _Bp, class _Tp = void> using enable_if_t = typename enable_if<_Bp, _Tp>::type;
+#endif
+
 
 struct __two {char __lx[2];};
 
@@ -191,16 +258,25 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS is_volatile<_Tp volatile> : public 
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_const            {typedef _Tp type;};
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_const<const _Tp> {typedef _Tp type;};
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_const_t = typename remove_const<_Tp>::type;
+#endif
 
 // remove_volatile
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_volatile               {typedef _Tp type;};
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_volatile<volatile _Tp> {typedef _Tp type;};
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_volatile_t = typename remove_volatile<_Tp>::type;
+#endif
 
 // remove_cv
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_cv
 {typedef typename remove_volatile<typename remove_const<_Tp>::type>::type type;};
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_cv_t = typename remove_cv<_Tp>::type;
+#endif
 
 // is_void
 
@@ -446,6 +522,10 @@ struct __add_const<_Tp, false> {typedef const _Tp type;};
 template <class _Tp> struct _LIBCPP_TYPE_VIS add_const
     {typedef typename __add_const<_Tp>::type type;};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using add_const_t = typename add_const<_Tp>::type;
+#endif
+
 // add_volatile
 
 template <class _Tp, bool = is_reference<_Tp>::value ||
@@ -459,10 +539,18 @@ struct __add_volatile<_Tp, false> {typedef volatile _Tp type;};
 template <class _Tp> struct _LIBCPP_TYPE_VIS add_volatile
     {typedef typename __add_volatile<_Tp>::type type;};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using add_volatile_t = typename add_volatile<_Tp>::type;
+#endif
+
 // add_cv
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS add_cv
     {typedef typename add_const<typename add_volatile<_Tp>::type>::type type;};
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using add_cv_t = typename add_cv<_Tp>::type;
+#endif
 
 // remove_reference
 
@@ -470,6 +558,10 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS remove_reference        {typedef _T
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_reference<_Tp&>  {typedef _Tp type;};
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_reference<_Tp&&> {typedef _Tp type;};
+#endif
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_reference_t = typename remove_reference<_Tp>::type;
 #endif
 
 // add_lvalue_reference
@@ -481,6 +573,10 @@ template <>          struct _LIBCPP_TYPE_VIS add_lvalue_reference<const void>   
 template <>          struct _LIBCPP_TYPE_VIS add_lvalue_reference<volatile void>       {typedef volatile void type;};
 template <>          struct _LIBCPP_TYPE_VIS add_lvalue_reference<const volatile void> {typedef const volatile void type;};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using add_lvalue_reference_t = typename add_lvalue_reference<_Tp>::type;
+#endif
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS  add_rvalue_reference                     {typedef _Tp&& type;};
@@ -488,6 +584,10 @@ template <>          struct _LIBCPP_TYPE_VIS add_rvalue_reference<void>         
 template <>          struct _LIBCPP_TYPE_VIS add_rvalue_reference<const void>          {typedef const void type;};
 template <>          struct _LIBCPP_TYPE_VIS add_rvalue_reference<volatile void>       {typedef volatile void type;};
 template <>          struct _LIBCPP_TYPE_VIS add_rvalue_reference<const volatile void> {typedef const volatile void type;};
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using add_rvalue_reference_t = typename add_rvalue_reference<_Tp>::type;
+#endif
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -518,10 +618,18 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS remove_pointer<_Tp* const>         
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_pointer<_Tp* volatile>       {typedef _Tp type;};
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_pointer<_Tp* const volatile> {typedef _Tp type;};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_pointer_t = typename remove_pointer<_Tp>::type;
+#endif
+
 // add_pointer
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS add_pointer
     {typedef typename remove_reference<_Tp>::type* type;};
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using add_pointer_t = typename add_pointer<_Tp>::type;
+#endif
 
 // is_signed
 
@@ -584,6 +692,10 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS remove_extent<_Tp[]>
 template <class _Tp, size_t _Np> struct _LIBCPP_TYPE_VIS remove_extent<_Tp[_Np]>
     {typedef _Tp type;};
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_extent_t = typename remove_extent<_Tp>::type;
+#endif
+
 // remove_all_extents
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS remove_all_extents
@@ -592,6 +704,10 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS remove_all_extents<_Tp[]>
     {typedef typename remove_all_extents<_Tp>::type type;};
 template <class _Tp, size_t _Np> struct _LIBCPP_TYPE_VIS remove_all_extents<_Tp[_Np]>
     {typedef typename remove_all_extents<_Tp>::type type;};
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using remove_all_extents_t = typename remove_all_extents<_Tp>::type;
+#endif
 
 // is_abstract
 
@@ -916,7 +1032,7 @@ template <class _Hp, class _Tp, size_t _Len>
 struct __find_max_align<__type_list<_Hp, _Tp>, _Len>
     : public integral_constant<size_t, __select_align<_Len, _Hp::value, __find_max_align<_Tp, _Len>::value>::value> {};
 
-template <size_t _Len, const size_t _Align = __find_max_align<__all_types, _Len>::value>
+template <size_t _Len, size_t _Align = __find_max_align<__all_types, _Len>::value>
 struct _LIBCPP_TYPE_VIS aligned_storage
 {
     typedef typename __find_pod<__all_types, _Align>::type _Aligner;
@@ -927,6 +1043,11 @@ struct _LIBCPP_TYPE_VIS aligned_storage
         unsigned char __data[_Len];
     };
 };
+
+#if _LIBCPP_STD_VER > 11
+template <size_t _Len, size_t _Align = __find_max_align<__all_types, _Len>::value>
+    using aligned_storage_t = typename aligned_storage<_Len, _Align>::type;
+#endif
 
 #define _CREATE_ALIGNED_STORAGE_SPECIALIZATION(n) \
 template <size_t _Len>\
@@ -988,6 +1109,10 @@ struct aligned_union
                                              sizeof(_Types)...>::value;
     typedef typename aligned_storage<__len, alignment_value>::type type;
 };
+
+#if _LIBCPP_STD_VER > 11
+template <size_t _Len, class ..._Types> using aligned_union_t = typename aligned_union<_Len, _Types...>::type;
+#endif
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -1150,6 +1275,10 @@ struct _LIBCPP_TYPE_VIS make_signed
     typedef typename __apply_cv<_Tp, typename __make_signed<typename remove_cv<_Tp>::type>::type>::type type;
 };
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using make_signed_t = typename make_signed<_Tp>::type;
+#endif
+
 template <class _Tp, bool = is_integral<_Tp>::value || is_enum<_Tp>::value>
 struct __make_unsigned {};
 
@@ -1174,6 +1303,10 @@ struct _LIBCPP_TYPE_VIS make_unsigned
 {
     typedef typename __apply_cv<_Tp, typename __make_unsigned<typename remove_cv<_Tp>::type>::type>::type type;
 };
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using make_unsigned_t = typename make_unsigned<_Tp>::type;
+#endif
 
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
@@ -1232,6 +1365,10 @@ struct _LIBCPP_TYPE_VIS common_type<_Tp, _Up, _Vp...>
 {
     typedef typename common_type<typename common_type<_Tp, _Up>::type, _Vp...>::type type;
 };
+
+#if _LIBCPP_STD_VER > 11
+template <class ..._Tp> using common_type_t = typename common_type<_Tp...>::type;
+#endif
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -1410,6 +1547,10 @@ public:
                          >::type
                      >::type type;
 };
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using decay_t = typename decay<_Tp>::type;
+#endif
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -2984,6 +3125,10 @@ class _LIBCPP_TYPE_VIS result_of<_Fp(_Args...)>
 {
 };
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using result_of_t = typename result_of<_Tp>::type;
+#endif
+
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp>
@@ -3077,6 +3222,10 @@ struct underlying_type
 {
     typedef _LIBCXX_UNDERLYING_TYPE(_Tp) type;
 };
+
+#if _LIBCPP_STD_VER > 11
+template <class _Tp> using underlying_type_t = typename underlying_type<_Tp>::type;
+#endif
 
 #else  // _LIBCXX_UNDERLYING_TYPE
 

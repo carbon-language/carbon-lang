@@ -17,6 +17,9 @@ template <class T, class U>
 void test_add_volatile_imp()
 {
     static_assert((std::is_same<typename std::add_volatile<T>::type, volatile U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::add_volatile_t<T>, U>::value), "");
+#endif
 }
 
 template <class T>

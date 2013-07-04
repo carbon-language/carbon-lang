@@ -14,6 +14,24 @@
 #include <type_traits>
 #include <cassert>
 
+template <class T>
+void test_is_trivially_copyable()
+{
+    static_assert( std::is_trivially_copyable<T>::value, "");
+    static_assert( std::is_trivially_copyable<const T>::value, "");
+    static_assert( std::is_trivially_copyable<volatile T>::value, "");
+    static_assert( std::is_trivially_copyable<const volatile T>::value, "");
+}
+
+template <class T>
+void test_is_not_trivially_copyable()
+{
+    static_assert(!std::is_trivially_copyable<T>::value, "");
+    static_assert(!std::is_trivially_copyable<const T>::value, "");
+    static_assert(!std::is_trivially_copyable<volatile T>::value, "");
+    static_assert(!std::is_trivially_copyable<const volatile T>::value, "");
+}
+
 struct A
 {
     int i_;
@@ -33,12 +51,13 @@ public:
 
 int main()
 {
-    static_assert( std::is_trivially_copyable<int>::value, "");
-    static_assert( std::is_trivially_copyable<const int>::value, "");
-    static_assert(!std::is_trivially_copyable<int&>::value, "");
-    static_assert( std::is_trivially_copyable<A>::value, "");
-    static_assert( std::is_trivially_copyable<const A>::value, "");
-    static_assert(!std::is_trivially_copyable<const A&>::value, "");
-    static_assert(!std::is_trivially_copyable<B>::value, "");
-    static_assert( std::is_trivially_copyable<C>::value, "");
+    test_is_trivially_copyable<int> ();
+    test_is_trivially_copyable<const int> ();
+    test_is_trivially_copyable<A> ();
+    test_is_trivially_copyable<const A> ();
+    test_is_trivially_copyable<C> ();
+
+    test_is_not_trivially_copyable<int&> ();
+    test_is_not_trivially_copyable<const A&> ();
+    test_is_not_trivially_copyable<B> ();
 }

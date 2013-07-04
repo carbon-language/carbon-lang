@@ -13,10 +13,16 @@
 
 #include <type_traits>
 
-template <class T, bool Result>
+template <class T>
 void test_is_move_constructible()
 {
-    static_assert(std::is_move_constructible<T>::value == Result, "");
+    static_assert( std::is_move_constructible<T>::value, "");
+}
+
+template <class T>
+void test_is_not_move_constructible()
+{
+    static_assert(!std::is_move_constructible<T>::value, "");
 }
 
 class Empty
@@ -49,25 +55,27 @@ struct A
 
 struct B
 {
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     B(B&&);
+#endif
 };
 
 int main()
 {
-    test_is_move_constructible<char[3], false>();
-    test_is_move_constructible<char[], false>();
-    test_is_move_constructible<void, false>();
-    test_is_move_constructible<Abstract, false>();
+    test_is_not_move_constructible<char[3]>();
+    test_is_not_move_constructible<char[]>();
+    test_is_not_move_constructible<void>();
+    test_is_not_move_constructible<Abstract>();
 
-    test_is_move_constructible<A, true>();
-    test_is_move_constructible<int&, true>();
-    test_is_move_constructible<Union, true>();
-    test_is_move_constructible<Empty, true>();
-    test_is_move_constructible<int, true>();
-    test_is_move_constructible<double, true>();
-    test_is_move_constructible<int*, true>();
-    test_is_move_constructible<const int*, true>();
-    test_is_move_constructible<NotEmpty, true>();
-    test_is_move_constructible<bit_zero, true>();
-    test_is_move_constructible<B, true>();
+    test_is_move_constructible<A>();
+    test_is_move_constructible<int&>();
+    test_is_move_constructible<Union>();
+    test_is_move_constructible<Empty>();
+    test_is_move_constructible<int>();
+    test_is_move_constructible<double>();
+    test_is_move_constructible<int*>();
+    test_is_move_constructible<const int*>();
+    test_is_move_constructible<NotEmpty>();
+    test_is_move_constructible<bit_zero>();
+    test_is_move_constructible<B>();
 }

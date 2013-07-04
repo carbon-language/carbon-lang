@@ -15,18 +15,27 @@
 
 enum Enum {zero, one_};
 
+template <class T, class U>
+void test_remove_all_extents()
+{
+    static_assert((std::is_same<typename std::remove_all_extents<T>::type, U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::remove_all_extents_t<T>,     U>::value), "");
+#endif
+}
+
 int main()
 {
-    static_assert((std::is_same<std::remove_all_extents<int>::type, int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<const Enum>::type, const Enum>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<int[]>::type, int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<const int[]>::type, const int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<int[3]>::type, int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<const int[3]>::type, const int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<int[][3]>::type, int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<const int[][3]>::type, const int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<int[2][3]>::type, int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<const int[2][3]>::type, const int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<int[1][2][3]>::type, int>::value), "");
-    static_assert((std::is_same<std::remove_all_extents<const int[1][2][3]>::type, const int>::value), "");
+    test_remove_all_extents<int, int> ();
+    test_remove_all_extents<const Enum, const Enum> ();
+    test_remove_all_extents<int[], int> ();
+    test_remove_all_extents<const int[], const int> ();
+    test_remove_all_extents<int[3], int> ();
+    test_remove_all_extents<const int[3], const int> ();
+    test_remove_all_extents<int[][3], int> ();
+    test_remove_all_extents<const int[][3], const int> ();
+    test_remove_all_extents<int[2][3], int> ();
+    test_remove_all_extents<const int[2][3], const int> ();
+    test_remove_all_extents<int[1][2][3], int> ();
+    test_remove_all_extents<const int[1][2][3], const int> ();
 }

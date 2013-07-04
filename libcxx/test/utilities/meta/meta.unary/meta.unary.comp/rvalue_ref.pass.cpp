@@ -16,7 +16,7 @@
 template <class T>
 void test_rvalue_ref()
 {
-    static_assert(std::is_reference<T>::value, "");
+    static_assert( std::is_reference<T>::value, "");
     static_assert(!std::is_arithmetic<T>::value, "");
     static_assert(!std::is_fundamental<T>::value, "");
     static_assert(!std::is_object<T>::value, "");

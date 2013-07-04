@@ -14,6 +14,36 @@
 
 #include <type_traits>
 
+template <class T>
+void test_is_nothrow_constructible()
+{
+    static_assert(( std::is_nothrow_constructible<T>::value), "");
+}
+
+template <class T, class A0>
+void test_is_nothrow_constructible()
+{
+    static_assert(( std::is_nothrow_constructible<T, A0>::value), "");
+}
+
+template <class T>
+void test_is_not_nothrow_constructible()
+{
+    static_assert((!std::is_nothrow_constructible<T>::value), "");
+}
+
+template <class T, class A0>
+void test_is_not_nothrow_constructible()
+{
+    static_assert((!std::is_nothrow_constructible<T, A0>::value), "");
+}
+
+template <class T, class A0, class A1>
+void test_is_not_nothrow_constructible()
+{
+    static_assert((!std::is_nothrow_constructible<T, A0, A1>::value), "");
+}
+
 class Empty
 {
 };
@@ -42,11 +72,12 @@ struct A
 
 int main()
 {
-    static_assert(( std::is_nothrow_constructible<int>::value), "");
-    static_assert(( std::is_nothrow_constructible<int, const int&>::value), "");
-    static_assert((!std::is_nothrow_constructible<A, int>::value), "");
-    static_assert((!std::is_nothrow_constructible<A, int, double>::value), "");
-    static_assert((!std::is_nothrow_constructible<A>::value), "");
-    static_assert(( std::is_nothrow_constructible<Empty>::value), "");
-    static_assert(( std::is_nothrow_constructible<Empty, const Empty&>::value), "");
+    test_is_nothrow_constructible<int> ();
+    test_is_nothrow_constructible<int, const int&> ();
+    test_is_nothrow_constructible<Empty> ();
+    test_is_nothrow_constructible<Empty, const Empty&> ();
+
+    test_is_not_nothrow_constructible<A, int> ();
+    test_is_not_nothrow_constructible<A, int, double> ();
+    test_is_not_nothrow_constructible<A> ();
 }

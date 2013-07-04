@@ -13,6 +13,24 @@
 
 #include <type_traits>
 
+template <class T>
+void test_is_trivial()
+{
+    static_assert( std::is_trivial<T>::value, "");
+    static_assert( std::is_trivial<const T>::value, "");
+    static_assert( std::is_trivial<volatile T>::value, "");
+    static_assert( std::is_trivial<const volatile T>::value, "");
+}
+
+template <class T>
+void test_is_not_trivial()
+{
+    static_assert(!std::is_trivial<T>::value, "");
+    static_assert(!std::is_trivial<const T>::value, "");
+    static_assert(!std::is_trivial<volatile T>::value, "");
+    static_assert(!std::is_trivial<const volatile T>::value, "");
+}
+
 struct A {};
 
 class B
@@ -23,9 +41,10 @@ public:
 
 int main()
 {
-    static_assert( std::is_trivial<int>::value, "");
-    static_assert(!std::is_trivial<int&>::value, "");
-    static_assert(!std::is_trivial<volatile int&>::value, "");
-    static_assert( std::is_trivial<A>::value, "");
-    static_assert(!std::is_trivial<B>::value, "");
+    test_is_trivial<int> ();
+    test_is_trivial<A> ();
+
+    test_is_not_trivial<int&> ();
+    test_is_not_trivial<volatile int&> ();
+    test_is_not_trivial<B> ();
 }

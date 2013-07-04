@@ -19,6 +19,9 @@ template <class T, class U>
 void test_add_rvalue_reference()
 {
     static_assert((std::is_same<typename std::add_rvalue_reference<T>::type, U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::add_rvalue_reference_t<T>, U>::value), "");
+#endif
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

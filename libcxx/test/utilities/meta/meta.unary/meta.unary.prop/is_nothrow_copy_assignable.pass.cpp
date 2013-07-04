@@ -13,10 +13,16 @@
 
 #include <type_traits>
 
-template <class T, bool Result>
+template <class T>
 void test_has_nothrow_assign()
 {
-    static_assert(std::is_nothrow_copy_assignable<T>::value == Result, "");
+    static_assert( std::is_nothrow_copy_assignable<T>::value, "");
+}
+
+template <class T>
+void test_has_not_nothrow_assign()
+{
+    static_assert(!std::is_nothrow_copy_assignable<T>::value, "");
 }
 
 class Empty
@@ -42,17 +48,18 @@ struct A
 
 int main()
 {
-    test_has_nothrow_assign<const int, false>();
-    test_has_nothrow_assign<void, false>();
-    test_has_nothrow_assign<A, false>();
-    test_has_nothrow_assign<int&, true>();
+    test_has_nothrow_assign<int&>();
+    test_has_nothrow_assign<Union>();
+    test_has_nothrow_assign<Empty>();
+    test_has_nothrow_assign<int>();
+    test_has_nothrow_assign<double>();
+    test_has_nothrow_assign<int*>();
+    test_has_nothrow_assign<const int*>();
+    test_has_nothrow_assign<NotEmpty>();
+    test_has_nothrow_assign<bit_zero>();
 
-    test_has_nothrow_assign<Union, true>();
-    test_has_nothrow_assign<Empty, true>();
-    test_has_nothrow_assign<int, true>();
-    test_has_nothrow_assign<double, true>();
-    test_has_nothrow_assign<int*, true>();
-    test_has_nothrow_assign<const int*, true>();
-    test_has_nothrow_assign<NotEmpty, true>();
-    test_has_nothrow_assign<bit_zero, true>();
+    test_has_not_nothrow_assign<const int>();
+    test_has_not_nothrow_assign<void>();
+    test_has_not_nothrow_assign<A>();
+
 }

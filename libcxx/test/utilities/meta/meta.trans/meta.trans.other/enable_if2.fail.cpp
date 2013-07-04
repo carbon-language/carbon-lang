@@ -9,16 +9,15 @@
 
 // type_traits
 
-// conditional
+// enable_if
 
 #include <type_traits>
 
 int main()
 {
-    static_assert((std::is_same<std::conditional<true, char, int>::type, char>::value), "");
-    static_assert((std::is_same<std::conditional<false, char, int>::type, int>::value), "");
 #if _LIBCPP_STD_VER > 11
-    static_assert((std::is_same<std::conditional_t<true, char, int>, char>::value), "");
-    static_assert((std::is_same<std::conditional_t<false, char, int>, int>::value), "");
+    typedef std::enable_if_t<false> A;
+#else
+    static_assert ( false, "" );
 #endif
 }

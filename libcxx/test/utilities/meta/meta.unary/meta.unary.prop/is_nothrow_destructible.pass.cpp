@@ -63,15 +63,23 @@ int main()
     test_has_not_nothrow_destructor<Abstract>();
     test_has_not_nothrow_destructor<NotEmpty>();
 
+#if __has_feature(cxx_noexcept)
     test_is_nothrow_destructible<A>();
+#endif
     test_is_nothrow_destructible<int&>();
+#if  __has_feature(cxx_unrestricted_unions) 
     test_is_nothrow_destructible<Union>();
+#endif
+#if __has_feature(cxx_access_control_sfinae)
     test_is_nothrow_destructible<Empty>();
+#endif
     test_is_nothrow_destructible<int>();
     test_is_nothrow_destructible<double>();
     test_is_nothrow_destructible<int*>();
     test_is_nothrow_destructible<const int*>();
     test_is_nothrow_destructible<char[3]>();
     test_is_nothrow_destructible<char[3]>();
+#if __has_feature(cxx_noexcept)
     test_is_nothrow_destructible<bit_zero>();
+#endif
 }

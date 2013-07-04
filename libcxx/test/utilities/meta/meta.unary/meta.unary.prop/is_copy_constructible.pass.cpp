@@ -13,10 +13,16 @@
 
 #include <type_traits>
 
-template <class T, bool Result>
+template <class T>
 void test_is_copy_constructible()
 {
-    static_assert(std::is_copy_constructible<T>::value == Result, "");
+    static_assert( std::is_copy_constructible<T>::value, "");
+}
+
+template <class T>
+void test_is_not_copy_constructible()
+{
+    static_assert(!std::is_copy_constructible<T>::value, "");
 }
 
 class Empty
@@ -54,20 +60,22 @@ class B
 
 int main()
 {
-    test_is_copy_constructible<char[3], false>();
-    test_is_copy_constructible<char[], false>();
-    test_is_copy_constructible<void, false>();
-    test_is_copy_constructible<Abstract, false>();
+    test_is_copy_constructible<A>();
+    test_is_copy_constructible<int&>();
+    test_is_copy_constructible<Union>();
+    test_is_copy_constructible<Empty>();
+    test_is_copy_constructible<int>();
+    test_is_copy_constructible<double>();
+    test_is_copy_constructible<int*>();
+    test_is_copy_constructible<const int*>();
+    test_is_copy_constructible<NotEmpty>();
+    test_is_copy_constructible<bit_zero>();
 
-    test_is_copy_constructible<A, true>();
-    test_is_copy_constructible<B, false>();
-    test_is_copy_constructible<int&, true>();
-    test_is_copy_constructible<Union, true>();
-    test_is_copy_constructible<Empty, true>();
-    test_is_copy_constructible<int, true>();
-    test_is_copy_constructible<double, true>();
-    test_is_copy_constructible<int*, true>();
-    test_is_copy_constructible<const int*, true>();
-    test_is_copy_constructible<NotEmpty, true>();
-    test_is_copy_constructible<bit_zero, true>();
+    test_is_not_copy_constructible<char[3]>();
+    test_is_not_copy_constructible<char[]>();
+    test_is_not_copy_constructible<void>();
+    test_is_not_copy_constructible<Abstract>();
+#if __has_feature(cxx_access_control_sfinae) 
+    test_is_not_copy_constructible<B>();
+#endif
 }

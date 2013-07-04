@@ -22,17 +22,32 @@ struct B
     void operator=(A);
 };
 
+template <class T, class U>
+void test_is_assignable()
+{
+    static_assert(( std::is_assignable<T, U>::value), "");
+}
+
+template <class T, class U>
+void test_is_not_assignable()
+{
+    static_assert((!std::is_assignable<T, U>::value), "");
+}
+
 int main()
 {
-    static_assert(( std::is_assignable<int&, int&>::value), "");
-    static_assert(( std::is_assignable<int&, int>::value), "");
-    static_assert((!std::is_assignable<int, int&>::value), "");
-    static_assert((!std::is_assignable<int, int>::value), "");
-    static_assert(( std::is_assignable<int&, double>::value), "");
-    static_assert(( std::is_assignable<B, A>::value), "");
-    static_assert((!std::is_assignable<A, B>::value), "");
-    static_assert((!std::is_assignable<void, const void>::value), "");
-    static_assert((!std::is_assignable<const void, const void>::value), "");
-    static_assert(( std::is_assignable<void*&, void*>::value), "");
-    static_assert((!std::is_assignable<int(), int>::value), "");
+    test_is_assignable<int&, int&> ();
+    test_is_assignable<int&, int> ();
+    test_is_assignable<int&, double> ();
+    test_is_assignable<B, A> ();
+    test_is_assignable<void*&, void*> ();
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    test_is_not_assignable<int, int&> ();
+    test_is_not_assignable<int, int> ();
+#endif
+    test_is_not_assignable<A, B> ();
+    test_is_not_assignable<void, const void> ();
+    test_is_not_assignable<const void, const void> ();
+    test_is_not_assignable<int(), int> ();
 }

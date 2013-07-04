@@ -13,10 +13,16 @@
 
 #include <type_traits>
 
-template <class T, bool Result>
-void test_has_trivial_assign()
+template <class T>
+void test_has_trivially_copy_assignable()
 {
-    static_assert(std::is_trivially_copy_assignable<T>::value == Result, "");
+    static_assert( std::is_trivially_copy_assignable<T>::value, "");
+}
+
+template <class T>
+void test_has_not_trivially_copy_assignable()
+{
+    static_assert(!std::is_trivially_copy_assignable<T>::value, "");
 }
 
 class Empty
@@ -47,18 +53,19 @@ struct A
 
 int main()
 {
-    test_has_trivial_assign<void, false>();
-    test_has_trivial_assign<A, false>();
-    test_has_trivial_assign<int&, true>();
-    test_has_trivial_assign<NotEmpty, false>();
-    test_has_trivial_assign<Abstract, false>();
-    test_has_trivial_assign<const Empty, false>();
+    test_has_trivially_copy_assignable<int&>();
+    test_has_trivially_copy_assignable<Union>();
+    test_has_trivially_copy_assignable<Empty>();
+    test_has_trivially_copy_assignable<int>();
+    test_has_trivially_copy_assignable<double>();
+    test_has_trivially_copy_assignable<int*>();
+    test_has_trivially_copy_assignable<const int*>();
+    test_has_trivially_copy_assignable<bit_zero>();
 
-    test_has_trivial_assign<Union, true>();
-    test_has_trivial_assign<Empty, true>();
-    test_has_trivial_assign<int, true>();
-    test_has_trivial_assign<double, true>();
-    test_has_trivial_assign<int*, true>();
-    test_has_trivial_assign<const int*, true>();
-    test_has_trivial_assign<bit_zero, true>();
+    test_has_not_trivially_copy_assignable<void>();
+    test_has_not_trivially_copy_assignable<A>();
+    test_has_not_trivially_copy_assignable<NotEmpty>();
+    test_has_not_trivially_copy_assignable<Abstract>();
+    test_has_not_trivially_copy_assignable<const Empty>();
+
 }

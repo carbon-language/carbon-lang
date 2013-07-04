@@ -17,6 +17,9 @@ template <class T, class U>
 void test_remove_const_imp()
 {
     static_assert((std::is_same<typename std::remove_const<T>::type, U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::remove_const_t<T>, U>::value), "");
+#endif
 }
 
 template <class T>

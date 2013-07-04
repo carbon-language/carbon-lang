@@ -21,22 +21,30 @@ enum BigEnum
     big = 0xFFFFFFFFFFFFFFFFULL
 };
 
+template <class T, class U>
+void test_make_signed()
+{
+    static_assert((std::is_same<typename std::make_signed<T>::type, U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::make_signed_t<T>, U>::value), "");
+#endif
+}
+
 int main()
 {
-    static_assert((std::is_same<std::make_signed<signed char>::type, signed char>::value), "");
-    static_assert((std::is_same<std::make_signed<unsigned char>::type, signed char>::value), "");
-    static_assert((std::is_same<std::make_signed<char>::type, signed char>::value), "");
-    static_assert((std::is_same<std::make_signed<short>::type, signed short>::value), "");
-    static_assert((std::is_same<std::make_signed<unsigned short>::type, signed short>::value), "");
-    static_assert((std::is_same<std::make_signed<int>::type, signed int>::value), "");
-    static_assert((std::is_same<std::make_signed<unsigned int>::type, signed int>::value), "");
-    static_assert((std::is_same<std::make_signed<long>::type, signed long>::value), "");
-    static_assert((std::is_same<std::make_signed<unsigned long>::type, long>::value), "");
-    static_assert((std::is_same<std::make_signed<long long>::type, signed long long>::value), "");
-    static_assert((std::is_same<std::make_signed<unsigned long long>::type, signed long long>::value), "");
-    static_assert((std::is_same<std::make_signed<wchar_t>::type, int>::value), "");
-    static_assert((std::is_same<std::make_signed<const wchar_t>::type, const int>::value), "");
-    static_assert((std::is_same<std::make_signed<const Enum>::type, const int>::value), "");
-    static_assert((std::is_same<std::make_signed<BigEnum>::type,
-                   std::conditional<sizeof(long) == 4, long long, long>::type>::value), "");
+    test_make_signed< signed char, signed char >();
+    test_make_signed< unsigned char, signed char >();
+    test_make_signed< char, signed char >();
+    test_make_signed< short, signed short >();
+    test_make_signed< unsigned short, signed short >();
+    test_make_signed< int, signed int >();
+    test_make_signed< unsigned int, signed int >();
+    test_make_signed< long, signed long >();
+    test_make_signed< unsigned long, long >();
+    test_make_signed< long long, signed long long >();
+    test_make_signed< unsigned long long, signed long long >();
+    test_make_signed< wchar_t, int >();
+    test_make_signed< const wchar_t, const int >();
+    test_make_signed< const Enum, const int >();
+    test_make_signed< BigEnum, std::conditional<sizeof(long) == 4, long long, long>::type >();
 }

@@ -13,6 +13,18 @@
 
 #include <type_traits>
 
+template <class T, class U>
+void test_is_nothrow_assignable()
+{
+    static_assert(( std::is_nothrow_assignable<T, U>::value), "");
+}
+
+template <class T, class U>
+void test_is_not_nothrow_assignable()
+{
+    static_assert((!std::is_nothrow_assignable<T, U>::value), "");
+}
+
 struct A
 {
 };
@@ -24,11 +36,14 @@ struct B
 
 int main()
 {
-    static_assert(( std::is_nothrow_assignable<int&, int&>::value), "");
-    static_assert(( std::is_nothrow_assignable<int&, int>::value), "");
-    static_assert((!std::is_nothrow_assignable<int, int&>::value), "");
-    static_assert((!std::is_nothrow_assignable<int, int>::value), "");
-    static_assert(( std::is_nothrow_assignable<int&, double>::value), "");
-    static_assert((!std::is_nothrow_assignable<B, A>::value), "");
-    static_assert((!std::is_nothrow_assignable<A, B>::value), "");
+    test_is_nothrow_assignable<int&, int&> ();
+    test_is_nothrow_assignable<int&, int> ();
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    test_is_nothrow_assignable<int&, double> ();
+#endif
+
+    test_is_not_nothrow_assignable<int, int&> ();
+    test_is_not_nothrow_assignable<int, int> ();
+    test_is_not_nothrow_assignable<B, A> ();
+    test_is_not_nothrow_assignable<A, B> ();
 }

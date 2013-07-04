@@ -18,20 +18,57 @@ struct A
 {
     explicit A(int);
     A(int, double);
+#if __has_feature(cxx_access_control_sfinae) 
 private:
+#endif
     A(char);
 };
 
+template <class T>
+void test_is_constructible()
+{
+    static_assert( (std::is_constructible<T>::value), "");
+}
+
+template <class T, class A0>
+void test_is_constructible()
+{
+    static_assert( (std::is_constructible<T, A0>::value), "");
+}
+
+template <class T, class A0, class A1>
+void test_is_constructible()
+{
+    static_assert( (std::is_constructible<T, A0, A1>::value), "");
+}
+
+template <class T>
+void test_is_not_constructible()
+{
+    static_assert((!std::is_constructible<T>::value), "");
+}
+
+template <class T, class A0>
+void test_is_not_constructible()
+{
+    static_assert((!std::is_constructible<T, A0>::value), "");
+}
+
 int main()
 {
-    static_assert((std::is_constructible<int>::value), "");
-    static_assert((std::is_constructible<int, const int>::value), "");
-    static_assert((std::is_constructible<A, int>::value), "");
-    static_assert((std::is_constructible<A, int, double>::value), "");
-    static_assert((!std::is_constructible<A>::value), "");
-    static_assert((!std::is_constructible<A, char>::value), "");
-    static_assert((!std::is_constructible<A, void>::value), "");
-    static_assert((!std::is_constructible<void>::value), "");
-    static_assert((!std::is_constructible<int&>::value), "");
-    static_assert(( std::is_constructible<int&, int&>::value), "");
+    test_is_constructible<int> ();
+    test_is_constructible<int, const int> ();
+    test_is_constructible<A, int> ();
+    test_is_constructible<A, int, double> ();
+    test_is_constructible<int&, int&> ();
+
+    test_is_not_constructible<A> ();
+#if __has_feature(cxx_access_control_sfinae) 
+    test_is_not_constructible<A, char> ();
+#else
+    test_is_constructible<A, char> ();
+#endif
+    test_is_not_constructible<A, void> ();
+    test_is_not_constructible<void> ();
+    test_is_not_constructible<int&> ();
 }

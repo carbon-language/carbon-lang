@@ -17,6 +17,9 @@ template <class T, class U>
 void test_remove_reference()
 {
     static_assert((std::is_same<typename std::remove_reference<T>::type, U>::value), "");
+#if _LIBCPP_STD_VER > 11
+    static_assert((std::is_same<std::remove_reference_t<T>, U>::value), "");
+#endif
 }
 
 int main()
