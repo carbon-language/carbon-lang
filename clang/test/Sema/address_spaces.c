@@ -65,3 +65,4 @@ void access_as_field()
     (void) bar.as_field;
 }
 
+typedef int PR4997 __attribute__((address_space(Foobar))); // expected-error {{use of undeclared identifier 'Foobar'}}
