@@ -12,7 +12,7 @@ currentpath=`pwd`
 origpath=$currentpath
 currentdir=`basename $currentpath`
 while [ $currentdir != "test" ]; do
-	if [ $currentdir == "/" ]
+	if [ $currentdir = "/" ]
 	then
 		echo "current directory must be in or under \"test\"."
 		exit 1
