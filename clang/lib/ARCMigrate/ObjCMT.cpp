@@ -211,9 +211,14 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
       if (!SRT->isVoidType())
         continue;
       const ParmVarDecl *argDecl = *SetterMethod->param_begin();
-      // FIXME. Can relax rule for matching getter/setter type further.
-      if (!Ctx.hasSameType(argDecl->getType(), GRT))
-        continue;
+      QualType ArgType = argDecl->getType();
+      if (!Ctx.hasSameType(ArgType, GRT)) {
+        bool Valid =
+          ((GRT->isObjCIdType() && ArgType->isObjCObjectPointerType())
+            || (ArgType->isObjCIdType() && GRT->isObjCObjectPointerType()));
+        if (!Valid)
+          continue;
+      }
       // we have a matching setter/getter pair.
       // TODO. synthesize a suitable property declaration here.
       }
