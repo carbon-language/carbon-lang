@@ -51,6 +51,11 @@ class MCModule {
 
   /// \brief Insert an atom in the module, using its Begin and End addresses.
   void map(MCAtom *NewAtom);
+
+  /// \brief Return an iterator to the first atom that is completely or in part
+  /// located after \p Addr, i.e., that \p Addr is bigger than its end address.
+  AtomListTy::const_iterator atom_lower_bound(uint64_t Addr) const;
+  AtomListTy::      iterator atom_lower_bound(uint64_t Addr);
   /// @}
 
   /// \name Function tracking
