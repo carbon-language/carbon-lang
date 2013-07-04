@@ -47,6 +47,7 @@ public:
   }
 
   ~AArch64Disassembler() {
+    delete RegInfo;
   }
 
   /// See MCDisassembler.
