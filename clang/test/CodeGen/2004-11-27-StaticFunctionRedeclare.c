@@ -1,12 +1,14 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | \
-// RUN:   opt -std-compile-opts -emit-llvm | not grep {declare i32.*func}
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
 // There should not be an unresolved reference to func here.  Believe it or not,
-// the "expected result" is a function named 'func' which is internal and 
+// the "expected result" is a function named 'func' which is internal and
 // referenced by bar().
 
 // This is PR244
 
+// CHECK: define void @bar(
+// CHECK: call {{.*}} @func
+// CHECK: define internal i32 @func(
 static int func();
 void bar() {
   int func();
