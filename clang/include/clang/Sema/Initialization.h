@@ -859,8 +859,8 @@ public:
 
   /// \brief Determine whether the initialization sequence is invalid.
   bool Failed() const { return SequenceKind == FailedSequence; }
-  
-  typedef SmallVector<Step, 4>::const_iterator step_iterator;
+
+  typedef SmallVectorImpl<Step>::const_iterator step_iterator;
   step_iterator step_begin() const { return Steps.begin(); }
   step_iterator step_end()   const { return Steps.end(); }
 
