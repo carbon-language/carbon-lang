@@ -1,4 +1,4 @@
-# RUN:  lld -core %s  2>&1  | FileCheck %s
+# RUN: not lld -core %s  2>&1  | FileCheck %s
 
 #
 # Test that multiple definitions cause an error
