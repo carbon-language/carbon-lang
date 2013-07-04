@@ -105,11 +105,12 @@ public:
   void setNoErrorAsFatal(bool Value) { HasNoErrorAsFatal = Value; }
 };
 
-/// \brief Used for handling and querying diagnostic IDs. Can be used and shared
-/// by multiple Diagnostics for multiple translation units.
+/// \brief Used for handling and querying diagnostic IDs.
+///
+/// Can be used and shared by multiple Diagnostics for multiple translation units.
 class DiagnosticIDs : public RefCountedBase<DiagnosticIDs> {
 public:
-  /// Level The level of the diagnostic, after it has been through mapping.
+  /// \brief The level of the diagnostic, after it has been through mapping.
   enum Level {
     Ignored, Note, Warning, Error, Fatal
   };
@@ -224,8 +225,8 @@ public:
 
   /// \brief Get the set of all diagnostic IDs in the group with the given name.
   ///
-  /// \param Diags [out] - On return, the diagnostics in the group.
-  /// \returns True if the given group is unknown, false otherwise.
+  /// \param[out] Diags - On return, the diagnostics in the group.
+  /// \returns \c true if the given group is unknown, \c false otherwise.
   bool getDiagnosticsInGroup(StringRef Group,
                              SmallVectorImpl<diag::kind> &Diags) const;
 
@@ -239,16 +240,18 @@ public:
 private:
   /// \brief Get the set of all diagnostic IDs in the given group.
   ///
-  /// \param Diags [out] - On return, the diagnostics in the group.
+  /// \param[out] Diags - On return, the diagnostics in the group.
   void getDiagnosticsInGroup(const WarningOption *Group,
                              SmallVectorImpl<diag::kind> &Diags) const;
  
-  /// \brief Based on the way the client configured the DiagnosticsEngine
-  /// object, classify the specified diagnostic ID into a Level, consumable by
+  /// \brief Classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
+  /// 
+  /// The classification is based on the way the client configured the
+  /// DiagnosticsEngine object.
   ///
-  /// \param Loc The source location we are interested in finding out the
-  /// diagnostic state. Can be null in order to query the latest state.
+  /// \param Loc The source location for which we are interested in finding out
+  /// the diagnostic state. Can be null in order to query the latest state.
   DiagnosticIDs::Level getDiagnosticLevel(unsigned DiagID, SourceLocation Loc,
                                           const DiagnosticsEngine &Diag) const;
 
