@@ -37,14 +37,16 @@ int main()
         assert(m.begin()->first == 0);
         assert(m.begin()->second == DefaultOnly());
         assert(DefaultOnly::count == 1);
-        r = m.emplace(1);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple());
         assert(r.second);
         assert(r.first == next(m.begin()));
         assert(m.size() == 2);
         assert(next(m.begin())->first == 1);
         assert(next(m.begin())->second == DefaultOnly());
         assert(DefaultOnly::count == 2);
-        r = m.emplace(1);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple());
         assert(!r.second);
         assert(r.first == next(m.begin()));
         assert(m.size() == 2);
@@ -57,7 +59,8 @@ int main()
         typedef std::map<int, Emplaceable> M;
         typedef std::pair<M::iterator, bool> R;
         M m;
-        R r = m.emplace(2);
+        R r = m.emplace(std::piecewise_construct, std::forward_as_tuple(2),
+                                                  std::forward_as_tuple());
         assert(r.second);
         assert(r.first == m.begin());
         assert(m.size() == 1);
@@ -102,14 +105,16 @@ int main()
         assert(m.begin()->first == 0);
         assert(m.begin()->second == DefaultOnly());
         assert(DefaultOnly::count == 1);
-        r = m.emplace(1);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple());
         assert(r.second);
         assert(r.first == next(m.begin()));
         assert(m.size() == 2);
         assert(next(m.begin())->first == 1);
         assert(next(m.begin())->second == DefaultOnly());
         assert(DefaultOnly::count == 2);
-        r = m.emplace(1);
+        r = m.emplace(std::piecewise_construct, std::forward_as_tuple(1),
+                                                std::forward_as_tuple());
         assert(!r.second);
         assert(r.first == next(m.begin()));
         assert(m.size() == 2);
@@ -122,7 +127,8 @@ int main()
         typedef std::map<int, Emplaceable, std::less<int>, min_allocator<std::pair<const int, Emplaceable>>> M;
         typedef std::pair<M::iterator, bool> R;
         M m;
-        R r = m.emplace(2);
+        R r = m.emplace(std::piecewise_construct, std::forward_as_tuple(2),
+                                                  std::forward_as_tuple());
         assert(r.second);
         assert(r.first == m.begin());
         assert(m.size() == 1);

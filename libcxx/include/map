@@ -1003,26 +1003,14 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node();
     template <class _A0>
-        typename enable_if
-        <
-            is_constructible<value_type, _A0>::value,
-            __node_holder
-        >::type
-         __construct_node(_A0&& __a0);
-    template <class _A0>
-        typename enable_if
-        <
-            is_constructible<key_type, _A0>::value,
-            __node_holder
-        >::type
-         __construct_node(_A0&& __a0);
+        __node_holder __construct_node(_A0&& __a0);
+    __node_holder __construct_node_with_key(key_type&& __k);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class _A1, class ..._Args>
         __node_holder __construct_node(_A0&& __a0, _A1&& __a1, _Args&& ...__args);
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __node_holder __construct_node(const key_type& __k);
 #endif
+    __node_holder __construct_node_with_key(const key_type& __k);
 
     __node_base_pointer&
         __find_equal_key(__node_base_pointer& __parent, const key_type& __k);
@@ -1150,11 +1138,7 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node()
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _A0>
-typename enable_if
-<
-    is_constructible<pair<const _Key, _Tp>, _A0>::value,
-    typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
->::type
+typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
 map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __tree_.__node_alloc();
@@ -1166,21 +1150,16 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
 }
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
-template <class _A0>
-typename enable_if
-<
-    is_constructible<_Key, _A0>::value,
-    typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
->::type
-map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
+typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
+map<_Key, _Tp, _Compare, _Allocator>::__construct_node_with_key(key_type&& __k)
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), _VSTD::forward<_A0>(__a0));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), _VSTD::move(__k));
     __h.get_deleter().__first_constructed = true;
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
-    return __h;
+    return _VSTD::move(__h);
 }
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1202,11 +1181,11 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0, _A1&& __a1, _
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 typename map<_Key, _Tp, _Compare, _Allocator>::__node_holder
-map<_Key, _Tp, _Compare, _Allocator>::__construct_node(const key_type& __k)
+map<_Key, _Tp, _Compare, _Allocator>::__construct_node_with_key(const key_type& __k)
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
@@ -1217,8 +1196,6 @@ map<_Key, _Tp, _Compare, _Allocator>::__construct_node(const key_type& __k)
     return _VSTD::move(__h);
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 _Tp&
 map<_Key, _Tp, _Compare, _Allocator>::operator[](const key_type& __k)
@@ -1228,7 +1205,7 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](const key_type& __k)
     __node_pointer __r = static_cast<__node_pointer>(__child);
     if (__child == nullptr)
     {
-        __node_holder __h = __construct_node(__k);
+        __node_holder __h = __construct_node_with_key(__k);
         __tree_.__insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
     }
@@ -1246,7 +1223,7 @@ map<_Key, _Tp, _Compare, _Allocator>::operator[](key_type&& __k)
     __node_pointer __r = static_cast<__node_pointer>(__child);
     if (__child == nullptr)
     {
-        __node_holder __h = __construct_node(_VSTD::move(__k));
+        __node_holder __h = __construct_node_with_key(_VSTD::move(__k));
         __tree_.__insert_node_at(__parent, __child, static_cast<__node_base_pointer>(__h.get()));
         __r = __h.release();
     }
@@ -1733,18 +1710,7 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node();
     template <class _A0>
-        typename enable_if
-        <
-            is_constructible<value_type, _A0>::value,
-            __node_holder
-        >::type
-         __construct_node(_A0&& __a0);
-    template <class _A0>
-        typename enable_if
-        <
-            is_constructible<key_type, _A0>::value,
-            __node_holder
-        >::type
+        __node_holder
          __construct_node(_A0&& __a0);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class _A1, class ..._Args>
@@ -1783,35 +1749,13 @@ multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node()
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _A0>
-typename enable_if
-<
-    is_constructible<pair<const _Key, _Tp>, _A0>::value,
-    typename multimap<_Key, _Tp, _Compare, _Allocator>::__node_holder
->::type
+typename multimap<_Key, _Tp, _Compare, _Allocator>::__node_holder
 multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __tree_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_), _VSTD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __h.get_deleter().__second_constructed = true;
-    return __h;
-}
-
-template <class _Key, class _Tp, class _Compare, class _Allocator>
-template <class _A0>
-typename enable_if
-<
-    is_constructible<_Key, _A0>::value,
-    typename multimap<_Key, _Tp, _Compare, _Allocator>::__node_holder
->::type
-multimap<_Key, _Tp, _Compare, _Allocator>::__construct_node(_A0&& __a0)
-{
-    __node_allocator& __na = __tree_.__node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), _VSTD::forward<_A0>(__a0));
-    __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }

@@ -30,7 +30,8 @@ int main()
         typedef C::iterator R;
         C c;
         C::const_iterator e = c.end();
-        R r = c.emplace_hint(e, 3);
+        R r = c.emplace_hint(e, std::piecewise_construct, std::forward_as_tuple(3),
+                                                          std::forward_as_tuple());
         assert(c.size() == 1);
         assert(r->first == 3);
         assert(r->second == Emplaceable());
@@ -61,7 +62,8 @@ int main()
         typedef C::iterator R;
         C c;
         C::const_iterator e = c.end();
-        R r = c.emplace_hint(e, 3);
+        R r = c.emplace_hint(e, std::piecewise_construct, std::forward_as_tuple(3),
+                                                          std::forward_as_tuple());
         assert(c.size() == 1);
         assert(r->first == 3);
         assert(r->second == Emplaceable());

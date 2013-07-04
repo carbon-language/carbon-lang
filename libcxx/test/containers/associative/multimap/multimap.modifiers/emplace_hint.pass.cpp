@@ -35,13 +35,17 @@ int main()
         assert(m.begin()->first == 0);
         assert(m.begin()->second == DefaultOnly());
         assert(DefaultOnly::count == 1);
-        r = m.emplace_hint(m.cend(), 1);
+        r = m.emplace_hint(m.cend(), std::piecewise_construct,
+                                       std::forward_as_tuple(1),
+                                       std::forward_as_tuple());
         assert(r == next(m.begin()));
         assert(m.size() == 2);
         assert(next(m.begin())->first == 1);
         assert(next(m.begin())->second == DefaultOnly());
         assert(DefaultOnly::count == 2);
-        r = m.emplace_hint(m.cend(), 1);
+        r = m.emplace_hint(m.cend(), std::piecewise_construct,
+                                       std::forward_as_tuple(1),
+                                       std::forward_as_tuple());
         assert(r == next(m.begin(), 2));
         assert(m.size() == 3);
         assert(next(m.begin(), 2)->first == 1);
@@ -53,7 +57,9 @@ int main()
         typedef std::multimap<int, Emplaceable> M;
         typedef M::iterator R;
         M m;
-        R r = m.emplace_hint(m.cend(), 2);
+        R r = m.emplace_hint(m.cend(), std::piecewise_construct,
+                                       std::forward_as_tuple(2),
+                                       std::forward_as_tuple());
         assert(r == m.begin());
         assert(m.size() == 1);
         assert(m.begin()->first == 2);
@@ -95,13 +101,17 @@ int main()
         assert(m.begin()->first == 0);
         assert(m.begin()->second == DefaultOnly());
         assert(DefaultOnly::count == 1);
-        r = m.emplace_hint(m.cend(), 1);
+        r = m.emplace_hint(m.cend(), std::piecewise_construct,
+                                       std::forward_as_tuple(1),
+                                       std::forward_as_tuple());
         assert(r == next(m.begin()));
         assert(m.size() == 2);
         assert(next(m.begin())->first == 1);
         assert(next(m.begin())->second == DefaultOnly());
         assert(DefaultOnly::count == 2);
-        r = m.emplace_hint(m.cend(), 1);
+        r = m.emplace_hint(m.cend(), std::piecewise_construct,
+                                       std::forward_as_tuple(1),
+                                       std::forward_as_tuple());
         assert(r == next(m.begin(), 2));
         assert(m.size() == 3);
         assert(next(m.begin(), 2)->first == 1);
@@ -113,7 +123,9 @@ int main()
         typedef std::multimap<int, Emplaceable, std::less<int>, min_allocator<std::pair<const int, Emplaceable>>> M;
         typedef M::iterator R;
         M m;
-        R r = m.emplace_hint(m.cend(), 2);
+        R r = m.emplace_hint(m.cend(), std::piecewise_construct,
+                                       std::forward_as_tuple(2),
+                                       std::forward_as_tuple());
         assert(r == m.begin());
         assert(m.size() == 1);
         assert(m.begin()->first == 2);

@@ -917,26 +917,15 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node();
     template <class _A0>
-        typename enable_if
-        <
-            is_constructible<value_type, _A0>::value,
-            __node_holder
-        >::type
+        __node_holder
          __construct_node(_A0&& __a0);
-    template <class _A0>
-        typename enable_if
-        <
-            is_constructible<key_type, _A0>::value,
-            __node_holder
-        >::type
-         __construct_node(_A0&& __a0);
+    __node_holder __construct_node_with_key(key_type&& __k);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class _A1, class ..._Args>
         __node_holder __construct_node(_A0&& __a0, _A1&& __a1, _Args&& ...__args);
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __node_holder __construct_node(const key_type& __k);
-#endif
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    __node_holder __construct_node_with_key(const key_type& __k);
 };
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
@@ -1115,11 +1104,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node()
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0>
-typename enable_if
-<
-    is_constructible<pair<const _Key, _Tp>, _A0>::value,
-    typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
->::type
+typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __table_.__node_alloc();
@@ -1132,22 +1117,16 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
 }
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
-template <class _A0>
-typename enable_if
-<
-    is_constructible<_Key, _A0>::value,
-    typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
->::type
-unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
+typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
+unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node_with_key(key_type&& __k)
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first),
-                             _VSTD::forward<_A0>(__a0));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first), _VSTD::move(__k));
     __h.get_deleter().__first_constructed = true;
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
-    return __h;
+    return _VSTD::move(__h);
 }
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1182,11 +1161,11 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace(_Args&&... __args)
 }
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
-unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(const key_type& __k)
+unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node_with_key(const key_type& __k)
 {
     __node_allocator& __na = __table_.__node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
@@ -1196,8 +1175,6 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(const key_type&
     __h.get_deleter().__second_constructed = true;
     return _VSTD::move(__h);
 }
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _InputIterator>
@@ -1217,7 +1194,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator[](const key_type& __k)
     iterator __i = find(__k);
     if (__i != end())
         return __i->second;
-    __node_holder __h = __construct_node(__k);
+    __node_holder __h = __construct_node_with_key(__k);
     pair<iterator, bool> __r = __table_.__node_insert_unique(__h.get());
     __h.release();
     return __r.first->second;
@@ -1232,7 +1209,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator[](key_type&& __k)
     iterator __i = find(__k);
     if (__i != end())
         return __i->second;
-    __node_holder __h = __construct_node(_VSTD::move(__k));
+    __node_holder __h = __construct_node_with_key(_VSTD::move(__k));
     pair<iterator, bool> __r = __table_.__node_insert_unique(__h.get());
     __h.release();
     return __r.first->second;
@@ -1595,18 +1572,7 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node();
     template <class _A0>
-        typename enable_if
-        <
-            is_constructible<value_type, _A0>::value,
-            __node_holder
-        >::type
-         __construct_node(_A0&& __a0);
-    template <class _A0>
-        typename enable_if
-        <
-            is_constructible<key_type, _A0>::value,
-            __node_holder
-        >::type
+        __node_holder
          __construct_node(_A0&& __a0);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class _A1, class ..._Args>
@@ -1793,11 +1759,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node()
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0>
-typename enable_if
-<
-    is_constructible<pair<const _Key, _Tp>, _A0>::value,
-    typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
->::type
+typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
 {
     __node_allocator& __na = __table_.__node_alloc();
@@ -1805,25 +1767,6 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_),
                              _VSTD::forward<_A0>(__a0));
     __h.get_deleter().__first_constructed = true;
-    __h.get_deleter().__second_constructed = true;
-    return __h;
-}
-
-template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
-template <class _A0>
-typename enable_if
-<
-    is_constructible<_Key, _A0>::value,
-    typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
->::type
-unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
-{
-    __node_allocator& __na = __table_.__node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.first),
-                             _VSTD::forward<_A0>(__a0));
-    __h.get_deleter().__first_constructed = true;
-    __node_traits::construct(__na, _VSTD::addressof(__h->__value_.__cc.second));
     __h.get_deleter().__second_constructed = true;
     return __h;
 }

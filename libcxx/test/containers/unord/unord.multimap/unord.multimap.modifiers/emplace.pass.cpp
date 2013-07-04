@@ -29,7 +29,8 @@ int main()
         typedef std::unordered_multimap<int, Emplaceable> C;
         typedef C::iterator R;
         C c;
-        R r = c.emplace(3);
+        R r = c.emplace(std::piecewise_construct, std::forward_as_tuple(3),
+                                                  std::forward_as_tuple());
         assert(c.size() == 1);
         assert(r->first == 3);
         assert(r->second == Emplaceable());
@@ -51,7 +52,8 @@ int main()
                             min_allocator<std::pair<const int, Emplaceable>>> C;
         typedef C::iterator R;
         C c;
-        R r = c.emplace(3);
+        R r = c.emplace(std::piecewise_construct, std::forward_as_tuple(3),
+                                                  std::forward_as_tuple());
         assert(c.size() == 1);
         assert(r->first == 3);
         assert(r->second == Emplaceable());
