@@ -21,16 +21,16 @@
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/Support/CommandLine.h"
 
 using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
+namespace cl = llvm::cl;
 
-static llvm::cl::opt<bool> DetectMacros(
+static cl::opt<bool> DetectMacros(
     "override-macros",
-    llvm::cl::desc(
-        "Detect and use macros that expand to the 'override' keyword."));
+    cl::desc("Detect and use macros that expand to the 'override' keyword."),
+    cl::cat(TransformsOptionsCategory));
 
 int AddOverrideTransform::apply(FileOverrides &InputStates,
                                 const CompilationDatabase &Database,

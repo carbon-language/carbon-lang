@@ -17,6 +17,8 @@
 
 namespace cl = llvm::cl;
 
+static cl::OptionCategory TransformCategory("Transforms");
+
 Transforms::~Transforms() {
   for (std::vector<Transform*>::iterator I = ChosenTransforms.begin(),
        E = ChosenTransforms.end(); I != E; ++I) {
@@ -32,7 +34,8 @@ void Transforms::registerTransform(llvm::StringRef OptName,
                                    llvm::StringRef Description,
                                    TransformCreator Creator) {
   Options.push_back(OptionVec::value_type(
-      new cl::opt<bool>(OptName.data(), cl::desc(Description.data())),
+      new cl::opt<bool>(OptName.data(), cl::desc(Description.data()),
+                        cl::cat(TransformCategory)),
       Creator));
 }
 

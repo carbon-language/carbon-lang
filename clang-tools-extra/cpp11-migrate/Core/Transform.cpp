@@ -11,6 +11,8 @@
 
 using namespace clang;
 
+llvm::cl::OptionCategory TransformsOptionsCategory("Transforms' options");
+
 namespace {
 
 using namespace tooling;

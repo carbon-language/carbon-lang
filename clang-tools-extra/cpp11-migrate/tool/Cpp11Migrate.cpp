@@ -34,6 +34,22 @@ using namespace clang::tooling;
 
 TransformOptions GlobalOptions;
 
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static cl::extrahelp MoreHelp(
+    "EXAMPLES:\n\n"
+    "Use 'auto' type specifier, no compilation database:\n\n"
+    "  cpp11-migrate -use-auto path/to/file.cpp -- -Ipath/to/include/\n"
+    "\n"
+    "Convert for loops to the new ranged-based for loops on all files in a "
+    "subtree:\n\n"
+    "  find path/in/subtree -name '*.cpp' -exec \\\n"
+    "    cpp11-migrate -p build/path -loop-convert {} ';'\n"
+    "\n"
+    "Make use of both nullptr and the override specifier, using git ls-files:\n"
+    "\n"
+    "  git ls-files '*.cpp' | xargs -I{} cpp11-migrate -p build/path \\\n"
+    "    -use-nullptr -add-override -override-macros {}\n");
+
 static cl::opt<RiskLevel, /*ExternalStorage=*/true> MaxRiskLevel(
     "risk", cl::desc("Select a maximum risk level:"),
     cl::values(clEnumValN(RL_Safe, "safe", "Only safe transformations"),
@@ -131,7 +147,7 @@ int main(int argc, const char **argv) {
   TransformManager.createSelectedTransforms(GlobalOptions);
 
   if (TransformManager.begin() == TransformManager.end()) {
-    llvm::errs() << "No selected transforms\n";
+    llvm::errs() << argv[0] << ": No selected transforms\n";
     return 1;
   }
 

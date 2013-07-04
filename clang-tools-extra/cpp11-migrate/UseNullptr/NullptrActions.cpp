@@ -26,15 +26,17 @@
 using namespace clang::ast_matchers;
 using namespace clang::tooling;
 using namespace clang;
+namespace cl = llvm::cl;
 
 namespace {
 
 const char *NullMacroName = "NULL";
 
-static llvm::cl::opt<std::string> UserNullMacroNames(
-    "user-null-macros", llvm::cl::desc("Comma-separated list of user-defined "
-                                       "macro names that behave like NULL"),
-    llvm::cl::init(""));
+static cl::opt<std::string>
+UserNullMacroNames("user-null-macros",
+                   cl::desc("Comma-separated list of user-defined "
+                            "macro names that behave like NULL"),
+                   cl::cat(TransformsOptionsCategory), cl::init(""));
 
 bool isReplaceableRange(SourceLocation StartLoc, SourceLocation EndLoc,
                         const SourceManager &SM, const Transform &Owner) {

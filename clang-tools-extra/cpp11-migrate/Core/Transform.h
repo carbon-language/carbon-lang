@@ -20,8 +20,9 @@
 #include "Core/IncludeExcludeInfo.h"
 #include "Core/FileOverrides.h"
 #include "clang/Tooling/Refactoring.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Timer.h"
 
 
 /// \brief Description of the riskiness of actions that can be taken by
@@ -50,6 +51,9 @@ class MatchFinder;
 } // namespace clang
 
 class RewriterManager;
+
+/// \brief To group transforms' options together when printing the help.
+extern llvm::cl::OptionCategory TransformsOptionsCategory;
 
 /// \brief Container for global options affecting all transforms.
 struct TransformOptions {
