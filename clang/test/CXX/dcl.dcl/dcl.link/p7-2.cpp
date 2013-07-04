@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -ast-print -o - %s | FileCheck %s
 
-extern "C" void f(void);
-// CHECK: extern "C" void f()
+extern "C" int f(void);
+// CHECK: extern "C" int f()
 
-extern "C" void v;
-// CHECK: extern "C" void v
+extern "C" int v;
+// CHECK: extern "C" int v
