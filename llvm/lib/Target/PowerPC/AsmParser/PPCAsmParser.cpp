@@ -107,6 +107,67 @@ static unsigned CRRegs[8] = {
   PPC::CR4, PPC::CR5, PPC::CR6, PPC::CR7
 };
 
+// Evaluate an expression containing condition register
+// or condition register field symbols.  Returns positive
+// value on success, or -1 on error.
+static int64_t
+EvaluateCRExpr(const MCExpr *E) {
+  switch (E->getKind()) {
+  case MCExpr::Target:
+    return -1;
+
+  case MCExpr::Constant: {
+    int64_t Res = cast<MCConstantExpr>(E)->getValue();
+    return Res < 0 ? -1 : Res;
+  }
+
+  case MCExpr::SymbolRef: {
+    const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
+    StringRef Name = SRE->getSymbol().getName();
+
+    if (Name == "lt") return 0;
+    if (Name == "gt") return 1;
+    if (Name == "eq") return 2;
+    if (Name == "so") return 3;
+    if (Name == "un") return 3;
+
+    if (Name == "cr0") return 0;
+    if (Name == "cr1") return 1;
+    if (Name == "cr2") return 2;
+    if (Name == "cr3") return 3;
+    if (Name == "cr4") return 4;
+    if (Name == "cr5") return 5;
+    if (Name == "cr6") return 6;
+    if (Name == "cr7") return 7;
+
+    return -1;
+  }
+
+  case MCExpr::Unary:
+    return -1;
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(E);
+    int64_t LHSVal = EvaluateCRExpr(BE->getLHS());
+    int64_t RHSVal = EvaluateCRExpr(BE->getRHS());
+    int64_t Res;
+
+    if (LHSVal < 0 || RHSVal < 0)
+      return -1;
+
+    switch (BE->getOpcode()) {
+    default: return -1;
+    case MCBinaryExpr::Add: Res = LHSVal + RHSVal; break;
+    case MCBinaryExpr::Mul: Res = LHSVal * RHSVal; break;
+    }
+
+    return Res < 0 ? -1 : Res;
+  }
+  }
+
+  llvm_unreachable("Invalid expression kind!");
+}
+
 struct PPCOperand;
 
 class PPCAsmParser : public MCTargetAsmParser {
@@ -193,6 +254,7 @@ struct PPCOperand : public MCParsedAsmOperand {
 
   struct ExprOp {
     const MCExpr *Val;
+    int64_t CRVal;     // Cached result of EvaluateCRExpr(Val)
   };
 
   union {
@@ -240,6 +302,11 @@ public:
     return Expr.Val;
   }
 
+  int64_t getExprCRVal() const {
+    assert(Kind == Expression && "Invalid access!");
+    return Expr.CRVal;
+  }
+
   unsigned getReg() const {
     assert(isRegNumber() && "Invalid access!");
     return (unsigned) Imm.Val;
@@ -247,7 +314,12 @@ public:
 
   unsigned getCCReg() const {
     assert(isCCRegNumber() && "Invalid access!");
-    return (unsigned) Imm.Val;
+    return (unsigned) (Kind == Immediate ? Imm.Val : Expr.CRVal);
+  }
+
+  unsigned getCRBit() const {
+    assert(isCRBitNumber() && "Invalid access!");
+    return (unsigned) (Kind == Immediate ? Imm.Val : Expr.CRVal);
   }
 
   unsigned getCRBitMask() const {
@@ -276,8 +348,14 @@ public:
                                  (Kind == Immediate && isInt<16>(getImm()) &&
                                   (getImm() & 3) == 0); }
   bool isRegNumber() const { return Kind == Immediate && isUInt<5>(getImm()); }
-  bool isCCRegNumber() const { return Kind == Immediate &&
-                                      isUInt<3>(getImm()); }
+  bool isCCRegNumber() const { return (Kind == Expression
+                                       && isUInt<3>(getExprCRVal())) ||
+                                      (Kind == Immediate
+                                       && isUInt<3>(getImm())); }
+  bool isCRBitNumber() const { return (Kind == Expression
+                                       && isUInt<5>(getExprCRVal())) ||
+                                      (Kind == Immediate
+                                       && isUInt<5>(getImm())); }
   bool isCRBitMask() const { return Kind == Immediate && isUInt<8>(getImm()) &&
                                     isPowerOf2_32(getImm()); }
   bool isMem() const { return false; }
@@ -338,7 +416,7 @@ public:
 
   void addRegCRBITRCOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateReg(CRBITRegs[getReg()]));
+    Inst.addOperand(MCOperand::CreateReg(CRBITRegs[getCRBit()]));
   }
 
   void addRegCRRCOperands(MCInst &Inst, unsigned N) const {
@@ -397,6 +475,7 @@ public:
                                 SMLoc S, SMLoc E, bool IsPPC64) {
     PPCOperand *Op = new PPCOperand(Expression);
     Op->Expr.Val = Val;
+    Op->Expr.CRVal = EvaluateCRExpr(Val);
     Op->StartLoc = S;
     Op->EndLoc = E;
     Op->IsPPC64 = IsPPC64;

@@ -1,7 +1,105 @@
 
 # RUN: llvm-mc -triple powerpc64-unknown-unknown --show-encoding %s | FileCheck %s
 
-# FIXME: Condition register bit symbols
+# Condition register bit symbols
+
+# CHECK: beqlr 0                         # encoding: [0x4d,0x82,0x00,0x20]
+         beqlr cr0
+# CHECK: beqlr 1                         # encoding: [0x4d,0x86,0x00,0x20]
+         beqlr cr1
+# CHECK: beqlr 2                         # encoding: [0x4d,0x8a,0x00,0x20]
+         beqlr cr2
+# CHECK: beqlr 3                         # encoding: [0x4d,0x8e,0x00,0x20]
+         beqlr cr3
+# CHECK: beqlr 4                         # encoding: [0x4d,0x92,0x00,0x20]
+         beqlr cr4
+# CHECK: beqlr 5                         # encoding: [0x4d,0x96,0x00,0x20]
+         beqlr cr5
+# CHECK: beqlr 6                         # encoding: [0x4d,0x9a,0x00,0x20]
+         beqlr cr6
+# CHECK: beqlr 7                         # encoding: [0x4d,0x9e,0x00,0x20]
+         beqlr cr7
+
+# CHECK: bclr 12, 0, 0                   # encoding: [0x4d,0x80,0x00,0x20]
+         btlr 4*cr0+lt
+# CHECK: bclr 12, 1, 0                   # encoding: [0x4d,0x81,0x00,0x20]
+         btlr 4*cr0+gt
+# CHECK: bclr 12, 2, 0                   # encoding: [0x4d,0x82,0x00,0x20]
+         btlr 4*cr0+eq
+# CHECK: bclr 12, 3, 0                   # encoding: [0x4d,0x83,0x00,0x20]
+         btlr 4*cr0+so
+# CHECK: bclr 12, 3, 0                   # encoding: [0x4d,0x83,0x00,0x20]
+         btlr 4*cr0+un
+# CHECK: bclr 12, 4, 0                   # encoding: [0x4d,0x84,0x00,0x20]
+         btlr 4*cr1+lt
+# CHECK: bclr 12, 5, 0                   # encoding: [0x4d,0x85,0x00,0x20]
+         btlr 4*cr1+gt
+# CHECK: bclr 12, 6, 0                   # encoding: [0x4d,0x86,0x00,0x20]
+         btlr 4*cr1+eq
+# CHECK: bclr 12, 7, 0                   # encoding: [0x4d,0x87,0x00,0x20]
+         btlr 4*cr1+so
+# CHECK: bclr 12, 7, 0                   # encoding: [0x4d,0x87,0x00,0x20]
+         btlr 4*cr1+un
+# CHECK: bclr 12, 8, 0                   # encoding: [0x4d,0x88,0x00,0x20]
+         btlr 4*cr2+lt
+# CHECK: bclr 12, 9, 0                   # encoding: [0x4d,0x89,0x00,0x20]
+         btlr 4*cr2+gt
+# CHECK: bclr 12, 10, 0                  # encoding: [0x4d,0x8a,0x00,0x20]
+         btlr 4*cr2+eq
+# CHECK: bclr 12, 11, 0                  # encoding: [0x4d,0x8b,0x00,0x20]
+         btlr 4*cr2+so
+# CHECK: bclr 12, 11, 0                  # encoding: [0x4d,0x8b,0x00,0x20]
+         btlr 4*cr2+un
+# CHECK: bclr 12, 12, 0                  # encoding: [0x4d,0x8c,0x00,0x20]
+         btlr 4*cr3+lt
+# CHECK: bclr 12, 13, 0                  # encoding: [0x4d,0x8d,0x00,0x20]
+         btlr 4*cr3+gt
+# CHECK: bclr 12, 14, 0                  # encoding: [0x4d,0x8e,0x00,0x20]
+         btlr 4*cr3+eq
+# CHECK: bclr 12, 15, 0                  # encoding: [0x4d,0x8f,0x00,0x20]
+         btlr 4*cr3+so
+# CHECK: bclr 12, 15, 0                  # encoding: [0x4d,0x8f,0x00,0x20]
+         btlr 4*cr3+un
+# CHECK: bclr 12, 16, 0                  # encoding: [0x4d,0x90,0x00,0x20]
+         btlr 4*cr4+lt
+# CHECK: bclr 12, 17, 0                  # encoding: [0x4d,0x91,0x00,0x20]
+         btlr 4*cr4+gt
+# CHECK: bclr 12, 18, 0                  # encoding: [0x4d,0x92,0x00,0x20]
+         btlr 4*cr4+eq
+# CHECK: bclr 12, 19, 0                  # encoding: [0x4d,0x93,0x00,0x20]
+         btlr 4*cr4+so
+# CHECK: bclr 12, 19, 0                  # encoding: [0x4d,0x93,0x00,0x20]
+         btlr 4*cr4+un
+# CHECK: bclr 12, 20, 0                  # encoding: [0x4d,0x94,0x00,0x20]
+         btlr 4*cr5+lt
+# CHECK: bclr 12, 21, 0                  # encoding: [0x4d,0x95,0x00,0x20]
+         btlr 4*cr5+gt
+# CHECK: bclr 12, 22, 0                  # encoding: [0x4d,0x96,0x00,0x20]
+         btlr 4*cr5+eq
+# CHECK: bclr 12, 23, 0                  # encoding: [0x4d,0x97,0x00,0x20]
+         btlr 4*cr5+so
+# CHECK: bclr 12, 23, 0                  # encoding: [0x4d,0x97,0x00,0x20]
+         btlr 4*cr5+un
+# CHECK: bclr 12, 24, 0                  # encoding: [0x4d,0x98,0x00,0x20]
+         btlr 4*cr6+lt
+# CHECK: bclr 12, 25, 0                  # encoding: [0x4d,0x99,0x00,0x20]
+         btlr 4*cr6+gt
+# CHECK: bclr 12, 26, 0                  # encoding: [0x4d,0x9a,0x00,0x20]
+         btlr 4*cr6+eq
+# CHECK: bclr 12, 27, 0                  # encoding: [0x4d,0x9b,0x00,0x20]
+         btlr 4*cr6+so
+# CHECK: bclr 12, 27, 0                  # encoding: [0x4d,0x9b,0x00,0x20]
+         btlr 4*cr6+un
+# CHECK: bclr 12, 28, 0                  # encoding: [0x4d,0x9c,0x00,0x20]
+         btlr 4*cr7+lt
+# CHECK: bclr 12, 29, 0                  # encoding: [0x4d,0x9d,0x00,0x20]
+         btlr 4*cr7+gt
+# CHECK: bclr 12, 30, 0                  # encoding: [0x4d,0x9e,0x00,0x20]
+         btlr 4*cr7+eq
+# CHECK: bclr 12, 31, 0                  # encoding: [0x4d,0x9f,0x00,0x20]
+         btlr 4*cr7+so
+# CHECK: bclr 12, 31, 0                  # encoding: [0x4d,0x9f,0x00,0x20]
+         btlr 4*cr7+un
 
 # Branch mnemonics
 

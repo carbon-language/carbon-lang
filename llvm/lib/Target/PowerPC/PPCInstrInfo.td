@@ -392,7 +392,7 @@ def vrrc : RegisterOperand<VRRC> {
   let ParserMatchClass = PPCRegVRRCAsmOperand;
 }
 def PPCRegCRBITRCAsmOperand : AsmOperandClass {
-  let Name = "RegCRBITRC"; let PredicateMethod = "isRegNumber";
+  let Name = "RegCRBITRC"; let PredicateMethod = "isCRBitNumber";
 }
 def crbitrc : RegisterOperand<CRBITRC> {
   let ParserMatchClass = PPCRegCRBITRCAsmOperand;
