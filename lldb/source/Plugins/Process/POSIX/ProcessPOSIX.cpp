@@ -135,6 +135,8 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
                                            m_target.GetArchitecture(),
                                            exe_module_sp,
                                            executable_search_paths.GetSize() ? &executable_search_paths : NULL);
+    if (!error.Success())
+        return error;
 
     // Fix the target architecture if necessary
     const ArchSpec &module_arch = exe_module_sp->GetArchitecture();
@@ -143,9 +145,6 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
 
     // Initialize the target module list
     m_target.SetExecutableModule (exe_module_sp, true);
-
-    if (!error.Success())
-        return error;
 
     SetSTDIOFileDescriptor(m_monitor->GetTerminalFD());
 
