@@ -203,6 +203,8 @@ def HasVFP3          : Predicate<"Subtarget->hasVFP3()">,
                                  AssemblerPredicate<"FeatureVFP3", "VFP3">;
 def HasVFP4          : Predicate<"Subtarget->hasVFP4()">,
                                  AssemblerPredicate<"FeatureVFP4", "VFP4">;
+def HasV8FP          : Predicate<"Subtarget->hasV8FP()">,
+                                 AssemblerPredicate<"FeatureV8FP", "V8FP">;
 def HasNEON          : Predicate<"Subtarget->hasNEON()">,
                                  AssemblerPredicate<"FeatureNEON", "NEON">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,

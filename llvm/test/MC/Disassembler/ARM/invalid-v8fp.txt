@@ -1,0 +1,10 @@
+# RUN: llvm-mc -disassemble -triple armv7 -show-encoding < %s | FileCheck %s
+
+0xe0 0x3b 0xb2 0xee
+# CHECK-NOT: vcvtt.f64.f16 d3, s1
+
+0x41 0x2b 0xb3 0xee 
+# CHECK-NOT: vcvtb.f16.f64 s4, d1
+
+0x41 0x2b 0xb3 0xbe
+# CHECK-NOT: vcvtblt.f16.f64 s4, d1 
