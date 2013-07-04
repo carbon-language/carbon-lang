@@ -9,6 +9,9 @@
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
 
+// because of the glob (*.c, *.sh)
+// REQUIRES: shell
+
 // RUN: not env FORCE_CLANG_DIAGNOSTICS_CRASH=1 %clang -fsyntax-only -x c /dev/null 2>&1 | FileCheck %s
 
 #pragma clang __debug parser_crash
