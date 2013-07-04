@@ -53,6 +53,6 @@ __attribute__((objc_root_class))
 // CHECK-GC-ONLY: warn-missing-super.m:26:1: warning: method possibly missing a [super finalize] call
 // CHECK-GC-ONLY: 1 warning generated.
 
-// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-arc %s 2>&1 | FileCheck --check-prefix=CHECK-ARC %s
+// RUN: not %clang_cc1 -fsyntax-only -triple x86_64-apple-darwin10 -fobjc-arc %s 2>&1 | FileCheck --check-prefix=CHECK-ARC %s
 // CHECK-ARC: warn-missing-super.m:36:10: error: ARC forbids explicit message send of 'dealloc'
 // CHECK-ARC: 1 error generated.

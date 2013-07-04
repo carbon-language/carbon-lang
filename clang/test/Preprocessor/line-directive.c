@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
-// RUN: %clang_cc1 -E %s 2>&1 | grep 'blonk.c:92:2: error: ABC'
-// RUN: %clang_cc1 -E %s 2>&1 | grep 'blonk.c:93:2: error: DEF'
+// RUN: not %clang_cc1 -E %s 2>&1 | grep 'blonk.c:92:2: error: ABC'
+// RUN: not %clang_cc1 -E %s 2>&1 | grep 'blonk.c:93:2: error: DEF'
 
 #line 'a'            // expected-error {{#line directive requires a positive integer argument}}
 #line 0              // expected-warning {{#line directive with zero argument is a GNU extension}}

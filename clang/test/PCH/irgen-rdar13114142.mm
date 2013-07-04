@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -emit-pch -o %t.pch
-// RUN: %clang_cc1 %s -emit-llvm %s -include-pch %t.pch -o - | FileCheck %s
+// RUN: not %clang_cc1 %s -emit-llvm %s -include-pch %t.pch -o - | FileCheck %s
 
 #ifndef HEADER
 #define HEADER

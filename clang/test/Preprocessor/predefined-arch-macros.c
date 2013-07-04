@@ -10,7 +10,7 @@
 // CHECK_I386_M32: #define __i386__ 1
 // CHECK_I386_M32: #define __tune_i386__ 1
 // CHECK_I386_M32: #define i386 1
-// RUN: %clang -march=i386 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=i386 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_I386_M64
 // CHECK_I386_M64: error:
@@ -24,7 +24,7 @@
 // CHECK_I486_M32: #define __i486__ 1
 // CHECK_I486_M32: #define __tune_i486__ 1
 // CHECK_I486_M32: #define i386 1
-// RUN: %clang -march=i486 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=i486 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_I486_M64
 // CHECK_I486_M64: error:
@@ -41,7 +41,7 @@
 // CHECK_I586_M32: #define __tune_i586__ 1
 // CHECK_I586_M32: #define __tune_pentium__ 1
 // CHECK_I586_M32: #define i386 1
-// RUN: %clang -march=i586 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=i586 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_I586_M64
 // CHECK_I586_M64: error:
@@ -58,7 +58,7 @@
 // CHECK_PENTIUM_M32: #define __tune_i586__ 1
 // CHECK_PENTIUM_M32: #define __tune_pentium__ 1
 // CHECK_PENTIUM_M32: #define i386 1
-// RUN: %clang -march=pentium -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM_M64
 // CHECK_PENTIUM_M64: error:
@@ -78,7 +78,7 @@
 // CHECK_PENTIUM_MMX_M32: #define __tune_pentium__ 1
 // CHECK_PENTIUM_MMX_M32: #define __tune_pentium_mmx__ 1
 // CHECK_PENTIUM_MMX_M32: #define i386 1
-// RUN: %clang -march=pentium-mmx -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium-mmx -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM_MMX_M64
 // CHECK_PENTIUM_MMX_M64: error:
@@ -93,7 +93,7 @@
 // CHECK_WINCHIP_C6_M32: #define __i486__ 1
 // CHECK_WINCHIP_C6_M32: #define __tune_i486__ 1
 // CHECK_WINCHIP_C6_M32: #define i386 1
-// RUN: %clang -march=winchip-c6 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=winchip-c6 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_WINCHIP_C6_M64
 // CHECK_WINCHIP_C6_M64: error:
@@ -109,7 +109,7 @@
 // CHECK_WINCHIP2_M32: #define __i486__ 1
 // CHECK_WINCHIP2_M32: #define __tune_i486__ 1
 // CHECK_WINCHIP2_M32: #define i386 1
-// RUN: %clang -march=winchip2 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=winchip2 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_WINCHIP2_M64
 // CHECK_WINCHIP2_M64: error:
@@ -125,7 +125,7 @@
 // CHECK_C3_M32: #define __i486__ 1
 // CHECK_C3_M32: #define __tune_i486__ 1
 // CHECK_C3_M32: #define i386 1
-// RUN: %clang -march=c3 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=c3 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_C3_M64
 // CHECK_C3_M64: error:
@@ -145,7 +145,7 @@
 // CHECK_C3_2_M32: #define __tune_pentium2__ 1
 // CHECK_C3_2_M32: #define __tune_pentiumpro__ 1
 // CHECK_C3_2_M32: #define i386 1
-// RUN: %clang -march=c3-2 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=c3-2 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_C3_2_M64
 // CHECK_C3_2_M64: error:
@@ -160,7 +160,7 @@
 // CHECK_I686_M32: #define __pentiumpro 1
 // CHECK_I686_M32: #define __pentiumpro__ 1
 // CHECK_I686_M32: #define i386 1
-// RUN: %clang -march=i686 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=i686 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_I686_M64
 // CHECK_I686_M64: error:
@@ -177,7 +177,7 @@
 // CHECK_PENTIUMPRO_M32: #define __tune_i686__ 1
 // CHECK_PENTIUMPRO_M32: #define __tune_pentiumpro__ 1
 // CHECK_PENTIUMPRO_M32: #define i386 1
-// RUN: %clang -march=pentiumpro -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentiumpro -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUMPRO_M64
 // CHECK_PENTIUMPRO_M64: error:
@@ -196,7 +196,7 @@
 // CHECK_PENTIUM2_M32: #define __tune_pentium2__ 1
 // CHECK_PENTIUM2_M32: #define __tune_pentiumpro__ 1
 // CHECK_PENTIUM2_M32: #define i386 1
-// RUN: %clang -march=pentium2 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium2 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM2_M64
 // CHECK_PENTIUM2_M64: error:
@@ -217,7 +217,7 @@
 // CHECK_PENTIUM3_M32: #define __tune_pentium3__ 1
 // CHECK_PENTIUM3_M32: #define __tune_pentiumpro__ 1
 // CHECK_PENTIUM3_M32: #define i386 1
-// RUN: %clang -march=pentium3 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium3 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM3_M64
 // CHECK_PENTIUM3_M64: error:
@@ -236,7 +236,7 @@
 // CHECK_PENTIUM3M_M32: #define __tune_i686__ 1
 // CHECK_PENTIUM3M_M32: #define __tune_pentiumpro__ 1
 // CHECK_PENTIUM3M_M32: #define i386 1
-// RUN: %clang -march=pentium3m -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium3m -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM3M_M64
 // CHECK_PENTIUM3M_M64: error:
@@ -256,7 +256,7 @@
 // CHECK_PENTIUM_M_M32: #define __tune_i686__ 1
 // CHECK_PENTIUM_M_M32: #define __tune_pentiumpro__ 1
 // CHECK_PENTIUM_M_M32: #define i386 1
-// RUN: %clang -march=pentium-m -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium-m -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM_M_M64
 // CHECK_PENTIUM_M_M64: error:
@@ -273,7 +273,7 @@
 // CHECK_PENTIUM4_M32: #define __pentium4__ 1
 // CHECK_PENTIUM4_M32: #define __tune_pentium4__ 1
 // CHECK_PENTIUM4_M32: #define i386 1
-// RUN: %clang -march=pentium4 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium4 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM4_M64
 // CHECK_PENTIUM4_M64: error:
@@ -290,7 +290,7 @@
 // CHECK_PENTIUM4M_M32: #define __pentium4__ 1
 // CHECK_PENTIUM4M_M32: #define __tune_pentium4__ 1
 // CHECK_PENTIUM4M_M32: #define i386 1
-// RUN: %clang -march=pentium4m -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=pentium4m -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PENTIUM4M_M64
 // CHECK_PENTIUM4M_M64: error:
@@ -308,7 +308,7 @@
 // CHECK_PRESCOTT_M32: #define __nocona__ 1
 // CHECK_PRESCOTT_M32: #define __tune_nocona__ 1
 // CHECK_PRESCOTT_M32: #define i386 1
-// RUN: %clang -march=prescott -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=prescott -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_PRESCOTT_M64
 // CHECK_PRESCOTT_M64: error:
@@ -607,7 +607,7 @@
 // CHECK_GEODE_M32: #define __i386__ 1
 // CHECK_GEODE_M32: #define __tune_geode__ 1
 // CHECK_GEODE_M32: #define i386 1
-// RUN: %clang -march=geode -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=geode -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_GEODE_M64
 // CHECK_GEODE_M64: error:
@@ -622,7 +622,7 @@
 // CHECK_K6_M32: #define __k6__ 1
 // CHECK_K6_M32: #define __tune_k6__ 1
 // CHECK_K6_M32: #define i386 1
-// RUN: %clang -march=k6 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=k6 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K6_M64
 // CHECK_K6_M64: error:
@@ -640,7 +640,7 @@
 // CHECK_K6_2_M32: #define __tune_k6_2__ 1
 // CHECK_K6_2_M32: #define __tune_k6__ 1
 // CHECK_K6_2_M32: #define i386 1
-// RUN: %clang -march=k6-2 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=k6-2 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K6_2_M64
 // CHECK_K6_2_M64: error:
@@ -658,7 +658,7 @@
 // CHECK_K6_3_M32: #define __tune_k6_3__ 1
 // CHECK_K6_3_M32: #define __tune_k6__ 1
 // CHECK_K6_3_M32: #define i386 1
-// RUN: %clang -march=k6-3 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=k6-3 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_K6_3_M64
 // CHECK_K6_3_M64: error:
@@ -675,7 +675,7 @@
 // CHECK_ATHLON_M32: #define __i386__ 1
 // CHECK_ATHLON_M32: #define __tune_athlon__ 1
 // CHECK_ATHLON_M32: #define i386 1
-// RUN: %clang -march=athlon -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=athlon -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_M64
 // CHECK_ATHLON_M64: error:
@@ -692,7 +692,7 @@
 // CHECK_ATHLON_TBIRD_M32: #define __i386__ 1
 // CHECK_ATHLON_TBIRD_M32: #define __tune_athlon__ 1
 // CHECK_ATHLON_TBIRD_M32: #define i386 1
-// RUN: %clang -march=athlon-tbird -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=athlon-tbird -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_TBIRD_M64
 // CHECK_ATHLON_TBIRD_M64: error:
@@ -712,7 +712,7 @@
 // CHECK_ATHLON_4_M32: #define __tune_athlon__ 1
 // CHECK_ATHLON_4_M32: #define __tune_athlon_sse__ 1
 // CHECK_ATHLON_4_M32: #define i386 1
-// RUN: %clang -march=athlon-4 -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=athlon-4 -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_4_M64
 // CHECK_ATHLON_4_M64: error:
@@ -732,7 +732,7 @@
 // CHECK_ATHLON_XP_M32: #define __tune_athlon__ 1
 // CHECK_ATHLON_XP_M32: #define __tune_athlon_sse__ 1
 // CHECK_ATHLON_XP_M32: #define i386 1
-// RUN: %clang -march=athlon-xp -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=athlon-xp -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_XP_M64
 // CHECK_ATHLON_XP_M64: error:
@@ -752,7 +752,7 @@
 // CHECK_ATHLON_MP_M32: #define __tune_athlon__ 1
 // CHECK_ATHLON_MP_M32: #define __tune_athlon_sse__ 1
 // CHECK_ATHLON_MP_M32: #define i386 1
-// RUN: %clang -march=athlon-mp -m64 -E -dM %s -o - 2>&1 \
+// RUN: not %clang -march=athlon-mp -m64 -E -dM %s -o - 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:   | FileCheck %s -check-prefix=CHECK_ATHLON_MP_M64
 // CHECK_ATHLON_MP_M64: error:

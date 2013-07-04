@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-pch -o %t.1.ast %S/Inputs/enum1.c
 // RUN: %clang_cc1 -emit-pch -o %t.2.ast %S/Inputs/enum2.c
-// RUN: %clang_cc1 -ast-merge %t.1.ast -ast-merge %t.2.ast -fsyntax-only %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -ast-merge %t.1.ast -ast-merge %t.2.ast -fsyntax-only %s 2>&1 | FileCheck %s
 
 // CHECK: enum1.c:9:6: warning: type 'enum E2' has incompatible definitions in different translation units
 // CHECK: enum1.c:11:3: note: enumerator 'E2Enumerator2' with value 3 here

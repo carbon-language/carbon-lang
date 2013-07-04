@@ -2,7 +2,7 @@
 // RUN: cp %s %t
 // RUN: not %clang_cc1 -x c++ -std=c++11 -fixit %t
 // RUN: %clang_cc1 -Wall -pedantic -x c++ -std=c++11 %t
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 
 namespace ClassSpecifier {
   class [[]] [[]]

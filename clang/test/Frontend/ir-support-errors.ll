@@ -1,4 +1,4 @@
-; RUN: %clang_cc1 -S -o - %s 2>&1 | FileCheck %s
+; RUN: not %clang_cc1 -S -o - %s 2>&1 | FileCheck %s
 
 target triple = "x86_64-apple-darwin10"
 

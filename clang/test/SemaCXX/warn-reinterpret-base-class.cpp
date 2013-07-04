@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s
-// RUN: %clang_cc1 -std=c++11 -fsyntax-only -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -std=c++11 -fsyntax-only -fdiagnostics-parseable-fixits -Wreinterpret-base-class -Wno-unused-volatile-lvalue %s 2>&1 | FileCheck %s
 
 // PR 13824
 class A {

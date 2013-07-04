@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -include-pch %S/Inputs/badpch-empty.h.gch %s 2>&1 | FileCheck -check-prefix=CHECK-EMPTY %s
-// RUN: %clang_cc1 -fsyntax-only -include-pch %S/Inputs/badpch-dir.h.gch %s 2>&1 | FileCheck -check-prefix=CHECK-DIR %s
+// RUN: not %clang_cc1 -fsyntax-only -include-pch %S/Inputs/badpch-empty.h.gch %s 2>&1 | FileCheck -check-prefix=CHECK-EMPTY %s
+// RUN: not %clang_cc1 -fsyntax-only -include-pch %S/Inputs/badpch-dir.h.gch %s 2>&1 | FileCheck -check-prefix=CHECK-DIR %s
 
 // The purpose of this test is to verify that various invalid PCH files are
 // reported as such.

@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules-cache-path=%t -fmodules -F %S/Inputs -DgetModuleVersion="epic fail" %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fmodules-cache-path=%t -fmodules -F %S/Inputs -DgetModuleVersion="epic fail" %s 2>&1 | FileCheck %s
 
 @import DependsOnModule;
 
@@ -11,7 +11,7 @@
 // CHECK: fatal error: could not build module 'DependsOnModule'
 // CHECK-NOT: error:
 
-// RUN: %clang_cc1 -fmodules-cache-path=%t -fmodules -F %S/Inputs %s -fdiagnostics-show-note-include-stack 2>&1 | FileCheck -check-prefix=CHECK-REDEF %s
+// RUN: not %clang_cc1 -fmodules-cache-path=%t -fmodules -F %S/Inputs %s -fdiagnostics-show-note-include-stack 2>&1 | FileCheck -check-prefix=CHECK-REDEF %s
 extern int Module;
 
 // CHECK-REDEF: In module 'DependsOnModule' imported from

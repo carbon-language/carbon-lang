@@ -2,7 +2,7 @@
 // diagnostics are generated in relation to the mis-use and non-use of the
 // 'expected-no-diagnostics' directive.
 
-// RUN: %clang_cc1 -DTEST1 -verify %s 2>&1 | FileCheck -check-prefix=CHECK1 %s
+// RUN: not %clang_cc1 -DTEST1 -verify %s 2>&1 | FileCheck -check-prefix=CHECK1 %s
 #ifdef TEST1
 // expected-no-diagnostics
 // expected-note {{}}
@@ -12,7 +12,7 @@
 // CHECK1-NEXT: 1 error generated.
 #endif
 
-// RUN: %clang_cc1 -DTEST2 -verify %s 2>&1 | FileCheck -check-prefix=CHECK2 %s
+// RUN: not %clang_cc1 -DTEST2 -verify %s 2>&1 | FileCheck -check-prefix=CHECK2 %s
 #ifdef TEST2
 #warning X
 // expected-warning@-1 {{X}}
@@ -23,8 +23,8 @@
 // CHECK2-NEXT: 1 error generated.
 #endif
 
-// RUN: %clang_cc1 -DTEST3 -verify %s 2>&1 | FileCheck -check-prefix=CHECK3 %s
-// RUN: %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK3 %s
+// RUN: not %clang_cc1 -DTEST3 -verify %s 2>&1 | FileCheck -check-prefix=CHECK3 %s
+// RUN: not %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK3 %s
 #ifdef TEST3
 // no directives
 

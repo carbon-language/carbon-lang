@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wfatal-errors -verify %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -Wfatal-errors -verify %s 2>&1 | FileCheck %s
 
 #error first fatal
 // expected-error@-1 {{first fatal}}

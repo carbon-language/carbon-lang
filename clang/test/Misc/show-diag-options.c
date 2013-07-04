@@ -2,7 +2,7 @@
 // RUN:   | FileCheck %s -check-prefix=BASE
 // RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-option %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=OPTION
-// RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-option -Werror %s 2>&1 \
+// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-show-option -Werror %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=OPTION_ERROR
 // RUN: %clang_cc1 -fsyntax-only -std=c89 -pedantic -fdiagnostics-show-option %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=OPTION_PEDANTIC
@@ -10,7 +10,7 @@
 // RUN:   | FileCheck %s -check-prefix=CATEGORY_ID
 // RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-category name %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=CATEGORY_NAME
-// RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-option -fdiagnostics-show-category name -Werror %s 2>&1 \
+// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-show-option -fdiagnostics-show-category name -Werror %s 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=OPTION_ERROR_CATEGORY
 
 void test(int x, int y) {

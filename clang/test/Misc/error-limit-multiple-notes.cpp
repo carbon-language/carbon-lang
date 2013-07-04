@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ferror-limit 1 -fsyntax-only %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -ferror-limit 1 -fsyntax-only %s 2>&1 | FileCheck %s
 
 // error and three notes emitted
 void foo(int);

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fshow-overloads=best -fno-caret-diagnostics %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fsyntax-only -fshow-overloads=best -fno-caret-diagnostics %s 2>&1 | FileCheck %s
 struct S {
   S(void*);
   S(char*);

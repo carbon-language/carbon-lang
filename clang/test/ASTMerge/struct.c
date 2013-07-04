@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-pch -o %t.1.ast %S/Inputs/struct1.c
 // RUN: %clang_cc1 -emit-pch -o %t.2.ast %S/Inputs/struct2.c
-// RUN: %clang_cc1 -ast-merge %t.1.ast -ast-merge %t.2.ast -fsyntax-only %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -ast-merge %t.1.ast -ast-merge %t.2.ast -fsyntax-only %s 2>&1 | FileCheck %s
 
 // CHECK: struct1.c:13:8: warning: type 'struct S1' has incompatible definitions in different translation units
 // CHECK: struct1.c:15:7: note: field 'field2' has type 'int' here

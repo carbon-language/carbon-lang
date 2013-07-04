@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-pch -o %t.1.ast %S/Inputs/var1.c
 // RUN: %clang_cc1 -emit-pch -o %t.2.ast %S/Inputs/var2.c
-// RUN: %clang_cc1 -ast-merge %t.1.ast -ast-merge %t.2.ast -fsyntax-only -fdiagnostics-show-note-include-stack %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -ast-merge %t.1.ast -ast-merge %t.2.ast -fsyntax-only -fdiagnostics-show-note-include-stack %s 2>&1 | FileCheck %s
 
 // CHECK: var2.c:2:9: error: external variable 'x1' declared with incompatible types in different translation units ('double *' vs. 'float **')
 // CHECK: var1.c:2:9: note: declared here with type 'float **'

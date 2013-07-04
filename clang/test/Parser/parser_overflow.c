@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 %s -fsyntax-only -DHUGE 2>&1 | FileCheck %s
-// RUN: %clang_cc1 %s -fsyntax-only 2>&1 | FileCheck %s
-// RUN: %clang_cc1 %s -fsyntax-only -fbracket-depth 299 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 %s -fsyntax-only -DHUGE 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 %s -fsyntax-only 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 %s -fsyntax-only -fbracket-depth 299 2>&1 | FileCheck %s
 // RUN: %clang_cc1 %s -fsyntax-only -fbracket-depth 300
-// RUN: %clang %s -fsyntax-only -fbracket-depth=299 2>&1 | FileCheck %s
+// RUN: not %clang %s -fsyntax-only -fbracket-depth=299 2>&1 | FileCheck %s
 // RUN: %clang %s -fsyntax-only -fbracket-depth=300
 
 void foo(void) {

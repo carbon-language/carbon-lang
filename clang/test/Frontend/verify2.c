@@ -1,5 +1,5 @@
 #if 0
-// RUN: %clang_cc1 -verify %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -verify %s 2>&1 | FileCheck %s
 
 // Please note that all comments are inside "#if 0" blocks so that
 // VerifyDiagnosticConsumer sees no comments while processing this

@@ -1,6 +1,6 @@
 //RUN: %clang_cc1 %s -emit-llvm -o - -triple=i686-unknown-linux | FileCheck --check-prefix=CHECKGEN %s
 //RUN: %clang_cc1 %s -emit-llvm -o - -triple=thumbv7-apple-ios3.0 -target-abi apcs-gnu | FileCheck --check-prefix=CHECKARM %s
-//RUN: %clang_cc1 %s -emit-llvm -o - -DPR12784_WORKAROUND -triple=x86_64-pc-win32 -cxx-abi microsoft | FileCheck --check-prefix=CHECKMS %s
+//RUN: not %clang_cc1 %s -emit-llvm -o - -DPR12784_WORKAROUND -triple=x86_64-pc-win32 -cxx-abi microsoft | FileCheck --check-prefix=CHECKMS %s
 
 // FIXME: Add checks to ensure that Microsoft destructors do not return 'this'
 // once PR12784 is resolved

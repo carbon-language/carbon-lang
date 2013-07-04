@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -fcolor-diagnostics %s 2>&1 | FileCheck %s
-// RUN: %clang_cc1 -fsyntax-only -fcolor-diagnostics -fdiagnostics-show-template-tree %s 2>&1 | FileCheck %s -check-prefix=TREE
+// RUN: not %clang_cc1 -fsyntax-only -fcolor-diagnostics %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fsyntax-only -fcolor-diagnostics -fdiagnostics-show-template-tree %s 2>&1 | FileCheck %s -check-prefix=TREE
 // REQUIRES: ansi-escape-sequences
 template<typename> struct foo {};
 void func(foo<int>);

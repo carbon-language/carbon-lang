@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -D__TIME__=1234 -U__DATE__ -E 2>&1 | FileCheck %s --check-prefix=CHECK-OUT
 // RUN: %clang_cc1 %s -D__TIME__=1234 -U__DATE__ -E 2>&1 | FileCheck %s --check-prefix=CHECK-WARN
-// RUN: %clang_cc1 %s -D__TIME__=1234 -U__DATE__ -E 2>&1 -pedantic-errors | FileCheck %s --check-prefix=CHECK-ERR
+// RUN: not %clang_cc1 %s -D__TIME__=1234 -U__DATE__ -E 2>&1 -pedantic-errors | FileCheck %s --check-prefix=CHECK-ERR
 
 // CHECK-WARN: <command line>:{{.*}} warning: redefining builtin macro
 // CHECK-WARN: <command line>:{{.*}} warning: undefining builtin macro

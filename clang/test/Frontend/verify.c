@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -DTEST1 -verify %s
-// RUN: %clang_cc1 -DTEST2 -verify %s 2>&1 | FileCheck -check-prefix=CHECK2 %s
-// RUN: %clang_cc1 -DTEST3 -verify %s 2>&1 | FileCheck -check-prefix=CHECK3 %s
-// RUN: %clang_cc1 -DTEST4 -verify %s 2>&1 | FileCheck -check-prefix=CHECK4 %s
-// RUN: %clang_cc1 -DTEST5 -verify %s 2>&1 | FileCheck -check-prefix=CHECK5 %s
+// RUN: not %clang_cc1 -DTEST2 -verify %s 2>&1 | FileCheck -check-prefix=CHECK2 %s
+// RUN: not %clang_cc1 -DTEST3 -verify %s 2>&1 | FileCheck -check-prefix=CHECK3 %s
+// RUN: not %clang_cc1 -DTEST4 -verify %s 2>&1 | FileCheck -check-prefix=CHECK4 %s
+// RUN: not %clang_cc1 -DTEST5 -verify %s 2>&1 | FileCheck -check-prefix=CHECK5 %s
 
 // expected-warning@ malformed
 // expected-error@7 1 {{missing or invalid line number}}
@@ -109,14 +109,14 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 #endif
 
 #if 0
-// RUN: %clang_cc1 -verify %t.invalid 2>&1 | FileCheck -check-prefix=CHECK6 %s
+// RUN: not %clang_cc1 -verify %t.invalid 2>&1 | FileCheck -check-prefix=CHECK6 %s
 
 //      CHECK6: error: no expected directives found: consider use of 'expected-no-diagnostics'
 // CHECK6-NEXT: error: 'error' diagnostics seen but not expected:
 // CHECK6-NEXT:   (frontend): error reading '{{.*}}verify.c.tmp.invalid'
 // CHECK6-NEXT: 2 errors generated.
 
-// RUN: echo -e '//expected-error@2{{1}}\n#error 2' | %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK7 %s
+// RUN: echo -e '//expected-error@2{{1}}\n#error 2' | not %clang_cc1 -verify 2>&1 | FileCheck -check-prefix=CHECK7 %s
 
 //      CHECK7: error: 'error' diagnostics expected but not seen:
 // CHECK7-NEXT:   Line 2 (directive at <stdin>:1): 1
@@ -126,7 +126,7 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 #endif
 
 #ifdef TEST8
-// RUN: %clang_cc1 -DTEST8 -verify %s 2>&1 | FileCheck -check-prefix=CHECK8 %s
+// RUN: not %clang_cc1 -DTEST8 -verify %s 2>&1 | FileCheck -check-prefix=CHECK8 %s
 
 // expected-warning@nonexistant-file:1 {{ }}
 // expected-error@-1 {{file 'nonexistant-file' could not be located}}

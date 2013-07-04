@@ -22,7 +22,7 @@ static void achor() {};
 // CHECK-unused: 1 warning generated
 
 // RUN: %clang_cc1 -fblocks -fsyntax-only -Weverything %s 2>&1 | FileCheck -check-prefix=CHECK-everything %s
-// RUN: %clang_cc1 -fblocks -fsyntax-only -Weverything -Werror %s 2>&1 | FileCheck -check-prefix=CHECK-everything-error %s
+// RUN: not %clang_cc1 -fblocks -fsyntax-only -Weverything -Werror %s 2>&1 | FileCheck -check-prefix=CHECK-everything-error %s
 // RUN: %clang_cc1 -fblocks -fsyntax-only -Weverything -Wno-unused %s 2>&1 | FileCheck -check-prefix=CHECK-everything-no-unused %s
 // CHECK-everything: 6 warnings generated
 // CHECK-everything-error: 5 errors generated

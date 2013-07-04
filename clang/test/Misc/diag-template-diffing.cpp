@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only %s -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-ELIDE-NOTREE
-// RUN: %clang_cc1 -fsyntax-only %s -fno-elide-type -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-NOELIDE-NOTREE
-// RUN: %clang_cc1 -fsyntax-only %s -fdiagnostics-show-template-tree -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-ELIDE-TREE
-// RUN: %clang_cc1 -fsyntax-only %s -fno-elide-type -fdiagnostics-show-template-tree -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-NOELIDE-TREE
+// RUN: not %clang_cc1 -fsyntax-only %s -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-ELIDE-NOTREE
+// RUN: not %clang_cc1 -fsyntax-only %s -fno-elide-type -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-NOELIDE-NOTREE
+// RUN: not %clang_cc1 -fsyntax-only %s -fdiagnostics-show-template-tree -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-ELIDE-TREE
+// RUN: not %clang_cc1 -fsyntax-only %s -fno-elide-type -fdiagnostics-show-template-tree -std=c++11 2>&1 | FileCheck %s -check-prefix=CHECK-NOELIDE-TREE
 
 // PR9548 - "no known conversion from 'vector<string>' to 'vector<string>'"
 // vector<string> refers to two different types here.  Make sure the message

@@ -8,7 +8,7 @@
 
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -x objective-c++ -fmodules-cache-path=%t -fdisable-module-hash -emit-module -fmodule-name=load_failure %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -fdisable-module-hash %s -DNONEXISTENT 2>&1 | FileCheck -check-prefix=CHECK-NONEXISTENT %s
+// RUN: not %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -fdisable-module-hash %s -DNONEXISTENT 2>&1 | FileCheck -check-prefix=CHECK-NONEXISTENT %s
 // CHECK-NONEXISTENT: load_failure.c:2:9: fatal error: module 'load_nonexistent' not found
 
 // RUN: not %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -fdisable-module-hash %s -DFAILURE 2> %t.out

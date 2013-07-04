@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -fsyntax-only -std=c99 -pedantic -verify -Wundef
 // RUN: %clang_cc1 %s -fsyntax-only -x c++ -pedantic -verify -Wundef
-// RUN: %clang_cc1 %s -fsyntax-only -std=c99 -pedantic -Wundef 2>&1 | FileCheck -strict-whitespace %s
+// RUN: not %clang_cc1 %s -fsyntax-only -std=c99 -pedantic -Wundef 2>&1 | FileCheck -strict-whitespace %s
 
 #define \u00FC
 #define a\u00FD() 0

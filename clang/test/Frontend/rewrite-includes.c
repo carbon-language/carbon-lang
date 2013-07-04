@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -verify -E -frewrite-includes -DFIRST -I %S/Inputs %s -o - | FileCheck -strict-whitespace %s
-// RUN: %clang_cc1 -verify -E -frewrite-includes -P -DFIRST -I %S/Inputs %s -o - | FileCheck -check-prefix=CHECKNL -strict-whitespace %s
+// RUN: not %clang_cc1 -verify -E -frewrite-includes -DFIRST -I %S/Inputs %s -o - | FileCheck -strict-whitespace %s
+// RUN: not %clang_cc1 -verify -E -frewrite-includes -P -DFIRST -I %S/Inputs %s -o - | FileCheck -check-prefix=CHECKNL -strict-whitespace %s
 // STARTCOMPARE
 #define A(a,b) a ## b
 A(1,2)

@@ -1,8 +1,8 @@
-// RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACK
-// RUN: %clang_cc1 -fsyntax-only -fno-diagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACKLESS
-// RUN: %clang_cc1 -fsyntax-only -fno-diagnostics-show-note-include-stack -fdiagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACK
-// RUN: %clang_cc1 -fsyntax-only -fdiagnostics-show-note-include-stack -fno-diagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACKLESS
-// RUN: %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck %s -check-prefix=STACKLESS
+// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACK
+// RUN: not %clang_cc1 -fsyntax-only -fno-diagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACKLESS
+// RUN: not %clang_cc1 -fsyntax-only -fno-diagnostics-show-note-include-stack -fdiagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACK
+// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-show-note-include-stack -fno-diagnostics-show-note-include-stack %s 2>&1 | FileCheck %s -check-prefix=STACKLESS
+// RUN: not %clang_cc1 -fsyntax-only %s 2>&1 | FileCheck %s -check-prefix=STACKLESS
 
 #include "Inputs/include.h"
 int test() {

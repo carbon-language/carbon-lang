@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -F %S/Inputs %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -F %S/Inputs %s 2>&1 | FileCheck %s
 // FIXME: When we have a syntax for modules in C, use that.
 @import MutuallyRecursive1;
 

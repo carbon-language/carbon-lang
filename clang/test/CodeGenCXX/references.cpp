@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin -verify -emit-llvm -o - %s | FileCheck %s
+// RUN: not %clang_cc1 -triple x86_64-apple-darwin -verify -emit-llvm -o - %s | FileCheck %s
 void t1() {
   // CHECK: define void @_Z2t1v
   // CHECK: [[REFLOAD:%.*]] = load i32** @a, align 8

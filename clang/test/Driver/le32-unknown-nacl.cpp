@@ -1,4 +1,4 @@
-// RUN: %clang -target le32-unknown-nacl -ccc-echo %s -emit-llvm-only -c 2>&1 | FileCheck %s -check-prefix=ECHO
+// RUN: not %clang -target le32-unknown-nacl -ccc-echo %s -emit-llvm-only -c 2>&1 | FileCheck %s -check-prefix=ECHO
 // RUN: %clang -target le32-unknown-nacl %s -emit-llvm -S -c -o - | FileCheck %s
 // RUN: %clang -target le32-unknown-nacl %s -emit-llvm -S -c -pthread -o - | FileCheck %s -check-prefix=THREADS
 

@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-linux | FileCheck -check-prefix LINUX %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -cxx-abi microsoft | FileCheck -check-prefix WIN32 %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-pc-win32 -cxx-abi microsoft | FileCheck -check-prefix WIN64 %s
+// RUN: not %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -cxx-abi microsoft | FileCheck -check-prefix WIN32 %s
+// RUN: not %clang_cc1 -emit-llvm %s -o - -triple=x86_64-pc-win32 -cxx-abi microsoft | FileCheck -check-prefix WIN64 %s
 
 struct Empty {};
 

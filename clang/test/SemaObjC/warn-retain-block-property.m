@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -Wno-objc-root-class %s 2>&1 | FileCheck --check-prefix=CHECK-ARC %s
+// RUN: not %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -Wno-objc-root-class %s 2>&1 | FileCheck --check-prefix=CHECK-ARC %s
 // rdar://9829425
 
-// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-objc-root-class %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fsyntax-only -fblocks -Wno-objc-root-class %s 2>&1 | FileCheck %s
 // rdar://11761511
 
 extern void doSomething();
