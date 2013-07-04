@@ -343,6 +343,7 @@ enum StatType {
   StatInt_wcstombs,
   StatInt_wcsrtombs,
   StatInt_wcsnrtombs,
+  StatInt_tcgetattr,
 
   // Dynamic annotations.
   StatAnnotation,

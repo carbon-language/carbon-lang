@@ -348,6 +348,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_wcstombs]                 = "  wcstombs                        ";
   name[StatInt_wcsrtombs]                = "  wcsrtombs                       ";
   name[StatInt_wcsnrtombs]               = "  wcsnrtombs                      ";
+  name[StatInt_tcgetattr]                = "  tcgetattr                       ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

@@ -1495,7 +1495,6 @@ INTERCEPTOR(SIZE_T, mbsrtowcs, wchar_t *dest, const char **src, SIZE_T len,
 #endif
 
 #if SANITIZER_INTERCEPT_MBSNRTOWCS
-
 INTERCEPTOR(SIZE_T, mbsnrtowcs, wchar_t *dest, const char **src, SIZE_T nms,
             SIZE_T len, void *ps) {
   void *ctx;
@@ -1546,7 +1545,6 @@ INTERCEPTOR(SIZE_T, wcsrtombs, char *dest, const wchar_t **src, SIZE_T len,
 #endif
 
 #if SANITIZER_INTERCEPT_WCSNRTOMBS
-
 INTERCEPTOR(SIZE_T, wcsnrtombs, char *dest, const wchar_t **src, SIZE_T nms,
             SIZE_T len, void *ps) {
   void *ctx;
@@ -1564,6 +1562,22 @@ INTERCEPTOR(SIZE_T, wcsnrtombs, char *dest, const wchar_t **src, SIZE_T nms,
 #define INIT_WCSNRTOMBS INTERCEPT_FUNCTION(wcsnrtombs);
 #else
 #define INIT_WCSNRTOMBS
+#endif
+
+
+#if SANITIZER_INTERCEPT_TCGETATTR
+INTERCEPTOR(int, tcgetattr, int fd, void *termios_p) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, tcgetattr, fd, termios_p);
+  int res = REAL(tcgetattr)(fd, termios_p);
+  if (!res && termios_p)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, termios_p, struct_termios_sz);
+  return res;
+}
+
+#define INIT_TCGETATTR INTERCEPT_FUNCTION(tcgetattr);
+#else
+#define INIT_TCGETATTR
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
@@ -1619,4 +1633,5 @@ INTERCEPTOR(SIZE_T, wcsnrtombs, char *dest, const wchar_t **src, SIZE_T nms,
   INIT_MBSTOWCS;                           \
   INIT_MBSNRTOWCS;                         \
   INIT_WCSTOMBS;                           \
-  INIT_WCSNRTOMBS;
+  INIT_WCSNRTOMBS;                         \
+  INIT_TCGETATTR;
