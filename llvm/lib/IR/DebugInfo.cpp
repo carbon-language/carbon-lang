@@ -514,9 +514,6 @@ bool DIGlobalVariable::Verify() const {
   if (!Ty.Verify())
     return false;
 
-  if (!getGlobal() && !getConstant())
-    return false;
-
   return DbgNode->getNumOperands() == 13;
 }
 
