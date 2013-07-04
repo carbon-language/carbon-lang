@@ -333,7 +333,6 @@ template <class _Key, class _Tp, class _Hash, bool = is_empty<_Hash>::value
 class __unordered_map_hasher
     : private _Hash
 {
-    typedef pair<typename remove_const<_Key>::type, _Tp> _Pp;
     typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -347,9 +346,6 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     const _Hash& hash_function() const _NOEXCEPT {return *this;}
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(const _Pp& __x) const
-        {return static_cast<const _Hash&>(*this)(__x.first);}
-    _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Cp& __x) const
         {return static_cast<const _Hash&>(*this)(__x.first);}
     _LIBCPP_INLINE_VISIBILITY
@@ -362,7 +358,6 @@ class __unordered_map_hasher<_Key, _Tp, _Hash, false>
 {
     _Hash __hash_;
 
-    typedef pair<typename remove_const<_Key>::type, _Tp> _Pp;
     typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -375,9 +370,6 @@ public:
         : __hash_(__h) {}
     _LIBCPP_INLINE_VISIBILITY
     const _Hash& hash_function() const _NOEXCEPT {return __hash_;}
-    _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(const _Pp& __x) const
-        {return __hash_(__x.first);}
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Cp& __x) const
         {return __hash_(__x.first);}
@@ -394,7 +386,6 @@ template <class _Key, class _Tp, class _Pred, bool = is_empty<_Pred>::value
 class __unordered_map_equal
     : private _Pred
 {
-    typedef pair<typename remove_const<_Key>::type, _Tp> _Pp;
     typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -408,32 +399,14 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     const _Pred& key_eq() const _NOEXCEPT {return *this;}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Pp& __y) const
-        {return static_cast<const _Pred&>(*this)(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Cp& __y) const
-        {return static_cast<const _Pred&>(*this)(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Key& __y) const
-        {return static_cast<const _Pred&>(*this)(__x.first, __y);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Cp& __x, const _Pp& __y) const
-        {return static_cast<const _Pred&>(*this)(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Cp& __y) const
         {return static_cast<const _Pred&>(*this)(__x.first, __y.first);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Key& __y) const
         {return static_cast<const _Pred&>(*this)(__x.first, __y);}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Pp& __y) const
-        {return static_cast<const _Pred&>(*this)(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
         {return static_cast<const _Pred&>(*this)(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Key& __y) const
-        {return static_cast<const _Pred&>(*this)(__x, __y);}
 };
 
 template <class _Key, class _Tp, class _Pred>
@@ -441,7 +414,6 @@ class __unordered_map_equal<_Key, _Tp, _Pred, false>
 {
     _Pred __pred_;
 
-    typedef pair<typename remove_const<_Key>::type, _Tp> _Pp;
     typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -455,32 +427,14 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     const _Pred& key_eq() const _NOEXCEPT {return __pred_;}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Pp& __y) const
-        {return __pred_(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Cp& __y) const
-        {return __pred_(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Key& __y) const
-        {return __pred_(__x.first, __y);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Cp& __x, const _Pp& __y) const
-        {return __pred_(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Cp& __y) const
         {return __pred_(__x.first, __y.first);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Key& __y) const
         {return __pred_(__x.first, __y);}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Pp& __y) const
-        {return __pred_(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
         {return __pred_(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Key& __y) const
-        {return __pred_(__x, __y);}
 };
 
 template <class _Alloc>

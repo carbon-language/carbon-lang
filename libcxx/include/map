@@ -389,7 +389,6 @@ template <class _Key, class _Tp, class _Compare, bool = is_empty<_Compare>::valu
 class __map_value_compare
     : private _Compare
 {
-    typedef pair<typename std::remove_const<_Key>::type, _Tp> _Pp;
     typedef pair<const _Key, _Tp> _CP;
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -406,29 +405,11 @@ public:
     bool operator()(const _CP& __x, const _CP& __y) const
         {return static_cast<const _Compare&>(*this)(__x.first, __y.first);}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _CP& __x, const _Pp& __y) const
-        {return static_cast<const _Compare&>(*this)(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _CP& __x, const _Key& __y) const
-        {return static_cast<const _Compare&>(*this)(__x.first, __y);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _CP& __y) const
-        {return static_cast<const _Compare&>(*this)(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Pp& __y) const
-        {return static_cast<const _Compare&>(*this)(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Key& __y) const
         {return static_cast<const _Compare&>(*this)(__x.first, __y);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _CP& __y) const
         {return static_cast<const _Compare&>(*this)(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Pp& __y) const
-        {return static_cast<const _Compare&>(*this)(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Key& __y) const
-        {return static_cast<const _Compare&>(*this)(__x, __y);}
 };
 
 template <class _Key, class _Tp, class _Compare>
@@ -436,7 +417,6 @@ class __map_value_compare<_Key, _Tp, _Compare, false>
 {
     _Compare comp;
 
-    typedef pair<typename std::remove_const<_Key>::type, _Tp> _Pp;
     typedef pair<const _Key, _Tp> _CP;
 
 public:
@@ -455,29 +435,11 @@ public:
     bool operator()(const _CP& __x, const _CP& __y) const
         {return comp(__x.first, __y.first);}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _CP& __x, const _Pp& __y) const
-        {return comp(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _CP& __x, const _Key& __y) const
-        {return comp(__x.first, __y);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _CP& __y) const
-        {return comp(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Pp& __y) const
-        {return comp(__x.first, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Pp& __x, const _Key& __y) const
         {return comp(__x.first, __y);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _CP& __y) const
         {return comp(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Pp& __y) const
-        {return comp(__x, __y.first);}
-    _LIBCPP_INLINE_VISIBILITY
-    bool operator()(const _Key& __x, const _Key& __y) const
-        {return comp(__x, __y);}
 };
 
 template <class _Allocator>
