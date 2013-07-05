@@ -55,7 +55,11 @@ namespace __sanitizer {
     uptr iov_len;
   };
 
+#if SANITIZER_MAC
+  typedef unsigned long __sanitizer_pthread_key_t;
+#else
   typedef unsigned __sanitizer_pthread_key_t;
+#endif
 
 #if SANITIZER_ANDROID || SANITIZER_MAC
   struct __sanitizer_msghdr {
