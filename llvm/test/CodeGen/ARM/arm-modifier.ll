@@ -65,3 +65,8 @@ entry:
   %0 = tail call i64 asm sideeffect "ldrexd $0, ${0:H}, [$1]", "=&r,r,*Qo"(i64* %val, i64* %val) nounwind
   ret i64 %0
 }
+
+define void @f5(i64 %__pu_val) {
+  call void asm sideeffect "$1", "r,i"(i64 %__pu_val, i32 -14)
+  ret void
+}

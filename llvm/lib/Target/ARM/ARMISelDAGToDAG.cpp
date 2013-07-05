@@ -3491,6 +3491,12 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     else
       continue;
 
+    if (Kind == InlineAsm::Kind_Imm) {
+      SDValue op = N->getOperand(++i);
+      AsmNodeOperands.push_back(op);
+      continue;
+    }
+
     unsigned NumRegs = InlineAsm::getNumOperandRegisters(Flag);
     if (NumRegs)
       OpChanged.push_back(false);
