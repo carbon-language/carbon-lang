@@ -381,3 +381,78 @@ define void @f9() {
 
   ret void
 }
+
+; This showed a problem with the way stack coloring updated instructions.
+; The copy from %val9 to %newval8 can be done using an MVC, which then
+; has two frame index operands.  Stack coloring chose a valid renumbering
+; [FI0, FI1] -> [FI1, FI2], but applied it in the form FI0 -> FI1 -> FI2,
+; so that both operands ended up being the same.
+define void @f10() {
+; CHECK: f10:
+; CHECK: lgrl [[REG:%r[0-9]+]], h9
+; CHECK: stg [[REG]], [[VAL9:[0-9]+]](%r15)
+; CHECK: brasl %r14, foo@PLT
+; CHECK: brasl %r14, foo@PLT
+; CHECK: mvc [[NEWVAL8:[0-9]+]](8,%r15), [[VAL9]](%r15)
+; CHECK: brasl %r14, foo@PLT
+; CHECK: lg [[REG:%r[0-9]+]], [[NEWVAL8]](%r15)
+; CHECK: stgrl [[REG]], h8
+; CHECK: br %r14
+entry:
+  %val0 = load volatile i64 *@h0
+  %val1 = load volatile i64 *@h1
+  %val2 = load volatile i64 *@h2
+  %val3 = load volatile i64 *@h3
+  %val4 = load volatile i64 *@h4
+  %val5 = load volatile i64 *@h5
+  %val6 = load volatile i64 *@h6
+  %val7 = load volatile i64 *@h7
+  %val8 = load volatile i64 *@h8
+  %val9 = load volatile i64 *@h9
+
+  call void @foo()
+
+  store volatile i64 %val0, i64 *@h0
+  store volatile i64 %val1, i64 *@h1
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+
+  %check = load volatile i64 *@h0
+  %cond = icmp eq i64 %check, 0
+  br i1 %cond, label %skip, label %fallthru
+
+fallthru:
+  call void @foo()
+
+  store volatile i64 %val0, i64 *@h0
+  store volatile i64 %val1, i64 *@h1
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+  store volatile i64 %val8, i64 *@h8
+  br label %skip
+
+skip:
+  %newval8 = phi i64 [ %val8, %entry ], [ %val9, %fallthru ]
+  call void @foo()
+
+  store volatile i64 %val0, i64 *@h0
+  store volatile i64 %val1, i64 *@h1
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+  store volatile i64 %newval8, i64 *@h8
+  store volatile i64 %val9, i64 *@h9
+
+  ret void
+}
