@@ -654,6 +654,40 @@ error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
   return createUniqueEntity(Model, Dummy, ResultPath, MakeAbsolute, 0, FS_Name);
 }
 
+static error_code createTemporaryFile(const Twine &Model, int &ResultFD,
+                                      llvm::SmallVectorImpl<char> &ResultPath,
+                                      FSEntity Type) {
+  SmallString<128> Storage;
+  StringRef P = Model.toNullTerminatedStringRef(Storage);
+  assert(P.find_first_of(separators) == StringRef::npos &&
+         "Model must be a simple filename.");
+  // Use P.begin() so that createUniqueEntity doesn't need to recreate Storage.
+  return createUniqueEntity(P.begin(), ResultFD, ResultPath,
+                            true, owner_read | owner_write, Type);
+}
+
+static error_code
+createTemporaryFile(const Twine &Prefix, StringRef Suffix, int &ResultFD,
+                    llvm::SmallVectorImpl<char> &ResultPath,
+                    FSEntity Type) {
+  return createTemporaryFile(Prefix + "-%%%%%%." + Suffix, ResultFD, ResultPath,
+                             Type);
+}
+
+
+error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
+                               int &ResultFD,
+                               SmallVectorImpl<char> &ResultPath) {
+  return createTemporaryFile(Prefix, Suffix, ResultFD, ResultPath, FS_File);
+}
+
+error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
+                               SmallVectorImpl<char> &ResultPath) {
+  int Dummy;
+  return createTemporaryFile(Prefix, Suffix, Dummy, ResultPath, FS_Name);
+}
+
+
 // This is a mkdtemp with a different pattern. We use createUniqueEntity mostly
 // for consistency. We should try using mkdtemp.
 error_code createUniqueDirectory(const Twine &Prefix,

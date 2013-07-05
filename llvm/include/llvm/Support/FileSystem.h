@@ -575,6 +575,22 @@ error_code unique_file(const Twine &model, int &result_fd,
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
                        bool MakeAbsolute = true);
 
+/// @brief Create a file in the system temporary directory.
+///
+/// The filename is of the form prefix-random_chars.suffix. Since the directory
+/// is not know to the caller, Prefix and Suffix cannot have path separators.
+/// The files are created with mode 0600.
+///
+/// This should be used for things like a temporary .s that is removed after
+/// running the assembler.
+error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
+                               int &ResultFD,
+                               SmallVectorImpl<char> &ResultPath);
+
+/// @brief Simpler version for clients that don't want an open file.
+error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
+                               SmallVectorImpl<char> &ResultPath);
+
 error_code createUniqueDirectory(const Twine &Prefix,
                                  SmallVectorImpl<char> &ResultPath);
 
