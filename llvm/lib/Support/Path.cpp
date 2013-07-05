@@ -654,6 +654,17 @@ error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
   return createUniqueEntity(Model, Dummy, ResultPath, MakeAbsolute, 0, FS_Name);
 }
 
+error_code createUniqueFile(const Twine &Model, int &ResultFd,
+                            SmallVectorImpl<char> &ResultPath, unsigned Mode) {
+  return createUniqueEntity(Model, ResultFd, ResultPath, false, Mode, FS_File);
+}
+
+error_code createUniqueFile(const Twine &Model,
+                            SmallVectorImpl<char> &ResultPath) {
+  int Dummy;
+  return createUniqueEntity(Model, Dummy, ResultPath, false, 0, FS_Name);
+}
+
 static error_code createTemporaryFile(const Twine &Model, int &ResultFD,
                                       llvm::SmallVectorImpl<char> &ResultPath,
                                       FSEntity Type) {

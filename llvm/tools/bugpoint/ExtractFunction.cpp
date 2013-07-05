@@ -365,8 +365,8 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  Module *M) {
   SmallString<128> Filename;
   int FD;
-  error_code EC = sys::fs::unique_file(OutputPrefix + "-extractblocks%%%%%%%",
-                                       FD, Filename);
+  error_code EC = sys::fs::createUniqueFile(
+      OutputPrefix + "-extractblocks%%%%%%%", FD, Filename);
   if (EC) {
     outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error creating temporary file: " << EC.message() << "\n";

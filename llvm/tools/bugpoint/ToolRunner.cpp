@@ -478,7 +478,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
 
   SmallString<128> UniqueFile;
   error_code EC =
-      sys::fs::unique_file(Bitcode + "-%%%%%%%" + Suffix, UniqueFile);
+      sys::fs::createUniqueFile(Bitcode + "-%%%%%%%" + Suffix, UniqueFile);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
@@ -715,7 +715,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   SmallString<128> OutputBinary;
   error_code EC =
-      sys::fs::unique_file(ProgramFile+ "-%%%%%%%.gcc.exe", OutputBinary);
+      sys::fs::createUniqueFile(ProgramFile + "-%%%%%%%.gcc.exe", OutputBinary);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
@@ -824,8 +824,8 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
                           const std::vector<std::string> &ArgsForGCC,
                           std::string &Error) {
   SmallString<128> UniqueFilename;
-  error_code EC = sys::fs::unique_file(InputFile + "-%%%%%%%" + LTDL_SHLIB_EXT,
-                                       UniqueFilename);
+  error_code EC = sys::fs::createUniqueFile(
+      InputFile + "-%%%%%%%" + LTDL_SHLIB_EXT, UniqueFilename);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);

@@ -124,8 +124,8 @@ bool BugDriver::runPasses(Module *Program,
   // setup the output file name
   outs().flush();
   SmallString<128> UniqueFilename;
-  error_code EC =
-      sys::fs::unique_file(OutputPrefix + "-output-%%%%%%%.bc", UniqueFilename);
+  error_code EC = sys::fs::createUniqueFile(
+      OutputPrefix + "-output-%%%%%%%.bc", UniqueFilename);
   if (EC) {
     errs() << getToolName() << ": Error making unique filename: "
            << EC.message() << "\n";
@@ -136,8 +136,8 @@ bool BugDriver::runPasses(Module *Program,
   // set up the input file name
   SmallString<128> InputFilename;
   int InputFD;
-  EC = sys::fs::unique_file(OutputPrefix + "-input-%%%%%%%.bc", InputFD,
-                            InputFilename);
+  EC = sys::fs::createUniqueFile(OutputPrefix + "-input-%%%%%%%.bc", InputFD,
+                                 InputFilename);
   if (EC) {
     errs() << getToolName() << ": Error making unique filename: "
            << EC.message() << "\n";

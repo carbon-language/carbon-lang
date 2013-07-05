@@ -260,8 +260,8 @@ bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
   // Create a temporary file to store the archive in
   int TmpArchiveFD;
   SmallString<128> TmpArchive;
-  error_code EC = sys::fs::unique_file("temp-archive-%%%%%%%.a", TmpArchiveFD,
-                                       TmpArchive, true, sys::fs::all_read | sys::fs::all_write);
+  error_code EC = sys::fs::createUniqueFile("temp-archive-%%%%%%%.a",
+                                            TmpArchiveFD, TmpArchive);
   if (EC)
     return true;
 

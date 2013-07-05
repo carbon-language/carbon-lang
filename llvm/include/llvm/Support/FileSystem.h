@@ -575,6 +575,35 @@ error_code unique_file(const Twine &model, int &result_fd,
 error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
                        bool MakeAbsolute = true);
 
+/// @brief Create a uniquely named file.
+///
+/// Generates a unique path suitable for a temporary file and then opens it as a
+/// file. The name is based on \a model with '%' replaced by a random char in
+/// [0-9a-f]. If \a model is not an absolute path, a suitable temporary
+/// directory will be prepended.
+///
+/// Example: clang-%%-%%-%%-%%-%%.s => clang-a0-b1-c2-d3-e4.s
+///
+/// This is an atomic operation. Either the file is created and opened, or the
+/// file system is left untouched.
+///
+/// The intendend use is for files that are to be kept, possibly after
+/// renaming them. For example, when running 'clang -c foo.o', the file can
+/// be first created as foo-abc123.o and then renamed.
+///
+/// @param Model Name to base unique path off of.
+/// @param ResultFD Set to the opened file's file descriptor.
+/// @param ResultPath Set to the opened file's absolute path.
+/// @returns errc::success if Result{FD,Path} have been successfully set,
+///          otherwise a platform specific error_code.
+error_code createUniqueFile(const Twine &Model, int &ResultFD,
+                            SmallVectorImpl<char> &ResultPath,
+                            unsigned Mode = all_read | all_write);
+
+/// @brief Simpler version for clients that don't want an open file.
+error_code createUniqueFile(const Twine &Model,
+                            SmallVectorImpl<char> &ResultPath);
+
 /// @brief Create a file in the system temporary directory.
 ///
 /// The filename is of the form prefix-random_chars.suffix. Since the directory

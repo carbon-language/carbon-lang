@@ -65,8 +65,8 @@ error_code FileOutputBuffer::create(StringRef FilePath,
   // Create new file in same directory but with random name.
   SmallString<128> TempFilePath;
   int FD;
-  EC = sys::fs::unique_file(Twine(FilePath) + ".tmp%%%%%%%",
-                            FD, TempFilePath, false, 0644);
+  EC = sys::fs::createUniqueFile(Twine(FilePath) + ".tmp%%%%%%%",
+                                 FD, TempFilePath);
   if (EC)
     return EC;
 

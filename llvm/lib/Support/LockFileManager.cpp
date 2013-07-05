@@ -78,10 +78,9 @@ LockFileManager::LockFileManager(StringRef FileName)
   UniqueLockFileName += "-%%%%%%%%";
   int UniqueLockFileID;
   if (error_code EC
-        = sys::fs::unique_file(UniqueLockFileName.str(),
-                                     UniqueLockFileID,
-                                     UniqueLockFileName,
-                                     /*makeAbsolute=*/false)) {
+        = sys::fs::createUniqueFile(UniqueLockFileName.str(),
+                                    UniqueLockFileID,
+                                    UniqueLockFileName)) {
     Error = EC;
     return;
   }
