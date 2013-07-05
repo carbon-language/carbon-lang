@@ -1,9 +1,10 @@
 # Verify that lld can handle .lib files. "main.obj" refers _val1 and
 # _val2 that are defined in "dynamic.lib".
 #
-# RUN: lld -flavor link -out %t1 -subsystem console \
-# RUN:   -- %p/Inputs/main.obj %p/Inputs/dynamic.lib \
-# RUN:   && llvm-objdump -d %t1 | FileCheck %s
+# RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link -out %t1 -subsystem console -- %t.obj \
+# RUN:   %p/Inputs/dynamic.lib && llvm-objdump -d %t1 | FileCheck %s
 
 CHECK: Disassembly of section .text:
 CHECK: .text:

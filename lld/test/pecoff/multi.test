@@ -1,8 +1,10 @@
 # Verify that lld can handle multiple input files.
 #
-# RUN: lld -flavor link -out %t1 -subsystem console \
-# RUN:   -- %p/Inputs/main.obj %p/Inputs/static-data1.obj \
-# RUN:   %p/Inputs/static-data2.obj \
+# RUN: yaml2obj %p/Inputs/main.obj.yaml > %t1.obj
+# RUN: yaml2obj %p/Inputs/static-data1.obj.yaml > %t2.obj
+# RUN: yaml2obj %p/Inputs/static-data2.obj.yaml > %t3.obj
+#
+# RUN: lld -flavor link -out %t1 -subsystem console -- %t1.obj %t2.obj %t3.obj \
 # RUN:   && llvm-objdump -d %t1 | FileCheck %s
 
 CHECK: Disassembly of section .text:

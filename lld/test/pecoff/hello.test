@@ -1,13 +1,13 @@
-# RUN: lld -flavor link -out %t1 -subsystem console -force \
-# RUN:   -- %p/Inputs/hello.obj \
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
+
+# RUN: lld -flavor link -out %t1 -subsystem console -force -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
 
 FILE: ImageOptionalHeader {
 FILE:   SizeOfInitializedData: 512
 FILE: }
 
-# RUN: lld -flavor link -out %t1 -subsystem console -force \
-# RUN:   -- %p/Inputs/hello.obj \
+# RUN: lld -flavor link -out %t1 -subsystem console -force -- %t.obj \
 # RUN:   && llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
 
 SECTIONS: Format: COFF-i386

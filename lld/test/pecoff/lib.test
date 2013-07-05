@@ -1,8 +1,9 @@
 # Verify that lld can handle a library file.
 #
-# RUN: lld -flavor link -out %t1 -subsystem console \
-# RUN:   -- %p/Inputs/main.obj %p/Inputs/static.lib \
-# RUN:   && llvm-objdump -d %t1 | FileCheck %s
+# RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link -out %t1 -subsystem console -- %t.obj \
+# RUN:   %p/Inputs/static.lib && llvm-objdump -d %t1 | FileCheck %s
 
 CHECK: Disassembly of section .text:
 CHECK: .text:

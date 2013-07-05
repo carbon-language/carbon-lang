@@ -1,5 +1,7 @@
-# RUN: lld -flavor link -out %t1 -subsystem console -force \
-# RUN:   -- %p/Inputs/grouped-sections.obj && llvm-objdump -s %t1 | FileCheck %s
+# RUN: yaml2obj %p/Inputs/grouped-sections.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link -out %t1 -subsystem console -force -- %t.obj \
+# RUN:   && llvm-objdump -s %t1 | FileCheck %s
 #
 # The file "grouped-sections.obj" has three data sections in the following
 # order:

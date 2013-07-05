@@ -2,8 +2,13 @@
 # text section. Other data, including data sections, relocations, symbol
 # tables are not present in nop.obj.
 #
-# RUN: lld -flavor link -out %t1 -subsystem console,3.11 -- %p/Inputs/nop.obj \
+# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link -out %t1 -subsystem console,3.11 -- %t.obj \
 # RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=FILE %s
+#
+# RUN: lld -flavor link -out %t1 -- %t.obj \
+# RUN:   && llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
 
 FILE: Format: COFF-i386
 FILE: Arch: i386
@@ -55,8 +60,6 @@ FILE:   SizeOfHeapCommit: 4096
 FILE:   NumberOfRvaAndSize: 16
 FILE: }
 
-# RUN: lld -flavor link -out %t1 -- %p/Inputs/nop.obj \
-# RUN:   && llvm-readobj -sections %t1 | FileCheck -check-prefix=SECTIONS %s
 SECTIONS: Format: COFF-i386
 SECTIONS: Arch: i386
 SECTIONS: AddressSize: 32bit
