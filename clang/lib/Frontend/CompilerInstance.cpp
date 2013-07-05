@@ -544,16 +544,15 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     TempPath = OutFile;
     TempPath += "-%%%%%%%%";
     int fd;
-    llvm::error_code EC = llvm::sys::fs::unique_file(
-        TempPath.str(), fd, TempPath, /*makeAbsolute=*/ false, 0664);
+    llvm::error_code EC =
+        llvm::sys::fs::createUniqueFile(TempPath.str(), fd, TempPath);
 
     if (CreateMissingDirectories &&
         EC == llvm::errc::no_such_file_or_directory) {
       StringRef Parent = llvm::sys::path::parent_path(OutputPath);
       EC = llvm::sys::fs::create_directories(Parent);
       if (!EC) {
-        EC = llvm::sys::fs::unique_file(TempPath.str(), fd, TempPath,
-                                        /*makeAbsolute=*/ false, 0664);
+        EC = llvm::sys::fs::createUniqueFile(TempPath.str(), fd, TempPath);
       }
     }
 

@@ -790,7 +790,8 @@ GlobalModuleIndex::writeIndex(FileManager &FileMgr, StringRef Path) {
   // Write the global index file to a temporary file.
   llvm::SmallString<128> IndexTmpPath;
   int TmpFD;
-  if (llvm::sys::fs::unique_file(IndexPath + "-%%%%%%%%", TmpFD, IndexTmpPath))
+  if (llvm::sys::fs::createUniqueFile(IndexPath + "-%%%%%%%%", TmpFD,
+                                      IndexTmpPath))
     return EC_IOError;
 
   // Open the temporary global index file for output.
