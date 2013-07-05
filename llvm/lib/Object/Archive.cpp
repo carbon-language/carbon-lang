@@ -38,7 +38,7 @@ static bool isInternalMember(const ArchiveMemberHeader &amh) {
 void Archive::anchor() { }
 
 error_code Archive::Child::getName(StringRef &Result) const {
-  StringRef name = ToHeader(Data.data())->getName();
+  StringRef name = getRawName();
   // Check if it's a special name.
   if (name[0] == '/') {
     if (name.size() == 1) { // Linker member.
@@ -119,10 +119,7 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
     return;
   }
 
-  // FIXME: this function should be able to use raw names.
-  StringRef name;
-  if ((ec = i->getName(name)))
-    return;
+  StringRef Name = i->getRawName();
 
   // Below is the pattern that is used to figure out the archive format
   // GNU archive format
@@ -143,14 +140,14 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   //  seem to create the third member if there's no member whose filename
   //  exceeds 15 characters. So the third member is optional.
 
-  if (name == "__.SYMDEF") {
+  if (Name == "__.SYMDEF") {
     Format = K_BSD;
     SymbolTable = i;
     ec = object_error::success;
     return;
   }
 
-  if (name == "/") {
+  if (Name == "/") {
     SymbolTable = i;
 
     ++i;
@@ -158,24 +155,23 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
       ec = object_error::parse_failed;
       return;
     }
-    if ((ec = i->getName(name)))
-      return;
+    Name = i->getRawName();
   }
 
-  if (name == "//") {
+  if (Name == "//") {
     Format = K_GNU;
     StringTable = i;
     ec = object_error::success;
     return;
   }
 
-  if (name[0] != '/') {
+  if (Name[0] != '/') {
     Format = K_GNU;
     ec = object_error::success;
     return;
   }
 
-  if (name != "/") {
+  if (Name != "/") {
     ec = object_error::parse_failed;
     return;
   }
@@ -189,10 +185,9 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
     return;
   }
 
-  if ((ec = i->getName(name)))
-    return;
+  Name = i->getRawName();
 
-  if (name == "//")
+  if (Name == "//")
     StringTable = i;
 
   ec = object_error::success;

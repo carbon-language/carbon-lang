@@ -114,6 +114,7 @@ public:
     }
 
     error_code getName(StringRef &Result) const;
+    StringRef getRawName() const { return ToHeader(Data.data())->getName(); }
     int getLastModified() const;
     int getUID() const;
     int getGID() const;
