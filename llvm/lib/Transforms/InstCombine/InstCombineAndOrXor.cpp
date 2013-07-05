@@ -1477,10 +1477,37 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   if (Value *V = foldLogOpOfMaskedICmps(LHS, RHS, ICmpInst::ICMP_NE, Builder))
     return V;
 
-  // This only handles icmp of constants: (icmp1 A, C1) | (icmp2 B, C2).
   Value *Val = LHS->getOperand(0), *Val2 = RHS->getOperand(0);
   ConstantInt *LHSCst = dyn_cast<ConstantInt>(LHS->getOperand(1));
   ConstantInt *RHSCst = dyn_cast<ConstantInt>(RHS->getOperand(1));
+
+  if (LHS->hasOneUse() || RHS->hasOneUse()) {
+    // (icmp eq B, 0) | (icmp ult A, B) -> (icmp ule A, B-1)
+    // (icmp eq B, 0) | (icmp ugt B, A) -> (icmp ule A, B-1)
+    Value *A = 0, *B = 0;
+    if (LHSCC == ICmpInst::ICMP_EQ && LHSCst && LHSCst->isZero()) {
+      B = Val;
+      if (RHSCC == ICmpInst::ICMP_ULT && Val == RHS->getOperand(1))
+        A = Val2;
+      else if (RHSCC == ICmpInst::ICMP_UGT && Val == Val2)
+        A = RHS->getOperand(1);
+    }
+    // (icmp ult A, B) | (icmp eq B, 0) -> (icmp ule A, B-1)
+    // (icmp ugt B, A) | (icmp eq B, 0) -> (icmp ule A, B-1)
+    else if (RHSCC == ICmpInst::ICMP_EQ && RHSCst && RHSCst->isZero()) {
+      B = Val2;
+      if (LHSCC == ICmpInst::ICMP_ULT && Val2 == LHS->getOperand(1))
+        A = Val;
+      else if (LHSCC == ICmpInst::ICMP_UGT && Val2 == Val)
+        A = LHS->getOperand(1);
+    }
+    if (A && B)
+      return Builder->CreateICmp(
+          ICmpInst::ICMP_UGE,
+          Builder->CreateAdd(B, ConstantInt::getSigned(B->getType(), -1)), A);
+  }
+
+  // This only handles icmp of constants: (icmp1 A, C1) | (icmp2 B, C2).
   if (LHSCst == 0 || RHSCst == 0) return 0;
 
   if (LHSCst == RHSCst && LHSCC == RHSCC) {
