@@ -20,6 +20,7 @@ clang_Cursor_getReceiverType
 clang_Cursor_isBitField
 clang_Cursor_isDynamicCall
 clang_Cursor_isNull
+clang_Cursor_isObjCOptional
 clang_Cursor_isVariadic
 clang_Cursor_getModule
 clang_Module_getASTFile
