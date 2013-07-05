@@ -189,7 +189,8 @@ namespace __sanitizer {
   extern int glob_nomatch;
 #endif
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
+#if SANITIZER_LINUX && !SANITIZER_ANDROID && \
+      (defined(__i386) || defined (__x86_64))
   extern unsigned struct_user_regs_struct_sz;
   extern unsigned struct_user_fpregs_struct_sz;
   extern unsigned struct_user_fpxregs_struct_sz;

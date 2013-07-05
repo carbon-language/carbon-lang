@@ -167,7 +167,8 @@ namespace __sanitizer {
   int glob_nomatch = GLOB_NOMATCH;
 #endif
 
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
+#if SANITIZER_LINUX && !SANITIZER_ANDROID && \
+      (defined(__i386) || defined (__x86_64))
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
 #if __WORDSIZE == 64
