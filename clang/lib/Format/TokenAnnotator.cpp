@@ -1006,6 +1006,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   }
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
     return 150;
+  if (Left.Type == TT_CastRParen)
+    return 100;
   if (Left.is(tok::coloncolon))
     return 500;
   if (Left.isOneOf(tok::kw_class, tok::kw_struct))
@@ -1227,9 +1229,13 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
     return false;
-  if (Left.is(tok::l_paren) && Right.is(tok::l_paren) && Left.Previous &&
-      Left.Previous->is(tok::kw___attribute))
-    return false;
+  if (Left.Previous) {
+    if (Left.is(tok::l_paren) && Right.is(tok::l_paren) &&
+        Left.Previous->is(tok::kw___attribute))
+      return false;
+    if (Left.is(tok::l_paren) && Left.Previous->Type == TT_BinaryOperator)
+      return false;
+  }
 
   if (Right.isTrailingComment())
     // We rely on MustBreakBefore being set correctly here as we should not
@@ -1256,7 +1262,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
          Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
                       tok::kw_class, tok::kw_struct) ||
          Right.isOneOf(tok::lessless, tok::arrow, tok::period, tok::colon) ||
-         (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
+         (Left.is(tok::r_paren) &&
           Right.isOneOf(tok::identifier, tok::kw_const, tok::kw___attribute)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
          (Left.is(tok::l_square) && !Right.is(tok::r_square));
