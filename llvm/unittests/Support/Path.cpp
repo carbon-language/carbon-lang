@@ -265,7 +265,7 @@ TEST_F(FileSystemTest, TempFiles) {
     "abcdefghijklmnopqrstuvwxyz5abcdefghijklmnopqrstuvwxyz4"
     "abcdefghijklmnopqrstuvwxyz3abcdefghijklmnopqrstuvwxyz2"
     "abcdefghijklmnopqrstuvwxyz1abcdefghijklmnopqrstuvwxyz0";
-  EXPECT_EQ(fs::unique_file(Twine(Path270), FileDescriptor, TempPath),
+  EXPECT_EQ(fs::createUniqueFile(Twine(Path270), FileDescriptor, TempPath),
             windows_error::path_not_found);
 #endif
 }
