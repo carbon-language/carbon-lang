@@ -173,6 +173,14 @@ public:
                                    const MachineMemOperand *&MMO,
                                    int &FrameIndex) const;
 
+  /// isStackSlotCopy - Return true if the specified machine instruction
+  /// is a copy of one stack slot to another and has no other effect.
+  /// Provide the identity of the two frame indices.
+  virtual bool isStackSlotCopy(const MachineInstr *MI, int &DestFrameIndex,
+                               int &SrcFrameIndex) const {
+    return false;
+  }
+
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
   /// The register in Orig->getOperand(0).getReg() will be substituted by

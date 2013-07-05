@@ -377,10 +377,19 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
     if (DCELimit != -1 && (int)NumDead >= DCELimit)
       break;
 
+    int FirstSS, SecondSS;
+    if (TII->isStackSlotCopy(I, FirstSS, SecondSS) &&
+        FirstSS == SecondSS &&
+        FirstSS != -1) {
+      ++NumDead;
+      changed = true;
+      toErase.push_back(I);
+      continue;
+    }
+        
     MachineBasicBlock::iterator NextMI = llvm::next(I);
     if (NextMI == MBB->end()) continue;
 
-    int FirstSS, SecondSS;
     unsigned LoadReg = 0;
     unsigned StoreReg = 0;
     if (!(LoadReg = TII->isLoadFromStackSlot(I, FirstSS))) continue;

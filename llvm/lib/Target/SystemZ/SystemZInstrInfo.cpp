@@ -104,6 +104,31 @@ unsigned SystemZInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return isSimpleMove(MI, FrameIndex, SystemZII::SimpleBDXStore);
 }
 
+bool SystemZInstrInfo::isStackSlotCopy(const MachineInstr *MI,
+                                       int &DestFrameIndex,
+                                       int &SrcFrameIndex) const {
+  // Check for MVC 0(Length,FI1),0(FI2)
+  const MachineFrameInfo *MFI = MI->getParent()->getParent()->getFrameInfo();
+  if (MI->getOpcode() != SystemZ::MVC ||
+      !MI->getOperand(0).isFI() ||
+      MI->getOperand(1).getImm() != 0 ||
+      !MI->getOperand(3).isFI() ||
+      MI->getOperand(4).getImm() != 0)
+    return false;
+
+  // Check that Length covers the full slots.
+  int64_t Length = MI->getOperand(2).getImm();
+  unsigned FI1 = MI->getOperand(0).getIndex();
+  unsigned FI2 = MI->getOperand(3).getIndex();
+  if (MFI->getObjectSize(FI1) != Length ||
+      MFI->getObjectSize(FI2) != Length)
+    return false;
+
+  DestFrameIndex = FI1;
+  SrcFrameIndex = FI2;
+  return true;
+}
+
 bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                      MachineBasicBlock *&TBB,
                                      MachineBasicBlock *&FBB,

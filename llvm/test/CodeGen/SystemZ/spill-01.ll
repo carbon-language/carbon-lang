@@ -456,3 +456,92 @@ skip:
 
   ret void
 }
+
+; This used to generate a no-op MVC.  It is very sensitive to spill heuristics.
+define void @f11() {
+; CHECK: f11:
+; CHECK-NOT: mvc [[OFFSET:[0-9]+]](8,%r15), [[OFFSET]](%r15)
+; CHECK: br %r14
+entry:
+  %val0 = load volatile i64 *@h0
+  %val1 = load volatile i64 *@h1
+  %val2 = load volatile i64 *@h2
+  %val3 = load volatile i64 *@h3
+  %val4 = load volatile i64 *@h4
+  %val5 = load volatile i64 *@h5
+  %val6 = load volatile i64 *@h6
+  %val7 = load volatile i64 *@h7
+
+  %altval0 = load volatile i64 *@h0
+  %altval1 = load volatile i64 *@h1
+
+  call void @foo()
+
+  store volatile i64 %val0, i64 *@h0
+  store volatile i64 %val1, i64 *@h1
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+
+  %check = load volatile i64 *@h0
+  %cond = icmp eq i64 %check, 0
+  br i1 %cond, label %a1, label %b1
+
+a1:
+  call void @foo()
+  br label %join1
+
+b1:
+  call void @foo()
+  br label %join1
+
+join1:
+  %newval0 = phi i64 [ %val0, %a1 ], [ %altval0, %b1 ]
+
+  call void @foo()
+
+  store volatile i64 %val1, i64 *@h1
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+  br i1 %cond, label %a2, label %b2
+
+a2:
+  call void @foo()
+  br label %join2
+
+b2:
+  call void @foo()
+  br label %join2
+
+join2:
+  %newval1 = phi i64 [ %val1, %a2 ], [ %altval1, %b2 ]
+
+  call void @foo()
+
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+
+  call void @foo()
+
+  store volatile i64 %newval0, i64 *@h0
+  store volatile i64 %newval1, i64 *@h1
+  store volatile i64 %val2, i64 *@h2
+  store volatile i64 %val3, i64 *@h3
+  store volatile i64 %val4, i64 *@h4
+  store volatile i64 %val5, i64 *@h5
+  store volatile i64 %val6, i64 *@h6
+  store volatile i64 %val7, i64 *@h7
+
+  ret void
+}
