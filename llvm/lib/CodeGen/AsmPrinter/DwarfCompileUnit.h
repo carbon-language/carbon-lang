@@ -156,7 +156,7 @@ public:
 
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable.
-  DIE *getDIE(const MDNode *N) { return MDNodeToDieMap.lookup(N); }
+  DIE *getDIE(const MDNode *N) const { return MDNodeToDieMap.lookup(N); }
 
   DIEBlock *getDIEBlock() {
     return new (DIEValueAllocator) DIEBlock();
@@ -169,12 +169,8 @@ public:
 
   /// getDIEEntry - Returns the debug information entry for the specified
   /// debug variable.
-  DIEEntry *getDIEEntry(const MDNode *N) {
-    DenseMap<const MDNode *, DIEEntry *>::iterator I =
-      MDNodeToDIEEntryMap.find(N);
-    if (I == MDNodeToDIEEntryMap.end())
-      return NULL;
-    return I->second;
+  DIEEntry *getDIEEntry(const MDNode *N) const {
+    return MDNodeToDIEEntryMap.lookup(N);
   }
 
   /// insertDIEEntry - Insert debug information entry into the map.
