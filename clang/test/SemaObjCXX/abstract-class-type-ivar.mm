@@ -17,7 +17,7 @@ class CppConcreteSub : public CppAbstractBase {
     CppConcreteSub _concrete; // expected-error{{instance variable type 'CppConcreteSub' is an abstract class}}
 }
 - (CppAbstractBase*)abstract;
-@property (nonatomic, readonly) const CppConcreteSub& Prop;  // expected-note {{property declared here}}
+@property (nonatomic, readonly) const CppConcreteSub Prop;  // expected-note {{property declared here}}
 @end
 
 @implementation Objc
