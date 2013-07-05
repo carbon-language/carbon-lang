@@ -55,3 +55,12 @@ void GORF (float IVAR1)
    }
 }
 
+// CHECK: @_ZZ25LocalTemplateFunctionTestdEN5Local3fooIdEET_S1_
+int LocalTemplateFunctionTest(double d) {
+  struct Local {
+    template<class T> T foo(T t) {
+      return t;
+    }
+  };
+  return Local().foo(d);
+}

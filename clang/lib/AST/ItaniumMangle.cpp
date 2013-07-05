@@ -326,7 +326,7 @@ private:
   void manglePrefix(NestedNameSpecifier *qualifier);
   void manglePrefix(const DeclContext *DC, bool NoFunction=false);
   void manglePrefix(QualType type);
-  void mangleTemplatePrefix(const TemplateDecl *ND);
+  void mangleTemplatePrefix(const TemplateDecl *ND, bool NoFunction=false);
   void mangleTemplatePrefix(TemplateName Template);
   void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
   void mangleQualifiers(Qualifiers Quals);
@@ -1250,7 +1250,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND,
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
-    mangleTemplatePrefix(TD);
+    mangleTemplatePrefix(TD, NoFunction);
     mangleTemplateArgs(*TemplateArgs);
   }
   else {
@@ -1513,7 +1513,8 @@ void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
   mangleUnscopedTemplateName(Template);
 }
 
-void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
+void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND,
+                                          bool NoFunction) {
   // <template-prefix> ::= <prefix> <template unqualified-name>
   //                   ::= <template-param>
   //                   ::= <substitution>
@@ -1530,7 +1531,7 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
     return;
   }
 
-  manglePrefix(getEffectiveDeclContext(ND));
+  manglePrefix(getEffectiveDeclContext(ND), NoFunction);
   mangleUnqualifiedName(ND->getTemplatedDecl());
   addSubstitution(ND);
 }
