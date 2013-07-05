@@ -295,12 +295,12 @@ StringRef ParamCommandComment::getParamName(const FullComment *FC) const {
   assert(isParamIndexValid());
   if (isVarArgParam())
     return "...";
-  return FC->getThisDeclInfo()->ParamVars[getParamIndex()]->getName();
+  return FC->getDeclInfo()->ParamVars[getParamIndex()]->getName();
 }
 
 StringRef TParamCommandComment::getParamName(const FullComment *FC) const {
   assert(isPositionValid());
-  const TemplateParameterList *TPL = FC->getThisDeclInfo()->TemplateParameters;
+  const TemplateParameterList *TPL = FC->getDeclInfo()->TemplateParameters;
   for (unsigned i = 0, e = getDepth(); i != e; ++i) {
     if (i == e-1)
       return TPL->getParam(getIndex(i))->getName();

@@ -1111,10 +1111,6 @@ public:
     return ThisDeclInfo;
   }
   
-  DeclInfo *getThisDeclInfo() const LLVM_READONLY {
-    return ThisDeclInfo;
-  }
-  
   ArrayRef<BlockContentComment *> getBlocks() const { return Blocks; }
   
 };
