@@ -17,6 +17,7 @@ define i32 @test1() {
 	%A = alloca i32		; <i32*> [#uses=2]
 	store i32 5, i32* %A
 	call void @use(i32* %A)
+; CHECK: tail call i32 @test1
 	%X = tail call i32 @test1()		; <i32> [#uses=1]
 	ret i32 %X
 }
