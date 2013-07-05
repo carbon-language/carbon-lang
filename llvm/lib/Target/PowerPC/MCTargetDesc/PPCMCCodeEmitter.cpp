@@ -209,7 +209,7 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
   // hint to the linker that this statement is part of a relocation sequence.
   // Return the thread-pointer register's encoding.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
-                                   (MCFixupKind)PPC::fixup_ppc_tlsreg));
+                                   (MCFixupKind)PPC::fixup_ppc_nofixup));
   return CTX.getRegisterInfo()->getEncodingValue(PPC::X13);
 }
 

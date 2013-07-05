@@ -12,6 +12,16 @@
 # CHECK-NEXT: add %r32, %r32, %r32
               add %r32, %r32, %r32
 
+# TLS register operands
+
+# CHECK: error: invalid operand for instruction
+# CHECK-NEXT: add 3, symbol@tls, 4
+              add 3, symbol@tls, 4
+
+# CHECK: error: invalid operand for instruction
+# CHECK-NEXT: subf 3, 4, symbol@tls
+              subf 3, 4, symbol@tls
+
 # Signed 16-bit immediate operands
 
 # CHECK: error: invalid operand for instruction

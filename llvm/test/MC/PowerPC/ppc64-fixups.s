@@ -206,8 +206,6 @@ base:
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT16_LO_DS target 0x0
          ld 1, target@got@l(3)
 
-# FIXME: @tls
-
 
 # CHECK: addis 3, 2, target@tprel@ha     # encoding: [0x3c,0x62,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@tprel@ha, kind: fixup_ppc_half16
@@ -404,6 +402,11 @@ base:
 # CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TLSLD target 0x0
 # CHECK-REL-NEXT:                        0x{{[0-9A-F]*[048C]}} R_PPC64_REL24 __tls_get_addr 0x0
          bl __tls_get_addr(target@tlsld)
+
+# CHECK: add 3, 4, target@tls            # encoding: [0x7c,0x64,0x6a,0x14]
+# CHECK-NEXT:                            #   fixup A - offset: 0, value: target@tls, kind: fixup_ppc_nofixup
+# CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TLS target 0x0
+         add 3, 4, target@tls
 
 
 # Data relocs

@@ -127,6 +127,9 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
     case PPCII::MO_TOC_LO:
       RefKind = MCSymbolRefExpr::VK_PPC_TOC_LO;
       break;
+    case PPCII::MO_TLS:
+      RefKind = MCSymbolRefExpr::VK_PPC_TLS;
+      break;
   }
 
   const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, RefKind, Ctx);
