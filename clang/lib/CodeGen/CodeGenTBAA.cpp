@@ -150,19 +150,11 @@ CodeGenTBAA::getTBAAInfo(QualType QTy) {
   // Enum types are distinct types. In C++ they have "underlying types",
   // however they aren't related for TBAA.
   if (const EnumType *ETy = dyn_cast<EnumType>(Ty)) {
-    // In C mode, two anonymous enums are compatible iff their members
-    // are the same -- see C99 6.2.7p1. For now, be conservative. We could
-    // theoretically implement this by combining information about all the
-    // members into a single identifying MDNode.
-    if (!Features.CPlusPlus &&
-        ETy->getDecl()->getTypedefNameForAnonDecl())
-      return MetadataCache[Ty] = getChar();
-
     // In C++ mode, types have linkage, so we can rely on the ODR and
     // on their mangled names, if they're external.
     // TODO: Is there a way to get a program-wide unique name for a
     // decl with local linkage or no linkage?
-    if (Features.CPlusPlus && !ETy->getDecl()->isExternallyVisible())
+    if (!Features.CPlusPlus || !ETy->getDecl()->isExternallyVisible())
       return MetadataCache[Ty] = getChar();
 
     // TODO: This is using the RTTI name. Is there a better way to get

@@ -72,11 +72,11 @@ static bool isLocalContainerContext(const DeclContext *DC) {
   return isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC) || isa<BlockDecl>(DC);
 }
 
-static const CXXRecordDecl *GetLocalClassDecl(const Decl *D) {
+static const RecordDecl *GetLocalClassDecl(const Decl *D) {
   const DeclContext *DC = getEffectiveDeclContext(D);
   while (!DC->isNamespace() && !DC->isTranslationUnit()) {
     if (isLocalContainerContext(DC))
-      return dyn_cast<CXXRecordDecl>(D);
+      return dyn_cast<RecordDecl>(D);
     D = cast<Decl>(DC);
     DC = getEffectiveDeclContext(D);
   }
@@ -1280,7 +1280,7 @@ void CXXNameMangler::mangleLocalName(const Decl *D) {
   //                 _ <entity name>
   // <discriminator> := _ <non-negative number>
   assert(isa<NamedDecl>(D) || isa<BlockDecl>(D));
-  const CXXRecordDecl *RD = GetLocalClassDecl(D);
+  const RecordDecl *RD = GetLocalClassDecl(D);
   const DeclContext *DC = getEffectiveDeclContext(RD ? RD : D);
 
   Out << 'Z';
@@ -1301,9 +1301,10 @@ void CXXNameMangler::mangleLocalName(const Decl *D) {
     // numbering will be local to the particular argument in which it appears
     // -- other default arguments do not affect its encoding.
     bool SkipDiscriminator = false;
-    if (RD->isLambda()) {
+    const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD);
+    if (CXXRD->isLambda()) {
       if (const ParmVarDecl *Parm
-                 = dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl())) {
+              = dyn_cast_or_null<ParmVarDecl>(CXXRD->getLambdaContextDecl())) {
         if (const FunctionDecl *Func
               = dyn_cast<FunctionDecl>(Parm->getDeclContext())) {
           Out << 'd';
