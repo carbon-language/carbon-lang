@@ -55,16 +55,6 @@
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0
          lis 3, target@l
 
-# CHECK: li 3, target                    # encoding: [0x38,0x60,A,A]
-# CHECK-NEXT:                            #   fixup A - offset: 2, value: target, kind: fixup_ppc_half16
-# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16 target 0x0
-         li 3, target
-
-# CHECK: lis 3, target                   # encoding: [0x3c,0x60,A,A]
-# CHECK-NEXT:                            #   fixup A - offset: 2, value: target, kind: fixup_ppc_half16
-# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16 target 0x0
-         lis 3, target
-
 # CHECK: li 3, target@h                  # encoding: [0x38,0x60,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@h, kind: fixup_ppc_half16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_HI target 0x0
@@ -100,6 +90,11 @@
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO target 0x0
          lwz 1, target@l(3)
 
+# CHECK: lwz 1, target(3)                # encoding: [0x80,0x23,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16 target 0x0
+         lwz 1, target(3)
+
 # CHECK: ld 1, target@l(3)               # encoding: [0xe8,0x23,A,0bAAAAAA00]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@l, kind: fixup_ppc_half16ds
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_ADDR16_LO_DS target 0x0
@@ -111,10 +106,10 @@
          ld 1, target(3)
 
 base:
-# CHECK: li 3, target-base               # encoding: [0x38,0x60,A,A]
+# CHECK: lwz 1, target-base(3)           # encoding: [0x80,0x23,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target-base, kind: fixup_ppc_half16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_REL16 target 0x2
-         li 3, target-base
+         lwz 1, target-base(3)
 
 # CHECK: li 3, target-base@h             # encoding: [0x38,0x60,A,A]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target-base@h, kind: fixup_ppc_half16
