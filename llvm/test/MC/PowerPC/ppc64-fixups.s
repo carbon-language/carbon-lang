@@ -318,6 +318,16 @@ base:
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_TPREL16_HI target 0x0
          addis 3, 2, target@got@tprel@h
 
+# CHECK: addis 3, 2, target@got@tprel@l  # encoding: [0x3c,0x62,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@tprel@l, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_TPREL16_LO_DS target 0x0
+         addis 3, 2, target@got@tprel@l
+
+# CHECK: addis 3, 2, target@got@tprel    # encoding: [0x3c,0x62,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@tprel, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_TPREL16_DS target 0x0
+         addis 3, 2, target@got@tprel
+
 # CHECK: ld 1, target@got@tprel(3)       # encoding: [0xe8,0x23,A,0bAAAAAA00]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@tprel, kind: fixup_ppc_half16ds
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_TPREL16_DS target 0x0
@@ -337,6 +347,16 @@ base:
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@dtprel@h, kind: fixup_ppc_half16
 # CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_DTPREL16_HI target 0x0
          addis 3, 2, target@got@dtprel@h
+
+# CHECK: addis 3, 2, target@got@dtprel@l # encoding: [0x3c,0x62,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@dtprel@l, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_DTPREL16_LO_DS target 0x0
+         addis 3, 2, target@got@dtprel@l
+
+# CHECK: addis 3, 2, target@got@dtprel   # encoding: [0x3c,0x62,A,A]
+# CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@dtprel, kind: fixup_ppc_half16
+# CHECK-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_GOT_DTPREL16_DS target 0x0
+         addis 3, 2, target@got@dtprel
 
 # CHECK: ld 1, target@got@dtprel(3)      # encoding: [0xe8,0x23,A,0bAAAAAA00]
 # CHECK-NEXT:                            #   fixup A - offset: 2, value: target@got@dtprel, kind: fixup_ppc_half16ds
