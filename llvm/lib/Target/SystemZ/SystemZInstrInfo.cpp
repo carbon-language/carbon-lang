@@ -363,18 +363,11 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // not valid in cases where the two memories partially overlap; however,
   // that is not a problem here, because we know that one of the memories
   // is a full frame index.
-  //
-  // For now we punt if the load or store is also to a frame index.
-  // In that case we might end up eliminating both of them to out-of-range
-  // offsets, which might then force the register scavenger to spill two
-  // other registers.  The backend can only handle one such scavenger spill
-  // at a time.
   if (OpNum == 0 && MI->hasOneMemOperand()) {
     MachineMemOperand *MMO = *MI->memoperands_begin();
     if (MMO->getSize() == Size && !MMO->isVolatile()) {
       // Handle conversion of loads.
-      if (isSimpleBD12Move(MI, SystemZII::SimpleBDXLoad) &&
-          !MI->getOperand(1).isFI()) {
+      if (isSimpleBD12Move(MI, SystemZII::SimpleBDXLoad)) {
         uint64_t Offset = 0;
         MachineMemOperand *FrameMMO = getFrameMMO(MF, FrameIndex, Offset,
                                                   MachineMemOperand::MOStore);
@@ -384,8 +377,7 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
           .addMemOperand(FrameMMO).addMemOperand(MMO);
       }
       // Handle conversion of stores.
-      if (isSimpleBD12Move(MI, SystemZII::SimpleBDXStore) &&
-          !MI->getOperand(1).isFI()) {
+      if (isSimpleBD12Move(MI, SystemZII::SimpleBDXStore)) {
         uint64_t Offset = 0;
         MachineMemOperand *FrameMMO = getFrameMMO(MF, FrameIndex, Offset,
                                                   MachineMemOperand::MOLoad);
