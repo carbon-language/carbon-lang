@@ -99,6 +99,20 @@ void foo3(Test3 *test3) {
 @synthesize prop1 = _prop1;
 @end
 
+@protocol TestProt
+-(void)protMeth1;
+@property (retain) id propProp1;
+
+@optional
+-(void)protMeth2;
+@property (retain) id propProp2;
+
+@required
+-(void)protMeth3;
+@property (retain) id propProp3;
+@end
+
+
 // RUN: c-index-test -cursor-at=%s:4:28 -cursor-at=%s:5:28 %s | FileCheck -check-prefix=CHECK-PROP %s
 // CHECK-PROP: ObjCPropertyDecl=foo1:4:26
 // CHECK-PROP: ObjCPropertyDecl=foo2:5:27
@@ -146,3 +160,13 @@ void foo3(Test3 *test3) {
 // RUN: c-index-test -cursor-at=%s:86:7 -cursor-at=%s:89:7 %s | FileCheck -check-prefix=CHECK-SELECTORLOC %s
 // CHECK-SELECTORLOC: 86:6 ObjCInstanceMethodDecl=meth1:86:6 (Definition) Extent=[86:1 - 88:2] Spelling=meth1 ([86:6 - 86:11]) Selector index=0
 // CHECK-SELECTORLOC: 89:6 ObjCInstanceMethodDecl=meth2:89:6 (Definition) Extent=[89:1 - 91:2] Spelling=meth2 ([89:6 - 89:11]) Selector index=0
+
+// RUN: c-index-test -cursor-at=%s:103:10 -cursor-at=%s:104:10 \
+// RUN:              -cursor-at=%s:107:10 -cursor-at=%s:108:10 \
+// RUN:              -cursor-at=%s:111:10 -cursor-at=%s:112:10 %s | FileCheck -check-prefix=CHECK-OBJCOPTIONAL %s
+// CHECK-OBJCOPTIONAL: 103:8 ObjCInstanceMethodDecl=protMeth1:103:8 Extent=[103:1 - 103:18]
+// CHECK-OBJCOPTIONAL: 104:23 ObjCPropertyDecl=propProp1:104:23 [retain,] Extent=[104:1 - 104:32]
+// CHECK-OBJCOPTIONAL: 107:8 ObjCInstanceMethodDecl=protMeth2:107:8 (@optional) Extent=[107:1 - 107:18]
+// CHECK-OBJCOPTIONAL: 108:23 ObjCPropertyDecl=propProp2:108:23 (@optional) [retain,] Extent=[108:1 - 108:32]
+// CHECK-OBJCOPTIONAL: 111:8 ObjCInstanceMethodDecl=protMeth3:111:8 Extent=[111:1 - 111:18]
+// CHECK-OBJCOPTIONAL: 112:23 ObjCPropertyDecl=propProp3:112:23 [retain,] Extent=[112:1 - 112:32]

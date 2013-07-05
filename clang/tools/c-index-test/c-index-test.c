@@ -698,7 +698,9 @@ static void PrintCursor(CXCursor Cursor,
       printf(" (pure)");
     if (clang_Cursor_isVariadic(Cursor))
       printf(" (variadic)");
-    
+    if (clang_Cursor_isObjCOptional(Cursor))
+      printf(" (@optional)");
+
     if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
       CXType T =
         clang_getCanonicalType(clang_getIBOutletCollectionType(Cursor));

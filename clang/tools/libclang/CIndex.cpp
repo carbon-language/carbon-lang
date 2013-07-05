@@ -5992,6 +5992,19 @@ unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C) {
   return Result;
 }
 
+unsigned clang_Cursor_isObjCOptional(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+
+  const Decl *D = getCursorDecl(C);
+  if (const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(D))
+    return PD->getPropertyImplementation() == ObjCPropertyDecl::Optional;
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    return MD->getImplementationControl() == ObjCMethodDecl::Optional;
+
+  return 0;
+}
+
 unsigned clang_Cursor_isVariadic(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
