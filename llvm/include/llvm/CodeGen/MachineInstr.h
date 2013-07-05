@@ -908,11 +908,6 @@ public:
   bool isSafeToMove(const TargetInstrInfo *TII, AliasAnalysis *AA,
                     bool &SawStore) const;
 
-  /// isSafeToReMat - Return true if it's safe to rematerialize the specified
-  /// instruction which defined the specified register instead of copying it.
-  bool isSafeToReMat(const TargetInstrInfo *TII, AliasAnalysis *AA,
-                     unsigned DstReg) const;
-
   /// hasOrderedMemoryRef - Return true if this instruction may have an ordered
   /// or volatile memory reference, or if the information describing the memory
   /// reference is not available. Return false if it is known to have no
