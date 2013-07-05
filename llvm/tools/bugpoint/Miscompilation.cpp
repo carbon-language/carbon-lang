@@ -928,8 +928,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
 
   SmallString<128> TestModuleBC;
   int TestModuleFD;
-  error_code EC = sys::fs::unique_file("bugpoint.test-%%%%%%%.bc", TestModuleFD,
-                                       TestModuleBC);
+  error_code EC = sys::fs::createTemporaryFile("bugpoint.test", "bc",
+                                               TestModuleFD, TestModuleBC);
   if (EC) {
     errs() << BD.getToolName() << "Error making unique filename: "
            << EC.message() << "\n";
@@ -947,8 +947,8 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe,
   // Make the shared library
   SmallString<128> SafeModuleBC;
   int SafeModuleFD;
-  EC = sys::fs::unique_file("bugpoint.safe-%%%%%%%.bc", SafeModuleFD,
-                            SafeModuleBC);
+  EC = sys::fs::createTemporaryFile("bugpoint.safe", "bc", SafeModuleFD,
+                                    SafeModuleBC);
   if (EC) {
     errs() << BD.getToolName() << "Error making unique filename: "
            << EC.message() << "\n";
@@ -1022,8 +1022,8 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
 
   SmallString<128> TestModuleBC;
   int TestModuleFD;
-  error_code EC = sys::fs::unique_file("bugpoint.test-%%%%%%%.bc", TestModuleFD,
-                                       TestModuleBC);
+  error_code EC = sys::fs::createTemporaryFile("bugpoint.test", "bc",
+                                               TestModuleFD, TestModuleBC);
   if (EC) {
     errs() << getToolName() << "Error making unique filename: "
            << EC.message() << "\n";
@@ -1040,8 +1040,8 @@ bool BugDriver::debugCodeGenerator(std::string *Error) {
   // Make the shared library
   SmallString<128> SafeModuleBC;
   int SafeModuleFD;
-  EC = sys::fs::unique_file("bugpoint.safe-%%%%%%%.bc", SafeModuleFD,
-                            SafeModuleBC);
+  EC = sys::fs::createTemporaryFile("bugpoint.safe", "bc", SafeModuleFD,
+                                    SafeModuleBC);
   if (EC) {
     errs() << getToolName() << "Error making unique filename: "
            << EC.message() << "\n";

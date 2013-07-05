@@ -141,8 +141,8 @@ static std::string ProcessFailure(StringRef ProgPath, const char** Args,
   // Rerun the compiler, capturing any error messages to print them.
   SmallString<128> ErrorFilename;
   int ErrorFD;
-  error_code EC = sys::fs::unique_file("bugpoint.program_error_messages",
-                                       ErrorFD, ErrorFilename);
+  error_code EC = sys::fs::createTemporaryFile(
+      "bugpoint.program_error_messages", "", ErrorFD, ErrorFilename);
   if (EC) {
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);

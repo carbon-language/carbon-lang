@@ -504,10 +504,9 @@ bool DebugIR::updateExtension(StringRef NewExtension) {
 }
 
 void DebugIR::generateFilename(OwningPtr<int> &fd) {
-  StringRef FileModel("debug-ir-%s%s%s%s.ll");
   SmallVector<char, 16> PathVec;
   fd.reset(new int);
-  sys::fs::unique_file(FileModel, *fd, PathVec);
+  sys::fs::createTemporaryFile("debug-ir", "ll", *fd, PathVec);
   StringRef Path(PathVec.data(), PathVec.size());
   Filename = sys::path::filename(Path);
   sys::path::remove_filename(PathVec);

@@ -162,8 +162,7 @@ bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
   // make unique temp .o file to put generated object file
   SmallString<128> Filename;
   int FD;
-  error_code EC = sys::fs::unique_file("lto-llvm-%%%%%%%.o",
-                                       FD, Filename);
+  error_code EC = sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filename);
   if (EC) {
     errMsg = EC.message();
     return true;

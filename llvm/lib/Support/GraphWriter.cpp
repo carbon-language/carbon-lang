@@ -68,8 +68,7 @@ StringRef llvm::DOT::getColorString(unsigned ColorNumber) {
 std::string llvm::createGraphFilename(const Twine &Name, int &FD) {
   FD = -1;
   SmallString<128> Filename;
-  error_code EC = sys::fs::unique_file(Twine(Name) + "-%%%%%%%.dot",
-                                       FD, Filename);
+  error_code EC = sys::fs::createTemporaryFile(Name, "dot", FD, Filename);
   if (EC) {
     errs() << "Error: " << EC.message() << "\n";
     return "";

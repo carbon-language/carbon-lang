@@ -165,7 +165,7 @@ TEST_F(FileSystemTest, Unique) {
   int FileDescriptor;
   SmallString<64> TempPath;
   ASSERT_NO_ERROR(
-    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+      fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
 
   // The same file should return an identical unique id.
   uint64_t F1, F2;
@@ -177,8 +177,8 @@ TEST_F(FileSystemTest, Unique) {
   int FileDescriptor2;
   SmallString<64> TempPath2;
   ASSERT_NO_ERROR(
-    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor2, TempPath2));
-  
+      fs::createTemporaryFile("prefix", "temp", FileDescriptor2, TempPath2));
+
   uint64_t D;
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath2), D));
   ASSERT_NE(D, F1);
@@ -201,7 +201,7 @@ TEST_F(FileSystemTest, TempFiles) {
   int FileDescriptor;
   SmallString<64> TempPath;
   ASSERT_NO_ERROR(
-    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+      fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
 
   // Make sure it exists.
   bool TempFileExists;
@@ -211,7 +211,7 @@ TEST_F(FileSystemTest, TempFiles) {
   // Create another temp tile.
   int FD2;
   SmallString<64> TempPath2;
-  ASSERT_NO_ERROR(fs::unique_file("%%-%%-%%-%%.temp", FD2, TempPath2));
+  ASSERT_NO_ERROR(fs::createTemporaryFile("prefix", "temp", FD2, TempPath2));
   ASSERT_NE(TempPath.str(), TempPath2.str());
 
   fs::file_status A, B;
@@ -369,7 +369,7 @@ TEST_F(FileSystemTest, Permissions) {
   int FileDescriptor;
   SmallString<64> TempPath;
   ASSERT_NO_ERROR(
-    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+      fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
 
   // Mark file as read-only
   const fs::perms AllWrite = fs::owner_write|fs::group_write|fs::others_write;
@@ -396,7 +396,7 @@ TEST_F(FileSystemTest, FileMapping) {
   int FileDescriptor;
   SmallString<64> TempPath;
   ASSERT_NO_ERROR(
-    fs::unique_file("%%-%%-%%-%%.temp", FileDescriptor, TempPath));
+      fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
   // Map in temp file and add some content
   error_code EC;
   StringRef Val("hello there");
