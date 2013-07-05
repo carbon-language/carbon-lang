@@ -1082,8 +1082,14 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   PropertyIvarType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Private,
                                   (Expr *)0, true);
-      if (CompleteTypeErr)
+      if (RequireNonAbstractType(PropertyIvarLoc,
+                                 PropertyIvarType,
+                                 diag::err_abstract_type_in_decl,
+                                 AbstractSynthesizedIvarType)) {
+        Diag(property->getLocation(), diag::note_property_declare);
         Ivar->setInvalidDecl();
+      } else if (CompleteTypeErr)
+          Ivar->setInvalidDecl();
       ClassImpDecl->addDecl(Ivar);
       IDecl->makeDeclVisibleInContext(Ivar);
 

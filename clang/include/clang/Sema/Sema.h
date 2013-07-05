@@ -4835,6 +4835,7 @@ public:
     AbstractVariableType,
     AbstractFieldType,
     AbstractIvarType,
+    AbstractSynthesizedIvarType,
     AbstractArrayType
   };
 
