@@ -743,16 +743,14 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
     return false;
 
   LiveInterval &SrcInt = LIS->getInterval(SrcReg);
-  SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI).getRegSlot(true);
-  LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
-  assert(SrcLR != SrcInt.end() && "Live range not found!");
-  VNInfo *ValNo = SrcLR->valno;
+  SlotIndex CopyIdx = LIS->getInstructionIndex(CopyMI);
+  VNInfo *ValNo = LiveRangeQuery(SrcInt, CopyIdx).valueIn();
+  assert(ValNo && "CopyMI input register not live");
   if (ValNo->isPHIDef() || ValNo->isUnused())
     return false;
   MachineInstr *DefMI = LIS->getInstructionFromIndex(ValNo->def);
   if (!DefMI)
     return false;
-  assert(DefMI && "Defining instruction disappeared");
   if (DefMI->isCopyLike()) {
     IsDefCopy = true;
     return false;
