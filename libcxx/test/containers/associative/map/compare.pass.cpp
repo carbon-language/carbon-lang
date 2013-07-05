@@ -14,6 +14,7 @@
 // class map
 
 // http://llvm.org/bugs/show_bug.cgi?id=16538
+// http://llvm.org/bugs/show_bug.cgi?id=16549
 
 #include <map>
 
@@ -26,4 +27,6 @@ int
 main()
 {
     std::map<Key, int>::iterator it = std::map<Key, int>().find(Key(0));
+    std::pair<std::map<Key, int>::iterator, bool> result =
+                        std::map<Key, int>().insert(std::make_pair(Key(0), 0));
 }

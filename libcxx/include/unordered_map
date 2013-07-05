@@ -325,7 +325,7 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class _Key, class _Tp, class _Hash, bool = is_empty<_Hash>::value
+template <class _Key, class _Cp, class _Hash, bool = is_empty<_Hash>::value
 #if __has_feature(is_final)
                                          && !__is_final(_Hash)
 #endif
@@ -333,7 +333,6 @@ template <class _Key, class _Tp, class _Hash, bool = is_empty<_Hash>::value
 class __unordered_map_hasher
     : private _Hash
 {
-    typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_hasher()
@@ -347,18 +346,17 @@ public:
     const _Hash& hash_function() const _NOEXCEPT {return *this;}
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Cp& __x) const
-        {return static_cast<const _Hash&>(*this)(__x.first);}
+        {return static_cast<const _Hash&>(*this)(__x.__cc.first);}
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Key& __x) const
         {return static_cast<const _Hash&>(*this)(__x);}
 };
 
-template <class _Key, class _Tp, class _Hash>
-class __unordered_map_hasher<_Key, _Tp, _Hash, false>
+template <class _Key, class _Cp, class _Hash>
+class __unordered_map_hasher<_Key, _Cp, _Hash, false>
 {
     _Hash __hash_;
 
-    typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_hasher()
@@ -372,13 +370,13 @@ public:
     const _Hash& hash_function() const _NOEXCEPT {return __hash_;}
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Cp& __x) const
-        {return __hash_(__x.first);}
+        {return __hash_(__x.__cc.first);}
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(const _Key& __x) const
         {return __hash_(__x);}
 };
 
-template <class _Key, class _Tp, class _Pred, bool = is_empty<_Pred>::value
+template <class _Key, class _Cp, class _Pred, bool = is_empty<_Pred>::value
 #if __has_feature(is_final)
                                          && !__is_final(_Pred)
 #endif
@@ -386,7 +384,6 @@ template <class _Key, class _Tp, class _Pred, bool = is_empty<_Pred>::value
 class __unordered_map_equal
     : private _Pred
 {
-    typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_equal()
@@ -400,21 +397,20 @@ public:
     const _Pred& key_eq() const _NOEXCEPT {return *this;}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Cp& __y) const
-        {return static_cast<const _Pred&>(*this)(__x.first, __y.first);}
+        {return static_cast<const _Pred&>(*this)(__x.__cc.first, __y.__cc.first);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Key& __y) const
-        {return static_cast<const _Pred&>(*this)(__x.first, __y);}
+        {return static_cast<const _Pred&>(*this)(__x.__cc.first, __y);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
-        {return static_cast<const _Pred&>(*this)(__x, __y.first);}
+        {return static_cast<const _Pred&>(*this)(__x, __y.__cc.first);}
 };
 
-template <class _Key, class _Tp, class _Pred>
-class __unordered_map_equal<_Key, _Tp, _Pred, false>
+template <class _Key, class _Cp, class _Pred>
+class __unordered_map_equal<_Key, _Cp, _Pred, false>
 {
     _Pred __pred_;
 
-    typedef pair<const _Key, _Tp> _Cp;
 public:
     _LIBCPP_INLINE_VISIBILITY
     __unordered_map_equal()
@@ -428,13 +424,13 @@ public:
     const _Pred& key_eq() const _NOEXCEPT {return __pred_;}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Cp& __y) const
-        {return __pred_(__x.first, __y.first);}
+        {return __pred_(__x.__cc.first, __y.__cc.first);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Cp& __x, const _Key& __y) const
-        {return __pred_(__x.first, __y);}
+        {return __pred_(__x.__cc.first, __y);}
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Key& __x, const _Cp& __y) const
-        {return __pred_(__x, __y.first);}
+        {return __pred_(__x, __y.__cc.first);}
 };
 
 template <class _Alloc>
@@ -655,8 +651,6 @@ private:
             {__nc = std::move(__v.__nc); return *this;}
 
         ~__value_type() {__cc.~value_type();}
-
-        operator const value_type& () const {return __cc;}
     };
 #else
     struct __value_type
@@ -673,12 +667,10 @@ private:
         template <class _A0, class _A1>
         __value_type(const _A0& __a0, const _A1& __a1)
             : __cc(__a0, __a1) {}
-
-        operator const value_type& () const {return __cc;}
     };
 #endif
-    typedef __unordered_map_hasher<key_type, mapped_type, hasher>   __hasher;
-    typedef __unordered_map_equal<key_type, mapped_type, key_equal> __key_equal;
+    typedef __unordered_map_hasher<key_type, __value_type, hasher>   __hasher;
+    typedef __unordered_map_equal<key_type, __value_type, key_equal> __key_equal;
     typedef typename allocator_traits<allocator_type>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind_alloc<__value_type>
@@ -1321,8 +1313,6 @@ private:
             {__nc = std::move(__v.__nc); return *this;}
 
         ~__value_type() {__cc.~value_type();}
-
-        operator const value_type& () const {return __cc;}
     };
 #else
     struct __value_type
@@ -1339,12 +1329,10 @@ private:
         template <class _A0, class _A1>
         __value_type(const _A0& __a0, const _A1& __a1)
             : __cc(__a0, __a1) {}
-
-        operator const value_type& () const {return __cc;}
     };
 #endif
-    typedef __unordered_map_hasher<key_type, mapped_type, hasher>   __hasher;
-    typedef __unordered_map_equal<key_type, mapped_type, key_equal> __key_equal;
+    typedef __unordered_map_hasher<key_type, __value_type, hasher>   __hasher;
+    typedef __unordered_map_equal<key_type, __value_type, key_equal> __key_equal;
     typedef typename allocator_traits<allocator_type>::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind_alloc<__value_type>
