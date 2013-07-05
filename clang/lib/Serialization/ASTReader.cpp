@@ -210,6 +210,8 @@ bool PCHValidator::ReadTargetOptions(const TargetOptions &TargetOpts,
 namespace {
   typedef llvm::StringMap<std::pair<StringRef, bool /*IsUndef*/> >
     MacroDefinitionsMap;
+  typedef llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> >
+    DeclsMap;
 }
 
 /// \brief Collect the macro definitions provided by the given preprocessor
@@ -5812,15 +5814,13 @@ namespace {
   class DeclContextAllNamesVisitor {
     ASTReader &Reader;
     SmallVectorImpl<const DeclContext *> &Contexts;
-    llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> > &Decls;
+    DeclsMap &Decls;
     bool VisitAll;
 
   public:
     DeclContextAllNamesVisitor(ASTReader &Reader,
                                SmallVectorImpl<const DeclContext *> &Contexts,
-                               llvm::DenseMap<DeclarationName,
-                                           SmallVector<NamedDecl *, 8> > &Decls,
-                                bool VisitAll)
+                               DeclsMap &Decls, bool VisitAll)
       : Reader(Reader), Contexts(Contexts), Decls(Decls), VisitAll(VisitAll) { }
 
     static bool visit(ModuleFile &M, void *UserData) {
@@ -5871,8 +5871,6 @@ namespace {
 void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   if (!DC->hasExternalVisibleStorage())
     return;
-  typedef llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> >
-    DeclsMap;
   DeclsMap Decls;
 
   // Compute the declaration contexts we need to look into. Multiple such
