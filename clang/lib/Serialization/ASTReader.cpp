@@ -5871,7 +5871,9 @@ namespace {
 void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   if (!DC->hasExternalVisibleStorage())
     return;
-  llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> > Decls;
+  typedef llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> >
+    DeclsMap;
+  DeclsMap Decls;
 
   // Compute the declaration contexts we need to look into. Multiple such
   // declaration contexts occur when two declaration contexts from disjoint
@@ -5894,9 +5896,7 @@ void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   ModuleMgr.visit(&DeclContextAllNamesVisitor::visit, &Visitor);
   ++NumVisibleDeclContextsRead;
 
-  for (llvm::DenseMap<DeclarationName,
-                      SmallVector<NamedDecl *, 8> >::iterator
-         I = Decls.begin(), E = Decls.end(); I != E; ++I) {
+  for (DeclsMap::iterator I = Decls.begin(), E = Decls.end(); I != E; ++I) {
     SetExternalVisibleDeclsForName(DC, I->first, I->second);
   }
   const_cast<DeclContext *>(DC)->setHasExternalVisibleStorage(false);
@@ -7298,7 +7298,10 @@ void ASTReader::finishPendingActions() {
          !PendingMacroIDs.empty() || !PendingDeclContextInfos.empty()) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
-    llvm::DenseMap<IdentifierInfo *, SmallVector<Decl *, 2> > TopLevelDecls;
+    typedef llvm::DenseMap<IdentifierInfo *, SmallVector<Decl *, 2> >
+      TopLevelDeclsMap;
+    TopLevelDeclsMap TopLevelDecls;
+
     while (!PendingIdentifierInfos.empty()) {
       // FIXME: std::move
       IdentifierInfo *II = PendingIdentifierInfos.back().first;
@@ -7316,9 +7319,8 @@ void ASTReader::finishPendingActions() {
     PendingDeclChains.clear();
 
     // Make the most recent of the top-level declarations visible.
-    for (llvm::DenseMap<IdentifierInfo *, SmallVector<Decl *, 2> >::iterator
-           TLD = TopLevelDecls.begin(), TLDEnd = TopLevelDecls.end();
-         TLD != TLDEnd; ++TLD) {
+    for (TopLevelDeclsMap::iterator TLD = TopLevelDecls.begin(),
+           TLDEnd = TopLevelDecls.end(); TLD != TLDEnd; ++TLD) {
       IdentifierInfo *II = TLD->first;
       for (unsigned I = 0, N = TLD->second.size(); I != N; ++I) {
         pushExternalDeclIntoScope(cast<NamedDecl>(TLD->second[I]), II);
