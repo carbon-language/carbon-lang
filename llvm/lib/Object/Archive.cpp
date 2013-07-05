@@ -294,7 +294,6 @@ Archive::symbol_iterator Archive::end_symbols() const {
   uint32_t symbol_count = 0;
   if (kind() == K_GNU) {
     symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
-    buf += sizeof(uint32_t) + (symbol_count * (sizeof(uint32_t)));
   } else if (kind() == K_BSD) {
     llvm_unreachable("BSD archive format is not supported");
   } else {

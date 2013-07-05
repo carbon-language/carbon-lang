@@ -868,7 +868,6 @@ void ExtAddrMode::print(raw_ostream &OS) const {
     OS << (NeedPlus ? " + " : "")
        << Scale << "*";
     WriteAsOperand(OS, ScaledReg, /*PrintType=*/false);
-    NeedPlus = true;
   }
 
   OS << ']';
