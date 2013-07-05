@@ -14,6 +14,7 @@
 #include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/IR/Function.h"
 
 using namespace llvm;
@@ -263,6 +264,18 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+void SystemZFrameLowering::
+processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                    RegScavenger *RS) const {
+  MachineFrameInfo *MFFrame = MF.getFrameInfo();
+  uint64_t MaxReach = (MFFrame->estimateStackSize(MF) +
+                       SystemZMC::CallFrameSize * 2);
+  if (!isUInt<12>(MaxReach))
+    // We may need a register scavenging slot if some parts of the frame
+    // are outside the reach of an unsigned 12-bit displacement.
+    RS->addScavengingFrameIndex(MFFrame->CreateStackObject(8, 8, false));
+}
+
 // Emit instructions before MBBI (in MBB) to add NumBytes to Reg.
 static void emitIncrement(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator &MBBI,
@@ -469,9 +482,6 @@ getAllocatedStackSize(const MachineFunction &MF) const {
   // Start with the size of the local variables and spill slots.
   uint64_t StackSize = MFFrame->getStackSize();
 
-  // Include space for an emergency spill slot, if one might be needed.
-  StackSize += getEmergencySpillSlotSize(MF);
-
   // We need to allocate the ABI-defined 160-byte base area whenever
   // we allocate stack space for our own use and whenever we call another
   // function.
@@ -479,19 +489,6 @@ getAllocatedStackSize(const MachineFunction &MF) const {
     StackSize += SystemZMC::CallFrameSize;
 
   return StackSize;
-}
-
-unsigned SystemZFrameLowering::
-getEmergencySpillSlotSize(const MachineFunction &MF) const {
-  const MachineFrameInfo *MFFrame = MF.getFrameInfo();
-  uint64_t MaxReach = MFFrame->getStackSize() + SystemZMC::CallFrameSize * 2;
-  return isUInt<12>(MaxReach) ? 0 : 8;
-}
-
-unsigned SystemZFrameLowering::
-getEmergencySpillSlotOffset(const MachineFunction &MF) const {
-  assert(getEmergencySpillSlotSize(MF) && "No emergency spill slot");
-  return SystemZMC::CallFrameSize;
 }
 
 bool

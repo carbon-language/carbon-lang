@@ -52,11 +52,6 @@ public:
     const LLVM_OVERRIDE;
   virtual BitVector getReservedRegs(const MachineFunction &MF)
     const LLVM_OVERRIDE;
-  virtual bool saveScavengerRegister(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator SaveMBBI,
-                                     MachineBasicBlock::iterator &UseMBBI,
-                                     const TargetRegisterClass *RC,
-                                     unsigned Reg) const LLVM_OVERRIDE;
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                    int SPAdj, unsigned FIOperandNum,
                                    RegScavenger *RS) const LLVM_OVERRIDE;

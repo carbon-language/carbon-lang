@@ -88,6 +88,11 @@ public:
   ///
   int getOffsetOfLocalArea() const { return LocalAreaOffset; }
 
+  /// isFPCloseToIncomingSP - Return true if the frame pointer is close to
+  /// the incoming stack pointer, false if it is close to the post-prologue
+  /// stack pointer.
+  virtual bool isFPCloseToIncomingSP() const { return true; }
+
   /// getCalleeSavedSpillSlots - This method returns a pointer to an array of
   /// pairs, that contains an entry for each callee saved register that must be
   /// spilled to a particular stack location if it is spilled.

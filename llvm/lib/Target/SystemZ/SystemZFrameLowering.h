@@ -30,6 +30,7 @@ public:
                        const SystemZSubtarget &sti);
 
   // Override TargetFrameLowering.
+  virtual bool isFPCloseToIncomingSP() const LLVM_OVERRIDE { return false; }
   virtual const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries) const
     LLVM_OVERRIDE;
   virtual void
@@ -47,6 +48,8 @@ public:
                                 const std::vector<CalleeSavedInfo> &CSI,
                                 const TargetRegisterInfo *TRI) const
     LLVM_OVERRIDE;
+  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                                   RegScavenger *RS) const;
   virtual void emitPrologue(MachineFunction &MF) const LLVM_OVERRIDE;
   virtual void emitEpilogue(MachineFunction &MF,
                             MachineBasicBlock &MBB) const LLVM_OVERRIDE;
@@ -63,16 +66,6 @@ public:
 
   // Return the number of bytes in the callee-allocated part of the frame.
   uint64_t getAllocatedStackSize(const MachineFunction &MF) const;
-
-  // Return the number of frame bytes that should be reserved for
-  // an emergency spill slot, for use by the register scaveneger.
-  // Return 0 if register scaveging won't be needed.
-  unsigned getEmergencySpillSlotSize(const MachineFunction &MF) const;
-
-  // Return the offset from the frame pointer of the emergency spill slot,
-  // which always fits within a 12-bit unsigned displacement field.
-  // Only valid if getEmergencySpillSlotSize(MF) returns nonzero.
-  unsigned getEmergencySpillSlotOffset(const MachineFunction &MF) const;
 
   // Return the byte offset from the incoming stack pointer of Reg's
   // ABI-defined save slot.  Return 0 if no slot is defined for Reg.
