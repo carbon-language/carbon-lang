@@ -591,7 +591,8 @@ private:
         NameFound = true;
       } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
         Current.Type =
-            determineStarAmpUsage(Current, Contexts.back().IsExpression);
+            determineStarAmpUsage(Current, Contexts.back().CanBeExpression &&
+                                               Contexts.back().IsExpression);
       } else if (Current.isOneOf(tok::minus, tok::plus, tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
       } else if (Current.isOneOf(tok::minusminus, tok::plusplus)) {

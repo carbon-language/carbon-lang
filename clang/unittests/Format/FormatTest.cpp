@@ -3378,8 +3378,12 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 
   verifyIndependentOfContext("A = new SomeType *[Length];");
   verifyIndependentOfContext("A = new SomeType *[Length]();");
+  verifyIndependentOfContext("T **t = new T *;");
+  verifyIndependentOfContext("T **t = new T *();");
   verifyGoogleFormat("A = new SomeType* [Length]();");
   verifyGoogleFormat("A = new SomeType* [Length];");
+  verifyGoogleFormat("T** t = new T*;");
+  verifyGoogleFormat("T** t = new T*();");
 
   FormatStyle PointerLeft = getLLVMStyle();
   PointerLeft.PointerBindsToType = true;
