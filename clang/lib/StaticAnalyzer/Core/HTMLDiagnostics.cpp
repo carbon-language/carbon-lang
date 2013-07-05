@@ -247,8 +247,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   SmallString<128> Model, ResultPath;
   llvm::sys::path::append(Model, Directory, "report-%%%%%%.html");
 
-  if (llvm::error_code EC =
-          llvm::sys::fs::unique_file(Model.str(), FD, ResultPath)) {
+  if (llvm::error_code EC = llvm::sys::fs::unique_file(
+          Model.str(), FD, ResultPath, false,
+          llvm::sys::fs::all_read | llvm::sys::fs::all_write)) {
     llvm::errs() << "warning: could not create file in '" << Directory
                  << "': " << EC.message() << '\n';
     return;
