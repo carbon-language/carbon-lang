@@ -548,9 +548,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
         TempPath.str(), fd, TempPath, /*makeAbsolute=*/ false, 0664);
 
     if (CreateMissingDirectories &&
-        (EC == llvm::errc::no_such_file_or_directory ||
-         EC == llvm::windows_error::file_not_found ||
-         EC == llvm::windows_error::path_not_found)) {
+        EC == llvm::errc::no_such_file_or_directory) {
       StringRef Parent = llvm::sys::path::parent_path(OutputPath);
       EC = llvm::sys::fs::create_directories(Parent);
       if (!EC) {
