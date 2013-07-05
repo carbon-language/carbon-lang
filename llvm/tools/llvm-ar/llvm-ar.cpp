@@ -665,8 +665,7 @@ int main(int argc, char **argv) {
   ArchiveOperation Operation = parseCommandLine();
 
   // Create or open the archive object.
-  bool Exists;
-  if (llvm::sys::fs::exists(ArchiveName, Exists) || !Exists) {
+  if (!llvm::sys::fs::exists(ArchiveName)) {
     // Produce a warning if we should and we're creating the archive
     if (!Create)
       errs() << argv[0] << ": creating " << ArchiveName << "\n";
