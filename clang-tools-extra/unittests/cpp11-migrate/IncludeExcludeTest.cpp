@@ -54,7 +54,7 @@ struct InputFiles {
     int FD;
 
     ASSERT_NO_ERROR(
-        llvm::sys::fs::unique_file("include-%%%%%%", FD, Path));
+        llvm::sys::fs::createTemporaryFile("include", "", FD, Path));
     IncludeDataPath = Path.str();
     {
       llvm::raw_fd_ostream IncludeDataFile(FD, true);
@@ -64,7 +64,7 @@ struct InputFiles {
     }
 
     ASSERT_NO_ERROR(
-        llvm::sys::fs::unique_file("exclude-%%%%%%", FD, Path));
+        llvm::sys::fs::createTemporaryFile("exclude", "", FD, Path));
     ExcludeDataPath = Path.str();
     {
       llvm::raw_fd_ostream ExcludeDataFile(FD, true);
