@@ -270,10 +270,14 @@ processFunctionBeforeFrameFinalized(MachineFunction &MF,
   MachineFrameInfo *MFFrame = MF.getFrameInfo();
   uint64_t MaxReach = (MFFrame->estimateStackSize(MF) +
                        SystemZMC::CallFrameSize * 2);
-  if (!isUInt<12>(MaxReach))
-    // We may need a register scavenging slot if some parts of the frame
+  if (!isUInt<12>(MaxReach)) {
+    // We may need register scavenging slots if some parts of the frame
     // are outside the reach of an unsigned 12-bit displacement.
+    // Create 2 for the case where both addresses in an MVC are
+    // out of range.
     RS->addScavengingFrameIndex(MFFrame->CreateStackObject(8, 8, false));
+    RS->addScavengingFrameIndex(MFFrame->CreateStackObject(8, 8, false));
+  }
 }
 
 // Emit instructions before MBBI (in MBB) to add NumBytes to Reg.

@@ -107,9 +107,9 @@ define void @f3(i32 *%ptr) {
   ret void
 }
 
-; The largest frame for which the LMG is in range.  This frame has an
-; emergency spill slot at 160(%r11), so create a frame of size 524192
-; by allocating (524192 - 168) / 8 = 65503 doublewords.
+; The largest frame for which the LMG is in range.  This frame has two
+; emergency spill slots at 160(%r11), so create a frame of size 524192
+; by allocating (524192 - 176) / 8 = 65502 doublewords.
 define void @f4(i64 %x) {
 ; CHECK: f4:
 ; CHECK: stmg %r11, %r15, 88(%r15)
@@ -119,12 +119,12 @@ define void @f4(i64 %x) {
 ; CHECK: .cfi_def_cfa_offset 524352
 ; CHECK: lgr %r11, %r15
 ; CHECK: .cfi_def_cfa_register %r11
-; CHECK: stg %r2, 168(%r11)
+; CHECK: stg %r2, 176(%r11)
 ; CHECK-NOT: ag
 ; CHECK: lmg %r11, %r15, 524280(%r11)
 ; CHECK: br %r14
-  %y = alloca [65503 x i64], align 8
-  %ptr = getelementptr inbounds [65503 x i64]* %y, i64 0, i64 0
+  %y = alloca [65502 x i64], align 8
+  %ptr = getelementptr inbounds [65502 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %ptr
   ret void
 }
@@ -139,12 +139,12 @@ define void @f5(i64 %x) {
 ; CHECK: .cfi_def_cfa_offset 524360
 ; CHECK: lgr %r11, %r15
 ; CHECK: .cfi_def_cfa_register %r11
-; CHECK: stg %r2, 168(%r11)
+; CHECK: stg %r2, 176(%r11)
 ; CHECK: aghi %r11, 8
 ; CHECK: lmg %r11, %r15, 524280(%r11)
 ; CHECK: br %r14
-  %y = alloca [65504 x i64], align 8
-  %ptr = getelementptr inbounds [65504 x i64]* %y, i64 0, i64 0
+  %y = alloca [65503 x i64], align 8
+  %ptr = getelementptr inbounds [65503 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %ptr
   ret void
 }

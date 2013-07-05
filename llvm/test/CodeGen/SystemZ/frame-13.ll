@@ -17,9 +17,9 @@
 ; First check the highest in-range offset after conversion, which is 4092
 ; for word-addressing instructions like MVHI.
 ;
-; The last in-range doubleword offset is 4088.  Since the frame has an
-; emergency spill slot at 160(%r15), the amount that we need to allocate
-; in order to put another object at offset 4088 is (4088 - 168) / 4 = 980
+; The last in-range doubleword offset is 4088.  Since the frame has two
+; emergency spill slots at 160(%r15), the amount that we need to allocate
+; in order to put another object at offset 4088 is (4088 - 176) / 4 = 978
 ; words.
 define void @f1() {
 ; CHECK-NOFP: f1:
@@ -29,10 +29,10 @@ define void @f1() {
 ; CHECK-FP: f1:
 ; CHECK-FP: mvhi 4092(%r11), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [980 x i32], align 8
-  %region2 = alloca [980 x i32], align 8
-  %ptr1 = getelementptr inbounds [980 x i32]* %region1, i64 0, i64 1
-  %ptr2 = getelementptr inbounds [980 x i32]* %region2, i64 0, i64 1
+  %region1 = alloca [978 x i32], align 8
+  %region2 = alloca [978 x i32], align 8
+  %ptr1 = getelementptr inbounds [978 x i32]* %region1, i64 0, i64 1
+  %ptr2 = getelementptr inbounds [978 x i32]* %region2, i64 0, i64 1
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -49,10 +49,10 @@ define void @f2() {
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: mvhi 0(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [980 x i32], align 8
-  %region2 = alloca [980 x i32], align 8
-  %ptr1 = getelementptr inbounds [980 x i32]* %region1, i64 0, i64 2
-  %ptr2 = getelementptr inbounds [980 x i32]* %region2, i64 0, i64 2
+  %region1 = alloca [978 x i32], align 8
+  %region2 = alloca [978 x i32], align 8
+  %ptr1 = getelementptr inbounds [978 x i32]* %region1, i64 0, i64 2
+  %ptr2 = getelementptr inbounds [978 x i32]* %region2, i64 0, i64 2
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -69,10 +69,10 @@ define void @f3() {
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: mvhi 4(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [980 x i32], align 8
-  %region2 = alloca [980 x i32], align 8
-  %ptr1 = getelementptr inbounds [980 x i32]* %region1, i64 0, i64 3
-  %ptr2 = getelementptr inbounds [980 x i32]* %region2, i64 0, i64 3
+  %region1 = alloca [978 x i32], align 8
+  %region2 = alloca [978 x i32], align 8
+  %ptr1 = getelementptr inbounds [978 x i32]* %region1, i64 0, i64 3
+  %ptr2 = getelementptr inbounds [978 x i32]* %region2, i64 0, i64 3
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -89,10 +89,10 @@ define void @f4() {
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: mvhi 4092(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [2004 x i32], align 8
-  %region2 = alloca [2004 x i32], align 8
-  %ptr1 = getelementptr inbounds [2004 x i32]* %region1, i64 0, i64 1
-  %ptr2 = getelementptr inbounds [2004 x i32]* %region2, i64 0, i64 1
+  %region1 = alloca [2002 x i32], align 8
+  %region2 = alloca [2002 x i32], align 8
+  %ptr1 = getelementptr inbounds [2002 x i32]* %region1, i64 0, i64 1
+  %ptr2 = getelementptr inbounds [2002 x i32]* %region2, i64 0, i64 1
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -109,10 +109,10 @@ define void @f5() {
 ; CHECK-FP: lay %r1, 8192(%r11)
 ; CHECK-FP: mvhi 0(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [2004 x i32], align 8
-  %region2 = alloca [2004 x i32], align 8
-  %ptr1 = getelementptr inbounds [2004 x i32]* %region1, i64 0, i64 2
-  %ptr2 = getelementptr inbounds [2004 x i32]* %region2, i64 0, i64 2
+  %region1 = alloca [2002 x i32], align 8
+  %region2 = alloca [2002 x i32], align 8
+  %ptr1 = getelementptr inbounds [2002 x i32]* %region1, i64 0, i64 2
+  %ptr2 = getelementptr inbounds [2002 x i32]* %region2, i64 0, i64 2
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -129,17 +129,17 @@ define void @f6() {
 ; CHECK-FP: lay %r1, 8192(%r11)
 ; CHECK-FP: mvhi 4(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [2004 x i32], align 8
-  %region2 = alloca [2004 x i32], align 8
-  %ptr1 = getelementptr inbounds [2004 x i32]* %region1, i64 0, i64 3
-  %ptr2 = getelementptr inbounds [2004 x i32]* %region2, i64 0, i64 3
+  %region1 = alloca [2002 x i32], align 8
+  %region2 = alloca [2002 x i32], align 8
+  %ptr1 = getelementptr inbounds [2002 x i32]* %region1, i64 0, i64 3
+  %ptr2 = getelementptr inbounds [2002 x i32]* %region2, i64 0, i64 3
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
 }
 
 ; Now try an offset of 4092 from the start of the object, with the object
-; being at offset 8192.  This time we need objects of (8192 - 168) / 4 = 2006
+; being at offset 8192.  This time we need objects of (8192 - 176) / 4 = 2004
 ; words.
 define void @f7() {
 ; CHECK-NOFP: f7:
@@ -151,10 +151,10 @@ define void @f7() {
 ; CHECK-FP: lay %r1, 8192(%r11)
 ; CHECK-FP: mvhi 4092(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [2006 x i32], align 8
-  %region2 = alloca [2006 x i32], align 8
-  %ptr1 = getelementptr inbounds [2006 x i32]* %region1, i64 0, i64 1023
-  %ptr2 = getelementptr inbounds [2006 x i32]* %region2, i64 0, i64 1023
+  %region1 = alloca [2004 x i32], align 8
+  %region2 = alloca [2004 x i32], align 8
+  %ptr1 = getelementptr inbounds [2004 x i32]* %region1, i64 0, i64 1023
+  %ptr2 = getelementptr inbounds [2004 x i32]* %region2, i64 0, i64 1023
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -172,10 +172,10 @@ define void @f8() {
 ; CHECK-FP: lay %r1, 12288(%r11)
 ; CHECK-FP: mvhi 4(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [2008 x i32], align 8
-  %region2 = alloca [2008 x i32], align 8
-  %ptr1 = getelementptr inbounds [2008 x i32]* %region1, i64 0, i64 1023
-  %ptr2 = getelementptr inbounds [2008 x i32]* %region2, i64 0, i64 1023
+  %region1 = alloca [2006 x i32], align 8
+  %region2 = alloca [2006 x i32], align 8
+  %ptr1 = getelementptr inbounds [2006 x i32]* %region1, i64 0, i64 1023
+  %ptr2 = getelementptr inbounds [2006 x i32]* %region2, i64 0, i64 1023
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
@@ -194,41 +194,41 @@ define void @f9() {
 ; CHECK-FP: lay %r1, 12296(%r11)
 ; CHECK-FP: mvhi 0(%r1), 42
 ; CHECK-FP: br %r14
-  %region1 = alloca [2008 x i32], align 8
-  %region2 = alloca [2008 x i32], align 8
-  %ptr1 = getelementptr inbounds [2008 x i32]* %region1, i64 0, i64 1024
-  %ptr2 = getelementptr inbounds [2008 x i32]* %region2, i64 0, i64 1024
+  %region1 = alloca [2006 x i32], align 8
+  %region2 = alloca [2006 x i32], align 8
+  %ptr1 = getelementptr inbounds [2006 x i32]* %region1, i64 0, i64 1024
+  %ptr2 = getelementptr inbounds [2006 x i32]* %region2, i64 0, i64 1024
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   ret void
 }
 
-; Repeat f2 in a case that needs the emergency spill slot (because all
+; Repeat f2 in a case that needs the emergency spill slots (because all
 ; call-clobbered registers are live and no call-saved ones have been
 ; allocated).
 define void @f10(i32 *%vptr) {
 ; CHECK-NOFP: f10:
-; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], 160(%r15)
+; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lay [[REGISTER]], 4096(%r15)
 ; CHECK-NOFP: mvhi 0([[REGISTER]]), 42
-; CHECK-NOFP: lg [[REGISTER]], 160(%r15)
+; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: br %r14
 ;
 ; CHECK-FP: f10:
-; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], 160(%r11)
+; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lay [[REGISTER]], 4096(%r11)
 ; CHECK-FP: mvhi 0([[REGISTER]]), 42
-; CHECK-FP: lg [[REGISTER]], 160(%r11)
+; CHECK-FP: lg [[REGISTER]], [[OFFSET]](%r11)
 ; CHECK-FP: br %r14
   %i0 = load volatile i32 *%vptr
   %i1 = load volatile i32 *%vptr
   %i3 = load volatile i32 *%vptr
   %i4 = load volatile i32 *%vptr
   %i5 = load volatile i32 *%vptr
-  %region1 = alloca [980 x i32], align 8
-  %region2 = alloca [980 x i32], align 8
-  %ptr1 = getelementptr inbounds [980 x i32]* %region1, i64 0, i64 2
-  %ptr2 = getelementptr inbounds [980 x i32]* %region2, i64 0, i64 2
+  %region1 = alloca [978 x i32], align 8
+  %region2 = alloca [978 x i32], align 8
+  %ptr1 = getelementptr inbounds [978 x i32]* %region1, i64 0, i64 2
+  %ptr2 = getelementptr inbounds [978 x i32]* %region2, i64 0, i64 2
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   store volatile i32 %i0, i32 *%vptr
@@ -239,26 +239,26 @@ define void @f10(i32 *%vptr) {
   ret void
 }
 
-; And again with maximum register pressure.  The only spill slot that the
-; NOFP case needs is the emergency one, so the offsets are the same as for f2.
+; And again with maximum register pressure.  The only spill slots that the
+; NOFP case needs are the emergency ones, so the offsets are the same as for f2.
 ; However, the FP case uses %r11 as the frame pointer and must therefore
 ; spill a second register.  This leads to an extra displacement of 8.
 define void @f11(i32 *%vptr) {
 ; CHECK-NOFP: f11:
 ; CHECK-NOFP: stmg %r6, %r15,
-; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], 160(%r15)
+; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lay [[REGISTER]], 4096(%r15)
 ; CHECK-NOFP: mvhi 0([[REGISTER]]), 42
-; CHECK-NOFP: lg [[REGISTER]], 160(%r15)
+; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: lmg %r6, %r15,
 ; CHECK-NOFP: br %r14
 ;
 ; CHECK-FP: f11:
 ; CHECK-FP: stmg %r6, %r15,
-; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], 160(%r11)
+; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lay [[REGISTER]], 4096(%r11)
 ; CHECK-FP: mvhi 8([[REGISTER]]), 42
-; CHECK-FP: lg [[REGISTER]], 160(%r11)
+; CHECK-FP: lg [[REGISTER]], [[OFFSET]](%r11)
 ; CHECK-FP: lmg %r6, %r15,
 ; CHECK-FP: br %r14
   %i0 = load volatile i32 *%vptr
@@ -275,10 +275,10 @@ define void @f11(i32 *%vptr) {
   %i12 = load volatile i32 *%vptr
   %i13 = load volatile i32 *%vptr
   %i14 = load volatile i32 *%vptr
-  %region1 = alloca [980 x i32], align 8
-  %region2 = alloca [980 x i32], align 8
-  %ptr1 = getelementptr inbounds [980 x i32]* %region1, i64 0, i64 2
-  %ptr2 = getelementptr inbounds [980 x i32]* %region2, i64 0, i64 2
+  %region1 = alloca [978 x i32], align 8
+  %region2 = alloca [978 x i32], align 8
+  %ptr1 = getelementptr inbounds [978 x i32]* %region1, i64 0, i64 2
+  %ptr2 = getelementptr inbounds [978 x i32]* %region2, i64 0, i64 2
   store volatile i32 42, i32 *%ptr1
   store volatile i32 42, i32 *%ptr2
   store volatile i32 %i0, i32 *%vptr
