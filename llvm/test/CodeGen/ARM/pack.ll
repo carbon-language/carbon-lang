@@ -78,11 +78,24 @@ define i32 @test7(i32 %X, i32 %Y) {
 	ret i32 %tmp57
 }
 
+; Arithmetic and logic right shift does not have the same semantics if shifting
+; by more than 16 in this context.
+
 ; CHECK: test8
-; CHECK: pkhtb   r0, r0, r1, asr #22
+; CHECK-NOT: pkhtb   r0, r0, r1, asr #22
 define i32 @test8(i32 %X, i32 %Y) {
 	%tmp1 = and i32 %X, -65536
 	%tmp3 = lshr i32 %Y, 22
 	%tmp57 = or i32 %tmp3, %tmp1
 	ret i32 %tmp57
+}
+
+; CHECK: test9:
+; CHECK: pkhtb r0, r0, r1, asr #16
+define i32 @test9(i32 %src1, i32 %src2) {
+entry:
+    %tmp = and i32 %src1, -65536
+    %tmp2 = lshr i32 %src2, 16
+    %tmp3 = or i32 %tmp, %tmp2
+    ret i32 %tmp3
 }

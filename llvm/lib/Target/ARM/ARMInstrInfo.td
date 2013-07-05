@@ -4011,9 +4011,11 @@ def PKHTB : APKHI<0b01101000, 1, (outs GPRnopc:$Rd),
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
+// We also can not replace a srl (17..31) by an arithmetic shift we would use in
+// pkhtb src1, src2, asr (17..31).
 def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
-                   (srl GPRnopc:$src2, imm16_31:$sh)),
-               (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm16_31:$sh)>;
+                   (srl GPRnopc:$src2, imm16:$sh)),
+               (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm16:$sh)>;
 def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
                    (and (srl GPRnopc:$src2, imm1_15:$sh), 0xFFFF)),
                (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm1_15:$sh)>;
