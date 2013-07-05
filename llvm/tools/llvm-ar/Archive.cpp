@@ -125,13 +125,6 @@ bool ArchiveMember::replaceWith(StringRef newFile, std::string* ErrMsg) {
       return true;
   }
 
-  // Determine what kind of file it is.
-  if (sys::fs::identify_magic(StringRef(signature, 4)) ==
-      sys::fs::file_magic::bitcode)
-    flags |= BitcodeFlag;
-  else
-    flags &= ~BitcodeFlag;
-
   return false;
 }
 

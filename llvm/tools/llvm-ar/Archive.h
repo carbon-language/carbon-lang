@@ -52,7 +52,6 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     enum Flags {
       SVR4SymbolTableFlag = 1,     ///< Member is a SVR4 symbol table
       BSD4SymbolTableFlag = 2,     ///< Member is a BSD4 symbol table
-      BitcodeFlag         = 4,     ///< Member is bitcode
       HasLongFilenameFlag = 8,     ///< Member uses the long filename syntax
       StringTableFlag     = 16     ///< Member is an ar(1) format string table
     };
@@ -120,10 +119,6 @@ class ArchiveMember : public ilist_node<ArchiveMember> {
     /// @returns true iff the archive member is the ar(1) string table
     /// @brief Determine if this member is the ar(1) string table.
     bool isStringTable() const { return flags&StringTableFlag; }
-
-    /// @returns true iff the archive member is a bitcode file.
-    /// @brief Determine if this member is a bitcode file.
-    bool isBitcode() const { return flags&BitcodeFlag; }
 
     /// Long filenames are an artifact of the ar(1) file format which allows
     /// up to sixteen characters in its header and doesn't allow a path

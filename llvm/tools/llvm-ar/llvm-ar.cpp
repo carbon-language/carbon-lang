@@ -99,7 +99,6 @@ bool AddBefore = false;          ///< 'b' modifier
 bool Create = false;             ///< 'c' modifier
 bool TruncateNames = false;      ///< 'f' modifier
 bool InsertBefore = false;       ///< 'i' modifier
-bool DontSkipBitcode = false;    ///< 'k' modifier
 bool UseCount = false;           ///< 'N' modifier
 bool OriginalDates = false;      ///< 'o' modifier
 bool FullPath = false;           ///< 'P' modifier
@@ -219,7 +218,6 @@ ArchiveOperation parseCommandLine() {
     case 'x': ++NumOperations; Operation = Extract; break;
     case 'c': Create = true; break;
     case 'f': TruncateNames = true; break;
-    case 'k': DontSkipBitcode = true; break;
     case 'l': /* accepted but unused */ break;
     case 'o': OriginalDates = true; break;
     case 's': break; // Ignore for now.
@@ -323,8 +321,7 @@ bool doPrint(std::string* ErrMsg) {
         const char* data = reinterpret_cast<const char*>(I->getData());
 
         // Skip things that don't make sense to print
-        if (I->isSVR4SymbolTable() ||
-            I->isBSD4SymbolTable() || (!DontSkipBitcode && I->isBitcode()))
+        if (I->isSVR4SymbolTable() || I->isBSD4SymbolTable())
           continue;
 
         if (Verbose)
@@ -373,10 +370,7 @@ doDisplayTable(std::string* ErrMsg) {
       if (Verbose) {
         // FIXME: Output should be this format:
         // Zrw-r--r--  500/ 500    525 Nov  8 17:42 2004 Makefile
-        if (I->isBitcode())
-          outs() << "b";
-        else
-          outs() << " ";
+        outs() << " ";
         unsigned mode = I->getMode();
         printMode((mode >> 6) & 007);
         printMode((mode >> 3) & 007);

@@ -183,13 +183,6 @@ bool Archive::addFileBefore(StringRef filePath, iterator where,
   sys::fs::file_magic type;
   if (sys::fs::identify_magic(mbr->path, type))
     type = sys::fs::file_magic::unknown;
-  switch (type) {
-    case sys::fs::file_magic::bitcode:
-      flags |= ArchiveMember::BitcodeFlag;
-      break;
-    default:
-      break;
-  }
   mbr->flags = flags;
   members.insert(where,mbr);
   return false;

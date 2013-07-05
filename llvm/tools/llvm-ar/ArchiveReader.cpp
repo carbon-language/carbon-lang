@@ -162,13 +162,6 @@ Archive::parseMemberHeader(const char*& At, const char* End, std::string* error)
       break;
   }
 
-  // Determine if this is a bitcode file
-  if (sys::fs::identify_magic(StringRef(At, 4)) ==
-      sys::fs::file_magic::bitcode)
-    flags |= ArchiveMember::BitcodeFlag;
-  else
-    flags &= ~ArchiveMember::BitcodeFlag;
-
   // Instantiate the ArchiveMember to be filled
   ArchiveMember* member = new ArchiveMember(this);
 
