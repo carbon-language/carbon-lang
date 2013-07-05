@@ -4017,6 +4017,9 @@ def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
                    (srl GPRnopc:$src2, imm16:$sh)),
                (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm16:$sh)>;
 def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
+                   (sra GPRnopc:$src2, imm16_31:$sh)),
+               (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm16_31:$sh)>;
+def : ARMV6Pat<(or (and GPRnopc:$src1, 0xFFFF0000),
                    (and (srl GPRnopc:$src2, imm1_15:$sh), 0xFFFF)),
                (PKHTB GPRnopc:$src1, GPRnopc:$src2, imm1_15:$sh)>;
 

@@ -99,3 +99,13 @@ entry:
     %tmp3 = or i32 %tmp, %tmp2
     ret i32 %tmp3
 }
+
+; CHECK: test10:
+; CHECK: pkhtb r0, r0, r1, asr #17
+define i32 @test10(i32 %src1, i32 %src2) {
+entry:
+    %tmp = and i32 %src1, -65536
+    %tmp2 = ashr i32 %src2, 17
+    %tmp3 = or i32 %tmp, %tmp2
+    ret i32 %tmp3
+}
