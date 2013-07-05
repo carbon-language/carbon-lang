@@ -8336,15 +8336,15 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
                                       SourceLocation OpLoc) {
   if (const BuiltinType *PTy = OrigOp.get()->getType()->getAsPlaceholderType()){
     if (PTy->getKind() == BuiltinType::Overload) {
-      if (!isa<OverloadExpr>(OrigOp.get()->IgnoreParens())) {
-        assert(cast<UnaryOperator>(OrigOp.get()->IgnoreParens())->getOpcode()
-                 == UO_AddrOf);
+      Expr *E = OrigOp.get()->IgnoreParens();
+      if (!isa<OverloadExpr>(E)) {
+        assert(cast<UnaryOperator>(E)->getOpcode() == UO_AddrOf);
         S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof_addrof_function)
           << OrigOp.get()->getSourceRange();
         return QualType();
       }
 
-      OverloadExpr *Ovl = cast<OverloadExpr>(OrigOp.get()->IgnoreParens());
+      OverloadExpr *Ovl = cast<OverloadExpr>(E);
       if (isa<UnresolvedMemberExpr>(Ovl))
         if (!S.ResolveSingleFunctionTemplateSpecialization(Ovl)) {
           S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
