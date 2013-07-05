@@ -642,6 +642,21 @@ doReplaceOrInsert(std::string* ErrMsg) {
   return false;
 }
 
+bool shouldCreateArchive(ArchiveOperation Op) {
+  switch (Op) {
+  case Print:
+  case Delete:
+  case Move:
+  case DisplayTable:
+  case Extract:
+    return false;
+
+  case QuickAppend:
+  case ReplaceOrInsert:
+    return true;
+  }
+}
+
 // main - main program for llvm-ar .. see comments in the code
 int main(int argc, char **argv) {
   program_name = argv[0];
@@ -665,13 +680,15 @@ int main(int argc, char **argv) {
   ArchiveOperation Operation = parseCommandLine();
 
   // Create or open the archive object.
-  if (!llvm::sys::fs::exists(ArchiveName)) {
+  if (shouldCreateArchive(Operation) && !llvm::sys::fs::exists(ArchiveName)) {
     // Produce a warning if we should and we're creating the archive
     if (!Create)
       errs() << argv[0] << ": creating " << ArchiveName << "\n";
     TheArchive = Archive::CreateEmpty(ArchiveName, Context);
     TheArchive->writeToDisk();
-  } else {
+  }
+
+  if (!TheArchive) {
     std::string Error;
     TheArchive = Archive::OpenAndLoad(ArchiveName, Context, &Error);
     if (TheArchive == 0) {
