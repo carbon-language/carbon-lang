@@ -278,7 +278,7 @@ public:
     State.ParenLevel = 0;
     State.StartOfStringLiteral = 0;
     State.StartOfLineLevel = State.ParenLevel;
-    State.LowestCallLevel = State.ParenLevel;
+    State.LowestLevelOnLine = State.ParenLevel;
     State.IgnoreStackForComparison = false;
 
     // The first token has already been indented and thus consumed.
@@ -434,8 +434,8 @@ private:
     /// \brief The \c ParenLevel at the start of this line.
     unsigned StartOfLineLevel;
 
-    /// \brief The lowest \c ParenLevel of "." or "->" on the current line.
-    unsigned LowestCallLevel;
+    /// \brief The lowest \c ParenLevel on the current line.
+    unsigned LowestLevelOnLine;
 
     /// \brief The start column of the string literal, if we're in a string
     /// literal sequence, 0 otherwise.
@@ -473,8 +473,8 @@ private:
         return ParenLevel < Other.ParenLevel;
       if (StartOfLineLevel != Other.StartOfLineLevel)
         return StartOfLineLevel < Other.StartOfLineLevel;
-      if (LowestCallLevel != Other.LowestCallLevel)
-        return LowestCallLevel < Other.LowestCallLevel;
+      if (LowestLevelOnLine != Other.LowestLevelOnLine)
+        return LowestLevelOnLine < Other.LowestLevelOnLine;
       if (StartOfStringLiteral != Other.StartOfStringLiteral)
         return StartOfStringLiteral < Other.StartOfStringLiteral;
       if (IgnoreStackForComparison || Other.IgnoreStackForComparison)
@@ -580,7 +580,7 @@ private:
           Current.Type != TT_DesignatedInitializerPeriod)
         State.Stack.back().LastSpace += Current.CodePointCount;
       State.StartOfLineLevel = State.ParenLevel;
-      State.LowestCallLevel = State.ParenLevel;
+      State.LowestLevelOnLine = State.ParenLevel;
 
       // Any break on this level means that the parent level has been broken
       // and we need to avoid bin packing there.
@@ -685,13 +685,14 @@ private:
       State.Stack.back().FirstLessLess = State.Column;
     if (Current.is(tok::question))
       State.Stack.back().QuestionColumn = State.Column;
-    if (Current.isOneOf(tok::period, tok::arrow)) {
-      State.LowestCallLevel = std::min(State.LowestCallLevel, State.ParenLevel);
-      if (Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
-        State.Stack.back().StartOfFunctionCall =
-            Current.LastInChainOfCalls ? 0
-                                       : State.Column + Current.CodePointCount;
-    }
+    if (!Current.opensScope() && !Current.closesScope())
+      State.LowestLevelOnLine =
+          std::min(State.LowestLevelOnLine, State.ParenLevel);
+    if (Current.isOneOf(tok::period, tok::arrow) &&
+        Line.Type == LT_BuilderTypeCall && State.ParenLevel == 0)
+      State.Stack.back().StartOfFunctionCall =
+          Current.LastInChainOfCalls ? 0
+                                     : State.Column + Current.CodePointCount;
     if (Current.Type == TT_CtorInitializerColon) {
       // Indent 2 from the column, so:
       // SomeClass::SomeClass()
@@ -1047,7 +1048,8 @@ private:
     //   SomeParameter, OtherParameter).DoSomething(
     //   ...
     // As they hide "DoSomething" and are generally bad for readability.
-    if (Previous.opensScope() && State.LowestCallLevel < State.StartOfLineLevel)
+    if (Previous.opensScope() &&
+        State.LowestLevelOnLine < State.StartOfLineLevel)
       return false;
     return !State.Stack.back().NoLineBreak;
   }
