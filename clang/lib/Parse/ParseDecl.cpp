@@ -5118,7 +5118,7 @@ bool Parser::isFunctionDeclaratorIdentifierList() {
 ///
 void Parser::ParseFunctionDeclaratorIdentifierList(
        Declarator &D,
-       SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo) {
+       SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo) {
   // If there was no identifier specified for the declarator, either we are in
   // an abstract-declarator, or we are in a parameter declarator which was found
   // to be abstract.  In abstract-declarators, identifier lists are not valid:
@@ -5199,7 +5199,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(
 void Parser::ParseParameterDeclarationClause(
        Declarator &D,
        ParsedAttributes &FirstArgAttrs,
-       SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
+       SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo,
        SourceLocation &EllipsisLoc) {
 
   while (1) {

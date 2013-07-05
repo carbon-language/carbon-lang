@@ -2332,7 +2332,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
 
 static
 llvm::Constant *GenerateConstantVector(CGBuilderTy &Builder,
-                                       SmallVector<unsigned, 4> &Elts) {
+                                       SmallVectorImpl<unsigned> &Elts) {
   SmallVector<llvm::Constant*, 4> CElts;
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
     CElts.push_back(Builder.getInt32(Elts[i]));

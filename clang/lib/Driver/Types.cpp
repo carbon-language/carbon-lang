@@ -180,9 +180,7 @@ types::ID types::lookupTypeForTypeSpecifier(const char *Name) {
 }
 
 // FIXME: Why don't we just put this list in the defs file, eh.
-void types::getCompilationPhases(
-  ID Id,
-  llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases> &P) {
+void types::getCompilationPhases(ID Id, llvm::SmallVectorImpl<phases::ID> &P) {
   if (Id != TY_Object) {
     if (getPreprocessedType(Id) != TY_INVALID) {
       P.push_back(phases::Preprocess);

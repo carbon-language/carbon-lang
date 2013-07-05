@@ -993,7 +993,7 @@ public:
   sema::CapturedRegionScopeInfo *getCurCapturedRegion();
 
   /// WeakTopLevelDeclDecls - access to \#pragma weak-generated Decls
-  SmallVector<Decl*,2> &WeakTopLevelDecls() { return WeakTopLevelDecl; }
+  SmallVectorImpl<Decl *> &WeakTopLevelDecls() { return WeakTopLevelDecl; }
 
   void ActOnComment(SourceRange Comment);
 
@@ -6859,7 +6859,7 @@ public:
                               const FunctionProtoType *Proto,
                               unsigned FirstProtoArg,
                               ArrayRef<Expr *> Args,
-                              SmallVector<Expr *, 8> &AllArgs,
+                              SmallVectorImpl<Expr *> &AllArgs,
                               VariadicCallType CallType = VariadicDoesNotApply,
                               bool AllowExplicit = false,
                               bool IsListInitialization = false);

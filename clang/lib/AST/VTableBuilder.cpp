@@ -1068,8 +1068,8 @@ void VTableBuilder::AddThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk) {
   assert(!isBuildingConstructorVTable() && 
          "Can't add thunks for construction vtable");
 
-  SmallVector<ThunkInfo, 1> &ThunksVector = Thunks[MD];
-  
+  SmallVectorImpl<ThunkInfo> &ThunksVector = Thunks[MD];
+
   // Check if we have this thunk already.
   if (std::find(ThunksVector.begin(), ThunksVector.end(), Thunk) != 
       ThunksVector.end())

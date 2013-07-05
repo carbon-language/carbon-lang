@@ -682,7 +682,7 @@ static void handleNoSanitizeThread(Sema &S, Decl *D,
 
 static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
                                         const AttributeList &Attr,
-                                        SmallVector<Expr*, 1> &Args) {
+                                        SmallVectorImpl<Expr *> &Args) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
@@ -743,7 +743,7 @@ static void handleAcquiredBeforeAttr(Sema &S, Decl *D,
 
 static bool checkLockFunAttrCommon(Sema &S, Decl *D,
                                    const AttributeList &Attr,
-                                   SmallVector<Expr*, 1> &Args) {
+                                   SmallVectorImpl<Expr *> &Args) {
   assert(!Attr.isInvalid());
 
   // zero or more arguments ok
@@ -818,7 +818,7 @@ static void handleAssertExclusiveLockAttr(Sema &S, Decl *D,
 
 static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
                                       const AttributeList &Attr,
-                                      SmallVector<Expr*, 2> &Args) {
+                                      SmallVectorImpl<Expr *> &Args) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
@@ -872,7 +872,7 @@ static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
 
 static bool checkLocksRequiredCommon(Sema &S, Decl *D,
                                      const AttributeList &Attr,
-                                     SmallVector<Expr*, 1> &Args) {
+                                     SmallVectorImpl<Expr *> &Args) {
   assert(!Attr.isInvalid());
 
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))

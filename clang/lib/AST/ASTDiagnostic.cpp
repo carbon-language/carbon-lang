@@ -990,7 +990,7 @@ class TemplateDiff {
 
   /// makeTemplateList - Dump every template alias into the vector.
   static void makeTemplateList(
-      SmallVector<const TemplateSpecializationType*, 1> &TemplateList,
+      SmallVectorImpl<const TemplateSpecializationType *> &TemplateList,
       const TemplateSpecializationType *TST) {
     while (TST) {
       TemplateList.push_back(TST);

@@ -4699,7 +4699,7 @@ class MipsABIInfo : public ABIInfo {
   bool IsO32;
   unsigned MinABIStackAlignInBytes, StackAlignInBytes;
   void CoerceToIntArgs(uint64_t TySize,
-                       SmallVector<llvm::Type*, 8> &ArgList) const;
+                       SmallVectorImpl<llvm::Type *> &ArgList) const;
   llvm::Type* HandleAggregates(QualType Ty, uint64_t TySize) const;
   llvm::Type* returnAggregateInRegs(QualType RetTy, uint64_t Size) const;
   llvm::Type* getPaddingType(uint64_t Align, uint64_t Offset) const;
@@ -4749,7 +4749,7 @@ public:
 }
 
 void MipsABIInfo::CoerceToIntArgs(uint64_t TySize,
-                                  SmallVector<llvm::Type*, 8> &ArgList) const {
+                                  SmallVectorImpl<llvm::Type *> &ArgList) const {
   llvm::IntegerType *IntTy =
     llvm::IntegerType::get(getVMContext(), MinABIStackAlignInBytes * 8);
 

@@ -1732,7 +1732,7 @@ public:
 
   /// \brief Read a template argument array.
   void
-  ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
+  ReadTemplateArgumentList(SmallVectorImpl<TemplateArgument> &TemplArgs,
                            ModuleFile &F, const RecordData &Record,
                            unsigned &Idx);
 

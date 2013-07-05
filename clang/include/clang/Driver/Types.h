@@ -78,7 +78,7 @@ namespace types {
   /// done for type 'Id'.
   void getCompilationPhases(
     ID Id,
-    llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases> &Phases);
+    llvm::SmallVectorImpl<phases::ID> &Phases);
 
   /// lookupCXXTypeForCType - Lookup CXX input type that corresponds to given
   /// C type (used for clang++ emulation of g++ behaviour)

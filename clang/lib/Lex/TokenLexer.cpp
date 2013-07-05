@@ -121,7 +121,7 @@ void TokenLexer::destroy() {
 
 /// Remove comma ahead of __VA_ARGS__, if present, according to compiler dialect
 /// settings.  Returns true if the comma is removed.
-static bool MaybeRemoveCommaBeforeVaArgs(SmallVector<Token, 128> &ResultToks,
+static bool MaybeRemoveCommaBeforeVaArgs(SmallVectorImpl<Token> &ResultToks,
                                          bool &NextTokGetsSpace,
                                          bool HasPasteOperator,
                                          MacroInfo *Macro, unsigned MacroArgNo,

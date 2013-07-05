@@ -3919,7 +3919,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                   const FunctionProtoType *Proto,
                                   unsigned FirstProtoArg,
                                   ArrayRef<Expr *> Args,
-                                  SmallVector<Expr *, 8> &AllArgs,
+                                  SmallVectorImpl<Expr *> &AllArgs,
                                   VariadicCallType CallType,
                                   bool AllowExplicit,
                                   bool IsListInitialization) {

@@ -6922,7 +6922,7 @@ ASTReader::ReadTemplateParameterList(ModuleFile &F,
 
 void
 ASTReader::
-ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
+ReadTemplateArgumentList(SmallVectorImpl<TemplateArgument> &TemplArgs,
                          ModuleFile &F, const RecordData &Record,
                          unsigned &Idx) {
   unsigned NumTemplateArgs = Record[Idx++];

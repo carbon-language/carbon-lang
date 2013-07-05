@@ -2178,7 +2178,7 @@ static void checkArgMatches(llvm::Value *Elt, unsigned &ArgNo,
 }
 
 void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
-                                       SmallVector<llvm::Value*,16> &Args,
+                                       SmallVectorImpl<llvm::Value *> &Args,
                                        llvm::FunctionType *IRFuncTy) {
   if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
     unsigned NumElts = AT->getSize().getZExtValue();

@@ -2469,7 +2469,7 @@ private:
   /// Ty, into individual arguments on the provided vector \arg Args. See
   /// ABIArgInfo::Expand.
   void ExpandTypeToArgs(QualType Ty, RValue Src,
-                        SmallVector<llvm::Value*, 16> &Args,
+                        SmallVectorImpl<llvm::Value *> &Args,
                         llvm::FunctionType *IRFuncTy);
 
   llvm::Value* EmitAsmInput(const TargetInfo::ConstraintInfo &Info,

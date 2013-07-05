@@ -2044,11 +2044,11 @@ private:
   bool isFunctionDeclaratorIdentifierList();
   void ParseFunctionDeclaratorIdentifierList(
          Declarator &D,
-         SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo);
+         SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo);
   void ParseParameterDeclarationClause(
          Declarator &D,
          ParsedAttributes &attrs,
-         SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
+         SmallVectorImpl<DeclaratorChunk::ParamInfo> &ParamInfo,
          SourceLocation &EllipsisLoc);
   void ParseBracketDeclarator(Declarator &D);
 

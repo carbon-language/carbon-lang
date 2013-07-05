@@ -267,7 +267,7 @@ namespace {
     void RewriteRecordBody(RecordDecl *RD);
     void RewriteInclude();
     void RewriteForwardClassDecl(DeclGroupRef D);
-    void RewriteForwardClassDecl(const SmallVector<Decl *, 8> &DG);
+    void RewriteForwardClassDecl(const SmallVectorImpl<Decl *> &DG);
     void RewriteForwardClassEpilogue(ObjCInterfaceDecl *ClassDecl, 
                                      const std::string &typedefString);
     void RewriteImplementations();
@@ -285,7 +285,7 @@ namespace {
     void RewriteCategoryDecl(ObjCCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
     void RewriteForwardProtocolDecl(DeclGroupRef D);
-    void RewriteForwardProtocolDecl(const SmallVector<Decl *, 8> &DG);
+    void RewriteForwardProtocolDecl(const SmallVectorImpl<Decl *> &DG);
     void RewriteMethodDeclaration(ObjCMethodDecl *Method);
     void RewriteProperty(ObjCPropertyDecl *prop);
     void RewriteFunctionDecl(FunctionDecl *FD);
@@ -395,7 +395,7 @@ namespace {
                                  StringRef FunName);
     FunctionDecl *SynthBlockInitFunctionDecl(StringRef name);
     Stmt *SynthBlockInitExpr(BlockExpr *Exp,
-            const SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs);
+            const SmallVectorImpl<DeclRefExpr *> &InnerBlockDeclRefs);
 
     // Misc. helper routines.
     QualType getProtocolType();
@@ -408,8 +408,8 @@ namespace {
     bool IsDeclStmtInForeachHeader(DeclStmt *DS);
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
     void GetBlockDeclRefExprs(Stmt *S);
-    void GetInnerBlockDeclRefExprs(Stmt *S, 
-                SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs,
+    void GetInnerBlockDeclRefExprs(Stmt *S,
+                SmallVectorImpl<DeclRefExpr *> &InnerBlockDeclRefs,
                 llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts);
 
     // We avoid calling Type::isBlockPointerType(), since it operates on the
@@ -926,7 +926,7 @@ void RewriteObjC::RewriteForwardClassDecl(DeclGroupRef D) {
   RewriteForwardClassEpilogue(cast<ObjCInterfaceDecl>(*I), typedefString);
 }
 
-void RewriteObjC::RewriteForwardClassDecl(const SmallVector<Decl *, 8> &D) {
+void RewriteObjC::RewriteForwardClassDecl(const SmallVectorImpl<Decl *> &D) {
   std::string typedefString;
   for (unsigned i = 0; i < D.size(); i++) {
     ObjCInterfaceDecl *ForwardDecl = cast<ObjCInterfaceDecl>(D[i]);
@@ -1038,7 +1038,7 @@ void RewriteObjC::RewriteForwardProtocolDecl(DeclGroupRef D) {
 }
 
 void 
-RewriteObjC::RewriteForwardProtocolDecl(const SmallVector<Decl *, 8> &DG) {
+RewriteObjC::RewriteForwardProtocolDecl(const SmallVectorImpl<Decl *> &DG) {
   SourceLocation LocStart = DG[0]->getLocStart();
   if (LocStart.isInvalid())
     llvm_unreachable("Invalid SourceLocation");
@@ -3743,8 +3743,8 @@ void RewriteObjC::GetBlockDeclRefExprs(Stmt *S) {
   return;
 }
 
-void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S, 
-                SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs,
+void RewriteObjC::GetInnerBlockDeclRefExprs(Stmt *S,
+                SmallVectorImpl<DeclRefExpr *> &InnerBlockDeclRefs,
                 llvm::SmallPtrSet<const DeclContext *, 8> &InnerContexts) {
   for (Stmt::child_range CI = S->children(); CI; ++CI)
     if (*CI) {
@@ -4452,7 +4452,7 @@ FunctionDecl *RewriteObjC::SynthBlockInitFunctionDecl(StringRef name) {
 }
 
 Stmt *RewriteObjC::SynthBlockInitExpr(BlockExpr *Exp,
-          const SmallVector<DeclRefExpr *, 8> &InnerBlockDeclRefs) {
+                     const SmallVectorImpl<DeclRefExpr *> &InnerBlockDeclRefs) {
   const BlockDecl *block = Exp->getBlockDecl();
   Blocks.push_back(Exp);
 

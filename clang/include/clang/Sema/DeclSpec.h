@@ -1997,7 +1997,7 @@ public:
 
   /// \brief Return a source range list of C++11 attributes associated
   /// with the declarator.
-  void getCXX11AttributeRanges(SmallVector<SourceRange, 4> &Ranges) {
+  void getCXX11AttributeRanges(SmallVectorImpl<SourceRange> &Ranges) {
     AttributeList *AttrList = Attrs.getList();
     while (AttrList) {
       if (AttrList->isCXX11Attribute())
