@@ -1244,7 +1244,7 @@ static std::string GetPreamblePCHPath() {
     return TmpFile;
 
   SmallString<128> Path;
-  llvm::sys::fs::unique_file("preamble-%%%%%%.pch", Path);
+  llvm::sys::fs::createTemporaryFile("preamble", "pch", Path);
 
   return Path.str();
 }

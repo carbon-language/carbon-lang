@@ -76,12 +76,10 @@ class FixItRewriteToTemp : public FixItOptions {
 public:
   std::string RewriteFilename(const std::string &Filename, int &fd) {
     SmallString<128> Path;
-    Path = llvm::sys::path::filename(Filename);
-    Path += "-%%%%%%%%";
-    Path += llvm::sys::path::extension(Filename);
-    SmallString<128> NewPath;
-    llvm::sys::fs::unique_file(Path.str(), fd, NewPath);
-    return NewPath.str();
+    llvm::sys::fs::createTemporaryFile(llvm::sys::path::filename(Filename),
+                                       llvm::sys::path::extension(Filename), fd,
+                                       Path);
+    return Path.str();
   }
 };
 } // end anonymous namespace

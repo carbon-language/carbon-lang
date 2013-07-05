@@ -146,11 +146,10 @@ bool FileRemapper::flushToFile(StringRef outputPath, DiagnosticsEngine &Diag) {
     } else {
 
       SmallString<64> tempPath;
-      tempPath = path::filename(origFE->getName());
-      tempPath += "-%%%%%%%%";
-      tempPath += path::extension(origFE->getName());
       int fd;
-      if (fs::unique_file(tempPath.str(), fd, tempPath) != llvm::errc::success)
+      if (fs::createTemporaryFile(path::filename(origFE->getName()),
+                                  path::extension(origFE->getName()), fd,
+                                  tempPath))
         return report("Could not create file: " + tempPath.str(), Diag);
 
       llvm::raw_fd_ostream newOut(fd, /*shouldClose=*/true);

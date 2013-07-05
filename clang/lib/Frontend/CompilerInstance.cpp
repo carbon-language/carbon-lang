@@ -855,13 +855,9 @@ static void compileModule(CompilerInstance &ImportingInstance,
                                                     IK));
   } else {
     // Create a temporary module map file.
-    TempModuleMapFileName = Module->Name;
-    TempModuleMapFileName += "-%%%%%%%%.map";
     int FD;
-    if (llvm::sys::fs::unique_file(TempModuleMapFileName.str(), FD, 
-                                   TempModuleMapFileName,
-                                   /*makeAbsolute=*/true)
-          != llvm::errc::success) {
+    if (llvm::sys::fs::createTemporaryFile(Module->Name, "map", FD,
+                                           TempModuleMapFileName)) {
       ImportingInstance.getDiagnostics().Report(diag::err_module_map_temp_file)
         << TempModuleMapFileName;
       return;

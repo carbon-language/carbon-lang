@@ -700,7 +700,7 @@ public:
 static ExplodedNode::Auditor* CreateUbiViz() {
   SmallString<128> P;
   int FD;
-  llvm::sys::fs::unique_file("llvm_ubi-%%%%%%", FD, P);
+  llvm::sys::fs::createTemporaryFile("llvm_ubi", "", FD, P);
   llvm::errs() << "Writing '" << P.str() << "'.\n";
 
   OwningPtr<llvm::raw_fd_ostream> Stream;

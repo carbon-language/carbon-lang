@@ -194,7 +194,7 @@ public:
     SmallString<1024> Path;
     int FD;
     llvm::error_code EC =
-        llvm::sys::fs::unique_file(Twine(Name) + "%%%%%%", FD, Path);
+        llvm::sys::fs::createTemporaryFile(Name, "", FD, Path);
     assert(!EC);
     (void)EC;
 

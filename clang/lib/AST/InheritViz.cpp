@@ -140,8 +140,8 @@ void CXXRecordDecl::viewInheritance(ASTContext& Context) const {
 
   int FD;
   SmallString<128> Filename;
-  error_code EC = sys::fs::unique_file(Self.getAsString() + "-%%%%%%.dot", FD,
-                                       Filename);
+  error_code EC =
+      sys::fs::createTemporaryFile(Self.getAsString(), "dot", FD, Filename);
   if (EC) {
     llvm::errs() << "Error: " << EC.message() << "\n";
     return;
