@@ -1,4 +1,4 @@
-// RUN: not %clang_cc1 %s 2>&1 | FileCheck %s
+// RUN: not --crash %clang_cc1 %s 2>&1 | FileCheck %s
 // REQUIRES: crash-recovery
 
 #prag\
