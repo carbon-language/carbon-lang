@@ -637,23 +637,6 @@ bool is_relative(const Twine &path) {
 
 namespace fs {
 
-// This is a mkostemps with a different pattern. Unfortunatelly OS X (ond *BSD)
-// don't have it. We should try using mkostemps on systems that have it.
-error_code unique_file(const Twine &Model, int &ResultFD,
-                       SmallVectorImpl<char> &ResultPath, bool MakeAbsolute,
-                       unsigned Mode) {
-  return createUniqueEntity(Model, ResultFD, ResultPath, MakeAbsolute, Mode,
-                            FS_File);
-}
-
-// This is a mktemp with a differet pattern. We use createUniqueEntity mostly
-// for consistency. We should try using mktemp.
-error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
-                       bool MakeAbsolute) {
-  int Dummy;
-  return createUniqueEntity(Model, Dummy, ResultPath, MakeAbsolute, 0, FS_Name);
-}
-
 error_code createUniqueFile(const Twine &Model, int &ResultFd,
                             SmallVectorImpl<char> &ResultPath, unsigned Mode) {
   return createUniqueEntity(Model, ResultFd, ResultPath, false, Mode, FS_File);

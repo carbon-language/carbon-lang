@@ -545,36 +545,6 @@ bool status_known(file_status s);
 ///          platform specific error_code.
 error_code status_known(const Twine &path, bool &result);
 
-/// @brief Generate a unique path and open it as a file.
-///
-/// Generates a unique path suitable for a temporary file and then opens it as a
-/// file. The name is based on \a model with '%' replaced by a random char in
-/// [0-9a-f]. If \a model is not an absolute path, a suitable temporary
-/// directory will be prepended.
-///
-/// This is an atomic operation. Either the file is created and opened, or the
-/// file system is left untouched.
-///
-/// clang-%%-%%-%%-%%-%%.s => /tmp/clang-a0-b1-c2-d3-e4.s
-///
-/// @param model Name to base unique path off of.
-/// @param result_fd Set to the opened file's file descriptor.
-/// @param result_path Set to the opened file's absolute path.
-/// @param makeAbsolute If true and \a model is not an absolute path, a temp
-///        directory will be prepended.
-/// @param mode Set to the file open mode; since this is most often used for
-///        temporary files, mode defaults to owner_read | owner_write.
-/// @returns errc::success if result_{fd,path} have been successfully set,
-///          otherwise a platform specific error_code.
-error_code unique_file(const Twine &model, int &result_fd,
-                       SmallVectorImpl<char> &result_path,
-                       bool makeAbsolute = true,
-                       unsigned mode = owner_read | owner_write);
-
-/// @brief Simpler version for clients that don't want an open file.
-error_code unique_file(const Twine &Model, SmallVectorImpl<char> &ResultPath,
-                       bool MakeAbsolute = true);
-
 /// @brief Create a uniquely named file.
 ///
 /// Generates a unique path suitable for a temporary file and then opens it as a
