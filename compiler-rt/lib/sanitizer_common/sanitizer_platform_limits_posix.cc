@@ -727,6 +727,7 @@ COMPILER_CHECK(sizeof(__sanitizer::struct_sigaction_max_sz) >=
                    sizeof(__sanitizer::struct_sigaction_sz));
 
 COMPILER_CHECK(sizeof(socklen_t) == sizeof(unsigned));
+CHECK_TYPE_SIZE(pthread_key_t);
 
 #if SANITIZER_LINUX
 // There are more undocumented fields in dl_phdr_info that we are not interested

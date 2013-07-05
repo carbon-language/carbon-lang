@@ -2050,6 +2050,15 @@ TEST(MemorySanitizer, pthread_getschedparam) {
   EXPECT_NOT_POISONED(param.sched_priority);
 }
 
+TEST(MemorySanitizer, pthread_key_create) {
+  pthread_key_t key;
+  int res = pthread_key_create(&key, NULL);
+  assert(!res);
+  EXPECT_NOT_POISONED(key);
+  res = pthread_key_delete(key);
+  assert(!res);
+}
+
 TEST(MemorySanitizer, posix_memalign) {
   void *p;
   EXPECT_POISONED(p);
