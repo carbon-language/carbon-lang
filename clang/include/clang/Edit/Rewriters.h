@@ -12,6 +12,7 @@
 
 namespace clang {
   class ObjCMessageExpr;
+  class ObjCMethodDecl;
   class NSAPI;
   class ParentMap;
 
@@ -24,6 +25,10 @@ bool rewriteObjCRedundantCallWithLiteral(const ObjCMessageExpr *Msg,
 bool rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
                                 const NSAPI &NS, Commit &commit,
                                 const ParentMap *PMap);
+  
+bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
+                           const ObjCMethodDecl *Setter,
+                           const NSAPI &NS, Commit &commit);
 
 bool rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);

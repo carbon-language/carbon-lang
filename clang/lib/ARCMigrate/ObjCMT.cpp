@@ -212,15 +212,11 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
         continue;
       const ParmVarDecl *argDecl = *SetterMethod->param_begin();
       QualType ArgType = argDecl->getType();
-      if (!Ctx.hasSameType(ArgType, GRT)) {
-        bool Valid =
-          ((GRT->isObjCIdType() && ArgType->isObjCObjectPointerType())
-            || (ArgType->isObjCIdType() && GRT->isObjCObjectPointerType()));
-        if (!Valid)
+      if (!Ctx.hasSameType(ArgType, GRT))
           continue;
-      }
-      // we have a matching setter/getter pair.
-      // TODO. synthesize a suitable property declaration here.
+        edit::Commit commit(*Editor);
+        edit::rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit);
+        Editor->commit(commit);
       }
   }
 }

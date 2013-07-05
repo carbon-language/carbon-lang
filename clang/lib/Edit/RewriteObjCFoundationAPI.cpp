@@ -355,6 +355,12 @@ bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
   return false;
 }
 
+bool edit::rewriteToObjCProperty(const ObjCMethodDecl *Getter,
+                                 const ObjCMethodDecl *Setter,
+                                 const NSAPI &NS, Commit &commit) {
+  return false;
+}
+
 /// \brief Returns true if the immediate message arguments of \c Msg should not
 /// be rewritten because it will interfere with the rewrite of the parent
 /// message expression. e.g.
