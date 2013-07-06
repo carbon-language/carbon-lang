@@ -16,6 +16,7 @@
 #include <ios>
 #include <string>
 #include <cassert>
+#include <cstdint>
 
 class test
     : public std::ios
@@ -31,12 +32,12 @@ int main()
 {
     test t;
     std::ios_base& b = t;
-    for (int i = 0; i < 10000; ++i)
+    for (std::intptr_t i = 0; i < 10000; ++i)
     {
         assert(b.pword(i) == 0);
         b.pword(i) = (void*)i;
         assert(b.pword(i) == (void*)i);
-        for (int j = 0; j <= i; ++j)
+        for (std::intptr_t j = 0; j <= i; ++j)
             assert(b.pword(j) == (void*)j);
     }
 }
