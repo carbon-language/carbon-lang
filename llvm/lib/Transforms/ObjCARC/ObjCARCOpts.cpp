@@ -528,7 +528,7 @@ namespace {
 
 
     bool IsKnownSafe() const {
-      return RRI.KnownSafe;    
+      return RRI.KnownSafe;
     }
 
     void SetKnownSafe(const bool NewValue) {
@@ -1505,7 +1505,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 
         // Create the declaration lazily.
         LLVMContext &C = Inst->getContext();
-        
+
         Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Release);
         CallInst *NewCall = CallInst::Create(Decl, Call->getArgOperand(0), "",
                                              Call);
