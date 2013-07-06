@@ -870,7 +870,7 @@ bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
           if (YBO->getOpcode() == Instruction::And ||
               YBO->getOpcode() == Instruction::Xor)
             if (YBO->getOperand(0) == X || YBO->getOperand(1) == X)
-              if (isKnownToBeAPowerOfTwo(X, /*OrYero*/true, Depth))
+              if (isKnownToBeAPowerOfTwo(X, /*OrZero*/true, Depth))
                 return true;
       }
 
