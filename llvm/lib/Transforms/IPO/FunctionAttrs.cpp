@@ -1343,7 +1343,7 @@ bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
       return false;
     setDoesNotThrow(F);
     setDoesNotCapture(F, 1);
-    setOnlyReadsMemory(F, 2);
+    setOnlyReadsMemory(F, 1);
     break;
   case LibFunc::unsetenv:
     if (FTy->getNumParams() != 1 || !FTy->getParamType(0)->isPointerTy())
