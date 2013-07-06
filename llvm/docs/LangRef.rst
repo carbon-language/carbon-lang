@@ -890,8 +890,7 @@ example:
     
     On an argument, this attribute indicates that the function does not
     dereference that pointer argument, even though it may read or write the
-    memory that the pointer points to through if accessed through other
-    pointers.
+    memory that the pointer points to if accessed through other pointers.
 ``readonly``
     On a function, this attribute indicates that the function does not write
     through any pointer arguments (including ``byval`` arguments) or otherwise
