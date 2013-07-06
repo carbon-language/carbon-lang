@@ -82,6 +82,11 @@ public:
   /// its containing function.
   bool hasReturnedAttr() const;
 
+  /// \brief Return true if this argument has the readonly or readnone attribute
+  /// on it in its containing function.
+  bool onlyReadsMemory() const;
+
+
   /// \brief Add a Attribute to an argument.
   void addAttr(AttributeSet AS);
 

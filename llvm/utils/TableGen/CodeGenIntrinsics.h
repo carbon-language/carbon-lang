@@ -77,7 +77,9 @@ namespace llvm {
     bool isNoReturn;
 
     enum ArgAttribute {
-      NoCapture
+      NoCapture,
+      ReadOnly,
+      ReadNone
     };
     std::vector<std::pair<unsigned, ArgAttribute> > ArgumentAttributes;
 

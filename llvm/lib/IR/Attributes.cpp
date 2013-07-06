@@ -1157,6 +1157,8 @@ AttributeSet AttributeFuncs::typeIncompatible(Type *Ty, uint64_t Index) {
       .addAttribute(Attribute::Nest)
       .addAttribute(Attribute::NoAlias)
       .addAttribute(Attribute::NoCapture)
+      .addAttribute(Attribute::ReadNone)
+      .addAttribute(Attribute::ReadOnly)
       .addAttribute(Attribute::StructRet);
 
   return AttributeSet::get(Ty->getContext(), Index, Incompatible);

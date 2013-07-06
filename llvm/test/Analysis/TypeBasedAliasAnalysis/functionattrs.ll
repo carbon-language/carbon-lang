@@ -49,7 +49,7 @@ define void @test2_yes(i8* %p, i8* %q, i64 %n) nounwind {
   ret void
 }
 
-; CHECK: define void @test2_no(i8* nocapture %p, i8* nocapture %q, i64 %n) #1 {
+; CHECK: define void @test2_no(i8* nocapture %p, i8* nocapture readonly %q, i64 %n) #1 {
 define void @test2_no(i8* %p, i8* %q, i64 %n) nounwind {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %p, i8* %q, i64 %n, i32 1, i1 false), !tbaa !2
   ret void

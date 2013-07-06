@@ -1159,6 +1159,8 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_nest:            B.addAttribute(Attribute::Nest); break;
     case lltok::kw_noalias:         B.addAttribute(Attribute::NoAlias); break;
     case lltok::kw_nocapture:       B.addAttribute(Attribute::NoCapture); break;
+    case lltok::kw_readnone:        B.addAttribute(Attribute::ReadNone); break;
+    case lltok::kw_readonly:        B.addAttribute(Attribute::ReadOnly); break;
     case lltok::kw_returned:        B.addAttribute(Attribute::Returned); break;
     case lltok::kw_signext:         B.addAttribute(Attribute::SExt); break;
     case lltok::kw_sret:            B.addAttribute(Attribute::StructRet); break;
@@ -1179,8 +1181,6 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
     case lltok::kw_noreturn:
     case lltok::kw_nounwind:
     case lltok::kw_optsize:
-    case lltok::kw_readnone:
-    case lltok::kw_readonly:
     case lltok::kw_returns_twice:
     case lltok::kw_sanitize_address:
     case lltok::kw_sanitize_memory:
@@ -1239,8 +1239,6 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_noreturn:
     case lltok::kw_nounwind:
     case lltok::kw_optsize:
-    case lltok::kw_readnone:
-    case lltok::kw_readonly:
     case lltok::kw_returns_twice:
     case lltok::kw_sanitize_address:
     case lltok::kw_sanitize_memory:
@@ -1251,6 +1249,10 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_uwtable:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
+
+    case lltok::kw_readnone:
+    case lltok::kw_readonly:
+      HaveError |= Error(Lex.getLoc(), "invalid use of attribute on return type");
     }
 
     Lex.Lex();

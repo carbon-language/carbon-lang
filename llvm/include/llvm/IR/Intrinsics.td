@@ -55,6 +55,18 @@ class NoCapture<int argNo> : IntrinsicProperty {
   int ArgNo = argNo;
 }
 
+// ReadOnly - The specified argument pointer is not written to through the
+// pointer by the intrinsic.
+class ReadOnly<int argNo> : IntrinsicProperty {
+  int ArgNo = argNo;
+}
+
+// ReadNone - The specified argument pointer is not dereferenced by the
+// intrinsic.
+class ReadNone<int argNo> : IntrinsicProperty {
+  int ArgNo = argNo;
+}
+
 def IntrNoReturn : IntrinsicProperty;
 
 //===----------------------------------------------------------------------===//
@@ -253,11 +265,13 @@ def int_stackprotector : Intrinsic<[], [llvm_ptr_ty, llvm_ptrptr_ty], []>;
 def int_memcpy  : Intrinsic<[],
                              [llvm_anyptr_ty, llvm_anyptr_ty, llvm_anyint_ty,
                               llvm_i32_ty, llvm_i1_ty],
-                            [IntrReadWriteArgMem, NoCapture<0>, NoCapture<1>]>;
+                            [IntrReadWriteArgMem, NoCapture<0>, NoCapture<1>,
+                             ReadOnly<1>]>;
 def int_memmove : Intrinsic<[],
                             [llvm_anyptr_ty, llvm_anyptr_ty, llvm_anyint_ty,
                              llvm_i32_ty, llvm_i1_ty],
-                            [IntrReadWriteArgMem, NoCapture<0>, NoCapture<1>]>;
+                            [IntrReadWriteArgMem, NoCapture<0>, NoCapture<1>,
+                             ReadOnly<1>]>;
 def int_memset  : Intrinsic<[],
                             [llvm_anyptr_ty, llvm_i8_ty, llvm_anyint_ty,
                              llvm_i32_ty, llvm_i1_ty],

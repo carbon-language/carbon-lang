@@ -1,6 +1,6 @@
 ; RUN: opt < %s -functionattrs -S | FileCheck %s
 
-; CHECK: declare noalias i8* @fopen(i8* nocapture, i8* nocapture) #0
+; CHECK: declare noalias i8* @fopen(i8* nocapture readonly, i8* nocapture readonly) #0
 declare i8* @fopen(i8*, i8*)
 
 ; CHECK: declare i8 @strlen(i8* nocapture) #1

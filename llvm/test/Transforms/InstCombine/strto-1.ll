@@ -5,25 +5,25 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
 declare i64 @strtol(i8* %s, i8** %endptr, i32 %base)
-; CHECK: declare i64 @strtol(i8*, i8** nocapture, i32)
+; CHECK: declare i64 @strtol(i8* readonly, i8** nocapture, i32)
 
 declare double @strtod(i8* %s, i8** %endptr, i32 %base)
-; CHECK: declare double @strtod(i8*, i8** nocapture, i32)
+; CHECK: declare double @strtod(i8* readonly, i8** nocapture, i32)
 
 declare float @strtof(i8* %s, i8** %endptr, i32 %base)
-; CHECK: declare float @strtof(i8*, i8** nocapture, i32)
+; CHECK: declare float @strtof(i8* readonly, i8** nocapture, i32)
 
 declare i64 @strtoul(i8* %s, i8** %endptr, i32 %base)
-; CHECK: declare i64 @strtoul(i8*, i8** nocapture, i32)
+; CHECK: declare i64 @strtoul(i8* readonly, i8** nocapture, i32)
 
 declare i64 @strtoll(i8* %s, i8** %endptr, i32 %base)
-; CHECK: declare i64 @strtoll(i8*, i8** nocapture, i32)
+; CHECK: declare i64 @strtoll(i8* readonly, i8** nocapture, i32)
 
 declare double @strtold(i8* %s, i8** %endptr)
-; CHECK: declare double @strtold(i8*, i8** nocapture)
+; CHECK: declare double @strtold(i8* readonly, i8** nocapture)
 
 declare i64 @strtoull(i8* %s, i8** %endptr, i32 %base)
-; CHECK: declare i64 @strtoull(i8*, i8** nocapture, i32)
+; CHECK: declare i64 @strtoull(i8* readonly, i8** nocapture, i32)
 
 define void @test_simplify1(i8* %x, i8** %endptr) {
 ; CHECK: @test_simplify1

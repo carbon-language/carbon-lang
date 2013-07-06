@@ -131,6 +131,15 @@ bool Argument::hasReturnedAttr() const {
     hasAttribute(getArgNo()+1, Attribute::Returned);
 }
 
+/// Return true if this argument has the readonly or readnone attribute on it
+/// in its containing function.
+bool Argument::onlyReadsMemory() const {
+  return getParent()->getAttributes().
+      hasAttribute(getArgNo()+1, Attribute::ReadOnly) ||
+      getParent()->getAttributes().
+      hasAttribute(getArgNo()+1, Attribute::ReadNone);
+}
+
 /// addAttr - Add attributes to an argument.
 void Argument::addAttr(AttributeSet AS) {
   assert(AS.getNumSlots() <= 1 &&
@@ -711,4 +720,3 @@ bool Function::callsFunctionThatReturnsTwice() const {
 
   return false;
 }
-

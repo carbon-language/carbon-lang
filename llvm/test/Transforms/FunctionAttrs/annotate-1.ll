@@ -2,7 +2,7 @@
 ; RUN: opt < %s -mtriple=x86_64-apple-macosx10.8.0 -functionattrs -S | FileCheck -check-prefix=POSIX %s
 
 declare i8* @fopen(i8*, i8*)
-; CHECK: declare noalias i8* @fopen(i8* nocapture, i8* nocapture) [[G0:#[0-9]]] 
+; CHECK: declare noalias i8* @fopen(i8* nocapture readonly, i8* nocapture readonly) [[G0:#[0-9]]] 
 
 declare i8 @strlen(i8*)
 ; CHECK: declare i8 @strlen(i8* nocapture) [[G1:#[0-9]]]

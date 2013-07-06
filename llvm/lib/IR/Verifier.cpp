@@ -654,7 +654,7 @@ void Verifier::visitModuleFlag(MDNode *Op, DenseMap<MDString*, MDNode*>&SeenIDs,
 }
 
 void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
-                                    bool isFunction, const Value* V) {
+                                    bool isFunction, const Value *V) {
   unsigned Slot = ~0U;
   for (unsigned I = 0, E = Attrs.getNumSlots(); I != E; ++I)
     if (Attrs.getSlotIndex(I) == Idx) {
@@ -671,8 +671,6 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
 
     if (I->getKindAsEnum() == Attribute::NoReturn ||
         I->getKindAsEnum() == Attribute::NoUnwind ||
-        I->getKindAsEnum() == Attribute::ReadNone ||
-        I->getKindAsEnum() == Attribute::ReadOnly ||
         I->getKindAsEnum() == Attribute::NoInline ||
         I->getKindAsEnum() == Attribute::AlwaysInline ||
         I->getKindAsEnum() == Attribute::OptimizeForSize ||
@@ -696,14 +694,21 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::NoBuiltin ||
         I->getKindAsEnum() == Attribute::Cold) {
       if (!isFunction) {
-          CheckFailed("Attribute '" + I->getAsString() +
-                      "' only applies to functions!", V);
-          return;
+        CheckFailed("Attribute '" + I->getAsString() +
+                    "' only applies to functions!", V);
+        return;
+      }
+    } else if (I->getKindAsEnum() == Attribute::ReadOnly ||
+               I->getKindAsEnum() == Attribute::ReadNone) {
+      if (Idx == 0) {
+        CheckFailed("Attribute '" + I->getAsString() +
+                    "' does not apply to function returns");
+        return;
       }
     } else if (isFunction) {
-        CheckFailed("Attribute '" + I->getAsString() +
-                    "' does not apply to functions!", V);
-        return;
+      CheckFailed("Attribute '" + I->getAsString() +
+                  "' does not apply to functions!", V);
+      return;
     }
   }
 }

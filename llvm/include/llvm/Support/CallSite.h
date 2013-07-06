@@ -257,6 +257,15 @@ public:
     return paramHasAttr(ArgNo + 1, Attribute::ByVal);
   }
 
+  bool doesNotAccessMemory(unsigned ArgNo) const {
+    return paramHasAttr(ArgNo + 1, Attribute::ReadNone);
+  }
+
+  bool onlyReadsMemory(unsigned ArgNo) const {
+    return paramHasAttr(ArgNo + 1, Attribute::ReadOnly) ||
+           paramHasAttr(ArgNo + 1, Attribute::ReadNone);
+  }
+
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
   /// argument to the called function.
   bool hasArgument(const Value *Arg) const {

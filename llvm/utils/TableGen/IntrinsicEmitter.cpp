@@ -579,6 +579,12 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
           case CodeGenIntrinsic::NoCapture:
             OS << "      AttrVec.push_back(Attribute::NoCapture);\n";
             break;
+          case CodeGenIntrinsic::ReadOnly:
+            OS << "      AttrVec.push_back(Attribute::ReadOnly);\n";
+            break;
+          case CodeGenIntrinsic::ReadNone:
+            OS << "      AttrVec.push_back(Attribute::ReadNone);\n";
+            break;
           }
 
           ++ai;
