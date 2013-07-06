@@ -827,6 +827,7 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
   if (DS.SetTypeSpecType(DeclSpec::TST_underlyingType, StartLoc, PrevSpec,
                          DiagID, Result.release()))
     Diag(StartLoc, DiagID) << PrevSpec;
+  DS.setTypeofParensRange(T.getRange());
 }
 
 /// ParseBaseTypeSpecifier - Parse a C++ base-type-specifier which is either a

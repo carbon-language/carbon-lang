@@ -180,5 +180,26 @@ TEST(CXXNewExpr, TypeParenRange) {
   EXPECT_TRUE(Verifier.match("int* a = new (int);", newExpr()));
 }
 
+class UnaryTransformTypeLocParensRangeVerifier : public RangeVerifier<TypeLoc> {
+protected:
+  virtual SourceRange getRange(const TypeLoc &Node) {
+    UnaryTransformTypeLoc T =
+        Node.getUnqualifiedLoc().castAs<UnaryTransformTypeLoc>();
+    assert(!T.isNull());
+    return SourceRange(T.getLParenLoc(), T.getRParenLoc());
+  }
+};
+
+TEST(UnaryTransformTypeLoc, ParensRange) {
+  UnaryTransformTypeLocParensRangeVerifier Verifier;
+  Verifier.expectRange(3, 26, 3, 28);
+  EXPECT_TRUE(Verifier.match(
+      "template <typename T>\n"
+      "struct S {\n"
+      "typedef __underlying_type(T) type;\n"
+      "};",
+      loc(unaryTransformType())));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang

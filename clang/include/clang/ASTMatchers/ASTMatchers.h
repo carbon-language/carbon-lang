@@ -3186,6 +3186,16 @@ AST_TYPE_MATCHER(TypedefType, typedefType);
 /// instantiation in \c A and the type of the variable declaration in \c B.
 AST_TYPE_MATCHER(TemplateSpecializationType, templateSpecializationType);
 
+/// \brief Matches types nodes representing unary type transformations.
+///
+/// Given:
+/// \code
+///   typedef __underlying_type(T) type;
+/// \endcode
+/// unaryTransformType()
+///   matches "__underlying_type(T)"
+AST_TYPE_MATCHER(UnaryTransformType, unaryTransformType);
+
 /// \brief Matches record types (e.g. structs, classes).
 ///
 /// Given
