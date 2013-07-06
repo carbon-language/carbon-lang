@@ -5220,6 +5220,13 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
   if (LN0->getNumValues() > 2)
     return SDValue();
 
+  // If the load that we're shrinking is an extload and we're not just
+  // discarding the extension we can't simply shrink the load. Bail.
+  // TODO: It would be possible to merge the extensions in some cases.
+  if (LN0->getExtensionType() != ISD::NON_EXTLOAD &&
+      LN0->getMemoryVT().getSizeInBits() < ExtVT.getSizeInBits() + ShAmt)
+    return SDValue();
+
   EVT PtrType = N0.getOperand(1).getValueType();
 
   if (PtrType == MVT::Untyped || PtrType.isExtended())
