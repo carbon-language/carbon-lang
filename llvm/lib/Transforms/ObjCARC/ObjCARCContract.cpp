@@ -28,6 +28,7 @@
 
 #define DEBUG_TYPE "objc-arc-contract"
 #include "ObjCARC.h"
+#include "ARCRuntimeEntryPoints.h"
 #include "DependencyAnalysis.h"
 #include "ProvenanceAnalysis.h"
 #include "llvm/ADT/Statistic.h"
@@ -52,22 +53,10 @@ namespace {
     AliasAnalysis *AA;
     DominatorTree *DT;
     ProvenanceAnalysis PA;
+    ARCRuntimeEntryPoints EP;
 
     /// A flag indicating whether this optimization pass should run.
     bool Run;
-
-    /// Declarations for ObjC runtime functions, for use in creating calls to
-    /// them. These are initialized lazily to avoid cluttering up the Module
-    /// with unused declarations.
-
-    /// Declaration for objc_storeStrong().
-    Constant *StoreStrongCallee;
-    /// Declaration for objc_retainAutorelease().
-    Constant *RetainAutoreleaseCallee;
-    /// Declaration for objc_retainAutoreleaseReturnValue().
-    Constant *RetainAutoreleaseRVCallee;
-    /// Declaration for objc_retainAutoreleasedReturnValue().
-    Constant *RetainRVCallee;
 
     /// The inline asm string to insert between calls and RetainRV calls to make
     /// the optimization work on targets which need it.
@@ -77,11 +66,6 @@ namespace {
     /// function we have found no alloca instructions, these calls can be marked
     /// "tail".
     SmallPtrSet<CallInst *, 8> StoreStrongCalls;
-
-    Constant *getStoreStrongCallee(Module *M);
-    Constant *getRetainRVCallee(Module *M);
-    Constant *getRetainAutoreleaseCallee(Module *M);
-    Constant *getRetainAutoreleaseRVCallee(Module *M);
 
     bool OptimizeRetainCall(Function &F, Instruction *Retain);
 
@@ -125,74 +109,6 @@ void ObjCARCContract::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
 }
 
-Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
-  if (!StoreStrongCallee) {
-    LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *I8XX = PointerType::getUnqual(I8X);
-    Type *Params[] = { I8XX, I8X };
-
-    AttributeSet Attr = AttributeSet()
-      .addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                    Attribute::NoUnwind)
-      .addAttribute(M->getContext(), 1, Attribute::NoCapture);
-
-    StoreStrongCallee =
-      M->getOrInsertFunction(
-        "objc_storeStrong",
-        FunctionType::get(Type::getVoidTy(C), Params, /*isVarArg=*/false),
-        Attr);
-  }
-  return StoreStrongCallee;
-}
-
-Constant *ObjCARCContract::getRetainAutoreleaseCallee(Module *M) {
-  if (!RetainAutoreleaseCallee) {
-    LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *Params[] = { I8X };
-    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    RetainAutoreleaseCallee =
-      M->getOrInsertFunction("objc_retainAutorelease", FTy, Attribute);
-  }
-  return RetainAutoreleaseCallee;
-}
-
-Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
-  if (!RetainAutoreleaseRVCallee) {
-    LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *Params[] = { I8X };
-    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    RetainAutoreleaseRVCallee =
-      M->getOrInsertFunction("objc_retainAutoreleaseReturnValue", FTy,
-                             Attribute);
-  }
-  return RetainAutoreleaseRVCallee;
-}
-
-Constant *ObjCARCContract::getRetainRVCallee(Module *M) {
-  if (!RetainRVCallee) {
-    LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *Params[] = { I8X };
-    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    RetainRVCallee =
-      M->getOrInsertFunction("objc_retainAutoreleasedReturnValue", FTy,
-                             Attribute);
-  }
-  return RetainRVCallee;
-}
-
 /// Turn objc_retain into objc_retainAutoreleasedReturnValue if the operand is a
 /// return value. We do this late so we do not disrupt the dataflow analysis in
 /// ObjCARCOpt.
@@ -222,7 +138,8 @@ ObjCARCContract::OptimizeRetainCall(Function &F, Instruction *Retain) {
 
   // We do not have to worry about tail calls/does not throw since
   // retain/retainRV have the same properties.
-  cast<CallInst>(Retain)->setCalledFunction(getRetainRVCallee(F.getParent()));
+  Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_RetainRV);
+  cast<CallInst>(Retain)->setCalledFunction(Decl);
 
   DEBUG(dbgs() << "New: " << *Retain << "\n");
   return true;
@@ -272,10 +189,10 @@ ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
                   "                                      Old Retain: "
                << *Retain << "\n");
 
-  if (Class == IC_AutoreleaseRV)
-    Retain->setCalledFunction(getRetainAutoreleaseRVCallee(F.getParent()));
-  else
-    Retain->setCalledFunction(getRetainAutoreleaseCallee(F.getParent()));
+  Constant *Decl = EP.get(Class == IC_AutoreleaseRV ?
+                          ARCRuntimeEntryPoints::EPT_RetainAutoreleaseRV :
+                          ARCRuntimeEntryPoints::EPT_RetainAutorelease);
+  Retain->setCalledFunction(Decl);
 
   DEBUG(dbgs() << "                                      New Retain: "
                << *Retain << "\n");
@@ -356,9 +273,8 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
     Args[0] = new BitCastInst(Args[0], I8XX, "", Store);
   if (Args[1]->getType() != I8X)
     Args[1] = new BitCastInst(Args[1], I8X, "", Store);
-  CallInst *StoreStrong =
-    CallInst::Create(getStoreStrongCallee(BB->getParent()->getParent()),
-                     Args, "", Store);
+  Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_StoreStrong);
+  CallInst *StoreStrong = CallInst::Create(Decl, Args, "", Store);
   StoreStrong->setDoesNotThrow();
   StoreStrong->setDebugLoc(Store->getDebugLoc());
 
@@ -381,11 +297,7 @@ bool ObjCARCContract::doInitialization(Module &M) {
   if (!Run)
     return false;
 
-  // These are initialized lazily.
-  StoreStrongCallee = 0;
-  RetainAutoreleaseCallee = 0;
-  RetainAutoreleaseRVCallee = 0;
-  RetainRVCallee = 0;
+  EP.Initialize(&M);
 
   // Initialize RetainRVMarker.
   RetainRVMarker = 0;
