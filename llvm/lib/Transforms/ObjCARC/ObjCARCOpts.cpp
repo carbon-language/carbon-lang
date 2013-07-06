@@ -26,6 +26,7 @@
 
 #define DEBUG_TYPE "objc-arc-opts"
 #include "ObjCARC.h"
+#include "ARCRuntimeEntryPoints.h"
 #include "DependencyAnalysis.h"
 #include "ObjCARCAliasAnalysis.h"
 #include "ProvenanceAnalysis.h"
@@ -1127,27 +1128,13 @@ namespace {
   class ObjCARCOpt : public FunctionPass {
     bool Changed;
     ProvenanceAnalysis PA;
+    ARCRuntimeEntryPoints EP;
 
     // This is used to track if a pointer is stored into an alloca.
     DenseSet<const Value *> MultiOwnersSet;
 
     /// A flag indicating whether this optimization pass should run.
     bool Run;
-
-    /// Declarations for ObjC runtime functions, for use in creating calls to
-    /// them. These are initialized lazily to avoid cluttering up the Module
-    /// with unused declarations.
-
-    /// Declaration for ObjC runtime function objc_autoreleaseReturnValue.
-    Constant *AutoreleaseRVCallee;
-    /// Declaration for ObjC runtime function objc_release.
-    Constant *ReleaseCallee;
-    /// Declaration for ObjC runtime function objc_retain.
-    Constant *RetainCallee;
-    /// Declaration for ObjC runtime function objc_retainBlock.
-    Constant *RetainBlockCallee;
-    /// Declaration for ObjC runtime function objc_autorelease.
-    Constant *AutoreleaseCallee;
 
     /// Flags which determine whether each of the interesting runtine functions
     /// is in fact used in the current function.
@@ -1170,12 +1157,6 @@ namespace {
     /// The Metadata Kind for llvm.arc.annotation.provenancesource metadata.
     unsigned ARCAnnotationProvenanceSourceMDKind;
 #endif // ARC_ANNOATIONS
-
-    Constant *getAutoreleaseRVCallee(Module *M);
-    Constant *getReleaseCallee(Module *M);
-    Constant *getRetainCallee(Module *M);
-    Constant *getRetainBlockCallee(Module *M);
-    Constant *getAutoreleaseCallee(Module *M);
 
     bool IsRetainBlockOptimizable(const Instruction *Inst);
 
@@ -1288,85 +1269,6 @@ bool ObjCARCOpt::IsRetainBlockOptimizable(const Instruction *Inst) {
   return true;
 }
 
-Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
-  if (!AutoreleaseRVCallee) {
-    LLVMContext &C = M->getContext();
-    Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
-    Type *Params[] = { I8X };
-    FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    AutoreleaseRVCallee =
-      M->getOrInsertFunction("objc_autoreleaseReturnValue", FTy,
-                             Attribute);
-  }
-  return AutoreleaseRVCallee;
-}
-
-Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
-  if (!ReleaseCallee) {
-    LLVMContext &C = M->getContext();
-    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    ReleaseCallee =
-      M->getOrInsertFunction(
-        "objc_release",
-        FunctionType::get(Type::getVoidTy(C), Params, /*isVarArg=*/false),
-        Attribute);
-  }
-  return ReleaseCallee;
-}
-
-Constant *ObjCARCOpt::getRetainCallee(Module *M) {
-  if (!RetainCallee) {
-    LLVMContext &C = M->getContext();
-    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    RetainCallee =
-      M->getOrInsertFunction(
-        "objc_retain",
-        FunctionType::get(Params[0], Params, /*isVarArg=*/false),
-        Attribute);
-  }
-  return RetainCallee;
-}
-
-Constant *ObjCARCOpt::getRetainBlockCallee(Module *M) {
-  if (!RetainBlockCallee) {
-    LLVMContext &C = M->getContext();
-    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
-    // objc_retainBlock is not nounwind because it calls user copy constructors
-    // which could theoretically throw.
-    RetainBlockCallee =
-      M->getOrInsertFunction(
-        "objc_retainBlock",
-        FunctionType::get(Params[0], Params, /*isVarArg=*/false),
-        AttributeSet());
-  }
-  return RetainBlockCallee;
-}
-
-Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
-  if (!AutoreleaseCallee) {
-    LLVMContext &C = M->getContext();
-    Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
-    AttributeSet Attribute =
-      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
-                                  Attribute::NoUnwind);
-    AutoreleaseCallee =
-      M->getOrInsertFunction(
-        "objc_autorelease",
-        FunctionType::get(Params[0], Params, /*isVarArg=*/false),
-        Attribute);
-  }
-  return AutoreleaseCallee;
-}
-
 /// Turn objc_retainAutoreleasedReturnValue into objc_retain if the operand is
 /// not a return value.  Or, if it can be paired with an
 /// objc_autoreleaseReturnValue, delete the pair and return true.
@@ -1420,7 +1322,8 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
                   "objc_retain since the operand is not a return value.\n"
                   "Old = " << *RetainRV << "\n");
 
-  cast<CallInst>(RetainRV)->setCalledFunction(getRetainCallee(F.getParent()));
+  Constant *NewDecl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
+  cast<CallInst>(RetainRV)->setCalledFunction(NewDecl);
 
   DEBUG(dbgs() << "New = " << *RetainRV << "\n");
 
@@ -1457,8 +1360,8 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
                   "Old = " << *AutoreleaseRV << "\n");
 
   CallInst *AutoreleaseRVCI = cast<CallInst>(AutoreleaseRV);
-  AutoreleaseRVCI->
-    setCalledFunction(getAutoreleaseCallee(F.getParent()));
+  Constant *NewDecl = EP.get(ARCRuntimeEntryPoints::EPT_Autorelease);
+  AutoreleaseRVCI->setCalledFunction(NewDecl);
   AutoreleaseRVCI->setTailCall(false); // Never tail call objc_autorelease.
   Class = IC_Autorelease;
 
@@ -1492,7 +1395,8 @@ ObjCARCOpt::OptimizeRetainBlockCall(Function &F, Instruction *Inst,
   DEBUG(dbgs() << "Strength reduced retainBlock => retain.\n");
   DEBUG(dbgs() << "Old: " << *Inst << "\n");
   CallInst *RetainBlock = cast<CallInst>(Inst);
-  RetainBlock->setCalledFunction(getRetainCallee(F.getParent()));
+  Constant *NewDecl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
+  RetainBlock->setCalledFunction(NewDecl);
   // Remove copy_on_escape metadata.
   RetainBlock->setMetadata(CopyOnEscapeMDKind, 0);
   Class = IC_Retain;
@@ -1601,9 +1505,10 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 
         // Create the declaration lazily.
         LLVMContext &C = Inst->getContext();
-        CallInst *NewCall =
-          CallInst::Create(getReleaseCallee(F.getParent()),
-                           Call->getArgOperand(0), "", Call);
+        
+        Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Release);
+        CallInst *NewCall = CallInst::Create(Decl, Call->getArgOperand(0), "",
+                                             Call);
         NewCall->setMetadata(ImpreciseReleaseMDKind, MDNode::get(C, None));
 
         DEBUG(dbgs() << "Replacing autorelease{,RV}(x) with objc_release(x) "
@@ -2519,8 +2424,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Instruction *InsertPt = *PI;
     Value *MyArg = ArgTy == ParamTy ? Arg :
                    new BitCastInst(Arg, ParamTy, "", InsertPt);
-    CallInst *Call =
-      CallInst::Create(getRetainCallee(M), MyArg, "", InsertPt);
+    Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
+    CallInst *Call = CallInst::Create(Decl, MyArg, "", InsertPt);
     Call->setDoesNotThrow();
     Call->setTailCall();
 
@@ -2533,8 +2438,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Instruction *InsertPt = *PI;
     Value *MyArg = ArgTy == ParamTy ? Arg :
                    new BitCastInst(Arg, ParamTy, "", InsertPt);
-    CallInst *Call = CallInst::Create(getReleaseCallee(M), MyArg,
-                                      "", InsertPt);
+    Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Release);
+    CallInst *Call = CallInst::Create(Decl, MyArg, "", InsertPt);
     // Attach a clang.imprecise_release metadata tag, if appropriate.
     if (MDNode *M = ReleasesToMove.ReleaseMetadata)
       Call->setMetadata(ImpreciseReleaseMDKind, M);
@@ -2892,9 +2797,8 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
           Changed = true;
           // If the load has a builtin retain, insert a plain retain for it.
           if (Class == IC_LoadWeakRetained) {
-            CallInst *CI =
-              CallInst::Create(getRetainCallee(F.getParent()), EarlierCall,
-                               "", Call);
+            Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
+            CallInst *CI = CallInst::Create(Decl, EarlierCall, "", Call);
             CI->setTailCall();
           }
           // Zap the fully redundant load.
@@ -2922,9 +2826,8 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
           Changed = true;
           // If the load has a builtin retain, insert a plain retain for it.
           if (Class == IC_LoadWeakRetained) {
-            CallInst *CI =
-              CallInst::Create(getRetainCallee(F.getParent()), EarlierCall,
-                               "", Call);
+            Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
+            CallInst *CI = CallInst::Create(Decl, EarlierCall, "", Call);
             CI->setTailCall();
           }
           // Zap the fully redundant load.
@@ -3238,12 +3141,8 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   // they are not, because they return their argument value. And objc_release
   // calls finalizers which can have arbitrary side effects.
 
-  // These are initialized lazily.
-  AutoreleaseRVCallee = 0;
-  ReleaseCallee = 0;
-  RetainCallee = 0;
-  RetainBlockCallee = 0;
-  AutoreleaseCallee = 0;
+  // Initialize our runtime entry point cache.
+  EP.Initialize(&M);
 
   return false;
 }
