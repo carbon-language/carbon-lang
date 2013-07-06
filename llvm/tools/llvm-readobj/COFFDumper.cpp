@@ -479,15 +479,15 @@ static std::string formatSymbol(const std::vector<RelocationRef> &Rels,
 
   StringRef Sym;
   if (resolveSymbolName(Rels, Offset, Sym)) {
-    Str << format(" (0x%X)", Offset);
+    Str << format(" (0x%" PRIX64 ")", Offset);
     return Str.str();
   }
 
   Str << Sym;
   if (Disp > 0) {
-    Str << format(" +0x%X (0x%X)", Disp, Offset);
+    Str << format(" +0x%X (0x%" PRIX64 ")", Disp, Offset);
   } else {
-    Str << format(" (0x%X)", Offset);
+    Str << format(" (0x%" PRIX64 ")", Offset);
   }
 
   return Str.str();
