@@ -1103,8 +1103,8 @@ define i1 @icmp_shl_1_V_ult_2147483648(i32 %V) {
   ret i1 %cmp
 }
 
-; CEHCK: @or_icmp_eq_B_0_icmp_ult_A_B
-; CHECK: [[SUB:%[a-z0-9]+]] = add i64 %b, -1
+; CHECK: @or_icmp_eq_B_0_icmp_ult_A_B
+; CHECK-NEXT: [[SUB:%[a-z0-9]+]] = add i64 %b, -1
 ; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp uge i64 [[SUB]], %a
 ; CHECK-NEXT: ret i1 [[CMP]]
 define i1 @or_icmp_eq_B_0_icmp_ult_A_B(i64 %a, i64 %b) {
