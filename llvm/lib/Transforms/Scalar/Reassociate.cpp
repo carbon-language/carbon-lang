@@ -122,7 +122,6 @@ namespace {
   class XorOpnd {
   public:
     XorOpnd(Value *V);
-    const XorOpnd &operator=(const XorOpnd &That);
 
     bool isInvalid() const { return SymbolicPart == 0; }
     bool isOrExpr() const { return isOr; }
@@ -223,15 +222,6 @@ XorOpnd::XorOpnd(Value *V) {
   SymbolicPart = V;
   ConstPart = APInt::getNullValue(V->getType()->getIntegerBitWidth());
   isOr = true;
-}
-
-const XorOpnd &XorOpnd::operator=(const XorOpnd &That) {
-  OrigVal = That.OrigVal;
-  SymbolicPart = That.SymbolicPart;
-  ConstPart = That.ConstPart;
-  SymbolicRank = That.SymbolicRank;
-  isOr = That.isOr;
-  return *this;
 }
 
 char Reassociate::ID = 0;
