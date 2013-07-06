@@ -1543,12 +1543,11 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     // with mask.  If so, verify that RHS is an integer vector type with the
     // same number of elts as lhs.
     if (TheCall->getNumArgs() == 2) {
-      if (!RHSType->hasIntegerRepresentation() || 
+      if (!RHSType->hasIntegerRepresentation() ||
           RHSType->getAs<VectorType>()->getNumElements() != numElements)
         Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
           << SourceRange(TheCall->getArg(1)->getLocStart(),
                          TheCall->getArg(1)->getLocEnd());
-      numResElements = numElements;
     }
     else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)

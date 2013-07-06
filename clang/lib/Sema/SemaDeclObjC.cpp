@@ -2333,7 +2333,6 @@ HelperSelectorsForTypoCorrection(
   else if (EditDistance < BestEditDistance) {
     BestMethod.clear();
     BestMethod.push_back(Method);
-    BestEditDistance = EditDistance;
   }
 }
 
