@@ -77,16 +77,18 @@ public:
       return getI8XRetI8XEntryPoint(Autorelease, "objc_autorelease", true);
     case EPT_StoreStrong:
       return getI8XRetI8XXI8XEntryPoint(StoreStrong, "objc_storeStrong");
+    case EPT_RetainRV:
+      return getI8XRetI8XEntryPoint(RetainRV,
+                                    "objc_retainAutoreleasedReturnValue", true);
     case EPT_RetainAutorelease:
       return getI8XRetI8XEntryPoint(RetainAutorelease, "objc_retainAutorelease",
                                     true);
     case EPT_RetainAutoreleaseRV:
       return getI8XRetI8XEntryPoint(RetainAutoreleaseRV,
                                     "objc_retainAutoreleaseReturnValue", true);
-    case EPT_RetainRV:
-      return getI8XRetI8XEntryPoint(RetainRV,
-                                    "objc_retainAutoreleasedReturnValue", true);
     }
+
+    llvm_unreachable("Switch should be a covered switch.");
   }
 
 private:
