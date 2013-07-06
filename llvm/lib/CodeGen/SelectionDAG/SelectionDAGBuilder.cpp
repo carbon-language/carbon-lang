@@ -5357,6 +5357,10 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     // As a special case, a null chain means that a tail call has been emitted and
     // the DAG root is already updated.
     HasTailCall = true;
+
+    // Since there's no actual continuation from this block, nothing can be
+    // relying on us setting vregs for them.
+    PendingExports.clear();
   } else {
     DAG.setRoot(Result.second);
   }
