@@ -655,6 +655,8 @@ bool shouldCreateArchive(ArchiveOperation Op) {
   case ReplaceOrInsert:
     return true;
   }
+
+  llvm_unreachable("Missing entry in covered switch.");
 }
 
 // main - main program for llvm-ar .. see comments in the code
