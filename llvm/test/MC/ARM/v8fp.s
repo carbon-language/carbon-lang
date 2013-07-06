@@ -39,3 +39,14 @@
 @ CHECK: vselvs.f32 s21, s16, s14 @ encoding: [0x07,0xaa,0x58,0xfe]
   vselvs.f64 d0, d1, d31
 @ CHECK: vselvs.f64 d0, d1, d31   @ encoding: [0x2f,0x0b,0x11,0xfe]
+
+
+@ VMAXNM / VMINNM
+  vmaxnm.f32 s5, s12, s0
+@ CHECK: vmaxnm.f32 s5, s12, s0    @ encoding: [0x00,0x2a,0xc6,0xfe]
+  vmaxnm.f64 d5, d22, d30
+@ CHECK: vmaxnm.f64 d5, d22, d30   @ encoding: [0xae,0x5b,0x86,0xfe]
+  vminnm.f32 s0, s0, s12
+@ CHECK: vminnm.f32 s0, s0, s12    @ encoding: [0x46,0x0a,0x80,0xfe]
+  vminnm.f64 d4, d6, d9
+@ CHECK: vminnm.f64 d4, d6, d9     @ encoding: [0x49,0x4b,0x86,0xfe]

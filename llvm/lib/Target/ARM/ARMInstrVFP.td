@@ -335,12 +335,12 @@ def VNMULS : ASbI<0b11100, 0b10, 1, 0,
 
 multiclass vsel_inst<string op, bits<2> opc> {
   let DecoderNamespace = "VFPV8", PostEncoderMethod = "" in {
-    def S : ASbInp<0b11100, opc,
+    def S : ASbInp<0b11100, opc, 0,
                    (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
                    NoItinerary, !strconcat("vsel", op, ".f32\t$Sd, $Sn, $Sm"),
                    []>, Requires<[HasV8FP]>;
 
-    def D : ADbInp<0b11100, opc,
+    def D : ADbInp<0b11100, opc, 0,
                    (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
                    NoItinerary, !strconcat("vsel", op, ".f64\t$Dd, $Dn, $Dm"),
                    []>, Requires<[HasV8FP]>;
@@ -351,6 +351,23 @@ defm VSELGT : vsel_inst<"gt", 0b11>;
 defm VSELGE : vsel_inst<"ge", 0b10>;
 defm VSELEQ : vsel_inst<"eq", 0b00>;
 defm VSELVS : vsel_inst<"vs", 0b01>;
+
+multiclass vmaxmin_inst<string op, bit opc> {
+  let DecoderNamespace = "VFPV8", PostEncoderMethod = "" in {
+    def S : ASbInp<0b11101, 0b00, opc,
+                   (outs SPR:$Sd), (ins SPR:$Sn, SPR:$Sm),
+                   NoItinerary, !strconcat(op, ".f32\t$Sd, $Sn, $Sm"),
+                   []>, Requires<[HasV8FP]>;
+
+    def D : ADbInp<0b11101, 0b00, opc,
+                   (outs DPR:$Dd), (ins DPR:$Dn, DPR:$Dm),
+                   NoItinerary, !strconcat(op, ".f64\t$Dd, $Dn, $Dm"),
+                   []>, Requires<[HasV8FP]>;
+  }
+}
+
+defm VMAXNM : vmaxmin_inst<"vmaxnm", 0>;
+defm VMINNM : vmaxmin_inst<"vminnm", 1>;
 
 // Match reassociated forms only if not sign dependent rounding.
 def : Pat<(fmul (fneg DPR:$a), (f64 DPR:$b)),

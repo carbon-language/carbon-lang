@@ -1549,7 +1549,7 @@ class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
 }
 
 // FP, binary, not predicated
-class ADbInp<bits<5> opcod1, bits<2> opcod2, dag oops, dag iops,
+class ADbInp<bits<5> opcod1, bits<2> opcod2, bit opcod3, dag oops, dag iops,
            InstrItinClass itin, string asm, list<dag> pattern>
   : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone,
           VFPBinaryFrm, itin, asm, "", pattern>
@@ -1573,7 +1573,7 @@ class ADbInp<bits<5> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{21-20} = opcod2;
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 1; // double precision
-  let Inst{6}     = 0;
+  let Inst{6}     = opcod3;
   let Inst{4}     = 0;
 }
 
@@ -1637,7 +1637,7 @@ class ASbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops, dag iops,
 }
 
 // Single precision, binary, not predicated
-class ASbInp<bits<5> opcod1, bits<2> opcod2, dag oops, dag iops,
+class ASbInp<bits<5> opcod1, bits<2> opcod2, bit opcod3, dag oops, dag iops,
            InstrItinClass itin, string asm, list<dag> pattern>
   : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone,
           VFPBinaryFrm, itin, asm, "", pattern>
@@ -1661,7 +1661,7 @@ class ASbInp<bits<5> opcod1, bits<2> opcod2, dag oops, dag iops,
   let Inst{21-20} = opcod2;
   let Inst{11-9}  = 0b101;
   let Inst{8}     = 0; // Single precision
-  let Inst{6}     = 0;
+  let Inst{6}     = opcod3;
   let Inst{4}     = 0;
 }
 
