@@ -274,10 +274,10 @@ const MCSectionELF *MCContext::CreateELFGroupSection() {
   return Result;
 }
 
-const MCSection *MCContext::getCOFFSection(StringRef Section,
-                                           unsigned Characteristics,
-                                           int Selection,
-                                           SectionKind Kind) {
+const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section,
+                                               unsigned Characteristics,
+                                               SectionKind Kind, int Selection,
+                                               const MCSectionCOFF *Assoc) {
   if (COFFUniquingMap == 0)
     COFFUniquingMap = new COFFUniqueMapTy();
   COFFUniqueMapTy &Map = *(COFFUniqueMapTy*)COFFUniquingMap;
@@ -288,10 +288,18 @@ const MCSection *MCContext::getCOFFSection(StringRef Section,
 
   MCSectionCOFF *Result = new (*this) MCSectionCOFF(Entry.getKey(),
                                                     Characteristics,
-                                                    Selection, Kind);
+                                                    Selection, Assoc, Kind);
 
   Entry.setValue(Result);
   return Result;
+}
+
+const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
+  if (COFFUniquingMap == 0)
+    COFFUniquingMap = new COFFUniqueMapTy();
+  COFFUniqueMapTy &Map = *(COFFUniqueMapTy*)COFFUniquingMap;
+
+  return Map.lookup(Section);
 }
 
 //===----------------------------------------------------------------------===//

@@ -28,6 +28,17 @@ bool MCSectionCOFF::ShouldOmitSectionDirective(StringRef Name,
   return false;
 }
 
+void MCSectionCOFF::setSelection(int Selection,
+                                 const MCSectionCOFF *Assoc) const {
+  assert(Selection != 0 && "invalid COMDAT selection type");
+  assert((Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) ==
+         (Assoc != 0) &&
+    "associative COMDAT section must have an associated section");
+  this->Selection = Selection;
+  this->Assoc = Assoc;
+  Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
+}
+
 void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
                                          raw_ostream &OS,
                                          const MCExpr *Subsection) const {
@@ -63,12 +74,15 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
       case COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH:
         OS << "\t.linkonce same_contents\n";
         break;
-    //NOTE: as of binutils 2.20, there is no way to specifiy select largest
-    //      with the .linkonce directive. For now, we treat it as an invalid
-    //      comdat selection value.
+      case COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE:
+        OS << "\t.linkonce associative " << Assoc->getSectionName() << "\n";
+        break;
       case COFF::IMAGE_COMDAT_SELECT_LARGEST:
-    //  OS << "\t.linkonce largest\n";
-    //  break;
+        OS << "\t.linkonce largest\n";
+        break;
+      case COFF::IMAGE_COMDAT_SELECT_NEWEST:
+        OS << "\t.linkonce newest\n";
+        break;
       default:
         assert (0 && "unsupported COFF selection type");
         break;

@@ -155,7 +155,7 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   int Selection = COFF::IMAGE_COMDAT_SELECT_LARGEST;
 
   const MCSection *Section = MCStreamer::getContext().getCOFFSection(
-    SectionName, Characteristics, Selection, SectionKind::getBSS());
+    SectionName, Characteristics, SectionKind::getBSS(), Selection);
 
   MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
 

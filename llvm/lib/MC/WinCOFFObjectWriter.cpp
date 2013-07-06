@@ -18,6 +18,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -707,10 +708,13 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   // Assign symbol and section indexes and offsets.
   Header.NumberOfSections = 0;
 
+  DenseMap<COFFSection *, uint16_t> SectionIndices;
   for (sections::iterator i = Sections.begin(),
                           e = Sections.end(); i != e; i++) {
     if (Layout.getSectionAddressSize((*i)->MCData) > 0) {
-      MakeSectionReal(**i, ++Header.NumberOfSections);
+      size_t Number = ++Header.NumberOfSections;
+      SectionIndices[*i] = Number;
+      MakeSectionReal(**i, Number);
     } else {
       (*i)->Number = -1;
     }
@@ -753,6 +757,31 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
       coff_symbol->Aux[0].Aux.WeakExternal.TagIndex = coff_symbol->Other->Index;
     }
   }
+
+  // Fixup associative COMDAT sections.
+  for (sections::iterator i = Sections.begin(),
+                          e = Sections.end(); i != e; i++) {
+    if ((*i)->Symbol->Aux[0].Aux.SectionDefinition.Selection !=
+        COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
+      continue;
+
+    const MCSectionCOFF &MCSec = static_cast<const MCSectionCOFF &>(
+                                                    (*i)->MCData->getSection());
+
+    COFFSection *Assoc = SectionMap.lookup(MCSec.getAssocSection());
+    if (!Assoc) {
+      report_fatal_error(Twine("Missing associated COMDAT section ") +
+                         MCSec.getAssocSection()->getSectionName() +
+                         " for section " + MCSec.getSectionName());
+    }
+
+    // Skip this section if the associated section is unused.
+    if (Assoc->Number == -1)
+      continue;
+
+    (*i)->Symbol->Aux[0].Aux.SectionDefinition.Number = SectionIndices[Assoc];
+  }
+
 
   // Assign file offsets to COFF object file structures.
 
