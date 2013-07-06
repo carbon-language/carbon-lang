@@ -58,6 +58,15 @@ public:
 
   void Initialize(Module *M) {
     TheModule = M;
+    AutoreleaseRV = 0;
+    Release = 0;
+    Retain = 0;
+    RetainBlock = 0;
+    Autorelease = 0;
+    StoreStrong = 0;
+    RetainRV = 0;
+    RetainAutorelease = 0;
+    RetainAutoreleaseRV = 0;
   }
 
   Constant *get(const EntryPointType entry) {
