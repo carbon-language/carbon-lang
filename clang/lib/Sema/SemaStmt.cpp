@@ -93,9 +93,6 @@ void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
     return;
   }
 
-  // suppress any potential 'unused variable' warning.
-  var->setUsed();
-
   // foreach variables are never actually initialized in the way that
   // the parser came up with.
   var->setInit(0);

@@ -13,8 +13,8 @@ void f(NSArray *a) {
    * and no diagnostics even in pedantic mode should happen.
    * rdar://6814674
    */
-  for (id thisKey in keys);
-  for (id thisKey in keys);
+  for (id thisKey in keys); /* expected-warning {{unused variable 'thisKey'}} */
+  for (id thisKey in keys); /* expected-warning {{unused variable 'thisKey'}} */
 }
 
 /* // rdar://9072298 */
@@ -41,7 +41,7 @@ typedef struct {
 int main ()
 {
  NSObject<NSFastEnumeration>* collection = ((void*)0);
- for (id thing in collection) { }
+ for (id thing in collection) { } /* expected-warning {{unused variable 'thing'}} */
 
  return 0;
 }
