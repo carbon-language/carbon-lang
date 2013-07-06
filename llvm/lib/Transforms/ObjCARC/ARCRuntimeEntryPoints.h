@@ -43,7 +43,7 @@ public:
     EPT_RetainAutoreleaseRV
   };
 
-  ARCRuntimeEntryPoints() : Module(0),
+  ARCRuntimeEntryPoints() : TheModule(0),
                             AutoreleaseRV(0),
                             Release(0),
                             Retain(0),
@@ -57,11 +57,11 @@ public:
   ~ARCRuntimeEntryPoints() { }
 
   void Initialize(Module *M) {
-    Module = M;
+    TheModule = M;
   }
 
   Constant *get(const EntryPointType entry) {
-    assert(Module != 0 && "Not initialized.");
+    assert(TheModule != 0 && "Not initialized.");
 
     switch (entry) {
     case EPT_AutoreleaseRV:
@@ -91,7 +91,7 @@ public:
 
 private:
   /// Cached reference to the module which we will insert declarations into.
-  Module *Module;
+  Module *TheModule;
 
   /// Declaration for ObjC runtime function objc_autoreleaseReturnValue.
   Constant *AutoreleaseRV;
@@ -117,15 +117,14 @@ private:
     if (Decl)
       return Decl;
 
-    LLVMContext &C = Module->getContext();
+    LLVMContext &C = TheModule->getContext();
     Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
     AttributeSet Attr =
-      AttributeSet().addAttribute(Module->getContext(),
-                                  AttributeSet::FunctionIndex,
+      AttributeSet().addAttribute(C, AttributeSet::FunctionIndex,
                                   Attribute::NoUnwind);
     FunctionType *Fty = FunctionType::get(Type::getVoidTy(C), Params,
                                           /*isVarArg=*/false);
-    return Decl = Module->getOrInsertFunction(Name, Fty, Attr);
+    return Decl = TheModule->getOrInsertFunction(Name, Fty, Attr);
   }
 
   Constant *getI8XRetI8XEntryPoint(Constant *& Decl,
@@ -134,18 +133,17 @@ private:
     if (Decl)
       return Decl;
 
-    LLVMContext &C = Module->getContext();
+    LLVMContext &C = TheModule->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
     Type *Params[] = { I8X };
     FunctionType *Fty = FunctionType::get(I8X, Params, /*isVarArg=*/false);
     AttributeSet Attr = AttributeSet();
 
     if (NoUnwind)
-      Attr = Attr.addAttribute(Module->getContext(),
-                               AttributeSet::FunctionIndex,
+      Attr = Attr.addAttribute(C, AttributeSet::FunctionIndex,
                                Attribute::NoUnwind);
 
-    return Decl = Module->getOrInsertFunction(Name, Fty, Attr);
+    return Decl = TheModule->getOrInsertFunction(Name, Fty, Attr);
   }
 
   Constant *getI8XRetI8XXI8XEntryPoint(Constant *&Decl,
@@ -153,21 +151,20 @@ private:
     if (Decl)
       return Decl;
 
-    LLVMContext &C = Module->getContext();
+    LLVMContext &C = TheModule->getContext();
     Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
     Type *I8XX = PointerType::getUnqual(I8X);
     Type *Params[] = { I8XX, I8X };
 
     AttributeSet Attr =
-      AttributeSet().addAttribute(Module->getContext(),
-                                  AttributeSet::FunctionIndex,
+      AttributeSet().addAttribute(C, AttributeSet::FunctionIndex,
                                   Attribute::NoUnwind);
-    Attr = Attr.addAttribute(Module->getContext(), 1, Attribute::NoCapture);
+    Attr = Attr.addAttribute(C, 1, Attribute::NoCapture);
 
     FunctionType *Fty = FunctionType::get(Type::getVoidTy(C), Params,
                                           /*isVarArg=*/false);
 
-    return Decl = Module->getOrInsertFunction(Name, Fty, Attr);
+    return Decl = TheModule->getOrInsertFunction(Name, Fty, Attr);
   }
 
 }; // class ARCRuntimeEntryPoints
