@@ -29,4 +29,17 @@ void g() {
        (*e)() -> void,
 #endif
        f = 0.0;
+
+#if __has_feature(cxx_decltype)
+  auto g = 0ull, h = decltype(g)(0);
+#endif
 }
+
+template<typename T> void h() {
+  auto a = T(), *b = &a;
+#if __has_feature(cxx_decltype)
+  auto c = T(), d = decltype(c)(0);
+#endif
+}
+template void h<int>();
+template void h<unsigned long>();

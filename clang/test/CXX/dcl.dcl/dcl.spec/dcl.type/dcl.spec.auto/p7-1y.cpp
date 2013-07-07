@@ -8,9 +8,6 @@ namespace std {
   };
 }
 
-// FIXME: This may not be p6 in C++1y; N3638 isn't very clear whether paragraphs
-// were added. It might be p8?
-
 int i;
 int &&f();
 
