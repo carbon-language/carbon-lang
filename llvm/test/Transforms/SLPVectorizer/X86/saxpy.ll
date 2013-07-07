@@ -43,3 +43,19 @@ define void @SAXPY(i32* noalias nocapture %x, i32* noalias nocapture %y, i32 %a,
   ret void
 }
 
+; Make sure we don't crash on this one.
+define void @SAXPY_crash(i32* noalias nocapture %x, i32* noalias nocapture %y, i64 %i) {
+  %1 = add i64 %i, 1
+  %2 = getelementptr inbounds i32* %x, i64 %1
+  %3 = getelementptr inbounds i32* %y, i64 %1
+  %4 = load i32* %3, align 4
+  %5 = add nsw i32 undef, %4
+  store i32 %5, i32* %2, align 4
+  %6 = add i64 %i, 2
+  %7 = getelementptr inbounds i32* %x, i64 %6
+  %8 = getelementptr inbounds i32* %y, i64 %6
+  %9 = load i32* %8, align 4
+  %10 = add nsw i32 undef, %9
+  store i32 %10, i32* %7, align 4
+  ret void
+}

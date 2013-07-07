@@ -3,12 +3,13 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.8.0"
 
+; At this point we can't vectorize only parts of the tree.
+
 ; CHECK: test
-; CHECK: sitofp i8
-; CHECK-NEXT: sitofp i8
-; CHECK-NEXT: insertelement
-; CHECK-NEXT: insertelement
-; CHECK-NEXT: fmul <2 x double>
+; CHECK: insertelement <2 x i8>
+; CHECK: insertelement <2 x i8>
+; CHECK: sitofp <2 x i8>
+; CHECK: fmul <2 x double>
 ; CHECK: ret
 define i32 @test(double* nocapture %A, i8* nocapture %B) {
 entry:
@@ -18,7 +19,7 @@ entry:
   %add = add i8 %0, 3
   %add4 = add i8 %1, 3
   %conv6 = sitofp i8 %add to double
-  %conv7 = sitofp i8 %add4 to double ; <--- This is inefficient. The chain stops here.
+  %conv7 = sitofp i8 %add4 to double 
   %mul = fmul double %conv6, %conv6
   %add8 = fadd double %mul, 1.000000e+00
   %mul9 = fmul double %conv7, %conv7
