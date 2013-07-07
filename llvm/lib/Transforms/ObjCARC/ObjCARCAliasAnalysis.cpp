@@ -150,14 +150,6 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
     break;
   }
 
-  // Handle special objective c calls defaulting to chaining.
-  const Function *F = CS.getCalledFunction();
-  if (F)
-    return StringSwitch<AliasAnalysis::ModRefResult>(F->getName())
-      .Case("objc_sync_start", NoModRef)
-      .Case("objc_sync_stop", NoModRef)
-      .Default(AliasAnalysis::getModRefInfo(CS, Loc));
-
   return AliasAnalysis::getModRefInfo(CS, Loc);
 }
 
