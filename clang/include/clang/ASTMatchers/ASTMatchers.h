@@ -640,6 +640,18 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CXXConstructExpr> constructExpr;
 
+/// \brief Matches unresolved constructor call expressions.
+///
+/// Example matches T(t) in return statement of f
+///     (matcher = unresolvedConstructExpr())
+/// \code
+///   template <typename T>
+///   void f(const T& t) { return T(t); }
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  CXXUnresolvedConstructExpr> unresolvedConstructExpr;
+
 /// \brief Matches implicit and explicit this expressions.
 ///
 /// Example matches the implicit this expression in "return i".

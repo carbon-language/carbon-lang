@@ -1224,7 +1224,9 @@ public:
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
   SourceLocation getLocStart() const LLVM_READONLY { return TyBeginLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return RParenLoc.isValid() ? RParenLoc : getSubExpr()->getLocEnd();
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXFunctionalCastExprClass;
@@ -3069,7 +3071,10 @@ public:
   }
 
   SourceLocation getLocStart() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    assert(RParenLoc.isValid() || NumArgs == 1);
+    return RParenLoc.isValid() ? RParenLoc : getArg(0)->getLocEnd();
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXUnresolvedConstructExprClass;

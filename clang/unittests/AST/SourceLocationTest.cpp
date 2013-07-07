@@ -201,5 +201,26 @@ TEST(UnaryTransformTypeLoc, ParensRange) {
       loc(unaryTransformType())));
 }
 
+TEST(CXXFunctionalCastExpr, SourceRange) {
+  RangeVerifier<CXXFunctionalCastExpr> Verifier;
+  Verifier.expectRange(2, 10, 2, 14);
+  EXPECT_TRUE(Verifier.match(
+      "int foo() {\n"
+      "  return int{};\n"
+      "}",
+      functionalCastExpr(), Lang_CXX11));
+}
+
+TEST(CXXUnresolvedConstructExpr, SourceRange) {
+  RangeVerifier<CXXUnresolvedConstructExpr> Verifier;
+  Verifier.expectRange(3, 10, 3, 12);
+  EXPECT_TRUE(Verifier.match(
+      "template <typename U>\n"
+      "U foo() {\n"
+      "  return U{};\n"
+      "}",
+      unresolvedConstructExpr(), Lang_CXX11));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
