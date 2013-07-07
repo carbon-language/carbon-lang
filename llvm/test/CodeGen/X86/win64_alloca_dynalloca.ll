@@ -19,7 +19,7 @@ entry:
 ; W64: movq  %rsp, %rbp
 ; W64:       $4096, %rax
 ; W64: callq __chkstk
-; W64: subq  $4096, %rsp
+; W64: subq  %rax, %rsp
 
 ; Freestanding
 ; EFI: movq  %rsp, %rbp
