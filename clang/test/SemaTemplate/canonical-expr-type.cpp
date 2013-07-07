@@ -22,13 +22,9 @@ void f0a(T x, __typeof__(f(N)) y) { } // expected-note{{previous}}
 void f(int);
 
 template<typename T, T N>
-void f0a(T x, __typeof__(f(N)) y) { } // expected-error{{redefinition}} \
-                                      // expected-note{{previous}}
+void f0a(T x, __typeof__(f(N)) y) { } // expected-error{{redefinition}}
 
 void f(float);
-
-template<typename T, T N>
-void f0a(T x, __typeof__(f(N)) y) { } // expected-error{{redefinition}}
 
 // Test dependently-sized array canonicalization
 template<typename T, int N, int M>

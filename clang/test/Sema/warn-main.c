@@ -14,16 +14,14 @@ static int main() {
   return 0;
 }
 
-// expected-error@+3 {{redefinition of 'main'}}
-// expected-error@+2 {{'main' is not allowed to be declared inline}}
-// expected-note@+1 {{previous definition is here}}
+// expected-error@+2 {{redefinition of 'main'}}
+// expected-error@+1 {{'main' is not allowed to be declared inline}}
 inline int main() {
 // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:1-[[@LINE-1]]:8}:""
   return 0;
 }
 
-// expected-warning@+6 {{function 'main' declared 'noreturn' should not return}}
-// expected-error@+3 {{redefinition of 'main'}}
+// expected-warning@+5 {{function 'main' declared 'noreturn' should not return}}
 // expected-warning@+2 {{'main' is not allowed to be declared _Noreturn}}
 // expected-note@+1 {{remove '_Noreturn'}}
 _Noreturn int main() {
