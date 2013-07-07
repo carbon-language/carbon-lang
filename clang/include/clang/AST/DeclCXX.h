@@ -1024,33 +1024,34 @@ public:
   std::pair<conversion_iterator, conversion_iterator>
     getVisibleConversionFunctions();
 
-  /// isAggregate - Whether this class is an aggregate (C++
-  /// [dcl.init.aggr]), which is a class with no user-declared
-  /// constructors, no private or protected non-static data members,
-  /// no base classes, and no virtual functions (C++ [dcl.init.aggr]p1).
+  /// Determine whether this class is an aggregate (C++ [dcl.init.aggr]),
+  /// which is a class with no user-declared constructors, no private
+  /// or protected non-static data members, no base classes, and no virtual
+  /// functions (C++ [dcl.init.aggr]p1).
   bool isAggregate() const { return data().Aggregate; }
 
-  /// hasInClassInitializer - Whether this class has any in-class initializers
+  /// \brief Whether this class has any in-class initializers
   /// for non-static data members.
   bool hasInClassInitializer() const { return data().HasInClassInitializer; }
 
   /// \brief Whether this class or any of its subobjects has any members of
-  /// reference type which would make value-initialization ill-formed, per
-  /// C++03 [dcl.init]p5:
-  ///  -- if T is a non-union class type without a user-declared constructor,
-  ///     then every non-static data member and base-class component of T is
-  ///     value-initialized
-  /// [...]
-  /// A program that calls for [...] value-initialization of an entity of
-  /// reference type is ill-formed.
+  /// reference type which would make value-initialization ill-formed.
+  ///
+  /// Per C++03 [dcl.init]p5:
+  ///  - if T is a non-union class type without a user-declared constructor,
+  ///    then every non-static data member and base-class component of T is
+  ///    value-initialized [...] A program that calls for [...]
+  ///    value-initialization of an entity of reference type is ill-formed.
   bool hasUninitializedReferenceMember() const {
     return !isUnion() && !hasUserDeclaredConstructor() &&
            data().HasUninitializedReferenceMember;
   }
 
-  /// isPOD - Whether this class is a POD-type (C++ [class]p4), which is a class
-  /// that is an aggregate that has no non-static non-POD data members, no
-  /// reference data members, no user-defined copy assignment operator and no
+  /// \brief Whether this class is a POD-type (C++ [class]p4)
+  ///
+  /// For purposes of this function a class is POD if it is an aggregate
+  /// that has no non-static non-POD data members, no reference data
+  /// members, no user-defined copy assignment operator and no
   /// user-defined destructor.
   ///
   /// Note that this is the C++ TR1 definition of POD.
@@ -1060,26 +1061,33 @@ public:
   /// it contains only public fields, no bases, tag kind is not 'class', etc.
   bool isCLike() const;
 
-  /// isEmpty - Whether this class is empty (C++0x [meta.unary.prop]), which
-  /// means it has a virtual function, virtual base, data member (other than
-  /// 0-width bit-field) or inherits from a non-empty class. Does NOT include
-  /// a check for union-ness.
+  /// \brief Determine whether this is an empty class in the sense of
+  /// (C++11 [meta.unary.prop]).
+  ///
+  /// A non-union class is empty iff it has a virtual function, virtual base,
+  /// data member (other than 0-width bit-field) or inherits from a non-empty
+  /// class.
+  ///
+  /// \note This does NOT include a check for union-ness.
   bool isEmpty() const { return data().Empty; }
 
-  /// isPolymorphic - Whether this class is polymorphic (C++ [class.virtual]),
+  /// Whether this class is polymorphic (C++ [class.virtual]),
   /// which means that the class contains or inherits a virtual function.
   bool isPolymorphic() const { return data().Polymorphic; }
 
-  /// isAbstract - Whether this class is abstract (C++ [class.abstract]),
-  /// which means that the class contains or inherits a pure virtual function.
+  /// \brief Determine whether this class has a pure virtual function.
+  ///
+  /// The class is is abstract per (C++ [class.abstract]p2) if it declares
+  /// a pure virtual function or inherits a pure virtual function that is
+  /// not overridden.
   bool isAbstract() const { return data().Abstract; }
 
-  /// isStandardLayout - Whether this class has standard layout
+  /// \brief Determine whether this class has standard layout per 
   /// (C++ [class]p7)
   bool isStandardLayout() const { return data().IsStandardLayout; }
 
-  /// \brief Whether this class, or any of its class subobjects, contains a
-  /// mutable field.
+  /// \brief Determine whether this class, or any of its class subobjects,
+  /// contains a mutable field.
   bool hasMutableFields() const { return data().HasMutableFields; }
 
   /// \brief Determine whether this class has a trivial default constructor
@@ -1187,47 +1195,48 @@ public:
     return !(data().HasTrivialSpecialMembers & SMF_Destructor);
   }
 
-  // hasIrrelevantDestructor - Whether this class has a destructor which has no
-  // semantic effect. Any such destructor will be trivial, public, defaulted
-  // and not deleted, and will call only irrelevant destructors.
+  /// \brief Whether this class has a destructor which has no semantic effect.
+  ///
+  /// Any such destructor will be trivial, public, defaulted and not deleted,
+  /// and will call only irrelevant destructors.
   bool hasIrrelevantDestructor() const {
     return data().HasIrrelevantDestructor;
   }
 
-  // hasNonLiteralTypeFieldsOrBases - Whether this class has a non-literal or
-  // volatile type non-static data member or base class.
+  /// \brief Whether this class has a non-literal or/ volatile type non-static
+  /// data member or base class.
   bool hasNonLiteralTypeFieldsOrBases() const {
     return data().HasNonLiteralTypeFieldsOrBases;
   }
 
-  // isTriviallyCopyable - Whether this class is considered trivially copyable
-  // (C++0x [class]p6).
+  /// \brief Whether this class is considered trivially copyable per
+  /// (C++11 [class]p6).
   bool isTriviallyCopyable() const;
 
-  // isTrivial - Whether this class is considered trivial
-  //
-  // C++0x [class]p6
-  //    A trivial class is a class that has a trivial default constructor and
-  //    is trivially copiable.
+  /// \brief Determine whether this class is considered trivial.
+  ///
+  /// C++11 [class]p6:
+  ///    "A trivial class is a class that has a trivial default constructor and
+  ///    is trivially copiable."
   bool isTrivial() const {
     return isTriviallyCopyable() && hasTrivialDefaultConstructor();
   }
 
-  // isLiteral - Whether this class is a literal type.
-  //
-  // C++11 [basic.types]p10
-  //   A class type that has all the following properties:
-  //     -- it has a trivial destructor
-  //     -- every constructor call and full-expression in the
-  //        brace-or-equal-intializers for non-static data members (if any) is
-  //        a constant expression.
-  //     -- it is an aggregate type or has at least one constexpr constructor or
-  //        constructor template that is not a copy or move constructor, and
-  //     -- all of its non-static data members and base classes are of literal
-  //        types
-  //
-  // We resolve DR1361 by ignoring the second bullet. We resolve DR1452 by
-  // treating types with trivial default constructors as literal types.
+  /// \brief Determine whether this class is a literal type.
+  ///
+  /// C++11 [basic.types]p10:
+  ///   A class type that has all the following properties:
+  ///     - it has a trivial destructor
+  ///     - every constructor call and full-expression in the
+  ///       brace-or-equal-intializers for non-static data members (if any) is
+  ///       a constant expression.
+  ///     - it is an aggregate type or has at least one constexpr constructor
+  ///       or constructor template that is not a copy or move constructor, and
+  ///     - all of its non-static data members and base classes are of literal
+  ///       types
+  ///
+  /// We resolve DR1361 by ignoring the second bullet. We resolve DR1452 by
+  /// treating types with trivial default constructors as literal types.
   bool isLiteral() const {
     return hasTrivialDestructor() &&
            (isAggregate() || hasConstexprNonCopyMoveConstructor() ||
@@ -1238,7 +1247,7 @@ public:
   /// \brief If this record is an instantiation of a member class,
   /// retrieves the member class from which it was instantiated.
   ///
-  /// This routine will return non-NULL for (non-templated) member
+  /// This routine will return non-null for (non-templated) member
   /// classes of class templates. For example, given:
   ///
   /// @code
@@ -1264,7 +1273,7 @@ public:
   }
 
   /// \brief Specify that this record is an instantiation of the
-  /// member class RD.
+  /// member class \p RD.
   void setInstantiationOfMemberClass(CXXRecordDecl *RD,
                                      TemplateSpecializationKind TSK);
 
@@ -1295,10 +1304,10 @@ public:
   /// \brief Set the kind of specialization or template instantiation this is.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
 
-  /// getDestructor - Returns the destructor decl for this class.
+  /// \brief Returns the destructor decl for this class.
   CXXDestructorDecl *getDestructor() const;
 
-  /// isLocalClass - If the class is a local class [class.local], returns
+  /// \brief If the class is a local class [class.local], returns
   /// the enclosing function declaration.
   const FunctionDecl *isLocalClass() const {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(getDeclContext()))
@@ -1335,7 +1344,7 @@ public:
   /// \param Paths will contain the paths taken from the current class to the
   /// given \p Base class.
   ///
-  /// \returns true if this class is derived from Base, false otherwise.
+  /// \returns true if this class is derived from \p Base, false otherwise.
   ///
   /// \todo add a separate paramaeter to configure IsDerivedFrom, rather than
   /// tangling input and output in \p Paths
@@ -1478,12 +1487,12 @@ public:
   /// \brief Get the indirect primary bases for this class.
   void getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const;
 
-  /// viewInheritance - Renders and displays an inheritance diagram
+  /// Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.
   void viewInheritance(ASTContext& Context) const;
 
-  /// MergeAccess - Calculates the access of a decl that is reached
+  /// \brief Calculates the access of a decl that is reached
   /// along a path.
   static AccessSpecifier MergeAccess(AccessSpecifier PathAccess,
                                      AccessSpecifier DeclAccess) {
@@ -2747,7 +2756,7 @@ public:
   /// \brief Sets whether the using declaration has 'typename'.
   void setTypeName(bool TN) { FirstUsingShadow.setInt(TN); }
 
-  /// \brief Iterates through the using shadow declarations assosiated with
+  /// \brief Iterates through the using shadow declarations associated with
   /// this using declaration.
   class shadow_iterator {
     /// \brief The current using shadow declaration.
