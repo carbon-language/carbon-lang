@@ -112,6 +112,8 @@ InstructionClass llvm::objcarc::GetFunctionClass(const Function *F) {
           .Case("objc_retain_autorelease",    IC_FusedRetainAutorelease)
           .Case("objc_retainAutorelease",     IC_FusedRetainAutorelease)
           .Case("objc_retainAutoreleaseReturnValue",IC_FusedRetainAutoreleaseRV)
+          .Case("objc_sync_enter", IC_User)
+          .Case("objc_sync_exit", IC_User)
           .Default(IC_CallOrUser);
 
       // Argument is i8**

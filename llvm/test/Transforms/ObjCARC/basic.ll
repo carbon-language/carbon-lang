@@ -3037,9 +3037,28 @@ end:                                              ; preds = %if.end125, %if.end1
   ret void
 }
 
-!0 = metadata !{}
-
 declare i32 @__gxx_personality_v0(...)
+
+declare i32 @objc_sync_enter(i8*)
+declare i32 @objc_sync_exit(i8*)
+
+; Make sure that we understand that objc_sync_{enter,exit} are IC_User not
+; IC_Call/IC_CallOrUser.
+
+; CHECK:      define void @test67
+; CHECK-NEXT:   call i32 @objc_sync_enter(i8* %x)
+; CHECK-NEXT:   call i32 @objc_sync_exit(i8* %x)
+; CHECK-NEXT:   ret void
+; CHECK-NEXT: }
+define void @test67(i8* %x) {
+  call i8* @objc_retain(i8* %x)
+  call i32 @objc_sync_enter(i8* %x)
+  call i32 @objc_sync_exit(i8* %x)
+  call void @objc_release(i8* %x), !clang.imprecise_release !0
+  ret void
+}
+
+!0 = metadata !{}
 
 ; CHECK: attributes #0 = { nounwind readnone }
 ; CHECK: attributes [[NUW]] = { nounwind }
