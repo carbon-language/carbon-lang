@@ -1292,6 +1292,7 @@ void BoUpSLP::vectorizeTree() {
   for (Function::iterator it = F->begin(), e = F->end(); it != e; ++it) {
     BlocksNumbers[it].forget();
   }
+  Builder.ClearInsertionPoint();
 }
 
 void BoUpSLP::optimizeGatherSequence() {
