@@ -633,6 +633,7 @@ private:
         // there is also an identifier before the ().
         if (LeftOfParens && (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
                              LeftOfParens->is(tok::kw_return)) &&
+            LeftOfParens->Type != TT_OverloadedOperator &&
             LeftOfParens->Type != TT_TemplateCloser && Current.Next &&
             Current.Next->is(tok::identifier))
           IsCast = true;
