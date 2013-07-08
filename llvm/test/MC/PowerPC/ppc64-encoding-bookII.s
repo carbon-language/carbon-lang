@@ -71,3 +71,12 @@
 # CHECK: wait 2                          # encoding: [0x7c,0x40,0x00,0x7c]
          waitimpl
 
+# Time base instructions
+
+# CHECK: mftb 2, 123                     # encoding: [0x7c,0x5b,0x1a,0xe6]
+         mftb 2, 123
+# CHECK: mftb 2, 268                     # encoding: [0x7c,0x4c,0x42,0xe6]
+         mftb 2
+# CHECK: mftb 2, 269                     # encoding: [0x7c,0x4d,0x42,0xe6]
+         mftbu 2
+
