@@ -764,8 +764,8 @@ The following can be used as a template:
 
 .. code-block:: c++
 
-  #include "llvm/Module.h"
-  #include "llvm/IntrinsicInst.h"
+  #include "llvm/IR/Module.h"
+  #include "llvm/IR/IntrinsicInst.h"
 
   bool MyGC::initializeCustomLowering(Module &M) {
     return false;
@@ -915,10 +915,10 @@ map for the entire module, and may access the ``GCFunctionInfo`` using its own
 .. code-block:: c++
 
   #include "llvm/CodeGen/AsmPrinter.h"
-  #include "llvm/Function.h"
-  #include "llvm/Target/TargetMachine.h"
-  #include "llvm/DataLayout.h"
+  #include "llvm/IR/Function.h"
+  #include "llvm/IR/DataLayout.h"
   #include "llvm/Target/TargetAsmInfo.h"
+  #include "llvm/Target/TargetMachine.h"
 
   void MyGCPrinter::beginAssembly(std::ostream &OS, AsmPrinter &AP,
                                   const TargetAsmInfo &TAI) {

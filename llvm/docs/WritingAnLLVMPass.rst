@@ -96,7 +96,7 @@ Start out with:
 .. code-block:: c++
 
   #include "llvm/Pass.h"
-  #include "llvm/Function.h"
+  #include "llvm/IR/Function.h"
   #include "llvm/Support/raw_ostream.h"
 
 Which are needed because we are writing a `Pass
@@ -184,7 +184,7 @@ As a whole, the ``.cpp`` file looks like:
 .. code-block:: c++
 
     #include "llvm/Pass.h"
-    #include "llvm/Function.h"
+    #include "llvm/IR/Function.h"
     #include "llvm/Support/raw_ostream.h"
 
     using namespace llvm;

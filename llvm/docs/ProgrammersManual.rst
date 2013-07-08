@@ -2421,7 +2421,7 @@ place the ``vptr`` in the first word of the instances.)
 The Core LLVM Class Hierarchy Reference
 =======================================
 
-``#include "llvm/Type.h"``
+``#include "llvm/IR/Type.h"``
 
 header source: `Type.h <http://llvm.org/doxygen/Type_8h-source.html>`_
 
@@ -2524,7 +2524,7 @@ Important Derived Types
 The ``Module`` class
 --------------------
 
-``#include "llvm/Module.h"``
+``#include "llvm/IR/Module.h"``
 
 header source: `Module.h <http://llvm.org/doxygen/Module_8h-source.html>`_
 
@@ -2611,7 +2611,7 @@ Important Public Members of the ``Module`` class
 The ``Value`` class
 -------------------
 
-``#include "llvm/Value.h"``
+``#include "llvm/IR/Value.h"``
 
 header source: `Value.h <http://llvm.org/doxygen/Value_8h-source.html>`_
 
@@ -2702,7 +2702,7 @@ Important Public Members of the ``Value`` class
 The ``User`` class
 ------------------
 
-``#include "llvm/User.h"``
+``#include "llvm/IR/User.h"``
 
 header source: `User.h <http://llvm.org/doxygen/User_8h-source.html>`_
 
@@ -2748,7 +2748,7 @@ interface and through an iterator based interface.
 The ``Instruction`` class
 -------------------------
 
-``#include "llvm/Instruction.h"``
+``#include "llvm/IR/Instruction.h"``
 
 header source: `Instruction.h
 <http://llvm.org/doxygen/Instruction_8h-source.html>`_
@@ -2896,7 +2896,7 @@ Important Subclasses of Constant
 The ``GlobalValue`` class
 -------------------------
 
-``#include "llvm/GlobalValue.h"``
+``#include "llvm/IR/GlobalValue.h"``
 
 header source: `GlobalValue.h
 <http://llvm.org/doxygen/GlobalValue_8h-source.html>`_
@@ -2955,7 +2955,7 @@ Important Public Members of the ``GlobalValue`` class
 The ``Function`` class
 ----------------------
 
-``#include "llvm/Function.h"``
+``#include "llvm/IR/Function.h"``
 
 header source: `Function.h <http://llvm.org/doxygen/Function_8h-source.html>`_
 
@@ -3063,7 +3063,7 @@ Important Public Members of the ``Function``
 The ``GlobalVariable`` class
 ----------------------------
 
-``#include "llvm/GlobalVariable.h"``
+``#include "llvm/IR/GlobalVariable.h"``
 
 header source: `GlobalVariable.h
 <http://llvm.org/doxygen/GlobalVariable_8h-source.html>`_
@@ -3121,7 +3121,7 @@ Important Public Members of the ``GlobalVariable`` class
 The ``BasicBlock`` class
 ------------------------
 
-``#include "llvm/BasicBlock.h"``
+``#include "llvm/IR/BasicBlock.h"``
 
 header source: `BasicBlock.h
 <http://llvm.org/doxygen/BasicBlock_8h-source.html>`_
