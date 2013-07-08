@@ -4145,6 +4145,13 @@ static IntRange GetValueRange(ASTContext &C, APValue &result, QualType Ty,
   return IntRange(MaxWidth, Ty->isUnsignedIntegerOrEnumerationType());
 }
 
+static QualType GetExprType(Expr *E) {
+  QualType Ty = E->getType();
+  if (const AtomicType *AtomicRHS = Ty->getAs<AtomicType>())
+    Ty = AtomicRHS->getValueType();
+  return Ty;
+}
+
 /// Pseudo-evaluate the given integer expression, estimating the
 /// range of values it might take.
 ///
@@ -4155,7 +4162,7 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
   // Try a full evaluation first.
   Expr::EvalResult result;
   if (E->EvaluateAsRValue(result, C))
-    return GetValueRange(C, result.Val, E->getType(), MaxWidth);
+    return GetValueRange(C, result.Val, GetExprType(E), MaxWidth);
 
   // I think we only want to look through implicit casts here; if the
   // user has an explicit widening cast, we should treat the value as
@@ -4164,7 +4171,7 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     if (CE->getCastKind() == CK_NoOp || CE->getCastKind() == CK_LValueToRValue)
       return GetExprRange(C, CE->getSubExpr(), MaxWidth);
 
-    IntRange OutputTypeRange = IntRange::forValueOfType(C, CE->getType());
+    IntRange OutputTypeRange = IntRange::forValueOfType(C, GetExprType(CE));
 
     bool isIntegerCast = (CE->getCastKind() == CK_IntegralCast);
 
@@ -4224,7 +4231,7 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     case BO_XorAssign:
     case BO_OrAssign:
       // TODO: bitfields?
-      return IntRange::forValueOfType(C, E->getType());
+      return IntRange::forValueOfType(C, GetExprType(E));
 
     // Simple assignments just pass through the RHS, which will have
     // been coerced to the LHS type.
@@ -4235,7 +4242,7 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // Operations with opaque sources are black-listed.
     case BO_PtrMemD:
     case BO_PtrMemI:
-      return IntRange::forValueOfType(C, E->getType());
+      return IntRange::forValueOfType(C, GetExprType(E));
 
     // Bitwise-and uses the *infinum* of the two source ranges.
     case BO_And:
@@ -4250,14 +4257,14 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
       if (IntegerLiteral *I
             = dyn_cast<IntegerLiteral>(BO->getLHS()->IgnoreParenCasts())) {
         if (I->getValue() == 1) {
-          IntRange R = IntRange::forValueOfType(C, E->getType());
+          IntRange R = IntRange::forValueOfType(C, GetExprType(E));
           return IntRange(R.Width, /*NonNegative*/ true);
         }
       }
       // fallthrough
 
     case BO_ShlAssign:
-      return IntRange::forValueOfType(C, E->getType());
+      return IntRange::forValueOfType(C, GetExprType(E));
 
     // Right shift by a constant can narrow its left argument.
     case BO_Shr:
@@ -4286,14 +4293,14 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // Black-list pointer subtractions.
     case BO_Sub:
       if (BO->getLHS()->getType()->isPointerType())
-        return IntRange::forValueOfType(C, E->getType());
+        return IntRange::forValueOfType(C, GetExprType(E));
       break;
 
     // The width of a division result is mostly determined by the size
     // of the LHS.
     case BO_Div: {
       // Don't 'pre-truncate' the operands.
-      unsigned opWidth = C.getIntWidth(E->getType());
+      unsigned opWidth = C.getIntWidth(GetExprType(E));
       IntRange L = GetExprRange(C, BO->getLHS(), opWidth);
 
       // If the divisor is constant, use that.
@@ -4316,7 +4323,7 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // either side.
     case BO_Rem: {
       // Don't 'pre-truncate' the operands.
-      unsigned opWidth = C.getIntWidth(E->getType());
+      unsigned opWidth = C.getIntWidth(GetExprType(E));
       IntRange L = GetExprRange(C, BO->getLHS(), opWidth);
       IntRange R = GetExprRange(C, BO->getRHS(), opWidth);
 
@@ -4349,26 +4356,22 @@ static IntRange GetExprRange(ASTContext &C, Expr *E, unsigned MaxWidth) {
     // Operations with opaque sources are black-listed.
     case UO_Deref:
     case UO_AddrOf: // should be impossible
-      return IntRange::forValueOfType(C, E->getType());
+      return IntRange::forValueOfType(C, GetExprType(E));
 
     default:
       return GetExprRange(C, UO->getSubExpr(), MaxWidth);
     }
-  }
-  
-  if (dyn_cast<OffsetOfExpr>(E)) {
-    IntRange::forValueOfType(C, E->getType());
   }
 
   if (FieldDecl *BitField = E->getSourceBitField())
     return IntRange(BitField->getBitWidthValue(C),
                     BitField->getType()->isUnsignedIntegerOrEnumerationType());
 
-  return IntRange::forValueOfType(C, E->getType());
+  return IntRange::forValueOfType(C, GetExprType(E));
 }
 
 static IntRange GetExprRange(ASTContext &C, Expr *E) {
-  return GetExprRange(C, E, C.getIntWidth(E->getType()));
+  return GetExprRange(C, E, C.getIntWidth(GetExprType(E)));
 }
 
 /// Checks whether the given value, which currently has the given

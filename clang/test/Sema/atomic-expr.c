@@ -45,3 +45,16 @@ void func_09 (int* xp) {
 void func_10 (int* xp) {
   *xp <<= data2;
 }
+
+int func_11 (int x) {
+  return data1 == x;
+}
+
+int func_12 () {
+  return data1 < data2;
+}
+
+int func_13 (int x, unsigned y) {
+  return x ? data1 : y;
+}
+

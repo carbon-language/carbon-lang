@@ -5280,11 +5280,8 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   Cond = UsualUnaryConversions(Cond.take());
   if (Cond.isInvalid())
     return QualType();
-  LHS = UsualUnaryConversions(LHS.take());
-  if (LHS.isInvalid())
-    return QualType();
-  RHS = UsualUnaryConversions(RHS.take());
-  if (RHS.isInvalid())
+  UsualArithmeticConversions(LHS, RHS);
+  if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
   QualType CondTy = Cond.get()->getType();
@@ -5308,12 +5305,8 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS,
   
   // If both operands have arithmetic type, do the usual arithmetic conversions
   // to find a common type: C99 6.5.15p3,5.
-  if (LHSTy->isArithmeticType() && RHSTy->isArithmeticType()) {
-    UsualArithmeticConversions(LHS, RHS);
-    if (LHS.isInvalid() || RHS.isInvalid())
-      return QualType();
+  if (LHSTy->isArithmeticType() && RHSTy->isArithmeticType())
     return LHS.get()->getType();
-  }
 
   // If both operands are the same structure or union type, the result is that
   // type.
@@ -7401,21 +7394,9 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
   }
 
   // C99 6.5.8p3 / C99 6.5.9p4
-  if (LHS.get()->getType()->isArithmeticType() &&
-      RHS.get()->getType()->isArithmeticType()) {
-    UsualArithmeticConversions(LHS, RHS);
-    if (LHS.isInvalid() || RHS.isInvalid())
-      return QualType();
-  }
-  else {
-    LHS = UsualUnaryConversions(LHS.take());
-    if (LHS.isInvalid())
-      return QualType();
-
-    RHS = UsualUnaryConversions(RHS.take());
-    if (RHS.isInvalid())
-      return QualType();
-  }
+  UsualArithmeticConversions(LHS, RHS);
+  if (LHS.isInvalid() || RHS.isInvalid())
+    return QualType();
 
   LHSType = LHS.get()->getType();
   RHSType = RHS.get()->getType();
