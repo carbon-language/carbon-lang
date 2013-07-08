@@ -18,9 +18,9 @@
 
 namespace { // Private
 
-	struct free_deleter { 
-		inline void operator()(char* p) { free(p); } 
-	}; 
+    struct free_deleter { 
+        inline void operator()(char* p) { free(p); } 
+    }; 
 }
 // Some of these functions aren't standard or if they conform, the name does not.
 

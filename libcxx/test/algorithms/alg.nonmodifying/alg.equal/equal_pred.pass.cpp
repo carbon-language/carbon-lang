@@ -22,15 +22,15 @@
 #include "test_iterators.h"
 
 #if _LIBCPP_STD_VER > 11
-#define	HAS_FOUR_ITERATOR_VERSION
+#define HAS_FOUR_ITERATOR_VERSION
 #endif
 
 int comparison_count = 0;
 template <typename T>
 bool counting_equals ( const T &a, const T &b ) {
-	++comparison_count;
-	return a == b;
-	}
+    ++comparison_count;
+    return a == b;
+}
 
 int main()
 {

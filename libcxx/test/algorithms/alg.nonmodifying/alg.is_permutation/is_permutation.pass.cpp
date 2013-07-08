@@ -20,7 +20,7 @@
 #include "test_iterators.h"
 
 #if _LIBCPP_STD_VER > 11
-#define	HAS_FOUR_ITERATOR_VERSION
+#define HAS_FOUR_ITERATOR_VERSION
 #endif
 
 int main()

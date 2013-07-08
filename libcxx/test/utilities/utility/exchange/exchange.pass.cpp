@@ -18,30 +18,30 @@
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-	{
-	int v = 12;
-	assert ( std::exchange ( v, 23 ) == 12 );
-	assert ( v == 23 );
-	assert ( std::exchange ( v, 67.2 ) == 23 );
-	assert ( v = 67 );
-	}
+    {
+    int v = 12;
+    assert ( std::exchange ( v, 23 ) == 12 );
+    assert ( v == 23 );
+    assert ( std::exchange ( v, 67.2 ) == 23 );
+    assert ( v = 67 );
+    }
 
-	{
-	bool b = false;
-	assert ( !std::exchange ( b, true ));
-	assert ( b );
-	}
+    {
+    bool b = false;
+    assert ( !std::exchange ( b, true ));
+    assert ( b );
+    }
 
-	{
-	const std::string s1 ( "Hi Mom!" );
-	const std::string s2 ( "Yo Dad!" );
-	std::string s3 = s1; // Mom
-	assert ( std::exchange ( s3, s2 ) == s1 );
-	assert ( s3 == s2 );
-	assert ( std::exchange ( s3, "Hi Mom!" ) == s2 );
-	assert ( s3 == s1 );
-	assert ( std::exchange ( s3, "" ) == s1 );
-	assert ( s3.size () == 0 );
-	}
+    {
+    const std::string s1 ( "Hi Mom!" );
+    const std::string s2 ( "Yo Dad!" );
+    std::string s3 = s1; // Mom
+    assert ( std::exchange ( s3, s2 ) == s1 );
+    assert ( s3 == s2 );
+    assert ( std::exchange ( s3, "Hi Mom!" ) == s2 );
+    assert ( s3 == s1 );
+    assert ( std::exchange ( s3, "" ) == s1 );
+    assert ( s3.size () == 0 );
+    }
 #endif
 }

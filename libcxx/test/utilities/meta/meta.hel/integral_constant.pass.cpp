@@ -27,8 +27,8 @@ int main()
 #endif
 
 #if _LIBCPP_STD_VER > 11
-	static_assert ( _5{}() == 5, "" );
-	static_assert ( std::true_type{}(), "" );
+    static_assert ( _5{}() == 5, "" );
+    static_assert ( std::true_type{}(), "" );
 #endif
 
     static_assert(std::false_type::value == false, "");

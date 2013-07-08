@@ -290,7 +290,7 @@ inline Iter base(bidirectional_iterator<Iter> i) { return i.base(); }
 template <class Iter>
 inline Iter base(random_access_iterator<Iter> i) { return i.base(); }
 
-template <class Iter>	// everything else
+template <class Iter>    // everything else
 inline Iter base(Iter i) { return i; }
 
 #endif  // ITERATORS_H

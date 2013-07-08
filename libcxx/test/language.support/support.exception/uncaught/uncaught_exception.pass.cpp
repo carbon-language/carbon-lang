@@ -22,11 +22,11 @@ struct A
 
 struct B
 {
-	B()
-	{
-		// http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#475
+    B()
+    {
+        // http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#475
         assert(!std::uncaught_exception());
-	}
+    }
 };
 
 int main()
