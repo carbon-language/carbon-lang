@@ -1200,7 +1200,7 @@ if test "$DOTTY" != "echo dotty" ; then
   AC_DEFINE_UNQUOTED([LLVM_PATH_DOTTY],"$DOTTY${EXEEXT}",
    [Define to path to dotty program if found or 'echo dotty' otherwise])
 fi
-AC_PATH_PROGS(XDOT, [xdot, xdot.py], [echo xdot])
+AC_PATH_PROGS(XDOT, [xdot xdot.py], [echo xdot])
 if test "$XDOT" != "echo xdot" ; then
   AC_DEFINE([HAVE_XDOT],[1],[Define if the xdot program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
