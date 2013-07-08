@@ -2385,19 +2385,17 @@ void DwarfUnits::emitAddresses(const MCSection *AddrSection) {
 
   // Get all of the address pool entries and put them in an array by their ID so
   // we can sort them.
-  SmallVector<std::pair<unsigned, const MCExpr *>, 64> Entries;
+  SmallVector<const MCExpr *, 64> Entries(AddressPool.size());
 
   for (DenseMap<const MCExpr *, unsigned>::iterator
            I = AddressPool.begin(),
            E = AddressPool.end();
        I != E; ++I)
-    Entries.push_back(std::make_pair(I->second, I->first));
-
-  array_pod_sort(Entries.begin(), Entries.end());
+    Entries[I->second] = I->first;
 
   for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
     // Emit an expression for reference from debug information entries.
-    if (const MCExpr *Expr = Entries[i].second)
+    if (const MCExpr *Expr = Entries[i])
       Asm->OutStreamer.EmitValue(Expr, Asm->getDataLayout().getPointerSize());
     else
       Asm->OutStreamer.EmitIntValue(0, Asm->getDataLayout().getPointerSize());
