@@ -22,7 +22,7 @@ func1:
         .cantunwind
         .personality    __gxx_personality_v0
 @ CHECK: error: .personality can't be used with .cantunwind directive
-@ CEHCK:        .personality __gxx_personality_v0
+@ CHECK:        .personality __gxx_personality_v0
 @ CHECK:        ^
 @ CHECK: error: .cantunwind was specified here
 @ CHECK:        .cantunwind
@@ -42,7 +42,7 @@ func2:
         .cantunwind
         .handlerdata
 @ CHECK: error: .handlerdata can't be used with .cantunwind directive
-@ CEHCK:        .handlerdata
+@ CHECK:        .handlerdata
 @ CHECK:        ^
 @ CHECK: error: .cantunwind was specified here
 @ CHECK:        .cantunwind
@@ -62,7 +62,7 @@ func3:
         .personality    __gxx_personality_v0
         .cantunwind
 @ CHECK: error: .cantunwind can't be used with .personality directive
-@ CEHCK:        .cantunwind
+@ CHECK:        .cantunwind
 @ CHECK:        ^
 @ CHECK: error: .personality was specified here
 @ CHECK:        .personality __gxx_personality_v0
@@ -82,7 +82,7 @@ func4:
         .handlerdata
         .cantunwind
 @ CHECK: error: .cantunwind can't be used with .handlerdata directive
-@ CEHCK:        .cantunwind
+@ CHECK:        .cantunwind
 @ CHECK:        ^
 @ CHECK: error: .handlerdata was specified here
 @ CHECK:        .handlerdata
