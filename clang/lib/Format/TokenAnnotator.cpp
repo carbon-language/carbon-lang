@@ -542,9 +542,9 @@ private:
     ScopedContextCreator(AnnotatingParser &P, tok::TokenKind ContextKind,
                          unsigned Increase)
         : P(P) {
-      P.Contexts.push_back(
-          Context(ContextKind, P.Contexts.back().BindingStrength + Increase,
-                  P.Contexts.back().IsExpression));
+      P.Contexts.push_back(Context(ContextKind,
+                                   P.Contexts.back().BindingStrength + Increase,
+                                   P.Contexts.back().IsExpression));
     }
 
     ~ScopedContextCreator() { P.Contexts.pop_back(); }
@@ -625,8 +625,7 @@ private:
         if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
             Contexts.back().IsExpression)
           IsCast = true;
-        if (Current.Next &&
-            Current.Next->isNot(tok::string_literal) &&
+        if (Current.Next && Current.Next->isNot(tok::string_literal) &&
             (Current.Next->Tok.isLiteral() ||
              Current.Next->isOneOf(tok::kw_sizeof, tok::kw_alignof)))
           IsCast = true;
@@ -678,9 +677,9 @@ private:
     if (PreviousNotConst == NULL)
       return false;
 
-    bool IsPPKeyword =
-        PreviousNotConst->is(tok::identifier) && PreviousNotConst->Previous &&
-        PreviousNotConst->Previous->is(tok::hash);
+    bool IsPPKeyword = PreviousNotConst->is(tok::identifier) &&
+                       PreviousNotConst->Previous &&
+                       PreviousNotConst->Previous->is(tok::hash);
 
     return (!IsPPKeyword && PreviousNotConst->is(tok::identifier)) ||
            PreviousNotConst->Type == TT_PointerOrReference ||
@@ -952,9 +951,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     if (Current->MustBreakBefore)
       Current->TotalLength = Current->Previous->TotalLength + Style.ColumnLimit;
     else
-      Current->TotalLength =
-          Current->Previous->TotalLength + Current->CodePointCount +
-          Current->SpacesRequiredBefore;
+      Current->TotalLength = Current->Previous->TotalLength +
+                             Current->CodePointCount +
+                             Current->SpacesRequiredBefore;
     // FIXME: Only calculate this if CanBreakBefore is true once static
     // initializers etc. are sorted out.
     // FIXME: Move magic numbers to a better place.

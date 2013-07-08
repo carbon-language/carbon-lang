@@ -42,9 +42,9 @@ void WhitespaceManager::replaceWhitespace(const FormatToken &Tok,
                                           unsigned Newlines, unsigned Spaces,
                                           unsigned StartOfTokenColumn,
                                           bool InPPDirective) {
-  Changes.push_back(
-      Change(true, Tok.WhitespaceRange, Spaces, StartOfTokenColumn, Newlines,
-             "", "", Tok.Tok.getKind(), InPPDirective && !Tok.IsFirst));
+  Changes.push_back(Change(true, Tok.WhitespaceRange, Spaces,
+                           StartOfTokenColumn, Newlines, "", "",
+                           Tok.Tok.getKind(), InPPDirective && !Tok.IsFirst));
 }
 
 void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
@@ -94,10 +94,10 @@ void WhitespaceManager::calculateLineBreakInformation() {
         SourceMgr.getFileOffset(Changes[i].OriginalWhitespaceRange.getBegin());
     unsigned PreviousOriginalWhitespaceEnd = SourceMgr.getFileOffset(
         Changes[i - 1].OriginalWhitespaceRange.getEnd());
-    Changes[i - 1].TokenLength =
-        OriginalWhitespaceStart - PreviousOriginalWhitespaceEnd +
-        Changes[i].PreviousLinePostfix.size() +
-        Changes[i - 1].CurrentLinePrefix.size();
+    Changes[i - 1].TokenLength = OriginalWhitespaceStart -
+                                 PreviousOriginalWhitespaceEnd +
+                                 Changes[i].PreviousLinePostfix.size() +
+                                 Changes[i - 1].CurrentLinePrefix.size();
 
     Changes[i].PreviousEndOfTokenColumn =
         Changes[i - 1].StartOfTokenColumn + Changes[i - 1].TokenLength;
@@ -242,8 +242,7 @@ void WhitespaceManager::storeReplacement(const SourceRange &Range,
                               SourceMgr.getFileOffset(Range.getBegin());
   // Don't create a replacement, if it does not change anything.
   if (StringRef(SourceMgr.getCharacterData(Range.getBegin()),
-                WhitespaceLength) ==
-      Text)
+                WhitespaceLength) == Text)
     return;
   Replaces.insert(tooling::Replacement(
       SourceMgr, CharSourceRange::getCharRange(Range), Text));

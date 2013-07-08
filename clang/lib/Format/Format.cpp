@@ -271,9 +271,9 @@ public:
     LineState State;
     State.Column = FirstIndent;
     State.NextToken = RootToken;
-    State.Stack.push_back(
-        ParenState(FirstIndent, FirstIndent, /*AvoidBinPacking=*/false,
-                   /*NoLineBreak=*/false));
+    State.Stack.push_back(ParenState(FirstIndent, FirstIndent,
+                                     /*AvoidBinPacking=*/false,
+                                     /*NoLineBreak=*/false));
     State.LineContainsContinuedForLoopSection = false;
     State.ParenLevel = 0;
     State.StartOfStringLiteral = 0;
@@ -1289,9 +1289,9 @@ public:
           !AnnotatedLines[i].First->Next)
         AnnotatedLines[i].Level = NextNonCommentLine->Level;
       else
-        NextNonCommentLine =
-            AnnotatedLines[i].First->isNot(tok::r_brace) ? &AnnotatedLines[i]
-                                                         : NULL;
+        NextNonCommentLine = AnnotatedLines[i].First->isNot(tok::r_brace)
+                                 ? &AnnotatedLines[i]
+                                 : NULL;
     }
 
     std::vector<int> IndentForLevel;

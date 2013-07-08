@@ -50,10 +50,10 @@ inline unsigned getCodePointCountUTF8(StringRef Text) {
 /// Encoding.
 inline unsigned getCodePointCount(StringRef Text, Encoding Encoding) {
   switch (Encoding) {
-    case Encoding_UTF8:
-      return getCodePointCountUTF8(Text);
-    default:
-      return Text.size();
+  case Encoding_UTF8:
+    return getCodePointCountUTF8(Text);
+  default:
+    return Text.size();
   }
 }
 
@@ -61,16 +61,14 @@ inline unsigned getCodePointCount(StringRef Text, Encoding Encoding) {
 /// codepoint and starting with FirstChar in the specified Encoding.
 inline unsigned getCodePointNumBytes(char FirstChar, Encoding Encoding) {
   switch (Encoding) {
-    case Encoding_UTF8:
-      return getNumBytesForUTF8(FirstChar);
-    default:
-      return 1;
+  case Encoding_UTF8:
+    return getNumBytesForUTF8(FirstChar);
+  default:
+    return 1;
   }
 }
 
-inline bool isOctDigit(char c) {
-  return '0' <= c && c <= '7';
-}
+inline bool isOctDigit(char c) { return '0' <= c && c <= '7'; }
 
 inline bool isHexDigit(char c) {
   return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') ||

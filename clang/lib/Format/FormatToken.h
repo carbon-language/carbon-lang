@@ -212,7 +212,6 @@ struct FormatToken {
   bool opensScope() const {
     return isOneOf(tok::l_paren, tok::l_brace, tok::l_square) ||
            Type == TT_TemplateOpener;
-
   }
   /// \brief Returns whether \p Tok is )]} or a template closing >.
   bool closesScope() const {

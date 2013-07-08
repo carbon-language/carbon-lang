@@ -75,11 +75,11 @@ private:
   struct Change {
     /// \brief Functor to sort changes in original source order.
     class IsBeforeInFile {
-     public:
+    public:
       IsBeforeInFile(const SourceManager &SourceMgr) : SourceMgr(SourceMgr) {}
       bool operator()(const Change &C1, const Change &C2) const;
 
-     private:
+    private:
       const SourceManager &SourceMgr;
     };
 
@@ -126,7 +126,6 @@ private:
     unsigned TokenLength;
     unsigned PreviousEndOfTokenColumn;
     unsigned EscapedNewlineColumn;
-
   };
 
   /// \brief Calculate \c IsTrailingComment, \c TokenLength for the last tokens

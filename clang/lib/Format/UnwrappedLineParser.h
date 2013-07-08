@@ -31,8 +31,7 @@ namespace format {
 /// \c UnwrappedLineFormatter. The key property is that changing the formatting
 /// within an unwrapped line does not affect any other unwrapped lines.
 struct UnwrappedLine {
-  UnwrappedLine() : Level(0), InPPDirective(false), MustBeDeclaration(false) {
-  }
+  UnwrappedLine() : Level(0), InPPDirective(false), MustBeDeclaration(false) {}
 
   // FIXME: Don't use std::list here.
   /// \brief The \c Tokens comprising this \c UnwrappedLine.
@@ -49,8 +48,7 @@ struct UnwrappedLine {
 
 class UnwrappedLineConsumer {
 public:
-  virtual ~UnwrappedLineConsumer() {
-  }
+  virtual ~UnwrappedLineConsumer() {}
   virtual void consumeUnwrappedLine(const UnwrappedLine &Line) = 0;
 };
 
@@ -163,8 +161,8 @@ private:
   // Represents preprocessor branch type, so we can find matching
   // #if/#else/#endif directives.
   enum PPBranchKind {
-    PP_Conditional,  // Any #if, #ifdef, #ifndef, #elif, block outside #if 0
-    PP_Unreachable   // #if 0 or a conditional preprocessor block inside #if 0
+    PP_Conditional, // Any #if, #ifdef, #ifndef, #elif, block outside #if 0
+    PP_Unreachable  // #if 0 or a conditional preprocessor block inside #if 0
   };
 
   // Keeps a stack of currently active preprocessor branching directives.

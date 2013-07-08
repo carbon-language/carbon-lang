@@ -28,13 +28,13 @@ namespace format {
 static const char *const Blanks = " \t\v\f";
 static bool IsBlank(char C) {
   switch (C) {
-    case ' ':
-    case '\t':
-    case '\v':
-    case '\f':
-      return true;
-    default:
-      return false;
+  case ' ':
+  case '\t':
+  case '\v':
+  case '\f':
+    return true;
+  default:
+    return false;
   }
 }
 
@@ -388,9 +388,9 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
     }
   }
 
-  unsigned WhitespaceOffsetInToken =
-      Lines[LineIndex].data() - Tok.TokenText.data() -
-      LeadingWhitespace[LineIndex];
+  unsigned WhitespaceOffsetInToken = Lines[LineIndex].data() -
+                                     Tok.TokenText.data() -
+                                     LeadingWhitespace[LineIndex];
   assert(StartOfLineColumn[LineIndex] >= Prefix.size());
   Whitespaces.replaceWhitespaceInToken(
       Tok, WhitespaceOffsetInToken, LeadingWhitespace[LineIndex], "", Prefix,
