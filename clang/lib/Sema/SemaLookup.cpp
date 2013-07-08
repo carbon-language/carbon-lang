@@ -4220,3 +4220,41 @@ bool CorrectionCandidateCallback::ValidateCandidate(const TypoCorrection &candid
 
   return WantTypeSpecifiers;
 }
+
+FunctionCallFilterCCC::FunctionCallFilterCCC(Sema &SemaRef, unsigned NumArgs,
+                                             bool HasExplicitTemplateArgs)
+    : NumArgs(NumArgs), HasExplicitTemplateArgs(HasExplicitTemplateArgs) {
+  WantTypeSpecifiers = SemaRef.getLangOpts().CPlusPlus;
+  WantRemainingKeywords = false;
+}
+
+bool FunctionCallFilterCCC::ValidateCandidate(const TypoCorrection &candidate) {
+  if (!candidate.getCorrectionDecl())
+    return candidate.isKeyword();
+
+  for (TypoCorrection::const_decl_iterator DI = candidate.begin(),
+                                           DIEnd = candidate.end();
+       DI != DIEnd; ++DI) {
+    FunctionDecl *FD = 0;
+    NamedDecl *ND = (*DI)->getUnderlyingDecl();
+    if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
+      FD = FTD->getTemplatedDecl();
+    if (!HasExplicitTemplateArgs && !FD) {
+      if (!(FD = dyn_cast<FunctionDecl>(ND)) && isa<ValueDecl>(ND)) {
+        // If the Decl is neither a function nor a template function,
+        // determine if it is a pointer or reference to a function. If so,
+        // check against the number of arguments expected for the pointee.
+        QualType ValType = cast<ValueDecl>(ND)->getType();
+        if (ValType->isAnyPointerType() || ValType->isReferenceType())
+          ValType = ValType->getPointeeType();
+        if (const FunctionProtoType *FPT = ValType->getAs<FunctionProtoType>())
+          if (FPT->getNumArgs() == NumArgs)
+            return true;
+      }
+    }
+    if (FD && FD->getNumParams() >= NumArgs &&
+        FD->getMinRequiredArguments() <= NumArgs)
+      return true;
+  }
+  return false;
+}

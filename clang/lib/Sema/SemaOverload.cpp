@@ -9858,67 +9858,6 @@ DiagnoseTwoPhaseOperatorLookup(Sema &SemaRef, OverloadedOperatorKind Op,
 }
 
 namespace {
-// Callback to limit the allowed keywords and to only accept typo corrections
-// that are keywords or whose decls refer to functions (or template functions)
-// that accept the given number of arguments.
-class RecoveryCallCCC : public CorrectionCandidateCallback {
- public:
-  RecoveryCallCCC(Sema &SemaRef, unsigned NumArgs, bool HasExplicitTemplateArgs)
-      : NumArgs(NumArgs), HasExplicitTemplateArgs(HasExplicitTemplateArgs) {
-    WantTypeSpecifiers = SemaRef.getLangOpts().CPlusPlus;
-    WantRemainingKeywords = false;
-  }
-
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
-    if (!candidate.getCorrectionDecl())
-      return candidate.isKeyword();
-
-    for (TypoCorrection::const_decl_iterator DI = candidate.begin(),
-           DIEnd = candidate.end(); DI != DIEnd; ++DI) {
-      FunctionDecl *FD = 0;
-      NamedDecl *ND = (*DI)->getUnderlyingDecl();
-      if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
-        FD = FTD->getTemplatedDecl();
-      if (!HasExplicitTemplateArgs && !FD) {
-        if (!(FD = dyn_cast<FunctionDecl>(ND)) && isa<ValueDecl>(ND)) {
-          // If the Decl is neither a function nor a template function,
-          // determine if it is a pointer or reference to a function. If so,
-          // check against the number of arguments expected for the pointee.
-          QualType ValType = cast<ValueDecl>(ND)->getType();
-          if (ValType->isAnyPointerType() || ValType->isReferenceType())
-            ValType = ValType->getPointeeType();
-          if (const FunctionProtoType *FPT = ValType->getAs<FunctionProtoType>())
-            if (FPT->getNumArgs() == NumArgs)
-              return true;
-        }
-      }
-      if (FD && FD->getNumParams() >= NumArgs &&
-          FD->getMinRequiredArguments() <= NumArgs)
-        return true;
-    }
-    return false;
-  }
-
- private:
-  unsigned NumArgs;
-  bool HasExplicitTemplateArgs;
-};
-
-// Callback that effectively disabled typo correction
-class NoTypoCorrectionCCC : public CorrectionCandidateCallback {
- public:
-  NoTypoCorrectionCCC() {
-    WantTypeSpecifiers = false;
-    WantExpressionKeywords = false;
-    WantCXXNamedCasts = false;
-    WantRemainingKeywords = false;
-  }
-
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
-    return false;
-  }
-};
-
 class BuildRecoveryCallExprRAII {
   Sema &SemaRef;
 public:
@@ -9967,7 +9906,8 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
-  RecoveryCallCCC Validator(SemaRef, Args.size(), ExplicitTemplateArgs != 0);
+  FunctionCallFilterCCC Validator(SemaRef, Args.size(),
+                                  ExplicitTemplateArgs != 0);
   NoTypoCorrectionCCC RejectAll;
   CorrectionCandidateCallback *CCC = AllowTypoCorrection ?
       (CorrectionCandidateCallback*)&Validator :

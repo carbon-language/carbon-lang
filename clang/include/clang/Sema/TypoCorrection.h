@@ -225,7 +225,7 @@ private:
 /// @brief Base class for callback objects used by Sema::CorrectTypo to check
 /// the validity of a potential typo correction.
 class CorrectionCandidateCallback {
- public:
+public:
   static const unsigned InvalidDistance = TypoCorrection::InvalidDistance;
 
   CorrectionCandidateCallback()
@@ -274,9 +274,39 @@ class CorrectionCandidateCallback {
 /// to ones having a single Decl* of the given type.
 template <class C>
 class DeclFilterCCC : public CorrectionCandidateCallback {
- public:
+public:
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     return candidate.getCorrectionDeclAs<C>();
+  }
+};
+
+// @brief Callback class to limit the allowed keywords and to only accept typo
+// corrections that are keywords or whose decls refer to functions (or template
+// functions) that accept the given number of arguments.
+class FunctionCallFilterCCC : public CorrectionCandidateCallback {
+public:
+  FunctionCallFilterCCC(Sema &SemaRef, unsigned NumArgs,
+                        bool HasExplicitTemplateArgs);
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate);
+
+ private:
+  unsigned NumArgs;
+  bool HasExplicitTemplateArgs;
+};
+
+// @brief Callback class that effectively disabled typo correction
+class NoTypoCorrectionCCC : public CorrectionCandidateCallback {
+public:
+  NoTypoCorrectionCCC() {
+    WantTypeSpecifiers = false;
+    WantExpressionKeywords = false;
+    WantCXXNamedCasts = false;
+    WantRemainingKeywords = false;
+  }
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return false;
   }
 };
 
