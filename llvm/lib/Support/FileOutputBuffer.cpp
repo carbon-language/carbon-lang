@@ -62,11 +62,16 @@ error_code FileOutputBuffer::create(StringRef FilePath,
   if (EC)
     return EC;
 
+  unsigned Mode = sys::fs::all_read | sys::fs::all_write;
+  // If requested, make the output file executable.
+  if (Flags & F_executable)
+    Mode |= sys::fs::all_exe;
+
   // Create new file in same directory but with random name.
   SmallString<128> TempFilePath;
   int FD;
-  EC = sys::fs::createUniqueFile(Twine(FilePath) + ".tmp%%%%%%%",
-                                 FD, TempFilePath);
+  EC = sys::fs::createUniqueFile(Twine(FilePath) + ".tmp%%%%%%%", FD,
+                                 TempFilePath, Mode);
   if (EC)
     return EC;
 
@@ -74,26 +79,6 @@ error_code FileOutputBuffer::create(StringRef FilePath,
       FD, true, mapped_file_region::readwrite, Size, 0, EC));
   if (EC)
     return EC;
-
-  // If requested, make the output file executable.
-  if ( Flags & F_executable ) {
-    sys::fs::file_status Stat2;
-    EC = sys::fs::status(Twine(TempFilePath), Stat2);
-    if (EC)
-      return EC;
-
-    sys::fs::perms new_perms = Stat2.permissions();
-    if ( new_perms & sys::fs::owner_read )
-      new_perms |= sys::fs::owner_exe;
-    if ( new_perms & sys::fs::group_read )
-      new_perms |= sys::fs::group_exe;
-    if ( new_perms & sys::fs::others_read )
-      new_perms |= sys::fs::others_exe;
-    new_perms |= sys::fs::add_perms;
-    EC = sys::fs::permissions(Twine(TempFilePath), new_perms);
-    if (EC)
-      return EC;
-  }
 
   Result.reset(new FileOutputBuffer(MappedFile.get(), FilePath, TempFilePath));
   if (Result)
