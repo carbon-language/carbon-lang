@@ -159,11 +159,11 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
 
   MCContext &context = streamer.getContext();
   streamer.EmitValueToAlignment(4);
+  // Upper 3 bits are the version number (currently 1).
+  uint8_t flags = 0x01;
   info->Symbol = context.CreateTempSymbol();
   streamer.EmitLabel(info->Symbol);
 
-  // Upper 3 bits are the version number (currently 1).
-  uint8_t flags = 0x01;
   if (info->ChainedParent)
     flags |= Win64EH::UNW_ChainInfo << 3;
   else {
@@ -199,14 +199,6 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
     EmitUnwindCode(streamer, info->Begin, inst);
   }
 
-  // For alignment purposes, the instruction array will always have an even
-  // number of entries, with the final entry potentially unused (in which case
-  // the array will be one longer than indicated by the count of unwind codes
-  // field).
-  if (numCodes & 1) {
-    streamer.EmitIntValue(0, 2);
-  }
-
   if (flags & (Win64EH::UNW_ChainInfo << 3))
     EmitRuntimeFunction(streamer, info->ChainedParent);
   else if (flags &
@@ -214,11 +206,14 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
     streamer.EmitValue(MCSymbolRefExpr::Create(info->ExceptionHandler,
                                               MCSymbolRefExpr::VK_COFF_IMGREL32,
                                               context), 4);
-  else if (numCodes == 0) {
+  else if (numCodes < 2) {
     // The minimum size of an UNWIND_INFO struct is 8 bytes. If we're not
     // a chained unwind info, if there is no handler, and if there are fewer
     // than 2 slots used in the unwind code array, we have to pad to 8 bytes.
-    streamer.EmitIntValue(0, 4);
+    if (numCodes == 1)
+      streamer.EmitIntValue(0, 2);
+    else
+      streamer.EmitIntValue(0, 4);
   }
 }
 
