@@ -236,6 +236,10 @@ struct _LIBCPP_TYPE_VIS integral_constant
     typedef integral_constant type;
     _LIBCPP_INLINE_VISIBILITY
         _LIBCPP_CONSTEXPR operator value_type() const {return value;}
+#if _LIBCPP_STD_VER > 11
+    _LIBCPP_INLINE_VISIBILITY
+         constexpr value_type operator ()() const {return value;}
+#endif
 };
 
 template <class _Tp, _Tp __v>
