@@ -402,6 +402,9 @@ Disassembler::PrintInstructions
     ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
     StackFrame *frame = exe_ctx.GetFramePtr();
 
+    TargetSP target_sp (exe_ctx.GetTargetSP());
+    SourceManager &source_manager = target_sp ? target_sp->GetSourceManager() : debugger.GetSourceManager();
+
     if (frame)
         pc_addr_ptr = &frame->GetFrameCodeAddress();
     const uint32_t scope = eSymbolContextLineEntry | eSymbolContextFunction | eSymbolContextSymbol;
@@ -438,12 +441,12 @@ Disassembler::PrintInstructions
                                 
                                 if (sc.comp_unit && sc.line_entry.IsValid())
                                 {
-                                    debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
-                                                                                                   sc.line_entry.line,
-                                                                                                   num_mixed_context_lines,
-                                                                                                   num_mixed_context_lines,
-                                                                                                   ((inst_is_at_pc && (options & eOptionMarkPCSourceLine)) ? "->" : ""),
-                                                                                                   &strm);
+                                    source_manager.DisplaySourceLinesWithLineNumbers (sc.line_entry.file,
+                                                                                      sc.line_entry.line,
+                                                                                      num_mixed_context_lines,
+                                                                                      num_mixed_context_lines,
+                                                                                      ((inst_is_at_pc && (options & eOptionMarkPCSourceLine)) ? "->" : ""),
+                                                                                      &strm);
                                 }
                             }
                         }
