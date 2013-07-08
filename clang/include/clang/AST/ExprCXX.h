@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file defines the Expr interface and subclasses for C++ expressions.
-//
+///
+/// \file
+/// \brief Defines the clang::Expr interface and subclasses for C++ expressions.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_AST_EXPRCXX_H
@@ -74,15 +75,15 @@ public:
     CallExpr(C, CXXOperatorCallExprClass, Empty) { }
 
 
-  /// getOperator - Returns the kind of overloaded operator that this
+  /// \brief Returns the kind of overloaded operator that this
   /// expression refers to.
   OverloadedOperatorKind getOperator() const { return Operator; }
 
-  /// getOperatorLoc - Returns the location of the operator symbol in
-  /// the expression. When @c getOperator()==OO_Call, this is the
-  /// location of the right parentheses; when @c
-  /// getOperator()==OO_Subscript, this is the location of the right
-  /// bracket.
+  /// \brief Returns the location of the operator symbol in the expression.
+  ///
+  /// When \c getOperator()==OO_Call, this is the location of the right
+  /// parentheses; when \c getOperator()==OO_Subscript, this is the location
+  /// of the right bracket.
   SourceLocation getOperatorLoc() const { return getRParenLoc(); }
 
   SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
@@ -105,7 +106,7 @@ public:
   friend class ASTStmtWriter;
 };
 
-/// CXXMemberCallExpr - Represents a call to a member function that
+/// Represents a call to a member function that
 /// may be written either with member call syntax (e.g., "obj.func()"
 /// or "objptr->func()") or with normal function-call syntax
 /// ("func()") within a member function that ends up calling a member
@@ -122,18 +123,19 @@ public:
   CXXMemberCallExpr(ASTContext &C, EmptyShell Empty)
     : CallExpr(C, CXXMemberCallExprClass, Empty) { }
 
-  /// getImplicitObjectArgument - Retrieves the implicit object
-  /// argument for the member call. For example, in "x.f(5)", this
-  /// operation would return "x".
+  /// \brief Retrieves the implicit object argument for the member call.
+  ///
+  /// For example, in "x.f(5)", this returns the sub-expression "x".
   Expr *getImplicitObjectArgument() const;
 
-  /// Retrieves the declaration of the called method.
+  /// \brief Retrieves the declaration of the called method.
   CXXMethodDecl *getMethodDecl() const;
 
-  /// getRecordDecl - Retrieves the CXXRecordDecl for the underlying type of
-  /// the implicit object argument. Note that this is may not be the same
-  /// declaration as that of the class context of the CXXMethodDecl which this
-  /// function is calling.
+  /// \brief Retrieves the CXXRecordDecl for the underlying type of
+  /// the implicit object argument.
+  ///
+  /// Note that this is may not be the same declaration as that of the class
+  /// context of the CXXMethodDecl which this function is calling.
   /// FIXME: Returns 0 for member pointer call exprs.
   CXXRecordDecl *getRecordDecl() const;
 
@@ -142,7 +144,7 @@ public:
   }
 };
 
-/// CUDAKernelCallExpr - Represents a call to a CUDA kernel function.
+/// \brief Represents a call to a CUDA kernel function.
 class CUDAKernelCallExpr : public CallExpr {
 private:
   enum { CONFIG, END_PREARG };
@@ -169,13 +171,12 @@ public:
   }
 };
 
-/// CXXNamedCastExpr - Abstract class common to all of the C++ "named"
-/// casts, @c static_cast, @c dynamic_cast, @c reinterpret_cast, or @c
-/// const_cast.
+/// \brief Abstract class common to all of the C++ "named"/"keyword" casts.
 ///
 /// This abstract class is inherited by all of the classes
-/// representing "named" casts, e.g., CXXStaticCastExpr,
-/// CXXDynamicCastExpr, CXXReinterpretCastExpr, and CXXConstCastExpr.
+/// representing "named" casts: CXXStaticCastExpr for \c static_cast,
+/// CXXDynamicCastExpr for \c dynamic_cast, CXXReinterpretCastExpr for
+/// reinterpret_cast, and CXXConstCastExpr for \c const_cast.
 class CXXNamedCastExpr : public ExplicitCastExpr {
 private:
   SourceLocation Loc; // the location of the casting op
@@ -200,7 +201,7 @@ public:
   const char *getCastName() const;
 
   /// \brief Retrieve the location of the cast operator keyword, e.g.,
-  /// "static_cast".
+  /// \c static_cast.
   SourceLocation getOperatorLoc() const { return Loc; }
 
   /// \brief Retrieve the location of the closing parenthesis.
@@ -223,11 +224,10 @@ public:
   }
 };
 
-/// CXXStaticCastExpr - A C++ @c static_cast expression
-/// (C++ [expr.static.cast]).
+/// \brief A C++ \c static_cast expression (C++ [expr.static.cast]).
 ///
 /// This expression node represents a C++ static cast, e.g.,
-/// @c static_cast<int>(1.0).
+/// \c static_cast<int>(1.0).
 class CXXStaticCastExpr : public CXXNamedCastExpr {
   CXXStaticCastExpr(QualType ty, ExprValueKind vk, CastKind kind, Expr *op,
                     unsigned pathSize, TypeSourceInfo *writtenTy,
@@ -254,12 +254,11 @@ public:
   }
 };
 
-/// CXXDynamicCastExpr - A C++ @c dynamic_cast expression
-/// (C++ [expr.dynamic.cast]), which may perform a run-time check to
-/// determine how to perform the type cast.
+/// \brief A C++ @c dynamic_cast expression (C++ [expr.dynamic.cast]).
 ///
 /// This expression node represents a dynamic cast, e.g.,
-/// @c dynamic_cast<Derived*>(BasePtr).
+/// \cc dynamic_cast<Derived*>(BasePtr). Such a cast may perform a run-time
+/// check to determine how to perform the type conversion.
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
   CXXDynamicCastExpr(QualType ty, ExprValueKind VK, CastKind kind,
                      Expr *op, unsigned pathSize, TypeSourceInfo *writtenTy,
@@ -289,12 +288,14 @@ public:
   }
 };
 
-/// CXXReinterpretCastExpr - A C++ @c reinterpret_cast expression (C++
-/// [expr.reinterpret.cast]), which provides a differently-typed view
-/// of a value but performs no actual work at run time.
+/// \brief A C++ @c reinterpret_cast expression (C++ [expr.reinterpret.cast]).
 ///
 /// This expression node represents a reinterpret cast, e.g.,
 /// @c reinterpret_cast<int>(VoidPtr).
+///
+/// A reinterpret_cast provides a differently-typed view of a value but
+/// (in Clang, as in most C++ implementations) performs no actual work at
+/// run time.
 class CXXReinterpretCastExpr : public CXXNamedCastExpr {
   CXXReinterpretCastExpr(QualType ty, ExprValueKind vk, CastKind kind,
                          Expr *op, unsigned pathSize,
@@ -322,11 +323,13 @@ public:
   }
 };
 
-/// CXXConstCastExpr - A C++ @c const_cast expression (C++ [expr.const.cast]),
-/// which can remove type qualifiers but does not change the underlying value.
+/// \brief A C++ \c const_cast expression (C++ [expr.const.cast]).
 ///
 /// This expression node represents a const cast, e.g.,
-/// @c const_cast<char*>(PtrToConstChar).
+/// \c const_cast<char*>(PtrToConstChar).
+///
+/// A const_cast can remove type qualifiers but does not change the underlying
+/// value.
 class CXXConstCastExpr : public CXXNamedCastExpr {
   CXXConstCastExpr(QualType ty, ExprValueKind VK, Expr *op,
                    TypeSourceInfo *writtenTy, SourceLocation l,
@@ -350,7 +353,7 @@ public:
   }
 };
 
-/// UserDefinedLiteral - A call to a literal operator (C++11 [over.literal])
+/// \brief A call to a literal operator (C++11 [over.literal])
 /// written as a user-defined literal (C++11 [lit.ext]).
 ///
 /// Represents a user-defined literal, e.g. "foo"_bar or 1.23_xyz. While this
@@ -382,11 +385,11 @@ public:
     LOK_Character ///< operator "" X (CharT)
   };
 
-  /// getLiteralOperatorKind - Returns the kind of literal operator invocation
+  /// \brief Returns the kind of literal operator invocation
   /// which this expression represents.
   LiteralOperatorKind getLiteralOperatorKind() const;
 
-  /// getCookedLiteral - If this is not a raw user-defined literal, get the
+  /// \brief If this is not a raw user-defined literal, get the
   /// underlying cooked literal (representing the literal with the suffix
   /// removed).
   Expr *getCookedLiteral();
@@ -402,12 +405,13 @@ public:
   SourceLocation getLocEnd() const { return getRParenLoc(); }
 
 
-  /// getUDSuffixLoc - Returns the location of a ud-suffix in the expression.
+  /// \brief Returns the location of a ud-suffix in the expression.
+  ///
   /// For a string literal, there may be multiple identical suffixes. This
   /// returns the first.
   SourceLocation getUDSuffixLoc() const { return UDSuffixLoc; }
 
-  /// getUDSuffix - Returns the ud-suffix specified for this literal.
+  /// \brief Returns the ud-suffix specified for this literal.
   const IdentifierInfo *getUDSuffix() const;
 
   static bool classof(const Stmt *S) {
@@ -418,7 +422,7 @@ public:
   friend class ASTStmtWriter;
 };
 
-/// CXXBoolLiteralExpr - [C++ 2.13.5] C++ Boolean Literal.
+/// \brief A boolean literal, per ([C++ lex.bool] Boolean literals).
 ///
 class CXXBoolLiteralExpr : public Expr {
   bool Value;
@@ -449,7 +453,9 @@ public:
   child_range children() { return child_range(); }
 };
 
-/// CXXNullPtrLiteralExpr - [C++0x 2.14.7] C++ Pointer Literal
+/// \brief The null pointer literal (C++11 [lex.nullptr])
+///
+/// Introduced in C++11, the only literal of type \c nullptr_t is \c nullptr.
 class CXXNullPtrLiteralExpr : public Expr {
   SourceLocation Loc;
 public:
@@ -513,11 +519,11 @@ public:
   friend class ASTStmtReader;
 };
 
-/// CXXTypeidExpr - A C++ @c typeid expression (C++ [expr.typeid]), which gets
-/// the type_info that corresponds to the supplied type, or the (possibly
+/// A C++ \c typeid expression (C++ [expr.typeid]), which gets
+/// the \c type_info that corresponds to the supplied type, or the (possibly
 /// dynamic) type of the supplied expression.
 ///
-/// This represents code like @c typeid(int) or @c typeid(*objPtr)
+/// This represents code like \c typeid(int) or \c typeid(*objPtr)
 class CXXTypeidExpr : public Expr {
 private:
   llvm::PointerUnion<Stmt *, TypeSourceInfo *> Operand;
@@ -600,10 +606,11 @@ public:
   }
 };
 
-/// A member reference to an MSPropertyDecl.  This expression always
-/// has pseudo-object type, and therefore it is typically not
-/// encountered in a fully-typechecked expression except within the
-/// syntactic form of a PseudoObjectExpr.
+/// \brief A member reference to an MSPropertyDecl. 
+///
+/// This expression always has pseudo-object type, and therefore it is
+/// typically not encountered in a fully-typechecked expression except
+/// within the syntactic form of a PseudoObjectExpr.
 class MSPropertyRefExpr : public Expr {
   Expr *BaseExpr;
   MSPropertyDecl *TheDecl;
@@ -658,7 +665,7 @@ public:
   friend class ASTStmtReader;
 };
 
-/// CXXUuidofExpr - A microsoft C++ @c __uuidof expression, which gets
+/// A Microsoft C++ @c __uuidof expression, which gets
 /// the _GUID that corresponds to the supplied type or expression.
 ///
 /// This represents code like @c __uuidof(COMTYPE) or @c __uuidof(*comPtr)
@@ -737,17 +744,18 @@ public:
   }
 };
 
-/// CXXThisExpr - Represents the "this" expression in C++, which is a
-/// pointer to the object on which the current member function is
+/// \brief Represents the \c this expression in C++.
+///
+/// This is a pointer to the object on which the current member function is
 /// executing (C++ [expr.prim]p3). Example:
 ///
-/// @code
+/// \code
 /// class Foo {
 /// public:
 ///   void bar();
 ///   void test() { this->bar(); }
 /// };
-/// @endcode
+/// \endcode
 class CXXThisExpr : public Expr {
   SourceLocation Loc;
   bool Implicit : 1;
@@ -781,10 +789,11 @@ public:
   child_range children() { return child_range(); }
 };
 
-///  CXXThrowExpr - [C++ 15] C++ Throw Expression.  This handles
-///  'throw' and 'throw' assignment-expression.  When
-///  assignment-expression isn't present, Op will be null.
+/// \brief A C++ throw-expression (C++ [except.throw]).
 ///
+/// This handles 'throw' (for re-throwing the current exception) and
+/// 'throw' assignment-expression.  When assignment-expression isn't
+/// present, Op will be null.
 class CXXThrowExpr : public Expr {
   Stmt *Op;
   SourceLocation ThrowLoc;
@@ -794,8 +803,8 @@ class CXXThrowExpr : public Expr {
   friend class ASTStmtReader;
 
 public:
-  // Ty is the void type which is used as the result type of the
-  // exepression.  The l is the location of the throw keyword.  expr
+  // \p Ty is the void type which is used as the result type of the
+  // expression.  The \p l is the location of the throw keyword.  \p expr
   // can by null, if the optional expression to throw isn't present.
   CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l,
                bool IsThrownVariableInScope) :
@@ -834,10 +843,11 @@ public:
   }
 };
 
-/// CXXDefaultArgExpr - C++ [dcl.fct.default]. This wraps up a
-/// function call argument that was created from the corresponding
-/// parameter's default argument, when the call did not explicitly
-/// supply arguments for all of the parameters.
+/// \brief A default argument (C++ [dcl.fct.default]).
+///
+/// This wraps up a function call argument that was created from the
+/// corresponding parameter's default argument, when the call did not
+/// explicitly supply arguments for all of the parameters.
 class CXXDefaultArgExpr : public Expr {
   /// \brief The parameter whose default is being used.
   ///
@@ -870,16 +880,15 @@ class CXXDefaultArgExpr : public Expr {
 public:
   CXXDefaultArgExpr(EmptyShell Empty) : Expr(CXXDefaultArgExprClass, Empty) {}
 
-
-  // Param is the parameter whose default argument is used by this
+  // \p Param is the parameter whose default argument is used by this
   // expression.
   static CXXDefaultArgExpr *Create(ASTContext &C, SourceLocation Loc,
                                    ParmVarDecl *Param) {
     return new (C) CXXDefaultArgExpr(CXXDefaultArgExprClass, Loc, Param);
   }
 
-  // Param is the parameter whose default argument is used by this
-  // expression, and SubExpr is the expression that will actually be used.
+  // \p Param is the parameter whose default argument is used by this
+  // expression, and \p SubExpr is the expression that will actually be used.
   static CXXDefaultArgExpr *Create(ASTContext &C,
                                    SourceLocation Loc,
                                    ParmVarDecl *Param,
@@ -905,8 +914,8 @@ public:
   /// used.
   SourceLocation getUsedLocation() const { return Loc; }
 
-  // Default argument expressions have no representation in the
-  // source, so they have an empty source range.
+  /// Default argument expressions have no representation in the
+  /// source, so they have an empty source range.
   SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
 
@@ -923,7 +932,10 @@ public:
   friend class ASTStmtWriter;
 };
 
-/// \brief This wraps a use of a C++ default initializer (technically,
+/// \brief A use of a default initializer in a constructor or in aggregate
+/// initialization.
+///
+/// This wraps a use of a C++ default initializer (technically,
 /// a brace-or-equal-initializer for a non-static data member) when it
 /// is implicitly used in a mem-initializer-list in a constructor
 /// (C++11 [class.base.init]p8) or in aggregate initialization
@@ -941,18 +953,18 @@ class CXXDefaultInitExpr : public Expr {
   CXXDefaultInitExpr(EmptyShell Empty) : Expr(CXXDefaultInitExprClass, Empty) {}
 
 public:
-  // Field is the non-static data member whose default initializer is used
-  // by this expression.
+  /// \p Field is the non-static data member whose default initializer is used
+  /// by this expression.
   static CXXDefaultInitExpr *Create(ASTContext &C, SourceLocation Loc,
                                     FieldDecl *Field) {
     return new (C) CXXDefaultInitExpr(C, Loc, Field, Field->getType());
   }
 
-  // Get the field whose initializer will be used.
+  /// \brief Get the field whose initializer will be used.
   FieldDecl *getField() { return Field; }
   const FieldDecl *getField() const { return Field; }
 
-  // Get the initialization expression that will be used.
+  /// \brief Get the initialization expression that will be used.
   const Expr *getExpr() const { return Field->getInClassInitializer(); }
   Expr *getExpr() { return Field->getInClassInitializer(); }
 
@@ -970,12 +982,12 @@ public:
   friend class ASTStmtReader;
 };
 
-/// CXXTemporary - Represents a C++ temporary.
+/// \brief Represents a C++ temporary.
 class CXXTemporary {
-  /// Destructor - The destructor that needs to be called.
+  /// \brief The destructor that needs to be called.
   const CXXDestructorDecl *Destructor;
 
-  CXXTemporary(const CXXDestructorDecl *destructor)
+  explicit CXXTemporary(const CXXDestructorDecl *destructor)
     : Destructor(destructor) { }
 
 public:
@@ -1130,7 +1142,7 @@ public:
     ZeroInitialization = ZeroInit;
   }
 
-  /// \brief Determines whether this constructor is actually constructing
+  /// \brief Determine whether this constructor is actually constructing
   /// a base class (rather than a complete object).
   ConstructionKind getConstructionKind() const {
     return (ConstructionKind)ConstructKind;
@@ -1150,7 +1162,7 @@ public:
   Expr **getArgs() const { return reinterpret_cast<Expr **>(Args); }
   unsigned getNumArgs() const { return NumArgs; }
 
-  /// getArg - Return the specified argument.
+  /// \brief Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
     return cast<Expr>(Args[Arg]);
@@ -1160,7 +1172,7 @@ public:
     return cast<Expr>(Args[Arg]);
   }
 
-  /// setArg - Set the specified argument.
+  /// \brief Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
     assert(Arg < NumArgs && "Arg access out of range!");
     Args[Arg] = ArgExpr;
@@ -1188,9 +1200,9 @@ public:
 /// notation (C++ [expr.type.conv]).
 ///
 /// Example:
-/// @code
+/// \code
 ///   x = int(0.5);
-/// @endcode
+/// \endcode
 class CXXFunctionalCastExpr : public ExplicitCastExpr {
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
@@ -1241,13 +1253,13 @@ public:
 /// constructor to build a temporary object. With N == 1 arguments the
 /// functional cast expression will be represented by CXXFunctionalCastExpr.
 /// Example:
-/// @code
+/// \code
 /// struct X { X(int, float); }
 ///
 /// X create_X() {
 ///   return X(1, 3.14f); // creates a CXXTemporaryObjectExpr
 /// };
-/// @endcode
+/// \endcode
 class CXXTemporaryObjectExpr : public CXXConstructExpr {
   TypeSourceInfo *Type;
 
@@ -1573,9 +1585,11 @@ public:
   /// brackets ([...]).
   SourceRange getIntroducerRange() const { return IntroducerRange; }
 
-  /// \brief Retrieve the class that corresponds to the lambda, which
-  /// stores the captures in its fields and provides the various
-  /// operations permitted on a lambda (copying, calling).
+  /// \brief Retrieve the class that corresponds to the lambda.
+  /// 
+  /// This is the "closure type" (C++1y [expr.prim.lambda]), and stores the
+  /// captures in its fields and provides the various operations permitted
+  /// on a lambda (copying, calling).
   CXXRecordDecl *getLambdaClass() const;
 
   /// \brief Retrieve the function call operator associated with this
@@ -1613,10 +1627,8 @@ public:
   friend class ASTStmtWriter;
 };
 
-/// CXXScalarValueInitExpr - [C++ 5.2.3p2]
-/// Expression "T()" which creates a value-initialized rvalue of type
-/// T, which is a non-class type.
-///
+/// An expression "T()" which creates a value-initialized rvalue of type
+/// T, which is a non-class type.  See (C++98 [5.2.3p2]).
 class CXXScalarValueInitExpr : public Expr {
   SourceLocation RParenLoc;
   TypeSourceInfo *TypeInfo;
@@ -1653,11 +1665,11 @@ public:
   child_range children() { return child_range(); }
 };
 
-/// @brief Represents a new-expression for memory allocation and constructor
-// calls, e.g: "new CXXNewExpr(foo)".
+/// \brief Represents a new-expression for memory allocation and constructor
+/// calls, e.g: "new CXXNewExpr(foo)".
 class CXXNewExpr : public Expr {
-  // Contains an optional array size expression, an optional initialization
-  // expression, and any number of optional placement arguments, in that order.
+  /// Contains an optional array size expression, an optional initialization
+  /// expression, and any number of optional placement arguments, in that order.
   Stmt **SubExprs;
   /// \brief Points to the allocation function used.
   FunctionDecl *OperatorNew;
@@ -1678,18 +1690,18 @@ class CXXNewExpr : public Expr {
   /// \brief Source-range of a paren-delimited initializer.
   SourceRange DirectInitRange;
 
-  // Was the usage ::new, i.e. is the global new to be used?
+  /// Was the usage ::new, i.e. is the global new to be used?
   bool GlobalNew : 1;
-  // Do we allocate an array? If so, the first SubExpr is the size expression.
+  /// Do we allocate an array? If so, the first SubExpr is the size expression.
   bool Array : 1;
-  // If this is an array allocation, does the usual deallocation
-  // function for the allocated type want to know the allocated size?
+  /// If this is an array allocation, does the usual deallocation
+  /// function for the allocated type want to know the allocated size?
   bool UsualArrayDeleteWantsSize : 1;
-  // The number of placement new arguments.
+  /// The number of placement new arguments.
   unsigned NumPlacementArgs : 13;
-  // What kind of initializer do we have? Could be none, parens, or braces.
-  // In storage, we distinguish between "none, and no initializer expr", and
-  // "none, but an implicit initializer expr".
+  /// What kind of initializer do we have? Could be none, parens, or braces.
+  /// In storage, we distinguish between "none, and no initializer expr", and
+  /// "none, but an implicit initializer expr".
   unsigned StoredInitializationStyle : 2;
 
   friend class ASTStmtReader;
@@ -1724,10 +1736,12 @@ public:
   }
 
   /// \brief True if the allocation result needs to be null-checked.
-  /// C++0x [expr.new]p13:
+  ///
+  /// C++11 [expr.new]p13:
   ///   If the allocation function returns null, initialization shall
   ///   not be done, the deallocation function shall not be called,
   ///   and the value of the new-expression shall be null.
+  ///
   /// An allocation function is not allowed to return null unless it
   /// has a non-throwing exception-specification.  The '03 rule is
   /// identical except that the definition of a non-throwing
@@ -1784,7 +1798,7 @@ public:
     return hasInitializer() ? cast<Expr>(SubExprs[Array]) : 0;
   }
 
-  /// \brief Returns the CXXConstructExpr from this new-expression, or NULL.
+  /// \brief Returns the CXXConstructExpr from this new-expression, or null.
   const CXXConstructExpr* getConstructExpr() const {
     return dyn_cast_or_null<CXXConstructExpr>(getInitializer());
   }
@@ -1846,22 +1860,22 @@ public:
 /// \brief Represents a \c delete expression for memory deallocation and
 /// destructor calls, e.g. "delete[] pArray".
 class CXXDeleteExpr : public Expr {
-  // Points to the operator delete overload that is used. Could be a member.
+  /// Points to the operator delete overload that is used. Could be a member.
   FunctionDecl *OperatorDelete;
-  // The pointer expression to be deleted.
+  /// The pointer expression to be deleted.
   Stmt *Argument;
-  // Location of the expression.
+  /// Location of the expression.
   SourceLocation Loc;
-  // Is this a forced global delete, i.e. "::delete"?
+  /// Is this a forced global delete, i.e. "::delete"?
   bool GlobalDelete : 1;
-  // Is this the array form of delete, i.e. "delete[]"?
+  /// Is this the array form of delete, i.e. "delete[]"?
   bool ArrayForm : 1;
-  // ArrayFormAsWritten can be different from ArrayForm if 'delete' is applied
-  // to pointer-to-array type (ArrayFormAsWritten will be false while ArrayForm
-  // will be true).
+  /// ArrayFormAsWritten can be different from ArrayForm if 'delete' is applied
+  /// to pointer-to-array type (ArrayFormAsWritten will be false while ArrayForm
+  /// will be true).
   bool ArrayFormAsWritten : 1;
-  // Does the usual deallocation function for the element type require
-  // a size_t argument?
+  /// Does the usual deallocation function for the element type require
+  /// a size_t argument?
   bool UsualArrayDeleteWantsSize : 1;
 public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
@@ -1894,9 +1908,10 @@ public:
   Expr *getArgument() { return cast<Expr>(Argument); }
   const Expr *getArgument() const { return cast<Expr>(Argument); }
 
-  /// \brief Retrieve the type being destroyed.  If the type being
-  /// destroyed is a dependent type which may or may not be a pointer,
-  /// return an invalid type.
+  /// \brief Retrieve the type being destroyed. 
+  ///
+  /// If the type being destroyed is a dependent type which may or may not
+  /// be a pointer, return an invalid type.
   QualType getDestroyedType() const;
 
   SourceLocation getLocStart() const LLVM_READONLY { return Loc; }
@@ -2021,7 +2036,7 @@ public:
 
   /// \brief If the member name was qualified, retrieves the
   /// nested-name-specifier that precedes the member name. Otherwise, returns
-  /// NULL.
+  /// null.
   NestedNameSpecifier *getQualifier() const {
     return QualifierLoc.getNestedNameSpecifier();
   }
@@ -2056,7 +2071,7 @@ public:
   ///
   /// This type-source information is available for non-dependent
   /// pseudo-destructor expressions and some dependent pseudo-destructor
-  /// expressions. Returns NULL if we only have the identifier for a
+  /// expressions. Returns null if we only have the identifier for a
   /// dependent pseudo-destructor expression.
   TypeSourceInfo *getDestroyedTypeInfo() const {
     return DestroyedType.getTypeSourceInfo();
@@ -2103,23 +2118,23 @@ public:
 /// implementation of TR1/C++11 type trait templates.
 ///
 /// Example:
-/// @code
+/// \code
 ///   __is_pod(int) == true
 ///   __is_enum(std::string) == false
-/// @endcode
+/// \endcode
 class UnaryTypeTraitExpr : public Expr {
-  /// UTT - The trait. A UnaryTypeTrait enum in MSVC compat unsigned.
+  /// \brief The trait. A UnaryTypeTrait enum in MSVC compatible unsigned.
   unsigned UTT : 31;
   /// The value of the type trait. Unspecified if dependent.
   bool Value : 1;
 
-  /// Loc - The location of the type trait keyword.
+  /// \brief The location of the type trait keyword.
   SourceLocation Loc;
 
-  /// RParen - The location of the closing paren.
+  /// \brief The location of the closing paren.
   SourceLocation RParen;
 
-  /// The type being queried.
+  /// \brief The type being queried.
   TypeSourceInfo *QueriedType;
 
 public:
@@ -2161,26 +2176,26 @@ public:
 /// implementation of TR1/C++11 type trait templates.
 ///
 /// Example:
-/// @code
+/// \code
 ///   __is_base_of(Base, Derived) == true
-/// @endcode
+/// \endcode
 class BinaryTypeTraitExpr : public Expr {
-  /// BTT - The trait. A BinaryTypeTrait enum in MSVC compat unsigned.
+  /// \brief The trait. A BinaryTypeTrait enum in MSVC compatible unsigned.
   unsigned BTT : 8;
 
   /// The value of the type trait. Unspecified if dependent.
   bool Value : 1;
 
-  /// Loc - The location of the type trait keyword.
+  /// \brief The location of the type trait keyword.
   SourceLocation Loc;
 
-  /// RParen - The location of the closing paren.
+  /// \brief The location of the closing paren.
   SourceLocation RParen;
 
-  /// The lhs type being queried.
+  /// \brief The lhs type being queried.
   TypeSourceInfo *LhsType;
 
-  /// The rhs type being queried.
+  /// \brief The rhs type being queried.
   TypeSourceInfo *RhsType;
 
 public:
@@ -2327,10 +2342,10 @@ public:
 /// __array_rank and __array_extent.
 ///
 /// Example:
-/// @code
+/// \code
 ///   __array_rank(int[10][20]) == 2
 ///   __array_extent(int, 1)    == 20
-/// @endcode
+/// \endcode
 class ArrayTypeTraitExpr : public Expr {
   virtual void anchor();
 
@@ -2397,12 +2412,12 @@ public:
 /// \brief An expression trait intrinsic.
 ///
 /// Example:
-/// @code
+/// \code
 ///   __is_lvalue_expr(std::cout) == true
 ///   __is_lvalue_expr(1) == false
-/// @endcode
+/// \endcode
 class ExpressionTraitExpr : public Expr {
-  /// \brief The trait. A ExpressionTrait enum in MSVC compat unsigned.
+  /// \brief The trait. A ExpressionTrait enum in MSVC compatible unsigned.
   unsigned ET : 31;
   /// \brief The value of the type trait. Unspecified if dependent.
   bool Value : 1;
@@ -2506,7 +2521,7 @@ public:
     bool HasFormOfMemberPointer;
   };
 
-  /// Finds the overloaded expression in the given expression of
+  /// \brief Finds the overloaded expression in the given expression \p E of
   /// OverloadTy.
   ///
   /// \return the expression (which must be there) and true if it has
@@ -2639,10 +2654,11 @@ public:
 /// parsing but could not resolve to a specific declaration.
 ///
 /// This arises in several ways:
-///   * we might be waiting for argument-dependent lookup
-///   * the name might resolve to an overloaded function
+///   * we might be waiting for argument-dependent lookup;
+///   * the name might resolve to an overloaded function;
 /// and eventually:
-///   * the lookup might have included a function template
+///   * the lookup might have included a function template.
+///
 /// These never include UnresolvedUsingValueDecls, which are always class
 /// members and therefore appear only in UnresolvedMemberLookupExprs.
 class UnresolvedLookupExpr : public OverloadExpr {
@@ -2759,7 +2775,7 @@ class DependentScopeDeclRefExpr : public Expr {
   /// declaration name.
   NestedNameSpecifierLoc QualifierLoc;
 
-  /// The name of the entity we will be referencing.
+  /// \brief The name of the entity we will be referencing.
   DeclarationNameInfo NameInfo;
 
   /// \brief Whether the name includes info for explicit template
@@ -2857,6 +2873,7 @@ public:
   }
 
   /// \brief Retrieves the optional explicit template arguments.
+  ///
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
   const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
@@ -2897,7 +2914,7 @@ public:
   friend class ASTStmtWriter;
 };
 
-/// Represents an expression --- generally a full-expression --- which
+/// Represents an expression -- generally a full-expression -- that
 /// introduces cleanups to be run at the end of the sub-expression's
 /// evaluation.  The most common source of expression-introduced
 /// cleanups is temporary objects in C++, but several other kinds of
@@ -2950,7 +2967,7 @@ public:
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
 
-  /// setSubExpr - As with any mutator of the AST, be very careful
+  /// As with any mutator of the AST, be very careful
   /// when modifying an existing AST to preserve its invariants.
   void setSubExpr(Expr *E) { SubExpr = E; }
 
@@ -3128,6 +3145,7 @@ class CXXDependentScopeMemberExpr : public Expr {
 
   /// \brief The member to which this member expression refers, which
   /// can be name, overloaded operator, or destructor.
+  ///
   /// FIXME: could also be a template-id
   DeclarationNameInfo MemberNameInfo;
 
@@ -3278,6 +3296,7 @@ public:
   }
 
   /// \brief Retrieves the optional explicit template arguments.
+  ///
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
   const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
@@ -3340,11 +3359,13 @@ public:
 /// produced a set of overloaded functions.
 ///
 /// The member access may be explicit or implicit:
+/// \code
 ///    struct A {
 ///      int a, b;
 ///      int explicitAccess() { return this->a + this->A::b; }
 ///      int implicitAccess() { return a + A::b; }
 ///    };
+/// \endcode
 ///
 /// In the final AST, an explicit access always becomes a MemberExpr.
 /// An implicit access may become either a MemberExpr or a
@@ -3359,11 +3380,12 @@ class UnresolvedMemberExpr : public OverloadExpr {
   bool HasUnresolvedUsing : 1;
 
   /// \brief The expression for the base pointer or class reference,
-  /// e.g., the \c x in x.f.  This can be null if this is an 'unbased'
-  /// member expression
+  /// e.g., the \c x in x.f.
+  ///
+  /// This can be null if this is an 'unbased' member expression.
   Stmt *Base;
 
-  /// \brief The type of the base expression;  never null.
+  /// \brief The type of the base expression; never null.
   QualType BaseType;
 
   /// \brief The location of the '->' or '.' operator.
@@ -3399,9 +3421,10 @@ public:
   CreateEmpty(ASTContext &C, bool HasTemplateKWAndArgsInfo,
               unsigned NumTemplateArgs);
 
-  /// \brief True if this is an implicit access, i.e. one in which the
-  /// member being accessed was not written in the source.  The source
-  /// location of the operator is invalid in this case.
+  /// \brief True if this is an implicit access, i.e., one in which the
+  /// member being accessed was not written in the source.
+  ///
+  /// The source location of the operator is invalid in this case.
   bool isImplicitAccess() const;
 
   /// \brief Retrieve the base object of this member expressions,
@@ -3428,7 +3451,7 @@ public:
   /// \brief Retrieve the location of the '->' or '.' operator.
   SourceLocation getOperatorLoc() const { return OperatorLoc; }
 
-  /// \brief Retrieves the naming class of this lookup.
+  /// \brief Retrieve the naming class of this lookup.
   CXXRecordDecl *getNamingClass() const;
 
   /// \brief Retrieve the full name info for the member that this expression
@@ -3471,7 +3494,7 @@ public:
   }
 };
 
-/// \brief Represents a C++0x noexcept expression (C++ [expr.unary.noexcept]).
+/// \brief Represents a C++11 noexcept expression (C++ [expr.unary.noexcept]).
 ///
 /// The noexcept expression tests whether a given expression might throw. Its
 /// result is a boolean constant.
@@ -3513,7 +3536,7 @@ public:
   child_range children() { return child_range(&Operand, &Operand + 1); }
 };
 
-/// \brief Represents a C++0x pack expansion that produces a sequence of
+/// \brief Represents a C++11 pack expansion that produces a sequence of
 /// expressions.
 ///
 /// A pack expansion expression contains a pattern (which itself is an
@@ -3612,7 +3635,7 @@ inline ASTTemplateKWAndArgsInfo *OverloadExpr::getTemplateKWAndArgsInfo() {
 /// };
 /// \endcode
 class SizeOfPackExpr : public Expr {
-  /// \brief The location of the 'sizeof' keyword.
+  /// \brief The location of the \c sizeof keyword.
   SourceLocation OperatorLoc;
 
   /// \brief The location of the name of the parameter pack.
@@ -3635,7 +3658,7 @@ class SizeOfPackExpr : public Expr {
   friend class ASTStmtWriter;
 
 public:
-  /// \brief Creates a value-dependent expression that computes the length of
+  /// \brief Create a value-dependent expression that computes the length of
   /// the given parameter pack.
   SizeOfPackExpr(QualType SizeType, SourceLocation OperatorLoc, NamedDecl *Pack,
                  SourceLocation PackLoc, SourceLocation RParenLoc)
@@ -3646,7 +3669,7 @@ public:
       OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
       Length(0), Pack(Pack) { }
 
-  /// \brief Creates an expression that computes the length of
+  /// \brief Create an expression that computes the length of
   /// the given parameter pack, which is already known.
   SizeOfPackExpr(QualType SizeType, SourceLocation OperatorLoc, NamedDecl *Pack,
                  SourceLocation PackLoc, SourceLocation RParenLoc,
@@ -3864,7 +3887,7 @@ public:
   child_range children() { return child_range(); }
 };
 
-/// \brief Represents a prvalue temporary that written into memory so that
+/// \brief Represents a prvalue temporary that is written into memory so that
 /// a reference can bind to it.
 ///
 /// Prvalue expressions are materialized when they need to have an address
