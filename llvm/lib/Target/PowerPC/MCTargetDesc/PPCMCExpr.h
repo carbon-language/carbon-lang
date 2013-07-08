@@ -32,29 +32,32 @@ public:
 private:
   const VariantKind Kind;
   const MCExpr *Expr;
-  const int AssemblerDialect;
+  bool IsDarwin;
 
   explicit PPCMCExpr(VariantKind _Kind, const MCExpr *_Expr,
-                     int _AssemblerDialect)
-    : Kind(_Kind), Expr(_Expr), AssemblerDialect(_AssemblerDialect) {}
+                     bool _IsDarwin)
+    : Kind(_Kind), Expr(_Expr), IsDarwin(_IsDarwin) {}
 
 public:
   /// @name Construction
   /// @{
 
   static const PPCMCExpr *Create(VariantKind Kind, const MCExpr *Expr,
-                                      MCContext &Ctx);
+                                 bool isDarwin, MCContext &Ctx);
 
-  static const PPCMCExpr *CreateLo(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(VK_PPC_LO, Expr, Ctx);
+  static const PPCMCExpr *CreateLo(const MCExpr *Expr,
+                                   bool isDarwin, MCContext &Ctx) {
+    return Create(VK_PPC_LO, Expr, isDarwin, Ctx);
   }
 
-  static const PPCMCExpr *CreateHi(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(VK_PPC_HI, Expr, Ctx);
+  static const PPCMCExpr *CreateHi(const MCExpr *Expr,
+                                   bool isDarwin, MCContext &Ctx) {
+    return Create(VK_PPC_HI, Expr, isDarwin, Ctx);
   }
 
-  static const PPCMCExpr *CreateHa(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(VK_PPC_HA, Expr, Ctx);
+  static const PPCMCExpr *CreateHa(const MCExpr *Expr,
+                                   bool isDarwin, MCContext &Ctx) {
+    return Create(VK_PPC_HA, Expr, isDarwin, Ctx);
   }
 
   /// @}
@@ -68,7 +71,7 @@ public:
   const MCExpr *getSubExpr() const { return Expr; }
 
   /// isDarwinSyntax - True if expression is to be printed using Darwin syntax.
-  bool isDarwinSyntax() const { return AssemblerDialect == 1; }
+  bool isDarwinSyntax() const { return IsDarwin; }
 
 
   /// @}

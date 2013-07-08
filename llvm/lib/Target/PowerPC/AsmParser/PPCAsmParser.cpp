@@ -1015,7 +1015,7 @@ ParseExpression(const MCExpr *&EVal) {
   PPCMCExpr::VariantKind Variant;
   const MCExpr *E = ExtractModifierFromExpr(EVal, Variant);
   if (E)
-    EVal = PPCMCExpr::Create(Variant, E, getParser().getContext());
+    EVal = PPCMCExpr::Create(Variant, E, false, getParser().getContext());
 
   return false;
 }

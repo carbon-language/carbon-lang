@@ -17,9 +17,8 @@ using namespace llvm;
 
 const PPCMCExpr*
 PPCMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
-                       MCContext &Ctx) {
-  int AssemblerDialect = Ctx.getAsmInfo()->getAssemblerDialect();
-  return new (Ctx) PPCMCExpr(Kind, Expr, AssemblerDialect);
+                  bool isDarwin, MCContext &Ctx) {
+  return new (Ctx) PPCMCExpr(Kind, Expr, isDarwin);
 }
 
 void PPCMCExpr::PrintImpl(raw_ostream &OS) const {

@@ -105,7 +105,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
 }
 
 static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
-                              AsmPrinter &Printer) {
+                              AsmPrinter &Printer, bool isDarwin) {
   MCContext &Ctx = Printer.OutContext;
   MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
 
@@ -150,10 +150,10 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   // Add ha16() / lo16() markers if required.
   switch (access) {
     case PPCII::MO_LO:
-      Expr = PPCMCExpr::CreateLo(Expr, Ctx);
+      Expr = PPCMCExpr::CreateLo(Expr, isDarwin, Ctx);
       break;
     case PPCII::MO_HA:
-      Expr = PPCMCExpr::CreateHa(Expr, Ctx);
+      Expr = PPCMCExpr::CreateHa(Expr, isDarwin, Ctx);
       break;
   }
 
@@ -161,7 +161,7 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 }
 
 void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                        AsmPrinter &AP) {
+                                        AsmPrinter &AP, bool isDarwin) {
   OutMI.setOpcode(MI->getOpcode());
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -185,17 +185,17 @@ void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       break;
     case MachineOperand::MO_GlobalAddress:
     case MachineOperand::MO_ExternalSymbol:
-      MCOp = GetSymbolRef(MO, GetSymbolFromOperand(MO, AP), AP);
+      MCOp = GetSymbolRef(MO, GetSymbolFromOperand(MO, AP), AP, isDarwin);
       break;
     case MachineOperand::MO_JumpTableIndex:
-      MCOp = GetSymbolRef(MO, AP.GetJTISymbol(MO.getIndex()), AP);
+      MCOp = GetSymbolRef(MO, AP.GetJTISymbol(MO.getIndex()), AP, isDarwin);
       break;
     case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = GetSymbolRef(MO, AP.GetCPISymbol(MO.getIndex()), AP);
+      MCOp = GetSymbolRef(MO, AP.GetCPISymbol(MO.getIndex()), AP, isDarwin);
       break;
     case MachineOperand::MO_BlockAddress:
-      MCOp = GetSymbolRef(MO, AP.GetBlockAddressSymbol(MO.getBlockAddress()),
-                          AP);
+      MCOp = GetSymbolRef(MO,AP.GetBlockAddressSymbol(MO.getBlockAddress()),AP,
+                          isDarwin);
       break;
     case MachineOperand::MO_RegisterMask:
       continue;

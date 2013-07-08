@@ -117,7 +117,8 @@ static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
                                              const MCInstrInfo &MII,
                                              const MCRegisterInfo &MRI,
                                              const MCSubtargetInfo &STI) {
-  return new PPCInstPrinter(MAI, MII, MRI, SyntaxVariant);
+  bool isDarwin = Triple(STI.getTargetTriple()).isOSDarwin();
+  return new PPCInstPrinter(MAI, MII, MRI, isDarwin);
 }
 
 extern "C" void LLVMInitializePowerPCTargetMC() {
