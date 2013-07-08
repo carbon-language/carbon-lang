@@ -5339,6 +5339,14 @@ def err_typecheck_call_too_few_args_at_least_one : Error<
   "too few %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
   "at least argument %1 must be specified">;
+def err_typecheck_call_too_few_args_suggest : Error<
+  "too few %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "expected %1, have %2; did you mean %3?">;
+def err_typecheck_call_too_few_args_at_least_suggest : Error<
+  "too few %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "expected at least %1, have %2; did you mean %3?">;
 def err_typecheck_call_too_many_args : Error<
   "too many %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
@@ -5355,6 +5363,14 @@ def err_typecheck_call_too_many_args_at_most_one : Error<
   "too many %select{|||execution configuration }0arguments to "
   "%select{function|block|method|kernel function}0 call, "
   "expected at most single argument %1, have %2 arguments">;
+def err_typecheck_call_too_many_args_suggest : Error<
+  "too many %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "expected %1, have %2; did you mean %3?">;
+def err_typecheck_call_too_many_args_at_most_suggest : Error<
+  "too many %select{|||execution configuration }0arguments to "
+  "%select{function|block|method|kernel function}0 call, "
+  "expected at most %1, have %2; did you mean %3?">;
 def note_callee_decl : Note<
   "%0 declared here">;
 def note_defined_here : Note<"%0 defined here">;

@@ -21,7 +21,7 @@ struct X {
   X(int);
 };
 
-void j(X x = 17);
+void j(X x = 17); // expected-note{{'::j' declared here}}
 
 struct Y { // expected-note 2{{candidate}}
   explicit Y(int);
@@ -46,8 +46,13 @@ int l () {
 int i () {
   void j (int f = 4);
   {
-    void j (int f); // expected-note{{'j' declared here}}
-    j(); // expected-error{{too few arguments to function call, single argument 'f' was not specified}}
+    void j (int f);
+    j(); // expected-error{{too few arguments to function call, expected 1, have 0; did you mean '::j'?}}
+  }
+  void jj (int f = 4);
+  {
+    void jj (int f); // expected-note{{'jj' declared here}}
+    jj(); // expected-error{{too few arguments to function call, single argument 'f' was not specified}}
   }
 }
 

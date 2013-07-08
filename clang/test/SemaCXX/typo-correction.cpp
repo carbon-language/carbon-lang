@@ -1,4 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-c++11-extensions %s
+//
+// WARNING: Do not add more typo correction test cases to this file lest you run
+// afoul the hard-coded limit (escape hatch) of 20 different typos whose
+// correction was attempted by Sema::CorrectTypo
 
 struct errc {
   int v_;
@@ -313,4 +317,11 @@ namespace b6956809_test2 {
     S s;
     int k = s.methodd((void*)0);  // expected-error{{no member named 'methodd' in 'b6956809_test2::S'; did you mean 'method'?}}
   }
+}
+
+namespace CorrectTypo_has_reached_its_limit {
+int flibberdy();  // no note here
+int no_correction() {
+  return gibberdy();  // expected-error-re{{use of undeclared identifier 'gibberdy'$}}
+};
 }
