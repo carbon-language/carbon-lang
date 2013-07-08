@@ -1,7 +1,8 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | FileCheck %s
 
 // XFAIL: mips
 
+// It could hit in @llvm.memcpy with "-triple x86_64-(mingw32|win32)".
 // CHECK-NOT: readonly
 // CHECK-NOT: readnone
 
