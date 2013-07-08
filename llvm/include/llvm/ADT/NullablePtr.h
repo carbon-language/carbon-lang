@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_NULLABLEPTR_H
 #define LLVM_ADT_NULLABLEPTR_H
 
+#include "llvm/Support/type_traits.h"
 #include <cassert>
 #include <cstddef>
 
@@ -25,8 +26,17 @@ namespace llvm {
 template<class T>
 class NullablePtr {
   T *Ptr;
+  struct PlaceHolder {};
+
 public:
   NullablePtr(T *P = 0) : Ptr(P) {}
+
+  template<typename OtherT>
+  NullablePtr(NullablePtr<OtherT> Other,
+              typename enable_if<
+                is_base_of<T, OtherT>,
+                PlaceHolder
+              >::type = PlaceHolder()) : Ptr(Other.getPtrOrNull()) {}
   
   bool isNull() const { return Ptr == 0; }
   bool isNonNull() const { return Ptr != 0; }
