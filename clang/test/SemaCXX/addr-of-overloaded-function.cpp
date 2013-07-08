@@ -235,3 +235,7 @@ namespace test1 {
 
   void (Qualifiers::*X)() = &Dummy::N; // expected-error{{cannot initialize a variable of type 'void (test1::Qualifiers::*)()' with an rvalue of type 'void (test1::Dummy::*)()': different classes ('test1::Qualifiers' vs 'test1::Dummy')}}
 }
+
+template <typename T> class PR16561 {
+  virtual bool f() { if (f) {} return false; } // expected-error {{reference to non-static member function must be called}}
+};

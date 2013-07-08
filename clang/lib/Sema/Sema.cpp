@@ -1187,7 +1187,7 @@ bool Sema::tryExprAsCall(Expr &E, QualType &ZeroArgCallReturnTy,
   // Attempt to call the member with no arguments - this will correctly handle
   // member templates with defaults/deduction of template arguments, overloads
   // with default arguments, etc.
-  if (IsMemExpr) {
+  if (IsMemExpr && !E.isTypeDependent()) {
     bool Suppress = getDiagnostics().getSuppressAllDiagnostics();
     getDiagnostics().setSuppressAllDiagnostics(true);
     ExprResult R = BuildCallToMemberFunction(NULL, &E, SourceLocation(), None,
