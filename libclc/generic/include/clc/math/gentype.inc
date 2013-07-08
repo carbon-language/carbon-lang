@@ -1,63 +1,63 @@
-#define SCALAR_GENTYPE float
+#define __CLC_SCALAR_GENTYPE float
 
-#define GENTYPE float
-#define SCALAR
-#include BODY
-#undef GENTYPE
-#undef SCALAR
+#define __CLC_GENTYPE float
+#define __CLC_SCALAR
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_SCALAR
 
-#define GENTYPE float2
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE float2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE float3
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE float3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE float4
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE float4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE float8
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE float8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE float16
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE float16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#undef SCALAR_GENTYPE
+#undef __CLC_SCALAR_GENTYPE
 
 #ifdef cl_khr_fp64
-#define SCALAR_GENTYPE double
+#define __CLC_SCALAR_GENTYPE double
 
-#define SCALAR
-#define GENTYPE double
-#include BODY
-#undef GENTYPE
-#undef SCALAR
+#define __CLC_SCALAR
+#define __CLC_GENTYPE double
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_SCALAR
 
-#define GENTYPE double2
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE double2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE double3
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE double3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE double4
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE double4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE double8
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE double8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#define GENTYPE double16
-#include BODY
-#undef GENTYPE
+#define __CLC_GENTYPE double16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
 
-#undef SCALAR_GENTYPE
+#undef __CLC_SCALAR_GENTYPE
 #endif
 
-#undef BODY
+#undef __CLC_BODY

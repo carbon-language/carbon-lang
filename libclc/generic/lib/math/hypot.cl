@@ -4,5 +4,5 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 
-#define BODY <hypot.inc>
+#define __CLC_BODY <hypot.inc>
 #include <clc/math/gentype.inc>

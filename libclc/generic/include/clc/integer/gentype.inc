@@ -1,435 +1,435 @@
 //These 2 defines only change when switching between data sizes or base types to
 //keep this file manageable.
-#define GENSIZE 8
-#define SCALAR_GENTYPE char
+#define __CLC_GENSIZE 8
+#define __CLC_SCALAR_GENTYPE char
 
-#define GENTYPE char
-#define UGENTYPE uchar
-#define SGENTYPE char
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE char
+#define __CLC_U_GENTYPE uchar
+#define __CLC_S_GENTYPE char
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE char2
-#define UGENTYPE uchar2
-#define SGENTYPE char2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE char2
+#define __CLC_U_GENTYPE uchar2
+#define __CLC_S_GENTYPE char2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE char3
-#define UGENTYPE uchar3
-#define SGENTYPE char3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE char3
+#define __CLC_U_GENTYPE uchar3
+#define __CLC_S_GENTYPE char3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE char4
-#define UGENTYPE uchar4
-#define SGENTYPE char4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE char4
+#define __CLC_U_GENTYPE uchar4
+#define __CLC_S_GENTYPE char4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE char8
-#define UGENTYPE uchar8
-#define SGENTYPE char8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE char8
+#define __CLC_U_GENTYPE uchar8
+#define __CLC_S_GENTYPE char8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE char16
-#define UGENTYPE uchar16
-#define SGENTYPE char16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE char16
+#define __CLC_U_GENTYPE uchar16
+#define __CLC_S_GENTYPE char16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE uchar
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE uchar
 
-#define GENTYPE uchar
-#define UGENTYPE uchar
-#define SGENTYPE char
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uchar
+#define __CLC_U_GENTYPE uchar
+#define __CLC_S_GENTYPE char
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uchar2
-#define UGENTYPE uchar2
-#define SGENTYPE char2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uchar2
+#define __CLC_U_GENTYPE uchar2
+#define __CLC_S_GENTYPE char2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uchar3
-#define UGENTYPE uchar3
-#define SGENTYPE char3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uchar3
+#define __CLC_U_GENTYPE uchar3
+#define __CLC_S_GENTYPE char3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uchar4
-#define UGENTYPE uchar4
-#define SGENTYPE char4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uchar4
+#define __CLC_U_GENTYPE uchar4
+#define __CLC_S_GENTYPE char4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uchar8
-#define UGENTYPE uchar8
-#define SGENTYPE char8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uchar8
+#define __CLC_U_GENTYPE uchar8
+#define __CLC_S_GENTYPE char8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uchar16
-#define UGENTYPE uchar16
-#define SGENTYPE char16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uchar16
+#define __CLC_U_GENTYPE uchar16
+#define __CLC_S_GENTYPE char16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef GENSIZE
-#define GENSIZE 16
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE short
+#undef __CLC_GENSIZE
+#define __CLC_GENSIZE 16
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE short
 
-#define GENTYPE short
-#define UGENTYPE ushort
-#define SGENTYPE short
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE short
+#define __CLC_U_GENTYPE ushort
+#define __CLC_S_GENTYPE short
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE short2
-#define UGENTYPE ushort2
-#define SGENTYPE short2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE short2
+#define __CLC_U_GENTYPE ushort2
+#define __CLC_S_GENTYPE short2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE short3
-#define UGENTYPE ushort3
-#define SGENTYPE short3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE short3
+#define __CLC_U_GENTYPE ushort3
+#define __CLC_S_GENTYPE short3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE short4
-#define UGENTYPE ushort4
-#define SGENTYPE short4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE short4
+#define __CLC_U_GENTYPE ushort4
+#define __CLC_S_GENTYPE short4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE short8
-#define UGENTYPE ushort8
-#define SGENTYPE short8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE short8
+#define __CLC_U_GENTYPE ushort8
+#define __CLC_S_GENTYPE short8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE short16
-#define UGENTYPE ushort16
-#define SGENTYPE short16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE short16
+#define __CLC_U_GENTYPE ushort16
+#define __CLC_S_GENTYPE short16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE ushort
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE ushort
 
-#define GENTYPE ushort
-#define UGENTYPE ushort
-#define SGENTYPE short
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ushort
+#define __CLC_U_GENTYPE ushort
+#define __CLC_S_GENTYPE short
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ushort2
-#define UGENTYPE ushort2
-#define SGENTYPE short2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ushort2
+#define __CLC_U_GENTYPE ushort2
+#define __CLC_S_GENTYPE short2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ushort3
-#define UGENTYPE ushort3
-#define SGENTYPE short3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ushort3
+#define __CLC_U_GENTYPE ushort3
+#define __CLC_S_GENTYPE short3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ushort4
-#define UGENTYPE ushort4
-#define SGENTYPE short4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ushort4
+#define __CLC_U_GENTYPE ushort4
+#define __CLC_S_GENTYPE short4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ushort8
-#define UGENTYPE ushort8
-#define SGENTYPE short8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ushort8
+#define __CLC_U_GENTYPE ushort8
+#define __CLC_S_GENTYPE short8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ushort16
-#define UGENTYPE ushort16
-#define SGENTYPE short16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ushort16
+#define __CLC_U_GENTYPE ushort16
+#define __CLC_S_GENTYPE short16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef GENSIZE
-#define GENSIZE 32
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE int
+#undef __CLC_GENSIZE
+#define __CLC_GENSIZE 32
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE int
 
-#define GENTYPE int
-#define UGENTYPE uint
-#define SGENTYPE int
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE int
+#define __CLC_U_GENTYPE uint
+#define __CLC_S_GENTYPE int
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE int2
-#define UGENTYPE uint2
-#define SGENTYPE int2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE int2
+#define __CLC_U_GENTYPE uint2
+#define __CLC_S_GENTYPE int2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE int3
-#define UGENTYPE uint3
-#define SGENTYPE int3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE int3
+#define __CLC_U_GENTYPE uint3
+#define __CLC_S_GENTYPE int3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE int4
-#define UGENTYPE uint4
-#define SGENTYPE int4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE int4
+#define __CLC_U_GENTYPE uint4
+#define __CLC_S_GENTYPE int4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE int8
-#define UGENTYPE uint8
-#define SGENTYPE int8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE int8
+#define __CLC_U_GENTYPE uint8
+#define __CLC_S_GENTYPE int8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE int16
-#define UGENTYPE uint16
-#define SGENTYPE int16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE int16
+#define __CLC_U_GENTYPE uint16
+#define __CLC_S_GENTYPE int16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE uint
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE uint
 
-#define GENTYPE uint
-#define UGENTYPE uint
-#define SGENTYPE int
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uint
+#define __CLC_U_GENTYPE uint
+#define __CLC_S_GENTYPE int
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uint2
-#define UGENTYPE uint2
-#define SGENTYPE int2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uint2
+#define __CLC_U_GENTYPE uint2
+#define __CLC_S_GENTYPE int2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uint3
-#define UGENTYPE uint3
-#define SGENTYPE int3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uint3
+#define __CLC_U_GENTYPE uint3
+#define __CLC_S_GENTYPE int3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uint4
-#define UGENTYPE uint4
-#define SGENTYPE int4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uint4
+#define __CLC_U_GENTYPE uint4
+#define __CLC_S_GENTYPE int4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uint8
-#define UGENTYPE uint8
-#define SGENTYPE int8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uint8
+#define __CLC_U_GENTYPE uint8
+#define __CLC_S_GENTYPE int8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE uint16
-#define UGENTYPE uint16
-#define SGENTYPE int16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE uint16
+#define __CLC_U_GENTYPE uint16
+#define __CLC_S_GENTYPE int16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef GENSIZE
-#define GENSIZE 64
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE long
+#undef __CLC_GENSIZE
+#define __CLC_GENSIZE 64
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE long
 
-#define GENTYPE long
-#define UGENTYPE ulong
-#define SGENTYPE long
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE long
+#define __CLC_U_GENTYPE ulong
+#define __CLC_S_GENTYPE long
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE long2
-#define UGENTYPE ulong2
-#define SGENTYPE long2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE long2
+#define __CLC_U_GENTYPE ulong2
+#define __CLC_S_GENTYPE long2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE long3
-#define UGENTYPE ulong3
-#define SGENTYPE long3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE long3
+#define __CLC_U_GENTYPE ulong3
+#define __CLC_S_GENTYPE long3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE long4
-#define UGENTYPE ulong4
-#define SGENTYPE long4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE long4
+#define __CLC_U_GENTYPE ulong4
+#define __CLC_S_GENTYPE long4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE long8
-#define UGENTYPE ulong8
-#define SGENTYPE long8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE long8
+#define __CLC_U_GENTYPE ulong8
+#define __CLC_S_GENTYPE long8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE long16
-#define UGENTYPE ulong16
-#define SGENTYPE long16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE long16
+#define __CLC_U_GENTYPE ulong16
+#define __CLC_S_GENTYPE long16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef SCALAR_GENTYPE
-#define SCALAR_GENTYPE ulong
+#undef __CLC_SCALAR_GENTYPE
+#define __CLC_SCALAR_GENTYPE ulong
 
-#define GENTYPE ulong
-#define UGENTYPE ulong
-#define SGENTYPE long
-#define SCALAR 1
-#include BODY
-#undef SCALAR
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ulong
+#define __CLC_U_GENTYPE ulong
+#define __CLC_S_GENTYPE long
+#define __CLC_SCALAR 1
+#include __CLC_BODY
+#undef __CLC_SCALAR
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ulong2
-#define UGENTYPE ulong2
-#define SGENTYPE long2
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ulong2
+#define __CLC_U_GENTYPE ulong2
+#define __CLC_S_GENTYPE long2
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ulong3
-#define UGENTYPE ulong3
-#define SGENTYPE long3
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ulong3
+#define __CLC_U_GENTYPE ulong3
+#define __CLC_S_GENTYPE long3
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ulong4
-#define UGENTYPE ulong4
-#define SGENTYPE long4
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ulong4
+#define __CLC_U_GENTYPE ulong4
+#define __CLC_S_GENTYPE long4
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ulong8
-#define UGENTYPE ulong8
-#define SGENTYPE long8
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ulong8
+#define __CLC_U_GENTYPE ulong8
+#define __CLC_S_GENTYPE long8
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#define GENTYPE ulong16
-#define UGENTYPE ulong16
-#define SGENTYPE long16
-#include BODY
-#undef GENTYPE
-#undef UGENTYPE
-#undef SGENTYPE
+#define __CLC_GENTYPE ulong16
+#define __CLC_U_GENTYPE ulong16
+#define __CLC_S_GENTYPE long16
+#include __CLC_BODY
+#undef __CLC_GENTYPE
+#undef __CLC_U_GENTYPE
+#undef __CLC_S_GENTYPE
 
-#undef GENSIZE
-#undef SCALAR_GENTYPE
-#undef BODY
+#undef __CLC_GENSIZE
+#undef __CLC_SCALAR_GENTYPE
+#undef __CLC_BODY

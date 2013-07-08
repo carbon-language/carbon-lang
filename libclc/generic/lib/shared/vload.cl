@@ -21,11 +21,11 @@
     return (PRIM_TYPE##16)(vload8(offset, x), vload8(offset+8, x)); \
   } \
 
-#define VLOAD_ADDR_SPACES(SCALAR_GENTYPE) \
-    VLOAD_VECTORIZE(SCALAR_GENTYPE, __private) \
-    VLOAD_VECTORIZE(SCALAR_GENTYPE, __local) \
-    VLOAD_VECTORIZE(SCALAR_GENTYPE, __constant) \
-    VLOAD_VECTORIZE(SCALAR_GENTYPE, __global) \
+#define VLOAD_ADDR_SPACES(__CLC_SCALAR_GENTYPE) \
+    VLOAD_VECTORIZE(__CLC_SCALAR_GENTYPE, __private) \
+    VLOAD_VECTORIZE(__CLC_SCALAR_GENTYPE, __local) \
+    VLOAD_VECTORIZE(__CLC_SCALAR_GENTYPE, __constant) \
+    VLOAD_VECTORIZE(__CLC_SCALAR_GENTYPE, __global) \
 
 //int/uint are special... see below
 #define VLOAD_TYPES() \

@@ -4,5 +4,5 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 
-#define BODY <normalize.inc>
+#define __CLC_BODY <normalize.inc>
 #include <clc/geometric/floatn.inc>

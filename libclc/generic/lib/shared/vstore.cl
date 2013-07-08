@@ -29,10 +29,10 @@
     vstore8(vec.hi, offset+8, mem); \
   } \
 
-#define VSTORE_ADDR_SPACES(SCALAR_GENTYPE) \
-    VSTORE_VECTORIZE(SCALAR_GENTYPE, __private) \
-    VSTORE_VECTORIZE(SCALAR_GENTYPE, __local) \
-    VSTORE_VECTORIZE(SCALAR_GENTYPE, __global) \
+#define VSTORE_ADDR_SPACES(__CLC_SCALAR___CLC_GENTYPE) \
+    VSTORE_VECTORIZE(__CLC_SCALAR___CLC_GENTYPE, __private) \
+    VSTORE_VECTORIZE(__CLC_SCALAR___CLC_GENTYPE, __local) \
+    VSTORE_VECTORIZE(__CLC_SCALAR___CLC_GENTYPE, __global) \
 
 //int/uint are special... see below
 #define VSTORE_TYPES() \

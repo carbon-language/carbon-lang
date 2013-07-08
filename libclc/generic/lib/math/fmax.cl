@@ -7,5 +7,5 @@
 #define FUNCTION __clc_fmax
 #define FUNCTION_IMPL(x, y) ((x) < (y) ? (y) : (x))
 
-#define BODY <binary_impl.inc>
+#define __CLC_BODY <binary_impl.inc>
 #include <clc/math/gentype.inc>

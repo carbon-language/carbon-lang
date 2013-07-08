@@ -7,36 +7,36 @@
  * Eventually, someone should feel free to implement an llvm-specific version
  */
 
-_CLC_OVERLOAD _CLC_DEF GENTYPE rotate(GENTYPE x, GENTYPE n){
+_CLC_OVERLOAD _CLC_DEF __CLC_GENTYPE rotate(__CLC_GENTYPE x, __CLC_GENTYPE n){
     //Try to avoid extra work if someone's spinning the value through multiple
     //full rotations
-    n = n % (GENTYPE)GENSIZE;
+    n = n % (__CLC_GENTYPE)__CLC_GENSIZE;
 
-#ifdef SCALAR
+#ifdef __CLC_SCALAR
     if (n > 0){
-        return (x << n) | (((UGENTYPE)x) >> (GENSIZE - n));
+        return (x << n) | (((__CLC_U_GENTYPE)x) >> (__CLC_GENSIZE - n));
     } else if (n == 0){
         return x;
     } else {
-        return ( (((UGENTYPE)x) >> -n) | (x << (GENSIZE + n)) );
+        return ( (((__CLC_U_GENTYPE)x) >> -n) | (x << (__CLC_GENSIZE + n)) );
     }
 #else
     //XXX: There's a lot of __builtin_astype calls to cast everything to
-    //     unsigned ... This should be improved so that if GENTYPE==UGENTYPE, no
+    //     unsigned ... This should be improved so that if __CLC_GENTYPE==__CLC_U_GENTYPE, no
     //     casts are required.
     
-    UGENTYPE x_1 = __builtin_astype(x, UGENTYPE);
+    __CLC_U_GENTYPE x_1 = __builtin_astype(x, __CLC_U_GENTYPE);
 
-    //XXX: Is (UGENTYPE >> SGENTYPE) | (UGENTYPE << SGENTYPE) legal?
+    //XXX: Is (__CLC_U_GENTYPE >> S__CLC_GENTYPE) | (__CLC_U_GENTYPE << S__CLC_GENTYPE) legal?
     //     If so, then combine the amt and shifts into a single set of statements
     
-    UGENTYPE amt;
-    amt = (n < (GENTYPE)0 ? __builtin_astype((GENTYPE)0-n, UGENTYPE) : (UGENTYPE)0);
-    x_1 = (x_1 >> amt) | (x_1 << ((UGENTYPE)GENSIZE - amt));
+    __CLC_U_GENTYPE amt;
+    amt = (n < (__CLC_GENTYPE)0 ? __builtin_astype((__CLC_GENTYPE)0-n, __CLC_U_GENTYPE) : (__CLC_U_GENTYPE)0);
+    x_1 = (x_1 >> amt) | (x_1 << ((__CLC_U_GENTYPE)__CLC_GENSIZE - amt));
 
-    amt = (n < (GENTYPE)0 ? (UGENTYPE)0 : __builtin_astype(n, UGENTYPE));
-    x_1 = (x_1 << amt) | (x_1 >> ((UGENTYPE)GENSIZE - amt));
+    amt = (n < (__CLC_GENTYPE)0 ? (__CLC_U_GENTYPE)0 : __builtin_astype(n, __CLC_U_GENTYPE));
+    x_1 = (x_1 << amt) | (x_1 >> ((__CLC_U_GENTYPE)__CLC_GENSIZE - amt));
 
-    return __builtin_astype(x_1, GENTYPE);
+    return __builtin_astype(x_1, __CLC_GENTYPE);
 #endif
 }

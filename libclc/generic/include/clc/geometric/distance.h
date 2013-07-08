@@ -1,2 +1,2 @@
-#define BODY <clc/geometric/distance.inc>
+#define __CLC_BODY <clc/geometric/distance.inc>
 #include <clc/geometric/floatn.inc>

@@ -1,4 +1,4 @@
 #include <clc/clc.h>
 
-#define BODY <abs.inc>
+#define __CLC_BODY <abs.inc>
 #include <clc/integer/gentype.inc>
