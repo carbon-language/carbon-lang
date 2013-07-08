@@ -245,8 +245,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   // We want to use MVC in preference to even a single load/store pair.
   MaxStoresPerMemcpy = 0;
   MaxStoresPerMemcpyOptSize = 0;
-  MaxStoresPerMemmove = 0;
-  MaxStoresPerMemmoveOptSize = 0;
 }
 
 bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
