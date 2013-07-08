@@ -229,6 +229,8 @@ public:
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
+
+  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op, unsigned Kind);
 };
 
 /// PPCOperand - Instances of this class represent a parsed PowerPC machine
@@ -1232,3 +1234,25 @@ extern "C" void LLVMInitializePowerPCAsmParser() {
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
 #include "PPCGenAsmMatcher.inc"
+
+// Define this matcher function after the auto-generated include so we
+// have the match class enum definitions.
+unsigned PPCAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
+                                                  unsigned Kind) {
+  // If the kind is a token for a literal immediate, check if our asm
+  // operand matches. This is for InstAliases which have a fixed-value
+  // immediate in the syntax.
+  int64_t ImmVal;
+  switch (Kind) {
+    case MCK_0: ImmVal = 0; break;
+    case MCK_1: ImmVal = 1; break;
+    default: return Match_InvalidOperand;
+  }
+
+  PPCOperand *Op = static_cast<PPCOperand*>(AsmOp);
+  if (Op->isImm() && Op->getImm() == ImmVal)
+    return Match_Success;
+
+  return Match_InvalidOperand;
+}
+

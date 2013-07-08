@@ -272,10 +272,20 @@ def PPCAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;
 }
 
+def PPCAsmParserVariant : AsmParserVariant {
+  int Variant = 0;
+
+  // We do not use hard coded registers in asm strings.  However, some
+  // InstAlias definitions use immediate literals.  Set RegisterPrefix
+  // so that those are not misinterpreted as registers.
+  string RegisterPrefix = "%";
+}
+
 def PPC : Target {
   // Information about the instructions.
   let InstructionSet = PPCInstrInfo;
   
   let AssemblyWriters = [PPCAsmWriter];
   let AssemblyParsers = [PPCAsmParser];
+  let AssemblyParserVariants = [PPCAsmParserVariant];
 }
