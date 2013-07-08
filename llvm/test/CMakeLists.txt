@@ -13,11 +13,19 @@ if(NOT LLVM_BUILD_TOOLS)
 endif()
 
 # Set the depends list as a variable so that it can grow conditionally.
-set(LLVM_TEST_DEPENDS UnitTests
-          BugpointPasses LLVMHello
-          llc lli llvm-ar llvm-as
-          llvm-bcanalyzer llvm-diff
-          llvm-dis llvm-extract llvm-dwarfdump
+set(LLVM_TEST_DEPENDS
+          UnitTests
+          BugpointPasses
+          LLVMHello
+          llc
+          lli
+          llvm-ar
+          llvm-as
+          llvm-bcanalyzer
+          llvm-diff
+          llvm-dis
+          llvm-extract
+          llvm-dwarfdump
           llvm-link
           llvm-mc
           llvm-mcmarkup
@@ -26,10 +34,15 @@ set(LLVM_TEST_DEPENDS UnitTests
           llvm-readobj
           llvm-rtdyld
           llvm-symbolizer
-          macho-dump opt
+          macho-dump
+          opt
           profile_rt-shared
-          FileCheck count not
-          yaml2obj obj2yaml)
+          FileCheck
+          count
+          not
+          yaml2obj
+          obj2yaml
+        )
 
 # If Intel JIT events are supported, depend on a tool that tests the listener.
 if( LLVM_USE_INTEL_JITEVENTS )
