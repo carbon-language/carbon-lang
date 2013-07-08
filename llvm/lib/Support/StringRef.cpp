@@ -11,6 +11,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/edit_distance.h"
 #include <bitset>
 
@@ -464,4 +465,8 @@ bool StringRef::getAsInteger(unsigned Radix, APInt &Result) const {
 // Implementation of StringRef hashing.
 hash_code llvm::hash_value(StringRef S) {
   return hash_combine_range(S.begin(), S.end());
+}
+
+unsigned DenseMapInfo<StringRef>::getHashValue(StringRef const val) {
+  return llvm::HashString(val);
 }
