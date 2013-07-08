@@ -66,7 +66,7 @@ private:
   BuilderLocGuard(const BuilderLocGuard &);
   BuilderLocGuard &operator=(const BuilderLocGuard &);
   IRBuilder<> &Builder;
-  BasicBlock::iterator Loc;
+  AssertingVH<Instruction> Loc;
 };
 
 /// A helper class for numbering instructions in multible blocks.
@@ -1217,6 +1217,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 }
 
 void BoUpSLP::vectorizeTree() {
+  Builder.SetInsertPoint(&F->getEntryBlock());
   vectorizeTree(&VectorizableTree[0]);
 
   // For each vectorized value:
