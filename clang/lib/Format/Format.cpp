@@ -140,7 +140,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.PenaltyBreakComment = 45;
   LLVMStyle.PenaltyBreakString = 1000;
   LLVMStyle.PenaltyExcessCharacter = 1000000;
-  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 75;
+  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.SpacesInBracedLists = true;
@@ -320,7 +320,7 @@ private:
           AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
           NoLineBreak(NoLineBreak), ColonPos(0), StartOfFunctionCall(0),
           NestedNameSpecifierContinuation(0), CallContinuation(0),
-          VariablePos(0), ForFakeParenthesis(false) {}
+          VariablePos(0), ContainsLineBreak(false) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -379,12 +379,12 @@ private:
     /// Used to align further variables if necessary.
     unsigned VariablePos;
 
-    /// \brief \c true if this \c ParenState was created for a fake parenthesis.
+    /// \brief \c true if this \c ParenState already contains a line-break.
     ///
-    /// Does not need to be considered for memoization / the comparison function
-    /// as otherwise identical states will have the same fake/non-fake
-    /// \c ParenStates.
-    bool ForFakeParenthesis;
+    /// The first line break in a certain \c ParenState causes extra penalty so
+    /// that clang-format prefers similar breaks, i.e. breaks in the same
+    /// parenthesis.
+    bool ContainsLineBreak;
 
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
@@ -411,6 +411,8 @@ private:
         return CallContinuation < Other.CallContinuation;
       if (VariablePos != Other.VariablePos)
         return VariablePos < Other.VariablePos;
+      if (ContainsLineBreak != Other.ContainsLineBreak)
+        return ContainsLineBreak < Other.ContainsLineBreak;
       return false;
     }
   };
@@ -510,6 +512,7 @@ private:
     unsigned ContinuationIndent =
         std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) + 4;
     if (Newline) {
+      State.Stack.back().ContainsLineBreak = true;
       if (Current.is(tok::r_brace)) {
         State.Column = Line.Level * Style.IndentWidth;
       } else if (Current.is(tok::string_literal) &&
@@ -728,7 +731,7 @@ private:
              E = Current.FakeLParens.rend();
          I != E; ++I) {
       ParenState NewParenState = State.Stack.back();
-      NewParenState.ForFakeParenthesis = true;
+      NewParenState.ContainsLineBreak = false;
       NewParenState.Indent =
           std::max(std::max(State.Column, NewParenState.Indent),
                    State.Stack.back().LastSpace);
@@ -1013,8 +1016,11 @@ private:
       return;
     if (!NewLine && mustBreak(PreviousNode->State))
       return;
-    if (NewLine)
+    if (NewLine) {
+      if (!PreviousNode->State.Stack.back().ContainsLineBreak)
+        Penalty += 15;
       Penalty += PreviousNode->State.NextToken->SplitPenalty;
+    }
 
     StateNode *Node = new (Allocator.Allocate())
         StateNode(PreviousNode->State, NewLine, PreviousNode);
