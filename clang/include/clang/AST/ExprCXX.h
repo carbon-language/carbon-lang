@@ -257,7 +257,7 @@ public:
 /// \brief A C++ @c dynamic_cast expression (C++ [expr.dynamic.cast]).
 ///
 /// This expression node represents a dynamic cast, e.g.,
-/// \cc dynamic_cast<Derived*>(BasePtr). Such a cast may perform a run-time
+/// \c dynamic_cast<Derived*>(BasePtr). Such a cast may perform a run-time
 /// check to determine how to perform the type conversion.
 class CXXDynamicCastExpr : public CXXNamedCastExpr {
   CXXDynamicCastExpr(QualType ty, ExprValueKind VK, CastKind kind,
