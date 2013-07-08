@@ -338,7 +338,7 @@ class DwarfDebug {
   // Provides a unique id per text section.
   SetVector<const MCSection*> SectionMap;
 
-  // List of Arguments (DbgValues) for current function.
+  // List of arguments for current function.
   SmallVector<DbgVariable *, 8> CurrentFnArguments;
 
   LexicalScopes LScopes;
