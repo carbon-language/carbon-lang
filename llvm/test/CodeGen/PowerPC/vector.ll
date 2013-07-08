@@ -59,6 +59,14 @@ define void @test_div(%f8* %P, %f8* %Q, %f8* %S) {
         ret void
 }
 
+define void @test_rem(%f8* %P, %f8* %Q, %f8* %S) {
+        %p = load %f8* %P               ; <%f8> [#uses=1]
+        %q = load %f8* %Q               ; <%f8> [#uses=1]
+        %R = frem %f8 %p, %q            ; <%f8> [#uses=1]
+        store %f8 %R, %f8* %S
+        ret void
+}
+
 ;;; TEST VECTOR CONSTRUCTS
 
 define void @test_cst(%f4* %P, %f4* %S) {

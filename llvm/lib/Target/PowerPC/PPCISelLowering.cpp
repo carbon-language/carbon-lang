@@ -392,6 +392,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::UDIV, VT, Expand);
       setOperationAction(ISD::UREM, VT, Expand);
       setOperationAction(ISD::FDIV, VT, Expand);
+      setOperationAction(ISD::FREM, VT, Expand);
       setOperationAction(ISD::FNEG, VT, Expand);
       setOperationAction(ISD::FSQRT, VT, Expand);
       setOperationAction(ISD::FLOG, VT, Expand);
