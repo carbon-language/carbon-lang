@@ -524,14 +524,14 @@ const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   if (Kind.isText())
-    return GV->isWeakForLinker() ? TextCoalSection : TextSection;
-
-  // If this is weak/linkonce, put this in a coalescable section, either in text
-  // or data depending on if it is writable.
+    return TextSection;
+ 
+  // If this is weak/linkonce, put this in a read only or data section depending
+  // on whether or not it's writable.
   if (GV->isWeakForLinker()) {
     if (Kind.isReadOnly())
-      return ConstTextCoalSection;
-    return DataCoalSection;
+      return ReadOnlySection;
+    return DataSection;
   }
 
   // FIXME: Alignment check should be handled by section classifier.
