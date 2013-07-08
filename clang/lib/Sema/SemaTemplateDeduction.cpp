@@ -581,14 +581,17 @@ static TemplateParameter makeTemplateParameter(Decl *D) {
   return TemplateParameter(cast<TemplateTemplateParmDecl>(D));
 }
 
+typedef SmallVector<SmallVector<DeducedTemplateArgument, 4>, 2>
+  NewlyDeducedPacksType;
+
 /// \brief Prepare to perform template argument deduction for all of the
 /// arguments in a set of argument packs.
-static void PrepareArgumentPackDeduction(Sema &S,
-                       SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                                           ArrayRef<unsigned> PackIndices,
-                     SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
-         SmallVectorImpl<
-           SmallVector<DeducedTemplateArgument, 4> > &NewlyDeducedPacks) {
+static void
+PrepareArgumentPackDeduction(Sema &S,
+                           SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                           ArrayRef<unsigned> PackIndices,
+                           SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
+                           NewlyDeducedPacksType &NewlyDeducedPacks) {
   // Save the deduced template arguments for each parameter pack expanded
   // by this pack expansion, then clear out the deduction.
   for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
@@ -620,14 +623,13 @@ static void PrepareArgumentPackDeduction(Sema &S,
 /// deductions.
 static Sema::TemplateDeductionResult
 FinishArgumentPackDeduction(Sema &S,
-                            TemplateParameterList *TemplateParams,
-                            bool HasAnyArguments,
-                            SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                            ArrayRef<unsigned> PackIndices,
-                    SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
-        SmallVectorImpl<
-          SmallVector<DeducedTemplateArgument, 4> > &NewlyDeducedPacks,
-                            TemplateDeductionInfo &Info) {
+                           TemplateParameterList *TemplateParams,
+                           bool HasAnyArguments,
+                           SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                           ArrayRef<unsigned> PackIndices,
+                           SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
+                           NewlyDeducedPacksType &NewlyDeducedPacks,
+                           TemplateDeductionInfo &Info) {
   // Build argument packs for each of the parameter packs expanded by this
   // pack expansion.
   for (unsigned I = 0, N = PackIndices.size(); I != N; ++I) {
@@ -793,8 +795,7 @@ DeduceTemplateArguments(Sema &S,
     // Keep track of the deduced template arguments for each parameter pack
     // expanded by this pack expansion (the outer index) and for each
     // template argument (the inner SmallVectors).
-    SmallVector<SmallVector<DeducedTemplateArgument, 4>, 2>
-      NewlyDeducedPacks(PackIndices.size());
+    NewlyDeducedPacksType NewlyDeducedPacks(PackIndices.size());
     SmallVector<DeducedTemplateArgument, 2>
       SavedPacks(PackIndices.size());
     PrepareArgumentPackDeduction(S, Deduced, PackIndices, SavedPacks,
@@ -1871,8 +1872,7 @@ DeduceTemplateArguments(Sema &S,
     // by this pack expansion, then clear out the deduction.
     SmallVector<DeducedTemplateArgument, 2>
       SavedPacks(PackIndices.size());
-    SmallVector<SmallVector<DeducedTemplateArgument, 4>, 2>
-      NewlyDeducedPacks(PackIndices.size());
+    NewlyDeducedPacksType NewlyDeducedPacks(PackIndices.size());
     PrepareArgumentPackDeduction(S, Deduced, PackIndices, SavedPacks,
                                  NewlyDeducedPacks);
 
@@ -3255,8 +3255,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     // Keep track of the deduced template arguments for each parameter pack
     // expanded by this pack expansion (the outer index) and for each
     // template argument (the inner SmallVectors).
-    SmallVector<SmallVector<DeducedTemplateArgument, 4>, 2>
-      NewlyDeducedPacks(PackIndices.size());
+    NewlyDeducedPacksType NewlyDeducedPacks(PackIndices.size());
     SmallVector<DeducedTemplateArgument, 2>
       SavedPacks(PackIndices.size());
     PrepareArgumentPackDeduction(*this, Deduced, PackIndices, SavedPacks,
