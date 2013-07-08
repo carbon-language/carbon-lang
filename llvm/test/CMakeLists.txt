@@ -22,6 +22,7 @@ set(LLVM_TEST_DEPENDS
           llvm-ar
           llvm-as
           llvm-bcanalyzer
+          llvm-cov
           llvm-diff
           llvm-dis
           llvm-extract
