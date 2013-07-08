@@ -14432,12 +14432,11 @@ X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
     } else {
       // __chkstk(MSVCRT): does not update stack pointer.
       // Clobbers R10, R11 and EFLAGS.
-      // FIXME: RAX(allocated size) might be reused and not killed.
       BuildMI(*BB, MI, DL, TII->get(X86::W64ALLOCA))
         .addExternalSymbol("__chkstk")
         .addReg(X86::RAX, RegState::Implicit)
         .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
-      // RAX has the offset to subtracted from RSP.
+      // RAX has the offset to be subtracted from RSP.
       BuildMI(*BB, MI, DL, TII->get(X86::SUB64rr), X86::RSP)
         .addReg(X86::RSP)
         .addReg(X86::RAX);
