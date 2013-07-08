@@ -208,6 +208,10 @@ private:
   // instead.
   unsigned IndentAtLineBreak;
 
+  // This is to distinguish between the case when the last line was empty and
+  // the case when it started with a decoration ("*" or "* ").
+  bool LastLineNeedsDecoration;
+
   // Either "* " if all lines begin with a "*", or empty.
   StringRef Decoration;
 };

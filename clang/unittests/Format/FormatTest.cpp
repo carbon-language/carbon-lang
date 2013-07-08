@@ -3967,7 +3967,7 @@ TEST_F(FormatTest, BlockComments) {
   EXPECT_EQ("/*\n"
             "*\n"
             " * aaaaaa\n"
-            "* aaaaaa\n"
+            "*aaaaaa\n"
             "*/",
             format("/*\n"
                    "*\n"
@@ -3977,7 +3977,7 @@ TEST_F(FormatTest, BlockComments) {
   EXPECT_EQ("/*\n"
             "**\n"
             "* aaaaaa\n"
-            "* aaaaaa\n"
+            "*aaaaaa\n"
             "*/",
             format("/*\n"
                    "**\n"
@@ -4017,6 +4017,33 @@ TEST_F(FormatTest, BlockComments) {
              "int    cccccccccccccccccccccccccccccc;  /* comment */\n"));
 
   verifyFormat("void f(int * /* unused */) {}");
+
+  EXPECT_EQ("/*\n"
+            " **\n"
+            " */",
+            format("/*\n"
+                   " **\n"
+                   " */"));
+  EXPECT_EQ("/*\n"
+            " *q\n"
+            " */",
+            format("/*\n"
+                   " *q\n"
+                   " */"));
+  EXPECT_EQ("/*\n"
+            " * q\n"
+            " */",
+            format("/*\n"
+                   " * q\n"
+                   " */"));
+  EXPECT_EQ("/*\n"
+            " **/",
+            format("/*\n"
+                   " **/"));
+  EXPECT_EQ("/*\n"
+            " ***/",
+            format("/*\n"
+                   " ***/"));
 }
 
 TEST_F(FormatTest, BlockCommentsInMacros) {

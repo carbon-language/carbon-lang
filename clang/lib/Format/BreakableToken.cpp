@@ -225,50 +225,56 @@ BreakableBlockComment::BreakableBlockComment(
   TokenText.substr(2, TokenText.size() - 4).split(Lines, "\n");
 
   int IndentDelta = StartColumn - OriginalStartColumn;
-  bool NeedsStar = true;
   LeadingWhitespace.resize(Lines.size());
   StartOfLineColumn.resize(Lines.size());
+  StartOfLineColumn[0] = StartColumn + 2;
+  for (size_t i = 1; i < Lines.size(); ++i)
+    adjustWhitespace(Style, i, IndentDelta);
+
+  Decoration = "* ";
   if (Lines.size() == 1 && !FirstInLine) {
     // Comments for which FirstInLine is false can start on arbitrary column,
     // and available horizontal space can be too small to align consecutive
     // lines with the first one.
     // FIXME: We could, probably, align them to current indentation level, but
     // now we just wrap them without stars.
-    NeedsStar = false;
+    Decoration = "";
   }
-  StartOfLineColumn[0] = StartColumn + 2;
-  for (size_t i = 1; i < Lines.size(); ++i) {
-    adjustWhitespace(Style, i, IndentDelta);
-    if (Lines[i].empty())
-      // If the last line is empty, the closing "*/" will have a star.
-      NeedsStar = NeedsStar && i + 1 == Lines.size();
-    else
-      NeedsStar = NeedsStar && Lines[i][0] == '*';
+  for (size_t i = 1, e = Lines.size(); i < e && !Decoration.empty(); ++i) {
+    // If the last line is empty, the closing "*/" will have a star.
+    if (i + 1 == e && Lines[i].empty())
+      break;
+    while (!Lines[i].startswith(Decoration))
+      Decoration = Decoration.substr(0, Decoration.size() - 1);
   }
-  Decoration = NeedsStar ? "* " : "";
+
+  LastLineNeedsDecoration = true;
   IndentAtLineBreak = StartOfLineColumn[0] + 1;
   for (size_t i = 1; i < Lines.size(); ++i) {
     if (Lines[i].empty()) {
-      if (!NeedsStar && i + 1 != Lines.size())
-        // For all but the last line (which always ends in */), set the
-        // start column to 0 if they're empty, so we do not insert
-        // trailing whitespace anywhere.
+      if (i + 1 == Lines.size()) {
+        // Empty last line means that we already have a star as a part of the
+        // trailing */. We also need to preserve whitespace, so that */ is
+        // correctly indented.
+        LastLineNeedsDecoration = false;
+      } else if (Decoration.empty()) {
+        // For all other lines, set the start column to 0 if they're empty, so
+        // we do not insert trailing whitespace anywhere.
         StartOfLineColumn[i] = 0;
+      }
       continue;
     }
-    if (NeedsStar) {
-      // The first line already excludes the star.
-      // For all other lines, adjust the line to exclude the star and
-      // (optionally) the first whitespace.
-      int Offset = Lines[i].startswith("* ") ? 2 : 1;
-      StartOfLineColumn[i] += Offset;
-      Lines[i] = Lines[i].substr(Offset);
-      LeadingWhitespace[i] += Offset;
-    }
+    // The first line already excludes the star.
+    // For all other lines, adjust the line to exclude the star and
+    // (optionally) the first whitespace.
+    StartOfLineColumn[i] += Decoration.size();
+    Lines[i] = Lines[i].substr(Decoration.size());
+    LeadingWhitespace[i] += Decoration.size();
     IndentAtLineBreak = std::min<int>(IndentAtLineBreak, StartOfLineColumn[i]);
   }
   IndentAtLineBreak = std::max<unsigned>(IndentAtLineBreak, Decoration.size());
   DEBUG({
+    llvm::dbgs() << "IndentAtLineBreak " << IndentAtLineBreak << "\n";
     for (size_t i = 0; i < Lines.size(); ++i) {
       llvm::dbgs() << i << " |" << Lines[i] << "| " << LeadingWhitespace[i]
                    << "\n";
@@ -365,9 +371,11 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
   StringRef Prefix = Decoration;
   if (Lines[LineIndex].empty()) {
     if (LineIndex + 1 == Lines.size()) {
-      // If the last line is empty, we don't need a prefix, as the */ will line
-      // up with the decoration (if it exists).
-      Prefix = "";
+      if (!LastLineNeedsDecoration) {
+        // If the last line was empty, we don't need a prefix, as the */ will
+        // line up with the decoration (if it exists).
+        Prefix = "";
+      }
     } else if (!Decoration.empty()) {
       // For other empty lines, if we do have a decoration, adapt it to not
       // contain a trailing whitespace.
@@ -375,7 +383,7 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
     }
   } else {
     if (StartOfLineColumn[LineIndex] == 1) {
-      // This lines starts immediately after the decorating *.
+      // This line starts immediately after the decorating *.
       Prefix = Prefix.substr(0, 1);
     }
   }
