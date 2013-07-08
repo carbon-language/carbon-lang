@@ -17,7 +17,7 @@
 // RUN: FileCheck %s < %t/out.c-index-direct
 // RUN: FileCheck %s < %t/out.c-index-pch
 
-// XFAIL: valgrind
+// XFAIL: vg_leak
 
 #ifndef HEADER
 #define HEADER
