@@ -1,6 +1,6 @@
 // This test checks that the SEH directives emit the correct unwind data.
 
-// RUN: llvm-mc -triple x86_64-pc-win32 -filetype=obj %s | llvm-readobj -s -u -r | FileCheck %s
+// RUN: llvm-mc -triple x86_64-pc-win32 -filetype=obj %s | llvm-readobj -s -u | FileCheck %s
 
 // CHECK:      Sections [
 // CHECK:        Section {
@@ -33,27 +33,6 @@
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
-
-// CHECK-NEXT: Relocations [
-// CHECK-NEXT:   Section (2) .xdata {
-// CHECK-NEXT:     0x14 IMAGE_REL_AMD64_ADDR32NB __C_specific_handler
-// CHECK-NEXT:     0x20 IMAGE_REL_AMD64_ADDR32NB func
-// CHECK-NEXT:     0x24 IMAGE_REL_AMD64_ADDR32NB func
-// CHECK-NEXT:     0x28 IMAGE_REL_AMD64_ADDR32NB .xdata
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Section (3) .pdata {
-// CHECK-NEXT:     0x0 IMAGE_REL_AMD64_ADDR32NB func
-// CHECK-NEXT:     0x4 IMAGE_REL_AMD64_ADDR32NB func
-// CHECK-NEXT:     0x8 IMAGE_REL_AMD64_ADDR32NB .xdata
-// CHECK-NEXT:     0xC IMAGE_REL_AMD64_ADDR32NB func
-// CHECK-NEXT:     0x10 IMAGE_REL_AMD64_ADDR32NB func
-// CHECK-NEXT:     0x14 IMAGE_REL_AMD64_ADDR32NB .xdata
-// CHECK-NEXT:     0x18 IMAGE_REL_AMD64_ADDR32NB smallFunc
-// CHECK-NEXT:     0x1C IMAGE_REL_AMD64_ADDR32NB smallFunc
-// CHECK-NEXT:     0x20 IMAGE_REL_AMD64_ADDR32NB .xdata
-// CHECK-NEXT:   }
-// CHECK-NEXT: ]
-
 
 // CHECK:      UnwindInformation [
 // CHECK-NEXT:   RuntimeFunction {

@@ -3,8 +3,8 @@
 
 // CHECK:      Unwind info:
 // CHECK:      Function Table:
-// CHECK-NEXT: Start Address: func
-// CHECK-NEXT: End Address: func + 0x001b
+// CHECK-NEXT: Start Address: .text
+// CHECK-NEXT: End Address: .text + 0x001b
 // CHECK-NEXT: Unwind Info Address: .xdata
 // CHECK-NEXT: Version: 1
 // CHECK-NEXT: Flags: 1 UNW_ExceptionHandler
@@ -20,8 +20,8 @@
 // CHECK-NEXT: 0x04: UOP_AllocSmall 24
 // CHECK-NEXT: 0x00: UOP_PushMachFrame w/o error code
 // CHECK:      Function Table:
-// CHECK-NEXT: Start Address: func + 0x0012
-// CHECK-NEXT: End Address: func + 0x0012
+// CHECK-NEXT: Start Address: .text + 0x0012
+// CHECK-NEXT: End Address: .text + 0x0012
 // CHECK-NEXT: Unwind Info Address: .xdata + 0x001c
 // CHECK-NEXT: Version: 1
 // CHECK-NEXT: Flags: 4 UNW_ChainInfo
@@ -29,8 +29,8 @@
 // CHECK-NEXT: Number of Codes: 0
 // CHECK-NEXT: No frame pointer used
 // CHECK:      Function Table:
-// CHECK-NEXT: Start Address: smallFunc
-// CHECK-NEXT: End Address: smallFunc + 0x0001
+// CHECK-NEXT: Start Address: .text + 0x001b
+// CHECK-NEXT: End Address: .text + 0x001c
 // CHECK-NEXT: Unwind Info Address: .xdata + 0x002c
 // CHECK-NEXT: Version: 1
 // CHECK-NEXT: Flags: 0
@@ -38,8 +38,8 @@
 // CHECK-NEXT: Number of Codes: 0
 // CHECK-NEXT: No frame pointer used
 // CHECK:      Function Table:
-// CHECK-NEXT: Start Address: allocFunc
-// CHECK-NEXT: End Address: allocFunc + 0x001d
+// CHECK-NEXT: Start Address: .text + 0x001c
+// CHECK-NEXT: End Address: .text + 0x0039
 // CHECK-NEXT: Unwind Info Address: .xdata + 0x0034
 // CHECK-NEXT: Version: 1
 // CHECK-NEXT: Flags: 0
@@ -90,9 +90,9 @@ smallFunc:
     .seh_endproc
 
 // Function with big stack allocation.
-    .globl allocFunc
+    .globl smallFunc
     .def allocFunc; .scl 2; .type 32; .endef
-    .seh_proc allocFunc
+    .seh_proc smallFunc
 allocFunc:
     .seh_pushframe @code
     subq $65520, %rsp

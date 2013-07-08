@@ -128,29 +128,14 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
   }
 }
 
-static void EmitSymbolRefWithOfs(MCStreamer &streamer,
-                                 const MCSymbol *Base,
-                                 const MCSymbol *Other) {
-  MCContext &Context = streamer.getContext();
-  const MCSymbolRefExpr *BaseRef = MCSymbolRefExpr::Create(Base, Context);
-  const MCSymbolRefExpr *OtherRef = MCSymbolRefExpr::Create(Other, Context);
-  const MCExpr *Ofs = MCBinaryExpr::CreateSub(OtherRef, BaseRef, Context);
-  const MCSymbolRefExpr *BaseRefRel = MCSymbolRefExpr::Create(Base,
-                                              MCSymbolRefExpr::VK_COFF_IMGREL32,
-                                              Context);
-  streamer.EmitValue(MCBinaryExpr::CreateAdd(BaseRefRel, Ofs, Context), 4);
-}
-
 static void EmitRuntimeFunction(MCStreamer &streamer,
                                 const MCWin64EHUnwindInfo *info) {
   MCContext &context = streamer.getContext();
 
   streamer.EmitValueToAlignment(4);
-  EmitSymbolRefWithOfs(streamer, info->Function, info->Begin);
-  EmitSymbolRefWithOfs(streamer, info->Function, info->End);
-  streamer.EmitValue(MCSymbolRefExpr::Create(info->Symbol,
-                                             MCSymbolRefExpr::VK_COFF_IMGREL32,
-                                             context), 4);
+  streamer.EmitValue(MCSymbolRefExpr::Create(info->Begin, context), 4);
+  streamer.EmitValue(MCSymbolRefExpr::Create(info->End, context), 4);
+  streamer.EmitValue(MCSymbolRefExpr::Create(info->Symbol, context), 4);
 }
 
 static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
@@ -203,9 +188,8 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
     EmitRuntimeFunction(streamer, info->ChainedParent);
   else if (flags &
            ((Win64EH::UNW_TerminateHandler|Win64EH::UNW_ExceptionHandler) << 3))
-    streamer.EmitValue(MCSymbolRefExpr::Create(info->ExceptionHandler,
-                                              MCSymbolRefExpr::VK_COFF_IMGREL32,
-                                              context), 4);
+    streamer.EmitValue(MCSymbolRefExpr::Create(info->ExceptionHandler, context),
+                       4);
   else if (numCodes < 2) {
     // The minimum size of an UNWIND_INFO struct is 8 bytes. If we're not
     // a chained unwind info, if there is no handler, and if there are fewer
