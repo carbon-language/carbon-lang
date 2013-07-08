@@ -41,7 +41,7 @@ typedef std::map<std::string, HeaderOverride> HeaderOverrides;
 
 /// \brief Container storing the file content overrides for a source file.
 struct SourceOverrides {
-  SourceOverrides(llvm::StringRef MainFileName)
+  SourceOverrides(const std::string &MainFileName)
       : MainFileName(MainFileName) {}
 
   /// \brief Convenience function for applying this source's overrides to

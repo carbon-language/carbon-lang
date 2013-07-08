@@ -216,7 +216,8 @@ void Transform::handleEndSource() {
 
     FileOverrides::iterator I = Overrides->find(CurrentSource);
     if (I == Overrides->end())
-      I = Overrides->insert(std::make_pair(CurrentSource, CurrentSource)).first;
+      I = Overrides->insert(FileOverrides::value_type(CurrentSource,
+                                                      CurrentSource)).first;
 
     collectResults(RewriterOwner->getRewriter(), I->second);
   }
