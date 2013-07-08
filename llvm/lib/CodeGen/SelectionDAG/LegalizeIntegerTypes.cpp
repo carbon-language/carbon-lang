@@ -2931,8 +2931,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
   Ops.reserve(NumElems);
   for (unsigned i = 0; i != NumElems; ++i) {
     SDValue Op;
-    // It is possible for the operands to be larger than the result, for example,
-    // when the operands are promoted booleans and the result was an i1 vector.
+    // BUILD_VECTOR integer operand types are allowed to be larger than the
+    // result's element type. This may still be true after the promotion. For
+    // example, we might be promoting (<v?i1> = BV <i32>, <i32>, ...) to
+    // (v?i16 = BV <i32>, <i32>, ...), and we can't any_extend <i32> to <i16>.
     if (N->getOperand(i).getValueType().bitsLT(NOutVTElem))
       Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(i));
     else
