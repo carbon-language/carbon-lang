@@ -201,7 +201,7 @@
 #define LLVM_ATTRIBUTE_WEAK
 #endif
 
-#if __has_attribute(const) || defined(__GNUC__)
+#if __has_attribute(__const__) || defined(__GNUC__)
 // aka 'CONST' but following LLVM Conventions.
 #define LLVM_READNONE __attribute__((__const__))
 #else
