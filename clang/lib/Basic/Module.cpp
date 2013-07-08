@@ -111,8 +111,8 @@ std::string Module::getFullModuleName() const {
     Names.push_back(M->Name);
   
   std::string Result;
-  for (SmallVector<StringRef, 2>::reverse_iterator I = Names.rbegin(),
-                                                IEnd = Names.rend();
+  for (SmallVectorImpl<StringRef>::reverse_iterator I = Names.rbegin(),
+                                                 IEnd = Names.rend();
        I != IEnd; ++I) {
     if (!Result.empty())
       Result += '.';

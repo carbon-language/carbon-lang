@@ -511,8 +511,8 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType,
   QualType SrcConstruct = Self.Context.VoidTy;
   QualType DestConstruct = Self.Context.VoidTy;
   ASTContext &Context = Self.Context;
-  for (SmallVector<Qualifiers, 8>::reverse_iterator i1 = cv1.rbegin(),
-                                                          i2 = cv2.rbegin();
+  for (SmallVectorImpl<Qualifiers>::reverse_iterator i1 = cv1.rbegin(),
+                                                     i2 = cv2.rbegin();
        i1 != cv1.rend(); ++i1, ++i2) {
     SrcConstruct
       = Context.getPointerType(Context.getQualifiedType(SrcConstruct, *i1));

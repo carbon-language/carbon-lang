@@ -723,7 +723,7 @@ private:
         Current.is(tok::kw_return) ||
         (Previous && (Previous->opensScope() ||
                       Previous->getPrecedence() == prec::Assignment));
-    for (SmallVector<prec::Level, 4>::const_reverse_iterator
+    for (SmallVectorImpl<prec::Level>::const_reverse_iterator
              I = Current.FakeLParens.rbegin(),
              E = Current.FakeLParens.rend();
          I != E; ++I) {

@@ -1283,7 +1283,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   }
 
   // Reenter template scopes from outermost to innermost.
-  SmallVector<DeclContext*, 4>::reverse_iterator II =
+  SmallVectorImpl<DeclContext *>::reverse_iterator II =
       DeclContextsToReenter.rbegin();
   for (; II != DeclContextsToReenter.rend(); ++II) {
     if (ClassTemplatePartialSpecializationDecl *MD =
@@ -1358,7 +1358,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
 
   // Exit scopes.
   FnScope.Exit();
-  SmallVector<ParseScope*, 4>::reverse_iterator I =
+  SmallVectorImpl<ParseScope *>::reverse_iterator I =
    TemplateParamScopeStack.rbegin();
   for (; I != TemplateParamScopeStack.rend(); ++I)
     delete *I;

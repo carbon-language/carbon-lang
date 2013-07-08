@@ -1025,7 +1025,7 @@ class TemplateDiff {
     makeTemplateList(FromTemplateList, FromTST);
     makeTemplateList(ToTemplateList, ToTST);
 
-    SmallVector<const TemplateSpecializationType*, 1>::reverse_iterator
+    SmallVectorImpl<const TemplateSpecializationType *>::reverse_iterator
         FromIter = FromTemplateList.rbegin(), FromEnd = FromTemplateList.rend(),
         ToIter = ToTemplateList.rbegin(), ToEnd = ToTemplateList.rend();
 
