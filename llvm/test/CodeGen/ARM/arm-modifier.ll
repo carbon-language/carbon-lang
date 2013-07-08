@@ -66,6 +66,7 @@ entry:
   ret i64 %0
 }
 
+; PR16490
 define void @f5(i64 %__pu_val) {
   call void asm sideeffect "$1", "r,i"(i64 %__pu_val, i32 -14)
   ret void

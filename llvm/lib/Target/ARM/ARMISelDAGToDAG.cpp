@@ -3491,6 +3491,10 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     else
       continue;
 
+    // Immediate operands to inline asm in the SelectionDAG are modeled with
+    // two operands. The first is a constant of value InlineAsm::Kind_Imm, and
+    // the second is a constant with the value of the immediate. If we get here
+    // and we have a Kind_Imm, skip the next operand, and continue.
     if (Kind == InlineAsm::Kind_Imm) {
       SDValue op = N->getOperand(++i);
       AsmNodeOperands.push_back(op);
