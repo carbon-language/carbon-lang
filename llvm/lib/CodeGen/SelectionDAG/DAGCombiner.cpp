@@ -1843,7 +1843,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
 
   APInt Val;
   // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
-  if (N1IsConst && N0.getOpcode() == ISD::SHL && 
+  if (N1IsConst && N0.getOpcode() == ISD::SHL &&
       (isConstantSplatVector(N0.getOperand(1).getNode(), Val) ||
                      isa<ConstantSDNode>(N0.getOperand(1)))) {
     SDValue C3 = DAG.getNode(ISD::SHL, SDLoc(N), VT,
@@ -1858,7 +1858,7 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   {
     SDValue Sh(0,0), Y(0,0);
     // Check for both (mul (shl X, C), Y)  and  (mul Y, (shl X, C)).
-    if (N0.getOpcode() == ISD::SHL && 
+    if (N0.getOpcode() == ISD::SHL &&
         (isConstantSplatVector(N0.getOperand(1).getNode(), Val) ||
                        isa<ConstantSDNode>(N0.getOperand(1))) &&
         N0.getNode()->hasOneUse()) {
@@ -2541,7 +2541,7 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
-  // similarly fold (and (X (load ([non_ext|any_ext|zero_ext] V))), c) -> 
+  // similarly fold (and (X (load ([non_ext|any_ext|zero_ext] V))), c) ->
   // (X (load ([non_ext|zero_ext] V))) if 'and' only clears top bits which must
   // already be zero by virtue of the width of the base type of the load.
   //
@@ -4551,7 +4551,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // sext(setcc) -> sext_in_reg(vsetcc) for vectors.
     // Only do this before legalize for now.
     if (VT.isVector() && !LegalOperations &&
-        TLI.getBooleanContents(true) == 
+        TLI.getBooleanContents(true) ==
           TargetLowering::ZeroOrNegativeOneBooleanContent) {
       EVT N0VT = N0.getOperand(0).getValueType();
       // On some architectures (such as SSE/NEON/etc) the SETCC result type is
@@ -5214,7 +5214,7 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   // For the transform to be legal, the load must produce only two values
   // (the value loaded and the chain).  Don't transform a pre-increment
-  // load, for example, which produces an extra value.  Otherwise the 
+  // load, for example, which produces an extra value.  Otherwise the
   // transformation is not equivalent, and the downstream logic to replace
   // uses gets things wrong.
   if (LN0->getNumValues() > 2)
@@ -5944,9 +5944,9 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   // We don't need test this condition for transformation like following, as
   // the DAG being transformed implies it is legal to take FP constant as
   // operand.
-  // 
+  //
   //  (fadd (fmul c, x), x) -> (fmul c+1, x)
-  // 
+  //
   bool AllowNewFpConst = (Level < AfterLegalizeDAG);
 
   // If allow, fold (fadd (fneg x), x) -> 0.0
@@ -6191,7 +6191,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
     }
 
     // fold (fsub (-(fmul, x, y)), z) -> (fma (fneg x), y, (fneg z))
-    if (N0.getOpcode() == ISD::FNEG && 
+    if (N0.getOpcode() == ISD::FNEG &&
         N0.getOperand(0).getOpcode() == ISD::FMUL &&
         N0->hasOneUse() && N0.getOperand(0).hasOneUse()) {
       SDValue N00 = N0.getOperand(0).getOperand(0);
@@ -6247,7 +6247,7 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   // fold (fmul (fneg X), (fneg Y)) -> (fmul X, Y)
   if (char LHSNeg = isNegatibleForFree(N0, LegalOperations, TLI,
                                        &DAG.getTarget().Options)) {
-    if (char RHSNeg = isNegatibleForFree(N1, LegalOperations, TLI, 
+    if (char RHSNeg = isNegatibleForFree(N1, LegalOperations, TLI,
                                          &DAG.getTarget().Options)) {
       // Both can be negated for free, check to see if at least one is cheaper
       // negated.
@@ -6792,7 +6792,7 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
 
   // Transform fabs(bitconvert(x)) -> bitconvert(x&~sign) to avoid loading
   // constant pool values.
-  if (!TLI.isFAbsFree(VT) && 
+  if (!TLI.isFAbsFree(VT) &&
       N0.getOpcode() == ISD::BITCAST && N0.getNode()->hasOneUse() &&
       N0.getOperand(0).getValueType().isInteger() &&
       !N0.getOperand(0).getValueType().isVector()) {
@@ -7217,7 +7217,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     //   x0 * offset0 + y0 * ptr0 = t0
     // knowing that
     //   x1 * offset1 + y1 * ptr0 = t1 (the indexed load/store)
-    // 
+    //
     // where x0, x1, y0 and y1 in {-1, 1} are given by the types of the
     // indexed load/store and the expresion that needs to be re-written.
     //
@@ -7339,7 +7339,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
           for (SDNode::use_iterator III = Use->use_begin(),
                  EEE = Use->use_end(); III != EEE; ++III) {
             SDNode *UseUse = *III;
-            if (!canFoldInAddressingMode(Use, UseUse, DAG, TLI)) 
+            if (!canFoldInAddressingMode(Use, UseUse, DAG, TLI))
               RealUse = true;
           }
 
@@ -8841,7 +8841,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     } else {
       Load = DAG.getLoad(LVT, SDLoc(N), LN0->getChain(), NewPtr,
                          LN0->getPointerInfo().getWithOffset(PtrOff),
-                         LN0->isVolatile(), LN0->isNonTemporal(), 
+                         LN0->isVolatile(), LN0->isNonTemporal(),
                          LN0->isInvariant(), Align);
       Chain = Load.getValue(1);
       if (NVT.bitsLT(LVT))
@@ -9219,7 +9219,7 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     // The extract index must be constant.
     if (!CS)
       return SDValue();
-    
+
     // Check that we are reading from the identity index.
     if (CS->getZExtValue() != IdentityIndex)
       return SDValue();
@@ -9227,7 +9227,7 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
 
   if (SingleSource.getNode())
     return SingleSource;
-  
+
   return SDValue();
 }
 

@@ -572,7 +572,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
 SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
   // Lower a select instruction where the condition is a scalar and the
   // operands are vectors. Lower this select to VSELECT and implement it
-  // using XOR AND OR. The selector bit is broadcasted. 
+  // using XOR AND OR. The selector bit is broadcasted.
   EVT VT = Op.getValueType();
   SDLoc DL(Op);
 

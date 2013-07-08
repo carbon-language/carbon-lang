@@ -161,7 +161,7 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
                                false, false, 0);
 
   // Load the first half from the stack slot.
-  Lo = DAG.getLoad(NOutVT, dl, Store, StackPtr, PtrInfo, 
+  Lo = DAG.getLoad(NOutVT, dl, Store, StackPtr, PtrInfo,
                    false, false, false, 0);
 
   // Increment the pointer to the other half.

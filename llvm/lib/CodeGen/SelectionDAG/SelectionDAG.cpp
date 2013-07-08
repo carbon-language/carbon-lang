@@ -3646,7 +3646,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, SDLoc dl,
     unsigned NewAlign = (unsigned) TLI.getDataLayout()->getABITypeAlignment(Ty);
 
     // Don't promote to an alignment that would require dynamic stack
-    // realignment.  
+    // realignment.
     const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
     if (!TRI->needsStackRealignment(MF))
        while (NewAlign > Align &&

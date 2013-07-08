@@ -90,7 +90,7 @@ bool FastISel::LowerArguments() {
     // Fallback to SDISel argument lowering code to deal with sret pointer
     // parameter.
     return false;
-  
+
   if (!FastLowerArguments())
     return false;
 
@@ -598,7 +598,7 @@ bool FastISel::SelectCall(const User *I) {
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(Call);
     DIVariable DIVar(DI->getVariable());
-    assert((!DIVar || DIVar.isVariable()) && 
+    assert((!DIVar || DIVar.isVariable()) &&
       "Variable in DbgDeclareInst should be either null or a DIVariable.");
     if (!DIVar ||
         !FuncInfo.MF->getMMI().hasDebugInfo()) {
