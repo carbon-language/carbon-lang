@@ -123,6 +123,11 @@ void ThreadJoin(u32 tid) {
   thread_registry->JoinThread(tid, /* arg */0);
 }
 
+void EnsureMainThreadIDIsCorrect() {
+  if (GetCurrentThread() == 0)
+    CurrentThreadContext()->os_id = GetTid();
+}
+
 ///// Interface to the common LSan module. /////
 
 bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,

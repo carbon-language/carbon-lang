@@ -211,7 +211,8 @@ static bool ThreadStackContainsAddress(ThreadContextBase *tctx_base,
 }
 
 AsanThread *GetCurrentThread() {
-  AsanThreadContext *context = (AsanThreadContext*)AsanTSDGet();
+  AsanThreadContext *context =
+      reinterpret_cast<AsanThreadContext *>(AsanTSDGet());
   if (!context) {
     if (SANITIZER_ANDROID) {
       // On Android, libc constructor is called _after_ asan_init, and cleans up
@@ -254,6 +255,13 @@ AsanThread *FindThreadByStackAddress(uptr addr) {
                                                    (void *)addr));
   return tctx ? tctx->thread : 0;
 }
+
+void EnsureMainThreadIDIsCorrect() {
+  AsanThreadContext *context =
+      reinterpret_cast<AsanThreadContext *>(AsanTSDGet());
+  if (context && (context->tid == 0))
+    context->os_id = GetTid();
+}
 }  // namespace __asan
 
 // --- Implementation of LSan-specific functions --- {{{1
@@ -282,5 +290,9 @@ void LockThreadRegistry() {
 
 void UnlockThreadRegistry() {
   __asan::asanThreadRegistry().Unlock();
+}
+
+void EnsureMainThreadIDIsCorrect() {
+  __asan::EnsureMainThreadIDIsCorrect();
 }
 }  // namespace __lsan

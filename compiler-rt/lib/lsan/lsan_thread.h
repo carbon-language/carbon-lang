@@ -47,7 +47,7 @@ u32 ThreadTid(uptr uid);
 u32 GetCurrentThread();
 void SetCurrentThread(u32 tid);
 ThreadContext *CurrentThreadContext();
-
+void EnsureMainThreadIDIsCorrect();
 }  // namespace __lsan
 
 #endif  // LSAN_THREAD_H

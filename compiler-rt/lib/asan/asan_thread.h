@@ -124,6 +124,8 @@ void SetCurrentThread(AsanThread *t);
 u32 GetCurrentTidOrInvalid();
 AsanThread *FindThreadByStackAddress(uptr addr);
 
+// Used to handle fork().
+void EnsureMainThreadIDIsCorrect();
 }  // namespace __asan
 
 #endif  // ASAN_THREAD_H

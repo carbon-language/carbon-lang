@@ -350,6 +350,7 @@ static void DoLeakCheckCallback(const SuspendedThreadsList &suspended_threads,
 }
 
 void DoLeakCheck() {
+  EnsureMainThreadIDIsCorrect();
   BlockingMutexLock l(&global_mutex);
   static bool already_done;
   CHECK(!already_done);

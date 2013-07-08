@@ -135,6 +135,13 @@ void UnlockThreadRegistry();
 bool GetThreadRangesLocked(uptr os_id, uptr *stack_begin, uptr *stack_end,
                            uptr *tls_begin, uptr *tls_end,
                            uptr *cache_begin, uptr *cache_end);
+// If called from the main thread, updates the main thread's TID in the thread
+// registry. We need this to handle processes that fork() without a subsequent
+// exec(), which invalidates the recorded TID. To update it, we must call
+// gettid() from the main thread. Our solution is to call this function before
+// leak checking and also before every call to pthread_create() (to handle cases
+// where leak checking is initiated from a non-main thread).
+void EnsureMainThreadIDIsCorrect();
 // If p points into a chunk that has been allocated to the user, returns its
 // user-visible address. Otherwise, returns 0.
 uptr PointsIntoChunk(void *p);

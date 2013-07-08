@@ -218,6 +218,7 @@ extern "C" void *__lsan_thread_start_func(void *arg) {
 INTERCEPTOR(int, pthread_create, void *th, void *attr,
             void *(*callback)(void *), void *param) {
   Init();
+  EnsureMainThreadIDIsCorrect();
   __sanitizer_pthread_attr_t myattr;
   if (attr == 0) {
     pthread_attr_init(&myattr);

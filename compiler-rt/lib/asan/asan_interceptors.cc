@@ -138,6 +138,7 @@ extern "C" int pthread_attr_getdetachstate(void *attr, int *v);
 
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
+  EnsureMainThreadIDIsCorrect();
   // Strict init-order checking in thread-hostile.
   if (flags()->strict_init_order)
     StopInitOrderChecking();
