@@ -34,12 +34,23 @@ public:
   template <typename MatcherType>
   testing::AssertionResult match(const std::string &Code,
                                  const MatcherType &AMatcher) {
-    return match(Code, AMatcher, Lang_CXX);
+    std::vector<std::string> Args;
+    return match(Code, AMatcher, Args, Lang_CXX);
   }
 
   template <typename MatcherType>
   testing::AssertionResult match(const std::string &Code,
-                                 const MatcherType &AMatcher, Language L);
+                                 const MatcherType &AMatcher,
+                                 Language L) {
+    std::vector<std::string> Args;
+    return match(Code, AMatcher, Args, L);
+  }
+
+  template <typename MatcherType>
+  testing::AssertionResult match(const std::string &Code,
+                                 const MatcherType &AMatcher,
+                                 std::vector<std::string>& Args,
+                                 Language L);
 
 protected:
   virtual void run(const MatchFinder::MatchResult &Result);
@@ -64,13 +75,13 @@ private:
 /// verifier for the matched node.
 template <typename NodeType> template <typename MatcherType>
 testing::AssertionResult MatchVerifier<NodeType>::match(
-    const std::string &Code, const MatcherType &AMatcher, Language L) {
+    const std::string &Code, const MatcherType &AMatcher,
+    std::vector<std::string>& Args, Language L) {
   MatchFinder Finder;
   Finder.addMatcher(AMatcher.bind(""), this);
   OwningPtr<tooling::FrontendActionFactory> Factory(
       tooling::newFrontendActionFactory(&Finder));
 
-  std::vector<std::string> Args;
   StringRef FileName;
   switch (L) {
   case Lang_C:
