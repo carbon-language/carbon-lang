@@ -934,7 +934,7 @@ void DwarfDebug::collectDeadVariables() {
       for (unsigned i = 0, e = Subprograms.getNumElements(); i != e; ++i) {
         DISubprogram SP(Subprograms.getElement(i));
         if (ProcessedSPNodes.count(SP) != 0) continue;
-        if (!SP.Verify()) continue;
+        if (!SP.isSubprogram()) continue;
         if (!SP.isDefinition()) continue;
         DIArray Variables = SP.getVariables();
         if (Variables.getNumElements() == 0) continue;
@@ -950,7 +950,7 @@ void DwarfDebug::collectDeadVariables() {
         DIE *ScopeDIE = SPCU->getDIE(SP);
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
-          if (!DV.Verify()) continue;
+          if (!DV.isVariable()) continue;
           DbgVariable *NewVar = new DbgVariable(DV, NULL);
           if (DIE *VariableDIE =
               SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
@@ -1314,7 +1314,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
   DIArray Variables = DISubprogram(FnScope->getScopeNode()).getVariables();
   for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
     DIVariable DV(Variables.getElement(i));
-    if (!DV || !DV.Verify() || !Processed.insert(DV))
+    if (!DV || !DV.isVariable() || !Processed.insert(DV))
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
       addScopeVariable(Scope, new DbgVariable(DV, NULL));
@@ -1445,7 +1445,7 @@ static MDNode *getScopeNode(DebugLoc DL, const LLVMContext &Ctx) {
 static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
   const MDNode *Scope = getScopeNode(DL, Ctx);
   DISubprogram SP = getDISubprogram(Scope);
-  if (SP.Verify()) {
+  if (SP.isSubprogram()) {
     // Check for number of operands since the compatibility is
     // cheap here.
     if (SP->getNumOperands() > 19)
@@ -1513,7 +1513,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
           // The first mention of a function argument gets the FunctionBeginSym
           // label, so arguments are visible when breaking at function entry.
           DIVariable DV(Var);
-          if (DV.Verify() && DV.getTag() == dwarf::DW_TAG_arg_variable &&
+          if (DV.isVariable() && DV.getTag() == dwarf::DW_TAG_arg_variable &&
               DISubprogram(getDISubprogram(DV.getContext()))
                 .describes(MF->getFunction()))
             LabelsBeforeInsn[MI] = FunctionBeginSym;
@@ -1699,12 +1699,12 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   for (unsigned i = 0, e = AList.size(); i != e; ++i) {
     LexicalScope *AScope = AList[i];
     DISubprogram SP(AScope->getScopeNode());
-    if (SP.Verify()) {
+    if (SP.isSubprogram()) {
       // Collect info for variables that were optimized out.
       DIArray Variables = SP.getVariables();
       for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
         DIVariable DV(Variables.getElement(i));
-        if (!DV || !DV.Verify() || !ProcessedVars.insert(DV))
+        if (!DV || !DV.isVariable() || !ProcessedVars.insert(DV))
           continue;
         // Check that DbgVariable for DV wasn't created earlier, when
         // findAbstractVariable() was called for inlined instance of DV.

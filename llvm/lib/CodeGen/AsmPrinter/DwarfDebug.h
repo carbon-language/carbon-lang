@@ -193,15 +193,15 @@ public:
   }
 
   bool variableHasComplexAddress()   const {
-    assert(Var.Verify() && "Invalid complex DbgVariable!");
+    assert(Var.isVariable() && "Invalid complex DbgVariable!");
     return Var.hasComplexAddress();
   }
   bool isBlockByrefVariable()        const {
-    assert(Var.Verify() && "Invalid complex DbgVariable!");
+    assert(Var.isVariable() && "Invalid complex DbgVariable!");
     return Var.isBlockByrefVariable();
   }
   unsigned getNumAddrElements()      const {
-    assert(Var.Verify() && "Invalid complex DbgVariable!");
+    assert(Var.isVariable() && "Invalid complex DbgVariable!");
     return Var.getNumAddrElements();
   }
   uint64_t getAddrElement(unsigned i) const {

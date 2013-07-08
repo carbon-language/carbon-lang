@@ -241,7 +241,7 @@ void CompileUnit::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
 /// entry.
 void CompileUnit::addSourceLine(DIE *Die, DIVariable V) {
   // Verify variable.
-  if (!V.Verify())
+  if (!V.isVariable())
     return;
 
   unsigned Line = V.getLineNumber();
@@ -259,7 +259,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIVariable V) {
 /// entry.
 void CompileUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
   // Verify global variable.
-  if (!G.Verify())
+  if (!G.isGlobalVariable())
     return;
 
   unsigned Line = G.getLineNumber();
@@ -276,7 +276,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIGlobalVariable G) {
 /// entry.
 void CompileUnit::addSourceLine(DIE *Die, DISubprogram SP) {
   // Verify subprogram.
-  if (!SP.Verify())
+  if (!SP.isSubprogram())
     return;
 
   // If the line number is 0, don't add it.
@@ -295,7 +295,7 @@ void CompileUnit::addSourceLine(DIE *Die, DISubprogram SP) {
 /// entry.
 void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
   // Verify type.
-  if (!Ty.Verify())
+  if (!Ty.isType())
     return;
 
   unsigned Line = Ty.getLineNumber();
@@ -312,7 +312,7 @@ void CompileUnit::addSourceLine(DIE *Die, DIType Ty) {
 /// entry.
 void CompileUnit::addSourceLine(DIE *Die, DIObjCProperty Ty) {
   // Verify type.
-  if (!Ty.Verify())
+  if (!Ty.isObjCProperty())
     return;
 
   unsigned Line = Ty.getLineNumber();
@@ -734,7 +734,7 @@ void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
 /// given DIType.
 DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   DIType Ty(TyNode);
-  if (!Ty.Verify())
+  if (!Ty.isType())
     return NULL;
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
@@ -773,7 +773,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
 /// addType - Add a new type attribute to the specified entity.
 void CompileUnit::addType(DIE *Entity, DIType Ty, unsigned Attribute) {
-  if (!Ty.Verify())
+  if (!Ty.isType())
     return;
 
   // Check for pre-existence.
@@ -818,7 +818,7 @@ void CompileUnit::addPubTypes(DISubprogram SP) {
   DIArray Args = SPTy.getTypeArray();
   for (unsigned i = 0, e = Args.getNumElements(); i != e; ++i) {
     DIType ATy(Args.getElement(i));
-    if (!ATy.Verify())
+    if (!ATy.isType())
       continue;
     addGlobalType(ATy);
   }
@@ -904,7 +904,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       }
     }
     DIType DTy = CTy.getTypeDerivedFrom();
-    if (DTy.Verify()) {
+    if (DTy.isType()) {
       addType(&Buffer, DTy);
       addUInt(&Buffer, dwarf::DW_AT_enum_class, dwarf::DW_FORM_flag, 1);
     }
@@ -1296,7 +1296,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     return;
 
   DIGlobalVariable GV(N);
-  if (!GV.Verify())
+  if (!GV.isGlobalVariable())
     return;
 
   DIDescriptor GVContext = GV.getContext();
