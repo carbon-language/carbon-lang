@@ -914,14 +914,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit)
       .setMIFlag(MachineInstr::FrameSetup);
 
-    // MSVC x64's __chkstk does not adjust %rsp itself.
-    // It also does not clobber %rax so we can reuse it when adjusting %rsp.
-    if (isSPUpdateNeeded) {
-      BuildMI(MBB, MBBI, DL, TII.get(X86::SUB64rr), StackPtr)
-        .addReg(StackPtr)
-        .addReg(X86::RAX)
-        .setMIFlag(MachineInstr::FrameSetup);
-    }
+    // MSVC x64's __chkstk needs to adjust %rsp.
+    // FIXME: %rax preserves the offset and should be available.
+    if (isSPUpdateNeeded)
+      emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, IsLP64,
+                   UseLEA, TII, *RegInfo);
 
     if (isEAXAlive) {
         // Restore EAX
