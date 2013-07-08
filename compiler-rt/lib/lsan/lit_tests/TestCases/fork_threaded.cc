@@ -21,8 +21,7 @@ void ExitFromThread() {
   int res;
   res = pthread_create(&tid, 0, exit_thread_func, 0);
   assert(res == 0);
-  res = pthread_join(tid, 0);
-  assert(res == 0);
+  pthread_join(tid, 0);
 }
 
 int main() {
