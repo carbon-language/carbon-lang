@@ -844,17 +844,6 @@ DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   return DISubprogram();
 }
 
-/// getDICompositeType - Find underlying composite type.
-DICompositeType llvm::getDICompositeType(DIType T) {
-  if (T.isCompositeType())
-    return DICompositeType(T);
-
-  if (T.isDerivedType())
-    return getDICompositeType(DIDerivedType(T).getTypeDerivedFrom());
-
-  return DICompositeType();
-}
-
 /// isSubprogramContext - Return true if Context is either a subprogram
 /// or another context nested inside a subprogram.
 bool llvm::isSubprogramContext(const MDNode *Context) {
