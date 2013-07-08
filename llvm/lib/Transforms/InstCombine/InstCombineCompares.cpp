@@ -1539,6 +1539,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                               Builder->getInt(CR.getLower()));
         }
       }
+
+      // X-C1 <u 2 -> (X & -2) == C1
+      //   iff C1 & 1 == 0
+      if (ICI.getPredicate() == ICmpInst::ICMP_ULT && LHSI->hasOneUse() &&
+          LHSV[0] == 0 && RHSV == 2)
+        return new ICmpInst(ICmpInst::ICMP_EQ,
+                            Builder->CreateAnd(LHSI->getOperand(0), -RHSV),
+                            ConstantExpr::getNeg(LHSC));
     }
     break;
   }
