@@ -547,16 +547,11 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   // though it contains relocatable pointers.  In PIC mode, this is probably a
   // big runtime hit for C++ apps.  Either the contents of the LSDA need to be
   // adjusted or this should be a data section.
-  if (T.getOS() == Triple::Win32) {
-    // On Windows with SEH, the LSDA is emitted into the .xdata section
-    LSDASection = 0;
-  } else {
-    LSDASection =
-      Ctx->getCOFFSection(".gcc_except_table",
-                          COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                          COFF::IMAGE_SCN_MEM_READ,
-                          SectionKind::getReadOnly());
-  }
+  LSDASection =
+    Ctx->getCOFFSection(".gcc_except_table",
+                        COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                        COFF::IMAGE_SCN_MEM_READ,
+                        SectionKind::getReadOnly());
 
   // Debug info.
   DwarfAbbrevSection =
