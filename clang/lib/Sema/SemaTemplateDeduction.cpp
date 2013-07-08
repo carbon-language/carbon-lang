@@ -375,10 +375,10 @@ DeduceNonTypeTemplateArgument(Sema &S,
 /// \returns true if deduction succeeded, false otherwise.
 static Sema::TemplateDeductionResult
 DeduceNonTypeTemplateArgument(Sema &S,
-                              NonTypeTemplateParmDecl *NTTP,
-                              ValueDecl *D,
-                              TemplateDeductionInfo &Info,
-                    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+                            NonTypeTemplateParmDecl *NTTP,
+                            ValueDecl *D,
+                            TemplateDeductionInfo &Info,
+                            SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == 0 &&
          "Cannot deduce non-type template argument with depth > 0");
 
@@ -405,7 +405,7 @@ DeduceTemplateArguments(Sema &S,
                         TemplateName Param,
                         TemplateName Arg,
                         TemplateDeductionInfo &Info,
-                    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+                        SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   TemplateDecl *ParamDecl = Param.getAsTemplateDecl();
   if (!ParamDecl) {
     // The parameter type is dependent and is not a template template parameter,
@@ -709,7 +709,7 @@ DeduceTemplateArguments(Sema &S,
                         const QualType *Params, unsigned NumParams,
                         const QualType *Args, unsigned NumArgs,
                         TemplateDeductionInfo &Info,
-                       SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+                        SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                         unsigned TDF,
                         bool PartialOrdering = false,
                         SmallVectorImpl<RefParamPartialOrderingComparison> *
