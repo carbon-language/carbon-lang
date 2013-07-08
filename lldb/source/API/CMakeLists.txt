@@ -27,6 +27,7 @@ add_lldb_library(lldbAPI
   SBLineEntry.cpp
   SBListener.cpp
   SBModule.cpp
+  SBModuleSpec.cpp
   SBProcess.cpp
   SBSection.cpp
   SBSourceManager.cpp
