@@ -45,14 +45,14 @@ int main()
         test_buf f(bs.rdbuf());
         assert(f.sbumpc() == L'1');
         assert(f.sgetc() == L'2');
-        assert(f.pbackfail(L'a') == -1);
+        assert(f.pbackfail(L'a') == test_buf::traits_type::eof());
     }
     {
         std::fstream bs("underflow.dat");
         test_buf f(bs.rdbuf());
         assert(f.sbumpc() == L'1');
         assert(f.sgetc() == L'2');
-        assert(f.pbackfail(L'a') == -1);
+        assert(f.pbackfail(L'a') == test_buf::traits_type::eof());
         assert(f.sbumpc() == L'2');
         assert(f.sgetc() == L'3');
     }

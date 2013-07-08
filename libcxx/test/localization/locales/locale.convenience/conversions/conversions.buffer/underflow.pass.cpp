@@ -79,6 +79,6 @@ int main()
         assert(f.sbumpc() == 0x4E51);
         assert(f.sbumpc() == 0x4E52);
         assert(f.sbumpc() == 0x4E53);
-        assert(f.sbumpc() == -1);
+        assert(f.sbumpc() == test_buf::traits_type::eof());
     }
 }
