@@ -487,6 +487,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setCondCodeAction(ISD::SETUGE, MVT::v4f32, Expand);
     setCondCodeAction(ISD::SETULT, MVT::v4f32, Expand);
     setCondCodeAction(ISD::SETULE, MVT::v4f32, Expand);
+
+    setCondCodeAction(ISD::SETO,   MVT::v4f32, Expand);
+    setCondCodeAction(ISD::SETONE, MVT::v4f32, Expand);
   }
 
   if (Subtarget->has64BitSupport()) {
