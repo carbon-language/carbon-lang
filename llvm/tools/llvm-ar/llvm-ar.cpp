@@ -404,7 +404,10 @@ doExtract(std::string* ErrMsg) {
       OpenFlags |= O_BINARY;
 #endif
 
-      int FD = open(I->getPath().str().c_str(), OpenFlags, 0664);
+      // Retain the original mode.
+      sys::fs::perms Mode = sys::fs::perms(I->getMode());
+
+      int FD = open(I->getPath().str().c_str(), OpenFlags, Mode);
       if (FD < 0)
         return true;
 
@@ -419,17 +422,11 @@ doExtract(std::string* ErrMsg) {
         file.write(data, len);
       }
 
-      // Retain the original mode.
-      sys::fs::perms Mode = sys::fs::perms(I->getMode());
-      // FIXME: at least on posix we should be able to reuse FD (fchmod).
-      error_code EC = sys::fs::permissions(I->getPath(), Mode);
-      if (EC)
-        fail(EC.message());
-
       // If we're supposed to retain the original modification times, etc. do so
       // now.
       if (OriginalDates) {
-        EC = sys::fs::setLastModificationAndAccessTime(FD, I->getModTime());
+        error_code EC =
+            sys::fs::setLastModificationAndAccessTime(FD, I->getModTime());
         if (EC)
           fail(EC.message());
       }
