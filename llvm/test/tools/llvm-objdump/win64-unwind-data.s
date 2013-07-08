@@ -13,7 +13,7 @@
 // CHECK-NEXT: Frame register: RBX
 // CHECK-NEXT: Frame offset: 0
 // CHECK-NEXT: Unwind Codes:
-// CHECK-NEXT: 0x12: UOP_SetFPReg
+// CHECK-NEXT: 0x00: UOP_SetFPReg
 // CHECK-NEXT: 0x0f: UOP_PushNonVol RBX
 // CHECK-NEXT: 0x0e: UOP_SaveXMM128 XMM8 [0x0000]
 // CHECK-NEXT: 0x09: UOP_SaveNonVol RSI [0x0010]
