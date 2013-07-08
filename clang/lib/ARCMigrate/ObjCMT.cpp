@@ -199,6 +199,10 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
     QualType GRT = Method->getResultType();
     if (GRT->isVoidType())
       continue;
+    // FIXME. Don't know what todo with attributes, skip for now.
+    if (Method->hasAttrs())
+      continue;
+    
     Selector GetterSelector = Method->getSelector();
     IdentifierInfo *getterName = GetterSelector.getIdentifierInfoForSlot(0);
     Selector SetterSelector =
@@ -212,7 +216,8 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
         continue;
       const ParmVarDecl *argDecl = *SetterMethod->param_begin();
       QualType ArgType = argDecl->getType();
-      if (!Ctx.hasSameUnqualifiedType(ArgType, GRT))
+      if (!Ctx.hasSameUnqualifiedType(ArgType, GRT) ||
+          SetterMethod->hasAttrs())
           continue;
         edit::Commit commit(*Editor);
         edit::rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit);
