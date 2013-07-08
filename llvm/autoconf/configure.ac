@@ -1200,15 +1200,15 @@ if test "$DOTTY" != "echo dotty" ; then
   AC_DEFINE_UNQUOTED([LLVM_PATH_DOTTY],"$DOTTY${EXEEXT}",
    [Define to path to dotty program if found or 'echo dotty' otherwise])
 fi
-AC_PATH_PROG(XDOT_PY, [xdot.py], [echo xdot.py])
-if test "$XDOT_PY" != "echo xdot.py" ; then
-  AC_DEFINE([HAVE_XDOT_PY],[1],[Define if the xdot.py program is available])
+AC_PATH_PROGS(XDOT, [xdot, xdot.py], [echo xdot])
+if test "$XDOT" != "echo xdot" ; then
+  AC_DEFINE([HAVE_XDOT],[1],[Define if the xdot program is available])
   dnl If we're targeting for mingw we should emit windows paths, not msys
   if test "$llvm_cv_os_type" = "MingW" ; then
-    XDOT_PY=`echo $XDOT_PY | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+    XDOT=`echo $XDOT | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
   fi
-  AC_DEFINE_UNQUOTED([LLVM_PATH_XDOT_PY],"$XDOT_PY${EXEEXT}",
-   [Define to path to xdot.py program if found or 'echo xdot.py' otherwise])
+  AC_DEFINE_UNQUOTED([LLVM_PATH_XDOT],"$XDOT${EXEEXT}",
+   [Define to path to xdot program if found or 'echo xdot' otherwise])
 fi
 
 dnl Find the install program

@@ -271,7 +271,7 @@ llvm_find_program(neato)
 llvm_find_program(fdp)
 llvm_find_program(dot)
 llvm_find_program(dotty)
-llvm_find_program(xdot.py)
+llvm_find_program(xdot xdot.py)
 llvm_find_program(Graphviz)
 
 if( LLVM_ENABLE_FFI )

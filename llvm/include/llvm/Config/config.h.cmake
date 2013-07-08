@@ -508,7 +508,7 @@
 #cmakedefine HAVE_WRITEV ${HAVE_WRITEV}
 
 /* Define if the xdot.py program is available */
-#cmakedefine HAVE_XDOT_PY ${HAVE_XDOT_PY}
+#cmakedefine HAVE_XDOT ${HAVE_XDOT}
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #cmakedefine HAVE_ZLIB_H ${HAVE_ZLIB_H}
@@ -657,8 +657,8 @@
 /* Define to path to twopi program if found or 'echo twopi' otherwise */
 #cmakedefine LLVM_PATH_TWOPI "${LLVM_PATH_TWOPI}"
 
-/* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
-#cmakedefine LLVM_PATH_XDOT_PY "${LLVM_PATH_XDOT_PY}"
+/* Define to path to xdot.py program if found or 'echo xdot' otherwise */
+#cmakedefine LLVM_PATH_XDOT "${LLVM_PATH_XDOT}"
 
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"

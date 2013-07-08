@@ -512,8 +512,8 @@
 /* Define to 1 if you have the `writev' function. */
 #undef HAVE_WRITEV
 
-/* Define if the xdot.py program is available */
-#undef HAVE_XDOT_PY
+/* Define if the xdot program is available */
+#undef HAVE_XDOT
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
@@ -662,8 +662,8 @@
 /* Define to path to twopi program if found or 'echo twopi' otherwise */
 #undef LLVM_PATH_TWOPI
 
-/* Define to path to xdot.py program if found or 'echo xdot.py' otherwise */
-#undef LLVM_PATH_XDOT_PY
+/* Define to path to xdot program if found or 'echo xdot' otherwise */
+#undef LLVM_PATH_XDOT
 
 /* Installation prefix directory */
 #undef LLVM_PREFIX
