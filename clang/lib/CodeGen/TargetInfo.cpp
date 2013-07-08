@@ -901,9 +901,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     bool NeedsPadding;
     if (shouldUseInReg(Ty, FreeRegs, IsFastCall, NeedsPadding)) {
       unsigned SizeInRegs = (getContext().getTypeSize(Ty) + 31) / 32;
-      SmallVector<llvm::Type*, 3> Elements;
-      for (unsigned I = 0; I < SizeInRegs; ++I)
-        Elements.push_back(Int32);
+      SmallVector<llvm::Type*, 3> Elements(SizeInRegs, Int32);
       llvm::Type *Result = llvm::StructType::get(LLVMContext, Elements);
       return ABIArgInfo::getDirectInReg(Result);
     }
