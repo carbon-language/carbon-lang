@@ -2930,7 +2930,13 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
   SmallVector<SDValue, 8> Ops;
   Ops.reserve(NumElems);
   for (unsigned i = 0; i != NumElems; ++i) {
-    SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(i));
+    SDValue Op;
+    // It is possible for the operands to be larger than the result, for example,
+    // when the operands are promoted booleans and the result was an i1 vector.
+    if (N->getOperand(i).getValueType().bitsLT(NOutVTElem))
+      Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(i));
+    else
+      Op = N->getOperand(i);
     Ops.push_back(Op);
   }
 
