@@ -212,7 +212,7 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
         continue;
       const ParmVarDecl *argDecl = *SetterMethod->param_begin();
       QualType ArgType = argDecl->getType();
-      if (!Ctx.hasSameType(ArgType, GRT))
+      if (!Ctx.hasSameUnqualifiedType(ArgType, GRT))
           continue;
         edit::Commit commit(*Editor);
         edit::rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit);

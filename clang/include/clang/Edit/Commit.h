@@ -13,6 +13,7 @@
 #include "clang/Edit/FileOffset.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
   class LangOptions;
@@ -51,6 +52,8 @@ private:
 
   bool IsCommitable;
   SmallVector<Edit, 8> CachedEdits;
+  
+  llvm::BumpPtrAllocator StrAlloc;
 
 public:
   explicit Commit(EditedSource &Editor);
@@ -131,6 +134,12 @@ private:
                                  SourceLocation *MacroBegin = 0) const;
   bool isAtEndOfMacroExpansion(SourceLocation loc,
                                SourceLocation *MacroEnd = 0) const;
+
+  StringRef copyString(StringRef str) {
+    char *buf = StrAlloc.Allocate<char>(str.size());
+    std::memcpy(buf, str.data(), str.size());
+    return StringRef(buf, str.size());
+  }
 };
 
 }
