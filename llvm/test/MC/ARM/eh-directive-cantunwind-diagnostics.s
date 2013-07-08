@@ -8,99 +8,99 @@
 @ the conflicts.
 
 
-	.syntax unified
-	.text
+        .syntax unified
+        .text
 
 @-------------------------------------------------------------------------------
 @ TEST1: cantunwind + personality
 @-------------------------------------------------------------------------------
-	.globl	func1
-	.align	2
-	.type	func1,%function
-	.fnstart
+        .globl  func1
+        .align  2
+        .type   func1,%function
+        .fnstart
 func1:
-	.cantunwind
-	.personality	__gxx_personality_v0
+        .cantunwind
+        .personality    __gxx_personality_v0
 @ CHECK: error: .personality can't be used with .cantunwind directive
 @ CEHCK:        .personality __gxx_personality_v0
 @ CHECK:        ^
 @ CHECK: error: .cantunwind was specified here
 @ CHECK:        .cantunwind
 @ CHECK:        ^
-	.fnend
+        .fnend
 
 
 
 @-------------------------------------------------------------------------------
 @ TEST2: cantunwind + handlerdata
 @-------------------------------------------------------------------------------
-	.globl	func2
-	.align	2
-	.type	func2,%function
-	.fnstart
+        .globl  func2
+        .align  2
+        .type   func2,%function
+        .fnstart
 func2:
-	.cantunwind
-	.handlerdata
+        .cantunwind
+        .handlerdata
 @ CHECK: error: .handlerdata can't be used with .cantunwind directive
 @ CEHCK:        .handlerdata
 @ CHECK:        ^
 @ CHECK: error: .cantunwind was specified here
 @ CHECK:        .cantunwind
 @ CHECK:        ^
-	.fnend
+        .fnend
 
 
 
 @-------------------------------------------------------------------------------
 @ TEST3: personality + cantunwind
 @-------------------------------------------------------------------------------
-	.globl	func3
-	.align	2
-	.type	func3,%function
-	.fnstart
+        .globl  func3
+        .align  2
+        .type   func3,%function
+        .fnstart
 func3:
-	.personality	__gxx_personality_v0
-	.cantunwind
+        .personality    __gxx_personality_v0
+        .cantunwind
 @ CHECK: error: .cantunwind can't be used with .personality directive
 @ CEHCK:        .cantunwind
 @ CHECK:        ^
 @ CHECK: error: .personality was specified here
 @ CHECK:        .personality __gxx_personality_v0
 @ CHECK:        ^
-	.fnend
+        .fnend
 
 
 
 @-------------------------------------------------------------------------------
 @ TEST4: handlerdata + cantunwind
 @-------------------------------------------------------------------------------
-	.globl	func4
-	.align	2
-	.type	func4,%function
-	.fnstart
+        .globl  func4
+        .align  2
+        .type   func4,%function
+        .fnstart
 func4:
-	.handlerdata
-	.cantunwind
+        .handlerdata
+        .cantunwind
 @ CHECK: error: .cantunwind can't be used with .handlerdata directive
 @ CEHCK:        .cantunwind
 @ CHECK:        ^
 @ CHECK: error: .handlerdata was specified here
 @ CHECK:        .handlerdata
 @ CHECK:        ^
-	.fnend
+        .fnend
 
 
 
 @-------------------------------------------------------------------------------
 @ TEST5: cantunwind + fnstart
 @-------------------------------------------------------------------------------
-	.globl	func5
-	.align	2
-	.type	func5,%function
-	.cantunwind
+        .globl  func5
+        .align  2
+        .type   func5,%function
+        .cantunwind
 @ CHECK: error: .fnstart must precede .cantunwind directive
 @ CHECK:        .cantunwind
 @ CHECK:        ^
-	.fnstart
+        .fnstart
 func5:
-	.fnend
+        .fnend
