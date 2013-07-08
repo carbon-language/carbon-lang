@@ -20,10 +20,10 @@
 #include "SystemZInstrInfo.h"
 #include "SystemZRegisterInfo.h"
 #include "SystemZSubtarget.h"
+#include "SystemZSelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetSelectionDAGInfo.h"
 
 namespace llvm {
 
@@ -32,7 +32,7 @@ class SystemZTargetMachine : public LLVMTargetMachine {
   const DataLayout        DL;
   SystemZInstrInfo        InstrInfo;
   SystemZTargetLowering   TLInfo;
-  TargetSelectionDAGInfo  TSInfo;
+  SystemZSelectionDAGInfo TSInfo;
   SystemZFrameLowering    FrameLowering;
 
 public:

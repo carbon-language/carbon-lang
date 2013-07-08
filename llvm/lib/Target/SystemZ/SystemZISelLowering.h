@@ -73,6 +73,13 @@ namespace SystemZISD {
     UDIVREM32,
     UDIVREM64,
 
+    // Use MVC to copy bytes from one memory location to another.
+    // The first operand is the target address, the second operand is the
+    // source address, and the third operand is the constant length.
+    // This isn't a memory opcode because we'd need to attach two
+    // MachineMemOperands rather than one.
+    MVC,
+
     // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
     // ATOMIC_LOAD_<op>.
     //
@@ -221,6 +228,8 @@ private:
                                           unsigned BitSize) const;
   MachineBasicBlock *emitAtomicCmpSwapW(MachineInstr *MI,
                                         MachineBasicBlock *BB) const;
+  MachineBasicBlock *emitMVCWrapper(MachineInstr *MI,
+                                    MachineBasicBlock *BB) const;
 };
 } // end namespace llvm
 

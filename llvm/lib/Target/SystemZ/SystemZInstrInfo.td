@@ -288,6 +288,12 @@ let mayLoad = 1, mayStore = 1 in
                                       bdaddr12only:$BD2),
                    "mvc\t$BDL1, $BD2", []>;
 
+let mayLoad = 1, mayStore = 1, usesCustomInserter = 1 in
+  def MVCWrapper : Pseudo<(outs), (ins bdaddr12only:$dest, bdaddr12only:$src,
+                                       imm32len8:$length),
+                          [(z_mvc bdaddr12only:$dest, bdaddr12only:$src,
+                                  imm32len8:$length)]>;
+
 //===----------------------------------------------------------------------===//
 // Sign extensions
 //===----------------------------------------------------------------------===//

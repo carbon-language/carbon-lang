@@ -241,6 +241,12 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
   setOperationAction(ISD::VAEND,   MVT::Other, Expand);
+
+  // We want to use MVC in preference to even a single load/store pair.
+  MaxStoresPerMemcpy = 0;
+  MaxStoresPerMemcpyOptSize = 0;
+  MaxStoresPerMemmove = 0;
+  MaxStoresPerMemmoveOptSize = 0;
 }
 
 bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
@@ -1579,6 +1585,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(SDIVREM64);
     OPCODE(UDIVREM32);
     OPCODE(UDIVREM64);
+    OPCODE(MVC);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);
@@ -2143,6 +2150,26 @@ SystemZTargetLowering::emitExt128(MachineInstr *MI,
   return MBB;
 }
 
+MachineBasicBlock *
+SystemZTargetLowering::emitMVCWrapper(MachineInstr *MI,
+                                      MachineBasicBlock *MBB) const {
+  const SystemZInstrInfo *TII = TM.getInstrInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  MachineOperand DestBase = MI->getOperand(0);
+  uint64_t       DestDisp = MI->getOperand(1).getImm();
+  MachineOperand SrcBase  = MI->getOperand(2);
+  uint64_t       SrcDisp  = MI->getOperand(3).getImm();
+  uint64_t       Length   = MI->getOperand(4).getImm();
+
+  BuildMI(*MBB, MI, DL, TII->get(SystemZ::MVC))
+    .addOperand(DestBase).addImm(DestDisp).addImm(Length)
+    .addOperand(SrcBase).addImm(SrcDisp);
+
+  MI->eraseFromParent();
+  return MBB;
+}
+
 MachineBasicBlock *SystemZTargetLowering::
 EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   switch (MI->getOpcode()) {
@@ -2376,6 +2403,8 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
                                    MI->getOperand(1).getMBB()))
       MI->eraseFromParent();
     return MBB;
+  case SystemZ::MVCWrapper:
+    return emitMVCWrapper(MI, MBB);
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }

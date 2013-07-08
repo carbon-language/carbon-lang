@@ -219,6 +219,11 @@ def uimm8    : Immediate<i8, [{}], UIMM8, "U8Imm">;
 // i32 immediates
 //===----------------------------------------------------------------------===//
 
+// Immediates for 8-bit lengths.
+def imm32len8 : Immediate<i32, [{
+  return isUInt<8>(N->getZExtValue() - 1);
+}], NOOP_SDNodeXForm, "U32Imm">;
+
 // Immediates for the lower and upper 16 bits of an i32, with the other
 // bits of the i32 being zero.
 def imm32ll16 : Immediate<i32, [{
