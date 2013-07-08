@@ -1940,9 +1940,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                 const SmallPtrSet<const PHINode*, 16> &PHIUsers,
                                       const GlobalStatus &GS) {
   // If this is a first class global and has only one accessing function
-  // and this function is main (which we know is not recursive we can make
-  // this global a local variable) we replace the global with a local alloca
-  // in this function.
+  // and this function is main (which we know is not recursive), we replace
+  // the global with a local alloca in this function.
   //
   // NOTE: It doesn't make sense to promote non single-value types since we
   // are just replacing static memory to stack memory.
