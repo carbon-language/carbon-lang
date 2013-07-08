@@ -211,6 +211,10 @@ TEST(CXXFunctionalCastExpr, SourceRange) {
       functionalCastExpr(), Lang_CXX11));
 }
 
+#if !defined(_MSC_VER)
+// FIXME: It could pass if MS-compatible mode were disabled.
+// Args.push_back("-fno-delayed-template-parsing");
+
 TEST(CXXUnresolvedConstructExpr, SourceRange) {
   RangeVerifier<CXXUnresolvedConstructExpr> Verifier;
   Verifier.expectRange(3, 10, 3, 12);
@@ -221,6 +225,7 @@ TEST(CXXUnresolvedConstructExpr, SourceRange) {
       "}",
       unresolvedConstructExpr(), Lang_CXX11));
 }
+#endif
 
 } // end namespace ast_matchers
 } // end namespace clang
