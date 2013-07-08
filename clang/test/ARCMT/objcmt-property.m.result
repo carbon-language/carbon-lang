@@ -28,3 +28,22 @@
 
 @implementation I
 @end
+
+@class NSArray;
+
+@interface MyClass2  {
+@private
+    NSArray *_names1;
+    NSArray *_names2;
+    NSArray *_names3;
+    NSArray *_names4;
+}
+
+
+
+
+@property(strong) NSArray * names2;
+@property(strong) NSArray * names3;
+@property(strong) NSArray *__strong names4;
+@property(strong) NSArray * names1;
+@end

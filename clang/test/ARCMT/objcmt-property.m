@@ -28,3 +28,22 @@
 
 @implementation I
 @end
+
+@class NSArray;
+
+@interface MyClass2  {
+@private
+    NSArray *_names1;
+    NSArray *_names2;
+    NSArray *_names3;
+    NSArray *_names4;
+}
+- (void)setNames1:(NSArray *)names;
+- (void)setNames4:(__strong NSArray *)names;
+- (void)setNames3:(__strong NSArray *)names;
+- (void)setNames2:(NSArray *)names;
+- (NSArray *) names2;
+- (NSArray *)names3;
+- (__strong NSArray *)names4;
+- (NSArray *) names1;
+@end
