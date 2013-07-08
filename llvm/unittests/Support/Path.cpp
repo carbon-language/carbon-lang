@@ -363,34 +363,6 @@ TEST_F(FileSystemTest, Magic) {
   }
 }
 
-#if !defined(_WIN32) // FIXME: Win32 has different permission schema.
-TEST_F(FileSystemTest, Permissions) {
-  // Create a temp file.
-  int FileDescriptor;
-  SmallString<64> TempPath;
-  ASSERT_NO_ERROR(
-      fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
-
-  // Mark file as read-only
-  const fs::perms AllWrite = fs::owner_write|fs::group_write|fs::others_write;
-  ASSERT_NO_ERROR(fs::permissions(Twine(TempPath), fs::remove_perms|AllWrite));
- 
-  // Verify file is read-only
-  fs::file_status Status;
-  ASSERT_NO_ERROR(fs::status(Twine(TempPath), Status));
-  bool AnyWriteBits = (Status.permissions() & AllWrite);
-  EXPECT_FALSE(AnyWriteBits);
-  
-  // Mark file as read-write
-  ASSERT_NO_ERROR(fs::permissions(Twine(TempPath), fs::add_perms|AllWrite));
-  
-  // Verify file is read-write
-  ASSERT_NO_ERROR(fs::status(Twine(TempPath), Status));
-  AnyWriteBits = (Status.permissions() & AllWrite);
-  EXPECT_TRUE(AnyWriteBits);
-}
-#endif
-
 TEST_F(FileSystemTest, FileMapping) {
   // Create a temp file.
   int FileDescriptor;

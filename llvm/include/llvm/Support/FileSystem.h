@@ -118,11 +118,7 @@ enum perms {
   set_uid_on_exe  = 04000, 
   set_gid_on_exe  = 02000, 
   sticky_bit      = 01000,
-  perms_mask      = all_all | set_uid_on_exe | set_gid_on_exe | sticky_bit, 
-  perms_not_known = 0xFFFF,
-  add_perms       = 0x1000,
-  remove_perms    = 0x2000, 
-  symlink_perms   = 0x4000
+  perms_not_known = 0xFFFF
 };
 
 // Helper functions so that you can use & and | to manipulate perms bits:
@@ -521,13 +517,6 @@ error_code is_symlink(const Twine &path, bool &result);
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code status(const Twine &path, file_status &result);
-
-/// @brief Modifies permission bits on a file
-///
-/// @param path Input path.
-/// @returns errc::success if permissions have been changed, otherwise a
-///          platform specific error_code.
-error_code permissions(const Twine &path, perms prms);
 
 error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
 
