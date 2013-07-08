@@ -286,7 +286,9 @@ static inline void EraseInstruction(Instruction *CI) {
 
   if (!Unused) {
     // Replace the return value with the argument.
-    assert(IsForwarding(GetBasicInstructionClass(CI)) &&
+    assert((IsForwarding(GetBasicInstructionClass(CI)) ||
+            (IsNoopOnNull(GetBasicInstructionClass(CI)) &&
+             isa<ConstantPointerNull>(OldArg))) &&
            "Can't delete non-forwarding instruction with users!");
     CI->replaceAllUsesWith(OldArg);
   }
