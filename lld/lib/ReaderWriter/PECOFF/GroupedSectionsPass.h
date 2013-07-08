@@ -39,7 +39,6 @@
 
 #include "Atoms.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/Pass.h"
 #include "llvm/Support/Debug.h"
 
 #include <algorithm>
