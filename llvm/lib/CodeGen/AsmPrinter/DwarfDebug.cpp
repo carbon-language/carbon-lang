@@ -2383,13 +2383,11 @@ void DwarfUnits::emitAddresses(const MCSection *AddrSection) {
   // Start the dwarf addr section.
   Asm->OutStreamer.SwitchSection(AddrSection);
 
-  // Get all of the address pool entries and put them in an array by their ID so
-  // we can sort them.
+  // Order the address pool entries by ID
   SmallVector<const MCExpr *, 64> Entries(AddressPool.size());
 
-  for (DenseMap<const MCExpr *, unsigned>::iterator
-           I = AddressPool.begin(),
-           E = AddressPool.end();
+  for (DenseMap<const MCExpr *, unsigned>::iterator I = AddressPool.begin(),
+                                                    E = AddressPool.end();
        I != E; ++I)
     Entries[I->second] = I->first;
 
