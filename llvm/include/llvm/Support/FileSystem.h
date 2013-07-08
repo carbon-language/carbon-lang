@@ -96,28 +96,27 @@ struct space_info {
   uint64_t available;
 };
 
-
 enum perms {
-  no_perms     = 0,
-  owner_read   = 0400, 
-  owner_write  = 0200, 
-  owner_exe    = 0100, 
-  owner_all    = owner_read | owner_write | owner_exe,
-  group_read   =  040, 
-  group_write  =  020, 
-  group_exe    =  010, 
-  group_all    = group_read | group_write | group_exe,
-  others_read  =   04, 
-  others_write =   02, 
-  others_exe   =   01, 
-  others_all   = others_read | others_write | others_exe, 
-  all_read     = owner_read | group_read | others_read,
-  all_write    = owner_write | group_write | others_write,
-  all_exe      = owner_exe | group_exe | others_exe,
-  all_all      = owner_all | group_all | others_all,
-  set_uid_on_exe  = 04000, 
-  set_gid_on_exe  = 02000, 
-  sticky_bit      = 01000,
+  no_perms = 0,
+  owner_read = 0400,
+  owner_write = 0200,
+  owner_exe = 0100,
+  owner_all = owner_read | owner_write | owner_exe,
+  group_read = 040,
+  group_write = 020,
+  group_exe = 010,
+  group_all = group_read | group_write | group_exe,
+  others_read = 04,
+  others_write = 02,
+  others_exe = 01,
+  others_all = others_read | others_write | others_exe,
+  all_read = owner_read | group_read | others_read,
+  all_write = owner_write | group_write | others_write,
+  all_exe = owner_exe | group_exe | others_exe,
+  all_all = owner_all | group_all | others_all,
+  set_uid_on_exe = 04000,
+  set_gid_on_exe = 02000,
+  sticky_bit = 01000,
   perms_not_known = 0xFFFF
 };
 
