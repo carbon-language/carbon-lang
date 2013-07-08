@@ -71,6 +71,7 @@ public:
   /// inserted into a block.
   void ClearInsertionPoint() {
     BB = 0;
+    InsertPt = 0;
   }
 
   BasicBlock *GetInsertBlock() const { return BB; }
