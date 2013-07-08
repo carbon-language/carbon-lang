@@ -384,8 +384,6 @@ public:
       return matchesRecursively(Node, Matcher, Builder, MaxDepth, Traversal,
                                 Bind);
 
-    if (ResultCache.size() > MaxMemoizationEntries)
-      ResultCache.clear();
     std::pair<MemoizationMap::iterator, bool> InsertResult =
         ResultCache.insert(std::make_pair(Key, MemoizedMatchResult()));
     if (InsertResult.second) {
@@ -426,6 +424,8 @@ public:
                                    const DynTypedMatcher &Matcher,
                                    BoundNodesTreeBuilder *Builder,
                                    BindKind Bind) {
+    if (ResultCache.size() > MaxMemoizationEntries)
+      ResultCache.clear();
     return memoizedMatchesRecursively(Node, Matcher, Builder, INT_MAX,
                                       TK_AsIs, Bind);
   }
@@ -434,6 +434,10 @@ public:
                                  const DynTypedMatcher &Matcher,
                                  BoundNodesTreeBuilder *Builder,
                                  AncestorMatchMode MatchMode) {
+    // Reset the cache outside of the recursive call to make sure we
+    // don't invalidate any iterators.
+    if (ResultCache.size() > MaxMemoizationEntries)
+      ResultCache.clear();
     return memoizedMatchesAncestorOfRecursively(Node, Matcher, Builder,
                                                 MatchMode);
   }
@@ -498,8 +502,6 @@ private:
     Key.MatcherID = Matcher.getID();
     Key.Node = Node;
     Key.BoundNodes = *Builder;
-    if (ResultCache.size() > MaxMemoizationEntries)
-      ResultCache.clear();
     std::pair<MemoizationMap::iterator, bool> InsertResult =
         ResultCache.insert(std::make_pair(Key, MemoizedMatchResult()));
     if (InsertResult.second) {
