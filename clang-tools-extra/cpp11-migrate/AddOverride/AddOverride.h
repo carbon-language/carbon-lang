@@ -1,4 +1,4 @@
-//===-- AddOverride/AddOverride.h - add C++11 override ---------*- C++ -*-===//
+//===-- AddOverride/AddOverride.h - add C++11 override ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,13 +9,14 @@
 ///
 /// \file
 /// \brief This file provides the definition of the AddOverrideTransform
-/// class which is the main interface to the transform that tries to add
-/// the override keyword to declarations of member function that override
-/// virtual functions in a base class.
+/// class which is the main interface to the transform that tries to add the
+/// override keyword to declarations of member function that override virtual
+/// functions in a base class.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_H
+
+#ifndef CPP11_MIGRATE_ADD_OVERRIDE_H
+#define CPP11_MIGRATE_ADD_OVERRIDE_H
 
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h"
@@ -41,4 +42,4 @@ private:
   AddOverrideFixer *Fixer;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_H
+#endif // CPP11_MIGRATE_ADD_OVERRIDE_H

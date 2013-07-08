@@ -8,10 +8,11 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file contains the declaration of the ASTMatcher callback
-/// for the ReplaceAutoPtr transform.
+/// \brief This file contains the declaration of the ASTMatcher callback for the
+/// ReplaceAutoPtr transform.
 ///
 //===----------------------------------------------------------------------===//
+
 #ifndef CPP11_MIGRATE_REPLACE_AUTO_PTR_ACTIONS_H
 #define CPP11_MIGRATE_REPLACE_AUTO_PTR_ACTIONS_H
 

@@ -12,8 +12,9 @@
 /// to handle the include and exclude command line options.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
+
+#ifndef CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
+#define CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/system_error.h"
@@ -48,4 +49,4 @@ private:
   std::vector<std::string> ExcludeList;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H
+#endif // CPP11_MIGRATE_INCLUDEEXCLUDEINFO_H

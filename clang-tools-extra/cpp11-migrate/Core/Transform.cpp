@@ -1,3 +1,18 @@
+//===-- Core/Transform.cpp - Transform Base Class Def'n -------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief This file provides the definition for the base Transform class from
+/// which all transforms must subclass.
+///
+//===----------------------------------------------------------------------===//
+
 #include "Core/Transform.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/LangOptions.h"
@@ -69,7 +84,7 @@ private:
 /// FileManager and a DiagnosticsEngine. Transform uses this class to create a
 /// new Rewriter and SourceManager for every translation unit it transforms. A
 /// DiagnosticsEngine doesn't need to be re-created so it's constructed once. A
-/// SourceManager and Rewriter and (re)created as required.
+/// SourceManager and Rewriter are (re)created as required.
 ///
 /// FIXME: The DiagnosticsEngine should really come from somewhere more global.
 /// It shouldn't be re-created once for every transform.
@@ -140,13 +155,12 @@ void collectResults(clang::Rewriter &Rewrite, SourceOverrides &Overrides) {
     // in memory will always be necessary as the source goes down the transform
     // pipeline.
 
-    HeaderOverrides &Headers = Overrides.Headers;
-    HeaderOverrides::iterator HeaderI = Headers.find(Entry->getName());
-    if (HeaderI == Headers.end())
-      HeaderI = Headers.insert(HeaderOverrides::value_type(
-          Entry->getName(), Entry->getName())).first;
+    // Create HeaderOverride if not already existing
+    HeaderOverride &Header = Overrides.Headers[Entry->getName()];
+    if (Header.FileName.empty())
+      Header.FileName = Entry->getName();
 
-    HeaderI->second.FileOverride = ResultBuf;
+    Header.FileOverride = ResultBuf;
   }
 }
 
@@ -169,7 +183,7 @@ bool Transform::isFileModifiable(const SourceManager &SM,
   const FileEntry *FE = SM.getFileEntryForID(SM.getFileID(Loc));
   if (!FE)
     return false;
-  
+
   return GlobalOptions.ModifiableHeaders.isFileIncluded(FE->getName());
 }
 
@@ -202,8 +216,7 @@ void Transform::handleEndSource() {
 
     FileOverrides::iterator I = Overrides->find(CurrentSource);
     if (I == Overrides->end())
-      I = Overrides
-        ->insert(FileOverrides::value_type(CurrentSource, CurrentSource)).first;
+      I = Overrides->insert(std::make_pair(CurrentSource, CurrentSource)).first;
 
     collectResults(RewriterOwner->getRewriter(), I->second);
   }

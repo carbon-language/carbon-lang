@@ -12,8 +12,9 @@
 /// used to build and check data structures used in loop migration.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_STMT_ANCESTOR_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_STMT_ANCESTOR_H
+
+#ifndef CPP11_MIGRATE_STMT_ANCESTOR_H
+#define CPP11_MIGRATE_STMT_ANCESTOR_H
 
 #include "clang/AST/RecursiveASTVisitor.h"
 
@@ -197,4 +198,4 @@ private:
   bool VisitTypeLoc(clang::TypeLoc TL);
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_STMT_ANCESTOR_H
+#endif // CPP11_MIGRATE_STMT_ANCESTOR_H

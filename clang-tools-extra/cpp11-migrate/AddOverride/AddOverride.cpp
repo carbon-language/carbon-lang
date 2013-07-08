@@ -1,4 +1,4 @@
-//===-- AddOverride/AddOverride.cpp - add C++11 override -------*- C++ -*-===//
+//===-- AddOverride/AddOverride.cpp - add C++11 override ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,11 +16,8 @@
 #include "AddOverride.h"
 #include "AddOverrideActions.h"
 #include "AddOverrideMatchers.h"
+
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendActions.h"
-#include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/Tooling/Refactoring.h"
-#include "clang/Tooling/Tooling.h"
 
 using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
@@ -36,11 +33,8 @@ int AddOverrideTransform::apply(FileOverrides &InputStates,
                                 const CompilationDatabase &Database,
                                 const std::vector<std::string> &SourcePaths) {
   ClangTool AddOverrideTool(Database, SourcePaths);
-
   unsigned AcceptedChanges = 0;
-
   MatchFinder Finder;
-
   AddOverrideFixer Fixer(getReplacements(), AcceptedChanges, DetectMacros,
                          /*Owner=*/ *this);
   Finder.addMatcher(makeCandidateForOverrideAttrMatcher(), &Fixer);
@@ -56,7 +50,6 @@ int AddOverrideTransform::apply(FileOverrides &InputStates,
   }
 
   setAcceptedChanges(AcceptedChanges);
-
   return 0;
 }
 

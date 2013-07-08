@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the implementation for matcher-generating
-///  functions and custom AST_MATCHERs.
+/// \file
+/// \brief This file contains the implementation for matcher-generating
+/// functions and custom AST_MATCHERs.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "UseAutoMatchers.h"
 #include "clang/AST/ASTContext.h"
 

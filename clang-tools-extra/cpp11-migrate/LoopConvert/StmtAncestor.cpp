@@ -1,4 +1,4 @@
-//===-- LoopConvert/StmtAncestor.cpp - AST property visitors ----*- C++ -*-===//
+//===-- LoopConvert/StmtAncestor.cpp - AST property visitors --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,7 @@
 /// used to build and check data structures used in loop migration.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "StmtAncestor.h"
 
 using namespace clang;

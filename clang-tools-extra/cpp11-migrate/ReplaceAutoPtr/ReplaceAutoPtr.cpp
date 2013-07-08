@@ -1,4 +1,4 @@
-//===-- ReplaceAutoPtr.cpp ---------- std::auto_ptr replacement -*- C++ -*-===//
+//===-- ReplaceAutoPtr.cpp ---------- std::auto_ptr replacement -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,9 +17,6 @@
 #include "ReplaceAutoPtrActions.h"
 #include "ReplaceAutoPtrMatchers.h"
 
-#include "clang/Tooling/Refactoring.h"
-#include "clang/Tooling/Tooling.h"
-
 using namespace clang;
 using namespace clang::tooling;
 using namespace clang::ast_matchers;
@@ -29,9 +26,7 @@ ReplaceAutoPtrTransform::apply(FileOverrides &InputStates,
                                const CompilationDatabase &Database,
                                const std::vector<std::string> &SourcePaths) {
   ClangTool Tool(Database, SourcePaths);
-
   unsigned AcceptedChanges = 0;
-
   MatchFinder Finder;
   AutoPtrReplacer Replacer(getReplacements(), AcceptedChanges,
                            /*Owner=*/*this);

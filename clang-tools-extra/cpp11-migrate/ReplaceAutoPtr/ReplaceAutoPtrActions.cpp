@@ -1,4 +1,4 @@
-//===-- ReplaceAutoPtrActions.cpp --- std::auto_ptr replacement -*- C++ -*-===//
+//===-- ReplaceAutoPtrActions.cpp --- std::auto_ptr replacement -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file contains the definition of the ASTMatcher callback
-/// for the ReplaceAutoPtr transform.
+/// \brief This file contains the definition of the ASTMatcher callback for the
+/// ReplaceAutoPtr transform.
 ///
 //===----------------------------------------------------------------------===//
 

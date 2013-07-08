@@ -12,6 +12,7 @@
 /// class.
 ///
 //===----------------------------------------------------------------------===//
+
 #ifndef CPP11_MIGRATE_REPLACE_AUTO_PTR_H
 #define CPP11_MIGRATE_REPLACE_AUTO_PTR_H
 

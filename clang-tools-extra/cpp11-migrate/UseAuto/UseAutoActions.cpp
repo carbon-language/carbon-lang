@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the implementation of callbacks for the UseAuto
-///  transform.
+/// \file
+/// \brief This file contains the implementation of callbacks for the UseAuto
+/// transform.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "UseAutoActions.h"
 #include "UseAutoMatchers.h"
 #include "clang/AST/ASTContext.h"

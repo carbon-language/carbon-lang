@@ -1,4 +1,4 @@
-//===-- LoopConvert/LoopMatchers.h - Matchers for for loops -----*- C++ -*-===//
+//===-- LoopConvert/LoopMatchers.cpp - Matchers for for loops -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,7 @@
 /// C++ for loops.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "LoopMatchers.h"
 
 using namespace clang::ast_matchers;

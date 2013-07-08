@@ -1,4 +1,4 @@
-//===-- UseAutoMatchers.h - Matchers for use-auto transform ----*- C++ -*--===//
+//===-- UseAutoMatchers.h - Matchers for use-auto transform -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,9 @@
 ///  and names for bound nodes found by AST matchers.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_MATCHERS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_MATCHERS_H
+
+#ifndef CPP11_MIGRATE_USE_AUTO_MATCHERS_H
+#define CPP11_MIGRATE_USE_AUTO_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -30,4 +31,4 @@ clang::ast_matchers::StatementMatcher makeIteratorDeclMatcher();
 /// initialized by a C++ new expression.
 clang::ast_matchers::StatementMatcher makeDeclWithNewMatcher();
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_MATCHERS_H
+#endif // CPP11_MIGRATE_USE_AUTO_MATCHERS_H

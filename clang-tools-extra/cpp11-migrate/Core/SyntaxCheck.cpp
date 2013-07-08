@@ -1,3 +1,18 @@
+//===-- Core/SyntaxCheck.cpp ----------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief This file exposes functionaliy for doing a syntax-only check on
+/// files with overridden contents.
+///
+//===----------------------------------------------------------------------===//
+
 #include "SyntaxCheck.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"

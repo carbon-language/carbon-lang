@@ -12,8 +12,11 @@
 /// and header file content overrides.
 ///
 //===----------------------------------------------------------------------===//
+
 #ifndef CPP11_MIGRATE_FILE_OVERRIDES_H
 #define CPP11_MIGRATE_FILE_OVERRIDES_H
+
+#include "llvm/ADT/StringRef.h"
 
 #include <map>
 #include <string>
@@ -26,7 +29,8 @@ class FileManager;
 
 /// \brief Container for storing override information for a single headers.
 struct HeaderOverride {
-  HeaderOverride(const char *FileName) : FileName(FileName) {}
+  HeaderOverride() {}
+  HeaderOverride(llvm::StringRef FileName) : FileName(FileName) {}
 
   std::string FileName;
   std::string FileOverride;
@@ -37,7 +41,7 @@ typedef std::map<std::string, HeaderOverride> HeaderOverrides;
 
 /// \brief Container storing the file content overrides for a source file.
 struct SourceOverrides {
-  SourceOverrides(const std::string &MainFileName)
+  SourceOverrides(llvm::StringRef MainFileName)
       : MainFileName(MainFileName) {}
 
   /// \brief Convenience function for applying this source's overrides to

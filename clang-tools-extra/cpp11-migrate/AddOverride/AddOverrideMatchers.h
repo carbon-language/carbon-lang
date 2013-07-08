@@ -1,4 +1,4 @@
-//===-- AddOverride/AddOverrideMatchers.h - add C++11 override -*- C++ -*-===//
+//===-- AddOverride/AddOverrideMatchers.h - add C++11 override --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the declarations for matcher-generating functions
-///  and names for bound nodes found by AST matchers.
+/// \file
+/// \brief This file contains the declarations for matcher-generating functions
+/// and names for bound nodes found by AST matchers.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
+
+#ifndef CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
+#define CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -24,4 +25,4 @@ extern const char *MethodId;
 /// candidates for adding the override attribute.
 clang::ast_matchers::DeclarationMatcher makeCandidateForOverrideAttrMatcher();
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H
+#endif // CPP11_MIGRATE_ADD_OVERRIDE_MATCHERS_H

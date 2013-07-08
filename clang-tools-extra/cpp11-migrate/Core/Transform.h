@@ -1,4 +1,4 @@
-//===-- cpp11-migrate/Transform.h - Transform Base Class Def'n --*- C++ -*-===//
+//===-- Core/Transform.h - Transform Base Class Def'n -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,15 +8,14 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file provides the definition for the base Transform class from
+/// \brief This file provides the declaration for the base Transform class from
 /// which all transforms must subclass.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORM_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORM_H
 
-#include <string>
-#include <vector>
+#ifndef CPP11_MIGRATE_TRANSFORM_H
+#define CPP11_MIGRATE_TRANSFORM_H
+
 #include "Core/IncludeExcludeInfo.h"
 #include "Core/FileOverrides.h"
 #include "clang/Tooling/Refactoring.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
 
+#include <string>
+#include <vector>
 
 /// \brief Description of the riskiness of actions that can be taken by
 /// transforms.
@@ -223,4 +224,4 @@ private:
   unsigned DeferredChanges;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORM_H
+#endif // CPP11_MIGRATE_TRANSFORM_H

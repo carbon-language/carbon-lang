@@ -1,4 +1,4 @@
-//===-- LoopConvert/LoopActions.cpp - C++11 For loop migration --*- C++ -*-===//
+//===-- LoopConvert/LoopActions.cpp - C++11 For loop migration ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,7 @@
 /// for loops.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "LoopActions.h"
 #include "LoopMatchers.h"
 #include "VariableNaming.h"

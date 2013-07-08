@@ -1,4 +1,4 @@
-//===-- nullptr-convert/NullptrActions.cpp - Matcher callback -------------===//
+//===-- UseNullptr/NullptrActions.cpp - Matcher callback ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the definition of the NullptrFixer class which is
-///  used as an ASTMatcher callback. Also within this file is a helper AST
-///  visitor class used to identify sequences of explicit casts.
+/// \file
+/// \brief This file contains the definition of the NullptrFixer class which is
+/// used as an ASTMatcher callback. Also within this file is a helper AST
+/// visitor class used to identify sequences of explicit casts.
 ///
 //===----------------------------------------------------------------------===//
 

@@ -1,4 +1,4 @@
-//===-- cpp11-migrate/Transforms.cpp - class Transforms Impl ----*- C++ -*-===//
+//===-- Core/Transforms.cpp - class Transforms Impl -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

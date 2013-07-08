@@ -9,12 +9,13 @@
 ///
 /// \file
 /// \brief This file provides the definition of the LoopConvertTransform
-/// class which is the main interface to the loop-convert transform
-/// that tries to make use of range-based for loops where possible.
+/// class which is the main interface to the loop-convert transform that tries
+/// to make use of range-based for loops where possible.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H
+
+#ifndef CPP11_MIGRATE_LOOP_CONVERT_H
+#define CPP11_MIGRATE_LOOP_CONVERT_H
 
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
@@ -32,4 +33,4 @@ public:
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H
+#endif // CPP11_MIGRATE_LOOP_CONVERT_H

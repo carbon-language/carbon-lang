@@ -1,4 +1,4 @@
-//===-- AddOverride/AddOverrideActions.cpp - add C++11 override-*- C++ -*-===//
+//===-- AddOverride/AddOverrideActions.cpp - add C++11 override -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the definition of the AddOverrideFixer class
-///  which is used as an ASTMatcher callback.
+/// \file
+/// \brief This file contains the definition of the AddOverrideFixer class
+/// which is used as an ASTMatcher callback.
 ///
 //===----------------------------------------------------------------------===//
 

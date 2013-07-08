@@ -14,8 +14,9 @@
 /// situations.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_H
+
+#ifndef CPP11_MIGRATE_USE_AUTO_H
+#define CPP11_MIGRATE_USE_AUTO_H
 
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h"
@@ -38,4 +39,4 @@ public:
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_AUTO_H
+#endif // CPP11_MIGRATE_USE_AUTO_H

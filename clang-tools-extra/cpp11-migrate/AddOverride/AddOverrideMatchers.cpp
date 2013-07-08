@@ -1,4 +1,4 @@
-//===-- AddOverride/AddOverrideMatchers.cpp - C++11 override ---*- C++ -*-===//
+//===-- AddOverride/AddOverrideMatchers.cpp - C++11 override --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the definitions for matcher-generating functions
-///  and a custom AST_MATCHER for identifying casts of type CK_NullTo*.
+/// \file
+/// \brief This file contains the definitions for matcher-generating functions
+/// and a custom AST_MATCHER for identifying casts of type CK_NullTo*.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "AddOverrideMatchers.h"
 #include "clang/AST/ASTContext.h"
 

@@ -1,4 +1,4 @@
-//===-- cpp11-migrate/PerfSupport.h - Perf measurement helpers --*- C++ -*-===//
+//===-- Core/PerfSupport.h - Perf measurement helpers -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,10 +16,11 @@
 #ifndef CPP11_MIGRATE_PERFSUPPORT_H
 #define CPP11_MIGRATE_PERFSUPPORT_H
 
-#include <map>
-#include <vector>
 #include "Transform.h"
 #include "llvm/ADT/StringRef.h"
+
+#include <map>
+#include <vector>
 
 /// \brief A single piece of performance data: a duration in milliseconds and a
 /// label for that duration.

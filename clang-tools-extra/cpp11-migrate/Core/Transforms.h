@@ -1,4 +1,4 @@
-//===-- cpp11-migrate/Transforms.h - class Transforms Def'n -----*- C++ -*-===//
+//===-- Core/Transforms.h - class Transforms Def'n --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,11 +13,13 @@
 /// transformations to the user and applying requested transforms.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORMS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORMS_H
+
+#ifndef CPP11_MIGRATE_TRANSFORMS_H
+#define CPP11_MIGRATE_TRANSFORMS_H
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/StringRef.h"
+
 #include <vector>
 
 // Forward declarations
@@ -75,4 +77,4 @@ private:
   OptionVec Options;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORMS_H
+#endif // CPP11_MIGRATE_TRANSFORMS_H

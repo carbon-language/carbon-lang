@@ -15,8 +15,9 @@
 /// convertible in the matcher callback.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_MATCHERS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_MATCHERS_H
+
+#ifndef CPP11_MIGRATE_LOOP_MATCHERS_H
+#define CPP11_MIGRATE_LOOP_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -38,4 +39,4 @@ clang::ast_matchers::StatementMatcher makeArrayLoopMatcher();
 clang::ast_matchers::StatementMatcher makeIteratorLoopMatcher();
 clang::ast_matchers::StatementMatcher makePseudoArrayLoopMatcher();
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_MATCHERS_H
+#endif // CPP11_MIGRATE_LOOP_MATCHERS_H

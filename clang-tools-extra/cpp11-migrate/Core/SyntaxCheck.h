@@ -12,11 +12,13 @@
 /// files with overridden contents.
 ///
 //===----------------------------------------------------------------------===//
+
 #ifndef CPP11_MIGRATE_SYNTAX_CHECK_H
 #define CPP11_MIGRATE_SYNTAX_CHECK_H
 
-#include <vector>
 #include "Core/FileOverrides.h"
+
+#include <vector>
 
 // Forward Declarations
 namespace clang {

@@ -1,4 +1,4 @@
-//===-- AddOverride/AddOverrideActions.h - add C++11 override --*- C++ -*-===//
+//===-- AddOverride/AddOverrideActions.h - add C++11 override ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the declaration of the AddOverrideFixer class
-///  which is used as a ASTMatcher callback.
+/// \file
+/// \brief This file contains the declaration of the AddOverrideFixer class
+/// which is used as a ASTMatcher callback.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
+
+#ifndef CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
+#define CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Refactoring.h"
@@ -43,4 +44,4 @@ private:
   const Transform &Owner;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H
+#endif // CPP11_MIGRATE_ADD_OVERRIDE_ACTIONS_H

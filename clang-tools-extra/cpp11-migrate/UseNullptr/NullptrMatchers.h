@@ -1,4 +1,4 @@
-//===-- nullptr-convert/Matchers.h - Matchers for null casts ---*- C++ -*--===//
+//===-- UseNullptr/NullptrMatchers.h - Matchers for null casts --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the declarations for matcher-generating functions
-///  and names for bound nodes found by AST matchers.
+/// \file
+/// \brief This file contains the declarations for matcher-generating functions
+/// and names for bound nodes found by AST matchers.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H
+
+#ifndef CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H
+#define CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -27,4 +28,4 @@ extern const char *CastSequence;
 /// can be replaced instead of just the inner-most implicit cast.
 clang::ast_matchers::StatementMatcher makeCastSequenceMatcher();
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H
+#endif // CPP11_MIGRATE_USE_NULLPTR_MATCHERS_H

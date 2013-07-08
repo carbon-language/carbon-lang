@@ -1,4 +1,4 @@
-//===-- nullptr-convert/Matchers.cpp - Matchers for null casts ------------===//
+//===-- UseNullptr/NullptrMatchers.cpp - Matchers for null casts ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the definitions for matcher-generating functions
-///  and a custom AST_MATCHER for identifying casts of type CK_NullTo*.
+/// \file
+/// \brief This file contains the definitions for matcher-generating functions
+/// and a custom AST_MATCHER for identifying casts of type CK_NullTo*.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "NullptrMatchers.h"
 #include "clang/AST/ASTContext.h"
 

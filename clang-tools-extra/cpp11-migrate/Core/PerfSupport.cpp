@@ -1,4 +1,4 @@
-//===-- cpp11-migrate/Cpp11Migrate.cpp - Main file C++11 migration tool ---===//
+//===-- Core/PerfSupport.cpp - Perf measurement helpers -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

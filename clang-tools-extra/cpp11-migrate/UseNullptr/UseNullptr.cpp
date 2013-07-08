@@ -1,4 +1,4 @@
-//===-- LoopConvert/LoopConvert.cpp - C++11 for-loop migration --*- C++ -*-===//
+//===-- UseNullptr/UseNullptr.cpp - C++11 nullptr migration ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,7 +17,6 @@
 #include "NullptrActions.h"
 #include "NullptrMatchers.h"
 #include "clang/Frontend/FrontendActions.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
 

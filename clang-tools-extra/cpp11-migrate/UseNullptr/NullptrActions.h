@@ -1,4 +1,4 @@
-//===-- nullptr-convert/NullptrActions.h - Matcher callback ------*- C++ -*-==//
+//===-- UseNullptr/NullptrActions.h - Matcher callback ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-///  \file
-///  \brief This file contains the declaration of the NullptrFixer class which
-///  is used as a ASTMatcher callback.
+/// \file
+/// \brief This file contains the declaration of the NullptrFixer class which
+/// is used as a ASTMatcher callback.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_NULLPTR_ACTIONS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_NULLPTR_ACTIONS_H
+
+#ifndef CPP11_MIGRATE_NULLPTR_ACTIONS_H
+#define CPP11_MIGRATE_NULLPTR_ACTIONS_H
 
 #include "Core/Transform.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -39,4 +40,4 @@ private:
   const Transform &Owner;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_NULLPTR_ACTIONS_H
+#endif // CPP11_MIGRATE_NULLPTR_ACTIONS_H

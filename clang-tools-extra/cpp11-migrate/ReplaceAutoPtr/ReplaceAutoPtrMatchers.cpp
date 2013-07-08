@@ -1,4 +1,4 @@
-//===-- ReplaceAutoPtrMatchers.cpp - std::auto_ptr replacement -*- C++ -*--===//
+//===-- ReplaceAutoPtrMatchers.cpp -- std::auto_ptr replacement -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

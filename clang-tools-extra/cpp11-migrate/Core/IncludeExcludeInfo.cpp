@@ -1,4 +1,4 @@
-//===-- Core/IncludeExcludeInfo.cpp - IncludeExclude class impl -*- C++ -*-===//
+//===-- Core/IncludeExcludeInfo.cpp - IncludeExclude class impl -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file provides the implemention of the IncludeExcludeInfo class
+/// \brief This file provides the implementation of the IncludeExcludeInfo class
 /// to handle the include and exclude command line options.
 ///
 //===----------------------------------------------------------------------===//

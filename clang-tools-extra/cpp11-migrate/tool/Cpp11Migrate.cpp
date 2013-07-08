@@ -158,25 +158,24 @@ int main(int argc, const char **argv) {
   for (Transforms::const_iterator I = TransformManager.begin(),
                                   E = TransformManager.end();
        I != E; ++I) {
-    if ((*I)->apply(FileStates, OptionsParser.getCompilations(),
-                    OptionsParser.getSourcePathList()) !=
+    Transform *T = *I;
+
+    if (T->apply(FileStates, OptionsParser.getCompilations(),
+                 OptionsParser.getSourcePathList()) !=
         0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
 
     if (GlobalOptions.EnableTiming)
-      collectSourcePerfData(**I, PerfData);
+      collectSourcePerfData(*T, PerfData);
 
     if (SummaryMode) {
-      llvm::outs() << "Transform: " << (*I)->getName()
-                   << " - Accepted: "
-                   << (*I)->getAcceptedChanges();
-      if ((*I)->getChangesNotMade()) {
-         llvm::outs() << " - Rejected: "
-                      << (*I)->getRejectedChanges()
-                      << " - Deferred: "
-                      << (*I)->getDeferredChanges();
+      llvm::outs() << "Transform: " << T->getName()
+                   << " - Accepted: " << T->getAcceptedChanges();
+      if (T->getChangesNotMade()) {
+        llvm::outs() << " - Rejected: " << T->getRejectedChanges()
+                     << " - Deferred: " << T->getDeferredChanges();
       }
       llvm::outs() << "\n";
     }

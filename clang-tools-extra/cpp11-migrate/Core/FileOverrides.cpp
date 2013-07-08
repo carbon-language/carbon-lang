@@ -1,4 +1,20 @@
+//===-- Core/FileOverrides.cpp --------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief This file provides types and functionality for dealing with source
+/// and header file content overrides.
+///
+//===----------------------------------------------------------------------===//
+
 #include "Core/FileOverrides.h"
+
 #include "clang/Basic/SourceManager.h"
 
 void SourceOverrides::applyOverrides(clang::SourceManager &SM) const {

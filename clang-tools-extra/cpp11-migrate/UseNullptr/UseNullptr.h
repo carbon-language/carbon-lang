@@ -1,4 +1,4 @@
-//===-- LoopConvert/LoopConvert.h - C++11 for-loop migration ----*- C++ -*-===//
+//===-- UseNullptr/UseNullptr.h - C++11 nullptr migration -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,12 +9,13 @@
 ///
 /// \file
 /// \brief This file provides the definition of the UseNullptrTransform
-/// class which is the main interface to the use-nullptr transform
-/// that tries to make use of nullptr where possible.
+/// class which is the main interface to the use-nullptr transform that tries to
+/// make use of nullptr where possible.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_H
+
+#ifndef CPP11_MIGRATE_USE_NULLPTR_H
+#define CPP11_MIGRATE_USE_NULLPTR_H
 
 #include "Core/Transform.h"
 #include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
@@ -32,4 +33,4 @@ public:
                     const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_USE_NULLPTR_H
+#endif // CPP11_MIGRATE_USE_NULLPTR_H

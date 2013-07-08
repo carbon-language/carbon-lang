@@ -1,4 +1,4 @@
-//===-- LoopConvert/VariableNaming.h - Gererate variable names --*- C++ -*-===//
+//===-- LoopConvert/VariableNaming.cpp - Gererate variable names ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,6 +13,7 @@
 /// not conflict with existing ones.
 ///
 //===----------------------------------------------------------------------===//
+
 #include "VariableNaming.h"
 
 using namespace llvm;

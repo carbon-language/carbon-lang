@@ -1,4 +1,4 @@
-//===-- ReplaceAutoPtrMatchers.h --- std::auto_ptr replacement -*- C++ -*--===//
+//===-- ReplaceAutoPtrMatchers.h ---- std::auto_ptr replacement -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,6 +12,7 @@
 /// and names for bound nodes found by AST matchers.
 ///
 //===----------------------------------------------------------------------===//
+
 #ifndef CPP11_MIGRATE_REPLACE_AUTO_PTR_MATCHERS_H
 #define CPP11_MIGRATE_REPLACE_AUTO_PTR_MATCHERS_H
 

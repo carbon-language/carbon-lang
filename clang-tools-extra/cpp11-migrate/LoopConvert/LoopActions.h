@@ -12,8 +12,9 @@
 /// for loops.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_ACTIONS_H
-#define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_ACTIONS_H
+
+#ifndef CPP11_MIGRATE_LOOP_ACTIONS_H
+#define CPP11_MIGRATE_LOOP_ACTIONS_H
 
 #include "StmtAncestor.h"
 #include "Core/Transform.h"
@@ -103,4 +104,4 @@ class LoopFixer : public clang::ast_matchers::MatchFinder::MatchCallback {
                                               const clang::ForStmt *TheLoop);
 };
 
-#endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_ACTIONS_H
+#endif // CPP11_MIGRATE_LOOP_ACTIONS_H
