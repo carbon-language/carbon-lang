@@ -136,20 +136,26 @@ define <4 x i16> @test_undef(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 
 ; We should ignore a build_vector with more than two sources.
 ; Use illegal <32 x i16> type to produce such a shuffle after legalizing types.
-; Try to look for fallback to stack expansion.
+; Try to look for fallback to by-element inserts.
 define <4 x i16> @test_multisource(<32 x i16>* %B) nounwind {
 ;CHECK: test_multisource:
-;CHECK: vst1.16
+;CHECK: vmov.16 [[REG:d[0-9]+]][0]
+;CHECK: vmov.16 [[REG]][1]
+;CHECK: vmov.16 [[REG]][2]
+;CHECK: vmov.16 [[REG]][3]
         %tmp1 = load <32 x i16>* %B
         %tmp2 = shufflevector <32 x i16> %tmp1, <32 x i16> undef, <4 x i32> <i32 0, i32 8, i32 16, i32 24>
         ret <4 x i16> %tmp2
 }
 
 ; We don't handle shuffles using more than half of a 128-bit vector.
-; Again, test for fallback to stack expansion
+; Again, test for fallback to by-element inserts.
 define <4 x i16> @test_largespan(<8 x i16>* %B) nounwind {
 ;CHECK: test_largespan:
-;CHECK: vst1.16
+;CHECK: vmov.16 [[REG:d[0-9]+]][0]
+;CHECK: vmov.16 [[REG]][1]
+;CHECK: vmov.16 [[REG]][2]
+;CHECK: vmov.16 [[REG]][3]
         %tmp1 = load <8 x i16>* %B
         %tmp2 = shufflevector <8 x i16> %tmp1, <8 x i16> undef, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
         ret <4 x i16> %tmp2
@@ -160,7 +166,14 @@ define <4 x i16> @test_largespan(<8 x i16>* %B) nounwind {
 ; lowering loop can result otherwise).
 define <8 x i16> @test_illegal(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK: test_illegal:
-;CHECK: vst1.16
+;CHECK: vmov.16 [[REG:d[0-9]+]][0]
+;CHECK: vmov.16 [[REG]][1]
+;CHECK: vmov.16 [[REG]][2]
+;CHECK: vmov.16 [[REG]][3]
+;CHECK: vmov.16 [[REG2:d[0-9]+]][0]
+;CHECK: vmov.16 [[REG2]][1]
+;CHECK: vmov.16 [[REG2]][2]
+;CHECK: vmov.16 [[REG2]][3]
        %tmp1 = load <8 x i16>* %A
        %tmp2 = load <8 x i16>* %B
        %tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> <i32 0, i32 7, i32 5, i32 13, i32 3, i32 2, i32 2, i32 9>
