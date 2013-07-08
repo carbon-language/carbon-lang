@@ -11,6 +11,7 @@
 #define liblldb_ModuleSpec_h_
 
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Target/PathMappingList.h"
@@ -286,6 +287,123 @@ public:
         m_object_mod_time.Clear();
     }
 
+    
+    operator bool () const
+    {
+        if (m_file)
+            return true;
+        if (m_platform_file)
+            return true;
+        if (m_symbol_file)
+            return true;
+        if (m_arch.IsValid())
+            return true;
+        if (m_uuid.IsValid())
+            return true;
+        if (m_object_name)
+            return true;
+        if (m_object_mod_time.IsValid())
+            return true;
+        return false;
+    }
+
+    void
+    Dump (Stream &strm)
+    {
+        bool dumped_something = false;
+        if (m_file)
+        {
+            strm.PutCString("file = '");
+            strm << m_file;
+            strm.PutCString("'");
+            dumped_something = true;
+        }
+        if (m_platform_file)
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.PutCString("platform_file = '");
+            strm << m_platform_file;
+            strm.PutCString("'");
+            dumped_something = true;
+        }
+        if (m_symbol_file)
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.PutCString("symbol_file = '");
+            strm << m_symbol_file;
+            strm.PutCString("'");
+            dumped_something = true;
+        }
+        if (m_arch.IsValid())
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.Printf("arch = %s", m_arch.GetTriple().str().c_str());
+            dumped_something = true;
+        }
+        if (m_uuid.IsValid())
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.PutCString("uuid = ");
+            m_uuid.Dump(&strm);
+            dumped_something = true;
+            
+        }
+        if (m_object_name)
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.Printf("object_name = %s", m_object_name.GetCString());
+            dumped_something = true;
+        }
+    }
+
+    bool
+    Matches (const ModuleSpec &match_module_spec, bool exact_arch_match) const
+    {
+        if (match_module_spec.GetUUIDPtr() && match_module_spec.GetUUID() != GetUUID())
+            return false;
+        if (match_module_spec.GetObjectName() && match_module_spec.GetObjectName() != GetObjectName())
+            return false;
+        if (match_module_spec.GetFileSpecPtr())
+        {
+            const FileSpec &fspec = match_module_spec.GetFileSpec();
+            if (!FileSpec::Equal(fspec, GetFileSpec(), fspec.GetDirectory().IsEmpty() == false))
+                return false;
+        }
+        if (match_module_spec.GetPlatformFileSpecPtr())
+        {
+            const FileSpec &fspec = match_module_spec.GetPlatformFileSpec();
+            if (!FileSpec::Equal(fspec, GetPlatformFileSpec(), fspec.GetDirectory().IsEmpty() == false))
+                return false;
+            
+        }
+        if (match_module_spec.GetSymbolFileSpecPtr())
+        {
+            const FileSpec &fspec = match_module_spec.GetSymbolFileSpec();
+            if (!FileSpec::Equal(fspec, GetSymbolFileSpec(), fspec.GetDirectory().IsEmpty() == false))
+                return false;
+            
+        }
+        if (match_module_spec.GetArchitecturePtr())
+        {
+            if (exact_arch_match)
+            {
+                if (!GetArchitecture().IsExactMatch(match_module_spec.GetArchitecture()))
+                    return false;
+            }
+            else
+            {
+                if (!GetArchitecture().IsCompatibleMatch(match_module_spec.GetArchitecture()))
+                    return false;
+            }
+        }
+        return true;
+    }
+
 protected:
     FileSpec m_file;
     FileSpec m_platform_file;
@@ -319,7 +437,19 @@ public:
     ~ModuleSpecList ()
     {
     }
-    
+
+    ModuleSpecList &
+    operator = (const ModuleSpecList &rhs)
+    {
+        if (this != &rhs)
+        {
+            Mutex::Locker lhs_locker(m_mutex);
+            Mutex::Locker rhs_locker(rhs.m_mutex);
+            m_specs = rhs.m_specs;
+        }
+        return *this;
+    }
+
     size_t
     GetSize() const
     {
@@ -340,7 +470,15 @@ public:
         Mutex::Locker locker(m_mutex);
         m_specs.push_back (spec);
     }
-    
+
+    void
+    Append (const ModuleSpecList &rhs)
+    {
+        Mutex::Locker lhs_locker(m_mutex);
+        Mutex::Locker rhs_locker(rhs.m_mutex);
+        m_specs.insert(m_specs.end(), rhs.m_specs.begin(), rhs.m_specs.end());
+    }
+
     bool
     GetModuleSpecAtIndex (size_t i, ModuleSpec &module_spec) const
     {
@@ -354,57 +492,75 @@ public:
         return false;
     }
     
+    
     bool
     FindMatchingModuleSpec (const ModuleSpec &module_spec, ModuleSpec &match_module_spec) const
     {
-        const FileSpec *file_ptr = module_spec.GetFileSpecPtr();
-        const FileSpec *platform_file_ptr = module_spec.GetPlatformFileSpecPtr();
-        const FileSpec *symbol_file_ptr = module_spec.GetSymbolFileSpecPtr();
-        const ArchSpec *arch_ptr = module_spec.GetArchitecturePtr();
-        const UUID *uuid_ptr = module_spec.GetUUIDPtr();
-        const bool check_module_name = (bool)module_spec.GetObjectName();
         Mutex::Locker locker(m_mutex);
+        bool exact_arch_match = true;
         for (auto spec: m_specs)
         {
-            if (uuid_ptr && spec.GetUUID() != *uuid_ptr)
-                continue;
-            if (check_module_name && module_spec.GetObjectName() != spec.GetObjectName())
-                continue;
-            if (file_ptr && !FileSpec::Equal(*file_ptr, spec.GetFileSpec(), file_ptr->GetDirectory().IsEmpty() == false))
-                continue;
-            if (platform_file_ptr && !FileSpec::Equal(*platform_file_ptr, spec.GetFileSpec(), platform_file_ptr->GetDirectory().IsEmpty() == false))
-                continue;
-            if (symbol_file_ptr && !FileSpec::Equal(*symbol_file_ptr, spec.GetFileSpec(), symbol_file_ptr->GetDirectory().IsEmpty() == false))
-                continue;
-            if (arch_ptr && !spec.GetArchitecture().IsExactMatch(*arch_ptr))
-                continue;
-            match_module_spec = spec;
-            return true;
-        }
-        
-        // If there was an architecture, retry with a compatible arch
-        if (arch_ptr)
-        {
-            for (auto spec: m_specs)
+            if (spec.Matches(module_spec, exact_arch_match))
             {
-                if (uuid_ptr && spec.GetUUID() != *uuid_ptr)
-                    continue;
-                if (check_module_name && module_spec.GetObjectName() != spec.GetObjectName())
-                    continue;
-                if (file_ptr && !FileSpec::Equal(*file_ptr, spec.GetFileSpec(), file_ptr->GetDirectory().IsEmpty() == false))
-                    continue;
-                if (platform_file_ptr && !FileSpec::Equal(*platform_file_ptr, spec.GetFileSpec(), platform_file_ptr->GetDirectory().IsEmpty() == false))
-                    continue;
-                if (symbol_file_ptr && !FileSpec::Equal(*symbol_file_ptr, spec.GetFileSpec(), symbol_file_ptr->GetDirectory().IsEmpty() == false))
-                    continue;
-                if (arch_ptr && !spec.GetArchitecture().IsCompatibleMatch(*arch_ptr))
-                    continue;
                 match_module_spec = spec;
                 return true;
             }
         }
+        
+        // If there was an architecture, retry with a compatible arch
+        if (module_spec.GetArchitecturePtr())
+        {
+            exact_arch_match = false;
+            for (auto spec: m_specs)
+            {
+                if (spec.Matches(module_spec, exact_arch_match))
+                {
+                    match_module_spec = spec;
+                    return true;
+                }
+            }
+        }
         match_module_spec.Clear();
         return false;
+    }
+    
+    size_t
+    FindMatchingModuleSpecs (const ModuleSpec &module_spec, ModuleSpecList &matching_list) const
+    {
+        Mutex::Locker locker(m_mutex);
+        bool exact_arch_match = true;
+        const size_t initial_match_count = matching_list.GetSize();
+        for (auto spec: m_specs)
+        {
+            if (spec.Matches(module_spec, exact_arch_match))
+                matching_list.Append (spec);
+        }
+        
+        // If there was an architecture, retry with a compatible arch if no matches were found
+        if (module_spec.GetArchitecturePtr() && (initial_match_count == matching_list.GetSize()))
+        {
+            exact_arch_match = false;
+            for (auto spec: m_specs)
+            {
+                if (spec.Matches(module_spec, exact_arch_match))
+                    matching_list.Append (spec);
+            }
+        }
+        return matching_list.GetSize() - initial_match_count;
+    }
+
+    void
+    Dump (Stream &strm)
+    {
+        Mutex::Locker locker(m_mutex);
+        uint32_t idx = 0;
+        for (auto spec: m_specs)
+        {
+            strm.Printf("[%u] ", idx);
+            spec.Dump (strm);
+            strm.EOL();
+            ++idx;
+        }
     }
 
 protected:

@@ -105,25 +105,34 @@ UUID::Dump (Stream *s) const
     }
 }
 
-void
+bool
 UUID::SetBytes (const void *uuid_bytes, uint32_t num_uuid_bytes)
 {
-    if (uuid_bytes && num_uuid_bytes >= 20)
+    if (uuid_bytes)
     {
-        m_num_uuid_bytes = 20;
-        ::memcpy (m_uuid, uuid_bytes, m_num_uuid_bytes);
+        switch (num_uuid_bytes)
+        {
+            case 20:
+                m_num_uuid_bytes = 20;
+                break;
+            case 16:
+                m_num_uuid_bytes = 16;
+                m_uuid[16] = m_uuid[17] = m_uuid[18] = m_uuid[19] = 0;
+                break;
+            default:
+                // Unsupported UUID byte size
+                m_num_uuid_bytes = 0;
+                break;
+        }
+
+        if (m_num_uuid_bytes > 0)
+        {
+            ::memcpy (m_uuid, uuid_bytes, m_num_uuid_bytes);
+            return true;
+        }
     }
-    else if (uuid_bytes && num_uuid_bytes >= 16)
-    {
-        m_num_uuid_bytes = 16;
-        ::memcpy (m_uuid, uuid_bytes, m_num_uuid_bytes);
-        m_uuid[16] = m_uuid[17] = m_uuid[18] = m_uuid[19] = 0;
-    }
-    else
-    {
-        m_num_uuid_bytes = 16;
-        ::memset (m_uuid, 0, sizeof(m_uuid));
-    }
+    ::memset (m_uuid, 0, sizeof(m_uuid));
+    return false;
 }
 
 size_t

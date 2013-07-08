@@ -54,6 +54,8 @@ class SBInstructionList;
 class SBLineEntry;
 class SBListener;
 class SBModule;
+class SBModuleSpec;
+class SBModuleSpecList;
 class SBProcess;
 class SBSourceManager;
 class SBStream;

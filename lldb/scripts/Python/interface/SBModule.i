@@ -96,7 +96,9 @@ public:
 
     SBModule ();
 
-    SBModule (const SBModule &rhs);
+    SBModule (const lldb::SBModule &rhs);
+     
+    SBModule (const lldb::SBModuleSpec &module_spec);
     
     SBModule (lldb::SBProcess &process, 
               lldb::addr_t header_addr);

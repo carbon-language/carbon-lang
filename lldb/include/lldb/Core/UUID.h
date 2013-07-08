@@ -52,7 +52,7 @@ public:
     bool
     IsValid () const;
 
-    void
+    bool
     SetBytes (const void *uuid_bytes, uint32_t num_uuid_bytes = 16);
 
     std::string

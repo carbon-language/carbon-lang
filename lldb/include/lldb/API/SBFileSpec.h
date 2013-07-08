@@ -64,13 +64,16 @@ private:
     friend class SBLaunchInfo;
     friend class SBLineEntry;
     friend class SBModule;
+    friend class SBModuleSpec;
     friend class SBProcess;
     friend class SBSourceManager;
     friend class SBThread;
     friend class SBTarget;
 
+    SBFileSpec (const lldb_private::FileSpec& fspec);
+
     void
-    SetFileSpec (const lldb_private::FileSpec& fs);
+    SetFileSpec (const lldb_private::FileSpec& fspec);
 
     const lldb_private::FileSpec *
     operator->() const;

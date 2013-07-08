@@ -353,6 +353,37 @@
             return getattr(_lldb,self.__class__.__name__+"___ne__")(self, rhs)
     %}
 }
+
+%extend lldb::SBModuleSpec {
+        PyObject *lldb::SBModuleSpec::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+
+%extend lldb::SBModuleSpecList {
+        PyObject *lldb::SBModuleSpecList::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+
 %extend lldb::SBProcess {
         PyObject *lldb::SBProcess::__str__ (){
                 lldb::SBStream description;

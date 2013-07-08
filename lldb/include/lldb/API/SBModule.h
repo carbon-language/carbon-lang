@@ -26,6 +26,8 @@ public:
 
     SBModule (const SBModule &rhs);
 
+    SBModule (const SBModuleSpec &module_spec);
+
     const SBModule &
     operator = (const SBModule &rhs);
 

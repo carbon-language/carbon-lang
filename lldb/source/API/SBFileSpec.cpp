@@ -21,25 +21,18 @@ using namespace lldb_private;
 
 
 SBFileSpec::SBFileSpec () :
-    m_opaque_ap()
+    m_opaque_ap(new lldb_private::FileSpec())
 {
 }
 
 SBFileSpec::SBFileSpec (const SBFileSpec &rhs) :
-    m_opaque_ap()
+    m_opaque_ap(new lldb_private::FileSpec(*rhs.m_opaque_ap))
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+}
 
-    if (rhs.m_opaque_ap.get())
-        m_opaque_ap.reset (new FileSpec (rhs.get()));
-
-    if (log)
-    {
-        SBStream sstr;
-        GetDescription (sstr);
-        log->Printf ("SBFileSpec::SBFileSpec (const SBFileSpec rhs.ap=%p) => SBFileSpec(%p): %s",
-                     rhs.m_opaque_ap.get(), m_opaque_ap.get(), sstr.GetData());
-    }
+SBFileSpec::SBFileSpec (const lldb_private::FileSpec& fspec) :
+    m_opaque_ap(new lldb_private::FileSpec(fspec))
+{
 }
 
 // Deprected!!!
@@ -51,11 +44,6 @@ SBFileSpec::SBFileSpec (const char *path) :
 SBFileSpec::SBFileSpec (const char *path, bool resolve) :
     m_opaque_ap(new FileSpec (path, resolve))
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    if (log)
-        log->Printf ("SBFileSpec::SBFileSpec (path=\"%s\", resolve=%i) => SBFileSpec(%p)", path, 
-                     resolve, m_opaque_ap.get());
 }
 
 SBFileSpec::~SBFileSpec ()
@@ -66,17 +54,14 @@ const SBFileSpec &
 SBFileSpec::operator = (const SBFileSpec &rhs)
 {
     if (this != &rhs)
-    {
-        if (rhs.IsValid())
-            m_opaque_ap.reset (new lldb_private::FileSpec(*rhs.m_opaque_ap.get()));
-    }
+        *m_opaque_ap = *rhs.m_opaque_ap;
     return *this;
 }
 
 bool
 SBFileSpec::IsValid() const
 {
-    return m_opaque_ap.get() != NULL;
+    return *m_opaque_ap;
 }
 
 bool
@@ -84,9 +69,7 @@ SBFileSpec::Exists () const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    bool result = false;
-    if (m_opaque_ap.get())
-        result = m_opaque_ap->Exists();
+    bool result = m_opaque_ap->Exists();
 
     if (log)
         log->Printf ("SBFileSpec(%p)::Exists () => %s", m_opaque_ap.get(), (result ? "true" : "false"));
@@ -97,9 +80,7 @@ SBFileSpec::Exists () const
 bool
 SBFileSpec::ResolveExecutableLocation ()
 {
-    if (m_opaque_ap.get())
-        return m_opaque_ap->ResolveExecutableLocation ();
-    return false;
+    return m_opaque_ap->ResolveExecutableLocation ();
 }
 
 int
@@ -111,9 +92,7 @@ SBFileSpec::ResolvePath (const char *src_path, char *dst_path, size_t dst_len)
 const char *
 SBFileSpec::GetFilename() const
 {
-    const char *s = NULL;
-    if (m_opaque_ap.get())
-        s = m_opaque_ap->GetFilename().AsCString();
+    const char *s = m_opaque_ap->GetFilename().AsCString();
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -130,9 +109,7 @@ SBFileSpec::GetFilename() const
 const char *
 SBFileSpec::GetDirectory() const
 {
-    const char *s = NULL;
-    if (m_opaque_ap.get())
-        s = m_opaque_ap->GetDirectory().AsCString();
+    const char *s = m_opaque_ap->GetDirectory().AsCString();
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
@@ -149,9 +126,7 @@ SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    uint32_t result = 0;
-    if (m_opaque_ap.get())
-        result = m_opaque_ap->GetPath (dst_path, dst_len);
+    uint32_t result = m_opaque_ap->GetPath (dst_path, dst_len);
 
     if (log)
         log->Printf ("SBFileSpec(%p)::GetPath (dst_path=\"%.*s\", dst_len=%" PRIu64 ") => %u",
@@ -192,24 +167,15 @@ SBFileSpec::ref() const
 void
 SBFileSpec::SetFileSpec (const lldb_private::FileSpec& fs)
 {
-    if (m_opaque_ap.get())
-        *m_opaque_ap = fs;
-    else
-        m_opaque_ap.reset (new FileSpec (fs));
+    *m_opaque_ap = fs;
 }
 
 bool
 SBFileSpec::GetDescription (SBStream &description) const
 {
     Stream &strm = description.ref();
-    if (m_opaque_ap.get())
-    {
-        char path[PATH_MAX];
-        if (m_opaque_ap->GetPath(path, sizeof(path)))
-            strm.PutCString (path);
-    }
-    else
-        strm.PutCString ("No value");
-    
+    char path[PATH_MAX];
+    if (m_opaque_ap->GetPath(path, sizeof(path)))
+        strm.PutCString (path);    
     return true;
 }

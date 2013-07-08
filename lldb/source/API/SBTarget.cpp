@@ -19,6 +19,7 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBModule.h"
+#include "lldb/API/SBModuleSpec.h"
 #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBStream.h"
@@ -1910,6 +1911,16 @@ SBTarget::AddModule (const char *path,
 
         sb_module.SetSP(target_sp->GetSharedModule (module_spec));
     }
+    return sb_module;
+}
+
+lldb::SBModule
+SBTarget::AddModule (const SBModuleSpec &module_spec)
+{
+    lldb::SBModule sb_module;
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+        sb_module.SetSP(target_sp->GetSharedModule (*module_spec.m_opaque_ap));
     return sb_module;
 }
 

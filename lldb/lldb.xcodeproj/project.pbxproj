@@ -92,6 +92,8 @@
 		2635879417822FC2004C30BA /* SymbolVendorELF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2635879017822E56004C30BA /* SymbolVendorELF.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
+		263C4938178B50C40070F12D /* SBModuleSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263C4937178B50C40070F12D /* SBModuleSpec.cpp */; };
+		263C493A178B50CF0070F12D /* SBModuleSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 263C4939178B50CF0070F12D /* SBModuleSpec.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
 		2640E19F15DC78FD00F23B50 /* Property.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2640E19E15DC78FD00F23B50 /* Property.cpp */; };
 		2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */; };
@@ -923,6 +925,9 @@
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
+		263C4937178B50C40070F12D /* SBModuleSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBModuleSpec.cpp; path = source/API/SBModuleSpec.cpp; sourceTree = "<group>"; };
+		263C4939178B50CF0070F12D /* SBModuleSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBModuleSpec.h; path = include/lldb/API/SBModuleSpec.h; sourceTree = "<group>"; };
+		263C493B178B61CC0070F12D /* SBModuleSpec.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBModuleSpec.i; sourceTree = "<group>"; };
 		263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "UnwindAssembly-x86.cpp"; sourceTree = "<group>"; };
 		263E949E13661AE400E7D1CE /* UnwindAssembly-x86.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UnwindAssembly-x86.h"; sourceTree = "<group>"; };
 		263FEDA5112CC1DA00E4C208 /* ThreadSafeSTLMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeSTLMap.h; path = include/lldb/Core/ThreadSafeSTLMap.h; sourceTree = "<group>"; };
@@ -2113,6 +2118,7 @@
 				2611FF04142D83060017FEA3 /* SBLineEntry.i */,
 				2611FF05142D83060017FEA3 /* SBListener.i */,
 				2611FF06142D83060017FEA3 /* SBModule.i */,
+				263C493B178B61CC0070F12D /* SBModuleSpec.i */,
 				2611FF07142D83060017FEA3 /* SBProcess.i */,
 				2611FF08142D83060017FEA3 /* SBSection.i */,
 				2611FF09142D83060017FEA3 /* SBSourceManager.i */,
@@ -2211,6 +2217,8 @@
 				9A9831011125FC5800A56CB0 /* SBListener.cpp */,
 				26DE204E11618E9800A093E2 /* SBModule.h */,
 				26DE204C11618E7A00A093E2 /* SBModule.cpp */,
+				263C4939178B50CF0070F12D /* SBModuleSpec.h */,
+				263C4937178B50C40070F12D /* SBModuleSpec.cpp */,
 				9A9831041125FC5800A56CB0 /* SBProcess.h */,
 				9A9831031125FC5800A56CB0 /* SBProcess.cpp */,
 				26B8283C142D01E9002DBC64 /* SBSection.h */,
@@ -3497,6 +3505,7 @@
 				268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */,
 				2668022C115FD13D008E1FE4 /* SBTarget.h in Headers */,
 				2668022E115FD13D008E1FE4 /* SBThread.h in Headers */,
+				263C493A178B50CF0070F12D /* SBModuleSpec.h in Headers */,
 				2617447A11685869005ADD65 /* SBType.h in Headers */,
 				9475C18914E5EA08001BFC6D /* SBTypeCategory.h in Headers */,
 				941BCC7F14E48C4000BB969C /* SBTypeFilter.h in Headers */,
@@ -3904,6 +3913,7 @@
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
 				26B82840142D020F002DBC64 /* SBSection.cpp in Sources */,
 				B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */,
+				263C4938178B50C40070F12D /* SBModuleSpec.cpp in Sources */,
 				2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */,
 				9475C18814E5E9FA001BFC6D /* SBTypeCategory.cpp in Sources */,
 				9475C18E14E5F834001BFC6D /* SBTypeNameSpecifier.cpp in Sources */,
