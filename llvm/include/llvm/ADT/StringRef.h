@@ -548,14 +548,6 @@ namespace llvm {
   template <typename T> struct isPodLike;
   template <> struct isPodLike<StringRef> { static const bool value = true; };
 
-  template <typename T> struct DenseMapInfo;
-  template<> struct DenseMapInfo<StringRef> {
-    static StringRef getEmptyKey() { return StringRef(); }
-    static StringRef getTombstoneKey() { return StringRef(" ", 0); }
-    static unsigned getHashValue(StringRef const val);
-    static bool isEqual(StringRef const lhs,
-                        StringRef const rhs) { return lhs.equals(rhs); }
-  };
 }
 
 #endif
