@@ -1126,6 +1126,18 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                               Builder->getInt(RHSV ^ NotSignBit));
         }
       }
+
+      // (icmp ugt (xor X, C), ~C) -> (icmp ult X, C)
+      //   iff -C is a power of 2
+      if (ICI.getPredicate() == ICmpInst::ICMP_UGT &&
+          XorCST->getValue() == ~RHSV && (RHSV + 1).isPowerOf2())
+        return new ICmpInst(ICmpInst::ICMP_ULT, LHSI->getOperand(0), XorCST);
+
+      // (icmp ult (xor X, C), -C) -> (icmp uge X, C)
+      //   iff -C is a power of 2
+      if (ICI.getPredicate() == ICmpInst::ICMP_ULT &&
+          XorCST->getValue() == -RHSV && RHSV.isPowerOf2())
+        return new ICmpInst(ICmpInst::ICMP_UGE, LHSI->getOperand(0), XorCST);
     }
     break;
   case Instruction::And:         // (icmp pred (and X, AndCST), RHS)

@@ -1181,3 +1181,21 @@ define i1 @icmp_and_X_-16_ne-16(i32 %X) {
   %cmp = icmp ne i32 %and, -16
   ret i1 %cmp
 }
+
+; CHECK: @icmp_sub_-1_X_ult_4
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ugt i32 %X, -5
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_sub_-1_X_ult_4(i32 %X) {
+  %sub = sub i32 -1, %X
+  %cmp = icmp ult i32 %sub, 4
+  ret i1 %cmp
+}
+
+; CHECK: @icmp_sub_-1_X_uge_4
+; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ult i32 %X, -4
+; CHECK-NEXT: ret i1 [[CMP]]
+define i1 @icmp_sub_-1_X_uge_4(i32 %X) {
+  %sub = sub i32 -1, %X
+  %cmp = icmp uge i32 %sub, 4
+  ret i1 %cmp
+}
