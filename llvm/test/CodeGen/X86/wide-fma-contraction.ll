@@ -1,5 +1,5 @@
 ; RUN: llc -march=x86 -mattr=+fma4 -mtriple=x86_64-apple-darwin < %s | FileCheck %s
-; RUN: llc -march=x86 -mattr=-fma,-fma4 -mtriple=x86_64-apple-darwin < %s | FileCheck %s --check-prefix=CHECK-NOFMA
+; RUN: llc -march=x86 -mattr=+avx,-fma,-fma4 -mtriple=x86_64-apple-darwin < %s | FileCheck %s --check-prefix=CHECK-NOFMA
 
 ; CHECK: fmafunc
 define <16 x float> @fmafunc(<16 x float> %a, <16 x float> %b, <16 x float> %c) {
