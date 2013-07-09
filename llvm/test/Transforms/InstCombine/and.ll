@@ -186,9 +186,9 @@ define i1 @test25(i32 %A) {
 }
 
 define i1 @test26(i32 %A) {
-        %B = icmp ne i32 %A, 50         ; <i1> [#uses=1]
-        %C = icmp ne i32 %A, 51         ; <i1> [#uses=1]
-        ;; (A-50) > 1
+        %B = icmp ne i32 %A, 49         ; <i1> [#uses=1]
+        %C = icmp ne i32 %A, 50         ; <i1> [#uses=1]
+        ;; (A-49) > 1
         %D = and i1 %B, %C              ; <i1> [#uses=1]
         ret i1 %D
 }
