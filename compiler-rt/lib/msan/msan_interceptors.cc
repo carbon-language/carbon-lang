@@ -991,6 +991,8 @@ struct MSanInterceptorContext {
       CHECK_UNPOISONED_0(x, n);                                 \
   } while (0)
 
+#define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count)  \
+  UnpoisonParam(count)
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
   __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) \

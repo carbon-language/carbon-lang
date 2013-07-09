@@ -751,12 +751,64 @@ static void unpoison_glob_t(void *ctx, __sanitizer_glob_t *pglob) {
   }
 }
 
+static THREADLOCAL __sanitizer_glob_t* pglob_copy; 
+static THREADLOCAL void* glob_ctx;
+
+static void wrapped_gl_closedir(void *dir) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(glob_ctx, 1);
+  pglob_copy->gl_closedir(dir);
+}
+
+static void *wrapped_gl_readdir(void *dir) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(glob_ctx, 1);
+  return pglob_copy->gl_readdir(dir);
+}
+
+static void *wrapped_gl_opendir(const char *s) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(glob_ctx, 1);
+  COMMON_INTERCEPTOR_WRITE_RANGE(glob_ctx, s, REAL(strlen)(s) + 1);
+  return pglob_copy->gl_opendir(s);
+}
+
+static int wrapped_gl_lstat(const char *s, void *st) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(glob_ctx, 2);
+  COMMON_INTERCEPTOR_WRITE_RANGE(glob_ctx, s, REAL(strlen)(s) + 1);
+  return pglob_copy->gl_lstat(s, st);
+}
+
+static int wrapped_gl_stat(const char *s, void *st) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(glob_ctx, 2);
+  COMMON_INTERCEPTOR_WRITE_RANGE(glob_ctx, s, REAL(strlen)(s) + 1);
+  return pglob_copy->gl_stat(s, st);
+}
+
 INTERCEPTOR(int, glob, const char *pattern, int flags,
             int (*errfunc)(const char *epath, int eerrno),
             __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob, pattern, flags, errfunc, pglob);
+  __sanitizer_glob_t glob_copy = {0, 0, 0, 0, wrapped_gl_closedir,
+                                  wrapped_gl_readdir, wrapped_gl_opendir,
+                                  wrapped_gl_lstat, wrapped_gl_stat};
+  if (flags & glob_altdirfunc) {
+    Swap(pglob->gl_closedir, glob_copy.gl_closedir);
+    Swap(pglob->gl_readdir, glob_copy.gl_readdir);
+    Swap(pglob->gl_opendir, glob_copy.gl_opendir);
+    Swap(pglob->gl_lstat, glob_copy.gl_lstat);
+    Swap(pglob->gl_stat, glob_copy.gl_stat);
+    pglob_copy = &glob_copy;
+    glob_ctx = ctx;
+  }
   int res = REAL(glob)(pattern, flags, errfunc, pglob);
+  if (flags & glob_altdirfunc) {
+    Swap(pglob->gl_closedir, glob_copy.gl_closedir);
+    Swap(pglob->gl_readdir, glob_copy.gl_readdir);
+    Swap(pglob->gl_opendir, glob_copy.gl_opendir);
+    Swap(pglob->gl_lstat, glob_copy.gl_lstat);
+    Swap(pglob->gl_stat, glob_copy.gl_stat);
+  }
+  pglob_copy = 0;
+  glob_ctx = 0;
   if ((!res || res == glob_nomatch) && pglob) unpoison_glob_t(ctx, pglob);
   return res;
 }

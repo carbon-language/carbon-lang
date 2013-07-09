@@ -190,9 +190,18 @@ namespace __sanitizer {
   struct __sanitizer_glob_t {
     uptr gl_pathc;
     char **gl_pathv;
+    uptr gl_offs;
+    int gl_flags;
+    
+    void (*gl_closedir)(void *);
+    void *(*gl_readdir)(void *);
+    void *(*gl_opendir)(const char *);
+    int (*gl_lstat)(const char *, void *);
+    int (*gl_stat)(const char *, void *);
   };
 
   extern int glob_nomatch;
+  extern int glob_altdirfunc;
 #endif
 
   extern unsigned path_max;

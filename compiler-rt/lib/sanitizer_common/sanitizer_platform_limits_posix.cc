@@ -166,6 +166,7 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   int glob_nomatch = GLOB_NOMATCH;
+  int glob_altdirfunc = GLOB_ALTDIRFUNC;
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
@@ -745,9 +746,16 @@ COMPILER_CHECK(IOC_SIZE(0x12345678) == _IOC_SIZE(0x12345678));
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
-COMPILER_CHECK(sizeof(__sanitizer_glob_t) <= sizeof(glob_t));
+CHECK_TYPE_SIZE(glob_t);
 CHECK_SIZE_AND_OFFSET(glob_t, gl_pathc);
 CHECK_SIZE_AND_OFFSET(glob_t, gl_pathv);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_offs);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_flags);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_closedir);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_readdir);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_opendir);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_lstat);
+CHECK_SIZE_AND_OFFSET(glob_t, gl_stat);
 #endif
 
 CHECK_TYPE_SIZE(addrinfo);

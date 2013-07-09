@@ -1815,9 +1815,12 @@ struct TsanInterceptorContext {
 // Causes interceptor recursion (glob64() calls lstat64())
 #undef SANITIZER_INTERCEPT_GLOB
 
-#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                      \
-  MemoryAccessRange(((TsanInterceptorContext *) ctx)->thr,                  \
-                    ((TsanInterceptorContext *) ctx)->pc, (uptr) ptr, size, \
+#define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count) \
+  do {                                                \
+  } while (false)
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                    \
+  MemoryAccessRange(((TsanInterceptorContext *)ctx)->thr,                 \
+                    ((TsanInterceptorContext *)ctx)->pc, (uptr)ptr, size, \
                     true)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size)                       \
   MemoryAccessRange(((TsanInterceptorContext *) ctx)->thr,                  \
