@@ -1,4 +1,4 @@
-//===-- FastISel.h - Definition of the FastISel class ---------------------===//
+//===-- FastISel.h - Definition of the FastISel class ---*- mode: c++; -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
