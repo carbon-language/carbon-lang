@@ -37,4 +37,12 @@ USEDLIBS = clang.a \
 include $(CLANG_LEVEL)/Makefile
 
 LIBS += $(LIBXML2_LIBS)
+
+# Headers in $(LIBXML2_INC) should not be checked with clang's -Wdocumentation.
+# Use -isystem instead of -I then.
+# FIXME: Could autoconf detect clang or availability of -isystem?
+ifneq ($(findstring -Wdocumentation,$(OPTIMIZE_OPTION)),)
+CPPFLAGS += $(subst -I,-isystem ,$(LIBXML2_INC))
+else
 CPPFLAGS += $(LIBXML2_INC)
+endif
