@@ -115,8 +115,7 @@ ProcessPOSIX::DoAttachToProcessWithID(lldb::pid_t pid)
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s(pid = %" PRIi64 ")", __FUNCTION__, GetID());
 
-    ProcessPOSIXSP process_sp(static_pointer_cast<ProcessPOSIX>(CalculateProcess()));
-    m_monitor = new ProcessMonitor(process_sp, pid, error);
+    m_monitor = new ProcessMonitor(this, pid, error);
 
     if (!error.Success())
         return error;
@@ -226,8 +225,7 @@ ProcessPOSIX::DoLaunch (Module *module,
     file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
     stderr_path = GetFilePath(file_action, stderr_path);
 
-    ProcessPOSIXSP process_sp(static_pointer_cast<ProcessPOSIX>(CalculateProcess()));
-    m_monitor = new ProcessMonitor (process_sp,
+    m_monitor = new ProcessMonitor (this, 
                                     module,
                                     launch_info.GetArguments().GetConstArgumentVector(), 
                                     launch_info.GetEnvironmentEntries().GetConstArgumentVector(),
