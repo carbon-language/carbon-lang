@@ -3051,6 +3051,15 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
                "                         aaaaaaaaaaaaaaaaaaa,\n"
                "                         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
                NoBinPacking);
+
+  // If there is a subsequent call, change to hanging indentation.
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "                         aaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa))\n"
+      "    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaa));");
 }
 
 TEST_F(FormatTest, WrapsTemplateDeclarations) {
@@ -3787,7 +3796,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
     verifyFormat("DoSomethingWithVector({ {} /* No data */ }, { { 1, 2 } });");
     verifyFormat(
         "someFunction(OtherParam, BracedList{\n"
-        "                           // comment 1 (Forcing intersting break)\n"
+        "                           // comment 1 (Forcing interesting break)\n"
         "                           param1, param2,\n"
         "                           // comment 2\n"
         "                           param3, param4\n"

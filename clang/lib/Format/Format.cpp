@@ -672,10 +672,24 @@ private:
         State.Stack.back().LastSpace = State.Column;
       else if (Previous.Type == TT_InheritanceColon)
         State.Stack.back().Indent = State.Column;
-      else if (Previous.opensScope() && !Current.FakeLParens.empty())
-        // If this function has multiple parameters or a binary expression
-        // parameter, indent nested calls from the start of the first parameter.
-        State.Stack.back().LastSpace = State.Column;
+      else if (Previous.opensScope()) {
+        // If a function has multiple parameters (including a single parameter
+        // that is a binary expression) or a trailing call, indented all
+        // parameters from the opening parenthesis. This avoids confusing
+        // indents like:
+        //   OuterFunction(InnerFunctionCall(
+        //       ParameterToInnerFunction),
+        //                 SecondParameterToOuterFunction);
+        bool HasMultipleParameters = !Current.FakeLParens.empty();
+        bool HasTrailingCall = false;
+        if (Previous.MatchingParen) {
+          const FormatToken *Next = Previous.MatchingParen->getNextNonComment();
+          if (Next && Next->isOneOf(tok::period, tok::arrow))
+            HasTrailingCall = true;
+        }
+        if (HasMultipleParameters || HasTrailingCall)
+          State.Stack.back().LastSpace = State.Column;
+      }
     }
 
     return moveStateToNextToken(State, DryRun);
