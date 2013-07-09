@@ -35,6 +35,7 @@
 namespace llvm {
 class Function;
 class GlobalVariable;
+class MemoryBuffer;
 class Module;
 class Regex;
 class StringRef;
@@ -42,6 +43,8 @@ class StringRef;
 class SpecialCaseList {
  public:
   SpecialCaseList(const StringRef Path);
+  SpecialCaseList(const MemoryBuffer *MB);
+
   // Returns whether either this function or it's source file are blacklisted.
   bool isIn(const Function &F) const;
   // Returns whether either this global or it's source file are blacklisted.
@@ -53,6 +56,7 @@ class SpecialCaseList {
  private:
   StringMap<Regex*> Entries;
 
+  void init(const MemoryBuffer *MB);
   bool inSection(const StringRef Section, const StringRef Query) const;
 };
 

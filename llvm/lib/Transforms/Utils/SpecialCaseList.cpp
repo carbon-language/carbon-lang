@@ -39,9 +39,17 @@ SpecialCaseList::SpecialCaseList(const StringRef Path) {
                        EC.message());
   }
 
+  init(File.get());
+}
+
+SpecialCaseList::SpecialCaseList(const MemoryBuffer *MB) {
+  init(MB);
+}
+
+void SpecialCaseList::init(const MemoryBuffer *MB) {
   // Iterate through each line in the blacklist file.
   SmallVector<StringRef, 16> Lines;
-  SplitString(File.take()->getBuffer(), Lines, "\n\r");
+  SplitString(MB->getBuffer(), Lines, "\n\r");
   StringMap<std::string> Regexps;
   for (SmallVectorImpl<StringRef>::iterator I = Lines.begin(), E = Lines.end();
        I != E; ++I) {
