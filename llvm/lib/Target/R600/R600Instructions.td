@@ -522,9 +522,9 @@ let usesCustomInserter = 1, isNotDuplicable = 1 in {
 class ExportSwzInst : InstR600ISA<(
     outs),
     (ins R600_Reg128:$gpr, i32imm:$type, i32imm:$arraybase,
-    i32imm:$sw_x, i32imm:$sw_y, i32imm:$sw_z, i32imm:$sw_w, i32imm:$inst,
+    RSel:$sw_x, RSel:$sw_y, RSel:$sw_z, RSel:$sw_w, i32imm:$inst,
     i32imm:$eop),
-    !strconcat("EXPORT", " $gpr"),
+    !strconcat("EXPORT", " $gpr.$sw_x$sw_y$sw_z$sw_w"),
     []>, ExportWord0, ExportSwzWord1 {
   let elem_size = 3;
   let Inst{31-0} = Word0;
