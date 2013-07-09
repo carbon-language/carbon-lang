@@ -648,6 +648,27 @@ def VNEGS  : ASuIn<0b11101, 0b11, 0b0001, 0b01, 0,
   let D = VFPNeonA8Domain;
 }
 
+multiclass vrint_inst_zrx<string opc, bit op, bit op2> {
+  def S : ASuI<0b11101, 0b11, 0b0110, 0b11, 0,
+               (outs SPR:$Sd), (ins SPR:$Sm),
+               NoItinerary, !strconcat("vrint", opc), ".f32\t$Sd, $Sm",
+               []>, Requires<[HasV8FP]> {
+    let Inst{7} = op2;
+    let Inst{16} = op;
+  }
+  def D : ADuI<0b11101, 0b11, 0b0110, 0b11, 0,
+                (outs DPR:$Dd), (ins DPR:$Dm),
+                NoItinerary, !strconcat("vrint", opc), ".f64\t$Dd, $Dm",
+                []>, Requires<[HasV8FP]> {
+    let Inst{7} = op2;
+    let Inst{16} = op;
+  }
+}
+
+defm VRINTZ : vrint_inst_zrx<"z", 0, 1>;
+defm VRINTR : vrint_inst_zrx<"r", 0, 0>;
+defm VRINTX : vrint_inst_zrx<"x", 1, 0>;
+
 def VSQRTD : ADuI<0b11101, 0b11, 0b0001, 0b11, 0,
                   (outs DPR:$Dd), (ins DPR:$Dm),
                   IIC_fpSQRT64, "vsqrt", ".f64\t$Dd, $Dm",

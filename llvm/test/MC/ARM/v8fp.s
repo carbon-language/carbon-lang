@@ -88,3 +88,18 @@
 @ CHECK: vminnm.f32 s0, s0, s12    @ encoding: [0x46,0x0a,0x80,0xfe]
   vminnm.f64 d4, d6, d9
 @ CHECK: vminnm.f64 d4, d6, d9     @ encoding: [0x49,0x4b,0x86,0xfe]
+
+@ VRINT{Z,R,X}
+
+  vrintzge.f64 d3, d12
+@ CHECK: vrintzge.f64 d3, d12   @ encoding: [0xcc,0x3b,0xb6,0xae]
+  vrintz.f32 s3, s24
+@ CHECK: vrintz.f32 s3, s24     @ encoding: [0xcc,0x1a,0xf6,0xee]
+  vrintrlt.f64 d5, d0
+@ CHECK: vrintrlt.f64 d5, d0    @ encoding: [0x40,0x5b,0xb6,0xbe]
+  vrintr.f32 s0, s9
+@ CHECK: vrintr.f32 s0, s9      @ encoding: [0x64,0x0a,0xb6,0xee]
+  vrintxeq.f64 d28, d30
+@ CHECK: vrintxeq.f64 d28, d30  @ encoding: [0x6e,0xcb,0xf7,0x0e]
+  vrintxvs.f32 s10, s14
+@ CHECK: vrintxvs.f32 s10, s14  @ encoding: [0x47,0x5a,0xb7,0x6e]
