@@ -36,10 +36,6 @@ struct ArchiveMemberHeader {
   uint64_t getSize() const;
 };
 
-static const ArchiveMemberHeader *ToHeader(const char *base) {
-  return reinterpret_cast<const ArchiveMemberHeader *>(base);
-}
-
 class Archive : public Binary {
   virtual void anchor();
 public:
@@ -49,6 +45,10 @@ public:
     StringRef Data;
     /// \brief Offset from Data to the start of the file.
     uint16_t StartOfFile;
+
+    const ArchiveMemberHeader *getHeader() const {
+      return reinterpret_cast<const ArchiveMemberHeader *>(Data.data());
+    }
 
   public:
     Child(const Archive *Parent, const char *Start);
@@ -64,7 +64,7 @@ public:
     Child getNext() const;
 
     error_code getName(StringRef &Result) const;
-    StringRef getRawName() const { return ToHeader(Data.data())->getName(); }
+    StringRef getRawName() const { return getHeader()->getName(); }
     /// \return the size of the archive member without the header or padding.
     uint64_t getSize() const { return Data.size() - StartOfFile; }
 

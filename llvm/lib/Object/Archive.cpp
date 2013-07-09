@@ -61,12 +61,16 @@ uint64_t ArchiveMemberHeader::getSize() const {
   return ret;
 }
 
+static const ArchiveMemberHeader *toHeader(const char *base) {
+  return reinterpret_cast<const ArchiveMemberHeader *>(base);
+}
+
 Archive::Child::Child(const Archive *Parent, const char *Start)
     : Parent(Parent) {
   if (!Start)
     return;
 
-  const ArchiveMemberHeader *Header = ToHeader(Start);
+  const ArchiveMemberHeader *Header = toHeader(Start);
   Data = StringRef(Start, sizeof(ArchiveMemberHeader) + Header->getSize());
 
   // Setup StartOfFile and PaddingBytes.
@@ -270,7 +274,7 @@ Archive::child_iterator Archive::begin_children(bool skip_internal) const {
   const char *Loc = Data->getBufferStart() + strlen(Magic);
   Child c(this, Loc);
   // Skip internals at the beginning of an archive.
-  if (skip_internal && isInternalMember(*ToHeader(Loc)))
+  if (skip_internal && isInternalMember(*toHeader(Loc)))
     return c.getNext();
   return c;
 }
