@@ -143,9 +143,19 @@ CommandReturnObject::SetError (const Error &error, const char *fallback_error_cs
     const char *error_cstr = error.AsCString();
     if (error_cstr == NULL)
         error_cstr = fallback_error_cstr;
-    AppendError (error_cstr);
-    SetStatus (eReturnStatusFailed);
+    SetError(error_cstr);
 }
+
+void
+CommandReturnObject::SetError (const char *error_cstr)
+{
+    if (error_cstr)
+    {
+        AppendError (error_cstr);
+        SetStatus (eReturnStatusFailed);
+    }
+}
+
 // Similar to AppendError, but do not prepend 'Error: ' to message, and
 // don't append "\n" to the end of it.
 
