@@ -148,7 +148,11 @@ bool AMDGPUPassConfig::addPostRegAlloc() {
 }
 
 bool AMDGPUPassConfig::addPreSched2() {
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
+  if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
+    addPass(createR600EmitClauseMarkers(*TM));
+  }
   addPass(&IfConverterID);
   return false;
 }
@@ -158,7 +162,6 @@ bool AMDGPUPassConfig::addPreEmitPass() {
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createAMDGPUCFGPreparationPass(*TM));
     addPass(createAMDGPUCFGStructurizerPass(*TM));
-    addPass(createR600EmitClauseMarkers(*TM));
     addPass(createR600ExpandSpecialInstrsPass(*TM));
     addPass(&FinalizeMachineBundlesID);
     addPass(createR600Packetizer(*TM));

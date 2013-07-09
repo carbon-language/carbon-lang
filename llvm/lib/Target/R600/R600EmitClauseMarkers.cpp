@@ -32,6 +32,7 @@ class R600EmitClauseMarkersPass : public MachineFunctionPass {
 private:
   static char ID;
   const R600InstrInfo *TII;
+  int Address;
 
   unsigned OccupiedDwords(MachineInstr *MI) const {
     switch (MI->getOpcode()) {
@@ -159,7 +160,7 @@ private:
   }
 
   MachineBasicBlock::iterator
-  MakeALUClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const {
+  MakeALUClause(MachineBasicBlock &MBB, MachineBasicBlock::iterator I) {
     MachineBasicBlock::iterator ClauseHead = I;
     std::vector<std::pair<unsigned, unsigned> > KCacheBanks;
     bool PushBeforeModifier = false;
@@ -199,20 +200,25 @@ private:
     unsigned Opcode = PushBeforeModifier ?
         AMDGPU::CF_ALU_PUSH_BEFORE : AMDGPU::CF_ALU;
     BuildMI(MBB, ClauseHead, MBB.findDebugLoc(ClauseHead), TII->get(Opcode))
-        .addImm(0) // ADDR
+    // We don't use the ADDR field until R600ControlFlowFinalizer pass, where
+    // it is safe to assume it is 0. However if we always put 0 here, the ifcvt
+    // pass may assume that identical ALU clause starter at the beginning of a 
+    // true and false branch can be factorized which is not the case.
+        .addImm(Address++) // ADDR
         .addImm(KCacheBanks.empty()?0:KCacheBanks[0].first) // KB0
         .addImm((KCacheBanks.size() < 2)?0:KCacheBanks[1].first) // KB1
         .addImm(KCacheBanks.empty()?0:2) // KM0
         .addImm((KCacheBanks.size() < 2)?0:2) // KM1
         .addImm(KCacheBanks.empty()?0:KCacheBanks[0].second) // KLINE0
         .addImm((KCacheBanks.size() < 2)?0:KCacheBanks[1].second) // KLINE1
-        .addImm(AluInstCount); // COUNT
+        .addImm(AluInstCount) // COUNT
+        .addImm(1); // Enabled
     return I;
   }
 
 public:
   R600EmitClauseMarkersPass(TargetMachine &tm) : MachineFunctionPass(ID),
-    TII(0) { }
+    TII(0), Address(0) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF) {
     TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());

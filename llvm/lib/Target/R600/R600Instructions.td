@@ -563,7 +563,7 @@ class ALU_CLAUSE<bits<4> inst, string OpName> : AMDGPUInst <(outs),
 (ins i32imm:$ADDR, i32imm:$KCACHE_BANK0, i32imm:$KCACHE_BANK1,
 KCACHE:$KCACHE_MODE0, KCACHE:$KCACHE_MODE1,
 i32imm:$KCACHE_ADDR0, i32imm:$KCACHE_ADDR1,
-i32imm:$COUNT),
+i32imm:$COUNT, i32imm:$Enabled),
 !strconcat(OpName, " $COUNT, @$ADDR, "
 "KC0[$KCACHE_MODE0], KC1[$KCACHE_MODE1]"),
 [] >, CF_ALU_WORD0, CF_ALU_WORD1 {

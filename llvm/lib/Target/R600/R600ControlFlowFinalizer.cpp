@@ -256,6 +256,7 @@ private:
         ClauseContent.push_back(MILit);
       }
     }
+    assert(ClauseContent.size() < 128 && "ALU clause is too big");
     ClauseHead->getOperand(7).setImm(ClauseContent.size() - 1);
     return ClauseFile(ClauseHead, ClauseContent);
   }
@@ -276,6 +277,7 @@ private:
   void
   EmitALUClause(MachineBasicBlock::iterator InsertPos, ClauseFile &Clause,
       unsigned &CfCount) {
+    Clause.first->getOperand(0).setImm(0);
     CounterPropagateAddr(Clause.first, CfCount);
     MachineBasicBlock *BB = Clause.first->getParent();
     BuildMI(BB, InsertPos->getDebugLoc(), TII->get(AMDGPU::ALU_CLAUSE))
