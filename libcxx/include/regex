@@ -5773,7 +5773,8 @@ basic_regex<_CharT, _Traits>::__search(
 {
     __m.__init(1 + mark_count(), __first, __last,
                                     __flags & regex_constants::__no_update_pos);
-    if (__match_at_start(__first, __last, __m, __flags, true))
+    if (__match_at_start(__first, __last, __m, __flags, 
+                                    !(__flags & regex_constants::__no_update_pos)))
     {
         __m.__prefix_.second = __m[0].first;
         __m.__prefix_.matched = __m.__prefix_.first != __m.__prefix_.second;
