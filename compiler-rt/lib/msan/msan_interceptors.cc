@@ -619,14 +619,6 @@ INTERCEPTOR(char *, fgets_unlocked, char *s, int size, void *stream) {
   return res;
 }
 
-INTERCEPTOR(char *, realpath, char *path, char *abspath) {
-  ENSURE_MSAN_INITED();
-  char *res = REAL(realpath)(path, abspath);
-  if (res)
-    __msan_unpoison(abspath, REAL(strlen)(abspath) + 1);
-  return res;
-}
-
 INTERCEPTOR(int, getrlimit, int resource, void *rlim) {
   if (msan_init_is_running)
     return REAL(getrlimit)(resource, rlim);
@@ -1208,7 +1200,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(socketpair);
   INTERCEPT_FUNCTION(fgets);
   INTERCEPT_FUNCTION(fgets_unlocked);
-  INTERCEPT_FUNCTION(realpath);
   INTERCEPT_FUNCTION(getrlimit);
   INTERCEPT_FUNCTION(getrlimit64);
   INTERCEPT_FUNCTION(statfs);

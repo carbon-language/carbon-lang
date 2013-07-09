@@ -344,6 +344,8 @@ enum StatType {
   StatInt_wcsrtombs,
   StatInt_wcsnrtombs,
   StatInt_tcgetattr,
+  StatInt_realpath,
+  StatInt_canonicalize_file_name,
 
   // Dynamic annotations.
   StatAnnotation,

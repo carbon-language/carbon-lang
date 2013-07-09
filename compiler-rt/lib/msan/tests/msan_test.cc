@@ -939,6 +939,23 @@ TEST(MemorySanitizer, realpath) {
   EXPECT_NOT_POISONED(path[0]);
 }
 
+TEST(MemorySanitizer, realpath_null) {
+  const char* relpath = ".";
+  char* res = realpath(relpath, NULL);
+  printf("%d, %s\n", errno, strerror(errno));
+  assert(res);
+  EXPECT_NOT_POISONED(res[0]);
+  free(res);
+}
+
+TEST(MemorySanitizer, canonicalize_file_name) {
+  const char* relpath = ".";
+  char* res = canonicalize_file_name(relpath);
+  assert(res);
+  EXPECT_NOT_POISONED(res[0]);
+  free(res);
+}
+
 TEST(MemorySanitizer, memcpy) {
   char* x = new char[2];
   char* y = new char[2];

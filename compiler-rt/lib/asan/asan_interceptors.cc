@@ -99,6 +99,9 @@ void SetThreadName(const char *name) {
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
 
+DECLARE_REAL_AND_INTERCEPTOR(void *, malloc, uptr)
+DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
+
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
   ASAN_WRITE_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) ASAN_READ_RANGE(ptr, size)

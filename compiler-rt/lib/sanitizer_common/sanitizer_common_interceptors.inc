@@ -1580,6 +1580,46 @@ INTERCEPTOR(int, tcgetattr, int fd, void *termios_p) {
 #define INIT_TCGETATTR
 #endif
 
+
+#if SANITIZER_INTERCEPT_REALPATH
+INTERCEPTOR(char *, realpath, const char *path, char *resolved_path) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, realpath, path, resolved_path);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+
+  // Workaround a bug in glibc where dlsym(RTLD_NEXT, ...) returns the oldest
+  // version of a versioned symbol. For realpath(), this gives us something
+  // (called __old_realpath) that does not handle NULL in the second argument.
+  // Handle it as part of the interceptor.
+  char *allocated_path = 0;
+  if (!resolved_path)
+    allocated_path = resolved_path = (char *)WRAP(malloc)(path_max + 1);
+
+  char *res = REAL(realpath)(path, resolved_path);
+  if (allocated_path && !res)
+    WRAP(free)(allocated_path);
+  if (res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+#define INIT_REALPATH INTERCEPT_FUNCTION(realpath);
+#else
+#define INIT_REALPATH
+#endif
+
+#if SANITIZER_INTERCEPT_CANONICALIZE_FILE_NAME
+INTERCEPTOR(char *, canonicalize_file_name, const char *path) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, canonicalize_file_name, path);
+  if (path) COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  char *res = REAL(canonicalize_file_name)(path);
+  if (res) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+#define INIT_CANONICALIZE_FILE_NAME INTERCEPT_FUNCTION(canonicalize_file_name);
+#else
+#define INIT_CANONICALIZE_FILE_NAME
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
@@ -1634,4 +1674,6 @@ INTERCEPTOR(int, tcgetattr, int fd, void *termios_p) {
   INIT_MBSNRTOWCS;                         \
   INIT_WCSTOMBS;                           \
   INIT_WCSNRTOMBS;                         \
-  INIT_TCGETATTR;
+  INIT_TCGETATTR;                          \
+  INIT_REALPATH;                           \
+  INIT_CANONICALIZE_FILE_NAME;

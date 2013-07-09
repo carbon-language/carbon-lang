@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <grp.h>
+#include <limits.h>
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/route.h>
@@ -193,6 +194,8 @@ namespace __sanitizer {
   int ptrace_setregset = -1;
 #endif
 #endif
+
+  unsigned path_max = PATH_MAX;
 
   // ioctl arguments
   unsigned struct_arpreq_sz = sizeof(struct arpreq);
