@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZTargetMachine.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -208,6 +209,8 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   //   (Opcode (Opcode Op0 UpperVal) LowerVal)
   SDNode *splitLargeImmediate(unsigned Opcode, SDNode *Node, SDValue Op0,
                               uint64_t UpperVal, uint64_t LowerVal);
+
+  bool storeLoadCanUseMVC(SDNode *N) const;
 
 public:
   SystemZDAGToDAGISel(SystemZTargetMachine &TM, CodeGenOpt::Level OptLevel)
@@ -531,6 +534,49 @@ SDNode *SystemZDAGToDAGISel::splitLargeImmediate(unsigned Opcode, SDNode *Node,
   SDValue Lower = CurDAG->getConstant(LowerVal, VT);
   SDValue Or = CurDAG->getNode(Opcode, DL, VT, Upper, Lower);
   return Or.getNode();
+}
+
+// N is a (store (load ...), ...) pattern.  Return true if it can use MVC.
+bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
+  StoreSDNode *Store = cast<StoreSDNode>(N);
+  LoadSDNode *Load = cast<LoadSDNode>(Store->getValue().getNode());
+
+  // MVC is logically a bytewise copy, so can't be used for volatile accesses.
+  if (Load->isVolatile() || Store->isVolatile())
+    return false;
+
+  // Prefer not to use MVC if either address can use ... RELATIVE LONG
+  // instructions.
+  assert(Load->getMemoryVT() == Store->getMemoryVT() &&
+         "Should already have checked that the types match");
+  uint64_t Size = Load->getMemoryVT().getStoreSize();
+  if (Size > 1 && Size <= 8) {
+    // Prefer LHRL, LRL and LGRL.
+    if (Load->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
+      return false;
+    // Prefer STHRL, STRL and STGRL.
+    if (Store->getBasePtr().getOpcode() == SystemZISD::PCREL_WRAPPER)
+      return false;
+  }
+
+  // There's no chance of overlap if the load is invariant.
+  if (Load->isInvariant())
+    return true;
+
+  // If both operands are aligned, they must be equal or not overlap.
+  if (Load->getAlignment() >= Size && Store->getAlignment() >= Size)
+    return true;
+
+  // Otherwise we need to check whether there's an alias.
+  const Value *V1 = Load->getSrcValue();
+  const Value *V2 = Store->getSrcValue();
+  if (!V1 || !V2)
+    return false;
+
+  int64_t End1 = Load->getSrcValueOffset() + Size;
+  int64_t End2 = Store->getSrcValueOffset() + Size;
+  return !AA->alias(AliasAnalysis::Location(V1, End1, Load->getTBAAInfo()),
+                    AliasAnalysis::Location(V2, End2, Store->getTBAAInfo()));
 }
 
 SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {

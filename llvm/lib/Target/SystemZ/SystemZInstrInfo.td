@@ -294,6 +294,20 @@ let mayLoad = 1, mayStore = 1, usesCustomInserter = 1 in
                           [(z_mvc bdaddr12only:$dest, bdaddr12only:$src,
                                   imm32len8:$length)]>;
 
+defm LoadStore8_32  : MVCLoadStore<anyextloadi8, truncstorei8, i32,
+                                   MVCWrapper, 1>;
+defm LoadStore16_32 : MVCLoadStore<anyextloadi16, truncstorei16, i32,
+                                   MVCWrapper, 2>;
+defm LoadStore32_32 : MVCLoadStore<load, store, i32, MVCWrapper, 4>;
+
+defm LoadStore8  : MVCLoadStore<anyextloadi8, truncstorei8, i64,
+                                MVCWrapper, 1>;
+defm LoadStore16 : MVCLoadStore<anyextloadi16, truncstorei16, i64,
+                                MVCWrapper, 2>;
+defm LoadStore32 : MVCLoadStore<anyextloadi32, truncstorei32, i64,
+                                MVCWrapper, 4>;
+defm LoadStore64 : MVCLoadStore<load, store, i64, MVCWrapper, 8>;
+
 //===----------------------------------------------------------------------===//
 // Sign extensions
 //===----------------------------------------------------------------------===//
@@ -338,6 +352,14 @@ def : Pat<(i32 (extloadi16 bdxaddr20pair:$src)), (LHY bdxaddr20pair:$src)>;
 def : Pat<(i64 (extloadi8  bdxaddr20only:$src)), (LGB bdxaddr20only:$src)>;
 def : Pat<(i64 (extloadi16 bdxaddr20only:$src)), (LGH bdxaddr20only:$src)>;
 def : Pat<(i64 (extloadi32 bdxaddr20only:$src)), (LGF bdxaddr20only:$src)>;
+
+// We want PC-relative addresses to be tried ahead of BD and BDX addresses.
+// However, BDXs have two extra operands and are therefore 6 units more
+// complex.
+let AddedComplexity = 7 in {
+  def : Pat<(i32 (extloadi16 pcrel32:$src)), (LHRL  pcrel32:$src)>;
+  def : Pat<(i64 (extloadi16 pcrel32:$src)), (LGHRL pcrel32:$src)>;
+}
 
 //===----------------------------------------------------------------------===//
 // Zero extensions
