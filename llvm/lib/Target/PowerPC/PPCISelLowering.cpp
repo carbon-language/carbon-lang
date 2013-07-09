@@ -4720,15 +4720,6 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                                            SDLoc dl) const {
   assert(Op.getOperand(0).getValueType().isFloatingPoint());
   SDValue Src = Op.getOperand(0);
-
-  // If we have a long double here, it must be that we have an undef of
-  // that type.  In this case return an undef of the target type.
-  if (Src.getValueType() == MVT::ppcf128) {
-    assert(Src.getOpcode() == ISD::UNDEF && "Unhandled ppcf128!");
-    return DAG.getNode(ISD::UNDEF, dl,
-                       Op.getValueType().getSimpleVT().SimpleTy);
-  }
-
   if (Src.getValueType() == MVT::f32)
     Src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Src);
 
@@ -5808,6 +5799,9 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::FP_TO_SINT:
+    // LowerFP_TO_INT() can only handle f32 and f64.
+    if (N->getOperand(0).getValueType() == MVT::ppcf128)
+      return;
     Results.push_back(LowerFP_TO_INT(SDValue(N, 0), DAG, dl));
     return;
   }
