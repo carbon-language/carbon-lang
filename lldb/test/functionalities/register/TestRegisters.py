@@ -45,7 +45,6 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
-    @skipIfLinux # llvm.org/pr16301 LLDB occasionally exits with SIGABRT 
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:
@@ -236,14 +235,14 @@ class RegisterCommandsTestCase(TestBase):
 
     def convenience_registers_with_process_attach(self, test_16bit_regs):
         """Test convenience registers after a 'process attach'."""
-        exe = self.lldbHere
+        exe = os.path.join(os.getcwd(), "a.out")
 
         # Spawn a new process
         pid = 0
         if sys.platform.startswith('linux'):
-            pid = self.forkSubprocess(exe, [self.lldbOption])
+            pid = self.forkSubprocess(exe, ['wait_for_attach'])
         else:
-            proc = self.spawnSubprocess(exe, [self.lldbOption])
+            proc = self.spawnSubprocess(exe, ['wait_for_attach'])
             pid = proc.pid
         self.addTearDownHook(self.cleanupSubprocesses)
 
