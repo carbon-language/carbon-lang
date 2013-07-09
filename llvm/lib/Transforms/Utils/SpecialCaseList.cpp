@@ -1,4 +1,4 @@
-//===-- BlackList.cpp - blacklist for sanitizers --------------------------===//
+//===-- SpecialCaseList.cpp - blacklist for sanitizers --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/BlackList.h"
+#include "llvm/Transforms/Utils/SpecialCaseList.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -30,7 +30,7 @@
 
 namespace llvm {
 
-BlackList::BlackList(const StringRef Path) {
+SpecialCaseList::SpecialCaseList(const StringRef Path) {
   // Validate and open blacklist file.
   if (Path.empty()) return;
   OwningPtr<MemoryBuffer> File;
@@ -84,15 +84,15 @@ BlackList::BlackList(const StringRef Path) {
   }
 }
 
-bool BlackList::isIn(const Function &F) const {
+bool SpecialCaseList::isIn(const Function &F) const {
   return isIn(*F.getParent()) || inSection("fun", F.getName());
 }
 
-bool BlackList::isIn(const GlobalVariable &G) const {
+bool SpecialCaseList::isIn(const GlobalVariable &G) const {
   return isIn(*G.getParent()) || inSection("global", G.getName());
 }
 
-bool BlackList::isIn(const Module &M) const {
+bool SpecialCaseList::isIn(const Module &M) const {
   return inSection("src", M.getModuleIdentifier());
 }
 
@@ -107,15 +107,15 @@ static StringRef GetGVTypeString(const GlobalVariable &G) {
   return "<unknown type>";
 }
 
-bool BlackList::isInInit(const GlobalVariable &G) const {
+bool SpecialCaseList::isInInit(const GlobalVariable &G) const {
   return (isIn(*G.getParent()) ||
           inSection("global-init", G.getName()) ||
           inSection("global-init-type", GetGVTypeString(G)) ||
           inSection("global-init-src", G.getParent()->getModuleIdentifier()));
 }
 
-bool BlackList::inSection(const StringRef Section,
-                          const StringRef Query) const {
+bool SpecialCaseList::inSection(const StringRef Section,
+                           const StringRef Query) const {
   StringMap<Regex*>::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
 
