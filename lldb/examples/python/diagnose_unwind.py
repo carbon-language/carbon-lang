@@ -72,7 +72,7 @@ def simple_backtrace(debugger):
   if this_module != None:
     module_list.append (this_module)
   if cur_thread.GetNumFrames() < 2:
-    return
+    return [module_list, address_list]
 
   cur_fp = process.ReadPointerFromMemory (initial_fp, lldb.SBError())
   cur_pc = process.ReadPointerFromMemory (initial_fp + process.GetAddressByteSize(), lldb.SBError())
@@ -82,6 +82,8 @@ def simple_backtrace(debugger):
   while cur_pc != 0 and cur_fp != 0 and cur_pc != lldb.LLDB_INVALID_ADDRESS and cur_fp != lldb.LLDB_INVALID_ADDRESS:
     address_list.append (cur_pc)
     this_module = backtrace_print_frame (target, frame_num, cur_pc, cur_fp)
+    print_stack_frame (process, cur_fp)
+    print ""
     if this_module != None:
       module_list.append (this_module)
     frame_num = frame_num + 1
@@ -101,9 +103,28 @@ def simple_backtrace(debugger):
     cur_pc = next_pc
     cur_fp = next_fp
   this_module = backtrace_print_frame (target, frame_num, cur_pc, cur_fp)
+  print_stack_frame (process, cur_fp)
+  print ""
   if this_module != None:
     module_list.append (this_module)
   return [module_list, address_list]
+
+def print_stack_frame(process, fp):
+  if fp == 0 or fp == lldb.LLDB_INVALID_ADDRESS or fp == 1:
+    return
+  addr_size = process.GetAddressByteSize()
+  addr = fp - (2 * addr_size)
+  i = 0
+  outline = "Stack frame from $fp-%d: " % (2 * addr_size)
+  error = lldb.SBError()
+  try:
+    while i < 5 and error.Success():
+      address = process.ReadPointerFromMemory(addr + (i * addr_size), error)
+      outline += " 0x%x" % address
+      i += 1
+    print outline
+  except Exception:
+    return
 
 def diagnose_unwind(debugger, command, result, dict):
   """
@@ -157,6 +178,8 @@ to be helpful when reporting the problem.
         for frame in thread.frames:
           if not frame.IsInlined():
             this_module = backtrace_print_frame (target, frame_num, frame.GetPC(), frame.GetFP())
+            print_stack_frame (process, frame.GetFP())
+            print ""
             if this_module != None:
               modules_seen.append (this_module)
             addresses_seen.append (frame.GetPC())
@@ -166,10 +189,12 @@ to be helpful when reporting the problem.
         print ""
         print "Simple stack walk algorithm:"
         print ""
-        simple_bt_modules_and_addresses = simple_backtrace(debugger)
-        modules_seen += simple_bt_modules_and_addresses[0]
-        addresses_seen = set(addresses_seen)
-        addresses_seen.update(set(simple_bt_modules_and_addresses[1]))
+        (module_list, address_list) = simple_backtrace(debugger)
+        if module_list and module_list != None:
+          modules_seen += module_list
+        if address_list and address_list != None:
+          addresses_seen = set(addresses_seen)
+          addresses_seen.update(set(address_list))
 
         print ""
         print "============================================================================================="
