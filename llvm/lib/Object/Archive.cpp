@@ -54,11 +54,11 @@ StringRef ArchiveMemberHeader::getName() const {
   return llvm::StringRef(Name, end);
 }
 
-uint64_t ArchiveMemberHeader::getSize() const {
-  uint64_t ret;
-  if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret))
-    llvm_unreachable("Size is not an integer.");
-  return ret;
+uint32_t ArchiveMemberHeader::getSize() const {
+  uint32_t Ret;
+  if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, Ret))
+    llvm_unreachable("Size is not a decimal number.");
+  return Ret;
 }
 
 static const ArchiveMemberHeader *toHeader(const char *base) {

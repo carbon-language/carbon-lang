@@ -33,7 +33,8 @@ struct ArchiveMemberHeader {
   /// Get the name without looking up long names.
   llvm::StringRef getName() const;
 
-  uint64_t getSize() const;
+  /// Members are not larger than 4GB.
+  uint32_t getSize() const;
 };
 
 class Archive : public Binary {
