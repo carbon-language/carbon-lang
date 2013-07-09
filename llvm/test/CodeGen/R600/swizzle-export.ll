@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
 
+;EG-CHECK: @main
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XYXX
 ;EG-CHECK: EXPORT T{{[0-9]+}}.ZXXX
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XXWX
@@ -91,10 +92,43 @@ main_body:
   ret void
 }
 
+; EG-CHECK: @main2
+; EG-CHECK: T{{[0-9]+}}.ZXY0
+
+define void @main2() #0 {
+main_body:
+  %0 = call float @llvm.R600.load.input(i32 4)
+  %1 = call float @llvm.R600.load.input(i32 5)
+  %2 = call float @llvm.R600.load.input(i32 6)
+  %3 = call float @llvm.R600.load.input(i32 7)
+  %4 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 1)
+  %5 = extractelement <4 x float> %4, i32 0
+  %6 = call float @llvm.cos.f32(float %5)
+  %7 = load <4 x float> addrspace(8)* null
+  %8 = extractelement <4 x float> %7, i32 0
+  %9 = load <4 x float> addrspace(8)* null
+  %10 = extractelement <4 x float> %9, i32 1
+  %11 = insertelement <4 x float> undef, float %0, i32 0
+  %12 = insertelement <4 x float> %11, float %1, i32 1
+  %13 = insertelement <4 x float> %12, float %2, i32 2
+  %14 = insertelement <4 x float> %13, float %3, i32 3
+  call void @llvm.R600.store.swizzle(<4 x float> %14, i32 60, i32 1)
+  %15 = insertelement <4 x float> undef, float %6, i32 0
+  %16 = insertelement <4 x float> %15, float %8, i32 1
+  %17 = insertelement <4 x float> %16, float %10, i32 2
+  %18 = insertelement <4 x float> %17, float 0.000000e+00, i32 3
+  call void @llvm.R600.store.swizzle(<4 x float> %18, i32 0, i32 2)
+  ret void
+}
+
 ; Function Attrs: readnone
 declare float @llvm.R600.load.input(i32) #1
+
+; Function Attrs: nounwind readonly
+declare float @llvm.cos.f32(float) #2
 
 declare void @llvm.R600.store.swizzle(<4 x float>, i32, i32)
 
 attributes #0 = { "ShaderType"="1" }
 attributes #1 = { readnone }
+attributes #2 = { nounwind readonly }

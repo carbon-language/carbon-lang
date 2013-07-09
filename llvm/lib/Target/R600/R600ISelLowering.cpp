@@ -1296,6 +1296,8 @@ static SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
       VectorEntry.getOperand(3)
   };
   bool isUnmovable[4] = { false, false, false, false };
+  for (unsigned i = 0; i < 4; i++)
+    RemapSwizzle[i] = i;
 
   for (unsigned i = 0; i < 4; i++) {
     if (NewBldVec[i].getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
@@ -1304,8 +1306,7 @@ static SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,
       if (!isUnmovable[Idx]) {
         // Swap i and Idx
         std::swap(NewBldVec[Idx], NewBldVec[i]);
-        RemapSwizzle[Idx] = i;
-        RemapSwizzle[i] = Idx;
+        std::swap(RemapSwizzle[RemapSwizzle[Idx]], RemapSwizzle[RemapSwizzle[i]]);
       }
       isUnmovable[Idx] = true;
     }
