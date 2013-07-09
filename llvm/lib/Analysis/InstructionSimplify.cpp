@@ -1363,6 +1363,10 @@ static Value *SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
   if (Value *V = SimplifyShift(Instruction::LShr, Op0, Op1, Q, MaxRecurse))
     return V;
 
+  // X >> X -> 0
+  if (Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
+
   // undef >>l X -> 0
   if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
@@ -1390,6 +1394,10 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
                                const Query &Q, unsigned MaxRecurse) {
   if (Value *V = SimplifyShift(Instruction::AShr, Op0, Op1, Q, MaxRecurse))
     return V;
+
+  // X >> X -> 0
+  if (Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
 
   // all ones >>a X -> all ones
   if (match(Op0, m_AllOnes()))

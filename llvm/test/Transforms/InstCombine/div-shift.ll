@@ -54,9 +54,9 @@ define i32 @t5(i1 %x, i1 %y, i32 %V) nounwind {
 ; CHECK: t5
 ; CHECK-NOT: udiv
 ; CHECK-NEXT: [[SEL1:%.*]] = select i1 %x, i32 5, i32 6
-; CHECK-NEXT: [[SEL2:%.*]] = select i1 %y, i32 [[SEL1]], i32 %V
-; CHECK-NEXT: [[LSHR:%.*]] = lshr i32 %V, [[SEL2]]
-; CHECK-NEXT: ret i32 [[LSHR]]
+; CHECK-NEXT: [[LSHR:%.*]] = lshr i32 %V, [[SEL1]]
+; CHECK-NEXT: [[SEL2:%.*]] = select i1 %y, i32 [[LSHR]], i32 0
+; CHECK-NEXT: ret i32 [[SEL2]]
   %1 = shl i32 1, %V
   %2 = select i1 %x, i32 32, i32 64
   %3 = select i1 %y, i32 %2, i32 %1

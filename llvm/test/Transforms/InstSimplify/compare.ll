@@ -357,6 +357,14 @@ define i1 @lshr2(i32 %x) {
 ; CHECK: ret i1 false
 }
 
+define i1 @lshr3(i32 %x) {
+; CHECK: @lshr3
+  %s = lshr i32 %x, %x
+  %c = icmp eq i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 true
+}
+
 define i1 @ashr1(i32 %x) {
 ; CHECK: @ashr1
   %s = ashr i32 -1, %x
@@ -371,6 +379,14 @@ define i1 @ashr2(i32 %x) {
   %c = icmp slt i32 %s, -5
   ret i1 %c
 ; CHECK: ret i1 false
+}
+
+define i1 @ashr3(i32 %x) {
+; CHECK: @ashr3
+  %s = ashr i32 %x, %x
+  %c = icmp eq i32 %s, 0
+  ret i1 %c
+; CHECK: ret i1 true
 }
 
 define i1 @select1(i1 %cond) {
