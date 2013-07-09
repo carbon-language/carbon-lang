@@ -196,6 +196,7 @@ class PPCAsmParser : public MCTargetAsmParser {
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveTC(unsigned Size, SMLoc L);
+  bool ParseDirectiveMachine(SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -1182,6 +1183,8 @@ bool PPCAsmParser::ParseDirective(AsmToken DirectiveID) {
     return ParseDirectiveWord(8, DirectiveID.getLoc());
   if (IDVal == ".tc")
     return ParseDirectiveTC(isPPC64()? 8 : 4, DirectiveID.getLoc());
+  if (IDVal == ".machine")
+    return ParseDirectiveMachine(DirectiveID.getLoc());
   return true;
 }
 
@@ -1225,6 +1228,30 @@ bool PPCAsmParser::ParseDirectiveTC(unsigned Size, SMLoc L) {
 
   // Emit expressions.
   return ParseDirectiveWord(Size, L);
+}
+
+/// ParseDirectiveMachine
+///  ::= .machine [ cpu | "push" | "pop" ]
+bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
+  if (getLexer().isNot(AsmToken::Identifier) &&
+      getLexer().isNot(AsmToken::String))
+    return Error(L, "unexpected token in directive");
+
+  StringRef CPU = Parser.getTok().getIdentifier();
+  Parser.Lex();
+
+  // FIXME: Right now, the parser always allows any available
+  // instruction, so the .machine directive is not useful.
+  // Implement ".machine any" (by doing nothing) for the benefit
+  // of existing assembler code.  Likewise, we can then implement
+  // ".machine push" and ".machine pop" as no-op.
+  if (CPU != "any" && CPU != "push" && CPU != "pop")
+    return Error(L, "unrecognized machine type");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(L, "unexpected token in directive");
+
+  return false;
 }
 
 /// Force static initialization.
