@@ -172,7 +172,7 @@ static unsigned getSameOpcode(ArrayRef<Value *> VL) {
 static Type* getSameType(ArrayRef<Value *> VL) {
   Type *Ty = VL[0]->getType();
   for (int i = 1, e = VL.size(); i < e; i++)
-    if (VL[0]->getType() != Ty)
+    if (VL[i]->getType() != Ty)
       return 0;
 
   return Ty;
@@ -389,6 +389,8 @@ private:
 
 void BoUpSLP::buildTree(ArrayRef<Value *> Roots) {
   deleteTree();
+  if (!getSameType(Roots))
+    return;
   buildTree_rec(Roots, 0);
 }
 
