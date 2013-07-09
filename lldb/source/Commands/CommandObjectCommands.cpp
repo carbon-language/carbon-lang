@@ -333,6 +333,11 @@ protected:
                     if (!success)
                         error.SetErrorStringWithFormat("invalid value for stop-on-continue: %s", option_arg);
                     break;
+                case 's':
+                    m_silent_run = Args::StringToBoolean(option_arg, true, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid value for silent-run: %s", option_arg);
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
                     break;
@@ -345,6 +350,7 @@ protected:
         OptionParsingStarting ()
         {
             m_stop_on_error.Clear();
+            m_silent_run = false;
             m_stop_on_continue = true;
         }
 
@@ -361,6 +367,7 @@ protected:
         // Instance variables to hold the values for command options.
 
         OptionValueBoolean m_stop_on_error;
+	    bool m_silent_run;
         bool m_stop_on_continue;
     };
     
@@ -376,7 +383,7 @@ protected:
 
             FileSpec cmd_file (filename, true);
             ExecutionContext *exe_ctx = NULL;  // Just use the default context.
-            bool echo_commands    = true;
+            bool echo_commands    = !m_options.m_silent_run;
             bool print_results    = true;
             bool stop_on_error = m_options.m_stop_on_error.OptionWasSet() ? (bool)m_options.m_stop_on_error : m_interpreter.GetStopCmdSourceOnError();
 
@@ -405,6 +412,7 @@ CommandObjectCommandsSource::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "stop-on-error", 'e', required_argument, NULL, 0, eArgTypeBoolean,    "If true, stop executing commands on error."},
 { LLDB_OPT_SET_ALL, false, "stop-on-continue", 'c', required_argument, NULL, 0, eArgTypeBoolean, "If true, stop executing commands on continue."},
+{ LLDB_OPT_SET_ALL, false, "silent-run", 's', required_argument, NULL, 0, eArgTypeBoolean, "If true don't echo commands while executing."},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
