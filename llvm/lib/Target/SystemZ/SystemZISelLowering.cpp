@@ -255,6 +255,26 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   MaxStoresPerMemsetOptSize = 0;
 }
 
+bool
+SystemZTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
+  VT = VT.getScalarType();
+
+  if (!VT.isSimple())
+    return false;
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::f32:
+  case MVT::f64:
+    return true;
+  case MVT::f128:
+    return false;
+  default:
+    break;
+  }
+
+  return false;
+}
+
 bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
   // We can load zero using LZ?R and negative zero using LZ?R;LC?BR.
   return Imm.isZero() || Imm.isNegZero();

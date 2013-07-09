@@ -129,9 +129,7 @@ public:
   virtual EVT getSetCCResultType(LLVMContext &, EVT) const {
     return MVT::i32;
   }
-  virtual bool isFMAFasterThanMulAndAdd(EVT) const LLVM_OVERRIDE {
-    return true;
-  }
+  virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const LLVM_OVERRIDE;
   virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
   virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
   virtual const char *getTargetNodeName(unsigned Opcode) const LLVM_OVERRIDE;

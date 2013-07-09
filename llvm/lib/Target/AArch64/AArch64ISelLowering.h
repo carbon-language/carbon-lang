@@ -229,11 +229,11 @@ public:
 
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
-  /// isFMAFasterThanMulAndAdd - Return true if an FMA operation is faster than
-  /// a pair of mul and add instructions. fmuladd intrinsics will be expanded to
-  /// FMAs when this method returns true (and FMAs are legal), otherwise fmuladd
-  /// is expanded to mul + add.
-  virtual bool isFMAFasterThanMulAndAdd(EVT) const { return true; }
+  /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
+  /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be
+  /// expanded to FMAs when this method returns true, otherwise fmuladd is
+  /// expanded to fmul + fadd.
+  virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const;
 
   ConstraintType getConstraintType(const std::string &Constraint) const;
 

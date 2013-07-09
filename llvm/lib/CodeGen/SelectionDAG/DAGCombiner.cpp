@@ -6084,8 +6084,8 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   // FADD -> FMA combines:
   if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
        DAG.getTarget().Options.UnsafeFPMath) &&
-      DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
-      TLI.isOperationLegalOrCustom(ISD::FMA, VT)) {
+      DAG.getTarget().getTargetLowering()->isFMAFasterThanFMulAndFAdd(VT) &&
+      (!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FMA, VT))) {
 
     // fold (fadd (fmul x, y), z) -> (fma x, y, z)
     if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse())
@@ -6161,8 +6161,8 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   // FSUB -> FMA combines:
   if ((DAG.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast ||
        DAG.getTarget().Options.UnsafeFPMath) &&
-      DAG.getTarget().getTargetLowering()->isFMAFasterThanMulAndAdd(VT) &&
-      TLI.isOperationLegalOrCustom(ISD::FMA, VT)) {
+      DAG.getTarget().getTargetLowering()->isFMAFasterThanFMulAndFAdd(VT) &&
+      (!LegalOperations || TLI.isOperationLegalOrCustom(ISD::FMA, VT))) {
 
     // fold (fsub (fmul x, y), z) -> (fma x, y, (fneg z))
     if (N0.getOpcode() == ISD::FMUL && N0->hasOneUse())

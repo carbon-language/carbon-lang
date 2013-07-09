@@ -2798,6 +2798,27 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   return SDValue();
 }
 
+bool
+AArch64TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
+  VT = VT.getScalarType();
+
+  if (!VT.isSimple())
+    return false;
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::f16:
+  case MVT::f32:
+  case MVT::f64:
+    return true;
+  case MVT::f128:
+    return false;
+  default:
+    break;
+  }
+
+  return false;
+}
+
 AArch64TargetLowering::ConstraintType
 AArch64TargetLowering::getConstraintType(const std::string &Constraint) const {
   if (Constraint.size() == 1) {

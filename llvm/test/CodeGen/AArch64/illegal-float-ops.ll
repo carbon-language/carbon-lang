@@ -219,3 +219,29 @@ define void @test_frem(float %float, double %double, fp128 %fp128) {
 
   ret void
 }
+
+declare fp128 @llvm.fma.f128(fp128, fp128, fp128)
+
+define void @test_fma(fp128 %fp128) {
+; CHECK: test_fma:
+
+  %fmafp128 = call fp128 @llvm.fma.f128(fp128 %fp128, fp128 %fp128, fp128 %fp128)
+  store fp128 %fmafp128, fp128* @varfp128
+; CHECK: bl fmal
+
+  ret void
+}
+
+declare fp128 @llvm.fmuladd.f128(fp128, fp128, fp128)
+
+define void @test_fmuladd(fp128 %fp128) {
+; CHECK: test_fmuladd:
+
+  %fmuladdfp128 = call fp128 @llvm.fmuladd.f128(fp128 %fp128, fp128 %fp128, fp128 %fp128)
+  store fp128 %fmuladdfp128, fp128* @varfp128
+; CHECK-NOT: bl fmal
+; CHECK: bl __multf3
+; CHECK: bl __addtf3
+
+  ret void
+}
