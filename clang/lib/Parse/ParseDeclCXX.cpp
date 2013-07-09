@@ -2368,8 +2368,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return;
   }
 
-  Actions.FinalizeDeclaratorGroup(getCurScope(), DS, DeclsInGroup.data(),
-                                  DeclsInGroup.size());
+  Actions.FinalizeDeclaratorGroup(getCurScope(), DS, DeclsInGroup);
 }
 
 /// ParseCXXMemberInitializer - Parse the brace-or-equal-initializer or

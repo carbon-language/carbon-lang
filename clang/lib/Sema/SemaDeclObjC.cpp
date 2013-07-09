@@ -833,7 +833,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     DeclsInGroup.push_back(PDecl);
   }
 
-  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
+  return BuildDeclaratorGroup(DeclsInGroup, false);
 }
 
 Decl *Sema::
@@ -1100,7 +1100,7 @@ Sema::ActOnFinishObjCImplementation(Decl *ObjCImpDecl, ArrayRef<Decl *> Decls) {
 
   DeclsInGroup.push_back(ObjCImpDecl);
 
-  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
+  return BuildDeclaratorGroup(DeclsInGroup, false);
 }
 
 void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
@@ -1985,8 +1985,8 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     CheckObjCDeclScope(IDecl);
     DeclsInGroup.push_back(IDecl);
   }
-  
-  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
+
+  return BuildDeclaratorGroup(DeclsInGroup, false);
 }
 
 static bool tryMatchRecordTypes(ASTContext &Context,

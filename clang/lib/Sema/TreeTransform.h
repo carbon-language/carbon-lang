@@ -1163,10 +1163,9 @@ public:
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildDeclStmt(Decl **Decls, unsigned NumDecls,
-                                   SourceLocation StartLoc,
-                                   SourceLocation EndLoc) {
-    Sema::DeclGroupPtrTy DG = getSema().BuildDeclaratorGroup(Decls, NumDecls);
+  StmtResult RebuildDeclStmt(llvm::MutableArrayRef<Decl *> Decls,
+                             SourceLocation StartLoc, SourceLocation EndLoc) {
+    Sema::DeclGroupPtrTy DG = getSema().BuildDeclaratorGroup(Decls);
     return getSema().ActOnDeclStmt(DG, StartLoc, EndLoc);
   }
 
@@ -5603,8 +5602,7 @@ TreeTransform<Derived>::TransformDeclStmt(DeclStmt *S) {
   if (!getDerived().AlwaysRebuild() && !DeclChanged)
     return SemaRef.Owned(S);
 
-  return getDerived().RebuildDeclStmt(Decls.data(), Decls.size(),
-                                      S->getStartLoc(), S->getEndLoc());
+  return getDerived().RebuildDeclStmt(Decls, S->getStartLoc(), S->getEndLoc());
 }
 
 template<typename Derived>

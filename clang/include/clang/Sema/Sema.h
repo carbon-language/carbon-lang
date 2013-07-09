@@ -1490,15 +1490,14 @@ public:
   void SetDeclDefaulted(Decl *dcl, SourceLocation DefaultLoc);
   void FinalizeDeclaration(Decl *D);
   DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
-                                         Decl **Group,
-                                         unsigned NumDecls);
-  DeclGroupPtrTy BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
+                                         ArrayRef<Decl *> Group);
+  DeclGroupPtrTy BuildDeclaratorGroup(llvm::MutableArrayRef<Decl *> Group,
                                       bool TypeMayContainAuto = true);
 
   /// Should be called on all declarations that might have attached
   /// documentation comments.
   void ActOnDocumentableDecl(Decl *D);
-  void ActOnDocumentableDecls(Decl **Group, unsigned NumDecls);
+  void ActOnDocumentableDecls(ArrayRef<Decl *> Group);
 
   void ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
                                        SourceLocation LocAfterDecls);

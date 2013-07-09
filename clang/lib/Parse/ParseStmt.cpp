@@ -817,8 +817,8 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
     }
 
     DeclSpec DS(AttrFactory);
-    DeclGroupPtrTy Res = Actions.FinalizeDeclaratorGroup(getCurScope(), DS,
-                                      DeclsInGroup.data(), DeclsInGroup.size());
+    DeclGroupPtrTy Res =
+        Actions.FinalizeDeclaratorGroup(getCurScope(), DS, DeclsInGroup);
     StmtResult R = Actions.ActOnDeclStmt(Res, LabelLoc, Tok.getLocation());
 
     ExpectAndConsumeSemi(diag::err_expected_semi_declaration);

@@ -8363,15 +8363,14 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   }
 }
 
-Sema::DeclGroupPtrTy
-Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
-                              Decl **Group, unsigned NumDecls) {
+Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
+                                                   ArrayRef<Decl *> Group) {
   SmallVector<Decl*, 8> Decls;
 
   if (DS.isTypeSpecOwned())
     Decls.push_back(DS.getRepAsDecl());
 
-  for (unsigned i = 0; i != NumDecls; ++i)
+  for (unsigned i = 0, e = Group.size(); i != e; ++i)
     if (Decl *D = Group[i])
       Decls.push_back(D);
 
@@ -8379,14 +8378,13 @@ Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     if (const TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl()))
       getASTContext().addUnnamedTag(Tag);
 
-  return BuildDeclaratorGroup(Decls.data(), Decls.size(),
-                              DS.containsPlaceholderType());
+  return BuildDeclaratorGroup(Decls, DS.containsPlaceholderType());
 }
 
 /// BuildDeclaratorGroup - convert a list of declarations into a declaration
 /// group, performing any necessary semantic checking.
 Sema::DeclGroupPtrTy
-Sema::BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
+Sema::BuildDeclaratorGroup(llvm::MutableArrayRef<Decl *> Group,
                            bool TypeMayContainAuto) {
   // C++0x [dcl.spec.auto]p7:
   //   If the type deduced for the template parameter U is not the same in each
@@ -8395,11 +8393,11 @@ Sema::BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
   // between the deduced type U and the deduced type which 'auto' stands for.
   //   auto a = 0, b = { 1, 2, 3 };
   // is legal because the deduced type U is 'int' in both cases.
-  if (TypeMayContainAuto && NumDecls > 1) {
+  if (TypeMayContainAuto && Group.size() > 1) {
     QualType Deduced;
     CanQualType DeducedCanon;
     VarDecl *DeducedDecl = 0;
-    for (unsigned i = 0; i != NumDecls; ++i) {
+    for (unsigned i = 0, e = Group.size(); i != e; ++i) {
       if (VarDecl *D = dyn_cast<VarDecl>(Group[i])) {
         AutoType *AT = D->getType()->getContainedAutoType();
         // Don't reissue diagnostics when instantiating a template.
@@ -8428,18 +8426,19 @@ Sema::BuildDeclaratorGroup(Decl **Group, unsigned NumDecls,
     }
   }
 
-  ActOnDocumentableDecls(Group, NumDecls);
+  ActOnDocumentableDecls(Group);
 
-  return DeclGroupPtrTy::make(DeclGroupRef::Create(Context, Group, NumDecls));
+  return DeclGroupPtrTy::make(
+      DeclGroupRef::Create(Context, Group.data(), Group.size()));
 }
 
 void Sema::ActOnDocumentableDecl(Decl *D) {
-  ActOnDocumentableDecls(&D, 1);
+  ActOnDocumentableDecls(D);
 }
 
-void Sema::ActOnDocumentableDecls(Decl **Group, unsigned NumDecls) {
+void Sema::ActOnDocumentableDecls(ArrayRef<Decl *> Group) {
   // Don't parse the comment if Doxygen diagnostics are ignored.
-  if (NumDecls == 0 || !Group[0])
+  if (Group.empty() || !Group[0])
    return;
 
   if (Diags.getDiagnosticLevel(diag::warn_doc_param_not_found,
@@ -8447,9 +8446,9 @@ void Sema::ActOnDocumentableDecls(Decl **Group, unsigned NumDecls) {
         == DiagnosticsEngine::Ignored)
     return;
 
-  if (NumDecls >= 2) {
+  if (Group.size() >= 2) {
     // This is a decl group.  Normally it will contain only declarations
-    // procuded from declarator list.  But in case we have any definitions or
+    // produced from declarator list.  But in case we have any definitions or
     // additional declaration references:
     //   'typedef struct S {} S;'
     //   'typedef struct S *S;'
@@ -8457,8 +8456,7 @@ void Sema::ActOnDocumentableDecls(Decl **Group, unsigned NumDecls) {
     // FinalizeDeclaratorGroup adds these as separate declarations.
     Decl *MaybeTagDecl = Group[0];
     if (MaybeTagDecl && isa<TagDecl>(MaybeTagDecl)) {
-      Group++;
-      NumDecls--;
+      Group = Group.slice(1);
     }
   }
 
@@ -8473,7 +8471,7 @@ void Sema::ActOnDocumentableDecls(Decl **Group, unsigned NumDecls) {
     // declaration, but also comments that *follow* the declaration -- thanks to
     // the lookahead in the lexer: we've consumed the semicolon and looked
     // ahead through comments.
-    for (unsigned i = 0; i != NumDecls; ++i)
+    for (unsigned i = 0, e = Group.size(); i != e; ++i)
       Context.getCommentForDecl(Group[i], &PP);
   }
 }

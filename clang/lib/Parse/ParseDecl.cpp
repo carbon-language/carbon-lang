@@ -1667,7 +1667,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       Actions.ActOnCXXForRangeDecl(ThisDecl);
     Actions.FinalizeDeclaration(ThisDecl);
     D.complete(ThisDecl);
-    return Actions.FinalizeDeclaratorGroup(getCurScope(), DS, &ThisDecl, 1);
+    return Actions.FinalizeDeclaratorGroup(getCurScope(), DS, ThisDecl);
   }
 
   SmallVector<Decl *, 8> DeclsInGroup;
@@ -1734,9 +1734,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     }
   }
 
-  return Actions.FinalizeDeclaratorGroup(getCurScope(), DS,
-                                         DeclsInGroup.data(),
-                                         DeclsInGroup.size());
+  return Actions.FinalizeDeclaratorGroup(getCurScope(), DS, DeclsInGroup);
 }
 
 /// Parse an optional simple-asm-expr and attributes, and attach them to a
