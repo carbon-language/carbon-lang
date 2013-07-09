@@ -1551,8 +1551,8 @@ class ADbI<bits<5> opcod1, bits<2> opcod2, bit op6, bit op4, dag oops,
 // FP, binary, not predicated
 class ADbInp<bits<5> opcod1, bits<2> opcod2, bit opcod3, dag oops, dag iops,
            InstrItinClass itin, string asm, list<dag> pattern>
-  : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone,
-          VFPBinaryFrm, itin, asm, "", pattern>
+  : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone, VFPBinaryFrm, itin,
+          asm, "", pattern>
 {
   // Instruction operands.
   bits<5> Dd;
@@ -1577,7 +1577,7 @@ class ADbInp<bits<5> opcod1, bits<2> opcod2, bit opcod3, dag oops, dag iops,
   let Inst{4}     = 0;
 }
 
-// Single precision, unary
+// Single precision, unary, predicated
 class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
            bit opcod5, dag oops, dag iops, InstrItinClass itin, string opc,
            string asm, list<dag> pattern>
@@ -1585,6 +1585,33 @@ class ASuI<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
   // Instruction operands.
   bits<5> Sd;
   bits<5> Sm;
+
+  // Encode instruction operands.
+  let Inst{3-0}   = Sm{4-1};
+  let Inst{5}     = Sm{0};
+  let Inst{15-12} = Sd{4-1};
+  let Inst{22}    = Sd{0};
+
+  let Inst{27-23} = opcod1;
+  let Inst{21-20} = opcod2;
+  let Inst{19-16} = opcod3;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0;          // Single precision
+  let Inst{7-6}   = opcod4;
+  let Inst{4}     = opcod5;
+}
+
+// Single precision, unary, non-predicated
+class ASuInp<bits<5> opcod1, bits<2> opcod2, bits<4> opcod3, bits<2> opcod4,
+             bit opcod5, dag oops, dag iops, InstrItinClass itin,
+             string asm, list<dag> pattern>
+  : VFPXI<oops, iops, AddrModeNone, 4, IndexModeNone,
+          VFPUnaryFrm, itin, asm, "", pattern> {
+  // Instruction operands.
+  bits<5> Sd;
+  bits<5> Sm;
+
+  let Inst{31-28} = 0b1111;
 
   // Encode instruction operands.
   let Inst{3-0}   = Sm{4-1};
