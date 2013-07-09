@@ -1217,7 +1217,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 }
 
 void BoUpSLP::vectorizeTree() {
-  Builder.SetInsertPoint(&F->getEntryBlock());
+  Builder.SetInsertPoint(F->getEntryBlock().begin());
   vectorizeTree(&VectorizableTree[0]);
 
   // For each vectorized value:
