@@ -61,6 +61,38 @@ uint32_t ArchiveMemberHeader::getSize() const {
   return Ret;
 }
 
+sys::fs::perms ArchiveMemberHeader::getAccessMode() const {
+  unsigned Ret;
+  if (StringRef(AccessMode, sizeof(AccessMode)).rtrim(" ").getAsInteger(8, Ret))
+    llvm_unreachable("Access mode is not an octal number.");
+  return static_cast<sys::fs::perms>(Ret);
+}
+
+sys::TimeValue ArchiveMemberHeader::getLastModified() const {
+  unsigned Seconds;
+  if (StringRef(LastModified, sizeof(LastModified)).rtrim(" ")
+          .getAsInteger(10, Seconds))
+    llvm_unreachable("Last modified time not a decimal number.");
+
+  sys::TimeValue Ret;
+  Ret.fromEpochTime(Seconds);
+  return Ret;
+}
+
+unsigned ArchiveMemberHeader::getUID() const {
+  unsigned Ret;
+  if (StringRef(UID, sizeof(UID)).rtrim(" ").getAsInteger(10, Ret))
+    llvm_unreachable("UID time not a decimal number.");
+  return Ret;
+}
+
+unsigned ArchiveMemberHeader::getGID() const {
+  unsigned Ret;
+  if (StringRef(GID, sizeof(GID)).rtrim(" ").getAsInteger(10, Ret))
+    llvm_unreachable("GID time not a decimal number.");
+  return Ret;
+}
+
 static const ArchiveMemberHeader *toHeader(const char *base) {
   return reinterpret_cast<const ArchiveMemberHeader *>(base);
 }

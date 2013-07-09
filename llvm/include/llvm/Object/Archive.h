@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 namespace llvm {
@@ -35,6 +36,11 @@ struct ArchiveMemberHeader {
 
   /// Members are not larger than 4GB.
   uint32_t getSize() const;
+
+  sys::fs::perms getAccessMode() const;
+  sys::TimeValue getLastModified() const;
+  unsigned getUID() const;
+  unsigned getGID() const;
 };
 
 class Archive : public Binary {
@@ -67,6 +73,14 @@ public:
 
     error_code getName(StringRef &Result) const;
     StringRef getRawName() const { return getHeader()->getName(); }
+    sys::TimeValue getLastModified() const {
+      return getHeader()->getLastModified();
+    }
+    unsigned getUID() const { return getHeader()->getUID(); }
+    unsigned getGID() const { return getHeader()->getGID(); }
+    sys::fs::perms getAccessMode() const {
+      return getHeader()->getAccessMode();
+    }
     /// \return the size of the archive member without the header or padding.
     uint64_t getSize() const { return Data.size() - StartOfFile; }
 
