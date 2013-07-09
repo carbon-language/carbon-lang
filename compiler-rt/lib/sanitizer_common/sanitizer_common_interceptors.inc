@@ -818,7 +818,28 @@ INTERCEPTOR(int, glob64, const char *pattern, int flags,
             __sanitizer_glob_t *pglob) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, glob64, pattern, flags, errfunc, pglob);
+  __sanitizer_glob_t glob_copy = {0, 0, 0, 0, wrapped_gl_closedir,
+                                  wrapped_gl_readdir, wrapped_gl_opendir,
+                                  wrapped_gl_lstat, wrapped_gl_stat};
+  if (flags & glob_altdirfunc) {
+    Swap(pglob->gl_closedir, glob_copy.gl_closedir);
+    Swap(pglob->gl_readdir, glob_copy.gl_readdir);
+    Swap(pglob->gl_opendir, glob_copy.gl_opendir);
+    Swap(pglob->gl_lstat, glob_copy.gl_lstat);
+    Swap(pglob->gl_stat, glob_copy.gl_stat);
+    pglob_copy = &glob_copy;
+    glob_ctx = ctx;
+  }
   int res = REAL(glob64)(pattern, flags, errfunc, pglob);
+  if (flags & glob_altdirfunc) {
+    Swap(pglob->gl_closedir, glob_copy.gl_closedir);
+    Swap(pglob->gl_readdir, glob_copy.gl_readdir);
+    Swap(pglob->gl_opendir, glob_copy.gl_opendir);
+    Swap(pglob->gl_lstat, glob_copy.gl_lstat);
+    Swap(pglob->gl_stat, glob_copy.gl_stat);
+  }
+  pglob_copy = 0;
+  glob_ctx = 0;
   if ((!res || res == glob_nomatch) && pglob) unpoison_glob_t(ctx, pglob);
   return res;
 }
