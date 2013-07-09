@@ -99,7 +99,13 @@ namespace std {
   : private __list_imp<_Tp, _Alloc>
   {
   public:
-    void pop_front();
+    void pop_front() {
+      // Fake use-after-free.
+      // No warning is expected as we are suppressing warning comming
+      // out of std::list.
+      int z = 0;
+      z = 5/z;
+    }
     bool empty() const;
   };
 

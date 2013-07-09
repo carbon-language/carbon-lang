@@ -1541,12 +1541,12 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
       // The analyzer issues a false use-after-free when std::list::pop_front
       // or std::list::pop_back are called multiple times because we cannot
       // reason about the internal invariants of the datastructure.
-      const DeclContext *DC =
-        D->getDeclContext()->getEnclosingNamespaceContext();
-      const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
-      if (ND && ND->getName() == "list") {
+      if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+        const CXXRecordDecl *CD = MD->getParent();
+        if (CD->getName() == "list") {
           BR.markInvalid(getTag(), 0);
           return 0;
+        }
       }
     }
   }
