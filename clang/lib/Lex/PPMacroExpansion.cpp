@@ -1218,9 +1218,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     if (Tok.is(tok::l_paren)) {
       // Read the identifier
       LexUnexpandedToken(Tok);
-      if (Tok.is(tok::identifier) || Tok.is(tok::kw_const)) {
-        FeatureII = Tok.getIdentifierInfo();
-
+      if ((FeatureII = Tok.getIdentifierInfo())) {
         // Read the ')'.
         LexUnexpandedToken(Tok);
         if (Tok.is(tok::r_paren))

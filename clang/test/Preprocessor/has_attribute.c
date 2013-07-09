@@ -34,3 +34,7 @@ int has_something_we_dont_have();
  static int constFunction() __attribute__((const));
 #endif
 
+// CHECK: has_no_volatile_attribute
+#if !__has_attribute(volatile)
+int has_no_volatile_attribute();
+#endif
