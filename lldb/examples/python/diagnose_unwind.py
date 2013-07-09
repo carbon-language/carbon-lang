@@ -69,6 +69,8 @@ def simple_backtrace(debugger):
   module_list = []
   address_list = [cur_thread.GetFrameAtIndex(0).GetPC()]
   this_module = backtrace_print_frame (target, 0, cur_thread.GetFrameAtIndex(0).GetPC(), initial_fp)
+  print_stack_frame (process, cur_fp)
+  print ""
   if this_module != None:
     module_list.append (this_module)
   if cur_thread.GetNumFrames() < 2:
