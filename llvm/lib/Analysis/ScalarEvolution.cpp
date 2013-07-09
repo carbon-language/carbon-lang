@@ -3589,7 +3589,7 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
     if (!U->getValue()->getType()->isIntegerTy() && !TD)
       return setSignedRange(U, ConservativeResult);
     unsigned NS = ComputeNumSignBits(U->getValue(), TD);
-    if (NS == 1)
+    if (NS <= 1)
       return setSignedRange(U, ConservativeResult);
     return setSignedRange(U, ConservativeResult.intersectWith(
       ConstantRange(APInt::getSignedMinValue(BitWidth).ashr(NS - 1),
