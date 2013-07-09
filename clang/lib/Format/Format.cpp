@@ -536,7 +536,9 @@ private:
                  State.Stack.back().VariablePos != 0) {
         State.Column = State.Stack.back().VariablePos;
       } else if (Previous.ClosesTemplateDeclaration ||
-                 (Current.Type == TT_StartOfName && State.ParenLevel == 0 &&
+                 ((Current.Type == TT_StartOfName ||
+                   Current.is(tok::kw_operator)) &&
+                  State.ParenLevel == 0 &&
                   (!Style.IndentFunctionDeclarationAfterType ||
                    Line.StartsDefinition))) {
         State.Column = State.Stack.back().Indent;
@@ -1111,8 +1113,9 @@ private:
          (Previous.ClosesTemplateDeclaration && State.ParenLevel == 0)))
       return true;
 
-    if (Current.Type == TT_StartOfName && Line.MightBeFunctionDecl &&
-        State.Stack.back().BreakBeforeParameter && State.ParenLevel == 0)
+    if ((Current.Type == TT_StartOfName || Current.is(tok::kw_operator)) &&
+        Line.MightBeFunctionDecl && State.Stack.back().BreakBeforeParameter &&
+        State.ParenLevel == 0)
       return true;
     return false;
   }

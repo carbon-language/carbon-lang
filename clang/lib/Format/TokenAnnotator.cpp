@@ -996,7 +996,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.is(tok::comma))
     return 1;
 
-  if (Right.Type == TT_StartOfName) {
+  if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
       return 3;
     else if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
@@ -1203,7 +1203,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
 bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                     const FormatToken &Right) {
   const FormatToken &Left = *Right.Previous;
-  if (Right.Type == TT_StartOfName)
+  if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator))
     return true;
   if (Right.is(tok::colon) &&
       (Right.Type == TT_ObjCDictLiteral || Right.Type == TT_ObjCMethodExpr))

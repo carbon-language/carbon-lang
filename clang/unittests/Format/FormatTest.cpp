@@ -2456,6 +2456,13 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "    bbbb bbbb);");
+
+  // Treat overloaded operators like other functions.
+  verifyFormat("SomeLoooooooooooooooooooooooooogType\n"
+               "operator>(const SomeLoooooooooooooooooooooooooogType &other);");
+  verifyGoogleFormat(
+      "SomeLoooooooooooooooooooooooooooooogType operator<<(\n"
+      "    const SomeLooooooooogType &a, const SomeLooooooooogType &b);");
 }
 
 TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
