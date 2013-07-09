@@ -33,6 +33,12 @@ public:
                                   MachinePointerInfo DstPtrInfo,
                                   MachinePointerInfo SrcPtrInfo) const
     LLVM_OVERRIDE;
+
+  virtual SDValue
+  EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL,
+                          SDValue Chain, SDValue Dst, SDValue Byte,
+                          SDValue Size, unsigned Align, bool IsVolatile,
+                          MachinePointerInfo DstPtrInfo) const;
 };
 
 }
