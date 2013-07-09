@@ -529,8 +529,16 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
           if (IDecl->ClassImplementsProtocol(PNSCopying, true))
             Diag(AtLoc, diag::warn_implements_nscopying) << PropertyId;
     }
-  if (T->isObjCObjectType())
-    Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object);
+
+  if (T->isObjCObjectType()) {
+    SourceLocation StarLoc = TInfo->getTypeLoc().getLocEnd();
+    StarLoc = PP.getLocForEndOfToken(StarLoc);
+    Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object)
+      << FixItHint::CreateInsertion(StarLoc, "*");
+    T = Context.getObjCObjectPointerType(T);
+    SourceLocation TLoc = TInfo->getTypeLoc().getLocStart();
+    TInfo = Context.getTrivialTypeSourceInfo(T, TLoc);
+  }
 
   DeclContext *DC = cast<DeclContext>(CDecl);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,

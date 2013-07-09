@@ -164,3 +164,11 @@ namespace test10 {
     (void) t.index[t.b];
   }
 }
+
+// <rdar://problem/14354144>
+@interface PropertyOfItself
+@property (readonly, nonatomic) PropertyOfItself x; // expected-error {{interface type cannot be statically allocated}}
+@end
+@implementation PropertyOfItself
+@synthesize x;
+@end
