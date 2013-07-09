@@ -1177,7 +1177,9 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
 bool PPCAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
-    return ParseDirectiveWord(4, DirectiveID.getLoc());
+    return ParseDirectiveWord(2, DirectiveID.getLoc());
+  if (IDVal == ".llong")
+    return ParseDirectiveWord(8, DirectiveID.getLoc());
   if (IDVal == ".tc")
     return ParseDirectiveTC(isPPC64()? 8 : 4, DirectiveID.getLoc());
   return true;

@@ -48,7 +48,7 @@ addis 1, 1, target7@highesta
 .data
 
 .quad v1
-.word v2
+.long v2
 .short v3
 .byte v4
 
