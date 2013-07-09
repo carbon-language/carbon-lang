@@ -4422,11 +4422,15 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   if (Op->isReg())
-    Op->setIsDebug();
-
-  FuncInfo.ArgDbgValues.push_back(
+    FuncInfo.ArgDbgValues.push_back(BuildMI(MF, getCurDebugLoc(),
+                                            TII->get(TargetOpcode::DBG_VALUE),
+                                            /* IsIndirect */ Offset != 0,
+                                            Op->getReg(), Offset, Variable));
+  else
+    FuncInfo.ArgDbgValues.push_back(
       BuildMI(MF, getCurDebugLoc(), TII->get(TargetOpcode::DBG_VALUE))
           .addOperand(*Op).addImm(Offset).addMetadata(Variable));
+
   return true;
 }
 

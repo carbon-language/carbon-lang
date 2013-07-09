@@ -1563,8 +1563,9 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
     assert(DVInsn->getNumOperands() == 3);
     if (DVInsn->getOperand(0).isReg()) {
       const MachineOperand RegOp = DVInsn->getOperand(0);
-      if (int64_t Offset = DVInsn->getOperand(1).getImm()) {
-        MachineLocation Location(RegOp.getReg(), Offset);
+      // If the second operand is an immedieate, this is an indirect value.
+      if (DVInsn->getOperand(1).isImm()) {
+        MachineLocation Location(RegOp.getReg(), DVInsn->getOperand(1).getImm());
         addVariableAddress(*DV, VariableDie, Location);
       } else if (RegOp.getReg())
         addVariableAddress(*DV, VariableDie, MachineLocation(RegOp.getReg()));

@@ -612,11 +612,13 @@ bool FastISel::SelectCall(const User *I) {
       return true;
     }
 
+    unsigned Offset = 0;
     Optional<MachineOperand> Op;
     if (const Argument *Arg = dyn_cast<Argument>(Address))
       // Some arguments' frame index is recorded during argument lowering.
-      if (int FI = FuncInfo.getArgumentFrameIndex(Arg))
-        Op = MachineOperand::CreateFI(FI);
+      Offset = FuncInfo.getArgumentFrameIndex(Arg);
+    if (Offset)
+        Op = MachineOperand::CreateFI(Offset);
     if (!Op)
       if (unsigned Reg = lookUpRegForValue(Address))
         Op = MachineOperand::CreateReg(Reg, false);
@@ -638,12 +640,16 @@ bool FastISel::SelectCall(const User *I) {
       Op = MachineOperand::CreateReg(FuncInfo.InitializeRegForValue(Address),
                                       false);
 
-    if (Op && Op->isReg())
-      Op->setIsDebug(true);
-
     if (Op)
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-              TII.get(TargetOpcode::DBG_VALUE)).addOperand(*Op).addImm(0)
+      if (Op->isReg()) {
+        Op->setIsDebug(true);
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::DBG_VALUE),
+                /* IsIndirect */ DI->getAddress()->getType()->isPointerTy(),
+                Op->getReg(), Offset, DI->getVariable());
+      } else
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                TII.get(TargetOpcode::DBG_VALUE)).addOperand(*Op).addImm(0)
           .addMetadata(DI->getVariable());
     else
       // We can't yet handle anything else here because it would require
@@ -676,9 +682,9 @@ bool FastISel::SelectCall(const User *I) {
         .addFPImm(CF).addImm(DI->getOffset())
         .addMetadata(DI->getVariable());
     } else if (unsigned Reg = lookUpRegForValue(V)) {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
-        .addReg(Reg, RegState::Debug).addImm(DI->getOffset())
-        .addMetadata(DI->getVariable());
+      bool IsIndirect = DI->getOffset() != 0;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, IsIndirect,
+              Reg, DI->getOffset(), DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.

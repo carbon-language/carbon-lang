@@ -570,8 +570,10 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   }
   OS << V.getName() << " <- ";
 
-  int64_t Offset = MI->getOperand(1).getImm();
-  bool Deref = false;
+  // The second operand is only an offset if it's an immediate.
+  bool Deref = MI->getOperand(0).isReg() && MI->getOperand(1).isImm();
+  int64_t Offset = Deref ? MI->getOperand(1).getImm() : 0;
+
   // Register or immediate value. Register 0 means undef.
   if (MI->getOperand(0).isFPImm()) {
     APFloat APF = APFloat(MI->getOperand(0).getFPImm()->getValueAPF());
@@ -595,8 +597,6 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     unsigned Reg;
     if (MI->getOperand(0).isReg()) {
       Reg = MI->getOperand(0).getReg();
-      Deref = Offset != 0; // FIXME: use a better sentinel value so that deref
-                           // of a reg with a zero offset is valid
     } else {
       assert(MI->getOperand(0).isFI() && "Unknown operand type");
       const TargetFrameLowering *TFI = AP.TM.getFrameLowering();
@@ -616,10 +616,9 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     OS << AP.TM.getRegisterInfo()->getName(Reg);
   }
 
-  if (Offset)
-    OS << '+' << Offset;
   if (Deref)
-    OS << ']';
+    OS << '+' << Offset << ']';
+
   // NOTE: Want this comment at start of line, don't emit with AddComment.
   AP.OutStreamer.EmitRawText(OS.str());
   return true;
