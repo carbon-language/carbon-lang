@@ -275,6 +275,11 @@ LLVM-specific variables
   Build with zlib to support compression/uncompression in LLVM tools.
   Defaults to ON.
 
+**LLVM_USE_SANITIZER**:STRING
+  Define the sanitizer used to build LLVM binaries and tests. Possible values
+  are ``Address``, ``Memory`` and ``MemoryWithOrigins``. Defaults to empty
+  string.
+
 Executing the test suite
 ========================
 
