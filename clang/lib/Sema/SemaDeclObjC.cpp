@@ -406,7 +406,9 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
         if (Context.getLangOpts().getGC() != LangOptions::NonGC)
           getCurFunction()->ObjCShouldCallSuper = true;
         
-      } else {
+      } else if (MDecl->hasAttr<ObjCRequiresSuperAttr>())
+        getCurFunction()->ObjCShouldCallSuper = true;
+      else {
         const ObjCMethodDecl *SuperMethod =
           SuperClass->lookupMethod(MDecl->getSelector(),
                                    MDecl->isInstanceMethod());
@@ -3200,6 +3202,12 @@ Decl *Sema::ActOnMethodDeclaration(
     if (ObjCInterfaceDecl *IDecl = ImpDecl->getClassInterface())
       IMD = IDecl->lookupMethod(ObjCMethod->getSelector(), 
                                 ObjCMethod->isInstanceMethod());
+    if (IMD && IMD->hasAttr<ObjCRequiresSuperAttr>() &&
+        !ObjCMethod->hasAttr<ObjCRequiresSuperAttr>()) {
+      // merge the attribute into implementation.
+      ObjCMethod->addAttr(
+        new (Context) ObjCRequiresSuperAttr(ObjCMethod->getLocation(), Context));
+    }
     if (ObjCMethod->hasAttrs() &&
         containsInvalidMethodImplAttribute(IMD, ObjCMethod->getAttrs())) {
       SourceLocation MethodLoc = IMD->getLocation();

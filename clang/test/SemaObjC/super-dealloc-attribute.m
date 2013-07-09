@@ -40,9 +40,9 @@
   [super MyDealloc];
 } // expected-warning {{method possibly missing a [super XXX] call}}
 
-- (void) MyDeallocMeth {} // No warning here.
+- (void) MyDeallocMeth {} // expected-warning {{method possibly missing a [super MyDeallocMeth] call}}
 - (void) AnnotMyDeallocMeth{} // expected-warning {{method possibly missing a [super AnnotMyDeallocMeth] call}}
-- (void) AnnotMeth{}; // No warning here. Annotation is in its class.
+- (void) AnnotMeth{}; // expected-warning {{method possibly missing a [super AnnotMeth] call}}
 
 + (void)registerClass:(id)name {} // expected-warning {{method possibly missing a [super registerClass:] call}}
 @end
@@ -66,7 +66,7 @@
 - (void) AnnotMyDeallocMeth{} // expected-warning {{method possibly missing a [super AnnotMyDeallocMeth] call}}
 - (void) AnnotMeth{};  // expected-warning {{method possibly missing a [super AnnotMeth] call}}
 - (void) AnnotMyDeallocMethCAT{}; // expected-warning {{method possibly missing a [super AnnotMyDeallocMethCAT] call}}
-- (void) AnnotMethCAT {};
+- (void) AnnotMethCAT {}; // expected-warning {{method possibly missing a [super AnnotMethCAT] call}}
 @end
 
 
@@ -84,4 +84,28 @@
   [super registerClass:name]; // no-warning
 }
 
+@end
+
+// rdar://14251387
+#define IBAction void)__attribute__((ibaction)
+
+@interface UIViewController @end
+
+@interface ViewController : UIViewController
+- (void) someMethodRequiringSuper NS_REQUIRES_SUPER;
+- (IBAction) someAction;
+- (IBAction) someActionRequiringSuper NS_REQUIRES_SUPER;
+@end
+
+
+@implementation ViewController
+- (void) someMethodRequiringSuper
+{
+} // expected-warning {{method possibly missing a [super someMethodRequiringSuper] call}}
+- (IBAction) someAction
+{
+}
+- (IBAction) someActionRequiringSuper
+{
+} // expected-warning {{method possibly missing a [super someActionRequiringSuper] call}}
 @end
