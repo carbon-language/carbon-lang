@@ -1905,6 +1905,18 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
         continue;
       }
 
+      // If we're in -traditional mode, then we should ignore stringification
+      // and token pasting. Mark the tokens as unknown so as not to confuse
+      // things.
+      if (getLangOpts().TraditionalCPP) {
+        Tok.setKind(tok::unknown);
+        MI->AddTokenToBody(Tok);
+
+        // Get the next token of the macro.
+        LexUnexpandedToken(Tok);
+        continue;
+      }
+
       if (Tok.is(tok::hashhash)) {
         
         // If we see token pasting, check if it looks like the gcc comma

@@ -88,3 +88,20 @@ a b c in skipped block
 Preserve URLs: http://clang.llvm.org
 /* CHECK: {{^}}Preserve URLs: http://clang.llvm.org{{$}}
  */
+
+/* The following tests ensure we ignore # and ## in macro bodies */
+
+#define FOO_NO_STRINGIFY(a) test(# a)
+FOO_NO_STRINGIFY(foobar)
+/* CHECK: {{^}}test(# foobar){{$}}
+ */
+
+#define FOO_NO_PASTE(a, b) test(b##a)
+FOO_NO_PASTE(foo,bar)
+/* CHECK {{^}}test(bar##foo){{$}}
+ */
+
+#define BAR_NO_STRINGIFY(a) test(#a)
+BAR_NO_STRINGIFY(foobar)
+/* CHECK: {{^}}test(#foobar){{$}}
+ */
