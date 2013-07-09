@@ -1613,12 +1613,19 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
 // Since it may not be valid to emit a fold to zero for vector initializers
 // check if we can before folding.
 static SDValue tryFoldToZero(SDLoc DL, const TargetLowering &TLI, EVT VT,
-                             SelectionDAG &DAG, bool LegalOperations) {
+                             SelectionDAG &DAG,
+                             bool LegalOperations, bool LegalTypes) {
   if (!VT.isVector())
     return DAG.getConstant(0, VT);
   if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)) {
     // Produce a vector of zeros.
-    SDValue El = DAG.getConstant(0, VT.getVectorElementType());
+    EVT ElemTy = VT.getVectorElementType();
+    if (LegalTypes && TLI.getTypeAction(*DAG.getContext(), ElemTy) ==
+                      TargetLowering::TypePromoteInteger)
+      ElemTy = TLI.getTypeToTransformTo(*DAG.getContext(), ElemTy);
+    assert((!LegalTypes || TLI.isTypeLegal(ElemTy)) &&
+           "Type for zero vector elements is not legal");
+    SDValue El = DAG.getConstant(0, ElemTy);
     std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
     return DAG.getNode(ISD::BUILD_VECTOR, DL, VT,
       &Ops[0], Ops.size());
@@ -1648,7 +1655,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
   // fold (sub x, x) -> 0
   // FIXME: Refactor this and xor and other similar operations together.
   if (N0 == N1)
-    return tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations);
+    return tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations, LegalTypes);
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.FoldConstantArithmetic(ISD::SUB, VT, N0C, N1C);
@@ -3519,7 +3526,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
   }
   // fold (xor x, x) -> 0
   if (N0 == N1)
-    return tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations);
+    return tryFoldToZero(SDLoc(N), TLI, VT, DAG, LegalOperations, LegalTypes);
 
   // Simplify: xor (op x...), (op y...)  -> (op (xor x, y))
   if (N0.getOpcode() == N1.getOpcode()) {
