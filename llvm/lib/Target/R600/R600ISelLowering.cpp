@@ -26,7 +26,8 @@
 using namespace llvm;
 
 R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
-    AMDGPUTargetLowering(TM) {
+    AMDGPUTargetLowering(TM),
+    Gen(TM.getSubtarget<AMDGPUSubtarget>().getGeneration()) {
   addRegisterClass(MVT::v4f32, &AMDGPU::R600_Reg128RegClass);
   addRegisterClass(MVT::f32, &AMDGPU::R600_Reg32RegClass);
   addRegisterClass(MVT::v4i32, &AMDGPU::R600_Reg128RegClass);
@@ -37,6 +38,9 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FMUL, MVT::v4f32, Expand);
   setOperationAction(ISD::FDIV, MVT::v4f32, Expand);
   setOperationAction(ISD::FSUB, MVT::v4f32, Expand);
+
+  setOperationAction(ISD::FCOS, MVT::f32, Custom);
+  setOperationAction(ISD::FSIN, MVT::f32, Custom);
 
   setOperationAction(ISD::FP_TO_SINT, MVT::v4i32, Expand);
   setOperationAction(ISD::FP_TO_UINT, MVT::v4i32, Expand);
@@ -473,6 +477,8 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::FCOS:
+  case ISD::FSIN: return LowerTrig(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SELECT: return LowerSELECT(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
@@ -721,6 +727,37 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(SDValue(Node, 0));
     return;
   }
+}
+
+SDValue R600TargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {
+  // On hw >= R700, COS/SIN input must be between -1. and 1.
+  // Thus we lower them to TRIG ( FRACT ( x / 2Pi + 0.5) - 0.5)
+  EVT VT = Op.getValueType();
+  SDValue Arg = Op.getOperand(0);
+  SDValue FractPart = DAG.getNode(AMDGPUISD::FRACT, SDLoc(Op), VT,
+      DAG.getNode(ISD::FADD, SDLoc(Op), VT,
+        DAG.getNode(ISD::FMUL, SDLoc(Op), VT, Arg,
+          DAG.getConstantFP(0.15915494309, MVT::f32)),
+        DAG.getConstantFP(0.5, MVT::f32)));
+  unsigned TrigNode;
+  switch (Op.getOpcode()) {
+  case ISD::FCOS:
+    TrigNode = AMDGPUISD::COS_HW;
+    break;
+  case ISD::FSIN:
+    TrigNode = AMDGPUISD::SIN_HW;
+    break;
+  default:
+    llvm_unreachable("Wrong trig opcode");
+  }
+  SDValue TrigVal = DAG.getNode(TrigNode, SDLoc(Op), VT,
+      DAG.getNode(ISD::FADD, SDLoc(Op), VT, FractPart,
+        DAG.getConstantFP(-0.5, MVT::f32)));
+  if (Gen >= AMDGPUSubtarget::R700)
+    return TrigVal;
+  // On R600 hw, COS/SIN input must be between -Pi and Pi.
+  return DAG.getNode(ISD::FMUL, SDLoc(Op), VT, TrigVal,
+      DAG.getConstantFP(3.14159265359, MVT::f32));
 }
 
 SDValue R600TargetLowering::LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const {

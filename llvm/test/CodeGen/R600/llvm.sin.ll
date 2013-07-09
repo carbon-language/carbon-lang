@@ -1,5 +1,8 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
+;CHECK: MULADD_IEEE *
+;CHECK: FRACT *
+;CHECK: ADD *
 ;CHECK: SIN * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 
 define void @test() {

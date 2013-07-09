@@ -364,6 +364,14 @@ def DOT4 : SDNode<"AMDGPUISD::DOT4",
   []
 >;
 
+def COS_HW : SDNode<"AMDGPUISD::COS_HW",
+  SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisFP<1>]>
+>;
+
+def SIN_HW : SDNode<"AMDGPUISD::SIN_HW",
+  SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisFP<1>]>
+>;
+
 def TEXTURE_FETCH_Type : SDTypeProfile<1, 19, [SDTCisFP<0>]>;
 
 def TEXTURE_FETCH: SDNode<"AMDGPUISD::TEXTURE_FETCH", TEXTURE_FETCH_Type, []>;
@@ -1080,14 +1088,14 @@ class RECIPSQRT_IEEE_Common <bits<11> inst> : R600_1OP <
 }
 
 class SIN_Common <bits<11> inst> : R600_1OP <
-  inst, "SIN", []>{
+  inst, "SIN", [(set f32:$dst, (SIN_HW f32:$src0))]>{
   let Trig = 1;
   let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class COS_Common <bits<11> inst> : R600_1OP <
-  inst, "COS", []> {
+  inst, "COS", [(set f32:$dst, (COS_HW f32:$src0))]> {
   let Trig = 1;
   let TransOnly = 1;
   let Itinerary = TransALU;
@@ -1228,18 +1236,6 @@ let Predicates = [isR600] in {
 
 }
 
-// Helper pattern for normalizing inputs to triginomic instructions for R700+
-// cards.
-class COS_PAT <InstR600 trig> : Pat<
-  (fcos f32:$src),
-  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), $src))
->;
-
-class SIN_PAT <InstR600 trig> : Pat<
-  (fsin f32:$src),
-  (trig (MUL_IEEE (MOV_IMM_I32 CONST.TWO_PI_INV), $src))
->;
-
 //===----------------------------------------------------------------------===//
 // R700 Only instructions
 //===----------------------------------------------------------------------===//
@@ -1247,10 +1243,6 @@ class SIN_PAT <InstR600 trig> : Pat<
 let Predicates = [isR700] in {
   def SIN_r700 : SIN_Common<0x6E>;
   def COS_r700 : COS_Common<0x6F>;
-
-  // R700 normalizes inputs to SIN/COS the same as EG
-  def : SIN_PAT <SIN_r700>;
-  def : COS_PAT <COS_r700>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1276,8 +1268,6 @@ def SIN_eg : SIN_Common<0x8D>;
 def COS_eg : COS_Common<0x8E>;
 
 def : POW_Common <LOG_IEEE_eg, EXP_IEEE_eg, MUL>;
-def : SIN_PAT <SIN_eg>;
-def : COS_PAT <COS_eg>;
 def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_eg $src))>;
 
 //===----------------------------------------------------------------------===//
@@ -1726,8 +1716,6 @@ def COS_cm : COS_Common<0x8E>;
 } // End isVector = 1
 
 def : POW_Common <LOG_IEEE_cm, EXP_IEEE_cm, MUL>;
-def : SIN_PAT <SIN_cm>;
-def : COS_PAT <COS_cm>;
 
 defm DIV_cm : DIV_Common<RECIP_IEEE_cm>;
 
