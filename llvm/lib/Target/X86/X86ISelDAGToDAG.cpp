@@ -2531,6 +2531,11 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
     // Prevent use of AH in a REX instruction by referencing AX instead.
     // Shift it down 8 bits.
+    //
+    // The current assumption of the register allocator is that isel
+    // won't generate explicit references to the GPR8_NOREX registers. If
+    // the allocator and/or the backend get enhanced to be more robust in
+    // that regard, this can be, and should be, removed.
     if (HiReg == X86::AH && Subtarget->is64Bit() &&
         !SDValue(Node, 1).use_empty()) {
       SDValue Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
