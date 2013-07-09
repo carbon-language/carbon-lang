@@ -695,6 +695,9 @@ namespace llvm {
   /// getDISubprogram - Find subprogram that is enclosing this scope.
   DISubprogram getDISubprogram(const MDNode *Scope);
 
+  /// getDICompositeType - Find underlying composite type.
+  DICompositeType getDICompositeType(DIType T);
+
   /// isSubprogramContext - Return true if Context is either a subprogram
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
