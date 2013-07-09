@@ -13,6 +13,8 @@
 
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MemoryBuffer.h"
 
@@ -36,6 +38,60 @@ static bool isInternalMember(const ArchiveMemberHeader &amh) {
 }
 
 void Archive::anchor() { }
+
+StringRef ArchiveMemberHeader::getName() const {
+  char EndCond;
+  if (Name[0] == '/' || Name[0] == '#')
+    EndCond = ' ';
+  else
+    EndCond = '/';
+  llvm::StringRef::size_type end =
+      llvm::StringRef(Name, sizeof(Name)).find(EndCond);
+  if (end == llvm::StringRef::npos)
+    end = sizeof(Name);
+  assert(end <= sizeof(Name) && end > 0);
+  // Don't include the EndCond if there is one.
+  return llvm::StringRef(Name, end);
+}
+
+uint64_t ArchiveMemberHeader::getSize() const {
+  uint64_t ret;
+  if (llvm::StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret))
+    llvm_unreachable("Size is not an integer.");
+  return ret;
+}
+
+Archive::Child::Child(const Archive *p, StringRef d) : Parent(p), Data(d) {
+  if (!p || d.empty())
+    return;
+  // Setup StartOfFile and PaddingBytes.
+  StartOfFile = sizeof(ArchiveMemberHeader);
+  // Don't include attached name.
+  StringRef Name = ToHeader(Data.data())->getName();
+  if (Name.startswith("#1/")) {
+    uint64_t NameSize;
+    if (Name.substr(3).rtrim(" ").getAsInteger(10, NameSize))
+      llvm_unreachable("Long name length is not an integer");
+    StartOfFile += NameSize;
+  }
+}
+
+Archive::Child Archive::Child::getNext() const {
+  size_t SpaceToSkip = Data.size();
+  // If it's odd, add 1 to make it even.
+  if (SpaceToSkip & 1)
+    ++SpaceToSkip;
+
+  const char *NextLoc = Data.data() + SpaceToSkip;
+
+  // Check to see if this is past the end of the archive.
+  if (NextLoc >= Parent->Data->getBufferEnd())
+    return Child(Parent, StringRef(0, 0));
+
+  size_t NextSize = sizeof(ArchiveMemberHeader) + ToHeader(NextLoc)->getSize();
+
+  return Child(Parent, StringRef(NextLoc, NextSize));
+}
 
 error_code Archive::Child::getName(StringRef &Result) const {
   StringRef name = getRawName();
@@ -87,6 +143,20 @@ error_code Archive::Child::getName(StringRef &Result) const {
   else
     Result = name;
   return object_error::success;
+}
+
+error_code Archive::Child::getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
+                                           bool FullPath) const {
+  StringRef Name;
+  if (error_code ec = getName(Name))
+    return ec;
+  SmallString<128> Path;
+  Result.reset(MemoryBuffer::getMemBuffer(
+      getBuffer(), FullPath ? (Twine(Parent->getFileName()) + "(" + Name + ")")
+                                  .toStringRef(Path)
+                            : Name,
+      false));
+  return error_code::success();
 }
 
 error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
