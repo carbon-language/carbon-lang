@@ -201,4 +201,6 @@ protected:
     ThreadStopSet m_seen_initial_stop;
 };
 
+typedef std::shared_ptr<ProcessPOSIX> ProcessPOSIXSP;
+
 #endif  // liblldb_MacOSXProcess_H_

@@ -47,7 +47,7 @@ public:
 
     /// Launches an inferior process ready for debugging.  Forms the
     /// implementation of Process::DoLaunch.
-    ProcessMonitor(ProcessPOSIX *process,
+    ProcessMonitor(ProcessPOSIXSP &process,
                    lldb_private::Module *module,
                    char const *argv[],
                    char const *envp[],
@@ -57,7 +57,7 @@ public:
                    const char *working_dir,
                    lldb_private::Error &error);
 
-    ProcessMonitor(ProcessPOSIX *process,
+    ProcessMonitor(ProcessPOSIXSP &process,
                    lldb::pid_t pid,
                    lldb_private::Error &error);
 
@@ -192,7 +192,7 @@ public:
 
 
 private:
-    ProcessFreeBSD *m_process;
+    std::shared_ptr<ProcessFreeBSD> m_process;
 
     lldb::thread_t m_operation_thread;
     lldb::thread_t m_monitor_thread;

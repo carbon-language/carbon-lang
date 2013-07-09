@@ -923,7 +923,7 @@ ProcessMonitor::AttachArgs::~AttachArgs()
 /// launching or attaching to the inferior process, and then 2) servicing
 /// operations such as register reads/writes, stepping, etc.  See the comments
 /// on the Operation class for more info as to why this is needed.
-ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
+ProcessMonitor::ProcessMonitor(ProcessPOSIXSP &process,
                                Module *module,
                                const char *argv[],
                                const char *envp[],
@@ -932,7 +932,7 @@ ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
                                const char *stderr_path,
                                const char *working_dir,
                                lldb_private::Error &error)
-    : m_process(static_cast<ProcessLinux *>(process)),
+    : m_process(static_pointer_cast<ProcessLinux>(process)),
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_monitor_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(LLDB_INVALID_PROCESS_ID),
@@ -988,10 +988,10 @@ WAIT_AGAIN:
     }
 }
 
-ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
+ProcessMonitor::ProcessMonitor(ProcessPOSIXSP &process,
                                lldb::pid_t pid,
                                lldb_private::Error &error)
-  : m_process(static_cast<ProcessLinux *>(process)),
+  : m_process(static_pointer_cast<ProcessLinux>(process)),
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_monitor_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(LLDB_INVALID_PROCESS_ID),
@@ -1412,7 +1412,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
 {
     ProcessMessage message;
     ProcessMonitor *monitor = static_cast<ProcessMonitor*>(callback_baton);
-    ProcessLinux *process = monitor->m_process;
+    ProcessLinux *process = monitor->m_process.get();
     assert(process);
     bool stop_monitoring;
     siginfo_t info;
