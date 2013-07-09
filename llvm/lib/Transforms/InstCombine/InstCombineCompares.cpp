@@ -1547,7 +1547,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                           Builder->CreateOr(LHSI->getOperand(1), RHSV - 1),
                           LHSC);
 
-    // C1-X >u C2 -> (X|C2) == C1
+    // C1-X >u C2 -> (X|C2) != C1
     //   iff C1 & C2 == C2
     //       C2+1 is a power of 2
     if (ICI.getPredicate() == ICmpInst::ICMP_UGT && LHSI->hasOneUse() &&
@@ -1594,7 +1594,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                             Builder->CreateAnd(LHSI->getOperand(0), -RHSV),
                             ConstantExpr::getNeg(LHSC));
 
-      // X-C1 >u C2 -> (X & ~C2) == C1
+      // X-C1 >u C2 -> (X & ~C2) != C1
       //   iff C1 & C2 == 0
       //       C2+1 is a power of 2
       if (ICI.getPredicate() == ICmpInst::ICMP_UGT && LHSI->hasOneUse() &&
