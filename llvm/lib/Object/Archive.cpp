@@ -61,13 +61,18 @@ uint64_t ArchiveMemberHeader::getSize() const {
   return ret;
 }
 
-Archive::Child::Child(const Archive *p, StringRef d) : Parent(p), Data(d) {
-  if (!p || d.empty())
+Archive::Child::Child(const Archive *Parent, const char *Start)
+    : Parent(Parent) {
+  if (!Start)
     return;
+
+  const ArchiveMemberHeader *Header = ToHeader(Start);
+  Data = StringRef(Start, sizeof(ArchiveMemberHeader) + Header->getSize());
+
   // Setup StartOfFile and PaddingBytes.
   StartOfFile = sizeof(ArchiveMemberHeader);
   // Don't include attached name.
-  StringRef Name = ToHeader(Data.data())->getName();
+  StringRef Name = Header->getName();
   if (Name.startswith("#1/")) {
     uint64_t NameSize;
     if (Name.substr(3).rtrim(" ").getAsInteger(10, NameSize))
@@ -86,11 +91,9 @@ Archive::Child Archive::Child::getNext() const {
 
   // Check to see if this is past the end of the archive.
   if (NextLoc >= Parent->Data->getBufferEnd())
-    return Child(Parent, StringRef(0, 0));
+    return Child(Parent, NULL);
 
-  size_t NextSize = sizeof(ArchiveMemberHeader) + ToHeader(NextLoc)->getSize();
-
-  return Child(Parent, StringRef(NextLoc, NextSize));
+  return Child(Parent, NextLoc);
 }
 
 error_code Archive::Child::getName(StringRef &Result) const {
@@ -265,9 +268,7 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
 
 Archive::child_iterator Archive::begin_children(bool skip_internal) const {
   const char *Loc = Data->getBufferStart() + strlen(Magic);
-  size_t Size = sizeof(ArchiveMemberHeader) +
-    ToHeader(Loc)->getSize();
-  Child c(this, StringRef(Loc, Size));
+  Child c(this, Loc);
   // Skip internals at the beginning of an archive.
   if (skip_internal && isInternalMember(*ToHeader(Loc)))
     return c.getNext();
@@ -275,7 +276,7 @@ Archive::child_iterator Archive::begin_children(bool skip_internal) const {
 }
 
 Archive::child_iterator Archive::end_children() const {
-  return Child(this, StringRef(0, 0));
+  return Child(this, NULL);
 }
 
 error_code Archive::Symbol::getName(StringRef &Result) const {
@@ -323,9 +324,7 @@ error_code Archive::Symbol::getMember(child_iterator &Result) const {
   }
 
   const char *Loc = Parent->getData().begin() + Offset;
-  size_t Size = sizeof(ArchiveMemberHeader) +
-    ToHeader(Loc)->getSize();
-  Result = Child(Parent, StringRef(Loc, Size));
+  Result = Child(Parent, Loc);
 
   return object_error::success;
 }

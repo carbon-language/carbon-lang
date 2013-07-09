@@ -51,7 +51,7 @@ public:
     uint16_t StartOfFile;
 
   public:
-    Child(const Archive *p, StringRef d);
+    Child(const Archive *Parent, const char *Start);
 
     bool operator ==(const Child &other) const {
       return (Parent == other.Parent) && (Data.begin() == other.Data.begin());
@@ -81,7 +81,7 @@ public:
   class child_iterator {
     Child child;
   public:
-    child_iterator() : child(Child(0, StringRef())) {}
+    child_iterator() : child(Child(0, 0)) {}
     child_iterator(const Child &c) : child(c) {}
     const Child* operator->() const {
       return &child;
