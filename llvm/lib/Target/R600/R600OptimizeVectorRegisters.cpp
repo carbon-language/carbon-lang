@@ -183,10 +183,6 @@ MachineInstr *R600VectorRegMerger::RebuildVector(
   std::vector<unsigned> UpdatedUndef = BaseRSI->UndefReg;
   for (DenseMap<unsigned, unsigned>::iterator It = RSI->RegToChan.begin(),
       E = RSI->RegToChan.end(); It != E; ++It) {
-    if (BaseRSI->RegToChan.find((*It).first) != BaseRSI->RegToChan.end()) {
-      UpdatedRegToChan[(*It).first] = (*It).second;
-      continue;
-    }
     unsigned DstReg = MRI->createVirtualRegister(&AMDGPU::R600_Reg128RegClass);
     unsigned SubReg = (*It).first;
     unsigned Swizzle = (*It).second;
