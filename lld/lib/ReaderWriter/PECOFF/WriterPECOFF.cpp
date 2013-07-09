@@ -547,39 +547,6 @@ private:
 
 class ExecutableWriter : public Writer {
 private:
-  // Compute and set the offset of each chunk in the output file.
-  void computeChunkSizeOnDisk() {
-    uint64_t offset = 0;
-    for (auto &chunk : _chunks) {
-      // Round up to the nearest alignment boundary.
-      offset = llvm::RoundUpToAlignment(offset, chunk->align());
-      chunk->setFileOffset(offset);
-      offset += chunk->size();
-    }
-  }
-
-  // Compute the starting address of sections when loaded in memory. They are
-  // different from positions on disk because sections need to be
-  // sector-aligned on disk but page-aligned in memory.
-  void computeChunkSizeInMemory(uint32_t &numSections, uint32_t &imageSize) {
-    // The first page starting at ImageBase is usually left unmapped. IIUC
-    // there's no technical reason to do so, but we'll follow that convention
-    // so that we don't produce odd-looking binary. We should update the code
-    // (or this comment) once we figure the reason out.
-    uint32_t rva = PAGE_SIZE;
-    for (auto &cp : _chunks) {
-      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp)) {
-        chunk->setVirtualAddress(rva);
-        // Skip the empty section.
-        if (chunk->size() == 0)
-          continue;
-        numSections++;
-        rva = llvm::RoundUpToAlignment(rva + chunk->size(), PAGE_SIZE);
-      }
-    }
-    imageSize = rva;
-  }
-
   /// Apply relocations to the output file buffer. This two pass. In the first
   /// pass, we visit all atoms to create a map from atom to its virtual
   /// address. In the second pass, we visit all relocation references to fix
@@ -596,11 +563,31 @@ private:
 
   void addChunk(Chunk *chunk) {
     _chunks.push_back(std::unique_ptr<Chunk>(chunk));
+
+    // Compute and set the offset of the chunk in the output file.
+    _imageSizeOnDisk = llvm::RoundUpToAlignment(_imageSizeOnDisk,
+                                                chunk->align());
+    chunk->setFileOffset(_imageSizeOnDisk);
+    _imageSizeOnDisk += chunk->size();
+
+    // Compute and set the starting address of sections when loaded in
+    // memory. They are different from positions on disk because sections need
+    // to be sector-aligned on disk but page-aligned in memory.
+    if (SectionChunk *sectionChunk = dyn_cast<SectionChunk>(chunk)) {
+      sectionChunk->setVirtualAddress(_imageSizeInMemory);
+      // Skip the empty section.
+      if (chunk->size() == 0)
+        return;
+      _numSections++;
+      _imageSizeInMemory = llvm::RoundUpToAlignment(
+        _imageSizeInMemory + chunk->size(), PAGE_SIZE);
+    }
   }
 
 public:
   explicit ExecutableWriter(const PECOFFTargetInfo &targetInfo)
-      : _PECOFFTargetInfo(targetInfo) {}
+    : _PECOFFTargetInfo(targetInfo), _numSections(0),
+      _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
 
   // Create all chunks that consist of the output file.
   void build(const File &linkedFile) {
@@ -621,20 +608,14 @@ public:
     addChunk(rdata);
     addChunk(data);
 
-    // Compute and assign file offset to each chunk.
-    uint32_t numSections = 0;
-    uint32_t imageSize = 0;
-    computeChunkSizeOnDisk();
-    computeChunkSizeInMemory(numSections, imageSize);
-
     // Now that we know the size and file offset of sections. Set the file
     // header accordingly.
     peHeader->setSizeOfCode(text->size());
     peHeader->setBaseOfCode(text->getVirtualAddress());
     peHeader->setBaseOfData(rdata->getVirtualAddress());
     peHeader->setSizeOfInitializedData(rdata->size() + data->size());
-    peHeader->setNumberOfSections(numSections);
-    peHeader->setSizeOfImage(imageSize);
+    peHeader->setNumberOfSections(_numSections);
+    peHeader->setSizeOfImage(_imageSizeInMemory);
   }
 
   virtual error_code writeFile(const File &linkedFile, StringRef path) {
@@ -656,6 +637,17 @@ public:
 private:
   std::vector<std::unique_ptr<Chunk>> _chunks;
   const PECOFFTargetInfo &_PECOFFTargetInfo;
+  uint32_t _numSections;
+
+  // The size of the image in memory. This is initialized with PAGE_SIZE, as the
+  // first page starting at ImageBase is usually left unmapped. IIUC there's no
+  // technical reason to do so, but we'll follow that convention so that we
+  // don't produce odd-looking binary.
+  uint32_t _imageSizeInMemory;
+
+  // The size of the image on disk. This is basically the sum of all chunks in
+  // the output file with paddings between them.
+  uint32_t _imageSizeOnDisk;
 };
 
 } // end namespace pecoff
