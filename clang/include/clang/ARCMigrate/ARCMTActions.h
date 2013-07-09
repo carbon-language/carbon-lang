@@ -59,12 +59,14 @@ class ObjCMigrateAction : public WrapperFrontendAction {
   std::string MigrateDir;
   bool MigrateLiterals;
   bool MigrateSubscripting;
+  bool MigrateProperty;
   FileRemapper Remapper;
   CompilerInstance *CompInst;
 public:
   ObjCMigrateAction(FrontendAction *WrappedAction, StringRef migrateDir,
                     bool migrateLiterals,
-                    bool migrateSubscripting);
+                    bool migrateSubscripting,
+                    bool migrateProperty);
 
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,StringRef InFile);
