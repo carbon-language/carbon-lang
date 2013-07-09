@@ -65,6 +65,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.
         lldbutil.run_break_set_by_file_and_line (self, None, self.first_stop, num_expected_locations=1)
 
+        # llvm.org/pr16566: LLDB requires a breakpoint to be hit before watchpoints are respected on a thread created after the watchpoing is set.
         # Set this breakpoint to allow newly created thread to inherit the global watchpoint state.
         lldbutil.run_break_set_by_file_and_line (self, None, self.thread_function, num_expected_locations=1)
 

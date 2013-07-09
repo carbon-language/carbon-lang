@@ -618,6 +618,22 @@ def skipIfLinux(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipIfDarwin(func):
+    """Decorate the item to skip tests that should be skipped on Darwin."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipIfLinux can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        platform = sys.platform
+        if "darwin" in platform:
+            self.skipTest("skip on darwin")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
+
 def skipIfLinuxClang(func):
     """Decorate the item to skip tests that should be skipped if building on 
        Linux with clang.

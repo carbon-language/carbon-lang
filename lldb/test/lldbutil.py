@@ -181,6 +181,8 @@ def stop_reason_to_str(enum):
         return "exception"
     elif enum == lldb.eStopReasonPlanComplete:
         return "plancomplete"
+    elif enum == lldb.eStopReasonThreadExiting:
+        return "threadexiting"
     else:
         raise Exception("Unknown StopReason enum")
 
@@ -256,6 +258,41 @@ def value_type_to_str(enum):
     else:
         raise Exception("Unknown ValueType enum")
 
+
+# ==================================================
+# Get stopped threads due to each stop reason.
+# ==================================================
+
+def sort_stopped_threads(process,
+                         breakpoint_threads = None,
+                         crashed_threads = None,
+                         watchpoint_threads = None,
+                         signal_threads = None,
+                         exiting_threads = None,
+                         other_threads = None):
+    """ Fills array *_threads with threads stopped for the corresponding stop
+        reason.
+    """
+    for lst in [breakpoint_threads,
+                watchpoint_threads,
+                signal_threads,
+                exiting_threads,
+                other_threads]:
+        if lst is not None:
+            lst[:] = []
+
+    for thread in process:
+        dispatched = False
+        for (reason, list) in [(lldb.eStopReasonBreakpoint, breakpoint_threads),
+                               (lldb.eStopReasonException, crashed_threads),
+                               (lldb.eStopReasonWatchpoint, watchpoint_threads),
+                               (lldb.eStopReasonSignal, signal_threads),
+                               (lldb.eStopReasonThreadExiting, exiting_threads),
+                               (None, other_threads)]:
+            if not dispatched and list is not None:
+                if thread.GetStopReason() == reason or reason is None:
+                    list.append(thread)
+                    dispatched = True
 
 # ==================================================
 # Utility functions for setting breakpoints
