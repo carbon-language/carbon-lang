@@ -88,10 +88,33 @@ define i32 @test7(i32 %X, i32 %Y) {
 }
 
 ; CHECK: test8
-; CHECK: pkhtb   r0, r0, r1, asr #22
+; CHECK-NOT: pkhtb   r0, r0, r1, asr #22
+;   pkhtb does an arithmetic shift, not a logical shift. Make sure we don't
+;   use it for problematic cases when whether sign bits would be shifted in
+;   would matter.
 define i32 @test8(i32 %X, i32 %Y) {
 	%tmp1 = and i32 %X, -65536
 	%tmp3 = lshr i32 %Y, 22
 	%tmp57 = or i32 %tmp3, %tmp1
 	ret i32 %tmp57
 }
+
+; CHECK: test9:
+; CHECK: pkhtb r0, r0, r1, asr #16
+define i32 @test9(i32 %src1, i32 %src2) {
+entry:
+    %tmp = and i32 %src1, -65536
+    %tmp2 = lshr i32 %src2, 16
+    %tmp3 = or i32 %tmp, %tmp2
+    ret i32 %tmp3
+}
+
+; CHECK: test10
+; CHECK: pkhtb   r0, r0, r1, asr #22
+define i32 @test10(i32 %X, i32 %Y) {
+	%tmp1 = and i32 %X, -65536
+	%tmp3 = ashr i32 %Y, 22
+	%tmp57 = or i32 %tmp3, %tmp1
+	ret i32 %tmp57
+}
+

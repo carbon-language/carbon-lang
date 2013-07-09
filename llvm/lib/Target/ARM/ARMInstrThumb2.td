@@ -2951,7 +2951,12 @@ def t2PKHTB : T2ThreeReg<
 
 // Alternate cases for PKHTB where identities eliminate some nodes.  Note that
 // a shift amount of 0 is *not legal* here, it is PKHBT instead.
-def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000), (srl rGPR:$src2, imm16_31:$sh)),
+// We also can not replace a srl (17..31) by an arithmetic shift we would use in
+// pkhtb src1, src2, asr (17..31).
+def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000), (srl rGPR:$src2, imm16:$sh)),
+            (t2PKHTB rGPR:$src1, rGPR:$src2, imm16:$sh)>,
+            Requires<[HasT2ExtractPack, IsThumb2]>;
+def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000), (sra rGPR:$src2, imm16_31:$sh)),
             (t2PKHTB rGPR:$src1, rGPR:$src2, imm16_31:$sh)>,
             Requires<[HasT2ExtractPack, IsThumb2]>;
 def : T2Pat<(or (and rGPR:$src1, 0xFFFF0000),
