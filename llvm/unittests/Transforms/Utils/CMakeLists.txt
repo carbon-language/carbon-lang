@@ -6,4 +6,5 @@ add_llvm_unittest(UtilsTests
   Cloning.cpp
   IntegerDivision.cpp
   Local.cpp
+  SpecialCaseList.cpp
   )
