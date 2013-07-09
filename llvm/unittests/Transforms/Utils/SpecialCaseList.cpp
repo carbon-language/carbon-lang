@@ -82,6 +82,13 @@ TEST_F(SpecialCaseListTest, FunctionIsIn) {
                                 "fun:bar\n"));
   EXPECT_TRUE(SCL->isIn(*Foo));
   EXPECT_TRUE(SCL->isIn(*Bar));
+
+  SCL.reset(makeSpecialCaseList("fun:foo=functional\n"));
+  EXPECT_TRUE(SCL->isIn(*Foo, "functional"));
+  StringRef Category;
+  EXPECT_TRUE(SCL->findCategory(*Foo, Category));
+  EXPECT_EQ("functional", Category);
+  EXPECT_FALSE(SCL->isIn(*Bar, "functional"));
 }
 
 TEST_F(SpecialCaseListTest, GlobalIsIn) {
@@ -92,26 +99,44 @@ TEST_F(SpecialCaseListTest, GlobalIsIn) {
   OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("global:foo\n"));
   EXPECT_TRUE(SCL->isIn(*Foo));
   EXPECT_FALSE(SCL->isIn(*Bar));
-  EXPECT_FALSE(SCL->isInInit(*Foo));
-  EXPECT_FALSE(SCL->isInInit(*Bar));
+  EXPECT_FALSE(SCL->isIn(*Foo, "init"));
+  EXPECT_FALSE(SCL->isIn(*Bar, "init"));
+
+  SCL.reset(makeSpecialCaseList("global:foo=init\n"));
+  EXPECT_FALSE(SCL->isIn(*Foo));
+  EXPECT_FALSE(SCL->isIn(*Bar));
+  EXPECT_TRUE(SCL->isIn(*Foo, "init"));
+  EXPECT_FALSE(SCL->isIn(*Bar, "init"));
 
   SCL.reset(makeSpecialCaseList("global-init:foo\n"));
   EXPECT_FALSE(SCL->isIn(*Foo));
   EXPECT_FALSE(SCL->isIn(*Bar));
-  EXPECT_TRUE(SCL->isInInit(*Foo));
-  EXPECT_FALSE(SCL->isInInit(*Bar));
+  EXPECT_TRUE(SCL->isIn(*Foo, "init"));
+  EXPECT_FALSE(SCL->isIn(*Bar, "init"));
+
+  SCL.reset(makeSpecialCaseList("type:t2=init\n"));
+  EXPECT_FALSE(SCL->isIn(*Foo));
+  EXPECT_FALSE(SCL->isIn(*Bar));
+  EXPECT_FALSE(SCL->isIn(*Foo, "init"));
+  EXPECT_TRUE(SCL->isIn(*Bar, "init"));
 
   SCL.reset(makeSpecialCaseList("global-init-type:t2\n"));
   EXPECT_FALSE(SCL->isIn(*Foo));
   EXPECT_FALSE(SCL->isIn(*Bar));
-  EXPECT_FALSE(SCL->isInInit(*Foo));
-  EXPECT_TRUE(SCL->isInInit(*Bar));
+  EXPECT_FALSE(SCL->isIn(*Foo, "init"));
+  EXPECT_TRUE(SCL->isIn(*Bar, "init"));
+
+  SCL.reset(makeSpecialCaseList("src:hello=init\n"));
+  EXPECT_FALSE(SCL->isIn(*Foo));
+  EXPECT_FALSE(SCL->isIn(*Bar));
+  EXPECT_TRUE(SCL->isIn(*Foo, "init"));
+  EXPECT_TRUE(SCL->isIn(*Bar, "init"));
 
   SCL.reset(makeSpecialCaseList("global-init-src:hello\n"));
   EXPECT_FALSE(SCL->isIn(*Foo));
   EXPECT_FALSE(SCL->isIn(*Bar));
-  EXPECT_TRUE(SCL->isInInit(*Foo));
-  EXPECT_TRUE(SCL->isInInit(*Bar));
+  EXPECT_TRUE(SCL->isIn(*Foo, "init"));
+  EXPECT_TRUE(SCL->isIn(*Bar, "init"));
 }
 
 }

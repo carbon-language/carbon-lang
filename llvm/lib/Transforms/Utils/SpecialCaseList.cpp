@@ -1,4 +1,4 @@
-//===-- SpecialCaseList.cpp - blacklist for sanitizers --------------------===//
+//===-- SpecialCaseList.cpp - special case list for sanitizers ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,13 +9,15 @@
 //
 // This is a utility class for instrumentation passes (like AddressSanitizer
 // or ThreadSanitizer) to avoid instrumenting some functions or global
-// variables based on a user-supplied blacklist.
+// variables, or to instrument some functions or global variables in a specific
+// way, based on a user-supplied list.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -50,7 +52,7 @@ void SpecialCaseList::init(const MemoryBuffer *MB) {
   // Iterate through each line in the blacklist file.
   SmallVector<StringRef, 16> Lines;
   SplitString(MB->getBuffer(), Lines, "\n\r");
-  StringMap<std::string> Regexps;
+  StringMap<StringMap<std::string> > Regexps;
   for (SmallVectorImpl<StringRef>::iterator I = Lines.begin(), E = Lines.end();
        I != E; ++I) {
     // Ignore empty lines and lines starting with "#"
@@ -59,10 +61,25 @@ void SpecialCaseList::init(const MemoryBuffer *MB) {
     // Get our prefix and unparsed regexp.
     std::pair<StringRef, StringRef> SplitLine = I->split(":");
     StringRef Prefix = SplitLine.first;
-    std::string Regexp = SplitLine.second;
-    if (Regexp.empty()) {
+    if (SplitLine.second.empty()) {
       // Missing ':' in the line.
       report_fatal_error("malformed blacklist line: " + SplitLine.first);
+    }
+
+    std::pair<StringRef, StringRef> SplitRegexp = SplitLine.second.split("=");
+    std::string Regexp = SplitRegexp.first;
+    StringRef Category = SplitRegexp.second;
+
+    // Backwards compatibility.
+    if (Prefix == "global-init") {
+      Prefix = "global";
+      Category = "init";
+    } else if (Prefix == "global-init-type") {
+      Prefix = "type";
+      Category = "init";
+    } else if (Prefix == "global-init-src") {
+      Prefix = "src";
+      Category = "init";
     }
 
     // Replace * with .*
@@ -80,28 +97,40 @@ void SpecialCaseList::init(const MemoryBuffer *MB) {
     }
 
     // Add this regexp into the proper group by its prefix.
-    if (!Regexps[Prefix].empty())
-      Regexps[Prefix] += "|";
-    Regexps[Prefix] += Regexp;
+    if (!Regexps[Prefix][Category].empty())
+      Regexps[Prefix][Category] += "|";
+    Regexps[Prefix][Category] += Regexp;
   }
 
   // Iterate through each of the prefixes, and create Regexs for them.
-  for (StringMap<std::string>::const_iterator I = Regexps.begin(),
-       E = Regexps.end(); I != E; ++I) {
-    Entries[I->getKey()] = new Regex(I->getValue());
+  for (StringMap<StringMap<std::string> >::const_iterator I = Regexps.begin(),
+                                                          E = Regexps.end();
+       I != E; ++I) {
+    for (StringMap<std::string>::const_iterator II = I->second.begin(),
+                                                IE = I->second.end();
+         II != IE; ++II) {
+      Entries[I->getKey()][II->getKey()] = new Regex(II->getValue());
+    }
   }
 }
 
-bool SpecialCaseList::isIn(const Function &F) const {
-  return isIn(*F.getParent()) || inSection("fun", F.getName());
+SpecialCaseList::~SpecialCaseList() {
+  for (StringMap<StringMap<Regex*> >::iterator I = Entries.begin(),
+                                               E = Entries.end();
+       I != E; ++I) {
+    DeleteContainerSeconds(I->second);
+  }
 }
 
-bool SpecialCaseList::isIn(const GlobalVariable &G) const {
-  return isIn(*G.getParent()) || inSection("global", G.getName());
+bool SpecialCaseList::findCategory(const Function &F,
+                                   StringRef &Category) const {
+  return findCategory(*F.getParent(), Category) ||
+         findCategory("fun", F.getName(), Category);
 }
 
-bool SpecialCaseList::isIn(const Module &M) const {
-  return inSection("src", M.getModuleIdentifier());
+bool SpecialCaseList::isIn(const Function& F, const StringRef Category) const {
+  return isIn(*F.getParent(), Category) ||
+         inSectionCategory("fun", F.getName(), Category);
 }
 
 static StringRef GetGVTypeString(const GlobalVariable &G) {
@@ -115,19 +144,56 @@ static StringRef GetGVTypeString(const GlobalVariable &G) {
   return "<unknown type>";
 }
 
-bool SpecialCaseList::isInInit(const GlobalVariable &G) const {
-  return (isIn(*G.getParent()) ||
-          inSection("global-init", G.getName()) ||
-          inSection("global-init-type", GetGVTypeString(G)) ||
-          inSection("global-init-src", G.getParent()->getModuleIdentifier()));
+bool SpecialCaseList::findCategory(const GlobalVariable &G,
+                                   StringRef &Category) const {
+  return findCategory(*G.getParent(), Category) ||
+         findCategory("global", G.getName(), Category) ||
+         findCategory("type", GetGVTypeString(G), Category);
 }
 
-bool SpecialCaseList::inSection(const StringRef Section,
-                           const StringRef Query) const {
-  StringMap<Regex*>::const_iterator I = Entries.find(Section);
+bool SpecialCaseList::isIn(const GlobalVariable &G,
+                           const StringRef Category) const {
+  return isIn(*G.getParent(), Category) ||
+         inSectionCategory("global", G.getName(), Category) ||
+         inSectionCategory("type", GetGVTypeString(G), Category);
+}
+
+bool SpecialCaseList::findCategory(const Module &M, StringRef &Category) const {
+  return findCategory("src", M.getModuleIdentifier(), Category);
+}
+
+bool SpecialCaseList::isIn(const Module &M, const StringRef Category) const {
+  return inSectionCategory("src", M.getModuleIdentifier(), Category);
+}
+
+bool SpecialCaseList::findCategory(const StringRef Section,
+                                   const StringRef Query,
+                                   StringRef &Category) const {
+  StringMap<StringMap<Regex *> >::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
 
-  Regex *FunctionRegex = I->getValue();
+  for (StringMap<Regex *>::const_iterator II = I->second.begin(),
+                                          IE = I->second.end();
+       II != IE; ++II) {
+    Regex *FunctionRegex = II->getValue();
+    if (FunctionRegex->match(Query)) {
+      Category = II->first();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool SpecialCaseList::inSectionCategory(const StringRef Section,
+                                        const StringRef Query,
+                                        const StringRef Category) const {
+  StringMap<StringMap<Regex *> >::const_iterator I = Entries.find(Section);
+  if (I == Entries.end()) return false;
+  StringMap<Regex *>::const_iterator II = I->second.find(Category);
+  if (II == I->second.end()) return false;
+
+  Regex *FunctionRegex = II->getValue();
   return FunctionRegex->match(Query);
 }
 
