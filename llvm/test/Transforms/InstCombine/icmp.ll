@@ -1164,46 +1164,6 @@ define i1 @icmp_sub_3_X_uge_2(i32 %X) {
   ret i1 %cmp
 }
 
-; CHECK: @icmp_add_X_-14_ult_2
-; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 %X, -2
-; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp eq i32 [[AND]], 14
-; CHECK-NEXT: ret i1 [[CMP]]
-define i1 @icmp_add_X_-14_ult_2(i32 %X) {
-  %add = add i32 %X, -14
-  %cmp = icmp ult i32 %add, 2
-  ret i1 %cmp
-}
-
-; CHECK: @icmp_sub_3_X_ult_2
-; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 %X, 1
-; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp eq i32 [[OR]], 3
-; CHECK-NEXT: ret i1 [[CMP]]
-define i1 @icmp_sub_3_X_ult_2(i32 %X) {
-  %add = sub i32 3, %X
-  %cmp = icmp ult i32 %add, 2
-  ret i1 %cmp
-}
-
-; CHECK: @icmp_add_X_-14_uge_2
-; CHECK-NEXT: [[AND:%[a-z0-9]+]] = and i32 %X, -2
-; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 [[AND]], 14
-; CHECK-NEXT: ret i1 [[CMP]]
-define i1 @icmp_add_X_-14_uge_2(i32 %X) {
-  %add = add i32 %X, -14
-  %cmp = icmp uge i32 %add, 2
-  ret i1 %cmp
-}
-
-; CHECK: @icmp_sub_3_X_uge_2
-; CHECK-NEXT: [[OR:%[a-z0-9]+]] = or i32 %X, 1
-; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ne i32 [[OR]], 3
-; CHECK-NEXT: ret i1 [[CMP]]
-define i1 @icmp_sub_3_X_uge_2(i32 %X) {
-  %add = sub i32 3, %X
-  %cmp = icmp uge i32 %add, 2
-  ret i1 %cmp
-}
-
 ; CHECK: @icmp_and_X_-16_eq-16
 ; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ugt i32 %X, -17
 ; CHECK-NEXT: ret i1 [[CMP]]
