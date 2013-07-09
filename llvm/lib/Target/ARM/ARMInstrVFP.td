@@ -669,6 +669,33 @@ defm VRINTZ : vrint_inst_zrx<"z", 0, 1>;
 defm VRINTR : vrint_inst_zrx<"r", 0, 0>;
 defm VRINTX : vrint_inst_zrx<"x", 1, 0>;
 
+multiclass vrint_inst_anpm<string opc, bits<2> rm> {
+  let PostEncoderMethod = "" in {
+    def S : ASuInp<0b11101, 0b11, 0b1000, 0b01, 0,
+                   (outs SPR:$Sd), (ins SPR:$Sm),
+                   NoItinerary, !strconcat("vrint", opc, ".f32\t$Sd, $Sm"),
+                   []>, Requires<[HasV8FP]> {
+      let Inst{17-16} = rm;
+    }
+    def D : ADuInp<0b11101, 0b11, 0b1000, 0b01, 0,
+                   (outs DPR:$Dd), (ins DPR:$Dm),
+                   NoItinerary, !strconcat("vrint", opc, ".f64\t$Dd, $Dm"),
+                   []>, Requires<[HasV8FP]> {
+      let Inst{17-16} = rm;
+    }
+  }
+
+  def : InstAlias<!strconcat("vrint", opc, ".f32.f32\t$Sd, $Sm"),
+                  (!cast<Instruction>(NAME#"S") SPR:$Sd, SPR:$Sm)>;
+  def : InstAlias<!strconcat("vrint", opc, ".f64.f64\t$Dd, $Dm"),
+                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm)>;
+}
+
+defm VRINTA : vrint_inst_anpm<"a", 0b00>;
+defm VRINTN : vrint_inst_anpm<"n", 0b01>;
+defm VRINTP : vrint_inst_anpm<"p", 0b10>;
+defm VRINTM : vrint_inst_anpm<"m", 0b11>;
+
 def VSQRTD : ADuI<0b11101, 0b11, 0b0001, 0b11, 0,
                   (outs DPR:$Dd), (ins DPR:$Dm),
                   IIC_fpSQRT64, "vsqrt", ".f64\t$Dd, $Dm",

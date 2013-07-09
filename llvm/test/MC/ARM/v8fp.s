@@ -103,3 +103,22 @@
 @ CHECK: vrintxeq.f64 d28, d30  @ encoding: [0x6e,0xcb,0xf7,0x0e]
   vrintxvs.f32 s10, s14
 @ CHECK: vrintxvs.f32 s10, s14  @ encoding: [0x47,0x5a,0xb7,0x6e]
+
+@ VRINT{A,N,P,M}
+
+  vrinta.f64 d3, d4
+@ CHECK: vrinta.f64 d3, d4     @ encoding: [0x44,0x3b,0xb8,0xfe]
+  vrinta.f32 s12, s1
+@ CHECK: vrinta.f32 s12, s1    @ encoding: [0x60,0x6a,0xb8,0xfe]
+  vrintn.f64 d3, d4
+@ CHECK: vrintn.f64 d3, d4     @ encoding: [0x44,0x3b,0xb9,0xfe]
+  vrintn.f32 s12, s1
+@ CHECK: vrintn.f32 s12, s1    @ encoding: [0x60,0x6a,0xb9,0xfe]
+  vrintp.f64 d3, d4
+@ CHECK: vrintp.f64 d3, d4     @ encoding: [0x44,0x3b,0xba,0xfe]
+  vrintp.f32 s12, s1
+@ CHECK: vrintp.f32 s12, s1    @ encoding: [0x60,0x6a,0xba,0xfe]
+  vrintm.f64 d3, d4
+@ CHECK: vrintm.f64 d3, d4     @ encoding: [0x44,0x3b,0xbb,0xfe]
+  vrintm.f32 s12, s1
+@ CHECK: vrintm.f32 s12, s1    @ encoding: [0x60,0x6a,0xbb,0xfe]
