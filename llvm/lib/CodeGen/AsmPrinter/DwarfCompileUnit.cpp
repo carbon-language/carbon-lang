@@ -834,7 +834,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
 
   if (BTy.getTag() == dwarf::DW_TAG_unspecified_type) {
     Buffer.setTag(dwarf::DW_TAG_unspecified_type);
-    // Unspecified types has only name, nothing else.
+    // An unspecified type only has a name attribute.
     return;
   }
 
