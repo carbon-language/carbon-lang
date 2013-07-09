@@ -1564,12 +1564,22 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         }
       }
 
-      // X-C1 <u 2 -> (X & -2) == C1
-      //   iff C1 & 1 == 0
+      // X-C1 <u C2 -> (X & -C2) == C1
+      //   iff C1 & (C2-1) == 0
+      //       C2 is a power of 2
       if (ICI.getPredicate() == ICmpInst::ICMP_ULT && LHSI->hasOneUse() &&
-          LHSV[0] == 0 && RHSV == 2)
+          RHSV.isPowerOf2() && (LHSV & (RHSV - 1)) == 0)
         return new ICmpInst(ICmpInst::ICMP_EQ,
                             Builder->CreateAnd(LHSI->getOperand(0), -RHSV),
+                            ConstantExpr::getNeg(LHSC));
+
+      // X-C1 >u C2 -> (X & ~C2) == C1
+      //   iff C1 & C2 == 0
+      //       C2+1 is a power of 2
+      if (ICI.getPredicate() == ICmpInst::ICMP_UGT && LHSI->hasOneUse() &&
+          (RHSV + 1).isPowerOf2() && (LHSV & RHSV) == 0)
+        return new ICmpInst(ICmpInst::ICMP_NE,
+                            Builder->CreateAnd(LHSI->getOperand(0), ~RHSV),
                             ConstantExpr::getNeg(LHSC));
     }
     break;
@@ -1732,24 +1742,6 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       default:
         break;
       }
-
-      // X-C1 <u C2 -> (X & -C2) == C1
-      //   iff C1 & (C2-1) == 0
-      //       C2 is a power of 2
-      if (ICI.getPredicate() == ICmpInst::ICMP_ULT && LHSI->hasOneUse() &&
-          RHSV.isPowerOf2() && (LHSV & (RHSV - 1)) == 0)
-        return new ICmpInst(ICmpInst::ICMP_EQ,
-                            Builder->CreateAnd(LHSI->getOperand(0), -RHSV),
-                            ConstantExpr::getNeg(LHSC));
-
-      // X-C1 >u C2 -> (X & ~C2) == C1
-      //   iff C1 & C2 == 0
-      //       C2+1 is a power of 2
-      if (ICI.getPredicate() == ICmpInst::ICMP_UGT && LHSI->hasOneUse() &&
-          (RHSV + 1).isPowerOf2() && (LHSV & RHSV) == 0)
-        return new ICmpInst(ICmpInst::ICMP_NE,
-                            Builder->CreateAnd(LHSI->getOperand(0), ~RHSV),
-                            ConstantExpr::getNeg(LHSC));
     }
   }
   return 0;

@@ -272,11 +272,10 @@ define i1 @test19(i32 %A) {
 
 define i1 @test19a(i32 %A) {
 ; CHECK: @test19a
-; CHECK-NEXT: and i32 %A, -4
-; CHECK-NEXT: icmp eq i32
+; CHECK-NEXT: icmp ugt i32 %A, -5
 ; CHECK-NEXT: ret i1
         %B = ashr i32 %A, 2             ; <i32> [#uses=1]
-        ;; (X & -4) == -4
+        ;; X >u ~4
         %C = icmp eq i32 %B, -1         ; <i1> [#uses=1]
         ret i1 %C
 }
