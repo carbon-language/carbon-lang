@@ -31,7 +31,7 @@ class AnnotatingParser {
 public:
   AnnotatingParser(AnnotatedLine &Line, IdentifierInfo &Ident_in)
       : Line(Line), CurrentToken(Line.First), KeywordVirtualFound(false),
-        NameFound(false), Ident_in(Ident_in) {
+        NameFound(false), AutoFound(false), Ident_in(Ident_in) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
   }
 
@@ -589,6 +589,10 @@ private:
         Contexts.back().FirstStartOfName = &Current;
         Current.Type = TT_StartOfName;
         NameFound = true;
+      } else if (Current.is(tok::kw_auto)) {
+        AutoFound = true;
+      } else if (Current.is(tok::arrow) && AutoFound) {
+        Current.Type = TT_TrailingReturnArrow;
       } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
         Current.Type =
             determineStarAmpUsage(Current, Contexts.back().CanBeExpression &&
@@ -792,6 +796,7 @@ private:
   FormatToken *CurrentToken;
   bool KeywordVirtualFound;
   bool NameFound;
+  bool AutoFound;
   IdentifierInfo &Ident_in;
 };
 
@@ -1165,6 +1170,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       (Tok.is(tok::equal) || Tok.Previous->is(tok::equal)))
     return false;
 
+  if (Tok.Type == TT_TrailingReturnArrow ||
+      Tok.Previous->Type == TT_TrailingReturnArrow)
+    return true;
   if (Tok.Previous->is(tok::comma))
     return true;
   if (Tok.is(tok::comma))
@@ -1234,7 +1242,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     if (Left.is(tok::l_paren) && Right.is(tok::l_paren) &&
         Left.Previous->is(tok::kw___attribute))
       return false;
-    if (Left.is(tok::l_paren) && Left.Previous->Type == TT_BinaryOperator)
+    if (Left.is(tok::l_paren) && (Left.Previous->Type == TT_BinaryOperator ||
+                                  Left.Previous->is(tok::r_paren)))
       return false;
   }
 

@@ -674,7 +674,7 @@ private:
         State.Stack.back().Indent = State.Column;
       else if (Previous.opensScope()) {
         // If a function has multiple parameters (including a single parameter
-        // that is a binary expression) or a trailing call, indented all
+        // that is a binary expression) or a trailing call, indent all
         // parameters from the opening parenthesis. This avoids confusing
         // indents like:
         //   OuterFunction(InnerFunctionCall(

@@ -2465,6 +2465,16 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
       "    const SomeLooooooooogType &a, const SomeLooooooooogType &b);");
 }
 
+TEST_F(FormatTest, TrailingReturnType) {
+  verifyFormat("auto foo() -> int;\n");
+  verifyFormat("struct S {\n"
+               "  auto bar() const -> int;\n"
+               "};");
+  verifyFormat("template <size_t Order, typename T>\n"
+               "auto load_img(const std::string &filename)\n"
+               "    -> alias::tensor<Order, T, mem::tag::cpu> {}");
+}
+
 TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
   verifyFormat("void someLongFunction(\n"
                "    int someLongParameter) const {}",
