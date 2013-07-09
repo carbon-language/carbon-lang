@@ -163,18 +163,3 @@ define i32 @test16(i32 %x, i32 %y) {
 	%rem = urem i32 %x, %add
 	ret i32 %rem
 }
-
-define i32 @test17(i16 %x, i32 %y) {
-; CHECK: @test17
-; CHECK-NEXT: [[AND:%.*]] = and i16 %x, 4
-; CHECK-NEXT: [[EXT:%.*]] = zext i16 [[AND]] to i32
-; CHECK-NEXT: [[SHL:%.*]] = shl nuw nsw i32 [[EXT]], 3
-; CHECK-NEXT: [[XOR:%.*]] = xor i32 [[SHL]], 63
-; CHECK-NEXT: [[REM:%.*]] = and i32 [[XOR]], %y
-; CHECK-NEXT: ret i32 [[REM]]
-	%1 = and i16 %x, 4
-	%2 = icmp ne i16 %1, 0
-	%3 = select i1 %2, i32 32, i32 64
-	%4 = urem i32 %y, %3
-	ret i32 %4
-}
