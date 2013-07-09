@@ -148,7 +148,8 @@ PRE_SYSCALL(clock_gettime)(int clk_id, struct sanitizer_kernel_timespec *tp) {
   if (tp) PRE_WRITE(tp, sizeof(*tp));
 }
 
-POST_SYSCALL(clock_gettime)(long res, int clk_id, struct sanitizer_kernel_timespec *tp) {
+POST_SYSCALL(clock_gettime)(long res, int clk_id,
+                            struct sanitizer_kernel_timespec *tp) {
   if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
 }
 
@@ -156,7 +157,8 @@ PRE_SYSCALL(clock_getres)(int clk_id, struct sanitizer_kernel_timespec *tp) {
   if (tp) PRE_WRITE(tp, sizeof(*tp));
 }
 
-POST_SYSCALL(clock_getres)(long res, int clk_id, struct sanitizer_kernel_timespec *tp) {
+POST_SYSCALL(clock_getres)(long res, int clk_id,
+                           struct sanitizer_kernel_timespec *tp) {
   if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
 }
 
