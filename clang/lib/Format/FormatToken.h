@@ -56,16 +56,24 @@ enum TokenType {
   TT_Unknown
 };
 
+// Represents what type of block a set of braces open.
+enum BraceBlockKind {
+  BK_Unknown,
+  BK_Block,
+  BK_BracedInit
+};
+
 /// \brief A wrapper around a \c Token storing information about the
 /// whitespace characters preceeding it.
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
         CodePointCount(0), IsFirst(false), MustBreakBefore(false),
-        Type(TT_Unknown), SpacesRequiredBefore(0), CanBreakBefore(false),
-        ClosesTemplateDeclaration(false), ParameterCount(0), TotalLength(0),
-        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0), LastInChainOfCalls(false),
+        BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
+        CanBreakBefore(false), ClosesTemplateDeclaration(false),
+        ParameterCount(0), TotalLength(0), UnbreakableTailLength(0),
+        BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
+        FakeRParens(0), LastInChainOfCalls(false),
         PartOfMultiVariableDeclStmt(false), MatchingParen(NULL), Previous(NULL),
         Next(NULL) {}
 
@@ -116,6 +124,9 @@ struct FormatToken {
   /// Contains the raw token text without leading whitespace and without leading
   /// escaped newlines.
   StringRef TokenText;
+
+  /// \brief Contains the kind of block if this token is a brace.
+  BraceBlockKind BlockKind;
 
   TokenType Type;
 

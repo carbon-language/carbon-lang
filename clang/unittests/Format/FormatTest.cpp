@@ -3785,6 +3785,13 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
         "                                 bbbbbbbbbbbbbbbbbbbb, bbbbb };");
     verifyFormat("DoSomethingWithVector({} /* No data */);");
     verifyFormat("DoSomethingWithVector({ {} /* No data */ }, { { 1, 2 } });");
+    verifyFormat(
+        "someFunction(OtherParam, BracedList{\n"
+        "                           // comment 1 (Forcing intersting break)\n"
+        "                           param1, param2,\n"
+        "                           // comment 2\n"
+        "                           param3, param4\n"
+        "                         });");
 
     FormatStyle NoSpaces = getLLVMStyle();
     NoSpaces.SpacesInBracedLists = false;

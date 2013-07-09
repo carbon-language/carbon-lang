@@ -102,13 +102,6 @@ private:
   void calculateBraceTypes();
   void pushPPConditional();
 
-  // Represents what type of block a left brace opens.
-  enum LBraceState {
-    BS_Unknown,
-    BS_Block,
-    BS_BracedInit
-  };
-
   // FIXME: We are constantly running into bugs where Line.Level is incorrectly
   // subtracted from beyond 0. Introduce a method to subtract from Line.Level
   // and use that everywhere in the Parser.
@@ -152,11 +145,6 @@ private:
   // of the format tokens. The goal is to have the actual tokens created and
   // owned outside of and handed into the UnwrappedLineParser.
   ArrayRef<FormatToken *> AllTokens;
-
-  // FIXME: Currently we cannot store attributes with tokens, as we treat
-  // them as read-only; thus, we now store the brace state indexed by the
-  // position of the token in the stream (see \c AllTokens).
-  SmallVector<LBraceState, 16> LBraces;
 
   // Represents preprocessor branch type, so we can find matching
   // #if/#else/#endif directives.
