@@ -39,7 +39,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_watchpoint_threads=100)
 
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @dwarf_test
     def test_many_signals_dwarf(self):
@@ -59,7 +58,7 @@ class ConcurrentEventsTestCase(TestBase):
     ## Tests for concurrent signal and breakpoint
     #
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_break_dwarf(self):
         """Test signal and a breakpoint in multiple threads."""
@@ -67,7 +66,7 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=1, num_signal_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_delay_signal_break_dwarf(self):
         """Test (1-second delay) signal and a breakpoint in multiple threads."""
@@ -75,7 +74,7 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=1, num_delay_signal_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_delay_break_dwarf(self):
         """Test signal and a (1 second delay) breakpoint in multiple threads."""
@@ -111,7 +110,6 @@ class ConcurrentEventsTestCase(TestBase):
     ## Tests for concurrent signal and watchpoint
     #
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @dwarf_test
     def test_signal_watch_dwarf(self):
         """Test a watchpoint and a signal in multiple threads."""
@@ -119,7 +117,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_signal_threads=1, num_watchpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @dwarf_test
     def test_delay_signal_watch_dwarf(self):
         """Test a watchpoint and a (1 second delay) signal in multiple threads."""
@@ -127,7 +124,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_delay_signal_threads=1, num_watchpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @dwarf_test
     def test_signal_delay_watch_dwarf(self):
         """Test a (1 second delay) watchpoint and a signal in multiple threads."""
@@ -152,7 +148,7 @@ class ConcurrentEventsTestCase(TestBase):
                                num_delay_breakpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_two_breakpoints_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one signal thread. """
@@ -160,7 +156,7 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=2, num_signal_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_breakpoint_delay_breakpoint_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint (one with a 1 second delay) and one signal thread. """
@@ -170,7 +166,7 @@ class ConcurrentEventsTestCase(TestBase):
                                num_signal_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_two_breakpoints_one_delay_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one (1 second delay) signal thread. """
@@ -235,7 +231,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_breakpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @dwarf_test
     def test_two_watchpoints_one_signal_dwarf(self):
         """Test two threads that trigger a watchpoint and one signal thread. """
@@ -246,7 +241,7 @@ class ConcurrentEventsTestCase(TestBase):
     ## Test for watchpoint, signal and breakpoint happening concurrently
     #
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
         """Test a signal/watchpoint/breakpoint in multiple threads."""
@@ -256,7 +251,7 @@ class ConcurrentEventsTestCase(TestBase):
                                num_breakpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
         """Test one signal thread with 5 watchpoint and breakpoint threads."""
@@ -291,7 +286,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_crash_threads=1, num_watchpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @dwarf_test
     def test_crash_with_signal_dwarf(self):
         """ Test a thread that crashes while another thread generates a signal."""
@@ -299,7 +293,7 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_crash_threads=1, num_signal_threads=1)
 
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
+    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_crash_with_watchpoint_breakpoint_signal_dwarf(self):
         """ Test a thread that crashes while other threads generate a signal and hit a watchpoint and breakpoint. """
@@ -310,7 +304,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_watchpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
-    @skipIfLinux # inferior thread enters state D (disk sleep) which causes hang in lldb
     @dwarf_test
     def test_delayed_crash_with_breakpoint_watchpoint_dwarf(self):
         """ Test a thread with a delayed crash while other threads hit a watchpoint and a breakpoint. """
@@ -320,7 +313,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_watchpoint_threads=1)
 
     @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
-    @skipIfLinux # llvm.org/pr16567 -- explicit signals cause hangs on Linux
     @dwarf_test
     def test_delayed_crash_with_breakpoint_signal_dwarf(self):
         """ Test a thread with a delayed crash while other threads generate a signal and hit a breakpoint. """

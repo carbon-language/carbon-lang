@@ -17,7 +17,6 @@
 using namespace std;
 
 #include <pthread.h>
-#include <semaphore.h>
 
 #include <signal.h>
 #include <sys/types.h>
@@ -43,8 +42,6 @@ int g_breakpoint = 0;
 int g_sigusr1_count = 0;
 std::atomic_int g_watchme;
 
-//sem_t g_signal_semaphore;
-
 struct action_args {
   int delay;
 };
@@ -60,7 +57,7 @@ void do_action_args(void *input) {
 void *
 breakpoint_func (void *input)
 {
-    // Wait until both threads are running
+    // Wait until all threads are running
     pseudo_barrier_wait(g_barrier);
     do_action_args(input);
 
@@ -71,15 +68,12 @@ breakpoint_func (void *input)
 
 void *
 signal_func (void *input) {
-    // Wait until both threads are running
+    // Wait until all threads are running
     pseudo_barrier_wait(g_barrier);
     do_action_args(input);
 
     // Generate a user-defined signal to current process
     kill(getpid(), SIGUSR1);
-
-    // wait for notification the signal handler was executed
-    //sem_wait(&g_signal_semaphore);
 
     return 0;
 }
@@ -104,7 +98,6 @@ crash_func (void *input) {
 }
 
 void sigusr1_handler(int sig) {
-    //sem_post(&g_signal_semaphore);
     if (sig == SIGUSR1)
         g_sigusr1_count += 1; // Break here in signal handler
 }
@@ -121,8 +114,6 @@ void register_signal_handler(int signal, void (*handler)(int))
     action.sa_flags = 0;
     action.sa_handler = handler;
     sigaction(SIGUSR1, &action, 0);
-
-    //sem_init(&g_signal_semaphore, 0, 0);
 }
 
 void start_threads(thread_vector& threads,
