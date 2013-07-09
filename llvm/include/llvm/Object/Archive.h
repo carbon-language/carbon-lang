@@ -54,7 +54,8 @@ public:
     Child(const Archive *Parent, const char *Start);
 
     bool operator ==(const Child &other) const {
-      return (Parent == other.Parent) && (Data.begin() == other.Data.begin());
+      assert(Parent == other.Parent);
+      return Data.begin() == other.Data.begin();
     }
 
     bool operator <(const Child &other) const {
