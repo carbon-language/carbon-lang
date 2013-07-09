@@ -621,7 +621,7 @@ def skipIfLinux(func):
 def skipIfDarwin(func):
     """Decorate the item to skip tests that should be skipped on Darwin."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfLinux can only be used to decorate a test method")
+        raise Exception("@skipIfDarwin can only be used to decorate a test method")
     @wraps(func)
     def wrapper(*args, **kwargs):
         from unittest2 import case
