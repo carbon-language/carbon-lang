@@ -55,6 +55,11 @@ struct sanitizer_kernel_msghdr {
   unsigned msg_flags;
 };
 
+struct sanitizer_kernel_timespec {
+  long tv_sec;
+  long tv_nsec;
+};
+
 struct sanitizer_kernel_timeval {
   long tv_sec;
   long tv_usec;
@@ -138,6 +143,23 @@ POST_SYSCALL(waitpid)(long res, int pid, int *status, int options) {
     POST_WRITE(status, sizeof(*status));
   }
 }
+
+PRE_SYSCALL(clock_gettime)(int clk_id, struct sanitizer_kernel_timespec *tp) {
+  if (tp) PRE_WRITE(tp, sizeof(*tp));
+}
+
+POST_SYSCALL(clock_gettime)(long res, int clk_id, struct sanitizer_kernel_timespec *tp) {
+  if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
+}
+
+PRE_SYSCALL(clock_getres)(int clk_id, struct sanitizer_kernel_timespec *tp) {
+  if (tp) PRE_WRITE(tp, sizeof(*tp));
+}
+
+POST_SYSCALL(clock_getres)(long res, int clk_id, struct sanitizer_kernel_timespec *tp) {
+  if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
+}
+
 }  // extern "C"
 
 #undef PRE_SYSCALL

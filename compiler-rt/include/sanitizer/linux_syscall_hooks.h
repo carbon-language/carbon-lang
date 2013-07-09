@@ -31,6 +31,8 @@ void __sanitizer_syscall_pre_getdents64(int fd, void *dirp, int count);
 void __sanitizer_syscall_pre_recvmsg(int sockfd, void *msg, int flags);
 void __sanitizer_syscall_pre_wait4(int pid, int *status, int options, void *r);
 void __sanitizer_syscall_pre_waitpid(int pid, int *status, int options);
+void __sanitizer_syscall_pre_clock_gettime(int clk_id, void *tp);
+void __sanitizer_syscall_pre_clock_getres(int clk_id, void *tp);
 
 void __sanitizer_syscall_post_rt_sigpending(long res, void *p, size_t s);
 void __sanitizer_syscall_post_getdents(long res, int fd, void *dirp, int count);
@@ -42,6 +44,8 @@ void __sanitizer_syscall_post_wait4(long res, int pid, int *status, int options,
                                     void *r);
 void __sanitizer_syscall_post_waitpid(long res, int pid, int *status,
                                       int options);
+void __sanitizer_syscall_post_clock_gettime(long res, int clk_id, void *tp);
+void __sanitizer_syscall_post_clock_getres(long res, int clk_id, void *tp);
 
 // And now a few syscalls we don't handle yet.
 
@@ -66,8 +70,6 @@ void __sanitizer_syscall_post_waitpid(long res, int pid, int *status,
 #define __sanitizer_syscall_pre_chown32(...)
 #define __sanitizer_syscall_pre_chroot(...)
 #define __sanitizer_syscall_pre_clock_adjtime(...)
-#define __sanitizer_syscall_pre_clock_getres(...)
-#define __sanitizer_syscall_pre_clock_gettime(...)
 #define __sanitizer_syscall_pre_clock_nanosleep(...)
 #define __sanitizer_syscall_pre_clock_settime(...)
 #define __sanitizer_syscall_pre_clone(...)
@@ -441,8 +443,6 @@ void __sanitizer_syscall_post_waitpid(long res, int pid, int *status,
 #define __sanitizer_syscall_post_chown(res, ...)
 #define __sanitizer_syscall_post_chroot(res, ...)
 #define __sanitizer_syscall_post_clock_adjtime(res, ...)
-#define __sanitizer_syscall_post_clock_getres(res, ...)
-#define __sanitizer_syscall_post_clock_gettime(res, ...)
 #define __sanitizer_syscall_post_clock_nanosleep(res, ...)
 #define __sanitizer_syscall_post_clock_settime(res, ...)
 #define __sanitizer_syscall_post_clone(res, ...)

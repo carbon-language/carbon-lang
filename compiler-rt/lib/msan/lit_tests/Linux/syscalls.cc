@@ -46,5 +46,18 @@ int main(int argc, char *argv[]) {
   __msan_poison(buf, kTen + 1);
   __sanitizer_syscall_post_getdents64(kTen, 0, buf, kTen);
   assert(__msan_test_shadow(buf, sizeof(buf)) == kTen);
+
+  __msan_poison(buf, sizeof(buf));
+  __sanitizer_syscall_post_clock_getres(0, 0, buf);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == sizeof(long) * 2);
+
+  __msan_poison(buf, sizeof(buf));
+  __sanitizer_syscall_post_clock_gettime(0, 0, buf);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == sizeof(long) * 2);
+
+  // Failed syscall does not write to the buffer.
+  __msan_poison(buf, sizeof(buf));
+  __sanitizer_syscall_post_clock_gettime(-1, 0, buf);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == 0);
   return 0;
 }
