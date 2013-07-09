@@ -6,5 +6,5 @@
 # fun:*bad_function_name*
 # src:file_with_tricky_code.cc
 # global:*global_with_bad_access_or_initialization*
-# global-init:*global_with_initialization_issues*
-# global-init-type:*Namespace::ClassName*
+# global:*global_with_initialization_issues*=init
+# type:*Namespace::ClassName*=init
