@@ -65,10 +65,6 @@ public:
 
     error_code getName(StringRef &Result) const;
     StringRef getRawName() const { return ToHeader(Data.data())->getName(); }
-    int getLastModified() const;
-    int getUID() const;
-    int getGID() const;
-    int getAccessMode() const;
     /// \return the size of the archive member without the header or padding.
     uint64_t getSize() const { return Data.size() - StartOfFile; }
 
