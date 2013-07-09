@@ -190,6 +190,7 @@ class PPCAsmParser : public MCTargetAsmParser {
 
   const MCExpr *ExtractModifierFromExpr(const MCExpr *E,
                                         PPCMCExpr::VariantKind &Variant);
+  const MCExpr *FixupVariantKind(const MCExpr *E);
   bool ParseExpression(const MCExpr *&EVal);
 
   bool ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -1006,12 +1007,65 @@ ExtractModifierFromExpr(const MCExpr *E,
   llvm_unreachable("Invalid expression kind!");
 }
 
+/// Find all VK_TLSGD/VK_TLSLD symbol references in expression and replace
+/// them by VK_PPC_TLSGD/VK_PPC_TLSLD.  This is necessary to avoid having
+/// _GLOBAL_OFFSET_TABLE_ created via ELFObjectWriter::RelocNeedsGOT.
+/// FIXME: This is a hack.
+const MCExpr *PPCAsmParser::
+FixupVariantKind(const MCExpr *E) {
+  MCContext &Context = getParser().getContext();
+
+  switch (E->getKind()) {
+  case MCExpr::Target:
+  case MCExpr::Constant:
+    return E;
+
+  case MCExpr::SymbolRef: {
+    const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(E);
+    MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+
+    switch (SRE->getKind()) {
+    case MCSymbolRefExpr::VK_TLSGD:
+      Variant = MCSymbolRefExpr::VK_PPC_TLSGD;
+      break;
+    case MCSymbolRefExpr::VK_TLSLD:
+      Variant = MCSymbolRefExpr::VK_PPC_TLSLD;
+      break;
+    default:
+      return E;
+    }
+    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Variant, Context);
+  }
+
+  case MCExpr::Unary: {
+    const MCUnaryExpr *UE = cast<MCUnaryExpr>(E);
+    const MCExpr *Sub = FixupVariantKind(UE->getSubExpr());
+    if (Sub == UE->getSubExpr())
+      return E;
+    return MCUnaryExpr::Create(UE->getOpcode(), Sub, Context);
+  }
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(E);
+    const MCExpr *LHS = FixupVariantKind(BE->getLHS());
+    const MCExpr *RHS = FixupVariantKind(BE->getRHS());
+    if (LHS == BE->getLHS() && RHS == BE->getRHS())
+      return E;
+    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, Context);
+  }
+  }
+
+  llvm_unreachable("Invalid expression kind!");
+}
+
 /// Parse an expression.  This differs from the default "parseExpression"
 /// in that it handles complex \code @l/@ha \endcode modifiers.
 bool PPCAsmParser::
 ParseExpression(const MCExpr *&EVal) {
   if (getParser().parseExpression(EVal))
     return true;
+
+  EVal = FixupVariantKind(EVal);
 
   PPCMCExpr::VariantKind Variant;
   const MCExpr *E = ExtractModifierFromExpr(EVal, Variant);
