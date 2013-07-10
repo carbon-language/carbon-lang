@@ -6151,7 +6151,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
       if (N10 == N0 && isNegatibleForFree(N11, LegalOperations, TLI,
                                           &DAG.getTarget().Options))
         return GetNegatedExpression(N11, DAG, LegalOperations);
-      
+
       if (N11 == N0 && isNegatibleForFree(N10, LegalOperations, TLI,
                                           &DAG.getTarget().Options))
         return GetNegatedExpression(N10, DAG, LegalOperations);
@@ -6172,7 +6172,7 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
 
     // fold (fsub x, (fmul y, z)) -> (fma (fneg y), z, x)
     // Note: Commutes FSUB operands.
-    if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse()) 
+    if (N1.getOpcode() == ISD::FMUL && N1->hasOneUse())
       return DAG.getNode(ISD::FMA, dl, VT,
                          DAG.getNode(ISD::FNEG, dl, VT,
                          N1.getOperand(0)),
