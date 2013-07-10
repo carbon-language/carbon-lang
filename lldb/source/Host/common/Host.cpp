@@ -629,40 +629,6 @@ Host::ThreadJoin (lldb::thread_t thread, thread_result_t *thread_result_ptr, Err
     return err == 0;
 }
 
-
-std::string
-Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
-{
-    std::string thread_name;
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5
-    // We currently can only get the name of a thread in the current process.
-    if (pid == Host::GetCurrentProcessID())
-    {
-        char pthread_name[1024];
-        if (::pthread_getname_np (::pthread_from_mach_thread_np (tid), pthread_name, sizeof(pthread_name)) == 0)
-        {
-            if (pthread_name[0])
-            {
-                thread_name = pthread_name;
-            }
-        }
-        else
-        {
-            dispatch_queue_t current_queue = ::dispatch_get_current_queue ();
-            if (current_queue != NULL)
-            {
-                const char *queue_name = dispatch_queue_get_label (current_queue);
-                if (queue_name && queue_name[0])
-                {
-                    thread_name = queue_name;
-                }
-            }
-        }
-    }
-#endif
-    return thread_name;
-}
-
 bool
 Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
 {

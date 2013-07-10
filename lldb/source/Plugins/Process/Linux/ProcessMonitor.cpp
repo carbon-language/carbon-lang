@@ -1098,6 +1098,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     lldb::pid_t pid;
 
     lldb::ThreadSP inferior;
+    POSIXThread *thread;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
@@ -1232,6 +1233,10 @@ ProcessMonitor::Launch(LaunchArgs *args)
     // FIXME: should we be letting UpdateThreadList handle this?
     // FIXME: by using pids instead of tids, we can only support one thread.
     inferior.reset(new POSIXThread(process, pid));
+
+    thread = static_cast<POSIXThread*>(inferior.get());
+    thread->SetName(Host::GetThreadName(pid, pid).c_str());
+
     if (log)
         log->Printf ("ProcessMonitor::%s() adding pid = %" PRIu64, __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
@@ -1292,6 +1297,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     ProcessMonitor *monitor = args->m_monitor;
     ProcessLinux &process = monitor->GetProcess();
     lldb::ThreadSP inferior;
+    POSIXThread *thread;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     // Use a map to keep track of the threads which we have attached/need to attach.
@@ -1357,6 +1363,10 @@ ProcessMonitor::Attach(AttachArgs *args)
 
                 // Update the process thread list with the attached thread.
                 inferior.reset(new POSIXThread(process, tid));
+
+                thread = static_cast<POSIXThread*>(inferior.get());
+                thread->SetName(Host::GetThreadName(pid, tid).c_str());
+
                 if (log)
                     log->Printf ("ProcessMonitor::%s() adding tid = %" PRIu64, __FUNCTION__, tid);
                 process.GetThreadList().AddThread(inferior);

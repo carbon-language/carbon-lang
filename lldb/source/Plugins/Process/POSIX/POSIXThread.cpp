@@ -41,7 +41,9 @@ using namespace lldb_private;
 
 POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
-      m_frame_ap()
+      m_frame_ap (),
+      m_breakpoint (),
+      m_thread_name ()
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
@@ -102,6 +104,23 @@ const char *
 POSIXThread::GetInfo()
 {
     return NULL;
+}
+
+void
+POSIXThread::SetName (const char *name)
+{
+    if (name && name[0])
+        m_thread_name.assign (name);
+    else
+        m_thread_name.clear();
+}
+
+const char *
+POSIXThread::GetName ()
+{
+    if (m_thread_name.empty())
+        return NULL;
+    return m_thread_name.c_str();
 }
 
 lldb::RegisterContextSP

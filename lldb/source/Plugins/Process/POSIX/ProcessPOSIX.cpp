@@ -491,8 +491,13 @@ ProcessPOSIX::RefreshStateAfterStop()
         {
             if (log)
                 log->Printf ("ProcessPOSIX::%s() adding thread, tid = %" PRIi64, __FUNCTION__, message.GetChildTID());
+            lldb::tid_t child_tid = message.GetChildTID();
             ThreadSP thread_sp;
-            thread_sp.reset(new POSIXThread(*this, message.GetChildTID()));
+            thread_sp.reset(new POSIXThread(*this, child_tid));
+
+            POSIXThread *thread = static_cast<POSIXThread*>(thread_sp.get());
+            thread->SetName(Host::GetThreadName(GetID(), child_tid).c_str());
+
             m_thread_list.AddThread(thread_sp);
         }
 

@@ -13,6 +13,7 @@
 // C Includes
 // C++ Includes
 #include <memory>
+#include <string>
 
 // Other libraries and framework includes
 #include "lldb/Target/Thread.h"
@@ -45,6 +46,12 @@ public:
 
     const char *
     GetInfo();
+
+    void
+    SetName (const char *name);
+
+    const char *
+    GetName ();
 
     virtual lldb::RegisterContextSP
     GetRegisterContext();
@@ -99,6 +106,8 @@ private:
     std::unique_ptr<lldb_private::StackFrame> m_frame_ap;
 
     lldb::BreakpointSiteSP m_breakpoint;
+
+    std::string m_thread_name;
 
     ProcessMonitor &
     GetMonitor();
