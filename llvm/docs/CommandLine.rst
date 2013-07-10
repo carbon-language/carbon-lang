@@ -925,7 +925,7 @@ This section describes the basic attributes that you can specify on options.
 
   .. code-block:: c++
 
-    cl::opt<**bool**> Quiet("quiet");
+    cl::opt<bool> Quiet("quiet");
 
 .. _cl::desc(...):
 
