@@ -1043,8 +1043,19 @@ static void fixupFuncForFI(SelectionDAG &DAG, int FrameIdx, EVT VT) {
   if (VT != MVT::i64)
     return;
 
-  // This should not be needed for negative FIs, which come from argument
-  // lowering, because the ABI should guarentee the necessary alignment.
+  // NOTE: We'll exclude negative FIs here, which come from argument
+  // lowering, because there are no known test cases triggering this problem
+  // using packed structures (or similar). We can remove this exclusion if
+  // we find such a test case. The reason why this is so test-case driven is
+  // because this entire 'fixup' is only to prevent crashes (from the
+  // register scavenger) on not-really-valid inputs. For example, if we have:
+  //   %a = alloca i1
+  //   %b = bitcast i1* %a to i64*
+  //   store i64* a, i64 b
+  // then the store should really be marked as 'align 1', but is not. If it
+  // were marked as 'align 1' then the indexed form would have been
+  // instruction-selected initially, and the problem this 'fixup' is preventing
+  // won't happen regardless.
   if (FrameIdx < 0)
     return;
 
