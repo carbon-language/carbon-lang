@@ -774,8 +774,17 @@ def S_CBRANCH_EXECNZ : SOPP <
 } // End isBranch = 1
 } // End isTerminator = 1
 
-//def S_BARRIER : SOPP_ <0x0000000a, "S_BARRIER", []>;
 let hasSideEffects = 1 in {
+def S_BARRIER : SOPP <0x0000000a, (ins), "S_BARRIER",
+  [(int_AMDGPU_barrier_local)]
+> {
+  let SIMM16 = 0;
+  let isBarrier = 1;
+  let hasCtrlDep = 1;
+  let mayLoad = 1;
+  let mayStore = 1;
+}
+
 def S_WAITCNT : SOPP <0x0000000c, (ins i32imm:$simm16), "S_WAITCNT $simm16",
   []
 >;
