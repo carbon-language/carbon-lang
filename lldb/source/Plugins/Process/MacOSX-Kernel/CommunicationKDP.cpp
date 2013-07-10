@@ -124,19 +124,48 @@ CommunicationKDP::SendRequestAndGetReply (const CommandType command,
         if (SendRequestPacketNoLock(request_packet))
         {
             const uint8_t request_sequence_id = (uint8_t)request_packet.GetData()[1];
-            if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, GetPacketTimeoutInMicroSeconds ()))
+            while (1)
             {
-                offset = 0;
-                const uint8_t reply_command = reply_packet.GetU8 (&offset);
-                const uint8_t reply_sequence_id = reply_packet.GetU8 (&offset);
-                if ((reply_command & eCommandTypeMask) == command)
+                if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, GetPacketTimeoutInMicroSeconds ()))
                 {
+                    offset = 0;
+                    const uint8_t reply_sequence_id = reply_packet.GetU8 (&offset);
                     if (request_sequence_id == reply_sequence_id)
                     {
-                        if (command == KDP_RESUMECPUS)
-                            m_is_running.SetValue(true, eBroadcastAlways);
-                        return true;
+                        const uint8_t reply_command = reply_packet.GetU8 (&offset);
+                        // The sequent ID was correct, now verify we got the response we were looking for
+                        if ((reply_command & eCommandTypeMask) == command)
+                        {
+                            // Success
+                            if (command == KDP_RESUMECPUS)
+                                m_is_running.SetValue(true, eBroadcastAlways);
+                            return true;
+                        }
+                        else
+                        {
+                            // Failed to get the correct response, bail
+                            reply_packet.Clear();
+                            return false;
+                        }
                     }
+                    else if (reply_sequence_id > request_sequence_id)
+                    {
+                        // Sequence ID was greater than the sequence ID of the packet we sent, something
+                        // is really wrong...
+                        reply_packet.Clear();
+                        return false;
+                    }
+                    else
+                    {
+                        // The reply sequence ID was less than our current packet's sequence ID
+                        // so we should keep trying to get a response because this was a response
+                        // for a previous packet that we must have retried.
+                    }
+                }
+                else
+                {
+                    // Break and retry sending the packet as we didn't get a response due to timeout
+                    break;
                 }
             }
         }
