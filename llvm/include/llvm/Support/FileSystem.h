@@ -436,8 +436,8 @@ inline bool equivalent(const Twine &A, const Twine &B) {
 
 /// @brief Get file size.
 ///
-/// @param path Input path.
-/// @param result Set to the size of the file in \a path.
+/// @param Path Input path.
+/// @param Result Set to the size of the file in \a Path.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 inline error_code file_size(const Twine &Path, uint64_t &Result) {
