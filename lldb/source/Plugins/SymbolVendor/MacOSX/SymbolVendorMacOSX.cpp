@@ -232,6 +232,7 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                                                                 if (node_content)
                                                                                 {
                                                                                     strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
+                                                                                    xmlFree((void *) node_content);
                                                                                 }
                                                                             }
                                                                             key_node = value_node;
@@ -251,11 +252,14 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                                                                 {
                                                                                     FileSpec resolved_source_path(node_content, true);
                                                                                     resolved_source_path.GetPath(DBGSourcePath, sizeof(DBGSourcePath));
+                                                                                    xmlFree ((void *) node_content);
                                                                                 }
                                                                             }
                                                                             key_node = value_node;
                                                                         }
                                                                     }
+                                                                    if (key_name != NULL)
+                                                                        xmlFree((void *) key_name);
                                                                 }
                                                             }
                                                         }
