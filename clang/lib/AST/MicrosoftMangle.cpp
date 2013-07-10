@@ -556,7 +556,14 @@ void MicrosoftCXXNameMangler::manglePostfix(const DeclContext *DC,
     return;
 
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(DC)) {
-    Context.mangleBlock(BD, Out);
+    DiagnosticsEngine Diags = Context.getDiags();
+    unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
+      "cannot mangle a local inside this block yet");
+    Diags.Report(BD->getLocation(), DiagID);
+
+    // FIXME: This is completely, utterly, wrong; see ItaniumMangle
+    // for how this should be done.
+    Out << "__block_invoke" << Context.getBlockId(BD, false);
     Out << '@';
     return manglePostfix(DC->getParent(), NoFunction);
   } else if (isa<CapturedDecl>(DC)) {

@@ -135,9 +135,6 @@ public:
                        const BlockDecl *BD, raw_ostream &Out);
   void mangleBlock(const DeclContext *DC, const BlockDecl *BD,
                    raw_ostream &Out);
-  // Do the right thing.
-  void mangleBlock(const BlockDecl *BD, raw_ostream &Out,
-                   const NamedDecl *ID=0);
 
   void mangleObjCMethodName(const ObjCMethodDecl *MD,
                             raw_ostream &);
