@@ -4,7 +4,13 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc -fobjc-default-synthesize-properties %s.result
 
 @class NSString;
-@interface NSObject @end
+@protocol NSCopying @end
+
+@interface NSObject <NSCopying>
+@end
+
+@interface NSDictionary : NSObject
+@end
 
 @interface I : NSObject {
   int ivarVal;
@@ -24,6 +30,8 @@
 - (NSString *) UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
 
+- (NSDictionary*) undoAction;
+- (void) setUndoAction: (NSDictionary*)Arg;
 @end
 
 @implementation I

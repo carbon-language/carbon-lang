@@ -358,23 +358,38 @@ bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
 bool edit::rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                  const ObjCMethodDecl *Setter,
                                  const NSAPI &NS, Commit &commit) {
+  ASTContext &Context = NS.getASTContext();
   std::string PropertyString = "@property";
   const ParmVarDecl *argDecl = *Setter->param_begin();
-  QualType ArgType = argDecl->getType();
+  QualType ArgType = Context.getCanonicalType(argDecl->getType());
   Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
   
   if (ArgType->isObjCRetainableType() &&
       propertyLifetime == Qualifiers::OCL_Strong) {
-    PropertyString += "(copy)";
+    if (const ObjCObjectPointerType *ObjPtrTy =
+          ArgType->getAs<ObjCObjectPointerType>()) {
+      ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
+      if (IDecl &&
+          IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
+        PropertyString += "(copy)";
+    }
   }
   else if (propertyLifetime == Qualifiers::OCL_Weak)
+    // TODO. More precise determination of 'weak' attribute requires
+    // looking into setter's implementation for backing weak ivar.
     PropertyString += "(weak)";
   else
     PropertyString += "(unsafe_unretained)";
-  
-  QualType PropQT = Getter->getResultType();
+
+  // strip off any ARC lifetime qualifier.
+  QualType CanResultTy = Context.getCanonicalType(Getter->getResultType());
+  if (CanResultTy.getQualifiers().hasObjCLifetime()) {
+    Qualifiers Qs = CanResultTy.getQualifiers();
+    Qs.removeObjCLifetime();
+    CanResultTy = Context.getQualifiedType(CanResultTy.getUnqualifiedType(), Qs);
+  }
   PropertyString += " ";
-  PropertyString += PropQT.getAsString(NS.getASTContext().getPrintingPolicy());
+  PropertyString += CanResultTy.getAsString(Context.getPrintingPolicy());
   PropertyString += " ";
   PropertyString += Getter->getNameAsString();
   commit.replace(CharSourceRange::getCharRange(Getter->getLocStart(),

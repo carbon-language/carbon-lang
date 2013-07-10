@@ -1136,6 +1136,8 @@ public:
     return lookupInstanceVariable(IVarName, ClassDeclared);
   }
 
+  ObjCProtocolDecl *lookupNestedProtocol(IdentifierInfo *Name);
+                          
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
   ObjCMethodDecl *lookupMethod(Selector Sel, bool isInstance,

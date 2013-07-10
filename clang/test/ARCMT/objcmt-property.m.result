@@ -4,15 +4,21 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc -fobjc-default-synthesize-properties %s.result
 
 @class NSString;
-@interface NSObject @end
+@protocol NSCopying @end
+
+@interface NSObject <NSCopying>
+@end
+
+@interface NSDictionary : NSObject
+@end
 
 @interface I : NSObject {
   int ivarVal;
 }
 
-@property(weak) NSString *__weak WeakProp;
+@property(weak) NSString * WeakProp;
 
-@property(copy) NSString * StrongProp;
+@property NSString * StrongProp;
 
 
 - (NSString *) UnavailProp  __attribute__((unavailable));
@@ -23,6 +29,8 @@
 
 - (NSString *) UnavailProp2;
 - (void) setUnavailProp2  : (NSString *)Val  __attribute__((unavailable));
+
+@property(copy) NSDictionary * undoAction;
 
 @end
 
@@ -42,8 +50,8 @@
 
 
 
-@property(copy) NSArray * names2;
-@property(copy) NSArray * names3;
-@property(copy) NSArray *__strong names4;
-@property(copy) NSArray * names1;
+@property NSArray * names2;
+@property NSArray * names3;
+@property NSArray * names4;
+@property NSArray * names1;
 @end

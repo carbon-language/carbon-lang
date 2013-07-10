@@ -441,6 +441,17 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
   return NULL;
 }
 
+ObjCProtocolDecl *
+ObjCInterfaceDecl::lookupNestedProtocol(IdentifierInfo *Name) {
+  for (ObjCInterfaceDecl::all_protocol_iterator P =
+       all_referenced_protocol_begin(), PE = all_referenced_protocol_end();
+       P != PE; ++P)
+    if ((*P)->lookupProtocolNamed(Name))
+      return (*P);
+  ObjCInterfaceDecl *SuperClass = getSuperClass();
+  return SuperClass ? SuperClass->lookupNestedProtocol(Name) : NULL;
+}
+
 /// lookupMethod - This method returns an instance/class method by looking in
 /// the class, its categories, and its super classes (using a linear search).
 /// When argument category "C" is specified, any implicit method found
