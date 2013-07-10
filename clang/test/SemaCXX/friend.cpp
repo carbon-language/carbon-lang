@@ -163,3 +163,15 @@ namespace test9 {
     friend void C::f(int, int, int) {}  // expected-error {{no function named 'f' with type 'void (int, int, int)' was found in the specified scope}}
   };
 }
+
+namespace test10 {
+  struct A {
+    friend void f10();
+  };
+  struct B {
+    friend void f10();
+  };
+  void g() {
+    f10(); // expected-error {{undeclared identifier}}
+  }
+}

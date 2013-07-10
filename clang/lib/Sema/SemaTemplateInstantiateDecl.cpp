@@ -960,7 +960,7 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     else
       Inst->setAccess(D->getAccess());
 
-    Inst->setObjectOfFriendDecl(PrevClassTemplate != 0);
+    Inst->setObjectOfFriendDecl();
     // TODO: do we want to track the instantiation progeny of this
     // friend target decl?
   } else {
@@ -1110,8 +1110,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   // If the original function was part of a friend declaration,
   // inherit its namespace state.
-  if (Decl::FriendObjectKind FOK = D->getFriendObjectKind())
-    Record->setObjectOfFriendDecl(FOK == Decl::FOK_Declared);
+  if (D->getFriendObjectKind())
+    Record->setObjectOfFriendDecl();
 
   // Make sure that anonymous structs and unions are recorded.
   if (D->isAnonymousStructOrUnion()) {
@@ -1315,7 +1315,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     assert(isFriend && "non-friend has dependent specialization info?");
 
     // This needs to be set now for future sanity.
-    Function->setObjectOfFriendDecl(/*HasPrevious*/ true);
+    Function->setObjectOfFriendDecl();
 
     // Instantiate the explicit template arguments.
     TemplateArgumentListInfo ExplicitArgs(Info->getLAngleLoc(),
@@ -1365,13 +1365,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   // If the original function was part of a friend declaration,
   // inherit its namespace state and add it to the owner.
   if (isFriend) {
-    NamedDecl *PrevDecl;
-    if (TemplateParams)
-      PrevDecl = FunctionTemplate->getPreviousDecl();
-    else
-      PrevDecl = Function->getPreviousDecl();
-
-    PrincipalDecl->setObjectOfFriendDecl(PrevDecl != 0);
+    PrincipalDecl->setObjectOfFriendDecl();
     DC->makeDeclVisibleInContext(PrincipalDecl);
 
     bool queuedInstantiation = false;
@@ -1639,7 +1633,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                                     TemplateParams, Method);
     if (isFriend) {
       FunctionTemplate->setLexicalDeclContext(Owner);
-      FunctionTemplate->setObjectOfFriendDecl(true);
+      FunctionTemplate->setObjectOfFriendDecl();
     } else if (D->isOutOfLine())
       FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
     Method->setDescribedFunctionTemplate(FunctionTemplate);
@@ -1666,7 +1660,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                             TempParamLists.data());
 
     Method->setLexicalDeclContext(Owner);
-    Method->setObjectOfFriendDecl(true);
+    Method->setObjectOfFriendDecl();
   } else if (D->isOutOfLine())
     Method->setLexicalDeclContext(D->getLexicalDeclContext());
 
