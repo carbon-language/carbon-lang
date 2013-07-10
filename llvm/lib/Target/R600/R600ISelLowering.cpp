@@ -92,6 +92,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
   setTargetDAGCombine(ISD::SELECT_CC);
 
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
   setSchedulingPreference(Sched::VLIW);

@@ -72,8 +72,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
 
-  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-
   int types[] = {
     (int)MVT::v2i32,
     (int)MVT::v4i32
@@ -158,7 +156,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
   // XXX: Account for alignment?
   MFI->LDSSize += Size;
 
-  return DAG.getConstant(Offset, MVT::i32);
+  return DAG.getConstant(Offset, TD->getPointerSize() == 8 ? MVT::i64 : MVT::i32);
 }
 
 SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,

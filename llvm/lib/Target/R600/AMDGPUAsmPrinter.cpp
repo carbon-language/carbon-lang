@@ -233,7 +233,14 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF) {
 
   OutStreamer.EmitIntValue(RsrcReg, 4);
   OutStreamer.EmitIntValue(S_00B028_VGPRS(MaxVGPR / 4) | S_00B028_SGPRS(MaxSGPR / 8), 4);
+
+  if (MFI->ShaderType == ShaderType::COMPUTE) {
+    OutStreamer.EmitIntValue(R_00B84C_COMPUTE_PGM_RSRC2, 4);
+    OutStreamer.EmitIntValue(S_00B84C_LDS_SIZE(RoundUpToAlignment(MFI->LDSSize, 256) >> 8), 4);
+  }
   if (MFI->ShaderType == ShaderType::PIXEL) {
+    OutStreamer.EmitIntValue(R_00B02C_SPI_SHADER_PGM_RSRC2_PS, 4);
+    OutStreamer.EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(RoundUpToAlignment(MFI->LDSSize, 256) >> 8), 4);
     OutStreamer.EmitIntValue(R_0286CC_SPI_PS_INPUT_ENA, 4);
     OutStreamer.EmitIntValue(MFI->PSInputAddr, 4);
   }
