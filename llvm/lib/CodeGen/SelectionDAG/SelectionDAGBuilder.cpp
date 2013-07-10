@@ -4421,10 +4421,12 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
   if (!Op)
     return false;
 
+  // FIXME: This does not handle register-indirect values at offset 0.
+  bool IsIndirect = Offset != 0;
   if (Op->isReg())
     FuncInfo.ArgDbgValues.push_back(BuildMI(MF, getCurDebugLoc(),
                                             TII->get(TargetOpcode::DBG_VALUE),
-                                            /* IsIndirect */ Offset != 0,
+                                            IsIndirect,
                                             Op->getReg(), Offset, Variable));
   else
     FuncInfo.ArgDbgValues.push_back(
