@@ -1954,14 +1954,22 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 
 Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
                                        ArrayRef<unsigned> Idxs) {
+  assert(Agg->getType()->isFirstClassType() &&
+         "Non-first-class type for constant insertvalue expression");
+
   assert(ExtractValueInst::getIndexedType(Agg->getType(),
                                           Idxs) == Val->getType() &&
          "insertvalue indices invalid!");
-  assert(Agg->getType()->isFirstClassType() &&
-         "Non-first-class type for constant insertvalue expression");
-  Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs);
-  assert(FC && "insertvalue constant expr couldn't be folded!");
-  return FC;
+  Type *ReqTy = Val->getType();
+
+  if (Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs))
+    return FC;
+
+  Constant *ArgVec[] = { Agg, Val };
+  const ExprMapKeyType Key(Instruction::InsertValue, ArgVec, 0, 0, Idxs);
+
+  LLVMContextImpl *pImpl = Agg->getContext().pImpl;
+  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getExtractValue(Constant *Agg,
@@ -1975,9 +1983,14 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
 
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
-  Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs);
-  assert(FC && "ExtractValue constant expr couldn't be folded!");
-  return FC;
+  if (Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs))
+    return FC;
+
+  Constant *ArgVec[] = { Agg };
+  const ExprMapKeyType Key(Instruction::ExtractValue, ArgVec, 0, 0, Idxs);
+
+  LLVMContextImpl *pImpl = Agg->getContext().pImpl;
+  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
 }
 
 Constant *ConstantExpr::getNeg(Constant *C, bool HasNUW, bool HasNSW) {
