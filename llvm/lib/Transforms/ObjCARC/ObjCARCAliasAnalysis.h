@@ -1,4 +1,4 @@
-//===- ObjCARCAliasAnalysis.h - ObjC ARC Optimization -*- mode: c++ -*-----===//
+//===- ObjCARCAliasAnalysis.h - ObjC ARC Optimization -*- C++ -*-----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

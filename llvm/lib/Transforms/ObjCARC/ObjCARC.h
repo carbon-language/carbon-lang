@@ -1,4 +1,4 @@
-//===- ObjCARC.h - ObjC ARC Optimization --------------*- mode: c++ -*-----===//
+//===- ObjCARC.h - ObjC ARC Optimization --------------*- C++ -*-----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

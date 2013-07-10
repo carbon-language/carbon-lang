@@ -1,4 +1,4 @@
-//===- DependencyAnalysis.h - ObjC ARC Optimization ---*- mode: c++ -*-----===//
+//===- DependencyAnalysis.h - ObjC ARC Optimization ---*- C++ -*-----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

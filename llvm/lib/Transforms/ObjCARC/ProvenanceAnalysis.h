@@ -1,4 +1,4 @@
-//===- ProvenanceAnalysis.h - ObjC ARC Optimization ---*- mode: c++ -*-----===//
+//===- ProvenanceAnalysis.h - ObjC ARC Optimization ---*- C++ -*-----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

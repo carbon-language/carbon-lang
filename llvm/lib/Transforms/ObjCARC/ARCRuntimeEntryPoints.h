@@ -1,4 +1,4 @@
-//===- ARCRuntimeEntryPoints.h - ObjC ARC Optimization --*- mode: c++ -*---===//
+//===- ARCRuntimeEntryPoints.h - ObjC ARC Optimization --*- C++ -*---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
