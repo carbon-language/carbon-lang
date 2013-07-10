@@ -94,6 +94,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("ConstructorInitializerAllOnOneLineOrOnePerLine",
                    Style.ConstructorInitializerAllOnOneLineOrOnePerLine);
     IO.mapOptional("DerivePointerBinding", Style.DerivePointerBinding);
+    IO.mapOptional("ExperimentalAutoDetectBinPacking",
+                   Style.ExperimentalAutoDetectBinPacking);
     IO.mapOptional("IndentCaseLabels", Style.IndentCaseLabels);
     IO.mapOptional("MaxEmptyLinesToKeep", Style.MaxEmptyLinesToKeep);
     IO.mapOptional("ObjCSpaceBeforeProtocolList",
@@ -134,6 +136,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ColumnLimit = 80;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.DerivePointerBinding = false;
+  LLVMStyle.ExperimentalAutoDetectBinPacking = false;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.MaxEmptyLinesToKeep = 1;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
@@ -165,6 +168,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.ColumnLimit = 80;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.DerivePointerBinding = true;
+  GoogleStyle.ExperimentalAutoDetectBinPacking = false;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.MaxEmptyLinesToKeep = 1;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
@@ -260,10 +264,12 @@ public:
                          const AnnotatedLine &Line, unsigned FirstIndent,
                          const FormatToken *RootToken,
                          WhitespaceManager &Whitespaces,
-                         encoding::Encoding Encoding)
+                         encoding::Encoding Encoding,
+                         bool BinPackInconclusiveFunctions)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
         FirstIndent(FirstIndent), RootToken(RootToken),
-        Whitespaces(Whitespaces), Count(0), Encoding(Encoding) {}
+        Whitespaces(Whitespaces), Count(0), Encoding(Encoding),
+        BinPackInconclusiveFunctions(BinPackInconclusiveFunctions) {}
 
   /// \brief Formats an \c UnwrappedLine.
   void format(const AnnotatedLine *NextLine) {
@@ -782,7 +788,11 @@ private:
       } else {
         NewIndent =
             4 + std::max(LastSpace, State.Stack.back().StartOfFunctionCall);
-        AvoidBinPacking = !Style.BinPackParameters;
+        AvoidBinPacking = !Style.BinPackParameters ||
+                          (Style.ExperimentalAutoDetectBinPacking &&
+                           (Current.PackingKind == PPK_OnePerLine ||
+                            (!BinPackInconclusiveFunctions &&
+                             Current.PackingKind == PPK_Inconclusive)));
       }
 
       State.Stack.push_back(ParenState(NewIndent, LastSpace, AvoidBinPacking,
@@ -1157,6 +1167,7 @@ private:
   // to create a deterministic order independent of the container.
   unsigned Count;
   encoding::Encoding Encoding;
+  bool BinPackInconclusiveFunctions;
 };
 
 class FormatTokenLexer {
@@ -1363,7 +1374,8 @@ public:
               1;
         }
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
-                                         TheLine.First, Whitespaces, Encoding);
+                                         TheLine.First, Whitespaces, Encoding,
+                                         BinPackInconclusiveFunctions);
         Formatter.format(I + 1 != E ? &*(I + 1) : NULL);
         IndentForLevel[TheLine.Level] = LevelIndent;
         PreviousLineWasTouched = true;
@@ -1408,6 +1420,8 @@ private:
     unsigned CountBoundToVariable = 0;
     unsigned CountBoundToType = 0;
     bool HasCpp03IncompatibleFormat = false;
+    bool HasBinPackedFunction = false;
+    bool HasOnePerLineFunction = false;
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       if (!AnnotatedLines[i].First->Next)
         continue;
@@ -1428,6 +1442,12 @@ private:
             Tok->Previous->Type == TT_TemplateCloser &&
             Tok->WhitespaceRange.getBegin() == Tok->WhitespaceRange.getEnd())
           HasCpp03IncompatibleFormat = true;
+
+        if (Tok->PackingKind == PPK_BinPacked)
+          HasBinPackedFunction = true;
+        if (Tok->PackingKind == PPK_OnePerLine)
+          HasOnePerLineFunction = true;
+
         Tok = Tok->Next;
       }
     }
@@ -1441,6 +1461,8 @@ private:
       Style.Standard = HasCpp03IncompatibleFormat ? FormatStyle::LS_Cpp11
                                                   : FormatStyle::LS_Cpp03;
     }
+    BinPackInconclusiveFunctions =
+        HasBinPackedFunction || !HasOnePerLineFunction;
   }
 
   /// \brief Get the indent of \p Level from \p IndentForLevel.
@@ -1691,6 +1713,7 @@ private:
   std::vector<AnnotatedLine> AnnotatedLines;
 
   encoding::Encoding Encoding;
+  bool BinPackInconclusiveFunctions;
 };
 
 } // end anonymous namespace

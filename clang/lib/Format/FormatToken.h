@@ -64,6 +64,13 @@ enum BraceBlockKind {
   BK_BracedInit
 };
 
+// The packing kind of a function's parameters.
+enum ParameterPackingKind {
+  PPK_BinPacked,
+  PPK_OnePerLine,
+  PPK_Inconclusive
+};
+
 /// \brief A wrapper around a \c Token storing information about the
 /// whitespace characters preceeding it.
 struct FormatToken {
@@ -72,9 +79,9 @@ struct FormatToken {
         CodePointCount(0), IsFirst(false), MustBreakBefore(false),
         BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
         CanBreakBefore(false), ClosesTemplateDeclaration(false),
-        ParameterCount(0), TotalLength(0), UnbreakableTailLength(0),
-        BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
-        FakeRParens(0), LastInChainOfCalls(false),
+        ParameterCount(0), PackingKind(PPK_Inconclusive), TotalLength(0),
+        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
+        LongestObjCSelectorName(0), FakeRParens(0), LastInChainOfCalls(false),
         PartOfMultiVariableDeclStmt(false), MatchingParen(NULL), Previous(NULL),
         Next(NULL) {}
 
@@ -142,6 +149,9 @@ struct FormatToken {
   /// 0 parameters from functions with 1 parameter. Thus, we can simply count
   /// the number of commas.
   unsigned ParameterCount;
+
+  /// \brief If this is an opening parenthesis, how are the parameters packed?
+  ParameterPackingKind PackingKind;
 
   /// \brief The total length of the line up to and including this token.
   unsigned TotalLength;

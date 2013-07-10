@@ -77,6 +77,18 @@ struct FormatStyle {
   /// will either all be on the same line or will have one line each.
   bool BinPackParameters;
 
+  /// \brief If true, clang-format detects whether function calls and
+  /// definitions are formatted with one parameter per line.
+  ///
+  /// Each call can be bin-packed, one-per-line or inconclusive. If it is
+  /// inconclusive, e.g. completely on one line, but a decision needs to be
+  /// made, clang-format analyzes whether there are other bin-packed cases in
+  /// the input file and act accordingly.
+  ///
+  /// NOTE: This is an experimental flag, that might go away or be renamed. Do
+  /// not use this in config files, etc. Use at your own risk.
+  bool ExperimentalAutoDetectBinPacking;
+
   /// \brief Allow putting all parameters of a function declaration onto
   /// the next line even if \c BinPackParameters is \c false.
   bool AllowAllParametersOfDeclarationOnNextLine;
@@ -155,6 +167,8 @@ struct FormatStyle {
            ConstructorInitializerAllOnOneLineOrOnePerLine ==
                R.ConstructorInitializerAllOnOneLineOrOnePerLine &&
            DerivePointerBinding == R.DerivePointerBinding &&
+           ExperimentalAutoDetectBinPacking ==
+               R.ExperimentalAutoDetectBinPacking &&
            IndentCaseLabels == R.IndentCaseLabels &&
            IndentWidth == R.IndentWidth &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&

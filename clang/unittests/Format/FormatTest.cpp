@@ -2644,6 +2644,30 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
       NoBinPacking);
 }
 
+TEST_F(FormatTest, AdaptiveOnePerLineFormatting) {
+  FormatStyle Style = getLLVMStyleWithColumns(15);
+  Style.ExperimentalAutoDetectBinPacking = true;
+  EXPECT_EQ("aaa(aaaa,\n"
+            "    aaaa,\n"
+            "    aaaa);\n"
+            "aaa(aaaa,\n"
+            "    aaaa,\n"
+            "    aaaa);",
+            format("aaa(aaaa,\n" // one-per-line
+                   "  aaaa,\n"
+                   "    aaaa  );\n"
+                   "aaa(aaaa,  aaaa,  aaaa);", // inconclusive
+                   Style));
+  EXPECT_EQ("aaa(aaaa, aaaa,\n"
+            "    aaaa);\n"
+            "aaa(aaaa, aaaa,\n"
+            "    aaaa);",
+            format("aaa(aaaa,  aaaa,\n" // bin-packed
+                   "    aaaa  );\n"
+                   "aaa(aaaa,  aaaa,  aaaa);", // inconclusive
+                   Style));
+}
+
 TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat(
       "return llvm::StringSwitch<Reference::Kind>(name)\n"

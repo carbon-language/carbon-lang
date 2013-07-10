@@ -99,6 +99,8 @@ private:
     }
 
     bool MightBeFunctionType = CurrentToken->is(tok::star);
+    bool HasMultipleLines = false;
+    bool HasMultipleParametersOnALine = false;
     while (CurrentToken != NULL) {
       // LookForDecls is set when "if (" has been seen. Check for
       // 'identifier' '*' 'identifier' followed by not '=' -- this
@@ -133,6 +135,13 @@ private:
           }
         }
 
+        if (!HasMultipleLines)
+          Left->PackingKind = PPK_Inconclusive;
+        else if (HasMultipleParametersOnALine)
+          Left->PackingKind = PPK_BinPacked;
+        else
+          Left->PackingKind = PPK_OnePerLine;
+
         next();
         return true;
       }
@@ -143,8 +152,14 @@ private:
                                                     tok::coloncolon))
         MightBeFunctionType = true;
       updateParameterCount(Left, CurrentToken);
+      if (CurrentToken->is(tok::comma) && CurrentToken->Next &&
+          !CurrentToken->Next->HasUnescapedNewline &&
+          !CurrentToken->Next->isTrailingComment())
+        HasMultipleParametersOnALine = true;
       if (!consumeToken())
         return false;
+      if (CurrentToken && CurrentToken->HasUnescapedNewline)
+        HasMultipleLines = true;
     }
     return false;
   }
@@ -245,10 +260,11 @@ private:
   }
 
   void updateParameterCount(FormatToken *Left, FormatToken *Current) {
-    if (Current->is(tok::comma))
+    if (Current->is(tok::comma)) {
       ++Left->ParameterCount;
-    else if (Left->ParameterCount == 0 && Current->isNot(tok::comment))
+    } else if (Left->ParameterCount == 0 && Current->isNot(tok::comment)) {
       Left->ParameterCount = 1;
+    }
   }
 
   bool parseConditional() {
@@ -1283,9 +1299,10 @@ void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
   const FormatToken *Tok = Line.First;
   while (Tok) {
     llvm::errs() << " M=" << Tok->MustBreakBefore
-                 << " C=" << Tok->CanBreakBefore << " T=" << Tok->Type << " S="
-                 << Tok->SpacesRequiredBefore << " P=" << Tok->SplitPenalty
-                 << " Name=" << Tok->Tok.getName() << " FakeLParens=";
+                 << " C=" << Tok->CanBreakBefore << " T=" << Tok->Type
+                 << " S=" << Tok->SpacesRequiredBefore
+                 << " P=" << Tok->SplitPenalty << " Name=" << Tok->Tok.getName()
+                 << " PPK=" << Tok->PackingKind << " FakeLParens=";
     for (unsigned i = 0, e = Tok->FakeLParens.size(); i != e; ++i)
       llvm::errs() << Tok->FakeLParens[i] << "/";
     llvm::errs() << " FakeRParens=" << Tok->FakeRParens << "\n";
