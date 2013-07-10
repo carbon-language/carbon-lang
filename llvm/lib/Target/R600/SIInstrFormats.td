@@ -281,6 +281,30 @@ class VINTRP <bits <2> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
 let Uses = [EXEC] in {
 
+class DS <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
+    Enc64 <outs, ins, asm, pattern> {
+
+  bits<8> vdst;
+  bits<1> gds;
+  bits<8> addr;
+  bits<8> data0;
+  bits<8> data1;
+  bits<8> offset0;
+  bits<8> offset1;
+
+  let Inst{7-0} = offset0;
+  let Inst{15-8} = offset1;
+  let Inst{17} = gds;
+  let Inst{25-18} = op;
+  let Inst{31-26} = 0x36; //encoding
+  let Inst{39-32} = addr;
+  let Inst{47-40} = data0;
+  let Inst{55-48} = data1;
+  let Inst{63-56} = vdst;
+
+  let LGKM_CNT = 1;
+}
+
 class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc64<outs, ins, asm, pattern> {
 

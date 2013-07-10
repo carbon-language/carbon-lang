@@ -287,6 +287,29 @@ class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
 // Vector I/O classes
 //===----------------------------------------------------------------------===//
 
+class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
+  op,
+  (outs regClass:$vdst),
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
+       i8imm:$offset0, i8imm:$offset1),
+  asm#" $vdst, $gds, $addr, $data0, $data1, $offset0, $offset1, [M0]",
+  []> {
+  let mayLoad = 1;
+  let mayStore = 0;
+}
+
+class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
+  op,
+  (outs),
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
+       i8imm:$offset0, i8imm:$offset1),
+  asm#" $gds, $addr, $data0, $data1, $offset0, $offset1, [M0]",
+  []> {
+  let mayStore = 1;
+  let mayLoad = 0;
+  let vdst = 0;
+}
+
 class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
   op,
   (outs),

@@ -134,6 +134,8 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
   if (TSFlags & SIInstrFlags::LGKM_CNT) {
 
     MachineOperand &Op = MI.getOperand(0);
+    if (!Op.isReg())
+      Op = MI.getOperand(1);
     assert(Op.isReg() && "First LGKM operand must be a register!");
 
     unsigned Reg = Op.getReg();
