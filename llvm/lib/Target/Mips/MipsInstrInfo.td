@@ -250,12 +250,6 @@ def simm16      : Operand<i32> {
 def simm20      : Operand<i32> {
 }
 
-def uimm20      : Operand<i32> {
-}
-
-def uimm10      : Operand<i32> {
-}
-
 def simm16_64   : Operand<i64>;
 def shamt       : Operand<i32>;
 
@@ -643,14 +637,6 @@ class BAL_FT :
   let hasDelaySlot = 1;
   let Defs = [RA];
 }
-// Syscall
-class SYS_FT<string opstr> :
-  InstSE<(outs), (ins uimm20:$code_),
-         !strconcat(opstr, "\t$code_"), [], NoItinerary, FrmI>;
-// Break
-class BRK_FT<string opstr> :
-  InstSE<(outs), (ins uimm10:$code_1, uimm10:$code_2),
-         !strconcat(opstr, "\t$code_1, $code_2"), [], NoItinerary, FrmOther>;
 
 // Sync
 let hasSideEffects = 1 in
@@ -955,9 +941,6 @@ defm SWR : StoreLeftRightM<"swr", MipsSWR, CPURegs>, LW_FM<0x2e>;
 def SYNC : SYNC_FT, SYNC_FM;
 def TEQ : TEQ_FT<"teq", CPURegsOpnd>, TEQ_FM<0x34>;
 
-def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
-def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
-
 /// Load-linked, Store-conditional
 let Predicates = [NotN64, HasStdEnc] in {
   def LL : LLBase<"ll", CPURegsOpnd, mem>, LW_FM<0x30>;
@@ -1136,10 +1119,6 @@ def : InstAlias<"bnez $rs,$offset",
 def : InstAlias<"beqz $rs,$offset",
                  (BEQ CPURegsOpnd:$rs, ZERO, brtarget:$offset), 1>,
                  Requires<[NotMips64]>;
-def : InstAlias<"syscall", (SYSCALL 0), 1>;
-
-def : InstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
-def : InstAlias<"break", (BREAK 0, 0), 1>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
