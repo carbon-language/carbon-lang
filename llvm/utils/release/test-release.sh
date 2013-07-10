@@ -480,7 +480,7 @@ for Flavor in $Flavors ; do
         build_dragonegg 2 $Flavor $llvmCore_de_phase2_installdir $dragonegg_phase2_objdir
 
         ########################################################################
-        # Phase 3: Build llvmCore with newly built clang from phase 2.
+        # Phase 3: Build llvmCore with newly built dragonegg from phase 2.
         c_compiler="$gcc_compiler -fplugin=$dragonegg_phase2_objdir/dragonegg.so"
         cxx_compiler="$gxx_compiler -fplugin=$dragonegg_phase2_objdir/dragonegg.so"
         echo "# Phase 3: Building llvmCore with dragonegg"
