@@ -716,7 +716,7 @@ public:
   /// \param[out] ManglingContextDecl - Returns the ManglingContextDecl
   /// associated with the context, if relevant.
   MangleNumberingContext *getCurrentMangleNumberContext(
-    DeclContext *DC,
+    const DeclContext *DC,
     Decl *&ManglingContextDecl);
 
 

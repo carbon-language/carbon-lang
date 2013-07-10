@@ -23,22 +23,35 @@ namespace clang {
 
 class BlockDecl;
 class CXXMethodDecl;
+class IdentifierInfo;
+class TagDecl;
 class Type;
+class VarDecl;
 
 /// \brief Keeps track of the mangled names of lambda expressions and block
 /// literals within a particular context.
 class MangleNumberingContext 
     : public RefCountedBase<MangleNumberingContext> {
   llvm::DenseMap<const Type *, unsigned> ManglingNumbers;
-  
+  llvm::DenseMap<IdentifierInfo*, unsigned> VarManglingNumbers;
+  llvm::DenseMap<IdentifierInfo*, unsigned> TagManglingNumbers;
+
 public:
   /// \brief Retrieve the mangling number of a new lambda expression with the
   /// given call operator within this context.
-  unsigned getManglingNumber(CXXMethodDecl *CallOperator);
+  unsigned getManglingNumber(const CXXMethodDecl *CallOperator);
 
   /// \brief Retrieve the mangling number of a new block literal within this
   /// context.
-  unsigned getManglingNumber(BlockDecl *BD);
+  unsigned getManglingNumber(const BlockDecl *BD);
+
+  /// \brief Retrieve the mangling number of a static local variable within
+  /// this context.
+  unsigned getManglingNumber(const VarDecl *VD);
+
+  /// \brief Retrieve the mangling number of a static local variable within
+  /// this context.
+  unsigned getManglingNumber(const TagDecl *TD);
 };
   
 } // end namespace clang

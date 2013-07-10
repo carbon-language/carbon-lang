@@ -55,6 +55,26 @@ void GORF (float IVAR1)
    }
 }
 
+// CHECK: @_ZZ12OmittingCodefEN4SSSSC1E_0RKf
+inline void OmittingCode(float x) {
+  if (0) {
+    struct SSSS {
+      float bv;
+      SSSS(const float& from): bv(from) { }
+    };
+
+    SSSS VAR1(x);
+  }
+
+  struct SSSS {
+    float bv;
+    SSSS(const float& from): bv(from) { }
+  };
+
+  SSSS VAR2(x);
+}
+void CallOmittingCode() { OmittingCode(1); }
+
 // CHECK: @_ZZ25LocalTemplateFunctionTestdEN5Local3fooIdEET_S1_
 int LocalTemplateFunctionTest(double d) {
   struct Local {
@@ -64,3 +84,14 @@ int LocalTemplateFunctionTest(double d) {
   };
   return Local().foo(d);
 }
+
+// CHECK: @_ZZ15LocalAnonStructvENUt0_1gEv
+inline void LocalAnonStruct() {
+  if (0) {
+    struct { void f() {} } x;
+    x.f();
+  }
+  struct { void g() {} } y;
+  y.g();
+}
+void CallLocalAnonStruct() { LocalAnonStruct(); }

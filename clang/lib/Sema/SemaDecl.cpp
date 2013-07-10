@@ -3043,6 +3043,27 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   return ParsedFreeStandingDeclSpec(S, AS, DS, MultiTemplateParamsArg());
 }
 
+static void HandleTagNumbering(Sema &S, const TagDecl *Tag) {
+  if (isa<CXXRecordDecl>(Tag->getParent())) {
+    // If this tag is the direct child of a class, number it if
+    // it is anonymous.
+    if (!Tag->getName().empty() || Tag->getTypedefNameForAnonDecl())
+      return;
+    MangleNumberingContext &MCtx =
+        S.Context.getManglingNumberContext(Tag->getParent());
+    S.Context.setManglingNumber(Tag, MCtx.getManglingNumber(Tag));
+    return;
+  }
+
+  // If this tag isn't a direct child of a class, number it if it is local.
+  Decl *ManglingContextDecl;
+  if (MangleNumberingContext *MCtx =
+          S.getCurrentMangleNumberContext(Tag->getDeclContext(),
+                                          ManglingContextDecl)) {
+    S.Context.setManglingNumber(Tag, MCtx->getManglingNumber(Tag));
+  }
+}
+
 /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
 /// no declarator (e.g. "struct foo;") is parsed. It also accepts template
 /// parameters to cope with template friend declarations.
@@ -3072,7 +3093,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
 
   if (Tag) {
-    getASTContext().addUnnamedTag(Tag);
+    HandleTagNumbering(*this, Tag);
     Tag->setFreeStanding();
     if (Tag->isInvalidDecl())
       return Tag;
@@ -5119,6 +5140,15 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   if (!NewVD->getPreviousDecl() && !NewVD->isInvalidDecl() &&
       isIncompleteDeclExternC(*this, NewVD))
     RegisterLocallyScopedExternCDecl(NewVD, S);
+
+  if (NewVD->isStaticLocal()) {
+    Decl *ManglingContextDecl;
+    if (MangleNumberingContext *MCtx =
+            getCurrentMangleNumberContext(NewVD->getDeclContext(),
+                                          ManglingContextDecl)) {
+      Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD));
+    }
+  }
 
   return NewVD;
 }
@@ -8374,9 +8404,10 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     if (Decl *D = Group[i])
       Decls.push_back(D);
 
-  if (DeclSpec::isDeclRep(DS.getTypeSpecType()))
+  if (DeclSpec::isDeclRep(DS.getTypeSpecType())) {
     if (const TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl()))
-      getASTContext().addUnnamedTag(Tag);
+      HandleTagNumbering(*this, Tag);
+  }
 
   return BuildDeclaratorGroup(Decls, DS.containsPlaceholderType());
 }

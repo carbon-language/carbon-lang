@@ -12,7 +12,7 @@ namespace test1 {
 }
 
 namespace test2 {
-  // CHECK-DAG: define internal void @_ZN5test21fIZNS_L1gEvE1S_0EEvT_(
+  // CHECK-DAG: define internal void @_ZN5test21fIZNS_L1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   static inline void *g() {
     struct S {
@@ -46,7 +46,7 @@ namespace test4 {
 }
 
 namespace test5 {
-  // CHECK-DAG: define linkonce_odr void @_ZN5test51fIZNS_1gILi1EEEPvvE1S_1EEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test51fIZNS_1gILi1EEEPvvE1SEEvT_(
   template <typename T> void f(T) {}
   template <int N> inline void *g() {
     struct S {
@@ -58,7 +58,7 @@ namespace test5 {
 }
 
 namespace test6 {
-  // CHECK-DAG: define linkonce_odr void @_ZN5test61fIZZNS_1gEvEN1S1hE_2vE1T_3EEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test61fIZZNS_1gEvEN1S1hEvE1TEEvv(
   template <typename T> void f() {}
 
   inline void *g() {
@@ -76,7 +76,7 @@ namespace test6 {
 }
 
 namespace test7 {
-  // CHECK-DAG: define internal void @_ZN5test71fIZZNS_1gEvEN1S1hEvE1T_4EEvv(
+  // CHECK-DAG: define internal void @_ZN5test71fIZZNS_1gEvEN1S1hEvE1TEEvv(
   template <typename T> void f() {}
 
   void *g() {
@@ -105,7 +105,7 @@ namespace test8 {
 }
 
 namespace test9 {
-  // CHECK-DAG: define linkonce_odr void @_ZN5test91fIPZNS_1gEvE1S_5EEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN5test91fIPZNS_1gEvE1SEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     struct S {
@@ -116,7 +116,7 @@ namespace test9 {
 }
 
 namespace test10 {
-  // CHECK-DAG: define linkonce_odr void @_ZN6test101fIPFZNS_1gEvE1S_6vEEEvT_(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test101fIPFZNS_1gEvE1SvEEEvT_(
   template <typename T> void f(T) {}
   inline void *g() {
     struct S {
@@ -128,7 +128,7 @@ namespace test10 {
 }
 
 namespace test11 {
-  // CHECK-DAG: define internal void @_ZN6test111fIPFZNS_1gEvE1S_7PNS_12_GLOBAL__N_11IEEEEvT_(
+  // CHECK-DAG: define internal void @_ZN6test111fIPFZNS_1gEvE1SPNS_12_GLOBAL__N_11IEEEEvT_(
   namespace {
     struct I {
     };
@@ -172,7 +172,7 @@ namespace test13 {
 }
 
 namespace test14 {
-  // CHECK-DAG: define linkonce_odr void @_ZN6test143fooIZNS_1fEvE1S_8E3barILPS1_0EEEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test143fooIZNS_1fEvE1SE3barILPS1_0EEEvv(
   template <typename T> struct foo {
     template <T *P> static void bar() {}
     static void *g() { return (void *)bar<nullptr>; }
@@ -186,7 +186,7 @@ namespace test14 {
 }
 
 namespace test15 {
-  // CHECK-DAG: define linkonce_odr void @_ZN6test153zedIZNS_3fooIiEEPvvE3bar_9EEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test153zedIZNS_3fooIiEEPvvE3barEEvv(
   template <class T> void zed() {}
   template <class T> void *foo() {
     class bar {
@@ -197,7 +197,7 @@ namespace test15 {
 }
 
 namespace test16 {
-  // CHECK-DAG: define linkonce_odr void @_ZN6test163zedIZNS_3fooIiE3barEvE1S__10_EEvv(
+  // CHECK-DAG: define linkonce_odr void @_ZN6test163zedIZNS_3fooIiE3barEvE1SEEvv(
   template <class T> void zed() {}
   template <class T> struct foo {
     static void *bar();

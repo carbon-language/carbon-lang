@@ -344,8 +344,9 @@ class ASTContext : public RefCountedBase<ASTContext> {
   llvm::DenseMap<const DeclContext *, MangleNumberingContext>
       MangleNumberingContexts;
 
-  llvm::DenseMap<const DeclContext *, unsigned> UnnamedMangleContexts;
-  llvm::DenseMap<const TagDecl *, unsigned> UnnamedMangleNumbers;
+  /// \brief Side-table of mangling numbers for declarations which rarely
+  /// need them (like static local vars).
+  llvm::DenseMap<const NamedDecl *, unsigned> MangleNumbers;
 
   /// \brief Mapping that stores parameterIndex values for ParmVarDecls when
   /// that value exceeds the bitfield size of ParmVarDeclBits.ParameterIndex.
@@ -2086,12 +2087,12 @@ public:
   /// it is not used.
   bool DeclMustBeEmitted(const Decl *D);
 
-  void addUnnamedTag(const TagDecl *Tag);
-  int getUnnamedTagManglingNumber(const TagDecl *Tag) const;
+  void setManglingNumber(const NamedDecl *ND, unsigned Number);
+  unsigned getManglingNumber(const NamedDecl *ND) const;
 
   /// \brief Retrieve the context for computing mangling numbers in the given
   /// DeclContext.
-  MangleNumberingContext &getManglingNumberContext(DeclContext *DC);
+  MangleNumberingContext &getManglingNumberContext(const DeclContext *DC);
 
   /// \brief Used by ParmVarDecl to store on the side the
   /// index of the parameter when it exceeds the size of the normal bitfield.

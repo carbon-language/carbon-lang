@@ -53,7 +53,7 @@ static bool isInInlineFunction(const DeclContext *DC) {
 }
 
 MangleNumberingContext *
-Sema::getCurrentMangleNumberContext(DeclContext *DC,
+Sema::getCurrentMangleNumberContext(const DeclContext *DC,
                                     Decl *&ManglingContextDecl) {
   // Compute the context for allocating mangling numbers in the current
   // expression, if the ABI requires them.

@@ -19,7 +19,7 @@
 using namespace clang;
 
 unsigned
-MangleNumberingContext::getManglingNumber(CXXMethodDecl *CallOperator) {
+MangleNumberingContext::getManglingNumber(const CXXMethodDecl *CallOperator) {
   const FunctionProtoType *Proto
     = CallOperator->getType()->getAs<FunctionProtoType>();
   ASTContext &Context = CallOperator->getASTContext();
@@ -31,8 +31,18 @@ MangleNumberingContext::getManglingNumber(CXXMethodDecl *CallOperator) {
 }
 
 unsigned
-MangleNumberingContext::getManglingNumber(BlockDecl *BD) {
+MangleNumberingContext::getManglingNumber(const BlockDecl *BD) {
   // FIXME: Compute a BlockPointerType?  Not obvious how.
   const Type *Ty = 0;
   return ++ManglingNumbers[Ty];
+}
+
+unsigned
+MangleNumberingContext::getManglingNumber(const VarDecl *VD) {
+  return ++VarManglingNumbers[VD->getIdentifier()];
+}
+
+unsigned
+MangleNumberingContext::getManglingNumber(const TagDecl *TD) {
+  return ++TagManglingNumbers[TD->getIdentifier()];
 }

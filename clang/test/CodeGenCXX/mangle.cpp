@@ -888,7 +888,7 @@ namespace test38 {
 }
 
 namespace test39 {
-  // CHECK: define internal void @"_ZN6test394funcINS_3$_0Ut_EEEvT_"
+  // CHECK: define internal void @"_ZN6test394funcINS_3$_03$_1EEEvT_"
   typedef struct {
     struct {} a;
   } *foo;
@@ -896,4 +896,17 @@ namespace test39 {
   void test(foo x) {
     func(x->a);
   }
+}
+
+namespace test40 {
+  // CHECK: i32* @_ZZN6test401fEvE1a_0
+  void h(int&);
+  inline void f() {
+    if (0) {
+      static int a;
+    }
+    static int a;
+    h(a);
+  };
+  void g() { f(); }
 }

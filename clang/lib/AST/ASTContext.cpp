@@ -7990,24 +7990,19 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
     + llvm::capacity_in_bytes(ClassScopeSpecializationPattern);
 }
 
-void ASTContext::addUnnamedTag(const TagDecl *Tag) {
-  // FIXME: This mangling should be applied to function local classes too
-  if (!Tag->getName().empty() || Tag->getTypedefNameForAnonDecl() ||
-      !isa<CXXRecordDecl>(Tag->getParent()))
-    return;
-
-  std::pair<llvm::DenseMap<const DeclContext *, unsigned>::iterator, bool> P =
-    UnnamedMangleContexts.insert(std::make_pair(Tag->getParent(), 0));
-  UnnamedMangleNumbers.insert(std::make_pair(Tag, P.first->second++));
+void ASTContext::setManglingNumber(const NamedDecl *ND, unsigned Number) {
+  if (Number > 1)
+    MangleNumbers[ND] = Number;
 }
 
-int ASTContext::getUnnamedTagManglingNumber(const TagDecl *Tag) const {
-  llvm::DenseMap<const TagDecl *, unsigned>::const_iterator I =
-    UnnamedMangleNumbers.find(Tag);
-  return I != UnnamedMangleNumbers.end() ? I->second : -1;
+unsigned ASTContext::getManglingNumber(const NamedDecl *ND) const {
+  llvm::DenseMap<const NamedDecl *, unsigned>::const_iterator I =
+    MangleNumbers.find(ND);
+  return I != MangleNumbers.end() ? I->second : 1;
 }
 
-MangleNumberingContext &ASTContext::getManglingNumberContext(DeclContext *DC) {
+MangleNumberingContext &
+ASTContext::getManglingNumberContext(const DeclContext *DC) {
   return MangleNumberingContexts[DC];
 }
 
