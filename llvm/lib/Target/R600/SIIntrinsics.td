@@ -23,6 +23,7 @@ let TargetPrefix = "SI", isTarget = 1 in {
 
   def int_SI_sample : Sample;
   def int_SI_sampleb : Sample;
+  def int_SI_sampled : Sample;
   def int_SI_samplel : Sample;
 
   def int_SI_imageload : Intrinsic <[llvm_v4i32_ty], [llvm_anyvector_ty, llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
