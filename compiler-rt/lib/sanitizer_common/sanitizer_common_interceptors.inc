@@ -1374,7 +1374,7 @@ INTERCEPTOR(int, readdir_r, void *dirp, __sanitizer_dirent *entry,
   if (!res) {
     if (result)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
-    if (entry)
+    if (entry && *result)
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, entry, entry->d_reclen);
   }
   return res;
