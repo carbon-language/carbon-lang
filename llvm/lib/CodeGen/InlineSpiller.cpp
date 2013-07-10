@@ -1152,7 +1152,8 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
     // Debug values are not allowed to affect codegen.
     if (MI->isDebugValue()) {
       // Modify DBG_VALUE now that the value is in a spill slot.
-      uint64_t Offset = MI->getOperand(1).getImm();
+      bool IsIndirect = MI->getOperand(1).isImm();
+      uint64_t Offset = IsIndirect ? MI->getOperand(1).getImm() : 0;
       const MDNode *MDPtr = MI->getOperand(2).getMetadata();
       DebugLoc DL = MI->getDebugLoc();
       DEBUG(dbgs() << "Modifying debug info due to spill:" << "\t" << *MI);
