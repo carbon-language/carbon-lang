@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -fblocks -o - -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 %s | FileCheck %s
 
 // CHECK: @_ZGVZZ3foovEUb_E5value = internal global i64 0
+// CHECK: @_ZZZN26externally_visible_statics1S3fooEiEd_Ub_E1k = linkonce_odr global i32 0
 // CHECK: @_ZZ26externally_visible_statics1S1xMUb_E1j = linkonce_odr global i32 0
 // CHECK: @_ZZZN26externally_visible_statics10inlinefuncEvEUb_E1i = linkonce_odr global i32 0
 
@@ -79,10 +80,6 @@ namespace externally_visible_statics {
   void g() {
     inlinefunc();
     S s;
-#if 0
-    // FIXME: We know how to mangle k, but crash trying to mangle the
-    // block itself.
     s.foo();
-#endif
   }
 }

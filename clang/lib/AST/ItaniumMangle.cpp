@@ -56,6 +56,13 @@ static const DeclContext *getEffectiveDeclContext(const Decl *D) {
             = dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl()))
         return ContextParam->getDeclContext();
   }
+
+  // Perform the same check for block literals.
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    if (ParmVarDecl *ContextParam
+          = dyn_cast_or_null<ParmVarDecl>(BD->getBlockManglingContextDecl()))
+      return ContextParam->getDeclContext();
+  }
   
   const DeclContext *DC = D->getDeclContext();
   if (const CapturedDecl *CD = dyn_cast<CapturedDecl>(DC))
@@ -1334,12 +1341,26 @@ void CXXNameMangler::mangleLocalName(const Decl *D) {
       const NamedDecl *ND = cast<NamedDecl>(D);
       mangleNestedName(ND, getEffectiveDeclContext(ND), true /*NoFunction*/);
     }
+  } else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    // Mangle a block in a default parameter; see above explanation for
+    // lambdas.
+    if (const ParmVarDecl *Parm
+            = dyn_cast_or_null<ParmVarDecl>(BD->getBlockManglingContextDecl())) {
+      if (const FunctionDecl *Func
+            = dyn_cast<FunctionDecl>(Parm->getDeclContext())) {
+        Out << 'd';
+        unsigned Num = Func->getNumParams() - Parm->getFunctionScopeIndex();
+        if (Num > 1)
+          mangleNumber(Num - 2);
+        Out << '_';
+      }
+    }
+
+    mangleUnqualifiedBlock(BD);
   } else {
-    if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
-      mangleUnqualifiedBlock(BD);
-    else
-      mangleUnqualifiedName(cast<NamedDecl>(D));
+    mangleUnqualifiedName(cast<NamedDecl>(D));
   }
+
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(RD ? RD : D)) {
     unsigned disc;
     if (Context.getNextDiscriminator(ND, disc)) {
