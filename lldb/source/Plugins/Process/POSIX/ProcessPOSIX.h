@@ -40,6 +40,9 @@ public:
     //------------------------------------------------------------------
     // Process protocol.
     //------------------------------------------------------------------
+    virtual void
+    Finalize();
+
     virtual bool
     CanDebug(lldb_private::Target &target, bool plugin_specified_by_name);
 

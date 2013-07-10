@@ -177,6 +177,10 @@ public:
     lldb_private::Error
     Detach(lldb::tid_t tid);
 
+    /// Stops the monitoring the child process thread.
+    void
+    StopMonitor();
+
     /// Stops the requested thread and waits for the stop signal.
     bool
     StopThread(lldb::tid_t tid);
@@ -301,9 +305,6 @@ private:
     /// Stops the child monitor thread.
     void
     StopMonitoringChildProcess();
-
-    void 
-    StopMonitor();
 
     /// Stops the operation thread used to attach/launch a process.
     void

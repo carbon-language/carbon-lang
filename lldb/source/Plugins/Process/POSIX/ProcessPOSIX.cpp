@@ -93,6 +93,14 @@ ProcessPOSIX::~ProcessPOSIX()
 
 //------------------------------------------------------------------------------
 // Process protocol.
+void
+ProcessPOSIX::Finalize()
+{
+  Process::Finalize();
+
+  if (m_monitor)
+    m_monitor->StopMonitor();
+}
 
 bool
 ProcessPOSIX::CanDebug(Target &target, bool plugin_specified_by_name)
