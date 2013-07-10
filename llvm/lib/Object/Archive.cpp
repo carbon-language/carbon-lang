@@ -210,7 +210,7 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
 }
 
 Archive::Archive(MemoryBuffer *source, error_code &ec)
-  : Binary(Binary::ID_Archive, source) {
+  : Binary(Binary::ID_Archive, source), SymbolTable(end_children()) {
   // Check for sufficient magic.
   if (!source || source->getBufferSize()
                  < (8 + sizeof(ArchiveMemberHeader)) // Smallest archive.
@@ -375,6 +375,9 @@ Archive::Symbol Archive::Symbol::getNext() const {
 }
 
 Archive::symbol_iterator Archive::begin_symbols() const {
+  if (SymbolTable == end_children())
+    return symbol_iterator(Symbol(this, 0, 0));
+
   const char *buf = SymbolTable->getBuffer().begin();
   if (kind() == K_GNU) {
     uint32_t symbol_count = 0;
@@ -395,6 +398,9 @@ Archive::symbol_iterator Archive::begin_symbols() const {
 }
 
 Archive::symbol_iterator Archive::end_symbols() const {
+  if (SymbolTable == end_children())
+    return symbol_iterator(Symbol(this, 0, 0));
+
   const char *buf = SymbolTable->getBuffer().begin();
   uint32_t symbol_count = 0;
   if (kind() == K_GNU) {

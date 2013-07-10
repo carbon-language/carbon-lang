@@ -1,17 +1,6 @@
 RUN: llvm-nm %p/Inputs/archive-test.a-coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF
 
-RUN: llvm-as %p/Inputs/trivial.ll -o=%t1
-RUN: rm -f %t2
-RUN: llvm-ar rcs %t2 %t1
-RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
-
-Test we don't error with an archive with no symtab.
-RUN: llvm-nm %p/Inputs/archive-test.a-gnu-no-symtab
-
-Or in an archive with no symtab or string table.
-RUN: llvm-nm %p/Inputs/archive-test.a-gnu-minimal
-
 COFF: trivial-object-test.coff-i386:
 COFF-NEXT: 00000000 d .data
 COFF-NEXT: 00000000 t .text
@@ -20,6 +9,24 @@ COFF-NEXT:          U _SomeOtherFunction
 COFF-NEXT: 00000000 T _main
 COFF-NEXT:          U _puts
 
+
+RUN: llvm-as %p/Inputs/trivial.ll -o=%t1
+RUN: rm -f %t2
+RUN: llvm-ar rcs %t2 %t1
+RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
+
 BITCODE:          U SomeOtherFunction
 BITCODE-NEXT:          T main
 BITCODE-NEXT:          U puts
+
+
+Test we don't error with an archive with no symtab.
+RUN: llvm-nm %p/Inputs/archive-test.a-gnu-no-symtab
+
+
+Or in an archive with no symtab or string table.
+RUN: llvm-nm %p/Inputs/archive-test.a-gnu-minimal
+
+
+And don't crash when asked to print a non existing symtab.
+RUN: llvm-nm -s %p/Inputs/archive-test.a-gnu-minimal

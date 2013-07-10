@@ -365,21 +365,24 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
 
     if (object::Archive *a = dyn_cast<object::Archive>(arch.get())) {
       if (ArchiveMap) {
-        outs() << "Archive map" << "\n";
-        for (object::Archive::symbol_iterator i = a->begin_symbols(), 
-             e = a->end_symbols(); i != e; ++i) {
-          object::Archive::child_iterator c;
-          StringRef symname;
-          StringRef filename;
-          if (error(i->getMember(c))) 
+        object::Archive::symbol_iterator I = a->begin_symbols();
+        object::Archive::symbol_iterator E = a->end_symbols();
+        if (I !=E) {
+          outs() << "Archive map" << "\n";
+          for (; I != E; ++I) {
+            object::Archive::child_iterator c;
+            StringRef symname;
+            StringRef filename;
+            if (error(I->getMember(c)))
               return;
-          if (error(i->getName(symname)))
+            if (error(I->getName(symname)))
               return;
-          if (error(c->getName(filename)))
+            if (error(c->getName(filename)))
               return;
-          outs() << symname << " in " << filename << "\n";
+            outs() << symname << " in " << filename << "\n";
+          }
+          outs() << "\n";
         }
-        outs() << "\n";
       }
 
       for (object::Archive::child_iterator i = a->begin_children(),
