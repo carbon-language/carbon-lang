@@ -1553,9 +1553,8 @@ INTERCEPTOR(SIZE_T, mbsrtowcs, wchar_t *dest, const char **src, SIZE_T len,
             void *ps) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, mbsrtowcs, dest, src, len, ps);
-  if (src) {
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
-  }
+  if (src) COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(mbsrtowcs)(dest, src, len, ps);
   if (res != (SIZE_T)(-1) && dest && src) {
     // This function, and several others, may or may not write the terminating
@@ -1582,6 +1581,7 @@ INTERCEPTOR(SIZE_T, mbsnrtowcs, wchar_t *dest, const char **src, SIZE_T nms,
     COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
     if (nms) COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
   }
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(mbsnrtowcs)(dest, src, nms, len, ps);
   if (res != (SIZE_T)(-1) && dest && src) {
     SIZE_T write_cnt = res + !*src;
@@ -1611,9 +1611,8 @@ INTERCEPTOR(SIZE_T, wcsrtombs, char *dest, const wchar_t **src, SIZE_T len,
             void *ps) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, wcsrtombs, dest, src, len, ps);
-  if (src) {
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
-  }
+  if (src) COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(wcsrtombs)(dest, src, len, ps);
   if (res != (SIZE_T) - 1 && dest && src) {
     SIZE_T write_cnt = res + !*src;
@@ -1638,6 +1637,7 @@ INTERCEPTOR(SIZE_T, wcsnrtombs, char *dest, const wchar_t **src, SIZE_T nms,
     COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
     if (nms) COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
   }
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(wcsnrtombs)(dest, src, nms, len, ps);
   if (res != (SIZE_T) - 1 && dest && src) {
     SIZE_T write_cnt = res + !*src;

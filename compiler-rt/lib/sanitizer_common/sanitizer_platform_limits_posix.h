@@ -32,6 +32,7 @@ namespace __sanitizer {
   extern unsigned pid_t_sz;
   extern unsigned timeval_sz;
   extern unsigned uid_t_sz;
+  extern unsigned mbstate_t_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;

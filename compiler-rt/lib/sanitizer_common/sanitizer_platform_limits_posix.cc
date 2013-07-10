@@ -39,6 +39,7 @@
 #include <sys/utsname.h>
 #include <termios.h>
 #include <time.h>
+#include <wchar.h>
 
 #if SANITIZER_LINUX
 #include <sys/mount.h>
@@ -112,6 +113,7 @@ namespace __sanitizer {
   unsigned pid_t_sz = sizeof(pid_t);
   unsigned timeval_sz = sizeof(timeval);
   unsigned uid_t_sz = sizeof(uid_t);
+  unsigned mbstate_t_sz = sizeof(mbstate_t);
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
