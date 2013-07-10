@@ -30,3 +30,10 @@ RUN: llvm-nm %p/Inputs/archive-test.a-gnu-minimal
 
 And don't crash when asked to print a non existing symtab.
 RUN: llvm-nm -s %p/Inputs/archive-test.a-gnu-minimal
+
+
+Test that we at least find the symbol table on an OS X archive. Please update
+this when we are actually able to parse it.
+RUN: not llvm-nm -s %p/Inputs/MacOSX.a 2>&1 | FileCheck %s -check-prefix OSX
+
+OSX: BSD archive format is not supported
