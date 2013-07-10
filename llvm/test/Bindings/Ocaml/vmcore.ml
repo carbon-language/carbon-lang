@@ -1,9 +1,9 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_analysis.cmxa llvm_bitwriter.cmxa %s -o %t
  * RUN: %t %t.bc
- * RUN: llvm-dis < %t.bc > t.ll
- * RUN: FileCheck %s < t.ll
+ * RUN: llvm-dis < %t.bc > %t.ll
+ * RUN: FileCheck %s < %t.ll
  * Do a second pass for things that shouldn't be anywhere.
- * RUN: FileCheck -check-prefix=CHECK-NOWHERE %s < t.ll
+ * RUN: FileCheck -check-prefix=CHECK-NOWHERE %s < %t.ll
  * XFAIL: vg_leak
  *)
 
