@@ -9,6 +9,8 @@
 
 #include "TestVisitor.h"
 
+#include <stack>
+
 namespace clang {
 
 class TypeLocVisitor : public ExpectedLocationVisitor<TypeLocVisitor> {
@@ -82,9 +84,25 @@ public:
 class LambdaExprVisitor : public ExpectedLocationVisitor<LambdaExprVisitor> {
 public:
   bool VisitLambdaExpr(LambdaExpr *Lambda) {
+    PendingBodies.push(Lambda);
     Match("", Lambda->getIntroducerRange().getBegin());
     return true;
   }
+  /// For each call to VisitLambdaExpr, we expect a subsequent call (with
+  /// proper nesting) to TraverseLambdaBody.
+  bool TraverseLambdaBody(LambdaExpr *Lambda) {
+    EXPECT_FALSE(PendingBodies.empty());
+    EXPECT_EQ(PendingBodies.top(), Lambda);
+    PendingBodies.pop();
+    return TraverseStmt(Lambda->getBody());
+  }
+  /// Determine whether TraverseLambdaBody has been called for every call to
+  /// VisitLambdaExpr.
+  bool allBodiesHaveBeenTraversed() const {
+    return PendingBodies.empty();
+  }
+private:
+  std::stack<LambdaExpr *> PendingBodies; 
 };
 
 class TemplateArgumentLocTraverser
@@ -476,6 +494,13 @@ TEST(RecursiveASTVisitor, VisitsLambdaExpr) {
   Visitor.ExpectMatch("", 1, 12);
   EXPECT_TRUE(Visitor.runOver("void f() { []{ return; }(); }",
 			      LambdaExprVisitor::Lang_CXX11));
+}
+
+TEST(RecursiveASTVisitor, TraverseLambdaBodyCanBeOverridden) {
+  LambdaExprVisitor Visitor;
+  EXPECT_TRUE(Visitor.runOver("void f() { []{ return; }(); }",
+			      LambdaExprVisitor::Lang_CXX11));
+  EXPECT_TRUE(Visitor.allBodiesHaveBeenTraversed());
 }
 
 } // end namespace clang

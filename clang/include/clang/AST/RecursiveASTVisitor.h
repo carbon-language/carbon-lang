@@ -244,7 +244,15 @@ public:
   ///
   /// \returns false if the visitation was terminated early, true otherwise.
   bool TraverseLambdaCapture(LambdaExpr *LE, const LambdaExpr::Capture *C);
-  
+
+  /// \brief Recursively visit the body of a lambda expression.
+  ///
+  /// This provides a hook for visitors that need more context when visiting
+  /// \c LE->getBody().
+  ///
+  /// \returns false if the visitation was terminated early, true otherwise.
+  bool TraverseLambdaBody(LambdaExpr *LE);
+
   // ---- Methods on Stmts ----
 
   // Declare Traverse*() for all concrete Stmt classes.
@@ -808,6 +816,13 @@ bool RecursiveASTVisitor<Derived>::TraverseLambdaCapture(
     TRY_TO(TraverseStmt(LE->getInitCaptureInit(C)));
   return true;
 }
+
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseLambdaBody(LambdaExpr *LE) {
+  TRY_TO(TraverseStmt(LE->getBody()));
+  return true;
+}
+
 
 // ----------------- Type traversal -----------------
 
@@ -2153,7 +2168,7 @@ bool RecursiveASTVisitor<Derived>::TraverseLambdaExpr(LambdaExpr *S) {
     }
   }
 
-  TRY_TO(TraverseStmt(S->getBody()));
+  TRY_TO(TraverseLambdaBody(S));
   return true;
 }
 
