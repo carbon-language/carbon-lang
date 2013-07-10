@@ -642,11 +642,17 @@ bool FastISel::SelectCall(const User *I) {
 
     if (Op)
       if (Op->isReg()) {
+        // Set the indirect flag if the type and the DIVariable's
+        // indirect field are in disagreement: Indirectly-addressed
+        // variables that are nonpointer types should be marked as
+        // indirect, and VLAs should be marked as indirect eventhough
+        // they are a pointer type.
+        bool IsIndirect = DI->getAddress()->getType()->isPointerTy()
+          ^ DIVar.isIndirect();
         Op->setIsDebug(true);
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                 TII.get(TargetOpcode::DBG_VALUE),
-                /* IsIndirect */ DI->getAddress()->getType()->isPointerTy(),
-                Op->getReg(), Offset, DI->getVariable());
+                IsIndirect, Op->getReg(), Offset, DI->getVariable());
       } else
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                 TII.get(TargetOpcode::DBG_VALUE)).addOperand(*Op).addImm(0)
