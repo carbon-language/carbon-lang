@@ -774,6 +774,13 @@ FormatManager::LoadObjCFormatters()
 #endif // LLDB_DISABLE_PYTHON
 
     objc_flags.SetSkipPointers(false);
+    objc_flags.SetCascades(true);
+    objc_flags.SetSkipReferences(false);
+    
+    AddStringSummary (objc_category_sp,
+                      "${var.__FuncPtr%A}",
+                      ConstString("__block_literal_generic"),
+                      objc_flags);
 
     TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
 
