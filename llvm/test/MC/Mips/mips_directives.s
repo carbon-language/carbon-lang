@@ -39,7 +39,17 @@ $JTI0_0:
     .set FPU_MASK,$f7
     .set r3,$3
     .set f6,$f6
-#CHECK:    abs.s   $f6, $f7           # encoding: [0x46,0x00,0x39,0x85]
-#CHECK:    and     $3, $15, $15       # encoding: [0x01,0xef,0x18,0x24]
+# CHECK:    abs.s   $f6, $f7           # encoding: [0x46,0x00,0x39,0x85]
+# CHECK:    and     $3, $15, $15       # encoding: [0x01,0xef,0x18,0x24]
+# CHECK:    break                      # encoding: [0x00,0x00,0x00,0x0d]
+# CHECK:    break   7, 0               # encoding: [0x00,0x07,0x00,0x0d]
+# CHECK:    break   7, 5               # encoding: [0x00,0x07,0x01,0x4d]
+# CHECK:    syscall                    # encoding: [0x00,0x00,0x00,0x0c]
+# CHECK:    syscall 13396              # encoding: [0x00,0x0d,0x15,0x0c]
     abs.s  f6,FPU_MASK
     and    r3,$t7,STORE_MASK
+    break
+    break 7
+    break 7,5
+    syscall
+    syscall 0x3454
