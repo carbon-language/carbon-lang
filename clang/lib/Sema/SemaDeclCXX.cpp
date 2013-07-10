@@ -7024,6 +7024,35 @@ void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
   // be possible for this to happen, because...?
 }
 
+class UsingValidatorCCC : public CorrectionCandidateCallback {
+public:
+  UsingValidatorCCC(bool IsTypeName, bool IsInstantiation)
+      : IsTypeName(IsTypeName), IsInstantiation(IsInstantiation) {}
+  
+  virtual bool ValidateCandidate(const TypoCorrection &Candidate) {
+    if (NamedDecl *ND = Candidate.getCorrectionDecl()) {
+      if (isa<NamespaceDecl>(ND))
+        return false;
+      // Completely unqualified names are invalid for a 'using' declaration.
+      bool droppedSpecifier = Candidate.WillReplaceSpecifier() &&
+                              !Candidate.getCorrectionSpecifier();
+      if (droppedSpecifier)
+        return false;
+      else if (isa<TypeDecl>(ND))
+        return IsTypeName || !IsInstantiation;
+      else
+        return !IsTypeName;
+    } else {
+      // Keywords are not valid here.
+      return false;
+    }
+  }
+
+private:
+  bool IsTypeName;
+  bool IsInstantiation;
+};
+
 /// Builds a using declaration.
 ///
 /// \param IsInstantiation - Whether this call arises from an
@@ -7133,11 +7162,32 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   LookupQualifiedName(R, LookupContext);
 
+  // Try to correct typos if possible.
   if (R.empty()) {
-    Diag(IdentLoc, diag::err_no_member) 
-      << NameInfo.getName() << LookupContext << SS.getRange();
-    UD->setInvalidDecl();
-    return UD;
+    UsingValidatorCCC CCC(IsTypeName, IsInstantiation);
+    if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
+                                               R.getLookupKind(), S, &SS, CCC)){
+      // We reject any correction for which ND would be NULL.
+      NamedDecl *ND = Corrected.getCorrectionDecl();
+      std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
+      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
+      R.setLookupName(Corrected.getCorrection());
+      R.addDecl(ND);
+      // We reject candidates where droppedSpecifier == true, hence the
+      // literal '0' below.
+      Diag(R.getNameLoc(), diag::err_no_member_suggest)
+        << NameInfo.getName() << LookupContext << 0
+        << CorrectedQuotedStr << SS.getRange()
+        << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
+                                        CorrectedStr);
+      Diag(ND->getLocation(), diag::note_previous_decl)
+        << CorrectedQuotedStr;
+    } else {
+      Diag(IdentLoc, diag::err_no_member) 
+        << NameInfo.getName() << LookupContext << SS.getRange();
+      UD->setInvalidDecl();
+      return UD;
+    }
   }
 
   if (R.isAmbiguous()) {

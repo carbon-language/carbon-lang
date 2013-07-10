@@ -118,3 +118,45 @@ namespace foo
     using ::foo::Class1::Function; // expected-error{{incomplete type 'foo::Class1' named in nested name specifier}}
   };
 }
+
+// Don't suggest non-typenames for positions requiring typenames.
+namespace using_suggestion_tyname_val {
+namespace N { void FFF() {} }
+using typename N::FFG; // expected-error {{no member named 'FFG' in namespace 'using_suggestion_tyname_val::N'}}
+}
+
+namespace using_suggestion_member_tyname_val {
+class CCC { public: void AAA() { } };
+class DDD : public CCC { public: using typename CCC::AAB; }; // expected-error {{no member named 'AAB' in 'using_suggestion_member_tyname_val::CCC'}}
+}
+
+namespace using_suggestion_tyname_val_dropped_specifier {
+void FFF() {}
+namespace N { }
+using typename N::FFG; // expected-error {{no member named 'FFG' in namespace 'using_suggestion_tyname_val_dropped_specifier::N'}}
+}
+
+// Currently hints aren't provided to drop out the incorrect M::.
+namespace using_suggestion_ty_dropped_nested_specifier {
+namespace N {
+class AAA {};
+namespace M { }
+}
+using N::M::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_ty_dropped_nested_specifier::N::M'}}
+}
+
+namespace using_suggestion_tyname_ty_dropped_nested_specifier {
+namespace N {
+class AAA {};
+namespace M { }
+}
+using typename N::M::AAA; // expected-error {{no member named 'AAA' in namespace 'using_suggestion_tyname_ty_dropped_nested_specifier::N::M'}}
+}
+
+namespace using_suggestion_val_dropped_nested_specifier {
+namespace N {
+void FFF() {}
+namespace M { }
+}
+using N::M::FFF; // expected-error {{no member named 'FFF' in namespace 'using_suggestion_val_dropped_nested_specifier::N::M'}}
+}
