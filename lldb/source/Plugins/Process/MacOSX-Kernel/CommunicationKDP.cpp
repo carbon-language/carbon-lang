@@ -129,10 +129,10 @@ CommunicationKDP::SendRequestAndGetReply (const CommandType command,
                 if (WaitForPacketWithTimeoutMicroSecondsNoLock (reply_packet, GetPacketTimeoutInMicroSeconds ()))
                 {
                     offset = 0;
+                    const uint8_t reply_command = reply_packet.GetU8 (&offset);
                     const uint8_t reply_sequence_id = reply_packet.GetU8 (&offset);
                     if (request_sequence_id == reply_sequence_id)
                     {
-                        const uint8_t reply_command = reply_packet.GetU8 (&offset);
                         // The sequent ID was correct, now verify we got the response we were looking for
                         if ((reply_command & eCommandTypeMask) == command)
                         {
