@@ -362,16 +362,16 @@ bool edit::rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   const ParmVarDecl *argDecl = *Setter->param_begin();
   QualType ArgType = argDecl->getType();
   Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
-  if (propertyLifetime != Qualifiers::OCL_None) {
-    PropertyString += "(";
-    if (propertyLifetime == Qualifiers::OCL_Strong)
-      PropertyString += "strong";
-    else if (propertyLifetime == Qualifiers::OCL_Weak)
-      PropertyString += "weak";
-    else
-      PropertyString += "unsafe_unretained";
-    PropertyString += ")";
+  
+  if (ArgType->isObjCRetainableType() &&
+      propertyLifetime == Qualifiers::OCL_Strong) {
+    PropertyString += "(copy)";
   }
+  else if (propertyLifetime == Qualifiers::OCL_Weak)
+    PropertyString += "(weak)";
+  else
+    PropertyString += "(unsafe_unretained)";
+  
   QualType PropQT = Getter->getResultType();
   PropertyString += " ";
   PropertyString += PropQT.getAsString(NS.getASTContext().getPrintingPolicy());

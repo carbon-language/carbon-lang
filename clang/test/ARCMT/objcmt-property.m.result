@@ -12,7 +12,7 @@
 
 @property(weak) NSString *__weak WeakProp;
 
-@property(strong) NSString * StrongProp;
+@property(copy) NSString * StrongProp;
 
 
 - (NSString *) UnavailProp  __attribute__((unavailable));
@@ -42,8 +42,8 @@
 
 
 
-@property(strong) NSArray * names2;
-@property(strong) NSArray * names3;
-@property(strong) NSArray *__strong names4;
-@property(strong) NSArray * names1;
+@property(copy) NSArray * names2;
+@property(copy) NSArray * names3;
+@property(copy) NSArray *__strong names4;
+@property(copy) NSArray * names1;
 @end
