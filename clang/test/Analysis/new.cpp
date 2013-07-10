@@ -170,6 +170,16 @@ void testUsingThisAfterDelete() {
   c->f(0); // no-warning
 }
 
+void testAggregateNew() {
+  struct Point { int x, y; };
+  new Point{1, 2}; // no crash
+
+  Point p;
+  new (&p) Point{1, 2}; // no crash
+  clang_analyzer_eval(p.x == 1); // expected-warning{{TRUE}}
+  clang_analyzer_eval(p.y == 2); // expected-warning{{TRUE}}
+}
+
 //--------------------------------
 // Incorrectly-modelled behavior
 //--------------------------------

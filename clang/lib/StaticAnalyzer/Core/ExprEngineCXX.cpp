@@ -431,8 +431,6 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     if (!isa<CXXConstructExpr>(Init)) {
       assert(Bldr.getResults().size() == 1);
       Bldr.takeNodes(NewN);
-
-      assert(!CNE->getType()->getPointeeCXXRecordDecl());
       evalBind(Dst, CNE, NewN, Result, State->getSVal(Init, LCtx),
                /*FirstInit=*/IsStandardGlobalOpNewFunction);
     }
