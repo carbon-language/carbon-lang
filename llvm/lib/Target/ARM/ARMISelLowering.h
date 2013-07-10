@@ -464,7 +464,7 @@ namespace llvm {
     /// expanded to fmul + fadd.
     ///
     /// ARM supports both fused and unfused multiply-add operations; we already
-    /// lower a pair of fmul and fmadd to the latter so it's not clear that there
+    /// lower a pair of fmul and fadd to the latter so it's not clear that there
     /// would be a gain or that the gain would be worthwhile enough to risk
     /// correctness bugs.
     virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const { return false; }
