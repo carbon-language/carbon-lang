@@ -175,27 +175,6 @@ int llvm::DiffFilesWithTolerance(StringRef NameA,
                                  StringRef NameB,
                                  double AbsTol, double RelTol,
                                  std::string *Error) {
-  // Check for zero length files because some systems croak when you try to
-  // mmap an empty file.
-  uint64_t A_size;
-  if (sys::fs::file_size(NameA, A_size))
-    return false;
-
-  uint64_t B_size;
-  if (sys::fs::file_size(NameB, B_size))
-    return false;
-
-  // If they are both zero sized then they're the same
-  if (A_size == 0 && B_size == 0)
-    return 0;
-
-  // If only one of them is zero sized then they can't be the same
-  if ((A_size == 0 || B_size == 0)) {
-    if (Error)
-      *Error = "Files differ: one is zero-sized, the other isn't";
-    return 1;
-  }
-
   // Now its safe to mmap the files into memory because both files
   // have a non-zero size.
   OwningPtr<MemoryBuffer> F1;
@@ -218,6 +197,8 @@ int llvm::DiffFilesWithTolerance(StringRef NameA,
   const char *File2End = F2->getBufferEnd();
   const char *F1P = File1Start;
   const char *F2P = File2Start;
+  uint64_t A_size = F1->getBufferSize();
+  uint64_t B_size = F2->getBufferSize();
 
   // Are the buffers identical?  Common case: Handle this efficiently.
   if (A_size == B_size &&
