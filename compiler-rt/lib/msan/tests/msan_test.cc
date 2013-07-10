@@ -1230,6 +1230,8 @@ TEST(MemorySanitizer, wcsrtombs) {
   EXPECT_EQ(buff[0], 'a');
   EXPECT_EQ(buff[1], 'b');
   EXPECT_EQ(buff[2], 'c');
+  EXPECT_EQ(buff[3], '\0');
+  EXPECT_POISONED(buff[4]);
 }
 
 TEST(MemorySanitizer, wcsnrtombs) {
@@ -1241,7 +1243,7 @@ TEST(MemorySanitizer, wcsnrtombs) {
   EXPECT_EQ(res, 2);
   EXPECT_EQ(buff[0], 'a');
   EXPECT_EQ(buff[1], 'b');
-  EXPECT_EQ(buff[2], 0);
+  EXPECT_POISONED(buff[2]);
 }
 
 TEST(MemorySanitizer, mbtowc) {
