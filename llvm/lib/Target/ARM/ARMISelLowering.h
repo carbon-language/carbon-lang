@@ -458,6 +458,17 @@ namespace llvm {
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
                               const ARMSubtarget *ST) const;
 
+    /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
+    /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be
+    /// expanded to FMAs when this method returns true, otherwise fmuladd is
+    /// expanded to fmul + fadd.
+    ///
+    /// ARM supports both fused and unfused multiply-add operations; we already
+    /// lower a pair of fmul and fmadd to the latter so it's not clear that there
+    /// would be a gain or that the gain would be worthwhile enough to risk
+    /// correctness bugs.
+    virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const { return false; }
+
     SDValue ReconstructShuffle(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
