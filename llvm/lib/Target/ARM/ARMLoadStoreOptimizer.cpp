@@ -1858,9 +1858,7 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
           if (!StopHere)
             BI->second.push_back(MI);
         } else {
-          SmallVector<MachineInstr*, 4> MIs;
-          MIs.push_back(MI);
-          Base2LdsMap[Base] = MIs;
+          Base2LdsMap[Base].push_back(MI);
           LdBases.push_back(Base);
         }
       } else {
@@ -1876,9 +1874,7 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
           if (!StopHere)
             BI->second.push_back(MI);
         } else {
-          SmallVector<MachineInstr*, 4> MIs;
-          MIs.push_back(MI);
-          Base2StsMap[Base] = MIs;
+          Base2StsMap[Base].push_back(MI);
           StBases.push_back(Base);
         }
       }
