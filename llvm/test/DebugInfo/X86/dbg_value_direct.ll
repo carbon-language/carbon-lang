@@ -1,5 +1,44 @@
 ; RUN: llc -filetype=obj -O0 -stack-protector-buffer-size=1 < %s
 ; Test that we handle DBG_VALUEs in a register without crashing.
+;
+; Generated and reduced from: (with -fsanitize=address)
+; class C;
+; template < typename, typename = int, typename = C > class A;
+; class B
+; {
+; };
+; class C:B
+; {
+; public:
+;     C (const C &):B ()
+;     {
+;     }
+; };
+; template < typename _CharT, typename, typename _Alloc > class A
+; {
+;     struct D:_Alloc
+;     {
+;     };
+;     D _M_dataplus;
+; public:
+;     A (_CharT *);
+; };
+;
+; template < typename _CharT, typename _Traits,
+;          typename _Alloc > A < _CharT > operator+ (A < _Traits, _Alloc >,
+;                  const _CharT *)
+; {
+;     A < _CharT > a (0);
+;     return a;
+; }
+;
+; int
+; main ()
+; {
+;     A < int >b = 0;
+;     A < char >c = b + "/glob_test_root/*a";
+; }
+
 %class.A = type { %"struct.A<int, int, C>::D" }
 %"struct.A<int, int, C>::D" = type { i8 }
 %class.A.0 = type { %"struct.A<char, int, C>::D" }
