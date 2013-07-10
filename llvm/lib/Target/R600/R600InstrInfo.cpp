@@ -114,9 +114,7 @@ bool R600InstrInfo::isPlaceHolderOpcode(unsigned Opcode) const {
 }
 
 bool R600InstrInfo::isReductionOp(unsigned Opcode) const {
-  switch(Opcode) {
-    default: return false;
-  }
+  return false;
 }
 
 bool R600InstrInfo::isCubeOp(unsigned Opcode) const {

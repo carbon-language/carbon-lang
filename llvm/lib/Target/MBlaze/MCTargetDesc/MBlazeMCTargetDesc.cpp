@@ -54,11 +54,7 @@ static MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
 }
 
 static MCAsmInfo *createMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
-  Triple TheTriple(TT);
-  switch (TheTriple.getOS()) {
-  default:
-    return new MBlazeMCAsmInfo();
-  }
+  return new MBlazeMCAsmInfo();
 }
 
 static MCCodeGenInfo *createMBlazeMCCodeGenInfo(StringRef TT, Reloc::Model RM,
