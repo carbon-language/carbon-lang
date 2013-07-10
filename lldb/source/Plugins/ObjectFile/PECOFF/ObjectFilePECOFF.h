@@ -86,10 +86,13 @@ public:
 //    GetAddressClass (lldb::addr_t file_addr);
 //    
     virtual lldb_private::Symtab *
-    GetSymtab(uint32_t flags = 0);
+    GetSymtab ();
     
-    virtual lldb_private::SectionList *
-    GetSectionList();
+    virtual bool
+    IsStripped ();
+
+    virtual void
+    CreateSections (lldb_private::SectionList &unified_section_list);
     
     virtual void
     Dump (lldb_private::Stream *s);

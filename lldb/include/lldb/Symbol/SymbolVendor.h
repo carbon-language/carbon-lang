@@ -38,7 +38,7 @@ class SymbolVendor :
 public:
     static SymbolVendor*
     FindPlugin (const lldb::ModuleSP &module_sp,
-                lldb_private::Stream *feedback_strm);
+                Stream *feedback_strm);
 
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -126,7 +126,7 @@ public:
                size_t max_matches,
                TypeList& types);
 
-    virtual lldb_private::ClangNamespaceDecl
+    virtual ClangNamespaceDecl
     FindNamespace (const SymbolContext& sc, 
                    const ConstString &name,
                    const ClangNamespaceDecl *parent_namespace_decl);
@@ -154,9 +154,9 @@ public:
     }
 
     virtual size_t
-    GetTypes (lldb_private::SymbolContextScope *sc_scope,
+    GetTypes (SymbolContextScope *sc_scope,
               uint32_t type_mask,
-              lldb_private::TypeList &type_list);
+              TypeList &type_list);
 
     SymbolFile *
     GetSymbolFile()
@@ -175,7 +175,7 @@ public:
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
-    virtual lldb_private::ConstString
+    virtual ConstString
     GetPluginName();
 
     virtual uint32_t

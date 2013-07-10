@@ -292,8 +292,6 @@ Section::Slide (addr_t slide_amount, bool slide_children)
 #pragma mark SectionList
 
 SectionList::SectionList () :
-    m_changed(false),
-    m_revision_id(0),
     m_sections()
 {
 }
@@ -303,22 +301,17 @@ SectionList::~SectionList ()
 {
 }
 
-bool
-SectionList::Copy (SectionList *dest_section_list)
+SectionList &
+SectionList::operator = (const SectionList& rhs)
 {
-    if (dest_section_list)
-    {
-        dest_section_list->m_sections = m_sections;
-        dest_section_list->m_changed = true;
-        return true;
-    }
-    return false;
+    if (this != &rhs)
+        m_sections = rhs.m_sections;
+    return *this;
 }
 
 size_t
 SectionList::AddSection (const lldb::SectionSP& section_sp)
 {
-    m_changed = true;
     assert (section_sp.get());
     size_t section_index = m_sections.size();
     m_sections.push_back(section_sp);
@@ -331,7 +324,6 @@ SectionList::DeleteSection (size_t idx)
 {
     if (idx < m_sections.size())
     {
-        m_changed = true;
         m_sections.erase (m_sections.begin() + idx);
         return true; 
     }
@@ -361,7 +353,6 @@ SectionList::AddUniqueSection (const lldb::SectionSP& sect_sp)
     size_t sect_idx = FindSectionIndex (sect_sp.get());
     if (sect_idx == UINT32_MAX)
     {
-        m_changed = true;
         sect_idx = AddSection (sect_sp);
     }
     return sect_idx;
@@ -375,7 +366,6 @@ SectionList::ReplaceSection (user_id_t sect_id, const lldb::SectionSP& sect_sp, 
     {
         if ((*sect_iter)->GetID() == sect_id)
         {
-            m_changed = true;
             *sect_iter = sect_sp;
             return true;
         }
@@ -551,23 +541,4 @@ SectionList::Slide (addr_t slide_amount, bool slide_children)
             ++count;
     }
     return count;
-}
-
-void
-SectionList::Finalize ()
-{
-    for (const_iterator si = m_sections.begin(), se = m_sections.end();
-         si != se;
-         ++si)
-    {
-        Section *sect = si->get();
-        
-        sect->GetChildren().Finalize();
-    }
-
-    if (m_changed)
-    {
-        m_revision_id++;
-        m_changed = false;
-    }
 }

@@ -2189,7 +2189,7 @@ AppleObjCRuntimeV2::GetSharedCacheReadOnlyAddress()
             
             if (objc_object)
             {
-                SectionList *section_list = objc_object->GetSectionList();
+                SectionList *section_list = objc_module_sp->GetSectionList();
                 
                 if (section_list)
                 {

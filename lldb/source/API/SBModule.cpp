@@ -406,7 +406,7 @@ SBModule::GetNumSections ()
     {
         // Give the symbol vendor a chance to add to the unified section list.
         module_sp->GetSymbolVendor();
-        SectionList *section_list = module_sp->GetUnifiedSectionList();
+        SectionList *section_list = module_sp->GetSectionList();
         if (section_list)
             return section_list->GetSize();
     }
@@ -422,7 +422,7 @@ SBModule::GetSectionAtIndex (size_t idx)
     {
         // Give the symbol vendor a chance to add to the unified section list.
         module_sp->GetSymbolVendor();
-        SectionList *section_list = module_sp->GetUnifiedSectionList ();
+        SectionList *section_list = module_sp->GetSectionList ();
 
         if (section_list)
             sb_section.SetSP(section_list->GetSectionAtIndex (idx));
@@ -587,7 +587,7 @@ SBModule::FindSection (const char *sect_name)
     {
         // Give the symbol vendor a chance to add to the unified section list.
         module_sp->GetSymbolVendor();
-        SectionList *section_list = module_sp->GetUnifiedSectionList();
+        SectionList *section_list = module_sp->GetSectionList();
         if (section_list)
         {
             ConstString const_sect_name(sect_name);

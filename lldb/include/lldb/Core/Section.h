@@ -34,8 +34,8 @@ public:
 
     ~SectionList();
 
-    bool
-    Copy (SectionList* dest_section_list);
+    SectionList &
+    operator =(const SectionList& rhs);
 
     size_t
     AddSection (const lldb::SectionSP& section_sp);
@@ -91,17 +91,6 @@ public:
     size_t
     Slide (lldb::addr_t slide_amount, bool slide_children);
     
-    // Update all section lookup caches
-    void
-    Finalize ();
-
-    // Each time Finalize() is called with changes, revision id increments.
-    uint32_t
-    GetRevisionID() const
-    {
-        return m_revision_id;
-    }
-
     void
     Clear ()
     {
@@ -109,8 +98,6 @@ public:
     }
 
 protected:
-    bool        m_changed;
-    uint32_t    m_revision_id;
     collection  m_sections;
 };
 
@@ -283,13 +270,6 @@ public:
         m_thread_specific = b;
     }
     
-    // Update all section lookup caches
-    void
-    Finalize ()
-    {
-        m_children.Finalize();
-    }
-
     ObjectFile *
     GetObjectFile ()
     {

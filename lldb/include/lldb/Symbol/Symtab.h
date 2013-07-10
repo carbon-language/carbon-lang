@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "lldb/lldb-private.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/Symbol.h"
@@ -72,7 +73,7 @@ public:
             Symbol *    FindSymbolContainingFileAddress (lldb::addr_t file_addr, const uint32_t* indexes, uint32_t num_indexes);
             Symbol *    FindSymbolContainingFileAddress (lldb::addr_t file_addr);
             size_t      FindFunctionSymbols (const ConstString &name, uint32_t name_type_mask, SymbolContextList& sc_list);
-            size_t      CalculateSymbolSize (Symbol *symbol);
+            void        CalculateSymbolSizes ();
 
             void        SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_duplicates) const;
 
@@ -98,19 +99,19 @@ protected:
     typedef std::vector<Symbol>         collection;
     typedef collection::iterator        iterator;
     typedef collection::const_iterator  const_iterator;
-
+    typedef RangeDataVector<lldb::addr_t, lldb::addr_t, uint32_t> FileRangeToIndexMap;
             void        InitNameIndexes ();
             void        InitAddressIndexes ();
 
     ObjectFile *        m_objfile;
     collection          m_symbols;
-    std::vector<uint32_t> m_addr_indexes;
+    FileRangeToIndexMap m_file_addr_to_index;
     UniqueCStringMap<uint32_t> m_name_to_index;
     UniqueCStringMap<uint32_t> m_basename_to_index;
     UniqueCStringMap<uint32_t> m_method_to_index;
     UniqueCStringMap<uint32_t> m_selector_to_index;
     mutable Mutex       m_mutex; // Provide thread safety for this symbol table
-    bool                m_addr_indexes_computed:1,
+    bool                m_file_addr_to_index_computed:1,
                         m_name_indexes_computed:1;
 private:
 

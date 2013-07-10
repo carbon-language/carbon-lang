@@ -543,7 +543,7 @@ SymbolFileDWARF::InitializeObject()
     ModuleSP module_sp (m_obj_file->GetModule());
     if (module_sp)
     {
-        const SectionList *section_list = module_sp->GetUnifiedSectionList();
+        const SectionList *section_list = module_sp->GetSectionList();
 
         const Section* section = section_list->FindSectionByName(GetDWARFMachOSegmentName ()).get();
 
@@ -706,7 +706,7 @@ SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type,
     {
         ModuleSP module_sp (m_obj_file->GetModule());
         m_flags.Set (got_flag);
-        const SectionList *section_list = module_sp->GetUnifiedSectionList();
+        const SectionList *section_list = module_sp->GetSectionList();
         if (section_list)
         {
             SectionSP section_sp (section_list->FindSectionByType(sect_type, true));
@@ -1056,7 +1056,7 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
         if (lowest_func_addr != LLDB_INVALID_ADDRESS && lowest_func_addr <= highest_func_addr)
         {
             ModuleSP module_sp (m_obj_file->GetModule());
-            func_range.GetBaseAddress().ResolveAddressUsingFileSections (lowest_func_addr, module_sp->GetUnifiedSectionList());
+            func_range.GetBaseAddress().ResolveAddressUsingFileSections (lowest_func_addr, module_sp->GetSectionList());
             if (func_range.GetBaseAddress().IsValid())
                 func_range.SetByteSize(highest_func_addr - lowest_func_addr);
         }
@@ -4723,7 +4723,7 @@ SymbolFileDWARF::GetObjCClassSymbol (const ConstString &objc_class_name)
     Symbol *objc_class_symbol = NULL;
     if (m_obj_file)
     {
-        Symtab *symtab = m_obj_file->GetSymtab (ObjectFile::eSymtabFromUnifiedSectionList);
+        Symtab *symtab = m_obj_file->GetSymtab ();
         if (symtab)
         {
             objc_class_symbol = symtab->FindFirstSymbolWithNameAndType (objc_class_name, 
@@ -7437,7 +7437,7 @@ SymbolFileDWARF::ParseVariableDIE
                             ObjectFile *debug_map_objfile = debug_map_symfile->GetObjectFile();
                             if (debug_map_objfile)
                             {
-                                Symtab *debug_map_symtab = debug_map_objfile->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+                                Symtab *debug_map_symtab = debug_map_objfile->GetSymtab();
                                 if (debug_map_symtab)
                                 {
                                     Symbol *exe_symbol = debug_map_symtab->FindFirstSymbolWithNameAndType (const_name,

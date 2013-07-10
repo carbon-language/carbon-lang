@@ -1138,6 +1138,39 @@ namespace lldb_private {
             }
         }
         
+        // Calculate the byte size of ranges with zero byte sizes by finding
+        // the next entry with a base address > the current base address
+        void
+        CalculateSizesOfZeroByteSizeRanges ()
+        {
+#ifdef ASSERT_RANGEMAP_ARE_SORTED
+            assert (IsSorted());
+#endif
+            typename Collection::iterator pos;
+            typename Collection::iterator end;
+            typename Collection::iterator next;
+            for (pos = m_entries.begin(), end = m_entries.end(); pos != end; ++pos)
+            {
+                if (pos->GetByteSize() == 0)
+                {
+                    // Watch out for multiple entries with same address and make sure
+                    // we find an entry that is greater than the current base address
+                    // before we use that for the size
+                    auto curr_base = pos->GetRangeBase();
+                    for (next = pos + 1; next != end; ++next)
+                    {
+                        auto next_base = next->GetRangeBase();
+                        if (next_base > curr_base)
+                        {
+                            pos->SetByteSize (next_base - curr_base);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+        }
+        
         void
         Clear ()
         {

@@ -511,7 +511,7 @@ ObjectFilePECOFF::GetSectionName(std::string& sect_name, const section_header_t&
 // GetNListSymtab
 //----------------------------------------------------------------------
 Symtab *
-ObjectFilePECOFF::GetSymtab(uint32_t flags)
+ObjectFilePECOFF::GetSymtab()
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
@@ -597,16 +597,26 @@ ObjectFilePECOFF::GetSymtab(uint32_t flags)
 
 }
 
-SectionList *
-ObjectFilePECOFF::GetSectionList()
+bool
+ObjectFilePECOFF::IsStripped ()
 {
-    ModuleSP module_sp(GetModule());
-    if (module_sp)
+    // TODO: determine this for COFF
+    return false;
+}
+
+
+
+void
+ObjectFilePECOFF::CreateSections (SectionList &unified_section_list)
+{
+    if (!m_sections_ap.get())
     {
-        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        if (m_sections_ap.get() == NULL)
+        m_sections_ap.reset(new SectionList());
+
+        ModuleSP module_sp(GetModule());
+        if (module_sp)
         {
-            m_sections_ap.reset(new SectionList());
+            lldb_private::Mutex::Locker locker(module_sp->GetMutex());
             const uint32_t nsects = m_sect_headers.size();
             ModuleSP module_sp (GetModule());
             for (uint32_t idx = 0; idx<nsects; ++idx)
@@ -710,13 +720,11 @@ ObjectFilePECOFF::GetSectionList()
 
                 //section_sp->SetIsEncrypted (segment_is_encrypted);
 
-                m_sections_ap->AddSection(section_sp);
+                unified_section_list.AddSection(section_sp);
+                m_sections_ap->AddSection (section_sp);
             }
-            
-            m_sections_ap->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
         }
     }
-    return m_sections_ap.get();
 }
 
 bool
@@ -754,8 +762,9 @@ ObjectFilePECOFF::Dump(Stream *s)
         
         *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
         
-        if (m_sections_ap.get())
-            m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
+        SectionList *sections = GetSectionList();
+        if (sections)
+            sections->Dump(s, NULL, true, UINT32_MAX);
         
         if (m_symtab_ap.get())
             m_symtab_ap->Dump(s, NULL, eSortOrderNone);

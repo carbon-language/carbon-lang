@@ -33,7 +33,7 @@ Symbol::Symbol() :
     m_is_external (false),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_calculated_size (false),
+    m_size_is_valid (false),
     m_demangled_is_synthesized (false),
     m_type (eSymbolTypeInvalid),
     m_mangled (),
@@ -67,7 +67,7 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_calculated_size (size_is_valid || size > 0),
+    m_size_is_valid (size_is_valid || size > 0),
     m_demangled_is_synthesized (false),
     m_type (type),
     m_mangled (ConstString(name), name_is_mangled),
@@ -99,7 +99,7 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_calculated_size (size_is_valid || range.GetByteSize() > 0),
+    m_size_is_valid (size_is_valid || range.GetByteSize() > 0),
     m_demangled_is_synthesized (false),
     m_type (type),
     m_mangled (ConstString(name), name_is_mangled),
@@ -118,7 +118,7 @@ Symbol::Symbol(const Symbol& rhs):
     m_is_external (rhs.m_is_external),
     m_size_is_sibling (rhs.m_size_is_sibling),
     m_size_is_synthesized (false),
-    m_calculated_size (rhs.m_calculated_size),
+    m_size_is_valid (rhs.m_size_is_valid),
     m_demangled_is_synthesized (rhs.m_demangled_is_synthesized),
     m_type (rhs.m_type),
     m_mangled (rhs.m_mangled),
@@ -141,7 +141,7 @@ Symbol::operator= (const Symbol& rhs)
         m_is_external = rhs.m_is_external;
         m_size_is_sibling = rhs.m_size_is_sibling;
         m_size_is_synthesized = rhs.m_size_is_sibling;
-        m_calculated_size = rhs.m_calculated_size;
+        m_size_is_valid = rhs.m_size_is_valid;
         m_demangled_is_synthesized = rhs.m_demangled_is_synthesized;
         m_type = rhs.m_type;
         m_mangled = rhs.m_mangled;
@@ -163,7 +163,7 @@ Symbol::Clear()
     m_is_external = false;
     m_size_is_sibling = false;
     m_size_is_synthesized = false;
-    m_calculated_size = false;
+    m_size_is_valid = false;
     m_demangled_is_synthesized = false;
     m_type = eSymbolTypeInvalid;
     m_flags = 0;
@@ -410,7 +410,6 @@ Symbol::GetTypeAsString() const
     return "<unknown SymbolType>";
 }
 
-
 void
 Symbol::CalculateSymbolContext (SymbolContext *sc)
 {
@@ -436,7 +435,6 @@ Symbol::CalculateSymbolContextSymbol ()
     return this;
 }
 
-
 void
 Symbol::DumpSymbolContext (Stream *s)
 {
@@ -456,32 +454,9 @@ Symbol::DumpSymbolContext (Stream *s)
     s->Printf("Symbol{0x%8.8x}", GetID());
 }
 
-
 lldb::addr_t
 Symbol::GetByteSize () const
 {
-    addr_t byte_size = m_addr_range.GetByteSize();
-    if (byte_size == 0 && !m_calculated_size)
-    {
-        const_cast<Symbol*>(this)->m_calculated_size = true;
-        if (ValueIsAddress())
-        {
-            ModuleSP module_sp (GetAddress().GetModule());
-            if (module_sp)
-            {
-                SymbolVendor *sym_vendor = module_sp->GetSymbolVendor();
-                if (sym_vendor)
-                {
-                    Symtab *symtab = sym_vendor->GetSymtab();
-                    if (symtab)
-                    {
-                        const_cast<Symbol*>(this)->SetByteSize (symtab->CalculateSymbolSize (const_cast<Symbol *>(this)));
-                        byte_size = m_addr_range.GetByteSize();
-                    }
-                }
-            }
-        }
-    }
-    return byte_size;
+    return m_addr_range.GetByteSize();
 }
 

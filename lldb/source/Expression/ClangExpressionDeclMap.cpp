@@ -1524,13 +1524,8 @@ ClangExpressionDeclMap::GetVariableValue
         
         if (!var_sc.module_sp)
             return NULL;
-        
-        ObjectFile *object_file = var_sc.module_sp->GetObjectFile();
-        
-        if (!object_file)
-            return NULL;
-        
-        Address so_addr(var_location->GetScalar().ULongLong(), object_file->GetSectionList());
+
+        Address so_addr(var_location->GetScalar().ULongLong(), var_sc.module_sp->GetSectionList());
         
         lldb::addr_t load_addr = so_addr.GetLoadAddress(target);
         

@@ -141,7 +141,7 @@ SymbolVendorELF::CreateInstance (const lldb::ModuleSP &module_sp, lldb_private::
                 if (symbol_vendor)
                 {
                     // Get the module unified section list and add our debug sections to that.
-                    SectionList *module_section_list = module_sp->GetUnifiedSectionList();
+                    SectionList *module_section_list = module_sp->GetSectionList();
                     SectionList *objfile_section_list = dsym_objfile_sp->GetSectionList();
 
                     static const SectionType g_sections[] =
@@ -172,7 +172,6 @@ SymbolVendorELF::CreateInstance (const lldb::ModuleSP &module_sp, lldb_private::
                                 module_section_list->AddSection (section_sp);
                         }
                     }
-                    module_section_list->Finalize();
 
                     symbol_vendor->AddSymbolFileRepresentation (dsym_objfile_sp);
                     return symbol_vendor;

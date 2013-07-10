@@ -24,6 +24,22 @@ SymbolFile::FindPlugin (ObjectFile* obj_file)
     std::unique_ptr<SymbolFile> best_symfile_ap;
     if (obj_file != NULL)
     {
+        
+        // We need to test the abilities of this section list. So create what it would
+        // be with this new obj_file.
+        lldb::ModuleSP module_sp(obj_file->GetModule());
+        if (module_sp)
+        {
+            // Default to the main module section list.
+            ObjectFile *module_obj_file = module_sp->GetObjectFile();
+            if (module_obj_file != obj_file)
+            {
+                // Make sure the main object file's sections are created
+                module_obj_file->GetSectionList();
+                obj_file->CreateSections (*module_sp->GetUnifiedSectionList());
+            }
+        }
+
         // TODO: Load any plug-ins in the appropriate plug-in search paths and
         // iterate over all of them to find the best one for the job.
 

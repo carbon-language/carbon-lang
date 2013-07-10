@@ -75,9 +75,9 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
     {
         for (auto comp_unit_info : cu_infos)
         {
-            Symtab *exe_symtab = exe_symfile->GetObjectFile()->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+            Symtab *exe_symtab = exe_symfile->GetObjectFile()->GetSymtab();
             ModuleSP oso_module_sp (oso_objfile->GetModule());
-            Symtab *oso_symtab = oso_objfile->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+            Symtab *oso_symtab = oso_objfile->GetSymtab();
             
             ///const uint32_t fun_resolve_flags = SymbolContext::Module | eSymbolContextCompUnit | eSymbolContextFunction;
             //SectionList *oso_sections = oso_objfile->Sections();
@@ -169,7 +169,7 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
             
             exe_symfile->FinalizeOSOFileRanges (this);
             // We don't need the symbols anymore for the .o files
-            oso_objfile->ClearSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+            oso_objfile->ClearSymtab();
         }
     }
     return file_range_map;
@@ -325,12 +325,36 @@ SymbolFileDWARFDebugMap::InitOSO()
         return;
     
     m_flags.set(kHaveInitializedOSOs);
+    
+    // If the object file has been stripped, there is no sense in looking further
+    // as all of the debug symbols for the debug map will not be available
+    if (m_obj_file->IsStripped())
+        return;
+    
+    // Also make sure the file type is some sort of executable. Core files, debug
+    // info files (dSYM), object files (.o files), and stub libraries all can
+    switch (m_obj_file->GetType())
+    {
+        case ObjectFile::eTypeInvalid:
+        case ObjectFile::eTypeCoreFile:
+        case ObjectFile::eTypeDebugInfo:
+        case ObjectFile::eTypeObjectFile:
+        case ObjectFile::eTypeStubLibrary:
+        case ObjectFile::eTypeUnknown:
+            return;
+            
+        case ObjectFile::eTypeExecutable:
+        case ObjectFile::eTypeDynamicLinker:
+        case ObjectFile::eTypeSharedLibrary:
+            break;
+    }
+
     // In order to get the abilities of this plug-in, we look at the list of
     // N_OSO entries (object files) from the symbol table and make sure that
     // these files exist and also contain valid DWARF. If we get any of that
     // then we return the abilities of the first N_OSO's DWARF.
 
-    Symtab* symtab = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+    Symtab* symtab = m_obj_file->GetSymtab();
     if (symtab)
     {
         Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_MAP));
@@ -367,13 +391,7 @@ SymbolFileDWARFDebugMap::InitOSO()
             {
                 const Symbol *symbol = symtab->SymbolAtIndex(sym_idx);
                 lldb::addr_t file_addr = symbol->GetAddress().GetFileAddress();
-                // The N_GSYM and N_STSYM symbols have a byte size and calling
-                // symbol->GetByteSize() can cause an infinite loop where
-                // InitOSO() gets called over and over if we are in the process
-                // of getting the symbol vendor (module->SymbolVendor()). So
-                // use a safer call for now until we can fix this. This is related
-                // to the unified section/symtab changes that just went in.
-                lldb::addr_t byte_size = symtab->CalculateSymbolSize(const_cast<Symbol *>(symbol));
+                lldb::addr_t byte_size = symbol->GetByteSize();
                 DebugMap::Entry debug_map_entry(file_addr, byte_size, OSOEntry(sym_idx, LLDB_INVALID_ADDRESS));
                 m_debug_map.Append(debug_map_entry);
             }
@@ -599,27 +617,17 @@ SymbolFileDWARFDebugMap::CalculateAbilities ()
     const uint32_t oso_index_count = GetNumCompileUnits();
     if (oso_index_count > 0)
     {
-        const uint32_t dwarf_abilities = SymbolFile::CompileUnits |
-                                         SymbolFile::Functions |
-                                         SymbolFile::Blocks |
-                                         SymbolFile::GlobalVariables |
-                                         SymbolFile::LocalVariables |
-                                         SymbolFile::VariableTypes |
-                                         SymbolFile::LineTables;
-
         InitOSO();
         if (!m_compile_unit_infos.empty())
-            return dwarf_abilities;
-//        for (uint32_t oso_idx=0; oso_idx<oso_index_count; ++oso_idx)
-//        {
-//            SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (oso_idx);
-//            if (oso_dwarf)
-//            {
-//                uint32_t oso_abilities = oso_dwarf->GetAbilities();
-//                if ((oso_abilities & dwarf_abilities) == dwarf_abilities)
-//                    return oso_abilities;
-//            }
-//        }
+        {
+            return SymbolFile::CompileUnits    |
+                   SymbolFile::Functions       |
+                   SymbolFile::Blocks          |
+                   SymbolFile::GlobalVariables |
+                   SymbolFile::LocalVariables  |
+                   SymbolFile::VariableTypes   |
+                   SymbolFile::LineTables      ;
+        }
     }
     return 0;
 }
@@ -783,7 +791,7 @@ uint32_t
 SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint32_t resolve_scope, SymbolContext& sc)
 {
     uint32_t resolved_flags = 0;
-    Symtab* symtab = m_obj_file->GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+    Symtab* symtab = m_obj_file->GetSymtab();
     if (symtab)
     {
         const addr_t exe_file_addr = exe_so_addr.GetFileAddress();
@@ -1460,12 +1468,10 @@ SymbolFileDWARFDebugMap::AddOSOFileRange (CompileUnitInfo *cu_info,
                                           lldb::addr_t oso_file_addr,
                                           lldb::addr_t oso_byte_size)
 {
-    assert (cu_info);// REMOVE THIS PRIOR TO CHECKIN
     const uint32_t debug_map_idx = m_debug_map.FindEntryIndexThatContains(exe_file_addr);
     if (debug_map_idx != UINT32_MAX)
     {
         DebugMap::Entry *debug_map_entry = m_debug_map.FindEntryThatContains(exe_file_addr);
-        assert (debug_map_entry);// REMOVE THIS PRIOR TO CHECKIN
         debug_map_entry->data.SetOSOFileAddress(oso_file_addr);
         cu_info->file_range_map.Append(FileRangeMap::Entry(oso_file_addr, oso_byte_size, exe_file_addr));
         return true;

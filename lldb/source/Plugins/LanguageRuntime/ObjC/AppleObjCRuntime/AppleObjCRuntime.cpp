@@ -312,7 +312,7 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
             if (!ofile)
                 return eObjC_VersionUnknown;
             
-            SectionList *sections = ofile->GetSectionList();
+            SectionList *sections = module_sp->GetSectionList();
             if (!sections)
                 return eObjC_VersionUnknown;    
             SectionSP v1_telltale_section_sp = sections->FindSectionByName(ConstString ("__OBJC"));

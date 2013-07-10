@@ -210,13 +210,19 @@ public:
     bool
     IsIndirect () const;
 
+    bool
+    GetByteSizeIsValid () const
+    {
+        return m_size_is_valid;
+    }
+
     lldb::addr_t
     GetByteSize () const;
     
     void
     SetByteSize (lldb::addr_t size)
     {
-        m_calculated_size = size > 0;
+        m_size_is_valid = size > 0;
         m_addr_range.SetByteSize(size);
     }
 
@@ -298,7 +304,7 @@ protected:
                     m_is_external:1,        // non-zero if this symbol is globally visible
                     m_size_is_sibling:1,    // m_size contains the index of this symbol's sibling
                     m_size_is_synthesized:1,// non-zero if this symbol's size was calculated using a delta between this symbol and the next
-                    m_calculated_size:1,
+                    m_size_is_valid:1,
                     m_demangled_is_synthesized:1, // The demangled name was created should not be used for expressions or other lookups
                     m_type:8;
     Mangled         m_mangled;              // uniqued symbol name/mangled name pair

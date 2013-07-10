@@ -513,22 +513,6 @@ ObjectFileELF::GetDependentModules(FileSpecList &files)
     return num_specs;
 }
 
-user_id_t
-ObjectFileELF::GetSectionIndexByType(unsigned type)
-{
-    if (!ParseSectionHeaders())
-        return 0;
-
-    for (SectionHeaderCollIter sh_pos = m_section_headers.begin();
-         sh_pos != m_section_headers.end(); ++sh_pos) 
-    {
-        if (sh_pos->sh_type == type)
-            return SectionIndex(sh_pos);
-    }
-
-    return 0;
-}
-
 Address
 ObjectFileELF::GetImageInfoAddress()
 {
@@ -539,28 +523,27 @@ ObjectFileELF::GetImageInfoAddress()
     if (!section_list)
         return Address();
 
-    user_id_t dynsym_id = GetSectionIndexByType(SHT_DYNAMIC);
-    if (!dynsym_id)
+    // Find the SHT_DYNAMIC (.dynamic) section.
+    SectionSP dynsym_section_sp (section_list->FindSectionByType (eSectionTypeELFDynamicLinkInfo, true));
+    if (!dynsym_section_sp)
         return Address();
+    assert (dynsym_section_sp->GetObjectFile() == this);
 
+    user_id_t dynsym_id = dynsym_section_sp->GetID();
     const ELFSectionHeaderInfo *dynsym_hdr = GetSectionHeaderByIndex(dynsym_id);
     if (!dynsym_hdr)
         return Address();
 
-    SectionSP dynsym_section_sp (section_list->FindSectionByID(dynsym_id));
-    if (dynsym_section_sp)
+    for (size_t i = 0; i < m_dynamic_symbols.size(); ++i)
     {
-        for (size_t i = 0; i < m_dynamic_symbols.size(); ++i)
-        {
-            ELFDynamic &symbol = m_dynamic_symbols[i];
+        ELFDynamic &symbol = m_dynamic_symbols[i];
 
-            if (symbol.d_tag == DT_DEBUG)
-            {
-                // Compute the offset as the number of previous entries plus the
-                // size of d_tag.
-                addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
-                return Address(dynsym_section_sp, offset);
-            }
+        if (symbol.d_tag == DT_DEBUG)
+        {
+            // Compute the offset as the number of previous entries plus the
+            // size of d_tag.
+            addr_t offset = i * dynsym_hdr->sh_entsize + GetAddressByteSize();
+            return Address(dynsym_section_sp, offset);
         }
     }
 
@@ -570,26 +553,19 @@ ObjectFileELF::GetImageInfoAddress()
 lldb_private::Address
 ObjectFileELF::GetEntryPointAddress () 
 {
-    SectionList *sections;
-    addr_t offset;
-
     if (m_entry_point_address.IsValid())
         return m_entry_point_address;
 
     if (!ParseHeader() || !IsExecutable())
         return m_entry_point_address;
 
-    sections = GetSectionList();
-    offset = m_header.e_entry;
+    SectionList *section_list = GetSectionList();
+    addr_t offset = m_header.e_entry;
 
-    if (!sections) 
-    {
+    if (!section_list) 
         m_entry_point_address.SetOffset(offset);
-        return m_entry_point_address;
-    }
-
-    m_entry_point_address.ResolveAddressUsingFileSections(offset, sections);
-
+    else
+        m_entry_point_address.ResolveAddressUsingFileSections(offset, section_list);
     return m_entry_point_address;
 }
 
@@ -607,32 +583,22 @@ ObjectFileELF::ParseDependentModules()
     if (!ParseSectionHeaders())
         return 0;
 
-    // Locate the dynamic table.
-    user_id_t dynsym_id = 0;
-    user_id_t dynstr_id = 0;
-    for (SectionHeaderCollIter sh_pos = m_section_headers.begin();
-         sh_pos != m_section_headers.end(); ++sh_pos)
-    {
-        if (sh_pos->sh_type == SHT_DYNAMIC)
-        {
-            dynsym_id = SectionIndex(sh_pos);
-            dynstr_id = sh_pos->sh_link + 1; // Section ID's are 1 based.
-            break;
-        }
-    }
-
-    if (!(dynsym_id && dynstr_id))
-        return 0;
-
     SectionList *section_list = GetSectionList();
     if (!section_list)
         return 0;
 
-    // Resolve and load the dynamic table entries and corresponding string
-    // table.
-    Section *dynsym = section_list->FindSectionByID(dynsym_id).get();
-    Section *dynstr = section_list->FindSectionByID(dynstr_id).get();
-    if (!(dynsym && dynstr))
+    // Find the SHT_DYNAMIC section.
+    Section *dynsym = section_list->FindSectionByType (eSectionTypeELFDynamicLinkInfo, true).get();
+    if (!dynsym)
+        return 0;
+    assert (dynsym->GetObjectFile() == this);
+
+    const ELFSectionHeaderInfo *header = GetSectionHeaderByIndex (dynsym->GetID());
+    if (!header)
+        return 0;
+    // sh_link: section header index of string table used by entries in the section.
+    Section *dynstr = section_list->FindSectionByID (header->sh_link + 1).get();
+    if (!dynstr)
         return 0;
 
     DataExtractor dynsym_data;
@@ -844,30 +810,6 @@ ObjectFileELF::ParseSectionHeaders()
     return GetSectionHeaderInfo(m_section_headers, m_data, m_header, m_uuid, m_gnu_debuglink_file, m_gnu_debuglink_crc);
 }
 
-lldb::user_id_t
-ObjectFileELF::GetSectionIndexByName(const char *name)
-{
-    if (!ParseSectionHeaders())
-        return 0;
-
-    // Search the collection of section headers for one with a matching name.
-    for (SectionHeaderCollIter I = m_section_headers.begin();
-         I != m_section_headers.end(); ++I)
-    {
-        const char *sectionName = I->section_name.AsCString();
-
-        if (!sectionName)
-            return 0;
-
-        if (strcmp(name, sectionName) != 0)
-            continue;
-
-        return SectionIndex(I);
-    }
-
-    return 0;
-}
-
 const ObjectFileELF::ELFSectionHeaderInfo *
 ObjectFileELF::GetSectionHeaderByIndex(lldb::user_id_t id)
 {
@@ -880,14 +822,10 @@ ObjectFileELF::GetSectionHeaderByIndex(lldb::user_id_t id)
     return NULL;
 }
 
-
-SectionList *
-ObjectFileELF::GetSectionList()
+void
+ObjectFileELF::CreateSections(SectionList &unified_section_list)
 {
-    if (m_sections_ap.get())
-        return m_sections_ap.get();
-
-    if (ParseSectionHeaders())
+    if (!m_sections_ap.get() && ParseSectionHeaders())
     {
         m_sections_ap.reset(new SectionList());
 
@@ -982,40 +920,75 @@ ObjectFileELF::GetSectionList()
                     break;
             }
 
-            SectionSP section_sp(new Section(
-                GetModule(),        // Module to which this section belongs.
-                this,               // ObjectFile to which this section belongs and should read section data from.
-                SectionIndex(I),    // Section ID.
-                name,               // Section name.
-                sect_type,          // Section type.
-                header.sh_addr,     // VM address.
-                vm_size,            // VM size in bytes of this section.
-                header.sh_offset,   // Offset of this section in the file.
-                file_size,          // Size of the section as found in the file.
-                header.sh_flags));  // Flags for this section.
+            SectionSP section_sp (new Section(GetModule(),        // Module to which this section belongs.
+                                              this,               // ObjectFile to which this section belongs and should read section data from.
+                                              SectionIndex(I),    // Section ID.
+                                              name,               // Section name.
+                                              sect_type,          // Section type.
+                                              header.sh_addr,     // VM address.
+                                              vm_size,            // VM size in bytes of this section.
+                                              header.sh_offset,   // Offset of this section in the file.
+                                              file_size,          // Size of the section as found in the file.
+                                              header.sh_flags));  // Flags for this section.
 
             if (is_thread_specific)
                 section_sp->SetIsThreadSpecific (is_thread_specific);
             m_sections_ap->AddSection(section_sp);
         }
-
-        m_sections_ap->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
     }
 
-    return m_sections_ap.get();
+    if (m_sections_ap.get())
+    {
+        if (GetType() == eTypeDebugInfo)
+        {
+            static const SectionType g_sections[] =
+            {
+                eSectionTypeDWARFDebugAranges,
+                eSectionTypeDWARFDebugInfo,
+                eSectionTypeDWARFDebugAbbrev,
+                eSectionTypeDWARFDebugFrame,
+                eSectionTypeDWARFDebugLine,
+                eSectionTypeDWARFDebugStr,
+                eSectionTypeDWARFDebugLoc,
+                eSectionTypeDWARFDebugMacInfo,
+                eSectionTypeDWARFDebugPubNames,
+                eSectionTypeDWARFDebugPubTypes,
+                eSectionTypeDWARFDebugRanges,
+                eSectionTypeELFSymbolTable,
+            };
+            SectionList *elf_section_list = m_sections_ap.get();
+            for (size_t idx = 0; idx < sizeof(g_sections) / sizeof(g_sections[0]); ++idx)
+            {
+                SectionType section_type = g_sections[idx];
+                SectionSP section_sp (elf_section_list->FindSectionByType (section_type, true));
+                if (section_sp)
+                {
+                    SectionSP module_section_sp (unified_section_list.FindSectionByType (section_type, true));
+                    if (module_section_sp)
+                        unified_section_list.ReplaceSection (module_section_sp->GetID(), section_sp);
+                    else
+                        unified_section_list.AddSection (section_sp);
+                }
+            }
+        }
+        else
+        {
+            unified_section_list = *m_sections_ap;
+        }
+    }
 }
 
+// private
 unsigned
-ObjectFileELF::ParseSymbols(Symtab *symtab, 
-             user_id_t start_id,
-             SectionList *section_list,
-             const ELFSectionHeaderInfo *symtab_shdr,
-             const DataExtractor &symtab_data,
-             const DataExtractor &strtab_data)
+ObjectFileELF::ParseSymbols (Symtab *symtab,
+                             user_id_t start_id,
+                             SectionList *section_list,
+                             const size_t num_symbols,
+                             const DataExtractor &symtab_data,
+                             const DataExtractor &strtab_data)
 {
     ELFSymbol symbol;
     lldb::offset_t offset = 0;
-    const size_t num_symbols = symtab_data.GetByteSize() / symtab_shdr->sh_entsize;
 
     static ConstString text_section_name(".text");
     static ConstString init_section_name(".init");
@@ -1128,21 +1101,18 @@ ObjectFileELF::ParseSymbols(Symtab *symtab,
             }
         }
 
-        // If the symbol section we've found has no data (SHT_NOBITS), then check the module
-        // for the main object file and use the section there if it has data. This can happen
-        // if we're parsing the debug file and the it has no .text section, for example.
+        // If the symbol section we've found has no data (SHT_NOBITS), then check the module section
+        // list. This can happen if we're parsing the debug file and it has no .text section, for example.
         if (symbol_section_sp && (symbol_section_sp->GetFileSize() == 0))
         {
             ModuleSP module_sp(GetModule());
             if (module_sp)
             {
-                ObjectFile *obj_file = module_sp->GetObjectFile();
-                // Check if we've got a different object file than ourselves.
-                if (obj_file && (obj_file != this))
+                SectionList *module_section_list = module_sp->GetSectionList();
+                if (module_section_list && module_section_list != section_list)
                 {
                     const ConstString &sect_name = symbol_section_sp->GetName();
-                    SectionList *obj_file_section_list = obj_file->GetSectionList();
-                    lldb::SectionSP section_sp (obj_file_section_list->FindSectionByName (sect_name));
+                    lldb::SectionSP section_sp (module_section_list->FindSectionByName (sect_name));
                     if (section_sp && section_sp->GetFileSize())
                     {
                         symbol_section_sp = section_sp;
@@ -1178,32 +1148,46 @@ ObjectFileELF::ParseSymbols(Symtab *symtab,
 }
 
 unsigned
-ObjectFileELF::ParseSymbolTable(Symtab *symbol_table, user_id_t start_id, user_id_t symtab_id)
+ObjectFileELF::ParseSymbolTable(Symtab *symbol_table, user_id_t start_id, lldb_private::Section *symtab)
 {
-    // Parse in the section list if needed.
-    SectionList *section_list = GetSectionList();
+    if (symtab->GetObjectFile() != this)
+    {
+        // If the symbol table section is owned by a different object file, have it do the
+        // parsing.
+        ObjectFileELF *obj_file_elf = static_cast<ObjectFileELF *>(symtab->GetObjectFile());
+        return obj_file_elf->ParseSymbolTable (symbol_table, start_id, symtab);
+    }
+
+    // Get section list for this object file.
+    SectionList *section_list = m_sections_ap.get();
     if (!section_list)
         return 0;
 
-    const ELFSectionHeaderInfo *symtab_hdr = &m_section_headers[symtab_id - 1];
+    user_id_t symtab_id = symtab->GetID();
+    const ELFSectionHeaderInfo *symtab_hdr = GetSectionHeaderByIndex(symtab_id);
     assert(symtab_hdr->sh_type == SHT_SYMTAB || 
            symtab_hdr->sh_type == SHT_DYNSYM);
 
+    // sh_link: section header index of associated string table.
     // Section ID's are ones based.
     user_id_t strtab_id = symtab_hdr->sh_link + 1;
-
-    Section *symtab = section_list->FindSectionByID(symtab_id).get();
     Section *strtab = section_list->FindSectionByID(strtab_id).get();
+
     unsigned num_symbols = 0;
     if (symtab && strtab)
     {
+        assert (symtab->GetObjectFile() == this);
+        assert (strtab->GetObjectFile() == this);
+
         DataExtractor symtab_data;
         DataExtractor strtab_data;
         if (ReadSectionData(symtab, symtab_data) &&
             ReadSectionData(strtab, strtab_data))
         {
+            size_t num_symbols = symtab_data.GetByteSize() / symtab_hdr->sh_entsize;
+
             num_symbols = ParseSymbols(symbol_table, start_id, 
-                                       section_list, symtab_hdr,
+                                       section_list, num_symbols,
                                        symtab_data, strtab_data);
         }
     }
@@ -1217,17 +1201,15 @@ ObjectFileELF::ParseDynamicSymbols()
     if (m_dynamic_symbols.size())
         return m_dynamic_symbols.size();
 
-    user_id_t dyn_id = GetSectionIndexByType(SHT_DYNAMIC);
-    if (!dyn_id)
-        return 0;
-
     SectionList *section_list = GetSectionList();
     if (!section_list)
         return 0;
 
-    Section *dynsym = section_list->FindSectionByID(dyn_id).get();
+    // Find the SHT_DYNAMIC section.
+    Section *dynsym = section_list->FindSectionByType (eSectionTypeELFDynamicLinkInfo, true).get();
     if (!dynsym)
         return 0;
+    assert (dynsym->GetObjectFile() == this);
 
     ELFDynamic symbol;
     DataExtractor dynsym_data;
@@ -1360,7 +1342,7 @@ ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
 {
     assert(rel_hdr->sh_type == SHT_RELA || rel_hdr->sh_type == SHT_REL);
 
-    // The link field points to the associated symbol table.  The info field
+    // The link field points to the associated symbol table. The info field
     // points to the section holding the plt.
     user_id_t symtab_id = rel_hdr->sh_link;
     user_id_t plt_id = rel_hdr->sh_info;
@@ -1380,7 +1362,7 @@ ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
     if (!sym_hdr)
         return 0;
 
-    SectionList *section_list = GetSectionList();
+    SectionList *section_list = m_sections_ap.get();
     if (!section_list)
         return 0;
 
@@ -1396,6 +1378,7 @@ ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
     if (!symtab)
         return 0;
 
+    // sh_link points to associated string table.
     Section *strtab = section_list->FindSectionByID(sym_hdr->sh_link + 1).get();
     if (!strtab)
         return 0;
@@ -1430,82 +1413,68 @@ ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
 }
 
 Symtab *
-ObjectFileELF::GetSymtab(uint32_t flags)
+ObjectFileELF::GetSymtab()
 {
     ModuleSP module_sp(GetModule());
-    if (module_sp)
-    {
-        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
+    if (!module_sp)
+        return NULL;
 
-        bool from_unified_section_list = !!(flags & eSymtabFromUnifiedSectionList);
-        SectionList *section_list = from_unified_section_list ? module_sp->GetUnifiedSectionList() : GetSectionList();
+    // We always want to use the main object file so we (hopefully) only have one cached copy
+    // of our symtab, dynamic sections, etc.
+    ObjectFile *module_obj_file = module_sp->GetObjectFile();
+    if (module_obj_file && module_obj_file != this)
+        return module_obj_file->GetSymtab();
+
+    if (m_symtab_ap.get() == NULL)
+    {
+        SectionList *section_list = GetSectionList();
         if (!section_list)
             return NULL;
 
-        // If we're doing the unified section list and it has been modified, then clear our
-        // cache and reload the symbols. If needed, we could check on only the sections that
-        // we use to create the symbol table...
-        std::unique_ptr<lldb_private::Symtab> &symtab_ap = from_unified_section_list ? m_symtab_unified_ap : m_symtab_ap;
-        if (from_unified_section_list && (m_symtab_unified_revisionid != section_list->GetRevisionID()))
-        {
-            symtab_ap.reset();
-            m_symtab_unified_revisionid = section_list->GetRevisionID();
-        }
-        else if (symtab_ap.get())
-        {
-            return symtab_ap.get();
-        }
+        uint64_t symbol_id = 0;
+        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
 
-        Symtab *symbol_table = new Symtab(this);
-        symtab_ap.reset(symbol_table);
+        m_symtab_ap.reset(new Symtab(this));
 
         // Sharable objects and dynamic executables usually have 2 distinct symbol
         // tables, one named ".symtab", and the other ".dynsym". The dynsym is a smaller
         // version of the symtab that only contains global symbols. The information found
         // in the dynsym is therefore also found in the symtab, while the reverse is not
         // necessarily true.
-        Section *section_sym = section_list->FindSectionByType (eSectionTypeELFSymbolTable, true).get();
-        if (!section_sym)
+        Section *symtab = section_list->FindSectionByType (eSectionTypeELFSymbolTable, true).get();
+        if (!symtab)
         {
             // The symtab section is non-allocable and can be stripped, so if it doesn't exist
             // then use the dynsym section which should always be there.
-            section_sym = section_list->FindSectionByType (eSectionTypeELFDynamicSymbols, true).get();
+            symtab = section_list->FindSectionByType (eSectionTypeELFDynamicSymbols, true).get();
         }
+        if (symtab)
+            symbol_id += ParseSymbolTable (m_symtab_ap.get(), symbol_id, symtab);
 
-        uint64_t symbol_id = 0;
-        if (section_sym)
+        // Synthesize trampoline symbols to help navigate the PLT.
+        const ELFDynamic *symbol = FindDynamicSymbol(DT_JMPREL);
+        if (symbol)
         {
-            user_id_t section_id = section_sym->GetID();
-            ObjectFileELF *obj_file_elf = static_cast<ObjectFileELF *>(section_sym->GetObjectFile());
-
-            symbol_id += obj_file_elf->ParseSymbolTable (symbol_table, symbol_id, section_id);
-        }
-
-        Section *section = section_list->FindSectionByType (eSectionTypeELFDynamicLinkInfo, true).get();
-        if (section)
-        {
-            ObjectFileELF *obj_file_elf = static_cast<ObjectFileELF *>(section->GetObjectFile());
-
-            // Synthesize trampoline symbols to help navigate the PLT.
-            const ELFDynamic *symbol = obj_file_elf->FindDynamicSymbol(DT_JMPREL);
-            if (symbol)
+            addr_t addr = symbol->d_ptr;
+            Section *reloc_section = section_list->FindSectionContainingFileAddress(addr).get();
+            if (reloc_section) 
             {
-                addr_t addr = symbol->d_ptr;
-                Section *reloc_section = section_list->FindSectionContainingFileAddress(addr).get();
-                if (reloc_section) 
-                {
-                    user_id_t reloc_id = reloc_section->GetID();
-                    const ELFSectionHeaderInfo *reloc_header = obj_file_elf->GetSectionHeaderByIndex(reloc_id);
-                    assert(reloc_header);
+                user_id_t reloc_id = reloc_section->GetID();
+                const ELFSectionHeaderInfo *reloc_header = GetSectionHeaderByIndex(reloc_id);
+                assert(reloc_header);
 
-                    obj_file_elf->ParseTrampolineSymbols(symbol_table, symbol_id, reloc_header, reloc_id);
-                }
+                ParseTrampolineSymbols (m_symtab_ap.get(), symbol_id, reloc_header, reloc_id);
             }
         }
-
-        return symbol_table;
     }
-    return NULL;
+    return m_symtab_ap.get();
+}
+
+bool
+ObjectFileELF::IsStripped ()
+{
+    // TODO: determine this for ELF
+    return false;
 }
 
 //===----------------------------------------------------------------------===//

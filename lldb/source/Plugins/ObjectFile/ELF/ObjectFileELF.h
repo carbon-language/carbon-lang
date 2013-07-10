@@ -100,10 +100,13 @@ public:
     GetAddressByteSize() const;
 
     virtual lldb_private::Symtab *
-    GetSymtab(uint32_t flags = 0);
+    GetSymtab();
 
-    virtual lldb_private::SectionList *
-    GetSectionList();
+    virtual bool
+    IsStripped ();
+
+    virtual void
+    CreateSections (lldb_private::SectionList &unified_section_list);
 
     virtual void
     Dump(lldb_private::Stream *s);
@@ -232,14 +235,14 @@ private:
     unsigned
     ParseSymbolTable(lldb_private::Symtab *symbol_table,
                      lldb::user_id_t start_id,
-                     lldb::user_id_t symtab_id);
+                     lldb_private::Section *symtab);
 
     /// Helper routine for ParseSymbolTable().
     unsigned
     ParseSymbols(lldb_private::Symtab *symbol_table, 
                  lldb::user_id_t start_id,
                  lldb_private::SectionList *section_list,
-                 const ELFSectionHeaderInfo *symtab_shdr,
+                 const size_t num_symbols,
                  const lldb_private::DataExtractor &symtab_data,
                  const lldb_private::DataExtractor &strtab_data);
 
@@ -251,17 +254,6 @@ private:
                            lldb::user_id_t start_id,
                            const ELFSectionHeaderInfo *rela_hdr,
                            lldb::user_id_t section_id);
-
-    /// Utility method for looking up a section given its name.  Returns the
-    /// index of the corresponding section or zero if no section with the given
-    /// name can be found (note that section indices are always 1 based, and so
-    /// section index 0 is never valid).
-    lldb::user_id_t
-    GetSectionIndexByName(const char *name);
-
-    // Returns the ID of the first section that has the given type.
-    lldb::user_id_t
-    GetSectionIndexByType(unsigned type);
 
     /// Returns the section header with the given id or NULL.
     const ELFSectionHeaderInfo *

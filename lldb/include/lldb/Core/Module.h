@@ -651,8 +651,8 @@ public:
     ///     Unified module section list.
     //------------------------------------------------------------------
     virtual SectionList *
-    GetUnifiedSectionList ();
- 
+    GetSectionList ();
+
     uint32_t
     GetVersion (uint32_t *versions, uint32_t num_versions);
 
@@ -1000,7 +1000,7 @@ protected:
     std::unique_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
     ClangASTContext             m_ast;          ///< The AST context for this module.
     PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
-    std::unique_ptr<lldb_private::SectionList> m_unified_sections_ap; ///< Unified section list for module.
+    std::unique_ptr<lldb_private::SectionList> m_sections_ap; ///< Unified section list for module that is used by the ObjectFile and and ObjectFile instances for the debug info
 
     bool                        m_did_load_objfile:1,
                                 m_did_load_symbol_vendor:1,
@@ -1059,9 +1059,12 @@ protected:
     bool
     SetArchitecture (const ArchSpec &new_arch);
     
-    
+    SectionList *
+    GetUnifiedSectionList();
+
     friend class ModuleList;
     friend class ObjectFile;
+    friend class SymbolFile;
 
 private:
 

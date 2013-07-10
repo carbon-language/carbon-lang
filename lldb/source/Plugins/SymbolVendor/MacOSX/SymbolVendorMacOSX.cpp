@@ -83,51 +83,6 @@ UUIDsMatch(Module *module, ObjectFile *ofile, lldb_private::Stream *feedback_str
     return false;
 }
 
-static bool
-ReplaceDSYMSectionsWithExecutableSections (ObjectFile *exec_objfile, ObjectFile *dsym_objfile)
-{
-    // We need both the executable and the dSYM to live off of the
-    // same section lists. So we take all of the sections from the
-    // executable, and replace them in the dSYM. This allows section
-    // offset addresses that come from the dSYM to automatically
-    // get updated as images (shared libraries) get loaded and
-    // unloaded.
-    SectionList *exec_section_list = exec_objfile->GetSectionList();
-    SectionList *dsym_section_list = dsym_objfile->GetSectionList();
-    if (exec_section_list && dsym_section_list)
-    {
-        const uint32_t num_exec_sections = dsym_section_list->GetSize();
-        uint32_t exec_sect_idx;
-        for (exec_sect_idx = 0; exec_sect_idx < num_exec_sections; ++exec_sect_idx)
-        {
-            SectionSP exec_sect_sp(exec_section_list->GetSectionAtIndex(exec_sect_idx));
-            if (exec_sect_sp.get())
-            {
-                // Try and replace any sections that exist in both the executable
-                // and in the dSYM with those from the executable. If we fail to
-                // replace the one in the dSYM, then add the executable section to
-                // the dSYM.
-                SectionSP dsym_sect_sp(dsym_section_list->FindSectionByID(exec_sect_sp->GetID()));
-                if (dsym_sect_sp.get() && dsym_sect_sp->GetName() != exec_sect_sp->GetName())
-                {
-                    // The sections in a dSYM are normally a superset of the sections in an executable.
-                    // If we find a section # in the exectuable & dSYM that don't have the same name,
-                    // something has changed since the dSYM was written.  The mach_kernel DSTROOT binary
-                    // has a CTF segment added, for instance, and it's easiest to simply not add that to
-                    // the dSYM - none of the nlist entries are going to have references to that section.
-                    continue;
-                }
-                if (dsym_section_list->ReplaceSection(exec_sect_sp->GetID(), exec_sect_sp, 0) == false)
-                    dsym_section_list->AddSection(exec_sect_sp);
-            }
-        }
-        
-        dsym_section_list->Finalize(); // Now that we're done adding sections, finalize to build fast-lookup caches
-        return true;
-    }
-    return false;
-}
-
 void
 SymbolVendorMacOSX::Initialize()
 {
@@ -318,16 +273,6 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                 }
                             }
                         }
-                    }
-                }
-
-                if (ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get()))
-                {
-                    SectionList *section_list = dsym_objfile_sp.get()->GetSectionList();
-                    if (section_list)
-                    {
-                        section_list->Copy (module_sp->GetUnifiedSectionList());
-                        section_list->Finalize ();
                     }
                 }
 

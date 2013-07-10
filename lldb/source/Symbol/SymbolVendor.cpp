@@ -447,7 +447,7 @@ SymbolVendor::GetSymtab ()
         if (objfile)
         {
             // Get symbol table from unified section list.
-            return objfile->GetSymtab (ObjectFile::eSymtabFromUnifiedSectionList);
+            return objfile->GetSymtab ();
         }
     }
     return NULL;
@@ -463,7 +463,7 @@ SymbolVendor::ClearSymtab()
         if (objfile)
         {
             // Clear symbol table from unified section list.
-            objfile->ClearSymtab (ObjectFile::eSymtabFromUnifiedSectionList);
+            objfile->ClearSymtab ();
         }
     }
 }

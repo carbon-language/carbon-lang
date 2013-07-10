@@ -80,11 +80,6 @@ public:
         eStrataRawImage
     } Strata;
 
-    typedef enum
-    {
-        eSymtabFromUnifiedSectionList = 0x0001 /// Return symbol table from unified module section list
-    } SymtabFlags;
-
     //------------------------------------------------------------------
     /// Construct with a parent module, offset, and header data.
     ///
@@ -353,7 +348,10 @@ public:
     ///     The list of sections contained in this object file.
     //------------------------------------------------------------------
     virtual SectionList *
-    GetSectionList () = 0;
+    GetSectionList ();
+
+    virtual void
+    CreateSections (SectionList &unified_section_list) = 0;
 
     //------------------------------------------------------------------
     /// Gets the symbol table for the currently selected architecture
@@ -362,15 +360,21 @@ public:
     /// Symbol table parsing can be deferred by ObjectFile instances
     /// until this accessor is called the first time.
     ///
-    /// @param[in] flags
-    ///     eSymtabFromUnifiedSectionList: Whether to get symbol table
-    ///     for unified module section list, or object file.
-    ///
     /// @return
     ///     The symbol table for this object file.
     //------------------------------------------------------------------
     virtual Symtab *
-    GetSymtab (uint32_t flags = 0) = 0;
+    GetSymtab () = 0;
+
+    //------------------------------------------------------------------
+    /// Detect if this object file has been stripped of local symbols.
+    ///
+    /// @return
+    ///     Return \b true if the object file has been stripped of local
+    ///     symbols.
+    //------------------------------------------------------------------
+    virtual bool
+    IsStripped () = 0;
 
     //------------------------------------------------------------------
     /// Frees the symbol table.
@@ -385,7 +389,7 @@ public:
     ///     The symbol table for this object file.
     //------------------------------------------------------------------
     virtual void
-    ClearSymtab (uint32_t flags = 0);
+    ClearSymtab ();
     
     //------------------------------------------------------------------
     /// Gets the UUID for this object file.
@@ -676,8 +680,6 @@ protected:
     const lldb::addr_t m_memory_addr;
     std::unique_ptr<lldb_private::SectionList> m_sections_ap;
     std::unique_ptr<lldb_private::Symtab> m_symtab_ap;
-    std::unique_ptr<lldb_private::Symtab> m_symtab_unified_ap; ///< Unified section list symbol table.
-    uint32_t m_symtab_unified_revisionid; ///< Unified section list symbol table revision id for when m_symtab_unified_ap was last modified.
     
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture

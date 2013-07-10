@@ -1453,7 +1453,7 @@ DumpModuleSections (CommandInterpreter &interpreter, Stream &strm, Module *modul
 {
     if (module)
     {
-        SectionList *section_list = module->GetUnifiedSectionList();
+        SectionList *section_list = module->GetSectionList();
         if (section_list)
         {
             strm.Printf ("Sections for '%s' (%s):\n",
@@ -2804,7 +2804,7 @@ protected:
                         ObjectFile *objfile = module->GetObjectFile();
                         if (objfile)
                         {
-                            SectionList *section_list = objfile->GetSectionList();
+                            SectionList *section_list = module->GetSectionList();
                             if (section_list)
                             {
                                 bool changed = false;

@@ -895,7 +895,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
 }
 
 Symtab *
-ObjectFileMachO::GetSymtab(uint32_t flags)
+ObjectFileMachO::GetSymtab()
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
@@ -905,409 +905,462 @@ ObjectFileMachO::GetSymtab(uint32_t flags)
         {
             m_symtab_ap.reset(new Symtab(this));
             Mutex::Locker symtab_locker (m_symtab_ap->GetMutex());
-            ParseSymtab (true);
+            ParseSymtab ();
             m_symtab_ap->Finalize ();
         }
     }
     return m_symtab_ap.get();
 }
 
-
-SectionList *
-ObjectFileMachO::GetSectionList()
+bool
+ObjectFileMachO::IsStripped ()
 {
-    ModuleSP module_sp(GetModule());
-    if (module_sp)
+    if (m_dysymtab.cmd == 0)
     {
-        lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        if (m_sections_ap.get() == NULL)
+        ModuleSP module_sp(GetModule());
+        if (module_sp)
         {
-            m_sections_ap.reset(new SectionList());
-            ParseSections();
-        }
-    }
-    return m_sections_ap.get();
-}
-
-
-size_t
-ObjectFileMachO::ParseSections ()
-{
-    lldb::user_id_t segID = 0;
-    lldb::user_id_t sectID = 0;
-    lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
-    uint32_t i;
-    const bool is_core = GetType() == eTypeCoreFile;
-    //bool dump_sections = false;
-    ModuleSP module_sp (GetModule());
-    // First look up any LC_ENCRYPTION_INFO load commands
-    typedef RangeArray<uint32_t, uint32_t, 8> EncryptedFileRanges;
-    EncryptedFileRanges encrypted_file_ranges;
-    encryption_info_command encryption_cmd;
-    for (i=0; i<m_header.ncmds; ++i)
-    {
-        const lldb::offset_t load_cmd_offset = offset;
-        if (m_data.GetU32(&offset, &encryption_cmd, 2) == NULL)
-            break;
-
-        if (encryption_cmd.cmd == LoadCommandEncryptionInfo)
-        {
-            if (m_data.GetU32(&offset, &encryption_cmd.cryptoff, 3))
+            lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
+            for (uint32_t i=0; i<m_header.ncmds; ++i)
             {
-                if (encryption_cmd.cryptid != 0)
+                const lldb::offset_t load_cmd_offset = offset;
+                
+                load_command lc;
+                if (m_data.GetU32(&offset, &lc.cmd, 2) == NULL)
+                    break;
+                if (lc.cmd == LoadCommandDynamicSymtabInfo)
                 {
-                    EncryptedFileRanges::Entry entry;
-                    entry.SetRangeBase(encryption_cmd.cryptoff);
-                    entry.SetByteSize(encryption_cmd.cryptsize);
-                    encrypted_file_ranges.Append(entry);
+                    m_dysymtab.cmd = lc.cmd;
+                    m_dysymtab.cmdsize = lc.cmdsize;
+                    if (m_data.GetU32 (&offset, &m_dysymtab.ilocalsym, (sizeof(m_dysymtab) / sizeof(uint32_t)) - 2) == NULL)
+                    {
+                        // Clear m_dysymtab if we were unable to read all items from the load command
+                        ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
+                    }
                 }
+                offset = load_cmd_offset + lc.cmdsize;
             }
         }
-        offset = load_cmd_offset + encryption_cmd.cmdsize;
     }
+    if (m_dysymtab.cmd)
+        return m_dysymtab.nlocalsym == 0;
+    return false;
+}
 
-    offset = MachHeaderSizeFromMagic(m_header.magic);
-
-    struct segment_command_64 load_cmd;
-    for (i=0; i<m_header.ncmds; ++i)
+void
+ObjectFileMachO::CreateSections (SectionList &unified_section_list)
+{
+    if (!m_sections_ap.get())
     {
-        const lldb::offset_t load_cmd_offset = offset;
-        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
-            break;
-
-        if (load_cmd.cmd == LoadCommandSegment32 || load_cmd.cmd == LoadCommandSegment64)
+        m_sections_ap.reset(new SectionList());
+        
+        const bool is_dsym = (m_header.filetype == HeaderFileTypeDSYM);
+        lldb::user_id_t segID = 0;
+        lldb::user_id_t sectID = 0;
+        lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        uint32_t i;
+        const bool is_core = GetType() == eTypeCoreFile;
+        //bool dump_sections = false;
+        ModuleSP module_sp (GetModule());
+        // First look up any LC_ENCRYPTION_INFO load commands
+        typedef RangeArray<uint32_t, uint32_t, 8> EncryptedFileRanges;
+        EncryptedFileRanges encrypted_file_ranges;
+        encryption_info_command encryption_cmd;
+        for (i=0; i<m_header.ncmds; ++i)
         {
-            if (m_data.GetU8(&offset, (uint8_t*)load_cmd.segname, 16))
+            const lldb::offset_t load_cmd_offset = offset;
+            if (m_data.GetU32(&offset, &encryption_cmd, 2) == NULL)
+                break;
+
+            if (encryption_cmd.cmd == LoadCommandEncryptionInfo)
             {
-                load_cmd.vmaddr = m_data.GetAddress(&offset);
-                load_cmd.vmsize = m_data.GetAddress(&offset);
-                load_cmd.fileoff = m_data.GetAddress(&offset);
-                load_cmd.filesize = m_data.GetAddress(&offset);
-                if (m_length != 0 && load_cmd.filesize != 0)
+                if (m_data.GetU32(&offset, &encryption_cmd.cryptoff, 3))
                 {
-                    if (load_cmd.fileoff > m_length)
+                    if (encryption_cmd.cryptid != 0)
                     {
-                        // We have a load command that says it extends past the end of hte file.  This is likely
-                        // a corrupt file.  We don't have any way to return an error condition here (this method
-                        // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
-                        // is null out the SectionList vector and if a process has been set up, dump a message
-                        // to stdout.  The most common case here is core file debugging with a truncated file.
-                        const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
-                        GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
-                                                 i,
-                                                 lc_segment_name,
-                                                 load_cmd.fileoff,
-                                                 m_length);
-                        
-                        load_cmd.fileoff = 0;
-                        load_cmd.filesize = 0;
-                    }
-                    
-                    if (load_cmd.fileoff + load_cmd.filesize > m_length)
-                    {
-                        // We have a load command that says it extends past the end of hte file.  This is likely
-                        // a corrupt file.  We don't have any way to return an error condition here (this method
-                        // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
-                        // is null out the SectionList vector and if a process has been set up, dump a message
-                        // to stdout.  The most common case here is core file debugging with a truncated file.
-                        const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
-                        GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), the segment will be truncated",
-                                                 i,
-                                                 lc_segment_name,
-                                                 load_cmd.fileoff + load_cmd.filesize,
-                                                 m_length);
-                        
-                        // Tuncase the length
-                        load_cmd.filesize = m_length - load_cmd.fileoff;
+                        EncryptedFileRanges::Entry entry;
+                        entry.SetRangeBase(encryption_cmd.cryptoff);
+                        entry.SetByteSize(encryption_cmd.cryptsize);
+                        encrypted_file_ranges.Append(entry);
                     }
                 }
-                if (m_data.GetU32(&offset, &load_cmd.maxprot, 4))
+            }
+            offset = load_cmd_offset + encryption_cmd.cmdsize;
+        }
+
+        offset = MachHeaderSizeFromMagic(m_header.magic);
+
+        struct segment_command_64 load_cmd;
+        for (i=0; i<m_header.ncmds; ++i)
+        {
+            const lldb::offset_t load_cmd_offset = offset;
+            if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+                break;
+
+            if (load_cmd.cmd == LoadCommandSegment32 || load_cmd.cmd == LoadCommandSegment64)
+            {
+                if (m_data.GetU8(&offset, (uint8_t*)load_cmd.segname, 16))
                 {
+                    bool add_section = true;
+                    bool add_to_unified = true;
+                    ConstString const_segname (load_cmd.segname, std::min<size_t>(strlen(load_cmd.segname), sizeof(load_cmd.segname)));
 
-                    const bool segment_is_encrypted = (load_cmd.flags & SegmentCommandFlagBitProtectedVersion1) != 0;
-
-                    // Keep a list of mach segments around in case we need to
-                    // get at data that isn't stored in the abstracted Sections.
-                    m_mach_segments.push_back (load_cmd);
-
-                    ConstString segment_name (load_cmd.segname, std::min<size_t>(strlen(load_cmd.segname), sizeof(load_cmd.segname)));
-                    // Use a segment ID of the segment index shifted left by 8 so they
-                    // never conflict with any of the sections.
-                    SectionSP segment_sp;
-                    if (segment_name || is_core)
+                    SectionSP unified_section_sp(unified_section_list.FindSectionByName(const_segname));
+                    if (is_dsym && unified_section_sp)
                     {
-                        segment_sp.reset(new Section (module_sp,              // Module to which this section belongs
-                                                      this,                   // Object file to which this sections belongs
-                                                      ++segID << 8,           // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
-                                                      segment_name,           // Name of this section
-                                                      eSectionTypeContainer,  // This section is a container of other sections.
-                                                      load_cmd.vmaddr,        // File VM address == addresses as they are found in the object file
-                                                      load_cmd.vmsize,        // VM size in bytes of this section
-                                                      load_cmd.fileoff,       // Offset to the data for this section in the file
-                                                      load_cmd.filesize,      // Size in bytes of this section as found in the the file
-                                                      load_cmd.flags));       // Flags for this section
-
-                        segment_sp->SetIsEncrypted (segment_is_encrypted);
-                        m_sections_ap->AddSection(segment_sp);
+                        if (const_segname == GetSegmentNameLINKEDIT())
+                        {
+                            // We need to keep the __LINKEDIT segment private to this object file only
+                            add_to_unified = false;
+                        }
+                        else
+                        {
+                            // This is the dSYM file and this section has already been created by
+                            // the object file, no need to create it.
+                            add_section = false;
+                        }
                     }
-
-                    struct section_64 sect64;
-                    ::memset (&sect64, 0, sizeof(sect64));
-                    // Push a section into our mach sections for the section at
-                    // index zero (NListSectionNoSection) if we don't have any
-                    // mach sections yet...
-                    if (m_mach_sections.empty())
-                        m_mach_sections.push_back(sect64);
-                    uint32_t segment_sect_idx;
-                    const lldb::user_id_t first_segment_sectID = sectID + 1;
-
-
-                    const uint32_t num_u32s = load_cmd.cmd == LoadCommandSegment32 ? 7 : 8;
-                    for (segment_sect_idx=0; segment_sect_idx<load_cmd.nsects; ++segment_sect_idx)
+                    load_cmd.vmaddr = m_data.GetAddress(&offset);
+                    load_cmd.vmsize = m_data.GetAddress(&offset);
+                    load_cmd.fileoff = m_data.GetAddress(&offset);
+                    load_cmd.filesize = m_data.GetAddress(&offset);
+                    if (m_length != 0 && load_cmd.filesize != 0)
                     {
-                        if (m_data.GetU8(&offset, (uint8_t*)sect64.sectname, sizeof(sect64.sectname)) == NULL)
-                            break;
-                        if (m_data.GetU8(&offset, (uint8_t*)sect64.segname, sizeof(sect64.segname)) == NULL)
-                            break;
-                        sect64.addr = m_data.GetAddress(&offset);
-                        sect64.size = m_data.GetAddress(&offset);
+                        if (load_cmd.fileoff > m_length)
+                        {
+                            // We have a load command that says it extends past the end of hte file.  This is likely
+                            // a corrupt file.  We don't have any way to return an error condition here (this method
+                            // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
+                            // is null out the SectionList vector and if a process has been set up, dump a message
+                            // to stdout.  The most common case here is core file debugging with a truncated file.
+                            const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
+                            GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
+                                                     i,
+                                                     lc_segment_name,
+                                                     load_cmd.fileoff,
+                                                     m_length);
+                            
+                            load_cmd.fileoff = 0;
+                            load_cmd.filesize = 0;
+                        }
+                        
+                        if (load_cmd.fileoff + load_cmd.filesize > m_length)
+                        {
+                            // We have a load command that says it extends past the end of hte file.  This is likely
+                            // a corrupt file.  We don't have any way to return an error condition here (this method
+                            // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
+                            // is null out the SectionList vector and if a process has been set up, dump a message
+                            // to stdout.  The most common case here is core file debugging with a truncated file.
+                            const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
+                            GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), the segment will be truncated",
+                                                     i,
+                                                     lc_segment_name,
+                                                     load_cmd.fileoff + load_cmd.filesize,
+                                                     m_length);
+                            
+                            // Tuncase the length
+                            load_cmd.filesize = m_length - load_cmd.fileoff;
+                        }
+                    }
+                    if (m_data.GetU32(&offset, &load_cmd.maxprot, 4))
+                    {
 
-                        if (m_data.GetU32(&offset, &sect64.offset, num_u32s) == NULL)
-                            break;
+                        const bool segment_is_encrypted = (load_cmd.flags & SegmentCommandFlagBitProtectedVersion1) != 0;
 
-                        // Keep a list of mach sections around in case we need to
+                        // Keep a list of mach segments around in case we need to
                         // get at data that isn't stored in the abstracted Sections.
-                        m_mach_sections.push_back (sect64);
+                        m_mach_segments.push_back (load_cmd);
 
-                        ConstString section_name (sect64.sectname, std::min<size_t>(strlen(sect64.sectname), sizeof(sect64.sectname)));
-                        if (!segment_name)
+                        // Use a segment ID of the segment index shifted left by 8 so they
+                        // never conflict with any of the sections.
+                        SectionSP segment_sp;
+                        if (add_section && (const_segname || is_core))
                         {
-                            // We have a segment with no name so we need to conjure up
-                            // segments that correspond to the section's segname if there
-                            // isn't already such a section. If there is such a section,
-                            // we resize the section so that it spans all sections.
-                            // We also mark these sections as fake so address matches don't
-                            // hit if they land in the gaps between the child sections.
-                            segment_name.SetTrimmedCStringWithLength(sect64.segname, sizeof(sect64.segname));
-                            segment_sp = m_sections_ap->FindSectionByName (segment_name);
-                            if (segment_sp.get())
-                            {
-                                Section *segment = segment_sp.get();
-                                // Grow the section size as needed.
-                                const lldb::addr_t sect64_min_addr = sect64.addr;
-                                const lldb::addr_t sect64_max_addr = sect64_min_addr + sect64.size;
-                                const lldb::addr_t curr_seg_byte_size = segment->GetByteSize();
-                                const lldb::addr_t curr_seg_min_addr = segment->GetFileAddress();
-                                const lldb::addr_t curr_seg_max_addr = curr_seg_min_addr + curr_seg_byte_size;
-                                if (sect64_min_addr >= curr_seg_min_addr)
-                                {
-                                    const lldb::addr_t new_seg_byte_size = sect64_max_addr - curr_seg_min_addr;
-                                    // Only grow the section size if needed
-                                    if (new_seg_byte_size > curr_seg_byte_size)
-                                        segment->SetByteSize (new_seg_byte_size);
-                                }
-                                else
-                                {
-                                    // We need to change the base address of the segment and
-                                    // adjust the child section offsets for all existing children.
-                                    const lldb::addr_t slide_amount = sect64_min_addr - curr_seg_min_addr;
-                                    segment->Slide(slide_amount, false);
-                                    segment->GetChildren().Slide(-slide_amount, false);
-                                    segment->SetByteSize (curr_seg_max_addr - sect64_min_addr);
-                                }
+                            segment_sp.reset(new Section (module_sp,              // Module to which this section belongs
+                                                          this,                   // Object file to which this sections belongs
+                                                          ++segID << 8,           // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
+                                                          const_segname,          // Name of this section
+                                                          eSectionTypeContainer,  // This section is a container of other sections.
+                                                          load_cmd.vmaddr,        // File VM address == addresses as they are found in the object file
+                                                          load_cmd.vmsize,        // VM size in bytes of this section
+                                                          load_cmd.fileoff,       // Offset to the data for this section in the file
+                                                          load_cmd.filesize,      // Size in bytes of this section as found in the the file
+                                                          load_cmd.flags));       // Flags for this section
 
-                                // Grow the section size as needed.
-                                if (sect64.offset)
-                                {
-                                    const lldb::addr_t segment_min_file_offset = segment->GetFileOffset();
-                                    const lldb::addr_t segment_max_file_offset = segment_min_file_offset + segment->GetFileSize();
-
-                                    const lldb::addr_t section_min_file_offset = sect64.offset;
-                                    const lldb::addr_t section_max_file_offset = section_min_file_offset + sect64.size;
-                                    const lldb::addr_t new_file_offset = std::min (section_min_file_offset, segment_min_file_offset);
-                                    const lldb::addr_t new_file_size = std::max (section_max_file_offset, segment_max_file_offset) - new_file_offset;
-                                    segment->SetFileOffset (new_file_offset);
-                                    segment->SetFileSize (new_file_size);
-                                }
-                            }
-                            else
-                            {
-                                // Create a fake section for the section's named segment
-                                segment_sp.reset(new Section (segment_sp,            // Parent section
-                                                              module_sp,             // Module to which this section belongs
-                                                              this,                  // Object file to which this section belongs
-                                                              ++segID << 8,          // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
-                                                              segment_name,          // Name of this section
-                                                              eSectionTypeContainer, // This section is a container of other sections.
-                                                              sect64.addr,           // File VM address == addresses as they are found in the object file
-                                                              sect64.size,           // VM size in bytes of this section
-                                                              sect64.offset,         // Offset to the data for this section in the file
-                                                              sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the the file
-                                                              load_cmd.flags));      // Flags for this section
-                                segment_sp->SetIsFake(true);
-                                m_sections_ap->AddSection(segment_sp);
-                                segment_sp->SetIsEncrypted (segment_is_encrypted);
-                            }
+                            segment_sp->SetIsEncrypted (segment_is_encrypted);
+                            m_sections_ap->AddSection(segment_sp);
+                            if (add_to_unified)
+                                unified_section_list.AddSection(segment_sp);
                         }
-                        assert (segment_sp.get());
-
-                        uint32_t mach_sect_type = sect64.flags & SectionFlagMaskSectionType;
-                        static ConstString g_sect_name_objc_data ("__objc_data");
-                        static ConstString g_sect_name_objc_msgrefs ("__objc_msgrefs");
-                        static ConstString g_sect_name_objc_selrefs ("__objc_selrefs");
-                        static ConstString g_sect_name_objc_classrefs ("__objc_classrefs");
-                        static ConstString g_sect_name_objc_superrefs ("__objc_superrefs");
-                        static ConstString g_sect_name_objc_const ("__objc_const");
-                        static ConstString g_sect_name_objc_classlist ("__objc_classlist");
-                        static ConstString g_sect_name_cfstring ("__cfstring");
-
-                        static ConstString g_sect_name_dwarf_debug_abbrev ("__debug_abbrev");
-                        static ConstString g_sect_name_dwarf_debug_aranges ("__debug_aranges");
-                        static ConstString g_sect_name_dwarf_debug_frame ("__debug_frame");
-                        static ConstString g_sect_name_dwarf_debug_info ("__debug_info");
-                        static ConstString g_sect_name_dwarf_debug_line ("__debug_line");
-                        static ConstString g_sect_name_dwarf_debug_loc ("__debug_loc");
-                        static ConstString g_sect_name_dwarf_debug_macinfo ("__debug_macinfo");
-                        static ConstString g_sect_name_dwarf_debug_pubnames ("__debug_pubnames");
-                        static ConstString g_sect_name_dwarf_debug_pubtypes ("__debug_pubtypes");
-                        static ConstString g_sect_name_dwarf_debug_ranges ("__debug_ranges");
-                        static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
-                        static ConstString g_sect_name_dwarf_apple_names ("__apple_names");
-                        static ConstString g_sect_name_dwarf_apple_types ("__apple_types");
-                        static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
-                        static ConstString g_sect_name_dwarf_apple_objc ("__apple_objc");
-                        static ConstString g_sect_name_eh_frame ("__eh_frame");
-                        static ConstString g_sect_name_DATA ("__DATA");
-                        static ConstString g_sect_name_TEXT ("__TEXT");
-
-                        SectionType sect_type = eSectionTypeOther;
-
-                        if (section_name == g_sect_name_dwarf_debug_abbrev)
-                            sect_type = eSectionTypeDWARFDebugAbbrev;
-                        else if (section_name == g_sect_name_dwarf_debug_aranges)
-                            sect_type = eSectionTypeDWARFDebugAranges;
-                        else if (section_name == g_sect_name_dwarf_debug_frame)
-                            sect_type = eSectionTypeDWARFDebugFrame;
-                        else if (section_name == g_sect_name_dwarf_debug_info)
-                            sect_type = eSectionTypeDWARFDebugInfo;
-                        else if (section_name == g_sect_name_dwarf_debug_line)
-                            sect_type = eSectionTypeDWARFDebugLine;
-                        else if (section_name == g_sect_name_dwarf_debug_loc)
-                            sect_type = eSectionTypeDWARFDebugLoc;
-                        else if (section_name == g_sect_name_dwarf_debug_macinfo)
-                            sect_type = eSectionTypeDWARFDebugMacInfo;
-                        else if (section_name == g_sect_name_dwarf_debug_pubnames)
-                            sect_type = eSectionTypeDWARFDebugPubNames;
-                        else if (section_name == g_sect_name_dwarf_debug_pubtypes)
-                            sect_type = eSectionTypeDWARFDebugPubTypes;
-                        else if (section_name == g_sect_name_dwarf_debug_ranges)
-                            sect_type = eSectionTypeDWARFDebugRanges;
-                        else if (section_name == g_sect_name_dwarf_debug_str)
-                            sect_type = eSectionTypeDWARFDebugStr;
-                        else if (section_name == g_sect_name_dwarf_apple_names)
-                            sect_type = eSectionTypeDWARFAppleNames;
-                        else if (section_name == g_sect_name_dwarf_apple_types)
-                            sect_type = eSectionTypeDWARFAppleTypes;
-                        else if (section_name == g_sect_name_dwarf_apple_namespaces)
-                            sect_type = eSectionTypeDWARFAppleNamespaces;
-                        else if (section_name == g_sect_name_dwarf_apple_objc)
-                            sect_type = eSectionTypeDWARFAppleObjC;
-                        else if (section_name == g_sect_name_objc_selrefs)
-                            sect_type = eSectionTypeDataCStringPointers;
-                        else if (section_name == g_sect_name_objc_msgrefs)
-                            sect_type = eSectionTypeDataObjCMessageRefs;
-                        else if (section_name == g_sect_name_eh_frame)
-                            sect_type = eSectionTypeEHFrame;
-                        else if (section_name == g_sect_name_cfstring)
-                            sect_type = eSectionTypeDataObjCCFStrings;
-                        else if (section_name == g_sect_name_objc_data ||
-                                 section_name == g_sect_name_objc_classrefs ||
-                                 section_name == g_sect_name_objc_superrefs ||
-                                 section_name == g_sect_name_objc_const ||
-                                 section_name == g_sect_name_objc_classlist)
+                        else if (unified_section_sp)
                         {
-                            sect_type = eSectionTypeDataPointers;
+                            m_sections_ap->AddSection(unified_section_sp);
                         }
 
-                        if (sect_type == eSectionTypeOther)
+                        struct section_64 sect64;
+                        ::memset (&sect64, 0, sizeof(sect64));
+                        // Push a section into our mach sections for the section at
+                        // index zero (NListSectionNoSection) if we don't have any
+                        // mach sections yet...
+                        if (m_mach_sections.empty())
+                            m_mach_sections.push_back(sect64);
+                        uint32_t segment_sect_idx;
+                        const lldb::user_id_t first_segment_sectID = sectID + 1;
+
+
+                        const uint32_t num_u32s = load_cmd.cmd == LoadCommandSegment32 ? 7 : 8;
+                        for (segment_sect_idx=0; segment_sect_idx<load_cmd.nsects; ++segment_sect_idx)
                         {
-                            switch (mach_sect_type)
-                            {
-                            // TODO: categorize sections by other flags for regular sections
-                            case SectionTypeRegular:
-                                if (segment_sp->GetName() == g_sect_name_TEXT)
-                                    sect_type = eSectionTypeCode;
-                                else if (segment_sp->GetName() == g_sect_name_DATA)
-                                    sect_type = eSectionTypeData;
-                                else
-                                    sect_type = eSectionTypeOther;
+                            if (m_data.GetU8(&offset, (uint8_t*)sect64.sectname, sizeof(sect64.sectname)) == NULL)
                                 break;
-                            case SectionTypeZeroFill:                   sect_type = eSectionTypeZeroFill; break;
-                            case SectionTypeCStringLiterals:            sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
-                            case SectionType4ByteLiterals:              sect_type = eSectionTypeData4;    break; // section with only 4 byte literals
-                            case SectionType8ByteLiterals:              sect_type = eSectionTypeData8;    break; // section with only 8 byte literals
-                            case SectionTypeLiteralPointers:            sect_type = eSectionTypeDataPointers;  break; // section with only pointers to literals
-                            case SectionTypeNonLazySymbolPointers:      sect_type = eSectionTypeDataPointers;  break; // section with only non-lazy symbol pointers
-                            case SectionTypeLazySymbolPointers:         sect_type = eSectionTypeDataPointers;  break; // section with only lazy symbol pointers
-                            case SectionTypeSymbolStubs:                sect_type = eSectionTypeCode;  break; // section with only symbol stubs, byte size of stub in the reserved2 field
-                            case SectionTypeModuleInitFunctionPointers: sect_type = eSectionTypeDataPointers;    break; // section with only function pointers for initialization
-                            case SectionTypeModuleTermFunctionPointers: sect_type = eSectionTypeDataPointers; break; // section with only function pointers for termination
-                            case SectionTypeCoalesced:                  sect_type = eSectionTypeOther; break;
-                            case SectionTypeZeroFillLarge:              sect_type = eSectionTypeZeroFill; break;
-                            case SectionTypeInterposing:                sect_type = eSectionTypeCode;  break; // section with only pairs of function pointers for interposing
-                            case SectionType16ByteLiterals:             sect_type = eSectionTypeData16; break; // section with only 16 byte literals
-                            case SectionTypeDTraceObjectFormat:         sect_type = eSectionTypeDebug; break;
-                            case SectionTypeLazyDylibSymbolPointers:    sect_type = eSectionTypeDataPointers;  break;
-                            default: break;
+                            if (m_data.GetU8(&offset, (uint8_t*)sect64.segname, sizeof(sect64.segname)) == NULL)
+                                break;
+                            sect64.addr = m_data.GetAddress(&offset);
+                            sect64.size = m_data.GetAddress(&offset);
+
+                            if (m_data.GetU32(&offset, &sect64.offset, num_u32s) == NULL)
+                                break;
+
+                            // Keep a list of mach sections around in case we need to
+                            // get at data that isn't stored in the abstracted Sections.
+                            m_mach_sections.push_back (sect64);
+
+                            if (add_section)
+                            {
+                                ConstString section_name (sect64.sectname, std::min<size_t>(strlen(sect64.sectname), sizeof(sect64.sectname)));
+                                if (!const_segname)
+                                {
+                                    // We have a segment with no name so we need to conjure up
+                                    // segments that correspond to the section's segname if there
+                                    // isn't already such a section. If there is such a section,
+                                    // we resize the section so that it spans all sections.
+                                    // We also mark these sections as fake so address matches don't
+                                    // hit if they land in the gaps between the child sections.
+                                    const_segname.SetTrimmedCStringWithLength(sect64.segname, sizeof(sect64.segname));
+                                    segment_sp = unified_section_list.FindSectionByName (const_segname);
+                                    if (segment_sp.get())
+                                    {
+                                        Section *segment = segment_sp.get();
+                                        // Grow the section size as needed.
+                                        const lldb::addr_t sect64_min_addr = sect64.addr;
+                                        const lldb::addr_t sect64_max_addr = sect64_min_addr + sect64.size;
+                                        const lldb::addr_t curr_seg_byte_size = segment->GetByteSize();
+                                        const lldb::addr_t curr_seg_min_addr = segment->GetFileAddress();
+                                        const lldb::addr_t curr_seg_max_addr = curr_seg_min_addr + curr_seg_byte_size;
+                                        if (sect64_min_addr >= curr_seg_min_addr)
+                                        {
+                                            const lldb::addr_t new_seg_byte_size = sect64_max_addr - curr_seg_min_addr;
+                                            // Only grow the section size if needed
+                                            if (new_seg_byte_size > curr_seg_byte_size)
+                                                segment->SetByteSize (new_seg_byte_size);
+                                        }
+                                        else
+                                        {
+                                            // We need to change the base address of the segment and
+                                            // adjust the child section offsets for all existing children.
+                                            const lldb::addr_t slide_amount = sect64_min_addr - curr_seg_min_addr;
+                                            segment->Slide(slide_amount, false);
+                                            segment->GetChildren().Slide(-slide_amount, false);
+                                            segment->SetByteSize (curr_seg_max_addr - sect64_min_addr);
+                                        }
+
+                                        // Grow the section size as needed.
+                                        if (sect64.offset)
+                                        {
+                                            const lldb::addr_t segment_min_file_offset = segment->GetFileOffset();
+                                            const lldb::addr_t segment_max_file_offset = segment_min_file_offset + segment->GetFileSize();
+
+                                            const lldb::addr_t section_min_file_offset = sect64.offset;
+                                            const lldb::addr_t section_max_file_offset = section_min_file_offset + sect64.size;
+                                            const lldb::addr_t new_file_offset = std::min (section_min_file_offset, segment_min_file_offset);
+                                            const lldb::addr_t new_file_size = std::max (section_max_file_offset, segment_max_file_offset) - new_file_offset;
+                                            segment->SetFileOffset (new_file_offset);
+                                            segment->SetFileSize (new_file_size);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Create a fake section for the section's named segment
+                                        segment_sp.reset(new Section (segment_sp,            // Parent section
+                                                                      module_sp,             // Module to which this section belongs
+                                                                      this,                  // Object file to which this section belongs
+                                                                      ++segID << 8,          // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
+                                                                      const_segname,         // Name of this section
+                                                                      eSectionTypeContainer, // This section is a container of other sections.
+                                                                      sect64.addr,           // File VM address == addresses as they are found in the object file
+                                                                      sect64.size,           // VM size in bytes of this section
+                                                                      sect64.offset,         // Offset to the data for this section in the file
+                                                                      sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the the file
+                                                                      load_cmd.flags));      // Flags for this section
+                                        segment_sp->SetIsFake(true);
+                                        
+                                        m_sections_ap->AddSection(segment_sp);
+                                        if (add_to_unified)
+                                            unified_section_list.AddSection(segment_sp);
+                                        segment_sp->SetIsEncrypted (segment_is_encrypted);
+                                    }
+                                }
+                                assert (segment_sp.get());
+
+                                uint32_t mach_sect_type = sect64.flags & SectionFlagMaskSectionType;
+                                static ConstString g_sect_name_objc_data ("__objc_data");
+                                static ConstString g_sect_name_objc_msgrefs ("__objc_msgrefs");
+                                static ConstString g_sect_name_objc_selrefs ("__objc_selrefs");
+                                static ConstString g_sect_name_objc_classrefs ("__objc_classrefs");
+                                static ConstString g_sect_name_objc_superrefs ("__objc_superrefs");
+                                static ConstString g_sect_name_objc_const ("__objc_const");
+                                static ConstString g_sect_name_objc_classlist ("__objc_classlist");
+                                static ConstString g_sect_name_cfstring ("__cfstring");
+
+                                static ConstString g_sect_name_dwarf_debug_abbrev ("__debug_abbrev");
+                                static ConstString g_sect_name_dwarf_debug_aranges ("__debug_aranges");
+                                static ConstString g_sect_name_dwarf_debug_frame ("__debug_frame");
+                                static ConstString g_sect_name_dwarf_debug_info ("__debug_info");
+                                static ConstString g_sect_name_dwarf_debug_line ("__debug_line");
+                                static ConstString g_sect_name_dwarf_debug_loc ("__debug_loc");
+                                static ConstString g_sect_name_dwarf_debug_macinfo ("__debug_macinfo");
+                                static ConstString g_sect_name_dwarf_debug_pubnames ("__debug_pubnames");
+                                static ConstString g_sect_name_dwarf_debug_pubtypes ("__debug_pubtypes");
+                                static ConstString g_sect_name_dwarf_debug_ranges ("__debug_ranges");
+                                static ConstString g_sect_name_dwarf_debug_str ("__debug_str");
+                                static ConstString g_sect_name_dwarf_apple_names ("__apple_names");
+                                static ConstString g_sect_name_dwarf_apple_types ("__apple_types");
+                                static ConstString g_sect_name_dwarf_apple_namespaces ("__apple_namespac");
+                                static ConstString g_sect_name_dwarf_apple_objc ("__apple_objc");
+                                static ConstString g_sect_name_eh_frame ("__eh_frame");
+                                static ConstString g_sect_name_DATA ("__DATA");
+                                static ConstString g_sect_name_TEXT ("__TEXT");
+
+                                SectionType sect_type = eSectionTypeOther;
+
+                                if (section_name == g_sect_name_dwarf_debug_abbrev)
+                                    sect_type = eSectionTypeDWARFDebugAbbrev;
+                                else if (section_name == g_sect_name_dwarf_debug_aranges)
+                                    sect_type = eSectionTypeDWARFDebugAranges;
+                                else if (section_name == g_sect_name_dwarf_debug_frame)
+                                    sect_type = eSectionTypeDWARFDebugFrame;
+                                else if (section_name == g_sect_name_dwarf_debug_info)
+                                    sect_type = eSectionTypeDWARFDebugInfo;
+                                else if (section_name == g_sect_name_dwarf_debug_line)
+                                    sect_type = eSectionTypeDWARFDebugLine;
+                                else if (section_name == g_sect_name_dwarf_debug_loc)
+                                    sect_type = eSectionTypeDWARFDebugLoc;
+                                else if (section_name == g_sect_name_dwarf_debug_macinfo)
+                                    sect_type = eSectionTypeDWARFDebugMacInfo;
+                                else if (section_name == g_sect_name_dwarf_debug_pubnames)
+                                    sect_type = eSectionTypeDWARFDebugPubNames;
+                                else if (section_name == g_sect_name_dwarf_debug_pubtypes)
+                                    sect_type = eSectionTypeDWARFDebugPubTypes;
+                                else if (section_name == g_sect_name_dwarf_debug_ranges)
+                                    sect_type = eSectionTypeDWARFDebugRanges;
+                                else if (section_name == g_sect_name_dwarf_debug_str)
+                                    sect_type = eSectionTypeDWARFDebugStr;
+                                else if (section_name == g_sect_name_dwarf_apple_names)
+                                    sect_type = eSectionTypeDWARFAppleNames;
+                                else if (section_name == g_sect_name_dwarf_apple_types)
+                                    sect_type = eSectionTypeDWARFAppleTypes;
+                                else if (section_name == g_sect_name_dwarf_apple_namespaces)
+                                    sect_type = eSectionTypeDWARFAppleNamespaces;
+                                else if (section_name == g_sect_name_dwarf_apple_objc)
+                                    sect_type = eSectionTypeDWARFAppleObjC;
+                                else if (section_name == g_sect_name_objc_selrefs)
+                                    sect_type = eSectionTypeDataCStringPointers;
+                                else if (section_name == g_sect_name_objc_msgrefs)
+                                    sect_type = eSectionTypeDataObjCMessageRefs;
+                                else if (section_name == g_sect_name_eh_frame)
+                                    sect_type = eSectionTypeEHFrame;
+                                else if (section_name == g_sect_name_cfstring)
+                                    sect_type = eSectionTypeDataObjCCFStrings;
+                                else if (section_name == g_sect_name_objc_data ||
+                                         section_name == g_sect_name_objc_classrefs ||
+                                         section_name == g_sect_name_objc_superrefs ||
+                                         section_name == g_sect_name_objc_const ||
+                                         section_name == g_sect_name_objc_classlist)
+                                {
+                                    sect_type = eSectionTypeDataPointers;
+                                }
+
+                                if (sect_type == eSectionTypeOther)
+                                {
+                                    switch (mach_sect_type)
+                                    {
+                                    // TODO: categorize sections by other flags for regular sections
+                                    case SectionTypeRegular:
+                                        if (segment_sp->GetName() == g_sect_name_TEXT)
+                                            sect_type = eSectionTypeCode;
+                                        else if (segment_sp->GetName() == g_sect_name_DATA)
+                                            sect_type = eSectionTypeData;
+                                        else
+                                            sect_type = eSectionTypeOther;
+                                        break;
+                                    case SectionTypeZeroFill:                   sect_type = eSectionTypeZeroFill; break;
+                                    case SectionTypeCStringLiterals:            sect_type = eSectionTypeDataCString;    break; // section with only literal C strings
+                                    case SectionType4ByteLiterals:              sect_type = eSectionTypeData4;    break; // section with only 4 byte literals
+                                    case SectionType8ByteLiterals:              sect_type = eSectionTypeData8;    break; // section with only 8 byte literals
+                                    case SectionTypeLiteralPointers:            sect_type = eSectionTypeDataPointers;  break; // section with only pointers to literals
+                                    case SectionTypeNonLazySymbolPointers:      sect_type = eSectionTypeDataPointers;  break; // section with only non-lazy symbol pointers
+                                    case SectionTypeLazySymbolPointers:         sect_type = eSectionTypeDataPointers;  break; // section with only lazy symbol pointers
+                                    case SectionTypeSymbolStubs:                sect_type = eSectionTypeCode;  break; // section with only symbol stubs, byte size of stub in the reserved2 field
+                                    case SectionTypeModuleInitFunctionPointers: sect_type = eSectionTypeDataPointers;    break; // section with only function pointers for initialization
+                                    case SectionTypeModuleTermFunctionPointers: sect_type = eSectionTypeDataPointers; break; // section with only function pointers for termination
+                                    case SectionTypeCoalesced:                  sect_type = eSectionTypeOther; break;
+                                    case SectionTypeZeroFillLarge:              sect_type = eSectionTypeZeroFill; break;
+                                    case SectionTypeInterposing:                sect_type = eSectionTypeCode;  break; // section with only pairs of function pointers for interposing
+                                    case SectionType16ByteLiterals:             sect_type = eSectionTypeData16; break; // section with only 16 byte literals
+                                    case SectionTypeDTraceObjectFormat:         sect_type = eSectionTypeDebug; break;
+                                    case SectionTypeLazyDylibSymbolPointers:    sect_type = eSectionTypeDataPointers;  break;
+                                    default: break;
+                                    }
+                                }
+
+                                SectionSP section_sp(new Section (segment_sp,
+                                                                  module_sp,
+                                                                  this,
+                                                                  ++sectID,
+                                                                  section_name,
+                                                                  sect_type,
+                                                                  sect64.addr - segment_sp->GetFileAddress(),
+                                                                  sect64.size,
+                                                                  sect64.offset,
+                                                                  sect64.offset == 0 ? 0 : sect64.size,
+                                                                  sect64.flags));
+                                // Set the section to be encrypted to match the segment
+
+                                bool section_is_encrypted = false;
+                                if (!segment_is_encrypted && load_cmd.filesize != 0)
+                                    section_is_encrypted = encrypted_file_ranges.FindEntryThatContains(sect64.offset) != NULL;
+
+                                section_sp->SetIsEncrypted (segment_is_encrypted || section_is_encrypted);
+                                segment_sp->GetChildren().AddSection(section_sp);
+
+                                if (segment_sp->IsFake())
+                                {
+                                    segment_sp.reset();
+                                    const_segname.Clear();
+                                }
                             }
                         }
-
-                        SectionSP section_sp(new Section (segment_sp,
-                                                          module_sp,
-                                                          this,
-                                                          ++sectID,
-                                                          section_name,
-                                                          sect_type,
-                                                          sect64.addr - segment_sp->GetFileAddress(),
-                                                          sect64.size,
-                                                          sect64.offset,
-                                                          sect64.offset == 0 ? 0 : sect64.size,
-                                                          sect64.flags));
-                        // Set the section to be encrypted to match the segment
-
-                        bool section_is_encrypted = false;
-                        if (!segment_is_encrypted && load_cmd.filesize != 0)
-                            section_is_encrypted = encrypted_file_ranges.FindEntryThatContains(sect64.offset) != NULL;
-
-                        section_sp->SetIsEncrypted (segment_is_encrypted || section_is_encrypted);
-                        segment_sp->GetChildren().AddSection(section_sp);
-
-                        if (segment_sp->IsFake())
+                        if (segment_sp && is_dsym)
                         {
-                            segment_sp.reset();
-                            segment_name.Clear();
-                        }
-                    }
-                    if (segment_sp && m_header.filetype == HeaderFileTypeDSYM)
-                    {
-                        if (first_segment_sectID <= sectID)
-                        {
-                            lldb::user_id_t sect_uid;
-                            for (sect_uid = first_segment_sectID; sect_uid <= sectID; ++sect_uid)
+                            if (first_segment_sectID <= sectID)
                             {
-                                SectionSP curr_section_sp(segment_sp->GetChildren().FindSectionByID (sect_uid));
-                                SectionSP next_section_sp;
-                                if (sect_uid + 1 <= sectID)
-                                    next_section_sp = segment_sp->GetChildren().FindSectionByID (sect_uid+1);
-
-                                if (curr_section_sp.get())
+                                lldb::user_id_t sect_uid;
+                                for (sect_uid = first_segment_sectID; sect_uid <= sectID; ++sect_uid)
                                 {
-                                    if (curr_section_sp->GetByteSize() == 0)
+                                    SectionSP curr_section_sp(segment_sp->GetChildren().FindSectionByID (sect_uid));
+                                    SectionSP next_section_sp;
+                                    if (sect_uid + 1 <= sectID)
+                                        next_section_sp = segment_sp->GetChildren().FindSectionByID (sect_uid+1);
+
+                                    if (curr_section_sp.get())
                                     {
-                                        if (next_section_sp.get() != NULL)
-                                            curr_section_sp->SetByteSize ( next_section_sp->GetFileAddress() - curr_section_sp->GetFileAddress() );
-                                        else
-                                            curr_section_sp->SetByteSize ( load_cmd.vmsize );
+                                        if (curr_section_sp->GetByteSize() == 0)
+                                        {
+                                            if (next_section_sp.get() != NULL)
+                                                curr_section_sp->SetByteSize ( next_section_sp->GetFileAddress() - curr_section_sp->GetFileAddress() );
+                                            else
+                                                curr_section_sp->SetByteSize ( load_cmd.vmsize );
+                                        }
                                     }
                                 }
                             }
@@ -1315,22 +1368,20 @@ ObjectFileMachO::ParseSections ()
                     }
                 }
             }
-        }
-        else if (load_cmd.cmd == LoadCommandDynamicSymtabInfo)
-        {
-            m_dysymtab.cmd = load_cmd.cmd;
-            m_dysymtab.cmdsize = load_cmd.cmdsize;
-            m_data.GetU32 (&offset, &m_dysymtab.ilocalsym, (sizeof(m_dysymtab) / sizeof(uint32_t)) - 2);
-        }
+            else if (load_cmd.cmd == LoadCommandDynamicSymtabInfo)
+            {
+                m_dysymtab.cmd = load_cmd.cmd;
+                m_dysymtab.cmdsize = load_cmd.cmdsize;
+                m_data.GetU32 (&offset, &m_dysymtab.ilocalsym, (sizeof(m_dysymtab) / sizeof(uint32_t)) - 2);
+            }
 
-        offset = load_cmd_offset + load_cmd.cmdsize;
+            offset = load_cmd_offset + load_cmd.cmdsize;
+        }
+        
+//        StreamFile s(stdout, false);                    // REMOVE THIS LINE
+//        s.Printf ("Sections for %s:\n", m_file.GetPath().c_str());// REMOVE THIS LINE
+//        m_sections_ap->Dump(&s, NULL, true, UINT32_MAX);// REMOVE THIS LINE
     }
-//    if (dump_sections)
-//    {
-//        StreamFile s(stdout);
-//        m_sections_ap->Dump(&s, true);
-//    }
-    return sectID;  // Return the number of sections we registered with the module
 }
 
 class MachSymtabSectionInfo
@@ -1403,7 +1454,7 @@ protected:
 };
 
 size_t
-ObjectFileMachO::ParseSymtab (bool minimize)
+ObjectFileMachO::ParseSymtab ()
 {
     Timer scoped_timer(__PRETTY_FUNCTION__,
                        "ObjectFileMachO::ParseSymtab () module = %s",
@@ -2044,8 +2095,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                                 // We don't really need the end function STAB as it contains the size which
                                                                 // we already placed with the original symbol, so don't add it if we want a
                                                                 // minimal symbol table
-                                                                if (minimize)
-                                                                    add_nlist = false;
+                                                                add_nlist = false;
                                                             }
                                                         }
                                                         break;
@@ -2067,17 +2117,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         // N_BNSYM
                                                         // We use the current number of symbols in the symbol table in lieu of
                                                         // using nlist_idx in case we ever start trimming entries out
-                                                        if (minimize)
-                                                        {
-                                                            // Skip these if we want minimal symbol tables
-                                                            add_nlist = false;
-                                                        }
-                                                        else
-                                                        {
-                                                            symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
-                                                            N_NSYM_indexes.push_back(sym_idx);
-                                                            type = eSymbolTypeScopeBegin;
-                                                        }
+                                                        // Skip these if we want minimal symbol tables
+                                                        add_nlist = false;
                                                         break;
 
                                                     case StabEndSymbol:
@@ -2085,22 +2126,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         // Set the size of the N_BNSYM to the terminating index of this N_ENSYM
                                                         // so that we can always skip the entire symbol if we need to navigate
                                                         // more quickly at the source level when parsing STABS
-                                                        if (minimize)
-                                                        {
-                                                            // Skip these if we want minimal symbol tables
-                                                            add_nlist = false;
-                                                        }
-                                                        else
-                                                        {
-                                                            if ( !N_NSYM_indexes.empty() )
-                                                            {
-                                                                symbol_ptr = symtab->SymbolAtIndex(N_NSYM_indexes.back());
-                                                                symbol_ptr->SetByteSize(sym_idx + 1);
-                                                                symbol_ptr->SetSizeIsSibling(true);
-                                                                N_NSYM_indexes.pop_back();
-                                                            }
-                                                            type = eSymbolTypeScopeEnd;
-                                                        }
+                                                        // Skip these if we want minimal symbol tables
+                                                        add_nlist = false;
                                                         break;
 
 
@@ -2130,15 +2157,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         type = eSymbolTypeSourceFile;
                                                         if (symbol_name == NULL)
                                                         {
-                                                            if (minimize)
-                                                                add_nlist = false;
+                                                            add_nlist = false;
                                                             if (N_SO_index != UINT32_MAX)
                                                             {
                                                                 // Set the size of the N_SO to the terminating index of this N_SO
                                                                 // so that we can always skip the entire N_SO if we need to navigate
                                                                 // more quickly at the source level when parsing STABS
                                                                 symbol_ptr = symtab->SymbolAtIndex(N_SO_index);
-                                                                symbol_ptr->SetByteSize(sym_idx + (minimize ? 0 : 1));
+                                                                symbol_ptr->SetByteSize(sym_idx);
                                                                 symbol_ptr->SetSizeIsSibling(true);
                                                             }
                                                             N_NSYM_indexes.clear();
@@ -2155,7 +2181,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                             const bool N_SO_has_full_path = symbol_name[0] == '/';
                                                             if (N_SO_has_full_path)
                                                             {
-                                                                if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
+                                                                if ((N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
                                                                 {
                                                                     // We have two consecutive N_SO entries where the first contains a directory
                                                                     // and the second contains a full path.
@@ -2170,7 +2196,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                                     N_SO_index = sym_idx;
                                                                 }
                                                             }
-                                                            else if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
+                                                            else if ((N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
                                                             {
                                                                 // This is usually the second N_SO entry that contains just the filename,
                                                                 // so here we combine it with the first one if we are minimizing the symbol table
@@ -2253,8 +2279,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         type = eSymbolTypeHeaderFile;
 
                                                         // We currently don't use the header files on darwin
-                                                        if (minimize)
-                                                            add_nlist = false;
+                                                        add_nlist = false;
                                                         break;
 
                                                     case StabCompilerParameters:
@@ -2503,8 +2528,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                             if (add_nlist)
                                             {
                                                 uint64_t symbol_value = nlist.n_value;
-                                                bool symbol_name_is_mangled = false;
-
                                                 if (symbol_name_non_abi_mangled)
                                                 {
                                                     sym[sym_idx].GetMangled().SetMangledName (ConstString(symbol_name_non_abi_mangled));
@@ -2512,6 +2535,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                 }
                                                 else
                                                 {
+                                                    bool symbol_name_is_mangled = false;
+                                                    
                                                     if (symbol_name && symbol_name[0] == '_')
                                                     {
                                                         symbol_name_is_mangled = symbol_name[1] == '_';
@@ -2521,9 +2546,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                     if (symbol_name)
                                                     {
                                                         ConstString const_symbol_name(symbol_name);
-                                                        if (is_gsym)
-                                                            N_GSYM_name_to_sym_idx[const_symbol_name.GetCString()] = sym_idx;
                                                         sym[sym_idx].GetMangled().SetValue(const_symbol_name, symbol_name_is_mangled);
+                                                        if (is_gsym && is_debug)
+                                                            N_GSYM_name_to_sym_idx[sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled).GetCString()] = sym_idx;
                                                     }
                                                 }
                                                 if (symbol_section)
@@ -2590,8 +2615,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
                                                         if (pos != N_FUN_addr_to_sym_idx.end())
                                                         {
-                                                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                                            if (sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled) == sym[pos->second].GetMangled().GetName(Mangled::ePreferMangled))
                                                             {
                                                                 m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                                                 // We just need the flags from the linker symbol, so put these flags
@@ -2611,8 +2635,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
                                                         if (pos != N_STSYM_addr_to_sym_idx.end())
                                                         {
-                                                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                                                            if (sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled) == sym[pos->second].GetMangled().GetName(Mangled::ePreferMangled))
                                                             {
                                                                 m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                                                 // We just need the flags from the linker symbol, so put these flags
@@ -2625,7 +2648,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                         else
                                                         {
                                                             // Combine N_GSYM stab entries with the non stab symbol
-                                                            ConstNameToSymbolIndexMap::const_iterator pos = N_GSYM_name_to_sym_idx.find(sym[sym_idx].GetMangled().GetMangledName().GetCString());
+                                                            ConstNameToSymbolIndexMap::const_iterator pos = N_GSYM_name_to_sym_idx.find(sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled).GetCString());
                                                             if (pos != N_GSYM_name_to_sym_idx.end())
                                                             {
                                                                 const uint32_t GSYM_sym_idx = pos->second;
@@ -2811,8 +2834,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                             // We don't really need the end function STAB as it contains the size which
                             // we already placed with the original symbol, so don't add it if we want a
                             // minimal symbol table
-                            if (minimize)
-                                add_nlist = false;
+                            add_nlist = false;
                         }
                     }
                     break;
@@ -2834,17 +2856,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     // N_BNSYM
                     // We use the current number of symbols in the symbol table in lieu of
                     // using nlist_idx in case we ever start trimming entries out
-                    if (minimize)
-                    {
-                        // Skip these if we want minimal symbol tables
-                        add_nlist = false;
-                    }
-                    else
-                    {
-                        symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
-                        N_NSYM_indexes.push_back(sym_idx);
-                        type = eSymbolTypeScopeBegin;
-                    }
+                    // Skip these if we want minimal symbol tables
+                    add_nlist = false;
                     break;
 
                 case StabEndSymbol:
@@ -2852,22 +2865,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     // Set the size of the N_BNSYM to the terminating index of this N_ENSYM
                     // so that we can always skip the entire symbol if we need to navigate
                     // more quickly at the source level when parsing STABS
-                    if (minimize)
-                    {
-                        // Skip these if we want minimal symbol tables
-                        add_nlist = false;
-                    }
-                    else
-                    {
-                        if ( !N_NSYM_indexes.empty() )
-                        {
-                            symbol_ptr = symtab->SymbolAtIndex(N_NSYM_indexes.back());
-                            symbol_ptr->SetByteSize(sym_idx + 1);
-                            symbol_ptr->SetSizeIsSibling(true);
-                            N_NSYM_indexes.pop_back();
-                        }
-                        type = eSymbolTypeScopeEnd;
-                    }
+                    // Skip these if we want minimal symbol tables
+                    add_nlist = false;
                     break;
 
 
@@ -2897,15 +2896,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     type = eSymbolTypeSourceFile;
                     if (symbol_name == NULL)
                     {
-                        if (minimize)
-                            add_nlist = false;
+                        add_nlist = false;
                         if (N_SO_index != UINT32_MAX)
                         {
                             // Set the size of the N_SO to the terminating index of this N_SO
                             // so that we can always skip the entire N_SO if we need to navigate
                             // more quickly at the source level when parsing STABS
                             symbol_ptr = symtab->SymbolAtIndex(N_SO_index);
-                            symbol_ptr->SetByteSize(sym_idx + (minimize ? 0 : 1));
+                            symbol_ptr->SetByteSize(sym_idx);
                             symbol_ptr->SetSizeIsSibling(true);
                         }
                         N_NSYM_indexes.clear();
@@ -2922,7 +2920,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         const bool N_SO_has_full_path = symbol_name[0] == '/';
                         if (N_SO_has_full_path)
                         {
-                            if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
+                            if ((N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
                             {
                                 // We have two consecutive N_SO entries where the first contains a directory
                                 // and the second contains a full path.
@@ -2937,7 +2935,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 N_SO_index = sym_idx;
                             }
                         }
-                        else if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
+                        else if ((N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
                         {
                             // This is usually the second N_SO entry that contains just the filename,
                             // so here we combine it with the first one if we are minimizing the symbol table
@@ -3021,8 +3019,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     type = eSymbolTypeHeaderFile;
 
                     // We currently don't use the header files on darwin
-                    if (minimize)
-                        add_nlist = false;
+                    add_nlist = false;
                     break;
 
                 case StabCompilerParameters:
@@ -3275,7 +3272,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             if (add_nlist)
             {
                 uint64_t symbol_value = nlist.n_value;
-                bool symbol_name_is_mangled = false;
 
                 if (symbol_name_non_abi_mangled)
                 {
@@ -3284,6 +3280,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 }
                 else
                 {
+                    bool symbol_name_is_mangled = false;
+
                     if (symbol_name && symbol_name[0] == '_')
                     {
                         symbol_name_is_mangled = symbol_name[1] == '_';
@@ -3293,9 +3291,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     if (symbol_name)
                     {
                         ConstString const_symbol_name(symbol_name);
-                        if (is_gsym)
-                            N_GSYM_name_to_sym_idx[const_symbol_name.GetCString()] = sym_idx;
                         sym[sym_idx].GetMangled().SetValue(const_symbol_name, symbol_name_is_mangled);
+                        if (is_gsym && is_debug)
+                        {
+                            N_GSYM_name_to_sym_idx[sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled).GetCString()] = sym_idx;
+                        }
                     }
                 }
                 if (symbol_section)
@@ -3357,8 +3357,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         ValueToSymbolIndexMap::const_iterator pos = N_FUN_addr_to_sym_idx.find (nlist.n_value);
                         if (pos != N_FUN_addr_to_sym_idx.end())
                         {
-                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                            if (sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled) == sym[pos->second].GetMangled().GetName(Mangled::ePreferMangled))
                             {
                                 m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                 // We just need the flags from the linker symbol, so put these flags
@@ -3378,8 +3377,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         ValueToSymbolIndexMap::const_iterator pos = N_STSYM_addr_to_sym_idx.find (nlist.n_value);
                         if (pos != N_STSYM_addr_to_sym_idx.end())
                         {
-                            if ((symbol_name_is_mangled == true && sym[sym_idx].GetMangled().GetMangledName() == sym[pos->second].GetMangled().GetMangledName()) ||
-                                (symbol_name_is_mangled == false && sym[sym_idx].GetMangled().GetDemangledName() == sym[pos->second].GetMangled().GetDemangledName()))
+                            if (sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled) == sym[pos->second].GetMangled().GetName(Mangled::ePreferMangled))
                             {
                                 m_nlist_idx_to_sym_idx[nlist_idx] = pos->second;
                                 // We just need the flags from the linker symbol, so put these flags
@@ -3392,7 +3390,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         else
                         {
                             // Combine N_GSYM stab entries with the non stab symbol
-                            ConstNameToSymbolIndexMap::const_iterator pos = N_GSYM_name_to_sym_idx.find(sym[sym_idx].GetMangled().GetMangledName().GetCString());
+                            ConstNameToSymbolIndexMap::const_iterator pos = N_GSYM_name_to_sym_idx.find(sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled).GetCString());
                             if (pos != N_GSYM_name_to_sym_idx.end())
                             {
                                 const uint32_t GSYM_sym_idx = pos->second;
@@ -3639,6 +3637,16 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 }
             }
         }
+        
+//        StreamFile s(stdout, false);
+//        s.Printf ("Symbol table before CalculateSymbolSizes():\n");
+//        symtab->Dump(&s, NULL, eSortOrderNone);
+        // Set symbol byte sizes correctly since mach-o nlist entries don't have sizes
+        symtab->CalculateSymbolSizes();
+
+//        s.Printf ("Symbol table after CalculateSymbolSizes():\n");
+//        symtab->Dump(&s, NULL, eSortOrderNone);
+
         return symtab->GetNumSymbols();
     }
     return 0;
@@ -3663,8 +3671,9 @@ ObjectFileMachO::Dump (Stream *s)
 
         *s << ", file = '" << m_file << "', arch = " << header_arch.GetArchitectureName() << "\n";
 
-        if (m_sections_ap.get())
-            m_sections_ap->Dump(s, NULL, true, UINT32_MAX);
+        SectionList *sections = GetSectionList();
+        if (sections)
+            sections->Dump(s, NULL, true, UINT32_MAX);
 
         if (m_symtab_ap.get())
             m_symtab_ap->Dump(s, NULL, eSortOrderNone);

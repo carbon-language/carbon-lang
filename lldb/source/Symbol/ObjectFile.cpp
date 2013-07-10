@@ -243,10 +243,8 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     m_unwind_table (*this),
     m_process_wp(),
     m_memory_addr (LLDB_INVALID_ADDRESS),
-    m_sections_ap (),
-    m_symtab_ap (),
-    m_symtab_unified_ap (),
-    m_symtab_unified_revisionid (0)
+    m_sections_ap(),
+    m_symtab_ap ()
 {
     if (file_spec_ptr)
         m_file = *file_spec_ptr;
@@ -292,10 +290,8 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
     m_unwind_table (*this),
     m_process_wp (process_sp),
     m_memory_addr (header_addr),
-    m_sections_ap (),
-    m_symtab_ap (),
-    m_symtab_unified_ap (),
-    m_symtab_unified_revisionid (0)
+    m_sections_ap(),
+    m_symtab_ap ()
 {
     if (header_data_sp)
         m_data.SetData (header_data_sp, 0, header_data_sp->GetByteSize());
@@ -331,7 +327,7 @@ ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch)
 AddressClass
 ObjectFile::GetAddressClass (addr_t file_addr)
 {
-    Symtab *symtab = GetSymtab(ObjectFile::eSymtabFromUnifiedSectionList);
+    Symtab *symtab = GetSymtab();
     if (symtab)
     {
         Symbol *symbol = symtab->FindSymbolContainingFileAddress(file_addr);
@@ -586,29 +582,31 @@ ObjectFile::SplitArchivePathWithObject (const char *path_with_object, FileSpec &
 }
 
 void
-ObjectFile::ClearSymtab (uint32_t flags)
+ObjectFile::ClearSymtab ()
 {
     ModuleSP module_sp(GetModule());
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        bool unified_section_list = !!(flags & ObjectFile::eSymtabFromUnifiedSectionList);
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
         if (log)
         {
-            log->Printf ("%p ObjectFile::ClearSymtab (%s) symtab = %p",
+            log->Printf ("%p ObjectFile::ClearSymtab () symtab = %p",
                          this,
-                         unified_section_list ? "unified" : "",
-                         unified_section_list ? m_symtab_unified_ap.get() : m_symtab_ap.get());
+                         m_symtab_ap.get());
         }
-        if (unified_section_list)
-        {
-            m_symtab_unified_ap.reset();
-            m_symtab_unified_revisionid = 0;
-        }
-        else
-        {
-            m_symtab_ap.reset();
-        }
+        m_symtab_ap.reset();
     }
+}
+
+SectionList *
+ObjectFile::GetSectionList()
+{
+    if (m_sections_ap.get() == NULL)
+    {
+        ModuleSP module_sp(GetModule());
+        if (module_sp)
+            CreateSections(*module_sp->GetUnifiedSectionList());
+    }
+    return m_sections_ap.get();
 }
