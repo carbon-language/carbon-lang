@@ -555,27 +555,6 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   return error_code::success();
 }
 
-error_code file_size(const Twine &path, uint64_t &result) {
-  SmallString<128> path_storage;
-  SmallVector<wchar_t, 128> path_utf16;
-
-  if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
-                                  path_utf16))
-    return ec;
-
-  WIN32_FILE_ATTRIBUTE_DATA FileData;
-  if (!::GetFileAttributesExW(path_utf16.begin(),
-                              ::GetFileExInfoStandard,
-                              &FileData))
-    return windows_error(::GetLastError());
-
-  result =
-    (uint64_t(FileData.nFileSizeHigh) << (sizeof(FileData.nFileSizeLow) * 8))
-    + FileData.nFileSizeLow;
-
-  return error_code::success();
-}
-
 error_code getUniqueID(const Twine Path, uint64_t &Result) {
   file_status Status;
   if (error_code E = status(Path, Status))

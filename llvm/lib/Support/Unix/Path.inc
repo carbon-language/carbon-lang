@@ -529,20 +529,6 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   return error_code::success();
 }
 
-error_code file_size(const Twine &path, uint64_t &result) {
-  SmallString<128> path_storage;
-  StringRef p = path.toNullTerminatedStringRef(path_storage);
-
-  struct stat status;
-  if (::stat(p.begin(), &status) == -1)
-    return error_code(errno, system_category());
-  if (!S_ISREG(status.st_mode))
-    return make_error_code(errc::operation_not_permitted);
-
-  result = status.st_size;
-  return error_code::success();
-}
-
 error_code getUniqueID(const Twine Path, uint64_t &Result) {
   SmallString<128> Storage;
   StringRef P = Path.toNullTerminatedStringRef(Storage);
@@ -591,6 +577,7 @@ error_code status(const Twine &path, file_status &result) {
   result.fs_st_mtime = status.st_mtime;
   result.fs_st_uid = status.st_uid;
   result.fs_st_gid = status.st_gid;
+  result.fs_st_size = status.st_size;
 
   return error_code::success();
 }

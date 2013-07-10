@@ -153,6 +153,7 @@ class file_status
   time_t fs_st_mtime;
   uid_t fs_st_uid;
   gid_t fs_st_gid;
+  off_t fs_st_size;
   #elif defined (LLVM_ON_WIN32)
   uint32_t LastWriteTimeHigh;
   uint32_t LastWriteTimeLow;
@@ -180,12 +181,16 @@ public:
   #if defined(LLVM_ON_UNIX)
   uint32_t getUser() const { return fs_st_uid; }
   uint32_t getGroup() const { return fs_st_gid; }
+  uint64_t getSize() const { return fs_st_size; }
   #elif defined (LLVM_ON_WIN32)
   uint32_t getUser() const {
     return 9999; // Not applicable to Windows, so...
   }
   uint32_t getGroup() const {
     return 9999; // Not applicable to Windows, so...
+  }
+  uint64_t getSize() const {
+    return (uint64_t(FileSizeHigh) << 32) + FileSizeLow;
   }
   #endif
 
@@ -435,7 +440,14 @@ inline bool equivalent(const Twine &A, const Twine &B) {
 /// @param result Set to the size of the file in \a path.
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code file_size(const Twine &path, uint64_t &result);
+inline error_code file_size(const Twine &Path, uint64_t &Result) {
+  file_status Status;
+  error_code EC = status(Path, Status);
+  if (EC)
+    return EC;
+  Result = Status.getSize();
+  return error_code::success();
+}
 
 /// @brief Does status represent a directory?
 ///
