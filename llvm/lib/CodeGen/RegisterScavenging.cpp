@@ -368,7 +368,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Exclude all the registers being used by the instruction.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = I->getOperand(i);
-    if (MO.isReg() && MO.getReg() != 0 &&
+    if (MO.isReg() && MO.getReg() != 0 && !(MO.isUse() && MO.isUndef()) &&
         !TargetRegisterInfo::isVirtualRegister(MO.getReg()))
       Candidates.reset(MO.getReg());
   }
