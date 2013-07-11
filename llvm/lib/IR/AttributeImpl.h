@@ -27,97 +27,30 @@ class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 /// \class
-/// \brief A set of classes that contain the kind and (optional) value of the
-/// attribute object. There are three main categories: enum attribute entries,
-/// represented by Attribute::AttrKind; alignment attribute entries; and string
-/// attribute enties, which are for target-dependent attributes.
-class AttributeEntry {
-  unsigned char KindID;
+/// \brief This class represents a single, uniqued attribute. That attribute
+/// could be a single enum, a tuple, or a string.
+class AttributeImpl : public FoldingSetNode {
+  unsigned char KindID; ///< Holds the AttrEntryKind of the attribute
+
+  // AttributesImpl is uniqued, these should not be publicly available.
+  void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
+  AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
+
 protected:
   enum AttrEntryKind {
     EnumAttrEntry,
     AlignAttrEntry,
     StringAttrEntry
   };
+
+  AttributeImpl(AttrEntryKind KindID) : KindID(KindID) {}
+
 public:
-  AttributeEntry(AttrEntryKind Kind)
-    : KindID(Kind) {}
-  virtual ~AttributeEntry() {}
+  virtual ~AttributeImpl();
 
-  unsigned getKindID() const { return KindID; }
-
-  static inline bool classof(const AttributeEntry *) { return true; }
-};
-
-class EnumAttributeEntry : public AttributeEntry {
-  Attribute::AttrKind Kind;
-public:
-  EnumAttributeEntry(Attribute::AttrKind Kind)
-    : AttributeEntry(EnumAttrEntry), Kind(Kind) {}
-
-  Attribute::AttrKind getEnumKind() const { return Kind; }
-
-  static inline bool classof(const AttributeEntry *AE) {
-    return AE->getKindID() == EnumAttrEntry;
-  }
-  static inline bool classof(const EnumAttributeEntry *) { return true; }
-};
-
-class AlignAttributeEntry : public AttributeEntry {
-  Attribute::AttrKind Kind;
-  unsigned Align;
-public:
-  AlignAttributeEntry(Attribute::AttrKind Kind, unsigned Align)
-    : AttributeEntry(AlignAttrEntry), Kind(Kind), Align(Align) {}
-
-  Attribute::AttrKind getEnumKind() const { return Kind; }
-  unsigned getAlignment() const { return Align; }
-
-  static inline bool classof(const AttributeEntry *AE) {
-    return AE->getKindID() == AlignAttrEntry;
-  }
-  static inline bool classof(const AlignAttributeEntry *) { return true; }
-};
-
-class StringAttributeEntry : public AttributeEntry {
-  std::string Kind;
-  std::string Val;
-public:
-  StringAttributeEntry(StringRef Kind, StringRef Val = StringRef())
-    : AttributeEntry(StringAttrEntry), Kind(Kind), Val(Val) {}
-
-  StringRef getStringKind() const { return Kind; }
-  StringRef getStringValue() const { return Val; }
-
-  static inline bool classof(const AttributeEntry *AE) {
-    return AE->getKindID() == StringAttrEntry;
-  }
-  static inline bool classof(const StringAttributeEntry *) { return true; }
-};
-
-//===----------------------------------------------------------------------===//
-/// \class
-/// \brief This class represents a single, uniqued attribute. That attribute
-/// could be a single enum, a tuple, or a string.
-class AttributeImpl : public FoldingSetNode {
-  LLVMContext &Context;  ///< Global context for uniquing objects
-
-  AttributeEntry *Entry; ///< Holds the kind and value of the attribute
-
-  // AttributesImpl is uniqued, these should not be publicly available.
-  void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
-  AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
-public:
-  AttributeImpl(LLVMContext &C, Attribute::AttrKind Kind);
-  AttributeImpl(LLVMContext &C, Attribute::AttrKind Kind, unsigned Align);
-  AttributeImpl(LLVMContext &C, StringRef Kind, StringRef Val = StringRef());
-  ~AttributeImpl();
-
-  LLVMContext &getContext() { return Context; }
-
-  bool isEnumAttribute() const;
-  bool isAlignAttribute() const;
-  bool isStringAttribute() const;
+  bool isEnumAttribute() const { return KindID == EnumAttrEntry; }
+  bool isAlignAttribute() const { return KindID == AlignAttrEntry; }
+  bool isStringAttribute() const { return KindID == StringAttrEntry; }
 
   bool hasAttribute(Attribute::AttrKind A) const;
   bool hasAttribute(StringRef Kind) const;
@@ -155,13 +88,63 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
+/// \brief A set of classes that contain the value of the
+/// attribute object. There are three main categories: enum attribute entries,
+/// represented by Attribute::AttrKind; alignment attribute entries; and string
+/// attribute enties, which are for target-dependent attributes.
+
+class EnumAttributeImpl : public AttributeImpl {
+  Attribute::AttrKind Kind;
+
+protected:
+  EnumAttributeImpl(AttrEntryKind ID, Attribute::AttrKind Kind)
+      : AttributeImpl(ID), Kind(Kind) {}
+
+public:
+  EnumAttributeImpl(Attribute::AttrKind Kind)
+      : AttributeImpl(EnumAttrEntry), Kind(Kind) {}
+
+  Attribute::AttrKind getEnumKind() const { return Kind; }
+};
+
+class AlignAttributeImpl : public EnumAttributeImpl {
+  unsigned Align;
+
+public:
+  AlignAttributeImpl(Attribute::AttrKind Kind, unsigned Align)
+      : EnumAttributeImpl(AlignAttrEntry, Kind), Align(Align) {
+    assert(
+        (Kind == Attribute::Alignment || Kind == Attribute::StackAlignment) &&
+        "Wrong kind for alignment attribute!");
+  }
+
+  unsigned getAlignment() const { return Align; }
+};
+
+class StringAttributeImpl : public AttributeImpl {
+  std::string Kind;
+  std::string Val;
+
+public:
+  StringAttributeImpl(StringRef Kind, StringRef Val = StringRef())
+      : AttributeImpl(StringAttrEntry), Kind(Kind), Val(Val) {}
+
+  StringRef getStringKind() const { return Kind; }
+  StringRef getStringValue() const { return Val; }
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
 /// \brief This class represents a group of attributes that apply to one
 /// element: function, return type, or parameter.
 class AttributeSetNode : public FoldingSetNode {
-  SmallVector<Attribute, 4> AttrList;
+  unsigned NumAttrs; ///< Number of attributes in this node.
 
-  AttributeSetNode(ArrayRef<Attribute> Attrs)
-    : AttrList(Attrs.begin(), Attrs.end()) {}
+  AttributeSetNode(ArrayRef<Attribute> Attrs) : NumAttrs(Attrs.size()) {
+    // There's memory after the node where we can store the entries in.
+    std::copy(Attrs.begin(), Attrs.end(),
+              reinterpret_cast<Attribute *>(this + 1));
+  }
 
   // AttributesSetNode is uniqued, these should not be publicly available.
   void operator=(const AttributeSetNode &) LLVM_DELETED_FUNCTION;
@@ -171,7 +154,7 @@ public:
 
   bool hasAttribute(Attribute::AttrKind Kind) const;
   bool hasAttribute(StringRef Kind) const;
-  bool hasAttributes() const { return !AttrList.empty(); }
+  bool hasAttributes() const { return NumAttrs != 0; }
 
   Attribute getAttribute(Attribute::AttrKind Kind) const;
   Attribute getAttribute(StringRef Kind) const;
@@ -180,17 +163,12 @@ public:
   unsigned getStackAlignment() const;
   std::string getAsString(bool InAttrGrp) const;
 
-  typedef SmallVectorImpl<Attribute>::iterator       iterator;
-  typedef SmallVectorImpl<Attribute>::const_iterator const_iterator;
-
-  iterator begin() { return AttrList.begin(); }
-  iterator end()   { return AttrList.end(); }
-
-  const_iterator begin() const { return AttrList.begin(); }
-  const_iterator end() const   { return AttrList.end(); }
+  typedef const Attribute *iterator;
+  iterator begin() const { return reinterpret_cast<iterator>(this + 1); }
+  iterator end() const { return begin() + NumAttrs; }
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, AttrList);
+    Profile(ID, makeArrayRef(begin(), end()));
   }
   static void Profile(FoldingSetNodeID &ID, ArrayRef<Attribute> AttrList) {
     for (unsigned I = 0, E = AttrList.size(); I != E; ++I)
@@ -208,58 +186,58 @@ class AttributeSetImpl : public FoldingSetNode {
   LLVMContext &Context;
 
   typedef std::pair<unsigned, AttributeSetNode*> IndexAttrPair;
-  SmallVector<IndexAttrPair, 4> AttrNodes;
+  unsigned NumAttrs; ///< Number of entries in this set.
+
+  /// \brief Return a pointer to the IndexAttrPair for the specified slot.
+  const IndexAttrPair *getNode(unsigned Slot) const {
+    return reinterpret_cast<const IndexAttrPair *>(this + 1) + Slot;
+  }
 
   // AttributesSet is uniqued, these should not be publicly available.
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
   AttributeSetImpl(LLVMContext &C,
-                   ArrayRef<std::pair<unsigned, AttributeSetNode*> > attrs)
-    : Context(C), AttrNodes(attrs.begin(), attrs.end()) {}
+                   ArrayRef<std::pair<unsigned, AttributeSetNode *> > Attrs)
+      : Context(C), NumAttrs(Attrs.size()) {
+    // There's memory after the node where we can store the entries in.
+    std::copy(Attrs.begin(), Attrs.end(),
+              reinterpret_cast<IndexAttrPair *>(this + 1));
+  }
 
   /// \brief Get the context that created this AttributeSetImpl.
   LLVMContext &getContext() { return Context; }
 
   /// \brief Return the number of attributes this AttributeSet contains.
-  unsigned getNumAttributes() const { return AttrNodes.size(); }
+  unsigned getNumAttributes() const { return NumAttrs; }
 
   /// \brief Get the index of the given "slot" in the AttrNodes list. This index
   /// is the index of the return, parameter, or function object that the
   /// attributes are applied to, not the index into the AttrNodes list where the
   /// attributes reside.
   unsigned getSlotIndex(unsigned Slot) const {
-    return AttrNodes[Slot].first;
+    return getNode(Slot)->first;
   }
 
   /// \brief Retrieve the attributes for the given "slot" in the AttrNode list.
   /// \p Slot is an index into the AttrNodes list, not the index of the return /
   /// parameter/ function which the attributes apply to.
   AttributeSet getSlotAttributes(unsigned Slot) const {
-    return AttributeSet::get(Context, AttrNodes[Slot]);
+    return AttributeSet::get(Context, *getNode(Slot));
   }
 
   /// \brief Retrieve the attribute set node for the given "slot" in the
   /// AttrNode list.
   AttributeSetNode *getSlotNode(unsigned Slot) const {
-    return AttrNodes[Slot].second;
+    return getNode(Slot)->second;
   }
 
-  typedef AttributeSetNode::iterator       iterator;
-  typedef AttributeSetNode::const_iterator const_iterator;
-
-  iterator begin(unsigned Slot)
-    { return AttrNodes[Slot].second->begin(); }
-  iterator end(unsigned Slot)
-    { return AttrNodes[Slot].second->end(); }
-
-  const_iterator begin(unsigned Slot) const
-    { return AttrNodes[Slot].second->begin(); }
-  const_iterator end(unsigned Slot) const
-    { return AttrNodes[Slot].second->end(); }
+  typedef AttributeSetNode::iterator iterator;
+  iterator begin(unsigned Slot) const { return getSlotNode(Slot)->begin(); }
+  iterator end(unsigned Slot) const { return getSlotNode(Slot)->end(); }
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, AttrNodes);
+    Profile(ID, makeArrayRef(getNode(0), getNumAttributes()));
   }
   static void Profile(FoldingSetNodeID &ID,
                       ArrayRef<std::pair<unsigned, AttributeSetNode*> > Nodes) {
