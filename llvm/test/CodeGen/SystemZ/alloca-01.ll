@@ -1,8 +1,7 @@
 ; Test variable-sized allocas and addresses based on them in cases where
 ; stack arguments are needed.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK1
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK2
+; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-A
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-B
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-C
@@ -15,34 +14,19 @@ declare i64 @bar(i8 *%a, i8 *%b, i8 *%c, i8 *%d, i8 *%e, i64 %f, i64 %g)
 ; There are two stack arguments, so an offset of 160 + 2 * 8 == 176
 ; is added to the copy of %r15.
 define i64 @f1(i64 %length, i64 %index) {
-; The full allocation sequence is:
-;
-;    la %r0, 7(%r2)      1
-;    nill %r0, 0xfff8    1
-;    lgr %r1, %r15         2
-;    sgr %r1, %r0        1 2
-;    lgr %r15, %r1         2
-;
-; The third instruction does not depend on the first two, so check for
-; two fully-ordered sequences.
-;
 ; FIXME: a better sequence would be:
 ;
 ;    lgr %r1, %r15
 ;    sgr %r1, %r2
-;    nill %r1, 0xfff8
+;    risbg %r1, %r1, 0, 188, 0
 ;    lgr %r15, %r1
 ;
-; CHECK1: f1:
-; CHECK1: la %r0, 7(%r2)
-; CHECK1: nill %r0, 65528
-; CHECK1: sgr %r1, %r0
-; CHECK1: lgr %r15, %r1
-;
-; CHECK2: f1:
-; CHECK2: lgr %r1, %r15
-; CHECK2: sgr %r1, %r0
-; CHECK2: lgr %r15, %r1
+; CHECK: f1:
+; CHECK-DAG: la [[REG1:%r[0-5]]], 7(%r2)
+; CHECK-DAG: risbg [[REG2:%r[0-5]]], [[REG1]], 0, 188, 0
+; CHECK-DAG: lgr [[REG3:%r[0-5]]], %r15
+; CHECK: sgr [[REG3]], [[REG2]]
+; CHECK: lgr %r15, [[REG3]]
 ;
 ; CHECK-A: f1:
 ; CHECK-A: lgr %r15, %r1

@@ -65,8 +65,8 @@ define void @f5(i64 %addr, i64 %index) {
 ; An address with an index and a displacement added using OR.
 define void @f6(i64 %addr, i64 %index) {
 ; CHECK: f6:
-; CHECK: nill %r2, 65528
-; CHECK: lb %r0, 6(%r3,%r2)
+; CHECK: risbg [[BASE:%r[1245]]], %r2, 0, 188, 0
+; CHECK: lb %r0, 6(%r3,[[BASE]])
 ; CHECK: br %r14
   %aligned = and i64 %addr, -8
   %or = or i64 %aligned, 6
@@ -93,10 +93,10 @@ define void @f7(i64 %addr, i64 %index) {
 ; about the alignment of %add here.
 define void @f8(i64 %addr, i64 %index) {
 ; CHECK: f8:
-; CHECK: nill %r2, 65528
-; CHECK: agr %r2, %r3
-; CHECK: oill %r2, 6
-; CHECK: lb %r0, 0(%r2)
+; CHECK: risbg [[BASE:%r[1245]]], %r2, 0, 188, 0
+; CHECK: agr [[BASE]], %r3
+; CHECK: oill [[BASE]], 6
+; CHECK: lb %r0, 0([[BASE]])
 ; CHECK: br %r14
   %aligned = and i64 %addr, -8
   %add = add i64 %aligned, %index

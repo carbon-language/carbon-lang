@@ -14,14 +14,14 @@
 ;   independent of the other loop prologue instructions.
 define i16 @f1(i16 *%src, i16 %b) {
 ; CHECK: f1:
-; CHECK: sllg [[SHIFT:%r[1-9]+]], %r2, 3
-; CHECK: nill %r2, 65532
-; CHECK: l [[OLD:%r[0-9]+]], 0(%r2)
+; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
+; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
+; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: nr [[ROT]], %r3
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
-; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
+; CHECK: cs [[OLD]], [[NEW]], 0([[BASE]])
 ; CHECK: jlh [[LABEL]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
@@ -49,14 +49,14 @@ define i16 @f1(i16 *%src, i16 %b) {
 ; Check the minimum signed value.  We AND the rotated word with 0x8000ffff.
 define i16 @f2(i16 *%src) {
 ; CHECK: f2:
-; CHECK: sllg [[SHIFT:%r[1-9]+]], %r2, 3
-; CHECK: nill %r2, 65532
-; CHECK: l [[OLD:%r[0-9]+]], 0(%r2)
+; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
+; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
+; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: nilh [[ROT]], 32768
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0([[NEGSHIFT:%r[1-9]+]])
-; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
+; CHECK: cs [[OLD]], [[NEW]], 0([[BASE]])
 ; CHECK: jlh [[LABEL]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14

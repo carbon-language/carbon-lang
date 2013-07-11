@@ -2,13 +2,10 @@
 ;
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
-; There is no 64-bit AND instruction for a mask of 1.
-; FIXME: we ought to be able to require "ngr %r2, %r0", but at the moment,
-; two-address optimisations force "ngr %r0, %r2; lgr %r2, %r0" instead.
+; Use RISBG for a single bit.
 define i64 @f1(i64 %a) {
 ; CHECK: f1:
-; CHECK: lghi %r0, 1
-; CHECK: ngr
+; CHECK: risbg %r2, %r2, 63, 191, 0
 ; CHECK: br %r14
   %and = and i64 %a, 1
   ret i64 %and
@@ -17,8 +14,7 @@ define i64 @f1(i64 %a) {
 ; Likewise 0xfffe.
 define i64 @f2(i64 %a) {
 ; CHECK: f2:
-; CHECK: llill %r0, 65534
-; CHECK: ngr
+; CHECK: risbg %r2, %r2, 48, 190, 0
 ; CHECK: br %r14
   %and = and i64 %a, 65534
   ret i64 %and
@@ -33,21 +29,19 @@ define i64 @f3(i64 %a) {
   ret i64 %and
 }
 
-; Check the next value up, which again has no dedicated instruction.
+; Check the next value up, which can again use RISBG.
 define i64 @f4(i64 %a) {
 ; CHECK: f4:
-; CHECK: llilh %r0, 1
-; CHECK: ngr
+; CHECK: risbg %r2, %r2, 47, 175, 0
 ; CHECK: br %r14
   %and = and i64 %a, 65536
   ret i64 %and
 }
 
-; Check 0xfffffffe.
+; Check 0xfffffffe, which can also use RISBG.
 define i64 @f5(i64 %a) {
 ; CHECK: f5:
-; CHECK: lilf %r0, 4294967294
-; CHECK: ngr
+; CHECK: risbg %r2, %r2, 32, 190, 0
 ; CHECK: br %r14
   %and = and i64 %a, 4294967294
   ret i64 %and
@@ -62,30 +56,30 @@ define i64 @f6(i64 %a) {
   ret i64 %and
 }
 
-; Check the lowest useful NIHF value (0x00000001_ffffffff).
+; Check the lowest useful NIHF value (0x00000002_ffffffff).
 define i64 @f7(i64 %a) {
 ; CHECK: f7:
-; CHECK: nihf %r2, 1
+; CHECK: nihf %r2, 2
 ; CHECK: br %r14
-  %and = and i64 %a, 8589934591
+  %and = and i64 %a, 12884901887
   ret i64 %and
 }
 
-; Check the low end of the NIHH range (0x0000ffff_ffffffff).
+; Check the lowest useful NIHH value (0x0002ffff_ffffffff).
 define i64 @f8(i64 %a) {
 ; CHECK: f8:
-; CHECK: nihh %r2, 0
+; CHECK: nihh %r2, 2
 ; CHECK: br %r14
-  %and = and i64 %a, 281474976710655
+  %and = and i64 %a, 844424930131967
   ret i64 %and
 }
 
-; Check the highest useful NIHH value (0xfffeffff_ffffffff).
+; Check the highest useful NIHH value (0xfffaffff_ffffffff).
 define i64 @f9(i64 %a) {
 ; CHECK: f9:
-; CHECK: nihh %r2, 65534
+; CHECK: nihh %r2, 65530
 ; CHECK: br %r14
-  %and = and i64 %a, -281474976710657
+  %and = and i64 %a, -1407374883553281
   ret i64 %and
 }
 
@@ -98,83 +92,83 @@ define i64 @f10(i64 %a) {
   ret i64 %and
 }
 
-; Check the low end of the NIHL range (0xffff0000_ffffffff).
+; Check the lowest useful NIHL value (0xffff0002_ffffffff).
 define i64 @f11(i64 %a) {
 ; CHECK: f11:
-; CHECK: nihl %r2, 0
+; CHECK: nihl %r2, 2
 ; CHECK: br %r14
-  %and = and i64 %a, -281470681743361
+  %and = and i64 %a, -281462091808769
   ret i64 %and
 }
 
-; Check the highest useful NIHL value (0xfffffffe_ffffffff).
+; Check the highest useful NIHL value (0xfffffffa_ffffffff).
 define i64 @f12(i64 %a) {
 ; CHECK: f12:
-; CHECK: nihl %r2, 65534
+; CHECK: nihl %r2, 65530
 ; CHECK: br %r14
-  %and = and i64 %a, -4294967297
+  %and = and i64 %a, -21474836481
   ret i64 %and
 }
 
-; Check the low end of the NILF range (0xffffffff_00000000).
+; Check the lowest useful NILF range (0xffffffff_00000002).
 define i64 @f13(i64 %a) {
 ; CHECK: f13:
-; CHECK: nilf %r2, 0
+; CHECK: nilf %r2, 2
 ; CHECK: br %r14
-  %and = and i64 %a, -4294967296
+  %and = and i64 %a, -4294967294
   ret i64 %and
 }
 
-; Check the low end of the NILH range (0xffffffff_0000ffff).
+; Check the low end of the NILH range (0xffffffff_0002ffff).
 define i64 @f14(i64 %a) {
 ; CHECK: f14:
-; CHECK: nilh %r2, 0
+; CHECK: nilh %r2, 2
 ; CHECK: br %r14
-  %and = and i64 %a, -4294901761
+  %and = and i64 %a, -4294770689
   ret i64 %and
 }
 
 ; Check the next value up, which must use NILF.
 define i64 @f15(i64 %a) {
 ; CHECK: f15:
-; CHECK: nilf %r2, 65536
+; CHECK: nilf %r2, 196608
 ; CHECK: br %r14
-  %and = and i64 %a, -4294901760
+  %and = and i64 %a, -4294770688
+  ret i64 %and
+}
+
+; Check the highest useful NILH value (0xffffffff_fffaffff).
+define i64 @f16(i64 %a) {
+; CHECK: f16:
+; CHECK: nilh %r2, 65530
+; CHECK: br %r14
+  %and = and i64 %a, -327681
   ret i64 %and
 }
 
 ; Check the maximum useful NILF value (0xffffffff_fffefffe).
-define i64 @f16(i64 %a) {
-; CHECK: f16:
+define i64 @f17(i64 %a) {
+; CHECK: f17:
 ; CHECK: nilf %r2, 4294901758
 ; CHECK: br %r14
   %and = and i64 %a, -65538
   ret i64 %and
 }
 
-; Check the highest useful NILH value, which is one greater than the above.
-define i64 @f17(i64 %a) {
-; CHECK: f17:
-; CHECK: nilh %r2, 65534
-; CHECK: br %r14
-  %and = and i64 %a, -65537
-  ret i64 %and
-}
-
-; Check the low end of the NILL range, which is one greater again.
+; Check the lowest useful NILL value (0xffffffff_ffff0002).
 define i64 @f18(i64 %a) {
 ; CHECK: f18:
-; CHECK: nill %r2, 0
+; CHECK: nill %r2, 2
 ; CHECK: br %r14
-  %and = and i64 %a, -65536
+  %and = and i64 %a, -65534
   ret i64 %and
 }
 
 ; Check the highest useful NILL value.
 define i64 @f19(i64 %a) {
 ; CHECK: f19:
-; CHECK: nill %r2, 65534
+; CHECK: nill %r2, 65530
 ; CHECK: br %r14
-  %and = and i64 %a, -2
+  %and = and i64 %a, -6
   ret i64 %and
 }

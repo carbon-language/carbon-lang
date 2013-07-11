@@ -33,7 +33,7 @@ define i64 @f2(i64 %orig, i8 *%ptr) {
 ; register value.  We can use IC but must keep the original mask.
 define i64 @f3(i64 %orig, i8 *%ptr) {
 ; CHECK: f3:
-; CHECK: nill %r2, 65024
+; CHECK: risbg %r2, %r2, 0, 182, 0
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -46,7 +46,7 @@ define i64 @f3(i64 %orig, i8 *%ptr) {
 ; Like f3, but with the operands reversed.
 define i64 @f4(i64 %orig, i8 *%ptr) {
 ; CHECK: f4:
-; CHECK: nill %r2, 65024
+; CHECK: risbg %r2, %r2, 0, 182, 0
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
   %val = load i8 *%ptr

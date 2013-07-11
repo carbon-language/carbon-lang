@@ -39,9 +39,9 @@ define float @f3(i64 %big) {
 define float @f4(i64 %big) {
 ; CHECK: f4:
 ; CHECK-NOT: %r2
-; CHECK: nilf %r2, 0
-; CHECK-NOT: %r2
-; CHECK: ldgr %f0, %r2
+; CHECK: risbg [[REG:%r[0-5]]], %r2, 0, 159, 0
+; CHECK-NOT: [[REG]]
+; CHECK: ldgr %f0, [[REG]]
   %shift = ashr i64 %big, 32
   %a = trunc i64 %shift to i32
   %res = bitcast i32 %a to float

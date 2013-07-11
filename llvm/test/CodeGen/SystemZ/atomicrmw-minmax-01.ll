@@ -14,16 +14,16 @@
 ;   independent of the other loop prologue instructions.
 define i8 @f1(i8 *%src, i8 %b) {
 ; CHECK: f1:
-; CHECK: sllg [[SHIFT:%r[1-9]+]], %r2, 3
-; CHECK: nill %r2, 65532
-; CHECK: l [[OLD:%r[0-9]+]], 0(%r2)
+; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
+; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
+; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: crjle [[ROT]], %r3, [[KEEP:\..*]]
 ; CHECK: risbg [[ROT]], %r3, 32, 39, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
-; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
+; CHECK: cs [[OLD]], [[NEW]], 0([[BASE]])
 ; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
@@ -50,16 +50,16 @@ define i8 @f1(i8 *%src, i8 %b) {
 ; Check signed maximum.
 define i8 @f2(i8 *%src, i8 %b) {
 ; CHECK: f2:
-; CHECK: sllg [[SHIFT:%r[1-9]+]], %r2, 3
-; CHECK: nill %r2, 65532
-; CHECK: l [[OLD:%r[0-9]+]], 0(%r2)
+; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
+; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
+; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: crjhe [[ROT]], %r3, [[KEEP:\..*]]
 ; CHECK: risbg [[ROT]], %r3, 32, 39, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
-; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
+; CHECK: cs [[OLD]], [[NEW]], 0([[BASE]])
 ; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
@@ -86,9 +86,9 @@ define i8 @f2(i8 *%src, i8 %b) {
 ; Check unsigned minimum.
 define i8 @f3(i8 *%src, i8 %b) {
 ; CHECK: f3:
-; CHECK: sllg [[SHIFT:%r[1-9]+]], %r2, 3
-; CHECK: nill %r2, 65532
-; CHECK: l [[OLD:%r[0-9]+]], 0(%r2)
+; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
+; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
+; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: clr [[ROT]], %r3
@@ -96,7 +96,7 @@ define i8 @f3(i8 *%src, i8 %b) {
 ; CHECK: risbg [[ROT]], %r3, 32, 39, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
-; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
+; CHECK: cs [[OLD]], [[NEW]], 0([[BASE]])
 ; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
@@ -123,9 +123,9 @@ define i8 @f3(i8 *%src, i8 %b) {
 ; Check unsigned maximum.
 define i8 @f4(i8 *%src, i8 %b) {
 ; CHECK: f4:
-; CHECK: sllg [[SHIFT:%r[1-9]+]], %r2, 3
-; CHECK: nill %r2, 65532
-; CHECK: l [[OLD:%r[0-9]+]], 0(%r2)
+; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
+; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
+; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
 ; CHECK: [[LOOP:\.[^:]*]]:
 ; CHECK: rll [[ROT:%r[0-9]+]], [[OLD]], 0([[SHIFT]])
 ; CHECK: clr [[ROT]], %r3
@@ -133,7 +133,7 @@ define i8 @f4(i8 *%src, i8 %b) {
 ; CHECK: risbg [[ROT]], %r3, 32, 39, 0
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
-; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
+; CHECK: cs [[OLD]], [[NEW]], 0([[BASE]])
 ; CHECK: jlh [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
