@@ -1020,8 +1020,7 @@ multiclass CmpSwapRSPair<string mnemonic, bits<8> rsOpcode, bits<16> rsyOpcode,
 class RotateSelectRIEf<string mnemonic, bits<16> opcode, RegisterOperand cls1,
                        RegisterOperand cls2>
   : InstRIEf<opcode, (outs cls1:$R1),
-             (ins cls1:$R1src, cls2:$R2,
-                  uimm8zx6:$I3, uimm8zx6:$I4, uimm8zx6:$I5),
+             (ins cls1:$R1src, cls2:$R2, uimm8:$I3, uimm8:$I4, uimm8zx6:$I5),
              mnemonic#"\t$R1, $R2, $I3, $I4, $I5", []> {
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";

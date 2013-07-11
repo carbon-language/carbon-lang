@@ -2102,18 +2102,18 @@
 #CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,0,-1,0
 #CHECK: error: invalid operand
-#CHECK: risbg	%r0,%r0,0,64,0
+#CHECK: risbg	%r0,%r0,0,256,0
 #CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,-1,0,0
 #CHECK: error: invalid operand
-#CHECK: risbg	%r0,%r0,64,0,0
+#CHECK: risbg	%r0,%r0,256,0,0
 
 	risbg	%r0,%r0,0,0,-1
 	risbg	%r0,%r0,0,0,64
 	risbg	%r0,%r0,0,-1,0
-	risbg	%r0,%r0,0,64,0
+	risbg	%r0,%r0,0,256,0
 	risbg	%r0,%r0,-1,0,0
-	risbg	%r0,%r0,64,0,0
+	risbg	%r0,%r0,256,0,0
 
 #CHECK: error: invalid operand
 #CHECK: rll	%r0,%r0,-524289
