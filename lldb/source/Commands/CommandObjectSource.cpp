@@ -26,6 +26,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Interpreter/CommandCompletions.h"
@@ -439,6 +440,73 @@ protected:
         return 0;
     }
 
+    // From Jim: The FindMatchingFunctions / FindMatchingFunctionSymbols functions 
+    // "take a possibly empty vector of strings which are names of modules, and
+    // run the two search functions on the subset of the full module list that
+    // matches the strings in the input vector". If we wanted to put these somewhere,
+    // there should probably be a module-filter-list that can be passed to the
+    // various ModuleList::Find* calls, which would either be a vector of string
+    // names or a ModuleSpecList.
+    size_t FindMatchingFunctions (Target *target, const ConstString &name, SymbolContextList& sc_list)
+    {
+        // Displaying the source for a symbol:
+        bool include_inlines = true;
+        bool append = true;
+        bool include_symbols = false;
+        size_t num_matches = 0;
+        
+        if (m_options.num_lines == 0)
+            m_options.num_lines = 10;
+
+        const size_t num_modules = m_options.modules.size();
+        if (num_modules > 0)
+        {
+            ModuleList matching_modules;
+            for (size_t i = 0; i < num_modules; ++i)
+            {
+                FileSpec module_file_spec(m_options.modules[i].c_str(), false);
+                if (module_file_spec)
+                {
+                    ModuleSpec module_spec (module_file_spec);
+                    matching_modules.Clear();
+                    target->GetImages().FindModules (module_spec, matching_modules);
+                    num_matches += matching_modules.FindFunctions (name, eFunctionNameTypeAuto, include_symbols, include_inlines, append, sc_list);
+                }
+            }
+        }
+        else
+        {
+            num_matches = target->GetImages().FindFunctions (name, eFunctionNameTypeAuto, include_symbols, include_inlines, append, sc_list);
+        }
+        return num_matches;
+    }
+
+    size_t FindMatchingFunctionSymbols (Target *target, const ConstString &name, SymbolContextList& sc_list)
+    {
+        size_t num_matches = 0;
+        const size_t num_modules = m_options.modules.size();
+        if (num_modules > 0)
+        {
+            ModuleList matching_modules;
+            for (size_t i = 0; i < num_modules; ++i)
+            {
+                FileSpec module_file_spec(m_options.modules[i].c_str(), false);
+                if (module_file_spec)
+                {
+                    ModuleSpec module_spec (module_file_spec);
+                    matching_modules.Clear();
+                    target->GetImages().FindModules (module_spec, matching_modules);
+                    num_matches += matching_modules.FindFunctionSymbols (name, eFunctionNameTypeAuto, sc_list);
+                }
+            }
+        }
+        else
+        {
+            num_matches = target->GetImages().FindFunctionSymbols (name, eFunctionNameTypeAuto, sc_list);
+        }
+        return num_matches;
+    }
+
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
@@ -453,41 +521,36 @@ protected:
 
         Target *target = m_exe_ctx.GetTargetPtr();
 
-        SymbolContextList sc_list;
         if (!m_options.symbol_name.empty())
         {
-            // Displaying the source for a symbol:
+            SymbolContextList sc_list;
             ConstString name(m_options.symbol_name.c_str());
-            bool include_symbols = false;
-            bool include_inlines = true;
-            bool append = true;
-            size_t num_matches = 0;
-            
-            if (m_options.num_lines == 0)
-                m_options.num_lines = 10;
 
-            const size_t num_modules = m_options.modules.size();
-            if (num_modules > 0)
+            // Displaying the source for a symbol. Search for function named name.
+            size_t num_matches = FindMatchingFunctions (target, name, sc_list);
+            if (!num_matches)
             {
-                ModuleList matching_modules;
-                for (size_t i = 0; i < num_modules; ++i)
+                // If we didn't find any functions with that name, try searching for symbols
+                // that line up exactly with function addresses.
+                SymbolContextList sc_list_symbols;
+                size_t num_symbol_matches = FindMatchingFunctionSymbols (target, name, sc_list_symbols);
+                for (size_t i = 0; i < num_symbol_matches; i++)
                 {
-                    FileSpec module_file_spec(m_options.modules[i].c_str(), false);
-                    if (module_file_spec)
+                    SymbolContext sc;
+                    sc_list_symbols.GetContextAtIndex (i, sc);
+                    if (sc.symbol)
                     {
-                        ModuleSpec module_spec (module_file_spec);
-                        matching_modules.Clear();
-                        target->GetImages().FindModules (module_spec, matching_modules);
-                        num_matches += matching_modules.FindFunctions (name, eFunctionNameTypeAuto, include_symbols, include_inlines, append, sc_list);
+                        const Address &base_address = sc.symbol->GetAddress();
+                        Function *function = base_address.CalculateSymbolContextFunction();
+                        if (function)
+                        {
+                            sc_list.Append (SymbolContext(function));
+                            num_matches++;
+                            break;
+                        }
                     }
                 }
             }
-            else
-            {
-                num_matches = target->GetImages().FindFunctions (name, eFunctionNameTypeAuto, include_symbols, include_inlines, append, sc_list);
-            }
-            
-            SymbolContext sc;
 
             if (num_matches == 0)
             {
@@ -495,7 +558,7 @@ protected:
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
-            
+
             if (num_matches > 1)
             {
                 std::set<SourceInfo> source_match_set;
@@ -503,6 +566,7 @@ protected:
                 bool displayed_something = false;
                 for (size_t i = 0; i < num_matches; i++)
                 {
+                    SymbolContext sc;
                     sc_list.GetContextAtIndex (i, sc);
                     SourceInfo source_info (sc.GetFunctionName(),
                                             sc.GetFunctionStartLineEntry());
@@ -525,6 +589,7 @@ protected:
             }
             else
             {
+                SymbolContext sc;
                 sc_list.GetContextAtIndex (0, sc);
                 SourceInfo source_info;
                 
@@ -541,9 +606,9 @@ protected:
         }
         else if (m_options.address != LLDB_INVALID_ADDRESS)
         {
-            SymbolContext sc;
             Address so_addr;
             StreamString error_strm;
+            SymbolContextList sc_list;
 
             if (target->GetSectionLoadList().IsEmpty())
             {
@@ -556,6 +621,7 @@ protected:
                     ModuleSP module_sp (module_list.GetModuleAtIndex(i));
                     if (module_sp && module_sp->ResolveFileAddress(m_options.address, so_addr))
                     {
+                        SymbolContext sc;
                         sc.Clear(true);
                         if (module_sp->ResolveSymbolContextForAddress (so_addr, eSymbolContextEverything, sc) & eSymbolContextLineEntry)
                             sc_list.Append(sc);
@@ -579,6 +645,7 @@ protected:
                     ModuleSP module_sp (so_addr.GetModule());
                     if (module_sp)
                     {
+                        SymbolContext sc;
                         sc.Clear(true);
                         if (module_sp->ResolveSymbolContextForAddress (so_addr, eSymbolContextEverything, sc) & eSymbolContextLineEntry)
                         {
@@ -605,6 +672,7 @@ protected:
             uint32_t num_matches = sc_list.GetSize();
             for (uint32_t i=0; i<num_matches; ++i)
             {
+                SymbolContext sc;
                 sc_list.GetContextAtIndex(i, sc);
                 if (sc.comp_unit)
                 {
@@ -738,12 +806,12 @@ protected:
             
             if (num_matches > 1)
             {
-                SymbolContext sc;
                 bool got_multiple = false;
                 FileSpec *test_cu_spec = NULL;
 
                 for (unsigned i = 0; i < num_matches; i++)
                 {
+                    SymbolContext sc;
                     sc_list.GetContextAtIndex(i, sc);
                     if (sc.comp_unit)
                     {

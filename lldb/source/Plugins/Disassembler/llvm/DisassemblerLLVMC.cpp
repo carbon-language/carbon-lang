@@ -123,7 +123,7 @@ public:
             lldb::offset_t data_offset)
     {
         // All we have to do is read the opcode which can be easy for some
-        // architetures
+        // architectures
         bool got_op = false;
         DisassemblerLLVMC &llvm_disasm = GetDisassemblerLLVMC();
         const ArchSpec &arch = llvm_disasm.GetArchitecture();

@@ -270,6 +270,14 @@ public:
                    SymbolContextList &sc_list) const;
 
     //------------------------------------------------------------------
+    /// @see Module::FindFunctionSymbols ()
+    //------------------------------------------------------------------
+    size_t
+    FindFunctionSymbols (const ConstString &name,
+                         uint32_t name_type_mask,
+                         SymbolContextList& sc_list);
+
+    //------------------------------------------------------------------
     /// Find global and static variables by name.
     ///
     /// @param[in] name

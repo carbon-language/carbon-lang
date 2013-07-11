@@ -386,7 +386,6 @@ ModuleList::FindFunctions (const ConstString &name,
     }
     else
     {
-    
         Mutex::Locker locker(m_modules_mutex);
         collection::const_iterator pos, end = m_modules.end();
         for (pos = m_modules.begin(); pos != end; ++pos)
@@ -394,6 +393,67 @@ ModuleList::FindFunctions (const ConstString &name,
             (*pos)->FindFunctions (name, NULL, name_type_mask, include_symbols, include_inlines, true, sc_list);
         }
     }
+    return sc_list.GetSize() - old_size;
+}
+
+size_t
+ModuleList::FindFunctionSymbols (const ConstString &name,
+                                 uint32_t name_type_mask,
+                                 SymbolContextList& sc_list)
+{
+    const size_t old_size = sc_list.GetSize();
+
+    if (name_type_mask & eFunctionNameTypeAuto)
+    {
+        ConstString lookup_name;
+        uint32_t lookup_name_type_mask = 0;
+        bool match_name_after_lookup = false;
+        Module::PrepareForFunctionNameLookup (name, name_type_mask,
+                                              lookup_name,
+                                              lookup_name_type_mask,
+                                              match_name_after_lookup);
+    
+        Mutex::Locker locker(m_modules_mutex);
+        collection::const_iterator pos, end = m_modules.end();
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            (*pos)->FindFunctionSymbols (lookup_name,
+                                   lookup_name_type_mask,
+                                   sc_list);
+        }
+        
+        if (match_name_after_lookup)
+        {
+            SymbolContext sc;
+            size_t i = old_size;
+            while (i<sc_list.GetSize())
+            {
+                if (sc_list.GetContextAtIndex(i, sc))
+                {
+                    const char *func_name = sc.GetFunctionName().GetCString();
+                    if (func_name && strstr (func_name, name.GetCString()) == NULL)
+                    {
+                        // Remove the current context
+                        sc_list.RemoveContextAtIndex(i);
+                        // Don't increment i and continue in the loop
+                        continue;
+                    }
+                }
+                ++i;
+            }
+        }
+
+    }
+    else
+    {
+        Mutex::Locker locker(m_modules_mutex);
+        collection::const_iterator pos, end = m_modules.end();
+        for (pos = m_modules.begin(); pos != end; ++pos)
+        {
+            (*pos)->FindFunctionSymbols (name, name_type_mask, sc_list);
+        }
+    }
+
     return sc_list.GetSize() - old_size;
 }
 
