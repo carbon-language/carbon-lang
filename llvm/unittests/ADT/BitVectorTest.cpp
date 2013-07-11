@@ -357,5 +357,41 @@ TYPED_TEST(BitVectorTest, RangeOps) {
   EXPECT_TRUE( E.test(32));
   EXPECT_FALSE(E.test(33));
 }
+
+TYPED_TEST(BitVectorTest, CompoundTestReset) {
+  TypeParam A(50, true);
+  TypeParam B(50, false);
+
+  TypeParam C(100, true);
+  TypeParam D(100, false);
+
+  EXPECT_FALSE(A.test(A));
+  EXPECT_TRUE(A.test(B));
+  EXPECT_FALSE(A.test(C));
+  EXPECT_TRUE(A.test(D));
+  EXPECT_FALSE(B.test(A));
+  EXPECT_FALSE(B.test(B));
+  EXPECT_FALSE(B.test(C));
+  EXPECT_FALSE(B.test(D));
+  EXPECT_TRUE(C.test(A));
+  EXPECT_TRUE(C.test(B));
+  EXPECT_FALSE(C.test(C));
+  EXPECT_TRUE(C.test(D));
+
+  A.reset(B);
+  A.reset(D);
+  EXPECT_TRUE(A.all());
+  A.reset(A);
+  EXPECT_TRUE(A.none());
+  A.set();
+  A.reset(C);
+  EXPECT_TRUE(A.none());
+  A.set();
+
+  C.reset(A);
+  EXPECT_EQ(50, C.find_first());
+  C.reset(C);
+  EXPECT_TRUE(C.none());
+}
 }
 #endif

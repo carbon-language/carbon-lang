@@ -426,6 +426,40 @@ public:
     return *this;
   }
 
+  /// reset - Reset bits that are set in RHS. Same as *this &= ~RHS.
+  SmallBitVector &reset(const SmallBitVector &RHS) {
+    if (isSmall() && RHS.isSmall())
+      setSmallBits(getSmallBits() & ~RHS.getSmallBits());
+    else if (!isSmall() && !RHS.isSmall())
+      getPointer()->reset(*RHS.getPointer());
+    else
+      for (unsigned i = 0, e = std::min(size(), RHS.size()); i != e; ++i)
+        if (RHS.test(i))
+          reset(i);
+
+    return *this;
+  }
+
+  /// test - Check if (This - RHS) is zero.
+  /// This is the same as reset(RHS) and any().
+  bool test(const SmallBitVector &RHS) const {
+    if (isSmall() && RHS.isSmall())
+      return (getSmallBits() & ~RHS.getSmallBits()) != 0;
+    if (!isSmall() && !RHS.isSmall())
+      return getPointer()->test(*RHS.getPointer());
+
+    unsigned i, e;
+    for (i = 0, e = std::min(size(), RHS.size()); i != e; ++i)
+      if (test(i) && !RHS.test(i))
+        return true;
+
+    for (e = size(); i != e; ++i)
+      if (test(i))
+        return true;
+
+    return false;
+  }
+
   SmallBitVector &operator|=(const SmallBitVector &RHS) {
     resize(std::max(size(), RHS.size()));
     if (isSmall())
