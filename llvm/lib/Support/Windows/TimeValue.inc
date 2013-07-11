@@ -31,14 +31,24 @@ TimeValue TimeValue::now() {
 }
 
 std::string TimeValue::str() const {
-  struct tm LT;
+  struct tm *LT;
+#ifdef __MINGW32__
+  // Old versions of mingw don't have _localtime64_s. Remove this once we drop support
+  // for them.
+  time_t OurTime = time_t(this->toEpochTime());
+  LT = ::localtime(&OurTime);
+  assert(LT);
+#else
+  struct tm Storage;
   __time64_t OurTime = this->toEpochTime();
-  int Error = ::_localtime64_s(&LT, &OurTime);
+  int Error = ::_localtime64_s(&Storage, &OurTime);
   assert(!Error);
+  LT = &Storage;
+#endif
 
   char Buffer[25];
   // FIXME: the windows version of strftime doesn't support %e
-  strftime(Buffer, 25, "%b %d %H:%M %Y", &LT);
+  strftime(Buffer, 25, "%b %d %H:%M %Y", LT);
   return std::string(Buffer);
 }
 
