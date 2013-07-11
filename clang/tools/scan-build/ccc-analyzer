@@ -325,11 +325,6 @@ sub Analyze {
 
 my %CompileOptionMap = (
   '-nostdinc' => 0,
-  '-fblocks' => 0,
-  '-fno-builtin' => 0,
-  '-fobjc-gc-only' => 0,
-  '-fobjc-gc' => 0,
-  '-ffreestanding' => 0,
   '-include' => 1,
   '-idirafter' => 1,
   '-imacros' => 1,
@@ -346,10 +341,8 @@ my %LinkerOptionMap = (
 );
 
 my %CompilerLinkerOptionMap = (
-  '-fobjc-arc' => 0,
-  '-fno-objc-arc' => 0,
-  '-fobjc-abi-version' => 0, # This is really a 1 argument, but always has '='
-  '-fobjc-legacy-dispatch' => 0,
+  '-Wwrite-strings' => 0
+  '-ftrapv-handler' => 1, # specifically call out separated -f flag
   '-mios-simulator-version-min' => 0, # This really has 1 argument, but always has '='
   '-isysroot' => 1,
   '-arch' => 1,
@@ -357,7 +350,6 @@ my %CompilerLinkerOptionMap = (
   '-m64' => 0,
   '-stdlib' => 0, # This is really a 1 argument, but always has '='
   '-v' => 0,
-  '-fpascal-strings' => 0,
   '-mmacosx-version-min' => 0, # This is really a 1 argument, but always has '='
   '-miphoneos-version-min' => 0 # This is really a 1 argument, but always has '='
 );
@@ -574,6 +566,9 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     if ($Arg eq '-O') { push @LinkOpts,'-O1'; }
     elsif ($Arg eq '-Os') { push @LinkOpts,'-O2'; }
     else { push @LinkOpts,$Arg; }
+
+    # Must pass this along for the __OPTIMIZE__ macro
+    if ($Arg =~ /^-O/) { push @CompileOpts,$Arg; }
     next;
   }
   
@@ -581,12 +576,6 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     push @CompileOpts,$Arg;
     next;
   }
-  
-#  if ($Arg =~ /^-f/) {
-#    # FIXME: Not sure if the remaining -fxxxx options have no arguments.
-#    push @CompileOpts,$Arg;
-#    push @LinkOpts,$Arg;  # FIXME: Not sure if these are link opts.
-#  }
   
   # Get the compiler/link mode.
   if ($Arg =~ /^-F(.+)$/) {
@@ -608,6 +597,12 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     while (<IN>) { s/\015?\012//; push @Files,$_; }
     close(IN);
     ++$i;
+    next;
+  }
+  
+  if ($Arg =~ /^-f/) {
+    push @CompileOpts,$Arg;
+    push @LinkOpts,$Arg;
     next;
   }
   
