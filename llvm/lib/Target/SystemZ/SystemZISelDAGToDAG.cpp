@@ -613,20 +613,81 @@ SDNode *SystemZDAGToDAGISel::tryRISBGForAND(SDNode *N) {
   unsigned Start, End;
   ConstantSDNode *MaskNode =
     dyn_cast<ConstantSDNode>(N->getOperand(1).getNode());
-  if (!MaskNode
-      || !isRISBGMask(MaskNode->getZExtValue(), BitSize, Start, End))
+  if (!MaskNode)
     return 0;
 
+  SDValue Input = N->getOperand(0);
+  uint64_t Mask = MaskNode->getZExtValue();
+  if (!isRISBGMask(Mask, BitSize, Start, End)) {
+    APInt KnownZero, KnownOne;
+    CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
+    Mask |= KnownZero.getZExtValue();
+    if (!isRISBGMask(Mask, BitSize, Start, End))
+      return 0;
+  }
+
+  unsigned Rotate = 0;
+  if (Input->getOpcode() == ISD::ROTL && BitSize == 64) {
+    // Any 64-bit rotate left can be merged into the RISBG.
+    if (ConstantSDNode *CountNode =
+        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
+      Rotate = CountNode->getZExtValue() & (BitSize - 1);
+      Input = Input->getOperand(0);
+    }
+  } else if (Input->getOpcode() == ISD::SHL) {
+    // Try to convert (and (shl X, count), mask) into
+    // (and (rotl X, count), mask&(~0<<count)), where the new mask
+    // removes bits from the original mask that are zeroed by the shl
+    // but that are not necessarily zero in X.
+    if (ConstantSDNode *CountNode =
+        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
+      uint64_t Count = CountNode->getZExtValue();
+      if (Count > 0 &&
+          Count < BitSize &&
+          isRISBGMask(Mask & (allOnes(BitSize - Count) << Count),
+                      BitSize, Start, End)) {
+        Rotate = Count;
+        Input = Input->getOperand(0);
+      }
+    }
+  } else if (Input->getOpcode() == ISD::SRL) {
+    // Try to convert (and (srl X, count), mask) into
+    // (and (rotl X, size-count), mask&(~0>>count)), which is similar
+    // to SLL above.
+    if (ConstantSDNode *CountNode =
+        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
+      uint64_t Count = CountNode->getZExtValue();
+      if (Count > 0 &&
+          Count < BitSize &&
+          isRISBGMask(Mask & allOnes(BitSize - Count), BitSize, Start, End)) {
+        Rotate = 64 - Count;
+        Input = Input->getOperand(0);
+      }
+    }
+  } else if (Start <= End && Input->getOpcode() == ISD::SRA) {
+    // Try to convert (and (sra X, count), mask) into
+    // (and (rotl X, size-count), mask).  The mask must not include
+    // any sign bits.
+    if (ConstantSDNode *CountNode =
+        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
+      uint64_t Count = CountNode->getZExtValue();
+      if (Count > 0 && Count < BitSize && Start >= 64 - (BitSize - Count)) {
+        Rotate = 64 - Count;
+        Input = Input->getOperand(0);
+      }
+    }
+  }
+
   // Prefer register extensions like LLC over RSIBG.
-  if ((Start == 32 || Start == 48 || Start == 56) && End == 63)
+  if (Rotate == 0 && (Start == 32 || Start == 48 || Start == 56) && End == 63)
     return 0;
 
   SDValue Ops[5] = {
     getUNDEF64(SDLoc(N)),
-    convertTo(SDLoc(N), MVT::i64, N->getOperand(0)),
+    convertTo(SDLoc(N), MVT::i64, Input),
     CurDAG->getTargetConstant(Start, MVT::i32),
     CurDAG->getTargetConstant(End | 128, MVT::i32),
-    CurDAG->getTargetConstant(0, MVT::i32)
+    CurDAG->getTargetConstant(Rotate, MVT::i32)
   };
   N = CurDAG->getMachineNode(SystemZ::RISBG, SDLoc(N), MVT::i64, Ops);
   return convertTo(SDLoc(N), VT, SDValue(N, 0)).getNode();

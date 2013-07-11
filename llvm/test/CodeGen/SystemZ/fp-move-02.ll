@@ -16,7 +16,7 @@ define float @f1(i32 %a) {
 ; surrounding code.
 define float @f2(i64 %big) {
 ; CHECK: f2:
-; CHECK: sllg [[REGISTER:%r[0-5]]], %r2, 31
+; CHECK: risbg [[REGISTER:%r[0-5]]], %r2, 0, 159, 31
 ; CHECK: ldgr %f0, [[REGISTER]]
   %shift = lshr i64 %big, 1
   %a = trunc i64 %shift to i32
@@ -27,7 +27,7 @@ define float @f2(i64 %big) {
 ; Another example of the same thing.
 define float @f3(i64 %big) {
 ; CHECK: f3:
-; CHECK: sllg [[REGISTER:%r[0-5]]], %r2, 2
+; CHECK: risbg [[REGISTER:%r[0-5]]], %r2, 0, 159, 2
 ; CHECK: ldgr %f0, [[REGISTER]]
   %shift = ashr i64 %big, 30
   %a = trunc i64 %shift to i32
