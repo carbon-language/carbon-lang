@@ -1361,8 +1361,7 @@ void BoUpSLP::vectorizeTree() {
       if (Entry->NeedToGather)
         continue;
 
-      Value *Vec = Entry->VectorizedValue;
-      assert(Vec && "Can't find vectorizable value");
+      assert(Entry->VectorizedValue && "Can't find vectorizable value");
 
       Type *Ty = Scalar->getType();
       if (!Ty->isVoidTy()) {
