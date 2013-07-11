@@ -665,11 +665,24 @@ def VCMPGTUW  : VCMP <646, "vcmpgtuw $vD, $vA, $vB" , v4i32>;
 def VCMPGTUWo : VCMPo<646, "vcmpgtuw. $vD, $vA, $vB", v4i32>;
                       
 let isCodeGenOnly = 1 in {
-def V_SET0 : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
+def V_SET0B : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
+                      "vxor $vD, $vD, $vD", VecFP,
+                      [(set v16i8:$vD, (v16i8 immAllZerosV))]>;
+def V_SET0H : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
+                      "vxor $vD, $vD, $vD", VecFP,
+                      [(set v8i16:$vD, (v8i16 immAllZerosV))]>;
+def V_SET0  : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
                       "vxor $vD, $vD, $vD", VecFP,
                       [(set v4i32:$vD, (v4i32 immAllZerosV))]>;
+
 let IMM=-1 in {
-def V_SETALLONES : VXForm_3<908, (outs vrrc:$vD), (ins),
+def V_SETALLONESB : VXForm_3<908, (outs vrrc:$vD), (ins),
+                      "vspltisw $vD, -1", VecFP,
+                      [(set v16i8:$vD, (v16i8 immAllOnesV))]>;
+def V_SETALLONESH : VXForm_3<908, (outs vrrc:$vD), (ins),
+                      "vspltisw $vD, -1", VecFP,
+                      [(set v8i16:$vD, (v8i16 immAllOnesV))]>;
+def V_SETALLONES  : VXForm_3<908, (outs vrrc:$vD), (ins),
                       "vspltisw $vD, -1", VecFP,
                       [(set v4i32:$vD, (v4i32 immAllOnesV))]>;
 }
