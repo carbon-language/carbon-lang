@@ -77,3 +77,15 @@ entry:
   ret void
 }
 
+define fastcc void @dct36(double* %inbuf) {
+entry:
+  %arrayidx41 = getelementptr inbounds double* %inbuf, i64 2
+  %arrayidx44 = getelementptr inbounds double* %inbuf, i64 1
+  %0 = load double* %arrayidx44, align 8
+  %add46 = fadd double %0, undef
+  store double %add46, double* %arrayidx41, align 8
+  %1 = load double* %inbuf, align 8
+  %add49 = fadd double %1, %0
+  store double %add49, double* %arrayidx44, align 8
+  ret void
+}
