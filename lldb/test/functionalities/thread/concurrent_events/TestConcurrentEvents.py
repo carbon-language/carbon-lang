@@ -46,7 +46,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_watchpoint_threads=100)
 
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @dwarf_test
     def test_many_signals_dwarf(self):
         """Test 100 signals from 100 threads."""
@@ -64,7 +63,6 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for concurrent signal and breakpoint
     #
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_break_dwarf(self):
@@ -72,7 +70,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_signal_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_delay_signal_break_dwarf(self):
@@ -80,7 +77,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_delay_signal_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_delay_break_dwarf(self):
@@ -154,7 +150,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=1,
                                num_delay_breakpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_two_breakpoints_one_signal_dwarf(self):
@@ -162,7 +157,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2, num_signal_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_breakpoint_delay_breakpoint_one_signal_dwarf(self):
@@ -172,7 +166,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_delay_breakpoint_threads=1,
                                num_signal_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_two_breakpoints_one_delay_signal_dwarf(self):
@@ -292,7 +285,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_crash_threads=1, num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @dwarf_test
     def test_crash_with_signal_dwarf(self):
         """ Test a thread that crashes while another thread generates a signal."""
@@ -319,7 +311,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_breakpoint_threads=1,
                                num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16567 -- thread count is incorrect during signal delivery
     @dwarf_test
     def test_delayed_crash_with_breakpoint_signal_dwarf(self):
         """ Test a thread with a delayed crash while other threads generate a signal and hit a breakpoint. """
