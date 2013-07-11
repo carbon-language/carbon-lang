@@ -318,8 +318,6 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
     // For now, assume that the types in the AST values come from the Target's 
     // scratch AST.    
     
-    clang::ASTContext *ast_context = exe_ctx.GetTargetRef().GetScratchClangASTContext()->getASTContext();
-    
     // Extract the register context so we can read arguments from registers
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
@@ -338,18 +336,18 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
         if (!value)
             return false;
         
-        void *value_type = value->GetClangType();
-        if (value_type)
+        ClangASTType clang_type = value->GetClangType();
+        if (clang_type)
         {
             bool is_signed = false;
             size_t bit_width = 0;
-            if (ClangASTContext::IsIntegerType (value_type, is_signed))
+            if (clang_type.IsIntegerType (is_signed))
             {
-                bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+                bit_width = clang_type.GetBitSize();
             }
-            else if (ClangASTContext::IsPointerOrReferenceType (value_type))
+            else if (clang_type.IsPointerOrReferenceType ())
             {
-                bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+                bit_width = clang_type.GetBitSize();
             }
             else
             {
@@ -421,20 +419,20 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
 
 ValueObjectSP
 ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
-                                         lldb_private::ClangASTType &ast_type) const
+                                         lldb_private::ClangASTType &clang_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;
     
-    void *value_type = ast_type.GetOpaqueQualType();
-    if (!value_type) 
+    if (!clang_type)
         return return_valobj_sp;
     
-    clang::ASTContext *ast_context = ast_type.GetASTContext();
+    clang::ASTContext *ast_context = clang_type.GetASTContext();
     if (!ast_context)
         return return_valobj_sp;
 
-    value.SetContext (Value::eContextTypeClangType, value_type);
+    //value.SetContext (Value::eContextTypeClangType, clang_type.GetOpaqueQualType());
+    value.SetClangType (clang_type);
             
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -446,9 +444,9 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
     // when reading data
     
     const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfoByName("r0", 0);
-    if (ClangASTContext::IsIntegerType (value_type, is_signed))
+    if (clang_type.IsIntegerType (is_signed))
     {
-        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+        size_t bit_width = clang_type.GetBitSize();
         
         switch (bit_width)
         {
@@ -486,7 +484,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
                 break;
         }
     }
-    else if (ClangASTContext::IsPointerType (value_type))
+    else if (clang_type.IsPointerType ())
     {
         uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
         value.GetScalar() = ptr;
@@ -499,11 +497,9 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
     
     // If we get here, we have a valid Value, so make our ValueObject out of it:
     
-    return_valobj_sp = ValueObjectConstResult::Create(
-                                    thread.GetStackFrameAtIndex(0).get(),
-                                    ast_type.GetASTContext(),
-                                    value,
-                                    ConstString(""));
+    return_valobj_sp = ValueObjectConstResult::Create(thread.GetStackFrameAtIndex(0).get(),
+                                                      value,
+                                                      ConstString(""));
     return return_valobj_sp;
 }
 
@@ -517,19 +513,13 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
         return error;
     }
     
-    clang_type_t value_type = new_value_sp->GetClangType();
-    if (!value_type)
+    ClangASTType clang_type = new_value_sp->GetClangType();
+    if (!clang_type)
     {
         error.SetErrorString ("Null clang type for return value.");
         return error;
     }
     
-    clang::ASTContext *ast_context = new_value_sp->GetClangAST();
-    if (!ast_context)
-    {
-        error.SetErrorString ("Null clang AST for return value.");
-        return error;
-    }
     Thread *thread = frame_sp->GetThread().get();
     
     bool is_signed;
@@ -539,7 +529,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
     RegisterContext *reg_ctx = thread->GetRegisterContext().get();
 
     bool set_it_simple = false;
-    if (ClangASTContext::IsIntegerType (value_type, is_signed) || ClangASTContext::IsPointerType(value_type))
+    if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType())
     {
         DataExtractor data;
         size_t num_bytes = new_value_sp->GetData(data);
@@ -573,7 +563,7 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
             error.SetErrorString("We don't support returning longer than 64 bit integer values at present.");
         }
     }
-    else if (ClangASTContext::IsFloatingPointType (value_type, count, is_complex))
+    else if (clang_type.IsFloatingPointType (count, is_complex))
     {
         if (is_complex)
             error.SetErrorString ("We don't support returning complex values at present");

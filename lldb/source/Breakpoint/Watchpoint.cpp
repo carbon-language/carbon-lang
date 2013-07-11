@@ -54,8 +54,7 @@ Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, uint32_t size, const 
     {
         // If we don't have a known type, then we force it to unsigned int of the right size.
         ClangASTContext *ast_context = target.GetScratchClangASTContext();
-        clang_type_t clang_type = ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 8 * size);
-        m_type.SetClangType(ast_context->getASTContext(), clang_type);
+        m_type = ast_context->GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, 8 * size);
     }
     
     // Set the initial value of the watched variable:

@@ -259,8 +259,7 @@ TypeList::RemoveMismatchedTypes (const std::string &type_scope,
 
         if (type_class != eTypeClassAny)
         {
-            match_type_class = ClangASTType::GetTypeClass (the_type->GetClangAST(),
-                                                           the_type->GetClangForwardType());
+            match_type_class = the_type->GetClangForwardType().GetTypeClass ();
             if ((match_type_class & type_class) == 0)
                 continue;
         }
@@ -349,43 +348,9 @@ TypeList::RemoveMismatchedTypes (TypeClass type_class)
     for (pos = m_types.begin(); pos != end; ++pos)
     {
         Type* the_type = pos->second.get();
-        TypeClass match_type_class = ClangASTType::GetTypeClass (the_type->GetClangAST(),
-                                                                 the_type->GetClangForwardType());
+        TypeClass match_type_class = the_type->GetClangForwardType().GetTypeClass ();
         if (match_type_class & type_class)
             matching_types.insert (*pos);
     }
     m_types.swap(matching_types);
 }
-
-//void *
-//TypeList::CreateClangPointerType (Type *type)
-//{
-//    assert(type);
-//    return m_ast.CreatePointerType(type->GetClangForwardType());
-//}
-//
-//void *
-//TypeList::CreateClangTypedefType (Type *typedef_type, Type *base_type)
-//{
-//    assert(typedef_type && base_type);
-//    return m_ast.CreateTypedefType (typedef_type->GetName().AsCString(), 
-//                                    base_type->GetClangForwardType(), 
-//                                    typedef_type->GetSymbolFile()->GetClangDeclContextForTypeUID(typedef_type->GetID()));
-//}
-//
-//void *
-//TypeList::CreateClangLValueReferenceType (Type *type)
-//{
-//    assert(type);
-//    return m_ast.CreateLValueReferenceType(type->GetClangForwardType());
-//}
-//
-//void *
-//TypeList::CreateClangRValueReferenceType (Type *type)
-//{
-//    assert(type);
-//    return m_ast.CreateRValueReferenceType (type->GetClangForwardType());
-//}
-//
-
-

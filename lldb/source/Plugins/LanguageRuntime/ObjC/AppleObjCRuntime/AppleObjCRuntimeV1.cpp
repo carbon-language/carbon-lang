@@ -178,13 +178,14 @@ AppleObjCRuntimeV1::CreateObjectChecker(const char *name)
 //ObjCLanguageRuntime::ObjCISA
 //AppleObjCRuntimeV1::GetISA(ValueObject& valobj)
 //{
-////    if (ClangASTType::GetMinimumLanguage(valobj.GetClangAST(),valobj.GetClangType()) != eLanguageTypeObjC)
+//    ClangASTType valobj_clang_type = valobj.GetClangType();
+////    if (valobj_clang_type.GetMinimumLanguage() != eLanguageTypeObjC)
 ////        return 0;
 //    
 //    // if we get an invalid VO (which might still happen when playing around
 //    // with pointers returned by the expression parser, don't consider this
 //    // a valid ObjC object)
-//    if (valobj.GetValue().GetContextType() == Value::eContextTypeInvalid)
+//    if (!valobj.GetClangType().IsValid())
 //        return 0;
 //    
 //    addr_t isa_pointer = valobj.GetPointerValue();

@@ -34,16 +34,14 @@ public:
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            clang::ASTContext *clang_ast,
-            void *clang_type,
+            const ClangASTType &clang_type,
             const ConstString &name,
             const DataExtractor &data,
             lldb::addr_t address = LLDB_INVALID_ADDRESS);
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            clang::ASTContext *clang_ast,
-            void *clang_type,
+            const ClangASTType &clang_type,
             const ConstString &name,
             const lldb::DataBufferSP &result_data_sp,
             lldb::ByteOrder byte_order, 
@@ -52,8 +50,7 @@ public:
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            clang::ASTContext *clang_ast,
-            void *clang_type,
+            const ClangASTType &clang_type,
             const ConstString &name,
             lldb::addr_t address,
             AddressType address_type,
@@ -61,7 +58,6 @@ public:
 
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
-            clang::ASTContext *clang_ast,
             Value &value,
             const ConstString &name);
 
@@ -86,13 +82,6 @@ public:
 
     virtual bool
     IsInScope ();
-
-    virtual bool
-    SetClangAST (clang::ASTContext *ast)
-    {
-        m_clang_ast = ast;
-        return true;
-    }
 
     void
     SetByteSize (size_t size);
@@ -139,13 +128,9 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual clang::ASTContext *
-    GetClangASTImpl ();
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ();
 
-    clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     ConstString m_type_name;
     uint64_t m_byte_size;
     
@@ -159,15 +144,13 @@ private:
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
-                            void *clang_type,
+                            const ClangASTType &clang_type,
                             const ConstString &name,
                             const DataExtractor &data,
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
-                            void *clang_type,
+                            const ClangASTType &clang_type,
                             const ConstString &name,
                             const lldb::DataBufferSP &result_data_sp,
                             lldb::ByteOrder byte_order, 
@@ -175,15 +158,13 @@ private:
                             lldb::addr_t address);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
-                            void *clang_type,
+                            const ClangASTType &clang_type,
                             const ConstString &name,
                             lldb::addr_t address,
                             AddressType address_type,
                             uint32_t addr_byte_size);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
-                            clang::ASTContext *clang_ast,
                             const Value &value,
                             const ConstString &name);
 

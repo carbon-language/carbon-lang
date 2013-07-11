@@ -564,19 +564,9 @@ public:
     //------------------------------------------------------------------
     const Type*
     GetType() const;
-
-    lldb::clang_type_t
-    GetReturnClangType ();
-
-    // The Number of arguments, or -1 for an unprototyped function.
-    int
-    GetArgumentCount ();
-
-    lldb::clang_type_t
-    GetArgumentTypeAtIndex (size_t idx);
-
-    bool
-    IsVariadic ();
+    
+    ClangASTType
+    GetClangType ();
 
     uint32_t
     GetPrologueByteSize ();

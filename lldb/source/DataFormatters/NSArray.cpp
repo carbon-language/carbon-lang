@@ -90,14 +90,18 @@ lldb_private::formatters::NSArraySummaryProvider (ValueObject& valobj, Stream& s
 }
 
 lldb_private::formatters::NSArrayMSyntheticFrontEnd::NSArrayMSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-SyntheticChildrenFrontEnd(*valobj_sp.get()),
-m_exe_ctx_ref(),
-m_ptr_size(8),
-m_data_32(NULL),
-m_data_64(NULL)
+    SyntheticChildrenFrontEnd(*valobj_sp.get()),
+    m_exe_ctx_ref(),
+    m_ptr_size(8),
+    m_data_32(NULL),
+    m_data_64(NULL)
 {
     if (valobj_sp)
-        m_id_type = ClangASTType(valobj_sp->GetClangAST(),valobj_sp->GetClangAST()->ObjCBuiltinIdTy.getAsOpaquePtr());
+    {
+        clang::ASTContext *ast = valobj_sp->GetClangType().GetASTContext();
+        if (ast)
+            m_id_type = ClangASTType(ast, ast->ObjCBuiltinIdTy);
+    }
 }
 
 size_t
@@ -195,14 +199,18 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::~NSArrayMSyntheticFrontEnd 
 }
 
 lldb_private::formatters::NSArrayISyntheticFrontEnd::NSArrayISyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-SyntheticChildrenFrontEnd(*valobj_sp.get()),
-m_exe_ctx_ref(),
-m_ptr_size(8),
-m_items(0),
-m_data_ptr(0)
+    SyntheticChildrenFrontEnd (*valobj_sp.get()),
+    m_exe_ctx_ref (),
+    m_ptr_size (8),
+    m_items (0),
+    m_data_ptr (0)
 {
     if (valobj_sp)
-        m_id_type = ClangASTType(valobj_sp->GetClangAST(),valobj_sp->GetClangAST()->ObjCBuiltinIdTy.getAsOpaquePtr());
+    {
+        clang::ASTContext *ast = valobj_sp->GetClangType().GetASTContext();
+        if (ast)
+            m_id_type = ClangASTType(ast, ast->ObjCBuiltinIdTy);
+    }
 }
 
 lldb_private::formatters::NSArrayISyntheticFrontEnd::~NSArrayISyntheticFrontEnd ()

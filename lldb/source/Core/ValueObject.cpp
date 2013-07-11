@@ -283,101 +283,80 @@ ValueObject::ClearDynamicTypeInformation ()
 ClangASTType
 ValueObject::MaybeCalculateCompleteType ()
 {
-    ClangASTType ret(GetClangASTImpl(), GetClangTypeImpl());
+    ClangASTType clang_type(GetClangTypeImpl());
         
     if (m_did_calculate_complete_objc_class_type)
     {
         if (m_override_type.IsValid())
             return m_override_type;
         else
-            return ret;
+            return clang_type;
     }
     
-    clang_type_t ast_type(GetClangTypeImpl());
-    clang_type_t class_type;
-    bool is_pointer_type;
+    ClangASTType class_type;
+    bool is_pointer_type = false;
     
-    if (ClangASTContext::IsObjCObjectPointerType(ast_type, &class_type))
+    if (clang_type.IsObjCObjectPointerType(&class_type))
     {
         is_pointer_type = true;
     }
-    else if (ClangASTContext::IsObjCClassType(ast_type))
+    else if (clang_type.IsObjCObjectOrInterfaceType())
     {
-        is_pointer_type = false;
-        class_type = ast_type;
+        class_type = clang_type;
     }
     else
     {
-        return ret;
+        return clang_type;
     }
     
     m_did_calculate_complete_objc_class_type = true;
     
-    if (!class_type)
-        return ret;
-    
-    std::string class_name;
-    
-    if (!ClangASTContext::GetObjCClassName(class_type, class_name))
-        return ret;
-    
-    ProcessSP process_sp(GetUpdatePoint().GetExecutionContextRef().GetProcessSP());
-    
-    if (!process_sp)
-        return ret;
-    
-    ObjCLanguageRuntime *objc_language_runtime(process_sp->GetObjCLanguageRuntime());
-    
-    if (!objc_language_runtime)
-        return ret;
-    
-    ConstString class_name_cs(class_name.c_str());
-    
-    TypeSP complete_objc_class_type_sp = objc_language_runtime->LookupInCompleteClassCache(class_name_cs);
-    
-    if (!complete_objc_class_type_sp)
-        return ret;
-    
-    ClangASTType complete_class(complete_objc_class_type_sp->GetClangAST(),
-                                complete_objc_class_type_sp->GetClangFullType());
-    
-    if (!ClangASTContext::GetCompleteType(complete_class.GetASTContext(), 
-                                          complete_class.GetOpaqueQualType()))
-        return ret;
-    
-    if (is_pointer_type)
+    if (class_type)
     {
-        clang_type_t pointer_type = ClangASTContext::CreatePointerType(complete_class.GetASTContext(),
-                                                                       complete_class.GetOpaqueQualType());
+        ConstString class_name (class_type.GetConstTypeName());
         
-        m_override_type = ClangASTType(complete_class.GetASTContext(),
-                                       pointer_type);
+        if (class_name)
+        {
+            ProcessSP process_sp(GetUpdatePoint().GetExecutionContextRef().GetProcessSP());
+            
+            if (process_sp)
+            {
+                ObjCLanguageRuntime *objc_language_runtime(process_sp->GetObjCLanguageRuntime());
+                
+                if (objc_language_runtime)
+                {
+                    TypeSP complete_objc_class_type_sp = objc_language_runtime->LookupInCompleteClassCache(class_name);
+                    
+                    if (complete_objc_class_type_sp)
+                    {
+                        ClangASTType complete_class(complete_objc_class_type_sp->GetClangFullType());
+                        
+                        if (complete_class.GetCompleteType())
+                        {
+                            if (is_pointer_type)
+                            {
+                                m_override_type = complete_class.GetPointerType();
+                            }
+                            else
+                            {
+                                m_override_type = complete_class;
+                            }
+                            
+                            if (m_override_type.IsValid())
+                                return m_override_type;
+                        }
+                    }
+                }
+            }
+        }
     }
-    else
-    {
-        m_override_type = complete_class;
-    }
-    
-    if (m_override_type.IsValid())
-        return m_override_type;
-    else
-        return ret;
+    return clang_type;
 }
 
-clang::ASTContext *
-ValueObject::GetClangAST ()
-{
-    ClangASTType type = MaybeCalculateCompleteType();
-    
-    return type.GetASTContext();
-}
-
-lldb::clang_type_t
+ClangASTType
 ValueObject::GetClangType ()
 {
-    ClangASTType type = MaybeCalculateCompleteType();
-    
-    return type.GetOpaqueQualType();
+    return MaybeCalculateCompleteType();
 }
 
 DataExtractor &
@@ -474,7 +453,7 @@ ValueObject::ResolveValue (Scalar &scalar)
     {
         ExecutionContext exe_ctx (GetExecutionContextRef());
         Value tmp_value(m_value);
-        scalar = tmp_value.ResolveValue(&exe_ctx, GetClangAST ());
+        scalar = tmp_value.ResolveValue(&exe_ctx);
         if (scalar.IsValid())
         {
             const uint32_t bitfield_bit_size = GetBitfieldBitSize();
@@ -620,10 +599,7 @@ size_t
 ValueObject::GetIndexOfChildWithName (const ConstString &name)
 {
     bool omit_empty_base_classes = true;
-    return ClangASTContext::GetIndexOfChildWithName (GetClangAST(),
-                                                     GetClangType(),
-                                                     name.GetCString(),
-                                                     omit_empty_base_classes);
+    return GetClangType().GetIndexOfChildWithName (name.GetCString(), omit_empty_base_classes);
 }
 
 ValueObjectSP
@@ -639,14 +615,10 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
         UpdateValueIfNeeded(false);
 
     std::vector<uint32_t> child_indexes;
-    clang::ASTContext *clang_ast = GetClangAST();
-    void *clang_type = GetClangType();
     bool omit_empty_base_classes = true;
-    const size_t num_child_indexes =  ClangASTContext::GetIndexOfChildMemberWithName (clang_ast,
-                                                                                      clang_type,
-                                                                                      name.GetCString(),
-                                                                                      omit_empty_base_classes,
-                                                                                      child_indexes);
+    const size_t num_child_indexes =  GetClangType().GetIndexOfChildMemberWithName (name.GetCString(),
+                                                                                    omit_empty_base_classes,
+                                                                                    child_indexes);
     if (num_child_indexes > 0)
     {
         std::vector<uint32_t>::const_iterator pos = child_indexes.begin ();
@@ -689,9 +661,9 @@ ValueObject::MightHaveChildren()
     const uint32_t type_info = GetTypeInfo();
     if (type_info)
     {
-        if (type_info & (ClangASTContext::eTypeHasChildren |
-                         ClangASTContext::eTypeIsPointer |
-                         ClangASTContext::eTypeIsReference))
+        if (type_info & (ClangASTType::eTypeHasChildren |
+                         ClangASTType::eTypeIsPointer |
+                         ClangASTType::eTypeIsReference))
             has_children = true;
     }
     else
@@ -731,27 +703,23 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
     bool child_is_deref_of_parent = false;
 
     const bool transparent_pointers = synthetic_array_member == false;
-    clang::ASTContext *clang_ast = GetClangAST();
-    clang_type_t clang_type = GetClangType();
-    clang_type_t child_clang_type;
+    ClangASTType child_clang_type;
     
     ExecutionContext exe_ctx (GetExecutionContextRef());
     
-    child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
-                                                                  clang_ast,
-                                                                  GetName().GetCString(),
-                                                                  clang_type,
-                                                                  idx,
-                                                                  transparent_pointers,
-                                                                  omit_empty_base_classes,
-                                                                  ignore_array_bounds,
-                                                                  child_name_str,
-                                                                  child_byte_size,
-                                                                  child_byte_offset,
-                                                                  child_bitfield_bit_size,
-                                                                  child_bitfield_bit_offset,
-                                                                  child_is_base_class,
-                                                                  child_is_deref_of_parent);
+    child_clang_type = GetClangType().GetChildClangTypeAtIndex (&exe_ctx,
+                                                                GetName().GetCString(),
+                                                                idx,
+                                                                transparent_pointers,
+                                                                omit_empty_base_classes,
+                                                                ignore_array_bounds,
+                                                                child_name_str,
+                                                                child_byte_size,
+                                                                child_byte_offset,
+                                                                child_bitfield_bit_size,
+                                                                child_bitfield_bit_offset,
+                                                                child_is_base_class,
+                                                                child_is_deref_of_parent);
     if (child_clang_type)
     {
         if (synthetic_index)
@@ -762,7 +730,6 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
             child_name.SetCString (child_name_str.c_str());
 
         valobj = new ValueObjectChild (*this,
-                                       clang_ast,
                                        child_clang_type,
                                        child_name,
                                        child_byte_size,
@@ -809,19 +776,14 @@ ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
         }
         else
         {
-            clang_type_t clang_type = GetClangType();
+            ClangASTType clang_type = GetClangType();
             
             // Do some default printout for function pointers
             if (clang_type)
             {
-                StreamString sstr;
-                clang_type_t elem_or_pointee_clang_type;
-                const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, 
-                                                                      GetClangAST(), 
-                                                                      &elem_or_pointee_clang_type));
-                
-                if (ClangASTContext::IsFunctionPointerType (clang_type))
+                if (clang_type.IsFunctionPointerType ())
                 {
+                    StreamString sstr;
                     AddressType func_ptr_address_type = eAddressTypeInvalid;
                     addr_t func_ptr_address = GetPointerValue (&func_ptr_address_type);
                     if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
@@ -885,15 +847,15 @@ ValueObject::GetSummaryAsCString ()
 bool
 ValueObject::IsCStringContainer(bool check_pointer)
 {
-    clang_type_t elem_or_pointee_clang_type;
-    const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
-    bool is_char_arr_ptr (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
-                          ClangASTContext::IsCharType (elem_or_pointee_clang_type));
+    ClangASTType pointee_or_element_clang_type;
+    const Flags type_flags (GetTypeInfo (&pointee_or_element_clang_type));
+    bool is_char_arr_ptr (type_flags.AnySet (ClangASTType::eTypeIsArray | ClangASTType::eTypeIsPointer) &&
+                          pointee_or_element_clang_type.IsCharType ());
     if (!is_char_arr_ptr)
         return false;
     if (!check_pointer)
         return true;
-    if (type_flags.Test(ClangASTContext::eTypeIsArray))
+    if (type_flags.Test(ClangASTType::eTypeIsArray))
         return true;
     addr_t cstr_address = LLDB_INVALID_ADDRESS;
     AddressType cstr_address_type = eAddressTypeInvalid;
@@ -906,23 +868,18 @@ ValueObject::GetPointeeData (DataExtractor& data,
                              uint32_t item_idx,
                              uint32_t item_count)
 {
-    clang_type_t pointee_or_element_clang_type;
+    ClangASTType pointee_or_element_clang_type;
     const uint32_t type_info = GetTypeInfo (&pointee_or_element_clang_type);
-    const bool is_pointer_type = type_info & ClangASTContext::eTypeIsPointer;
-    const bool is_array_type = type_info & ClangASTContext::eTypeIsArray;
+    const bool is_pointer_type = type_info & ClangASTType::eTypeIsPointer;
+    const bool is_array_type = type_info & ClangASTType::eTypeIsArray;
     if (!(is_pointer_type || is_array_type))
         return 0;
     
     if (item_count == 0)
         return 0;
     
-    clang::ASTContext *ast = GetClangAST();
-    ClangASTType pointee_or_element_type(ast, pointee_or_element_clang_type);
-    
-    const uint64_t item_type_size = pointee_or_element_type.GetClangTypeByteSize();
-    
+    const uint64_t item_type_size = pointee_or_element_clang_type.GetByteSize();
     const uint64_t bytes = item_count * item_type_size;
-    
     const uint64_t offset = item_idx * item_type_size;
     
     if (item_idx == 0 && item_count == 1) // simply a deref
@@ -996,8 +953,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
                 break;
             case eAddressTypeHost:
                 {
-                    ClangASTType valobj_type(ast, GetClangType());
-                    uint64_t max_bytes = valobj_type.GetClangTypeByteSize();
+                    const uint64_t max_bytes = GetClangType().GetByteSize();
                     if (max_bytes > offset)
                     {
                         size_t bytes_read = std::min<uint64_t>(max_bytes - offset, bytes);
@@ -1019,7 +975,7 @@ ValueObject::GetData (DataExtractor& data)
 {
     UpdateValueIfNeeded(false);
     ExecutionContext exe_ctx (GetExecutionContextRef());
-    Error error = m_value.GetValueAsData(&exe_ctx, GetClangAST(), data, 0, GetModule().get());
+    Error error = m_value.GetValueAsData(&exe_ctx, data, 0, GetModule().get());
     if (error.Fail())
     {
         if (m_data.GetByteSize())
@@ -1050,7 +1006,7 @@ ValueObject::SetData (DataExtractor &data, Error &error)
     }
     
     uint64_t count = 0;
-    Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
+    const Encoding encoding = GetClangType().GetEncoding(count);
     
     const size_t byte_size = GetByteSize();
     
@@ -1163,25 +1119,29 @@ ValueObject::ReadPointedString (Stream& s,
     size_t bytes_read = 0;
     size_t total_bytes_read = 0;
     
-    clang_type_t clang_type = GetClangType();
-    clang_type_t elem_or_pointee_clang_type;
+    ClangASTType clang_type = GetClangType();
+    ClangASTType elem_or_pointee_clang_type;
     const Flags type_flags (GetTypeInfo (&elem_or_pointee_clang_type));
-    if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
-        ClangASTContext::IsCharType (elem_or_pointee_clang_type))
+    if (type_flags.AnySet (ClangASTType::eTypeIsArray | ClangASTType::eTypeIsPointer) &&
+        elem_or_pointee_clang_type.IsCharType ())
     {
         addr_t cstr_address = LLDB_INVALID_ADDRESS;
         AddressType cstr_address_type = eAddressTypeInvalid;
         
         size_t cstr_len = 0;
         bool capped_data = false;
-        if (type_flags.Test (ClangASTContext::eTypeIsArray))
+        if (type_flags.Test (ClangASTType::eTypeIsArray))
         {
             // We have an array
-            cstr_len = ClangASTContext::GetArraySize (clang_type);
-            if (cstr_len > max_length)
+            uint64_t array_size = 0;
+            if (clang_type.IsArrayType(NULL, &array_size, NULL))
             {
-                capped_data = true;
-                cstr_len = max_length;
+                cstr_len = array_size;
+                if (cstr_len > max_length)
+                {
+                    capped_data = true;
+                    cstr_len = max_length;
+                }
             }
             cstr_address = GetAddressOf (true, &cstr_address_type);
         }
@@ -1318,12 +1278,11 @@ ValueObject::GetObjectDescription ()
     if (runtime == NULL)
     {
         // Aw, hell, if the things a pointer, or even just an integer, let's try ObjC anyway...
-        clang_type_t opaque_qual_type = GetClangType();
-        if (opaque_qual_type != NULL)
+        ClangASTType clang_type = GetClangType();
+        if (clang_type)
         {
             bool is_signed;
-            if (ClangASTContext::IsIntegerType (opaque_qual_type, is_signed) 
-                || ClangASTContext::IsPointerType (opaque_qual_type))
+            if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType ())
             {
                 runtime = process->GetLanguageRuntime(eLanguageTypeObjC);
             }
@@ -1345,94 +1304,79 @@ bool
 ValueObject::GetValueAsCString (lldb::Format format,
                                 std::string& destination)
 {
-    if (ClangASTContext::IsAggregateType (GetClangType()) == false &&
-        UpdateValueIfNeeded(false))
+    if (GetClangType().IsAggregateType () == false && UpdateValueIfNeeded(false))
     {
         const Value::ContextType context_type = m_value.GetContextType();
         
-        switch (context_type)
+        if (context_type == Value::eContextTypeRegisterInfo)
         {
-            case Value::eContextTypeClangType:
-            case Value::eContextTypeLLDBType:
-            case Value::eContextTypeVariable:
+            const RegisterInfo *reg_info = m_value.GetRegisterInfo();
+            if (reg_info)
             {
-                clang_type_t clang_type = GetClangType ();
-                if (clang_type)
+                ExecutionContext exe_ctx (GetExecutionContextRef());
+                
+                StreamString reg_sstr;
+                m_data.Dump (&reg_sstr,
+                             0,
+                             format,
+                             reg_info->byte_size,
+                             1,
+                             UINT32_MAX,
+                             LLDB_INVALID_ADDRESS,
+                             0,
+                             0,
+                             exe_ctx.GetBestExecutionContextScope());
+                destination.swap(reg_sstr.GetString());
+            }
+        }
+        else
+        {
+            ClangASTType clang_type = GetClangType ();
+            if (clang_type)
+            {
+                 // put custom bytes to display in this DataExtractor to override the default value logic
+                lldb_private::DataExtractor special_format_data;
+                if (format == eFormatCString)
                 {
-                     // put custom bytes to display in this DataExtractor to override the default value logic
-                    lldb_private::DataExtractor special_format_data;
-                    clang::ASTContext* ast = GetClangAST();
-                    if (format == eFormatCString)
+                    Flags type_flags(clang_type.GetTypeInfo(NULL));
+                    if (type_flags.Test(ClangASTType::eTypeIsPointer) && !type_flags.Test(ClangASTType::eTypeIsObjC))
                     {
-                        Flags type_flags(ClangASTContext::GetTypeInfo(clang_type, ast, NULL));
-                        if (type_flags.Test(ClangASTContext::eTypeIsPointer) && !type_flags.Test(ClangASTContext::eTypeIsObjC))
+                        // if we are dumping a pointer as a c-string, get the pointee data as a string
+                        TargetSP target_sp(GetTargetSP());
+                        if (target_sp)
                         {
-                            // if we are dumping a pointer as a c-string, get the pointee data as a string
-                            TargetSP target_sp(GetTargetSP());
-                            if (target_sp)
-                            {
-                                size_t max_len = target_sp->GetMaximumSizeOfStringSummary();
-                                Error error;
-                                DataBufferSP buffer_sp(new DataBufferHeap(max_len+1,0));
-                                Address address(GetPointerValue());
-                                if (target_sp->ReadCStringFromMemory(address, (char*)buffer_sp->GetBytes(), max_len, error) && error.Success())
-                                    special_format_data.SetData(buffer_sp);
-                            }
+                            size_t max_len = target_sp->GetMaximumSizeOfStringSummary();
+                            Error error;
+                            DataBufferSP buffer_sp(new DataBufferHeap(max_len+1,0));
+                            Address address(GetPointerValue());
+                            if (target_sp->ReadCStringFromMemory(address, (char*)buffer_sp->GetBytes(), max_len, error) && error.Success())
+                                special_format_data.SetData(buffer_sp);
                         }
                     }
-                    
-                    StreamString sstr;
-                    ExecutionContext exe_ctx (GetExecutionContextRef());
-                    ClangASTType::DumpTypeValue (ast,                           // The clang AST
-                                                 clang_type,                    // The clang type to display
-                                                 &sstr,                         // The stream to use for display
-                                                 format,                        // Format to display this type with
-                                                 special_format_data.GetByteSize() ?
-                                                 special_format_data: m_data,   // Data to extract from
-                                                 0,                             // Byte offset into "m_data"
-                                                 GetByteSize(),                 // Byte size of item in "m_data"
-                                                 GetBitfieldBitSize(),          // Bitfield bit size
-                                                 GetBitfieldBitOffset(),        // Bitfield bit offset
-                                                 exe_ctx.GetBestExecutionContextScope()); 
-                    // Don't set the m_error to anything here otherwise
-                    // we won't be able to re-format as anything else. The
-                    // code for ClangASTType::DumpTypeValue() should always
-                    // return something, even if that something contains
-                    // an error messsage. "m_error" is used to detect errors
-                    // when reading the valid object, not for formatting errors.
-                    if (sstr.GetString().empty())
-                        destination.clear();
-                    else
-                        destination.swap(sstr.GetString());
                 }
-            }
-                break;
                 
-            case Value::eContextTypeRegisterInfo:
-            {
-                const RegisterInfo *reg_info = m_value.GetRegisterInfo();
-                if (reg_info)
-                {
-                    ExecutionContext exe_ctx (GetExecutionContextRef());
-                    
-                    StreamString reg_sstr;
-                    m_data.Dump (&reg_sstr, 
-                                 0, 
-                                 format, 
-                                 reg_info->byte_size, 
-                                 1, 
-                                 UINT32_MAX, 
-                                 LLDB_INVALID_ADDRESS, 
-                                 0, 
-                                 0, 
-                                 exe_ctx.GetBestExecutionContextScope());
-                    destination.swap(reg_sstr.GetString());
-                }
+                StreamString sstr;
+                ExecutionContext exe_ctx (GetExecutionContextRef());
+                clang_type.DumpTypeValue (&sstr,                         // The stream to use for display
+                                          format,                        // Format to display this type with
+                                          special_format_data.GetByteSize() ?
+                                          special_format_data: m_data,   // Data to extract from
+                                          0,                             // Byte offset into "m_data"
+                                          GetByteSize(),                 // Byte size of item in "m_data"
+                                          GetBitfieldBitSize(),          // Bitfield bit size
+                                          GetBitfieldBitOffset(),        // Bitfield bit offset
+                                          exe_ctx.GetBestExecutionContextScope());
+                // Don't set the m_error to anything here otherwise
+                // we won't be able to re-format as anything else. The
+                // code for ClangASTType::DumpTypeValue() should always
+                // return something, even if that something contains
+                // an error messsage. "m_error" is used to detect errors
+                // when reading the valid object, not for formatting errors.
+                if (sstr.GetString().empty())
+                    destination.clear();
+                else
+                    destination.swap(sstr.GetString());
             }
-                break;
-                
-            default:
-                break;
         }
         return !destination.empty();
     }
@@ -1464,8 +1408,7 @@ ValueObject::GetValueAsCString ()
                     }
                     else
                     {
-                        clang_type_t clang_type = GetClangType ();
-                        my_format = ClangASTType::GetFormat(clang_type);
+                        my_format = GetClangType().GetFormat();
                     }
                 }
             }
@@ -1495,7 +1438,7 @@ uint64_t
 ValueObject::GetValueAsUnsigned (uint64_t fail_value, bool *success)
 {
     // If our byte size is zero this is an aggregate type that has children
-    if (ClangASTContext::IsAggregateType (GetClangType()) == false)
+    if (!GetClangType().IsAggregateType())
     {
         Scalar scalar;
         if (ResolveValue (scalar))
@@ -1519,10 +1462,8 @@ bool
 ValueObject::HasSpecialPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
                                                Format custom_format)
 {
-    clang_type_t elem_or_pointee_type;
-    Flags flags(GetTypeInfo(&elem_or_pointee_type));
-    
-    if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
+    Flags flags(GetTypeInfo());
+    if (flags.AnySet(ClangASTType::eTypeIsArray | ClangASTType::eTypeIsPointer)
         && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue)
     {        
         if (IsCStringContainer(true) && 
@@ -1532,7 +1473,7 @@ ValueObject::HasSpecialPrintableRepresentation(ValueObjectRepresentationStyle va
              custom_format == eFormatVectorOfChar))
             return true;
 
-        if (flags.Test(ClangASTContext::eTypeIsArray))
+        if (flags.Test(ClangASTType::eTypeIsArray))
         {
             if ((custom_format == eFormatBytes) ||
                 (custom_format == eFormatBytesWithASCII))
@@ -1563,15 +1504,14 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                                          PrintableRepresentationSpecialCases special)
 {
 
-    clang_type_t elem_or_pointee_type;
-    Flags flags(GetTypeInfo(&elem_or_pointee_type));
+    Flags flags(GetTypeInfo());
     
     bool allow_special = ((special & ePrintableRepresentationSpecialCasesAllow) == ePrintableRepresentationSpecialCasesAllow);
     bool only_special = ((special & ePrintableRepresentationSpecialCasesOnly) == ePrintableRepresentationSpecialCasesOnly);
     
     if (allow_special)
     {
-        if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
+        if (flags.AnySet(ClangASTType::eTypeIsArray | ClangASTType::eTypeIsPointer)
              && val_obj_display == ValueObject::eValueObjectRepresentationStyleValue)
         {
             // when being asked to get a printable display an array or pointer type directly, 
@@ -1597,7 +1537,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
             
             // this only works for arrays, because I have no way to know when
             // the pointed memory ends, and no special \0 end of data marker
-            if (flags.Test(ClangASTContext::eTypeIsArray))
+            if (flags.Test(ClangASTType::eTypeIsArray))
             {
                 if ((custom_format == eFormatBytes) ||
                     (custom_format == eFormatBytesWithASCII))
@@ -1745,7 +1685,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 cstr = GetSummaryAsCString();
             else if (val_obj_display == eValueObjectRepresentationStyleSummary)
             {
-                if (ClangASTContext::IsAggregateType (GetClangType()) == true)
+                if (GetClangType().IsAggregateType())
                 {
                     strm.Printf("%s @ %s", GetTypeName().AsCString(), GetLocationAsCString());
                     cstr = strm.GetString().c_str();
@@ -1862,7 +1802,7 @@ ValueObject::SetValueFromCString (const char *value_str, Error& error)
     }
 
     uint64_t count = 0;
-    Encoding encoding = ClangASTType::GetEncoding (GetClangType(), count);
+    const Encoding encoding = GetClangType().GetEncoding (count);
 
     const size_t byte_size = GetByteSize();
 
@@ -1960,21 +1900,20 @@ ValueObject::GetDeclaration (Declaration &decl)
 ConstString
 ValueObject::GetTypeName()
 {
-    return ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
+    return GetClangType().GetConstTypeName();
 }
 
 ConstString
 ValueObject::GetQualifiedTypeName()
 {
-    return ClangASTType::GetConstQualifiedTypeName (GetClangAST(), GetClangType());
+    return GetClangType().GetConstQualifiedTypeName();
 }
 
 
 LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
-    return ClangASTType::GetMinimumLanguage (GetClangAST(),
-                                             GetClangType());
+    return GetClangType().GetMinimumLanguage ();
 }
 
 void
@@ -1994,39 +1933,39 @@ ValueObject::GetSyntheticChild (const ConstString &key) const
 }
 
 uint32_t
-ValueObject::GetTypeInfo (clang_type_t *pointee_or_element_clang_type)
+ValueObject::GetTypeInfo (ClangASTType *pointee_or_element_clang_type)
 {
-    return ClangASTContext::GetTypeInfo (GetClangType(), GetClangAST(), pointee_or_element_clang_type);
+    return GetClangType().GetTypeInfo (pointee_or_element_clang_type);
 }
 
 bool
 ValueObject::IsPointerType ()
 {
-    return ClangASTContext::IsPointerType (GetClangType());
+    return GetClangType().IsPointerType();
 }
 
 bool
 ValueObject::IsArrayType ()
 {
-    return ClangASTContext::IsArrayType (GetClangType(), NULL, NULL, NULL);
+    return GetClangType().IsArrayType (NULL, NULL, NULL);
 }
 
 bool
 ValueObject::IsScalarType ()
 {
-    return ClangASTContext::IsScalarType (GetClangType());
+    return GetClangType().IsScalarType ();
 }
 
 bool
 ValueObject::IsIntegerType (bool &is_signed)
 {
-    return ClangASTContext::IsIntegerType (GetClangType(), is_signed);
+    return GetClangType().IsIntegerType (is_signed);
 }
 
 bool
 ValueObject::IsPointerOrReferenceType ()
 {
-    return ClangASTContext::IsPointerOrReferenceType (GetClangType());
+    return GetClangType().IsPointerOrReferenceType ();
 }
 
 bool
@@ -2037,14 +1976,14 @@ ValueObject::IsPossibleDynamicType ()
     if (process)
         return process->IsPossibleDynamicValue(*this);
     else
-        return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType(), NULL, true, true);
+        return GetClangType().IsPossibleDynamicType (NULL, true, true);
 }
 
 bool
 ValueObject::IsObjCNil ()
 {
-    const uint32_t mask = ClangASTContext::eTypeIsObjC | ClangASTContext::eTypeIsPointer;
-    bool isObjCpointer = ( ((ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), NULL)) & mask) == mask);
+    const uint32_t mask = ClangASTType::eTypeIsObjC | ClangASTType::eTypeIsPointer;
+    bool isObjCpointer = (((GetClangType().GetTypeInfo(NULL)) & mask) == mask);
     if (!isObjCpointer)
         return false;
     bool canReadValue = true;
@@ -2056,10 +1995,10 @@ ValueObjectSP
 ValueObject::GetSyntheticArrayMember (size_t index, bool can_create)
 {
     const uint32_t type_info = GetTypeInfo ();
-    if (type_info & ClangASTContext::eTypeIsArray)
+    if (type_info & ClangASTType::eTypeIsArray)
         return GetSyntheticArrayMemberFromArray(index, can_create);
 
-    if (type_info & ClangASTContext::eTypeIsPointer)
+    if (type_info & ClangASTType::eTypeIsPointer)
         return GetSyntheticArrayMemberFromPointer(index, can_create);
     
     return ValueObjectSP();
@@ -2155,20 +2094,18 @@ ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_cre
         synthetic_child_sp = GetSyntheticChild (index_const_str);
         if (!synthetic_child_sp)
         {
-            ValueObjectChild *synthetic_child;
             // We haven't made a synthetic array member for INDEX yet, so
             // lets make one and cache it for any future reference.
-            synthetic_child = new ValueObjectChild(*this,
-                                                      GetClangAST(),
-                                                      GetClangType(),
-                                                      index_const_str,
-                                                      GetByteSize(),
-                                                      0,
-                                                      to-from+1,
-                                                      from,
-                                                      false,
-                                                      false,
-                                                      eAddressTypeInvalid);
+            ValueObjectChild *synthetic_child = new ValueObjectChild (*this,
+                                                                      GetClangType(),
+                                                                      index_const_str,
+                                                                      GetByteSize(),
+                                                                      0,
+                                                                      to-from+1,
+                                                                      from,
+                                                                      false,
+                                                                      false,
+                                                                      eAddressTypeInvalid);
             
             // Cache the value if we got one back...
             if (synthetic_child)
@@ -2204,10 +2141,9 @@ ValueObject::GetSyntheticChildAtOffset(uint32_t offset, const ClangASTType& type
         return ValueObjectSP();
     
     ValueObjectChild *synthetic_child = new ValueObjectChild(*this,
-                                                             type.GetASTContext(),
-                                                             type.GetOpaqueQualType(),
+                                                             type,
                                                              name_const_str,
-                                                             type.GetTypeByteSize(),
+                                                             type.GetByteSize(),
                                                              offset,
                                                              0,
                                                              0,
@@ -2377,9 +2313,9 @@ ValueObject::GetBaseClassPath (Stream &s)
     if (IsBaseClass())
     {
         bool parent_had_base_class = GetParent() && GetParent()->GetBaseClassPath (s);
-        clang_type_t clang_type = GetClangType();
+        ClangASTType clang_type = GetClangType();
         std::string cxx_class_name;
-        bool this_had_base_class = ClangASTContext::GetCXXClassName (clang_type, cxx_class_name);
+        bool this_had_base_class = clang_type.GetCXXClassName (cxx_class_name);
         if (this_had_base_class)
         {
             if (parent_had_base_class)
@@ -2436,23 +2372,23 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
             ValueObject *non_base_class_parent = GetNonBaseClassParent();
             if (non_base_class_parent)
             {
-                clang_type_t non_base_class_parent_clang_type = non_base_class_parent->GetClangType();
+                ClangASTType non_base_class_parent_clang_type = non_base_class_parent->GetClangType();
                 if (non_base_class_parent_clang_type)
                 {
-                    const uint32_t non_base_class_parent_type_info = ClangASTContext::GetTypeInfo (non_base_class_parent_clang_type, NULL, NULL);
-                    
                     if (parent && parent->IsDereferenceOfParent() && epformat == eGetExpressionPathFormatHonorPointers)
                     {
                         s.PutCString("->");
                     }
                     else
                     {                    
-                        if (non_base_class_parent_type_info & ClangASTContext::eTypeIsPointer)
+                        const uint32_t non_base_class_parent_type_info = non_base_class_parent_clang_type.GetTypeInfo();
+                        
+                        if (non_base_class_parent_type_info & ClangASTType::eTypeIsPointer)
                         {
                             s.PutCString("->");
                         }
-                        else if ((non_base_class_parent_type_info & ClangASTContext::eTypeHasChildren) &&
-                                 !(non_base_class_parent_type_info & ClangASTContext::eTypeIsArray))
+                        else if ((non_base_class_parent_type_info & ClangASTType::eTypeHasChildren) &&
+                                 !(non_base_class_parent_type_info & ClangASTType::eTypeIsArray))
                         {
                             s.PutChar('.');
                         }
@@ -2657,13 +2593,13 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        clang_type_t root_clang_type = root->GetClangType();
-        clang_type_t pointee_clang_type;
-        Flags root_clang_type_info,pointee_clang_type_info;
+        ClangASTType root_clang_type = root->GetClangType();
+        ClangASTType pointee_clang_type;
+        Flags pointee_clang_type_info;
         
-        root_clang_type_info = Flags(ClangASTContext::GetTypeInfo(root_clang_type, GetClangAST(), &pointee_clang_type));
+        Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
         if (pointee_clang_type)
-            pointee_clang_type_info = Flags(ClangASTContext::GetTypeInfo(pointee_clang_type, GetClangAST(), NULL));
+            pointee_clang_type_info.Reset(pointee_clang_type.GetTypeInfo());
         
         if (!expression_cstr || *expression_cstr == '\0')
         {
@@ -2676,15 +2612,15 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             case '-':
             {
                 if (options.m_check_dot_vs_arrow_syntax &&
-                    root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) ) // if you are trying to use -> on a non-pointer and I must catch the error
+                    root_clang_type_info.Test(ClangASTType::eTypeIsPointer) ) // if you are trying to use -> on a non-pointer and I must catch the error
                 {
                     *first_unparsed = expression_cstr;
                     *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrowInsteadOfDot;
                     *final_result = ValueObject::eExpressionPathEndResultTypeInvalid;
                     return ValueObjectSP();
                 }
-                if (root_clang_type_info.Test(ClangASTContext::eTypeIsObjC) &&  // if yo are trying to extract an ObjC IVar when this is forbidden
-                    root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) &&
+                if (root_clang_type_info.Test(ClangASTType::eTypeIsObjC) &&  // if yo are trying to extract an ObjC IVar when this is forbidden
+                    root_clang_type_info.Test(ClangASTType::eTypeIsPointer) &&
                     options.m_no_fragile_ivar)
                 {
                     *first_unparsed = expression_cstr;
@@ -2704,7 +2640,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             case '.': // or fallthrough from ->
             {
                 if (options.m_check_dot_vs_arrow_syntax && *expression_cstr == '.' &&
-                    root_clang_type_info.Test(ClangASTContext::eTypeIsPointer)) // if you are trying to use . on a pointer and I must catch the error
+                    root_clang_type_info.Test(ClangASTType::eTypeIsPointer)) // if you are trying to use . on a pointer and I must catch the error
                 {
                     *first_unparsed = expression_cstr;
                     *reason_to_stop = ValueObject::eExpressionPathScanEndReasonDotInsteadOfArrow;
@@ -2805,9 +2741,9 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
             }
             case '[':
             {
-                if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray) && !root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) && !root_clang_type_info.Test(ClangASTContext::eTypeIsVector)) // if this is not a T[] nor a T*
+                if (!root_clang_type_info.Test(ClangASTType::eTypeIsArray) && !root_clang_type_info.Test(ClangASTType::eTypeIsPointer) && !root_clang_type_info.Test(ClangASTType::eTypeIsVector)) // if this is not a T[] nor a T*
                 {
-                    if (!root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // if this is not even a scalar...
+                    if (!root_clang_type_info.Test(ClangASTType::eTypeIsScalar)) // if this is not even a scalar...
                     {
                         if (options.m_no_synthetic_children) // ...only chance left is synthetic
                         {
@@ -2827,7 +2763,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                 }
                 if (*(expression_cstr+1) == ']') // if this is an unbounded range it only works for arrays
                 {
-                    if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
+                    if (!root_clang_type_info.Test(ClangASTType::eTypeIsArray))
                     {
                         *first_unparsed = expression_cstr;
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
@@ -2864,7 +2800,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
                     {
-                        if (root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
+                        if (root_clang_type_info.Test(ClangASTType::eTypeIsArray))
                         {
                             *first_unparsed = expression_cstr+2;
                             *reason_to_stop = ValueObject::eExpressionPathScanEndReasonArrayRangeOperatorMet;
@@ -2880,7 +2816,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         }
                     }
                     // from here on we do have a valid index
-                    if (root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
+                    if (root_clang_type_info.Test(ClangASTType::eTypeIsArray))
                     {
                         ValueObjectSP child_valobj_sp = root->GetChildAtIndex(index, true);
                         if (!child_valobj_sp)
@@ -2903,10 +2839,10 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return ValueObjectSP();
                         }
                     }
-                    else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer))
+                    else if (root_clang_type_info.Test(ClangASTType::eTypeIsPointer))
                     {
                         if (*what_next == ValueObject::eExpressionPathAftermathDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
-                            pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
+                            pointee_clang_type_info.Test(ClangASTType::eTypeIsScalar))
                         {
                             Error error;
                             root = root->Dereference(error);
@@ -2925,9 +2861,8 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         }
                         else
                         {
-                            if (ClangASTType::GetMinimumLanguage(root->GetClangAST(),
-                                                                 root->GetClangType()) == eLanguageTypeObjC
-                                && pointee_clang_type_info.AllClear(ClangASTContext::eTypeIsPointer)
+                            if (root->GetClangType().GetMinimumLanguage() == eLanguageTypeObjC
+                                && pointee_clang_type_info.AllClear(ClangASTType::eTypeIsPointer)
                                 && root->HasSyntheticValue()
                                 && options.m_no_synthetic_children == false)
                             {
@@ -2950,7 +2885,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             }
                         }
                     }
-                    else if (root_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
+                    else if (root_clang_type_info.Test(ClangASTType::eTypeIsScalar))
                     {
                         root = root->GetSyntheticBitFieldChild(index, index, true);
                         if (!root.get())
@@ -2968,7 +2903,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return root;
                         }
                     }
-                    else if (root_clang_type_info.Test(ClangASTContext::eTypeIsVector))
+                    else if (root_clang_type_info.Test(ClangASTType::eTypeIsVector))
                     {
                         root = root->GetChildAtIndex(index, true);
                         if (!root.get())
@@ -3053,7 +2988,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                         index_lower = index_higher;
                         index_higher = temp;
                     }
-                    if (root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // expansion only works for scalars
+                    if (root_clang_type_info.Test(ClangASTType::eTypeIsScalar)) // expansion only works for scalars
                     {
                         root = root->GetSyntheticBitFieldChild(index_lower, index_higher, true);
                         if (!root.get())
@@ -3071,9 +3006,9 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                             return root;
                         }
                     }
-                    else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                    else if (root_clang_type_info.Test(ClangASTType::eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
                              *what_next == ValueObject::eExpressionPathAftermathDereference &&
-                             pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
+                             pointee_clang_type_info.Test(ClangASTType::eTypeIsScalar))
                     {
                         Error error;
                         root = root->Dereference(error);
@@ -3132,13 +3067,12 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         
         const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
         
-        clang_type_t root_clang_type = root->GetClangType();
-        clang_type_t pointee_clang_type;
-        Flags root_clang_type_info,pointee_clang_type_info;
-        
-        root_clang_type_info = Flags(ClangASTContext::GetTypeInfo(root_clang_type, GetClangAST(), &pointee_clang_type));
+        ClangASTType root_clang_type = root->GetClangType();
+        ClangASTType pointee_clang_type;
+        Flags pointee_clang_type_info;
+        Flags root_clang_type_info(root_clang_type.GetTypeInfo(&pointee_clang_type));
         if (pointee_clang_type)
-            pointee_clang_type_info = Flags(ClangASTContext::GetTypeInfo(pointee_clang_type, GetClangAST(), NULL));
+            pointee_clang_type_info.Reset(pointee_clang_type.GetTypeInfo());
         
         if (!expression_cstr || *expression_cstr == '\0')
         {
@@ -3151,9 +3085,9 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
         {
             case '[':
             {
-                if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray) && !root_clang_type_info.Test(ClangASTContext::eTypeIsPointer)) // if this is not a T[] nor a T*
+                if (!root_clang_type_info.Test(ClangASTType::eTypeIsArray) && !root_clang_type_info.Test(ClangASTType::eTypeIsPointer)) // if this is not a T[] nor a T*
                 {
-                    if (!root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // if this is not even a scalar, this syntax is just plain wrong!
+                    if (!root_clang_type_info.Test(ClangASTType::eTypeIsScalar)) // if this is not even a scalar, this syntax is just plain wrong!
                     {
                         *first_unparsed = expression_cstr;
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonRangeOperatorInvalid;
@@ -3170,7 +3104,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                 }
                 if (*(expression_cstr+1) == ']') // if this is an unbounded range it only works for arrays
                 {
-                    if (!root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
+                    if (!root_clang_type_info.Test(ClangASTType::eTypeIsArray))
                     {
                         *first_unparsed = expression_cstr;
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEmptyRangeNotAllowed;
@@ -3214,7 +3148,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                     }
                     if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
                     {
-                        if (root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
+                        if (root_clang_type_info.Test(ClangASTType::eTypeIsArray))
                         {
                             const size_t max_index = root->GetNumChildren() - 1;
                             for (size_t index = 0; index < max_index; index++)
@@ -3237,7 +3171,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         }
                     }
                     // from here on we do have a valid index
-                    if (root_clang_type_info.Test(ClangASTContext::eTypeIsArray))
+                    if (root_clang_type_info.Test(ClangASTType::eTypeIsArray))
                     {
                         root = root->GetChildAtIndex(index, true);
                         if (!root.get())
@@ -3256,10 +3190,10 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             return 1;
                         }
                     }
-                    else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer))
+                    else if (root_clang_type_info.Test(ClangASTType::eTypeIsPointer))
                     {
                         if (*what_next == ValueObject::eExpressionPathAftermathDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
-                            pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
+                            pointee_clang_type_info.Test(ClangASTType::eTypeIsScalar))
                         {
                             Error error;
                             root = root->Dereference(error);
@@ -3341,7 +3275,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         index_lower = index_higher;
                         index_higher = temp;
                     }
-                    if (root_clang_type_info.Test(ClangASTContext::eTypeIsScalar)) // expansion only works for scalars
+                    if (root_clang_type_info.Test(ClangASTType::eTypeIsScalar)) // expansion only works for scalars
                     {
                         root = root->GetSyntheticBitFieldChild(index_lower, index_higher, true);
                         if (!root.get())
@@ -3360,9 +3294,9 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                             return 1;
                         }
                     }
-                    else if (root_clang_type_info.Test(ClangASTContext::eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                    else if (root_clang_type_info.Test(ClangASTType::eTypeIsPointer) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
                              *what_next == ValueObject::eExpressionPathAftermathDereference &&
-                             pointee_clang_type_info.Test(ClangASTContext::eTypeIsScalar))
+                             pointee_clang_type_info.Test(ClangASTType::eTypeIsScalar))
                     {
                         Error error;
                         root = root->Dereference(error);
@@ -3431,12 +3365,11 @@ DumpValueObject_Impl (Stream &s,
                 valobj = dynamic_value;
         }
         
-        clang_type_t clang_type = valobj->GetClangType();
-
-        const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, NULL, NULL));
+        ClangASTType clang_type = valobj->GetClangType();
+        const Flags type_flags (clang_type.GetTypeInfo ());
         const char *err_cstr = NULL;
-        const bool has_children = type_flags.Test (ClangASTContext::eTypeHasChildren);
-        const bool has_value = type_flags.Test (ClangASTContext::eTypeHasValue);
+        const bool has_children = type_flags.Test (ClangASTType::eTypeHasChildren);
+        const bool has_value = type_flags.Test (ClangASTType::eTypeHasValue);
         
         const bool print_valobj = options.m_flat_output == false || has_value;
         
@@ -3521,7 +3454,7 @@ DumpValueObject_Impl (Stream &s,
         }
         else
         {
-            const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
+            const bool is_ref = type_flags.Test (ClangASTType::eTypeIsReference);
             if (print_valobj)
             {
                 if (is_nil)
@@ -3573,7 +3506,7 @@ DumpValueObject_Impl (Stream &s,
                 // current pointer depth below...
                 uint32_t curr_ptr_depth = ptr_depth;
 
-                const bool is_ptr = type_flags.Test (ClangASTContext::eTypeIsPointer);
+                const bool is_ptr = type_flags.Test (ClangASTType::eTypeIsPointer);
                 if (is_ptr || is_ref)
                 {
                     // We have a pointer or reference whose value is an address.
@@ -3742,7 +3675,6 @@ ValueObject::CreateConstantValue (const ConstString &name)
     if (UpdateValueIfNeeded(false) && m_error.Success())
     {
         ExecutionContext exe_ctx (GetExecutionContextRef());
-        clang::ASTContext *ast = GetClangAST ();
         
         DataExtractor data;
         data.SetByteOrder (m_data.GetByteOrder());
@@ -3751,13 +3683,12 @@ ValueObject::CreateConstantValue (const ConstString &name)
         if (IsBitfield())
         {
             Value v(Scalar(GetValueAsUnsigned(UINT64_MAX)));
-            m_error = v.GetValueAsData (&exe_ctx, ast, data, 0, GetModule().get());
+            m_error = v.GetValueAsData (&exe_ctx, data, 0, GetModule().get());
         }
         else
-            m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0, GetModule().get());
+            m_error = m_value.GetValueAsData (&exe_ctx, data, 0, GetModule().get());
         
         valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), 
-                                                    ast,
                                                     GetClangType(),
                                                     name,
                                                     data,
@@ -3791,27 +3722,24 @@ ValueObject::Dereference (Error &error)
         bool child_is_base_class = false;
         bool child_is_deref_of_parent = false;
         const bool transparent_pointers = false;
-        clang::ASTContext *clang_ast = GetClangAST();
-        clang_type_t clang_type = GetClangType();
-        clang_type_t child_clang_type;
+        ClangASTType clang_type = GetClangType();
+        ClangASTType child_clang_type;
 
         ExecutionContext exe_ctx (GetExecutionContextRef());
         
-        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
-                                                                      clang_ast,
-                                                                      GetName().GetCString(),
-                                                                      clang_type,
-                                                                      0,
-                                                                      transparent_pointers,
-                                                                      omit_empty_base_classes,
-                                                                      ignore_array_bounds,
-                                                                      child_name_str,
-                                                                      child_byte_size,
-                                                                      child_byte_offset,
-                                                                      child_bitfield_bit_size,
-                                                                      child_bitfield_bit_offset,
-                                                                      child_is_base_class,
-                                                                      child_is_deref_of_parent);
+        child_clang_type = clang_type.GetChildClangTypeAtIndex (&exe_ctx,
+                                                                GetName().GetCString(),
+                                                                0,
+                                                                transparent_pointers,
+                                                                omit_empty_base_classes,
+                                                                ignore_array_bounds,
+                                                                child_name_str,
+                                                                child_byte_size,
+                                                                child_byte_offset,
+                                                                child_bitfield_bit_size,
+                                                                child_bitfield_bit_offset,
+                                                                child_is_base_class,
+                                                                child_is_deref_of_parent);
         if (child_clang_type && child_byte_size)
         {
             ConstString child_name;
@@ -3819,7 +3747,6 @@ ValueObject::Dereference (Error &error)
                 child_name.SetCString (child_name_str.c_str());
 
             m_deref_valobj = new ValueObjectChild (*this,
-                                                   clang_ast,
                                                    child_clang_type,
                                                    child_name,
                                                    child_byte_size,
@@ -3876,16 +3803,14 @@ ValueObject::AddressOf (Error &error)
         case eAddressTypeLoad:
         case eAddressTypeHost:
             {
-                clang::ASTContext *ast = GetClangAST();
-                clang_type_t clang_type = GetClangType();
-                if (ast && clang_type)
+                ClangASTType clang_type = GetClangType();
+                if (clang_type)
                 {
                     std::string name (1, '&');
                     name.append (m_name.AsCString(""));
                     ExecutionContext exe_ctx (GetExecutionContextRef());
                     m_addr_of_valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                                          ast, 
-                                                                          ClangASTContext::CreatePointerType (ast, clang_type),
+                                                                          clang_type.GetPointerType(),
                                                                           ConstString (name.c_str()),
                                                                           addr, 
                                                                           eAddressTypeInvalid,
@@ -4104,103 +4029,6 @@ ValueObject::EvaluationPoint::SetUpdated ()
 }
         
 
-//bool
-//ValueObject::EvaluationPoint::SetContext (ExecutionContextScope *exe_scope)
-//{
-//    if (!IsValid())
-//        return false;
-//    
-//    bool needs_update = false;
-//    
-//    // The target has to be non-null, and the 
-//    Target *target = exe_scope->CalculateTarget();
-//    if (target != NULL)
-//    {
-//        Target *old_target = m_target_sp.get();
-//        assert (target == old_target);
-//        Process *process = exe_scope->CalculateProcess();
-//        if (process != NULL)
-//        {
-//            // FOR NOW - assume you can't update variable objects across process boundaries.
-//            Process *old_process = m_process_sp.get();
-//            assert (process == old_process);
-//            ProcessModID current_mod_id = process->GetModID();
-//            if (m_mod_id != current_mod_id)
-//            {
-//                needs_update = true;
-//                m_mod_id = current_mod_id;
-//            }
-//            // See if we're switching the thread or stack context.  If no thread is given, this is
-//            // being evaluated in a global context.            
-//            Thread *thread = exe_scope->CalculateThread();
-//            if (thread != NULL)
-//            {
-//                user_id_t new_thread_index = thread->GetIndexID();
-//                if (new_thread_index != m_thread_id)
-//                {
-//                    needs_update = true;
-//                    m_thread_id = new_thread_index;
-//                    m_stack_id.Clear();
-//                }
-//                
-//                StackFrame *new_frame = exe_scope->CalculateStackFrame();
-//                if (new_frame != NULL)
-//                {
-//                    if (new_frame->GetStackID() != m_stack_id)
-//                    {
-//                        needs_update = true;
-//                        m_stack_id = new_frame->GetStackID();
-//                    }
-//                }
-//                else
-//                {
-//                    m_stack_id.Clear();
-//                    needs_update = true;
-//                }
-//            }
-//            else
-//            {
-//                // If this had been given a thread, and now there is none, we should update.
-//                // Otherwise we don't have to do anything.
-//                if (m_thread_id != LLDB_INVALID_UID)
-//                {
-//                    m_thread_id = LLDB_INVALID_UID;
-//                    m_stack_id.Clear();
-//                    needs_update = true;
-//                }
-//            }
-//        }
-//        else
-//        {
-//            // If there is no process, then we don't need to update anything.
-//            // But if we're switching from having a process to not, we should try to update.
-//            if (m_process_sp.get() != NULL)
-//            {
-//                needs_update = true;
-//                m_process_sp.reset();
-//                m_thread_id = LLDB_INVALID_UID;
-//                m_stack_id.Clear();
-//            }
-//        }
-//    }
-//    else
-//    {
-//        // If there's no target, nothing can change so we don't need to update anything.
-//        // But if we're switching from having a target to not, we should try to update.
-//        if (m_target_sp.get() != NULL)
-//        {
-//            needs_update = true;
-//            m_target_sp.reset();
-//            m_process_sp.reset();
-//            m_thread_id = LLDB_INVALID_UID;
-//            m_stack_id.Clear();
-//        }
-//    }
-//    if (!m_needs_update)
-//        m_needs_update = needs_update;
-//        
-//    return needs_update;
-//}
 
 void
 ValueObject::ClearUserVisibleData(uint32_t clear_mask)
@@ -4262,24 +4090,30 @@ ValueObject::CreateValueObjectFromAddress (const char* name,
                                            const ExecutionContext& exe_ctx,
                                            ClangASTType type)
 {
-    ClangASTType pointer_type(type.GetASTContext(),type.GetPointerType());
-    lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
-    lldb::ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                                             pointer_type.GetASTContext(),
-                                                                             pointer_type.GetOpaqueQualType(),
-                                                                             ConstString(name),
-                                                                             buffer,
-                                                                             lldb::endian::InlHostByteOrder(),
-                                                                             exe_ctx.GetAddressByteSize()));
-    if (ptr_result_valobj_sp)
+    if (type)
     {
-        ptr_result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
-        Error err;
-        ptr_result_valobj_sp = ptr_result_valobj_sp->Dereference(err);
-        if (ptr_result_valobj_sp && name && *name)
-            ptr_result_valobj_sp->SetName(ConstString(name));
+        ClangASTType pointer_type(type.GetPointerType());
+        if (pointer_type)
+        {
+            lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
+            lldb::ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                                                     pointer_type,
+                                                                                     ConstString(name),
+                                                                                     buffer,
+                                                                                     lldb::endian::InlHostByteOrder(),
+                                                                                     exe_ctx.GetAddressByteSize()));
+            if (ptr_result_valobj_sp)
+            {
+                ptr_result_valobj_sp->GetValue().SetValueType(Value::eValueTypeLoadAddress);
+                Error err;
+                ptr_result_valobj_sp = ptr_result_valobj_sp->Dereference(err);
+                if (ptr_result_valobj_sp && name && *name)
+                    ptr_result_valobj_sp->SetName(ConstString(name));
+            }
+            return ptr_result_valobj_sp;
+        }
     }
-    return ptr_result_valobj_sp;
+    return lldb::ValueObjectSP();
 }
 
 lldb::ValueObjectSP
@@ -4290,8 +4124,7 @@ ValueObject::CreateValueObjectFromData (const char* name,
 {
     lldb::ValueObjectSP new_value_sp;
     new_value_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                   type.GetASTContext() ,
-                                                   type.GetOpaqueQualType(),
+                                                   type,
                                                    ConstString(name),
                                                    data,
                                                    LLDB_INVALID_ADDRESS);

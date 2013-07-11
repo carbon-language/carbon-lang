@@ -81,10 +81,10 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
         return false;
     
     Target *target = exe_ctx.GetTargetPtr();
-    if (value.GetClangType())
+    ClangASTType clang_type = value.GetClangType();
+    if (clang_type)
     {
-        clang::QualType value_type = clang::QualType::getFromOpaquePtr (value.GetClangType());
-        if (!value_type->isObjCObjectPointerType())
+        if (!clang_type.IsObjCObjectPointerType())
         {
             strm.Printf ("Value doesn't point to an ObjC object.\n");
             return false;
@@ -94,10 +94,11 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     {
         // If it is not a pointer, see if we can make it into a pointer.
         ClangASTContext *ast_context = target->GetScratchClangASTContext();
-        void *opaque_type_ptr = ast_context->GetBuiltInType_objc_id();
-        if (opaque_type_ptr == NULL)
-            opaque_type_ptr = ast_context->GetVoidPtrType(false);
-        value.SetContext(Value::eContextTypeClangType, opaque_type_ptr);    
+        ClangASTType opaque_type = ast_context->GetBasicType(eBasicTypeObjCID);
+        if (!opaque_type)
+            opaque_type = ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
+        //value.SetContext(Value::eContextTypeClangType, opaque_type_ptr);
+        value.SetClangType (opaque_type);
     }
 
     ValueList arg_value_list;
@@ -106,9 +107,10 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     // This is the return value:
     ClangASTContext *ast_context = target->GetScratchClangASTContext();
     
-    void *return_qualtype = ast_context->GetCStringType(true);
+    ClangASTType return_clang_type = ast_context->GetCStringType(true);
     Value ret;
-    ret.SetContext(Value::eContextTypeClangType, return_qualtype);
+//    ret.SetContext(Value::eContextTypeClangType, return_clang_type);
+    ret.SetClangType (return_clang_type);
     
     if (exe_ctx.GetFramePtr() == NULL)
     {
@@ -126,8 +128,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     
     // Now we're ready to call the function:
     ClangFunction func (*exe_ctx.GetBestExecutionContextScope(),
-                        ast_context, 
-                        return_qualtype, 
+                        return_clang_type, 
                         *function_address, 
                         arg_value_list);
 
@@ -221,10 +222,9 @@ AppleObjCRuntime::GetPrintForDebuggerAddr()
 bool
 AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    return ClangASTContext::IsPossibleDynamicType(in_value.GetClangAST(), in_value.GetClangType(),
-                                                  NULL,
-                                                  false, // do not check C++
-                                                  true); // check ObjC
+    return in_value.GetClangType().IsPossibleDynamicType (NULL,
+                                                          false, // do not check C++
+                                                          true); // check ObjC
 }
 
 bool

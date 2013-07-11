@@ -2153,7 +2153,7 @@ SBTarget::FindFirstType (const char* typename_cstr)
         // No matches, search for basic typename matches
         ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
         if (clang_ast)
-            return SBType (ClangASTType::GetBasicType (clang_ast->getASTContext(), const_typename));
+            return SBType (ClangASTContext::GetBasicType (clang_ast->getASTContext(), const_typename));
     }
     return SBType();
 }
@@ -2166,7 +2166,7 @@ SBTarget::GetBasicType(lldb::BasicType type)
     {
         ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
         if (clang_ast)
-            return SBType (ClangASTType::GetBasicType (clang_ast->getASTContext(), type));
+            return SBType (ClangASTContext::GetBasicType (clang_ast->getASTContext(), type));
     }
     return SBType();
 }
@@ -2233,7 +2233,7 @@ SBTarget::FindTypes (const char* typename_cstr)
             // No matches, search for basic typename matches
             ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
             if (clang_ast)
-                sb_type_list.Append (SBType (ClangASTType::GetBasicType (clang_ast->getASTContext(), const_typename)));
+                sb_type_list.Append (SBType (ClangASTContext::GetBasicType (clang_ast->getASTContext(), const_typename)));
         }
     }
     return sb_type_list;

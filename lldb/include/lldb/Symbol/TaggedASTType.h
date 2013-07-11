@@ -20,16 +20,30 @@ namespace lldb_private
 template <unsigned int C> class TaggedASTType : public ClangASTType
 {
 public:
+    TaggedASTType (const ClangASTType &clang_type) :
+        ClangASTType(clang_type)
+    {
+    }
+
     TaggedASTType (lldb::clang_type_t type, clang::ASTContext *ast_context) :
-        ClangASTType(ast_context, type) { }
+        ClangASTType(ast_context, type)
+    {
+    }
     
     TaggedASTType (const TaggedASTType<C> &tw) :
-        ClangASTType(tw) { }
+        ClangASTType(tw)
+    {
+    }
     
     TaggedASTType () :
-        ClangASTType() { }
+        ClangASTType()
+    {
+    }
     
-    virtual ~TaggedASTType() { }
+    virtual
+    ~TaggedASTType()
+    {
+    }
     
     TaggedASTType<C> &operator= (const TaggedASTType<C> &tw)
     {

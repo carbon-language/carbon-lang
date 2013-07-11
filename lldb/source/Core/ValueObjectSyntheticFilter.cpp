@@ -83,7 +83,7 @@ ValueObjectSynthetic::~ValueObjectSynthetic()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectSynthetic::GetClangTypeImpl ()
 {
     return m_parent->GetClangType();
@@ -126,13 +126,6 @@ ValueObjectSynthetic::MightHaveChildren()
     if (m_might_have_children == eLazyBoolCalculate)
         m_might_have_children = (m_synth_filter_ap->MightHaveChildren() ? eLazyBoolYes : eLazyBoolNo);
     return (m_might_have_children == eLazyBoolNo ? false : true);
-}
-
-
-clang::ASTContext *
-ValueObjectSynthetic::GetClangASTImpl ()
-{
-    return m_parent->GetClangAST ();
 }
 
 uint64_t
@@ -273,5 +266,5 @@ ValueObjectSynthetic::CopyParentData ()
 {
     m_value = m_parent->GetValue();
     ExecutionContext exe_ctx (GetExecutionContextRef());
-    m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule().get());
+    m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
 }

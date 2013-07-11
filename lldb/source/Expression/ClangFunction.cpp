@@ -51,15 +51,13 @@ using namespace lldb_private;
 ClangFunction::ClangFunction 
 (
     ExecutionContextScope &exe_scope,
-    ClangASTContext *ast_context, 
-    void *return_qualtype, 
+    const ClangASTType &return_type, 
     const Address& functionAddress, 
     const ValueList &arg_value_list
 ) :
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
-    m_function_return_qual_type(return_qualtype),
-    m_clang_ast_context (ast_context),
+    m_function_return_type(return_type),
     m_wrapper_function_name ("__lldb_caller_function"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
     m_wrapper_args_addrs (),
@@ -81,7 +79,7 @@ ClangFunction::ClangFunction
 ) :
     m_function_ptr (&function),
     m_function_addr (),
-    m_function_return_qual_type (),
+    m_function_return_type (),
     m_clang_ast_context (ast_context),
     m_wrapper_function_name ("__lldb_function_caller"),
     m_wrapper_struct_name ("__lldb_caller_struct"),
@@ -95,7 +93,7 @@ ClangFunction::ClangFunction
     assert (m_jit_process_wp.lock());
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
-    m_function_return_qual_type = m_function_ptr->GetReturnClangType();
+    m_function_return_type = m_function_ptr->GetClangType().GetFunctionReturnType();
 }
 
 //----------------------------------------------------------------------
@@ -114,8 +112,7 @@ ClangFunction::CompileFunction (Stream &errors)
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     unsigned num_errors = 0;
     
-    std::string return_type_str (ClangASTType::GetTypeNameForOpaqueQualType (m_clang_ast_context->getASTContext(),
-                                                                             m_function_return_qual_type));
+    std::string return_type_str (m_function_return_type.GetTypeName());
     
     // Cons up the function we're going to wrap our call in, then compile it...
     // We declare the function "extern "C"" because the compiler might be in C++
@@ -137,16 +134,22 @@ ClangFunction::CompileFunction (Stream &errors)
     // to pull the defined arguments out of the function, then add the types from the
     // arguments list for the variable arguments.
 
-    size_t num_args = UINT32_MAX;
+    uint32_t num_args = UINT32_MAX;
     bool trust_function = false;
     // GetArgumentCount returns -1 for an unprototyped function.
+    ClangASTType function_clang_type;
     if (m_function_ptr)
     {
-        int num_func_args = m_function_ptr->GetArgumentCount();
-        if (num_func_args >= 0)
-            trust_function = true;
-        else
-            num_args = num_func_args;
+        function_clang_type = m_function_ptr->GetClangType();
+        if (function_clang_type)
+        {
+            int num_func_args = function_clang_type.GetFunctionArgumentCount();
+            if (num_func_args >= 0)
+            {
+                trust_function = true;
+                num_args = num_func_args;
+            }
+        }
     }
 
     if (num_args == UINT32_MAX)
@@ -160,18 +163,14 @@ ClangFunction::CompileFunction (Stream &errors)
 
         if (trust_function)
         {
-            lldb::clang_type_t arg_clang_type = m_function_ptr->GetArgumentTypeAtIndex(i);
-            type_name = ClangASTType::GetTypeNameForOpaqueQualType (m_clang_ast_context->getASTContext(),
-                                                                    arg_clang_type);
+            type_name = function_clang_type.GetFunctionArgumentTypeAtIndex(i).GetTypeName();
         }
         else
         {
-            Value *arg_value = m_arg_values.GetValueAtIndex(i);
-            lldb::clang_type_t clang_qual_type = arg_value->GetClangType ();
-            if (clang_qual_type != NULL)
+            ClangASTType clang_qual_type = m_arg_values.GetValueAtIndex(i)->GetClangType ();
+            if (clang_qual_type)
             {
-                type_name = ClangASTType::GetTypeNameForOpaqueQualType (m_clang_ast_context->getASTContext(),
-                                                                        clang_qual_type);
+                type_name = clang_qual_type.GetTypeName();
             }
             else
             {   
@@ -362,11 +361,11 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         // Special case: if it's a pointer, don't do anything (the ABI supports passing cstrings)
         
         if (arg_value->GetValueType() == Value::eValueTypeHostAddress &&
-            arg_value->GetContextType() == Value::eContextTypeClangType &&
-            ClangASTContext::IsPointerType(arg_value->GetClangType()))
+            arg_value->GetContextType() == Value::eContextTypeInvalid &&
+            arg_value->GetClangType().IsPointerType())
             continue;
         
-        const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx, m_clang_ast_context->getASTContext());
+        const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx);
 
         if (!process->WriteScalarToMemory(args_addr_ref + offset, arg_scalar, arg_scalar.GetByteSize(), error))
             return false;
@@ -464,7 +463,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     if (error.Fail())
         return false;
 
-    ret_value.SetContext (Value::eContextTypeClangType, m_function_return_qual_type);
+    ret_value.SetClangType(m_function_return_type);
     ret_value.SetValueType(Value::eValueTypeScalar);
     return true;
 }

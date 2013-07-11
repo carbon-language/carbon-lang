@@ -21,6 +21,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Scalar.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 namespace lldb_private {
 
@@ -46,7 +47,6 @@ public:
                                         // m_context contains...
                                         // ====================
         eContextTypeInvalid,            // undefined
-        eContextTypeClangType,          // void * (an opaque clang::QualType * that can be fed to "static QualType QualType::getFromOpaquePtr(void *)")
         eContextTypeRegisterInfo,       // RegisterInfo * (can be a scalar or a vector register)
         eContextTypeLLDBType,           // lldb_private::Type *
         eContextTypeVariable            // lldb_private::Variable *
@@ -77,7 +77,13 @@ public:
             return *this;
         }
 
-        bool 
+        void
+        Clear ()
+        {
+			length = 0;
+        }
+
+        bool
 		SetBytes(const void *bytes, size_t length, lldb::ByteOrder byte_order)
 		{
             this->length = length;
@@ -124,8 +130,11 @@ public:
     Value &
     operator=(const Value &rhs);
 
-    lldb::clang_type_t
+    const ClangASTType &
     GetClangType();
+    
+    void
+    SetClangType (const ClangASTType &clang_type);
 
     ValueType
     GetValueType() const;
@@ -173,7 +182,7 @@ public:
     GetType();
 
     Scalar &
-    ResolveValue (ExecutionContext *exe_ctx, clang::ASTContext *ast_context);
+    ResolveValue (ExecutionContext *exe_ctx);
 
     const Scalar &
     GetScalar() const
@@ -227,7 +236,7 @@ public:
     ResizeData(size_t len);
 
     bool
-    ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context);
+    ValueOf(ExecutionContext *exe_ctx);
 
     Variable *
     GetVariable();
@@ -239,11 +248,10 @@ public:
     GetValueDefaultFormat ();
 
     uint64_t
-    GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr);
+    GetValueByteSize (Error *error_ptr);
 
     Error
     GetValueAsData (ExecutionContext *exe_ctx, 
-                    clang::ASTContext *ast_context, 
                     DataExtractor &data, 
                     uint32_t data_offset,
                     Module *module);     // Can be NULL
@@ -257,11 +265,15 @@ public:
     bool
     GetData (DataExtractor &data);
 
+    void
+    Clear();
+
 protected:
     Scalar          m_value;
     Vector          m_vector;
-    ValueType       m_value_type;
+    ClangASTType    m_clang_type;
     void *          m_context;
+    ValueType       m_value_type;
     ContextType     m_context_type;
     DataBufferHeap  m_data_buffer;
 };

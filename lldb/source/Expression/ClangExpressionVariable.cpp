@@ -74,34 +74,23 @@ ClangExpressionVariable::SetRegisterInfo (const RegisterInfo *reg_info)
     return m_frozen_sp->GetValue().SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_info));
 }
 
-lldb::clang_type_t
+ClangASTType
 ClangExpressionVariable::GetClangType()
 {
     return m_frozen_sp->GetClangType();
 }    
 
 void
-ClangExpressionVariable::SetClangType(lldb::clang_type_t clang_type)
+ClangExpressionVariable::SetClangType(const ClangASTType &clang_type)
 {
-    m_frozen_sp->GetValue().SetContext(Value::eContextTypeClangType, clang_type);
+    m_frozen_sp->GetValue().SetClangType(clang_type);
 }    
 
-clang::ASTContext *
-ClangExpressionVariable::GetClangAST()
-{
-    return m_frozen_sp->GetClangAST();
-}    
-
-void
-ClangExpressionVariable::SetClangAST (clang::ASTContext *ast)
-{
-    m_frozen_sp->SetClangAST (ast);
-}
 
 TypeFromUser
 ClangExpressionVariable::GetTypeFromUser()
 {
-    TypeFromUser tfu (m_frozen_sp->GetClangType(), m_frozen_sp->GetClangAST());
+    TypeFromUser tfu (m_frozen_sp->GetClangType());
     return tfu;
 }    
 

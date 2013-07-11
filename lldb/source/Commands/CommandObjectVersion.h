@@ -34,7 +34,7 @@ public:
 protected:
     virtual bool
     DoExecute (Args& args,
-             CommandReturnObject &result);
+               CommandReturnObject &result);
 
 };
 

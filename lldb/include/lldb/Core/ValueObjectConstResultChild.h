@@ -27,8 +27,7 @@ class ValueObjectConstResultChild : public ValueObjectChild
 public:
     
     ValueObjectConstResultChild (ValueObject &parent,
-                                 clang::ASTContext *clang_ast,
-                                 void *clang_type,
+                                 const ClangASTType &clang_type,
                                  const ConstString &name,
                                  uint32_t byte_size,
                                  int32_t byte_offset,
@@ -45,7 +44,7 @@ public:
     virtual ValueObject *
     CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_t synthetic_index);
 
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangType ()
     {
         return ValueObjectChild::GetClangType();

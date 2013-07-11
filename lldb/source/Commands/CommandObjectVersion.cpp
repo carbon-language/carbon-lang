@@ -38,8 +38,16 @@ CommandObjectVersion::~CommandObjectVersion ()
 bool
 CommandObjectVersion::DoExecute (Args& args, CommandReturnObject &result)
 {
-    result.AppendMessageWithFormat ("%s\n", lldb_private::GetVersion());
-    result.SetStatus (eReturnStatusSuccessFinishResult);
+    if (args.GetArgumentCount() == 0)
+    {
+        result.AppendMessageWithFormat ("%s\n", lldb_private::GetVersion());
+        result.SetStatus (eReturnStatusSuccessFinishResult);
+    }
+    else
+    {
+        result.AppendError("the version command takes no arguments.");
+        result.SetStatus (eReturnStatusFailed);
+    }
     return true;
 }
 

@@ -54,35 +54,30 @@ ValueObjectCast::ValueObjectCast
     m_cast_type (cast_type)
 {
     SetName (name);
-    m_value.SetContext (Value::eContextTypeClangType, cast_type.GetOpaqueQualType());
+    //m_value.SetContext (Value::eContextTypeClangType, cast_type.GetOpaqueQualType());
+    m_value.SetClangType (cast_type);
 }
 
 ValueObjectCast::~ValueObjectCast()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectCast::GetClangTypeImpl ()
 {
-    return m_cast_type.GetOpaqueQualType();
+    return m_cast_type;
 }
 
 size_t
 ValueObjectCast::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
-}
-
-clang::ASTContext *
-ValueObjectCast::GetClangASTImpl ()
-{
-    return m_cast_type.GetASTContext();
+    return GetClangType().GetNumChildren (true);
 }
 
 uint64_t
 ValueObjectCast::GetByteSize()
 {
-    return m_value.GetValueByteSize(GetClangAST(), NULL);
+    return m_value.GetValueByteSize(NULL);
 }
 
 lldb::ValueType
@@ -103,9 +98,11 @@ ValueObjectCast::UpdateValue ()
         Value old_value(m_value);
         m_update_point.SetUpdated();
         m_value = m_parent->GetValue();
-        m_value.SetContext (Value::eContextTypeClangType, GetClangType());
+        ClangASTType clang_type (GetClangType());
+        //m_value.SetContext (Value::eContextTypeClangType, clang_type);
+        m_value.SetClangType (clang_type);
         SetAddressTypeOfChildren(m_parent->GetAddressTypeOfChildren());
-        if (ClangASTContext::IsAggregateType (GetClangType()))
+        if (clang_type.IsAggregateType ())
         {
             // this value object represents an aggregate type whose
             // children have values, but this object does not. So we
@@ -113,7 +110,7 @@ ValueObjectCast::UpdateValue ()
             SetValueDidChange (m_value.GetValueType() != old_value.GetValueType() || m_value.GetScalar() != old_value.GetScalar());
         } 
         ExecutionContext exe_ctx (GetExecutionContextRef());
-        m_error = m_value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0, GetModule().get());
+        m_error = m_value.GetValueAsData(&exe_ctx, m_data, 0, GetModule().get());
         SetValueDidChange (m_parent->GetValueDidChange());
         return true;
     }

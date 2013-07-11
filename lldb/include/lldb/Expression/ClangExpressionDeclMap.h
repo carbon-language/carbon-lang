@@ -549,8 +549,8 @@ private:
     /// @param[in] var
     ///     The variable to evaluate.
     ///
-    /// @param[in] parser_ast_context
-    ///     The AST context of the parser, to store the found type in.
+    /// @param[out] var_location
+    ///     The variable location value to fill in
     ///
     /// @param[out] found_type
     ///     The type of the found value, as it was found in the user process.
@@ -566,11 +566,11 @@ private:
     ///     The Decl to be looked up.
     ///
     /// @return
-    ///     The LLDB Value for the variable.
+    ///     Return true if the value was successfully filled in.
     //------------------------------------------------------------------
-    Value *
+    bool
     GetVariableValue (lldb::VariableSP &var,
-                      clang::ASTContext *parser_ast_context,
+                      lldb_private::Value &var_location,
                       TypeFromUser *found_type = NULL,
                       TypeFromParser *parser_type = NULL);
     

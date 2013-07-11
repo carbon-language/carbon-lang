@@ -1179,7 +1179,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         dwarfexpr.SetRegisterKind (unwindplan_registerkind);
         Value result;
         Error error;
-        if (dwarfexpr.Evaluate (&exe_ctx, NULL, NULL, NULL, this, 0, NULL, result, &error))
+        if (dwarfexpr.Evaluate (&exe_ctx, NULL, NULL, this, 0, NULL, result, &error))
         {
             addr_t val;
             val = result.GetScalar().ULongLong();

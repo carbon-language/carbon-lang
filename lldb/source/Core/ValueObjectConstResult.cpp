@@ -30,13 +30,10 @@ using namespace lldb;
 using namespace lldb_private;
 
 ValueObjectSP
-ValueObjectConstResult::Create
-(
-    ExecutionContextScope *exe_scope,
-    ByteOrder byte_order, 
-     uint32_t addr_byte_size,
-     lldb::addr_t address
-)
+ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
+                                ByteOrder byte_order,
+                                uint32_t addr_byte_size,
+                                lldb::addr_t address)
 {
     return (new ValueObjectConstResult (exe_scope,
                                         byte_order,
@@ -44,15 +41,11 @@ ValueObjectConstResult::Create
                                         address))->GetSP();
 }
 
-ValueObjectConstResult::ValueObjectConstResult
-(
-    ExecutionContextScope *exe_scope,
-    ByteOrder byte_order, 
-    uint32_t addr_byte_size,
-    lldb::addr_t address
-) :
+ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                                                ByteOrder byte_order,
+                                                uint32_t addr_byte_size,
+                                                lldb::addr_t address) :
     ValueObject (exe_scope),
-    m_clang_ast (NULL),
     m_type_name (),
     m_byte_size (0),
     m_impl(this, address)
@@ -68,32 +61,25 @@ ValueObjectSP
 ValueObjectConstResult::Create
 (
     ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
+    const ClangASTType &clang_type,
     const ConstString &name,
     const DataExtractor &data,
     lldb::addr_t address
 )
 {
     return (new ValueObjectConstResult (exe_scope,
-                                        clang_ast,
                                         clang_type,
                                         name,
                                         data,
                                         address))->GetSP();
 }
 
-ValueObjectConstResult::ValueObjectConstResult
-(
-    ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
-    const ConstString &name,
-    const DataExtractor &data,
-    lldb::addr_t address
-) :
+ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                                                const ClangASTType &clang_type,
+                                                const ConstString &name,
+                                                const DataExtractor &data,
+                                                lldb::addr_t address) :
     ValueObject (exe_scope),
-    m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0),
     m_impl(this, address)
@@ -108,7 +94,7 @@ ValueObjectConstResult::ValueObjectConstResult
     
     m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
     m_value.SetValueType(Value::eValueTypeHostAddress);
-    m_value.SetContext(Value::eContextTypeClangType, clang_type);
+    m_value.SetClangType(clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -116,20 +102,15 @@ ValueObjectConstResult::ValueObjectConstResult
 }
 
 ValueObjectSP
-ValueObjectConstResult::Create
-(
-    ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
-    const ConstString &name,
-    const lldb::DataBufferSP &data_sp,
-    lldb::ByteOrder data_byte_order, 
-    uint32_t data_addr_size,
-    lldb::addr_t address
-)
+ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
+                                const ClangASTType &clang_type,
+                                const ConstString &name,
+                                const lldb::DataBufferSP &data_sp,
+                                lldb::ByteOrder data_byte_order,
+                                uint32_t data_addr_size,
+                                lldb::addr_t address)
 {
     return (new ValueObjectConstResult (exe_scope,
-                                        clang_ast,
                                         clang_type,
                                         name,
                                         data_sp,
@@ -140,26 +121,20 @@ ValueObjectConstResult::Create
 
 ValueObjectSP
 ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
-        clang::ASTContext *clang_ast,
-        Value &value,
-        const ConstString &name)
+                                Value &value,
+                                const ConstString &name)
 {
-    return (new ValueObjectConstResult (exe_scope, clang_ast, value, name))->GetSP();
+    return (new ValueObjectConstResult (exe_scope, value, name))->GetSP();
 }
 
-ValueObjectConstResult::ValueObjectConstResult
-(
-    ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
-    const ConstString &name,
-    const lldb::DataBufferSP &data_sp,
-    lldb::ByteOrder data_byte_order, 
-    uint32_t data_addr_size,
-    lldb::addr_t address
-) :
+ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                                                const ClangASTType &clang_type,
+                                                const ConstString &name,
+                                                const lldb::DataBufferSP &data_sp,
+                                                lldb::ByteOrder data_byte_order, 
+                                                uint32_t data_addr_size,
+                                                lldb::addr_t address) :
     ValueObject (exe_scope),
-    m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0),
     m_impl(this, address)
@@ -169,7 +144,8 @@ ValueObjectConstResult::ValueObjectConstResult
     m_data.SetData(data_sp);
     m_value.GetScalar() = (uintptr_t)data_sp->GetBytes();
     m_value.SetValueType(Value::eValueTypeHostAddress);
-    m_value.SetContext(Value::eContextTypeClangType, clang_type);
+    //m_value.SetContext(Value::eContextTypeClangType, clang_type);
+    m_value.SetClangType (clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -177,19 +153,14 @@ ValueObjectConstResult::ValueObjectConstResult
 }
 
 ValueObjectSP
-ValueObjectConstResult::Create
-(
-    ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
-    const ConstString &name,
-    lldb::addr_t address,
-    AddressType address_type,
-    uint32_t addr_byte_size
-)
+ValueObjectConstResult::Create (ExecutionContextScope *exe_scope,
+                                const ClangASTType &clang_type,
+                                const ConstString &name,
+                                lldb::addr_t address,
+                                AddressType address_type,
+                                uint32_t addr_byte_size)
 {
     return (new ValueObjectConstResult (exe_scope,
-                                        clang_ast,
                                         clang_type,
                                         name,
                                         address,
@@ -197,18 +168,13 @@ ValueObjectConstResult::Create
                                         addr_byte_size))->GetSP();
 }
 
-ValueObjectConstResult::ValueObjectConstResult 
-(
-    ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
-    const ConstString &name,
-    lldb::addr_t address,
-    AddressType address_type,
-    uint32_t addr_byte_size
-) :
+ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                                                const ClangASTType &clang_type,
+                                                const ConstString &name,
+                                                lldb::addr_t address,
+                                                AddressType address_type,
+                                                uint32_t addr_byte_size) :
     ValueObject (exe_scope),
-    m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0),
     m_impl(this, address)
@@ -224,7 +190,8 @@ ValueObjectConstResult::ValueObjectConstResult
     case eAddressTypeLoad:      m_value.SetValueType(Value::eValueTypeLoadAddress); break;    
     case eAddressTypeHost:      m_value.SetValueType(Value::eValueTypeHostAddress); break;
     }
-    m_value.SetContext(Value::eContextTypeClangType, clang_type);
+//    m_value.SetContext(Value::eContextTypeClangType, clang_type);
+    m_value.SetClangType (clang_type);
     m_name = name;
     SetIsConstant ();
     SetValueIsValid(true);
@@ -242,11 +209,9 @@ ValueObjectConstResult::Create
                                         error))->GetSP();
 }
 
-ValueObjectConstResult::ValueObjectConstResult (
-    ExecutionContextScope *exe_scope,
-    const Error& error) :
+ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                                                const Error& error) :
     ValueObject (exe_scope),
-    m_clang_ast (NULL),
     m_type_name (),
     m_byte_size (0),
     m_impl(this)
@@ -255,13 +220,10 @@ ValueObjectConstResult::ValueObjectConstResult (
     SetIsConstant ();
 }
 
-ValueObjectConstResult::ValueObjectConstResult (
-    ExecutionContextScope *exe_scope,
-    clang::ASTContext *clang_ast,
-    const Value &value,
-    const ConstString &name) :
+ValueObjectConstResult::ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                                                const Value &value,
+                                                const ConstString &name) :
     ValueObject (exe_scope),
-    m_clang_ast (clang_ast),
     m_type_name (),
     m_byte_size (0),
     m_impl(this)
@@ -274,7 +236,7 @@ ValueObjectConstResult::~ValueObjectConstResult()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectConstResult::GetClangTypeImpl()
 {
     return m_value.GetClangType();
@@ -290,7 +252,7 @@ uint64_t
 ValueObjectConstResult::GetByteSize()
 {
     if (m_byte_size == 0)
-        m_byte_size = ClangASTType::GetTypeByteSize(GetClangAST(), GetClangType());
+        m_byte_size = GetClangType().GetByteSize();
     return m_byte_size;
 }
 
@@ -303,20 +265,14 @@ ValueObjectConstResult::SetByteSize (size_t size)
 size_t
 ValueObjectConstResult::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
-}
-
-clang::ASTContext *
-ValueObjectConstResult::GetClangASTImpl ()
-{
-    return m_clang_ast;
+    return GetClangType().GetNumChildren (true);
 }
 
 ConstString
 ValueObjectConstResult::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
+        m_type_name = GetClangType().GetConstTypeName ();
     return m_type_name;
 }
 

@@ -131,7 +131,7 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
             {
                 TypeSP type_sp (types.GetTypeAtIndex(i));
                 
-                if (ClangASTContext::IsObjCClassType(type_sp->GetClangForwardType()))
+                if (type_sp->GetClangForwardType().IsObjCObjectOrInterfaceType())
                 {
                     if (type_sp->IsCompleteObjCClass())
                     {
@@ -532,7 +532,7 @@ ObjCLanguageRuntime::GetClassDescriptor (ValueObject& valobj)
     // if we get an invalid VO (which might still happen when playing around
     // with pointers returned by the expression parser, don't consider this
     // a valid ObjC object)
-    if (valobj.GetValue().GetContextType() != Value::eContextTypeInvalid)
+    if (valobj.GetClangType().IsValid())
     {
         addr_t isa_pointer = valobj.GetPointerValue();
         if (isa_pointer != LLDB_INVALID_ADDRESS)

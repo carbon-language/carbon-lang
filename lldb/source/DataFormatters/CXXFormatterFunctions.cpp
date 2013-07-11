@@ -518,12 +518,13 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     if (data_addr == 0 || data_addr == LLDB_INVALID_ADDRESS)
         return false;
 
-    clang::ASTContext* ast = valobj.GetClangAST();
-
+    clang::ASTContext* ast = valobj.GetClangType().GetASTContext();
+    
     if (!ast)
         return false;
 
-    uint32_t wchar_size = ClangASTType::GetClangTypeBitWidth(ast, ClangASTType::GetBasicType(ast, lldb::eBasicTypeWChar).GetOpaqueQualType());
+    ClangASTType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
+    const uint32_t wchar_size = wchar_clang_type.GetBitSize();
 
     switch (wchar_size)
     {
@@ -605,14 +606,14 @@ lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& str
     DataExtractor data;
     valobj.GetData(data);
     
-    clang::ASTContext* ast = valobj.GetClangAST();
+    clang::ASTContext* ast = valobj.GetClangType().GetASTContext();
     
     if (!ast)
         return false;
     
+    ClangASTType wchar_clang_type = ClangASTContext::GetBasicType(ast, lldb::eBasicTypeWChar);
+    const uint32_t wchar_size = wchar_clang_type.GetBitSize();
     std::string value;
-    
-    uint32_t wchar_size = ClangASTType::GetClangTypeBitWidth(ast, ClangASTType::GetBasicType(ast, lldb::eBasicTypeWChar).GetOpaqueQualType());
     
     switch (wchar_size)
     {
@@ -1133,13 +1134,13 @@ lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj
     if (!target_sp)
         return false;
     uint32_t addr_size = target_sp->GetArchitecture().GetAddressByteSize();
-    uint64_t pointee = valobj.GetValueAsUnsigned(0);
-    if (!pointee)
+    uint64_t pointer_value = valobj.GetValueAsUnsigned(0);
+    if (!pointer_value)
         return false;
-    pointee += addr_size;
-    ClangASTType type(valobj.GetClangAST(),valobj.GetClangType());
+    pointer_value += addr_size;
+    ClangASTType type(valobj.GetClangType());
     ExecutionContext exe_ctx(target_sp,false);
-    ValueObjectSP child_ptr_sp(valobj.CreateValueObjectFromAddress("string_ptr", pointee, exe_ctx, type));
+    ValueObjectSP child_ptr_sp(valobj.CreateValueObjectFromAddress("string_ptr", pointer_value, exe_ctx, type));
     if (!child_ptr_sp)
         return false;
     DataExtractor data;
@@ -1167,20 +1168,18 @@ lldb_private::formatters::RuntimeSpecificDescriptionSummaryProvider (ValueObject
 bool
 lldb_private::formatters::ObjCBOOLSummaryProvider (ValueObject& valobj, Stream& stream)
 {
-    const uint32_t type_info = ClangASTContext::GetTypeInfo(valobj.GetClangType(),
-                                                            valobj.GetClangAST(),
-                                                            NULL);
+    const uint32_t type_info = valobj.GetClangType().GetTypeInfo();
     
     ValueObjectSP real_guy_sp = valobj.GetSP();
     
-    if (type_info & ClangASTContext::eTypeIsPointer)
+    if (type_info & ClangASTType::eTypeIsPointer)
     {
         Error err;
         real_guy_sp = valobj.Dereference(err);
         if (err.Fail() || !real_guy_sp)
             return false;
     }
-    else if (type_info & ClangASTContext::eTypeIsReference)
+    else if (type_info & ClangASTType::eTypeIsReference)
     {
         real_guy_sp =  valobj.GetChildAtIndex(0, true);
         if (!real_guy_sp)
@@ -1202,12 +1201,10 @@ lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& s
 {
     lldb::ValueObjectSP valobj_sp;
 
-    if (!valobj.GetClangAST())
+    ClangASTType charstar (valobj.GetClangType().GetBasicTypeFromAST(eBasicTypeChar).GetPointerType());
+    
+    if (!charstar)
         return false;
-    void* char_opaque_type = valobj.GetClangAST()->CharTy.getAsOpaquePtr();
-    if (!char_opaque_type)
-        return false;
-    ClangASTType charstar(valobj.GetClangAST(),ClangASTType::GetPointerType(valobj.GetClangAST(), char_opaque_type));
 
     ExecutionContext exe_ctx(valobj.GetExecutionContextRef());
     
@@ -1303,7 +1300,7 @@ lldb_private::formatters::VectorIteratorSyntheticFrontEnd::Update()
         return false;
     Error err;
     m_exe_ctx_ref = valobj_sp->GetExecutionContextRef();
-    m_item_sp = ValueObject::CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, ClangASTType(item_ptr->GetClangAST(),ClangASTType::GetPointeeType(item_ptr->GetClangType())));
+    m_item_sp = ValueObject::CreateValueObjectFromAddress("item", item_ptr->GetValueAsUnsigned(0), m_exe_ctx_ref, item_ptr->GetClangType().GetPointeeType());
     if (err.Fail())
         m_item_sp.reset();
     return false;

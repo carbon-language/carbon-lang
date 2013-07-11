@@ -547,18 +547,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
 {
 
     // We are in a type parsing child members
-    const uint32_t num_bases = ClangASTContext::GetNumDirectBaseClasses(clang_type.GetASTContext(),
-                                                                        clang_type.GetOpaqueQualType());
+    const uint32_t num_bases = clang_type.GetNumDirectBaseClasses();
     
     if (num_bases > 0)
     {
         for (uint32_t i = 0; i < num_bases; ++i)
         {
-            ClangASTType base_class_type (clang_type.GetASTContext(),
-                                          ClangASTContext::GetDirectBaseClassAtIndex (clang_type.GetASTContext(),
-                                                                                      clang_type.GetOpaqueQualType(),
-                                                                                      i,
-                                                                                      NULL));
+            ClangASTType base_class_type (clang_type.GetDirectBaseClassAtIndex (i, NULL));
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -570,18 +565,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
         }
     }
 
-    const uint32_t num_vbases = ClangASTContext::GetNumVirtualBaseClasses(clang_type.GetASTContext(),
-                                                                          clang_type.GetOpaqueQualType());
+    const uint32_t num_vbases = clang_type.GetNumVirtualBaseClasses();
     
     if (num_vbases > 0)
     {
         for (uint32_t i = 0; i < num_vbases; ++i)
         {
-            ClangASTType vbase_class_type (clang_type.GetASTContext(),
-                                          ClangASTContext::GetVirtualBaseClassAtIndex(clang_type.GetASTContext(),
-                                                                                      clang_type.GetOpaqueQualType(),
-                                                                                      i,
-                                                                                      NULL));
+            ClangASTType vbase_class_type (clang_type.GetVirtualBaseClassAtIndex(i,NULL));
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -594,8 +584,7 @@ PrivateAutoCompleteMembers (StackFrame *frame,
     }
 
     // We are in a type parsing child members
-    const uint32_t num_fields = ClangASTContext::GetNumFields(clang_type.GetASTContext(),
-                                                              clang_type.GetOpaqueQualType());
+    const uint32_t num_fields = clang_type.GetNumFields();
     
     if (num_fields > 0)
     {
@@ -603,20 +592,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
         {
             std::string member_name;
             
-            lldb::clang_type_t member_type = ClangASTContext::GetFieldAtIndex (clang_type.GetASTContext(),
-                                                                               clang_type.GetOpaqueQualType(),
-                                                                               i,
-                                                                               member_name,
-                                                                               NULL,
-                                                                               NULL,
-                                                                               NULL);
+            ClangASTType member_clang_type = clang_type.GetFieldAtIndex (i, member_name, NULL, NULL, NULL);
             
             if (partial_member_name.empty() ||
                 member_name.find(partial_member_name) == 0)
             {
                 if (member_name == partial_member_name)
                 {
-                    ClangASTType member_clang_type (clang_type.GetASTContext(), member_type);
                     PrivateAutoComplete (frame,
                                          partial_path,
                                          prefix_path + member_name, // Anything that has been resolved already will be in here
@@ -683,7 +665,7 @@ PrivateAutoComplete (StackFrame *frame,
                 case eTypeClassPointer:
                     {
                         bool omit_empty_base_classes = true;
-                        if (ClangASTContext::GetNumChildren (clang_type.GetASTContext(), clang_type.GetPointeeType(), omit_empty_base_classes) > 0)
+                        if (clang_type.GetNumChildren (omit_empty_base_classes) > 0)
                             matches.AppendString (prefix_path + "->");
                         else
                         {
@@ -747,7 +729,7 @@ PrivateAutoComplete (StackFrame *frame,
                 {
                     case lldb::eTypeClassPointer:
                         {
-                            ClangASTType pointee_type(clang_type.GetASTContext(), clang_type.GetPointeeType());
+                            ClangASTType pointee_type(clang_type.GetPointeeType());
                             if (partial_path[2])
                             {
                                 // If there is more after the "->", then search deeper
@@ -859,7 +841,7 @@ PrivateAutoComplete (StackFrame *frame,
                                 Type *variable_type = variable->GetType();
                                 if (variable_type)
                                 {
-                                    ClangASTType variable_clang_type (variable_type->GetClangAST(), variable_type->GetClangForwardType());
+                                    ClangASTType variable_clang_type (variable_type->GetClangForwardType());
                                     PrivateAutoComplete (frame,
                                                          remaining_partial_path,
                                                          prefix_path + token, // Anything that has been resolved already will be in here

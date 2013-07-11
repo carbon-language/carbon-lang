@@ -111,7 +111,9 @@ class TestObjCIvarsInBlocks(TestBase):
         expr = frame.EvaluateExpression("(ret)")
         self.assertTrue (expr, "Successfully got a local variable in a block in a class method.")
 
-        self.assertTrue (expr.GetValueAsSigned (error) == 5, "The local variable in the block was what we expected.")
+        ret_value_signed = expr.GetValueAsSigned (error)
+        print 'ret_value_signed = %i' % (ret_value_signed)
+        self.assertTrue (ret_value_signed == 5, "The local variable in the block was what we expected.")
         
 if __name__ == '__main__':
     import atexit

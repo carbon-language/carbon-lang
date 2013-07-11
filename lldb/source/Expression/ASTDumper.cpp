@@ -9,6 +9,7 @@
 
 #include "lldb/Core/Log.h"
 #include "lldb/Expression/ASTDumper.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 #include "llvm/Support/raw_ostream.h"
 
@@ -77,7 +78,13 @@ ASTDumper::ASTDumper (lldb::clang_type_t type)
 {
     m_dump = clang::QualType::getFromOpaquePtr(type).getAsString();
 }
-    
+
+ASTDumper::ASTDumper (const ClangASTType &clang_type)
+{
+    m_dump = clang_type.GetQualType().getAsString();
+}
+
+
 const char *
 ASTDumper::GetCString()
 {

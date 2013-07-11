@@ -292,10 +292,10 @@ SymbolFileSymtab::ResolveTypeUID(lldb::user_id_t type_uid)
     return NULL;
 }
 
-lldb::clang_type_t
-SymbolFileSymtab::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type)
+bool
+SymbolFileSymtab::ResolveClangOpaqueTypeDefinition (lldb_private::ClangASTType& clang_opaque_type)
 {
-    return NULL;
+    return false;
 }
 
 ClangNamespaceDecl 

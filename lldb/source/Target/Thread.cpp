@@ -1677,13 +1677,12 @@ Thread::ReturnFromFrame (lldb::StackFrameSP frame_sp, lldb::ValueObjectSP return
             Type *function_type = sc.function->GetType();
             if (function_type)
             {
-                clang_type_t return_type = sc.function->GetReturnClangType();
+                ClangASTType return_type = sc.function->GetClangType().GetFunctionReturnType();
                 if (return_type)
                 {
-                    ClangASTType ast_type (function_type->GetClangAST(), return_type);
                     StreamString s;
-                    ast_type.DumpTypeDescription(&s);
-                    ValueObjectSP cast_value_sp = return_value_sp->Cast(ast_type);
+                    return_type.DumpTypeDescription(&s);
+                    ValueObjectSP cast_value_sp = return_value_sp->Cast(return_type);
                     if (cast_value_sp)
                     {
                         cast_value_sp->SetFormat(eFormatHex);

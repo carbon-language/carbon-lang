@@ -136,8 +136,7 @@ ThreadPlanAssemblyTracer::GetIntPointerType()
         
             if (exe_module)
             {
-                m_intptr_type = TypeFromUser(exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, target_sp->GetArchitecture().GetAddressByteSize() * 8),
-                                             exe_module->GetClangASTContext().getASTContext());
+                m_intptr_type = TypeFromUser(exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingUint, target_sp->GetArchitecture().GetAddressByteSize() * 8));
             }
         }        
     }
@@ -243,7 +242,8 @@ ThreadPlanAssemblyTracer::Log ()
         {
             Value value;
             value.SetValueType (Value::eValueTypeScalar);
-            value.SetContext (Value::eContextTypeClangType, intptr_type.GetOpaqueQualType());
+//            value.SetContext (Value::eContextTypeClangType, intptr_type.GetOpaqueQualType());
+            value.SetClangType (intptr_type);
             value_list.PushValue (value);
         }
         

@@ -645,9 +645,9 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                         {
                             // Make sure we aren't trying to deref an objective
                             // C ivar if this is not allowed
-                            const uint32_t pointer_type_flags = ClangASTContext::GetTypeInfo (valobj_sp->GetClangType(), NULL, NULL);
-                            if ((pointer_type_flags & ClangASTContext::eTypeIsObjC) &&
-                                (pointer_type_flags & ClangASTContext::eTypeIsPointer))
+                            const uint32_t pointer_type_flags = valobj_sp->GetClangType().GetTypeInfo (NULL);
+                            if ((pointer_type_flags & ClangASTType::eTypeIsObjC) &&
+                                (pointer_type_flags & ClangASTType::eTypeIsPointer))
                             {
                                 // This was an objective C object pointer and 
                                 // it was requested we skip any fragile ivars
@@ -759,7 +759,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                             if (end && *end == ']'
                                 && *(end-1) != '[') // this code forces an error in the case of arr[]. as bitfield[] is not a good syntax we're good to go
                             {
-                                if (ClangASTContext::IsPointerToScalarType(valobj_sp->GetClangType()) && deref)
+                                if (valobj_sp->GetClangType().IsPointerToScalarType() && deref)
                                 {
                                     // what we have is *ptr[low]. the most similar C++ syntax is to deref ptr
                                     // and extract bit low out of it. reading array item low
@@ -777,7 +777,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                     valobj_sp = temp;
                                     deref = false;
                                 }
-                                else if (ClangASTContext::IsArrayOfScalarType(valobj_sp->GetClangType()) && deref)
+                                else if (valobj_sp->GetClangType().IsArrayOfScalarType() && deref)
                                 {
                                     // what we have is *arr[low]. the most similar C++ syntax is to get arr[0]
                                     // (an operation that is equivalent to deref-ing arr)
@@ -802,9 +802,9 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 {
                                     bool is_objc_pointer = true;
                                     
-                                    if (ClangASTType::GetMinimumLanguage(valobj_sp->GetClangAST(), valobj_sp->GetClangType()) != eLanguageTypeObjC)
+                                    if (valobj_sp->GetClangType().GetMinimumLanguage() != eLanguageTypeObjC)
                                         is_objc_pointer = false;
-                                    else if (!ClangASTContext::IsPointerType(valobj_sp->GetClangType()))
+                                    else if (!valobj_sp->GetClangType().IsPointerType())
                                         is_objc_pointer = false;
 
                                     if (no_synth_child && is_objc_pointer)
@@ -861,7 +861,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                         }
                                     }
                                 }
-                                else if (ClangASTContext::IsArrayType (valobj_sp->GetClangType(), NULL, NULL, &is_incomplete_array))
+                                else if (valobj_sp->GetClangType().IsArrayType (NULL, NULL, &is_incomplete_array))
                                 {
                                     // Pass false to dynamic_value here so we can tell the difference between
                                     // no dynamic value and no member of this type...
@@ -878,7 +878,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                                                         var_expr_path_strm.GetString().c_str());
                                     }
                                 }
-                                else if (ClangASTContext::IsScalarType(valobj_sp->GetClangType()))
+                                else if (valobj_sp->GetClangType().IsScalarType())
                                 {
                                     // this is a bitfield asking to display just one bit
                                     child_valobj_sp = valobj_sp->GetSyntheticBitFieldChild(child_index, child_index, true);
@@ -961,7 +961,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                         final_index = temp;
                                     }
                                     
-                                    if (ClangASTContext::IsPointerToScalarType(valobj_sp->GetClangType()) && deref)
+                                    if (valobj_sp->GetClangType().IsPointerToScalarType() && deref)
                                     {
                                         // what we have is *ptr[low-high]. the most similar C++ syntax is to deref ptr
                                         // and extract bits low thru high out of it. reading array items low thru high
@@ -979,7 +979,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                         valobj_sp = temp;
                                         deref = false;
                                     }
-                                    else if (ClangASTContext::IsArrayOfScalarType(valobj_sp->GetClangType()) && deref)
+                                    else if (valobj_sp->GetClangType().IsArrayOfScalarType() && deref)
                                     {
                                         // what we have is *arr[low-high]. the most similar C++ syntax is to get arr[0]
                                         // (an operation that is equivalent to deref-ing arr)
@@ -1122,7 +1122,7 @@ StackFrame::GetFrameBaseValue (Scalar &frame_base, Error *error_ptr)
             if (m_sc.function->GetFrameBaseExpression().IsLocationList())
                 loclist_base_addr = m_sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.GetTargetPtr());
 
-            if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, NULL, NULL, NULL, loclist_base_addr, NULL, expr_value, &m_frame_base_error) == false)
+            if (m_sc.function->GetFrameBaseExpression().Evaluate(&exe_ctx, NULL, NULL, NULL, loclist_base_addr, NULL, expr_value, &m_frame_base_error) == false)
             {
                 // We should really have an error if evaluate returns, but in case
                 // we don't, lets set the error to something at least.
@@ -1131,7 +1131,7 @@ StackFrame::GetFrameBaseValue (Scalar &frame_base, Error *error_ptr)
             }
             else
             {
-                m_frame_base = expr_value.ResolveValue(&exe_ctx, NULL);
+                m_frame_base = expr_value.ResolveValue(&exe_ctx);
             }
         }
         else

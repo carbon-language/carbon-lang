@@ -55,7 +55,6 @@ ValueObjectConstResultImpl::DerefOnTarget()
         lldb::addr_t tgt_address = m_impl_backend->GetPointerValue();
         ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
         m_load_addr_backend = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                              m_impl_backend->GetClangAST(),
                                                               m_impl_backend->GetClangType(),
                                                               m_impl_backend->GetName(),
                                                               tgt_address,
@@ -104,27 +103,24 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
     bool child_is_deref_of_parent = false;
     
     const bool transparent_pointers = synthetic_array_member == false;
-    clang::ASTContext *clang_ast = m_impl_backend->GetClangAST();
-    lldb::clang_type_t clang_type = m_impl_backend->GetClangType();
-    lldb::clang_type_t child_clang_type;
+    ClangASTType clang_type = m_impl_backend->GetClangType();
+    ClangASTType child_clang_type;
     
     ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
     
-    child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
-                                                                  clang_ast,
-                                                                  m_impl_backend->GetName().GetCString(),
-                                                                  clang_type,
-                                                                  idx,
-                                                                  transparent_pointers,
-                                                                  omit_empty_base_classes,
-                                                                  ignore_array_bounds,
-                                                                  child_name_str,
-                                                                  child_byte_size,
-                                                                  child_byte_offset,
-                                                                  child_bitfield_bit_size,
-                                                                  child_bitfield_bit_offset,
-                                                                  child_is_base_class,
-                                                                  child_is_deref_of_parent);
+    child_clang_type = clang_type.GetChildClangTypeAtIndex (&exe_ctx,
+                                                            m_impl_backend->GetName().GetCString(),
+                                                            idx,
+                                                            transparent_pointers,
+                                                            omit_empty_base_classes,
+                                                            ignore_array_bounds,
+                                                            child_name_str,
+                                                            child_byte_size,
+                                                            child_byte_offset,
+                                                            child_bitfield_bit_size,
+                                                            child_bitfield_bit_offset,
+                                                            child_is_base_class,
+                                                            child_is_deref_of_parent);
     if (child_clang_type && child_byte_size)
     {
         if (synthetic_index)
@@ -135,7 +131,6 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
             child_name.SetCString (child_name_str.c_str());
         
         valobj = new ValueObjectConstResultChild (*m_impl_backend,
-                                                  clang_ast,
                                                   child_clang_type,
                                                   child_name,
                                                   child_byte_size,
@@ -178,7 +173,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         return lldb::ValueObjectSP();
     if (m_live_address != LLDB_INVALID_ADDRESS)
     {
-        ClangASTType type(m_impl_backend->GetClangAST(), m_impl_backend->GetClangType());
+        ClangASTType clang_type(m_impl_backend->GetClangType());
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&m_live_address,sizeof(lldb::addr_t)));
         
@@ -186,8 +181,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         new_name.append(m_impl_backend->GetName().AsCString(""));
         ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
         m_address_of_backend = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                               type.GetASTContext(),
-                                                               type.GetPointerType(),
+                                                               clang_type.GetPointerType(),
                                                                ConstString(new_name.c_str()),
                                                                buffer,
                                                                lldb::endian::InlHostByteOrder(), 

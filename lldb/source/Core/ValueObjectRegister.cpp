@@ -42,10 +42,10 @@ ValueObjectRegisterContext::~ValueObjectRegisterContext()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectRegisterContext::GetClangTypeImpl ()
 {
-    return NULL;
+    return ClangASTType();
 }
 
 ConstString
@@ -64,12 +64,6 @@ size_t
 ValueObjectRegisterContext::CalculateNumChildren()
 {
     return m_reg_ctx_sp->GetRegisterSetCount();
-}
-
-clang::ASTContext *
-ValueObjectRegisterContext::GetClangASTImpl ()
-{
-    return NULL;
 }
 
 uint64_t
@@ -144,10 +138,10 @@ ValueObjectRegisterSet::~ValueObjectRegisterSet()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectRegisterSet::GetClangTypeImpl ()
 {
-    return NULL;
+    return ClangASTType();
 }
 
 ConstString
@@ -169,12 +163,6 @@ ValueObjectRegisterSet::CalculateNumChildren()
     if (reg_set)
         return reg_set->num_registers;
     return 0;
-}
-
-clang::ASTContext *
-ValueObjectRegisterSet::GetClangASTImpl ()
-{
-    return NULL;
 }
 
 uint64_t
@@ -285,7 +273,7 @@ ValueObjectRegister::ValueObjectRegister (ValueObject &parent, lldb::RegisterCon
     m_reg_info (),
     m_reg_value (),
     m_type_name (),
-    m_clang_type (NULL)
+    m_clang_type ()
 {
     assert (reg_ctx_sp.get());
     ConstructObject(reg_num);
@@ -303,7 +291,7 @@ ValueObjectRegister::ValueObjectRegister (ExecutionContextScope *exe_scope, lldb
     m_reg_info (),
     m_reg_value (),
     m_type_name (),
-    m_clang_type (NULL)
+    m_clang_type ()
 {
     assert (reg_ctx);
     ConstructObject(reg_num);
@@ -313,10 +301,10 @@ ValueObjectRegister::~ValueObjectRegister()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectRegister::GetClangTypeImpl ()
 {
-    if (m_clang_type == NULL)
+    if (!m_clang_type.IsValid())
     {
         ExecutionContext exe_ctx (GetExecutionContextRef());
         Target *target = exe_ctx.GetTargetPtr();
@@ -337,28 +325,14 @@ ConstString
 ValueObjectRegister::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
+        m_type_name = GetClangType().GetConstTypeName ();
     return m_type_name;
 }
 
 size_t
 ValueObjectRegister::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren(GetClangAST(), GetClangType(), true);
-}
-
-clang::ASTContext *
-ValueObjectRegister::GetClangASTImpl ()
-{
-    ExecutionContext exe_ctx (GetExecutionContextRef());
-    Target *target = exe_ctx.GetTargetPtr();
-    if (target)
-    {
-        Module *exe_module = target->GetExecutableModulePointer();
-        if (exe_module)
-            return exe_module->GetClangASTContext().getASTContext();
-    }
-    return NULL;
+    return GetClangType().GetNumChildren(true);
 }
 
 uint64_t

@@ -128,7 +128,7 @@ public:
     virtual size_t          ParseTypes (const SymbolContext& sc) = 0;
     virtual size_t          ParseVariablesForContext (const SymbolContext& sc) = 0;
     virtual Type*           ResolveTypeUID (lldb::user_id_t type_uid) = 0;
-    virtual lldb::clang_type_t ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type) = 0;
+    virtual bool            ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type) = 0;
     virtual clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid) { return NULL; }
     virtual clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid) { return NULL; }
     virtual uint32_t        ResolveSymbolContext (const Address& so_addr, uint32_t resolve_scope, SymbolContext& sc) = 0;

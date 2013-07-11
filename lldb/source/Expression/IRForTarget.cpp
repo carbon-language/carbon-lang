@@ -33,6 +33,7 @@
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 #include <map>
 
@@ -130,7 +131,7 @@ PrintValue(const Value *value, bool truncate = false)
 }
 
 static std::string
-PrintType(const Type *type, bool truncate = false)
+PrintType(const llvm::Type *type, bool truncate = false)
 {
     std::string s;
     raw_string_ostream rso(s);
@@ -565,7 +566,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
                                                      &result_decl->getASTContext());
     }
     
-    if (m_result_type.GetClangTypeBitWidth() == 0)
+    if (m_result_type.GetBitSize() == 0)
     {
         lldb_private::StreamString type_desc_stream;
         m_result_type.DumpTypeDescription(&type_desc_stream);
@@ -592,7 +593,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     if (log)
         log->Printf("Creating a new result global: \"%s\" with size 0x%" PRIx64,
                     m_result_name.GetCString(),
-                    m_result_type.GetClangTypeBitWidth() / 8);
+                    m_result_type.GetByteSize());
         
     // Construct a new result global and set up its metadata
     
@@ -1496,22 +1497,14 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         
         std::string name (named_decl->getName().str());
         
-        void *opaque_type = NULL;
-        clang::ASTContext *ast_context = NULL;
-        
-        if (clang::ValueDecl *value_decl = dyn_cast<clang::ValueDecl>(named_decl))
-        {
-            opaque_type = value_decl->getType().getAsOpaquePtr();
-            ast_context = &value_decl->getASTContext();
-        }
-        else
-        {
+        clang::ValueDecl *value_decl = dyn_cast<clang::ValueDecl>(named_decl);
+        if (value_decl == NULL)
             return false;
-        }
+
+        lldb_private::ClangASTType clang_type(&value_decl->getASTContext(), value_decl->getType());
         
-        clang::QualType qual_type;
         const Type *value_type = NULL;
-        
+
         if (name[0] == '$')
         {
             // The $__lldb_expr_result name indicates the the return value has allocated as
@@ -1523,26 +1516,26 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
             // to the type of $__lldb_expr_result, not the type itself.
             //
             // We also do this for any user-declared persistent variables.
-            
-            qual_type = ast_context->getPointerType(clang::QualType::getFromOpaquePtr(opaque_type));
+            clang_type = clang_type.GetPointerType();
             value_type = PointerType::get(global_variable->getType(), 0);
         }
         else
         {
-            qual_type = clang::QualType::getFromOpaquePtr(opaque_type);
             value_type = global_variable->getType();
         }
-                
-        uint64_t value_size = (ast_context->getTypeSize(qual_type) + 7ull) / 8ull;
-        off_t value_alignment = (ast_context->getTypeAlign(qual_type) + 7ull) / 8ull;
+        
+        const uint64_t value_size = clang_type.GetByteSize();
+        off_t value_alignment = (clang_type.GetTypeBitAlign() + 7ull) / 8ull;
         
         if (log)
+        {
             log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %" PRIu64 ", align %" PRId64 "]",
                         name.c_str(), 
-                        qual_type.getAsString().c_str(), 
-                        PrintType(value_type).c_str(), 
+                        clang_type.GetQualType().getAsString().c_str(),
+                        PrintType(value_type).c_str(),
                         value_size, 
                         value_alignment);
+        }
         
         
         if (named_decl && !m_decl_map->AddValueToStruct(named_decl,

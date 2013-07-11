@@ -1050,7 +1050,7 @@ protected:
                 valobj_sp = valobj_list.GetValueObjectAtIndex(0);
         }
         
-        ClangASTType type;
+        ClangASTType clang_type;
         
         if (valobj_sp)
         {
@@ -1063,7 +1063,7 @@ protected:
                 size = m_option_watchpoint.watch_size == 0 ? valobj_sp->GetByteSize()
                                                            : m_option_watchpoint.watch_size;
             }
-            type.SetClangType(valobj_sp->GetClangAST(), valobj_sp->GetClangType());
+            clang_type = valobj_sp->GetClangType();
         }
         else
         {
@@ -1080,7 +1080,7 @@ protected:
         uint32_t watch_type = m_option_watchpoint.watch_type;
         
         error.Clear();
-        Watchpoint *wp = target->CreateWatchpoint(addr, size, &type, watch_type, error).get();
+        Watchpoint *wp = target->CreateWatchpoint(addr, size, &clang_type, watch_type, error).get();
         if (wp)
         {
             wp->SetWatchSpec(command.GetArgumentAtIndex(0));
@@ -1292,12 +1292,10 @@ protected:
         
         // Fetch the type from the value object, the type of the watched object is the pointee type
         /// of the expression, so convert to that if we  found a valid type.
-        ClangASTType type(valobj_sp->GetClangAST(), valobj_sp->GetClangType());
-        if (type.IsValid())
-            type.SetClangType(type.GetASTContext(), type.GetPointeeType());
+        ClangASTType clang_type(valobj_sp->GetClangType());
         
         Error error;
-        Watchpoint *wp = target->CreateWatchpoint(addr, size, &type, watch_type, error).get();
+        Watchpoint *wp = target->CreateWatchpoint(addr, size, &clang_type, watch_type, error).get();
         if (wp)
         {
             Stream &output_stream = result.GetOutputStream();

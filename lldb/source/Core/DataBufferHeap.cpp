@@ -101,5 +101,9 @@ DataBufferHeap::CopyData (const void *src, uint64_t src_len)
         m_data.clear();
 }
 
-
-
+void
+DataBufferHeap::Clear()
+{
+    buffer_t empty;
+    m_data.swap(empty);
+}

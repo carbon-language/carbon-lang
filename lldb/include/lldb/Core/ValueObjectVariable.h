@@ -71,10 +71,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual clang::ASTContext *
-    GetClangASTImpl ();
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ();
 
     lldb::VariableSP  m_variable_sp;  ///< The variable that this value object is based upon

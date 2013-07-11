@@ -14,7 +14,6 @@
 #include <set>
 
 #include "lldb/lldb-types.h"
-
 #include "clang/AST/ASTImporter.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemOptions.h"

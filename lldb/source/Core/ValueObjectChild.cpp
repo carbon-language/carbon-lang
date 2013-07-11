@@ -27,8 +27,7 @@ using namespace lldb_private;
 ValueObjectChild::ValueObjectChild
 (
     ValueObject &parent,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
+    const ClangASTType &clang_type,
     const ConstString &name,
     uint64_t byte_size,
     int32_t byte_offset,
@@ -39,7 +38,6 @@ ValueObjectChild::ValueObjectChild
     AddressType child_ptr_or_ref_addr_type
 ) :
     ValueObject (parent),
-    m_clang_ast (clang_ast),
     m_clang_type (clang_type),
     m_byte_size (byte_size),
     m_byte_offset (byte_offset),
@@ -65,7 +63,7 @@ ValueObjectChild::GetValueType() const
 size_t
 ValueObjectChild::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
+    return GetClangType().GetNumChildren (true);
 }
 
 ConstString
@@ -73,7 +71,7 @@ ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
-        m_type_name = ClangASTType::GetConstTypeName (GetClangAST(), GetClangType());
+        m_type_name = GetClangType().GetConstTypeName ();
         if (m_type_name)
         {
             if (m_bitfield_bit_size > 0)
@@ -94,7 +92,7 @@ ValueObjectChild::GetTypeName()
 ConstString
 ValueObjectChild::GetQualifiedTypeName()
 {
-    ConstString qualified_name = ClangASTType::GetConstQualifiedTypeName (GetClangAST(), GetClangType());
+    ConstString qualified_name = GetClangType().GetConstTypeName();
     if (qualified_name)
     {
         if (m_bitfield_bit_size > 0)
@@ -121,14 +119,14 @@ ValueObjectChild::UpdateValue ()
     {
         if (parent->UpdateValueIfNeeded(false))
         {
-            m_value.SetContext(Value::eContextTypeClangType, GetClangType());
+            m_value.SetClangType(GetClangType());
 
             // Copy the parent scalar value and the scalar value type
             m_value.GetScalar() = parent->GetValue().GetScalar();
             Value::ValueType value_type = parent->GetValue().GetValueType();
             m_value.SetValueType (value_type);
 
-            if (ClangASTContext::IsPointerOrReferenceType (parent->GetClangType()))
+            if (parent->GetClangType().IsPointerOrReferenceType ())
             {
                 lldb::addr_t addr = parent->GetPointerValue ();
                 m_value.GetScalar() = addr;
@@ -209,7 +207,7 @@ ValueObjectChild::UpdateValue ()
             if (m_error.Success())
             {
                 ExecutionContext exe_ctx (GetExecutionContextRef().Lock());
-                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0, GetModule().get());
+                m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
             }
         }
         else

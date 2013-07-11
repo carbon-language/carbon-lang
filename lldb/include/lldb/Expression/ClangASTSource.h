@@ -404,10 +404,8 @@ protected:
     /// @return
     ///     The imported type.
     //------------------------------------------------------------------
-    void *
-    GuardedCopyType (clang::ASTContext *dest_context, 
-                     clang::ASTContext *source_context,
-                     void *clang_type);
+    ClangASTType
+    GuardedCopyType (const ClangASTType &src_type);
     
     friend struct NameSearchContext;
     
@@ -434,7 +432,7 @@ struct NameSearchContext {
     ClangASTImporter::NamespaceMapSP m_namespace_map;           ///< The mapping of all namespaces found for this request back to their modules
     const clang::DeclarationName &m_decl_name;                  ///< The name being looked for
     const clang::DeclContext *m_decl_context;                   ///< The DeclContext to put declarations into
-    llvm::SmallSet <lldb::clang_type_t, 5> m_function_types;    ///< All the types of functions that have been reported, so we don't report conflicts
+    llvm::SmallSet <ClangASTType, 5> m_function_types;    ///< All the types of functions that have been reported, so we don't report conflicts
     
     struct {
         bool variable                   : 1;
@@ -479,7 +477,7 @@ struct NameSearchContext {
     /// @param[in] type
     ///     The opaque QualType for the VarDecl being registered.
     //------------------------------------------------------------------
-    clang::NamedDecl *AddVarDecl(void *type);
+    clang::NamedDecl *AddVarDecl(const ClangASTType &type);
     
     //------------------------------------------------------------------
     /// Create a FunDecl with the name being searched for and the provided
@@ -488,7 +486,7 @@ struct NameSearchContext {
     /// @param[in] type
     ///     The opaque QualType for the FunDecl being registered.
     //------------------------------------------------------------------
-    clang::NamedDecl *AddFunDecl(void *type);
+    clang::NamedDecl *AddFunDecl(const ClangASTType &type);
     
     //------------------------------------------------------------------
     /// Create a FunDecl with the name being searched for and generic
@@ -504,7 +502,7 @@ struct NameSearchContext {
     /// @param[in] type
     ///     The opaque QualType for the TypeDecl being registered.
     //------------------------------------------------------------------
-    clang::NamedDecl *AddTypeDecl(void *type);
+    clang::NamedDecl *AddTypeDecl(const ClangASTType &clang_type);
     
     
     //------------------------------------------------------------------

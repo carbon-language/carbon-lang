@@ -77,7 +77,7 @@ public:
     virtual lldb_private::Type* ResolveTypeUID (lldb::user_id_t type_uid);
     virtual clang::DeclContext* GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid);
     virtual clang::DeclContext* GetClangDeclContextForTypeUID (const lldb_private::SymbolContext &sc, lldb::user_id_t type_uid);
-    virtual lldb::clang_type_t  ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_Type);
+    virtual bool            ResolveClangOpaqueTypeDefinition (lldb_private::ClangASTType& clang_type);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::Address& so_addr, uint32_t resolve_scope, lldb_private::SymbolContext& sc);
     virtual uint32_t        ResolveSymbolContext (const lldb_private::FileSpec& file_spec, uint32_t line, bool check_inlines, uint32_t resolve_scope, lldb_private::SymbolContextList& sc_list);
     virtual uint32_t        FindGlobalVariables (const lldb_private::ConstString &name, const lldb_private::ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::VariableList& variables);

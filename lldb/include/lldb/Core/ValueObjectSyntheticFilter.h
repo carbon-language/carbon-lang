@@ -140,10 +140,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual clang::ASTContext *
-    GetClangASTImpl ();
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ();
     
     virtual void

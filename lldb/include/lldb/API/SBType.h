@@ -164,10 +164,6 @@ public:
     bool
     IsTypeComplete ();
 
-    // DEPRECATED: but needed for Xcode right now
-    static bool
-    IsPointerType (void * clang_type);
-        
     bool
     GetDescription (lldb::SBStream &description, 
                     lldb::DescriptionLevel description_level);

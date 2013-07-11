@@ -12,13 +12,10 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ClangASTType.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
-#include "clang/AST/Type.h"
-#include "clang/AST/CanonicalType.h"
 #include "llvm/Support/Casting.h"
 
 using namespace lldb;
@@ -484,64 +481,13 @@ Function::GetType() const
     return m_type;
 }
 
-clang_type_t
-Function::GetReturnClangType ()
+ClangASTType
+Function::GetClangType()
 {
-    Type *type = GetType();
-    if (type)
-    {
-        clang::QualType clang_type (clang::QualType::getFromOpaquePtr(type->GetClangFullType()));
-        const clang::FunctionType *function_type = llvm::dyn_cast<clang::FunctionType> (clang_type);
-        if (function_type)
-            return function_type->getResultType().getAsOpaquePtr();
-    }
-    return NULL;
-}
-
-int
-Function::GetArgumentCount ()
-{
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
-    assert (clang_type->isFunctionType());
-    if (!clang_type->isFunctionProtoType())
-        return -1;
-
-    const clang::FunctionProtoType *function_proto_type = llvm::dyn_cast<clang::FunctionProtoType>(clang_type);
-    if (function_proto_type != NULL)
-        return function_proto_type->getNumArgs();
-
-    return 0;
-}
-
-clang_type_t
-Function::GetArgumentTypeAtIndex (size_t idx)
-{
-    clang::QualType clang_type (clang::QualType::getFromOpaquePtr(GetType()->GetClangFullType()));
-    const clang::FunctionProtoType *function_proto_type = llvm::dyn_cast<clang::FunctionProtoType>(clang_type);
-    if (function_proto_type)
-    {
-        unsigned num_args = function_proto_type->getNumArgs();
-        if (idx >= num_args)
-            return NULL;
-        
-        return (function_proto_type->arg_type_begin())[idx].getAsOpaquePtr();
-    }
-    return NULL;
-}
-
-bool
-Function::IsVariadic ()
-{
-   const clang::Type *clang_type = static_cast<clang::QualType *>(GetType()->GetClangFullType())->getTypePtr();
-   assert (clang_type->isFunctionType());
-   if (!clang_type->isFunctionProtoType())
-        return false;
-
-    const clang::FunctionProtoType *function_proto_type = llvm::dyn_cast<clang::FunctionProtoType>(clang_type);
-    if (function_proto_type)
-        return function_proto_type->isVariadic();
-
-    return false;
+    Type *function_type = GetType();
+    if (function_type)
+        return function_type->GetClangFullType();
+    return ClangASTType();
 }
 
 uint32_t

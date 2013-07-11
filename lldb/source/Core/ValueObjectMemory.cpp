@@ -103,7 +103,8 @@ ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
     TargetSP target_sp (GetTargetSP());
 
     SetName (ConstString(name));
-    m_value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
+//    m_value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
+    m_value.SetClangType(m_clang_type);
     lldb::addr_t load_address = m_address.GetLoadAddress (target_sp.get());
     if (load_address != LLDB_INVALID_ADDRESS)
     {
@@ -130,12 +131,12 @@ ValueObjectMemory::~ValueObjectMemory()
 {
 }
 
-lldb::clang_type_t
+ClangASTType
 ValueObjectMemory::GetClangTypeImpl ()
 {
     if (m_type_sp)
         return m_type_sp->GetClangForwardType();
-    return m_clang_type.GetOpaqueQualType();
+    return m_clang_type;
 }
 
 ConstString
@@ -143,7 +144,7 @@ ValueObjectMemory::GetTypeName()
 {
     if (m_type_sp)
         return m_type_sp->GetName();
-    return ClangASTType::GetConstTypeName (GetClangAST(), m_clang_type.GetOpaqueQualType());
+    return m_clang_type.GetConstTypeName();
 }
 
 size_t
@@ -152,17 +153,7 @@ ValueObjectMemory::CalculateNumChildren()
     if (m_type_sp)
         return m_type_sp->GetNumChildren(true);
     const bool omit_empty_base_classes = true;
-    return ClangASTContext::GetNumChildren (m_clang_type.GetASTContext(),
-                                            m_clang_type.GetOpaqueQualType(), 
-                                            omit_empty_base_classes);
-}
-
-clang::ASTContext *
-ValueObjectMemory::GetClangASTImpl ()
-{
-    if (m_type_sp)
-        return m_type_sp->GetClangAST();
-    return m_clang_type.GetASTContext();
+    return m_clang_type.GetNumChildren (omit_empty_base_classes);
 }
 
 uint64_t
@@ -170,7 +161,7 @@ ValueObjectMemory::GetByteSize()
 {
     if (m_type_sp)
         return m_type_sp->GetByteSize();
-    return m_clang_type.GetClangTypeByteSize ();
+    return m_clang_type.GetByteSize ();
 }
 
 lldb::ValueType
@@ -209,7 +200,7 @@ ValueObjectMemory::UpdateValue ()
         case Value::eValueTypeScalar:
             // The variable value is in the Scalar value inside the m_value.
             // We can point our m_data right to it.
-            m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule().get());
+            m_error = m_value.GetValueAsData (&exe_ctx, m_data, 0, GetModule().get());
             break;
 
         case Value::eValueTypeFileAddress:
@@ -234,7 +225,7 @@ ValueObjectMemory::UpdateValue ()
                 }
             }
 
-            if (ClangASTContext::IsAggregateType (GetClangType()))
+            if (GetClangType().IsAggregateType())
             {
                 // this value object represents an aggregate type whose
                 // children have values, but this object does not. So we
@@ -249,9 +240,12 @@ ValueObjectMemory::UpdateValue ()
                 if (m_type_sp)
                     value.SetContext(Value::eContextTypeLLDBType, m_type_sp.get());
                 else
-                    value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
+                {
+                    //value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
+                    value.SetClangType(m_clang_type);
+                }
 
-                m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0, GetModule().get());
+                m_error = value.GetValueAsData(&exe_ctx, m_data, 0, GetModule().get());
             }
             break;
         }

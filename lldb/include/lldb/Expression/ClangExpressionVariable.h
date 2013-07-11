@@ -25,6 +25,7 @@
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Value.h"
 #include "lldb/Symbol/TaggedASTType.h"
 
 namespace llvm {
@@ -98,7 +99,7 @@ public:
             m_parser_type(),
             m_named_decl (NULL),
             m_llvm_value (NULL),
-            m_lldb_value (NULL),
+            m_lldb_value (),
             m_lldb_var   (),
             m_lldb_sym   (NULL)
         {
@@ -107,7 +108,7 @@ public:
         TypeFromParser          m_parser_type;  ///< The type of the variable according to the parser
         const clang::NamedDecl *m_named_decl;   ///< The Decl corresponding to this variable
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
-        lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
+        lldb_private::Value     m_lldb_value;   ///< The value found in LLDB for this variable
         lldb::VariableSP        m_lldb_var;     ///< The original variable for this variable
         const lldb_private::Symbol *m_lldb_sym; ///< The original symbol for this variable, if it was a symbol
     };
@@ -215,17 +216,11 @@ public:
     void
     SetRegisterInfo (const RegisterInfo *reg_info);
 
-    lldb::clang_type_t
+    ClangASTType
     GetClangType ();
     
     void
-    SetClangType (lldb::clang_type_t);
-
-    clang::ASTContext *
-    GetClangAST ();
-    
-    void
-    SetClangAST (clang::ASTContext *ast);
+    SetClangType (const ClangASTType &clang_type);
 
     TypeFromUser
     GetTypeFromUser ();
@@ -420,8 +415,7 @@ public:
     {
         lldb::ClangExpressionVariableSP var_sp(new ClangExpressionVariable(exe_scope, byte_order, addr_byte_size));
         var_sp->SetName (name);
-        var_sp->SetClangType (user_type.GetOpaqueQualType());
-        var_sp->SetClangAST (user_type.GetASTContext());
+        var_sp->SetClangType (user_type);
         m_variables.push_back(var_sp);
         return var_sp;
     }

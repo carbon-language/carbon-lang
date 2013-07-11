@@ -543,15 +543,15 @@ protected:
                 else
                 {
                     TypeSP type_sp (type_list.GetTypeAtIndex(0));
-                    clang_ast_type.SetClangType (type_sp->GetClangAST(), type_sp->GetClangFullType());
+                    clang_ast_type = type_sp->GetClangFullType();
                 }
             }
             
             while (pointer_count > 0)
             {
-                clang_type_t pointer_type = ClangASTContext::CreatePointerType (clang_ast_type.GetASTContext(), clang_ast_type.GetOpaqueQualType());
-                if (pointer_type)
-                    clang_ast_type.SetClangType (clang_ast_type.GetASTContext(), pointer_type);
+                ClangASTType pointer_type = clang_ast_type.GetPointerType();
+                if (pointer_type.IsValid())
+                    clang_ast_type = pointer_type;
                 else
                 {
                     result.AppendError ("unable make a pointer type\n");
@@ -561,7 +561,7 @@ protected:
                 --pointer_count;
             }
 
-            m_format_options.GetByteSizeValue() = clang_ast_type.GetClangTypeByteSize();
+            m_format_options.GetByteSizeValue() = clang_ast_type.GetByteSize();
             
             if (m_format_options.GetByteSizeValue() == 0)
             {
@@ -675,7 +675,7 @@ protected:
             if (m_format_options.GetFormatValue().OptionWasSet() == false)
                 m_format_options.GetFormatValue().SetCurrentValue(eFormatDefault);
 
-            bytes_read = clang_ast_type.GetTypeByteSize() * m_format_options.GetCountValue().GetCurrentValue();
+            bytes_read = clang_ast_type.GetByteSize() * m_format_options.GetCountValue().GetCurrentValue();
         }
         else if (m_format_options.GetFormatValue().GetCurrentValue() != eFormatCString)
         {

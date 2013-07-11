@@ -121,6 +121,9 @@ public:
     void
     CopyData (const void *src, lldb::offset_t src_len);
 
+    void
+    Clear();
+
 private:
     //------------------------------------------------------------------
     // This object uses a std::vector<uint8_t> to store its data. This

@@ -281,7 +281,7 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetDataType()
     deref = deref->GetChildMemberWithName(ConstString("__value_"), true);
     if (!deref)
         return false;
-    m_element_type.SetClangType(deref->GetClangAST(), deref->GetClangType());
+    m_element_type = deref->GetClangType();
     return true;
 }
 
@@ -292,9 +292,9 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetValueOffset (const l
         return;
     if (!node)
         return;
-    ClangASTType node_type(node->GetClangAST(),node->GetClangType());
+    ClangASTType node_type(node->GetClangType());
     uint64_t bit_offset;
-    if (ClangASTContext::GetIndexOfFieldWithName(node->GetClangAST(),node->GetClangType(),"__value_",NULL,&bit_offset) == UINT32_MAX)
+    if (node_type.GetIndexOfFieldWithName("__value_", NULL, &bit_offset) == UINT32_MAX)
         return;
     m_skip_size = bit_offset / 8u;
 }

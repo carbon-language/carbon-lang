@@ -596,10 +596,7 @@ public:
     
     virtual ~ValueObject();
     
-    clang::ASTContext *
-    GetClangAST ();
-    
-    lldb::clang_type_t
+    ClangASTType
     GetClangType ();
 
     //------------------------------------------------------------------
@@ -624,7 +621,7 @@ public:
     GetObjectRuntimeLanguage();
 
     virtual uint32_t
-    GetTypeInfo (lldb::clang_type_t *pointee_or_element_clang_type = NULL);
+    GetTypeInfo (ClangASTType *pointee_or_element_clang_type = NULL);
 
     virtual bool
     IsPointerType ();
@@ -718,12 +715,6 @@ public:
         return m_is_array_item_for_pointer;
     }
     
-    virtual bool
-    SetClangAST (clang::ASTContext *ast)
-    {
-        return false;
-    }
-
     virtual const char *
     GetValueAsCString ();
     
@@ -1337,10 +1328,7 @@ protected:
     // Sublasses must implement the functions below.
     //------------------------------------------------------------------
     
-    virtual clang::ASTContext *
-    GetClangASTImpl () = 0;
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl () = 0;
     
     const char *

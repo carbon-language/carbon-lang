@@ -206,12 +206,12 @@ lldb_private::formatters::LibstdcppVectorBoolSyntheticFrontEndCreator (CXXSynthe
  */
 
 lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::LibstdcppMapIteratorSyntheticFrontEnd (lldb::ValueObjectSP valobj_sp) :
-SyntheticChildrenFrontEnd(*valobj_sp.get()),
-m_exe_ctx_ref(),
-m_pair_address(0),
-m_pair_type(),
-m_options(),
-m_pair_sp()
+    SyntheticChildrenFrontEnd(*valobj_sp.get()),
+    m_exe_ctx_ref(),
+    m_pair_address(0),
+    m_pair_type(),
+    m_options(),
+    m_pair_sp()
 {
     if (valobj_sp)
         Update();
@@ -249,14 +249,14 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::Update()
     
     m_pair_address += (is_64bit ? 32 : 16);
     
-    ClangASTType my_type(valobj_sp->GetClangAST(),valobj_sp->GetClangType());
-    if (ClangASTContext::GetNumTemplateArguments(valobj_sp->GetClangAST(),valobj_sp->GetClangType()) >= 1)
+    ClangASTType my_type(valobj_sp->GetClangType());
+    if (my_type.GetNumTemplateArguments() >= 1)
     {
         TemplateArgumentKind kind;
-        clang_type_t pair_type = ClangASTContext::GetTemplateArgument(valobj_sp->GetClangAST(),valobj_sp->GetClangType(), 0, kind);
+        ClangASTType pair_type = my_type.GetTemplateArgument(0, kind);
         if (kind != eTemplateArgumentKindType && kind != eTemplateArgumentKindTemplate && kind != eTemplateArgumentKindTemplateExpansion)
             return false;
-        m_pair_type = ClangASTType(valobj_sp->GetClangAST(),pair_type);
+        m_pair_type = pair_type;
     }
     else
         return false;
@@ -273,15 +273,13 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::CalculateNumChi
 lldb::ValueObjectSP
 lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
-    if (m_pair_address == 0)
-        return lldb::ValueObjectSP();
-    if (m_pair_type.GetASTContext() == NULL ||
-        m_pair_type.GetOpaqueQualType() == NULL)
-        return lldb::ValueObjectSP();
-    if (!m_pair_sp)
-        m_pair_sp = ValueObject::CreateValueObjectFromAddress("pair", m_pair_address, m_exe_ctx_ref, m_pair_type);
-    if (m_pair_sp)
-        return m_pair_sp->GetChildAtIndex(idx, true);
+    if (m_pair_address != 0 && m_pair_type)
+    {
+        if (!m_pair_sp)
+            m_pair_sp = ValueObject::CreateValueObjectFromAddress("pair", m_pair_address, m_exe_ctx_ref, m_pair_type);
+        if (m_pair_sp)
+            return m_pair_sp->GetChildAtIndex(idx, true);
+    }
     return lldb::ValueObjectSP();
 }
 

@@ -19,8 +19,7 @@ using namespace lldb_private;
 ValueObjectConstResultChild::ValueObjectConstResultChild
 (
     ValueObject &parent,
-    clang::ASTContext *clang_ast,
-    void *clang_type,
+    const ClangASTType &clang_type,
     const ConstString &name,
     uint32_t byte_size,
     int32_t byte_offset,
@@ -30,7 +29,6 @@ ValueObjectConstResultChild::ValueObjectConstResultChild
     bool is_deref_of_parent
 ) :
     ValueObjectChild (parent,
-                      clang_ast,
                       clang_type,
                       name,
                       byte_size,

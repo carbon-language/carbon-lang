@@ -33,8 +33,10 @@ using namespace lldb_private;
 
 Value::Value() :
     m_value (),
-    m_value_type (eValueTypeScalar),
+    m_vector (),
+    m_clang_type (),
     m_context (NULL),
+    m_value_type (eValueTypeScalar),
     m_context_type (eContextTypeInvalid),
     m_data_buffer ()
 {
@@ -42,8 +44,10 @@ Value::Value() :
 
 Value::Value(const Scalar& scalar) :
     m_value (scalar),
-    m_value_type (eValueTypeScalar),
+    m_vector (),
+    m_clang_type (),
     m_context (NULL),
+    m_value_type (eValueTypeScalar),
     m_context_type (eContextTypeInvalid),
     m_data_buffer ()
 {
@@ -52,8 +56,10 @@ Value::Value(const Scalar& scalar) :
 
 Value::Value(const uint8_t *bytes, int len) :
     m_value (),
-    m_value_type (eValueTypeHostAddress),
+    m_vector (),
+    m_clang_type (),
     m_context (NULL),
+    m_value_type (eValueTypeHostAddress),
     m_context_type (eContextTypeInvalid),
     m_data_buffer ()
 {
@@ -62,10 +68,13 @@ Value::Value(const uint8_t *bytes, int len) :
 }
 
 Value::Value(const Value &v) :
-    m_value(v.m_value),
-    m_value_type(v.m_value_type),
-    m_context(v.m_context),
-    m_context_type(v.m_context_type)
+    m_value (v.m_value),
+    m_vector (v.m_vector),
+    m_clang_type (v.m_clang_type),
+    m_context (v.m_context),
+    m_value_type (v.m_value_type),
+    m_context_type (v.m_context_type),
+    m_data_buffer ()
 {
     if ((uintptr_t)v.m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)v.m_data_buffer.GetBytes())
     {
@@ -82,8 +91,10 @@ Value::operator=(const Value &rhs)
     if (this != &rhs)
     {
         m_value = rhs.m_value;
-        m_value_type = rhs.m_value_type;
+        m_vector = rhs.m_vector;
+        m_clang_type = rhs.m_clang_type;
         m_context = rhs.m_context;
+        m_value_type = rhs.m_value_type;
         m_context_type = rhs.m_context_type;
         if ((uintptr_t)rhs.m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)rhs.m_data_buffer.GetBytes())
         {
@@ -152,72 +163,42 @@ Value::ResizeData(size_t len)
 }
 
 bool
-Value::ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
+Value::ValueOf(ExecutionContext *exe_ctx)
 {
     switch (m_context_type)
     {
     case eContextTypeInvalid:
-    case eContextTypeClangType:         // clang::Type *
     case eContextTypeRegisterInfo:      // RegisterInfo *
     case eContextTypeLLDBType:          // Type *
         break;
 
     case eContextTypeVariable:          // Variable *
-        ResolveValue(exe_ctx, ast_context);
+        ResolveValue(exe_ctx);
         return true;
     }
     return false;
 }
 
 uint64_t
-Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
+Value::GetValueByteSize (Error *error_ptr)
 {
     uint64_t byte_size = 0;
 
     switch (m_context_type)
     {
-    case eContextTypeInvalid:
-        // If we have no context, there is no way to know how much memory to read
-        if (error_ptr)
-            error_ptr->SetErrorString ("Invalid context type, there is no way to know how much memory to read.");
-        break;
-
-    case eContextTypeClangType:
-        if (ast_context == NULL)
-        {
-            if (error_ptr)
-                error_ptr->SetErrorString ("Can't determine size of opaque clang type with NULL ASTContext *.");
-        }
-        else
-        {
-            byte_size = ClangASTType(ast_context, m_context).GetClangTypeByteSize();
-        }
-        break;
-
     case eContextTypeRegisterInfo:     // RegisterInfo *
         if (GetRegisterInfo())
             byte_size = GetRegisterInfo()->byte_size;
-        else if (error_ptr)
-            error_ptr->SetErrorString ("Can't determine byte size with NULL RegisterInfo *.");
         break;
 
-    case eContextTypeLLDBType:             // Type *
-        if (GetType())
-            byte_size = GetType()->GetByteSize();
-        else if (error_ptr)
-            error_ptr->SetErrorString ("Can't determine byte size with NULL Type *.");
-        break;
-
+    case eContextTypeInvalid:
+    case eContextTypeLLDBType:         // Type *
     case eContextTypeVariable:         // Variable *
-        if (GetVariable())
-        {   
-            if (GetVariable()->GetType())
-                byte_size = GetVariable()->GetType()->GetByteSize();
-            else if (error_ptr)
-                error_ptr->SetErrorString ("Can't determine byte size with NULL Type *.");
+        {
+            const ClangASTType &ast_type = GetClangType();
+            if (ast_type.IsValid())
+                byte_size = ast_type.GetByteSize();
         }
-        else if (error_ptr)
-            error_ptr->SetErrorString ("Can't determine byte size with NULL Variable *.");
         break;
     }
 
@@ -236,32 +217,48 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
     return byte_size;
 }
 
-clang_type_t
+const ClangASTType &
 Value::GetClangType ()
 {
-    switch (m_context_type)
+    if (!m_clang_type.IsValid())
     {
-    case eContextTypeInvalid:
-        break;
+        switch (m_context_type)
+        {
+        case eContextTypeInvalid:
+            break;
 
-    case eContextTypeClangType:
-        return m_context;
+        case eContextTypeRegisterInfo:
+            break;    // TODO: Eventually convert into a clang type?
 
-    case eContextTypeRegisterInfo:
-        break;    // TODO: Eventually convert into a clang type?
+        case eContextTypeLLDBType:
+            {
+                Type *lldb_type = GetType();
+                if (lldb_type)
+                    m_clang_type = lldb_type->GetClangForwardType();
+            }
+            break;
 
-    case eContextTypeLLDBType:
-        if (GetType())
-            return GetType()->GetClangForwardType();
-        break;
-
-    case eContextTypeVariable:
-        if (GetVariable())
-            return GetVariable()->GetType()->GetClangForwardType();
-        break;
+        case eContextTypeVariable:
+            {
+                Variable *variable = GetVariable();
+                if (variable)
+                {
+                    Type *variable_type = variable->GetType();
+                    if (variable_type)
+                        m_clang_type = variable_type->GetClangForwardType();
+                }
+            }
+            break;
+        }
     }
 
-    return NULL;
+    return m_clang_type;
+}
+
+void
+Value::SetClangType (const ClangASTType &clang_type)
+{
+    m_clang_type = clang_type;
 }
 
 lldb::Format
@@ -269,25 +266,19 @@ Value::GetValueDefaultFormat ()
 {
     switch (m_context_type)
     {
-    case eContextTypeInvalid:
-        break;
-
-    case eContextTypeClangType:
-        return ClangASTType::GetFormat (m_context);
-
     case eContextTypeRegisterInfo:
         if (GetRegisterInfo())
             return GetRegisterInfo()->format;
         break;
 
+    case eContextTypeInvalid:
     case eContextTypeLLDBType:
-        if (GetType())
-            return GetType()->GetFormat();
-        break;
-
     case eContextTypeVariable:
-        if (GetVariable())
-            return GetVariable()->GetType()->GetFormat();
+        {
+            const ClangASTType &ast_type = GetClangType();
+            if (ast_type.IsValid())
+                return ast_type.GetFormat();
+        }
         break;
 
     }
@@ -326,8 +317,7 @@ Value::GetData (DataExtractor &data)
 
 Error
 Value::GetValueAsData (ExecutionContext *exe_ctx,
-                       clang::ASTContext *ast_context, 
-                       DataExtractor &data, 
+                       DataExtractor &data,
                        uint32_t data_offset,
                        Module *module)
 {
@@ -337,15 +327,12 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     AddressType address_type = eAddressTypeFile;
     Address file_so_addr;
+    const ClangASTType &ast_type = GetClangType();
     switch (m_value_type)
     {
     case eValueTypeVector:
-        if (m_context_type == eContextTypeClangType && ast_context)
-        {
-            ClangASTType ptr_type (ast_context, ClangASTContext::GetVoidPtrType(ast_context, false));
-            uint64_t ptr_byte_size = ptr_type.GetClangTypeByteSize();
-            data.SetAddressByteSize (ptr_byte_size);
-        }
+        if (ast_type.IsValid())
+            data.SetAddressByteSize (ast_type.GetPointerByteSize());
         else
             data.SetAddressByteSize(sizeof(void *));
         data.SetData(m_vector.bytes, m_vector.length, m_vector.byte_order);
@@ -353,12 +340,8 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
 
     case eValueTypeScalar:
         data.SetByteOrder (lldb::endian::InlHostByteOrder());
-        if (m_context_type == eContextTypeClangType && ast_context)
-        {
-            ClangASTType ptr_type (ast_context, ClangASTContext::GetVoidPtrType(ast_context, false));
-            uint64_t ptr_byte_size = ptr_type.GetClangTypeByteSize();
-            data.SetAddressByteSize (ptr_byte_size);
-        }
+        if (ast_type.IsValid())
+            data.SetAddressByteSize (ast_type.GetPointerByteSize());
         else
             data.SetAddressByteSize(sizeof(void *));
         if (m_value.GetData (data))
@@ -562,7 +545,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     }
 
     // If we got here, we need to read the value from memory
-    size_t byte_size = GetValueByteSize (ast_context, &error);
+    size_t byte_size = GetValueByteSize (&error);
 
     // Bail if we encountered any errors getting the byte size
     if (error.Fail())
@@ -637,10 +620,10 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
 }
 
 Scalar &
-Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
-{    
-    void *opaque_clang_qual_type = GetClangType();
-    if (opaque_clang_qual_type)
+Value::ResolveValue(ExecutionContext *exe_ctx)
+{
+    const ClangASTType &clang_type = GetClangType();
+    if (clang_type.IsValid())
     {
         switch (m_value_type)
         {
@@ -654,11 +637,11 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
             {
                 DataExtractor data;
                 lldb::addr_t addr = m_value.ULongLong(LLDB_INVALID_ADDRESS);
-                Error error (GetValueAsData (exe_ctx, ast_context, data, 0, NULL));
+                Error error (GetValueAsData (exe_ctx, data, 0, NULL));
                 if (error.Success())
                 {
                     Scalar scalar;
-                    if (ClangASTType::GetValueAsScalar (ast_context, opaque_clang_qual_type, data, 0, data.GetByteSize(), scalar))
+                    if (clang_type.GetValueAsScalar (data, 0, data.GetByteSize(), scalar))
                     {
                         m_value = scalar;
                         m_value_type = eValueTypeScalar;
@@ -695,6 +678,19 @@ Value::GetVariable()
     return NULL;
 }
 
+void
+Value::Clear()
+{
+    m_value.Clear();
+    m_vector.Clear();
+    m_clang_type.Clear();
+    m_value_type = eValueTypeScalar;
+    m_context = NULL;
+    m_context_type = eContextTypeInvalid;
+    m_data_buffer.Clear();
+}
+
+
 const char *
 Value::GetValueTypeAsCString (ValueType value_type)
 {    
@@ -715,7 +711,6 @@ Value::GetContextTypeAsCString (ContextType context_type)
     switch (context_type)
     {
     case eContextTypeInvalid:       return "invalid";
-    case eContextTypeClangType:     return "clang::Type *";
     case eContextTypeRegisterInfo:  return "RegisterInfo *";
     case eContextTypeLLDBType:      return "Type *";
     case eContextTypeVariable:      return "Variable *";
@@ -763,3 +758,4 @@ ValueList::Clear ()
 {
     m_values.clear();
 }
+

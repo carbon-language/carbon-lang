@@ -76,11 +76,11 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
             if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
             {
                 ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-                lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
+                ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
                 ThreadPlanCallFunction *call_function_thread_plan
                   = new ThreadPlanCallFunction (*thread,
                                                 mmap_range.GetBaseAddress(),
-                                                ClangASTType (clang_ast_context->getASTContext(), clang_void_ptr_type),
+                                                clang_void_ptr_type,
                                                 stop_other_threads,
                                                 unwind_on_error,
                                                 ignore_breakpoints,
@@ -222,11 +222,11 @@ bool lldb_private::InferiorCall(Process *process, const Address *address, addr_t
     const uint32_t timeout_usec = 500000;
 
     ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-    lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
+    ClangASTType clang_void_ptr_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
     ThreadPlanCallFunction *call_function_thread_plan
         = new ThreadPlanCallFunction (*thread,
                                       *address,
-                                      ClangASTType (clang_ast_context->getASTContext(), clang_void_ptr_type),
+                                      clang_void_ptr_type,
                                       stop_other_threads,
                                       unwind_on_error,
                                       ignore_breakpoints);

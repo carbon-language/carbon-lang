@@ -473,7 +473,7 @@ SBValue::GetType()
     TypeImplSP type_sp;
     if (value_sp)
     {
-        type_sp.reset (new TypeImpl(ClangASTType (value_sp->GetClangAST(), value_sp->GetClangType())));
+        type_sp.reset (new TypeImpl(value_sp->GetClangType()));
         sb_type.SetSP(type_sp);
     }
     if (log)
@@ -761,17 +761,14 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType s
     lldb::TypeImplSP type_impl_sp (sb_type.GetSP());
     if (value_sp && type_impl_sp)
     {
-        ClangASTType pointee_ast_type(type_impl_sp->GetASTContext(), type_impl_sp->GetClangASTType().GetPointerType ());
-        lldb::TypeImplSP pointee_type_impl_sp (new TypeImpl(pointee_ast_type));
-        if (pointee_type_impl_sp)
+        ClangASTType pointee_ast_type(type_impl_sp->GetClangASTType().GetPointerType ());
+        if (pointee_ast_type)
         {
-        
             lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
         
             ExecutionContext exe_ctx (value_sp->GetExecutionContextRef());
             ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                                               pointee_type_impl_sp->GetASTContext(),
-                                                                               pointee_type_impl_sp->GetOpaqueQualType(),
+                                                                               pointee_ast_type,
                                                                                ConstString(name),
                                                                                buffer,
                                                                                lldb::endian::InlHostByteOrder(), 
@@ -811,8 +808,7 @@ SBValue::CreateValueFromData (const char* name, SBData data, SBType type)
         ExecutionContext exe_ctx (value_sp->GetExecutionContextRef());
 
         new_value_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
-                                                       type.m_opaque_sp->GetASTContext() ,
-                                                       type.m_opaque_sp->GetOpaqueQualType(),
+                                                       type.m_opaque_sp->GetClangASTType(),
                                                        ConstString(name),
                                                        *data.m_opaque_sp,
                                                        LLDB_INVALID_ADDRESS);
@@ -1187,7 +1183,7 @@ SBValue::GetOpaqueType()
     ValueLocker locker;
     lldb::ValueObjectSP value_sp(GetSP(locker));
     if (value_sp)
-        return value_sp->GetClangType();
+        return value_sp->GetClangType().GetOpaqueQualType();
     return NULL;
 }
 
@@ -1665,7 +1661,7 @@ SBValue::Watch (bool resolve_location, bool read, bool write, SBError &error)
             watch_type |= LLDB_WATCH_TYPE_WRITE;
         
         Error rc;
-        ClangASTType type (value_sp->GetClangAST(), value_sp->GetClangType());
+        ClangASTType type (value_sp->GetClangType());
         WatchpointSP watchpoint_sp = target_sp->CreateWatchpoint(addr, byte_size, &type, watch_type, rc);
         error.SetError(rc);
                 

@@ -1195,7 +1195,6 @@ bool
 DWARFExpression::Evaluate
 (
     ExecutionContextScope *exe_scope,
-    clang::ASTContext *ast_context,
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
     lldb::addr_t loclist_base_load_addr,
@@ -1205,14 +1204,13 @@ DWARFExpression::Evaluate
 ) const
 {
     ExecutionContext exe_ctx (exe_scope);
-    return Evaluate(&exe_ctx, ast_context, expr_locals, decl_map, NULL, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
+    return Evaluate(&exe_ctx, expr_locals, decl_map, NULL, loclist_base_load_addr, initial_value_ptr, result, error_ptr);
 }
 
 bool
 DWARFExpression::Evaluate
 (
     ExecutionContext *exe_ctx,
-    clang::ASTContext *ast_context,
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
@@ -1269,7 +1267,7 @@ DWARFExpression::Evaluate
 
                     if (length > 0 && lo_pc <= pc && pc < hi_pc)
                     {
-                        return DWARFExpression::Evaluate (exe_ctx, ast_context, expr_locals, decl_map, reg_ctx, m_data, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
+                        return DWARFExpression::Evaluate (exe_ctx, expr_locals, decl_map, reg_ctx, m_data, offset, length, m_reg_kind, initial_value_ptr, result, error_ptr);
                     }
                     offset += length;
                 }
@@ -1281,7 +1279,7 @@ DWARFExpression::Evaluate
     }
 
     // Not a location list, just a single expression.
-    return DWARFExpression::Evaluate (exe_ctx, ast_context, expr_locals, decl_map, reg_ctx, m_data, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
+    return DWARFExpression::Evaluate (exe_ctx, expr_locals, decl_map, reg_ctx, m_data, 0, m_data.GetByteSize(), m_reg_kind, initial_value_ptr, result, error_ptr);
 }
 
 
@@ -1290,7 +1288,6 @@ bool
 DWARFExpression::Evaluate
 (
     ExecutionContext *exe_ctx,
-    clang::ASTContext *ast_context,
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
@@ -1769,7 +1766,7 @@ DWARFExpression::Evaluate
                     error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_abs.");
                 return false;
             }
-            else if (stack.back().ResolveValue(exe_ctx, ast_context).AbsoluteValue() == false)
+            else if (stack.back().ResolveValue(exe_ctx).AbsoluteValue() == false)
             {
                 if (error_ptr)
                     error_ptr->SetErrorString("Failed to take the absolute value of the first stack item.");
@@ -1794,7 +1791,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) & tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) & tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -1815,7 +1812,7 @@ DWARFExpression::Evaluate
             else
             {
                 tmp = stack.back();
-                if (tmp.ResolveValue(exe_ctx, ast_context).IsZero())
+                if (tmp.ResolveValue(exe_ctx).IsZero())
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("Divide by zero.");
@@ -1824,8 +1821,8 @@ DWARFExpression::Evaluate
                 else
                 {
                     stack.pop_back();
-                    stack.back() = stack.back().ResolveValue(exe_ctx, ast_context) / tmp.ResolveValue(exe_ctx, ast_context);
-                    if (!stack.back().ResolveValue(exe_ctx, ast_context).IsValid())
+                    stack.back() = stack.back().ResolveValue(exe_ctx) / tmp.ResolveValue(exe_ctx);
+                    if (!stack.back().ResolveValue(exe_ctx).IsValid())
                     {
                         if (error_ptr)
                             error_ptr->SetErrorString("Divide failed.");
@@ -1852,7 +1849,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) - tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) - tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -1874,7 +1871,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) % tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) % tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -1896,7 +1893,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) * tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) * tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -1914,7 +1911,7 @@ DWARFExpression::Evaluate
             }
             else
             {
-                if (stack.back().ResolveValue(exe_ctx, ast_context).UnaryNegate() == false)
+                if (stack.back().ResolveValue(exe_ctx).UnaryNegate() == false)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("Unary negate failed.");
@@ -1938,7 +1935,7 @@ DWARFExpression::Evaluate
             }
             else
             {
-                if (stack.back().ResolveValue(exe_ctx, ast_context).OnesComplement() == false)
+                if (stack.back().ResolveValue(exe_ctx).OnesComplement() == false)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("Logical NOT failed.");
@@ -1964,7 +1961,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) | tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) | tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -1985,7 +1982,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) + tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) + tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2006,8 +2003,8 @@ DWARFExpression::Evaluate
             {
                 const uint64_t uconst_value = opcodes.GetULEB128(&offset);
                 // Implicit conversion from a UINT to a Scalar...
-                stack.back().ResolveValue(exe_ctx, ast_context) += uconst_value;
-                if (!stack.back().ResolveValue(exe_ctx, ast_context).IsValid())
+                stack.back().ResolveValue(exe_ctx) += uconst_value;
+                if (!stack.back().ResolveValue(exe_ctx).IsValid())
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("DW_OP_plus_uconst failed.");
@@ -2034,7 +2031,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) <<= tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) <<= tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2056,7 +2053,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                if (stack.back().ResolveValue(exe_ctx, ast_context).ShiftRightLogical(tmp.ResolveValue(exe_ctx, ast_context)) == false)
+                if (stack.back().ResolveValue(exe_ctx).ShiftRightLogical(tmp.ResolveValue(exe_ctx)) == false)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("DW_OP_shr failed.");
@@ -2084,7 +2081,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) >>= tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) >>= tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2105,7 +2102,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) ^ tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) ^ tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2149,7 +2146,7 @@ DWARFExpression::Evaluate
                 stack.pop_back();
                 int16_t bra_offset = (int16_t)opcodes.GetU16(&offset);
                 Scalar zero(0);
-                if (tmp.ResolveValue(exe_ctx, ast_context) != zero)
+                if (tmp.ResolveValue(exe_ctx) != zero)
                 {
                     lldb::offset_t new_offset = offset + bra_offset;
                     if (new_offset >= opcodes_offset && new_offset < end_offset)
@@ -2184,7 +2181,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) == tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) == tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2208,7 +2205,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) >= tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) >= tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2232,7 +2229,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) > tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) > tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2256,7 +2253,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) <= tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) <= tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2280,7 +2277,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) < tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) < tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2304,7 +2301,7 @@ DWARFExpression::Evaluate
             {
                 tmp = stack.back();
                 stack.pop_back();
-                stack.back().ResolveValue(exe_ctx, ast_context) = stack.back().ResolveValue(exe_ctx, ast_context) != tmp.ResolveValue(exe_ctx, ast_context);
+                stack.back().ResolveValue(exe_ctx) = stack.back().ResolveValue(exe_ctx) != tmp.ResolveValue(exe_ctx);
             }
             break;
 
@@ -2457,7 +2454,7 @@ DWARFExpression::Evaluate
                 if (ReadRegisterValueAsScalar (reg_ctx, reg_kind, reg_num, error_ptr, tmp))
                 {
                     int64_t breg_offset = opcodes.GetSLEB128(&offset);
-                    tmp.ResolveValue(exe_ctx, ast_context) += (uint64_t)breg_offset;
+                    tmp.ResolveValue(exe_ctx) += (uint64_t)breg_offset;
                     tmp.ClearContext();
                     stack.push_back(tmp);
                     stack.back().SetValueType (Value::eValueTypeLoadAddress);
@@ -2481,7 +2478,7 @@ DWARFExpression::Evaluate
                 if (ReadRegisterValueAsScalar (reg_ctx, reg_kind, reg_num, error_ptr, tmp))
                 {
                     int64_t breg_offset = opcodes.GetSLEB128(&offset);
-                    tmp.ResolveValue(exe_ctx, ast_context) += (uint64_t)breg_offset;
+                    tmp.ResolveValue(exe_ctx) += (uint64_t)breg_offset;
                     tmp.ClearContext();
                     stack.push_back(tmp);
                     stack.back().SetValueType (Value::eValueTypeLoadAddress);
@@ -2630,566 +2627,6 @@ DWARFExpression::Evaluate
         case DW_OP_stack_value:
             stack.back().SetValueType(Value::eValueTypeScalar);
             break;
-
-#if 0
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_call_ref
-        // OPERANDS:
-        //      uint32_t absolute DIE offset for 32-bit DWARF or a uint64_t
-        //               absolute DIE offset for 64 bit DWARF.
-        // DESCRIPTION: Performs a subroutine call during evaluation of a DWARF
-        // expression. Takes a single operand. In the 32-bit DWARF format, the
-        // operand is a 4-byte unsigned value; in the 64-bit DWARF format, it
-        // is an 8-byte unsigned value. The operand is used as the offset of a
-        // debugging information entry in a .debug_info section which may be
-        // contained in a shared object for executable other than that
-        // containing the operator. For references from one shared object or
-        // executable to another, the relocation must be performed by the
-        // consumer.
-        //
-        // Operand interpretation of DW_OP_call_ref is exactly like that for
-        // DW_FORM_ref_addr.
-        //
-        // This operation transfers control of DWARF expression evaluation
-        // to the DW_AT_location attribute of the referenced DIE. If there is
-        // no such attribute, then there is no effect. Execution of the DWARF
-        // expression of a DW_AT_location attribute may add to and/or remove from
-        // values on the stack. Execution returns to the point following the call
-        // when the end of the attribute is reached. Values on the stack at the
-        // time of the call may be used as parameters by the called expression
-        // and values left on the stack by the called expression may be used as
-        // return values by prior agreement between the calling and called
-        // expressions.
-        //----------------------------------------------------------------------
-        case DW_OP_call_ref:
-            if (error_ptr)
-                error_ptr->SetErrorString ("Unimplemented opcode DW_OP_call_ref.");
-            return false;
-
-                //----------------------------------------------------------------------
-                // OPCODE: DW_OP_APPLE_array_ref
-                // OPERANDS: none
-                // DESCRIPTION: Pops a value off the stack and uses it as the array 
-                // index.  Pops a second value off the stack and uses it as the array
-                // itself.  Pushes a value onto the stack representing the element of
-                // the array specified by the index.
-                //----------------------------------------------------------------------
-            case DW_OP_APPLE_array_ref:
-            {
-                if (stack.size() < 2)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Expression stack needs at least 2 items for DW_OP_APPLE_array_ref.");
-                    return false;
-                }
-                
-                Value index_val = stack.back();
-                stack.pop_back();
-                Value array_val = stack.back();
-                stack.pop_back();
-                
-                Scalar &index_scalar = index_val.ResolveValue(exe_ctx, ast_context);
-                int64_t index = index_scalar.SLongLong(LLONG_MAX);
-                
-                if (index == LLONG_MAX)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Invalid array index.");
-                    return false;
-                }
-                
-                if (array_val.GetContextType() != Value::eContextTypeClangType)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Arrays without Clang types are unhandled at this time.");
-                    return false;
-                }
-                
-                if (array_val.GetValueType() != Value::eValueTypeLoadAddress &&
-                    array_val.GetValueType() != Value::eValueTypeHostAddress)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Array must be stored in memory.");
-                    return false;
-                }
-                
-                void *array_type = array_val.GetClangType();
-                
-                void *member_type;
-                uint64_t size = 0;
-                
-                if ((!ClangASTContext::IsPointerType(array_type, &member_type)) &&
-                    (!ClangASTContext::IsArrayType(array_type, &member_type, &size)))
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Array reference from something that is neither a pointer nor an array.");
-                    return false;
-                }
-                
-                if (size && (index >= size || index < 0))
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat("Out of bounds array access.  %" PRId64 " is not in [0, %" PRIu64 "]", index, size);
-                    return false;
-                }
-                
-                uint64_t member_bit_size = ClangASTType::GetClangTypeBitWidth(ast_context, member_type);
-                uint64_t member_bit_align = ClangASTType::GetTypeBitAlign(ast_context, member_type);
-                uint64_t member_bit_incr = ((member_bit_size + member_bit_align - 1) / member_bit_align) * member_bit_align;
-                if (member_bit_incr % 8)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat("Array increment is not byte aligned");
-                    return false;
-                }
-                int64_t member_offset = (int64_t)(member_bit_incr / 8) * index;
-                
-                Value member;
-                
-                member.SetContext(Value::eContextTypeClangType, member_type);
-                member.SetValueType(array_val.GetValueType());
-                
-                addr_t array_base = (addr_t)array_val.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                addr_t member_loc = array_base + member_offset;
-                member.GetScalar() = (uint64_t)member_loc;
-                
-                stack.push_back(member);
-            }
-                break;
-                
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_uninit
-        // OPERANDS: none
-        // DESCRIPTION: Lets us know that the value is currently not initialized
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_uninit:
-            //return eResultTypeErrorUninitialized;
-            break;  // Ignore this as we have seen cases where this value is incorrectly added
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_assign
-        // OPERANDS: none
-        // DESCRIPTION: Pops a value off of the stack and assigns it to the next
-        // item on the stack which must be something assignable (inferior
-        // Variable, inferior Type with address, inferior register, or
-        // expression local variable.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_assign:
-            if (stack.size() < 2)
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorString("Expression stack needs at least 2 items for DW_OP_APPLE_assign.");
-                return false;
-            }
-            else
-            {
-                tmp = stack.back();
-                stack.pop_back();
-                Value::ContextType context_type = stack.back().GetContextType();
-                StreamString new_value(Stream::eBinary, 4, lldb::endian::InlHostByteOrder());
-                switch (context_type)
-                {
-                case Value::eContextTypeClangType:
-                    {
-                        void *clang_type = stack.back().GetClangType();
-                        
-                        if (ClangASTContext::IsAggregateType (clang_type))
-                        {
-                            Value::ValueType source_value_type = tmp.GetValueType();
-                            Value::ValueType target_value_type = stack.back().GetValueType();
-                            
-                            addr_t source_addr = (addr_t)tmp.GetScalar().ULongLong();
-                            addr_t target_addr = (addr_t)stack.back().GetScalar().ULongLong();
-                            
-                            const uint64_t byte_size = ClangASTType::GetTypeByteSize(ast_context, clang_type);
-                            
-                            switch (source_value_type)
-                            {
-                            case Value::eValueTypeScalar:
-                            case Value::eValueTypeFileAddress:
-                                break;
-
-                            case Value::eValueTypeLoadAddress:
-                                switch (target_value_type)
-                                {
-                                case Value::eValueTypeLoadAddress:
-                                    {
-                                        DataBufferHeap data;
-                                        data.SetByteSize(byte_size);
-                                        
-                                        Error error;
-                                        if (process->ReadMemory (source_addr, data.GetBytes(), byte_size, error) != byte_size)
-                                        {
-                                            if (error_ptr)
-                                                error_ptr->SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
-                                            return false;
-                                        }
-                                        
-                                        if (process->WriteMemory (target_addr, data.GetBytes(), byte_size, error) != byte_size)
-                                        {
-                                            if (error_ptr)
-                                                error_ptr->SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
-                                            return false;
-                                        }
-                                    }
-                                    break;
-                                case Value::eValueTypeHostAddress:
-                                    if (process->GetByteOrder() != lldb::endian::InlHostByteOrder())
-                                    {
-                                        if (error_ptr)
-                                            error_ptr->SetErrorStringWithFormat ("Copy of composite types between incompatible byte orders is unimplemented");
-                                        return false;
-                                    }
-                                    else
-                                    {
-                                        Error error;
-                                        if (process->ReadMemory (source_addr, (uint8_t*)target_addr, byte_size, error) != byte_size)
-                                        {
-                                            if (error_ptr)
-                                                error_ptr->SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
-                                            return false;
-                                        }
-                                    }
-                                    break;
-                                default:
-                                    return false;
-                                }
-                                break;
-                            case Value::eValueTypeHostAddress:
-                                switch (target_value_type)
-                                {
-                                case Value::eValueTypeLoadAddress:
-                                    if (process->GetByteOrder() != lldb::endian::InlHostByteOrder())
-                                    {
-                                        if (error_ptr)
-                                            error_ptr->SetErrorStringWithFormat ("Copy of composite types between incompatible byte orders is unimplemented");
-                                        return false;
-                                    }
-                                    else
-                                    {
-                                        Error error;
-                                        if (process->WriteMemory (target_addr, (uint8_t*)source_addr, byte_size, error) != byte_size)
-                                        {
-                                            if (error_ptr)
-                                                error_ptr->SetErrorStringWithFormat ("Couldn't write a composite type to the target: %s", error.AsCString());
-                                            return false;
-                                        }
-                                    }
-                                case Value::eValueTypeHostAddress:
-                                    memcpy ((uint8_t*)target_addr, (uint8_t*)source_addr, byte_size);
-                                    break;
-                                default:
-                                    return false;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (!ClangASTType::SetValueFromScalar (ast_context,
-                                                                  clang_type,
-                                                                  tmp.ResolveValue(exe_ctx, ast_context),
-                                                                  new_value))
-                            {
-                                if (error_ptr)
-                                    error_ptr->SetErrorStringWithFormat ("Couldn't extract a value from an integral type.\n");
-                                return false;
-                            }
-                                
-                            Value::ValueType value_type = stack.back().GetValueType();
-                            
-                            switch (value_type)
-                            {
-                            case Value::eValueTypeLoadAddress:
-                            case Value::eValueTypeHostAddress:
-                                {
-                                    AddressType address_type = (value_type == Value::eValueTypeLoadAddress ? eAddressTypeLoad : eAddressTypeHost);
-                                    lldb::addr_t addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                                    if (!ClangASTType::WriteToMemory (ast_context,
-                                                                          clang_type,
-                                                                          exe_ctx,
-                                                                          addr,
-                                                                          address_type,
-                                                                          new_value))
-                                    {
-                                        if (error_ptr)
-                                            error_ptr->SetErrorStringWithFormat ("Failed to write value to memory at 0x%" PRIx64 ".\n", addr);
-                                        return false;
-                                    }
-                                }
-                                break;
-
-                            default:
-                                break;
-                            }
-                        }
-                    }
-                    break;
-
-                default:
-                    if (error_ptr)
-                        error_ptr->SetErrorString ("Assign failed.");
-                    return false;
-                }
-            }
-            break;
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_address_of
-        // OPERANDS: none
-        // DESCRIPTION: Pops a value off of the stack and pushed its address.
-        // The top item on the stack must be a variable, or already be a memory
-        // location.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_address_of:
-            if (stack.empty())
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_APPLE_address_of.");
-                return false;
-            }
-            else
-            {
-                Value::ValueType value_type = stack.back().GetValueType();
-                switch (value_type)
-                {
-                default:
-                case Value::eValueTypeScalar:      // raw scalar value
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Top stack item isn't a memory based object.");
-                    return false;
-
-                case Value::eValueTypeLoadAddress: // load address value
-                case Value::eValueTypeFileAddress: // file address value
-                case Value::eValueTypeHostAddress: // host address value (for memory in the process that is using liblldb)
-                    // Taking the address of an object reduces it to the address
-                    // of the value and removes any extra context it had.
-                    //stack.back().SetValueType(Value::eValueTypeScalar);
-                    stack.back().ClearContext();
-                    break;
-                }
-            }
-            break;
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_value_of
-        // OPERANDS: none
-        // DESCRIPTION: Pops a value off of the stack and pushed its value.
-        // The top item on the stack must be a variable, expression variable.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_value_of:
-            if (stack.empty())
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorString("Expression stack needs at least 1 items for DW_OP_APPLE_value_of.");
-                return false;
-            }
-            else if (!stack.back().ValueOf(exe_ctx, ast_context))
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorString ("Top stack item isn't a valid candidate for DW_OP_APPLE_value_of.");
-                return false;
-            }
-            break;
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_deref_type
-        // OPERANDS: none
-        // DESCRIPTION: gets the value pointed to by the top stack item
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_deref_type:
-            {
-                if (stack.empty())
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Expression stack needs at least 1 items for DW_OP_APPLE_deref_type.");
-                    return false;
-                }
-                    
-                tmp = stack.back();
-                stack.pop_back();
-                
-                if (tmp.GetContextType() != Value::eContextTypeClangType)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Item at top of expression stack must have a Clang type");
-                    return false;
-                }
-                    
-                void *ptr_type = tmp.GetClangType();
-                void *target_type;
-            
-                if (!ClangASTContext::IsPointerType(ptr_type, &target_type))
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Dereferencing a non-pointer type");
-                    return false;
-                }
-                
-                // TODO do we want all pointers to be dereferenced as load addresses?
-                Value::ValueType value_type = tmp.GetValueType();
-                
-                tmp.ResolveValue(exe_ctx, ast_context);
-                
-                tmp.SetValueType(value_type);
-                tmp.SetContext(Value::eContextTypeClangType, target_type);
-                
-                stack.push_back(tmp);
-            }
-            break;
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_expr_local
-        // OPERANDS: ULEB128
-        // DESCRIPTION: pushes the expression local variable index onto the
-        // stack and set the appropriate context so we know the stack item is
-        // an expression local variable index.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_expr_local:
-            {
-                /*
-                uint32_t idx = opcodes.GetULEB128(&offset);
-                if (expr_locals == NULL)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_expr_local(%u) opcode encountered with no local variable list.\n", idx);
-                    return false;
-                }
-                Value *expr_local_variable = expr_locals->GetVariableAtIndex(idx);
-                if (expr_local_variable == NULL)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_expr_local(%u) with invalid index %u.\n", idx, idx);
-                    return false;
-                }
-                 // The proxy code has been removed. If it is ever re-added, please
-                 // use shared pointers or return by value to avoid possible memory
-                 // leak (there is no leak here, but in general, no returning pointers
-                 // that must be manually freed please.
-                Value *proxy = expr_local_variable->CreateProxy();
-                stack.push_back(*proxy);
-                delete proxy;
-                //stack.back().SetContext (Value::eContextTypeClangType, expr_local_variable->GetClangType());
-                */
-            }
-            break;
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_extern
-        // OPERANDS: ULEB128
-        // DESCRIPTION: pushes a proxy for the extern object index onto the
-        // stack.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_extern:
-            {
-                /*
-                uint32_t idx = opcodes.GetULEB128(&offset);
-                if (!decl_map)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_extern(%u) opcode encountered with no decl map.\n", idx);
-                    return false;
-                }
-                Value *extern_var = decl_map->GetValueForIndex(idx);
-                if (!extern_var)
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_extern(%u) with invalid index %u.\n", idx, idx);
-                    return false;
-                }
-                // The proxy code has been removed. If it is ever re-added, please
-                // use shared pointers or return by value to avoid possible memory
-                // leak (there is no leak here, but in general, no returning pointers
-                // that must be manually freed please.
-                Value *proxy = extern_var->CreateProxy();
-                stack.push_back(*proxy);
-                delete proxy;
-                */
-            }
-            break;
-
-        case DW_OP_APPLE_scalar_cast:
-            if (stack.empty())
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_APPLE_scalar_cast.");
-                return false;
-            }
-            else
-            {
-                // Simple scalar cast
-                if (!stack.back().ResolveValue(exe_ctx, ast_context).Cast((Scalar::Type)opcodes.GetU8(&offset)))
-                {
-                    if (error_ptr)
-                        error_ptr->SetErrorString("Cast failed.");
-                    return false;
-                }
-            }
-            break;
-
-
-        case DW_OP_APPLE_clang_cast:
-            if (stack.empty())
-            {
-                if (error_ptr)
-                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_APPLE_clang_cast.");
-                return false;
-            }
-            else
-            {
-                void *clang_type = (void *)opcodes.GetMaxU64(&offset, sizeof(void*));
-                stack.back().SetContext (Value::eContextTypeClangType, clang_type);
-            }
-            break;
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_constf
-        // OPERANDS: 1 byte float length, followed by that many bytes containing
-        // the constant float data.
-        // DESCRIPTION: Push a float value onto the expression stack.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_constf:        // 0xF6 - 1 byte float size, followed by constant float data
-            {
-                uint8_t float_length = opcodes.GetU8(&offset);
-                if (sizeof(float) == float_length)
-                    tmp.ResolveValue(exe_ctx, ast_context) = opcodes.GetFloat (&offset);
-                else if (sizeof(double) == float_length)
-                    tmp.ResolveValue(exe_ctx, ast_context) = opcodes.GetDouble (&offset);
-                else if (sizeof(long double) == float_length)
-                    tmp.ResolveValue(exe_ctx, ast_context) = opcodes.GetLongDouble (&offset);
-                else
-                {
-                    StreamString new_value;
-                    opcodes.Dump(&new_value, offset, eFormatBytes, 1, float_length, UINT32_MAX, DW_INVALID_ADDRESS, 0, 0);
-
-                     if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_constf(<%u> %s) unsupported float size.\n", float_length, new_value.GetData());
-                    return false;
-               }
-               tmp.SetValueType(Value::eValueTypeScalar);
-               tmp.ClearContext();
-               stack.push_back(tmp);
-            }
-            break;
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_clear
-        // OPERANDS: none
-        // DESCRIPTION: Clears the expression stack.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_clear:
-            stack.clear();
-            break;
-
-        //----------------------------------------------------------------------
-        // OPCODE: DW_OP_APPLE_error
-        // OPERANDS: none
-        // DESCRIPTION: Pops a value off of the stack and pushed its value.
-        // The top item on the stack must be a variable, expression variable.
-        //----------------------------------------------------------------------
-        case DW_OP_APPLE_error:         // 0xFF - Stops expression evaluation and returns an error (no args)
-            if (error_ptr)
-                error_ptr->SetErrorString ("Generic error.");
-            return false;
-#endif // #if 0
-                
         }
     }
 

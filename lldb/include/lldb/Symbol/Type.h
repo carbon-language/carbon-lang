@@ -16,6 +16,7 @@
 #include "lldb/Core/UserID.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/Declaration.h"
+
 #include <set>
 
 namespace lldb_private {
@@ -84,7 +85,7 @@ public:
           lldb::user_id_t encoding_uid,
           EncodingDataType encoding_uid_type,
           const Declaration& decl,
-          lldb::clang_type_t clang_qual_type,
+          const ClangASTType &clang_qual_type,
           ResolveState clang_type_resolve_state);
     
     // This makes an invalid type.  Used for functions that return a Type when they
@@ -226,22 +227,19 @@ public:
 
     // Get the clang type, and resolve definitions for any 
     // class/struct/union/enum types completely.
-    lldb::clang_type_t 
+    ClangASTType
     GetClangFullType ();
 
     // Get the clang type, and resolve definitions enough so that the type could
     // have layout performed. This allows ptrs and refs to class/struct/union/enum 
     // types remain forward declarations.
-    lldb::clang_type_t 
+    ClangASTType
     GetClangLayoutType ();
 
     // Get the clang type and leave class/struct/union/enum types as forward
     // declarations if they haven't already been fully defined.
-    lldb::clang_type_t 
+    ClangASTType 
     GetClangForwardType ();
-
-    clang::ASTContext *
-    GetClangAST ();
 
     ClangASTContext &
     GetClangASTContext ();
@@ -264,21 +262,10 @@ public:
 
     uint32_t
     GetEncodingMask ();
-
-    void *
-    CreateClangPointerType (Type *type);
-
-    void *
+    
+    ClangASTType
     CreateClangTypedefType (Type *typedef_type, Type *base_type);
 
-    // For C++98 references (&)
-    void *
-    CreateClangLValueReferenceType (Type *type);
-
-    // For C++0x references (&&)
-    void *
-    CreateClangRValueReferenceType (Type *type);
-    
     bool
     IsRealObjCClass();
     
@@ -303,7 +290,7 @@ protected:
     EncodingDataType m_encoding_uid_type;
     uint64_t m_byte_size;
     Declaration m_decl;
-    lldb::clang_type_t m_clang_type;
+    ClangASTType m_clang_type;
     
     struct Flags {
         ResolveState    clang_type_resolve_state : 2;

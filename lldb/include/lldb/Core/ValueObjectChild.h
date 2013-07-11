@@ -81,20 +81,13 @@ protected:
     virtual bool
     UpdateValue ();
 
-    virtual clang::ASTContext *
-    GetClangASTImpl ()
-    {
-        return m_clang_ast;
-    }
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ()
     {
         return m_clang_type;
     }
     
-    clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
-    void *m_clang_type; // The type of the child in question within the parent (m_parent_sp)
+    ClangASTType m_clang_type;
     ConstString m_type_name;
     uint64_t m_byte_size;
     int32_t m_byte_offset;
@@ -111,8 +104,7 @@ protected:
     friend class ValueObject;
     friend class ValueObjectConstResult;
     ValueObjectChild (ValueObject &parent,
-                      clang::ASTContext *clang_ast,
-                      void *clang_type,
+                      const ClangASTType &clang_type,
                       const ConstString &name,
                       uint64_t byte_size,
                       int32_t byte_offset,

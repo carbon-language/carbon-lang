@@ -250,7 +250,6 @@ public:
     //------------------------------------------------------------------
     bool
     Evaluate (ExecutionContextScope *exe_scope,
-              clang::ASTContext *ast_context,
               ClangExpressionVariableList *expr_locals,
               ClangExpressionDeclMap *decl_map,
               lldb::addr_t loclist_base_load_addr,
@@ -264,7 +263,6 @@ public:
     //------------------------------------------------------------------
     bool
     Evaluate (ExecutionContext *exe_ctx,
-              clang::ASTContext *ast_context,
               ClangExpressionVariableList *expr_locals,
               ClangExpressionDeclMap *decl_map,
               RegisterContext *reg_ctx,
@@ -280,9 +278,6 @@ public:
     ///     The execution context in which to evaluate the location
     ///     expression.  The location expression may access the target's
     ///     memory, especially if it comes from the expression parser.
-    ///
-    /// @param[in] ast_context
-    ///     The context in which to interpret types.
     ///
     /// @param[in] opcodes
     ///     This is a static method so the opcodes need to be provided
@@ -334,7 +329,6 @@ public:
     //------------------------------------------------------------------
     static bool
     Evaluate (ExecutionContext *exe_ctx,
-              clang::ASTContext *ast_context,
               ClangExpressionVariableList *expr_locals,
               ClangExpressionDeclMap *decl_map,
               RegisterContext *reg_ctx,

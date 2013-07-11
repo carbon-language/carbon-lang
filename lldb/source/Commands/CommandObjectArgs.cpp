@@ -164,7 +164,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         const char *arg_type_cstr = args.GetArgumentAtIndex(arg_index);
         Value value;
         value.SetValueType(Value::eValueTypeScalar);
-        void *type;
+        ClangASTType clang_type;
         
         char *int_pos;
         if ((int_pos = strstr (const_cast<char*>(arg_type_cstr), "int")))
@@ -207,9 +207,9 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
                 return false;
             }
             
-            type = ast_context.GetBuiltinTypeForEncodingAndBitSize(encoding, width);
+            clang_type = ast_context.GetBuiltinTypeForEncodingAndBitSize(encoding, width);
             
-            if (!type)
+            if (!clang_type.IsValid())
             {
                 result.AppendErrorWithFormat ("Couldn't get Clang type for format %s (%s integer, width %d).\n",
                                              arg_type_cstr,
@@ -223,9 +223,9 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
         else if (strchr (arg_type_cstr, '*'))
         {
             if (!strcmp (arg_type_cstr, "void*"))
-                type = ast_context.CreatePointerType (ast_context.GetBuiltInType_void ());
+                clang_type = ast_context.GetBasicType(eBasicTypeVoid).GetPointerType();
             else if (!strcmp (arg_type_cstr, "char*"))
-                type = ast_context.GetCStringType (false);
+                clang_type = ast_context.GetCStringType (false);
             else
             {
                 result.AppendErrorWithFormat ("Invalid format: %s.\n", arg_type_cstr);
@@ -240,8 +240,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
             return false;
         }
                      
-        value.SetContext (Value::eContextTypeClangType, type);
-        
+        value.SetClangType (clang_type);
         value_list.PushValue(value);
     }
     

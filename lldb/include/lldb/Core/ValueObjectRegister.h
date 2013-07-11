@@ -56,10 +56,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual clang::ASTContext *
-    GetClangASTImpl ();
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
@@ -113,10 +110,7 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual clang::ASTContext *
-    GetClangASTImpl ();
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
@@ -173,17 +167,14 @@ protected:
     virtual bool
     UpdateValue ();
     
-    virtual clang::ASTContext *
-    GetClangASTImpl ();
-    
-    virtual lldb::clang_type_t
+    virtual ClangASTType
     GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
     RegisterInfo m_reg_info;
     RegisterValue m_reg_value;
     ConstString m_type_name;
-    void *m_clang_type;
+    ClangASTType m_clang_type;
 
 private:
     void

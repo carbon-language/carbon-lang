@@ -272,16 +272,14 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
     ValueObjectSP impl_sp(m_backend.GetChildMemberWithName(ConstString("__end_"),true));
     if (!impl_sp)
         return false;
-    auto list_type = m_backend.GetClangType();
-    if (ClangASTContext::IsReferenceType(list_type))
-    {
-        clang::QualType qt = clang::QualType::getFromOpaquePtr(list_type);
-        list_type = qt.getNonReferenceType().getAsOpaquePtr();
-    }
-    if (ClangASTContext::GetNumTemplateArguments(m_backend.GetClangAST(), list_type) == 0)
+    ClangASTType list_type = m_backend.GetClangType();
+    if (list_type.IsReferenceType())
+        list_type = list_type.GetNonReferenceType();
+
+    if (list_type.GetNumTemplateArguments() == 0)
         return false;
     lldb::TemplateArgumentKind kind;
-    m_element_type = ClangASTType(m_backend.GetClangAST(), ClangASTContext::GetTemplateArgument(m_backend.GetClangAST(), list_type, 0, kind));
+    m_element_type = list_type.GetTemplateArgument(0, kind);
     m_head = impl_sp->GetChildMemberWithName(ConstString("__next_"), true).get();
     m_tail = impl_sp->GetChildMemberWithName(ConstString("__prev_"), true).get();
     return false;

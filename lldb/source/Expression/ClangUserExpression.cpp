@@ -297,21 +297,19 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                         return;
                     }
                     
-                    lldb::clang_type_t self_opaque_type = self_type->GetClangForwardType();
+                    ClangASTType self_clang_type = self_type->GetClangForwardType();
                     
-                    if (!self_opaque_type)
+                    if (!self_clang_type)
                     {
                         err.SetErrorString(selfErrorString);
                         return;
                     }
-                    
-                    clang::QualType self_qual_type = clang::QualType::getFromOpaquePtr(self_opaque_type);
-                    
-                    if (self_qual_type->isObjCClassType())
+                                        
+                    if (self_clang_type.IsObjCClassType())
                     {
                         return;
                     }
-                    else if (self_qual_type->isObjCObjectPointerType())
+                    else if (self_clang_type.IsObjCObjectPointerType())
                     {
                         m_objectivec = true;
                         m_needs_object_ptr = true;
@@ -486,6 +484,26 @@ ClangUserExpression::Parse (Stream &error_stream,
     m_materializer_ap.reset(new Materializer());
         
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
+    
+    class OnExit
+    {
+    public:
+        typedef std::function <void (void)> Callback;
+        
+        OnExit (Callback const &callback) :
+            m_callback(callback)
+        {
+        }
+        
+        ~OnExit ()
+        {
+            m_callback();
+        }
+    private:
+        Callback m_callback;
+    };
+    
+    OnExit on_exit([this]() { m_expr_decl_map.reset(); });
     
     if (!m_expr_decl_map->WillParse(exe_ctx, m_materializer_ap.get()))
     {
