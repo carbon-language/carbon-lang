@@ -525,6 +525,13 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   PredBB->eraseFromParent();
 }
 
+/// CanMergeValues - Return true if we can choose one of these values to use
+/// in place of the other. Note that we will always choose the non-undef
+/// value to keep.
+static bool CanMergeValues(Value *First, Value *Second) {
+  return First == Second || isa<UndefValue>(First) || isa<UndefValue>(Second);
+}
+
 /// CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
 /// almost-empty BB ending in an unconditional branch to Succ, into succ.
 ///
@@ -555,7 +562,8 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
       for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
         BasicBlock *IBB = PN->getIncomingBlock(PI);
         if (BBPreds.count(IBB) &&
-            BBPN->getIncomingValueForBlock(IBB) != PN->getIncomingValue(PI)) {
+            !CanMergeValues(BBPN->getIncomingValueForBlock(IBB),
+                            PN->getIncomingValue(PI))) {
           DEBUG(dbgs() << "Can't fold, phi node " << PN->getName() << " in " 
                 << Succ->getName() << " is conflicting with " 
                 << BBPN->getName() << " with regard to common predecessor "
@@ -570,7 +578,8 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
         // one for BB, in which case this phi node will not prevent the merging
         // of the block.
         BasicBlock *IBB = PN->getIncomingBlock(PI);
-        if (BBPreds.count(IBB) && Val != PN->getIncomingValue(PI)) {
+        if (BBPreds.count(IBB) &&
+            !CanMergeValues(Val, PN->getIncomingValue(PI))) {
           DEBUG(dbgs() << "Can't fold, phi node " << PN->getName() << " in " 
                 << Succ->getName() << " is conflicting with regard to common "
                 << "predecessor " << IBB->getName() << "\n");
@@ -581,6 +590,139 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   }
 
   return true;
+}
+
+typedef SmallVector<BasicBlock *, 16> PredBlockVector;
+typedef DenseMap<BasicBlock *, Value *> IncomingValueMap;
+
+/// \brief Determines the value to use as the phi node input for a block.
+///
+/// Select between \p OldVal any value that we know flows from \p BB
+/// to a particular phi on the basis of which one (if either) is not
+/// undef. Update IncomingValues based on the selected value.
+///
+/// \param OldVal The value we are considering selecting.
+/// \param BB The block that the value flows in from.
+/// \param IncomingValues A map from block-to-value for other phi inputs
+/// that we have examined.
+///
+/// \returns the selected value.
+static Value *selectIncomingValueForBlock(Value *OldVal, BasicBlock *BB,
+                                          IncomingValueMap &IncomingValues) {
+  if (!isa<UndefValue>(OldVal)) {
+    assert((!IncomingValues.count(BB) ||
+            IncomingValues.find(BB)->second == OldVal) &&
+           "Expected OldVal to match incoming value from BB!");
+
+    IncomingValues.insert(std::make_pair(BB, OldVal));
+    return OldVal;
+  }
+
+  IncomingValueMap::const_iterator It = IncomingValues.find(BB);
+  if (It != IncomingValues.end()) return It->second;
+
+  return OldVal;
+}
+
+/// \brief Create a map from block to value for the operands of a
+/// given phi.
+///
+/// Create a map from block to value for each non-undef value flowing
+/// into \p PN.
+///
+/// \param PN The phi we are collecting the map for.
+/// \param IncomingValues [out] The map from block to value for this phi.
+static void gatherIncomingValuesToPhi(PHINode *PN,
+                                      IncomingValueMap &IncomingValues) {
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    BasicBlock *BB = PN->getIncomingBlock(i);
+    Value *V = PN->getIncomingValue(i);
+
+    if (!isa<UndefValue>(V))
+      IncomingValues.insert(std::make_pair(BB, V));
+  }
+}
+
+/// \brief Replace the incoming undef values to a phi with the values
+/// from a block-to-value map.
+///
+/// \param PN The phi we are replacing the undefs in.
+/// \param IncomingValues A map from block to value.
+static void replaceUndefValuesInPhi(PHINode *PN,
+                                    const IncomingValueMap &IncomingValues) {
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    Value *V = PN->getIncomingValue(i);
+
+    if (!isa<UndefValue>(V)) continue;
+
+    BasicBlock *BB = PN->getIncomingBlock(i);
+    IncomingValueMap::const_iterator It = IncomingValues.find(BB);
+    if (It == IncomingValues.end()) continue;
+
+    PN->setIncomingValue(i, It->second);
+  }
+}
+
+/// \brief Replace a value flowing from a block to a phi with
+/// potentially multiple instances of that value flowing from the
+/// block's predecessors to the phi.
+///
+/// \param BB The block with the value flowing into the phi.
+/// \param BBPreds The predecessors of BB.
+/// \param PN The phi that we are updating.
+static void redirectValuesFromPredecessorsToPhi(BasicBlock *BB,
+                                                const PredBlockVector &BBPreds,
+                                                PHINode *PN) {
+  Value *OldVal = PN->removeIncomingValue(BB, false);
+  assert(OldVal && "No entry in PHI for Pred BB!");
+
+  IncomingValueMap IncomingValues;
+
+  // We are merging two blocks - BB, and the block containing PN - and
+  // as a result we need to redirect edges from the predecessors of BB
+  // to go to the block containing PN, and update PN
+  // accordingly. Since we allow merging blocks in the case where the
+  // predecessor and successor blocks both share some predecessors,
+  // and where some of those common predecessors might have undef
+  // values flowing into PN, we want to rewrite those values to be
+  // consistent with the non-undef values.
+
+  gatherIncomingValuesToPhi(PN, IncomingValues);
+
+  // If this incoming value is one of the PHI nodes in BB, the new entries
+  // in the PHI node are the entries from the old PHI.
+  if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
+    PHINode *OldValPN = cast<PHINode>(OldVal);
+    for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i) {
+      // Note that, since we are merging phi nodes and BB and Succ might
+      // have common predecessors, we could end up with a phi node with
+      // identical incoming branches. This will be cleaned up later (and
+      // will trigger asserts if we try to clean it up now, without also
+      // simplifying the corresponding conditional branch).
+      BasicBlock *PredBB = OldValPN->getIncomingBlock(i);
+      Value *PredVal = OldValPN->getIncomingValue(i);
+      Value *Selected = selectIncomingValueForBlock(PredVal, PredBB,
+                                                    IncomingValues);
+
+      // And add a new incoming value for this predecessor for the
+      // newly retargeted branch.
+      PN->addIncoming(Selected, PredBB);
+    }
+  } else {
+    for (unsigned i = 0, e = BBPreds.size(); i != e; ++i) {
+      // Update existing incoming values in PN for this
+      // predecessor of BB.
+      BasicBlock *PredBB = BBPreds[i];
+      Value *Selected = selectIncomingValueForBlock(OldVal, PredBB,
+                                                    IncomingValues);
+
+      // And add a new incoming value for this predecessor for the
+      // newly retargeted branch.
+      PN->addIncoming(Selected, PredBB);
+    }
+  }
+
+  replaceUndefValuesInPhi(PN, IncomingValues);
 }
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
@@ -634,31 +776,13 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
     // If there is more than one pred of succ, and there are PHI nodes in
     // the successor, then we need to add incoming edges for the PHI nodes
     //
-    const SmallVector<BasicBlock*, 16> BBPreds(pred_begin(BB), pred_end(BB));
+    const PredBlockVector BBPreds(pred_begin(BB), pred_end(BB));
     
     // Loop over all of the PHI nodes in the successor of BB.
     for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
       PHINode *PN = cast<PHINode>(I);
-      Value *OldVal = PN->removeIncomingValue(BB, false);
-      assert(OldVal && "No entry in PHI for Pred BB!");
-      
-      // If this incoming value is one of the PHI nodes in BB, the new entries
-      // in the PHI node are the entries from the old PHI.
-      if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
-        PHINode *OldValPN = cast<PHINode>(OldVal);
-        for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i)
-          // Note that, since we are merging phi nodes and BB and Succ might
-          // have common predecessors, we could end up with a phi node with
-          // identical incoming branches. This will be cleaned up later (and
-          // will trigger asserts if we try to clean it up now, without also
-          // simplifying the corresponding conditional branch).
-          PN->addIncoming(OldValPN->getIncomingValue(i),
-                          OldValPN->getIncomingBlock(i));
-      } else {
-        // Add an incoming value for each of the new incoming values.
-        for (unsigned i = 0, e = BBPreds.size(); i != e; ++i)
-          PN->addIncoming(OldVal, BBPreds[i]);
-      }
+
+      redirectValuesFromPredecessorsToPhi(BB, BBPreds, PN);
     }
   }
   
