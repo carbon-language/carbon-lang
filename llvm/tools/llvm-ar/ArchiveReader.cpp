@@ -212,7 +212,7 @@ Archive::loadArchive(std::string* error) {
   while (At < End) {
     // parse the member header
     const char* Save = At;
-    ArchiveMember* mbr = parseMemberHeader(At, End, error);
+    OwningPtr<ArchiveMember> mbr(parseMemberHeader(At, End, error));
     if (!mbr)
       return false;
 
@@ -230,7 +230,6 @@ Archive::loadArchive(std::string* error) {
       At += mbr->getSize();
       if ((intptr_t(At) & 1) == 1)
         At++;
-      delete mbr;
     } else {
       // This is just a regular file. If its the first one, save its offset.
       // Otherwise just push it on the list and move on to the next file.
@@ -238,8 +237,8 @@ Archive::loadArchive(std::string* error) {
         firstFileOffset = Save - base;
         foundFirstFile = true;
       }
-      members.push_back(mbr);
       At += mbr->getSize();
+      members.push_back(mbr.take());
       if ((intptr_t(At) & 1) == 1)
         At++;
     }
@@ -276,7 +275,7 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
 
   // Parse the first file member header
   const char* FirstFile = At;
-  ArchiveMember* mbr = parseMemberHeader(At, End, ErrorMsg);
+  OwningPtr<ArchiveMember> mbr(parseMemberHeader(At, End, ErrorMsg));
   if (!mbr)
     return false;
 
@@ -285,15 +284,12 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
     At += mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
       At++;
-    delete mbr;
 
     // Read the next one
     FirstFile = At;
-    mbr = parseMemberHeader(At, End, ErrorMsg);
-    if (!mbr) {
-      delete mbr;
+    mbr.reset(parseMemberHeader(At, End, ErrorMsg));
+    if (!mbr)
       return false;
-    }
   }
 
   if (mbr->isStringTable()) {
@@ -302,21 +298,19 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
     At += mbr->getSize();
     if ((intptr_t(At) & 1) == 1)
       At++;
-    delete mbr;
+
     // Get the next one
     FirstFile = At;
-    mbr = parseMemberHeader(At, End, ErrorMsg);
-    if (!mbr) {
-      delete mbr;
+    mbr.reset(parseMemberHeader(At, End, ErrorMsg));
+    if (!mbr)
       return false;
-    }
   }
 
   // There's no symbol table in the file. We have to rebuild it from scratch
   // because the intent of this method is to get the symbol table loaded so
   // it can be searched efficiently.
   // Add the member to the members list
-  members.push_back(mbr);
+  members.push_back(mbr.take());
 
   firstFileOffset = FirstFile - base;
   return true;
