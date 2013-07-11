@@ -22,18 +22,13 @@ namespace llvm {
   using namespace sys;
 
 std::string TimeValue::str() const {
-  char buffer[32];
-
-  time_t ourTime = time_t(this->toEpochTime());
-#ifdef __hpux
-// note that the following line needs -D_REENTRANT on HP-UX to be picked up
-  asctime_r(localtime(&ourTime), buffer);
-#else
-  ::asctime_r(::localtime(&ourTime), buffer);
-#endif
-
-  std::string result(buffer);
-  return result.substr(0,24);
+  time_t OurTime = time_t(this->toEpochTime());
+  struct tm Storage;
+  struct tm *LT = ::localtime_r(&OurTime, &Storage);
+  assert(LT);
+  char Buffer[25];
+  strftime(Buffer, 25, "%b %e %H:%M %Y", LT);
+  return std::string(Buffer);
 }
 
 TimeValue TimeValue::now() {

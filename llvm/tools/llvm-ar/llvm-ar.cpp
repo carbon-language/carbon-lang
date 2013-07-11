@@ -325,17 +325,15 @@ doDisplayTable(std::string* ErrMsg) {
     if (Paths.empty() ||
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
       if (Verbose) {
-        // FIXME: Output should be this format:
-        // Zrw-r--r--  500/ 500    525 Nov  8 17:42 2004 Makefile
-        outs() << " ";
         unsigned mode = I->getMode();
         printMode((mode >> 6) & 007);
         printMode((mode >> 3) & 007);
         printMode(mode & 007);
-        outs() << " " << format("%4u", I->getUser());
-        outs() << "/" << format("%4u", I->getGroup());
-        outs() << " " << format("%8u", I->getSize());
-        outs() << " " << format("%20s", I->getModTime().str().substr(4).c_str());
+        outs() << ' ' << I->getUser();
+        outs() << "/" << I->getGroup();
+        outs() << ' ' << format("%6u", I->getSize());
+        sys::TimeValue ModTime = I->getModTime();
+        outs() << " " << ModTime.str();
         outs() << " " << I->getPath().str() << "\n";
       } else {
         outs() << I->getPath().str() << "\n";
