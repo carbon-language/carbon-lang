@@ -1,0 +1,16 @@
+Test reading an archive created by gnu ar
+RUN: llvm-ar t %p/Inputs/GNU.a | FileCheck %s
+
+Test reading an archive createdy by Mac OS X ar
+RUN: llvm-ar t %p/Inputs/MacOSX.a | FileCheck %s
+
+Test reading an archive created on Solaris by /usr/ccs/bin/ar
+RUN: llvm-ar t %p/Inputs/SVR4.a | FileCheck %s
+
+Test reading an archive created on Solaris by /usr/xpg4/bin/ar
+RUN: llvm-ar t %p/Inputs/xpg4.a | FileCheck %s
+
+CHECK:      evenlen
+CHECK-NEXT: oddlen
+CHECK-NEXT: very_long_bytecode_file_name.bc
+CHECK-NEXT: IsNAN.o
