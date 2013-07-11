@@ -330,7 +330,7 @@ doDisplayTable(std::string* ErrMsg) {
         printMode(mode & 007);
         outs() << ' ' << I->getUser();
         outs() << "/" << I->getGroup();
-        outs() << ' ' << format("%6u", I->getSize());
+        outs() << ' ' << format("%6llu", I->getSize());
         sys::TimeValue ModTime = I->getModTime();
         outs() << " " << ModTime.str();
         outs() << " " << I->getPath().str() << "\n";
