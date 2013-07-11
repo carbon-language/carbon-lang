@@ -327,8 +327,8 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
   // permissions.
   tracer_thread_argument.mutex.Lock();
   pid_t tracer_pid = clone(TracerThread, tracer_stack.Bottom(),
-                          CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_UNTRACED,
-                          &tracer_thread_argument, 0, 0, 0);
+                           CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_UNTRACED,
+                           &tracer_thread_argument);
   if (tracer_pid < 0) {
     Report("Failed spawning a tracer thread (errno %d).\n", errno);
     tracer_thread_argument.mutex.Unlock();
