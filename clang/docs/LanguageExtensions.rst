@@ -159,12 +159,16 @@ include paths, or 0 otherwise:
   # include "myinclude.h"
   #endif
 
+To test for this feature, use ``#if defined(__has_include)``:
+
+.. code-block:: c++
+
   // To avoid problem with non-clang compilers not having this macro.
-  #if defined(__has_include) && __has_include("myinclude.h")
+  #if defined(__has_include)
+  #if __has_include("myinclude.h")
   # include "myinclude.h"
   #endif
-
-To test for this feature, use ``#if defined(__has_include)``.
+  #endif
 
 .. _langext-__has_include_next:
 
@@ -185,8 +189,10 @@ or 0 otherwise:
   #endif
 
   // To avoid problem with non-clang compilers not having this macro.
-  #if defined(__has_include_next) && __has_include_next("myinclude.h")
+  #if defined(__has_include_next)
+  #if __has_include_next("myinclude.h")
   # include_next "myinclude.h"
+  #endif
   #endif
 
 Note that ``__has_include_next``, like the GNU extension ``#include_next``
@@ -1695,7 +1701,7 @@ are accepted with the ``__attribute__((foo))`` syntax are also accepted as
 <http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html>`_, `GCC variable
 attributes <http://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html>`_, and
 `GCC type attributes
-<http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html>`_. As with the GCC
+<http://gcc.gnu.org/onlinedocs/gcc/Type-Attributes.html>`_). As with the GCC
 implementation, these attributes must appertain to the *declarator-id* in a
 declaration, which means they must go either at the start of the declaration or
 immediately after the name being declared.
