@@ -95,6 +95,22 @@ static bool SemaBuiltinAnnotation(Sema &S, CallExpr *TheCall) {
   return false;
 }
 
+/// Check that the argument to __builtin_addressof is a glvalue, and set the
+/// result type to the corresponding pointer type.
+static bool SemaBuiltinAddressof(Sema &S, CallExpr *TheCall) {
+  if (checkArgCount(S, TheCall, 1))
+    return true;
+
+  ExprResult Arg(S.Owned(TheCall->getArg(0)));
+  QualType ResultType = S.CheckAddressOfOperand(Arg, TheCall->getLocStart());
+  if (ResultType.isNull())
+    return true;
+
+  TheCall->setArg(0, Arg.take());
+  TheCall->setType(ResultType);
+  return false;
+}
+
 ExprResult
 Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   ExprResult TheCallResult(Owned(TheCall));
@@ -273,6 +289,10 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 #include "clang/Basic/Builtins.def"
   case Builtin::BI__builtin_annotation:
     if (SemaBuiltinAnnotation(*this, TheCall))
+      return ExprError();
+    break;
+  case Builtin::BI__builtin_addressof:
+    if (SemaBuiltinAddressof(*this, TheCall))
       return ExprError();
     break;
   }

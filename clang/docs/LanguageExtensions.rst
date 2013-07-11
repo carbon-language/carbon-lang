@@ -1533,6 +1533,22 @@ correct code by avoiding expensive loops around
 implementation details of ``__sync_lock_test_and_set()``.  The
 ``__sync_swap()`` builtin is a full barrier.
 
+``__builtin_addressof``
+-----------------------
+
+``__builtin_addressof`` performs the functionality of the built-in ``&``
+operator, ignoring any ``operator&`` overload.  This is useful in constant
+expressions in C++11, where there is no other way to take the address of an
+object that overloads ``operator&``.
+
+**Example of use**:
+
+.. code-block:: c++
+
+  template<typename T> constexpr T *addressof(T &value) {
+    return __builtin_addressof(value);
+  }
+
 Multiprecision Arithmetic Builtins
 ----------------------------------
 

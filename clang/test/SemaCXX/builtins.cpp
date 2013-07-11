@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify -std=c++11
 typedef const struct __CFString * CFStringRef;
 #define CFSTR __builtin___CFStringMakeConstantString
 
@@ -24,3 +24,17 @@ void f2() {
 // pr14895
 typedef __typeof(sizeof(int)) size_t;
 extern "C" void *__builtin_alloca (size_t);
+
+namespace addressof {
+  struct S {} s;
+  static_assert(__builtin_addressof(s) == &s, "");
+
+  struct T { constexpr T *operator&() const { return nullptr; } int n; } t;
+  constexpr T *pt = __builtin_addressof(t);
+  static_assert(&pt->n == &t.n, "");
+
+  struct U { int n : 5; } u;
+  int *pbf = __builtin_addressof(u.n); // expected-error {{address of bit-field requested}}
+
+  S *ptmp = __builtin_addressof(S{}); // expected-error {{taking the address of a temporary}}
+}

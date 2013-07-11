@@ -4513,7 +4513,13 @@ bool PointerExprEvaluator::VisitCallExpr(const CallExpr *E) {
   if (IsStringLiteralCall(E))
     return Success(E);
 
-  return ExprEvaluatorBaseTy::VisitCallExpr(E);
+  switch (E->isBuiltinCall()) {
+  case Builtin::BI__builtin_addressof:
+    return EvaluateLValue(E->getArg(0), Result, Info);
+
+  default:
+    return ExprEvaluatorBaseTy::VisitCallExpr(E);
+  }
 }
 
 //===----------------------------------------------------------------------===//
