@@ -3223,11 +3223,12 @@ static bool isInBoundsGep(Value *Ptr) {
 /// \brief Check whether the access through \p Ptr has a constant stride.
 static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
                         const Loop *Lp) {
-  const Type *PtrTy = Ptr->getType();
-  assert(PtrTy->isPointerTy() && "Unexpected non ptr");
+  const Type *Ty = Ptr->getType();
+  assert(Ty->isPointerTy() && "Unexpected non ptr");
 
   // Make sure that the pointer does not point to aggregate types.
-  if (cast<PointerType>(Ptr->getType())->getElementType()->isAggregateType()) {
+  const PointerType *PtrTy = cast<PointerType>(Ty);
+  if (PtrTy->getElementType()->isAggregateType()) {
     DEBUG(dbgs() << "LV: Bad stride - Not a pointer to a scalar type" << *Ptr
           << "\n");
     return 0;
@@ -3248,11 +3249,16 @@ static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
   }
 
   // The address calculation must not wrap. Otherwise, a dependence could be
-  // inverted. An inbounds getelementptr that is a AddRec with a unit stride
+  // inverted.
+  // An inbounds getelementptr that is a AddRec with a unit stride
   // cannot wrap per definition. The unit stride requirement is checked later.
+  // An getelementptr without an inbounds attribute and unit stride would have
+  // to access the pointer value "0" which is undefined behavior in address
+  // space 0, therefore we can also vectorize this case.
   bool IsInBoundsGEP = isInBoundsGep(Ptr);
   bool IsNoWrapAddRec = AR->getNoWrapFlags(SCEV::NoWrapMask);
-  if (!IsNoWrapAddRec && !IsInBoundsGEP) {
+  bool IsInAddressSpaceZero = PtrTy->getAddressSpace() == 0;
+  if (!IsNoWrapAddRec && !IsInBoundsGEP && !IsInAddressSpaceZero) {
     DEBUG(dbgs() << "LV: Bad stride - Pointer may wrap in the address space "
           << *Ptr << " SCEV: " << *PtrScev << "\n");
     return 0;
@@ -3269,7 +3275,7 @@ static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
     return 0;
   }
 
-  int64_t Size = DL->getTypeAllocSize(PtrTy->getPointerElementType());
+  int64_t Size = DL->getTypeAllocSize(PtrTy->getElementType());
   const APInt &APStepVal = C->getValue()->getValue();
 
   // Huge step value - give up.
@@ -3285,8 +3291,10 @@ static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
     return 0;
 
   // If the SCEV could wrap but we have an inbounds gep with a unit stride we
-  // know we can't "wrap around the address space".
-  if (!IsNoWrapAddRec && IsInBoundsGEP && Stride != 1 && Stride != -1)
+  // know we can't "wrap around the address space". In case of address space
+  // zero we know that this won't happen without triggering undefined behavior.
+  if (!IsNoWrapAddRec && (IsInBoundsGEP || IsInAddressSpaceZero) &&
+      Stride != 1 && Stride != -1)
     return 0;
 
   return Stride;
