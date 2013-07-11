@@ -3836,8 +3836,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     // FIXME: Modules won't like this at all.
     IdentifierTable &Table = PP.getIdentifierTable();
     SmallVector<const char *, 32> BuiltinNames;
-    Context.BuiltinInfo.GetBuiltinNames(BuiltinNames,
-                                        Context.getLangOpts().NoBuiltin);
+    if (!Context.getLangOpts().NoBuiltin) {
+      Context.BuiltinInfo.GetBuiltinNames(BuiltinNames);
+    }
     for (unsigned I = 0, N = BuiltinNames.size(); I != N; ++I)
       getIdentifierRef(&Table.get(BuiltinNames[I]));
   }

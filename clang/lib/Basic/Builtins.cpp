@@ -63,16 +63,15 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 }
 
 void
-Builtin::Context::GetBuiltinNames(SmallVectorImpl<const char *> &Names,
-                                  bool NoBuiltins) {
+Builtin::Context::GetBuiltinNames(SmallVectorImpl<const char *> &Names) {
   // Final all target-independent names
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
-    if (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f'))
+    if (!strchr(BuiltinInfo[i].Attributes, 'f'))
       Names.push_back(BuiltinInfo[i].Name);
 
   // Find target-specific names.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
-    if (!NoBuiltins || !strchr(TSRecords[i].Attributes, 'f'))
+    if (!strchr(TSRecords[i].Attributes, 'f'))
       Names.push_back(TSRecords[i].Name);
 }
 
