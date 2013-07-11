@@ -91,7 +91,6 @@ enum ArchiveOperation {
 bool AddAfter = false;           ///< 'a' modifier
 bool AddBefore = false;          ///< 'b' modifier
 bool Create = false;             ///< 'c' modifier
-bool InsertBefore = false;       ///< 'i' modifier
 bool OriginalDates = false;      ///< 'o' modifier
 bool SymTable = true;            ///< 's' & 'S' modifiers
 bool OnlyUpdate = false;         ///< 'u' modifier
@@ -208,7 +207,7 @@ ArchiveOperation parseCommandLine() {
       break;
     case 'i':
       getRelPos();
-      InsertBefore = true;
+      AddBefore = true;
       NumPositional++;
       break;
     default:
@@ -231,7 +230,7 @@ ArchiveOperation parseCommandLine() {
     show_help("Only one operation may be specified");
   if (NumPositional > 1)
     show_help("You may only specify one of a, b, and i modifiers");
-  if (AddAfter || AddBefore || InsertBefore) {
+  if (AddAfter || AddBefore) {
     if (Operation != Move && Operation != ReplaceOrInsert)
       show_help("The 'a', 'b' and 'i' modifiers can only be specified with "
             "the 'm' or 'r' operations");
@@ -436,7 +435,7 @@ doMove(std::string* ErrMsg) {
   // However, if the relative positioning modifiers were used, we need to scan
   // the archive to find the member in question. If we don't find it, its no
   // crime, we just move to the end.
-  if (AddBefore || InsertBefore || AddAfter) {
+  if (AddBefore || AddAfter) {
     for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end();
          I != E; ++I ) {
       if (RelPos == I->getPath().str()) {
@@ -555,7 +554,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
     }
 
     // Determine if this is the place where we should insert
-    if ((AddBefore || InsertBefore) && RelPos == I->getPath().str())
+    if (AddBefore && RelPos == I->getPath().str())
       insert_spot = I;
     else if (AddAfter && RelPos == I->getPath().str()) {
       insert_spot = I;
