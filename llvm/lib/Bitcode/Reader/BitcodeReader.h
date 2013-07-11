@@ -258,7 +258,7 @@ private:
   /// getValueTypePair - Read a value/type pair out of the specified record from
   /// slot 'Slot'.  Increment Slot past the number of slots used in the record.
   /// Return true on failure.
-  bool getValueTypePair(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
+  bool getValueTypePair(SmallVectorImpl<uint64_t> &Record, unsigned &Slot,
                         unsigned InstNum, Value *&ResVal) {
     if (Slot == Record.size()) return true;
     unsigned ValNo = (unsigned)Record[Slot++];
@@ -282,7 +282,7 @@ private:
   /// popValue - Read a value out of the specified record from slot 'Slot'.
   /// Increment Slot past the number of slots used by the value in the record.
   /// Return true if there is an error.
-  bool popValue(SmallVector<uint64_t, 64> &Record, unsigned &Slot,
+  bool popValue(SmallVectorImpl<uint64_t> &Record, unsigned &Slot,
                 unsigned InstNum, Type *Ty, Value *&ResVal) {
     if (getValue(Record, Slot, InstNum, Ty, ResVal))
       return true;
@@ -292,7 +292,7 @@ private:
   }
 
   /// getValue -- Like popValue, but does not increment the Slot number.
-  bool getValue(SmallVector<uint64_t, 64> &Record, unsigned Slot,
+  bool getValue(SmallVectorImpl<uint64_t> &Record, unsigned Slot,
                 unsigned InstNum, Type *Ty, Value *&ResVal) {
     ResVal = getValue(Record, Slot, InstNum, Ty);
     return ResVal == 0;
@@ -300,7 +300,7 @@ private:
 
   /// getValue -- Version of getValue that returns ResVal directly,
   /// or 0 if there is an error.
-  Value *getValue(SmallVector<uint64_t, 64> &Record, unsigned Slot,
+  Value *getValue(SmallVectorImpl<uint64_t> &Record, unsigned Slot,
                   unsigned InstNum, Type *Ty) {
     if (Slot == Record.size()) return 0;
     unsigned ValNo = (unsigned)Record[Slot];
@@ -311,7 +311,7 @@ private:
   }
 
   /// getValueSigned -- Like getValue, but decodes signed VBRs.
-  Value *getValueSigned(SmallVector<uint64_t, 64> &Record, unsigned Slot,
+  Value *getValueSigned(SmallVectorImpl<uint64_t> &Record, unsigned Slot,
                         unsigned InstNum, Type *Ty) {
     if (Slot == Record.size()) return 0;
     unsigned ValNo = (unsigned)decodeSignRotatedValue(Record[Slot]);

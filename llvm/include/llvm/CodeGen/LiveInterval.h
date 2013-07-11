@@ -389,7 +389,7 @@ namespace llvm {
     void join(LiveInterval &Other,
               const int *ValNoAssignments,
               const int *RHSValNoAssignments,
-              SmallVector<VNInfo*, 16> &NewVNInfo,
+              SmallVectorImpl<VNInfo *> &NewVNInfo,
               MachineRegisterInfo *MRI);
 
     /// isInOneLiveRange - Return true if the range specified is entirely in the

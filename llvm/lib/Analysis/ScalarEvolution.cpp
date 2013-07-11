@@ -1380,7 +1380,7 @@ const SCEV *ScalarEvolution::getAnyExtendExpr(const SCEV *Op,
 ///
 static bool
 CollectAddOperandsWithScales(DenseMap<const SCEV *, APInt> &M,
-                             SmallVector<const SCEV *, 8> &NewOps,
+                             SmallVectorImpl<const SCEV *> &NewOps,
                              APInt &AccumulatedConstant,
                              const SCEV *const *Ops, size_t NumOperands,
                              const APInt &Scale,

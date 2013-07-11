@@ -441,7 +441,7 @@ void LiveVariables::HandleRegMask(const MachineOperand &MO) {
 }
 
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
-                                     SmallVector<unsigned, 4> &Defs) {
+                                     SmallVectorImpl<unsigned> &Defs) {
   // What parts of the register are previously defined?
   SmallSet<unsigned, 32> Live;
   if (PhysRegDef[Reg] || PhysRegUse[Reg]) {
@@ -484,7 +484,7 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
 }
 
 void LiveVariables::UpdatePhysRegDefs(MachineInstr *MI,
-                                      SmallVector<unsigned, 4> &Defs) {
+                                      SmallVectorImpl<unsigned> &Defs) {
   while (!Defs.empty()) {
     unsigned Reg = Defs.back();
     Defs.pop_back();

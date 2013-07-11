@@ -1526,7 +1526,7 @@ Value *llvm::isBytewiseValue(Value *V) {
 // struct. To is the result struct built so far, new insertvalue instructions
 // build on that.
 static Value *BuildSubAggregate(Value *From, Value* To, Type *IndexedType,
-                                SmallVector<unsigned, 10> &Idxs,
+                                SmallVectorImpl<unsigned> &Idxs,
                                 unsigned IdxSkip,
                                 Instruction *InsertBefore) {
   llvm::StructType *STy = dyn_cast<llvm::StructType>(IndexedType);

@@ -172,7 +172,7 @@ namespace {
                    BitVector &PhysRegDefs,
                    BitVector &PhysRegClobbers,
                    SmallSet<int, 32> &StoredFIs,
-                   SmallVector<CandidateInfo, 32> &Candidates);
+                   SmallVectorImpl<CandidateInfo> &Candidates);
 
     /// AddToLiveIns - Add register 'Reg' to the livein sets of BBs in the
     /// current loop.
@@ -404,7 +404,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
                             BitVector &PhysRegDefs,
                             BitVector &PhysRegClobbers,
                             SmallSet<int, 32> &StoredFIs,
-                            SmallVector<CandidateInfo, 32> &Candidates) {
+                            SmallVectorImpl<CandidateInfo> &Candidates) {
   bool RuledOut = false;
   bool HasNonInvariantUse = false;
   unsigned Def = 0;
@@ -1084,7 +1084,7 @@ bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost,
       return true;
 
     for (unsigned i = BackTrace.size(); i != 0; --i) {
-      SmallVector<unsigned, 8> &RP = BackTrace[i-1];
+      SmallVectorImpl<unsigned> &RP = BackTrace[i-1];
       if (RP[RCId] + Cost >= Limit)
         return true;
     }
@@ -1130,7 +1130,7 @@ void MachineLICM::UpdateBackTraceRegPressure(const MachineInstr *MI) {
 
   // Update register pressure of blocks from loop header to current block.
   for (unsigned i = 0, e = BackTrace.size(); i != e; ++i) {
-    SmallVector<unsigned, 8> &RP = BackTrace[i];
+    SmallVectorImpl<unsigned> &RP = BackTrace[i];
     for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
          CI != CE; ++CI) {
       unsigned RCId = CI->first;

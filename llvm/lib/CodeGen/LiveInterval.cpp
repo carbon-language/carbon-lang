@@ -415,7 +415,7 @@ void LiveInterval::removeValNo(VNInfo *ValNo) {
 void LiveInterval::join(LiveInterval &Other,
                         const int *LHSValNoAssignments,
                         const int *RHSValNoAssignments,
-                        SmallVector<VNInfo*, 16> &NewVNInfo,
+                        SmallVectorImpl<VNInfo *> &NewVNInfo,
                         MachineRegisterInfo *MRI) {
   verify();
 

@@ -125,7 +125,7 @@ public:
 
   const ValueList &getValues() const { return Values; }
   const ValueList &getMDValues() const { return MDValues; }
-  const SmallVector<const MDNode *, 8> &getFunctionLocalMDValues() const {
+  const SmallVectorImpl<const MDNode *> &getFunctionLocalMDValues() const {
     return FunctionLocalMDs;
   }
   const TypeList &getTypes() const { return Types; }

@@ -81,7 +81,7 @@ CostModelAnalysis::runOnFunction(Function &F) {
  return false;
 }
 
-static bool isReverseVectorMask(SmallVector<int, 16> &Mask) {
+static bool isReverseVectorMask(SmallVectorImpl<int> &Mask) {
   for (unsigned i = 0, MaskSize = Mask.size(); i < MaskSize; ++i)
     if (Mask[i] > 0 && Mask[i] != (int)(MaskSize - 1 - i))
       return false;

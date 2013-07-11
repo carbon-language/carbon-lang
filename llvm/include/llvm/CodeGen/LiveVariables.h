@@ -157,8 +157,8 @@ private:   // Intermediate data structures
 
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
-                        SmallVector<unsigned, 4> &Defs);
-  void UpdatePhysRegDefs(MachineInstr *MI, SmallVector<unsigned, 4> &Defs);
+                        SmallVectorImpl<unsigned> &Defs);
+  void UpdatePhysRegDefs(MachineInstr *MI, SmallVectorImpl<unsigned> &Defs);
 
   /// FindLastRefOrPartRef - Return the last reference or partial reference of
   /// the specified register.

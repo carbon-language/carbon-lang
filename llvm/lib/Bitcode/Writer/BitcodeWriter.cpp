@@ -614,7 +614,7 @@ static uint64_t GetOptimizationFlags(const Value *V) {
 static void WriteMDNode(const MDNode *N,
                         const ValueEnumerator &VE,
                         BitstreamWriter &Stream,
-                        SmallVector<uint64_t, 64> &Record) {
+                        SmallVectorImpl<uint64_t> &Record) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (N->getOperand(i)) {
       Record.push_back(VE.getTypeID(N->getOperand(i)->getType()));
@@ -701,7 +701,7 @@ static void WriteFunctionLocalMetadata(const Function &F,
                                        BitstreamWriter &Stream) {
   bool StartedMetadataBlock = false;
   SmallVector<uint64_t, 64> Record;
-  const SmallVector<const MDNode *, 8> &Vals = VE.getFunctionLocalMDValues();
+  const SmallVectorImpl<const MDNode *> &Vals = VE.getFunctionLocalMDValues();
   for (unsigned i = 0, e = Vals.size(); i != e; ++i)
     if (const MDNode *N = Vals[i])
       if (N->isFunctionLocal() && N->getFunction() == &F) {
@@ -1078,7 +1078,7 @@ static void WriteModuleConstants(const ValueEnumerator &VE,
 /// instruction ID, then it is a forward reference, and it also includes the
 /// type ID.  The value ID that is written is encoded relative to the InstID.
 static bool PushValueAndType(const Value *V, unsigned InstID,
-                             SmallVector<unsigned, 64> &Vals,
+                             SmallVectorImpl<unsigned> &Vals,
                              ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
   // Make encoding relative to the InstID.
@@ -1093,21 +1093,21 @@ static bool PushValueAndType(const Value *V, unsigned InstID,
 /// pushValue - Like PushValueAndType, but where the type of the value is
 /// omitted (perhaps it was already encoded in an earlier operand).
 static void pushValue(const Value *V, unsigned InstID,
-                      SmallVector<unsigned, 64> &Vals,
+                      SmallVectorImpl<unsigned> &Vals,
                       ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
   Vals.push_back(InstID - ValID);
 }
 
 static void pushValue64(const Value *V, unsigned InstID,
-                        SmallVector<uint64_t, 128> &Vals,
+                        SmallVectorImpl<uint64_t> &Vals,
                         ValueEnumerator &VE) {
   uint64_t ValID = VE.getValueID(V);
   Vals.push_back(InstID - ValID);
 }
 
 static void pushValueSigned(const Value *V, unsigned InstID,
-                            SmallVector<uint64_t, 128> &Vals,
+                            SmallVectorImpl<uint64_t> &Vals,
                             ValueEnumerator &VE) {
   unsigned ValID = VE.getValueID(V);
   int64_t diff = ((int32_t)InstID - (int32_t)ValID);
@@ -1117,7 +1117,7 @@ static void pushValueSigned(const Value *V, unsigned InstID,
 /// WriteInstruction - Emit an instruction to the specified stream.
 static void WriteInstruction(const Instruction &I, unsigned InstID,
                              ValueEnumerator &VE, BitstreamWriter &Stream,
-                             SmallVector<unsigned, 64> &Vals) {
+                             SmallVectorImpl<unsigned> &Vals) {
   unsigned Code = 0;
   unsigned AbbrevToUse = 0;
   VE.setInstructionID(&I);
