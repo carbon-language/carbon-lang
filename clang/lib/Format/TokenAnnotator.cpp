@@ -1020,6 +1020,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
       return 3;
+    if (Left.Type == TT_StartOfName)
+      return 20;
     else if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
       // FIXME: Clean up hack of using BindingStrength to find top-level names.
       return Style.PenaltyReturnTypeOnItsOwnLine;

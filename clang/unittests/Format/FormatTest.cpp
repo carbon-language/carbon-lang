@@ -2511,6 +2511,10 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
       "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "    GUARDED_BY(aaaaaaaaaaaa);",
       getGoogleStyle());
+  verifyFormat(
+      "bool aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    GUARDED_BY(aaaaaaaaaaaa);",
+      getGoogleStyle());
 }
 
 TEST_F(FormatTest, BreaksDesireably) {
