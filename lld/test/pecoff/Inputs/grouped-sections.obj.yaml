@@ -6,7 +6,7 @@ sections:
   - Name:            .text
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       4
-    SectionData:     ""
+    SectionData:     90
   - Name:            .data
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
     Alignment:       4
@@ -22,7 +22,7 @@ sections:
   - Name:            ".debug$S"
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
-    SectionData:     04000000F1000000670000002C000111000000005A3A5C67726F7570656473656374696F6E735C73656374696F6E2D67726F7570732E6F626A0037003C1103020000030000000000000000000A0000001B9D01004D6963726F736F667420285229204D6163726F20417373656D626C6572000000
+    SectionData:     04000000F1000000590000001E000111000000005A3A5C67726F757065642D73656374696F6E732E6F626A0037003C1103020000030000000000000000000A0000001B9D01004D6963726F736F667420285229204D6163726F20417373656D626C65720000000000
   - Name:            .drectve
     Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
     Alignment:       2147483648
@@ -41,7 +41,7 @@ symbols:
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
     NumberOfAuxSymbols: 1
-    AuxiliaryData:   000000000000000000000000000000000000
+    AuxiliaryData:   010000000000000000000000000000000000
   - Name:            .data
     Value:           0
     SectionNumber:   2
@@ -66,14 +66,14 @@ symbols:
     StorageClass:    IMAGE_SYM_CLASS_STATIC
     NumberOfAuxSymbols: 1
     AuxiliaryData:   040000000000000000000000000000000000
-  - Name:            ."debug$S"
+  - Name:            ".debug$S"
     Value:           0
     SectionNumber:   5
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
     NumberOfAuxSymbols: 1
-    AuxiliaryData:   740000000000000000000000000000000000
+    AuxiliaryData:   680000000000000000000000000000000000
   - Name:            _main
     Value:           0
     SectionNumber:   1

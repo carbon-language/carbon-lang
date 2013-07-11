@@ -64,7 +64,8 @@ class Chunk {
 public:
   enum Kind {
     kindHeader,
-    kindSection
+    kindSection,
+    kindDataDirectory
   };
 
   explicit Chunk(Kind kind) : _kind(kind), _size(0), _align(1) {}
@@ -243,43 +244,6 @@ private:
   llvm::object::pe32_header _peHeader;
 };
 
-/// A DataDirectoryChunk represents data directory entries that follows the PE
-/// header in the output file. An entry consists of an 8 byte field that
-/// indicates a relative virtual address (the starting address of the entry data
-/// in memory) and 8 byte entry data size.
-class DataDirectoryChunk : public HeaderChunk {
-public:
-  DataDirectoryChunk() : HeaderChunk() {
-    _size = sizeof(_dirs);
-    std::memset(_dirs, 0, sizeof(_dirs));
-  }
-
-  // Set the import table address and size. The import table is usually in
-  // .idata section, but because .idata section can be merged with other section
-  // such as .rdata, the given address can be in any section.
-  void setImportTableDirectoryRva(uint32_t rva, uint32_t size) {
-    _dirs[1].RelativeVirtualAddress = rva;
-    _dirs[1].Size = size;
-  }
-
-  // Set the address and size of the import address table (IAT). This is
-  // redundant information because the import table contains the file offset of
-  // the IAT. Although it's redundant, it needs to be set properly, otherwise
-  // the loader refuses the executable.
-  void setImportAddressTableRva(uint32_t rva, uint32_t size) {
-    _dirs[12].RelativeVirtualAddress = rva;
-    _dirs[12].Size = size;
-  }
-
-  virtual void write(uint8_t *fileBuffer) {
-    fileBuffer += fileOffset();
-    std::memcpy(fileBuffer, &_dirs, sizeof(_dirs));
-  }
-
-private:
-  llvm::object::data_directory _dirs[16];
-};
-
 /// A SectionHeaderTableChunk represents Section Table Header of PE/COFF
 /// format, which is a list of section headers.
 class SectionHeaderTableChunk : public HeaderChunk {
@@ -363,9 +327,49 @@ public:
       layout->_virtualAddr += rva;
   }
 
+  static bool classof(const Chunk *c) {
+    Kind kind = c->getKind();
+    return kind == kindSection || kind == kindDataDirectory;
+  }
+
 protected:
   AtomChunk(Kind kind) : Chunk(kind) {}
   std::vector<AtomLayout *> _atomLayouts;
+};
+
+/// A DataDirectoryChunk represents data directory entries that follows the PE
+/// header in the output file. An entry consists of an 8 byte field that
+/// indicates a relative virtual address (the starting address of the entry data
+/// in memory) and 8 byte entry data size.
+class DataDirectoryChunk : public AtomChunk {
+public:
+  DataDirectoryChunk(const File &linkedFile)
+      : AtomChunk(kindDataDirectory) {
+    // Extract atoms from the linked file and append them to this section.
+    for (const DefinedAtom *atom : linkedFile.defined()) {
+      if (atom->contentType() == DefinedAtom::typeDataDirectoryEntry) {
+        uint64_t size = atom->ordinal() * sizeof(llvm::object::data_directory);
+        _atomLayouts.push_back(new (_alloc) AtomLayout(atom, size, size));
+      }
+    }
+  }
+
+  virtual uint64_t size() const {
+    return sizeof(llvm::object::data_directory) * 16;
+  }
+
+  virtual void write(uint8_t *fileBuffer) {
+    fileBuffer += fileOffset();
+    for (const AtomLayout *layout : _atomLayouts) {
+      if (!layout)
+        continue;
+      ArrayRef<uint8_t> content = static_cast<const DefinedAtom *>(layout->_atom)->rawContent();
+      std::memcpy(fileBuffer + layout->_fileOffset, content.data(), content.size());
+    }
+  }
+
+private:
+  mutable llvm::BumpPtrAllocator _alloc;
 };
 
 /// A SectionChunk represents a section containing atoms. It consists of a
@@ -453,13 +457,13 @@ private:
   }
 
   void appendAtom(const DefinedAtom *atom) {
-    auto *layout = new (_storage) AtomLayout(atom, _size, _size);
+    auto *layout = new (_alloc) AtomLayout(atom, _size, _size);
     _atomLayouts.push_back(layout);
     _size += atom->rawContent().size();
   }
 
   llvm::object::coff_section _sectionHeader;
-  mutable llvm::BumpPtrAllocator _storage;
+  mutable llvm::BumpPtrAllocator _alloc;
 };
 
 void SectionHeaderTableChunk::addSection(SectionChunk *chunk) {
@@ -545,10 +549,10 @@ private:
   void applyRelocations(uint8_t *bufferStart) {
     std::map<const Atom *, uint64_t> atomToVirtualAddr;
     for (auto &cp : _chunks)
-      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+      if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
         chunk->buildAtomToVirtualAddr(atomToVirtualAddr);
     for (auto &cp : _chunks)
-      if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
+      if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
         chunk->applyRelocations(bufferStart, atomToVirtualAddr);
   }
 
@@ -586,7 +590,7 @@ public:
     // Create file chunks and add them to the list.
     auto *dosStub = new DOSStubChunk();
     auto *peHeader = new PEHeaderChunk(_PECOFFTargetInfo);
-    auto *dataDirectory = new DataDirectoryChunk();
+    auto *dataDirectory = new DataDirectoryChunk(linkedFile);
     auto *sectionTable = new SectionHeaderTableChunk();
     auto *text = new TextSectionChunk(linkedFile);
     auto *rdata = new RDataSectionChunk(linkedFile);

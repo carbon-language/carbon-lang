@@ -144,6 +144,7 @@ public:
     typeTLVInitialData,     // initial data for a TLV [Darwin]
     typeTLVInitialZeroFill, // TLV initial zero fill data [Darwin]
     typeTLVInitializerPtr,  // pointer to thread local initializer [Darwin]
+    typeDataDirectoryEntry, // linker created for data directory header [PECOFF]
   };
 
   // Permission bits for atoms and segments. The order of these values are

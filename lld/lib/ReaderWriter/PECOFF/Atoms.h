@@ -223,27 +223,45 @@ public:
   virtual uint64_t ordinal() const { return 0; }
   virtual Scope scope() const { return scopeGlobal; }
   virtual Alignment alignment() const { return Alignment(1); }
-  virtual uint64_t size() const { return _data->size(); }
-  virtual ArrayRef<uint8_t> rawContent() const { return *_data; }
+  virtual uint64_t size() const { return _data.size(); }
+  virtual ArrayRef<uint8_t> rawContent() const { return _data; }
 
 protected:
-  COFFLinkerInternalAtom(const File &file, std::vector<uint8_t> *data,
+  COFFLinkerInternalAtom(const File &file, std::vector<uint8_t> data,
                          StringRef symbolName = "")
-      : COFFBaseDefinedAtom(file, symbolName, Kind::Internal), _data(data) {}
+      : COFFBaseDefinedAtom(file, symbolName, Kind::Internal),
+        _data(std::move(data)) {}
 
 private:
-  std::vector<uint8_t> *_data;
+  std::vector<uint8_t> _data;
+};
+
+// A COFFDataDirectoryAtom represents an entry of Optional Data Directory in the
+// COFF header.
+class COFFDataDirectoryAtom : public COFFLinkerInternalAtom {
+public:
+  COFFDataDirectoryAtom(const File &file, uint64_t ordinal)
+      : COFFLinkerInternalAtom(file, std::vector<uint8_t>(8)),
+        _ordinal(ordinal) {}
+
+  virtual uint64_t ordinal() const { return _ordinal; }
+  virtual ContentType contentType() const { return typeDataDirectoryEntry; }
+  virtual ContentPermissions permissions() const { return permR__; }
+
+private:
+  uint64_t _ordinal;
 };
 
 // A COFFSharedLibraryAtom represents a symbol for data in an import library.  A
 // reference to a COFFSharedLibraryAtom will be transformed to a real reference
-// to an import address table entry in a pass.
+// to an import address table entry in Idata pass.
 class COFFSharedLibraryAtom : public SharedLibraryAtom {
 public:
   COFFSharedLibraryAtom(const File &file, uint16_t hint,
                         StringRef symbolName, StringRef loadName)
       : _file(file), _hint(hint), _unmangledName(symbolName),
-        _loadName(loadName), _mangledName(addImpPrefix(symbolName)) {}
+        _loadName(loadName), _mangledName(addImpPrefix(symbolName)),
+        _importTableEntry(nullptr) {}
 
   virtual const File &file() const { return _file; }
   uint16_t hint() const { return _hint; }
@@ -251,6 +269,14 @@ public:
   virtual StringRef unmangledName() const { return _unmangledName; }
   virtual StringRef loadName() const { return _loadName; }
   virtual bool canBeNullAtRuntime() const { return false; }
+
+  void setImportTableEntry(const DefinedAtom *atom) {
+    _importTableEntry = atom;
+  }
+
+  const DefinedAtom *getImportTableEntry() const {
+    return _importTableEntry;
+  }
 
 private:
   /// Mangle the symbol name by adding "__imp_" prefix. See the file comment of
@@ -266,6 +292,7 @@ private:
   StringRef _unmangledName;
   StringRef _loadName;
   std::string _mangledName;
+  const DefinedAtom *_importTableEntry;
 };
 
 //===----------------------------------------------------------------------===//

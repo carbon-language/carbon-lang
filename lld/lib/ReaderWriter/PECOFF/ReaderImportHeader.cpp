@@ -135,7 +135,8 @@ namespace {
 class FuncAtom : public COFFLinkerInternalAtom {
 public:
   FuncAtom(const File &file, StringRef symbolName)
-      : COFFLinkerInternalAtom(file, &rawContent, symbolName) {}
+      : COFFLinkerInternalAtom(file, std::vector<uint8_t>(rawContent),
+                               symbolName) {}
 
   virtual uint64_t ordinal() const { return 0; }
   virtual Scope scope() const { return scopeGlobal; }

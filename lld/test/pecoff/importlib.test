@@ -1,19 +1,17 @@
 # Verify that lld can handle .lib files. "main.obj" refers _val1 and
-# _val2 that are defined in "dynamic.lib".
+# _val2 that are defined in "vars.lib".
 #
-# RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
+# RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
 #
 # RUN: lld -flavor link -out %t1 -subsystem console -- %t.obj \
-# RUN:   %p/Inputs/dynamic.lib && llvm-objdump -d %t1 | FileCheck %s
+# RUN:    %p/Inputs/vars.lib && llvm-objdump -d %t1 | FileCheck %s
 
 CHECK: Disassembly of section .text:
 CHECK: .text:
-CHECK:     1000:       a1 0c 10 40 00            movl    4198412, %eax
-CHECK:     1005:       03 05 14 10 40 00         addl    4198420, %eax
-CHECK:     100b:       c3                        ret
-CHECK:     100c:       ff 25 00 00 40 00         jmpl    *4194304
-CHECK:     1012:       90                        nop
-CHECK:     1013:       90                        nop
-CHECK:     1014:       ff 25 00 00 40 00         jmpl    *4194304
-CHECK:     101a:       90                        nop
-CHECK:     101b:       90                        nop
+CHECK:     1000:       55                    pushl   %ebp
+CHECK:     1001:       8b ec                 movl    %esp, %ebp
+CHECK:     1003:       ff 15 4c 20 40 00     calll   *4202572
+CHECK:     1009:       8b 0d 50 20 40 00     movl    4202576, %ecx
+CHECK:     100f:       03 01                 addl    (%ecx), %eax
+CHECK:     1011:       5d                    popl    %ebp
+CHECK:     1012:       c3                    ret

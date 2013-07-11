@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GroupedSectionsPass.h"
+#include "IdataPass.h"
 
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
@@ -59,6 +60,7 @@ PECOFFTargetInfo::stringFromRelocKind(Reference::Kind kind) const {
 
 void PECOFFTargetInfo::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
+  pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass()));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 

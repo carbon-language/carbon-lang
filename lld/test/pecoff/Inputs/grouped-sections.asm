@@ -14,4 +14,5 @@ _data$1 ends
 
 .code
 main:
+	nop
 end main
