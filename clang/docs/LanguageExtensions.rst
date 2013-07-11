@@ -1961,11 +1961,11 @@ Type Safety Checking
 ====================
 
 Clang supports additional attributes to enable checking type safety properties
-that can't be enforced by C type system.  Usecases include:
+that can't be enforced by the C type system.  Use cases include:
 
 * MPI library implementations, where these attributes enable checking that
-  buffer type matches the passed ``MPI_Datatype``;
-* for HDF5 library there is a similar usecase as MPI;
+  the buffer type matches the passed ``MPI_Datatype``;
+* for HDF5 library there is a similar use case to MPI;
 * checking types of variadic functions' arguments for functions like
   ``fcntl()`` and ``ioctl()``.
 
@@ -2000,7 +2000,7 @@ accepts a type tag that determines the type of some other argument.
 applicable type tags.
 
 This attribute is primarily useful for checking arguments of variadic functions
-(``pointer_with_type_tag`` can be used in most of non-variadic cases).
+(``pointer_with_type_tag`` can be used in most non-variadic cases).
 
 For example:
 
