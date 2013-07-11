@@ -8407,51 +8407,50 @@ static void diagnoseAddressOfInvalidType(Sema &S, SourceLocation Loc,
 /// operator (C99 6.3.2.1p[2-4]), and its result is never an lvalue.
 /// In C++, the operand might be an overloaded function name, in which case
 /// we allow the '&' but retain the overloaded-function type.
-static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
-                                      SourceLocation OpLoc) {
+QualType Sema::CheckAddressOfOperand(ExprResult &OrigOp, SourceLocation OpLoc) {
   if (const BuiltinType *PTy = OrigOp.get()->getType()->getAsPlaceholderType()){
     if (PTy->getKind() == BuiltinType::Overload) {
       Expr *E = OrigOp.get()->IgnoreParens();
       if (!isa<OverloadExpr>(E)) {
         assert(cast<UnaryOperator>(E)->getOpcode() == UO_AddrOf);
-        S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof_addrof_function)
+        Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof_addrof_function)
           << OrigOp.get()->getSourceRange();
         return QualType();
       }
 
       OverloadExpr *Ovl = cast<OverloadExpr>(E);
       if (isa<UnresolvedMemberExpr>(Ovl))
-        if (!S.ResolveSingleFunctionTemplateSpecialization(Ovl)) {
-          S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+        if (!ResolveSingleFunctionTemplateSpecialization(Ovl)) {
+          Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
             << OrigOp.get()->getSourceRange();
           return QualType();
         }
 
-      return S.Context.OverloadTy;
+      return Context.OverloadTy;
     }
 
     if (PTy->getKind() == BuiltinType::UnknownAny)
-      return S.Context.UnknownAnyTy;
+      return Context.UnknownAnyTy;
 
     if (PTy->getKind() == BuiltinType::BoundMember) {
-      S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+      Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
         << OrigOp.get()->getSourceRange();
       return QualType();
     }
 
-    OrigOp = S.CheckPlaceholderExpr(OrigOp.take());
+    OrigOp = CheckPlaceholderExpr(OrigOp.take());
     if (OrigOp.isInvalid()) return QualType();
   }
 
   if (OrigOp.get()->isTypeDependent())
-    return S.Context.DependentTy;
+    return Context.DependentTy;
 
   assert(!OrigOp.get()->getType()->isPlaceholderType());
 
   // Make sure to ignore parentheses in subsequent checks
   Expr *op = OrigOp.get()->IgnoreParens();
 
-  if (S.getLangOpts().C99) {
+  if (getLangOpts().C99) {
     // Implement C99-only parts of addressof rules.
     if (UnaryOperator* uOp = dyn_cast<UnaryOperator>(op)) {
       if (uOp->getOpcode() == UO_Deref)
@@ -8463,28 +8462,28 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
     // expressions here, but the result of one is always an lvalue anyway.
   }
   ValueDecl *dcl = getPrimaryDecl(op);
-  Expr::LValueClassification lval = op->ClassifyLValue(S.Context);
+  Expr::LValueClassification lval = op->ClassifyLValue(Context);
   unsigned AddressOfError = AO_No_Error;
 
   if (lval == Expr::LV_ClassTemporary || lval == Expr::LV_ArrayTemporary) { 
-    bool sfinae = (bool)S.isSFINAEContext();
-    S.Diag(OpLoc, S.isSFINAEContext() ? diag::err_typecheck_addrof_temporary
-                         : diag::ext_typecheck_addrof_temporary)
+    bool sfinae = (bool)isSFINAEContext();
+    Diag(OpLoc, isSFINAEContext() ? diag::err_typecheck_addrof_temporary
+                                  : diag::ext_typecheck_addrof_temporary)
       << op->getType() << op->getSourceRange();
     if (sfinae)
       return QualType();
     // Materialize the temporary as an lvalue so that we can take its address.
-    OrigOp = op = new (S.Context)
+    OrigOp = op = new (Context)
         MaterializeTemporaryExpr(op->getType(), OrigOp.take(), true, 0);
   } else if (isa<ObjCSelectorExpr>(op)) {
-    return S.Context.getPointerType(op->getType());
+    return Context.getPointerType(op->getType());
   } else if (lval == Expr::LV_MemberFunction) {
     // If it's an instance method, make a member pointer.
     // The expression must have exactly the form &A::foo.
 
     // If the underlying expression isn't a decl ref, give up.
     if (!isa<DeclRefExpr>(op)) {
-      S.Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
+      Diag(OpLoc, diag::err_invalid_form_pointer_member_function)
         << OrigOp.get()->getSourceRange();
       return QualType();
     }
@@ -8493,25 +8492,25 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
 
     // The id-expression was parenthesized.
     if (OrigOp.get() != DRE) {
-      S.Diag(OpLoc, diag::err_parens_pointer_member_function)
+      Diag(OpLoc, diag::err_parens_pointer_member_function)
         << OrigOp.get()->getSourceRange();
 
     // The method was named without a qualifier.
     } else if (!DRE->getQualifier()) {
       if (MD->getParent()->getName().empty())
-        S.Diag(OpLoc, diag::err_unqualified_pointer_member_function)
+        Diag(OpLoc, diag::err_unqualified_pointer_member_function)
           << op->getSourceRange();
       else {
         SmallString<32> Str;
         StringRef Qual = (MD->getParent()->getName() + "::").toStringRef(Str);
-        S.Diag(OpLoc, diag::err_unqualified_pointer_member_function)
+        Diag(OpLoc, diag::err_unqualified_pointer_member_function)
           << op->getSourceRange()
           << FixItHint::CreateInsertion(op->getSourceRange().getBegin(), Qual);
       }
     }
 
-    return S.Context.getMemberPointerType(op->getType(),
-              S.Context.getTypeDeclType(MD->getParent()).getTypePtr());
+    return Context.getMemberPointerType(op->getType(),
+              Context.getTypeDeclType(MD->getParent()).getTypePtr());
   } else if (lval != Expr::LV_Valid && lval != Expr::LV_IncompleteVoidType) {
     // C99 6.5.3.2p1
     // The operand must be either an l-value or a function designator
@@ -8520,7 +8519,7 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
       if (isa<PseudoObjectExpr>(op)) {
         AddressOfError = AO_Property_Expansion;
       } else {
-        S.Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
+        Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof)
           << op->getType() << op->getSourceRange();
         return QualType();
       }
@@ -8538,11 +8537,11 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
       // in C++ it is not error to take address of a register
       // variable (c++03 7.1.1P3)
       if (vd->getStorageClass() == SC_Register &&
-          !S.getLangOpts().CPlusPlus) {
+          !getLangOpts().CPlusPlus) {
         AddressOfError = AO_Register_Variable;
       }
     } else if (isa<FunctionTemplateDecl>(dcl)) {
-      return S.Context.OverloadTy;
+      return Context.OverloadTy;
     } else if (isa<FieldDecl>(dcl) || isa<IndirectFieldDecl>(dcl)) {
       // Okay: we can take the address of a field.
       // Could be a pointer to member, though, if there is an explicit
@@ -8551,16 +8550,16 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
         DeclContext *Ctx = dcl->getDeclContext();
         if (Ctx && Ctx->isRecord()) {
           if (dcl->getType()->isReferenceType()) {
-            S.Diag(OpLoc,
-                   diag::err_cannot_form_pointer_to_member_of_reference_type)
+            Diag(OpLoc,
+                 diag::err_cannot_form_pointer_to_member_of_reference_type)
               << dcl->getDeclName() << dcl->getType();
             return QualType();
           }
 
           while (cast<RecordDecl>(Ctx)->isAnonymousStructOrUnion())
             Ctx = Ctx->getParent();
-          return S.Context.getMemberPointerType(op->getType(),
-                S.Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
+          return Context.getMemberPointerType(op->getType(),
+                Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
         }
       }
     } else if (!isa<FunctionDecl>(dcl) && !isa<NonTypeTemplateParmDecl>(dcl))
@@ -8568,7 +8567,7 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
   }
 
   if (AddressOfError != AO_No_Error) {
-    diagnoseAddressOfInvalidType(S, OpLoc, op, AddressOfError);
+    diagnoseAddressOfInvalidType(*this, OpLoc, op, AddressOfError);
     return QualType();
   }
 
@@ -8576,13 +8575,13 @@ static QualType CheckAddressOfOperand(Sema &S, ExprResult &OrigOp,
     // Taking the address of a void variable is technically illegal, but we
     // allow it in cases which are otherwise valid.
     // Example: "extern void x; void* y = &x;".
-    S.Diag(OpLoc, diag::ext_typecheck_addrof_void) << op->getSourceRange();
+    Diag(OpLoc, diag::ext_typecheck_addrof_void) << op->getSourceRange();
   }
 
   // If the operand has type "type", the result has type "pointer to type".
   if (op->getType()->isObjCObjectType())
-    return S.Context.getObjCObjectPointerType(op->getType());
-  return S.Context.getPointerType(op->getType());
+    return Context.getObjCObjectPointerType(op->getType());
+  return Context.getPointerType(op->getType());
 }
 
 /// CheckIndirectionOperand - Type check unary indirection (prefix '*').
@@ -9286,7 +9285,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                                 Opc == UO_PreDec);
     break;
   case UO_AddrOf:
-    resultType = CheckAddressOfOperand(*this, Input, OpLoc);
+    resultType = CheckAddressOfOperand(Input, OpLoc);
     break;
   case UO_Deref: {
     Input = DefaultFunctionArrayLvalueConversion(Input.take());
