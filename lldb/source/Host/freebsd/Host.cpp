@@ -77,6 +77,13 @@ Host::ThreadCreated (const char *thread_name)
     }
 }
 
+std::string
+Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
+{
+    std::string thread_name;
+    return thread_name;
+}
+
 void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
