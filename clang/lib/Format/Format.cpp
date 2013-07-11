@@ -589,7 +589,8 @@ private:
                                       State.Column, Line.InPPDirective);
       }
 
-      State.Stack.back().LastSpace = State.Column;
+      if (!Current.isTrailingComment())
+        State.Stack.back().LastSpace = State.Column;
       if (Current.isOneOf(tok::arrow, tok::period) &&
           Current.Type != TT_DesignatedInitializerPeriod)
         State.Stack.back().LastSpace += Current.CodePointCount;
