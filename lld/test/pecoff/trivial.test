@@ -34,7 +34,7 @@ FILE:   SizeOfInitializedData: 0
 FILE:   SizeOfUninitializedData: 0
 FILE:   AddressOfEntryPoint: 0x1000
 FILE:   BaseOfCode: 0x1000
-FILE:   BaseOfData: 0x2000
+FILE:   BaseOfData: 0
 FILE:   ImageBase: 0x400000
 FILE:   SectionAlignment: 4096
 FILE:   FileAlignment: 512

@@ -400,15 +400,11 @@ public:
   static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
 
 protected:
-  SectionChunk(SectionHeaderTableChunk *table, StringRef sectionName,
-               uint32_t characteristics)
+  SectionChunk(StringRef sectionName, uint32_t characteristics)
       : AtomChunk(kindSection),
         _sectionHeader(createSectionHeader(sectionName, characteristics)) {
     // The section should be aligned to disk sector.
     _align = SECTOR_SIZE;
-
-    // Add this section to the file header.
-    table->addSection(this);
   }
 
   void buildContents(const File &linkedFile,
@@ -478,11 +474,6 @@ void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
   uint64_t offset = 0;
   fileBuffer += fileOffset();
   for (const auto &chunk : _sections) {
-    // Skip the empty section. Windows loader does not like a section
-    // of size zero and rejects such executable.
-    if (chunk->size() == 0)
-      continue;
-
     const llvm::object::coff_section &header = chunk->getSectionHeader();
     std::memcpy(fileBuffer + offset, &header, sizeof(header));
     offset += sizeof(header);
@@ -492,8 +483,8 @@ void SectionHeaderTableChunk::write(uint8_t *fileBuffer) {
 // \brief A TextSectionChunk represents a .text section.
 class TextSectionChunk : public SectionChunk {
 public:
-  TextSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
-      : SectionChunk(table, ".text", characteristics) {
+  TextSectionChunk(const File &linkedFile)
+      : SectionChunk(".text", characteristics) {
     buildContents(linkedFile, [](const DefinedAtom *atom) {
       return atom->contentType() == DefinedAtom::typeCode;
     });
@@ -509,8 +500,8 @@ private:
 // \brief A RDataSectionChunk represents a .rdata section.
 class RDataSectionChunk : public SectionChunk {
 public:
-  RDataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
-      : SectionChunk(table, ".rdata", characteristics) {
+  RDataSectionChunk(const File &linkedFile)
+      : SectionChunk(".rdata", characteristics) {
     buildContents(linkedFile, [](const DefinedAtom *atom) {
       return (atom->contentType() == DefinedAtom::typeData &&
               atom->permissions() == DefinedAtom::permR__);
@@ -527,8 +518,8 @@ private:
 // \brief A DataSectionChunk represents a .data section.
 class DataSectionChunk : public SectionChunk {
 public:
-  DataSectionChunk(const File &linkedFile, SectionHeaderTableChunk *table)
-      : SectionChunk(table, ".data", characteristics) {
+  DataSectionChunk(const File &linkedFile)
+      : SectionChunk(".data", characteristics) {
     buildContents(linkedFile, [](const DefinedAtom *atom) {
       return (atom->contentType() == DefinedAtom::typeData &&
               atom->permissions() == DefinedAtom::permRW_);
@@ -569,19 +560,20 @@ private:
                                                 chunk->align());
     chunk->setFileOffset(_imageSizeOnDisk);
     _imageSizeOnDisk += chunk->size();
+  }
 
-    // Compute and set the starting address of sections when loaded in
-    // memory. They are different from positions on disk because sections need
-    // to be sector-aligned on disk but page-aligned in memory.
-    if (SectionChunk *sectionChunk = dyn_cast<SectionChunk>(chunk)) {
-      sectionChunk->setVirtualAddress(_imageSizeInMemory);
-      // Skip the empty section.
-      if (chunk->size() == 0)
-        return;
-      _numSections++;
-      _imageSizeInMemory = llvm::RoundUpToAlignment(
+  void maybeAddSectionChunk(SectionChunk *chunk,
+                            SectionHeaderTableChunk *table) {
+    // Skip the empty section. Windows loader does not like a section of size
+    // zero and rejects such executable.
+    if (chunk->size() == 0)
+      return;
+    addChunk(chunk);
+    table->addSection(chunk);
+    _numSections++;
+    chunk->setVirtualAddress(_imageSizeInMemory);
+    _imageSizeInMemory = llvm::RoundUpToAlignment(
         _imageSizeInMemory + chunk->size(), PAGE_SIZE);
-    }
   }
 
 public:
@@ -596,23 +588,29 @@ public:
     auto *peHeader = new PEHeaderChunk(_PECOFFTargetInfo);
     auto *dataDirectory = new DataDirectoryChunk();
     auto *sectionTable = new SectionHeaderTableChunk();
-    auto *text = new TextSectionChunk(linkedFile, sectionTable);
-    auto *rdata = new RDataSectionChunk(linkedFile, sectionTable);
-    auto *data = new DataSectionChunk(linkedFile, sectionTable);
+    auto *text = new TextSectionChunk(linkedFile);
+    auto *rdata = new RDataSectionChunk(linkedFile);
+    auto *data = new DataSectionChunk(linkedFile);
 
     addChunk(dosStub);
     addChunk(peHeader);
     addChunk(dataDirectory);
     addChunk(sectionTable);
-    addChunk(text);
-    addChunk(rdata);
-    addChunk(data);
+    maybeAddSectionChunk(text, sectionTable);
+    maybeAddSectionChunk(rdata, sectionTable);
+    maybeAddSectionChunk(data, sectionTable);
 
     // Now that we know the size and file offset of sections. Set the file
     // header accordingly.
     peHeader->setSizeOfCode(text->size());
-    peHeader->setBaseOfCode(text->getVirtualAddress());
-    peHeader->setBaseOfData(rdata->getVirtualAddress());
+    if (text->size() > 0) {
+      peHeader->setBaseOfCode(text->getVirtualAddress());
+    }
+    if (rdata->size() > 0) {
+      peHeader->setBaseOfData(rdata->getVirtualAddress());
+    } else if (data->size() > 0) {
+      peHeader->setBaseOfData(data->getVirtualAddress());
+    }
     peHeader->setSizeOfInitializedData(rdata->size() + data->size());
     peHeader->setNumberOfSections(_numSections);
     peHeader->setSizeOfImage(_imageSizeInMemory);
