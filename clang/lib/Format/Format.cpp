@@ -536,7 +536,7 @@ private:
         if (Current.BlockKind == BK_BracedInit)
           State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
         else
-          State.Column = Line.Level * Style.IndentWidth;
+          State.Column = FirstIndent;
       } else if (Current.is(tok::string_literal) &&
                  State.StartOfStringLiteral != 0) {
         State.Column = State.StartOfStringLiteral;

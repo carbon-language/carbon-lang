@@ -4810,6 +4810,13 @@ TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
                    "       // line 2\n"
                    "  int b;",
                    35, 0, getLLVMStyle()));
+  EXPECT_EQ("  int a;\n"
+            "  void\n"
+            "  ffffff() {\n"
+            "  }",
+            format("  int a;\n"
+                   "void ffffff() {}",
+                   11, 0, getLLVMStyleWithColumns(11)));
 }
 
 TEST_F(FormatTest, BreakStringLiterals) {
