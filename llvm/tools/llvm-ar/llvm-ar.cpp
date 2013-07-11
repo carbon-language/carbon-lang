@@ -64,7 +64,6 @@ static cl::extrahelp MoreHelp(
   "\nMODIFIERS (operation specific):\n"
   "  [a] - put file(s) after [relpos]\n"
   "  [b] - put file(s) before [relpos] (same as [i])\n"
-  "  [f] - truncate inserted file names\n"
   "  [i] - put file(s) before [relpos] (same as [b])\n"
   "  [N] - use instance [count] of name\n"
   "  [o] - preserve original dates\n"
@@ -93,7 +92,6 @@ enum ArchiveOperation {
 bool AddAfter = false;           ///< 'a' modifier
 bool AddBefore = false;          ///< 'b' modifier
 bool Create = false;             ///< 'c' modifier
-bool TruncateNames = false;      ///< 'f' modifier
 bool InsertBefore = false;       ///< 'i' modifier
 bool UseCount = false;           ///< 'N' modifier
 bool OriginalDates = false;      ///< 'o' modifier
@@ -213,7 +211,6 @@ ArchiveOperation parseCommandLine() {
     case 't': ++NumOperations; Operation = DisplayTable; break;
     case 'x': ++NumOperations; Operation = Extract; break;
     case 'c': Create = true; break;
-    case 'f': TruncateNames = true; break;
     case 'l': /* accepted but unused */ break;
     case 'o': OriginalDates = true; break;
     case 's': break; // Ignore for now.
@@ -267,9 +264,6 @@ ArchiveOperation parseCommandLine() {
   }
   if (OriginalDates && Operation != Extract)
     show_help("The 'o' modifier is only applicable to the 'x' operation");
-  if (TruncateNames && Operation!=QuickAppend && Operation!=ReplaceOrInsert)
-    show_help("The 'f' modifier is only applicable to the 'q' and 'r' "
-              "operations");
   if (OnlyUpdate && Operation != ReplaceOrInsert)
     show_help("The 'u' modifier is only applicable to the 'r' operation");
   if (Count > 1 && Members.size() > 1)
@@ -460,7 +454,7 @@ doDelete(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(ErrMsg))
     return true;
   return false;
 }
@@ -513,7 +507,7 @@ doMove(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(ErrMsg))
     return true;
   return false;
 }
@@ -536,7 +530,7 @@ doQuickAppend(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(ErrMsg))
     return true;
   return false;
 }
@@ -569,18 +563,6 @@ doReplaceOrInsert(std::string* ErrMsg) {
     for (std::set<std::string>::iterator RI = remaining.begin(),
          RE = remaining.end(); RI != RE; ++RI ) {
       std::string compare(sys::path::filename(*RI));
-      if (TruncateNames && compare.length() > 15) {
-        const char* nm = compare.c_str();
-        unsigned len = compare.length();
-        size_t slashpos = compare.rfind('/');
-        if (slashpos != std::string::npos) {
-          nm += slashpos + 1;
-          len -= slashpos +1;
-        }
-        if (len > 15)
-          len = 15;
-        compare.assign(nm,len);
-      }
       if (compare == I->getPath().str()) {
         found = RI;
         break;
@@ -631,7 +613,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
   }
 
   // We're done editting, reconstruct the archive.
-  if (TheArchive->writeToDisk(TruncateNames,ErrMsg))
+  if (TheArchive->writeToDisk(ErrMsg))
     return true;
   return false;
 }

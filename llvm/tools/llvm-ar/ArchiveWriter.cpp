@@ -80,7 +80,7 @@ Archive* Archive::CreateEmpty(StringRef FilePath, LLVMContext& C) {
 // compressed.
 bool
 Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
-                    int sz, bool TruncateNames) const {
+                    int sz) const {
 
   // Set the permissions mode, uid and gid
   hdr.init();
@@ -107,18 +107,6 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
     memcpy(hdr.name,ARFILE_SVR4_SYMTAB_NAME,16);
   } else if (mbr.isBSD4SymbolTable()) {
     memcpy(hdr.name,ARFILE_BSD4_SYMTAB_NAME,16);
-  } else if (TruncateNames) {
-    const char* nm = mbrPath.c_str();
-    unsigned len = mbrPath.length();
-    size_t slashpos = mbrPath.rfind('/');
-    if (slashpos != std::string::npos) {
-      nm += slashpos + 1;
-      len -= slashpos +1;
-    }
-    if (len > 15)
-      len = 15;
-    memcpy(hdr.name,nm,len);
-    hdr.name[len] = '/';
   } else if (mbrPath.length() < 16 && mbrPath.find('/') == std::string::npos) {
     memcpy(hdr.name,mbrPath.c_str(),mbrPath.length());
     hdr.name[mbrPath.length()] = '/';
@@ -193,7 +181,6 @@ bool
 Archive::writeMember(
   const ArchiveMember& member,
   raw_fd_ostream& ARFile,
-  bool TruncateNames,
   std::string* ErrMsg
 ) {
 
@@ -221,7 +208,7 @@ Archive::writeMember(
 
   // Compute the fields of the header
   ArchiveMemberHeader Hdr;
-  bool writeLongName = fillHeader(member,Hdr,hdrSize,TruncateNames);
+  bool writeLongName = fillHeader(member,Hdr,hdrSize);
 
   // Write header to archive file
   ARFile.write((char*)&Hdr, sizeof(Hdr));
@@ -248,7 +235,7 @@ Archive::writeMember(
 // This writes to a temporary file first. Options are for creating a symbol
 // table, flattening the file names (no directories, 15 chars max) and
 // compressing each archive member.
-bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
+bool Archive::writeToDisk(std::string *ErrMsg) {
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
   if (members.empty() && mapfile && mapfile->getBufferSize() > 8) {
@@ -277,7 +264,7 @@ bool Archive::writeToDisk(bool TruncateNames, std::string *ErrMsg) {
   // Loop over all member files, and write them out. Note that this also
   // builds the symbol table, symTab.
   for (MembersList::iterator I = begin(), E = end(); I != E; ++I) {
-    if (writeMember(*I, ArchiveFile, TruncateNames, ErrMsg)) {
+    if (writeMember(*I, ArchiveFile, ErrMsg)) {
       sys::fs::remove(Twine(TmpArchive));
       ArchiveFile.close();
       return true;

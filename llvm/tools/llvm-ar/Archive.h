@@ -318,7 +318,6 @@ class Archive {
     /// returns false if the writing succeeded.
     /// @brief Write (possibly modified) archive contents to disk
     bool writeToDisk(
-      bool TruncateNames=false,       ///< Truncate the filename to 15 chars
       std::string* ErrMessage=0       ///< If non-null, where error msg is set
     );
 
@@ -372,13 +371,12 @@ class Archive {
     bool writeMember(
       const ArchiveMember& member, ///< The member to be written
       raw_fd_ostream& ARFile,      ///< The file to write member onto
-      bool TruncateNames,          ///< Should names be truncated to 11 chars?
       std::string* ErrMessage      ///< If non-null, place were error msg is set
     );
 
     /// @brief Fill in an ArchiveMemberHeader from ArchiveMember.
     bool fillHeader(const ArchiveMember&mbr,
-                    ArchiveMemberHeader& hdr,int sz, bool TruncateNames) const;
+                    ArchiveMemberHeader& hdr,int sz) const;
 
     /// @brief Maps archive into memory
     bool mapToMemory(std::string* ErrMsg);
