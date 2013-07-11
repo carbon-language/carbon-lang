@@ -307,3 +307,8 @@ namespace dtor_fixit {
     // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:6-[[@LINE-1]]:9}:"foo"
   };
 }
+
+namespace PR5066 {
+  template<typename T> struct X {};
+  X<int *p> x; // expected-error {{type-id cannot have a name}}
+}

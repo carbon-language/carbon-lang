@@ -187,6 +187,13 @@ namespace PR15017 {
 // Ensure we produce at least some diagnostic for attributes in C++98.
 [[]] struct S; // expected-error 2{{}}
 
+namespace PR5066 {
+  template<typename T> struct X {};
+  X<int N> x; // expected-error {{type-id cannot have a name}}
+
+  using T = int (*T)(); // expected-error {{type-id cannot have a name}} expected-warning {{C++11}}
+}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \

@@ -4696,6 +4696,12 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     D.SetIdentifier(Tok.getIdentifierInfo(), Tok.getLocation());
     ConsumeToken();
     goto PastIdentifier;
+  } else if (Tok.is(tok::identifier) && D.diagnoseIdentifier()) {
+    Diag(Tok.getLocation(), diag::err_unexpected_unqualified_id)
+      << FixItHint::CreateRemoval(Tok.getLocation());
+    D.SetIdentifier(0, Tok.getLocation());
+    ConsumeToken();
+    goto PastIdentifier;
   }
 
   if (Tok.is(tok::l_paren)) {
