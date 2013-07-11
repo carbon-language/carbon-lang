@@ -2482,6 +2482,7 @@ TEST_F(FormatTest, TrailingReturnType) {
 }
 
 TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
+  // Avoid breaking before trailing 'const'.
   verifyFormat("void someLongFunction(\n"
                "    int someLongParameter) const {}",
                getLLVMStyleWithColumns(46));
@@ -2500,6 +2501,13 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
                "    const {}",
                Style);
 
+  // Avoid breaking before other trailing annotations, if they are not
+  // function-like.
+  verifyFormat("void SomeFunction(aaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "                  aaaaaaaaaaaaaaaaaaaaaaaaaa) OVERRIDE;");
+
+  // Breaking before function-like trailing annotations is fine to keep them
+  // close to their arguments.
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
                "    LOCKS_EXCLUDED(aaaaaaaaaaaaa);");
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"

@@ -1052,8 +1052,10 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 150;
   }
 
-  // Breaking before a trailing 'const' is bad.
-  if (Left.is(tok::r_paren) && Right.is(tok::kw_const))
+  // Breaking before a trailing 'const' or not-function-like annotation is bad.
+  if (Left.is(tok::r_paren) &&
+      (Right.is(tok::kw_const) || (Right.is(tok::identifier) && Right.Next &&
+                                   Right.Next->isNot(tok::l_paren))))
     return 150;
 
   // In for-loops, prefer breaking at ',' and ';'.
