@@ -250,7 +250,9 @@ public:
   /// \brief Retrieves the type of the base class.
   ///
   /// This type will always be an unqualified class type.
-  QualType getType() const { return BaseTypeInfo->getType(); }
+  QualType getType() const {
+    return BaseTypeInfo->getType().getUnqualifiedType();
+  }
 
   /// \brief Retrieves the type and source location of the base class.
   TypeSourceInfo *getTypeSourceInfo() const { return BaseTypeInfo; }

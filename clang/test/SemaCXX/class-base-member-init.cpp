@@ -98,3 +98,13 @@ namespace rdar13185264 {
     union { void *a; };
   };
 }
+
+namespace PR16596 {
+  class A { public: virtual ~A(); };
+  typedef const A Foo;
+  void Apply(Foo processor);
+  struct Bar : public Foo {};
+  void Fetch() {
+    Apply(Bar());
+  }
+}
