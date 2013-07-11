@@ -1,3 +1,12 @@
+//===- cpp11-migrate/IncludeExcludeTest.cpp - IncludeExclude unit tests ---===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #include "Core/IncludeExcludeInfo.h"
 #include "gtest/gtest.h"
 #include "llvm/Support/FileSystem.h"
