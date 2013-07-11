@@ -64,3 +64,16 @@ if.end103:                                        ; preds = %if.else, %if.then88
   ret void
 }
 
+
+define void @intrapred_luma() {
+entry:
+  %conv153 = trunc i32 undef to i16
+  %arrayidx154 = getelementptr inbounds [13 x i16]* undef, i64 0, i64 12
+  store i16 %conv153, i16* %arrayidx154, align 8
+  %arrayidx155 = getelementptr inbounds [13 x i16]* undef, i64 0, i64 11
+  store i16 %conv153, i16* %arrayidx155, align 2
+  %arrayidx156 = getelementptr inbounds [13 x i16]* undef, i64 0, i64 10
+  store i16 %conv153, i16* %arrayidx156, align 4
+  ret void
+}
+
