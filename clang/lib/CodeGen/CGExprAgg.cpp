@@ -619,7 +619,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
         // Zero-initialize.  (Strictly speaking, we only need to intialize
         // the padding at the end, but this is simpler.)
         if (!Dest.isZeroed())
-          CGF.EmitNullInitialization(Dest.getAddr(), type);
+          CGF.EmitNullInitialization(Dest.getAddr(), atomicType);
 
         // Build a GEP to refer to the subobject.
         llvm::Value *valueAddr =
@@ -633,7 +633,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                                           AggValueSlot::IsZeroed);
       }
       
-      CGF.EmitAggExpr(E->getSubExpr(), valueDest.getDest());
+      CGF.EmitAggExpr(E->getSubExpr(), valueDest);
       return;
     }
 
