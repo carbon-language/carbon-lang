@@ -135,6 +135,18 @@ public:
     virtual ObjectFile::Strata
     CalculateStrata();
 
+    // Returns number of program headers found in the ELF file.
+    size_t
+    GetProgramHeaderCount();
+
+    // Returns the program header with the given index.
+    const elf::ELFProgramHeader *
+    GetProgramHeaderByIndex(lldb::user_id_t id);
+
+    // Returns segment data for the given index.
+    lldb_private::DataExtractor
+    GetSegmentDataByIndex(lldb::user_id_t id);
+
 private:
     ObjectFileELF(const lldb::ModuleSP &module_sp,
                   lldb::DataBufferSP& data_sp,

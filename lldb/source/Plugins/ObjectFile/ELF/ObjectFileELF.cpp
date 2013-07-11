@@ -801,6 +801,33 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
     return 0;
 }
 
+size_t
+ObjectFileELF::GetProgramHeaderCount()
+{
+    return ParseProgramHeaders();
+}
+
+const elf::ELFProgramHeader *
+ObjectFileELF::GetProgramHeaderByIndex(lldb::user_id_t id)
+{
+    if (!id || !ParseProgramHeaders())
+        return NULL;
+
+    if (--id < m_program_headers.size())
+        return &m_program_headers[id];
+
+    return NULL;
+}
+
+DataExtractor 
+ObjectFileELF::GetSegmentDataByIndex(lldb::user_id_t id)
+{
+    const elf::ELFProgramHeader *segment_header = GetProgramHeaderByIndex(id);
+    if (segment_header == NULL)
+        return DataExtractor();
+    return DataExtractor(m_data, segment_header->p_offset, segment_header->p_filesz);
+}
+
 //----------------------------------------------------------------------
 // ParseSectionHeaders
 //----------------------------------------------------------------------
@@ -813,7 +840,7 @@ ObjectFileELF::ParseSectionHeaders()
 const ObjectFileELF::ELFSectionHeaderInfo *
 ObjectFileELF::GetSectionHeaderByIndex(lldb::user_id_t id)
 {
-    if (!ParseSectionHeaders() || !id)
+    if (!id || !ParseSectionHeaders())
         return NULL;
 
     if (--id < m_section_headers.size())
