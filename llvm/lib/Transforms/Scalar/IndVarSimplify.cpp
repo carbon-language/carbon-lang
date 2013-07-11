@@ -1612,10 +1612,29 @@ LinearFunctionTestReplace(Loop *L,
                << "  IVCount:\t" << *IVCount << "\n");
 
   IRBuilder<> Builder(BI);
-  if (SE->getTypeSizeInBits(CmpIndVar->getType())
-      > SE->getTypeSizeInBits(ExitCnt->getType())) {
-    CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
-                                    "lftr.wideiv");
+
+  unsigned CmpIndVarSize = SE->getTypeSizeInBits(CmpIndVar->getType());
+  unsigned ExitCntSize = SE->getTypeSizeInBits(ExitCnt->getType());
+  if (CmpIndVarSize > ExitCntSize) {
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
+    const SCEV *ARStart = AR->getStart();
+    const SCEV *ARStep = AR->getStepRecurrence(*SE);
+    if (isa<SCEVConstant>(ARStart) && isa<SCEVConstant>(IVCount)) {
+      const APInt &Start = cast<SCEVConstant>(ARStart)->getValue()->getValue();
+      const APInt &Count = cast<SCEVConstant>(IVCount)->getValue()->getValue();
+
+      APInt NewLimit;
+      if (cast<SCEVConstant>(ARStep)->getValue()->isNegative())
+        NewLimit = Start - Count.zext(CmpIndVarSize);
+      else
+        NewLimit = Start + Count.zext(CmpIndVarSize);
+      ExitCnt = ConstantInt::get(CmpIndVar->getType(), NewLimit);
+
+      DEBUG(dbgs() << "  Widen RHS:\t" << *ExitCnt << "\n");
+    } else {
+      CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
+                                      "lftr.wideiv");
+    }
   }
 
   Value *Cond = Builder.CreateICmp(P, CmpIndVar, ExitCnt, "exitcond");
