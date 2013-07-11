@@ -1,0 +1,30 @@
+Test the 'd' operation in llvm-ar
+
+REQUIRES: shell
+
+RUN: cd %T
+
+RUN: rm -f test.a
+RUN: cp %p/Inputs/GNU.a test.a
+RUN: llvm-ar d test.a very_long_bytecode_file_name.bc
+RUN: llvm-ar t test.a | FileCheck %s
+
+RUN: rm -f test.a
+RUN: cp %p/Inputs/MacOSX.a test.a
+RUN: llvm-ar d test.a very_long_bytecode_file_name.bc
+RUN: llvm-ar t test.a | FileCheck %s
+
+RUN: rm -f test.a
+RUN: cp %p/Inputs/SVR4.a test.a
+RUN: llvm-ar d test.a very_long_bytecode_file_name.bc
+RUN: llvm-ar t test.a | FileCheck %s
+
+RUN: rm -f test.a
+RUN: cp %p/Inputs/xpg4.a test.a
+RUN: llvm-ar d test.a very_long_bytecode_file_name.bc
+RUN: llvm-ar t test.a | FileCheck %s
+
+
+CHECK: evenlen
+CHECK-NEXT: oddlen
+CHECK-NEXT: IsNAN.o
