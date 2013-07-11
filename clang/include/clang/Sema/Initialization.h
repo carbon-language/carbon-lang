@@ -35,6 +35,7 @@ class ParmVarDecl;
 class Sema;
 class TypeLoc;
 class VarDecl;
+class ObjCMethodDecl;
   
 /// \brief Describes an entity that is being initialized.
 class InitializedEntity {
@@ -78,7 +79,10 @@ public:
     EK_LambdaCapture,
     /// \brief The entity being initialized is the initializer for a compound
     /// literal.
-    EK_CompoundLiteralInit
+    EK_CompoundLiteralInit,
+    /// \brief The entity being implicitly initialized back to the formal
+    /// result type.
+    EK_RelatedResult
   };
   
 private:
@@ -116,6 +120,10 @@ private:
     /// \brief When Kind == EK_Variable, or EK_Member, the VarDecl or
     /// FieldDecl, respectively.
     DeclaratorDecl *VariableOrMember;
+    
+    /// \brief When Kind == EK_RelatedResult, the ObjectiveC method where
+    /// result type was implicitly changed to accomodate ARC semantics.
+    ObjCMethodDecl *MethodDecl;
 
     /// \brief When Kind == EK_Parameter, the ParmVarDecl, with the
     /// low bit indicating whether the parameter is "consumed".
@@ -254,6 +262,15 @@ public:
     Result.TypeInfo = TypeInfo;
     return Result;
   }
+  
+  /// \brief Create the initialization entity for a related result.
+  static InitializedEntity InitializeRelatedResult(ObjCMethodDecl *MD,
+                                                   QualType Type) {
+    InitializedEntity Result(EK_RelatedResult, SourceLocation(), Type);
+    Result.MethodDecl = MD;
+    return Result;
+  }
+
 
   /// \brief Create the initialization entity for a base class subobject.
   static InitializedEntity InitializeBase(ASTContext &Context,
@@ -326,6 +343,9 @@ public:
   /// \brief Retrieve the variable, parameter, or field being
   /// initialized.
   DeclaratorDecl *getDecl() const;
+  
+  /// \brief Retrieve the ObjectiveC method being initialized.
+  ObjCMethodDecl *getMethodDecl() const { return MethodDecl; }
 
   /// \brief Determine whether this initialization allows the named return 
   /// value optimization, which also applies to thrown objects.

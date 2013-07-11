@@ -2495,6 +2495,7 @@ DeclarationName InitializedEntity::getName() const {
   case EK_ComplexElement:
   case EK_BlockElement:
   case EK_CompoundLiteralInit:
+  case EK_RelatedResult:
     return DeclarationName();
   }
 
@@ -2522,6 +2523,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_BlockElement:
   case EK_LambdaCapture:
   case EK_CompoundLiteralInit:
+  case EK_RelatedResult:
     return 0;
   }
 
@@ -2547,6 +2549,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_ComplexElement:
   case EK_BlockElement:
   case EK_LambdaCapture:
+  case EK_RelatedResult:
     break;
   }
 
@@ -2568,6 +2571,7 @@ unsigned InitializedEntity::dumpImpl(raw_ostream &OS) const {
   case EK_New: OS << "New"; break;
   case EK_Temporary: OS << "Temporary"; break;
   case EK_CompoundLiteralInit: OS << "CompoundLiteral";break;
+  case EK_RelatedResult: OS << "RelatedResult"; break;
   case EK_Base: OS << "Base"; break;
   case EK_Delegating: OS << "Delegating"; break;
   case EK_ArrayElement: OS << "ArrayElement " << Index; break;
@@ -4632,6 +4636,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
     return Sema::AA_Passing;
 
   case InitializedEntity::EK_Result:
+  case InitializedEntity::EK_RelatedResult:
     return Sema::AA_Returning;
 
   case InitializedEntity::EK_Temporary:
@@ -4672,6 +4677,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
 
   case InitializedEntity::EK_Parameter:
   case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_RelatedResult:
     return true;
   }
 
@@ -4699,6 +4705,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_ArrayElement:
     case InitializedEntity::EK_Exception:
     case InitializedEntity::EK_CompoundLiteralInit:
+    case InitializedEntity::EK_RelatedResult:
       return true;
   }
 
@@ -4781,6 +4788,7 @@ static SourceLocation getInitializationLoc(const InitializedEntity &Entity,
   case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_BlockElement:
   case InitializedEntity::EK_CompoundLiteralInit:
+  case InitializedEntity::EK_RelatedResult:
     return Initializer->getLocStart();
   }
   llvm_unreachable("missed an InitializedEntity kind?");
@@ -5001,6 +5009,11 @@ void InitializationSequence::PrintInitLocationNote(Sema &S,
     else
       S.Diag(Entity.getDecl()->getLocation(), diag::note_parameter_here);
   }
+  else if (Entity.getKind() == InitializedEntity::EK_RelatedResult &&
+           Entity.getMethodDecl())
+    S.Diag(Entity.getMethodDecl()->getLocation(),
+           diag::note_method_return_type_change)
+      << Entity.getMethodDecl()->getDeclName();
 }
 
 static bool isReferenceBinding(const InitializationSequence::Step &s) {
@@ -5016,6 +5029,7 @@ static bool isExplicitTemporary(const InitializedEntity &Entity,
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_CompoundLiteralInit:
+  case InitializedEntity::EK_RelatedResult:
     break;
   default:
     return false;
@@ -5186,6 +5200,7 @@ InitializedEntityOutlivesFullExpression(const InitializedEntity &Entity) {
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_LambdaCapture:
   case InitializedEntity::EK_CompoundLiteralInit:
+  case InitializedEntity::EK_RelatedResult:
     // The entity being initialized might not outlive the full-expression.
     return false;
   }
@@ -5232,6 +5247,7 @@ getDeclForTemporaryLifetimeExtension(const InitializedEntity &Entity,
 
   case InitializedEntity::EK_Temporary:
   case InitializedEntity::EK_CompoundLiteralInit:
+  case InitializedEntity::EK_RelatedResult:
     // We don't yet know the storage duration of the surrounding temporary.
     // Assume it's got full-expression duration for now, it will patch up our
     // storage duration if that's not correct.
