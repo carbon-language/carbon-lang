@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s 
 class X { };
 
 X operator+(X, X);
@@ -441,3 +441,7 @@ namespace test10 {
     a[bar<float>];
   }
 }
+
+struct InvalidOperatorEquals {
+  InvalidOperatorEquals operator=() = delete; // expected-error {{overloaded 'operator=' must be a binary operator}}
+};
