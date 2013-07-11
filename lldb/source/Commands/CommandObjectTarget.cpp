@@ -159,6 +159,7 @@ public:
         m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
         m_core_file (LLDB_OPT_SET_1, false, "core", 'c', 0, eArgTypeFilename, "Fullpath to a core file to use for this target."),
         m_symbol_file (LLDB_OPT_SET_1, false, "symfile", 's', 0, eArgTypeFilename, "Fullpath to a stand alone debug symbols file for when debug symbols are not in the executable."),
+        m_remote_file (LLDB_OPT_SET_1, false, "remote-file", 'r', 0, eArgTypeFilename, "Fullpath to the file on the remote host if debugging remotely."),
         m_add_dependents (LLDB_OPT_SET_1, false, "no-dependents", 'd', "Don't load dependent files when creating the target, just add the specified executable.", true, true)
     {
         CommandArgumentEntry arg;
@@ -178,6 +179,7 @@ public:
         m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_core_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_symbol_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_remote_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_add_dependents, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
@@ -222,6 +224,7 @@ protected:
     {
         const size_t argc = command.GetArgumentCount();
         FileSpec core_file (m_core_file.GetOptionValue().GetCurrentValue());
+        FileSpec remote_file (m_remote_file.GetOptionValue().GetCurrentValue());
 
         if (argc == 1 || core_file)
         {
@@ -253,11 +256,20 @@ protected:
 
             if (target_sp)
             {
-                if (symfile)
+                if (symfile || remote_file)
                 {
                     ModuleSP module_sp (target_sp->GetExecutableModule());
                     if (module_sp)
-                        module_sp->SetSymbolFileFileSpec(symfile);
+                    {
+                        if (symfile)
+                            module_sp->SetSymbolFileFileSpec(symfile);
+                        if (remote_file)
+                        {
+                            std::string remote_path = remote_file.GetPath();
+                            target_sp->SetArg0(remote_path.c_str());
+                            module_sp->SetPlatformFileSpec(remote_file);
+                        }
+                    }
                 }
                 
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());
@@ -330,6 +342,7 @@ private:
     OptionGroupPlatform m_platform_options;
     OptionGroupFile m_core_file;
     OptionGroupFile m_symbol_file;
+    OptionGroupFile m_remote_file;
     OptionGroupBoolean m_add_dependents;
 };
 
