@@ -66,18 +66,15 @@ static cl::extrahelp MoreHelp(
   "  [b] - put file(s) before [relpos] (same as [i])\n"
   "  [f] - truncate inserted file names\n"
   "  [i] - put file(s) before [relpos] (same as [b])\n"
-  "  [k] - always print bitcode files (default is to skip them)\n"
   "  [N] - use instance [count] of name\n"
   "  [o] - preserve original dates\n"
   "  [P] - use full path names when matching\n"
-  "  [R] - recurse through directories when inserting\n"
   "  [s] - create an archive index (cf. ranlib)\n"
   "  [S] - do not build a symbol table\n"
   "  [u] - update only files newer than archive contents\n"
   "\nMODIFIERS (generic):\n"
   "  [c] - do not warn if the library had to be created\n"
   "  [v] - be verbose about actions taken\n"
-  "  [V] - be *really* verbose about actions taken\n"
 );
 
 // This enumeration delineates the kinds of operations on an archive
