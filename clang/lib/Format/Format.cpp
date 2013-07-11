@@ -102,6 +102,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
                    Style.ObjCSpaceBeforeProtocolList);
     IO.mapOptional("PenaltyBreakComment", Style.PenaltyBreakComment);
     IO.mapOptional("PenaltyBreakString", Style.PenaltyBreakString);
+    IO.mapOptional("PenaltyBreakFirstLessLess",
+                   Style.PenaltyBreakFirstLessLess);
     IO.mapOptional("PenaltyExcessCharacter", Style.PenaltyExcessCharacter);
     IO.mapOptional("PenaltyReturnTypeOnItsOwnLine",
                    Style.PenaltyReturnTypeOnItsOwnLine);
@@ -123,6 +125,13 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
 namespace clang {
 namespace format {
 
+void setDefaultPenalties(FormatStyle &Style) {
+  Style.PenaltyBreakComment = 45;
+  Style.PenaltyBreakFirstLessLess = 100;
+  Style.PenaltyBreakString = 1000;
+  Style.PenaltyExcessCharacter = 1000000;
+}
+
 FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
   LLVMStyle.AccessModifierOffset = -2;
@@ -140,10 +149,6 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.MaxEmptyLinesToKeep = 1;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
-  LLVMStyle.PenaltyBreakComment = 45;
-  LLVMStyle.PenaltyBreakString = 1000;
-  LLVMStyle.PenaltyExcessCharacter = 1000000;
-  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.SpacesInBracedLists = true;
@@ -152,6 +157,10 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.UseTab = false;
   LLVMStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   LLVMStyle.IndentFunctionDeclarationAfterType = false;
+
+  setDefaultPenalties(LLVMStyle);
+  LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
+
   return LLVMStyle;
 }
 
@@ -172,10 +181,6 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.MaxEmptyLinesToKeep = 1;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
-  GoogleStyle.PenaltyBreakComment = 45;
-  GoogleStyle.PenaltyBreakString = 1000;
-  GoogleStyle.PenaltyExcessCharacter = 1000000;
-  GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.SpacesInBracedLists = false;
@@ -184,6 +189,10 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.UseTab = false;
   GoogleStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   GoogleStyle.IndentFunctionDeclarationAfterType = true;
+
+  setDefaultPenalties(GoogleStyle);
+  GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
+
   return GoogleStyle;
 }
 
@@ -503,6 +512,10 @@ private:
     const FormatToken &Current = *State.NextToken;
     const FormatToken &Previous = *State.NextToken->Previous;
 
+    // Extra penalty that needs to be added because of the way certain line
+    // breaks are chosen.
+    unsigned ExtraPenalty = 0;
+
     if (State.Stack.size() == 0 || Current.Type == TT_ImplicitStringLiteral) {
       // FIXME: Is this correct?
       int WhitespaceLength = SourceMgr.getSpellingColumnNumber(
@@ -621,6 +634,11 @@ private:
              Line.MustBeDeclaration))
           State.Stack.back().BreakBeforeParameter = true;
       }
+
+      // Breaking before the first "<<" is generally not desirable.
+      if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0)
+        ExtraPenalty += Style.PenaltyBreakFirstLessLess;
+
     } else {
       if (Current.is(tok::equal) &&
           (RootToken->is(tok::kw_for) || State.ParenLevel == 0) &&
@@ -699,7 +717,7 @@ private:
       }
     }
 
-    return moveStateToNextToken(State, DryRun);
+    return moveStateToNextToken(State, DryRun) + ExtraPenalty;
   }
 
   /// \brief Mark the next token as consumed in \p State and modify its stacks

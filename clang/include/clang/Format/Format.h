@@ -45,6 +45,9 @@ struct FormatStyle {
   /// \brief The penalty for each character outside of the column limit.
   unsigned PenaltyExcessCharacter;
 
+  /// \brief The penalty for breaking before the first "<<".
+  unsigned PenaltyBreakFirstLessLess;
+
   /// \brief Set whether & and * bind to the type as opposed to the variable.
   bool PointerBindsToType;
 
@@ -173,8 +176,9 @@ struct FormatStyle {
            IndentWidth == R.IndentWidth &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
-           PenaltyBreakString == R.PenaltyBreakString &&
            PenaltyBreakComment == R.PenaltyBreakComment &&
+           PenaltyBreakFirstLessLess == R.PenaltyBreakFirstLessLess &&
+           PenaltyBreakString == R.PenaltyBreakString &&
            PenaltyExcessCharacter == R.PenaltyExcessCharacter &&
            PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
            PointerBindsToType == R.PointerBindsToType &&
