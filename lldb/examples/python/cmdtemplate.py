@@ -38,8 +38,8 @@ def the_framestats_command(debugger, command, result, dict):
     except:
         # if you don't handle exceptions, passing an incorrect argument to the OptionParser will cause LLDB to exit
         # (courtesy of OptParse dealing with argument errors by throwing SystemExit)
-        result.SetStatus (lldb.eReturnStatusFailed)
-        return "option parsing failed" # returning a string is the same as returning an error whose description is the string
+        result.SetError ("option parsing failed")
+        return
     
     # in a command - the lldb.* convenience variables are not to be used
     # and their values (if any) are undefined
@@ -54,7 +54,7 @@ def the_framestats_command(debugger, command, result, dict):
     variables_list = frame.GetVariables(options.arguments, options.locals, options.statics, options.inscope)
     variables_count = variables_list.GetSize()
     if variables_count == 0:
-        result.PutCString("no variables here")
+        print >> result, "no variables here"
         return
     total_size = 0
     for i in range(0,variables_count):
@@ -62,8 +62,8 @@ def the_framestats_command(debugger, command, result, dict):
         variable_type = variable.GetType()
         total_size = total_size + variable_type.GetByteSize()
     average_size = float(total_size) / variables_count
-    result.PutCString("Your frame has %d variables. Their total size is %d bytes. The average size is %f bytes" % (variables_count,total_size,average_size))
-    # not returning anything is askin to returning success
+    print >>result, "Your frame has %d variables. Their total size is %d bytes. The average size is %f bytes" % (variables_count,total_size,average_size)
+    # not returning anything is akin to returning success
 
 def __lldb_init_module (debugger, dict):
     # This initializer is being run from LLDB in the embedded command interpreter    

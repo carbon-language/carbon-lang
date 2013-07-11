@@ -437,7 +437,7 @@ import optparse
 import shlex
 
 def ls(debugger, command, result, internal_dict):
-    result.PutCString(commands.getoutput('/bin/ls %s' % command))
+    print >>result, (commands.getoutput('/bin/ls %s' % command))
 
 <font color=green># And the initialization code to add your commands </font>
 def __lldb_init_module(debugger, internal_dict):
