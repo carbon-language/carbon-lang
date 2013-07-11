@@ -38,13 +38,14 @@ ConstantRange::ConstantRange(uint32_t BitWidth, bool Full) {
 
 /// Initialize a range to hold the single specified value.
 ///
-ConstantRange::ConstantRange(const APInt &V) : Lower(V), Upper(V + 1) {}
+ConstantRange::ConstantRange(APIntMoveTy V)
+    : Lower(llvm_move(V)), Upper(Lower + 1) {}
 
-ConstantRange::ConstantRange(const APInt &L, const APInt &U) :
-  Lower(L), Upper(U) {
-  assert(L.getBitWidth() == U.getBitWidth() &&
+ConstantRange::ConstantRange(APIntMoveTy L, APIntMoveTy U)
+    : Lower(llvm_move(L)), Upper(llvm_move(U)) {
+  assert(Lower.getBitWidth() == Upper.getBitWidth() &&
          "ConstantRange with unequal bit widths");
-  assert((L != U || (L.isMaxValue() || L.isMinValue())) &&
+  assert((Lower != Upper || (Lower.isMaxValue() || Lower.isMinValue())) &&
          "Lower == Upper, but they aren't min or max value!");
 }
 

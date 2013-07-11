@@ -42,6 +42,14 @@ namespace llvm {
 class ConstantRange {
   APInt Lower, Upper;
 
+#if LLVM_HAS_RVALUE_REFERENCES
+  // If we have move semantics, pass APInts by value and move them into place.
+  typedef APInt APIntMoveTy;
+#else
+  // Otherwise pass by const ref to save one copy.
+  typedef const APInt &APIntMoveTy;
+#endif
+
 public:
   /// Initialize a full (the default) or empty set for the specified bit width.
   ///
@@ -49,12 +57,12 @@ public:
 
   /// Initialize a range to hold the single specified value.
   ///
-  ConstantRange(const APInt &Value);
+  ConstantRange(APIntMoveTy Value);
 
   /// @brief Initialize a range of values explicitly. This will assert out if
   /// Lower==Upper and Lower != Min or Max value for its type. It will also
   /// assert out if the two APInt's are not the same bit width.
-  ConstantRange(const APInt &Lower, const APInt &Upper);
+  ConstantRange(APIntMoveTy Lower, APIntMoveTy Upper);
 
   /// makeICmpRegion - Produce the smallest range that contains all values that
   /// might satisfy the comparison specified by Pred when compared to any value
