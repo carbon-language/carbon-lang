@@ -556,9 +556,16 @@ DNBArchImplI386::GetDBGState(bool force)
 }
 
 kern_return_t
-DNBArchImplI386::SetDBGState()
+DNBArchImplI386::SetDBGState(bool also_set_on_task)
 {
     m_state.SetError(e_regSetDBG, Write, ::thread_set_state(m_thread->MachPortNumber(), __i386_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, e_regSetWordSizeDBG));
+    if (also_set_on_task)
+    {
+        kern_return_t kret = ::task_set_state(m_thread->Process()->Task().TaskPort(), __i386_DEBUG_STATE, (thread_state_t)&m_state.context.dbg, e_regSetWordSizeDBG);
+        if (kret != KERN_SUCCESS)
+            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::SetDBGState failed to set debug control register state: 0x%8.8x.", kret);
+
+    }
     return m_state.GetError(e_regSetDBG, Write);
 }
 
@@ -588,7 +595,7 @@ DNBArchImplI386::ThreadWillResume()
     if (need_reset)
     {
         ClearWatchpointHits(debug_state);
-        kret = SetDBGState();
+        kret = SetDBGState(false);
         DNBLogThreadedIf(LOG_WATCHPOINTS,"DNBArchImplI386::ThreadWillResume() SetDBGState() => 0x%8.8x.", kret);
     }
 }
@@ -854,7 +861,7 @@ DNBArchImplI386::RollbackTransForHWP()
     if (m_2pc_trans_state != Trans_Pending)
         DNBLogError ("%s inconsistent state detected, expected %d, got: %d", __FUNCTION__, Trans_Pending, m_2pc_trans_state);
     m_2pc_trans_state = Trans_Rolled_Back;
-    kern_return_t kret = SetDBGState();
+    kern_return_t kret = SetDBGState(false);
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::RollbackTransForHWP() SetDBGState() => 0x%8.8x.", kret);
 
     if (kret == KERN_SUCCESS)
@@ -875,7 +882,7 @@ DNBArchImplI386::GetDBGCheckpoint()
 }
 
 uint32_t
-DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write)
+DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task)
 {
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::EnableHardwareWatchpoint(addr = 0x%llx, size = %llu, read = %u, write = %u)", (uint64_t)addr, (uint64_t)size, read, write);
 
@@ -912,7 +919,7 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
             // Modify our local copy of the debug state, first.
             SetWatchpoint(debug_state, i, addr, size, read, write);
             // Now set the watch point in the inferior.
-            kret = SetDBGState();
+            kret = SetDBGState(also_set_on_task);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::EnableHardwareWatchpoint() SetDBGState() => 0x%8.8x.", kret);
 
             if (kret == KERN_SUCCESS)
@@ -929,7 +936,7 @@ DNBArchImplI386::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, boo
 }
 
 bool
-DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
+DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index, bool also_set_on_task)
 {
     kern_return_t kret = GetDBGState(false);
 
@@ -944,7 +951,7 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
             // Modify our local copy of the debug state, first.
             ClearWatchpoint(debug_state, hw_index);
             // Now disable the watch point in the inferior.
-            kret = SetDBGState();
+            kret = SetDBGState(also_set_on_task);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchImplI386::DisableHardwareWatchpoint( %u )",
                              hw_index);
 
@@ -955,19 +962,6 @@ DNBArchImplI386::DisableHardwareWatchpoint (uint32_t hw_index)
         }
     }
     return false;
-}
-
-DNBArchImplI386::DBG DNBArchImplI386::Global_Debug_State = {0,0,0,0,0,0,0,0};
-bool DNBArchImplI386::Valid_Global_Debug_State = false;
-
-// Use this callback from MachThread, which in turn was called from MachThreadList, to update
-// the global view of the hardware watchpoint state, so that when new thread comes along, they
-// get to inherit the existing hardware watchpoint state.
-void
-DNBArchImplI386::HardwareWatchpointStateChanged ()
-{
-    Global_Debug_State = m_state.context.dbg;
-    Valid_Global_Debug_State = true;
 }
 
 // Iterate through the debug status register; return the index of the first hit.
@@ -1228,15 +1222,6 @@ DNBArchProtocol *
 DNBArchImplI386::Create (MachThread *thread)
 {
     DNBArchImplI386 *obj = new DNBArchImplI386 (thread);
-
-    // When new thread comes along, it tries to inherit from the global debug state, if it is valid.
-    if (Valid_Global_Debug_State)
-    {
-        obj->m_state.context.dbg = Global_Debug_State;
-        kern_return_t kret = obj->SetDBGState();
-        DNBLogThreadedIf(LOG_WATCHPOINTS,
-                         "DNBArchImplX86_64::Create() Inherit and SetDBGState() => 0x%8.8x.", kret);
-    }
     return obj;
 }
 

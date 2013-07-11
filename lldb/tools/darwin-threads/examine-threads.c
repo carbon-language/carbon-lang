@@ -293,7 +293,7 @@ main (int argc, char **argv)
           if (strcmp (argv[i], "-v") == 0)
             verbose = 1;
           if (strcmp (argv[i], "-r") == 0)
-            resume_when_done = 1;
+            resume_when_done++;
           i++;
         }
     }
@@ -470,12 +470,16 @@ main (int argc, char **argv)
       nanosleep (rqtp, NULL);
     } while (do_loop);
   
-  kern_return_t err = task_resume (task);
-  if (err != KERN_SUCCESS)
-    printf ("Error resuming task: %d.", err);
+    while (resume_when_done > 0)
+    {
+        kern_return_t err = task_resume (task);
+        if (err != KERN_SUCCESS)
+          printf ("Error resuming task: %d.", err);
+        resume_when_done--;
+    }
 
-  vm_deallocate (mytask, (vm_address_t) task, sizeof (task_t));
-  free ((void *) process_name);
+    vm_deallocate (mytask, (vm_address_t) task, sizeof (task_t));
+    free ((void *) process_name);
 
   return 0;
 }

@@ -76,10 +76,9 @@ public:
     virtual uint32_t        NumSupportedHardwareBreakpoints() { return 0; }
     virtual uint32_t        NumSupportedHardwareWatchpoints() { return 0; }
     virtual uint32_t        EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size) { return INVALID_NUB_HW_INDEX; }
-    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write) { return INVALID_NUB_HW_INDEX; }
-    virtual void            HardwareWatchpointStateChanged () { ; }
+    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task) { return INVALID_NUB_HW_INDEX; }
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_index) { return false; }
-    virtual bool            DisableHardwareWatchpoint (uint32_t hw_index) { return false; }
+    virtual bool            DisableHardwareWatchpoint (uint32_t hw_index, bool also_set_on_task) { return false; }
     virtual uint32_t        GetHardwareWatchpointHit() { return INVALID_NUB_HW_INDEX; }
     virtual bool            StepNotComplete () { return false; }
 

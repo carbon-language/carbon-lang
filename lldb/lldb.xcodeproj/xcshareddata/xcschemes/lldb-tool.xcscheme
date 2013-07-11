@@ -84,7 +84,7 @@
    <LaunchAction
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      launchStyle = "1"
+      launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       customWorkingDirectory = "/Volumes/work/gclayton/Documents/devb/attach"
       buildConfiguration = "Debug"
@@ -102,7 +102,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/private/tmp/a.out"
+            argument = "/Volumes/ThePlayground/Users/jingham/Projects/Sketch/build/Debug/Sketch.app"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

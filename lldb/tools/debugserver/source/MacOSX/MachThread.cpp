@@ -625,18 +625,11 @@ MachThread::EnableHardwareBreakpoint (const DNBBreakpoint *bp)
 }
 
 uint32_t
-MachThread::EnableHardwareWatchpoint (const DNBBreakpoint *wp)
+MachThread::EnableHardwareWatchpoint (const DNBBreakpoint *wp, bool also_set_on_task)
 {
     if (wp != NULL && wp->IsWatchpoint())
-        return m_arch_ap->EnableHardwareWatchpoint(wp->Address(), wp->ByteSize(), wp->WatchpointRead(), wp->WatchpointWrite());
+        return m_arch_ap->EnableHardwareWatchpoint(wp->Address(), wp->ByteSize(), wp->WatchpointRead(), wp->WatchpointWrite(), also_set_on_task);
     return INVALID_NUB_HW_INDEX;
-}
-
-// Provide a chance to update the global view of the hardware watchpoint state.
-void
-MachThread::HardwareWatchpointStateChanged ()
-{
-    m_arch_ap->HardwareWatchpointStateChanged();
 }
 
 bool
@@ -660,10 +653,10 @@ MachThread::DisableHardwareBreakpoint (const DNBBreakpoint *bp)
 }
 
 bool
-MachThread::DisableHardwareWatchpoint (const DNBBreakpoint *wp)
+MachThread::DisableHardwareWatchpoint (const DNBBreakpoint *wp, bool also_set_on_task)
 {
     if (wp != NULL && wp->IsHardware())
-        return m_arch_ap->DisableHardwareWatchpoint(wp->GetHardwareIndex());
+        return m_arch_ap->DisableHardwareWatchpoint(wp->GetHardwareIndex(), also_set_on_task);
     return false;
 }
 

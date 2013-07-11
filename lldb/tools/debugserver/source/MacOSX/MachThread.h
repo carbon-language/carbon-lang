@@ -64,9 +64,9 @@ public:
 
     DNBBreakpoint * CurrentBreakpoint();
     uint32_t        EnableHardwareBreakpoint (const DNBBreakpoint *breakpoint);
-    uint32_t        EnableHardwareWatchpoint (const DNBBreakpoint *watchpoint);
+    uint32_t        EnableHardwareWatchpoint (const DNBBreakpoint *watchpoint, bool also_set_on_task);
     bool            DisableHardwareBreakpoint (const DNBBreakpoint *breakpoint);
-    bool            DisableHardwareWatchpoint (const DNBBreakpoint *watchpoint);
+    bool            DisableHardwareWatchpoint (const DNBBreakpoint *watchpoint, bool also_set_on_task);
     uint32_t        NumSupportedHardwareWatchpoints () const;
     bool            RollbackTransForHWP();
     bool            FinishTransForHWP();
@@ -138,7 +138,6 @@ protected:
 
 private:
     friend class MachThreadList;
-    void HardwareWatchpointStateChanged(); // Provide a chance to update the global view of the hardware watchpoint state
 };
 
 typedef std::shared_ptr<MachThread> MachThreadSP;

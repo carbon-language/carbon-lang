@@ -37,7 +37,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=100)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @unittest2.skipIf(TestBase.skipLongRunningTest(), "Skip this long running test")
     @dwarf_test
     def test_many_watchpoints_dwarf(self):
@@ -88,21 +87,18 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for concurrent watchpoint and breakpoint
     #
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_watch_break_dwarf(self):
         """Test watchpoint and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_delay_watch_break_dwarf(self):
         """Test (1-second delay) watchpoint and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_delay_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_watch_break_dwarf(self):
         """Test watchpoint and a (1 second delay) breakpoint in multiple threads."""
@@ -112,21 +108,18 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for concurrent signal and watchpoint
     #
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_signal_watch_dwarf(self):
         """Test a watchpoint and a signal in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_signal_threads=1, num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_delay_signal_watch_dwarf(self):
         """Test a watchpoint and a (1 second delay) signal in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_delay_signal_threads=1, num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_signal_delay_watch_dwarf(self):
         """Test a (1 second delay) watchpoint and a signal in multiple threads."""
@@ -173,14 +166,12 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2, num_delay_signal_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_two_breakpoints_one_watchpoint_dwarf(self):
         """Test two threads that trigger a breakpoint and one watchpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2, num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_breakpoints_delayed_breakpoint_one_watchpoint_dwarf(self):
         """Test a breakpoint, a delayed breakpoint, and one watchpoint thread. """
@@ -192,14 +183,12 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for multiple watchpoint threads
     #
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_two_watchpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_watchpoint_threads=2)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_watchpoint_with_delay_waychpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint where one thread has a 1 second delay. """
@@ -207,21 +196,18 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_watchpoint_threads=1,
                                num_delay_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_two_watchpoints_one_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint and one breakpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_watchpoint_threads=2, num_breakpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_two_watchpoints_one_delay_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint and one (1 second delay) breakpoint thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_watchpoint_threads=2, num_delay_breakpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_watchpoint_delay_watchpoint_one_breakpoint_dwarf(self):
         """Test two threads that trigger a watchpoint (one with a 1 second delay) and one breakpoint thread. """
@@ -230,7 +216,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_delay_watchpoint_threads=1,
                                num_breakpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_two_watchpoints_one_signal_dwarf(self):
         """Test two threads that trigger a watchpoint and one signal thread. """
@@ -240,7 +225,6 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Test for watchpoint, signal and breakpoint happening concurrently
     #
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
@@ -250,7 +234,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_watchpoint_threads=1,
                                num_breakpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
@@ -260,7 +243,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_watchpoint_threads=5,
                                num_breakpoint_threads=5)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
         """Test with 5 watchpoint and breakpoint threads."""
@@ -278,7 +260,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_crash_threads=1, num_breakpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_crash_with_watchpoint_dwarf(self):
         """ Test a thread that crashes while another thread hits a watchpoint."""
@@ -291,7 +272,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_crash_threads=1, num_signal_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_crash_with_watchpoint_breakpoint_signal_dwarf(self):
@@ -302,7 +282,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_signal_threads=1,
                                num_watchpoint_threads=1)
 
-    @skipIfDarwin # llvm.org/pr16566 -- new threads do not respect watchpoints
     @dwarf_test
     def test_delayed_crash_with_breakpoint_watchpoint_dwarf(self):
         """ Test a thread with a delayed crash while other threads hit a watchpoint and a breakpoint. """

@@ -71,13 +71,12 @@ public:
     virtual uint32_t        NumSupportedHardwareBreakpoints();
     virtual uint32_t        NumSupportedHardwareWatchpoints();
     virtual uint32_t        EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size);
-    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write);
+    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task);
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_break_index);
-    virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
+    virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index, bool also_set_on_task);
     virtual bool            EnableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate);
     virtual bool            DisableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate);
     virtual bool            StepNotComplete ();
-    virtual void            HardwareWatchpointStateChanged ();
     virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
     typedef arm_debug_state_t DBG;
@@ -134,10 +133,6 @@ protected:
         FPU vfp;
         EXC exc;
     };
-
-    // See also HardwareWatchpointStateChanged() which updates this class-wide variable.
-    static DBG Global_Debug_State;
-    static bool Valid_Global_Debug_State;
 
     struct State
     {
@@ -230,7 +225,7 @@ protected:
     kern_return_t SetGPRState ();
     kern_return_t SetVFPState ();
     kern_return_t SetEXCState ();
-    kern_return_t SetDBGState ();
+    kern_return_t SetDBGState (bool also_set_on_task);
 
     // Helper functions for watchpoint implementaions.
     static void ClearWatchpointOccurred();
