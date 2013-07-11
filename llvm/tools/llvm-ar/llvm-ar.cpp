@@ -92,7 +92,6 @@ bool AddAfter = false;           ///< 'a' modifier
 bool AddBefore = false;          ///< 'b' modifier
 bool Create = false;             ///< 'c' modifier
 bool InsertBefore = false;       ///< 'i' modifier
-bool UseCount = false;           ///< 'N' modifier
 bool OriginalDates = false;      ///< 'o' modifier
 bool SymTable = true;            ///< 's' & 'S' modifiers
 bool OnlyUpdate = false;         ///< 'u' modifier
@@ -103,10 +102,6 @@ bool Verbose = false;            ///< 'v' modifier
 // refers. Only one of 'a', 'b' or 'i' can be specified so we only need
 // one variable.
 std::string RelPos;
-
-// Select which of multiple entries in the archive with the same name should be
-// used (specified with -N) for the delete and extract operations.
-int Count = 1;
 
 // This variable holds the name of the archive file as given on the
 // command line.
@@ -152,20 +147,6 @@ void getRelPos() {
     show_help("Expected [relpos] for a, b, or i modifier");
   RelPos = RestOfArgs[0];
   RestOfArgs.erase(RestOfArgs.begin());
-}
-
-// getCount - Extract the [count] argument associated with the N modifier
-// from the command line and check its value.
-void getCount() {
-  if(RestOfArgs.size() == 0)
-    show_help("Expected [count] value with N modifier");
-
-  Count = atoi(RestOfArgs[0].c_str());
-  RestOfArgs.erase(RestOfArgs.begin());
-
-  // Non-positive counts are not allowed
-  if (Count < 1)
-    show_help("Invalid [count] value (not a positive integer)");
 }
 
 // getArchive - Get the archive file name from the command line
@@ -230,10 +211,6 @@ ArchiveOperation parseCommandLine() {
       InsertBefore = true;
       NumPositional++;
       break;
-    case 'N':
-      getCount();
-      UseCount = true;
-      break;
     default:
       cl::PrintHelpMessage();
     }
@@ -263,8 +240,6 @@ ArchiveOperation parseCommandLine() {
     show_help("The 'o' modifier is only applicable to the 'x' operation");
   if (OnlyUpdate && Operation != ReplaceOrInsert)
     show_help("The 'u' modifier is only applicable to the 'r' operation");
-  if (Count > 1 && Members.size() > 1)
-    show_help("Only one member name may be specified with the 'N' modifier");
 
   // Return the parsed operation to the caller
   return Operation;
@@ -299,26 +274,21 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
 bool doPrint(std::string* ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
-  unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
     if (Paths.empty() ||
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
-      if (countDown == 1) {
-        const char* data = reinterpret_cast<const char*>(I->getData());
+      const char *data = reinterpret_cast<const char *>(I->getData());
 
-        // Skip things that don't make sense to print
-        if (I->isSVR4SymbolTable() || I->isBSD4SymbolTable())
-          continue;
+      // Skip things that don't make sense to print
+      if (I->isSVR4SymbolTable() || I->isBSD4SymbolTable())
+        continue;
 
-        if (Verbose)
-          outs() << "Printing " << I->getPath().str() << "\n";
+      if (Verbose)
+        outs() << "Printing " << I->getPath().str() << "\n";
 
-        unsigned len = I->getSize();
-        outs().write(data, len);
-      } else {
-        countDown--;
-      }
+      unsigned len = I->getSize();
+      outs().write(data, len);
     }
   }
   return false;
@@ -435,16 +405,12 @@ doDelete(std::string* ErrMsg) {
     return true;
   if (Paths.empty())
     return false;
-  unsigned countDown = Count;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ) {
     if (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end()) {
-      if (countDown == 1) {
-        Archive::iterator J = I;
-        ++I;
-        TheArchive->erase(J);
-      } else
-        countDown--;
+      Archive::iterator J = I;
+      ++I;
+      TheArchive->erase(J);
     } else {
       ++I;
     }
