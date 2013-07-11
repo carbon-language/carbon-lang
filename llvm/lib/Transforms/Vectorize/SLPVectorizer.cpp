@@ -250,11 +250,6 @@ public:
     MemBarrierIgnoreList.clear();
   }
 
-  /// \returns the scalarization cost for this list of values. Assuming that
-  /// this subtree gets vectorized, we may need to extract the values from the
-  /// roots. This method calculates the cost of extracting the values.
-  int getGatherCost(ArrayRef<Value *> VL);
-
   /// \returns true if the memory operations A and B are consecutive.
   bool isConsecutiveAccess(Value *A, Value *B);
 
@@ -286,6 +281,11 @@ private:
   /// \returns the scalarization cost for this type. Scalarization in this
   /// context means the creation of vectors from a group of scalars.
   int getGatherCost(Type *Ty);
+
+  /// \returns the scalarization cost for this list of values. Assuming that
+  /// this subtree gets vectorized, we may need to extract the values from the
+  /// roots. This method calculates the cost of extracting the values.
+  int getGatherCost(ArrayRef<Value *> VL);
 
   /// \returns the AA location that is being access by the instruction.
   AliasAnalysis::Location getLocation(Instruction *I);
@@ -1553,7 +1553,7 @@ private:
   /// \brief Try to vectorize a list of operands. If \p NeedExtracts is true
   /// then we calculate the cost of extracting the scalars from the vector.
   /// \returns true if a value was vectorized.
-  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R, bool NeedExtracts);
+  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that may start at the operands of \V;
   bool tryToVectorize(BinaryOperator *V, BoUpSLP &R);
@@ -1713,11 +1713,10 @@ bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R) {
   if (!A || !B)
     return false;
   Value *VL[] = { A, B };
-  return tryToVectorizeList(VL, R, true);
+  return tryToVectorizeList(VL, R);
 }
 
-bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
-                                       bool NeedExtracts) {
+bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
   if (VL.size() < 2)
     return false;
 
@@ -1742,12 +1741,10 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   R.buildTree(VL);
   int Cost = R.getTreeCost();
 
-  int ExtrCost = NeedExtracts ? R.getGatherCost(VL) : 0;
-  DEBUG(dbgs() << "SLP: Cost of pair:" << Cost
-               << " Cost of extract:" << ExtrCost << ".\n");
-  if ((Cost + ExtrCost) >= -SLPCostThreshold)
+  if (Cost >= -SLPCostThreshold)
     return false;
-  DEBUG(dbgs() << "SLP: Vectorizing pair.\n");
+
+  DEBUG(dbgs() << "SLP: Vectorizing pair at cost:" << Cost << ".\n");
   R.vectorizeTree();
   return true;
 }
@@ -1854,7 +1851,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
     }
 
     if (Incoming.size() > 1)
-      Changed |= tryToVectorizeList(Incoming, R, true);
+      Changed |= tryToVectorizeList(Incoming, R);
   }
 
   return Changed;
