@@ -119,7 +119,7 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
         return 0;
 
       D = ConstantInt::get(UseInst->getContext(),
-                           APInt(BitWidth, 1).shl(D->getZExtValue()));
+                           APInt::getOneBitSet(BitWidth, D->getZExtValue()));
     }
     FoldedExpr = SE->getUDivExpr(SE->getSCEV(IVSrc), SE->getSCEV(D));
   }
