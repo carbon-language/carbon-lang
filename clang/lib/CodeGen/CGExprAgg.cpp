@@ -29,14 +29,6 @@ using namespace CodeGen;
 //                        Aggregate Expression Emitter
 //===----------------------------------------------------------------------===//
 
-llvm::Value *AggValueSlot::getPaddedAtomicAddr() const {
-  assert(isValueOfAtomic());
-  llvm::GEPOperator *op = cast<llvm::GEPOperator>(getAddr());
-  assert(op->getNumIndices() == 2);
-  assert(op->hasAllZeroIndices());
-  return op->getPointerOperand();
-}
-
 namespace  {
 class AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CodeGenFunction &CGF;
@@ -202,38 +194,6 @@ public:
     CGF.EmitAtomicExpr(E, EnsureSlot(E->getType()).getAddr());
   }
 };
-
-/// A helper class for emitting expressions into the value sub-object
-/// of a padded atomic type.
-class ValueDestForAtomic {
-  AggValueSlot Dest;
-public:
-  ValueDestForAtomic(CodeGenFunction &CGF, AggValueSlot dest, QualType type)
-    : Dest(dest) {
-    assert(!Dest.isValueOfAtomic());
-    if (!Dest.isIgnored() && CGF.CGM.isPaddedAtomicType(type)) {
-      llvm::Value *valueAddr = CGF.Builder.CreateStructGEP(Dest.getAddr(), 0);
-      Dest = AggValueSlot::forAddr(valueAddr,
-                                   Dest.getAlignment(),
-                                   Dest.getQualifiers(),
-                                   Dest.isExternallyDestructed(),
-                                   Dest.requiresGCollection(),
-                                   Dest.isPotentiallyAliased(),
-                                   Dest.isZeroed(),
-                                   AggValueSlot::IsValueOfAtomic);
-    }
-  }
-
-  const AggValueSlot &getDest() const { return Dest; }
-
-  ~ValueDestForAtomic() {
-    // Kill the GEP if we made one and it didn't end up used.
-    if (Dest.isValueOfAtomic()) {
-      llvm::Instruction *addr = cast<llvm::GetElementPtrInst>(Dest.getAddr());
-      if (addr->use_empty()) addr->eraseFromParent();
-    }
-  }
-};
 }  // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
@@ -248,8 +208,7 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 
   // If the type of the l-value is atomic, then do an atomic load.
   if (LV.getType()->isAtomicType()) {
-    ValueDestForAtomic valueDest(CGF, Dest, LV.getType());
-    CGF.EmitAtomicLoad(LV, valueDest.getDest());
+    CGF.EmitAtomicLoad(LV, Dest);
     return;
   }
 
@@ -653,34 +612,33 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     }
 
     // If we're converting an r-value of non-atomic type to an r-value
-    // of atomic type, just make an atomic temporary, emit into that,
-    // and then copy the value out.  (FIXME: do we need to
-    // zero-initialize it first?)
+    // of atomic type, just emit directly into the relevant sub-object.
     if (isToAtomic) {
-      ValueDestForAtomic valueDest(CGF, Dest, atomicType);
+      AggValueSlot valueDest = Dest;
+      if (!valueDest.isIgnored() && CGF.CGM.isPaddedAtomicType(atomicType)) {
+        // Zero-initialize.  (Strictly speaking, we only need to intialize
+        // the padding at the end, but this is simpler.)
+        if (!Dest.isZeroed())
+          CGF.EmitNullInitialization(Dest.getAddr(), type);
+
+        // Build a GEP to refer to the subobject.
+        llvm::Value *valueAddr =
+            CGF.Builder.CreateStructGEP(valueDest.getAddr(), 0);
+        valueDest = AggValueSlot::forAddr(valueAddr,
+                                          valueDest.getAlignment(),
+                                          valueDest.getQualifiers(),
+                                          valueDest.isExternallyDestructed(),
+                                          valueDest.requiresGCollection(),
+                                          valueDest.isPotentiallyAliased(),
+                                          AggValueSlot::IsZeroed);
+      }
+      
       CGF.EmitAggExpr(E->getSubExpr(), valueDest.getDest());
       return;
     }
 
     // Otherwise, we're converting an atomic type to a non-atomic type.
-
-    // If the dest is a value-of-atomic subobject, drill back out.
-    if (Dest.isValueOfAtomic()) {
-      AggValueSlot atomicSlot =
-        AggValueSlot::forAddr(Dest.getPaddedAtomicAddr(),
-                              Dest.getAlignment(),
-                              Dest.getQualifiers(),
-                              Dest.isExternallyDestructed(),
-                              Dest.requiresGCollection(),
-                              Dest.isPotentiallyAliased(),
-                              Dest.isZeroed(),
-                              AggValueSlot::IsNotValueOfAtomic);
-      CGF.EmitAggExpr(E->getSubExpr(), atomicSlot);
-      return;
-    }
-
-    // Otherwise, make an atomic temporary, emit into that, and then
-    // copy the value out.
+    // Make an atomic temporary, emit into that, and then copy the value out.
     AggValueSlot atomicSlot =
       CGF.CreateAggTemp(atomicType, "atomic-to-nonatomic.temp");
     CGF.EmitAggExpr(E->getSubExpr(), atomicSlot);

@@ -93,7 +93,7 @@ namespace {
       return (ValueSizeInBits != AtomicSizeInBits);
     }
 
-    void emitMemSetZeroIfNecessary(LValue dest) const;
+    bool emitMemSetZeroIfNecessary(LValue dest) const;
 
     llvm::Value *getAtomicSizeValue() const {
       CharUnits size = CGF.getContext().toCharUnitsFromBits(AtomicSizeInBits);
@@ -164,21 +164,22 @@ bool AtomicInfo::requiresMemSetZero(llvm::Type *type) const {
     return !isFullSizeType(CGF.CGM, type->getStructElementType(0),
                            AtomicSizeInBits / 2);
 
-  // Just be pessimistic about aggregates.
+  // Padding in structs has an undefined bit pattern.  User beware.
   case TEK_Aggregate:
-    return true;
+    return false;
   }
   llvm_unreachable("bad evaluation kind");
 }
 
-void AtomicInfo::emitMemSetZeroIfNecessary(LValue dest) const {
+bool AtomicInfo::emitMemSetZeroIfNecessary(LValue dest) const {
   llvm::Value *addr = dest.getAddress();
   if (!requiresMemSetZero(addr->getType()->getPointerElementType()))
-    return;
+    return false;
 
   CGF.Builder.CreateMemSet(addr, llvm::ConstantInt::get(CGF.Int8Ty, 0),
                            AtomicSizeInBits / 8,
                            dest.getAlignment().getQuantity());
+  return true;
 }
 
 static void
@@ -715,29 +716,12 @@ llvm::Value *AtomicInfo::emitCastToAtomicIntPointer(llvm::Value *addr) const {
 
 RValue AtomicInfo::convertTempToRValue(llvm::Value *addr,
                                        AggValueSlot resultSlot) const {
-  if (EvaluationKind == TEK_Aggregate) {
-    // Nothing to do if the result is ignored.
-    if (resultSlot.isIgnored()) return resultSlot.asRValue();
-
-    assert(resultSlot.getAddr() == addr || hasPadding());
-
-    // In these cases, we should have emitted directly into the result slot.
-    if (!hasPadding() || resultSlot.isValueOfAtomic())
-      return resultSlot.asRValue();
-
-    // Otherwise, fall into the common path.
-  }
+  if (EvaluationKind == TEK_Aggregate)
+    return resultSlot.asRValue();
 
   // Drill into the padding structure if we have one.
   if (hasPadding())
     addr = CGF.Builder.CreateStructGEP(addr, 0);
-
-  // If we're emitting to an aggregate, copy into the result slot.
-  if (EvaluationKind == TEK_Aggregate) {
-    CGF.EmitAggregateCopy(resultSlot.getAddr(), addr, getValueType(),
-                          resultSlot.isVolatile());
-    return resultSlot.asRValue();
-  }
 
   // Otherwise, just convert the temporary to an r-value using the
   // normal conversion routine.
@@ -752,10 +736,7 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, AggValueSlot resultSlot) {
   // Check whether we should use a library call.
   if (atomics.shouldUseLibcall()) {
     llvm::Value *tempAddr;
-    if (resultSlot.isValueOfAtomic()) {
-      assert(atomics.getEvaluationKind() == TEK_Aggregate);
-      tempAddr = resultSlot.getPaddedAtomicAddr();
-    } else if (!resultSlot.isIgnored() && !atomics.hasPadding()) {
+    if (!resultSlot.isIgnored()) {
       assert(atomics.getEvaluationKind() == TEK_Aggregate);
       tempAddr = resultSlot.getAddr();
     } else {
@@ -819,16 +800,10 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, AggValueSlot resultSlot) {
   llvm::Value *temp;
   bool tempIsVolatile = false;
   CharUnits tempAlignment;
-  if (atomics.getEvaluationKind() == TEK_Aggregate &&
-      (!atomics.hasPadding() || resultSlot.isValueOfAtomic())) {
+  if (atomics.getEvaluationKind() == TEK_Aggregate) {
     assert(!resultSlot.isIgnored());
-    if (resultSlot.isValueOfAtomic()) {
-      temp = resultSlot.getPaddedAtomicAddr();
-      tempAlignment = atomics.getAtomicAlignment();
-    } else {
-      temp = resultSlot.getAddr();
-      tempAlignment = atomics.getValueAlignment();
-    }
+    temp = resultSlot.getAddr();
+    tempAlignment = atomics.getValueAlignment();
     tempIsVolatile = resultSlot.isVolatile();
   } else {
     temp = CreateMemTemp(atomics.getAtomicType(), "atomic-load-temp");
@@ -996,13 +971,11 @@ void CodeGenFunction::EmitAtomicInit(Expr *init, LValue dest) {
   }
 
   case TEK_Aggregate: {
-    // Memset the buffer first if there's any possibility of
-    // uninitialized internal bits.
-    atomics.emitMemSetZeroIfNecessary(dest);
-
-    // HACK: whether the initializer actually has an atomic type
-    // doesn't really seem reliable right now.
+    // Fix up the destination if the initializer isn't an expression
+    // of atomic type.
+    bool Zeroed = false;
     if (!init->getType()->isAtomicType()) {
+      Zeroed = atomics.emitMemSetZeroIfNecessary(dest);
       dest = atomics.projectValue(dest);
     }
 
@@ -1010,7 +983,10 @@ void CodeGenFunction::EmitAtomicInit(Expr *init, LValue dest) {
     AggValueSlot slot = AggValueSlot::forLValue(dest,
                                         AggValueSlot::IsNotDestructed,
                                         AggValueSlot::DoesNotNeedGCBarriers,
-                                        AggValueSlot::IsNotAliased);
+                                        AggValueSlot::IsNotAliased,
+                                        Zeroed ? AggValueSlot::IsZeroed :
+                                                 AggValueSlot::IsNotZeroed);
+
     EmitAggExpr(init, slot);
     return;
   }

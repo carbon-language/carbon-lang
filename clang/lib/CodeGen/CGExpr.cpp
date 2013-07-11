@@ -2717,11 +2717,10 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_BuiltinFnToFnPtr:
     llvm_unreachable("builtin functions are handled elsewhere");
 
-  // These two casts are currently treated as no-ops, although they could
-  // potentially be real operations depending on the target's ABI.
+  // These are never l-values; just use the aggregate emission code.
   case CK_NonAtomicToAtomic:
   case CK_AtomicToNonAtomic:
-    return EmitLValue(E->getSubExpr());
+    return EmitAggExprToLValue(E);
 
   case CK_Dynamic: {
     LValue LV = EmitLValue(E->getSubExpr());

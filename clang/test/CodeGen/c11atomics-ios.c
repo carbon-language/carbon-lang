@@ -102,8 +102,6 @@ void testStruct(_Atomic(S) *fp) {
 // CHECK-NEXT: store [[S]]*
 
 // CHECK-NEXT: [[P:%.*]] = load [[S]]** [[FP]]
-// CHECK-NEXT: [[T0:%.*]] = bitcast [[S]]* [[P]] to i8*
-// CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 8, i32 8, i1 false)
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]]* [[P]], i32 0, i32 0
 // CHECK-NEXT: store i16 1, i16* [[T0]], align 2
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]]* [[P]], i32 0, i32 1
@@ -114,8 +112,6 @@ void testStruct(_Atomic(S) *fp) {
 // CHECK-NEXT: store i16 4, i16* [[T0]], align 2
   __c11_atomic_init(fp, (S){1,2,3,4});
 
-// CHECK-NEXT: [[T0:%.*]] = bitcast [[S]]* [[X]] to i8*
-// CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 8, i32 8, i1 false)
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]]* [[X]], i32 0, i32 0
 // CHECK-NEXT: store i16 1, i16* [[T0]], align 2
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[S]]* [[X]], i32 0, i32 1
@@ -169,7 +165,7 @@ void testPromotedStruct(_Atomic(PS) *fp) {
   __c11_atomic_init(fp, (PS){1,2,3});
 
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[APS]]* [[X]] to i8*
-// CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 8, i32 8, i1 false)
+// CHECK-NEXT: call void @llvm.memset.p0i8.i32(i8* [[T0]], i8 0, i32 8, i32 8, i1 false)
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[APS]]* [[X]], i32 0, i32 0
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[PS]]* [[T0]], i32 0, i32 0
 // CHECK-NEXT: store i16 1, i16* [[T1]], align 2
@@ -183,7 +179,7 @@ void testPromotedStruct(_Atomic(PS) *fp) {
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[APS]]* [[T0]] to i64*
 // CHECK-NEXT: [[T2:%.*]] = load atomic i64* [[T1]] seq_cst, align 8
 // CHECK-NEXT: [[T3:%.*]] = bitcast [[APS]]* [[TMP0]] to i64*
-// CHECK-NEXT: store i64 [[T2]], i64* [[T3]], align 8
+// CHECK-NEXT: store i64 [[T2]], i64* [[T3]], align 2
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[APS]]* [[TMP0]], i32 0, i32 0
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[PS]]* [[F]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[PS]]* [[T0]] to i8*
@@ -191,6 +187,8 @@ void testPromotedStruct(_Atomic(PS) *fp) {
   PS f = *fp;
 
 // CHECK-NEXT: [[T0:%.*]] = load [[APS]]** [[FP]]
+// CHECK-NEXT: [[T1:%.*]] = bitcast { %struct.PS, [2 x i8] }* [[TMP1]] to i8*
+// CHECK-NEXT: call void @llvm.memset.p0i8.i32(i8* [[T1]], i8 0, i32 8, i32 8, i1 false)
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[APS]]* [[TMP1]], i32 0, i32 0
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[PS]]* [[T1]] to i8*
 // CHECK-NEXT: [[T3:%.*]] = bitcast [[PS]]* [[F]] to i8*
