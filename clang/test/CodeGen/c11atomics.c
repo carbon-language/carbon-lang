@@ -329,7 +329,7 @@ void testPromotedStruct(_Atomic(PS) *fp) {
 // CHECK-NEXT: call arm_aapcscc void @__atomic_store(i32 8, i8* [[T4]], i8* [[T5]], i32 5)
   *fp = f;
 
-// CHECK-NEXT: [[T0:%.*]] = load [[APS]]** %fp.addr, align 4
+// CHECK-NEXT: [[T0:%.*]] = load [[APS]]** [[FP]], align 4
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[APS]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[APS]]* [[TMP3]] to i8*
 // CHECK-NEXT: call arm_aapcscc void @__atomic_load(i32 8, i8* [[T1]], i8* [[T2]], i32 5)
