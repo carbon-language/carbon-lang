@@ -4636,10 +4636,10 @@ getAssignmentAction(const InitializedEntity &Entity) {
     return Sema::AA_Passing;
 
   case InitializedEntity::EK_Result:
-  case InitializedEntity::EK_RelatedResult:
     return Sema::AA_Returning;
 
   case InitializedEntity::EK_Temporary:
+  case InitializedEntity::EK_RelatedResult:
     // FIXME: Can we tell apart casting vs. converting?
     return Sema::AA_Casting;
 

@@ -175,7 +175,7 @@ void test_inference() {
 @implementation Fail
 - (id<X>) initWithX // expected-note {{compiler has implicitly changed method 'initWithX' return type}}
 {
-  return (id)self; // expected-warning {{returning 'Fail *' from a function with incompatible result type 'id<X>'}}
+  return (id)self; // expected-warning {{casting 'Fail *' to incompatible type 'id<X>'}}
 }
 @end
 
@@ -197,6 +197,6 @@ void test_inference() {
 + (UIViewController<PMFilterManager> *)newFilterViewControllerForType // expected-note {{compiler has implicitly changed method 'newFilterViewControllerForType' return type}}
 {
         UIViewController<PMFilterManager> *filterVC;
-        return filterVC; // expected-warning {{incompatible pointer types returning 'UIViewController *' from a function with result type 'UIViewController<PMFilterManager> *'}}
+        return filterVC; // expected-warning {{incompatible pointer types casting 'UIViewController *' to type 'UIViewController<PMFilterManager> *'}}
 }
 @end
