@@ -118,8 +118,8 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   struct __sanitizer_dirent64 {
-    uptr d_ino;
-    uptr d_off;
+    unsigned long long d_ino;
+    unsigned long long d_off;
     unsigned short d_reclen;
     // more fields that we don't care about
   };

@@ -795,11 +795,19 @@ CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_len);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_level);
 CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_type);
 
+COMPILER_CHECK(sizeof(__sanitizer_dirent) <= sizeof(dirent));
 CHECK_SIZE_AND_OFFSET(dirent, d_ino);
 #ifndef SANITIZER_MAC
 CHECK_SIZE_AND_OFFSET(dirent, d_off);
 #endif
 CHECK_SIZE_AND_OFFSET(dirent, d_reclen);
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+COMPILER_CHECK(sizeof(__sanitizer_dirent64) <= sizeof(dirent64));
+CHECK_SIZE_AND_OFFSET(dirent64, d_ino);
+CHECK_SIZE_AND_OFFSET(dirent64, d_off);
+CHECK_SIZE_AND_OFFSET(dirent64, d_reclen);
+#endif
 
 CHECK_TYPE_SIZE(ifconf);
 CHECK_SIZE_AND_OFFSET(ifconf, ifc_len);
