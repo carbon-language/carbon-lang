@@ -43,8 +43,8 @@ int main()
     test_make_unsigned<unsigned long, unsigned long> ();
     test_make_unsigned<long long, unsigned long long> ();
     test_make_unsigned<unsigned long long, unsigned long long> ();
-    test_make_unsigned<wchar_t, unsigned int> ();
-    test_make_unsigned<const wchar_t, const unsigned int> ();
+    test_make_unsigned<wchar_t, std::conditional<sizeof(wchar_t) == 4, unsigned int, unsigned short>::type> ();
+    test_make_unsigned<const wchar_t, std::conditional<sizeof(wchar_t) == 4, const unsigned int, const unsigned short>::type> ();
     test_make_unsigned<const Enum, const unsigned int> ();
     test_make_unsigned<BigEnum,
                    std::conditional<sizeof(long) == 4, unsigned long long, unsigned long>::type> ();

@@ -43,8 +43,8 @@ int main()
     test_make_signed< unsigned long, long >();
     test_make_signed< long long, signed long long >();
     test_make_signed< unsigned long long, signed long long >();
-    test_make_signed< wchar_t, int >();
-    test_make_signed< const wchar_t, const int >();
+    test_make_signed< wchar_t, std::conditional<sizeof(wchar_t) == 4, int, short>::type >();
+    test_make_signed< const wchar_t, std::conditional<sizeof(wchar_t) == 4, const int, const short>::type >();
     test_make_signed< const Enum, const int >();
     test_make_signed< BigEnum, std::conditional<sizeof(long) == 4, long long, long>::type >();
 }
