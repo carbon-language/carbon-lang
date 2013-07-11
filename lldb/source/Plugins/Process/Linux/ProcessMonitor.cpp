@@ -1549,6 +1549,13 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
             log->Printf ("ProcessMonitor::%s() received watchpoint event, pid = %" PRIu64, __FUNCTION__, pid);
         message = ProcessMessage::Watch(pid, (lldb::addr_t)info->si_addr);
         break;
+
+    case SIGTRAP:
+    case (SIGTRAP | 0x80):
+        if (log)
+            log->Printf ("ProcessMonitor::%s() received system call stop event, pid = %" PRIu64, __FUNCTION__, pid);
+        // Ignore these signals until we know more about them
+        monitor->Resume(pid, eResumeSignalNone);
     }
 
     return message;
