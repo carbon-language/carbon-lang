@@ -330,6 +330,9 @@ static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
 }
 
 bool PPCDAGToDAGISel::isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  if (!Val)
+    return false;
+
   if (isShiftedMask_32(Val)) {
     // look for the first non-zero bit
     MB = countLeadingZeros(Val);
@@ -435,7 +438,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
     }
 
     unsigned MB, ME;
-    if (InsertMask && isRunOfOnes(InsertMask, MB, ME)) {
+    if (isRunOfOnes(InsertMask, MB, ME)) {
       SDValue Tmp1, Tmp2;
 
       if ((Op1Opc == ISD::SHL || Op1Opc == ISD::SRL) &&
