@@ -53,6 +53,7 @@
 #define DEBUG_TYPE "tailcallelim"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InlineCost.h"
@@ -69,6 +70,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -129,34 +131,42 @@ void TailCallElim::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetTransformInfo>();
 }
 
-/// AllocaMightEscapeToCalls - Return true if this alloca may be accessed by
-/// callees of this function.  We only do very simple analysis right now, this
-/// could be expanded in the future to use mod/ref information for particular
-/// call sites if desired.
-static bool AllocaMightEscapeToCalls(AllocaInst *AI) {
-  // FIXME: do simple 'address taken' analysis.
-  return true;
+/// CanTRE - Scan the specified basic block for alloca instructions.
+/// If it contains any that are variable-sized or not in the entry block,
+/// returns false.
+static bool CanTRE(AllocaInst *AI) {
+  // Because of PR962, we don't TRE allocas outside the entry block.
+
+  // If this alloca is in the body of the function, or if it is a variable
+  // sized allocation, we cannot tail call eliminate calls marked 'tail'
+  // with this mechanism.
+  BasicBlock *BB = AI->getParent();
+  return BB == &BB->getParent()->getEntryBlock() &&
+         isa<ConstantInt>(AI->getArraySize());
 }
 
-/// CheckForEscapingAllocas - Scan the specified basic block for alloca
-/// instructions.  If it contains any that might be accessed by calls, return
-/// true.
-static bool CheckForEscapingAllocas(BasicBlock *BB,
-                                    bool &CannotTCETailMarkedCall) {
-  bool RetVal = false;
-  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-      RetVal |= AllocaMightEscapeToCalls(AI);
+struct AllocaCaptureTracker : public CaptureTracker {
+  AllocaCaptureTracker() : Captured(false) {}
 
-      // If this alloca is in the body of the function, or if it is a variable
-      // sized allocation, we cannot tail call eliminate calls marked 'tail'
-      // with this mechanism.
-      if (BB != &BB->getParent()->getEntryBlock() ||
-          !isa<ConstantInt>(AI->getArraySize()))
-        CannotTCETailMarkedCall = true;
-    }
-  return RetVal;
-}
+  void tooManyUses() { Captured = true; }
+
+  bool shouldExplore(Use *U) {
+    Value *V = U->getUser();
+    if (isa<CallInst>(V) || isa<InvokeInst>(V))
+      UsesAlloca.insert(V);
+    return true;
+  }
+
+  bool captured(Use *U) {
+    if (isa<ReturnInst>(U->getUser()))
+      return false;
+    Captured = true;
+    return true;
+  }
+
+  bool Captured;
+  SmallPtrSet<const Value *, 64> UsesAlloca;
+};
 
 bool TailCallElim::runOnFunction(Function &F) {
   // If this function is a varargs function, we won't be able to PHI the args
@@ -168,41 +178,44 @@ bool TailCallElim::runOnFunction(Function &F) {
   bool TailCallsAreMarkedTail = false;
   SmallVector<PHINode*, 8> ArgumentPHIs;
   bool MadeChange = false;
-  bool FunctionContainsEscapingAllocas = false;
 
-  // CannotTCETailMarkedCall - If true, we cannot perform TCE on tail calls
+  // CanTRETailMarkedCall - If false, we cannot perform TRE on tail calls
   // marked with the 'tail' attribute, because doing so would cause the stack
-  // size to increase (real TCE would deallocate variable sized allocas, TCE
+  // size to increase (real TRE would deallocate variable sized allocas, TRE
   // doesn't).
-  bool CannotTCETailMarkedCall = false;
+  bool CanTRETailMarkedCall = true;
 
-  // Loop over the function, looking for any returning blocks, and keeping track
-  // of whether this function has any non-trivially used allocas.
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    if (FunctionContainsEscapingAllocas && CannotTCETailMarkedCall)
-      break;
-
-    FunctionContainsEscapingAllocas |=
-      CheckForEscapingAllocas(BB, CannotTCETailMarkedCall);
+  // Find calls that can be marked tail.
+  AllocaCaptureTracker ACT;
+  for (Function::iterator BB = F.begin(), EE = F.end(); BB != EE; ++BB) {
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+        CanTRETailMarkedCall &= CanTRE(AI);
+        PointerMayBeCaptured(AI, &ACT);
+        // If any allocas are captured, exit.
+        if (ACT.Captured)
+          return false;
+      }
+    }
   }
 
-  /// FIXME: The code generator produces really bad code when an 'escaping
-  /// alloca' is changed from being a static alloca to being a dynamic alloca.
-  /// Until this is resolved, disable this transformation if that would ever
-  /// happen.  This bug is PR962.
-  if (FunctionContainsEscapingAllocas)
-    return false;
-
-  // Second pass, change any tail calls to loops.
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      bool Change = ProcessReturningBlock(Ret, OldEntry, TailCallsAreMarkedTail,
-                                          ArgumentPHIs,CannotTCETailMarkedCall);
-      if (!Change && BB->getFirstNonPHIOrDbg() == Ret)
-        Change = FoldReturnAndProcessPred(BB, Ret, OldEntry,
-                                          TailCallsAreMarkedTail, ArgumentPHIs,
-                                          CannotTCETailMarkedCall);
-      MadeChange |= Change;
+  // Second pass, change any tail recursive calls to loops.
+  //
+  // FIXME: The code generator produces really bad code when an 'escaping
+  // alloca' is changed from being a static alloca to being a dynamic alloca.
+  // Until this is resolved, disable this transformation if that would ever
+  // happen.  This bug is PR962.
+  if (ACT.UsesAlloca.empty()) {
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+      if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator())) {
+        bool Change = ProcessReturningBlock(Ret, OldEntry, TailCallsAreMarkedTail,
+                                            ArgumentPHIs, !CanTRETailMarkedCall);
+        if (!Change && BB->getFirstNonPHIOrDbg() == Ret)
+          Change = FoldReturnAndProcessPred(BB, Ret, OldEntry,
+                                            TailCallsAreMarkedTail, ArgumentPHIs,
+                                            !CanTRETailMarkedCall);
+        MadeChange |= Change;
+      }
     }
   }
 
@@ -223,16 +236,24 @@ bool TailCallElim::runOnFunction(Function &F) {
     }
   }
 
-  // Finally, if this function contains no non-escaping allocas, or calls
-  // setjmp, mark all calls in the function as eligible for tail calls
-  //(there is no stack memory for them to access).
-  if (!FunctionContainsEscapingAllocas && !F.callsFunctionThatReturnsTwice())
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+  // At this point, we know that the function does not have any captured
+  // allocas. If additionally the function does not call setjmp, mark all calls
+  // in the function that do not access stack memory with the tail keyword. This
+  // implies ensuring that there does not exist any path from a call that takes
+  // in an alloca but does not capture it and the call which we wish to mark
+  // with "tail".
+  if (!F.callsFunctionThatReturnsTwice()) {
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          CI->setTailCall();
-          MadeChange = true;
+          if (!ACT.UsesAlloca.count(CI)) {
+            CI->setTailCall();
+            MadeChange = true;
+          }
         }
+      }
+    }
+  }
 
   return MadeChange;
 }

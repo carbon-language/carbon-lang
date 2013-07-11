@@ -2,6 +2,8 @@
 
 declare void @noarg()
 declare void @use(i32*)
+declare void @use_nocapture(i32* nocapture)
+declare void @use2_nocapture(i32* nocapture, i32* nocapture)
 
 ; Trivial case. Mark @noarg with tail call.
 define void @test0() {
@@ -57,3 +59,87 @@ return:		; preds = %entry
 	ret i32 0
 }
 
+; Make sure that a nocapture pointer does not stop adding a tail call marker to
+; an unrelated call and additionally that we do not mark the nocapture call with
+; a tail call.
+;
+; rdar://14324281
+define void @test4() {
+; CHECK: void @test4
+; CHECK-NOT: tail call void @use_nocapture
+; CHECK: tail call void @noarg()
+; CHECK: ret void
+  %a = alloca i32
+  call void @use_nocapture(i32* %a)
+  call void @noarg()
+  ret void
+}
+
+; Make sure that we do not perform TRE even with a nocapture use. This is due to
+; bad codegen caused by PR962.
+;
+; rdar://14324281.
+define i32* @test5(i32* nocapture %A, i1 %cond) {
+; CHECK: i32* @test5
+; CHECK-NOT: tailrecurse:
+; CHECK: ret i32* null
+  %B = alloca i32
+  br i1 %cond, label %cond_true, label %cond_false
+cond_true:
+  call i32* @test5(i32* %B, i1 false)
+  ret i32* null
+cond_false:
+  call void @use2_nocapture(i32* %A, i32* %B)
+  call void @noarg()
+  ret i32* null
+}
+
+; PR14143: Make sure that we do not mark functions with nocapture allocas with tail.
+;
+; rdar://14324281.
+define void @test6(i32* %a, i32* %b) {
+; CHECK: @test6
+; CHECK-NOT: tail call
+; CHECK: ret void
+  %c = alloca [100 x i8], align 16
+  %tmp = bitcast [100 x i8]* %c to i32*
+  call void @use2_nocapture(i32* %b, i32* %tmp)
+  ret void
+}
+
+; PR14143: Make sure that we do not mark functions with nocapture allocas with tail.
+;
+; rdar://14324281
+define void @test7(i32* %a, i32* %b) nounwind uwtable {
+entry:
+; CHECK: @test7
+; CHECK-NOT: tail call
+; CHECK: ret void
+  %c = alloca [100 x i8], align 16
+  %0 = bitcast [100 x i8]* %c to i32*
+  call void @use2_nocapture(i32* %0, i32* %a)
+  call void @use2_nocapture(i32* %b, i32* %0)
+  ret void
+}
+
+; If we have a mix of escaping captured/non-captured allocas, ensure that we do
+; not do anything including marking callsites with the tail call marker.
+;
+; rdar://14324281.
+define i32* @test8(i32* nocapture %A, i1 %cond) {
+; CHECK: i32* @test8
+; CHECK-NOT: tailrecurse:
+; CHECK-NOT: tail call
+; CHECK: ret i32* null
+  %B = alloca i32
+  %B2 = alloca i32
+  br i1 %cond, label %cond_true, label %cond_false
+cond_true:
+  call void @use(i32* %B2)
+  call i32* @test8(i32* %B, i1 false)
+  ret i32* null
+cond_false:
+  call void @use2_nocapture(i32* %A, i32* %B)
+  call void @noarg()
+  ret i32* null
+}
