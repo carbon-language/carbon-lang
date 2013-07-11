@@ -51,3 +51,57 @@ for.end48:                                        ; preds = %for.end44
   ret void
 }
 
+%struct.hoge = type { double, double, double}
+
+define void @zot(%struct.hoge* %arg) {
+bb:
+  %tmp = load double* undef, align 8
+  %tmp1 = fsub double %tmp, undef
+  %tmp2 = load double* undef, align 8
+  %tmp3 = fsub double %tmp2, undef
+  %tmp4 = fmul double %tmp3, undef
+  %tmp5 = fmul double %tmp3, undef
+  %tmp6 = fsub double %tmp5, undef
+  %tmp7 = getelementptr inbounds %struct.hoge* %arg, i64 0, i32 1
+  store double %tmp6, double* %tmp7, align 8
+  %tmp8 = fmul double %tmp1, undef
+  %tmp9 = fsub double %tmp8, undef
+  %tmp10 = getelementptr inbounds %struct.hoge* %arg, i64 0, i32 2
+  store double %tmp9, double* %tmp10, align 8
+  br i1 undef, label %bb11, label %bb12
+
+bb11:                                             ; preds = %bb
+  br label %bb14
+
+bb12:                                             ; preds = %bb
+  %tmp13 = fmul double undef, %tmp2
+  br label %bb14
+
+bb14:                                             ; preds = %bb12, %bb11
+  ret void
+}
+
+
+%struct.rc4_state.0.24 = type { i32, i32, [256 x i32] }
+
+define void @rc4_crypt(%struct.rc4_state.0.24* nocapture %s) {
+entry:
+  %x1 = getelementptr inbounds %struct.rc4_state.0.24* %s, i64 0, i32 0
+  %y2 = getelementptr inbounds %struct.rc4_state.0.24* %s, i64 0, i32 1
+  br i1 undef, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.body, %entry
+  %x.045 = phi i32 [ %conv4, %for.body ], [ undef, %entry ]
+  %conv4 = and i32 undef, 255
+  %conv7 = and i32 undef, 255
+  %idxprom842 = zext i32 %conv7 to i64
+  br i1 undef, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body, %entry
+  %x.0.lcssa = phi i32 [ undef, %entry ], [ %conv4, %for.body ]
+  %y.0.lcssa = phi i32 [ undef, %entry ], [ %conv7, %for.body ]
+  store i32 %x.0.lcssa, i32* %x1, align 4
+  store i32 %y.0.lcssa, i32* %y2, align 4
+  ret void
+}
+
