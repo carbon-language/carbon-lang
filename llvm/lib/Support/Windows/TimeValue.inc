@@ -33,7 +33,7 @@ TimeValue TimeValue::now() {
 std::string TimeValue::str() const {
   struct tm LT;
   __time64_t OurTime = this->toEpochTime();
-  errno_t Error = ::_localtime64_s(&LT, &OurTime);
+  int Error = ::_localtime64_s(&LT, &OurTime);
   assert(!Error);
 
   char Buffer[25];
