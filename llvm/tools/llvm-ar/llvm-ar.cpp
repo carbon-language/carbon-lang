@@ -67,7 +67,6 @@ static cl::extrahelp MoreHelp(
   "  [i] - put file(s) before [relpos] (same as [b])\n"
   "  [N] - use instance [count] of name\n"
   "  [o] - preserve original dates\n"
-  "  [P] - use full path names when matching\n"
   "  [s] - create an archive index (cf. ranlib)\n"
   "  [S] - do not build a symbol table\n"
   "  [u] - update only files newer than archive contents\n"
@@ -95,7 +94,6 @@ bool Create = false;             ///< 'c' modifier
 bool InsertBefore = false;       ///< 'i' modifier
 bool UseCount = false;           ///< 'N' modifier
 bool OriginalDates = false;      ///< 'o' modifier
-bool FullPath = false;           ///< 'P' modifier
 bool SymTable = true;            ///< 's' & 'S' modifiers
 bool OnlyUpdate = false;         ///< 'u' modifier
 bool Verbose = false;            ///< 'v' modifier
@@ -215,7 +213,6 @@ ArchiveOperation parseCommandLine() {
     case 'o': OriginalDates = true; break;
     case 's': break; // Ignore for now.
     case 'S': break; // Ignore for now.
-    case 'P': FullPath = true; break;
     case 'u': OnlyUpdate = true; break;
     case 'v': Verbose = true; break;
     case 'a':
