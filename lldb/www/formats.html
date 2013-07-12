@@ -19,7 +19,7 @@
 			<div class="post">
 				<h1 class ="postheader">Stack Frame and Thread Format</h1>
 				<div class="postcontent">
-				   <p>LLDB was recently modified to allow users to define the 
+				   <p>LLDB has a facility to allow users to define the 
 				       format of the information that generates the descriptions
 				       for threads and stack frames. Typically when your program stops
 				       at a breakpoint you will get a line that describes why
@@ -100,6 +100,10 @@
                     <tr valign=top><td><b>thread.stop-reason</b></td><td>A textual reason each thread stopped</td></tr>
                     <tr valign=top><td><b>thread.return-value</b></td><td>The return value of the latest step operation (currently only for step-out.)</td></tr>
                     <tr valign=top><td><b>target.arch</b></td><td>The architecture of the current target</td></tr>
+                    <tr valign=top><td><b>target.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
+                    <tr valign=top><td><b>process.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
+                    <tr valign=top><td><b>thread.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
+                    <tr valign=top><td><b>frame.script:<i>python_func</i></b></td><td>Use a Python function to generate a piece of textual output</td></tr>
                     </table>
                     
                        </div>
@@ -247,6 +251,23 @@
                         that when the thread information is displayed in a context where
                         we only want to show thread information, we can do so.
                         
+					<p>For both thread and frame formats, you can use ${target.script:<i>python_func</i>}, ${process.script:<i>python_func</i>} and ${thread.script:<i>python_func</i>}
+						(and of course ${frame.script:<i>python_func</i>} for frame formats)<br/>
+						In all cases, the signature of <i>python_func</i> is expected to be:<br/>
+							<p><code>
+								def <i>python_func</i>(<i>object</i>,unused):<br/>
+								&nbsp;&nbsp;&nbsp;&nbsp;...<br/>
+								&nbsp;&nbsp;&nbsp;&nbsp;return <i>string</i><br/></code>
+						<p>Where <i>object</i> is an instance of the SB class associated to the keyword you are using.
+							
+						<p>e.g. Assuming your function looks like<br/><code><p>
+						def thread_printer_func (thread,unused):<br/>
+						&nbsp;&nbsp;return "Thread %s has %d frames\n" % (thread.name, thread.num_frames)<br/></code><p>
+							
+						And you set it up with <code><br/><b>(lldb)</b> settings set thread-format "${thread.script:thread_printer_func}"<br/></code>
+						you would see output like:
+						</p>
+						<code>* Thread main has 21 frames</code>
 				</div>
 				<div class="postfooter"></div>
 		    </div>
