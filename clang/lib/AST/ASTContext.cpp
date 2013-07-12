@@ -5435,7 +5435,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       // {...};
       S += '^';
       if (FD && OPT->getInterfaceDecl()) {
-        // Prevent redursive encoding of fields in some rare cases.
+        // Prevent recursive encoding of fields in some rare cases.
         ObjCInterfaceDecl *OI = OPT->getInterfaceDecl();
         SmallVector<const ObjCIvarDecl*, 32> Ivars;
         DeepCollectObjCIvars(OI, true, Ivars);
