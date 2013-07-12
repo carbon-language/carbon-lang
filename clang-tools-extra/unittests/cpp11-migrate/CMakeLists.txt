@@ -7,10 +7,12 @@ get_filename_component(CPP11_MIGRATE_SOURCE_DIR
 include_directories(${CPP11_MIGRATE_SOURCE_DIR})
 
 add_extra_unittest(Cpp11MigrateTests
-  TransformTest.cpp
+  FileOverridesTest.cpp
   IncludeExcludeTest.cpp
   PerfSupportTest.cpp
-  UniqueHeaderNameTest.cpp)
+  TransformTest.cpp
+  UniqueHeaderNameTest.cpp
+  )
 
 target_link_libraries(Cpp11MigrateTests
   migrateCore

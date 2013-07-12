@@ -17,7 +17,6 @@
 #define CPP11_MIGRATE_TRANSFORM_H
 
 #include "Core/IncludeExcludeInfo.h"
-#include "Core/FileOverrides.h"
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
@@ -51,7 +50,7 @@ class MatchFinder;
 } // namespace ast_matchers
 } // namespace clang
 
-class RewriterManager;
+class FileOverrides;
 
 /// \brief To group transforms' options together when printing the help.
 extern llvm::cl::OptionCategory TransformsOptionsCategory;
@@ -216,7 +215,6 @@ private:
   const TransformOptions &GlobalOptions;
   FileOverrides *Overrides;
   clang::tooling::Replacements Replace;
-  llvm::OwningPtr<RewriterManager> RewriterOwner;
   std::string CurrentSource;
   TimingVec Timings;
   unsigned AcceptedChanges;

@@ -15,10 +15,11 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "Core/SyntaxCheck.h"
-#include "Core/Transforms.h"
-#include "Core/Transform.h"
+#include "Core/FileOverrides.h"
 #include "Core/PerfSupport.h"
+#include "Core/SyntaxCheck.h"
+#include "Core/Transform.h"
+#include "Core/Transforms.h"
 #include "LoopConvert/LoopConvert.h"
 #include "UseNullptr/UseNullptr.h"
 #include "UseAuto/UseAuto.h"
@@ -30,6 +31,7 @@
 #include "llvm/Support/Signals.h"
 
 namespace cl = llvm::cl;
+using namespace clang;
 using namespace clang::tooling;
 
 TransformOptions GlobalOptions;
@@ -190,25 +192,28 @@ int main(int argc, const char **argv) {
   for (FileOverrides::const_iterator I = FileStates.begin(),
                                      E = FileStates.end();
        I != E; ++I) {
-    if (I->second.isSourceOverriden()) {
+    const SourceOverrides &Overrides = *I->second;
+    if (Overrides.isSourceOverriden()) {
       std::string ErrorInfo;
-      llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
+      std::string MainFileName = I->getKey();
+      llvm::raw_fd_ostream FileStream(MainFileName.c_str(), ErrorInfo,
                                       llvm::raw_fd_ostream::F_Binary);
-      FileStream << I->second.MainFileOverride;
+      FileStream << Overrides.getMainFileContent();
     }
 
-    // FIXME: The Migrator shouldn't be responsible for writing headers
-    // to disk. Instead, it should write replacement info and another tool
-    // should take all replacement info for a header from possibly many other
-    // migration processes and merge it into a final form. For now, the 
-    // updated header is written to disk for testing purposes.
-    for (HeaderOverrides::const_iterator HeaderI = I->second.Headers.begin(),
-                                         HeaderE = I->second.Headers.end();
+    // FIXME: The Migrator shouldn't be responsible for writing headers to disk.
+    // Instead, it should write replacement info and another tool should take
+    // all replacement info for a header from possibly many other migration
+    // processes and merge it into a final form. For now, the updated header is
+    // written to disk for testing purposes.
+    for (HeaderOverrides::const_iterator HeaderI = Overrides.headers_begin(),
+                                         HeaderE = Overrides.headers_end();
          HeaderI != HeaderE; ++HeaderI) {
       assert(!HeaderI->second.FileOverride.empty() &&
              "A header override should not be empty");
       std::string ErrorInfo;
-      llvm::raw_fd_ostream HeaderStream(HeaderI->first.c_str(), ErrorInfo,
+      std::string HeaderFileName = HeaderI->getKey();
+      llvm::raw_fd_ostream HeaderStream(HeaderFileName.c_str(), ErrorInfo,
                                         llvm::raw_fd_ostream::F_Binary);
       HeaderStream << HeaderI->second.FileOverride;
     }

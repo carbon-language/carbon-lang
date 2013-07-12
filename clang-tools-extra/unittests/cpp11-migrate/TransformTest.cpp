@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
+#include "Core/FileOverrides.h"
 #include "Core/Transform.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclGroup.h"

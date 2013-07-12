@@ -16,8 +16,7 @@
 #ifndef CPP11_MIGRATE_SYNTAX_CHECK_H
 #define CPP11_MIGRATE_SYNTAX_CHECK_H
 
-#include "Core/FileOverrides.h"
-
+#include <string>
 #include <vector>
 
 // Forward Declarations
@@ -26,6 +25,8 @@ namespace tooling {
 class CompilationDatabase;
 } // namespace tooling
 } // namespace clang
+
+class FileOverrides;
 
 /// \brief Perform a syntax-only check over all files in \c SourcePaths using
 /// options provided by \c Database using file contents from \c Overrides if

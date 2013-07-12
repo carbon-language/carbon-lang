@@ -16,10 +16,8 @@
 #ifndef CPP11_MIGRATE_FILE_OVERRIDES_H
 #define CPP11_MIGRATE_FILE_OVERRIDES_H
 
-#include "llvm/ADT/StringRef.h"
-
-#include <map>
-#include <string>
+#include "clang/Tooling/Refactoring.h"
+#include "llvm/ADT/StringMap.h"
 
 // Forward Declarations
 namespace llvm {
@@ -28,7 +26,7 @@ class SmallVectorImpl;
 } // namespace llvm
 namespace clang {
 class SourceManager;
-class FileManager;
+class Rewriter;
 } // namespace clang
 
 /// \brief Container for storing override information for a single headers.
@@ -41,16 +39,20 @@ struct HeaderOverride {
 };
 
 /// \brief Container mapping header file names to override information.
-typedef std::map<std::string, HeaderOverride> HeaderOverrides;
+typedef llvm::StringMap<HeaderOverride> HeaderOverrides;
 
-/// \brief Container storing the file content overrides for a source file.
-struct SourceOverrides {
-  SourceOverrides(const std::string &MainFileName)
-      : MainFileName(MainFileName) {}
+/// \brief Container storing the file content overrides for a source file and
+/// any headers included by the source file either directly or indirectly to
+/// which changes have been made.
+class SourceOverrides {
+public:
+  SourceOverrides(llvm::StringRef MainFileName);
 
-  /// \brief Convenience function for applying this source's overrides to
-  /// the given SourceManager.
-  void applyOverrides(clang::SourceManager &SM) const;
+  /// \brief Accessors.
+  /// @{
+  llvm::StringRef getMainFileName() const { return MainFileName; }
+  llvm::StringRef getMainFileContent() const { return MainFileOverride; }
+  /// @}
 
   /// \brief Indicates if the source file has been overridden.
   ///
@@ -58,13 +60,67 @@ struct SourceOverrides {
   /// changed.
   bool isSourceOverriden() const { return !MainFileOverride.empty(); }
 
-  std::string MainFileName;
+  /// \brief Override the file contents by applying all the replacements.
+  ///
+  /// \param Replaces The replacements to apply.
+  /// \param SM A user provided SourceManager to be used when applying rewrites.
+  void applyReplacements(clang::tooling::Replacements &Replaces,
+                         clang::SourceManager &SM);
+  void applyReplacements(clang::tooling::Replacements &Replaces);
+
+  /// \brief Convenience function for applying this source's overrides to
+  /// the given SourceManager.
+  void applyOverrides(clang::SourceManager &SM) const;
+
+  /// \brief Iterators.
+  /// @{
+  HeaderOverrides::iterator headers_begin() { return Headers.begin(); }
+  HeaderOverrides::iterator headers_end() { return Headers.end(); }
+  HeaderOverrides::const_iterator headers_begin() const {
+    return Headers.begin();
+  }
+  HeaderOverrides::const_iterator headers_end() const { return Headers.end(); }
+  /// @}
+
+private:
+  /// \brief Flatten the Rewriter buffers of \p Rewrite and store results as
+  /// file content overrides.
+  void applyRewrites(clang::Rewriter &Rewrite);
+
+  const std::string MainFileName;
   std::string MainFileOverride;
   HeaderOverrides Headers;
 };
 
 /// \brief Maps source file names to content override information.
-typedef std::map<std::string, SourceOverrides> FileOverrides;
+class FileOverrides {
+public:
+  typedef llvm::StringMap<SourceOverrides *> SourceOverridesMap;
+  typedef SourceOverridesMap::const_iterator const_iterator;
+
+  FileOverrides() {}
+  ~FileOverrides();
+
+  const_iterator find(llvm::StringRef Filename) const {
+    return Overrides.find(Filename);
+  }
+
+  /// \brief Get the \c SourceOverrides for \p Filename, creating it if
+  /// necessary.
+  SourceOverrides &getOrCreate(llvm::StringRef Filename);
+
+  /// \brief Iterators.
+  /// @{
+  const_iterator begin() const { return Overrides.begin(); }
+  const_iterator end() const { return Overrides.end(); }
+  /// @}
+
+private:
+  FileOverrides(const FileOverrides &) LLVM_DELETED_FUNCTION;
+  FileOverrides &operator=(const FileOverrides &) LLVM_DELETED_FUNCTION;
+
+  SourceOverridesMap Overrides;
+};
 
 /// \brief Generate a unique filename to store the replacements.
 ///

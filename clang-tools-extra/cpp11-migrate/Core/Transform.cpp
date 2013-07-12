@@ -14,15 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "Core/Transform.h"
+#include "Core/FileOverrides.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/LangOptions.h"
-#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
@@ -77,96 +74,8 @@ private:
 };
 } // namespace
 
-/// \brief Class for creating Rewriter objects and housing Rewriter
-/// dependencies.
-///
-/// A Rewriter depends on a SourceManager which in turn depends on a
-/// FileManager and a DiagnosticsEngine. Transform uses this class to create a
-/// new Rewriter and SourceManager for every translation unit it transforms. A
-/// DiagnosticsEngine doesn't need to be re-created so it's constructed once. A
-/// SourceManager and Rewriter are (re)created as required.
-///
-/// FIXME: The DiagnosticsEngine should really come from somewhere more global.
-/// It shouldn't be re-created once for every transform.
-///
-/// NOTE: SourceManagers cannot be shared. Therefore the one used to parse the
-/// translation unit cannot be used to create a Rewriter. This is why both a
-/// SourceManager and Rewriter need to be created for each translation unit.
-class RewriterManager {
-public:
-  RewriterManager()
-      : DiagOpts(new DiagnosticOptions()),
-        DiagnosticPrinter(llvm::errs(), DiagOpts.getPtr()),
-        Diagnostics(
-            llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-            DiagOpts.getPtr(), &DiagnosticPrinter, false) {}
-
-  void prepare(FileManager &Files) {
-    Sources.reset(new SourceManager(Diagnostics, Files));
-    Rewrite.reset(new Rewriter(*Sources, DefaultLangOptions));
-  }
-
-  void applyOverrides(const SourceOverrides &Overrides) {
-    Overrides.applyOverrides(*Sources);
-  }
-
-  Rewriter &getRewriter() { return *Rewrite; }
-
-private:
-  LangOptions DefaultLangOptions;
-  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
-  TextDiagnosticPrinter DiagnosticPrinter;
-  DiagnosticsEngine Diagnostics;
-  llvm::OwningPtr<SourceManager> Sources;
-  llvm::OwningPtr<Rewriter> Rewrite;
-};
-
-/// \brief Flatten the Rewriter buffers of \p Rewrite and store results as
-/// file content overrides in \p Overrides.
-void collectResults(clang::Rewriter &Rewrite, SourceOverrides &Overrides) {
-  for (Rewriter::buffer_iterator I = Rewrite.buffer_begin(),
-                                 E = Rewrite.buffer_end();
-       I != E; ++I) {
-    const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
-    assert(Entry != 0 && "Expected a FileEntry");
-    assert(Entry->getName() != 0 &&
-           "Unexpected NULL return from FileEntry::getName()");
-
-    std::string ResultBuf;
-
-    // Get a copy of the rewritten buffer from the Rewriter.
-    llvm::raw_string_ostream StringStream(ResultBuf);
-    I->second.write(StringStream);
-
-    // Cause results to be written to ResultBuf.
-    StringStream.str();
-
-    // FIXME: Use move semantics to avoid copies of the buffer contents if
-    // benchmarking shows the copies are expensive, especially for large source
-    // files.
-
-    if (Overrides.MainFileName == Entry->getName()) {
-      Overrides.MainFileOverride = ResultBuf;
-      continue;
-    }
-
-    // Header overrides are treated differently. Eventually, raw replacements
-    // will be stored as well for later output to disk. Applying replacements
-    // in memory will always be necessary as the source goes down the transform
-    // pipeline.
-
-    // Create HeaderOverride if not already existing
-    HeaderOverride &Header = Overrides.Headers[Entry->getName()];
-    if (Header.FileName.empty())
-      Header.FileName = Entry->getName();
-
-    Header.FileOverride = ResultBuf;
-  }
-}
-
 Transform::Transform(llvm::StringRef Name, const TransformOptions &Options)
-    : Name(Name), GlobalOptions(Options), Overrides(0),
-      RewriterOwner(new RewriterManager) {
+    : Name(Name), GlobalOptions(Options), Overrides(0) {
   Reset();
 }
 
@@ -192,12 +101,9 @@ bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
 
   CurrentSource = Filename.str();
 
-  RewriterOwner->prepare(CI.getFileManager());
   FileOverrides::const_iterator I = Overrides->find(CurrentSource);
-  if (I != Overrides->end()) {
-    I->second.applyOverrides(CI.getSourceManager());
-    RewriterOwner->applyOverrides(I->second);
-  }
+  if (I != Overrides->end())
+    I->second->applyOverrides(CI.getSourceManager());
 
   Replace.clear();
 
@@ -210,16 +116,8 @@ bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
 
 void Transform::handleEndSource() {
   if (!getReplacements().empty()) {
-    // FIXME: applyAllReplacements will indicate if it couldn't apply all
-    // replacements. Handle that case.
-    applyAllReplacements(getReplacements(), RewriterOwner->getRewriter());
-
-    FileOverrides::iterator I = Overrides->find(CurrentSource);
-    if (I == Overrides->end())
-      I = Overrides->insert(FileOverrides::value_type(CurrentSource,
-                                                      CurrentSource)).first;
-
-    collectResults(RewriterOwner->getRewriter(), I->second);
+    SourceOverrides &SO = Overrides->getOrCreate(CurrentSource);
+    SO.applyReplacements(getReplacements());
   }
 
   if (Options().EnableTiming)

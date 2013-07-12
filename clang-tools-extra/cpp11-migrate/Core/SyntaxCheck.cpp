@@ -13,7 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "SyntaxCheck.h"
+#include "Core/SyntaxCheck.h"
+#include "Core/FileOverrides.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Tooling.h"
@@ -31,7 +32,7 @@ public:
 
     FileOverrides::const_iterator I = Overrides.find(Filename);
     if (I != Overrides.end())
-      I->second.applyOverrides(CI.getSourceManager());
+      I->second->applyOverrides(CI.getSourceManager());
 
     return true;
   }
