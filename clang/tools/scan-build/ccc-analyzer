@@ -341,7 +341,7 @@ my %LinkerOptionMap = (
 );
 
 my %CompilerLinkerOptionMap = (
-  '-Wwrite-strings' => 0
+  '-Wwrite-strings' => 0,
   '-ftrapv-handler' => 1, # specifically call out separated -f flag
   '-mios-simulator-version-min' => 0, # This really has 1 argument, but always has '='
   '-isysroot' => 1,
