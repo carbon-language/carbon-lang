@@ -498,6 +498,9 @@ def err_misplaced_ellipsis_in_declaration : Error<
 def ext_abstract_pack_declarator_parens : ExtWarn<
   "ISO C++11 requires a parenthesized pack declaration to have a name">,
   InGroup<DiagGroup<"anonymous-pack-parens">>;
+def err_function_is_not_record : Error<
+  "unexpected '%select{.|->}0' in function call; perhaps remove the "
+  "'%select{.|->}0'?">;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;

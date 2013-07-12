@@ -1457,7 +1457,19 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       ParsedType ObjectType;
       bool MayBePseudoDestructor = false;
       if (getLangOpts().CPlusPlus && !LHS.isInvalid()) {
-        LHS = Actions.ActOnStartCXXMemberReference(getCurScope(), LHS.take(),
+        Expr *Base = LHS.take();
+        const Type* BaseType = Base->getType().getTypePtrOrNull();
+        if (BaseType && Tok.is(tok::l_paren) &&
+            (BaseType->isFunctionType() ||
+             BaseType->getAsPlaceholderType()->getKind() ==
+                 BuiltinType::BoundMember)) {
+          Diag(OpLoc, diag::err_function_is_not_record)
+            << (OpKind == tok::arrow) << Base->getSourceRange()
+            << FixItHint::CreateRemoval(OpLoc);
+          return ParsePostfixExpressionSuffix(Base);
+        }
+
+        LHS = Actions.ActOnStartCXXMemberReference(getCurScope(), Base,
                                                    OpLoc, OpKind, ObjectType,
                                                    MayBePseudoDestructor);
         if (LHS.isInvalid())

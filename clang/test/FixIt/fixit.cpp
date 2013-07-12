@@ -324,3 +324,17 @@ namespace PR15045 {
     return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer; maybe you meant to use '.'?}}
   }
 }
+
+namespace PR5898 {
+  class A {
+  public:
+    const char *str();
+  };
+  const char* foo(A &x)
+  {
+    return x.str.();  // expected-error {{unexpected '.' in function call; perhaps remove the '.'?}}
+  }
+  bool bar(A x, const char *y) {
+    return foo->(x) == y;  // expected-error {{unexpected '->' in function call; perhaps remove the '->'?}}
+  }
+}
