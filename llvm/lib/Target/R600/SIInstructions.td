@@ -1232,15 +1232,21 @@ def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
 
 } // Uses = [EXEC,VCC,M0], Defs = [EXEC,VCC,M0]
 
-// This psuedo instruction takes a pointer as input and outputs a resource
-// constant that can be used with the ADDR64 MUBUF instructions.
-
 let usesCustomInserter = 1 in {
 
+// This psuedo instruction takes a pointer as input and outputs a resource
+// constant that can be used with the ADDR64 MUBUF instructions.
 def SI_ADDR64_RSRC : InstSI <
   (outs SReg_128:$srsrc),
   (ins SReg_64:$ptr),
   "", []
+>;
+
+def V_SUB_F64 : InstSI <
+  (outs VReg_64:$dst),
+  (ins VReg_64:$src0, VReg_64:$src1),
+  "V_SUB_F64 $dst, $src0, $src1",
+  []
 >;
 
 } // end usesCustomInserter
@@ -1269,6 +1275,11 @@ def : Pat <
                  f32:$src0, f32:$src1, f32:$src2, f32:$src3),
   (EXP imm:$en, imm:$tgt, imm:$compr, imm:$done, imm:$vm,
        $src0, $src1, $src2, $src3)
+>;
+
+def : Pat <
+  (f64 (fsub f64:$src0, f64:$src1)),
+  (V_SUB_F64 $src0, $src1)
 >;
 
 /********** ======================= **********/
