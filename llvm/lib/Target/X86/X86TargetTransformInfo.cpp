@@ -100,6 +100,8 @@ public:
                                    unsigned Alignment,
                                    unsigned AddressSpace) const;
 
+  virtual unsigned getAddressComputationCost(Type *PtrTy, bool IsComplex) const;
+
   /// @}
 };
 
@@ -597,4 +599,17 @@ unsigned X86TTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
     Cost*=2;
 
   return Cost;
+}
+
+unsigned X86TTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
+  // Address computations in vectorized code with non-consecutive addresses will
+  // likely result in more instructions compared to scalar code where the
+  // computation can more often be merged into the index mode. The resulting
+  // extra micro-ops can significantly decrease throughput.
+  unsigned NumVectorInstToHideOverhead = 10;
+
+  if (Ty->isVectorTy() && IsComplex)
+    return NumVectorInstToHideOverhead;
+
+  return TargetTransformInfo::getAddressComputationCost(Ty, IsComplex);
 }
