@@ -22,7 +22,6 @@ add_lldb_library(lldbSymbol
   SymbolVendor.cpp
   Symtab.cpp
   Type.cpp
-  TypeHierarchyNavigator.cpp
   TypeList.cpp
   UnwindPlan.cpp
   UnwindTable.cpp
