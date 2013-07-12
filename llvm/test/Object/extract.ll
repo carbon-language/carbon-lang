@@ -43,4 +43,4 @@
 ; RUN: llvm-ar rc %t.a very_long_bytecode_file_name.bc
 ; RUN: env TZ=GMT llvm-ar tv %t.a | FileCheck %s
 
-CHECK: 1000/1000 1465 Nov 19 03:01 2004 very_long_bytecode_file_name.bc
+CHECK: 1465 Nov 19 03:01 2004 very_long_bytecode_file_name.bc
