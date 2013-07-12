@@ -1017,6 +1017,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 0;
   if (Left.is(tok::comma))
     return 1;
+  if (Right.is(tok::l_square))
+    return 150;
 
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator)) {
     if (Line.First->is(tok::kw_for) && Right.PartOfMultiVariableDeclStmt)
@@ -1296,7 +1298,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
          (Left.is(tok::r_paren) &&
           Right.isOneOf(tok::identifier, tok::kw_const, tok::kw___attribute)) ||
          (Left.is(tok::l_paren) && !Right.is(tok::r_paren)) ||
-         (Left.is(tok::l_square) && !Right.is(tok::r_square));
+         Right.is(tok::l_square);
 }
 
 void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
