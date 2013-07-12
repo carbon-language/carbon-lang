@@ -5434,6 +5434,20 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       // We encode the underlying type which comes out as
       // {...};
       S += '^';
+      if (FD && OPT->getInterfaceDecl()) {
+        // Prevent redursive encoding of fields in some rare cases.
+        ObjCInterfaceDecl *OI = OPT->getInterfaceDecl();
+        SmallVector<const ObjCIvarDecl*, 32> Ivars;
+        DeepCollectObjCIvars(OI, true, Ivars);
+        for (unsigned i = 0, e = Ivars.size(); i != e; ++i) {
+          if (cast<FieldDecl>(Ivars[i]) == FD) {
+            S += '{';
+            S += OI->getIdentifier()->getName();
+            S += '}';
+            return;
+          }
+        }
+      }
       getObjCEncodingForTypeImpl(PointeeTy, S,
                                  false, ExpandPointedToStructures,
                                  NULL,

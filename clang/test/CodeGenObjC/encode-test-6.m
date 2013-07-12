@@ -35,3 +35,21 @@ typedef BABugExample BABugExampleRedefinition;
 @end
 
 // CHECK: internal global [24 x i8] c"^{BABugExample=@}16
+
+// rdar://14408244
+@class SCNCamera;
+typedef SCNCamera C3DCamera;
+typedef struct
+{
+    C3DCamera *presentationInstance;
+}  C3DCameraStorage;
+
+@interface SCNCamera
+@end
+
+@implementation SCNCamera
+{
+    C3DCameraStorage _storage;
+}
+@end
+// CHECK: internal global [39 x i8] c"{?=\22presentationInstance\22^{SCNCamera}}\00"
