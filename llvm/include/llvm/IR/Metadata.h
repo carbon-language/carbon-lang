@@ -139,7 +139,7 @@ public:
   void replaceOperandWith(unsigned i, Value *NewVal);
 
   /// getOperand - Return specified operand.
-  Value *getOperand(unsigned i) const;
+  Value *getOperand(unsigned i) const LLVM_READONLY;
 
   /// getNumOperands - Return number of MDNode operands.
   unsigned getNumOperands() const { return NumOperands; }
