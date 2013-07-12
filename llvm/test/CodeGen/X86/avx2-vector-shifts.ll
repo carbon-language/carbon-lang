@@ -1,0 +1,247 @@
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=core-avx2 -mattr=+avx2 | FileCheck %s
+
+; AVX2 Logical Shift Left
+
+define <16 x i16> @test_sllw_1(<16 x i16> %InVec) {
+entry:
+  %shl = shl <16 x i16> %InVec, <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_sllw_1:
+; CHECK: vpsllw  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <16 x i16> @test_sllw_2(<16 x i16> %InVec) {
+entry:
+  %shl = shl <16 x i16> %InVec, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_sllw_2:
+; CHECK: vpaddw  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <16 x i16> @test_sllw_3(<16 x i16> %InVec) {
+entry:
+  %shl = shl <16 x i16> %InVec, <i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_sllw_3:
+; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_slld_1(<8 x i32> %InVec) {
+entry:
+  %shl = shl <8 x i32> %InVec, <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_slld_1:
+; CHECK: vpslld  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_slld_2(<8 x i32> %InVec) {
+entry:
+  %shl = shl <8 x i32> %InVec, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_slld_2:
+; CHECK: vpaddd  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_slld_3(<8 x i32> %InVec) {
+entry:
+  %shl = shl <8 x i32> %InVec, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_slld_3:
+; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <4 x i64> @test_sllq_1(<4 x i64> %InVec) {
+entry:
+  %shl = shl <4 x i64> %InVec, <i64 0, i64 0, i64 0, i64 0>
+  ret <4 x i64> %shl
+}
+
+; CHECK: test_sllq_1:
+; CHECK: vpsllq  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <4 x i64> @test_sllq_2(<4 x i64> %InVec) {
+entry:
+  %shl = shl <4 x i64> %InVec, <i64 1, i64 1, i64 1, i64 1>
+  ret <4 x i64> %shl
+}
+
+; CHECK: test_sllq_2:
+; CHECK: vpaddq  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <4 x i64> @test_sllq_3(<4 x i64> %InVec) {
+entry:
+  %shl = shl <4 x i64> %InVec, <i64 64, i64 64, i64 64, i64 64>
+  ret <4 x i64> %shl
+}
+
+; CHECK: test_sllq_3:
+; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+; AVX2 Arithmetic Shift
+
+define <16 x i16> @test_sraw_1(<16 x i16> %InVec) {
+entry:
+  %shl = ashr <16 x i16> %InVec, <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_sraw_1:
+; CHECK: vpsraw  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <16 x i16> @test_sraw_2(<16 x i16> %InVec) {
+entry:
+  %shl = ashr <16 x i16> %InVec, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_sraw_2:
+; CHECK: vpsraw  $1, %ymm0, %ymm0
+; CHECK: ret
+
+define <16 x i16> @test_sraw_3(<16 x i16> %InVec) {
+entry:
+  %shl = ashr <16 x i16> %InVec, <i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_sraw_3:
+; CHECK: vpsraw  $16, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_srad_1(<8 x i32> %InVec) {
+entry:
+  %shl = ashr <8 x i32> %InVec, <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_srad_1:
+; CHECK: vpsrad  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_srad_2(<8 x i32> %InVec) {
+entry:
+  %shl = ashr <8 x i32> %InVec, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_srad_2:
+; CHECK: vpsrad  $1, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_srad_3(<8 x i32> %InVec) {
+entry:
+  %shl = ashr <8 x i32> %InVec, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_srad_3:
+; CHECK: vpsrad  $32, %ymm0, %ymm0
+; CHECK: ret
+
+; SSE Logical Shift Right
+
+define <16 x i16> @test_srlw_1(<16 x i16> %InVec) {
+entry:
+  %shl = lshr <16 x i16> %InVec, <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_srlw_1:
+; CHECK: vpsrlw  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <16 x i16> @test_srlw_2(<16 x i16> %InVec) {
+entry:
+  %shl = lshr <16 x i16> %InVec, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_srlw_2:
+; CHECK: vpsrlw  $1, %ymm0, %ymm0
+; CHECK: ret
+
+define <16 x i16> @test_srlw_3(<16 x i16> %InVec) {
+entry:
+  %shl = lshr <16 x i16> %InVec, <i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16>
+  ret <16 x i16> %shl
+}
+
+; CHECK: test_srlw_3:
+; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_srld_1(<8 x i32> %InVec) {
+entry:
+  %shl = lshr <8 x i32> %InVec, <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_srld_1:
+; CHECK: vpsrld  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_srld_2(<8 x i32> %InVec) {
+entry:
+  %shl = lshr <8 x i32> %InVec, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_srld_2:
+; CHECK: vpsrld  $1, %ymm0, %ymm0
+; CHECK: ret
+
+define <8 x i32> @test_srld_3(<8 x i32> %InVec) {
+entry:
+  %shl = lshr <8 x i32> %InVec, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
+  ret <8 x i32> %shl
+}
+
+; CHECK: test_srld_3:
+; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: ret
+
+define <4 x i64> @test_srlq_1(<4 x i64> %InVec) {
+entry:
+  %shl = lshr <4 x i64> %InVec, <i64 0, i64 0, i64 0, i64 0>
+  ret <4 x i64> %shl
+}
+
+; CHECK: test_srlq_1:
+; CHECK: vpsrlq  $0, %ymm0, %ymm0
+; CHECK: ret
+
+define <4 x i64> @test_srlq_2(<4 x i64> %InVec) {
+entry:
+  %shl = lshr <4 x i64> %InVec, <i64 1, i64 1, i64 1, i64 1>
+  ret <4 x i64> %shl
+}
+
+; CHECK: test_srlq_2:
+; CHECK: vpsrlq  $1, %ymm0, %ymm0
+; CHECK: ret
+
+define <4 x i64> @test_srlq_3(<4 x i64> %InVec) {
+entry:
+  %shl = lshr <4 x i64> %InVec, <i64 64, i64 64, i64 64, i64 64>
+  ret <4 x i64> %shl
+}
+
+; CHECK: test_srlq_3:
+; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: ret
