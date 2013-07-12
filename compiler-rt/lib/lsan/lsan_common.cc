@@ -420,7 +420,7 @@ static Suppression *GetSuppressionForStack(u32 stack_trace_id) {
 // real-world applications.
 // FIXME: Get rid of this limit by changing the implementation of LeakReport to
 // use a hash table.
-const uptr kMaxLeaksConsidered = 1000;
+const uptr kMaxLeaksConsidered = 5000;
 
 void LeakReport::Add(u32 stack_trace_id, uptr leaked_size, ChunkTag tag) {
   CHECK(tag == kDirectlyLeaked || tag == kIndirectlyLeaked);
