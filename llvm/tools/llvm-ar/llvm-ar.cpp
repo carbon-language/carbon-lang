@@ -88,34 +88,33 @@ enum ArchiveOperation {
 };
 
 // Modifiers to follow operation to vary behavior
-bool AddAfter = false;           ///< 'a' modifier
-bool AddBefore = false;          ///< 'b' modifier
-bool Create = false;             ///< 'c' modifier
-bool OriginalDates = false;      ///< 'o' modifier
-bool SymTable = true;            ///< 's' & 'S' modifiers
-bool OnlyUpdate = false;         ///< 'u' modifier
-bool Verbose = false;            ///< 'v' modifier
+static bool AddAfter = false;      ///< 'a' modifier
+static bool AddBefore = false;     ///< 'b' modifier
+static bool Create = false;        ///< 'c' modifier
+static bool OriginalDates = false; ///< 'o' modifier
+static bool OnlyUpdate = false;    ///< 'u' modifier
+static bool Verbose = false;       ///< 'v' modifier
 
 // Relative Positional Argument (for insert/move). This variable holds
 // the name of the archive member to which the 'a', 'b' or 'i' modifier
 // refers. Only one of 'a', 'b' or 'i' can be specified so we only need
 // one variable.
-std::string RelPos;
+static std::string RelPos;
 
 // This variable holds the name of the archive file as given on the
 // command line.
-std::string ArchiveName;
+static std::string ArchiveName;
 
 // This variable holds the list of member files to proecess, as given
 // on the command line.
-std::vector<std::string> Members;
+static std::vector<std::string> Members;
 
 // This variable holds the (possibly expanded) list of path objects that
 // correspond to files we will
-std::set<std::string> Paths;
+static std::set<std::string> Paths;
 
 // The Archive object to which all the editing operations will be sent.
-Archive* TheArchive = 0;
+static Archive *TheArchive = 0;
 
 // The name this program was invoked as.
 static const char *program_name;
@@ -141,7 +140,7 @@ fail(const std::string &msg) {
 
 // getRelPos - Extract the member filename from the command line for
 // the [relpos] argument associated with a, b, and i modifiers
-void getRelPos() {
+static void getRelPos() {
   if(RestOfArgs.size() == 0)
     show_help("Expected [relpos] for a, b, or i modifier");
   RelPos = RestOfArgs[0];
@@ -149,7 +148,7 @@ void getRelPos() {
 }
 
 // getArchive - Get the archive file name from the command line
-void getArchive() {
+static void getArchive() {
   if(RestOfArgs.size() == 0)
     show_help("An archive name must be specified");
   ArchiveName = RestOfArgs[0];
@@ -158,7 +157,7 @@ void getArchive() {
 
 // getMembers - Copy over remaining items in RestOfArgs to our Members vector
 // This is just for clarity.
-void getMembers() {
+static void getMembers() {
   if(RestOfArgs.size() > 0)
     Members = std::vector<std::string>(RestOfArgs);
 }
@@ -166,7 +165,7 @@ void getMembers() {
 // parseCommandLine - Parse the command line options as presented and return the
 // operation specified. Process all modifiers and check to make sure that
 // constraints on modifier/operation pairs have not been violated.
-ArchiveOperation parseCommandLine() {
+static ArchiveOperation parseCommandLine() {
 
   // Keep track of number of operations. We can only specify one
   // per execution.
@@ -247,7 +246,7 @@ ArchiveOperation parseCommandLine() {
 // buildPaths - Convert the strings in the Members vector to sys::Path objects
 // and make sure they are valid and exist exist. This check is only needed for
 // the operations that add/replace files to the archive ('q' and 'r')
-bool buildPaths(bool checkExistence, std::string* ErrMsg) {
+static bool buildPaths(bool checkExistence, std::string *ErrMsg) {
   for (unsigned i = 0; i < Members.size(); i++) {
     std::string aPath = Members[i];
     if (checkExistence) {
@@ -270,7 +269,7 @@ bool buildPaths(bool checkExistence, std::string* ErrMsg) {
 // looking for members that match the path list. It is careful to uncompress
 // things that should be and to skip bitcode files unless the 'k' modifier was
 // given.
-bool doPrint(std::string* ErrMsg) {
+static bool doPrint(std::string *ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
@@ -295,8 +294,7 @@ bool doPrint(std::string* ErrMsg) {
 
 // putMode - utility function for printing out the file mode when the 't'
 // operation is in verbose mode.
-void
-printMode(unsigned mode) {
+static void printMode(unsigned mode) {
   if (mode & 004)
     outs() << "r";
   else
@@ -315,8 +313,7 @@ printMode(unsigned mode) {
 // the file names of each of the members. However, if verbose mode is requested
 // ('v' modifier) then the file type, permission mode, user, group, size, and
 // modification time are also printed.
-bool
-doDisplayTable(std::string* ErrMsg) {
+static bool doDisplayTable(std::string *ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
@@ -344,8 +341,7 @@ doDisplayTable(std::string* ErrMsg) {
 
 // doExtract - Implement the 'x' operation. This function extracts files back to
 // the file system.
-bool
-doExtract(std::string* ErrMsg) {
+static bool doExtract(std::string *ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
   for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
@@ -396,8 +392,7 @@ doExtract(std::string* ErrMsg) {
 // members from the archive. Note that if the count is specified, there should
 // be no more than one path in the Paths list or else this algorithm breaks.
 // That check is enforced in parseCommandLine (above).
-bool
-doDelete(std::string* ErrMsg) {
+static bool doDelete(std::string *ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
   if (Paths.empty())
@@ -423,8 +418,7 @@ doDelete(std::string* ErrMsg) {
 // order of the archive members so that when the archive is written the move
 // of the members is accomplished. Note the use of the RelPos variable to
 // determine where the items should be moved to.
-bool
-doMove(std::string* ErrMsg) {
+static bool doMove(std::string *ErrMsg) {
   if (buildPaths(false, ErrMsg))
     return true;
 
@@ -474,8 +468,7 @@ doMove(std::string* ErrMsg) {
 
 // doQuickAppend - Implements the 'q' operation. This function just
 // indiscriminantly adds the members to the archive and rebuilds it.
-bool
-doQuickAppend(std::string* ErrMsg) {
+static bool doQuickAppend(std::string *ErrMsg) {
   // Get the list of paths to append.
   if (buildPaths(true, ErrMsg))
     return true;
@@ -497,8 +490,7 @@ doQuickAppend(std::string* ErrMsg) {
 
 // doReplaceOrInsert - Implements the 'r' operation. This function will replace
 // any existing files or insert new ones into the archive.
-bool
-doReplaceOrInsert(std::string* ErrMsg) {
+static bool doReplaceOrInsert(std::string *ErrMsg) {
 
   // Build the list of files to be added/replaced.
   if (buildPaths(true, ErrMsg))
@@ -578,7 +570,7 @@ doReplaceOrInsert(std::string* ErrMsg) {
   return false;
 }
 
-bool shouldCreateArchive(ArchiveOperation Op) {
+static bool shouldCreateArchive(ArchiveOperation Op) {
   switch (Op) {
   case Print:
   case Delete:
