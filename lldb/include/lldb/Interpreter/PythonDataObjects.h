@@ -99,6 +99,12 @@ namespace lldb_private {
             return m_py_obj;
         }
         
+        PythonString
+        Repr ();
+        
+        PythonString
+        Str ();
+        
         operator bool () const
         {
             return m_py_obj != NULL;

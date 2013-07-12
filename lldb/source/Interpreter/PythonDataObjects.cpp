@@ -66,6 +66,28 @@ PythonObject::Dump (Stream &strm) const
         strm.PutCString ("NULL");
 }
 
+PythonString
+PythonObject::Repr ()
+{
+    if (!m_py_obj)
+        return PythonString ();
+    PyObject *repr = PyObject_Repr(m_py_obj);
+    if (!repr)
+        return PythonString ();
+    return PythonString(repr);
+}
+
+PythonString
+PythonObject::Str ()
+{
+    if (!m_py_obj)
+        return PythonString ();
+    PyObject *str = PyObject_Str(m_py_obj);
+    if (!str)
+        return PythonString ();
+    return PythonString(str);
+}
+
 //----------------------------------------------------------------------
 // PythonString
 //----------------------------------------------------------------------
