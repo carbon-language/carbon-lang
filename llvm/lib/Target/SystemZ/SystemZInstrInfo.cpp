@@ -368,6 +368,28 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
          .getRegClass(MI->getOperand(OpNum).getReg())->getSize() &&
          "Invalid size combination");
 
+  unsigned Opcode = MI->getOpcode();
+  if (Opcode == SystemZ::LGDR || Opcode == SystemZ::LDGR) {
+    bool Op0IsGPR = (Opcode == SystemZ::LGDR);
+    bool Op1IsGPR = (Opcode == SystemZ::LDGR);
+    // If we're spilling the destination of an LDGR or LGDR, store the
+    // source register instead.
+    if (OpNum == 0) {
+      unsigned StoreOpcode = Op1IsGPR ? SystemZ::STG : SystemZ::STD;
+      return BuildMI(MF, MI->getDebugLoc(), get(StoreOpcode))
+        .addOperand(MI->getOperand(1)).addFrameIndex(FrameIndex)
+        .addImm(0).addReg(0);
+    }
+    // If we're spilling the source of an LDGR or LGDR, load the
+    // destination register instead.
+    if (OpNum == 1) {
+      unsigned LoadOpcode = Op0IsGPR ? SystemZ::LG : SystemZ::LD;
+      unsigned Dest = MI->getOperand(0).getReg();
+      return BuildMI(MF, MI->getDebugLoc(), get(LoadOpcode), Dest)
+        .addFrameIndex(FrameIndex).addImm(0).addReg(0);
+    }
+  }
+
   // Look for cases where the source of a simple store or the destination
   // of a simple load is being spilled.  Try to use MVC instead.
   //
@@ -399,7 +421,7 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
 
   // If the spilled operand is the final one, try to change <INSN>R
   // into <INSN>.
-  int MemOpcode = SystemZ::getMemOpcode(MI->getOpcode());
+  int MemOpcode = SystemZ::getMemOpcode(Opcode);
   if (MemOpcode >= 0) {
     unsigned NumOps = MI->getNumExplicitOperands();
     if (OpNum == NumOps - 1) {
