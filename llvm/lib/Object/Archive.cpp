@@ -212,9 +212,9 @@ error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
 Archive::Archive(MemoryBuffer *source, error_code &ec)
   : Binary(Binary::ID_Archive, source), SymbolTable(end_children()) {
   // Check for sufficient magic.
-  if (!source || source->getBufferSize()
-                 < (8 + sizeof(ArchiveMemberHeader)) // Smallest archive.
-              || StringRef(source->getBufferStart(), 8) != Magic) {
+  assert(source);
+  if (source->getBufferSize() < 8 ||
+      StringRef(source->getBufferStart(), 8) != Magic) {
     ec = object_error::invalid_file_type;
     return;
   }
@@ -224,7 +224,7 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   child_iterator e = end_children();
 
   if (i == e) {
-    ec = object_error::parse_failed;
+    ec = object_error::success;
     return;
   }
 
@@ -314,6 +314,8 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
 }
 
 Archive::child_iterator Archive::begin_children(bool skip_internal) const {
+  if (Data->getBufferSize() == 8) // empty archive.
+    return end_children();
   const char *Loc = Data->getBufferStart() + strlen(Magic);
   Child c(this, Loc);
   // Skip internals at the beginning of an archive.

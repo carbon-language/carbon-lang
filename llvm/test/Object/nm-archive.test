@@ -30,3 +30,6 @@ RUN: llvm-nm %p/Inputs/archive-test.a-gnu-minimal
 
 And don't crash when asked to print a non existing symtab.
 RUN: llvm-nm -s %p/Inputs/archive-test.a-gnu-minimal
+
+Don't reject an empty archive.
+RUN: llvm-nm %p/Inputs/archive-test.a-empty
