@@ -22,9 +22,8 @@ def LO32 : SDNodeXForm<imm, [{
 }]>;
 
 def LO32f : SDNodeXForm<fpimm, [{
-  uint64_t val = N->getValueAPF().bitcastToAPInt().getZExtValue() & 0xffffffff;
-  float *fval = reinterpret_cast<float *>(&val);
-  return CurDAG->getTargetConstantFP(*fval, MVT::f32);
+  APInt V = N->getValueAPF().bitcastToAPInt().trunc(32);
+  return CurDAG->getTargetConstantFP(APFloat(APFloat::IEEEsingle, V), MVT::f32);
 }]>;
 
 // Transformation function, extract the upper 32bit of a 64bit immediate
@@ -33,9 +32,8 @@ def HI32 : SDNodeXForm<imm, [{
 }]>;
 
 def HI32f : SDNodeXForm<fpimm, [{
-  uint64_t val = N->getValueAPF().bitcastToAPInt().getZExtValue() >> 32;
-  float *fval = reinterpret_cast<float *>(&val);
-  return CurDAG->getTargetConstantFP(*fval, MVT::f32);
+  APInt V = N->getValueAPF().bitcastToAPInt().lshr(32).trunc(32);
+  return CurDAG->getTargetConstantFP(APFloat(APFloat::IEEEsingle, V), MVT::f32);
 }]>;
 
 def IMM8bitDWORD : ImmLeaf <
