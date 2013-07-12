@@ -2246,6 +2246,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
+  // icmp pred (urem X, Y), Y
   if (LBO && match(LBO, m_URem(m_Value(), m_Specific(RHS)))) {
     bool KnownNonNegative, KnownNegative;
     switch (Pred) {
@@ -2253,7 +2254,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       break;
     case ICmpInst::ICMP_SGT:
     case ICmpInst::ICMP_SGE:
-      ComputeSignBit(LHS, KnownNonNegative, KnownNegative, Q.TD);
+      ComputeSignBit(RHS, KnownNonNegative, KnownNegative, Q.TD);
       if (!KnownNonNegative)
         break;
       // fall-through
@@ -2263,7 +2264,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       return getFalse(ITy);
     case ICmpInst::ICMP_SLT:
     case ICmpInst::ICMP_SLE:
-      ComputeSignBit(LHS, KnownNonNegative, KnownNegative, Q.TD);
+      ComputeSignBit(RHS, KnownNonNegative, KnownNegative, Q.TD);
       if (!KnownNonNegative)
         break;
       // fall-through
@@ -2273,6 +2274,8 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       return getTrue(ITy);
     }
   }
+
+  // icmp pred X, (urem Y, X)
   if (RBO && match(RBO, m_URem(m_Value(), m_Specific(LHS)))) {
     bool KnownNonNegative, KnownNegative;
     switch (Pred) {
@@ -2280,7 +2283,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       break;
     case ICmpInst::ICMP_SGT:
     case ICmpInst::ICMP_SGE:
-      ComputeSignBit(RHS, KnownNonNegative, KnownNegative, Q.TD);
+      ComputeSignBit(LHS, KnownNonNegative, KnownNegative, Q.TD);
       if (!KnownNonNegative)
         break;
       // fall-through
@@ -2290,7 +2293,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       return getTrue(ITy);
     case ICmpInst::ICMP_SLT:
     case ICmpInst::ICMP_SLE:
-      ComputeSignBit(RHS, KnownNonNegative, KnownNegative, Q.TD);
+      ComputeSignBit(LHS, KnownNonNegative, KnownNegative, Q.TD);
       if (!KnownNonNegative)
         break;
       // fall-through

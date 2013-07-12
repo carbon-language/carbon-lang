@@ -480,7 +480,7 @@ define i1 @urem5(i16 %X, i32 %Y) {
   %B = urem i32 %A, %Y
   %C = icmp slt i32 %B, %Y
   ret i1 %C
-; CHECK: ret i1 true
+; CHECK-NOT: ret i1 true
 }
 
 define i1 @urem6(i32 %X, i32 %Y) {
@@ -489,6 +489,14 @@ define i1 @urem6(i32 %X, i32 %Y) {
   %B = icmp ugt i32 %Y, %A
   ret i1 %B
 ; CHECK: ret i1 true
+}
+
+define i1 @urem7(i32 %X) {
+; CHECK: @urem7
+  %A = urem i32 1, %X
+  %B = icmp sgt i32 %A, %X
+  ret i1 %B
+; CHECK-NOT: ret i1 false
 }
 
 define i1 @srem1(i32 %X) {
