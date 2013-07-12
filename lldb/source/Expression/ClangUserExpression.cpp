@@ -753,8 +753,6 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
                                            lldb::addr_t function_stack_bottom,
                                            lldb::addr_t function_stack_top)
 {
-    Error expr_error;
-    
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
@@ -762,7 +760,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
         
     if (!m_dematerializer_sp)
     {
-        error_stream.Printf ("Couldn't dematerialize struct : no dematerializer is present");
+        error_stream.Printf ("Couldn't apply expression side effects : no dematerializer is present");
         return false;
     }
     
@@ -772,7 +770,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
 
     if (!dematerialize_error.Success())
     {
-        error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
+        error_stream.Printf ("Couldn't apply expression side effects : %s\n", dematerialize_error.AsCString("unknown error"));
         return false;
     }
         
@@ -937,7 +935,6 @@ ClangUserExpression::Execute (Stream &error_stream,
         }
         else
         {
-            error_stream.Printf("Errored out in %s: Couldn't FinalizeJITExpression", __FUNCTION__);
             return eExecutionSetupError;
         }
     }

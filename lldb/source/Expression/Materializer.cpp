@@ -1164,6 +1164,8 @@ public:
             return;
         }
         
+        m_register_contents.reset(new DataBufferHeap(register_data.GetDataStart(), register_data.GetByteSize()));
+        
         Error write_error;
         
         map.WriteMemory(load_addr, register_data.GetDataStart(), register_data.GetByteSize(), write_error);
@@ -1212,6 +1214,16 @@ public:
             err.SetErrorStringWithFormat("couldn't get the data for register %s: %s", m_register_info.name, extract_error.AsCString());
             return;
         }
+        
+        if (!memcmp(register_data.GetDataStart(), m_register_contents->GetBytes(), register_data.GetByteSize()))
+        {
+            // No write required, and in particular we avoid errors if the register wasn't writable
+            
+            m_register_contents.reset();
+            return;
+        }
+        
+        m_register_contents.reset();
         
         RegisterValue register_value (const_cast<uint8_t*>(register_data.GetDataStart()), register_data.GetByteSize(), register_data.GetByteOrder());
         
@@ -1262,6 +1274,7 @@ public:
     }
 private:
     RegisterInfo m_register_info;
+    lldb::DataBufferSP m_register_contents;
 };
 
 uint32_t
