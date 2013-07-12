@@ -10,6 +10,7 @@ GNU-NEXT: rw-r--r-- 500/500   2280 Nov 19 03:04 2004 IsNAN.o
 Test reading an archive createdy by Mac OS X ar
 RUN: env TZ=GMT llvm-ar tv %p/Inputs/MacOSX.a | FileCheck %s --check-prefix=OSX -strict-whitespace
 
+OSX-NOT: __.SYMDEF
 OSX:      rw-r--r-- 501/501      8 Nov 19 02:57 2004 evenlen
 OSX-NEXT: rw-r--r-- 501/501      8 Nov 19 02:57 2004 oddlen
 OSX-NEXT: rw-r--r-- 502/502   1465 Feb  4 06:59 2010 very_long_bytecode_file_name.bc

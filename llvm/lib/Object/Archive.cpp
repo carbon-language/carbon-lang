@@ -23,20 +23,6 @@ using namespace object;
 
 static const char *Magic = "!<arch>\n";
 
-static bool isInternalMember(const ArchiveMemberHeader &amh) {
-  static const char *const internals[] = {
-    "/",
-    "//"
-  };
-
-  StringRef name = amh.getName();
-  for (std::size_t i = 0; i < sizeof(internals) / sizeof(*internals); ++i) {
-    if (name == internals[i])
-      return true;
-  }
-  return false;
-}
-
 void Archive::anchor() { }
 
 StringRef ArchiveMemberHeader::getName() const {
@@ -93,16 +79,13 @@ unsigned ArchiveMemberHeader::getGID() const {
   return Ret;
 }
 
-static const ArchiveMemberHeader *toHeader(const char *base) {
-  return reinterpret_cast<const ArchiveMemberHeader *>(base);
-}
-
 Archive::Child::Child(const Archive *Parent, const char *Start)
     : Parent(Parent) {
   if (!Start)
     return;
 
-  const ArchiveMemberHeader *Header = toHeader(Start);
+  const ArchiveMemberHeader *Header =
+      reinterpret_cast<const ArchiveMemberHeader *>(Start);
   Data = StringRef(Start, sizeof(ArchiveMemberHeader) + Header->getSize());
 
   // Setup StartOfFile and PaddingBytes.
@@ -173,7 +156,8 @@ error_code Archive::Child::getName(StringRef &Result) const {
     uint64_t name_size;
     if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
       llvm_unreachable("Long name length is not an ingeter");
-    Result = Data.substr(sizeof(ArchiveMemberHeader), name_size);
+    Result = Data.substr(sizeof(ArchiveMemberHeader), name_size)
+        .rtrim(StringRef("\0", 1));
     return object_error::success;
   }
   // It's a simple name.
@@ -252,6 +236,8 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   if (Name == "__.SYMDEF") {
     Format = K_BSD;
     SymbolTable = i;
+    ++i;
+    FirstRegular = i;
     ec = object_error::success;
     return;
   }
@@ -262,8 +248,11 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
     ec = i->getName(Name);
     if (ec)
       return;
-    if (Name == StringRef("__.SYMDEF SORTED\0\0\0", 20))
+    if (Name == "__.SYMDEF SORTED") {
       SymbolTable = i;
+      ++i;
+    }
+    FirstRegular = i;
     return;
   }
 
@@ -281,12 +270,15 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
   if (Name == "//") {
     Format = K_GNU;
     StringTable = i;
+    ++i;
+    FirstRegular = i;
     ec = object_error::success;
     return;
   }
 
   if (Name[0] != '/') {
     Format = K_GNU;
+    FirstRegular = i;
     ec = object_error::success;
     return;
   }
@@ -301,26 +293,31 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
 
   ++i;
   if (i == e) {
+    FirstRegular = i;
     ec = object_error::success;
     return;
   }
 
   Name = i->getRawName();
 
-  if (Name == "//")
+  if (Name == "//") {
     StringTable = i;
+    ++i;
+  }
 
+  FirstRegular = i;
   ec = object_error::success;
 }
 
-Archive::child_iterator Archive::begin_children(bool skip_internal) const {
+Archive::child_iterator Archive::begin_children(bool SkipInternal) const {
   if (Data->getBufferSize() == 8) // empty archive.
     return end_children();
+
+  if (SkipInternal)
+    return FirstRegular;
+
   const char *Loc = Data->getBufferStart() + strlen(Magic);
   Child c(this, Loc);
-  // Skip internals at the beginning of an archive.
-  if (skip_internal && isInternalMember(*toHeader(Loc)))
-    return c.getNext();
   return c;
 }
 

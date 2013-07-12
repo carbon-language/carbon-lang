@@ -174,7 +174,7 @@ public:
     return Format;
   }
 
-  child_iterator begin_children(bool skip_internal = true) const;
+  child_iterator begin_children(bool SkipInternal = true) const;
   child_iterator end_children() const;
 
   symbol_iterator begin_symbols() const;
@@ -191,6 +191,7 @@ public:
 private:
   child_iterator SymbolTable;
   child_iterator StringTable;
+  child_iterator FirstRegular;
   Kind Format;
 };
 
