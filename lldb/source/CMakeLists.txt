@@ -90,7 +90,6 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
     lldbHostLinux
     lldbPluginProcessLinux
     lldbPluginProcessPOSIX
-    lldbPluginProcessElfCore
     )
 endif ()
 

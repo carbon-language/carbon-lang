@@ -25,7 +25,6 @@
 #include "RegisterContext_i386.h"
 #include "RegisterContext_x86.h"
 #include "RegisterContext_x86_64.h"
-#include "Plugins/Process/elf-core/ProcessElfCore.h"
 
 using namespace lldb_private;
 using namespace lldb;
@@ -498,11 +497,6 @@ RegisterContext_x86_64::RegisterContext_x86_64(Thread &thread,
 
     ::memset(&m_fpr, 0, sizeof(RegisterContext_x86_64::FPR));
 
-    // elf-core yet to support ReadFPR()
-    ProcessSP base = CalculateProcess();
-    if (base.get()->GetPluginName() ==  ProcessElfCore::GetPluginNameStatic())
-        return;
-    
     // TODO: Use assembly to call cpuid on the inferior and query ebx or ecx
     m_fpr_type = eXSAVE; // extended floating-point registers, if available
     if (false == ReadFPR())

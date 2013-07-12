@@ -67,7 +67,6 @@ USEDLIBS = lldbAPI.a \
 	LLVMMCDisassembler.a \
 	lldbPluginPlatformMacOSX.a \
 	lldbPluginPlatformLinux.a \
-	lldbPluginProcessElfCore.a \
 	lldbPluginPlatformFreeBSD.a
 
 # Because GCC requires RTTI enabled for lldbCore (see source/Core/Makefile) it is

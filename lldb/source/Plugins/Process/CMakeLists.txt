@@ -1,7 +1,6 @@
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_subdirectory(Linux)
   add_subdirectory(POSIX)
-  add_subdirectory(elf-core)
 elseif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
   add_subdirectory(FreeBSD)
   add_subdirectory(POSIX)

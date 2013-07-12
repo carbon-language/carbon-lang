@@ -51,8 +51,7 @@ public:
     // Constructors and destructors
     //------------------------------------------------------------------
     ProcessLinux(lldb_private::Target& target,
-                 lldb_private::Listener &listener,
-                 lldb_private::FileSpec *core_file);
+                 lldb_private::Listener &listener);
 
     virtual bool
     UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list);
@@ -85,9 +84,6 @@ public:
         return m_linux_signals;
     }
 
-    virtual bool
-    CanDebug(lldb_private::Target &target, bool plugin_specified_by_name);
-
     //------------------------------------------------------------------
     // ProcessPOSIX overrides
     //------------------------------------------------------------------
@@ -98,8 +94,6 @@ private:
 
     /// Linux-specific signal set.
     LinuxSignals m_linux_signals;
-
-    lldb_private::FileSpec *m_core_file;
 
     // Flag to avoid recursion when stopping all threads.
     bool m_stopping_threads;
