@@ -732,7 +732,9 @@ InstCombiner::EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask) {
       }
 
       if (!Found)
-        return UndefValue::get(I->getType());
+        return UndefValue::get(
+            VectorType::get(V->getType()->getScalarType(), Mask.size()));
+
       Value *V = EvaluateInDifferentElementOrder(I->getOperand(0), Mask);
       return InsertElementInst::Create(V, I->getOperand(1),
                                        Builder->getInt32(Index), "", I);
