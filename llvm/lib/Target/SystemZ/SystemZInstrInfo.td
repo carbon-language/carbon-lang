@@ -1073,3 +1073,12 @@ def  : Pat<(add GR64:$src1, imm64zx32n:$src2),
            (SLGFI GR64:$src1, imm64zx32n:$src2)>;
 def  : Pat<(sub GR64:$src1, (zextloadi32 bdxaddr20only:$addr)),
            (SLGF GR64:$src1, bdxaddr20only:$addr)>;
+
+// Optimize sign-extended 1/0 selects to -1/0 selects.  This is important
+// for vector legalization.
+def : Pat<(sra (shl (i32 (z_select_ccmask 1, 0, imm:$cc)), (i32 31)), (i32 31)),
+          (Select32 (LHI -1), (LHI 0), imm:$cc)>;
+def : Pat<(sra (shl (i64 (anyext (i32 (z_select_ccmask 1, 0, imm:$cc)))),
+                    (i32 63)),
+               (i32 63)),
+          (Select64 (LGHI -1), (LGHI 0), imm:$cc)>;
