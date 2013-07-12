@@ -13,6 +13,7 @@ import commands
 import platform
 import os
 import re
+import signal
 import sys
 
 try: 
@@ -227,6 +228,10 @@ if __name__ == '__main__':
     #     print "error: option parsing failed" 
     #     sys.exit(1)
     
+    if options.debug:
+        print "Waiting for debugger to attach to process %d" % os.getpid()
+        os.kill(os.getpid(), signal.SIGSTOP)
+        
     for path in args:
     # in a command - the lldb.* convenience variables are not to be used
     # and their values (if any) are undefined
