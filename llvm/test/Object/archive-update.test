@@ -1,0 +1,25 @@
+Test the 'u' option of llvm-ar
+
+REQUIRES: shell
+
+RUN: cd %T
+RUN: rm -f %t.a
+
+Create an achive with the newest file
+RUN: llvm-ar r %t.a %p/Inputs/AUX/evenlen
+RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
+
+Check that without the 'u' option the member is replaced with an older file.
+RUN: llvm-ar r %t.a %p/Inputs/evenlen
+RUN: llvm-ar p %t.a | FileCheck --check-prefix=OLDER %s
+
+Check that with the 'u' option the member is replaced with a newer file.
+RUN: llvm-ar ru %t.a %p/Inputs/AUX/evenlen
+RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
+
+Check that with the 'u' option the member is not replaced with an older file.
+RUN: llvm-ar ru %t.a %p/Inputs/evenlen
+RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
+
+NEWER: newer
+OLDER: evenlen
