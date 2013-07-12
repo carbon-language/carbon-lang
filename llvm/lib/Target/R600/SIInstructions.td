@@ -1509,6 +1509,13 @@ def : Pat <
     (S_MOV_B32 (i32 (HI32 imm:$imm))), sub1)
 >;
 
+def : Pat <
+  (f64 fpimm:$imm),
+  (INSERT_SUBREG (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
+    (V_MOV_B32_e32 (f32 (LO32f fpimm:$imm))), sub0),
+    (V_MOV_B32_e32 (f32 (HI32f fpimm:$imm))), sub1)
+>;
+
 /********** ===================== **********/
 /********** Interpolation Paterns **********/
 /********** ===================== **********/
