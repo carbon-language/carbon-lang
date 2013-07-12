@@ -1877,13 +1877,15 @@ SymbolFileDWARF::ParseChildMembers
                         is_artificial = true;
                     }
 
-                    // Skip static members
+                    // Handle static members
                     if (is_external && member_byte_offset == UINT32_MAX)
                     {
                         Type *var_type = ResolveTypeUID(encoding_uid);
 
                         if (var_type)
                         {
+                            if (accessibility == eAccessNone)
+                                accessibility = eAccessPublic;
                             class_clang_type.AddVariableToRecordType (name,
                                                                       var_type->GetClangLayoutType(),
                                                                       accessibility);
