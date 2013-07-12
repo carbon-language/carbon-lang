@@ -4958,6 +4958,16 @@ TEST_F(FormatTest, BreakStringLiterals) {
                    "rs\"",
                    getLLVMStyleWithColumns(20)));
 
+  // Verify that splitting the strings understands
+  // Style::AlwaysBreakBeforeMultilineStrings.
+  EXPECT_EQ("aaaaaaaaaaaa(aaaaaaaaaaaaa,\n"
+            "             \"aaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaa \"\n"
+            "             \"aaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaa\");",
+            format("aaaaaaaaaaaa(aaaaaaaaaaaaa, \"aaaaaaaaaaaaaaaaaaaaaa "
+                   "aaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaa "
+                   "aaaaaaaaaaaaaaaaaaaaaa\");",
+                   getGoogleStyle()));
+
   FormatStyle AlignLeft = getLLVMStyleWithColumns(12);
   AlignLeft.AlignEscapedNewlinesLeft = true;
   EXPECT_EQ(

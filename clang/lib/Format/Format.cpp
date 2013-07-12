@@ -297,7 +297,7 @@ public:
     State.IgnoreStackForComparison = false;
 
     // The first token has already been indented and thus consumed.
-    moveStateToNextToken(State, /*DryRun=*/false);
+    moveStateToNextToken(State, /*DryRun=*/false, /*Newline=*/false);
 
     // If everything fits on a single line, just put it there.
     unsigned ColumnLimit = Style.ColumnLimit;
@@ -729,12 +729,12 @@ private:
       }
     }
 
-    return moveStateToNextToken(State, DryRun) + ExtraPenalty;
+    return moveStateToNextToken(State, DryRun, Newline) + ExtraPenalty;
   }
 
   /// \brief Mark the next token as consumed in \p State and modify its stacks
   /// accordingly.
-  unsigned moveStateToNextToken(LineState &State, bool DryRun) {
+  unsigned moveStateToNextToken(LineState &State, bool DryRun, bool Newline) {
     const FormatToken &Current = *State.NextToken;
     assert(State.Stack.size());
 
@@ -874,6 +874,10 @@ private:
     State.Column += Current.CodePointCount;
 
     State.NextToken = State.NextToken->Next;
+
+    if (!Newline && Style.AlwaysBreakBeforeMultilineStrings &&
+        Current.is(tok::string_literal))
+      return 0;
 
     return breakProtrudingToken(Current, State, DryRun);
   }
