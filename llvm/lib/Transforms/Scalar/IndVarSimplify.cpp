@@ -1590,15 +1590,41 @@ LinearFunctionTestReplace(Loop *L,
                << "      RHS:\t" << *ExitCnt << "\n"
                << "  IVCount:\t" << *IVCount << "\n");
 
+  IRBuilder<> Builder(BI);
+
   // LFTR can ignore IV overflow and truncate to the width of
   // BECount. This avoids materializing the add(zext(add)) expression.
-  IRBuilder<> Builder(BI);
-  if (SE->getTypeSizeInBits(CmpIndVar->getType())
-      > SE->getTypeSizeInBits(ExitCnt->getType())) {
-    CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
-                                    "lftr.wideiv");
-  }
+  unsigned CmpIndVarSize = SE->getTypeSizeInBits(CmpIndVar->getType());
+  unsigned ExitCntSize = SE->getTypeSizeInBits(ExitCnt->getType());
+  if (CmpIndVarSize > ExitCntSize) {
+    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(SE->getSCEV(IndVar));
+    const SCEV *ARStart = AR->getStart();
+    const SCEV *ARStep = AR->getStepRecurrence(*SE);
+    // For constant IVCount, avoid truncation.
+    if (isa<SCEVConstant>(ARStart) && isa<SCEVConstant>(IVCount)) {
+      const APInt &Start = cast<SCEVConstant>(ARStart)->getValue()->getValue();
+      APInt Count = cast<SCEVConstant>(IVCount)->getValue()->getValue();
+      // Note that the post-inc value of BackedgeTakenCount may have overflowed
+      // above such that IVCount is now zero.
+      if (IVCount != BackedgeTakenCount && Count == 0) {
+        Count = APInt::getMaxValue(Count.getBitWidth()).zext(CmpIndVarSize);
+        ++Count;
+      }
+      else
+        Count = Count.zext(CmpIndVarSize);
+      APInt NewLimit;
+      if (cast<SCEVConstant>(ARStep)->getValue()->isNegative())
+        NewLimit = Start - Count;
+      else
+        NewLimit = Start + Count;
+      ExitCnt = ConstantInt::get(CmpIndVar->getType(), NewLimit);
 
+      DEBUG(dbgs() << "  Widen RHS:\t" << *ExitCnt << "\n");
+    } else {
+      CmpIndVar = Builder.CreateTrunc(CmpIndVar, ExitCnt->getType(),
+                                      "lftr.wideiv");
+    }
+  }
   Value *Cond = Builder.CreateICmp(P, CmpIndVar, ExitCnt, "exitcond");
   Value *OrigCond = BI->getCondition();
   // It's tempting to use replaceAllUsesWith here to fully replace the old
