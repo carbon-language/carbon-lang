@@ -127,6 +127,8 @@ namespace llvm {
     void insertCSRSpillsAndRestores(MachineFunction &Fn);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
     void replaceFrameIndices(MachineFunction &Fn);
+    void replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
+                             int &SPAdj);
     void scavengeFrameVirtualRegs(MachineFunction &Fn);
     void insertPrologEpilogCode(MachineFunction &Fn);
 

@@ -728,6 +728,14 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
 void PEI::replaceFrameIndices(MachineFunction &Fn) {
   if (!Fn.getFrameInfo()->hasStackObjects()) return; // Nothing to do?
 
+  for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    int SPAdj = 0;
+    replaceFrameIndices(BB, Fn, SPAdj);
+  }
+}
+
+void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
+                              int &SPAdj) {
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
@@ -738,105 +746,101 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
   int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
-  for (MachineFunction::iterator BB = Fn.begin(),
-         E = Fn.end(); BB != E; ++BB) {
 #ifndef NDEBUG
-    int SPAdjCount = 0; // frame setup / destroy count.
+  int SPAdjCount = 0; // frame setup / destroy count.
 #endif
-    int SPAdj = 0;  // SP offset due to call frame setup / destroy.
-    if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
+  if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 
-    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
+  for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
 
-      if (I->getOpcode() == FrameSetupOpcode ||
-          I->getOpcode() == FrameDestroyOpcode) {
+    if (I->getOpcode() == FrameSetupOpcode ||
+        I->getOpcode() == FrameDestroyOpcode) {
 #ifndef NDEBUG
-        // Track whether we see even pairs of them
-        SPAdjCount += I->getOpcode() == FrameSetupOpcode ? 1 : -1;
+      // Track whether we see even pairs of them
+      SPAdjCount += I->getOpcode() == FrameSetupOpcode ? 1 : -1;
 #endif
-        // Remember how much SP has been adjusted to create the call
-        // frame.
-        int Size = I->getOperand(0).getImm();
+      // Remember how much SP has been adjusted to create the call
+      // frame.
+      int Size = I->getOperand(0).getImm();
 
-        if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
-            (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
-          Size = -Size;
+      if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
+          (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
+        Size = -Size;
 
-        SPAdj += Size;
+      SPAdj += Size;
 
-        MachineBasicBlock::iterator PrevI = BB->end();
-        if (I != BB->begin()) PrevI = prior(I);
-        TFI->eliminateCallFramePseudoInstr(Fn, *BB, I);
+      MachineBasicBlock::iterator PrevI = BB->end();
+      if (I != BB->begin()) PrevI = prior(I);
+      TFI->eliminateCallFramePseudoInstr(Fn, *BB, I);
 
-        // Visit the instructions created by eliminateCallFramePseudoInstr().
-        if (PrevI == BB->end())
-          I = BB->begin();     // The replaced instr was the first in the block.
-        else
-          I = llvm::next(PrevI);
+      // Visit the instructions created by eliminateCallFramePseudoInstr().
+      if (PrevI == BB->end())
+        I = BB->begin();     // The replaced instr was the first in the block.
+      else
+        I = llvm::next(PrevI);
+      continue;
+    }
+
+    MachineInstr *MI = I;
+    bool DoIncr = true;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      if (!MI->getOperand(i).isFI())
+        continue;
+
+      // Frame indicies in debug values are encoded in a target independent
+      // way with simply the frame index and offset rather than any
+      // target-specific addressing mode.
+      if (MI->isDebugValue()) {
+        assert(i == 0 && "Frame indicies can only appear as the first "
+                         "operand of a DBG_VALUE machine instruction");
+        unsigned Reg;
+        MachineOperand &Offset = MI->getOperand(1);
+        Offset.setImm(Offset.getImm() +
+                      TFI->getFrameIndexReference(
+                          Fn, MI->getOperand(0).getIndex(), Reg));
+        MI->getOperand(0).ChangeToRegister(Reg, false /*isDef*/);
         continue;
       }
 
-      MachineInstr *MI = I;
-      bool DoIncr = true;
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        if (!MI->getOperand(i).isFI())
-          continue;
+      // Some instructions (e.g. inline asm instructions) can have
+      // multiple frame indices and/or cause eliminateFrameIndex
+      // to insert more than one instruction. We need the register
+      // scavenger to go through all of these instructions so that
+      // it can update its register information. We keep the
+      // iterator at the point before insertion so that we can
+      // revisit them in full.
+      bool AtBeginning = (I == BB->begin());
+      if (!AtBeginning) --I;
 
-        // Frame indicies in debug values are encoded in a target independent
-        // way with simply the frame index and offset rather than any
-        // target-specific addressing mode.
-        if (MI->isDebugValue()) {
-          assert(i == 0 && "Frame indicies can only appear as the first "
-                           "operand of a DBG_VALUE machine instruction");
-          unsigned Reg;
-          MachineOperand &Offset = MI->getOperand(1);
-          Offset.setImm(Offset.getImm() +
-                        TFI->getFrameIndexReference(
-                            Fn, MI->getOperand(0).getIndex(), Reg));
-          MI->getOperand(0).ChangeToRegister(Reg, false /*isDef*/);
-          continue;
-        }
+      // If this instruction has a FrameIndex operand, we need to
+      // use that target machine register info object to eliminate
+      // it.
+      TRI.eliminateFrameIndex(MI, SPAdj, i,
+                              FrameIndexVirtualScavenging ?  NULL : RS);
 
-        // Some instructions (e.g. inline asm instructions) can have
-        // multiple frame indices and/or cause eliminateFrameIndex
-        // to insert more than one instruction. We need the register
-        // scavenger to go through all of these instructions so that
-        // it can update its register information. We keep the
-        // iterator at the point before insertion so that we can
-        // revisit them in full.
-        bool AtBeginning = (I == BB->begin());
-        if (!AtBeginning) --I;
-
-        // If this instruction has a FrameIndex operand, we need to
-        // use that target machine register info object to eliminate
-        // it.
-        TRI.eliminateFrameIndex(MI, SPAdj, i,
-                                FrameIndexVirtualScavenging ?  NULL : RS);
-
-        // Reset the iterator if we were at the beginning of the BB.
-        if (AtBeginning) {
-          I = BB->begin();
-          DoIncr = false;
-        }
-
-        MI = 0;
-        break;
+      // Reset the iterator if we were at the beginning of the BB.
+      if (AtBeginning) {
+        I = BB->begin();
+        DoIncr = false;
       }
 
-      if (DoIncr && I != BB->end()) ++I;
-
-      // Update register states.
-      if (RS && !FrameIndexVirtualScavenging && MI) RS->forward(MI);
+      MI = 0;
+      break;
     }
 
-    // If we have evenly matched pairs of frame setup / destroy instructions,
-    // make sure the adjustments come out to zero. If we don't have matched
-    // pairs, we can't be sure the missing bit isn't in another basic block
-    // due to a custom inserter playing tricks, so just asserting SPAdj==0
-    // isn't sufficient. See tMOVCC on Thumb1, for example.
-    assert((SPAdjCount || SPAdj == 0) &&
-           "Unbalanced call frame setup / destroy pairs?");
+    if (DoIncr && I != BB->end()) ++I;
+
+    // Update register states.
+    if (RS && !FrameIndexVirtualScavenging && MI) RS->forward(MI);
   }
+
+  // If we have evenly matched pairs of frame setup / destroy instructions,
+  // make sure the adjustments come out to zero. If we don't have matched
+  // pairs, we can't be sure the missing bit isn't in another basic block
+  // due to a custom inserter playing tricks, so just asserting SPAdj==0
+  // isn't sufficient. See tMOVCC on Thumb1, for example.
+  assert((SPAdjCount || SPAdj == 0) &&
+         "Unbalanced call frame setup / destroy pairs?");
 }
 
 /// scavengeFrameVirtualRegs - Replace all frame index virtual registers
