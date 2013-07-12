@@ -81,3 +81,9 @@ int materializeTempExpr() {
   const S &s = S(*n); // expected-warning{{Dereference of null pointer}}
   return s.a;
 }
+
+typedef decltype(nullptr) nullptr_t;
+void testMaterializeTemporaryExprWithNullPtr() {
+  // Create MaterializeTemporaryExpr with a nullptr inside.
+  const nullptr_t &r = nullptr;
+}
