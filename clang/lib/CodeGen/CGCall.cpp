@@ -1070,6 +1070,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                            CodeGenOpts.UnsafeFPMath ? "true" : "false");
     FuncAttrs.addAttribute("use-soft-float",
                            CodeGenOpts.SoftFloat ? "true" : "false");
+    FuncAttrs.addAttribute("ssp-buffer-size",
+                           llvm::utostr(CodeGenOpts.SSPBufferSize));
   }
 
   QualType RetTy = FI.getReturnType();
