@@ -1120,8 +1120,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       NewClass->setAccess(PrevClassTemplate->getAccess());
     }
 
-    NewTemplate->setObjectOfFriendDecl(/* PreviouslyDeclared = */
-                                       PrevClassTemplate != NULL);
+    NewTemplate->setObjectOfFriendDecl();
 
     // Friend templates are visible in fairly strange ways.
     if (!CurContext->isDependentContext()) {
