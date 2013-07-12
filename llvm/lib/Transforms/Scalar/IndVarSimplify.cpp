@@ -1552,44 +1552,23 @@ LinearFunctionTestReplace(Loop *L,
                           SCEVExpander &Rewriter) {
   assert(canExpandBackedgeTakenCount(L, SE) && "precondition");
 
-  // LFTR can ignore IV overflow and truncate to the width of
-  // BECount. This avoids materializing the add(zext(add)) expression.
-  Type *CntTy = BackedgeTakenCount->getType();
+  // Initialize CmpIndVar and IVCount to their preincremented values.
+  Value *CmpIndVar = IndVar;
+  const SCEV *IVCount = BackedgeTakenCount;
 
   // If the exiting block is the same as the backedge block, we prefer to
   // compare against the post-incremented value, otherwise we must compare
   // against the preincremented value.
-  Value *CmpIndVar;
-  const SCEV *IVCount;
   if (L->getExitingBlock() == L->getLoopLatch()) {
     // Add one to the "backedge-taken" count to get the trip count.
-    // If this addition may overflow, we have to be more pessimistic and
-    // cast the induction variable before doing the add.
-    const SCEV *N =
-      SE->getAddExpr(BackedgeTakenCount,
-                     SE->getConstant(BackedgeTakenCount->getType(), 1));
-    if (CntTy == BackedgeTakenCount->getType())
-      IVCount = N;
-    else {
-      const SCEV *Zero = SE->getConstant(BackedgeTakenCount->getType(), 0);
-      if ((isa<SCEVConstant>(N) && !N->isZero()) ||
-          SE->isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
-        // No overflow. Cast the sum.
-        IVCount = SE->getTruncateOrZeroExtend(N, CntTy);
-      } else {
-        // Potential overflow. Cast before doing the add.
-        IVCount = SE->getTruncateOrZeroExtend(BackedgeTakenCount, CntTy);
-        IVCount = SE->getAddExpr(IVCount, SE->getConstant(CntTy, 1));
-      }
-    }
+    // This addition may overflow, which is valid as long as the comparison is
+    // truncated to BackedgeTakenCount->getType().
+    IVCount = SE->getAddExpr(BackedgeTakenCount,
+                             SE->getConstant(BackedgeTakenCount->getType(), 1));
     // The BackedgeTaken expression contains the number of times that the
     // backedge branches to the loop header.  This is one less than the
     // number of times the loop executes, so use the incremented indvar.
     CmpIndVar = IndVar->getIncomingValueForBlock(L->getExitingBlock());
-  } else {
-    // We must use the preincremented value...
-    IVCount = SE->getTruncateOrZeroExtend(BackedgeTakenCount, CntTy);
-    CmpIndVar = IndVar;
   }
 
   Value *ExitCnt = genLoopLimit(IndVar, IVCount, L, Rewriter, SE);
@@ -1611,6 +1590,8 @@ LinearFunctionTestReplace(Loop *L,
                << "      RHS:\t" << *ExitCnt << "\n"
                << "  IVCount:\t" << *IVCount << "\n");
 
+  // LFTR can ignore IV overflow and truncate to the width of
+  // BECount. This avoids materializing the add(zext(add)) expression.
   IRBuilder<> Builder(BI);
   if (SE->getTypeSizeInBits(CmpIndVar->getType())
       > SE->getTypeSizeInBits(ExitCnt->getType())) {
