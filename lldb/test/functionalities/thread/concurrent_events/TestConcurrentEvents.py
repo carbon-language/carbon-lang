@@ -62,21 +62,18 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for concurrent signal and breakpoint
     #
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_break_dwarf(self):
         """Test signal and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_signal_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_delay_signal_break_dwarf(self):
         """Test (1-second delay) signal and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_delay_signal_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_delay_break_dwarf(self):
         """Test signal and a (1 second delay) breakpoint in multiple threads."""
@@ -143,14 +140,12 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=1,
                                num_delay_breakpoint_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_two_breakpoints_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one signal thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2, num_signal_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_breakpoint_delay_breakpoint_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint (one with a 1 second delay) and one signal thread. """
@@ -159,7 +154,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_delay_breakpoint_threads=1,
                                num_signal_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_two_breakpoints_one_delay_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one (1 second delay) signal thread. """
@@ -225,7 +219,6 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Test for watchpoint, signal and breakpoint happening concurrently
     #
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
         """Test a signal/watchpoint/breakpoint in multiple threads."""
@@ -234,7 +227,6 @@ class ConcurrentEventsTestCase(TestBase):
                                num_watchpoint_threads=1,
                                num_breakpoint_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_signal_watch_break_dwarf(self):
         """Test one signal thread with 5 watchpoint and breakpoint threads."""
@@ -272,7 +264,6 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_crash_threads=1, num_signal_threads=1)
 
-    @skipIfLinux # llvm.org/pr16575 -- LLDB crashes with assertion failure "Unexpected SIGTRAP code!"
     @dwarf_test
     def test_crash_with_watchpoint_breakpoint_signal_dwarf(self):
         """ Test a thread that crashes while other threads generate a signal and hit a watchpoint and breakpoint. """
@@ -334,9 +325,9 @@ class ConcurrentEventsTestCase(TestBase):
             returns the LLDB SBBreakpoint object.
         """
 
-        bpno = lldbutil.run_break_set_by_file_and_line(self, self.filename, line, num_expected_locations=1)
+        bpno = lldbutil.run_break_set_by_file_and_line(self, self.filename, line, num_expected_locations=-1)
         bp = self.inferior_target.FindBreakpointByID(bpno)
-        descriptions.append(": file = 'main.cpp', line = %d, locations = 1" % self.finish_breakpoint_line)
+        descriptions.append(": file = 'main.cpp', line = %d" % self.finish_breakpoint_line)
         return bp
 
     def inferior_done(self):
