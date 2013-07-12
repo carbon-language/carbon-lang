@@ -59,7 +59,7 @@ public:
     void
     Dump (Stream& stream,
           size_t start_idx = 0,
-          size_t stop_idx = UINT64_MAX) const;
+          size_t stop_idx = SIZE_MAX) const;
     
     static const char g_repeat_char = '!';
     
