@@ -124,7 +124,7 @@ public:
 
   unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const;
 
-  unsigned getAddressComputationCost(Type *Val) const;
+  unsigned getAddressComputationCost(Type *Val, bool IsComplex) const;
 
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                   OperandValueKind Op1Info = OK_AnyValue,
@@ -425,7 +425,7 @@ unsigned ARMTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   return TargetTransformInfo::getCmpSelInstrCost(Opcode, ValTy, CondTy);
 }
 
-unsigned ARMTTI::getAddressComputationCost(Type *Ty) const {
+unsigned ARMTTI::getAddressComputationCost(Type *Ty, bool IsComplex) const {
   // In many cases the address computation is not merged into the instruction
   // addressing mode.
   return 1;

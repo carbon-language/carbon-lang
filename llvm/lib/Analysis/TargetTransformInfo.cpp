@@ -206,8 +206,9 @@ unsigned TargetTransformInfo::getNumberOfParts(Type *Tp) const {
   return PrevTTI->getNumberOfParts(Tp);
 }
 
-unsigned TargetTransformInfo::getAddressComputationCost(Type *Tp) const {
-  return PrevTTI->getAddressComputationCost(Tp);
+unsigned TargetTransformInfo::getAddressComputationCost(Type *Tp,
+                                                        bool IsComplex) const {
+  return PrevTTI->getAddressComputationCost(Tp, IsComplex);
 }
 
 namespace {
@@ -559,7 +560,7 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     return 0;
   }
 
-  unsigned getAddressComputationCost(Type *Tp) const {
+  unsigned getAddressComputationCost(Type *Tp, bool) const {
     return 0;
   }
 };

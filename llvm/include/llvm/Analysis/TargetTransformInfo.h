@@ -339,7 +339,11 @@ public:
   /// merged into the instruction indexing mode. Some targets might want to
   /// distinguish between address computation for memory operations on vector
   /// types and scalar types. Such targets should override this function.
-  virtual unsigned getAddressComputationCost(Type *Ty) const;
+  /// The 'IsComplex' parameter is a hint that the address computation is likely
+  /// to involve multiple instructions and as such unlikely to be merged into
+  /// the address indexing mode.
+  virtual unsigned getAddressComputationCost(Type *Ty,
+                                             bool IsComplex = false) const;
 
   /// @}
 
