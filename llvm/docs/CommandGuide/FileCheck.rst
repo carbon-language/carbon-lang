@@ -243,6 +243,55 @@ occurrences matching ``CHECK-DAG:`` after ``CHECK-NOT:``. For example,
 
 This case will reject input strings where ``BEFORE`` occurs after ``AFTER``.
 
+The "CHECK-LABEL:" directive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes in a file containing multiple tests divided into logical blocks, one
+or more ``CHECK:`` directives may inadvertently succeed by matching lines in a
+later block. While an error will usually eventually be generated, the check
+flagged as causing the error may not actually bear any relationship to the
+actual source of the problem.
+
+In order to produce better error messages in these cases, the "``CHECK-LABEL:``"
+directive can be used. It is treated identically to a normal ``CHECK``
+directive except that the FileCheck utility makes an additional assumption that
+a line matched by the directive cannot also be matched by any other check
+present in ``match-filename``; this is intended to be used for lines containing
+labels or other unique identifiers. Conceptually, the presence of
+``CHECK-LABEL`` divides the input stream into separate blocks, each of which is
+processed independently, preventing a ``CHECK:`` directive in one block
+matching a line in another block. For example,
+
+.. code-block:: llvm
+
+  define %struct.C* @C_ctor_base(%struct.C* %this, i32 %x) {
+  entry:
+  ; CHECK-LABEL: C_ctor_base:
+  ; CHECK: mov [[SAVETHIS:r[0-9]+]], r0
+  ; CHECK: bl A_ctor_base
+  ; CHECK: mov r0, [[SAVETHIS]]
+    %0 = bitcast %struct.C* %this to %struct.A*
+    %call = tail call %struct.A* @A_ctor_base(%struct.A* %0)
+    %1 = bitcast %struct.C* %this to %struct.B*
+    %call2 = tail call %struct.B* @B_ctor_base(%struct.B* %1, i32 %x)
+    ret %struct.C* %this
+  }
+
+  define %struct.D* @D_ctor_base(%struct.D* %this, i32 %x) {
+  entry:
+  ; CHECK-LABEL: D_ctor_base:
+
+The use of ``CHECK-LABEL:`` directives in this case ensures that the three
+``CHECK:`` directives only accept lines corresponding to the body of the
+``@C_ctor_base`` function, even if the patterns match lines found later in
+the file.
+
+There is no requirement that ``CHECK-LABEL:`` directives contain strings that
+correspond to actual syntactic labels in a source or output language: they must
+simply uniquely match a single line in the file being verified.
+
+``CHECK-LABEL:`` directives cannot contain variable definitions or uses.
+
 FileCheck Pattern Matching Syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

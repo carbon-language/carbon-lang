@@ -115,6 +115,9 @@ public:
   void PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
                         const StringMap<StringRef> &VariableTable) const;
 
+  bool hasVariable() const { return !(VariableUses.empty() &&
+                                      VariableDefs.empty()); }
+
   void setMatchNot(bool Not) { MatchNot = Not; }
   bool getMatchNot() const { return MatchNot; }
 
@@ -594,17 +597,21 @@ struct CheckString {
   /// to a CHECK: directive.
   bool IsCheckNext;
 
+  /// IsCheckLabel - This is true if this is a CHECK-LABEL: directive (as
+  /// opposed to a CHECK: directive.
+  bool IsCheckLabel;
+
   /// DagNotStrings - These are all of the strings that are disallowed from
   /// occurring between this match string and the previous one (or start of
   /// file).
   std::vector<Pattern> DagNotStrings;
 
-  CheckString(const Pattern &P, SMLoc L, bool isCheckNext)
-    : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
+  CheckString(const Pattern &P, SMLoc L, bool isCheckNext, bool isCheckLabel)
+    : Pat(P), Loc(L), IsCheckNext(isCheckNext), IsCheckLabel(isCheckLabel) {}
 
   /// Check - Match check string and its "not strings" and/or "dag strings".
-  size_t Check(const SourceMgr &SM, StringRef Buffer, size_t &MatchLen,
-               StringMap<StringRef> &VariableTable) const;
+  size_t Check(const SourceMgr &SM, StringRef Buffer, bool IsLabel,
+               size_t &MatchLen, StringMap<StringRef> &VariableTable) const;
 
   /// CheckNext - Verify there is a single line in the given buffer.
   bool CheckNext(const SourceMgr &SM, StringRef Buffer) const;
@@ -703,7 +710,8 @@ static bool ReadCheckFile(SourceMgr &SM,
 
     // When we find a check prefix, keep track of whether we find CHECK: or
     // CHECK-NEXT:
-    bool IsCheckNext = false, IsCheckNot = false, IsCheckDag = false;
+    bool IsCheckNext = false, IsCheckNot = false, IsCheckDag = false,
+         IsCheckLabel = false;
 
     // Verify that the : is present after the prefix.
     if (Buffer[CheckPrefix.size()] == ':') {
@@ -720,6 +728,10 @@ static bool ReadCheckFile(SourceMgr &SM,
                memcmp(Buffer.data()+CheckPrefix.size(), "-DAG:", 5) == 0) {
       Buffer = Buffer.substr(CheckPrefix.size()+5);
       IsCheckDag = true;
+    } else if (Buffer.size() > CheckPrefix.size()+7 &&
+               memcmp(Buffer.data()+CheckPrefix.size(), "-LABEL:", 7) == 0) {
+      Buffer = Buffer.substr(CheckPrefix.size()+7);
+      IsCheckLabel = true;
     } else {
       Buffer = Buffer.substr(1);
       continue;
@@ -739,6 +751,15 @@ static bool ReadCheckFile(SourceMgr &SM,
     Pattern P;
     if (P.ParsePattern(Buffer.substr(0, EOL), SM, LineNumber))
       return true;
+
+    // Verify that CHECK-LABEL lines do not define or use variables
+    if (IsCheckLabel && P.hasVariable()) {
+      SM.PrintMessage(SMLoc::getFromPointer(CheckPrefixStart),
+                      SourceMgr::DK_Error,
+                      "found '"+CheckPrefix+"-LABEL:' with variable definition"
+                      " or use'");
+      return true;
+    }
 
     P.setMatchNot(IsCheckNot);
     P.setMatchDag(IsCheckDag);
@@ -763,7 +784,8 @@ static bool ReadCheckFile(SourceMgr &SM,
     // Okay, add the string we captured to the output vector and move on.
     CheckStrings.push_back(CheckString(P,
                                        PatternLoc,
-                                       IsCheckNext));
+                                       IsCheckNext,
+                                       IsCheckLabel));
     std::swap(DagNotMatches, CheckStrings.back().DagNotStrings);
   }
 
@@ -771,6 +793,7 @@ static bool ReadCheckFile(SourceMgr &SM,
   if (!DagNotMatches.empty()) {
     CheckStrings.push_back(CheckString(Pattern(true),
                                        SMLoc::getFromPointer(Buffer.data()),
+                                       false,
                                        false));
     std::swap(DagNotMatches, CheckStrings.back().DagNotStrings);
   }
@@ -829,15 +852,17 @@ static unsigned CountNumNewlinesBetween(StringRef Range) {
 }
 
 size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
-                          size_t &MatchLen,
+                          bool IsLabel, size_t &MatchLen,
                           StringMap<StringRef> &VariableTable) const {
   size_t LastPos = 0;
   std::vector<const Pattern *> NotStrings;
 
-  // Match "dag strings" (with mixed "not strings" if any).
-  LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
-  if (LastPos == StringRef::npos)
-    return StringRef::npos;
+  if (!IsLabel) {
+    // Match "dag strings" (with mixed "not strings" if any).
+    LastPos = CheckDag(SM, Buffer, NotStrings, VariableTable);
+    if (LastPos == StringRef::npos)
+      return StringRef::npos;
+  }
 
   // Match itself from the last position after matching CHECK-DAG.
   StringRef MatchBuffer = Buffer.substr(LastPos);
@@ -848,17 +873,19 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
   }
   MatchPos += LastPos;
 
-  StringRef SkippedRegion = Buffer.substr(LastPos, MatchPos);
+  if (!IsLabel) {
+    StringRef SkippedRegion = Buffer.substr(LastPos, MatchPos);
 
-  // If this check is a "CHECK-NEXT", verify that the previous match was on
-  // the previous line (i.e. that there is one newline between them).
-  if (CheckNext(SM, SkippedRegion))
-    return StringRef::npos;
+    // If this check is a "CHECK-NEXT", verify that the previous match was on
+    // the previous line (i.e. that there is one newline between them).
+    if (CheckNext(SM, SkippedRegion))
+      return StringRef::npos;
 
-  // If this match had "not strings", verify that they don't exist in the
-  // skipped region.
-  if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable))
-    return StringRef::npos;
+    // If this match had "not strings", verify that they don't exist in the
+    // skipped region.
+    if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable))
+      return StringRef::npos;
+  }
 
   return MatchPos;
 }
@@ -1040,18 +1067,56 @@ int main(int argc, char **argv) {
   // file.
   StringRef Buffer = F->getBuffer();
 
-  for (unsigned StrNo = 0, e = CheckStrings.size(); StrNo != e; ++StrNo) {
-    const CheckString &CheckStr = CheckStrings[StrNo];
+  bool hasError = false;
 
-    // Find StrNo in the file.
-    size_t MatchLen = 0;
-    size_t MatchPos = CheckStr.Check(SM, Buffer, MatchLen, VariableTable);
+  unsigned i = 0, j = 0, e = CheckStrings.size();
 
-    if (MatchPos == StringRef::npos)
-      return 1;
+  while (true) {
+    StringRef CheckRegion;
+    if (j == e) {
+      CheckRegion = Buffer;
+    } else {
+      const CheckString &CheckLabelStr = CheckStrings[j];
+      if (!CheckLabelStr.IsCheckLabel) {
+        ++j;
+        continue;
+      }
 
-    Buffer = Buffer.substr(MatchPos + MatchLen);
+      // Scan to next CHECK-LABEL match, ignoring CHECK-NOT and CHECK-DAG
+      size_t MatchLabelLen = 0;
+      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer, true,
+                                                 MatchLabelLen, VariableTable);
+      if (MatchLabelPos == StringRef::npos) {
+        hasError = true;
+        break;
+      }
+
+      CheckRegion = Buffer.substr(0, MatchLabelPos + MatchLabelLen);
+      Buffer = Buffer.substr(MatchLabelPos + MatchLabelLen);
+      ++j;
+    }
+
+    for ( ; i != j; ++i) {
+      const CheckString &CheckStr = CheckStrings[i];
+
+      // Check each string within the scanned region, including a second check
+      // of any final CHECK-LABEL (to verify CHECK-NOT and CHECK-DAG)
+      size_t MatchLen = 0;
+      size_t MatchPos = CheckStr.Check(SM, CheckRegion, false, MatchLen,
+                                       VariableTable);
+
+      if (MatchPos == StringRef::npos) {
+        hasError = true;
+        i = j;
+        break;
+      }
+
+      CheckRegion = CheckRegion.substr(MatchPos + MatchLen);
+    }
+
+    if (j == e)
+      break;
   }
 
-  return 0;
+  return hasError ? 1 : 0;
 }
