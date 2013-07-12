@@ -745,6 +745,9 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     if (Opc == ARM::VORRq)
       Mov.addReg(Src);
     Mov = AddDefaultPred(Mov);
+    // MOVr can set CC.
+    if (Opc == ARM::MOVr)
+      Mov = AddDefaultCC(Mov);
   }
   // Add implicit super-register defs and kills to the last instruction.
   Mov->addRegisterDefined(DestReg, TRI);
