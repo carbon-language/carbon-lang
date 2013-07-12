@@ -14,7 +14,7 @@ declare %struct.B* @B_ctor_nothisret(%struct.B*, i32)
 
 define %struct.C* @C_ctor(%struct.C* %this, i32 %y) {
 entry:
-; CHECK: C_ctor:
+; CHECK-LABEL: C_ctor:
 ; CHECK: jmp     B_ctor                  # TAILCALL
   %0 = getelementptr inbounds %struct.C* %this, i64 0, i32 0
   %call = tail call %struct.B* @B_ctor(%struct.B* %0, i32 %y)
@@ -23,7 +23,7 @@ entry:
 
 define %struct.C* @C_ctor_nothisret(%struct.C* %this, i32 %y) {
 entry:
-; CHECK: C_ctor_nothisret:
+; CHECK-LABEL: C_ctor_nothisret:
 ; CHECK-NOT: jmp     B_ctor_nothisret
   %0 = getelementptr inbounds %struct.C* %this, i64 0, i32 0
   %call = tail call %struct.B* @B_ctor_nothisret(%struct.B* %0, i32 %y)
@@ -32,7 +32,7 @@ entry:
 
 define %struct.D* @D_ctor(%struct.D* %this, i32 %y) {
 entry:
-; CHECK: D_ctor:
+; CHECK-LABEL: D_ctor:
 ; CHECK: movq    %rcx, [[SAVETHIS:%r[0-9a-z]+]]
 ; CHECK: callq   A_ctor
 ; CHECK: movq    [[SAVETHIS]], %rcx
@@ -48,7 +48,7 @@ entry:
 
 define %struct.D* @D_ctor_nothisret(%struct.D* %this, i32 %y) {
 entry:
-; CHECK: D_ctor_nothisret:
+; CHECK-LABEL: D_ctor_nothisret:
 ; CHECK: movq    %rcx, [[SAVETHIS:%r[0-9a-z]+]]
 ; CHECK: callq   A_ctor_nothisret
 ; CHECK: movq    [[SAVETHIS]], %rcx
@@ -64,7 +64,7 @@ entry:
 
 define %struct.E* @E_ctor(%struct.E* %this, i32 %x) {
 entry:
-; CHECK: E_ctor:
+; CHECK-LABEL: E_ctor:
 ; CHECK: movq    %rcx, [[SAVETHIS:%r[0-9a-z]+]]
 ; CHECK: callq   B_ctor
 ; CHECK: movq    [[SAVETHIS]], %rcx
@@ -77,7 +77,7 @@ entry:
 
 define %struct.E* @E_ctor_nothisret(%struct.E* %this, i32 %x) {
 entry:
-; CHECK: E_ctor_nothisret:
+; CHECK-LABEL: E_ctor_nothisret:
 ; CHECK: movq    %rcx, [[SAVETHIS:%r[0-9a-z]+]]
 ; CHECK: callq   B_ctor_nothisret
 ; CHECK: movq    [[SAVETHIS]], %rcx

@@ -1,6 +1,6 @@
 ; RUN: llc -march=x86-64 -mattr=+avx,-fma4 -mtriple=x86_64-apple-darwin -enable-unsafe-fp-math < %s | FileCheck %s
 
-; CHECK: test1
+; CHECK-LABEL: test1
 define float @test1(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: mulss
@@ -11,7 +11,7 @@ define float @test1(float %a) {
   ret float %r
 }
 
-; CHECK: test2
+; CHECK-LABEL: test2
 define float @test2(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: mulss
@@ -23,7 +23,7 @@ define float @test2(float %a) {
   ret float %r
 }
 
-; CHECK: test3
+; CHECK-LABEL: test3
 define float @test3(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: mulss
@@ -35,7 +35,7 @@ define float @test3(float %a) {
   ret float %r
 }
 
-; CHECK: test4
+; CHECK-LABEL: test4
 define float @test4(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: mulss
@@ -47,7 +47,7 @@ define float @test4(float %a) {
   ret float %r
 }
 
-; CHECK: test5
+; CHECK-LABEL: test5
 define float @test5(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: mulss
@@ -59,7 +59,7 @@ define float @test5(float %a) {
   ret float %r
 }
 
-; CHECK: test6
+; CHECK-LABEL: test6
 define float @test6(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: xorps
@@ -71,7 +71,7 @@ define float @test6(float %a) {
   ret float %r
 }
 
-; CHECK: test7
+; CHECK-LABEL: test7
 define float @test7(float %a) {
 ; CHECK-NOT: addss
 ; CHECK: xorps
@@ -83,7 +83,7 @@ define float @test7(float %a) {
   ret float %r
 }
 
-; CHECK: test8
+; CHECK-LABEL: test8
 define float @test8(float %a) {
 ; CHECK-NOT: fma
 ; CHECK-NOT: mul
@@ -94,7 +94,7 @@ define float @test8(float %a) {
   ret float %t2
 }
 
-; CHECK: test9
+; CHECK-LABEL: test9
 define float @test9(float %a) {
 ; CHECK-NOT: fma
 ; CHECK-NOT: mul
@@ -105,7 +105,7 @@ define float @test9(float %a) {
   ret float %t2
 }
 
-; CHECK: test10
+; CHECK-LABEL: test10
 define float @test10(float %a) {
 ; CHECK-NOT: add
 ; CHECK: vxorps
@@ -115,7 +115,7 @@ define float @test10(float %a) {
   ret float %t2
 }
 
-; CHECK: test11
+; CHECK-LABEL: test11
 define float @test11(float %a) {
 ; CHECK-NOT: add
 ; CHECK: vxorps

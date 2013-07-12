@@ -5,8 +5,8 @@ declare float @llvm.fma.f32(float, float, float)
 declare double @llvm.fma.f64(double, double, double)
 
 define float @test_fmadd(float %a, float %b, float %c) {
-; CHECK: test_fmadd:
-; CHECK-NOFAST: test_fmadd:
+; CHECK-LABEL: test_fmadd:
+; CHECK-NOFAST-LABEL: test_fmadd:
   %val = call float @llvm.fma.f32(float %a, float %b, float %c)
 ; CHECK: fmadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK-NOFAST: fmadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
@@ -14,8 +14,8 @@ define float @test_fmadd(float %a, float %b, float %c) {
 }
 
 define float @test_fmsub(float %a, float %b, float %c) {
-; CHECK: test_fmsub:
-; CHECK-NOFAST: test_fmsub:
+; CHECK-LABEL: test_fmsub:
+; CHECK-NOFAST-LABEL: test_fmsub:
   %nega = fsub float -0.0, %a
   %val = call float @llvm.fma.f32(float %nega, float %b, float %c)
 ; CHECK: fmsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
@@ -24,8 +24,8 @@ define float @test_fmsub(float %a, float %b, float %c) {
 }
 
 define float @test_fnmadd(float %a, float %b, float %c) {
-; CHECK: test_fnmadd:
-; CHECK-NOFAST: test_fnmadd:
+; CHECK-LABEL: test_fnmadd:
+; CHECK-NOFAST-LABEL: test_fnmadd:
   %negc = fsub float -0.0, %c
   %val = call float @llvm.fma.f32(float %a, float %b, float %negc)
 ; CHECK: fnmadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
@@ -34,8 +34,8 @@ define float @test_fnmadd(float %a, float %b, float %c) {
 }
 
 define float @test_fnmsub(float %a, float %b, float %c) {
-; CHECK: test_fnmsub:
-; CHECK-NOFAST: test_fnmsub:
+; CHECK-LABEL: test_fnmsub:
+; CHECK-NOFAST-LABEL: test_fnmsub:
   %nega = fsub float -0.0, %a
   %negc = fsub float -0.0, %c
   %val = call float @llvm.fma.f32(float %nega, float %b, float %negc)
@@ -85,8 +85,8 @@ define double @testd_fnmsub(double %a, double %b, double %c) {
 }
 
 define float @test_fmadd_unfused(float %a, float %b, float %c) {
-; CHECK: test_fmadd_unfused:
-; CHECK-NOFAST: test_fmadd_unfused:
+; CHECK-LABEL: test_fmadd_unfused:
+; CHECK-NOFAST-LABEL: test_fmadd_unfused:
   %prod = fmul float %b, %c
   %sum = fadd float %a, %prod
 ; CHECK: fmadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
@@ -97,8 +97,8 @@ define float @test_fmadd_unfused(float %a, float %b, float %c) {
 }
 
 define float @test_fmsub_unfused(float %a, float %b, float %c) {
-; CHECK: test_fmsub_unfused:
-; CHECK-NOFAST: test_fmsub_unfused:
+; CHECK-LABEL: test_fmsub_unfused:
+; CHECK-NOFAST-LABEL: test_fmsub_unfused:
   %prod = fmul float %b, %c
   %diff = fsub float %a, %prod
 ; CHECK: fmsub {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
@@ -109,8 +109,8 @@ define float @test_fmsub_unfused(float %a, float %b, float %c) {
 }
 
 define float @test_fnmadd_unfused(float %a, float %b, float %c) {
-; CHECK: test_fnmadd_unfused:
-; CHECK-NOFAST: test_fnmadd_unfused:
+; CHECK-LABEL: test_fnmadd_unfused:
+; CHECK-NOFAST-LABEL: test_fnmadd_unfused:
   %nega = fsub float -0.0, %a
   %prod = fmul float %b, %c
   %sum = fadd float %nega, %prod
@@ -122,8 +122,8 @@ define float @test_fnmadd_unfused(float %a, float %b, float %c) {
 }
 
 define float @test_fnmsub_unfused(float %a, float %b, float %c) {
-; CHECK: test_fnmsub_unfused:
-; CHECK-NOFAST: test_fnmsub_unfused:
+; CHECK-LABEL: test_fnmsub_unfused:
+; CHECK-NOFAST-LABEL: test_fnmsub_unfused:
   %nega = fsub float -0.0, %a
   %prod = fmul float %b, %c
   %diff = fsub float %nega, %prod

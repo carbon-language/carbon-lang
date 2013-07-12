@@ -1,7 +1,7 @@
 ; RUN: llc -march=x86 -mcpu=bdver2 -mattr=-fma -mtriple=x86_64-apple-darwin < %s | FileCheck %s
 ; RUN: llc -march=x86 -mcpu=bdver2 -mattr=-fma,-fma4 -mtriple=x86_64-apple-darwin < %s | FileCheck %s --check-prefix=CHECK-NOFMA
 
-; CHECK: fmafunc
+; CHECK-LABEL: fmafunc
 define <3 x float> @fmafunc(<3 x float> %a, <3 x float> %b, <3 x float> %c) {
 
 ; CHECK-NOT: vmulps

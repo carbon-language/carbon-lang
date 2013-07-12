@@ -6,7 +6,7 @@ define i64 @test_trivial() {
  %A = tail call i64 @testi()
  ret i64 %A
 }
-; CHECK: test_trivial:
+; CHECK-LABEL: test_trivial:
 ; CHECK: jmp	_testi                  ## TAILCALL
 
 
@@ -15,7 +15,7 @@ define i64 @test_noop_bitcast() {
  %B = bitcast i64 %A to i64
  ret i64 %B
 }
-; CHECK: test_noop_bitcast:
+; CHECK-LABEL: test_noop_bitcast:
 ; CHECK: jmp	_testi                  ## TAILCALL
 
 
@@ -26,7 +26,7 @@ define i8* @test_inttoptr() {
   ret i8* %B
 }
 
-; CHECK: test_inttoptr:
+; CHECK-LABEL: test_inttoptr:
 ; CHECK: jmp	_testi                  ## TAILCALL
 
 
@@ -37,7 +37,7 @@ define <4 x i32> @test_vectorbitcast() {
   %B = bitcast <4 x float> %A to <4 x i32>
   ret <4 x i32> %B
 }
-; CHECK: test_vectorbitcast:
+; CHECK-LABEL: test_vectorbitcast:
 ; CHECK: jmp	_testv                  ## TAILCALL
 
 
@@ -47,7 +47,7 @@ define {i64, i64} @test_pair_trivial() {
   %A = tail call { i64, i64} @testp()
   ret { i64, i64} %A
 }
-; CHECK: test_pair_trivial:
+; CHECK-LABEL: test_pair_trivial:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
 define {i64, i64} @test_pair_notail() {
@@ -58,7 +58,7 @@ define {i64, i64} @test_pair_notail() {
 
   ret { i64, i64} %c
 }
-; CHECK: test_pair_notail:
+; CHECK-LABEL: test_pair_notail:
 ; CHECK-NOT: jmp	_testi
 
 define {i64, i64} @test_pair_extract_trivial() {
@@ -72,7 +72,7 @@ define {i64, i64} @test_pair_extract_trivial() {
   ret { i64, i64} %c
 }
 
-; CHECK: test_pair_extract_trivial:
+; CHECK-LABEL: test_pair_extract_trivial:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
 define {i64, i64} @test_pair_extract_notail() {
@@ -86,7 +86,7 @@ define {i64, i64} @test_pair_extract_notail() {
   ret { i64, i64} %c
 }
 
-; CHECK: test_pair_extract_notail:
+; CHECK-LABEL: test_pair_extract_notail:
 ; CHECK-NOT: jmp	_testp
 
 define {i8*, i64} @test_pair_extract_conv() {
@@ -102,7 +102,7 @@ define {i8*, i64} @test_pair_extract_conv() {
   ret { i8*, i64} %c
 }
 
-; CHECK: test_pair_extract_conv:
+; CHECK-LABEL: test_pair_extract_conv:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
 define {i64, i64} @test_pair_extract_multiple() {
@@ -122,7 +122,7 @@ define {i64, i64} @test_pair_extract_multiple() {
   ret { i64, i64} %e
 }
 
-; CHECK: test_pair_extract_multiple:
+; CHECK-LABEL: test_pair_extract_multiple:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
 define {i64, i64} @test_pair_extract_undef() {
@@ -134,7 +134,7 @@ define {i64, i64} @test_pair_extract_undef() {
   ret { i64, i64} %b
 }
 
-; CHECK: test_pair_extract_undef:
+; CHECK-LABEL: test_pair_extract_undef:
 ; CHECK: jmp	_testp                  ## TAILCALL
 
 declare { i64, { i32, i32 } } @testn()
@@ -154,7 +154,7 @@ define {i64, {i32, i32}} @test_nest() {
   ret { i64, { i32, i32}} %c
 }
 
-; CHECK: test_nest:
+; CHECK-LABEL: test_nest:
 ; CHECK: jmp	_testn                  ## TAILCALL
 
 %struct.A = type { i32 }
@@ -169,7 +169,7 @@ entry:
   ret %struct.A* %x
 }
 
-; CHECK: test_upcast:
+; CHECK-LABEL: test_upcast:
 ; CHECK: jmp	_testu                  ## TAILCALL
 
 ; PR13006
@@ -206,7 +206,7 @@ entry:
 ;   return funcs[n](0, 0, 0, 0, 0, 0);
 ; }
 ;
-; CHECK: rdar12282281
+; CHECK-LABEL: rdar12282281
 ; CHECK: jmpq *%r11 # TAILCALL
 @funcs = external constant [0 x i32 (i8*, ...)*]
 
@@ -221,7 +221,7 @@ entry:
 
 define x86_fp80 @fp80_call(x86_fp80 %x) nounwind  {
 entry:
-; CHECK: fp80_call:
+; CHECK-LABEL: fp80_call:
 ; CHECK: jmp _fp80_callee
   %call = tail call x86_fp80 @fp80_callee(x86_fp80 %x) nounwind
   ret x86_fp80 %call
@@ -232,7 +232,7 @@ declare x86_fp80 @fp80_callee(x86_fp80)
 ; rdar://12229511
 define x86_fp80 @trunc_fp80(x86_fp80 %x) nounwind  {
 entry:
-; CHECK: trunc_fp80
+; CHECK-LABEL: trunc_fp80
 ; CHECK: callq _trunc
 ; CHECK-NOT: jmp _trunc
 ; CHECK: ret

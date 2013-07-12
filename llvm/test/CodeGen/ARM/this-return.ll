@@ -17,12 +17,12 @@ declare %struct.B* @B_ctor_complete_nothisret(%struct.B*, i32)
 
 define %struct.C* @C_ctor_base(%struct.C* returned %this, i32 %x) {
 entry:
-; CHECKELF: C_ctor_base:
+; CHECKELF-LABEL: C_ctor_base:
 ; CHECKELF-NOT: mov {{r[0-9]+}}, r0
 ; CHECKELF: bl A_ctor_base
 ; CHECKELF-NOT: mov r0, {{r[0-9]+}}
 ; CHECKELF: b B_ctor_base
-; CHECKT2D: C_ctor_base:
+; CHECKT2D-LABEL: C_ctor_base:
 ; CHECKT2D-NOT: mov {{r[0-9]+}}, r0
 ; CHECKT2D: blx _A_ctor_base
 ; CHECKT2D-NOT: mov r0, {{r[0-9]+}}
@@ -36,12 +36,12 @@ entry:
 
 define %struct.C* @C_ctor_base_nothisret(%struct.C* %this, i32 %x) {
 entry:
-; CHECKELF: C_ctor_base_nothisret:
+; CHECKELF-LABEL: C_ctor_base_nothisret:
 ; CHECKELF: mov [[SAVETHIS:r[0-9]+]], r0
 ; CHECKELF: bl A_ctor_base_nothisret
 ; CHECKELF: mov r0, [[SAVETHIS]]
 ; CHECKELF-NOT: b B_ctor_base_nothisret
-; CHECKT2D: C_ctor_base_nothisret:
+; CHECKT2D-LABEL: C_ctor_base_nothisret:
 ; CHECKT2D: mov [[SAVETHIS:r[0-9]+]], r0
 ; CHECKT2D: blx _A_ctor_base_nothisret
 ; CHECKT2D: mov r0, [[SAVETHIS]]
@@ -55,9 +55,9 @@ entry:
 
 define %struct.C* @C_ctor_complete(%struct.C* %this, i32 %x) {
 entry:
-; CHECKELF: C_ctor_complete:
+; CHECKELF-LABEL: C_ctor_complete:
 ; CHECKELF: b C_ctor_base
-; CHECKT2D: C_ctor_complete:
+; CHECKT2D-LABEL: C_ctor_complete:
 ; CHECKT2D: b.w _C_ctor_base
   %call = tail call %struct.C* @C_ctor_base(%struct.C* %this, i32 %x)
   ret %struct.C* %this
@@ -65,9 +65,9 @@ entry:
 
 define %struct.C* @C_ctor_complete_nothisret(%struct.C* %this, i32 %x) {
 entry:
-; CHECKELF: C_ctor_complete_nothisret:
+; CHECKELF-LABEL: C_ctor_complete_nothisret:
 ; CHECKELF-NOT: b C_ctor_base_nothisret
-; CHECKT2D: C_ctor_complete_nothisret:
+; CHECKT2D-LABEL: C_ctor_complete_nothisret:
 ; CHECKT2D-NOT: b.w _C_ctor_base_nothisret
   %call = tail call %struct.C* @C_ctor_base_nothisret(%struct.C* %this, i32 %x)
   ret %struct.C* %this
@@ -75,12 +75,12 @@ entry:
 
 define %struct.D* @D_ctor_base(%struct.D* %this, i32 %x) {
 entry:
-; CHECKELF: D_ctor_base:
+; CHECKELF-LABEL: D_ctor_base:
 ; CHECKELF-NOT: mov {{r[0-9]+}}, r0
 ; CHECKELF: bl B_ctor_complete
 ; CHECKELF-NOT: mov r0, {{r[0-9]+}}
 ; CHECKELF: b B_ctor_complete
-; CHECKT2D: D_ctor_base:
+; CHECKT2D-LABEL: D_ctor_base:
 ; CHECKT2D-NOT: mov {{r[0-9]+}}, r0
 ; CHECKT2D: blx _B_ctor_complete
 ; CHECKT2D-NOT: mov r0, {{r[0-9]+}}
@@ -93,9 +93,9 @@ entry:
 
 define %struct.E* @E_ctor_base(%struct.E* %this, i32 %x) {
 entry:
-; CHECKELF: E_ctor_base:
+; CHECKELF-LABEL: E_ctor_base:
 ; CHECKELF-NOT: b B_ctor_complete
-; CHECKT2D: E_ctor_base:
+; CHECKT2D-LABEL: E_ctor_base:
 ; CHECKT2D-NOT: b.w _B_ctor_complete
   %b = getelementptr inbounds %struct.E* %this, i32 0, i32 0
   %call = tail call %struct.B* @B_ctor_complete(%struct.B* %b, i32 %x)
