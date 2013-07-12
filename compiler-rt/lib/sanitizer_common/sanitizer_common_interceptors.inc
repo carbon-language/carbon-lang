@@ -1540,7 +1540,7 @@ INTERCEPTOR(SIZE_T, mbstowcs, wchar_t *dest, const char *src, SIZE_T len) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, mbstowcs, dest, src, len);
   SIZE_T res = REAL(mbstowcs)(dest, src, len);
-  if (res != (SIZE_T)-1 && dest) {
+  if (res != (SIZE_T) - 1 && dest) {
     SIZE_T write_cnt = res + (res < len);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, write_cnt * sizeof(wchar_t));
   }
@@ -1551,11 +1551,13 @@ INTERCEPTOR(SIZE_T, mbsrtowcs, wchar_t *dest, const char **src, SIZE_T len,
             void *ps) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, mbsrtowcs, dest, src, len, ps);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  if (src) COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(mbsrtowcs)(dest, src, len, ps);
-  if (res != (SIZE_T)-1 && dest) {
-    // Terminating '\0' is not printed iff *src is cleared.
-    SIZE_T write_cnt = res + !(*src);
+  if (res != (SIZE_T)(-1) && dest && src) {
+    // This function, and several others, may or may not write the terminating
+    // \0 character. They write it iff they clear *src.
+    SIZE_T write_cnt = res + !*src;
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, write_cnt * sizeof(wchar_t));
   }
   return res;
@@ -1573,14 +1575,14 @@ INTERCEPTOR(SIZE_T, mbsnrtowcs, wchar_t *dest, const char **src, SIZE_T nms,
             SIZE_T len, void *ps) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, mbsnrtowcs, dest, src, nms, len, ps);
-  if (nms) {
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
+  if (src) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+    if (nms) COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
   }
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(mbsnrtowcs)(dest, src, nms, len, ps);
-  if (res != (SIZE_T)-1 && dest && nms) {
-    // Terminating '\0' is not printed iff *src is cleared.
-    SIZE_T write_cnt = res + !(*src);
+  if (res != (SIZE_T)(-1) && dest && src) {
+    SIZE_T write_cnt = res + !*src;
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, write_cnt * sizeof(wchar_t));
   }
   return res;
@@ -1596,7 +1598,7 @@ INTERCEPTOR(SIZE_T, wcstombs, char *dest, const wchar_t *src, SIZE_T len) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, wcstombs, dest, src, len);
   SIZE_T res = REAL(wcstombs)(dest, src, len);
-  if (res != (SIZE_T)-1 && dest) {
+  if (res != (SIZE_T) - 1 && dest) {
     SIZE_T write_cnt = res + (res < len);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, write_cnt);
   }
@@ -1607,11 +1609,11 @@ INTERCEPTOR(SIZE_T, wcsrtombs, char *dest, const wchar_t **src, SIZE_T len,
             void *ps) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, wcsrtombs, dest, src, len, ps);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  if (src) COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(wcsrtombs)(dest, src, len, ps);
-  if (res != (SIZE_T)-1 && dest) {
-    // Terminating '\0' is not printed iff *src is cleared.
-    SIZE_T write_cnt = res + !(*src);
+  if (res != (SIZE_T) - 1 && dest && src) {
+    SIZE_T write_cnt = res + !*src;
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, write_cnt);
   }
   return res;
@@ -1629,14 +1631,14 @@ INTERCEPTOR(SIZE_T, wcsnrtombs, char *dest, const wchar_t **src, SIZE_T nms,
             SIZE_T len, void *ps) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, wcsnrtombs, dest, src, nms, len, ps);
-  if (nms) {
+  if (src) {
     COMMON_INTERCEPTOR_READ_RANGE(ctx, src, sizeof(*src));
-    COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
+    if (nms) COMMON_INTERCEPTOR_READ_RANGE(ctx, *src, nms);
   }
+  if (ps) COMMON_INTERCEPTOR_READ_RANGE(ctx, ps, mbstate_t_sz);
   SIZE_T res = REAL(wcsnrtombs)(dest, src, nms, len, ps);
-  if (res != (SIZE_T)-1 && dest && nms) {
-    // Terminating '\0' is not printed iff *src is cleared.
-    SIZE_T write_cnt = res + !(*src);
+  if (res != (SIZE_T) - 1 && dest && src) {
+    SIZE_T write_cnt = res + !*src;
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, dest, write_cnt);
   }
   return res;
