@@ -355,14 +355,9 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
 
   // First, 'this'.
   if (block->capturesCXXThis()) {
-    const DeclContext *DC = block->getDeclContext();
-    for (; isa<BlockDecl>(DC); DC = cast<BlockDecl>(DC)->getDeclContext())
-      ;
-    QualType thisType;
-    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC))
-      thisType = C.getPointerType(C.getRecordType(RD));
-    else
-      thisType = cast<CXXMethodDecl>(DC)->getThisType(C);
+    assert(CGF && CGF->CurFuncDecl && isa<CXXMethodDecl>(CGF->CurFuncDecl) &&
+           "Can't capture 'this' outside a method");
+    QualType thisType = cast<CXXMethodDecl>(CGF->CurFuncDecl)->getThisType(C);
 
     llvm::Type *llvmType = CGM.getTypes().ConvertType(thisType);
     std::pair<CharUnits,CharUnits> tinfo

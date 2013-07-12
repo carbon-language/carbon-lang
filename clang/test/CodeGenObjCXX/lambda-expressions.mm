@@ -60,6 +60,12 @@ void take_block(void (^block)()) { block(); }
 }
 @end
 
+// Check lines for BlockInLambda test below
+// ARC: define internal i32 @___ZZN13BlockInLambda1X1fEvENKUlvE_clEv_block_invoke
+// ARC: [[Y:%.*]] = getelementptr inbounds %"struct.BlockInLambda::X"* {{.*}}, i32 0, i32 1
+// ARC-NEXT: [[YVAL:%.*]] = load i32* [[Y]], align 4
+// ARC-NEXT: ret i32 [[YVAL]]
+
 typedef int (^fptr)();
 template<typename T> struct StaticMembers {
   static fptr f;
@@ -68,6 +74,18 @@ template<typename T>
 fptr StaticMembers<T>::f = [] { auto f = []{return 5;}; return fptr(f); }();
 template fptr StaticMembers<float>::f;
 // ARC: define linkonce_odr i32 ()* @_ZZNK13StaticMembersIfE1fMUlvE_clEvENKUlvE_cvU13block_pointerFivEEv
+
+namespace BlockInLambda {
+  struct X {
+    int x,y;
+    void f() {
+      [this]{return ^{return y;}();}();
+    };
+  };
+  void g(X& x) {
+    x.f();
+  };
+}
 
 
 // ARC: attributes [[NUW]] = { nounwind{{.*}} }
