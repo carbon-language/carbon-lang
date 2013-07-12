@@ -16,12 +16,14 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/Watchpoint.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/ThreadSpec.h"
 #include "POSIXStopInfo.h"
 #include "POSIXThread.h"
 #include "ProcessPOSIX.h"
@@ -383,15 +385,33 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     if (log)
         log->Printf ("POSIXThread::%s () PC=0x%8.8" PRIx64, __FUNCTION__, pc);
     lldb::BreakpointSiteSP bp_site(GetProcess()->GetBreakpointSiteList().FindByAddress(pc));
-    assert(bp_site);
-    lldb::break_id_t bp_id = bp_site->GetID();
-    assert(bp_site && bp_site->ValidForThisThread(this));
 
-    // Make this thread the selected thread
-    GetProcess()->GetThreadList().SetSelectedThreadByID(GetID());
+    // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+    // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+    // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+    if (bp_site && bp_site->ValidForThisThread(this))
+    {
+        lldb::break_id_t bp_id = bp_site->GetID();
+        if (GetProcess()->GetThreadList().SetSelectedThreadByID(GetID()))
+            SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
+        else
+            assert(false && "Invalid thread ID during BreakNotify.");
+    }
+    else
+    {
+        const ThreadSpec *spec = bp_site ? 
+            bp_site->GetOwnerAtIndex(0)->GetOptionsNoCreate()->GetThreadSpecNoCreate() : 0;
 
-    m_breakpoint = bp_site;
-    SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID(*this, bp_id));
+        if (spec && spec->TIDMatches(*this))
+            assert(false && "BreakpointSite is invalid for the current ThreadSpec.");
+        else
+        {
+            if (!m_stop_info_sp) {
+                StopInfoSP invalid_stop_info_sp;
+                SetStopInfo (invalid_stop_info_sp);
+            }
+        }
+    }
 }
 
 void
