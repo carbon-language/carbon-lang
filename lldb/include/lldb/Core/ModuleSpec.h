@@ -350,13 +350,26 @@ public:
             strm.PutCString("uuid = ");
             m_uuid.Dump(&strm);
             dumped_something = true;
-            
         }
         if (m_object_name)
         {
             if (dumped_something)
                 strm.PutCString(", ");
             strm.Printf("object_name = %s", m_object_name.GetCString());
+            dumped_something = true;
+        }
+        if (m_object_offset > 0)
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.Printf("object_offset = 0x%" PRIx64, m_object_offset);
+            dumped_something = true;
+        }
+        if (m_object_mod_time.IsValid())
+        {
+            if (dumped_something)
+                strm.PutCString(", ");
+            strm.Printf("object_mod_time = 0x%" PRIx64, m_object_mod_time.GetAsSecondsSinceJan1_1970());
             dumped_something = true;
         }
     }
@@ -479,6 +492,13 @@ public:
         m_specs.insert(m_specs.end(), rhs.m_specs.begin(), rhs.m_specs.end());
     }
 
+    // The index "i" must be valid and this can't be used in
+    // multi-threaded code as no mutex lock is taken.
+    ModuleSpec &
+    GetModuleSpecRefAtIndex (size_t i)
+    {
+        return m_specs[i];
+    }
     bool
     GetModuleSpecAtIndex (size_t i, ModuleSpec &module_spec) const
     {

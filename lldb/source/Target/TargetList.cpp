@@ -92,7 +92,8 @@ TargetList::CreateTarget (Debugger &debugger,
         ModuleSpec module_spec;
         module_spec.GetFileSpec().SetFile(user_exe_path, true);
         lldb::offset_t file_offset = 0;
-        const size_t num_specs = ObjectFile::GetModuleSpecifications (module_spec.GetFileSpec(), file_offset, module_specs);
+        lldb::offset_t file_size = 0;
+        const size_t num_specs = ObjectFile::GetModuleSpecifications (module_spec.GetFileSpec(), file_offset, file_size, module_specs);
         if (num_specs > 0)
         {
             ModuleSpec matching_module_spec;

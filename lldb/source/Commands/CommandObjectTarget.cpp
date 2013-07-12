@@ -4285,7 +4285,7 @@ protected:
             size_t num_matches = 0;
             // First extract all module specs from the symbol file
             lldb_private::ModuleSpecList symfile_module_specs;
-            if (ObjectFile::GetModuleSpecifications(module_spec.GetSymbolFileSpec(), 0, symfile_module_specs))
+            if (ObjectFile::GetModuleSpecifications(module_spec.GetSymbolFileSpec(), 0, 0, symfile_module_specs))
             {
                 // Now extract the module spec that matches the target architecture
                 ModuleSpec target_arch_module_spec;

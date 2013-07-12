@@ -278,13 +278,13 @@ ObjectContainerUniversalMachO::GetModuleSpecifications (const lldb_private::File
                                                         lldb::DataBufferSP& data_sp,
                                                         lldb::offset_t data_offset,
                                                         lldb::offset_t file_offset,
-                                                        lldb::offset_t length,
+                                                        lldb::offset_t file_size,
                                                         lldb_private::ModuleSpecList &specs)
 {
     const size_t initial_count = specs.GetSize();
     
     DataExtractor data;
-    data.SetData (data_sp, data_offset, length);
+    data.SetData (data_sp, data_offset, data_sp->GetByteSize());
 
     if (ObjectContainerUniversalMachO::MagicBytesMatch(data))
     {
@@ -294,9 +294,14 @@ ObjectContainerUniversalMachO::GetModuleSpecifications (const lldb_private::File
         {
             for (const llvm::MachO::fat_arch &fat_arch : fat_archs)
             {
-                ObjectFile::GetModuleSpecifications (file,
-                                                     fat_arch.offset + file_offset,
-                                                     specs);
+                const lldb::offset_t slice_file_offset = fat_arch.offset + file_offset;
+                if (fat_arch.offset < file_size && file_size > slice_file_offset)
+                {
+                    ObjectFile::GetModuleSpecifications (file,
+                                                         slice_file_offset,
+                                                         file_size - slice_file_offset,
+                                                         specs);
+                }
             }
         }
     }

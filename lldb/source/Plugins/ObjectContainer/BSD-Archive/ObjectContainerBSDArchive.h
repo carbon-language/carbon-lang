@@ -136,16 +136,19 @@ protected:
         static Archive::shared_ptr
         FindCachedArchive (const lldb_private::FileSpec &file,
                            const lldb_private::ArchSpec &arch,
-                           const lldb_private::TimeValue &mod_time);
+                           const lldb_private::TimeValue &mod_time,
+                           lldb::offset_t file_offset);
 
         static Archive::shared_ptr
         ParseAndCacheArchiveForFile (const lldb_private::FileSpec &file,
                                      const lldb_private::ArchSpec &arch,
                                      const lldb_private::TimeValue &mod_time,
+                                     lldb::offset_t file_offset,
                                      lldb_private::DataExtractor &data);
 
         Archive (const lldb_private::ArchSpec &arch,
                  const lldb_private::TimeValue &mod_time,
+                 lldb::offset_t file_offset,
                  lldb_private::DataExtractor &data);
 
         ~Archive ();
@@ -156,12 +159,26 @@ protected:
             return m_objects.size();
         }
 
+        const Object *
+        GetObjectAtIndex (size_t idx)
+        {
+            if (idx < m_objects.size())
+                return &m_objects[idx];
+            return NULL;
+        }
+
         size_t
         ParseObjects ();
 
         Object *
         FindObject (const lldb_private::ConstString &object_name,
                     const lldb_private::TimeValue &object_mod_time);
+
+        lldb::offset_t
+        GetFileOffset () const
+        {
+            return m_file_offset;
+        }
 
         const lldb_private::TimeValue &
         GetModificationTime()
@@ -170,11 +187,17 @@ protected:
         }
 
         const lldb_private::ArchSpec &
-        GetArchitecture ()
+        GetArchitecture () const
         {
             return m_arch;
         }
-        
+
+        void
+        SetArchitecture (const lldb_private::ArchSpec &arch)
+        {
+            m_arch = arch;
+        }
+
         bool
         HasNoExternalReferences() const;
 
@@ -191,6 +214,7 @@ protected:
         //----------------------------------------------------------------------
         lldb_private::ArchSpec m_arch;
         lldb_private::TimeValue m_time;
+        lldb::offset_t m_file_offset;
         Object::collection m_objects;
         ObjectNameToIndexMap m_object_name_to_index_map;
         lldb_private::DataExtractor m_data; ///< The data for this object container so we don't lose data if the .a files gets modified

@@ -182,6 +182,7 @@ public:
     static size_t
     GetModuleSpecifications (const FileSpec &file,
                              lldb::offset_t file_offset,
+                             lldb::offset_t file_size,
                              ModuleSpecList &specs);
     
     static size_t
@@ -189,7 +190,7 @@ public:
                              lldb::DataBufferSP& data_sp,
                              lldb::offset_t data_offset,
                              lldb::offset_t file_offset,
-                             lldb::offset_t length,
+                             lldb::offset_t file_size,
                              lldb_private::ModuleSpecList &specs);
     //------------------------------------------------------------------
     /// Split a path into a file path with object name.

@@ -513,7 +513,8 @@ ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
             if (header.sizeofcmds >= data_sp->GetByteSize())
             {
                 data_sp = file.ReadFileContents(file_offset, header.sizeofcmds);
-                data_offset = MachHeaderSizeFromMagic(header.magic) + file_offset;
+                data.SetData(data_sp);
+                data_offset = MachHeaderSizeFromMagic(header.magic);
             }
             if (data_sp)
             {

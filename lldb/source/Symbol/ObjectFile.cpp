@@ -186,16 +186,25 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
 size_t
 ObjectFile::GetModuleSpecifications (const FileSpec &file,
                                      lldb::offset_t file_offset,
+                                     lldb::offset_t file_size,
                                      ModuleSpecList &specs)
 {
     DataBufferSP data_sp (file.ReadFileContents(file_offset, 512));
     if (data_sp)
-        return ObjectFile::GetModuleSpecifications (file,                    // file spec
-                                                    data_sp,                 // data bytes
-                                                    0,                       // data offset
-                                                    file_offset,             // file offset
-                                                    data_sp->GetByteSize(),  // data length
+    {
+        if (file_size == 0)
+        {
+            const lldb::offset_t actual_file_size = file.GetByteSize();
+            if (actual_file_size > file_offset)
+                file_size = actual_file_size - file_offset;
+        }
+        return ObjectFile::GetModuleSpecifications (file,       // file spec
+                                                    data_sp,    // data bytes
+                                                    0,          // data offset
+                                                    file_offset,// file offset
+                                                    file_size,  // file length
                                                     specs);
+    }
     return 0;
 }
 
@@ -204,7 +213,7 @@ ObjectFile::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                      lldb::DataBufferSP& data_sp,
                                      lldb::offset_t data_offset,
                                      lldb::offset_t file_offset,
-                                     lldb::offset_t length,
+                                     lldb::offset_t file_size,
                                      lldb_private::ModuleSpecList &specs)
 {
     const size_t initial_count = specs.GetSize();
@@ -213,14 +222,14 @@ ObjectFile::GetModuleSpecifications (const lldb_private::FileSpec& file,
     // Try the ObjectFile plug-ins
     for (i = 0; (callback = PluginManager::GetObjectFileGetModuleSpecificationsCallbackAtIndex(i)) != NULL; ++i)
     {
-        if (callback (file, data_sp, data_offset, file_offset, length, specs) > 0)
+        if (callback (file, data_sp, data_offset, file_offset, file_size, specs) > 0)
             return specs.GetSize() - initial_count;
     }
 
     // Try the ObjectContainer plug-ins
     for (i = 0; (callback = PluginManager::GetObjectContainerGetModuleSpecificationsCallbackAtIndex(i)) != NULL; ++i)
     {
-        if (callback (file, data_sp, data_offset, file_offset, length, specs) > 0)
+        if (callback (file, data_sp, data_offset, file_offset, file_size, specs) > 0)
             return specs.GetSize() - initial_count;
     }
     return 0;
