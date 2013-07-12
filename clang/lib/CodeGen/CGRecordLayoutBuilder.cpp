@@ -976,11 +976,11 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
 
   // Dump the layout, if requested.
   if (getContext().getLangOpts().DumpRecordLayouts) {
-    llvm::errs() << "\n*** Dumping IRgen Record Layout\n";
-    llvm::errs() << "Record: ";
-    D->dump();
-    llvm::errs() << "\nLayout: ";
-    RL->dump();
+    llvm::outs() << "\n*** Dumping IRgen Record Layout\n";
+    llvm::outs() << "Record: ";
+    D->dump(llvm::outs());
+    llvm::outs() << "\nLayout: ";
+    RL->print(llvm::outs());
   }
 
 #ifndef NDEBUG

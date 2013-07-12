@@ -2423,8 +2423,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
   ASTRecordLayouts[D] = NewEntry;
 
   if (getLangOpts().DumpRecordLayouts) {
-    llvm::errs() << "\n*** Dumping AST Record Layout\n";
-    DumpRecordLayout(D, llvm::errs(), getLangOpts().DumpRecordLayoutsSimple);
+    llvm::outs() << "\n*** Dumping AST Record Layout\n";
+    DumpRecordLayout(D, llvm::outs(), getLangOpts().DumpRecordLayoutsSimple);
   }
 
   return *NewEntry;

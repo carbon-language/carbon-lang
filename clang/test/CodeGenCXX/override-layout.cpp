@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fdump-record-layouts-simple %s 2> %t.layouts
-// RUN: %clang_cc1 -fdump-record-layouts-simple %s > %t.before 2>&1
-// RUN: %clang_cc1 -DPACKED= -DALIGNED16= -fdump-record-layouts-simple -foverride-record-layout=%t.layouts %s > %t.after 2>&1
+// RUN: %clang_cc1 -fdump-record-layouts-simple %s > %t.layouts
+// RUN: %clang_cc1 -fdump-record-layouts-simple %s > %t.before
+// RUN: %clang_cc1 -DPACKED= -DALIGNED16= -fdump-record-layouts-simple -foverride-record-layout=%t.layouts %s > %t.after
 // RUN: diff -u %t.before %t.after
 // RUN: FileCheck %s < %t.after
 

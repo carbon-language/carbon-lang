@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -triple x86_64 -O3 -o %t.opt.ll %s \
-// RUN:   -fdump-record-layouts 2> %t.dump.txt
+// RUN:   -fdump-record-layouts > %t.dump.txt
 // RUN: FileCheck -check-prefix=CHECK-RECORD < %t.dump.txt %s
 // RUN: FileCheck -check-prefix=CHECK-OPT < %t.opt.ll %s
 
