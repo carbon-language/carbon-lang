@@ -19,6 +19,8 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 
+#include "Plugins/Process/elf-core/ProcessElfCore.h"
+
 #include "AuxVector.h"
 
 using namespace lldb;
@@ -53,8 +55,10 @@ ParseAuxvEntry(DataExtractor &data,
 DataBufferSP
 AuxVector::GetAuxvData()
 {
-
-    return lldb_private::Host::GetAuxvData(m_process);
+    if (m_process->GetPluginName() == ProcessElfCore::GetPluginNameStatic())
+        return static_cast<ProcessElfCore *>(m_process)->GetAuxvData();
+    else
+        return lldb_private::Host::GetAuxvData(m_process);
 }
 
 void
