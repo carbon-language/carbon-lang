@@ -119,8 +119,17 @@ namespace CallingConv {
     SPIR_KERNEL = 76,
 
     /// Intel_OCL_BI - Calling conventions for Intel OpenCL built-ins
-    Intel_OCL_BI = 77
+    Intel_OCL_BI = 77,
 
+    /// \brief The C convention as specified in the x86-64 supplement to the
+    /// System V ABI, used on most non-Windows systems.
+    X86_64_SysV = 78,
+
+    /// \brief The C convention as implemented on Windows/x86-64. This
+    /// convention differs from the more common \c X86_64_SysV convention
+    /// in a number of ways, most notably in that XMM registers used to pass
+    /// arguments are shadowed by GPRs, and vice versa.
+    X86_64_Win64 = 79
   };
 } // End CallingConv namespace
 

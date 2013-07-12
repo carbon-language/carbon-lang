@@ -50,12 +50,13 @@ syn keyword llvmKeyword msp430_intrcc naked nest noalias nocapture
 syn keyword llvmKeyword noimplicitfloat noinline nonlazybind noredzone noreturn
 syn keyword llvmKeyword nounwind optsize personality private protected
 syn keyword llvmKeyword ptx_device ptx_kernel readnone readonly release
-syn keyword llvmKeyword returns_twice section seq_cst sideeffect signext
-syn keyword llvmKeyword singlethread spir_func spir_kernel sret ssp sspreq
-syn keyword llvmKeyword sspstrong tail target thread_local to triple
-syn keyword llvmKeyword unnamed_addr unordered uwtable volatile weak weak_odr
-syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc zeroext
-syn keyword llvmKeyword sanitize_thread sanitize_memory
+syn keyword llvmKeyword returns_twice sanitize_thread sanitize_memory
+syn keyword llvmKeyword section seq_cst sideeffect signext singlethread
+syn keyword llvmKeyword spir_func spir_kernel sret ssp sspreq sspstrong
+syn keyword llvmKeyword tail target thread_local to triple unnamed_addr
+syn keyword llvmKeyword unordered uwtable volatile weak weak_odr
+syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc x86_64_sysvcc
+syn keyword llvmKeyword x86_64_win64cc zeroext
 
 " Obsolete keywords.
 syn keyword llvmError  getresult begin end

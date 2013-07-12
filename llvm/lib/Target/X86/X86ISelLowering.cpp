@@ -1880,13 +1880,19 @@ static bool IsTailCallConvention(CallingConv::ID CC) {
           CC == CallingConv::HiPE);
 }
 
+/// \brief Return true if the calling convention is a C calling convention.
+static bool IsCCallConvention(CallingConv::ID CC) {
+  return (CC == CallingConv::C || CC == CallingConv::X86_64_Win64 ||
+          CC == CallingConv::X86_64_SysV);
+}
+
 bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   if (!CI->isTailCall() || getTargetMachine().Options.DisableTailCalls)
     return false;
 
   CallSite CS(CI);
   CallingConv::ID CalleeCC = CS.getCallingConv();
-  if (!IsTailCallConvention(CalleeCC) && CalleeCC != CallingConv::C)
+  if (!IsTailCallConvention(CalleeCC) && !IsCCallConvention(CalleeCC))
     return false;
 
   return true;
@@ -1961,7 +1967,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool Is64Bit = Subtarget->is64Bit();
   bool IsWindows = Subtarget->isTargetWindows();
-  bool IsWin64 = Subtarget->isTargetWin64();
+  bool IsWin64 = Subtarget->isCallingConvWin64(CallConv);
 
   assert(!(isVarArg && IsTailCallConvention(CallConv)) &&
          "Var args not supported with calling convention fastcc, ghc or hipe");
@@ -1972,9 +1978,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
                  ArgLocs, *DAG.getContext());
 
   // Allocate shadow area for Win64
-  if (IsWin64) {
+  if (IsWin64)
     CCInfo.AllocateStack(32, 8);
-  }
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_X86);
 
@@ -2287,7 +2292,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   MachineFunction &MF = DAG.getMachineFunction();
   bool Is64Bit        = Subtarget->is64Bit();
-  bool IsWin64        = Subtarget->isTargetWin64();
+  bool IsWin64        = Subtarget->isCallingConvWin64(CallConv);
   bool IsWindows      = Subtarget->isTargetWindows();
   StructReturnType SR = callIsStructReturn(Outs);
   bool IsSibcall      = false;
@@ -2320,9 +2325,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                  ArgLocs, *DAG.getContext());
 
   // Allocate shadow area for Win64
-  if (IsWin64) {
+  if (IsWin64)
     CCInfo.AllocateStack(32, 8);
-  }
 
   CCInfo.AnalyzeCallOperands(Outs, CC_X86);
 
@@ -2833,13 +2837,12 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                                     const SmallVectorImpl<SDValue> &OutVals,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                                      SelectionDAG &DAG) const {
-  if (!IsTailCallConvention(CalleeCC) &&
-      CalleeCC != CallingConv::C)
+  if (!IsTailCallConvention(CalleeCC) && !IsCCallConvention(CalleeCC))
     return false;
 
   // If -tailcallopt is specified, make fastcc functions tail-callable.
   const MachineFunction &MF = DAG.getMachineFunction();
-  const Function *CallerF = DAG.getMachineFunction().getFunction();
+  const Function *CallerF = MF.getFunction();
 
   // If the function return type is x86_fp80 and the callee return type is not,
   // then the FP_EXTEND of the call result is not a nop. It's not safe to
@@ -2849,6 +2852,8 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 
   CallingConv::ID CallerCC = CallerF->getCallingConv();
   bool CCMatch = CallerCC == CalleeCC;
+  bool IsCalleeWin64 = Subtarget->isCallingConvWin64(CalleeCC);
+  bool IsCallerWin64 = Subtarget->isCallingConvWin64(CallerCC);
 
   if (getTargetMachine().Options.GuaranteedTailCallOpt) {
     if (IsTailCallConvention(CalleeCC) && CCMatch)
@@ -2882,7 +2887,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 
     // Optimizing for varargs on Win64 is unlikely to be safe without
     // additional testing.
-    if (Subtarget->isTargetWin64())
+    if (IsCalleeWin64 || IsCallerWin64)
       return false;
 
     SmallVector<CCValAssign, 16> ArgLocs;
@@ -2957,9 +2962,8 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
                    getTargetMachine(), ArgLocs, *DAG.getContext());
 
     // Allocate shadow area for Win64
-    if (Subtarget->isTargetWin64()) {
+    if (IsCalleeWin64)
       CCInfo.AllocateStack(32, 8);
-    }
 
     CCInfo.AnalyzeCallOperands(Outs, CC_X86);
     if (CCInfo.getNextStackOffset()) {

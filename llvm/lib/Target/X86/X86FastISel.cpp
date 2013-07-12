@@ -712,10 +712,11 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
   CallingConv::ID CC = F.getCallingConv();
   if (CC != CallingConv::C &&
       CC != CallingConv::Fast &&
-      CC != CallingConv::X86_FastCall)
+      CC != CallingConv::X86_FastCall &&
+      CC != CallingConv::X86_64_SysV)
     return false;
 
-  if (Subtarget->isTargetWin64())
+  if (Subtarget->isCallingConvWin64(CC))
     return false;
 
   // Don't handle popping bytes on return for now.
@@ -1705,9 +1706,6 @@ bool X86FastISel::FastLowerArguments() {
   if (!FuncInfo.CanLowerReturn)
     return false;
 
-  if (Subtarget->isTargetWin64())
-    return false;
-
   const Function *F = FuncInfo.Fn;
   if (F->isVarArg())
     return false;
@@ -1715,7 +1713,10 @@ bool X86FastISel::FastLowerArguments() {
   CallingConv::ID CC = F->getCallingConv();
   if (CC != CallingConv::C)
     return false;
-  
+
+  if (Subtarget->isCallingConvWin64(CC))
+    return false;
+
   if (!Subtarget->is64Bit())
     return false;
   
@@ -1817,8 +1818,10 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   // Handle only C and fastcc calling conventions for now.
   ImmutableCallSite CS(CI);
   CallingConv::ID CC = CS.getCallingConv();
+  bool isWin64 = Subtarget->isCallingConvWin64(CC);
   if (CC != CallingConv::C && CC != CallingConv::Fast &&
-      CC != CallingConv::X86_FastCall)
+      CC != CallingConv::X86_FastCall && CC != CallingConv::X86_64_Win64 &&
+      CC != CallingConv::X86_64_SysV)
     return false;
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
@@ -1832,7 +1835,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   // Don't know how to handle Win64 varargs yet.  Nothing special needed for
   // x86-32.  Special handling for x86-64 is implemented.
-  if (isVarArg && Subtarget->isTargetWin64())
+  if (isVarArg && isWin64)
     return false;
 
   // Fast-isel doesn't know about callee-pop yet.
@@ -1962,7 +1965,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
                  I->getParent()->getContext());
 
   // Allocate shadow area for Win64
-  if (Subtarget->isTargetWin64())
+  if (isWin64)
     CCInfo.AllocateStack(32, 8);
 
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CC_X86);
@@ -2078,7 +2081,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
             X86::EBX).addReg(Base);
   }
 
-  if (Subtarget->is64Bit() && isVarArg && !Subtarget->isTargetWin64()) {
+  if (Subtarget->is64Bit() && isVarArg && !isWin64) {
     // Count the number of XMM registers allocated.
     static const uint16_t XMMArgRegs[] = {
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
@@ -2147,7 +2150,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   if (Subtarget->isPICStyleGOT())
     MIB.addReg(X86::EBX, RegState::Implicit);
 
-  if (Subtarget->is64Bit() && isVarArg && !Subtarget->isTargetWin64())
+  if (Subtarget->is64Bit() && isVarArg && !isWin64)
     MIB.addReg(X86::AL, RegState::Implicit);
 
   // Add implicit physical register uses to the call.

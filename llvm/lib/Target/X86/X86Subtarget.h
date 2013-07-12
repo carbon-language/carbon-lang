@@ -338,7 +338,13 @@ public:
   }
   bool isPICStyleStubAny() const {
     return PICStyle == PICStyles::StubDynamicNoPIC ||
-           PICStyle == PICStyles::StubPIC; }
+           PICStyle == PICStyles::StubPIC;
+  }
+
+  bool isCallingConvWin64(CallingConv::ID CC) const {
+    return (isTargetWin64() && CC != CallingConv::X86_64_SysV) ||
+           CC == CallingConv::X86_64_Win64;
+  }
 
   /// ClassifyGlobalReference - Classify a global variable reference for the
   /// current subtarget according to how we should reference it in a non-pcrel
