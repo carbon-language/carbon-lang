@@ -33,6 +33,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetLowering.h"
+#include <cstdlib>
 using namespace llvm;
 
 STATISTIC(NumFunProtected, "Number of functions protected");
@@ -52,6 +53,10 @@ namespace {
     Module *M;
 
     DominatorTree *DT;
+
+    /// \brief The minimum size of buffers that will receive stack smashing
+    /// protection when -fstack-protection is used.
+    unsigned SSPBufferSize;
 
     /// VisitedPHIs - The set of PHI nodes visited when determining
     /// if a variable's reference has been taken.  This set 
@@ -85,11 +90,12 @@ namespace {
     bool RequiresStackProtector();
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    StackProtector() : FunctionPass(ID), TM(0), TLI(0) {
+    StackProtector() : FunctionPass(ID), TM(0), TLI(0), SSPBufferSize(0) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
     StackProtector(const TargetMachine *TM)
-      : FunctionPass(ID), TM(TM), TLI(0), Trip(TM->getTargetTriple()) {
+      : FunctionPass(ID), TM(TM), TLI(0), Trip(TM->getTargetTriple()),
+        SSPBufferSize(8) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
 
@@ -117,6 +123,12 @@ bool StackProtector::runOnFunction(Function &Fn) {
 
   if (!RequiresStackProtector()) return false;
 
+  Attribute Attr =
+    Fn.getAttributes().getAttribute(AttributeSet::FunctionIndex,
+                                    "ssp-buffer-size");
+  if (Attr.isStringAttribute())
+    SSPBufferSize = atoi(Attr.getValueAsString().data());
+
   ++NumFunProtected;
   return InsertStackProtectors();
 }
@@ -132,7 +144,6 @@ bool StackProtector::ContainsProtectableArray(Type *Ty, bool Strong,
     // protector
     if (Strong)
       return true;
-    const TargetMachine &TM = TLI->getTargetMachine();
     if (!AT->getElementType()->isIntegerTy(8)) {
       // If we're on a non-Darwin platform or we're inside of a structure, don't
       // add stack protectors unless the array is a character array.
@@ -142,7 +153,7 @@ bool StackProtector::ContainsProtectableArray(Type *Ty, bool Strong,
 
     // If an array has more than SSPBufferSize bytes of allocated space, then we
     // emit stack protectors.
-    if (TM.Options.SSPBufferSize <= TLI->getDataLayout()->getTypeAllocSize(AT))
+    if (SSPBufferSize <= TLI->getDataLayout()->getTypeAllocSize(AT))
       return true;
   }
 
@@ -230,13 +241,14 @@ bool StackProtector::RequiresStackProtector() {
   
           if (const ConstantInt *CI =
                dyn_cast<ConstantInt>(AI->getArraySize())) {
-            unsigned BufferSize = TLI->getTargetMachine().Options.SSPBufferSize;
-            if (CI->getLimitedValue(BufferSize) >= BufferSize)
+            if (CI->getLimitedValue(SSPBufferSize) >= SSPBufferSize)
               // A call to alloca with size >= SSPBufferSize requires
               // stack protectors.
               return true;
-          } else // A call to alloca with a variable size requires protectors.
+          } else {
+            // A call to alloca with a variable size requires protectors.
             return true;
+          }
         }
 
         if (ContainsProtectableArray(AI->getAllocatedType(), Strong))
