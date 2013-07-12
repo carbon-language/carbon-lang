@@ -491,6 +491,34 @@ class TEQ_FM<bits<6> funct> {
 }
 
 //===----------------------------------------------------------------------===//
+//  System calls format <op|code_|funct>
+//===----------------------------------------------------------------------===//
+
+class SYS_FM<bits<6> funct>
+{
+  bits<20> code_;
+  bits<32> Inst;
+  let Inst{31-26} = 0x0;
+  let Inst{25-6} = code_;
+  let Inst{5-0}  = funct;
+}
+
+//===----------------------------------------------------------------------===//
+//  Break instruction format <op|code_1|funct>
+//===----------------------------------------------------------------------===//
+
+class BRK_FM<bits<6> funct>
+{
+  bits<10> code_1;
+  bits<10> code_2;
+  bits<32> Inst;
+  let Inst{31-26} = 0x0;
+  let Inst{25-16} = code_1;
+  let Inst{15-6}  = code_2;
+  let Inst{5-0}   = funct;
+}
+
+//===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS
 //
