@@ -23,10 +23,10 @@ target triple = "i386-apple-macosx10.9.0"
 ;CHECK: fmul <3 x float>
 ;CHECK: fadd <3 x float>
 ; At the moment we don't sink extractelements.
-;CHECK: extractelement
-;CHECK: extractelement
-;CHECK: extractelement
 ;CHECK: br
+;CHECK: extractelement
+;CHECK: extractelement
+;CHECK: extractelement
 ;CHECK: ret
 
 define float @foo(float* nocapture readonly %A) {

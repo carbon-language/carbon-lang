@@ -1320,6 +1320,9 @@ void BoUpSLP::vectorizeTree() {
        it != e; ++it) {
     Value *Scalar = it->Scalar;
     llvm::User *User = it->User;
+
+    // Skip users that we already RAUW. This happens when one instruction
+    // has multiple uses of the same value.
     if (std::find(Scalar->use_begin(), Scalar->use_end(), User) ==
         Scalar->use_end())
       continue;
@@ -1337,8 +1340,18 @@ void BoUpSLP::vectorizeTree() {
     Instruction *Loc = 0;
     if (PHINode *PN = dyn_cast<PHINode>(Vec)) {
       Loc = PN->getParent()->getFirstInsertionPt();
-    } else if (Instruction *Iv = dyn_cast<Instruction>(Vec)){
-      Loc = ++((BasicBlock::iterator)*Iv);
+    } else if (isa<Instruction>(Vec)){
+      if (PHINode *PH = dyn_cast<PHINode>(User)) {
+        for (int i = 0, e = PH->getNumIncomingValues(); i != e; ++i) {
+          if (PH->getIncomingValue(i) == Scalar) {
+            Loc = PH->getIncomingBlock(i)->getTerminator();
+            break;
+          }
+        }
+        assert(Loc && "Unable to find incoming value for the PHI");
+      } else {
+        Loc = cast<Instruction>(User);
+     }
     } else {
       Loc = F->getEntryBlock().begin();
     }
@@ -1433,24 +1446,25 @@ void BoUpSLP::optimizeGatherSequence() {
     BasicBlock *BB = *I;
     // For all instructions in the function:
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-      InsertElementInst *Insert = dyn_cast<InsertElementInst>(it);
-      if (!Insert || !GatherSeq.count(Insert))
+      Instruction *In = it;
+      if ((!isa<InsertElementInst>(In) && !isa<ExtractElementInst>(In)) ||
+          !GatherSeq.count(In))
         continue;
 
       // Check if we can replace this instruction with any of the
       // visited instructions.
       for (SmallPtrSet<Instruction*, 16>::iterator v = Visited.begin(),
            ve = Visited.end(); v != ve; ++v) {
-        if (Insert->isIdenticalTo(*v) &&
-            DT->dominates((*v)->getParent(), Insert->getParent())) {
-          Insert->replaceAllUsesWith(*v);
-          ToRemove.push_back(Insert);
-          Insert = 0;
+        if (In->isIdenticalTo(*v) &&
+            DT->dominates((*v)->getParent(), In->getParent())) {
+          In->replaceAllUsesWith(*v);
+          ToRemove.push_back(In);
+          In = 0;
           break;
         }
       }
-      if (Insert)
-        Visited.insert(Insert);
+      if (In)
+        Visited.insert(In);
     }
   }
 

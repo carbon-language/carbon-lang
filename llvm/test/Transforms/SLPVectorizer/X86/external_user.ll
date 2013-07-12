@@ -26,9 +26,9 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: phi <2 x double>
 ;CHECK: fadd <2 x double>
 ;CHECK: fmul <2 x double>
-;CHECK: extractelement <2 x double>
 ;CHECK: br
 ;CHECK: store <2 x double>
+;CHECK: extractelement <2 x double>
 ;CHECK: ret double
 
 define double @ext_user(double* noalias nocapture %B, double* noalias nocapture %A, i32 %n, i32 %m) {
