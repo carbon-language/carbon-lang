@@ -379,10 +379,8 @@ namespace {
 class NewArchiveIterator {
   bool IsNewMember;
   SmallString<16> MemberName;
-  union {
-    object::Archive::child_iterator OldI;
-    std::vector<std::string>::const_iterator NewI;
-  };
+  object::Archive::child_iterator OldI;
+  std::vector<std::string>::const_iterator NewI;
 
 public:
   NewArchiveIterator(object::Archive::child_iterator I, Twine Name);
