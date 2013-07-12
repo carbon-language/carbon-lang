@@ -93,7 +93,7 @@ Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
             if (file_spec.Exists())
             {
                 lldb_private::ModuleSpecList specs;
-                const size_t num_specs = ObjectFile::GetModuleSpecifications (file_spec, 0, specs);
+                const size_t num_specs = ObjectFile::GetModuleSpecifications (file_spec, 0, 0, specs);
                 assert (num_specs <= 1 && "Symbol Vendor supports only a single architecture");
                 if (num_specs == 1)
                 {
