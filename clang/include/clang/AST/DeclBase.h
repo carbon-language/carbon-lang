@@ -295,8 +295,6 @@ protected:
   friend class ASTReader;
   friend class LinkageComputer;
 
-  template<typename decl_type> friend class Redeclarable;
-
 private:
   void CheckAccessDeclContext() const;
 
@@ -826,7 +824,7 @@ public:
   /// class, but in the semantic context of the actual entity.  This property
   /// applies only to a specific decl object;  other redeclarations of the
   /// same entity may not (and probably don't) share this property.
-  void setObjectOfFriendDecl(bool PerformFriendInjection = false) {
+  void setObjectOfFriendDecl(bool PreviouslyDeclared) {
     unsigned OldNS = IdentifierNamespace;
     assert((OldNS & (IDNS_Tag | IDNS_Ordinary |
                      IDNS_TagFriend | IDNS_OrdinaryFriend)) &&
@@ -835,20 +833,15 @@ public:
                        IDNS_TagFriend | IDNS_OrdinaryFriend)) &&
            "namespace includes other than ordinary or tag");
 
-    Decl *Prev = getPreviousDecl();
     IdentifierNamespace = 0;
     if (OldNS & (IDNS_Tag | IDNS_TagFriend)) {
       IdentifierNamespace |= IDNS_TagFriend;
-      if (PerformFriendInjection || 
-          (Prev && Prev->getIdentifierNamespace() & IDNS_Tag))
-        IdentifierNamespace |= IDNS_Tag | IDNS_Type;
+      if (PreviouslyDeclared) IdentifierNamespace |= IDNS_Tag | IDNS_Type;
     }
 
     if (OldNS & (IDNS_Ordinary | IDNS_OrdinaryFriend)) {
       IdentifierNamespace |= IDNS_OrdinaryFriend;
-      if (PerformFriendInjection ||
-          (Prev && Prev->getIdentifierNamespace() & IDNS_Ordinary))
-        IdentifierNamespace |= IDNS_Ordinary;
+      if (PreviouslyDeclared) IdentifierNamespace |= IDNS_Ordinary;
     }
   }
 

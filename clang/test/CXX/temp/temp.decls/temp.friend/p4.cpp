@@ -26,20 +26,3 @@ void g() {
   X2<float> xf; 
   f(xf);
 }
-
-template<typename T>
-struct X3 {
-  operator int();
-
-  friend void h(int x);
-};
-
-int array2[sizeof(X3<int>)]; 
-int array3[sizeof(X3<float>)];
-
-void i() {
-  X3<int> xi;
-  h(xi);
-  X3<float> xf; 
-  h(xf);
-}
