@@ -663,7 +663,9 @@ defm V_RSQ_LEGACY_F32 : VOP1_32 <
   [(set f32:$dst, (int_AMDGPU_rsq f32:$src0))]
 >;
 defm V_RSQ_F32 : VOP1_32 <0x0000002e, "V_RSQ_F32", []>;
-defm V_RCP_F64 : VOP1_64 <0x0000002f, "V_RCP_F64", []>;
+defm V_RCP_F64 : VOP1_64 <0x0000002f, "V_RCP_F64",
+  [(set f64:$dst, (fdiv FP_ONE, f64:$src0))]
+>;
 defm V_RCP_CLAMP_F64 : VOP1_64 <0x00000030, "V_RCP_CLAMP_F64", []>;
 defm V_RSQ_F64 : VOP1_64 <0x00000031, "V_RSQ_F64", []>;
 defm V_RSQ_CLAMP_F64 : VOP1_64 <0x00000032, "V_RSQ_CLAMP_F64", []>;
@@ -1008,10 +1010,25 @@ def V_LSHR_B64 : VOP3_64_Shift <0x00000162, "V_LSHR_B64",
 >;
 def V_ASHR_I64 : VOP3_64_Shift <0x00000163, "V_ASHR_I64", []>;
 
+let isCommutable = 1 in {
+
 def V_ADD_F64 : VOP3_64 <0x00000164, "V_ADD_F64", []>;
 def V_MUL_F64 : VOP3_64 <0x00000165, "V_MUL_F64", []>;
 def V_MIN_F64 : VOP3_64 <0x00000166, "V_MIN_F64", []>;
 def V_MAX_F64 : VOP3_64 <0x00000167, "V_MAX_F64", []>;
+
+} // isCommutable = 1
+
+def : Pat <
+  (fadd f64:$src0, f64:$src1),
+  (V_ADD_F64 $src0, $src1, (i64 0))
+>;
+
+def : Pat <
+  (fmul f64:$src0, f64:$src1),
+  (V_MUL_F64 $src0, $src1, (i64 0))
+>;
+
 def V_LDEXP_F64 : VOP3_64 <0x00000168, "V_LDEXP_F64", []>;
 
 let isCommutable = 1 in {
@@ -1434,6 +1451,10 @@ def : BitConvert <i32, f32, VReg_32>;
 def : BitConvert <f32, i32, SReg_32>;
 def : BitConvert <f32, i32, VReg_32>;
 
+def : BitConvert <i64, f64, VReg_64>;
+
+def : BitConvert <f64, i64, VReg_64>;
+
 /********** =================== **********/
 /********** Src & Dst modifiers **********/
 /********** =================== **********/
@@ -1520,6 +1541,11 @@ def : Pat <
 def : Pat<
   (fdiv f32:$src0, f32:$src1),
   (V_MUL_F32_e32 $src0, (V_RCP_F32_e32 $src1))
+>;
+
+def : Pat<
+  (fdiv f64:$src0, f64:$src1),
+  (V_MUL_F64 $src0, (V_RCP_F64_e32 $src1), (i64 0))
 >;
 
 def : Pat <
@@ -1672,6 +1698,8 @@ multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
   >;
 }
 
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
+                          global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
                           global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32,
