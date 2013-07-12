@@ -43,8 +43,11 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     return false;
 
   switch (id) {
-  case Builtin::BI__builtin_expect: {
+  case Builtin::BI__builtin_expect:
+  case Builtin::BI__builtin_addressof: {
     // For __builtin_expect, just return the value of the subexpression.
+    // __builtin_addressof is going from a reference to a pointer, but those
+    // are represented the same way in the analyzer.
     assert (CE->arg_begin() != CE->arg_end());
     SVal X = state->getSVal(*(CE->arg_begin()), LCtx);
     C.addTransition(state->BindExpr(CE, LCtx, X));
