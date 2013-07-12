@@ -2728,7 +2728,7 @@ namespace {
       case scConstant:
         return false;
       case scUnknown:
-        if(!cast<SCEVUnknown>(S)->getValue())
+        if (!cast<SCEVUnknown>(S)->getValue())
           FindOne = true;
         return false;
       default:
@@ -2755,7 +2755,7 @@ const SCEV *ScalarEvolution::getSCEV(Value *V) {
   ValueExprMapType::iterator I = ValueExprMap.find_as(V);
   if (I != ValueExprMap.end()) {
     const SCEV *S = I->second;
-    if(checkValidity(S))
+    if (checkValidity(S))
       return S;
     else
       ValueExprMap.erase(I);

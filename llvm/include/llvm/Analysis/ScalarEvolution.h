@@ -545,7 +545,7 @@ namespace llvm {
     /// forgetMemoizedResults - Drop memoized information computed for S.
     void forgetMemoizedResults(const SCEV *S);
 
-    /// return false iff given SCEV contains a SCEVUnknown with NULL value-
+    /// Return false iff given SCEV contains a SCEVUnknown with NULL value-
     /// pointer.
     bool checkValidity(const SCEV *S) const;
 
