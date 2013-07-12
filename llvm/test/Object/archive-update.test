@@ -5,8 +5,12 @@ REQUIRES: shell
 RUN: cd %T
 RUN: rm -f %t.a
 
+Create a file named evenlen that is newer than the evenlen on the source dir.
+RUN: mkdir -p %t.dir
+RUN: echo newer > %t.dir/evenlen
+
 Create an achive with the newest file
-RUN: llvm-ar r %t.a %p/Inputs/Other/evenlen
+RUN: llvm-ar r %t.a %t.dir/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 Check that without the 'u' option the member is replaced with an older file.
@@ -14,7 +18,7 @@ RUN: llvm-ar r %t.a %p/Inputs/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=OLDER %s
 
 Check that with the 'u' option the member is replaced with a newer file.
-RUN: llvm-ar ru %t.a %p/Inputs/Other/evenlen
+RUN: llvm-ar ru %t.a %t.dir/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 Check that with the 'u' option the member is not replaced with an older file.
