@@ -1556,29 +1556,29 @@ LinearFunctionTestReplace(Loop *L,
   // BECount. This avoids materializing the add(zext(add)) expression.
   Type *CntTy = BackedgeTakenCount->getType();
 
-  const SCEV *IVCount = BackedgeTakenCount;
-
   // If the exiting block is the same as the backedge block, we prefer to
   // compare against the post-incremented value, otherwise we must compare
   // against the preincremented value.
   Value *CmpIndVar;
+  const SCEV *IVCount;
   if (L->getExitingBlock() == L->getLoopLatch()) {
     // Add one to the "backedge-taken" count to get the trip count.
     // If this addition may overflow, we have to be more pessimistic and
     // cast the induction variable before doing the add.
     const SCEV *N =
-      SE->getAddExpr(IVCount, SE->getConstant(IVCount->getType(), 1));
-    if (CntTy == IVCount->getType())
+      SE->getAddExpr(BackedgeTakenCount,
+                     SE->getConstant(BackedgeTakenCount->getType(), 1));
+    if (CntTy == BackedgeTakenCount->getType())
       IVCount = N;
     else {
-      const SCEV *Zero = SE->getConstant(IVCount->getType(), 0);
+      const SCEV *Zero = SE->getConstant(BackedgeTakenCount->getType(), 0);
       if ((isa<SCEVConstant>(N) && !N->isZero()) ||
           SE->isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, N, Zero)) {
         // No overflow. Cast the sum.
         IVCount = SE->getTruncateOrZeroExtend(N, CntTy);
       } else {
         // Potential overflow. Cast before doing the add.
-        IVCount = SE->getTruncateOrZeroExtend(IVCount, CntTy);
+        IVCount = SE->getTruncateOrZeroExtend(BackedgeTakenCount, CntTy);
         IVCount = SE->getAddExpr(IVCount, SE->getConstant(CntTy, 1));
       }
     }
@@ -1588,7 +1588,7 @@ LinearFunctionTestReplace(Loop *L,
     CmpIndVar = IndVar->getIncomingValueForBlock(L->getExitingBlock());
   } else {
     // We must use the preincremented value...
-    IVCount = SE->getTruncateOrZeroExtend(IVCount, CntTy);
+    IVCount = SE->getTruncateOrZeroExtend(BackedgeTakenCount, CntTy);
     CmpIndVar = IndVar;
   }
 
