@@ -33,6 +33,8 @@ namespace {
 class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateDecl(Decl *D);
   void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCInterfaceDecl *D);
+  void migrateProtocolConformance(ASTContext &Ctx,
+                                  const ObjCImplementationDecl *ImpDecl);
 
 public:
   std::string MigrateDir;
@@ -46,7 +48,8 @@ public:
   const PPConditionalDirectiveRecord *PPRec;
   Preprocessor &PP;
   bool IsOutputFile;
-
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 32> ObjCProtocolDecls;
+  
   ObjCMigrateASTConsumer(StringRef migrateDir,
                          bool migrateLiterals,
                          bool migrateSubscripting,
@@ -232,6 +235,27 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
   }
 }
 
+void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
+                                            const ObjCImplementationDecl *ImpDecl) {
+  const ObjCInterfaceDecl *IDecl = ImpDecl->getClassInterface();
+  if (!IDecl || ObjCProtocolDecls.empty())
+    return;
+  // Find all implicit conforming protocols for this class
+  // and make them explicit.
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> ExplicitProtocols;
+  Ctx.CollectInheritedProtocols(IDecl, ExplicitProtocols);
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> PotentialImplicitProtocols;
+  
+  for (llvm::SmallPtrSet<ObjCProtocolDecl*,32>::iterator I =
+       ObjCProtocolDecls.begin(),
+       E = ObjCProtocolDecls.end(); I != E; ++I)
+    if (!ExplicitProtocols.count(*I))
+      PotentialImplicitProtocols.insert(*I);
+  
+  if (PotentialImplicitProtocols.empty())
+    return;
+}
+
 namespace {
 
 class RewritesReceiver : public edit::EditsReceiver {
@@ -258,6 +282,11 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
          D != DEnd; ++D) {
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
         migrateObjCInterfaceDecl(Ctx, CDecl);
+      else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
+        ObjCProtocolDecls.insert(PDecl);
+      else if (const ObjCImplementationDecl *ImpDecl =
+               dyn_cast<ObjCImplementationDecl>(*D))
+        migrateProtocolConformance(Ctx, ImpDecl);
     }
   
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
