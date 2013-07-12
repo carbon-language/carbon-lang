@@ -1210,6 +1210,19 @@ TEST(MemorySanitizer, asprintf) {  // NOLINT
   free(pbuf);
 }
 
+TEST(MemorySanitizer, mbstowcs) {
+  const char *x = "abc";
+  wchar_t buff[10];
+  int res = mbstowcs(buff, x, 2);
+  EXPECT_EQ(2, res);
+  EXPECT_EQ(L'a', buff[0]);
+  EXPECT_EQ(L'b', buff[1]);
+  EXPECT_POISONED(buff[2]);
+  res = mbstowcs(buff, x, 10);
+  EXPECT_EQ(3, res);
+  EXPECT_NOT_POISONED(buff[3]);
+}
+
 TEST(MemorySanitizer, wcstombs) {
   const wchar_t *x = L"abc";
   char buff[10];
