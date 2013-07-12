@@ -1,6 +1,4 @@
-; RUN: llc < %s -march=x86 | grep "movl	8(.esp), %eax"
-; RUN: llc < %s -march=x86 | grep "shrl	.eax"
-; RUN: llc < %s -march=x86 | grep "movswl	.ax, .eax"
+; RUN: llc < %s -march=x86 | FileCheck %s
 
 define i32 @test1(i64 %a) nounwind {
         %tmp29 = lshr i64 %a, 24                ; <i64> [#uses=1]
@@ -9,5 +7,10 @@ define i32 @test1(i64 %a) nounwind {
         %tmp45 = trunc i32 %tmp410 to i16               ; <i16> [#uses=1]
         %tmp456 = sext i16 %tmp45 to i32                ; <i32> [#uses=1]
         ret i32 %tmp456
+
+; CHECK: test1:
+; CHECK: movl 8(%esp), %eax
+; CHECK: shrl %eax
+; CHECK: cwtl
 }
 

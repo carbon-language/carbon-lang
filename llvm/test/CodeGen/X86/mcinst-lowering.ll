@@ -24,3 +24,21 @@ if.end:                                           ; preds = %entry
 return:                                           ; preds = %entry
   ret i32 0
 }
+
+define i32 @f1() nounwind {
+  %ax = tail call i16 asm sideeffect "", "={ax},~{dirflag},~{fpsr},~{flags}"()
+  %conv = sext i16 %ax to i32
+  ret i32 %conv
+
+; CHECK: f1:
+; CHECK: cwtl ## encoding: [0x98]
+}
+
+define i64 @f2() nounwind {
+  %eax = tail call i32 asm sideeffect "", "={ax},~{dirflag},~{fpsr},~{flags}"()
+  %conv = sext i32 %eax to i64
+  ret i64 %conv
+
+; CHECK: f2:
+; CHECK: cltq ## encoding: [0x48,0x98]
+}
