@@ -669,8 +669,12 @@ defm V_RCP_F64 : VOP1_64 <0x0000002f, "V_RCP_F64",
 defm V_RCP_CLAMP_F64 : VOP1_64 <0x00000030, "V_RCP_CLAMP_F64", []>;
 defm V_RSQ_F64 : VOP1_64 <0x00000031, "V_RSQ_F64", []>;
 defm V_RSQ_CLAMP_F64 : VOP1_64 <0x00000032, "V_RSQ_CLAMP_F64", []>;
-defm V_SQRT_F32 : VOP1_32 <0x00000033, "V_SQRT_F32", []>;
-defm V_SQRT_F64 : VOP1_64 <0x00000034, "V_SQRT_F64", []>;
+defm V_SQRT_F32 : VOP1_32 <0x00000033, "V_SQRT_F32",
+  [(set f32:$dst, (fsqrt f32:$src0))]
+>;
+defm V_SQRT_F64 : VOP1_64 <0x00000034, "V_SQRT_F64",
+  [(set f64:$dst, (fsqrt f64:$src0))]
+>;
 defm V_SIN_F32 : VOP1_32 <0x00000035, "V_SIN_F32", []>;
 defm V_COS_F32 : VOP1_32 <0x00000036, "V_COS_F32", []>;
 defm V_NOT_B32 : VOP1_32 <0x00000037, "V_NOT_B32", []>;
