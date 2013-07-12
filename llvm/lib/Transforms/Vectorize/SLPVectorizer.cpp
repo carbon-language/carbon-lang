@@ -1550,8 +1550,7 @@ private:
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
   bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R);
 
-  /// \brief Try to vectorize a list of operands. If \p NeedExtracts is true
-  /// then we calculate the cost of extracting the scalars from the vector.
+  /// \brief Try to vectorize a list of operands.
   /// \returns true if a value was vectorized.
   bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R);
 
@@ -1791,6 +1790,27 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
 
 bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
   bool Changed = false;
+  SmallVector<Value *, 4> Incoming;
+  // Collect the incoming values from the PHIs.
+  for (BasicBlock::iterator instr = BB->begin(), ie = BB->end(); instr != ie;
+       ++instr) {
+    PHINode *P = dyn_cast<PHINode>(instr);
+
+    if (!P)
+      break;
+
+    // Stop constructing the list when you reach a different type.
+    if (Incoming.size() && P->getType() != Incoming[0]->getType()) {
+      Changed |= tryToVectorizeList(Incoming, R);
+      Incoming.clear();
+    }
+
+    Incoming.push_back(P);
+  }
+
+  if (Incoming.size() > 1)
+    Changed |= tryToVectorizeList(Incoming, R);
+
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     if (isa<DbgInfoIntrinsic>(it))
       continue;
@@ -1829,29 +1849,6 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
               tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R);
       continue;
     }
-  }
-
-  // Scan the PHINodes in our successors in search for pairing hints.
-  for (succ_iterator it = succ_begin(BB), e = succ_end(BB); it != e; ++it) {
-    BasicBlock *Succ = *it;
-    SmallVector<Value *, 4> Incoming;
-
-    // Collect the incoming values from the PHIs.
-    for (BasicBlock::iterator instr = Succ->begin(), ie = Succ->end();
-         instr != ie; ++instr) {
-      PHINode *P = dyn_cast<PHINode>(instr);
-
-      if (!P)
-        break;
-
-      Value *V = P->getIncomingValueForBlock(BB);
-      if (Instruction *I = dyn_cast<Instruction>(V))
-        if (I->getParent() == BB)
-          Incoming.push_back(I);
-    }
-
-    if (Incoming.size() > 1)
-      Changed |= tryToVectorizeList(Incoming, R);
   }
 
   return Changed;
