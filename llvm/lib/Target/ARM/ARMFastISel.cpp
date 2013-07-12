@@ -821,22 +821,19 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
   switch (Opcode) {
     default:
     break;
-    case Instruction::BitCast: {
+    case Instruction::BitCast:
       // Look through bitcasts.
       return ARMComputeAddress(U->getOperand(0), Addr);
-    }
-    case Instruction::IntToPtr: {
+    case Instruction::IntToPtr:
       // Look past no-op inttoptrs.
       if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
         return ARMComputeAddress(U->getOperand(0), Addr);
       break;
-    }
-    case Instruction::PtrToInt: {
+    case Instruction::PtrToInt:
       // Look past no-op ptrtoints.
       if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
         return ARMComputeAddress(U->getOperand(0), Addr);
       break;
-    }
     case Instruction::GetElementPtr: {
       Address SavedAddr = Addr;
       int TmpOffset = Addr.Offset;
