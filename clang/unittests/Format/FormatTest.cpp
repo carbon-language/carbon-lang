@@ -3026,6 +3026,11 @@ TEST_F(FormatTest, AlignsPipes) {
                "             << aaaaaaaaaaaaaaaaaaaaaaaaaaaa;",
                getLLVMStyleWithColumns(70));
 
+  // But sometimes, breaking before the first "<<" is necessary.
+  verifyFormat("Diag(aaaaaaaaaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbb)\n"
+               "    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+               "    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+
   verifyFormat(
       "llvm::errs() << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "                    .aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa();");

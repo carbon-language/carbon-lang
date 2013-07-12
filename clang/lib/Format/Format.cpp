@@ -1174,6 +1174,11 @@ private:
         State.Stack.back().BreakBeforeParameter)
       return true;
 
+    // Same as above, but for the first "<<" operator.
+    if (Current.is(tok::lessless) && State.Stack.back().BreakBeforeParameter &&
+        State.Stack.back().FirstLessLess == 0)
+      return true;
+
     // FIXME: Comparing LongestObjCSelectorName to 0 is a hacky way of finding
     // out whether it is the first parameter. Clean this up.
     if (Current.Type == TT_ObjCSelectorName &&
