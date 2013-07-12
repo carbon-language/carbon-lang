@@ -57,9 +57,6 @@ MCOperand SystemZMCInstLower::lowerOperand(const MachineOperand &MO) const {
     llvm_unreachable("unknown operand type");
 
   case MachineOperand::MO_Register:
-    // Ignore all implicit register operands.
-    if (MO.isImplicit())
-      return MCOperand();
     return MCOperand::CreateReg(MO.getReg());
 
   case MachineOperand::MO_Immediate:
@@ -104,8 +101,8 @@ void SystemZMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(Opcode);
   for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
     const MachineOperand &MO = MI->getOperand(I);
-    MCOperand MCOp = lowerOperand(MO);
-    if (MCOp.isValid())
-      OutMI.addOperand(MCOp);
+    // Ignore all implicit register operands.
+    if (!MO.isReg() || !MO.isImplicit())
+      OutMI.addOperand(lowerOperand(MO));
   }
 }

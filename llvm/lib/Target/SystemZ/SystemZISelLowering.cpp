@@ -386,6 +386,22 @@ getSingleConstraintMatchWeight(AsmOperandInfo &info,
   return weight;
 }
 
+// Parse a "{tNNN}" register constraint for which the register type "t"
+// has already been verified.  MC is the class associated with "t" and
+// Map maps 0-based register numbers to LLVM register numbers.
+static std::pair<unsigned, const TargetRegisterClass *>
+parseRegisterNumber(const std::string &Constraint,
+                    const TargetRegisterClass *RC, const unsigned *Map) {
+  assert(*(Constraint.end()-1) == '}' && "Missing '}'");
+  if (isdigit(Constraint[2])) {
+    std::string Suffix(Constraint.data() + 2, Constraint.size() - 2);
+    unsigned Index = atoi(Suffix.c_str());
+    if (Index < 16 && Map[Index])
+      return std::make_pair(Map[Index], RC);
+  }
+  return std::make_pair(0u, static_cast<TargetRegisterClass*>(0));
+}
+
 std::pair<unsigned, const TargetRegisterClass *> SystemZTargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
   if (Constraint.size() == 1) {
@@ -413,6 +429,32 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const {
       else if (VT == MVT::f128)
         return std::make_pair(0U, &SystemZ::FP128BitRegClass);
       return std::make_pair(0U, &SystemZ::FP32BitRegClass);
+    }
+  }
+  if (Constraint[0] == '{') {
+    // We need to override the default register parsing for GPRs and FPRs
+    // because the interpretation depends on VT.  The internal names of
+    // the registers are also different from the external names
+    // (F0D and F0S instead of F0, etc.).
+    if (Constraint[1] == 'r') {
+      if (VT == MVT::i32)
+        return parseRegisterNumber(Constraint, &SystemZ::GR32BitRegClass,
+                                   SystemZMC::GR32Regs);
+      if (VT == MVT::i128)
+        return parseRegisterNumber(Constraint, &SystemZ::GR128BitRegClass,
+                                   SystemZMC::GR128Regs);
+      return parseRegisterNumber(Constraint, &SystemZ::GR64BitRegClass,
+                                 SystemZMC::GR64Regs);
+    }
+    if (Constraint[1] == 'f') {
+      if (VT == MVT::f32)
+        return parseRegisterNumber(Constraint, &SystemZ::FP32BitRegClass,
+                                   SystemZMC::FP32Regs);
+      if (VT == MVT::f128)
+        return parseRegisterNumber(Constraint, &SystemZ::FP128BitRegClass,
+                                   SystemZMC::FP128Regs);
+      return parseRegisterNumber(Constraint, &SystemZ::FP64BitRegClass,
+                                 SystemZMC::FP64Regs);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);

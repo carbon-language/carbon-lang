@@ -35,7 +35,7 @@ public:
   // Lower MachineInstr MI to MCInst OutMI.
   void lower(const MachineInstr *MI, MCInst &OutMI) const;
 
-  // Return an MCOperand for MO.  Return an empty operand if MO is implicit.
+  // Return an MCOperand for MO.
   MCOperand lowerOperand(const MachineOperand& MO) const;
 
   // Return an MCOperand for MO, given that it equals Symbol + Offset.
