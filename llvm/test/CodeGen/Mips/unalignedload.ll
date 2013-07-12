@@ -9,17 +9,17 @@
 
 define void @foo1() nounwind {
 entry:
-; CHECK-EL: lbu ${{[0-9]+}}, 2($[[R0:[0-9]+]])
-; CHECK-EL: lbu ${{[0-9]+}}, 3($[[R0]])
-; CHECK-EL: jalr
-; CHECK-EL: lwl $[[R1:[0-9]+]], 3($[[R2:[0-9]+]])
-; CHECK-EL: lwr $[[R1]], 0($[[R2]])
+; CHECK-EL-DAG: lbu ${{[0-9]+}}, 2($[[R0:[0-9]+]])
+; CHECK-EL-DAG: lbu ${{[0-9]+}}, 3($[[R0]])
+; CHECK-EL:     jalr
+; CHECK-EL-DAG: lwl $[[R1:[0-9]+]], 3($[[R2:[0-9]+]])
+; CHECK-EL-DAG: lwr $[[R1]], 0($[[R2]])
 
-; CHECK-EB: lbu ${{[0-9]+}}, 3($[[R0:[0-9]+]])
-; CHECK-EB: lbu ${{[0-9]+}}, 2($[[R0]])
-; CHECK-EB: jalr
-; CHECK-EB: lwl $[[R1:[0-9]+]], 0($[[R2:[0-9]+]])
-; CHECK-BE: lwr $[[R1]], 3($[[R2]])
+; CHECK-EB-DAG: lbu ${{[0-9]+}}, 3($[[R0:[0-9]+]])
+; CHECK-EB-DAG: lbu ${{[0-9]+}}, 2($[[R0]])
+; CHECK-EB:     jalr
+; CHECK-EB-DAG: lwl $[[R1:[0-9]+]], 0($[[R2:[0-9]+]])
+; CHECK-EB-DAG: lwr $[[R1]], 3($[[R2]])
 
   tail call void @foo2(%struct.S1* byval getelementptr inbounds (%struct.S2* @s2, i32 0, i32 1)) nounwind
   tail call void @foo4(%struct.S4* byval @s4) nounwind

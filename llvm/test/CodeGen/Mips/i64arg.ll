@@ -17,12 +17,12 @@ entry:
 ; CHECK: jalr $25
   tail call void @ff2(i64 %ll, double 3.000000e+00) nounwind
   %sub = add nsw i32 %i, -1
-; CHECK: lw $25, %call16(ff3)
-; CHECK: sw $[[R1]], 28($sp)
-; CHECK: sw $[[R0]], 24($sp)
-; CHECK: move $6, $[[R2]]
-; CHECK: move $7, $[[R3]]
-; CHECK: jalr $25
+; CHECK-DAG: lw $25, %call16(ff3)
+; CHECK-DAG: sw $[[R1]], 28($sp)
+; CHECK-DAG: sw $[[R0]], 24($sp)
+; CHECK-DAG: move $6, $[[R2]]
+; CHECK-DAG: move $7, $[[R3]]
+; CHECK:     jalr $25
   tail call void @ff3(i32 %i, i64 %ll, i32 %sub, i64 %ll1) nounwind
   ret void
 }

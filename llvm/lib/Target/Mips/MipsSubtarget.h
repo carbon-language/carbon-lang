@@ -194,6 +194,7 @@ public:
   bool hasBitCount()  const { return HasBitCount; }
   bool hasFPIdx()     const { return HasFPIdx; }
 
+  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
   bool allowMixed16_32() const { return inMips16ModeDefault() |
                                         AllowMixed16_32;}
 

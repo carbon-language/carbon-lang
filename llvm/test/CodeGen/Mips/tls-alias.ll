@@ -4,7 +4,7 @@
 @bar = hidden alias i32* @foo
 
 define i32* @zed() {
-; CHECK: __tls_get_addr
-; CHECK-NEXT: %tlsgd(bar)
+; CHECK-DAG: __tls_get_addr
+; CHECK-DAG: %tlsgd(bar)
        ret i32* @bar
 }

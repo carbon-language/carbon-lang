@@ -7,14 +7,15 @@ declare float @copysignf(float, float) nounwind readnone
 
 define float @func2(float %d, double %f) nounwind readnone {
 entry:
-; 64: func2
-; 64: lui  $[[T0:[0-9]+]], 32767
-; 64: ori  $[[MSK0:[0-9]+]], $[[T0]], 65535
-; 64: and  $[[AND0:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
-; 64: dsrl ${{[0-9]+}}, ${{[0-9]+}}, 63
-; 64: sll  $[[SLL:[0-9]+]], ${{[0-9]+}}, 31
-; 64: or   $[[OR:[0-9]+]], $[[AND0]], $[[SLL]]
-; 64: mtc1 $[[OR]], $f0
+; 64:     func2
+; 64-DAG: lui  $[[T0:[0-9]+]], 32767
+; 64-DAG: ori  $[[MSK0:[0-9]+]], $[[T0]], 65535
+; 64-DAG: and  $[[AND0:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
+; 64-DAG: dsrl $[[DSRL:[0-9]+]], ${{[0-9]+}}, 63
+; 64-DAG: sll  $[[SLL0:[0-9]+]], $[[DSRL]], 0
+; 64-DAG: sll  $[[SLL1:[0-9]+]], $[[SLL0]], 31
+; 64:     or   $[[OR:[0-9]+]], $[[AND0]], $[[SLL1]]
+; 64:     mtc1 $[[OR]], $f0
 
 ; 64R2: dext ${{[0-9]+}}, ${{[0-9]+}}, 63, 1
 ; 64R2: ins  $[[INS:[0-9]+]], ${{[0-9]+}}, 31, 1
@@ -29,14 +30,16 @@ entry:
 define double @func3(double %d, float %f) nounwind readnone {
 entry:
 
-; 64: daddiu $[[T0:[0-9]+]], $zero, 1
-; 64: dsll   $[[T1:[0-9]+]], $[[T0]], 63
-; 64: daddiu $[[MSK0:[0-9]+]], $[[T1]], -1
-; 64: and    $[[AND0:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
-; 64: srl    ${{[0-9]+}}, ${{[0-9]+}}, 31
-; 64: dsll   $[[DSLL:[0-9]+]], ${{[0-9]+}}, 63
-; 64: or     $[[OR:[0-9]+]], $[[AND0]], $[[DSLL]]
-; 64: dmtc1  $[[OR]], $f0
+; 64:     func3
+; 64-DAG: daddiu $[[T0:[0-9]+]], $zero, 1
+; 64-DAG: dsll   $[[T1:[0-9]+]], $[[T0]], 63
+; 64-DAG: daddiu $[[MSK0:[0-9]+]], $[[T1]], -1
+; 64-DAG: and    $[[AND0:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
+; 64-DAG: srl    $[[SRL:[0-9]+]], ${{[0-9]+}}, 31
+; 64-DAG: sll    $[[SLL:[0-9]+]], $[[SRL]], 0
+; 64-DAG: dsll   $[[DSLL:[0-9]+]], $[[SLL]], 63
+; 64:     or     $[[OR:[0-9]+]], $[[AND0]], $[[DSLL]]
+; 64:     dmtc1  $[[OR]], $f0
 
 ; 64R2: ext   ${{[0-9]+}}, ${{[0-9]+}}, 31, 1
 ; 64R2: dins  $[[INS:[0-9]+]], ${{[0-9]+}}, 63, 1

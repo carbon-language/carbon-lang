@@ -179,11 +179,11 @@ entry:
   ret <4 x float> %vecins4
 
 ; CHECK:        return_f4:
-; CHECK:        lwc1    $[[R0:[a-z0-9]+]], 16($sp)
-; CHECK:        swc1    $[[R0]], 12($4)
-; CHECK:        sw      $7, 8($4)
-; CHECK:        sw      $6, 4($4)
-; CHECK:        sw      $5, 0($4)
+; CHECK-DAG:    lwc1    $[[R0:[a-z0-9]+]], 16($sp)
+; CHECK-DAG:    swc1    $[[R0]], 12($4)
+; CHECK-DAG:    sw      $7, 8($4)
+; CHECK-DAG:    sw      $6, 4($4)
+; CHECK-DAG:    sw      $5, 0($4)
 }
 
 
@@ -195,11 +195,11 @@ entry:
   %vecins4 = insertelement <4 x double> %vecins3, double %d, i32 3
   ret <4 x double> %vecins4
 
-; CHECK:        return_d4:
-; CHECK:        sdc1    $[[R0:[a-z0-9]+]], 24($4)
-; CHECK:        sdc1    $[[R1:[a-z0-9]+]], 16($4)
-; CHECK:        sdc1    $[[R2:[a-z0-9]+]], 8($4)
-; CHECK:        sdc1    $[[R3:[a-z0-9]+]], 0($4)
+; CHECK:            return_d4:
+; CHECK-DAG:        sdc1    $[[R0:[a-z0-9]+]], 24($4)
+; CHECK-DAG:        sdc1    $[[R1:[a-z0-9]+]], 16($4)
+; CHECK-DAG:        sdc1    $[[R2:[a-z0-9]+]], 8($4)
+; CHECK-DAG:        sdc1    $[[R3:[a-z0-9]+]], 0($4)
 }
 
 

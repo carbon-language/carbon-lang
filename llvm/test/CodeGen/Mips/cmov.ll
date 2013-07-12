@@ -5,12 +5,12 @@
 @i1 = global [3 x i32] [i32 1, i32 2, i32 3], align 4
 @i3 = common global i32* null, align 4
 
-; O32:  lw $[[R0:[0-9]+]], %got(i3)
-; O32:  addiu $[[R1:[0-9]+]], ${{[0-9]+}}, %got(i1) 
-; O32:  movn $[[R0]], $[[R1]], ${{[0-9]+}} 
-; N64:  ldr $[[R0:[0-9]+]] 
-; N64:  ld $[[R1:[0-9]+]], %got_disp(i1)
-; N64:  movn $[[R0]], $[[R1]], ${{[0-9]+}} 
+; O32-DAG:  lw $[[R0:[0-9]+]], %got(i3)
+; O32-DAG:  addiu $[[R1:[0-9]+]], ${{[0-9]+}}, %got(i1) 
+; O32:      movn $[[R0]], $[[R1]], ${{[0-9]+}} 
+; N64-DAG:  ldr $[[R0:[0-9]+]] 
+; N64-DAG:  ld $[[R1:[0-9]+]], %got_disp(i1)
+; N64:      movn $[[R0]], $[[R1]], ${{[0-9]+}} 
 define i32* @cmov1(i32 %s) nounwind readonly {
 entry:
   %tobool = icmp ne i32 %s, 0

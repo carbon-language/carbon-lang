@@ -231,13 +231,13 @@ entry:
   ret double %conv
 }
 
-; CHECK: libcall1_fabsl:
-; CHECK: ld      $[[R0:[0-9]+]], 8($[[R4:[0-9]+]])
-; CHECK: daddiu  $[[R1:[0-9]+]], $zero, 1
-; CHECK: dsll    $[[R2:[0-9]+]], $[[R1]], 63
-; CHECK: daddiu  $[[R3:[0-9]+]], $[[R2]], -1
-; CHECK: and     $4, $[[R0]], $[[R3]]
-; CHECK: ld      $2, 0($[[R4]])
+; CHECK:             libcall1_fabsl:
+; CHECK-DAG: ld      $[[R0:[0-9]+]], 8($[[R4:[0-9]+]])
+; CHECK-DAG: daddiu  $[[R1:[0-9]+]], $zero, 1
+; CHECK-DAG: dsll    $[[R2:[0-9]+]], $[[R1]], 63
+; CHECK-DAG: daddiu  $[[R3:[0-9]+]], $[[R2]], -1
+; CHECK-DAG: and     $4, $[[R0]], $[[R3]]
+; CHECK-DAG: ld      $2, 0($[[R4]])
 
 define fp128 @libcall1_fabsl() {
 entry:
@@ -403,18 +403,18 @@ entry:
 
 declare fp128 @llvm.powi.f128(fp128, i32) #3
 
-; CHECK: libcall2_copysignl:
-; CHECK: daddiu $[[R2:[0-9]+]], $zero, 1
-; CHECK: dsll   $[[R3:[0-9]+]], $[[R2]], 63
-; CHECK: ld     $[[R0:[0-9]+]], %got_disp(gld1)
-; CHECK: ld     $[[R1:[0-9]+]], 8($[[R0]])
-; CHECK: and    $[[R4:[0-9]+]], $[[R1]], $[[R3]]
-; CHECK: ld     $[[R5:[0-9]+]], %got_disp(gld0)
-; CHECK: ld     $[[R6:[0-9]+]], 8($[[R5]])
-; CHECK: daddiu $[[R7:[0-9]+]], $[[R3]], -1
-; CHECK: and    $[[R8:[0-9]+]], $[[R6]], $[[R7]]
-; CHECK: or     $4, $[[R8]], $[[R4]]
-; CHECK: ld     $2, 0($[[R5]])
+; CHECK:     libcall2_copysignl:
+; CHECK-DAG: daddiu $[[R2:[0-9]+]], $zero, 1
+; CHECK-DAG: dsll   $[[R3:[0-9]+]], $[[R2]], 63
+; CHECK-DAG: ld     $[[R0:[0-9]+]], %got_disp(gld1)
+; CHECK-DAG: ld     $[[R1:[0-9]+]], 8($[[R0]])
+; CHECK-DAG: and    $[[R4:[0-9]+]], $[[R1]], $[[R3]]
+; CHECK-DAG: ld     $[[R5:[0-9]+]], %got_disp(gld0)
+; CHECK-DAG: ld     $[[R6:[0-9]+]], 8($[[R5]])
+; CHECK-DAG: daddiu $[[R7:[0-9]+]], $[[R3]], -1
+; CHECK-DAG: and    $[[R8:[0-9]+]], $[[R6]], $[[R7]]
+; CHECK-DAG: or     $4, $[[R8]], $[[R4]]
+; CHECK-DAG: ld     $2, 0($[[R5]])
 
 define fp128 @libcall2_copysignl() {
 entry:
