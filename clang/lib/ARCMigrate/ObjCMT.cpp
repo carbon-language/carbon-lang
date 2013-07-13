@@ -235,6 +235,13 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
   }
 }
 
+static bool 
+ClassImplementsAllMethodsAndProprties(ASTContext &Ctx,
+                                      const ObjCImplementationDecl *ImpDecl,
+                                      ObjCProtocolDecl *Protocol) {
+  return false;
+}
+
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
                                             const ObjCImplementationDecl *ImpDecl) {
   const ObjCInterfaceDecl *IDecl = ImpDecl->getClassInterface();
@@ -244,16 +251,25 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
   // and make them explicit.
   llvm::SmallPtrSet<ObjCProtocolDecl *, 8> ExplicitProtocols;
   Ctx.CollectInheritedProtocols(IDecl, ExplicitProtocols);
-  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> PotentialImplicitProtocols;
+  llvm::SmallVector<ObjCProtocolDecl *, 8> PotentialImplicitProtocols;
   
-  for (llvm::SmallPtrSet<ObjCProtocolDecl*,32>::iterator I =
+  for (llvm::SmallPtrSet<ObjCProtocolDecl*, 32>::iterator I =
        ObjCProtocolDecls.begin(),
        E = ObjCProtocolDecls.end(); I != E; ++I)
     if (!ExplicitProtocols.count(*I))
-      PotentialImplicitProtocols.insert(*I);
+      PotentialImplicitProtocols.push_back(*I);
   
   if (PotentialImplicitProtocols.empty())
     return;
+
+  // go through list of non-optional methods and properties in each protocol
+  // in the PotentialImplicitProtocols list. If class implements every one of the
+  // methods and properties, then this class conforms to this protocol.
+  llvm::SmallVector<ObjCProtocolDecl*, 8> ConformingProtocols;
+  for (unsigned i = 0, e = PotentialImplicitProtocols.size(); i != e; i++)
+    if (ClassImplementsAllMethodsAndProprties(Ctx, ImpDecl, 
+                                              PotentialImplicitProtocols[i]))
+      ConformingProtocols.push_back(PotentialImplicitProtocols[i]);
 }
 
 namespace {
