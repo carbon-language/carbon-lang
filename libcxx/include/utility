@@ -117,6 +117,15 @@ template<size_t I, class T1, class T2>
     typename tuple_element<I, std::pair<T1, T2> >::type&&
     get(std::pair<T1, T2>&&) noexcept;
 
+template<class T1, class T2>
+    constexpr T1& get(std::pair<T1, T2>&) noexcept; // C++14
+
+template<size_t I, class T1, class T2>
+    constexpr T1 const& get(std::pair<T1, T2> const &) noexcept; // C++14
+
+template<size_t I, class T1, class T2>
+    constexpr T1&& get(std::pair<T1, T2>&&) noexcept; // C++14
+
 // C++14
 
 template<class T, T... I>
@@ -600,6 +609,51 @@ get(pair<_T1, _T2>&& __p) _NOEXCEPT
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#if _LIBCPP_STD_VER > 11
+template <class _T1, class _T2>
+_LIBCPP_INLINE_VISIBILITY inline
+constexpr _T1 & get(pair<_T1, _T2>& __p) _NOEXCEPT
+{
+	return __get_pair<0>::get(__p);
+}
+
+template <class _T1, class _T2>
+_LIBCPP_INLINE_VISIBILITY inline
+constexpr _T1 const & get(pair<_T1, _T2> const& __p) _NOEXCEPT
+{
+	return __get_pair<0>::get(__p);
+}
+
+template <class _T1, class _T2>
+_LIBCPP_INLINE_VISIBILITY inline
+constexpr _T1 && get(pair<_T1, _T2>&& __p) _NOEXCEPT
+{
+	return __get_pair<0>::get(_VSTD::move(__p));
+}
+
+template <class _T1, class _T2>
+_LIBCPP_INLINE_VISIBILITY inline
+constexpr _T1 & get(pair<_T2, _T1>& __p) _NOEXCEPT
+{
+	return __get_pair<1>::get(__p);
+}
+
+template <class _T1, class _T2>
+_LIBCPP_INLINE_VISIBILITY inline
+constexpr _T1 const & get(pair<_T2, _T1> const& __p) _NOEXCEPT
+{
+	return __get_pair<1>::get(__p);
+}
+
+template <class _T1, class _T2>
+_LIBCPP_INLINE_VISIBILITY inline
+constexpr _T1 && get(pair<_T2, _T1>&& __p) _NOEXCEPT
+{
+	return __get_pair<1>::get(_VSTD::move(__p));
+}
+
+#endif
 
 #if _LIBCPP_STD_VER > 11
 

@@ -94,6 +94,13 @@ template <intsize_t I, class... T>
     typename tuple_element<I, tuple<T...>>::type&&
     get(tuple<T...>&&) noexcept;
 
+template <class T1, class... T>
+    constexpr T1& get(tuple<T...>&) noexcept;  // C++14
+template <class T1, class... T>
+    constexpr T1 const& get(const tuple<T...>&) noexcept;   // C++14
+template <class T1, class... T>
+    constexpr T1&& get(tuple<T...>&&) noexcept;   // C++14
+
 // 20.4.1.6, relational operators:
 template<class... T, class... U> bool operator==(const tuple<T...>&, const tuple<U...>&);
 template<class... T, class... U> bool operator<(const tuple<T...>&, const tuple<U...>&);
@@ -782,6 +789,64 @@ get(tuple<_Tp...>&& __t) _NOEXCEPT
     return static_cast<type&&>(
              static_cast<__tuple_leaf<_Ip, type>&&>(__t.base_).get());
 }
+
+#if _LIBCPP_STD_VER > 11
+// get by type
+template <typename _T1, size_t _Idx, typename... _Args>
+struct __find_exactly_one_t_helper;
+
+// -- find exactly one
+template <typename _T1, size_t _Idx, typename... _Args>
+struct __find_exactly_one_t_checker {
+    static constexpr size_t value = _Idx;
+//  Check the rest of the list to make sure there's only one
+    static_assert ( __find_exactly_one_t_helper<_T1, 0, _Args...>::value == -1, "type can only occur once in type list" );
+    };
+
+
+template <typename _T1, size_t _Idx>
+struct __find_exactly_one_t_helper <_T1, _Idx> {
+    static constexpr size_t value = -1;
+    };
+
+template <typename _T1, size_t _Idx, typename _Head, typename... _Args>
+struct __find_exactly_one_t_helper <_T1, _Idx, _Head, _Args...> {
+    static constexpr size_t value =
+        std::conditional<
+            std::is_same<_T1, _Head>::value,
+            __find_exactly_one_t_checker<_T1, _Idx,   _Args...>,
+            __find_exactly_one_t_helper <_T1, _Idx+1, _Args...>
+        >::type::value;
+    };
+
+template <typename _T1, typename... _Args>
+struct __find_exactly_one_t {
+    static constexpr size_t value = __find_exactly_one_t_helper<_T1, 0, _Args...>::value;
+    static_assert ( value != -1, "type not found in type list" );
+    };
+
+template <class _T1, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+constexpr _T1& get(tuple<_Args...>& __tup) noexcept
+{
+    return _VSTD::get<__find_exactly_one_t<_T1, _Args...>::value>(__tup);
+}
+
+template <class _T1, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+constexpr _T1 const& get(tuple<_Args...> const& __tup) noexcept
+{
+    return _VSTD::get<__find_exactly_one_t<_T1, _Args...>::value>(__tup);
+}
+
+template <class _T1, class... _Args>
+inline _LIBCPP_INLINE_VISIBILITY
+constexpr _T1&& get(tuple<_Args...>&& __tup) noexcept
+{
+    return _VSTD::get<__find_exactly_one_t<_T1, _Args...>::value>(_VSTD::move<tuple<_Args...>>(__tup));
+}
+
+#endif
 
 // tie
 
