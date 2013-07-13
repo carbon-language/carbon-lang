@@ -71,8 +71,11 @@ static void EmitBranchToAt(uint64_t At, uint64_t To, bool isCall, bool is64Bit){
 extern "C" void PPC32CompilationCallback();
 extern "C" void PPC64CompilationCallback();
 
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-    !(defined(__ppc64__) || defined(__FreeBSD__))
+#if !defined(__ppc__) || defined(__ppc64__)
+void PPC32CompilationCallback() {
+  llvm_unreachable("This is not a 32bit PowerPC, you can't execute this!");
+}
+#elif !defined(__ELF__)
 // CompilationCallback stub - We can't use a C function with inline assembly in
 // it, because we the prolog/epilog inserted by GCC won't work for us.  Instead,
 // write our own wrapper, which does things our way, so we have complete control
@@ -137,8 +140,8 @@ asm(
     "bctr\n"
     );
 
-#elif defined(__PPC__) && !defined(__ppc64__)
-// Linux & FreeBSD / PPC 32 support
+#else
+// ELF PPC 32 support
 
 // CompilationCallback stub - We can't use a C function with inline assembly in
 // it, because we the prolog/epilog inserted by GCC won't work for us.  Instead,
@@ -197,15 +200,14 @@ asm(
     "mtlr 0\n"
     "bctr\n"
     );
-#else
-void PPC32CompilationCallback() {
-  llvm_unreachable("This is not a power pc, you can't execute this!");
-}
 #endif
 
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-    defined(__ppc64__)
-#ifdef __ELF__
+#ifndef __ppc64__
+void PPC64CompilationCallback() {
+  llvm_unreachable("This is not a 64bit PowerPC, you can't execute this!");
+}
+#else
+#  ifdef __ELF__
 asm(
     ".text\n"
     ".align 2\n"
@@ -219,13 +221,13 @@ asm(
     ".align 4\n"
     ".type PPC64CompilationCallback,@function\n"
 ".L.PPC64CompilationCallback:\n"
-#else
+#  else
 asm(
     ".text\n"
     ".align 2\n"
     ".globl _PPC64CompilationCallback\n"
 "_PPC64CompilationCallback:\n"
-#endif
+#  endif
     // Make space for 8 ints r[3-10] and 13 doubles f[1-13] and the 
     // FIXME: need to save v[0-19] for altivec?
     // Set up a proper stack frame
@@ -258,12 +260,12 @@ asm(
     "ld   5, 280(1)\n" // stub's frame
     "ld   4, 16(5)\n"  // stub's lr
     "li   5, 1\n"      // 1 == 64 bit
-#ifdef __ELF__
+#  ifdef __ELF__
     "bl LLVMPPCCompilationCallback\n"
     "nop\n"
-#else
+#  else
     "bl _LLVMPPCCompilationCallback\n"
-#endif
+#  endif
     "mtctr 3\n"
     // Restore all int arg registers
     "ld 10, 272(1)\n"    "ld 9,  264(1)\n"
@@ -285,10 +287,6 @@ asm(
     // XXX: any special TOC handling in the ELF case for JIT?
     "bctr\n"
     );
-#else
-void PPC64CompilationCallback() {
-  llvm_unreachable("This is not a power pc, you can't execute this!");
-}
 #endif
 
 extern "C" {
