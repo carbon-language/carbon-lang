@@ -4202,8 +4202,8 @@ public:
     return None;
   }
 
-  bool isSugared() const { return false; }
-  QualType desugar() const { return QualType(this, 0); }
+  bool isSugared() const { return !Pattern->isDependentType(); }
+  QualType desugar() const { return isSugared() ? Pattern : QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPattern(), getNumExpansions());

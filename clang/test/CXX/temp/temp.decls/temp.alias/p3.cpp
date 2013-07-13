@@ -9,5 +9,9 @@ template<class T> struct A {
 B<short> b;
 
 template<typename T> using U = int;
+
+template<typename ...T> void f(U<T> ...xs);
+void g() { f<void,void,void>(1, 2, 3); }
+
 // FIXME: This is illegal, but probably only because CWG1044 missed this paragraph.
 template<typename T> using U = U<T>;
