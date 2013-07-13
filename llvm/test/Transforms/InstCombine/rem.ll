@@ -163,3 +163,12 @@ define i32 @test16(i32 %x, i32 %y) {
 	%rem = urem i32 %x, %add
 	ret i32 %rem
 }
+
+define i32 @test17(i32 %X) {
+; CHECK: @test17
+; CHECK-NEXT: icmp ne i32 %X, 1
+; CHECK-NEXT: zext i1
+; CHECK-NEXT: ret
+  %A = urem i32 1, %X
+  ret i32 %A
+}

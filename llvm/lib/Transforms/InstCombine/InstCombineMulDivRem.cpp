@@ -1125,6 +1125,13 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     return BinaryOperator::CreateAnd(Op0, Add);
   }
 
+  // 1 urem X -> zext(X != 1)
+  if (match(Op0, m_One())) {
+    Value *Cmp = Builder->CreateICmpNE(Op1, Op0);
+    Value *Ext = Builder->CreateZExt(Cmp, I.getType());
+    return ReplaceInstUsesWith(I, Ext);
+  }
+
   return 0;
 }
 
