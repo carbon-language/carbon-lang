@@ -22,11 +22,8 @@
 #include "llvm/IR/Value.h"
 
 namespace llvm {
-class Constant;
-class Instruction;
 class LLVMContext;
 class Module;
-template <typename T> class SmallVectorImpl;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
