@@ -10,11 +10,11 @@ define i32 @test1(%0* %p, %0* %q, i1 %r) nounwind {
   %t4 = select i1 %r, %0 %t0, %0 %t1
   %t5 = extractvalue %0 %t4, 1
   ret i32 %t5
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: cmovneq %rdi, %rsi
 ; CHECK: movl (%rsi), %eax
 
-; ATOM: test1:
+; ATOM-LABEL: test1:
 ; ATOM: cmovneq %rdi, %rsi
 ; ATOM: movl (%rsi), %eax
 }
@@ -33,11 +33,11 @@ bb90:		; preds = %bb84, %bb72
 	unreachable
 bb91:		; preds = %bb84
 	ret i32 0
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movnew
 ; CHECK: movswl
 
-; ATOM: test2:
+; ATOM-LABEL: test2:
 ; ATOM: movnew
 ; ATOM: movswl
 }
@@ -51,10 +51,10 @@ entry:
 	%0 = icmp eq i32 %x, 0		; <i1> [#uses=1]
 	%iftmp.0.0 = select i1 %0, float 4.200000e+01, float 2.300000e+01		; <float> [#uses=1]
 	ret float %iftmp.0.0
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: movss	{{.*}},4), %xmm0
 
-; ATOM: test3:
+; ATOM-LABEL: test3:
 ; ATOM: movss  {{.*}},4), %xmm0
 }
 
@@ -65,10 +65,10 @@ entry:
 	%1 = getelementptr i8* %P, i32 %iftmp.0.0		; <i8*> [#uses=1]
 	%2 = load i8* %1, align 1		; <i8> [#uses=1]
 	ret i8 %2
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: movsbl	({{.*}},4), %eax
 
-; ATOM: test4:
+; ATOM-LABEL: test4:
 ; ATOM: movsbl ({{.*}},4), %eax
 }
 
@@ -76,9 +76,9 @@ define void @test5(i1 %c, <2 x i16> %a, <2 x i16> %b, <2 x i16>* %p) nounwind {
   %x = select i1 %c, <2 x i16> %a, <2 x i16> %b
   store <2 x i16> %x, <2 x i16>* %p
   ret void
-; CHECK: test5:
+; CHECK-LABEL: test5:
 
-; ATOM: test5:
+; ATOM-LABEL: test5:
 }
 
 define void @test6(i32 %C, <4 x float>* %A, <4 x float>* %B) nounwind {
@@ -91,13 +91,13 @@ define void @test6(i32 %C, <4 x float>* %A, <4 x float>* %B) nounwind {
         ret void
 ; Verify that the fmul gets sunk into the one part of the diamond where it is
 ; needed.
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: je
 ; CHECK: ret
 ; CHECK: mulps
 ; CHECK: ret
 
-; ATOM: test6:
+; ATOM-LABEL: test6:
 ; ATOM: je
 ; ATOM: ret
 ; ATOM: mulps
@@ -109,11 +109,11 @@ define x86_fp80 @test7(i32 %tmp8) nounwind {
         %tmp9 = icmp sgt i32 %tmp8, -1          ; <i1> [#uses=1]
         %retval = select i1 %tmp9, x86_fp80 0xK4005B400000000000000, x86_fp80 0xK40078700000000000000
         ret x86_fp80 %retval
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK: leaq
 ; CHECK: fldt (%r{{.}}x,%r{{.}}x)
 
-; ATOM: test7:
+; ATOM-LABEL: test7:
 ; ATOM: leaq
 ; ATOM: fldt (%r{{.}}x,%r{{.}}x)
 }
@@ -125,9 +125,9 @@ define void @test8(i1 %c, <6 x i32>* %dst.addr, <6 x i32> %src1,<6 x i32> %src2)
 	store <6 x i32> %val, <6 x i32>* %dst.addr
 	ret void
 
-; CHECK: test8:
+; CHECK-LABEL: test8:
 
-; ATOM: test8:
+; ATOM-LABEL: test8:
 }
 
 
@@ -137,13 +137,13 @@ define i64 @test9(i64 %x, i64 %y) nounwind readnone ssp noredzone {
   %cmp = icmp ne i64 %x, 0
   %cond = select i1 %cmp, i64 %y, i64 -1
   ret i64 %cond
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: cmpq	$1, %rdi
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
 
-; ATOM: test9:
+; ATOM-LABEL: test9:
 ; ATOM: cmpq   $1, %rdi
 ; ATOM: sbbq   %rax, %rax
 ; ATOM: orq    %rsi, %rax
@@ -155,13 +155,13 @@ define i64 @test9a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
   %cmp = icmp eq i64 %x, 0
   %cond = select i1 %cmp, i64 -1, i64 %y
   ret i64 %cond
-; CHECK: test9a:
+; CHECK-LABEL: test9a:
 ; CHECK: cmpq	$1, %rdi
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
 
-; ATOM: test9a:
+; ATOM-LABEL: test9a:
 ; ATOM: cmpq   $1, %rdi
 ; ATOM: sbbq   %rax, %rax
 ; ATOM: orq    %rsi, %rax
@@ -173,13 +173,13 @@ define i64 @test9b(i64 %x, i64 %y) nounwind readnone ssp noredzone {
   %A = sext i1 %cmp to i64
   %cond = or i64 %y, %A
   ret i64 %cond
-; CHECK: test9b:
+; CHECK-LABEL: test9b:
 ; CHECK: cmpq	$1, %rdi
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
 
-; ATOM: test9b:
+; ATOM-LABEL: test9b:
 ; ATOM: cmpq   $1, %rdi
 ; ATOM: sbbq   %rax, %rax
 ; ATOM: orq    %rsi, %rax
@@ -191,13 +191,13 @@ define i64 @test10(i64 %x, i64 %y) nounwind readnone ssp noredzone {
   %cmp = icmp eq i64 %x, 0
   %cond = select i1 %cmp, i64 -1, i64 1
   ret i64 %cond
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: cmpq	$1, %rdi
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: orq	$1, %rax
 ; CHECK: ret
 
-; ATOM: test10:
+; ATOM-LABEL: test10:
 ; ATOM: cmpq   $1, %rdi
 ; ATOM: sbbq   %rax, %rax
 ; ATOM: orq    $1, %rax
@@ -210,14 +210,14 @@ define i64 @test11(i64 %x, i64 %y) nounwind readnone ssp noredzone {
   %cmp = icmp eq i64 %x, 0
   %cond = select i1 %cmp, i64 %y, i64 -1
   ret i64 %cond
-; CHECK: test11:
+; CHECK-LABEL: test11:
 ; CHECK: cmpq	$1, %rdi
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: notq %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
 
-; ATOM: test11:
+; ATOM-LABEL: test11:
 ; ATOM: cmpq   $1, %rdi
 ; ATOM: sbbq   %rax, %rax
 ; ATOM: notq %rax
@@ -229,14 +229,14 @@ define i64 @test11a(i64 %x, i64 %y) nounwind readnone ssp noredzone {
   %cmp = icmp ne i64 %x, 0
   %cond = select i1 %cmp, i64 -1, i64 %y
   ret i64 %cond
-; CHECK: test11a:
+; CHECK-LABEL: test11a:
 ; CHECK: cmpq	$1, %rdi
 ; CHECK: sbbq	%rax, %rax
 ; CHECK: notq %rax
 ; CHECK: orq	%rsi, %rax
 ; CHECK: ret
 
-; ATOM: test11a:
+; ATOM-LABEL: test11a:
 ; ATOM: cmpq   $1, %rdi
 ; ATOM: sbbq   %rax, %rax
 ; ATOM: notq %rax
@@ -255,13 +255,13 @@ entry:
   %D = select i1 %B, i64 -1, i64 %C
   %call = tail call noalias i8* @_Znam(i64 %D) nounwind noredzone
   ret i8* %call
-; CHECK: test12:
+; CHECK-LABEL: test12:
 ; CHECK: movq $-1, %rdi
 ; CHECK: mulq
 ; CHECK: cmovnoq	%rax, %rdi
 ; CHECK: jmp	__Znam
 
-; ATOM: test12:
+; ATOM-LABEL: test12:
 ; ATOM: mulq
 ; ATOM: movq $-1, %rdi
 ; ATOM: cmovnoq        %rax, %rdi
@@ -274,12 +274,12 @@ define i32 @test13(i32 %a, i32 %b) nounwind {
   %c = icmp ult i32 %a, %b
   %d = sext i1 %c to i32
   ret i32 %d
-; CHECK: test13:
+; CHECK-LABEL: test13:
 ; CHECK: cmpl
 ; CHECK-NEXT: sbbl
 ; CHECK-NEXT: ret
 
-; ATOM: test13:
+; ATOM-LABEL: test13:
 ; ATOM: cmpl
 ; ATOM-NEXT: sbbl
 ; ATOM: ret
@@ -289,13 +289,13 @@ define i32 @test14(i32 %a, i32 %b) nounwind {
   %c = icmp uge i32 %a, %b
   %d = sext i1 %c to i32
   ret i32 %d
-; CHECK: test14:
+; CHECK-LABEL: test14:
 ; CHECK: cmpl
 ; CHECK-NEXT: sbbl
 ; CHECK-NEXT: notl
 ; CHECK-NEXT: ret
 
-; ATOM: test14:
+; ATOM-LABEL: test14:
 ; ATOM: cmpl
 ; ATOM-NEXT: sbbl
 ; ATOM-NEXT: notl
@@ -308,11 +308,11 @@ entry:
   %cmp = icmp ne i32 %x, 0
   %sub = sext i1 %cmp to i32
   ret i32 %sub
-; CHECK: test15:
+; CHECK-LABEL: test15:
 ; CHECK: negl
 ; CHECK: sbbl
 
-; ATOM: test15:
+; ATOM-LABEL: test15:
 ; ATOM: negl
 ; ATOM: sbbl
 }
@@ -322,11 +322,11 @@ entry:
   %cmp = icmp ne i64 %x, 0
   %conv1 = sext i1 %cmp to i64
   ret i64 %conv1
-; CHECK: test16:
+; CHECK-LABEL: test16:
 ; CHECK: negq
 ; CHECK: sbbq
 
-; ATOM: test16:
+; ATOM-LABEL: test16:
 ; ATOM: negq
 ; ATOM: sbbq
 }
@@ -336,11 +336,11 @@ entry:
   %cmp = icmp ne i16 %x, 0
   %sub = sext i1 %cmp to i16
   ret i16 %sub
-; CHECK: test17:
+; CHECK-LABEL: test17:
 ; CHECK: negw
 ; CHECK: sbbw
 
-; ATOM: test17:
+; ATOM-LABEL: test17:
 ; ATOM: negw
 ; ATOM: sbbw
 }
@@ -349,11 +349,11 @@ define i8 @test18(i32 %x, i8 zeroext %a, i8 zeroext %b) nounwind {
   %cmp = icmp slt i32 %x, 15
   %sel = select i1 %cmp, i8 %a, i8 %b
   ret i8 %sel
-; CHECK: test18:
+; CHECK-LABEL: test18:
 ; CHECK: cmpl $15, %edi
 ; CHECK: cmovgel %edx
 
-; ATOM: test18:
+; ATOM-LABEL: test18:
 ; ATOM: cmpl $15, %edi
 ; ATOM: cmovgel %edx
 }

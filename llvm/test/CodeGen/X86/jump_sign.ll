@@ -283,7 +283,7 @@ entry:
 @a = common global i32 0, align 4
 define i32 @test1(i32 %p1) nounwind uwtable {
 entry:
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: testb
 ; CHECK: j
 ; CHECK: ret

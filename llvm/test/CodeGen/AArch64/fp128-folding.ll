@@ -5,7 +5,7 @@ declare void @bar(i8*, i8*, i32*)
 ; which is not supported.
 
 define fp128 @test_folding() {
-; CHECK: test_folding:
+; CHECK-LABEL: test_folding:
   %l = alloca i32
   store i32 42, i32* %l
   %val = load i32* %l

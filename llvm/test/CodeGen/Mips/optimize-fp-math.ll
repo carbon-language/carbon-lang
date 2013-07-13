@@ -1,10 +1,10 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=32
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s -check-prefix=64
 
-; 32: test_sqrtf_float_:
+; 32-LABEL: test_sqrtf_float_:
 ; 32: sqrt.s $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 32: c.un.s $f[[R0]], $f[[R0]]
-; 64: test_sqrtf_float_:
+; 64-LABEL: test_sqrtf_float_:
 ; 64: sqrt.s $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 64: c.un.s $f[[R0]], $f[[R0]]
 
@@ -16,10 +16,10 @@ entry:
 
 declare float @sqrtf(float)
 
-; 32: test_sqrt_double_:
+; 32-LABEL: test_sqrt_double_:
 ; 32: sqrt.d $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 32: c.un.d $f[[R0]], $f[[R0]]
-; 64: test_sqrt_double_:
+; 64-LABEL: test_sqrt_double_:
 ; 64: sqrt.d $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 64: c.un.d $f[[R0]], $f[[R0]]
 

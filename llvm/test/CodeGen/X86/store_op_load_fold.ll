@@ -19,7 +19,7 @@ define void @foo() nounwind {
 %struct.S2 = type { i64, i16, [2 x i8], i8, [3 x i8], [7 x i8], i8, [8 x i8] }
 @s2 = external global %struct.S2, align 16
 define void @test2() nounwind uwtable ssp {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: mov
 ; CHECK-NEXT: and
 ; CHECK-NEXT: ret

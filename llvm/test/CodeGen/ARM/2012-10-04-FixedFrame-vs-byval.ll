@@ -6,7 +6,7 @@
 
 declare i32 @printf(i8*, ...)
 
-; CHECK:     test_byval_usage_scheduling:
+; CHECK-LABEL:     test_byval_usage_scheduling:
 ; CHECK:       str     r3, [sp, #12]
 ; CHECK:       str     r2, [sp, #8]
 ; CHECK:       vldr    d16, [sp, #8]

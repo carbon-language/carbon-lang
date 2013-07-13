@@ -6,7 +6,7 @@
 
 ; Use the flags on the add.
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ;     CHECK: addl
 ; CHECK-NOT: test
 ;     CHECK: cmovnsl
@@ -25,7 +25,7 @@ declare void @foo(i32)
 ; Don't use the flags result of the and here, since the and has no
 ; other use. A simple test is better.
 
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: testb   $16, {{%dil|%cl}}
 
 define void @test2(i32 %x) nounwind {
@@ -41,7 +41,7 @@ false:
 
 ; Do use the flags result of the and here, since the and has another use.
 
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ;      CHECK: andl    $16, %e
 ; CHECK-NEXT: jne
 

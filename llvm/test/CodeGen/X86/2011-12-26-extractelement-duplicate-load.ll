@@ -5,7 +5,7 @@
 ; the chains correctly.
 ; PR10747
 
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: pextrd $2, %xmm
 define <4 x i32> @test(<4 x i32>* %p) {
   %v = load <4 x i32>* %p

@@ -179,7 +179,7 @@ return:
 
 define void @test3() nounwind ssp {
 entry:
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: decq 16(%rax)
   %0 = load i64** @foo, align 8
   %arrayidx = getelementptr inbounds i64* %0, i64 2

@@ -4,10 +4,10 @@
 
 
 define i32 @test1(i32 %X, i32 %Y, i8 %sh) {
-; A8: test1:
+; A8-LABEL: test1:
 ; A8: add r0, r0, r1, lsl r2
 
-; A9: test1:
+; A9-LABEL: test1:
 ; A9: add r0, r0, r1, lsl r2
         %shift.upgrd.1 = zext i8 %sh to i32
         %A = shl i32 %Y, %shift.upgrd.1
@@ -16,10 +16,10 @@ define i32 @test1(i32 %X, i32 %Y, i8 %sh) {
 }
 
 define i32 @test2(i32 %X, i32 %Y, i8 %sh) {
-; A8: test2:
+; A8-LABEL: test2:
 ; A8: bic r0, r0, r1, asr r2
 
-; A9: test2:
+; A9-LABEL: test2:
 ; A9: bic r0, r0, r1, asr r2
         %shift.upgrd.2 = zext i8 %sh to i32
         %A = ashr i32 %Y, %shift.upgrd.2
@@ -30,12 +30,12 @@ define i32 @test2(i32 %X, i32 %Y, i8 %sh) {
 
 define i32 @test3(i32 %base, i32 %base2, i32 %offset) {
 entry:
-; A8: test3:
+; A8-LABEL: test3:
 ; A8: ldr r0, [r0, r2, lsl #2]
 ; A8: ldr r1, [r1, r2, lsl #2]
 
 ; lsl #2 is free
-; A9: test3:
+; A9-LABEL: test3:
 ; A9: ldr r0, [r0, r2, lsl #2]
 ; A9: ldr r1, [r1, r2, lsl #2]
         %tmp1 = shl i32 %offset, 2
@@ -53,13 +53,13 @@ declare i8* @malloc(...)
 
 define fastcc void @test4(i16 %addr) nounwind {
 entry:
-; A8: test4:
+; A8-LABEL: test4:
 ; A8: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]
 ; A8-NOT: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]!
 ; A8: str [[REG]], [r0, r1, lsl #2]
 ; A8-NOT: str [[REG]], [r0]
 
-; A9: test4:
+; A9-LABEL: test4:
 ; A9: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]
 ; A9-NOT: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]!
 ; A9: str [[REG]], [r0, r1, lsl #2]

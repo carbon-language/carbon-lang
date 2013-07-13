@@ -9,7 +9,7 @@ define void @test1(%struct.foo* nocapture %x, i32 %y) nounwind {
   call void @bar(i8* %dynalloc, %struct.foo* align 4 byval %x)
   ret void
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: andl $-16, %esp
 ; CHECK: movl %esp, %esi
 ; CHECK-NOT: rep;movsl

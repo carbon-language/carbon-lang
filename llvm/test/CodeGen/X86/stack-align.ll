@@ -45,7 +45,7 @@ entry:
   %0 = ptrtoint [2048 x i8]* %buffer to i32
   %and = and i32 %0, -16
   ret i32 %and
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK-NOT: and
 ; CHECK: ret
 }

@@ -9,7 +9,7 @@ declare double @sin(double) readonly
 
 declare x86_fp80 @sinl(x86_fp80) readonly
 
-; SIN: test1:
+; SIN-LABEL: test1:
 define float @test1(float %X) {
         %Y = call float @sinf(float %X) readonly
         ret float %Y
@@ -21,7 +21,7 @@ define float @test1(float %X) {
 ; SAFE: test1
 ; SAFE-NOT: fsin
 
-; SIN: test2:
+; SIN-LABEL: test2:
 define double @test2(double %X) {
         %Y = call double @sin(double %X) readonly
         ret double %Y
@@ -33,7 +33,7 @@ define double @test2(double %X) {
 ; SAFE: test2
 ; SAFE-NOT: fsin
 
-; SIN: test3:
+; SIN-LABEL: test3:
 define x86_fp80 @test3(x86_fp80 %X) {
         %Y = call x86_fp80 @sinl(x86_fp80 %X) readonly
         ret x86_fp80 %Y
@@ -49,8 +49,8 @@ declare double @cos(double) readonly
 declare x86_fp80 @cosl(x86_fp80) readonly
 
 
-; SIN: test4:
-; COS: test3:
+; SIN-LABEL: test4:
+; COS-LABEL: test3:
 define float @test4(float %X) {
         %Y = call float @cosf(float %X) readonly
         ret float %Y

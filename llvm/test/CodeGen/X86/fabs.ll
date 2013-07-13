@@ -7,9 +7,9 @@ declare float @fabsf(float)
 
 declare x86_fp80 @fabsl(x86_fp80)
 
-; CHECK:  test1:
-; UNSAFE: test1:
-; NOOPT:  test1:
+; CHECK-LABEL:  test1:
+; UNSAFE-LABEL: test1:
+; NOOPT-LABEL:  test1:
 define float @test1(float %X) {
         %Y = call float @fabsf(float %X) readnone
         ret float %Y
@@ -21,9 +21,9 @@ define float @test1(float %X) {
 ; UNSAFE-NOT: fabs
 ; NOOPT-NOT:  fabsf
 
-; CHECK:  test2:
-; UNSAFE: test2:
-; NOOPT:  test2:
+; CHECK-LABEL:  test2:
+; UNSAFE-LABEL: test2:
+; NOOPT-LABEL:  test2:
 define double @test2(double %X) {
         %Y = fcmp oge double %X, -0.0
         %Z = fsub double -0.0, %X
@@ -38,9 +38,9 @@ define double @test2(double %X) {
 
 ; UNSAFE-NOT: fabs
 
-; CHECK:  test3:
-; UNSAFE: test3:
-; NOOPT:  test3:
+; CHECK-LABEL:  test3:
+; UNSAFE-LABEL: test3:
+; NOOPT-LABEL:  test3:
 define x86_fp80 @test3(x86_fp80 %X) {
         %Y = call x86_fp80 @fabsl(x86_fp80 %X) readnone
         ret x86_fp80 %Y

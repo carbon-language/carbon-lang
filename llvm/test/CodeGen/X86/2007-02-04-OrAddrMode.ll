@@ -2,7 +2,7 @@
 
 ;; This example can't fold the or into an LEA.
 define i32 @test(float ** %tmp2, i32 %tmp12) nounwind {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: ret
 ; CHECK: orl $1, %{{.*}}
 ; CHECK: ret
@@ -18,7 +18,7 @@ define i32 @test(float ** %tmp2, i32 %tmp12) nounwind {
 
 ;; This can!
 define i32 @test2(i32 %a, i32 %b) nounwind {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK-NOT: ret
 ; CHECK: leal 3(,%{{.*}},8)
 ; CHECK: ret

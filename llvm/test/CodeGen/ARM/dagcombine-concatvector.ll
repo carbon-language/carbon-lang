@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7s-apple-ios3.0.0 | FileCheck %s
 
 ; PR15525
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: ldr.w	[[REG:r[0-9]+]], [sp]
 ; CHECK-NEXT: vmov	{{d[0-9]+}}, r1, r2
 ; CHECK-NEXT: vmov	{{d[0-9]+}}, r3, [[REG]]

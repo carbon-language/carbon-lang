@@ -53,7 +53,7 @@ declare void @foo(i32)
 ; Don't zero extend the test operands to pointer type if it can be avoided.
 ; rdar://8781238
 define void @test2(i32 %x) nounwind ssp {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: cmpl $6
 ; CHECK: ja
 
@@ -81,7 +81,7 @@ if.end:                                           ; preds = %entry
 declare void @bar()
 
 define void @test3(i32 %x) nounwind {
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: cmpl $5
 ; CHECK: ja
 ; CHECK: cmpl $4

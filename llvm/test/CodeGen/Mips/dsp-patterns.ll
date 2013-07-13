@@ -1,7 +1,7 @@
 ; RUN: llc -march=mips -mattr=dsp < %s | FileCheck %s -check-prefix=R1
 ; RUN: llc -march=mips -mattr=dspr2 < %s | FileCheck %s -check-prefix=R2
 
-; R1: test_lbux:
+; R1-LABEL: test_lbux:
 ; R1: lbux ${{[0-9]+}}
 
 define zeroext i8 @test_lbux(i8* nocapture %b, i32 %i) {
@@ -11,7 +11,7 @@ entry:
   ret i8 %0
 }
 
-; R1: test_lhx:
+; R1-LABEL: test_lhx:
 ; R1: lhx ${{[0-9]+}}
 
 define signext i16 @test_lhx(i16* nocapture %b, i32 %i) {
@@ -21,7 +21,7 @@ entry:
   ret i16 %0
 }
 
-; R1: test_lwx:
+; R1-LABEL: test_lwx:
 ; R1: lwx ${{[0-9]+}}
 
 define i32 @test_lwx(i32* nocapture %b, i32 %i) {
@@ -31,7 +31,7 @@ entry:
   ret i32 %0
 }
 
-; R1: test_add_v2q15_:
+; R1-LABEL: test_add_v2q15_:
 ; R1: addq.ph ${{[0-9]+}}
 
 define { i32 } @test_add_v2q15_(i32 %a.coerce, i32 %b.coerce) {
@@ -44,7 +44,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: test_sub_v2q15_:
+; R1-LABEL: test_sub_v2q15_:
 ; R1: subq.ph ${{[0-9]+}}
 
 define { i32 } @test_sub_v2q15_(i32 %a.coerce, i32 %b.coerce) {
@@ -57,11 +57,11 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R2: test_mul_v2q15_:
+; R2-LABEL: test_mul_v2q15_:
 ; R2: mul.ph ${{[0-9]+}}
 
 ; mul.ph is an R2 instruction. Check that multiply node gets expanded.
-; R1: test_mul_v2q15_:
+; R1-LABEL: test_mul_v2q15_:
 ; R1: mul ${{[0-9]+}}
 ; R1: mul ${{[0-9]+}}
 
@@ -75,7 +75,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: test_add_v4i8_:
+; R1-LABEL: test_add_v4i8_:
 ; R1: addu.qb ${{[0-9]+}}
 
 define { i32 } @test_add_v4i8_(i32 %a.coerce, i32 %b.coerce) {
@@ -88,7 +88,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: test_sub_v4i8_:
+; R1-LABEL: test_sub_v4i8_:
 ; R1: subu.qb ${{[0-9]+}}
 
 define { i32 } @test_sub_v4i8_(i32 %a.coerce, i32 %b.coerce) {
@@ -102,7 +102,7 @@ entry:
 }
 
 ; DSP-ASE doesn't have a v4i8 multiply instruction. Check that multiply node gets expanded.
-; R2: test_mul_v4i8_:
+; R2-LABEL: test_mul_v4i8_:
 ; R2: mul ${{[0-9]+}}
 ; R2: mul ${{[0-9]+}}
 ; R2: mul ${{[0-9]+}}
@@ -118,7 +118,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: test_addsc:
+; R1-LABEL: test_addsc:
 ; R1: addsc ${{[0-9]+}}
 ; R1: addwc ${{[0-9]+}}
 
@@ -206,7 +206,7 @@ entry:
 
 ; Check that shift node is expanded if splat element size is not 16-bit.
 ;
-; R1: test_vector_splat_imm_v2q15:
+; R1-LABEL: test_vector_splat_imm_v2q15:
 ; R1-NOT: shll.ph
 
 define { i32 } @test_vector_splat_imm_v2q15(i32 %a.coerce) {
@@ -220,7 +220,7 @@ entry:
 
 ; Check that shift node is expanded if splat element size is not 8-bit.
 ;
-; R1: test_vector_splat_imm_v4i8:
+; R1-LABEL: test_vector_splat_imm_v4i8:
 ; R1-NOT: shll.qb
 
 define { i32 } @test_vector_splat_imm_v4i8(i32 %a.coerce) {
@@ -234,7 +234,7 @@ entry:
 
 ; Check that shift node is expanded if shift amount doesn't fit in 4-bit sa field.
 ;
-; R1: test_shift_amount_v2q15:
+; R1-LABEL: test_shift_amount_v2q15:
 ; R1-NOT: shll.ph
 
 define { i32 } @test_shift_amount_v2q15(i32 %a.coerce) {
@@ -248,7 +248,7 @@ entry:
 
 ; Check that shift node is expanded if shift amount doesn't fit in 3-bit sa field.
 ;
-; R1: test_shift_amount_v4i8:
+; R1-LABEL: test_shift_amount_v4i8:
 ; R1-NOT: shll.qb
 
 define { i32 } @test_shift_amount_v4i8(i32 %a.coerce) {

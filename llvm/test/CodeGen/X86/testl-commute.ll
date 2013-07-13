@@ -7,7 +7,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin7"
 
 define i32 @test(i32* %P, i32* %G) nounwind {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: ret
 ; CHECK: testl (%{{.*}}), %{{.*}}
 ; CHECK: ret
@@ -28,7 +28,7 @@ bb1:		; preds = %entry
 }
 
 define i32 @test2(i32* %P, i32* %G) nounwind {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK-NOT: ret
 ; CHECK: testl (%{{.*}}), %{{.*}}
 ; CHECK: ret
@@ -49,7 +49,7 @@ bb1:		; preds = %entry
 }
 
 define i32 @test3(i32* %P, i32* %G) nounwind {
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK-NOT: ret
 ; CHECK: testl (%{{.*}}), %{{.*}}
 ; CHECK: ret

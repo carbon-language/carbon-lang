@@ -13,10 +13,10 @@ entry:
   store i32 %D, i32* %a0, align 4
   ret void
   
-; X64: test1:
+; X64-LABEL: test1:
 ; X64: movb	%sil, (%rdi)
 
-; X32: test1:
+; X32-LABEL: test1:
 ; X32: movb	8(%esp), %al
 ; X32: movb	%al, (%{{.*}})
 }
@@ -30,10 +30,10 @@ entry:
   %D = or i32 %B, %CS
   store i32 %D, i32* %a0, align 4
   ret void
-; X64: test2:
+; X64-LABEL: test2:
 ; X64: movb	%sil, 1(%rdi)
 
-; X32: test2:
+; X32-LABEL: test2:
 ; X32: movb	8(%esp), %al
 ; X32: movb	%al, 1(%{{.*}})
 }
@@ -46,10 +46,10 @@ entry:
   %D = or i32 %B, %C
   store i32 %D, i32* %a0, align 4
   ret void
-; X64: test3:
+; X64-LABEL: test3:
 ; X64: movw	%si, (%rdi)
 
-; X32: test3:
+; X32-LABEL: test3:
 ; X32: movw	8(%esp), %ax
 ; X32: movw	%ax, (%{{.*}})
 }
@@ -63,10 +63,10 @@ entry:
   %D = or i32 %B, %CS
   store i32 %D, i32* %a0, align 4
   ret void
-; X64: test4:
+; X64-LABEL: test4:
 ; X64: movw	%si, 2(%rdi)
 
-; X32: test4:
+; X32-LABEL: test4:
 ; X32: movl	8(%esp), %eax
 ; X32: movw	%ax, 2(%{{.*}})
 }
@@ -80,10 +80,10 @@ entry:
   %D = or i64 %B, %CS
   store i64 %D, i64* %a0, align 4
   ret void
-; X64: test5:
+; X64-LABEL: test5:
 ; X64: movw	%si, 2(%rdi)
 
-; X32: test5:
+; X32-LABEL: test5:
 ; X32: movzwl	8(%esp), %eax
 ; X32: movw	%ax, 2(%{{.*}})
 }
@@ -97,11 +97,11 @@ entry:
   %D = or i64 %B, %CS
   store i64 %D, i64* %a0, align 4
   ret void
-; X64: test6:
+; X64-LABEL: test6:
 ; X64: movb	%sil, 5(%rdi)
 
 
-; X32: test6:
+; X32-LABEL: test6:
 ; X32: movb	8(%esp), %al
 ; X32: movb	%al, 5(%{{.*}})
 }
@@ -116,11 +116,11 @@ entry:
   %D = or i64 %B, %CS
   store i64 %D, i64* %a0, align 4
   ret i32 %OtherLoad
-; X64: test7:
+; X64-LABEL: test7:
 ; X64: movb	%sil, 5(%rdi)
 
 
-; X32: test7:
+; X32-LABEL: test7:
 ; X32: movb	8(%esp), %cl
 ; X32: movb	%cl, 5(%{{.*}})
 }
@@ -129,7 +129,7 @@ entry:
 
 @g_16 = internal global i32 -1
 
-; X64: test8:
+; X64-LABEL: test8:
 ; X64-NEXT: movl _g_16(%rip), %eax
 ; X64-NEXT: movl $0, _g_16(%rip)
 ; X64-NEXT: orl  $1, %eax
@@ -143,7 +143,7 @@ define void @test8() nounwind {
   ret void
 }
 
-; X64: test9:
+; X64-LABEL: test9:
 ; X64-NEXT: orb $1, _g_16(%rip)
 ; X64-NEXT: ret
 define void @test9() nounwind {
@@ -154,7 +154,7 @@ define void @test9() nounwind {
 }
 
 ; rdar://8494845 + PR8244
-; X64: test10:
+; X64-LABEL: test10:
 ; X64-NEXT: movsbl	(%rdi), %eax
 ; X64-NEXT: shrl	$8, %eax
 ; X64-NEXT: ret

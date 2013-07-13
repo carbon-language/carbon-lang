@@ -5,7 +5,7 @@
 @var32_align64 = global [3 x i32] zeroinitializer, align 8
 
 define i64 @test_align32() {
-; CHECK: test_align32:
+; CHECK-LABEL: test_align32:
   %addr = bitcast [3 x i32]* @var32 to i64*
 
   ; Since @var32 is only guaranteed to be aligned to 32-bits, it's invalid to
@@ -19,7 +19,7 @@ define i64 @test_align32() {
 }
 
 define i64 @test_align64() {
-; CHECK: test_align64:
+; CHECK-LABEL: test_align64:
   %addr = bitcast [3 x i64]* @var64 to i64*
 
   ; However, var64 *is* properly aligned and emitting an adrp/add/ldr would be
@@ -33,7 +33,7 @@ define i64 @test_align64() {
 }
 
 define i64 @test_var32_align64() {
-; CHECK: test_var32_align64:
+; CHECK-LABEL: test_var32_align64:
   %addr = bitcast [3 x i32]* @var32_align64 to i64*
 
   ; Since @var32 is only guaranteed to be aligned to 32-bits, it's invalid to
@@ -49,7 +49,7 @@ define i64 @test_var32_align64() {
 @yet_another_var = external global {i32, i32}
 
 define i64 @test_yet_another_var() {
-; CHECK: test_yet_another_var:
+; CHECK-LABEL: test_yet_another_var:
 
   ; @yet_another_var has a preferred alignment of 8, but that's not enough if
   ; we're going to be linking against other things. Its ABI alignment is only 4
@@ -62,7 +62,7 @@ define i64 @test_yet_another_var() {
 }
 
 define i64()* @test_functions() {
-; CHECK: test_functions:
+; CHECK-LABEL: test_functions:
   ret i64()* @test_yet_another_var
 ; CHECK: adrp [[HIBITS:x[0-9]+]], test_yet_another_var
 ; CHECK: add x0, [[HIBITS]], #:lo12:test_yet_another_var

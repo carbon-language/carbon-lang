@@ -7,7 +7,7 @@
 ;;       ret
 ; rdar://10695237
 define i32 @test(i32 %a) nounwind {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: mov
 ; CHECK-NEXT: neg
 ; CHECK-NEXT: cmov

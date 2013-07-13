@@ -6,7 +6,7 @@ target triple = "powerpc64-bgq-linux"
 
 ; %val1 is a load live out of %entry. It should be hoisted
 ; above the add.
-; CHECK: testload:
+; CHECK-LABEL: testload:
 ; CHECK: %entry
 ; CHECK: lwz
 ; CHECK: addi
@@ -34,7 +34,7 @@ end:
 ; The prefetch gets a default latency of 3 cycles and should be hoisted
 ; above the add.
 ;
-; CHECK: testprefetch:
+; CHECK-LABEL: testprefetch:
 ; CHECK: %entry
 ; CHECK: dcbt
 ; CHECK: addi

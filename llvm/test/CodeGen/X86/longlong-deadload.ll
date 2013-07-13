@@ -2,7 +2,7 @@
 ; This should not load or store the top part of *P.
 
 define void @test(i64* %P) nounwind  {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: movl 4(%esp), %[[REGISTER:.*]]
 ; CHECK-NOT: 4(%[[REGISTER]])
 ; CHECK: ret

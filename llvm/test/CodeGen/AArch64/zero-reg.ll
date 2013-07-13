@@ -4,7 +4,7 @@
 @var64 = global i64 0
 
 define void @test_zr() {
-; CHECK: test_zr:
+; CHECK-LABEL: test_zr:
 
   store i32 0, i32* @var32
 ; CHECK: str wzr, [{{x[0-9]+}}, #:lo12:var32]
@@ -16,7 +16,7 @@ define void @test_zr() {
 }
 
 define void @test_sp(i32 %val) {
-; CHECK: test_sp:
+; CHECK-LABEL: test_sp:
 
 ; Important correctness point here is that LLVM doesn't try to use xzr
 ; as an addressing register: "str w0, [xzr]" is not a valid A64

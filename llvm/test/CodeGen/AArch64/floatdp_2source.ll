@@ -4,7 +4,7 @@
 @vardouble = global double 0.0
 
 define void @testfloat() {
-; CHECK: testfloat:
+; CHECK-LABEL: testfloat:
   %val1 = load float* @varfloat
 
   %val2 = fadd float %val1, %val1
@@ -32,7 +32,7 @@ define void @testfloat() {
 }
 
 define void @testdouble() {
-; CHECK: testdouble:
+; CHECK-LABEL: testdouble:
   %val1 = load double* @vardouble
 
   %val2 = fadd double %val1, %val1

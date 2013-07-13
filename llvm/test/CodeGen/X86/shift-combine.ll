@@ -3,7 +3,7 @@
 @array = weak global [4 x i32] zeroinitializer
 
 define i32 @test_lshr_and(i32 %x) {
-; CHECK: test_lshr_and:
+; CHECK-LABEL: test_lshr_and:
 ; CHECK-NOT: shrl
 ; CHECK: andl $12,
 ; CHECK: movl {{.*}}array{{.*}},

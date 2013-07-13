@@ -9,7 +9,7 @@
 @var_tlsle = thread_local(localexec) global i32 0
 
 define void @test_inline_modifier_L() nounwind {
-; CHECK: test_inline_modifier_L:
+; CHECK-LABEL: test_inline_modifier_L:
   call void asm sideeffect "add x0, x0, ${0:L}", "S,~{x0}"(i32* @var_simple)
   call void asm sideeffect "ldr x0, [x0, ${0:L}]", "S,~{x0}"(i32* @var_got)
   call void asm sideeffect "add x0, x0, ${0:L}", "S,~{x0}"(i32* @var_tlsgd)
@@ -34,7 +34,7 @@ define void @test_inline_modifier_L() nounwind {
 }
 
 define void @test_inline_modifier_G() nounwind {
-; CHECK: test_inline_modifier_G:
+; CHECK-LABEL: test_inline_modifier_G:
   call void asm sideeffect "add x0, x0, ${0:G}, lsl #12", "S,~{x0}"(i32* @var_tlsld)
   call void asm sideeffect "add x0, x0, ${0:G}, lsl #12", "S,~{x0}"(i32* @var_tlsle)
 ; CHECK: add x0, x0, #:dtprel_hi12:var_tlsld, lsl #12
@@ -47,7 +47,7 @@ define void @test_inline_modifier_G() nounwind {
 }
 
 define void @test_inline_modifier_A() nounwind {
-; CHECK: test_inline_modifier_A:
+; CHECK-LABEL: test_inline_modifier_A:
   call void asm sideeffect "adrp x0, ${0:A}", "S,~{x0}"(i32* @var_simple)
   call void asm sideeffect "adrp x0, ${0:A}", "S,~{x0}"(i32* @var_got)
   call void asm sideeffect "adrp x0, ${0:A}", "S,~{x0}"(i32* @var_tlsgd)
@@ -67,7 +67,7 @@ define void @test_inline_modifier_A() nounwind {
 }
 
 define void @test_inline_modifier_wx(i32 %small, i64 %big) nounwind {
-; CHECK: test_inline_modifier_wx:
+; CHECK-LABEL: test_inline_modifier_wx:
   call i32 asm sideeffect "add $0, $0, $0", "=r,0"(i32 %small)
   call i32 asm sideeffect "add ${0:w}, ${0:w}, ${0:w}", "=r,0"(i32 %small)
   call i32 asm sideeffect "add ${0:x}, ${0:x}, ${0:x}", "=r,0"(i32 %small)
@@ -91,7 +91,7 @@ define void @test_inline_modifier_wx(i32 %small, i64 %big) nounwind {
 }
 
 define void @test_inline_modifier_bhsdq() nounwind {
-; CHECK: test_inline_modifier_bhsdq:
+; CHECK-LABEL: test_inline_modifier_bhsdq:
   call float asm sideeffect "ldr ${0:b}, [sp]", "=w"()
   call float asm sideeffect "ldr ${0:h}, [sp]", "=w"()
   call float asm sideeffect "ldr ${0:s}, [sp]", "=w"()
@@ -117,7 +117,7 @@ define void @test_inline_modifier_bhsdq() nounwind {
 }
 
 define void @test_inline_modifier_c() nounwind {
-; CHECK: test_inline_modifier_c:
+; CHECK-LABEL: test_inline_modifier_c:
   call void asm sideeffect "adr x0, ${0:c}", "i"(i32 3)
 ; CHECK: adr x0, 3
 

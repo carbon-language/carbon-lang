@@ -1,7 +1,7 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 define i128 @test_simple(i128 %a, i128 %b, i128 %c) {
-; CHECK: test_simple:
+; CHECK-LABEL: test_simple:
 
   %valadd = add i128 %a, %b
 ; CHECK: adds [[ADDLO:x[0-9]+]], x0, x2
@@ -16,7 +16,7 @@ define i128 @test_simple(i128 %a, i128 %b, i128 %c) {
 }
 
 define i128 @test_imm(i128 %a) {
-; CHECK: test_imm:
+; CHECK-LABEL: test_imm:
 
   %val = add i128 %a, 12
 ; CHECK: adds x0, x0, #12
@@ -27,7 +27,7 @@ define i128 @test_imm(i128 %a) {
 }
 
 define i128 @test_shifted(i128 %a, i128 %b) {
-; CHECK: test_shifted:
+; CHECK-LABEL: test_shifted:
 
   %rhs = shl i128 %b, 45
 
@@ -40,7 +40,7 @@ define i128 @test_shifted(i128 %a, i128 %b) {
 }
 
 define i128 @test_extended(i128 %a, i16 %b) {
-; CHECK: test_extended:
+; CHECK-LABEL: test_extended:
 
   %ext = sext i16 %b to i128
   %rhs = shl i128 %ext, 3

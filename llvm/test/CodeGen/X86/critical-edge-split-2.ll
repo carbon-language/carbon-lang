@@ -22,7 +22,7 @@ cond.end.i:                                       ; preds = %entry
   ret i16 %call1
 }
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: testb %dil, %dil
 ; CHECK: jne LBB0_2
 ; CHECK: divl

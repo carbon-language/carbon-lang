@@ -8,12 +8,12 @@
 
 define float @test1(float %x) nounwind {
 entry:
-; GNU_SINCOS: test1:
+; GNU_SINCOS-LABEL: test1:
 ; GNU_SINCOS: callq sincosf
 ; GNU_SINCOS: movss 4(%rsp), %xmm0
 ; GNU_SINCOS: addss (%rsp), %xmm0
 
-; OSX_SINCOS: test1:
+; OSX_SINCOS-LABEL: test1:
 ; OSX_SINCOS: callq ___sincosf_stret
 ; OSX_SINCOS: pshufd $1, %xmm0, %xmm1
 ; OSX_SINCOS: addss %xmm0, %xmm1
@@ -29,12 +29,12 @@ entry:
 
 define double @test2(double %x) nounwind {
 entry:
-; GNU_SINCOS: test2:
+; GNU_SINCOS-LABEL: test2:
 ; GNU_SINCOS: callq sincos
 ; GNU_SINCOS: movsd 16(%rsp), %xmm0
 ; GNU_SINCOS: addsd 8(%rsp), %xmm0
 
-; OSX_SINCOS: test2:
+; OSX_SINCOS-LABEL: test2:
 ; OSX_SINCOS: callq ___sincos_stret
 ; OSX_SINCOS: addsd %xmm1, %xmm0
 
@@ -49,7 +49,7 @@ entry:
 
 define x86_fp80 @test3(x86_fp80 %x) nounwind {
 entry:
-; GNU_SINCOS: test3:
+; GNU_SINCOS-LABEL: test3:
 ; GNU_SINCOS: callq sinl
 ; GNU_SINCOS: callq cosl
 ; GNU_SINCOS: ret

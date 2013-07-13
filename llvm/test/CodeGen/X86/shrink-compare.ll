@@ -15,7 +15,7 @@ if.then:
 
 if.end:
   ret void
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: cmpb $47, (%{{rdi|rcx}})
 }
 
@@ -31,7 +31,7 @@ if.then:
 
 if.end:
   ret void
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: cmpb $47, %{{dil|cl}}
 }
 
@@ -47,7 +47,7 @@ if.then:
 
 if.end:
   ret void
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: cmpb $-1, %{{dil|cl}}
 }
 
@@ -85,7 +85,7 @@ if.then:
 if.end:
   ret void
 
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK-NOT: cmpl $1,{{.*}}x+4
 ; CHECK: ret
 }

@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 ; RUN: llc < %s -march=arm -mcpu=swift | FileCheck %s
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: ldr {{.*, \[.*]}}, -r2
 ; CHECK-NOT: ldr
 define i32 @test1(i32 %a, i32 %b, i32 %c) {
@@ -13,7 +13,7 @@ define i32 @test1(i32 %a, i32 %b, i32 %c) {
         ret i32 %tmp5
 }
 
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: ldr {{.*, \[.*\]}}, #-16
 ; CHECK-NOT: ldr
 define i32 @test2(i32 %a, i32 %b) {

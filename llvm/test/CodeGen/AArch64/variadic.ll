@@ -7,7 +7,7 @@
 declare void @llvm.va_start(i8*)
 
 define void @test_simple(i32 %n, ...) {
-; CHECK: test_simple:
+; CHECK-LABEL: test_simple:
 ; CHECK: sub sp, sp, #[[STACKSIZE:[0-9]+]]
 ; CHECK: mov x[[FPRBASE:[0-9]+]], sp
 ; CHECK: str q7, [x[[FPRBASE]], #112]
@@ -37,7 +37,7 @@ define void @test_simple(i32 %n, ...) {
 }
 
 define void @test_fewargs(i32 %n, i32 %n1, i32 %n2, float %m, ...) {
-; CHECK: test_fewargs:
+; CHECK-LABEL: test_fewargs:
 ; CHECK: sub sp, sp, #[[STACKSIZE:[0-9]+]]
 ; CHECK: mov x[[FPRBASE:[0-9]+]], sp
 ; CHECK: str q7, [x[[FPRBASE]], #96]
@@ -67,7 +67,7 @@ define void @test_fewargs(i32 %n, i32 %n1, i32 %n2, float %m, ...) {
 }
 
 define void @test_nospare([8 x i64], [8 x float], ...) {
-; CHECK: test_nospare:
+; CHECK-LABEL: test_nospare:
 
   %addr = bitcast %va_list* @var to i8*
   call void @llvm.va_start(i8* %addr)
@@ -81,7 +81,7 @@ define void @test_nospare([8 x i64], [8 x float], ...) {
 ; If there are non-variadic arguments on the stack (here two i64s) then the
 ; __stack field should point just past them.
 define void @test_offsetstack([10 x i64], [3 x float], ...) {
-; CHECK: test_offsetstack:
+; CHECK-LABEL: test_offsetstack:
 ; CHECK: sub sp, sp, #80
 ; CHECK: mov x[[FPRBASE:[0-9]+]], sp
 ; CHECK: str q7, [x[[FPRBASE]], #64]
@@ -108,7 +108,7 @@ define void @test_offsetstack([10 x i64], [3 x float], ...) {
 declare void @llvm.va_end(i8*)
 
 define void @test_va_end() nounwind {
-; CHECK: test_va_end:
+; CHECK-LABEL: test_va_end:
 ; CHECK-NEXT: BB#0
 
   %addr = bitcast %va_list* @var to i8*
@@ -123,7 +123,7 @@ declare void @llvm.va_copy(i8* %dest, i8* %src)
 @second_list = global %va_list zeroinitializer
 
 define void @test_va_copy() {
-; CHECK: test_va_copy:
+; CHECK-LABEL: test_va_copy:
   %srcaddr = bitcast %va_list* @var to i8*
   %dstaddr = bitcast %va_list* @second_list to i8*
   call void @llvm.va_copy(i8* %dstaddr, i8* %srcaddr)

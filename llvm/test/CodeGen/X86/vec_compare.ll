@@ -2,7 +2,7 @@
 
 
 define <4 x i32> @test1(<4 x i32> %A, <4 x i32> %B) nounwind {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: pcmpgtd
 ; CHECK: ret
 
@@ -12,7 +12,7 @@ define <4 x i32> @test1(<4 x i32> %A, <4 x i32> %B) nounwind {
 }
 
 define <4 x i32> @test2(<4 x i32> %A, <4 x i32> %B) nounwind {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: pcmp
 ; CHECK: pcmp
 ; CHECK: pxor
@@ -23,7 +23,7 @@ define <4 x i32> @test2(<4 x i32> %A, <4 x i32> %B) nounwind {
 }
 
 define <4 x i32> @test3(<4 x i32> %A, <4 x i32> %B) nounwind {
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: pcmpgtd
 ; CHECK: movdqa
 ; CHECK: ret
@@ -33,7 +33,7 @@ define <4 x i32> @test3(<4 x i32> %A, <4 x i32> %B) nounwind {
 }
 
 define <4 x i32> @test4(<4 x i32> %A, <4 x i32> %B) nounwind {
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: movdqa
 ; CHECK: pcmpgtd
 ; CHECK: ret
@@ -43,7 +43,7 @@ define <4 x i32> @test4(<4 x i32> %A, <4 x i32> %B) nounwind {
 }
 
 define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: pcmpeqd
 ; CHECK: pshufd $-79
 ; CHECK: pand
@@ -54,7 +54,7 @@ define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test6(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: pcmpeqd
 ; CHECK: pshufd $-79
 ; CHECK: pand
@@ -72,7 +72,7 @@ define <2 x i64> @test7(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK-NEXT: .long	0
 ; CHECK-NEXT: .long	2147483648
 ; CHECK-NEXT: .long	0
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK: movdqa [[CONSTSEG]], [[CONSTREG:%xmm[0-9]*]]
 ; CHECK: pxor [[CONSTREG]]
 ; CHECK: pxor [[CONSTREG]]
@@ -90,7 +90,7 @@ define <2 x i64> @test7(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test8(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test8:
+; CHECK-LABEL: test8:
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
@@ -107,7 +107,7 @@ define <2 x i64> @test8(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test9(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
@@ -126,7 +126,7 @@ define <2 x i64> @test9(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test10(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm1
@@ -150,7 +150,7 @@ define <2 x i64> @test11(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK-NEXT: .long	2147483648
 ; CHECK-NEXT: .long	2147483648
 ; CHECK-NEXT: .long	2147483648
-; CHECK: test11:
+; CHECK-LABEL: test11:
 ; CHECK: movdqa [[CONSTSEG]], [[CONSTREG:%xmm[0-9]*]]
 ; CHECK: pxor [[CONSTREG]]
 ; CHECK: pxor [[CONSTREG]]
@@ -168,7 +168,7 @@ define <2 x i64> @test11(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test12(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test12:
+; CHECK-LABEL: test12:
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
@@ -185,7 +185,7 @@ define <2 x i64> @test12(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test13(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test13:
+; CHECK-LABEL: test13:
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm0
@@ -204,7 +204,7 @@ define <2 x i64> @test13(<2 x i64> %A, <2 x i64> %B) nounwind {
 }
 
 define <2 x i64> @test14(<2 x i64> %A, <2 x i64> %B) nounwind {
-; CHECK: test14:
+; CHECK-LABEL: test14:
 ; CHECK: pxor
 ; CHECK: pxor
 ; CHECK: pcmpgtd %xmm1

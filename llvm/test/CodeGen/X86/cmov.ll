@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define i32 @test1(i32 %x, i32 %n, i32 %w, i32* %vp) nounwind readnone {
 entry:
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: movl	$12, %eax
 ; CHECK-NEXT: btl
 ; CHECK-NEXT: cmovael	(%rcx), %eax
@@ -18,7 +18,7 @@ entry:
 }
 define i32 @test2(i32 %x, i32 %n, i32 %w, i32* %vp) nounwind readnone {
 entry:
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movl	$12, %eax
 ; CHECK-NEXT: btl
 ; CHECK-NEXT: cmovbl	(%rcx), %eax
@@ -40,7 +40,7 @@ entry:
 declare void @bar(i64) nounwind
 
 define void @test3(i64 %a, i64 %b, i1 %p) nounwind {
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK:      cmovnel %edi, %esi
 ; CHECK-NEXT: movl    %esi, %edi
 
@@ -87,7 +87,7 @@ bb.i.i.i:                                         ; preds = %entry
   %4 = load volatile i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_4.exit.i
 
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: g_100
 ; CHECK: testb
 ; CHECK-NOT: xor
@@ -119,7 +119,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; rdar://6668608
 define i32 @test5(i32* nocapture %P) nounwind readonly {
 entry:
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: 	setg	%al
 ; CHECK:	movzbl	%al, %eax
 ; CHECK:	orl	$-2, %eax
@@ -133,7 +133,7 @@ entry:
 
 define i32 @test6(i32* nocapture %P) nounwind readonly {
 entry:
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: 	setl	%al
 ; CHECK:	movzbl	%al, %eax
 ; CHECK:	leal	4(%rax,%rax,8), %eax
@@ -148,7 +148,7 @@ entry:
 ; Don't try to use a 16-bit conditional move to do an 8-bit select,
 ; because it isn't worth it. Just use a branch instead.
 define i8 @test7(i1 inreg %c, i8 inreg %a, i8 inreg %b) nounwind {
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK:     testb	$1, %dil
 ; CHECK-NEXT:     jne	LBB
 

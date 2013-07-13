@@ -7,7 +7,7 @@ define zeroext i1 @test1(i32 %X)  nounwind {
     %Y = trunc i32 %X to i1
     ret i1 %Y
 }
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: andl $1, %eax
 
 define i1 @test2(i32 %val, i32 %mask) nounwind {
@@ -21,7 +21,7 @@ ret_true:
 ret_false:
     ret i1 false
 }
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: btl %eax
 
 define i32 @test3(i8* %ptr) nounwind {
@@ -33,7 +33,7 @@ cond_true:
 cond_false:
     ret i32 42
 }
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: testb $1, (%eax)
 
 define i32 @test4(i8* %ptr) nounwind {
@@ -44,7 +44,7 @@ cond_true:
 cond_false:
     ret i32 42
 }
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: testb $1, 4(%esp)
 
 define i32 @test5(double %d) nounwind {
@@ -55,5 +55,5 @@ cond_true:
 cond_false:
     ret i32 42
 }
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: testb $1

@@ -3,7 +3,7 @@
 
 define i32 @test1(i32 %x) nounwind readnone ssp {
 entry:
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: leal 3(%rdi), %eax
   %0 = shl i32 %x, 5                              ; <i32> [#uses=1]
   %1 = or i32 %0, 3                               ; <i32> [#uses=1]
@@ -11,7 +11,7 @@ entry:
 }
 
 define i64 @test2(i8 %A, i8 %B) nounwind {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: shrq $4
 ; CHECK-NOT: movq
 ; CHECK-NOT: orq
@@ -31,7 +31,7 @@ define i64 @test2(i8 %A, i8 %B) nounwind {
 define void @test3(i32 %x, i32* %P) nounwind readnone ssp {
 entry:
 ; No reason to emit an add here, should be an or.
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: orl $3, %edi
   %0 = shl i32 %x, 5
   %1 = or i32 %0, 3
@@ -45,7 +45,7 @@ entry:
   %and2 = and i32 %b, 16
   %or = or i32 %and2, %and
   ret i32 %or
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: leal	(%rsi,%rdi), %eax
 }
 
@@ -56,6 +56,6 @@ entry:
   %or = or i32 %and2, %and
   store i32 %or, i32* %P, align 4
   ret void
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: orl
 }

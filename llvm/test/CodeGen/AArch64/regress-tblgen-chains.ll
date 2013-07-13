@@ -12,7 +12,7 @@
 declare void @bar(i8*)
 
 define i64 @test_chains() {
-; CHECK: test_chains:
+; CHECK-LABEL: test_chains:
 
   %locvar = alloca i8
 

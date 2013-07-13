@@ -6,7 +6,7 @@ target triple = "i386-unknown-linux-gnu"
 
 declare void @callee1(i32 inreg, i32 inreg, i32 inreg)
 define void @test1(i32 %a, i32 %b) nounwind {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: calll callee1@PLT
   tail call void @callee1(i32 inreg 0, i32 inreg 0, i32 inreg 0) nounwind
   ret void

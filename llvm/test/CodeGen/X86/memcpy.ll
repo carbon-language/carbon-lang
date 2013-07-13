@@ -10,7 +10,7 @@ entry:
 	tail call void @llvm.memcpy.p0i8.p0i8.i64( i8* %a, i8* %b, i64 %n, i32 1, i1 0 )
 	ret i8* %a
         
-; LINUX: test1:
+; LINUX-LABEL: test1:
 ; LINUX: memcpy
 }
 
@@ -22,7 +22,7 @@ entry:
 	tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp14, i8* %tmp25, i64 %n, i32 8, i1 0 )
 	ret i8* %tmp14
         
-; LINUX: test2:
+; LINUX-LABEL: test2:
 ; LINUX: memcpy
 }
 
@@ -36,10 +36,10 @@ define void @test3(i8* nocapture %A, i8* nocapture %B) nounwind optsize noredzon
 entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
   ret void
-; LINUX: test3:
+; LINUX-LABEL: test3:
 ; LINUX: memcpy
 
-; DARWIN: test3:
+; DARWIN-LABEL: test3:
 ; DARWIN-NOT: memcpy
 ; DARWIN: movq
 ; DARWIN: movq
@@ -64,7 +64,7 @@ define void @test4(i8* nocapture %A, i8* nocapture %B) nounwind noredzone {
 entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %A, i8* %B, i64 64, i32 1, i1 false)
   ret void
-; LINUX: test4:
+; LINUX-LABEL: test4:
 ; LINUX: movq
 ; LINUX: movq
 ; LINUX: movq
@@ -87,7 +87,7 @@ entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
   ret void
 
-; DARWIN: test5:
+; DARWIN-LABEL: test5:
 ; DARWIN: movabsq	$7016996765293437281
 ; DARWIN: movabsq	$7016996765293437184
 }

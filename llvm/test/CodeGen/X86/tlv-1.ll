@@ -18,7 +18,7 @@ entry:
 ; rdar://10291355
 define i32 @test() nounwind readonly ssp {
 entry:
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: movq _a@TLVP(%rip),
 ; CHECK: callq *
 ; CHECK: movl (%rax), [[REGISTER:%[a-z]+]]

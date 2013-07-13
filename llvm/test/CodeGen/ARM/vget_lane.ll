@@ -207,7 +207,7 @@ define <4 x i32> @vsetQ_lane32(<4 x i32>* %A, i32 %B) nounwind {
 }
 
 define arm_aapcs_vfpcc <2 x float> @test_vset_lanef32(float %arg0_float32_t, <2 x float> %arg1_float32x2_t) nounwind {
-;CHECK: test_vset_lanef32:
+;CHECK-LABEL: test_vset_lanef32:
 ;CHECK: vmov.f32 s3, s0
 ;CHECK: vmov.f64 d0, d1
 entry:

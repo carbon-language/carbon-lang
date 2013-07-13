@@ -5,7 +5,7 @@
 ; verify-machineinstrs should ensure that DEBUG_VALUEs go before the
 ; terminator.
 ;
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: ##DEBUG_VALUE: i
 %a = type { i32, i32 }
 

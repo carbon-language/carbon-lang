@@ -99,7 +99,7 @@ define i32 @test8(i32 %X, i32 %Y) {
 	ret i32 %tmp57
 }
 
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: pkhtb r0, r0, r1, asr #16
 define i32 @test9(i32 %src1, i32 %src2) {
 entry:

@@ -9,7 +9,7 @@ declare void @bar()
 @var = global i32 0
 
 define i32 @test_multiflag(i32 %n, i32 %m, i32 %o) {
-; CHECK: test_multiflag:
+; CHECK-LABEL: test_multiflag:
 
   %test = icmp ne i32 %n, %m
 ; CHECK: cmp [[LHS:w[0-9]+]], [[RHS:w[0-9]+]]

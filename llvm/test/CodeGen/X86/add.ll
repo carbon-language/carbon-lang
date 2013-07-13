@@ -39,11 +39,11 @@ normal:
 overflow:
   ret i1 false
   
-; X32: test4:
+; X32-LABEL: test4:
 ; X32: addl
 ; X32-NEXT: jo
 
-; X64:        test4:
+; X64-LABEL:        test4:
 ; X64:          addl	%e[[A1:si|dx]], %e[[A0:di|cx]]
 ; X64-NEXT:	jo
 }
@@ -62,11 +62,11 @@ normal:
 carry:
   ret i1 false
 
-; X32: test5:
+; X32-LABEL: test5:
 ; X32: addl
 ; X32-NEXT: jb
 
-; X64:        test5:
+; X64-LABEL:        test5:
 ; X64:          addl	%e[[A1]], %e[[A0]]
 ; X64-NEXT:	jb
 }
@@ -81,13 +81,13 @@ define i64 @test6(i64 %A, i32 %B) nounwind {
         %tmp5 = add i64 %tmp3, %A               ; <i64> [#uses=1]
         ret i64 %tmp5
 
-; X32: test6:
+; X32-LABEL: test6:
 ; X32:	    movl 12(%esp), %edx
 ; X32-NEXT: addl 8(%esp), %edx
 ; X32-NEXT: movl 4(%esp), %eax
 ; X32-NEXT: ret
         
-; X64: test6:
+; X64-LABEL: test6:
 ; X64:	shlq	$32, %r[[A1]]
 ; X64:	leaq	(%r[[A1]],%r[[A0]]), %rax
 ; X64:	ret
@@ -98,7 +98,7 @@ define {i32, i1} @test7(i32 %v1, i32 %v2) nounwind {
    ret {i32, i1} %t
 }
 
-; X64: test7:
+; X64-LABEL: test7:
 ; X64: addl %e[[A1]], %e
 ; X64-NEXT: setb %dl
 ; X64: ret
@@ -117,7 +117,7 @@ entry:
     ret {i64, i1} %final1
 }
 
-; X64: test8:
+; X64-LABEL: test8:
 ; X64: addq
 ; X64-NEXT: setb
 ; X64: ret
@@ -127,7 +127,7 @@ define i32 @test9(i32 %x, i32 %y) nounwind readnone {
   %sub = sext i1 %cmp to i32
   %cond = add i32 %sub, %y
   ret i32 %cond
-; X64: test9:
+; X64-LABEL: test9:
 ; X64: cmpl $10
 ; X64: sete
 ; X64: subl
@@ -140,11 +140,11 @@ entry:
   %obit = extractvalue {i32, i1} %t, 1
   ret i1 %obit
 
-; X32: test10:
+; X32-LABEL: test10:
 ; X32: incl
 ; X32-NEXT: seto
 
-; X64: test10:
+; X64-LABEL: test10:
 ; X64: incl
 ; X64-NEXT: seto
 }

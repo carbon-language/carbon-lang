@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <4 x i32> @test1(<4 x i32> %a) nounwind {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: vabs.s32 q
         %tmp1neg = sub <4 x i32> zeroinitializer, %a
         %b = icmp sgt <4 x i32> %a, <i32 -1, i32 -1, i32 -1, i32 -1>
@@ -10,7 +10,7 @@ define <4 x i32> @test1(<4 x i32> %a) nounwind {
 }
 
 define <4 x i32> @test2(<4 x i32> %a) nounwind {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: vabs.s32 q
         %tmp1neg = sub <4 x i32> zeroinitializer, %a
         %b = icmp sge <4 x i32> %a, zeroinitializer
@@ -19,7 +19,7 @@ define <4 x i32> @test2(<4 x i32> %a) nounwind {
 }
 
 define <8 x i16> @test3(<8 x i16> %a) nounwind {
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: vabs.s16 q
         %tmp1neg = sub <8 x i16> zeroinitializer, %a
         %b = icmp sgt <8 x i16> %a, zeroinitializer
@@ -28,7 +28,7 @@ define <8 x i16> @test3(<8 x i16> %a) nounwind {
 }
 
 define <16 x i8> @test4(<16 x i8> %a) nounwind {
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: vabs.s8 q
         %tmp1neg = sub <16 x i8> zeroinitializer, %a
         %b = icmp slt <16 x i8> %a, zeroinitializer
@@ -37,7 +37,7 @@ define <16 x i8> @test4(<16 x i8> %a) nounwind {
 }
 
 define <4 x i32> @test5(<4 x i32> %a) nounwind {
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: vabs.s32 q
         %tmp1neg = sub <4 x i32> zeroinitializer, %a
         %b = icmp sle <4 x i32> %a, zeroinitializer
@@ -46,7 +46,7 @@ define <4 x i32> @test5(<4 x i32> %a) nounwind {
 }
 
 define <2 x i32> @test6(<2 x i32> %a) nounwind {
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: vabs.s32 d
         %tmp1neg = sub <2 x i32> zeroinitializer, %a
         %b = icmp sgt <2 x i32> %a, <i32 -1, i32 -1>
@@ -55,7 +55,7 @@ define <2 x i32> @test6(<2 x i32> %a) nounwind {
 }
 
 define <2 x i32> @test7(<2 x i32> %a) nounwind {
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK: vabs.s32 d
         %tmp1neg = sub <2 x i32> zeroinitializer, %a
         %b = icmp sge <2 x i32> %a, zeroinitializer
@@ -64,7 +64,7 @@ define <2 x i32> @test7(<2 x i32> %a) nounwind {
 }
 
 define <4 x i16> @test8(<4 x i16> %a) nounwind {
-; CHECK: test8:
+; CHECK-LABEL: test8:
 ; CHECK: vabs.s16 d
         %tmp1neg = sub <4 x i16> zeroinitializer, %a
         %b = icmp sgt <4 x i16> %a, zeroinitializer
@@ -73,7 +73,7 @@ define <4 x i16> @test8(<4 x i16> %a) nounwind {
 }
 
 define <8 x i8> @test9(<8 x i8> %a) nounwind {
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: vabs.s8 d
         %tmp1neg = sub <8 x i8> zeroinitializer, %a
         %b = icmp slt <8 x i8> %a, zeroinitializer
@@ -82,7 +82,7 @@ define <8 x i8> @test9(<8 x i8> %a) nounwind {
 }
 
 define <2 x i32> @test10(<2 x i32> %a) nounwind {
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: vabs.s32 d
         %tmp1neg = sub <2 x i32> zeroinitializer, %a
         %b = icmp sle <2 x i32> %a, zeroinitializer

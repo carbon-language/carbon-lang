@@ -39,7 +39,7 @@ L:
   store i16 %A, i16* %Q
   ret i32 %D
   
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: 	movl	4(%esp), %eax
 ; CHECK-NEXT:	movzwl	(%eax), %ecx
 
@@ -48,7 +48,7 @@ L:
 ; rdar://10554090
 ; xor in exit block will be CSE'ed and load will be folded to xor in entry.
 define i1 @test3(i32* %P, i32* %Q) nounwind {
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: movl 8(%esp), %eax
 ; CHECK: xorl (%eax),
 ; CHECK: j

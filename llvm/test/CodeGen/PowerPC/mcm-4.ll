@@ -14,14 +14,14 @@ entry:
 
 ; MEDIUM: [[VAR:[a-z0-9A-Z_.]+]]:
 ; MEDIUM: .quad 4562098671269285104
-; MEDIUM: test_double_const:
+; MEDIUM-LABEL: test_double_const:
 ; MEDIUM: addis [[REG1:[0-9]+]], 2, [[VAR]]@toc@ha
 ; MEDIUM: addi [[REG2:[0-9]+]], [[REG1]], [[VAR]]@toc@l
 ; MEDIUM: lfd {{[0-9]+}}, 0([[REG2]])
 
 ; LARGE: [[VAR:[a-z0-9A-Z_.]+]]:
 ; LARGE: .quad 4562098671269285104
-; LARGE: test_double_const:
+; LARGE-LABEL: test_double_const:
 ; LARGE: addis [[REG1:[0-9]+]], 2, [[VAR]]@toc@ha
 ; LARGE: ld [[REG2:[0-9]+]], [[VAR]]@toc@l([[REG1]])
 ; LARGE: lfd {{[0-9]+}}, 0([[REG2]])

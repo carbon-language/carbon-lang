@@ -1,7 +1,7 @@
 ; RUN: llc -verify-machineinstrs -mtriple=armv7-none-linux-gnueabi -mcpu=cortex-a9 -mattr=+neon,+neonfp -float-abi=hard < %s | FileCheck %s
 
 define <2 x float> @test_vmovs_via_vext_lane0to0(float %arg, <2 x float> %in) {
-; CHECK: test_vmovs_via_vext_lane0to0:
+; CHECK-LABEL: test_vmovs_via_vext_lane0to0:
   %vec = insertelement <2 x float> %in, float %arg, i32 0
   %res = fadd <2 x float> %vec, %vec
 
@@ -13,7 +13,7 @@ define <2 x float> @test_vmovs_via_vext_lane0to0(float %arg, <2 x float> %in) {
 }
 
 define <2 x float> @test_vmovs_via_vext_lane0to1(float %arg, <2 x float> %in) {
-; CHECK: test_vmovs_via_vext_lane0to1:
+; CHECK-LABEL: test_vmovs_via_vext_lane0to1:
   %vec = insertelement <2 x float> %in, float %arg, i32 1
   %res = fadd <2 x float> %vec, %vec
 
@@ -25,7 +25,7 @@ define <2 x float> @test_vmovs_via_vext_lane0to1(float %arg, <2 x float> %in) {
 }
 
 define <2 x float> @test_vmovs_via_vext_lane1to0(float, float %arg, <2 x float> %in) {
-; CHECK: test_vmovs_via_vext_lane1to0:
+; CHECK-LABEL: test_vmovs_via_vext_lane1to0:
   %vec = insertelement <2 x float> %in, float %arg, i32 0
   %res = fadd <2 x float> %vec, %vec
 
@@ -37,7 +37,7 @@ define <2 x float> @test_vmovs_via_vext_lane1to0(float, float %arg, <2 x float> 
 }
 
 define <2 x float> @test_vmovs_via_vext_lane1to1(float, float %arg, <2 x float> %in) {
-; CHECK: test_vmovs_via_vext_lane1to1:
+; CHECK-LABEL: test_vmovs_via_vext_lane1to1:
   %vec = insertelement <2 x float> %in, float %arg, i32 1
   %res = fadd <2 x float> %vec, %vec
 
@@ -50,7 +50,7 @@ define <2 x float> @test_vmovs_via_vext_lane1to1(float, float %arg, <2 x float> 
 
 
 define float @test_vmovs_via_vdup(float, float %ret, float %lhs, float %rhs) {
-; CHECK: test_vmovs_via_vdup:
+; CHECK-LABEL: test_vmovs_via_vdup:
 
   ; Do an operation (which will end up NEON because of +neonfp) to convince the
   ; execution-domain pass that NEON is a good thing to use.
@@ -68,7 +68,7 @@ declare void @bar()
 
 ; This is a comp
 define float @test_ineligible(float, float %in) {
-; CHECK: test_ineligible:
+; CHECK-LABEL: test_ineligible:
 
   %sqrt = call float @llvm.sqrt.f32(float %in)
   %val = fadd float %sqrt, %sqrt
@@ -85,7 +85,7 @@ define float @test_ineligible(float, float %in) {
 }
 
 define i32 @test_vmovs_no_sreg(i32 %in) {
-; CHECK: test_vmovs_no_sreg:
+; CHECK-LABEL: test_vmovs_no_sreg:
 
   ; Check that the movement to and from GPRs takes place in the NEON domain.
 ; CHECK: vmov.32 d

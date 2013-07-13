@@ -227,14 +227,14 @@ define i32 @endin(i8 addrspace(1)* %r) {
 }
 
 define i32 @testct(i8 addrspace(1)* %r) {
-; CHECK: testct:
+; CHECK-LABEL: testct:
 ; CHECK: testct r0, res[r0]
 	%result = call i32 @llvm.xcore.testct.p1i8(i8 addrspace(1)* %r)
 	ret i32 %result
 }
 
 define i32 @testwct(i8 addrspace(1)* %r) {
-; CHECK: testwct:
+; CHECK-LABEL: testwct:
 ; CHECK: testwct r0, res[r0]
 	%result = call i32 @llvm.xcore.testwct.p1i8(i8 addrspace(1)* %r)
 	ret i32 %result

@@ -7,7 +7,7 @@ entry:
   %retval.0 = select i1 %cmp, i64 2, i64 %add
   ret i64 %retval.0
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: leaq 1(%rdi), %rax
 ; CHECK: cmpq $2, %rdi
 ; CHECK: cmoveq %rdi, %rax

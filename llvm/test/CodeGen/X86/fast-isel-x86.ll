@@ -1,7 +1,7 @@
 ; RUN: llc -fast-isel -O0 -mcpu=generic -mtriple=i386-apple-darwin10 -relocation-model=pic < %s | FileCheck %s
 
 ; This should use flds to set the return value.
-; CHECK: test0:
+; CHECK-LABEL: test0:
 ; CHECK: flds
 ; CHECK: ret
 @G = external global float
@@ -11,7 +11,7 @@ define float @test0() nounwind {
 }
 
 ; This should pop 4 bytes on return.
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: ret $4
 define void @test1({i32, i32, i32, i32}* sret %p) nounwind {
   store {i32, i32, i32, i32} zeroinitializer, {i32, i32, i32, i32}* %p
@@ -19,7 +19,7 @@ define void @test1({i32, i32, i32, i32}* sret %p) nounwind {
 }
 
 ; Properly initialize the pic base.
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK-NOT: HHH
 ; CHECK: call{{.*}}L2$pb
 ; CHECK-NEXT: L2$pb:
@@ -39,7 +39,7 @@ entry:
   %tmp = alloca %struct.a, align 8
   call void @test3sret(%struct.a* sret %tmp)
   ret void
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: subl $44
 ; CHECK: leal 16(%esp)
 ; CHECK: calll _test3sret
@@ -53,7 +53,7 @@ entry:
   %tmp = alloca %struct.a, align 8
   call fastcc void @test4fastccsret(%struct.a* sret %tmp)
   ret void
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: subl $28
 ; CHECK: leal (%esp), %ecx
 ; CHECK: calll _test4fastccsret

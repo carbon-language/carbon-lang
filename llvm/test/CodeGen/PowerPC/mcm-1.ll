@@ -17,7 +17,7 @@ entry:
   ret i32 %0
 }
 
-; CHECK: test_external:
+; CHECK-LABEL: test_external:
 ; CHECK: addis [[REG1:[0-9]+]], 2, .LC[[TOCNUM:[0-9]+]]@toc@ha
 ; CHECK: ld [[REG2:[0-9]+]], .LC[[TOCNUM]]@toc@l([[REG1]])
 ; CHECK: lwz {{[0-9]+}}, 0([[REG2]])

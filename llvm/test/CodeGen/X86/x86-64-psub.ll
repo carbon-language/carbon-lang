@@ -26,7 +26,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubb:
+; CHECK-LABEL: test_psubb:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
@@ -53,7 +53,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubw:
+; CHECK-LABEL: test_psubw:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
@@ -81,7 +81,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubd:
+; CHECK-LABEL: test_psubd:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
@@ -108,7 +108,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubsb:
+; CHECK-LABEL: test_psubsb:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
@@ -135,7 +135,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubswv:
+; CHECK-LABEL: test_psubswv:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
@@ -162,7 +162,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubusbv:
+; CHECK-LABEL: test_psubusbv:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]
@@ -189,7 +189,7 @@ entry:
   ret i64 %retval.0.extract.i15
 }
 
-; CHECK: test_psubuswv:
+; CHECK-LABEL: test_psubuswv:
 ; CHECK:   callq getFirstParam
 ; CHECK:   callq getSecondParam
 ; CHECK:   movd %rax, [[PARAM2:%[a-z0-9]+]]

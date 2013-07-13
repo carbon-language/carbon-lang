@@ -20,7 +20,7 @@ false:
         %retvalue = call i32 @test_basic(i32 %newlen)
         ret i32 %retvalue
 
-; X32:      test_basic:
+; X32-LABEL:      test_basic:
 
 ; X32:      cmpl %gs:48, %esp
 ; X32-NEXT: ja      .LBB0_2
@@ -41,7 +41,7 @@ false:
 ; X32-NEXT: calll __morestack_allocate_stack_space
 ; X32-NEXT: addl $16, %esp
 
-; X64:      test_basic:
+; X64-LABEL:      test_basic:
 
 ; X64:      cmpq %fs:112, %rsp
 ; X64-NEXT: ja      .LBB0_2

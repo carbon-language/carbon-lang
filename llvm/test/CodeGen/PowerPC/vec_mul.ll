@@ -6,7 +6,7 @@ define <4 x i32> @test_v4i32(<4 x i32>* %X, <4 x i32>* %Y) {
 	%tmp3 = mul <4 x i32> %tmp, %tmp2		; <<4 x i32>> [#uses=1]
 	ret <4 x i32> %tmp3
 }
-; CHECK: test_v4i32:
+; CHECK-LABEL: test_v4i32:
 ; CHECK: vmsumuhm
 ; CHECK-NOT: mullw
 
@@ -16,7 +16,7 @@ define <8 x i16> @test_v8i16(<8 x i16>* %X, <8 x i16>* %Y) {
 	%tmp3 = mul <8 x i16> %tmp, %tmp2		; <<8 x i16>> [#uses=1]
 	ret <8 x i16> %tmp3
 }
-; CHECK: test_v8i16:
+; CHECK-LABEL: test_v8i16:
 ; CHECK: vmladduhm
 ; CHECK-NOT: mullw
 
@@ -26,7 +26,7 @@ define <16 x i8> @test_v16i8(<16 x i8>* %X, <16 x i8>* %Y) {
 	%tmp3 = mul <16 x i8> %tmp, %tmp2		; <<16 x i8>> [#uses=1]
 	ret <16 x i8> %tmp3
 }
-; CHECK: test_v16i8:
+; CHECK-LABEL: test_v16i8:
 ; CHECK: vmuloub
 ; CHECK: vmuleub
 ; CHECK-NOT: mullw
@@ -40,7 +40,7 @@ define <4 x float> @test_float(<4 x float>* %X, <4 x float>* %Y) {
 ; Check the creation of a negative zero float vector by creating a vector of
 ; all bits set and shifting it 31 bits to left, resulting a an vector of 
 ; 4 x 0x80000000 (-0.0 as float).
-; CHECK: test_float:
+; CHECK-LABEL: test_float:
 ; CHECK: vspltisw [[ZNEG:[0-9]+]], -1
 ; CHECK: vslw     {{[0-9]+}}, [[ZNEG]], [[ZNEG]]
 ; CHECK: vmaddfp

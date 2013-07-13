@@ -9,11 +9,11 @@ define i32 @test1(i32 %t3, i32* %t1) nounwind {
        %t9 = getelementptr i32* %t1, i32 %t3           ; <i32*> [#uses=1]
        %t15 = load i32* %t9            ; <i32> [#uses=1]
        ret i32 %t15
-; X32: test1:
+; X32-LABEL: test1:
 ; X32:  	movl	(%eax,%ecx,4), %eax
 ; X32:  	ret
 
-; X64: test1:
+; X64-LABEL: test1:
 ; X64:  	movslq	%e[[A0:di|cx]], %rax
 ; X64:  	movl	(%r[[A1:si|dx]],%rax,4), %eax
 ; X64:  	ret
@@ -23,11 +23,11 @@ define i32 @test2(i64 %t3, i32* %t1) nounwind {
        %t9 = getelementptr i32* %t1, i64 %t3           ; <i32*> [#uses=1]
        %t15 = load i32* %t9            ; <i32> [#uses=1]
        ret i32 %t15
-; X32: test2:
+; X32-LABEL: test2:
 ; X32:  	movl	(%edx,%ecx,4), %e
 ; X32:  	ret
 
-; X64: test2:
+; X64-LABEL: test2:
 ; X64:  	movl	(%r[[A1]],%r[[A0]],4), %eax
 ; X64:  	ret
 }
@@ -42,12 +42,12 @@ entry:
   ret i8 %B
   
   
-; X32: test3:
+; X32-LABEL: test3:
 ; X32:  	movl	4(%esp), %eax
 ; X32:  	movb	-2(%eax), %al
 ; X32:  	ret
 
-; X64: test3:
+; X64-LABEL: test3:
 ; X64:  	movb	-2(%r[[A0]]), %al
 ; X64:  	ret
 
@@ -66,9 +66,9 @@ entry:
   %tmp2 = load double* %arrayidx                  ; <double> [#uses=1]
   ret double %tmp2
 
-; X32: test4:
+; X32-LABEL: test4:
 ; X32: 128(%e{{.*}},%e{{.*}},8)
-; X64: test4:
+; X64-LABEL: test4:
 ; X64: 128(%r{{.*}},%r{{.*}},8)
 }
 
@@ -80,7 +80,7 @@ define i64 @test5(i8* %A, i32 %I, i64 %B) nounwind {
   %v10 = load i64* %v9
   %v11 = add i64 %B, %v10
   ret i64 %v11
-; X64: test5:
+; X64-LABEL: test5:
 ; X64: movslq	%e[[A1]], %rax
 ; X64-NEXT: (%r[[A0]],%rax),
 ; X64: ret
@@ -113,7 +113,7 @@ declare i8* @_ZNK18G__FastAllocString4dataEv() nounwind
 ; PR10605 / rdar://9930964 - Don't fold loads incorrectly.  The load should
 ; happen before the store.  
 define i32 @test7({i32,i32,i32}* %tmp1, i32 %tmp71, i32 %tmp63) nounwind  {
-; X64: test7:
+; X64-LABEL: test7:
 ; X64:    movl	8({{%rdi|%rcx}}), %eax
 ; X64:     movl	$4, 8({{%rdi|%rcx}})
 

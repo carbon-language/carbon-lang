@@ -11,7 +11,7 @@ entry:
     store i32 %tmp.s, i32* @dst
     ret void
     
-; LINUX:    test0:
+; LINUX-LABEL:    test0:
 ; LINUX:	calll	.L0$pb
 ; LINUX-NEXT: .L0$pb:
 ; LINUX-NEXT:	popl
@@ -33,7 +33,7 @@ entry:
     store i32 %tmp.s, i32* @dst2
     ret void
     
-; LINUX: test1:
+; LINUX-LABEL: test1:
 ; LINUX:	calll	.L1$pb
 ; LINUX-NEXT: .L1$pb:
 ; LINUX-NEXT:	popl
@@ -51,7 +51,7 @@ define void @test2() nounwind {
 entry:
     %ptr = call i8* @malloc(i32 40)
     ret void
-; LINUX: test2:
+; LINUX-LABEL: test2:
 ; LINUX: 	pushl	%ebx
 ; LINUX-NEXT: 	subl	$8, %esp
 ; LINUX-NEXT: 	calll	.L2$pb
@@ -74,7 +74,7 @@ entry:
     %tmp1 = load void(...)** @pfoo
     call void(...)* %tmp1()
     ret void
-; LINUX: test3:
+; LINUX-LABEL: test3:
 ; LINUX: 	calll	.L3$pb
 ; LINUX-NEXT: .L3$pb:
 ; LINUX: 	popl
@@ -90,7 +90,7 @@ define void @test4() nounwind {
 entry:
     call void(...)* @foo()
     ret void
-; LINUX: test4:
+; LINUX-LABEL: test4:
 ; LINUX: calll	.L4$pb
 ; LINUX: popl	%ebx
 ; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L4$pb), %ebx
@@ -111,7 +111,7 @@ entry:
     store i32 %tmp.s, i32* @dst6
     ret void
     
-; LINUX: test5:
+; LINUX-LABEL: test5:
 ; LINUX: 	calll	.L5$pb
 ; LINUX-NEXT: .L5$pb:
 ; LINUX-NEXT: 	popl	%eax
@@ -133,7 +133,7 @@ entry:
 
 ; LINUX: .LCPI6_0:
 
-; LINUX: test6:
+; LINUX-LABEL: test6:
 ; LINUX:    calll .L6$pb
 ; LINUX: .L6$pb:
 ; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L6$pb), 
@@ -185,7 +185,7 @@ bb12:
     tail call void(...)* @foo6()
     ret void
     
-; LINUX: test7:
+; LINUX-LABEL: test7:
 ; LINUX:   calll	.L7$pb
 ; LINUX: .L7$pb:
 ; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.L{{.*}}-.L7$pb),

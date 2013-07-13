@@ -4,7 +4,7 @@
 
 define i32 @test1(i32 %a, i32 %b) nounwind ssp {
 entry:
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: xorb
 ; CHECK-NOT: andb
 ; CHECK-NOT: shrb
@@ -44,7 +44,7 @@ bb1:                                              ; preds = %entry
 
 return:                                           ; preds = %entry
   ret i32 192
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK:	movl	4(%esp), %eax
 ; CHECK-NEXT:	orl	8(%esp), %eax
 ; CHECK-NEXT:	jne	LBB1_2
@@ -63,7 +63,7 @@ bb1:                                              ; preds = %entry
 
 return:                                           ; preds = %entry
   ret i32 192
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK:	movl	4(%esp), %eax
 ; CHECK-NEXT:	orl	8(%esp), %eax
 ; CHECK-NEXT:	je	LBB2_2
@@ -113,7 +113,7 @@ declare i32 @llvm.x86.sse41.ptestc(<4 x float> %p1, <4 x float> %p2) nounwind
 
 define <4 x float> @test5(<4 x float> %a, <4 x float> %b) nounwind {
 entry:
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: ptest
 ; CHECK-NEXT:	jne
 ; CHECK: ret
@@ -137,7 +137,7 @@ return:
 
 define <4 x float> @test7(<4 x float> %a, <4 x float> %b) nounwind {
 entry:
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK: ptest
 ; CHECK-NEXT:	jne
 ; CHECK: ret
@@ -161,7 +161,7 @@ return:
 
 define <4 x float> @test8(<4 x float> %a, <4 x float> %b) nounwind {
 entry:
-; CHECK: test8:
+; CHECK-LABEL: test8:
 ; CHECK: ptest
 ; CHECK-NEXT:	jae
 ; CHECK: ret
@@ -185,7 +185,7 @@ return:
 
 define <4 x float> @test10(<4 x float> %a, <4 x float> %b) nounwind {
 entry:
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: ptest
 ; CHECK-NEXT:	jae
 ; CHECK: ret
@@ -209,7 +209,7 @@ return:
 
 define <4 x float> @test11(<4 x float> %a, <4 x float> %b) nounwind {
 entry:
-; CHECK: test11:
+; CHECK-LABEL: test11:
 ; CHECK: ptest
 ; CHECK-NEXT:	jne
 ; CHECK: ret
@@ -233,7 +233,7 @@ return:
 
 define <4 x float> @test12(<4 x float> %a, <4 x float> %b) nounwind {
 entry:
-; CHECK: test12:
+; CHECK-LABEL: test12:
 ; CHECK: ptest
 ; CHECK-NEXT:	je
 ; CHECK: ret

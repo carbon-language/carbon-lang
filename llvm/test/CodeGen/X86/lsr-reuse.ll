@@ -447,7 +447,7 @@ bb5:                                              ; preds = %bb3, %entry
 ; we don't want to leave extra induction variables around, or use an
 ; lea to compute an exit condition inside the loop:
 
-; CHECK: test:
+; CHECK-LABEL: test:
 
 ; CHECK:      BB10_4:
 ; CHECK-NEXT:   movaps  %xmm{{.*}}, %xmm{{.*}}

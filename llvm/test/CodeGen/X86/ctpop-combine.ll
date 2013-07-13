@@ -8,7 +8,7 @@ define i32 @test1(i64 %x) nounwind readnone {
   %cmp = icmp ugt i32 %cast, 1
   %conv = zext i1 %cmp to i32
   ret i32 %conv
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: leaq -1([[A0:%rdi|%rcx]])
 ; CHECK-NEXT: testq
 ; CHECK-NEXT: setne
@@ -21,7 +21,7 @@ define i32 @test2(i64 %x) nounwind readnone {
   %cmp = icmp ult i64 %count, 2
   %conv = zext i1 %cmp to i32
   ret i32 %conv
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: leaq -1([[A0]])
 ; CHECK-NEXT: testq
 ; CHECK-NEXT: sete
@@ -34,7 +34,7 @@ define i32 @test3(i64 %x) nounwind readnone {
   %cmp = icmp ult i6 %cast, 2
   %conv = zext i1 %cmp to i32
   ret i32 %conv
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: cmpb $2
 ; CHECK: ret
 }

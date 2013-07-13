@@ -17,7 +17,7 @@ normal:
 overflow:
   %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
   ret i1 false
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: imull
 ; CHECK-NEXT: jno
 }
@@ -36,7 +36,7 @@ overflow:
 normal:
   %t1 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @ok, i32 0, i32 0), i32 %sum ) nounwind
   ret i1 true
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: imull
 ; CHECK-NEXT: jno
 }
@@ -50,7 +50,7 @@ entry:
 	%tmp1 = call { i32, i1 } @llvm.smul.with.overflow.i32(i32 %tmp0, i32 2)
 	%tmp2 = extractvalue { i32, i1 } %tmp1, 0
 	ret i32 %tmp2
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: addl
 ; CHECK-NEXT: addl
 ; CHECK-NEXT: ret
@@ -62,7 +62,7 @@ entry:
 	%tmp1 = call { i32, i1 } @llvm.smul.with.overflow.i32(i32 %tmp0, i32 4)
 	%tmp2 = extractvalue { i32, i1 } %tmp1, 0
 	ret i32 %tmp2
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: addl
 ; CHECK: mull
 ; CHECK-NEXT: ret
@@ -78,6 +78,6 @@ entry:
   ret i1 %overflow
 ; Was returning false, should return true (not constant folded yet though).
 ; PR13991
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK-NOT: xorb
 }

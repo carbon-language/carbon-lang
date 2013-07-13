@@ -12,7 +12,7 @@
 declare {i64, i1} @llvm.umul.with.overflow.i64(i64, i64)
 
 define i64 @test_select(i64 %lhs, i64 %rhs) {
-; CHECK: test_select:
+; CHECK-LABEL: test_select:
 
   %res = call {i64, i1} @llvm.umul.with.overflow.i64(i64 %lhs, i64 %rhs)
   %flag = extractvalue {i64, i1} %res, 1

@@ -67,7 +67,7 @@ return:                                           ; preds = %entry
 
 ; Just like @and, but without the trunc+store. This should use a testb
 ; instead of an andl.
-; CHECK: test:
+; CHECK-LABEL: test:
 define void @test(float* %A, i32 %IA, i32 %N, i8* %p) nounwind {
 entry:
   store i8 0, i8* %p

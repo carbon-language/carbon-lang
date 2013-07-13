@@ -17,7 +17,7 @@ entry:
   ret i32 %0
 }
 
-; MEDIUM: test_fn_static:
+; MEDIUM-LABEL: test_fn_static:
 ; MEDIUM: addis [[REG1:[0-9]+]], 2, [[VAR:[a-z0-9A-Z_.]+]]@toc@ha
 ; MEDIUM: addi [[REG2:[0-9]+]], [[REG1]], [[VAR]]@toc@l
 ; MEDIUM: lwz {{[0-9]+}}, 0([[REG2]])
@@ -26,7 +26,7 @@ entry:
 ; MEDIUM: .local [[VAR]]
 ; MEDIUM: .comm [[VAR]],4,4
 
-; LARGE: test_fn_static:
+; LARGE-LABEL: test_fn_static:
 ; LARGE: addis [[REG1:[0-9]+]], 2, [[VAR:[a-z0-9A-Z_.]+]]@toc@ha
 ; LARGE: ld [[REG2:[0-9]+]], [[VAR]]@toc@l([[REG1]])
 ; LARGE: lwz {{[0-9]+}}, 0([[REG2]])

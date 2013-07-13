@@ -7,7 +7,7 @@ define <4 x i32> @test1() nounwind {
 	%tmp = xor <4 x i32> undef, undef
 	ret <4 x i32> %tmp
         
-; X32: test1:
+; X32-LABEL: test1:
 ; X32:	xorps	%xmm0, %xmm0
 ; X32:	ret
 }
@@ -16,7 +16,7 @@ define <4 x i32> @test1() nounwind {
 define i32 @test2() nounwind{
 	%tmp = xor i32 undef, undef
 	ret i32 %tmp
-; X32: test2:
+; X32-LABEL: test2:
 ; X32:	xorl	%eax, %eax
 ; X32:	ret
 }
@@ -28,13 +28,13 @@ entry:
         %tmp4 = lshr i32 %tmp3, 1
         ret i32 %tmp4
         
-; X64: test3:
+; X64-LABEL: test3:
 ; X64:	notl
 ; X64:	andl
 ; X64:	shrl
 ; X64:	ret
 
-; X32: test3:
+; X32-LABEL: test3:
 ; X32: 	movl	8(%esp), %eax
 ; X32: 	notl	%eax
 ; X32: 	andl	4(%esp), %eax
@@ -57,10 +57,10 @@ bb:
 bb12:
 	ret i32 %tmp3
         
-; X64: test4:
+; X64-LABEL: test4:
 ; X64:    notl	[[REG:%[a-z]+]]
 ; X64:    andl	{{.*}}[[REG]]
-; X32: test4:
+; X32-LABEL: test4:
 ; X32:    notl	[[REG:%[a-z]+]]
 ; X32:    andl	{{.*}}[[REG]]
 }
@@ -79,10 +79,10 @@ bb:
 	br i1 %tmp10, label %bb12, label %bb
 bb12:
 	ret i16 %tmp3
-; X64: test5:
+; X64-LABEL: test5:
 ; X64:    notl	[[REG:%[a-z]+]]
 ; X64:    andl	{{.*}}[[REG]]
-; X32: test5:
+; X32-LABEL: test5:
 ; X32:    notl	[[REG:%[a-z]+]]
 ; X32:    andl	{{.*}}[[REG]]
 }
@@ -101,10 +101,10 @@ bb:
 	br i1 %tmp10, label %bb12, label %bb
 bb12:
 	ret i8 %tmp3
-; X64: test6:
+; X64-LABEL: test6:
 ; X64:    notb	[[REG:%[a-z]+]]
 ; X64:    andb	{{.*}}[[REG]]
-; X32: test6:
+; X32-LABEL: test6:
 ; X32:    notb	[[REG:%[a-z]+]]
 ; X32:    andb	{{.*}}[[REG]]
 }
@@ -123,10 +123,10 @@ bb:
 	br i1 %tmp10, label %bb12, label %bb
 bb12:
 	ret i32 %tmp3
-; X64: test7:
+; X64-LABEL: test7:
 ; X64:    xorl	$2147483646, [[REG:%[a-z]+]]
 ; X64:    andl	{{.*}}[[REG]]
-; X32: test7:
+; X32-LABEL: test7:
 ; X32:    xorl	$2147483646, [[REG:%[a-z]+]]
 ; X32:    andl	{{.*}}[[REG]]
 }
@@ -137,9 +137,9 @@ entry:
   %t1 = sub i32 0, %a
   %t2 = add i32 %t1, -1
   ret i32 %t2
-; X64: test8:
+; X64-LABEL: test8:
 ; X64:   notl {{%eax|%edi|%ecx}}
-; X32: test8:
+; X32-LABEL: test8:
 ; X32:   notl %eax
 }
 
@@ -147,10 +147,10 @@ define i32 @test9(i32 %a) nounwind {
   %1 = and i32 %a, 4096
   %2 = xor i32 %1, 4096
   ret i32 %2
-; X64: test9:
+; X64-LABEL: test9:
 ; X64:    notl	[[REG:%[a-z]+]]
 ; X64:    andl	{{.*}}[[REG:%[a-z]+]]
-; X32: test9:
+; X32-LABEL: test9:
 ; X32:    notl	[[REG:%[a-z]+]]
 ; X32:    andl	{{.*}}[[REG:%[a-z]+]]
 }
@@ -160,8 +160,8 @@ define <4 x i32> @test10(<4 x i32> %a) nounwind {
   %1 = and <4 x i32> %a, <i32 4096, i32 4096, i32 4096, i32 4096>
   %2 = xor <4 x i32> %1, <i32 4096, i32 4096, i32 4096, i32 4096>
   ret <4 x i32> %2
-; X64: test10:
+; X64-LABEL: test10:
 ; X64:    andnps
-; X32: test10:
+; X32-LABEL: test10:
 ; X32:    andnps
 }

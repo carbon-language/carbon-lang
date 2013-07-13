@@ -25,7 +25,7 @@ entry:
 }
 
 define void @test_whole32(i32* %existing, i32* %new) {
-; CHECK: test_whole32:
+; CHECK-LABEL: test_whole32:
 ; CHECK: bfi {{w[0-9]+}}, {{w[0-9]+}}, #26, #5
 
   %oldval = load volatile i32* %existing
@@ -42,7 +42,7 @@ define void @test_whole32(i32* %existing, i32* %new) {
 }
 
 define void @test_whole64(i64* %existing, i64* %new) {
-; CHECK: test_whole64:
+; CHECK-LABEL: test_whole64:
 ; CHECK: bfi {{x[0-9]+}}, {{x[0-9]+}}, #26, #14
 ; CHECK-NOT: and
 ; CHECK: ret
@@ -61,7 +61,7 @@ define void @test_whole64(i64* %existing, i64* %new) {
 }
 
 define void @test_whole32_from64(i64* %existing, i64* %new) {
-; CHECK: test_whole32_from64:
+; CHECK-LABEL: test_whole32_from64:
 ; CHECK: bfi {{w[0-9]+}}, {{w[0-9]+}}, #{{0|16}}, #16
 ; CHECK-NOT: and
 ; CHECK: ret
@@ -79,7 +79,7 @@ define void @test_whole32_from64(i64* %existing, i64* %new) {
 }
 
 define void @test_32bit_masked(i32 *%existing, i32 *%new) {
-; CHECK: test_32bit_masked:
+; CHECK-LABEL: test_32bit_masked:
 ; CHECK: bfi [[INSERT:w[0-9]+]], {{w[0-9]+}}, #3, #4
 ; CHECK: and {{w[0-9]+}}, [[INSERT]], #0xff
 
@@ -97,7 +97,7 @@ define void @test_32bit_masked(i32 *%existing, i32 *%new) {
 }
 
 define void @test_64bit_masked(i64 *%existing, i64 *%new) {
-; CHECK: test_64bit_masked:
+; CHECK-LABEL: test_64bit_masked:
 ; CHECK: bfi [[INSERT:x[0-9]+]], {{x[0-9]+}}, #40, #8
 ; CHECK: and {{x[0-9]+}}, [[INSERT]], #0xffff00000000
 
@@ -116,7 +116,7 @@ define void @test_64bit_masked(i64 *%existing, i64 *%new) {
 
 ; Mask is too complicated for literal ANDwwi, make sure other avenues are tried.
 define void @test_32bit_complexmask(i32 *%existing, i32 *%new) {
-; CHECK: test_32bit_complexmask:
+; CHECK-LABEL: test_32bit_complexmask:
 ; CHECK: bfi {{w[0-9]+}}, {{w[0-9]+}}, #3, #4
 ; CHECK: and {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 
@@ -135,7 +135,7 @@ define void @test_32bit_complexmask(i32 *%existing, i32 *%new) {
 
 ; Neither mask is is a contiguous set of 1s. BFI can't be used
 define void @test_32bit_badmask(i32 *%existing, i32 *%new) {
-; CHECK: test_32bit_badmask:
+; CHECK-LABEL: test_32bit_badmask:
 ; CHECK-NOT: bfi
 ; CHECK: ret
 
@@ -154,7 +154,7 @@ define void @test_32bit_badmask(i32 *%existing, i32 *%new) {
 
 ; Ditto
 define void @test_64bit_badmask(i64 *%existing, i64 *%new) {
-; CHECK: test_64bit_badmask:
+; CHECK-LABEL: test_64bit_badmask:
 ; CHECK-NOT: bfi
 ; CHECK: ret
 
@@ -174,7 +174,7 @@ define void @test_64bit_badmask(i64 *%existing, i64 *%new) {
 ; Bitfield insert where there's a left-over shr needed at the beginning
 ; (e.g. result of str.bf1 = str.bf2)
 define void @test_32bit_with_shr(i32* %existing, i32* %new) {
-; CHECK: test_32bit_with_shr:
+; CHECK-LABEL: test_32bit_with_shr:
 
   %oldval = load volatile i32* %existing
   %oldval_keep = and i32 %oldval, 2214592511 ; =0x83ffffff

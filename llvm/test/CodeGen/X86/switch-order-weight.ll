@@ -10,7 +10,7 @@ entry:
     i32 20, label %if.then5
   ]
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK-NOT: unr
 ; CHECK: cmpl $10
 ; CHECK: bar

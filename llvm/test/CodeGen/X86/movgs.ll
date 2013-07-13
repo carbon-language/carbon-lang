@@ -8,12 +8,12 @@ entry:
 	%tmp1 = load i32* %tmp		; <i32> [#uses=1]
 	ret i32 %tmp1
 }
-; X32: test1:
+; X32-LABEL: test1:
 ; X32: 	movl	%gs:196, %eax
 ; X32: 	movl	(%eax), %eax
 ; X32: 	ret
 
-; X64: test1:
+; X64-LABEL: test1:
 ; X64: 	movq	%gs:320, %rax
 ; X64: 	movl	(%rax), %eax
 ; X64: 	ret
@@ -26,11 +26,11 @@ entry:
 }
 
 ; rdar://8453210
-; X32: test2:
+; X32-LABEL: test2:
 ; X32: movl	{{.*}}(%esp), %eax
 ; X32: calll	*%gs:(%eax)
 
-; X64: test2:
+; X64-LABEL: test2:
 ; X64: callq	*%gs:([[A0:%rdi|%rcx]])
 
 
@@ -66,7 +66,7 @@ entry:
 	%tmp4 = add i32 %tmp1, %tmp3
 	ret i32 %tmp4
 }
-; X32: test_no_cse:
+; X32-LABEL: test_no_cse:
 ; X32: 	movl	%gs:196
 ; X32: 	movl	%fs:196
 ; X32: 	ret

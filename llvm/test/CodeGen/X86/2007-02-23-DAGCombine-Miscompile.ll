@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=x86 | FileCheck %s
 
 define i32 @test(i1 %X) {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: ret
 ; CHECK: movl $1, %eax
 ; CHECK: ret

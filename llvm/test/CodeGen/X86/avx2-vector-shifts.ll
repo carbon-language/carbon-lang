@@ -8,7 +8,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_sllw_1:
+; CHECK-LABEL: test_sllw_1:
 ; CHECK: vpsllw  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -18,7 +18,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_sllw_2:
+; CHECK-LABEL: test_sllw_2:
 ; CHECK: vpaddw  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -28,7 +28,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_sllw_3:
+; CHECK-LABEL: test_sllw_3:
 ; CHECK: vxorps  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -38,7 +38,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_slld_1:
+; CHECK-LABEL: test_slld_1:
 ; CHECK: vpslld  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -48,7 +48,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_slld_2:
+; CHECK-LABEL: test_slld_2:
 ; CHECK: vpaddd  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -58,7 +58,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_slld_3:
+; CHECK-LABEL: test_slld_3:
 ; CHECK: vxorps  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -68,7 +68,7 @@ entry:
   ret <4 x i64> %shl
 }
 
-; CHECK: test_sllq_1:
+; CHECK-LABEL: test_sllq_1:
 ; CHECK: vpsllq  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -78,7 +78,7 @@ entry:
   ret <4 x i64> %shl
 }
 
-; CHECK: test_sllq_2:
+; CHECK-LABEL: test_sllq_2:
 ; CHECK: vpaddq  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -88,7 +88,7 @@ entry:
   ret <4 x i64> %shl
 }
 
-; CHECK: test_sllq_3:
+; CHECK-LABEL: test_sllq_3:
 ; CHECK: vxorps  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -100,7 +100,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_sraw_1:
+; CHECK-LABEL: test_sraw_1:
 ; CHECK: vpsraw  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -110,7 +110,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_sraw_2:
+; CHECK-LABEL: test_sraw_2:
 ; CHECK: vpsraw  $1, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -120,7 +120,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_sraw_3:
+; CHECK-LABEL: test_sraw_3:
 ; CHECK: vpsraw  $16, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -130,7 +130,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_srad_1:
+; CHECK-LABEL: test_srad_1:
 ; CHECK: vpsrad  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -140,7 +140,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_srad_2:
+; CHECK-LABEL: test_srad_2:
 ; CHECK: vpsrad  $1, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -150,7 +150,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_srad_3:
+; CHECK-LABEL: test_srad_3:
 ; CHECK: vpsrad  $32, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -162,7 +162,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_srlw_1:
+; CHECK-LABEL: test_srlw_1:
 ; CHECK: vpsrlw  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -172,7 +172,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_srlw_2:
+; CHECK-LABEL: test_srlw_2:
 ; CHECK: vpsrlw  $1, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -182,7 +182,7 @@ entry:
   ret <16 x i16> %shl
 }
 
-; CHECK: test_srlw_3:
+; CHECK-LABEL: test_srlw_3:
 ; CHECK: vxorps  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -192,7 +192,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_srld_1:
+; CHECK-LABEL: test_srld_1:
 ; CHECK: vpsrld  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -202,7 +202,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_srld_2:
+; CHECK-LABEL: test_srld_2:
 ; CHECK: vpsrld  $1, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -212,7 +212,7 @@ entry:
   ret <8 x i32> %shl
 }
 
-; CHECK: test_srld_3:
+; CHECK-LABEL: test_srld_3:
 ; CHECK: vxorps  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -222,7 +222,7 @@ entry:
   ret <4 x i64> %shl
 }
 
-; CHECK: test_srlq_1:
+; CHECK-LABEL: test_srlq_1:
 ; CHECK: vpsrlq  $0, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -232,7 +232,7 @@ entry:
   ret <4 x i64> %shl
 }
 
-; CHECK: test_srlq_2:
+; CHECK-LABEL: test_srlq_2:
 ; CHECK: vpsrlq  $1, %ymm0, %ymm0
 ; CHECK: ret
 
@@ -242,6 +242,6 @@ entry:
   ret <4 x i64> %shl
 }
 
-; CHECK: test_srlq_3:
+; CHECK-LABEL: test_srlq_3:
 ; CHECK: vxorps  %ymm0, %ymm0, %ymm0
 ; CHECK: ret

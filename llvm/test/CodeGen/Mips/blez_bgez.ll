@@ -1,7 +1,7 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s
 
-; CHECK: test_blez:
+; CHECK-LABEL: test_blez:
 ; CHECK: blez ${{[0-9]+}}, $BB
 
 define void @test_blez(i32 %a) {
@@ -19,7 +19,7 @@ if.end:
 
 declare void @foo1()
 
-; CHECK: test_bgez:
+; CHECK-LABEL: test_bgez:
 ; CHECK: bgez ${{[0-9]+}}, $BB
 
 define void @test_bgez(i32 %a) {

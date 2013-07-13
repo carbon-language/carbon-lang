@@ -5,7 +5,7 @@
 @var64 = global i64 0
 
 define void @test_extendb(i8 %var) {
-; CHECK: test_extendb:
+; CHECK-LABEL: test_extendb:
 
   %sxt32 = sext i8 %var to i32
   store volatile i32 %sxt32, i32* @var32
@@ -29,7 +29,7 @@ define void @test_extendb(i8 %var) {
 }
 
 define void @test_extendh(i16 %var) {
-; CHECK: test_extendh:
+; CHECK-LABEL: test_extendh:
 
   %sxt32 = sext i16 %var to i32
   store volatile i32 %sxt32, i32* @var32
@@ -53,7 +53,7 @@ define void @test_extendh(i16 %var) {
 }
 
 define void @test_extendw(i32 %var) {
-; CHECK: test_extendw:
+; CHECK-LABEL: test_extendw:
 
   %sxt64 = sext i32 %var to i64
   store volatile i64 %sxt64, i64* @var64
@@ -66,7 +66,7 @@ define void @test_extendw(i32 %var) {
 }
 
 define void @test_shifts(i32 %val32, i64 %val64) {
-; CHECK: test_shifts:
+; CHECK-LABEL: test_shifts:
 
   %shift1 = ashr i32 %val32, 31
   store volatile i32 %shift1, i32* @var32
@@ -114,7 +114,7 @@ define void @test_shifts(i32 %val32, i64 %val64) {
 ; LLVM can produce in-register extensions taking place entirely with
 ; 64-bit registers too.
 define void @test_sext_inreg_64(i64 %in) {
-; CHECK: test_sext_inreg_64:
+; CHECK-LABEL: test_sext_inreg_64:
 
 ; i1 doesn't have an official alias, but crops up and is handled by
 ; the bitfield ops.
@@ -143,7 +143,7 @@ define void @test_sext_inreg_64(i64 %in) {
 ; These instructions don't actually select to official bitfield
 ; operations, but it's important that we select them somehow:
 define void @test_zext_inreg_64(i64 %in) {
-; CHECK: test_zext_inreg_64:
+; CHECK-LABEL: test_zext_inreg_64:
 
   %trunc_i8 = trunc i64 %in to i8
   %zext_i8 = zext i8 %trunc_i8 to i64
@@ -164,7 +164,7 @@ define void @test_zext_inreg_64(i64 %in) {
 }
 
 define i64 @test_sext_inreg_from_32(i32 %in) {
-; CHECK: test_sext_inreg_from_32:
+; CHECK-LABEL: test_sext_inreg_from_32:
 
   %small = trunc i32 %in to i1
   %ext = sext i1 %small to i64
@@ -178,7 +178,7 @@ define i64 @test_sext_inreg_from_32(i32 %in) {
 
 
 define i32 @test_ubfx32(i32* %addr) {
-; CHECK: test_ubfx32:
+; CHECK-LABEL: test_ubfx32:
 ; CHECK: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #23, #3
 
    %fields = load i32* %addr
@@ -188,7 +188,7 @@ define i32 @test_ubfx32(i32* %addr) {
 }
 
 define i64 @test_ubfx64(i64* %addr) {
-; CHECK: test_ubfx64:
+; CHECK-LABEL: test_ubfx64:
 ; CHECK: ubfx {{x[0-9]+}}, {{x[0-9]+}}, #25, #10
 
    %fields = load i64* %addr
@@ -198,7 +198,7 @@ define i64 @test_ubfx64(i64* %addr) {
 }
 
 define i32 @test_sbfx32(i32* %addr) {
-; CHECK: test_sbfx32:
+; CHECK-LABEL: test_sbfx32:
 ; CHECK: sbfx {{w[0-9]+}}, {{w[0-9]+}}, #6, #3
 
    %fields = load i32* %addr
@@ -208,7 +208,7 @@ define i32 @test_sbfx32(i32* %addr) {
 }
 
 define i64 @test_sbfx64(i64* %addr) {
-; CHECK: test_sbfx64:
+; CHECK-LABEL: test_sbfx64:
 ; CHECK: sbfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #63
 
    %fields = load i64* %addr

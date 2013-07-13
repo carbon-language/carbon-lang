@@ -10,7 +10,7 @@ define void @test1(i64*) nounwind ssp {
   %4 = add i64 %3, 10
   store i64 %4, i64* %0
   ret void
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: callq _f
 ; CHECK-NEXT: addq	$10, %rax
 }
@@ -21,7 +21,7 @@ define void @test2(i64*) nounwind ssp {
   %4 = add i64 %3, 10
   store i64 %4, i64* %0
   ret void
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: callq _f
 ; CHECK-NEXT: addq	$10, %rdx
 }

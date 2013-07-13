@@ -15,7 +15,7 @@
 
 define i32 @test() nounwind optsize ssp {
 entry:
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: push
 ; CHECK-NOT: push
   %block_size = alloca i32, align 4

@@ -4,7 +4,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-apple-darwin8"
 
 define void @test() nounwind  {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: ret
 ; CHECK: 1 $2 3
 ; CHECK: ret

@@ -16,7 +16,7 @@ entry:
   ret i8 %1
 }
 
-; CHECK: test_avext:
+; CHECK-LABEL: test_avext:
 ; CHECK: addis [[REG1:[0-9]+]], 2, .LC[[TOCNUM:[0-9]+]]@toc@ha
 ; CHECK: ld [[REG2:[0-9]+]], .LC[[TOCNUM]]@toc@l([[REG1]])
 ; CHECK: lbz {{[0-9]+}}, 0([[REG2]])

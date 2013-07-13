@@ -16,7 +16,7 @@ define void @test_v4i32_pos_even(%v4i32* %P, %v4i32* %S) {
        ret void
 }
 
-; CHECK: test_v4i32_pos_even:
+; CHECK-LABEL: test_v4i32_pos_even:
 ; CHECK: vspltisw [[REG1:[0-9]+]], 9
 ; CHECK: vadduwm {{[0-9]+}}, [[REG1]], [[REG1]]
 
@@ -27,7 +27,7 @@ define void @test_v4i32_neg_even(%v4i32* %P, %v4i32* %S) {
        ret void
 }
 
-; CHECK: test_v4i32_neg_even:
+; CHECK-LABEL: test_v4i32_neg_even:
 ; CHECK: vspltisw [[REG1:[0-9]+]], -14
 ; CHECK: vadduwm {{[0-9]+}}, [[REG1]], [[REG1]]
 
@@ -38,7 +38,7 @@ define void @test_v8i16_pos_even(%v8i16* %P, %v8i16* %S) {
        ret void
 }
 
-; CHECK: test_v8i16_pos_even:
+; CHECK-LABEL: test_v8i16_pos_even:
 ; CHECK: vspltish [[REG1:[0-9]+]], 15
 ; CHECK: vadduhm {{[0-9]+}}, [[REG1]], [[REG1]]
 
@@ -49,7 +49,7 @@ define void @test_v8i16_neg_even(%v8i16* %P, %v8i16* %S) {
        ret void
 }
 
-; CHECK: test_v8i16_neg_even:
+; CHECK-LABEL: test_v8i16_neg_even:
 ; CHECK: vspltish [[REG1:[0-9]+]], -16
 ; CHECK: vadduhm {{[0-9]+}}, [[REG1]], [[REG1]]
 
@@ -60,7 +60,7 @@ define void @test_v16i8_pos_even(%v16i8* %P, %v16i8* %S) {
        ret void
 }
 
-; CHECK: test_v16i8_pos_even:
+; CHECK-LABEL: test_v16i8_pos_even:
 ; CHECK: vspltisb [[REG1:[0-9]+]], 8
 ; CHECK: vaddubm {{[0-9]+}}, [[REG1]], [[REG1]]
 
@@ -71,7 +71,7 @@ define void @test_v16i8_neg_even(%v16i8* %P, %v16i8* %S) {
        ret void
 }
 
-; CHECK: test_v16i8_neg_even:
+; CHECK-LABEL: test_v16i8_neg_even:
 ; CHECK: vspltisb [[REG1:[0-9]+]], -9
 ; CHECK: vaddubm {{[0-9]+}}, [[REG1]], [[REG1]]
 
@@ -82,7 +82,7 @@ define void @test_v4i32_pos_odd(%v4i32* %P, %v4i32* %S) {
        ret void
 }
 
-; CHECK: test_v4i32_pos_odd:
+; CHECK-LABEL: test_v4i32_pos_odd:
 ; CHECK: vspltisw [[REG2:[0-9]+]], -16
 ; CHECK: vspltisw [[REG1:[0-9]+]], 11
 ; CHECK: vsubuwm {{[0-9]+}}, [[REG1]], [[REG2]]
@@ -94,7 +94,7 @@ define void @test_v4i32_neg_odd(%v4i32* %P, %v4i32* %S) {
        ret void
 }
 
-; CHECK: test_v4i32_neg_odd:
+; CHECK-LABEL: test_v4i32_neg_odd:
 ; CHECK: vspltisw [[REG2:[0-9]+]], -16
 ; CHECK: vspltisw [[REG1:[0-9]+]], -11
 ; CHECK: vadduwm {{[0-9]+}}, [[REG1]], [[REG2]]
@@ -106,7 +106,7 @@ define void @test_v8i16_pos_odd(%v8i16* %P, %v8i16* %S) {
        ret void
 }
 
-; CHECK: test_v8i16_pos_odd:
+; CHECK-LABEL: test_v8i16_pos_odd:
 ; CHECK: vspltish [[REG2:[0-9]+]], -16
 ; CHECK: vspltish [[REG1:[0-9]+]], 15
 ; CHECK: vsubuhm {{[0-9]+}}, [[REG1]], [[REG2]]
@@ -118,7 +118,7 @@ define void @test_v8i16_neg_odd(%v8i16* %P, %v8i16* %S) {
        ret void
 }
 
-; CHECK: test_v8i16_neg_odd:
+; CHECK-LABEL: test_v8i16_neg_odd:
 ; CHECK: vspltish [[REG2:[0-9]+]], -16
 ; CHECK: vspltish [[REG1:[0-9]+]], -15
 ; CHECK: vadduhm {{[0-9]+}}, [[REG1]], [[REG2]]
@@ -130,7 +130,7 @@ define void @test_v16i8_pos_odd(%v16i8* %P, %v16i8* %S) {
        ret void
 }
 
-; CHECK: test_v16i8_pos_odd:
+; CHECK-LABEL: test_v16i8_pos_odd:
 ; CHECK: vspltisb [[REG2:[0-9]+]], -16
 ; CHECK: vspltisb [[REG1:[0-9]+]], 1
 ; CHECK: vsububm {{[0-9]+}}, [[REG1]], [[REG2]]
@@ -142,7 +142,7 @@ define void @test_v16i8_neg_odd(%v16i8* %P, %v16i8* %S) {
        ret void
 }
 
-; CHECK: test_v16i8_neg_odd:
+; CHECK-LABEL: test_v16i8_neg_odd:
 ; CHECK: vspltisb [[REG2:[0-9]+]], -16
 ; CHECK: vspltisb [[REG1:[0-9]+]], -1
 ; CHECK: vaddubm {{[0-9]+}}, [[REG1]], [[REG2]]

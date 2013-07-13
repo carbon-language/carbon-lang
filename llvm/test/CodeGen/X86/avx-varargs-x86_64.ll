@@ -5,7 +5,7 @@
 @x = common global <8 x float> zeroinitializer, align 32
 declare i32 @f(i32, ...)
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: vmovaps	%ymm0, (%rsp)
 define void @test1() nounwind uwtable ssp {
 entry:

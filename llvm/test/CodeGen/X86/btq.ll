@@ -7,7 +7,7 @@ define void @test1(i64 %foo) nounwind {
   %tobool = icmp eq i64 %and, 0
   br i1 %tobool, label %if.end, label %if.then
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: btq $32
 
 if.then:
@@ -23,7 +23,7 @@ define void @test2(i64 %foo) nounwind {
   %tobool = icmp eq i64 %and, 0
   br i1 %tobool, label %if.end, label %if.then
 
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: testl $-2147483648
 
 if.then:

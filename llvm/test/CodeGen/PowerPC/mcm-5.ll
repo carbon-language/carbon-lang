@@ -51,7 +51,7 @@ sw.epilog:                                        ; preds = %sw.bb3, %sw.default
   ret i32 %5
 }
 
-; CHECK: test_jump_table:
+; CHECK-LABEL: test_jump_table:
 ; CHECK: addis [[REG1:[0-9]+]], 2, .LC[[TOCNUM:[0-9]+]]@toc@ha
 ; CHECK: ld [[REG2:[0-9]+]], .LC[[TOCNUM]]@toc@l([[REG1]])
 ; CHECK: ldx {{[0-9]+}}, {{[0-9]+}}, [[REG2]]

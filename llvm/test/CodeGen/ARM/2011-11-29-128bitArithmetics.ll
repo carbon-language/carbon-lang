@@ -4,7 +4,7 @@
 
 define void @test_sqrt(<4 x float>* %X) nounwind {
 
-; CHECK: test_sqrt:
+; CHECK-LABEL: test_sqrt:
 
 ; CHECK:      movw    r1, :lower16:{{.*}}
 ; CHECK:      movt    r1, :upper16:{{.*}}
@@ -27,7 +27,7 @@ declare <4 x float> @llvm.sqrt.v4f32(<4 x float>) nounwind readonly
 
 define void @test_cos(<4 x float>* %X) nounwind {
 
-; CHECK: test_cos:
+; CHECK-LABEL: test_cos:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -58,7 +58,7 @@ declare <4 x float> @llvm.cos.v4f32(<4 x float>) nounwind readonly
 
 define void @test_exp(<4 x float>* %X) nounwind {
 
-; CHECK: test_exp:
+; CHECK-LABEL: test_exp:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -89,7 +89,7 @@ declare <4 x float> @llvm.exp.v4f32(<4 x float>) nounwind readonly
 
 define void @test_exp2(<4 x float>* %X) nounwind {
 
-; CHECK: test_exp2:
+; CHECK-LABEL: test_exp2:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -120,7 +120,7 @@ declare <4 x float> @llvm.exp2.v4f32(<4 x float>) nounwind readonly
 
 define void @test_log10(<4 x float>* %X) nounwind {
 
-; CHECK: test_log10:
+; CHECK-LABEL: test_log10:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -151,7 +151,7 @@ declare <4 x float> @llvm.log10.v4f32(<4 x float>) nounwind readonly
 
 define void @test_log(<4 x float>* %X) nounwind {
 
-; CHECK: test_log:
+; CHECK-LABEL: test_log:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -182,7 +182,7 @@ declare <4 x float> @llvm.log.v4f32(<4 x float>) nounwind readonly
 
 define void @test_log2(<4 x float>* %X) nounwind {
 
-; CHECK: test_log2:
+; CHECK-LABEL: test_log2:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -214,7 +214,7 @@ declare <4 x float> @llvm.log2.v4f32(<4 x float>) nounwind readonly
 
 define void @test_pow(<4 x float>* %X) nounwind {
 
-; CHECK: test_pow:
+; CHECK-LABEL: test_pow:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -248,7 +248,7 @@ declare <4 x float> @llvm.pow.v4f32(<4 x float>, <4 x float>) nounwind readonly
 
 define void @test_powi(<4 x float>* %X) nounwind {
 
-; CHECK: test_powi:
+; CHECK-LABEL: test_powi:
 
 ; CHECK:       movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:       movt  [[reg0]], :upper16:{{.*}}
@@ -271,7 +271,7 @@ declare <4 x float> @llvm.powi.v4f32(<4 x float>, i32) nounwind readonly
 
 define void @test_sin(<4 x float>* %X) nounwind {
 
-; CHECK: test_sin:
+; CHECK-LABEL: test_sin:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}
@@ -302,7 +302,7 @@ declare <4 x float> @llvm.sin.v4f32(<4 x float>) nounwind readonly
 
 define void @test_floor(<4 x float>* %X) nounwind {
 
-; CHECK: test_floor:
+; CHECK-LABEL: test_floor:
 
 ; CHECK:      movw  [[reg0:r[0-9]+]], :lower16:{{.*}}
 ; CHECK:      movt  [[reg0]], :upper16:{{.*}}

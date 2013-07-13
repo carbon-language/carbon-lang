@@ -5,7 +5,7 @@ target triple = "i386-apple-darwin9.6"
 
 define i32 @test1() nounwind {
 entry:
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: movw	%gs:6, %ax
   %asmtmp.i = tail call i16 asm "movw\09%gs:${1:a}, ${0:w}", "=r,ir,~{dirflag},~{fpsr},~{flags}"(i32 6) nounwind ; <i16> [#uses=1]
   %0 = zext i16 %asmtmp.i to i32                  ; <i32> [#uses=1]
@@ -14,7 +14,7 @@ entry:
 
 define zeroext i16 @test2(i32 %address) nounwind {
 entry:
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movw	%gs:(%eax), %ax
   %asmtmp = tail call i16 asm "movw\09%gs:${1:a}, ${0:w}", "=r,ir,~{dirflag},~{fpsr},~{flags}"(i32 %address) nounwind ; <i16> [#uses=1]
   ret i16 %asmtmp
@@ -25,7 +25,7 @@ entry:
 
 define void @test3() nounwind {
 entry:
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: movl _n, %eax
   call void asm sideeffect "movl ${0:a}, %eax", "ir,~{dirflag},~{fpsr},~{flags},~{eax}"(i32* @n) nounwind
   ret void
@@ -33,7 +33,7 @@ entry:
 
 define void @test4() nounwind {
 entry:
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: movl	L_y$non_lazy_ptr, %ecx
 ; CHECK: movl (%ecx), %eax
   call void asm sideeffect "movl ${0:a}, %eax", "ir,~{dirflag},~{fpsr},~{flags},~{eax}"(i32* @y) nounwind

@@ -8,7 +8,7 @@ define void @test1(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 	store <2 x double> %tmp9, <2 x double>* %r, align 16
 	ret void
         
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: 	movl	8(%esp), %eax
 ; CHECK-NEXT: 	movapd	(%eax), %xmm0
 ; CHECK-NEXT: 	movlpd	12(%esp), %xmm0
@@ -24,7 +24,7 @@ define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 	store <2 x double> %tmp9, <2 x double>* %r, align 16
 	ret void
         
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: 	movl	8(%esp), %eax
 ; CHECK-NEXT: 	movapd	(%eax), %xmm0
 ; CHECK-NEXT: 	movhpd	12(%esp), %xmm0
@@ -60,7 +60,7 @@ define void @test4(<4 x float> %X, <4 x float>* %res) nounwind {
 }
 
 define <4 x i32> @test5(i8** %ptr) nounwind {
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: pxor
 ; CHECK: punpcklbw
 ; CHECK: punpcklwd
@@ -86,7 +86,7 @@ define void @test6(<4 x float>* %res, <4 x float>* %A) nounwind {
         store <4 x float> %tmp2, <4 x float>* %res
         ret void
         
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: 	movaps	(%eax), %xmm0
 ; CHECK:	movaps	%xmm0, (%eax)
 }
@@ -97,7 +97,7 @@ define void @test7() nounwind {
         store <4 x float> %2, <4 x float>* null
         ret void
         
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK:	xorps	%xmm0, %xmm0
 ; CHECK:	movaps	%xmm0, 0
 }
@@ -115,7 +115,7 @@ define <2 x i64> @test8() nounwind {
 	%tmp15 = insertelement <4 x i32> %tmp14, i32 %tmp7, i32 3		; <<4 x i32>> [#uses=1]
 	%tmp16 = bitcast <4 x i32> %tmp15 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	ret <2 x i64> %tmp16
-; CHECK: test8:
+; CHECK-LABEL: test8:
 ; CHECK: movups	(%eax), %xmm0
 }
 
@@ -125,7 +125,7 @@ define <4 x float> @test9(i32 %dummy, float %a, float %b, float %c, float %d) no
 	%tmp12 = insertelement <4 x float> %tmp11, float %c, i32 2		; <<4 x float>> [#uses=1]
 	%tmp13 = insertelement <4 x float> %tmp12, float %d, i32 3		; <<4 x float>> [#uses=1]
 	ret <4 x float> %tmp13
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: movups	8(%esp), %xmm0
 }
 
@@ -135,7 +135,7 @@ define <4 x float> @test10(float %a, float %b, float %c, float %d) nounwind {
 	%tmp12 = insertelement <4 x float> %tmp11, float %c, i32 2		; <<4 x float>> [#uses=1]
 	%tmp13 = insertelement <4 x float> %tmp12, float %d, i32 3		; <<4 x float>> [#uses=1]
 	ret <4 x float> %tmp13
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: movaps	4(%esp), %xmm0
 }
 
@@ -143,7 +143,7 @@ define <2 x double> @test11(double %a, double %b) nounwind {
 	%tmp = insertelement <2 x double> undef, double %a, i32 0		; <<2 x double>> [#uses=1]
 	%tmp7 = insertelement <2 x double> %tmp, double %b, i32 1		; <<2 x double>> [#uses=1]
 	ret <2 x double> %tmp7
-; CHECK: test11:
+; CHECK-LABEL: test11:
 ; CHECK: movaps	4(%esp), %xmm0
 }
 
@@ -154,7 +154,7 @@ define void @test12() nounwind {
         %tmp4 = fadd <4 x float> %tmp2, %tmp3            ; <<4 x float>> [#uses=1]
         store <4 x float> %tmp4, <4 x float>* null
         ret void
-; CHECK: test12:
+; CHECK-LABEL: test12:
 ; CHECK: movhlps
 ; CHECK: shufps
 }
@@ -177,7 +177,7 @@ define <4 x float> @test14(<4 x float>* %x, <4 x float>* %y) nounwind {
         %tmp21 = fsub <4 x float> %tmp5, %tmp            ; <<4 x float>> [#uses=1]
         %tmp27 = shufflevector <4 x float> %tmp9, <4 x float> %tmp21, <4 x i32> < i32 0, i32 1, i32 4, i32 5 >                ; <<4 x float>> [#uses=1]
         ret <4 x float> %tmp27
-; CHECK: test14:
+; CHECK-LABEL: test14:
 ; CHECK: 	subps	[[X1:%xmm[0-9]+]], [[X2:%xmm[0-9]+]]
 ; CHECK: 	addps	[[X1]], [[X0:%xmm[0-9]+]]
 ; CHECK: 	movlhps	[[X2]], [[X0]]
@@ -189,12 +189,12 @@ entry:
         %tmp3 = load <4 x float>* %x            ; <<4 x float>> [#uses=1]
         %tmp4 = shufflevector <4 x float> %tmp3, <4 x float> %tmp, <4 x i32> < i32 2, i32 3, i32 6, i32 7 >           ; <<4 x float>> [#uses=1]
         ret <4 x float> %tmp4
-; CHECK: test15:
+; CHECK-LABEL: test15:
 ; CHECK: 	movhlps	%xmm1, %xmm0
 }
 
 ; PR8900
-; CHECK: test16:
+; CHECK-LABEL: test16:
 ; CHECK: unpcklpd
 ; CHECK: ret
 

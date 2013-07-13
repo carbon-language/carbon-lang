@@ -1,7 +1,7 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 define i32 @test_select_i32(i1 %bit, i32 %a, i32 %b) {
-; CHECK: test_select_i32:
+; CHECK-LABEL: test_select_i32:
   %val = select i1 %bit, i32 %a, i32 %b
 ; CHECK: movz [[ONE:w[0-9]+]], #1
 ; CHECK: tst w0, [[ONE]]
@@ -11,7 +11,7 @@ define i32 @test_select_i32(i1 %bit, i32 %a, i32 %b) {
 }
 
 define i64 @test_select_i64(i1 %bit, i64 %a, i64 %b) {
-; CHECK: test_select_i64:
+; CHECK-LABEL: test_select_i64:
   %val = select i1 %bit, i64 %a, i64 %b
 ; CHECK: movz [[ONE:w[0-9]+]], #1
 ; CHECK: tst w0, [[ONE]]
@@ -21,7 +21,7 @@ define i64 @test_select_i64(i1 %bit, i64 %a, i64 %b) {
 }
 
 define float @test_select_float(i1 %bit, float %a, float %b) {
-; CHECK: test_select_float:
+; CHECK-LABEL: test_select_float:
   %val = select i1 %bit, float %a, float %b
 ; CHECK: movz [[ONE:w[0-9]+]], #1
 ; CHECK: tst w0, [[ONE]]
@@ -31,7 +31,7 @@ define float @test_select_float(i1 %bit, float %a, float %b) {
 }
 
 define double @test_select_double(i1 %bit, double %a, double %b) {
-; CHECK: test_select_double:
+; CHECK-LABEL: test_select_double:
   %val = select i1 %bit, double %a, double %b
 ; CHECK: movz [[ONE:w[0-9]+]], #1
 ; CHECK: tst w0, [[ONE]]
@@ -41,7 +41,7 @@ define double @test_select_double(i1 %bit, double %a, double %b) {
 }
 
 define i32 @test_brcond(i1 %bit) {
-; CHECK: test_brcond:
+; CHECK-LABEL: test_brcond:
   br i1 %bit, label %true, label %false
 ; CHECK: tbz {{w[0-9]+}}, #0, .LBB
 

@@ -3,7 +3,7 @@
 ; Shows a dag combine bug that will generate an illegal build vector
 ; with v2i64 build_vector i32, i32.
 
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: unpcklpd
 ; CHECK: movapd
 define void @test(<2 x double>* %dst, <4 x double> %src) nounwind {
@@ -13,7 +13,7 @@ entry:
         ret void
 }
 
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movdqa
 define void @test2(<4 x i16>* %src, <4 x i32>* %dest) nounwind {
 entry:

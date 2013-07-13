@@ -139,7 +139,7 @@ define void @udiv_i32() {
 ; The point of this test is that we may not actually see (shl GPR32:$Val, (zext GPR32:$Val2))
 ; in the DAG (the RHS may be natively 64-bit), but we should still use the lsl instructions.
 define i32 @test_lsl32() {
-; CHECK: test_lsl32:
+; CHECK-LABEL: test_lsl32:
 
   %val = load i32* @var32_0
   %ret = shl i32 1, %val
@@ -149,7 +149,7 @@ define i32 @test_lsl32() {
 }
 
 define i32 @test_lsr32() {
-; CHECK: test_lsr32:
+; CHECK-LABEL: test_lsr32:
 
   %val = load i32* @var32_0
   %ret = lshr i32 1, %val
@@ -159,7 +159,7 @@ define i32 @test_lsr32() {
 }
 
 define i32 @test_asr32(i32 %in) {
-; CHECK: test_asr32:
+; CHECK-LABEL: test_asr32:
 
   %val = load i32* @var32_0
   %ret = ashr i32 %in, %val

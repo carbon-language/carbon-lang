@@ -24,7 +24,7 @@ define void @test(<2 x i64>* %P, i8 %x) nounwind {
 	store <2 x i64> %tmp73.upgrd.1, <2 x i64>* %P
 	ret void
 
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: pshufd
 ; CHECK: punpcklbw
 ; CHECK: punpcklbw

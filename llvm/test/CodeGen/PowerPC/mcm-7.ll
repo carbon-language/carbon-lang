@@ -18,7 +18,7 @@ entry:
 
 declare signext i32 @foo(i32 signext)
 
-; CHECK: test_fnaddr:
+; CHECK-LABEL: test_fnaddr:
 ; CHECK: addis [[REG1:[0-9]+]], 2, .LC[[TOCNUM:[0-9]+]]@toc@ha
 ; CHECK: ld [[REG2:[0-9]+]], .LC[[TOCNUM]]@toc@l([[REG1]])
 ; CHECK: .section .toc

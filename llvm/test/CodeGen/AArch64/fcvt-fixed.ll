@@ -4,7 +4,7 @@
 @var64 = global i64 0
 
 define void @test_fcvtzs(float %flt, double %dbl) {
-; CHECK: test_fcvtzs:
+; CHECK-LABEL: test_fcvtzs:
 
   %fix1 = fmul float %flt, 128.0
   %cvt1 = fptosi float %fix1 to i32
@@ -50,7 +50,7 @@ define void @test_fcvtzs(float %flt, double %dbl) {
 }
 
 define void @test_fcvtzu(float %flt, double %dbl) {
-; CHECK: test_fcvtzu:
+; CHECK-LABEL: test_fcvtzu:
 
   %fix1 = fmul float %flt, 128.0
   %cvt1 = fptoui float %fix1 to i32
@@ -99,7 +99,7 @@ define void @test_fcvtzu(float %flt, double %dbl) {
 @vardouble = global double 0.0
 
 define void @test_scvtf(i32 %int, i64 %long) {
-; CHECK: test_scvtf:
+; CHECK-LABEL: test_scvtf:
 
   %cvt1 = sitofp i32 %int to float
   %fix1 = fdiv float %cvt1, 128.0
@@ -145,7 +145,7 @@ define void @test_scvtf(i32 %int, i64 %long) {
 }
 
 define void @test_ucvtf(i32 %int, i64 %long) {
-; CHECK: test_ucvtf:
+; CHECK-LABEL: test_ucvtf:
 
   %cvt1 = uitofp i32 %int to float
   %fix1 = fdiv float %cvt1, 128.0

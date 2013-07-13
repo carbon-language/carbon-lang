@@ -7,7 +7,7 @@
 @var64 = global i64 0
 
 define i32 @test_tbz() {
-; CHECK: test_tbz:
+; CHECK-LABEL: test_tbz:
 
   %val = load i32* @var32
   %val64 = load i64* @var64

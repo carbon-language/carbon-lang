@@ -14,26 +14,26 @@ define void @test1(i32 %t) nounwind {
   call void @dummy(i8* %x)
   ret void
 
-; NOSSE: test1:
+; NOSSE-LABEL: test1:
 ; NOSSE-NOT: and
 ; NOSSE: movl $0
 
-; SSE1: test1:
+; SSE1-LABEL: test1:
 ; SSE1: andl $-16
 ; SSE1: movl %esp, %esi
 ; SSE1: movaps
 
-; SSE2: test1:
+; SSE2-LABEL: test1:
 ; SSE2: andl $-16
 ; SSE2: movl %esp, %esi
 ; SSE2: movaps
 
-; AVX1: test1:
+; AVX1-LABEL: test1:
 ; AVX1: andl $-32
 ; AVX1: movl %esp, %esi
 ; AVX1: vmovaps %ymm
 
-; AVX2: test1:
+; AVX2-LABEL: test1:
 ; AVX2: andl $-32
 ; AVX2: movl %esp, %esi
 ; AVX2: vmovaps %ymm
@@ -47,26 +47,26 @@ define void @test2(i32 %t) nounwind {
   call void @dummy(i8* %x)
   ret void
 
-; NOSSE: test2:
+; NOSSE-LABEL: test2:
 ; NOSSE-NOT: and
 ; NOSSE: movl $0
 
-; SSE1: test2:
+; SSE1-LABEL: test2:
 ; SSE1: andl $-16
 ; SSE1: movl %esp, %esi
 ; SSE1: movaps
 
-; SSE2: test2:
+; SSE2-LABEL: test2:
 ; SSE2: andl $-16
 ; SSE2: movl %esp, %esi
 ; SSE2: movaps
 
-; AVX1: test2:
+; AVX1-LABEL: test2:
 ; AVX1: andl $-16
 ; AVX1: movl %esp, %esi
 ; AVX1: vmovaps %xmm
 
-; AVX2: test2:
+; AVX2-LABEL: test2:
 ; AVX2: andl $-16
 ; AVX2: movl %esp, %esi
 ; AVX2: vmovaps %xmm

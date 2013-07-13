@@ -46,7 +46,7 @@ return:                                           ; preds = %bb
   ret void
 }
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: 	movl	%{{.*}},   (%[[RDI:...]],%[[RCX:...]],4)
 ; CHECK:	movl	%{{.*}},  8(%[[RDI]],%[[RCX]],4)
 ; CHECK:	movl	%{{.*}},  4(%[[RDI]],%[[RCX]],4)

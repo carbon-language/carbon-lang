@@ -11,7 +11,7 @@ define i32 @test1(i32 %i) nounwind ssp {
   ret i32 %and
 }
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: andl	$8, 
 
 
@@ -29,7 +29,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %if.then, %entry
   ret void
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movq	%rdi, -8(%rsp)
 ; CHECK: cmpq	$42, -8(%rsp)
 }
@@ -41,7 +41,7 @@ if.end:                                           ; preds = %if.then, %entry
 define i64 @test3() nounwind {
   %A = ptrtoint i32* @G to i64
   ret i64 %A
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: movq _G@GOTPCREL(%rip), %rax
 ; CHECK-NEXT: ret
 }
@@ -57,7 +57,7 @@ define i32 @test4(i64 %idxprom9) nounwind {
   %conv = zext i8 %tmp11 to i32
   ret i32 %conv
 
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: movq	_rtx_length@GOTPCREL(%rip), %rax
 ; CHECK-NEXT: movzbl	(%rax,%rdi), %eax
 ; CHECK-NEXT: ret
@@ -70,7 +70,7 @@ define void @test5(i32 %x, i32* %p) nounwind {
   store i32 %y, i32* %p
   ret void
 
-; CHECK: test5:
+; CHECK-LABEL: test5:
 ; CHECK: movl	$50000, %ecx
 ; CHECK: sarl	%cl, %edi
 ; CHECK: ret
@@ -82,7 +82,7 @@ entry:
   %mul = mul nsw i64 %x, 8
   ret i64 %mul
 
-; CHECK: test6:
+; CHECK-LABEL: test6:
 ; CHECK: shlq	$3, %rdi
 }
 
@@ -90,7 +90,7 @@ define i32 @test7(i32 %x) nounwind ssp {
 entry:
   %mul = mul nsw i32 %x, 8
   ret i32 %mul
-; CHECK: test7:
+; CHECK-LABEL: test7:
 ; CHECK: shll	$3, %edi
 }
 
@@ -101,7 +101,7 @@ entry:
   %add = add nsw i64 %x, 7
   ret i64 %add
 
-; CHECK: test8:
+; CHECK-LABEL: test8:
 ; CHECK: addq	$7, %rdi
 }
 
@@ -109,7 +109,7 @@ define i64 @test9(i64 %x) nounwind ssp {
 entry:
   %add = mul nsw i64 %x, 7
   ret i64 %add
-; CHECK: test9:
+; CHECK-LABEL: test9:
 ; CHECK: imulq	$7, %rdi, %rax
 }
 
@@ -117,14 +117,14 @@ entry:
 define i32 @test10(i32 %X) nounwind {
   %Y = udiv i32 %X, 8
   ret i32 %Y
-; CHECK: test10:
+; CHECK-LABEL: test10:
 ; CHECK: shrl	$3, 
 }
 
 define i32 @test11(i32 %X) nounwind {
   %Y = sdiv exact i32 %X, 8
   ret i32 %Y
-; CHECK: test11:
+; CHECK-LABEL: test11:
 ; CHECK: sarl	$3, 
 }
 
@@ -141,7 +141,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %if.then, %entry
   ret void
-; CHECK: test12:
+; CHECK-LABEL: test12:
 ; CHECK: testb	$1,
 ; CHECK-NEXT: je L
 ; CHECK-NEXT: movl $0, %edi
@@ -153,7 +153,7 @@ declare void @test13f(i1 %X)
 define void @test13() nounwind {
   call void @test13f(i1 0)
   ret void
-; CHECK: test13:
+; CHECK-LABEL: test13:
 ; CHECK: movl $0, %edi
 ; CHECK-NEXT: callq
 }
@@ -166,7 +166,7 @@ entry:
   %tobool = trunc i8 %tmp to i1
   call void @test13f(i1 zeroext %tobool) noredzone
   ret void
-; CHECK: test14:
+; CHECK-LABEL: test14:
 ; CHECK: andb	$1, 
 ; CHECK: callq
 }
@@ -177,7 +177,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8*, i8*, i64, i32, i1)
 define void @test15(i8* %a, i8* %b) nounwind {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %b, i64 4, i32 4, i1 false)
   ret void
-; CHECK: test15:
+; CHECK-LABEL: test15:
 ; CHECK-NEXT: movl	(%rsi), %eax
 ; CHECK-NEXT: movl	%eax, (%rdi)
 ; CHECK-NEXT: ret
@@ -186,7 +186,7 @@ define void @test15(i8* %a, i8* %b) nounwind {
 ; Handling for varargs calls
 declare void @test16callee(...) nounwind
 define void @test16() nounwind {
-; CHECK: test16:
+; CHECK-LABEL: test16:
 ; CHECK: movl $1, %edi
 ; CHECK: movb $0, %al
 ; CHECK: callq _test16callee
@@ -224,7 +224,7 @@ if.then:                                          ; preds = %entry
 
 if.else:                                          ; preds = %entry
   ret i32 2
-; CHECK: test17:
+; CHECK-LABEL: test17:
 ; CHECK: movl	(%rdi), %eax
 ; CHECK: callq _foo
 ; CHECK: cmpl	$5, %eax
@@ -235,7 +235,7 @@ if.else:                                          ; preds = %entry
 define void @test18(float* %p1) {
   store float 0.0, float* %p1
   ret void
-; CHECK: test18:
+; CHECK-LABEL: test18:
 ; CHECK: xorps
 }
 
@@ -243,7 +243,7 @@ define void @test18(float* %p1) {
 define void @test19(double* %p1) {
   store double 0.0, double* %p1
   ret void
-; CHECK: test19:
+; CHECK-LABEL: test19:
 ; CHECK: xorps
 }
 
@@ -254,7 +254,7 @@ entry:
   %tmp = alloca %struct.a, align 8
   call void @test20sret(%struct.a* sret %tmp)
   ret void
-; CHECK: test20:
+; CHECK-LABEL: test20:
 ; CHECK: leaq (%rsp), %rdi
 ; CHECK: callq _test20sret
 }
@@ -264,7 +264,7 @@ declare void @test20sret(%struct.a* sret)
 define void @test21(double* %p1) {
   store double -0.0, double* %p1
   ret void
-; CHECK: test21:
+; CHECK-LABEL: test21:
 ; CHECK-NOT: xor
 ; CHECK: movsd	LCPI
 }
@@ -279,7 +279,7 @@ entry:
   call void @foo22(i32 2)
   call void @foo22(i32 3)
   ret void
-; CHECK: test22:
+; CHECK-LABEL: test22:
 ; CHECK: movl	$0, %edi
 ; CHECK: callq	_foo22
 ; CHECK: movl	$1, %edi
@@ -297,7 +297,7 @@ define void @test23(i8* noalias sret %result) {
   %a = alloca i8
   %b = call i8* @foo23()
   ret void
-; CHECK: test23:
+; CHECK-LABEL: test23:
 ; CHECK: call
 ; CHECK: movq  %rdi, %rax
 ; CHECK: ret

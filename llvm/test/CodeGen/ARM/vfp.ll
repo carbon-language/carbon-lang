@@ -14,7 +14,7 @@ declare float @fabsf(float)
 declare double @fabs(double)
 
 define void @test_abs(float* %P, double* %D) {
-;CHECK: test_abs:
+;CHECK-LABEL: test_abs:
 	%a = load float* %P		; <float> [#uses=1]
 ;CHECK: vabs.f32
 	%b = call float @fabsf( float %a ) readnone	; <float> [#uses=1]
@@ -27,7 +27,7 @@ define void @test_abs(float* %P, double* %D) {
 }
 
 define void @test_add(float* %P, double* %D) {
-;CHECK: test_add:
+;CHECK-LABEL: test_add:
 	%a = load float* %P		; <float> [#uses=2]
 	%b = fadd float %a, %a		; <float> [#uses=1]
 	store float %b, float* %P
@@ -38,7 +38,7 @@ define void @test_add(float* %P, double* %D) {
 }
 
 define void @test_ext_round(float* %P, double* %D) {
-;CHECK: test_ext_round:
+;CHECK-LABEL: test_ext_round:
 	%a = load float* %P		; <float> [#uses=1]
 ;CHECK: vcvt.f64.f32
 ;CHECK: vcvt.f32.f64
@@ -51,7 +51,7 @@ define void @test_ext_round(float* %P, double* %D) {
 }
 
 define void @test_fma(float* %P1, float* %P2, float* %P3) {
-;CHECK: test_fma:
+;CHECK-LABEL: test_fma:
 	%a1 = load float* %P1		; <float> [#uses=1]
 	%a2 = load float* %P2		; <float> [#uses=1]
 	%a3 = load float* %P3		; <float> [#uses=1]
@@ -63,7 +63,7 @@ define void @test_fma(float* %P1, float* %P2, float* %P3) {
 }
 
 define i32 @test_ftoi(float* %P1) {
-;CHECK: test_ftoi:
+;CHECK-LABEL: test_ftoi:
 	%a1 = load float* %P1		; <float> [#uses=1]
 ;CHECK: vcvt.s32.f32
 	%b1 = fptosi float %a1 to i32		; <i32> [#uses=1]
@@ -71,7 +71,7 @@ define i32 @test_ftoi(float* %P1) {
 }
 
 define i32 @test_ftou(float* %P1) {
-;CHECK: test_ftou:
+;CHECK-LABEL: test_ftou:
 	%a1 = load float* %P1		; <float> [#uses=1]
 ;CHECK: vcvt.u32.f32
 	%b1 = fptoui float %a1 to i32		; <i32> [#uses=1]
@@ -79,7 +79,7 @@ define i32 @test_ftou(float* %P1) {
 }
 
 define i32 @test_dtoi(double* %P1) {
-;CHECK: test_dtoi:
+;CHECK-LABEL: test_dtoi:
 	%a1 = load double* %P1		; <double> [#uses=1]
 ;CHECK: vcvt.s32.f64
 	%b1 = fptosi double %a1 to i32		; <i32> [#uses=1]
@@ -87,7 +87,7 @@ define i32 @test_dtoi(double* %P1) {
 }
 
 define i32 @test_dtou(double* %P1) {
-;CHECK: test_dtou:
+;CHECK-LABEL: test_dtou:
 	%a1 = load double* %P1		; <double> [#uses=1]
 ;CHECK: vcvt.u32.f64
 	%b1 = fptoui double %a1 to i32		; <i32> [#uses=1]
@@ -95,7 +95,7 @@ define i32 @test_dtou(double* %P1) {
 }
 
 define void @test_utod(double* %P1, i32 %X) {
-;CHECK: test_utod:
+;CHECK-LABEL: test_utod:
 ;CHECK: vcvt.f64.u32
 	%b1 = uitofp i32 %X to double		; <double> [#uses=1]
 	store double %b1, double* %P1
@@ -103,7 +103,7 @@ define void @test_utod(double* %P1, i32 %X) {
 }
 
 define void @test_utod2(double* %P1, i8 %X) {
-;CHECK: test_utod2:
+;CHECK-LABEL: test_utod2:
 ;CHECK: vcvt.f64.u32
 	%b1 = uitofp i8 %X to double		; <double> [#uses=1]
 	store double %b1, double* %P1
@@ -111,7 +111,7 @@ define void @test_utod2(double* %P1, i8 %X) {
 }
 
 define void @test_cmp(float* %glob, i32 %X) {
-;CHECK: test_cmp:
+;CHECK-LABEL: test_cmp:
 entry:
 	%tmp = load float* %glob		; <float> [#uses=2]
 	%tmp3 = getelementptr float* %glob, i32 2		; <float*> [#uses=1]
@@ -139,7 +139,7 @@ declare i32 @bar(...)
 declare i32 @baz(...)
 
 define void @test_cmpfp0(float* %glob, i32 %X) {
-;CHECK: test_cmpfp0:
+;CHECK-LABEL: test_cmpfp0:
 entry:
 	%tmp = load float* %glob		; <float> [#uses=1]
 ;CHECK: vcmpe.f32

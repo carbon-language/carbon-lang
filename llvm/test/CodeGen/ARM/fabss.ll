@@ -13,17 +13,17 @@ entry:
 
 declare float @fabsf(float)
 
-; VFP2: test:
+; VFP2-LABEL: test:
 ; VFP2: 	vabs.f32	s
 
-; NFP1: test:
+; NFP1-LABEL: test:
 ; NFP1: 	vabs.f32	d
-; NFP0: test:
+; NFP0-LABEL: test:
 ; NFP0: 	vabs.f32	s
 
-; CORTEXA8: test:
+; CORTEXA8-LABEL: test:
 ; CORTEXA8:     vadd.f32        [[D1:d[0-9]+]]
 ; CORTEXA8: 	vabs.f32	{{d[0-9]+}}, [[D1]]
 
-; CORTEXA9: test:
+; CORTEXA9-LABEL: test:
 ; CORTEXA9: 	vabs.f32	s{{.}}, s{{.}}

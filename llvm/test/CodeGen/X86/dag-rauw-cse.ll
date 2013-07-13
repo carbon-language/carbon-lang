@@ -2,7 +2,7 @@
 ; PR3018
 
 define i32 @test(i32 %A) nounwind {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: ret
 ; CHECK: orl $1
 ; CHECK: ret

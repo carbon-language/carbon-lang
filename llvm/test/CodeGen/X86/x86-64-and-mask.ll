@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin8"
 
 ; This should be a single mov, not a load of immediate + andq.
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK: movl %edi, %eax
 
 define i64 @test(i64 %x) nounwind {

@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 
 define i16 @test1(i32* %X, i16* %A) {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: strh {{.*}}[{{.*}}], #-4
         %Y = load i32* %X               ; <i32> [#uses=1]
         %tmp1 = trunc i32 %Y to i16             ; <i16> [#uses=1]
@@ -12,7 +12,7 @@ define i16 @test1(i32* %X, i16* %A) {
 }
 
 define i32 @test2(i32* %X, i32* %A) {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: str {{.*}}[{{.*}}],
         %Y = load i32* %X               ; <i32> [#uses=1]
         store i32 %Y, i32* %A

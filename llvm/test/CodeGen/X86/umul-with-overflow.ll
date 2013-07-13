@@ -19,7 +19,7 @@ entry:
 	%tmp1 = call { i32, i1 } @llvm.umul.with.overflow.i32(i32 %tmp0, i32 2)
 	%tmp2 = extractvalue { i32, i1 } %tmp1, 0
 	ret i32 %tmp2
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: addl
 ; CHECK-NEXT: addl
 ; CHECK-NEXT: ret
@@ -31,7 +31,7 @@ entry:
 	%tmp1 = call { i32, i1 } @llvm.umul.with.overflow.i32(i32 %tmp0, i32 4)
 	%tmp2 = extractvalue { i32, i1 } %tmp1, 0
 	ret i32 %tmp2
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: addl
 ; CHECK: mull
 ; CHECK-NEXT: ret

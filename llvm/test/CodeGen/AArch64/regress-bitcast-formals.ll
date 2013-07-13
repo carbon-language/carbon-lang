@@ -4,7 +4,7 @@
 ; actually capable of that (the test was omitted from LowerFormalArguments).
 
 define void @test_bitcast_lower(<2 x i32> %a) {
-; CHECK: test_bitcast_lower:
+; CHECK-LABEL: test_bitcast_lower:
 
   ret void
 ; CHECK: ret

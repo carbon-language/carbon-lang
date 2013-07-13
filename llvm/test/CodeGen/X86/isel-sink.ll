@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 | FileCheck %s
 
 define i32 @test(i32* %X, i32 %B) {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: ret
 ; CHECK-NOT: lea
 ; CHECK: mov{{.}} $4, ({{.*}},{{.*}},4)

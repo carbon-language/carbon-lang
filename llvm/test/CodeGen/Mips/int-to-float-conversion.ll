@@ -4,7 +4,7 @@
 @i1 = global [3 x i32] [i32 1, i32 2, i32 3], align 4
 @i3 = common global i32* null, align 4
 
-; 32: test_float_int_:
+; 32-LABEL: test_float_int_:
 ; 32: mtc1 ${{[0-9]+}}, $f[[R0:[0-9]+]]
 ; 32: cvt.s.w $f{{[0-9]+}}, $f[[R0]]
 
@@ -14,10 +14,10 @@ entry:
   ret float %conv
 }
 
-; 32: test_double_int_:
+; 32-LABEL: test_double_int_:
 ; 32: mtc1 ${{[0-9]+}}, $f[[R0:[0-9]+]]
 ; 32: cvt.d.w $f{{[0-9]+}}, $f[[R0]]
-; 64: test_double_int_:
+; 64-LABEL: test_double_int_:
 ; 64: mtc1 ${{[0-9]+}}, $f[[R0:[0-9]+]]
 ; 64: cvt.d.w $f{{[0-9]+}}, $f[[R0]]
 
@@ -27,7 +27,7 @@ entry:
   ret double %conv
 }
 
-; 64: test_float_LL_:
+; 64-LABEL: test_float_LL_:
 ; 64: dmtc1 ${{[0-9]+}}, $f[[R0:[0-9]+]]
 ; 64: cvt.s.l $f{{[0-9]+}}, $f[[R0]]
 
@@ -37,7 +37,7 @@ entry:
   ret float %conv
 }
 
-; 64: test_double_LL_:
+; 64-LABEL: test_double_LL_:
 ; 64: dmtc1 ${{[0-9]+}}, $f[[R0:[0-9]+]]
 ; 64: cvt.d.l $f{{[0-9]+}}, $f[[R0]]
 

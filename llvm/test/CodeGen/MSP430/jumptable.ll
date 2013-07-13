@@ -6,7 +6,7 @@ target triple = "msp430---elf"
 ; Function Attrs: nounwind
 define i16 @test(i16 %i) #0 {
 entry:
-; CHECK: test:
+; CHECK-LABEL: test:
   %retval = alloca i16, align 2
   %i.addr = alloca i16, align 2
   store i16 %i, i16* %i.addr, align 2

@@ -163,28 +163,28 @@ define <4 x float> @g4(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind 
 }
 
 define <1 x i64> @test_vbsl_s64(<1 x i64> %a, <1 x i64> %b, <1 x i64> %c) nounwind readnone optsize ssp {
-; CHECK: test_vbsl_s64:
+; CHECK-LABEL: test_vbsl_s64:
 ; CHECK: vbsl d
   %vbsl3.i = tail call <1 x i64> @llvm.arm.neon.vbsl.v1i64(<1 x i64> %a, <1 x i64> %b, <1 x i64> %c) nounwind
   ret <1 x i64> %vbsl3.i
 }
 
 define <1 x i64> @test_vbsl_u64(<1 x i64> %a, <1 x i64> %b, <1 x i64> %c) nounwind readnone optsize ssp {
-; CHECK: test_vbsl_u64:
+; CHECK-LABEL: test_vbsl_u64:
 ; CHECK: vbsl d
   %vbsl3.i = tail call <1 x i64> @llvm.arm.neon.vbsl.v1i64(<1 x i64> %a, <1 x i64> %b, <1 x i64> %c) nounwind
   ret <1 x i64> %vbsl3.i
 }
 
 define <2 x i64> @test_vbslq_s64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c) nounwind readnone optsize ssp {
-; CHECK: test_vbslq_s64:
+; CHECK-LABEL: test_vbslq_s64:
 ; CHECK: vbsl q
   %vbsl3.i = tail call <2 x i64> @llvm.arm.neon.vbsl.v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c) nounwind
   ret <2 x i64> %vbsl3.i
 }
 
 define <2 x i64> @test_vbslq_u64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c) nounwind readnone optsize ssp {
-; CHECK: test_vbslq_u64:
+; CHECK-LABEL: test_vbslq_u64:
 ; CHECK: vbsl q
   %vbsl3.i = tail call <2 x i64> @llvm.arm.neon.vbsl.v2i64(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c) nounwind
   ret <2 x i64> %vbsl3.i

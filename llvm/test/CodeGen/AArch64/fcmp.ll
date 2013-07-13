@@ -3,7 +3,7 @@
 declare void @bar(i32)
 
 define void @test_float(float %a, float %b) {
-; CHECK: test_float:
+; CHECK-LABEL: test_float:
 
   %tst1 = fcmp oeq float %a, %b
   br i1 %tst1, label %end, label %t2
@@ -42,7 +42,7 @@ end:
 }
 
 define void @test_double(double %a, double %b) {
-; CHECK: test_double:
+; CHECK-LABEL: test_double:
 
   %tst1 = fcmp oeq double %a, %b
   br i1 %tst1, label %end, label %t2

@@ -4,7 +4,7 @@
 ; Release operations only need the store barrier provided by a "dmb ishst",
 
 define void @test_store_release(i32* %p, i32 %v) {
-; CHECK: test_store_release:
+; CHECK-LABEL: test_store_release:
 ; CHECK: dmb ishst
 ; CHECK: str
 
@@ -17,7 +17,7 @@ define void @test_store_release(i32* %p, i32 %v) {
 ; followed by an acquire does not get reordered. In that case a "dmb ishst" is
 ; not adequate.
 define i32 @test_seq_cst(i32* %p, i32 %v) {
-; CHECK: test_seq_cst:
+; CHECK-LABEL: test_seq_cst:
 ; CHECK: dmb ishst
 ; CHECK: str
 ; CHECK: dmb {{ish$}}
@@ -35,7 +35,7 @@ define i32 @test_seq_cst(i32* %p, i32 %v) {
 ; Also, pure acquire operations should definitely not have an ishst barrier.
 
 define i32 @test_acq(i32* %addr) {
-; CHECK: test_acq:
+; CHECK-LABEL: test_acq:
 ; CHECK: ldr
 ; CHECK: dmb {{ish$}}
 

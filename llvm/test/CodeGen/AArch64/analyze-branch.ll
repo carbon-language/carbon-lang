@@ -11,7 +11,7 @@ declare void @test_false()
 !1 = metadata !{metadata !"branch_weights", i32 4, i32 64}
 
 define void @test_Bcc_fallthrough_taken(i32 %in) nounwind {
-; CHECK: test_Bcc_fallthrough_taken:
+; CHECK-LABEL: test_Bcc_fallthrough_taken:
   %tst = icmp eq i32 %in, 42
   br i1 %tst, label %true, label %false, !prof !0
 
@@ -34,7 +34,7 @@ false:
 }
 
 define void @test_Bcc_fallthrough_nottaken(i32 %in) nounwind {
-; CHECK: test_Bcc_fallthrough_nottaken:
+; CHECK-LABEL: test_Bcc_fallthrough_nottaken:
   %tst = icmp eq i32 %in, 42
   br i1 %tst, label %true, label %false, !prof !1
 
@@ -57,7 +57,7 @@ false:
 }
 
 define void @test_CBZ_fallthrough_taken(i32 %in) nounwind {
-; CHECK: test_CBZ_fallthrough_taken:
+; CHECK-LABEL: test_CBZ_fallthrough_taken:
   %tst = icmp eq i32 %in, 0
   br i1 %tst, label %true, label %false, !prof !0
 
@@ -78,7 +78,7 @@ false:
 }
 
 define void @test_CBZ_fallthrough_nottaken(i64 %in) nounwind {
-; CHECK: test_CBZ_fallthrough_nottaken:
+; CHECK-LABEL: test_CBZ_fallthrough_nottaken:
   %tst = icmp eq i64 %in, 0
   br i1 %tst, label %true, label %false, !prof !1
 
@@ -99,7 +99,7 @@ false:
 }
 
 define void @test_CBNZ_fallthrough_taken(i32 %in) nounwind {
-; CHECK: test_CBNZ_fallthrough_taken:
+; CHECK-LABEL: test_CBNZ_fallthrough_taken:
   %tst = icmp ne i32 %in, 0
   br i1 %tst, label %true, label %false, !prof !0
 
@@ -120,7 +120,7 @@ false:
 }
 
 define void @test_CBNZ_fallthrough_nottaken(i64 %in) nounwind {
-; CHECK: test_CBNZ_fallthrough_nottaken:
+; CHECK-LABEL: test_CBNZ_fallthrough_nottaken:
   %tst = icmp ne i64 %in, 0
   br i1 %tst, label %true, label %false, !prof !1
 
@@ -141,7 +141,7 @@ false:
 }
 
 define void @test_TBZ_fallthrough_taken(i32 %in) nounwind {
-; CHECK: test_TBZ_fallthrough_taken:
+; CHECK-LABEL: test_TBZ_fallthrough_taken:
   %bit = and i32 %in, 32768
   %tst = icmp eq i32 %bit, 0
   br i1 %tst, label %true, label %false, !prof !0
@@ -163,7 +163,7 @@ false:
 }
 
 define void @test_TBZ_fallthrough_nottaken(i64 %in) nounwind {
-; CHECK: test_TBZ_fallthrough_nottaken:
+; CHECK-LABEL: test_TBZ_fallthrough_nottaken:
   %bit = and i64 %in, 32768
   %tst = icmp eq i64 %bit, 0
   br i1 %tst, label %true, label %false, !prof !1
@@ -186,7 +186,7 @@ false:
 
 
 define void @test_TBNZ_fallthrough_taken(i32 %in) nounwind {
-; CHECK: test_TBNZ_fallthrough_taken:
+; CHECK-LABEL: test_TBNZ_fallthrough_taken:
   %bit = and i32 %in, 32768
   %tst = icmp ne i32 %bit, 0
   br i1 %tst, label %true, label %false, !prof !0
@@ -208,7 +208,7 @@ false:
 }
 
 define void @test_TBNZ_fallthrough_nottaken(i64 %in) nounwind {
-; CHECK: test_TBNZ_fallthrough_nottaken:
+; CHECK-LABEL: test_TBNZ_fallthrough_nottaken:
   %bit = and i64 %in, 32768
   %tst = icmp ne i64 %bit, 0
   br i1 %tst, label %true, label %false, !prof !1

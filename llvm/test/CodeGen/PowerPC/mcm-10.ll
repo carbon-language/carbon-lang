@@ -16,7 +16,7 @@ entry:
   ret i32 %0
 }
 
-; CHECK: test_fn_static:
+; CHECK-LABEL: test_fn_static:
 ; CHECK: addis [[REG1:[0-9]+]], 2, [[VAR:[a-z0-9A-Z_.]+]]@toc@ha
 ; CHECK: lwz {{[0-9]+}}, [[VAR]]@toc@l([[REG1]])
 ; CHECK: stw {{[0-9]+}}, [[VAR]]@toc@l([[REG1]])

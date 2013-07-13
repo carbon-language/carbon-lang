@@ -4,7 +4,7 @@
 declare i32 @test1a(i32)
 
 define i32 @test1(i32 %x) nounwind {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: andb $1, %
 	%y = add i32 %x, -3
 	%t = call i32 @test1a(i32 %y)
@@ -23,7 +23,7 @@ exit:		; preds = %next
 
 define void @test2(i8* %a) nounwind {
 entry:
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movb {{.*}} %al
 ; CHECK-NEXT: xorb $1, %al
 ; CHECK-NEXT: testb $1

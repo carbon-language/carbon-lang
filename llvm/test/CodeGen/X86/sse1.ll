@@ -33,7 +33,7 @@ entry:
   %tmp11 = insertelement <2 x float> undef, float %add.r, i32 0
   %tmp9 = insertelement <2 x float> %tmp11, float %add.i, i32 1
   ret <2 x float> %tmp9
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK-NOT: shufps	$16
 ; CHECK: shufps	$1, 
 ; CHECK-NOT: shufps	$16

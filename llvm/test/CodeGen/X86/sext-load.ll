@@ -3,7 +3,7 @@
 ; When doing sign extension, use the sext-load lowering to take advantage of
 ; x86's sign extension during loads.
 ;
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK:      movsbl {{.*}}, %eax
 ; CHECK-NEXT: ret
 define i32 @test1(i32 %X) nounwind  {
@@ -16,7 +16,7 @@ entry:
 ; When using a sextload representation, ensure that the sign extension is
 ; preserved even when removing shifted-out low bits.
 ;
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK:      movswl {{.*}}, %eax
 ; CHECK-NEXT: ret
 define i32 @test2({i16, [6 x i8]}* %this) {

@@ -1,7 +1,7 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 
 define i32 @test_floattoi32(float %in) {
-; CHECK: test_floattoi32:
+; CHECK-LABEL: test_floattoi32:
 
   %signed = fptosi float %in to i32
   %unsigned = fptoui float %in to i32
@@ -16,7 +16,7 @@ define i32 @test_floattoi32(float %in) {
 }
 
 define i32 @test_doubletoi32(double %in) {
-; CHECK: test_doubletoi32:
+; CHECK-LABEL: test_doubletoi32:
 
   %signed = fptosi double %in to i32
   %unsigned = fptoui double %in to i32
@@ -31,7 +31,7 @@ define i32 @test_doubletoi32(double %in) {
 }
 
 define i64 @test_floattoi64(float %in) {
-; CHECK: test_floattoi64:
+; CHECK-LABEL: test_floattoi64:
 
   %signed = fptosi float %in to i64
   %unsigned = fptoui float %in to i64
@@ -46,7 +46,7 @@ define i64 @test_floattoi64(float %in) {
 }
 
 define i64 @test_doubletoi64(double %in) {
-; CHECK: test_doubletoi64:
+; CHECK-LABEL: test_doubletoi64:
 
   %signed = fptosi double %in to i64
   %unsigned = fptoui double %in to i64
@@ -61,7 +61,7 @@ define i64 @test_doubletoi64(double %in) {
 }
 
 define float @test_i32tofloat(i32 %in) {
-; CHECK: test_i32tofloat:
+; CHECK-LABEL: test_i32tofloat:
 
   %signed = sitofp i32 %in to float
   %unsigned = uitofp i32 %in to float
@@ -75,7 +75,7 @@ define float @test_i32tofloat(i32 %in) {
 }
 
 define double @test_i32todouble(i32 %in) {
-; CHECK: test_i32todouble:
+; CHECK-LABEL: test_i32todouble:
 
   %signed = sitofp i32 %in to double
   %unsigned = uitofp i32 %in to double
@@ -89,7 +89,7 @@ define double @test_i32todouble(i32 %in) {
 }
 
 define float @test_i64tofloat(i64 %in) {
-; CHECK: test_i64tofloat:
+; CHECK-LABEL: test_i64tofloat:
 
   %signed = sitofp i64 %in to float
   %unsigned = uitofp i64 %in to float
@@ -103,7 +103,7 @@ define float @test_i64tofloat(i64 %in) {
 }
 
 define double @test_i64todouble(i64 %in) {
-; CHECK: test_i64todouble:
+; CHECK-LABEL: test_i64todouble:
 
   %signed = sitofp i64 %in to double
   %unsigned = uitofp i64 %in to double
@@ -117,7 +117,7 @@ define double @test_i64todouble(i64 %in) {
 }
 
 define i32 @test_bitcastfloattoi32(float %in) {
-; CHECK: test_bitcastfloattoi32:
+; CHECK-LABEL: test_bitcastfloattoi32:
 
    %res = bitcast float %in to i32
 ; CHECK: fmov {{w[0-9]+}}, {{s[0-9]+}}
@@ -125,7 +125,7 @@ define i32 @test_bitcastfloattoi32(float %in) {
 }
 
 define i64 @test_bitcastdoubletoi64(double %in) {
-; CHECK: test_bitcastdoubletoi64:
+; CHECK-LABEL: test_bitcastdoubletoi64:
 
    %res = bitcast double %in to i64
 ; CHECK: fmov {{x[0-9]+}}, {{d[0-9]+}}
@@ -133,7 +133,7 @@ define i64 @test_bitcastdoubletoi64(double %in) {
 }
 
 define float @test_bitcasti32tofloat(i32 %in) {
-; CHECK: test_bitcasti32tofloat:
+; CHECK-LABEL: test_bitcasti32tofloat:
 
    %res = bitcast i32 %in to float
 ; CHECK: fmov {{s[0-9]+}}, {{w[0-9]+}}
@@ -142,7 +142,7 @@ define float @test_bitcasti32tofloat(i32 %in) {
 }
 
 define double @test_bitcasti64todouble(i64 %in) {
-; CHECK: test_bitcasti64todouble:
+; CHECK-LABEL: test_bitcasti64todouble:
 
    %res = bitcast i64 %in to double
 ; CHECK: fmov {{d[0-9]+}}, {{x[0-9]+}}

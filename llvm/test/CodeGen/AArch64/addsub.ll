@@ -76,7 +76,7 @@ define void @sub_med() {
 }
 
 define void @testing() {
-; CHECK: testing:
+; CHECK-LABEL: testing:
   %val = load i32* @var_i32
 
 ; CHECK: cmp {{w[0-9]+}}, #4095

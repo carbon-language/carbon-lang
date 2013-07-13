@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -pre-RA-sched=source | FileCheck %s
 ; Test that we correctly align elements when using va_arg
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK-NOT: bfc
 ; CHECK: add	[[REG:(r[0-9]+)|(lr)]], {{(r[0-9]+)|(lr)}}, #7
 ; CHECK: bfc	[[REG]], #0, #3
@@ -17,7 +17,7 @@ entry:
   ret i64 %0
 }
 
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK-NOT: bfc
 ; CHECK: add	[[REG:(r[0-9]+)|(lr)]], {{(r[0-9]+)|(lr)}}, #7
 ; CHECK: bfc	[[REG]], #0, #3

@@ -4,7 +4,7 @@
 @var64 = global i64 0
 
 define void @test_lsl_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
-; CHECK: test_lsl_arith:
+; CHECK-LABEL: test_lsl_arith:
 
   %rhs1 = load volatile i32* @var32
   %shift1 = shl i32 %rhs1, 18
@@ -73,7 +73,7 @@ define void @test_lsl_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
 }
 
 define void @test_lsr_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
-; CHECK: test_lsr_arith:
+; CHECK-LABEL: test_lsr_arith:
 
   %shift1 = lshr i32 %rhs32, 18
   %val1 = add i32 %lhs32, %shift1
@@ -132,7 +132,7 @@ define void @test_lsr_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
 }
 
 define void @test_asr_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
-; CHECK: test_asr_arith:
+; CHECK-LABEL: test_asr_arith:
 
   %shift1 = ashr i32 %rhs32, 18
   %val1 = add i32 %lhs32, %shift1
@@ -191,7 +191,7 @@ define void @test_asr_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
 }
 
 define i32 @test_cmp(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
-; CHECK: test_cmp:
+; CHECK-LABEL: test_cmp:
 
   %shift1 = shl i32 %rhs32, 13
   %tst1 = icmp uge i32 %lhs32, %shift1
@@ -237,7 +237,7 @@ end:
 }
 
 define i32 @test_cmn(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
-; CHECK: test_cmn:
+; CHECK-LABEL: test_cmn:
 
   %shift1 = shl i32 %rhs32, 13
   %val1 = sub i32 0, %shift1

@@ -7,7 +7,7 @@
 ; Make sure at end of do.cond.i, we jump to do.body.i first to have a tighter
 ; inner loop.
 define i32 @test_branches_order() uwtable ssp {
-; CHECK: test_branches_order:
+; CHECK-LABEL: test_branches_order:
 ; CHECK: [[L0:LBB0_[0-9]+]]: ## %do.body.i
 ; CHECK: je
 ; CHECK: %do.cond.i

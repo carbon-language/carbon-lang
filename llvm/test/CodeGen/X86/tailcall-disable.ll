@@ -15,12 +15,12 @@ entry:
   ret i32 %call
 }
 
-; CALL: test1:
+; CALL-LABEL: test1:
 ; CALL-NOT: ret
 ; CALL: callq helper
 ; CALL: ret
 
-; JMP: test1:
+; JMP-LABEL: test1:
 ; JMP-NOT: ret
 ; JMP: jmp helper # TAILCALL
 
@@ -30,11 +30,11 @@ entry:
   ret i32 %call
 }
 
-; CALL: test2:
+; CALL-LABEL: test2:
 ; CALL-NOT: ret
 ; CALL: callq test2
 ; CALL: ret
 
-; JMP: test2:
+; JMP-LABEL: test2:
 ; JMP-NOT: ret
 ; JMP: jmp test2 # TAILCALL

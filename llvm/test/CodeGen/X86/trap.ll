@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mcpu=yonah | FileCheck %s
 
-; CHECK: test0:
+; CHECK-LABEL: test0:
 ; CHECK: ud2
 define i32 @test0() noreturn nounwind  {
 entry:
@@ -8,7 +8,7 @@ entry:
 	unreachable
 }
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: int3
 define i32 @test1() noreturn nounwind  {
 entry:

@@ -11,19 +11,19 @@ entry:
 	ret float %0
 }
 
-; VFP2: test:
+; VFP2-LABEL: test:
 ; VFP2: 	vmul.f32	s
 
-; NFP1: test:
+; NFP1-LABEL: test:
 ; NFP1: 	vmul.f32	d
-; NFP0: test:
+; NFP0-LABEL: test:
 ; NFP0: 	vmul.f32	s
 
-; CORTEXA8: test:
+; CORTEXA8-LABEL: test:
 ; CORTEXA8: 	vmul.f32	s
-; CORTEXA8U: test:
+; CORTEXA8U-LABEL: test:
 ; CORTEXA8U: 	vmul.f32	d
-; CORTEXA9: test:
+; CORTEXA9-LABEL: test:
 ; CORTEXA9: 	vmul.f32	s
 
 ; VFP2: test2

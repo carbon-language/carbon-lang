@@ -33,7 +33,7 @@ while.end:                                        ; preds = %while.cond
 
 ; DAGCombiner shouldn't fold the sdiv (ashr) away.
 ; rdar://8636812
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK:   sarl
 
 define i32 @test2() nounwind {

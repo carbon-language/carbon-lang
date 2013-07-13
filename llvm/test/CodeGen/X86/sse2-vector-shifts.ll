@@ -8,7 +8,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_sllw_1:
+; CHECK-LABEL: test_sllw_1:
 ; CHECK: psllw   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -18,7 +18,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_sllw_2:
+; CHECK-LABEL: test_sllw_2:
 ; CHECK: paddw   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -28,7 +28,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_sllw_3:
+; CHECK-LABEL: test_sllw_3:
 ; CHECK: xorps   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -38,7 +38,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_slld_1:
+; CHECK-LABEL: test_slld_1:
 ; CHECK: pslld   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -48,7 +48,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_slld_2:
+; CHECK-LABEL: test_slld_2:
 ; CHECK: paddd   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -58,7 +58,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_slld_3:
+; CHECK-LABEL: test_slld_3:
 ; CHECK: xorps   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -68,7 +68,7 @@ entry:
   ret <2 x i64> %shl
 }
 
-; CHECK: test_sllq_1:
+; CHECK-LABEL: test_sllq_1:
 ; CHECK: psllq   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -78,7 +78,7 @@ entry:
   ret <2 x i64> %shl
 }
 
-; CHECK: test_sllq_2:
+; CHECK-LABEL: test_sllq_2:
 ; CHECK: paddq   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -88,7 +88,7 @@ entry:
   ret <2 x i64> %shl
 }
 
-; CHECK: test_sllq_3:
+; CHECK-LABEL: test_sllq_3:
 ; CHECK: xorps   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -100,7 +100,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_sraw_1:
+; CHECK-LABEL: test_sraw_1:
 ; CHECK: psraw   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -110,7 +110,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_sraw_2:
+; CHECK-LABEL: test_sraw_2:
 ; CHECK: psraw   $1, %xmm0
 ; CHECK-NEXT: ret
 
@@ -120,7 +120,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_sraw_3:
+; CHECK-LABEL: test_sraw_3:
 ; CHECK: psraw   $16, %xmm0
 ; CHECK-NEXT: ret
 
@@ -130,7 +130,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_srad_1:
+; CHECK-LABEL: test_srad_1:
 ; CHECK: psrad   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -140,7 +140,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_srad_2:
+; CHECK-LABEL: test_srad_2:
 ; CHECK: psrad   $1, %xmm0
 ; CHECK-NEXT: ret
 
@@ -150,7 +150,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_srad_3:
+; CHECK-LABEL: test_srad_3:
 ; CHECK: psrad   $32, %xmm0
 ; CHECK-NEXT: ret
 
@@ -162,7 +162,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_srlw_1:
+; CHECK-LABEL: test_srlw_1:
 ; CHECK: psrlw   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -172,7 +172,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_srlw_2:
+; CHECK-LABEL: test_srlw_2:
 ; CHECK: psrlw   $1, %xmm0
 ; CHECK-NEXT: ret
 
@@ -182,7 +182,7 @@ entry:
   ret <8 x i16> %shl
 }
 
-; CHECK: test_srlw_3:
+; CHECK-LABEL: test_srlw_3:
 ; CHECK: xorps   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -192,7 +192,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_srld_1:
+; CHECK-LABEL: test_srld_1:
 ; CHECK: psrld   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -202,7 +202,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_srld_2:
+; CHECK-LABEL: test_srld_2:
 ; CHECK: psrld   $1, %xmm0
 ; CHECK-NEXT: ret
 
@@ -212,7 +212,7 @@ entry:
   ret <4 x i32> %shl
 }
 
-; CHECK: test_srld_3:
+; CHECK-LABEL: test_srld_3:
 ; CHECK: xorps   %xmm0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -222,7 +222,7 @@ entry:
   ret <2 x i64> %shl
 }
 
-; CHECK: test_srlq_1:
+; CHECK-LABEL: test_srlq_1:
 ; CHECK: psrlq   $0, %xmm0
 ; CHECK-NEXT: ret
 
@@ -232,7 +232,7 @@ entry:
   ret <2 x i64> %shl
 }
 
-; CHECK: test_srlq_2:
+; CHECK-LABEL: test_srlq_2:
 ; CHECK: psrlq   $1, %xmm0
 ; CHECK-NEXT: ret
 
@@ -242,6 +242,6 @@ entry:
   ret <2 x i64> %shl
 }
 
-; CHECK: test_srlq_3:
+; CHECK-LABEL: test_srlq_3:
 ; CHECK: xorps   %xmm0, %xmm0
 ; CHECK-NEXT: ret

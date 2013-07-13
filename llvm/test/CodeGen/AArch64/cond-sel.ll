@@ -4,7 +4,7 @@
 @var64 = global i64 0
 
 define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
-; CHECK: test_csel:
+; CHECK-LABEL: test_csel:
 
   %tst1 = icmp ugt i32 %lhs32, %rhs32
   %val1 = select i1 %tst1, i32 42, i32 52
@@ -26,7 +26,7 @@ define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
 }
 
 define void @test_floatcsel(float %lhs32, float %rhs32, double %lhs64, double %rhs64) {
-; CHECK: test_floatcsel:
+; CHECK-LABEL: test_floatcsel:
 
   %tst1 = fcmp one float %lhs32, %rhs32
 ; CHECK: fcmp {{s[0-9]+}}, {{s[0-9]+}}
@@ -53,7 +53,7 @@ define void @test_floatcsel(float %lhs32, float %rhs32, double %lhs64, double %r
 
 
 define void @test_csinc(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
-; CHECK: test_csinc:
+; CHECK-LABEL: test_csinc:
 
 ; Note that commuting rhs and lhs in the select changes ugt to ule (i.e. hi to ls).
   %tst1 = icmp ugt i32 %lhs32, %rhs32
@@ -93,7 +93,7 @@ define void @test_csinc(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
 }
 
 define void @test_csinv(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
-; CHECK: test_csinv:
+; CHECK-LABEL: test_csinv:
 
 ; Note that commuting rhs and lhs in the select changes ugt to ule (i.e. hi to ls).
   %tst1 = icmp ugt i32 %lhs32, %rhs32
@@ -133,7 +133,7 @@ define void @test_csinv(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
 }
 
 define void @test_csneg(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
-; CHECK: test_csneg:
+; CHECK-LABEL: test_csneg:
 
 ; Note that commuting rhs and lhs in the select changes ugt to ule (i.e. hi to ls).
   %tst1 = icmp ugt i32 %lhs32, %rhs32
@@ -173,7 +173,7 @@ define void @test_csneg(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
 }
 
 define void @test_cset(i32 %lhs, i32 %rhs, i64 %lhs64) {
-; CHECK: test_cset:
+; CHECK-LABEL: test_cset:
 
 ; N.b. code is not optimal here (32-bit csinc would be better) but
 ; incoming DAG is too complex
@@ -194,7 +194,7 @@ define void @test_cset(i32 %lhs, i32 %rhs, i64 %lhs64) {
 }
 
 define void @test_csetm(i32 %lhs, i32 %rhs, i64 %lhs64) {
-; CHECK: test_csetm:
+; CHECK-LABEL: test_csetm:
 
   %tst1 = icmp eq i32 %lhs, %rhs
   %val1 = sext i1 %tst1 to i32

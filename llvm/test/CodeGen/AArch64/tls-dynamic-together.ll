@@ -8,7 +8,7 @@
 @general_dynamic_var = external thread_local global i32
 
 define i32 @test_generaldynamic() {
-; CHECK: test_generaldynamic:
+; CHECK-LABEL: test_generaldynamic:
 
   %val = load i32* @general_dynamic_var
   ret i32 %val

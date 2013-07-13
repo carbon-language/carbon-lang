@@ -13,6 +13,6 @@ entry:
 
 ; CHECK: [[VAR:[a-z0-9A-Z_.]+]]:
 ; CHECK: .quad 4562098671269285104
-; CHECK: test_double_const:
+; CHECK-LABEL: test_double_const:
 ; CHECK: addis [[REG1:[0-9]+]], 2, [[VAR]]@toc@ha
 ; CHECK: lfd {{[0-9]+}}, [[VAR]]@toc@l([[REG1]])

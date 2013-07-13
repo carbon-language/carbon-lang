@@ -4,7 +4,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-unknown-freebsd9.0"
 
 define double @test1(double %x) nounwind readnone {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: movl foo@GOT
 ; CHECK-NEXT: jmpl
   %1 = tail call double @foo(double %x) nounwind readnone
@@ -14,7 +14,7 @@ define double @test1(double %x) nounwind readnone {
 declare double @foo(double) readnone
 
 define double @test2(double %x) nounwind readnone {
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movl sin@GOT
 ; CHECK-NEXT: jmpl
   %1 = tail call double @sin(double %x) nounwind readnone

@@ -7,7 +7,7 @@ entry:
   ret i8 %result
 }
 
-; CHECK: test_sdiv8:
+; CHECK-LABEL: test_sdiv8:
 ; CHECK: movsbw
 ; CHECK: idivb
 
@@ -17,7 +17,7 @@ entry:
   ret i8 %result
 }
 
-; CHECK: test_srem8:
+; CHECK-LABEL: test_srem8:
 ; CHECK: movsbw
 ; CHECK: idivb
 
@@ -27,7 +27,7 @@ entry:
   ret i8 %result
 }
 
-; CHECK: test_udiv8:
+; CHECK-LABEL: test_udiv8:
 ; CHECK: movzbw
 ; CHECK: divb
 
@@ -37,7 +37,7 @@ entry:
   ret i8 %result
 }
 
-; CHECK: test_urem8:
+; CHECK-LABEL: test_urem8:
 ; CHECK: movzbw
 ; CHECK: divb
 
@@ -47,7 +47,7 @@ entry:
   ret i16 %result
 }
 
-; CHECK: test_sdiv16:
+; CHECK-LABEL: test_sdiv16:
 ; CHECK: cwtd
 ; CHECK: idivw
 
@@ -57,7 +57,7 @@ entry:
   ret i16 %result
 }
 
-; CHECK: test_srem16:
+; CHECK-LABEL: test_srem16:
 ; CHECK: cwtd
 ; CHECK: idivw
 
@@ -67,7 +67,7 @@ entry:
   ret i16 %result
 }
 
-; CHECK: test_udiv16:
+; CHECK-LABEL: test_udiv16:
 ; CHECK: xorl
 ; CHECK: divw
 
@@ -77,7 +77,7 @@ entry:
   ret i16 %result
 }
 
-; CHECK: test_urem16:
+; CHECK-LABEL: test_urem16:
 ; CHECK: xorl
 ; CHECK: divw
 
@@ -87,7 +87,7 @@ entry:
   ret i32 %result
 }
 
-; CHECK: test_sdiv32:
+; CHECK-LABEL: test_sdiv32:
 ; CHECK: cltd
 ; CHECK: idivl
 
@@ -97,7 +97,7 @@ entry:
   ret i32 %result
 }
 
-; CHECK: test_srem32:
+; CHECK-LABEL: test_srem32:
 ; CHECK: cltd
 ; CHECK: idivl
 
@@ -107,7 +107,7 @@ entry:
   ret i32 %result
 }
 
-; CHECK: test_udiv32:
+; CHECK-LABEL: test_udiv32:
 ; CHECK: xorl
 ; CHECK: divl
 
@@ -117,6 +117,6 @@ entry:
   ret i32 %result
 }
 
-; CHECK: test_urem32:
+; CHECK-LABEL: test_urem32:
 ; CHECK: xorl
 ; CHECK: divl

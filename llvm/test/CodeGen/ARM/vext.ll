@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @test_vextd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: test_vextd:
+;CHECK-LABEL: test_vextd:
 ;CHECK: vext
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -10,7 +10,7 @@ define <8 x i8> @test_vextd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <8 x i8> @test_vextRd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: test_vextRd:
+;CHECK-LABEL: test_vextRd:
 ;CHECK: vext
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -19,7 +19,7 @@ define <8 x i8> @test_vextRd(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <16 x i8> @test_vextq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: test_vextq:
+;CHECK-LABEL: test_vextq:
 ;CHECK: vext
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -28,7 +28,7 @@ define <16 x i8> @test_vextq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <16 x i8> @test_vextRq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: test_vextRq:
+;CHECK-LABEL: test_vextRq:
 ;CHECK: vext
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -37,7 +37,7 @@ define <16 x i8> @test_vextRq(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @test_vextd16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: test_vextd16:
+;CHECK-LABEL: test_vextd16:
 ;CHECK: vext
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -46,7 +46,7 @@ define <4 x i16> @test_vextd16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @test_vextq32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: test_vextq32:
+;CHECK-LABEL: test_vextq32:
 ;CHECK: vext
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -57,7 +57,7 @@ define <4 x i32> @test_vextq32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ; Undef shuffle indices should not prevent matching to VEXT:
 
 define <8 x i8> @test_vextd_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: test_vextd_undef:
+;CHECK-LABEL: test_vextd_undef:
 ;CHECK: vext
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -66,7 +66,7 @@ define <8 x i8> @test_vextd_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <16 x i8> @test_vextRq_undef(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: test_vextRq_undef:
+;CHECK-LABEL: test_vextRq_undef:
 ;CHECK: vext
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -75,7 +75,7 @@ define <16 x i8> @test_vextRq_undef(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <16 x i8> @test_vextq_undef_op2(<16 x i8> %a) nounwind {
-;CHECK: test_vextq_undef_op2:
+;CHECK-LABEL: test_vextq_undef_op2:
 ;CHECK: vext
 entry:
   %tmp1 = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1>
@@ -83,7 +83,7 @@ entry:
 }
 
 define <8 x i8> @test_vextd_undef_op2(<8 x i8> %a) nounwind {
-;CHECK: test_vextd_undef_op2:
+;CHECK-LABEL: test_vextd_undef_op2:
 ;CHECK: vext
 entry:
   %tmp1 = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 0, i32 1>
@@ -92,7 +92,7 @@ entry:
 
 
 define <16 x i8> @test_vextq_undef_op2_undef(<16 x i8> %a) nounwind {
-;CHECK: test_vextq_undef_op2_undef:
+;CHECK-LABEL: test_vextq_undef_op2_undef:
 ;CHECK: vext
 entry:
   %tmp1 = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 2, i32 3, i32 4, i32 undef, i32 undef, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 0, i32 1>
@@ -100,7 +100,7 @@ entry:
 }
 
 define <8 x i8> @test_vextd_undef_op2_undef(<8 x i8> %a) nounwind {
-;CHECK: test_vextd_undef_op2_undef:
+;CHECK-LABEL: test_vextd_undef_op2_undef:
 ;CHECK: vext
 entry:
   %tmp1 = shufflevector <8 x i8> %a, <8 x i8> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 6, i32 7, i32 undef, i32 1>
@@ -114,7 +114,7 @@ entry:
 ; Also checks interleaving of sources is handled correctly.
 ; Essence: a vext is used on %A and something saner than stack load/store for final result.
 define <4 x i16> @test_interleaved(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: test_interleaved:
+;CHECK-LABEL: test_interleaved:
 ;CHECK: vext.16
 ;CHECK-NOT: vext.16
 ;CHECK: vzip.16
@@ -126,7 +126,7 @@ define <4 x i16> @test_interleaved(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 
 ; An undef in the shuffle list should still be optimizable
 define <4 x i16> @test_undef(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: test_undef:
+;CHECK-LABEL: test_undef:
 ;CHECK: vzip.16
         %tmp1 = load <8 x i16>* %A
         %tmp2 = load <8 x i16>* %B
@@ -138,7 +138,7 @@ define <4 x i16> @test_undef(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ; Use illegal <32 x i16> type to produce such a shuffle after legalizing types.
 ; Try to look for fallback to by-element inserts.
 define <4 x i16> @test_multisource(<32 x i16>* %B) nounwind {
-;CHECK: test_multisource:
+;CHECK-LABEL: test_multisource:
 ;CHECK: vmov.16 [[REG:d[0-9]+]][0]
 ;CHECK: vmov.16 [[REG]][1]
 ;CHECK: vmov.16 [[REG]][2]
@@ -151,7 +151,7 @@ define <4 x i16> @test_multisource(<32 x i16>* %B) nounwind {
 ; We don't handle shuffles using more than half of a 128-bit vector.
 ; Again, test for fallback to by-element inserts.
 define <4 x i16> @test_largespan(<8 x i16>* %B) nounwind {
-;CHECK: test_largespan:
+;CHECK-LABEL: test_largespan:
 ;CHECK: vmov.16 [[REG:d[0-9]+]][0]
 ;CHECK: vmov.16 [[REG]][1]
 ;CHECK: vmov.16 [[REG]][2]
@@ -165,7 +165,7 @@ define <4 x i16> @test_largespan(<8 x i16>* %B) nounwind {
 ; this rather than blindly emitting a VECTOR_SHUFFLE (infinite
 ; lowering loop can result otherwise).
 define <8 x i16> @test_illegal(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: test_illegal:
+;CHECK-LABEL: test_illegal:
 ;CHECK: vmov.16 [[REG:d[0-9]+]][0]
 ;CHECK: vmov.16 [[REG]][1]
 ;CHECK: vmov.16 [[REG]][2]
@@ -183,7 +183,7 @@ define <8 x i16> @test_illegal(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ; PR11129
 ; Make sure this doesn't crash
 define arm_aapcscc void @test_elem_mismatch(<2 x i64>* nocapture %src, <4 x i16>* nocapture %dest) nounwind {
-; CHECK: test_elem_mismatch:
+; CHECK-LABEL: test_elem_mismatch:
 ; CHECK: vstr
   %tmp0 = load <2 x i64>* %src, align 16
   %tmp1 = bitcast <2 x i64> %tmp0 to <4 x i32>

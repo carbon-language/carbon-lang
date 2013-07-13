@@ -32,7 +32,7 @@ define i32 @test2(i32 %X) nounwind {
 ; rdar://9147637
 define i32 @test3(i16 zeroext %a) nounwind {
 entry:
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: revsh r0, r0
   %0 = tail call i16 @llvm.bswap.i16(i16 %a)
   %1 = sext i16 %0 to i32
@@ -43,7 +43,7 @@ declare i16 @llvm.bswap.i16(i16) nounwind readnone
 
 define i32 @test4(i16 zeroext %a) nounwind {
 entry:
-; CHECK: test4:
+; CHECK-LABEL: test4:
 ; CHECK: revsh r0, r0
   %conv = zext i16 %a to i32
   %shr9 = lshr i16 %a, 8

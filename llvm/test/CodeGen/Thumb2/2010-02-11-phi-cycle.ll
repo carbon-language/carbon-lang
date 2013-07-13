@@ -2,7 +2,7 @@
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 
 define i32 @test(i32 %n) nounwind {
-; CHECK: test:
+; CHECK-LABEL: test:
 ; CHECK-NOT: mov
 ; CHECK: return
 entry:
@@ -30,7 +30,7 @@ return:                                           ; preds = %bb, %entry
 }
 
 define i32 @test_dead_cycle(i32 %n) nounwind {
-; CHECK: test_dead_cycle:
+; CHECK-LABEL: test_dead_cycle:
 ; CHECK: blx
 ; CHECK-NOT: mov
 ; CHECK: blx

@@ -4,7 +4,7 @@
 @vardouble = global double 0.0
 
 define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
-; CHECK: test_csel:
+; CHECK-LABEL: test_csel:
 
   %tst1 = icmp ugt i32 %lhs32, %rhs32
   %val1 = select i1 %tst1, float 0.0, float 1.0

@@ -5,7 +5,7 @@ define i32 @test1(i32 %x) nounwind {
         %tmp1 = shl i32 %x, 3
         %tmp2 = add i32 %tmp1, 7
         ret i32 %tmp2
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK:    leal 7(,%r[[A0:di|cx]],8), %eax
 }
 
@@ -27,7 +27,7 @@ bb.nph:
 
 bb2:
 	ret i32 %x_offs
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: movl %e[[A0]], %eax
 ; CHECK: addl $-5, %eax
 ; CHECK:	andl	$-4, %eax

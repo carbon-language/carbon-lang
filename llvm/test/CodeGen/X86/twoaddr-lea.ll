@@ -10,7 +10,7 @@
 @G = external global i32
 
 define i32 @test1(i32 %X) nounwind {
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK-NOT: mov
 ; CHECK: leal 1(%rdi)
         %Z = add i32 %X, 1
@@ -23,7 +23,7 @@ define i32 @test1(i32 %X) nounwind {
 ; commutted (which would require inserting a copy).
 define i32 @test2(i32 inreg %a, i32 inreg %b, i32 %c, i32 %d) nounwind {
 entry:
-; CHECK: test2:
+; CHECK-LABEL: test2:
 ; CHECK: leal
 ; CHECK-NOT: leal
 ; CHECK-NOT: mov
@@ -38,7 +38,7 @@ entry:
 ; rdar://9002648
 define i64 @test3(i64 %x) nounwind readnone ssp {
 entry:
-; CHECK: test3:
+; CHECK-LABEL: test3:
 ; CHECK: leaq (%rdi,%rdi), %rax
 ; CHECK-NOT: addq
 ; CHECK-NEXT: ret
