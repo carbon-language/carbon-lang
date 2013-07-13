@@ -1,7 +1,4 @@
-; RUN: llc < %s -march=x86-64 | grep orb | count 1
-; RUN: llc < %s -march=x86-64 | grep orb | grep 1
-; RUN: llc < %s -march=x86-64 | grep orl | count 1
-; RUN: llc < %s -march=x86-64 | grep orl | grep 16842752
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 	%struct.bf = type { i64, i16, i16, i32 }
 @bfi = common global %struct.bf zeroinitializer, align 16
@@ -12,6 +9,10 @@ entry:
 	%1 = or i32 %0, 65536
 	store i32 %1, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	ret void
+
+; CHECK: t1:
+; CHECK: orb $1
+; CHECK-NEXT: ret
 }
 
 define void @t2() nounwind optsize ssp {
@@ -20,4 +21,8 @@ entry:
 	%1 = or i32 %0, 16842752
 	store i32 %1, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	ret void
+
+; CHECK: t2:
+; CHECK: orl $16842752
+; CHECK-NEXT: ret
 }
