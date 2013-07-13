@@ -149,8 +149,9 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
          BI != BE; ++BI)
       if (RI->getRegionFor(*BI) == R)
         O.indent(2 * (depth + 1))
-            << "Node" << static_cast<const void *>(
-                             RI->getTopLevelRegion()->getBBNode(*BI)) << ";\n";
+            << "Node"
+            << static_cast<void *>(RI->getTopLevelRegion()->getBBNode(*BI))
+            << ";\n";
 
     O.indent(2 * depth) << "}\n";
   }

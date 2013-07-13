@@ -262,8 +262,8 @@ bool JSONImporter::runOnScop(Scop &scop) {
     for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
                                    ME = Stmt->memacc_end();
          MI != ME; ++MI) {
-      Json::Value accesses = jscop["statements"][statementIdx]["accesses"][
-          memoryAccessIdx]["relation"];
+      Json::Value accesses = jscop["statements"][statementIdx]["accesses"]
+                                  [memoryAccessIdx]["relation"];
       isl_map *newAccessMap =
           isl_map_read_from_str(S->getIslCtx(), accesses.asCString());
       isl_map *currentAccessMap = (*MI)->getAccessRelation();
