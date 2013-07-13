@@ -38,10 +38,20 @@ LegalityCheckDisabled("disable-polly-legality",
                       cl::desc("Disable polly legality check"), cl::Hidden,
                       cl::init(false), cl::cat(PollyCategory));
 
-static cl::opt<bool>
-ValueDependences("polly-value-dependences",
-                 cl::desc("Use value instead of memory based dependences"),
-                 cl::Hidden, cl::init(true), cl::cat(PollyCategory));
+enum AnalysisType {
+  VALUE_BASED_ANALYSIS,
+  MEMORY_BASED_ANALYSIS
+};
+
+static cl::opt<enum AnalysisType> OptAnalysisType(
+    "polly-dependences-analysis-type",
+    cl::desc("The kind of dependence analysis to use"),
+    cl::values(clEnumValN(VALUE_BASED_ANALYSIS, "value-based",
+                          "Exact dependences without transitive dependences"),
+               clEnumValN(MEMORY_BASED_ANALYSIS, "memory-based",
+                          "Overapproximation of dependences"),
+               clEnumValEnd),
+    cl::Hidden, cl::init(VALUE_BASED_ANALYSIS), cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = NULL; }
@@ -80,7 +90,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
 
-  if (ValueDependences) {
+  if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_map_compute_flow(
         isl_union_map_copy(Read), isl_union_map_copy(Write),
         isl_union_map_copy(MayWrite), isl_union_map_copy(Schedule), &RAW, NULL,
