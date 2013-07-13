@@ -16,7 +16,7 @@ RUN: cat test.a | FileCheck -strict-whitespace %s
 CHECK:      !<arch>
 CHECK-NEXT: //                                              18        `
 CHECK-NEXT: 0123456789abcdef/
-CHECK-NEXT: 0123456789abcde/{{.*}}  {{.*}}  {{.*}}  {{.*}}  4         `
+CHECK-NEXT: 0123456789abcde/{{................................}}4         `
 CHECK-NEXT: bar
-CHECK-NEXT: /0              {{.*}}  {{.*}}  {{.*}}  {{.*}}  4         `
+CHECK-NEXT: /0              {{................................}}4         `
 CHECK-NEXT: zed
