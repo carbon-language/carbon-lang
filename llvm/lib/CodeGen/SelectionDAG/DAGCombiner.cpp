@@ -154,7 +154,7 @@ namespace {
     SDValue PromoteExtend(SDValue Op);
     bool PromoteLoad(SDValue Op);
 
-    void ExtendSetCCUses(SmallVector<SDNode*, 4> SetCCs,
+    void ExtendSetCCUses(const SmallVectorImpl<SDNode *> &SetCCs,
                          SDValue Trunc, SDValue ExtLoad, SDLoc DL,
                          ISD::NodeType ExtType);
 
@@ -4367,7 +4367,7 @@ static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
   return true;
 }
 
-void DAGCombiner::ExtendSetCCUses(SmallVector<SDNode*, 4> SetCCs,
+void DAGCombiner::ExtendSetCCUses(const SmallVectorImpl<SDNode *> &SetCCs,
                                   SDValue Trunc, SDValue ExtLoad, SDLoc DL,
                                   ISD::NodeType ExtType) {
   // Extend SetCC uses if necessary.
