@@ -216,11 +216,11 @@ public:
 
   iterator insert(ASTContext &C, iterator I, const T &Elt) {
     if (I == this->end()) {  // Important special case for empty vector.
-      push_back(Elt, C);
+      push_back(Elt);
       return this->end()-1;
     }
 
-    if (this->End < this->Capacity) {
+    if (this->EndX < this->CapacityX) {
     Retry:
       new (this->end()) T(this->back());
       this->setEnd(this->end()+1);
