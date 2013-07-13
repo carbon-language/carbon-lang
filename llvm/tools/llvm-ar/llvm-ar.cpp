@@ -560,6 +560,9 @@ static void performWriteOperation(ArchiveOperation Operation,
       sys::fs::file_status Status;
       failIfError(sys::fs::status(FileName, Status), FileName);
 
+      OwningPtr<MemoryBuffer> File;
+      failIfError(MemoryBuffer::getFile(FileName, File), FileName);
+
       uint64_t secondsSinceEpoch =
           Status.getLastModificationTime().toEpochTime();
       printWithSpacePadding(Out, secondsSinceEpoch, 12);
@@ -570,8 +573,6 @@ static void performWriteOperation(ArchiveOperation Operation,
       printWithSpacePadding(Out, Status.getSize(), 10);
       Out << "`\n";
 
-      OwningPtr<MemoryBuffer> File;
-      failIfError(MemoryBuffer::getFile(FileName, File), FileName);
       Out << File->getBuffer();
     } else {
       object::Archive::child_iterator OldMember = I->getOld();
