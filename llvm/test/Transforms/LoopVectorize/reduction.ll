@@ -442,3 +442,28 @@ for.end:
   %add2 = fadd fast float %add.lcssa, %add1.lcssa
   ret float %add2
 }
+
+
+; When vectorizing a reduction whose loop header phi value is used outside the
+; loop special care must be taken. Otherwise, the reduced value feeding into the
+; outside user misses a few iterations (VF-1) of the loop.
+; PR16522
+
+; CHECK: @phivalueredux
+; CHECK-NOT: x i32>
+
+define i32 @phivalueredux(i32 %p) {
+entry:
+  br label %for.body
+
+for.body:
+  %t.03 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %p.addr.02 = phi i32 [ %p, %entry ], [ %xor, %for.body ]
+  %xor = xor i32 %p.addr.02, -1
+  %inc = add nsw i32 %t.03, 1
+  %exitcond = icmp eq i32 %inc, 16
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  ret i32 %p.addr.02
+}
