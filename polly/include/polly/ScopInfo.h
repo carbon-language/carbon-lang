@@ -60,11 +60,7 @@ class Comparison;
 //===----------------------------------------------------------------------===//
 /// @brief Represent memory accesses in statements.
 class MemoryAccess {
-  // DO NOT IMPLEMENT
-  MemoryAccess(const MemoryAccess &);
-  // DO NOT IMPLEMENT
-  const MemoryAccess &operator=(const MemoryAccess &);
-
+public:
   /// @brief The access type of a memory access
   ///
   /// There are three kind of access types:
@@ -86,10 +82,16 @@ class MemoryAccess {
   /// contain a new value if there is actually a write or the old value may
   /// remain, if no write happens.
   enum AccessType {
-    Read,
-    MustWrite,
-    MayWrite
+    READ,
+    MUST_WRITE,
+    MAY_WRITE
   };
+
+private:
+  // DO NOT IMPLEMENT
+  MemoryAccess(const MemoryAccess &);
+  // DO NOT IMPLEMENT
+  const MemoryAccess &operator=(const MemoryAccess &);
 
   isl_map *AccessRelation;
   enum AccessType Type;
@@ -122,18 +124,21 @@ public:
 
   ~MemoryAccess();
 
+  /// @brief Get the type of a memory access.
+  enum AccessType getType() { return Type; }
+
   /// @brief Is this a read memory access?
-  bool isRead() const { return Type == MemoryAccess::Read; }
+  bool isRead() const { return Type == MemoryAccess::READ; }
 
   /// @brief Is this a must-write memory access?
-  bool isMustWrite() const { return Type == MemoryAccess::MustWrite; }
+  bool isMustWrite() const { return Type == MemoryAccess::MUST_WRITE; }
 
   /// @brief Is this a may-write memory access?
-  bool isMayWrite() const { return Type == MemoryAccess::MayWrite; }
+  bool isMayWrite() const { return Type == MemoryAccess::MAY_WRITE; }
 
   /// @brief Is this a write memory access?
   bool isWrite() const {
-    return Type == MemoryAccess::MustWrite || Type == MemoryAccess::MayWrite;
+    return Type == MemoryAccess::MUST_WRITE || Type == MemoryAccess::MAY_WRITE;
   }
 
   isl_map *getAccessRelation() const;
