@@ -1379,7 +1379,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   RecordDecl *RD = Ty->getDecl();
   // Limited debug info should only remove struct definitions that can
   // safely be replaced by a forward declaration in the source code.
-  if (DebugKind <= CodeGenOptions::LimitedDebugInfo && Declaration) {
+  if (DebugKind <= CodeGenOptions::LimitedDebugInfo && Declaration &&
+      !RD->isCompleteDefinitionRequired()) {
     // FIXME: This implementation is problematic; there are some test
     // cases where we violate the above principle, such as
     // test/CodeGen/debug-info-records.c .

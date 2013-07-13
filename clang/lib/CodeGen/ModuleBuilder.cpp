@@ -13,6 +13,7 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
+#include "CGDebugInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -91,6 +92,12 @@ namespace {
                  Method->hasAttr<ConstructorAttr>()))
               Builder->EmitTopLevelDecl(Method);
       }
+    }
+
+    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) LLVM_OVERRIDE {
+      if (CodeGen::CGDebugInfo *DI = Builder->getModuleDebugInfo())
+        if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
+          DI->completeFwdDecl(*RD);
     }
 
     virtual void HandleTranslationUnit(ASTContext &Ctx) {

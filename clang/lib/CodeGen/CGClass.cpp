@@ -1630,17 +1630,6 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
                                         llvm::Value *This,
                                         CallExpr::const_arg_iterator ArgBeg,
                                         CallExpr::const_arg_iterator ArgEnd) {
-
-  CGDebugInfo *DI = getDebugInfo();
-  if (DI &&
-      CGM.getCodeGenOpts().getDebugInfo() == CodeGenOptions::LimitedDebugInfo) {
-    // If debug info for this class has not been emitted then this is the
-    // right time to do so.
-    const CXXRecordDecl *Parent = D->getParent();
-    DI->getOrCreateRecordType(CGM.getContext().getTypeDeclType(Parent),
-                              Parent->getLocation());
-  }
-
   // If this is a trivial constructor, just emit what's needed.
   if (D->isTrivial()) {
     if (ArgBeg == ArgEnd) {

@@ -1,8 +1,7 @@
 // RUN: %clang -emit-llvm -g -S %s -o - | FileCheck %s
 
 namespace PR16214_1 {
-// CHECK: [[PR16214_1:![0-9]*]] = {{.*}} [ DW_TAG_namespace ] [PR16214_1]
-// CHECK: = metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata [[PR16214_1]], {{.*}} ; [ DW_TAG_structure_type ] [foo] {{.*}} [def]
+// CHECK-DAG: [ DW_TAG_structure_type ] [foo] [line [[@LINE+1]], {{.*}} [def]
 struct foo {
   int i;
 };
@@ -13,9 +12,9 @@ bar *a;
 bar b;
 }
 
-namespace test1 {
+namespace PR14467 {
+// CHECK-DAG: [ DW_TAG_structure_type ] [foo] [line [[@LINE+1]], {{.*}} [def]
 struct foo {
-  int i;
 };
 
 foo *bar(foo *a) {
@@ -24,13 +23,30 @@ foo *bar(foo *a) {
 }
 }
 
-namespace test2 {
+namespace test1 {
+// CHECK-DAG: [ DW_TAG_structure_type ] [foo] [line [[@LINE+1]], {{.*}} [decl]
 struct foo {
-  int i;
 };
 
 extern int bar(foo *a);
 int baz(foo *a) {
   return bar(a);
+}
+}
+
+namespace test2 {
+// FIXME: if we were a bit fancier, we could realize that the 'foo' type is only
+// required because of the 'bar' type which is not required at all (or might
+// only be required to be declared)
+// CHECK-DAG: [ DW_TAG_structure_type ] [foo] [line [[@LINE+1]], {{.*}} [def]
+struct foo {
+};
+
+struct bar {
+  foo f;
+};
+
+void func() {
+  foo *f;
 }
 }

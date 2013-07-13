@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
@@ -4844,6 +4845,20 @@ bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
 /// @c false otherwise.
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                                TypeDiagnoser &Diagnoser) {
+  if (RequireCompleteTypeImpl(Loc, T, Diagnoser))
+    return true;
+  if (const TagType *Tag = T->getAs<TagType>()) {
+    if (!Tag->getDecl()->isCompleteDefinitionRequired()) {
+      Tag->getDecl()->setCompleteDefinitionRequired();
+      Consumer.HandleTagDeclRequiredDefinition(Tag->getDecl());
+    }
+  }
+  return false;
+}
+
+/// \brief The implementation of RequireCompleteType
+bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
+                                   TypeDiagnoser &Diagnoser) {
   // FIXME: Add this assertion to make sure we always get instantiation points.
   //  assert(!Loc.isInvalid() && "Invalid location in RequireCompleteType");
   // FIXME: Add this assertion to help us flush out problems with

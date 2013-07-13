@@ -2445,6 +2445,9 @@ protected:
   /// This option is only enabled when modules are enabled.
   bool MayHaveOutOfDateDef : 1;
 
+  /// Has the full definition of this type been required by a use somewhere in
+  /// the TU.
+  bool IsCompleteDefinitionRequired : 1;
 private:
   SourceLocation RBraceLoc;
 
@@ -2531,6 +2534,12 @@ public:
     return IsCompleteDefinition;
   }
 
+  /// \brief Return true if this complete decl is
+  /// required to be complete for some existing use.
+  bool isCompleteDefinitionRequired() const {
+    return IsCompleteDefinitionRequired;
+  }
+
   /// isBeingDefined - Return true if this decl is currently being defined.
   bool isBeingDefined() const {
     return IsBeingDefined;
@@ -2571,6 +2580,8 @@ public:
   TagDecl *getDefinition() const;
 
   void setCompleteDefinition(bool V) { IsCompleteDefinition = V; }
+
+  void setCompleteDefinitionRequired() { IsCompleteDefinitionRequired = true; }
 
   // FIXME: Return StringRef;
   const char *getKindName() const {

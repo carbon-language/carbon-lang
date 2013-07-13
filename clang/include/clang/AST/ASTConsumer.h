@@ -72,6 +72,10 @@ public:
   /// can be defined in declspecs).
   virtual void HandleTagDeclDefinition(TagDecl *D) {}
 
+  /// \brief This callback is invoked the first time each TagDecl is required to
+  /// be complete.
+  virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) {}
+
   /// \brief Invoked when a function is implicitly instantiated.
   /// Note that at this point point it does not have a body, its body is
   /// instantiated at the end of the translation unit and passed to

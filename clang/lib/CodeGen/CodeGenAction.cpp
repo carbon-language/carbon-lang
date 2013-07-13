@@ -171,6 +171,10 @@ namespace clang {
       Gen->HandleTagDeclDefinition(D);
     }
 
+    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) {
+      Gen->HandleTagDeclRequiredDefinition(D);
+    }
+
     virtual void CompleteTentativeDefinition(VarDecl *D) {
       Gen->CompleteTentativeDefinition(D);
     }
