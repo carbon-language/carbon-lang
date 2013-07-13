@@ -61,3 +61,8 @@ void h2(void (*f_ptr)(void *), void *arg) {}
 
 PInt3Func h3(PInt3Func x, PInt3Func y, int* z) { return 0; }
 // CHECK: "\01?h3@@YAP6APAHPAH0@ZP6APAH00@Z10@Z"
+
+namespace foo {
+void foo() { }
+// CHECK: "\01?foo@0@YAXXZ"
+}

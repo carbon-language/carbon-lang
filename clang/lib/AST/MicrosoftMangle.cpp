@@ -421,7 +421,16 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = 0;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
-    // We have a template.
+    // Function templates aren't considered for name back referencing.  This
+    // makes sense since function templates aren't likely to occur multiple
+    // times in a symbol.
+    // FIXME: Test alias template mangling with MSVC 2013.
+    if (!isa<ClassTemplateDecl>(TD)) {
+      mangleTemplateInstantiationName(TD, *TemplateArgs);
+      return;
+    }
+
+    // We have a class template.
     // Here comes the tricky thing: if we need to mangle something like
     //   void foo(A::X<Y>, B::X<Y>),
     // the X<Y> part is aliased. However, if you need to mangle

@@ -107,7 +107,7 @@ void call_l_foo(L* l) { l->foo(I<A>()); }
 void foo(I<A> x) {}
 // CHECK: "\01?foo@PR13207@@YAXV?$I@VA@PR13207@@@1@@Z"
 void foo2(I<A> x, I<A> y) { }
-// CHECK "\01?foo2@PR13207@@YAXV?$I@VA@PR13207@@@1@0@Z"
+// CHECK: "\01?foo2@PR13207@@YAXV?$I@VA@PR13207@@@1@0@Z"
 void bar(J<A,B> x) {}
 // CHECK: "\01?bar@PR13207@@YAXV?$J@VA@PR13207@@VB@2@@1@@Z"
 void spam(K<A,B,C> x) {}
@@ -162,4 +162,32 @@ void foo(Y<NB::X> x) {}
 void foobar(NC::Y<NB::Y<NA::Y<NA::X> > > x) {}
 // CHECK: "\01?foobar@NC@PR13207@@YAXV?$Y@V?$Y@V?$Y@VX@NA@PR13207@@@NA@PR13207@@@NB@PR13207@@@12@@Z"
 }
+}
+
+// Function template names are not considered for backreferencing, but normal
+// function names are.
+namespace fn_space {
+struct RetVal { int hash; };
+template <typename T>
+RetVal fun_tmpl(const T &t) { return RetVal(); }
+RetVal fun_normal(int t) { return RetVal(); }
+void fun_instantiate() {
+  fun_normal(1);
+  fun_tmpl(1);
+}
+// CHECK: "\01?fun_normal@fn_space@@YA?AURetVal@1@H@Z"
+// CHECK: "\01??$fun_tmpl@H@fn_space@@YA?AURetVal@0@ABH@Z"
+
+template <typename T, RetVal (*F)(T)>
+RetVal fun_tmpl_recurse(T t) {
+  if (!t)
+    return RetVal();
+  return F(t - 1);
+}
+RetVal ident(int x) { return RetVal(); }
+void fun_instantiate2() {
+  fun_tmpl_recurse<int, fun_tmpl_recurse<int, ident> >(10);
+}
+// CHECK: "\01??$fun_tmpl_recurse@H$1??$fun_tmpl_recurse@H$1?ident@fn_space@@YA?AURetVal@2@H@Z@fn_space@@YA?AURetVal@1@H@Z@fn_space@@YA?AURetVal@0@H@Z"
+// CHECK: "\01??$fun_tmpl_recurse@H$1?ident@fn_space@@YA?AURetVal@2@H@Z@fn_space@@YA?AURetVal@0@H@Z"
 }
