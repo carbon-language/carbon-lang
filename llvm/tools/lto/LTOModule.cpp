@@ -151,6 +151,11 @@ UseInitArray("use-init-array",
   cl::desc("Use .init_array instead of .ctors."),
   cl::init(false));
 
+static cl::opt<unsigned>
+SSPBufferSize("stack-protector-buffer-size", cl::init(8),
+              cl::desc("Lower bound for a buffer to be considered for "
+                       "stack protection"));
+
 LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
   : _module(m), _target(t),
     _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), NULL),
@@ -256,6 +261,7 @@ void LTOModule::getTargetOptions(TargetOptions &Options) {
   Options.PositionIndependentExecutable = EnablePIE;
   Options.EnableSegmentedStacks = SegmentedStacks;
   Options.UseInitArray = UseInitArray;
+  Options.SSPBufferSize = SSPBufferSize;
 }
 
 LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
