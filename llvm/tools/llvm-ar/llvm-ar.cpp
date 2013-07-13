@@ -419,7 +419,7 @@ StringRef NewArchiveIterator::getNew() const {
 template <typename T>
 void addMember(std::vector<NewArchiveIterator> &Members,
                std::string &StringTable, T I, StringRef Name) {
-  if (Name.size() < 16) {
+  if (Name.size() < 15) {
     NewArchiveIterator NI(I, Twine(Name) + "/");
     Members.push_back(NI);
   } else {
