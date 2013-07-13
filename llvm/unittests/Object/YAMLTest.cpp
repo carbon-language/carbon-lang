@@ -13,11 +13,9 @@
 
 using namespace llvm;
 
-namespace {
 struct BinaryHolder {
   object::yaml::BinaryRef Binary;
 };
-} // end anonymous namespace
 
 namespace llvm {
 namespace yaml {
