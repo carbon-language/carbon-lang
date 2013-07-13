@@ -1914,14 +1914,15 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
 ASTDeclReader::FindExistingResult::~FindExistingResult() {
   if (!AddResult || Existing)
     return;
-  
-  if (New->getDeclContext()->getRedeclContext()->isTranslationUnit()
-      && Reader.SemaObj) {
+
+  DeclContext *DC = New->getDeclContext()->getRedeclContext();
+  if (DC->isTranslationUnit() && Reader.SemaObj) {
     Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
-  } else {
-    DeclContext *DC = New->getLexicalDeclContext();
-    if (DC->isNamespace())
-      DC->addDecl(New);
+  } else if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
+    // Add the declaration to its redeclaration context so later merging
+    // lookups will find it.
+    NS->getFirstDeclaration()->makeDeclVisibleInContextImpl(New,
+                                                            /*Internal*/true);
   }
 }
 
@@ -1933,11 +1934,11 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     Result.suppress();
     return Result;
   }
-  
+
   DeclContext *DC = D->getDeclContext()->getRedeclContext();
   if (!DC->isFileContext())
     return FindExistingResult(Reader);
-  
+
   if (DC->isTranslationUnit() && Reader.SemaObj) {
     IdentifierResolver &IdResolver = Reader.SemaObj->IdResolver;
 
@@ -1970,12 +1971,9 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
       if (isSameEntity(*I, D))
         return FindExistingResult(Reader, D, *I);
     }
-  }
-
-  if (DC->isNamespace()) {
-    DeclContext::lookup_result R = DC->lookup(Name);
-    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; 
-         ++I) {
+  } else if (NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
+    DeclContext::lookup_result R = NS->getFirstDeclaration()->noload_lookup(Name);
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
       if (isSameEntity(*I, D))
         return FindExistingResult(Reader, D, *I);
     }

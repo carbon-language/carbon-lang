@@ -991,6 +991,7 @@ protected:
   mutable Decl *LastDecl;
 
   friend class ExternalASTSource;
+  friend class ASTDeclReader;
   friend class ASTWriter;
 
   /// \brief Build up a chain of declarations.
@@ -1446,12 +1447,20 @@ public:
     return const_cast<DeclContext*>(this)->lookup(Name);
   }
 
+  /// \brief Find the declarations with the given name that are visible
+  /// within this context; don't attempt to retrieve anything from an
+  /// external source.
+  lookup_result noload_lookup(DeclarationName Name);
+
   /// \brief A simplistic name lookup mechanism that performs name lookup
   /// into this declaration context without consulting the external source.
   ///
   /// This function should almost never be used, because it subverts the
   /// usual relationship between a DeclContext and the external source.
   /// See the ASTImporter for the (few, but important) use cases.
+  ///
+  /// FIXME: This is very inefficient; replace uses of it with uses of
+  /// noload_lookup.
   void localUncachedLookup(DeclarationName Name,
                            SmallVectorImpl<NamedDecl *> &Results);
 
@@ -1573,6 +1582,8 @@ private:
   friend class DependentDiagnostic;
   StoredDeclsMap *CreateStoredDeclsMap(ASTContext &C) const;
 
+  template<decl_iterator (DeclContext::*Begin)() const,
+           decl_iterator (DeclContext::*End)() const>
   void buildLookupImpl(DeclContext *DCtx);
   void makeDeclVisibleInContextWithFlags(NamedDecl *D, bool Internal,
                                          bool Rediscoverable);

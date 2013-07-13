@@ -276,3 +276,23 @@ template<typename T> class DependentSpecializedFuncClass {
   void foo() {}
   friend void DependentSpecializedFunc<>(DependentSpecializedFuncClass);
 };
+
+namespace cyclic_module_load {
+  // Reduced from a libc++ modules crasher.
+  namespace std {
+    template<class> class mask_array;
+    template<class> class valarray {
+    public:
+      valarray(const valarray &v);
+    };
+
+    class gslice {
+      valarray<int> x;
+      valarray<int> stride() const { return x; }
+    };
+
+    template<class> class mask_array {
+      template<class> friend class valarray;
+    };
+  }
+}

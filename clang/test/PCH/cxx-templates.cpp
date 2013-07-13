@@ -94,3 +94,8 @@ namespace rdar13135282 {
 void CallDependentSpecializedFunc(DependentSpecializedFuncClass<int> &x) {
   DependentSpecializedFunc(x);
 }
+
+namespace cyclic_module_load {
+  extern std::valarray<int> x;
+  std::valarray<int> y(x);
+}
