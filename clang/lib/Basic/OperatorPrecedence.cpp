@@ -28,7 +28,7 @@ prec::Level getBinOpPrecedence(tok::TokenKind Kind, bool GreaterThanIsOperator,
     return prec::Unknown;
 
   case tok::greatergreater:
-    // C++0x [temp.names]p3:
+    // C++11 [temp.names]p3:
     //
     //   [...] Similarly, the first non-nested >> is treated as two
     //   consecutive but distinct > tokens, the first of which is
