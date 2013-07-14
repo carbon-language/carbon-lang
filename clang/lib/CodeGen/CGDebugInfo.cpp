@@ -1524,8 +1524,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // will find it and we're emitting the complete type.
   QualType QualTy = QualType(Ty, 0);
   CompletedTypeCache[QualTy.getAsOpaquePtr()] = RealDecl;
-  // Push the struct on region stack.
 
+  // Push the struct on region stack.
   LexicalBlockStack.push_back(static_cast<llvm::MDNode*>(RealDecl));
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
 
@@ -1544,6 +1544,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     EltTys.push_back(InhTag);
   }
 
+  // Create entries for all of the properties.
   for (ObjCContainerDecl::prop_iterator I = ID->prop_begin(),
          E = ID->prop_end(); I != E; ++I) {
     const ObjCPropertyDecl *PD = *I;
@@ -1589,8 +1590,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
       // Bit size, align and offset of the type.
       FieldSize = Field->isBitField()
-        ? Field->getBitWidthValue(CGM.getContext())
-        : CGM.getContext().getTypeSize(FType);
+                      ? Field->getBitWidthValue(CGM.getContext())
+                      : CGM.getContext().getTypeSize(FType);
       FieldAlign = CGM.getContext().getTypeAlign(FType);
     }
 
