@@ -1137,7 +1137,12 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
       IVIncInsertPos : Pred->getTerminator();
     Builder.SetInsertPoint(InsertPos);
     Value *IncV = expandIVInc(PN, StepV, L, ExpandTy, IntTy, useSubtract);
-
+    if (isa<OverflowingBinaryOperator>(IncV)) {
+      if (Normalized->getNoWrapFlags(SCEV::FlagNUW))
+        cast<BinaryOperator>(IncV)->setHasNoUnsignedWrap();
+      if (Normalized->getNoWrapFlags(SCEV::FlagNSW))
+        cast<BinaryOperator>(IncV)->setHasNoSignedWrap();
+    }
     PN->addIncoming(IncV, Pred);
   }
 
