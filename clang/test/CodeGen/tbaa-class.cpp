@@ -52,8 +52,8 @@ public:
 
 uint32_t g(uint32_t *s, StructA *A, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32:!.*]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32:!.*]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32:!.*]]
@@ -64,8 +64,8 @@ uint32_t g(uint32_t *s, StructA *A, uint64_t count) {
 
 uint32_t g2(uint32_t *s, StructA *A, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i16 4, i16* %{{.*}}, align 2, !tbaa !5
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i16 4, i16* %{{.*}}, align 2, !tbaa [[TAG_i16:!.*]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: store i16 4, i16* %{{.*}}, align 2, !tbaa [[TAG_A_f16:!.*]]
@@ -76,8 +76,8 @@ uint32_t g2(uint32_t *s, StructA *A, uint64_t count) {
 
 uint32_t g3(StructA *A, StructB *B, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_B_a_f32:!.*]]
@@ -88,8 +88,8 @@ uint32_t g3(StructA *A, StructB *B, uint64_t count) {
 
 uint32_t g4(StructA *A, StructB *B, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i16 4, i16* %{{.*}}, align 2, !tbaa !5
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i16 4, i16* %{{.*}}, align 2, !tbaa [[TAG_i16]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32]]
 // PATH: store i16 4, i16* %{{.*}}, align 2, !tbaa [[TAG_B_a_f16:!.*]]
@@ -100,8 +100,8 @@ uint32_t g4(StructA *A, StructB *B, uint64_t count) {
 
 uint32_t g5(StructA *A, StructB *B, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_B_f32:!.*]]
@@ -112,8 +112,8 @@ uint32_t g5(StructA *A, StructB *B, uint64_t count) {
 
 uint32_t g6(StructA *A, StructB *B, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_B_a_f32_2:!.*]]
@@ -124,8 +124,8 @@ uint32_t g6(StructA *A, StructB *B, uint64_t count) {
 
 uint32_t g7(StructA *A, StructS *S, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_S_f32:!.*]]
@@ -136,8 +136,8 @@ uint32_t g7(StructA *A, StructS *S, uint64_t count) {
 
 uint32_t g8(StructA *A, StructS *S, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i16 4, i16* %{{.*}}, align 2, !tbaa !5
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i16 4, i16* %{{.*}}, align 2, !tbaa [[TAG_i16]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_A_f32]]
 // PATH: store i16 4, i16* %{{.*}}, align 2, !tbaa [[TAG_S_f16:!.*]]
@@ -148,8 +148,8 @@ uint32_t g8(StructA *A, StructS *S, uint64_t count) {
 
 uint32_t g9(StructS *S, StructS2 *S2, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_S_f32]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_S_f32:!.*]]
@@ -160,8 +160,8 @@ uint32_t g9(StructS *S, StructS2 *S2, uint64_t count) {
 
 uint32_t g10(StructS *S, StructS2 *S2, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_S_f32]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_S2_f32_2:!.*]]
@@ -172,8 +172,8 @@ uint32_t g10(StructS *S, StructS2 *S2, uint64_t count) {
 
 uint32_t g11(StructC *C, StructD *D, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_C_b_a_f32:!.*]]
 // PATH: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_D_b_a_f32:!.*]]
@@ -184,8 +184,8 @@ uint32_t g11(StructC *C, StructD *D, uint64_t count) {
 
 uint32_t g12(StructC *C, StructD *D, uint64_t count) {
 // CHECK: define i32 @{{.*}}(
-// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa !4
-// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa !4
+// CHECK: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
+// CHECK: store i32 4, i32* %{{.*}}, align 4, !tbaa [[TAG_i32]]
 // TODO: differentiate the two accesses.
 // PATH: define i32 @{{.*}}(
 // PATH: store i32 1, i32* %{{.*}}, align 4, !tbaa [[TAG_B_a_f32]]
@@ -198,12 +198,12 @@ uint32_t g12(StructC *C, StructD *D, uint64_t count) {
   return b1->a.f32;
 }
 
-// CHECK: !1 = metadata !{metadata !"omnipotent char", metadata !2}
-// CHECK: !2 = metadata !{metadata !"Simple C/C++ TBAA"}
-// CHECK: !4 = metadata !{metadata !"int", metadata !1}
-// CHECK: !5 = metadata !{metadata !"short", metadata !1}
+// CHECK: [[TAG_char:!.*]] = metadata !{metadata !"omnipotent char", metadata [[TAG_cxx_tbaa:!.*]]}
+// CHECK: [[TAG_cxx_tbaa]] = metadata !{metadata !"Simple C/C++ TBAA"}
+// CHECK: [[TAG_i32]] = metadata !{metadata !"int", metadata [[TAG_char]]}
+// CHECK: [[TAG_i16]] = metadata !{metadata !"short", metadata [[TAG_char]]}
 
-// PATH: [[TYPE_CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata !3
+// PATH: [[TYPE_CHAR:!.*]] = metadata !{metadata !"omnipotent char", metadata
 // PATH: [[TAG_i32]] = metadata !{metadata [[TYPE_INT:!.*]], metadata [[TYPE_INT]], i64 0}
 // PATH: [[TYPE_INT]] = metadata !{metadata !"int", metadata [[TYPE_CHAR]]
 // PATH: [[TAG_A_f32]] = metadata !{metadata [[TYPE_A:!.*]], metadata [[TYPE_INT]], i64 4}
