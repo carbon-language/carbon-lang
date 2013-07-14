@@ -382,13 +382,11 @@ void TailDuplicatePass::AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg,
 /// ProcessPHI - Process PHI node in TailBB by turning it into a copy in PredBB.
 /// Remember the source register that's contributed by PredBB and update SSA
 /// update map.
-void TailDuplicatePass::ProcessPHI(MachineInstr *MI,
-                                   MachineBasicBlock *TailBB,
-                                   MachineBasicBlock *PredBB,
-                                   DenseMap<unsigned, unsigned> &LocalVRMap,
-                          SmallVectorImpl<std::pair<unsigned,unsigned>> &Copies,
-                                   const DenseSet<unsigned> &RegsUsedByPhi,
-                                   bool Remove) {
+void TailDuplicatePass::ProcessPHI(
+    MachineInstr *MI, MachineBasicBlock *TailBB, MachineBasicBlock *PredBB,
+    DenseMap<unsigned, unsigned> &LocalVRMap,
+    SmallVectorImpl<std::pair<unsigned, unsigned> > &Copies,
+    const DenseSet<unsigned> &RegsUsedByPhi, bool Remove) {
   unsigned DefReg = MI->getOperand(0).getReg();
   unsigned SrcOpIdx = getPHISrcRegOpIdx(MI, PredBB);
   assert(SrcOpIdx && "Unable to find matching PHI source?");
