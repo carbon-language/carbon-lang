@@ -389,7 +389,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         // parentheses so that the code remains well-formed in C++0x.
         if (!GreaterThanIsOperator && OpToken.is(tok::greatergreater))
           SuggestParentheses(OpToken.getLocation(),
-                             diag::warn_cxx0x_right_shift_in_template_arg,
+                             diag::warn_cxx11_right_shift_in_template_arg,
                          SourceRange(Actions.getExprRange(LHS.get()).getBegin(),
                                      Actions.getExprRange(RHS.get()).getEnd()));
 
