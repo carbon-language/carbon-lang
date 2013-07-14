@@ -200,6 +200,15 @@ module cxx_templates_b {
   header "cxx-templates-b.h"
 }
 
+module cxx_decls {
+  module unimported {
+    header "cxx-decls-unimported.h"
+  }
+  module imported {
+    header "cxx-decls-imported.h"
+  }
+}
+
 module config {
   header "config.h"
   config_macros [exhaustive] WANT_FOO, WANT_BAR

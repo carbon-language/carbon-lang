@@ -1949,8 +1949,12 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
             Func->getParamDecl(0)->getType().getUnqualifiedType());
         // FIXME: Do we need to check for default arguments here?
         if (Func->getNumParams() == 1 && InitialParamType == Argument) {
-          if(AddMallocAttr && !Func->hasAttr<MallocAttr>())
+          if (AddMallocAttr && !Func->hasAttr<MallocAttr>())
             Func->addAttr(::new (Context) MallocAttr(SourceLocation(), Context));
+          // Make the function visible to name lookup, even if we found it in an
+          // unimported module. It either is an implicitly-declared global
+          // allocation function, or is suppressing that function.
+          Func->setHidden(false);
           return;
         }
       }
