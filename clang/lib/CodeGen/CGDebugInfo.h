@@ -67,8 +67,7 @@ class CGDebugInfo {
 
   /// ObjCInterfaceCache - Cache of previously constructed interfaces
   /// which may change. Storing a pair of DIType and checksum.
-  llvm::DenseMap<void *, std::pair<llvm::WeakVH, unsigned > >
-    ObjCInterfaceCache;
+  llvm::DenseMap<void *, std::pair<llvm::WeakVH, unsigned> > ObjCInterfaceCache;
 
   /// RetainedTypes - list of interfaces we want to keep even if orphaned.
   std::vector<void *> RetainedTypes;
