@@ -443,6 +443,7 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitTagDecl(TagDecl *TD) {
   TD->setCompleteDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
   TD->setFreeStanding(Record[Idx++]);
+  TD->setCompleteDefinitionRequired(Record[Idx++]);
   TD->setRBraceLoc(ReadSourceLocation(Record, Idx));
   
   if (Record[Idx++]) { // hasExtInfo

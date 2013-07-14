@@ -2578,7 +2578,9 @@ public:
 
   void setCompleteDefinition(bool V) { IsCompleteDefinition = V; }
 
-  void setCompleteDefinitionRequired() { IsCompleteDefinitionRequired = true; }
+  void setCompleteDefinitionRequired(bool V = true) {
+    IsCompleteDefinitionRequired = V;
+  }
 
   // FIXME: Return StringRef;
   const char *getKindName() const {
