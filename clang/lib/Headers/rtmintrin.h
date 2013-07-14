@@ -25,6 +25,9 @@
 #error "Never use <rtmintrin.h> directly; include <immintrin.h> instead."
 #endif
 
+#ifndef __RTMINTRIN_H
+#define __RTMINTRIN_H
+
 #define _XBEGIN_STARTED   (~0u)
 #define _XABORT_EXPLICIT  (1 << 0)
 #define _XABORT_RETRY     (1 << 1)
@@ -47,3 +50,5 @@ _xend(void)
 }
 
 #define _xabort(imm) __builtin_ia32_xabort((imm))
+
+#endif /* __RTMINTRIN_H */
