@@ -103,7 +103,7 @@ exit2:
 ; LoopUnroll utility uses this assumption to optimize the latch
 ; block's branch.
 ;
-; CHECK: @multiExit
+; CHECK: @multiExitIncomplete
 ; CHECK: l3:
 ; CHECK-NOT: br
 ; CHECK:   br i1 %cmp3, label %l1, label %exit3

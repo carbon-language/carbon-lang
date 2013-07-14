@@ -101,7 +101,7 @@ define <4 x i8> @test9a(<16 x i8> %tmp6) nounwind {
 ; Test fold of two shuffles where the first shuffle vectors inputs are a
 ; different length then the second.
 define <4 x i8> @test9b(<4 x i8> %tmp6, <4 x i8> %tmp7) nounwind {
-; CHECK: @test9
+; CHECK: @test9b
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
   %tmp1 = shufflevector <4 x i8> %tmp6, <4 x i8> %tmp7, <8 x i32> <i32 0, i32 1, i32 4, i32 5, i32 4, i32 5, i32 2, i32 3>		; <<4 x i8>> [#uses=1]
