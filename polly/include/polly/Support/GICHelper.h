@@ -49,16 +49,15 @@ llvm::APInt APIntFromVal(__isl_take isl_val *Val);
 
 /// @brief Get c++ string from Isl objects.
 //@{
-std::string stringFromIslObj(/*__isl_keep*/ isl_map *map);
-std::string stringFromIslObj(/*__isl_keep*/ isl_union_map *umap);
-std::string stringFromIslObj(/*__isl_keep*/ isl_set *set);
-std::string stringFromIslObj(/*__isl_keep*/ isl_union_set *uset);
-std::string stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule);
-std::string stringFromIslObj(/*__isl_keep*/ isl_multi_aff *maff);
-std::string stringFromIslObj(/*__isl_keep*/ isl_pw_multi_aff *pma);
-std::string stringFromIslObj(/*__isl_keep*/ isl_aff *aff);
-std::string stringFromIslObj(/*__isl_keep*/ isl_pw_aff *pwaff);
-
+std::string stringFromIslObj(__isl_keep isl_map *map);
+std::string stringFromIslObj(__isl_keep isl_union_map *umap);
+std::string stringFromIslObj(__isl_keep isl_set *set);
+std::string stringFromIslObj(__isl_keep isl_union_set *uset);
+std::string stringFromIslObj(__isl_keep isl_schedule *schedule);
+std::string stringFromIslObj(__isl_keep isl_multi_aff *maff);
+std::string stringFromIslObj(__isl_keep isl_pw_multi_aff *pma);
+std::string stringFromIslObj(__isl_keep isl_aff *aff);
+std::string stringFromIslObj(__isl_keep isl_pw_aff *pwaff);
 //@}
 } // end namespace polly
 
