@@ -294,8 +294,8 @@ static bool FactorOutConstant(const SCEV *&S,
     const SCEV *Start = A->getStart();
     if (!FactorOutConstant(Start, Remainder, Factor, SE, TD))
       return false;
-    // FIXME: can use A->getNoWrapFlags(FlagNW)
-    S = SE.getAddRecExpr(Start, Step, A->getLoop(), SCEV::FlagAnyWrap);
+    S = SE.getAddRecExpr(Start, Step, A->getLoop(),
+                         A->getNoWrapFlags(SCEV::FlagNW));
     return true;
   }
 
@@ -348,8 +348,7 @@ static void SplitAddRecs(SmallVectorImpl<const SCEV *> &Ops,
       AddRecs.push_back(SE.getAddRecExpr(Zero,
                                          A->getStepRecurrence(SE),
                                          A->getLoop(),
-                                         // FIXME: A->getNoWrapFlags(FlagNW)
-                                         SCEV::FlagAnyWrap));
+                                         A->getNoWrapFlags(SCEV::FlagNW)));
       if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Start)) {
         Ops[i] = Zero;
         Ops.append(Add->op_begin(), Add->op_end());
@@ -846,8 +845,7 @@ static void ExposePointerBase(const SCEV *&Base, const SCEV *&Rest,
                          SE.getAddRecExpr(SE.getConstant(A->getType(), 0),
                                           A->getStepRecurrence(SE),
                                           A->getLoop(),
-                                          // FIXME: A->getNoWrapFlags(FlagNW)
-                                          SCEV::FlagAnyWrap));
+                                          A->getNoWrapFlags(SCEV::FlagNW)));
   }
   if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(Base)) {
     Base = A->getOperand(A->getNumOperands()-1);
@@ -1185,8 +1183,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
     Normalized = cast<SCEVAddRecExpr>(
       SE.getAddRecExpr(Start, Normalized->getStepRecurrence(SE),
                        Normalized->getLoop(),
-                       // FIXME: Normalized->getNoWrapFlags(FlagNW)
-                       SCEV::FlagAnyWrap));
+                       Normalized->getNoWrapFlags(SCEV::FlagNW)));
   }
 
   // Strip off any non-loop-dominating component from the addrec step.
@@ -1196,11 +1193,9 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
     PostLoopScale = Step;
     Step = SE.getConstant(Normalized->getType(), 1);
     Normalized =
-      cast<SCEVAddRecExpr>(SE.getAddRecExpr(Start, Step,
-                                            Normalized->getLoop(),
-                                            // FIXME: Normalized
-                                            // ->getNoWrapFlags(FlagNW)
-                                            SCEV::FlagAnyWrap));
+      cast<SCEVAddRecExpr>(SE.getAddRecExpr(
+                             Start, Step, Normalized->getLoop(),
+                             Normalized->getNoWrapFlags(SCEV::FlagNW)));
   }
 
   // Expand the core addrec. If we need post-loop scaling, force it to
@@ -1293,8 +1288,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     for (unsigned i = 0, e = S->getNumOperands(); i != e; ++i)
       NewOps[i] = SE.getAnyExtendExpr(S->op_begin()[i], CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(NewOps, S->getLoop(),
-                                       // FIXME: S->getNoWrapFlags(FlagNW)
-                                       SCEV::FlagAnyWrap));
+                                       S->getNoWrapFlags(SCEV::FlagNW)));
     BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
     BasicBlock::iterator NewInsertPt =
@@ -1312,8 +1306,8 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   if (!S->getStart()->isZero()) {
     SmallVector<const SCEV *, 4> NewOps(S->op_begin(), S->op_end());
     NewOps[0] = SE.getConstant(Ty, 0);
-    // FIXME: can use S->getNoWrapFlags()
-    const SCEV *Rest = SE.getAddRecExpr(NewOps, L, SCEV::FlagAnyWrap);
+    const SCEV *Rest = SE.getAddRecExpr(NewOps, L,
+                                        S->getNoWrapFlags(SCEV::FlagNW));
 
     // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
     // comments on expandAddToGEP for details.
