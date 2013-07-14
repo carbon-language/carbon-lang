@@ -311,10 +311,7 @@ class DwarfDebug {
   // All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
 
-  //===--------------------------------------------------------------------===//
-  // Attribute used to construct specific Dwarf sections.
-  //
-
+  // Handle to the a compile unit used for the inline extension handling.
   CompileUnit *FirstCU;
 
   // Maps MDNode with its corresponding CompileUnit.
