@@ -230,6 +230,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_body_end:                   return "DW_AT_body_end";
   case DW_AT_GNU_vector:                 return "DW_AT_GNU_vector";
   case DW_AT_GNU_template_name:          return "DW_AT_GNU_template_name";
+  case DW_AT_GNU_odr_signature:          return "DW_AT_GNU_odr_signature";
   case DW_AT_MIPS_assumed_size:          return "DW_AT_MIPS_assumed_size";
   case DW_AT_lo_user:                    return "DW_AT_lo_user";
   case DW_AT_hi_user:                    return "DW_AT_hi_user";

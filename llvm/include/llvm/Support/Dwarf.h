@@ -272,6 +272,8 @@ enum dwarf_constants {
   DW_AT_GNU_vector = 0x2107,
   DW_AT_GNU_template_name = 0x2110,
 
+  DW_AT_GNU_odr_signature = 0x210f,
+
   // Extensions for Fission proposal.
   DW_AT_GNU_dwo_name = 0x2130,
   DW_AT_GNU_dwo_id = 0x2131,
