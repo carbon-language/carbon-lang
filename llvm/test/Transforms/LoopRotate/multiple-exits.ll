@@ -32,7 +32,7 @@ return:                                           ; preds = %for.cond, %land.rhs
   %retval.0 = phi i32 [ 1000, %land.rhs ], [ %sum.0, %for.cond ]
   ret i32 %retval.0
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: for.cond1.preheader:
 ; CHECK: %sum.04 = phi i32 [ 0, %entry ], [ %sum.1.lcssa, %for.cond.loopexit ]
 ; CHECK: br label %for.cond1
@@ -73,7 +73,7 @@ return.loopexit:                                  ; preds = %for.cond
 return:                                           ; preds = %return.loopexit, %a
   ret void
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: if.end:
 ; CHECK: %inc = add i32 %i.02, 1
 ; CHECK: %cmp = icmp eq i32 %inc, %x

@@ -8,7 +8,7 @@ target triple = "i386-pc-linux-gnu"
 ; Check that a GEP with a non-zero first index does not prevent SROA as long
 ; as the resulting offset corresponds to an element in the alloca.
 define i32 @test1() {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: = i160
 ; CHECK: ret i32 undef
 	%A = alloca %nested
@@ -20,7 +20,7 @@ define i32 @test1() {
 
 ; But, if the offset is out of range, then it should not be transformed.
 define i32 @test2() {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: i160
 	%A = alloca %nested
 	%B = getelementptr %nested* %A, i32 0, i32 1, i32 0
@@ -31,7 +31,7 @@ define i32 @test2() {
 
 ; Try it with a bitcast and single GEP....
 define i32 @test3() {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: = i160
 ; CHECK: ret i32 undef
 	%A = alloca %nested
@@ -43,7 +43,7 @@ define i32 @test3() {
 
 ; ...and again make sure that out-of-range accesses are not transformed.
 define i32 @test4() {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: i160
 	%A = alloca %nested
 	%B = bitcast %nested* %A to i32*

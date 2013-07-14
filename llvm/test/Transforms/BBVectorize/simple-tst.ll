@@ -4,7 +4,7 @@ target triple = "powerpc64-unknown-linux"
 
 ; Basic depth-3 chain (target-specific type should not vectorize)
 define ppc_fp128 @test7(ppc_fp128 %A1, ppc_fp128 %A2, ppc_fp128 %B1, ppc_fp128 %B2) {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NOT: <2 x ppc_fp128>
 	%X1 = fsub ppc_fp128 %A1, %B1
 	%X2 = fsub ppc_fp128 %A2, %B2

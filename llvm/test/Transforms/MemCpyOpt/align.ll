@@ -8,7 +8,7 @@ declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 ; a 16-byte aligned store in the middle.
 
 define void @foo(i32* %p) {
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* {{.*}}, i8 0, i64 16, i32 4, i1 false)
   %a0 = getelementptr i32* %p, i64 0
   store i32 0, i32* %a0, align 4
@@ -24,7 +24,7 @@ define void @foo(i32* %p) {
 ; Replacing %a8 with %a4 in the memset requires boosting the alignment of %a4.
 
 define void @bar() {
-; CHECK: @bar
+; CHECK-LABEL: @bar(
 ; CHECK: %a4 = alloca i32, align 8
 ; CHECK-NOT: memcpy
   %a4 = alloca i32, align 4

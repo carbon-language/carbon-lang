@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;   return 0;
 ; }
 
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: load <4 x i32>
 ; CHECK: mul <4 x i32>
 ; CHECK: store <4 x i32>
@@ -49,7 +49,7 @@ entry:
 ;   return A[0];
 ; }
 
-; CHECK: @extr_user
+; CHECK-LABEL: @extr_user(
 ; CHECK: load <4 x i32>
 ; CHECK: store <4 x i32>
 ; CHECK: extractelement <4 x i32>
@@ -79,7 +79,7 @@ entry:
 }
 
 ; In this example we have an external user that is not the first element in the vector.
-; CHECK: @extr_user1
+; CHECK-LABEL: @extr_user1(
 ; CHECK: load <4 x i32>
 ; CHECK: store <4 x i32>
 ; CHECK: extractelement <4 x i32>

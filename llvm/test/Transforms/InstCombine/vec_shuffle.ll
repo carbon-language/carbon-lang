@@ -1,21 +1,21 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
 define <4 x float> @test1(<4 x float> %v1) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret <4 x float> %v1
   %v2 = shufflevector <4 x float> %v1, <4 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   ret <4 x float> %v2
 }
 
 define <4 x float> @test2(<4 x float> %v1) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret <4 x float> %v1
   %v2 = shufflevector <4 x float> %v1, <4 x float> %v1, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
   ret <4 x float> %v2
 }
 
 define float @test3(<4 x float> %A, <4 x float> %B, float %f) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret float %f
         %C = insertelement <4 x float> %A, float %f, i32 0
         %D = shufflevector <4 x float> %C, <4 x float> %B, <4 x i32> <i32 5, i32 0, i32 2, i32 7>
@@ -24,7 +24,7 @@ define float @test3(<4 x float> %A, <4 x float> %B, float %f) {
 }
 
 define i32 @test4(<4 x i32> %X) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: ret 
         %tmp152.i53899.i = shufflevector <4 x i32> %X, <4 x i32> undef, <4 x i32> zeroinitializer
@@ -33,7 +33,7 @@ define i32 @test4(<4 x i32> %X) {
 }
 
 define i32 @test5(<4 x i32> %X) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: ret 
         %tmp152.i53899.i = shufflevector <4 x i32> %X, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 undef, i32 undef>
@@ -42,7 +42,7 @@ define i32 @test5(<4 x i32> %X) {
 }
 
 define float @test6(<4 x float> %X) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: extractelement
 ; CHECK-NEXT: ret 
         %X1 = bitcast <4 x float> %X to <4 x i32>
@@ -53,7 +53,7 @@ define float @test6(<4 x float> %X) {
 }
 
 define <4 x float> @test7(<4 x float> %tmp45.i) {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NEXT: ret <4 x float> %tmp45.i
         %tmp1642.i = shufflevector <4 x float> %tmp45.i, <4 x float> undef, <4 x i32> < i32 0, i32 1, i32 6, i32 7 >
         ret <4 x float> %tmp1642.i
@@ -61,7 +61,7 @@ define <4 x float> @test7(<4 x float> %tmp45.i) {
 
 ; This should turn into a single shuffle.
 define <4 x float> @test8(<4 x float> %tmp, <4 x float> %tmp1) {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
         %tmp4 = extractelement <4 x float> %tmp, i32 1
@@ -77,7 +77,7 @@ define <4 x float> @test8(<4 x float> %tmp, <4 x float> %tmp1) {
 ; Test fold of two shuffles where the first shuffle vectors inputs are a
 ; different length then the second.
 define <4 x i8> @test9(<16 x i8> %tmp6) nounwind {
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
 	%tmp7 = shufflevector <16 x i8> %tmp6, <16 x i8> undef, <4 x i32> < i32 13, i32 9, i32 4, i32 13 >		; <<4 x i8>> [#uses=1]
@@ -89,7 +89,7 @@ define <4 x i8> @test9(<16 x i8> %tmp6) nounwind {
 ; mask values of 2*N, where N is the mask length.  These shuffles should not
 ; be folded (because [8,9,4,8] may not be a mask supported by the target).
 define <4 x i8> @test9a(<16 x i8> %tmp6) nounwind {
-; CHECK: @test9a
+; CHECK-LABEL: @test9a(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
@@ -101,7 +101,7 @@ define <4 x i8> @test9a(<16 x i8> %tmp6) nounwind {
 ; Test fold of two shuffles where the first shuffle vectors inputs are a
 ; different length then the second.
 define <4 x i8> @test9b(<4 x i8> %tmp6, <4 x i8> %tmp7) nounwind {
-; CHECK: @test9b
+; CHECK-LABEL: @test9b(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
   %tmp1 = shufflevector <4 x i8> %tmp6, <4 x i8> %tmp7, <8 x i32> <i32 0, i32 1, i32 4, i32 5, i32 4, i32 5, i32 2, i32 3>		; <<4 x i8>> [#uses=1]
@@ -111,7 +111,7 @@ define <4 x i8> @test9b(<4 x i8> %tmp6, <4 x i8> %tmp7) nounwind {
 
 ; Redundant vector splats should be removed.  Radar 8597790.
 define <4 x i32> @test10(<4 x i32> %tmp5) nounwind {
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
   %tmp6 = shufflevector <4 x i32> %tmp5, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
@@ -122,7 +122,7 @@ define <4 x i32> @test10(<4 x i32> %tmp5) nounwind {
 ; Test fold of two shuffles where the two shufflevector inputs's op1 are
 ; the same
 define <8 x i8> @test11(<16 x i8> %tmp6) nounwind {
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK-NEXT: shufflevector <16 x i8> %tmp6, <16 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 ; CHECK-NEXT: ret
   %tmp1 = shufflevector <16 x i8> %tmp6, <16 x i8> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>		; <<4 x i8>> [#uses=1]
@@ -134,7 +134,7 @@ define <8 x i8> @test11(<16 x i8> %tmp6) nounwind {
 ; Test fold of two shuffles where the first shufflevector's inputs are
 ; the same as the second
 define <8 x i8> @test12(<8 x i8> %tmp6, <8 x i8> %tmp2) nounwind {
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK-NEXT: shufflevector <8 x i8> %tmp6, <8 x i8> %tmp2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 9, i32 8, i32 11, i32 12>
 ; CHECK-NEXT: ret
   %tmp1 = shufflevector <8 x i8> %tmp6, <8 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 4, i32 undef, i32 7>	; <<8 x i8>> [#uses=1]
@@ -145,7 +145,7 @@ define <8 x i8> @test12(<8 x i8> %tmp6, <8 x i8> %tmp2) nounwind {
 ; Test fold of two shuffles where the first shufflevector's inputs are
 ; the same as the second
 define <8 x i8> @test12a(<8 x i8> %tmp6, <8 x i8> %tmp2) nounwind {
-; CHECK: @test12a
+; CHECK-LABEL: @test12a(
 ; CHECK-NEXT: shufflevector <8 x i8> %tmp2, <8 x i8> %tmp6, <8 x i32> <i32 0, i32 3, i32 1, i32 4, i32 8, i32 9, i32 10, i32 11>
 ; CHECK-NEXT: ret
   %tmp1 = shufflevector <8 x i8> %tmp6, <8 x i8> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 5, i32 4, i32 undef, i32 7>	; <<8 x i8>> [#uses=1]
@@ -154,7 +154,7 @@ define <8 x i8> @test12a(<8 x i8> %tmp6, <8 x i8> %tmp2) nounwind {
 }
 
 define <2 x i8> @test13a(i8 %x1, i8 %x2) {
-; CHECK: @test13a
+; CHECK-LABEL: @test13a(
 ; CHECK-NEXT: insertelement {{.*}} undef, i8 %x1, i32 1
 ; CHECK-NEXT: insertelement {{.*}} i8 %x2, i32 0
 ; CHECK-NEXT: add {{.*}} <i8 7, i8 5>
@@ -167,7 +167,7 @@ define <2 x i8> @test13a(i8 %x1, i8 %x2) {
 }
 
 define <2 x i8> @test13b(i8 %x) {
-; CHECK: @test13b
+; CHECK-LABEL: @test13b(
 ; CHECK-NEXT: insertelement <2 x i8> undef, i8 %x, i32 1
 ; CHECK-NEXT: ret
   %A = insertelement <2 x i8> undef, i8 %x, i32 0
@@ -176,7 +176,7 @@ define <2 x i8> @test13b(i8 %x) {
 }
 
 define <2 x i8> @test13c(i8 %x1, i8 %x2) {
-; CHECK: @test13c
+; CHECK-LABEL: @test13c(
 ; CHECK-NEXT: insertelement <2 x i8> {{.*}}, i32 0
 ; CHECK-NEXT: insertelement <2 x i8> {{.*}}, i32 1
 ; CHECK-NEXT: ret

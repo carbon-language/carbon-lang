@@ -11,7 +11,7 @@ declare double @sqrt(double)
 declare double @exp2(double)
 
 define double @T() {
-; CHECK: @T
+; CHECK-LABEL: @T(
 ; CHECK-NOT: call
 ; CHECK: ret
   %A = call double @cos(double 0.000000e+00)
@@ -29,7 +29,7 @@ define double @T() {
 }
 
 define i1 @test_sse_cvt() nounwind readnone {
-; CHECK: @test_sse_cvt
+; CHECK-LABEL: @test_sse_cvt(
 ; CHECK-NOT: call
 ; CHECK: ret i1 true
 entry:
@@ -63,7 +63,7 @@ declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
 
 define double @test_intrinsic_pow() nounwind uwtable ssp {
 entry:
-; CHECK: @test_intrinsic_pow
+; CHECK-LABEL: @test_intrinsic_pow(
 ; CHECK-NOT: call
   %0 = call double @llvm.pow.f64(double 1.500000e+00, double 3.000000e+00)
   ret double %0
@@ -72,7 +72,7 @@ declare double @llvm.pow.f64(double, double) nounwind readonly
 
 ; Shouldn't fold because of -fno-builtin
 define double @sin_() nounwind uwtable ssp {
-; FNOBUILTIN: @sin_
+; FNOBUILTIN-LABEL: @sin_(
 ; FNOBUILTIN: %1 = call double @sin(double 3.000000e+00)
   %1 = call double @sin(double 3.000000e+00)
   ret double %1
@@ -80,7 +80,7 @@ define double @sin_() nounwind uwtable ssp {
 
 ; Shouldn't fold because of -fno-builtin
 define double @sqrt_() nounwind uwtable ssp {
-; FNOBUILTIN: @sqrt_
+; FNOBUILTIN-LABEL: @sqrt_(
 ; FNOBUILTIN: %1 = call double @sqrt(double 3.000000e+00)
   %1 = call double @sqrt(double 3.000000e+00)
   ret double %1
@@ -88,7 +88,7 @@ define double @sqrt_() nounwind uwtable ssp {
 
 ; Shouldn't fold because of -fno-builtin
 define float @sqrtf_() nounwind uwtable ssp {
-; FNOBUILTIN: @sqrtf_
+; FNOBUILTIN-LABEL: @sqrtf_(
 ; FNOBUILTIN: %1 = call float @sqrtf(float 3.000000e+00)
   %1 = call float @sqrtf(float 3.000000e+00)
   ret float %1
@@ -97,7 +97,7 @@ declare float @sqrtf(float)
 
 ; Shouldn't fold because of -fno-builtin
 define float @sinf_() nounwind uwtable ssp {
-; FNOBUILTIN: @sinf_
+; FNOBUILTIN-LABEL: @sinf_(
 ; FNOBUILTIN: %1 = call float @sinf(float 3.000000e+00)
   %1 = call float @sinf(float 3.000000e+00)
   ret float %1
@@ -106,7 +106,7 @@ declare float @sinf(float)
 
 ; Shouldn't fold because of -fno-builtin
 define double @tan_() nounwind uwtable ssp {
-; FNOBUILTIN: @tan_
+; FNOBUILTIN-LABEL: @tan_(
 ; FNOBUILTIN: %1 = call double @tan(double 3.000000e+00)
   %1 = call double @tan(double 3.000000e+00)
   ret double %1
@@ -114,7 +114,7 @@ define double @tan_() nounwind uwtable ssp {
 
 ; Shouldn't fold because of -fno-builtin
 define double @tanh_() nounwind uwtable ssp {
-; FNOBUILTIN: @tanh_
+; FNOBUILTIN-LABEL: @tanh_(
 ; FNOBUILTIN: %1 = call double @tanh(double 3.000000e+00)
   %1 = call double @tanh(double 3.000000e+00)
   ret double %1
@@ -123,7 +123,7 @@ declare double @tanh(double)
 
 ; Shouldn't fold because of -fno-builtin
 define double @pow_() nounwind uwtable ssp {
-; FNOBUILTIN: @pow_
+; FNOBUILTIN-LABEL: @pow_(
 ; FNOBUILTIN: %1 = call double @pow(double 3.000000e+00, double 3.000000e+00)
   %1 = call double @pow(double 3.000000e+00, double 3.000000e+00)
   ret double %1
@@ -132,7 +132,7 @@ declare double @pow(double, double)
 
 ; Shouldn't fold because of -fno-builtin
 define double @fmod_() nounwind uwtable ssp {
-; FNOBUILTIN: @fmod_
+; FNOBUILTIN-LABEL: @fmod_(
 ; FNOBUILTIN: %1 = call double @fmod(double 3.000000e+00, double 3.000000e+00)
   %1 = call double @fmod(double 3.000000e+00, double 3.000000e+00)
   ret double %1
@@ -141,7 +141,7 @@ declare double @fmod(double, double)
 
 ; Shouldn't fold because of -fno-builtin
 define double @atan2_() nounwind uwtable ssp {
-; FNOBUILTIN: @atan2_
+; FNOBUILTIN-LABEL: @atan2_(
 ; FNOBUILTIN: %1 = call double @atan2(double 3.000000e+00, double 3.000000e+00)
   %1 = call double @atan2(double 3.000000e+00, double 3.000000e+00)
   ret double %1

@@ -3,7 +3,7 @@
 declare void @helper(i32)
 
 define void @test1(i1 %a, i1 %b) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
   br i1 %a, label %Y, label %X, !prof !0
 ; CHECK: br i1 %or.cond, label %Z, label %Y, !prof !0
@@ -22,7 +22,7 @@ Z:
 }
 
 define void @test2(i1 %a, i1 %b) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 entry:
   br i1 %a, label %X, label %Y, !prof !1
 ; CHECK: br i1 %or.cond, label %Z, label %Y, !prof !1
@@ -42,7 +42,7 @@ Z:
 }
 
 define void @test3(i1 %a, i1 %b) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: !prof
 entry:
   br i1 %a, label %X, label %Y, !prof !1
@@ -61,7 +61,7 @@ Z:
 }
 
 define void @test4(i1 %a, i1 %b) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: !prof
 entry:
   br i1 %a, label %X, label %Y
@@ -156,7 +156,7 @@ sw.epilog:
 
 ;; This test is based on test1 but swapped the targets of the second branch.
 define void @test1_swap(i1 %a, i1 %b) {
-; CHECK: @test1_swap
+; CHECK-LABEL: @test1_swap(
 entry:
   br i1 %a, label %Y, label %X, !prof !0
 ; CHECK: br i1 %or.cond, label %Y, label %Z, !prof !4
@@ -175,7 +175,7 @@ Z:
 }
 
 define void @test7(i1 %a, i1 %b) {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 entry:
   %c = or i1 %b, false
   br i1 %a, label %Y, label %X, !prof !0
@@ -195,7 +195,7 @@ Z:
 
 ; Test basic folding to a conditional branch.
 define void @test8(i64 %x, i64 %y) nounwind {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 entry:
     %lt = icmp slt i64 %x, %y
 ; CHECK: br i1 %lt, label %a, label %b, !prof !6
@@ -219,7 +219,7 @@ bees:
 ; Test edge splitting when the default target has icmp and unconditinal
 ; branch
 define i1 @test9(i32 %x, i32 %y) nounwind {
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 entry:
     switch i32 %x, label %bees [
         i32 0, label %a

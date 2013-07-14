@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 @x = common global [1024 x x86_fp80] zeroinitializer, align 16
 
-;CHECK: @example
+;CHECK-LABEL: @example(
 ;CHECK-NOT: bitcast x86_fp80* {{%[^ ]+}} to <{{[2-9][0-9]*}} x x86_fp80>*
 ;CHECK: store
 ;CHECK: ret void

@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @B = global [1024 x i32] zeroinitializer, align 16
 @C = global [1024 x i32] zeroinitializer, align 16
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 define i32 @test() #0 {
 entry:
   tail call void @llvm.dbg.value(metadata !1, i64 0, metadata !9), !dbg !18

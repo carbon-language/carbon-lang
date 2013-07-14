@@ -6,7 +6,7 @@
 ; Sink should sink the load past the store (which doesn't overlap) into
 ; the block that uses it.
 
-;      CHECK: @foo
+;      CHECK-LABEL: @foo(
 ;      CHECK: true:
 ; CHECK-NEXT: %l = load i32* @A
 ; CHECK-NEXT: ret i32 %l
@@ -23,7 +23,7 @@ false:
 
 ; But don't sink load volatiles...
 
-;      CHECK: @foo2
+;      CHECK-LABEL: @foo2(
 ;      CHECK: load volatile
 ; CHECK-NEXT: store i32
 
@@ -39,7 +39,7 @@ false:
 
 ; Sink to the nearest post-dominator
 
-;      CHECK: @diamond
+;      CHECK-LABEL: @diamond(
 ;      CHECK: X:
 ; CHECK-NEXT: phi
 ; CHECK-NEXT: mul nsw

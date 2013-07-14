@@ -16,7 +16,7 @@ BB2:
         br label %BB3
 
 BB3:     
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %Ret = phi i32 [ 0, %BB1 ], [ 1, %BB2 ]
         %Ret = phi i32 [ %Val, %BB1 ], [ 1, %BB2 ] 
         ret i32 %Ret
@@ -31,12 +31,12 @@ entry:
 bb:
   ret i1 %V
   
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i1 true
 }
 
 define i1 @TNAN() {
-; CHECK: @TNAN
+; CHECK-LABEL: @TNAN(
 ; CHECK: ret i1 true
   %A = fcmp uno double 0x7FF8000000000000, 1.000000e+00
   %B = fcmp uno double 1.230000e+02, 1.000000e+00
@@ -47,7 +47,7 @@ define i1 @TNAN() {
 define i128 @vector_to_int_cast() {
   %A = bitcast <4 x i32> <i32 1073741824, i32 1073741824, i32 1073741824, i32 1073741824> to i128
   ret i128 %A
-; CHECK: @vector_to_int_cast
+; CHECK-LABEL: @vector_to_int_cast(
 ; CHECK: ret i128 85070591750041656499021422275829170176
 }
   

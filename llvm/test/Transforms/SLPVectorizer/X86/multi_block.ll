@@ -16,7 +16,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ; }
 
 
-;CHECK: @bar
+;CHECK-LABEL: @bar(
 ;CHECK: load <2 x double>
 ;CHECK: fptrunc <2 x double>
 ;CHECK: call i32

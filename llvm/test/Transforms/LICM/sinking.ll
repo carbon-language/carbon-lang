@@ -14,7 +14,7 @@ Loop:		; preds = %Loop, %0
 
 Out:		; preds = %Loop
 	ret i32 %A
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: Out:
 ; CHECK-NEXT: call i32 @strlen
 ; CHECK-NEXT: ret i32 %A
@@ -33,7 +33,7 @@ Loop:		; preds = %Loop, %0
 
 Out:		; preds = %Loop
 	ret double %A
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: Out:
 ; CHECK-NEXT: call double @sin
 ; CHECK-NEXT: ret double %A
@@ -51,7 +51,7 @@ Exit:
 	%Y = phi i32 [ 0, %Entry ], [ %X, %Loop ]
 	ret void
         
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK:     Exit.loopexit:
 ; CHECK-NEXT:  %X = add i32 0, 1
 ; CHECK-NEXT:  br label %Exit
@@ -74,7 +74,7 @@ Loop:		; preds = %Loop, %Entry
 	br i1 %tmp.1, label %Loop, label %Out
 Out:		; preds = %Loop
 	ret i32 %tmp.7
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK:     Out:
 ; CHECK-NEXT:  mul i32 %N, %N_addr.0.pn
 ; CHECK-NEXT:  sub i32 %tmp.6, %N
@@ -98,7 +98,7 @@ Loop:		; preds = %Loop, %Entry
 	br i1 %tmp.1, label %Loop, label %Out
 Out:		; preds = %Loop
 	ret i32 %tmp.6
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK:     Out:
 ; CHECK-NEXT:  %tmp.6 = load i32* @X
 ; CHECK-NEXT:  ret i32 %tmp.6
@@ -122,7 +122,7 @@ Loop:
 	br i1 false, label %Loop, label %Out
 Out:		; preds = %Loop
 	ret i32 %sunk2
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK:     Out:
 ; CHECK-NEXT:  %dead = getelementptr %Ty* @X2, i64 0, i32 0
 ; CHECK-NEXT:  %sunk2 = load i32* %dead
@@ -150,7 +150,7 @@ Out1:		; preds = %Loop
 	ret i32 %tmp.7
 Out2:		; preds = %ContLoop
 	ret i32 %tmp.7
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK:     Out1:
 ; CHECK-NEXT:  mul i32 %N, %N_addr.0.pn
 ; CHECK-NEXT:  sub i32 %tmp.6, %N
@@ -179,7 +179,7 @@ exit1:		; preds = %Loop
 	ret i32 0
 exit2:		; preds = %Cont
 	ret i32 %V
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK:     exit1:
 ; CHECK-NEXT:  ret i32 0
 ; CHECK:     exit2:
@@ -206,7 +206,7 @@ loopentry.3.i.preheader:		; preds = %loopentry.3.i.preheader.loopexit, %loopentr
 return.i:		; preds = %no_exit.1.i
 	ret void
 
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK: loopentry.3.i.preheader.loopexit:
 ; CHECK-NEXT:  %inc.1.i = add i32 0, 1
 ; CHECK-NEXT:  br label %loopentry.3.i.preheader
@@ -227,7 +227,7 @@ Loop:		; preds = %Loop, %Entry
 Out:		; preds = %Loop
 	ret i32 %tmp.6
         
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: Out: 
 ; CHECK-NEXT:  %tmp.6 = sdiv i32 %N, %N_addr.0.pn
 ; CHECK-NEXT:  ret i32 %tmp.6
@@ -241,7 +241,7 @@ Loop:
 	br i1 false, label %Loop, label %Out
 Out:
 	ret void
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK:     Out:
 ; CHECK-NEXT:  ret void
 }

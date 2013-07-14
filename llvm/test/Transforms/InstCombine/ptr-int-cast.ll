@@ -28,7 +28,7 @@ define i64 @f0(i32 %a0) nounwind {
 }
 
 define <4 x i32> @test4(<4 x i8*> %arg) nounwind {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: ptrtoint <4 x i8*> %arg to <4 x i64>
 ; CHECK: trunc <4 x i64> %1 to <4 x i32>
   %p1 = ptrtoint <4 x i8*> %arg to <4 x i32>
@@ -36,7 +36,7 @@ define <4 x i32> @test4(<4 x i8*> %arg) nounwind {
 }
 
 define <4 x i128> @test5(<4 x i8*> %arg) nounwind {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: ptrtoint <4 x i8*> %arg to <4 x i64>
 ; CHECK: zext <4 x i64> %1 to <4 x i128>
   %p1 = ptrtoint <4 x i8*> %arg to <4 x i128>
@@ -44,7 +44,7 @@ define <4 x i128> @test5(<4 x i8*> %arg) nounwind {
 }
 
 define <4 x i8*> @test6(<4 x i32> %arg) nounwind {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: zext <4 x i32> %arg to <4 x i64>
 ; CHECK: inttoptr <4 x i64> %1 to <4 x i8*>
   %p1 = inttoptr <4 x i32> %arg to <4 x i8*>
@@ -52,7 +52,7 @@ define <4 x i8*> @test6(<4 x i32> %arg) nounwind {
 }
 
 define <4 x i8*> @test7(<4 x i128> %arg) nounwind {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: trunc <4 x i128> %arg to <4 x i64>
 ; CHECK: inttoptr <4 x i64> %1 to <4 x i8*>
   %p1 = inttoptr <4 x i128> %arg to <4 x i8*>

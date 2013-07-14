@@ -5,7 +5,7 @@ define <2 x i1> @test1(<2 x i64> %a) {
   %t = trunc <2 x i64> %a to <2 x i1>
   ret <2 x i1> %t
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK:   and <2 x i64> %a, <i64 1, i64 1>
 ; CHECK:   icmp ne <2 x i64> %1, zeroinitializer
 }
@@ -16,7 +16,7 @@ define <2 x i64> @test2(<2 x i64> %a) {
   %t = ashr <2 x i64> %b, <i64 1, i64 1>
   ret <2 x i64> %t
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK:   and <2 x i64> %a, <i64 65535, i64 65535>
 ; CHECK:   lshr <2 x i64> %b, <i64 1, i64 1>
 }
@@ -33,7 +33,7 @@ entry:
 	%conv = bitcast <4 x i32> %and to <2 x i64>
 	ret <2 x i64> %conv
         
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK:   fcmp ord <4 x float> %a, %b
 }
 
@@ -46,7 +46,7 @@ entry:
 	%or = or <4 x i32> %sext, %sext5
 	%conv = bitcast <4 x i32> %or to <2 x i64>
 	ret <2 x i64> %conv
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK:   fcmp uno <4 x float> %a, %b
 }
 
@@ -62,7 +62,7 @@ entry:
 	%conv = bitcast <4 x i32> %and to <2 x i64>
 	ret <2 x i64> %conv
         
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK:   sext <4 x i1> %cmp to <4 x i32>	
 ; The sext-and pair is canonicalized to a select.
 ; CHECK:   select <4 x i1> %cmp4, <4 x i32>	%sext, <4 x i32> zeroinitializer
@@ -126,7 +126,7 @@ define <2 x double> @fc(<2 x double> %t) {
 ; PR9228
 ; This was a crasher, so no CHECK statements.
 define <4 x float> @f(i32 %a) nounwind alwaysinline {
-; CHECK: @f
+; CHECK-LABEL: @f(
 entry:
   %dim = insertelement <4 x i32> undef, i32 %a, i32 0
   %dim30 = insertelement <4 x i32> %dim, i32 %a, i32 1

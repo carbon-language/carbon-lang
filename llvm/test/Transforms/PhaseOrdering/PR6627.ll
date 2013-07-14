@@ -42,7 +42,7 @@ if.then:                                          ; preds = %land.lhs.true17
 if.end:
   ret void
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %x1 = load i32* %xx, align 4
 ; CHECK-NEXT: icmp eq i32 %x1, 1179403647
 ; CHECK-NEXT: br i1 {{.*}}, label %if.then, label %if.end 
@@ -86,7 +86,7 @@ if.then:                                          ; preds = %land.lhs.true17
 if.end:
   ret void
 
-; CHECK: @test2a
+; CHECK-LABEL: @test2a(
 ; CHECK: %x1 = load i32* {{.*}}, align 4
 ; CHECK-NEXT: icmp eq i32 %x1, 1179403647
 ; CHECK-NEXT: br i1 {{.*}}, label %if.then, label %if.end 

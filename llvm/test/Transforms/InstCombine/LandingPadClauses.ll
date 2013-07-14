@@ -11,7 +11,7 @@ declare i32 @__objc_personality_v0(i32, i64, i8*, i8*)
 declare void @bar()
 
 define void @foo_generic() {
-; CHECK: @foo_generic
+; CHECK-LABEL: @foo_generic(
   invoke void @bar()
     to label %cont.a unwind label %lpad.a
 cont.a:
@@ -131,7 +131,7 @@ lpad.i:
 }
 
 define void @foo_cxx() {
-; CHECK: @foo_cxx
+; CHECK-LABEL: @foo_cxx(
   invoke void @bar()
     to label %cont.a unwind label %lpad.a
 cont.a:
@@ -182,7 +182,7 @@ lpad.d:
 }
 
 define void @foo_objc() {
-; CHECK: @foo_objc
+; CHECK-LABEL: @foo_objc(
   invoke void @bar()
     to label %cont.a unwind label %lpad.a
 cont.a:

@@ -17,7 +17,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;  }
 ;}
 
-;CHECK: @function0
+;CHECK-LABEL: @function0(
 ;CHECK: load <4 x i32>
 ;CHECK: icmp sgt <4 x i32>
 ;CHECK: mul <4 x i32>
@@ -70,7 +70,7 @@ for.end:
 ;   return sum;
 ; }
 
-;CHECK: @reduction_func
+;CHECK-LABEL: @reduction_func(
 ;CHECK: load <4 x i32>
 ;CHECK: icmp sgt <4 x i32>
 ;CHECK: add <4 x i32>

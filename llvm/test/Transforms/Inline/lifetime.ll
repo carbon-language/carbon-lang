@@ -14,7 +14,7 @@ define void @helper_both_markers() {
 }
 
 define void @test_both_markers() {
-; CHECK: @test_both_markers
+; CHECK-LABEL: @test_both_markers(
 ; CHECK: llvm.lifetime.start(i64 2
 ; CHECK-NEXT: llvm.lifetime.end(i64 2
   call void @helper_both_markers()
@@ -38,7 +38,7 @@ define void @helper_no_markers() {
 ;; We can't use CHECK-NEXT because there's an extra call void @use in between.
 ;; Instead, we use CHECK-NOT to verify that there are no other lifetime calls.
 define void @test_no_marker() {
-; CHECK: @test_no_marker
+; CHECK-LABEL: @test_no_marker(
 ; CHECK-NOT: lifetime
 ; CHECK: llvm.lifetime.start(i64 1
 ; CHECK-NOT: lifetime
@@ -64,7 +64,7 @@ define void @helper_two_casts() {
 }
 
 define void @test_two_casts() {
-; CHECK: @test_two_casts
+; CHECK-LABEL: @test_two_casts(
 ; CHECK-NOT: lifetime
 ; CHECK: llvm.lifetime.start(i64 4
 ; CHECK-NOT: lifetime
@@ -88,7 +88,7 @@ define void @helper_arrays_alloca() {
 }
 
 define void @test_arrays_alloca() {
-; CHECK: @test_arrays_alloca
+; CHECK-LABEL: @test_arrays_alloca(
 ; CHECK-NOT: lifetime
 ; CHECK: llvm.lifetime.start(i64 40,
 ; CHECK-NOT: lifetime

@@ -8,7 +8,7 @@ declare void @use(...)
 @int = global i32 zeroinitializer
 
 ; Zero byte allocas should be merged if they can't be deleted.
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK: alloca
 ; CHECK-NOT: alloca
 define void @test() {
@@ -25,7 +25,7 @@ define void @test() {
 }
 
 ; Zero byte allocas should be deleted.
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: alloca
 define void @test2() {
         %A = alloca i32         ; <i32*> [#uses=1]
@@ -34,7 +34,7 @@ define void @test2() {
 }
 
 ; Zero byte allocas should be deleted.
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: alloca
 define void @test3() {
         %A = alloca { i32 }             ; <{ i32 }*> [#uses=1]
@@ -43,7 +43,7 @@ define void @test3() {
         ret void
 }
 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: = zext i32 %n to i64
 ; CHECK: %A = alloca i32, i64 %
 define i32* @test4(i32 %n) {
@@ -54,7 +54,7 @@ define i32* @test4(i32 %n) {
 ; Allocas which are only used by GEPs, bitcasts, and stores (transitively)
 ; should be deleted.
 define void @test5() {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NOT: alloca
 ; CHECK-NOT: store
 ; CHECK: ret
@@ -80,7 +80,7 @@ declare void @f(i32* %p)
 
 ; Check that we don't delete allocas in some erroneous cases.
 define void @test6() {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NOT: ret
 ; CHECK: alloca
 ; CHECK-NEXT: alloca

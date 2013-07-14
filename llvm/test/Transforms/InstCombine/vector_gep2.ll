@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 
 define <2 x i8*> @testa(<2 x i8*> %a) {
-; CHECK: @testa
+; CHECK-LABEL: @testa(
   %g = getelementptr <2 x i8*> %a, <2 x i32> <i32 0, i32 1>
 ; CHECK: getelementptr <2 x i8*> %a, <2 x i64> <i64 0, i64 1>
   ret <2 x i8*> %g

@@ -12,7 +12,7 @@ declare i16* @strpbrk(i8*, i8*)
 ; Check that 'strpbrk' functions with the wrong prototype aren't simplified.
 
 define i16* @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %str = getelementptr [12 x i8]* @hello, i32 0, i32 0
   %pat = getelementptr [2 x i8]* @w, i32 0, i32 0
 

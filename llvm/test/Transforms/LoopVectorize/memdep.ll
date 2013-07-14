@@ -159,7 +159,7 @@ for.end:
 ; happen.
 ;
 
-; CHECK: @nostoreloadforward
+; CHECK-LABEL: @nostoreloadforward(
 ; CHECK-NOT: <2 x i32>
 
 define void @nostoreloadforward(i32* %A) {
@@ -194,7 +194,7 @@ for.end:
 ; happen.
 ;
 
-; CHECK: @nostoreloadforward2
+; CHECK-LABEL: @nostoreloadforward2(
 ; CHECK-NOT: <2 x i32>
 
 define void @nostoreloadforward2(i32* noalias %A, i32* noalias %B, i32* noalias %C) {

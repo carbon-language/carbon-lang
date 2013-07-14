@@ -14,7 +14,7 @@ entry:
   %X = add i32 %call, 4
   ret i32 %X
   
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: store
 ; CHECK-NEXT: store

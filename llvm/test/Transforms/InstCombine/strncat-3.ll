@@ -11,7 +11,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 declare i16* @strncat(i8*, i8*, i32)
 
 define void @test_nosimplify1() {
-; CHECK: @test_nosimplify1
+; CHECK-LABEL: @test_nosimplify1(
 ; CHECK: call i16* @strncat
 ; CHECK: ret void
 

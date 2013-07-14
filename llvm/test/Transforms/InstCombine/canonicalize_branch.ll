@@ -5,7 +5,7 @@ define i32 @test0(i32 %X, i32 %Y) {
         %C = icmp eq i32 %X, %Y
         br i1 %C, label %T, label %F, !prof !0
 
-; CHECK: @test0
+; CHECK-LABEL: @test0(
 ; CHECK: %C = icmp eq i32 %X, %Y
 ; CHECK: br i1 %C, label %T, label %F
 
@@ -19,7 +19,7 @@ define i32 @test1(i32 %X, i32 %Y) {
         %C = icmp ne i32 %X, %Y
         br i1 %C, label %T, label %F, !prof !1
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %C = icmp eq i32 %X, %Y
 ; CHECK: br i1 %C, label %F, label %T
 
@@ -33,7 +33,7 @@ define i32 @test2(i32 %X, i32 %Y) {
         %C = icmp ule i32 %X, %Y
         br i1 %C, label %T, label %F, !prof !2
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %C = icmp ugt i32 %X, %Y
 ; CHECK: br i1 %C, label %F, label %T
 
@@ -47,7 +47,7 @@ define i32 @test3(i32 %X, i32 %Y) {
         %C = icmp uge i32 %X, %Y
         br i1 %C, label %T, label %F, !prof !3
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: %C = icmp ult i32 %X, %Y
 ; CHECK: br i1 %C, label %F, label %T
 

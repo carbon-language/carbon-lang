@@ -5,7 +5,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 @p = external global i32
 
 define i32 @test(i32 %n) nounwind {
-; CHECK: @test
+; CHECK-LABEL: @test(
 entry:
   br label %for.cond
 

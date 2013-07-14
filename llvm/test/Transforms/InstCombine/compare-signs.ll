@@ -22,7 +22,7 @@
 ;}
 
 define i32 @test3(i32 %a, i32 %b) nounwind readnone {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 entry:
 ; CHECK: xor i32 %a, %b
 ; CHECK: lshr i32 %0, 31
@@ -40,7 +40,7 @@ entry:
 ; Variation on @test3: checking the 2nd bit in a situation where the 5th bit
 ; is one, not zero.
 define i32 @test3i(i32 %a, i32 %b) nounwind readnone {
-; CHECK: @test3i
+; CHECK-LABEL: @test3i(
 entry:
 ; CHECK: xor i32 %a, %b
 ; CHECK: lshr i32 %0, 31

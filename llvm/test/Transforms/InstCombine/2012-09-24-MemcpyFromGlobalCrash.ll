@@ -8,7 +8,7 @@ declare void @bar(i8*)
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 define void @test() {
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK: llvm.memcpy
 ; CHECK: ret void
   %A = alloca [100 x i8]

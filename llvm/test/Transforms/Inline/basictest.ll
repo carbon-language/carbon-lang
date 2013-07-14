@@ -9,7 +9,7 @@ define i32 @test1(i32 %W) {
         %X = call i32 @test1f(i32 7)
         %Y = add i32 %X, %W
         ret i32 %Y
-; CHECK: @test1(
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: %Y = add i32 7, %W
 ; CHECK-NEXT: ret i32 %Y
 }
@@ -20,7 +20,7 @@ define i32 @test1(i32 %W) {
 
 %T = type { i32, i32 }
 
-; CHECK-NOT: @test2f
+; CHECK-NOT-LABEL: @test2f(
 define internal %T* @test2f(i1 %cond, %T* %P) {
   br i1 %cond, label %T, label %F
   
@@ -41,7 +41,7 @@ define i32 @test2(i1 %cond) {
   %D = load i32* %C
   ret i32 %D
   
-; CHECK: @test2(
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: = alloca
 ; CHECK: ret i32
 }
@@ -75,7 +75,7 @@ define i32 @test3() {
 ;
 ; The call to @h *can* be inlined.
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 define i32 @test() {
 ; CHECK: call i32 @f()
   %a = call i32 @f()

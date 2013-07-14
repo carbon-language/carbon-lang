@@ -4,7 +4,7 @@ target triple = "powerpc64-bgq-linux"
 
 define void @test1() nounwind {
 ; Ensure that we don't crash when the trip count == -1.
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
   br label %for.cond2.preheader
 

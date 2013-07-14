@@ -32,7 +32,7 @@ return:		; preds = %endif, %then
 ; This simple test would normally unswitch, but should be inhibited by the presence of
 ; the noduplicate call.
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define i32 @test2(i32* %var) {
   %mem = alloca i32
   store i32 2, i32* %mem

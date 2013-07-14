@@ -9,7 +9,7 @@ declare i8 @memcpy(i8*, i8*, i32)
 ; Check that memcpy functions with the wrong prototype aren't simplified.
 
 define i8 @test_no_simplify1(i8* %mem1, i8* %mem2, i32 %size) {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %ret = call i8 @memcpy(i8* %mem1, i8* %mem2, i32 %size)
 ; CHECK: call i8 @memcpy
   ret i8 %ret

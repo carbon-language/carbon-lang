@@ -13,7 +13,7 @@ target datalayout = "e-p:64:64"
 define i32* @test1(i32* %I) {
         %A = getelementptr i32* %I, i64 0 
         ret i32* %A
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i32* %I
 }
 
@@ -21,7 +21,7 @@ define i32* @test1(i32* %I) {
 define i32* @test2(i32* %I) {
         %A = getelementptr i32* %I
         ret i32* %A
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i32* %I
 }
 
@@ -30,7 +30,7 @@ define i32* @test3(i32* %I) {
         %A = getelementptr i32* %I, i64 17
         %B = getelementptr i32* %A, i64 4
         ret i32* %B
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: getelementptr i32* %I, i64 21
 }
 
@@ -39,7 +39,7 @@ define i32* @test4({ i32 }* %I) {
         %A = getelementptr { i32 }* %I, i64 1 
         %B = getelementptr { i32 }* %A, i64 0, i32 0
         ret i32* %B
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: getelementptr { i32 }* %I, i64 1, i32 0
 }
 
@@ -48,7 +48,7 @@ define void @test5(i8 %B) {
         %A = getelementptr [10 x i8]* @Global, i64 0, i64 4 
         store i8 %B, i8* %A
         ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: store i8 %B, i8* getelementptr inbounds ([10 x i8]* @Global, i64 0, i64 4)
 }
 
@@ -57,7 +57,7 @@ define i32* @test7(i32* %I, i64 %C, i64 %D) {
         %A = getelementptr i32* %I, i64 %C 
         %B = getelementptr i32* %A, i64 %D 
         ret i32* %B
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: %A.sum = add i64 %C, %D
 ; CHECK: getelementptr i32* %I, i64 %A.sum
 }
@@ -67,7 +67,7 @@ define i8* @test8([10 x i32]* %X) {
         %A = getelementptr [10 x i32]* %X, i64 0, i64 0 
         %B = bitcast i32* %A to i8*     
         ret i8* %B
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: bitcast [10 x i32]* %X to i8*
 }
 
@@ -75,7 +75,7 @@ define i32 @test9() {
         %A = getelementptr { i32, double }* null, i32 0, i32 1
         %B = ptrtoint double* %A to i32        
         ret i32 %B
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK: ret i32 8
 }
 
@@ -85,7 +85,7 @@ define i1 @test10({ i32, i32 }* %x, { i32, i32 }* %y) {
         ;; seteq x, y
         %tmp.4 = icmp eq i32* %tmp.1, %tmp.3       
         ret i1 %tmp.4
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: icmp eq { i32, i32 }* %x, %y
 }
 
@@ -93,7 +93,7 @@ define i1 @test11({ i32, i32 }* %X) {
         %P = getelementptr { i32, i32 }* %X, i32 0, i32 0 
         %Q = icmp eq i32* %P, null             
         ret i1 %Q
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK: icmp eq { i32, i32 }* %X, null
 }
 
@@ -111,7 +111,7 @@ entry:
   %g5 = getelementptr %struct.A* %new_a, i32 0, i32 1	
   %a_a = load i32* %g5, align 4	
   ret i32 %a_a
-; CHECK:      @test12
+; CHECK-LABEL:      @test12(
 ; CHECK:      getelementptr %struct.A* %a, i64 0, i32 1
 ; CHECK-NEXT: store i32 10, i32* %g3
 ; CHECK-NEXT: ret i32 10
@@ -125,7 +125,7 @@ define i1 @test13(i64 %X, %S* %P) {
         %B = getelementptr inbounds %S* %P, i32 0, i32 0
 	%C = icmp eq i32* %A, %B
 	ret i1 %C
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK:    %C = icmp eq i64 %X, -1
 }
 
@@ -135,7 +135,7 @@ define i8* @test14(i32 %Idx) {
         %idx = zext i32 %Idx to i64
         %tmp = getelementptr i8* getelementptr ([3 x i8]* @G, i32 0, i32 0), i64 %idx
         ret i8* %tmp
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK: getelementptr [3 x i8]* @G, i64 0, i64 %idx
 }
 
@@ -145,7 +145,7 @@ define i8* @test14(i32 %Idx) {
 define i32 *@test15(i64 %X) {
         %A = getelementptr i32* getelementptr ([40 x i32]* @Array, i64 0, i64 0), i64 %X
         ret i32* %A
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK: getelementptr [40 x i32]* @Array, i64 0, i64 %X
 }
 
@@ -153,7 +153,7 @@ define i32 *@test15(i64 %X) {
 define i32* @test16(i32* %X, i32 %Idx) {
         %R = getelementptr i32* %X, i32 %Idx       
         ret i32* %R
-; CHECK: @test16
+; CHECK-LABEL: @test16(
 ; CHECK: sext i32 %Idx to i64
 }
 
@@ -163,7 +163,7 @@ define i1 @test17(i16* %P, i32 %I, i32 %J) {
         %Y = getelementptr inbounds i16* %P, i32 %J
         %C = icmp ult i16* %X, %Y
         ret i1 %C
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 ; CHECK: %C = icmp slt i32 %I, %J 
 }
 
@@ -171,7 +171,7 @@ define i1 @test18(i16* %P, i32 %I) {
         %X = getelementptr inbounds i16* %P, i32 %I
         %C = icmp ult i16* %X, %P
         ret i1 %C
-; CHECK: @test18
+; CHECK-LABEL: @test18(
 ; CHECK: %C = icmp slt i32 %I, 0
 }
 
@@ -181,7 +181,7 @@ define i32 @test19(i32* %P, i32 %A, i32 %B) {
         %tmp.10 = icmp eq i32* %tmp.4, %tmp.9
         %tmp.11 = zext i1 %tmp.10 to i32
         ret i32 %tmp.11
-; CHECK: @test19
+; CHECK-LABEL: @test19(
 ; CHECK: icmp eq i32 %A, %B
 }
 
@@ -190,7 +190,7 @@ define i32 @test20(i32* %P, i32 %A, i32 %B) {
         %tmp.6 = icmp eq i32* %tmp.4, %P
         %tmp.7 = zext i1 %tmp.6 to i32
         ret i32 %tmp.7
-; CHECK: @test20
+; CHECK-LABEL: @test20(
 ; CHECK: icmp eq i32 %A, 0
 }
 
@@ -201,7 +201,7 @@ define i32 @test21() {
         %pbobel = getelementptr %intstruct* %pbob2, i64 0, i32 0
         %rval = load i32* %pbobel
         ret i32 %rval
-; CHECK: @test21
+; CHECK-LABEL: @test21(
 ; CHECK: getelementptr %intstruct* %pbob1, i64 0, i32 0
 }
 
@@ -213,7 +213,7 @@ define i1 @test22() {
         %C = icmp ult i32* getelementptr (i32* @A, i64 1), 
                            getelementptr (i32* @B, i64 2) 
         ret i1 %C
-; CHECK: @test22
+; CHECK-LABEL: @test22(
 ; CHECK: icmp ult (i32* getelementptr inbounds (i32* @A, i64 1), i32* getelementptr (i32* @B, i64 2))
 }
 
@@ -224,7 +224,7 @@ define i1 @test23() {
         %A = getelementptr %X* null, i64 0, i32 0, i64 0                ; <i32*> [#uses=1]
         %B = icmp ne i32* %A, null              ; <i1> [#uses=1]
         ret i1 %B
-; CHECK: @test23
+; CHECK-LABEL: @test23(
 ; CHECK: ret i1 false
 }
 
@@ -239,7 +239,7 @@ entry:
         %tmp27.i = sext i32 %sext to i64                ; <i64> [#uses=1]
         tail call void @foo25( i32 0, i64 %tmp27.i )
         unreachable
-; CHECK: @test25
+; CHECK-LABEL: @test25(
 }
 
 declare void @foo25(i32, i64)
@@ -251,7 +251,7 @@ define i1 @test26(i8* %arr) {
         %Y = getelementptr i8* %arr, i32 1
         %test = icmp uge i8* %X, %Y
         ret i1 %test
-; CHECK: @test26
+; CHECK-LABEL: @test26(
 ; CHECK: ret i1 true
 }
 
@@ -275,7 +275,7 @@ entry:
         "=r,ir,*m,i,0,~{dirflag},~{fpsr},~{flags}"( i32 %tmp351,
          %struct.__large_struct* null, i32 -14, i32 0 )
 	unreachable
-; CHECK: @test27
+; CHECK-LABEL: @test27(
 }
 
 ; PR1978
@@ -303,7 +303,7 @@ bb10:
 
 bb17:	
 	ret i32 0
-; CHECK: @test28
+; CHECK-LABEL: @test28(
 ; CHECK: icmp eq i32 %indvar, 0
 }
 
@@ -332,7 +332,7 @@ if.then216:
 
 if.end363:
 	ret i32 0
-; CHECK: @test29
+; CHECK-LABEL: @test29(
 }
 
 
@@ -345,7 +345,7 @@ entry:
 	%2 = getelementptr [0 x i32]* %1, i32 0, i32 %m
 	%3 = load i32* %2, align 4
 	ret i32 %3
-; CHECK: @test30
+; CHECK-LABEL: @test30(
 ; CHECK: getelementptr i32
 }
 
@@ -358,7 +358,7 @@ define i1 @test31(i32* %A) {
         %C = getelementptr i32* %A, i64 1
         %V = icmp eq i32* %B, %C 
         ret i1 %V
-; CHECK: @test31
+; CHECK-LABEL: @test31(
 ; CHECK: ret i1 true
 }
 
@@ -375,7 +375,7 @@ define i8* @test32(i8* %v) {
 	%F = getelementptr [4 x i8*]* %A, i32 0, i32 2	
 	%G = load i8** %F
 	ret i8* %G
-; CHECK: @test32
+; CHECK-LABEL: @test32(
 ; CHECK: %D = getelementptr [4 x i8*]* %A, i64 0, i64 1
 ; CHECK: %F = getelementptr [4 x i8*]* %A, i64 0, i64 2
 }
@@ -388,7 +388,7 @@ define i32 *@test33(%struct.Key *%A) {
 	%B = bitcast %struct.Key* %A to %struct.anon*
         %C = getelementptr %struct.anon* %B, i32 0, i32 2 
 	ret i32 *%C
-; CHECK: @test33
+; CHECK-LABEL: @test33(
 ; CHECK: getelementptr %struct.Key* %A, i64 0, i32 0, i32 1
 }
 
@@ -404,7 +404,7 @@ entry:
       	store i64 %V, i64* %mrv_gep
 	%C = load i8** %B, align 8
 	ret i8* %C
-; CHECK: @test34
+; CHECK-LABEL: @test34(
 ; CHECK: %V.c = inttoptr i64 %V to i8*
 ; CHECK: ret i8* %V.c
 }
@@ -423,7 +423,7 @@ define i32 @test35() nounwind {
   call i32 (i8*, ...)* @printf(i8* getelementptr ([17 x i8]* @"\01LC8", i32 0, i32 0),
              i8* getelementptr (%t1* bitcast (%t0* @s to %t1*), i32 0, i32 1, i32 0)) nounwind
   ret i32 0
-; CHECK: @test35
+; CHECK-LABEL: @test35(
 ; CHECK: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @"\01LC8", i64 0, i64 0), i8* getelementptr inbounds (%t0* @s, i64 0, i32 1, i64 0)) [[NUW:#[0-9]+]]
 }
 
@@ -434,14 +434,14 @@ define i32 @test35() nounwind {
 
 define i8* @test36() nounwind {
   ret i8* getelementptr ([11 x i8]* @array, i32 0, i64 -1)
-; CHECK: @test36
+; CHECK-LABEL: @test36(
 ; CHECK: ret i8* getelementptr ([11 x i8]* @array, i64 1676976733973595601, i64 4)
 }
 
 ; Instcombine shouldn't assume that gep(A,0,1) != gep(A,1,0).
 @A37 = external constant [1 x i8]
 define i1 @test37() nounwind {
-; CHECK: @test37
+; CHECK-LABEL: @test37(
 ; CHECK: ret i1 true
   %t = icmp eq i8* getelementptr ([1 x i8]* @A37, i64 0, i64 1),
                    getelementptr ([1 x i8]* @A37, i64 1, i64 0)
@@ -452,7 +452,7 @@ define i1 @test37() nounwind {
 define i32* @test38(i32* %I, i32 %n) {
         %A = getelementptr i32* %I, i32 %n
         ret i32* %A
-; CHECK: @test38
+; CHECK-LABEL: @test38(
 ; CHECK: = sext i32 %n to i64
 ; CHECK: %A = getelementptr i32* %I, i64 %
 }
@@ -469,7 +469,7 @@ entry:
   call void @pr10322_f3(i8** %tmp2) nounwind
   ret void
 
-; CHECK: @pr10322_f1
+; CHECK-LABEL: @pr10322_f1(
 ; CHECK: %tmp2 = getelementptr inbounds %pr10322_t* %arrayidx8, i64 0, i32 0
 }
 
@@ -485,7 +485,7 @@ define void @three_gep_f(%three_gep_t2* %x) {
   %gep3 = getelementptr %three_gep_t* %gep2, i64 0, i32 0
   call void @three_gep_g(i32* %gep3)
 
-; CHECK: @three_gep_f
+; CHECK-LABEL: @three_gep_f(
 ; CHECK: %gep3 = getelementptr %three_gep_t2* %gep1, i64 0, i32 0, i32 0
   ret void
 }
@@ -504,7 +504,7 @@ define void @test39(%struct.ham* %arg, i8 %arg1) nounwind {
   store i8 %arg1, i8* %tmp4, align 8
   ret void
 
-; CHECK: @test39
+; CHECK-LABEL: @test39(
 ; CHECK: getelementptr inbounds %struct.ham* %arg, i64 0, i32 2
 ; CHECK: getelementptr inbounds i8* %tmp3, i64 -8
 }
@@ -515,7 +515,7 @@ define i1 @pr16483([1 x i8]* %a, [1 x i8]* %b) {
   %cmp = icmp ult i8* %c, %d
   ret i1 %cmp
 
-; CHECK: @pr16483
+; CHECK-LABEL: @pr16483(
 ; CHECK-NEXT: icmp ult  [1 x i8]* %a, %b
 }
 

@@ -11,7 +11,7 @@
 ; STATS: 2 loop-unswitch - Number of branches unswitched
 ; STATS: 1 loop-unswitch - Number of unswitches that are trivial
 
-; CHECK: @func_16
+; CHECK-LABEL: @func_16(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %a, label %entry.split, label %abort0.split
 

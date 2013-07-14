@@ -5,7 +5,7 @@
 target triple = "x86-apple-darwin"
 
 ; Verify that identical edges are merged. rdar://problem/6453893
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: bb89:
 ; CHECK: phi i8* [ %lsr.iv.next1, %bbA.bb89_crit_edge ], [ %lsr.iv.next1, %bbB.bb89_crit_edge ]{{$}}
 
@@ -43,7 +43,7 @@ exit:
 }
 
 ; Handle single-predecessor phis: PR13756
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: bb89:
 ; CHECK: phi i8* [ %lsr.iv.next1, %bbA ], [ %lsr.iv.next1, %bbA ], [ %lsr.iv.next1, %bbA ]{{$}}
 define i8* @test2() {

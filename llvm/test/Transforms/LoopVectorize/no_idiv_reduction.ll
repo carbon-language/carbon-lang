@@ -7,7 +7,7 @@ entry:
   br label %for.body
 
 for.body:
-  ; CHECK: @g
+  ; CHECK-LABEL: @g(
   ; CHECK-NOT: sdiv <2 x i32>
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %r.05 = phi i32 [ 80, %entry ], [ %div, %for.body ]

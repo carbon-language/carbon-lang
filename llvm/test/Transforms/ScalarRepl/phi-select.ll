@@ -6,7 +6,7 @@ target triple = "x86_64-apple-darwin10.2"
 %struct.X = type { i32 }
 %PairTy = type {i32, i32}
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %a.0 = alloca i32
 ; CHECK: %b.0 = alloca i32
 define i32 @test1(i32 %x) nounwind readnone ssp {
@@ -24,7 +24,7 @@ entry:
   ret i32 %4
 }
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %X.ld = phi i32 [ 1, %entry ], [ 2, %T ]
 ; CHECK-NEXT: ret i32 %X.ld
 define i32 @test2(i1 %c) {
@@ -43,7 +43,7 @@ F:
   ret i32 %Q
 }
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: %Q = select i1 %c, i32 1, i32 2
 ; CHECK-NEXT: ret i32 %Q
 ; rdar://8904039
@@ -63,7 +63,7 @@ define i32 @test3(i1 %c) {
 define i64 @test4(i1 %c) {
 entry:
   %A = alloca %PairTy
-  ; CHECK: @test4
+  ; CHECK-LABEL: @test4(
   ; CHECK: %A = alloca %PairTy
   %B = getelementptr %PairTy* %A, i32 0, i32 0
   store i32 1, i32* %B
@@ -94,7 +94,7 @@ entry:
   %r = load i32* %b, align 8
   ret i32 %r
   
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: store i32 123, i32* %P
 ; CHECK: ret i32 2
 }
@@ -107,7 +107,7 @@ define i32 @test6(i32 %x, i1 %c) nounwind readnone ssp {
   %p.0 = select i1 %c, i32* %b, i32* %a
   %r = load i32* %p.0, align 8
   ret i32 %r
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: %r = select i1 %c, i32 2, i32 1
 ; CHECK-NEXT: ret i32 %r
 }
@@ -124,7 +124,7 @@ define i32 @test7(i32 %x, i1 %c) nounwind readnone ssp {
   
   %r = load i32* %p.0, align 8
   ret i32 %r
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NOT: alloca i32
 ; CHECK: %r = select i1 %c, i32 2, i32 0
 ; CHECK: ret i32 %r
@@ -132,7 +132,7 @@ define i32 @test7(i32 %x, i1 %c) nounwind readnone ssp {
 
 ;; Promote allocs that are PHI'd together by moving the loads.
 define i32 @test8(i32 %x) nounwind readnone ssp {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NOT: load i32
 ; CHECK-NOT: store i32
 ; CHECK: %p.0.ld = phi i32 [ 2, %entry ], [ 1, %T ]

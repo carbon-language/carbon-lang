@@ -17,7 +17,7 @@ entry:
   store i64 %v3a, i64* %a3, align 8
   %r = add i64 %v2, %v3
   ret i64 %r
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: getelementptr <2 x i64*>
 }
 

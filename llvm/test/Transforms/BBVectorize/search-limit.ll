@@ -3,8 +3,8 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; RUN: opt < %s -bb-vectorize -bb-vectorize-req-chain-depth=3 -bb-vectorize-search-limit=4 -bb-vectorize-ignore-target-info -instcombine -gvn -S | FileCheck %s -check-prefix=CHECK-SL4
 
 define double @test1(double %A1, double %A2, double %B1, double %B2) {
-; CHECK: @test1
-; CHECK-SL4: @test1
+; CHECK-LABEL: @test1(
+; CHECK-SL4-LABEL: @test1(
 ; CHECK-SL4-NOT: <2 x double>
 ; CHECK: %X1.v.i1.1 = insertelement <2 x double> undef, double %B1, i32 0
 ; CHECK: %X1.v.i1.2 = insertelement <2 x double> %X1.v.i1.1, double %B2, i32 1

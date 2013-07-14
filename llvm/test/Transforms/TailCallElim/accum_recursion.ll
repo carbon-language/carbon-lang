@@ -41,7 +41,7 @@ return:		; preds = %entry
 
 
 define i64 @test3_fib(i64 %n) nounwind readnone {
-; CHECK: @test3_fib
+; CHECK-LABEL: @test3_fib(
 entry:
 ; CHECK: tailrecurse:
 ; CHECK: %accumulator.tr = phi i64 [ %n, %entry ], [ %3, %bb1 ]

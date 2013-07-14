@@ -21,7 +21,7 @@
 
 declare void @func(i32)
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 define void @test(i32 %m) nounwind uwtable {
 entry:
   br label %for.body
@@ -45,7 +45,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define i32 @test2(i32 %m) nounwind uwtable {
 entry:
   br label %for.body

@@ -16,7 +16,7 @@ define double @test1(double %A1, double %A2, double %B1, double %B2, double %C1,
 	%Z2 = fadd double %Y2, %B2
 	%R  = fmul double %Z1, %Z2
 	ret double %R
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret double %R
 }
 
@@ -30,7 +30,7 @@ define double @test1a(double %A1, double %A2, double %B1, double %B2, double %C1
 	%Z2 = fadd double %Y2, %B2
 	%R  = fmul double %Z1, %Z2
 	ret double %R
-; CHECK: @test1a
+; CHECK-LABEL: @test1a(
 ; CHECK: ret double %R
 }
 
@@ -44,7 +44,7 @@ define double @test2(double %A1, double %A2, double %B1, double %B2) {
 	%Z2 = fadd double %Y2, %B2
 	%R  = fmul double %Z1, %Z2
 	ret double %R
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret double %R
 }
 
@@ -58,7 +58,7 @@ define double @test3(double %A1, double %A2, double %B1, double %B2, i32 %P) {
 	%Z2 = fadd double %Y2, %B2
 	%R  = fmul double %Z1, %Z2
 	ret double %R
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret double %R
 }
 
@@ -73,7 +73,7 @@ define double @test4(double %A1, double %A2, double %B1, double %B2, i32 %P) {
 	%Z2 = fadd double %Y2, %B2
 	%R  = fmul double %Z1, %Z2
 	ret double %R
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: ret double %R
 }
 

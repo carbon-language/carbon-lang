@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 %S1 = type { i64, [42 x float] }
 
 define i32 @test1(<4 x i32> %x, <4 x i32> %y) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
 	%a = alloca [2 x <4 x i32>]
 ; CHECK-NOT: alloca
@@ -35,7 +35,7 @@ entry:
 }
 
 define i32 @test2(<4 x i32> %x, <4 x i32> %y) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 entry:
 	%a = alloca [2 x <4 x i32>]
 ; CHECK-NOT: alloca
@@ -69,7 +69,7 @@ entry:
 }
 
 define i32 @test3(<4 x i32> %x, <4 x i32> %y) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 entry:
 	%a = alloca [2 x <4 x i32>]
 ; CHECK-NOT: alloca
@@ -107,7 +107,7 @@ entry:
 }
 
 define i32 @test4(<4 x i32> %x, <4 x i32> %y, <4 x i32>* %z) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 entry:
 	%a = alloca [2 x <4 x i32>]
 ; CHECK-NOT: alloca
@@ -151,7 +151,7 @@ entry:
 }
 
 define i32 @test5(<4 x i32> %x, <4 x i32> %y, <4 x i32>* %z) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; The same as the above, but with reversed source and destination for the
 ; element memcpy, and a self copy.
 entry:
@@ -199,7 +199,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, 
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
 define i64 @test6(<4 x i64> %x, <4 x i64> %y, i64 %n) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; The old scalarrepl pass would wrongly drop the store to the second alloca.
 ; PR13254
   %tmp = alloca { <4 x i64>, <4 x i64> }
@@ -215,7 +215,7 @@ define i64 @test6(<4 x i64> %x, <4 x i64> %y, i64 %n) {
 }
 
 define <4 x i32> @test_subvec_store() {
-; CHECK: @test_subvec_store
+; CHECK-LABEL: @test_subvec_store(
 entry:
   %a = alloca <4 x i32>
 ; CHECK-NOT: alloca
@@ -247,7 +247,7 @@ entry:
 }
 
 define <4 x i32> @test_subvec_load() {
-; CHECK: @test_subvec_load
+; CHECK-LABEL: @test_subvec_load(
 entry:
   %a = alloca <4 x i32>
 ; CHECK-NOT: alloca
@@ -282,7 +282,7 @@ entry:
 declare void @llvm.memset.p0i32.i32(i32* nocapture, i32, i32, i32, i1) nounwind
 
 define <4 x float> @test_subvec_memset() {
-; CHECK: @test_subvec_memset
+; CHECK-LABEL: @test_subvec_memset(
 entry:
   %a = alloca <4 x float>
 ; CHECK-NOT: alloca
@@ -315,7 +315,7 @@ entry:
 }
 
 define <4 x float> @test_subvec_memcpy(i8* %x, i8* %y, i8* %z, i8* %f, i8* %out) {
-; CHECK: @test_subvec_memcpy
+; CHECK-LABEL: @test_subvec_memcpy(
 entry:
   %a = alloca <4 x float>
 ; CHECK-NOT: alloca
@@ -363,7 +363,7 @@ entry:
 }
 
 define i32 @PR14212() {
-; CHECK: @PR14212
+; CHECK-LABEL: @PR14212(
 ; This caused a crash when "splitting" the load of the i32 in order to promote
 ; the store of <3 x i8> properly. Heavily reduced from an OpenCL test case.
 entry:

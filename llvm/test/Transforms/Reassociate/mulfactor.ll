@@ -1,7 +1,7 @@
 ; RUN: opt < %s -reassociate -S | FileCheck %s
 
 define i32 @test1(i32 %a, i32 %b) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: mul i32 %a, %a
 ; CHECK-NEXT: mul i32 %a, 2
 ; CHECK-NEXT: add
@@ -20,7 +20,7 @@ entry:
 }
 
 define i32 @test2(i32 %t) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: mul
 ; CHECK-NEXT: add
 ; CHECK-NEXT: ret
@@ -35,7 +35,7 @@ entry:
 
 define i32 @test3(i32 %x) {
 ; (x^8)
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: mul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: mul
@@ -54,7 +54,7 @@ entry:
 
 define i32 @test4(i32 %x) {
 ; (x^7)
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: mul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: mul
@@ -73,7 +73,7 @@ entry:
 
 define i32 @test5(i32 %x, i32 %y) {
 ; (x^4) * (y^2)
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: mul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: mul
@@ -90,7 +90,7 @@ entry:
 
 define i32 @test6(i32 %x, i32 %y, i32 %z) {
 ; (x^5) * (y^3) * z
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: mul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: mul
@@ -113,7 +113,7 @@ entry:
 
 define i32 @test7(i32 %x, i32 %y, i32 %z) {
 ; (x^4) * (y^3) * (z^2)
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: mul
 ; CHECK-NEXT: mul
 ; CHECK-NEXT: mul

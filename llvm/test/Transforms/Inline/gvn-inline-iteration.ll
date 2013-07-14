@@ -12,9 +12,9 @@ entry:
   %call = tail call i32 %tmp3() nounwind          ; <i32> [#uses=1]
   ret i32 %call
 }
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: ret i32 7
-; CHECK: @bar
+; CHECK-LABEL: @bar(
 ; CHECK: ret i32 7
 
 define internal i32 @bar() nounwind readnone ssp {

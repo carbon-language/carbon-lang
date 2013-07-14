@@ -6,7 +6,7 @@ define i32 @test1(i32 %arg) {
 	%tmp1 = sub i32 -12, %arg
 	%tmp2 = add i32 %tmp1, 12
 	ret i32 %tmp2
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: sub i32 0, %arg
 ; CHECK-NEXT: ret i32
 }
@@ -16,7 +16,7 @@ define i32 @test2(i32 %reg109, i32 %reg1111) {
 	%reg116 = add i32 %reg115, %reg1111		; <i32> [#uses=1]
 	%reg117 = add i32 %reg116, 30		; <i32> [#uses=1]
 	ret i32 %reg117
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: add i32 %reg1111, %reg109
 ; CHECK-NEXT: ret i32
 }
@@ -40,7 +40,7 @@ define void @test3() {
         ; f = (a+c)+b
 	store i32 %t4, i32* @f
 	ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: add i32
 ; CHECK: add i32
 ; CHECK-NOT: add i32
@@ -60,7 +60,7 @@ define void @test4() {
         ; f = (c+a)+b
 	store i32 %t4, i32* @f
 	ret void
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: add i32
 ; CHECK: add i32
 ; CHECK-NOT: add i32
@@ -80,7 +80,7 @@ define void @test5() {
         ; f = (c+a)+b
 	store i32 %t4, i32* @f
 	ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: add i32
 ; CHECK: add i32
 ; CHECK-NOT: add i32
@@ -102,7 +102,7 @@ define i32 @test6() {
 	; X ^ X = 0
         %RV = xor i32 %tmp.5, %tmp.11
 	ret i32 %RV
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: ret i32 0
 }
 
@@ -115,7 +115,7 @@ define i32 @test7(i32 %A, i32 %B, i32 %C) {
 	%aac = mul i32 %ac, %A
 	%r = add i32 %aab, %aac
 	ret i32 %r
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NEXT: add i32 %C, %B
 ; CHECK-NEXT: mul i32 
 ; CHECK-NEXT: mul i32 
@@ -129,7 +129,7 @@ define i32 @test8(i32 %X, i32 %Y, i32 %Z) {
         ; (-X)*Y + Z -> Z-X*Y
 	%C = add i32 %B, %Z
 	ret i32 %C
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NEXT: %A = mul i32 %Y, %X
 ; CHECK-NEXT: %C = sub i32 %Z, %A
 ; CHECK-NEXT: ret i32 %C
@@ -141,7 +141,7 @@ define i32 @test9(i32 %X) {
   %Y = mul i32 %X, 47
   %Z = add i32 %Y, %Y
   ret i32 %Z
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NEXT: mul i32 %X, 94
 ; CHECK-NEXT: ret i32
 }
@@ -150,7 +150,7 @@ define i32 @test10(i32 %X) {
   %Y = add i32 %X ,%X
   %Z = add i32 %Y, %X
   ret i32 %Z
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK-NEXT: mul i32 %X, 3
 ; CHECK-NEXT: ret i32
 }
@@ -160,7 +160,7 @@ define i32 @test11(i32 %W) {
   %Y = add i32 %X ,%X
   %Z = add i32 %Y, %X
   ret i32 %Z
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK-NEXT: mul i32 %W, 381
 ; CHECK-NEXT: ret i32
 }
@@ -173,7 +173,7 @@ define i32 @test12(i32 %X) {
   %Y = add i32 %A ,%B
   %Z = add i32 %Y, %C
   ret i32 %Z
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK-NEXT: mul i32 %X, -3
 ; CHECK-NEXT: add i32{{.*}}, 6
 ; CHECK-NEXT: ret i32
@@ -185,7 +185,7 @@ define i32 @test13(i32 %X1, i32 %X2, i32 %X3) {
   %C = mul i32 %X1, %X3  ; X1*X3
   %D = add i32 %B, %C    ; -X1*X2 + X1*X3 -> X1*(X3-X2)
   ret i32 %D
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK-NEXT: sub i32 %X3, %X2
 ; CHECK-NEXT: mul i32 {{.*}}, %X1
 ; CHECK-NEXT: ret i32
@@ -197,7 +197,7 @@ define i32 @test14(i32 %X1, i32 %X2) {
   %C = mul i32 %X2, -47  ; X2*-47
   %D = add i32 %B, %C    ; X1*47 + X2*-47 -> 47*(X1-X2)
   ret i32 %D
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK-NEXT: sub i32 %X1, %X2
 ; CHECK-NEXT: mul i32 {{.*}}, 47
 ; CHECK-NEXT: ret i32
@@ -210,7 +210,7 @@ define i32 @test15(i32 %X1, i32 %X2, i32 %X3) {
   %C = and i1 %A, %B
   %D = select i1 %C, i32 %X1, i32 0
   ret i32 %D
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK: and i1 %A, %B
 }
 

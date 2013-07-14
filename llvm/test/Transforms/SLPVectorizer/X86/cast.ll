@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;     A[2] = B[2];
 ;     A[3] = B[3];
 ; }
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK: load <4 x i8>
 ;CHECK: sext
 ;CHECK: store <4 x i32>

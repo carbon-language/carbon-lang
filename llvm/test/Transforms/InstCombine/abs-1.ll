@@ -11,7 +11,7 @@ declare i64 @llabs(i64)
 ; Check abs(x) -> x >s -1 ? x : -x.
 
 define i32 @test_simplify1(i32 %x) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %ret = call i32 @abs(i32 %x)
 ; CHECK-NEXT: [[ISPOS:%[a-z0-9]+]] = icmp sgt i32 %x, -1
 ; CHECK-NEXT: [[NEG:%[a-z0-9]+]] = sub i32 0, %x
@@ -21,7 +21,7 @@ define i32 @test_simplify1(i32 %x) {
 }
 
 define i64 @test_simplify2(i64 %x) {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %ret = call i64 @labs(i64 %x)
 ; CHECK-NEXT: [[ISPOS:%[a-z0-9]+]] = icmp sgt i64 %x, -1
 ; CHECK-NEXT: [[NEG:%[a-z0-9]+]] = sub i64 0, %x
@@ -31,7 +31,7 @@ define i64 @test_simplify2(i64 %x) {
 }
 
 define i64 @test_simplify3(i64 %x) {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %ret = call i64 @llabs(i64 %x)
 ; CHECK-NEXT: [[ISPOS:%[a-z0-9]+]] = icmp sgt i64 %x, -1
 ; CHECK-NEXT: [[NEG:%[a-z0-9]+]] = sub i64 0, %x

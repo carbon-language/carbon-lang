@@ -200,7 +200,7 @@ for.end21:                                        ; preds = %for.cond14
 
 define i32 @fct3(i32 %c) nounwind uwtable ssp {
 entry:
-  ;CHECK: @fct3
+  ;CHECK-LABEL: @fct3(
   ;CHECK: call i32 @fct1
   ; The inline keyword gives a sufficient benefits to inline fct2
   ;CHECK-NOT: call i32 @fct2
@@ -216,7 +216,7 @@ entry:
 
 define i32 @fct4(i32 %c) minsize nounwind uwtable ssp {
 entry:
-  ;CHECK: @fct4
+  ;CHECK-LABEL: @fct4(
   ;CHECK: call i32 @fct1
   ; With Oz (minsize attribute), the benefit of inlining fct2
   ; is the same as fct1, thus no inlining for fct2

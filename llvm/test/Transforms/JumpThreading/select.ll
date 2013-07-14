@@ -10,7 +10,7 @@ declare void @quux()
 ; Mostly theoretical since instruction combining simplifies all selects of
 ; booleans where at least one operand is true/false/undef.
 
-; CHECK: @test_br
+; CHECK-LABEL: @test_br(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %cond, label %L1,
 define void @test_br(i1 %cond, i1 %value) nounwind {
@@ -34,7 +34,7 @@ L3:
 
 ; Jump threading of switch with select as condition.
 
-; CHECK: @test_switch
+; CHECK-LABEL: @test_switch(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %cond, label %L1,
 define void @test_switch(i1 %cond, i8 %value) nounwind {
@@ -69,7 +69,7 @@ L4:
 
 ; Jump threading of indirectbr with select as address.
 
-; CHECK: @test_indirectbr
+; CHECK-LABEL: @test_indirectbr(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %cond, label %L1, label %L3
 define void @test_indirectbr(i1 %cond, i8* %address) nounwind {
@@ -93,7 +93,7 @@ L3:
 
 ; A more complicated case: the condition is a select based on a comparison.
 
-; CHECK: @test_switch_cmp
+; CHECK-LABEL: @test_switch_cmp(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %cond, label %L0, label %[[THREADED:[A-Za-z.0-9]+]]
 ; CHECK: [[THREADED]]:

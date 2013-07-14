@@ -21,11 +21,11 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %if.then, %entry
   ret i8* %call
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: load
 ; CHECK-NOT: icmp
 
-; CHECK_NO_LIBCALLS: @test
+; CHECK_NO_LIBCALLS-LABEL: @test(
 ; CHECK_NO_LIBCALLS: load
 ; CHECK_NO_LIBCALLS: icmp
 }

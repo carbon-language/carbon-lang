@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;  for (i=0; i<n; i++){
 ;    a[i] += i;
 ;  }
-;CHECK: @inc
+;CHECK-LABEL: @inc(
 ;CHECK: load <4 x i32>
 ;CHECK: load <4 x i32>
 ;CHECK: add nsw <4 x i32>

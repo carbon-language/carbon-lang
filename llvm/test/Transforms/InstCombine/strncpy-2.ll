@@ -12,7 +12,7 @@ declare i16* @strncpy(i8*, i8*, i32)
 ; Check that 'strncpy' functions with the wrong prototype aren't simplified.
 
 define void @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
 

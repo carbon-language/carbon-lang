@@ -11,7 +11,7 @@ define i32 @test1(i32* %p) {
   %x = load i32* %t1
   %a = sub i32 %y, %x
   ret i32 %a
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i32 0
 }
 
@@ -22,7 +22,7 @@ define float @test2() {
   %tmp = load float* bitcast ([4 x i8]* @.str to float*), align 1
   ret float %tmp
   
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret float 0x3806965600000000
 }
 
@@ -41,6 +41,6 @@ define void @test3() nounwind {
   store i32 %l, i32* getelementptr ([36 x i32]* @rslts32, i32 29826161, i32 28), align 4
   ret void
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: store i32 1, i32* getelementptr inbounds ([36 x i32]* @rslts32, i32 0, i32 0)
 }

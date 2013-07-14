@@ -56,7 +56,7 @@ define void @frob() {
 
 
 ; PR8883 - Constant fold exotic gep subtract
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 @X = global [1000 x i8] zeroinitializer, align 16
 
 define i64 @test2() {

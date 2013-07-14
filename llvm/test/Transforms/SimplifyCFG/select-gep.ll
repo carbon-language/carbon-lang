@@ -14,7 +14,7 @@ if.end:
   %x.addr = phi i8* [ %incdec.ptr, %if.then ], [ %x, %entry ]
   ret i8* %x.addr
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: select
 ; CHECK: ret i8* %x.addr
 }
@@ -34,7 +34,7 @@ if.end:
   %x.addr = phi i8* [ %incdec.ptr, %if.then ], [ %y, %entry ]
   ret i8* %x.addr
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %incdec.ptr.y = select i1 %cmp, i8* %incdec.ptr, i8* %y
 ; CHECK: ret i8* %incdec.ptr.y
 }

@@ -2,7 +2,7 @@
 
 @a = external global i32		; <i32*> [#uses=7]
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 define i32 @test1() nounwind {
 entry:
 	%0 = load i32* @a, align 4
@@ -57,7 +57,7 @@ return:		; preds = %bb8
 declare void @foo(i1)
 declare void @bar(i32)
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 define void @test3(i32 %x, i32 %y) {
   %xz = icmp eq i32 %x, 0
   %yz = icmp eq i32 %y, 0
@@ -79,7 +79,7 @@ nope:
   ret void
 }
 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 define void @test4(i1 %b, i32 %x) {
   br i1 %b, label %sw, label %case3
 sw:
@@ -112,7 +112,7 @@ case3:
   ret void
 }
 
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 define i1 @test5(i32 %x, i32 %y) {
   %cmp = icmp eq i32 %x, %y
   br i1 %cmp, label %same, label %different
@@ -128,7 +128,7 @@ different:
   ret i1 %cmp3
 }
 
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 define i1 @test6(i32 %x, i32 %y) {
   %cmp2 = icmp ne i32 %x, %y
   %cmp = icmp eq i32 %x, %y
@@ -144,7 +144,7 @@ different:
   ret i1 %cmp3
 }
 
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 define i1 @test7(i32 %x, i32 %y) {
   %cmp = icmp sgt i32 %x, %y
   br i1 %cmp, label %same, label %different
@@ -160,7 +160,7 @@ different:
   ret i1 %cmp3
 }
 
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 define i1 @test8(i32 %x, i32 %y) {
   %cmp2 = icmp sle i32 %x, %y
   %cmp = icmp sgt i32 %x, %y
@@ -177,7 +177,7 @@ different:
 }
 
 ; PR1768
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 define i32 @test9(i32 %i, i32 %j) {
   %cmp = icmp eq i32 %i, %j
   br i1 %cmp, label %cond_true, label %ret
@@ -193,7 +193,7 @@ ret:
 }
 
 ; PR1768
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 define i32 @test10(i32 %j, i32 %i) {
   %cmp = icmp eq i32 %i, %j
   br i1 %cmp, label %cond_true, label %ret
@@ -210,7 +210,7 @@ ret:
 
 declare i32 @yogibar()
 
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 define i32 @test11(i32 %x) {
   %v0 = call i32 @yogibar()
   %v1 = call i32 @yogibar()
@@ -233,7 +233,7 @@ next2:
   ret i32 0
 }
 
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 define i32 @test12(i32 %x) {
   %cmp = icmp eq i32 %x, 0
   br i1 %cmp, label %cond_true, label %cond_false

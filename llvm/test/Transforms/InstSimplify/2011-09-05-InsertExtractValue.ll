@@ -14,7 +14,7 @@ lpad:
   %exc_ptr2 = insertvalue { i8*, i32 } undef, i8* %exc_ptr, 0
   %filter2 = insertvalue { i8*, i32 } %exc_ptr2, i32 %filter, 1
   resume { i8*, i32 } %filter2
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: extractvalue
 ; CHECK-NOT: insertvalue
 }
@@ -25,5 +25,5 @@ define { i8, i32 } @test2({ i8*, i32 } %x) {
   %ex = extractvalue { i8*, i32 } %x, 1
   %ins = insertvalue { i8, i32 } undef, i32 %ex, 1
   ret { i8, i32 } %ins
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 }

@@ -52,7 +52,7 @@ bb14:                                             ; preds = %bb14, %bb10
 }
 
 define fastcc void @TransformLine() nounwind {
-; CHECK: @TransformLine
+; CHECK-LABEL: @TransformLine(
 bb:
   br label %loop0
 

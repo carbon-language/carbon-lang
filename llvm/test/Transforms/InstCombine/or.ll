@@ -6,49 +6,49 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 define i32 @test1(i32 %A) {
         %B = or i32 %A, 0
         ret i32 %B
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i32 %A
 }
 
 define i32 @test2(i32 %A) {
         %B = or i32 %A, -1 
         ret i32 %B
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i32 -1
 }
 
 define i8 @test2a(i8 %A) {
         %B = or i8 %A, -1  
         ret i8 %B
-; CHECK: @test2a
+; CHECK-LABEL: @test2a(
 ; CHECK: ret i8 -1
 }
 
 define i1 @test3(i1 %A) {
         %B = or i1 %A, false
         ret i1 %B
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i1 %A
 }
 
 define i1 @test4(i1 %A) {
         %B = or i1 %A, true 
         ret i1 %B
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: ret i1 true
 }
 
 define i1 @test5(i1 %A) {
         %B = or i1 %A, %A   
         ret i1 %B
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: ret i1 %A
 }
 
 define i32 @test6(i32 %A) {
         %B = or i32 %A, %A  
         ret i32 %B
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: ret i32 %A
 }
 
@@ -57,7 +57,7 @@ define i32 @test7(i32 %A) {
         %NotA = xor i32 -1, %A
         %B = or i32 %A, %NotA
         ret i32 %B
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: ret i32 -1
 }
 
@@ -65,7 +65,7 @@ define i8 @test8(i8 %A) {
         %B = or i8 %A, -2
         %C = or i8 %B, 1
         ret i8 %C
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: ret i8 -1
 }
 
@@ -75,7 +75,7 @@ define i8 @test9(i8 %A, i8 %B) {
         %D = or i8 %B, -2
         %E = or i8 %C, %D
         ret i8 %E
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK: ret i8 -1
 }
 
@@ -85,7 +85,7 @@ define i8 @test10(i8 %A) {
         ; (X & C1) | C2 --> (X | C2) & (C1|C2)
         %D = or i8 %C, -2
         ret i8 %D
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: ret i8 -2
 }
 
@@ -96,7 +96,7 @@ define i8 @test11(i8 %A) {
         %D = or i8 %C, 1
         %E = xor i8 %D, 12
         ret i8 %E
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK: ret i8 -1
 }
 
@@ -105,7 +105,7 @@ define i32 @test12(i32 %A) {
         %B = or i32 %A, 4
         %C = and i32 %B, 8
         ret i32 %C
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK: %C = and i32 %A, 8
 ; CHECK: ret i32 %C
 }
@@ -115,7 +115,7 @@ define i32 @test13(i32 %A) {
         ; Always equal to 8
         %C = and i32 %B, 8
         ret i32 %C
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK: ret i32 8
 }
 
@@ -125,7 +125,7 @@ define i1 @test14(i32 %A, i32 %B) {
         ; (A < B) | (A > B) === A != B
         %D = or i1 %C1, %C2
         ret i1 %D
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK: icmp ne i32 %A, %B
 ; CHECK: ret i1
 }
@@ -136,7 +136,7 @@ define i1 @test15(i32 %A, i32 %B) {
         ; (A < B) | (A == B) === A <= B
         %D = or i1 %C1, %C2
         ret i1 %D
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK:  icmp ule i32 %A, %B
 ; CHECK: ret i1
 }
@@ -148,7 +148,7 @@ define i32 @test16(i32 %A) {
         ; %D = and int %B, -1 == %B
         %D = or i32 %B, %C
         ret i32 %D
-; CHECK: @test16
+; CHECK-LABEL: @test16(
 ; CHECK: ret i32 %A
 }
 
@@ -158,7 +158,7 @@ define i32 @test17(i32 %A) {
         ; %D = and int %B, 5
         %D = or i32 %B, %C
         ret i32 %D
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 ; CHECK: %D = and i32 %A, 5
 ; CHECK: ret i32 %D
 }
@@ -169,7 +169,7 @@ define i1 @test18(i32 %A) {
         ;; (A-50) >u 50
         %D = or i1 %B, %C
         ret i1 %D
-; CHECK: @test18
+; CHECK-LABEL: @test18(
 ; CHECK: add i32
 ; CHECK:  icmp ugt 
 ; CHECK: ret i1 
@@ -181,7 +181,7 @@ define i1 @test19(i32 %A) {
         ;; (A&-2) == 50
         %D = or i1 %B, %C
         ret i1 %D
-; CHECK: @test19
+; CHECK-LABEL: @test19(
 ; CHECK: and i32
 ; CHECK: icmp eq 
 ; CHECK: ret i1
@@ -191,7 +191,7 @@ define i32 @test20(i32 %x) {
         %y = and i32 %x, 123
         %z = or i32 %y, %x
         ret i32 %z
-; CHECK: @test20
+; CHECK-LABEL: @test20(
 ; CHECK: ret i32 %x
 }
 
@@ -202,7 +202,7 @@ define i32 @test21(i32 %tmp.1) {
         ;; add tmp.1, 2
         %tmp.6 = or i32 %tmp.5, %tmp.3
         ret i32 %tmp.6
-; CHECK: @test21
+; CHECK-LABEL: @test21(
 ; CHECK:   add i32 %{{[^,]*}}, 2
 ; CHECK:   ret i32 
 }
@@ -212,7 +212,7 @@ define i32 @test22(i32 %B) {
         %ELIM7 = and i32 %B, -2
         %ELIM5 = or i32 %ELIM41, %ELIM7
         ret i32 %ELIM5
-; CHECK: @test22
+; CHECK-LABEL: @test22(
 ; CHECK: ret i32 %B
 }
 
@@ -222,7 +222,7 @@ define i16 @test23(i16 %A) {
         %C = or i16 %B, -32768
         %D = xor i16 %C, 8193
         ret i16 %D
-; CHECK: @test23
+; CHECK-LABEL: @test23(
 ; CHECK:   %B = lshr i16 %A, 1
 ; CHECK:   %D = xor i16 %B, -24575
 ; CHECK:   ret i16 %D
@@ -235,7 +235,7 @@ define i1 @test24(double %X, double %Y) {
         %bothcond = or i1 %tmp13, %tmp9         ; <i1> [#uses=1]
         ret i1 %bothcond
         
-; CHECK: @test24
+; CHECK-LABEL: @test24(
 ; CHECK:    = fcmp uno double %Y, %X
 ; CHECK:   ret i1 
 }
@@ -248,7 +248,7 @@ define i1 @test25(i32 %A, i32 %B) {
   %F = xor i1 %E, -1
   ret i1 %F
 
-; CHECK: @test25
+; CHECK-LABEL: @test25(
 ; CHECK: icmp ne i32 %A, 0
 ; CHECK-NEXT: icmp ne i32 %B, 57
 ; CHECK-NEXT:  %F = and i1 
@@ -262,7 +262,7 @@ define i1 @test26(i32 %A, i32 %B) {
         ; (A == 0) & (A == 0)   -->   (A|B) == 0
         %D = and i1 %C1, %C2
         ret i1 %D
-; CHECK: @test26
+; CHECK-LABEL: @test26(
 ; CHECK: or i32 %A, %B
 ; CHECK: icmp eq i32 {{.*}}, 0
 ; CHECK: ret i1 
@@ -274,7 +274,7 @@ define i1 @test27(i32* %A, i32* %B) {
   %D = or i32 %C1, %C2
   %E = icmp eq i32 %D, 0
   ret i1 %E
-; CHECK: @test27
+; CHECK-LABEL: @test27(
 ; CHECK: icmp eq i32* %A, null
 ; CHECK: icmp eq i32* %B, null
 ; CHECK: and i1
@@ -288,7 +288,7 @@ define i1 @test28(i32 %A, i32 %B) {
         ; (A != 0) | (A != 0)   -->   (A|B) != 0
         %D = or i1 %C1, %C2
         ret i1 %D
-; CHECK: @test28
+; CHECK-LABEL: @test28(
 ; CHECK: or i32 %A, %B
 ; CHECK: icmp ne i32 {{.*}}, 0
 ; CHECK: ret i1 
@@ -300,7 +300,7 @@ define i1 @test29(i32* %A, i32* %B) {
   %D = or i32 %C1, %C2
   %E = icmp ne i32 %D, 0
   ret i1 %E
-; CHECK: @test29
+; CHECK-LABEL: @test29(
 ; CHECK: icmp ne i32* %A, null
 ; CHECK: icmp ne i32* %B, null
 ; CHECK: or i1
@@ -315,7 +315,7 @@ entry:
   %D = and i32 %B, 40186
   %E = or i32 %D, %C
   ret i32 %E
-; CHECK: @test30
+; CHECK-LABEL: @test30(
 ; CHECK: %D = and i32 %A, -58312
 ; CHECK: %E = or i32 %D, 32962
 ; CHECK: ret i32 %E
@@ -331,7 +331,7 @@ define i64 @test31(i64 %A) nounwind readnone ssp noredzone {
 
   %F = or i64 %D, %E
   ret i64 %F
-; CHECK: @test31
+; CHECK-LABEL: @test31(
 ; CHECK-NEXT: %E = and i64 %A, 4294908984
 ; CHECK-NEXT: %F = or i64 %E, 32962
 ; CHECK-NEXT: ret i64 %F
@@ -345,7 +345,7 @@ define <4 x i32> @test32(<4 x i1> %and.i1352, <4 x i32> %vecinit6.i176, <4 x i32
   %or.i = or <4 x i32> %and.i, %and.i129          ; <<4 x i32>> [#uses=1]
   ret <4 x i32> %or.i
 ; codegen is mature enough to handle vector selects.
-; CHECK: @test32
+; CHECK-LABEL: @test32(
 ; CHECK: select <4 x i1> %and.i1352, <4 x i32> %vecinit6.i176, <4 x i32> %vecinit6.i191
 }
 
@@ -353,7 +353,7 @@ define i1 @test33(i1 %X, i1 %Y) {
   %a = or i1 %X, %Y
   %b = or i1 %a, %X
   ret i1 %b
-; CHECK: @test33
+; CHECK-LABEL: @test33(
 ; CHECK-NEXT: or i1 %X, %Y
 ; CHECK-NEXT: ret
 }
@@ -362,7 +362,7 @@ define i32 @test34(i32 %X, i32 %Y) {
   %a = or i32 %X, %Y
   %b = or i32 %Y, %a
   ret i32 %b
-; CHECK: @test34
+; CHECK-LABEL: @test34(
 ; CHECK-NEXT: or i32 %X, %Y
 ; CHECK-NEXT: ret
 }
@@ -371,7 +371,7 @@ define i32 @test35(i32 %a, i32 %b) {
   %1 = or i32 %a, 1135
   %2 = or i32 %1, %b
   ret i32 %2
-  ; CHECK: @test35
+  ; CHECK-LABEL: @test35(
   ; CHECK-NEXT: or i32 %a, %b
   ; CHECK-NEXT: or i32 %1, 1135
 }
@@ -383,14 +383,14 @@ define i1 @test36(i32 %x) {
   %cmp3 = icmp eq i32 %x, 25
   %ret2 = or i1 %ret1, %cmp3
   ret i1 %ret2
-; CHECK: @test36
+; CHECK-LABEL: @test36(
 ; CHECK-NEXT: %x.off = add i32 %x, -23
 ; CHECK-NEXT: icmp ult i32 %x.off, 3
 ; CHECK-NEXT: ret i1
 }
 
 define i32 @test37(i32* %xp, i32 %y) {
-; CHECK: @test37
+; CHECK-LABEL: @test37(
 ; CHECK: select i1 %tobool, i32 -1, i32 %x
   %tobool = icmp ne i32 %y, 0
   %sext = sext i1 %tobool to i32
@@ -400,7 +400,7 @@ define i32 @test37(i32* %xp, i32 %y) {
 }
 
 define i32 @test38(i32* %xp, i32 %y) {
-; CHECK: @test38
+; CHECK-LABEL: @test38(
 ; CHECK: select i1 %tobool, i32 -1, i32 %x
   %tobool = icmp ne i32 %y, 0
   %sext = sext i1 %tobool to i32

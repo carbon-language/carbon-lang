@@ -5,7 +5,7 @@
 ; rdar://9786536
 
 ; First, make sure LSR doesn't crash on an empty IVUsers list.
-; CHECK: @dummyIV
+; CHECK-LABEL: @dummyIV(
 ; CHECK-NOT: phi
 ; CHECK-NOT: sitofp
 ; CHECK: br
@@ -24,7 +24,7 @@ for.end:
 }
 
 ; Now check that the computed double constant is correct.
-; CHECK: @doubleIV
+; CHECK-LABEL: @doubleIV(
 ; CHECK: phi double [ -3.900000e+01, %entry ]
 ; CHECK: br
 define void @doubleIV() nounwind {

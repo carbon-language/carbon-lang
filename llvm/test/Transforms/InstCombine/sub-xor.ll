@@ -5,7 +5,7 @@ define i32 @test1(i32 %x) nounwind {
   %sub = sub i32 63, %and
   ret i32 %sub
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: and i32 %x, 31
 ; CHECK-NEXT: xor i32 %and, 63
 ; CHECK-NEXT: ret
@@ -18,7 +18,7 @@ define i32 @test2(i32 %x) nounwind {
   %sub = sub i32 31, %count
   ret i32 %sub
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: ctlz
 ; CHECK-NEXT: xor i32 %count, 31
 ; CHECK-NEXT: ret
@@ -30,7 +30,7 @@ define i32 @test3(i32 %x) nounwind {
   %add = add i32 %sub, 42
   ret i32 %add
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: and i32 %x, 31
 ; CHECK-NEXT: sub i32 73, %and
 ; CHECK-NEXT: ret
@@ -41,7 +41,7 @@ define i32 @test4(i32 %x) nounwind {
   %add = add i32 %sub, 42
   ret i32 %add
 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: add i32 %x, -2147483606
 ; CHECK-NEXT: ret
 }

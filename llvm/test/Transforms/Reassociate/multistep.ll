@@ -2,7 +2,7 @@
 
 define i64 @multistep1(i64 %a, i64 %b, i64 %c) {
 ; Check that a*a*b+a*a*c is turned into a*(a*(b+c)).
-; CHECK: @multistep1
+; CHECK-LABEL: @multistep1(
   %t0 = mul i64 %a, %b
   %t1 = mul i64 %a, %t0 ; a*(a*b)
   %t2 = mul i64 %a, %c
@@ -17,7 +17,7 @@ define i64 @multistep1(i64 %a, i64 %b, i64 %c) {
 
 define i64 @multistep2(i64 %a, i64 %b, i64 %c, i64 %d) {
 ; Check that a*b+a*c+d is turned into a*(b+c)+d.
-; CHECK: @multistep2
+; CHECK-LABEL: @multistep2(
   %t0 = mul i64 %a, %b
   %t1 = mul i64 %a, %c
   %t2 = add i64 %t1, %d ; a*c+d

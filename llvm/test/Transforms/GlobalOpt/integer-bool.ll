@@ -19,7 +19,7 @@ define void @set2() {
 }
 
 define i1 @get() {
-; CHECK: @get
+; CHECK-LABEL: @get(
   %A = load i32 addrspace(1) * @G
   %C = icmp slt i32 %A, 2
   ret i1 %C

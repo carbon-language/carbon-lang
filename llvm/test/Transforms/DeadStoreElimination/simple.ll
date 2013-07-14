@@ -10,7 +10,7 @@ define void @test1(i32* %Q, i32* %P) {
         store i32 %DEAD, i32* %P
         store i32 0, i32* %P
         ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: store i32 0, i32* %P
 ; CHECK-NEXT: ret void
 }
@@ -21,7 +21,7 @@ define void @test2(i32 *%p, i32 *%q) {
   store i32 20, i32* %q, align 4
   store i32 30, i32* %p, align 4
   ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: store i32 20
 }
 
@@ -30,7 +30,7 @@ define void @test2(i32 *%p, i32 *%q) {
 @g = global i32 1
 
 define i32 @test3(i32* %g_addr) nounwind {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: load i32* %g_addr
   %g_value = load i32* %g_addr, align 4
   store i32 -1, i32* @g, align 4
@@ -44,7 +44,7 @@ define void @test4(i32* %Q) {
         %a = load i32* %Q
         store volatile i32 %a, i32* %Q
         ret void
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: load i32
 ; CHECK-NEXT: store volatile
 ; CHECK-NEXT: ret void
@@ -54,7 +54,7 @@ define void @test5(i32* %Q) {
         %a = load volatile i32* %Q
         store i32 %a, i32* %Q
         ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: load volatile
 ; CHECK-NEXT: ret void
 }
@@ -66,7 +66,7 @@ define void @test6(i32 *%p, i8 *%q) {
   call void @llvm.memset.p0i8.i64(i8* %q, i8 42, i64 900, i32 1, i1 false)
   store i32 30, i32* %p, align 4
   ret void
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: call void @llvm.memset
 }
 
@@ -77,7 +77,7 @@ define void @test7(i32 *%p, i8 *%q, i8* noalias %r) {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %q, i8* %r, i64 900, i32 1, i1 false)
   store i32 30, i32* %p, align 4
   ret void
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NEXT: call void @llvm.memcpy
 }
 
@@ -90,7 +90,7 @@ define i32 @test8() {
         %X = load i32* %V
         ret i32 %X
         
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: store i32 1234567
 }
 
@@ -101,7 +101,7 @@ define void @test9(%struct.x* byval  %a) nounwind  {
 	%tmp2 = getelementptr %struct.x* %a, i32 0, i32 0
 	store i32 1, i32* %tmp2, align 4
 	ret void
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NEXT: ret void
 }
 
@@ -111,7 +111,7 @@ define double @test10(i8* %X) {
         store i8* %X, i8** %X_addr
         %tmp.0 = va_arg i8** %X_addr, double
         ret double %tmp.0
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: store
 }
 
@@ -119,7 +119,7 @@ define double @test10(i8* %X) {
 ; DSE should delete the dead trampoline.
 declare void @test11f()
 define void @test11() {
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 	%storage = alloca [10 x i8], align 16		; <[10 x i8]*> [#uses=1]
 ; CHECK-NOT: alloca
 	%cast = getelementptr [10 x i8]* %storage, i32 0, i32 0		; <i8*> [#uses=1]
@@ -140,7 +140,7 @@ define void @test12({ i32, i32 }* %x) nounwind  {
 	store i32 %tmp5, i32* %tmp4, align 4
 	store i32 %tmp17, i32* %tmp7, align 4
 	ret void
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK-NOT: tmp5
 ; CHECK: ret void
 }
@@ -173,7 +173,7 @@ define void @test14(i32* %Q) {
         store i32 %DEAD, i32* %P
         ret void
 
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK-NEXT: ret void
 }
 
@@ -185,7 +185,7 @@ define void @test15(i8* %P, i8* %Q) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
   ret void
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
 }
@@ -195,7 +195,7 @@ define void @test16(i8* %P, i8* %Q) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 8, i32 1, i1 false)
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
   ret void
-; CHECK: @test16
+; CHECK-LABEL: @test16(
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
 }
@@ -205,7 +205,7 @@ define void @test17(i8* %P, i8* noalias %Q) nounwind ssp {
   tail call void @llvm.memset.p0i8.i64(i8* %P, i8 42, i64 8, i32 1, i1 false)
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
   ret void
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
 }
@@ -215,7 +215,7 @@ define void @test17v(i8* %P, i8* %Q) nounwind ssp {
   tail call void @llvm.memset.p0i8.i64(i8* %P, i8 42, i64 8, i32 1, i1 true)
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
   ret void
-; CHECK: @test17v
+; CHECK-LABEL: @test17v(
 ; CHECK-NEXT: call void @llvm.memset
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
@@ -229,7 +229,7 @@ define void @test18(i8* %P, i8* %Q, i8* %R) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %R, i64 12, i32 1, i1 false)
   ret void
-; CHECK: @test18
+; CHECK-LABEL: @test18(
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
@@ -246,7 +246,7 @@ bb:
   call void @test19f({i32}* byval align 4 %arg5)
   ret void
 
-; CHECK: @test19(
+; CHECK-LABEL: @test19(
 ; CHECK: store i32 912
 ; CHECK: call void @test19f
 }
@@ -256,10 +256,10 @@ define void @test20() {
   store i8 0, i8* %m
   ret void
 }
-; CHECK: @test20
+; CHECK-LABEL: @test20(
 ; CHECK-NEXT: ret void
 
-; CHECK: @test21
+; CHECK-LABEL: @test21(
 define void @test21() {
   %m = call i8* @calloc(i32 9, i32 7)
   store i8 0, i8* %m
@@ -267,7 +267,7 @@ define void @test21() {
   ret void
 }
 
-; CHECK: @test22(
+; CHECK-LABEL: @test22(
 define void @test22(i1 %i, i32 %k, i32 %m) nounwind {
   %k.addr = alloca i32
   %m.addr = alloca i32
@@ -278,7 +278,7 @@ define void @test22(i1 %i, i32 %k, i32 %m) nounwind {
 }
 
 ; PR13547
-; CHECK: @test23
+; CHECK-LABEL: @test23(
 ; CHECK: store i8 97
 ; CHECK: store i8 0
 declare noalias i8* @strdup(i8* nocapture) nounwind
@@ -293,7 +293,7 @@ define noalias i8* @test23() nounwind uwtable ssp {
 }
 
 ; Make sure same sized store to later element is deleted
-; CHECK: @test24
+; CHECK-LABEL: @test24(
 ; CHECK-NOT: store i32 0
 ; CHECK-NOT: store i32 0
 ; CHECK: store i32 %b
@@ -312,7 +312,7 @@ define void @test24([2 x i32]* %a, i32 %b, i32 %c) nounwind {
 }
 
 ; Check another case like PR13547 where strdup is not like malloc.
-; CHECK: @test25
+; CHECK-LABEL: @test25(
 ; CHECK: load i8
 ; CHECK: store i8 0
 ; CHECK: store i8 %tmp

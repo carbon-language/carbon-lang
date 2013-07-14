@@ -10,7 +10,7 @@ target triple = "thumbv7-apple-darwin10"
 %union..0anon = type { %struct.int16x8x2_t }
 
 define void @test(<8 x i16> %tmp.0, %struct.int16x8x2_t* %dst) nounwind {
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: alloca
 ; CHECK: "alloca point"
 ; CHECK: store <8 x i16>
@@ -82,7 +82,7 @@ cond.true:                                        ; preds = %entry
 cond.false:                                       ; preds = %entry
   ret void
 
-; CHECK: @test_memcpy_self
+; CHECK-LABEL: @test_memcpy_self(
 ; CHECK-NOT: alloca
 ; CHECK: br i1
 }

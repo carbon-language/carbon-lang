@@ -19,7 +19,7 @@ define void @test1() nounwind ssp {
   call void @free(i8* %tmp1)
   ret void
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: ret void
 }
 
@@ -44,7 +44,7 @@ entry:
   %sub = sub i32 %0, %mul
   ret i32 %sub
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %div = lshr i32 %a, 2
 ; CHECK: %add = shl nuw nsw i32 %div, 1
 ; CHECK: ret i32 0

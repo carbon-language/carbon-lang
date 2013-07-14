@@ -1,7 +1,7 @@
 ; RUN: opt < %s -loweratomic -S | FileCheck %s
 
 define i8 @add() {
-; CHECK: @add
+; CHECK-LABEL: @add(
   %i = alloca i8
   %j = atomicrmw add i8* %i, i8 42 monotonic
 ; CHECK: [[INST:%[a-z0-9]+]] = load
@@ -12,7 +12,7 @@ define i8 @add() {
 }
 
 define i8 @nand() {
-; CHECK: @nand
+; CHECK-LABEL: @nand(
   %i = alloca i8
   %j = atomicrmw nand i8* %i, i8 42 monotonic
 ; CHECK: [[INST:%[a-z0-9]+]] = load
@@ -24,7 +24,7 @@ define i8 @nand() {
 }
 
 define i8 @min() {
-; CHECK: @min
+; CHECK-LABEL: @min(
   %i = alloca i8
   %j = atomicrmw min i8* %i, i8 42 monotonic
 ; CHECK: [[INST:%[a-z0-9]+]] = load

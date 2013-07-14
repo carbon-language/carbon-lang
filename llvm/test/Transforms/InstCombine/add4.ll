@@ -12,7 +12,7 @@ EntryBlock:
   %s2 = select i1 %C, float %A, float 0.000000e+00
   %sum = fadd fast float %s1, %s2
   ret float %sum
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: select i1 %C, float %A, float %B
 }
 
@@ -25,7 +25,7 @@ EntryBlock:
   %p2 = fmul fast float %B, %cf
   %s1 = fadd fast float %p2, %p1
   ret float %s1
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: select i1 %C, float %B, float %A
 }
 
@@ -38,7 +38,7 @@ EntryBlock:
   %p2 = fmul fast float %B, %cf
   %s1 = fadd fast float %p1, %p2
   ret float %s1
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: select i1 %C, float %B, float %A
 }
 

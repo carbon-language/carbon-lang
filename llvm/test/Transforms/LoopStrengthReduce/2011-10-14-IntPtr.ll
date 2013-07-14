@@ -5,7 +5,7 @@
 
 target triple = "x86_64-apple-darwin"
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK: phi
 ; CHECK-NOT: phi
 define void @test(i32 %rowStride) ssp align 2 {

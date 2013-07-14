@@ -11,6 +11,6 @@ entry:
   %tobool21 = icmp ne %"struct.btSoftBody"* %n2, null
   %cond22 = zext i1 %tobool21 to i32
   ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 }
 

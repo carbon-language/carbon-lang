@@ -30,7 +30,7 @@ if.then:                                          ; preds = %if.else, %entry
 
 ; PR7318: assertion failure after doing a simple loop unroll
 ;
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: bb1.bb2_crit_edge:
 ; CHECK: %.lcssa = phi i32 [ %{{[2468]}}, %bb1{{.*}} ], [ %{{[2468]}}, %bb1{{.*}} ], [ %{{[2468]}}, %bb1{{.*}} ], [ %{{[2468]}}, %bb1{{.*}} ]
 ; CHECK: bb1.3:
@@ -67,7 +67,7 @@ bb2:                                              ; preds = %bb1.bb2_crit_edge, 
 
 ; Check phi update for loop with an early-exit.
 ;
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: return.loopexit:
 ; CHECK: %tmp7.i.lcssa = phi i32 [ %tmp7.i{{.*}}, %land.lhs.true{{.*}} ], [ %tmp7.i{{.*}}, %land.lhs.true{{.*}} ], [ %tmp7.i{{.*}}, %land.lhs.true{{.*}} ], [ %tmp7.i{{.*}}, %land.lhs.true{{.*}} ]
 ; CHECK: exit.3:

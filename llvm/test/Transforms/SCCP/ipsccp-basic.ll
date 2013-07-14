@@ -162,7 +162,7 @@ define internal %T @test7a(i32 %A) {
   %mrv0 = insertvalue %T undef, i32 %X, 0
   %mrv1 = insertvalue %T %mrv0, i32 %A, 1
   ret %T %mrv1
-; CHECK: @test7a
+; CHECK-LABEL: @test7a(
 ; CHECK-NEXT: %mrv0 = insertvalue %T undef, i32 18, 0
 ; CHECK-NEXT: %mrv1 = insertvalue %T %mrv0, i32 17, 1
 }
@@ -183,7 +183,7 @@ define i32 @test7b() {
 define internal {} @test8a(i32 %A, i32* %P) {
   store i32 %A, i32* %P
   ret {} {}
-; CHECK: @test8a
+; CHECK-LABEL: @test8a(
 ; CHECK-NEXT: store i32 5, 
 ; CHECK-NEXT: ret 
 }

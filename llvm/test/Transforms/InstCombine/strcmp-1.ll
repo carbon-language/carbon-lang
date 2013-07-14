@@ -12,7 +12,7 @@ declare i32 @strcmp(i8*, i8*)
 
 ; strcmp("", x) -> -*x
 define i32 @test1(i8* %str2) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %strcmpload = load i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: %2 = sub i32 0, %1
@@ -26,7 +26,7 @@ define i32 @test1(i8* %str2) {
 
 ; strcmp(x, "") -> *x
 define i32 @test2(i8* %str1) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %strcmpload = load i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: ret i32 %1
@@ -38,7 +38,7 @@ define i32 @test2(i8* %str1) {
 
 ; strcmp(x, y)  -> cnst
 define i32 @test3() {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i32 -1
 
   %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
@@ -48,7 +48,7 @@ define i32 @test3() {
 }
 
 define i32 @test4() {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: ret i32 1
 
   %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
@@ -60,7 +60,7 @@ define i32 @test4() {
 ; strcmp(x, y)   -> memcmp(x, y, <known length>)
 ; (This transform is rather difficult to trigger in a useful manner)
 define i32 @test5(i1 %b) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: %memcmp = call i32 @memcmp(i8* getelementptr inbounds ([6 x i8]* @hello, i32 0, i32 0), i8* %str2, i32 5)
 ; CHECK: ret i32 %memcmp
 
@@ -74,7 +74,7 @@ define i32 @test5(i1 %b) {
 
 ; strcmp(x,x)  -> 0
 define i32 @test6(i8* %str) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: ret i32 0
 
   %temp1 = call i32 @strcmp(i8* %str, i8* %str)

@@ -15,7 +15,7 @@ declare i32 @fputs(i8*, %FILE*)
 ; Check fputs(str, fp) --> fwrite(str, 1, strlen(s), fp).
 
 define void @test_simplify1(%FILE* %fp) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %str = getelementptr [1 x i8]* @empty, i32 0, i32 0
   call i32 @fputs(i8* %str, %FILE* %fp)
   ret void
@@ -25,7 +25,7 @@ define void @test_simplify1(%FILE* %fp) {
 ; NOTE: The fwrite simplifier simplifies this further to fputc.
 
 define void @test_simplify2(%FILE* %fp) {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %str = getelementptr [2 x i8]* @A, i32 0, i32 0
   call i32 @fputs(i8* %str, %FILE* %fp)
 ; CHECK-NEXT: call i32 @fputc(i32 65, %FILE* %fp)
@@ -34,7 +34,7 @@ define void @test_simplify2(%FILE* %fp) {
 }
 
 define void @test_simplify3(%FILE* %fp) {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %str = getelementptr [7 x i8]* @hello, i32 0, i32 0
   call i32 @fputs(i8* %str, %FILE* %fp)
 ; CHECK-NEXT: call i32 @fwrite(i8* getelementptr inbounds ([7 x i8]* @hello, i32 0, i32 0), i32 6, i32 1, %FILE* %fp)

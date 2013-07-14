@@ -22,7 +22,7 @@ entry:
 ; Check that one of the memcpy's are removed.
 ;; FIXME: PR 8643 We should be able to eliminate the last memcpy here.
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: call void @ccoshl
 ; CHECK: call void @llvm.memcpy
 ; CHECK-NOT: llvm.memcpy
@@ -41,7 +41,7 @@ define void @test2(i8* %P, i8* %Q) nounwind  {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %Q, i8* %R, i32 32, i32 16, i1 false)
   ret void
         
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: call void @llvm.memmove{{.*}}(i8* %Q, i8* %P
 ; CHECK-NEXT: ret void
 }
@@ -58,7 +58,7 @@ define void @test3(%0* noalias sret %agg.result) nounwind  {
   %agg.result2 = bitcast %0* %agg.result to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %agg.result2, i8* %x.01, i32 32, i32 16, i1 false)
   ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: %agg.result1 = bitcast 
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret void
@@ -72,7 +72,7 @@ define void @test4(i8 *%P) {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* %P, i64 8, i32 4, i1 false)
   call void @test4a(i8* align 1 byval %a)
   ret void
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: call void @test4a(
 }
 
@@ -96,7 +96,7 @@ entry:
   store i8 4, i8* %a
   call void @test5a(%struct.S* align 16 byval %y)
   ret i32 0
-  ; CHECK: @test5(
+  ; CHECK-LABEL: @test5(
   ; CHECK: store i8 4
   ; CHECK: call void @test5a(%struct.S* byval align 16 %y)
 }
@@ -105,7 +105,7 @@ entry:
 define void @test6(i8 *%P) {
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %P, i64 8, i32 4, i1 false)
   ret void
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: ret void
 }
 
@@ -122,7 +122,7 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp, i8* %tmp1, i64 48, i32 4, i1 false)
   %call = call i32 @g(%struct.p* align 8 byval %agg.tmp) nounwind
   ret i32 %call
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: call i32 @g(%struct.p* byval align 8 %q) [[NUW:#[0-9]+]]
 }
 

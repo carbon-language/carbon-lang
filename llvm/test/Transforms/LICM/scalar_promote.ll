@@ -6,7 +6,7 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
 define void @test1(i32 %i) {
 Entry:
   br label %Loop
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: Entry:
 ; CHECK-NEXT:   load i32* @X
 ; CHECK-NEXT:   br label %Loop
@@ -32,7 +32,7 @@ Out:
 define void @test2(i32 %i) {
 Entry:
   br label %Loop
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: Entry:
 ; CHECK-NEXT:    %.promoted = load i32* getelementptr inbounds (i32* @X, i64 1)
 ; CHECK-NEXT:    br label %Loop
@@ -55,7 +55,7 @@ Exit:   ; preds = %Loop
 
 
 define void @test3(i32 %i) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
   br label %Loop
 Loop:
         ; Should not promote this to a register
@@ -73,7 +73,7 @@ Out:    ; preds = %Loop
 
 ; PR8041
 define void @test4(i8* %x, i8 %n) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
   %handle1 = alloca i8*
   %handle2 = alloca i8*
   store i8* %x, i8** %handle1
@@ -121,7 +121,7 @@ exit:
 define void @test5(i32 %i, i32** noalias %P2) {
 Entry:
   br label %Loop
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: Entry:
 ; CHECK-NEXT:   load i32* @X
 ; CHECK-NEXT:   br label %Loop

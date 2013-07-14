@@ -9,7 +9,7 @@ define i8 @udiv_i8(i8 %a, i8 %b) nounwind {
   %div = udiv i32 %conv, %conv2   
   %conv3 = trunc i32 %div to i8   
   ret i8 %conv3
-; CHECK: @udiv_i8
+; CHECK-LABEL: @udiv_i8(
 ; CHECK: udiv i8 %a, %b
 }
 
@@ -19,7 +19,7 @@ define i8 @urem_i8(i8 %a, i8 %b) nounwind {
   %div = urem i32 %conv, %conv2   
   %conv3 = trunc i32 %div to i8   
   ret i8 %conv3
-; CHECK: @urem_i8
+; CHECK-LABEL: @urem_i8(
 ; CHECK: urem i8 %a, %b
 }
 
@@ -28,7 +28,7 @@ define i32 @udiv_i32(i8 %a, i8 %b) nounwind {
   %conv2 = zext i8 %b to i32
   %div = udiv i32 %conv, %conv2
   ret i32 %div
-; CHECK: @udiv_i32
+; CHECK-LABEL: @udiv_i32(
 ; CHECK: udiv i8 %a, %b
 ; CHECK: zext
 }
@@ -38,7 +38,7 @@ define i32 @urem_i32(i8 %a, i8 %b) nounwind {
   %conv2 = zext i8 %b to i32
   %div = urem i32 %conv, %conv2
   ret i32 %div
-; CHECK: @urem_i32
+; CHECK-LABEL: @urem_i32(
 ; CHECK: urem i8 %a, %b
 ; CHECK: zext
 }
@@ -47,7 +47,7 @@ define i32 @udiv_i32_c(i8 %a) nounwind {
   %conv = zext i8 %a to i32
   %div = udiv i32 %conv, 10
   ret i32 %div
-; CHECK: @udiv_i32_c
+; CHECK-LABEL: @udiv_i32_c(
 ; CHECK: udiv i8 %a, 10
 ; CHECK: zext
 }
@@ -56,7 +56,7 @@ define i32 @urem_i32_c(i8 %a) nounwind {
   %conv = zext i8 %a to i32
   %div = urem i32 %conv, 10
   ret i32 %div
-; CHECK: @urem_i32_c
+; CHECK-LABEL: @urem_i32_c(
 ; CHECK: urem i8 %a, 10
 ; CHECK: zext
 }

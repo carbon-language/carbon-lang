@@ -71,7 +71,7 @@ define float @fadd_fsub_0(float %a) {
 }
 
 ; fsub nnan ninf x, x ==> 0.0
-; CHECK: @fsub_x_x
+; CHECK-LABEL: @fsub_x_x(
 define float @fsub_x_x(float %a) {
 ; X - X ==> 0
   %zero1 = fsub nnan ninf float %a, %a
@@ -92,7 +92,7 @@ define float @fsub_x_x(float %a) {
 }
 
 ; fadd nsz X, 0 ==> X
-; CHECK: @nofold_fadd_x_0
+; CHECK-LABEL: @nofold_fadd_x_0(
 define float @nofold_fadd_x_0(float %a) {
 ; Dont fold
 ; CHECK: %no_zero1 = fadd

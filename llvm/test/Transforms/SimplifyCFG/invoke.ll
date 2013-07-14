@@ -9,7 +9,7 @@ declare i32 @nounwind_fn() nounwind
 declare i32 @fn()
 
 
-; CHECK: @f1
+; CHECK-LABEL: @f1(
 define i8* @f1() nounwind uwtable ssp {
 entry:
 ; CHECK: call void @llvm.trap()
@@ -28,7 +28,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f2
+; CHECK-LABEL: @f2(
 define i8* @f2() nounwind uwtable ssp {
 entry:
 ; CHECK: call void @llvm.trap()
@@ -47,7 +47,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f3
+; CHECK-LABEL: @f3(
 define i32 @f3() nounwind uwtable ssp {
 ; CHECK-NEXT: entry
 entry:
@@ -66,7 +66,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f4
+; CHECK-LABEL: @f4(
 define i32 @f4() nounwind uwtable ssp {
 ; CHECK-NEXT: entry
 entry:
@@ -86,7 +86,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f5
+; CHECK-LABEL: @f5(
 define i32 @f5(i1 %cond, i8* %a, i8* %b) {
 entry:
   br i1 %cond, label %x, label %y
@@ -117,7 +117,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f6
+; CHECK-LABEL: @f6(
 define void @f6() {
 entry:
   invoke void @purefn()

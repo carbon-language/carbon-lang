@@ -16,7 +16,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @Y = common addrspace(1) global [40000 x i8] zeroinitializer, align 16
 @X = common global [40000 x i8] zeroinitializer, align 16
 
-;CHECK: @main
+;CHECK-LABEL: @main(
 ;CHECK: bitcast i8 addrspace(1)* %{{.*}} to <4 x i8> addrspace(1)*
 ;CHECK: bitcast i8* %{{.*}} to <4 x i8>*
 

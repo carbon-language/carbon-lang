@@ -15,7 +15,7 @@ declare i32 @strlen(i8*)
 ; Check strlen(string constant) -> integer constant.
 
 define i32 @test_simplify1() {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %hello_p = getelementptr [6 x i8]* @hello, i32 0, i32 0
   %hello_l = call i32 @strlen(i8* %hello_p)
   ret i32 %hello_l
@@ -23,7 +23,7 @@ define i32 @test_simplify1() {
 }
 
 define i32 @test_simplify2() {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %null_p = getelementptr [1 x i8]* @null, i32 0, i32 0
   %null_l = call i32 @strlen(i8* %null_p)
   ret i32 %null_l
@@ -31,7 +31,7 @@ define i32 @test_simplify2() {
 }
 
 define i32 @test_simplify3() {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %null_hello_p = getelementptr [7 x i8]* @null_hello, i32 0, i32 0
   %null_hello_l = call i32 @strlen(i8* %null_hello_p)
   ret i32 %null_hello_l
@@ -39,7 +39,7 @@ define i32 @test_simplify3() {
 }
 
 define i32 @test_simplify4() {
-; CHECK: @test_simplify4
+; CHECK-LABEL: @test_simplify4(
   %len = tail call i32 @strlen(i8* @nullstring) nounwind
   ret i32 %len
 ; CHECK-NEXT: ret i32 0
@@ -48,7 +48,7 @@ define i32 @test_simplify4() {
 ; Check strlen(x) == 0 --> *x == 0.
 
 define i1 @test_simplify5() {
-; CHECK: @test_simplify5
+; CHECK-LABEL: @test_simplify5(
   %hello_p = getelementptr [6 x i8]* @hello, i32 0, i32 0
   %hello_l = call i32 @strlen(i8* %hello_p)
   %eq_hello = icmp eq i32 %hello_l, 0
@@ -57,7 +57,7 @@ define i1 @test_simplify5() {
 }
 
 define i1 @test_simplify6() {
-; CHECK: @test_simplify6
+; CHECK-LABEL: @test_simplify6(
   %null_p = getelementptr [1 x i8]* @null, i32 0, i32 0
   %null_l = call i32 @strlen(i8* %null_p)
   %eq_null = icmp eq i32 %null_l, 0
@@ -68,7 +68,7 @@ define i1 @test_simplify6() {
 ; Check strlen(x) != 0 --> *x != 0.
 
 define i1 @test_simplify7() {
-; CHECK: @test_simplify7
+; CHECK-LABEL: @test_simplify7(
   %hello_p = getelementptr [6 x i8]* @hello, i32 0, i32 0
   %hello_l = call i32 @strlen(i8* %hello_p)
   %ne_hello = icmp ne i32 %hello_l, 0
@@ -77,7 +77,7 @@ define i1 @test_simplify7() {
 }
 
 define i1 @test_simplify8() {
-; CHECK: @test_simplify8
+; CHECK-LABEL: @test_simplify8(
   %null_p = getelementptr [1 x i8]* @null, i32 0, i32 0
   %null_l = call i32 @strlen(i8* %null_p)
   %ne_null = icmp ne i32 %null_l, 0
@@ -88,7 +88,7 @@ define i1 @test_simplify8() {
 ; Check cases that shouldn't be simplified.
 
 define i32 @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %a_p = getelementptr [32 x i8]* @a, i32 0, i32 0
   %a_l = call i32 @strlen(i8* %a_p)
 ; CHECK-NEXT: %a_l = call i32 @strlen

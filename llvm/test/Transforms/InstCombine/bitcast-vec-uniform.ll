@@ -1,6 +1,6 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-; CHECK: @a
+; CHECK-LABEL: @a(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 define <4 x i32> @a(<1 x i64> %y) {
@@ -8,7 +8,7 @@ define <4 x i32> @a(<1 x i64> %y) {
   ret <4 x i32> %c
 }
 
-; CHECK: @b
+; CHECK-LABEL: @b(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 
@@ -17,7 +17,7 @@ define <4 x i32> @b(<1 x i64> %y) {
   ret <4 x i32> %c
 }
 
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 
@@ -28,7 +28,7 @@ define <2 x float> @foo() {
 }
 
 
-; CHECK: @foo2
+; CHECK-LABEL: @foo2(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 define <2 x double> @foo2() {
@@ -36,7 +36,7 @@ define <2 x double> @foo2() {
   ret <2 x double> %cast
 }
 
-; CHECK: @foo3
+; CHECK-LABEL: @foo3(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 define <1 x float> @foo3() {
@@ -44,7 +44,7 @@ define <1 x float> @foo3() {
   ret <1 x float> %cast
 }
 
-; CHECK: @foo4
+; CHECK-LABEL: @foo4(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 define float @foo4() {
@@ -52,7 +52,7 @@ define float @foo4() {
   ret float %cast
 }
 
-; CHECK: @foo5
+; CHECK-LABEL: @foo5(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 define double @foo5() {
@@ -61,7 +61,7 @@ define double @foo5() {
 }
 
 
-; CHECK: @foo6
+; CHECK-LABEL: @foo6(
 ; CHECK-NOT: bitcast
 ; CHECK: ret
 define <2 x double> @foo6() {

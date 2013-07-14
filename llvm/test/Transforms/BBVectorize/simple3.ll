@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; Basic depth-3 chain
 define double @test1(double %A1, double %A2, double %A3, double %B1, double %B2, double %B3) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %X1.v.i1.11 = insertelement <3 x double> undef, double %B1, i32 0
 ; CHECK: %X1.v.i1.22 = insertelement <3 x double> %X1.v.i1.11, double %B2, i32 1
 ; CHECK: %X1.v.i1 = insertelement <3 x double> %X1.v.i1.22, double %B3, i32 2

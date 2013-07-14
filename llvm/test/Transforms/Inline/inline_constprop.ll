@@ -21,7 +21,7 @@ define i32 @caller2() {
 ; inline and be cheap. We should eventually do that and lower the threshold here
 ; to 1.
 ;
-; CHECK: @caller2
+; CHECK-LABEL: @caller2(
 ; CHECK-NOT: call void @callee2
 ; CHECK: ret
 
@@ -61,7 +61,7 @@ define i32 @caller3() {
 ; it doesn't count toward the inline cost when constant-prop proves those paths
 ; dead.
 ;
-; CHECK: @caller3
+; CHECK-LABEL: @caller3(
 ; CHECK-NOT: call
 ; CHECK: ret i32 6
 
@@ -119,7 +119,7 @@ define i8 @caller4(i8 %z) {
 ; as they are used heavily in standard library code and generic C++ code where
 ; the arguments are oftent constant but complete generality is required.
 ;
-; CHECK: @caller4
+; CHECK-LABEL: @caller4(
 ; CHECK-NOT: call
 ; CHECK: ret i8 -1
 
@@ -153,7 +153,7 @@ define i64 @caller5(i64 %y) {
 ; Check that we can round trip constants through various kinds of casts etc w/o
 ; losing track of the constant prop in the inline cost analysis.
 ;
-; CHECK: @caller5
+; CHECK-LABEL: @caller5(
 ; CHECK-NOT: call
 ; CHECK: ret i64 -1
 

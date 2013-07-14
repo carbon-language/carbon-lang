@@ -9,7 +9,7 @@ declare float @exp2(double)
 ; Check that exp2 functions with the wrong prototype aren't simplified.
 
 define float @test_no_simplify1(i32 %x) {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %conv = sitofp i32 %x to double
   %ret = call float @exp2(double %conv)
 ; CHECK: call float @exp2(double %conv)

@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;   A[1] = (B[11] ? G : 1);
 ; }
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK: load <2 x double>
 ;CHECK: fcmp une <2 x double>
 ;CHECK: select <2 x i1>

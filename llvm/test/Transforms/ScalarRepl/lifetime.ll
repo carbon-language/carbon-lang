@@ -9,7 +9,7 @@ declare void @llvm.lifetime.end(i64, i8*)
 %t1 = type {i32, i32, i32}
 
 define void @test1() {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
   %A = alloca %t1
   %A1 = getelementptr %t1* %A, i32 0, i32 0
   %A2 = getelementptr %t1* %A, i32 0, i32 1
@@ -22,7 +22,7 @@ define void @test1() {
 }
 
 define void @test2() {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
   %A = alloca %t1
   %A1 = getelementptr %t1* %A, i32 0, i32 0
   %A2 = getelementptr %t1* %A, i32 0, i32 1
@@ -36,7 +36,7 @@ define void @test2() {
 }
 
 define void @test3() {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
   %A = alloca %t1
   %A1 = getelementptr %t1* %A, i32 0, i32 0
   %A2 = getelementptr %t1* %A, i32 0, i32 1
@@ -50,7 +50,7 @@ define void @test3() {
 }
 
 define void @test4() {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
   %A = alloca %t1
   %A1 = getelementptr %t1* %A, i32 0, i32 0
   %A2 = getelementptr %t1* %A, i32 0, i32 1
@@ -66,7 +66,7 @@ define void @test4() {
 %t2 = type {i32, [4 x i8], i32}
 
 define void @test5() {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
   %A = alloca %t2
 ; CHECK: alloca{{.*}}i8
 ; CHECK: alloca{{.*}}i8
@@ -97,7 +97,7 @@ define void @test5() {
 %t3 = type {[4 x i16], [4 x i8]}
 
 define void @test6() {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
   %A = alloca %t3
 ; CHECK: alloca i8
 ; CHECK: alloca i8

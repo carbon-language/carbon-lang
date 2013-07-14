@@ -7,7 +7,7 @@ declare void @llvm.lifetime.start(i64 %size, i8* nocapture %ptr)
 @glbl = external global i32
 
 define void @outer1() {
-; CHECK: @outer1
+; CHECK-LABEL: @outer1(
 ; CHECK-NOT: call void @inner1
   %ptr = alloca i32
   call void @inner1(i32* %ptr)
@@ -26,7 +26,7 @@ define void @inner1(i32 *%ptr) {
 }
 
 define void @outer2() {
-; CHECK: @outer2
+; CHECK-LABEL: @outer2(
 ; CHECK: call void @inner2
   %ptr = alloca i32
   call void @inner2(i32* %ptr)
@@ -46,7 +46,7 @@ define void @inner2(i32 *%ptr) {
 }
 
 define void @outer3() {
-; CHECK: @outer3
+; CHECK-LABEL: @outer3(
 ; CHECK-NOT: call void @inner3
   %ptr = alloca i32
   call void @inner3(i32* %ptr, i1 undef)
@@ -85,7 +85,7 @@ bb.false:
 }
 
 define void @outer4(i32 %A) {
-; CHECK: @outer4
+; CHECK-LABEL: @outer4(
 ; CHECK-NOT: call void @inner4
   %ptr = alloca i32
   call void @inner4(i32* %ptr, i32 %A)
@@ -126,7 +126,7 @@ bb.false:
 }
 
 define void @outer5() {
-; CHECK: @outer5
+; CHECK-LABEL: @outer5(
 ; CHECK-NOT: call void @inner5
   %ptr = alloca i32
   call void @inner5(i1 false, i32* %ptr)

@@ -9,7 +9,7 @@
 ; SCEV. Since it's an i8*, it has unit stride so we never adjust the
 ; SCEV expression in a way that would convert it to an integer type.
 
-; CHECK: @testnullptrptr
+; CHECK-LABEL: @testnullptrptr(
 ; CHECK: loop:
 ; CHECK: icmp ne
 define i8 @testnullptrptr(i8* %buf, i8* %end) nounwind {
@@ -34,7 +34,7 @@ exit:
   ret i8 %snext
 }
 
-; CHECK: @testptrptr
+; CHECK-LABEL: @testptrptr(
 ; CHECK: loop:
 ; CHECK: icmp ne
 define i8 @testptrptr(i8* %buf, i8* %end) nounwind {
@@ -59,7 +59,7 @@ exit:
   ret i8 %snext
 }
 
-; CHECK: @testnullptrint
+; CHECK-LABEL: @testnullptrint(
 ; CHECK: loop:
 ; CHECK: icmp ne
 define i8 @testnullptrint(i8* %buf, i8* %end) nounwind {
@@ -89,7 +89,7 @@ exit:
   ret i8 %snext
 }
 
-; CHECK: @testptrint
+; CHECK-LABEL: @testptrint(
 ; CHECK: loop:
 ; CHECK: icmp ne
 define i8 @testptrint(i8* %buf, i8* %end) nounwind {

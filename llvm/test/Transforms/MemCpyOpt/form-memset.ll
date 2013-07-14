@@ -48,7 +48,7 @@ entry:
 	store i8 %c, i8* %tmp73, align 1
 	%tmp76 = call i32 (...)* @bar( [19 x i8]* %x ) nounwind
 	ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: store
 ; CHECK: call void @llvm.memset.p0i8.i64
 ; CHECK-NOT: store
@@ -150,7 +150,7 @@ entry:
 	call void @foo( %struct.MV* %up_mvd252, %struct.MV* %left_mvd253, i8* %tmp41 ) nounwind 
 	ret void
         
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: store
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %tmp41, i8 -1, i64 8, i32 1, i1 false)
 ; CHECK-NOT: store
@@ -173,7 +173,7 @@ entry:
   %0 = bitcast i32* %add.ptr to i8*
   tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 11, i32 1, i1 false)
   ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: store
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
@@ -186,7 +186,7 @@ entry:
   %0 = bitcast i32* %add.ptr to i8*
   tail call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 11, i32 1, i1 false)
   ret void
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: store
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
@@ -202,7 +202,7 @@ entry:
   %arrayidx = getelementptr inbounds i32* %P, i64 1
   store i32 0, i32* %arrayidx, align 4
   ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NOT: store
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 15, i32 4, i1 false)
 }
@@ -216,7 +216,7 @@ entry:
   %1 = bitcast i32* %add.ptr to i8*
   tail call void @llvm.memset.p0i8.i64(i8* %1, i8 0, i64 12, i32 1, i1 false)
   ret void
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %2, i8 0, i64 24, i32 1, i1 false)
 }
 
@@ -232,7 +232,7 @@ define void @test7(i32* nocapture %c) nounwind optsize {
   store i32 -1, i32* %3, align 4
   %4 = getelementptr inbounds i32* %c, i32 4
   store i32 -1, i32* %4, align 4
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %5, i8 -1, i64 20, i32 4, i1 false)
   ret void
 }
@@ -245,7 +245,7 @@ entry:
   %0 = bitcast %struct.test8* %memtmp to <4 x i32>*
   store <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32>* %0, align 16
   ret void
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: store <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32>* %0, align 16
 }
 
@@ -269,6 +269,6 @@ define void @test9() nounwind {
   store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 14), align 2
   store i8 -1, i8* getelementptr (i8* bitcast ([16 x i64]* @test9buf to i8*), i64 15), align 1
   ret void
-; CHECK: @test9(
+; CHECK-LABEL: @test9(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* bitcast ([16 x i64]* @test9buf to i8*), i8 -1, i64 16, i32 16, i1 false)
 }

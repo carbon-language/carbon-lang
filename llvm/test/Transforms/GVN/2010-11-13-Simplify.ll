@@ -3,7 +3,7 @@
 declare i32 @foo(i32) readnone
 
 define i1 @bar() {
-; CHECK: @bar
+; CHECK-LABEL: @bar(
   %a = call i32 @foo (i32 0) readnone
   %b = call i32 @foo (i32 0) readnone
   %c = and i32 %a, %b

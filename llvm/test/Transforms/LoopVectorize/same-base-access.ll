@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;     x[k] = x[k-1] + y[k];
 ; }
 
-; CHECK: @kernel11
+; CHECK-LABEL: @kernel11(
 ; CHECK-NOT: <4 x double>
 ; CHECK: ret
 define i32 @kernel11(double* %x, double* %y, i32 %n) nounwind uwtable ssp {
@@ -77,7 +77,7 @@ define i32 @kernel11(double* %x, double* %y, i32 %n) nounwind uwtable ssp {
 ;   }
 ; }
 
-; CHECK: @func2
+; CHECK-LABEL: @func2(
 ; CHECK-NOT: <4 x i32>
 ; CHECK: ret
 define i32 @func2(i32* nocapture %a) nounwind uwtable ssp {

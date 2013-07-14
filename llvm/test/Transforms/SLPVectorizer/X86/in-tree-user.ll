@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 @.str = private unnamed_addr constant [6 x i8] c"bingo\00", align 1
 
 ; We can't vectorize when the roots are used inside the tree.
-;CHECK: @in_tree_user
+;CHECK-LABEL: @in_tree_user(
 ;CHECK-NOT: load <2 x double>
 ;CHECK: ret
 define void @in_tree_user(double* nocapture %A, i32 %n) {

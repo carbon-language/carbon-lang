@@ -77,7 +77,7 @@ BB0:
 ; SimplifyCFG should turn the indirectbr into a conditional branch on the
 ; condition of the select.
 
-; CHECK: @indbrtest3
+; CHECK-LABEL: @indbrtest3(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br i1 %cond, label %L1, label %L2
 ; CHECK-NOT: indirectbr
@@ -104,7 +104,7 @@ L3:
 ; As in @indbrtest1, it should really remove the branch entirely, but it doesn't
 ; because it's in the entry block.
 
-; CHECK: @indbrtest4
+; CHECK-LABEL: @indbrtest4(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: br label %L1
 define void @indbrtest4(i1 %cond) nounwind {
@@ -126,7 +126,7 @@ L3:
 ; SimplifyCFG should turn the indirectbr into an unreachable because neither
 ; destination is listed as a successor.
 
-; CHECK: @indbrtest5
+; CHECK-LABEL: @indbrtest5(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: unreachable
 ; CHECK-NEXT: }
@@ -156,7 +156,7 @@ L4:
 
 ; The same as above, except the selected addresses are equal.
 
-; CHECK: @indbrtest6
+; CHECK-LABEL: @indbrtest6(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: unreachable
 ; CHECK-NEXT: }

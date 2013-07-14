@@ -9,8 +9,8 @@ define double @test1(double %A1, double %A2, double %B1, double %B2) {
 	%Y2 = fmul double %X2, %A2
 	%R  = fmul double %Y1, %Y2
 	ret double %R
-; CHECK-RD3: @test1
-; CHECK-RD2: @test1
+; CHECK-RD3-LABEL: @test1(
+; CHECK-RD2-LABEL: @test1(
 ; CHECK-RD3-NOT: <2 x double>
 ; CHECK-RD2: <2 x double>
 }

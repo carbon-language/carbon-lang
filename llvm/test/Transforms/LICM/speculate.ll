@@ -2,7 +2,7 @@
 
 ; UDiv is safe to speculate if the denominator is known non-zero.
 
-; CHECK: @safe_udiv
+; CHECK-LABEL: @safe_udiv(
 ; CHECK:      %div = udiv i64 %x, %or
 ; CHECK-NEXT: br label %for.body
 
@@ -35,7 +35,7 @@ for.end:                                          ; preds = %for.inc, %entry
 
 ; UDiv is unsafe to speculate if the denominator is not known non-zero.
 
-; CHECK: @unsafe_udiv
+; CHECK-LABEL: @unsafe_udiv(
 ; CHECK-NOT:  udiv
 ; CHECK: for.body:
 
@@ -68,7 +68,7 @@ for.end:                                          ; preds = %for.inc, %entry
 ; SDiv is safe to speculate if the denominator is known non-zero and
 ; known to have at least one zero bit.
 
-; CHECK: @safe_sdiv
+; CHECK-LABEL: @safe_sdiv(
 ; CHECK:      %div = sdiv i64 %x, %or
 ; CHECK-NEXT: br label %for.body
 
@@ -102,7 +102,7 @@ for.end:                                          ; preds = %for.inc, %entry
 
 ; SDiv is unsafe to speculate if the denominator is not known non-zero.
 
-; CHECK: @unsafe_sdiv_a
+; CHECK-LABEL: @unsafe_sdiv_a(
 ; CHECK-NOT:  sdiv
 ; CHECK: for.body:
 
@@ -135,7 +135,7 @@ for.end:                                          ; preds = %for.inc, %entry
 
 ; SDiv is unsafe to speculate if the denominator is not known to have a zero bit.
 
-; CHECK: @unsafe_sdiv_b
+; CHECK-LABEL: @unsafe_sdiv_b(
 ; CHECK-NOT:  sdiv
 ; CHECK: for.body:
 

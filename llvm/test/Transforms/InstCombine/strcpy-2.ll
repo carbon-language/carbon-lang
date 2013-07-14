@@ -11,7 +11,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 declare i16* @strcpy(i8*, i8*)
 
 define void @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
 
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [6 x i8]* @hello, i32 0, i32 0

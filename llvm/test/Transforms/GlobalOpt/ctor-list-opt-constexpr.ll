@@ -20,7 +20,7 @@ entry:
   store i32* inttoptr (i64 sdiv (i64 ptrtoint (i32* @G to i64), i64 ptrtoint (i32* @H to i64)) to i32*), i32** %tmp, align 8
   ret void
 }
-; CHECK: @init1
+; CHECK-LABEL: @init1(
 ; CHECK: store i32*
 
 ; PR11705 - ptrtoint isn't safe in general in global initializers.
@@ -30,5 +30,5 @@ entry:
   store i128 ptrtoint (i32* @G to i128), i128* %tmp, align 16
   ret void
 }
-; CHECK: @init2
+; CHECK-LABEL: @init2(
 ; CHECK: store i128

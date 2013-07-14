@@ -6,7 +6,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @B = common global [1024 x float] zeroinitializer, align 16
 
 define i32 @test1() nounwind {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
   %V1 = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
   %V2 = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 1), align 4
   %V3= load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 2), align 8

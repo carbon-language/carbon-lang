@@ -4,21 +4,21 @@
 ; END.
 
 define i32 @test1(i32 %A) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: ret i32 0
 	%B = srem i32 %A, 1	; ISA constant 0
 	ret i32 %B
 }
 
 define i32 @test2(i32 %A) {	; 0 % X = 0, we don't need to preserve traps
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: ret i32 0
 	%B = srem i32 0, %A
 	ret i32 %B
 }
 
 define i32 @test3(i32 %A) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: [[AND:%.*]] = and i32 %A, 7
 ; CHECK-NEXT: ret i32 [[AND]]
 	%B = urem i32 %A, 8
@@ -26,7 +26,7 @@ define i32 @test3(i32 %A) {
 }
 
 define i1 @test3a(i32 %A) {
-; CHECK: @test3a
+; CHECK-LABEL: @test3a(
 ; CHECK-NEXT: [[AND:%.*]] = and i32 %A, 7
 ; CHECK-NEXT: [[CMP:%.*]] = icmp ne i32 [[AND]], 0
 ; CHECK-NEXT: ret i1 [[CMP]]
@@ -36,7 +36,7 @@ define i1 @test3a(i32 %A) {
 }
 
 define i32 @test4(i32 %X, i1 %C) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: [[SEL:%.*]] = select i1 %C, i32 0, i32 7
 ; CHECK-NEXT: [[AND:%.*]] = and i32 [[SEL]], %X
 	%V = select i1 %C, i32 1, i32 8
@@ -45,7 +45,7 @@ define i32 @test4(i32 %X, i1 %C) {
 }
 
 define i32 @test5(i32 %X, i8 %B) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: [[ZEXT:%.*]] = zext i8 %B to i32
 ; CHECK-NEXT: [[SHL:%.*]] = shl nuw i32 32, [[ZEXT]]
 ; CHECK-NEXT: [[ADD:%.*]] = add i32 [[SHL]], -1
@@ -58,14 +58,14 @@ define i32 @test5(i32 %X, i8 %B) {
 }
 
 define i32 @test6(i32 %A) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: ret i32 undef
 	%B = srem i32 %A, 0	;; undef
 	ret i32 %B
 }
 
 define i32 @test7(i32 %A) {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NEXT: ret i32 0
 	%B = mul i32 %A, 8
 	%C = srem i32 %B, 4
@@ -73,7 +73,7 @@ define i32 @test7(i32 %A) {
 }
 
 define i32 @test8(i32 %A) {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NEXT: ret i32 0
 	%B = shl i32 %A, 4
 	%C = srem i32 %B, 8
@@ -81,7 +81,7 @@ define i32 @test8(i32 %A) {
 }
 
 define i32 @test9(i32 %A) {
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NEXT: ret i32 0
 	%B = mul i32 %A, 64
 	%C = urem i32 %B, 32
@@ -89,7 +89,7 @@ define i32 @test9(i32 %A) {
 }
 
 define i32 @test10(i8 %c) {
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK-NEXT: ret i32 0
 	%tmp.1 = zext i8 %c to i32
 	%tmp.2 = mul i32 %tmp.1, 4
@@ -100,7 +100,7 @@ define i32 @test10(i8 %c) {
 }
 
 define i32 @test11(i32 %i) {
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK-NEXT: ret i32 0
 	%tmp.1 = and i32 %i, -2
 	%tmp.3 = mul i32 %tmp.1, 2
@@ -109,7 +109,7 @@ define i32 @test11(i32 %i) {
 }
 
 define i32 @test12(i32 %i) {
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK-NEXT: ret i32 0
 	%tmp.1 = and i32 %i, -4
 	%tmp.5 = srem i32 %tmp.1, 2
@@ -117,14 +117,14 @@ define i32 @test12(i32 %i) {
 }
 
 define i32 @test13(i32 %i) {
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK-NEXT: ret i32 0
 	%x = srem i32 %i, %i
 	ret i32 %x
 }
 
 define i64 @test14(i64 %x, i32 %y) {
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK-NEXT: [[SHL:%.*]] = shl i32 1, %y
 ; CHECK-NEXT: [[ZEXT:%.*]] = zext i32 [[SHL]] to i64
 ; CHECK-NEXT: [[ADD:%.*]] = add i64 [[ZEXT]], -1
@@ -137,7 +137,7 @@ define i64 @test14(i64 %x, i32 %y) {
 }
 
 define i64 @test15(i32 %x, i32 %y) {
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK-NEXT: [[SHL:%.*]] = shl nuw i32 1, %y
 ; CHECK-NEXT: [[ADD:%.*]] = add i32 [[SHL]], -1
 ; CHECK-NEXT: [[AND:%.*]] = and i32 [[ADD]], %x
@@ -151,7 +151,7 @@ define i64 @test15(i32 %x, i32 %y) {
 }
 
 define i32 @test16(i32 %x, i32 %y) {
-; CHECK: @test16
+; CHECK-LABEL: @test16(
 ; CHECK-NEXT: [[SHR:%.*]] = lshr i32 %y, 11
 ; CHECK-NEXT: [[AND:%.*]] = and i32 [[SHR]], 4
 ; CHECK-NEXT: [[OR:%.*]] = or i32 [[AND]], 3
@@ -165,7 +165,7 @@ define i32 @test16(i32 %x, i32 %y) {
 }
 
 define i32 @test17(i32 %X) {
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 ; CHECK-NEXT: icmp ne i32 %X, 1
 ; CHECK-NEXT: zext i1
 ; CHECK-NEXT: ret

@@ -52,7 +52,7 @@ return:
   %retval.0 = phi i32 [ 15, %sw.default ], [ 1, %sw.bb6 ], [ 62, %sw.bb5 ], [ 27, %sw.bb4 ], [ -1, %sw.bb3 ], [ 0, %sw.bb2 ], [ 123, %sw.bb1 ], [ 55, %entry ]
   ret i32 %retval.0
 
-; CHECK: @f
+; CHECK-LABEL: @f(
 ; CHECK: entry:
 ; CHECK-NEXT: %switch.tableidx = sub i32 %c, 42
 ; CHECK-NEXT: %0 = icmp ult i32 %switch.tableidx, 7
@@ -88,7 +88,7 @@ sw.epilog:
   call void @dummy(i8 signext %a.0, float %b.0)
   ret void
 
-; CHECK: @h
+; CHECK-LABEL: @h(
 ; CHECK: entry:
 ; CHECK-NEXT: %switch.tableidx = sub i32 %x, 0
 ; CHECK-NEXT: %0 = icmp ult i32 %switch.tableidx, 4
@@ -138,7 +138,7 @@ return:
                       [ getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), %entry ]
   ret i8* %retval.0
 
-; CHECK: @foostring
+; CHECK-LABEL: @foostring(
 ; CHECK: entry:
 ; CHECK-NEXT: %switch.tableidx = sub i32 %x, 0
 ; CHECK-NEXT: %0 = icmp ult i32 %switch.tableidx, 4
@@ -171,7 +171,7 @@ sw.epilog:
   %b.0 = phi i32 [ 10, %sw.default ], [ 5, %sw.bb3 ], [ 1, %sw.bb2 ], [ 4, %sw.bb1 ], [ 3, %entry ]
   ret i32 %a.0
 
-; CHECK: @earlyreturncrash
+; CHECK-LABEL: @earlyreturncrash(
 ; CHECK: switch.lookup:
 ; CHECK-NEXT: %switch.gep = getelementptr inbounds [4 x i32]* @switch.table3, i32 0, i32 %switch.tableidx
 ; CHECK-NEXT: %switch.load = load i32* %switch.gep
@@ -221,7 +221,7 @@ lor.end:
   %lor.ext = zext i1 %0 to i32
   ret i32 %lor.ext
 
-; CHECK: @crud
+; CHECK-LABEL: @crud(
 ; CHECK: entry:
 ; CHECK-NEXT: %cmp = icmp ult i8 %c, 33
 ; CHECK-NEXT: br i1 %cmp, label %lor.end, label %switch.early.test
@@ -744,7 +744,7 @@ return:
   %retval.0 = phi i32 [ 123, %sw.default ], [ %sext, %sw.bb3 ], [ %sub, %sw.bb2 ], [ 42, %sw.bb1 ], [ 5, %entry ]
   ret i32 %retval.0
 
-; CHECK: @cprop
+; CHECK-LABEL: @cprop(
 ; CHECK: switch.lookup:
 ; CHECK: %switch.gep = getelementptr inbounds [7 x i32]* @switch.table5, i32 0, i32 %switch.tableidx
 }
@@ -773,7 +773,7 @@ return:
   %retval.0 = phi i32 [ 1, %sw.bb3 ], [ -1, %sw.bb2 ], [ 0, %sw.bb ]
   ret i32 %retval.0
 
-; CHECK: @unreachable
+; CHECK-LABEL: @unreachable(
 ; CHECK: switch.lookup:
 ; CHECK: getelementptr inbounds [5 x i32]* @switch.table6, i32 0, i32 %switch.tableidx
 }
@@ -799,7 +799,7 @@ return:
   %retval.0 = phi i96 [ 15, %sw.default ], [ 27, %sw.bb4 ], [ -1, %sw.bb3 ], [ 0, %sw.bb2 ], [ 123, %sw.bb1 ], [ 55, %entry ]
   ret i96 %retval.0
 
-; CHECK: @illegaltype
+; CHECK-LABEL: @illegaltype(
 ; CHECK-NOT: @switch.table
 ; CHECK: switch i32 %c
 }

@@ -9,7 +9,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 @b = common global [60 x i16] zeroinitializer, align 1
 
 define void @test_no_simplify() {
-; CHECK: @test_no_simplify
+; CHECK-LABEL: @test_no_simplify(
   %dst = getelementptr inbounds [60 x i16]* @a, i32 0, i32 0
   %src = getelementptr inbounds [60 x i16]* @b, i32 0, i32 0
 

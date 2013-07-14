@@ -17,7 +17,7 @@ entry:
 
 ; Make sure we speculate stores like the following one. It is cheap compared to
 ; a mispredicated branch.
-; CHECK: @ifconvertstore
+; CHECK-LABEL: @ifconvertstore(
 ; CHECK: %add5.add = select i1 %cmp6, i32 %add5, i32 %add
 ; CHECK: store i32 %add5.add, i32* %arrayidx2, align 4
 if.then:
@@ -43,7 +43,7 @@ entry:
   %cmp6 = icmp sgt i32 %add5, %C
   br i1 %cmp6, label %if.then, label %ret.end
 
-; CHECK: @noifconvertstore1
+; CHECK-LABEL: @noifconvertstore1(
 ; CHECK-NOT: select
 if.then:
   store i32 %add5, i32* %arrayidx2, align 4
@@ -71,7 +71,7 @@ entry:
   %cmp6 = icmp sgt i32 %add5, %C
   br i1 %cmp6, label %if.then, label %ret.end
 
-; CHECK: @noifconvertstore2
+; CHECK-LABEL: @noifconvertstore2(
 ; CHECK-NOT: select
 if.then:
   store i32 %add5, i32* %arrayidx2, align 4
@@ -97,7 +97,7 @@ entry:
   br i1 %cmp6, label %if.then, label %ret.end
 
 ; Make sure we don't speculate volatile stores.
-; CHECK: @noifconvertstore_volatile
+; CHECK-LABEL: @noifconvertstore_volatile(
 ; CHECK-NOT: select
 if.then:
   store volatile i32 %add5, i32* %arrayidx2, align 4

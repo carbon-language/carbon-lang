@@ -7,7 +7,7 @@ define void @test(i32) {
 define void @foo() {
   call void @test(i32 0)
   ret void
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: i32 undef
 }
 

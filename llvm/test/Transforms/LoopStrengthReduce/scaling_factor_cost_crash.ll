@@ -3,7 +3,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "i686-pc-win32"
 
 ; <rdar://problem/14199725> Assertion failed: (CurScaleCost >= 0 && "Legal addressing mode has an illegal cost!")
-; CHECK: @scalingFactorCrash
+; CHECK-LABEL: @scalingFactorCrash(
 define void @scalingFactorCrash() {
   br i1 undef, label %1, label %24
 

@@ -7,7 +7,7 @@ define i32 @test1(i32 %x) {
         %tmp.2 = xor i32 %tmp.1, -32768         ; <i32> [#uses=1]
         %tmp.3 = add i32 %tmp.2, 32768          ; <i32> [#uses=1]
         ret i32 %tmp.3
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %sext = shl i32 %x, 16
 ; CHECK: %tmp.3 = ashr exact i32 %sext, 16
 ; CHECK: ret i32 %tmp.3
@@ -18,7 +18,7 @@ define i32 @test2(i32 %x) {
         %tmp.2 = xor i32 %tmp.1, 32768          ; <i32> [#uses=1]
         %tmp.3 = add i32 %tmp.2, -32768         ; <i32> [#uses=1]
         ret i32 %tmp.3
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %sext = shl i32 %x, 16
 ; CHECK: %tmp.3 = ashr exact i32 %sext, 16
 ; CHECK: ret i32 %tmp.3
@@ -29,7 +29,7 @@ define i32 @test3(i16 %P) {
         %tmp.4 = xor i32 %tmp.1, 32768          ; <i32> [#uses=1]
         %tmp.5 = add i32 %tmp.4, -32768         ; <i32> [#uses=1]
         ret i32 %tmp.5
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: %tmp.5 = sext i16 %P to i32
 ; CHECK: ret i32 %tmp.5
 }
@@ -39,7 +39,7 @@ define i32 @test4(i16 %P) {
         %tmp.4 = xor i32 %tmp.1, 32768          ; <i32> [#uses=1]
         %tmp.5 = add i32 %tmp.4, -32768         ; <i32> [#uses=1]
         ret i32 %tmp.5
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: %tmp.5 = sext i16 %P to i32
 ; CHECK: ret i32 %tmp.5
 }
@@ -49,7 +49,7 @@ define i32 @test5(i32 %x) {
         %tmp.2 = xor i32 %tmp.1, 128            ; <i32> [#uses=1]
         %tmp.3 = add i32 %tmp.2, -128           ; <i32> [#uses=1]
         ret i32 %tmp.3
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: %sext = shl i32 %x, 24
 ; CHECK: %tmp.3 = ashr exact i32 %sext, 24
 ; CHECK: ret i32 %tmp.3
@@ -59,7 +59,7 @@ define i32 @test6(i32 %x) {
         %tmp.2 = shl i32 %x, 16         ; <i32> [#uses=1]
         %tmp.4 = ashr i32 %tmp.2, 16            ; <i32> [#uses=1]
         ret i32 %tmp.4
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: %tmp.2 = shl i32 %x, 16
 ; CHECK: %tmp.4 = ashr exact i32 %tmp.2, 16
 ; CHECK: ret i32 %tmp.4
@@ -70,7 +70,7 @@ define i32 @test7(i16 %P) {
   %sext1 = shl i32 %tmp.1, 16                     ; <i32> [#uses=1]
   %tmp.5 = ashr i32 %sext1, 16                    ; <i32> [#uses=1]
   ret i32 %tmp.5
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: %tmp.5 = sext i16 %P to i32
 ; CHECK: ret i32 %tmp.5
 }
@@ -81,7 +81,7 @@ entry:
   %xor = xor i32 %shr, 67108864                   ; <i32> [#uses=1]
   %sub = add i32 %xor, -67108864                  ; <i32> [#uses=1]
   ret i32 %sub
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: %sub = ashr i32 %x, 5
 ; CHECK: ret i32 %sub
 }

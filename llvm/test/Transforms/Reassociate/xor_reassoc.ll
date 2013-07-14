@@ -14,7 +14,7 @@ define i32 @xor1(i32 %x) {
   %xor = xor i32 %or, %or1
   ret i32 %xor
 
-;CHECK: @xor1
+;CHECK-LABEL: @xor1(
 ;CHECK: %and.ra = and i32 %x, 435
 ;CHECK: %xor = xor i32 %and.ra, 435
 }
@@ -28,7 +28,7 @@ define i32 @xor2(i32 %x, i32 %y) {
   %xor2 = xor i32 %xor, %and1
   ret i32 %xor2
 
-;CHECK: @xor2
+;CHECK-LABEL: @xor2(
 ;CHECK: %and.ra = and i32 %x, 435
 ;CHECK: %xor2 = xor i32 %and.ra, %y
 }
@@ -42,7 +42,7 @@ define i32 @xor3(i32 %x, i32 %y) {
   %xor1 = xor i32 %xor, %and
   ret i32 %xor1
 
-;CHECK: @xor3
+;CHECK-LABEL: @xor3(
 ;CHECK: %and.ra = and i32 %x, -436
 ;CHECK: %xor = xor i32 %y, 123
 ;CHECK: %xor1 = xor i32 %xor, %and.ra
@@ -54,7 +54,7 @@ define i32 @xor4(i32 %x, i32 %y) {
   %xor = xor i32 %y, 435
   %xor1 = xor i32 %xor, %and
   ret i32 %xor1
-; CHECK: @xor4
+; CHECK-LABEL: @xor4(
 ; CHECK: %and = and i32 %x, -124
 ; CHECK: %xor = xor i32 %y, 435
 ; CHECK: %xor1 = xor i32 %xor, %and
@@ -74,7 +74,7 @@ define i32 @xor_special1(i32 %x, i32 %y) {
   %and = and i32 %x, -124
   %xor1 = xor i32 %xor, %and
   ret i32 %xor1
-; CHECK: @xor_special1
+; CHECK-LABEL: @xor_special1(
 ; CHECK: %xor1 = xor i32 %y, 123
 ; CHECK: ret i32 %xor1
 }
@@ -87,7 +87,7 @@ define i32 @xor_special2(i32 %x, i32 %y) {
   %and = and i32 %x, 123
   %xor1 = xor i32 %xor, %and
   ret i32 %xor1
-; CHECK: @xor_special2
+; CHECK-LABEL: @xor_special2(
 ; CHECK: %xor = xor i32 %y, 123
 ; CHECK: %xor1 = xor i32 %xor, %x
 ; CHECK: ret i32 %xor1
@@ -99,7 +99,7 @@ define i32 @xor_special3(i32 %x) {
   %or1 = or i32 %x, 123
   %xor = xor i32 %or, %or1
   ret i32 %xor
-;CHECK: @xor_special3
+;CHECK-LABEL: @xor_special3(
 ;CHECK: ret i32 0
 }
 
@@ -109,7 +109,7 @@ define i32 @xor_special4(i32 %x) {
   %or1 = and i32 123, %x
   %xor = xor i32 %or, %or1
   ret i32 %xor
-;CHECK: @xor_special4
+;CHECK-LABEL: @xor_special4(
 ;CHECK: ret i32 0
 }
 
@@ -129,7 +129,7 @@ define i32 @xor_ra_size1(i32 %x) {
 
   %add = add i32 %xor, %or
   ret i32 %add
-;CHECK: @xor_ra_size1
+;CHECK-LABEL: @xor_ra_size1(
 ;CHECK: %xor = xor i32 %and.ra, 435
 }
 
@@ -145,7 +145,7 @@ define i32 @xor_ra_size2(i32 %x) {
   %add2 = add i32 %add, %or1
   ret i32 %add2
 
-;CHECK: @xor_ra_size2
+;CHECK-LABEL: @xor_ra_size2(
 ;CHECK: %or1 = or i32 %x, 456
 ;CHECK: %xor = xor i32 %or, %or1
 }
@@ -188,6 +188,6 @@ define i32 @xor_bug2(i32, i32, i32, i32) {
   %19 = add i32 %18, %12
   %20 = add i32 %19, %15
   ret i32 %20
-;CHECK: @xor_bug2
+;CHECK-LABEL: @xor_bug2(
 ;CHECK: xor i32 %5, 891034567
 }

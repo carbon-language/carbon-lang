@@ -18,7 +18,7 @@ define <4 x float> @test7(<4 x float> %A1, <4 x float> %B1, double %C1, double %
 
         %R = fmul <4 x float> %Y1, %Y2
         ret <4 x float> %R
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NOT: <8 x float>
 ; CHECK: ret <4 x float>
 }

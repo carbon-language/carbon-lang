@@ -2,7 +2,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
 define i32 @test1(i32* %p, i1 %C) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 block1:
 	br i1 %C, label %block2, label %block3
 
@@ -25,7 +25,7 @@ block4:
 
 ; This is a simple phi translation case.
 define i32 @test2(i32* %p, i32* %q, i1 %C) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 block1:
 	br i1 %C, label %block2, label %block3
 
@@ -50,7 +50,7 @@ block4:
 
 ; This is a PRE case that requires phi translation through a GEP.
 define i32 @test3(i32* %p, i32* %q, i32** %Hack, i1 %C) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 block1:
   %B = getelementptr i32* %q, i32 1
   store i32* %B, i32** %Hack
@@ -80,7 +80,7 @@ block4:
 ;; Here the loaded address is available, but the computation is in 'block3'
 ;; which does not dominate 'block2'.
 define i32 @test4(i32* %p, i32* %q, i32** %Hack, i1 %C) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 block1:
 	br i1 %C, label %block2, label %block3
 
@@ -116,7 +116,7 @@ block4:
 ;}
 
 define void @test5(i32 %N, double* nocapture %G) nounwind ssp {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 entry:
   %0 = add i32 %N, -1           
   %1 = icmp sgt i32 %0, 0       
@@ -159,7 +159,7 @@ return:
 ;}
 
 define void @test6(i32 %N, double* nocapture %G) nounwind ssp {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 entry:
   %0 = add i32 %N, -1           
   %1 = icmp sgt i32 %0, 0       
@@ -242,7 +242,7 @@ return:
 ;; Here the loaded address isn't available in 'block2' at all, requiring a new
 ;; GEP to be inserted into it.
 define i32 @test8(i32* %p, i32* %q, i32** %Hack, i1 %C) {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 block1:
 	br i1 %C, label %block2, label %block3
 
@@ -365,7 +365,7 @@ return:
 
 ; Test critical edge splitting.
 define i32 @test11(i32* %p, i1 %C, i32 %N) {
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 block1:
         br i1 %C, label %block2, label %block3
 

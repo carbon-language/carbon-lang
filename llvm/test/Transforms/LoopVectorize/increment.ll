@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;  for (i=0; i<n; i++){
 ;    a[i] += i;
 ;  }
-;CHECK: @inc
+;CHECK-LABEL: @inc(
 ;CHECK: load <4 x i32>
 ;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
@@ -39,7 +39,7 @@ define void @inc(i32 %n) nounwind uwtable noinline ssp {
 ;  for (i = 0; i < n; ++i) {
 ;    A[B[i]]++;
 ;
-;CHECK: @histogram
+;CHECK-LABEL: @histogram(
 ;CHECK-NOT: <4 x i32>
 ;CHECK: ret i32
 define i32 @histogram(i32* nocapture noalias %A, i32* nocapture noalias %B, i32 %n) nounwind uwtable ssp {

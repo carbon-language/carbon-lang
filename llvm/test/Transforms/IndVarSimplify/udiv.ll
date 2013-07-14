@@ -8,7 +8,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Indvars shouldn't emit a udiv here, because there's no udiv in the
 ; original code. This comes from SingleSource/Benchmarks/Shootout/sieve.c.
 
-; CHECK: @main
+; CHECK-LABEL: @main(
 ; CHECK-NOT: div
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
@@ -130,7 +130,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 ; IndVars shouldn't be afraid to emit a udiv here, since there's a udiv in
 ; the original code.
 
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: for.body.preheader:
 ; CHECK-NEXT: udiv
 

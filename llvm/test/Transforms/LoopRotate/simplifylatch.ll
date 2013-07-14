@@ -3,7 +3,7 @@
 
 @mode_table = global [4 x i32] zeroinitializer		; <[4 x i32]*> [#uses=1]
 
-; CHECK: @f
+; CHECK-LABEL: @f(
 ; CHECK-NOT: bb4
 define i8 @f() {
 entry:

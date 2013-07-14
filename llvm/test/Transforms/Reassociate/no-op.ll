@@ -8,7 +8,7 @@ declare void @use(i32)
 define void @test1(i32 %a, i32 %b) {
 ; Shouldn't change or move any of the add instructions.  Should commute but
 ; otherwise not change or move any of the mul instructions.
-; CHECK: @test1
+; CHECK-LABEL: @test1(
   %a0 = add nsw i32 %a, 1
 ; CHECK-NEXT: %a0 = add nsw i32 %a, 1
   %m0 = mul nsw i32 3, %a
@@ -25,7 +25,7 @@ define void @test1(i32 %a, i32 %b) {
 
 define void @test2(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; The initial add doesn't change so should not lose the nsw flag.
-; CHECK: @test2
+; CHECK-LABEL: @test2(
   %a0 = add nsw i32 %b, %a
 ; CHECK-NEXT: %a0 = add nsw i32 %b, %a
   %a1 = add nsw i32 %a0, %d

@@ -1,7 +1,7 @@
 ; RUN: opt < %s -simplifycfg -S | FileCheck %s
 
 define void @test1(i1 %C, i1* %BP) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: entry:
 ; CHECK-NEXT: ret void
 entry:
@@ -14,7 +14,7 @@ F:
 }
 
 define void @test2() {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: entry:
 ; CHECK-NEXT: call void @test2()
 ; CHECK-NEXT: ret void
@@ -28,7 +28,7 @@ N:
 }
 
 define i32 @test3(i32 %v) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: entry:
 ; CHECK-NEXT: [[CMP:%[A-Za-z0-9]+]] = icmp eq i32 %v, 2
 ; CHECK-NEXT: select i1 [[CMP]], i32 2, i32 1

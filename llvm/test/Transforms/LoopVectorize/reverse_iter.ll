@@ -13,7 +13,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; }
 ;
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK:  <i64 0, i64 -1, i64 -2, i64 -3>
 ;CHECK: ret
 define i32 @foo(i32 %n, i32* nocapture %A) {

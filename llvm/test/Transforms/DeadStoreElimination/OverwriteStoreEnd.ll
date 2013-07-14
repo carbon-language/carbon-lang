@@ -8,7 +8,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 @glob2 = global %struct.vec2plusi zeroinitializer, align 16
 
 define void @write24to28(i32* nocapture %p) nounwind uwtable ssp {
-; CHECK: @write24to28
+; CHECK-LABEL: @write24to28(
 entry:
   %arrayidx0 = getelementptr inbounds i32* %p, i64 1
   %p3 = bitcast i32* %arrayidx0 to i8*
@@ -20,7 +20,7 @@ entry:
 }
 
 define void @write28to32(i32* nocapture %p) nounwind uwtable ssp {
-; CHECK: @write28to32
+; CHECK-LABEL: @write28to32(
 entry:
   %p3 = bitcast i32* %p to i8*
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %p3, i8 0, i64 28, i32 4, i1 false)
@@ -31,7 +31,7 @@ entry:
 }
 
 define void @dontwrite28to32memset(i32* nocapture %p) nounwind uwtable ssp {
-; CHECK: @dontwrite28to32memset
+; CHECK-LABEL: @dontwrite28to32memset(
 entry:
   %p3 = bitcast i32* %p to i8*
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %p3, i8 0, i64 32, i32 16, i1 false)
@@ -42,7 +42,7 @@ entry:
 }
 
 define void @write32to36(%struct.vec2plusi* nocapture %p) nounwind uwtable ssp {
-; CHECK: @write32to36
+; CHECK-LABEL: @write32to36(
 entry:
   %0 = bitcast %struct.vec2plusi* %p to i8*
 ; CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast (%struct.vec2plusi* @glob2 to i8*), i64 32, i32 16, i1 false)
@@ -53,7 +53,7 @@ entry:
 }
 
 define void @write16to32(%struct.vec2* nocapture %p) nounwind uwtable ssp {
-; CHECK: @write16to32
+; CHECK-LABEL: @write16to32(
 entry:
   %0 = bitcast %struct.vec2* %p to i8*
 ; CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast (%struct.vec2* @glob1 to i8*), i64 16, i32 16, i1 false)
@@ -64,7 +64,7 @@ entry:
 }
 
 define void @dontwrite28to32memcpy(%struct.vec2* nocapture %p) nounwind uwtable ssp {
-; CHECK: @dontwrite28to32memcpy
+; CHECK-LABEL: @dontwrite28to32memcpy(
 entry:
   %0 = bitcast %struct.vec2* %p to i8*
 ; CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast (%struct.vec2* @glob1 to i8*), i64 32, i32 16, i1 false)
@@ -80,7 +80,7 @@ declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
 %struct.trapframe = type { i64, i64, i64 }
 
 ; bugzilla 11455 - make sure negative GEP's don't break this optimisation
-; CHECK: @cpu_lwp_fork
+; CHECK-LABEL: @cpu_lwp_fork(
 define void @cpu_lwp_fork(%struct.trapframe* %md_regs, i64 %pcb_rsp0) nounwind uwtable noinline ssp {
 entry:
   %0 = inttoptr i64 %pcb_rsp0 to %struct.trapframe*

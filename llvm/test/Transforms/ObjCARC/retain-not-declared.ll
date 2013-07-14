@@ -28,7 +28,7 @@ entry:
 ; Properly create the @objc_retain declaration when it doesn't already exist.
 ; rdar://9825114
 
-; CHECK: @test1(
+; CHECK-LABEL: @test1(
 ; CHECK: @objc_retain(
 ; CHECK: @objc_retainAutoreleasedReturnValue(
 ; CHECK: @objc_release(

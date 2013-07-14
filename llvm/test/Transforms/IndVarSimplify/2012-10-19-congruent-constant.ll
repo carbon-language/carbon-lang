@@ -19,7 +19,7 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: phi i1
 ; CHECK: call void @aux(i1 false, i1 false)
 }

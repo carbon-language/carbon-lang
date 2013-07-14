@@ -9,7 +9,7 @@ declare i8* @memset(i8*, i32, i32)
 ; Check memset(mem1, val, size) -> llvm.memset(mem1, val, size, 1).
 
 define i8* @test_simplify1(i8* %mem, i32 %val, i32 %size) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %ret = call i8* @memset(i8* %mem, i32 %val, i32 %size)
 ; CHECK: call void @llvm.memset
   ret i8* %ret

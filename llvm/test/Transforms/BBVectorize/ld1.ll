@@ -22,7 +22,7 @@ entry:
   %add15 = fadd double %mul13, %i5
   %mul16 = fmul double %add11, %add15
   ret double %mul16
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
 ; CHECK: %i2.v.i0 = bitcast double* %c to <2 x double>*

@@ -20,7 +20,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @dj = common global [1024 x i32] zeroinitializer, align 16
 
 ; We can optimize this test without a tail.
-;CHECK: @example1
+;CHECK-LABEL: @example1(
 ;CHECK: load <4 x i32>
 ;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
@@ -47,7 +47,7 @@ define void @example1() optsize {
 }
 
 ; Can't vectorize in 'optsize' mode because we need a tail.
-;CHECK: @example2
+;CHECK-LABEL: @example2(
 ;CHECK-NOT: store <4 x i32>
 ;CHECK: ret void
 define void @example2(i32 %n, i32 %x) optsize {
@@ -92,7 +92,7 @@ define void @example2(i32 %n, i32 %x) optsize {
 }
 
 ; N is unknown, we need a tail. Can't vectorize.
-;CHECK: @example3
+;CHECK-LABEL: @example3(
 ;CHECK-NOT: <4 x i32>
 ;CHECK: ret void
 define void @example3(i32 %n, i32* noalias nocapture %p, i32* noalias nocapture %q) optsize {
@@ -117,7 +117,7 @@ define void @example3(i32 %n, i32* noalias nocapture %p, i32* noalias nocapture 
 
 
 ; We can't vectorize this one because we need a runtime ptr check.
-;CHECK: @example23
+;CHECK-LABEL: @example23(
 ;CHECK-NOT: <4 x i32>
 ;CHECK: ret void
 define void @example23(i16* nocapture %src, i32* nocapture %dst) optsize {
@@ -143,7 +143,7 @@ define void @example23(i16* nocapture %src, i32* nocapture %dst) optsize {
 
 
 ; We CAN vectorize this example because the pointers are marked as noalias.
-;CHECK: @example23b
+;CHECK-LABEL: @example23b(
 ;CHECK: <4 x i32>
 ;CHECK: ret void
 define void @example23b(i16* noalias nocapture %src, i32* noalias nocapture %dst) optsize {

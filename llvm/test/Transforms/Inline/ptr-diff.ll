@@ -3,7 +3,7 @@
 target datalayout = "p:32:32"
 
 define i32 @outer1() {
-; CHECK: @outer1
+; CHECK-LABEL: @outer1(
 ; CHECK-NOT: call
 ; CHECK: ret i32
 
@@ -32,7 +32,7 @@ else:
 define i32 @outer2(i32* %ptr) {
 ; Test that an inbounds GEP disables this -- it isn't safe in general as
 ; wrapping changes the behavior of lessthan and greaterthan comparisions.
-; CHECK: @outer2
+; CHECK-LABEL: @outer2(
 ; CHECK: call i32 @inner2
 ; CHECK: ret i32
 

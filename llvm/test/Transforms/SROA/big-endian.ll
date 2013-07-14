@@ -9,7 +9,7 @@ define i8 @test1() {
 ; the same as test12 in basictest.ll, but here we assert big-endian byte
 ; ordering.
 ;
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 
 entry:
   %a = alloca [3 x i8]
@@ -66,7 +66,7 @@ define i64 @test2() {
 ; Test for various mixed sizes of integer loads and stores all getting
 ; promoted.
 ;
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 
 entry:
   %a = alloca [7 x i8]

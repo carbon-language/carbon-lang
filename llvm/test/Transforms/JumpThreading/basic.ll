@@ -5,7 +5,7 @@ declare i32 @f2()
 declare void @f3()
 
 define i32 @test1(i1 %cond) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 
 	br i1 %cond, label %T1, label %F1
 
@@ -37,7 +37,7 @@ F2:
 
 ;; cond is known false on Entry -> F1 edge!
 define i32 @test2(i1 %cond) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 Entry:
 	br i1 %cond, label %T1, label %F1
 
@@ -62,7 +62,7 @@ F2:
 
 ; Undef handling.
 define i32 @test3(i1 %cond) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: T1:
 ; CHECK-NEXT: ret i32 42
 	br i1 undef, label %T1, label %F1
@@ -75,7 +75,7 @@ F1:
 }
 
 define i32 @test4(i1 %cond, i1 %cond2) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 
 	br i1 %cond, label %T1, label %F1
 
@@ -108,7 +108,7 @@ F2:
 
 ;; This tests that the branch in 'merge' can be cloned up into T1.
 define i32 @test5(i1 %cond, i1 %cond2) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 
 	br i1 %cond, label %T1, label %F1
 
@@ -144,7 +144,7 @@ F2:
 
 
 define i32 @test6(i32 %A) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 	%tmp455 = icmp eq i32 %A, 42
 	br i1 %tmp455, label %BB1, label %BB2
 
@@ -180,7 +180,7 @@ BB4:
 ;; rdar://7367025
 define i32 @test7(i1 %cond, i1 %cond2) {
 Entry:
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 	%v1 = call i32 @f1()
 	br i1 %cond, label %Merge, label %F1
 
@@ -213,7 +213,7 @@ F2:
 declare i1 @test8a()
 
 define i32 @test8b(i1 %cond, i1 %cond2) {
-; CHECK: @test8b
+; CHECK-LABEL: @test8b(
 T0:
         %A = call i1 @test8a()
 	br i1 %A, label %T1, label %F1
@@ -255,7 +255,7 @@ Y:
 ;;; Verify that we can handle constraint propagation through "xor x, 1".
 define i32 @test9(i1 %cond, i1 %cond2) {
 Entry:
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 	%v1 = call i32 @f1()
 	br i1 %cond, label %Merge, label %F1
 
@@ -298,7 +298,7 @@ declare void @test10f3()
 
 ;; Non-local condition threading.
 define i32 @test10g(i1 %cond) {
-; CHECK: @test10g
+; CHECK-LABEL: @test10g(
 ; CHECK-NEXT:   br i1 %cond, label %T2, label %F2
         br i1 %cond, label %T1, label %F1
 
@@ -329,7 +329,7 @@ F2:
 
 ; Impossible conditional constraints should get threaded.  BB3 is dead here.
 define i32 @test11(i32 %A) {
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK-NEXT: icmp
 ; CHECK-NEXT: br i1 %tmp455, label %BB4, label %BB2
 	%tmp455 = icmp eq i32 %A, 42
@@ -357,7 +357,7 @@ BB4:
 
 ;; Correlated value through boolean expression.  GCC PR18046.
 define void @test12(i32 %A) {
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 entry:
   %cond = icmp eq i32 %A, 0
   br i1 %cond, label %bb, label %bb1
@@ -393,7 +393,7 @@ return:
 ;; rdar://7391699
 define i32 @test13(i1 %cond, i1 %cond2) {
 Entry:
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 	%v1 = call i32 @f1()
 	br i1 %cond, label %Merge, label %F1
 
@@ -421,7 +421,7 @@ F2:
 ; CHECK-NEXT:   br i1 %N, label %T2, label %F2
 }
 
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 define i32 @test14(i32 %in) {
 entry:
 	%A = icmp eq i32 %in, 0
@@ -453,7 +453,7 @@ right_ret:
 }
 
 ; PR5652
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 define i32 @test15(i32 %len) {
 entry:
 ; CHECK: icmp ult i32 %len, 13

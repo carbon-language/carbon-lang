@@ -9,7 +9,7 @@ declare float @cos(double)
 ; Check that cos functions with the wrong prototype aren't simplified.
 
 define float @test_no_simplify1(double %d) {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %neg = fsub double -0.000000e+00, %d
   %cos = call float @cos(double %neg)
 ; CHECK: call float @cos(double %neg)

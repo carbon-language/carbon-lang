@@ -14,7 +14,7 @@ declare i8* @strstr(i8*, i8*)
 ; Check strstr(str, "") -> str.
 
 define i8* @test_simplify1(i8* %str) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %pat = getelementptr inbounds [1 x i8]* @.str, i32 0, i32 0
   %ret = call i8* @strstr(i8* %str, i8* %pat)
   ret i8* %ret
@@ -24,7 +24,7 @@ define i8* @test_simplify1(i8* %str) {
 ; Check strstr(str, "a") -> strchr(str, 'a').
 
 define i8* @test_simplify2(i8* %str) {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %pat = getelementptr inbounds [2 x i8]* @.str1, i32 0, i32 0
   %ret = call i8* @strstr(i8* %str, i8* %pat)
   ret i8* %ret
@@ -34,7 +34,7 @@ define i8* @test_simplify2(i8* %str) {
 ; Check strstr("abcde", "bcd") -> "abcde" + 1.
 
 define i8* @test_simplify3() {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %str = getelementptr inbounds [6 x i8]* @.str2, i32 0, i32 0
   %pat = getelementptr inbounds [4 x i8]* @.str3, i32 0, i32 0
   %ret = call i8* @strstr(i8* %str, i8* %pat)
@@ -45,7 +45,7 @@ define i8* @test_simplify3() {
 ; Check strstr(str, str) -> str.
 
 define i8* @test_simplify4(i8* %str) {
-; CHECK: @test_simplify4
+; CHECK-LABEL: @test_simplify4(
   %ret = call i8* @strstr(i8* %str, i8* %str)
   ret i8* %ret
 ; CHECK-NEXT: ret i8* %str
@@ -54,7 +54,7 @@ define i8* @test_simplify4(i8* %str) {
 ; Check strstr(str, pat) == str -> strncmp(str, pat, strlen(str)) == 0.
 
 define i1 @test_simplify5(i8* %str, i8* %pat) {
-; CHECK: @test_simplify5
+; CHECK-LABEL: @test_simplify5(
   %ret = call i8* @strstr(i8* %str, i8* %pat)
   %cmp = icmp eq i8* %ret, %str
   ret i1 %cmp

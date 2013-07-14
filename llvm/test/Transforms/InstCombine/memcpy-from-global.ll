@@ -8,7 +8,7 @@ entry:
 	%lookupTable1 = bitcast [128 x float]* %lookupTable to i8*		; <i8*> [#uses=1]
 	call void @llvm.memcpy.p0i8.p0i8.i64(i8* %lookupTable1, i8* bitcast ([128 x float]* @C.0.1248 to i8*), i64 512, i32 16, i1 false)
         
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: alloca
 ; CHECK-NOT: call{{.*}}@llvm.memcpy
         
@@ -50,7 +50,7 @@ define void @test2() {
   %a = bitcast %T* %A to i8*
   %b = bitcast %T* %B to i8*
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 
 ; %A alloca is deleted
 ; CHECK-NEXT: alloca [124 x i8]
@@ -73,7 +73,7 @@ define void @test3() {
   %a = bitcast %T* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @bar(i8* %a) readonly
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: call void @bar(i8* getelementptr inbounds (%T* @G, i64 0, i32 0))
   ret void
 }
@@ -83,7 +83,7 @@ define void @test4() {
   %a = bitcast %T* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @baz(i8* byval %a) 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: call void @baz(i8* byval getelementptr inbounds (%T* @G, i64 0, i32 0))
   ret void
 }
@@ -95,7 +95,7 @@ define void @test5() {
   call void @llvm.lifetime.start(i64 -1, i8* %a)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%T* @G to i8*), i64 124, i32 4, i1 false)
   call void @baz(i8* byval %a) 
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: call void @baz(i8* byval getelementptr inbounds (%T* @G, i64 0, i32 0))
   ret void
 }
@@ -109,7 +109,7 @@ define void @test6() {
   %a = bitcast %U* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast ([2 x %U]* @H to i8*), i64 20, i32 16, i1 false)
   call void @bar(i8* %a) readonly
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: call void @bar(i8* bitcast ([2 x %U]* @H to i8*))
   ret void
 }
@@ -119,7 +119,7 @@ define void @test7() {
   %a = bitcast %U* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 0) to i8*), i64 20, i32 4, i1 false)
   call void @bar(i8* %a) readonly
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NEXT: call void @bar(i8* bitcast ([2 x %U]* @H to i8*))
   ret void
 }
@@ -129,7 +129,7 @@ define void @test8() {
   %a = bitcast %U* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 1) to i8*), i64 20, i32 4, i1 false)
   call void @bar(i8* %a) readonly
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: llvm.memcpy
 ; CHECK: bar
   ret void
@@ -140,7 +140,7 @@ define void @test9() {
   %a = bitcast %U* %A to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %a, i8* bitcast (%U* getelementptr ([2 x %U]* @H, i64 0, i32 1) to i8*), i64 20, i32 4, i1 false)
   call void @bar(i8* %a) readonly
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NEXT: call void @bar(i8* bitcast (%U* getelementptr inbounds ([2 x %U]* @H, i64 0, i64 1) to i8*))
   ret void
 }

@@ -18,7 +18,7 @@ define float @test2(<2 x float> %A, <2 x i32> %B) {
   %add = fadd float %tmp24, %tmp4
   ret float %add
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT:  %tmp24 = extractelement <2 x float> %A, i32 1
 ; CHECK-NEXT:  bitcast <2 x i32> %B to <2 x float>
 ; CHECK-NEXT:  %tmp4 = extractelement <2 x float> {{.*}}, i32 1
@@ -40,7 +40,7 @@ define float @test3(<2 x float> %A, <2 x i64> %B) {
   %add = fadd float %tmp24, %tmp4
   ret float %add
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT:  %tmp24 = extractelement <2 x float> %A, i32 0
 ; CHECK-NEXT:  bitcast <2 x i64> %B to <4 x float>
 ; CHECK-NEXT:  %tmp4 = extractelement <4 x float> {{.*}}, i32 1

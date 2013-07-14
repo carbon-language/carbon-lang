@@ -3,7 +3,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.8.0"
 
-;CHECK: @start_at_nonzero
+;CHECK-LABEL: @start_at_nonzero(
 ;CHECK: mul nuw <4 x i32>
 ;CHECK: ret i32
 define i32 @start_at_nonzero(i32* nocapture %a, i32 %start, i32 %end) nounwind uwtable ssp {

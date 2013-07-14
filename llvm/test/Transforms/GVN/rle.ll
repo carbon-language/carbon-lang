@@ -7,7 +7,7 @@ define i32 @test0(i32 %V, i32* %P) {
 
   %A = load i32* %P
   ret i32 %A
-; CHECK: @test0
+; CHECK-LABEL: @test0(
 ; CHECK: ret i32 %V
 }
 
@@ -47,7 +47,7 @@ define float @coerce_mustalias1(i32 %V, i32* %P) {
 
   %A = load float* %P2
   ret float %A
-; CHECK: @coerce_mustalias1
+; CHECK-LABEL: @coerce_mustalias1(
 ; CHECK-NOT: load
 ; CHECK: ret float 
 }
@@ -60,7 +60,7 @@ define float @coerce_mustalias2(i32* %V, i32** %P) {
 
   %A = load float* %P2
   ret float %A
-; CHECK: @coerce_mustalias2
+; CHECK-LABEL: @coerce_mustalias2(
 ; CHECK-NOT: load
 ; CHECK: ret float 
 }
@@ -73,7 +73,7 @@ define i32* @coerce_mustalias3(float %V, float* %P) {
 
   %A = load i32** %P2
   ret i32* %A
-; CHECK: @coerce_mustalias3
+; CHECK-LABEL: @coerce_mustalias3(
 ; CHECK-NOT: load
 ; CHECK: ret i32* 
 }
@@ -92,7 +92,7 @@ F:
   %X = bitcast i32 %A to float
   ret float %X
 
-; CHECK: @coerce_mustalias4
+; CHECK-LABEL: @coerce_mustalias4(
 ; CHECK: %A = load i32* %P
 ; CHECK-NOT: load
 ; CHECK: ret float
@@ -107,7 +107,7 @@ define i8 @coerce_mustalias5(i32 %V, i32* %P) {
 
   %A = load i8* %P2
   ret i8 %A
-; CHECK: @coerce_mustalias5
+; CHECK-LABEL: @coerce_mustalias5(
 ; CHECK-NOT: load
 ; CHECK: ret i8
 }
@@ -120,7 +120,7 @@ define float @coerce_mustalias6(i64 %V, i64* %P) {
 
   %A = load float* %P2
   ret float %A
-; CHECK: @coerce_mustalias6
+; CHECK-LABEL: @coerce_mustalias6(
 ; CHECK-NOT: load
 ; CHECK: ret float
 }
@@ -133,7 +133,7 @@ define i8* @coerce_mustalias7(i64 %V, i64* %P) {
 
   %A = load i8** %P2
   ret i8* %A
-; CHECK: @coerce_mustalias7
+; CHECK-LABEL: @coerce_mustalias7(
 ; CHECK-NOT: load
 ; CHECK: ret i8*
 }
@@ -146,7 +146,7 @@ entry:
   %arrayidx = getelementptr inbounds i16* %A, i64 42
   %tmp2 = load i16* %arrayidx
   ret i16 %tmp2
-; CHECK: @memset_to_i16_local
+; CHECK-LABEL: @memset_to_i16_local(
 ; CHECK-NOT: load
 ; CHECK: ret i16 257
 }
@@ -159,7 +159,7 @@ entry:
   %arrayidx = getelementptr inbounds float* %A, i64 42 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
-; CHECK: @memset_to_float_local
+; CHECK-LABEL: @memset_to_float_local(
 ; CHECK-NOT: load
 ; CHECK: zext
 ; CHECK-NEXT: shl
@@ -187,7 +187,7 @@ Cont:
   %A = load i16* %P2
   ret i16 %A
 
-; CHECK: @memset_to_i16_nonlocal0
+; CHECK-LABEL: @memset_to_i16_nonlocal0(
 ; CHECK: Cont:
 ; CHECK-NEXT:   %A = phi i16 [ 514, %F ], [ 257, %T ]
 ; CHECK-NOT: load
@@ -204,7 +204,7 @@ entry:
   %arrayidx = getelementptr inbounds float* %A, i64 1 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
-; CHECK: @memcpy_to_float_local
+; CHECK-LABEL: @memcpy_to_float_local(
 ; CHECK-NOT: load
 ; CHECK: ret float 1.400000e+01
 }
@@ -228,7 +228,7 @@ Cont:
   %A = load i8* %P3
   ret i8 %A
 
-; CHECK: @coerce_mustalias_nonlocal0
+; CHECK-LABEL: @coerce_mustalias_nonlocal0(
 ; CHECK: Cont:
 ; CHECK:   %A = phi i8 [
 ; CHECK-NOT: load
@@ -254,7 +254,7 @@ Cont:
   %A = load i8* %P3
   ret i8 %A
 
-; CHECK: @coerce_mustalias_nonlocal1
+; CHECK-LABEL: @coerce_mustalias_nonlocal1(
 ; CHECK: Cont:
 ; CHECK:   %A = phi i8 [
 ; CHECK-NOT: load
@@ -277,7 +277,7 @@ Cont:
   %A = load i8* %P3
   ret i8 %A
 
-; CHECK: @coerce_mustalias_pre0
+; CHECK-LABEL: @coerce_mustalias_pre0(
 ; CHECK: F:
 ; CHECK:   load i8* %P3
 ; CHECK: Cont:
@@ -301,7 +301,7 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
 
   %A = load i8* %P3
   ret i8 %A
-; CHECK: @coerce_offset0
+; CHECK-LABEL: @coerce_offset0(
 ; CHECK-NOT: load
 ; CHECK: ret i8
 }
@@ -324,7 +324,7 @@ Cont:
   %A = load i8* %P4
   ret i8 %A
 
-; CHECK: @coerce_offset_nonlocal0
+; CHECK-LABEL: @coerce_offset_nonlocal0(
 ; CHECK: Cont:
 ; CHECK:   %A = phi i8 [
 ; CHECK-NOT: load
@@ -348,7 +348,7 @@ Cont:
   %A = load i8* %P4
   ret i8 %A
 
-; CHECK: @coerce_offset_pre0
+; CHECK-LABEL: @coerce_offset_pre0(
 ; CHECK: F:
 ; CHECK:   load i8* %P4
 ; CHECK: Cont:
@@ -378,7 +378,7 @@ block4:
   %d = load i32* %c
   ret i32 %d
   
-; CHECK: @chained_load
+; CHECK-LABEL: @chained_load(
 ; CHECK: %z = load i32** %p
 ; CHECK-NOT: load
 ; CHECK: %d = load i32* %z
@@ -390,7 +390,7 @@ declare i1 @cond() readonly
 declare i1 @cond2() readonly
 
 define i32 @phi_trans2() {
-; CHECK: @phi_trans2
+; CHECK-LABEL: @phi_trans2(
 entry:
   %P = alloca i32, i32 400
   br label %F1
@@ -428,7 +428,7 @@ TY:
 }
 
 define i32 @phi_trans3(i32* %p) {
-; CHECK: @phi_trans3
+; CHECK-LABEL: @phi_trans3(
 block1:
   br i1 true, label %block2, label %block3
 
@@ -469,7 +469,7 @@ exit:
 }
 
 define i8 @phi_trans4(i8* %p) {
-; CHECK: @phi_trans4
+; CHECK-LABEL: @phi_trans4(
 entry:
   %X3 = getelementptr i8* %p, i32 192
   store i8 192, i8* %X3
@@ -499,7 +499,7 @@ out:
 }
 
 define i8 @phi_trans5(i8* %p) {
-; CHECK: @phi_trans5
+; CHECK-LABEL: @phi_trans5(
 entry:
   
   %X4 = getelementptr i8* %p, i32 2
@@ -542,7 +542,7 @@ entry:
   %arraydecay = getelementptr inbounds [256 x i32]* %x, i32 0, i32 0 ; <i32*>
   %tmp1 = load i32* %arraydecay                   ; <i32> [#uses=1]
   ret i32 %tmp1
-; CHECK: @memset_to_load
+; CHECK-LABEL: @memset_to_load(
 ; CHECK: ret i32 0
 }
 
@@ -561,7 +561,7 @@ entry:
   %add = add nsw i32 %tmp2, %conv
   ret i32 %add
 
-; TEMPORARILYDISABLED: @load_load_partial_alias
+; TEMPORARILYDISABLED-LABEL: @load_load_partial_alias(
 ; TEMPORARILYDISABLED: load i32*
 ; TEMPORARILYDISABLED-NOT: load
 ; TEMPORARILYDISABLED: lshr i32 {{.*}}, 8
@@ -588,7 +588,7 @@ land.lhs.true:                                    ; preds = %entry
 
 if.end:
   ret i32 52
-; TEMPORARILY_DISABLED: @load_load_partial_alias_cross_block
+; TEMPORARILY_DISABLED-LABEL: @load_load_partial_alias_cross_block(
 ; TEMPORARILY_DISABLED: land.lhs.true:
 ; TEMPORARILY_DISABLED-NOT: load i8
 ; TEMPORARILY_DISABLED: ret i32 %conv6
@@ -611,7 +611,7 @@ entry:
   %conv2 = zext i8 %tmp1 to i32
   %add = add nsw i32 %conv, %conv2
   ret i32 %add
-; CHECK: @test_widening1
+; CHECK-LABEL: @test_widening1(
 ; CHECK-NOT: load
 ; CHECK: load i16*
 ; CHECK-NOT: load
@@ -635,7 +635,7 @@ entry:
   %add3 = add nsw i32 %add2, %conv3
 
   ret i32 %add3
-; CHECK: @test_widening2
+; CHECK-LABEL: @test_widening2(
 ; CHECK-NOT: load
 ; CHECK: load i32*
 ; CHECK-NOT: load

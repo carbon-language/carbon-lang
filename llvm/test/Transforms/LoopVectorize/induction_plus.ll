@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 @array = common global [1024 x i32] zeroinitializer, align 16
 
-;CHECK: @array_at_plus_one
+;CHECK-LABEL: @array_at_plus_one(
 ;CHECK: trunc i64
 ;CHECK: add i64 %index, 12
 ;CHECK: ret i32

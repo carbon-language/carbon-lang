@@ -1,7 +1,7 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
 
 ; This shouldn't fold, because sin(inf) is invalid.
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK:   %t = call double @sin(double 0x7FF0000000000000)
 define double @foo() {
   %t = call double @sin(double 0x7FF0000000000000)
@@ -9,7 +9,7 @@ define double @foo() {
 }
 
 ; This should fold.
-; CHECK: @bar
+; CHECK-LABEL: @bar(
 ; CHECK:   ret double 0.0
 define double @bar() {
   %t = call double @sin(double 0.0)

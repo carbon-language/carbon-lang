@@ -12,7 +12,7 @@ declare i8* @strncat(i8*, i8*, i32)
 declare i32 @puts(i8*)
 
 define i32 @main() {
-; CHECK: @main
+; CHECK-LABEL: @main(
 ; CHECK-NOT: call i8* @strncat
 ; CHECK: call i32 @puts
 

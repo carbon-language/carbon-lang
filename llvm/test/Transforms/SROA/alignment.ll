@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8*, i8*, i32, i32, i1)
 
 define void @test1({ i8, i8 }* %a, { i8, i8 }* %b) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %[[gep_a0:.*]] = getelementptr inbounds { i8, i8 }* %a, i64 0, i32 0
 ; CHECK: %[[a0:.*]] = load i8* %[[gep_a0]], align 16
 ; CHECK: %[[gep_a1:.*]] = getelementptr inbounds { i8, i8 }* %a, i64 0, i32 1
@@ -29,7 +29,7 @@ entry:
 }
 
 define void @test2() {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: alloca i16
 ; CHECK: load i8* %{{.*}}
 ; CHECK: store i8 42, i8* %{{.*}}
@@ -48,7 +48,7 @@ entry:
 
 define void @PR13920(<2 x i64>* %a, i16* %b) {
 ; Test that alignments on memcpy intrinsics get propagated to loads and stores.
-; CHECK: @PR13920
+; CHECK-LABEL: @PR13920(
 ; CHECK: load <2 x i64>* %a, align 2
 ; CHECK: store <2 x i64> {{.*}}, <2 x i64>* {{.*}}, align 2
 ; CHECK: ret void
@@ -68,7 +68,7 @@ define void @test3(i8* %x) {
 ; provide the needed explicit alignment that code using the alloca may be
 ; expecting. However, also check that any offset within an alloca can in turn
 ; reduce the alignment.
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: alloca [22 x i8], align 8
 ; CHECK: alloca [18 x i8], align 2
 ; CHECK: ret void
@@ -86,7 +86,7 @@ entry:
 
 define void @test5() {
 ; Test that we preserve underaligned loads and stores when splitting.
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: alloca [9 x i8]
 ; CHECK: alloca [9 x i8]
 ; CHECK: store volatile double 0.0{{.*}}, double* %{{.*}}, align 1
@@ -119,7 +119,7 @@ entry:
 define void @test6() {
 ; Test that we promote alignment when the underlying alloca switches to one
 ; that innately provides it.
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: alloca double
 ; CHECK: alloca double
 ; CHECK-NOT: align
@@ -142,7 +142,7 @@ entry:
 define void @test7(i8* %out) {
 ; Test that we properly compute the destination alignment when rewriting
 ; memcpys as direct loads or stores.
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NOT: alloca
 
 entry:

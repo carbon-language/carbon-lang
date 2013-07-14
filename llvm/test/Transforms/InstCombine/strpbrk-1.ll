@@ -13,7 +13,7 @@ declare i8* @strpbrk(i8*, i8*)
 ; Check strpbrk(s, "") -> NULL.
 
 define i8* @test_simplify1(i8* %str) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %pat = getelementptr [1 x i8]* @null, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
@@ -24,7 +24,7 @@ define i8* @test_simplify1(i8* %str) {
 ; Check strpbrk("", s) -> NULL.
 
 define i8* @test_simplify2(i8* %pat) {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %str = getelementptr [1 x i8]* @null, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
@@ -35,7 +35,7 @@ define i8* @test_simplify2(i8* %pat) {
 ; Check strpbrk(s1, s2), where s1 and s2 are constants.
 
 define i8* @test_simplify3() {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %str = getelementptr [12 x i8]* @hello, i32 0, i32 0
   %pat = getelementptr [2 x i8]* @w, i32 0, i32 0
 
@@ -47,7 +47,7 @@ define i8* @test_simplify3() {
 ; Check strpbrk(s, "a") -> strchr(s, 'a').
 
 define i8* @test_simplify4(i8* %str) {
-; CHECK: @test_simplify4
+; CHECK-LABEL: @test_simplify4(
   %pat = getelementptr [2 x i8]* @w, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
@@ -59,7 +59,7 @@ define i8* @test_simplify4(i8* %str) {
 ; Check cases that shouldn't be simplified.
 
 define i8* @test_no_simplify1(i8* %str, i8* %pat) {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
 ; CHECK-NEXT: %ret = call i8* @strpbrk(i8* %str, i8* %pat)

@@ -4,7 +4,7 @@
 
 @G = extern_weak global i32
 
-; CHECK: @test(
+; CHECK-LABEL: @test(
 ; CHECK: br i1 %tmp25
 ; CHECK: bb1:
 ; CHECK: sdiv
@@ -23,7 +23,7 @@ bb6:
 	ret i32 927
 }
 
-; CHECK: @test2(
+; CHECK-LABEL: @test2(
 ; CHECK: br i1 %tmp34
 ; CHECK: bb5:
 ; CHECK: sdiv

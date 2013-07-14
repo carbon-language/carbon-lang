@@ -7,7 +7,7 @@ declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
 declare i8* @_Znwm(i64)
 
 
-; CHECK: @f1
+; CHECK-LABEL: @f1(
 define i64 @f1() nounwind uwtable ssp {
 entry:
 ; CHECK: nvoke noalias i8* undef()
@@ -27,7 +27,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f2
+; CHECK-LABEL: @f2(
 define i64 @f2() nounwind uwtable ssp {
 entry:
 ; CHECK: nvoke noalias i8* null()
@@ -47,7 +47,7 @@ lpad:
   unreachable
 }
 
-; CHECK: @f3
+; CHECK-LABEL: @f3(
 define void @f3() nounwind uwtable ssp {
 ; CHECK: invoke void @llvm.donothing()
   %call = invoke noalias i8* @_Znwm(i64 13)

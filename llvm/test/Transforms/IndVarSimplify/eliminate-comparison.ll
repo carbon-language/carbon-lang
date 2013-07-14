@@ -7,7 +7,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Indvars should be able to simplify simple comparisons involving
 ; induction variables.
 
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: %cond = and i1 %tobool.not, true
 
 define void @foo(i64 %n, i32* nocapture %p) nounwind {
@@ -42,7 +42,7 @@ return:
 
 ; Don't eliminate an icmp that's contributing to the loop exit test though.
 
-; CHECK: @_ZNK4llvm5APInt3ultERKS0_
+; CHECK-LABEL: @_ZNK4llvm5APInt3ultERKS0_(
 ; CHECK: %tmp99 = icmp sgt i32 %i, -1
 
 define i32 @_ZNK4llvm5APInt3ultERKS0_(i32 %tmp2.i1, i64** %tmp65, i64** %tmp73, i64** %tmp82, i64** %tmp90) {
@@ -85,7 +85,7 @@ bb20.loopexit:
 
 ; Indvars should eliminate the icmp here.
 
-; CHECK: @func_10
+; CHECK-LABEL: @func_10(
 ; CHECK-NOT: icmp
 ; CHECK: ret void
 
@@ -110,7 +110,7 @@ return:
 ; PR14432
 ; Indvars should not turn the second loop into an infinite one.
 
-; CHECK: @func_11
+; CHECK-LABEL: @func_11(
 ; CHECK: %tmp5 = icmp slt i32 %__key6.0, 10
 ; CHECK-NOT: br i1 true, label %noassert68, label %unrolledend
 
@@ -162,7 +162,7 @@ unrolledend:                                      ; preds = %forcond38
 declare void @llvm.trap() noreturn nounwind
 
 ; In this case the second loop only has a single iteration, fold the header away
-; CHECK: @func_12
+; CHECK-LABEL: @func_12(
 ; CHECK: %tmp5 = icmp slt i32 %__key6.0, 10
 ; CHECK: br i1 true, label %noassert68, label %unrolledend
 define i32 @func_12() nounwind uwtable {

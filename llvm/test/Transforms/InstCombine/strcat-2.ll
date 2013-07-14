@@ -11,7 +11,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 declare i8* @strcat(i8*, i8*)
 
 define void @test_simplify1() {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
 ; CHECK-NOT: call i8* @strcat
 ; CHECK: ret void
 
@@ -22,7 +22,7 @@ define void @test_simplify1() {
 }
 
 define void @test_simplify2() {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
 ; CHECK-NEXT: ret void
 
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0

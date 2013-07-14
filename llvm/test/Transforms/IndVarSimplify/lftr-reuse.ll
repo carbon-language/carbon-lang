@@ -165,7 +165,7 @@ entry:
   %lim = add i32 %x, %n
   %cmp.ph = icmp ult i32 %x, %lim
   br i1 %cmp.ph, label %loop, label %exit
-; CHECK: @geplftr
+; CHECK-LABEL: @geplftr(
 ; CHECK: loop:
 ; CHECK: phi i8*
 ; DISABLE-NOT: phi      // This check is currently disabled
@@ -190,7 +190,7 @@ exit:
 define void @nevertaken() nounwind uwtable ssp {
 entry:
   br label %loop
-; CHECK: @nevertaken
+; CHECK-LABEL: @nevertaken(
 ; CHECK: loop:
 ; CHECK-NOT: phi
 ; CHECK-NOT: add

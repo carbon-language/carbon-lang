@@ -2,7 +2,7 @@
 
 ; Test basic folding to a conditional branch.
 define i32 @foo(i64 %x, i64 %y) nounwind {
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 entry:
     %eq = icmp eq i64 %x, %y
     br i1 %eq, label %b, label %switch
@@ -32,7 +32,7 @@ bees:
 
 ; Test basic folding to an unconditional branch.
 define i32 @bar(i64 %x, i64 %y) nounwind {
-; CHECK: @bar
+; CHECK-LABEL: @bar(
 entry:
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: tail call void @bees.a() [[NUW:#[0-9]+]]
@@ -58,7 +58,7 @@ bees:
 
 ; Test the edge case where both values from the select are the default case.
 define void @bazz(i64 %x, i64 %y) nounwind {
-; CHECK: @bazz
+; CHECK-LABEL: @bazz(
 entry:
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: tail call void @bees.b() [[NUW]]
@@ -83,7 +83,7 @@ bees:
 
 ; Test the edge case where both values from the select are equal.
 define void @quux(i64 %x, i64 %y) nounwind {
-; CHECK: @quux
+; CHECK-LABEL: @quux(
 entry:
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: tail call void @bees.a() [[NUW]]
@@ -108,7 +108,7 @@ bees:
 
 ; A final test, for phi node munging.
 define i32 @xyzzy(i64 %x, i64 %y) {
-; CHECK: @xyzzy
+; CHECK-LABEL: @xyzzy(
 entry:
     %eq = icmp eq i64 %x, %y
     br i1 %eq, label %r, label %cont

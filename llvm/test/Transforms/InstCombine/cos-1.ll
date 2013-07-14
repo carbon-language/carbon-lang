@@ -10,7 +10,7 @@ declare double @cos(double)
 ; Check cos(-x) -> cos(x);
 
 define double @test_simplify1(double %d) {
-; NO-FLOAT-SHRINK: @test_simplify1
+; NO-FLOAT-SHRINK-LABEL: @test_simplify1(
   %neg = fsub double -0.000000e+00, %d
   %cos = call double @cos(double %neg)
 ; NO-FLOAT-SHRINK: call double @cos(double %d)
@@ -18,7 +18,7 @@ define double @test_simplify1(double %d) {
 }
 
 define float @test_simplify2(float %f) {
-; DO-FLOAT-SHRINK: @test_simplify2
+; DO-FLOAT-SHRINK-LABEL: @test_simplify2(
   %conv1 = fpext float %f to double
   %neg = fsub double -0.000000e+00, %conv1
   %cos = call double @cos(double %neg)
@@ -28,7 +28,7 @@ define float @test_simplify2(float %f) {
 }
 
 define float @test_simplify3(float %f) {
-; NO-FLOAT-SHRINK: @test_simplify3
+; NO-FLOAT-SHRINK-LABEL: @test_simplify3(
   %conv1 = fpext float %f to double
   %neg = fsub double -0.000000e+00, %conv1
   %cos = call double @cos(double %neg)

@@ -2,7 +2,7 @@
 
 ; PR12189
 define i1 @test1(i32 %x) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
   br i1 true, label %a, label %b
 
 a:

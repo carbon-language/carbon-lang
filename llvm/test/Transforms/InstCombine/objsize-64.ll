@@ -7,7 +7,7 @@ declare i32 @__gxx_personality_v0(...)
 declare void @__cxa_call_unexpected(i8*)
 declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readonly
 
-; CHECK: @f1
+; CHECK-LABEL: @f1(
 define i64 @f1(i8 **%esc) {
   %call = call i8* @malloc(i32 4)
   store i8* %call, i8** %esc
@@ -17,7 +17,7 @@ define i64 @f1(i8 **%esc) {
 }
 
 
-; CHECK: @f2
+; CHECK-LABEL: @f2(
 define i64 @f2(i8** %esc) nounwind uwtable ssp {
 entry:
 ; CHECK: invoke noalias i8* @_Znwm(i64 13)

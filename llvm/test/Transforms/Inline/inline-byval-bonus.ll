@@ -21,7 +21,7 @@ define i32 @caller(%struct.sphere* %i) {
   %call = call i32 @ray_sphere(%struct.sphere* %i, %struct.ray* byval align 8 %shadow_ray, %struct.spoint* null)
   ret i32 %call
 
-; CHECK: @caller
+; CHECK-LABEL: @caller(
 ; CHECK-NOT: call i32 @ray_sphere
 ; CHECK: ret i32
 }

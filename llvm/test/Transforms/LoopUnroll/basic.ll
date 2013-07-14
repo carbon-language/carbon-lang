@@ -3,7 +3,7 @@
 
 ; This should not unroll since the address of the loop header is taken.
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: store i8* blockaddress(@test1, %l1), i8** %P
 ; CHECK: l1:
 ; CHECK-NEXT: phi i32
@@ -25,7 +25,7 @@ l2:                                               ; preds = %l1
 
 ; This should not unroll since the call is 'noduplicate'.
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define i32 @test2(i8** %P) nounwind ssp {
 entry:
   br label %l1

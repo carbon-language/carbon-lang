@@ -9,7 +9,7 @@ declare i32* @memcmp(i8*, i8*, i32)
 ; Check that memcmp functions with the wrong prototype aren't simplified.
 
 define i32* @test_no_simplify1(i8* %mem, i32 %size) {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %ret = call i32* @memcmp(i8* %mem, i8* %mem, i32 %size)
 ; CHECK-NEXT: call i32* @memcmp
   ret i32* %ret

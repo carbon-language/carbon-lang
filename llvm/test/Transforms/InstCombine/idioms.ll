@@ -25,7 +25,7 @@ bb3:
 bb4:
         %f = phi i32 [ %not2, %bb2 ], [ %e, %bb3 ]
 	ret i32 %f
-; CHECK: @test_asr
+; CHECK-LABEL: @test_asr(
 ; CHECK: bb4:
 ; CHECK: %f = ashr i32 %a, %b
 ; CHECK: ret i32 %f

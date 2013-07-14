@@ -7,7 +7,7 @@ define i32 @test1(i32 %X, i8 %A) {
         %Y = ashr i32 %X, %shift.upgrd.1                ; <i32> [#uses=1]
         %Z = and i32 %Y, 1              ; <i32> [#uses=1]
         ret i32 %Z
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: lshr i32 %X, %shift.upgrd.1 
 }
 
@@ -16,7 +16,7 @@ define i32 @test2(i8 %tmp) {
         %tmp4 = add i32 %tmp3, 7                ; <i32> [#uses=1]
         %tmp5 = ashr i32 %tmp4, 3               ; <i32> [#uses=1]
         ret i32 %tmp5
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: lshr i32 %tmp4, 3
 }
 
@@ -33,7 +33,7 @@ C:
   %S = ashr i64 %P, 12
   ret i64 %S
   
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: %P = phi i64
 ; CHECK-NEXT: ret i64 %P
 }
@@ -52,7 +52,7 @@ C:
   %S = ashr i64 %R, 12
   ret i64 %S
   
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: %P = phi i64
 ; CHECK-NEXT: ret i64 %P
 }
@@ -70,7 +70,7 @@ D:
   %P = phi i32 [0, %A], [0, %B], [%Y, %C] 
   %S = ashr i32 %P, 16
   ret i32 %S
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: %P = phi i32
 ; CHECK-NEXT: ashr i32 %P, 16
 E:

@@ -13,7 +13,7 @@ b:
   ret i32 3
 c:
   ret i32 5
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %cond = icmp eq i32 %i, 24
 ; CHECK: %. = select i1 %cond, i32 5, i32 0
 ; CHECK: ret i32 %.
@@ -33,6 +33,6 @@ b:
   ret i32 3
 c:
   ret i32 5
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i32 0
 }

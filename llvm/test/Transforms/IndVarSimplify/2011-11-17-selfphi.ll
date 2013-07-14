@@ -1,7 +1,7 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
 ; PR11350: Check that SimplifyIndvar handles a cycle of useless self-phis.
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: lcssa = phi
 define void @test() nounwind {
 entry:

@@ -21,7 +21,7 @@ entry:
 
 ; PR10180: same crash, but with vectors
 define <4 x float> @foo(i1 %b, <4 x float> %x, <4 x float> %y, <4 x float> %z) {
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: fsub <4 x float>
 ; CHECK: select
 ; CHECK: fadd <4 x float>
@@ -31,7 +31,7 @@ define <4 x float> @foo(i1 %b, <4 x float> %x, <4 x float> %y, <4 x float> %z) {
   ret <4 x float> %sel
 }
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 define i32 @test3(i1 %bool, i32 %a) {
 entry:
   %cond = or i1 %bool, true

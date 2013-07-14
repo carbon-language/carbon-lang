@@ -5,7 +5,7 @@ declare void @bar()
 ; This testcase checks to see if the simplifycfg pass is converting invoke
 ; instructions to call instructions if the handler just rethrows the exception.
 define i32 @test1() {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: call void @bar()
 ; CHECK-NEXT: ret i32 0
         invoke void @bar( )

@@ -17,7 +17,7 @@ define void @t()  {
 entry:
   br label %for.body
 
-; CHECK: @t
+; CHECK-LABEL: @t(
 ; CHECK: vector.body:
 ; CHECK: load <4 x i32>
 ; CHECK: [[VAR1:%[a-zA-Z0-9]+]] = shufflevector

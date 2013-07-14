@@ -15,11 +15,11 @@ define i1 @test1() {
   call void @free(i8* %A)
   ret i1 %B
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i1 false
 }
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define noalias i8* @test2() nounwind {
 entry:
 ; CHECK: @malloc

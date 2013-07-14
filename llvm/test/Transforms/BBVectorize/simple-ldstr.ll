@@ -17,7 +17,7 @@ entry:
   %arrayidx5 = getelementptr inbounds double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
 ; CHECK: %i0 = load <2 x double>* %i0.v.i0, align 8
@@ -26,7 +26,7 @@ entry:
 ; CHECK: %0 = bitcast double* %c to <2 x double>*
 ; CHECK: store <2 x double> %mul, <2 x double>* %0, align 8
 ; CHECK: ret void
-; CHECK-AO: @test1
+; CHECK-AO-LABEL: @test1(
 ; CHECK-AO-NOT: <2 x double>
 }
 
@@ -49,7 +49,7 @@ entry:
   %arrayidx5 = getelementptr inbounds double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %i0f.v.i0 = bitcast float* %a to <2 x float>*
 ; CHECK: %i1f.v.i0 = bitcast float* %b to <2 x float>*
 ; CHECK: %i0f = load <2 x float>* %i0f.v.i0, align 4
@@ -60,7 +60,7 @@ entry:
 ; CHECK: %0 = bitcast double* %c to <2 x double>*
 ; CHECK: store <2 x double> %mul, <2 x double>* %0, align 8
 ; CHECK: ret void
-; CHECK-AO: @test2
+; CHECK-AO-LABEL: @test2(
 ; CHECK-AO-NOT: <2 x double>
 }
 
@@ -81,7 +81,7 @@ entry:
   %arrayidx5 = getelementptr inbounds float* %c, i64 1
   store float %mul5f, float* %arrayidx5, align 4
   ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
 ; CHECK: %i0 = load <2 x double>* %i0.v.i0, align 8
@@ -91,7 +91,7 @@ entry:
 ; CHECK: %0 = bitcast float* %c to <2 x float>*
 ; CHECK: store <2 x float> %mulf, <2 x float>* %0, align 8
 ; CHECK: ret void
-; CHECK-AO: @test3
+; CHECK-AO-LABEL: @test3(
 ; CHECK-AO: %i0 = load double* %a, align 8
 ; CHECK-AO: %i1 = load double* %b, align 8
 ; CHECK-AO: %arrayidx3 = getelementptr inbounds double* %a, i64 1
@@ -134,9 +134,9 @@ if.then:
 
 if.end:
   ret void
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: <2 x double>
-; CHECK-AO: @test4
+; CHECK-AO-LABEL: @test4(
 ; CHECK-AO-NOT: <2 x double>
 }
 
@@ -155,7 +155,7 @@ entry:
   store double %mul5, double* %arrayidx5, align 8
   store double %mul, double* %c, align 4
   ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
 ; CHECK: %i0 = load <2 x double>* %i0.v.i0, align 8
@@ -164,7 +164,7 @@ entry:
 ; CHECK: %0 = bitcast double* %c to <2 x double>*
 ; CHECK: store <2 x double> %mul, <2 x double>* %0, align 4
 ; CHECK: ret void
-; CHECK-AO: @test5
+; CHECK-AO-LABEL: @test5(
 ; CHECK-AO-NOT: <2 x double>
 }
 

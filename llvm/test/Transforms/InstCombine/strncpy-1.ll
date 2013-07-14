@@ -16,7 +16,7 @@ declare i32 @puts(i8*)
 ; Check a bunch of strncpy invocations together.
 
 define i32 @test_simplify1() {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
 ; CHECK-NOT: call i8* @strncpy
 ; CHECK: call i32 @puts
   %target = alloca [1024 x i8]
@@ -39,7 +39,7 @@ define i32 @test_simplify1() {
 ; Check strncpy(x, "", y) -> memset(x, '\0', y, 1).
 
 define void @test_simplify2() {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [1 x i8]* @null, i32 0, i32 0
 
@@ -51,7 +51,7 @@ define void @test_simplify2() {
 ; Check strncpy(x, y, 0) -> x.
 
 define i8* @test_simplify3() {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
 
@@ -63,7 +63,7 @@ define i8* @test_simplify3() {
 ; Check  strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant].
 
 define void @test_simplify4() {
-; CHECK: @test_simplify4
+; CHECK-LABEL: @test_simplify4(
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
 
@@ -75,7 +75,7 @@ define void @test_simplify4() {
 ; Check cases that shouldn't be simplified.
 
 define void @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [32 x i8]* @b, i32 0, i32 0
 
@@ -85,7 +85,7 @@ define void @test_no_simplify1() {
 }
 
 define void @test_no_simplify2() {
-; CHECK: @test_no_simplify2
+; CHECK-LABEL: @test_no_simplify2(
   %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
   %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
 

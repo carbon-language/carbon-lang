@@ -10,7 +10,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; allocation of an i96 because of the bitcast to create %2. That's not valid,
 ; as the other 32 bits of the structure still feed into the return value
 define { i64, i64 } @function(i32 %x, i32 %y, i32 %z) nounwind {
-; CHECK: @function
+; CHECK-LABEL: @function(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: %retval = alloca %struct._my_struct, align 8
 ; CHECK-NOT: bitcast i96* %retval to %struct._my_struct*

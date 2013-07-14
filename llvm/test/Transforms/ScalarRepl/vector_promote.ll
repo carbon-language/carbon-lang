@@ -14,7 +14,7 @@ entry:
 	%tmp6 = fadd <4 x float> %tmp4, %tmp4		; <<4 x float>> [#uses=1]
 	store <4 x float> %tmp6, <4 x float>* %F
 	ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: alloca
 ; CHECK: %tmp = load <4 x float>* %F
 ; CHECK: fadd <4 x float> %tmp, %tmp
@@ -33,7 +33,7 @@ entry:
 	%tmp6 = fadd <4 x float> %tmp4, %tmp4		; <<4 x float>> [#uses=1]
 	store <4 x float> %tmp6, <4 x float>* %F
 	ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: alloca
 ; CHECK: %tmp = load <4 x float>* %F
 ; CHECK: fadd <4 x float> %tmp, %tmp
@@ -50,7 +50,7 @@ entry:
 	%tmp.upgrd.4 = load float* %tmp.upgrd.3		; <float> [#uses=1]
 	store float %tmp.upgrd.4, float* %f
 	ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: alloca
 ; CHECK: %tmp = load <4 x float>* %F
 ; CHECK: fadd <4 x float> %tmp, %tmp
@@ -67,7 +67,7 @@ entry:
 	%tmp.upgrd.6 = load float* %G.upgrd.5		; <float> [#uses=1]
 	store float %tmp.upgrd.6, float* %f
 	ret void
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: alloca
 ; CHECK: %tmp = load <4 x float>* %F
 ; CHECK: fadd <4 x float> %tmp, %tmp
@@ -81,7 +81,7 @@ define i32 @test5(float %X) {  ;; should turn into bitcast.
 	%a = bitcast float* %X1 to i32*
 	%tmp = load i32* %a
 	ret i32 %tmp
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: bitcast float %X to i32
 ; CHECK-NEXT: ret i32
 }
@@ -92,7 +92,7 @@ define i64 @test6(<2 x float> %X) {
 	%P = bitcast <2 x float>* %X_addr to i64*
 	%tmp = load i64* %P
 	ret i64 %tmp
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: bitcast <2 x float> %X to i64
 ; CHECK: ret i64
 }
@@ -107,7 +107,7 @@ entry:
   %1 = getelementptr inbounds %struct.test7* %memtmp, i64 0, i32 0, i64 5
   store i32 0, i32* %1, align 4
   ret void
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NOT: alloca
 ; CHECK: and i192
 }
@@ -130,7 +130,7 @@ entry:
   store <1 x i64> %vshl_n, <1 x i64>* %tmp
   %4 = load <1 x i64>* %tmp
   ret <1 x i64> %4
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NOT: alloca
 ; CHECK-NOT: insertelement
 ; CHECK: ret <1 x i64>

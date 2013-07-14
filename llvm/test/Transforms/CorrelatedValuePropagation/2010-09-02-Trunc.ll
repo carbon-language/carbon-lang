@@ -1,6 +1,6 @@
 ; RUN: opt -S < %s -correlated-propagation | FileCheck %s
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 define i16 @test(i32 %a, i1 %b) {
 entry:
   %c = icmp eq i32 %a, 0

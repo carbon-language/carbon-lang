@@ -7,7 +7,7 @@
 
 ; Completely unroll loops without a canonical IV.
 ;
-; CHECK: @sansCanonical
+; CHECK-LABEL: @sansCanonical(
 ; CHECK-NOT: phi
 ; CHECK-NOT: icmp
 ; CHECK: ret
@@ -35,7 +35,7 @@ exit:
 ; latch block. Canonical unrolling incorrectly unrolls it, but SCEV
 ; unrolling does not.
 ;
-; CHECK: @earlyLoopTest
+; CHECK-LABEL: @earlyLoopTest(
 ; CHECK: tail:
 ; CHECK-NOT: br
 ; CHECK: br i1 %cmp2, label %loop, label %exit2
@@ -69,7 +69,7 @@ exit2:
 ; SCEV cannot currently unroll this loop.
 ; It should ideally detect a trip count of 5.
 ; rdar:14038809 [SCEV]: Optimize trip count computation for multi-exit loops.
-; CHECK: @multiExit
+; CHECK-LABEL: @multiExit(
 ; CHECKFIXME: getelementptr i32* %base, i32 10
 ; CHECKFIXME-NEXT: load i32*
 ; CHECKFIXME: br i1 false, label %l2.10, label %exit1
@@ -103,7 +103,7 @@ exit2:
 ; LoopUnroll utility uses this assumption to optimize the latch
 ; block's branch.
 ;
-; CHECK: @multiExitIncomplete
+; CHECK-LABEL: @multiExitIncomplete(
 ; CHECK: l3:
 ; CHECK-NOT: br
 ; CHECK:   br i1 %cmp3, label %l1, label %exit3
@@ -137,7 +137,7 @@ exit3:
 ; When loop unroll merges a loop exit with one of its parent loop's
 ; exits, SCEV must forget its ExitNotTaken info.
 ;
-; CHECK: @nestedUnroll
+; CHECK-LABEL: @nestedUnroll(
 ; CHECK-NOT: br i1
 ; CHECK: for.body87:
 define void @nestedUnroll() nounwind {
@@ -183,7 +183,7 @@ for.body87:
 ; the loop latch's exit count of zero is an upper bound on the number
 ; of iterations.
 ;
-; CHECK: @nsw_latch
+; CHECK-LABEL: @nsw_latch(
 ; CHECK: for.body:
 ; CHECK: %b.03 = phi i32 [ 0, %entry ], [ %add, %for.cond ]
 ; CHECK: return:

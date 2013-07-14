@@ -7,7 +7,7 @@ entry:
 while.body:
   br label %while.body
 }
-;CHECK: @main
+;CHECK-LABEL: @main(
 ;CHECK: endless_loop
 ;CHECK: ret
 define i32 @main() noreturn nounwind ssp uwtable {

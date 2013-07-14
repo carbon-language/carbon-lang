@@ -2,7 +2,7 @@
 
 ; PR8862
 
-; CHECK: @shift1
+; CHECK-LABEL: @shift1(
 ; CHECK: ret i32 %A
 define i32 @shift1(i32 %A, i32 %B) {
   %C = lshr exact i32 %A, %B
@@ -10,7 +10,7 @@ define i32 @shift1(i32 %A, i32 %B) {
   ret i32 %D
 }
 
-; CHECK: @shift2
+; CHECK-LABEL: @shift2(
 ; CHECK: lshr
 ; CHECK: ret i32 %D
 define i32 @shift2(i32 %A, i32 %B) {
@@ -19,7 +19,7 @@ define i32 @shift2(i32 %A, i32 %B) {
   ret i32 %D
 }
 
-; CHECK: @shift3
+; CHECK-LABEL: @shift3(
 ; CHECK: ret i32 %A
 define i32 @shift3(i32 %A, i32 %B) {
   %C = ashr exact i32 %A, %B
@@ -27,7 +27,7 @@ define i32 @shift3(i32 %A, i32 %B) {
   ret i32 %D
 }
 
-; CHECK: @shift4
+; CHECK-LABEL: @shift4(
 ; CHECK: ret i32 %A
 define i32 @shift4(i32 %A, i32 %B) {
   %C = shl nuw i32 %A, %B
@@ -35,7 +35,7 @@ define i32 @shift4(i32 %A, i32 %B) {
   ret i32 %D
 }
 
-; CHECK: @shift5
+; CHECK-LABEL: @shift5(
 ; CHECK: ret i32 %A
 define i32 @shift5(i32 %A, i32 %B) {
   %C = shl nsw i32 %A, %B

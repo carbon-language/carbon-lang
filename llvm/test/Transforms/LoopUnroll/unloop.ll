@@ -7,7 +7,7 @@ declare i1 @check() nounwind
 ; Ensure that tail->inner is removed and rely on verify-loopinfo to
 ; check soundness.
 ;
-; CHECK: @skiplevelexit
+; CHECK-LABEL: @skiplevelexit(
 ; CHECK: tail:
 ; CHECK-NOT: br
 ; CHECK: ret void
@@ -38,7 +38,7 @@ exit:
 ; Ensure that only the middle loop is removed and rely on verify-loopinfo to
 ; check soundness.
 ;
-; CHECK: @unloopNested
+; CHECK-LABEL: @unloopNested(
 ; Outer loop control.
 ; CHECK: while.body:
 ; CHECK: br i1 %cmp3, label %if.then, label %if.end
@@ -128,7 +128,7 @@ return:
 ;
 ; This test must be disabled until trip count computation can be optimized...
 ; rdar:14038809 [SCEV]: Optimize trip count computation for multi-exit loops.
-; CHECKFIXME: @unloopDeepNested
+; CHECKFIXME-LABEL: @unloopDeepNested(
 ; Inner-inner loop control.
 ; CHECKFIXME: while.cond.us.i:
 ; CHECKFIXME: br i1 %cmp.us.i, label %next_data.exit, label %while.body.us.i
@@ -248,7 +248,7 @@ while.end:
 ; Ensure that only the middle loop is removed and rely on verify-loopinfo to
 ; check soundness.
 ;
-; CHECK: @unloopIrreducible
+; CHECK-LABEL: @unloopIrreducible(
 ; Irreducible loop.
 ; CHECK: for.inc117:
 ; CHECK: br label %for.cond103t
@@ -326,7 +326,7 @@ for.end166:
 ; Ensure that only the loop is removed and rely on verify-loopinfo to
 ; check soundness.
 ;
-; CHECK: @unloopCriticalEdge
+; CHECK-LABEL: @unloopCriticalEdge(
 ; CHECK: while.cond.outer.i.loopexit.split:
 ; CHECK: br label %while.body
 ; CHECK: while.body:
@@ -431,7 +431,7 @@ return:                                           ; preds = %sw.bb304
 }
 
 ; PR11335: the most deeply nested block should be removed from the outer loop.
-; CHECK: @removeSubloopBlocks2
+; CHECK-LABEL: @removeSubloopBlocks2(
 ; CHECK: for.cond3:
 ; CHECK-NOT: br
 ; CHECK: ret void

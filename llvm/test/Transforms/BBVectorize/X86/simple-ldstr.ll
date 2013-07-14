@@ -16,7 +16,7 @@ entry:
   %arrayidx5 = getelementptr inbounds double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
 ; CHECK: %i0 = load <2 x double>* %i0.v.i0, align 8

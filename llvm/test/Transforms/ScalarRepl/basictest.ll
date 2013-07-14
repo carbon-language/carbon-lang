@@ -7,7 +7,7 @@ define i32 @test1() {
 	store i32 0, i32* %Y
 	%Z = load i32* %Y		; <i32> [#uses=1]
 	ret i32 %Z
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: alloca
 ; CHECK: ret i32 0
 }
@@ -23,7 +23,7 @@ define i64 @test2(i64 %X) {
 L2:
 	%Z = load i64* %B		; <i32> [#uses=1]
 	ret i64 %Z
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: alloca
 ; CHECK: ret i64 %X
 }

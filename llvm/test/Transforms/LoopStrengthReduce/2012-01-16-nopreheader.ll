@@ -8,7 +8,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; while.cond197 is a dominates the simplified loop while.cond238 but
 ; has no with no preheader.
 ;
-; CHECK: @nopreheader
+; CHECK-LABEL: @nopreheader(
 ; CHECK: %while.cond238
 ; CHECK: phi i64
 ; CHECK-NOT: phi

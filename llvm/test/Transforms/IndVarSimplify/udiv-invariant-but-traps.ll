@@ -27,6 +27,6 @@ bb14:
   ret i32 0
 }
 
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: bb8:
 ; CHECK: udiv

@@ -6,7 +6,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 %struct.test = type { [3 x double] }
 
 define void @test_memcpy_self() nounwind {
-; CHECK: @test_memcpy_self
+; CHECK-LABEL: @test_memcpy_self(
 ; CHECK-NOT: alloca
 ; CHECK: ret void
   %1 = alloca %struct.test

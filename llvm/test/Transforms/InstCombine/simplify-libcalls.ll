@@ -18,7 +18,7 @@ define i8* @test1() {
         %tmp3 = tail call i8* @strchr( i8* getelementptr ([5 x i8]* @str, i32 0, i32 2), i32 103 )              ; <i8*> [#uses=1]
         ret i8* %tmp3
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i8* getelementptr inbounds ([5 x i8]* @str, i32 0, i64 3)
 }
 
@@ -28,7 +28,7 @@ define i8* @test2() {
         %tmp3 = tail call i8* @strchr( i8* getelementptr ([8 x i8]* @str1, i32 0, i32 2), i32 0 )               ; <i8*> [#uses=1]
         ret i8* %tmp3
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i8* getelementptr inbounds ([8 x i8]* @str1, i32 0, i64 7)
 }
 
@@ -37,7 +37,7 @@ entry:
         %tmp3 = tail call i8* @strchr( i8* getelementptr ([5 x i8]* @str2, i32 0, i32 1), i32 80 )              ; <i8*> [#uses=1]
         ret i8* %tmp3
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i8* null
 }
 
@@ -52,7 +52,7 @@ entry:
 	%tmp6 = icmp eq i32 %tmp5, 0		; <i1> [#uses=1]
 	ret i1 %tmp6
 
-; CHECK: @PR2341
+; CHECK-LABEL: @PR2341(
 ; CHECK: i32
 }
 
@@ -65,7 +65,7 @@ entry:
 	%call = call i32 @memcmp(i8* %c0, i8* %c2, i32 1)		; <i32> [#uses=1]
 	ret i32 %call
 
-; CHECK: @PR4284
+; CHECK-LABEL: @PR4284(
 ; CHECK: ret i32 -65
 }
 
@@ -124,7 +124,7 @@ define i32 @MemCpy() {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %target_p, i8* %hello_u_p, i32 8, i32 8, i1 false)
   ret i32 0
 
-; CHECK: @MemCpy
+; CHECK-LABEL: @MemCpy(
 ; CHECK-NOT: llvm.memcpy
 ; CHECK: ret i32 0
 }
@@ -134,7 +134,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, 
 declare i32 @strcmp(i8*, i8*) #0
 
 define void @test9(i8* %x) {
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NOT: strcmp
   %y = call i32 @strcmp(i8* %x, i8* %x) #1
   ret void

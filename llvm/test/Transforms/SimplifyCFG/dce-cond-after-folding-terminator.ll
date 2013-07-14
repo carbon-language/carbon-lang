@@ -2,7 +2,7 @@
 
 define void @test_br(i32 %x) {
 entry:
-; CHECK: @test_br
+; CHECK-LABEL: @test_br(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: ret void
   %cmp = icmp eq i32 %x, 10
@@ -17,7 +17,7 @@ if.end:                                           ; preds = %if.else, %if.then
 
 define void @test_switch(i32 %x) nounwind {
 entry:
-; CHECK: @test_switch
+; CHECK-LABEL: @test_switch(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: ret void
   %rem = srem i32 %x, 3
@@ -35,7 +35,7 @@ sw.epilog:                                        ; preds = %sw.bb
 
 define void @test_indirectbr(i32 %x) {
 entry:
-; CHECK: @test_indirectbr
+; CHECK-LABEL: @test_indirectbr(
 ; CHECK-NEXT: entry:
 ; Ideally this should now check:
 ;   CHK-NEXT: ret void

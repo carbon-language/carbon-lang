@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;  A[2] = (T * B[12] + 6.0);
 ;}
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK: load <3 x float>
 ;CHECK: fmul <3 x float>
 ;CHECK: fpext <3 x float>

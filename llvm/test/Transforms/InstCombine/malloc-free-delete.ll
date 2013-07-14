@@ -1,7 +1,7 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 ; PR1201
 define i32 @main(i32 %argc, i8** %argv) {
-; CHECK: @main
+; CHECK-LABEL: @main(
     %c_19 = alloca i8*
     %malloc_206 = tail call i8* @malloc(i32 mul (i32 ptrtoint (i8* getelementptr (i8* null, i32 1) to i32), i32 10))
     store i8* %malloc_206, i8** %c_19
@@ -16,7 +16,7 @@ declare noalias i8* @malloc(i32)
 declare void @free(i8*)
 
 define i1 @foo() {
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK-NEXT: ret i1 false
   %m = call i8* @malloc(i32 1)
   %z = icmp eq i8* %m, null
@@ -32,7 +32,7 @@ declare void @llvm.memmove.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32,
 declare void @llvm.memset.p0i8.i32(i8*, i8, i32, i32, i1) nounwind
 
 define void @test3(i8* %src) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: ret void
   %a = call noalias i8* @malloc(i32 10)
   call void @llvm.lifetime.start(i64 10, i8* %a)
@@ -49,7 +49,7 @@ define void @test3(i8* %src) {
 
 ;; This used to crash.
 define void @test4() {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: ret void
   %A = call i8* @malloc(i32 16000)
   %B = bitcast i8* %A to double*
@@ -58,7 +58,7 @@ define void @test4() {
   ret void
 }
 
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 define void @test5(i8* %ptr, i8** %esc) {
 ; CHECK-NEXT: call i8* @malloc
 ; CHECK-NEXT: call i8* @malloc
@@ -98,7 +98,7 @@ define void @test5(i8* %ptr, i8** %esc) {
 ;; Using simplifycfg will remove the empty basic block and the branch operation
 ;; Then, performing a dead elimination will remove the comparison.
 ;; This is what happens with -O1 and upper.
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 define void @test6(i8* %foo) minsize {
 ; CHECK:  %tobool = icmp eq i8* %foo, null
 ;; Call to free moved

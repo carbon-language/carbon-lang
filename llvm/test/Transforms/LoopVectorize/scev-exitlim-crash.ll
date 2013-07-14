@@ -10,7 +10,7 @@ target triple = "x86_64-apple-macosx"
 @e = common global i32* null, align 8
 @c = common global i32 0, align 4
 
-; CHECK-LABEL: @fn1
+; CHECK-LABEL-LABEL: @fn1(
 ; CHECK: vector.body
 define void @fn1() #0 {
 entry:

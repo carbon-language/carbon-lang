@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 @.str = private unnamed_addr constant [6 x i8] c"bingo\00", align 1
 
-;CHECK: @reduce_compare
+;CHECK-LABEL: @reduce_compare(
 ;CHECK: load <2 x double>
 ;CHECK: fmul <2 x double>
 ;CHECK: fmul <2 x double>

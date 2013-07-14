@@ -16,7 +16,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Check cases where dstlen >= len.
 
 define void @test_simplify1() {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %dst = bitcast %struct.T1* @t1 to i8*
   %src = bitcast %struct.T2* @t2 to i8*
 
@@ -26,7 +26,7 @@ define void @test_simplify1() {
 }
 
 define void @test_simplify2() {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %dst = bitcast %struct.T1* @t1 to i8*
   %src = bitcast %struct.T3* @t3 to i8*
 
@@ -38,7 +38,7 @@ define void @test_simplify2() {
 ; Check cases where dstlen < len.
 
 define void @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %dst = bitcast %struct.T3* @t3 to i8*
   %src = bitcast %struct.T1* @t1 to i8*
 
@@ -48,7 +48,7 @@ define void @test_no_simplify1() {
 }
 
 define void @test_no_simplify2() {
-; CHECK: @test_no_simplify2
+; CHECK-LABEL: @test_no_simplify2(
   %dst = bitcast %struct.T1* @t1 to i8*
   %src = bitcast %struct.T2* @t2 to i8*
 

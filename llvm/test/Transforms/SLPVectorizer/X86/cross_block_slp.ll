@@ -16,7 +16,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; }
 
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK: load <2 x float>
 ;CHECK: fadd <2 x float>
 ;CHECK: call i32

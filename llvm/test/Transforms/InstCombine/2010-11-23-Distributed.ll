@@ -1,6 +1,6 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 define i32 @foo(i32 %x, i32 %y) {
-; CHECK: @foo
+; CHECK-LABEL: @foo(
   %add = add nsw i32 %y, %x
   %mul = mul nsw i32 %add, %y
   %square = mul nsw i32 %y, %y
@@ -11,7 +11,7 @@ define i32 @foo(i32 %x, i32 %y) {
 }
 
 define i1 @bar(i64 %x, i64 %y) {
-; CHECK: @bar
+; CHECK-LABEL: @bar(
   %a = and i64 %y, %x
 ; CHECK: and
 ; CHECK-NOT: and

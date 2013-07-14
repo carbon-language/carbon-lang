@@ -5,7 +5,7 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.8.0"
 
-; CHECK: @udiv400
+; CHECK-LABEL: @udiv400(
 ; CHECK: udiv i32 %x, 400
 ; CHECK: ret
 define i32 @udiv400(i32 %x) {
@@ -16,7 +16,7 @@ entry:
 }
 
 
-; CHECK: @udiv400_no
+; CHECK-LABEL: @udiv400_no(
 ; CHECK: ashr
 ; CHECK: div
 ; CHECK: ret
@@ -27,7 +27,7 @@ entry:
   ret i32 %div1
 }
 
-; CHECK: @sdiv400_yes
+; CHECK-LABEL: @sdiv400_yes(
 ; CHECK: udiv i32 %x, 400
 ; CHECK: ret
 define i32 @sdiv400_yes(i32 %x) {
@@ -41,7 +41,7 @@ entry:
 }
 
 
-; CHECK: @udiv_i80
+; CHECK-LABEL: @udiv_i80(
 ; CHECK: udiv i80 %x, 400
 ; CHECK: ret
 define i80 @udiv_i80(i80 %x) {

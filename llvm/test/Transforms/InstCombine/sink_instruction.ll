@@ -4,7 +4,7 @@
 ;; arm of the 'if'.
 
 define i32 @test1(i1 %C, i32 %A, i32 %B) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
         %tmp.2 = sdiv i32 %A, %B                ; <i32> [#uses=1]
         %tmp.9 = add i32 %B, %A         ; <i32> [#uses=1]
@@ -22,7 +22,7 @@ endif:          ; preds = %entry
 
 ;; PHI use, sink divide before call.
 define i32 @test2(i32 %x) nounwind ssp {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: sdiv i32
 entry:
   br label %bb

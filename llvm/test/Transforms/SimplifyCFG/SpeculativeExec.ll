@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @test1(i32 %a, i32 %b, i32 %c) nounwind  {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
         %tmp1 = icmp eq i32 %b, 0
         br i1 %tmp1, label %bb1, label %bb3
@@ -31,7 +31,7 @@ bb3:		; preds = %bb2, %entry
 declare i8 @llvm.cttz.i8(i8, i1)
 
 define i8 @test2(i8 %a) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
   br i1 undef, label %bb_true, label %bb_false
 bb_true:
   %b = tail call i8 @llvm.cttz.i8(i8 %a, i1 false)
@@ -47,7 +47,7 @@ join:
 define i8* @test4(i1* %dummy, i8* %a, i8* %b) {
 ; Test that we don't speculate an arbitrarily large number of unfolded constant
 ; expressions.
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 
 entry:
   %cond1 = load volatile i1* %dummy

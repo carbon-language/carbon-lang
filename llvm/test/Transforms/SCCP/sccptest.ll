@@ -14,7 +14,7 @@ BB3:		; preds = %BB2, %BB1
 	%Ret = phi i32 [ %Val, %BB1 ], [ 1, %BB2 ]		; <i32> [#uses=1]
 	ret i32 %Ret
         
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %Ret = phi i32 [ 0, %BB1 ], [ 1, %BB2 ]
 }
 
@@ -22,7 +22,7 @@ BB3:		; preds = %BB2, %BB1
 ; that SCCP gets right.
 ;
 define i32 @test2(i32 %i0, i32 %j0) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 BB1:
 	br label %BB2
 BB2:

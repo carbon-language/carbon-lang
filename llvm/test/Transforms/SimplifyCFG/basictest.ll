@@ -5,14 +5,14 @@
 define void @test1() {
         br label %1
         ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: ret void
 }
 
 define void @test2() {
         ret void
         ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
 }
@@ -20,7 +20,7 @@ define void @test2() {
 define void @test3(i1 %T) {
         br i1 %T, label %1, label %1
         ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: ret void
 }
 
@@ -38,6 +38,6 @@ define void @test5(i32 %A) {
 
 return:                                           ; preds = %entry
   ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: ret void
 }

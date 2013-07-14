@@ -5,7 +5,7 @@
 ; the exit value of the loop will be for some value, allowing us to substitute
 ; it directly into users outside of the loop, making the loop dead.
 
-; CHECK: @linear_setne
+; CHECK-LABEL: @linear_setne(
 ; CHECK: ret i32 100
 
 define i32 @linear_setne() {
@@ -22,7 +22,7 @@ loopexit:		; preds = %loop
 	ret i32 %i
 }
 
-; CHECK: @linear_setne_2
+; CHECK-LABEL: @linear_setne_2(
 ; CHECK: ret i32 100
 
 define i32 @linear_setne_2() {
@@ -39,7 +39,7 @@ loopexit:		; preds = %loop
 	ret i32 %i
 }
 
-; CHECK: @linear_setne_overflow
+; CHECK-LABEL: @linear_setne_overflow(
 ; CHECK: ret i32 0
 
 define i32 @linear_setne_overflow() {
@@ -56,7 +56,7 @@ loopexit:		; preds = %loop
 	ret i32 %i
 }
 
-; CHECK: @linear_setlt
+; CHECK-LABEL: @linear_setlt(
 ; CHECK: ret i32 100
 
 define i32 @linear_setlt() {
@@ -73,7 +73,7 @@ loopexit:		; preds = %loop
 	ret i32 %i
 }
 
-; CHECK: @quadratic_setlt
+; CHECK-LABEL: @quadratic_setlt(
 ; CHECK: ret i32 34
 
 define i32 @quadratic_setlt() {
@@ -91,7 +91,7 @@ loopexit:		; preds = %loop
 	ret i32 %i
 }
 
-; CHECK: @chained
+; CHECK-LABEL: @chained(
 ; CHECK: ret i32 200
 
 define i32 @chained() {
@@ -117,7 +117,7 @@ loopexit2:		; preds = %loop2
 	ret i32 %j
 }
 
-; CHECK: @chained4
+; CHECK-LABEL: @chained4(
 ; CHECK: ret i32 400
 
 define i32 @chained4() {

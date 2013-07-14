@@ -9,7 +9,7 @@ declare i8* @memmove(i8*, i8*, i32)
 ; Check memmove(mem1, mem2, size) -> llvm.memmove(mem1, mem2, size, 1).
 
 define i8* @test_simplify1(i8* %mem1, i8* %mem2, i32 %size) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %ret = call i8* @memmove(i8* %mem1, i8* %mem2, i32 %size)
 ; CHECK: call void @llvm.memmove
   ret i8* %ret

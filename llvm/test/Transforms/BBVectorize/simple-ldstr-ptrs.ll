@@ -27,7 +27,7 @@ entry:
   %arrayidx5 = getelementptr inbounds i64* %c, i64 1
   store i64 %mul5, i64* %arrayidx5, align 8
   ret double %r
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %i0.v.i0 = bitcast i64* %a to <2 x i64>*
 ; CHECK: %i1.v.i0 = bitcast i64* %b to <2 x i64>*
 ; CHECK: %i0 = load <2 x i64>* %i0.v.i0, align 8
@@ -43,7 +43,7 @@ entry:
 ; CHECK: %0 = bitcast i64* %c to <2 x i64>*
 ; CHECK: store <2 x i64> %mul, <2 x i64>* %0, align 8
 ; CHECK: ret double %r
-; CHECK-AO: @test1
+; CHECK-AO-LABEL: @test1(
 ; CHECK-AO-NOT: load <2 x
 }
 
@@ -64,7 +64,7 @@ entry:
   %arrayidx5 = getelementptr inbounds i64** %c, i64 1
   store i64* %ptr3, i64** %arrayidx5, align 8
   ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %i0.v.i0 = bitcast i64** %a to <2 x i64*>*
 ; CHECK: %i1 = load i64** %b, align 8
 ; CHECK: %i0 = load <2 x i64*>* %i0.v.i0, align 8
@@ -78,7 +78,7 @@ entry:
 ; CHECK: %0 = bitcast i64** %c to <2 x i64*>*
 ; CHECK: store <2 x i64*> %ptr0, <2 x i64*>* %0, align 8
 ; CHECK: ret void
-; CHECK-AO: @test2
+; CHECK-AO-LABEL: @test2(
 ; CHECK-AO-NOT: <2 x
 }
 
@@ -108,7 +108,7 @@ entry:
   %arrayidx5 = getelementptr inbounds <2 x i64*>* %c, i64 1
   store <2 x i64*> %rtr3, <2 x i64*>* %arrayidx5, align 8
   ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: %i0.v.i0 = bitcast <2 x i64*>* %a to <4 x i64*>*
 ; CHECK: %i1 = load <2 x i64*>* %b, align 8
 ; CHECK: %i0 = load <4 x i64*>* %i0.v.i0, align 8
@@ -128,7 +128,7 @@ entry:
 ; CHECK: %1 = shufflevector <2 x i64*> %rtr0, <2 x i64*> %rtr3, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
 ; CHECK: store <4 x i64*> %1, <4 x i64*>* %0, align 8
 ; CHECK: ret void
-; CHECK-AO: @test3
+; CHECK-AO-LABEL: @test3(
 ; CHECK-AO-NOT: <4 x
 }
 

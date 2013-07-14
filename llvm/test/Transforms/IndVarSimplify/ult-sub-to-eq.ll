@@ -26,7 +26,7 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret void
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 
 ; First check that we move the sub into the preheader, it doesn't have to be
 ; executed if %cmp4 == false

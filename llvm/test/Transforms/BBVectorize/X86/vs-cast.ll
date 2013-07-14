@@ -7,6 +7,6 @@ entry:
   %0 = bitcast <2 x i64> undef to i128
   %1 = bitcast <2 x i64> undef to i128
   ret void
-; CHECK: @main
+; CHECK-LABEL: @main(
 }
 

@@ -9,7 +9,7 @@ target triple = "i386-unknown-freebsd10.0"
 
 @b = external global [121 x i32]
 
-; CHECK: @vb
+; CHECK-LABEL: @vb(
 ;   Outer recurrence:
 ; CHECK: %lsr.iv1 = phi [121 x i32]*
 ;   Inner recurrence:

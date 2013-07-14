@@ -15,7 +15,7 @@ T:              ; preds = %0
 F:              ; preds = %0
         call void @foo2( )
         ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK:  switch i32 %V, label %F [
 ; CHECK:    i32 17, label %T
 ; CHECK:    i32 4, label %T
@@ -33,7 +33,7 @@ T:              ; preds = %0
 F:              ; preds = %0
         call void @foo2( )
         ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK:  switch i32 %V, label %T [
 ; CHECK:    i32 17, label %F
 ; CHECK:    i32 4, label %F
@@ -53,7 +53,7 @@ F:              ; preds = %N
         call void @foo2( )
         ret void
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: switch i32 %V, label %F [
 ; CHECK:     i32 4, label %T
 ; CHECK:     i32 17, label %T
@@ -80,7 +80,7 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   %lor.ext = zext i1 %0 to i32
   ret i32 %lor.ext
   
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK:  switch i8 %c, label %lor.rhs [
 ; CHECK:    i8 62, label %lor.end
 ; CHECK:    i8 34, label %lor.end
@@ -104,7 +104,7 @@ lor.end:                                          ; preds = %entry, %entry, %ent
   %0 = phi i1 [ true, %entry ], [ %V, %lor.rhs ], [ true, %entry ], [ true, %entry ]
   %lor.ext = zext i1 %0 to i32
   ret i32 %lor.ext
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK:  switch i8 %c, label %lor.rhs [
 ; CHECK:    i8 62, label %lor.end
 ; CHECK:    i8 34, label %lor.end
@@ -140,7 +140,7 @@ UnifiedReturnBlock:             ; preds = %shortcirc_done.4, %shortcirc_next.4
         %UnifiedRetVal = phi i1 [ %tmp.26, %shortcirc_next.4 ], [ true, %shortcirc_done.4 ]             ; <i1> [#uses=1]
         ret i1 %UnifiedRetVal
         
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: %tmp.2.i.off = add i32 %tmp.2.i, -14
 ; CHECK: %switch = icmp ult i32 %tmp.2.i.off, 6
 }
@@ -161,7 +161,7 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry
   ret void
   
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK:   %cmp = icmp ult i32 %x, 32
 ; CHECK:   br i1 %cmp, label %if.then, label %switch.early.test
 ; CHECK: switch.early.test:
@@ -190,7 +190,7 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry
   ret i32 0
   
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: switch.early.test:
 ; CHECK:   switch i8 %c, label %if.end [
 ; CHECK:     i8 99, label %if.then
@@ -246,7 +246,7 @@ lor.end:                                          ; preds = %lor.rhs, %lor.lhs.f
   %conv46 = zext i1 %0 to i32
   ret i32 %conv46
   
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK:   %cmp = icmp ult i8 %c, 33
 ; CHECK:   br i1 %cmp, label %lor.end, label %switch.early.test
 
@@ -275,7 +275,7 @@ T:
 F:
   ret i32 324
 
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK:  br i1 %Cond, label %switch.early.test, label %F
 ; CHECK:switch.early.test:
 ; CHECK:  switch i32 %mode, label %T [
@@ -314,7 +314,7 @@ return:                                           ; preds = %if.end, %if.then
   %retval.0 = phi i32 [ 1, %if.then ], [ 0, %if.end ]
   ret i32 %retval.0
 
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK: switch i32 %bar, label %if.end [
 ; CHECK:   i32 55, label %return
 ; CHECK:   i32 53, label %return
@@ -343,7 +343,7 @@ bb55.us.us:
 
 malformed:
   ret void
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 
 }
 
@@ -371,7 +371,7 @@ if.then:                                          ; preds = %lor.lhs.false9, %lo
 
 if.end:                                           ; preds = %if.then, %lor.lhs.false9
   ret void
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK:  switch i32 %x, label %if.end [
 ; CHECK:     i32 6, label %if.then
 ; CHECK:     i32 4, label %if.then
@@ -405,7 +405,7 @@ if.then:                                          ; preds = %lor.lhs.false9, %lo
 
 if.end:                                           ; preds = %if.then, %lor.lhs.false9
   ret void
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK:  switch i32 %x, label %if.end [
 ; CHECK:     i32 6, label %if.then
 ; CHECK:     i32 4, label %if.then
@@ -431,7 +431,7 @@ if.then:
 if.end:
   ret void
 
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK-NOT: switch
 ; CHECK: ret void
 }
@@ -440,7 +440,7 @@ if.end:
 ; rdar://5134905
 define zeroext i1 @test16(i32 %x) nounwind {
 entry:
-; CHECK: @test16
+; CHECK-LABEL: @test16(
 ; CHECK: %x.off = add i32 %x, -1
 ; CHECK: %switch = icmp ult i32 %x.off, 3
   %cmp.i = icmp eq i32 %x, 1
@@ -473,7 +473,7 @@ lor.lhs.false8:
 return:
   ret void
 
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 ; CHECK-NOT: switch.early.test
 ; CHECK-NOT: switch i32
 ; CHECK: ret void
@@ -511,7 +511,7 @@ bb19:                                             ; preds = %bb8, %bb
 bb20:                                             ; preds = %bb19, %bb8
   ret void
 
-; CHECK: @test18
+; CHECK-LABEL: @test18(
 ; CHECK: %arg.off = add i32 %arg, -8
 ; CHECK: icmp ult i32 %arg.off, 11
 }

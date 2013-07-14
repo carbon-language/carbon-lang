@@ -17,7 +17,7 @@ target triple = "i386-apple-macosx10.9.0"
 ;   return R+G+B;
 ; }
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK: br
 ;CHECK: phi <3 x float>
 ;CHECK: fmul <3 x float>

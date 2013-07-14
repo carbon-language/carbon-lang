@@ -6,7 +6,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 define internal i32 @foo() nounwind noinline ssp {
 entry:
   ret i32 0
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: entry:
 ; CHECK: ret i32 0
 }

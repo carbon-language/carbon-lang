@@ -9,7 +9,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 @t = common global %struct.T zeroinitializer
 
 define void @test_no_simplify() {
-; CHECK: @test_no_simplify
+; CHECK-LABEL: @test_no_simplify(
   %dst = bitcast %struct.T* @t to i8*
 
 ; CHECK-NEXT: call i8* @__memset_chk

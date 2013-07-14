@@ -67,7 +67,7 @@ L2:                                               ; preds = %indirectgoto
 ; Don't merge address-taken blocks.
 @.str = private unnamed_addr constant [4 x i8] c"%p\0A\00"
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: __here:
 ; CHECK: blockaddress(@test3, %__here)
 ; CHECK: __here1:

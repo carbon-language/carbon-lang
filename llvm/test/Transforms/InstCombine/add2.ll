@@ -6,7 +6,7 @@ define i64 @test1(i64 %A, i32 %B) {
         %tmp5 = add i64 %tmp3, %A
         %tmp6 = and i64 %tmp5, 123
         ret i64 %tmp6
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: and i64 %A, 123
 ; CHECK-NEXT: ret i64
 }
@@ -16,7 +16,7 @@ define i32 @test2(i32 %A) {
   %C = and i32 %A, 32
   %F = add i32 %B, %C
   ret i32 %F
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: and i32 %A, 39
 ; CHECK-NEXT: ret i32
 }
@@ -26,7 +26,7 @@ define i32 @test3(i32 %A) {
   %C = lshr i32 %A, 30
   %F = add i32 %B, %C
   ret i32 %F
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: and
 ; CHECK-NEXT: lshr
 ; CHECK-NEXT: or i32 %B, %C
@@ -36,7 +36,7 @@ define i32 @test3(i32 %A) {
 define i32 @test4(i32 %A) {
   %B = add nuw i32 %A, %A
   ret i32 %B
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: %B = shl nuw i32 %A, 1
 ; CHECK-NEXT: ret i32 %B
 }

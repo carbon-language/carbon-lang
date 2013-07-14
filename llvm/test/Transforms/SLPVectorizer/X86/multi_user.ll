@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;  A[4] += n * 5 + 11;
 ;}
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK: insertelement <4 x i32>
 ;CHECK: load <4 x i32>
 ;CHECK: add <4 x i32>

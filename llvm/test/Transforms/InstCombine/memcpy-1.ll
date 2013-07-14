@@ -9,7 +9,7 @@ declare i8* @memcpy(i8*, i8*, i32)
 ; Check memcpy(mem1, mem2, size) -> llvm.memcpy(mem1, mem2, size, 1).
 
 define i8* @test_simplify1(i8* %mem1, i8* %mem2, i32 %size) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %ret = call i8* @memcpy(i8* %mem1, i8* %mem2, i32 %size)
 ; CHECK: call void @llvm.memcpy
   ret i8* %ret

@@ -2,7 +2,7 @@
 
 ; Derived from gcc.c-torture/execute/frame-address.c
 
-; CHECK:     @func
+; CHECK-LABEL:     @func(
 ; CHECK:     return:
 ; CHECK-NOT: ret i32 0
 ; CHECK:     ret i32 %retval

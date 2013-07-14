@@ -12,14 +12,14 @@ declare double @pow(double, double) nounwind readonly
 ; Check pow(1.0, x) -> 1.0.
 
 define float @test_simplify1(float %x) {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %retval = call float @powf(float 1.0, float %x)
   ret float %retval
 ; CHECK-NEXT: ret float 1.000000e+00
 }
 
 define double @test_simplify2(double %x) {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %retval = call double @pow(double 1.0, double %x)
   ret double %retval
 ; CHECK-NEXT: ret double 1.000000e+00
@@ -28,7 +28,7 @@ define double @test_simplify2(double %x) {
 ; Check pow(2.0, x) -> exp2(x).
 
 define float @test_simplify3(float %x) {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %retval = call float @powf(float 2.0, float %x)
 ; CHECK-NEXT: [[EXP2F:%[a-z0-9]+]] = call float @exp2f(float %x) [[NUW_RO:#[0-9]+]]
   ret float %retval
@@ -36,7 +36,7 @@ define float @test_simplify3(float %x) {
 }
 
 define double @test_simplify4(double %x) {
-; CHECK: @test_simplify4
+; CHECK-LABEL: @test_simplify4(
   %retval = call double @pow(double 2.0, double %x)
 ; CHECK-NEXT: [[EXP2:%[a-z0-9]+]] = call double @exp2(double %x) [[NUW_RO]]
   ret double %retval
@@ -46,14 +46,14 @@ define double @test_simplify4(double %x) {
 ; Check pow(x, 0.0) -> 1.0.
 
 define float @test_simplify5(float %x) {
-; CHECK: @test_simplify5
+; CHECK-LABEL: @test_simplify5(
   %retval = call float @powf(float %x, float 0.0)
   ret float %retval
 ; CHECK-NEXT: ret float 1.000000e+00
 }
 
 define double @test_simplify6(double %x) {
-; CHECK: @test_simplify6
+; CHECK-LABEL: @test_simplify6(
   %retval = call double @pow(double %x, double 0.0)
   ret double %retval
 ; CHECK-NEXT: ret double 1.000000e+00
@@ -62,7 +62,7 @@ define double @test_simplify6(double %x) {
 ; Check pow(x, 0.5) -> fabs(sqrt(x)), where x != -infinity.
 
 define float @test_simplify7(float %x) {
-; CHECK: @test_simplify7
+; CHECK-LABEL: @test_simplify7(
   %retval = call float @powf(float %x, float 0.5)
 ; CHECK-NEXT: [[SQRTF:%[a-z0-9]+]] = call float @sqrtf(float %x) [[NUW_RO]]
 ; CHECK-NEXT: [[FABSF:%[a-z0-9]+]] = call float @fabsf(float [[SQRTF]]) [[NUW_RO]]
@@ -73,7 +73,7 @@ define float @test_simplify7(float %x) {
 }
 
 define double @test_simplify8(double %x) {
-; CHECK: @test_simplify8
+; CHECK-LABEL: @test_simplify8(
   %retval = call double @pow(double %x, double 0.5)
 ; CHECK-NEXT: [[SQRT:%[a-z0-9]+]] = call double @sqrt(double %x) [[NUW_RO]]
 ; CHECK-NEXT: [[FABS:%[a-z0-9]+]] = call double @fabs(double [[SQRT]]) [[NUW_RO]]
@@ -86,14 +86,14 @@ define double @test_simplify8(double %x) {
 ; Check pow(-infinity, 0.5) -> +infinity.
 
 define float @test_simplify9(float %x) {
-; CHECK: @test_simplify9
+; CHECK-LABEL: @test_simplify9(
   %retval = call float @powf(float 0xFFF0000000000000, float 0.5)
   ret float %retval
 ; CHECK-NEXT: ret float 0x7FF0000000000000
 }
 
 define double @test_simplify10(double %x) {
-; CHECK: @test_simplify10
+; CHECK-LABEL: @test_simplify10(
   %retval = call double @pow(double 0xFFF0000000000000, double 0.5)
   ret double %retval
 ; CHECK-NEXT: ret double 0x7FF0000000000000
@@ -102,14 +102,14 @@ define double @test_simplify10(double %x) {
 ; Check pow(x, 1.0) -> x.
 
 define float @test_simplify11(float %x) {
-; CHECK: @test_simplify11
+; CHECK-LABEL: @test_simplify11(
   %retval = call float @powf(float %x, float 1.0)
   ret float %retval
 ; CHECK-NEXT: ret float %x
 }
 
 define double @test_simplify12(double %x) {
-; CHECK: @test_simplify12
+; CHECK-LABEL: @test_simplify12(
   %retval = call double @pow(double %x, double 1.0)
   ret double %retval
 ; CHECK-NEXT: ret double %x
@@ -118,7 +118,7 @@ define double @test_simplify12(double %x) {
 ; Check pow(x, 2.0) -> x*x.
 
 define float @test_simplify13(float %x) {
-; CHECK: @test_simplify13
+; CHECK-LABEL: @test_simplify13(
   %retval = call float @powf(float %x, float 2.0)
 ; CHECK-NEXT: [[SQUARE:%[a-z0-9]+]] = fmul float %x, %x
   ret float %retval
@@ -126,7 +126,7 @@ define float @test_simplify13(float %x) {
 }
 
 define double @test_simplify14(double %x) {
-; CHECK: @test_simplify14
+; CHECK-LABEL: @test_simplify14(
   %retval = call double @pow(double %x, double 2.0)
 ; CHECK-NEXT: [[SQUARE:%[a-z0-9]+]] = fmul double %x, %x
   ret double %retval
@@ -136,7 +136,7 @@ define double @test_simplify14(double %x) {
 ; Check pow(x, -1.0) -> 1.0/x.
 
 define float @test_simplify15(float %x) {
-; CHECK: @test_simplify15
+; CHECK-LABEL: @test_simplify15(
   %retval = call float @powf(float %x, float -1.0)
 ; CHECK-NEXT: [[RECIPROCAL:%[a-z0-9]+]] = fdiv float 1.000000e+00, %x
   ret float %retval
@@ -144,7 +144,7 @@ define float @test_simplify15(float %x) {
 }
 
 define double @test_simplify16(double %x) {
-; CHECK: @test_simplify16
+; CHECK-LABEL: @test_simplify16(
   %retval = call double @pow(double %x, double -1.0)
 ; CHECK-NEXT: [[RECIPROCAL:%[a-z0-9]+]] = fdiv double 1.000000e+00, %x
   ret double %retval

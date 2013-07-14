@@ -5,7 +5,7 @@
 ; Transform disabled until PR13021 is fixed.
 
 define i64 @f(i64 %x0) {
-; CHECK: @f
+; CHECK-LABEL: @f(
 ; CHECK-NEXT: mul i64 %x0, 208
 ; CHECK-NEXT: add i64 %{{.*}}, 1617
 ; CHECK-NEXT: ret i64

@@ -17,7 +17,7 @@ bb:             ; preds = %entry
         br label %return
 return:         ; preds = %entry
         ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: load volatile
 }
 
@@ -27,7 +27,7 @@ entry:
         store i32 4,i32* null
         ret void
         
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: call void @llvm.trap
 ; CHECK: unreachable
 }
@@ -38,14 +38,14 @@ entry:
         store volatile i32 4, i32* null
         ret void
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: store volatile i32 4, i32* null
 ; CHECK: ret
 }
 
 ; Check store before unreachable.
 define void @test4(i1 %C, i32* %P) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: entry:
 ; CHECK-NEXT: br i1 %C
 entry:
@@ -59,7 +59,7 @@ F:
 
 ; Check cmpxchg before unreachable.
 define void @test5(i1 %C, i32* %P) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: entry:
 ; CHECK-NEXT: br i1 %C
 entry:
@@ -73,7 +73,7 @@ F:
 
 ; Check atomicrmw before unreachable.
 define void @test6(i1 %C, i32* %P) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: entry:
 ; CHECK-NEXT: br i1 %C
 entry:

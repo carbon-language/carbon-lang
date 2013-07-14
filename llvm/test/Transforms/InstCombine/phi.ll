@@ -15,7 +15,7 @@ BB1:
 
 BB2:
         ret i32 %A
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: BB1:
 ; CHECK-NEXT: ret i32 %A
 }
@@ -31,7 +31,7 @@ BB2:
         ; Combine away PHI nodes with same values
         %B = phi i32 [ %A, %BB0 ], [ %A, %BB1 ]         
         ret i32 %B
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: BB2:
 ; CHECK-NEXT: ret i32 %A
 }
@@ -47,7 +47,7 @@ Loop:
 
 Exit:
         ret i32 %B
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: Exit:
 ; CHECK-NEXT: ret i32 %A
 }
@@ -64,7 +64,7 @@ Loop:           ; preds = %L2, %Loop
 
 L2:             ; preds = %Loop
         br label %Loop
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: Loop:
 ; CHECK-NEXT: br i1 %b
 }
@@ -80,7 +80,7 @@ Loop:           ; preds = %Loop, %BB0
 
 Exit:           ; preds = %Loop
         ret i32 %B
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: Loop:
 ; CHECK-NEXT: br i1 %b
 ; CHECK: Exit:
@@ -100,7 +100,7 @@ BB2:
         ;; Suck casts into phi
         %B = phi i32 [ %X, %BB0 ], [ %Y, %BB1 ]         
         ret i32 %B
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: BB2:
 ; CHECK: zext i16 %A to i32
 ; CHECK-NEXT: ret i32
@@ -118,7 +118,7 @@ Loop:           ; preds = %Loop, %BB0
 
 Exit:           ; preds = %Loop
         ret i32 0
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: Loop:
 ; CHECK-NEXT: br i1 %b
 }
@@ -136,7 +136,7 @@ BB2:
         ;; Suck GEPs into phi
         %B = phi i32* [ %X, %BB0 ], [ %Y, %BB1 ]
         ret i32* %B
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NOT: phi
 ; CHECK: BB2:
 ; CHECK-NEXT: %B = getelementptr { i32, i32 }* %A 
@@ -159,7 +159,7 @@ bb1:
 bb2:
   %E = phi i32 [ %C, %bb ], [ %D, %bb1 ]
   ret i32 %E
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK:       bb2:
 ; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
 ; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 1
@@ -183,7 +183,7 @@ bb1:
 bb2:
   %E = phi i32 [ %C, %bb ], [ %D, %bb1 ]
   ret i32 %E
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK:       bb2:
 ; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
 ; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 16
@@ -219,7 +219,7 @@ end:
   store i32 10, i32* %g
   %z = call i1 @test11a()
   ret i1 %z
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK-NOT: phi i32
 ; CHECK: ret i1 %z
 }
@@ -245,7 +245,7 @@ end:
 
   %tmp2 = add i64 %tmp32, %tmp30
   ret i64 %tmp2
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK-NOT: zext
 ; CHECK: end:
 ; CHECK-NEXT: phi i64 [ 0, %entry ], [ %Val, %two ]
@@ -276,7 +276,7 @@ end:
   
   call void @test13f(double %tmp31, i32 %tmp32)
   ret void
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK-NOT: zext
 ; CHECK: end:
 ; CHECK-NEXT: phi double [ 0.000000e+00, %entry ], [ %Vald, %two ]
@@ -296,7 +296,7 @@ Loop:
 
 Exit:           ; preds = %Loop
         ret i640 %C
-; CHECK: @test14a
+; CHECK-LABEL: @test14a(
 ; CHECK: Loop:
 ; CHECK-NEXT: phi i320
 }
@@ -313,7 +313,7 @@ Loop:
 
 Exit:           ; preds = %Loop
         ret i160 %C
-; CHECK: @test14b
+; CHECK-LABEL: @test14b(
 ; CHECK: Loop:
 ; CHECK-NEXT: phi i160
 }
@@ -321,7 +321,7 @@ Exit:           ; preds = %Loop
 declare i64 @test15a(i64)
 
 define i64 @test15b(i64 %A, i1 %b) {
-; CHECK: @test15b
+; CHECK-LABEL: @test15b(
 entry:
   %i0 = zext i64 %A to i128
   %i1 = shl i128 %i0, 64
@@ -405,7 +405,7 @@ if.else:                                          ; preds = %entry
 
 ; PR4413
 declare i32 @ext()
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 define i32 @test17(i1 %a) {
 entry:
     br i1 %a, label %bb1, label %bb2
@@ -435,7 +435,7 @@ ret:
   %ptr = phi i32* [ %zero, %true ] , [ %one, %false ]
   %isnull = icmp eq i32* %ptr, null
   ret i1 %isnull
-; CHECK: @test18
+; CHECK-LABEL: @test18(
 ; CHECK: ret i1 false
 }
 
@@ -449,7 +449,7 @@ ret:
   %p = phi double [ %x, %true ], [ 0x7FF0000000000000, %false ]; RHS = +infty
   %cmp = fcmp ule double %x, %p
   ret i1 %cmp
-; CHECK: @test19
+; CHECK-LABEL: @test19(
 ; CHECK: ret i1 true
 }
 
@@ -466,7 +466,7 @@ ret:
   %p = phi i32* [ %a, %true ], [ %b, %false ]
   %r = icmp eq i32* %p, %c
   ret i1 %r
-; CHECK: @test20
+; CHECK-LABEL: @test20(
 ; CHECK: ret i1 false
 }
 
@@ -485,12 +485,12 @@ loop:
   br i1 %c2, label %ret, label %loop
 ret:
   ret i1 %r
-; CHECK: @test21
+; CHECK-LABEL: @test21(
 ; CHECK: ret i1 false
 }
 
 define void @test22() {
-; CHECK: @test22
+; CHECK-LABEL: @test22(
 entry:
   br label %loop
 loop:
@@ -518,7 +518,7 @@ Loop:           ; preds = %Loop, %BB0
 Exit:           ; preds = %Loop
         %E = add i32 %B, 19
         ret i32 %E
-; CHECK: @test23
+; CHECK-LABEL: @test23(
 ; CHECK: %phitmp = add i32 %A, 19
 ; CHECK: Loop:
 ; CHECK-NEXT: %B = phi i32 [ %phitmp, %BB0 ], [ 61, %Loop ]
@@ -538,7 +538,7 @@ BB1:
 BB2:
         %C = phi i32 [ %X, %BB0 ], [ %Y, %BB1 ]
         ret i32 %C
-; CHECK: @test24
+; CHECK-LABEL: @test24(
 ; CHECK-NOT: phi
 ; CHECK: BB2:
 ; CHECK-NEXT: %C = add nuw i32 %A, 1
@@ -573,7 +573,7 @@ end:
   store i32 10, i32* %g
   %z = call i1 @test25a()
   ret i1 %z
-; CHECK: @test25
+; CHECK-LABEL: @test25(
 ; CHECK-NOT: phi i32
 ; CHECK: ret i1 %z
 }
@@ -616,12 +616,12 @@ end:
   store i32 10, i32* %g
   %z = call i1 @test26a()
   ret i1 %z
-; CHECK: @test26
+; CHECK-LABEL: @test26(
 ; CHECK-NOT: phi i32
 ; CHECK: ret i1 %z
 }
 
-; CHECK: @test27(
+; CHECK-LABEL: @test27(
 ; CHECK: ret i32 undef
 define i32 @test27(i1 %b) {
 entry:

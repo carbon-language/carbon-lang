@@ -11,7 +11,7 @@ target triple = "i386-apple-darwin"
 ; cannot find a preheader, so they should be expanded in the loop header
 ; (bb7.lr.ph.us) below the existing phi i.12.us.
 ; Currently, LSR won't kick in on such loops.
-; CHECK: @nopreheader
+; CHECK-LABEL: @nopreheader(
 ; CHECK: bb7.us:
 ; CHECK-NOT: phi float*
 ; CHECK: %j.01.us = phi i32
@@ -54,7 +54,7 @@ return:                                           ; preds = %bb9, %bb9.us, %bb10
 ; In this case, SCEVExpander simply cannot materialize the AddRecExpr
 ; that LSR picks. We must detect that %bb8.preheader does not have a
 ; preheader and avoid performing LSR on %bb7.
-; CHECK: @nopreheader2
+; CHECK-LABEL: @nopreheader2(
 ; CHECK: bb7:
 ; CHECK: %indvar = phi i32
 define fastcc void @nopreheader2([200 x i32]* nocapture %Array2) nounwind {

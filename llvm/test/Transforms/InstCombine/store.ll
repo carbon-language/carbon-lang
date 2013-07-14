@@ -5,7 +5,7 @@ define void @test1(i32* %P) {
         store i32 123, i32* undef
         store i32 124, i32* null
         ret void
-; CHECK: @test1(
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: store i32 123, i32* undef
 ; CHECK-NEXT: store i32 undef, i32* null
 ; CHECK-NEXT: ret void
@@ -16,7 +16,7 @@ define void @test2(i32* %P) {
         %Y = add i32 %X, 0              ; <i32> [#uses=1]
         store i32 %Y, i32* %P
         ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: ret void
 }
 
@@ -38,7 +38,7 @@ Cond2:
 Cont:
 	%V = load i32* %A
 	ret i32 %V
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: alloca
 ; CHECK: Cont:
 ; CHECK-NEXT:  %storemerge = phi i32 [ 47, %Cond2 ], [ -987654321, %Cond ]
@@ -58,7 +58,7 @@ Cond:
 Cont:
 	%V = load i32* %A
 	ret i32 %V
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: alloca
 ; CHECK: Cont:
 ; CHECK-NEXT:  %storemerge = phi i32 [ -987654321, %Cond ], [ 47, %0 ]
@@ -76,7 +76,7 @@ Cond:
 
 Cont:
 	ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: Cont:
 ; CHECK-NEXT:  %storemerge = phi i32
 ; CHECK-NEXT:  store i32 %storemerge, i32* %P, align 1
@@ -107,7 +107,7 @@ for.body:                                         ; preds = %for.cond
 
 for.end:                                          ; preds = %for.cond
   ret void
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: for.cond:
 ; CHECK-NEXT: phi i32 [ 42
 ; CHECK-NEXT: store i32 %storemerge, i32* %gi, align 4, !tbaa !0

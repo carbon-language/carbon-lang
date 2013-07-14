@@ -43,7 +43,7 @@ define void @test_simplify3() {
 }
 
 define void @test_nosimplify1(i32 %chr) {
-; CHECK: @test_nosimplify1
+; CHECK-LABEL: @test_nosimplify1(
 ; CHECK: call i8* @strrchr
 ; CHECK: ret void
 

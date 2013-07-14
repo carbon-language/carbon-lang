@@ -5,7 +5,7 @@
 define double @test1() {
   %t = sitofp i32 undef to double
   ret double %t
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret double 0.0
 }
 
@@ -13,7 +13,7 @@ define double @test1() {
 ; rdar://7832370
 ; Check that lots of stuff doesn't get turned into undef.
 define i32 @test2() nounwind readnone ssp {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 init:
   br label %control.outer.outer
 
@@ -110,7 +110,7 @@ bb1:                                              ; preds = %bb1.us-lcssa, %bb1.
 define i32 @test3() {
   %t = xor i32 undef, undef
   ret i32 %t
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i32 0
 }
 
@@ -118,7 +118,7 @@ define i32 @test3() {
 define double @test4(double %x) {
   %t = fadd double %x, undef
   ret double %t
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: fadd double %x, undef
 }
 
@@ -126,7 +126,7 @@ define double @test4(double %x) {
 define i32 @test5() {
   %t = sext i8 undef to i32
   ret i32 %t
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: ret i32 0
 }
 
@@ -134,7 +134,7 @@ define i32 @test5() {
 define i32 @test6() {
   %t = ashr i32 undef, 31
   ret i32 %t
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: ret i32 -1
 }
 
@@ -142,7 +142,7 @@ define i32 @test6() {
 define i32 @test7() {
   %t = lshr i32 undef, 31
   ret i32 %t
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: ret i32 0
 }
 
@@ -150,7 +150,7 @@ define i32 @test7() {
 define i1 @test8() {
   %t = icmp eq i32 undef, -1
   ret i1 %t
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: ret i1 undef
 }
 
@@ -158,7 +158,7 @@ define i1 @test8() {
 define i1 @test9() {
   %t = icmp ugt i32 undef, -1
   ret i1 %t
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK: icmp ugt
 }
 
@@ -167,6 +167,6 @@ define i64 @test10() {
 entry:
   %e = extractvalue { i64, i64 } undef, 1
   ret i64 %e
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: ret i64 undef
 }

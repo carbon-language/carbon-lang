@@ -4,7 +4,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i386-apple-darwin7"
 
 define i32 @test1(i32* %b, i32* %c) nounwind {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
 	%g = alloca i32
 	%t1 = icmp eq i32* %b, null
@@ -36,7 +36,7 @@ bb2:		; preds = %bb1, %bb
 }
 
 define i8 @test2(i1 %cond, i32* %b, i32* %c) nounwind {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 entry:
   br i1 %cond, label %bb, label %bb1
 
@@ -61,7 +61,7 @@ bb2:
 }
 
 define i32 @test3(i1 %cond, i32* %b, i32* %c) nounwind {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 entry:
   br i1 %cond, label %bb, label %bb1
 
@@ -88,7 +88,7 @@ bb2:
 
 ; PR5313
 define i32 @test4(i1 %cond, i32* %b, i32* %c) nounwind {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 entry:
   br i1 %cond, label %bb, label %bb1
 
@@ -121,7 +121,7 @@ bb2:
 ;
 ; Should compile into one load in the loop.
 define void @test5(i32 %N, double* nocapture %G) nounwind ssp {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 bb.nph:
   br label %for.body
 

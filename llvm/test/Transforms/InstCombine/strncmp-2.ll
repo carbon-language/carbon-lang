@@ -9,7 +9,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 declare i16 @strncmp(i8*, i8*, i32)
 
 define i16 @test_nosimplify() {
-; CHECK: @test_nosimplify
+; CHECK-LABEL: @test_nosimplify(
 ; CHECK: call i16 @strncmp
 ; CHECK: ret i16 %temp1
 

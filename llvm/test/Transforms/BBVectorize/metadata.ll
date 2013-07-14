@@ -16,7 +16,7 @@ entry:
   %arrayidx5 = getelementptr inbounds double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: !fpmath
 ; CHECK: ret void
 }
@@ -36,7 +36,7 @@ entry:
   %arrayidx5 = getelementptr inbounds i64* %c, i64 1
   store i64 %mul5, i64* %arrayidx5, align 8
   ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: !range
 ; CHECK: ret void
 }

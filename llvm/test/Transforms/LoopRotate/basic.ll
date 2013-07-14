@@ -5,7 +5,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; PR5319 - The "arrayidx" gep should be hoisted, not duplicated.  We should
 ; end up with one phi node.
 define void @test1() nounwind ssp {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 entry:
   %array = alloca [20 x i32], align 16
   br label %for.cond
@@ -33,7 +33,7 @@ for.end:                                          ; preds = %for.cond
 
 declare void @g(i32*)
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define void @test2() nounwind ssp {
 entry:
   %array = alloca [20 x i32], align 16

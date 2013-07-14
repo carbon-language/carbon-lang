@@ -24,7 +24,7 @@ if.end7:                                          ; preds = %if.else, %if.then4,
   %tmp9 = load i32* %x.0
   ret i32 %tmp9
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: if.else:
 ; CHECK: br label %if.end7
 
@@ -52,7 +52,7 @@ if.end7:                                          ; preds = %if.else, %if.then4,
   %x.0 = phi i32* [ %a, %if.then ], [ null, %if.then4 ], [ null, %if.else ]
   %tmp9 = load i32* %x.0
   ret i32 %tmp9
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: if.else:
 ; CHECK: unreachable
 
@@ -81,7 +81,7 @@ if.end7:                                          ; preds = %if.else, %if.then4,
   tail call void @bar() nounwind
   %tmp9 = load i32* %x.0
   ret i32 %tmp9
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: if.end7:
 ; CHECK: phi i32* [ %a, %if.then ], [ null, %if.then4 ], [ null, %if.else ]
 }
@@ -110,6 +110,6 @@ if.end7:                                          ; preds = %if.else, %if.then4,
   %tmp10 = or i32 %tmp9, 1
   store i32 %tmp10, i32* %gep
   ret i32 %tmp9
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: phi
 }

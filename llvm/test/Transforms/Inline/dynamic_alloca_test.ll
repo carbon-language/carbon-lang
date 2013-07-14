@@ -19,7 +19,7 @@ define internal void @callee(i32 %N) {
 }
 
 define void @foo(i32 %N) {
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: alloca i32, i32 %{{.*}}
 ; CHECK: call i8* @llvm.stacksave()
 ; CHECK: alloca i32, i32 %{{.*}}

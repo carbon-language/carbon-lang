@@ -7,7 +7,7 @@ declare void @foo()
 ; This testcase tests for a problem where LICM hoists 
 ; potentially trapping instructions when they are not guaranteed to execute.
 define i32 @test1(i1 %c) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 	%A = load i32* @X		; <i32> [#uses=2]
 	br label %Loop
 Loop:		; preds = %LoopTail, %0
@@ -34,7 +34,7 @@ declare void @foo2(i32) nounwind
 
 ;; It is ok and desirable to hoist this potentially trapping instruction.
 define i32 @test2(i1 %c) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: load i32* @X
 ; CHECK-NEXT: %B = sdiv i32 4, %A
 	%A = load i32* @X		; <i32> [#uses=2]
@@ -65,7 +65,7 @@ Out:		; preds = %Loop
 	ret i32 %C
 }
 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: call
 ; CHECK: sdiv
 ; CHECK: ret
@@ -91,7 +91,7 @@ for.end:                                          ; preds = %for.body
 declare void @foo_may_call_exit(i32)
 
 ; PR14854
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: extractvalue
 ; CHECK: br label %tailrecurse
 ; CHECK: tailrecurse:

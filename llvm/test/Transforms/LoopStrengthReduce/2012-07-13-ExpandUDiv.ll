@@ -10,7 +10,7 @@ target triple = "x86_64-apple-darwin"
 @g_3 = global i32 0, align 4
 
 ; Ensure that %div.i.i.us is not hoisted.
-; CHECK: @main
+; CHECK-LABEL: @main(
 ; CHECK: for.body.i.i.us:
 ; CHECK: %div.i.i.i.us
 ; CHECK: %cmp5.i.i.us

@@ -29,7 +29,7 @@ entry:
   %1 = load i32* %0, align 4
   ret i32 %1
 
-; CHECK: @f
+; CHECK-LABEL: @f(
 ; Make sure that the load from @ip hasn't been removed.
 ; CHECK: load i32** @ip
 ; CHECK: ret
@@ -46,7 +46,7 @@ entry:
   tail call void @signal() nounwind
   ret void
 
-; CHECK: @g
+; CHECK-LABEL: @g(
 ; Make sure that the store to @ip hasn't been removed.
 ; CHECK: store {{.*}} @ip
 ; CHECK: ret

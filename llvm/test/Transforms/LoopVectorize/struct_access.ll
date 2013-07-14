@@ -21,7 +21,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;   return sum;
 ; }
 
-;CHECK: @foo
+;CHECK-LABEL: @foo(
 ;CHECK-NOT: load <4 x i32>
 ;CHECK: ret
 define i32 @foo(%struct.coordinate* nocapture %A, i32 %n) nounwind uwtable readonly ssp {

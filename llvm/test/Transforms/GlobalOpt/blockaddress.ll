@@ -3,7 +3,7 @@
 @x = internal global i8* zeroinitializer
 
 define void @f() {
-; CHECK: @f
+; CHECK-LABEL: @f(
 
 ; Check that we don't hit an assert in Constant::IsThreadDependent()
 ; when storing this blockaddress into a global.
@@ -13,7 +13,7 @@ define void @f() {
 }
 
 define void @g() {
-; CHECK: @g
+; CHECK-LABEL: @g(
 
 here:
   ret void

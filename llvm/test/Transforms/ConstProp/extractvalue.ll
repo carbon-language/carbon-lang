@@ -5,21 +5,21 @@
 define i32 @test1() {
   %A = extractvalue %struct { i32 2, [4 x i8] c"foo\00" }, 0
   ret i32 %A
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret i32 2
 }
 
 define i8 @test2() {
   %A = extractvalue %struct { i32 2, [4 x i8] c"foo\00" }, 1, 2
   ret i8 %A
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret i8 111
 }
 
 define i32 @test3() {
   %A = extractvalue [3 x %struct] [ %struct { i32 0, [4 x i8] c"aaaa" }, %struct { i32 1, [4 x i8] c"bbbb" }, %struct { i32 2, [4 x i8] c"cccc" } ], 1, 0
   ret i32 %A
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i32 1
 }
 

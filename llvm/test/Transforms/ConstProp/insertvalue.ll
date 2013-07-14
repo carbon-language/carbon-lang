@@ -5,21 +5,21 @@
 define %struct @test1() {
   %A = insertvalue %struct { i32 2, [4 x i8] c"foo\00" }, i32 1, 0
   ret %struct %A
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: ret %struct { i32 1, [4 x i8] c"foo\00" }
 }
 
 define %struct @test2() {
   %A = insertvalue %struct { i32 2, [4 x i8] c"foo\00" }, i8 1, 1, 2
   ret %struct %A
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: ret %struct { i32 2, [4 x i8] c"fo\01\00" }
 }
 
 define [3 x %struct] @test3() {
   %A = insertvalue [3 x %struct] [ %struct { i32 0, [4 x i8] c"aaaa" }, %struct { i32 1, [4 x i8] c"bbbb" }, %struct { i32 2, [4 x i8] c"cccc" } ], i32 -1, 1, 0
   ret [3 x %struct] %A
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK:ret [3 x %struct] [%struct { i32 0, [4 x i8] c"aaaa" }, %struct { i32 -1, [4 x i8] c"bbbb" }, %struct { i32 2, [4 x i8] c"cccc" }]
 }
 

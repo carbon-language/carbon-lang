@@ -52,7 +52,7 @@ UnifiedReturnBlock:		; preds = %cond_next13
 declare void @ext(i32*)
 
 define void @test() {
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: ret
 ;
 ; FIXME: This should be a CHECK-NOT, but currently we have a bug that causes us
@@ -202,7 +202,7 @@ for.cond12.for.inc26_crit_edge.2:
 }
 
 define void @crasher_outer() {
-; CHECK: @crasher_outer
+; CHECK-LABEL: @crasher_outer(
 ; CHECK-NOT: call
 ; CHECK: ret void
 ; CHECK-NOT: ret

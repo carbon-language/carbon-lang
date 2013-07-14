@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; Indvars should be able to fold IV increments into shr when low bits are zero.
 ;
-; CHECK: @foldIncShr
+; CHECK-LABEL: @foldIncShr(
 ; CHECK: shr.1 = lshr i32 %0, 5
 define i32 @foldIncShr(i32* %bitmap, i32 %bit_addr, i32 %nbits) nounwind {
 entry:
@@ -31,7 +31,7 @@ while.end:
 ; Invdars should not fold an increment into shr unless 2^shiftBits is
 ; a multiple of the recurrence step.
 ;
-; CHECK: @noFoldIncShr
+; CHECK-LABEL: @noFoldIncShr(
 ; CHECK: shr.1 = lshr i32 %inc.1, 5
 define i32 @noFoldIncShr(i32* %bitmap, i32 %bit_addr, i32 %nbits) nounwind {
 entry:

@@ -3,7 +3,7 @@
 @glbl = internal global i8* null
 
 define void @test1a() {
-; CHECK: @test1a
+; CHECK-LABEL: @test1a(
 ; CHECK-NOT: store
 ; CHECK-NEXT: ret void
   store i8* null, i8** @glbl
@@ -11,7 +11,7 @@ define void @test1a() {
 }
 
 define void @test1b(i8* %p) {
-; CHECK: @test1b
+; CHECK-LABEL: @test1b(
 ; CHECK-NEXT: store
 ; CHECK-NEXT: ret void
   store i8* %p, i8** @glbl
@@ -19,7 +19,7 @@ define void @test1b(i8* %p) {
 }
 
 define void @test2() {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: alloca i8
   %txt = alloca i8
   call void @foo2(i8* %txt)
@@ -31,7 +31,7 @@ declare i8* @strdup(i8*)
 declare void @foo2(i8*)
 
 define void @test3() uwtable {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: bb1:
 ; CHECK-NOT: bb2:
 ; CHECK: invoke

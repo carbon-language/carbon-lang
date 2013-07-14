@@ -7,7 +7,7 @@ declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 declare void @llvm.memset.p0i8.i8(i8* nocapture, i8, i8, i32, i1) nounwind
 
 define void @test1() {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
   %A = alloca i8
 
   store i8 0, i8* %A  ;; Written to by memset

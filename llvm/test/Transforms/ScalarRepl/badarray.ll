@@ -7,7 +7,7 @@ target triple = "i386-pc-linux-gnu"
 ; PR3466
 ; Off end of array, don't transform.
 define i32 @test1() {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: = alloca
 	%X = alloca [4 x i32]
 	%Y = getelementptr [4 x i32]* %X, i64 0, i64 6		; <i32*> [#uses=2]
@@ -20,7 +20,7 @@ define i32 @test1() {
 ; Off end of array, don't transform.
 define i32 @test2() nounwind {
 entry:
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: = alloca
         %yx2.i = alloca float, align 4          ; <float*> [#uses=1]            
         %yx26.i = bitcast float* %yx2.i to i64*         ; <i64*> [#uses=1]      
@@ -34,7 +34,7 @@ entry:
 ; PR5436
 define void @test3() {
 entry:
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: = alloca
 ; CHECK: store i64
   %var_1 = alloca %padded, align 8                ; <%padded*> [#uses=3]

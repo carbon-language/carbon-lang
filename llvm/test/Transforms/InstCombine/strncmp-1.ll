@@ -12,7 +12,7 @@ declare i32 @strncmp(i8*, i8*, i32)
 
 ; strncmp("", x, n) -> -*x
 define i32 @test1(i8* %str2) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %strcmpload = load i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: %2 = sub i32 0, %1
@@ -25,7 +25,7 @@ define i32 @test1(i8* %str2) {
 
 ; strncmp(x, "", n) -> *x
 define i32 @test2(i8* %str1) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: %strcmpload = load i8* %str1
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: ret i32 %1
@@ -37,7 +37,7 @@ define i32 @test2(i8* %str1) {
 
 ; strncmp(x, y, n)  -> cnst
 define i32 @test3() {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: ret i32 -1
 
   %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
@@ -47,7 +47,7 @@ define i32 @test3() {
 }
 
 define i32 @test4() {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: ret i32 1
 
   %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
@@ -57,7 +57,7 @@ define i32 @test4() {
 }
 
 define i32 @test5() {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: ret i32 0
 
   %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
@@ -68,7 +68,7 @@ define i32 @test5() {
 
 ; strncmp(x,y,1) -> memcmp(x,y,1)
 define i32 @test6(i8* %str1, i8* %str2) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: [[LOAD1:%[a-z]+]] = load i8* %str1, align 1
 ; CHECK: [[ZEXT1:%[a-z]+]] = zext i8 [[LOAD1]] to i32
 ; CHECK: [[LOAD2:%[a-z]+]] = load i8* %str2, align 1
@@ -82,7 +82,7 @@ define i32 @test6(i8* %str1, i8* %str2) {
 
 ; strncmp(x,y,0)   -> 0
 define i32 @test7(i8* %str1, i8* %str2) {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: ret i32 0
 
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 0)
@@ -91,7 +91,7 @@ define i32 @test7(i8* %str1, i8* %str2) {
 
 ; strncmp(x,x,n)  -> 0
 define i32 @test8(i8* %str, i32 %n) {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: ret i32 0
 
   %temp1 = call i32 @strncmp(i8* %str, i8* %str, i32 %n)

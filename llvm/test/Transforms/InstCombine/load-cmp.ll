@@ -10,7 +10,7 @@ define i1 @test1(i32 %X) {
   %Q = load i16* %P
   %R = icmp eq i16 %Q, 0
   ret i1 %R
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NEXT: %R = icmp eq i32 %X, 9
 ; CHECK-NEXT: ret i1 %R
 }
@@ -20,7 +20,7 @@ define i1 @test2(i32 %X) {
   %Q = load i16* %P
   %R = icmp slt i16 %Q, 85
   ret i1 %R
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: %R = icmp ne i32 %X, 4
 ; CHECK-NEXT: ret i1 %R
 }
@@ -30,7 +30,7 @@ define i1 @test3(i32 %X) {
   %Q = load double* %P
   %R = fcmp oeq double %Q, 1.0
   ret i1 %R
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NEXT: %R = icmp eq i32 %X, 1
 ; CHECK-NEXT: ret i1 %R
 }
@@ -40,7 +40,7 @@ define i1 @test4(i32 %X) {
   %Q = load i16* %P
   %R = icmp sle i16 %Q, 73
   ret i1 %R
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NEXT: lshr i32 933, %X
 ; CHECK-NEXT: and i32 {{.*}}, 1
 ; CHECK-NEXT: %R = icmp ne i32 {{.*}}, 0
@@ -52,7 +52,7 @@ define i1 @test4_i16(i16 %X) {
   %Q = load i16* %P
   %R = icmp sle i16 %Q, 73
   ret i1 %R
-; CHECK: @test4_i16
+; CHECK-LABEL: @test4_i16(
 ; CHECK-NEXT: lshr i16 933, %X
 ; CHECK-NEXT: and i16 {{.*}}, 1
 ; CHECK-NEXT: %R = icmp ne i16 {{.*}}, 0
@@ -64,7 +64,7 @@ define i1 @test5(i32 %X) {
   %Q = load i16* %P
   %R = icmp eq i16 %Q, 69
   ret i1 %R
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NEXT: icmp eq i32 %X, 2
 ; CHECK-NEXT: icmp eq i32 %X, 7
 ; CHECK-NEXT: %R = or i1
@@ -76,7 +76,7 @@ define i1 @test6(i32 %X) {
   %Q = load double* %P
   %R = fcmp ogt double %Q, 0.0
   ret i1 %R
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NEXT: add i32 %X, -1
 ; CHECK-NEXT: %R = icmp ult i32 {{.*}}, 3
 ; CHECK-NEXT: ret i1 %R
@@ -87,7 +87,7 @@ define i1 @test7(i32 %X) {
   %Q = load double* %P
   %R = fcmp olt double %Q, 0.0
   ret i1 %R
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NEXT: add i32 %X, -1
 ; CHECK-NEXT: %R = icmp ugt i32 {{.*}}, 2
 ; CHECK-NEXT: ret i1 %R
@@ -99,7 +99,7 @@ define i1 @test8(i32 %X) {
   %R = and i16 %Q, 3
   %S = icmp eq i16 %R, 0
   ret i1 %S
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK-NEXT: and i32 %X, -2
 ; CHECK-NEXT: icmp eq i32 {{.*}}, 8
 ; CHECK-NEXT: ret i1
@@ -117,7 +117,7 @@ define i1 @test9(i32 %X) {
   %Q = load i32* %P
   %R = icmp eq i32 %Q, 1
   ret i1 %R
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NEXT: add i32 %X, -1
 ; CHECK-NEXT: icmp ult i32 {{.*}}, 2
 ; CHECK-NEXT: ret i1

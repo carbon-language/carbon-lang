@@ -25,7 +25,7 @@ return:                                           ; preds = %entry
 }
 
 
-;; CHECK: @bonk
+;; CHECK-LABEL: @bonk(
 ;; CHECK: call void @foo(i32 42)
 define void @bonk() nounwind ssp {
 entry:
@@ -62,7 +62,7 @@ return:                                           ; preds = %entry
 }
 
 
-; CHECK: @top_level
+; CHECK-LABEL: @top_level(
 ; CHECK: call void @f2(i32 122
 ; Here we inline one instance of the cycle, but we don't want to completely
 ; unroll it.
@@ -100,7 +100,7 @@ one.else:
 }
 
 define i32 @fib_caller() {
-; CHECK: @fib_caller
+; CHECK-LABEL: @fib_caller(
 ; CHECK-NOT: call
 ; CHECK: ret
   %f1 = call i32 @fib(i32 0)

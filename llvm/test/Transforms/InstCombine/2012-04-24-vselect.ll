@@ -1,6 +1,6 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
 
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 ; CHECK: <i32 1, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
 
 define <8 x i32> @foo() nounwind {

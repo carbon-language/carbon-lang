@@ -10,7 +10,7 @@ define <2 x i32> @test1() {
   store <2 x i8*> %v3, <2 x i8*>* %v4
   %v5 = load <2 x i32>* %v1
   ret <2 x i32> %v5
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %v1 = alloca <2 x i32>
 ; CHECK: call void @anything(<2 x i32>* %v1)
 ; CHECK: %v2 = load <2 x i32>* %v1

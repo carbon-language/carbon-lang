@@ -9,21 +9,21 @@ declare i32 @isascii(i32)
 ; Check isascii(c) -> c <u 128.
 
 define i32 @test_simplify1() {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %ret = call i32 @isascii(i32 127)
   ret i32 %ret
 ; CHECK-NEXT: ret i32 1
 }
 
 define i32 @test_simplify2() {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %ret = call i32 @isascii(i32 128)
   ret i32 %ret
 ; CHECK-NEXT: ret i32 0
 }
 
 define i32 @test_simplify3(i32 %x) {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %ret = call i32 @isascii(i32 %x)
 ; CHECK-NEXT: [[CMP:%[a-z0-9]+]] = icmp ult i32 %x, 128
 ; CHECK-NEXT: [[ZEXT:%[a-z0-9]+]] = zext i1 [[CMP]] to i32

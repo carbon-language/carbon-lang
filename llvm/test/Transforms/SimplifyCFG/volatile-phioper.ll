@@ -7,7 +7,7 @@
 ; it can no longer use language standard as an excuse. The compiler
 ; needs to expose the volatile access to the platform.
 ;
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK: entry:
 ; CHECK: @Trace
 ; CHECK: while.body:

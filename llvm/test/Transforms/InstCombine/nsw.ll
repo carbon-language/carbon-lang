@@ -1,6 +1,6 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-; CHECK: @sub1
+; CHECK-LABEL: @sub1(
 ; CHECK: %y = sub i32 0, %x
 ; CHECK: %z = sdiv i32 %y, 337
 ; CHECK: ret i32 %z
@@ -10,7 +10,7 @@ define i32 @sub1(i32 %x) {
   ret i32 %z
 }
 
-; CHECK: @sub2
+; CHECK-LABEL: @sub2(
 ; CHECK: %z = sdiv i32 %x, -337
 ; CHECK: ret i32 %z
 define i32 @sub2(i32 %x) {
@@ -19,7 +19,7 @@ define i32 @sub2(i32 %x) {
   ret i32 %z
 }
 
-; CHECK: @shl_icmp
+; CHECK-LABEL: @shl_icmp(
 ; CHECK: %B = icmp eq i64 %X, 0
 ; CHECK: ret i1 %B
 define i1 @shl_icmp(i64 %X) nounwind {
@@ -28,7 +28,7 @@ define i1 @shl_icmp(i64 %X) nounwind {
   ret i1 %B
 }
 
-; CHECK: @shl1
+; CHECK-LABEL: @shl1(
 ; CHECK: %B = shl nuw nsw i64 %A, 8
 ; CHECK: ret i64 %B
 define i64 @shl1(i64 %X, i64* %P) nounwind {
@@ -38,7 +38,7 @@ define i64 @shl1(i64 %X, i64* %P) nounwind {
   ret i64 %B
 }
 
-; CHECK: @preserve1
+; CHECK-LABEL: @preserve1(
 ; CHECK: add nsw i32 %x, 5
 define i32 @preserve1(i32 %x) nounwind {
   %add = add nsw i32 %x, 2
@@ -46,7 +46,7 @@ define i32 @preserve1(i32 %x) nounwind {
   ret i32 %add3
 }
 
-; CHECK: @nopreserve1
+; CHECK-LABEL: @nopreserve1(
 ; CHECK: add i8 %x, -126
 define i8 @nopreserve1(i8 %x) nounwind {
   %add = add nsw i8 %x, 127
@@ -54,7 +54,7 @@ define i8 @nopreserve1(i8 %x) nounwind {
   ret i8 %add3
 }
 
-; CHECK: @nopreserve2
+; CHECK-LABEL: @nopreserve2(
 ; CHECK: add i8 %x, 3
 define i8 @nopreserve2(i8 %x) nounwind {
   %add = add i8 %x, 1
@@ -62,7 +62,7 @@ define i8 @nopreserve2(i8 %x) nounwind {
   ret i8 %add3
 }
 
-; CHECK: @nopreserve3
+; CHECK-LABEL: @nopreserve3(
 ; CHECK: add i8 %A, %B
 ; CHECK: add i8
 define i8 @nopreserve3(i8 %A, i8 %B) nounwind {
@@ -72,7 +72,7 @@ define i8 @nopreserve3(i8 %A, i8 %B) nounwind {
   ret i8 %add
 }
 
-; CHECK: @nopreserve4
+; CHECK-LABEL: @nopreserve4(
 ; CHECK: add i8 %A, %B
 ; CHECK: add i8
 define i8 @nopreserve4(i8 %A, i8 %B) nounwind {

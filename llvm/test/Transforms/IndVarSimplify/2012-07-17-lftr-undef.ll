@@ -2,7 +2,7 @@
 ; PR13371: indvars pass incorrectly substitutes 'undef' values
 ;
 ; LFTR should not user %undef as the loop counter.
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: icmp{{.*}}undef
 @.str3 = private constant [6 x i8] c"%lld\0A\00", align 1
 declare i32 @printf(i8* noalias nocapture, ...) nounwind

@@ -6,7 +6,7 @@ define float @test1(float %x) {
   %mul = fmul float %sub, 2.0e+1
   ret float %mul
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: fmul float %x, -2.000000e+01
 }
 
@@ -16,7 +16,7 @@ define float @test2(float %x) {
   %mul = fmul float %sub, 2.0e+1
   ret float %mul
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: fmul float %x, -2.000000e+01
 }
 
@@ -26,7 +26,7 @@ define float @test3(float %x, float %y) {
   %sub2 = fsub float -0.000000e+00, %y
   %mul = fmul float %sub1, %sub2
   ret float %mul
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: fmul float %x, %y
 }
 
@@ -36,7 +36,7 @@ define float @test4(float %x, float %y) {
   %sub2 = fsub nsz float 0.000000e+00, %y
   %mul = fmul float %sub1, %sub2
   ret float %mul
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK: fmul float %x, %y
 }
 
@@ -45,7 +45,7 @@ define float @test5(float %x, float %y) {
   %sub1 = fsub float -0.000000e+00, %x
   %mul = fmul float %sub1, %y
   ret float %mul
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK: %1 = fmul float %x, %y
 ; CHECK: %mul = fsub float -0.000000e+00, %1
 }
@@ -55,7 +55,7 @@ define float @test6(float %x, float %y) {
   %sub1 = fsub nsz float 0.000000e+00, %x
   %mul = fmul float %sub1, %y
   ret float %mul
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: %1 = fmul float %x, %y
 ; CHECK: %mul = fsub float -0.000000e+00, %1
 }
@@ -67,6 +67,6 @@ define float @test7(float %x, float %y) {
   %mul = fmul float %sub1, %y
   %mul2 = fmul float %mul, %sub1
   ret float %mul2
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: fsub float -0.000000e+00, %x
 }

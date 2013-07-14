@@ -1,7 +1,7 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
 
 ; <rdar://problem/8606771>
-; CHECK: @main
+; CHECK-LABEL: @main(
 define i32 @main(i32 %argc) nounwind ssp {
 entry:
   %tmp3151 = trunc i32 %argc to i8
@@ -23,7 +23,7 @@ entry:
 }
 
 ; rdar://8739316
-; CHECK: @foo
+; CHECK-LABEL: @foo(
 define i8 @foo(i8 %arg, i8 %arg1) nounwind {
 bb:
   %tmp = shl i8 %arg, 7

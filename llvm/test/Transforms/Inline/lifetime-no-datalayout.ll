@@ -10,7 +10,7 @@ define void @helper() {
 
 ; Size in llvm.lifetime.X should be -1 (unknown).
 define void @test() {
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: lifetime
 ; CHECK: llvm.lifetime.start(i64 -1
 ; CHECK-NOT: lifetime

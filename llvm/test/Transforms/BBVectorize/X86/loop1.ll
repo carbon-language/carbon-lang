@@ -7,8 +7,8 @@ target triple = "x86_64-unknown-linux-gnu"
 define void @test1(double* noalias %out, double* noalias %in1, double* noalias %in2) nounwind uwtable {
 entry:
   br label %for.body
-; CHECK: @test1
-; CHECK-UNRL: @test1
+; CHECK-LABEL: @test1(
+; CHECK-UNRL-LABEL: @test1(
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]

@@ -17,7 +17,7 @@ else:
 end:
   ret i32 2
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: then:
 ; CHECK-NEXT: br i1 false, label %end, label %else
 }
@@ -37,12 +37,12 @@ else:
 end:
   ret i32 2
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: then:
 ; CHECK-NEXT: br i1 false, label %end, label %else
 }
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 define i32 @test3(i32 %c) nounwind {
   %cmp = icmp slt i32 %c, 2
   br i1 %cmp, label %if.then, label %if.end
@@ -71,7 +71,7 @@ if.end8:
   ret i32 4
 }
 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 define i32 @test4(i32 %c) nounwind {
   switch i32 %c, label %sw.default [
     i32 1, label %sw.bb
@@ -99,7 +99,7 @@ return:
   ret i32 %retval.0
 }
 
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 define i1 @test5(i32 %c) nounwind {
   %cmp = icmp slt i32 %c, 5
   br i1 %cmp, label %if.then, label %if.end
@@ -121,7 +121,7 @@ if.end8:
   ret i1 %cmp2
 }
 
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 define i1 @test6(i32 %c) nounwind {
   %cmp = icmp ule i32 %c, 7
   br i1 %cmp, label %if.then, label %if.end
@@ -143,7 +143,7 @@ sw.bb:
   ret i1 %cmp2
 }
 
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 define i1 @test7(i32 %c) nounwind {
 entry:
  switch i32 %c, label %sw.default [

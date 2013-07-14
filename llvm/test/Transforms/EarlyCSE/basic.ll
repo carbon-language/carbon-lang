@@ -1,7 +1,7 @@
 ; RUN: opt < %s -S -early-cse | FileCheck %s
 
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 define void @test1(i8 %V, i32 *%P) {
   %A = bitcast i64 42 to double  ;; dead
   %B = add i32 4, 19             ;; constant folds
@@ -33,7 +33,7 @@ define void @test1(i8 %V, i32 *%P) {
 
 
 ;; Simple load value numbering.
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 define i32 @test2(i32 *%P) {
   %V1 = load i32* %P
   %V2 = load i32* %P
@@ -43,7 +43,7 @@ define i32 @test2(i32 *%P) {
 }
 
 ;; Cross block load value numbering.
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 define i32 @test3(i32 *%P, i1 %Cond) {
   %V1 = load i32* %P
   br i1 %Cond, label %T, label %F
@@ -59,7 +59,7 @@ F:
 }
 
 ;; Cross block load value numbering stops when stores happen.
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 define i32 @test4(i32 *%P, i1 %Cond) {
   %V1 = load i32* %P
   br i1 %Cond, label %T, label %F
@@ -79,7 +79,7 @@ F:
 declare i32 @func(i32 *%P) readonly
 
 ;; Simple call CSE'ing.
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 define i32 @test5(i32 *%P) {
   %V1 = call i32 @func(i32* %P)
   %V2 = call i32 @func(i32* %P)
@@ -89,7 +89,7 @@ define i32 @test5(i32 *%P) {
 }
 
 ;; Trivial Store->load forwarding
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 define i32 @test6(i32 *%P) {
   store i32 42, i32* %P
   %V1 = load i32* %P
@@ -98,7 +98,7 @@ define i32 @test6(i32 *%P) {
 }
 
 ;; Trivial dead store elimination.
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 define void @test7(i32 *%P) {
   store i32 42, i32* %P
   store i32 45, i32* %P
@@ -108,7 +108,7 @@ define void @test7(i32 *%P) {
 }
 
 ;; Readnone functions aren't invalidated by stores.
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 define i32 @test8(i32 *%P) {
   %V1 = call i32 @func(i32* %P) readnone
   store i32 4, i32* %P

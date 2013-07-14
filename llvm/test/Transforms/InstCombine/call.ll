@@ -130,7 +130,7 @@ define i8* @test9(i8* %arg, i8* %tmp3) nounwind ssp noredzone {
 entry:
   %call = call i8* bitcast (i8* (i8*, i8*, ...)* @test9x to i8* (i8*, i8*)*)(i8* %arg, i8* %tmp3) noredzone
   ret i8* %call
-; CHECK: @test9(
+; CHECK-LABEL: @test9(
 ; CHECK: call i8* bitcast
 }
 

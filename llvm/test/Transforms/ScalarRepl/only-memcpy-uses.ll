@@ -4,7 +4,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 %struct.S = type { [12 x i32] }
 
-; CHECK: @bar4
+; CHECK-LABEL: @bar4(
 define void @bar4(%struct.S* byval %s) nounwind ssp {
 entry:
 ; CHECK: alloca

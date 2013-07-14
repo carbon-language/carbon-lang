@@ -26,7 +26,7 @@ return:
   %retval.0 = phi i32 [ 15, %sw.default ], [ 1, %sw.bb6 ], [ 62, %sw.bb5 ], [ 27, %sw.bb4 ], [ -1, %sw.bb3 ], [ 0, %sw.bb2 ], [ 123, %sw.bb1 ], [ 55, %entry ]
   ret i32 %retval.0
 
-; CHECK: @f
+; CHECK-LABEL: @f(
 ; CHECK-NOT: getelementptr
 ; CHECK: switch i32 %c
 }

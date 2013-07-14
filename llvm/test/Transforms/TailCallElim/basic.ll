@@ -98,7 +98,7 @@ cond_false:
 ;
 ; rdar://14324281.
 define void @test6(i32* %a, i32* %b) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NOT: tail call
 ; CHECK: ret void
   %c = alloca [100 x i8], align 16
@@ -112,7 +112,7 @@ define void @test6(i32* %a, i32* %b) {
 ; rdar://14324281
 define void @test7(i32* %a, i32* %b) nounwind uwtable {
 entry:
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK-NOT: tail call
 ; CHECK: ret void
   %c = alloca [100 x i8], align 16

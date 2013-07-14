@@ -16,7 +16,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base, i8 0, i64 %Size, i32 1, i1 false)
 ; CHECK-NOT: store
 }
@@ -39,7 +39,7 @@ for.body.cont:
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test1a
+; CHECK-LABEL: @test1a(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base, i8 0, i64 %Size, i32 1, i1 false)
 ; CHECK-NOT: store
 }
@@ -60,7 +60,7 @@ for.body:                                         ; preds = %entry, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK: br i1 %cmp10,
 ; CHECK: %0 = mul i64 %Size, 4
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base1, i8 1, i64 %0, i32 4, i1 false)
@@ -85,7 +85,7 @@ for.body:                                         ; preds = %entry, %for.body
 
 for.end:                                          ; preds = %entry
   ret void
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: memset
 ; CHECK: ret void
 }
@@ -111,7 +111,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK-TODO: @test4
+; CHECK-TODO-LABEL: @test4(
 ; CHECK-TODO: call void @llvm.memset.p0i8.i64(i8* %Base, i8 0, i64 100, i32 1, i1 false)
 ; CHECK-TODO-NOT: store
 }
@@ -133,7 +133,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NOT: memset
 ; CHECK: ret void
 }
@@ -158,7 +158,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %Dest, i8* %Base, i64 %Size, i32 1, i1 false)
 ; CHECK-NOT: store
 ; CHECK: ret void
@@ -183,7 +183,7 @@ for.body.cont:
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %Base, i8 0, i64 %Size, i32 1, i1 false)
 ; CHECK-NOT: store
 }
@@ -203,7 +203,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 ; CHECK: store i64 0, i64* %PI
 }
 
@@ -235,7 +235,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
 
 for.end:                                          ; preds = %for.body, %entry
   ret void
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NOT: llvm.memcpy
 ; CHECK: ret void
 }
@@ -267,7 +267,7 @@ for.inc10:                                        ; preds = %for.body5
 
 for.end13:                                        ; preds = %for.inc10
   ret void
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK: entry:
 ; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %X, i8 0, i64 10000, i32 1, i1 false)
 ; CHECK-NOT: store
@@ -291,7 +291,7 @@ for.body:                                         ; preds = %entry, %for.body
 
 for.end:                                          ; preds = %for.body
   ret void
-; CHECK: @test11_pattern
+; CHECK-LABEL: @test11_pattern(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: memset_pattern
@@ -314,7 +314,7 @@ for.body:                                         ; preds = %entry, %for.body
 
 for.end:                                          ; preds = %for.body
   ret void
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* %P1, i8 0, i64 80000, i32 4, i1 false)
@@ -340,7 +340,7 @@ for.body:                                         ; preds = %entry, %for.body
 
 for.end:                                          ; preds = %for.body
   ret void
-; CHECK: @test13_pattern
+; CHECK-LABEL: @test13_pattern(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: memset_pattern
@@ -375,7 +375,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
 for.end:                                          ; preds = %for.inc
   %tmp8 = load i32* getelementptr inbounds ([7 x i32]* @g_50, i32 0, i64 6), align 4
   ret i32 %tmp8
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK: for.body:
 ; CHECK: load i32
 ; CHECK: store i32
@@ -389,7 +389,7 @@ define void @PR14241(i32* %s, i64 %size) {
 ; instead of a memmove. If we get the memmove transform back, this will catch
 ; regressions.
 ;
-; CHECK: @PR14241
+; CHECK-LABEL: @PR14241(
 
 entry:
   %end.idx = add i64 %size, -1

@@ -8,7 +8,7 @@ target triple = "thumbv7-apple-ios3.0.0"
 @a = common global [2048 x i32] zeroinitializer, align 16
 
 ; Select VF = 8;
-;CHECK: @example1
+;CHECK-LABEL: @example1(
 ;CHECK: load <4 x i32>
 ;CHECK: add nsw <4 x i32>
 ;CHECK: store <4 x i32>
@@ -34,7 +34,7 @@ define void @example1() nounwind uwtable ssp {
   ret void
 }
 
-;CHECK: @example10b
+;CHECK-LABEL: @example10b(
 ;CHECK: load <4 x i16>
 ;CHECK: sext <4 x i16>
 ;CHECK: store <4 x i32>

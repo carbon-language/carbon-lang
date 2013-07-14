@@ -7,7 +7,7 @@ declare void @llvm.lifetime.start(i64, i8* nocapture)
 declare void @llvm.lifetime.end(i64, i8* nocapture)
 
 define i32 @test0() {
-; CHECK: @test0
+; CHECK-LABEL: @test0(
 ; CHECK-NOT: alloca
 ; CHECK: ret i32
 
@@ -37,7 +37,7 @@ entry:
 }
 
 define i32 @test1() {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: alloca
 ; CHECK: ret i32 0
 
@@ -50,7 +50,7 @@ entry:
 }
 
 define i64 @test2(i64 %X) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: alloca
 ; CHECK: ret i64 %X
 
@@ -66,7 +66,7 @@ L2:
 }
 
 define void @test3(i8* %dst, i8* %src) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 
 entry:
   %a = alloca [300 x i8]
@@ -302,7 +302,7 @@ entry:
 }
 
 define void @test4(i8* %dst, i8* %src) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 
 entry:
   %a = alloca [100 x i8]
@@ -408,7 +408,7 @@ declare void @llvm.memmove.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32,
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
 define i16 @test5() {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NOT: alloca float
 ; CHECK:      %[[cast:.*]] = bitcast float 0.0{{.*}} to i32
 ; CHECK-NEXT: %[[shr:.*]] = lshr i32 %[[cast]], 16
@@ -426,7 +426,7 @@ entry:
 }
 
 define i32 @test6() {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK: alloca i32
 ; CHECK-NEXT: store volatile i32
 ; CHECK-NEXT: load i32*
@@ -442,7 +442,7 @@ entry:
 }
 
 define void @test7(i8* %src, i8* %dst) {
-; CHECK: @test7
+; CHECK-LABEL: @test7(
 ; CHECK: alloca i32
 ; CHECK-NEXT: bitcast i8* %src to i32*
 ; CHECK-NEXT: load volatile i32*
@@ -465,7 +465,7 @@ entry:
 %S2 = type { %S1*, %S2* }
 
 define %S2 @test8(%S2* %s2) {
-; CHECK: @test8
+; CHECK-LABEL: @test8(
 entry:
   %new = alloca %S2
 ; CHECK-NOT: alloca
@@ -503,7 +503,7 @@ define i64 @test9() {
 ; weird bit casts and types. This is valid IR due to the alignment and masking
 ; off the bits past the end of the alloca.
 ;
-; CHECK: @test9
+; CHECK-LABEL: @test9(
 ; CHECK-NOT: alloca
 ; CHECK:      %[[b2:.*]] = zext i8 26 to i64
 ; CHECK-NEXT: %[[s2:.*]] = shl i64 %[[b2]], 16
@@ -535,7 +535,7 @@ entry:
 }
 
 define %S2* @test10() {
-; CHECK: @test10
+; CHECK-LABEL: @test10(
 ; CHECK-NOT: alloca %S2*
 ; CHECK: ret %S2* null
 
@@ -549,7 +549,7 @@ entry:
 }
 
 define i32 @test11() {
-; CHECK: @test11
+; CHECK-LABEL: @test11(
 ; CHECK-NOT: alloca
 ; CHECK: ret i32 0
 
@@ -574,7 +574,7 @@ define i8 @test12() {
 ; We fully promote these to the i24 load or store size, resulting in just masks
 ; and other operations that instcombine will fold, but no alloca.
 ;
-; CHECK: @test12
+; CHECK-LABEL: @test12(
 
 entry:
   %a = alloca [3 x i8]
@@ -630,7 +630,7 @@ entry:
 define i32 @test13() {
 ; Ensure we don't crash and handle undefined loads that straddle the end of the
 ; allocation.
-; CHECK: @test13
+; CHECK-LABEL: @test13(
 ; CHECK:      %[[value:.*]] = zext i8 0 to i16
 ; CHECK-NEXT: %[[ret:.*]] = zext i16 %[[value]] to i32
 ; CHECK-NEXT: ret i32 %[[ret]]
@@ -657,7 +657,7 @@ define void @test14(...) nounwind uwtable {
 ; also gain enough data to prove they must be dead allocas due to GEPs that walk
 ; across two adjacent allocas. Test that we don't try to promote or otherwise
 ; do bad things to these dead allocas, they should just be removed.
-; CHECK: @test14
+; CHECK-LABEL: @test14(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: ret void
 
@@ -688,7 +688,7 @@ define i32 @test15(i1 %flag) nounwind uwtable {
 ; Ensure that when there are dead instructions using an alloca that are not
 ; loads or stores we still delete them during partitioning and rewriting.
 ; Otherwise we'll go to promote them while thy still have unpromotable uses.
-; CHECK: @test15
+; CHECK-LABEL: @test15(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   br label %loop
 ; CHECK:      loop:
@@ -731,7 +731,7 @@ loop:
 
 define void @test16(i8* %src, i8* %dst) {
 ; Ensure that we can promote an alloca of [3 x i8] to an i24 SSA value.
-; CHECK: @test16
+; CHECK-LABEL: @test16(
 ; CHECK-NOT: alloca
 ; CHECK:      %[[srccast:.*]] = bitcast i8* %src to i24*
 ; CHECK-NEXT: load i24* %[[srccast]]
@@ -752,7 +752,7 @@ entry:
 define void @test17(i8* %src, i8* %dst) {
 ; Ensure that we can rewrite unpromotable memcpys which extend past the end of
 ; the alloca.
-; CHECK: @test17
+; CHECK-LABEL: @test17(
 ; CHECK:      %[[a:.*]] = alloca [3 x i8]
 ; CHECK-NEXT: %[[ptr:.*]] = getelementptr [3 x i8]* %[[a]], i32 0, i32 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[ptr]], i8* %src,
@@ -771,7 +771,7 @@ define void @test18(i8* %src, i8* %dst, i32 %size) {
 ; Preserve transfer instrinsics with a variable size, even if they overlap with
 ; fixed size operations. Further, continue to split and promote allocas preceding
 ; the variable sized intrinsic.
-; CHECK: @test18
+; CHECK-LABEL: @test18(
 ; CHECK:      %[[a:.*]] = alloca [34 x i8]
 ; CHECK:      %[[srcgep1:.*]] = getelementptr inbounds i8* %src, i64 4
 ; CHECK-NEXT: %[[srccast1:.*]] = bitcast i8* %[[srcgep1]] to i32*
@@ -810,7 +810,7 @@ define i32 @test19(%opaque* %x) {
 ; pointers in such a way that we try to GEP through the opaque type. Previously,
 ; a check for an unsized type was missing and this crashed. Ensure it behaves
 ; reasonably now.
-; CHECK: @test19
+; CHECK-LABEL: @test19(
 ; CHECK-NOT: alloca
 ; CHECK: ret i32 undef
 
@@ -827,7 +827,7 @@ entry:
 define i32 @test20() {
 ; Ensure we can track negative offsets (before the beginning of the alloca) and
 ; negative relative offsets from offsets starting past the end of the alloca.
-; CHECK: @test20
+; CHECK-LABEL: @test20(
 ; CHECK-NOT: alloca
 ; CHECK: %[[sum1:.*]] = add i32 1, 2
 ; CHECK: %[[sum2:.*]] = add i32 %[[sum1]], 3
@@ -858,7 +858,7 @@ define i8 @test21() {
 ; Test allocations and offsets which border on overflow of the int64_t used
 ; internally. This is really awkward to really test as LLVM doesn't really
 ; support such extreme constructs cleanly.
-; CHECK: @test21
+; CHECK-LABEL: @test21(
 ; CHECK-NOT: alloca
 ; CHECK: or i8 -1, -1
 
@@ -926,7 +926,7 @@ define void @PR13990() {
 ; Ensure we can handle cases where processing one alloca causes the other
 ; alloca to become dead and get deleted. This might crash or fail under
 ; Valgrind if we regress.
-; CHECK: @PR13990
+; CHECK-LABEL: @PR13990(
 ; CHECK-NOT: alloca
 ; CHECK: unreachable
 ; CHECK: unreachable
@@ -955,7 +955,7 @@ define double @PR13969(double %x) {
 ; Check that we detect when promotion will un-escape an alloca and iterate to
 ; re-try running SROA over that alloca. Without that, the two allocas that are
 ; stored into a dead alloca don't get rewritten and promoted.
-; CHECK: @PR13969
+; CHECK-LABEL: @PR13969(
 
 entry:
   %a = alloca double
@@ -982,7 +982,7 @@ define void @PR14034() {
 ; This test case tries to form GEPs into the empty leading struct members, and
 ; subsequently crashed (under valgrind) before we fixed the PR. The important
 ; thing is to handle empty structs gracefully.
-; CHECK: @PR14034
+; CHECK-LABEL: @PR14034(
 
 entry:
   %a = alloca %PR14034.struct
@@ -998,7 +998,7 @@ entry:
 define i32 @test22(i32 %x) {
 ; Test that SROA and promotion is not confused by a grab bax mixture of pointer
 ; types involving wrapper aggregates and zero-length aggregate members.
-; CHECK: @test22
+; CHECK-LABEL: @test22(
 
 entry:
   %a1 = alloca { { [1 x { i32 }] } }
@@ -1134,7 +1134,7 @@ define void @PR14105({ [16 x i8] }* %ptr) {
 ; Ensure that when rewriting the GEP index '-1' for this alloca we preserve is
 ; sign as negative. We use a volatile memcpy to ensure promotion never actually
 ; occurs.
-; CHECK: @PR14105
+; CHECK-LABEL: @PR14105(
 
 entry:
   %a = alloca { [16 x i8] }, align 8
@@ -1153,7 +1153,7 @@ entry:
 define void @PR14465() {
 ; Ensure that we don't crash when analyzing a alloca larger than the maximum
 ; integer type width (MAX_INT_BITS) supported by llvm (1048576*32 > (1<<23)-1).
-; CHECK: @PR14465
+; CHECK-LABEL: @PR14465(
 
   %stack = alloca [1048576 x i32], align 16
 ; CHECK: alloca [1048576 x i32]
@@ -1170,7 +1170,7 @@ define void @PR14548(i1 %x) {
 ; iteratively.
 ; Note that we don't do a particularly good *job* of handling these mixtures,
 ; but the hope is that this is very rare.
-; CHECK: @PR14548
+; CHECK-LABEL: @PR14548(
 
 entry:
   %a = alloca <{ i1 }>, align 8
@@ -1232,7 +1232,7 @@ entry:
 define i32 @PR14601(i32 %x) {
 ; Don't try to form a promotable integer alloca when there is a variable length
 ; memory intrinsic.
-; CHECK: @PR14601
+; CHECK-LABEL: @PR14601(
 
 entry:
   %a = alloca i32
@@ -1250,7 +1250,7 @@ define void @PR15674(i8* %data, i8* %src, i32 %size) {
 ; beginning of the array. Ensure that the final integer store, despite being
 ; convertable to the integer type that we end up promoting this alloca toward,
 ; doesn't get widened to a full alloca store.
-; CHECK: @PR15674
+; CHECK-LABEL: @PR15674(
 
 entry:
   %tmp = alloca [4 x i8], align 1
@@ -1307,7 +1307,7 @@ end:
 }
 
 define void @PR15805(i1 %a, i1 %b) {
-; CHECK: @PR15805
+; CHECK-LABEL: @PR15805(
 ; CHECK: select i1 undef, i64* %c, i64* %c
 ; CHECK: ret void
 

@@ -3,7 +3,7 @@
 
 ; Reassociate should clear optional flags like nsw when reassociating.
 
-; CHECK: @test0
+; CHECK-LABEL: @test0(
 ; CHECK: %y = add i64 %b, %a
 ; CHECK: %z = add i64 %y, %c
 define i64 @test0(i64 %a, i64 %b, i64 %c) {
@@ -12,7 +12,7 @@ define i64 @test0(i64 %a, i64 %b, i64 %c) {
   ret i64 %z
 }
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: %y = add i64 %b, %a
 ; CHECK: %z = add i64 %y, %c
 define i64 @test1(i64 %a, i64 %b, i64 %c) {

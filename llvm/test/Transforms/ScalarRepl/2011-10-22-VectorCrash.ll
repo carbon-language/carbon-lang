@@ -4,7 +4,7 @@ target triple = "thumbv7-apple-ios5.0.0"
 
 %union.anon = type { <4 x float> }
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NOT: alloca
 
 define void @test() nounwind {

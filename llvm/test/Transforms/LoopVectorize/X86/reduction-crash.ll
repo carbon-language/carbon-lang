@@ -5,7 +5,7 @@ target triple = "i386-apple-darwin"
 
 ; PR15344
 define void @test1(float* nocapture %arg, i32 %arg1) nounwind {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK: preheader
 ; CHECK: insertelement <2 x double> zeroinitializer, double %tmp, i32 0
 ; CHECK: vector.memcheck

@@ -12,7 +12,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 ; Check cases where dstlen >= len
 
 define void @test_simplify1() {
-; CHECK: @test_simplify1
+; CHECK-LABEL: @test_simplify1(
   %dst = getelementptr inbounds [60 x i8]* @a, i32 0, i32 0
   %src = getelementptr inbounds [12 x i8]* @.str, i32 0, i32 0
 
@@ -22,7 +22,7 @@ define void @test_simplify1() {
 }
 
 define void @test_simplify2() {
-; CHECK: @test_simplify2
+; CHECK-LABEL: @test_simplify2(
   %dst = getelementptr inbounds [60 x i8]* @a, i32 0, i32 0
   %src = getelementptr inbounds [12 x i8]* @.str, i32 0, i32 0
 
@@ -32,7 +32,7 @@ define void @test_simplify2() {
 }
 
 define void @test_simplify3() {
-; CHECK: @test_simplify3
+; CHECK-LABEL: @test_simplify3(
   %dst = getelementptr inbounds [60 x i8]* @a, i32 0, i32 0
   %src = getelementptr inbounds [60 x i8]* @b, i32 0, i32 0
 
@@ -44,7 +44,7 @@ define void @test_simplify3() {
 ; Check cases where dstlen < len
 
 define void @test_no_simplify1() {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %dst = getelementptr inbounds [60 x i8]* @a, i32 0, i32 0
   %src = getelementptr inbounds [12 x i8]* @.str, i32 0, i32 0
 
@@ -54,7 +54,7 @@ define void @test_no_simplify1() {
 }
 
 define void @test_no_simplify2() {
-; CHECK: @test_no_simplify2
+; CHECK-LABEL: @test_no_simplify2(
   %dst = getelementptr inbounds [60 x i8]* @a, i32 0, i32 0
   %src = getelementptr inbounds [60 x i8]* @b, i32 0, i32 0
 

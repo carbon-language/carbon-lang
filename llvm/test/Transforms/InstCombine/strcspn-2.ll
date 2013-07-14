@@ -11,7 +11,7 @@ declare double @strcspn(i8*, i8*)
 ; Check that strcspn functions with the wrong prototype aren't simplified.
 
 define double @test_no_simplify1(i8* %pat) {
-; CHECK: @test_no_simplify1
+; CHECK-LABEL: @test_no_simplify1(
   %str = getelementptr [1 x i8]* @null, i32 0, i32 0
 
   %ret = call double @strcspn(i8* %str, i8* %pat)

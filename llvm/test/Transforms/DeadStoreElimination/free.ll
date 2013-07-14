@@ -5,7 +5,7 @@ target datalayout = "e-p:64:64:64"
 declare void @free(i8* nocapture)
 declare noalias i8* @malloc(i64)
 
-; CHECK: @test
+; CHECK-LABEL: @test(
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: @free
 ; CHECK-NEXT: ret void
@@ -17,7 +17,7 @@ define void @test(i32* %Q, i32* %P) {
         ret void
 }
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: @free
 ; CHECK-NEXT: ret void
@@ -29,7 +29,7 @@ define void @test2({i32, i32}* %P) {
 	ret void
 }
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: store
 ; CHECK: ret void
 define void @test3() {
@@ -42,7 +42,7 @@ define void @test3() {
 }
 
 ; PR11240
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: store
 ; CHECK: ret void
 define void @test4(i1 %x) nounwind {
@@ -59,7 +59,7 @@ skipinit1:
   ret void
 }
 
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 define void @test5() {
   br label %bb
 

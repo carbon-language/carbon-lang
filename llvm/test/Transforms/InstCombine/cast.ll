@@ -326,7 +326,7 @@ define i16 @test39(i16 %a) {
         %tmp.upgrd.32 = or i32 %tmp21, %tmp5
         %tmp.upgrd.3 = trunc i32 %tmp.upgrd.32 to i16
         ret i16 %tmp.upgrd.3
-; CHECK: @test39
+; CHECK-LABEL: @test39(
 ; CHECK: %tmp.upgrd.32 = call i16 @llvm.bswap.i16(i16 %a)
 ; CHECK: ret i16 %tmp.upgrd.32
 }
@@ -338,7 +338,7 @@ define i16 @test40(i16 %a) {
         %tmp.upgrd.32 = or i32 %tmp21, %tmp5
         %tmp.upgrd.3 = trunc i32 %tmp.upgrd.32 to i16
         ret i16 %tmp.upgrd.3
-; CHECK: @test40
+; CHECK-LABEL: @test40(
 ; CHECK: %tmp21 = lshr i16 %a, 9
 ; CHECK: %tmp5 = shl i16 %a, 8
 ; CHECK: %tmp.upgrd.32 = or i16 %tmp21, %tmp5
@@ -350,7 +350,7 @@ define i32* @test41(i32* %tmp1) {
         %tmp64 = bitcast i32* %tmp1 to { i32 }*
         %tmp65 = getelementptr { i32 }* %tmp64, i32 0, i32 0
         ret i32* %tmp65
-; CHECK: @test41
+; CHECK-LABEL: @test41(
 ; CHECK: ret i32* %tmp1
 }
 
@@ -358,7 +358,7 @@ define i32 @test42(i32 %X) {
         %Y = trunc i32 %X to i8         ; <i8> [#uses=1]
         %Z = zext i8 %Y to i32          ; <i32> [#uses=1]
         ret i32 %Z
-; CHECK: @test42
+; CHECK-LABEL: @test42(
 ; CHECK: %Z = and i32 %X, 255
 }
 
@@ -368,7 +368,7 @@ define zeroext i64 @test43(i8 zeroext %on_off) nounwind readonly {
 	%B = add i32 %A, -1
 	%C = sext i32 %B to i64
 	ret i64 %C  ;; Should be (add (zext i8 -> i64), -1)
-; CHECK: @test43
+; CHECK-LABEL: @test43(
 ; CHECK-NEXT: %A = zext i8 %on_off to i64
 ; CHECK-NEXT: %B = add i64 %A, -1
 ; CHECK-NEXT: ret i64 %B
@@ -379,7 +379,7 @@ define i64 @test44(i8 %T) {
  %B = or i16 %A, 1234
  %C = zext i16 %B to i64
  ret i64 %C
-; CHECK: @test44
+; CHECK-LABEL: @test44(
 ; CHECK-NEXT: %A = zext i8 %T to i64
 ; CHECK-NEXT: %B = or i64 %A, 1234
 ; CHECK-NEXT: ret i64 %B
@@ -391,7 +391,7 @@ define i64 @test45(i8 %A, i64 %Q) {
  %C = or i32 %B, %D
  %E = zext i32 %C to i64 
  ret i64 %E
-; CHECK: @test45
+; CHECK-LABEL: @test45(
 ; CHECK-NEXT: %B = sext i8 %A to i64
 ; CHECK-NEXT: %C = or i64 %B, %Q
 ; CHECK-NEXT: %E = and i64 %C, 4294967295
@@ -405,7 +405,7 @@ define i64 @test46(i64 %A) {
  %D = shl i32 %C, 8
  %E = zext i32 %D to i64 
  ret i64 %E
-; CHECK: @test46
+; CHECK-LABEL: @test46(
 ; CHECK-NEXT: %C = shl i64 %A, 8
 ; CHECK-NEXT: %D = and i64 %C, 10752
 ; CHECK-NEXT: ret i64 %D
@@ -416,7 +416,7 @@ define i64 @test47(i8 %A) {
  %C = or i32 %B, 42
  %E = zext i32 %C to i64 
  ret i64 %E
-; CHECK: @test47
+; CHECK-LABEL: @test47(
 ; CHECK-NEXT:   %B = sext i8 %A to i64
 ; CHECK-NEXT: %C = and i64 %B, 4294967253
 ; CHECK-NEXT:  %E = or i64 %C, 42
@@ -430,7 +430,7 @@ define i64 @test48(i8 %A, i8 %a) {
   %D = or i32 %C, %b
   %E = zext i32 %D to i64
   ret i64 %E
-; CHECK: @test48
+; CHECK-LABEL: @test48(
 ; CHECK-NEXT: %b = zext i8 %a to i64
 ; CHECK-NEXT: %B = zext i8 %A to i64
 ; CHECK-NEXT: %C = shl nuw nsw i64 %B, 8
@@ -443,7 +443,7 @@ define i64 @test49(i64 %A) {
  %C = or i32 %B, 1
  %D = sext i32 %C to i64 
  ret i64 %D
-; CHECK: @test49
+; CHECK-LABEL: @test49(
 ; CHECK-NEXT: %C = shl i64 %A, 32
 ; CHECK-NEXT: ashr exact i64 %C, 32
 ; CHECK-NEXT: %D = or i64 {{.*}}, 1
@@ -456,7 +456,7 @@ define i64 @test50(i64 %A) {
   %D = add i32 %B, -1
   %E = sext i32 %D to i64
   ret i64 %E
-; CHECK: @test50
+; CHECK-LABEL: @test50(
 ; lshr+shl will be handled by DAGCombine.
 ; CHECK-NEXT: lshr i64 %A, 2
 ; CHECK-NEXT: shl i64 %a, 32
@@ -472,7 +472,7 @@ define i64 @test51(i64 %A, i1 %cond) {
   %E = select i1 %cond, i32 %C, i32 %D
   %F = sext i32 %E to i64
   ret i64 %F
-; CHECK: @test51
+; CHECK-LABEL: @test51(
 ; CHECK-NEXT: %C = and i64 %A, 4294967294
 ; CHECK-NEXT: %D = or i64 %A, 1
 ; CHECK-NEXT: %E = select i1 %cond, i64 %C, i64 %D
@@ -487,7 +487,7 @@ define i32 @test52(i64 %A) {
   %D = and i16 %C, -25350
   %E = zext i16 %D to i32
   ret i32 %E
-; CHECK: @test52
+; CHECK-LABEL: @test52(
 ; CHECK-NEXT: %B = trunc i64 %A to i32
 ; CHECK-NEXT: %C = and i32 %B, 7224
 ; CHECK-NEXT: %D = or i32 %C, 32962
@@ -500,7 +500,7 @@ define i64 @test53(i32 %A) {
   %D = and i16 %C, -25350
   %E = zext i16 %D to i64
   ret i64 %E
-; CHECK: @test53
+; CHECK-LABEL: @test53(
 ; CHECK-NEXT: %B = zext i32 %A to i64
 ; CHECK-NEXT: %C = and i64 %B, 7224
 ; CHECK-NEXT: %D = or i64 %C, 32962
@@ -513,7 +513,7 @@ define i32 @test54(i64 %A) {
   %D = and i16 %C, -25350
   %E = sext i16 %D to i32
   ret i32 %E
-; CHECK: @test54
+; CHECK-LABEL: @test54(
 ; CHECK-NEXT: %B = trunc i64 %A to i32
 ; CHECK-NEXT: %C = and i32 %B, 7224
 ; CHECK-NEXT: %D = or i32 %C, -32574
@@ -526,7 +526,7 @@ define i64 @test55(i32 %A) {
   %D = and i16 %C, -25350
   %E = sext i16 %D to i64
   ret i64 %E
-; CHECK: @test55
+; CHECK-LABEL: @test55(
 ; CHECK-NEXT: %B = zext i32 %A to i64
 ; CHECK-NEXT: %C = and i64 %B, 7224
 ; CHECK-NEXT: %D = or i64 %C, -32574
@@ -538,7 +538,7 @@ define i64 @test56(i16 %A) nounwind {
   %tmp354 = lshr i32 %tmp353, 5
   %tmp355 = zext i32 %tmp354 to i64
   ret i64 %tmp355
-; CHECK: @test56
+; CHECK-LABEL: @test56(
 ; CHECK-NEXT: %tmp353 = sext i16 %A to i64
 ; CHECK-NEXT: %tmp354 = lshr i64 %tmp353, 5
 ; CHECK-NEXT: %tmp355 = and i64 %tmp354, 134217727
@@ -550,7 +550,7 @@ define i64 @test57(i64 %A) nounwind {
  %C = lshr i32 %B, 8
  %E = zext i32 %C to i64
  ret i64 %E
-; CHECK: @test57
+; CHECK-LABEL: @test57(
 ; CHECK-NEXT: %C = lshr i64 %A, 8 
 ; CHECK-NEXT: %E = and i64 %C, 16777215
 ; CHECK-NEXT: ret i64 %E
@@ -563,7 +563,7 @@ define i64 @test58(i64 %A) nounwind {
  %E = zext i32 %D to i64
  ret i64 %E
  
-; CHECK: @test58
+; CHECK-LABEL: @test58(
 ; CHECK-NEXT:   %C = lshr i64 %A, 8
 ; CHECK-NEXT:   %D = and i64 %C, 16777087
 ; CHECK-NEXT:   %E = or i64 %D, 128
@@ -579,7 +579,7 @@ define i64 @test59(i8 %A, i8 %B) nounwind {
   %H = or i32 %G, %E
   %I = zext i32 %H to i64
   ret i64 %I
-; CHECK: @test59
+; CHECK-LABEL: @test59(
 ; CHECK-NEXT:   %C = zext i8 %A to i64
 ; CHECK-NOT: i32
 ; CHECK:   %F = zext i8 %B to i64
@@ -593,7 +593,7 @@ define <3 x i32> @test60(<4 x i32> %call4) nounwind {
   %tmp10 = bitcast i96 %tmp9 to <3 x i32>
   ret <3 x i32> %tmp10
   
-; CHECK: @test60
+; CHECK-LABEL: @test60(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
 }
@@ -603,7 +603,7 @@ define <4 x i32> @test61(<3 x i32> %call4) nounwind {
   %tmp9 = zext i96 %tmp11 to i128
   %tmp10 = bitcast i128 %tmp9 to <4 x i32>
   ret <4 x i32> %tmp10
-; CHECK: @test61
+; CHECK-LABEL: @test61(
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
 }
@@ -613,7 +613,7 @@ define <4 x i32> @test62(<3 x float> %call4) nounwind {
   %tmp9 = zext i96 %tmp11 to i128
   %tmp10 = bitcast i128 %tmp9 to <4 x i32>
   ret <4 x i32> %tmp10
-; CHECK: @test62
+; CHECK-LABEL: @test62(
 ; CHECK-NEXT: bitcast
 ; CHECK-NEXT: shufflevector
 ; CHECK-NEXT: ret
@@ -625,7 +625,7 @@ entry:
   %a = bitcast i64 %tmp8 to <2 x i32>           
   %vcvt.i = uitofp <2 x i32> %a to <2 x float>  
   ret <2 x float> %vcvt.i
-; CHECK: @test63
+; CHECK-LABEL: @test63(
 ; CHECK: bitcast
 ; CHECK: uitofp
 }
@@ -634,7 +634,7 @@ define <4 x float> @test64(<4 x float> %c) nounwind {
   %t0 = bitcast <4 x float> %c to <4 x i32>
   %t1 = bitcast <4 x i32> %t0 to <4 x float>
   ret <4 x float> %t1
-; CHECK: @test64
+; CHECK-LABEL: @test64(
 ; CHECK-NEXT: ret <4 x float> %c
 }
 
@@ -642,7 +642,7 @@ define <4 x float> @test65(<4 x float> %c) nounwind {
   %t0 = bitcast <4 x float> %c to <2 x double>
   %t1 = bitcast <2 x double> %t0 to <4 x float>
   ret <4 x float> %t1
-; CHECK: @test65
+; CHECK-LABEL: @test65(
 ; CHECK-NEXT: ret <4 x float> %c
 }
 
@@ -650,13 +650,13 @@ define <2 x float> @test66(<2 x float> %c) nounwind {
   %t0 = bitcast <2 x float> %c to double
   %t1 = bitcast double %t0 to <2 x float>
   ret <2 x float> %t1
-; CHECK: @test66
+; CHECK-LABEL: @test66(
 ; CHECK-NEXT: ret <2 x float> %c
 }
 
 define float @test2c() {
   ret float extractelement (<2 x float> bitcast (double bitcast (<2 x float> <float -1.000000e+00, float -1.000000e+00> to double) to <2 x float>), i32 0)
-; CHECK: @test2c
+; CHECK-LABEL: @test2c(
 ; CHECK-NOT: extractelement
 }
 
@@ -665,7 +665,7 @@ define i64 @test_mmx(<2 x i32> %c) nounwind {
   %B = bitcast x86_mmx %A to <2 x i32>
   %C = bitcast <2 x i32> %B to i64
   ret i64 %C
-; CHECK: @test_mmx
+; CHECK-LABEL: @test_mmx(
 ; CHECK-NOT: x86_mmx
 }
 
@@ -674,7 +674,7 @@ define i64 @test_mmx_const(<2 x i32> %c) nounwind {
   %B = bitcast x86_mmx %A to <2 x i32>
   %C = bitcast <2 x i32> %B to i64
   ret i64 %C
-; CHECK: @test_mmx_const
+; CHECK-LABEL: @test_mmx_const(
 ; CHECK-NOT: x86_mmx
 }
 
@@ -689,14 +689,14 @@ define i1 @test67(i1 %a, i32 %b) {
   %trunc = trunc i32 %conv.i.i to i8
   %tobool.i = icmp eq i8 %trunc, 0
   ret i1 %tobool.i
-; CHECK: @test67
+; CHECK-LABEL: @test67(
 ; CHECK: ret i1 false
 }
 
 %s = type { i32, i32, i32 }
 
 define %s @test68(%s *%p, i64 %i) {
-; CHECK: @test68
+; CHECK-LABEL: @test68(
   %o = mul i64 %i, 12
   %q = bitcast %s* %p to i8*
   %pp = getelementptr inbounds i8* %q, i64 %o
@@ -709,7 +709,7 @@ define %s @test68(%s *%p, i64 %i) {
 }
 
 define double @test69(double *%p, i64 %i) {
-; CHECK: @test69
+; CHECK-LABEL: @test69(
   %o = shl nsw i64 %i, 3
   %q = bitcast double* %p to i8*
   %pp = getelementptr inbounds i8* %q, i64 %o
@@ -722,7 +722,7 @@ define double @test69(double *%p, i64 %i) {
 }
 
 define %s @test70(%s *%p, i64 %i) {
-; CHECK: @test70
+; CHECK-LABEL: @test70(
   %o = mul nsw i64 %i, 36
 ; CHECK-NEXT: mul nsw i64 %i, 3
   %q = bitcast %s* %p to i8*
@@ -736,7 +736,7 @@ define %s @test70(%s *%p, i64 %i) {
 }
 
 define double @test71(double *%p, i64 %i) {
-; CHECK: @test71
+; CHECK-LABEL: @test71(
   %o = shl i64 %i, 5
 ; CHECK-NEXT: shl i64 %i, 2
   %q = bitcast double* %p to i8*
@@ -750,7 +750,7 @@ define double @test71(double *%p, i64 %i) {
 }
 
 define double @test72(double *%p, i32 %i) {
-; CHECK: @test72
+; CHECK-LABEL: @test72(
   %so = mul nsw i32 %i, 8
   %o = sext i32 %so to i64
 ; CHECK-NEXT: sext i32 %i to i64
@@ -765,7 +765,7 @@ define double @test72(double *%p, i32 %i) {
 }
 
 define double @test73(double *%p, i128 %i) {
-; CHECK: @test73
+; CHECK-LABEL: @test73(
   %lo = mul nsw i128 %i, 8
   %o = trunc i128 %lo to i64
 ; CHECK-NEXT: trunc i128 %i to i64
@@ -780,7 +780,7 @@ define double @test73(double *%p, i128 %i) {
 }
 
 define double @test74(double *%p, i64 %i) {
-; CHECK: @test74
+; CHECK-LABEL: @test74(
   %q = bitcast double* %p to i64*
   %pp = getelementptr inbounds i64* %q, i64 %i
 ; CHECK-NEXT: getelementptr inbounds double*
@@ -792,7 +792,7 @@ define double @test74(double *%p, i64 %i) {
 }
 
 define i32* @test75(i32* %p, i32 %x) {
-; CHECK: @test75
+; CHECK-LABEL: @test75(
   %y = shl i32 %x, 3
 ; CHECK-NEXT: shl i32 %x, 3
   %z = sext i32 %y to i64
@@ -804,7 +804,7 @@ define i32* @test75(i32* %p, i32 %x) {
 }
 
 define %s @test76(%s *%p, i64 %i, i64 %j) {
-; CHECK: @test76
+; CHECK-LABEL: @test76(
   %o = mul i64 %i, 12
   %o2 = mul nsw i64 %o, %j
 ; CHECK-NEXT: %o2 = mul i64 %i, %j
@@ -819,7 +819,7 @@ define %s @test76(%s *%p, i64 %i, i64 %j) {
 }
 
 define %s @test77(%s *%p, i64 %i, i64 %j) {
-; CHECK: @test77
+; CHECK-LABEL: @test77(
   %o = mul nsw i64 %i, 36
   %o2 = mul nsw i64 %o, %j
 ; CHECK-NEXT: %o = mul nsw i64 %i, 3
@@ -835,7 +835,7 @@ define %s @test77(%s *%p, i64 %i, i64 %j) {
 }
 
 define %s @test78(%s *%p, i64 %i, i64 %j, i32 %k, i32 %l, i128 %m, i128 %n) {
-; CHECK: @test78
+; CHECK-LABEL: @test78(
   %a = mul nsw i32 %k, 36
 ; CHECK-NEXT: mul nsw i32 %k, 3
   %b = mul nsw i32 %a, %l
@@ -863,7 +863,7 @@ define %s @test78(%s *%p, i64 %i, i64 %j, i32 %k, i32 %l, i128 %m, i128 %n) {
 }
 
 define %s @test79(%s *%p, i64 %i, i32 %j) {
-; CHECK: @test79
+; CHECK-LABEL: @test79(
   %a = mul nsw i64 %i, 36
 ; CHECK: mul nsw i64 %i, 36
   %b = trunc i64 %a to i32
@@ -877,7 +877,7 @@ define %s @test79(%s *%p, i64 %i, i32 %j) {
 }
 
 define double @test80([100 x double]* %p, i32 %i) {
-; CHECK: @test80
+; CHECK-LABEL: @test80(
   %tmp = mul nsw i32 %i, 8
 ; CHECK-NEXT: sext i32 %i to i64
   %q = bitcast [100 x double]* %p to i8*
@@ -906,7 +906,7 @@ define i64 @test82(i64 %A) nounwind {
   %E = zext i32 %D to i64
   ret i64 %E
 
-; CHECK: @test82
+; CHECK-LABEL: @test82(
 ; CHECK-NEXT:   [[REG:%[0-9]*]] = shl i64 %A, 1
 ; CHECK-NEXT:   %E = and i64 [[REG]], 4294966784
 ; CHECK-NEXT:   ret i64 %E
@@ -921,7 +921,7 @@ define i64 @test83(i16 %a, i64 %k) {
   %sh_prom1 = zext i32 %shl to i64
   ret i64 %sh_prom1
 
-; CHECK: @test83
+; CHECK-LABEL: @test83(
 ; CHECK: %sub = add nsw i64 %k, 4294967295
 ; CHECK: %sh_prom = trunc i64 %sub to i32
 ; CHECK: %shl = shl i32 %conv, %sh_prom

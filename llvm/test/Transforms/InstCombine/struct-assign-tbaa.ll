@@ -24,7 +24,7 @@ entry:
 %struct.test2 = type { i32 (i8*, i32*, double*)** }
 
 define i32 (i8*, i32*, double*)*** @test2() {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: memcpy
 ; CHECK: ret
   %tmp = alloca %struct.test2, align 8

@@ -40,5 +40,5 @@ define i32 @test2(i8* %this) ssp align 2 {
   ret i32 %X
 }
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NEXT: ret i32 41

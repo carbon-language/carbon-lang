@@ -2,7 +2,7 @@
 ; PR3103
 
 define i8 @test1(i8 %x, i8 %y) {
-; CHECK: @test1
+; CHECK-LABEL: @test1(
   %A = udiv i8 %x, %y
 ; CHECK-NEXT: urem
   %B = mul i8 %A, %y
@@ -12,7 +12,7 @@ define i8 @test1(i8 %x, i8 %y) {
 }
 
 define i8 @test2(i8 %x, i8 %y) {
-; CHECK: @test2
+; CHECK-LABEL: @test2(
   %A = sdiv i8 %x, %y
 ; CHECK-NEXT: srem
   %B = mul i8 %A, %y
@@ -22,7 +22,7 @@ define i8 @test2(i8 %x, i8 %y) {
 }
 
 define i8 @test3(i8 %x, i8 %y) {
-; CHECK: @test3
+; CHECK-LABEL: @test3(
   %A = udiv i8 %x, %y
 ; CHECK-NEXT: urem
   %B = mul i8 %A, %y
@@ -33,7 +33,7 @@ define i8 @test3(i8 %x, i8 %y) {
 }
 
 define i8 @test4(i8 %x) {
-; CHECK: @test4
+; CHECK-LABEL: @test4(
   %A = udiv i8 %x, 3
 ; CHECK-NEXT: urem
   %B = mul i8 %A, -3
@@ -45,7 +45,7 @@ define i8 @test4(i8 %x) {
 }
 
 define i32 @test5(i32 %x, i32 %y) {
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; (((X / Y) * Y) / Y) -> X / Y
   %div = sdiv i32 %x, %y
 ; CHECK-NEXT: sdiv
@@ -56,7 +56,7 @@ define i32 @test5(i32 %x, i32 %y) {
 }
 
 define i32 @test6(i32 %x, i32 %y) {
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; (((X / Y) * Y) / Y) -> X / Y
   %div = udiv i32 %x, %y
 ; CHECK-NEXT: udiv

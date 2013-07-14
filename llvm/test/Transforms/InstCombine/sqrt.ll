@@ -2,7 +2,7 @@
 
 define float @test1(float %x) nounwind readnone ssp {
 entry:
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: fpext
 ; CHECK-NOT: sqrt(
 ; CHECK: sqrtf(
@@ -17,7 +17,7 @@ entry:
 ; PR8096
 define float @test2(float %x) nounwind readnone ssp {
 entry:
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: fpext
 ; CHECK-NOT: sqrt(
 ; CHECK: sqrtf(
@@ -34,7 +34,7 @@ entry:
 ; use of sqrt result.
 define float @test3(float* %v) nounwind uwtable ssp {
 entry:
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK: sqrt(
 ; CHECK-NOT: sqrtf(
 ; CHECK: fptrunc

@@ -11,7 +11,7 @@ entry:
   ret i64 %add1
 }
 
-; CHECK: @test1
+; CHECK-LABEL: @test1(
 ; CHECK-NOT: add1
 ; CHECK: ret
 
@@ -23,7 +23,7 @@ entry:
   ret i64 %sub1
 }
 
-; CHECK: @test2
+; CHECK-LABEL: @test2(
 ; CHECK-NOT: sub1
 ; CHECK: ret
 
@@ -35,7 +35,7 @@ entry:
   ret i64 %mul1
 }
 
-; CHECK: @test3
+; CHECK-LABEL: @test3(
 ; CHECK-NOT: mul1
 ; CHECK: ret
 
@@ -47,7 +47,7 @@ entry:
   ret i64 %add1
 }
 
-; CHECK: @test4
+; CHECK-LABEL: @test4(
 ; CHECK-NOT: add1
 ; CHECK: ret
 
@@ -59,7 +59,7 @@ entry:
   ret i64 %sub1
 }
 
-; CHECK: @test5
+; CHECK-LABEL: @test5(
 ; CHECK-NOT: sub1
 ; CHECK: ret
 
@@ -71,7 +71,7 @@ entry:
   ret i64 %mul1
 }
 
-; CHECK: @test6
+; CHECK-LABEL: @test6(
 ; CHECK-NOT: mul1
 ; CHECK: ret
 
