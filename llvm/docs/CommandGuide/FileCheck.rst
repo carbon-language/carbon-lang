@@ -18,7 +18,8 @@ using :program:`grep`, but it is optimized for matching multiple different
 inputs in one file in a specific order.
 
 The ``match-filename`` file specifies the file that contains the patterns to
-match.  The file to verify is always read from standard input.
+match.  The file to verify is read from standard input unless the
+:option:`--input-file` option is used.
 
 OPTIONS
 -------
