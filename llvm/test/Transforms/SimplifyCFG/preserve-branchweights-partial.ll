@@ -13,7 +13,7 @@
 declare void @foo() nounwind uwtable
 
 define void @func(i32 %A) nounwind uwtable {
-; CHECK: define void @func
+; CHECK-LABEL: define void @func(
 entry:
   %cmp11 = icmp eq i32 %A, 1
   br i1 %cmp11, label %if.then, label %if.else, !prof !0

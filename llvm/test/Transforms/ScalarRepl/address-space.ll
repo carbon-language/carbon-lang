@@ -6,7 +6,7 @@ target triple = "x86_64-apple-darwin10"
 
 %struct.anon = type { [1 x float] }
 
-; CHECK: define void @Test(
+; CHECK-LABEL: define void @Test(
 ; CHECK: load float addrspace(2)*
 ; CHECK-NEXT: fsub float
 ; CHECK: store float {{.*}}, float addrspace(2)* 

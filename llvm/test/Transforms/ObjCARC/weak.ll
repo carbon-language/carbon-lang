@@ -10,7 +10,7 @@ declare void @objc_copyWeak(i8**, i8**)
 
 ; If the pointer-to-weak-pointer is null, it's undefined behavior.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK: store i8* undef, i8** null
 ; CHECK: store i8* undef, i8** null
 ; CHECK: store i8* undef, i8** null

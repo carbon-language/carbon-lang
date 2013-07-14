@@ -10,7 +10,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; metadata and eliminate the retainBlock+release pair here.
 ; rdar://10803830.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test0() {
@@ -63,7 +63,7 @@ lpad:                                             ; preds = %entry
 ; shouldn't eliminate anything, but *CAN* strength reduce the objc_retainBlock
 ; to an objc_retain.
 
-; CHECK: define void @test0_no_metadata(
+; CHECK-LABEL: define void @test0_no_metadata(
 ; CHECK: call i8* @objc_retain(
 ; CHECK: invoke
 ; CHECK: call void @objc_release(

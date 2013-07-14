@@ -9,4 +9,4 @@ entry:
   %or4 = or i32 or (i32 zext (i1 icmp eq (i32* @g, i32* null) to i32), i32 1), %xor
   ret i32 %or4
 }
-; CHECK: define i32 @function
+; CHECK-LABEL: define i32 @function(

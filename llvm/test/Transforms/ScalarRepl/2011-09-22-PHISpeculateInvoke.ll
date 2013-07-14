@@ -36,5 +36,5 @@ unwind:                                           ; preds = %then
   unreachable
 }
 
-; CHECK: define void @odd_fn
+; CHECK-LABEL: define void @odd_fn(
 ; CHECK: %storemerge.in = phi i32* [ %retptr2, %else ], [ %retptr1, %then ]

@@ -3,7 +3,7 @@
 declare void @bar({i32, i32} %a)
 declare i32 @baz(i32 %a)
 
-; CHECK: define i32 @foo
+; CHECK-LABEL: define i32 @foo(
 ; CHECK-NOT: extractvalue
 define i32 @foo(i32 %a, i32 %b) {
 ; Instcombine should fold various combinations of insertvalue and extractvalue
@@ -39,7 +39,7 @@ define i32 @foo(i32 %a, i32 %b) {
         ret i32 %v5
 }
 
-; CHECK: define i32 @extract2gep
+; CHECK-LABEL: define i32 @extract2gep(
 ; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}* %pair, i32 0, i32 1
 ; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32* [[GEP]]
 ; CHECK-NEXT: store
@@ -67,7 +67,7 @@ end:
         ret i32 %E
 }
 
-; CHECK: define i32 @doubleextract2gep
+; CHECK-LABEL: define i32 @doubleextract2gep(
 ; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}* %arg, i32 0, i32 1, i32 1
 ; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32* [[GEP]]
 ; CHECK-NEXT: ret i32 [[LOAD]]

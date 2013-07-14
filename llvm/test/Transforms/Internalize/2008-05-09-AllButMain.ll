@@ -27,29 +27,29 @@
 ; MERGE: @j = global
 @j = global i32 0
 
-; NOARGS: define internal void @main
-; LIST: define internal void @main
-; EMPTYFILE: define internal void @main
-; LIST2: define internal void @main
-; MERGE: define internal void @main
+; NOARGS-LABEL: define internal void @main(
+; LIST-LABEL: define internal void @main(
+; EMPTYFILE-LABEL: define internal void @main(
+; LIST2-LABEL: define internal void @main(
+; MERGE-LABEL: define internal void @main(
 define void @main() {
         ret void
 }
 
-; NOARGS: define internal void @foo
-; LIST: define void @foo
-; EMPTYFILE: define internal void @foo
-; LIST2: define void @foo
-; MERGE: define void @foo
+; NOARGS-LABEL: define internal void @foo(
+; LIST-LABEL: define void @foo(
+; EMPTYFILE-LABEL: define internal void @foo(
+; LIST2-LABEL: define void @foo(
+; MERGE-LABEL: define void @foo(
 define void @foo() {
         ret void
 }
 
-; NOARGS: define internal void @bar
-; LIST: define internal void @bar
-; EMPTYFILE: define internal void @bar
-; LIST2: define void @bar
-; MERGE: define void @bar
+; NOARGS-LABEL: define internal void @bar(
+; LIST-LABEL: define internal void @bar(
+; EMPTYFILE-LABEL: define internal void @bar(
+; LIST2-LABEL: define void @bar(
+; MERGE-LABEL: define void @bar(
 define void @bar() {
         ret void
 }

@@ -263,7 +263,7 @@ if.else: br label %if.end
 if.end:
   %dirent_type.0 = phi i32 [ 3, %sw.default ], [ 6, %sw.bb3 ], [ 5, %sw.bb2 ], [ 0, %sw.bb1 ], [ 3, %sw.bb ], [ 0, %if.else ]
   ret i32 %dirent_type.0
-; CHECK: define i32 @overflow
+; CHECK-LABEL: define i32 @overflow(
 ; CHECK: switch
 ; CHECK: phi
 }
@@ -284,7 +284,7 @@ bb2: br label %bb3
 bb3:
   %tmp4 = phi i1 [ undef, %bb ], [ false, %bb2 ], [ true, %bb1 ]
   ret i1 %tmp4
-; CHECK: define i1 @undef
+; CHECK-LABEL: define i1 @undef(
 ; CHECK: %switch.cast = trunc i32 %switch.tableidx to i9
 ; CHECK: %switch.downshift = lshr i9 3, %switch.shiftamt
 }

@@ -13,7 +13,7 @@ define internal zeroext i32 @test1(i32 %DEADARG1) nounwind {
 }
 
 ; This checks if the struct doesn't get non-packed
-; CHECK: define internal <{ i32, i32 }> @test2
+; CHECK-LABEL: define internal <{ i32, i32 }> @test2(
 define internal <{ i32, i32 }> @test2(i32 %DEADARG1) {
         ret <{ i32, i32 }> <{ i32 1, i32 2 }>
 }

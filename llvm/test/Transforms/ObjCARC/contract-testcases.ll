@@ -18,7 +18,7 @@ declare i32 @__gxx_personality_sj0(...)
 
 ; Don't get in trouble on bugpointed code.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 define void @test0() {
 bb:
   %tmp = bitcast %4* undef to i8*
@@ -45,7 +45,7 @@ bb6:                                              ; preds = %bb5, %bb4, %bb4, %b
 ; When rewriting operands for a phi which has multiple operands
 ; for the same block, use the exactly same value in each block.
 
-; CHECK: define void @test1(
+; CHECK-LABEL: define void @test1(
 ; CHECK: %0 = bitcast i8* %tmp3 to %0* 
 ; CHECK: br i1 undef, label %bb7, label %bb7
 ; CHECK: bb7:

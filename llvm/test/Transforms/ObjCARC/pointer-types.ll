@@ -5,7 +5,7 @@
 ; in dubious ways.
 ; rdar://10551239
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK: %otherBlock = phi void ()* [ %b1, %if.then ], [ null, %entry ]
 ; CHECK-NEXT: call void @use_fptr(void ()* %otherBlock)
 ; CHECK-NEXT: %tmp11 = bitcast void ()* %otherBlock to i8*

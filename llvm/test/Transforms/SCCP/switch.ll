@@ -4,7 +4,7 @@
 ; with no cases.
 declare void @foo()
 define void @test1() {
-; CHECK: define void @test1
+; CHECK-LABEL: define void @test1(
 ; CHECK: call void @foo()
   switch i32 undef, label %d []
 d:

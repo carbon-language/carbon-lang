@@ -17,7 +17,7 @@ define void @bar(i32* byval %x) {
 }
 
 define void @foo(i32* %x) {
-; CHECK: define void @foo
+; CHECK-LABEL: define void @foo(
 ; CHECK: store i32 %1, i32* %x
   call void @bar(i32* byval %x)
   ret void

@@ -27,7 +27,7 @@ declare i8* @returner()
 ; Simple retain+release pair deletion, with some intervening control
 ; flow and harmless instructions.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK: entry:
 ; CHECK:   call void @llvm.arc.annotation.bottomup.bbstart(i8** @x, i8** @S_None)
 ; CHECK:   %0 = tail call i8* @objc_retain(i8* %a) #0, !llvm.arc.annotation.bottomup ![[ANN0:[0-9]+]], !llvm.arc.annotation.topdown ![[ANN1:[0-9]+]]

@@ -3,7 +3,7 @@
 ; Handle a retain+release pair entirely contained within a split loop backedge.
 ; rdar://11256239
 
-; CHECK: define void @test0
+; CHECK-LABEL: define void @test0(
 ; CHECK: call i8* @objc_retain(i8* %call) [[NUW:#[0-9]+]]
 ; CHECK: call i8* @objc_retain(i8* %call) [[NUW]]
 ; CHECK: call i8* @objc_retain(i8* %cond) [[NUW]]

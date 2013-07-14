@@ -990,7 +990,7 @@ define i1 @icmp_add_and_shr_ne_0(i32 %X) {
 }
 
 ; PR16244
-; CHECK: define i1 @test71
+; CHECK-LABEL: define i1 @test71(
 ; CHECK-NEXT: ret i1 false
 define i1 @test71(i8* %x) {
   %a = getelementptr i8* %x, i64 8

@@ -11,7 +11,7 @@ declare i8* @objc_autoreleaseReturnValue(i8*)
 
 ; Don't delete the autorelease.
 
-; CHECK: define %0* @test0(
+; CHECK-LABEL: define %0* @test0(
 ; CHECK:   @objc_retain
 ; CHECK: .lr.ph:
 ; CHECK-NOT: @objc_r
@@ -35,7 +35,7 @@ define %0* @test0(%0* %buffer) nounwind {
 
 ; Do delete the autorelease, even with the retain in a different block.
 
-; CHECK: define %0* @test1(
+; CHECK-LABEL: define %0* @test1(
 ; CHECK-NOT: @objc
 ; CHECK: }
 define %0* @test1() nounwind {

@@ -22,7 +22,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ;     Foo.A[i] = Foo.B[i] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias01
+; CHECK-LABEL: define i32 @noAlias01(
 ; CHECK: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -70,7 +70,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i] = Foo.B[i+10] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias02
+; CHECK-LABEL: define i32 @noAlias02(
 ; CHECK: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -119,7 +119,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i+10] = Foo.B[i] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias03
+; CHECK-LABEL: define i32 @noAlias03(
 ; CHECK: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -168,7 +168,7 @@ for.end:                                          ; preds = %for.cond
 ;     *(PA+i) = *(PB+i) + a;
 ;   return *(PA+a);
 ; }
-; CHECK: define i32 @noAlias04
+; CHECK-LABEL: define i32 @noAlias04(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 ;
@@ -222,7 +222,7 @@ for.end:                                          ; preds = %for.cond
 ;     Bar.A[N][i] = Bar.B[N][i] + a;
 ;   return Bar.A[N][a];
 ; }
-; CHECK: define i32 @noAlias05
+; CHECK-LABEL: define i32 @noAlias05(
 ; CHECK: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -278,7 +278,7 @@ for.end:                                          ; preds = %for.cond
 ;     Bar.A[N][i] = Bar.A[N+1][i] + a;
 ;   return Bar.A[N][a];
 ; }
-; CHECK: define i32 @noAlias06
+; CHECK-LABEL: define i32 @noAlias06(
 ; CHECK: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -335,7 +335,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[SIZE-i-1] = Foo.B[SIZE-i-1] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias07
+; CHECK-LABEL: define i32 @noAlias07(
 ; CHECK: sub nsw <4 x i32>
 ; CHECK: ret
 
@@ -387,7 +387,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[SIZE-i-1] = Foo.B[SIZE-i-10] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias08
+; CHECK-LABEL: define i32 @noAlias08(
 ; CHECK: sub nsw <4 x i32>
 ; CHECK: ret
 
@@ -439,7 +439,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[SIZE-i-10] = Foo.B[SIZE-i-1] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias09
+; CHECK-LABEL: define i32 @noAlias09(
 ; CHECK: sub nsw <4 x i32>
 ; CHECK: ret
 
@@ -491,7 +491,7 @@ for.end:                                          ; preds = %for.cond
 ;     *(PA+SIZE-i-1) = *(PB+SIZE-i-1) + a;
 ;   return *(PA+a);
 ; }
-; CHECK: define i32 @noAlias10
+; CHECK-LABEL: define i32 @noAlias10(
 ; CHECK-NOT: sub nsw <4 x i32>
 ; CHECK: ret
 ;
@@ -551,7 +551,7 @@ for.end:                                          ; preds = %for.cond
 ;     Bar.A[N][SIZE-i-1] = Bar.B[N][SIZE-i-1] + a;
 ;   return Bar.A[N][a];
 ; }
-; CHECK: define i32 @noAlias11
+; CHECK-LABEL: define i32 @noAlias11(
 ; CHECK: sub nsw <4 x i32>
 ; CHECK: ret
 
@@ -611,7 +611,7 @@ for.end:                                          ; preds = %for.cond
 ;     Bar.A[N][SIZE-i-1] = Bar.A[N+1][SIZE-i-1] + a;
 ;   return Bar.A[N][a];
 ; }
-; CHECK: define i32 @noAlias12
+; CHECK-LABEL: define i32 @noAlias12(
 ; CHECK: sub nsw <4 x i32>
 ; CHECK: ret
 
@@ -672,7 +672,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i] = Foo.A[i+4] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias13
+; CHECK-LABEL: define i32 @noAlias13(
 ; CHECK: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -721,7 +721,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[SIZE-i-1] = Foo.A[SIZE-i-5] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @noAlias14
+; CHECK-LABEL: define i32 @noAlias14(
 ; CHECK: sub nsw <4 x i32>
 ; CHECK: ret
 
@@ -777,7 +777,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i] = Foo.B[SIZE-i-1] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @mayAlias01
+; CHECK-LABEL: define i32 @mayAlias01(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -827,7 +827,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[SIZE-i-1] = Foo.B[i] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @mayAlias02
+; CHECK-LABEL: define i32 @mayAlias02(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -877,7 +877,7 @@ for.end:                                          ; preds = %for.cond
 ;     *(PA+i) = *(PB+SIZE-i-1) + a;
 ;   return *(PA+a);
 ; }
-; CHECK: define i32 @mayAlias03
+; CHECK-LABEL: define i32 @mayAlias03(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -934,7 +934,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i+10] = Foo.B[SIZE-i-1] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @mustAlias01
+; CHECK-LABEL: define i32 @mustAlias01(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -984,7 +984,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i] = Foo.B[SIZE-i-10] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @mustAlias02
+; CHECK-LABEL: define i32 @mustAlias02(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 
@@ -1033,7 +1033,7 @@ for.end:                                          ; preds = %for.cond
 ;     Foo.A[i+10] = Foo.B[SIZE-i-10] + a;
 ;   return Foo.A[a];
 ; }
-; CHECK: define i32 @mustAlias03
+; CHECK-LABEL: define i32 @mustAlias03(
 ; CHECK-NOT: add nsw <4 x i32>
 ; CHECK: ret
 

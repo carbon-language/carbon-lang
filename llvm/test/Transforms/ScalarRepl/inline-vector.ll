@@ -6,7 +6,7 @@ target triple = "thumbv7-apple-darwin10.0.0"
 %struct.Vector4 = type { float, float, float, float }
 @f.vector = internal constant %struct.Vector4 { float 1.000000e+00, float 2.000000e+00, float 3.000000e+00, float 4.000000e+00 }, align 16
 
-; CHECK: define void @f
+; CHECK-LABEL: define void @f(
 ; CHECK-NOT: alloca
 ; CHECK: phi <4 x float>
 

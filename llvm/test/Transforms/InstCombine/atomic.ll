@@ -6,7 +6,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ; Check transforms involving atomic operations
 
 define i32* @test1(i8** %p) {
-; CHECK: define i32* @test1
+; CHECK-LABEL: define i32* @test1(
 ; CHECK: load atomic i8** %p monotonic, align 8
   %c = bitcast i8** %p to i32**
   %r = load atomic i32** %c monotonic, align 8
@@ -14,7 +14,7 @@ define i32* @test1(i8** %p) {
 }
 
 define i32 @test2(i32* %p) {
-; CHECK: define i32 @test2
+; CHECK-LABEL: define i32 @test2(
 ; CHECK: %x = load atomic i32* %p seq_cst, align 4
 ; CHECK: shl i32 %x, 1
   %x = load atomic i32* %p seq_cst, align 4

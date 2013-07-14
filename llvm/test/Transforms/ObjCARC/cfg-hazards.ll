@@ -10,7 +10,7 @@ declare void @objc_release(i8*)
 declare void @callee()
 declare void @block_callee(void ()*)
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK:   call i8* @objc_retain(
 ; CHECK: for.body:
 ; CHECK-NOT: @objc
@@ -35,7 +35,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-; CHECK: define void @test1(
+; CHECK-LABEL: define void @test1(
 ; CHECK:   call i8* @objc_retain(
 ; CHECK: for.body:
 ; CHECK-NOT: @objc
@@ -60,7 +60,7 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
-; CHECK: define void @test2(
+; CHECK-LABEL: define void @test2(
 ; CHECK:   call i8* @objc_retain(
 ; CHECK: for.body:
 ; CHECK-NOT: @objc

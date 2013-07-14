@@ -16,4 +16,4 @@ xxx:
   br label %lbl_1215
 }
 
-; CHECK: define i32 @fn
+; CHECK-LABEL: define i32 @fn(

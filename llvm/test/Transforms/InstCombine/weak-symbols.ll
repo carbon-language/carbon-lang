@@ -8,7 +8,7 @@
 @.str = private constant [2 x i8] c"y\00"
 
 define i32 @foo() nounwind {
-; CHECK: define i32 @foo
+; CHECK-LABEL: define i32 @foo(
 ; CHECK: call i32 @strcmp
 ; CHECK: ret i32 %temp1
 
@@ -20,7 +20,7 @@ entry:
 }
 
 define i32 @bar() nounwind {
-; CHECK: define i32 @bar
+; CHECK-LABEL: define i32 @bar(
 ; CHECK: ret i32 0
 
 entry:

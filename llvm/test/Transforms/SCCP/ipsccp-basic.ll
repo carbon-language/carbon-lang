@@ -6,14 +6,14 @@ define internal i32 @test1a(i32 %A) {
 	%X = add i32 1, 2
 	ret i32 %A
 }
-; CHECK: define internal i32 @test1a
+; CHECK-LABEL: define internal i32 @test1a(
 ; CHECK: ret i32 undef
 
 define i32 @test1b() {
 	%X = call i32 @test1a( i32 17 )
 	ret i32 %X
 
-; CHECK: define i32 @test1b
+; CHECK-LABEL: define i32 @test1b(
 ; CHECK: ret i32 17
 }
 
@@ -31,7 +31,7 @@ F:
 	%C.upgrd.1 = call i32 @test2a(i32 1)
 	ret i32 %C.upgrd.1
 }
-; CHECK: define internal i32 @test2a
+; CHECK-LABEL: define internal i32 @test2a(
 ; CHECK-NEXT: br label %T
 ; CHECK: ret i32 undef
 
@@ -40,7 +40,7 @@ define i32 @test2b() {
 	%X = call i32 @test2a(i32 0)
 	ret i32 %X
 }
-; CHECK: define i32 @test2b
+; CHECK-LABEL: define i32 @test2b(
 ; CHECK-NEXT: %X = call i32 @test2a(i32 0)
 ; CHECK-NEXT: ret i32 0
 
@@ -54,7 +54,7 @@ define void @test3a() {
 	store i32 %X, i32* @G
 	ret void
 }
-; CHECK: define void @test3a
+; CHECK-LABEL: define void @test3a(
 ; CHECK-NEXT: ret void
 
 
@@ -69,7 +69,7 @@ F:
 	store i32 123, i32* @G
 	ret i32 0
 }
-; CHECK: define i32 @test3b
+; CHECK-LABEL: define i32 @test3b(
 ; CHECK-NOT: store
 ; CHECK: ret i32 0
 
@@ -102,7 +102,7 @@ B:
 define internal i64 @test4c(i64 %a) {
   ret i64 %a
 }
-; CHECK: define internal i64 @test4c
+; CHECK-LABEL: define internal i64 @test4c(
 ; CHECK: ret i64 undef
 
 
@@ -149,7 +149,7 @@ define i64 @test6b() {
   %a = call i64 @test6a()
   ret i64 %a
 }
-; CHECK: define i64 @test6b
+; CHECK-LABEL: define i64 @test6b(
 ; CHECK: ret i64 0
 
 ;;======================== test7
@@ -172,7 +172,7 @@ define i32 @test7b() {
         %Y = extractvalue %T %X, 0
 	%Z = add i32 %Y, %Y
 	ret i32 %Z
-; CHECK: define i32 @test7b
+; CHECK-LABEL: define i32 @test7b(
 ; CHECK-NEXT: call %T @test7a(i32 17)
 ; CHECK-NEXT: ret i32 36
 }
@@ -191,7 +191,7 @@ define internal {} @test8a(i32 %A, i32* %P) {
 define void @test8b(i32* %P) {
     %X = call {} @test8a(i32 5, i32* %P)
     ret void
-; CHECK: define void @test8b
+; CHECK-LABEL: define void @test8b(
 ; CHECK-NEXT: call {} @test8a
 ; CHECK-NEXT: ret void
 }
@@ -216,7 +216,7 @@ define i32 @test10a() nounwind {
 entry:
   %call = call i32 @test10b(i32 undef)
   ret i32 %call
-; CHECK: define i32 @test10a
+; CHECK-LABEL: define i32 @test10a(
 ; CHECK: ret i32 0
 }
 
@@ -224,6 +224,6 @@ define internal i32 @test10b(i32 %x) nounwind {
 entry:
   %r = and i32 %x, 1
   ret i32 %r
-; CHECK: define internal i32 @test10b
+; CHECK-LABEL: define internal i32 @test10b(
 ; CHECK: ret i32 undef
 }

@@ -26,7 +26,7 @@ entry:
 ; GVN should not be able to eliminate this redundant load, with ARC-specific
 ; alias analysis.
 
-; CHECK: define i8* @test1
+; CHECK-LABEL: define i8* @test1(
 ; CHECK: load
 ; CHECK: load
 ; CHECK: ret i8* %t

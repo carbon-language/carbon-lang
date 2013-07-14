@@ -4,7 +4,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 define i32 @tak(i32 %x, i32 %y, i32 %z) nounwind ssp {
-; CHECK: define i32 @tak
+; CHECK-LABEL: define i32 @tak(
 ; CHECK: entry
 ; CHECK-NEXT: call void @llvm.dbg.value(metadata !{i32 %x}
 
@@ -43,7 +43,7 @@ return:                                           ; preds = %if.end
 define void @FindFreeHorzSeg(i64 %startCol, i64 %row, i64* %rowStart) {
 ; Ensure that the loop increment basic block is rotated into the tail of the
 ; body, even though it contains a debug intrinsic call.
-; CHECK: define void @FindFreeHorzSeg
+; CHECK-LABEL: define void @FindFreeHorzSeg(
 ; CHECK: %dec = add
 ; CHECK-NEXT: tail call void @llvm.dbg.value
 ; CHECK-NEXT: br i1 %tobool, label %for.cond, label %for.end

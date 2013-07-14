@@ -8,7 +8,7 @@
 @__block_descriptor_tmp = external hidden constant { i64, i64, i8*, i8*, i8*, i8* }
 @"\01L_OBJC_SELECTOR_REFERENCES_" = external hidden global i8*, section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
 
-; CHECK: define void @test(
+; CHECK-LABEL: define void @test(
 ; CHECK: %3 = call i8* @objc_retainBlock(i8* %2) [[NUW:#[0-9]+]]
 ; CHECK: @objc_msgSend
 ; CHECK-NEXT: @objc_release(i8* %3)
@@ -43,7 +43,7 @@ entry:
 ; Same as test, but the objc_retainBlock has a clang.arc.copy_on_escape
 ; tag so it's safe to delete.
 
-; CHECK: define void @test_with_COE(
+; CHECK-LABEL: define void @test_with_COE(
 ; CHECK-NOT: @objc_retainBlock
 ; CHECK: @objc_msgSend
 ; CHECK: @objc_release

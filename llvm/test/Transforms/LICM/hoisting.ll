@@ -52,7 +52,7 @@ Out:		; preds = %Loop
 
 ; This loop invariant instruction should be constant folded, not hoisted.
 define i32 @test3(i1 %c) {
-; CHECK: define i32 @test3
+; CHECK-LABEL: define i32 @test3(
 ; CHECK: call void @foo2(i32 6)
 	%A = load i32* @X		; <i32> [#uses=2]
 	br label %Loop

@@ -7,7 +7,7 @@ define void @test1(i32* noalias %p) {
        call void @test1f()
        store i32 2, i32 *%p
        ret void
-; CHECK: define void @test1
+; CHECK-LABEL: define void @test1(
 ; CHECK-NOT: store
 ; CHECK-NEXT: call void
 ; CHECK-NEXT: store i32 2

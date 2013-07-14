@@ -29,7 +29,7 @@ for.end:                                          ; preds = %for.cond
 }
 
 ; Should only end up with one phi.
-; CHECK:      define void @test
+; CHECK-LABEL:      define void @test(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   br label %for.body
 ; CHECK:      for.body:

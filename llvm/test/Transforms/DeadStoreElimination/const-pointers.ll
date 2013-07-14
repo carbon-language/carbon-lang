@@ -11,7 +11,7 @@ define void @test1(%t* noalias %pp) {
   %x = load i32* inttoptr (i32 12345 to i32*)
   store i32 %x, i32* %p
   ret void
-; CHECK: define void @test1
+; CHECK-LABEL: define void @test1(
 ; CHECK: store
 ; CHECK-NOT: store
 ; CHECK: ret void
@@ -21,7 +21,7 @@ define void @test3() {
   store i32 1, i32* @g; <-- This is dead.
   store i32 42, i32* @g
   ret void
-; CHECK: define void @test3
+; CHECK-LABEL: define void @test3(
 ; CHECK: store
 ; CHECK-NOT: store
 ; CHECK: ret void
@@ -32,7 +32,7 @@ define void @test4(i32* %p) {
   %x = load i32* @g; <-- %p and @g could alias
   store i32 %x, i32* %p
   ret void
-; CHECK: define void @test4
+; CHECK-LABEL: define void @test4(
 ; CHECK: store
 ; CHECK: store
 ; CHECK: ret void

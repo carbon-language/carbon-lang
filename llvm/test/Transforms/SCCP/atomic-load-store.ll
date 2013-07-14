@@ -16,7 +16,7 @@ F:
 	store atomic i32 123, i32* @G seq_cst, align 4
 	ret i32 0
 }
-; CHECK: define i32 @test1
+; CHECK-LABEL: define i32 @test1(
 ; CHECK-NOT: store
 ; CHECK: ret i32 17
 
@@ -25,6 +25,6 @@ define i32 @test2() {
 	ret i32 %V
 }
 
-; CHECK: define i32 @test2
+; CHECK-LABEL: define i32 @test2(
 ; CHECK-NOT: load
 ; CHECK: ret i32 222

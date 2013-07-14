@@ -20,7 +20,7 @@ declare i8* @objc_retainBlock(i8*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 define void @bitcasttest(i8* %storage, void (...)* %block)  {
-; CHECK: define void @bitcasttest
+; CHECK-LABEL: define void @bitcasttest(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK: tail call i8* @objc_retain
@@ -37,7 +37,7 @@ entry:
 }
 
 define void @bitcasttest_a(i8* %storage, void (...)* %block)  {
-; CHECK: define void @bitcasttest_a
+; CHECK-LABEL: define void @bitcasttest_a(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
@@ -54,7 +54,7 @@ entry:
 }
 
 define void @geptest(void (...)** %storage_array, void (...)* %block)  {
-; CHECK: define void @geptest
+; CHECK-LABEL: define void @geptest(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK: tail call i8* @objc_retain
@@ -73,7 +73,7 @@ entry:
 }
 
 define void @geptest_a(void (...)** %storage_array, void (...)* %block)  {
-; CHECK: define void @geptest_a
+; CHECK-LABEL: define void @geptest_a(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
@@ -93,7 +93,7 @@ entry:
 
 define void @selecttest(void (...)** %store1, void (...)** %store2,
                         void (...)* %block) {
-; CHECK: define void @selecttest
+; CHECK-LABEL: define void @selecttest(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK: tail call i8* @objc_retain
@@ -111,7 +111,7 @@ entry:
 
 define void @selecttest_a(void (...)** %store1, void (...)** %store2,
                           void (...)* %block) {
-; CHECK: define void @selecttest_a
+; CHECK-LABEL: define void @selecttest_a(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain
@@ -130,7 +130,7 @@ entry:
 define void @phinodetest(void (...)** %storage1,
                          void (...)** %storage2,
                          void (...)* %block) {
-; CHECK: define void @phinodetest
+; CHECK-LABEL: define void @phinodetest(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK: tail call i8* @objc_retain
@@ -160,7 +160,7 @@ end:
 define void @phinodetest_a(void (...)** %storage1,
                            void (...)** %storage2,
                            void (...)* %block) {
-; CHECK: define void @phinodetest_a
+; CHECK-LABEL: define void @phinodetest_a(
 entry:
   %t1 = bitcast void (...)* %block to i8*
 ; CHECK-NOT: tail call i8* @objc_retain

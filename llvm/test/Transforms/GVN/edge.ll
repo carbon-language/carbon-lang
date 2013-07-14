@@ -1,7 +1,7 @@
 ; RUN: opt -gvn -S < %s | FileCheck %s
 
 define i32 @f1(i32 %x) {
-  ; CHECK: define i32 @f1(
+  ; CHECK-LABEL: define i32 @f1(
 bb0:
   %cmp = icmp eq i32 %x, 0
   br i1 %cmp, label %bb2, label %bb1
@@ -16,7 +16,7 @@ bb2:
 }
 
 define i32 @f2(i32 %x) {
-  ; CHECK: define i32 @f2(
+  ; CHECK-LABEL: define i32 @f2(
 bb0:
   %cmp = icmp ne i32 %x, 0
   br i1 %cmp, label %bb1, label %bb2
@@ -31,7 +31,7 @@ bb2:
 }
 
 define i32 @f3(i32 %x) {
-  ; CHECK: define i32 @f3(
+  ; CHECK-LABEL: define i32 @f3(
 bb0:
   switch i32 %x, label %bb1 [ i32 0, label %bb2]
 bb1:
@@ -46,7 +46,7 @@ bb2:
 
 declare void @g(i1)
 define void @f4(i8 * %x)  {
-; CHECK: define void @f4(
+; CHECK-LABEL: define void @f4(
 bb0:
   %y = icmp eq i8* null, %x
   br i1 %y, label %bb2, label %bb1

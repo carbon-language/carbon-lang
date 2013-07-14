@@ -15,7 +15,7 @@ entry:
 
 define i32 @g() {
 entry:
-; CHECK: define i32 @g
+; CHECK-LABEL: define i32 @g(
 ; CHECK: call i32 @f()
 ; CHECK-NOT: call i32 @a()
   %call = call i32 @f()
@@ -32,7 +32,7 @@ entry:
 
 define i32 @i() {
 entry:
-; CHECK: define i32 @i
+; CHECK-LABEL: define i32 @i(
 ; CHECK: call i32 @b()
 ; CHECK-NOT: call i32 @h()
   %call = call i32 @h() returns_twice

@@ -2,7 +2,7 @@
 ; Check that the mere presence of a blockaddress doesn't prevent -globalopt
 ; from promoting @f to fastcc.
 
-; CHECK: define{{.*}}fastcc{{.*}}@f
+; CHECK-LABEL: define{{.*}}fastcc{{.*}}@f(
 define internal i8* @f() {
   ret i8* blockaddress(@f, %L1)
 L1:

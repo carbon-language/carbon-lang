@@ -6,7 +6,7 @@ define internal i32 @callee1(i32 %A, i32 %B) {
 }
 
 define i32 @caller1() {
-; CHECK: define i32 @caller1
+; CHECK-LABEL: define i32 @caller1(
 ; CHECK-NEXT: ret i32 3
 
   %X = call i32 @callee1( i32 10, i32 3 )

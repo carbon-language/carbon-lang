@@ -25,7 +25,7 @@ declare void @__crasher_block_invoke1(i8* nocapture)
 
 ; Delete a nested retain+release pair.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: @objc_retain
 ; CHECK: }
@@ -89,7 +89,7 @@ forcoll.empty:
 
 ; Delete a nested retain+release pair.
 
-; CHECK: define void @test2(
+; CHECK-LABEL: define void @test2(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: @objc_retain
 ; CHECK: }
@@ -154,7 +154,7 @@ forcoll.empty:
 
 ; Delete a nested retain+release pair.
 
-; CHECK: define void @test4(
+; CHECK-LABEL: define void @test4(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: @objc_retain
 ; CHECK: }
@@ -219,7 +219,7 @@ forcoll.empty:
 
 ; Delete a nested retain+release pair.
 
-; CHECK: define void @test5(
+; CHECK-LABEL: define void @test5(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: @objc_retain
 ; CHECK: }
@@ -287,7 +287,7 @@ forcoll.empty:
 ; The optimizer currently can't do this, because isn't isn't sophisticated enough in
 ; reasnoning about nesting.
 
-; CHECK: define void @test6(
+; CHECK-LABEL: define void @test6(
 ; CHECK: call i8* @objc_retain
 ; CHECK: @objc_retain
 ; CHECK: }
@@ -355,7 +355,7 @@ forcoll.empty:
 ; The optimizer currently can't do this, because isn't isn't sophisticated enough in
 ; reasnoning about nesting.
 
-; CHECK: define void @test7(
+; CHECK-LABEL: define void @test7(
 ; CHECK: call i8* @objc_retain
 ; CHECK: @objc_retain
 ; CHECK: }
@@ -422,7 +422,7 @@ forcoll.empty:
 
 ; Delete a nested retain+release pair.
 
-; CHECK: define void @test8(
+; CHECK-LABEL: define void @test8(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: @objc_retain
 ; CHECK: }
@@ -496,7 +496,7 @@ forcoll.empty:
 ; The optimizer currently can't do this, because of a split loop backedge.
 ; See test9b for the same testcase without a split backedge.
 
-; CHECK: define void @test9(
+; CHECK-LABEL: define void @test9(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
@@ -563,7 +563,7 @@ forcoll.empty:
 
 ; Like test9, but without a split backedge. TODO: optimize this.
 
-; CHECK: define void @test9b(
+; CHECK-LABEL: define void @test9b(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
 ; CHECK: @objc_retain
@@ -629,7 +629,7 @@ forcoll.empty:
 ; The optimizer currently can't do this, because of a split loop backedge.
 ; See test10b for the same testcase without a split backedge.
 
-; CHECK: define void @test10(
+; CHECK-LABEL: define void @test10(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
@@ -697,7 +697,7 @@ forcoll.empty:
 
 ; Like test10, but without a split backedge. TODO: optimize this.
 
-; CHECK: define void @test10b(
+; CHECK-LABEL: define void @test10b(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call i8* @objc_retain
 ; CHECK: @objc_retain
@@ -769,7 +769,7 @@ forcoll.empty:
 @__block_d_tmp = external hidden constant { i64, i64, i8*, i8*, i8*, i8* }
 @__block_d_tmp5 = external hidden constant { i64, i64, i8*, i8*, i8*, i8* }
 
-; CHECK: define void @test11(
+; CHECK-LABEL: define void @test11(
 ; CHECK: tail call i8* @objc_retain(i8* %call) [[NUW:#[0-9]+]]
 ; CHECK: tail call i8* @objc_retain(i8* %call) [[NUW]]
 ; CHECK: call void @objc_release(i8* %call) [[NUW]], !clang.imprecise_release !0

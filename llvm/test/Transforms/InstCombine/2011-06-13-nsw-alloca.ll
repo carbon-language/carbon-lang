@@ -2,7 +2,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32"
 target triple = "i386-apple-darwin10.0.0"
 
-; CHECK: define void @fu1
+; CHECK-LABEL: define void @fu1(
 define void @fu1(i32 %parm) nounwind ssp {
   %1 = alloca i32, align 4
 ; CHECK: alloca double*
@@ -33,7 +33,7 @@ define void @fu1(i32 %parm) nounwind ssp {
 
 declare void @bar(double*)
 
-; CHECK: define void @fu2
+; CHECK-LABEL: define void @fu2(
 define void @fu2(i32 %parm) nounwind ssp {
   %1 = alloca i32, align 4
   %ptr = alloca double*, align 4

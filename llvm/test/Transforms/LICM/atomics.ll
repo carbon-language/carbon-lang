@@ -14,7 +14,7 @@ loop:
 
 end:
   ret i32 %val
-; CHECK: define i32 @test1(
+; CHECK-LABEL: define i32 @test1(
 ; CHECK: load atomic
 ; CHECK-NEXT: br label %loop
 }
@@ -33,7 +33,7 @@ loop:
 
 end:
   ret i32 %val
-; CHECK: define i32 @test2(
+; CHECK-LABEL: define i32 @test2(
 ; CHECK: load atomic
 ; CHECK-NEXT: %exitcond = icmp ne
 ; CHECK-NEXT: br i1 %exitcond, label %end, label %loop
@@ -54,7 +54,7 @@ loop:
 
 end:
   ret i32 %vala
-; CHECK: define i32 @test3(
+; CHECK-LABEL: define i32 @test3(
 ; CHECK: load atomic i32* %x unordered
 ; CHECK-NEXT: br label %loop
 }
@@ -73,7 +73,7 @@ loop:
 
 end:
   ret i32 %vala
-; CHECK: define i32 @test4(
+; CHECK-LABEL: define i32 @test4(
 ; CHECK: load atomic i32* %y monotonic
 ; CHECK-NEXT: store atomic
 }

@@ -8,7 +8,7 @@ declare i8* @objc_retainAutoreleasedReturnValue(i8*)
 
 ; Clean up residue left behind after inlining.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK: entry:
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
@@ -21,7 +21,7 @@ entry:
 
 ; Same as test0, but with slightly different use arrangements.
 
-; CHECK: define void @test1(
+; CHECK-LABEL: define void @test1(
 ; CHECK: entry:
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
@@ -34,7 +34,7 @@ entry:
 
 ; Delete a retainRV+autoreleaseRV even if the pointer is used.
 
-; CHECK: define void @test24(
+; CHECK-LABEL: define void @test24(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   call void @use_pointer(i8* %p)
 ; CHECK-NEXT:   ret void

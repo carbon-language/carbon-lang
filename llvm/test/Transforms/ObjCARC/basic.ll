@@ -177,7 +177,7 @@ if.end5:                                          ; preds = %if.then3, %if.end
   ret void
 }
 
-; CHECK: define void @test1b_imprecise(
+; CHECK-LABEL: define void @test1b_imprecise(
 ; CHECK: entry:
 ; CHECK:   tail call i8* @objc_retain(i8* %x) [[NUW:#[0-9]+]]
 ; CHECK-NOT: @objc_
@@ -210,7 +210,7 @@ if.end5:                                          ; preds = %if.then3, %if.end
 ; Like test0 but the pointer is passed to an intervening call,
 ; so the optimization is not safe.
 
-; CHECK: define void @test2_precise(
+; CHECK-LABEL: define void @test2_precise(
 ; CHECK: @objc_retain(i8* %a)
 ; CHECK: @objc_release
 ; CHECK: }
@@ -239,7 +239,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test2_imprecise(
+; CHECK-LABEL: define void @test2_imprecise(
 ; CHECK: @objc_retain(i8* %a)
 ; CHECK: @objc_release
 ; CHECK: }
@@ -273,7 +273,7 @@ return:
 
 ; TODO: For now, assume this can't happen.
 
-; CHECK: define void @test3_precise(
+; CHECK-LABEL: define void @test3_precise(
 ; TODO: @objc_retain(i8* %a)
 ; TODO: @objc_release
 ; CHECK: }
@@ -293,7 +293,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test3_imprecise(
+; CHECK-LABEL: define void @test3_imprecise(
 ; TODO: @objc_retain(i8* %a)
 ; TODO: @objc_release
 ; CHECK: }
@@ -319,7 +319,7 @@ return:
 ; Like test0 but the retain is in a loop,
 ; so the optimization is not safe.
 
-; CHECK: define void @test4_precise(
+; CHECK-LABEL: define void @test4_precise(
 ; TODO: @objc_retain(i8* %a)
 ; TODO: @objc_release
 ; CHECK: }
@@ -339,7 +339,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test4_imprecise(
+; CHECK-LABEL: define void @test4_imprecise(
 ; TODO: @objc_retain(i8* %a)
 ; TODO: @objc_release
 ; CHECK: }
@@ -363,7 +363,7 @@ return:
 ; Like test0 but the pointer is conditionally passed to an intervening call,
 ; so the optimization is not safe.
 
-; CHECK: define void @test5a(
+; CHECK-LABEL: define void @test5a(
 ; CHECK: @objc_retain(i8*
 ; CHECK: @objc_release
 ; CHECK: }
@@ -379,7 +379,7 @@ entry:
   ret void
 }
 
-; CHECK: define void @test5b(
+; CHECK-LABEL: define void @test5b(
 ; CHECK: @objc_retain(i8*
 ; CHECK: @objc_release
 ; CHECK: }
@@ -399,7 +399,7 @@ entry:
 ; retain+release pair deletion, where the release happens on two different
 ; flow paths.
 
-; CHECK: define void @test6a(
+; CHECK-LABEL: define void @test6a(
 ; CHECK: entry:
 ; CHECK:   tail call i8* @objc_retain(
 ; CHECK: t:
@@ -433,7 +433,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test6b(
+; CHECK-LABEL: define void @test6b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test6b(i32* %x, i1 %p) nounwind {
@@ -461,7 +461,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test6c(
+; CHECK-LABEL: define void @test6c(
 ; CHECK: entry:
 ; CHECK:   tail call i8* @objc_retain(
 ; CHECK: t:
@@ -495,7 +495,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test6d(
+; CHECK-LABEL: define void @test6d(
 ; CHECK: entry:
 ; CHECK:   tail call i8* @objc_retain(
 ; CHECK: t:
@@ -533,7 +533,7 @@ return:
 ; retain+release pair deletion, where the retain happens on two different
 ; flow paths.
 
-; CHECK:     define void @test7(
+; CHECK-LABEL:     define void @test7(
 ; CHECK:     entry:
 ; CHECK-NOT:   objc_
 ; CHECK:     t:
@@ -567,7 +567,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test7b(
+; CHECK-LABEL: define void @test7b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test7b(i32* %x, i1 %p) nounwind {
@@ -596,7 +596,7 @@ return:
 
 ; Like test7, but there's a retain/retainBlock mismatch. Don't delete!
 
-; CHECK: define void @test7c
+; CHECK-LABEL: define void @test7c(
 ; CHECK: t:
 ; CHECK:   call i8* @objc_retainBlock
 ; CHECK: f:
@@ -631,7 +631,7 @@ return:
 ; retain+release pair deletion, where the retain and release both happen on
 ; different flow paths. Wild!
 
-; CHECK: define void @test8a(
+; CHECK-LABEL: define void @test8a(
 ; CHECK: entry:
 ; CHECK: t:
 ; CHECK:   @objc_retain
@@ -679,7 +679,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test8b(
+; CHECK-LABEL: define void @test8b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test8b(i32* %x, i1 %p, i1 %q) nounwind {
@@ -717,7 +717,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test8c(
+; CHECK-LABEL: define void @test8c(
 ; CHECK: entry:
 ; CHECK: t:
 ; CHECK:   @objc_retain
@@ -765,7 +765,7 @@ return:
   ret void
 }
 
-; CHECK: define void @test8d(
+; CHECK-LABEL: define void @test8d(
 ; CHECK: entry:
 ; CHECK: t:
 ; CHECK:   @objc_retain
@@ -815,7 +815,7 @@ return:
 
 ; Trivial retain+release pair deletion.
 
-; CHECK: define void @test9(
+; CHECK-LABEL: define void @test9(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test9(i8* %x) nounwind {
@@ -827,7 +827,7 @@ entry:
 
 ; Retain+release pair, but on an unknown pointer relationship. Don't delete!
 
-; CHECK: define void @test9b
+; CHECK-LABEL: define void @test9b(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK: @objc_release(i8* %s)
 ; CHECK: }
@@ -841,7 +841,7 @@ entry:
 
 ; Trivial retain+release pair with intervening calls - don't delete!
 
-; CHECK: define void @test10(
+; CHECK-LABEL: define void @test10(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK: @callee
 ; CHECK: @use_pointer
@@ -860,7 +860,7 @@ entry:
 ; Also, add a tail keyword, since objc_retain can never be passed
 ; a stack argument.
 
-; CHECK: define void @test11(
+; CHECK-LABEL: define void @test11(
 ; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK: call i8* @objc_autorelease(i8* %0) [[NUW]]
 ; CHECK: }
@@ -874,7 +874,7 @@ entry:
 
 ; Same as test11 but with no use_pointer call. Delete the pair!
 
-; CHECK: define void @test11a(
+; CHECK-LABEL: define void @test11a(
 ; CHECK: entry:
 ; CHECK-NEXT: ret void
 ; CHECK: }
@@ -889,7 +889,7 @@ entry:
 ; since if the frontend emitted code for an __autoreleasing variable, we may
 ; want it to be in the autorelease pool.
 
-; CHECK: define i8* @test11b(
+; CHECK-LABEL: define i8* @test11b(
 ; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK: call i8* @objc_autorelease(i8* %0) [[NUW]]
 ; CHECK: }
@@ -903,7 +903,7 @@ entry:
 ; Trivial retain,release pair with intervening call, but it's dominated
 ; by another retain - delete!
 
-; CHECK: define void @test12(
+; CHECK-LABEL: define void @test12(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc_
@@ -920,7 +920,7 @@ entry:
 
 ; Trivial retain,autorelease pair. Don't delete!
 
-; CHECK: define void @test13(
+; CHECK-LABEL: define void @test13(
 ; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK: tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK: @use_pointer(i8* %x)
@@ -937,7 +937,7 @@ entry:
 
 ; Delete the retain+release pair.
 
-; CHECK: define void @test13b
+; CHECK-LABEL: define void @test13b(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_retain(i8* %x)
 ; CHECK-NEXT: @use_pointer
@@ -957,7 +957,7 @@ entry:
 ; Don't delete the retain+release pair because there's an
 ; autoreleasePoolPop in the way.
 
-; CHECK: define void @test13c
+; CHECK-LABEL: define void @test13c(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK: @objc_autoreleasePoolPop
 ; CHECK: @objc_retain(i8* %x)
@@ -978,7 +978,7 @@ entry:
 ; Like test13c, but there's an autoreleasePoolPush in the way, but that
 ; doesn't matter.
 
-; CHECK: define void @test13d
+; CHECK-LABEL: define void @test13d(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_retain(i8* %x)
 ; CHECK-NEXT: @objc_autoreleasePoolPush
@@ -1000,7 +1000,7 @@ entry:
 ; Trivial retain,release pair with intervening call, but it's post-dominated
 ; by another release - delete!
 
-; CHECK: define void @test14(
+; CHECK-LABEL: define void @test14(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @use_pointer
 ; CHECK-NEXT: @use_pointer
@@ -1020,7 +1020,7 @@ entry:
 ; Trivial retain,autorelease pair with intervening call, but it's post-dominated
 ; by another release. Don't delete anything.
 
-; CHECK: define void @test15(
+; CHECK-LABEL: define void @test15(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_retain(i8* %x)
 ; CHECK-NEXT: @use_pointer
@@ -1040,7 +1040,7 @@ entry:
 ; Trivial retain,autorelease pair, post-dominated
 ; by another release. Delete the retain and release.
 
-; CHECK: define void @test15b
+; CHECK-LABEL: define void @test15b(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_retain
 ; CHECK-NEXT: @objc_autorelease
@@ -1055,7 +1055,7 @@ entry:
   ret void
 }
 
-; CHECK: define void @test15c
+; CHECK-LABEL: define void @test15c(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: @objc_autorelease
 ; CHECK-NEXT: ret void
@@ -1070,7 +1070,7 @@ entry:
 
 ; Retain+release pairs in diamonds, all dominated by a retain.
 
-; CHECK: define void @test16a(
+; CHECK-LABEL: define void @test16a(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
 ; CHECK: }
@@ -1104,7 +1104,7 @@ purple:
   ret void
 }
 
-; CHECK: define void @test16b(
+; CHECK-LABEL: define void @test16b(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
 ; CHECK: }
@@ -1138,7 +1138,7 @@ purple:
   ret void
 }
 
-; CHECK: define void @test16c(
+; CHECK-LABEL: define void @test16c(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
 ; CHECK: }
@@ -1172,7 +1172,7 @@ purple:
   ret void
 }
 
-; CHECK: define void @test16d(
+; CHECK-LABEL: define void @test16d(
 ; CHECK: @objc_retain(i8* %x)
 ; CHECK-NOT: @objc
 ; CHECK: }
@@ -1209,7 +1209,7 @@ purple:
 
 ; Retain+release pairs in diamonds, all post-dominated by a release.
 
-; CHECK: define void @test17(
+; CHECK-LABEL: define void @test17(
 ; CHECK-NOT: @objc_
 ; CHECK: purple:
 ; CHECK: @objc_release
@@ -1246,7 +1246,7 @@ purple:
 
 ; Delete no-ops.
 
-; CHECK: define void @test18(
+; CHECK-LABEL: define void @test18(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test18() {
@@ -1258,7 +1258,7 @@ define void @test18() {
 
 ; Delete no-ops where undef can be assumed to be null.
 
-; CHECK: define void @test18b
+; CHECK-LABEL: define void @test18b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test18b() {
@@ -1294,7 +1294,7 @@ entry:
 
 ; Bitcast insertion
 
-; CHECK: define void @test20(
+; CHECK-LABEL: define void @test20(
 ; CHECK: %tmp1 = tail call i8* @objc_retain(i8* %tmp) [[NUW]]
 ; CHECK-NEXT: invoke
 ; CHECK: }
@@ -1322,7 +1322,7 @@ if.end:                                           ; preds = %invoke.cont23
 ; Delete a redundant retain,autorelease when forwaring a call result
 ; directly to a return value.
 
-; CHECK: define i8* @test21(
+; CHECK-LABEL: define i8* @test21(
 ; CHECK: call i8* @returner()
 ; CHECK-NEXT: ret i8* %call
 ; CHECK-NEXT: }
@@ -1336,7 +1336,7 @@ entry:
 
 ; Move an objc call up through a phi that has null operands.
 
-; CHECK: define void @test22(
+; CHECK-LABEL: define void @test22(
 ; CHECK: B:
 ; CHECK:   %1 = bitcast double* %p to i8*
 ; CHECK:   call void @objc_release(i8* %1)
@@ -1359,7 +1359,7 @@ C:
 
 ; Optimize objc_retainBlock.
 
-; CHECK: define void @test23(
+; CHECK-LABEL: define void @test23(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 %block0 = type { i64, i64, i8*, i8* }
@@ -1393,7 +1393,7 @@ entry:
 
 ; Don't optimize objc_retainBlock, because there's no copy_on_escape metadata.
 
-; CHECK: define void @test23c(
+; CHECK-LABEL: define void @test23c(
 ; CHECK: @objc_retainBlock
 ; CHECK: @objc_release
 ; CHECK: }
@@ -1408,7 +1408,7 @@ entry:
 
 ; Any call can decrement a retain count.
 
-; CHECK: define void @test24(
+; CHECK-LABEL: define void @test24(
 ; CHECK: @objc_retain(i8* %a)
 ; CHECK: @objc_release
 ; CHECK: }
@@ -1423,7 +1423,7 @@ define void @test24(i8* %r, i8* %a) {
 ; Don't move a retain/release pair if the release can be moved
 ; but the retain can't be moved to balance it.
 
-; CHECK: define void @test25(
+; CHECK-LABEL: define void @test25(
 ; CHECK: entry:
 ; CHECK:   call i8* @objc_retain(i8* %p)
 ; CHECK: true:
@@ -1448,7 +1448,7 @@ done:
 ; Don't move a retain/release pair if the retain can be moved
 ; but the release can't be moved to balance it.
 
-; CHECK: define void @test26(
+; CHECK-LABEL: define void @test26(
 ; CHECK: entry:
 ; CHECK:   call i8* @objc_retain(i8* %p)
 ; CHECK: true:
@@ -1472,7 +1472,7 @@ done:
 
 ; Don't sink the retain,release into the loop.
 
-; CHECK: define void @test27(
+; CHECK-LABEL: define void @test27(
 ; CHECK: entry:
 ; CHECK: call i8* @objc_retain(i8* %p)
 ; CHECK: loop:
@@ -1497,7 +1497,7 @@ done:
 
 ; Trivial code motion case: Triangle.
 
-; CHECK: define void @test28(
+; CHECK-LABEL: define void @test28(
 ; CHECK-NOT: @objc_
 ; CHECK: true:
 ; CHECK: call i8* @objc_retain(
@@ -1525,7 +1525,7 @@ done:
 ; Trivial code motion case: Triangle, but no metadata. Don't move past
 ; unrelated memory references!
 
-; CHECK: define void @test28b
+; CHECK-LABEL: define void @test28b(
 ; CHECK: call i8* @objc_retain(
 ; CHECK: true:
 ; CHECK-NOT: @objc_
@@ -1555,7 +1555,7 @@ done:
 ; Trivial code motion case: Triangle, with metadata. Do move past
 ; unrelated memory references! And preserve the metadata.
 
-; CHECK: define void @test28c
+; CHECK-LABEL: define void @test28c(
 ; CHECK-NOT: @objc_
 ; CHECK: true:
 ; CHECK: call i8* @objc_retain(
@@ -1583,7 +1583,7 @@ done:
 
 ; Like test28. but with two releases.
 
-; CHECK: define void @test29(
+; CHECK-LABEL: define void @test29(
 ; CHECK-NOT: @objc_
 ; CHECK: true:
 ; CHECK: call i8* @objc_retain(
@@ -1618,7 +1618,7 @@ ohno:
 ; Basic case with the use and call in a diamond
 ; with an extra release.
 
-; CHECK: define void @test30(
+; CHECK-LABEL: define void @test30(
 ; CHECK-NOT: @objc_
 ; CHECK: true:
 ; CHECK: call i8* @objc_retain(
@@ -1657,7 +1657,7 @@ ohno:
 
 ; Basic case with a mergeable release.
 
-; CHECK: define void @test31(
+; CHECK-LABEL: define void @test31(
 ; CHECK: call i8* @objc_retain(i8* %p)
 ; CHECK: call void @callee()
 ; CHECK: store
@@ -1686,7 +1686,7 @@ false:
 
 ; Don't consider bitcasts or getelementptrs direct uses.
 
-; CHECK: define void @test32(
+; CHECK-LABEL: define void @test32(
 ; CHECK-NOT: @objc_
 ; CHECK: true:
 ; CHECK: call i8* @objc_retain(
@@ -1715,7 +1715,7 @@ done:
 
 ; Do consider icmps to be direct uses.
 
-; CHECK: define void @test33(
+; CHECK-LABEL: define void @test33(
 ; CHECK-NOT: @objc_
 ; CHECK: true:
 ; CHECK: call i8* @objc_retain(
@@ -1745,7 +1745,7 @@ done:
 ; Delete retain,release if there's just a possible dec and we have imprecise
 ; releases.
 
-; CHECK: define void @test34a(
+; CHECK-LABEL: define void @test34a(
 ; CHECK:   call i8* @objc_retain
 ; CHECK: true:
 ; CHECK: done:
@@ -1767,7 +1767,7 @@ done:
   ret void
 }
 
-; CHECK: define void @test34b(
+; CHECK-LABEL: define void @test34b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test34b(i8* %p, i1 %x, i8* %y) {
@@ -1791,7 +1791,7 @@ done:
 ; release.
 
 ; Precise.
-; CHECK: define void @test35a(
+; CHECK-LABEL: define void @test35a(
 ; CHECK: entry:
 ; CHECK:   call i8* @objc_retain
 ; CHECK: true:
@@ -1815,7 +1815,7 @@ done:
 }
 
 ; Imprecise.
-; CHECK: define void @test35b(
+; CHECK-LABEL: define void @test35b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test35b(i8* %p, i1 %x, i8* %y) {
@@ -1836,7 +1836,7 @@ done:
 
 ; Delete a retain,release if there's no actual use and we have precise release.
 
-; CHECK: define void @test36a(
+; CHECK-LABEL: define void @test36a(
 ; CHECK: @objc_retain
 ; CHECK: call void @callee()
 ; CHECK-NOT: @objc_
@@ -1854,7 +1854,7 @@ entry:
 
 ; Like test36, but with metadata.
 
-; CHECK: define void @test36b(
+; CHECK-LABEL: define void @test36b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test36b(i8* %p) {
@@ -1868,7 +1868,7 @@ entry:
 
 ; Be aggressive about analyzing phis to eliminate possible uses.
 
-; CHECK: define void @test38(
+; CHECK-LABEL: define void @test38(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test38(i8* %p, i1 %u, i1 %m, i8* %z, i8* %y, i8* %x, i8* %w) {
@@ -1902,7 +1902,7 @@ g:
 
 ; Delete retain,release pairs around loops.
 
-; CHECK: define void @test39(
+; CHECK-LABEL: define void @test39(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test39(i8* %p) {
@@ -1920,7 +1920,7 @@ exit:                                             ; preds = %loop
 
 ; Delete retain,release pairs around loops containing uses.
 
-; CHECK: define void @test39b(
+; CHECK-LABEL: define void @test39b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test39b(i8* %p) {
@@ -1939,7 +1939,7 @@ exit:                                             ; preds = %loop
 
 ; Delete retain,release pairs around loops containing potential decrements.
 
-; CHECK: define void @test39c(
+; CHECK-LABEL: define void @test39c(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test39c(i8* %p) {
@@ -1959,7 +1959,7 @@ exit:                                             ; preds = %loop
 ; Delete retain,release pairs around loops even if
 ; the successors are in a different order.
 
-; CHECK: define void @test40(
+; CHECK-LABEL: define void @test40(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test40(i8* %p) {
@@ -1979,7 +1979,7 @@ exit:                                             ; preds = %loop
 ; Do the known-incremented retain+release elimination even if the pointer
 ; is also autoreleased.
 
-; CHECK: define void @test42(
+; CHECK-LABEL: define void @test42(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: call i8* @objc_retain(i8* %p)
 ; CHECK-NEXT: call i8* @objc_autorelease(i8* %p)
@@ -2001,7 +2001,7 @@ entry:
 ; Don't the known-incremented retain+release elimination if the pointer is
 ; autoreleased and there's an autoreleasePoolPop.
 
-; CHECK: define void @test43(
+; CHECK-LABEL: define void @test43(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: call i8* @objc_retain(i8* %p)
 ; CHECK-NEXT: call i8* @objc_autorelease(i8* %p)
@@ -2027,7 +2027,7 @@ entry:
 ; Do the known-incremented retain+release elimination if the pointer is
 ; autoreleased and there's an autoreleasePoolPush.
 
-; CHECK: define void @test43b
+; CHECK-LABEL: define void @test43b(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: call i8* @objc_retain(i8* %p)
 ; CHECK-NEXT: call i8* @objc_autorelease(i8* %p)
@@ -2050,7 +2050,7 @@ entry:
 
 ; Do retain+release elimination for non-provenance pointers.
 
-; CHECK: define void @test44(
+; CHECK-LABEL: define void @test44(
 ; CHECK-NOT: objc_
 ; CHECK: }
 define void @test44(i8** %pp) {
@@ -2063,7 +2063,7 @@ define void @test44(i8** %pp) {
 ; Don't delete retain+release with an unknown-provenance
 ; may-alias objc_release between them.
 
-; CHECK: define void @test45(
+; CHECK-LABEL: define void @test45(
 ; CHECK: call i8* @objc_retain(i8* %p)
 ; CHECK: call void @objc_release(i8* %q)
 ; CHECK: call void @use_pointer(i8* %p)
@@ -2081,7 +2081,7 @@ define void @test45(i8** %pp, i8** %qq) {
 
 ; Don't delete retain and autorelease here.
 
-; CHECK: define void @test46(
+; CHECK-LABEL: define void @test46(
 ; CHECK: tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK: true:
 ; CHECK: call i8* @objc_autorelease(i8* %p) [[NUW]]
@@ -2102,7 +2102,7 @@ false:
 
 ; Delete no-op cast calls.
 
-; CHECK: define i8* @test47(
+; CHECK-LABEL: define i8* @test47(
 ; CHECK-NOT: call
 ; CHECK: ret i8* %p
 ; CHECK: }
@@ -2113,7 +2113,7 @@ define i8* @test47(i8* %p) nounwind {
 
 ; Delete no-op cast calls.
 
-; CHECK: define i8* @test48(
+; CHECK-LABEL: define i8* @test48(
 ; CHECK-NOT: call
 ; CHECK: ret i8* %p
 ; CHECK: }
@@ -2124,7 +2124,7 @@ define i8* @test48(i8* %p) nounwind {
 
 ; Delete no-op cast calls.
 
-; CHECK: define i8* @test49(
+; CHECK-LABEL: define i8* @test49(
 ; CHECK-NOT: call
 ; CHECK: ret i8* %p
 ; CHECK: }
@@ -2136,7 +2136,7 @@ define i8* @test49(i8* %p) nounwind {
 ; Do delete retain+release with intervening stores of the address value if we
 ; have imprecise release attached to objc_release.
 
-; CHECK:      define void @test50a(
+; CHECK-LABEL:      define void @test50a(
 ; CHECK-NEXT:   call i8* @objc_retain
 ; CHECK-NEXT:   call void @callee
 ; CHECK-NEXT:   store
@@ -2151,7 +2151,7 @@ define void @test50a(i8* %p, i8** %pp) {
   ret void
 }
 
-; CHECK: define void @test50b(
+; CHECK-LABEL: define void @test50b(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test50b(i8* %p, i8** %pp) {
@@ -2166,7 +2166,7 @@ define void @test50b(i8* %p, i8** %pp) {
 ; Don't delete retain+release with intervening stores through the
 ; address value.
 
-; CHECK: define void @test51a(
+; CHECK-LABEL: define void @test51a(
 ; CHECK: call i8* @objc_retain(i8* %p)
 ; CHECK: call void @objc_release(i8* %p)
 ; CHECK: ret void
@@ -2179,7 +2179,7 @@ define void @test51a(i8* %p) {
   ret void
 }
 
-; CHECK: define void @test51b(
+; CHECK-LABEL: define void @test51b(
 ; CHECK: call i8* @objc_retain(i8* %p)
 ; CHECK: call void @objc_release(i8* %p)
 ; CHECK: ret void
@@ -2195,7 +2195,7 @@ define void @test51b(i8* %p) {
 ; Don't delete retain+release with intervening use of a pointer of
 ; unknown provenance.
 
-; CHECK: define void @test52a(
+; CHECK-LABEL: define void @test52a(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call void @callee()
 ; CHECK: call void @use_pointer(i8* %z)
@@ -2212,7 +2212,7 @@ define void @test52a(i8** %zz, i8** %pp) {
   ret void
 }
 
-; CHECK: define void @test52b(
+; CHECK-LABEL: define void @test52b(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call void @callee()
 ; CHECK: call void @use_pointer(i8* %z)
@@ -2234,7 +2234,7 @@ define void @test52b(i8** %zz, i8** %pp) {
 ; Oops. That's wrong. Clang sometimes uses function types gratuitously.
 ; See rdar://10551239.
 
-; CHECK: define void @test53(
+; CHECK-LABEL: define void @test53(
 ; CHECK: @objc_
 ; CHECK: }
 define void @test53(void ()** %zz, i8** %pp) {
@@ -2249,7 +2249,7 @@ define void @test53(void ()** %zz, i8** %pp) {
 
 ; Convert autorelease to release if the value is unused.
 
-; CHECK: define void @test54(
+; CHECK-LABEL: define void @test54(
 ; CHECK: call i8* @returner()
 ; CHECK-NEXT: call void @objc_release(i8* %t) [[NUW]], !clang.imprecise_release !0
 ; CHECK-NEXT: ret void
@@ -2262,7 +2262,7 @@ define void @test54() {
 
 ; Nested retain+release pairs. Delete them both.
 
-; CHECK: define void @test55(
+; CHECK-LABEL: define void @test55(
 ; CHECK-NOT: @objc
 ; CHECK: }
 define void @test55(i8* %x) { 
@@ -2279,7 +2279,7 @@ entry:
 ; can be partially eliminated. Plus an extra outer pair to
 ; eliminate, for fun.
 
-; CHECK: define void @test56(
+; CHECK-LABEL: define void @test56(
 ; CHECK-NOT: @objc
 ; CHECK: if.then:
 ; CHECK-NEXT: %0 = tail call i8* @objc_retain(i8* %x) [[NUW]]
@@ -2313,7 +2313,7 @@ if.end:                                           ; preds = %entry, %if.then
 ; known unnecessary because the presence of the second one means that
 ; the first one won't be deleting the object.
 
-; CHECK:      define void @test57(
+; CHECK-LABEL:      define void @test57(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
@@ -2339,7 +2339,7 @@ entry:
 ; An adjacent retain+release pair is sufficient even if it will be
 ; removed itself.
 
-; CHECK:      define void @test58(
+; CHECK-LABEL:      define void @test58(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
@@ -2358,7 +2358,7 @@ entry:
 
 ; Don't delete the second retain+release pair in an adjacent set.
 
-; CHECK:      define void @test59(
+; CHECK-LABEL:      define void @test59(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %x) [[NUW]]
 ; CHECK-NEXT:   call void @use_pointer(i8* %x)
@@ -2385,7 +2385,7 @@ entry:
 ; We have a precise lifetime retain/release here. We can not remove them since
 ; @something is not constant.
 
-; CHECK: define void @test60a(
+; CHECK-LABEL: define void @test60a(
 ; CHECK: call i8* @objc_retain
 ; CHECK: call void @objc_release
 ; CHECK: }
@@ -2399,7 +2399,7 @@ define void @test60a() {
   ret void
 }
 
-; CHECK: define void @test60b(
+; CHECK-LABEL: define void @test60b(
 ; CHECK: call i8* @objc_retain
 ; CHECK-NOT: call i8* @objc_retain
 ; CHECK-NOT: call i8* @objc_rrelease
@@ -2415,7 +2415,7 @@ define void @test60b() {
   ret void
 }
 
-; CHECK: define void @test60c(
+; CHECK-LABEL: define void @test60c(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test60c() {
@@ -2428,7 +2428,7 @@ define void @test60c() {
   ret void
 }
 
-; CHECK: define void @test60d(
+; CHECK-LABEL: define void @test60d(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test60d() {
@@ -2441,7 +2441,7 @@ define void @test60d() {
   ret void
 }
 
-; CHECK: define void @test60e(
+; CHECK-LABEL: define void @test60e(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test60e() {
@@ -2457,7 +2457,7 @@ define void @test60e() {
 ; Constant pointers to objects don't need to be considered related to other
 ; pointers.
 
-; CHECK: define void @test61(
+; CHECK-LABEL: define void @test61(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test61() {
@@ -2472,7 +2472,7 @@ define void @test61() {
 ; Delete a retain matched by releases when one is inside the loop and the
 ; other is outside the loop.
 
-; CHECK: define void @test62(
+; CHECK-LABEL: define void @test62(
 ; CHECK-NOT: @objc_
 ; CHECK: }
 define void @test62(i8* %x, i1* %p) nounwind {
@@ -2496,7 +2496,7 @@ exit:
 ; Like test62 but with no release in exit.
 ; Don't delete anything!
 
-; CHECK: define void @test63(
+; CHECK-LABEL: define void @test63(
 ; CHECK: loop:
 ; CHECK:   tail call i8* @objc_retain(i8* %x)
 ; CHECK: loop.more:
@@ -2522,7 +2522,7 @@ exit:
 ; Like test62 but with no release in loop.more.
 ; Don't delete anything!
 
-; CHECK: define void @test64(
+; CHECK-LABEL: define void @test64(
 ; CHECK: loop:
 ; CHECK:   tail call i8* @objc_retain(i8* %x)
 ; CHECK: exit:
@@ -2547,7 +2547,7 @@ exit:
 
 ; Move an autorelease past a phi with a null.
 
-; CHECK: define i8* @test65(
+; CHECK-LABEL: define i8* @test65(
 ; CHECK: if.then:
 ; CHECK:   call i8* @objc_autorelease(
 ; CHECK: return:
@@ -2570,7 +2570,7 @@ return:                                           ; preds = %if.then, %entry
 
 ; Don't move an autorelease past an autorelease pool boundary.
 
-; CHECK: define i8* @test65b(
+; CHECK-LABEL: define i8* @test65b(
 ; CHECK: if.then:
 ; CHECK-NOT: @objc_autorelease
 ; CHECK: return:
@@ -2596,7 +2596,7 @@ return:                                           ; preds = %if.then, %entry
 ; Don't move an autoreleaseReuturnValue, which would break
 ; the RV optimization.
 
-; CHECK: define i8* @test65c(
+; CHECK-LABEL: define i8* @test65c(
 ; CHECK: if.then:
 ; CHECK-NOT: @objc_autorelease
 ; CHECK: return:
@@ -2620,7 +2620,7 @@ return:                                           ; preds = %if.then, %entry
 ; An objc_retain can serve as a may-use for a different pointer.
 ; rdar://11931823
 
-; CHECK: define void @test66a(
+; CHECK-LABEL: define void @test66a(
 ; CHECK:   tail call i8* @objc_retain(i8* %cond) [[NUW]]
 ; CHECK:   tail call void @objc_release(i8* %call) [[NUW]]
 ; CHECK:   tail call i8* @objc_retain(i8* %tmp8) [[NUW]]
@@ -2643,7 +2643,7 @@ cond.end:                                         ; preds = %cond.true, %entry
   ret void
 }
 
-; CHECK: define void @test66b(
+; CHECK-LABEL: define void @test66b(
 ; CHECK:   tail call i8* @objc_retain(i8* %cond) [[NUW]]
 ; CHECK:   tail call void @objc_release(i8* %call) [[NUW]]
 ; CHECK:   tail call i8* @objc_retain(i8* %tmp8) [[NUW]]
@@ -2666,7 +2666,7 @@ cond.end:                                         ; preds = %cond.true, %entry
   ret void
 }
 
-; CHECK: define void @test66c(
+; CHECK-LABEL: define void @test66c(
 ; CHECK:   tail call i8* @objc_retain(i8* %cond) [[NUW]]
 ; CHECK:   tail call void @objc_release(i8* %call) [[NUW]]
 ; CHECK:   tail call i8* @objc_retain(i8* %tmp8) [[NUW]]
@@ -2689,7 +2689,7 @@ cond.end:                                         ; preds = %cond.true, %entry
   ret void
 }
 
-; CHECK: define void @test66d(
+; CHECK-LABEL: define void @test66d(
 ; CHECK:   tail call i8* @objc_retain(i8* %cond) [[NUW]]
 ; CHECK:   tail call void @objc_release(i8* %call) [[NUW]]
 ; CHECK:   tail call i8* @objc_retain(i8* %tmp8) [[NUW]]
@@ -3045,7 +3045,7 @@ declare i32 @objc_sync_exit(i8*)
 ; Make sure that we understand that objc_sync_{enter,exit} are IC_User not
 ; IC_Call/IC_CallOrUser.
 
-; CHECK:      define void @test67
+; CHECK-LABEL:      define void @test67(
 ; CHECK-NEXT:   call i32 @objc_sync_enter(i8* %x)
 ; CHECK-NEXT:   call i32 @objc_sync_exit(i8* %x)
 ; CHECK-NEXT:   ret void

@@ -2,7 +2,7 @@
 ; PR7328
 ; PR7506
 define i32 @foo(i32 %x) {
-; CHECK: define i32 @foo
+; CHECK-LABEL: define i32 @foo(
 ; CHECK: %accumulator.tr = phi i32 [ 1, %entry ], [ 0, %body ]
 entry:
   %cond = icmp ugt i32 %x, 0                      ; <i1> [#uses=1]

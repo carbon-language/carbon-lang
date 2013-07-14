@@ -14,14 +14,14 @@ target triple = "i386-apple-macosx10.7.2"
 @.str2 = private unnamed_addr constant [3 x i8] c"%s\00", align 1
 
 define void @test1(%struct.__sFILE* %stream) nounwind {
-; CHECK: define void @test1
+; CHECK-LABEL: define void @test1(
 ; CHECK: call i32 @"fwrite$UNIX2003"
   %call = tail call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %stream, i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0)) nounwind
   ret void
 }
 
 define void @test2(%struct.__sFILE* %stream, i8* %str) nounwind ssp {
-; CHECK: define void @test2
+; CHECK-LABEL: define void @test2(
 ; CHECK: call i32 @"fputs$UNIX2003"
   %call = tail call i32 (%struct.__sFILE*, i8*, ...)* @fprintf(%struct.__sFILE* %stream, i8* getelementptr inbounds ([3 x i8]* @.str2, i32 0, i32 0), i8* %str) nounwind
   ret void

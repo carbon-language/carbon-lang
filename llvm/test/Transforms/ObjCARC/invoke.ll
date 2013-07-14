@@ -10,7 +10,7 @@ declare i8* @returner()
 
 ; ARCOpt shouldn't try to move the releases to the block containing the invoke.
 
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK: invoke.cont:
 ; CHECK:   call void @objc_release(i8* %zipFile) [[NUW:#[0-9]+]], !clang.imprecise_release !0
 ; CHECK:   ret void
@@ -38,7 +38,7 @@ lpad:                                             ; preds = %entry
 
 ; ARCOpt should move the release before the callee calls.
 
-; CHECK: define void @test1(
+; CHECK-LABEL: define void @test1(
 ; CHECK: invoke.cont:
 ; CHECK:   call void @objc_release(i8* %zipFile) [[NUW]], !clang.imprecise_release !0
 ; CHECK:   call void @callee()
@@ -108,7 +108,7 @@ finally.rethrow:                                  ; preds = %invoke.cont, %entry
 
 ; Don't try to place code on invoke critical edges.
 
-; CHECK: define void @test3(
+; CHECK-LABEL: define void @test3(
 ; CHECK: if.end:
 ; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
@@ -139,7 +139,7 @@ if.end:
 
 ; Like test3, but with ARC-relevant exception handling.
 
-; CHECK: define void @test4(
+; CHECK-LABEL: define void @test4(
 ; CHECK: lpad:
 ; CHECK-NEXT: %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
 ; CHECK-NEXT: cleanup
@@ -177,7 +177,7 @@ if.end:
 ; Don't turn the retainAutoreleaseReturnValue into retain, because it's
 ; for an invoke which we can assume codegen will put immediately prior.
 
-; CHECK: define void @test5(
+; CHECK-LABEL: define void @test5(
 ; CHECK: call i8* @objc_retainAutoreleasedReturnValue(i8* %z)
 ; CHECK: }
 define void @test5() {
@@ -197,7 +197,7 @@ if.end:
 
 ; Like test5, but there's intervening code.
 
-; CHECK: define void @test6(
+; CHECK-LABEL: define void @test6(
 ; CHECK: call i8* @objc_retain(i8* %z)
 ; CHECK: }
 define void @test6() {

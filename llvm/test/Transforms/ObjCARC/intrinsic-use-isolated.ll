@@ -6,7 +6,7 @@
 declare void @clang.arc.use(...) nounwind
 
 ; Kill calls to @clang.arc.use(...)
-; CHECK: define void @test0(
+; CHECK-LABEL: define void @test0(
 ; CHECK-NOT: clang.arc.use
 ; CHECK: }
 define void @test0(i8* %a, i8* %b) {

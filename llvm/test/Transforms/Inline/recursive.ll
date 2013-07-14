@@ -6,7 +6,7 @@ target triple = "i386-apple-darwin10.0"
 ; rdar://10853263
 
 ; Make sure that the callee is still here.
-; CHECK: define i32 @callee
+; CHECK-LABEL: define i32 @callee(
 define i32 @callee(i32 %param) {
  %yyy = alloca [100000 x i8]
  %r = bitcast [100000 x i8]* %yyy to i8*
@@ -14,7 +14,7 @@ define i32 @callee(i32 %param) {
  ret i32 4
 }
 
-; CHECK: define i32 @caller
+; CHECK-LABEL: define i32 @caller(
 ; CHECK-NEXT: entry:
 ; CHECK-NOT: alloca
 ; CHECK: ret

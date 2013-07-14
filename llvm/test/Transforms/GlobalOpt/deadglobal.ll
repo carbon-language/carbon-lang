@@ -16,7 +16,7 @@ define void @foo1() {
 @G2 = linkonce_odr constant i32 42
 
 define void @foo2() {
-; CHECK: define void @foo2
+; CHECK-LABEL: define void @foo2(
 ; CHECK-NEXT: store
         store i32 1, i32* @G2
         ret void
