@@ -1522,15 +1522,15 @@ struct SLPVectorizer : public FunctionPass {
          e = po_end(&F.getEntryBlock()); it != e; ++it) {
       BasicBlock *BB = *it;
 
-      // Vectorize trees that end at reductions.
-      Changed |= vectorizeChainsInBlock(BB, R);
-
       // Vectorize trees that end at stores.
       if (unsigned count = collectStores(BB, R)) {
         (void)count;
         DEBUG(dbgs() << "SLP: Found " << count << " stores to vectorize.\n");
         Changed |= vectorizeStoreChains(R);
       }
+
+      // Vectorize trees that end at reductions.
+      Changed |= vectorizeChainsInBlock(BB, R);
     }
 
     if (Changed) {
@@ -1653,7 +1653,7 @@ bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
   bool Changed = false;
 
   // Do a quadratic search on all of the given stores and find
-  // all of the pairs of loads that follow each other.
+  // all of the pairs of stores that follow each other.
   for (unsigned i = 0, e = Stores.size(); i < e; ++i)
     for (unsigned j = 0; j < e; ++j) {
       if (i == j)
