@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux | FileCheck %s
 
 ; First without noredzone.
-; CHECK: f0:
+; CHECK-LABEL: f0:
 ; CHECK: -4(%rsp)
 ; CHECK: -4(%rsp)
 ; CHECK: ret
@@ -12,7 +12,7 @@ entry:
 }
 
 ; Then with noredzone.
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: subq $4, %rsp
 ; CHECK: (%rsp)
 ; CHECK: (%rsp)

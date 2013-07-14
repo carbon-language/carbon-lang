@@ -7,7 +7,7 @@
 
 ; Check zero-extended multiplication in which only the high part is used.
 define i32 @f1(i32 %a, i32 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: msgr
 ; CHECK: br %r14
   %ax = zext i32 %a to i64
@@ -20,7 +20,7 @@ define i32 @f1(i32 %a, i32 %b) {
 
 ; Check sign-extended multiplication in which only the high part is used.
 define i32 @f2(i32 %a, i32 %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: msgfr
 ; CHECK: br %r14
   %ax = sext i32 %a to i64
@@ -34,7 +34,7 @@ define i32 @f2(i32 %a, i32 %b) {
 ; Check zero-extended multiplication in which the result is split into
 ; high and low halves.
 define i32 @f3(i32 %a, i32 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: msgr
 ; CHECK: br %r14
   %ax = zext i32 %a to i64
@@ -50,7 +50,7 @@ define i32 @f3(i32 %a, i32 %b) {
 ; Check sign-extended multiplication in which the result is split into
 ; high and low halves.
 define i32 @f4(i32 %a, i32 %b) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: msgfr
 ; CHECK: br %r14
   %ax = sext i32 %a to i64

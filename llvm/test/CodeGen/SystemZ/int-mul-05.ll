@@ -4,7 +4,7 @@
 
 ; Check multiplication by 2, which should use shifts.
 define i32 @f1(i32 %a, i32 *%dest) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: sll %r2, 1
 ; CHECK: br %r14
   %mul = mul i32 %a, 2
@@ -13,7 +13,7 @@ define i32 @f1(i32 %a, i32 *%dest) {
 
 ; Check multiplication by 3.
 define i32 @f2(i32 %a, i32 *%dest) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mhi %r2, 3
 ; CHECK: br %r14
   %mul = mul i32 %a, 3
@@ -22,7 +22,7 @@ define i32 @f2(i32 %a, i32 *%dest) {
 
 ; Check the high end of the MHI range.
 define i32 @f3(i32 %a, i32 *%dest) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: mhi %r2, 32767
 ; CHECK: br %r14
   %mul = mul i32 %a, 32767
@@ -31,7 +31,7 @@ define i32 @f3(i32 %a, i32 *%dest) {
 
 ; Check the next value up, which should use shifts.
 define i32 @f4(i32 %a, i32 *%dest) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: sll %r2, 15
 ; CHECK: br %r14
   %mul = mul i32 %a, 32768
@@ -40,7 +40,7 @@ define i32 @f4(i32 %a, i32 *%dest) {
 
 ; Check the next value up again, which can use MSFI.
 define i32 @f5(i32 %a, i32 *%dest) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: msfi %r2, 32769
 ; CHECK: br %r14
   %mul = mul i32 %a, 32769
@@ -49,7 +49,7 @@ define i32 @f5(i32 %a, i32 *%dest) {
 
 ; Check the high end of the MSFI range.
 define i32 @f6(i32 %a, i32 *%dest) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: msfi %r2, 2147483647
 ; CHECK: br %r14
   %mul = mul i32 %a, 2147483647
@@ -58,7 +58,7 @@ define i32 @f6(i32 %a, i32 *%dest) {
 
 ; Check the next value up, which should use shifts.
 define i32 @f7(i32 %a, i32 *%dest) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: sll %r2, 31
 ; CHECK: br %r14
   %mul = mul i32 %a, 2147483648
@@ -67,7 +67,7 @@ define i32 @f7(i32 %a, i32 *%dest) {
 
 ; Check the next value up again, which is treated as a negative value.
 define i32 @f8(i32 %a, i32 *%dest) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: msfi %r2, -2147483647
 ; CHECK: br %r14
   %mul = mul i32 %a, 2147483649
@@ -76,7 +76,7 @@ define i32 @f8(i32 %a, i32 *%dest) {
 
 ; Check multiplication by -1, which is a negation.
 define i32 @f9(i32 %a, i32 *%dest) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: lcr %r2, %r2
 ; CHECK: br %r14
   %mul = mul i32 %a, -1
@@ -85,7 +85,7 @@ define i32 @f9(i32 %a, i32 *%dest) {
 
 ; Check multiplication by -2, which should use shifts.
 define i32 @f10(i32 %a, i32 *%dest) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: sll %r2, 1
 ; CHECK: lcr %r2, %r2
 ; CHECK: br %r14
@@ -95,7 +95,7 @@ define i32 @f10(i32 %a, i32 *%dest) {
 
 ; Check multiplication by -3.
 define i32 @f11(i32 %a, i32 *%dest) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: mhi %r2, -3
 ; CHECK: br %r14
   %mul = mul i32 %a, -3
@@ -104,7 +104,7 @@ define i32 @f11(i32 %a, i32 *%dest) {
 
 ; Check the lowest useful MHI value.
 define i32 @f12(i32 %a, i32 *%dest) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: mhi %r2, -32767
 ; CHECK: br %r14
   %mul = mul i32 %a, -32767
@@ -113,7 +113,7 @@ define i32 @f12(i32 %a, i32 *%dest) {
 
 ; Check the next value down, which should use shifts.
 define i32 @f13(i32 %a, i32 *%dest) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: sll %r2, 15
 ; CHECK: lcr %r2, %r2
 ; CHECK: br %r14
@@ -123,7 +123,7 @@ define i32 @f13(i32 %a, i32 *%dest) {
 
 ; Check the next value down again, which can use MSFI.
 define i32 @f14(i32 %a, i32 *%dest) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: msfi %r2, -32769
 ; CHECK: br %r14
   %mul = mul i32 %a, -32769
@@ -132,7 +132,7 @@ define i32 @f14(i32 %a, i32 *%dest) {
 
 ; Check the lowest useful MSFI value.
 define i32 @f15(i32 %a, i32 *%dest) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: msfi %r2, -2147483647
 ; CHECK: br %r14
   %mul = mul i32 %a, -2147483647
@@ -141,7 +141,7 @@ define i32 @f15(i32 %a, i32 *%dest) {
 
 ; Check the next value down, which should use shifts.
 define i32 @f16(i32 %a, i32 *%dest) {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: sll %r2, 31
 ; CHECK-NOT: lcr
 ; CHECK: br %r14
@@ -151,7 +151,7 @@ define i32 @f16(i32 %a, i32 *%dest) {
 
 ; Check the next value down again, which is treated as a positive value.
 define i32 @f17(i32 %a, i32 *%dest) {
-; CHECK: f17:
+; CHECK-LABEL: f17:
 ; CHECK: msfi %r2, 2147483647
 ; CHECK: br %r14
   %mul = mul i32 %a, -2147483649

@@ -4,7 +4,7 @@
 
 ; Test f64->f32.
 define float @f1(double %d1, double %d2) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ledbr %f0, %f2
 ; CHECK: br %r14
   %res = fptrunc double %d2 to float
@@ -13,7 +13,7 @@ define float @f1(double %d1, double %d2) {
 
 ; Test f128->f32.
 define float @f2(fp128 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lexbr %f0, %f0
 ; CHECK: br %r14
   %val = load fp128 *%ptr
@@ -24,7 +24,7 @@ define float @f2(fp128 *%ptr) {
 ; Make sure that we don't use %f0 as the destination of LEXBR when %f2
 ; is still live.
 define void @f3(float *%dst, fp128 *%ptr, float %d1, float %d2) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lexbr %f1, %f1
 ; CHECK: aebr %f1, %f2
 ; CHECK: ste %f1, 0(%r2)
@@ -38,7 +38,7 @@ define void @f3(float *%dst, fp128 *%ptr, float %d1, float %d2) {
 
 ; Test f128->f64.
 define double @f4(fp128 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ldxbr %f0, %f0
 ; CHECK: br %r14
   %val = load fp128 *%ptr
@@ -48,7 +48,7 @@ define double @f4(fp128 *%ptr) {
 
 ; Like f3, but for f128->f64.
 define void @f5(double *%dst, fp128 *%ptr, double %d1, double %d2) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: ldxbr %f1, %f1
 ; CHECK: adbr %f1, %f2
 ; CHECK: std %f1, 0(%r2)

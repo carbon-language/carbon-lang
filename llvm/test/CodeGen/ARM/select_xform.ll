@@ -3,11 +3,11 @@
 ; rdar://8662825
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
-; ARM: t1:
+; ARM-LABEL: t1:
 ; ARM: suble r1, r1, #-2147483647
 ; ARM: mov r0, r1
 
-; T2: t1:
+; T2-LABEL: t1:
 ; T2: mvn r0, #-2147483648
 ; T2: addle r1, r0
 ; T2: mov r0, r1
@@ -18,11 +18,11 @@ define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 }
 
 define i32 @t2(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
-; ARM: t2:
+; ARM-LABEL: t2:
 ; ARM: suble r1, r1, #10
 ; ARM: mov r0, r1
 
-; T2: t2:
+; T2-LABEL: t2:
 ; T2: suble r1, #10
 ; T2: mov r0, r1
   %tmp1 = icmp sgt i32 %c, 10
@@ -32,11 +32,11 @@ define i32 @t2(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 }
 
 define i32 @t3(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
-; ARM: t3:
+; ARM-LABEL: t3:
 ; ARM: andge r3, r3, r2
 ; ARM: mov r0, r3
 
-; T2: t3:
+; T2-LABEL: t3:
 ; T2: andge r3, r2
 ; T2: mov r0, r3
   %cond = icmp slt i32 %a, %b
@@ -46,11 +46,11 @@ define i32 @t3(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
 }
 
 define i32 @t4(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
-; ARM: t4:
+; ARM-LABEL: t4:
 ; ARM: orrge r3, r3, r2
 ; ARM: mov r0, r3
 
-; T2: t4:
+; T2-LABEL: t4:
 ; T2: orrge r3, r2
 ; T2: mov r0, r3
   %cond = icmp slt i32 %a, %b
@@ -61,11 +61,11 @@ define i32 @t4(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
 
 define i32 @t5(i32 %a, i32 %b, i32 %c) nounwind {
 entry:
-; ARM: t5:
+; ARM-LABEL: t5:
 ; ARM-NOT: moveq
 ; ARM: orreq r2, r2, #1
 
-; T2: t5:
+; T2-LABEL: t5:
 ; T2-NOT: moveq
 ; T2: orreq r2, r2, #1
   %tmp1 = icmp eq i32 %a, %b
@@ -75,11 +75,11 @@ entry:
 }
 
 define i32 @t6(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
-; ARM: t6:
+; ARM-LABEL: t6:
 ; ARM-NOT: movge
 ; ARM: eorlt r3, r3, r2
 
-; T2: t6:
+; T2-LABEL: t6:
 ; T2-NOT: movge
 ; T2: eorlt r3, r2
   %cond = icmp slt i32 %a, %b
@@ -90,11 +90,11 @@ define i32 @t6(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 
 define i32 @t7(i32 %a, i32 %b, i32 %c) nounwind {
 entry:
-; ARM: t7:
+; ARM-LABEL: t7:
 ; ARM-NOT: lsleq
 ; ARM: andeq r2, r2, r2, lsl #1
 
-; T2: t7:
+; T2-LABEL: t7:
 ; T2-NOT: lsleq.w
 ; T2: andeq.w r2, r2, r2, lsl #1
   %tmp1 = shl i32 %c, 1
@@ -106,11 +106,11 @@ entry:
 
 ; Fold ORRri into movcc.
 define i32 @t8(i32 %a, i32 %b) nounwind {
-; ARM: t8:
+; ARM-LABEL: t8:
 ; ARM: cmp r0, r1
 ; ARM: orrge r0, r1, #1
 
-; T2: t8:
+; T2-LABEL: t8:
 ; T2: cmp r0, r1
 ; T2: orrge r0, r1, #1
   %x = or i32 %b, 1
@@ -121,11 +121,11 @@ define i32 @t8(i32 %a, i32 %b) nounwind {
 
 ; Fold ANDrr into movcc.
 define i32 @t9(i32 %a, i32 %b, i32 %c) nounwind {
-; ARM: t9:
+; ARM-LABEL: t9:
 ; ARM: cmp r0, r1
 ; ARM: andge r0, r1, r2
 
-; T2: t9:
+; T2-LABEL: t9:
 ; T2: cmp r0, r1
 ; T2: andge.w r0, r1, r2
   %x = and i32 %b, %c
@@ -136,11 +136,11 @@ define i32 @t9(i32 %a, i32 %b, i32 %c) nounwind {
 
 ; Fold EORrs into movcc.
 define i32 @t10(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
-; ARM: t10:
+; ARM-LABEL: t10:
 ; ARM: cmp r0, r1
 ; ARM: eorge r0, r1, r2, lsl #7
 
-; T2: t10:
+; T2-LABEL: t10:
 ; T2: cmp r0, r1
 ; T2: eorge.w r0, r1, r2, lsl #7
   %s = shl i32 %c, 7
@@ -152,11 +152,11 @@ define i32 @t10(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 
 ; Fold ORRri into movcc, reversing the condition.
 define i32 @t11(i32 %a, i32 %b) nounwind {
-; ARM: t11:
+; ARM-LABEL: t11:
 ; ARM: cmp r0, r1
 ; ARM: orrlt r0, r1, #1
 
-; T2: t11:
+; T2-LABEL: t11:
 ; T2: cmp r0, r1
 ; T2: orrlt r0, r1, #1
   %x = or i32 %b, 1
@@ -167,11 +167,11 @@ define i32 @t11(i32 %a, i32 %b) nounwind {
 
 ; Fold ADDri12 into movcc
 define i32 @t12(i32 %a, i32 %b) nounwind {
-; ARM: t12:
+; ARM-LABEL: t12:
 ; ARM: cmp r0, r1
 ; ARM: addge r0, r1,
 
-; T2: t12:
+; T2-LABEL: t12:
 ; T2: cmp r0, r1
 ; T2: addwge r0, r1, #3000
   %x = add i32 %b, 3000

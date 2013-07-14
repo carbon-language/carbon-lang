@@ -3,7 +3,7 @@
 ; rdar://12471808
 
 define <8 x i8> @v_bsli8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
-;CHECK: v_bsli8:
+;CHECK-LABEL: v_bsli8:
 ;CHECK: vbsl
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -16,7 +16,7 @@ define <8 x i8> @v_bsli8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 }
 
 define <4 x i16> @v_bsli16(<4 x i16>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
-;CHECK: v_bsli16:
+;CHECK-LABEL: v_bsli16:
 ;CHECK: vbsl
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -29,7 +29,7 @@ define <4 x i16> @v_bsli16(<4 x i16>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind
 }
 
 define <2 x i32> @v_bsli32(<2 x i32>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
-;CHECK: v_bsli32:
+;CHECK-LABEL: v_bsli32:
 ;CHECK: vbsl
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -42,7 +42,7 @@ define <2 x i32> @v_bsli32(<2 x i32>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind
 }
 
 define <1 x i64> @v_bsli64(<1 x i64>* %A, <1 x i64>* %B, <1 x i64>* %C) nounwind {
-;CHECK: v_bsli64:
+;CHECK-LABEL: v_bsli64:
 ;CHECK: vbsl
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -55,7 +55,7 @@ define <1 x i64> @v_bsli64(<1 x i64>* %A, <1 x i64>* %B, <1 x i64>* %C) nounwind
 }
 
 define <16 x i8> @v_bslQi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind {
-;CHECK: v_bslQi8:
+;CHECK-LABEL: v_bslQi8:
 ;CHECK: vbsl
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -68,7 +68,7 @@ define <16 x i8> @v_bslQi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8>* %C) nounwind
 }
 
 define <8 x i16> @v_bslQi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwind {
-;CHECK: v_bslQi16:
+;CHECK-LABEL: v_bslQi16:
 ;CHECK: vbsl
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -81,7 +81,7 @@ define <8 x i16> @v_bslQi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwin
 }
 
 define <4 x i32> @v_bslQi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwind {
-;CHECK: v_bslQi32:
+;CHECK-LABEL: v_bslQi32:
 ;CHECK: vbsl
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -94,7 +94,7 @@ define <4 x i32> @v_bslQi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwin
 }
 
 define <2 x i64> @v_bslQi64(<2 x i64>* %A, <2 x i64>* %B, <2 x i64>* %C) nounwind {
-;CHECK: v_bslQi64:
+;CHECK-LABEL: v_bslQi64:
 ;CHECK: vbsl
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
@@ -107,56 +107,56 @@ define <2 x i64> @v_bslQi64(<2 x i64>* %A, <2 x i64>* %B, <2 x i64>* %C) nounwin
 }
 
 define <8 x i8> @f1(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) nounwind readnone optsize ssp {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: vbsl
   %vbsl.i = tail call <8 x i8> @llvm.arm.neon.vbsl.v8i8(<8 x i8> %a, <8 x i8> %b, <8 x i8> %c) nounwind
   ret <8 x i8> %vbsl.i
 }
 
 define <4 x i16> @f2(<4 x i16> %a, <4 x i16> %b, <4 x i16> %c) nounwind readnone optsize ssp {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: vbsl
   %vbsl3.i = tail call <4 x i16> @llvm.arm.neon.vbsl.v4i16(<4 x i16> %a, <4 x i16> %b, <4 x i16> %c) nounwind
   ret <4 x i16> %vbsl3.i
 }
 
 define <2 x i32> @f3(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c) nounwind readnone optsize ssp {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: vbsl
   %vbsl3.i = tail call <2 x i32> @llvm.arm.neon.vbsl.v2i32(<2 x i32> %a, <2 x i32> %b, <2 x i32> %c) nounwind
   ret <2 x i32> %vbsl3.i
 }
 
 define <2 x float> @f4(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind readnone optsize ssp {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: vbsl
   %vbsl4.i = tail call <2 x float> @llvm.arm.neon.vbsl.v2f32(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind
   ret <2 x float> %vbsl4.i
 }
 
 define <16 x i8> @g1(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c) nounwind readnone optsize ssp {
-; CHECK: g1:
+; CHECK-LABEL: g1:
 ; CHECK: vbsl
   %vbsl.i = tail call <16 x i8> @llvm.arm.neon.vbsl.v16i8(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c) nounwind
   ret <16 x i8> %vbsl.i
 }
 
 define <8 x i16> @g2(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c) nounwind readnone optsize ssp {
-; CHECK: g2:
+; CHECK-LABEL: g2:
 ; CHECK: vbsl
   %vbsl3.i = tail call <8 x i16> @llvm.arm.neon.vbsl.v8i16(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c) nounwind
   ret <8 x i16> %vbsl3.i
 }
 
 define <4 x i32> @g3(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) nounwind readnone optsize ssp {
-; CHECK: g3:
+; CHECK-LABEL: g3:
 ; CHECK: vbsl
   %vbsl3.i = tail call <4 x i32> @llvm.arm.neon.vbsl.v4i32(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) nounwind
   ret <4 x i32> %vbsl3.i
 }
 
 define <4 x float> @g4(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind readnone optsize ssp {
-; CHECK: g4:
+; CHECK-LABEL: g4:
 ; CHECK: vbsl
   %vbsl4.i = tail call <4 x float> @llvm.arm.neon.vbsl.v4f32(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind
   ret <4 x float> %vbsl4.i

@@ -6,7 +6,7 @@ declare void @foo(i64, i64, i64, i64)
 
 ; Check 0.
 define i64 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lghi %r2, 0
 ; CHECK-NEXT: br %r14
   ret i64 0
@@ -14,7 +14,7 @@ define i64 @f1() {
 
 ; Check the high end of the LGHI range.
 define i64 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lghi %r2, 32767
 ; CHECK-NEXT: br %r14
   ret i64 32767
@@ -22,7 +22,7 @@ define i64 @f2() {
 
 ; Check the next value up, which must use LLILL instead.
 define i64 @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: llill %r2, 32768
 ; CHECK-NEXT: br %r14
   ret i64 32768
@@ -30,7 +30,7 @@ define i64 @f3() {
 
 ; Check the high end of the LLILL range.
 define i64 @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: llill %r2, 65535
 ; CHECK-NEXT: br %r14
   ret i64 65535
@@ -38,7 +38,7 @@ define i64 @f4() {
 
 ; Check the first useful LLILH value, which is the next one up.
 define i64 @f5() {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: llilh %r2, 1
 ; CHECK-NEXT: br %r14
   ret i64 65536
@@ -46,7 +46,7 @@ define i64 @f5() {
 
 ; Check the first useful LGFI value, which is the next one up again.
 define i64 @f6() {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lgfi %r2, 65537
 ; CHECK-NEXT: br %r14
   ret i64 65537
@@ -54,7 +54,7 @@ define i64 @f6() {
 
 ; Check the high end of the LGFI range.
 define i64 @f7() {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lgfi %r2, 2147483647
 ; CHECK-NEXT: br %r14
   ret i64 2147483647
@@ -62,7 +62,7 @@ define i64 @f7() {
 
 ; Check the next value up, which should use LLILH instead.
 define i64 @f8() {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: llilh %r2, 32768
 ; CHECK-NEXT: br %r14
   ret i64 2147483648
@@ -70,7 +70,7 @@ define i64 @f8() {
 
 ; Check the next value up again, which should use LLILF.
 define i64 @f9() {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: llilf %r2, 2147483649
 ; CHECK-NEXT: br %r14
   ret i64 2147483649
@@ -78,7 +78,7 @@ define i64 @f9() {
 
 ; Check the high end of the LLILH range.
 define i64 @f10() {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: llilh %r2, 65535
 ; CHECK-NEXT: br %r14
   ret i64 4294901760
@@ -86,7 +86,7 @@ define i64 @f10() {
 
 ; Check the next value up, which must use LLILF.
 define i64 @f11() {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: llilf %r2, 4294901761
 ; CHECK-NEXT: br %r14
   ret i64 4294901761
@@ -94,7 +94,7 @@ define i64 @f11() {
 
 ; Check the high end of the LLILF range.
 define i64 @f12() {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: llilf %r2, 4294967295
 ; CHECK-NEXT: br %r14
   ret i64 4294967295
@@ -102,7 +102,7 @@ define i64 @f12() {
 
 ; Check the lowest useful LLIHL value, which is the next one up.
 define i64 @f13() {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: br %r14
   ret i64 4294967296
@@ -110,7 +110,7 @@ define i64 @f13() {
 
 ; Check the next value up, which must use a combination of two instructions.
 define i64 @f14() {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: oill %r2, 1
 ; CHECK-NEXT: br %r14
@@ -119,7 +119,7 @@ define i64 @f14() {
 
 ; Check the high end of the OILL range.
 define i64 @f15() {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: oill %r2, 65535
 ; CHECK-NEXT: br %r14
@@ -128,7 +128,7 @@ define i64 @f15() {
 
 ; Check the next value up, which should use OILH instead.
 define i64 @f16() {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: oilh %r2, 1
 ; CHECK-NEXT: br %r14
@@ -137,7 +137,7 @@ define i64 @f16() {
 
 ; Check the next value up again, which should use OILF.
 define i64 @f17() {
-; CHECK: f17:
+; CHECK-LABEL: f17:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: oilf %r2, 65537
 ; CHECK-NEXT: br %r14
@@ -146,7 +146,7 @@ define i64 @f17() {
 
 ; Check the high end of the OILH range.
 define i64 @f18() {
-; CHECK: f18:
+; CHECK-LABEL: f18:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: oilh %r2, 65535
 ; CHECK-NEXT: br %r14
@@ -155,7 +155,7 @@ define i64 @f18() {
 
 ; Check the high end of the OILF range.
 define i64 @f19() {
-; CHECK: f19:
+; CHECK-LABEL: f19:
 ; CHECK: llihl %r2, 1
 ; CHECK-NEXT: oilf %r2, 4294967295
 ; CHECK-NEXT: br %r14
@@ -164,7 +164,7 @@ define i64 @f19() {
 
 ; Check the high end of the LLIHL range.
 define i64 @f20() {
-; CHECK: f20:
+; CHECK-LABEL: f20:
 ; CHECK: llihl %r2, 65535
 ; CHECK-NEXT: br %r14
   ret i64 281470681743360
@@ -172,7 +172,7 @@ define i64 @f20() {
 
 ; Check the lowest useful LLIHH value, which is 1<<32 greater than the above.
 define i64 @f21() {
-; CHECK: f21:
+; CHECK-LABEL: f21:
 ; CHECK: llihh %r2, 1
 ; CHECK-NEXT: br %r14
   ret i64 281474976710656
@@ -180,7 +180,7 @@ define i64 @f21() {
 
 ; Check the lowest useful LLIHF value, which is 1<<32 greater again.
 define i64 @f22() {
-; CHECK: f22:
+; CHECK-LABEL: f22:
 ; CHECK: llihf %r2, 65537
 ; CHECK-NEXT: br %r14
   ret i64 281479271677952
@@ -188,7 +188,7 @@ define i64 @f22() {
 
 ; Check the highest end of the LLIHH range.
 define i64 @f23() {
-; CHECK: f23:
+; CHECK-LABEL: f23:
 ; CHECK: llihh %r2, 65535
 ; CHECK-NEXT: br %r14
   ret i64 -281474976710656
@@ -196,7 +196,7 @@ define i64 @f23() {
 
 ; Check the next value up, which must use OILL too.
 define i64 @f24() {
-; CHECK: f24:
+; CHECK-LABEL: f24:
 ; CHECK: llihh %r2, 65535
 ; CHECK-NEXT: oill %r2, 1
 ; CHECK-NEXT: br %r14
@@ -205,7 +205,7 @@ define i64 @f24() {
 
 ; Check the high end of the LLIHF range.
 define i64 @f25() {
-; CHECK: f25:
+; CHECK-LABEL: f25:
 ; CHECK: llihf %r2, 4294967295
 ; CHECK-NEXT: br %r14
   ret i64 -4294967296
@@ -213,7 +213,7 @@ define i64 @f25() {
 
 ; Check -1.
 define i64 @f26() {
-; CHECK: f26:
+; CHECK-LABEL: f26:
 ; CHECK: lghi %r2, -1
 ; CHECK-NEXT: br %r14
   ret i64 -1
@@ -221,7 +221,7 @@ define i64 @f26() {
 
 ; Check the low end of the LGHI range.
 define i64 @f27() {
-; CHECK: f27:
+; CHECK-LABEL: f27:
 ; CHECK: lghi %r2, -32768
 ; CHECK-NEXT: br %r14
   ret i64 -32768
@@ -229,7 +229,7 @@ define i64 @f27() {
 
 ; Check the next value down, which must use LGFI instead.
 define i64 @f28() {
-; CHECK: f28:
+; CHECK-LABEL: f28:
 ; CHECK: lgfi %r2, -32769
 ; CHECK-NEXT: br %r14
   ret i64 -32769
@@ -237,7 +237,7 @@ define i64 @f28() {
 
 ; Check the low end of the LGFI range.
 define i64 @f29() {
-; CHECK: f29:
+; CHECK-LABEL: f29:
 ; CHECK: lgfi %r2, -2147483648
 ; CHECK-NEXT: br %r14
   ret i64 -2147483648
@@ -245,7 +245,7 @@ define i64 @f29() {
 
 ; Check the next value down, which needs a two-instruction sequence.
 define i64 @f30() {
-; CHECK: f30:
+; CHECK-LABEL: f30:
 ; CHECK: llihf %r2, 4294967295
 ; CHECK-NEXT: oilf %r2, 2147483647
 ; CHECK-NEXT: br %r14
@@ -254,7 +254,7 @@ define i64 @f30() {
 
 ; Check that constant loads are rematerialized.
 define i64 @f31() {
-; CHECK: f31:
+; CHECK-LABEL: f31:
 ; CHECK-DAG: lghi %r2, 42
 ; CHECK-DAG: lgfi %r3, 65537
 ; CHECK-DAG: llilf %r4, 2147483649

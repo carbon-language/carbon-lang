@@ -4,7 +4,7 @@ target triple = "powerpc64-unknown-freebsd10.0"
 
 @a = thread_local global i32 0, align 4
 
-;CHECK:          localexec:
+;CHECK-LABEL:          localexec:
 define i32 @localexec() nounwind {
 entry:
 ;CHECK:          addis [[REG1:[0-9]+]], 13, a@tprel@ha

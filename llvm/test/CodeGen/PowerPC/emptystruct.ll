@@ -25,7 +25,7 @@ entry:
   ret void
 }
 
-; CHECK: callee:
+; CHECK-LABEL: callee:
 ; CHECK: std 4,
 ; CHECK-NOT: std 5,
 ; CHECK-NOT: std 6,
@@ -42,7 +42,7 @@ entry:
   ret void
 }
 
-; CHECK: caller:
+; CHECK-LABEL: caller:
 ; CHECK: addi 4,
 ; CHECK-NOT: std 5,
 ; CHECK-NOT: std 6,

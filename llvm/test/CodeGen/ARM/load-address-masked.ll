@@ -10,5 +10,5 @@ entry:
   ret i32 and (i32 ptrtoint (i32* @a to i32), i32 255)
 }
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: ldrb    r0, .LCPI0_0

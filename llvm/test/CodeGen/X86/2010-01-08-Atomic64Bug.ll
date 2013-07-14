@@ -6,7 +6,7 @@
 
 define void @t(i64* nocapture %p) nounwind ssp {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: movl ([[REG:%[a-z]+]]), %eax
 ; CHECK: movl 4([[REG]]), %edx
 ; CHECK: LBB0_1:

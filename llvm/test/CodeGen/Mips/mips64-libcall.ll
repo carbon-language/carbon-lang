@@ -5,7 +5,7 @@
 
 ; Check that %add is not passed in an integer register.
 ;
-; HARD: callfloor:
+; HARD-LABEL: callfloor:
 ; HARD-NOT: dmfc1 $4
 
 define double @callfloor(double %d) nounwind readnone {
@@ -19,7 +19,7 @@ declare double @floor(double) nounwind readnone
 
 ; Check call16.
 ;
-; SOFT: f64add:
+; SOFT-LABEL: f64add:
 ; SOFT: ld $25, %call16(__adddf3)
 
 define double @f64add(double %a, double %b) {

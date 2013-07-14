@@ -8,7 +8,7 @@ declare i32 @printf(i8*, ...)
 @.str = private unnamed_addr constant [10 x i8] c"%llx, %d\0A\00", align 1
 
 define i32 @t1() nounwind {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK:  movl $0, 12(%esp)
 ; CHECK:  movl $0, 8(%esp)
 ; CHECK:  movl $72, 4(%esp)
@@ -22,7 +22,7 @@ define i32 @t1() nounwind {
 }
 
 define i32 @t2() nounwind {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK:  movl $0, 12(%esp)
 ; CHECK:  movl $0, 8(%esp)
 ; CHECK:  movl $0, 4(%esp)
@@ -36,7 +36,7 @@ define i32 @t2() nounwind {
 }
 
 define i32 @t3() nounwind {
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK:  movl $1, 12(%esp)
 ; CHECK:  movl $-1, 8(%esp)
 ; CHECK:  movl $-9, 4(%esp)

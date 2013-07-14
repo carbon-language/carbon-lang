@@ -4,7 +4,7 @@
 @gint_ = external global i32
 @gLL_ = external global i64
 
-; 32: store_int_float_:
+; 32-LABEL: store_int_float_:
 ; 32: trunc.w.s $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 32: swc1 $f[[R0]],
 
@@ -15,10 +15,10 @@ entry:
   ret void
 }
 
-; 32: store_int_double_:
+; 32-LABEL: store_int_double_:
 ; 32: trunc.w.d $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 32: swc1 $f[[R0]],
-; 64: store_int_double_:
+; 64-LABEL: store_int_double_:
 ; 64: trunc.w.d $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 64: swc1 $f[[R0]],
 
@@ -29,7 +29,7 @@ entry:
   ret void
 }
 
-; 64: store_LL_float_:
+; 64-LABEL: store_LL_float_:
 ; 64: trunc.l.s $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 64: sdc1 $f[[R0]],
 
@@ -40,7 +40,7 @@ entry:
   ret void
 }
 
-; 64: store_LL_double_:
+; 64-LABEL: store_LL_double_:
 ; 64: trunc.l.d $f[[R0:[0-9]+]], $f{{[0-9]+}}
 ; 64: sdc1 $f[[R0]],
 

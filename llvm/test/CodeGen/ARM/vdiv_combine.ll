@@ -97,7 +97,7 @@ entry:
 declare void @foo_float32x4_t(<4 x float>)
 
 define <4 x float> @fix_unsigned_i16_to_float(<4 x i16> %in) {
-; CHECK: fix_unsigned_i16_to_float:
+; CHECK-LABEL: fix_unsigned_i16_to_float:
 ; CHECK: vmovl.u16 [[TMP:q[0-9]+]], {{d[0-9]+}}
 ; CHECK: vcvt.f32.u32 {{q[0-9]+}}, [[TMP]], #1
 
@@ -107,7 +107,7 @@ define <4 x float> @fix_unsigned_i16_to_float(<4 x i16> %in) {
 }
 
 define <4 x float> @fix_signed_i16_to_float(<4 x i16> %in) {
-; CHECK: fix_signed_i16_to_float:
+; CHECK-LABEL: fix_signed_i16_to_float:
 ; CHECK: vmovl.s16 [[TMP:q[0-9]+]], {{d[0-9]+}}
 ; CHECK: vcvt.f32.s32 {{q[0-9]+}}, [[TMP]], #1
 
@@ -117,7 +117,7 @@ define <4 x float> @fix_signed_i16_to_float(<4 x i16> %in) {
 }
 
 define <2 x float> @fix_i64_to_float(<2 x i64> %in) {
-; CHECK: fix_i64_to_float:
+; CHECK-LABEL: fix_i64_to_float:
 ; CHECK: bl
 ; CHECK: bl
 
@@ -127,7 +127,7 @@ define <2 x float> @fix_i64_to_float(<2 x i64> %in) {
 }
 
 define <2 x double> @fix_i64_to_double(<2 x i64> %in) {
-; CHECK: fix_i64_to_double:
+; CHECK-LABEL: fix_i64_to_double:
 ; CHECK: bl
 ; CHECK: bl
 

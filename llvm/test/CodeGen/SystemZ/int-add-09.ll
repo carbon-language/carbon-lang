@@ -5,7 +5,7 @@
 ; Check additions of 1.  The XOR ensures that we don't instead load the
 ; constant into a register and use memory addition.
 define void @f1(i128 *%aptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: algfi {{%r[0-5]}}, 1
 ; CHECK: alcgr
 ; CHECK: br %r14
@@ -18,7 +18,7 @@ define void @f1(i128 *%aptr) {
 
 ; Check the high end of the ALGFI range.
 define void @f2(i128 *%aptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: algfi {{%r[0-5]}}, 4294967295
 ; CHECK: alcgr
 ; CHECK: br %r14
@@ -31,7 +31,7 @@ define void @f2(i128 *%aptr) {
 
 ; Check the next value up, which must use register addition.
 define void @f3(i128 *%aptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: algr
 ; CHECK: alcgr
 ; CHECK: br %r14
@@ -44,7 +44,7 @@ define void @f3(i128 *%aptr) {
 
 ; Check addition of -1, which must also use register addition.
 define void @f4(i128 *%aptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: algr
 ; CHECK: alcgr
 ; CHECK: br %r14

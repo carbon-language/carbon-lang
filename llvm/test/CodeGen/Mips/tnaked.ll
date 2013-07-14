@@ -7,7 +7,7 @@ entry:
 }
 
 ; CHECK: 	.ent	tnaked
-; CHECK:          tnaked: 
+; CHECK-LABEL:          tnaked:
 ; CHECK-NOT:	.frame	{{.*}}
 ; CHECK-NOT:     .mask 	{{.*}}
 ; CHECK-NOT:	.fmask	{{.*}}
@@ -19,7 +19,7 @@ entry:
 }
 
 ; CHECK: 	.ent	tnonaked
-; CHECK:         tnonaked: 
+; CHECK-LABEL:         tnonaked:
 ; CHECK:	.frame	$fp,8,$ra
 ; CHECK:        .mask 	0x40000000,-4
 ; CHECK:	.fmask	0x00000000,0

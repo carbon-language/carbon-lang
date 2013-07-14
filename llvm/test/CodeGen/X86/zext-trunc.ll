@@ -2,7 +2,7 @@
 ; rdar://7570931
 
 define i64 @foo(i64 %a, i64 %b) nounwind {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: leal
 ; CHECK-NOT: movl
 ; CHECK: ret

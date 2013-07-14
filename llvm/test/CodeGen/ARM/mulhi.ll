@@ -3,13 +3,13 @@
 ; RUN: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s -check-prefix=M3
 
 define i32 @smulhi(i32 %x, i32 %y) nounwind {
-; V6: smulhi:
+; V6-LABEL: smulhi:
 ; V6: smmul
 
-; V4: smulhi:
+; V4-LABEL: smulhi:
 ; V4: smull
 
-; M3: smulhi:
+; M3-LABEL: smulhi:
 ; M3: smull
         %tmp = sext i32 %x to i64               ; <i64> [#uses=1]
         %tmp1 = sext i32 %y to i64              ; <i64> [#uses=1]
@@ -20,13 +20,13 @@ define i32 @smulhi(i32 %x, i32 %y) nounwind {
 }
 
 define i32 @umulhi(i32 %x, i32 %y) nounwind {
-; V6: umulhi:
+; V6-LABEL: umulhi:
 ; V6: umull
 
-; V4: umulhi:
+; V4-LABEL: umulhi:
 ; V4: umull
 
-; M3: umulhi:
+; M3-LABEL: umulhi:
 ; M3: umull
         %tmp = zext i32 %x to i64               ; <i64> [#uses=1]
         %tmp1 = zext i32 %y to i64              ; <i64> [#uses=1]
@@ -38,13 +38,13 @@ define i32 @umulhi(i32 %x, i32 %y) nounwind {
 
 ; rdar://r10152911
 define i32 @t3(i32 %a) nounwind {
-; V6: t3:
+; V6-LABEL: t3:
 ; V6: smmla
 
-; V4: t3:
+; V4-LABEL: t3:
 ; V4: smull
 
-; M3: t3:
+; M3-LABEL: t3:
 ; M3-NOT: smmla
 ; M3: smull
 entry:

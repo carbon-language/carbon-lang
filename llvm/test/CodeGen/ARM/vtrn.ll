@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vtrni8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vtrni8:
+;CHECK-LABEL: vtrni8:
 ;CHECK: vtrn.8
 ;CHECK-NEXT: vadd.i8
 	%tmp1 = load <8 x i8>* %A
@@ -13,7 +13,7 @@ define <8 x i8> @vtrni8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vtrni16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vtrni16:
+;CHECK-LABEL: vtrni16:
 ;CHECK: vtrn.16
 ;CHECK-NEXT: vadd.i16
 	%tmp1 = load <4 x i16>* %A
@@ -25,7 +25,7 @@ define <4 x i16> @vtrni16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vtrni32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vtrni32:
+;CHECK-LABEL: vtrni32:
 ;CHECK: vtrn.32
 ;CHECK-NEXT: vadd.i32
 	%tmp1 = load <2 x i32>* %A
@@ -37,7 +37,7 @@ define <2 x i32> @vtrni32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <2 x float> @vtrnf(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vtrnf:
+;CHECK-LABEL: vtrnf:
 ;CHECK: vtrn.32
 ;CHECK-NEXT: vadd.f32
 	%tmp1 = load <2 x float>* %A
@@ -49,7 +49,7 @@ define <2 x float> @vtrnf(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <16 x i8> @vtrnQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vtrnQi8:
+;CHECK-LABEL: vtrnQi8:
 ;CHECK: vtrn.8
 ;CHECK-NEXT: vadd.i8
 	%tmp1 = load <16 x i8>* %A
@@ -61,7 +61,7 @@ define <16 x i8> @vtrnQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vtrnQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vtrnQi16:
+;CHECK-LABEL: vtrnQi16:
 ;CHECK: vtrn.16
 ;CHECK-NEXT: vadd.i16
 	%tmp1 = load <8 x i16>* %A
@@ -73,7 +73,7 @@ define <8 x i16> @vtrnQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vtrnQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vtrnQi32:
+;CHECK-LABEL: vtrnQi32:
 ;CHECK: vtrn.32
 ;CHECK-NEXT: vadd.i32
 	%tmp1 = load <4 x i32>* %A
@@ -85,7 +85,7 @@ define <4 x i32> @vtrnQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <4 x float> @vtrnQf(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vtrnQf:
+;CHECK-LABEL: vtrnQf:
 ;CHECK: vtrn.32
 ;CHECK-NEXT: vadd.f32
 	%tmp1 = load <4 x float>* %A
@@ -99,7 +99,7 @@ define <4 x float> @vtrnQf(<4 x float>* %A, <4 x float>* %B) nounwind {
 ; Undef shuffle indices should not prevent matching to VTRN:
 
 define <8 x i8> @vtrni8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vtrni8_undef:
+;CHECK-LABEL: vtrni8_undef:
 ;CHECK: vtrn.8
 ;CHECK-NEXT: vadd.i8
 	%tmp1 = load <8 x i8>* %A
@@ -111,7 +111,7 @@ define <8 x i8> @vtrni8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vtrnQi16_undef(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vtrnQi16_undef:
+;CHECK-LABEL: vtrnQi16_undef:
 ;CHECK: vtrn.16
 ;CHECK-NEXT: vadd.i16
 	%tmp1 = load <8 x i16>* %A

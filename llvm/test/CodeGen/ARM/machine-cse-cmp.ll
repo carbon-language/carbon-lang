@@ -6,7 +6,7 @@
 
 define i32 @f1(i32 %cond1, i32 %x1, i32 %x2, i32 %x3) {
 entry:
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cmp
 ; CHECK: moveq
 ; CHECK-NOT: cmp
@@ -25,7 +25,7 @@ entry:
 ; rdar://10660865
 define void @f2() nounwind ssp {
 entry:
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cmp
 ; CHECK: poplt
 ; CHECK-NOT: cmp
@@ -49,7 +49,7 @@ declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 ; rdar://12462006
 define i8* @f3(i8* %base, i32* nocapture %offset, i32 %size) nounwind {
 entry:
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: sub
 ; CHECK: cmp
 ; CHECK: blt

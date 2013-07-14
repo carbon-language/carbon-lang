@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vhsubs8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vhsubs8:
+;CHECK-LABEL: vhsubs8:
 ;CHECK: vhsub.s8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -10,7 +10,7 @@ define <8 x i8> @vhsubs8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vhsubs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vhsubs16:
+;CHECK-LABEL: vhsubs16:
 ;CHECK: vhsub.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -19,7 +19,7 @@ define <4 x i16> @vhsubs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vhsubs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vhsubs32:
+;CHECK-LABEL: vhsubs32:
 ;CHECK: vhsub.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -28,7 +28,7 @@ define <2 x i32> @vhsubs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <8 x i8> @vhsubu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vhsubu8:
+;CHECK-LABEL: vhsubu8:
 ;CHECK: vhsub.u8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -37,7 +37,7 @@ define <8 x i8> @vhsubu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vhsubu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vhsubu16:
+;CHECK-LABEL: vhsubu16:
 ;CHECK: vhsub.u16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -46,7 +46,7 @@ define <4 x i16> @vhsubu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vhsubu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vhsubu32:
+;CHECK-LABEL: vhsubu32:
 ;CHECK: vhsub.u32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -55,7 +55,7 @@ define <2 x i32> @vhsubu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <16 x i8> @vhsubQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vhsubQs8:
+;CHECK-LABEL: vhsubQs8:
 ;CHECK: vhsub.s8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -64,7 +64,7 @@ define <16 x i8> @vhsubQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vhsubQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vhsubQs16:
+;CHECK-LABEL: vhsubQs16:
 ;CHECK: vhsub.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -73,7 +73,7 @@ define <8 x i16> @vhsubQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vhsubQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vhsubQs32:
+;CHECK-LABEL: vhsubQs32:
 ;CHECK: vhsub.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -82,7 +82,7 @@ define <4 x i32> @vhsubQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <16 x i8> @vhsubQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vhsubQu8:
+;CHECK-LABEL: vhsubQu8:
 ;CHECK: vhsub.u8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -91,7 +91,7 @@ define <16 x i8> @vhsubQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vhsubQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vhsubQu16:
+;CHECK-LABEL: vhsubQu16:
 ;CHECK: vhsub.u16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -100,7 +100,7 @@ define <8 x i16> @vhsubQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vhsubQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vhsubQu32:
+;CHECK-LABEL: vhsubQu32:
 ;CHECK: vhsub.u32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B

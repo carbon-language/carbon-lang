@@ -97,7 +97,7 @@ define void @atomic_maxmin_i6432() {
 @id = internal global i64 0, align 8
 
 define void @tf_bug(i8* %ptr) nounwind {
-; PIC: tf_bug:
+; PIC-LABEL: tf_bug:
 ; PIC: movl _id-L1$pb(
 ; PIC: movl (_id-L1$pb)+4(
   %tmp1 = atomicrmw add i64* @id, i64 1 seq_cst

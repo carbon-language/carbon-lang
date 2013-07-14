@@ -12,7 +12,7 @@
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 
 define hidden fastcc void @rdictionary_lookup(%struct.Dict_node_struct* %dn, i8* nocapture %s) nounwind ssp {
-; CHECK: rdictionary_lookup:
+; CHECK-LABEL: rdictionary_lookup:
 entry:
   br label %tailrecurse
 

@@ -4,7 +4,7 @@
 
 ; Test the low end of the LD range.
 define double @f1(double *%src) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: br %r14
   %val = load double *%src
@@ -13,7 +13,7 @@ define double @f1(double *%src) {
 
 ; Test the high end of the LD range.
 define double @f2(double *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ld %f0, 4088(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr double *%src, i64 511
@@ -23,7 +23,7 @@ define double @f2(double *%src) {
 
 ; Check the next doubleword up, which should use LDY instead of LD.
 define double @f3(double *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ldy %f0, 4096(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr double *%src, i64 512
@@ -33,7 +33,7 @@ define double @f3(double *%src) {
 
 ; Check the high end of the aligned LDY range.
 define double @f4(double *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ldy %f0, 524280(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr double *%src, i64 65535
@@ -44,7 +44,7 @@ define double @f4(double *%src) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f5(double *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r2, 524288
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: br %r14
@@ -55,7 +55,7 @@ define double @f5(double *%src) {
 
 ; Check the high end of the negative aligned LDY range.
 define double @f6(double *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: ldy %f0, -8(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr double *%src, i64 -1
@@ -65,7 +65,7 @@ define double @f6(double *%src) {
 
 ; Check the low end of the LDY range.
 define double @f7(double *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: ldy %f0, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr double *%src, i64 -65536
@@ -76,7 +76,7 @@ define double @f7(double *%src) {
 ; Check the next doubleword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f8(double *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r2, -524296
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: br %r14
@@ -87,7 +87,7 @@ define double @f8(double *%src) {
 
 ; Check that LD allows an index.
 define double @f9(i64 %src, i64 %index) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ld %f0, 4095({{%r3,%r2|%r2,%r3}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -99,7 +99,7 @@ define double @f9(i64 %src, i64 %index) {
 
 ; Check that LDY allows an index.
 define double @f10(i64 %src, i64 %index) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: ldy %f0, 4096({{%r3,%r2|%r2,%r3}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index

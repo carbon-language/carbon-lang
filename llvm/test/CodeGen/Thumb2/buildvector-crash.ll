@@ -12,6 +12,6 @@ bb8:                                              ; preds = %bb8, %bb.nph372
   %3 = fadd <4 x float> undef, %2
   store <4 x float> %3, <4 x float>* undef, align 4
   br label %bb8
-; CHECK: RotateStarsFP_Vec:
+; CHECK-LABEL: RotateStarsFP_Vec:
 ; CHECK: vld1.64
 }

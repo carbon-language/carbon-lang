@@ -7,7 +7,7 @@ entry:
 	%2 = mul i64 %1, %0
 	ret i64 %2
 }
-; CHECK: umul_lohi:
+; CHECK-LABEL: umul_lohi:
 ; CHECK: ldc [[REG:r[0-9]+]], 0
 ; CHECK-NEXT: lmul {{.*}}, [[REG]], [[REG]]
 ; CHECK-NEXT: retsp 0
@@ -19,7 +19,7 @@ entry:
 	%2 = mul i64 %1, %0
 	ret i64 %2
 }
-; CHECK: smul_lohi:
+; CHECK-LABEL: smul_lohi:
 ; CHECK: ldc
 ; CHECK-NEXT: mov
 ; CHECK-NEXT: maccs
@@ -30,7 +30,7 @@ entry:
 	%0 = mul i64 %a, %b
 	ret i64 %0
 }
-; CHECK: mul64:
+; CHECK-LABEL: mul64:
 ; CHECK: ldc
 ; CHECK-NEXT: lmul
 ; CHECK-NEXT: mul
@@ -42,7 +42,7 @@ entry:
 	%1 = mul i64 %a, %0
 	ret i64 %1
 }
-; CHECK: mul64_2:
+; CHECK-LABEL: mul64_2:
 ; CHECK: ldc
 ; CHECK-NEXT: lmul
 ; CHECK-NEXT: mul

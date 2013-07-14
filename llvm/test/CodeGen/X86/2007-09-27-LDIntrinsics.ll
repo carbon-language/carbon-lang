@@ -7,7 +7,7 @@ entry:
 	%tmp2 = call x86_fp80 @llvm.sqrt.f80( x86_fp80 %x )
 	ret x86_fp80 %tmp2
         
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: fldt 4(%esp)
 ; CHECK-NEXT: fsqrt
 ; CHECK-NEXT: ret
@@ -19,7 +19,7 @@ define x86_fp80 @bar(x86_fp80 %x) nounwind {
 entry:
 	%tmp2 = call x86_fp80 @llvm.powi.f80( x86_fp80 %x, i32 3 )
 	ret x86_fp80 %tmp2
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK: fldt 4(%esp)
 ; CHECK-NEXT: fld	%st(0)
 ; CHECK-NEXT: fmul	%st(1)

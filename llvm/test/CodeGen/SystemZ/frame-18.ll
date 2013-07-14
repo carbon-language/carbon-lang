@@ -5,7 +5,7 @@
 ; We need to allocate a 4-byte spill slot, rounded to 8 bytes.  The frame
 ; size should be exactly 160 + 8 = 168.
 define void @f1(i32 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: stmg %r6, %r15, 48(%r15)
 ; CHECK: aghi %r15, -168
 ; CHECK-NOT: 160(%r15)
@@ -50,7 +50,7 @@ define void @f1(i32 *%ptr) {
 
 ; Same for i64, except that the full spill slot is used.
 define void @f2(i64 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: stmg %r6, %r15, 48(%r15)
 ; CHECK: aghi %r15, -168
 ; CHECK: stg [[REGISTER:%r[0-9]+]], 160(%r15)

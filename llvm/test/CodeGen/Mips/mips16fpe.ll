@@ -41,7 +41,7 @@
 
 define void @test_addsf3() nounwind {
 entry:
-;16hf: test_addsf3:
+;16hf-LABEL: test_addsf3:
   %0 = load float* @x, align 4
   %1 = load float* @y, align 4
   %add = fadd float %0, %1
@@ -52,7 +52,7 @@ entry:
 
 define void @test_adddf3() nounwind {
 entry:
-;16hf: test_adddf3:
+;16hf-LABEL: test_adddf3:
   %0 = load double* @xd, align 8
   %1 = load double* @yd, align 8
   %add = fadd double %0, %1
@@ -63,7 +63,7 @@ entry:
 
 define void @test_subsf3() nounwind {
 entry:
-;16hf: test_subsf3:
+;16hf-LABEL: test_subsf3:
   %0 = load float* @x, align 4
   %1 = load float* @y, align 4
   %sub = fsub float %0, %1
@@ -74,7 +74,7 @@ entry:
 
 define void @test_subdf3() nounwind {
 entry:
-;16hf: test_subdf3:
+;16hf-LABEL: test_subdf3:
   %0 = load double* @xd, align 8
   %1 = load double* @yd, align 8
   %sub = fsub double %0, %1
@@ -85,7 +85,7 @@ entry:
 
 define void @test_mulsf3() nounwind {
 entry:
-;16hf: test_mulsf3:
+;16hf-LABEL: test_mulsf3:
   %0 = load float* @x, align 4
   %1 = load float* @y, align 4
   %mul = fmul float %0, %1
@@ -96,7 +96,7 @@ entry:
 
 define void @test_muldf3() nounwind {
 entry:
-;16hf: test_muldf3:
+;16hf-LABEL: test_muldf3:
   %0 = load double* @xd, align 8
   %1 = load double* @yd, align 8
   %mul = fmul double %0, %1
@@ -107,7 +107,7 @@ entry:
 
 define void @test_divsf3() nounwind {
 entry:
-;16hf: test_divsf3:
+;16hf-LABEL: test_divsf3:
   %0 = load float* @y, align 4
   %1 = load float* @x, align 4
   %div = fdiv float %0, %1
@@ -118,7 +118,7 @@ entry:
 
 define void @test_divdf3() nounwind {
 entry:
-;16hf: test_divdf3:
+;16hf-LABEL: test_divdf3:
   %0 = load double* @yd, align 8
   %mul = fmul double %0, 2.000000e+00
   %1 = load double* @xd, align 8
@@ -130,7 +130,7 @@ entry:
 
 define void @test_extendsfdf2() nounwind {
 entry:
-;16hf: test_extendsfdf2:
+;16hf-LABEL: test_extendsfdf2:
   %0 = load float* @x, align 4
   %conv = fpext float %0 to double
   store double %conv, double* @extendsfdf2_result, align 8
@@ -140,7 +140,7 @@ entry:
 
 define void @test_truncdfsf2() nounwind {
 entry:
-;16hf: test_truncdfsf2:
+;16hf-LABEL: test_truncdfsf2:
   %0 = load double* @xd2, align 8
   %conv = fptrunc double %0 to float
   store float %conv, float* @truncdfsf2_result, align 4
@@ -150,7 +150,7 @@ entry:
 
 define void @test_fix_truncsfsi() nounwind {
 entry:
-;16hf: test_fix_truncsfsi:
+;16hf-LABEL: test_fix_truncsfsi:
   %0 = load float* @x, align 4
   %conv = fptosi float %0 to i32
   store i32 %conv, i32* @fix_truncsfsi_result, align 4
@@ -160,7 +160,7 @@ entry:
 
 define void @test_fix_truncdfsi() nounwind {
 entry:
-;16hf: test_fix_truncdfsi:
+;16hf-LABEL: test_fix_truncdfsi:
   %0 = load double* @xd, align 8
   %conv = fptosi double %0 to i32
   store i32 %conv, i32* @fix_truncdfsi_result, align 4
@@ -170,7 +170,7 @@ entry:
 
 define void @test_floatsisf() nounwind {
 entry:
-;16hf: test_floatsisf:
+;16hf-LABEL: test_floatsisf:
   %0 = load i32* @si, align 4
   %conv = sitofp i32 %0 to float
   store float %conv, float* @floatsisf_result, align 4
@@ -180,7 +180,7 @@ entry:
 
 define void @test_floatsidf() nounwind {
 entry:
-;16hf: test_floatsidf:
+;16hf-LABEL: test_floatsidf:
   %0 = load i32* @si, align 4
   %conv = sitofp i32 %0 to double
   store double %conv, double* @floatsidf_result, align 8
@@ -190,7 +190,7 @@ entry:
 
 define void @test_floatunsisf() nounwind {
 entry:
-;16hf: test_floatunsisf:
+;16hf-LABEL: test_floatunsisf:
   %0 = load i32* @ui, align 4
   %conv = uitofp i32 %0 to float
   store float %conv, float* @floatunsisf_result, align 4
@@ -200,7 +200,7 @@ entry:
 
 define void @test_floatunsidf() nounwind {
 entry:
-;16hf: test_floatunsidf:
+;16hf-LABEL: test_floatunsidf:
   %0 = load i32* @ui, align 4
   %conv = uitofp i32 %0 to double
   store double %conv, double* @floatunsidf_result, align 8
@@ -210,7 +210,7 @@ entry:
 
 define void @test_eqsf2() nounwind {
 entry:
-;16hf: test_eqsf2:
+;16hf-LABEL: test_eqsf2:
   %0 = load float* @x, align 4
   %1 = load float* @xx, align 4
   %cmp = fcmp oeq float %0, %1
@@ -222,7 +222,7 @@ entry:
 
 define void @test_eqdf2() nounwind {
 entry:
-;16hf: test_eqdf2:
+;16hf-LABEL: test_eqdf2:
   %0 = load double* @xd, align 8
   %1 = load double* @xxd, align 8
   %cmp = fcmp oeq double %0, %1
@@ -234,7 +234,7 @@ entry:
 
 define void @test_nesf2() nounwind {
 entry:
-;16hf: test_nesf2:
+;16hf-LABEL: test_nesf2:
   %0 = load float* @x, align 4
   %1 = load float* @y, align 4
   %cmp = fcmp une float %0, %1
@@ -246,7 +246,7 @@ entry:
 
 define void @test_nedf2() nounwind {
 entry:
-;16hf: test_nedf2:
+;16hf-LABEL: test_nedf2:
   %0 = load double* @xd, align 8
   %1 = load double* @yd, align 8
   %cmp = fcmp une double %0, %1
@@ -258,7 +258,7 @@ entry:
 
 define void @test_gesf2() nounwind {
 entry:
-;16hf: test_gesf2:
+;16hf-LABEL: test_gesf2:
   %0 = load float* @x, align 4
   %1 = load float* @xx, align 4
   %cmp = fcmp oge float %0, %1
@@ -273,7 +273,7 @@ entry:
 
 define void @test_gedf2() nounwind {
 entry:
-;16hf: test_gedf2:
+;16hf-LABEL: test_gedf2:
   %0 = load double* @xd, align 8
   %1 = load double* @xxd, align 8
   %cmp = fcmp oge double %0, %1
@@ -288,7 +288,7 @@ entry:
 
 define void @test_ltsf2() nounwind {
 entry:
-;16hf: test_ltsf2:
+;16hf-LABEL: test_ltsf2:
   %0 = load float* @x, align 4
   %1 = load float* @xx, align 4
   %lnot = fcmp uge float %0, %1
@@ -304,7 +304,7 @@ entry:
 
 define void @test_ltdf2() nounwind {
 entry:
-;16hf: test_ltdf2:
+;16hf-LABEL: test_ltdf2:
   %0 = load double* @xd, align 8
   %1 = load double* @xxd, align 8
   %lnot = fcmp uge double %0, %1
@@ -320,7 +320,7 @@ entry:
 
 define void @test_lesf2() nounwind {
 entry:
-;16hf: test_lesf2:
+;16hf-LABEL: test_lesf2:
   %0 = load float* @x, align 4
   %1 = load float* @xx, align 4
   %cmp = fcmp ole float %0, %1
@@ -335,7 +335,7 @@ entry:
 
 define void @test_ledf2() nounwind {
 entry:
-;16hf: test_ledf2:
+;16hf-LABEL: test_ledf2:
   %0 = load double* @xd, align 8
   %1 = load double* @xxd, align 8
   %cmp = fcmp ole double %0, %1
@@ -350,7 +350,7 @@ entry:
 
 define void @test_gtsf2() nounwind {
 entry:
-;16hf: test_gtsf2:
+;16hf-LABEL: test_gtsf2:
   %0 = load float* @x, align 4
   %1 = load float* @xx, align 4
   %lnot = fcmp ule float %0, %1
@@ -365,7 +365,7 @@ entry:
 
 define void @test_gtdf2() nounwind {
 entry:
-;16hf: test_gtdf2:
+;16hf-LABEL: test_gtdf2:
   %0 = load double* @xd, align 8
   %1 = load double* @xxd, align 8
   %lnot = fcmp ule double %0, %1

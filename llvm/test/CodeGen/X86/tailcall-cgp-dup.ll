@@ -4,7 +4,7 @@
 ; rdar://9147433
 
 define i32 @foo(i32 %x) nounwind ssp {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 entry:
   switch i32 %x, label %return [
     i32 1, label %sw.bb
@@ -69,7 +69,7 @@ declare i8* @bar(i8*) uwtable optsize noinline ssp
 
 define hidden %0* @thingWithValue(i8* %self) uwtable ssp {
 entry:
-; CHECK: thingWithValue:
+; CHECK-LABEL: thingWithValue:
 ; CHECK: jmp _bar
   br i1 undef, label %if.then.i, label %if.else.i
 

@@ -14,7 +14,7 @@ declare i8* @choose(i8*, i8*)
 ; BranchFolding should tail-duplicate the indirect jump to avoid
 ; redundant branching.
 
-; CHECK: tail_duplicate_me:
+; CHECK-LABEL: tail_duplicate_me:
 ; CHECK:      qux
 ; CHECK:      movw r{{[0-9]+}}, :lower16:_GHJK
 ; CHECK:      movt r{{[0-9]+}}, :upper16:_GHJK

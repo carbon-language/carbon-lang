@@ -4,7 +4,7 @@
 
 ; Check the low end of the RLL range.
 define i32 @f1(i32 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: rll %r2, %r2, 1
 ; CHECK: br %r14
   %parta = shl i32 %a, 1
@@ -15,7 +15,7 @@ define i32 @f1(i32 %a) {
 
 ; Check the high end of the defined RLL range.
 define i32 @f2(i32 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: rll %r2, %r2, 31
 ; CHECK: br %r14
   %parta = shl i32 %a, 31
@@ -26,7 +26,7 @@ define i32 @f2(i32 %a) {
 
 ; We don't generate shifts by out-of-range values.
 define i32 @f3(i32 %a) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: rll
 ; CHECK: br %r14
   %parta = shl i32 %a, 32
@@ -37,7 +37,7 @@ define i32 @f3(i32 %a) {
 
 ; Check variable shifts.
 define i32 @f4(i32 %a, i32 %amt) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: rll %r2, %r2, 0(%r3)
 ; CHECK: br %r14
   %amtb = sub i32 32, %amt
@@ -49,7 +49,7 @@ define i32 @f4(i32 %a, i32 %amt) {
 
 ; Check shift amounts that have a constant term.
 define i32 @f5(i32 %a, i32 %amt) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: rll %r2, %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i32 %amt, 10
@@ -62,7 +62,7 @@ define i32 @f5(i32 %a, i32 %amt) {
 
 ; ...and again with a truncated 64-bit shift amount.
 define i32 @f6(i32 %a, i64 %amt) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: rll %r2, %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i64 %amt, 10
@@ -76,7 +76,7 @@ define i32 @f6(i32 %a, i64 %amt) {
 
 ; ...and again with a different truncation representation.
 define i32 @f7(i32 %a, i64 %amt) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: rll %r2, %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i64 %amt, 10
@@ -92,7 +92,7 @@ define i32 @f7(i32 %a, i64 %amt) {
 ; Check shift amounts that have the largest in-range constant term.  We could
 ; mask the amount instead.
 define i32 @f8(i32 %a, i32 %amt) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: rll %r2, %r2, 524287(%r3)
 ; CHECK: br %r14
   %add = add i32 %amt, 524287
@@ -106,7 +106,7 @@ define i32 @f8(i32 %a, i32 %amt) {
 ; Check the next value up, which without masking must use a separate
 ; addition.
 define i32 @f9(i32 %a, i32 %amt) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: afi %r3, 524288
 ; CHECK: rll %r2, %r2, 0(%r3)
 ; CHECK: br %r14
@@ -120,7 +120,7 @@ define i32 @f9(i32 %a, i32 %amt) {
 
 ; Check cases where 1 is subtracted from the shift amount.
 define i32 @f10(i32 %a, i32 %amt) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: rll %r2, %r2, -1(%r3)
 ; CHECK: br %r14
   %suba = sub i32 %amt, 1
@@ -134,7 +134,7 @@ define i32 @f10(i32 %a, i32 %amt) {
 ; Check the lowest value that can be subtracted from the shift amount.
 ; Again, we could mask the shift amount instead.
 define i32 @f11(i32 %a, i32 %amt) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: rll %r2, %r2, -524288(%r3)
 ; CHECK: br %r14
   %suba = sub i32 %amt, 524288
@@ -148,7 +148,7 @@ define i32 @f11(i32 %a, i32 %amt) {
 ; Check the next value down, which without masking must use a separate
 ; addition.
 define i32 @f12(i32 %a, i32 %amt) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: afi %r3, -524289
 ; CHECK: rll %r2, %r2, 0(%r3)
 ; CHECK: br %r14
@@ -162,7 +162,7 @@ define i32 @f12(i32 %a, i32 %amt) {
 
 ; Check that we don't try to generate "indexed" shifts.
 define i32 @f13(i32 %a, i32 %b, i32 %c) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: ar {{%r3, %r4|%r4, %r3}}
 ; CHECK: rll %r2, %r2, 0({{%r[34]}})
 ; CHECK: br %r14
@@ -176,7 +176,7 @@ define i32 @f13(i32 %a, i32 %b, i32 %c) {
 
 ; Check that the shift amount uses an address register.  It cannot be in %r0.
 define i32 @f14(i32 %a, i32 *%ptr) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: l %r1, 0(%r3)
 ; CHECK: rll %r2, %r2, 0(%r1)
 ; CHECK: br %r14

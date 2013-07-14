@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vsras8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vsras8:
+;CHECK-LABEL: vsras8:
 ;CHECK: vsra.s8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -11,7 +11,7 @@ define <8 x i8> @vsras8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vsras16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vsras16:
+;CHECK-LABEL: vsras16:
 ;CHECK: vsra.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -21,7 +21,7 @@ define <4 x i16> @vsras16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vsras32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vsras32:
+;CHECK-LABEL: vsras32:
 ;CHECK: vsra.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -31,7 +31,7 @@ define <2 x i32> @vsras32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vsras64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
-;CHECK: vsras64:
+;CHECK-LABEL: vsras64:
 ;CHECK: vsra.s64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -41,7 +41,7 @@ define <1 x i64> @vsras64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vsraQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vsraQs8:
+;CHECK-LABEL: vsraQs8:
 ;CHECK: vsra.s8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -51,7 +51,7 @@ define <16 x i8> @vsraQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vsraQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vsraQs16:
+;CHECK-LABEL: vsraQs16:
 ;CHECK: vsra.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -61,7 +61,7 @@ define <8 x i16> @vsraQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vsraQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vsraQs32:
+;CHECK-LABEL: vsraQs32:
 ;CHECK: vsra.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -71,7 +71,7 @@ define <4 x i32> @vsraQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vsraQs64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
-;CHECK: vsraQs64:
+;CHECK-LABEL: vsraQs64:
 ;CHECK: vsra.s64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
@@ -81,7 +81,7 @@ define <2 x i64> @vsraQs64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 }
 
 define <8 x i8> @vsrau8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vsrau8:
+;CHECK-LABEL: vsrau8:
 ;CHECK: vsra.u8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -91,7 +91,7 @@ define <8 x i8> @vsrau8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vsrau16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vsrau16:
+;CHECK-LABEL: vsrau16:
 ;CHECK: vsra.u16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -101,7 +101,7 @@ define <4 x i16> @vsrau16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vsrau32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vsrau32:
+;CHECK-LABEL: vsrau32:
 ;CHECK: vsra.u32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -111,7 +111,7 @@ define <2 x i32> @vsrau32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vsrau64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
-;CHECK: vsrau64:
+;CHECK-LABEL: vsrau64:
 ;CHECK: vsra.u64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -121,7 +121,7 @@ define <1 x i64> @vsrau64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vsraQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vsraQu8:
+;CHECK-LABEL: vsraQu8:
 ;CHECK: vsra.u8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -131,7 +131,7 @@ define <16 x i8> @vsraQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vsraQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vsraQu16:
+;CHECK-LABEL: vsraQu16:
 ;CHECK: vsra.u16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -141,7 +141,7 @@ define <8 x i16> @vsraQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vsraQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vsraQu32:
+;CHECK-LABEL: vsraQu32:
 ;CHECK: vsra.u32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -151,7 +151,7 @@ define <4 x i32> @vsraQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vsraQu64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
-;CHECK: vsraQu64:
+;CHECK-LABEL: vsraQu64:
 ;CHECK: vsra.u64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
@@ -161,7 +161,7 @@ define <2 x i64> @vsraQu64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 }
 
 define <8 x i8> @vrsras8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vrsras8:
+;CHECK-LABEL: vrsras8:
 ;CHECK: vrsra.s8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -171,7 +171,7 @@ define <8 x i8> @vrsras8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vrsras16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vrsras16:
+;CHECK-LABEL: vrsras16:
 ;CHECK: vrsra.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -181,7 +181,7 @@ define <4 x i16> @vrsras16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vrsras32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vrsras32:
+;CHECK-LABEL: vrsras32:
 ;CHECK: vrsra.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -191,7 +191,7 @@ define <2 x i32> @vrsras32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vrsras64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
-;CHECK: vrsras64:
+;CHECK-LABEL: vrsras64:
 ;CHECK: vrsra.s64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -201,7 +201,7 @@ define <1 x i64> @vrsras64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <8 x i8> @vrsrau8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vrsrau8:
+;CHECK-LABEL: vrsrau8:
 ;CHECK: vrsra.u8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -211,7 +211,7 @@ define <8 x i8> @vrsrau8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vrsrau16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vrsrau16:
+;CHECK-LABEL: vrsrau16:
 ;CHECK: vrsra.u16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -221,7 +221,7 @@ define <4 x i16> @vrsrau16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vrsrau32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vrsrau32:
+;CHECK-LABEL: vrsrau32:
 ;CHECK: vrsra.u32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -231,7 +231,7 @@ define <2 x i32> @vrsrau32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vrsrau64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
-;CHECK: vrsrau64:
+;CHECK-LABEL: vrsrau64:
 ;CHECK: vrsra.u64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -241,7 +241,7 @@ define <1 x i64> @vrsrau64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vrsraQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vrsraQs8:
+;CHECK-LABEL: vrsraQs8:
 ;CHECK: vrsra.s8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -251,7 +251,7 @@ define <16 x i8> @vrsraQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vrsraQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vrsraQs16:
+;CHECK-LABEL: vrsraQs16:
 ;CHECK: vrsra.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -261,7 +261,7 @@ define <8 x i16> @vrsraQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vrsraQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vrsraQs32:
+;CHECK-LABEL: vrsraQs32:
 ;CHECK: vrsra.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -271,7 +271,7 @@ define <4 x i32> @vrsraQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vrsraQs64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
-;CHECK: vrsraQs64:
+;CHECK-LABEL: vrsraQs64:
 ;CHECK: vrsra.s64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
@@ -281,7 +281,7 @@ define <2 x i64> @vrsraQs64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vrsraQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vrsraQu8:
+;CHECK-LABEL: vrsraQu8:
 ;CHECK: vrsra.u8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -291,7 +291,7 @@ define <16 x i8> @vrsraQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vrsraQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vrsraQu16:
+;CHECK-LABEL: vrsraQu16:
 ;CHECK: vrsra.u16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -301,7 +301,7 @@ define <8 x i16> @vrsraQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vrsraQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vrsraQu32:
+;CHECK-LABEL: vrsraQu32:
 ;CHECK: vrsra.u32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -311,7 +311,7 @@ define <4 x i32> @vrsraQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vrsraQu64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
-;CHECK: vrsraQu64:
+;CHECK-LABEL: vrsraQu64:
 ;CHECK: vrsra.u64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B

@@ -9,28 +9,28 @@
 
 define void @t1(i32 %argc, i8** %argv) nounwind  {
 entry:
-; SSE2-Darwin: t1:
+; SSE2-Darwin-LABEL: t1:
 ; SSE2-Darwin: movsd _.str+16, %xmm0
 ; SSE2-Darwin: movsd %xmm0, 16(%esp)
 ; SSE2-Darwin: movaps _.str, %xmm0
 ; SSE2-Darwin: movaps %xmm0
 ; SSE2-Darwin: movb $0, 24(%esp)
 
-; SSE2-Mingw32: t1:
+; SSE2-Mingw32-LABEL: t1:
 ; SSE2-Mingw32: movsd _.str+16, %xmm0
 ; SSE2-Mingw32: movsd %xmm0, 16(%esp)
 ; SSE2-Mingw32: movaps _.str, %xmm0
 ; SSE2-Mingw32: movups %xmm0
 ; SSE2-Mingw32: movb $0, 24(%esp)
 
-; SSE1: t1:
+; SSE1-LABEL: t1:
 ; SSE1: movaps _.str, %xmm0
 ; SSE1: movaps %xmm0
 ; SSE1: movb $0, 24(%esp)
 ; SSE1: movl $0, 20(%esp)
 ; SSE1: movl $0, 16(%esp)
 
-; NOSSE: t1:
+; NOSSE-LABEL: t1:
 ; NOSSE: movb $0
 ; NOSSE: movl $0
 ; NOSSE: movl $0
@@ -39,7 +39,7 @@ entry:
 ; NOSSE: movl $101
 ; NOSSE: movl $1734438249
 
-; X86-64: t1:
+; X86-64-LABEL: t1:
 ; X86-64: movaps _.str(%rip), %xmm0
 ; X86-64: movaps %xmm0
 ; X86-64: movb $0
@@ -55,19 +55,19 @@ entry:
 
 define void @t2(%struct.s0* nocapture %a, %struct.s0* nocapture %b) nounwind ssp {
 entry:
-; SSE2-Darwin: t2:
+; SSE2-Darwin-LABEL: t2:
 ; SSE2-Darwin: movaps (%eax), %xmm0
 ; SSE2-Darwin: movaps %xmm0, (%eax)
 
-; SSE2-Mingw32: t2:
+; SSE2-Mingw32-LABEL: t2:
 ; SSE2-Mingw32: movaps (%eax), %xmm0
 ; SSE2-Mingw32: movaps %xmm0, (%eax)
 
-; SSE1: t2:
+; SSE1-LABEL: t2:
 ; SSE1: movaps (%eax), %xmm0
 ; SSE1: movaps %xmm0, (%eax)
 
-; NOSSE: t2:
+; NOSSE-LABEL: t2:
 ; NOSSE: movl
 ; NOSSE: movl
 ; NOSSE: movl
@@ -79,7 +79,7 @@ entry:
 ; NOSSE: movl
 ; NOSSE: movl
 
-; X86-64: t2:
+; X86-64-LABEL: t2:
 ; X86-64: movaps (%rsi), %xmm0
 ; X86-64: movaps %xmm0, (%rdi)
   %tmp2 = bitcast %struct.s0* %a to i8*           ; <i8*> [#uses=1]
@@ -90,19 +90,19 @@ entry:
 
 define void @t3(%struct.s0* nocapture %a, %struct.s0* nocapture %b) nounwind ssp {
 entry:
-; SSE2-Darwin: t3:
+; SSE2-Darwin-LABEL: t3:
 ; SSE2-Darwin: movsd (%eax), %xmm0
 ; SSE2-Darwin: movsd 8(%eax), %xmm1
 ; SSE2-Darwin: movsd %xmm1, 8(%eax)
 ; SSE2-Darwin: movsd %xmm0, (%eax)
 
-; SSE2-Mingw32: t3:
+; SSE2-Mingw32-LABEL: t3:
 ; SSE2-Mingw32: movsd (%eax), %xmm0
 ; SSE2-Mingw32: movsd 8(%eax), %xmm1
 ; SSE2-Mingw32: movsd %xmm1, 8(%eax)
 ; SSE2-Mingw32: movsd %xmm0, (%eax)
 
-; SSE1: t3:
+; SSE1-LABEL: t3:
 ; SSE1: movl
 ; SSE1: movl
 ; SSE1: movl
@@ -114,7 +114,7 @@ entry:
 ; SSE1: movl
 ; SSE1: movl
 
-; NOSSE: t3:
+; NOSSE-LABEL: t3:
 ; NOSSE: movl
 ; NOSSE: movl
 ; NOSSE: movl
@@ -126,7 +126,7 @@ entry:
 ; NOSSE: movl
 ; NOSSE: movl
 
-; X86-64: t3:
+; X86-64-LABEL: t3:
 ; X86-64: movq (%rsi), %rax
 ; X86-64: movq 8(%rsi), %rcx
 ; X86-64: movq %rcx, 8(%rdi)
@@ -139,7 +139,7 @@ entry:
 
 define void @t4() nounwind {
 entry:
-; SSE2-Darwin: t4:
+; SSE2-Darwin-LABEL: t4:
 ; SSE2-Darwin: movw $120
 ; SSE2-Darwin: movl $2021161080
 ; SSE2-Darwin: movl $2021161080
@@ -149,7 +149,7 @@ entry:
 ; SSE2-Darwin: movl $2021161080
 ; SSE2-Darwin: movl $2021161080
 
-; SSE2-Mingw32: t4:
+; SSE2-Mingw32-LABEL: t4:
 ; SSE2-Mingw32: movw $120
 ; SSE2-Mingw32: movl $2021161080
 ; SSE2-Mingw32: movl $2021161080
@@ -159,7 +159,7 @@ entry:
 ; SSE2-Mingw32: movl $2021161080
 ; SSE2-Mingw32: movl $2021161080
 
-; SSE1: t4:
+; SSE1-LABEL: t4:
 ; SSE1: movw $120
 ; SSE1: movl $2021161080
 ; SSE1: movl $2021161080
@@ -169,7 +169,7 @@ entry:
 ; SSE1: movl $2021161080
 ; SSE1: movl $2021161080
 
-; NOSSE: t4:
+; NOSSE-LABEL: t4:
 ; NOSSE: movw $120
 ; NOSSE: movl $2021161080
 ; NOSSE: movl $2021161080
@@ -179,7 +179,7 @@ entry:
 ; NOSSE: movl $2021161080
 ; NOSSE: movl $2021161080
 
-; X86-64: t4:
+; X86-64-LABEL: t4:
 ; X86-64: movabsq $8680820740569200760, %rax
 ; X86-64: movq %rax
 ; X86-64: movq %rax

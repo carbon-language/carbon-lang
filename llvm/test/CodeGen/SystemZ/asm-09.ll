@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 define void @f1(i32 *%dst) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lhi %r0, 100
 ; CHECK: blah %r0
 ; CHECK: st %r0, 0(%r2)
@@ -14,7 +14,7 @@ define void @f1(i32 *%dst) {
 }
 
 define void @f2(i32 *%dst) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lhi %r0, 101
 ; CHECK: blah %r0
 ; CHECK: st %r0, 0(%r2)
@@ -25,7 +25,7 @@ define void @f2(i32 *%dst) {
 }
 
 define void @f3(i32 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lhi %r0, 102
 ; CHECK: blah %r0
 ; CHECK: st %r0, 0(%r2)
@@ -37,7 +37,7 @@ define void @f3(i32 *%dst) {
 
 ; FIXME: this uses "lhi %r0, 103", but should use "lghi %r0, 103".
 define void @f4(i32 *%dst) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: blah %r0
 ; CHECK: st %r0, 0(%r2)
 ; CHECK: br %r14
@@ -47,7 +47,7 @@ define void @f4(i32 *%dst) {
 }
 
 define i64 @f5() {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: lghi %r2, 104
 ; CHECK: blah %r2
 ; CHECK: br %r14
@@ -56,7 +56,7 @@ define i64 @f5() {
 }
 
 define i64 @f6() {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lghi %r2, 105
 ; CHECK: blah %r2
 ; CHECK: br %r14
@@ -65,7 +65,7 @@ define i64 @f6() {
 }
 
 define i64 @f7() {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lghi %r2, 106
 ; CHECK: blah %r2
 ; CHECK: br %r14
@@ -74,7 +74,7 @@ define i64 @f7() {
 }
 
 define i64 @f8() {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: lghi %r2, 107
 ; CHECK: blah %r2
 ; CHECK: br %r14

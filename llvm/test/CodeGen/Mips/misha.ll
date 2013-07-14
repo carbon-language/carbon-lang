@@ -25,10 +25,10 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %inc = add nsw i32 %i.010, 1
   %cmp = icmp eq i32 %inc, %conv
   br i1 %cmp, label %for.end, label %for.body
-; 16: sumc:
+; 16-LABEL: sumc:
 ; 16: 	lbu	${{[0-9]+}}, 0(${{[0-9]+}})
 ; 16: 	lbu	${{[0-9]+}}, 0(${{[0-9]+}})
-; 16: sum:
+; 16-LABEL: sum:
 ; 16: 	lhu	${{[0-9]+}}, 0(${{[0-9]+}})
 ; 16: 	lhu	${{[0-9]+}}, 0(${{[0-9]+}})
 

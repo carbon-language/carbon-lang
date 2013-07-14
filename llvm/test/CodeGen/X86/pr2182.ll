@@ -7,7 +7,7 @@ target triple = "i386-apple-darwin8"
 @x = weak global i32 0          ; <i32*> [#uses=8]
 
 define void @loop_2() nounwind  {
-; CHECK: loop_2:
+; CHECK-LABEL: loop_2:
 ; CHECK-NOT: ret
 ; CHECK: addl $3, (%{{.*}})
 ; CHECK-NEXT: addl $3, (%{{.*}})

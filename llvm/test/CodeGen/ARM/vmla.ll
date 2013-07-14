@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vmlai8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8> * %C) nounwind {
-;CHECK: vmlai8:
+;CHECK-LABEL: vmlai8:
 ;CHECK: vmla.i8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -12,7 +12,7 @@ define <8 x i8> @vmlai8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8> * %C) nounwind {
 }
 
 define <4 x i16> @vmlai16(<4 x i16>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
-;CHECK: vmlai16:
+;CHECK-LABEL: vmlai16:
 ;CHECK: vmla.i16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -23,7 +23,7 @@ define <4 x i16> @vmlai16(<4 x i16>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind 
 }
 
 define <2 x i32> @vmlai32(<2 x i32>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
-;CHECK: vmlai32:
+;CHECK-LABEL: vmlai32:
 ;CHECK: vmla.i32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -34,7 +34,7 @@ define <2 x i32> @vmlai32(<2 x i32>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind 
 }
 
 define <2 x float> @vmlaf32(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) nounwind {
-;CHECK: vmlaf32:
+;CHECK-LABEL: vmlaf32:
 ;CHECK: vmla.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -45,7 +45,7 @@ define <2 x float> @vmlaf32(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) n
 }
 
 define <16 x i8> @vmlaQi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8> * %C) nounwind {
-;CHECK: vmlaQi8:
+;CHECK-LABEL: vmlaQi8:
 ;CHECK: vmla.i8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -56,7 +56,7 @@ define <16 x i8> @vmlaQi8(<16 x i8>* %A, <16 x i8>* %B, <16 x i8> * %C) nounwind
 }
 
 define <8 x i16> @vmlaQi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwind {
-;CHECK: vmlaQi16:
+;CHECK-LABEL: vmlaQi16:
 ;CHECK: vmla.i16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -67,7 +67,7 @@ define <8 x i16> @vmlaQi16(<8 x i16>* %A, <8 x i16>* %B, <8 x i16>* %C) nounwind
 }
 
 define <4 x i32> @vmlaQi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwind {
-;CHECK: vmlaQi32:
+;CHECK-LABEL: vmlaQi32:
 ;CHECK: vmla.i32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -78,7 +78,7 @@ define <4 x i32> @vmlaQi32(<4 x i32>* %A, <4 x i32>* %B, <4 x i32>* %C) nounwind
 }
 
 define <4 x float> @vmlaQf32(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) nounwind {
-;CHECK: vmlaQf32:
+;CHECK-LABEL: vmlaQf32:
 ;CHECK: vmla.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
@@ -89,7 +89,7 @@ define <4 x float> @vmlaQf32(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) 
 }
 
 define <8 x i16> @vmlals8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
-;CHECK: vmlals8:
+;CHECK-LABEL: vmlals8:
 ;CHECK: vmlal.s8
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -102,7 +102,7 @@ define <8 x i16> @vmlals8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 }
 
 define <4 x i32> @vmlals16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
-;CHECK: vmlals16:
+;CHECK-LABEL: vmlals16:
 ;CHECK: vmlal.s16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -115,7 +115,7 @@ define <4 x i32> @vmlals16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind
 }
 
 define <2 x i64> @vmlals32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
-;CHECK: vmlals32:
+;CHECK-LABEL: vmlals32:
 ;CHECK: vmlal.s32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -128,7 +128,7 @@ define <2 x i64> @vmlals32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind
 }
 
 define <8 x i16> @vmlalu8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
-;CHECK: vmlalu8:
+;CHECK-LABEL: vmlalu8:
 ;CHECK: vmlal.u8
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -141,7 +141,7 @@ define <8 x i16> @vmlalu8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 }
 
 define <4 x i32> @vmlalu16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
-;CHECK: vmlalu16:
+;CHECK-LABEL: vmlalu16:
 ;CHECK: vmlal.u16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -154,7 +154,7 @@ define <4 x i32> @vmlalu16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind
 }
 
 define <2 x i64> @vmlalu32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
-;CHECK: vmlalu32:
+;CHECK-LABEL: vmlalu32:
 ;CHECK: vmlal.u32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B

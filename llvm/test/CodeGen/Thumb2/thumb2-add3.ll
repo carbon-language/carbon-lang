@@ -5,5 +5,5 @@ define i32 @f1(i32 %a) {
     ret i32 %tmp
 }
 
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: 	addw	r0, r0, #4095

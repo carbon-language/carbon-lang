@@ -5,7 +5,7 @@
 
 ; Check the low end of the CH range.
 define void @f1(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ch %r2, 0(%r3)
 ; CHECK: br %r14
   %half = load i16 *%src
@@ -18,7 +18,7 @@ define void @f1(i32 %lhs, i16 *%src, i32 *%dst) {
 
 ; Check the high end of the aligned CH range.
 define void @f2(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ch %r2, 4094(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 2047
@@ -32,7 +32,7 @@ define void @f2(i32 %lhs, i16 *%src, i32 *%dst) {
 
 ; Check the next halfword up, which should use CHY instead of CH.
 define void @f3(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: chy %r2, 4096(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 2048
@@ -46,7 +46,7 @@ define void @f3(i32 %lhs, i16 *%src, i32 *%dst) {
 
 ; Check the high end of the aligned CHY range.
 define void @f4(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: chy %r2, 524286(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 262143
@@ -61,7 +61,7 @@ define void @f4(i32 %lhs, i16 *%src, i32 *%dst) {
 ; Check the next halfword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f5(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r3, 524288
 ; CHECK: ch %r2, 0(%r3)
 ; CHECK: br %r14
@@ -76,7 +76,7 @@ define void @f5(i32 %lhs, i16 *%src, i32 *%dst) {
 
 ; Check the high end of the negative aligned CHY range.
 define void @f6(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: chy %r2, -2(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 -1
@@ -90,7 +90,7 @@ define void @f6(i32 %lhs, i16 *%src, i32 *%dst) {
 
 ; Check the low end of the CHY range.
 define void @f7(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: chy %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 -262144
@@ -105,7 +105,7 @@ define void @f7(i32 %lhs, i16 *%src, i32 *%dst) {
 ; Check the next halfword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f8(i32 %lhs, i16 *%src, i32 *%dst) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r3, -524290
 ; CHECK: ch %r2, 0(%r3)
 ; CHECK: br %r14
@@ -120,7 +120,7 @@ define void @f8(i32 %lhs, i16 *%src, i32 *%dst) {
 
 ; Check that CH allows an index.
 define void @f9(i32 %lhs, i64 %base, i64 %index, i32 *%dst) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ch %r2, 4094({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %add1 = add i64 %base, %index
@@ -136,7 +136,7 @@ define void @f9(i32 %lhs, i64 %base, i64 %index, i32 *%dst) {
 
 ; Check that CHY allows an index.
 define void @f10(i32 %lhs, i64 %base, i64 %index, i32 *%dst) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: chy %r2, 4096({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %add1 = add i64 %base, %index

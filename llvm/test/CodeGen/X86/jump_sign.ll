@@ -2,7 +2,7 @@
 
 define i32 @f(i32 %X) {
 entry:
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: jns
 	%tmp1 = add i32 %X, 1		; <i32> [#uses=1]
 	%tmp = icmp slt i32 %tmp1, 0		; <i1> [#uses=1]
@@ -25,7 +25,7 @@ declare i32 @baz(...)
 ; rdar://11355268
 define i32 @g(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: g:
+; CHECK-LABEL: g:
 ; CHECK-NOT: test
 ; CHECK: cmovs
   %sub = sub nsw i32 %a, %b
@@ -37,7 +37,7 @@ entry:
 ; rdar://10734411
 define i32 @h(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: h:
+; CHECK-LABEL: h:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -49,7 +49,7 @@ entry:
 }
 define i32 @i(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: i:
+; CHECK-LABEL: i:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -61,7 +61,7 @@ entry:
 }
 define i32 @j(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: j:
+; CHECK-LABEL: j:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -73,7 +73,7 @@ entry:
 }
 define i32 @k(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: k:
+; CHECK-LABEL: k:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -86,7 +86,7 @@ entry:
 ; redundant cmp instruction
 define i32 @l(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: l:
+; CHECK-LABEL: l:
 ; CHECK-NOT: cmp
   %cmp = icmp slt i32 %b, %a
   %sub = sub nsw i32 %a, %b
@@ -95,7 +95,7 @@ entry:
 }
 define i32 @m(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: m:
+; CHECK-LABEL: m:
 ; CHECK-NOT: cmp
   %cmp = icmp sgt i32 %a, %b
   %sub = sub nsw i32 %a, %b
@@ -106,7 +106,7 @@ entry:
 ; a swapped sub.
 define i32 @l2(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: l2:
+; CHECK-LABEL: l2:
 ; CHECK: cmp
   %cmp = icmp eq i32 %b, %a
   %sub = sub nsw i32 %a, %b
@@ -122,7 +122,7 @@ if.else:
 }
 define i32 @l3(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: l3:
+; CHECK-LABEL: l3:
 ; CHECK: sub
 ; CHECK-NOT: cmp
 ; CHECK: jge
@@ -141,7 +141,7 @@ if.else:
 ; When Movr0 is between sub and cmp, we need to move "Movr0" before sub.
 define i32 @l4(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: l4:
+; CHECK-LABEL: l4:
 ; CHECK: xor
 ; CHECK: sub
 ; CHECK-NOT: cmp
@@ -153,7 +153,7 @@ entry:
 ; rdar://11540023
 define i32 @n(i32 %x, i32 %y) nounwind {
 entry:
-; CHECK: n:
+; CHECK-LABEL: n:
 ; CHECK-NOT: sub
 ; CHECK: cmp
   %sub = sub nsw i32 %x, %y
@@ -177,7 +177,7 @@ sw.bb:                                            ; preds = %if.end.i
   br i1 undef, label %if.then44, label %if.end29
 
 if.end29:                                         ; preds = %sw.bb
-; CHECK: o:
+; CHECK-LABEL: o:
 ; CHECK: cmp
   %1 = urem i16 %0, 10
   %cmp25 = icmp eq i16 %1, 0
@@ -206,7 +206,7 @@ if.else.i104:                                     ; preds = %if.then44
 ; rdar://11855129
 define i32 @p(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: p:
+; CHECK-LABEL: p:
 ; CHECK-NOT: test
 ; CHECK: cmovs
   %add = add nsw i32 %b, %a
@@ -218,7 +218,7 @@ entry:
 ; If we have sub a, b and cmp b, a and the result of cmp is used
 ; by sbb, we should not optimize cmp away.
 define i32 @q(i32 %j.4, i32 %w, i32 %el) {
-; CHECK: q:
+; CHECK-LABEL: q:
 ; CHECK: cmp
 ; CHECK-NEXT: sbb
   %tmp532 = add i32 %j.4, %w
@@ -232,7 +232,7 @@ define i32 @q(i32 %j.4, i32 %w, i32 %el) {
 ; rdar://11873276
 define i8* @r(i8* %base, i32* nocapture %offset, i32 %size) nounwind {
 entry:
-; CHECK: r:
+; CHECK-LABEL: r:
 ; CHECK: sub
 ; CHECK-NOT: cmp
 ; CHECK: j
@@ -256,7 +256,7 @@ return:
 ; Test optimizations of dec/inc.
 define i32 @dec(i32 %a) nounwind {
 entry:
-; CHECK: dec:
+; CHECK-LABEL: dec:
 ; CHECK: decl
 ; CHECK-NOT: test
 ; CHECK: cmovsl
@@ -268,7 +268,7 @@ entry:
 
 define i32 @inc(i32 %a) nounwind {
 entry:
-; CHECK: inc:
+; CHECK-LABEL: inc:
 ; CHECK: incl
 ; CHECK-NOT: test
 ; CHECK: cmovsl

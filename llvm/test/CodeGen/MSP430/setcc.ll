@@ -8,7 +8,7 @@ define i16 @sccweqand(i16 %a, i16 %b) nounwind {
 	%t3 = zext i1 %t2 to i16
 	ret i16 %t3
 }
-; CHECK: sccweqand:
+; CHECK-LABEL: sccweqand:
 ; CHECK:	bit.w	r14, r15
 ; CHECK:	mov.w	r2, r15
 ; CHECK:	rra.w   r15
@@ -20,7 +20,7 @@ define i16 @sccwneand(i16 %a, i16 %b) nounwind {
 	%t3 = zext i1 %t2 to i16
 	ret i16 %t3
 }
-; CHECK: sccwneand:
+; CHECK-LABEL: sccwneand:
 ; CHECK: 	bit.w	r14, r15
 ; CHECK:	mov.w	r2, r15
 ; CHECK:	and.w	#1, r15
@@ -30,7 +30,7 @@ define i16 @sccwne(i16 %a, i16 %b) nounwind {
 	%t2 = zext i1 %t1 to i16
 	ret i16 %t2
 }
-; CHECK:sccwne:
+; CHECK-LABEL:sccwne:
 ; CHECK:	cmp.w	r14, r15
 ; CHECK:	mov.w	r2, r12
 ; CHECK:	rra.w	r12
@@ -42,7 +42,7 @@ define i16 @sccweq(i16 %a, i16 %b) nounwind {
 	%t2 = zext i1 %t1 to i16
 	ret i16 %t2
 }
-; CHECK:sccweq:
+; CHECK-LABEL:sccweq:
 ; CHECK:	cmp.w	r14, r15
 ; CHECK:	mov.w	r2, r15
 ; CHECK:	rra.w	r15
@@ -53,7 +53,7 @@ define i16 @sccwugt(i16 %a, i16 %b) nounwind {
 	%t2 = zext i1 %t1 to i16
 	ret i16 %t2
 }
-; CHECK:sccwugt:
+; CHECK-LABEL:sccwugt:
 ; CHECK:	cmp.w	r15, r14
 ; CHECK:	mov.w	#1, r15
 ; CHECK:	bic.w	r2, r15
@@ -63,7 +63,7 @@ define i16 @sccwuge(i16 %a, i16 %b) nounwind {
 	%t2 = zext i1 %t1 to i16
 	ret i16 %t2
 }
-; CHECK:sccwuge:
+; CHECK-LABEL:sccwuge:
 ; CHECK:	cmp.w	r14, r15
 ; CHECK:	mov.w	r2, r15
 ; CHECK:	and.w	#1, r15
@@ -73,7 +73,7 @@ define i16 @sccwult(i16 %a, i16 %b) nounwind {
 	%t2 = zext i1 %t1 to i16
 	ret i16 %t2
 }
-; CHECK:sccwult:
+; CHECK-LABEL:sccwult:
 ; CHECK:	cmp.w	r14, r15
 ; CHECK:	mov.w	#1, r15
 ; CHECK:	bic.w	r2, r15
@@ -83,7 +83,7 @@ define i16 @sccwule(i16 %a, i16 %b) nounwind {
 	%t2 = zext i1 %t1 to i16
 	ret i16 %t2
 }
-; CHECK:sccwule:
+; CHECK-LABEL:sccwule:
 ; CHECK:	cmp.w	r15, r14
 ; CHECK:	mov.w	r2, r15
 ; CHECK:	and.w	#1, r15

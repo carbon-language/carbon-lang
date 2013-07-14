@@ -8,7 +8,7 @@ entry:
   %tmp = alloca %struct.s1, align 4
   call void @f(%struct.s1* inreg sret %tmp, i32 inreg 41, i32 inreg 42, i32 43)
   ret void
-  ; DAG: g1:
+  ; DAG-LABEL: g1:
   ; DAG: subl $[[AMT:.*]], %esp
   ; DAG-NEXT: $43, (%esp)
   ; DAG-NEXT: leal    16(%esp), %eax
@@ -18,7 +18,7 @@ entry:
   ; DAG-NEXT: addl $[[AMT]], %esp
   ; DAG-NEXT: ret
 
-  ; FAST: g1:
+  ; FAST-LABEL: g1:
   ; FAST: subl $[[AMT:.*]], %esp
   ; FAST-NEXT: leal    8(%esp), %eax
   ; FAST-NEXT: movl    $41, %edx

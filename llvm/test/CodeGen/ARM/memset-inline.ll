@@ -2,7 +2,7 @@
 
 define void @t1(i8* nocapture %c) nounwind optsize {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: movs r1, #0
 ; CHECK: str r1, [r0]
 ; CHECK: str r1, [r0, #4]
@@ -13,7 +13,7 @@ entry:
 
 define void @t2() nounwind ssp {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: add.w r1, r0, #10
 ; CHECK: vmov.i32 {{q[0-9]+}}, #0x0
 ; CHECK: vst1.16 {d{{[0-9]+}}, d{{[0-9]+}}}, [r1]

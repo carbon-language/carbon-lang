@@ -5,12 +5,12 @@
 
 define zeroext i16 @t1(i16 zeroext %c, i16 zeroext %k) nounwind ssp {
 entry:
-; 32BIT:     t1:
+; 32BIT-LABEL:     t1:
 ; 32BIT:     movw 20(%esp), %ax
 ; 32BIT-NOT: movw %ax, %cx
 ; 32BIT:     leal 1(%eax), %ecx
 
-; 64BIT:     t1:
+; 64BIT-LABEL:     t1:
 ; 64BIT-NOT: movw %si, %ax
 ; 64BIT:     leal 1(%rsi), %eax
   %0 = icmp eq i16 %k, %c                         ; <i1> [#uses=1]
@@ -27,12 +27,12 @@ bb1:                                              ; preds = %entry
 
 define zeroext i16 @t2(i16 zeroext %c, i16 zeroext %k) nounwind ssp {
 entry:
-; 32BIT:     t2:
+; 32BIT-LABEL:     t2:
 ; 32BIT:     movw 20(%esp), %ax
 ; 32BIT-NOT: movw %ax, %cx
 ; 32BIT:     leal -1(%eax), %ecx
 
-; 64BIT:     t2:
+; 64BIT-LABEL:     t2:
 ; 64BIT-NOT: movw %si, %ax
 ; 64BIT:     leal -1(%rsi), %eax
   %0 = icmp eq i16 %k, %c                         ; <i1> [#uses=1]
@@ -51,12 +51,12 @@ declare void @foo(i16 zeroext)
 
 define zeroext i16 @t3(i16 zeroext %c, i16 zeroext %k) nounwind ssp {
 entry:
-; 32BIT:     t3:
+; 32BIT-LABEL:     t3:
 ; 32BIT:     movw 20(%esp), %ax
 ; 32BIT-NOT: movw %ax, %cx
 ; 32BIT:     leal 2(%eax), %ecx
 
-; 64BIT:     t3:
+; 64BIT-LABEL:     t3:
 ; 64BIT-NOT: movw %si, %ax
 ; 64BIT:     leal 2(%rsi), %eax
   %0 = add i16 %k, 2                              ; <i16> [#uses=3]
@@ -73,13 +73,13 @@ bb1:                                              ; preds = %entry
 
 define zeroext i16 @t4(i16 zeroext %c, i16 zeroext %k) nounwind ssp {
 entry:
-; 32BIT:     t4:
+; 32BIT-LABEL:     t4:
 ; 32BIT:     movw 16(%esp), %ax
 ; 32BIT:     movw 20(%esp), %cx
 ; 32BIT-NOT: movw %cx, %dx
 ; 32BIT:     leal (%ecx,%eax), %edx
 
-; 64BIT:     t4:
+; 64BIT-LABEL:     t4:
 ; 64BIT-NOT: movw %si, %ax
 ; 64BIT:     leal (%rsi,%rdi), %eax
   %0 = add i16 %k, %c                             ; <i16> [#uses=3]

@@ -3,7 +3,7 @@
 ; widening shuffle v3float and then a add
 define void @shuf(<3 x float>* %dst.addr, <3 x float> %src1,<3 x float> %src2) nounwind {
 entry:
-; CHECK: shuf:
+; CHECK-LABEL: shuf:
 ; CHECK: extractps
 ; CHECK: extractps
 	%x = shufflevector <3 x float> %src1, <3 x float> %src2, <3 x i32> < i32 0, i32 1, i32 2>
@@ -17,7 +17,7 @@ entry:
 ; widening shuffle v3float with a different mask and then a add
 define void @shuf2(<3 x float>* %dst.addr, <3 x float> %src1,<3 x float> %src2) nounwind {
 entry:
-; CHECK: shuf2:
+; CHECK-LABEL: shuf2:
 ; CHECK: extractps
 ; CHECK: extractps
 	%x = shufflevector <3 x float> %src1, <3 x float> %src2, <3 x i32> < i32 0, i32 4, i32 2>
@@ -32,7 +32,7 @@ entry:
 ; opA with opB, the DAG will produce new operations with opA.
 define void @shuf3(<4 x float> %tmp10, <4 x float> %vecinit15, <4 x float>* %dst) nounwind {
 entry:
-; CHECK: shuf3:
+; CHECK-LABEL: shuf3:
 ; CHECK: shufps
   %shuffle.i.i.i12 = shufflevector <4 x float> %tmp10, <4 x float> %vecinit15, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   %tmp25.i.i = shufflevector <4 x float> %shuffle.i.i.i12, <4 x float> undef, <3 x i32> <i32 0, i32 1, i32 2> 
@@ -52,7 +52,7 @@ entry:
 
 ; PR10421: make sure we correctly handle extreme widening with CONCAT_VECTORS
 define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
-; CHECK: shuf4:
+; CHECK-LABEL: shuf4:
 ; CHECK-NOT: punpckldq
   %vshuf = shufflevector <4 x i8> %a, <4 x i8> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x i8> %vshuf
@@ -61,7 +61,7 @@ define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
 
 ; PR11389: another CONCAT_VECTORS case
 define void @shuf5(<8 x i8>* %p) nounwind {
-; CHECK: shuf5:
+; CHECK-LABEL: shuf5:
   %v = shufflevector <2 x i8> <i8 4, i8 33>, <2 x i8> undef, <8 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   store <8 x i8> %v, <8 x i8>* %p, align 8
   ret void

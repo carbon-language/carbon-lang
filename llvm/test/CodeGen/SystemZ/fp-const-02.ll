@@ -4,7 +4,7 @@
 
 ; Test f32.
 define float @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lzer [[REGISTER:%f[0-5]+]]
 ; CHECK: lcebr %f0, [[REGISTER]]
 ; CHECK: br %r14
@@ -13,7 +13,7 @@ define float @f1() {
 
 ; Test f64.
 define double @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lzdr [[REGISTER:%f[0-5]+]]
 ; CHECK: lcdbr %f0, [[REGISTER]]
 ; CHECK: br %r14
@@ -22,7 +22,7 @@ define double @f2() {
 
 ; Test f128.
 define void @f3(fp128 *%x) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lzxr [[REGISTER:%f[0-5]+]]
 ; CHECK: lcxbr %f0, [[REGISTER]]
 ; CHECK: br %r14

@@ -6,7 +6,7 @@
 @var64 = global i64 0
 
 define void @addsub_i8rhs() {
-; CHECK: addsub_i8rhs:
+; CHECK-LABEL: addsub_i8rhs:
     %val8_tmp = load i8* @var8
     %lhs32 = load i32* @var32
     %lhs64 = load i64* @var64
@@ -81,7 +81,7 @@ end:
 }
 
 define void @addsub_i16rhs() {
-; CHECK: addsub_i16rhs:
+; CHECK-LABEL: addsub_i16rhs:
     %val16_tmp = load i16* @var16
     %lhs32 = load i32* @var32
     %lhs64 = load i64* @var64
@@ -159,7 +159,7 @@ end:
 ; example), but the remaining instructions are probably not idiomatic
 ; in the face of "add/sub (shifted register)" so I don't intend to.
 define void @addsub_i32rhs() {
-; CHECK: addsub_i32rhs:
+; CHECK-LABEL: addsub_i32rhs:
     %val32_tmp = load i32* @var32
     %lhs64 = load i64* @var64
 

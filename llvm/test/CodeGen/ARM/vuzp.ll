@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vuzpi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vuzpi8:
+;CHECK-LABEL: vuzpi8:
 ;CHECK: vuzp.8
 ;CHECK-NEXT: vadd.i8
 	%tmp1 = load <8 x i8>* %A
@@ -13,7 +13,7 @@ define <8 x i8> @vuzpi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vuzpi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vuzpi16:
+;CHECK-LABEL: vuzpi16:
 ;CHECK: vuzp.16
 ;CHECK-NEXT: vadd.i16
 	%tmp1 = load <4 x i16>* %A
@@ -27,7 +27,7 @@ define <4 x i16> @vuzpi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ; VUZP.32 is equivalent to VTRN.32 for 64-bit vectors.
 
 define <16 x i8> @vuzpQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vuzpQi8:
+;CHECK-LABEL: vuzpQi8:
 ;CHECK: vuzp.8
 ;CHECK-NEXT: vadd.i8
 	%tmp1 = load <16 x i8>* %A
@@ -39,7 +39,7 @@ define <16 x i8> @vuzpQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vuzpQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vuzpQi16:
+;CHECK-LABEL: vuzpQi16:
 ;CHECK: vuzp.16
 ;CHECK-NEXT: vadd.i16
 	%tmp1 = load <8 x i16>* %A
@@ -51,7 +51,7 @@ define <8 x i16> @vuzpQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vuzpQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vuzpQi32:
+;CHECK-LABEL: vuzpQi32:
 ;CHECK: vuzp.32
 ;CHECK-NEXT: vadd.i32
 	%tmp1 = load <4 x i32>* %A
@@ -63,7 +63,7 @@ define <4 x i32> @vuzpQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <4 x float> @vuzpQf(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vuzpQf:
+;CHECK-LABEL: vuzpQf:
 ;CHECK: vuzp.32
 ;CHECK-NEXT: vadd.f32
 	%tmp1 = load <4 x float>* %A
@@ -77,7 +77,7 @@ define <4 x float> @vuzpQf(<4 x float>* %A, <4 x float>* %B) nounwind {
 ; Undef shuffle indices should not prevent matching to VUZP:
 
 define <8 x i8> @vuzpi8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vuzpi8_undef:
+;CHECK-LABEL: vuzpi8_undef:
 ;CHECK: vuzp.8
 ;CHECK-NEXT: vadd.i8
 	%tmp1 = load <8 x i8>* %A
@@ -89,7 +89,7 @@ define <8 x i8> @vuzpi8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vuzpQi16_undef(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vuzpQi16_undef:
+;CHECK-LABEL: vuzpQi16_undef:
 ;CHECK: vuzp.16
 ;CHECK-NEXT: vadd.i16
 	%tmp1 = load <8 x i16>* %A

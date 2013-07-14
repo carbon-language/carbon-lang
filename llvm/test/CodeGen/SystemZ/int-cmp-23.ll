@@ -4,7 +4,7 @@
 
 ; Check a value near the low end of the unsigned 16-bit range.
 define double @f1(double %a, double %b, i16 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: clhhsi 0(%r2), 1
 ; CHECK-NEXT: jh
 ; CHECK: ldr %f0, %f2
@@ -17,7 +17,7 @@ define double @f1(double %a, double %b, i16 *%ptr) {
 
 ; Check a value near the high end of the unsigned 16-bit range.
 define double @f2(double %a, double %b, i16 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: clhhsi 0(%r2), 65534
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -30,7 +30,7 @@ define double @f2(double %a, double %b, i16 *%ptr) {
 
 ; Check the high end of the CLHHSI range.
 define double @f3(double %a, double %b, i16 %i1, i16 *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: clhhsi 4094(%r3), 1
 ; CHECK-NEXT: jh
 ; CHECK: ldr %f0, %f2
@@ -44,7 +44,7 @@ define double @f3(double %a, double %b, i16 %i1, i16 *%base) {
 
 ; Check the next halfword up, which needs separate address logic,
 define double @f4(double %a, double %b, i16 *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: clhhsi 0(%r2), 1
 ; CHECK-NEXT: jh
@@ -59,7 +59,7 @@ define double @f4(double %a, double %b, i16 *%base) {
 
 ; Check negative offsets, which also need separate address logic.
 define double @f5(double %a, double %b, i16 *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -2
 ; CHECK: clhhsi 0(%r2), 1
 ; CHECK-NEXT: jh
@@ -74,7 +74,7 @@ define double @f5(double %a, double %b, i16 *%base) {
 
 ; Check that CLHHSI does not allow indices.
 define double @f6(double %a, double %b, i64 %base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agr {{%r2, %r3|%r3, %r2}}
 ; CHECK: clhhsi 0({{%r[23]}}), 1
 ; CHECK-NEXT: jh

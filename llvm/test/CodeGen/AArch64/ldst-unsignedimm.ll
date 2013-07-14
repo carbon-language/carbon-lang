@@ -9,7 +9,7 @@
 @var_double = global double 0.0
 
 define void @ldst_8bit() {
-; CHECK: ldst_8bit:
+; CHECK-LABEL: ldst_8bit:
 
 ; No architectural support for loads to 16-bit or 8-bit since we
 ; promote i8 during lowering.
@@ -63,7 +63,7 @@ define void @ldst_8bit() {
 }
 
 define void @ldst_16bit() {
-; CHECK: ldst_16bit:
+; CHECK-LABEL: ldst_16bit:
 
 ; No architectural support for load volatiles to 16-bit promote i16 during
 ; lowering.
@@ -117,7 +117,7 @@ define void @ldst_16bit() {
 }
 
 define void @ldst_32bit() {
-; CHECK: ldst_32bit:
+; CHECK-LABEL: ldst_32bit:
 
 ; Straight 32-bit load/store
   %val32_noext = load volatile i32* @var_32bit
@@ -225,7 +225,7 @@ define void @ldst_complex_offsets() {
 }
 
 define void @ldst_float() {
-; CHECK: ldst_float:
+; CHECK-LABEL: ldst_float:
 
    %valfp = load volatile float* @var_float
 ; CHECK: adrp {{x[0-9]+}}, var_float
@@ -238,7 +238,7 @@ define void @ldst_float() {
 }
 
 define void @ldst_double() {
-; CHECK: ldst_double:
+; CHECK-LABEL: ldst_double:
 
    %valfp = load volatile double* @var_double
 ; CHECK: adrp {{x[0-9]+}}, var_double

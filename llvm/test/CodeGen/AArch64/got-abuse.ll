@@ -13,7 +13,7 @@ declare void @consume(i32)
 declare void @func()
 
 define void @foo() nounwind {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 entry:
   call void @consume(i32 ptrtoint (void ()* @func to i32))
 ; CHECK: adrp x[[ADDRHI:[0-9]+]], :got:func

@@ -4,7 +4,7 @@
 
 define void @shift5a(<4 x i32> %val, <4 x i32>* %dst, i32* %pamt) nounwind {
 entry:
-; CHECK: shift5a:
+; CHECK-LABEL: shift5a:
 ; CHECK: movd
 ; CHECK: pslld
   %amt = load i32* %pamt 
@@ -18,7 +18,7 @@ entry:
 
 define void @shift5b(<4 x i32> %val, <4 x i32>* %dst, i32* %pamt) nounwind {
 entry:
-; CHECK: shift5b:
+; CHECK-LABEL: shift5b:
 ; CHECK: movd
 ; CHECK: psrad
   %amt = load i32* %pamt 
@@ -32,7 +32,7 @@ entry:
 
 define void @shift5c(<4 x i32> %val, <4 x i32>* %dst, i32 %amt) nounwind {
 entry:
-; CHECK: shift5c:
+; CHECK-LABEL: shift5c:
 ; CHECK: movd
 ; CHECK: pslld
   %tmp0 = insertelement <4 x i32> undef, i32 %amt, i32 0
@@ -45,7 +45,7 @@ entry:
 
 define void @shift5d(<4 x i32> %val, <4 x i32>* %dst, i32 %amt) nounwind {
 entry:
-; CHECK: shift5d:
+; CHECK-LABEL: shift5d:
 ; CHECK: movd
 ; CHECK: psrad
   %tmp0 = insertelement <4 x i32> undef, i32 %amt, i32 0

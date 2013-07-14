@@ -6,7 +6,7 @@ declare i32 @foo()
 
 ; Test register division.  The result is in the second of the two registers.
 define void @f1(i32 %dummy, i32 %a, i32 %b, i32 *%dest) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: %r3
 ; CHECK: {{llill|lhi}} %r2, 0
 ; CHECK-NOT: %r3
@@ -20,7 +20,7 @@ define void @f1(i32 %dummy, i32 %a, i32 %b, i32 *%dest) {
 
 ; Test register remainder.  The result is in the first of the two registers.
 define void @f2(i32 %dummy, i32 %a, i32 %b, i32 *%dest) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: %r3
 ; CHECK: {{llill|lhi}} %r2, 0
 ; CHECK-NOT: %r3
@@ -34,7 +34,7 @@ define void @f2(i32 %dummy, i32 %a, i32 %b, i32 *%dest) {
 
 ; Test that division and remainder use a single instruction.
 define i32 @f3(i32 %dummy1, i32 %a, i32 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: %r3
 ; CHECK: {{llill|lhi}} %r2, 0
 ; CHECK-NOT: %r3
@@ -50,7 +50,7 @@ define i32 @f3(i32 %dummy1, i32 %a, i32 %b) {
 
 ; Test memory division with no displacement.
 define void @f4(i32 %dummy, i32 %a, i32 *%src, i32 *%dest) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: %r3
 ; CHECK: {{llill|lhi}} %r2, 0
 ; CHECK-NOT: %r3
@@ -65,7 +65,7 @@ define void @f4(i32 %dummy, i32 %a, i32 *%src, i32 *%dest) {
 
 ; Test memory remainder with no displacement.
 define void @f5(i32 %dummy, i32 %a, i32 *%src, i32 *%dest) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: %r3
 ; CHECK: {{llill|lhi}} %r2, 0
 ; CHECK-NOT: %r3
@@ -80,7 +80,7 @@ define void @f5(i32 %dummy, i32 %a, i32 *%src, i32 *%dest) {
 
 ; Test both memory division and memory remainder.
 define i32 @f6(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: %r3
 ; CHECK: {{llill|lhi}} %r2, 0
 ; CHECK-NOT: %r3
@@ -97,7 +97,7 @@ define i32 @f6(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check the high end of the DL range.
 define i32 @f7(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: dl %r2, 524284(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 131071
@@ -109,7 +109,7 @@ define i32 @f7(i32 %dummy, i32 %a, i32 *%src) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f8(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r4, 524288
 ; CHECK: dl %r2, 0(%r4)
 ; CHECK: br %r14
@@ -121,7 +121,7 @@ define i32 @f8(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check the high end of the negative aligned DL range.
 define i32 @f9(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: dl %r2, -4(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -1
@@ -132,7 +132,7 @@ define i32 @f9(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check the low end of the DL range.
 define i32 @f10(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: dl %r2, -524288(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -131072
@@ -144,7 +144,7 @@ define i32 @f10(i32 %dummy, i32 %a, i32 *%src) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f11(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: agfi %r4, -524292
 ; CHECK: dl %r2, 0(%r4)
 ; CHECK: br %r14
@@ -156,7 +156,7 @@ define i32 @f11(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check that DL allows an index.
 define i32 @f12(i32 %dummy, i32 %a, i64 %src, i64 %index) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: dl %r2, 524287(%r5,%r4)
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -169,7 +169,7 @@ define i32 @f12(i32 %dummy, i32 %a, i64 %src, i64 %index) {
 
 ; Check that divisions of spilled values can use DL rather than DLR.
 define i32 @f13(i32 *%ptr0) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: dl {{%r[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14

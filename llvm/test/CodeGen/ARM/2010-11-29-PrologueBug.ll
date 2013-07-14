@@ -4,7 +4,7 @@
 
 define i32* @t(i32* %x) nounwind {
 entry:
-; ARM: t:
+; ARM-LABEL: t:
 ; ARM: push
 ; ARM: mov r7, sp
 ; ARM: bl _foo
@@ -12,7 +12,7 @@ entry:
 ; ARM: bl _foo
 ; ARM: pop {r7, pc}
 
-; THUMB2: t:
+; THUMB2-LABEL: t:
 ; THUMB2: push
 ; THUMB2: mov r7, sp
 ; THUMB2: blx _foo

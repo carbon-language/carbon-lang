@@ -4,7 +4,7 @@
 
 ; Test i32->i32 negation.
 define i32 @f1(i32 %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lcr %r2, %r2
 ; CHECK: br %r14
   %neg = sub i32 0, %val
@@ -13,7 +13,7 @@ define i32 @f1(i32 %val) {
 
 ; Test i32->i64 negation.
 define i64 @f2(i32 %val) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lcgfr %r2, %r2
 ; CHECK: br %r14
   %ext = sext i32 %val to i64
@@ -23,7 +23,7 @@ define i64 @f2(i32 %val) {
 
 ; Test i32->i64 negation that uses an "in-register" form of sign extension.
 define i64 @f3(i64 %val) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lcgfr %r2, %r2
 ; CHECK: br %r14
   %trunc = trunc i64 %val to i32
@@ -34,7 +34,7 @@ define i64 @f3(i64 %val) {
 
 ; Test i64 negation.
 define i64 @f4(i64 %val) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lcgr %r2, %r2
 ; CHECK: br %r14
   %neg = sub i64 0, %val

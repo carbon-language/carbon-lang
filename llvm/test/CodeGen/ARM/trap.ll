@@ -23,10 +23,10 @@
 
 define void @t() nounwind {
 entry:
-; INSTR: t:
+; INSTR-LABEL: t:
 ; INSTR: trap
 
-; FUNC: t:
+; FUNC-LABEL: t:
 ; FUNC: bl __trap
 
 ; ENCODING-NACL: f0 de fe e7
@@ -39,10 +39,10 @@ entry:
 
 define void @t2() nounwind {
 entry:
-; INSTR: t2:
+; INSTR-LABEL: t2:
 ; INSTR: trap
 
-; FUNC: t2:
+; FUNC-LABEL: t2:
 ; FUNC: bl __trap
 
 ; ENCODING-NACL: f0 de fe e7

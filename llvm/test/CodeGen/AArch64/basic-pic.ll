@@ -6,7 +6,7 @@
 ; CHECK-ELF: RELOCATION RECORDS FOR [.rela.text]
 
 define i32 @get_globalvar() {
-; CHECK: get_globalvar:
+; CHECK-LABEL: get_globalvar:
 
   %val = load i32* @var
 ; CHECK: adrp x[[GOTHI:[0-9]+]], :got:var
@@ -19,7 +19,7 @@ define i32 @get_globalvar() {
 }
 
 define i32* @get_globalvaraddr() {
-; CHECK: get_globalvaraddr:
+; CHECK-LABEL: get_globalvaraddr:
 
   %val = load i32* @var
 ; CHECK: adrp x[[GOTHI:[0-9]+]], :got:var
@@ -33,7 +33,7 @@ define i32* @get_globalvaraddr() {
 @hiddenvar = hidden global i32 0
 
 define i32 @get_hiddenvar() {
-; CHECK: get_hiddenvar:
+; CHECK-LABEL: get_hiddenvar:
 
   %val = load i32* @hiddenvar
 ; CHECK: adrp x[[HI:[0-9]+]], hiddenvar
@@ -45,7 +45,7 @@ define i32 @get_hiddenvar() {
 }
 
 define i32* @get_hiddenvaraddr() {
-; CHECK: get_hiddenvaraddr:
+; CHECK-LABEL: get_hiddenvaraddr:
 
   %val = load i32* @hiddenvar
 ; CHECK: adrp [[HI:x[0-9]+]], hiddenvar
@@ -57,7 +57,7 @@ define i32* @get_hiddenvaraddr() {
 }
 
 define void()* @get_func() {
-; CHECK: get_func:
+; CHECK-LABEL: get_func:
 
   ret void()* bitcast(void()*()* @get_func to void()*)
 ; CHECK: adrp x[[GOTHI:[0-9]+]], :got:get_func

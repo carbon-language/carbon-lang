@@ -2,21 +2,21 @@
 
 define i32 *@addr_G1() {
 entry:
-; CHECK: addr_G1:
+; CHECK-LABEL: addr_G1:
 ; CHECK: ldaw r0, dp[G1]
 	ret i32* @G1
 }
 
 define i32 *@addr_G2() {
 entry:
-; CHECK: addr_G2:
+; CHECK-LABEL: addr_G2:
 ; CHECK: ldaw r0, dp[G2]
 	ret i32* @G2
 }
 
 define i32 *@addr_G3() {
 entry:
-; CHECK: addr_G3:
+; CHECK-LABEL: addr_G3:
 ; CHECK: ldaw r11, cp[G3]
 ; CHECK: mov r0, r11
 	ret i32* @G3
@@ -24,14 +24,14 @@ entry:
 
 define i32 **@addr_G4() {
 entry:
-; CHECK: addr_G4:
+; CHECK-LABEL: addr_G4:
 ; CHECK: ldaw r0, dp[G4]
 	ret i32** @G4
 }
 
 define i32 **@addr_G5() {
 entry:
-; CHECK: addr_G5:
+; CHECK-LABEL: addr_G5:
 ; CHECK: ldaw r11, cp[G5]
 ; CHECK: mov r0, r11
 	ret i32** @G5
@@ -39,14 +39,14 @@ entry:
 
 define i32 **@addr_G6() {
 entry:
-; CHECK: addr_G6:
+; CHECK-LABEL: addr_G6:
 ; CHECK: ldaw r0, dp[G6]
 	ret i32** @G6
 }
 
 define i32 **@addr_G7() {
 entry:
-; CHECK: addr_G7:
+; CHECK-LABEL: addr_G7:
 ; CHECK: ldaw r11, cp[G7]
 ; CHECK: mov r0, r11
 	ret i32** @G7
@@ -54,7 +54,7 @@ entry:
 
 define i32 *@addr_G8() {
 entry:
-; CHECK: addr_G8:
+; CHECK-LABEL: addr_G8:
 ; CHECK: ldaw r0, dp[G8]
 	ret i32* @G8
 }

@@ -2,7 +2,7 @@
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s -check-prefix=CHECK
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s -check-prefix=CHECK64
 
-; CHECK: mul5_32:
+; CHECK-LABEL: mul5_32:
 ; CHECK: sll $[[R0:[0-9]+]], $4, 2
 ; CHECK: addu ${{[0-9]+}}, $[[R0]], $4
 
@@ -12,7 +12,7 @@ entry:
   ret i32 %mul
 }
 
-; CHECK:     mul27_32:
+; CHECK-LABEL:     mul27_32:
 ; CHECK-DAG: sll $[[R0:[0-9]+]], $4, 2
 ; CHECK-DAG: addu $[[R1:[0-9]+]], $[[R0]], $4
 ; CHECK-DAG: sll $[[R2:[0-9]+]], $4, 5
@@ -24,7 +24,7 @@ entry:
   ret i32 %mul
 }
 
-; CHECK:     muln2147483643_32:
+; CHECK-LABEL:     muln2147483643_32:
 ; CHECK-DAG: sll $[[R0:[0-9]+]], $4, 2
 ; CHECK-DAG: addu $[[R1:[0-9]+]], $[[R0]], $4
 ; CHECK-DAG: sll $[[R2:[0-9]+]], $4, 31
@@ -36,7 +36,7 @@ entry:
   ret i32 %mul
 }
 
-; CHECK64:     muln9223372036854775805_64:
+; CHECK64-LABEL:     muln9223372036854775805_64:
 ; CHECK64-DAG: dsll $[[R0:[0-9]+]], $4, 1
 ; CHECK64-DAG: daddu $[[R1:[0-9]+]], $[[R0]], $4
 ; CHECK64-DAG: dsll $[[R2:[0-9]+]], $4, 63

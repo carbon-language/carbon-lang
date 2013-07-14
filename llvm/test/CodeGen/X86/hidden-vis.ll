@@ -9,12 +9,12 @@
 
 define weak hidden void @t1() nounwind {
 ; LINUX: .hidden t1
-; LINUX: t1:
+; LINUX-LABEL: t1:
 
 ; DARWIN: .private_extern _t1
-; DARWIN: t1:
+; DARWIN-LABEL: t1:
 
-; WINDOWS: t1:
+; WINDOWS-LABEL: t1:
 ; WINDOWS-NOT: hidden
   ret void
 }

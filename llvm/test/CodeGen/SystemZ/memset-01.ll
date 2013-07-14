@@ -7,7 +7,7 @@ declare void @llvm.memset.p0i8.i64(i8 *nocapture, i8, i64, i32, i1) nounwind
 
 ; No bytes, i32 version.
 define void @f1(i8 *%dest, i8 %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: %r2
 ; CHECK-NOT: %r3
 ; CHECK: br %r14
@@ -17,7 +17,7 @@ define void @f1(i8 *%dest, i8 %val) {
 
 ; No bytes, i64 version.
 define void @f2(i8 *%dest, i8 %val) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: %r2
 ; CHECK-NOT: %r3
 ; CHECK: br %r14
@@ -27,7 +27,7 @@ define void @f2(i8 *%dest, i8 %val) {
 
 ; 1 byte, i32 version.
 define void @f3(i8 *%dest, i8 %val) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 %val, i32 1, i32 1, i1 false)
@@ -36,7 +36,7 @@ define void @f3(i8 *%dest, i8 %val) {
 
 ; 1 byte, i64 version.
 define void @f4(i8 *%dest, i8 %val) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 %val, i64 1, i32 1, i1 false)
@@ -45,7 +45,7 @@ define void @f4(i8 *%dest, i8 %val) {
 
 ; 2 bytes, i32 version.
 define void @f5(i8 *%dest, i8 %val) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-DAG: stc %r3, 0(%r2)
 ; CHECK-DAG: stc %r3, 1(%r2)
 ; CHECK: br %r14
@@ -55,7 +55,7 @@ define void @f5(i8 *%dest, i8 %val) {
 
 ; 2 bytes, i64 version.
 define void @f6(i8 *%dest, i8 %val) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-DAG: stc %r3, 0(%r2)
 ; CHECK-DAG: stc %r3, 1(%r2)
 ; CHECK: br %r14
@@ -65,7 +65,7 @@ define void @f6(i8 *%dest, i8 %val) {
 
 ; 3 bytes, i32 version.
 define void @f7(i8 *%dest, i8 %val) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: mvc 1(2,%r2), 0(%r2)
 ; CHECK: br %r14
@@ -75,7 +75,7 @@ define void @f7(i8 *%dest, i8 %val) {
 
 ; 3 bytes, i64 version.
 define void @f8(i8 *%dest, i8 %val) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: mvc 1(2,%r2), 0(%r2)
 ; CHECK: br %r14
@@ -85,7 +85,7 @@ define void @f8(i8 *%dest, i8 %val) {
 
 ; 257 bytes, i32 version.
 define void @f9(i8 *%dest, i8 %val) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: mvc 1(256,%r2), 0(%r2)
 ; CHECK: br %r14
@@ -95,7 +95,7 @@ define void @f9(i8 *%dest, i8 %val) {
 
 ; 257 bytes, i64 version.
 define void @f10(i8 *%dest, i8 %val) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: mvc 1(256,%r2), 0(%r2)
 ; CHECK: br %r14
@@ -107,7 +107,7 @@ define void @f10(i8 *%dest, i8 %val) {
 ; For now expect none, so that the test fails and gets updated when
 ; large copies are implemented.
 define void @f11(i8 *%dest, i8 %val) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i32(i8 *%dest, i8 %val, i32 258, i32 1, i1 false)
@@ -116,7 +116,7 @@ define void @f11(i8 *%dest, i8 %val) {
 
 ; 258 bytes, i64 version, with the same comments as above.
 define void @f12(i8 *%dest, i8 %val) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
   call void @llvm.memset.p0i8.i64(i8 *%dest, i8 %val, i64 258, i32 1, i1 false)

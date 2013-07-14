@@ -6,13 +6,13 @@
 
 define float @t1(float %acc, float %a, float %b) {
 entry:
-; VFP2: t1:
+; VFP2-LABEL: t1:
 ; VFP2: vmla.f32
 
-; NEON: t1:
+; NEON-LABEL: t1:
 ; NEON: vmla.f32
 
-; A8: t1:
+; A8-LABEL: t1:
 ; A8: vmul.f32
 ; A8: vadd.f32
 	%0 = fmul float %a, %b
@@ -22,13 +22,13 @@ entry:
 
 define double @t2(double %acc, double %a, double %b) {
 entry:
-; VFP2: t2:
+; VFP2-LABEL: t2:
 ; VFP2: vmla.f64
 
-; NEON: t2:
+; NEON-LABEL: t2:
 ; NEON: vmla.f64
 
-; A8: t2:
+; A8-LABEL: t2:
 ; A8: vmul.f64
 ; A8: vadd.f64
 	%0 = fmul double %a, %b
@@ -38,13 +38,13 @@ entry:
 
 define float @t3(float %acc, float %a, float %b) {
 entry:
-; VFP2: t3:
+; VFP2-LABEL: t3:
 ; VFP2: vmla.f32
 
-; NEON: t3:
+; NEON-LABEL: t3:
 ; NEON: vmla.f32
 
-; A8: t3:
+; A8-LABEL: t3:
 ; A8: vmul.f32
 ; A8: vadd.f32
 	%0 = fmul float %a, %b
@@ -56,18 +56,18 @@ entry:
 ; rdar://8659675
 define void @t4(float %acc1, float %a, float %b, float %acc2, float %c, float* %P1, float* %P2) {
 entry:
-; A8: t4:
+; A8-LABEL: t4:
 ; A8: vmul.f32
 ; A8: vmul.f32
 ; A8: vadd.f32
 ; A8: vadd.f32
 
 ; Two vmla with now RAW hazard
-; A9: t4:
+; A9-LABEL: t4:
 ; A9: vmla.f32
 ; A9: vmla.f32
 
-; HARD: t4:
+; HARD-LABEL: t4:
 ; HARD: vmla.f32 s0, s1, s2
 ; HARD: vmla.f32 s3, s1, s4
   %0 = fmul float %a, %b
@@ -81,18 +81,18 @@ entry:
 
 define float @t5(float %a, float %b, float %c, float %d, float %e) {
 entry:
-; A8: t5:
+; A8-LABEL: t5:
 ; A8: vmul.f32
 ; A8: vmul.f32
 ; A8: vadd.f32
 ; A8: vadd.f32
 
-; A9: t5:
+; A9-LABEL: t5:
 ; A9: vmla.f32
 ; A9: vmul.f32
 ; A9: vadd.f32
 
-; HARD: t5:
+; HARD-LABEL: t5:
 ; HARD: vmla.f32 s4, s0, s1
 ; HARD: vmul.f32 s0, s2, s3
 ; HARD: vadd.f32 s0, s4, s0

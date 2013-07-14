@@ -2,7 +2,7 @@
 
 define i32 @t1(i8 zeroext %x) nounwind readnone ssp {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: shll
 ; CHECK-NOT: movzwl
 ; CHECK: ret
@@ -14,7 +14,7 @@ entry:
 
 define i32 @t2(i8 zeroext %x) nounwind readnone ssp {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: shrl
 ; CHECK-NOT: movzwl
 ; CHECK: ret

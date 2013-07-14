@@ -7,7 +7,7 @@ target triple = "x86_64-apple-darwin9.6"
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 (i32)* @longest_match to i8*)]		; <[1 x i8*]*> [#uses=0]
 
 define fastcc i32 @longest_match(i32 %cur_match) nounwind {
-; CHECK: longest_match:
+; CHECK-LABEL: longest_match:
 ; CHECK-NOT: ret
 ; CHECK: cmpb $0, (%r{{.*}},%r{{.*}})
 ; CHECK: ret

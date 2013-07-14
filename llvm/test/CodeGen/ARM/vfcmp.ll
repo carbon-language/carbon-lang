@@ -4,7 +4,7 @@
 
 ; une is implemented with VCEQ/VMVN
 define <2 x i32> @vcunef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcunef32:
+;CHECK-LABEL: vcunef32:
 ;CHECK: vceq.f32
 ;CHECK-NEXT: vmvn
 	%tmp1 = load <2 x float>* %A
@@ -16,7 +16,7 @@ define <2 x i32> @vcunef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; olt is implemented with VCGT
 define <2 x i32> @vcoltf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcoltf32:
+;CHECK-LABEL: vcoltf32:
 ;CHECK: vcgt.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -27,7 +27,7 @@ define <2 x i32> @vcoltf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; ole is implemented with VCGE
 define <2 x i32> @vcolef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcolef32:
+;CHECK-LABEL: vcolef32:
 ;CHECK: vcge.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -38,7 +38,7 @@ define <2 x i32> @vcolef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; uge is implemented with VCGT/VMVN
 define <2 x i32> @vcugef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcugef32:
+;CHECK-LABEL: vcugef32:
 ;CHECK: vcgt.f32
 ;CHECK-NEXT: vmvn
 	%tmp1 = load <2 x float>* %A
@@ -50,7 +50,7 @@ define <2 x i32> @vcugef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; ule is implemented with VCGT/VMVN
 define <2 x i32> @vculef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vculef32:
+;CHECK-LABEL: vculef32:
 ;CHECK: vcgt.f32
 ;CHECK-NEXT: vmvn
 	%tmp1 = load <2 x float>* %A
@@ -62,7 +62,7 @@ define <2 x i32> @vculef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; ugt is implemented with VCGE/VMVN
 define <2 x i32> @vcugtf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcugtf32:
+;CHECK-LABEL: vcugtf32:
 ;CHECK: vcge.f32
 ;CHECK-NEXT: vmvn
 	%tmp1 = load <2 x float>* %A
@@ -74,7 +74,7 @@ define <2 x i32> @vcugtf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; ult is implemented with VCGE/VMVN
 define <2 x i32> @vcultf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcultf32:
+;CHECK-LABEL: vcultf32:
 ;CHECK: vcge.f32
 ;CHECK-NEXT: vmvn
 	%tmp1 = load <2 x float>* %A
@@ -86,7 +86,7 @@ define <2 x i32> @vcultf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; ueq is implemented with VCGT/VCGT/VORR/VMVN
 define <2 x i32> @vcueqf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcueqf32:
+;CHECK-LABEL: vcueqf32:
 ;CHECK: vcgt.f32
 ;CHECK-NEXT: vcgt.f32
 ;CHECK-NEXT: vorr
@@ -100,7 +100,7 @@ define <2 x i32> @vcueqf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; one is implemented with VCGT/VCGT/VORR
 define <2 x i32> @vconef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vconef32:
+;CHECK-LABEL: vconef32:
 ;CHECK: vcgt.f32
 ;CHECK-NEXT: vcgt.f32
 ;CHECK-NEXT: vorr
@@ -113,7 +113,7 @@ define <2 x i32> @vconef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; uno is implemented with VCGT/VCGE/VORR/VMVN
 define <2 x i32> @vcunof32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcunof32:
+;CHECK-LABEL: vcunof32:
 ;CHECK: vcge.f32
 ;CHECK-NEXT: vcgt.f32
 ;CHECK-NEXT: vorr
@@ -127,7 +127,7 @@ define <2 x i32> @vcunof32(<2 x float>* %A, <2 x float>* %B) nounwind {
 
 ; ord is implemented with VCGT/VCGE/VORR
 define <2 x i32> @vcordf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcordf32:
+;CHECK-LABEL: vcordf32:
 ;CHECK: vcge.f32
 ;CHECK-NEXT: vcgt.f32
 ;CHECK-NEXT: vorr

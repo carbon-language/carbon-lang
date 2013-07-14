@@ -8,7 +8,7 @@ entry:
 	%2 = add i64 %1, %0		; <i64> [#uses=1]
 	ret i64 %2
 }
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ldc r2, 0
 ; CHECK-NEXT: ladd r1, r0, r1, r0, r2
 ; CHECK-NEXT: retsp 0
@@ -21,7 +21,7 @@ entry:
 	%2 = sub i64 %1, %0		; <i64> [#uses=1]
 	ret i64 %2
 }
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ldc r2, 0
 ; CHECK-NEXT: lsub r1, r0, r1, r0, r2
 ; CHECK-NEXT: neg r1, r1
@@ -34,7 +34,7 @@ entry:
 	%1 = add i64 %x, %0		; <i64> [#uses=1]
 	ret i64 %1
 }
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ldc r3, 0
 ; CHECK-NEXT: ladd r2, r0, r0, r2, r3
 ; CHECK-NEXT: add r1, r1, r2
@@ -47,7 +47,7 @@ entry:
 	%1 = add i64 %0, %y		; <i64> [#uses=1]
 	ret i64 %1
 }
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ldc r3, 0
 ; CHECK-NEXT: ladd r1, r0, r0, r1, r3
 ; CHECK-NEXT: add r1, r2, r1
@@ -60,7 +60,7 @@ entry:
 	%1 = sub i64 %x, %0		; <i64> [#uses=1]
 	ret i64 %1
 }
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: ldc r3, 0
 ; CHECK-NEXT: lsub r2, r0, r0, r2, r3
 ; CHECK-NEXT: sub r1, r1, r2

@@ -6,7 +6,7 @@
 
 ; A simple index address.
 define void @f1(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lb %r0, 0(%r3,%r2)
 ; CHECK: br %r14
   %add = add i64 %addr, %index
@@ -18,7 +18,7 @@ define void @f1(i64 %addr, i64 %index, i8 **%dst) {
 
 ; An address with an index and a displacement (order 1).
 define void @f2(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lb %r0, 100(%r3,%r2)
 ; CHECK: br %r14
   %add1 = add i64 %addr, %index
@@ -31,7 +31,7 @@ define void @f2(i64 %addr, i64 %index, i8 **%dst) {
 
 ; An address with an index and a displacement (order 2).
 define void @f3(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lb %r0, 100(%r3,%r2)
 ; CHECK: br %r14
   %add1 = add i64 %addr, 100
@@ -44,7 +44,7 @@ define void @f3(i64 %addr, i64 %index, i8 **%dst) {
 
 ; An address with an index and a subtracted displacement (order 1).
 define void @f4(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lb %r0, -100(%r3,%r2)
 ; CHECK: br %r14
   %add1 = add i64 %addr, %index
@@ -57,7 +57,7 @@ define void @f4(i64 %addr, i64 %index, i8 **%dst) {
 
 ; An address with an index and a subtracted displacement (order 2).
 define void @f5(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: lb %r0, -100(%r3,%r2)
 ; CHECK: br %r14
   %add1 = sub i64 %addr, 100
@@ -70,7 +70,7 @@ define void @f5(i64 %addr, i64 %index, i8 **%dst) {
 
 ; An address with an index and a displacement added using OR.
 define void @f6(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: risbg [[BASE:%r[1245]]], %r2, 0, 188, 0
 ; CHECK: lb %r0, 6(%r3,[[BASE]])
 ; CHECK: br %r14
@@ -85,7 +85,7 @@ define void @f6(i64 %addr, i64 %index, i8 **%dst) {
 
 ; Like f6, but without the masking.  This OR doesn't count as a displacement.
 define void @f7(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: oill %r2, 6
 ; CHECK: lb %r0, 0(%r3,%r2)
 ; CHECK: br %r14
@@ -100,7 +100,7 @@ define void @f7(i64 %addr, i64 %index, i8 **%dst) {
 ; Like f6, but with the OR applied after the index.  We don't know anything
 ; about the alignment of %add here.
 define void @f8(i64 %addr, i64 %index, i8 **%dst) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: risbg [[BASE:%r[1245]]], %r2, 0, 188, 0
 ; CHECK: agr [[BASE]], %r3
 ; CHECK: oill [[BASE]], 6

@@ -9,10 +9,10 @@
 declare void @dummy_use(i32*, i32)
 
 define {i32, i32} @test_basic(i32 %hp, i32 %p) {
-  ; X32-Linux:       test_basic:
+  ; X32-Linux-LABEL:       test_basic:
   ; X32-Linux-NOT:   calll inc_stack_0
 
-  ; X64-Linux:       test_basic:
+  ; X64-Linux-LABEL:       test_basic:
   ; X64-Linux-NOT:   callq inc_stack_0
 
   %mem = alloca i32, i32 10
@@ -23,7 +23,7 @@ define {i32, i32} @test_basic(i32 %hp, i32 %p) {
 }
 
 define cc 11 {i32, i32} @test_basic_hipecc(i32 %hp, i32 %p) {
-  ; X32-Linux:       test_basic_hipecc:
+  ; X32-Linux-LABEL:       test_basic_hipecc:
   ; X32-Linux:       leal -156(%esp), %ebx
   ; X32-Linux-NEXT:  cmpl 76(%ebp), %ebx
   ; X32-Linux-NEXT:  jb .LBB1_1
@@ -33,7 +33,7 @@ define cc 11 {i32, i32} @test_basic_hipecc(i32 %hp, i32 %p) {
   ; X32-Linux:       .LBB1_1:
   ; X32-Linux-NEXT:  calll inc_stack_0
 
-  ; X64-Linux:       test_basic_hipecc:
+  ; X64-Linux-LABEL:       test_basic_hipecc:
   ; X64-Linux:       leaq -232(%rsp), %r14
   ; X64-Linux-NEXT:  cmpq 144(%rbp), %r14
   ; X64-Linux-NEXT:  jb .LBB1_1
@@ -51,10 +51,10 @@ define cc 11 {i32, i32} @test_basic_hipecc(i32 %hp, i32 %p) {
 }
 
 define cc 11 {i32,i32,i32} @test_nocall_hipecc(i32 %hp,i32 %p,i32 %x,i32 %y) {
-  ; X32-Linux:       test_nocall_hipecc:
+  ; X32-Linux-LABEL:       test_nocall_hipecc:
   ; X32-Linux-NOT:   calll inc_stack_0
 
-  ; X64-Linux:       test_nocall_hipecc:
+  ; X64-Linux-LABEL:       test_nocall_hipecc:
   ; X64-Linux-NOT:   callq inc_stack_0
 
   %1 = add i32 %x, %y

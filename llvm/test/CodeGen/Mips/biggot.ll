@@ -31,12 +31,12 @@ declare void @foo0(i32)
 
 define void @foo2(i32* nocapture %d, i32* nocapture %s, i32 %n) nounwind {
 entry:
-; O32: foo2:
+; O32-LABEL: foo2:
 ; O32: lui $[[R2:[0-9]+]], %call_hi(memcpy)
 ; O32: addu  $[[R3:[0-9]+]], $[[R2]], ${{[a-z0-9]+}}
 ; O32: lw  ${{[0-9]+}}, %call_lo(memcpy)($[[R3]])
 
-; N64: foo2:
+; N64-LABEL: foo2:
 ; N64: lui $[[R2:[0-9]+]], %call_hi(memcpy)
 ; N64: daddu  $[[R3:[0-9]+]], $[[R2]], ${{[a-z0-9]+}}
 ; N64: ld  ${{[0-9]+}}, %call_lo(memcpy)($[[R3]])

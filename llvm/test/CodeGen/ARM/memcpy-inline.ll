@@ -15,7 +15,7 @@
 
 define i32 @t0() {
 entry:
-; CHECK: t0:
+; CHECK-LABEL: t0:
 ; CHECK: vldr [[REG1:d[0-9]+]],
 ; CHECK: vstr [[REG1]], 
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds (%struct.x* @dst, i32 0, i32 0), i8* getelementptr inbounds (%struct.x* @src, i32 0, i32 0), i32 11, i32 8, i1 false)
@@ -24,7 +24,7 @@ entry:
 
 define void @t1(i8* nocapture %C) nounwind {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: vld1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r1]
 ; CHECK: vst1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r0]
 ; CHECK: adds r0, #15
@@ -37,7 +37,7 @@ entry:
 
 define void @t2(i8* nocapture %C) nounwind {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: ldr [[REG2:r[0-9]+]], [r1, #32]
 ; CHECK: str [[REG2]], [r0, #32]
 ; CHECK: vld1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r1]
@@ -52,7 +52,7 @@ entry:
 
 define void @t3(i8* nocapture %C) nounwind {
 entry:
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK: vld1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r1]
 ; CHECK: vst1.8 {d{{[0-9]+}}, d{{[0-9]+}}}, [r0]
 ; CHECK: adds r0, #16
@@ -65,7 +65,7 @@ entry:
 
 define void @t4(i8* nocapture %C) nounwind {
 entry:
-; CHECK: t4:
+; CHECK-LABEL: t4:
 ; CHECK: vld1.8 {[[REG3:d[0-9]+]], [[REG4:d[0-9]+]]}, [r1]
 ; CHECK: vst1.8 {[[REG3]], [[REG4]]}, [r0]
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([18 x i8]* @.str4, i64 0, i64 0), i64 18, i32 1, i1 false)
@@ -74,7 +74,7 @@ entry:
 
 define void @t5(i8* nocapture %C) nounwind {
 entry:
-; CHECK: t5:
+; CHECK-LABEL: t5:
 ; CHECK: movs [[REG5:r[0-9]+]], #0
 ; CHECK: strb [[REG5]], [r0, #6]
 ; CHECK: movw [[REG6:r[0-9]+]], #21587
@@ -87,7 +87,7 @@ entry:
 
 define void @t6() nounwind {
 entry:
-; CHECK: t6:
+; CHECK-LABEL: t6:
 ; CHECK: vld1.8 {[[REG8:d[0-9]+]]}, [r0]
 ; CHECK: vstr [[REG8]], [r1]
 ; CHECK: adds r1, #6

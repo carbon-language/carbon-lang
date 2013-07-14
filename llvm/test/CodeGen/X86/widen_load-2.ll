@@ -148,7 +148,7 @@ define void @add3i8(%i8vec3* nocapture sret %ret, %i8vec3* %ap, %i8vec3* %bp) no
 	ret void
 }
 
-; CHECK: add31i8:
+; CHECK-LABEL: add31i8:
 %i8vec31 = type <31 x i8>
 define void @add31i8(%i8vec31* nocapture sret %ret, %i8vec31* %ap, %i8vec31* %bp) nounwind {
 ; CHECK: movdqa

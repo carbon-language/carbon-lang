@@ -18,7 +18,7 @@ overflow:
   %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
   ret i1 false
 
-; CHECK: func1:
+; CHECK-LABEL: func1:
 ; CHECK: subl 20(%esp)
 ; CHECK-NEXT: jno
 }
@@ -38,7 +38,7 @@ carry:
   %t2 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @no, i32 0, i32 0) ) nounwind
   ret i1 false
 
-; CHECK: func2:
+; CHECK-LABEL: func2:
 ; CHECK: subl 20(%esp)
 ; CHECK-NEXT: jae
 }
@@ -53,7 +53,7 @@ entry:
   %obit = extractvalue {i32, i1} %t, 1
   ret i1 %obit
 
-; CHECK: func3:
+; CHECK-LABEL: func3:
 ; CHECK: decl
 ; CHECK-NEXT: seto
 }

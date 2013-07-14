@@ -3,7 +3,7 @@
 
 define hidden void @foo() nounwind ssp {
 entry:
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: mov r7, sp
 ; CHECK-NEXT: vpush {d8}
 ; CHECK-NEXT: vpush {d10, d11}

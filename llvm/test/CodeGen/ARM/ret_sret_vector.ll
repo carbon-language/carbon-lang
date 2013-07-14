@@ -6,7 +6,7 @@ target triple = "thumbv7-apple-ios3.0.0"
 define <4 x double> @PR14337(<4 x double> %a, <4 x double> %b) {
   %foo = fadd <4 x double>  %a, %b
   ret <4 x double> %foo
-; CHECK: PR14337:
+; CHECK-LABEL: PR14337:
 ; CHECK: vst1.64
 ; CHECK: vst1.64
 }

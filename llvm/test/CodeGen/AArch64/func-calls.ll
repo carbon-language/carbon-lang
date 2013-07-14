@@ -17,7 +17,7 @@ declare void @take_i8s(i8 %val1, i8 %val2)
 declare void @take_floats(float %val1, float %val2)
 
 define void @simple_args() {
-; CHECK: simple_args:
+; CHECK-LABEL: simple_args:
   %char1 = load i8* @var8
   %char2 = load i8* @var8_2
   call void @take_i8s(i8 %char1, i8 %char2)
@@ -41,7 +41,7 @@ declare [2 x i64] @return_smallstruct()
 declare void @return_large_struct(%myStruct* sret %retval)
 
 define void @simple_rets() {
-; CHECK: simple_rets:
+; CHECK-LABEL: simple_rets:
 
   %int = call i32 @return_int()
   store i32 %int, i32* @var32
@@ -106,7 +106,7 @@ declare void @check_i128_regalign(i32 %val0, i128 %val1)
 
 
 define void @check_i128_align() {
-; CHECK: check_i128_align:
+; CHECK-LABEL: check_i128_align:
   %val = load i128* @var128
   call void @check_i128_stackalign(i32 0, i32 1, i32 2, i32 3,
                                    i32 4, i32 5, i32 6, i32 7,
@@ -130,7 +130,7 @@ define void @check_i128_align() {
 @fptr = global void()* null
 
 define void @check_indirect_call() {
-; CHECK: check_indirect_call:
+; CHECK-LABEL: check_indirect_call:
   %func = load void()** @fptr
   call void %func()
 ; CHECK: ldr [[FPTR:x[0-9]+]], [{{x[0-9]+}}, #:lo12:fptr]

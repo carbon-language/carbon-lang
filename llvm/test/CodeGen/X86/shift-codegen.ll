@@ -8,7 +8,7 @@ target triple = "i686-apple-darwin8"
 
 
 define void @fn1() {
-; CHECK: fn1:
+; CHECK-LABEL: fn1:
 ; CHECK-NOT: ret
 ; CHECK-NOT: lea
 ; CHECK: shll $3
@@ -24,7 +24,7 @@ define void @fn1() {
 }
 
 define i32 @fn2(i32 %X, i32 %Y) {
-; CHECK: fn2:
+; CHECK-LABEL: fn2:
 ; CHECK-NOT: ret
 ; CHECK-NOT: lea
 ; CHECK: shll $3

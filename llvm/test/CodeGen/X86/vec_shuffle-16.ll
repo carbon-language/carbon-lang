@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=+sse,-sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse
 ; RUN: llc < %s -march=x86 -mcpu=penryn -mattr=+sse2 -mtriple=i386-apple-darwin | FileCheck %s -check-prefix=sse2
 
-; sse:  t1:
-; sse2: t1:
+; sse-LABEL:  t1:
+; sse2-LABEL: t1:
 define <4 x float> @t1(<4 x float> %a, <4 x float> %b) nounwind  {
 ; sse: shufps
 ; sse2: pshufd
@@ -11,8 +11,8 @@ define <4 x float> @t1(<4 x float> %a, <4 x float> %b) nounwind  {
         ret <4 x float> %tmp1
 }
 
-; sse:  t2:
-; sse2: t2:
+; sse-LABEL:  t2:
+; sse2-LABEL: t2:
 define <4 x float> @t2(<4 x float> %A, <4 x float> %B) nounwind {
 ; sse: shufps
 ; sse2: pshufd
@@ -21,8 +21,8 @@ define <4 x float> @t2(<4 x float> %A, <4 x float> %B) nounwind {
 	ret <4 x float> %tmp
 }
 
-; sse:  t3:
-; sse2: t3:
+; sse-LABEL:  t3:
+; sse2-LABEL: t3:
 define <4 x float> @t3(<4 x float> %A, <4 x float> %B) nounwind {
 ; sse: shufps
 ; sse2: pshufd
@@ -31,8 +31,8 @@ define <4 x float> @t3(<4 x float> %A, <4 x float> %B) nounwind {
 	ret <4 x float> %tmp
 }
 
-; sse:  t4:
-; sse2: t4:
+; sse-LABEL:  t4:
+; sse2-LABEL: t4:
 define <4 x float> @t4(<4 x float> %A, <4 x float> %B) nounwind {
 
 ; sse: shufps

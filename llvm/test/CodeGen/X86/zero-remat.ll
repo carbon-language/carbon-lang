@@ -11,12 +11,12 @@ define double @foo() nounwind {
   call void @bar(double 0.0)
   ret double 0.0
 
-;CHECK-32: foo:
+;CHECK-32-LABEL: foo:
 ;CHECK-32: call
 ;CHECK-32: fldz
 ;CHECK-32: ret
 
-;CHECK-64: foo:
+;CHECK-64-LABEL: foo:
 ;CHECK-64: xorps
 ;CHECK-64: call
 ;CHECK-64: xorps
@@ -28,12 +28,12 @@ define float @foof() nounwind {
   call void @barf(float 0.0)
   ret float 0.0
 
-;CHECK-32: foof:
+;CHECK-32-LABEL: foof:
 ;CHECK-32: call
 ;CHECK-32: fldz
 ;CHECK-32: ret
 
-;CHECK-64: foof:
+;CHECK-64-LABEL: foof:
 ;CHECK-64: xorps
 ;CHECK-64: call
 ;CHECK-64: xorps

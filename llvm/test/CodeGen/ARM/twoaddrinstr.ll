@@ -3,7 +3,7 @@
 
 define void @PR13378() nounwind {
 ; This was orriginally a crasher trying to schedule the instructions.
-; CHECK:      PR13378:
+; CHECK-LABEL:      PR13378:
 ; CHECK:        vld1.32
 ; CHECK-NEXT:   vst1.32
 ; CHECK-NEXT:   vst1.32

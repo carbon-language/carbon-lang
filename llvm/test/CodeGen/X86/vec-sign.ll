@@ -2,7 +2,7 @@
 
 define <4 x i32> @signd(<4 x i32> %a, <4 x i32> %b) nounwind {
 entry:
-; CHECK: signd:
+; CHECK-LABEL: signd:
 ; CHECK: psignd
 ; CHECK-NOT: sub
 ; CHECK: ret
@@ -17,7 +17,7 @@ entry:
 
 define <4 x i32> @blendvb(<4 x i32> %b, <4 x i32> %a, <4 x i32> %c) nounwind {
 entry:
-; CHECK: blendvb:
+; CHECK-LABEL: blendvb:
 ; CHECK: pblendvb
 ; CHECK: ret
   %b.lobit = ashr <4 x i32> %b, <i32 31, i32 31, i32 31, i32 31>

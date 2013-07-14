@@ -4,7 +4,7 @@
 
 ; Check loads with no offset.
 define double @f1(i64 %src) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: ld %f2, 8(%r2)
 ; CHECK: br %r14
@@ -16,7 +16,7 @@ define double @f1(i64 %src) {
 
 ; Check the highest aligned offset that allows LD for both halves.
 define double @f2(i64 %src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ld %f0, 4080(%r2)
 ; CHECK: ld %f2, 4088(%r2)
 ; CHECK: br %r14
@@ -29,7 +29,7 @@ define double @f2(i64 %src) {
 
 ; Check the next doubleword up, which requires a mixture of LD and LDY.
 define double @f3(i64 %src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ld %f0, 4088(%r2)
 ; CHECK: ldy %f2, 4096(%r2)
 ; CHECK: br %r14
@@ -42,7 +42,7 @@ define double @f3(i64 %src) {
 
 ; Check the next doubleword after that, which requires LDY for both halves.
 define double @f4(i64 %src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ldy %f0, 4096(%r2)
 ; CHECK: ldy %f2, 4104(%r2)
 ; CHECK: br %r14
@@ -55,7 +55,7 @@ define double @f4(i64 %src) {
 
 ; Check the highest aligned offset that allows LDY for both halves.
 define double @f5(i64 %src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: ldy %f0, 524272(%r2)
 ; CHECK: ldy %f2, 524280(%r2)
 ; CHECK: br %r14
@@ -69,7 +69,7 @@ define double @f5(i64 %src) {
 ; Check the next doubleword up, which requires separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f6(i64 %src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lay %r1, 524280(%r2)
 ; CHECK: ld %f0, 0(%r1)
 ; CHECK: ld %f2, 8(%r1)
@@ -84,7 +84,7 @@ define double @f6(i64 %src) {
 ; Check the highest aligned negative offset, which needs a combination of
 ; LDY and LD.
 define double @f7(i64 %src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: ldy %f0, -8(%r2)
 ; CHECK: ld %f2, 0(%r2)
 ; CHECK: br %r14
@@ -97,7 +97,7 @@ define double @f7(i64 %src) {
 
 ; Check the next doubleword down, which requires LDY for both halves.
 define double @f8(i64 %src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: ldy %f0, -16(%r2)
 ; CHECK: ldy %f2, -8(%r2)
 ; CHECK: br %r14
@@ -110,7 +110,7 @@ define double @f8(i64 %src) {
 
 ; Check the lowest offset that allows LDY for both halves.
 define double @f9(i64 %src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ldy %f0, -524288(%r2)
 ; CHECK: ldy %f2, -524280(%r2)
 ; CHECK: br %r14
@@ -124,7 +124,7 @@ define double @f9(i64 %src) {
 ; Check the next doubleword down, which requires separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f10(i64 %src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agfi %r2, -524296
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: ld %f2, 8(%r2)
@@ -138,7 +138,7 @@ define double @f10(i64 %src) {
 
 ; Check that indices are allowed.
 define double @f11(i64 %src, i64 %index) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: ld %f0, 4088({{%r2,%r3|%r3,%r2}})
 ; CHECK: ldy %f2, 4096({{%r2,%r3|%r3,%r2}})
 ; CHECK: br %r14

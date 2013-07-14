@@ -21,7 +21,7 @@ declare void @bar(i8 signext, i16 signext, i32 signext, i64, float, double,
 ; The order of the CHECK-STACK stores doesn't matter.  It would be OK to reorder
 ; them in response to future code changes.
 define void @foo() {
-; CHECK-INT: foo:
+; CHECK-INT-LABEL: foo:
 ; CHECK-INT-DAG: lghi %r2, -1
 ; CHECK-INT-DAG: lghi %r3, -2
 ; CHECK-INT-DAG: lghi %r4, -3
@@ -29,31 +29,31 @@ define void @foo() {
 ; CHECK-INT-DAG: la %r6, {{224|240}}(%r15)
 ; CHECK-INT: brasl %r14, bar@PLT
 ;
-; CHECK-FLOAT: foo:
+; CHECK-FLOAT-LABEL: foo:
 ; CHECK-FLOAT: lzer %f0
 ; CHECK-FLOAT: lcebr %f4, %f0
 ; CHECK-FLOAT: brasl %r14, bar@PLT
 ;
-; CHECK-DOUBLE: foo:
+; CHECK-DOUBLE-LABEL: foo:
 ; CHECK-DOUBLE: lzdr %f2
 ; CHECK-DOUBLE: lcdbr %f6, %f2
 ; CHECK-DOUBLE: brasl %r14, bar@PLT
 ;
-; CHECK-FP128-1: foo:
+; CHECK-FP128-1-LABEL: foo:
 ; CHECK-FP128-1: aghi %r15, -256
 ; CHECK-FP128-1: lzxr %f0
 ; CHECK-FP128-1-DAG: std %f0, 224(%r15)
 ; CHECK-FP128-1-DAG: std %f2, 232(%r15)
 ; CHECK-FP128-1: brasl %r14, bar@PLT
 ;
-; CHECK-FP128-2: foo:
+; CHECK-FP128-2-LABEL: foo:
 ; CHECK-FP128-2: aghi %r15, -256
 ; CHECK-FP128-2: lzxr %f0
 ; CHECK-FP128-2-DAG: std %f0, 240(%r15)
 ; CHECK-FP128-2-DAG: std %f2, 248(%r15)
 ; CHECK-FP128-2: brasl %r14, bar@PLT
 ;
-; CHECK-STACK: foo:
+; CHECK-STACK-LABEL: foo:
 ; CHECK-STACK: aghi %r15, -256
 ; CHECK-STACK: la [[REGISTER:%r[0-5]+]], {{224|240}}(%r15)
 ; CHECK-STACK: stg [[REGISTER]], 216(%r15)

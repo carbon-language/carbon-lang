@@ -4,7 +4,7 @@ define i32 @sext1(i32 %a) {
 	%2 = sext i1 %1 to i32
 	ret i32 %2
 }
-; CHECK: sext1:
+; CHECK-LABEL: sext1:
 ; CHECK: sext r0, 1
 
 define i32 @sext2(i32 %a) {
@@ -12,7 +12,7 @@ define i32 @sext2(i32 %a) {
 	%2 = sext i2 %1 to i32
 	ret i32 %2
 }
-; CHECK: sext2:
+; CHECK-LABEL: sext2:
 ; CHECK: sext r0, 2
 
 define i32 @sext8(i32 %a) {
@@ -20,7 +20,7 @@ define i32 @sext8(i32 %a) {
 	%2 = sext i8 %1 to i32
 	ret i32 %2
 }
-; CHECK: sext8:
+; CHECK-LABEL: sext8:
 ; CHECK: sext r0, 8
 
 define i32 @sext16(i32 %a) {
@@ -28,5 +28,5 @@ define i32 @sext16(i32 %a) {
 	%2 = sext i16 %1 to i32
 	ret i32 %2
 }
-; CHECK: sext16:
+; CHECK-LABEL: sext16:
 ; CHECK: sext r0, 16

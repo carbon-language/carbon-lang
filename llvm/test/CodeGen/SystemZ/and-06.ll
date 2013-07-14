@@ -5,7 +5,7 @@
 
 ; Zero extension to 32 bits, negative constant.
 define void @f1(i8 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -18,7 +18,7 @@ define void @f1(i8 *%ptr) {
 
 ; Zero extension to 64 bits, negative constant.
 define void @f2(i8 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -31,7 +31,7 @@ define void @f2(i8 *%ptr) {
 
 ; Zero extension to 32 bits, positive constant.
 define void @f3(i8 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -44,7 +44,7 @@ define void @f3(i8 *%ptr) {
 
 ; Zero extension to 64 bits, positive constant.
 define void @f4(i8 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -57,7 +57,7 @@ define void @f4(i8 *%ptr) {
 
 ; Sign extension to 32 bits, negative constant.
 define void @f5(i8 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -70,7 +70,7 @@ define void @f5(i8 *%ptr) {
 
 ; Sign extension to 64 bits, negative constant.
 define void @f6(i8 *%ptr) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -83,7 +83,7 @@ define void @f6(i8 *%ptr) {
 
 ; Sign extension to 32 bits, positive constant.
 define void @f7(i8 *%ptr) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -96,7 +96,7 @@ define void @f7(i8 *%ptr) {
 
 ; Sign extension to 64 bits, positive constant.
 define void @f8(i8 *%ptr) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: ni 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr

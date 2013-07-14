@@ -2,7 +2,7 @@
 
 %struct.I = type { i32 (...)** }
 define x86_stdcallcc void @bar(%struct.I* nocapture %this) ssp align 2 {
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK-NOT: jmp
 ; CHECK: ret $4
 entry:

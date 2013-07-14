@@ -7,7 +7,7 @@
 
 define void @t(i8* nocapture %a, i8* nocapture %b) nounwind {
 entry:
-; EXPANDED: t:
+; EXPANDED-LABEL: t:
 ; EXPANDED: ldrb [[R2:r[0-9]+]]
 ; EXPANDED: ldrb [[R3:r[0-9]+]]
 ; EXPANDED: ldrb [[R12:r[0-9]+]]
@@ -17,7 +17,7 @@ entry:
 ; EXPANDED: strb [[R3]]
 ; EXPANDED: strb [[R2]]
 
-; UNALIGNED: t:
+; UNALIGNED-LABEL: t:
 ; UNALIGNED: ldr r1
 ; UNALIGNED: str r1
 
@@ -30,13 +30,13 @@ entry:
 
 define void @hword(double* %a, double* %b) nounwind {
 entry:
-; EXPANDED: hword:
+; EXPANDED-LABEL: hword:
 ; EXPANDED-NOT: vld1
 ; EXPANDED: ldrh
 ; EXPANDED-NOT: str1
 ; EXPANDED: strh
 
-; UNALIGNED: hword:
+; UNALIGNED-LABEL: hword:
 ; UNALIGNED: vld1.16
 ; UNALIGNED: vst1.16
   %tmp = load double* %a, align 2
@@ -46,13 +46,13 @@ entry:
 
 define void @byte(double* %a, double* %b) nounwind {
 entry:
-; EXPANDED: byte:
+; EXPANDED-LABEL: byte:
 ; EXPANDED-NOT: vld1
 ; EXPANDED: ldrb
 ; EXPANDED-NOT: str1
 ; EXPANDED: strb
 
-; UNALIGNED: byte:
+; UNALIGNED-LABEL: byte:
 ; UNALIGNED: vld1.8
 ; UNALIGNED: vst1.8
   %tmp = load double* %a, align 1
@@ -62,11 +62,11 @@ entry:
 
 define void @byte_word_ops(i32* %a, i32* %b) nounwind {
 entry:
-; EXPANDED: byte_word_ops:
+; EXPANDED-LABEL: byte_word_ops:
 ; EXPANDED: ldrb
 ; EXPANDED: strb
 
-; UNALIGNED: byte_word_ops:
+; UNALIGNED-LABEL: byte_word_ops:
 ; UNALIGNED-NOT: ldrb
 ; UNALIGNED: ldr
 ; UNALIGNED-NOT: strb

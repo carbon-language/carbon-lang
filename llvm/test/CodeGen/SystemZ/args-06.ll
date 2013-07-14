@@ -4,7 +4,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 define i8 @f1(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ar %r2, %r3
 ; CHECK: ar %r2, %r4
 ; CHECK: ar %r2, %r5
@@ -22,7 +22,7 @@ define i8 @f1(i8 %a, i8 %b, i8 %c, i8 %d, i8 %e, i8 %f, i8 %g) {
 }
 
 define i16 @f2(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 %g) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ar %r2, %r3
 ; CHECK: ar %r2, %r4
 ; CHECK: ar %r2, %r5
@@ -40,7 +40,7 @@ define i16 @f2(i16 %a, i16 %b, i16 %c, i16 %d, i16 %e, i16 %f, i16 %g) {
 }
 
 define i32 @f3(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ar %r2, %r3
 ; CHECK: ar %r2, %r4
 ; CHECK: ar %r2, %r5
@@ -58,7 +58,7 @@ define i32 @f3(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g) {
 }
 
 define i64 @f4(i64 %a, i64 %b, i64 %c, i64 %d, i64 %e, i64 %f, i64 %g) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: agr %r2, %r3
 ; CHECK: agr %r2, %r4
 ; CHECK: agr %r2, %r5

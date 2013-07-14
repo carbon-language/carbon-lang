@@ -13,7 +13,7 @@ define i32 @bar() {
 	%1 = load i32* @baz, align 4
         ret i32 %1
 
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK: callq .Lfoo
 ; CHECK: movl	.Lbaz(%rip)
 }

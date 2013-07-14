@@ -4,7 +4,7 @@
 
 ; Check the low end of the CS range.
 define i32 @f1(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cs %r2, %r3, 0(%r4)
 ; CHECK: br %r14
   %val = cmpxchg i32 *%src, i32 %cmp, i32 %swap seq_cst
@@ -13,7 +13,7 @@ define i32 @f1(i32 %cmp, i32 %swap, i32 *%src) {
 
 ; Check the high end of the aligned CS range.
 define i32 @f2(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cs %r2, %r3, 4092(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 1023
@@ -23,7 +23,7 @@ define i32 @f2(i32 %cmp, i32 %swap, i32 *%src) {
 
 ; Check the next word up, which should use CSY instead of CS.
 define i32 @f3(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: csy %r2, %r3, 4096(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 1024
@@ -33,7 +33,7 @@ define i32 @f3(i32 %cmp, i32 %swap, i32 *%src) {
 
 ; Check the high end of the aligned CSY range.
 define i32 @f4(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: csy %r2, %r3, 524284(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 131071
@@ -44,7 +44,7 @@ define i32 @f4(i32 %cmp, i32 %swap, i32 *%src) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f5(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r4, 524288
 ; CHECK: cs %r2, %r3, 0(%r4)
 ; CHECK: br %r14
@@ -55,7 +55,7 @@ define i32 @f5(i32 %cmp, i32 %swap, i32 *%src) {
 
 ; Check the high end of the negative aligned CSY range.
 define i32 @f6(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: csy %r2, %r3, -4(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -1
@@ -65,7 +65,7 @@ define i32 @f6(i32 %cmp, i32 %swap, i32 *%src) {
 
 ; Check the low end of the CSY range.
 define i32 @f7(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: csy %r2, %r3, -524288(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -131072
@@ -76,7 +76,7 @@ define i32 @f7(i32 %cmp, i32 %swap, i32 *%src) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f8(i32 %cmp, i32 %swap, i32 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r4, -524292
 ; CHECK: cs %r2, %r3, 0(%r4)
 ; CHECK: br %r14
@@ -87,7 +87,7 @@ define i32 @f8(i32 %cmp, i32 %swap, i32 *%src) {
 
 ; Check that CS does not allow an index.
 define i32 @f9(i32 %cmp, i32 %swap, i64 %src, i64 %index) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: agr %r4, %r5
 ; CHECK: cs %r2, %r3, 0(%r4)
 ; CHECK: br %r14
@@ -99,7 +99,7 @@ define i32 @f9(i32 %cmp, i32 %swap, i64 %src, i64 %index) {
 
 ; Check that CSY does not allow an index.
 define i32 @f10(i32 %cmp, i32 %swap, i64 %src, i64 %index) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agr %r4, %r5
 ; CHECK: csy %r2, %r3, 4096(%r4)
 ; CHECK: br %r14
@@ -112,7 +112,7 @@ define i32 @f10(i32 %cmp, i32 %swap, i64 %src, i64 %index) {
 
 ; Check that a constant %cmp value is loaded into a register first.
 define i32 @f11(i32 %dummy, i32 %swap, i32 *%ptr) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: lhi %r2, 1001
 ; CHECK: cs %r2, %r3, 0(%r4)
 ; CHECK: br %r14
@@ -122,7 +122,7 @@ define i32 @f11(i32 %dummy, i32 %swap, i32 *%ptr) {
 
 ; Check that a constant %swap value is loaded into a register first.
 define i32 @f12(i32 %cmp, i32 *%ptr) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: lhi [[SWAP:%r[0-9]+]], 1002
 ; CHECK: cs %r2, [[SWAP]], 0(%r3)
 ; CHECK: br %r14

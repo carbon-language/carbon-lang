@@ -9,6 +9,6 @@ entry:
   ret i32 %3
 }
 
-; CHECK: extend2bit_v2:
+; CHECK-LABEL: extend2bit_v2:
 ; CHECK: xorl	%eax, %eax
 ; CHECK-NEXT: ret

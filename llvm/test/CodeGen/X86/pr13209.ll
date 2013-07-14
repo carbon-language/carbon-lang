@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux | FileCheck %s
 
-; CHECK: pr13209:
+; CHECK-LABEL: pr13209:
 ; CHECK-NOT: mov
 ; CHECK: .size pr13209
 

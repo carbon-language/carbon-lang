@@ -6,7 +6,7 @@ declare i64 @foo()
 
 ; Check zero-extended multiplication in which only the high part is used.
 define i64 @f1(i64 %dummy, i64 %a, i64 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: mlgr %r2, %r4
 ; CHECK: br %r14
@@ -21,7 +21,7 @@ define i64 @f1(i64 %dummy, i64 %a, i64 %b) {
 ; Check sign-extended multiplication in which only the high part is used.
 ; This needs a rather convoluted sequence.
 define i64 @f2(i64 %dummy, i64 %a, i64 %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mlgr
 ; CHECK: agr
 ; CHECK: agr
@@ -37,7 +37,7 @@ define i64 @f2(i64 %dummy, i64 %a, i64 %b) {
 ; Check zero-extended multiplication in which only part of the high half
 ; is used.
 define i64 @f3(i64 %dummy, i64 %a, i64 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: mlgr %r2, %r4
 ; CHECK: srlg %r2, %r2, 3
@@ -53,7 +53,7 @@ define i64 @f3(i64 %dummy, i64 %a, i64 %b) {
 ; Check zero-extended multiplication in which the result is split into
 ; high and low halves.
 define i64 @f4(i64 %dummy, i64 %a, i64 %b) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: mlgr %r2, %r4
 ; CHECK: ogr %r2, %r3
@@ -70,7 +70,7 @@ define i64 @f4(i64 %dummy, i64 %a, i64 %b) {
 
 ; Check division by a constant, which should use multiplication instead.
 define i64 @f5(i64 %dummy, i64 %a) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: mlgr %r2,
 ; CHECK: srlg %r2, %r2,
 ; CHECK: br %r14
@@ -80,7 +80,7 @@ define i64 @f5(i64 %dummy, i64 %a) {
 
 ; Check MLG with no displacement.
 define i64 @f6(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: mlg %r2, 0(%r4)
 ; CHECK: br %r14
@@ -95,7 +95,7 @@ define i64 @f6(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check the high end of the aligned MLG range.
 define i64 @f7(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: mlg %r2, 524280(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 65535
@@ -111,7 +111,7 @@ define i64 @f7(i64 %dummy, i64 %a, i64 *%src) {
 ; Check the next doubleword up, which requires separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f8(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r4, 524288
 ; CHECK: mlg %r2, 0(%r4)
 ; CHECK: br %r14
@@ -127,7 +127,7 @@ define i64 @f8(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check the high end of the negative aligned MLG range.
 define i64 @f9(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: mlg %r2, -8(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 -1
@@ -142,7 +142,7 @@ define i64 @f9(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check the low end of the MLG range.
 define i64 @f10(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: mlg %r2, -524288(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 -65536
@@ -158,7 +158,7 @@ define i64 @f10(i64 %dummy, i64 %a, i64 *%src) {
 ; Check the next doubleword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f11(i64 *%dest, i64 %a, i64 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: agfi %r4, -524296
 ; CHECK: mlg %r2, 0(%r4)
 ; CHECK: br %r14
@@ -174,7 +174,7 @@ define i64 @f11(i64 *%dest, i64 %a, i64 *%src) {
 
 ; Check that MLG allows an index.
 define i64 @f12(i64 *%dest, i64 %a, i64 %src, i64 %index) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: mlg %r2, 524287(%r5,%r4)
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -191,7 +191,7 @@ define i64 @f12(i64 *%dest, i64 %a, i64 %src, i64 %index) {
 
 ; Check that multiplications of spilled values can use MLG rather than MLGR.
 define i64 @f13(i64 *%ptr0) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mlg {{%r[0-9]+}}, 160(%r15)
 ; CHECK: br %r14

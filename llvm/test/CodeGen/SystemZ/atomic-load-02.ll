@@ -5,7 +5,7 @@
 ; This is just a placeholder to make sure that loads are handled.
 ; The CS-based sequence is probably far too conservative.
 define i16 @f1(i16 *%src) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cs
 ; CHECK: br %r14
   %val = load atomic i16 *%src seq_cst, align 2

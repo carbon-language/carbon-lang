@@ -4,7 +4,7 @@
 ; LSR should compare against the post-incremented induction variable.
 ; In this case, the immediate value is -2 which requires a cmn instruction.
 ;
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: %for.body
 ; CHECK: sub{{.*}}[[IV:r[0-9]+]], #2
 ; CHECK: cmn{{.*}}[[IV]], #2

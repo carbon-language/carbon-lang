@@ -16,7 +16,7 @@
 @.str24 = external constant [4 x i8], align 1     ; <[4 x i8]*> [#uses=1]
 
 define i32 @t1(i32 %c, i8** nocapture %v) nounwind ssp {
-; X86-32: t1:
+; X86-32-LABEL: t1:
 entry:
   br i1 undef, label %bb, label %bb3
 
@@ -146,7 +146,7 @@ declare i32 @strcmp(i8* nocapture, i8* nocapture) nounwind readonly
 @map_4_to_16 = external constant [16 x i16], align 32 ; <[16 x i16]*> [#uses=2]
 
 define void @t2(i8* nocapture %bufp, i8* nocapture %data, i32 %dsize) nounwind ssp {
-; X86-64: t2:
+; X86-64-LABEL: t2:
 entry:
   br i1 undef, label %return, label %bb.nph
 

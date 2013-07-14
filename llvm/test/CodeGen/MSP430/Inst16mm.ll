@@ -5,7 +5,7 @@ target triple = "msp430-generic-generic"
 @bar = common global i16 0, align 2
 
 define void @mov() nounwind {
-; CHECK: mov:
+; CHECK-LABEL: mov:
 ; CHECK: mov.w	&bar, &foo
         %1 = load i16* @bar
         store i16 %1, i16* @foo
@@ -13,7 +13,7 @@ define void @mov() nounwind {
 }
 
 define void @add() nounwind {
-; CHECK: add:
+; CHECK-LABEL: add:
 ; CHECK: add.w	&bar, &foo
 	%1 = load i16* @bar
 	%2 = load i16* @foo
@@ -23,7 +23,7 @@ define void @add() nounwind {
 }
 
 define void @and() nounwind {
-; CHECK: and:
+; CHECK-LABEL: and:
 ; CHECK: and.w	&bar, &foo
 	%1 = load i16* @bar
 	%2 = load i16* @foo
@@ -33,7 +33,7 @@ define void @and() nounwind {
 }
 
 define void @bis() nounwind {
-; CHECK: bis:
+; CHECK-LABEL: bis:
 ; CHECK: bis.w	&bar, &foo
 	%1 = load i16* @bar
 	%2 = load i16* @foo
@@ -43,7 +43,7 @@ define void @bis() nounwind {
 }
 
 define void @xor() nounwind {
-; CHECK: xor:
+; CHECK-LABEL: xor:
 ; CHECK: xor.w	&bar, &foo
 	%1 = load i16* @bar
 	%2 = load i16* @foo
@@ -63,7 +63,7 @@ entry:
  store i16 0, i16* %retval
  %0 = load i16* %retval                          ; <i16> [#uses=1]
  ret i16 %0
-; CHECK: mov2:
+; CHECK-LABEL: mov2:
 ; CHECK:	mov.w	2(r1), 6(r1)
 ; CHECK:	mov.w	0(r1), 4(r1)
 }

@@ -7,7 +7,7 @@
 
 define zeroext i1 @t(i32 %c) nounwind ssp {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: xorl %eax, %eax
 ; CHECK: test
 ; CHECK: je

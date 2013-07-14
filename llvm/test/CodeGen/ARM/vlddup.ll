@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vld1dupi8(i8* %A) nounwind {
-;CHECK: vld1dupi8:
+;CHECK-LABEL: vld1dupi8:
 ;Check the (default) alignment value.
 ;CHECK: vld1.8 {d16[]}, [r0]
 	%tmp1 = load i8* %A, align 8
@@ -11,7 +11,7 @@ define <8 x i8> @vld1dupi8(i8* %A) nounwind {
 }
 
 define <4 x i16> @vld1dupi16(i16* %A) nounwind {
-;CHECK: vld1dupi16:
+;CHECK-LABEL: vld1dupi16:
 ;Check the alignment value.  Max for this instruction is 16 bits:
 ;CHECK: vld1.16 {d16[]}, [r0:16]
 	%tmp1 = load i16* %A, align 8
@@ -21,7 +21,7 @@ define <4 x i16> @vld1dupi16(i16* %A) nounwind {
 }
 
 define <2 x i32> @vld1dupi32(i32* %A) nounwind {
-;CHECK: vld1dupi32:
+;CHECK-LABEL: vld1dupi32:
 ;Check the alignment value.  Max for this instruction is 32 bits:
 ;CHECK: vld1.32 {d16[]}, [r0:32]
 	%tmp1 = load i32* %A, align 8
@@ -31,7 +31,7 @@ define <2 x i32> @vld1dupi32(i32* %A) nounwind {
 }
 
 define <2 x float> @vld1dupf(float* %A) nounwind {
-;CHECK: vld1dupf:
+;CHECK-LABEL: vld1dupf:
 ;CHECK: vld1.32 {d16[]}, [r0:32]
 	%tmp0 = load float* %A
         %tmp1 = insertelement <2 x float> undef, float %tmp0, i32 0
@@ -40,7 +40,7 @@ define <2 x float> @vld1dupf(float* %A) nounwind {
 }
 
 define <16 x i8> @vld1dupQi8(i8* %A) nounwind {
-;CHECK: vld1dupQi8:
+;CHECK-LABEL: vld1dupQi8:
 ;Check the (default) alignment value.
 ;CHECK: vld1.8 {d16[], d17[]}, [r0]
 	%tmp1 = load i8* %A, align 8
@@ -50,7 +50,7 @@ define <16 x i8> @vld1dupQi8(i8* %A) nounwind {
 }
 
 define <4 x float> @vld1dupQf(float* %A) nounwind {
-;CHECK: vld1dupQf:
+;CHECK-LABEL: vld1dupQf:
 ;CHECK: vld1.32 {d16[], d17[]}, [r0:32]
         %tmp0 = load float* %A
         %tmp1 = insertelement <4 x float> undef, float %tmp0, i32 0
@@ -63,7 +63,7 @@ define <4 x float> @vld1dupQf(float* %A) nounwind {
 %struct.__neon_int2x32x2_t = type { <2 x i32>, <2 x i32> }
 
 define <8 x i8> @vld2dupi8(i8* %A) nounwind {
-;CHECK: vld2dupi8:
+;CHECK-LABEL: vld2dupi8:
 ;Check the (default) alignment value.
 ;CHECK: vld2.8 {d16[], d17[]}, [r0]
 	%tmp0 = tail call %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8* %A, <8 x i8> undef, <8 x i8> undef, i32 0, i32 1)
@@ -76,7 +76,7 @@ define <8 x i8> @vld2dupi8(i8* %A) nounwind {
 }
 
 define <4 x i16> @vld2dupi16(i8* %A) nounwind {
-;CHECK: vld2dupi16:
+;CHECK-LABEL: vld2dupi16:
 ;Check that a power-of-two alignment smaller than the total size of the memory
 ;being loaded is ignored.
 ;CHECK: vld2.16 {d16[], d17[]}, [r0]
@@ -91,7 +91,7 @@ define <4 x i16> @vld2dupi16(i8* %A) nounwind {
 
 ;Check for a post-increment updating load. 
 define <4 x i16> @vld2dupi16_update(i16** %ptr) nounwind {
-;CHECK: vld2dupi16_update:
+;CHECK-LABEL: vld2dupi16_update:
 ;CHECK: vld2.16 {d16[], d17[]}, [r1]!
 	%A = load i16** %ptr
         %A2 = bitcast i16* %A to i8*
@@ -107,7 +107,7 @@ define <4 x i16> @vld2dupi16_update(i16** %ptr) nounwind {
 }
 
 define <2 x i32> @vld2dupi32(i8* %A) nounwind {
-;CHECK: vld2dupi32:
+;CHECK-LABEL: vld2dupi32:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;CHECK: vld2.32 {d16[], d17[]}, [r0:64]
 	%tmp0 = tail call %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i8* %A, <2 x i32> undef, <2 x i32> undef, i32 0, i32 16)
@@ -128,7 +128,7 @@ declare %struct.__neon_int2x32x2_t @llvm.arm.neon.vld2lane.v2i32(i8*, <2 x i32>,
 
 ;Check for a post-increment updating load with register increment.
 define <8 x i8> @vld3dupi8_update(i8** %ptr, i32 %inc) nounwind {
-;CHECK: vld3dupi8_update:
+;CHECK-LABEL: vld3dupi8_update:
 ;CHECK: vld3.8 {d16[], d17[], d18[]}, [r2], r1
 	%A = load i8** %ptr
 	%tmp0 = tail call %struct.__neon_int8x8x3_t @llvm.arm.neon.vld3lane.v8i8(i8* %A, <8 x i8> undef, <8 x i8> undef, <8 x i8> undef, i32 0, i32 8)
@@ -146,7 +146,7 @@ define <8 x i8> @vld3dupi8_update(i8** %ptr, i32 %inc) nounwind {
 }
 
 define <4 x i16> @vld3dupi16(i8* %A) nounwind {
-;CHECK: vld3dupi16:
+;CHECK-LABEL: vld3dupi16:
 ;Check the (default) alignment value. VLD3 does not support alignment.
 ;CHECK: vld3.16 {d16[], d17[], d18[]}, [r0]
 	%tmp0 = tail call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i8* %A, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 8)
@@ -169,7 +169,7 @@ declare %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i8*, <4 x i16>,
 
 ;Check for a post-increment updating load.
 define <4 x i16> @vld4dupi16_update(i16** %ptr) nounwind {
-;CHECK: vld4dupi16_update:
+;CHECK-LABEL: vld4dupi16_update:
 ;CHECK: vld4.16 {d16[], d17[], d18[], d19[]}, [r1]!
 	%A = load i16** %ptr
         %A2 = bitcast i16* %A to i8*
@@ -191,7 +191,7 @@ define <4 x i16> @vld4dupi16_update(i16** %ptr) nounwind {
 }
 
 define <2 x i32> @vld4dupi32(i8* %A) nounwind {
-;CHECK: vld4dupi32:
+;CHECK-LABEL: vld4dupi32:
 ;Check the alignment value.  An 8-byte alignment is allowed here even though
 ;it is smaller than the total size of the memory being loaded.
 ;CHECK: vld4.32 {d16[], d17[], d18[], d19[]}, [r0:64]

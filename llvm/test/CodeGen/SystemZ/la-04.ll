@@ -4,7 +4,7 @@
 
 ; Do some arbitrary work and return the address of the following label.
 define i8 *@f1(i8 *%addr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: mvi 0(%r2), 1
 ; CHECK: [[LABEL:\.L.*]]:
 ; CHECK: larl %r2, [[LABEL]]

@@ -15,7 +15,7 @@ define void @vmax_v4i32(<4 x i32>* %m, <4 x i32> %a, <4 x i32> %b) {
 ; lowering we also need to adjust the cost.
 %T0_10 = type <16 x i16>
 %T1_10 = type <16 x i1>
-; CHECK: func_blend10:
+; CHECK-LABEL: func_blend10:
 define void @func_blend10(%T0_10* %loadaddr, %T0_10* %loadaddr2,
                            %T1_10* %blend, %T0_10* %storeaddr) {
   %v0 = load %T0_10* %loadaddr
@@ -31,7 +31,7 @@ define void @func_blend10(%T0_10* %loadaddr, %T0_10* %loadaddr2,
 }
 %T0_14 = type <8 x i32>
 %T1_14 = type <8 x i1>
-; CHECK: func_blend14:
+; CHECK-LABEL: func_blend14:
 define void @func_blend14(%T0_14* %loadaddr, %T0_14* %loadaddr2,
                            %T1_14* %blend, %T0_14* %storeaddr) {
   %v0 = load %T0_14* %loadaddr
@@ -47,7 +47,7 @@ define void @func_blend14(%T0_14* %loadaddr, %T0_14* %loadaddr2,
 }
 %T0_15 = type <16 x i32>
 %T1_15 = type <16 x i1>
-; CHECK: func_blend15:
+; CHECK-LABEL: func_blend15:
 define void @func_blend15(%T0_15* %loadaddr, %T0_15* %loadaddr2,
                            %T1_15* %blend, %T0_15* %storeaddr) {
 ; CHECK: vbsl
@@ -63,7 +63,7 @@ define void @func_blend15(%T0_15* %loadaddr, %T0_15* %loadaddr2,
 }
 %T0_18 = type <4 x i64>
 %T1_18 = type <4 x i1>
-; CHECK: func_blend18:
+; CHECK-LABEL: func_blend18:
 define void @func_blend18(%T0_18* %loadaddr, %T0_18* %loadaddr2,
                            %T1_18* %blend, %T0_18* %storeaddr) {
 ; CHECK: vbsl
@@ -79,7 +79,7 @@ define void @func_blend18(%T0_18* %loadaddr, %T0_18* %loadaddr2,
 }
 %T0_19 = type <8 x i64>
 %T1_19 = type <8 x i1>
-; CHECK: func_blend19:
+; CHECK-LABEL: func_blend19:
 define void @func_blend19(%T0_19* %loadaddr, %T0_19* %loadaddr2,
                            %T1_19* %blend, %T0_19* %storeaddr) {
 ; CHECK: vbsl
@@ -97,7 +97,7 @@ define void @func_blend19(%T0_19* %loadaddr, %T0_19* %loadaddr2,
 }
 %T0_20 = type <16 x i64>
 %T1_20 = type <16 x i1>
-; CHECK: func_blend20:
+; CHECK-LABEL: func_blend20:
 define void @func_blend20(%T0_20* %loadaddr, %T0_20* %loadaddr2,
                            %T1_20* %blend, %T0_20* %storeaddr) {
 ; CHECK: vbsl

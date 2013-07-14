@@ -10,7 +10,7 @@
 @infoBlock = external global %struct.InformationBlock
 
 define hidden void @foo() {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: ldr.w
 ; CHECK: ldr.w
 ; CHECK-NOT: ldm

@@ -9,7 +9,7 @@
 ; should be exactly 160 + 8 * 8 = 224.  The CFA offset is 160
 ; (the caller-allocated part of the frame) + 224.
 define void @f1(double *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: aghi %r15, -224
 ; CHECK: .cfi_def_cfa_offset 384
 ; CHECK: std %f8, 216(%r15)
@@ -93,7 +93,7 @@ define void @f1(double *%ptr) {
 ; Like f1, but requires one fewer FPR.  We allocate in numerical order,
 ; so %f15 is the one that gets dropped.
 define void @f2(double *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: aghi %r15, -216
 ; CHECK: .cfi_def_cfa_offset 376
 ; CHECK: std %f8, 208(%r15)
@@ -171,7 +171,7 @@ define void @f2(double *%ptr) {
 
 ; Like f1, but should require only one call-saved FPR.
 define void @f3(double *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: aghi %r15, -168
 ; CHECK: .cfi_def_cfa_offset 328
 ; CHECK: std %f8, 160(%r15)
@@ -220,7 +220,7 @@ define void @f3(double *%ptr) {
 ; This function should use all call-clobbered FPRs but no call-saved ones.
 ; It shouldn't need to create a frame.
 define void @f4(double *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: %r15
 ; CHECK-NOT: %f8
 ; CHECK-NOT: %f9

@@ -56,7 +56,7 @@ declare void @llvm.mblaze.fsl.tncput(i32 %port)
 declare void @llvm.mblaze.fsl.tncaput(i32 %port)
 
 define void @fsl_get(i32 %port) {
-    ; CHECK:        fsl_get:
+    ; CHECK-LABEL:        fsl_get:
     %v0  = call i32 @llvm.mblaze.fsl.get(i32 %port)
     ; CHECK:        getd
     %v1  = call i32 @llvm.mblaze.fsl.aget(i32 %port)
@@ -126,7 +126,7 @@ define void @fsl_get(i32 %port) {
 }
 
 define void @fslc_get() {
-    ; CHECK:        fslc_get:
+    ; CHECK-LABEL:        fslc_get:
     %v0  = call i32 @llvm.mblaze.fsl.get(i32 1)
     ; CHECK:        get
     %v1  = call i32 @llvm.mblaze.fsl.aget(i32 1)
@@ -227,7 +227,7 @@ define void @fslc_get() {
 }
 
 define void @putfsl(i32 %value, i32 %port) {
-    ; CHECK:        putfsl:
+    ; CHECK-LABEL:        putfsl:
     call void @llvm.mblaze.fsl.put(i32 %value, i32 %port)
     ; CHECK:        putd
     call void @llvm.mblaze.fsl.aput(i32 %value, i32 %port)
@@ -265,7 +265,7 @@ define void @putfsl(i32 %value, i32 %port) {
 }
 
 define void @putfsl_const(i32 %value) {
-    ; CHECK:        putfsl_const:
+    ; CHECK-LABEL:        putfsl_const:
     call void @llvm.mblaze.fsl.put(i32 %value, i32 1)
     ; CHECK-NOT:    putd
     ; CHECK:        put

@@ -8,7 +8,7 @@ entry:
         ret void
 }
 
-; CHECK: a:
+; CHECK-LABEL: a:
 ; CHECK: movups
 ; CHECK: movups
 ; CHECK-NOT: movups

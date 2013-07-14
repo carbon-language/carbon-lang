@@ -2,7 +2,7 @@
 
 ; 0x000000bb = 187
 define i32 @f1(i32 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: mvn r0, #187
     %tmp = xor i32 4294967295, 187
     ret i32 %tmp
@@ -10,7 +10,7 @@ define i32 @f1(i32 %a) {
 
 ; 0x00aa00aa = 11141290
 define i32 @f2(i32 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mvn r0, #11141290
     %tmp = xor i32 4294967295, 11141290 
     ret i32 %tmp
@@ -18,7 +18,7 @@ define i32 @f2(i32 %a) {
 
 ; 0xcc00cc00 = 3422604288
 define i32 @f3(i32 %a) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: mvn r0, #-872363008
     %tmp = xor i32 4294967295, 3422604288
     ret i32 %tmp
@@ -26,7 +26,7 @@ define i32 @f3(i32 %a) {
 
 ; 0x00110000 = 1114112
 define i32 @f5(i32 %a) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: mvn r0, #1114112
     %tmp = xor i32 4294967295, 1114112
     ret i32 %tmp

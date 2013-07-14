@@ -4,7 +4,7 @@
 
 define void @f() nounwind {
 entry:
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: ldap r11, g.1101
 ; CHECK: stw r11, sp[7]
   %TRAMP.23 = alloca [20 x i8], align 2

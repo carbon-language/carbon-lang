@@ -7,16 +7,16 @@
 
 define i32 @t1() nounwind readnone {
 entry:
-; FP-ELIM:      t1:
+; FP-ELIM-LABEL:      t1:
 ; FP-ELIM-NEXT: movl
 ; FP-ELIM-NEXT: ret
 
-; NO-ELIM:      t1:
+; NO-ELIM-LABEL:      t1:
 ; NO-ELIM-NEXT: pushl %ebp
 ; NO-ELIM:      popl %ebp
 ; NO-ELIM-NEXT: ret
 
-; NON-LEAF:      t1:
+; NON-LEAF-LABEL:      t1:
 ; NON-LEAF-NEXT: movl
 ; NON-LEAF-NEXT: ret
   ret i32 10
@@ -24,16 +24,16 @@ entry:
 
 define void @t2() nounwind {
 entry:
-; FP-ELIM:     t2:
+; FP-ELIM-LABEL:     t2:
 ; FP-ELIM-NOT: pushl %ebp
 ; FP-ELIM:     ret
 
-; NO-ELIM:      t2:
+; NO-ELIM-LABEL:      t2:
 ; NO-ELIM-NEXT: pushl %ebp
 ; NO-ELIM:      popl %ebp
 ; NO-ELIM-NEXT: ret
 
-; NON-LEAF:      t2:
+; NON-LEAF-LABEL:      t2:
 ; NON-LEAF-NEXT: pushl %ebp
 ; NON-LEAF:      popl %ebp
 ; NON-LEAF-NEXT: ret

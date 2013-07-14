@@ -5,7 +5,7 @@
 
 ; Check the low end of the 8-bit unsigned range, with zero extension.
 define double @f1(double %a, double %b, i8 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cli 0(%r2), 0
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -18,7 +18,7 @@ define double @f1(double %a, double %b, i8 *%ptr) {
 
 ; Check the high end of the 8-bit unsigned range, with zero extension.
 define double @f2(double %a, double %b, i8 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cli 0(%r2), 255
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -31,7 +31,7 @@ define double @f2(double %a, double %b, i8 *%ptr) {
 
 ; Check the next value up, with zero extension.  The condition is always false.
 define double @f3(double %a, double %b, i8 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: cli
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -44,7 +44,7 @@ define double @f3(double %a, double %b, i8 *%ptr) {
 ; Check comparisons with -1, with zero extension.
 ; This condition is also always false.
 define double @f4(double %a, double %b, i8 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: cli
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -56,7 +56,7 @@ define double @f4(double %a, double %b, i8 *%ptr) {
 
 ; Check comparisons with 0, using sign extension.
 define double @f5(double %a, double %b, i8 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: cli 0(%r2), 0
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -69,7 +69,7 @@ define double @f5(double %a, double %b, i8 *%ptr) {
 
 ; Check the high end of the signed 8-bit range, using sign extension.
 define double @f6(double %a, double %b, i8 *%ptr) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: cli 0(%r2), 127
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -83,7 +83,7 @@ define double @f6(double %a, double %b, i8 *%ptr) {
 ; Check the next value up, using sign extension.
 ; The condition is always false.
 define double @f7(double %a, double %b, i8 *%ptr) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK-NOT: cli
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -95,7 +95,7 @@ define double @f7(double %a, double %b, i8 *%ptr) {
 
 ; Check comparisons with -1, using sign extension.
 define double @f8(double %a, double %b, i8 *%ptr) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: cli 0(%r2), 255
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -108,7 +108,7 @@ define double @f8(double %a, double %b, i8 *%ptr) {
 
 ; Check the low end of the signed 8-bit range, using sign extension.
 define double @f9(double %a, double %b, i8 *%ptr) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: cli 0(%r2), 128
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -122,7 +122,7 @@ define double @f9(double %a, double %b, i8 *%ptr) {
 ; Check the next value down, using sign extension.
 ; The condition is always false.
 define double @f10(double %a, double %b, i8 *%ptr) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK-NOT: cli
 ; CHECK: br %r14
   %val = load i8 *%ptr

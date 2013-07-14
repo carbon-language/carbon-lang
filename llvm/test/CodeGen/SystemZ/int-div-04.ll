@@ -6,7 +6,7 @@ declare i64 @foo()
 
 ; Testg register division.  The result is in the second of the two registers.
 define void @f1(i64 %dummy, i64 %a, i64 %b, i64 *%dest) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgr %r2, %r4
 ; CHECK: stg %r3, 0(%r5)
@@ -18,7 +18,7 @@ define void @f1(i64 %dummy, i64 %a, i64 %b, i64 *%dest) {
 
 ; Testg register remainder.  The result is in the first of the two registers.
 define void @f2(i64 %dummy, i64 %a, i64 %b, i64 *%dest) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgr %r2, %r4
 ; CHECK: stg %r2, 0(%r5)
@@ -30,7 +30,7 @@ define void @f2(i64 %dummy, i64 %a, i64 %b, i64 *%dest) {
 
 ; Testg that division and remainder use a single instruction.
 define i64 @f3(i64 %dummy1, i64 %a, i64 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgr %r2, %r4
 ; CHECK-NOT: dsgr
@@ -44,7 +44,7 @@ define i64 @f3(i64 %dummy1, i64 %a, i64 %b) {
 
 ; Testg memory division with no displacement.
 define void @f4(i64 %dummy, i64 %a, i64 *%src, i64 *%dest) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsg %r2, 0(%r4)
 ; CHECK: stg %r3, 0(%r5)
@@ -57,7 +57,7 @@ define void @f4(i64 %dummy, i64 %a, i64 *%src, i64 *%dest) {
 
 ; Testg memory remainder with no displacement.
 define void @f5(i64 %dummy, i64 %a, i64 *%src, i64 *%dest) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsg %r2, 0(%r4)
 ; CHECK: stg %r2, 0(%r5)
@@ -70,7 +70,7 @@ define void @f5(i64 %dummy, i64 %a, i64 *%src, i64 *%dest) {
 
 ; Testg both memory division and memory remainder.
 define i64 @f6(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsg %r2, 0(%r4)
 ; CHECK-NOT: {{dsg|dsgr}}
@@ -85,7 +85,7 @@ define i64 @f6(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check the high end of the DSG range.
 define i64 @f7(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: dsg %r2, 524280(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 65535
@@ -97,7 +97,7 @@ define i64 @f7(i64 %dummy, i64 %a, i64 *%src) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f8(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r4, 524288
 ; CHECK: dsg %r2, 0(%r4)
 ; CHECK: br %r14
@@ -109,7 +109,7 @@ define i64 @f8(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check the high end of the negative aligned DSG range.
 define i64 @f9(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: dsg %r2, -8(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 -1
@@ -120,7 +120,7 @@ define i64 @f9(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check the low end of the DSG range.
 define i64 @f10(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: dsg %r2, -524288(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 -65536
@@ -132,7 +132,7 @@ define i64 @f10(i64 %dummy, i64 %a, i64 *%src) {
 ; Check the next doubleword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f11(i64 %dummy, i64 %a, i64 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: agfi %r4, -524296
 ; CHECK: dsg %r2, 0(%r4)
 ; CHECK: br %r14
@@ -144,7 +144,7 @@ define i64 @f11(i64 %dummy, i64 %a, i64 *%src) {
 
 ; Check that DSG allows an index.
 define i64 @f12(i64 %dummy, i64 %a, i64 %src, i64 %index) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: dsg %r2, 524287(%r5,%r4)
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -157,7 +157,7 @@ define i64 @f12(i64 %dummy, i64 %a, i64 %src, i64 %index) {
 
 ; Check that divisions of spilled values can use DSG rather than DSGR.
 define i64 @f13(i64 *%ptr0) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: dsg {{%r[0-9]+}}, 160(%r15)
 ; CHECK: br %r14

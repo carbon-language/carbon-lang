@@ -7,7 +7,7 @@
 ; 336L		%vreg15<def> = SAR32rCL %vreg15, %EFLAGS<imp-def,dead>, %CL<imp-use,kill>; GR32:%vreg15
 
 define void @foo(i32* nocapture %quadrant, i32* nocapture %ptr, i32 %bbSize, i32 %bbStart, i32 %shifts) nounwind ssp {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 entry:
   %j.03 = add i32 %bbSize, -1                     ; <i32> [#uses=2]
   %0 = icmp sgt i32 %j.03, -1                     ; <i1> [#uses=1]

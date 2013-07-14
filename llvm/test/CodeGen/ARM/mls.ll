@@ -14,15 +14,15 @@ define i32 @f2(i32 %a, i32 %b, i32 %c) {
     ret i32 %tmp2
 }
 
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: mls	r0, r0, r1, r2
-; NO_MULOPS: f1:
+; NO_MULOPS-LABEL: f1:
 ; NO_MULOPS: mul r0, r0, r1
 ; NO_MULOPS-NEXT: sub r0, r2, r0
 
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mul r0, r0, r1
 ; CHECK-NEXT: sub r0, r0, r2
-; NO_MULOPS: f2:
+; NO_MULOPS-LABEL: f2:
 ; NO_MULOPS: mul r0, r0, r1
 ; NO_MULOPS-NEXT: sub r0, r0, r2

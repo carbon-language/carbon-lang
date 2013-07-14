@@ -75,7 +75,7 @@ define void @t19() nounwind {
 entry:
   call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(void ()* @t19_helper) nounwind
   ret void
-; CHECK: t19:
+; CHECK-LABEL: t19:
 ; CHECK: movl %esp, %ebp
 ; CHECK: movl ${{_?}}t19_helper, %eax
 ; CHECK: {{## InlineAsm Start|#APP}}
@@ -94,7 +94,7 @@ entry:
   call void asm sideeffect inteldialect "mov dword ptr $0, edi", "=*m,~{dirflag},~{fpsr},~{flags}"(i32** %res) nounwind
   %0 = load i32** %res, align 4
   ret i32* %0
-; CHECK: t30:
+; CHECK-LABEL: t30:
 ; CHECK: movl %esp, %ebp
 ; CHECK: {{## InlineAsm Start|#APP}}
 ; CHECK: .intel_syntax

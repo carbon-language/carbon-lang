@@ -3,7 +3,7 @@
 
 define void @t() nounwind {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: trap
   call void @llvm.trap()
   unreachable

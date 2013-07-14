@@ -5,7 +5,7 @@
 
 ; Check CGH with no displacement.
 define void @f1(i64 %lhs, i16 *%src, i64 *%dst) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cgh %r2, 0(%r3)
 ; CHECK: br %r14
   %half = load i16 *%src
@@ -18,7 +18,7 @@ define void @f1(i64 %lhs, i16 *%src, i64 *%dst) {
 
 ; Check the high end of the aligned CGH range.
 define void @f2(i64 %lhs, i16 *%src, i64 *%dst) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cgh %r2, 524286(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 262143
@@ -33,7 +33,7 @@ define void @f2(i64 %lhs, i16 *%src, i64 *%dst) {
 ; Check the next halfword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f3(i64 %lhs, i16 *%src, i64 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: agfi %r3, 524288
 ; CHECK: cgh %r2, 0(%r3)
 ; CHECK: br %r14
@@ -48,7 +48,7 @@ define void @f3(i64 %lhs, i16 *%src, i64 *%dst) {
 
 ; Check the high end of the negative aligned CGH range.
 define void @f4(i64 %lhs, i16 *%src, i64 *%dst) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: cgh %r2, -2(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 -1
@@ -62,7 +62,7 @@ define void @f4(i64 %lhs, i16 *%src, i64 *%dst) {
 
 ; Check the low end of the CGH range.
 define void @f5(i64 %lhs, i16 *%src, i64 *%dst) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: cgh %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 -262144
@@ -77,7 +77,7 @@ define void @f5(i64 %lhs, i16 *%src, i64 *%dst) {
 ; Check the next halfword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f6(i64 %lhs, i16 *%src, i64 *%dst) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agfi %r3, -524290
 ; CHECK: cgh %r2, 0(%r3)
 ; CHECK: br %r14
@@ -92,7 +92,7 @@ define void @f6(i64 %lhs, i16 *%src, i64 *%dst) {
 
 ; Check that CGH allows an index.
 define void @f7(i64 %lhs, i64 %base, i64 %index, i64 *%dst) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: cgh %r2, 4096({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %add1 = add i64 %base, %index

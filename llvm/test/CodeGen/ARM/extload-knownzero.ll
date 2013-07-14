@@ -3,7 +3,7 @@
 
 define void @foo(i16* %ptr, i32 %a) nounwind {
 entry:
-; CHECK: foo:
+; CHECK-LABEL: foo:
   %tmp1 = icmp ult i32 %a, 100
   br i1 %tmp1, label %bb1, label %bb2
 bb1:

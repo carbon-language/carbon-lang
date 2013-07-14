@@ -14,7 +14,7 @@ entry:
 }
 
 ; This copy can't be coalesced away because it needs the implicit zero-extend.
-; CHECK: bbb:
+; CHECK-LABEL: bbb:
 ; CHECK: movl %edi, %edi
 
 define void @bbb(i64 %x) nounwind {
@@ -26,7 +26,7 @@ define void @bbb(i64 %x) nounwind {
 ; This should use a 32-bit and with implicit zero-extension, not a 64-bit and
 ; with a separate mov to materialize the mask.
 ; rdar://7527390
-; CHECK: ccc:
+; CHECK-LABEL: ccc:
 ; CHECK: andl $-1048593, %edi
 
 declare void @foo(i64 %x) nounwind
@@ -38,7 +38,7 @@ define void @ccc(i64 %x) nounwind {
 }
 
 ; This requires a mov and a 64-bit and.
-; CHECK: ddd:
+; CHECK-LABEL: ddd:
 ; CHECK: movabsq $4294967296, %r
 ; CHECK: andq %rax, %rdi
 

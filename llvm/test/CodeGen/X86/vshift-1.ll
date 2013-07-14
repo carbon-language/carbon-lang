@@ -5,7 +5,7 @@
 
 define void @shift1a(<2 x i64> %val, <2 x i64>* %dst) nounwind {
 entry:
-; CHECK: shift1a:
+; CHECK-LABEL: shift1a:
 ; CHECK: psllq
   %shl = shl <2 x i64> %val, < i64 32, i64 32 >
   store <2 x i64> %shl, <2 x i64>* %dst
@@ -14,7 +14,7 @@ entry:
 
 define void @shift1b(<2 x i64> %val, <2 x i64>* %dst, i64 %amt) nounwind {
 entry:
-; CHECK: shift1b:
+; CHECK-LABEL: shift1b:
 ; CHECK: movd
 ; CHECK: psllq
   %0 = insertelement <2 x i64> undef, i64 %amt, i32 0
@@ -27,7 +27,7 @@ entry:
 
 define void @shift2a(<4 x i32> %val, <4 x i32>* %dst) nounwind {
 entry:
-; CHECK: shift2a:
+; CHECK-LABEL: shift2a:
 ; CHECK: pslld
   %shl = shl <4 x i32> %val, < i32 5, i32 5, i32 5, i32 5 >
   store <4 x i32> %shl, <4 x i32>* %dst
@@ -36,7 +36,7 @@ entry:
 
 define void @shift2b(<4 x i32> %val, <4 x i32>* %dst, i32 %amt) nounwind {
 entry:
-; CHECK: shift2b:
+; CHECK-LABEL: shift2b:
 ; CHECK: movd
 ; CHECK: pslld
   %0 = insertelement <4 x i32> undef, i32 %amt, i32 0
@@ -50,7 +50,7 @@ entry:
 
 define void @shift3a(<8 x i16> %val, <8 x i16>* %dst) nounwind {
 entry:
-; CHECK: shift3a:
+; CHECK-LABEL: shift3a:
 ; CHECK: psllw
   %shl = shl <8 x i16> %val, < i16 5, i16 5, i16 5, i16 5, i16 5, i16 5, i16 5, i16 5 >
   store <8 x i16> %shl, <8 x i16>* %dst
@@ -60,7 +60,7 @@ entry:
 ; Make sure the shift amount is properly zero extended.
 define void @shift3b(<8 x i16> %val, <8 x i16>* %dst, i16 %amt) nounwind {
 entry:
-; CHECK: shift3b:
+; CHECK-LABEL: shift3b:
 ; CHECK: movzwl
 ; CHECK: movd
 ; CHECK-NEXT: psllw

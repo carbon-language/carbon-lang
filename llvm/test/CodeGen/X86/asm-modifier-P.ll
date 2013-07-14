@@ -21,20 +21,20 @@ define void @test1() nounwind {
 entry:
 ; P suffix removes (rip) in -static 64-bit mode.
 
-; CHECK-PIC-64: test1:
+; CHECK-PIC-64-LABEL: test1:
 ; CHECK-PIC-64: movq	G@GOTPCREL(%rip), %rax
 ; CHECK-PIC-64: frob (%rax) x
 ; CHECK-PIC-64: frob (%rax) x
 
-; CHECK-STATIC-64: test1:
+; CHECK-STATIC-64-LABEL: test1:
 ; CHECK-STATIC-64: frob G(%rip) x
 ; CHECK-STATIC-64: frob G x
 
-; CHECK-PIC-32: test1:
+; CHECK-PIC-32-LABEL: test1:
 ; CHECK-PIC-32: frob G x
 ; CHECK-PIC-32: frob G x
 
-; CHECK-STATIC-32: test1:
+; CHECK-STATIC-32-LABEL: test1:
 ; CHECK-STATIC-32: frob G x
 ; CHECK-STATIC-32: frob G x
 
@@ -45,25 +45,25 @@ entry:
 
 define void @test3() nounwind {
 entry:
-; CHECK-STATIC-64: test3:
+; CHECK-STATIC-64-LABEL: test3:
 ; CHECK-STATIC-64: call bar
 ; CHECK-STATIC-64: call test3
 ; CHECK-STATIC-64: call $bar
 ; CHECK-STATIC-64: call $test3
 
-; CHECK-STATIC-32: test3:
+; CHECK-STATIC-32-LABEL: test3:
 ; CHECK-STATIC-32: call bar
 ; CHECK-STATIC-32: call test3
 ; CHECK-STATIC-32: call $bar
 ; CHECK-STATIC-32: call $test3
 
-; CHECK-PIC-64: test3:
+; CHECK-PIC-64-LABEL: test3:
 ; CHECK-PIC-64: call bar@PLT
 ; CHECK-PIC-64: call test3@PLT
 ; CHECK-PIC-64: call $bar
 ; CHECK-PIC-64: call $test3
 
-; CHECK-PIC-32: test3:
+; CHECK-PIC-32-LABEL: test3:
 ; CHECK-PIC-32: call bar@PLT
 ; CHECK-PIC-32: call test3@PLT
 ; CHECK-PIC-32: call $bar

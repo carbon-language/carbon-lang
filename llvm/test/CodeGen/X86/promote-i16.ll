@@ -2,7 +2,7 @@
 
 define signext i16 @foo(i16 signext %x) nounwind {
 entry:
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK-NOT: movzwl
 ; CHECK: movswl 4(%esp), %eax
 ; CHECK: xorl $21998, %eax
@@ -12,7 +12,7 @@ entry:
 
 define signext i16 @bar(i16 signext %x) nounwind {
 entry:
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK-NOT: movzwl
 ; CHECK: movswl 4(%esp), %eax
 ; CHECK: xorl $-10770, %eax

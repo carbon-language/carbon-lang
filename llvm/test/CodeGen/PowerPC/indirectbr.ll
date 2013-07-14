@@ -6,9 +6,9 @@
 @C.0.2070 = private constant [5 x i8*] [i8* blockaddress(@foo, %L1), i8* blockaddress(@foo, %L2), i8* blockaddress(@foo, %L3), i8* blockaddress(@foo, %L4), i8* blockaddress(@foo, %L5)] ; <[5 x i8*]*> [#uses=1]
 
 define internal i32 @foo(i32 %i) nounwind {
-; PIC: foo:
-; STATIC: foo:
-; PPC64: foo:
+; PIC-LABEL: foo:
+; STATIC-LABEL: foo:
+; PPC64-LABEL: foo:
 entry:
   %0 = load i8** @nextaddr, align 4               ; <i8*> [#uses=2]
   %1 = icmp eq i8* %0, null                       ; <i1> [#uses=1]

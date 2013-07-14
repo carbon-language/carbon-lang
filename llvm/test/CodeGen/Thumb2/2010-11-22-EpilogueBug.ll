@@ -6,7 +6,7 @@
 declare void @bar() nounwind optsize
 
 define void @foo() nounwind optsize {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: push
 ; CHECK: mov r7, sp
 ; CHECK: sub sp, #4

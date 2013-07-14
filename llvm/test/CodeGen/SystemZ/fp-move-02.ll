@@ -10,7 +10,7 @@ declare double @bar()
 ; Test 32-bit moves from GPRs to FPRs.  The GPR must be moved into the high
 ; 32 bits of the FPR.
 define float @f1(i32 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: sllg [[REGISTER:%r[0-5]]], %r2, 32
 ; CHECK: ldgr %f0, [[REGISTER]]
   %res = bitcast i32 %a to float
@@ -20,7 +20,7 @@ define float @f1(i32 %a) {
 ; Like f1, but create a situation where the shift can be folded with
 ; surrounding code.
 define float @f2(i64 %big) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: risbg [[REGISTER:%r[0-5]]], %r2, 0, 159, 31
 ; CHECK: ldgr %f0, [[REGISTER]]
   %shift = lshr i64 %big, 1
@@ -31,7 +31,7 @@ define float @f2(i64 %big) {
 
 ; Another example of the same thing.
 define float @f3(i64 %big) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: risbg [[REGISTER:%r[0-5]]], %r2, 0, 159, 2
 ; CHECK: ldgr %f0, [[REGISTER]]
   %shift = ashr i64 %big, 30
@@ -42,7 +42,7 @@ define float @f3(i64 %big) {
 
 ; Like f1, but the value to transfer is already in the high 32 bits.
 define float @f4(i64 %big) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: %r2
 ; CHECK: risbg [[REG:%r[0-5]]], %r2, 0, 159, 0
 ; CHECK-NOT: [[REG]]
@@ -55,7 +55,7 @@ define float @f4(i64 %big) {
 
 ; Test 64-bit moves from GPRs to FPRs.
 define double @f5(i64 %a) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: ldgr %f0, %r2
   %res = bitcast i64 %a to double
   ret double %res
@@ -65,7 +65,7 @@ define double @f5(i64 %a) {
 ; so this goes through memory.
 ; FIXME: it would be better to use one MVC here.
 define void @f6(fp128 *%a, i128 *%b) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lg
 ; CHECK: mvc
 ; CHECK: stg
@@ -79,7 +79,7 @@ define void @f6(fp128 *%a, i128 *%b) {
 ; Test 32-bit moves from FPRs to GPRs.  The high 32 bits of the FPR should
 ; be moved into the low 32 bits of the GPR.
 define i32 @f7(float %a) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lgdr [[REGISTER:%r[0-5]]], %f0
 ; CHECK: srlg %r2, [[REGISTER]], 32
   %res = bitcast float %a to i32
@@ -88,7 +88,7 @@ define i32 @f7(float %a) {
 
 ; Test 64-bit moves from FPRs to GPRs.
 define i64 @f8(double %a) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: lgdr %r2, %f0
   %res = bitcast double %a to i64
   ret i64 %res
@@ -96,7 +96,7 @@ define i64 @f8(double %a) {
 
 ; Test 128-bit moves from FPRs to GPRs, with the same restriction as f6.
 define void @f9(fp128 *%a, i128 *%b) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ld
 ; CHECK: ld
 ; CHECK: std
@@ -110,7 +110,7 @@ define void @f9(fp128 *%a, i128 *%b) {
 ; Test cases where the destination of an LGDR needs to be spilled.
 ; We shouldn't have any integer stack stores or floating-point loads.
 define void @f10(double %extra) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: dptr
 ; CHECK-NOT: stg {{.*}}(%r15)
 ; CHECK: %loop
@@ -172,7 +172,7 @@ exit:
 
 ; ...likewise LDGR, with the requirements the other way around.
 define void @f11(i64 %mask) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: iptr
 ; CHECK-NOT: std {{.*}}(%r15)
 ; CHECK: %loop
@@ -235,7 +235,7 @@ exit:
 ; Test cases where the source of an LDGR needs to be spilled.
 ; We shouldn't have any integer stack stores or floating-point loads.
 define void @f12() {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: %loop
 ; CHECK-NOT: std {{.*}}(%r15)
 ; CHECK: %exit
@@ -314,7 +314,7 @@ exit:
 
 ; ...likewise LGDR, with the requirements the other way around.
 define void @f13() {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: %loop
 ; CHECK-NOT: stg {{.*}}(%r15)
 ; CHECK: %exit

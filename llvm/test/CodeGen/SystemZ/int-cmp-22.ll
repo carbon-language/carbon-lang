@@ -4,7 +4,7 @@
 
 ; Check comparisons with 0.
 define double @f1(double %a, double %b, i16 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: chhsi 0(%r2), 0
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -17,7 +17,7 @@ define double @f1(double %a, double %b, i16 *%ptr) {
 
 ; Check comparisons with 1.
 define double @f2(double %a, double %b, i16 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: chhsi 0(%r2), 1
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -30,7 +30,7 @@ define double @f2(double %a, double %b, i16 *%ptr) {
 
 ; Check a value near the high end of the signed 16-bit range.
 define double @f3(double %a, double %b, i16 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: chhsi 0(%r2), 32766
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -43,7 +43,7 @@ define double @f3(double %a, double %b, i16 *%ptr) {
 
 ; Check comparisons with -1.
 define double @f4(double %a, double %b, i16 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: chhsi 0(%r2), -1
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -56,7 +56,7 @@ define double @f4(double %a, double %b, i16 *%ptr) {
 
 ; Check a value near the low end of the 16-bit signed range.
 define double @f5(double %a, double %b, i16 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: chhsi 0(%r2), -32766
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -69,7 +69,7 @@ define double @f5(double %a, double %b, i16 *%ptr) {
 
 ; Check the high end of the CHHSI range.
 define double @f6(double %a, double %b, i16 %i1, i16 *%base) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: chhsi 4094(%r3), 0
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -83,7 +83,7 @@ define double @f6(double %a, double %b, i16 %i1, i16 *%base) {
 
 ; Check the next halfword up, which needs separate address logic,
 define double @f7(double %a, double %b, i16 *%base) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: aghi %r2, 4096
 ; CHECK: chhsi 0(%r2), 0
 ; CHECK-NEXT: jl
@@ -98,7 +98,7 @@ define double @f7(double %a, double %b, i16 *%base) {
 
 ; Check negative offsets, which also need separate address logic.
 define double @f8(double %a, double %b, i16 *%base) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: aghi %r2, -2
 ; CHECK: chhsi 0(%r2), 0
 ; CHECK-NEXT: jl
@@ -113,7 +113,7 @@ define double @f8(double %a, double %b, i16 *%base) {
 
 ; Check that CHHSI does not allow indices.
 define double @f9(double %a, double %b, i64 %base, i64 %index) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: agr {{%r2, %r3|%r3, %r2}}
 ; CHECK: chhsi 0({{%r[23]}}), 0
 ; CHECK-NEXT: jl

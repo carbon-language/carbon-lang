@@ -5,7 +5,7 @@
 
 declare void @f(%struct.s* %p);
 
-; CHECK: t:
+; CHECK-LABEL: t:
 define void @t(i32 %a, %struct.s* byval %s) nounwind {
 entry:
 
@@ -20,7 +20,7 @@ entry:
   ret void
 }
 
-; CHECK: caller:
+; CHECK-LABEL: caller:
 define void @caller() {
 
 ; CHECK:      ldm     r0, {r1, r2, r3}

@@ -4,7 +4,7 @@
 ; rdar://12300648
 
 define i32 @t(i32 %x) {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK-NOT: movw
   %tmp = add i32 %x, -65535
   ret i32 %tmp

@@ -8,8 +8,8 @@ target triple = "armv7-eabi"
 @z = common global i16 0
 
 define arm_aapcs_vfpcc void @foo() nounwind {
-; CHECK: foo:
-; CHECK-FP6: foo:
+; CHECK-LABEL: foo:
+; CHECK-FP6-LABEL: foo:
 entry:
   %0 = load i16* @x, align 2
   %1 = load i16* @y, align 2

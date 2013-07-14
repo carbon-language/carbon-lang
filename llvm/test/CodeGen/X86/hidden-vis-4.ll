@@ -4,7 +4,7 @@
 
 define i32 @t() nounwind readonly {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: movl _x, %eax
 ; CHECK: .comm _x,4
 	%0 = load i32* @x, align 4		; <i32> [#uses=1]

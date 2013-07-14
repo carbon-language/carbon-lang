@@ -6,7 +6,7 @@
 ; 4-byte spill slot, rounded to 8 bytes.  The frame size should be exactly
 ; 160 + 8 * 8 = 232.
 define void @f1(float *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: aghi %r15, -232
 ; CHECK: std %f8, 224(%r15)
 ; CHECK: std %f9, 216(%r15)
@@ -70,7 +70,7 @@ define void @f1(float *%ptr) {
 
 ; Same for doubles, except that the full spill slot is used.
 define void @f2(double *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: aghi %r15, -232
 ; CHECK: std %f8, 224(%r15)
 ; CHECK: std %f9, 216(%r15)
@@ -131,7 +131,7 @@ define void @f2(double *%ptr) {
 
 ; The long double case needs a 16-byte spill slot.
 define void @f3(fp128 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: aghi %r15, -240
 ; CHECK: std %f8, 232(%r15)
 ; CHECK: std %f9, 224(%r15)

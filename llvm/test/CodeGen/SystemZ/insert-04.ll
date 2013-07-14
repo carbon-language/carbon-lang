@@ -5,7 +5,7 @@
 ; Check the lowest useful IILL value.  (We use NILL rather than IILL
 ; to clear 16 bits.)
 define i64 @f1(i64 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: ni
 ; CHECK: iill %r2, 1
 ; CHECK: br %r14
@@ -16,7 +16,7 @@ define i64 @f1(i64 %a) {
 
 ; Check a middle value.
 define i64 @f2(i64 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: ni
 ; CHECK: iill %r2, 32769
 ; CHECK: br %r14
@@ -28,7 +28,7 @@ define i64 @f2(i64 %a) {
 ; Check the highest useful IILL value.  (We use OILL rather than IILL
 ; to set 16 bits.)
 define i64 @f3(i64 %a) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: ni
 ; CHECK: iill %r2, 65534
 ; CHECK: br %r14
@@ -39,7 +39,7 @@ define i64 @f3(i64 %a) {
 
 ; Check the lowest useful IILH value.
 define i64 @f4(i64 %a) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: ni
 ; CHECK: iilh %r2, 1
 ; CHECK: br %r14
@@ -50,7 +50,7 @@ define i64 @f4(i64 %a) {
 
 ; Check a middle value.
 define i64 @f5(i64 %a) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: ni
 ; CHECK: iilh %r2, 32767
 ; CHECK: br %r14
@@ -61,7 +61,7 @@ define i64 @f5(i64 %a) {
 
 ; Check the highest useful IILH value.
 define i64 @f6(i64 %a) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: ni
 ; CHECK: iilh %r2, 65534
 ; CHECK: br %r14
@@ -72,7 +72,7 @@ define i64 @f6(i64 %a) {
 
 ; Check the lowest useful IIHL value.
 define i64 @f7(i64 %a) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK-NOT: ni
 ; CHECK: iihl %r2, 1
 ; CHECK: br %r14
@@ -83,7 +83,7 @@ define i64 @f7(i64 %a) {
 
 ; Check a middle value.
 define i64 @f8(i64 %a) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK-NOT: ni
 ; CHECK: iihl %r2, 32767
 ; CHECK: br %r14
@@ -94,7 +94,7 @@ define i64 @f8(i64 %a) {
 
 ; Check the highest useful IIHL value.
 define i64 @f9(i64 %a) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK-NOT: ni
 ; CHECK: iihl %r2, 65534
 ; CHECK: br %r14
@@ -105,7 +105,7 @@ define i64 @f9(i64 %a) {
 
 ; Check the lowest useful IIHH value.
 define i64 @f10(i64 %a) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK-NOT: ni
 ; CHECK: iihh %r2, 1
 ; CHECK: br %r14
@@ -116,7 +116,7 @@ define i64 @f10(i64 %a) {
 
 ; Check a middle value.
 define i64 @f11(i64 %a) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK-NOT: ni
 ; CHECK: iihh %r2, 32767
 ; CHECK: br %r14
@@ -127,7 +127,7 @@ define i64 @f11(i64 %a) {
 
 ; Check the highest useful IIHH value.
 define i64 @f12(i64 %a) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK-NOT: ni
 ; CHECK: iihh %r2, 65534
 ; CHECK: br %r14

@@ -112,7 +112,7 @@ declare void @__cxa_end_catch()
 
 declare void @_ZSt9terminatev()
 
-; CHECK-FP: _Z4testiiiiiddddd:
+; CHECK-FP-LABEL: _Z4testiiiiiddddd:
 ; CHECK-FP:   .fnstart
 ; CHECK-FP:   .save  {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-FP:   push   {r4, r5, r6, r7, r8, r9, r10, r11, lr}
@@ -124,7 +124,7 @@ declare void @_ZSt9terminatev()
 ; CHECK-FP:   .handlerdata
 ; CHECK-FP:   .fnend
 
-; CHECK-FP-ELIM: _Z4testiiiiiddddd:
+; CHECK-FP-ELIM-LABEL: _Z4testiiiiiddddd:
 ; CHECK-FP-ELIM:   .fnstart
 ; CHECK-FP-ELIM:   .save {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK-FP-ELIM:   push  {r4, r5, r6, r7, r8, r9, r10, r11, lr}
@@ -134,7 +134,7 @@ declare void @_ZSt9terminatev()
 ; CHECK-FP-ELIM:   .handlerdata
 ; CHECK-FP-ELIM:   .fnend
 
-; CHECK-V7-FP: _Z4testiiiiiddddd:
+; CHECK-V7-FP-LABEL: _Z4testiiiiiddddd:
 ; CHECK-V7-FP:   .fnstart
 ; CHECK-V7-FP:   .save  {r4, r11, lr}
 ; CHECK-V7-FP:   push   {r4, r11, lr}
@@ -148,7 +148,7 @@ declare void @_ZSt9terminatev()
 ; CHECK-V7-FP:   .handlerdata
 ; CHECK-V7-FP:   .fnend
 
-; CHECK-V7-FP-ELIM: _Z4testiiiiiddddd:
+; CHECK-V7-FP-ELIM-LABEL: _Z4testiiiiiddddd:
 ; CHECK-V7-FP-ELIM:   .fnstart
 ; CHECK-V7-FP-ELIM:   .save  {r4, lr}
 ; CHECK-V7-FP-ELIM:   push   {r4, lr}
@@ -173,7 +173,7 @@ entry:
   ret void
 }
 
-; CHECK-FP: test2:
+; CHECK-FP-LABEL: test2:
 ; CHECK-FP:   .fnstart
 ; CHECK-FP:   .save  {r11, lr}
 ; CHECK-FP:   push   {r11, lr}
@@ -183,7 +183,7 @@ entry:
 ; CHECK-FP:   mov    pc, lr
 ; CHECK-FP:   .fnend
 
-; CHECK-FP-ELIM: test2:
+; CHECK-FP-ELIM-LABEL: test2:
 ; CHECK-FP-ELIM:   .fnstart
 ; CHECK-FP-ELIM:   .save {r11, lr}
 ; CHECK-FP-ELIM:   push  {r11, lr}
@@ -191,7 +191,7 @@ entry:
 ; CHECK-FP-ELIM:   mov   pc, lr
 ; CHECK-FP-ELIM:   .fnend
 
-; CHECK-V7-FP: test2:
+; CHECK-V7-FP-LABEL: test2:
 ; CHECK-V7-FP:   .fnstart
 ; CHECK-V7-FP:   .save  {r11, lr}
 ; CHECK-V7-FP:   push   {r11, lr}
@@ -200,7 +200,7 @@ entry:
 ; CHECK-V7-FP:   pop    {r11, pc}
 ; CHECK-V7-FP:   .fnend
 
-; CHECK-V7-FP-ELIM: test2:
+; CHECK-V7-FP-ELIM-LABEL: test2:
 ; CHECK-V7-FP-ELIM:   .fnstart
 ; CHECK-V7-FP-ELIM:   .save {r11, lr}
 ; CHECK-V7-FP-ELIM:   push  {r11, lr}
@@ -229,7 +229,7 @@ entry:
   ret i32 %add6
 }
 
-; CHECK-FP: test3:
+; CHECK-FP-LABEL: test3:
 ; CHECK-FP:   .fnstart
 ; CHECK-FP:   .save  {r4, r5, r11, lr}
 ; CHECK-FP:   push   {r4, r5, r11, lr}
@@ -239,7 +239,7 @@ entry:
 ; CHECK-FP:   mov    pc, lr
 ; CHECK-FP:   .fnend
 
-; CHECK-FP-ELIM: test3:
+; CHECK-FP-ELIM-LABEL: test3:
 ; CHECK-FP-ELIM:   .fnstart
 ; CHECK-FP-ELIM:   .save {r4, r5, r11, lr}
 ; CHECK-FP-ELIM:   push  {r4, r5, r11, lr}
@@ -247,7 +247,7 @@ entry:
 ; CHECK-FP-ELIM:   mov   pc, lr
 ; CHECK-FP-ELIM:   .fnend
 
-; CHECK-V7-FP: test3:
+; CHECK-V7-FP-LABEL: test3:
 ; CHECK-V7-FP:   .fnstart
 ; CHECK-V7-FP:   .save  {r4, r5, r11, lr}
 ; CHECK-V7-FP:   push   {r4, r5, r11, lr}
@@ -256,7 +256,7 @@ entry:
 ; CHECK-V7-FP:   pop    {r4, r5, r11, pc}
 ; CHECK-V7-FP:   .fnend
 
-; CHECK-V7-FP-ELIM: test3:
+; CHECK-V7-FP-ELIM-LABEL: test3:
 ; CHECK-V7-FP-ELIM:   .fnstart
 ; CHECK-V7-FP-ELIM:   .save {r4, r5, r11, lr}
 ; CHECK-V7-FP-ELIM:   push  {r4, r5, r11, lr}
@@ -273,25 +273,25 @@ entry:
   ret void
 }
 
-; CHECK-FP: test4:
+; CHECK-FP-LABEL: test4:
 ; CHECK-FP:   .fnstart
 ; CHECK-FP:   mov pc, lr
 ; CHECK-FP:   .cantunwind
 ; CHECK-FP:   .fnend
 
-; CHECK-FP-ELIM: test4:
+; CHECK-FP-ELIM-LABEL: test4:
 ; CHECK-FP-ELIM:   .fnstart
 ; CHECK-FP-ELIM:   mov pc, lr
 ; CHECK-FP-ELIM:   .cantunwind
 ; CHECK-FP-ELIM:   .fnend
 
-; CHECK-V7-FP: test4:
+; CHECK-V7-FP-LABEL: test4:
 ; CHECK-V7-FP:   .fnstart
 ; CHECK-V7-FP:   bx lr
 ; CHECK-V7-FP:   .cantunwind
 ; CHECK-V7-FP:   .fnend
 
-; CHECK-V7-FP-ELIM: test4:
+; CHECK-V7-FP-ELIM-LABEL: test4:
 ; CHECK-V7-FP-ELIM:   .fnstart
 ; CHECK-V7-FP-ELIM:   bx lr
 ; CHECK-V7-FP-ELIM:   .cantunwind

@@ -57,7 +57,7 @@ define i32 @test1() {
 
 
 
-; LinuxPIC: test1:
+; LinuxPIC-LABEL: test1:
 ; LinuxPIC: 	ldr r0, .LCPI0_0
 ; LinuxPIC: 	ldr r1, .LCPI0_1
 	

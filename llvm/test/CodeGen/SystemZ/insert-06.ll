@@ -4,7 +4,7 @@
 
 ; Insertion of an i32 can be done using LR.
 define i64 @f1(i64 %a, i32 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
@@ -16,7 +16,7 @@ define i64 @f1(i64 %a, i32 %b) {
 
 ; ... and again with the operands reversed.
 define i64 @f2(i64 %a, i32 %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
@@ -28,7 +28,7 @@ define i64 @f2(i64 %a, i32 %b) {
 
 ; Like f1, but with "in register" zero extension.
 define i64 @f3(i64 %a, i64 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
@@ -40,7 +40,7 @@ define i64 @f3(i64 %a, i64 %b) {
 
 ; ... and again with the operands reversed.
 define i64 @f4(i64 %a, i64 %b) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
@@ -52,7 +52,7 @@ define i64 @f4(i64 %a, i64 %b) {
 
 ; Unary operations can be done directly into the low half.
 define i64 @f5(i64 %a, i32 %b) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: lcr %r2, %r3
 ; CHECK: br %r14
@@ -65,7 +65,7 @@ define i64 @f5(i64 %a, i32 %b) {
 
 ; ...likewise three-operand binary operations like RLL.
 define i64 @f6(i64 %a, i32 %b) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: rll %r2, %r3, 1
 ; CHECK: br %r14
@@ -81,7 +81,7 @@ define i64 @f6(i64 %a, i32 %b) {
 ; Loads can be done directly into the low half.  The range of L is checked
 ; in the move tests.
 define i64 @f7(i64 %a, i32 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: br %r14
@@ -94,7 +94,7 @@ define i64 @f7(i64 %a, i32 *%src) {
 
 ; ...likewise extending loads.
 define i64 @f8(i64 %a, i8 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK-NOT: {{%r[23]}}
 ; CHECK: lb %r2, 0(%r3)
 ; CHECK: br %r14
@@ -110,7 +110,7 @@ define i64 @f8(i64 %a, i8 *%src) {
 ; that the upper half of one OR operand and the lower half of the other are
 ; both clear.
 define i64 @f9(i64 %a, i32 %b) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: sllg %r2, %r2, 32
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
@@ -122,7 +122,7 @@ define i64 @f9(i64 %a, i32 %b) {
 
 ; ...and again with the operands reversed.
 define i64 @f10(i64 %a, i32 %b) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: sllg %r2, %r2, 32
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
@@ -134,7 +134,7 @@ define i64 @f10(i64 %a, i32 %b) {
 
 ; Like f9, but with "in register" zero extension.
 define i64 @f11(i64 %a, i64 %b) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
   %shift = shl i64 %a, 32
@@ -145,7 +145,7 @@ define i64 @f11(i64 %a, i64 %b) {
 
 ; ...and again with the operands reversed.
 define i64 @f12(i64 %a, i64 %b) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14
   %shift = shl i64 %a, 32
@@ -156,7 +156,7 @@ define i64 @f12(i64 %a, i64 %b) {
 
 ; Like f9, but for larger shifts than 32.
 define i64 @f13(i64 %a, i32 %b) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: sllg %r2, %r2, 60
 ; CHECK: lr %r2, %r3
 ; CHECK: br %r14

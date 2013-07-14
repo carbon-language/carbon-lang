@@ -3,7 +3,7 @@
 @var = global float 0.0
 
 define void @foo() {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 
 ; CHECK: stp d14, d15, [sp
 ; CHECK: stp d12, d13, [sp

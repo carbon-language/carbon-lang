@@ -3,7 +3,7 @@
 ; Additional tests for 64-bit divide bypass
 
 define i64 @Test_get_quotient(i64 %a, i64 %b) nounwind {
-; CHECK: Test_get_quotient:
+; CHECK-LABEL: Test_get_quotient:
 ; CHECK: movq %rdi, %rax
 ; CHECK: orq %rsi, %rax
 ; CHECK-NEXT: testq $-65536, %rax
@@ -17,7 +17,7 @@ define i64 @Test_get_quotient(i64 %a, i64 %b) nounwind {
 }
 
 define i64 @Test_get_remainder(i64 %a, i64 %b) nounwind {
-; CHECK: Test_get_remainder:
+; CHECK-LABEL: Test_get_remainder:
 ; CHECK: movq %rdi, %rax
 ; CHECK: orq %rsi, %rax
 ; CHECK-NEXT: testq $-65536, %rax
@@ -31,7 +31,7 @@ define i64 @Test_get_remainder(i64 %a, i64 %b) nounwind {
 }
 
 define i64 @Test_get_quotient_and_remainder(i64 %a, i64 %b) nounwind {
-; CHECK: Test_get_quotient_and_remainder:
+; CHECK-LABEL: Test_get_quotient_and_remainder:
 ; CHECK: movq %rdi, %rax
 ; CHECK: orq %rsi, %rax
 ; CHECK-NEXT: testq $-65536, %rax

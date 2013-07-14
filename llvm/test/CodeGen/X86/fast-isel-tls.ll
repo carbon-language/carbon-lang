@@ -9,7 +9,7 @@ entry:
           ret i32 %s
 }
 
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: leal	v@TLSGD
 ; CHECK: __tls_get_addr
 
@@ -21,6 +21,6 @@ entry:
           ret i32 %s
 }
 
-; CHECK: f_alias:
+; CHECK-LABEL: f_alias:
 ; CHECK: leal	v@TLSGD
 ; CHECK: __tls_get_addr

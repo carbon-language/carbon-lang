@@ -11,7 +11,7 @@ define i32 *@foo() {
 ; CHECK-CP: .LCP{{.*}}:
 ; CHECK-CP: .quad x@NTPOFF
 ;
-; CHECK-MAIN: foo:
+; CHECK-MAIN-LABEL: foo:
 ; CHECK-MAIN: ear [[HIGH:%r[0-5]]], %a0
 ; CHECK-MAIN: sllg %r2, [[HIGH]], 32
 ; CHECK-MAIN: ear %r2, %a1

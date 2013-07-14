@@ -2,7 +2,7 @@
 ; rdar://13782395
 
 define i32 @t1(i32 %a, i32 %b, i8** %retaddr) {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: Block address taken
 ; CHECK-NOT: Address of block that was removed by CodeGen
   store i8* blockaddress(@t1, %cond_true), i8** %retaddr
@@ -19,7 +19,7 @@ cond_false:
 }
 
 define i32 @t2(i32 %a, i32 %b, i32 %c, i32 %d, i8** %retaddr) {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: Block address taken
 ; CHECK: %cond_true
 ; CHECK: add
@@ -41,7 +41,7 @@ UnifiedReturnBlock:
 }
 
 define hidden fastcc void @t3(i8** %retaddr) {
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK: Block address taken
 ; CHECK-NOT: Address of block that was removed by CodeGen
 bb:

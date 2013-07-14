@@ -9,27 +9,27 @@
 declare i64 @bar(i8 *%a)
 
 define i64 @f1(i64 %length, i64 %index) {
-; CHECK-A: f1:
+; CHECK-A-LABEL: f1:
 ; CHECK-A: lgr %r15, [[ADDR:%r[1-5]]]
 ; CHECK-A: la %r2, 160([[ADDR]])
 ; CHECK-A: mvi 0(%r2), 0
 ;
-; CHECK-B: f1:
+; CHECK-B-LABEL: f1:
 ; CHECK-B: lgr %r15, [[ADDR:%r[1-5]]]
 ; CHECK-B: la %r2, 160([[ADDR]])
 ; CHECK-B: mvi 4095(%r2), 1
 ;
-; CHECK-C: f1:
+; CHECK-C-LABEL: f1:
 ; CHECK-C: lgr %r15, [[ADDR:%r[1-5]]]
 ; CHECK-C: la [[TMP:%r[1-5]]], 160(%r3,[[ADDR]])
 ; CHECK-C: mvi 0([[TMP]]), 2
 ;
-; CHECK-D: f1:
+; CHECK-D-LABEL: f1:
 ; CHECK-D: lgr %r15, [[ADDR:%r[1-5]]]
 ; CHECK-D: la [[TMP:%r[1-5]]], 160(%r3,[[ADDR]])
 ; CHECK-D: mvi 4095([[TMP]]), 3
 ;
-; CHECK-E: f1:
+; CHECK-E-LABEL: f1:
 ; CHECK-E: lgr %r15, [[ADDR:%r[1-5]]]
 ; CHECK-E: la [[TMP:%r[1-5]]], 160(%r3,[[ADDR]])
 ; CHECK-E: mviy 4096([[TMP]]), 4

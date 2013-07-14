@@ -7,10 +7,10 @@ entry:
 	%tmp6 = shufflevector <4 x i32> zeroinitializer, <4 x i32> %tmp, <4 x i32> < i32 4, i32 1, i32 2, i32 3 >		; <<4 x i32>> [#uses=1]
 	ret <4 x i32> %tmp6
 
-; X86-32: t1:
+; X86-32-LABEL: t1:
 ; X86-32: movd	4(%esp), %xmm0
 
-; X86-64: t1:
+; X86-64-LABEL: t1:
 ; X86-64: movd	%e{{..}}, %xmm0
 }
 
@@ -20,10 +20,10 @@ entry:
 	%tmp6 = shufflevector <2 x i64> zeroinitializer, <2 x i64> %tmp, <2 x i32> < i32 2, i32 1 >		; <<4 x i32>> [#uses=1]
 	ret <2 x i64> %tmp6
 
-; X86-32: t2:
+; X86-32-LABEL: t2:
 ; X86-32: movq	4(%esp), %xmm0
 
-; X86-64: t2:
+; X86-64-LABEL: t2:
 ; X86-64: movd	%r{{..}}, %xmm0
 }
 
@@ -35,11 +35,11 @@ entry:
 	%tmp8 = bitcast <4 x i32> %tmp7 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	ret <2 x i64> %tmp8
 
-; X86-32: t3:
+; X86-32-LABEL: t3:
 ; X86-32: movl	4(%esp)
 ; X86-32: movq
 
-; X86-64: t3:
+; X86-64-LABEL: t3:
 ; X86-64: movq	({{.*}}), %xmm0
 }
 
@@ -50,10 +50,10 @@ entry:
 	%tmp7 = bitcast <4 x i32> %tmp6 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	ret <2 x i64> %tmp7
 
-; X86-32: t4:
+; X86-32-LABEL: t4:
 ; X86-32: movq %xmm0, %xmm0
 
-; X86-64: t4:
+; X86-64-LABEL: t4:
 ; X86-64: movq {{.*}}, %xmm0
 }
 
@@ -62,9 +62,9 @@ entry:
 	%tmp6 = shufflevector <2 x i64> zeroinitializer, <2 x i64> %a, <2 x i32> < i32 2, i32 1 >		; <<4 x i32>> [#uses=1]
 	ret <2 x i64> %tmp6
 
-; X86-32: t5:
+; X86-32-LABEL: t5:
 ; X86-32: movq %xmm0, %xmm0
 
-; X86-64: t5:
+; X86-64-LABEL: t5:
 ; X86-64: movq {{.*}}, %xmm0
 }

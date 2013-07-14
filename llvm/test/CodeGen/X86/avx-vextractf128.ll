@@ -114,7 +114,7 @@ define void @t9(i64* %p) {
  store i64 0, i64* %s
  ret void
 
-; CHECK: t9:
+; CHECK-LABEL: t9:
 ; CHECK: vxorps	%xmm
 ; CHECK-NOT: vextractf
 ; CHECK: vmovups

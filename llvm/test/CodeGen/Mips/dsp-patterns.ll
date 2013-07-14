@@ -128,7 +128,7 @@ entry:
   ret i64 %add
 }
 
-; R1: shift1_v2i16_shl_:
+; R1-LABEL: shift1_v2i16_shl_:
 ; R1: shll.ph ${{[0-9]+}}, ${{[0-9]+}}, 15
 
 define { i32 } @shift1_v2i16_shl_(i32 %a0.coerce) {
@@ -140,7 +140,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: shift1_v2i16_sra_:
+; R1-LABEL: shift1_v2i16_sra_:
 ; R1: shra.ph ${{[0-9]+}}, ${{[0-9]+}}, 15
 
 define { i32 } @shift1_v2i16_sra_(i32 %a0.coerce) {
@@ -152,9 +152,9 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: shift1_v2ui16_srl_:
+; R1-LABEL: shift1_v2ui16_srl_:
 ; R1-NOT: shrl.ph
-; R2: shift1_v2ui16_srl_:
+; R2-LABEL: shift1_v2ui16_srl_:
 ; R2: shrl.ph ${{[0-9]+}}, ${{[0-9]+}}, 15
 
 define { i32 } @shift1_v2ui16_srl_(i32 %a0.coerce) {
@@ -166,7 +166,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: shift1_v4i8_shl_:
+; R1-LABEL: shift1_v4i8_shl_:
 ; R1: shll.qb ${{[0-9]+}}, ${{[0-9]+}}, 7
 
 define { i32 } @shift1_v4i8_shl_(i32 %a0.coerce) {
@@ -178,9 +178,9 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: shift1_v4i8_sra_:
+; R1-LABEL: shift1_v4i8_sra_:
 ; R1-NOT: shra.qb
-; R2: shift1_v4i8_sra_:
+; R2-LABEL: shift1_v4i8_sra_:
 ; R2: shra.qb ${{[0-9]+}}, ${{[0-9]+}}, 7
 
 define { i32 } @shift1_v4i8_sra_(i32 %a0.coerce) {
@@ -192,7 +192,7 @@ entry:
   ret { i32 } %.fca.0.insert
 }
 
-; R1: shift1_v4ui8_srl_:
+; R1-LABEL: shift1_v4ui8_srl_:
 ; R1: shrl.qb ${{[0-9]+}}, ${{[0-9]+}}, 7
 
 define { i32 } @shift1_v4ui8_srl_(i32 %a0.coerce) {

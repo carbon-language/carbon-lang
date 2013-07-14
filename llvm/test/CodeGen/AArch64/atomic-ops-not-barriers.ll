@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 
 define i32 @foo(i32* %var, i1 %cond) {
-; CHECK: foo:
+; CHECK-LABEL: foo:
   br i1 %cond, label %atomic_ver, label %simple_ver
 simple_ver:
   %oldval = load i32* %var

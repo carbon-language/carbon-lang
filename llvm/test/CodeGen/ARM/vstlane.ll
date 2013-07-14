@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define void @vst1lanei8(i8* %A, <8 x i8>* %B) nounwind {
-;CHECK: vst1lanei8:
+;CHECK-LABEL: vst1lanei8:
 ;Check the (default) alignment.
 ;CHECK: vst1.8 {d16[3]}, [r0]
 	%tmp1 = load <8 x i8>* %B
@@ -12,7 +12,7 @@ define void @vst1lanei8(i8* %A, <8 x i8>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst1lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
-;CHECK: vst1lanei8_update:
+;CHECK-LABEL: vst1lanei8_update:
 ;CHECK: vst1.8 {d16[3]}, [r2]!
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
@@ -24,7 +24,7 @@ define void @vst1lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 }
 
 define void @vst1lanei16(i16* %A, <4 x i16>* %B) nounwind {
-;CHECK: vst1lanei16:
+;CHECK-LABEL: vst1lanei16:
 ;Check the alignment value.  Max for this instruction is 16 bits:
 ;CHECK: vst1.16 {d16[2]}, [r0:16]
 	%tmp1 = load <4 x i16>* %B
@@ -34,7 +34,7 @@ define void @vst1lanei16(i16* %A, <4 x i16>* %B) nounwind {
 }
 
 define void @vst1lanei32(i32* %A, <2 x i32>* %B) nounwind {
-;CHECK: vst1lanei32:
+;CHECK-LABEL: vst1lanei32:
 ;Check the alignment value.  Max for this instruction is 32 bits:
 ;CHECK: vst1.32 {d16[1]}, [r0:32]
 	%tmp1 = load <2 x i32>* %B
@@ -44,7 +44,7 @@ define void @vst1lanei32(i32* %A, <2 x i32>* %B) nounwind {
 }
 
 define void @vst1lanef(float* %A, <2 x float>* %B) nounwind {
-;CHECK: vst1lanef:
+;CHECK-LABEL: vst1lanef:
 ;CHECK: vst1.32 {d16[1]}, [r0:32]
 	%tmp1 = load <2 x float>* %B
         %tmp2 = extractelement <2 x float> %tmp1, i32 1
@@ -53,7 +53,7 @@ define void @vst1lanef(float* %A, <2 x float>* %B) nounwind {
 }
 
 define void @vst1laneQi8(i8* %A, <16 x i8>* %B) nounwind {
-;CHECK: vst1laneQi8:
+;CHECK-LABEL: vst1laneQi8:
 ; // Can use scalar load. No need to use vectors.
 ; // CHE-CK: vst1.8 {d17[1]}, [r0]
 	%tmp1 = load <16 x i8>* %B
@@ -63,7 +63,7 @@ define void @vst1laneQi8(i8* %A, <16 x i8>* %B) nounwind {
 }
 
 define void @vst1laneQi16(i16* %A, <8 x i16>* %B) nounwind {
-;CHECK: vst1laneQi16:
+;CHECK-LABEL: vst1laneQi16:
 ;CHECK: vst1.16 {d17[1]}, [r0:16]
 	%tmp1 = load <8 x i16>* %B
         %tmp2 = extractelement <8 x i16> %tmp1, i32 5
@@ -72,7 +72,7 @@ define void @vst1laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 }
 
 define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
-;CHECK: vst1laneQi32:
+;CHECK-LABEL: vst1laneQi32:
 ; // Can use scalar load. No need to use vectors.
 ; // CHE-CK: vst1.32 {d17[1]}, [r0:32]
 	%tmp1 = load <4 x i32>* %B
@@ -83,7 +83,7 @@ define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst1laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
-;CHECK: vst1laneQi32_update:
+;CHECK-LABEL: vst1laneQi32_update:
 ; // Can use scalar load. No need to use vectors.
 ; // CHE-CK: vst1.32 {d17[1]}, [r1:32]!
 	%A = load i32** %ptr
@@ -96,7 +96,7 @@ define void @vst1laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
 }
 
 define void @vst1laneQf(float* %A, <4 x float>* %B) nounwind {
-;CHECK: vst1laneQf:
+;CHECK-LABEL: vst1laneQf:
 ; // Can use scalar load. No need to use vectors.
 ; // CHE-CK: vst1.32 {d17[1]}, [r0]
 	%tmp1 = load <4 x float>* %B
@@ -106,7 +106,7 @@ define void @vst1laneQf(float* %A, <4 x float>* %B) nounwind {
 }
 
 define void @vst2lanei8(i8* %A, <8 x i8>* %B) nounwind {
-;CHECK: vst2lanei8:
+;CHECK-LABEL: vst2lanei8:
 ;Check the alignment value.  Max for this instruction is 16 bits:
 ;CHECK: vst2.8 {d16[1], d17[1]}, [r0:16]
 	%tmp1 = load <8 x i8>* %B
@@ -115,7 +115,7 @@ define void @vst2lanei8(i8* %A, <8 x i8>* %B) nounwind {
 }
 
 define void @vst2lanei16(i16* %A, <4 x i16>* %B) nounwind {
-;CHECK: vst2lanei16:
+;CHECK-LABEL: vst2lanei16:
 ;Check the alignment value.  Max for this instruction is 32 bits:
 ;CHECK: vst2.16 {d16[1], d17[1]}, [r0:32]
 	%tmp0 = bitcast i16* %A to i8*
@@ -126,7 +126,7 @@ define void @vst2lanei16(i16* %A, <4 x i16>* %B) nounwind {
 
 ;Check for a post-increment updating store with register increment.
 define void @vst2lanei16_update(i16** %ptr, <4 x i16>* %B, i32 %inc) nounwind {
-;CHECK: vst2lanei16_update:
+;CHECK-LABEL: vst2lanei16_update:
 ;CHECK: vst2.16 {d16[1], d17[1]}, [r1], r2
 	%A = load i16** %ptr
 	%tmp0 = bitcast i16* %A to i8*
@@ -138,7 +138,7 @@ define void @vst2lanei16_update(i16** %ptr, <4 x i16>* %B, i32 %inc) nounwind {
 }
 
 define void @vst2lanei32(i32* %A, <2 x i32>* %B) nounwind {
-;CHECK: vst2lanei32:
+;CHECK-LABEL: vst2lanei32:
 ;CHECK: vst2.32
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <2 x i32>* %B
@@ -147,7 +147,7 @@ define void @vst2lanei32(i32* %A, <2 x i32>* %B) nounwind {
 }
 
 define void @vst2lanef(float* %A, <2 x float>* %B) nounwind {
-;CHECK: vst2lanef:
+;CHECK-LABEL: vst2lanef:
 ;CHECK: vst2.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <2 x float>* %B
@@ -156,7 +156,7 @@ define void @vst2lanef(float* %A, <2 x float>* %B) nounwind {
 }
 
 define void @vst2laneQi16(i16* %A, <8 x i16>* %B) nounwind {
-;CHECK: vst2laneQi16:
+;CHECK-LABEL: vst2laneQi16:
 ;Check the (default) alignment.
 ;CHECK: vst2.16 {d17[1], d19[1]}, [r0]
 	%tmp0 = bitcast i16* %A to i8*
@@ -166,7 +166,7 @@ define void @vst2laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 }
 
 define void @vst2laneQi32(i32* %A, <4 x i32>* %B) nounwind {
-;CHECK: vst2laneQi32:
+;CHECK-LABEL: vst2laneQi32:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;CHECK: vst2.32 {d17[0], d19[0]}, [r0:64]
 	%tmp0 = bitcast i32* %A to i8*
@@ -176,7 +176,7 @@ define void @vst2laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 }
 
 define void @vst2laneQf(float* %A, <4 x float>* %B) nounwind {
-;CHECK: vst2laneQf:
+;CHECK-LABEL: vst2laneQf:
 ;CHECK: vst2.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <4 x float>* %B
@@ -194,7 +194,7 @@ declare void @llvm.arm.neon.vst2lane.v4i32(i8*, <4 x i32>, <4 x i32>, i32, i32) 
 declare void @llvm.arm.neon.vst2lane.v4f32(i8*, <4 x float>, <4 x float>, i32, i32) nounwind
 
 define void @vst3lanei8(i8* %A, <8 x i8>* %B) nounwind {
-;CHECK: vst3lanei8:
+;CHECK-LABEL: vst3lanei8:
 ;CHECK: vst3.8
 	%tmp1 = load <8 x i8>* %B
 	call void @llvm.arm.neon.vst3lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 1)
@@ -202,7 +202,7 @@ define void @vst3lanei8(i8* %A, <8 x i8>* %B) nounwind {
 }
 
 define void @vst3lanei16(i16* %A, <4 x i16>* %B) nounwind {
-;CHECK: vst3lanei16:
+;CHECK-LABEL: vst3lanei16:
 ;Check the (default) alignment value.  VST3 does not support alignment.
 ;CHECK: vst3.16 {d16[1], d17[1], d18[1]}, [r0]
 	%tmp0 = bitcast i16* %A to i8*
@@ -212,7 +212,7 @@ define void @vst3lanei16(i16* %A, <4 x i16>* %B) nounwind {
 }
 
 define void @vst3lanei32(i32* %A, <2 x i32>* %B) nounwind {
-;CHECK: vst3lanei32:
+;CHECK-LABEL: vst3lanei32:
 ;CHECK: vst3.32
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <2 x i32>* %B
@@ -221,7 +221,7 @@ define void @vst3lanei32(i32* %A, <2 x i32>* %B) nounwind {
 }
 
 define void @vst3lanef(float* %A, <2 x float>* %B) nounwind {
-;CHECK: vst3lanef:
+;CHECK-LABEL: vst3lanef:
 ;CHECK: vst3.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <2 x float>* %B
@@ -230,7 +230,7 @@ define void @vst3lanef(float* %A, <2 x float>* %B) nounwind {
 }
 
 define void @vst3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
-;CHECK: vst3laneQi16:
+;CHECK-LABEL: vst3laneQi16:
 ;Check the (default) alignment value.  VST3 does not support alignment.
 ;CHECK: vst3.16 {d17[2], d19[2], d21[2]}, [r0]
 	%tmp0 = bitcast i16* %A to i8*
@@ -240,7 +240,7 @@ define void @vst3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 }
 
 define void @vst3laneQi32(i32* %A, <4 x i32>* %B) nounwind {
-;CHECK: vst3laneQi32:
+;CHECK-LABEL: vst3laneQi32:
 ;CHECK: vst3.32
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <4 x i32>* %B
@@ -250,7 +250,7 @@ define void @vst3laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst3laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
-;CHECK: vst3laneQi32_update:
+;CHECK-LABEL: vst3laneQi32_update:
 ;CHECK: vst3.32 {d16[0], d18[0], d20[0]}, [r1]!
 	%A = load i32** %ptr
 	%tmp0 = bitcast i32* %A to i8*
@@ -262,7 +262,7 @@ define void @vst3laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
 }
 
 define void @vst3laneQf(float* %A, <4 x float>* %B) nounwind {
-;CHECK: vst3laneQf:
+;CHECK-LABEL: vst3laneQf:
 ;CHECK: vst3.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <4 x float>* %B
@@ -281,7 +281,7 @@ declare void @llvm.arm.neon.vst3lane.v4f32(i8*, <4 x float>, <4 x float>, <4 x f
 
 
 define void @vst4lanei8(i8* %A, <8 x i8>* %B) nounwind {
-;CHECK: vst4lanei8:
+;CHECK-LABEL: vst4lanei8:
 ;Check the alignment value.  Max for this instruction is 32 bits:
 ;CHECK: vst4.8 {d16[1], d17[1], d18[1], d19[1]}, [r0:32]
 	%tmp1 = load <8 x i8>* %B
@@ -291,7 +291,7 @@ define void @vst4lanei8(i8* %A, <8 x i8>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst4lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
-;CHECK: vst4lanei8_update:
+;CHECK-LABEL: vst4lanei8_update:
 ;CHECK: vst4.8 {d16[1], d17[1], d18[1], d19[1]}, [r1:32]!
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
@@ -302,7 +302,7 @@ define void @vst4lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 }
 
 define void @vst4lanei16(i16* %A, <4 x i16>* %B) nounwind {
-;CHECK: vst4lanei16:
+;CHECK-LABEL: vst4lanei16:
 ;CHECK: vst4.16
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
@@ -311,7 +311,7 @@ define void @vst4lanei16(i16* %A, <4 x i16>* %B) nounwind {
 }
 
 define void @vst4lanei32(i32* %A, <2 x i32>* %B) nounwind {
-;CHECK: vst4lanei32:
+;CHECK-LABEL: vst4lanei32:
 ;Check the alignment value.  Max for this instruction is 128 bits:
 ;CHECK: vst4.32 {d16[1], d17[1], d18[1], d19[1]}, [r0:128]
 	%tmp0 = bitcast i32* %A to i8*
@@ -321,7 +321,7 @@ define void @vst4lanei32(i32* %A, <2 x i32>* %B) nounwind {
 }
 
 define void @vst4lanef(float* %A, <2 x float>* %B) nounwind {
-;CHECK: vst4lanef:
+;CHECK-LABEL: vst4lanef:
 ;CHECK: vst4.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <2 x float>* %B
@@ -330,7 +330,7 @@ define void @vst4lanef(float* %A, <2 x float>* %B) nounwind {
 }
 
 define void @vst4laneQi16(i16* %A, <8 x i16>* %B) nounwind {
-;CHECK: vst4laneQi16:
+;CHECK-LABEL: vst4laneQi16:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;CHECK: vst4.16 {d17[3], d19[3], d21[3], d23[3]}, [r0:64]
 	%tmp0 = bitcast i16* %A to i8*
@@ -340,7 +340,7 @@ define void @vst4laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 }
 
 define void @vst4laneQi32(i32* %A, <4 x i32>* %B) nounwind {
-;CHECK: vst4laneQi32:
+;CHECK-LABEL: vst4laneQi32:
 ;Check the (default) alignment.
 ;CHECK: vst4.32 {d17[0], d19[0], d21[0], d23[0]}, [r0]
 	%tmp0 = bitcast i32* %A to i8*
@@ -350,7 +350,7 @@ define void @vst4laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 }
 
 define void @vst4laneQf(float* %A, <4 x float>* %B) nounwind {
-;CHECK: vst4laneQf:
+;CHECK-LABEL: vst4laneQf:
 ;CHECK: vst4.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <4 x float>* %B
@@ -360,7 +360,7 @@ define void @vst4laneQf(float* %A, <4 x float>* %B) nounwind {
 
 ; Make sure this doesn't crash; PR10258
 define <8 x i16> @variable_insertelement(<8 x i16> %a, i16 %b, i32 %c) nounwind readnone {
-;CHECK: variable_insertelement:
+;CHECK-LABEL: variable_insertelement:
     %r = insertelement <8 x i16> %a, i16 %b, i32 %c
     ret <8 x i16> %r
 }

@@ -5,7 +5,7 @@ target triple = "msp430---elf"
 
 define void @fp() nounwind {
 entry:
-; CHECK: fp:
+; CHECK-LABEL: fp:
 ; CHECK: push.w r4
 ; CHECK: mov.w r1, r4
 ; CHECK: sub.w #2, r1

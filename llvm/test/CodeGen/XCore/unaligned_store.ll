@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=xcore | FileCheck %s
 
 ; Byte aligned store.
-; CHECK: align1:
+; CHECK-LABEL: align1:
 ; CHECK: bl __misaligned_store
 define void @align1(i32* %p, i32 %val) nounwind {
 entry:

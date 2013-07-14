@@ -8,7 +8,7 @@ entry:
         %retval1112 = bitcast x86_mmx %tmp6 to i64
 	ret i64 %retval1112
 
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: psllq $32
 }
 
@@ -20,7 +20,7 @@ entry:
         %retval1112 = bitcast x86_mmx %tmp7 to i64
 	ret i64 %retval1112
 
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: psrad
 }
 
@@ -32,7 +32,7 @@ entry:
         %retval1314 = bitcast x86_mmx %tmp8 to i64
 	ret i64 %retval1314
 
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK: psrlw
 }
 

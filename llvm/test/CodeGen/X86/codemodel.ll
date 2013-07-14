@@ -7,9 +7,9 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @foo() nounwind readonly {
 entry:
-; CHECK-SMALL:  foo:
+; CHECK-SMALL-LABEL:  foo:
 ; CHECK-SMALL:   movl data(%rip), %eax
-; CHECK-KERNEL: foo:
+; CHECK-KERNEL-LABEL: foo:
 ; CHECK-KERNEL:  movl data, %eax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i64 0, i64 0), align 4		; <i32> [#uses=1]
 	ret i32 %0
@@ -17,9 +17,9 @@ entry:
 
 define i32 @foo2() nounwind readonly {
 entry:
-; CHECK-SMALL:  foo2:
+; CHECK-SMALL-LABEL:  foo2:
 ; CHECK-SMALL:   movl data+40(%rip), %eax
-; CHECK-KERNEL: foo2:
+; CHECK-KERNEL-LABEL: foo2:
 ; CHECK-KERNEL:  movl data+40, %eax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 10), align 4		; <i32> [#uses=1]
 	ret i32 %0
@@ -27,9 +27,9 @@ entry:
 
 define i32 @foo3() nounwind readonly {
 entry:
-; CHECK-SMALL:  foo3:
+; CHECK-SMALL-LABEL:  foo3:
 ; CHECK-SMALL:   movl data-40(%rip), %eax
-; CHECK-KERNEL: foo3:
+; CHECK-KERNEL-LABEL: foo3:
 ; CHECK-KERNEL:  movq $-40, %rax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 -10), align 4		; <i32> [#uses=1]
 	ret i32 %0
@@ -38,10 +38,10 @@ entry:
 define i32 @foo4() nounwind readonly {
 entry:
 ; FIXME: We really can use movabsl here!
-; CHECK-SMALL:  foo4:
+; CHECK-SMALL-LABEL:  foo4:
 ; CHECK-SMALL:   movl $16777216, %eax
 ; CHECK-SMALL:   movl data(%rax), %eax
-; CHECK-KERNEL: foo4:
+; CHECK-KERNEL-LABEL: foo4:
 ; CHECK-KERNEL:  movl data+16777216, %eax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 4194304), align 4		; <i32> [#uses=1]
 	ret i32 %0
@@ -49,18 +49,18 @@ entry:
 
 define i32 @foo1() nounwind readonly {
 entry:
-; CHECK-SMALL:  foo1:
+; CHECK-SMALL-LABEL:  foo1:
 ; CHECK-SMALL:   movl data+16777212(%rip), %eax
-; CHECK-KERNEL: foo1:
+; CHECK-KERNEL-LABEL: foo1:
 ; CHECK-KERNEL:  movl data+16777212, %eax
         %0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 4194303), align 4            ; <i32> [#uses=1]
         ret i32 %0
 }
 define i32 @foo5() nounwind readonly {
 entry:
-; CHECK-SMALL:  foo5:
+; CHECK-SMALL-LABEL:  foo5:
 ; CHECK-SMALL:   movl data-16777216(%rip), %eax
-; CHECK-KERNEL: foo5:
+; CHECK-KERNEL-LABEL: foo5:
 ; CHECK-KERNEL:  movq $-16777216, %rax
 	%0 = load i32* getelementptr ([0 x i32]* @data, i32 0, i64 -4194304), align 4		; <i32> [#uses=1]
 	ret i32 %0

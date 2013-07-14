@@ -53,11 +53,11 @@
 
 ;RUN: llc -mtriple=thumbv7-linux-gnueabihf -float-abi=hard < %s | FileCheck %s
 ;
-;CHECK:     foo:
+;CHECK-LABEL:     foo:
 ;CHECK-NOT:     mov r0
 ;CHECK-NOT:     ldr r0
 ;CHECK:         bl fooUseI32
-;CHECK:     doFoo:
+;CHECK-LABEL:     doFoo:
 ;CHECK:         movs    r0, #43
 ;CHECK:         bl      foo
 

@@ -6,7 +6,7 @@
 
 define void @t() nounwind ssp {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
   %size = mul i32 8, 2
 ; CHECK:  subs  r0, #16
 ; CHECK:  mov sp, r0

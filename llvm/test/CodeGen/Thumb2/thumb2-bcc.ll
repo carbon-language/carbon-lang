@@ -4,7 +4,7 @@
 ; happen and we get actual branches.
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: cbz
   %tmp2 = icmp eq i32 %a, 0
   br i1 %tmp2, label %cond_false, label %cond_true

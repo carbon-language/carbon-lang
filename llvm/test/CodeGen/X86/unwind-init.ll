@@ -12,7 +12,7 @@ define void @calls_unwind_init() {
   ret void
 }
 
-; X8664: calls_unwind_init:
+; X8664-LABEL: calls_unwind_init:
 ; X8664: pushq %rbp
 ; X8664: pushq %r15
 ; X8664: pushq %r14
@@ -25,7 +25,7 @@ define void @calls_unwind_init() {
 ; X8664: popq %r14
 ; X8664: popq %r15
 
-; X8632: calls_unwind_init:
+; X8632-LABEL: calls_unwind_init:
 ; X8632: pushl %ebp
 ; X8632: pushl %ebx
 ; X8632: pushl %edi

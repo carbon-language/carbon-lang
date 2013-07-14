@@ -15,7 +15,7 @@ declare void @Z_fatal(i8*) noreturn nounwind
 declare noalias i8* @calloc(i32, i32) nounwind
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK: tbb
 entry:
 	br label %bb42.i

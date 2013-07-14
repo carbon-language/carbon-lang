@@ -6,18 +6,18 @@
 
 define weak hidden void @t1() nounwind {
 ; LINUX: .hidden t1
-; LINUX: t1:
+; LINUX-LABEL: t1:
 
 ; DARWIN: .private_extern _t1
-; DARWIN: t1:
+; DARWIN-LABEL: t1:
   ret void
 }
 
 define weak void @t2() nounwind {
-; LINUX: t2:
+; LINUX-LABEL: t2:
 ; LINUX: .hidden a
 
-; DARWIN: t2:
+; DARWIN-LABEL: t2:
 ; DARWIN: .private_extern _a
   ret void
 }

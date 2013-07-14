@@ -13,7 +13,7 @@
 ;   before being used.  This shift is independent of the other loop prologue
 ;   instructions.
 define i8 @f1(i8 *%src, i8 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
 ; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
 ; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
@@ -26,7 +26,7 @@ define i8 @f1(i8 *%src, i8 %b) {
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT1: f1:
+; CHECK-SHIFT1-LABEL: f1:
 ; CHECK-SHIFT1: sllg [[SHIFT:%r[1-9]+]], %r2, 3
 ; CHECK-SHIFT1: lcr [[NEGSHIFT:%r[1-9]+]], [[SHIFT]]
 ; CHECK-SHIFT1: rll
@@ -34,7 +34,7 @@ define i8 @f1(i8 *%src, i8 %b) {
 ; CHECK-SHIFT1: rll
 ; CHECK-SHIFT1: br %r14
 ;
-; CHECK-SHIFT2: f1:
+; CHECK-SHIFT2-LABEL: f1:
 ; CHECK-SHIFT2: sll %r3, 24
 ; CHECK-SHIFT2: rll
 ; CHECK-SHIFT2: ar {{%r[0-9]+}}, %r3
@@ -47,7 +47,7 @@ define i8 @f1(i8 *%src, i8 %b) {
 
 ; Check the minimum signed value.  We add 0x80000000 to the rotated word.
 define i8 @f2(i8 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
 ; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
 ; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
@@ -60,7 +60,7 @@ define i8 @f2(i8 *%src) {
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT1: f2:
+; CHECK-SHIFT1-LABEL: f2:
 ; CHECK-SHIFT1: sllg [[SHIFT:%r[1-9]+]], %r2, 3
 ; CHECK-SHIFT1: lcr [[NEGSHIFT:%r[1-9]+]], [[SHIFT]]
 ; CHECK-SHIFT1: rll
@@ -68,7 +68,7 @@ define i8 @f2(i8 *%src) {
 ; CHECK-SHIFT1: rll
 ; CHECK-SHIFT1: br %r14
 ;
-; CHECK-SHIFT2: f2:
+; CHECK-SHIFT2-LABEL: f2:
 ; CHECK-SHIFT2: br %r14
   %res = atomicrmw add i8 *%src, i8 -128 seq_cst
   ret i8 %res
@@ -76,13 +76,13 @@ define i8 @f2(i8 *%src) {
 
 ; Check addition of -1.  We add 0xff000000 to the rotated word.
 define i8 @f3(i8 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: afi [[ROT]], -16777216
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT1: f3:
+; CHECK-SHIFT1-LABEL: f3:
 ; CHECK-SHIFT1: br %r14
-; CHECK-SHIFT2: f3:
+; CHECK-SHIFT2-LABEL: f3:
 ; CHECK-SHIFT2: br %r14
   %res = atomicrmw add i8 *%src, i8 -1 seq_cst
   ret i8 %res
@@ -90,13 +90,13 @@ define i8 @f3(i8 *%src) {
 
 ; Check addition of 1.  We add 0x01000000 to the rotated word.
 define i8 @f4(i8 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: afi [[ROT]], 16777216
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT1: f4:
+; CHECK-SHIFT1-LABEL: f4:
 ; CHECK-SHIFT1: br %r14
-; CHECK-SHIFT2: f4:
+; CHECK-SHIFT2-LABEL: f4:
 ; CHECK-SHIFT2: br %r14
   %res = atomicrmw add i8 *%src, i8 1 seq_cst
   ret i8 %res
@@ -104,13 +104,13 @@ define i8 @f4(i8 *%src) {
 
 ; Check the maximum signed value.  We add 0x7f000000 to the rotated word.
 define i8 @f5(i8 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: afi [[ROT]], 2130706432
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT1: f5:
+; CHECK-SHIFT1-LABEL: f5:
 ; CHECK-SHIFT1: br %r14
-; CHECK-SHIFT2: f5:
+; CHECK-SHIFT2-LABEL: f5:
 ; CHECK-SHIFT2: br %r14
   %res = atomicrmw add i8 *%src, i8 127 seq_cst
   ret i8 %res
@@ -119,13 +119,13 @@ define i8 @f5(i8 *%src) {
 ; Check addition of a large unsigned value.  We add 0xfe000000 to the
 ; rotated word, expressed as a negative AFI operand.
 define i8 @f6(i8 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: afi [[ROT]], -33554432
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT1: f6:
+; CHECK-SHIFT1-LABEL: f6:
 ; CHECK-SHIFT1: br %r14
-; CHECK-SHIFT2: f6:
+; CHECK-SHIFT2-LABEL: f6:
 ; CHECK-SHIFT2: br %r14
   %res = atomicrmw add i8 *%src, i8 254 seq_cst
   ret i8 %res

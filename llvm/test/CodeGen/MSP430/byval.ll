@@ -8,7 +8,7 @@ target triple = "msp430---elf"
 
 define i16 @callee(%struct.Foo* byval %f) nounwind {
 entry:
-; CHECK: callee:
+; CHECK-LABEL: callee:
 ; CHECK: mov.w 2(r1), r15
   %0 = getelementptr inbounds %struct.Foo* %f, i32 0, i32 0
   %1 = load i16* %0, align 2
@@ -17,7 +17,7 @@ entry:
 
 define void @caller() nounwind {
 entry:
-; CHECK: caller:
+; CHECK-LABEL: caller:
 ; CHECK: mov.w &foo+4, 4(r1)
 ; CHECK-NEXT: mov.w &foo+2, 2(r1)
 ; CHECK-NEXT: mov.w &foo, 0(r1)

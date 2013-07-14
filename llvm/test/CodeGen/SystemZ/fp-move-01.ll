@@ -4,14 +4,14 @@
 
 ; Test f32 moves.
 define float @f1(float %a, float %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ler %f0, %f2
   ret float %b
 }
 
 ; Test f64 moves.
 define double @f2(double %a, double %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ldr %f0, %f2
   ret double %b
 }
@@ -19,7 +19,7 @@ define double @f2(double %a, double %b) {
 ; Test f128 moves.  Since f128s are passed by reference, we need to force
 ; a copy by other means.
 define void @f3(fp128 *%x) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lxr
 ; CHECK: axbr
   %val = load volatile fp128 *%x

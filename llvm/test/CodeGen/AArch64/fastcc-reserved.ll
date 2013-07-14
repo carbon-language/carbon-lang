@@ -7,7 +7,7 @@
 declare fastcc void @will_pop([8 x i32], i32 %val)
 
 define fastcc void @foo(i32 %in) {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 
   %addr = alloca i8, i32 %in
 
@@ -34,7 +34,7 @@ define fastcc void @foo(i32 %in) {
 declare void @wont_pop([8 x i32], i32 %val)
 
 define void @foo1(i32 %in) {
-; CHECK: foo1:
+; CHECK-LABEL: foo1:
 
   %addr = alloca i8, i32 %in
 ; Normal frame setup again

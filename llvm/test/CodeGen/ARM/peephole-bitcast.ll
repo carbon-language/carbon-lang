@@ -10,7 +10,7 @@
 
 define void @t(float %x) nounwind ssp {
 entry:
-; CHECK:     t:
+; CHECK-LABEL:     t:
 ; CHECK-NOT: vmov
 ; CHECK:     bl
   %0 = bitcast float %x to i32

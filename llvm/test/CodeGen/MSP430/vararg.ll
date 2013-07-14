@@ -9,7 +9,7 @@ declare void @llvm.va_copy(i8*, i8*) nounwind
 
 define void @va_start(i16 %a, ...) nounwind {
 entry:
-; CHECK: va_start:
+; CHECK-LABEL: va_start:
 ; CHECK: sub.w #2, r1
   %vl = alloca i8*, align 2
   %vl1 = bitcast i8** %vl to i8*
@@ -23,7 +23,7 @@ entry:
 
 define i16 @va_arg(i8* %vl) nounwind {
 entry:
-; CHECK: va_arg:
+; CHECK-LABEL: va_arg:
   %vl.addr = alloca i8*, align 2
 ; CHECK: mov.w r15, 0(r1)
   store i8* %vl, i8** %vl.addr, align 2
@@ -37,7 +37,7 @@ entry:
 
 define void @va_copy(i8* %vl) nounwind {
 entry:
-; CHECK: va_copy:
+; CHECK-LABEL: va_copy:
   %vl.addr = alloca i8*, align 2
   %vl2 = alloca i8*, align 2
 ; CHECK: mov.w r15, 2(r1)

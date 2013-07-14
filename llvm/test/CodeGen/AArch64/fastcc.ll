@@ -5,10 +5,10 @@
 ; stack, so try to make sure this is respected.
 
 define fastcc void @func_stack0() {
-; CHECK: func_stack0:
+; CHECK-LABEL: func_stack0:
 ; CHECK: sub sp, sp, #48
 
-; CHECK-TAIL: func_stack0:
+; CHECK-TAIL-LABEL: func_stack0:
 ; CHECK-TAIL: sub sp, sp, #48
 
 
@@ -45,10 +45,10 @@ define fastcc void @func_stack0() {
 }
 
 define fastcc void @func_stack8([8 x i32], i32 %stacked) {
-; CHECK: func_stack8:
+; CHECK-LABEL: func_stack8:
 ; CHECK: sub sp, sp, #48
 
-; CHECK-TAIL: func_stack8:
+; CHECK-TAIL-LABEL: func_stack8:
 ; CHECK-TAIL: sub sp, sp, #48
 
 
@@ -84,10 +84,10 @@ define fastcc void @func_stack8([8 x i32], i32 %stacked) {
 }
 
 define fastcc void @func_stack32([8 x i32], i128 %stacked0, i128 %stacked1) {
-; CHECK: func_stack32:
+; CHECK-LABEL: func_stack32:
 ; CHECK: sub sp, sp, #48
 
-; CHECK-TAIL: func_stack32:
+; CHECK-TAIL-LABEL: func_stack32:
 ; CHECK-TAIL: sub sp, sp, #48
 
 

@@ -6,7 +6,7 @@ declare i64 @llvm.bswap.i64(i64 %a)
 
 ; Check STRVG with no displacement.
 define void @f1(i64 *%dst, i64 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: strvg %r3, 0(%r2)
 ; CHECK: br %r14
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
@@ -16,7 +16,7 @@ define void @f1(i64 *%dst, i64 %a) {
 
 ; Check the high end of the aligned STRVG range.
 define void @f2(i64 *%dst, i64 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: strvg %r3, 524280(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%dst, i64 65535
@@ -28,7 +28,7 @@ define void @f2(i64 *%dst, i64 %a) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f3(i64 *%dst, i64 %a) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: agfi %r2, 524288
 ; CHECK: strvg %r3, 0(%r2)
 ; CHECK: br %r14
@@ -40,7 +40,7 @@ define void @f3(i64 *%dst, i64 %a) {
 
 ; Check the high end of the negative aligned STRVG range.
 define void @f4(i64 *%dst, i64 %a) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: strvg %r3, -8(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%dst, i64 -1
@@ -51,7 +51,7 @@ define void @f4(i64 *%dst, i64 %a) {
 
 ; Check the low end of the STRVG range.
 define void @f5(i64 *%dst, i64 %a) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: strvg %r3, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%dst, i64 -65536
@@ -63,7 +63,7 @@ define void @f5(i64 *%dst, i64 %a) {
 ; Check the next doubleword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f6(i64 *%dst, i64 %a) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agfi %r2, -524296
 ; CHECK: strvg %r3, 0(%r2)
 ; CHECK: br %r14
@@ -75,7 +75,7 @@ define void @f6(i64 *%dst, i64 %a) {
 
 ; Check that STRVG allows an index.
 define void @f7(i64 %src, i64 %index, i64 %a) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: strvg %r4, 524287({{%r3,%r2|%r2,%r3}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -89,7 +89,7 @@ define void @f7(i64 %src, i64 %index, i64 %a) {
 ; Check that volatile stores do not use STRVG, which might access the
 ; storage multple times.
 define void @f8(i64 *%dst, i64 %a) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: lrvgr [[REG:%r[0-5]]], %r3
 ; CHECK: stg [[REG]], 0(%r2)
 ; CHECK: br %r14

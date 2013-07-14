@@ -10,7 +10,7 @@ declare i32 @printf(i8*, ...)
 @MSG = internal constant [13 x i8] c"Message: %d\0A\00"
 
 define void @params0_noret() {
-    ; CHECK:        params0_noret:
+    ; CHECK-LABEL:        params0_noret:
     ret void
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -18,7 +18,7 @@ define void @params0_noret() {
 }
 
 define i8 @params0_8bitret() {
-    ; CHECK:        params0_8bitret:
+    ; CHECK-LABEL:        params0_8bitret:
     ret i8 1
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -27,7 +27,7 @@ define i8 @params0_8bitret() {
 }
 
 define i16 @params0_16bitret() {
-    ; CHECK:        params0_16bitret:
+    ; CHECK-LABEL:        params0_16bitret:
     ret i16 1
     ; CHECK:        rtsd
     ; CHECK:        {{.* r3, r0, 1}}
@@ -35,7 +35,7 @@ define i16 @params0_16bitret() {
 }
 
 define i32 @params0_32bitret() {
-    ; CHECK:        params0_32bitret:
+    ; CHECK-LABEL:        params0_32bitret:
     ret i32 1
     ; CHECK-NOT:    {{.* r4, .*, .*}}
     ; CHECK:        rtsd
@@ -43,7 +43,7 @@ define i32 @params0_32bitret() {
 }
 
 define i64 @params0_64bitret() {
-    ; CHECK:        params0_64bitret:
+    ; CHECK-LABEL:        params0_64bitret:
     ret i64 1
     ; CHECK:        {{.* r3, r0, .*}}
     ; CHECK:        rtsd
@@ -51,7 +51,7 @@ define i64 @params0_64bitret() {
 }
 
 define i32 @params1_32bitret(i32 %a) {
-    ; CHECK:        params1_32bitret:
+    ; CHECK-LABEL:        params1_32bitret:
     ret i32 %a
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -60,7 +60,7 @@ define i32 @params1_32bitret(i32 %a) {
 }
 
 define i32 @params2_32bitret(i32 %a, i32 %b) {
-    ; CHECK:        params2_32bitret:
+    ; CHECK-LABEL:        params2_32bitret:
     ret i32 %b
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -69,7 +69,7 @@ define i32 @params2_32bitret(i32 %a, i32 %b) {
 }
 
 define i32 @params3_32bitret(i32 %a, i32 %b, i32 %c) {
-    ; CHECK:        params3_32bitret:
+    ; CHECK-LABEL:        params3_32bitret:
     ret i32 %c
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -78,7 +78,7 @@ define i32 @params3_32bitret(i32 %a, i32 %b, i32 %c) {
 }
 
 define i32 @params4_32bitret(i32 %a, i32 %b, i32 %c, i32 %d) {
-    ; CHECK:        params4_32bitret:
+    ; CHECK-LABEL:        params4_32bitret:
     ret i32 %d
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -87,7 +87,7 @@ define i32 @params4_32bitret(i32 %a, i32 %b, i32 %c, i32 %d) {
 }
 
 define i32 @params5_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) {
-    ; CHECK:        params5_32bitret:
+    ; CHECK-LABEL:        params5_32bitret:
     ret i32 %e
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -96,7 +96,7 @@ define i32 @params5_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) {
 }
 
 define i32 @params6_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f) {
-    ; CHECK:        params6_32bitret:
+    ; CHECK-LABEL:        params6_32bitret:
     ret i32 %f
     ; CHECK-NOT:    {{.* r3, .*, .*}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -106,7 +106,7 @@ define i32 @params6_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f) {
 
 define i32 @params7_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                              i32 %g) {
-    ; CHECK:        params7_32bitret:
+    ; CHECK-LABEL:        params7_32bitret:
     ret i32 %g
     ; CHECK:        {{lwi? r3, r1, 32}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -115,7 +115,7 @@ define i32 @params7_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
 
 define i32 @params8_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                              i32 %g, i32 %h) {
-    ; CHECK:        params8_32bitret:
+    ; CHECK-LABEL:        params8_32bitret:
     ret i32 %h
     ; CHECK:        {{lwi? r3, r1, 36}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -124,7 +124,7 @@ define i32 @params8_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
 
 define i32 @params9_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                              i32 %g, i32 %h, i32 %i) {
-    ; CHECK:        params9_32bitret:
+    ; CHECK-LABEL:        params9_32bitret:
     ret i32 %i
     ; CHECK:        {{lwi? r3, r1, 40}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}
@@ -133,7 +133,7 @@ define i32 @params9_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
 
 define i32 @params10_32bitret(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f,
                               i32 %g, i32 %h, i32 %i, i32 %j) {
-    ; CHECK:        params10_32bitret:
+    ; CHECK-LABEL:        params10_32bitret:
     ret i32 %j
     ; CHECK:        {{lwi? r3, r1, 44}}
     ; CHECK-NOT:    {{.* r4, .*, .*}}

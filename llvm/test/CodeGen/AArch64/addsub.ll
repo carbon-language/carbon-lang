@@ -9,7 +9,7 @@
 
 ; Add pure 12-bit immediates:
 define void @add_small() {
-; CHECK: add_small:
+; CHECK-LABEL: add_small:
 
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #4095
   %val32 = load i32* @var_i32
@@ -26,7 +26,7 @@ define void @add_small() {
 
 ; Add 12-bit immediates, shifted left by 12 bits
 define void @add_med() {
-; CHECK: add_med:
+; CHECK-LABEL: add_med:
 
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #3567, lsl #12
   %val32 = load i32* @var_i32
@@ -43,7 +43,7 @@ define void @add_med() {
 
 ; Subtract 12-bit immediates
 define void @sub_small() {
-; CHECK: sub_small:
+; CHECK-LABEL: sub_small:
 
 ; CHECK: sub {{w[0-9]+}}, {{w[0-9]+}}, #4095
   %val32 = load i32* @var_i32
@@ -60,7 +60,7 @@ define void @sub_small() {
 
 ; Subtract 12-bit immediates, shifted left by 12 bits
 define void @sub_med() {
-; CHECK: sub_med:
+; CHECK-LABEL: sub_med:
 
 ; CHECK: sub {{w[0-9]+}}, {{w[0-9]+}}, #3567, lsl #12
   %val32 = load i32* @var_i32

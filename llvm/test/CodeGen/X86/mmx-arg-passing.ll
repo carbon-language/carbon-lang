@@ -13,10 +13,10 @@ define void @t1(x86_mmx %v1) nounwind  {
 	store x86_mmx %v1, x86_mmx* @u1, align 8
 	ret void
 
-; X86-32: t1:
+; X86-32-LABEL: t1:
 ; X86-32: movq %mm0
 
-; X86-64: t1:
+; X86-64-LABEL: t1:
 ; X86-64: movdq2q %xmm0
 ; X86-64: movq %mm0
 }
@@ -28,11 +28,11 @@ define void @t2(<1 x i64> %v1) nounwind  {
 	store x86_mmx %tmp, x86_mmx* @u2, align 8
 	ret void
 
-; X86-32: t2:
+; X86-32-LABEL: t2:
 ; X86-32: movl 4(%esp)
 ; X86-32: movl 8(%esp)
 
-; X86-64: t2:
+; X86-64-LABEL: t2:
 ; X86-64: movq %rdi
 }
 

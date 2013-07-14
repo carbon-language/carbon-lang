@@ -4,11 +4,11 @@
 
 define void @t1() noreturn nounwind ssp {
 entry:
-; ARM: t1:
+; ARM-LABEL: t1:
 ; ARM: mov lr, pc
 ; ARM: b _bar
 
-; SWIFT: t1:
+; SWIFT-LABEL: t1:
 ; SWIFT: mov lr, pc
 ; SWIFT: b _bar
   tail call void @bar() noreturn nounwind
@@ -17,11 +17,11 @@ entry:
 
 define void @t2() noreturn nounwind ssp {
 entry:
-; ARM: t2:
+; ARM-LABEL: t2:
 ; ARM: mov lr, pc
 ; ARM: b _t1
 
-; SWIFT: t2:
+; SWIFT-LABEL: t2:
 ; SWIFT: mov lr, pc
 ; SWIFT: b _t1
   tail call void @t1() noreturn nounwind

@@ -55,7 +55,7 @@ define <32 x i8> @vpblendvb(<32 x i1> %cond, <32 x i8> %x, <32 x i8> %y) {
 
 define <8 x i32> @signd(<8 x i32> %a, <8 x i32> %b) nounwind {
 entry:
-; CHECK: signd:
+; CHECK-LABEL: signd:
 ; CHECK: psignd
 ; CHECK-NOT: sub
 ; CHECK: ret
@@ -70,7 +70,7 @@ entry:
 
 define <8 x i32> @blendvb(<8 x i32> %b, <8 x i32> %a, <8 x i32> %c) nounwind {
 entry:
-; CHECK: blendvb:
+; CHECK-LABEL: blendvb:
 ; CHECK: pblendvb
 ; CHECK: ret
   %b.lobit = ashr <8 x i32> %b, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>

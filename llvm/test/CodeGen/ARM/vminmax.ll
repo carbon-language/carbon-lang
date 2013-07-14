@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vmins8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vmins8:
+;CHECK-LABEL: vmins8:
 ;CHECK: vmin.s8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -10,7 +10,7 @@ define <8 x i8> @vmins8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vmins16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vmins16:
+;CHECK-LABEL: vmins16:
 ;CHECK: vmin.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -19,7 +19,7 @@ define <4 x i16> @vmins16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vmins32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vmins32:
+;CHECK-LABEL: vmins32:
 ;CHECK: vmin.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -28,7 +28,7 @@ define <2 x i32> @vmins32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <8 x i8> @vminu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vminu8:
+;CHECK-LABEL: vminu8:
 ;CHECK: vmin.u8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -37,7 +37,7 @@ define <8 x i8> @vminu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vminu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vminu16:
+;CHECK-LABEL: vminu16:
 ;CHECK: vmin.u16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -46,7 +46,7 @@ define <4 x i16> @vminu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vminu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vminu32:
+;CHECK-LABEL: vminu32:
 ;CHECK: vmin.u32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -55,7 +55,7 @@ define <2 x i32> @vminu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <2 x float> @vminf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vminf32:
+;CHECK-LABEL: vminf32:
 ;CHECK: vmin.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -64,7 +64,7 @@ define <2 x float> @vminf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <16 x i8> @vminQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vminQs8:
+;CHECK-LABEL: vminQs8:
 ;CHECK: vmin.s8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -73,7 +73,7 @@ define <16 x i8> @vminQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vminQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vminQs16:
+;CHECK-LABEL: vminQs16:
 ;CHECK: vmin.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -82,7 +82,7 @@ define <8 x i16> @vminQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vminQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vminQs32:
+;CHECK-LABEL: vminQs32:
 ;CHECK: vmin.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -91,7 +91,7 @@ define <4 x i32> @vminQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <16 x i8> @vminQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vminQu8:
+;CHECK-LABEL: vminQu8:
 ;CHECK: vmin.u8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -100,7 +100,7 @@ define <16 x i8> @vminQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vminQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vminQu16:
+;CHECK-LABEL: vminQu16:
 ;CHECK: vmin.u16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -109,7 +109,7 @@ define <8 x i16> @vminQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vminQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vminQu32:
+;CHECK-LABEL: vminQu32:
 ;CHECK: vmin.u32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -118,7 +118,7 @@ define <4 x i32> @vminQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <4 x float> @vminQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vminQf32:
+;CHECK-LABEL: vminQf32:
 ;CHECK: vmin.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
@@ -147,7 +147,7 @@ declare <4 x i32> @llvm.arm.neon.vminu.v4i32(<4 x i32>, <4 x i32>) nounwind read
 declare <4 x float> @llvm.arm.neon.vmins.v4f32(<4 x float>, <4 x float>) nounwind readnone
 
 define <8 x i8> @vmaxs8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vmaxs8:
+;CHECK-LABEL: vmaxs8:
 ;CHECK: vmax.s8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -156,7 +156,7 @@ define <8 x i8> @vmaxs8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vmaxs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vmaxs16:
+;CHECK-LABEL: vmaxs16:
 ;CHECK: vmax.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -165,7 +165,7 @@ define <4 x i16> @vmaxs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vmaxs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vmaxs32:
+;CHECK-LABEL: vmaxs32:
 ;CHECK: vmax.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -174,7 +174,7 @@ define <2 x i32> @vmaxs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <8 x i8> @vmaxu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vmaxu8:
+;CHECK-LABEL: vmaxu8:
 ;CHECK: vmax.u8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -183,7 +183,7 @@ define <8 x i8> @vmaxu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vmaxu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vmaxu16:
+;CHECK-LABEL: vmaxu16:
 ;CHECK: vmax.u16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -192,7 +192,7 @@ define <4 x i16> @vmaxu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vmaxu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vmaxu32:
+;CHECK-LABEL: vmaxu32:
 ;CHECK: vmax.u32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -201,7 +201,7 @@ define <2 x i32> @vmaxu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <2 x float> @vmaxf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vmaxf32:
+;CHECK-LABEL: vmaxf32:
 ;CHECK: vmax.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -210,7 +210,7 @@ define <2 x float> @vmaxf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <16 x i8> @vmaxQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vmaxQs8:
+;CHECK-LABEL: vmaxQs8:
 ;CHECK: vmax.s8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -219,7 +219,7 @@ define <16 x i8> @vmaxQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vmaxQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vmaxQs16:
+;CHECK-LABEL: vmaxQs16:
 ;CHECK: vmax.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -228,7 +228,7 @@ define <8 x i16> @vmaxQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vmaxQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vmaxQs32:
+;CHECK-LABEL: vmaxQs32:
 ;CHECK: vmax.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -237,7 +237,7 @@ define <4 x i32> @vmaxQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <16 x i8> @vmaxQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vmaxQu8:
+;CHECK-LABEL: vmaxQu8:
 ;CHECK: vmax.u8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -246,7 +246,7 @@ define <16 x i8> @vmaxQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vmaxQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vmaxQu16:
+;CHECK-LABEL: vmaxQu16:
 ;CHECK: vmax.u16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -255,7 +255,7 @@ define <8 x i16> @vmaxQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vmaxQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vmaxQu32:
+;CHECK-LABEL: vmaxQu32:
 ;CHECK: vmax.u32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -264,7 +264,7 @@ define <4 x i32> @vmaxQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <4 x float> @vmaxQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vmaxQf32:
+;CHECK-LABEL: vmaxQf32:
 ;CHECK: vmax.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B

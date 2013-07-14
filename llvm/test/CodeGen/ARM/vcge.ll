@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vcges8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vcges8:
+;CHECK-LABEL: vcges8:
 ;CHECK: vcge.s8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -11,7 +11,7 @@ define <8 x i8> @vcges8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vcges16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vcges16:
+;CHECK-LABEL: vcges16:
 ;CHECK: vcge.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -21,7 +21,7 @@ define <4 x i16> @vcges16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vcges32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vcges32:
+;CHECK-LABEL: vcges32:
 ;CHECK: vcge.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -31,7 +31,7 @@ define <2 x i32> @vcges32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <8 x i8> @vcgeu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vcgeu8:
+;CHECK-LABEL: vcgeu8:
 ;CHECK: vcge.u8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -41,7 +41,7 @@ define <8 x i8> @vcgeu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vcgeu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vcgeu16:
+;CHECK-LABEL: vcgeu16:
 ;CHECK: vcge.u16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -51,7 +51,7 @@ define <4 x i16> @vcgeu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vcgeu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vcgeu32:
+;CHECK-LABEL: vcgeu32:
 ;CHECK: vcge.u32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -61,7 +61,7 @@ define <2 x i32> @vcgeu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <2 x i32> @vcgef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vcgef32:
+;CHECK-LABEL: vcgef32:
 ;CHECK: vcge.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -71,7 +71,7 @@ define <2 x i32> @vcgef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <16 x i8> @vcgeQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vcgeQs8:
+;CHECK-LABEL: vcgeQs8:
 ;CHECK: vcge.s8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -81,7 +81,7 @@ define <16 x i8> @vcgeQs8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vcgeQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vcgeQs16:
+;CHECK-LABEL: vcgeQs16:
 ;CHECK: vcge.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -91,7 +91,7 @@ define <8 x i16> @vcgeQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vcgeQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vcgeQs32:
+;CHECK-LABEL: vcgeQs32:
 ;CHECK: vcge.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -101,7 +101,7 @@ define <4 x i32> @vcgeQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <16 x i8> @vcgeQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vcgeQu8:
+;CHECK-LABEL: vcgeQu8:
 ;CHECK: vcge.u8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -111,7 +111,7 @@ define <16 x i8> @vcgeQu8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vcgeQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vcgeQu16:
+;CHECK-LABEL: vcgeQu16:
 ;CHECK: vcge.u16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -121,7 +121,7 @@ define <8 x i16> @vcgeQu16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vcgeQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vcgeQu32:
+;CHECK-LABEL: vcgeQu32:
 ;CHECK: vcge.u32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -131,7 +131,7 @@ define <4 x i32> @vcgeQu32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <4 x i32> @vcgeQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vcgeQf32:
+;CHECK-LABEL: vcgeQf32:
 ;CHECK: vcge.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
@@ -141,7 +141,7 @@ define <4 x i32> @vcgeQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 }
 
 define <2 x i32> @vacgef32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vacgef32:
+;CHECK-LABEL: vacgef32:
 ;CHECK: vacge.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -150,7 +150,7 @@ define <2 x i32> @vacgef32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <4 x i32> @vacgeQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vacgeQf32:
+;CHECK-LABEL: vacgeQf32:
 ;CHECK: vacge.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
@@ -162,7 +162,7 @@ declare <2 x i32> @llvm.arm.neon.vacged(<2 x float>, <2 x float>) nounwind readn
 declare <4 x i32> @llvm.arm.neon.vacgeq(<4 x float>, <4 x float>) nounwind readnone
 
 define <8 x i8> @vcgei8Z(<8 x i8>* %A) nounwind {
-;CHECK: vcgei8Z:
+;CHECK-LABEL: vcgei8Z:
 ;CHECK-NOT: vmov
 ;CHECK-NOT: vmvn
 ;CHECK: vcge.s8
@@ -173,7 +173,7 @@ define <8 x i8> @vcgei8Z(<8 x i8>* %A) nounwind {
 }
 
 define <8 x i8> @vclei8Z(<8 x i8>* %A) nounwind {
-;CHECK: vclei8Z:
+;CHECK-LABEL: vclei8Z:
 ;CHECK-NOT: vmov
 ;CHECK-NOT: vmvn
 ;CHECK: vcle.s8

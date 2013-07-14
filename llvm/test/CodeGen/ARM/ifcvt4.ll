@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 
 ; Do not if-convert when branches go to the different loops.
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK-NOT: subgt
 ; CHECK-NOT: suble
 ; Don't use

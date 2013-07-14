@@ -7,7 +7,7 @@
 ; V8:     call get_double
 ; V8:     fnegs %f0, %f0
 
-; V8-UNOPT:     test_neg:
+; V8-UNOPT-LABEL:     test_neg:
 ; V8-UNOPT:     fnegs
 ; V8-UNOPT:     ! implicit-def
 ; V8-UNOPT:     fmovs {{.+}}, %f0
@@ -26,7 +26,7 @@ entry:
 ; V8-LABEL:     test_abs:
 ; V8:     fabss %f0, %f0
 
-; V8-UNOPT:     test_abs:
+; V8-UNOPT-LABEL:     test_abs:
 ; V8-UNOPT:     fabss
 ; V8-UNOPT:     ! implicit-def
 ; V8-UNOPT:     fmovs {{.+}}, %f0

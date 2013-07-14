@@ -4,7 +4,7 @@
 
 ; Check i32->f32.
 define float @f1(i32 %i) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cefbr %f0, %r2
 ; CHECK: br %r14
   %conv = sitofp i32 %i to float
@@ -13,7 +13,7 @@ define float @f1(i32 %i) {
 
 ; Check i32->f64.
 define double @f2(i32 %i) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cdfbr %f0, %r2
 ; CHECK: br %r14
   %conv = sitofp i32 %i to double
@@ -22,7 +22,7 @@ define double @f2(i32 %i) {
 
 ; Check i32->f128.
 define void @f3(i32 %i, fp128 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: cxfbr %f0, %r2
 ; CHECK: std %f0, 0(%r3)
 ; CHECK: std %f2, 8(%r3)

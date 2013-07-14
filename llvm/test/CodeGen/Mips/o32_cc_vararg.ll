@@ -27,7 +27,7 @@ entry:
   %tmp = load i32* %b, align 4
   ret i32 %tmp
 
-; CHECK: va1:
+; CHECK-LABEL: va1:
 ; CHECK: addiu   $sp, $sp, -16
 ; CHECK: sw      $7, 28($sp)
 ; CHECK: sw      $6, 24($sp)
@@ -53,7 +53,7 @@ entry:
   %tmp = load double* %b, align 8
   ret double %tmp
 
-; CHECK: va2:
+; CHECK-LABEL: va2:
 ; CHECK: addiu   $sp, $sp, -16
 ; CHECK: sw      $7, 28($sp)
 ; CHECK: sw      $6, 24($sp)
@@ -81,7 +81,7 @@ entry:
   %tmp = load i32* %b, align 4
   ret i32 %tmp
 
-; CHECK: va3:
+; CHECK-LABEL: va3:
 ; CHECK: addiu   $sp, $sp, -16
 ; CHECK: sw      $7, 28($sp)
 ; CHECK: sw      $6, 24($sp)
@@ -104,7 +104,7 @@ entry:
   %tmp = load double* %b, align 8
   ret double %tmp
 
-; CHECK: va4:
+; CHECK-LABEL: va4:
 ; CHECK: addiu   $sp, $sp, -24
 ; CHECK: sw      $7, 36($sp)
 ; CHECK: sw      $6, 32($sp)
@@ -132,7 +132,7 @@ entry:
   %tmp = load i32* %d, align 4
   ret i32 %tmp
 
-; CHECK: va5:
+; CHECK-LABEL: va5:
 ; CHECK: addiu   $sp, $sp, -24
 ; CHECK: sw      $7, 36($sp)
 ; CHECK: lw      $2, 36($sp)
@@ -158,7 +158,7 @@ entry:
   %tmp = load double* %d, align 8
   ret double %tmp
 
-; CHECK: va6:
+; CHECK-LABEL: va6:
 ; CHECK: addiu   $sp, $sp, -24
 ; CHECK: sw      $7, 36($sp)
 ; CHECK: addiu   $[[R0:[0-9]+]], $sp, 36
@@ -186,7 +186,7 @@ entry:
   %tmp = load i32* %c, align 4
   ret i32 %tmp
 
-; CHECK: va7:
+; CHECK-LABEL: va7:
 ; CHECK: addiu   $sp, $sp, -24
 ; CHECK: lw      $2, 40($sp)
 }
@@ -209,7 +209,7 @@ entry:
   %tmp = load double* %c, align 8
   ret double %tmp
 
-; CHECK: va8:
+; CHECK-LABEL: va8:
 ; CHECK: addiu   $sp, $sp, -32
 ; CHECK: addiu   ${{[0-9]+}}, $sp, 48
 ; CHECK: ldc1    $f0, 48($sp)
@@ -235,7 +235,7 @@ entry:
   %tmp = load i32* %d, align 4
   ret i32 %tmp
 
-; CHECK: va9:
+; CHECK-LABEL: va9:
 ; CHECK: addiu   $sp, $sp, -32
 ; CHECK: lw      $2, 52($sp)
 }
@@ -260,7 +260,7 @@ entry:
   %tmp = load double* %d, align 8
   ret double %tmp
 
-; CHECK: va10:
+; CHECK-LABEL: va10:
 ; CHECK: addiu   $sp, $sp, -32
 ; CHECK: addiu   $[[R0:[0-9]+]], $sp, 52
 ; CHECK: addiu   $[[R1:[0-9]+]], $[[R0]], 7

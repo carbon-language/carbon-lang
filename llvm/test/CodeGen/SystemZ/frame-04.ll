@@ -8,7 +8,7 @@
 ; should be exactly 160 + 8 * 8 = 224.  The CFA offset is 160
 ; (the caller-allocated part of the frame) + 224.
 define void @f1(fp128 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: aghi %r15, -224
 ; CHECK: .cfi_def_cfa_offset 384
 ; CHECK: std %f8, 216(%r15)
@@ -68,7 +68,7 @@ define void @f1(fp128 *%ptr) {
 ; Like f1, but requires one fewer FPR pair.  We allocate in numerical order,
 ; so %f13+%f15 is the pair that gets dropped.
 define void @f2(fp128 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: aghi %r15, -208
 ; CHECK: .cfi_def_cfa_offset 368
 ; CHECK: std %f8, 200(%r15)
@@ -121,7 +121,7 @@ define void @f2(fp128 *%ptr) {
 ; Like f1, but requires only one call-saved FPR pair.  We allocate in
 ; numerical order so the pair should be %f8+%f10.
 define void @f3(fp128 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: aghi %r15, -176
 ; CHECK: .cfi_def_cfa_offset 336
 ; CHECK: std %f8, 168(%r15)
@@ -160,7 +160,7 @@ define void @f3(fp128 *%ptr) {
 ; This function should use all call-clobbered FPRs but no call-saved ones.
 ; It shouldn't need to create a frame.
 define void @f4(fp128 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: %r15
 ; CHECK-NOT: %f8
 ; CHECK-NOT: %f9

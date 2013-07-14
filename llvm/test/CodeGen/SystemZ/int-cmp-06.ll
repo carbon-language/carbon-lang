@@ -6,7 +6,7 @@ declare i64 @foo()
 
 ; Check unsigned register comparison.
 define double @f1(double %a, double %b, i64 %i1, i32 %unext) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: clgfr %r2, %r3
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -19,7 +19,7 @@ define double @f1(double %a, double %b, i64 %i1, i32 %unext) {
 
 ; ...and again with a different representation.
 define double @f2(double %a, double %b, i64 %i1, i64 %unext) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: clgfr %r2, %r3
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -32,7 +32,7 @@ define double @f2(double %a, double %b, i64 %i1, i64 %unext) {
 
 ; Check signed register comparison, which can't use CLGFR.
 define double @f3(double %a, double %b, i64 %i1, i32 %unext) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: clgfr
 ; CHECK: br %r14
   %i2 = zext i32 %unext to i64
@@ -43,7 +43,7 @@ define double @f3(double %a, double %b, i64 %i1, i32 %unext) {
 
 ; ...and again with a different representation
 define double @f4(double %a, double %b, i64 %i1, i64 %unext) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: clgfr
 ; CHECK: br %r14
   %i2 = and i64 %unext, 4294967295
@@ -54,7 +54,7 @@ define double @f4(double %a, double %b, i64 %i1, i64 %unext) {
 
 ; Check register equality.
 define double @f5(double %a, double %b, i64 %i1, i32 %unext) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: clgfr %r2, %r3
 ; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
@@ -67,7 +67,7 @@ define double @f5(double %a, double %b, i64 %i1, i32 %unext) {
 
 ; ...and again with a different representation
 define double @f6(double %a, double %b, i64 %i1, i64 %unext) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: clgfr %r2, %r3
 ; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
@@ -80,7 +80,7 @@ define double @f6(double %a, double %b, i64 %i1, i64 %unext) {
 
 ; Check register inequality.
 define double @f7(double %a, double %b, i64 %i1, i32 %unext) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: clgfr %r2, %r3
 ; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
@@ -93,7 +93,7 @@ define double @f7(double %a, double %b, i64 %i1, i32 %unext) {
 
 ; ...and again with a different representation
 define double @f8(double %a, double %b, i64 %i1, i64 %unext) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: clgfr %r2, %r3
 ; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
@@ -106,7 +106,7 @@ define double @f8(double %a, double %b, i64 %i1, i64 %unext) {
 
 ; Check unsigned comparisonn with memory.
 define double @f9(double %a, double %b, i64 %i1, i32 *%ptr) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: clgf %r2, 0(%r3)
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -120,7 +120,7 @@ define double @f9(double %a, double %b, i64 %i1, i32 *%ptr) {
 
 ; Check signed comparison with memory.
 define double @f10(double %a, double %b, i64 %i1, i32 *%ptr) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK-NOT: clgf
 ; CHECK: br %r14
   %unext = load i32 *%ptr
@@ -132,7 +132,7 @@ define double @f10(double %a, double %b, i64 %i1, i32 *%ptr) {
 
 ; Check memory equality.
 define double @f11(double %a, double %b, i64 %i1, i32 *%ptr) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: clgf %r2, 0(%r3)
 ; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
@@ -146,7 +146,7 @@ define double @f11(double %a, double %b, i64 %i1, i32 *%ptr) {
 
 ; Check memory inequality.
 define double @f12(double %a, double %b, i64 %i1, i32 *%ptr) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: clgf %r2, 0(%r3)
 ; CHECK-NEXT: jlh
 ; CHECK: ldr %f0, %f2
@@ -160,7 +160,7 @@ define double @f12(double %a, double %b, i64 %i1, i32 *%ptr) {
 
 ; Check the high end of the aligned CLGF range.
 define double @f13(double %a, double %b, i64 %i1, i32 *%base) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: clgf %r2, 524284(%r3)
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -176,7 +176,7 @@ define double @f13(double %a, double %b, i64 %i1, i32 *%base) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f14(double %a, double %b, i64 %i1, i32 *%base) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: agfi %r3, 524288
 ; CHECK: clgf %r2, 0(%r3)
 ; CHECK-NEXT: jl
@@ -192,7 +192,7 @@ define double @f14(double %a, double %b, i64 %i1, i32 *%base) {
 
 ; Check the high end of the negative aligned CLGF range.
 define double @f15(double %a, double %b, i64 %i1, i32 *%base) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: clgf %r2, -4(%r3)
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -207,7 +207,7 @@ define double @f15(double %a, double %b, i64 %i1, i32 *%base) {
 
 ; Check the low end of the CLGF range.
 define double @f16(double %a, double %b, i64 %i1, i32 *%base) {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: clgf %r2, -524288(%r3)
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -223,7 +223,7 @@ define double @f16(double %a, double %b, i64 %i1, i32 *%base) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f17(double %a, double %b, i64 %i1, i32 *%base) {
-; CHECK: f17:
+; CHECK-LABEL: f17:
 ; CHECK: agfi %r3, -524292
 ; CHECK: clgf %r2, 0(%r3)
 ; CHECK-NEXT: jl
@@ -239,7 +239,7 @@ define double @f17(double %a, double %b, i64 %i1, i32 *%base) {
 
 ; Check that CLGF allows an index.
 define double @f18(double %a, double %b, i64 %i1, i64 %base, i64 %index) {
-; CHECK: f18:
+; CHECK-LABEL: f18:
 ; CHECK: clgf %r2, 524284({{%r4,%r3|%r3,%r4}})
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -256,7 +256,7 @@ define double @f18(double %a, double %b, i64 %i1, i64 %base, i64 %index) {
 
 ; Check that comparisons of spilled values can use CLGF rather than CLGFR.
 define i64 @f19(i32 *%ptr0) {
-; CHECK: f19:
+; CHECK-LABEL: f19:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: clgf {{%r[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14

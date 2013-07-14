@@ -6,8 +6,8 @@
 ; RUN: llc < %s -march=mblaze -mattr=+div | FileCheck -check-prefix=DIV %s
 
 define i8 @test_i8(i8 %a, i8 %b) {
-    ; FUN:        test_i8:
-    ; DIV:        test_i8:
+    ; FUN-LABEL:        test_i8:
+    ; DIV-LABEL:        test_i8:
 
     %tmp.1 = udiv i8 %a, %b
     ; FUN-NOT:    idiv
@@ -29,8 +29,8 @@ define i8 @test_i8(i8 %a, i8 %b) {
 }
 
 define i16 @test_i16(i16 %a, i16 %b) {
-    ; FUN:        test_i16:
-    ; DIV:        test_i16:
+    ; FUN-LABEL:        test_i16:
+    ; DIV-LABEL:        test_i16:
 
     %tmp.1 = udiv i16 %a, %b
     ; FUN-NOT:    idiv
@@ -52,8 +52,8 @@ define i16 @test_i16(i16 %a, i16 %b) {
 }
 
 define i32 @test_i32(i32 %a, i32 %b) {
-    ; FUN:        test_i32:
-    ; DIV:        test_i32:
+    ; FUN-LABEL:        test_i32:
+    ; DIV-LABEL:        test_i32:
 
     %tmp.1 = udiv i32 %a, %b
     ; FUN-NOT:    idiv

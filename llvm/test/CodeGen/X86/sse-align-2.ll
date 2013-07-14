@@ -6,7 +6,7 @@ define <4 x float> @foo(<4 x float>* %p, <4 x float> %x) nounwind {
   ret <4 x float> %z
 }
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: movups
 ; CHECK: ret
 
@@ -16,6 +16,6 @@ define <2 x double> @bar(<2 x double>* %p, <2 x double> %x) nounwind {
   ret <2 x double> %z
 }
 
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK: movupd
 ; CHECK: ret

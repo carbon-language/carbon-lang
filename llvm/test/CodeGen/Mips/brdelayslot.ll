@@ -31,7 +31,7 @@ declare void @foo2(i32)
 ;
 define void @foo3(i32 %a) nounwind {
 entry:
-; Default:     foo3:
+; Default-LABEL:     foo3:
 ; Default:     jalr
 ; Default:     cvt.d.w
 
@@ -49,7 +49,7 @@ declare void @foo4(double)
 ; Check that branch delay slot can be filled with an instruction with operand
 ; $1.
 ;
-; Default:     foo5:
+; Default-LABEL:     foo5:
 ; Default-NOT: nop
 
 define void @foo5(i32 %a) nounwind {
@@ -76,7 +76,7 @@ if.end:
 
 ; Check that delay slot filler can place mov.s or mov.d in delay slot.
 ;
-; Default:     foo6:
+; Default-LABEL:     foo6:
 ; Default-NOT: nop
 ; Default:     .end foo6
 
@@ -90,7 +90,7 @@ declare void @foo7(double, float)
 
 ; Check that a store can move past other memory instructions.
 ;
-; STATICO1:      foo8:
+; STATICO1-LABEL:      foo8:
 ; STATICO1:      jalr ${{[0-9]+}}
 ; STATICO1-NEXT: sw ${{[0-9]+}}, %lo(g1)
 
@@ -109,7 +109,7 @@ entry:
 ; Test searchForward. Check that the second jal's slot is filled with another
 ; instruction in the same block.
 ;
-; FORWARD:     foo10:
+; FORWARD-LABEL:     foo10:
 ; FORWARD:     jal foo11
 ; FORWARD:     jal foo11
 ; FORWARD-NOT: nop
@@ -130,7 +130,7 @@ declare void @foo11()
 ; Check that delay slots of branches in both the entry block and loop body are
 ; filled.
 ;
-; SUCCBB:      succbbs_loop1:
+; SUCCBB-LABEL:      succbbs_loop1:
 ; SUCCBB:      blez $5, $BB
 ; SUCCBB-NEXT: addiu
 ; SUCCBB:      bne ${{[0-9]+}}, $zero, $BB
@@ -158,7 +158,7 @@ for.end:                                          ; preds = %for.body, %entry
 
 ; Check that the first branch has its slot filled.
 ;
-; SUCCBB:      succbbs_br1:
+; SUCCBB-LABEL:      succbbs_br1:
 ; SUCCBB:      beq ${{[0-9]+}}, $zero, $BB
 ; SUCCBB-NEXT: lw $25, %call16(foo100)
 

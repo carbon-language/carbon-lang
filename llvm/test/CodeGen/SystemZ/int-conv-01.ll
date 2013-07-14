@@ -4,7 +4,7 @@
 
 ; Test register extension, starting with an i32.
 define i32 @f1(i32 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lbr %r2, %r2
 ; CHECK: br %r14
   %byte = trunc i32 %a to i8
@@ -14,7 +14,7 @@ define i32 @f1(i32 %a) {
 
 ; ...and again with an i64.
 define i32 @f2(i64 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lbr %r2, %r2
 ; CHECK: br %r14
   %byte = trunc i64 %a to i8
@@ -24,7 +24,7 @@ define i32 @f2(i64 %a) {
 
 ; Check LB with no displacement.
 define i32 @f3(i8 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lb %r2, 0(%r2)
 ; CHECK: br %r14
   %byte = load i8 *%src
@@ -34,7 +34,7 @@ define i32 @f3(i8 *%src) {
 
 ; Check the high end of the LB range.
 define i32 @f4(i8 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lb %r2, 524287(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 524287
@@ -46,7 +46,7 @@ define i32 @f4(i8 *%src) {
 ; Check the next byte up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f5(i8 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r2, 524288
 ; CHECK: lb %r2, 0(%r2)
 ; CHECK: br %r14
@@ -58,7 +58,7 @@ define i32 @f5(i8 *%src) {
 
 ; Check the high end of the negative LB range.
 define i32 @f6(i8 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lb %r2, -1(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 -1
@@ -69,7 +69,7 @@ define i32 @f6(i8 *%src) {
 
 ; Check the low end of the LB range.
 define i32 @f7(i8 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lb %r2, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 -524288
@@ -81,7 +81,7 @@ define i32 @f7(i8 *%src) {
 ; Check the next byte down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f8(i8 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r2, -524289
 ; CHECK: lb %r2, 0(%r2)
 ; CHECK: br %r14
@@ -93,7 +93,7 @@ define i32 @f8(i8 *%src) {
 
 ; Check that LB allows an index
 define i32 @f9(i64 %src, i64 %index) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: lb %r2, 524287(%r3,%r2)
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -107,7 +107,7 @@ define i32 @f9(i64 %src, i64 %index) {
 ; Test a case where we spill the source of at least one LBR.  We want
 ; to use LB if possible.
 define void @f10(i32 *%ptr) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: lb {{%r[0-9]+}}, 16{{[37]}}(%r15)
 ; CHECK: br %r14
   %val0 = load volatile i32 *%ptr

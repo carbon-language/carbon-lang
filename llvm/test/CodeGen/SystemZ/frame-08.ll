@@ -7,7 +7,7 @@
 ; so get a frame of size 524232 by allocating (524232 - 176) / 8 = 65507
 ; extra doublewords.
 define void @f1(i32 *%ptr, i64 %x) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: stmg %r6, %r15, 48(%r15)
 ; CHECK: .cfi_offset %r6, -112
 ; CHECK: .cfi_offset %r7, -104
@@ -75,7 +75,7 @@ define void @f1(i32 *%ptr, i64 %x) {
 ; so get a frame of size 524168 by allocating (524168 - 176) / 8 = 65499
 ; extra doublewords.
 define void @f2(i32 *%ptr, i64 %x) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: stmg %r14, %r15, 112(%r15)
 ; CHECK: .cfi_offset %r14, -48
 ; CHECK: .cfi_offset %r15, -40
@@ -110,7 +110,7 @@ define void @f2(i32 *%ptr, i64 %x) {
 ; frame size that needs two instructions to perform the final LMG for
 ; %r6 and above.
 define void @f3(i32 *%ptr, i64 %x) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: stmg %r6, %r15, 48(%r15)
 ; CHECK: .cfi_offset %r6, -112
 ; CHECK: .cfi_offset %r7, -104
@@ -177,7 +177,7 @@ define void @f3(i32 *%ptr, i64 %x) {
 ; frame size that needs two instructions to perform the final LMG for
 ; %r14 and %r15.
 define void @f4(i32 *%ptr, i64 %x) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: stmg %r14, %r15, 112(%r15)
 ; CHECK: .cfi_offset %r14, -48
 ; CHECK: .cfi_offset %r15, -40
@@ -211,7 +211,7 @@ define void @f4(i32 *%ptr, i64 %x) {
 ; This is the largest frame size for which the prepatory increment for
 ; "lmg %r14, %r15, ..." can be done using AGHI.
 define void @f5(i32 *%ptr, i64 %x) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: stmg %r14, %r15, 112(%r15)
 ; CHECK: .cfi_offset %r14, -48
 ; CHECK: .cfi_offset %r15, -40
@@ -245,7 +245,7 @@ define void @f5(i32 *%ptr, i64 %x) {
 ; This is the smallest frame size for which the prepatory increment for
 ; "lmg %r14, %r15, ..." needs to be done using AGFI.
 define void @f6(i32 *%ptr, i64 %x) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: stmg %r14, %r15, 112(%r15)
 ; CHECK: .cfi_offset %r14, -48
 ; CHECK: .cfi_offset %r15, -40

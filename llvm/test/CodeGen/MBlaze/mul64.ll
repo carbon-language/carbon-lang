@@ -7,8 +7,8 @@
 ; RUN:      FileCheck -check-prefix=MUL %s
 
 define i64 @test_i64(i64 %a, i64 %b) {
-    ; FUN:        test_i64:
-    ; MUL:        test_i64:
+    ; FUN-LABEL:        test_i64:
+    ; MUL-LABEL:        test_i64:
 
     %tmp.1 = mul i64 %a, %b
     ; FUN-NOT:    mul

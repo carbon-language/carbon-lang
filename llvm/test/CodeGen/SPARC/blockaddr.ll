@@ -15,13 +15,13 @@ entry:
   ret i8* %x
 }
 
-; abs32: func_block_addr:
+; abs32-LABEL: func_block_addr:
 ; abs32: sethi %hi([[BLK:.+]]), [[R:%[gilo][0-7]]]
 ; abs32: call dummy
 ; abs32: add  [[R]], %lo([[BLK]]), %o0
 ; abs32: jmp %o0
 
-; abs44: func_block_addr:
+; abs44-LABEL: func_block_addr:
 ; abs44: sethi %h44([[BLK:.+]]), [[R:%[gilo][0-7]]]
 ; abs44: add [[R]], %m44([[BLK]]), [[R1:%[gilo][0-7]]]
 ; abs44: sllx [[R1]], 12, [[R2:%[gilo][0-7]]]
@@ -29,7 +29,7 @@ entry:
 ; abs44: add [[R2]], %l44([[BLK]]), %o0
 ; abs44: jmp %o0
 
-; abs64: func_block_addr:
+; abs64-LABEL: func_block_addr:
 ; abs64: sethi %hi([[BLK:.+]]), [[R:%[gilo][0-7]]]
 ; abs64: add [[R]], %lo([[BLK]]), [[R1:%[gilo][0-7]]]
 ; abs64: sethi %hh([[BLK]]), [[R2:%[gilo][0-7]]]

@@ -7,7 +7,7 @@
 
 define i32 @t() nounwind {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: sub sp, #12
 ; CHECK-NOT: sub
 ; CHECK: add r0, sp, #4

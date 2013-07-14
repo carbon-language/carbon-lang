@@ -4,7 +4,7 @@
 
 ; Check register extension.
 define void @f1(fp128 *%dst, double %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lxdbr %f0, %f0
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -16,7 +16,7 @@ define void @f1(fp128 *%dst, double %val) {
 
 ; Check the low end of the LXDB range.
 define void @f2(fp128 *%dst, double *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lxdb %f0, 0(%r3)
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -29,7 +29,7 @@ define void @f2(fp128 *%dst, double *%ptr) {
 
 ; Check the high end of the aligned LXDB range.
 define void @f3(fp128 *%dst, double *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lxdb %f0, 4088(%r3)
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -44,7 +44,7 @@ define void @f3(fp128 *%dst, double *%base) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f4(fp128 *%dst, double *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r3, 4096
 ; CHECK: lxdb %f0, 0(%r3)
 ; CHECK: std %f0, 0(%r2)
@@ -59,7 +59,7 @@ define void @f4(fp128 *%dst, double *%base) {
 
 ; Check negative displacements, which also need separate address logic.
 define void @f5(fp128 *%dst, double *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r3, -8
 ; CHECK: lxdb %f0, 0(%r3)
 ; CHECK: std %f0, 0(%r2)
@@ -74,7 +74,7 @@ define void @f5(fp128 *%dst, double *%base) {
 
 ; Check that LXDB allows indices.
 define void @f6(fp128 *%dst, double *%base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r4, 3
 ; CHECK: lxdb %f0, 800(%r1,%r3)
 ; CHECK: std %f0, 0(%r2)
@@ -91,7 +91,7 @@ define void @f6(fp128 *%dst, double *%base, i64 %index) {
 ; Test a case where we spill the source of at least one LXDBR.  We want
 ; to use LXDB if possible.
 define void @f7(fp128 *%ptr1, double *%ptr2) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lxdb {{%f[0-9]+}}, 160(%r15)
 ; CHECK: br %r14
   %val0 = load volatile double *%ptr2

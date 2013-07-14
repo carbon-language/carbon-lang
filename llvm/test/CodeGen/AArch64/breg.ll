@@ -3,7 +3,7 @@
 @stored_label = global i8* null
 
 define void @foo() {
-; CHECK: foo:
+; CHECK-LABEL: foo:
   %lab = load i8** @stored_label
   indirectbr i8* %lab, [label  %otherlab, label %retlab]
 ; CHECK: adrp {{x[0-9]+}}, stored_label

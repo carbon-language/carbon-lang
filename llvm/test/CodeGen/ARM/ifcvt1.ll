@@ -2,8 +2,8 @@
 ; RUN: llc < %s -march=arm -mcpu=swift     | FileCheck %s -check-prefix=SWIFT
 
 define i32 @t1(i32 %a, i32 %b) {
-; A8: t1:
-; SWIFT: t1:
+; A8-LABEL: t1:
+; SWIFT-LABEL: t1:
 	%tmp2 = icmp eq i32 %a, 0
 	br i1 %tmp2, label %cond_false, label %cond_true
 

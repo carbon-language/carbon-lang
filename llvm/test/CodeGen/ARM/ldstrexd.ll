@@ -3,7 +3,7 @@
 
 %0 = type { i32, i32 }
 
-; CHECK: f0:
+; CHECK-LABEL: f0:
 ; CHECK: ldrexd
 define i64 @f0(i8* %p) nounwind readonly {
 entry:
@@ -17,7 +17,7 @@ entry:
   ret i64 %4
 }
 
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: strexd
 define i32 @f1(i8* %ptr, i64 %val) nounwind {
 entry:

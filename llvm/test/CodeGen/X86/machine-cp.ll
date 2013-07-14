@@ -4,7 +4,7 @@
 ; rdar://10640363
 define i32 @t1(i32 %a, i32 %b) nounwind  {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: je [[LABEL:.*BB.*]]
   %cmp1 = icmp eq i32 %b, 0
   br i1 %cmp1, label %while.end, label %while.body
@@ -29,7 +29,7 @@ while.end:                                        ; preds = %while.body, %entry
 ; rdar://10428165
 define <8 x i16> @t2(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK-NOT: movdqa
   %tmp8 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 undef, i32 undef, i32 7, i32 2, i32 8, i32 undef, i32 undef , i32 undef >
   ret <8 x i16> %tmp8

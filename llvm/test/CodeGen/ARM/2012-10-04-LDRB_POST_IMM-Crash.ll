@@ -6,7 +6,7 @@
 
 declare void @f(i32 %n1, i32 %n2, i32 %n3, %my_struct_t* byval %val);
 
-; CHECK: main:
+; CHECK-LABEL: main:
 define i32 @main() nounwind {
 entry:
 ; CHECK: ldrb	{{(r[0-9]+)}}, {{(\[r[0-9]+\])}}, #1

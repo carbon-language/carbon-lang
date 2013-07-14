@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=x86-64 -mattr=+sse2 -mcpu=core2 | FileCheck %s
 
 define i32 @t(<2 x i64>* %val) nounwind  {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK-NOT: movd
 ; CHECK: movl 8(
 ; CHECK-NEXT: ret
@@ -15,7 +15,7 @@ define i32 @t(<2 x i64>* %val) nounwind  {
 ; Case where extractelement of load ends up as undef.
 ; (Making sure this doesn't crash.)
 define i32 @t2(<8 x i32>* %xp) {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: ret
   %x = load <8 x i32>* %xp
   %Shuff68 = shufflevector <8 x i32> %x, <8 x i32> undef, <8 x i32> <i32

@@ -3,7 +3,7 @@
 
 define i32 @bswap32(i32 %x) nounwind readnone {
 entry:
-; MIPS32: bswap32:
+; MIPS32-LABEL: bswap32:
 ; MIPS32: wsbh $[[R0:[0-9]+]]
 ; MIPS32: rotr ${{[0-9]+}}, $[[R0]], 16
   %or.3 = call i32 @llvm.bswap.i32(i32 %x)
@@ -12,7 +12,7 @@ entry:
 
 define i64 @bswap64(i64 %x) nounwind readnone {
 entry:
-; MIPS64: bswap64:
+; MIPS64-LABEL: bswap64:
 ; MIPS64: dsbh $[[R0:[0-9]+]]
 ; MIPS64: dshd ${{[0-9]+}}, $[[R0]]
   %or.7 = call i64 @llvm.bswap.i64(i64 %x)

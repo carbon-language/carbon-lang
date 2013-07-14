@@ -4,7 +4,7 @@
 
 ; Check NANDs of a variable.
 define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^ ]*]]:
 ; CHECK: lr %r0, %r2
@@ -19,7 +19,7 @@ define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check NANDs of 1.
 define i32 @f2(i32 %dummy, i32 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^ ]*]]:
 ; CHECK: lr %r0, %r2
@@ -34,7 +34,7 @@ define i32 @f2(i32 %dummy, i32 *%src) {
 
 ; Check NANDs of the low end of the NILH range.
 define i32 @f3(i32 %dummy, i32 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: nilh %r0, 0
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14
@@ -44,7 +44,7 @@ define i32 @f3(i32 %dummy, i32 *%src) {
 
 ; Check the next value up, which must use NILF.
 define i32 @f4(i32 %dummy, i32 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: nilf %r0, 65536
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14
@@ -54,7 +54,7 @@ define i32 @f4(i32 %dummy, i32 *%src) {
 
 ; Check the largest useful NILL value.
 define i32 @f5(i32 %dummy, i32 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: nill %r0, 65534
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14
@@ -64,7 +64,7 @@ define i32 @f5(i32 %dummy, i32 *%src) {
 
 ; Check the low end of the NILL range.
 define i32 @f6(i32 %dummy, i32 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: nill %r0, 0
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14
@@ -74,7 +74,7 @@ define i32 @f6(i32 %dummy, i32 *%src) {
 
 ; Check the largest useful NILH value, which is one less than the above.
 define i32 @f7(i32 %dummy, i32 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: nilh %r0, 65534
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14
@@ -84,7 +84,7 @@ define i32 @f7(i32 %dummy, i32 *%src) {
 
 ; Check the highest useful NILF value, which is one less than the above.
 define i32 @f8(i32 %dummy, i32 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: nilf %r0, 4294901758
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14

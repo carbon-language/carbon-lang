@@ -8,7 +8,7 @@ declare double @foo()
 ; point of view, because %f2 is the low register of the FP128 %f0.  Pass the
 ; multiplier in %f4 instead.
 define void @f1(double %f1, double %dummy, double %f2, fp128 *%dst) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: mxdbr %f0, %f4
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -22,7 +22,7 @@ define void @f1(double %f1, double %dummy, double %f2, fp128 *%dst) {
 
 ; Check the low end of the MXDB range.
 define void @f2(double %f1, double *%ptr, fp128 *%dst) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mxdb %f0, 0(%r2)
 ; CHECK: std %f0, 0(%r3)
 ; CHECK: std %f2, 8(%r3)
@@ -37,7 +37,7 @@ define void @f2(double %f1, double *%ptr, fp128 *%dst) {
 
 ; Check the high end of the aligned MXDB range.
 define void @f3(double %f1, double *%base, fp128 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: mxdb %f0, 4088(%r2)
 ; CHECK: std %f0, 0(%r3)
 ; CHECK: std %f2, 8(%r3)
@@ -54,7 +54,7 @@ define void @f3(double %f1, double *%base, fp128 *%dst) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f4(double %f1, double *%base, fp128 *%dst) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: mxdb %f0, 0(%r2)
 ; CHECK: std %f0, 0(%r3)
@@ -71,7 +71,7 @@ define void @f4(double %f1, double *%base, fp128 *%dst) {
 
 ; Check negative displacements, which also need separate address logic.
 define void @f5(double %f1, double *%base, fp128 *%dst) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -8
 ; CHECK: mxdb %f0, 0(%r2)
 ; CHECK: std %f0, 0(%r3)
@@ -88,7 +88,7 @@ define void @f5(double %f1, double *%base, fp128 *%dst) {
 
 ; Check that MXDB allows indices.
 define void @f6(double %f1, double *%base, i64 %index, fp128 *%dst) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: mxdb %f0, 800(%r1,%r2)
 ; CHECK: std %f0, 0(%r4)
@@ -106,7 +106,7 @@ define void @f6(double %f1, double *%base, i64 %index, fp128 *%dst) {
 
 ; Check that multiplications of spilled values can use MXDB rather than MXDBR.
 define double @f7(double *%ptr0) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mxdb %f0, 160(%r15)
 ; CHECK: br %r14

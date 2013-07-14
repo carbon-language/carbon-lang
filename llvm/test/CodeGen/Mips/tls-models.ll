@@ -20,9 +20,9 @@ entry:
   ret i32* @external_gd
 
   ; Non-PIC code can use initial-exec, PIC code has to use general dynamic.
-  ; CHECK-NONPIC:   f1:
+  ; CHECK-NONPIC-LABEL:   f1:
   ; CHECK-NONPIC:   %gottprel
-  ; CHECK-PIC:      f1:
+  ; CHECK-PIC-LABEL:      f1:
   ; CHECK-PIC:      %tlsgd
 }
 
@@ -31,9 +31,9 @@ entry:
   ret i32* @internal_gd
 
   ; Non-PIC code can use local exec, PIC code can use local dynamic.
-  ; CHECK-NONPIC:   f2:
+  ; CHECK-NONPIC-LABEL:   f2:
   ; CHECK-NONPIC:   %tprel_hi
-  ; CHECK-PIC:      f2:
+  ; CHECK-PIC-LABEL:      f2:
   ; CHECK-PIC:      %tlsldm
 }
 
@@ -45,9 +45,9 @@ entry:
   ret i32* @external_ld
 
   ; Non-PIC code can use initial exec, PIC should use local dynamic.
-  ; CHECK-NONPIC:   f3:
+  ; CHECK-NONPIC-LABEL:   f3:
   ; CHECK-NONPIC:   %gottprel
-  ; CHECK-PIC:      f3:
+  ; CHECK-PIC-LABEL:      f3:
   ; CHECK-PIC:      %tlsldm
 }
 
@@ -56,9 +56,9 @@ entry:
   ret i32* @internal_ld
 
   ; Non-PIC code can use local exec, PIC code can use local dynamic.
-  ; CHECK-NONPIC:   f4:
+  ; CHECK-NONPIC-LABEL:   f4:
   ; CHECK-NONPIC:   %tprel_hi
-  ; CHECK-PIC:      f4:
+  ; CHECK-PIC-LABEL:      f4:
   ; CHECK-PIC:      %tlsldm
 }
 
@@ -70,9 +70,9 @@ entry:
   ret i32* @external_ie
 
   ; Non-PIC and PIC code will use initial exec as specified.
-  ; CHECK-NONPIC:   f5:
+  ; CHECK-NONPIC-LABEL:   f5:
   ; CHECK-NONPIC:   %gottprel
-  ; CHECK-PIC:      f5:
+  ; CHECK-PIC-LABEL:      f5:
   ; CHECK-PIC:      %gottprel
 }
 
@@ -81,9 +81,9 @@ entry:
   ret i32* @internal_ie
 
   ; Non-PIC code can use local exec, PIC code use initial exec as specified.
-  ; CHECK-NONPIC:   f6:
+  ; CHECK-NONPIC-LABEL:   f6:
   ; CHECK-NONPIC:   %tprel_hi
-  ; CHECK-PIC:      f6:
+  ; CHECK-PIC-LABEL:      f6:
   ; CHECK-PIC:      %gottprel
 }
 
@@ -95,9 +95,9 @@ entry:
   ret i32* @external_le
 
   ; Non-PIC and PIC code will use local exec as specified.
-  ; CHECK-NONPIC:   f7:
+  ; CHECK-NONPIC-LABEL:   f7:
   ; CHECK-NONPIC:   %tprel_hi
-  ; CHECK-PIC:      f7:
+  ; CHECK-PIC-LABEL:      f7:
   ; CHECK-PIC:      %tprel_hi
 }
 
@@ -106,8 +106,8 @@ entry:
   ret i32* @internal_le
 
   ; Non-PIC and PIC code will use local exec as specified.
-  ; CHECK-NONPIC:   f8:
+  ; CHECK-NONPIC-LABEL:   f8:
   ; CHECK-NONPIC:   %tprel_hi
-  ; CHECK-PIC:      f8:
+  ; CHECK-PIC-LABEL:      f8:
   ; CHECK-PIC:      %tprel_hi
 }

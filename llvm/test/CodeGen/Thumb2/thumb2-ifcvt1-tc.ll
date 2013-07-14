@@ -2,7 +2,7 @@
 ; XFAIL: *
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: it ne
 ; CHECK: cmpne
 	switch i32 %c, label %cond_next [
@@ -23,7 +23,7 @@ cond_next:
 ; FIXME: Check for # of unconditional branch after adding branch folding post ifcvt.
 define i32 @t2(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: ite gt
 ; CHECK: subgt
 ; CHECK: suble
@@ -71,7 +71,7 @@ entry:
 ; Tail call prevents use of ifcvt in this one.  Seems like a win though.
 define void @t3(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK-NOT: it lt
 ; CHECK-NOT: poplt
 ; CHECK: b.w _foo @ TAILCALL

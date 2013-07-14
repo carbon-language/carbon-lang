@@ -7,7 +7,7 @@
 
 define arm_apcscc %struct.list_head* @t1(%struct.list_head* %list) nounwind {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
   %0 = icmp eq %struct.list_head* %list, null
   br i1 %0, label %bb2, label %bb
 
@@ -33,7 +33,7 @@ bb2:
 ; rdar://8117827
 define i32 @t2(i32 %passes, i32* nocapture %src, i32 %size) nounwind readonly {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: beq LBB1_[[RET:.]]
   %0 = icmp eq i32 %passes, 0                     ; <i1> [#uses=1]
   br i1 %0, label %bb5, label %bb.nph15

@@ -9,7 +9,7 @@
 @oStruct = external global %struct.Outer, align 4
 
 define void @main() nounwind {
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK-NOT: ldrd
 ; CHECK: mul
 for.body.lr.ph:

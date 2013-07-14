@@ -4,7 +4,7 @@
 
 ; Test i32 GPRs.
 define i32 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lhi %r4, 1
 ; CHECK: blah %r4
 ; CHECK: lr %r2, %r4
@@ -15,7 +15,7 @@ define i32 @f1() {
 
 ; Test i64 GPRs.
 define i64 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lghi %r4, 1
 ; CHECK: blah %r4
 ; CHECK: lgr %r2, %r4
@@ -26,7 +26,7 @@ define i64 @f2() {
 
 ; Test i32 FPRs.
 define float @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lzer %f4
 ; CHECK: blah %f4
 ; CHECK: ler %f0, %f4
@@ -37,7 +37,7 @@ define float @f3() {
 
 ; Test i64 FPRs.
 define double @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lzdr %f4
 ; CHECK: blah %f4
 ; CHECK: ldr %f0, %f4
@@ -48,7 +48,7 @@ define double @f4() {
 
 ; Test i128 FPRs.
 define void @f5(fp128 *%dest) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: lzxr %f4
 ; CHECK: blah %f4
 ; CHECK-DAG: std %f4, 0(%r2)
@@ -61,7 +61,7 @@ define void @f5(fp128 *%dest) {
 
 ; Test clobbers of GPRs and CC.
 define i32 @f6(i32 %in) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lr [[REG:%r[01345]]], %r2
 ; CHECK: blah
 ; CHECK: lr %r2, [[REG]]
@@ -72,7 +72,7 @@ define i32 @f6(i32 %in) {
 
 ; Test clobbers of FPRs and CC.
 define float @f7(float %in) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: ler [[REG:%f[1-7]]], %f0
 ; CHECK: blah
 ; CHECK: ler %f0, [[REG]]

@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 define i64 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lhi %r1, 1
 ; CHECK: blah %r2 %r1
 ; CHECK: br %r14
@@ -12,7 +12,7 @@ define i64 @f1() {
 }
 
 define i64 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lhi %r1, 2
 ; CHECK: blah %r2 %r1
 ; CHECK: br %r14
@@ -21,7 +21,7 @@ define i64 @f2() {
 }
 
 define i64 @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lhi %r1, 3
 ; CHECK: blah %r2 %r1
 ; CHECK: br %r14
@@ -30,7 +30,7 @@ define i64 @f3() {
 }
 
 define i64 @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lghi %r1, 4
 ; CHECK: blah %r2 %r1
 ; CHECK: br %r14

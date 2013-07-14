@@ -6,8 +6,8 @@
 ; RUN: llc < %s -march=mblaze -mattr=+fpu | FileCheck -check-prefix=FPU %s
 
 define float @test_add(float %a, float %b) {
-    ; FUN:        test_add:
-    ; FPU:        test_add:
+    ; FUN-LABEL:        test_add:
+    ; FPU-LABEL:        test_add:
 
     %tmp.1 = fadd float %a, %b
     ; FUN:        brlid
@@ -21,8 +21,8 @@ define float @test_add(float %a, float %b) {
 }
 
 define float @test_sub(float %a, float %b) {
-    ; FUN:        test_sub:
-    ; FPU:        test_sub:
+    ; FUN-LABEL:        test_sub:
+    ; FPU-LABEL:        test_sub:
 
     %tmp.1 = fsub float %a, %b
     ; FUN:        brlid
@@ -36,8 +36,8 @@ define float @test_sub(float %a, float %b) {
 }
 
 define float @test_mul(float %a, float %b) {
-    ; FUN:        test_mul:
-    ; FPU:        test_mul:
+    ; FUN-LABEL:        test_mul:
+    ; FPU-LABEL:        test_mul:
 
     %tmp.1 = fmul float %a, %b
     ; FUN:        brlid
@@ -51,8 +51,8 @@ define float @test_mul(float %a, float %b) {
 }
 
 define float @test_div(float %a, float %b) {
-    ; FUN:        test_div:
-    ; FPU:        test_div:
+    ; FUN-LABEL:        test_div:
+    ; FPU-LABEL:        test_div:
 
     %tmp.1 = fdiv float %a, %b
     ; FUN:        brlid

@@ -8,7 +8,7 @@
 
 ; Check unsigned comparison.
 define i64 @f1(i64 %src1) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: clgfrl %r2, g
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -27,7 +27,7 @@ exit:
 
 ; Check signed comparison.
 define i64 @f2(i64 %src1) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: clgfrl
 ; CHECK: br %r14
 entry:
@@ -45,7 +45,7 @@ exit:
 
 ; Check equality.
 define i64 @f3(i64 %src1) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: clgfrl %r2, g
 ; CHECK-NEXT: je
 ; CHECK: br %r14
@@ -64,7 +64,7 @@ exit:
 
 ; Check inequality.
 define i64 @f4(i64 %src1) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: clgfrl %r2, g
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -83,7 +83,7 @@ exit:
 
 ; Repeat f1 with an unaligned address.
 define i64 @f5(i64 %src1) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: larl [[REG:%r[0-5]]], h
 ; CHECK: clgf %r2, 0([[REG]])
 ; CHECK-NEXT: jl

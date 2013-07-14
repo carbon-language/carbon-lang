@@ -22,7 +22,7 @@ entry:
 
 define i32 @main() nounwind {
 entry:
-; 1: main: 
+; 1-LABEL: main:
 ; 1: 1: 	.word	-797992
 ; 1:            li ${{[0-9]+}}, 12
 ; 1:            sll ${{[0-9]+}}, ${{[0-9]+}}, 16

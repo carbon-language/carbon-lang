@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
 
 define zeroext i1 @f1(i8* %x) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: movb	(%rdi), %al
 ; CHECK-NEXT: ret
 
@@ -12,7 +12,7 @@ entry:
 }
 
 define zeroext i1 @f2(i8* %x) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: movb	(%rdi), %al
 ; CHECK-NEXT: ret
 
@@ -27,7 +27,7 @@ entry:
 
 ; check that we don't build a "trunc" from i1 to i1, which would assert.
 define zeroext i1 @f3(i1 %x) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 
 entry:
   %tobool = icmp ne i1 %x, 0
@@ -36,7 +36,7 @@ entry:
 
 ; check that we don't build a trunc when other bits are needed
 define zeroext i1 @f4(i32 %x) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: and
 
 entry:

@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 -mcpu=corei7-avx | FileCheck %s
 ; RUN: opt -instsimplify -disable-output < %s
 
-;CHECK: AGEP0:
+;CHECK-LABEL: AGEP0:
 define <4 x i32*> @AGEP0(i32* %ptr) nounwind {
 entry:
   %vecinit.i = insertelement <4 x i32*> undef, i32* %ptr, i32 0
@@ -16,7 +16,7 @@ entry:
 ;CHECK: ret
 }
 
-;CHECK: AGEP1:
+;CHECK-LABEL: AGEP1:
 define i32 @AGEP1(<4 x i32*> %param) nounwind {
 entry:
 ;CHECK: padd
@@ -27,7 +27,7 @@ entry:
 ;CHECK: ret
 }
 
-;CHECK: AGEP2:
+;CHECK-LABEL: AGEP2:
 define i32 @AGEP2(<4 x i32*> %param, <4 x i32> %off) nounwind {
 entry:
 ;CHECK: pslld $2
@@ -39,7 +39,7 @@ entry:
 ;CHECK: ret
 }
 
-;CHECK: AGEP3:
+;CHECK-LABEL: AGEP3:
 define <4 x i32*> @AGEP3(<4 x i32*> %param, <4 x i32> %off) nounwind {
 entry:
 ;CHECK: pslld $2
@@ -51,7 +51,7 @@ entry:
 ;CHECK: ret
 }
 
-;CHECK: AGEP4:
+;CHECK-LABEL: AGEP4:
 define <4 x i16*> @AGEP4(<4 x i16*> %param, <4 x i32> %off) nounwind {
 entry:
 ; Multiply offset by two (add it to itself).
@@ -63,7 +63,7 @@ entry:
 ;CHECK: ret
 }
 
-;CHECK: AGEP5:
+;CHECK-LABEL: AGEP5:
 define <4 x i8*> @AGEP5(<4 x i8*> %param, <4 x i8> %off) nounwind {
 entry:
 ;CHECK: paddd
@@ -74,7 +74,7 @@ entry:
 
 
 ; The size of each element is 1 byte. No need to multiply by element size.
-;CHECK: AGEP6:
+;CHECK-LABEL: AGEP6:
 define <4 x i8*> @AGEP6(<4 x i8*> %param, <4 x i32> %off) nounwind {
 entry:
 ;CHECK-NOT: pslld

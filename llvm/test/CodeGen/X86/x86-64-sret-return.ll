@@ -4,11 +4,11 @@
 
 %struct.foo = type { [4 x i64] }
 
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK: movq %rdi, %rax
 
 ; For the x32 ABI, pointers are 32-bit so 32-bit instructions will be used
-; X32ABI: bar:
+; X32ABI-LABEL: bar:
 ; X32ABI: movl %edi, %eax
 
 define void @bar(%struct.foo* noalias sret  %agg.result, %struct.foo* %d) nounwind  {
@@ -60,11 +60,11 @@ return:		; preds = %entry
 	ret void
 }
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: movq %rdi, %rax
 
 ; For the x32 ABI, pointers are 32-bit so 32-bit instructions will be used
-; X32ABI: foo:
+; X32ABI-LABEL: foo:
 ; X32ABI: movl %edi, %eax
 
 define void @foo({ i64 }* noalias nocapture sret %agg.result) nounwind {

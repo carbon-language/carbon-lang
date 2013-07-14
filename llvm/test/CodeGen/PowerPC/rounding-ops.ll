@@ -10,7 +10,7 @@ define float @test1(float %x) nounwind  {
 ; CHECK-LABEL: test1:
 ; CHECK: frim 1, 1
 
-; CHECK-FM: test1:
+; CHECK-FM-LABEL: test1:
 ; CHECK-FM: frim 1, 1
 }
 
@@ -23,7 +23,7 @@ define double @test2(double %x) nounwind  {
 ; CHECK-LABEL: test2:
 ; CHECK: frim 1, 1
 
-; CHECK-FM: test2:
+; CHECK-FM-LABEL: test2:
 ; CHECK-FM: frim 1, 1
 }
 
@@ -36,7 +36,7 @@ define float @test3(float %x) nounwind  {
 ; CHECK-LABEL: test3:
 ; CHECK-NOT: frin
 
-; CHECK-FM: test3:
+; CHECK-FM-LABEL: test3:
 ; CHECK-FM: frin 1, 1
 }
 
@@ -49,7 +49,7 @@ define double @test4(double %x) nounwind  {
 ; CHECK-LABEL: test4:
 ; CHECK-NOT: frin
 
-; CHECK-FM: test4:
+; CHECK-FM-LABEL: test4:
 ; CHECK-FM: frin 1, 1
 }
 
@@ -62,7 +62,7 @@ define float @test5(float %x) nounwind  {
 ; CHECK-LABEL: test5:
 ; CHECK: frip 1, 1
 
-; CHECK-FM: test5:
+; CHECK-FM-LABEL: test5:
 ; CHECK-FM: frip 1, 1
 }
 
@@ -75,7 +75,7 @@ define double @test6(double %x) nounwind  {
 ; CHECK-LABEL: test6:
 ; CHECK: frip 1, 1
 
-; CHECK-FM: test6:
+; CHECK-FM-LABEL: test6:
 ; CHECK-FM: frip 1, 1
 }
 
@@ -88,7 +88,7 @@ define float @test9(float %x) nounwind  {
 ; CHECK-LABEL: test9:
 ; CHECK: friz 1, 1
 
-; CHECK-FM: test9:
+; CHECK-FM-LABEL: test9:
 ; CHECK-FM: friz 1, 1
 }
 
@@ -101,7 +101,7 @@ define double @test10(double %x) nounwind  {
 ; CHECK-LABEL: test10:
 ; CHECK: friz 1, 1
 
-; CHECK-FM: test10:
+; CHECK-FM-LABEL: test10:
 ; CHECK-FM: friz 1, 1
 }
 
@@ -115,7 +115,7 @@ define void @test11(float %x, float* %y) nounwind  {
 ; CHECK-LABEL: test11:
 ; CHECK-NOT: frin
 
-; CHECK-FM: test11:
+; CHECK-FM-LABEL: test11:
 ; CHECK-FM: frin [[R2:[0-9]+]], [[R1:[0-9]+]]
 ; CHECK-FM: fcmpu [[CR:[0-9]+]], [[R2]], [[R1]]
 ; CHECK-FM: beq [[CR]], .LBB[[BB:[0-9]+]]_2
@@ -134,7 +134,7 @@ define void @test12(double %x, double* %y) nounwind  {
 ; CHECK-LABEL: test12:
 ; CHECK-NOT: frin
 
-; CHECK-FM: test12:
+; CHECK-FM-LABEL: test12:
 ; CHECK-FM: frin [[R2:[0-9]+]], [[R1:[0-9]+]]
 ; CHECK-FM: fcmpu [[CR:[0-9]+]], [[R2]], [[R1]]
 ; CHECK-FM: beq [[CR]], .LBB[[BB:[0-9]+]]_2

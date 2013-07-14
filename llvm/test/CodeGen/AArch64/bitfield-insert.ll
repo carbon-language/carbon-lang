@@ -6,7 +6,7 @@
 %struct.foo = type { i8, [2 x i8], i8 }
 
 define [1 x i64] @from_clang([1 x i64] %f.coerce, i32 %n) nounwind readnone {
-; CHECK: from_clang:
+; CHECK-LABEL: from_clang:
 ; CHECK: bfi w0, w1, #3, #4
 ; CHECK-NEXT: ret
 

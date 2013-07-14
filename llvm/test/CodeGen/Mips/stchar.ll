@@ -50,8 +50,8 @@ entry:
   %conv1.i = sext i8 %3 to i32
   %call.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i32 %conv.i, i32 %conv1.i) nounwind
   ret void
-; 16_b: test:
-; 16_h: test:
+; 16_b-LABEL: test:
+; 16_h-LABEL: test:
 ; 16_b:	sb	${{[0-9]+}}, [[offset1:[0-9]+]](${{[0-9]+}})
 ; 16_b: lb      ${{[0-9]+}}, [[offset1]](${{[0-9]+}})
 ; 16_h:	sh	${{[0-9]+}}, [[offset2:[0-9]+]](${{[0-9]+}})

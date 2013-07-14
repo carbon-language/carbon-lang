@@ -8,7 +8,7 @@ define i1 @f1(i32 %a, i32 %b) {
     %tmp = icmp ne i32 %a, %nb
     ret i1 %tmp
 }
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: 	cmn	{{.*}}, r1
 
 define i1 @f2(i32 %a, i32 %b) {
@@ -16,7 +16,7 @@ define i1 @f2(i32 %a, i32 %b) {
     %tmp = icmp ne i32 %nb, %a
     ret i1 %tmp
 }
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: 	cmn	{{.*}}, r1
 
 define i1 @f3(i32 %a, i32 %b) {
@@ -24,7 +24,7 @@ define i1 @f3(i32 %a, i32 %b) {
     %tmp = icmp eq i32 %a, %nb
     ret i1 %tmp
 }
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: 	cmn	{{.*}}, r1
 
 define i1 @f4(i32 %a, i32 %b) {
@@ -32,7 +32,7 @@ define i1 @f4(i32 %a, i32 %b) {
     %tmp = icmp eq i32 %nb, %a
     ret i1 %tmp
 }
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: 	cmn	{{.*}}, r1
 
 define i1 @f5(i32 %a, i32 %b) {
@@ -41,7 +41,7 @@ define i1 @f5(i32 %a, i32 %b) {
     %tmp1 = icmp eq i32 %nb, %a
     ret i1 %tmp1
 }
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: 	cmn.w	{{.*}}, r1, lsl #5
 
 define i1 @f6(i32 %a, i32 %b) {
@@ -50,7 +50,7 @@ define i1 @f6(i32 %a, i32 %b) {
     %tmp1 = icmp ne i32 %nb, %a
     ret i1 %tmp1
 }
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: 	cmn.w	{{.*}}, r1, lsr #6
 
 define i1 @f7(i32 %a, i32 %b) {
@@ -59,7 +59,7 @@ define i1 @f7(i32 %a, i32 %b) {
     %tmp1 = icmp eq i32 %a, %nb
     ret i1 %tmp1
 }
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: 	cmn.w	{{.*}}, r1, asr #7
 
 define i1 @f8(i32 %a, i32 %b) {
@@ -70,7 +70,7 @@ define i1 @f8(i32 %a, i32 %b) {
     %tmp1 = icmp ne i32 %a, %nb
     ret i1 %tmp1
 }
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: 	cmn.w	{{.*}}, {{.*}}, ror #8
 
 
@@ -81,5 +81,5 @@ define void @f9(i32 %a, i32 %b) nounwind optsize {
 
 !0 = metadata !{i32 81}
 
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: 	cmn.w	r0, r1

@@ -2,11 +2,11 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-macosx | FileCheck %s --check-prefix=X64
 
 define i32 @t1(i32 %t, i32 %val) nounwind {
-; X32: t1:
+; X32-LABEL: t1:
 ; X32-NOT: andl
 ; X32: shll
 
-; X64: t1:
+; X64-LABEL: t1:
 ; X64-NOT: andl
 ; X64: shll
        %shamt = and i32 %t, 31
@@ -15,11 +15,11 @@ define i32 @t1(i32 %t, i32 %val) nounwind {
 }
 
 define i32 @t2(i32 %t, i32 %val) nounwind {
-; X32: t2:
+; X32-LABEL: t2:
 ; X32-NOT: andl
 ; X32: shll
 
-; X64: t2:
+; X64-LABEL: t2:
 ; X64-NOT: andl
 ; X64: shll
        %shamt = and i32 %t, 63
@@ -30,11 +30,11 @@ define i32 @t2(i32 %t, i32 %val) nounwind {
 @X = internal global i16 0
 
 define void @t3(i16 %t) nounwind {
-; X32: t3:
+; X32-LABEL: t3:
 ; X32-NOT: andl
 ; X32: sarw
 
-; X64: t3:
+; X64-LABEL: t3:
 ; X64-NOT: andl
 ; X64: sarw
        %shamt = and i16 %t, 31
@@ -45,7 +45,7 @@ define void @t3(i16 %t) nounwind {
 }
 
 define i64 @t4(i64 %t, i64 %val) nounwind {
-; X64: t4:
+; X64-LABEL: t4:
 ; X64-NOT: and
 ; X64: shrq
        %shamt = and i64 %t, 63
@@ -54,7 +54,7 @@ define i64 @t4(i64 %t, i64 %val) nounwind {
 }
 
 define i64 @t5(i64 %t, i64 %val) nounwind {
-; X64: t5:
+; X64-LABEL: t5:
 ; X64-NOT: and
 ; X64: shrq
        %shamt = and i64 %t, 191
@@ -66,7 +66,7 @@ define i64 @t5(i64 %t, i64 %val) nounwind {
 ; rdar://11866926
 define i64 @t6(i64 %key, i64* nocapture %val) nounwind {
 entry:
-; X64: t6:
+; X64-LABEL: t6:
 ; X64-NOT: movabsq
 ; X64: decq
 ; X64: andq

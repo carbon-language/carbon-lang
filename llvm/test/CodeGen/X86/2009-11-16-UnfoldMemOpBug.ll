@@ -5,7 +5,7 @@
 
 define void @t(i32 %count) ssp nounwind {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: movups L_str+12(%rip), %xmm0
 ; CHECK: movups L_str(%rip), %xmm1
   %tmp0 = alloca [60 x i8], align 1

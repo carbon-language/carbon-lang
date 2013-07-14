@@ -5,7 +5,7 @@
 
 ; Check the low end of the MH range.
 define i32 @f1(i32 %lhs, i16 *%src) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: mh %r2, 0(%r3)
 ; CHECK: br %r14
   %half = load i16 *%src
@@ -16,7 +16,7 @@ define i32 @f1(i32 %lhs, i16 *%src) {
 
 ; Check the high end of the aligned MH range.
 define i32 @f2(i32 %lhs, i16 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mh %r2, 4094(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 2047
@@ -28,7 +28,7 @@ define i32 @f2(i32 %lhs, i16 *%src) {
 
 ; Check the next halfword up, which should use MHY instead of MH.
 define i32 @f3(i32 %lhs, i16 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: mhy %r2, 4096(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 2048
@@ -40,7 +40,7 @@ define i32 @f3(i32 %lhs, i16 *%src) {
 
 ; Check the high end of the aligned MHY range.
 define i32 @f4(i32 %lhs, i16 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: mhy %r2, 524286(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 262143
@@ -53,7 +53,7 @@ define i32 @f4(i32 %lhs, i16 *%src) {
 ; Check the next halfword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f5(i32 %lhs, i16 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r3, 524288
 ; CHECK: mh %r2, 0(%r3)
 ; CHECK: br %r14
@@ -66,7 +66,7 @@ define i32 @f5(i32 %lhs, i16 *%src) {
 
 ; Check the high end of the negative aligned MHY range.
 define i32 @f6(i32 %lhs, i16 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: mhy %r2, -2(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 -1
@@ -78,7 +78,7 @@ define i32 @f6(i32 %lhs, i16 *%src) {
 
 ; Check the low end of the MHY range.
 define i32 @f7(i32 %lhs, i16 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: mhy %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i16 *%src, i64 -262144
@@ -91,7 +91,7 @@ define i32 @f7(i32 %lhs, i16 *%src) {
 ; Check the next halfword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f8(i32 %lhs, i16 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r3, -524290
 ; CHECK: mh %r2, 0(%r3)
 ; CHECK: br %r14
@@ -104,7 +104,7 @@ define i32 @f8(i32 %lhs, i16 *%src) {
 
 ; Check that MH allows an index.
 define i32 @f9(i32 %lhs, i64 %src, i64 %index) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: mh %r2, 4094({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -118,7 +118,7 @@ define i32 @f9(i32 %lhs, i64 %src, i64 %index) {
 
 ; Check that MHY allows an index.
 define i32 @f10(i32 %lhs, i64 %src, i64 %index) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: mhy %r2, 4096({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index

@@ -7,7 +7,7 @@
 @sep = external global [20 x i32]		; <[20 x i32]*> [#uses=1]
 
 define void @main(i32 %argc, i8** %argv) noreturn nounwind {
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK: ldrb
 entry:
 	%nb.i.i.i = alloca [25 x i8], align 1		; <[25 x i8]*> [#uses=0]

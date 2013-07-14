@@ -7,7 +7,7 @@
 @numi = external global i32		; <i32*> [#uses=1]
 @counter = external global [2 x i32]		; <[2 x i32]*> [#uses=1]
 
-; CHECK: main_bb_2E_i_bb205_2E_i_2E_i_bb115_2E_i_2E_i:
+; CHECK-LABEL: main_bb_2E_i_bb205_2E_i_2E_i_bb115_2E_i_2E_i:
 ; CHECK-NOT: bx lr
 
 define void @main_bb_2E_i_bb205_2E_i_2E_i_bb115_2E_i_2E_i() {
@@ -56,7 +56,7 @@ define void @PR15520(void ()* %fn) {
   call void %fn()
   ret void
 
-; CHECK: PR15520:
+; CHECK-LABEL: PR15520:
 ; CHECK: mov lr, pc
 ; CHECK: mov pc, r0
 }

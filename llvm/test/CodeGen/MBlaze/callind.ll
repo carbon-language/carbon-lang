@@ -15,7 +15,7 @@ declare i32 @printf(i8*, ...)
 
 define i32 @doadd(i32 %a, i32 %b)
 {
-    ; CHECK:        doadd:
+    ; CHECK-LABEL:        doadd:
     %tmp.0 = add i32 %a, %b
     ret i32 %tmp.0
     ; CHECK:        rtsd
@@ -23,7 +23,7 @@ define i32 @doadd(i32 %a, i32 %b)
 
 define i32 @dosub(i32 %a, i32 %b)
 {
-    ; CHECK:        dosub:
+    ; CHECK-LABEL:        dosub:
     %tmp.0 = sub i32 %a, %b
     ret i32 %tmp.0
     ; CHECK:        rtsd
@@ -31,7 +31,7 @@ define i32 @dosub(i32 %a, i32 %b)
 
 define i32 @domul(i32 %a, i32 %b)
 {
-    ; CHECK:        domul:
+    ; CHECK-LABEL:        domul:
     %tmp.0 = mul i32 %a, %b
     ret i32 %tmp.0
     ; CHECK:        rtsd
@@ -39,7 +39,7 @@ define i32 @domul(i32 %a, i32 %b)
 
 define i32 @dodiv(i32 %a, i32 %b)
 {
-    ; CHECK:        dodiv:
+    ; CHECK-LABEL:        dodiv:
     %tmp.0 = sdiv i32 %a, %b
     ret i32 %tmp.0
     ; CHECK:        rtsd
@@ -47,7 +47,7 @@ define i32 @dodiv(i32 %a, i32 %b)
 
 define i32 @dorem(i32 %a, i32 %b)
 {
-    ; CHECK:        dorem:
+    ; CHECK-LABEL:        dorem:
     %tmp.0 = srem i32 %a, %b
     ret i32 %tmp.0
     ; CHECK:        rtsd
@@ -55,7 +55,7 @@ define i32 @dorem(i32 %a, i32 %b)
 
 define i32 @callind(i32 %a, i32 %b)
 {
-    ; CHECK:        callind:
+    ; CHECK-LABEL:        callind:
 entry:
     br label %loop
 

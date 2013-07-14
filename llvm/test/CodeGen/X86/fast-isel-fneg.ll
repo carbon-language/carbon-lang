@@ -5,14 +5,14 @@
 ; SSE2: xor
 ; SSE2-NOT: xor
 
-; CHECK: doo:
+; CHECK-LABEL: doo:
 ; CHECK: xor
 define double @doo(double %x) nounwind {
   %y = fsub double -0.0, %x
   ret double %y
 }
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: xor
 define float @foo(float %x) nounwind {
   %y = fsub float -0.0, %x

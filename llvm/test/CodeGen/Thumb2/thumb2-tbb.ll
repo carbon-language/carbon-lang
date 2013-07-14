@@ -3,7 +3,7 @@
 
 define void @bar(i32 %n.u) {
 entry:
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK: tbb
 ; CHECK: .data_region jt8
 ; CHECK: .end_data_region

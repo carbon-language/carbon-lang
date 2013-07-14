@@ -5,7 +5,7 @@
 @var64 = global i64 0
 
 define void @foo() {
-; CHECK: foo:
+; CHECK-LABEL: foo:
     %val32 = load i32* @var32
     %val64 = load i64* @var64
 
@@ -60,7 +60,7 @@ define void @foo() {
 @vardouble = global double 0.0
 
 define void @floating_lits() {
-; CHECK: floating_lits:
+; CHECK-LABEL: floating_lits:
 
   %floatval = load float* @varfloat
   %newfloat = fadd float %floatval, 128.0

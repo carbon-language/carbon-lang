@@ -2,7 +2,7 @@
 
 define i32 @f(i32 %a, i32 %b) nounwind ssp {
 entry:
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: subs
 ; CHECK-NOT: cmp
   %cmp = icmp sgt i32 %a, %b
@@ -13,7 +13,7 @@ entry:
 
 define i32 @g(i32 %a, i32 %b) nounwind ssp {
 entry:
-; CHECK: g:
+; CHECK-LABEL: g:
 ; CHECK: subs
 ; CHECK-NOT: cmp
   %cmp = icmp slt i32 %a, %b
@@ -24,7 +24,7 @@ entry:
 
 define i32 @h(i32 %a, i32 %b) nounwind ssp {
 entry:
-; CHECK: h:
+; CHECK-LABEL: h:
 ; CHECK: subs
 ; CHECK-NOT: cmp
   %cmp = icmp sgt i32 %a, 3
@@ -36,7 +36,7 @@ entry:
 ; rdar://11725965
 define i32 @i(i32 %a, i32 %b) nounwind readnone ssp {
 entry:
-; CHECK: i:
+; CHECK-LABEL: i:
 ; CHECK: subs
 ; CHECK-NOT: cmp
   %cmp = icmp ult i32 %a, %b
@@ -48,7 +48,7 @@ entry:
 ; a swapped sub.
 define i32 @j(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: j:
+; CHECK-LABEL: j:
 ; CHECK: sub
 ; CHECK: cmp
   %cmp = icmp eq i32 %b, %a

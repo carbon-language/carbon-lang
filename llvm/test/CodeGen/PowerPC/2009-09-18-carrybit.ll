@@ -5,7 +5,7 @@ target triple = "powerpc-apple-darwin9.6"
 
 define i64 @foo(i64 %r.0.ph, i64 %q.0.ph, i32 %sr1.1.ph) nounwind {
 entry:
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: subfc
 ; CHECK: subfe
 ; CHECK: subfc

@@ -13,7 +13,7 @@
 ; v4i8
 ;
 define void @sextload_v4i8_c(<4 x i8>* %v) nounwind {
-;CHECK: sextload_v4i8_c:
+;CHECK-LABEL: sextload_v4i8_c:
 entry:
   %0 = load <4 x i8>* %v, align 8
   %v0  = sext <4 x i8> %0 to <4 x i32>
@@ -26,7 +26,7 @@ entry:
 ; v2i8
 ;
 define void @sextload_v2i8_c(<2 x i8>* %v) nounwind {
-;CHECK: sextload_v2i8_c:
+;CHECK-LABEL: sextload_v2i8_c:
 entry:
   %0   = load <2 x i8>* %v, align 8
   %v0  = sext <2 x i8>  %0 to <2 x i64>
@@ -39,7 +39,7 @@ entry:
 ; v2i16
 ;
 define void @sextload_v2i16_c(<2 x i16>* %v) nounwind {
-;CHECK: sextload_v2i16_c:
+;CHECK-LABEL: sextload_v2i16_c:
 entry:
   %0   = load <2 x i16>* %v, align 8
   %v0  = sext <2 x i16>  %0 to <2 x i64>
@@ -54,7 +54,7 @@ entry:
 ; v4i8
 ;
 define void @sextload_v4i8_v(<4 x i8>* %v, <4 x i8>* %p) nounwind {
-;CHECK: sextload_v4i8_v:
+;CHECK-LABEL: sextload_v4i8_v:
 entry:
   %0 = load <4 x i8>* %v, align 8
   %v0  = sext <4 x i8> %0 to <4 x i32>
@@ -70,7 +70,7 @@ entry:
 ; v2i8
 ;
 define void @sextload_v2i8_v(<2 x i8>* %v, <2 x i8>* %p) nounwind {
-;CHECK: sextload_v2i8_v:
+;CHECK-LABEL: sextload_v2i8_v:
 entry:
   %0 = load <2 x i8>* %v, align 8
   %v0  = sext <2 x i8> %0 to <2 x i64>
@@ -86,7 +86,7 @@ entry:
 ; v2i16
 ;
 define void @sextload_v2i16_v(<2 x i16>* %v, <2 x i16>* %p) nounwind {
-;CHECK: sextload_v2i16_v:
+;CHECK-LABEL: sextload_v2i16_v:
 entry:
   %0 = load <2 x i16>* %v, align 8
   %v0  = sext <2 x i16> %0 to <2 x i64>
@@ -104,7 +104,7 @@ entry:
 ; v4i8 x v4i16
 ;
 define void @sextload_v4i8_vs(<4 x i8>* %v, <4 x i16>* %p) nounwind {
-;CHECK: sextload_v4i8_vs:
+;CHECK-LABEL: sextload_v4i8_vs:
 entry:
   %0 = load <4 x i8>* %v, align 8
   %v0  = sext <4 x i8> %0 to <4 x i32>
@@ -120,7 +120,7 @@ entry:
 ; v2i8
 ; v2i8 x v2i16
 define void @sextload_v2i8_vs(<2 x i8>* %v, <2 x i16>* %p) nounwind {
-;CHECK: sextload_v2i8_vs:
+;CHECK-LABEL: sextload_v2i8_vs:
 entry:
   %0 = load <2 x i8>* %v, align 8
   %v0  = sext <2 x i8> %0 to <2 x i64>
@@ -136,7 +136,7 @@ entry:
 ; v2i16
 ; v2i16 x v2i32
 define void @sextload_v2i16_vs(<2 x i16>* %v, <2 x i32>* %p) nounwind {
-;CHECK: sextload_v2i16_vs:
+;CHECK-LABEL: sextload_v2i16_vs:
 entry:
   %0 = load <2 x i16>* %v, align 8
   %v0  = sext <2 x i16> %0 to <2 x i64>

@@ -7,7 +7,7 @@
 ; could be made simpler.
 
 define void @foo() nounwind {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK-NOT: ret
 ; CHECK: cmpl $10
 ; CHECK: ret

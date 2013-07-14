@@ -12,7 +12,7 @@ entry:
   %3 = insertvalue %0 %2, i32 24601, 3
   ret %0 %3
 }
-; CHECK: ReturnBigStruct:
+; CHECK-LABEL: ReturnBigStruct:
 ; CHECK: ldc r0, 12
 ; CHECK: ldc r1, 24
 ; CHECK: ldc r2, 48
@@ -29,7 +29,7 @@ entry:
   %4 = insertvalue %1 %3, i32 4321, 4
   ret %1 %4
 }
-; CHECK: ReturnBigStruct2:
+; CHECK-LABEL: ReturnBigStruct2:
 ; CHECK: ldc r1, 4321
 ; CHECK: stw r1, r0[4]
 ; CHECK: ldc r1, 24601

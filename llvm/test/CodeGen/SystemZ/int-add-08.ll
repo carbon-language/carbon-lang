@@ -6,7 +6,7 @@ declare i128 *@foo()
 
 ; Test register addition.
 define void @f1(i128 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: algr
 ; CHECK: alcgr
 ; CHECK: br %r14
@@ -19,7 +19,7 @@ define void @f1(i128 *%ptr) {
 ; Test memory addition with no offset.  Making the load of %a volatile
 ; should force the memory operand to be %b.
 define void @f2(i128 *%aptr, i64 %addr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: alg {{%r[0-5]}}, 8(%r3)
 ; CHECK: alcg {{%r[0-5]}}, 0(%r3)
 ; CHECK: br %r14
@@ -33,7 +33,7 @@ define void @f2(i128 *%aptr, i64 %addr) {
 
 ; Test the highest aligned offset that is in range of both ALG and ALCG.
 define void @f3(i128 *%aptr, i64 %base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: alg {{%r[0-5]}}, 524280(%r3)
 ; CHECK: alcg {{%r[0-5]}}, 524272(%r3)
 ; CHECK: br %r14
@@ -48,7 +48,7 @@ define void @f3(i128 *%aptr, i64 %base) {
 
 ; Test the next doubleword up, which requires separate address logic for ALG.
 define void @f4(i128 *%aptr, i64 %base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lgr [[BASE:%r[1-5]]], %r3
 ; CHECK: agfi [[BASE]], 524288
 ; CHECK: alg {{%r[0-5]}}, 0([[BASE]])
@@ -67,7 +67,7 @@ define void @f4(i128 *%aptr, i64 %base) {
 ; both instructions.  It would be better to create an anchor at 524288
 ; that both instructions can use, but that isn't implemented yet.
 define void @f5(i128 *%aptr, i64 %base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: alg {{%r[0-5]}}, 0({{%r[1-5]}})
 ; CHECK: alcg {{%r[0-5]}}, 0({{%r[1-5]}})
 ; CHECK: br %r14
@@ -82,7 +82,7 @@ define void @f5(i128 *%aptr, i64 %base) {
 
 ; Test the lowest displacement that is in range of both ALG and ALCG.
 define void @f6(i128 *%aptr, i64 %base) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: alg {{%r[0-5]}}, -524280(%r3)
 ; CHECK: alcg {{%r[0-5]}}, -524288(%r3)
 ; CHECK: br %r14
@@ -97,7 +97,7 @@ define void @f6(i128 *%aptr, i64 %base) {
 
 ; Test the next doubleword down, which is out of range of the ALCG.
 define void @f7(i128 *%aptr, i64 %base) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: alg {{%r[0-5]}}, -524288(%r3)
 ; CHECK: alcg {{%r[0-5]}}, 0({{%r[1-5]}})
 ; CHECK: br %r14
@@ -113,7 +113,7 @@ define void @f7(i128 *%aptr, i64 %base) {
 ; Check that additions of spilled values can use ALG and ALCG rather than
 ; ALGR and ALCGR.
 define void @f8(i128 *%ptr0) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: alg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: alcg {{%r[0-9]+}}, {{[0-9]+}}(%r15)

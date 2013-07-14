@@ -4,7 +4,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 define void @f1(float *%src, float %target) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -19,7 +19,7 @@ exit:
 }
 
 define void @f2(float *%src, float %target) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -34,7 +34,7 @@ exit:
 }
 
 define void @f3(float *%src, float %target) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -49,7 +49,7 @@ exit:
 }
 
 define void @f4(float *%src, float %target) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -64,7 +64,7 @@ exit:
 }
 
 define void @f5(float *%src, float %target) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -79,7 +79,7 @@ exit:
 }
 
 define void @f6(float *%src, float %target) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -94,7 +94,7 @@ exit:
 }
 
 define void @f7(float *%src, float %target) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -109,7 +109,7 @@ exit:
 }
 
 define void @f8(float *%src, float %target) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -124,7 +124,7 @@ exit:
 }
 
 define void @f9(float *%src, float %target) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -139,7 +139,7 @@ exit:
 }
 
 define void @f10(float *%src, float %target) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -154,7 +154,7 @@ exit:
 }
 
 define void @f11(float *%src, float %target) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -169,7 +169,7 @@ exit:
 }
 
 define void @f12(float *%src, float %target) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -186,7 +186,7 @@ exit:
 ; "jno" == "jump if no overflow", which corresponds to "jump if ordered"
 ; rather than "jump if not ordered" after a floating-point comparison.
 define void @f13(float *%src, float %target) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)
@@ -203,7 +203,7 @@ exit:
 ; "jo" == "jump if overflow", which corresponds to "jump if not ordered"
 ; rather than "jump if ordered" after a floating-point comparison.
 define void @f14(float *%src, float %target) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: .cfi_startproc
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: ceb %f0, 0(%r2)

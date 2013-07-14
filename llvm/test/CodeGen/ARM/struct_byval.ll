@@ -6,7 +6,7 @@
 
 define i32 @f() nounwind ssp {
 entry:
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: ldr
 ; CHECK: str
 ; CHECK-NOT:bne
@@ -18,7 +18,7 @@ entry:
 ; Generate a loop for large struct byval
 define i32 @g() nounwind ssp {
 entry:
-; CHECK: g:
+; CHECK-LABEL: g:
 ; CHECK: ldr
 ; CHECK: sub
 ; CHECK: str
@@ -31,7 +31,7 @@ entry:
 ; Generate a loop using NEON instructions
 define i32 @h() nounwind ssp {
 entry:
-; CHECK: h:
+; CHECK-LABEL: h:
 ; CHECK: vld1
 ; CHECK: sub
 ; CHECK: vst1

@@ -4,7 +4,7 @@
 
 ; Check subtraction of a variable.
 define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: lgr %r0, %r2
@@ -18,7 +18,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check subtraction of 1, which can use AGHI.
 define i64 @f2(i64 %dummy, i64 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: lgr %r0, %r2
@@ -32,7 +32,7 @@ define i64 @f2(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the AGHI range.
 define i64 @f3(i64 %dummy, i64 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: aghi %r0, -32768
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 32768 seq_cst
@@ -41,7 +41,7 @@ define i64 @f3(i64 %dummy, i64 *%src) {
 
 ; Check the next value up, which must use AGFI.
 define i64 @f4(i64 %dummy, i64 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: agfi %r0, -32769
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 32769 seq_cst
@@ -50,7 +50,7 @@ define i64 @f4(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the AGFI range.
 define i64 @f5(i64 %dummy, i64 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r0, -2147483648
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 2147483648 seq_cst
@@ -59,7 +59,7 @@ define i64 @f5(i64 %dummy, i64 *%src) {
 
 ; Check the next value up, which must use a register operation.
 define i64 @f6(i64 %dummy, i64 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sgr
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 2147483649 seq_cst
@@ -68,7 +68,7 @@ define i64 @f6(i64 %dummy, i64 *%src) {
 
 ; Check subtraction of -1, which can use AGHI.
 define i64 @f7(i64 %dummy, i64 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: aghi %r0, 1
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 -1 seq_cst
@@ -77,7 +77,7 @@ define i64 @f7(i64 %dummy, i64 *%src) {
 
 ; Check the high end of the AGHI range.
 define i64 @f8(i64 %dummy, i64 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: aghi %r0, 32767
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 -32767 seq_cst
@@ -86,7 +86,7 @@ define i64 @f8(i64 %dummy, i64 *%src) {
 
 ; Check the next value down, which must use AGFI instead.
 define i64 @f9(i64 %dummy, i64 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: agfi %r0, 32768
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 -32768 seq_cst
@@ -95,7 +95,7 @@ define i64 @f9(i64 %dummy, i64 *%src) {
 
 ; Check the high end of the AGFI range.
 define i64 @f10(i64 %dummy, i64 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agfi %r0, 2147483647
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 -2147483647 seq_cst
@@ -104,7 +104,7 @@ define i64 @f10(i64 %dummy, i64 *%src) {
 
 ; Check the next value down, which must use a register operation.
 define i64 @f11(i64 %dummy, i64 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: sgr
 ; CHECK: br %r14
   %res = atomicrmw sub i64 *%src, i64 -2147483648 seq_cst

@@ -3,7 +3,7 @@
 ; rdar://8944252
 
 define void @t(i32 %width, float* nocapture %src, float* nocapture %dst, i32 %index) nounwind {
-; CHECK: t:
+; CHECK-LABEL: t:
 entry:
   %src6 = bitcast float* %src to i8*
   %0 = icmp eq i32 %width, 0

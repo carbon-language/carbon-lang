@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 define float @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lzer %f1
 ; CHECK: blah %f0 %f1
 ; CHECK: br %r14
@@ -12,7 +12,7 @@ define float @f1() {
 }
 
 define double @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lzdr %f1
 ; CHECK: blah %f0 %f1
 ; CHECK: br %r14
@@ -21,7 +21,7 @@ define double @f2() {
 }
 
 define double @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lzxr %f1
 ; CHECK: blah %f0 %f1
 ; CHECK: br %r14

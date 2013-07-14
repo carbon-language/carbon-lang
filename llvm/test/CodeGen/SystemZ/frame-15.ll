@@ -24,11 +24,11 @@ declare void @foo(float *%ptr1, float *%ptr2)
 ; in order to put another object at offset 4088 is (4088 - 176) / 4 = 978
 ; words.
 define void @f1(double *%dst) {
-; CHECK-NOFP: f1:
+; CHECK-NOFP-LABEL: f1:
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 4092(%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f1:
+; CHECK-FP-LABEL: f1:
 ; CHECK-FP: ldeb {{%f[0-7]}}, 4092(%r11)
 ; CHECK-FP: br %r14
   %region1 = alloca [978 x float], align 8
@@ -49,12 +49,12 @@ define void @f1(double *%dst) {
 
 ; Test the first out-of-range offset.
 define void @f2(double *%dst) {
-; CHECK-NOFP: f2:
+; CHECK-NOFP-LABEL: f2:
 ; CHECK-NOFP: lghi %r1, 4096
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 0(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f2:
+; CHECK-FP-LABEL: f2:
 ; CHECK-FP: lghi %r1, 4096
 ; CHECK-FP: ldeb {{%f[0-7]}}, 0(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -76,12 +76,12 @@ define void @f2(double *%dst) {
 
 ; Test the next offset after that.
 define void @f3(double *%dst) {
-; CHECK-NOFP: f3:
+; CHECK-NOFP-LABEL: f3:
 ; CHECK-NOFP: lghi %r1, 4096
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 4(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f3:
+; CHECK-FP-LABEL: f3:
 ; CHECK-FP: lghi %r1, 4096
 ; CHECK-FP: ldeb {{%f[0-7]}}, 4(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -103,12 +103,12 @@ define void @f3(double *%dst) {
 
 ; Add 4096 bytes (1024 words) to the size of each object and repeat.
 define void @f4(double *%dst) {
-; CHECK-NOFP: f4:
+; CHECK-NOFP-LABEL: f4:
 ; CHECK-NOFP: lghi %r1, 4096
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 4092(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f4:
+; CHECK-FP-LABEL: f4:
 ; CHECK-FP: lghi %r1, 4096
 ; CHECK-FP: ldeb {{%f[0-7]}}, 4092(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -130,12 +130,12 @@ define void @f4(double *%dst) {
 
 ; ...as above.
 define void @f5(double *%dst) {
-; CHECK-NOFP: f5:
+; CHECK-NOFP-LABEL: f5:
 ; CHECK-NOFP: lghi %r1, 8192
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 0(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f5:
+; CHECK-FP-LABEL: f5:
 ; CHECK-FP: lghi %r1, 8192
 ; CHECK-FP: ldeb {{%f[0-7]}}, 0(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -157,12 +157,12 @@ define void @f5(double *%dst) {
 
 ; ...as above.
 define void @f6(double *%dst) {
-; CHECK-NOFP: f6:
+; CHECK-NOFP-LABEL: f6:
 ; CHECK-NOFP: lghi %r1, 8192
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 4(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f6:
+; CHECK-FP-LABEL: f6:
 ; CHECK-FP: lghi %r1, 8192
 ; CHECK-FP: ldeb {{%f[0-7]}}, 4(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -186,12 +186,12 @@ define void @f6(double *%dst) {
 ; being at offset 8192.  This time we need objects of (8192 - 168) / 4 = 2004
 ; words.
 define void @f7(double *%dst) {
-; CHECK-NOFP: f7:
+; CHECK-NOFP-LABEL: f7:
 ; CHECK-NOFP: lghi %r1, 8192
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 4092(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f7:
+; CHECK-FP-LABEL: f7:
 ; CHECK-FP: lghi %r1, 8192
 ; CHECK-FP: ldeb {{%f[0-7]}}, 4092(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -214,12 +214,12 @@ define void @f7(double *%dst) {
 ; Keep the object-relative offset the same but bump the size of the
 ; objects by one doubleword.
 define void @f8(double *%dst) {
-; CHECK-NOFP: f8:
+; CHECK-NOFP-LABEL: f8:
 ; CHECK-NOFP: lghi %r1, 12288
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 4(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f8:
+; CHECK-FP-LABEL: f8:
 ; CHECK-FP: lghi %r1, 12288
 ; CHECK-FP: ldeb {{%f[0-7]}}, 4(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -243,12 +243,12 @@ define void @f8(double *%dst) {
 ; should force an LAY from the outset.  We don't yet do any kind of anchor
 ; optimization, so there should be no offset on the LDEB itself.
 define void @f9(double *%dst) {
-; CHECK-NOFP: f9:
+; CHECK-NOFP-LABEL: f9:
 ; CHECK-NOFP: lay %r1, 12296(%r15)
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 0(%r1)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f9:
+; CHECK-FP-LABEL: f9:
 ; CHECK-FP: lay %r1, 12296(%r11)
 ; CHECK-FP: ldeb {{%f[0-7]}}, 0(%r1)
 ; CHECK-FP: br %r14
@@ -273,14 +273,14 @@ define void @f9(double *%dst) {
 ; %vptr and %dst are copied to call-saved registers, freeing up %r2 and
 ; %r3 during the main test.
 define void @f10(i32 *%vptr, double *%dst) {
-; CHECK-NOFP: f10:
+; CHECK-NOFP-LABEL: f10:
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lghi [[REGISTER]], 4096
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 0([[REGISTER]],%r15)
 ; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f10:
+; CHECK-FP-LABEL: f10:
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lghi [[REGISTER]], 4096
 ; CHECK-FP: ldeb {{%f[0-7]}}, 0([[REGISTER]],%r11)
@@ -318,13 +318,13 @@ define void @f10(i32 *%vptr, double *%dst) {
 
 ; Repeat f2 in a case where the index register is already occupied.
 define void @f11(double *%dst, i64 %index) {
-; CHECK-NOFP: f11:
+; CHECK-NOFP-LABEL: f11:
 ; CHECK-NOFP: lgr [[REGISTER:%r[1-9][0-5]?]], %r3
 ; CHECK-NOFP: lay %r1, 4096(%r15)
 ; CHECK-NOFP: ldeb {{%f[0-7]}}, 0([[REGISTER]],%r1)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f11:
+; CHECK-FP-LABEL: f11:
 ; CHECK-FP: lgr [[REGISTER:%r[1-9][0-5]?]], %r3
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: ldeb {{%f[0-7]}}, 0([[REGISTER]],%r1)

@@ -9,7 +9,7 @@
 
 @.str = private unnamed_addr constant [13 x i8] c"%d %d %f %i\0A\00", align 1
 
-;CHECK: printfn:
+;CHECK-LABEL: printfn:
 define void @printfn(i32 %a, i16 signext %b, double %C, i8 signext %E) {
 entry:
   %conv = sext i16 %b to i32

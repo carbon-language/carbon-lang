@@ -32,7 +32,7 @@ define void @test_basic() {
         call void @dummy_use (i32* %mem, i32 10)
 	ret void
 
-; X32-Linux:       test_basic:
+; X32-Linux-LABEL:       test_basic:
 
 ; X32-Linux:       cmpl %gs:48, %esp
 ; X32-Linux-NEXT:  ja      .LBB0_2
@@ -42,7 +42,7 @@ define void @test_basic() {
 ; X32-Linux-NEXT:  calll __morestack
 ; X32-Linux-NEXT:  ret
 
-; X64-Linux:       test_basic:
+; X64-Linux-LABEL:       test_basic:
 
 ; X64-Linux:       cmpq %fs:112, %rsp
 ; X64-Linux-NEXT:  ja      .LBB0_2
@@ -52,7 +52,7 @@ define void @test_basic() {
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
 
-; X32-Darwin:      test_basic:
+; X32-Darwin-LABEL:      test_basic:
 
 ; X32-Darwin:      movl $432, %ecx
 ; X32-Darwin-NEXT: cmpl %gs:(%ecx), %esp
@@ -63,7 +63,7 @@ define void @test_basic() {
 ; X32-Darwin-NEXT: calll ___morestack
 ; X32-Darwin-NEXT: ret
 
-; X64-Darwin:      test_basic:
+; X64-Darwin-LABEL:      test_basic:
 
 ; X64-Darwin:      cmpq %gs:816, %rsp
 ; X64-Darwin-NEXT: ja      LBB0_2
@@ -73,7 +73,7 @@ define void @test_basic() {
 ; X64-Darwin-NEXT: callq ___morestack
 ; X64-Darwin-NEXT: ret
 
-; X32-MinGW:       test_basic:
+; X32-MinGW-LABEL:       test_basic:
 
 ; X32-MinGW:       cmpl %fs:20, %esp
 ; X32-MinGW-NEXT:  ja      LBB0_2
@@ -83,7 +83,7 @@ define void @test_basic() {
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
 
-; X64-FreeBSD:       test_basic:
+; X64-FreeBSD-LABEL:       test_basic:
 
 ; X64-FreeBSD:       cmpq %fs:24, %rsp
 ; X64-FreeBSD-NEXT:  ja      .LBB0_2
@@ -224,7 +224,7 @@ define fastcc void @test_fastcc() {
         call void @dummy_use (i32* %mem, i32 10)
         ret void
 
-; X32-Linux:       test_fastcc:
+; X32-Linux-LABEL:       test_fastcc:
 
 ; X32-Linux:       cmpl %gs:48, %esp
 ; X32-Linux-NEXT:  ja      .LBB3_2
@@ -234,7 +234,7 @@ define fastcc void @test_fastcc() {
 ; X32-Linux-NEXT:  calll __morestack
 ; X32-Linux-NEXT:  ret
 
-; X64-Linux:       test_fastcc:
+; X64-Linux-LABEL:       test_fastcc:
 
 ; X64-Linux:       cmpq %fs:112, %rsp
 ; X64-Linux-NEXT:  ja      .LBB3_2
@@ -244,7 +244,7 @@ define fastcc void @test_fastcc() {
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
 
-; X32-Darwin:      test_fastcc:
+; X32-Darwin-LABEL:      test_fastcc:
 
 ; X32-Darwin:      movl $432, %eax
 ; X32-Darwin-NEXT: cmpl %gs:(%eax), %esp
@@ -255,7 +255,7 @@ define fastcc void @test_fastcc() {
 ; X32-Darwin-NEXT: calll ___morestack
 ; X32-Darwin-NEXT: ret
 
-; X64-Darwin:      test_fastcc:
+; X64-Darwin-LABEL:      test_fastcc:
 
 ; X64-Darwin:      cmpq %gs:816, %rsp
 ; X64-Darwin-NEXT: ja      LBB3_2
@@ -265,7 +265,7 @@ define fastcc void @test_fastcc() {
 ; X64-Darwin-NEXT: callq ___morestack
 ; X64-Darwin-NEXT: ret
 
-; X32-MinGW:       test_fastcc:
+; X32-MinGW-LABEL:       test_fastcc:
 
 ; X32-MinGW:       cmpl %fs:20, %esp
 ; X32-MinGW-NEXT:  ja      LBB3_2
@@ -275,7 +275,7 @@ define fastcc void @test_fastcc() {
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
 
-; X64-FreeBSD:       test_fastcc:
+; X64-FreeBSD-LABEL:       test_fastcc:
 
 ; X64-FreeBSD:       cmpq %fs:24, %rsp
 ; X64-FreeBSD-NEXT:  ja      .LBB3_2
@@ -292,7 +292,7 @@ define fastcc void @test_fastcc_large() {
         call void @dummy_use (i32* %mem, i32 0)
         ret void
 
-; X32-Linux:       test_fastcc_large:
+; X32-Linux-LABEL:       test_fastcc_large:
 
 ; X32-Linux:       leal -40012(%esp), %eax
 ; X32-Linux-NEXT:  cmpl %gs:48, %eax
@@ -303,7 +303,7 @@ define fastcc void @test_fastcc_large() {
 ; X32-Linux-NEXT:  calll __morestack
 ; X32-Linux-NEXT:  ret
 
-; X64-Linux:       test_fastcc_large:
+; X64-Linux-LABEL:       test_fastcc_large:
 
 ; X64-Linux:       leaq -40008(%rsp), %r11
 ; X64-Linux-NEXT:  cmpq %fs:112, %r11
@@ -314,7 +314,7 @@ define fastcc void @test_fastcc_large() {
 ; X64-Linux-NEXT:  callq __morestack
 ; X64-Linux-NEXT:  ret
 
-; X32-Darwin:      test_fastcc_large:
+; X32-Darwin-LABEL:      test_fastcc_large:
 
 ; X32-Darwin:      leal -40012(%esp), %eax
 ; X32-Darwin-NEXT: movl $432, %ecx
@@ -326,7 +326,7 @@ define fastcc void @test_fastcc_large() {
 ; X32-Darwin-NEXT: calll ___morestack
 ; X32-Darwin-NEXT: ret
 
-; X64-Darwin:      test_fastcc_large:
+; X64-Darwin-LABEL:      test_fastcc_large:
 
 ; X64-Darwin:      leaq -40008(%rsp), %r11
 ; X64-Darwin-NEXT: cmpq %gs:816, %r11
@@ -337,7 +337,7 @@ define fastcc void @test_fastcc_large() {
 ; X64-Darwin-NEXT: callq ___morestack
 ; X64-Darwin-NEXT: ret
 
-; X32-MinGW:       test_fastcc_large:
+; X32-MinGW-LABEL:       test_fastcc_large:
 
 ; X32-MinGW:       leal -40008(%esp), %eax
 ; X32-MinGW-NEXT:  cmpl %fs:20, %eax
@@ -348,7 +348,7 @@ define fastcc void @test_fastcc_large() {
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
 
-; X64-FreeBSD:       test_fastcc_large:
+; X64-FreeBSD-LABEL:       test_fastcc_large:
 
 ; X64-FreeBSD:       leaq -40008(%rsp), %r11
 ; X64-FreeBSD-NEXT:  cmpq %fs:24, %r11
@@ -368,7 +368,7 @@ define fastcc void @test_fastcc_large_with_ecx_arg(i32 %a) {
 
 ; This is testing that the Mac implementation preserves ecx
 
-; X32-Darwin:      test_fastcc_large_with_ecx_arg:
+; X32-Darwin-LABEL:      test_fastcc_large_with_ecx_arg:
 
 ; X32-Darwin:      leal -40012(%esp), %eax
 ; X32-Darwin-NEXT: pushl %ecx

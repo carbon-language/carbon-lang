@@ -43,7 +43,7 @@ entry:
 
 define i64 @xfoo(i64 %x, i64 %y, i64 %z) nounwind readnone {
 entry:
-; BMI2: xfoo:
+; BMI2-LABEL: xfoo:
 ; BMI2: rorxq $57
 	%0 = lshr i64 %x, 57
 	%1 = shl i64 %x, 7
@@ -53,7 +53,7 @@ entry:
 
 define i64 @xfoop(i64* %p) nounwind readnone {
 entry:
-; BMI2: xfoop:
+; BMI2-LABEL: xfoop:
 ; BMI2: rorxq $57, ({{.+}}), %{{.+}}
 	%x = load i64* %p
 	%a = lshr i64 %x, 57
@@ -72,7 +72,7 @@ entry:
 
 define i64 @xun(i64 %x, i64 %y, i64 %z) nounwind readnone {
 entry:
-; BMI2: xun:
+; BMI2-LABEL: xun:
 ; BMI2: rorxq $7
 	%0 = lshr i64 %x, 7
 	%1 = shl i64 %x, 57
@@ -82,7 +82,7 @@ entry:
 
 define i64 @xunp(i64* %p) nounwind readnone {
 entry:
-; BMI2: xunp:
+; BMI2-LABEL: xunp:
 ; BMI2: rorxq $7, ({{.+}}), %{{.+}}
 	%x = load i64* %p
 	%a = lshr i64 %x, 7

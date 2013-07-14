@@ -11,7 +11,7 @@
 @varptr = global i8* null
 
 define void @ldst_8bit() {
-; CHECK: ldst_8bit:
+; CHECK-LABEL: ldst_8bit:
 
 ; No architectural support for loads to 16-bit or 8-bit since we
 ; promote i8 during lowering.
@@ -72,7 +72,7 @@ define void @ldst_8bit() {
 }
 
 define void @ldst_16bit() {
-; CHECK: ldst_16bit:
+; CHECK-LABEL: ldst_16bit:
 
 ; No architectural support for loads to 16-bit or 16-bit since we
 ; promote i16 during lowering.
@@ -140,7 +140,7 @@ define void @ldst_16bit() {
 }
 
 define void @ldst_32bit() {
-; CHECK: ldst_32bit:
+; CHECK-LABEL: ldst_32bit:
 
   %addr_8bit = load i8** @varptr
 
@@ -186,7 +186,7 @@ define void @ldst_32bit() {
 }
 
 define void @ldst_float() {
-; CHECK: ldst_float:
+; CHECK-LABEL: ldst_float:
 
   %addr_8bit = load i8** @varptr
   %addrfp_8 = getelementptr i8* %addr_8bit, i64 -5
@@ -202,7 +202,7 @@ define void @ldst_float() {
 }
 
 define void @ldst_double() {
-; CHECK: ldst_double:
+; CHECK-LABEL: ldst_double:
 
   %addr_8bit = load i8** @varptr
   %addrfp_8 = getelementptr i8* %addr_8bit, i64 4

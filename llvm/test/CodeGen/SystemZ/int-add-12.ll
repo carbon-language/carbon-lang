@@ -4,7 +4,7 @@
 
 ; Check additions of 1.
 define void @f1(i64 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: agsi 0(%r2), 1
 ; CHECK: br %r14
   %val = load i64 *%ptr
@@ -15,7 +15,7 @@ define void @f1(i64 *%ptr) {
 
 ; Check the high end of the constant range.
 define void @f2(i64 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: agsi 0(%r2), 127
 ; CHECK: br %r14
   %val = load i64 *%ptr
@@ -27,7 +27,7 @@ define void @f2(i64 *%ptr) {
 ; Check the next constant up, which must use an addition and a store.
 ; Both LG/AGHI and LGHI/AG would be OK.
 define void @f3(i64 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: agsi
 ; CHECK: stg %r0, 0(%r2)
 ; CHECK: br %r14
@@ -39,7 +39,7 @@ define void @f3(i64 *%ptr) {
 
 ; Check the low end of the constant range.
 define void @f4(i64 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: agsi 0(%r2), -128
 ; CHECK: br %r14
   %val = load i64 *%ptr
@@ -50,7 +50,7 @@ define void @f4(i64 *%ptr) {
 
 ; Check the next value down, with the same comment as f3.
 define void @f5(i64 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: agsi
 ; CHECK: stg %r0, 0(%r2)
 ; CHECK: br %r14
@@ -62,7 +62,7 @@ define void @f5(i64 *%ptr) {
 
 ; Check the high end of the aligned AGSI range.
 define void @f6(i64 *%base) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agsi 524280(%r2), 1
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65535
@@ -75,7 +75,7 @@ define void @f6(i64 *%base) {
 ; Check the next doubleword up, which must use separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f7(i64 *%base) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: agfi %r2, 524288
 ; CHECK: agsi 0(%r2), 1
 ; CHECK: br %r14
@@ -88,7 +88,7 @@ define void @f7(i64 *%base) {
 
 ; Check the low end of the AGSI range.
 define void @f8(i64 *%base) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agsi -524288(%r2), 1
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65536
@@ -101,7 +101,7 @@ define void @f8(i64 *%base) {
 ; Check the next doubleword down, which must use separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f9(i64 *%base) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: agfi %r2, -524296
 ; CHECK: agsi 0(%r2), 1
 ; CHECK: br %r14
@@ -114,7 +114,7 @@ define void @f9(i64 *%base) {
 
 ; Check that AGSI does not allow indices.
 define void @f10(i64 %base, i64 %index) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agr %r2, %r3
 ; CHECK: agsi 8(%r2), 1
 ; CHECK: br %r14

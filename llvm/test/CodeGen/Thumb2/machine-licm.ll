@@ -7,7 +7,7 @@
 
 define void @t1(i32* nocapture %vals, i32 %c) nounwind {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: bxeq lr
 
   %0 = icmp eq i32 %c, 0                          ; <i1> [#uses=1]
@@ -50,7 +50,7 @@ return:                                           ; preds = %bb, %entry
 ; rdar://8001136
 define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: vmov.f32 q{{.*}}, #1.000000e+00
   br i1 undef, label %bb1, label %bb2
 
@@ -82,7 +82,7 @@ declare <4 x float> @llvm.arm.neon.vmaxs.v4f32(<4 x float>, <4 x float>) nounwin
 ; rdar://8241368
 ; isel should not fold immediate into eor's which would have prevented LICM.
 define zeroext i16 @t3(i8 zeroext %data, i16 zeroext %crc) nounwind readnone {
-; CHECK: t3:
+; CHECK-LABEL: t3:
 bb.nph:
 ; CHECK: bb.nph
 ; CHECK: movw {{(r[0-9])|(lr)}}, #32768

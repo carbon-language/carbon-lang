@@ -9,7 +9,7 @@
 ; as well as the 8 FPR save slots.  Get a frame of size 4128 by allocating
 ; (4128 - 176 - 8 * 8) / 8 = 486 extra doublewords.
 define void @f1(double *%ptr, i64 %x) {
-; CHECK-NOFP: f1:
+; CHECK-NOFP-LABEL: f1:
 ; CHECK-NOFP: aghi %r15, -4128
 ; CHECK-NOFP: .cfi_def_cfa_offset 4288
 ; CHECK-NOFP: stdy %f8, 4120(%r15)
@@ -40,7 +40,7 @@ define void @f1(double *%ptr, i64 %x) {
 ; CHECK-NOFP: aghi %r15, 4128
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f1:
+; CHECK-FP-LABEL: f1:
 ; CHECK-FP: stmg %r11, %r15, 88(%r15)
 ; CHECK-FP: aghi %r15, -4128
 ; CHECK-FP: .cfi_def_cfa_offset 4288
@@ -129,7 +129,7 @@ define void @f1(double *%ptr, i64 %x) {
 ; As above, get a frame of size 524320 by allocating
 ; (524320 - 176 - 8 * 8) / 8 = 65510 extra doublewords.
 define void @f2(double *%ptr, i64 %x) {
-; CHECK-NOFP: f2:
+; CHECK-NOFP-LABEL: f2:
 ; CHECK-NOFP: agfi %r15, -524320
 ; CHECK-NOFP: .cfi_def_cfa_offset 524480
 ; CHECK-NOFP: llilh [[INDEX:%r[1-5]]], 8
@@ -161,7 +161,7 @@ define void @f2(double *%ptr, i64 %x) {
 ; CHECK-NOFP: agfi %r15, 524320
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f2:
+; CHECK-FP-LABEL: f2:
 ; CHECK-FP: stmg %r11, %r15, 88(%r15)
 ; CHECK-FP: agfi %r15, -524320
 ; CHECK-FP: .cfi_def_cfa_offset 524480

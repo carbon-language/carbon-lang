@@ -6,7 +6,7 @@ declare float @foo()
 
 ; Check register multiplication.
 define double @f1(float %f1, float %f2) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: mdebr %f0, %f2
 ; CHECK: br %r14
   %f1x = fpext float %f1 to double
@@ -17,7 +17,7 @@ define double @f1(float %f1, float %f2) {
 
 ; Check the low end of the MDEB range.
 define double @f2(float %f1, float *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mdeb %f0, 0(%r2)
 ; CHECK: br %r14
   %f2 = load float *%ptr
@@ -29,7 +29,7 @@ define double @f2(float %f1, float *%ptr) {
 
 ; Check the high end of the aligned MDEB range.
 define double @f3(float %f1, float *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: mdeb %f0, 4092(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%base, i64 1023
@@ -43,7 +43,7 @@ define double @f3(float %f1, float *%base) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f4(float %f1, float *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: mdeb %f0, 0(%r2)
 ; CHECK: br %r14
@@ -57,7 +57,7 @@ define double @f4(float %f1, float *%base) {
 
 ; Check negative displacements, which also need separate address logic.
 define double @f5(float %f1, float *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -4
 ; CHECK: mdeb %f0, 0(%r2)
 ; CHECK: br %r14
@@ -71,7 +71,7 @@ define double @f5(float %f1, float *%base) {
 
 ; Check that MDEB allows indices.
 define double @f6(float %f1, float *%base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: mdeb %f0, 400(%r1,%r2)
 ; CHECK: br %r14
@@ -86,7 +86,7 @@ define double @f6(float %f1, float *%base, i64 %index) {
 
 ; Check that multiplications of spilled values can use MDEB rather than MDEBR.
 define float @f7(float *%ptr0) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mdeb %f0, 16{{[04]}}(%r15)
 ; CHECK: br %r14

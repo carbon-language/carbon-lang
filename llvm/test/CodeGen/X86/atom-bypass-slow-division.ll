@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mcpu=atom -mtriple=i686-linux | FileCheck %s
 
 define i32 @Test_get_quotient(i32 %a, i32 %b) nounwind {
-; CHECK: Test_get_quotient:
+; CHECK-LABEL: Test_get_quotient:
 ; CHECK: orl %ecx, %edx
 ; CHECK-NEXT: testl $-256, %edx
 ; CHECK-NEXT: je
@@ -14,7 +14,7 @@ define i32 @Test_get_quotient(i32 %a, i32 %b) nounwind {
 }
 
 define i32 @Test_get_remainder(i32 %a, i32 %b) nounwind {
-; CHECK: Test_get_remainder:
+; CHECK-LABEL: Test_get_remainder:
 ; CHECK: orl %ecx, %edx
 ; CHECK-NEXT: testl $-256, %edx
 ; CHECK-NEXT: je
@@ -27,7 +27,7 @@ define i32 @Test_get_remainder(i32 %a, i32 %b) nounwind {
 }
 
 define i32 @Test_get_quotient_and_remainder(i32 %a, i32 %b) nounwind {
-; CHECK: Test_get_quotient_and_remainder:
+; CHECK-LABEL: Test_get_quotient_and_remainder:
 ; CHECK: orl %ecx, %edx
 ; CHECK-NEXT: testl $-256, %edx
 ; CHECK-NEXT: je
@@ -44,7 +44,7 @@ define i32 @Test_get_quotient_and_remainder(i32 %a, i32 %b) nounwind {
 }
 
 define i32 @Test_use_div_and_idiv(i32 %a, i32 %b) nounwind {
-; CHECK: Test_use_div_and_idiv:
+; CHECK-LABEL: Test_use_div_and_idiv:
 ; CHECK: idivl
 ; CHECK: divb
 ; CHECK: divl
@@ -58,14 +58,14 @@ define i32 @Test_use_div_and_idiv(i32 %a, i32 %b) nounwind {
 }
 
 define i32 @Test_use_div_imm_imm() nounwind {
-; CHECK: Test_use_div_imm_imm:
+; CHECK-LABEL: Test_use_div_imm_imm:
 ; CHECK: movl $64
   %resultdiv = sdiv i32 256, 4
   ret i32 %resultdiv
 }
 
 define i32 @Test_use_div_reg_imm(i32 %a) nounwind {
-; CHECK: Test_use_div_reg_imm:
+; CHECK-LABEL: Test_use_div_reg_imm:
 ; CHECK-NOT: test
 ; CHECK-NOT: idiv
 ; CHECK-NOT: divb
@@ -74,7 +74,7 @@ define i32 @Test_use_div_reg_imm(i32 %a) nounwind {
 }
 
 define i32 @Test_use_rem_reg_imm(i32 %a) nounwind {
-; CHECK: Test_use_rem_reg_imm:
+; CHECK-LABEL: Test_use_rem_reg_imm:
 ; CHECK-NOT: test
 ; CHECK-NOT: idiv
 ; CHECK-NOT: divb
@@ -83,7 +83,7 @@ define i32 @Test_use_rem_reg_imm(i32 %a) nounwind {
 }
 
 define i32 @Test_use_divrem_reg_imm(i32 %a) nounwind {
-; CHECK: Test_use_divrem_reg_imm:
+; CHECK-LABEL: Test_use_divrem_reg_imm:
 ; CHECK-NOT: test
 ; CHECK-NOT: idiv
 ; CHECK-NOT: divb
@@ -94,7 +94,7 @@ define i32 @Test_use_divrem_reg_imm(i32 %a) nounwind {
 }
 
 define i32 @Test_use_div_imm_reg(i32 %a) nounwind {
-; CHECK: Test_use_div_imm_reg:
+; CHECK-LABEL: Test_use_div_imm_reg:
 ; CHECK: test
 ; CHECK: idiv
 ; CHECK: divb
@@ -103,7 +103,7 @@ define i32 @Test_use_div_imm_reg(i32 %a) nounwind {
 }
 
 define i32 @Test_use_rem_imm_reg(i32 %a) nounwind {
-; CHECK: Test_use_rem_imm_reg:
+; CHECK-LABEL: Test_use_rem_imm_reg:
 ; CHECK: test
 ; CHECK: idiv
 ; CHECK: divb

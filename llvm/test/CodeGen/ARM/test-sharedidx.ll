@@ -14,7 +14,7 @@
 ; rdar://10674430
 define void @sharedidx(i8* nocapture %a, i8* nocapture %b, i8* nocapture %c, i32 %s, i32 %len) nounwind ssp {
 entry:
-; CHECK: sharedidx:
+; CHECK-LABEL: sharedidx:
   %cmp8 = icmp eq i32 %len, 0
   br i1 %cmp8, label %for.end, label %for.body
 

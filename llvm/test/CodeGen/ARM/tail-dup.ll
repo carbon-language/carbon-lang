@@ -2,7 +2,7 @@
 
 ; We should be able to tail-duplicate the basic block containing the indirectbr
 ; into all of its predecessors.
-; CHECK: fn:
+; CHECK-LABEL: fn:
 ; CHECK: mov pc
 ; CHECK: mov pc
 ; CHECK: mov pc

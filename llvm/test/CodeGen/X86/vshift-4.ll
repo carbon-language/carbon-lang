@@ -5,7 +5,7 @@
 
 define void @shift1a(<2 x i64> %val, <2 x i64>* %dst, <2 x i64> %sh) nounwind {
 entry:
-; CHECK: shift1a:
+; CHECK-LABEL: shift1a:
 ; CHECK: psllq
   %shamt = shufflevector <2 x i64> %sh, <2 x i64> undef, <2 x i32> <i32 0, i32 0>
   %shl = shl <2 x i64> %val, %shamt
@@ -16,7 +16,7 @@ entry:
 ; shift1b can't use a packed shift
 define void @shift1b(<2 x i64> %val, <2 x i64>* %dst, <2 x i64> %sh) nounwind {
 entry:
-; CHECK: shift1b:
+; CHECK-LABEL: shift1b:
 ; CHECK: shll
   %shamt = shufflevector <2 x i64> %sh, <2 x i64> undef, <2 x i32> <i32 0, i32 1>
   %shl = shl <2 x i64> %val, %shamt
@@ -26,7 +26,7 @@ entry:
 
 define void @shift2a(<4 x i32> %val, <4 x i32>* %dst, <2 x i32> %amt) nounwind {
 entry:
-; CHECK: shift2a:
+; CHECK-LABEL: shift2a:
 ; CHECK: pslld
   %shamt = shufflevector <2 x i32> %amt, <2 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %shl = shl <4 x i32> %val, %shamt
@@ -36,7 +36,7 @@ entry:
 
 define void @shift2b(<4 x i32> %val, <4 x i32>* %dst, <2 x i32> %amt) nounwind {
 entry:
-; CHECK: shift2b:
+; CHECK-LABEL: shift2b:
 ; CHECK: pslld
   %shamt = shufflevector <2 x i32> %amt, <2 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 1, i32 1>
   %shl = shl <4 x i32> %val, %shamt
@@ -46,7 +46,7 @@ entry:
 
 define void @shift2c(<4 x i32> %val, <4 x i32>* %dst, <2 x i32> %amt) nounwind {
 entry:
-; CHECK: shift2c:
+; CHECK-LABEL: shift2c:
 ; CHECK: pslld
   %shamt = shufflevector <2 x i32> %amt, <2 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %shl = shl <4 x i32> %val, %shamt
@@ -56,7 +56,7 @@ entry:
 
 define void @shift3a(<8 x i16> %val, <8 x i16>* %dst, <8 x i16> %amt) nounwind {
 entry:
-; CHECK: shift3a:
+; CHECK-LABEL: shift3a:
 ; CHECK: movzwl
 ; CHECK: psllw
   %shamt = shufflevector <8 x i16> %amt, <8 x i16> undef, <8 x i32> <i32 6, i32 6, i32 6, i32 6, i32 6, i32 6, i32 6, i32 6>
@@ -67,7 +67,7 @@ entry:
 
 define void @shift3b(<8 x i16> %val, <8 x i16>* %dst, i16 %amt) nounwind {
 entry:
-; CHECK: shift3b:
+; CHECK-LABEL: shift3b:
 ; CHECK: movzwl
 ; CHECK: psllw
   %0 = insertelement <8 x i16> undef, i16 %amt, i32 0

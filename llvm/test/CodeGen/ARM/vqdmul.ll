@@ -3,7 +3,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 target triple = "thumbv7-elf"
 
 define <4 x i16> @vqdmulhs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vqdmulhs16:
+;CHECK-LABEL: vqdmulhs16:
 ;CHECK: vqdmulh.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -12,7 +12,7 @@ define <4 x i16> @vqdmulhs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vqdmulhs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vqdmulhs32:
+;CHECK-LABEL: vqdmulhs32:
 ;CHECK: vqdmulh.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -21,7 +21,7 @@ define <2 x i32> @vqdmulhs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <8 x i16> @vqdmulhQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vqdmulhQs16:
+;CHECK-LABEL: vqdmulhQs16:
 ;CHECK: vqdmulh.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -30,7 +30,7 @@ define <8 x i16> @vqdmulhQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vqdmulhQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vqdmulhQs32:
+;CHECK-LABEL: vqdmulhQs32:
 ;CHECK: vqdmulh.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -81,7 +81,7 @@ declare <8 x i16> @llvm.arm.neon.vqdmulh.v8i16(<8 x i16>, <8 x i16>) nounwind re
 declare <4 x i32> @llvm.arm.neon.vqdmulh.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
 
 define <4 x i16> @vqrdmulhs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vqrdmulhs16:
+;CHECK-LABEL: vqrdmulhs16:
 ;CHECK: vqrdmulh.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -90,7 +90,7 @@ define <4 x i16> @vqrdmulhs16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vqrdmulhs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vqrdmulhs32:
+;CHECK-LABEL: vqrdmulhs32:
 ;CHECK: vqrdmulh.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -99,7 +99,7 @@ define <2 x i32> @vqrdmulhs32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <8 x i16> @vqrdmulhQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vqrdmulhQs16:
+;CHECK-LABEL: vqrdmulhQs16:
 ;CHECK: vqrdmulh.s16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -108,7 +108,7 @@ define <8 x i16> @vqrdmulhQs16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vqrdmulhQs32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vqrdmulhQs32:
+;CHECK-LABEL: vqrdmulhQs32:
 ;CHECK: vqrdmulh.s32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -159,7 +159,7 @@ declare <8 x i16> @llvm.arm.neon.vqrdmulh.v8i16(<8 x i16>, <8 x i16>) nounwind r
 declare <4 x i32> @llvm.arm.neon.vqrdmulh.v4i32(<4 x i32>, <4 x i32>) nounwind readnone
 
 define <4 x i32> @vqdmulls16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vqdmulls16:
+;CHECK-LABEL: vqdmulls16:
 ;CHECK: vqdmull.s16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -168,7 +168,7 @@ define <4 x i32> @vqdmulls16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i64> @vqdmulls32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vqdmulls32:
+;CHECK-LABEL: vqdmulls32:
 ;CHECK: vqdmull.s32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -198,7 +198,7 @@ declare <4 x i32>  @llvm.arm.neon.vqdmull.v4i32(<4 x i16>, <4 x i16>) nounwind r
 declare <2 x i64>  @llvm.arm.neon.vqdmull.v2i64(<2 x i32>, <2 x i32>) nounwind readnone
 
 define <4 x i32> @vqdmlals16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
-;CHECK: vqdmlals16:
+;CHECK-LABEL: vqdmlals16:
 ;CHECK: vqdmlal.s16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -208,7 +208,7 @@ define <4 x i32> @vqdmlals16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwi
 }
 
 define <2 x i64> @vqdmlals32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
-;CHECK: vqdmlals32:
+;CHECK-LABEL: vqdmlals32:
 ;CHECK: vqdmlal.s32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -239,7 +239,7 @@ declare <4 x i32>  @llvm.arm.neon.vqdmlal.v4i32(<4 x i32>, <4 x i16>, <4 x i16>)
 declare <2 x i64>  @llvm.arm.neon.vqdmlal.v2i64(<2 x i64>, <2 x i32>, <2 x i32>) nounwind readnone
 
 define <4 x i32> @vqdmlsls16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
-;CHECK: vqdmlsls16:
+;CHECK-LABEL: vqdmlsls16:
 ;CHECK: vqdmlsl.s16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -249,7 +249,7 @@ define <4 x i32> @vqdmlsls16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwi
 }
 
 define <2 x i64> @vqdmlsls32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
-;CHECK: vqdmlsls32:
+;CHECK-LABEL: vqdmlsls32:
 ;CHECK: vqdmlsl.s32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B

@@ -7,10 +7,10 @@
 @i2 = external thread_local global i32
 
 define i32 @f1() {
-; X32: f1:
+; X32-LABEL: f1:
 ; X32:      movl %gs:i@NTPOFF, %eax
 ; X32-NEXT: ret
-; X64: f1:
+; X64-LABEL: f1:
 ; X64:      movl %fs:i@TPOFF, %eax
 ; X64-NEXT: ret
 
@@ -20,11 +20,11 @@ entry:
 }
 
 define i32* @f2() {
-; X32: f2:
+; X32-LABEL: f2:
 ; X32:      movl %gs:0, %eax
 ; X32-NEXT: leal i@NTPOFF(%eax), %eax
 ; X32-NEXT: ret
-; X64: f2:
+; X64-LABEL: f2:
 ; X64:      movq %fs:0, %rax
 ; X64-NEXT: leaq i@TPOFF(%rax), %rax
 ; X64-NEXT: ret
@@ -34,7 +34,7 @@ entry:
 }
 
 define i32 @f3() {
-; X32: f3:
+; X32-LABEL: f3:
 ; X32:      calll .L{{[0-9]+}}$pb
 ; X32-NEXT: .L{{[0-9]+}}$pb:
 ; X32-NEXT: popl %eax
@@ -43,7 +43,7 @@ define i32 @f3() {
 ; X32-NEXT: movl i2@GOTNTPOFF(%eax), %eax
 ; X32-NEXT: movl %gs:(%eax), %eax
 ; X32-NEXT: ret
-; X64: f3:
+; X64-LABEL: f3:
 ; X64:      movq i2@GOTTPOFF(%rip), %rax
 ; X64-NEXT: movl %fs:(%rax), %eax
 ; X64-NEXT: ret
@@ -54,7 +54,7 @@ entry:
 }
 
 define i32* @f4() {
-; X32: f4:
+; X32-LABEL: f4:
 ; X32:      calll .L{{[0-9]+}}$pb
 ; X32-NEXT: .L{{[0-9]+}}$pb:
 ; X32-NEXT: popl %ecx
@@ -63,7 +63,7 @@ define i32* @f4() {
 ; X32-NEXT: movl %gs:0, %eax
 ; X32-NEXT: addl i2@GOTNTPOFF(%ecx), %eax
 ; X32-NEXT: ret
-; X64: f4:
+; X64-LABEL: f4:
 ; X64:      movq %fs:0, %rax
 ; X64-NEXT: addq i2@GOTTPOFF(%rip), %rax
 ; X64-NEXT: ret

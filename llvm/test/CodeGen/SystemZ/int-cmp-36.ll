@@ -8,7 +8,7 @@
 
 ; Check signed comparison.
 define i32 @f1(i32 %src1) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: chrl %r2, g
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -27,7 +27,7 @@ exit:
 
 ; Check unsigned comparison, which cannot use CHRL.
 define i32 @f2(i32 %src1) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: chrl
 ; CHECK: br %r14
 entry:
@@ -45,7 +45,7 @@ exit:
 
 ; Check equality.
 define i32 @f3(i32 %src1) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: chrl %r2, g
 ; CHECK-NEXT: je
 ; CHECK: br %r14
@@ -64,7 +64,7 @@ exit:
 
 ; Check inequality.
 define i32 @f4(i32 %src1) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: chrl %r2, g
 ; CHECK-NEXT: jlh
 ; CHECK: br %r14
@@ -83,7 +83,7 @@ exit:
 
 ; Repeat f1 with an unaligned address.
 define i32 @f5(i32 %src1) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: lgrl [[REG:%r[0-5]]], h@GOT
 ; CHECK: ch %r2, 0([[REG]])
 ; CHECK-NEXT: jl

@@ -4,7 +4,7 @@ target triple = "msp430-generic-generic"
 @foo = common global i8 0, align 1
 
 define i8 @add(i8 %a) nounwind {
-; CHECK: add:
+; CHECK-LABEL: add:
 ; CHECK: add.b	&foo, r15
 	%1 = load i8* @foo
 	%2 = add i8 %a, %1
@@ -12,7 +12,7 @@ define i8 @add(i8 %a) nounwind {
 }
 
 define i8 @and(i8 %a) nounwind {
-; CHECK: and:
+; CHECK-LABEL: and:
 ; CHECK: and.b	&foo, r15
 	%1 = load i8* @foo
 	%2 = and i8 %a, %1
@@ -20,7 +20,7 @@ define i8 @and(i8 %a) nounwind {
 }
 
 define i8 @bis(i8 %a) nounwind {
-; CHECK: bis:
+; CHECK-LABEL: bis:
 ; CHECK: bis.b	&foo, r15
 	%1 = load i8* @foo
 	%2 = or i8 %a, %1
@@ -28,7 +28,7 @@ define i8 @bis(i8 %a) nounwind {
 }
 
 define i8  @bic(i8 %a) nounwind {
-; CHECK: bic:
+; CHECK-LABEL: bic:
 ; CHECK: bic.b  &foo, r15
         %1 = load i8* @foo
         %2 = xor i8 %1, -1
@@ -37,7 +37,7 @@ define i8  @bic(i8 %a) nounwind {
 }
 
 define i8 @xor(i8 %a) nounwind {
-; CHECK: xor:
+; CHECK-LABEL: xor:
 ; CHECK: xor.b	&foo, r15
 	%1 = load i8* @foo
 	%2 = xor i8 %a, %1

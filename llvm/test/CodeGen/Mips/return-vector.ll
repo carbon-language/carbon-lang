@@ -30,7 +30,7 @@ entry:
   %add7 = add i32 %add5, %add6
   ret i32 %add7
 
-; CHECK:        call_i8:
+; CHECK-LABEL:        call_i8:
 ; CHECK:        call16(i8)
 ; CHECK:        addiu   $4, $sp, 32
 ; CHECK:        lw      $[[R0:[a-z0-9]+]], 60($sp)
@@ -56,7 +56,7 @@ entry:
   %add3 = fadd float %add1, %add2
   ret float %add3
 
-; CHECK:        call_f4:
+; CHECK-LABEL:        call_f4:
 ; CHECK:        call16(f4)
 ; CHECK:        addiu   $4, $sp, 16
 ; CHECK:        lwc1    $[[R0:[a-z0-9]+]], 28($sp)
@@ -78,7 +78,7 @@ entry:
   %add3 = fadd double %add1, %add2
   ret double %add3
 
-; CHECK:        call_d4:
+; CHECK-LABEL:        call_d4:
 ; CHECK:        call16(d4)
 ; CHECK:        addiu   $4, $sp, 32
 ; CHECK:        ldc1    $[[R0:[a-z0-9]+]], 56($sp)
@@ -109,7 +109,7 @@ entry:
   %add3 = add i32 %add1, %add2
   ret i32 %add3
 
-; CHECK:        call_i4:
+; CHECK-LABEL:        call_i4:
 ; CHECK:        call16(i4)
 ; CHECK-NOT:    lw
 ; CHECK:        addu    $[[R2:[a-z0-9]+]], $[[R0:[a-z0-9]+]], $[[R1:[a-z0-9]+]]
@@ -126,7 +126,7 @@ entry:
   %add1 = fadd float %v0, %v1
   ret float %add1
 
-; CHECK:        call_f2:
+; CHECK-LABEL:        call_f2:
 ; CHECK:        call16(f2)
 ; CHECK-NOT:    lwc1
 ; CHECK:        add.s    $[[R2:[a-z0-9]+]], $[[R0:[a-z0-9]+]], $[[R1:[a-z0-9]+]]
@@ -141,7 +141,7 @@ entry:
   %add1 = fadd double %v0, %v1
   ret double %add1
 
-; CHECK:        call_d2:
+; CHECK-LABEL:        call_d2:
 ; CHECK:        call16(d2)
 ; CHECK-NOT:    ldc1
 ; CHECK:        add.d    $[[R2:[a-z0-9]+]], $[[R0:[a-z0-9]+]], $[[R1:[a-z0-9]+]]
@@ -158,7 +158,7 @@ define <8 x i32> @return_i8() {
 entry:
   ret <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
 
-; CHECK:        return_i8:
+; CHECK-LABEL:        return_i8:
 ; CHECK:        sw      $[[R0:[a-z0-9]+]], 28($4)
 ; CHECK:        sw      $[[R1:[a-z0-9]+]], 24($4)
 ; CHECK:        sw      $[[R2:[a-z0-9]+]], 20($4)
@@ -178,7 +178,7 @@ entry:
   %vecins4 = insertelement <4 x float> %vecins3, float %d, i32 3
   ret <4 x float> %vecins4
 
-; CHECK:        return_f4:
+; CHECK-LABEL:        return_f4:
 ; CHECK-DAG:    lwc1    $[[R0:[a-z0-9]+]], 16($sp)
 ; CHECK-DAG:    swc1    $[[R0]], 12($4)
 ; CHECK-DAG:    sw      $7, 8($4)
@@ -195,7 +195,7 @@ entry:
   %vecins4 = insertelement <4 x double> %vecins3, double %d, i32 3
   ret <4 x double> %vecins4
 
-; CHECK:            return_d4:
+; CHECK-LABEL:            return_d4:
 ; CHECK-DAG:        sdc1    $[[R0:[a-z0-9]+]], 24($4)
 ; CHECK-DAG:        sdc1    $[[R1:[a-z0-9]+]], 16($4)
 ; CHECK-DAG:        sdc1    $[[R2:[a-z0-9]+]], 8($4)
@@ -212,7 +212,7 @@ define <4 x i32> @return_i4() {
 entry:
   ret <4 x i32> <i32 0, i32 1, i32 2, i32 3>
 
-; CHECK:        return_i4:
+; CHECK-LABEL:        return_i4:
 ; CHECK:        addiu   $2, $zero, 0
 ; CHECK:        addiu   $3, $zero, 1
 ; CHECK:        addiu   $4, $zero, 2
@@ -226,7 +226,7 @@ entry:
   %vecins2 = insertelement <2 x float> %vecins1, float %b, i32 1
   ret <2 x float> %vecins2
 
-; CHECK:        return_f2:
+; CHECK-LABEL:        return_f2:
 ; CHECK:        mov.s   $f0, $f12
 ; CHECK:        mov.s   $f2, $f14
 }
@@ -238,7 +238,7 @@ entry:
   %vecins2 = insertelement <2 x double> %vecins1, double %b, i32 1
   ret <2 x double> %vecins2
 
-; CHECK:        return_d2:
+; CHECK-LABEL:        return_d2:
 ; CHECK:        mov.d   $f0, $f12
 ; CHECK:        mov.d   $f2, $f14
 }

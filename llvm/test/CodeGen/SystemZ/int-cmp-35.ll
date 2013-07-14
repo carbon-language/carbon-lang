@@ -5,7 +5,7 @@
 ; Check ordered comparisons with a constant near the low end of the unsigned
 ; 16-bit range.
 define double @f1(double %a, double %b, i64 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: clghsi 0(%r2), 2
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -18,7 +18,7 @@ define double @f1(double %a, double %b, i64 *%ptr) {
 
 ; Check ordered comparisons with the high end of the unsigned 16-bit range.
 define double @f2(double %a, double %b, i64 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: clghsi 0(%r2), 65535
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -31,7 +31,7 @@ define double @f2(double %a, double %b, i64 *%ptr) {
 
 ; Check the next value up, which can't use CLGHSI.
 define double @f3(double %a, double %b, i64 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: clghsi
 ; CHECK: br %r14
   %val = load i64 *%ptr
@@ -43,7 +43,7 @@ define double @f3(double %a, double %b, i64 *%ptr) {
 ; Check equality comparisons with 32768, the lowest value for which
 ; we prefer CLGHSI to CGHSI.
 define double @f4(double %a, double %b, i64 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: clghsi 0(%r2), 32768
 ; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
@@ -56,7 +56,7 @@ define double @f4(double %a, double %b, i64 *%ptr) {
 
 ; Check equality comparisons with the high end of the unsigned 16-bit range.
 define double @f5(double %a, double %b, i64 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: clghsi 0(%r2), 65535
 ; CHECK-NEXT: je
 ; CHECK: ldr %f0, %f2
@@ -69,7 +69,7 @@ define double @f5(double %a, double %b, i64 *%ptr) {
 
 ; Check the next value up, which can't use CLGHSI.
 define double @f6(double %a, double %b, i64 *%ptr) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: clghsi
 ; CHECK: br %r14
   %val = load i64 *%ptr
@@ -80,7 +80,7 @@ define double @f6(double %a, double %b, i64 *%ptr) {
 
 ; Check the high end of the CLGHSI range.
 define double @f7(double %a, double %b, i64 %i1, i64 *%base) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: clghsi 4088(%r3), 2
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
@@ -94,7 +94,7 @@ define double @f7(double %a, double %b, i64 %i1, i64 *%base) {
 
 ; Check the next doubleword up, which needs separate address logic,
 define double @f8(double %a, double %b, i64 *%base) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: aghi %r2, 4096
 ; CHECK: clghsi 0(%r2), 2
 ; CHECK-NEXT: jl
@@ -109,7 +109,7 @@ define double @f8(double %a, double %b, i64 *%base) {
 
 ; Check negative offsets, which also need separate address logic.
 define double @f9(double %a, double %b, i64 *%base) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: aghi %r2, -8
 ; CHECK: clghsi 0(%r2), 2
 ; CHECK-NEXT: jl
@@ -124,7 +124,7 @@ define double @f9(double %a, double %b, i64 *%base) {
 
 ; Check that CLGHSI does not allow indices.
 define double @f10(double %a, double %b, i64 %base, i64 %index) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agr {{%r2, %r3|%r3, %r2}}
 ; CHECK: clghsi 0({{%r[23]}}), 2
 ; CHECK-NEXT: jl

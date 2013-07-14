@@ -2,7 +2,7 @@
 
 @g1 = external global i32*
 
-; CHECK: foo1:
+; CHECK-LABEL: foo1:
 ; CHECK: lw ${{[0-9]+}}, %got(g1)
 ; CHECK: # %for.body
 ; CHECK: # %for.end

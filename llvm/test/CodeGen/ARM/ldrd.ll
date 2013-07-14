@@ -13,10 +13,10 @@
 
 define i64 @t(i64 %a) nounwind readonly {
 entry:
-; A8: t:
+; A8-LABEL: t:
 ; A8:   ldrd r2, r3, [r2]
 
-; M3: t:
+; M3-LABEL: t:
 ; M3-NOT: ldrd
 
 	%0 = load i64** @b, align 4

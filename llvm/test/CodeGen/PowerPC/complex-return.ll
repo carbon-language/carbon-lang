@@ -23,7 +23,7 @@ entry:
   ret { ppc_fp128, ppc_fp128 } %0
 }
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: lfd 3
 ; CHECK: lfd 4
 ; CHECK: lfd 2
@@ -49,7 +49,7 @@ entry:
   ret { float, float } %0
 }
 
-; CHECK: oof:
+; CHECK-LABEL: oof:
 ; CHECK: lfs 2
 ; CHECK: lfs 1
 

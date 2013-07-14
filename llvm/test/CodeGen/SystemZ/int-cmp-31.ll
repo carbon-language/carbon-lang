@@ -6,7 +6,7 @@
 ; Check unsigned comparison near the low end of the CLHHSI range, using zero
 ; extension.
 define double @f1(double %a, double %b, i16 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: clhhsi 0(%r2), 1
 ; CHECK-NEXT: jh
 ; CHECK: br %r14
@@ -20,7 +20,7 @@ define double @f1(double %a, double %b, i16 *%ptr) {
 ; Check unsigned comparison near the low end of the CLHHSI range, using sign
 ; extension.
 define double @f2(double %a, double %b, i16 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: clhhsi 0(%r2), 1
 ; CHECK-NEXT: jh
 ; CHECK: br %r14
@@ -34,7 +34,7 @@ define double @f2(double %a, double %b, i16 *%ptr) {
 ; Check unsigned comparison near the high end of the CLHHSI range, using zero
 ; extension.
 define double @f3(double %a, double %b, i16 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: clhhsi 0(%r2), 65534
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -48,7 +48,7 @@ define double @f3(double %a, double %b, i16 *%ptr) {
 ; Check unsigned comparison near the high end of the CLHHSI range, using sign
 ; extension.
 define double @f4(double %a, double %b, i16 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: clhhsi 0(%r2), 65534
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -62,7 +62,7 @@ define double @f4(double %a, double %b, i16 *%ptr) {
 ; Check unsigned comparison above the high end of the CLHHSI range, using zero
 ; extension.  The condition is always true.
 define double @f5(double %a, double %b, i16 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: clhhsi
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -79,7 +79,7 @@ define double @f5(double %a, double %b, i16 *%ptr) {
 ; and simply ignore CLHHSI for this range.  First check the low end of the
 ; range.
 define double @f6(double %a, double %b, i16 *%ptr) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: clhhsi
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -91,7 +91,7 @@ define double @f6(double %a, double %b, i16 *%ptr) {
 
 ; ...and then the high end.
 define double @f7(double %a, double %b, i16 *%ptr) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK-NOT: clhhsi
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -104,7 +104,7 @@ define double @f7(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison near the low end of the CLHHSI range, using zero
 ; extension.  This is equivalent to unsigned comparison.
 define double @f8(double %a, double %b, i16 *%ptr) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: clhhsi 0(%r2), 1
 ; CHECK-NEXT: jh
 ; CHECK: br %r14
@@ -118,7 +118,7 @@ define double @f8(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison near the low end of the CLHHSI range, using sign
 ; extension.  This should use CHHSI instead.
 define double @f9(double %a, double %b, i16 *%ptr) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: chhsi 0(%r2), 1
 ; CHECK-NEXT: jh
 ; CHECK: br %r14
@@ -132,7 +132,7 @@ define double @f9(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison near the high end of the CLHHSI range, using zero
 ; extension.  This is equivalent to unsigned comparison.
 define double @f10(double %a, double %b, i16 *%ptr) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: clhhsi 0(%r2), 65534
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -146,7 +146,7 @@ define double @f10(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison near the high end of the CLHHSI range, using sign
 ; extension.  This should use CHHSI instead.
 define double @f11(double %a, double %b, i16 *%ptr) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: chhsi 0(%r2), -2
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -160,7 +160,7 @@ define double @f11(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison above the high end of the CLHHSI range, using zero
 ; extension.  The condition is always true.
 define double @f12(double %a, double %b, i16 *%ptr) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK-NOT: cli
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -173,7 +173,7 @@ define double @f12(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison near the high end of the CHHSI range, using sign
 ; extension.
 define double @f13(double %a, double %b, i16 *%ptr) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: chhsi 0(%r2), 32766
 ; CHECK-NEXT: jl
 ; CHECK: br %r14
@@ -187,7 +187,7 @@ define double @f13(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison above the high end of the CHHSI range, using sign
 ; extension.  This condition is always true.
 define double @f14(double %a, double %b, i16 *%ptr) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK-NOT: chhsi
 ; CHECK: br %r14
   %val = load i16 *%ptr
@@ -200,7 +200,7 @@ define double @f14(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison near the low end of the CHHSI range, using sign
 ; extension.
 define double @f15(double %a, double %b, i16 *%ptr) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: chhsi 0(%r2), -32767
 ; CHECK-NEXT: jh
 ; CHECK: br %r14
@@ -214,7 +214,7 @@ define double @f15(double %a, double %b, i16 *%ptr) {
 ; Check signed comparison below the low end of the CHHSI range, using sign
 ; extension.  This condition is always true.
 define double @f16(double %a, double %b, i16 *%ptr) {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK-NOT: chhsi
 ; CHECK: br %r14
   %val = load i16 *%ptr

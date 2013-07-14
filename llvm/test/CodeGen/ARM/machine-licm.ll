@@ -12,7 +12,7 @@
 
 define void @t(i32* nocapture %vals, i32 %c) nounwind {
 entry:
-; ARM: t:
+; ARM-LABEL: t:
 ; ARM: ldr [[REGISTER_1:r[0-9]+]], LCPI0_0
 ; Unfortunately currently ARM codegen doesn't cse the ldr from constantpool.
 ; The issue is it can be read by an "add pc" or a "ldr [pc]" so it's messy
@@ -23,14 +23,14 @@ entry:
 ; ARM: ldr r{{[0-9]+}}, [pc, [[REGISTER_1]]]
 ; ARM: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
 
-; MOVT: t:
+; MOVT-LABEL: t:
 ; MOVT: movw [[REGISTER_2:r[0-9]+]], :lower16:(L_GV$non_lazy_ptr-(LPC0_0+8))
 ; MOVT: movt [[REGISTER_2]], :upper16:(L_GV$non_lazy_ptr-(LPC0_0+8))
 ; MOVT: LPC0_0:
 ; MOVT: ldr r{{[0-9]+}}, [pc, [[REGISTER_2]]]
 ; MOVT: ldr r{{[0-9]+}}, [r{{[0-9]+}}]
 
-; THUMB: t:
+; THUMB-LABEL: t:
   %0 = icmp eq i32 %c, 0                          ; <i1> [#uses=1]
   br i1 %0, label %return, label %bb.nph
 

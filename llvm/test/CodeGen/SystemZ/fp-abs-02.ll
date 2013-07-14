@@ -5,7 +5,7 @@
 ; Test f32.
 declare float @llvm.fabs.f32(float %f)
 define float @f1(float %f) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lnebr %f0, %f0
 ; CHECK: br %r14
   %abs = call float @llvm.fabs.f32(float %f)
@@ -16,7 +16,7 @@ define float @f1(float %f) {
 ; Test f64.
 declare double @llvm.fabs.f64(double %f)
 define double @f2(double %f) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lndbr %f0, %f0
 ; CHECK: br %r14
   %abs = call double @llvm.fabs.f64(double %f)
@@ -29,7 +29,7 @@ define double @f2(double %f) {
 ; extra processing so that using FPRs is unequivocally better.
 declare fp128 @llvm.fabs.f128(fp128 %f)
 define void @f3(fp128 *%ptr, fp128 *%ptr2) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lnxbr
 ; CHECK: dxbr
 ; CHECK: br %r14

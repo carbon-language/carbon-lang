@@ -37,22 +37,22 @@ entry:
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 0), align 4
 	ret void
 
-; LINUX-64-STATIC: foo00:
+; LINUX-64-STATIC-LABEL: foo00:
 ; LINUX-64-STATIC: movl	src(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl	[[EAX]], dst
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo00:
+; LINUX-32-STATIC-LABEL: foo00:
 ; LINUX-32-STATIC: 	movl	src, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dst
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo00:
+; LINUX-32-PIC-LABEL: foo00:
 ; LINUX-32-PIC: 	movl	src, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dst
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo00:
+; LINUX-64-PIC-LABEL: foo00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r..]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e..]]
 ; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r..]]
@@ -109,22 +109,22 @@ entry:
 	store i32 %0, i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 0), align 4
 	ret void
 
-; LINUX-64-STATIC: fxo00:
+; LINUX-64-STATIC-LABEL: fxo00:
 ; LINUX-64-STATIC: movl	xsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl	[[EAX]], xdst
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: fxo00:
+; LINUX-32-STATIC-LABEL: fxo00:
 ; LINUX-32-STATIC: 	movl	xsrc, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], xdst
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: fxo00:
+; LINUX-32-PIC-LABEL: fxo00:
 ; LINUX-32-PIC: 	movl	xsrc, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], xdst
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: fxo00:
+; LINUX-64-PIC-LABEL: fxo00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -179,19 +179,19 @@ define void @foo01() nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @dst, i32 0, i32 0), i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: foo01:
+; LINUX-64-STATIC-LABEL: foo01:
 ; LINUX-64-STATIC: movq	$dst, ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo01:
+; LINUX-32-STATIC-LABEL: foo01:
 ; LINUX-32-STATIC: 	movl	$dst, ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo01:
+; LINUX-32-PIC-LABEL: foo01:
 ; LINUX-32-PIC: 	movl	$dst, ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo01:
+; LINUX-64-PIC-LABEL: foo01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
@@ -239,19 +239,19 @@ define void @fxo01() nounwind {
 entry:
 	store i32* getelementptr ([32 x i32]* @xdst, i32 0, i32 0), i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: fxo01:
+; LINUX-64-STATIC-LABEL: fxo01:
 ; LINUX-64-STATIC: movq	$xdst, ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: fxo01:
+; LINUX-32-STATIC-LABEL: fxo01:
 ; LINUX-32-STATIC: 	movl	$xdst, ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: fxo01:
+; LINUX-32-PIC-LABEL: fxo01:
 ; LINUX-32-PIC: 	movl	$xdst, ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: fxo01:
+; LINUX-64-PIC-LABEL: fxo01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
@@ -301,25 +301,25 @@ entry:
 	%1 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
 	ret void
-; LINUX-64-STATIC: foo02:
+; LINUX-64-STATIC-LABEL: foo02:
 ; LINUX-64-STATIC: movl    src(%rip), %
 ; LINUX-64-STATIC: movq    ptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo02:
+; LINUX-32-STATIC-LABEL: foo02:
 ; LINUX-32-STATIC: 	movl	src, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo02:
+; LINUX-32-PIC-LABEL: foo02:
 ; LINUX-32-PIC: 	movl	src, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo02:
+; LINUX-64-PIC-LABEL: foo02:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -382,26 +382,26 @@ entry:
 	%0 = load i32** @ptr, align 8
 	%1 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
-; LINUX-64-STATIC: fxo02:
+; LINUX-64-STATIC-LABEL: fxo02:
 ; LINUX-64-STATIC: movl    xsrc(%rip), %
 ; LINUX-64-STATIC: movq    ptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: fxo02:
+; LINUX-32-STATIC-LABEL: fxo02:
 ; LINUX-32-STATIC: 	movl	xsrc, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
-; LINUX-32-PIC: fxo02:
+; LINUX-32-PIC-LABEL: fxo02:
 ; LINUX-32-PIC: 	movl	xsrc, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: fxo02:
+; LINUX-64-PIC-LABEL: fxo02:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -464,22 +464,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 0), align 32
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 0), align 32
 	ret void
-; LINUX-64-STATIC: foo03:
+; LINUX-64-STATIC-LABEL: foo03:
 ; LINUX-64-STATIC: movl    dsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo03:
+; LINUX-32-STATIC-LABEL: foo03:
 ; LINUX-32-STATIC: 	movl	dsrc, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ddst
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo03:
+; LINUX-32-PIC-LABEL: foo03:
 ; LINUX-32-PIC: 	movl	dsrc, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ddst
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo03:
+; LINUX-64-PIC-LABEL: foo03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -524,19 +524,19 @@ define void @foo04() nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @ddst, i32 0, i32 0), i32** @dptr, align 8
 	ret void
-; LINUX-64-STATIC: foo04:
+; LINUX-64-STATIC-LABEL: foo04:
 ; LINUX-64-STATIC: movq    $ddst, dptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo04:
+; LINUX-32-STATIC-LABEL: foo04:
 ; LINUX-32-STATIC: 	movl	$ddst, dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo04:
+; LINUX-32-PIC-LABEL: foo04:
 ; LINUX-32-PIC: 	movl	$ddst, dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo04:
+; LINUX-64-PIC-LABEL: foo04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
@@ -580,25 +580,25 @@ entry:
 	%1 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 0), align 32
 	store i32 %1, i32* %0, align 4
 	ret void
-; LINUX-64-STATIC: foo05:
+; LINUX-64-STATIC-LABEL: foo05:
 ; LINUX-64-STATIC: movl    dsrc(%rip), %
 ; LINUX-64-STATIC: movq    dptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo05:
+; LINUX-32-STATIC-LABEL: foo05:
 ; LINUX-32-STATIC: 	movl	dsrc, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo05:
+; LINUX-32-PIC-LABEL: foo05:
 ; LINUX-32-PIC: 	movl	dsrc, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo05:
+; LINUX-64-PIC-LABEL: foo05:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -651,22 +651,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 0), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 0), align 4
 	ret void
-; LINUX-64-STATIC: foo06:
+; LINUX-64-STATIC-LABEL: foo06:
 ; LINUX-64-STATIC: movl    lsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo06:
+; LINUX-32-STATIC-LABEL: foo06:
 ; LINUX-32-STATIC: 	movl	lsrc, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ldst
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo06:
+; LINUX-32-PIC-LABEL: foo06:
 ; LINUX-32-PIC: 	movl	lsrc, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ldst
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo06:
+; LINUX-64-PIC-LABEL: foo06:
 ; LINUX-64-PIC: 	movl	lsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ldst(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
@@ -709,19 +709,19 @@ define void @foo07() nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @ldst, i32 0, i32 0), i32** @lptr, align 8
 	ret void
-; LINUX-64-STATIC: foo07:
+; LINUX-64-STATIC-LABEL: foo07:
 ; LINUX-64-STATIC: movq    $ldst, lptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo07:
+; LINUX-32-STATIC-LABEL: foo07:
 ; LINUX-32-STATIC: 	movl	$ldst, lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo07:
+; LINUX-32-PIC-LABEL: foo07:
 ; LINUX-32-PIC: 	movl	$ldst, lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo07:
+; LINUX-64-PIC-LABEL: foo07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
@@ -764,25 +764,25 @@ entry:
 	%1 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
 	ret void
-; LINUX-64-STATIC: foo08:
+; LINUX-64-STATIC-LABEL: foo08:
 ; LINUX-64-STATIC: movl    lsrc(%rip), %
 ; LINUX-64-STATIC: movq    lptr(%rip), %
 ; LINUX-64-STATIC: movl
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: foo08:
+; LINUX-32-STATIC-LABEL: foo08:
 ; LINUX-32-STATIC: 	movl	lsrc, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: foo08:
+; LINUX-32-PIC-LABEL: foo08:
 ; LINUX-32-PIC: 	movl	lsrc, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: foo08:
+; LINUX-64-PIC-LABEL: foo08:
 ; LINUX-64-PIC: 	movl	lsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
@@ -833,22 +833,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16), align 4
 	ret void
-; LINUX-64-STATIC: qux00:
+; LINUX-64-STATIC-LABEL: qux00:
 ; LINUX-64-STATIC: movl    src+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+64(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux00:
+; LINUX-32-STATIC-LABEL: qux00:
 ; LINUX-32-STATIC: 	movl	src+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qux00:
+; LINUX-32-PIC-LABEL: qux00:
 ; LINUX-32-PIC: 	movl	src+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux00:
+; LINUX-64-PIC-LABEL: qux00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -904,22 +904,22 @@ entry:
 	%0 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16), align 4
 	store i32 %0, i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16), align 4
 	ret void
-; LINUX-64-STATIC: qxx00:
+; LINUX-64-STATIC-LABEL: qxx00:
 ; LINUX-64-STATIC: movl    xsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], xdst+64(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qxx00:
+; LINUX-32-STATIC-LABEL: qxx00:
 ; LINUX-32-STATIC: 	movl	xsrc+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], xdst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qxx00:
+; LINUX-32-PIC-LABEL: qxx00:
 ; LINUX-32-PIC: 	movl	xsrc+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], xdst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qxx00:
+; LINUX-64-PIC-LABEL: qxx00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -974,19 +974,19 @@ define void @qux01() nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16), i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: qux01:
+; LINUX-64-STATIC-LABEL: qux01:
 ; LINUX-64-STATIC: movq    $dst+64, ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux01:
+; LINUX-32-STATIC-LABEL: qux01:
 ; LINUX-32-STATIC: 	movl	$dst+64, ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qux01:
+; LINUX-32-PIC-LABEL: qux01:
 ; LINUX-32-PIC: 	movl	$dst+64, ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux01:
+; LINUX-64-PIC-LABEL: qux01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1040,19 +1040,19 @@ define void @qxx01() nounwind {
 entry:
 	store i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16), i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: qxx01:
+; LINUX-64-STATIC-LABEL: qxx01:
 ; LINUX-64-STATIC: movq    $xdst+64, ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qxx01:
+; LINUX-32-STATIC-LABEL: qxx01:
 ; LINUX-32-STATIC: 	movl	$xdst+64, ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qxx01:
+; LINUX-32-PIC-LABEL: qxx01:
 ; LINUX-32-PIC: 	movl	$xdst+64, ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qxx01:
+; LINUX-64-PIC-LABEL: qxx01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1108,26 +1108,26 @@ entry:
 	%1 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16), align 4
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
-; LINUX-64-STATIC: qux02:
+; LINUX-64-STATIC-LABEL: qux02:
 ; LINUX-64-STATIC: movl    src+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux02:
+; LINUX-32-STATIC-LABEL: qux02:
 ; LINUX-32-STATIC: 	movl	src+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
-; LINUX-32-PIC: qux02:
+; LINUX-32-PIC-LABEL: qux02:
 ; LINUX-32-PIC: 	movl	src+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux02:
+; LINUX-64-PIC-LABEL: qux02:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1191,26 +1191,26 @@ entry:
 	%1 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16), align 4
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
-; LINUX-64-STATIC: qxx02:
+; LINUX-64-STATIC-LABEL: qxx02:
 ; LINUX-64-STATIC: movl    xsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qxx02:
+; LINUX-32-STATIC-LABEL: qxx02:
 ; LINUX-32-STATIC: 	movl	xsrc+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
-; LINUX-32-PIC: qxx02:
+; LINUX-32-PIC-LABEL: qxx02:
 ; LINUX-32-PIC: 	movl	xsrc+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qxx02:
+; LINUX-64-PIC-LABEL: qxx02:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1273,22 +1273,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16), align 32
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16), align 32
 	ret void
-; LINUX-64-STATIC: qux03:
+; LINUX-64-STATIC-LABEL: qux03:
 ; LINUX-64-STATIC: movl    dsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+64(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux03:
+; LINUX-32-STATIC-LABEL: qux03:
 ; LINUX-32-STATIC: 	movl	dsrc+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ddst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qux03:
+; LINUX-32-PIC-LABEL: qux03:
 ; LINUX-32-PIC: 	movl	dsrc+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ddst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux03:
+; LINUX-64-PIC-LABEL: qux03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1333,19 +1333,19 @@ define void @qux04() nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16), i32** @dptr, align 8
 	ret void
-; LINUX-64-STATIC: qux04:
+; LINUX-64-STATIC-LABEL: qux04:
 ; LINUX-64-STATIC: movq    $ddst+64, dptr(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux04:
+; LINUX-32-STATIC-LABEL: qux04:
 ; LINUX-32-STATIC: 	movl	$ddst+64, dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qux04:
+; LINUX-32-PIC-LABEL: qux04:
 ; LINUX-32-PIC: 	movl	$ddst+64, dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux04:
+; LINUX-64-PIC-LABEL: qux04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	addq	$64, [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1390,26 +1390,26 @@ entry:
 	%1 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16), align 32
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
-; LINUX-64-STATIC: qux05:
+; LINUX-64-STATIC-LABEL: qux05:
 ; LINUX-64-STATIC: movl    dsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux05:
+; LINUX-32-STATIC-LABEL: qux05:
 ; LINUX-32-STATIC: 	movl	dsrc+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
-; LINUX-32-PIC: qux05:
+; LINUX-32-PIC-LABEL: qux05:
 ; LINUX-32-PIC: 	movl	dsrc+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux05:
+; LINUX-64-PIC-LABEL: qux05:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1462,22 +1462,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16), align 4
 	ret void
-; LINUX-64-STATIC: qux06:
+; LINUX-64-STATIC-LABEL: qux06:
 ; LINUX-64-STATIC: movl    lsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+64
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux06:
+; LINUX-32-STATIC-LABEL: qux06:
 ; LINUX-32-STATIC: 	movl	lsrc+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ldst+64
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qux06:
+; LINUX-32-PIC-LABEL: qux06:
 ; LINUX-32-PIC: 	movl	lsrc+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ldst+64
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux06:
+; LINUX-64-PIC-LABEL: qux06:
 ; LINUX-64-PIC: 	movl	lsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ldst+64(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
@@ -1520,19 +1520,19 @@ define void @qux07() nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16), i32** @lptr, align 8
 	ret void
-; LINUX-64-STATIC: qux07:
+; LINUX-64-STATIC-LABEL: qux07:
 ; LINUX-64-STATIC: movq    $ldst+64, lptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux07:
+; LINUX-32-STATIC-LABEL: qux07:
 ; LINUX-32-STATIC: 	movl	$ldst+64, lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: qux07:
+; LINUX-32-PIC-LABEL: qux07:
 ; LINUX-32-PIC: 	movl	$ldst+64, lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux07:
+; LINUX-64-PIC-LABEL: qux07:
 ; LINUX-64-PIC: 	leaq	ldst+64(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
@@ -1575,26 +1575,26 @@ entry:
 	%1 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16), align 4
 	%2 = getelementptr i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
-; LINUX-64-STATIC: qux08:
+; LINUX-64-STATIC-LABEL: qux08:
 ; LINUX-64-STATIC: movl    lsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: qux08:
+; LINUX-32-STATIC-LABEL: qux08:
 ; LINUX-32-STATIC: 	movl	lsrc+64, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 	ret void
 
-; LINUX-32-PIC: qux08:
+; LINUX-32-PIC-LABEL: qux08:
 ; LINUX-32-PIC: 	movl	lsrc+64, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: qux08:
+; LINUX-64-PIC-LABEL: qux08:
 ; LINUX-64-PIC: 	movl	lsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
@@ -1647,24 +1647,24 @@ entry:
 	%2 = getelementptr [131072 x i32]* @dst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: ind00:
+; LINUX-64-STATIC-LABEL: ind00:
 ; LINUX-64-STATIC: movl    src(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind00:
+; LINUX-32-STATIC-LABEL: ind00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], dst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind00:
+; LINUX-32-PIC-LABEL: ind00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], dst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind00:
+; LINUX-64-PIC-LABEL: ind00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1725,24 +1725,24 @@ entry:
 	%2 = getelementptr [32 x i32]* @xdst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: ixd00:
+; LINUX-64-STATIC-LABEL: ixd00:
 ; LINUX-64-STATIC: movl    xsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], xdst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ixd00:
+; LINUX-32-STATIC-LABEL: ixd00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], xdst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ixd00:
+; LINUX-32-PIC-LABEL: ixd00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], xdst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ixd00:
+; LINUX-64-PIC-LABEL: ixd00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -1801,24 +1801,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @dst, i64 0, i64 %i
 	store i32* %0, i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: ind01:
+; LINUX-64-STATIC-LABEL: ind01:
 ; LINUX-64-STATIC: leaq    dst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind01:
+; LINUX-32-STATIC-LABEL: ind01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind01:
+; LINUX-32-PIC-LABEL: ind01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind01:
+; LINUX-64-PIC-LABEL: ind01:
 ; LINUX-64-PIC: 	shlq	$2, %rdi
 ; LINUX-64-PIC-NEXT: 	addq	dst@GOTPCREL(%rip), %rdi
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
@@ -1877,24 +1877,24 @@ entry:
 	%0 = getelementptr [32 x i32]* @xdst, i64 0, i64 %i
 	store i32* %0, i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: ixd01:
+; LINUX-64-STATIC-LABEL: ixd01:
 ; LINUX-64-STATIC: leaq    xdst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ixd01:
+; LINUX-32-STATIC-LABEL: ixd01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	xdst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ixd01:
+; LINUX-32-PIC-LABEL: ixd01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	xdst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ixd01:
+; LINUX-64-PIC-LABEL: ixd01:
 ; LINUX-64-PIC: 	shlq	$2, %rdi
 ; LINUX-64-PIC-NEXT: 	addq	xdst@GOTPCREL(%rip), %rdi
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
@@ -1956,27 +1956,27 @@ entry:
 	%3 = getelementptr i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: ind02:
+; LINUX-64-STATIC-LABEL: ind02:
 ; LINUX-64-STATIC: movl    src(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind02:
+; LINUX-32-STATIC-LABEL: ind02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind02:
+; LINUX-32-PIC-LABEL: ind02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	src(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind02:
+; LINUX-64-PIC-LABEL: ind02:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2045,27 +2045,27 @@ entry:
 	%3 = getelementptr i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: ixd02:
+; LINUX-64-STATIC-LABEL: ixd02:
 ; LINUX-64-STATIC: movl    xsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ixd02:
+; LINUX-32-STATIC-LABEL: ixd02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ixd02:
+; LINUX-32-PIC-LABEL: ixd02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	xsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ixd02:
+; LINUX-64-PIC-LABEL: ixd02:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2133,24 +2133,24 @@ entry:
 	%2 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: ind03:
+; LINUX-64-STATIC-LABEL: ind03:
 ; LINUX-64-STATIC: movl    dsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind03:
+; LINUX-32-STATIC-LABEL: ind03:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ddst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind03:
+; LINUX-32-PIC-LABEL: ind03:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ddst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind03:
+; LINUX-64-PIC-LABEL: ind03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2205,24 +2205,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %i
 	store i32* %0, i32** @dptr, align 8
 	ret void
-; LINUX-64-STATIC: ind04:
+; LINUX-64-STATIC-LABEL: ind04:
 ; LINUX-64-STATIC: leaq    ddst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], dptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind04:
+; LINUX-32-STATIC-LABEL: ind04:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ddst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind04:
+; LINUX-32-PIC-LABEL: ind04:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ddst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind04:
+; LINUX-64-PIC-LABEL: ind04:
 ; LINUX-64-PIC: 	shlq	$2, %rdi
 ; LINUX-64-PIC-NEXT: 	addq	ddst@GOTPCREL(%rip), %rdi
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
@@ -2277,27 +2277,27 @@ entry:
 	%3 = getelementptr i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: ind05:
+; LINUX-64-STATIC-LABEL: ind05:
 ; LINUX-64-STATIC: movl    dsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind05:
+; LINUX-32-STATIC-LABEL: ind05:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind05:
+; LINUX-32-PIC-LABEL: ind05:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind05:
+; LINUX-64-PIC-LABEL: ind05:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2358,24 +2358,24 @@ entry:
 	%2 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: ind06:
+; LINUX-64-STATIC-LABEL: ind06:
 ; LINUX-64-STATIC: movl    lsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind06:
+; LINUX-32-STATIC-LABEL: ind06:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ldst(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind06:
+; LINUX-32-PIC-LABEL: ind06:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ldst(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind06:
+; LINUX-64-PIC-LABEL: ind06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), [[RCX:%r.x]]
@@ -2430,24 +2430,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %i
 	store i32* %0, i32** @lptr, align 8
 	ret void
-; LINUX-64-STATIC: ind07:
+; LINUX-64-STATIC-LABEL: ind07:
 ; LINUX-64-STATIC: leaq    ldst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], lptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind07:
+; LINUX-32-STATIC-LABEL: ind07:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ldst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind07:
+; LINUX-32-PIC-LABEL: ind07:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ldst(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind07:
+; LINUX-64-PIC-LABEL: ind07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
@@ -2501,27 +2501,27 @@ entry:
 	%3 = getelementptr i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: ind08:
+; LINUX-64-STATIC-LABEL: ind08:
 ; LINUX-64-STATIC: movl    lsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ind08:
+; LINUX-32-STATIC-LABEL: ind08:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ind08:
+; LINUX-32-PIC-LABEL: ind08:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lsrc(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ind08:
+; LINUX-64-PIC-LABEL: ind08:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
@@ -2582,24 +2582,24 @@ entry:
 	%3 = getelementptr [131072 x i32]* @dst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: off00:
+; LINUX-64-STATIC-LABEL: off00:
 ; LINUX-64-STATIC: movl    src+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off00:
+; LINUX-32-STATIC-LABEL: off00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], dst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off00:
+; LINUX-32-PIC-LABEL: off00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], dst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off00:
+; LINUX-64-PIC-LABEL: off00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2661,24 +2661,24 @@ entry:
 	%3 = getelementptr [32 x i32]* @xdst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: oxf00:
+; LINUX-64-STATIC-LABEL: oxf00:
 ; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], xdst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: oxf00:
+; LINUX-32-STATIC-LABEL: oxf00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], xdst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: oxf00:
+; LINUX-32-PIC-LABEL: oxf00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], xdst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: oxf00:
+; LINUX-64-PIC-LABEL: oxf00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	xdst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2738,24 +2738,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @dst, i64 0, i64 %.sum
 	store i32* %0, i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: off01:
+; LINUX-64-STATIC-LABEL: off01:
 ; LINUX-64-STATIC: leaq    dst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off01:
+; LINUX-32-STATIC-LABEL: off01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off01:
+; LINUX-32-PIC-LABEL: off01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off01:
+; LINUX-64-PIC-LABEL: off01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2815,24 +2815,24 @@ entry:
 	%0 = getelementptr [32 x i32]* @xdst, i64 0, i64 %.sum
 	store i32* %0, i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: oxf01:
+; LINUX-64-STATIC-LABEL: oxf01:
 ; LINUX-64-STATIC: leaq    xdst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: oxf01:
+; LINUX-32-STATIC-LABEL: oxf01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	xdst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: oxf01:
+; LINUX-32-PIC-LABEL: oxf01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	xdst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: oxf01:
+; LINUX-64-PIC-LABEL: oxf01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2895,27 +2895,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: off02:
+; LINUX-64-STATIC-LABEL: off02:
 ; LINUX-64-STATIC: movl    src+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off02:
+; LINUX-32-STATIC-LABEL: off02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off02:
+; LINUX-32-PIC-LABEL: off02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	src+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off02:
+; LINUX-64-PIC-LABEL: off02:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -2985,27 +2985,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: oxf02:
+; LINUX-64-STATIC-LABEL: oxf02:
 ; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: oxf02:
+; LINUX-32-STATIC-LABEL: oxf02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: oxf02:
+; LINUX-32-PIC-LABEL: oxf02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	xsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: oxf02:
+; LINUX-64-PIC-LABEL: oxf02:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3074,24 +3074,24 @@ entry:
 	%3 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: off03:
+; LINUX-64-STATIC-LABEL: off03:
 ; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off03:
+; LINUX-32-STATIC-LABEL: off03:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ddst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off03:
+; LINUX-32-PIC-LABEL: off03:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ddst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off03:
+; LINUX-64-PIC-LABEL: off03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3147,24 +3147,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %.sum
 	store i32* %0, i32** @dptr, align 8
 	ret void
-; LINUX-64-STATIC: off04:
+; LINUX-64-STATIC-LABEL: off04:
 ; LINUX-64-STATIC: leaq    ddst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], dptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off04:
+; LINUX-32-STATIC-LABEL: off04:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ddst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off04:
+; LINUX-32-PIC-LABEL: off04:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ddst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off04:
+; LINUX-64-PIC-LABEL: off04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3220,27 +3220,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: off05:
+; LINUX-64-STATIC-LABEL: off05:
 ; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off05:
+; LINUX-32-STATIC-LABEL: off05:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off05:
+; LINUX-32-PIC-LABEL: off05:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off05:
+; LINUX-64-PIC-LABEL: off05:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3302,24 +3302,24 @@ entry:
 	%3 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: off06:
+; LINUX-64-STATIC-LABEL: off06:
 ; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+64(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off06:
+; LINUX-32-STATIC-LABEL: off06:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ldst+64(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off06:
+; LINUX-32-PIC-LABEL: off06:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ldst+64(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off06:
+; LINUX-64-PIC-LABEL: off06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), [[RCX:%r.x]]
@@ -3375,24 +3375,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %.sum
 	store i32* %0, i32** @lptr, align 8
 	ret void
-; LINUX-64-STATIC: off07:
+; LINUX-64-STATIC-LABEL: off07:
 ; LINUX-64-STATIC: leaq    ldst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], lptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off07:
+; LINUX-32-STATIC-LABEL: off07:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ldst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off07:
+; LINUX-32-PIC-LABEL: off07:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ldst+64(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off07:
+; LINUX-64-PIC-LABEL: off07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
@@ -3447,27 +3447,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: off08:
+; LINUX-64-STATIC-LABEL: off08:
 ; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 64([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: off08:
+; LINUX-32-STATIC-LABEL: off08:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: off08:
+; LINUX-32-PIC-LABEL: off08:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lsrc+64(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 64([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: off08:
+; LINUX-64-PIC-LABEL: off08:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	64([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
@@ -3525,22 +3525,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536), align 4
 	ret void
-; LINUX-64-STATIC: moo00:
+; LINUX-64-STATIC-LABEL: moo00:
 ; LINUX-64-STATIC: movl    src+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+262144(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo00:
+; LINUX-32-STATIC-LABEL: moo00:
 ; LINUX-32-STATIC: 	movl	src+262144, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dst+262144
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo00:
+; LINUX-32-PIC-LABEL: moo00:
 ; LINUX-32-PIC: 	movl	src+262144, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dst+262144
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo00:
+; LINUX-64-PIC-LABEL: moo00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3595,19 +3595,19 @@ define void @moo01(i64 %i) nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536), i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: moo01:
+; LINUX-64-STATIC-LABEL: moo01:
 ; LINUX-64-STATIC: movq    $dst+262144, ptr(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo01:
+; LINUX-32-STATIC-LABEL: moo01:
 ; LINUX-32-STATIC: 	movl	$dst+262144, ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo01:
+; LINUX-32-PIC-LABEL: moo01:
 ; LINUX-32-PIC: 	movl	$dst+262144, ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo01:
+; LINUX-64-PIC-LABEL: moo01:
 ; LINUX-64-PIC: 	movl	$262144, [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	addq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3664,25 +3664,25 @@ entry:
 	%2 = getelementptr i32* %0, i64 65536
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: moo02:
+; LINUX-64-STATIC-LABEL: moo02:
 ; LINUX-64-STATIC: movl    src+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo02:
+; LINUX-32-STATIC-LABEL: moo02:
 ; LINUX-32-STATIC: 	movl	src+262144, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo02:
+; LINUX-32-PIC-LABEL: moo02:
 ; LINUX-32-PIC: 	movl	src+262144, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo02:
+; LINUX-64-PIC-LABEL: moo02:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3745,22 +3745,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536), align 32
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536), align 32
 	ret void
-; LINUX-64-STATIC: moo03:
+; LINUX-64-STATIC-LABEL: moo03:
 ; LINUX-64-STATIC: movl    dsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+262144(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo03:
+; LINUX-32-STATIC-LABEL: moo03:
 ; LINUX-32-STATIC: 	movl	dsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ddst+262144
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo03:
+; LINUX-32-PIC-LABEL: moo03:
 ; LINUX-32-PIC: 	movl	dsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ddst+262144
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo03:
+; LINUX-64-PIC-LABEL: moo03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3805,19 +3805,19 @@ define void @moo04(i64 %i) nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536), i32** @dptr, align 8
 	ret void
-; LINUX-64-STATIC: moo04:
+; LINUX-64-STATIC-LABEL: moo04:
 ; LINUX-64-STATIC: movq    $ddst+262144, dptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo04:
+; LINUX-32-STATIC-LABEL: moo04:
 ; LINUX-32-STATIC: 	movl	$ddst+262144, dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo04:
+; LINUX-32-PIC-LABEL: moo04:
 ; LINUX-32-PIC: 	movl	$ddst+262144, dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo04:
+; LINUX-64-PIC-LABEL: moo04:
 ; LINUX-64-PIC: 	movl	$262144, [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	addq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3863,25 +3863,25 @@ entry:
 	%2 = getelementptr i32* %0, i64 65536
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: moo05:
+; LINUX-64-STATIC-LABEL: moo05:
 ; LINUX-64-STATIC: movl    dsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo05:
+; LINUX-32-STATIC-LABEL: moo05:
 ; LINUX-32-STATIC: 	movl	dsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo05:
+; LINUX-32-PIC-LABEL: moo05:
 ; LINUX-32-PIC: 	movl	dsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo05:
+; LINUX-64-PIC-LABEL: moo05:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]]), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -3934,22 +3934,22 @@ entry:
 	%0 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536), align 4
 	ret void
-; LINUX-64-STATIC: moo06:
+; LINUX-64-STATIC-LABEL: moo06:
 ; LINUX-64-STATIC: movl    lsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+262144(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo06:
+; LINUX-32-STATIC-LABEL: moo06:
 ; LINUX-32-STATIC: 	movl	lsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ldst+262144
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo06:
+; LINUX-32-PIC-LABEL: moo06:
 ; LINUX-32-PIC: 	movl	lsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ldst+262144
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo06:
+; LINUX-64-PIC-LABEL: moo06:
 ; LINUX-64-PIC: 	movl	lsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movl	[[EAX]], ldst+262144(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
@@ -3992,19 +3992,19 @@ define void @moo07(i64 %i) nounwind {
 entry:
 	store i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536), i32** @lptr, align 8
 	ret void
-; LINUX-64-STATIC: moo07:
+; LINUX-64-STATIC-LABEL: moo07:
 ; LINUX-64-STATIC: movq    $ldst+262144, lptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo07:
+; LINUX-32-STATIC-LABEL: moo07:
 ; LINUX-32-STATIC: 	movl	$ldst+262144, lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo07:
+; LINUX-32-PIC-LABEL: moo07:
 ; LINUX-32-PIC: 	movl	$ldst+262144, lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo07:
+; LINUX-64-PIC-LABEL: moo07:
 ; LINUX-64-PIC: 	leaq	ldst+262144(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
 ; LINUX-64-PIC-NEXT: 	ret
@@ -4048,25 +4048,25 @@ entry:
 	%2 = getelementptr i32* %0, i64 65536
 	store i32 %1, i32* %2, align 4
 	ret void
-; LINUX-64-STATIC: moo08:
+; LINUX-64-STATIC-LABEL: moo08:
 ; LINUX-64-STATIC: movl    lsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]])
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: moo08:
+; LINUX-32-STATIC-LABEL: moo08:
 ; LINUX-32-STATIC: 	movl	lsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: moo08:
+; LINUX-32-PIC-LABEL: moo08:
 ; LINUX-32-PIC: 	movl	lsrc+262144, [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], 262144([[ECX]])
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: moo08:
+; LINUX-64-PIC-LABEL: moo08:
 ; LINUX-64-PIC: 	movl	lsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
@@ -4120,24 +4120,24 @@ entry:
 	%3 = getelementptr [131072 x i32]* @dst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: big00:
+; LINUX-64-STATIC-LABEL: big00:
 ; LINUX-64-STATIC: movl    src+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+262144(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big00:
+; LINUX-32-STATIC-LABEL: big00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], dst+262144(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big00:
+; LINUX-32-PIC-LABEL: big00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], dst+262144(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big00:
+; LINUX-64-PIC-LABEL: big00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -4197,24 +4197,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @dst, i64 0, i64 %.sum
 	store i32* %0, i32** @ptr, align 8
 	ret void
-; LINUX-64-STATIC: big01:
+; LINUX-64-STATIC-LABEL: big01:
 ; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr(%rip)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big01:
+; LINUX-32-STATIC-LABEL: big01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dst+262144(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big01:
+; LINUX-32-PIC-LABEL: big01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dst+262144(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], ptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big01:
+; LINUX-64-PIC-LABEL: big01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -4277,27 +4277,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: big02:
+; LINUX-64-STATIC-LABEL: big02:
 ; LINUX-64-STATIC: movl    src+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big02:
+; LINUX-32-STATIC-LABEL: big02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big02:
+; LINUX-32-PIC-LABEL: big02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	src+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big02:
+; LINUX-64-PIC-LABEL: big02:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -4366,24 +4366,24 @@ entry:
 	%3 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: big03:
+; LINUX-64-STATIC-LABEL: big03:
 ; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+262144(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big03:
+; LINUX-32-STATIC-LABEL: big03:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ddst+262144(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big03:
+; LINUX-32-PIC-LABEL: big03:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ddst+262144(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big03:
+; LINUX-64-PIC-LABEL: big03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ddst@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -4439,24 +4439,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %.sum
 	store i32* %0, i32** @dptr, align 8
 	ret void
-; LINUX-64-STATIC: big04:
+; LINUX-64-STATIC-LABEL: big04:
 ; LINUX-64-STATIC: leaq    ddst+262144(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], dptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big04:
+; LINUX-32-STATIC-LABEL: big04:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big04:
+; LINUX-32-PIC-LABEL: big04:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], dptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big04:
+; LINUX-64-PIC-LABEL: big04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -4512,27 +4512,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: big05:
+; LINUX-64-STATIC-LABEL: big05:
 ; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big05:
+; LINUX-32-STATIC-LABEL: big05:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big05:
+; LINUX-32-PIC-LABEL: big05:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big05:
+; LINUX-64-PIC-LABEL: big05:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
@@ -4594,24 +4594,24 @@ entry:
 	%3 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
-; LINUX-64-STATIC: big06:
+; LINUX-64-STATIC-LABEL: big06:
 ; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+262144(,%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big06:
+; LINUX-32-STATIC-LABEL: big06:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], ldst+262144(,[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big06:
+; LINUX-32-PIC-LABEL: big06:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], ldst+262144(,[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big06:
+; LINUX-64-PIC-LABEL: big06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	ldst(%rip), [[RCX:%r.x]]
@@ -4667,24 +4667,24 @@ entry:
 	%0 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %.sum
 	store i32* %0, i32** @lptr, align 8
 	ret void
-; LINUX-64-STATIC: big07:
+; LINUX-64-STATIC-LABEL: big07:
 ; LINUX-64-STATIC: leaq    ldst+262144(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], lptr
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big07:
+; LINUX-32-STATIC-LABEL: big07:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big07:
+; LINUX-32-PIC-LABEL: big07:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[EAX]], lptr
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big07:
+; LINUX-64-PIC-LABEL: big07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	[[RAX]], lptr(%rip)
@@ -4739,27 +4739,27 @@ entry:
 	%4 = getelementptr i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
-; LINUX-64-STATIC: big08:
+; LINUX-64-STATIC-LABEL: big08:
 ; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], 262144([[RCX]],%rdi,4)
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: big08:
+; LINUX-32-STATIC-LABEL: big08:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: big08:
+; LINUX-32-PIC-LABEL: big08:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lsrc+262144(,[[EAX]],4), [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[EDX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	[[ECX]], 262144([[EDX]],[[EAX]],4)
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: big08:
+; LINUX-64-PIC-LABEL: big08:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movl	262144([[RAX]],%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-PIC-NEXT: 	movq	lptr(%rip), [[RCX:%r.x]]
@@ -4815,19 +4815,19 @@ entry:
 define i8* @bar00() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @src to i8*)
-; LINUX-64-STATIC: bar00:
+; LINUX-64-STATIC-LABEL: bar00:
 ; LINUX-64-STATIC: movl    $src, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar00:
+; LINUX-32-STATIC-LABEL: bar00:
 ; LINUX-32-STATIC: 	movl	$src, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar00:
+; LINUX-32-PIC-LABEL: bar00:
 ; LINUX-32-PIC: 	movl	$src, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar00:
+; LINUX-64-PIC-LABEL: bar00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -4862,19 +4862,19 @@ entry:
 define i8* @bxr00() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
-; LINUX-64-STATIC: bxr00:
+; LINUX-64-STATIC-LABEL: bxr00:
 ; LINUX-64-STATIC: movl    $xsrc, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bxr00:
+; LINUX-32-STATIC-LABEL: bxr00:
 ; LINUX-32-STATIC: 	movl	$xsrc, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bxr00:
+; LINUX-32-PIC-LABEL: bxr00:
 ; LINUX-32-PIC: 	movl	$xsrc, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bxr00:
+; LINUX-64-PIC-LABEL: bxr00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -4909,19 +4909,19 @@ entry:
 define i8* @bar01() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dst to i8*)
-; LINUX-64-STATIC: bar01:
+; LINUX-64-STATIC-LABEL: bar01:
 ; LINUX-64-STATIC: movl    $dst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar01:
+; LINUX-32-STATIC-LABEL: bar01:
 ; LINUX-32-STATIC: 	movl	$dst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar01:
+; LINUX-32-PIC-LABEL: bar01:
 ; LINUX-32-PIC: 	movl	$dst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar01:
+; LINUX-64-PIC-LABEL: bar01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -4956,19 +4956,19 @@ entry:
 define i8* @bxr01() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xdst to i8*)
-; LINUX-64-STATIC: bxr01:
+; LINUX-64-STATIC-LABEL: bxr01:
 ; LINUX-64-STATIC: movl    $xdst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bxr01:
+; LINUX-32-STATIC-LABEL: bxr01:
 ; LINUX-32-STATIC: 	movl	$xdst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bxr01:
+; LINUX-32-PIC-LABEL: bxr01:
 ; LINUX-32-PIC: 	movl	$xdst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bxr01:
+; LINUX-64-PIC-LABEL: bxr01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5003,19 +5003,19 @@ entry:
 define i8* @bar02() nounwind {
 entry:
 	ret i8* bitcast (i32** @ptr to i8*)
-; LINUX-64-STATIC: bar02:
+; LINUX-64-STATIC-LABEL: bar02:
 ; LINUX-64-STATIC: movl    $ptr, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar02:
+; LINUX-32-STATIC-LABEL: bar02:
 ; LINUX-32-STATIC: 	movl	$ptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar02:
+; LINUX-32-PIC-LABEL: bar02:
 ; LINUX-32-PIC: 	movl	$ptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar02:
+; LINUX-64-PIC-LABEL: bar02:
 ; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5050,19 +5050,19 @@ entry:
 define i8* @bar03() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
-; LINUX-64-STATIC: bar03:
+; LINUX-64-STATIC-LABEL: bar03:
 ; LINUX-64-STATIC: movl    $dsrc, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar03:
+; LINUX-32-STATIC-LABEL: bar03:
 ; LINUX-32-STATIC: 	movl	$dsrc, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar03:
+; LINUX-32-PIC-LABEL: bar03:
 ; LINUX-32-PIC: 	movl	$dsrc, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar03:
+; LINUX-64-PIC-LABEL: bar03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5097,19 +5097,19 @@ entry:
 define i8* @bar04() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
-; LINUX-64-STATIC: bar04:
+; LINUX-64-STATIC-LABEL: bar04:
 ; LINUX-64-STATIC: movl    $ddst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar04:
+; LINUX-32-STATIC-LABEL: bar04:
 ; LINUX-32-STATIC: 	movl	$ddst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar04:
+; LINUX-32-PIC-LABEL: bar04:
 ; LINUX-32-PIC: 	movl	$ddst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar04:
+; LINUX-64-PIC-LABEL: bar04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5144,19 +5144,19 @@ entry:
 define i8* @bar05() nounwind {
 entry:
 	ret i8* bitcast (i32** @dptr to i8*)
-; LINUX-64-STATIC: bar05:
+; LINUX-64-STATIC-LABEL: bar05:
 ; LINUX-64-STATIC: movl    $dptr, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar05:
+; LINUX-32-STATIC-LABEL: bar05:
 ; LINUX-32-STATIC: 	movl	$dptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar05:
+; LINUX-32-PIC-LABEL: bar05:
 ; LINUX-32-PIC: 	movl	$dptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar05:
+; LINUX-64-PIC-LABEL: bar05:
 ; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5191,19 +5191,19 @@ entry:
 define i8* @bar06() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
-; LINUX-64-STATIC: bar06:
+; LINUX-64-STATIC-LABEL: bar06:
 ; LINUX-64-STATIC: movl    $lsrc, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar06:
+; LINUX-32-STATIC-LABEL: bar06:
 ; LINUX-32-STATIC: 	movl	$lsrc, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar06:
+; LINUX-32-PIC-LABEL: bar06:
 ; LINUX-32-PIC: 	movl	$lsrc, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar06:
+; LINUX-64-PIC-LABEL: bar06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5238,19 +5238,19 @@ entry:
 define i8* @bar07() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
-; LINUX-64-STATIC: bar07:
+; LINUX-64-STATIC-LABEL: bar07:
 ; LINUX-64-STATIC: movl    $ldst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar07:
+; LINUX-32-STATIC-LABEL: bar07:
 ; LINUX-32-STATIC: 	movl	$ldst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar07:
+; LINUX-32-PIC-LABEL: bar07:
 ; LINUX-32-PIC: 	movl	$ldst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar07:
+; LINUX-64-PIC-LABEL: bar07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5285,19 +5285,19 @@ entry:
 define i8* @bar08() nounwind {
 entry:
 	ret i8* bitcast (i32** @lptr to i8*)
-; LINUX-64-STATIC: bar08:
+; LINUX-64-STATIC-LABEL: bar08:
 ; LINUX-64-STATIC: movl    $lptr, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bar08:
+; LINUX-32-STATIC-LABEL: bar08:
 ; LINUX-32-STATIC: 	movl	$lptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bar08:
+; LINUX-32-PIC-LABEL: bar08:
 ; LINUX-32-PIC: 	movl	$lptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bar08:
+; LINUX-64-PIC-LABEL: bar08:
 ; LINUX-64-PIC: 	leaq	lptr(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5332,19 +5332,19 @@ entry:
 define i8* @har00() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @src to i8*)
-; LINUX-64-STATIC: har00:
+; LINUX-64-STATIC-LABEL: har00:
 ; LINUX-64-STATIC: movl    $src, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har00:
+; LINUX-32-STATIC-LABEL: har00:
 ; LINUX-32-STATIC: 	movl	$src, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har00:
+; LINUX-32-PIC-LABEL: har00:
 ; LINUX-32-PIC: 	movl	$src, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har00:
+; LINUX-64-PIC-LABEL: har00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5379,19 +5379,19 @@ entry:
 define i8* @hxr00() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
-; LINUX-64-STATIC: hxr00:
+; LINUX-64-STATIC-LABEL: hxr00:
 ; LINUX-64-STATIC: movl    $xsrc, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: hxr00:
+; LINUX-32-STATIC-LABEL: hxr00:
 ; LINUX-32-STATIC: 	movl	$xsrc, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: hxr00:
+; LINUX-32-PIC-LABEL: hxr00:
 ; LINUX-32-PIC: 	movl	$xsrc, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: hxr00:
+; LINUX-64-PIC-LABEL: hxr00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5426,19 +5426,19 @@ entry:
 define i8* @har01() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dst to i8*)
-; LINUX-64-STATIC: har01:
+; LINUX-64-STATIC-LABEL: har01:
 ; LINUX-64-STATIC: movl    $dst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har01:
+; LINUX-32-STATIC-LABEL: har01:
 ; LINUX-32-STATIC: 	movl	$dst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har01:
+; LINUX-32-PIC-LABEL: har01:
 ; LINUX-32-PIC: 	movl	$dst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har01:
+; LINUX-64-PIC-LABEL: har01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5473,19 +5473,19 @@ entry:
 define i8* @hxr01() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xdst to i8*)
-; LINUX-64-STATIC: hxr01:
+; LINUX-64-STATIC-LABEL: hxr01:
 ; LINUX-64-STATIC: movl    $xdst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: hxr01:
+; LINUX-32-STATIC-LABEL: hxr01:
 ; LINUX-32-STATIC: 	movl	$xdst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: hxr01:
+; LINUX-32-PIC-LABEL: hxr01:
 ; LINUX-32-PIC: 	movl	$xdst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: hxr01:
+; LINUX-64-PIC-LABEL: hxr01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5522,19 +5522,19 @@ entry:
 	%0 = load i32** @ptr, align 8
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
-; LINUX-64-STATIC: har02:
+; LINUX-64-STATIC-LABEL: har02:
 ; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har02:
+; LINUX-32-STATIC-LABEL: har02:
 ; LINUX-32-STATIC: 	movl	ptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har02:
+; LINUX-32-PIC-LABEL: har02:
 ; LINUX-32-PIC: 	movl	ptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har02:
+; LINUX-64-PIC-LABEL: har02:
 ; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -5575,19 +5575,19 @@ entry:
 define i8* @har03() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
-; LINUX-64-STATIC: har03:
+; LINUX-64-STATIC-LABEL: har03:
 ; LINUX-64-STATIC: movl    $dsrc, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har03:
+; LINUX-32-STATIC-LABEL: har03:
 ; LINUX-32-STATIC: 	movl	$dsrc, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har03:
+; LINUX-32-PIC-LABEL: har03:
 ; LINUX-32-PIC: 	movl	$dsrc, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har03:
+; LINUX-64-PIC-LABEL: har03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5622,19 +5622,19 @@ entry:
 define i8* @har04() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
-; LINUX-64-STATIC: har04:
+; LINUX-64-STATIC-LABEL: har04:
 ; LINUX-64-STATIC: movl    $ddst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har04:
+; LINUX-32-STATIC-LABEL: har04:
 ; LINUX-32-STATIC: 	movl	$ddst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har04:
+; LINUX-32-PIC-LABEL: har04:
 ; LINUX-32-PIC: 	movl	$ddst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har04:
+; LINUX-64-PIC-LABEL: har04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5671,19 +5671,19 @@ entry:
 	%0 = load i32** @dptr, align 8
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
-; LINUX-64-STATIC: har05:
+; LINUX-64-STATIC-LABEL: har05:
 ; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har05:
+; LINUX-32-STATIC-LABEL: har05:
 ; LINUX-32-STATIC: 	movl	dptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har05:
+; LINUX-32-PIC-LABEL: har05:
 ; LINUX-32-PIC: 	movl	dptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har05:
+; LINUX-64-PIC-LABEL: har05:
 ; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -5719,19 +5719,19 @@ entry:
 define i8* @har06() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
-; LINUX-64-STATIC: har06:
+; LINUX-64-STATIC-LABEL: har06:
 ; LINUX-64-STATIC: movl    $lsrc, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har06:
+; LINUX-32-STATIC-LABEL: har06:
 ; LINUX-32-STATIC: 	movl	$lsrc, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har06:
+; LINUX-32-PIC-LABEL: har06:
 ; LINUX-32-PIC: 	movl	$lsrc, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har06:
+; LINUX-64-PIC-LABEL: har06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5766,19 +5766,19 @@ entry:
 define i8* @har07() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
-; LINUX-64-STATIC: har07:
+; LINUX-64-STATIC-LABEL: har07:
 ; LINUX-64-STATIC: movl    $ldst, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har07:
+; LINUX-32-STATIC-LABEL: har07:
 ; LINUX-32-STATIC: 	movl	$ldst, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har07:
+; LINUX-32-PIC-LABEL: har07:
 ; LINUX-32-PIC: 	movl	$ldst, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har07:
+; LINUX-64-PIC-LABEL: har07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5815,19 +5815,19 @@ entry:
 	%0 = load i32** @lptr, align 8
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
-; LINUX-64-STATIC: har08:
+; LINUX-64-STATIC-LABEL: har08:
 ; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: har08:
+; LINUX-32-STATIC-LABEL: har08:
 ; LINUX-32-STATIC: 	movl	lptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: har08:
+; LINUX-32-PIC-LABEL: har08:
 ; LINUX-32-PIC: 	movl	lptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: har08:
+; LINUX-64-PIC-LABEL: har08:
 ; LINUX-64-PIC: 	movq	lptr(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -5862,19 +5862,19 @@ entry:
 define i8* @bat00() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bat00:
+; LINUX-64-STATIC-LABEL: bat00:
 ; LINUX-64-STATIC: movl    $src+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat00:
+; LINUX-32-STATIC-LABEL: bat00:
 ; LINUX-32-STATIC: 	movl	$src+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat00:
+; LINUX-32-PIC-LABEL: bat00:
 ; LINUX-32-PIC: 	movl	$src+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat00:
+; LINUX-64-PIC-LABEL: bat00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -5915,19 +5915,19 @@ entry:
 define i8* @bxt00() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bxt00:
+; LINUX-64-STATIC-LABEL: bxt00:
 ; LINUX-64-STATIC: movl    $xsrc+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bxt00:
+; LINUX-32-STATIC-LABEL: bxt00:
 ; LINUX-32-STATIC: 	movl	$xsrc+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bxt00:
+; LINUX-32-PIC-LABEL: bxt00:
 ; LINUX-32-PIC: 	movl	$xsrc+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bxt00:
+; LINUX-64-PIC-LABEL: bxt00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -5968,19 +5968,19 @@ entry:
 define i8* @bat01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bat01:
+; LINUX-64-STATIC-LABEL: bat01:
 ; LINUX-64-STATIC: movl    $dst+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat01:
+; LINUX-32-STATIC-LABEL: bat01:
 ; LINUX-32-STATIC: 	movl	$dst+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat01:
+; LINUX-32-PIC-LABEL: bat01:
 ; LINUX-32-PIC: 	movl	$dst+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat01:
+; LINUX-64-PIC-LABEL: bat01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6021,19 +6021,19 @@ entry:
 define i8* @bxt01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bxt01:
+; LINUX-64-STATIC-LABEL: bxt01:
 ; LINUX-64-STATIC: movl    $xdst+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bxt01:
+; LINUX-32-STATIC-LABEL: bxt01:
 ; LINUX-32-STATIC: 	movl	$xdst+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bxt01:
+; LINUX-32-PIC-LABEL: bxt01:
 ; LINUX-32-PIC: 	movl	$xdst+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bxt01:
+; LINUX-64-PIC-LABEL: bxt01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6077,22 +6077,22 @@ entry:
 	%1 = getelementptr i32* %0, i64 16
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: bat02:
+; LINUX-64-STATIC-LABEL: bat02:
 ; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat02:
+; LINUX-32-STATIC-LABEL: bat02:
 ; LINUX-32-STATIC: 	movl	ptr, %eax
 ; LINUX-32-STATIC-NEXT: 	addl	$64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat02:
+; LINUX-32-PIC-LABEL: bat02:
 ; LINUX-32-PIC: 	movl	ptr, %eax
 ; LINUX-32-PIC-NEXT: 	addl	$64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat02:
+; LINUX-64-PIC-LABEL: bat02:
 ; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
@@ -6140,19 +6140,19 @@ entry:
 define i8* @bat03() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bat03:
+; LINUX-64-STATIC-LABEL: bat03:
 ; LINUX-64-STATIC: movl    $dsrc+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat03:
+; LINUX-32-STATIC-LABEL: bat03:
 ; LINUX-32-STATIC: 	movl	$dsrc+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat03:
+; LINUX-32-PIC-LABEL: bat03:
 ; LINUX-32-PIC: 	movl	$dsrc+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat03:
+; LINUX-64-PIC-LABEL: bat03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6188,19 +6188,19 @@ entry:
 define i8* @bat04() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bat04:
+; LINUX-64-STATIC-LABEL: bat04:
 ; LINUX-64-STATIC: movl    $ddst+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat04:
+; LINUX-32-STATIC-LABEL: bat04:
 ; LINUX-32-STATIC: 	movl	$ddst+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat04:
+; LINUX-32-PIC-LABEL: bat04:
 ; LINUX-32-PIC: 	movl	$ddst+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat04:
+; LINUX-64-PIC-LABEL: bat04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6239,22 +6239,22 @@ entry:
 	%1 = getelementptr i32* %0, i64 16
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: bat05:
+; LINUX-64-STATIC-LABEL: bat05:
 ; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat05:
+; LINUX-32-STATIC-LABEL: bat05:
 ; LINUX-32-STATIC: 	movl	dptr, %eax
 ; LINUX-32-STATIC-NEXT: 	addl	$64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat05:
+; LINUX-32-PIC-LABEL: bat05:
 ; LINUX-32-PIC: 	movl	dptr, %eax
 ; LINUX-32-PIC-NEXT: 	addl	$64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat05:
+; LINUX-64-PIC-LABEL: bat05:
 ; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
@@ -6297,19 +6297,19 @@ entry:
 define i8* @bat06() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bat06:
+; LINUX-64-STATIC-LABEL: bat06:
 ; LINUX-64-STATIC: movl    $lsrc+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat06:
+; LINUX-32-STATIC-LABEL: bat06:
 ; LINUX-32-STATIC: 	movl	$lsrc+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat06:
+; LINUX-32-PIC-LABEL: bat06:
 ; LINUX-32-PIC: 	movl	$lsrc+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat06:
+; LINUX-64-PIC-LABEL: bat06:
 ; LINUX-64-PIC: 	leaq	lsrc+64(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6344,19 +6344,19 @@ entry:
 define i8* @bat07() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16) to i8*)
-; LINUX-64-STATIC: bat07:
+; LINUX-64-STATIC-LABEL: bat07:
 ; LINUX-64-STATIC: movl    $ldst+64, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat07:
+; LINUX-32-STATIC-LABEL: bat07:
 ; LINUX-32-STATIC: 	movl	$ldst+64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat07:
+; LINUX-32-PIC-LABEL: bat07:
 ; LINUX-32-PIC: 	movl	$ldst+64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat07:
+; LINUX-64-PIC-LABEL: bat07:
 ; LINUX-64-PIC: 	leaq	ldst+64(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6394,22 +6394,22 @@ entry:
 	%1 = getelementptr i32* %0, i64 16
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: bat08:
+; LINUX-64-STATIC-LABEL: bat08:
 ; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bat08:
+; LINUX-32-STATIC-LABEL: bat08:
 ; LINUX-32-STATIC: 	movl	lptr, %eax
 ; LINUX-32-STATIC-NEXT: 	addl	$64, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bat08:
+; LINUX-32-PIC-LABEL: bat08:
 ; LINUX-32-PIC: 	movl	lptr, %eax
 ; LINUX-32-PIC-NEXT: 	addl	$64, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bat08:
+; LINUX-64-PIC-LABEL: bat08:
 ; LINUX-64-PIC: 	movq	lptr(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	addq	$64, %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6451,19 +6451,19 @@ entry:
 define i8* @bam00() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bam00:
+; LINUX-64-STATIC-LABEL: bam00:
 ; LINUX-64-STATIC: movl    $src+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam00:
+; LINUX-32-STATIC-LABEL: bam00:
 ; LINUX-32-STATIC: 	movl	$src+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam00:
+; LINUX-32-PIC-LABEL: bam00:
 ; LINUX-32-PIC: 	movl	$src+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam00:
+; LINUX-64-PIC-LABEL: bam00:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	src@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6504,19 +6504,19 @@ entry:
 define i8* @bam01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bam01:
+; LINUX-64-STATIC-LABEL: bam01:
 ; LINUX-64-STATIC: movl    $dst+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam01:
+; LINUX-32-STATIC-LABEL: bam01:
 ; LINUX-32-STATIC: 	movl	$dst+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam01:
+; LINUX-32-PIC-LABEL: bam01:
 ; LINUX-32-PIC: 	movl	$dst+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam01:
+; LINUX-64-PIC-LABEL: bam01:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	dst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6557,19 +6557,19 @@ entry:
 define i8* @bxm01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bxm01:
+; LINUX-64-STATIC-LABEL: bxm01:
 ; LINUX-64-STATIC: movl    $xdst+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bxm01:
+; LINUX-32-STATIC-LABEL: bxm01:
 ; LINUX-32-STATIC: 	movl	$xdst+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bxm01:
+; LINUX-32-PIC-LABEL: bxm01:
 ; LINUX-32-PIC: 	movl	$xdst+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bxm01:
+; LINUX-64-PIC-LABEL: bxm01:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	xdst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6613,22 +6613,22 @@ entry:
 	%1 = getelementptr i32* %0, i64 65536
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: bam02:
+; LINUX-64-STATIC-LABEL: bam02:
 ; LINUX-64-STATIC: movl    $262144, %eax
 ; LINUX-64-STATIC: addq    ptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam02:
+; LINUX-32-STATIC-LABEL: bam02:
 ; LINUX-32-STATIC: 	movl	$262144, %eax
 ; LINUX-32-STATIC-NEXT: 	addl	ptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam02:
+; LINUX-32-PIC-LABEL: bam02:
 ; LINUX-32-PIC: 	movl	$262144, %eax
 ; LINUX-32-PIC-NEXT: 	addl	ptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam02:
+; LINUX-64-PIC-LABEL: bam02:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	movq	ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	addq	([[RCX]]), %rax
@@ -6676,19 +6676,19 @@ entry:
 define i8* @bam03() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bam03:
+; LINUX-64-STATIC-LABEL: bam03:
 ; LINUX-64-STATIC: movl    $dsrc+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam03:
+; LINUX-32-STATIC-LABEL: bam03:
 ; LINUX-32-STATIC: 	movl	$dsrc+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam03:
+; LINUX-32-PIC-LABEL: bam03:
 ; LINUX-32-PIC: 	movl	$dsrc+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam03:
+; LINUX-64-PIC-LABEL: bam03:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	dsrc@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6724,19 +6724,19 @@ entry:
 define i8* @bam04() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bam04:
+; LINUX-64-STATIC-LABEL: bam04:
 ; LINUX-64-STATIC: movl    $ddst+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam04:
+; LINUX-32-STATIC-LABEL: bam04:
 ; LINUX-32-STATIC: 	movl	$ddst+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam04:
+; LINUX-32-PIC-LABEL: bam04:
 ; LINUX-32-PIC: 	movl	$ddst+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam04:
+; LINUX-64-PIC-LABEL: bam04:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	ddst@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6775,22 +6775,22 @@ entry:
 	%1 = getelementptr i32* %0, i64 65536
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: bam05:
+; LINUX-64-STATIC-LABEL: bam05:
 ; LINUX-64-STATIC: movl    $262144, %eax
 ; LINUX-64-STATIC: addq    dptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam05:
+; LINUX-32-STATIC-LABEL: bam05:
 ; LINUX-32-STATIC: 	movl	$262144, %eax
 ; LINUX-32-STATIC-NEXT: 	addl	dptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam05:
+; LINUX-32-PIC-LABEL: bam05:
 ; LINUX-32-PIC: 	movl	$262144, %eax
 ; LINUX-32-PIC-NEXT: 	addl	dptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam05:
+; LINUX-64-PIC-LABEL: bam05:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	movq	dptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	addq	([[RCX]]), %rax
@@ -6833,19 +6833,19 @@ entry:
 define i8* @bam06() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bam06:
+; LINUX-64-STATIC-LABEL: bam06:
 ; LINUX-64-STATIC: movl    $lsrc+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam06:
+; LINUX-32-STATIC-LABEL: bam06:
 ; LINUX-32-STATIC: 	movl	$lsrc+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam06:
+; LINUX-32-PIC-LABEL: bam06:
 ; LINUX-32-PIC: 	movl	$lsrc+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam06:
+; LINUX-64-PIC-LABEL: bam06:
 ; LINUX-64-PIC: 	leaq	lsrc+262144(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6880,19 +6880,19 @@ entry:
 define i8* @bam07() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536) to i8*)
-; LINUX-64-STATIC: bam07:
+; LINUX-64-STATIC-LABEL: bam07:
 ; LINUX-64-STATIC: movl    $ldst+262144, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam07:
+; LINUX-32-STATIC-LABEL: bam07:
 ; LINUX-32-STATIC: 	movl	$ldst+262144, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam07:
+; LINUX-32-PIC-LABEL: bam07:
 ; LINUX-32-PIC: 	movl	$ldst+262144, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam07:
+; LINUX-64-PIC-LABEL: bam07:
 ; LINUX-64-PIC: 	leaq	ldst+262144(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -6930,22 +6930,22 @@ entry:
 	%1 = getelementptr i32* %0, i64 65536
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: bam08:
+; LINUX-64-STATIC-LABEL: bam08:
 ; LINUX-64-STATIC: movl    $262144, %eax
 ; LINUX-64-STATIC: addq    lptr(%rip), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: bam08:
+; LINUX-32-STATIC-LABEL: bam08:
 ; LINUX-32-STATIC: 	movl	$262144, %eax
 ; LINUX-32-STATIC-NEXT: 	addl	lptr, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: bam08:
+; LINUX-32-PIC-LABEL: bam08:
 ; LINUX-32-PIC: 	movl	$262144, %eax
 ; LINUX-32-PIC-NEXT: 	addl	lptr, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: bam08:
+; LINUX-64-PIC-LABEL: bam08:
 ; LINUX-64-PIC: 	movl	$262144, %eax
 ; LINUX-64-PIC-NEXT: 	addq	lptr(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -6990,21 +6990,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @src, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cat00:
+; LINUX-64-STATIC-LABEL: cat00:
 ; LINUX-64-STATIC: leaq    src+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat00:
+; LINUX-32-STATIC-LABEL: cat00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	src+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat00:
+; LINUX-32-PIC-LABEL: cat00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	src+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat00:
+; LINUX-64-PIC-LABEL: cat00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7051,21 +7051,21 @@ entry:
 	%1 = getelementptr [32 x i32]* @xsrc, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cxt00:
+; LINUX-64-STATIC-LABEL: cxt00:
 ; LINUX-64-STATIC: leaq    xsrc+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cxt00:
+; LINUX-32-STATIC-LABEL: cxt00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	xsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cxt00:
+; LINUX-32-PIC-LABEL: cxt00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	xsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cxt00:
+; LINUX-64-PIC-LABEL: cxt00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7112,21 +7112,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @dst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cat01:
+; LINUX-64-STATIC-LABEL: cat01:
 ; LINUX-64-STATIC: leaq    dst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat01:
+; LINUX-32-STATIC-LABEL: cat01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat01:
+; LINUX-32-PIC-LABEL: cat01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat01:
+; LINUX-64-PIC-LABEL: cat01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7173,21 +7173,21 @@ entry:
 	%1 = getelementptr [32 x i32]* @xdst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cxt01:
+; LINUX-64-STATIC-LABEL: cxt01:
 ; LINUX-64-STATIC: leaq    xdst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cxt01:
+; LINUX-32-STATIC-LABEL: cxt01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	xdst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cxt01:
+; LINUX-32-PIC-LABEL: cxt01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	xdst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cxt01:
+; LINUX-64-PIC-LABEL: cxt01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7235,24 +7235,24 @@ entry:
 	%2 = getelementptr i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
-; LINUX-64-STATIC: cat02:
+; LINUX-64-STATIC-LABEL: cat02:
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat02:
+; LINUX-32-STATIC-LABEL: cat02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat02:
+; LINUX-32-PIC-LABEL: cat02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat02:
+; LINUX-64-PIC-LABEL: cat02:
 ; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
@@ -7306,21 +7306,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @dsrc, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cat03:
+; LINUX-64-STATIC-LABEL: cat03:
 ; LINUX-64-STATIC: leaq    dsrc+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat03:
+; LINUX-32-STATIC-LABEL: cat03:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat03:
+; LINUX-32-PIC-LABEL: cat03:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat03:
+; LINUX-64-PIC-LABEL: cat03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7365,21 +7365,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cat04:
+; LINUX-64-STATIC-LABEL: cat04:
 ; LINUX-64-STATIC: leaq    ddst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat04:
+; LINUX-32-STATIC-LABEL: cat04:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ddst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat04:
+; LINUX-32-PIC-LABEL: cat04:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ddst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat04:
+; LINUX-64-PIC-LABEL: cat04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7425,24 +7425,24 @@ entry:
 	%2 = getelementptr i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
-; LINUX-64-STATIC: cat05:
+; LINUX-64-STATIC-LABEL: cat05:
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat05:
+; LINUX-32-STATIC-LABEL: cat05:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat05:
+; LINUX-32-PIC-LABEL: cat05:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat05:
+; LINUX-64-PIC-LABEL: cat05:
 ; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
@@ -7491,21 +7491,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @lsrc, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cat06:
+; LINUX-64-STATIC-LABEL: cat06:
 ; LINUX-64-STATIC: leaq    lsrc+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat06:
+; LINUX-32-STATIC-LABEL: cat06:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	lsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat06:
+; LINUX-32-PIC-LABEL: cat06:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	lsrc+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat06:
+; LINUX-64-PIC-LABEL: cat06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7550,21 +7550,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cat07:
+; LINUX-64-STATIC-LABEL: cat07:
 ; LINUX-64-STATIC: leaq    ldst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat07:
+; LINUX-32-STATIC-LABEL: cat07:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ldst+64(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat07:
+; LINUX-32-PIC-LABEL: cat07:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ldst+64(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat07:
+; LINUX-64-PIC-LABEL: cat07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7610,24 +7610,24 @@ entry:
 	%2 = getelementptr i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
-; LINUX-64-STATIC: cat08:
+; LINUX-64-STATIC-LABEL: cat08:
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cat08:
+; LINUX-32-STATIC-LABEL: cat08:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cat08:
+; LINUX-32-PIC-LABEL: cat08:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	64([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cat08:
+; LINUX-64-PIC-LABEL: cat08:
 ; LINUX-64-PIC: 	movq	lptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7675,21 +7675,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @src, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cam00:
+; LINUX-64-STATIC-LABEL: cam00:
 ; LINUX-64-STATIC: leaq    src+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam00:
+; LINUX-32-STATIC-LABEL: cam00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	src+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam00:
+; LINUX-32-PIC-LABEL: cam00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	src+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam00:
+; LINUX-64-PIC-LABEL: cam00:
 ; LINUX-64-PIC: 	movq	src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7736,21 +7736,21 @@ entry:
 	%1 = getelementptr [32 x i32]* @xsrc, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cxm00:
+; LINUX-64-STATIC-LABEL: cxm00:
 ; LINUX-64-STATIC: leaq    xsrc+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cxm00:
+; LINUX-32-STATIC-LABEL: cxm00:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	xsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cxm00:
+; LINUX-32-PIC-LABEL: cxm00:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	xsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cxm00:
+; LINUX-64-PIC-LABEL: cxm00:
 ; LINUX-64-PIC: 	movq	xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7797,21 +7797,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @dst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cam01:
+; LINUX-64-STATIC-LABEL: cam01:
 ; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam01:
+; LINUX-32-STATIC-LABEL: cam01:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam01:
+; LINUX-32-PIC-LABEL: cam01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam01:
+; LINUX-64-PIC-LABEL: cam01:
 ; LINUX-64-PIC: 	movq	dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7858,21 +7858,21 @@ entry:
 	%1 = getelementptr [32 x i32]* @xdst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cxm01:
+; LINUX-64-STATIC-LABEL: cxm01:
 ; LINUX-64-STATIC: leaq    xdst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cxm01:
+; LINUX-32-STATIC-LABEL: cxm01:
 ; LINUX-32-STATIC: 	movl	4(%esp), %eax
 ; LINUX-32-STATIC-NEXT: 	leal	xdst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cxm01:
+; LINUX-32-PIC-LABEL: cxm01:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	xdst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cxm01:
+; LINUX-64-PIC-LABEL: cxm01:
 ; LINUX-64-PIC: 	movq	xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -7920,24 +7920,24 @@ entry:
 	%2 = getelementptr i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
-; LINUX-64-STATIC: cam02:
+; LINUX-64-STATIC-LABEL: cam02:
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam02:
+; LINUX-32-STATIC-LABEL: cam02:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam02:
+; LINUX-32-PIC-LABEL: cam02:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam02:
+; LINUX-64-PIC-LABEL: cam02:
 ; LINUX-64-PIC: 	movq	ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
@@ -7991,21 +7991,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @dsrc, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cam03:
+; LINUX-64-STATIC-LABEL: cam03:
 ; LINUX-64-STATIC: leaq    dsrc+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam03:
+; LINUX-32-STATIC-LABEL: cam03:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	dsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam03:
+; LINUX-32-PIC-LABEL: cam03:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	dsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam03:
+; LINUX-64-PIC-LABEL: cam03:
 ; LINUX-64-PIC: 	movq	dsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -8050,21 +8050,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @ddst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cam04:
+; LINUX-64-STATIC-LABEL: cam04:
 ; LINUX-64-STATIC: leaq    ddst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam04:
+; LINUX-32-STATIC-LABEL: cam04:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam04:
+; LINUX-32-PIC-LABEL: cam04:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ddst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam04:
+; LINUX-64-PIC-LABEL: cam04:
 ; LINUX-64-PIC: 	movq	ddst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -8110,24 +8110,24 @@ entry:
 	%2 = getelementptr i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
-; LINUX-64-STATIC: cam05:
+; LINUX-64-STATIC-LABEL: cam05:
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam05:
+; LINUX-32-STATIC-LABEL: cam05:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam05:
+; LINUX-32-PIC-LABEL: cam05:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam05:
+; LINUX-64-PIC-LABEL: cam05:
 ; LINUX-64-PIC: 	movq	dptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
@@ -8176,21 +8176,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @lsrc, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cam06:
+; LINUX-64-STATIC-LABEL: cam06:
 ; LINUX-64-STATIC: leaq    lsrc+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam06:
+; LINUX-32-STATIC-LABEL: cam06:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	lsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam06:
+; LINUX-32-PIC-LABEL: cam06:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	lsrc+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam06:
+; LINUX-64-PIC-LABEL: cam06:
 ; LINUX-64-PIC: 	leaq	lsrc(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -8235,21 +8235,21 @@ entry:
 	%1 = getelementptr [131072 x i32]* @ldst, i64 0, i64 %0
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
-; LINUX-64-STATIC: cam07:
+; LINUX-64-STATIC-LABEL: cam07:
 ; LINUX-64-STATIC: leaq    ldst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam07:
+; LINUX-32-STATIC-LABEL: cam07:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam07:
+; LINUX-32-PIC-LABEL: cam07:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	ldst+262144(,[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam07:
+; LINUX-64-PIC-LABEL: cam07:
 ; LINUX-64-PIC: 	leaq	ldst(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -8295,24 +8295,24 @@ entry:
 	%2 = getelementptr i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
 	ret i8* %3
-; LINUX-64-STATIC: cam08:
+; LINUX-64-STATIC-LABEL: cam08:
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: cam08:
+; LINUX-32-STATIC-LABEL: cam08:
 ; LINUX-32-STATIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: cam08:
+; LINUX-32-PIC-LABEL: cam08:
 ; LINUX-32-PIC: 	movl	4(%esp), [[EAX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-PIC-NEXT: 	leal	262144([[ECX]],[[EAX]],4), %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: cam08:
+; LINUX-64-PIC-LABEL: cam08:
 ; LINUX-64-PIC: 	movq	lptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; LINUX-64-PIC-NEXT: 	ret
@@ -8364,7 +8364,7 @@ entry:
 	call void @x() nounwind
 	call void @x() nounwind
 	ret void
-; LINUX-64-STATIC: lcallee:
+; LINUX-64-STATIC-LABEL: lcallee:
 ; LINUX-64-STATIC: callq   x
 ; LINUX-64-STATIC: callq   x
 ; LINUX-64-STATIC: callq   x
@@ -8374,7 +8374,7 @@ entry:
 ; LINUX-64-STATIC: callq   x
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: lcallee:
+; LINUX-32-STATIC-LABEL: lcallee:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	x
 ; LINUX-32-STATIC-NEXT: 	calll	x
@@ -8386,7 +8386,7 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: lcallee:
+; LINUX-32-PIC-LABEL: lcallee:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	x
 ; LINUX-32-PIC-NEXT: 	calll	x
@@ -8399,7 +8399,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: lcallee:
+; LINUX-64-PIC-LABEL: lcallee:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	x@PLT
 ; LINUX-64-PIC-NEXT: 	callq	x@PLT
@@ -8496,7 +8496,7 @@ entry:
 	call void @y() nounwind
 	call void @y() nounwind
 	ret void
-; LINUX-64-STATIC: dcallee:
+; LINUX-64-STATIC-LABEL: dcallee:
 ; LINUX-64-STATIC: callq   y
 ; LINUX-64-STATIC: callq   y
 ; LINUX-64-STATIC: callq   y
@@ -8506,7 +8506,7 @@ entry:
 ; LINUX-64-STATIC: callq   y
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: dcallee:
+; LINUX-32-STATIC-LABEL: dcallee:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	y
 ; LINUX-32-STATIC-NEXT: 	calll	y
@@ -8518,7 +8518,7 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: dcallee:
+; LINUX-32-PIC-LABEL: dcallee:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	y
 ; LINUX-32-PIC-NEXT: 	calll	y
@@ -8531,7 +8531,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: dcallee:
+; LINUX-64-PIC-LABEL: dcallee:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	y@PLT
 ; LINUX-64-PIC-NEXT: 	callq	y@PLT
@@ -8621,19 +8621,19 @@ declare void @y()
 define void ()* @address() nounwind {
 entry:
 	ret void ()* @callee
-; LINUX-64-STATIC: address:
+; LINUX-64-STATIC-LABEL: address:
 ; LINUX-64-STATIC: movl    $callee, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: address:
+; LINUX-32-STATIC-LABEL: address:
 ; LINUX-32-STATIC: 	movl	$callee, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: address:
+; LINUX-32-PIC-LABEL: address:
 ; LINUX-32-PIC: 	movl	$callee, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: address:
+; LINUX-64-PIC-LABEL: address:
 ; LINUX-64-PIC: 	movq	callee@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8670,19 +8670,19 @@ declare void @callee()
 define void ()* @laddress() nounwind {
 entry:
 	ret void ()* @lcallee
-; LINUX-64-STATIC: laddress:
+; LINUX-64-STATIC-LABEL: laddress:
 ; LINUX-64-STATIC: movl    $lcallee, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: laddress:
+; LINUX-32-STATIC-LABEL: laddress:
 ; LINUX-32-STATIC: 	movl	$lcallee, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: laddress:
+; LINUX-32-PIC-LABEL: laddress:
 ; LINUX-32-PIC: 	movl	$lcallee, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: laddress:
+; LINUX-64-PIC-LABEL: laddress:
 ; LINUX-64-PIC: 	movq	lcallee@GOTPCREL(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8717,19 +8717,19 @@ entry:
 define void ()* @daddress() nounwind {
 entry:
 	ret void ()* @dcallee
-; LINUX-64-STATIC: daddress:
+; LINUX-64-STATIC-LABEL: daddress:
 ; LINUX-64-STATIC: movl    $dcallee, %eax
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: daddress:
+; LINUX-32-STATIC-LABEL: daddress:
 ; LINUX-32-STATIC: 	movl	$dcallee, %eax
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: daddress:
+; LINUX-32-PIC-LABEL: daddress:
 ; LINUX-32-PIC: 	movl	$dcallee, %eax
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: daddress:
+; LINUX-64-PIC-LABEL: daddress:
 ; LINUX-64-PIC: 	leaq	dcallee(%rip), %rax
 ; LINUX-64-PIC-NEXT: 	ret
 
@@ -8766,19 +8766,19 @@ entry:
 	call void @callee() nounwind
 	call void @callee() nounwind
 	ret void
-; LINUX-64-STATIC: caller:
+; LINUX-64-STATIC-LABEL: caller:
 ; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: caller:
+; LINUX-32-STATIC-LABEL: caller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	callee
 ; LINUX-32-STATIC-NEXT: 	calll	callee
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: caller:
+; LINUX-32-PIC-LABEL: caller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	callee
 ; LINUX-32-PIC-NEXT: 	calll	callee
@@ -8786,7 +8786,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: caller:
+; LINUX-64-PIC-LABEL: caller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	callee@PLT
 ; LINUX-64-PIC-NEXT: 	callq	callee@PLT
@@ -8841,19 +8841,19 @@ entry:
 	call void @dcallee() nounwind
 	call void @dcallee() nounwind
 	ret void
-; LINUX-64-STATIC: dcaller:
+; LINUX-64-STATIC-LABEL: dcaller:
 ; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: dcaller:
+; LINUX-32-STATIC-LABEL: dcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	dcallee
 ; LINUX-32-STATIC-NEXT: 	calll	dcallee
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: dcaller:
+; LINUX-32-PIC-LABEL: dcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	dcallee
 ; LINUX-32-PIC-NEXT: 	calll	dcallee
@@ -8861,7 +8861,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: dcaller:
+; LINUX-64-PIC-LABEL: dcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	dcallee
 ; LINUX-64-PIC-NEXT: 	callq	dcallee
@@ -8916,19 +8916,19 @@ entry:
 	call void @lcallee() nounwind
 	call void @lcallee() nounwind
 	ret void
-; LINUX-64-STATIC: lcaller:
+; LINUX-64-STATIC-LABEL: lcaller:
 ; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: lcaller:
+; LINUX-32-STATIC-LABEL: lcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	lcallee
 ; LINUX-32-STATIC-NEXT: 	calll	lcallee
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: lcaller:
+; LINUX-32-PIC-LABEL: lcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	lcallee
 ; LINUX-32-PIC-NEXT: 	calll	lcallee
@@ -8936,7 +8936,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: lcaller:
+; LINUX-64-PIC-LABEL: lcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	lcallee@PLT
 ; LINUX-64-PIC-NEXT: 	callq	lcallee@PLT
@@ -8990,24 +8990,24 @@ define void @tailcaller() nounwind {
 entry:
 	call void @callee() nounwind
 	ret void
-; LINUX-64-STATIC: tailcaller:
+; LINUX-64-STATIC-LABEL: tailcaller:
 ; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: tailcaller:
+; LINUX-32-STATIC-LABEL: tailcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	callee
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: tailcaller:
+; LINUX-32-PIC-LABEL: tailcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	callee
 ; LINUX-32-PIC-NEXT: 	addl
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: tailcaller:
+; LINUX-64-PIC-LABEL: tailcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	callee@PLT
 ; LINUX-64-PIC-NEXT: 	popq
@@ -9054,24 +9054,24 @@ define void @dtailcaller() nounwind {
 entry:
 	call void @dcallee() nounwind
 	ret void
-; LINUX-64-STATIC: dtailcaller:
+; LINUX-64-STATIC-LABEL: dtailcaller:
 ; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: dtailcaller:
+; LINUX-32-STATIC-LABEL: dtailcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	dcallee
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: dtailcaller:
+; LINUX-32-PIC-LABEL: dtailcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	dcallee
 ; LINUX-32-PIC-NEXT: 	addl
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: dtailcaller:
+; LINUX-64-PIC-LABEL: dtailcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	dcallee
 ; LINUX-64-PIC-NEXT: 	popq
@@ -9118,24 +9118,24 @@ define void @ltailcaller() nounwind {
 entry:
 	call void @lcallee() nounwind
 	ret void
-; LINUX-64-STATIC: ltailcaller:
+; LINUX-64-STATIC-LABEL: ltailcaller:
 ; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ltailcaller:
+; LINUX-32-STATIC-LABEL: ltailcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	lcallee
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ltailcaller:
+; LINUX-32-PIC-LABEL: ltailcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	lcallee
 ; LINUX-32-PIC-NEXT: 	addl
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ltailcaller:
+; LINUX-64-PIC-LABEL: ltailcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	lcallee@PLT
 ; LINUX-64-PIC-NEXT: 	popq
@@ -9185,19 +9185,19 @@ entry:
 	%1 = load void ()** @ifunc, align 8
 	call void %1() nounwind
 	ret void
-; LINUX-64-STATIC: icaller:
+; LINUX-64-STATIC-LABEL: icaller:
 ; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: icaller:
+; LINUX-32-STATIC-LABEL: icaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: icaller:
+; LINUX-32-PIC-LABEL: icaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
@@ -9205,7 +9205,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: icaller:
+; LINUX-64-PIC-LABEL: icaller:
 ; LINUX-64-PIC: 	pushq	[[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
@@ -9275,19 +9275,19 @@ entry:
 	%1 = load void ()** @difunc, align 8
 	call void %1() nounwind
 	ret void
-; LINUX-64-STATIC: dicaller:
+; LINUX-64-STATIC-LABEL: dicaller:
 ; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: dicaller:
+; LINUX-32-STATIC-LABEL: dicaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*difunc
 ; LINUX-32-STATIC-NEXT: 	calll	*difunc
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: dicaller:
+; LINUX-32-PIC-LABEL: dicaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*difunc
 ; LINUX-32-PIC-NEXT: 	calll	*difunc
@@ -9295,7 +9295,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: dicaller:
+; LINUX-64-PIC-LABEL: dicaller:
 ; LINUX-64-PIC: 	pushq	[[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), [[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
@@ -9358,19 +9358,19 @@ entry:
 	%1 = load void ()** @lifunc, align 8
 	call void %1() nounwind
 	ret void
-; LINUX-64-STATIC: licaller:
+; LINUX-64-STATIC-LABEL: licaller:
 ; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: licaller:
+; LINUX-32-STATIC-LABEL: licaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*lifunc
 ; LINUX-32-STATIC-NEXT: 	calll	*lifunc
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: licaller:
+; LINUX-32-PIC-LABEL: licaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*lifunc
 ; LINUX-32-PIC-NEXT: 	calll	*lifunc
@@ -9378,7 +9378,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: licaller:
+; LINUX-64-PIC-LABEL: licaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	*lifunc(%rip)
 ; LINUX-64-PIC-NEXT: 	callq	*lifunc(%rip)
@@ -9440,19 +9440,19 @@ entry:
 	%1 = load void ()** @ifunc, align 8
 	call void %1() nounwind
 	ret void
-; LINUX-64-STATIC: itailcaller:
+; LINUX-64-STATIC-LABEL: itailcaller:
 ; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: itailcaller:
+; LINUX-32-STATIC-LABEL: itailcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
 ; LINUX-32-STATIC-NEXT: 	calll	*ifunc
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: itailcaller:
+; LINUX-32-PIC-LABEL: itailcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
 ; LINUX-32-PIC-NEXT: 	calll	*ifunc
@@ -9460,7 +9460,7 @@ entry:
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: itailcaller:
+; LINUX-64-PIC-LABEL: itailcaller:
 ; LINUX-64-PIC: 	pushq	[[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	movq	ifunc@GOTPCREL(%rip), [[RBX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	callq	*([[RBX]])
@@ -9528,24 +9528,24 @@ entry:
 	%0 = load void ()** @difunc, align 8
 	call void %0() nounwind
 	ret void
-; LINUX-64-STATIC: ditailcaller:
+; LINUX-64-STATIC-LABEL: ditailcaller:
 ; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: ditailcaller:
+; LINUX-32-STATIC-LABEL: ditailcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*difunc
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: ditailcaller:
+; LINUX-32-PIC-LABEL: ditailcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*difunc
 ; LINUX-32-PIC-NEXT: 	addl
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: ditailcaller:
+; LINUX-64-PIC-LABEL: ditailcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	movq	difunc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; LINUX-64-PIC-NEXT: 	callq	*([[RAX]])
@@ -9596,24 +9596,24 @@ entry:
 	%0 = load void ()** @lifunc, align 8
 	call void %0() nounwind
 	ret void
-; LINUX-64-STATIC: litailcaller:
+; LINUX-64-STATIC-LABEL: litailcaller:
 ; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: ret
 
-; LINUX-32-STATIC: litailcaller:
+; LINUX-32-STATIC-LABEL: litailcaller:
 ; LINUX-32-STATIC: 	subl
 ; LINUX-32-STATIC-NEXT: 	calll	*lifunc
 ; LINUX-32-STATIC-NEXT: 	addl
 ; LINUX-32-STATIC-NEXT: 	ret
 
-; LINUX-32-PIC: litailcaller:
+; LINUX-32-PIC-LABEL: litailcaller:
 ; LINUX-32-PIC: 	subl
 ; LINUX-32-PIC-NEXT: 	calll	*lifunc
 ; LINUX-32-PIC-NEXT: 	addl
 
 ; LINUX-32-PIC-NEXT: 	ret
 
-; LINUX-64-PIC: litailcaller:
+; LINUX-64-PIC-LABEL: litailcaller:
 ; LINUX-64-PIC: 	pushq
 ; LINUX-64-PIC-NEXT: 	callq	*lifunc(%rip)
 ; LINUX-64-PIC-NEXT: 	popq

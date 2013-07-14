@@ -1,33 +1,33 @@
 ; RUN: llc < %s -march=arm | FileCheck %s
 
 define i64 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 entry:
         ret i64 0
 }
 
 define i64 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 entry:
         ret i64 1
 }
 
 define i64 @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: mvn r0, #-2147483648
 entry:
         ret i64 2147483647
 }
 
 define i64 @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: mov r0, #-2147483648
 entry:
         ret i64 2147483648
 }
 
 define i64 @f5() {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: mvn r0, #0
 ; CHECK: mvn r1, #-2147483648
 entry:
@@ -35,7 +35,7 @@ entry:
 }
 
 define i64 @f6(i64 %x, i64 %y) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: adds
 ; CHECK: adc
 entry:
@@ -44,7 +44,7 @@ entry:
 }
 
 define void @f7() {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 entry:
         %tmp = call i64 @f8( )          ; <i64> [#uses=0]
         ret void
@@ -53,7 +53,7 @@ entry:
 declare i64 @f8()
 
 define i64 @f9(i64 %a, i64 %b) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: subs r
 ; CHECK: sbc
 entry:
@@ -62,7 +62,7 @@ entry:
 }
 
 define i64 @f(i32 %a, i32 %b) {
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: smull
 entry:
         %tmp = sext i32 %a to i64               ; <i64> [#uses=1]
@@ -72,7 +72,7 @@ entry:
 }
 
 define i64 @g(i32 %a, i32 %b) {
-; CHECK: g:
+; CHECK-LABEL: g:
 ; CHECK: umull
 entry:
         %tmp = zext i32 %a to i64               ; <i64> [#uses=1]
@@ -82,7 +82,7 @@ entry:
 }
 
 define i64 @f10() {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 entry:
         %a = alloca i64, align 8                ; <i64*> [#uses=1]
         %retval = load i64* %a          ; <i64> [#uses=1]

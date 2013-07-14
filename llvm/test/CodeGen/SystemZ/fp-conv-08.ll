@@ -5,7 +5,7 @@
 ; Test i64->f32.  There's no native support for unsigned i64-to-fp conversions,
 ; but we should be able to implement them using signed i64-to-fp conversions.
 define float @f1(i64 %i) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cegbr
 ; CHECK: aebr
 ; CHECK: br %r14
@@ -15,7 +15,7 @@ define float @f1(i64 %i) {
 
 ; Test i64->f64.
 define double @f2(i64 %i) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ldgr
 ; CHECK: adbr
 ; CHECK: br %r14
@@ -25,7 +25,7 @@ define double @f2(i64 %i) {
 
 ; Test i64->f128.
 define void @f3(i64 %i, fp128 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: cxgbr
 ; CHECK: axbr
 ; CHECK: br %r14

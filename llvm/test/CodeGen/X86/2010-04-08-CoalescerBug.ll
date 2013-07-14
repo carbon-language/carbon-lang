@@ -11,7 +11,7 @@
 
 define void @t(%struct.F* %this) nounwind {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: addq $12, %rsi
   %BitValueArray = alloca [32 x i32], align 4
   %tmp2 = getelementptr inbounds %struct.F* %this, i64 0, i32 0

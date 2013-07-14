@@ -4,7 +4,7 @@
 @_ZTIPKc = external constant i8*
 
 define i32 @main() {
-; 16: main:
+; 16-LABEL: main:
 ; 16: 	.cfi_startproc
 ; 16: 	save	$ra, $s0, $s1, 32
 ; 16:   .cfi_def_cfa_offset 32

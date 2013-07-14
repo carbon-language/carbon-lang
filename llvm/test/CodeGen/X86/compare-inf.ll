@@ -3,7 +3,7 @@
 ; Convert oeq and une to ole/oge/ule/uge when comparing with infinity
 ; and negative infinity, because those are more efficient on x86.
 
-; CHECK: oeq_inff:
+; CHECK-LABEL: oeq_inff:
 ; CHECK: ucomiss
 ; CHECK: jb
 define float @oeq_inff(float %x, float %y) nounwind readonly {
@@ -12,7 +12,7 @@ define float @oeq_inff(float %x, float %y) nounwind readonly {
   ret float %t1
 }
 
-; CHECK: oeq_inf:
+; CHECK-LABEL: oeq_inf:
 ; CHECK: ucomisd
 ; CHECK: jb
 define double @oeq_inf(double %x, double %y) nounwind readonly {
@@ -21,7 +21,7 @@ define double @oeq_inf(double %x, double %y) nounwind readonly {
   ret double %t1
 }
 
-; CHECK: une_inff:
+; CHECK-LABEL: une_inff:
 ; CHECK: ucomiss
 ; CHECK: jae
 define float @une_inff(float %x, float %y) nounwind readonly {
@@ -30,7 +30,7 @@ define float @une_inff(float %x, float %y) nounwind readonly {
   ret float %t1
 }
 
-; CHECK: une_inf:
+; CHECK-LABEL: une_inf:
 ; CHECK: ucomisd
 ; CHECK: jae
 define double @une_inf(double %x, double %y) nounwind readonly {
@@ -39,7 +39,7 @@ define double @une_inf(double %x, double %y) nounwind readonly {
   ret double %t1
 }
 
-; CHECK: oeq_neg_inff:
+; CHECK-LABEL: oeq_neg_inff:
 ; CHECK: ucomiss
 ; CHECK: jb
 define float @oeq_neg_inff(float %x, float %y) nounwind readonly {
@@ -48,7 +48,7 @@ define float @oeq_neg_inff(float %x, float %y) nounwind readonly {
   ret float %t1
 }
 
-; CHECK: oeq_neg_inf:
+; CHECK-LABEL: oeq_neg_inf:
 ; CHECK: ucomisd
 ; CHECK: jb
 define double @oeq_neg_inf(double %x, double %y) nounwind readonly {
@@ -57,7 +57,7 @@ define double @oeq_neg_inf(double %x, double %y) nounwind readonly {
   ret double %t1
 }
 
-; CHECK: une_neg_inff:
+; CHECK-LABEL: une_neg_inff:
 ; CHECK: ucomiss
 ; CHECK: jae
 define float @une_neg_inff(float %x, float %y) nounwind readonly {
@@ -66,7 +66,7 @@ define float @une_neg_inff(float %x, float %y) nounwind readonly {
   ret float %t1
 }
 
-; CHECK: une_neg_inf:
+; CHECK-LABEL: une_neg_inf:
 ; CHECK: ucomisd
 ; CHECK: jae
 define double @une_neg_inf(double %x, double %y) nounwind readonly {

@@ -11,6 +11,6 @@ entry:
   ret { i8*, i64, i64* } %2
 }
 
-; CHECK: copy_3:
+; CHECK-LABEL: copy_3:
 ; CHECK-NOT: (%rdi)
 ; CHECK: ret

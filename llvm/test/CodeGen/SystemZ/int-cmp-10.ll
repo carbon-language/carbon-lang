@@ -5,7 +5,7 @@
 ; Check a value near the low end of the range.  We use CFI for comparisons
 ; with zero, or things that are equivalent to them.
 define double @f1(double %a, double %b, i32 %i1) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: clfi %r2, 1
 ; CHECK-NEXT: jh
 ; CHECK: ldr %f0, %f2
@@ -17,7 +17,7 @@ define double @f1(double %a, double %b, i32 %i1) {
 
 ; Check a value near the high end of the range.
 define double @f2(double %a, double %b, i32 %i1) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: clfi %r2, 4294967280
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2

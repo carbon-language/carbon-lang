@@ -4,7 +4,7 @@
 
 ; Test the low end of the STE range.
 define void @f1(float *%ptr, float %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ste %f0, 0(%r2)
 ; CHECK: br %r14
   store float %val, float *%ptr
@@ -13,7 +13,7 @@ define void @f1(float *%ptr, float %val) {
 
 ; Test the high end of the STE range.
 define void @f2(float *%src, float %val) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ste %f0, 4092(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%src, i64 1023
@@ -23,7 +23,7 @@ define void @f2(float *%src, float %val) {
 
 ; Check the next word up, which should use STEY instead of STE.
 define void @f3(float *%src, float %val) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: stey %f0, 4096(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%src, i64 1024
@@ -33,7 +33,7 @@ define void @f3(float *%src, float %val) {
 
 ; Check the high end of the aligned STEY range.
 define void @f4(float *%src, float %val) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: stey %f0, 524284(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%src, i64 131071
@@ -44,7 +44,7 @@ define void @f4(float *%src, float %val) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f5(float *%src, float %val) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r2, 524288
 ; CHECK: ste %f0, 0(%r2)
 ; CHECK: br %r14
@@ -55,7 +55,7 @@ define void @f5(float *%src, float %val) {
 
 ; Check the high end of the negative aligned STEY range.
 define void @f6(float *%src, float %val) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: stey %f0, -4(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%src, i64 -1
@@ -65,7 +65,7 @@ define void @f6(float *%src, float %val) {
 
 ; Check the low end of the STEY range.
 define void @f7(float *%src, float %val) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: stey %f0, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%src, i64 -131072
@@ -76,7 +76,7 @@ define void @f7(float *%src, float %val) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f8(float *%src, float %val) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r2, -524292
 ; CHECK: ste %f0, 0(%r2)
 ; CHECK: br %r14
@@ -87,7 +87,7 @@ define void @f8(float *%src, float %val) {
 
 ; Check that STE allows an index.
 define void @f9(i64 %src, i64 %index, float %val) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ste %f0, 4092({{%r3,%r2|%r2,%r3}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -99,7 +99,7 @@ define void @f9(i64 %src, i64 %index, float %val) {
 
 ; Check that STEY allows an index.
 define void @f10(i64 %src, i64 %index, float %val) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: stey %f0, 4096({{%r3,%r2|%r2,%r3}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index

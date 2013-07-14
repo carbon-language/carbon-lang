@@ -4,7 +4,7 @@
         %struct.range_t = type { float, float, i32, i32, i32, [0 x i8] }
 
 define i32 @decode_byte(%struct.decode_t* %decode) nounwind {
-; CHECK: decode_byte:
+; CHECK-LABEL: decode_byte:
 ; CHECK: pushl
 ; CHECK: popl
 ; CHECK: jmp

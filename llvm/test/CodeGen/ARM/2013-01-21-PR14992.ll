@@ -2,8 +2,8 @@
 ;RUN: llc -mtriple=thumbv7 < %s  | FileCheck -check-prefix=EXPECTED %s
 ;RUN: llc -mtriple=thumbv7 < %s  | FileCheck %s
 
-;EXPECTED: foo:
-;CHECK: foo:
+;EXPECTED-LABEL: foo:
+;CHECK-LABEL: foo:
 define i32 @foo(i32* %a) nounwind optsize {
 entry:
   %0 = load i32* %a, align 4

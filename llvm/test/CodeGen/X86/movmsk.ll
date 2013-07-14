@@ -83,7 +83,7 @@ define void @float_call_signbit(double %n) {
 entry:
 ; FIXME: This should also use movmskps; we don't form the FGETSIGN node
 ; in this case, though.
-; CHECK: float_call_signbit:
+; CHECK-LABEL: float_call_signbit:
 ; CHECK: movd %xmm0, %rdi
 ; FIXME
   %t0 = bitcast double %n to i64
@@ -99,7 +99,7 @@ declare void @float_call_signbit_callee(i1 zeroext)
 
 define i32 @t1(<4 x float> %x, i32* nocapture %indexTable) nounwind uwtable readonly ssp {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: movmskps
 ; CHECK-NOT: movslq
   %0 = tail call i32 @llvm.x86.sse.movmsk.ps(<4 x float> %x) nounwind
@@ -111,7 +111,7 @@ entry:
 
 define i32 @t2(<4 x float> %x, i32* nocapture %indexTable) nounwind uwtable readonly ssp {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: movmskpd
 ; CHECK-NOT: movslq
   %0 = bitcast <4 x float> %x to <2 x double>

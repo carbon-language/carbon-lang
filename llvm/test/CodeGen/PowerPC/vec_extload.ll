@@ -14,7 +14,7 @@ define <16 x i8> @v16si8_sext_in_reg(<16 x i8> %a) {
   %c = sext <16 x i4> %b to <16 x i8>
   ret <16 x i8> %c
 }
-; CHECK: v16si8_sext_in_reg:
+; CHECK-LABEL: v16si8_sext_in_reg:
 ; CHECK: vslb
 ; CHECK: vsrab
 ; CHECK: blr 
@@ -26,7 +26,7 @@ define <16 x i8> @v16si8_zext_in_reg(<16 x i8> %a) {
   %c = zext <16 x i4> %b to <16 x i8>
   ret <16 x i8> %c
 }
-; CHECK:      v16si8_zext_in_reg:
+; CHECK-LABEL:      v16si8_zext_in_reg:
 ; CHECK:      vspltisb [[VMASK:[0-9]+]], 15
 ; CHECK-NEXT: vand 2, 2, [[VMASK]]
 
@@ -36,7 +36,7 @@ define <8 x i16> @v8si16_sext_in_reg(<8 x i16> %a) {
   %c = sext <8 x i8> %b to <8 x i16>
   ret <8 x i16> %c
 }
-; CHECK: v8si16_sext_in_reg:
+; CHECK-LABEL: v8si16_sext_in_reg:
 ; CHECK: vslh
 ; CHECK: vsrah
 ; CHECK: blr 
@@ -48,7 +48,7 @@ define <8 x i16> @v8si16_zext_in_reg(<8 x i16> %a) {
   %c = zext <8 x i8> %b to <8 x i16>
   ret <8 x i16> %c
 }
-; CHECK:      v8si16_zext_in_reg:
+; CHECK-LABEL:      v8si16_zext_in_reg:
 ; CHECK:      ld [[RMASKTOC:[0-9]+]], .LC{{[0-9]+}}@toc(2)
 ; CHECK-NEXT: lvx [[VMASK:[0-9]+]], {{[0-9]+}}, [[RMASKTOC]]
 ; CHECK-NEXT: vand 2, 2, [[VMASK]]
@@ -60,7 +60,7 @@ define <4 x i32> @v4si32_sext_in_reg(<4 x i32> %a) {
   %c = sext <4 x i16> %b to <4 x i32>
   ret <4 x i32> %c
 }
-; CHECK: v4si32_sext_in_reg:
+; CHECK-LABEL: v4si32_sext_in_reg:
 ; CHECK: vslw
 ; CHECK: vsraw
 ; CHECK: blr 
@@ -71,7 +71,7 @@ define <4 x i32> @v4si32_zext_in_reg(<4 x i32> %a) {
   %c = zext <4 x i16> %b to <4 x i32>
   ret <4 x i32> %c
 }
-; CHECK:      v4si32_zext_in_reg:
+; CHECK-LABEL:      v4si32_zext_in_reg:
 ; CHECK:      vspltisw [[VMASK:[0-9]+]], -16
 ; CHECK-NEXT: vsrw [[VMASK]], [[VMASK]], [[VMASK]]
 ; CHECK-NEXT: vand 2, 2, [[VMASK]]

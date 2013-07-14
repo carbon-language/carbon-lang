@@ -11,7 +11,7 @@
 ;   being used in the RISBG (in contrast to things like atomic addition,
 ;   which shift %r3 left so that %b is at the high end of the word).
 define i16 @f1(i16 *%src, i16 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-DAG: sllg [[SHIFT:%r[1-9]+]], %r2, 3
 ; CHECK-DAG: risbg [[BASE:%r[1-9]+]], %r2, 0, 189, 0
 ; CHECK: l [[OLD:%r[0-9]+]], 0([[BASE]])
@@ -24,7 +24,7 @@ define i16 @f1(i16 *%src, i16 %b) {
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT: f1:
+; CHECK-SHIFT-LABEL: f1:
 ; CHECK-SHIFT-NOT: %r3
 ; CHECK-SHIFT: sllg [[SHIFT:%r[1-9]+]], %r2, 3
 ; CHECK-SHIFT-NOT: %r3
@@ -43,12 +43,12 @@ define i16 @f1(i16 *%src, i16 %b) {
 ; Check exchange with a constant.  We should force the constant into
 ; a register and use the sequence above.
 define i16 @f2(i16 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lhi [[VALUE:%r[0-9]+]], -25536
 ; CHECK: risbg {{%r[0-9]+}}, [[VALUE]], 32, 47, 16
 ; CHECK: br %r14
 ;
-; CHECK-SHIFT: f2:
+; CHECK-SHIFT-LABEL: f2:
 ; CHECK-SHIFT: br %r14
   %res = atomicrmw xchg i16 *%src, i16 40000 seq_cst
   ret i16 %res

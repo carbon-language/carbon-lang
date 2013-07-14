@@ -3,7 +3,7 @@
 ; rdar://11331541
 
 define i32 @t(i32 %a) nounwind {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: asrs [[REG1:(r[0-9]+)]], [[REG2:(r[0-9]+)]], #31
 ; CHECK: eors [[REG1]], [[REG2]]
   %tmp0 = ashr i32 %a, 31

@@ -5,7 +5,7 @@
 
 define i32 @testsel(i32 %a, i32 %b)
 {
-    ; CHECK:        testsel:
+    ; CHECK-LABEL:        testsel:
     %tmp.1 = icmp eq i32 %a, %b
     ; CHECK:        cmp
     %tmp.2 = select i1 %tmp.1, i32 %a, i32 %b

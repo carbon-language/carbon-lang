@@ -7,7 +7,7 @@
 @gf1 = external global float
 @gd1 = external global double
 
-; CHECK: addLD:
+; CHECK-LABEL: addLD:
 ; CHECK: ld $25, %call16(__addtf3)
 
 define fp128 @addLD() {
@@ -18,7 +18,7 @@ entry:
   ret fp128 %add
 }
 
-; CHECK: subLD:
+; CHECK-LABEL: subLD:
 ; CHECK: ld $25, %call16(__subtf3)
 
 define fp128 @subLD() {
@@ -29,7 +29,7 @@ entry:
   ret fp128 %sub
 }
 
-; CHECK: mulLD:
+; CHECK-LABEL: mulLD:
 ; CHECK: ld $25, %call16(__multf3)
 
 define fp128 @mulLD() {
@@ -40,7 +40,7 @@ entry:
   ret fp128 %mul
 }
 
-; CHECK: divLD:
+; CHECK-LABEL: divLD:
 ; CHECK: ld $25, %call16(__divtf3)
 
 define fp128 @divLD() {
@@ -51,7 +51,7 @@ entry:
   ret fp128 %div
 }
 
-; CHECK: conv_LD_char:
+; CHECK-LABEL: conv_LD_char:
 ; CHECK: ld $25, %call16(__floatsitf)
 
 define fp128 @conv_LD_char(i8 signext %a) {
@@ -60,7 +60,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_short:
+; CHECK-LABEL: conv_LD_short:
 ; CHECK: ld $25, %call16(__floatsitf)
 
 define fp128 @conv_LD_short(i16 signext %a) {
@@ -69,7 +69,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_int:
+; CHECK-LABEL: conv_LD_int:
 ; CHECK: ld $25, %call16(__floatsitf)
 
 define fp128 @conv_LD_int(i32 %a) {
@@ -78,7 +78,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_LL:
+; CHECK-LABEL: conv_LD_LL:
 ; CHECK: ld $25, %call16(__floatditf)
 
 define fp128 @conv_LD_LL(i64 %a) {
@@ -87,7 +87,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_UChar:
+; CHECK-LABEL: conv_LD_UChar:
 ; CHECK: ld $25, %call16(__floatunsitf)
 
 define fp128 @conv_LD_UChar(i8 zeroext %a) {
@@ -96,7 +96,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_UShort:
+; CHECK-LABEL: conv_LD_UShort:
 ; CHECK: ld $25, %call16(__floatunsitf)
 
 define fp128 @conv_LD_UShort(i16 zeroext %a) {
@@ -105,7 +105,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_UInt:
+; CHECK-LABEL: conv_LD_UInt:
 ; CHECK: ld $25, %call16(__floatunsitf)
 
 define fp128 @conv_LD_UInt(i32 %a) {
@@ -114,7 +114,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_ULL:
+; CHECK-LABEL: conv_LD_ULL:
 ; CHECK: ld $25, %call16(__floatunditf)
 
 define fp128 @conv_LD_ULL(i64 %a) {
@@ -123,7 +123,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_char_LD:
+; CHECK-LABEL: conv_char_LD:
 ; CHECK: ld $25, %call16(__fixtfsi)
 
 define signext i8 @conv_char_LD(fp128 %a) {
@@ -132,7 +132,7 @@ entry:
   ret i8 %conv
 }
 
-; CHECK: conv_short_LD:
+; CHECK-LABEL: conv_short_LD:
 ; CHECK: ld $25, %call16(__fixtfsi)
 
 define signext i16 @conv_short_LD(fp128 %a) {
@@ -141,7 +141,7 @@ entry:
   ret i16 %conv
 }
 
-; CHECK: conv_int_LD:
+; CHECK-LABEL: conv_int_LD:
 ; CHECK: ld $25, %call16(__fixtfsi)
 
 define i32 @conv_int_LD(fp128 %a) {
@@ -150,7 +150,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: conv_LL_LD:
+; CHECK-LABEL: conv_LL_LD:
 ; CHECK: ld $25, %call16(__fixtfdi)
 
 define i64 @conv_LL_LD(fp128 %a) {
@@ -159,7 +159,7 @@ entry:
   ret i64 %conv
 }
 
-; CHECK: conv_UChar_LD:
+; CHECK-LABEL: conv_UChar_LD:
 ; CHECK: ld $25, %call16(__fixtfsi)
 
 define zeroext i8 @conv_UChar_LD(fp128 %a) {
@@ -168,7 +168,7 @@ entry:
   ret i8 %conv
 }
 
-; CHECK: conv_UShort_LD:
+; CHECK-LABEL: conv_UShort_LD:
 ; CHECK: ld $25, %call16(__fixtfsi)
 
 define zeroext i16 @conv_UShort_LD(fp128 %a) {
@@ -177,7 +177,7 @@ entry:
   ret i16 %conv
 }
 
-; CHECK: conv_UInt_LD:
+; CHECK-LABEL: conv_UInt_LD:
 ; CHECK: ld $25, %call16(__fixunstfsi)
 
 define i32 @conv_UInt_LD(fp128 %a) {
@@ -186,7 +186,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: conv_ULL_LD:
+; CHECK-LABEL: conv_ULL_LD:
 ; CHECK: ld $25, %call16(__fixunstfdi)
 
 define i64 @conv_ULL_LD(fp128 %a) {
@@ -195,7 +195,7 @@ entry:
   ret i64 %conv
 }
 
-; CHECK: conv_LD_float:
+; CHECK-LABEL: conv_LD_float:
 ; CHECK: ld $25, %call16(__extendsftf2)
 
 define fp128 @conv_LD_float(float %a) {
@@ -204,7 +204,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_LD_double:
+; CHECK-LABEL: conv_LD_double:
 ; CHECK: ld $25, %call16(__extenddftf2)
 
 define fp128 @conv_LD_double(double %a) {
@@ -213,7 +213,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: conv_float_LD:
+; CHECK-LABEL: conv_float_LD:
 ; CHECK: ld $25, %call16(__trunctfsf2)
 
 define float @conv_float_LD(fp128 %a) {
@@ -222,7 +222,7 @@ entry:
   ret float %conv
 }
 
-; CHECK: conv_double_LD:
+; CHECK-LABEL: conv_double_LD:
 ; CHECK: ld $25, %call16(__trunctfdf2)
 
 define double @conv_double_LD(fp128 %a) {
@@ -231,7 +231,7 @@ entry:
   ret double %conv
 }
 
-; CHECK:             libcall1_fabsl:
+; CHECK-LABEL:             libcall1_fabsl:
 ; CHECK-DAG: ld      $[[R0:[0-9]+]], 8($[[R4:[0-9]+]])
 ; CHECK-DAG: daddiu  $[[R1:[0-9]+]], $zero, 1
 ; CHECK-DAG: dsll    $[[R2:[0-9]+]], $[[R1]], 63
@@ -248,7 +248,7 @@ entry:
 
 declare fp128 @fabsl(fp128) #1
 
-; CHECK: libcall1_ceill:
+; CHECK-LABEL: libcall1_ceill:
 ; CHECK: ld $25, %call16(ceill)
 
 define fp128 @libcall1_ceill() {
@@ -260,7 +260,7 @@ entry:
 
 declare fp128 @ceill(fp128) #1
 
-; CHECK: libcall1_sinl:
+; CHECK-LABEL: libcall1_sinl:
 ; CHECK: ld $25, %call16(sinl)
 
 define fp128 @libcall1_sinl() {
@@ -272,7 +272,7 @@ entry:
 
 declare fp128 @sinl(fp128) #2
 
-; CHECK: libcall1_cosl:
+; CHECK-LABEL: libcall1_cosl:
 ; CHECK: ld $25, %call16(cosl)
 
 define fp128 @libcall1_cosl() {
@@ -284,7 +284,7 @@ entry:
 
 declare fp128 @cosl(fp128) #2
 
-; CHECK: libcall1_expl:
+; CHECK-LABEL: libcall1_expl:
 ; CHECK: ld $25, %call16(expl)
 
 define fp128 @libcall1_expl() {
@@ -296,7 +296,7 @@ entry:
 
 declare fp128 @expl(fp128) #2
 
-; CHECK: libcall1_exp2l:
+; CHECK-LABEL: libcall1_exp2l:
 ; CHECK: ld $25, %call16(exp2l)
 
 define fp128 @libcall1_exp2l() {
@@ -308,7 +308,7 @@ entry:
 
 declare fp128 @exp2l(fp128) #2
 
-; CHECK: libcall1_logl:
+; CHECK-LABEL: libcall1_logl:
 ; CHECK: ld $25, %call16(logl)
 
 define fp128 @libcall1_logl() {
@@ -320,7 +320,7 @@ entry:
 
 declare fp128 @logl(fp128) #2
 
-; CHECK: libcall1_log2l:
+; CHECK-LABEL: libcall1_log2l:
 ; CHECK: ld $25, %call16(log2l)
 
 define fp128 @libcall1_log2l() {
@@ -332,7 +332,7 @@ entry:
 
 declare fp128 @log2l(fp128) #2
 
-; CHECK: libcall1_log10l:
+; CHECK-LABEL: libcall1_log10l:
 ; CHECK: ld $25, %call16(log10l)
 
 define fp128 @libcall1_log10l() {
@@ -344,7 +344,7 @@ entry:
 
 declare fp128 @log10l(fp128) #2
 
-; CHECK: libcall1_nearbyintl:
+; CHECK-LABEL: libcall1_nearbyintl:
 ; CHECK: ld $25, %call16(nearbyintl)
 
 define fp128 @libcall1_nearbyintl() {
@@ -356,7 +356,7 @@ entry:
 
 declare fp128 @nearbyintl(fp128) #1
 
-; CHECK: libcall1_floorl:
+; CHECK-LABEL: libcall1_floorl:
 ; CHECK: ld $25, %call16(floorl)
 
 define fp128 @libcall1_floorl() {
@@ -368,7 +368,7 @@ entry:
 
 declare fp128 @floorl(fp128) #1
 
-; CHECK: libcall1_sqrtl:
+; CHECK-LABEL: libcall1_sqrtl:
 ; CHECK: ld $25, %call16(sqrtl)
 
 define fp128 @libcall1_sqrtl() {
@@ -380,7 +380,7 @@ entry:
 
 declare fp128 @sqrtl(fp128) #2
 
-; CHECK: libcall1_rintl:
+; CHECK-LABEL: libcall1_rintl:
 ; CHECK: ld $25, %call16(rintl)
 
 define fp128 @libcall1_rintl() {
@@ -392,7 +392,7 @@ entry:
 
 declare fp128 @rintl(fp128) #1
 
-; CHECK: libcall_powil:
+; CHECK-LABEL: libcall_powil:
 ; CHECK: ld $25, %call16(__powitf2)
 
 define fp128 @libcall_powil(fp128 %a, i32 %b) {
@@ -403,7 +403,7 @@ entry:
 
 declare fp128 @llvm.powi.f128(fp128, i32) #3
 
-; CHECK:     libcall2_copysignl:
+; CHECK-LABEL:     libcall2_copysignl:
 ; CHECK-DAG: daddiu $[[R2:[0-9]+]], $zero, 1
 ; CHECK-DAG: dsll   $[[R3:[0-9]+]], $[[R2]], 63
 ; CHECK-DAG: ld     $[[R0:[0-9]+]], %got_disp(gld1)
@@ -426,7 +426,7 @@ entry:
 
 declare fp128 @copysignl(fp128, fp128) #1
 
-; CHECK: libcall2_powl:
+; CHECK-LABEL: libcall2_powl:
 ; CHECK: ld $25, %call16(powl)
 
 define fp128 @libcall2_powl() {
@@ -439,7 +439,7 @@ entry:
 
 declare fp128 @powl(fp128, fp128) #2
 
-; CHECK: libcall2_fmodl:
+; CHECK-LABEL: libcall2_fmodl:
 ; CHECK: ld $25, %call16(fmodl)
 
 define fp128 @libcall2_fmodl() {
@@ -452,7 +452,7 @@ entry:
 
 declare fp128 @fmodl(fp128, fp128) #2
 
-; CHECK: libcall3_fmal:
+; CHECK-LABEL: libcall3_fmal:
 ; CHECK: ld $25, %call16(fmal)
 
 define fp128 @libcall3_fmal() {
@@ -466,7 +466,7 @@ entry:
 
 declare fp128 @llvm.fma.f128(fp128, fp128, fp128) #4
 
-; CHECK: cmp_lt:
+; CHECK-LABEL: cmp_lt:
 ; CHECK: ld $25, %call16(__lttf2)
 
 define i32 @cmp_lt(fp128 %a, fp128 %b) {
@@ -476,7 +476,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: cmp_le:
+; CHECK-LABEL: cmp_le:
 ; CHECK: ld $25, %call16(__letf2)
 
 define i32 @cmp_le(fp128 %a, fp128 %b) {
@@ -486,7 +486,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: cmp_gt:
+; CHECK-LABEL: cmp_gt:
 ; CHECK: ld $25, %call16(__gttf2)
 
 define i32 @cmp_gt(fp128 %a, fp128 %b) {
@@ -496,7 +496,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: cmp_ge:
+; CHECK-LABEL: cmp_ge:
 ; CHECK: ld $25, %call16(__getf2)
 
 define i32 @cmp_ge(fp128 %a, fp128 %b) {
@@ -506,7 +506,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: cmp_eq:
+; CHECK-LABEL: cmp_eq:
 ; CHECK: ld $25, %call16(__eqtf2)
 
 define i32 @cmp_eq(fp128 %a, fp128 %b) {
@@ -516,7 +516,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: cmp_ne:
+; CHECK-LABEL: cmp_ne:
 ; CHECK: ld $25, %call16(__netf2)
 
 define i32 @cmp_ne(fp128 %a, fp128 %b) {
@@ -526,7 +526,7 @@ entry:
   ret i32 %conv
 }
 
-; CHECK: load_LD_LD:
+; CHECK-LABEL: load_LD_LD:
 ; CHECK: ld $[[R0:[0-9]+]], %got_disp(gld1)
 ; CHECK: ld $2, 0($[[R0]])
 ; CHECK: ld $4, 8($[[R0]])
@@ -537,7 +537,7 @@ entry:
   ret fp128 %0
 }
 
-; CHECK: load_LD_float:
+; CHECK-LABEL: load_LD_float:
 ; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gf1)
 ; CHECK: lw   $4, 0($[[R0]])
 ; CHECK: ld   $25, %call16(__extendsftf2)
@@ -550,7 +550,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: load_LD_double:
+; CHECK-LABEL: load_LD_double:
 ; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gd1)
 ; CHECK: ld   $4, 0($[[R0]])
 ; CHECK: ld   $25, %call16(__extenddftf2)
@@ -563,7 +563,7 @@ entry:
   ret fp128 %conv
 }
 
-; CHECK: store_LD_LD:
+; CHECK-LABEL: store_LD_LD:
 ; CHECK: ld $[[R0:[0-9]+]], %got_disp(gld1)
 ; CHECK: ld $[[R1:[0-9]+]], 0($[[R0]])
 ; CHECK: ld $[[R2:[0-9]+]], 8($[[R0]])
@@ -578,7 +578,7 @@ entry:
   ret void
 }
 
-; CHECK: store_LD_float:
+; CHECK-LABEL: store_LD_float:
 ; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gld1)
 ; CHECK: ld   $4, 0($[[R0]])
 ; CHECK: ld   $5, 8($[[R0]])
@@ -595,7 +595,7 @@ entry:
   ret void
 }
 
-; CHECK: store_LD_double:
+; CHECK-LABEL: store_LD_double:
 ; CHECK: ld   $[[R0:[0-9]+]], %got_disp(gld1)
 ; CHECK: ld   $4, 0($[[R0]])
 ; CHECK: ld   $5, 8($[[R0]])
@@ -612,7 +612,7 @@ entry:
   ret void
 }
 
-; CHECK: select_LD:
+; CHECK-LABEL: select_LD:
 ; CHECK: movn $8, $6, $4
 ; CHECK: movn $9, $7, $4
 ; CHECK: move $2, $8
@@ -625,7 +625,7 @@ entry:
   ret fp128 %cond
 }
 
-; CHECK: selectCC_LD:
+; CHECK-LABEL: selectCC_LD:
 ; CHECK: move $[[R0:[0-9]+]], $11
 ; CHECK: move $[[R1:[0-9]+]], $10
 ; CHECK: move $[[R2:[0-9]+]], $9

@@ -6,7 +6,7 @@ declare i128 *@foo()
 
 ; Test register addition.
 define void @f1(i128 *%ptr, i64 %high, i64 %low) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: slgr {{%r[0-5]}}, %r4
 ; CHECK: slbgr {{%r[0-5]}}, %r3
 ; CHECK: br %r14
@@ -22,7 +22,7 @@ define void @f1(i128 *%ptr, i64 %high, i64 %low) {
 
 ; Test memory addition with no offset.
 define void @f2(i64 %addr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: slg {{%r[0-5]}}, 8(%r2)
 ; CHECK: slbg {{%r[0-5]}}, 0(%r2)
 ; CHECK: br %r14
@@ -37,7 +37,7 @@ define void @f2(i64 %addr) {
 
 ; Test the highest aligned offset that is in range of both SLG and SLBG.
 define void @f3(i64 %base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: slg {{%r[0-5]}}, 524280(%r2)
 ; CHECK: slbg {{%r[0-5]}}, 524272(%r2)
 ; CHECK: br %r14
@@ -53,7 +53,7 @@ define void @f3(i64 %base) {
 
 ; Test the next doubleword up, which requires separate address logic for SLG.
 define void @f4(i64 %base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lgr [[BASE:%r[1-5]]], %r2
 ; CHECK: agfi [[BASE]], 524288
 ; CHECK: slg {{%r[0-5]}}, 0([[BASE]])
@@ -73,7 +73,7 @@ define void @f4(i64 %base) {
 ; both instructions.  It would be better to create an anchor at 524288
 ; that both instructions can use, but that isn't implemented yet.
 define void @f5(i64 %base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: slg {{%r[0-5]}}, 0({{%r[1-5]}})
 ; CHECK: slbg {{%r[0-5]}}, 0({{%r[1-5]}})
 ; CHECK: br %r14
@@ -89,7 +89,7 @@ define void @f5(i64 %base) {
 
 ; Test the lowest displacement that is in range of both SLG and SLBG.
 define void @f6(i64 %base) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: slg {{%r[0-5]}}, -524280(%r2)
 ; CHECK: slbg {{%r[0-5]}}, -524288(%r2)
 ; CHECK: br %r14
@@ -105,7 +105,7 @@ define void @f6(i64 %base) {
 
 ; Test the next doubleword down, which is out of range of the SLBG.
 define void @f7(i64 %base) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: slg {{%r[0-5]}}, -524288(%r2)
 ; CHECK: slbg {{%r[0-5]}}, 0({{%r[1-5]}})
 ; CHECK: br %r14
@@ -122,7 +122,7 @@ define void @f7(i64 %base) {
 ; Check that subtractions of spilled values can use SLG and SLBG rather than
 ; SLGR and SLBGR.
 define void @f8(i128 *%ptr0) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: slg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: slbg {{%r[0-9]+}}, {{[0-9]+}}(%r15)

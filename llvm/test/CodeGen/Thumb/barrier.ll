@@ -3,10 +3,10 @@
 ; RUN: llc < %s -march=thumb -mcpu=cortex-m0   | FileCheck %s -check-prefix=V6M
 
 define void @t1() {
-; V6: t1:
+; V6-LABEL: t1:
 ; V6: blx {{_*}}sync_synchronize
 
-; V6M: t1:
+; V6M-LABEL: t1:
 ; V6M: dmb ish
   fence seq_cst
   ret void

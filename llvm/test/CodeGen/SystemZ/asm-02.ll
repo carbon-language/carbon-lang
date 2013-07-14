@@ -5,7 +5,7 @@
 
 ; Check the lowest range.
 define void @f1(i64 %base) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: blah 0(%r2)
 ; CHECK: br %r14
   %addr = inttoptr i64 %base to i64 *
@@ -15,7 +15,7 @@ define void @f1(i64 %base) {
 
 ; Check the next lowest byte.
 define void @f2(i64 %base) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: aghi %r2, -1
 ; CHECK: blah 0(%r2)
 ; CHECK: br %r14
@@ -27,7 +27,7 @@ define void @f2(i64 %base) {
 
 ; Check the highest range.
 define void @f3(i64 %base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: blah 4095(%r2)
 ; CHECK: br %r14
   %add = add i64 %base, 4095
@@ -38,7 +38,7 @@ define void @f3(i64 %base) {
 
 ; Check the next highest byte.
 define void @f4(i64 %base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: blah 0(%r2)
 ; CHECK: br %r14

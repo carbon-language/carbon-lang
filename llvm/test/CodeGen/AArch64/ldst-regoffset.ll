@@ -9,7 +9,7 @@
 @var_double = global double 0.0
 
 define void @ldst_8bit(i8* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_8bit:
+; CHECK-LABEL: ldst_8bit:
 
    %addr8_sxtw = getelementptr i8* %base, i32 %off32
    %val8_sxtw = load volatile i8* %addr8_sxtw
@@ -37,7 +37,7 @@ define void @ldst_8bit(i8* %base, i32 %off32, i64 %off64) {
 
 
 define void @ldst_16bit(i16* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_16bit:
+; CHECK-LABEL: ldst_16bit:
 
    %addr8_sxtwN = getelementptr i16* %base, i32 %off32
    %val8_sxtwN = load volatile i16* %addr8_sxtwN
@@ -91,7 +91,7 @@ define void @ldst_16bit(i16* %base, i32 %off32, i64 %off64) {
 }
 
 define void @ldst_32bit(i32* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_32bit:
+; CHECK-LABEL: ldst_32bit:
 
    %addr_sxtwN = getelementptr i32* %base, i32 %off32
    %val_sxtwN = load volatile i32* %addr_sxtwN
@@ -143,7 +143,7 @@ define void @ldst_32bit(i32* %base, i32 %off32, i64 %off64) {
 }
 
 define void @ldst_64bit(i64* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_64bit:
+; CHECK-LABEL: ldst_64bit:
 
    %addr_sxtwN = getelementptr i64* %base, i32 %off32
    %val_sxtwN = load volatile i64* %addr_sxtwN
@@ -191,7 +191,7 @@ define void @ldst_64bit(i64* %base, i32 %off32, i64 %off64) {
 }
 
 define void @ldst_float(float* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_float:
+; CHECK-LABEL: ldst_float:
 
    %addr_sxtwN = getelementptr float* %base, i32 %off32
    %val_sxtwN = load volatile float* %addr_sxtwN
@@ -238,7 +238,7 @@ define void @ldst_float(float* %base, i32 %off32, i64 %off64) {
 }
 
 define void @ldst_double(double* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_double:
+; CHECK-LABEL: ldst_double:
 
    %addr_sxtwN = getelementptr double* %base, i32 %off32
    %val_sxtwN = load volatile double* %addr_sxtwN
@@ -286,7 +286,7 @@ define void @ldst_double(double* %base, i32 %off32, i64 %off64) {
 
 
 define void @ldst_128bit(fp128* %base, i32 %off32, i64 %off64) {
-; CHECK: ldst_128bit:
+; CHECK-LABEL: ldst_128bit:
 
    %addr_sxtwN = getelementptr fp128* %base, i32 %off32
    %val_sxtwN = load volatile fp128* %addr_sxtwN

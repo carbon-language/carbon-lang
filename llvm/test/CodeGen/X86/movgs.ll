@@ -45,12 +45,12 @@ entry:
   %3 = bitcast <4 x i32> %2 to <2 x i64>
   ret <2 x i64> %3
   
-; X32: pmovsxwd_1:
+; X32-LABEL: pmovsxwd_1:
 ; X32: 	movl	4(%esp), %eax
 ; X32: 	pmovsxwd	%gs:(%eax), %xmm0
 ; X32: 	ret
 
-; X64: pmovsxwd_1:
+; X64-LABEL: pmovsxwd_1:
 ; X64:	pmovsxwd	%gs:([[A0]]), %xmm0
 ; X64:	ret
 }

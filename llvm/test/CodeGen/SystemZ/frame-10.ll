@@ -5,7 +5,7 @@
 declare i8 *@llvm.stacksave()
 
 define void @f1(i8 **%dest) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: stg %r15, 0(%r2)
 ; CHECK: br %r14
   %addr = call i8 *@llvm.stacksave()

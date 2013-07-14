@@ -26,7 +26,7 @@ declare float @nearbyintf(float) readonly
 declare double @nearbyint(double) readonly
 
 define void @simple_float() {
-; CHECK: simple_float:
+; CHECK-LABEL: simple_float:
   %val1 = load volatile float* @varfloat
 
   %valabs = call float @fabsf(float %val1)
@@ -65,7 +65,7 @@ define void @simple_float() {
 }
 
 define void @simple_double() {
-; CHECK: simple_double:
+; CHECK-LABEL: simple_double:
   %val1 = load volatile double* @vardouble
 
   %valabs = call double @fabs(double %val1)
@@ -104,7 +104,7 @@ define void @simple_double() {
 }
 
 define void @converts() {
-; CHECK: converts:
+; CHECK-LABEL: converts:
 
   %val16 = load volatile half* @varhalf
   %val32 = load volatile float* @varfloat

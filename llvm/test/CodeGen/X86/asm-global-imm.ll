@@ -7,7 +7,7 @@ target triple = "i686-apple-darwin9.0.0d2"
 @str = external global [12 x i8]		; <[12 x i8]*> [#uses=1]
 
 define void @foo() {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK-NOT: ret
 ; CHECK: test1 $_GV
 ; CHECK-NOT: ret

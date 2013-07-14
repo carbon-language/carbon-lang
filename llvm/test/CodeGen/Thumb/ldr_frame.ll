@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=thumb | FileCheck %s
 
 define i32 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ldr r0
 	%buf = alloca [32 x i32], align 4
 	%tmp = getelementptr [32 x i32]* %buf, i32 0, i32 0
@@ -10,7 +10,7 @@ define i32 @f1() {
 }
 
 define i32 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: mov r0
 ; CHECK: ldrb
 	%buf = alloca [32 x i8], align 4
@@ -21,7 +21,7 @@ define i32 @f2() {
 }
 
 define i32 @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ldr r0
 	%buf = alloca [32 x i32], align 4
 	%tmp = getelementptr [32 x i32]* %buf, i32 0, i32 32
@@ -30,7 +30,7 @@ define i32 @f3() {
 }
 
 define i32 @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: mov r0
 ; CHECK: ldrb
 	%buf = alloca [32 x i8], align 4

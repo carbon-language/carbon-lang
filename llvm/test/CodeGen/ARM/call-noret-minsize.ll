@@ -4,10 +4,10 @@
 
 define void @t1() noreturn minsize nounwind ssp {
 entry:
-; ARM: t1:
+; ARM-LABEL: t1:
 ; ARM: bl _bar
 
-; SWIFT: t1:
+; SWIFT-LABEL: t1:
 ; SWIFT: bl _bar
   tail call void @bar() noreturn nounwind
   unreachable
@@ -15,10 +15,10 @@ entry:
 
 define void @t2() noreturn minsize nounwind ssp {
 entry:
-; ARM: t2:
+; ARM-LABEL: t2:
 ; ARM: bl _t1
 
-; SWIFT: t2:
+; SWIFT-LABEL: t2:
 ; SWIFT: bl _t1
   tail call void @t1() noreturn nounwind
   unreachable

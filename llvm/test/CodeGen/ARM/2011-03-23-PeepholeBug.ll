@@ -8,7 +8,7 @@
 ; rdar://9172742
 
 define i32 @t() nounwind {
-; CHECK: t:
+; CHECK-LABEL: t:
 entry:
   br label %bb2
 

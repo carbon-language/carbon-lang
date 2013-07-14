@@ -10,7 +10,7 @@ entry:
 }
 
 ; Half word aligned load.
-; CHECK: align2:
+; CHECK-LABEL: align2:
 ; CHECK: ld16s
 ; CHECK: ld16s
 ; CHECK: or
@@ -23,7 +23,7 @@ entry:
 @a = global [5 x i8] zeroinitializer, align 4
 
 ; Constant offset from word aligned base.
-; CHECK: align3:
+; CHECK-LABEL: align3:
 ; CHECK: ldw {{r[0-9]+}}, dp
 ; CHECK: ldw {{r[0-9]+}}, dp
 ; CHECK: or

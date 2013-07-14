@@ -23,7 +23,7 @@
 ;
 ; rdar://11116189
 define i64 @t(i64 %aInput) nounwind {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: movs [[REG:(r[0-9]+)]], #0
 ; CHECK: movt [[REG]], #46540
 ; CHECK: adds r{{[0-9]+}}, r{{[0-9]+}}, [[REG]]

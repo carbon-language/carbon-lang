@@ -6,7 +6,7 @@
 %struct.xyz_t = type { double, double, double }
 
 define i32 @effie(i32 %tsets, %struct.xyz_t* nocapture %p, i32 %a, i32 %b, i32 %c) nounwind readonly noinline {
-; CHECK: effie:
+; CHECK-LABEL: effie:
 entry:
   %0 = icmp sgt i32 %tsets, 0
   br i1 %0, label %bb.nph, label %bb6

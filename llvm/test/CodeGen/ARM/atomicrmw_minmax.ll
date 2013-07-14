@@ -1,6 +1,6 @@
 ;  RUN: llc -march=arm -mcpu=cortex-a9 < %s | FileCheck %s
 
-;  CHECK: max:
+;  CHECK-LABEL: max:
 define i32 @max(i8 %ctx, i32* %ptr, i32 %val)
 {
 ;  CHECK: ldrex
@@ -10,7 +10,7 @@ define i32 @max(i8 %ctx, i32* %ptr, i32 %val)
   ret i32 %old
 }
 
-;  CHECK: min:
+;  CHECK-LABEL: min:
 define i32 @min(i8 %ctx, i32* %ptr, i32 %val)
 {
 ;  CHECK: ldrex

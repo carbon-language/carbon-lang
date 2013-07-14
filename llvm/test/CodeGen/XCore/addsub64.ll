@@ -27,7 +27,7 @@ entry:
 	%3 = add i64 %2, %a
 	ret i64 %3
 }
-; CHECK: maccu:
+; CHECK-LABEL: maccu:
 ; CHECK: maccu r1, r0, r3, r2
 ; CHECK-NEXT: retsp 0
 
@@ -39,7 +39,7 @@ entry:
 	%3 = add i64 %2, %a
 	ret i64 %3
 }
-; CHECK: maccs:
+; CHECK-LABEL: maccs:
 ; CHECK: maccs r1, r0, r3, r2
 ; CHECK-NEXT: retsp 0
 
@@ -54,6 +54,6 @@ entry:
 	%6 = add i64 %5, %3
 	ret i64 %6
 }
-; CHECK: lmul:
+; CHECK-LABEL: lmul:
 ; CHECK: lmul r1, r0, r1, r0, r2, r3
 ; CHECK-NEXT: retsp 0

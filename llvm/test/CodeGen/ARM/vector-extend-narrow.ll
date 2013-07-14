@@ -1,6 +1,6 @@
 ; RUN: llc -mtriple armv7 %s -o - | FileCheck %s
 
-; CHECK: f:
+; CHECK-LABEL: f:
 define float @f(<4 x i16>* nocapture %in) {
   ; CHECK: vldr
   ; CHECK: vmovl.u16
@@ -18,7 +18,7 @@ define float @f(<4 x i16>* nocapture %in) {
   ret float %7
 }
 
-; CHECK: g:
+; CHECK-LABEL: g:
 define float @g(<4 x i8>* nocapture %in) {
 ; Note: vld1 here is reasonably important. Mixing VFP and NEON
 ; instructions is bad on some cores
@@ -39,7 +39,7 @@ define float @g(<4 x i8>* nocapture %in) {
   ret float %7
 }
 
-; CHECK: h:
+; CHECK-LABEL: h:
 define <4 x i8> @h(<4 x float> %v) {
   ; CHECK: vcvt.{{[us]}}32.f32
   ; CHECK: vmovn.i32
@@ -47,7 +47,7 @@ define <4 x i8> @h(<4 x float> %v) {
   ret <4 x i8> %1
 }
 
-; CHECK: i:
+; CHECK-LABEL: i:
 define <4 x i8> @i(<4 x i8>* %x) {
 ; Note: vld1 here is reasonably important. Mixing VFP and NEON
 ; instructions is bad on some cores
@@ -62,7 +62,7 @@ define <4 x i8> @i(<4 x i8>* %x) {
   %2 = sdiv <4 x i8> zeroinitializer, %1
   ret <4 x i8> %2
 }
-; CHECK: j:
+; CHECK-LABEL: j:
 define <4 x i32> @j(<4 x i8>* %in) nounwind {
   ; CHECK: vld1
   ; CHECK: vmovl.u8

@@ -4,7 +4,7 @@
 
 ; Test an i8 store, which should get converted into an i32 truncation.
 define void @f1(i8 *%dst, i8 %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
   store i8 %val, i8 *%dst
@@ -13,7 +13,7 @@ define void @f1(i8 *%dst, i8 %val) {
 
 ; Test an i32 truncating store.
 define void @f2(i8 *%dst, i32 %val) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
   %trunc = trunc i32 %val to i8
@@ -23,7 +23,7 @@ define void @f2(i8 *%dst, i32 %val) {
 
 ; Test an i64 truncating store.
 define void @f3(i8 *%dst, i64 %val) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
   %trunc = trunc i64 %val to i8
@@ -33,7 +33,7 @@ define void @f3(i8 *%dst, i64 %val) {
 
 ; Check the high end of the STC range.
 define void @f4(i8 *%dst, i8 %val) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: stc %r3, 4095(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%dst, i64 4095
@@ -43,7 +43,7 @@ define void @f4(i8 *%dst, i8 %val) {
 
 ; Check the next byte up, which should use STCY instead of STC.
 define void @f5(i8 *%dst, i8 %val) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: stcy %r3, 4096(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%dst, i64 4096
@@ -53,7 +53,7 @@ define void @f5(i8 *%dst, i8 %val) {
 
 ; Check the high end of the STCY range.
 define void @f6(i8 *%dst, i8 %val) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: stcy %r3, 524287(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%dst, i64 524287
@@ -64,7 +64,7 @@ define void @f6(i8 *%dst, i8 %val) {
 ; Check the next byte up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f7(i8 *%dst, i8 %val) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: agfi %r2, 524288
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
@@ -75,7 +75,7 @@ define void @f7(i8 *%dst, i8 %val) {
 
 ; Check the high end of the negative STCY range.
 define void @f8(i8 *%dst, i8 %val) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: stcy %r3, -1(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%dst, i64 -1
@@ -85,7 +85,7 @@ define void @f8(i8 *%dst, i8 %val) {
 
 ; Check the low end of the STCY range.
 define void @f9(i8 *%dst, i8 %val) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: stcy %r3, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%dst, i64 -524288
@@ -96,7 +96,7 @@ define void @f9(i8 *%dst, i8 %val) {
 ; Check the next byte down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f10(i8 *%dst, i8 %val) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agfi %r2, -524289
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: br %r14
@@ -107,7 +107,7 @@ define void @f10(i8 *%dst, i8 %val) {
 
 ; Check that STC allows an index.
 define void @f11(i64 %dst, i64 %index, i8 %val) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: stc %r4, 4095(%r3,%r2)
 ; CHECK: br %r14
   %add1 = add i64 %dst, %index
@@ -119,7 +119,7 @@ define void @f11(i64 %dst, i64 %index, i8 %val) {
 
 ; Check that STCY allows an index.
 define void @f12(i64 %dst, i64 %index, i8 %val) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: stcy %r4, 4096(%r3,%r2)
 ; CHECK: br %r14
   %add1 = add i64 %dst, %index

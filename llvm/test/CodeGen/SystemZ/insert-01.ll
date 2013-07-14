@@ -5,7 +5,7 @@
 ; Check a plain insertion with (or (and ... -0xff) (zext (load ....))).
 ; The whole sequence can be performed by IC.
 define i32 @f1(i32 %orig, i8 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: ni
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -18,7 +18,7 @@ define i32 @f1(i32 %orig, i8 *%ptr) {
 
 ; Like f1, but with the operands reversed.
 define i32 @f2(i32 %orig, i8 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: ni
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -32,7 +32,7 @@ define i32 @f2(i32 %orig, i8 *%ptr) {
 ; Check a case where more bits than lower 8 are masked out of the
 ; register value.  We can use IC but must keep the original mask.
 define i32 @f3(i32 %orig, i8 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: risbg %r2, %r2, 32, 182, 0
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -45,7 +45,7 @@ define i32 @f3(i32 %orig, i8 *%ptr) {
 
 ; Like f3, but with the operands reversed.
 define i32 @f4(i32 %orig, i8 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: risbg %r2, %r2, 32, 182, 0
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -58,7 +58,7 @@ define i32 @f4(i32 %orig, i8 *%ptr) {
 
 ; Check a case where the low 8 bits are cleared by a shift left.
 define i32 @f5(i32 %orig, i8 *%ptr) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: sll %r2, 8
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -71,7 +71,7 @@ define i32 @f5(i32 %orig, i8 *%ptr) {
 
 ; Like f5, but with the operands reversed.
 define i32 @f6(i32 %orig, i8 *%ptr) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sll %r2, 8
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -84,7 +84,7 @@ define i32 @f6(i32 %orig, i8 *%ptr) {
 
 ; Check insertions into a constant.
 define i32 @f7(i32 %orig, i8 *%ptr) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lhi %r2, 256
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -96,7 +96,7 @@ define i32 @f7(i32 %orig, i8 *%ptr) {
 
 ; Like f7, but with the operands reversed.
 define i32 @f8(i32 %orig, i8 *%ptr) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: lhi %r2, 256
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -108,7 +108,7 @@ define i32 @f8(i32 %orig, i8 *%ptr) {
 
 ; Check the high end of the IC range.
 define i32 @f9(i32 %orig, i8 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ic %r2, 4095(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 4095
@@ -121,7 +121,7 @@ define i32 @f9(i32 %orig, i8 *%src) {
 
 ; Check the next byte up, which should use ICY instead of IC.
 define i32 @f10(i32 %orig, i8 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: icy %r2, 4096(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 4096
@@ -134,7 +134,7 @@ define i32 @f10(i32 %orig, i8 *%src) {
 
 ; Check the high end of the ICY range.
 define i32 @f11(i32 %orig, i8 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: icy %r2, 524287(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 524287
@@ -148,7 +148,7 @@ define i32 @f11(i32 %orig, i8 *%src) {
 ; Check the next byte up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f12(i32 %orig, i8 *%src) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: agfi %r3, 524288
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -162,7 +162,7 @@ define i32 @f12(i32 %orig, i8 *%src) {
 
 ; Check the high end of the negative ICY range.
 define i32 @f13(i32 %orig, i8 *%src) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: icy %r2, -1(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 -1
@@ -175,7 +175,7 @@ define i32 @f13(i32 %orig, i8 *%src) {
 
 ; Check the low end of the ICY range.
 define i32 @f14(i32 %orig, i8 *%src) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: icy %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 -524288
@@ -189,7 +189,7 @@ define i32 @f14(i32 %orig, i8 *%src) {
 ; Check the next byte down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f15(i32 %orig, i8 *%src) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: agfi %r3, -524289
 ; CHECK: ic %r2, 0(%r3)
 ; CHECK: br %r14
@@ -203,7 +203,7 @@ define i32 @f15(i32 %orig, i8 *%src) {
 
 ; Check that IC allows an index.
 define i32 @f16(i32 %orig, i8 *%src, i64 %index) {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: ic %r2, 4095({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %ptr1 = getelementptr i8 *%src, i64 %index
@@ -217,7 +217,7 @@ define i32 @f16(i32 %orig, i8 *%src, i64 %index) {
 
 ; Check that ICY allows an index.
 define i32 @f17(i32 %orig, i8 *%src, i64 %index) {
-; CHECK: f17:
+; CHECK-LABEL: f17:
 ; CHECK: icy %r2, 4096({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %ptr1 = getelementptr i8 *%src, i64 %index

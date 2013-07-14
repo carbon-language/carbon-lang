@@ -2,7 +2,7 @@
 
 define i32 *@addr_G() {
 entry:
-; CHECK: addr_G:
+; CHECK-LABEL: addr_G:
 ; CHECK: get r11, id
 	ret i32* @G
 }

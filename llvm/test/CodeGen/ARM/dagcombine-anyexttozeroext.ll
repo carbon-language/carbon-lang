@@ -1,6 +1,6 @@
 ; RUN: llc -mtriple armv7 %s -o - | FileCheck %s
 
-; CHECK: f:
+; CHECK-LABEL: f:
 define float @f(<4 x i16>* nocapture %in) {
   ; CHECK: vldr
   ; CHECK: vmovl.u16

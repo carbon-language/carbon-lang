@@ -9,7 +9,7 @@
 
 ; Test f32->i32.
 define i32 @f1(float %f) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cebr
 ; CHECK: sebr
 ; CHECK: cfebr
@@ -21,7 +21,7 @@ define i32 @f1(float %f) {
 
 ; Test f64->i32.
 define i32 @f2(double %f) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cdbr
 ; CHECK: sdbr
 ; CHECK: cfdbr
@@ -33,7 +33,7 @@ define i32 @f2(double %f) {
 
 ; Test f128->i32.
 define i32 @f3(fp128 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: cxbr
 ; CHECK: sxbr
 ; CHECK: cfxbr

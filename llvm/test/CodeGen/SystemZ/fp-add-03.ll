@@ -4,7 +4,7 @@
 
 ; There is no memory form of 128-bit addition.
 define void @f1(fp128 *%ptr, float %f2) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lxebr %f0, %f0
 ; CHECK: ld %f1, 0(%r2)
 ; CHECK: ld %f3, 8(%r2)

@@ -11,7 +11,7 @@ define void @calls_unwind_init() {
   ret void
 }
 
-; CHECK: calls_unwind_init:
+; CHECK-LABEL: calls_unwind_init:
 ; CHECK: push    {r4, r5, r6, r7, r8, r9, r10, r11, lr}
 ; CHECK: vpush   {d8, d9, d10, d11, d12, d13, d14, d15}
 ; CHECK: vpop    {d8, d9, d10, d11, d12, d13, d14, d15}

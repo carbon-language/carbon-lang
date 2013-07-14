@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 | FileCheck %s
 
 define i32 @t1(i8* %X, i32 %i) {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK-NOT: and
 ; CHECK: movzbl
 ; CHECK: movl (%{{...}},%{{...}},4),
@@ -17,7 +17,7 @@ entry:
 }
 
 define i32 @t2(i16* %X, i32 %i) {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK-NOT: and
 ; CHECK: movzwl
 ; CHECK: movl (%{{...}},%{{...}},4),
@@ -39,7 +39,7 @@ define i32 @t3(i16* %i.ptr, i32* %arr) {
 ; To make matters worse, because of the two-phase zext of %i and their reuse in
 ; the function, the DAG can get confusing trying to re-use both of them and
 ; prevent easy analysis of the mask in order to match this.
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK-NOT: and
 ; CHECK: shrl
 ; CHECK: addl (%{{...}},%{{...}},4),
@@ -58,7 +58,7 @@ entry:
 define i32 @t4(i16* %i.ptr, i32* %arr) {
 ; A version of @t3 that has more zero extends and more re-use of intermediate
 ; values. This exercise slightly different bits of canonicalization.
-; CHECK: t4:
+; CHECK-LABEL: t4:
 ; CHECK-NOT: and
 ; CHECK: shrl
 ; CHECK: addl (%{{...}},%{{...}},4),

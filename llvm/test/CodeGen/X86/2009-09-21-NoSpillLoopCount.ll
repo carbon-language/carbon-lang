@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin10.0 -relocation-model=pic | FileCheck %s
 
 define void @dot(i16* nocapture %A, i32 %As, i16* nocapture %B, i32 %Bs, i16* nocapture %C, i32 %N) nounwind ssp {
-; CHECK: dot:
+; CHECK-LABEL: dot:
 ; CHECK: decl %
 ; CHECK-NEXT: jne
 entry:

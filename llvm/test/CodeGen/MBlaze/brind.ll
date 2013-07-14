@@ -15,7 +15,7 @@ declare i32 @printf(i8*, ...)
 
 define i32 @brind(i32 %a, i32 %b)
 {
-    ; CHECK:        brind:
+    ; CHECK-LABEL:        brind:
 entry:
     br label %loop
 

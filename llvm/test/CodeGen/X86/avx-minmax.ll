@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mattr=+avx -asm-verbose=false -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck -check-prefix=UNSAFE %s
 
-; UNSAFE: maxpd:
+; UNSAFE-LABEL: maxpd:
 ; UNSAFE: vmaxpd {{.+}}, %xmm
 define <2 x double> @maxpd(<2 x double> %x, <2 x double> %y) {
   %max_is_x = fcmp oge <2 x double> %x, %y
@@ -8,7 +8,7 @@ define <2 x double> @maxpd(<2 x double> %x, <2 x double> %y) {
   ret <2 x double> %max
 }
 
-; UNSAFE: minpd:
+; UNSAFE-LABEL: minpd:
 ; UNSAFE: vminpd {{.+}}, %xmm
 define <2 x double> @minpd(<2 x double> %x, <2 x double> %y) {
   %min_is_x = fcmp ole <2 x double> %x, %y
@@ -16,7 +16,7 @@ define <2 x double> @minpd(<2 x double> %x, <2 x double> %y) {
   ret <2 x double> %min
 }
 
-; UNSAFE: maxps:
+; UNSAFE-LABEL: maxps:
 ; UNSAFE: vmaxps {{.+}}, %xmm
 define <4 x float> @maxps(<4 x float> %x, <4 x float> %y) {
   %max_is_x = fcmp oge <4 x float> %x, %y
@@ -24,7 +24,7 @@ define <4 x float> @maxps(<4 x float> %x, <4 x float> %y) {
   ret <4 x float> %max
 }
 
-; UNSAFE: minps:
+; UNSAFE-LABEL: minps:
 ; UNSAFE: vminps {{.+}}, %xmm
 define <4 x float> @minps(<4 x float> %x, <4 x float> %y) {
   %min_is_x = fcmp ole <4 x float> %x, %y
@@ -32,7 +32,7 @@ define <4 x float> @minps(<4 x float> %x, <4 x float> %y) {
   ret <4 x float> %min
 }
 
-; UNSAFE: vmaxpd:
+; UNSAFE-LABEL: vmaxpd:
 ; UNSAFE: vmaxpd {{.+}}, %ymm
 define <4 x double> @vmaxpd(<4 x double> %x, <4 x double> %y) {
   %max_is_x = fcmp oge <4 x double> %x, %y
@@ -40,7 +40,7 @@ define <4 x double> @vmaxpd(<4 x double> %x, <4 x double> %y) {
   ret <4 x double> %max
 }
 
-; UNSAFE: vminpd:
+; UNSAFE-LABEL: vminpd:
 ; UNSAFE: vminpd {{.+}}, %ymm
 define <4 x double> @vminpd(<4 x double> %x, <4 x double> %y) {
   %min_is_x = fcmp ole <4 x double> %x, %y
@@ -48,7 +48,7 @@ define <4 x double> @vminpd(<4 x double> %x, <4 x double> %y) {
   ret <4 x double> %min
 }
 
-; UNSAFE: vmaxps:
+; UNSAFE-LABEL: vmaxps:
 ; UNSAFE: vmaxps {{.+}}, %ymm
 define <8 x float> @vmaxps(<8 x float> %x, <8 x float> %y) {
   %max_is_x = fcmp oge <8 x float> %x, %y
@@ -56,7 +56,7 @@ define <8 x float> @vmaxps(<8 x float> %x, <8 x float> %y) {
   ret <8 x float> %max
 }
 
-; UNSAFE: vminps:
+; UNSAFE-LABEL: vminps:
 ; UNSAFE: vminps {{.+}}, %ymm
 define <8 x float> @vminps(<8 x float> %x, <8 x float> %y) {
   %min_is_x = fcmp ole <8 x float> %x, %y

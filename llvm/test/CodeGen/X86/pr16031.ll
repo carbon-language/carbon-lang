@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -mcpu=corei7-avx | FileCheck %s
 
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK: pushl %esi
 ; CHECK-NEXT: movl  $-12, %eax
 ; CHECK-NEXT: movl  $-1, %edx

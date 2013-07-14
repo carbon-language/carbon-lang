@@ -3,7 +3,7 @@
 
 ; LSR's OptimizeMax should eliminate the select (max).
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK-NOT: cmov
 ; CHECK: jle
 
@@ -37,7 +37,7 @@ for.end:                                          ; preds = %for.body, %entry
 ; OptimizeMax should handle this case.
 ; PR7454
 
-;      CHECK: _Z18GenerateStatusPagei:
+;      CHECK-LABEL: _Z18GenerateStatusPagei:
 
 ;      CHECK:         jle
 ;  CHECK-NOT:         cmov

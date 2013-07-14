@@ -4,7 +4,7 @@
 ; PR12545
 define void @f(i32 %x, i32 %y) nounwind uwtable ssp {
 entry:
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK-NOT: neg
 ; CHECK: add
   %sub = sub i32 0, %y

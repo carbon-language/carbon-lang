@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+v4t | FileCheck %s
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: bxlt lr
 	%tmp2 = icmp sgt i32 %c, 10
 	%tmp5 = icmp slt i32 %d, 4
@@ -19,7 +19,7 @@ UnifiedReturnBlock:
 }
 
 define i32 @t2(i32 %a, i32 %b, i32 %c, i32 %d) {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: bxgt lr
 ; CHECK: cmp
 ; CHECK: addge

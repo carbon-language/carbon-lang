@@ -6,7 +6,7 @@ target triple = "x86_64-apple-darwin10.0"
 
 define void @udiv8(i8* %quotient, i16 zeroext %a, i8 zeroext %b, i8 zeroext %c, i8* %remainder) nounwind ssp {
 entry:
-; CHECK: udiv8:
+; CHECK-LABEL: udiv8:
 ; CHECK-NOT: movb %ah, (%r8)
   %a_addr = alloca i16, align 2                   ; <i16*> [#uses=2]
   %b_addr = alloca i8, align 1                    ; <i8*> [#uses=2]

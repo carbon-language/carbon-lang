@@ -4,7 +4,7 @@
 ; RUN: opt < %s  -cost-model -analyze -mtriple=thumbv7-apple-ios6.0.0 -march=arm -mcpu=cortex-a8 | FileCheck %s --check-prefix=COST
 %T0_5 = type <8 x i8>
 %T1_5 = type <8 x i32>
-; CHECK: func_cvt5:
+; CHECK-LABEL: func_cvt5:
 define void @func_cvt5(%T0_5* %loadaddr, %T1_5* %storeaddr) {
 ; CHECK: vmovl.s8
 ; CHECK: vmovl.s16
@@ -20,7 +20,7 @@ define void @func_cvt5(%T0_5* %loadaddr, %T1_5* %storeaddr) {
 ;; is improved the cost needs to change.
 %TA0_5 = type <8 x i8>
 %TA1_5 = type <8 x i32>
-; CHECK: func_cvt1:
+; CHECK-LABEL: func_cvt1:
 define void @func_cvt1(%TA0_5* %loadaddr, %TA1_5* %storeaddr) {
 ; CHECK: vmovl.u8
 ; CHECK: vmovl.u16
@@ -35,7 +35,7 @@ define void @func_cvt1(%TA0_5* %loadaddr, %TA1_5* %storeaddr) {
 
 %T0_51 = type <8 x i32>
 %T1_51 = type <8 x i8>
-; CHECK: func_cvt51:
+; CHECK-LABEL: func_cvt51:
 define void @func_cvt51(%T0_51* %loadaddr, %T1_51* %storeaddr) {
 ; CHECK: vmovn.i32
 ; CHECK: vmovn.i32
@@ -50,7 +50,7 @@ define void @func_cvt51(%T0_51* %loadaddr, %T1_51* %storeaddr) {
 
 %TT0_5 = type <16 x i8>
 %TT1_5 = type <16 x i32>
-; CHECK: func_cvt52:
+; CHECK-LABEL: func_cvt52:
 define void @func_cvt52(%TT0_5* %loadaddr, %TT1_5* %storeaddr) {
 ; CHECK: vmovl.s16
 ; CHECK: vmovl.s16
@@ -67,7 +67,7 @@ define void @func_cvt52(%TT0_5* %loadaddr, %TT1_5* %storeaddr) {
 ;; is improved the cost needs to change.
 %TTA0_5 = type <16 x i8>
 %TTA1_5 = type <16 x i32>
-; CHECK: func_cvt12:
+; CHECK-LABEL: func_cvt12:
 define void @func_cvt12(%TTA0_5* %loadaddr, %TTA1_5* %storeaddr) {
 ; CHECK: vmovl.u16
 ; CHECK: vmovl.u16
@@ -83,7 +83,7 @@ define void @func_cvt12(%TTA0_5* %loadaddr, %TTA1_5* %storeaddr) {
 
 %TT0_51 = type <16 x i32>
 %TT1_51 = type <16 x i8>
-; CHECK: func_cvt512:
+; CHECK-LABEL: func_cvt512:
 define void @func_cvt512(%TT0_51* %loadaddr, %TT1_51* %storeaddr) {
 ; CHECK: vmovn.i32
 ; CHECK: vmovn.i32
@@ -99,7 +99,7 @@ define void @func_cvt512(%TT0_51* %loadaddr, %TT1_51* %storeaddr) {
   ret void
 }
 
-; CHECK: sext_v4i16_v4i64:
+; CHECK-LABEL: sext_v4i16_v4i64:
 define void @sext_v4i16_v4i64(<4 x i16>* %loadaddr, <4 x i64>* %storeaddr) {
 ; CHECK: vmovl.s32
 ; CHECK: vmovl.s32
@@ -111,7 +111,7 @@ define void @sext_v4i16_v4i64(<4 x i16>* %loadaddr, <4 x i64>* %storeaddr) {
   ret void
 }
 
-; CHECK: zext_v4i16_v4i64:
+; CHECK-LABEL: zext_v4i16_v4i64:
 define void @zext_v4i16_v4i64(<4 x i16>* %loadaddr, <4 x i64>* %storeaddr) {
 ; CHECK: vmovl.u32
 ; CHECK: vmovl.u32
@@ -123,7 +123,7 @@ define void @zext_v4i16_v4i64(<4 x i16>* %loadaddr, <4 x i64>* %storeaddr) {
   ret void
 }
 
-; CHECK: sext_v8i16_v8i64:
+; CHECK-LABEL: sext_v8i16_v8i64:
 define void @sext_v8i16_v8i64(<8 x i16>* %loadaddr, <8 x i64>* %storeaddr) {
 ; CHECK: vmovl.s32
 ; CHECK: vmovl.s32
@@ -137,7 +137,7 @@ define void @sext_v8i16_v8i64(<8 x i16>* %loadaddr, <8 x i64>* %storeaddr) {
   ret void
 }
 
-; CHECK: zext_v8i16_v8i64:
+; CHECK-LABEL: zext_v8i16_v8i64:
 define void @zext_v8i16_v8i64(<8 x i16>* %loadaddr, <8 x i64>* %storeaddr) {
 ; CHECK: vmovl.u32
 ; CHECK: vmovl.u32

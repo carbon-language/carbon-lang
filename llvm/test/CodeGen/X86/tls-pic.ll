@@ -11,11 +11,11 @@ entry:
 	ret i32 %tmp1
 }
 
-; X32: f1:
+; X32-LABEL: f1:
 ; X32:   leal i@TLSGD(,%ebx), %eax
 ; X32:   calll ___tls_get_addr@PLT
 
-; X64: f1:
+; X64-LABEL: f1:
 ; X64:   leaq i@TLSGD(%rip), %rdi
 ; X64:   callq __tls_get_addr@PLT
 
@@ -27,11 +27,11 @@ entry:
 	ret i32* @i
 }
 
-; X32: f2:
+; X32-LABEL: f2:
 ; X32:   leal i@TLSGD(,%ebx), %eax
 ; X32:   calll ___tls_get_addr@PLT
 
-; X64: f2:
+; X64-LABEL: f2:
 ; X64:   leaq i@TLSGD(%rip), %rdi
 ; X64:   callq __tls_get_addr@PLT
 
@@ -43,11 +43,11 @@ entry:
 	ret i32 %tmp1
 }
 
-; X32: f3:
+; X32-LABEL: f3:
 ; X32:   leal	i@TLSGD(,%ebx), %eax
 ; X32:   calll ___tls_get_addr@PLT
 
-; X64: f3:
+; X64-LABEL: f3:
 ; X64:   leaq i@TLSGD(%rip), %rdi
 ; X64:   callq __tls_get_addr@PLT
 
@@ -57,11 +57,11 @@ entry:
 	ret i32* @i
 }
 
-; X32: f4:
+; X32-LABEL: f4:
 ; X32:   leal	i@TLSGD(,%ebx), %eax
 ; X32:   calll ___tls_get_addr@PLT
 
-; X64: f4:
+; X64-LABEL: f4:
 ; X64:   leaq i@TLSGD(%rip), %rdi
 ; X64:   callq __tls_get_addr@PLT
 
@@ -74,13 +74,13 @@ entry:
 	ret i32 %add
 }
 
-; X32:    f5:
+; X32-LABEL:    f5:
 ; X32:      leal {{[jk]}}@TLSLDM(%ebx)
 ; X32: calll ___tls_get_addr@PLT
 ; X32: movl {{[jk]}}@DTPOFF(%e
 ; X32: addl {{[jk]}}@DTPOFF(%e
 
-; X64:    f5:
+; X64-LABEL:    f5:
 ; X64:      leaq {{[jk]}}@TLSLD(%rip), %rdi
 ; X64: callq	__tls_get_addr@PLT
 ; X64: movl {{[jk]}}@DTPOFF(%r

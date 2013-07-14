@@ -3,7 +3,7 @@
 ; Don't duplicate the load.
 
 define fastcc i32 @foo(i32* %p) nounwind {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK: andl $10, %eax
 ; CHECK: je
 	%t0 = load i32* %p
@@ -18,7 +18,7 @@ bb76:
 
 define fastcc double @bar(i32 %hash, double %x, double %y) nounwind {
 entry:
-; CHECK: bar:
+; CHECK-LABEL: bar:
   %0 = and i32 %hash, 15
   %1 = icmp ult i32 %0, 8
   br i1 %1, label %bb11, label %bb10

@@ -12,7 +12,7 @@ define i64 @test1(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test1:
+; CHECK-THUMB-LABEL: test1:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: adds.w [[REG3:[a-z0-9]+]], [[REG1]]
@@ -37,7 +37,7 @@ define i64 @test2(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test2:
+; CHECK-THUMB-LABEL: test2:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: subs.w [[REG3:[a-z0-9]+]], [[REG1]]
@@ -62,7 +62,7 @@ define i64 @test3(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test3:
+; CHECK-THUMB-LABEL: test3:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: and.w [[REG3:[a-z0-9]+]], [[REG1]]
@@ -87,7 +87,7 @@ define i64 @test4(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test4:
+; CHECK-THUMB-LABEL: test4:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: orr.w [[REG3:[a-z0-9]+]], [[REG1]]
@@ -112,7 +112,7 @@ define i64 @test5(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test5:
+; CHECK-THUMB-LABEL: test5:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: eor.w [[REG3:[a-z0-9]+]], [[REG1]]
@@ -135,7 +135,7 @@ define i64 @test6(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test6:
+; CHECK-THUMB-LABEL: test6:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, {{[a-z0-9]+}}, {{[a-z0-9]+}}
@@ -159,7 +159,7 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test7:
+; CHECK-THUMB-LABEL: test7:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: cmp [[REG1]]
@@ -188,7 +188,7 @@ define i64 @test8(i64* %ptr) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test8:
+; CHECK-THUMB-LABEL: test8:
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: cmp [[REG1]]
 ; CHECK-THUMB: it eq
@@ -214,7 +214,7 @@ define void @test9(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test9:
+; CHECK-THUMB-LABEL: test9:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: strexd {{[a-z0-9]+}}, {{[a-z0-9]+}}, {{[a-z0-9]+}}
@@ -238,7 +238,7 @@ define i64 @test10(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test10:
+; CHECK-THUMB-LABEL: test10:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
@@ -266,7 +266,7 @@ define i64 @test11(i64* %ptr, i64 %val) {
 ; CHECK: dmb {{ish$}}
 
 
-; CHECK-THUMB: test11:
+; CHECK-THUMB-LABEL: test11:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
@@ -293,7 +293,7 @@ define i64 @test12(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test12:
+; CHECK-THUMB-LABEL: test12:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]
@@ -320,7 +320,7 @@ define i64 @test13(i64* %ptr, i64 %val) {
 ; CHECK: bne
 ; CHECK: dmb {{ish$}}
 
-; CHECK-THUMB: test13:
+; CHECK-THUMB-LABEL: test13:
 ; CHECK-THUMB: dmb {{ish$}}
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: subs.w {{[a-z0-9]+}}, [[REG1]], [[REG3:[a-z0-9]+]]

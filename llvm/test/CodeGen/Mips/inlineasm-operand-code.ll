@@ -10,7 +10,7 @@
 ; X with -3
 define i32 @constraint_X() nounwind {
 entry:
-;CHECK_LITTLE_32:   constraint_X:
+;CHECK_LITTLE_32-LABEL:   constraint_X:
 ;CHECK_LITTLE_32: #APP
 ;CHECK_LITTLE_32: addi ${{[0-9]+}},${{[0-9]+}},0xfffffffffffffffd
 ;CHECK_LITTLE_32: #NO_APP
@@ -21,7 +21,7 @@ entry:
 ; x with -3
 define i32 @constraint_x() nounwind {
 entry:
-;CHECK_LITTLE_32:   constraint_x:
+;CHECK_LITTLE_32-LABEL:   constraint_x:
 ;CHECK_LITTLE_32: #APP
 ;CHECK_LITTLE_32: addi ${{[0-9]+}},${{[0-9]+}},0xfffd
 ;CHECK_LITTLE_32: #NO_APP
@@ -32,7 +32,7 @@ entry:
 ; d with -3
 define i32 @constraint_d() nounwind {
 entry:
-;CHECK_LITTLE_32:   constraint_d:
+;CHECK_LITTLE_32-LABEL:   constraint_d:
 ;CHECK_LITTLE_32:   #APP
 ;CHECK_LITTLE_32:   addi ${{[0-9]+}},${{[0-9]+}},-3
 ;CHECK_LITTLE_32:   #NO_APP
@@ -43,7 +43,7 @@ entry:
 ; m with -3
 define i32 @constraint_m() nounwind {
 entry:
-;CHECK_LITTLE_32:   constraint_m:
+;CHECK_LITTLE_32-LABEL:   constraint_m:
 ;CHECK_LITTLE_32:   #APP
 ;CHECK_LITTLE_32:   addi ${{[0-9]+}},${{[0-9]+}},-4
 ;CHECK_LITTLE_32:   #NO_APP
@@ -54,7 +54,7 @@ entry:
 ; z with -3
 define i32 @constraint_z() nounwind {
 entry:
-;CHECK_LITTLE_32: constraint_z:
+;CHECK_LITTLE_32-LABEL: constraint_z:
 ;CHECK_LITTLE_32:    #APP
 ;CHECK_LITTLE_32:    addi ${{[0-9]+}},${{[0-9]+}},-3
 ;CHECK_LITTLE_32:    #NO_APP
@@ -71,7 +71,7 @@ entry:
 ; a long long in 32 bit mode (use to assert)
 define i32 @constraint_longlong() nounwind {
 entry:
-;CHECK_LITTLE_32: constraint_longlong:
+;CHECK_LITTLE_32-LABEL: constraint_longlong:
 ;CHECK_LITTLE_32:    #APP
 ;CHECK_LITTLE_32:    addi ${{[0-9]+}},${{[0-9]+}},3
 ;CHECK_LITTLE_32:    #NO_APP
@@ -82,7 +82,7 @@ entry:
 ; D, in little endian the source reg will be 4 bytes into the long long
 define i32 @constraint_D() nounwind {
 entry:
-;CHECK_LITTLE_32: constraint_D:
+;CHECK_LITTLE_32-LABEL: constraint_D:
 ;CHECK_LITTLE_32:    lw ${{[0-9]+}}, %got(uval)(${{[0-9,a-z]+}})
 ;CHECK_LITTLE_32:    lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;CHECK_LITTLE_32:    lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})
@@ -91,7 +91,7 @@ entry:
 ;CHECK_LITTLE_32:    #NO_APP
 
 ; D, in big endian the source reg will also be 4 bytes into the long long
-;CHECK_BIG_32:    constraint_D:
+;CHECK_BIG_32-LABEL:    constraint_D:
 ;CHECK_BIG_32:       lw ${{[0-9]+}}, %got(uval)(${{[0-9,a-z]+}})
 ;CHECK_BIG_32:       lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;CHECK_BIG_32:       lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})
@@ -107,7 +107,7 @@ entry:
 ; L, in little endian the source reg will be 0 bytes into the long long
 define i32 @constraint_L() nounwind {
 entry:
-;CHECK_LITTLE_32: constraint_L:
+;CHECK_LITTLE_32-LABEL: constraint_L:
 ;CHECK_LITTLE_32:    lw ${{[0-9]+}}, %got(uval)(${{[0-9,a-z]+}})
 ;CHECK_LITTLE_32:    lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;CHECK_LITTLE_32:    lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})
@@ -115,7 +115,7 @@ entry:
 ;CHECK_LITTLE_32:    or ${{[0-9]+}},$[[FIRST]],${{[0-9]+}}
 ;CHECK_LITTLE_32:    #NO_APP
 ; L, in big endian the source reg will be 4 bytes into the long long
-;CHECK_BIG_32: constraint_L:
+;CHECK_BIG_32-LABEL: constraint_L:
 ;CHECK_BIG_32:       lw ${{[0-9]+}}, %got(uval)(${{[0-9,a-z]+}})
 ;CHECK_BIG_32:       lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;CHECK_BIG_32:       lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})
@@ -131,7 +131,7 @@ entry:
 ; M, in little endian the source reg will be 4 bytes into the long long
 define i32 @constraint_M() nounwind {
 entry:
-;CHECK_LITTLE_32: constraint_M:
+;CHECK_LITTLE_32-LABEL: constraint_M:
 ;CHECK_LITTLE_32:    lw ${{[0-9]+}}, %got(uval)(${{[0-9,a-z]+}})
 ;CHECK_LITTLE_32:    lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;CHECK_LITTLE_32:    lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})
@@ -139,7 +139,7 @@ entry:
 ;CHECK_LITTLE_32:    or ${{[0-9]+}},$[[SECOND]],${{[0-9]+}}
 ;CHECK_LITTLE_32:    #NO_APP
 ; M, in big endian the source reg will be 0 bytes into the long long
-;CHECK_BIG_32:    constraint_M:
+;CHECK_BIG_32-LABEL:    constraint_M:
 ;CHECK_BIG_32:       lw ${{[0-9]+}}, %got(uval)(${{[0-9,a-z]+}})
 ;CHECK_BIG_32:       lw $[[SECOND:[0-9]+]], 4(${{[0-9]+}})
 ;CHECK_BIG_32:       lw $[[FIRST:[0-9]+]], 0(${{[0-9]+}})

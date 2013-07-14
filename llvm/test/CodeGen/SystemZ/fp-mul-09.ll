@@ -3,7 +3,7 @@
 declare double @llvm.fma.f64(double %f1, double %f2, double %f3)
 
 define double @f1(double %f1, double %f2, double %acc) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: msdbr %f4, %f0, %f2
 ; CHECK: ldr %f0, %f4
 ; CHECK: br %r14
@@ -13,7 +13,7 @@ define double @f1(double %f1, double %f2, double %acc) {
 }
 
 define double @f2(double %f1, double *%ptr, double %acc) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: msdb %f2, %f0, 0(%r2)
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
@@ -24,7 +24,7 @@ define double @f2(double %f1, double *%ptr, double %acc) {
 }
 
 define double @f3(double %f1, double *%base, double %acc) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: msdb %f2, %f0, 4088(%r2)
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
@@ -39,7 +39,7 @@ define double @f4(double %f1, double *%base, double %acc) {
 ; The important thing here is that we don't generate an out-of-range
 ; displacement.  Other sequences besides this one would be OK.
 ;
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: msdb %f2, %f0, 0(%r2)
 ; CHECK: ldr %f0, %f2
@@ -55,7 +55,7 @@ define double @f5(double %f1, double *%base, double %acc) {
 ; Here too the important thing is that we don't generate an out-of-range
 ; displacement.  Other sequences besides this one would be OK.
 ;
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -8
 ; CHECK: msdb %f2, %f0, 0(%r2)
 ; CHECK: ldr %f0, %f2
@@ -68,7 +68,7 @@ define double @f5(double %f1, double *%base, double %acc) {
 }
 
 define double @f6(double %f1, double *%base, i64 %index, double %acc) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: msdb %f2, %f0, 0(%r1,%r2)
 ; CHECK: ldr %f0, %f2
@@ -81,7 +81,7 @@ define double @f6(double %f1, double *%base, i64 %index, double %acc) {
 }
 
 define double @f7(double %f1, double *%base, i64 %index, double %acc) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: msdb %f2, %f0, 4088({{%r1,%r2|%r2,%r1}})
 ; CHECK: ldr %f0, %f2
@@ -95,7 +95,7 @@ define double @f7(double %f1, double *%base, i64 %index, double %acc) {
 }
 
 define double @f8(double %f1, double *%base, i64 %index, double %acc) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: lay %r1, 4096({{%r1,%r2|%r2,%r1}})
 ; CHECK: msdb %f2, %f0, 0(%r1)

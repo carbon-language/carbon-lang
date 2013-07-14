@@ -4,7 +4,7 @@ target triple = "i686-pc-linux-gnu"
 @str = internal constant [9 x i8] c"%f+%f*i\0A\00"              ; <[9 x i8]*> [#uses=1]
 
 define i32 @main() {
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK-NOT: ret
 ; CHECK: subl $4, %{{.*}}
 ; CHECK: ret

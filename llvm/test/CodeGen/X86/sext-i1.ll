@@ -5,11 +5,11 @@
 
 define i32 @t1(i32 %x) nounwind readnone ssp {
 entry:
-; 32: t1:
+; 32-LABEL: t1:
 ; 32: cmpl $1
 ; 32: sbbl
 
-; 64: t1:
+; 64-LABEL: t1:
 ; 64: cmpl $1
 ; 64: sbbl
   %0 = icmp eq i32 %x, 0
@@ -19,11 +19,11 @@ entry:
 
 define i32 @t2(i32 %x) nounwind readnone ssp {
 entry:
-; 32: t2:
+; 32-LABEL: t2:
 ; 32: cmpl $1
 ; 32: sbbl
 
-; 64: t2:
+; 64-LABEL: t2:
 ; 64: cmpl $1
 ; 64: sbbl
   %0 = icmp eq i32 %x, 0
@@ -36,13 +36,13 @@ entry:
 
 define i32 @t3() nounwind readonly {
 entry:
-; 32: t3:
+; 32-LABEL: t3:
 ; 32: cmpl $1
 ; 32: sbbl
 ; 32: cmpl
 ; 32: xorl
 
-; 64: t3:
+; 64-LABEL: t3:
 ; 64: cmpl $1
 ; 64: sbbq
 ; 64: cmpq

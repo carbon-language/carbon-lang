@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vceqi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vceqi8:
+;CHECK-LABEL: vceqi8:
 ;CHECK: vceq.i8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -11,7 +11,7 @@ define <8 x i8> @vceqi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vceqi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vceqi16:
+;CHECK-LABEL: vceqi16:
 ;CHECK: vceq.i16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -21,7 +21,7 @@ define <4 x i16> @vceqi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vceqi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vceqi32:
+;CHECK-LABEL: vceqi32:
 ;CHECK: vceq.i32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -31,7 +31,7 @@ define <2 x i32> @vceqi32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <2 x i32> @vceqf32(<2 x float>* %A, <2 x float>* %B) nounwind {
-;CHECK: vceqf32:
+;CHECK-LABEL: vceqf32:
 ;CHECK: vceq.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
@@ -41,7 +41,7 @@ define <2 x i32> @vceqf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <16 x i8> @vceqQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vceqQi8:
+;CHECK-LABEL: vceqQi8:
 ;CHECK: vceq.i8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -51,7 +51,7 @@ define <16 x i8> @vceqQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vceqQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vceqQi16:
+;CHECK-LABEL: vceqQi16:
 ;CHECK: vceq.i16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -61,7 +61,7 @@ define <8 x i16> @vceqQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vceqQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vceqQi32:
+;CHECK-LABEL: vceqQi32:
 ;CHECK: vceq.i32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -71,7 +71,7 @@ define <4 x i32> @vceqQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <4 x i32> @vceqQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
-;CHECK: vceqQf32:
+;CHECK-LABEL: vceqQf32:
 ;CHECK: vceq.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
@@ -81,7 +81,7 @@ define <4 x i32> @vceqQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 }
 
 define <8 x i8> @vceqi8Z(<8 x i8>* %A) nounwind {
-;CHECK: vceqi8Z:
+;CHECK-LABEL: vceqi8Z:
 ;CHECK-NOT: vmov
 ;CHECK-NOT: vmvn
 ;CHECK: vceq.i8

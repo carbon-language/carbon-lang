@@ -6,7 +6,7 @@ define zeroext i1 @a(i32 %x)  nounwind {
   %obil = extractvalue {i32, i1} %res, 1
   ret i1 %obil
   
-; CHECK: a:
+; CHECK-LABEL: a:
 ; CHECK: mull
 ; CHECK: seto %al
 ; CHECK: movzbl	%al, %eax

@@ -1,6 +1,6 @@
 ; RUN: llc -O1 -mcpu=cortex-a15 -mtriple=armv7-linux-gnueabi -verify-machineinstrs < %s  | FileCheck %s
 
-; CHECK: t1:
+; CHECK-LABEL: t1:
 define <2 x float> @t1(float* %A, <2 x float> %B) {
 ; The generated code for this test uses a vld1.32 instruction
 ; to write the lane 1 of a D register containing the value of
@@ -15,7 +15,7 @@ define <2 x float> @t1(float* %A, <2 x float> %B) {
   ret <2 x float> %tmp3
 }
 
-; CHECK: t2:
+; CHECK-LABEL: t2:
 define void @t2(<4 x i8> *%in, <4 x i8> *%out, i32 %n) {
 entry:
   br label %loop

@@ -5,7 +5,7 @@
 declare i32 @foo()
 
 define void @f1(i32 %target) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: .cfi_def_cfa_offset
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: crje %r2, {{%r[0-9]+}}, .L[[LABEL]]
@@ -19,7 +19,7 @@ exit:
 }
 
 define void @f2(i32 %target) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: .cfi_def_cfa_offset
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: crjlh %r2, {{%r[0-9]+}}, .L[[LABEL]]
@@ -33,7 +33,7 @@ exit:
 }
 
 define void @f3(i32 %target) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: .cfi_def_cfa_offset
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: crjle %r2, {{%r[0-9]+}}, .L[[LABEL]]
@@ -47,7 +47,7 @@ exit:
 }
 
 define void @f4(i32 %target) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: .cfi_def_cfa_offset
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: crjl %r2, {{%r[0-9]+}}, .L[[LABEL]]
@@ -61,7 +61,7 @@ exit:
 }
 
 define void @f5(i32 %target) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: .cfi_def_cfa_offset
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: crjh %r2, {{%r[0-9]+}}, .L[[LABEL]]
@@ -75,7 +75,7 @@ exit:
 }
 
 define void @f6(i32 %target) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: .cfi_def_cfa_offset
 ; CHECK: .L[[LABEL:.*]]:
 ; CHECK: crjhe %r2, {{%r[0-9]+}}, .L[[LABEL]]

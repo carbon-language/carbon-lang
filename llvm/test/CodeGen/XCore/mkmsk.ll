@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=xcore | FileCheck %s
 
 define i32 @f(i32) nounwind {
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: mkmsk r0, r0
 ; CHECK-NEXT: retsp 0
 entry:

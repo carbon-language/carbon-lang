@@ -6,7 +6,7 @@
 ; rdar://11472010
 define i32 @t(i32 %mask) nounwind readnone ssp {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK-NOT: mov
   %sub = add i32 %mask, -65535
   %shr = lshr i32 %sub, 23

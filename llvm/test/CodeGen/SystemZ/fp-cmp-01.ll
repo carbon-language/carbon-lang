@@ -6,7 +6,7 @@ declare float @foo()
 
 ; Check comparison with registers.
 define i64 @f1(i64 %a, i64 %b, float %f1, float %f2) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cebr %f0, %f2
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
@@ -18,7 +18,7 @@ define i64 @f1(i64 %a, i64 %b, float %f1, float %f2) {
 
 ; Check the low end of the CEB range.
 define i64 @f2(i64 %a, i64 %b, float %f1, float *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ceb %f0, 0(%r4)
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
@@ -31,7 +31,7 @@ define i64 @f2(i64 %a, i64 %b, float %f1, float *%ptr) {
 
 ; Check the high end of the aligned CEB range.
 define i64 @f3(i64 %a, i64 %b, float %f1, float *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ceb %f0, 4092(%r4)
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
@@ -46,7 +46,7 @@ define i64 @f3(i64 %a, i64 %b, float %f1, float *%base) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f4(i64 %a, i64 %b, float %f1, float *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r4, 4096
 ; CHECK: ceb %f0, 0(%r4)
 ; CHECK-NEXT: je
@@ -61,7 +61,7 @@ define i64 @f4(i64 %a, i64 %b, float %f1, float *%base) {
 
 ; Check negative displacements, which also need separate address logic.
 define i64 @f5(i64 %a, i64 %b, float %f1, float *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r4, -4
 ; CHECK: ceb %f0, 0(%r4)
 ; CHECK-NEXT: je
@@ -76,7 +76,7 @@ define i64 @f5(i64 %a, i64 %b, float %f1, float *%base) {
 
 ; Check that CEB allows indices.
 define i64 @f6(i64 %a, i64 %b, float %f1, float *%base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r5, 2
 ; CHECK: ceb %f0, 400(%r1,%r4)
 ; CHECK-NEXT: je
@@ -92,7 +92,7 @@ define i64 @f6(i64 %a, i64 %b, float %f1, float *%base, i64 %index) {
 
 ; Check that comparisons of spilled values can use CEB rather than CEBR.
 define float @f7(float *%ptr0) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: ceb {{%f[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14

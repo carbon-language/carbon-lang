@@ -2,7 +2,7 @@
 ; rdar://7268481
 
 define void @t(i8* %a, ...) nounwind {
-; CHECK:      t:
+; CHECK-LABEL:      t:
 ; CHECK:      pop {r3}
 ; CHECK-NEXT: add sp, #12
 ; CHECK-NEXT: bx r3

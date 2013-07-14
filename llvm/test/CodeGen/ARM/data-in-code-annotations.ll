@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
 
 define double @f1() nounwind {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: .data_region
 ; CHECK: .long 1413754129
 ; CHECK: .long 1074340347
@@ -11,7 +11,7 @@ define double @f1() nounwind {
 
 
 define i32 @f2()  {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: .data_region jt32
 ; CHECK: .end_data_region
 

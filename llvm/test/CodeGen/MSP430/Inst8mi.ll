@@ -4,14 +4,14 @@ target triple = "msp430-generic-generic"
 @foo = common global i8 0, align 1
 
 define void @mov() nounwind {
-; CHECK: mov:
+; CHECK-LABEL: mov:
 ; CHECK: mov.b	#2, &foo
 	store i8 2, i8 * @foo
 	ret void
 }
 
 define void @add() nounwind {
-; CHECK: add:
+; CHECK-LABEL: add:
 ; CHECK: add.b	#2, &foo
 	%1 = load i8* @foo
 	%2 = add i8 %1, 2
@@ -20,7 +20,7 @@ define void @add() nounwind {
 }
 
 define void @and() nounwind {
-; CHECK: and:
+; CHECK-LABEL: and:
 ; CHECK: and.b	#2, &foo
 	%1 = load i8* @foo
 	%2 = and i8 %1, 2
@@ -29,7 +29,7 @@ define void @and() nounwind {
 }
 
 define void @bis() nounwind {
-; CHECK: bis:
+; CHECK-LABEL: bis:
 ; CHECK: bis.b	#2, &foo
 	%1 = load i8* @foo
 	%2 = or i8 %1, 2
@@ -38,7 +38,7 @@ define void @bis() nounwind {
 }
 
 define void @xor() nounwind {
-; CHECK: xor:
+; CHECK-LABEL: xor:
 ; CHECK: xor.b	#2, &foo
 	%1 = load i8* @foo
 	%2 = xor i8 %1, 2

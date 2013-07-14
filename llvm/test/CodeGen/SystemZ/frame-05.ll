@@ -14,7 +14,7 @@
 ; Use a different address for the final store, so that we can check that
 ; %r15 isn't referenced again until after that.
 define void @f1(i32 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: stmg %r6, %r15, 48(%r15)
 ; CHECK-NOT: %r15
 ; CHECK: .cfi_offset %r6, -112
@@ -82,7 +82,7 @@ define void @f1(i32 *%ptr) {
 ; from %r14 down, so that the STMG/LMG sequences aren't any longer than
 ; they need to be.
 define void @f2(i32 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: stmg %r7, %r15, 56(%r15)
 ; CHECK-NOT: %r15
 ; CHECK: .cfi_offset %r7, -104
@@ -145,7 +145,7 @@ define void @f2(i32 *%ptr) {
 
 ; Like f1, but only needs one call-saved GPR, which ought to be %r14.
 define void @f3(i32 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: stmg %r14, %r15, 112(%r15)
 ; CHECK-NOT: %r15
 ; CHECK: .cfi_offset %r14, -48
@@ -188,7 +188,7 @@ define void @f3(i32 *%ptr) {
 ; This function should use all call-clobbered GPRs but no call-saved ones.
 ; It shouldn't need to touch the stack at all.
 define void @f4(i32 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: %r15
 ; CHECK-NOT: %r6
 ; CHECK-NOT: %r7

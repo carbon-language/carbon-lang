@@ -20,11 +20,11 @@
 ; emergency spill slots at 160(%r15), the amount that we need to allocate
 ; in order to put another object at offset 4088 is 4088 - 176 = 3912 bytes.
 define void @f1(i8 %byte) {
-; CHECK-NOFP: f1:
+; CHECK-NOFP-LABEL: f1:
 ; CHECK-NOFP: stc %r2, 4095(%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f1:
+; CHECK-FP-LABEL: f1:
 ; CHECK-FP: stc %r2, 4095(%r11)
 ; CHECK-FP: br %r14
   %region1 = alloca [3912 x i8], align 8
@@ -38,11 +38,11 @@ define void @f1(i8 %byte) {
 
 ; Test the first offset that is out-of-range of the 12-bit form.
 define void @f2(i8 %byte) {
-; CHECK-NOFP: f2:
+; CHECK-NOFP-LABEL: f2:
 ; CHECK-NOFP: stcy %r2, 4096(%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f2:
+; CHECK-FP-LABEL: f2:
 ; CHECK-FP: stcy %r2, 4096(%r11)
 ; CHECK-FP: br %r14
   %region1 = alloca [3912 x i8], align 8
@@ -59,11 +59,11 @@ define void @f2(i8 %byte) {
 ; The last in-range doubleword offset is 524280, so by the same reasoning
 ; as above, we need to allocate objects of 524280 - 176 = 524104 bytes.
 define void @f3(i8 %byte) {
-; CHECK-NOFP: f3:
+; CHECK-NOFP-LABEL: f3:
 ; CHECK-NOFP: stcy %r2, 524287(%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f3:
+; CHECK-FP-LABEL: f3:
 ; CHECK-FP: stcy %r2, 524287(%r11)
 ; CHECK-FP: br %r14
   %region1 = alloca [524104 x i8], align 8
@@ -79,12 +79,12 @@ define void @f3(i8 %byte) {
 ; and the offset is also out of LAY's range, so expect a constant load
 ; followed by an addition.
 define void @f4(i8 %byte) {
-; CHECK-NOFP: f4:
+; CHECK-NOFP-LABEL: f4:
 ; CHECK-NOFP: llilh %r1, 8
 ; CHECK-NOFP: stc %r2, 0(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f4:
+; CHECK-FP-LABEL: f4:
 ; CHECK-FP: llilh %r1, 8
 ; CHECK-FP: stc %r2, 0(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -100,12 +100,12 @@ define void @f4(i8 %byte) {
 ; Add 4095 to the previous offset, to test the other end of the STC range.
 ; The instruction will actually be STCY before frame lowering.
 define void @f5(i8 %byte) {
-; CHECK-NOFP: f5:
+; CHECK-NOFP-LABEL: f5:
 ; CHECK-NOFP: llilh %r1, 8
 ; CHECK-NOFP: stc %r2, 4095(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f5:
+; CHECK-FP-LABEL: f5:
 ; CHECK-FP: llilh %r1, 8
 ; CHECK-FP: stc %r2, 4095(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -120,12 +120,12 @@ define void @f5(i8 %byte) {
 
 ; Test the next offset after that, which uses STCY instead of STC.
 define void @f6(i8 %byte) {
-; CHECK-NOFP: f6:
+; CHECK-NOFP-LABEL: f6:
 ; CHECK-NOFP: llilh %r1, 8
 ; CHECK-NOFP: stcy %r2, 4096(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f6:
+; CHECK-FP-LABEL: f6:
 ; CHECK-FP: llilh %r1, 8
 ; CHECK-FP: stcy %r2, 4096(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -143,12 +143,12 @@ define void @f6(i8 %byte) {
 ; anchors 0x10000 bytes apart, so that the high part can be loaded using
 ; LLILH while still using STC in more cases than 0x40000 anchors would.
 define void @f7(i8 %byte) {
-; CHECK-NOFP: f7:
+; CHECK-NOFP-LABEL: f7:
 ; CHECK-NOFP: llilh %r1, 23
 ; CHECK-NOFP: stcy %r2, 65535(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f7:
+; CHECK-FP-LABEL: f7:
 ; CHECK-FP: llilh %r1, 23
 ; CHECK-FP: stcy %r2, 65535(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -164,12 +164,12 @@ define void @f7(i8 %byte) {
 ; Keep the object-relative offset the same but bump the size of the
 ; objects by one doubleword.
 define void @f8(i8 %byte) {
-; CHECK-NOFP: f8:
+; CHECK-NOFP-LABEL: f8:
 ; CHECK-NOFP: llilh %r1, 24
 ; CHECK-NOFP: stc %r2, 7(%r1,%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f8:
+; CHECK-FP-LABEL: f8:
 ; CHECK-FP: llilh %r1, 24
 ; CHECK-FP: stc %r2, 7(%r1,%r11)
 ; CHECK-FP: br %r14
@@ -190,14 +190,14 @@ define void @f8(i8 %byte) {
 ; The LA then gets lowered into the LLILH/LA form.  The exact sequence
 ; isn't that important though.
 define void @f9(i8 %byte) {
-; CHECK-NOFP: f9:
+; CHECK-NOFP-LABEL: f9:
 ; CHECK-NOFP: llilh [[R1:%r[1-5]]], 16
 ; CHECK-NOFP: la [[R2:%r[1-5]]], 8([[R1]],%r15)
 ; CHECK-NOFP: agfi [[R2]], 524288
 ; CHECK-NOFP: stc %r2, 0([[R2]])
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f9:
+; CHECK-FP-LABEL: f9:
 ; CHECK-FP: llilh [[R1:%r[1-5]]], 16
 ; CHECK-FP: la [[R2:%r[1-5]]], 8([[R1]],%r11)
 ; CHECK-FP: agfi [[R2]], 524288
@@ -216,14 +216,14 @@ define void @f9(i8 %byte) {
 ; call-clobbered registers are live and no call-saved ones have been
 ; allocated).
 define void @f10(i32 *%vptr, i8 %byte) {
-; CHECK-NOFP: f10:
+; CHECK-NOFP-LABEL: f10:
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: llilh [[REGISTER]], 8
 ; CHECK-NOFP: stc %r3, 0([[REGISTER]],%r15)
 ; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f10:
+; CHECK-FP-LABEL: f10:
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: llilh [[REGISTER]], 8
 ; CHECK-FP: stc %r3, 0([[REGISTER]],%r11)
@@ -251,7 +251,7 @@ define void @f10(i32 *%vptr, i8 %byte) {
 ; However, the FP case uses %r11 as the frame pointer and must therefore
 ; spill a second register.  This leads to an extra displacement of 8.
 define void @f11(i32 *%vptr, i8 %byte) {
-; CHECK-NOFP: f11:
+; CHECK-NOFP-LABEL: f11:
 ; CHECK-NOFP: stmg %r6, %r15,
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: llilh [[REGISTER]], 8
@@ -260,7 +260,7 @@ define void @f11(i32 *%vptr, i8 %byte) {
 ; CHECK-NOFP: lmg %r6, %r15,
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f11:
+; CHECK-FP-LABEL: f11:
 ; CHECK-FP: stmg %r6, %r15,
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: llilh [[REGISTER]], 8
@@ -305,13 +305,13 @@ define void @f11(i32 *%vptr, i8 %byte) {
 
 ; Repeat f4 in a case where the index register is already occupied.
 define void @f12(i8 %byte, i64 %index) {
-; CHECK-NOFP: f12:
+; CHECK-NOFP-LABEL: f12:
 ; CHECK-NOFP: llilh %r1, 8
 ; CHECK-NOFP: agr %r1, %r15
 ; CHECK-NOFP: stc %r2, 0(%r3,%r1)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f12:
+; CHECK-FP-LABEL: f12:
 ; CHECK-FP: llilh %r1, 8
 ; CHECK-FP: agr %r1, %r11
 ; CHECK-FP: stc %r2, 0(%r3,%r1)

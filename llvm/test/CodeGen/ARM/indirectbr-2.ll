@@ -8,7 +8,7 @@
 ; The indirect branch has the two destinations as successors. The lone PHI
 ; statement shouldn't be implicitly defined.
 
-; CHECK:      func:
+; CHECK-LABEL:      func:
 ; CHECK:      Ltmp1:    @ Block address taken
 ; CHECK-NOT:            @ implicit-def: R0
 ; CHECK:                @ 4-byte Reload

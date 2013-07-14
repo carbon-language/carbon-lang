@@ -4,14 +4,14 @@
 
 define i32 @t(i32 %a, i32 %b) nounwind ssp {
 entry:
-; X32:     t:
+; X32-LABEL:     t:
 ; X32:     xorb
 ; X32-NOT: andb
 ; X32-NOT: shrb
 ; X32:     testb $64
 ; X32:     je
 
-; X64:     t:
+; X64-LABEL:     t:
 ; X64-NOT: setne
 ; X64:     xorl
 ; X64:     testb $64
@@ -37,7 +37,7 @@ declare i32 @foo(...)
 declare i32 @bar(...)
 
 define i32 @t2(i32 %x, i32 %y) nounwind ssp {
-; X32: t2:
+; X32-LABEL: t2:
 ; X32: cmpl
 ; X32: sete
 ; X32: cmpl
@@ -45,7 +45,7 @@ define i32 @t2(i32 %x, i32 %y) nounwind ssp {
 ; X32-NOT: xor
 ; X32: je
 
-; X64: t2:
+; X64-LABEL: t2:
 ; X64: testl
 ; X64: sete
 ; X64: testl

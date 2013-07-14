@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define void @vst4i8(i8* %A, <8 x i8>* %B) nounwind {
-;CHECK: vst4i8:
+;CHECK-LABEL: vst4i8:
 ;Check the alignment value.  Max for this instruction is 256 bits:
 ;CHECK: vst4.8 {d16, d17, d18, d19}, [r0:64]
 	%tmp1 = load <8 x i8>* %B
@@ -11,7 +11,7 @@ define void @vst4i8(i8* %A, <8 x i8>* %B) nounwind {
 
 ;Check for a post-increment updating store with register increment.
 define void @vst4i8_update(i8** %ptr, <8 x i8>* %B, i32 %inc) nounwind {
-;CHECK: vst4i8_update:
+;CHECK-LABEL: vst4i8_update:
 ;CHECK: vst4.8 {d16, d17, d18, d19}, [r1:128], r2
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
@@ -22,7 +22,7 @@ define void @vst4i8_update(i8** %ptr, <8 x i8>* %B, i32 %inc) nounwind {
 }
 
 define void @vst4i16(i16* %A, <4 x i16>* %B) nounwind {
-;CHECK: vst4i16:
+;CHECK-LABEL: vst4i16:
 ;Check the alignment value.  Max for this instruction is 256 bits:
 ;CHECK: vst4.16 {d16, d17, d18, d19}, [r0:128]
 	%tmp0 = bitcast i16* %A to i8*
@@ -32,7 +32,7 @@ define void @vst4i16(i16* %A, <4 x i16>* %B) nounwind {
 }
 
 define void @vst4i32(i32* %A, <2 x i32>* %B) nounwind {
-;CHECK: vst4i32:
+;CHECK-LABEL: vst4i32:
 ;Check the alignment value.  Max for this instruction is 256 bits:
 ;CHECK: vst4.32 {d16, d17, d18, d19}, [r0:256]
 	%tmp0 = bitcast i32* %A to i8*
@@ -42,7 +42,7 @@ define void @vst4i32(i32* %A, <2 x i32>* %B) nounwind {
 }
 
 define void @vst4f(float* %A, <2 x float>* %B) nounwind {
-;CHECK: vst4f:
+;CHECK-LABEL: vst4f:
 ;CHECK: vst4.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <2 x float>* %B
@@ -51,7 +51,7 @@ define void @vst4f(float* %A, <2 x float>* %B) nounwind {
 }
 
 define void @vst4i64(i64* %A, <1 x i64>* %B) nounwind {
-;CHECK: vst4i64:
+;CHECK-LABEL: vst4i64:
 ;Check the alignment value.  Max for this instruction is 256 bits:
 ;CHECK: vst1.64 {d16, d17, d18, d19}, [r0:256]
 	%tmp0 = bitcast i64* %A to i8*
@@ -61,7 +61,7 @@ define void @vst4i64(i64* %A, <1 x i64>* %B) nounwind {
 }
 
 define void @vst4Qi8(i8* %A, <16 x i8>* %B) nounwind {
-;CHECK: vst4Qi8:
+;CHECK-LABEL: vst4Qi8:
 ;Check the alignment value.  Max for this instruction is 256 bits:
 ;CHECK: vst4.8 {d16, d18, d20, d22}, [r0:256]!
 ;CHECK: vst4.8 {d17, d19, d21, d23}, [r0:256]
@@ -71,7 +71,7 @@ define void @vst4Qi8(i8* %A, <16 x i8>* %B) nounwind {
 }
 
 define void @vst4Qi16(i16* %A, <8 x i16>* %B) nounwind {
-;CHECK: vst4Qi16:
+;CHECK-LABEL: vst4Qi16:
 ;Check for no alignment specifier.
 ;CHECK: vst4.16 {d16, d18, d20, d22}, [r0]!
 ;CHECK: vst4.16 {d17, d19, d21, d23}, [r0]
@@ -82,7 +82,7 @@ define void @vst4Qi16(i16* %A, <8 x i16>* %B) nounwind {
 }
 
 define void @vst4Qi32(i32* %A, <4 x i32>* %B) nounwind {
-;CHECK: vst4Qi32:
+;CHECK-LABEL: vst4Qi32:
 ;CHECK: vst4.32
 ;CHECK: vst4.32
 	%tmp0 = bitcast i32* %A to i8*
@@ -92,7 +92,7 @@ define void @vst4Qi32(i32* %A, <4 x i32>* %B) nounwind {
 }
 
 define void @vst4Qf(float* %A, <4 x float>* %B) nounwind {
-;CHECK: vst4Qf:
+;CHECK-LABEL: vst4Qf:
 ;CHECK: vst4.32
 ;CHECK: vst4.32
 	%tmp0 = bitcast float* %A to i8*
@@ -103,7 +103,7 @@ define void @vst4Qf(float* %A, <4 x float>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst4Qf_update(float** %ptr, <4 x float>* %B) nounwind {
-;CHECK: vst4Qf_update:
+;CHECK-LABEL: vst4Qf_update:
 ;CHECK: vst4.32 {d16, d18, d20, d22}, [r1]!
 ;CHECK: vst4.32 {d17, d19, d21, d23}, [r1]!
 	%A = load float** %ptr

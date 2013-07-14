@@ -6,7 +6,7 @@ declare i64 @foo()
 
 ; Check AGFR.
 define i64 @f1(i64 %a, i32 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: agfr %r2, %r3
 ; CHECK: br %r14
   %bext = sext i32 %b to i64
@@ -16,7 +16,7 @@ define i64 @f1(i64 %a, i32 %b) {
 
 ; Check AGF with no displacement.
 define i64 @f2(i64 %a, i32 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: agf %r2, 0(%r3)
 ; CHECK: br %r14
   %b = load i32 *%src
@@ -27,7 +27,7 @@ define i64 @f2(i64 %a, i32 *%src) {
 
 ; Check the high end of the aligned AGF range.
 define i64 @f3(i64 %a, i32 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: agf %r2, 524284(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 131071
@@ -40,7 +40,7 @@ define i64 @f3(i64 %a, i32 *%src) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f4(i64 %a, i32 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: agfi %r3, 524288
 ; CHECK: agf %r2, 0(%r3)
 ; CHECK: br %r14
@@ -53,7 +53,7 @@ define i64 @f4(i64 %a, i32 *%src) {
 
 ; Check the high end of the negative aligned AGF range.
 define i64 @f5(i64 %a, i32 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agf %r2, -4(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -1
@@ -65,7 +65,7 @@ define i64 @f5(i64 %a, i32 *%src) {
 
 ; Check the low end of the AGF range.
 define i64 @f6(i64 %a, i32 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agf %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -131072
@@ -78,7 +78,7 @@ define i64 @f6(i64 %a, i32 *%src) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f7(i64 %a, i32 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: agfi %r3, -524292
 ; CHECK: agf %r2, 0(%r3)
 ; CHECK: br %r14
@@ -91,7 +91,7 @@ define i64 @f7(i64 %a, i32 *%src) {
 
 ; Check that AGF allows an index.
 define i64 @f8(i64 %a, i64 %src, i64 %index) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agf %r2, 524284({{%r4,%r3|%r3,%r4}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -105,7 +105,7 @@ define i64 @f8(i64 %a, i64 %src, i64 %index) {
 
 ; Check that additions of spilled values can use AGF rather than AGFR.
 define i64 @f9(i32 *%ptr0) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: agf %r2, 16{{[04]}}(%r15)
 ; CHECK: br %r14

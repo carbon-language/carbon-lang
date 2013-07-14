@@ -7,7 +7,7 @@
 @_interrupt_handler = alias void ()* @myintr
 
 define cc73 void @myintr() nounwind noinline {
-  ; CHECK:        myintr:
+  ; CHECK-LABEL:        myintr:
   ; CHECK:        swi   r3, r1
   ; CHECK:        swi   r4, r1
   ; CHECK:        swi   r5, r1

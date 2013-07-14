@@ -12,7 +12,7 @@ define <2 x double> @floor_v2f64(<2 x double> %p)
   %t = call <2 x double> @llvm.floor.v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
-; CHECK: floor_v2f64:
+; CHECK-LABEL: floor_v2f64:
 ; CHECK: frim
 ; CHECK: frim
 
@@ -22,7 +22,7 @@ define <4 x double> @floor_v4f64(<4 x double> %p)
   %t = call <4 x double> @llvm.floor.v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
-; CHECK: floor_v4f64:
+; CHECK-LABEL: floor_v4f64:
 ; CHECK: frim
 ; CHECK: frim
 ; CHECK: frim
@@ -34,7 +34,7 @@ define <2 x double> @ceil_v2f64(<2 x double> %p)
   %t = call <2 x double> @llvm.ceil.v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
-; CHECK: ceil_v2f64:
+; CHECK-LABEL: ceil_v2f64:
 ; CHECK: frip
 ; CHECK: frip
 
@@ -44,7 +44,7 @@ define <4 x double> @ceil_v4f64(<4 x double> %p)
   %t = call <4 x double> @llvm.ceil.v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
-; CHECK: ceil_v4f64:
+; CHECK-LABEL: ceil_v4f64:
 ; CHECK: frip
 ; CHECK: frip
 ; CHECK: frip
@@ -56,7 +56,7 @@ define <2 x double> @trunc_v2f64(<2 x double> %p)
   %t = call <2 x double> @llvm.trunc.v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
-; CHECK: trunc_v2f64:
+; CHECK-LABEL: trunc_v2f64:
 ; CHECK: friz
 ; CHECK: friz
 
@@ -66,7 +66,7 @@ define <4 x double> @trunc_v4f64(<4 x double> %p)
   %t = call <4 x double> @llvm.trunc.v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
-; CHECK: trunc_v4f64:
+; CHECK-LABEL: trunc_v4f64:
 ; CHECK: friz
 ; CHECK: friz
 ; CHECK: friz
@@ -78,7 +78,7 @@ define <2 x double> @nearbyint_v2f64(<2 x double> %p)
   %t = call <2 x double> @llvm.nearbyint.v2f64(<2 x double> %p)
   ret <2 x double> %t
 }
-; CHECK: nearbyint_v2f64:
+; CHECK-LABEL: nearbyint_v2f64:
 ; CHECK: bl nearbyint
 ; CHECK: bl nearbyint
 
@@ -88,7 +88,7 @@ define <4 x double> @nearbyint_v4f64(<4 x double> %p)
   %t = call <4 x double> @llvm.nearbyint.v4f64(<4 x double> %p)
   ret <4 x double> %t
 }
-; CHECK: nearbyint_v4f64:
+; CHECK-LABEL: nearbyint_v4f64:
 ; CHECK: bl nearbyint
 ; CHECK: bl nearbyint
 ; CHECK: bl nearbyint
@@ -101,7 +101,7 @@ define <4 x float> @floor_v4f32(<4 x float> %p)
   %t = call <4 x float> @llvm.floor.v4f32(<4 x float> %p)
   ret <4 x float> %t
 }
-; CHECK: floor_v4f32:
+; CHECK-LABEL: floor_v4f32:
 ; CHECK: vrfim
 
 declare <8 x float> @llvm.floor.v8f32(<8 x float> %p)
@@ -110,7 +110,7 @@ define <8 x float> @floor_v8f32(<8 x float> %p)
   %t = call <8 x float> @llvm.floor.v8f32(<8 x float> %p)
   ret <8 x float> %t
 }
-; CHECK: floor_v8f32:
+; CHECK-LABEL: floor_v8f32:
 ; CHECK: vrfim
 ; CHECK: vrfim
 
@@ -120,7 +120,7 @@ define <4 x float> @ceil_v4f32(<4 x float> %p)
   %t = call <4 x float> @llvm.ceil.v4f32(<4 x float> %p)
   ret <4 x float> %t
 }
-; CHECK: ceil_v4f32:
+; CHECK-LABEL: ceil_v4f32:
 ; CHECK: vrfip
 
 declare <8 x float> @llvm.ceil.v8f32(<8 x float> %p)
@@ -129,7 +129,7 @@ define <8 x float> @ceil_v8f32(<8 x float> %p)
   %t = call <8 x float> @llvm.ceil.v8f32(<8 x float> %p)
   ret <8 x float> %t
 }
-; CHECK: ceil_v8f32:
+; CHECK-LABEL: ceil_v8f32:
 ; CHECK: vrfip
 ; CHECK: vrfip
 
@@ -139,7 +139,7 @@ define <4 x float> @trunc_v4f32(<4 x float> %p)
   %t = call <4 x float> @llvm.trunc.v4f32(<4 x float> %p)
   ret <4 x float> %t
 }
-; CHECK: trunc_v4f32:
+; CHECK-LABEL: trunc_v4f32:
 ; CHECK: vrfiz
 
 declare <8 x float> @llvm.trunc.v8f32(<8 x float> %p)
@@ -148,7 +148,7 @@ define <8 x float> @trunc_v8f32(<8 x float> %p)
   %t = call <8 x float> @llvm.trunc.v8f32(<8 x float> %p)
   ret <8 x float> %t
 }
-; CHECK: trunc_v8f32:
+; CHECK-LABEL: trunc_v8f32:
 ; CHECK: vrfiz
 ; CHECK: vrfiz
 
@@ -158,7 +158,7 @@ define <4 x float> @nearbyint_v4f32(<4 x float> %p)
   %t = call <4 x float> @llvm.nearbyint.v4f32(<4 x float> %p)
   ret <4 x float> %t
 }
-; CHECK: nearbyint_v4f32:
+; CHECK-LABEL: nearbyint_v4f32:
 ; CHECK: vrfin
 
 declare <8 x float> @llvm.nearbyint.v8f32(<8 x float> %p)
@@ -167,6 +167,6 @@ define <8 x float> @nearbyint_v8f32(<8 x float> %p)
   %t = call <8 x float> @llvm.nearbyint.v8f32(<8 x float> %p)
   ret <8 x float> %t
 }
-; CHECK: nearbyint_v8f32:
+; CHECK-LABEL: nearbyint_v8f32:
 ; CHECK: vrfin
 ; CHECK: vrfin

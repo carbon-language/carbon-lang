@@ -18,7 +18,7 @@ entry:
   ret <2 x float> %sqrt
 }
 ; sqrt (<2 x float>) is promoted to sqrt (<4 x float>)
-; CHECK: v2f32_sqrt:
+; CHECK-LABEL: v2f32_sqrt:
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
@@ -29,7 +29,7 @@ entry:
   %sqrt = call <4 x float> @llvm.sqrt.v4f32 (<4 x float> %x)
   ret <4 x float> %sqrt
 }
-; CHECK: v4f32_sqrt:
+; CHECK-LABEL: v4f32_sqrt:
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
@@ -40,7 +40,7 @@ entry:
   %sqrt = call <8 x float> @llvm.sqrt.v8f32 (<8 x float> %x)
   ret <8 x float> %sqrt
 }
-; CHECK: v8f32_sqrt:
+; CHECK-LABEL: v8f32_sqrt:
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrts {{[0-9]+}}, {{[0-9]+}}
@@ -55,7 +55,7 @@ entry:
   %sqrt = call <2 x double> @llvm.sqrt.v2f64 (<2 x double> %x)
   ret <2 x double> %sqrt
 }
-; CHECK: v2f64_sqrt:
+; CHECK-LABEL: v2f64_sqrt:
 ; CHECK: fsqrt {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrt {{[0-9]+}}, {{[0-9]+}}
 
@@ -64,7 +64,7 @@ entry:
   %sqrt = call <4 x double> @llvm.sqrt.v4f64 (<4 x double> %x)
   ret <4 x double> %sqrt
 }
-; CHECK: v4f64_sqrt:
+; CHECK-LABEL: v4f64_sqrt:
 ; CHECK: fsqrt {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrt {{[0-9]+}}, {{[0-9]+}}
 ; CHECK: fsqrt {{[0-9]+}}, {{[0-9]+}}

@@ -5,7 +5,7 @@
 
 define void @foo(i32 %n, float* nocapture %x) nounwind ssp {
 entry:
-; CHECK: foo:
+; CHECK-LABEL: foo:
   %0 = icmp sgt i32 %n, 0                         ; <i1> [#uses=1]
   br i1 %0, label %bb.nph, label %return
 

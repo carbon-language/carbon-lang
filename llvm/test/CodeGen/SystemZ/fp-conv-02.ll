@@ -4,7 +4,7 @@
 
 ; Check register extension.
 define double @f1(float %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ldebr %f0, %f0
 ; CHECK: br %r14
   %res = fpext float %val to double
@@ -13,7 +13,7 @@ define double @f1(float %val) {
 
 ; Check the low end of the LDEB range.
 define double @f2(float *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
   %val = load float *%ptr
@@ -23,7 +23,7 @@ define double @f2(float *%ptr) {
 
 ; Check the high end of the aligned LDEB range.
 define double @f3(float *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ldeb %f0, 4092(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float *%base, i64 1023
@@ -35,7 +35,7 @@ define double @f3(float *%base) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f4(float *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
@@ -47,7 +47,7 @@ define double @f4(float *%base) {
 
 ; Check negative displacements, which also need separate address logic.
 define double @f5(float *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -4
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
@@ -59,7 +59,7 @@ define double @f5(float *%base) {
 
 ; Check that LDEB allows indices.
 define double @f6(float *%base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: ldeb %f0, 400(%r1,%r2)
 ; CHECK: br %r14
@@ -73,7 +73,7 @@ define double @f6(float *%base, i64 %index) {
 ; Test a case where we spill the source of at least one LDEBR.  We want
 ; to use LDEB if possible.
 define void @f7(double *%ptr1, float *%ptr2) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: ldeb {{%f[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
   %val0 = load volatile float *%ptr2

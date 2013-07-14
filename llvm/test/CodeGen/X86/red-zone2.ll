@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux | FileCheck %s
-; CHECK: f0:
+; CHECK-LABEL: f0:
 ; CHECK: subq
 ; CHECK: addq
 

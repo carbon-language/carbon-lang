@@ -3,7 +3,7 @@
 ; FIXME: Win64 does not support byval.
 
 ; Expect the entry point.
-; CHECK: tailcaller:
+; CHECK-LABEL: tailcaller:
 
 ; Expect 2 rep;movs because of tail call byval lowering.
 ; CHECK: rep;

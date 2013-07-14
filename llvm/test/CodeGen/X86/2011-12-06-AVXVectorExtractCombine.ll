@@ -2,7 +2,7 @@
 ; PR11494
 
 define void @test(<4 x i32>* nocapture %p) nounwind {
-  ; CHECK: test:
+  ; CHECK-LABEL: test:
   ; CHECK: vpxor %xmm0, %xmm0, %xmm0
   ; CHECK-NEXT: vpmaxsd {{.*}}, %xmm0, %xmm0
   ; CHECK-NEXT: vmovdqu	%xmm0, (%rdi)

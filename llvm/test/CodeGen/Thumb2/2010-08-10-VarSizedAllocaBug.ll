@@ -4,7 +4,7 @@
 
 define internal fastcc i32 @Callee(i32 %i) nounwind {
 entry:
-; CHECK: Callee:
+; CHECK-LABEL: Callee:
 ; CHECK: push
 ; CHECK: mov r4, sp
 ; CHECK: sub.w [[R12:r[0-9]+]], r4, #1000
@@ -33,7 +33,7 @@ bb2:                                              ; preds = %entry
 declare i32 @__sprintf_chk(i8*, i32, i32, i8*, ...) nounwind
 
 define i32 @main() nounwind {
-; CHECK: main:
+; CHECK-LABEL: main:
 bb.nph:
   br label %bb
 

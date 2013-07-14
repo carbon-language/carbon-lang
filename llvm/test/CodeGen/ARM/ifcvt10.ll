@@ -6,7 +6,7 @@
 
 define void @t(double %a, double %b, double %c, double %d, i32* nocapture %solutions, double* nocapture %x) nounwind {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: vpop {d8}
 ; CHECK-NOT: vpopne
 ; CHECK: pop {r7, pc}

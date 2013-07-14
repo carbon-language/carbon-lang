@@ -3,7 +3,7 @@
 declare float @llvm.fma.f32(float %f1, float %f2, float %f3)
 
 define float @f1(float %f1, float %f2, float %acc) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: maebr %f4, %f0, %f2
 ; CHECK: ler %f0, %f4
 ; CHECK: br %r14
@@ -12,7 +12,7 @@ define float @f1(float %f1, float %f2, float %acc) {
 }
 
 define float @f2(float %f1, float *%ptr, float %acc) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: maeb %f2, %f0, 0(%r2)
 ; CHECK: ler %f0, %f2
 ; CHECK: br %r14
@@ -22,7 +22,7 @@ define float @f2(float %f1, float *%ptr, float %acc) {
 }
 
 define float @f3(float %f1, float *%base, float %acc) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: maeb %f2, %f0, 4092(%r2)
 ; CHECK: ler %f0, %f2
 ; CHECK: br %r14
@@ -36,7 +36,7 @@ define float @f4(float %f1, float *%base, float %acc) {
 ; The important thing here is that we don't generate an out-of-range
 ; displacement.  Other sequences besides this one would be OK.
 ;
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: maeb %f2, %f0, 0(%r2)
 ; CHECK: ler %f0, %f2
@@ -51,7 +51,7 @@ define float @f5(float %f1, float *%base, float %acc) {
 ; Here too the important thing is that we don't generate an out-of-range
 ; displacement.  Other sequences besides this one would be OK.
 ;
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -4
 ; CHECK: maeb %f2, %f0, 0(%r2)
 ; CHECK: ler %f0, %f2
@@ -63,7 +63,7 @@ define float @f5(float %f1, float *%base, float %acc) {
 }
 
 define float @f6(float %f1, float *%base, i64 %index, float %acc) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: maeb %f2, %f0, 0(%r1,%r2)
 ; CHECK: ler %f0, %f2
@@ -75,7 +75,7 @@ define float @f6(float %f1, float *%base, i64 %index, float %acc) {
 }
 
 define float @f7(float %f1, float *%base, i64 %index, float %acc) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: maeb %f2, %f0, 4092({{%r1,%r2|%r2,%r1}})
 ; CHECK: ler %f0, %f2
@@ -88,7 +88,7 @@ define float @f7(float %f1, float *%base, i64 %index, float %acc) {
 }
 
 define float @f8(float %f1, float *%base, i64 %index, float %acc) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: lay %r1, 4096({{%r1,%r2|%r2,%r1}})
 ; CHECK: maeb %f2, %f0, 0(%r1)

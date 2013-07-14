@@ -11,7 +11,7 @@
 ; CHECK: .space 16,255
 
 ; No pcmpeqd instructions, everybody uses the constant pool.
-; CHECK: program_1:
+; CHECK-LABEL: program_1:
 ; CHECK-NOT: pcmpeqd
 
 	%struct.__ImageExecInfo = type <{ <4 x i32>, <4 x float>, <2 x i64>, i8*, i8*, i8*, i32, i32, i32, i32, i32 }>

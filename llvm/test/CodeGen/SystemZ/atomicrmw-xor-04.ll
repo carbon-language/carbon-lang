@@ -4,7 +4,7 @@
 
 ; Check XORs of a variable.
 define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^ ]*]]:
 ; CHECK: lgr %r0, %r2
@@ -18,7 +18,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check the lowest useful XILF value.
 define i64 @f2(i64 %dummy, i64 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^ ]*]]:
 ; CHECK: lgr %r0, %r2
@@ -32,7 +32,7 @@ define i64 @f2(i64 %dummy, i64 *%src) {
 
 ; Check the high end of the XILF range.
 define i64 @f3(i64 %dummy, i64 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: br %r14
   %res = atomicrmw xor i64 *%src, i64 4294967295 seq_cst
@@ -41,7 +41,7 @@ define i64 @f3(i64 %dummy, i64 *%src) {
 
 ; Check the lowest useful XIHF value, which is one greater than above.
 define i64 @f4(i64 %dummy, i64 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: xihf %r0, 1
 ; CHECK: br %r14
   %res = atomicrmw xor i64 *%src, i64 4294967296 seq_cst
@@ -51,7 +51,7 @@ define i64 @f4(i64 %dummy, i64 *%src) {
 ; Check the next value up, which must use a register.  (We could use
 ; combinations of XIH* and XIL* instead, but that isn't implemented.)
 define i64 @f5(i64 %dummy, i64 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: xgr
 ; CHECK: br %r14
   %res = atomicrmw xor i64 *%src, i64 4294967297 seq_cst
@@ -60,7 +60,7 @@ define i64 @f5(i64 %dummy, i64 *%src) {
 
 ; Check the high end of the XIHF range.
 define i64 @f6(i64 %dummy, i64 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: xihf %r0, 4294967295
 ; CHECK: br %r14
   %res = atomicrmw xor i64 *%src, i64 -4294967296 seq_cst
@@ -69,7 +69,7 @@ define i64 @f6(i64 %dummy, i64 *%src) {
 
 ; Check the next value up, which must use a register.
 define i64 @f7(i64 %dummy, i64 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: xgr
 ; CHECK: br %r14
   %res = atomicrmw xor i64 *%src, i64 -4294967295 seq_cst

@@ -8,7 +8,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define i64 @access_int64(i64 %a) nounwind readonly {
 entry:
-; CHECK: access_int64:
+; CHECK-LABEL: access_int64:
 ; CHECK-NEXT: .align  3
 ; CHECK-NEXT: .quad   .L.access_int64
 ; CHECK-NEXT: .quad   .TOC.@tocbase
@@ -23,7 +23,7 @@ entry:
 
 define i64 @internal_static_var(i64 %a) nounwind {
 entry:
-; CHECK: internal_static_var:
+; CHECK-LABEL: internal_static_var:
 ; CHECK: ld {{[0-9]+}}, .LC{{[0-9]+}}@toc(2)
   %0 = load i64* @internal_static_var.x, align 8
   %cmp = icmp eq i64 %0, %a
@@ -33,7 +33,7 @@ entry:
 
 define i32 @access_double(double %a) nounwind readnone {
 entry:
-; CHECK: access_double:
+; CHECK-LABEL: access_double:
 ; CHECK: ld {{[0-9]+}}, .LC{{[0-9]+}}@toc(2)
   %cmp = fcmp oeq double %a, 2.000000e+00
   %conv = zext i1 %cmp to i32 
@@ -43,7 +43,7 @@ entry:
 
 define i32 @access_double_array(double %a, i32 %i) nounwind readonly {
 entry:
-; CHECK: access_double_array:
+; CHECK-LABEL: access_double_array:
   %idxprom = sext i32 %i to i64
   %arrayidx = getelementptr inbounds [32 x double]* @double_array, i64 0, i64 %idxprom
   %0 = load double* %arrayidx, align 8

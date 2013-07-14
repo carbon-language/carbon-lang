@@ -6,7 +6,7 @@
 
 define i32 @jmptable(i32 %arg)
 {
-    ; CHECK:        jmptable:
+    ; CHECK-LABEL:        jmptable:
     switch i32 %arg, label %DEFAULT [ i32 0, label %L0
                                       i32 1, label %L1
                                       i32 2, label %L2

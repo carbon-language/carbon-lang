@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vsli8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vsli8:
+;CHECK-LABEL: vsli8:
 ;CHECK: vsli.8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -10,7 +10,7 @@ define <8 x i8> @vsli8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vsli16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vsli16:
+;CHECK-LABEL: vsli16:
 ;CHECK: vsli.16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -19,7 +19,7 @@ define <4 x i16> @vsli16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vsli32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vsli32:
+;CHECK-LABEL: vsli32:
 ;CHECK: vsli.32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -28,7 +28,7 @@ define <2 x i32> @vsli32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vsli64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
-;CHECK: vsli64:
+;CHECK-LABEL: vsli64:
 ;CHECK: vsli.64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -37,7 +37,7 @@ define <1 x i64> @vsli64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vsliQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vsliQ8:
+;CHECK-LABEL: vsliQ8:
 ;CHECK: vsli.8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -46,7 +46,7 @@ define <16 x i8> @vsliQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vsliQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vsliQ16:
+;CHECK-LABEL: vsliQ16:
 ;CHECK: vsli.16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -55,7 +55,7 @@ define <8 x i16> @vsliQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vsliQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vsliQ32:
+;CHECK-LABEL: vsliQ32:
 ;CHECK: vsli.32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -64,7 +64,7 @@ define <4 x i32> @vsliQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vsliQ64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
-;CHECK: vsliQ64:
+;CHECK-LABEL: vsliQ64:
 ;CHECK: vsli.64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
@@ -73,7 +73,7 @@ define <2 x i64> @vsliQ64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 }
 
 define <8 x i8> @vsri8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vsri8:
+;CHECK-LABEL: vsri8:
 ;CHECK: vsri.8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
@@ -82,7 +82,7 @@ define <8 x i8> @vsri8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vsri16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vsri16:
+;CHECK-LABEL: vsri16:
 ;CHECK: vsri.16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
@@ -91,7 +91,7 @@ define <4 x i16> @vsri16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vsri32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vsri32:
+;CHECK-LABEL: vsri32:
 ;CHECK: vsri.32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
@@ -100,7 +100,7 @@ define <2 x i32> @vsri32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vsri64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
-;CHECK: vsri64:
+;CHECK-LABEL: vsri64:
 ;CHECK: vsri.64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
@@ -109,7 +109,7 @@ define <1 x i64> @vsri64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vsriQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-;CHECK: vsriQ8:
+;CHECK-LABEL: vsriQ8:
 ;CHECK: vsri.8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
@@ -118,7 +118,7 @@ define <16 x i8> @vsriQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vsriQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
-;CHECK: vsriQ16:
+;CHECK-LABEL: vsriQ16:
 ;CHECK: vsri.16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
@@ -127,7 +127,7 @@ define <8 x i16> @vsriQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vsriQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
-;CHECK: vsriQ32:
+;CHECK-LABEL: vsriQ32:
 ;CHECK: vsri.32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
@@ -136,7 +136,7 @@ define <4 x i32> @vsriQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vsriQ64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
-;CHECK: vsriQ64:
+;CHECK-LABEL: vsriQ64:
 ;CHECK: vsri.64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B

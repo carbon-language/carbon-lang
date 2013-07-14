@@ -4,7 +4,7 @@
 
 ; Check stores with no offset.
 define void @f1(i64 %src, double %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
 ; CHECK: br %r14
@@ -16,7 +16,7 @@ define void @f1(i64 %src, double %val) {
 
 ; Check the highest aligned offset that allows STD for both halves.
 define void @f2(i64 %src, double %val) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: std %f0, 4080(%r2)
 ; CHECK: std %f2, 4088(%r2)
 ; CHECK: br %r14
@@ -29,7 +29,7 @@ define void @f2(i64 %src, double %val) {
 
 ; Check the next doubleword up, which requires a mixture of STD and STDY.
 define void @f3(i64 %src, double %val) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: std %f0, 4088(%r2)
 ; CHECK: stdy %f2, 4096(%r2)
 ; CHECK: br %r14
@@ -42,7 +42,7 @@ define void @f3(i64 %src, double %val) {
 
 ; Check the next doubleword after that, which requires STDY for both halves.
 define void @f4(i64 %src, double %val) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: stdy %f0, 4096(%r2)
 ; CHECK: stdy %f2, 4104(%r2)
 ; CHECK: br %r14
@@ -55,7 +55,7 @@ define void @f4(i64 %src, double %val) {
 
 ; Check the highest aligned offset that allows STDY for both halves.
 define void @f5(i64 %src, double %val) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: stdy %f0, 524272(%r2)
 ; CHECK: stdy %f2, 524280(%r2)
 ; CHECK: br %r14
@@ -69,7 +69,7 @@ define void @f5(i64 %src, double %val) {
 ; Check the next doubleword up, which requires separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f6(i64 %src, double %val) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lay %r1, 524280(%r2)
 ; CHECK: std %f0, 0(%r1)
 ; CHECK: std %f2, 8(%r1)
@@ -84,7 +84,7 @@ define void @f6(i64 %src, double %val) {
 ; Check the highest aligned negative offset, which needs a combination of
 ; STDY and STD.
 define void @f7(i64 %src, double %val) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: stdy %f0, -8(%r2)
 ; CHECK: std %f2, 0(%r2)
 ; CHECK: br %r14
@@ -97,7 +97,7 @@ define void @f7(i64 %src, double %val) {
 
 ; Check the next doubleword down, which requires STDY for both halves.
 define void @f8(i64 %src, double %val) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: stdy %f0, -16(%r2)
 ; CHECK: stdy %f2, -8(%r2)
 ; CHECK: br %r14
@@ -110,7 +110,7 @@ define void @f8(i64 %src, double %val) {
 
 ; Check the lowest offset that allows STDY for both halves.
 define void @f9(i64 %src, double %val) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: stdy %f0, -524288(%r2)
 ; CHECK: stdy %f2, -524280(%r2)
 ; CHECK: br %r14
@@ -124,7 +124,7 @@ define void @f9(i64 %src, double %val) {
 ; Check the next doubleword down, which requires separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f10(i64 %src, double %val) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agfi %r2, -524296
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -138,7 +138,7 @@ define void @f10(i64 %src, double %val) {
 
 ; Check that indices are allowed.
 define void @f11(i64 %src, i64 %index, double %val) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: std %f0, 4088({{%r2,%r3|%r3,%r2}})
 ; CHECK: stdy %f2, 4096({{%r2,%r3|%r3,%r2}})
 ; CHECK: br %r14

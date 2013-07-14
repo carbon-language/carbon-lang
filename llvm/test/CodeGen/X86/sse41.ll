@@ -6,20 +6,20 @@
 define <4 x i32> @pinsrd_1(i32 %s, <4 x i32> %tmp) nounwind {
         %tmp1 = insertelement <4 x i32> %tmp, i32 %s, i32 1
         ret <4 x i32> %tmp1
-; X32: pinsrd_1:
+; X32-LABEL: pinsrd_1:
 ; X32:    pinsrd $1, 4(%esp), %xmm0
 
-; X64: pinsrd_1:
+; X64-LABEL: pinsrd_1:
 ; X64:    pinsrd $1, %edi, %xmm0
 }
 
 define <16 x i8> @pinsrb_1(i8 %s, <16 x i8> %tmp) nounwind {
         %tmp1 = insertelement <16 x i8> %tmp, i8 %s, i32 1
         ret <16 x i8> %tmp1
-; X32: pinsrb_1:
+; X32-LABEL: pinsrb_1:
 ; X32:    pinsrb $1, 4(%esp), %xmm0
 
-; X64: pinsrb_1:
+; X64-LABEL: pinsrb_1:
 ; X64:    pinsrb $1, %edi, %xmm0
 }
 
@@ -237,12 +237,12 @@ entry:
   %tmp11 = insertelement <2 x float> undef, float %add.r, i32 0
   %tmp9 = insertelement <2 x float> %tmp11, float %add.i, i32 1
   ret <2 x float> %tmp9
-; X32: buildvector:
+; X32-LABEL: buildvector:
 ; X32-NOT: insertps $0
 ; X32: insertps $16
 ; X32-NOT: insertps $0
 ; X32: ret
-; X64: buildvector:
+; X64-LABEL: buildvector:
 ; X64-NOT: insertps $0
 ; X64: insertps $16
 ; X64-NOT: insertps $0

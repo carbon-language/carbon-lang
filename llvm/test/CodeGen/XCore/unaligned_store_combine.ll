@@ -4,7 +4,7 @@
 ; of size 8
 define void @f(i64* %dst, i64* %src) nounwind {
 entry:
-; CHECK: f:
+; CHECK-LABEL: f:
 ; CHECK: ldc r2, 8
 ; CHECK: bl memmove
 	%0 = load i64* %src, align 1

@@ -6,7 +6,7 @@
 
 define i32 @main() nounwind  {
 entry:
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK: movl $1, (%esp)
 ; CHECK: leal 16(%esp), %edi
 ; CHECK: leal 160(%esp), %esi

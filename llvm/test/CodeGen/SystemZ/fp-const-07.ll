@@ -5,7 +5,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CONST
 
 define void @f1(fp128 *%x) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: larl [[REGISTER:%r[1-5]+]], {{.*}}
 ; CHECK: lxdb %f0, 0([[REGISTER]])
 ; CHECK: std %f0, 0(%r2)

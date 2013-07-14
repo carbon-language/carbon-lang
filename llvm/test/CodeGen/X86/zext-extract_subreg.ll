@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
 
 define void @t() nounwind ssp {
-; CHECK: t:
+; CHECK-LABEL: t:
 entry:
   br i1 undef, label %return, label %if.end.i
 

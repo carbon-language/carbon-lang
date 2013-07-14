@@ -5,7 +5,7 @@ declare fastcc void @callee_stack8([8 x i32], i64)
 declare fastcc void @callee_stack16([8 x i32], i64, i64)
 
 define fastcc void @caller_to0_from0() nounwind {
-; CHECK: caller_to0_from0:
+; CHECK-LABEL: caller_to0_from0:
 ; CHECK-NEXT: // BB
   tail call fastcc void @callee_stack0()
   ret void
@@ -13,7 +13,7 @@ define fastcc void @caller_to0_from0() nounwind {
 }
 
 define fastcc void @caller_to0_from8([8 x i32], i64) {
-; CHECK: caller_to0_from8:
+; CHECK-LABEL: caller_to0_from8:
 
   tail call fastcc void @callee_stack0()
   ret void
@@ -22,7 +22,7 @@ define fastcc void @caller_to0_from8([8 x i32], i64) {
 }
 
 define fastcc void @caller_to8_from0() {
-; CHECK: caller_to8_from0:
+; CHECK-LABEL: caller_to8_from0:
 ; CHECK: sub sp, sp, #32
 
 ; Key point is that the "42" should go #16 below incoming stack
@@ -35,7 +35,7 @@ define fastcc void @caller_to8_from0() {
 }
 
 define fastcc void @caller_to8_from8([8 x i32], i64 %a) {
-; CHECK: caller_to8_from8:
+; CHECK-LABEL: caller_to8_from8:
 ; CHECK: sub sp, sp, #16
 
 ; Key point is that the "%a" should go where at SP on entry.
@@ -47,7 +47,7 @@ define fastcc void @caller_to8_from8([8 x i32], i64 %a) {
 }
 
 define fastcc void @caller_to16_from8([8 x i32], i64 %a) {
-; CHECK: caller_to16_from8:
+; CHECK-LABEL: caller_to16_from8:
 ; CHECK: sub sp, sp, #16
 
 ; Important point is that the call reuses the "dead" argument space
@@ -63,7 +63,7 @@ define fastcc void @caller_to16_from8([8 x i32], i64 %a) {
 
 
 define fastcc void @caller_to8_from24([8 x i32], i64 %a, i64 %b, i64 %c) {
-; CHECK: caller_to8_from24:
+; CHECK-LABEL: caller_to8_from24:
 ; CHECK: sub sp, sp, #16
 
 ; Key point is that the "%a" should go where at #16 above SP on entry.
@@ -76,7 +76,7 @@ define fastcc void @caller_to8_from24([8 x i32], i64 %a, i64 %b, i64 %c) {
 
 
 define fastcc void @caller_to16_from16([8 x i32], i64 %a, i64 %b) {
-; CHECK: caller_to16_from16:
+; CHECK-LABEL: caller_to16_from16:
 ; CHECK: sub sp, sp, #16
 
 ; Here we want to make sure that both loads happen before the stores:

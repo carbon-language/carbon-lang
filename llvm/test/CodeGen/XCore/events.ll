@@ -6,7 +6,7 @@ declare i8* @llvm.xcore.checkevent(i8*)
 declare void @llvm.xcore.clre()
 
 define i32 @f(i8 addrspace(1)* %r) nounwind {
-; CHECK: f:
+; CHECK-LABEL: f:
 entry:
 ; CHECK: clre
   call void @llvm.xcore.clre()
@@ -25,7 +25,7 @@ ret:
 }
 
 define i32 @g(i8 addrspace(1)* %r) nounwind {
-; CHECK: g:
+; CHECK-LABEL: g:
 entry:
 ; CHECK: clre
   call void @llvm.xcore.clre()

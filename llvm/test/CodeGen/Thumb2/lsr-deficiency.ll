@@ -7,7 +7,7 @@
 @array = external global i32*                     ; <i32**> [#uses=1]
 
 define void @t() nounwind optsize {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: mov{{.*}}, #1000
 entry:
   %.pre = load i32* @G, align 4                   ; <i32> [#uses=1]

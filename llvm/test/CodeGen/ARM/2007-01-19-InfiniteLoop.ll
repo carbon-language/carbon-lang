@@ -4,7 +4,7 @@
 @dequant_coef = external global [6 x [4 x [4 x i32]]]		; <[6 x [4 x [4 x i32]]]*> [#uses=1]
 @A = external global [4 x [4 x i32]]		; <[4 x [4 x i32]]*> [#uses=1]
 
-; CHECK: dct_luma_sp:
+; CHECK-LABEL: dct_luma_sp:
 define fastcc i32 @dct_luma_sp(i32 %block_x, i32 %block_y, i32* %coeff_cost) {
 entry:
 ; Make sure to use base-updating stores for saving callee-saved registers.

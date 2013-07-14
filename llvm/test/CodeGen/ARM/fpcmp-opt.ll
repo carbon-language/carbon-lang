@@ -5,7 +5,7 @@
 ; Disable this optimization unless we know one of them is zero.
 define arm_apcscc i32 @t1(float* %a, float* %b) nounwind {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: vldr [[S0:s[0-9]+]],
 ; CHECK: vldr [[S1:s[0-9]+]],
 ; CHECK: vcmpe.f32 [[S1]], [[S0]]
@@ -29,7 +29,7 @@ bb2:
 ; +0.0 == -0.0
 define arm_apcscc i32 @t2(double* %a, double* %b) nounwind {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK-NOT: vldr
 ; CHECK: ldr [[REG1:(r[0-9]+)]], [r0]
 ; CHECK: ldr [[REG2:(r[0-9]+)]], [r0, #4]
@@ -55,7 +55,7 @@ bb2:
 
 define arm_apcscc i32 @t3(float* %a, float* %b) nounwind {
 entry:
-; CHECK: t3:
+; CHECK-LABEL: t3:
 ; CHECK-NOT: vldr
 ; CHECK: ldr [[REG3:(r[0-9]+)]], [r0]
 ; CHECK: mvn [[REG4:(r[0-9]+)]], #-2147483648

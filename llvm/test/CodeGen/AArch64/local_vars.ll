@@ -24,7 +24,7 @@ define void @trivial_func() nounwind {
 }
 
 define void @trivial_fp_func() {
-; CHECK-WITHFP: trivial_fp_func:
+; CHECK-WITHFP-LABEL: trivial_fp_func:
 
 ; CHECK-WITHFP: sub sp, sp, #16
 ; CHECK-WITHFP: stp x29, x30, [sp]
@@ -43,7 +43,7 @@ define void @trivial_fp_func() {
 
 define void @stack_local() {
   %local_var = alloca i64
-; CHECK: stack_local:
+; CHECK-LABEL: stack_local:
 ; CHECK: sub sp, sp, #16
 
   %val = load i64* @var

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=nehalem | FileCheck %s
 
-; CHECK: a:
+; CHECK-LABEL: a:
 ; CHECK: movdqu
 ; CHECK: pshufd
 define <4 x float> @a(<4 x float>* %y) nounwind {
@@ -16,7 +16,7 @@ define <4 x float> @a(<4 x float>* %y) nounwind {
   ret <4 x float> %s
 }
 
-; CHECK: b:
+; CHECK-LABEL: b:
 ; CHECK: movups
 ; CHECK: unpckhps
 define <4 x float> @b(<4 x float>* %y, <4 x float> %z) nounwind {
@@ -32,7 +32,7 @@ define <4 x float> @b(<4 x float>* %y, <4 x float> %z) nounwind {
   ret <4 x float> %s
 }
 
-; CHECK: c:
+; CHECK-LABEL: c:
 ; CHECK: movupd
 ; CHECK: shufpd
 define <2 x double> @c(<2 x double>* %y) nounwind {
@@ -44,7 +44,7 @@ define <2 x double> @c(<2 x double>* %y) nounwind {
   ret <2 x double> %r
 }
 
-; CHECK: d:
+; CHECK-LABEL: d:
 ; CHECK: movupd
 ; CHECK: unpckhpd
 define <2 x double> @d(<2 x double>* %y, <2 x double> %z) nounwind {

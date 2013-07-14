@@ -2,7 +2,7 @@
 ; Check generated signed and unsigned multiply accumulate long.
 
 define i64 @MACLongTest1(i32 %a, i32 %b, i64 %c) {
-;CHECK: MACLongTest1:
+;CHECK-LABEL: MACLongTest1:
 ;CHECK: umlal
   %conv = zext i32 %a to i64
   %conv1 = zext i32 %b to i64
@@ -12,7 +12,7 @@ define i64 @MACLongTest1(i32 %a, i32 %b, i64 %c) {
 }
 
 define i64 @MACLongTest2(i32 %a, i32 %b, i64 %c)  {
-;CHECK: MACLongTest2:
+;CHECK-LABEL: MACLongTest2:
 ;CHECK: smlal
   %conv = sext i32 %a to i64
   %conv1 = sext i32 %b to i64
@@ -22,7 +22,7 @@ define i64 @MACLongTest2(i32 %a, i32 %b, i64 %c)  {
 }
 
 define i64 @MACLongTest3(i32 %a, i32 %b, i32 %c) {
-;CHECK: MACLongTest3:
+;CHECK-LABEL: MACLongTest3:
 ;CHECK: umlal
   %conv = zext i32 %b to i64
   %conv1 = zext i32 %a to i64
@@ -33,7 +33,7 @@ define i64 @MACLongTest3(i32 %a, i32 %b, i32 %c) {
 }
 
 define i64 @MACLongTest4(i32 %a, i32 %b, i32 %c) {
-;CHECK: MACLongTest4:
+;CHECK-LABEL: MACLongTest4:
 ;CHECK: smlal
   %conv = sext i32 %b to i64
   %conv1 = sext i32 %a to i64

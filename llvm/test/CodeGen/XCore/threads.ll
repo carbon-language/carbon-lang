@@ -11,56 +11,56 @@ declare void @llvm.xcore.initcp.p1i8(i8 addrspace(1)* %r, i8* %value)
 declare void @llvm.xcore.initdp.p1i8(i8 addrspace(1)* %r, i8* %value)
 
 define i8 addrspace(1)* @getst(i8 addrspace(1)* %r) {
-; CHECK: getst:
+; CHECK-LABEL: getst:
 ; CHECK: getst r0, res[r0]
         %result = call i8 addrspace(1)* @llvm.xcore.getst.p1i8.p1i8(i8 addrspace(1)* %r)
         ret i8 addrspace(1)* %result
 }
 
 define void @ssync() {
-; CHECK: ssync:
+; CHECK-LABEL: ssync:
 ; CHECK: ssync
 	call void @llvm.xcore.ssync()
 	ret void
 }
 
 define void @mjoin(i8 addrspace(1)* %r) {
-; CHECK: mjoin:
+; CHECK-LABEL: mjoin:
 ; CHECK: mjoin res[r0]
 	call void @llvm.xcore.mjoin.p1i8(i8 addrspace(1)* %r)
 	ret void
 }
 
 define void @initsp(i8 addrspace(1)* %t, i8* %src) {
-; CHECK: initsp:
+; CHECK-LABEL: initsp:
 ; CHECK: init t[r0]:sp, r1
         call void @llvm.xcore.initsp.p1i8(i8 addrspace(1)* %t, i8* %src)
         ret void
 }
 
 define void @initpc(i8 addrspace(1)* %t, i8* %src) {
-; CHECK: initpc:
+; CHECK-LABEL: initpc:
 ; CHECK: init t[r0]:pc, r1
         call void @llvm.xcore.initpc.p1i8(i8 addrspace(1)* %t, i8* %src)
         ret void
 }
 
 define void @initlr(i8 addrspace(1)* %t, i8* %src) {
-; CHECK: initlr:
+; CHECK-LABEL: initlr:
 ; CHECK: init t[r0]:lr, r1
         call void @llvm.xcore.initlr.p1i8(i8 addrspace(1)* %t, i8* %src)
         ret void
 }
 
 define void @initcp(i8 addrspace(1)* %t, i8* %src) {
-; CHECK: initcp:
+; CHECK-LABEL: initcp:
 ; CHECK: init t[r0]:cp, r1
         call void @llvm.xcore.initcp.p1i8(i8 addrspace(1)* %t, i8* %src)
         ret void
 }
 
 define void @initdp(i8 addrspace(1)* %t, i8* %src) {
-; CHECK: initdp:
+; CHECK-LABEL: initdp:
 ; CHECK: init t[r0]:dp, r1
         call void @llvm.xcore.initdp.p1i8(i8 addrspace(1)* %t, i8* %src)
         ret void

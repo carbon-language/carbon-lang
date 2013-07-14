@@ -21,21 +21,21 @@
 
 @.str = private unnamed_addr constant [12 x i8] c"S317\09%.5g \0A\00", align 1
 
-; CHECK-LINUXA5: main:
-; CHECK-LINUXA8: main:
-; CHECK-LINUXA9: main:
-; CHECK-LINUXA15: main:
-; CHECK-LINUXSWIFT: main:
-; CHECK-UNSAFEA5: main:
-; CHECK-UNSAFEA8: main:
-; CHECK-UNSAFEA9: main:
-; CHECK-UNSAFEA15: main:
-; CHECK-UNSAFESWIFT: main:
-; CHECK-DARWINA5: main:
-; CHECK-DARWINA8: main:
-; CHECK-DARWINA9: main:
-; CHECK-DARWINA15: main:
-; CHECK-DARWINSWIFT: main:
+; CHECK-LINUXA5-LABEL: main:
+; CHECK-LINUXA8-LABEL: main:
+; CHECK-LINUXA9-LABEL: main:
+; CHECK-LINUXA15-LABEL: main:
+; CHECK-LINUXSWIFT-LABEL: main:
+; CHECK-UNSAFEA5-LABEL: main:
+; CHECK-UNSAFEA8-LABEL: main:
+; CHECK-UNSAFEA9-LABEL: main:
+; CHECK-UNSAFEA15-LABEL: main:
+; CHECK-UNSAFESWIFT-LABEL: main:
+; CHECK-DARWINA5-LABEL: main:
+; CHECK-DARWINA8-LABEL: main:
+; CHECK-DARWINA9-LABEL: main:
+; CHECK-DARWINA15-LABEL: main:
+; CHECK-DARWINSWIFT-LABEL: main:
 define i32 @main() {
 entry:
   br label %for.body

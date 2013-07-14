@@ -4,7 +4,7 @@
 
 ; Check register exchange.
 define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: cs %r2, %r4, 0(%r3)
@@ -16,7 +16,7 @@ define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the high end of the aligned CS range.
 define i32 @f2(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: l %r2, 4092(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 4092(%r3)
 ; CHECK: br %r14
@@ -27,7 +27,7 @@ define i32 @f2(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the next word up, which requires CSY.
 define i32 @f3(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ly %r2, 4096(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, 4096(%r3)
 ; CHECK: br %r14
@@ -38,7 +38,7 @@ define i32 @f3(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the high end of the aligned CSY range.
 define i32 @f4(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ly %r2, 524284(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, 524284(%r3)
 ; CHECK: br %r14
@@ -49,7 +49,7 @@ define i32 @f4(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the next word up, which needs separate address logic.
 define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r3, 524288
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 0(%r3)
@@ -61,7 +61,7 @@ define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the high end of the negative aligned CSY range.
 define i32 @f6(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: ly %r2, -4(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, -4(%r3)
 ; CHECK: br %r14
@@ -72,7 +72,7 @@ define i32 @f6(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the low end of the CSY range.
 define i32 @f7(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: ly %r2, -524288(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, -524288(%r3)
 ; CHECK: br %r14
@@ -83,7 +83,7 @@ define i32 @f7(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check the next word down, which needs separate address logic.
 define i32 @f8(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r3, -524292
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 0(%r3)
@@ -95,7 +95,7 @@ define i32 @f8(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Check that indexed addresses are not allowed.
 define i32 @f9(i32 %dummy, i64 %base, i64 %index, i32 %b) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: agr %r3, %r4
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 0(%r3)
@@ -109,7 +109,7 @@ define i32 @f9(i32 %dummy, i64 %base, i64 %index, i32 %b) {
 ; Check exchange of a constant.  We should force it into a register and
 ; use the sequence above.
 define i32 @f10(i32 %dummy, i32 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: llill [[VALUE:%r[0-9+]]], 40000
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:

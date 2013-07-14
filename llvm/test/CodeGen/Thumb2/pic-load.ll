@@ -7,7 +7,7 @@
 
 define hidden i32 @atexit(void ()* %func) nounwind {
 entry:
-; CHECK: atexit:
+; CHECK-LABEL: atexit:
 ; CHECK: add r0, pc
 	%r = alloca %struct.one_atexit_routine, align 4		; <%struct.one_atexit_routine*> [#uses=3]
 	%0 = getelementptr %struct.one_atexit_routine* %r, i32 0, i32 0, i32 0		; <void ()**> [#uses=1]

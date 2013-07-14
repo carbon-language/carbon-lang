@@ -8,7 +8,7 @@
 
 ; Test f32->i64.
 define i64 @f1(float %f) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cebr
 ; CHECK: sebr
 ; CHECK: cgebr
@@ -20,7 +20,7 @@ define i64 @f1(float %f) {
 
 ; Test f64->i64.
 define i64 @f2(double %f) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cdbr
 ; CHECK: sdbr
 ; CHECK: cgdbr
@@ -32,7 +32,7 @@ define i64 @f2(double %f) {
 
 ; Test f128->i64.
 define i64 @f3(fp128 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: cxbr
 ; CHECK: sxbr
 ; CHECK: cgxbr

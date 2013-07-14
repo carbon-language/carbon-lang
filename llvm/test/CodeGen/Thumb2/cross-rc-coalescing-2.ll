@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mcpu=cortex-a8 | FileCheck %s
 
 define void @fht(float* nocapture %fz, i16 signext %n) nounwind {
-; CHECK: fht:
+; CHECK-LABEL: fht:
 entry:
   br label %bb5
 

@@ -21,7 +21,7 @@ define void @f1(i8 *%ptr) {
 
 ; Check that unaligned 2-byte accesses are allowed.
 define i16 @f2(i16 *%src, i16 *%dst) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lh %r2, 0(%r2)
 ; CHECK: sth %r2, 0(%r3)
 ; CHECK: br %r14
@@ -32,7 +32,7 @@ define i16 @f2(i16 *%src, i16 *%dst) {
 
 ; Check that unaligned 4-byte accesses are allowed.
 define i32 @f3(i32 *%src1, i32 *%src2, i32 *%dst) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: l %r2, 0(%r2)
 ; CHECK: s %r2, 0(%r3)
 ; CHECK: st %r2, 0(%r4)
@@ -46,7 +46,7 @@ define i32 @f3(i32 *%src1, i32 *%src2, i32 *%dst) {
 
 ; Check that unaligned 8-byte accesses are allowed.
 define i64 @f4(i64 *%src1, i64 *%src2, i64 *%dst) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lg %r2, 0(%r2)
 ; CHECK: sg %r2, 0(%r3)
 ; CHECK: stg %r2, 0(%r4)

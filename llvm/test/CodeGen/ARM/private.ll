@@ -2,7 +2,7 @@
 ;
 ; RUN: llc < %s -mtriple=arm-linux-gnueabi | FileCheck %s
 ; CHECK: .Lfoo:
-; CHECK: bar:
+; CHECK-LABEL: bar:
 ; CHECK: bl .Lfoo
 ; CHECK: .long .Lbaz
 ; CHECK: .Lbaz:

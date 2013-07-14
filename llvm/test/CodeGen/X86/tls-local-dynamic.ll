@@ -10,7 +10,7 @@ entry:
   ret i32* @x
 ; FIXME: This function uses a single thread-local variable,
 ; so we might want to fall back to general-dynamic here.
-; CHECK:       get_x:
+; CHECK-LABEL:       get_x:
 ; CHECK:       leaq x@TLSLD(%rip), %rdi
 ; CHECK-NEXT:  callq __tls_get_addr@PLT
 ; CHECK:       x@DTPOFF
@@ -26,7 +26,7 @@ entry:
   %cmp = icmp eq i32 %i, 1
   br i1 %cmp, label %return, label %if.else
 ; This bb does not access TLS, so should not call __tls_get_addr.
-; CHECK:       f:
+; CHECK-LABEL:       f:
 ; CHECK-NOT:   __tls_get_addr
 ; CHECK:       je
 

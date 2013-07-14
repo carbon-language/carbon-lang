@@ -3,7 +3,7 @@
 @foo = global i8 127
 
 define i32 @main() nounwind {
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK-NOT: ret
 ; CHECK: sar{{.}} $5
 ; CHECK: ret

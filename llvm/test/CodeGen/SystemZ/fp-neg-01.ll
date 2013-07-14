@@ -4,7 +4,7 @@
 
 ; Test f32.
 define float @f1(float %f) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lcebr %f0, %f0
 ; CHECK: br %r14
   %res = fsub float -0.0, %f
@@ -13,7 +13,7 @@ define float @f1(float %f) {
 
 ; Test f64.
 define double @f2(double %f) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lcdbr %f0, %f0
 ; CHECK: br %r14
   %res = fsub double -0.0, %f
@@ -24,7 +24,7 @@ define double @f2(double %f) {
 ; be better implemented using an XI on the upper byte.  Do some extra
 ; processing so that using FPRs is unequivocally better.
 define void @f3(fp128 *%ptr, fp128 *%ptr2) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lcxbr
 ; CHECK: dxbr
 ; CHECK: br %r14

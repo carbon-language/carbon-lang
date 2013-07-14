@@ -3,7 +3,7 @@
 ; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
 
 define void @f1(i64 %base) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: blah 0(%r2)
 ; CHECK: br %r14
   %addr = inttoptr i64 %base to i64 *

@@ -52,7 +52,7 @@ define i32 @f4(i32 %a) nounwind {
 ; rdar://8458663
 define i32 @f5(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: bfc
 ; CHECK: bfi r0, r1, #20, #4
   %0 = and i32 %a, -15728641
@@ -65,7 +65,7 @@ entry:
 ; rdar://9609030
 define i32 @f6(i32 %a, i32 %b) nounwind readnone {
 entry:
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: bic
 ; CHECK: bfi r0, r1, #8, #9
   %and = and i32 %a, -130817

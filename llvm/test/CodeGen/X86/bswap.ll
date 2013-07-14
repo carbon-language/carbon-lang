@@ -9,21 +9,21 @@ declare i32 @llvm.bswap.i32(i32)
 declare i64 @llvm.bswap.i64(i64)
 
 define i16 @W(i16 %A) {
-; CHECK: W:
+; CHECK-LABEL: W:
 ; CHECK: rolw $8, %ax
         %Z = call i16 @llvm.bswap.i16( i16 %A )         ; <i16> [#uses=1]
         ret i16 %Z
 }
 
 define i32 @X(i32 %A) {
-; CHECK: X:
+; CHECK-LABEL: X:
 ; CHECK: bswapl %eax
         %Z = call i32 @llvm.bswap.i32( i32 %A )         ; <i32> [#uses=1]
         ret i32 %Z
 }
 
 define i64 @Y(i64 %A) {
-; CHECK: Y:
+; CHECK-LABEL: Y:
 ; CHECK: bswapl %eax
 ; CHECK: bswapl %edx
         %Z = call i64 @llvm.bswap.i64( i64 %A )         ; <i64> [#uses=1]

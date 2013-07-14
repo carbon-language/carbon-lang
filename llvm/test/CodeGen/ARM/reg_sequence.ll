@@ -11,7 +11,7 @@
 
 define void @t1(i16* %i_ptr, i16* %o_ptr, %struct.int32x4_t* nocapture %vT0ptr, %struct.int32x4_t* nocapture %vT1ptr) nounwind {
 entry:
-; CHECK:        t1:
+; CHECK-LABEL:        t1:
 ; CHECK:        vld1.16
 ; CHECK-NOT:    vmov d
 ; CHECK:        vmovl.s16
@@ -44,7 +44,7 @@ entry:
 
 define void @t2(i16* %i_ptr, i16* %o_ptr, %struct.int16x8_t* nocapture %vT0ptr, %struct.int16x8_t* nocapture %vT1ptr) nounwind {
 entry:
-; CHECK:        t2:
+; CHECK-LABEL:        t2:
 ; CHECK:        vld1.16
 ; CHECK-NOT:    vmov
 ; CHECK:        vmul.i16
@@ -73,7 +73,7 @@ entry:
 }
 
 define <8 x i8> @t3(i8* %A, i8* %B) nounwind {
-; CHECK:        t3:
+; CHECK-LABEL:        t3:
 ; CHECK:        vld3.8
 ; CHECK:        vmul.i8
 ; CHECK:        vmov r
@@ -92,7 +92,7 @@ define <8 x i8> @t3(i8* %A, i8* %B) nounwind {
 
 define void @t4(i32* %in, i32* %out) nounwind {
 entry:
-; CHECK:        t4:
+; CHECK-LABEL:        t4:
 ; CHECK:        vld2.32
 ; CHECK-NOT:    vmov
 ; CHECK:        vld2.32
@@ -135,7 +135,7 @@ return2:
 }
 
 define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
-; CHECK:        t5:
+; CHECK-LABEL:        t5:
 ; CHECK:        vld1.32
 ; How can FileCheck match Q and D registers? We need a lisp interpreter.
 ; CHECK:        vorr {{q[0-9]+}}, {{q[0-9]+}}, {{q[0-9]+}}
@@ -153,7 +153,7 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 }
 
 define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
-; CHECK:        t6:
+; CHECK-LABEL:        t6:
 ; CHECK:        vldr
 ; CHECK:        vorr d[[D0:[0-9]+]], d[[D1:[0-9]+]]
 ; CHECK-NEXT:   vld2.8 {d[[D1]][1], d[[D0]][1]}
@@ -167,7 +167,7 @@ define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
 
 define void @t7(i32* %iptr, i32* %optr) nounwind {
 entry:
-; CHECK:        t7:
+; CHECK-LABEL:        t7:
 ; CHECK:        vld2.32
 ; CHECK:        vst2.32
 ; CHECK:        vld1.32 {d{{[0-9]+}}, d{{[0-9]+}}},
@@ -189,7 +189,7 @@ entry:
 
 ; PR7156
 define arm_aapcs_vfpcc i32 @t8() nounwind {
-; CHECK: t8:
+; CHECK-LABEL: t8:
 ; CHECK: vrsqrte.f32 q8, q8
 bb.nph55.bb.nph55.split_crit_edge:
   br label %bb3
@@ -238,7 +238,7 @@ bb14:                                             ; preds = %bb6
 
 ; PR7157
 define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
-; CHECK:        t9:
+; CHECK-LABEL:        t9:
 ; CHECK:        vldr
 ; CHECK-NOT:    vmov d{{.*}}, d16
 ; CHECK:        vmov.i32 d17
@@ -270,7 +270,7 @@ define arm_aapcs_vfpcc float @t9(%0* nocapture, %3* nocapture) nounwind {
 ; PR7162
 define arm_aapcs_vfpcc i32 @t10() nounwind {
 entry:
-; CHECK: t10:
+; CHECK-LABEL: t10:
 ; CHECK: vmov.i32 q[[Q0:[0-9]+]], #0x3f000000
 ; CHECK: vmul.f32 q8, q8, d[[DREG:[0-1]+]]
 ; CHECK: vadd.f32 q8, q8, q8

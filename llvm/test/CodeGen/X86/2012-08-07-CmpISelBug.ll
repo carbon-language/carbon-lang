@@ -6,7 +6,7 @@
 
 define void @foo(i8 %arg4, i32 %arg5, i32* %arg14) nounwind {
 bb:
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK-NOT: testl
 ; CHECK: testb
   %tmp48 = zext i8 %arg4 to i32

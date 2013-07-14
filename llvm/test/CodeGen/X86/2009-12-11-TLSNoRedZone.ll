@@ -18,7 +18,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @_dm_offset_addr_mask = external global [1 x i64], align 64 ; <[1 x i64]*> [#uses=0]
 
 define void @leaf() nounwind {
-; CHECK: leaf:
+; CHECK-LABEL: leaf:
 ; CHECK-NOT: -8(%rsp)
 ; CHECK: leaq link_ptr@TLSGD
 ; CHECK: callq __tls_get_addr@PLT

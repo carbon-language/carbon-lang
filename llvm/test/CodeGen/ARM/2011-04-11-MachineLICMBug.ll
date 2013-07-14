@@ -4,7 +4,7 @@
 ; rdar://9266679
 
 define zeroext i1 @t(i32* nocapture %A, i32 %size, i32 %value) nounwind readonly ssp {
-; CHECK: t:
+; CHECK-LABEL: t:
 entry:
   br label %for.cond
 

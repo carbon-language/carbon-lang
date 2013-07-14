@@ -2,7 +2,7 @@
 
 define i32 @f1(i32 %a.s) {
 entry:
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: it eq
 ; CHECK: moveq
 
@@ -13,7 +13,7 @@ entry:
 
 define i32 @f2(i32 %a.s) {
 entry:
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: it gt
 ; CHECK: movgt
     %tmp = icmp sgt i32 %a.s, 4
@@ -23,7 +23,7 @@ entry:
 
 define i32 @f3(i32 %a.s, i32 %b.s) {
 entry:
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: it lt
 ; CHECK: movlt
     %tmp = icmp slt i32 %a.s, %b.s
@@ -33,7 +33,7 @@ entry:
 
 define i32 @f4(i32 %a.s, i32 %b.s) {
 entry:
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: it le
 ; CHECK: movle
 
@@ -44,7 +44,7 @@ entry:
 
 define i32 @f5(i32 %a.u, i32 %b.u) {
 entry:
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: it ls
 ; CHECK: movls
     %tmp = icmp ule i32 %a.u, %b.u
@@ -54,7 +54,7 @@ entry:
 
 define i32 @f6(i32 %a.u, i32 %b.u) {
 entry:
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: it hi
 ; CHECK: movhi
     %tmp = icmp ugt i32 %a.u, %b.u
@@ -64,7 +64,7 @@ entry:
 
 define i32 @f7(i32 %a, i32 %b, i32 %c) {
 entry:
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: it hi
 ; CHECK: lsrhi.w
     %tmp1 = icmp ugt i32 %a, %b
@@ -75,7 +75,7 @@ entry:
 
 define i32 @f8(i32 %a, i32 %b, i32 %c) {
 entry:
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: it lo
 ; CHECK: lsllo.w
     %tmp1 = icmp ult i32 %a, %b
@@ -86,7 +86,7 @@ entry:
 
 define i32 @f9(i32 %a, i32 %b, i32 %c) {
 entry:
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: it ge
 ; CHECK: rorge.w
     %tmp1 = icmp sge i32 %a, %b

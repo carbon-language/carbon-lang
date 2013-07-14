@@ -17,7 +17,7 @@ entry:
   store <4 x i32> %1, <4 x i32>* %y, align 16
   ret void
 }
-;CHECK: v4f32_to_v4i32:
+;CHECK-LABEL: v4f32_to_v4i32:
 ;CHECK: vctsxs {{[0-9]+}}, {{[0-9]+}}, 0
 
 
@@ -29,7 +29,7 @@ entry:
   store <4 x i32> %1, <4 x i32>* %y, align 16
   ret void
 }
-;CHECK: v4f32_to_v4u32:
+;CHECK-LABEL: v4f32_to_v4u32:
 ;CHECK: vctuxs {{[0-9]+}}, {{[0-9]+}}, 0
 
 
@@ -41,7 +41,7 @@ entry:
   store <4 x float> %1, <4 x float>* %y, align 16
   ret void
 }
-;CHECK: v4i32_to_v4f32:
+;CHECK-LABEL: v4i32_to_v4f32:
 ;CHECK: vcfsx {{[0-9]+}}, {{[0-9]+}}, 0
 
 
@@ -53,5 +53,5 @@ entry:
   store <4 x float> %1, <4 x float>* %y, align 16
   ret void
 }
-;CHECK: v4u32_to_v4f32:
+;CHECK-LABEL: v4u32_to_v4f32:
 ;CHECK: vcfux {{[0-9]+}}, {{[0-9]+}}, 0

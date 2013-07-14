@@ -4,7 +4,7 @@
 
 ; Check register extension.
 define void @f1(fp128 *%dst, float %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lxebr %f0, %f0
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -16,7 +16,7 @@ define void @f1(fp128 *%dst, float %val) {
 
 ; Check the low end of the LXEB range.
 define void @f2(fp128 *%dst, float *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lxeb %f0, 0(%r3)
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -29,7 +29,7 @@ define void @f2(fp128 *%dst, float *%ptr) {
 
 ; Check the high end of the aligned LXEB range.
 define void @f3(fp128 *%dst, float *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lxeb %f0, 4092(%r3)
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
@@ -44,7 +44,7 @@ define void @f3(fp128 *%dst, float *%base) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f4(fp128 *%dst, float *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r3, 4096
 ; CHECK: lxeb %f0, 0(%r3)
 ; CHECK: std %f0, 0(%r2)
@@ -59,7 +59,7 @@ define void @f4(fp128 *%dst, float *%base) {
 
 ; Check negative displacements, which also need separate address logic.
 define void @f5(fp128 *%dst, float *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r3, -4
 ; CHECK: lxeb %f0, 0(%r3)
 ; CHECK: std %f0, 0(%r2)
@@ -74,7 +74,7 @@ define void @f5(fp128 *%dst, float *%base) {
 
 ; Check that LXEB allows indices.
 define void @f6(fp128 *%dst, float *%base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r4, 2
 ; CHECK: lxeb %f0, 400(%r1,%r3)
 ; CHECK: std %f0, 0(%r2)
@@ -91,7 +91,7 @@ define void @f6(fp128 *%dst, float *%base, i64 %index) {
 ; Test a case where we spill the source of at least one LXEBR.  We want
 ; to use LXEB if possible.
 define void @f7(fp128 *%ptr1, float *%ptr2) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lxeb {{%f[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
   %val0 = load volatile float *%ptr2

@@ -11,7 +11,7 @@
 @varstruct = global %myStruct zeroinitializer
 
 define void @take_i8s(i8 %val1, i8 %val2) {
-; CHECK: take_i8s:
+; CHECK-LABEL: take_i8s:
     store i8 %val2, i8* @var8
     ; Not using w1 may be technically allowed, but it would indicate a
     ; problem in itself.
@@ -20,7 +20,7 @@ define void @take_i8s(i8 %val1, i8 %val2) {
 }
 
 define void @add_floats(float %val1, float %val2) {
-; CHECK: add_floats:
+; CHECK-LABEL: add_floats:
     %newval = fadd float %val1, %val2
 ; CHECK: fadd [[ADDRES:s[0-9]+]], s0, s1
     store float %newval, float* @varfloat
@@ -31,7 +31,7 @@ define void @add_floats(float %val1, float %val2) {
 ; byval pointers should be allocated to the stack and copied as if
 ; with memcpy.
 define void @take_struct(%myStruct* byval %structval) {
-; CHECK: take_struct:
+; CHECK-LABEL: take_struct:
     %addr0 = getelementptr %myStruct* %structval, i64 0, i32 2
     %addr1 = getelementptr %myStruct* %structval, i64 0, i32 0
 
@@ -51,7 +51,7 @@ define void @take_struct(%myStruct* byval %structval) {
 
 ; %structval should be at sp + 16
 define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %structval) {
-; CHECK: check_byval_align:
+; CHECK-LABEL: check_byval_align:
 
     %addr0 = getelementptr %myStruct* %structval, i64 0, i32 2
     %addr1 = getelementptr %myStruct* %structval, i64 0, i32 0
@@ -72,7 +72,7 @@ define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %st
 }
 
 define i32 @return_int() {
-; CHECK: return_int:
+; CHECK-LABEL: return_int:
     %val = load i32* @var32
     ret i32 %val
 ; CHECK: ldr w0, [{{x[0-9]+}}, #:lo12:var32]
@@ -81,7 +81,7 @@ define i32 @return_int() {
 }
 
 define double @return_double() {
-; CHECK: return_double:
+; CHECK-LABEL: return_double:
     ret double 3.14
 ; CHECK: ldr d0, [{{x[0-9]+}}, #:lo12:.LCPI
 }
@@ -90,7 +90,7 @@ define double @return_double() {
 ; small enough to go into registers. Not all that pretty, but it
 ; works.
 define [2 x i64] @return_struct() {
-; CHECK: return_struct:
+; CHECK-LABEL: return_struct:
     %addr = bitcast %myStruct* @varstruct to [2 x i64]*
     %val = load [2 x i64]* %addr
     ret [2 x i64] %val
@@ -107,7 +107,7 @@ define [2 x i64] @return_struct() {
 ; structs larger than 16 bytes, but C semantics can still be provided
 ; if LLVM does it to %myStruct too. So this is the simplest check
 define void @return_large_struct(%myStruct* sret %retval) {
-; CHECK: return_large_struct:
+; CHECK-LABEL: return_large_struct:
     %addr0 = getelementptr %myStruct* %retval, i64 0, i32 0
     %addr1 = getelementptr %myStruct* %retval, i64 0, i32 1
     %addr2 = getelementptr %myStruct* %retval, i64 0, i32 2
@@ -128,7 +128,7 @@ define void @return_large_struct(%myStruct* sret %retval) {
 define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var45,
                           i32* %var6, %myStruct* byval %struct, i32* byval %stacked,
                           double %notstacked) {
-; CHECK: struct_on_stack:
+; CHECK-LABEL: struct_on_stack:
     %addr = getelementptr %myStruct* %struct, i64 0, i32 0
     %val64 = load i64* %addr
     store i64 %val64, i64* @var64
@@ -148,7 +148,7 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
 define void @stacked_fpu(float %var0, double %var1, float %var2, float %var3,
                          float %var4, float %var5, float %var6, float %var7,
                          float %var8) {
-; CHECK: stacked_fpu:
+; CHECK-LABEL: stacked_fpu:
     store float %var8, float* @varfloat
     ; Beware as above: the offset would be different on big-endian
     ; machines if the first ldr were changed to use s-registers.

@@ -15,7 +15,7 @@ entry:
 	store <8 x i16> %tmp6, <8 x i16>* %dest
 	ret void
         
-; X64: t0:
+; X64-LABEL: t0:
 ; X64:	movdqa	(%rsi), %xmm0
 ; X64:	pslldq	$2, %xmm0
 ; X64:	movdqa	%xmm0, (%rdi)
@@ -28,7 +28,7 @@ define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> < i32 8, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >
 	ret <8 x i16> %tmp3
         
-; X64: t1:
+; X64-LABEL: t1:
 ; X64: 	movdqa	(%rdi), %xmm0
 ; X64: 	pinsrw	$0, (%rsi), %xmm0
 ; X64: 	ret
@@ -37,7 +37,7 @@ define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <8 x i16> @t2(<8 x i16> %A, <8 x i16> %B) nounwind {
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %B, <8 x i32> < i32 9, i32 1, i32 2, i32 9, i32 4, i32 5, i32 6, i32 7 >
 	ret <8 x i16> %tmp
-; X64: t2:
+; X64-LABEL: t2:
 ; X64:	pextrw	$1, %xmm1, %eax
 ; X64:	pinsrw	$0, %eax, %xmm0
 ; X64:	pinsrw	$3, %eax, %xmm0
@@ -47,7 +47,7 @@ define <8 x i16> @t2(<8 x i16> %A, <8 x i16> %B) nounwind {
 define <8 x i16> @t3(<8 x i16> %A, <8 x i16> %B) nounwind {
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %A, <8 x i32> < i32 8, i32 3, i32 2, i32 13, i32 7, i32 6, i32 5, i32 4 >
 	ret <8 x i16> %tmp
-; X64: t3:
+; X64-LABEL: t3:
 ; X64: 	pextrw	$5, %xmm0, %eax
 ; X64: 	pshuflw	$44, %xmm0, %xmm0
 ; X64: 	pshufhw	$27, %xmm0, %xmm0
@@ -58,7 +58,7 @@ define <8 x i16> @t3(<8 x i16> %A, <8 x i16> %B) nounwind {
 define <8 x i16> @t4(<8 x i16> %A, <8 x i16> %B) nounwind {
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %B, <8 x i32> < i32 0, i32 7, i32 2, i32 3, i32 1, i32 5, i32 6, i32 5 >
 	ret <8 x i16> %tmp
-; X64: t4:
+; X64-LABEL: t4:
 ; X64: 	pextrw	$7, [[XMM0:%xmm[0-9]+]], %eax
 ; X64: 	pshufhw	$100, [[XMM0]], [[XMM1:%xmm[0-9]+]]
 ; X64: 	pinsrw	$1, %eax, [[XMM1]]
@@ -179,7 +179,7 @@ entry:
 	%tmp7 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 1, i32 8, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef , i32 undef >
 	ret <8 x i16> %tmp7
 
-; X64: t11:
+; X64-LABEL: t11:
 ; X64:	movd	%xmm1, %eax
 ; X64:	movlhps	%xmm0, %xmm0
 ; X64:	pshuflw	$1, %xmm0, %xmm0
@@ -193,7 +193,7 @@ entry:
 	%tmp9 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 0, i32 1, i32 undef, i32 undef, i32 3, i32 11, i32 undef , i32 undef >
 	ret <8 x i16> %tmp9
 
-; X64: t12:
+; X64-LABEL: t12:
 ; X64: 	pextrw	$3, %xmm1, %eax
 ; X64: 	movlhps	%xmm0, %xmm0
 ; X64: 	pshufhw	$3, %xmm0, %xmm0
@@ -206,7 +206,7 @@ define <8 x i16> @t13(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 entry:
 	%tmp9 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 8, i32 9, i32 undef, i32 undef, i32 11, i32 3, i32 undef , i32 undef >
 	ret <8 x i16> %tmp9
-; X64: t13:
+; X64-LABEL: t13:
 ; X64: 	punpcklqdq	%xmm0, %xmm1
 ; X64: 	pextrw	$3, %xmm1, %eax
 ; X64: 	pshufd	$52, %xmm1, %xmm0
@@ -219,7 +219,7 @@ define <8 x i16> @t14(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
 entry:
 	%tmp9 = shufflevector <8 x i16> %T0, <8 x i16> %T1, <8 x i32> < i32 8, i32 9, i32 undef, i32 undef, i32 undef, i32 2, i32 undef , i32 undef >
 	ret <8 x i16> %tmp9
-; X64: t14:
+; X64-LABEL: t14:
 ; X64: 	punpcklqdq	%xmm0, %xmm1
 ; X64: 	pshufhw	$8, %xmm1, %xmm0
 ; X64: 	ret
@@ -259,7 +259,7 @@ entry:
 ; rdar://8520311
 define <4 x i32> @t17() nounwind {
 entry:
-; X64: t17:
+; X64-LABEL: t17:
 ; X64:          movddup (%rax), %xmm0
   %tmp1 = load <4 x float>* undef, align 16
   %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> <i32 4, i32 1, i32 2, i32 3>

@@ -5,7 +5,7 @@
 	%struct.info = type { i32, i32, i32, i32, i32, i32, i32, i8* }
 
 define void @t1(%struct.state* %v) {
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: push
 ; CHECK: add r7, sp, #12
 ; CHECK: lsls r[[R0:[0-9]+]]
@@ -39,7 +39,7 @@ declare fastcc void @f2(float*, float*, float*, i32)
 @str215 = external global [2 x i8]
 
 define void @t2(%struct.comment* %vc, i8* %tag, i8* %contents) {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: push
 ; CHECK: add r7, sp, #12
 ; CHECK: sub sp, #

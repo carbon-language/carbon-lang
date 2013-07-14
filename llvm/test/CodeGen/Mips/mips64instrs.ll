@@ -86,7 +86,7 @@ entry:
 
 define i64 @f14(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: ddiv $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mflo
@@ -96,7 +96,7 @@ entry:
 
 define i64 @f15(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: ddivu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mflo
@@ -106,7 +106,7 @@ entry:
 
 define i64 @f16(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: ddiv $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mfhi
@@ -116,7 +116,7 @@ entry:
 
 define i64 @f17(i64 %a, i64 %b) nounwind readnone {
 entry:
-; CHECK: f17:
+; CHECK-LABEL: f17:
 ; CHECK: ddivu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; CHECK: teq $[[R0]], $zero, 7
 ; CHECK: mfhi

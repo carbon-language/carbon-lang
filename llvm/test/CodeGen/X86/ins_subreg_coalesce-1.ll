@@ -2,7 +2,7 @@
 
 define fastcc i32 @t() nounwind  {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: movzwl 0, %eax
 ; CHECK: orl $2, %eax
 ; CHECK: movw %ax, 0

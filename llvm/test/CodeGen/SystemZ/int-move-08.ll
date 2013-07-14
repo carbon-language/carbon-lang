@@ -13,7 +13,7 @@
 
 ; Check sign-extending loads from i16.
 define i32 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lhrl %r2, gsrc16
 ; CHECK: br %r14
   %val = load i16 *@gsrc16
@@ -23,7 +23,7 @@ define i32 @f1() {
 
 ; Check zero-extending loads from i16.
 define i32 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: llhrl %r2, gsrc16
 ; CHECK: br %r14
   %val = load i16 *@gsrc16
@@ -33,7 +33,7 @@ define i32 @f2() {
 
 ; Check truncating 16-bit stores.
 define void @f3(i32 %val) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: sthrl %r2, gdst16
 ; CHECK: br %r14
   %half = trunc i32 %val to i16
@@ -43,7 +43,7 @@ define void @f3(i32 %val) {
 
 ; Check plain loads and stores.
 define void @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lrl %r0, gsrc32
 ; CHECK: strl %r0, gdst32
 ; CHECK: br %r14
@@ -54,7 +54,7 @@ define void @f4() {
 
 ; Repeat f1 with an unaligned variable.
 define i32 @f5() {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: lgrl [[REG:%r[0-5]]], gsrc16u
 ; CHECK: lh %r2, 0([[REG]])
 ; CHECK: br %r14
@@ -65,7 +65,7 @@ define i32 @f5() {
 
 ; Repeat f2 with an unaligned variable.
 define i32 @f6() {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lgrl [[REG:%r[0-5]]], gsrc16u
 ; CHECK: llh %r2, 0([[REG]])
 ; CHECK: br %r14
@@ -76,7 +76,7 @@ define i32 @f6() {
 
 ; Repeat f3 with an unaligned variable.
 define void @f7(i32 %val) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lgrl [[REG:%r[0-5]]], gdst16u
 ; CHECK: sth %r2, 0([[REG]])
 ; CHECK: br %r14
@@ -87,7 +87,7 @@ define void @f7(i32 %val) {
 
 ; Repeat f4 with unaligned variables.
 define void @f8() {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: larl [[REG:%r[0-5]]], gsrc32u
 ; CHECK: l [[VAL:%r[0-5]]], 0([[REG]])
 ; CHECK: larl [[REG:%r[0-5]]], gdst32u

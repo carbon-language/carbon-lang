@@ -4,13 +4,13 @@
 
 define float @t1(float %acc, float %a, float %b) {
 entry:
-; VFP2: t1:
+; VFP2-LABEL: t1:
 ; VFP2: vmls.f32
 
-; NEON: t1:
+; NEON-LABEL: t1:
 ; NEON: vmls.f32
 
-; A8: t1:
+; A8-LABEL: t1:
 ; A8: vmul.f32
 ; A8: vsub.f32
 	%0 = fmul float %a, %b
@@ -20,13 +20,13 @@ entry:
 
 define double @t2(double %acc, double %a, double %b) {
 entry:
-; VFP2: t2:
+; VFP2-LABEL: t2:
 ; VFP2: vmls.f64
 
-; NEON: t2:
+; NEON-LABEL: t2:
 ; NEON: vmls.f64
 
-; A8: t2:
+; A8-LABEL: t2:
 ; A8: vmul.f64
 ; A8: vsub.f64
 	%0 = fmul double %a, %b

@@ -6,7 +6,7 @@ declare fp128 @llvm.sqrt.f128(fp128 %f)
 
 ; There's no memory form of SQXBR.
 define void @f1(fp128 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: ld %f2, 8(%r2)
 ; CHECK: sqxbr %f0, %f0

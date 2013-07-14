@@ -4,7 +4,7 @@
 
 ; Check the low end of the SRA range.
 define i32 @f1(i32 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: sra %r2, 1
 ; CHECK: br %r14
   %shift = ashr i32 %a, 1
@@ -13,7 +13,7 @@ define i32 @f1(i32 %a) {
 
 ; Check the high end of the defined SRA range.
 define i32 @f2(i32 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: sra %r2, 31
 ; CHECK: br %r14
   %shift = ashr i32 %a, 31
@@ -22,7 +22,7 @@ define i32 @f2(i32 %a) {
 
 ; We don't generate shifts by out-of-range values.
 define i32 @f3(i32 %a) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: sra %r2, 32
 ; CHECK: br %r14
   %shift = ashr i32 %a, 32
@@ -31,7 +31,7 @@ define i32 @f3(i32 %a) {
 
 ; Make sure that we don't generate negative shift amounts.
 define i32 @f4(i32 %a, i32 %amt) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: sra %r2, -1{{.*}}
 ; CHECK: br %r14
   %sub = sub i32 %amt, 1
@@ -41,7 +41,7 @@ define i32 @f4(i32 %a, i32 %amt) {
 
 ; Check variable shifts.
 define i32 @f5(i32 %a, i32 %amt) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: sra %r2, 0(%r3)
 ; CHECK: br %r14
   %shift = ashr i32 %a, %amt
@@ -50,7 +50,7 @@ define i32 @f5(i32 %a, i32 %amt) {
 
 ; Check shift amounts that have a constant term.
 define i32 @f6(i32 %a, i32 %amt) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sra %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i32 %amt, 10
@@ -60,7 +60,7 @@ define i32 @f6(i32 %a, i32 %amt) {
 
 ; ...and again with a truncated 64-bit shift amount.
 define i32 @f7(i32 %a, i64 %amt) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: sra %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i64 %amt, 10
@@ -72,7 +72,7 @@ define i32 @f7(i32 %a, i64 %amt) {
 ; Check shift amounts that have the largest in-range constant term.  We could
 ; mask the amount instead.
 define i32 @f8(i32 %a, i32 %amt) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: sra %r2, 4095(%r3)
 ; CHECK: br %r14
   %add = add i32 %amt, 4095
@@ -82,7 +82,7 @@ define i32 @f8(i32 %a, i32 %amt) {
 
 ; Check the next value up.  Again, we could mask the amount instead.
 define i32 @f9(i32 %a, i32 %amt) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: ahi %r3, 4096
 ; CHECK: sra %r2, 0(%r3)
 ; CHECK: br %r14
@@ -93,7 +93,7 @@ define i32 @f9(i32 %a, i32 %amt) {
 
 ; Check that we don't try to generate "indexed" shifts.
 define i32 @f10(i32 %a, i32 %b, i32 %c) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: ar {{%r3, %r4|%r4, %r3}}
 ; CHECK: sra %r2, 0({{%r[34]}})
 ; CHECK: br %r14
@@ -104,7 +104,7 @@ define i32 @f10(i32 %a, i32 %b, i32 %c) {
 
 ; Check that the shift amount uses an address register.  It cannot be in %r0.
 define i32 @f11(i32 %a, i32 *%ptr) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: l %r1, 0(%r3)
 ; CHECK: sra %r2, 0(%r1)
 ; CHECK: br %r14

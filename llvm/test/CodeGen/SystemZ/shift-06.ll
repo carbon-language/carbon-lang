@@ -4,7 +4,7 @@
 
 ; Check the low end of the SRLG range.
 define i64 @f1(i64 %a) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: srlg %r2, %r2, 1
 ; CHECK: br %r14
   %shift = lshr i64 %a, 1
@@ -13,7 +13,7 @@ define i64 @f1(i64 %a) {
 
 ; Check the high end of the defined SRLG range.
 define i64 @f2(i64 %a) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: srlg %r2, %r2, 63
 ; CHECK: br %r14
   %shift = lshr i64 %a, 63
@@ -22,7 +22,7 @@ define i64 @f2(i64 %a) {
 
 ; We don't generate shifts by out-of-range values.
 define i64 @f3(i64 %a) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: srlg
 ; CHECK: br %r14
   %shift = lshr i64 %a, 64
@@ -31,7 +31,7 @@ define i64 @f3(i64 %a) {
 
 ; Check variable shifts.
 define i64 @f4(i64 %a, i64 %amt) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: srlg %r2, %r2, 0(%r3)
 ; CHECK: br %r14
   %shift = lshr i64 %a, %amt
@@ -40,7 +40,7 @@ define i64 @f4(i64 %a, i64 %amt) {
 
 ; Check shift amounts that have a constant term.
 define i64 @f5(i64 %a, i64 %amt) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: srlg %r2, %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i64 %amt, 10
@@ -50,7 +50,7 @@ define i64 @f5(i64 %a, i64 %amt) {
 
 ; ...and again with a sign-extended 32-bit shift amount.
 define i64 @f6(i64 %a, i32 %amt) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: srlg %r2, %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i32 %amt, 10
@@ -61,7 +61,7 @@ define i64 @f6(i64 %a, i32 %amt) {
 
 ; ...and now with a zero-extended 32-bit shift amount.
 define i64 @f7(i64 %a, i32 %amt) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: srlg %r2, %r2, 10(%r3)
 ; CHECK: br %r14
   %add = add i32 %amt, 10
@@ -73,7 +73,7 @@ define i64 @f7(i64 %a, i32 %amt) {
 ; Check shift amounts that have the largest in-range constant term.  We could
 ; mask the amount instead.
 define i64 @f8(i64 %a, i64 %amt) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: srlg %r2, %r2, 524287(%r3)
 ; CHECK: br %r14
   %add = add i64 %amt, 524287
@@ -84,7 +84,7 @@ define i64 @f8(i64 %a, i64 %amt) {
 ; Check the next value up, which without masking must use a separate
 ; addition.
 define i64 @f9(i64 %a, i64 %amt) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: a{{g?}}fi %r3, 524288
 ; CHECK: srlg %r2, %r2, 0(%r3)
 ; CHECK: br %r14
@@ -95,7 +95,7 @@ define i64 @f9(i64 %a, i64 %amt) {
 
 ; Check cases where 1 is subtracted from the shift amount.
 define i64 @f10(i64 %a, i64 %amt) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: srlg %r2, %r2, -1(%r3)
 ; CHECK: br %r14
   %sub = sub i64 %amt, 1
@@ -106,7 +106,7 @@ define i64 @f10(i64 %a, i64 %amt) {
 ; Check the lowest value that can be subtracted from the shift amount.
 ; Again, we could mask the shift amount instead.
 define i64 @f11(i64 %a, i64 %amt) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: srlg %r2, %r2, -524288(%r3)
 ; CHECK: br %r14
   %sub = sub i64 %amt, 524288
@@ -117,7 +117,7 @@ define i64 @f11(i64 %a, i64 %amt) {
 ; Check the next value down, which without masking must use a separate
 ; addition.
 define i64 @f12(i64 %a, i64 %amt) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: a{{g?}}fi %r3, -524289
 ; CHECK: srlg %r2, %r2, 0(%r3)
 ; CHECK: br %r14
@@ -128,7 +128,7 @@ define i64 @f12(i64 %a, i64 %amt) {
 
 ; Check that we don't try to generate "indexed" shifts.
 define i64 @f13(i64 %a, i64 %b, i64 %c) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: a{{g?}}r {{%r3, %r4|%r4, %r3}}
 ; CHECK: srlg %r2, %r2, 0({{%r[34]}})
 ; CHECK: br %r14
@@ -139,7 +139,7 @@ define i64 @f13(i64 %a, i64 %b, i64 %c) {
 
 ; Check that the shift amount uses an address register.  It cannot be in %r0.
 define i64 @f14(i64 %a, i64 *%ptr) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: l %r1, 4(%r3)
 ; CHECK: srlg %r2, %r2, 0(%r1)
 ; CHECK: br %r14

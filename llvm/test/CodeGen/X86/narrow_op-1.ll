@@ -10,7 +10,7 @@ entry:
 	store i32 %1, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	ret void
 
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: orb $1
 ; CHECK-NEXT: ret
 }
@@ -22,7 +22,7 @@ entry:
 	store i32 %1, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	ret void
 
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: orl $16842752
 ; CHECK-NEXT: ret
 }

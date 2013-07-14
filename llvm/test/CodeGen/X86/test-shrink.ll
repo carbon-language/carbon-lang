@@ -2,10 +2,10 @@
 ; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s --check-prefix=CHECK-64
 ; RUN: llc < %s -march=x86 | FileCheck %s --check-prefix=CHECK-32
 
-; CHECK-64: g64xh:
+; CHECK-64-LABEL: g64xh:
 ; CHECK-64:   testb $8, {{%ah|%ch}}
 ; CHECK-64:   ret
-; CHECK-32: g64xh:
+; CHECK-32-LABEL: g64xh:
 ; CHECK-32:   testb $8, %ah
 ; CHECK-32:   ret
 define void @g64xh(i64 inreg %x) nounwind {
@@ -19,10 +19,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g64xl:
+; CHECK-64-LABEL: g64xl:
 ; CHECK-64:   testb $8, [[A0L:%dil|%cl]]
 ; CHECK-64:   ret
-; CHECK-32: g64xl:
+; CHECK-32-LABEL: g64xl:
 ; CHECK-32:   testb $8, %al
 ; CHECK-32:   ret
 define void @g64xl(i64 inreg %x) nounwind {
@@ -36,10 +36,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g32xh:
+; CHECK-64-LABEL: g32xh:
 ; CHECK-64:   testb $8, {{%ah|%ch}}
 ; CHECK-64:   ret
-; CHECK-32: g32xh:
+; CHECK-32-LABEL: g32xh:
 ; CHECK-32:   testb $8, %ah
 ; CHECK-32:   ret
 define void @g32xh(i32 inreg %x) nounwind {
@@ -53,10 +53,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g32xl:
+; CHECK-64-LABEL: g32xl:
 ; CHECK-64:   testb $8, [[A0L]]
 ; CHECK-64:   ret
-; CHECK-32: g32xl:
+; CHECK-32-LABEL: g32xl:
 ; CHECK-32:   testb $8, %al
 ; CHECK-32:   ret
 define void @g32xl(i32 inreg %x) nounwind {
@@ -70,10 +70,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g16xh:
+; CHECK-64-LABEL: g16xh:
 ; CHECK-64:   testb $8, {{%ah|%ch}}
 ; CHECK-64:   ret
-; CHECK-32: g16xh:
+; CHECK-32-LABEL: g16xh:
 ; CHECK-32:   testb $8, %ah
 ; CHECK-32:   ret
 define void @g16xh(i16 inreg %x) nounwind {
@@ -87,10 +87,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g16xl:
+; CHECK-64-LABEL: g16xl:
 ; CHECK-64:   testb $8, [[A0L]]
 ; CHECK-64:   ret
-; CHECK-32: g16xl:
+; CHECK-32-LABEL: g16xl:
 ; CHECK-32:   testb $8, %al
 ; CHECK-32:   ret
 define void @g16xl(i16 inreg %x) nounwind {
@@ -104,10 +104,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g64x16:
+; CHECK-64-LABEL: g64x16:
 ; CHECK-64:   testw $-32640, %[[A0W:di|cx]]
 ; CHECK-64:   ret
-; CHECK-32: g64x16:
+; CHECK-32-LABEL: g64x16:
 ; CHECK-32:   testw $-32640, %ax
 ; CHECK-32:   ret
 define void @g64x16(i64 inreg %x) nounwind {
@@ -121,10 +121,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g32x16:
+; CHECK-64-LABEL: g32x16:
 ; CHECK-64:   testw $-32640, %[[A0W]]
 ; CHECK-64:   ret
-; CHECK-32: g32x16:
+; CHECK-32-LABEL: g32x16:
 ; CHECK-32:   testw $-32640, %ax
 ; CHECK-32:   ret
 define void @g32x16(i32 inreg %x) nounwind {
@@ -138,10 +138,10 @@ yes:
 no:
   ret void
 }
-; CHECK-64: g64x32:
+; CHECK-64-LABEL: g64x32:
 ; CHECK-64:   testl $268468352, %e[[A0W]]
 ; CHECK-64:   ret
-; CHECK-32: g64x32:
+; CHECK-32-LABEL: g64x32:
 ; CHECK-32:   testl $268468352, %eax
 ; CHECK-32:   ret
 define void @g64x32(i64 inreg %x) nounwind {

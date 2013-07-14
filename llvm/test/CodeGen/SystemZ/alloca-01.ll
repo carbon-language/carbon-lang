@@ -21,34 +21,34 @@ define i64 @f1(i64 %length, i64 %index) {
 ;    risbg %r1, %r1, 0, 188, 0
 ;    lgr %r15, %r1
 ;
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-DAG: la [[REG1:%r[0-5]]], 7(%r2)
 ; CHECK-DAG: risbg [[REG2:%r[0-5]]], [[REG1]], 0, 188, 0
 ; CHECK-DAG: lgr [[REG3:%r[0-5]]], %r15
 ; CHECK: sgr [[REG3]], [[REG2]]
 ; CHECK: lgr %r15, [[REG3]]
 ;
-; CHECK-A: f1:
+; CHECK-A-LABEL: f1:
 ; CHECK-A: lgr %r15, %r1
 ; CHECK-A: la %r2, 176(%r1)
 ;
-; CHECK-B: f1:
+; CHECK-B-LABEL: f1:
 ; CHECK-B: lgr %r15, %r1
 ; CHECK-B: la %r3, 177(%r1)
 ;
-; CHECK-C: f1:
+; CHECK-C-LABEL: f1:
 ; CHECK-C: lgr %r15, %r1
 ; CHECK-C: la %r4, 4095({{%r3,%r1|%r1,%r3}})
 ;
-; CHECK-D: f1:
+; CHECK-D-LABEL: f1:
 ; CHECK-D: lgr %r15, %r1
 ; CHECK-D: lay %r5, 4096({{%r3,%r1|%r1,%r3}})
 ;
-; CHECK-E: f1:
+; CHECK-E-LABEL: f1:
 ; CHECK-E: lgr %r15, %r1
 ; CHECK-E: lay %r6, 4271({{%r3,%r1|%r1,%r3}})
 ;
-; CHECK-FP: f1:
+; CHECK-FP-LABEL: f1:
 ; CHECK-FP: lgr %r11, %r15
 ; CHECK-FP: lmg %r6, %r15, 224(%r11)
   %a = alloca i8, i64 %length

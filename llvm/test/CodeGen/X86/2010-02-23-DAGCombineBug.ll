@@ -2,7 +2,7 @@
 
 define i32* @t() nounwind optsize ssp {
 entry:
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: testl %eax, %eax
 ; CHECK: js
   %cmp = icmp slt i32 undef, 0                    ; <i1> [#uses=1]

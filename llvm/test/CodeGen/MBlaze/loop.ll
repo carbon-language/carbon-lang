@@ -9,7 +9,7 @@ declare i32 @printf(i8*, ...)
 
 define i32 @loop(i32 %a, i32 %b)
 {
-    ; CHECK:        loop:
+    ; CHECK-LABEL:        loop:
 entry:
     br label %loop_outer
 

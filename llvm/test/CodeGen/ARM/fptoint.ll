@@ -44,6 +44,6 @@ define void @foo9(double %x) {
 	store i16 %tmp, i16* null
 	ret void
 }
-; CHECK: foo9:
+; CHECK-LABEL: foo9:
 ; CHECK: 	vmov	r0, s0
 

@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-unknown"
 ; Instruction selection should use the FLAGS value from the dec for
 ; the branch. Scheduling should push the adds upwards.
 
-; CHECK: full_me_0:
+; CHECK-LABEL: full_me_0:
 ; CHECK: movsd   (%rsi), %xmm0
 ; CHECK: mulsd   (%rdx), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi)
@@ -50,7 +50,7 @@ return:
 ; would be better on x86-64, since the start value would be 0 instead of
 ; 2048.
 
-; CHECK: mostly_full_me_0:
+; CHECK-LABEL: mostly_full_me_0:
 ; CHECK: movsd   -2048(%rsi), %xmm0
 ; CHECK: mulsd   -2048(%rdx), %xmm0
 ; CHECK: movsd   %xmm0, -2048(%rdi)
@@ -96,7 +96,7 @@ return:
 ; A minor variation on mostly_full_me_0.
 ; Prefer to start the indvar at 0.
 
-; CHECK: mostly_full_me_1:
+; CHECK-LABEL: mostly_full_me_1:
 ; CHECK: movsd   (%rsi), %xmm0
 ; CHECK: mulsd   (%rdx), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi)
@@ -141,7 +141,7 @@ return:
 
 ; A slightly less minor variation on mostly_full_me_0.
 
-; CHECK: mostly_full_me_2:
+; CHECK-LABEL: mostly_full_me_2:
 ; CHECK: movsd   (%rsi), %xmm0
 ; CHECK: mulsd   (%rdx), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi)
@@ -190,7 +190,7 @@ return:
 ; cases away, but it's useful here to verify that LSR's register pressure
 ; heuristics are working as expected.
 
-; CHECK: count_me_0:
+; CHECK-LABEL: count_me_0:
 ; CHECK: movsd   (%rsi,%rax,8), %xmm0
 ; CHECK: mulsd   (%rdx,%rax,8), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi,%rax,8)
@@ -225,7 +225,7 @@ return:
 ; would not reduce register pressure.
 ; (though it would reduce register pressure inside the loop...)
 
-; CHECK: count_me_1:
+; CHECK-LABEL: count_me_1:
 ; CHECK: movsd   (%rsi,%rax,8), %xmm0
 ; CHECK: mulsd   (%rdx,%rax,8), %xmm0
 ; CHECK: movsd   %xmm0, (%rdi,%rax,8)
@@ -259,7 +259,7 @@ return:
 ; Full strength reduction doesn't save any registers here because the
 ; loop tripcount is a constant.
 
-; CHECK: count_me_2:
+; CHECK-LABEL: count_me_2:
 ; CHECK: movl    $10, %eax
 ; CHECK: align
 ; CHECK: BB6_1:
@@ -305,7 +305,7 @@ return:
 
 ; This should be fully strength-reduced to reduce register pressure.
 
-; CHECK: full_me_1:
+; CHECK-LABEL: full_me_1:
 ; CHECK: align
 ; CHECK: BB7_1:
 ; CHECK: movsd   (%rdi), %xmm0
@@ -353,7 +353,7 @@ return:
 ; This is a variation on full_me_0 in which the 0,+,1 induction variable
 ; has a non-address use, pinning that value in a register.
 
-; CHECK: count_me_3:
+; CHECK-LABEL: count_me_3:
 ; CHECK: call
 ; CHECK: movsd   (%r{{[^,]*}},%r{{[^,]*}},8), %xmm0
 ; CHECK: mulsd   (%r{{[^,]*}},%r{{[^,]*}},8), %xmm0
@@ -390,7 +390,7 @@ return:
 ; LSR should use only one indvar for the inner loop.
 ; rdar://7657764
 
-; CHECK: asd:
+; CHECK-LABEL: asd:
 ; CHECK: BB9_4:
 ; CHECK-NEXT: addl  (%r{{[^,]*}},%rdi,4), %e
 ; CHECK-NEXT: incq  %rdi

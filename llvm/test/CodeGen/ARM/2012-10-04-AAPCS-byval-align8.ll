@@ -23,7 +23,7 @@ entry:
   ret void
 }
 
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK: movw [[BASE:r[0-9]+]], :lower16:static_val
 ; CHECK: movt [[BASE]], :upper16:static_val
 ; ldm is not formed when the coalescer failed to coalesce everything.
@@ -53,7 +53,7 @@ entry:
   ret void
 }
 
-; CHECK: main_fixed_arg:
+; CHECK-LABEL: main_fixed_arg:
 ; CHECK: movw [[BASE:r[0-9]+]], :lower16:static_val
 ; CHECK: movt [[BASE]], :upper16:static_val
 ; ldm is not formed when the coalescer failed to coalesce everything.

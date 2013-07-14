@@ -2,7 +2,7 @@
 
 ; PR15611. Check that we don't crash when constant folding v1i32 types.
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 define void @foo(i32 %arg) {
 bb:
   %tmp = insertelement <4 x i32> undef, i32 %arg, i32 0

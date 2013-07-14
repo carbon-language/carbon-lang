@@ -4,7 +4,7 @@
 @varf64 = global double 0.0
 
 define void @check_float() {
-; CHECK: check_float:
+; CHECK-LABEL: check_float:
 
   %val = load float* @varf32
   %newval1 = fadd float %val, 8.5
@@ -19,7 +19,7 @@ define void @check_float() {
 }
 
 define void @check_double() {
-; CHECK: check_double:
+; CHECK-LABEL: check_double:
 
   %val = load double* @varf64
   %newval1 = fadd double %val, 8.5

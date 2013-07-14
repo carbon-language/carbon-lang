@@ -5,7 +5,7 @@
 
 define i32 *@f1() nounwind {
 entry:
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: ldaw r11, cp[a+4]
 ; CHECK: mov r0, r11
 	%0 = getelementptr [0 x i32]* @a, i32 0, i32 1
@@ -14,7 +14,7 @@ entry:
 
 define i32 *@f2() nounwind {
 entry:
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ldaw r0, dp[b+4]
 	%0 = getelementptr [0 x i32]* @b, i32 0, i32 1
 	ret i32* %0
@@ -25,7 +25,7 @@ entry:
 
 define i32 *@f3() nounwind {
 entry:
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: ldaw r11, cp[a]
 ; CHECK: sub r0, r11, 4
 	%0 = getelementptr [0 x i32]* @a, i32 0, i32 -1
@@ -34,7 +34,7 @@ entry:
 
 define i32 *@f4() nounwind {
 entry:
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ldaw [[REG:r[0-9]+]], dp[b]
 ; CHECK: sub r0, [[REG]], 4
 	%0 = getelementptr [0 x i32]* @b, i32 0, i32 -1

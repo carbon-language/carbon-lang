@@ -1,10 +1,10 @@
 ; RUN: llc < %s -march=sparcv9 -disable-sparc-delay-filler -disable-sparc-leaf-proc | FileCheck %s
 ; RUN: llc < %s -march=sparcv9  | FileCheck %s -check-prefix=OPT
 
-; CHECK: ret2:
+; CHECK-LABEL: ret2:
 ; CHECK: or %g0, %i1, %i0
 
-; OPT: ret2:
+; OPT-LABEL: ret2:
 ; OPT: jmp %o7+8
 ; OPT: or %g0, %o1, %o0
 define i64 @ret2(i64 %a, i64 %b) {
@@ -14,7 +14,7 @@ define i64 @ret2(i64 %a, i64 %b) {
 ; CHECK: shl_imm
 ; CHECK: sllx %i0, 7, %i0
 
-; OPT: shl_imm:
+; OPT-LABEL: shl_imm:
 ; OPT: jmp %o7+8
 ; OPT: sllx %o0, 7, %o0
 define i64 @shl_imm(i64 %a) {
@@ -25,7 +25,7 @@ define i64 @shl_imm(i64 %a) {
 ; CHECK: sra_reg
 ; CHECK: srax %i0, %i1, %i0
 
-; OPT: sra_reg:
+; OPT-LABEL: sra_reg:
 ; OPT: jmp %o7+8
 ; OPT: srax %o0, %o1, %o0
 define i64 @sra_reg(i64 %a, i64 %b) {
@@ -271,11 +271,11 @@ define double @bitcast_f64_i64(i64 %x) {
   ret double %y
 }
 
-; CHECK: store_zero:
+; CHECK-LABEL: store_zero:
 ; CHECK: stx %g0, [%i0]
 ; CHECK: stx %g0, [%i1+8]
 
-; OPT:  store_zero:
+; OPT-LABEL:  store_zero:
 ; OPT:  stx %g0, [%o0]
 ; OPT:  stx %g0, [%o1+8]
 define i64 @store_zero(i64* nocapture %a, i64* nocapture %b) {

@@ -4,7 +4,7 @@
 
 ; Test 1 below the first valid value.
 define i32 @f1() {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: iilf [[REG:%r[0-5]]], 4294443007
 ; CHECK: blah %r2 [[REG]]
 ; CHECK: br %r14
@@ -14,7 +14,7 @@ define i32 @f1() {
 
 ; Test the first valid value.
 define i32 @f2() {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: blah %r2 -524288
 ; CHECK: br %r14
   %val = call i32 asm "blah $0 $1", "=&r,rL" (i32 -524288)
@@ -23,7 +23,7 @@ define i32 @f2() {
 
 ; Test the last valid value.
 define i32 @f3() {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: blah %r2 524287
 ; CHECK: br %r14
   %val = call i32 asm "blah $0 $1", "=&r,rL" (i32 524287)
@@ -32,7 +32,7 @@ define i32 @f3() {
 
 ; Test 1 above the last valid value.
 define i32 @f4() {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: llilh [[REG:%r[0-5]]], 8
 ; CHECK: blah %r2 [[REG]]
 ; CHECK: br %r14

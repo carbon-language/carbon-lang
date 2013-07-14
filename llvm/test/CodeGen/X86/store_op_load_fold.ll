@@ -5,7 +5,7 @@
 @X = internal global i16 0              ; <i16*> [#uses=2]
 
 define void @foo() nounwind {
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK-NOT: mov
 ; CHECK: add
 ; CHECK-NEXT: ret

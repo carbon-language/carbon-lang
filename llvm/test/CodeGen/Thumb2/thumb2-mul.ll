@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
 
 define i32 @f1(i32 %a, i32 %b, i32 %c) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: muls r0, r1, r0
     %tmp = mul i32 %a, %b
     ret i32 %tmp
@@ -12,7 +12,7 @@ define i32 @f1(i32 %a, i32 %b, i32 %c) {
 
 define %struct.CMPoint* @t1(i32 %i, i32 %j, i32 %n, %struct.CMPoint* %thePoints) nounwind readnone ssp {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: mla     r0, r2, r0, r1
 ; CHECK: add.w   r0, r0, r0, lsl #3
 ; CHECK: add.w   r0, r3, r0, lsl #2

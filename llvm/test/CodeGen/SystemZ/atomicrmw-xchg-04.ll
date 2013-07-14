@@ -4,7 +4,7 @@
 
 ; Check register exchange.
 define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: csg %r2, %r4, 0(%r3)
@@ -16,7 +16,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check the high end of the aligned CSG range.
 define i64 @f2(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lg %r2, 524280(%r3)
 ; CHECK: csg %r2, {{%r[0-9]+}}, 524280(%r3)
 ; CHECK: br %r14
@@ -27,7 +27,7 @@ define i64 @f2(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check the next doubleword up, which requires separate address logic.
 define i64 @f3(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: agfi %r3, 524288
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: csg %r2, {{%r[0-9]+}}, 0(%r3)
@@ -39,7 +39,7 @@ define i64 @f3(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check the low end of the CSG range.
 define i64 @f4(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lg %r2, -524288(%r3)
 ; CHECK: csg %r2, {{%r[0-9]+}}, -524288(%r3)
 ; CHECK: br %r14
@@ -50,7 +50,7 @@ define i64 @f4(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check the next doubleword down, which requires separate address logic.
 define i64 @f5(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: agfi %r3, -524296
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: csg %r2, {{%r[0-9]+}}, 0(%r3)
@@ -62,7 +62,7 @@ define i64 @f5(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check that indexed addresses are not allowed.
 define i64 @f6(i64 %dummy, i64 %base, i64 %index, i64 %b) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agr %r3, %r4
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: csg %r2, {{%r[0-9]+}}, 0(%r3)
@@ -76,7 +76,7 @@ define i64 @f6(i64 %dummy, i64 %base, i64 %index, i64 %b) {
 ; Check exchange of a constant.  We should force it into a register and
 ; use the sequence above.
 define i64 @f7(i64 %dummy, i64 *%ptr) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: llilf [[VALUE:%r[0-9+]]], 3000000000
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:

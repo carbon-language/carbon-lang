@@ -6,10 +6,10 @@
 
 define zeroext i8 @t(%struct.foo* %this) noreturn optsize {
 entry:
-; ARM:       t:
+; ARM-LABEL:       t:
 ; ARM:       str r2, [r1], r0
 
-; THUMB:     t:
+; THUMB-LABEL:     t:
 ; THUMB-NOT: str r0, [r1], r0
 ; THUMB:     str r1, [r0]
   %0 = getelementptr inbounds %struct.foo* %this, i32 0, i32 1 ; <i64*> [#uses=1]

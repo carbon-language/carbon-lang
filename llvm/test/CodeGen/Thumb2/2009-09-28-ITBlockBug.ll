@@ -5,7 +5,7 @@
 @getNeighbour = external global void (i32, i32, i32, i32, %struct.pix_pos*)*, align 4 ; <void (i32, i32, i32, i32, %struct.pix_pos*)**> [#uses=2]
 
 define void @t() nounwind {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK:      it eq
 ; CHECK-NEXT: cmpeq
 entry:

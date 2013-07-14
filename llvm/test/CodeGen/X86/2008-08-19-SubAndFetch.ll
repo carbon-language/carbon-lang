@@ -4,7 +4,7 @@
 
 define i32 @main() nounwind {
 entry:
-; CHECK: main:
+; CHECK-LABEL: main:
 ; CHECK: lock
 ; CHECK: decq
 	atomicrmw sub i64* @var, i64 1 monotonic

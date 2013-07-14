@@ -2,7 +2,7 @@
 ; rdar://7317664
 
 define i32 @t(i32 %X) nounwind {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: movt r0, #65535
 entry:
 	%0 = or i32 %X, -65536
@@ -10,7 +10,7 @@ entry:
 }
 
 define i32 @t2(i32 %X) nounwind {
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: movt r0, #65534
 entry:
 	%0 = or i32 %X, -131072

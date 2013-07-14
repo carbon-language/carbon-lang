@@ -4,7 +4,7 @@
 
 ; It's hard to test for the ISEL condition because CodeGen optimizes
 ; away the bugpointed code. Just ensure the basics are still there.
-;CHECK: func:
+;CHECK-LABEL: func:
 ;CHECK: vxorps
 ;CHECK: vinsertf128
 ;CHECK: vpshufd

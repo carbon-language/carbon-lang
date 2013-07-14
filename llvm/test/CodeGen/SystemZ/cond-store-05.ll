@@ -6,7 +6,7 @@ declare void @foo(float *)
 
 ; Test with the loaded value first.
 define void @f1(float *%ptr, float %alt, i32 %limit) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -22,7 +22,7 @@ define void @f1(float *%ptr, float %alt, i32 %limit) {
 
 ; ...and with the loaded value second
 define void @f2(float *%ptr, float %alt, i32 %limit) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: %r2
 ; CHECK: jnl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -38,7 +38,7 @@ define void @f2(float *%ptr, float %alt, i32 %limit) {
 
 ; Check the high end of the aligned STE range.
 define void @f3(float *%base, float %alt, i32 %limit) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -55,7 +55,7 @@ define void @f3(float *%base, float %alt, i32 %limit) {
 
 ; Check the next word up, which should use STEY instead of STE.
 define void @f4(float *%base, float %alt, i32 %limit) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -72,7 +72,7 @@ define void @f4(float *%base, float %alt, i32 %limit) {
 
 ; Check the high end of the aligned STEY range.
 define void @f5(float *%base, float %alt, i32 %limit) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -90,7 +90,7 @@ define void @f5(float *%base, float %alt, i32 %limit) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f6(float *%base, float %alt, i32 %limit) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -108,7 +108,7 @@ define void @f6(float *%base, float %alt, i32 %limit) {
 
 ; Check the low end of the STEY range.
 define void @f7(float *%base, float %alt, i32 %limit) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -126,7 +126,7 @@ define void @f7(float *%base, float %alt, i32 %limit) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f8(float *%base, float %alt, i32 %limit) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -144,7 +144,7 @@ define void @f8(float *%base, float %alt, i32 %limit) {
 
 ; Check that STEY allows an index.
 define void @f9(i64 %base, i64 %index, float %alt, i32 %limit) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK-NOT: %r2
 ; CHECK: jl [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
@@ -163,7 +163,7 @@ define void @f9(i64 %base, i64 %index, float %alt, i32 %limit) {
 
 ; Check that volatile loads are not matched.
 define void @f10(float *%ptr, float %alt, i32 %limit) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: le {{%f[0-5]}}, 0(%r2)
 ; CHECK: {{jl|jnl}} [[LABEL:[^ ]*]]
 ; CHECK: [[LABEL]]:
@@ -178,7 +178,7 @@ define void @f10(float *%ptr, float %alt, i32 %limit) {
 
 ; ...likewise stores.  In this case we should have a conditional load into %f0.
 define void @f11(float *%ptr, float %alt, i32 %limit) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: jnl [[LABEL:[^ ]*]]
 ; CHECK: le %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
@@ -193,7 +193,7 @@ define void @f11(float *%ptr, float %alt, i32 %limit) {
 
 ; Try a frame index base.
 define void @f12(float %alt, i32 %limit) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK-NOT: %r15
 ; CHECK: jl [[LABEL:[^ ]*]]

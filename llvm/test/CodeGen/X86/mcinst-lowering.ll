@@ -30,7 +30,7 @@ define i32 @f1() nounwind {
   %conv = sext i16 %ax to i32
   ret i32 %conv
 
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: cwtl ## encoding: [0x98]
 }
 
@@ -39,6 +39,6 @@ define i64 @f2() nounwind {
   %conv = sext i32 %eax to i64
   ret i64 %conv
 
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: cltq ## encoding: [0x48,0x98]
 }

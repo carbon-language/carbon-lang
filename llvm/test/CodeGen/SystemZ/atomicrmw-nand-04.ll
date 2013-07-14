@@ -4,7 +4,7 @@
 
 ; Check NANDs of a variable.
 define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: lgr %r0, %r2
@@ -20,7 +20,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 
 ; Check NANDs of 1, which must be done using a register.
 define i64 @f2(i64 %dummy, i64 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: ngr
 ; CHECK: br %r14
   %res = atomicrmw nand i64 *%src, i64 1 seq_cst
@@ -29,7 +29,7 @@ define i64 @f2(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the NIHF range.
 define i64 @f3(i64 %dummy, i64 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: lgr %r0, %r2
@@ -45,7 +45,7 @@ define i64 @f3(i64 %dummy, i64 *%src) {
 
 ; Check the next value up, which must use a register.
 define i64 @f4(i64 %dummy, i64 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: ngr
 ; CHECK: br %r14
   %res = atomicrmw nand i64 *%src, i64 4294967296 seq_cst
@@ -54,7 +54,7 @@ define i64 @f4(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the NIHH range.
 define i64 @f5(i64 %dummy, i64 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: nihh %r0, 0
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -65,7 +65,7 @@ define i64 @f5(i64 %dummy, i64 *%src) {
 
 ; Check the next value up, which must use a register.
 define i64 @f6(i64 %dummy, i64 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: ngr
 ; CHECK: br %r14
   %res = atomicrmw nand i64 *%src, i64 281474976710656 seq_cst
@@ -74,7 +74,7 @@ define i64 @f6(i64 %dummy, i64 *%src) {
 
 ; Check the highest useful NILL value.
 define i64 @f7(i64 %dummy, i64 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: nill %r0, 65534
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -85,7 +85,7 @@ define i64 @f7(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the NILL range.
 define i64 @f8(i64 %dummy, i64 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: nill %r0, 0
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -96,7 +96,7 @@ define i64 @f8(i64 %dummy, i64 *%src) {
 
 ; Check the highest useful NILH value, which is one less than the above.
 define i64 @f9(i64 %dummy, i64 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: nilh %r0, 65534
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -107,7 +107,7 @@ define i64 @f9(i64 %dummy, i64 *%src) {
 
 ; Check the highest useful NILF value, which is one less than the above.
 define i64 @f10(i64 %dummy, i64 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: nilf %r0, 4294901758
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -118,7 +118,7 @@ define i64 @f10(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the NILH range.
 define i64 @f11(i64 %dummy, i64 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: nilh %r0, 0
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -129,7 +129,7 @@ define i64 @f11(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the NILF range.
 define i64 @f12(i64 %dummy, i64 *%src) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: nilf %r0, 0
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -140,7 +140,7 @@ define i64 @f12(i64 %dummy, i64 *%src) {
 
 ; Check the highest useful NIHL value, which is one less than the above.
 define i64 @f13(i64 %dummy, i64 *%src) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: nihl %r0, 65534
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -151,7 +151,7 @@ define i64 @f13(i64 %dummy, i64 *%src) {
 
 ; Check the low end of the NIHL range.
 define i64 @f14(i64 %dummy, i64 *%src) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: nihl %r0, 0
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -162,7 +162,7 @@ define i64 @f14(i64 %dummy, i64 *%src) {
 
 ; Check the highest useful NIHH value, which is 1<<32 less than the above.
 define i64 @f15(i64 %dummy, i64 *%src) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: nihh %r0, 65534
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1
@@ -173,7 +173,7 @@ define i64 @f15(i64 %dummy, i64 *%src) {
 
 ; Check the highest useful NIHF value, which is 1<<32 less than the above.
 define i64 @f16(i64 %dummy, i64 *%src) {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: nihf %r0, 4294901758
 ; CHECK: lcgr %r0, %r0
 ; CHECK: aghi %r0, -1

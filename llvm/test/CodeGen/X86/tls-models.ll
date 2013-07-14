@@ -25,15 +25,15 @@ entry:
   ret i32* @external_gd
 
   ; Non-PIC code can use initial-exec, PIC code has to use general dynamic.
-  ; X64:     f1:
+  ; X64-LABEL:     f1:
   ; X64:     external_gd@GOTTPOFF
-  ; X32:     f1:
+  ; X32-LABEL:     f1:
   ; X32:     external_gd@INDNTPOFF
-  ; X64_PIC: f1:
+  ; X64_PIC-LABEL: f1:
   ; X64_PIC: external_gd@TLSGD
-  ; X32_PIC: f1:
+  ; X32_PIC-LABEL: f1:
   ; X32_PIC: external_gd@TLSGD
-  ; DARWIN:  f1:
+  ; DARWIN-LABEL:  f1:
   ; DARWIN:  _external_gd@TLVP
 }
 
@@ -42,15 +42,15 @@ entry:
   ret i32* @internal_gd
 
   ; Non-PIC code can use local exec, PIC code can use local dynamic.
-  ; X64:     f2:
+  ; X64-LABEL:     f2:
   ; X64:     internal_gd@TPOFF
-  ; X32:     f2:
+  ; X32-LABEL:     f2:
   ; X32:     internal_gd@NTPOFF
-  ; X64_PIC: f2:
+  ; X64_PIC-LABEL: f2:
   ; X64_PIC: internal_gd@TLSLD
-  ; X32_PIC: f2:
+  ; X32_PIC-LABEL: f2:
   ; X32_PIC: internal_gd@TLSLDM
-  ; DARWIN:  f2:
+  ; DARWIN-LABEL:  f2:
   ; DARWIN:  _internal_gd@TLVP
 }
 
@@ -62,15 +62,15 @@ entry:
   ret i32* @external_ld
 
   ; Non-PIC code can use initial exec, PIC code use local dynamic as specified.
-  ; X64:     f3:
+  ; X64-LABEL:     f3:
   ; X64:     external_ld@GOTTPOFF
-  ; X32:     f3:
+  ; X32-LABEL:     f3:
   ; X32:     external_ld@INDNTPOFF
-  ; X64_PIC: f3:
+  ; X64_PIC-LABEL: f3:
   ; X64_PIC: external_ld@TLSLD
-  ; X32_PIC: f3:
+  ; X32_PIC-LABEL: f3:
   ; X32_PIC: external_ld@TLSLDM
-  ; DARWIN:  f3:
+  ; DARWIN-LABEL:  f3:
   ; DARWIN:  _external_ld@TLVP
 }
 
@@ -79,15 +79,15 @@ entry:
   ret i32* @internal_ld
 
   ; Non-PIC code can use local exec, PIC code can use local dynamic.
-  ; X64:     f4:
+  ; X64-LABEL:     f4:
   ; X64:     internal_ld@TPOFF
-  ; X32:     f4:
+  ; X32-LABEL:     f4:
   ; X32:     internal_ld@NTPOFF
-  ; X64_PIC: f4:
+  ; X64_PIC-LABEL: f4:
   ; X64_PIC: internal_ld@TLSLD
-  ; X32_PIC: f4:
+  ; X32_PIC-LABEL: f4:
   ; X32_PIC: internal_ld@TLSLDM
-  ; DARWIN:  f4:
+  ; DARWIN-LABEL:  f4:
   ; DARWIN:  _internal_ld@TLVP
 }
 
@@ -99,15 +99,15 @@ entry:
   ret i32* @external_ie
 
   ; Non-PIC and PIC code will use initial exec as specified.
-  ; X64:     f5:
+  ; X64-LABEL:     f5:
   ; X64:     external_ie@GOTTPOFF
-  ; X32:     f5:
+  ; X32-LABEL:     f5:
   ; X32:     external_ie@INDNTPOFF
-  ; X64_PIC: f5:
+  ; X64_PIC-LABEL: f5:
   ; X64_PIC: external_ie@GOTTPOFF
-  ; X32_PIC: f5:
+  ; X32_PIC-LABEL: f5:
   ; X32_PIC: external_ie@GOTNTPOFF
-  ; DARWIN:  f5:
+  ; DARWIN-LABEL:  f5:
   ; DARWIN:  _external_ie@TLVP
 }
 
@@ -116,15 +116,15 @@ entry:
   ret i32* @internal_ie
 
   ; Non-PIC code can use local exec, PIC code use initial exec as specified.
-  ; X64:     f6:
+  ; X64-LABEL:     f6:
   ; X64:     internal_ie@TPOFF
-  ; X32:     f6:
+  ; X32-LABEL:     f6:
   ; X32:     internal_ie@NTPOFF
-  ; X64_PIC: f6:
+  ; X64_PIC-LABEL: f6:
   ; X64_PIC: internal_ie@GOTTPOFF
-  ; X32_PIC: f6:
+  ; X32_PIC-LABEL: f6:
   ; X32_PIC: internal_ie@GOTNTPOFF
-  ; DARWIN:  f6:
+  ; DARWIN-LABEL:  f6:
   ; DARWIN:  _internal_ie@TLVP
 }
 
@@ -136,15 +136,15 @@ entry:
   ret i32* @external_le
 
   ; Non-PIC and PIC code will use local exec as specified.
-  ; X64:     f7:
+  ; X64-LABEL:     f7:
   ; X64:     external_le@TPOFF
-  ; X32:     f7:
+  ; X32-LABEL:     f7:
   ; X32:     external_le@NTPOFF
-  ; X64_PIC: f7:
+  ; X64_PIC-LABEL: f7:
   ; X64_PIC: external_le@TPOFF
-  ; X32_PIC: f7:
+  ; X32_PIC-LABEL: f7:
   ; X32_PIC: external_le@NTPOFF
-  ; DARWIN:  f7:
+  ; DARWIN-LABEL:  f7:
   ; DARWIN:  _external_le@TLVP
 }
 
@@ -153,14 +153,14 @@ entry:
   ret i32* @internal_le
 
   ; Non-PIC and PIC code will use local exec as specified.
-  ; X64:     f8:
+  ; X64-LABEL:     f8:
   ; X64:     internal_le@TPOFF
-  ; X32:     f8:
+  ; X32-LABEL:     f8:
   ; X32:     internal_le@NTPOFF
-  ; X64_PIC: f8:
+  ; X64_PIC-LABEL: f8:
   ; X64_PIC: internal_le@TPOFF
-  ; X32_PIC: f8:
+  ; X32_PIC-LABEL: f8:
   ; X32_PIC: internal_le@NTPOFF
-  ; DARWIN:  f8:
+  ; DARWIN-LABEL:  f8:
   ; DARWIN:  _internal_le@TLVP
 }

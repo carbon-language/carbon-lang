@@ -6,7 +6,7 @@ declare double @llvm.sqrt.f64(double %f)
 
 ; Check register square root.
 define double @f1(double %val) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: sqdbr %f0, %f0
 ; CHECK: br %r14
   %res = call double @llvm.sqrt.f64(double %val)
@@ -15,7 +15,7 @@ define double @f1(double %val) {
 
 ; Check the low end of the SQDB range.
 define double @f2(double *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: sqdb %f0, 0(%r2)
 ; CHECK: br %r14
   %val = load double *%ptr
@@ -25,7 +25,7 @@ define double @f2(double *%ptr) {
 
 ; Check the high end of the aligned SQDB range.
 define double @f3(double *%base) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: sqdb %f0, 4088(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr double *%base, i64 511
@@ -37,7 +37,7 @@ define double @f3(double *%base) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define double @f4(double *%base) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: aghi %r2, 4096
 ; CHECK: sqdb %f0, 0(%r2)
 ; CHECK: br %r14
@@ -49,7 +49,7 @@ define double @f4(double *%base) {
 
 ; Check negative displacements, which also need separate address logic.
 define double @f5(double *%base) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: aghi %r2, -8
 ; CHECK: sqdb %f0, 0(%r2)
 ; CHECK: br %r14
@@ -61,7 +61,7 @@ define double @f5(double *%base) {
 
 ; Check that SQDB allows indices.
 define double @f6(double *%base, i64 %index) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: sqdb %f0, 800(%r1,%r2)
 ; CHECK: br %r14
@@ -75,7 +75,7 @@ define double @f6(double *%base, i64 %index) {
 ; Test a case where we spill the source of at least one SQDBR.  We want
 ; to use SQDB if possible.
 define void @f7(double *%ptr) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: sqdb {{%f[0-9]+}}, 160(%r15)
 ; CHECK: br %r14
   %val0 = load volatile double *%ptr

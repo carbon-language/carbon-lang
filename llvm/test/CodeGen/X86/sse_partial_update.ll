@@ -8,7 +8,7 @@
 ; destination of rsqrtss are the same.
 define void @t1(<4 x float> %a) nounwind uwtable ssp {
 entry:
-; CHECK: t1:
+; CHECK-LABEL: t1:
 ; CHECK: rsqrtss %xmm0, %xmm0
   %0 = tail call <4 x float> @llvm.x86.sse.rsqrt.ss(<4 x float> %a) nounwind
   %a.addr.0.extract = extractelement <4 x float> %0, i32 0
@@ -23,7 +23,7 @@ declare <4 x float> @llvm.x86.sse.rsqrt.ss(<4 x float>) nounwind readnone
 
 define void @t2(<4 x float> %a) nounwind uwtable ssp {
 entry:
-; CHECK: t2:
+; CHECK-LABEL: t2:
 ; CHECK: rcpss %xmm0, %xmm0
   %0 = tail call <4 x float> @llvm.x86.sse.rcp.ss(<4 x float> %a) nounwind
   %a.addr.0.extract = extractelement <4 x float> %0, i32 0

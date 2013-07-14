@@ -22,11 +22,11 @@
 ; in order to put another object at offset 4088 is (4088 - 176) / 4 = 978
 ; words.
 define void @f1() {
-; CHECK-NOFP: f1:
+; CHECK-NOFP-LABEL: f1:
 ; CHECK-NOFP: mvhi 4092(%r15), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f1:
+; CHECK-FP-LABEL: f1:
 ; CHECK-FP: mvhi 4092(%r11), 42
 ; CHECK-FP: br %r14
   %region1 = alloca [978 x i32], align 8
@@ -40,12 +40,12 @@ define void @f1() {
 
 ; Test the first out-of-range offset.  We cannot use an index register here.
 define void @f2() {
-; CHECK-NOFP: f2:
+; CHECK-NOFP-LABEL: f2:
 ; CHECK-NOFP: lay %r1, 4096(%r15)
 ; CHECK-NOFP: mvhi 0(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f2:
+; CHECK-FP-LABEL: f2:
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: mvhi 0(%r1), 42
 ; CHECK-FP: br %r14
@@ -60,12 +60,12 @@ define void @f2() {
 
 ; Test the next offset after that.
 define void @f3() {
-; CHECK-NOFP: f3:
+; CHECK-NOFP-LABEL: f3:
 ; CHECK-NOFP: lay %r1, 4096(%r15)
 ; CHECK-NOFP: mvhi 4(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f3:
+; CHECK-FP-LABEL: f3:
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: mvhi 4(%r1), 42
 ; CHECK-FP: br %r14
@@ -80,12 +80,12 @@ define void @f3() {
 
 ; Add 4096 bytes (1024 words) to the size of each object and repeat.
 define void @f4() {
-; CHECK-NOFP: f4:
+; CHECK-NOFP-LABEL: f4:
 ; CHECK-NOFP: lay %r1, 4096(%r15)
 ; CHECK-NOFP: mvhi 4092(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f4:
+; CHECK-FP-LABEL: f4:
 ; CHECK-FP: lay %r1, 4096(%r11)
 ; CHECK-FP: mvhi 4092(%r1), 42
 ; CHECK-FP: br %r14
@@ -100,12 +100,12 @@ define void @f4() {
 
 ; ...as above.
 define void @f5() {
-; CHECK-NOFP: f5:
+; CHECK-NOFP-LABEL: f5:
 ; CHECK-NOFP: lay %r1, 8192(%r15)
 ; CHECK-NOFP: mvhi 0(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f5:
+; CHECK-FP-LABEL: f5:
 ; CHECK-FP: lay %r1, 8192(%r11)
 ; CHECK-FP: mvhi 0(%r1), 42
 ; CHECK-FP: br %r14
@@ -120,12 +120,12 @@ define void @f5() {
 
 ; ...as above.
 define void @f6() {
-; CHECK-NOFP: f6:
+; CHECK-NOFP-LABEL: f6:
 ; CHECK-NOFP: lay %r1, 8192(%r15)
 ; CHECK-NOFP: mvhi 4(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f6:
+; CHECK-FP-LABEL: f6:
 ; CHECK-FP: lay %r1, 8192(%r11)
 ; CHECK-FP: mvhi 4(%r1), 42
 ; CHECK-FP: br %r14
@@ -142,12 +142,12 @@ define void @f6() {
 ; being at offset 8192.  This time we need objects of (8192 - 176) / 4 = 2004
 ; words.
 define void @f7() {
-; CHECK-NOFP: f7:
+; CHECK-NOFP-LABEL: f7:
 ; CHECK-NOFP: lay %r1, 8192(%r15)
 ; CHECK-NOFP: mvhi 4092(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f7:
+; CHECK-FP-LABEL: f7:
 ; CHECK-FP: lay %r1, 8192(%r11)
 ; CHECK-FP: mvhi 4092(%r1), 42
 ; CHECK-FP: br %r14
@@ -163,12 +163,12 @@ define void @f7() {
 ; Keep the object-relative offset the same but bump the size of the
 ; objects by one doubleword.
 define void @f8() {
-; CHECK-NOFP: f8:
+; CHECK-NOFP-LABEL: f8:
 ; CHECK-NOFP: lay %r1, 12288(%r15)
 ; CHECK-NOFP: mvhi 4(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f8:
+; CHECK-FP-LABEL: f8:
 ; CHECK-FP: lay %r1, 12288(%r11)
 ; CHECK-FP: mvhi 4(%r1), 42
 ; CHECK-FP: br %r14
@@ -185,12 +185,12 @@ define void @f8() {
 ; should force an LAY from the outset.  We don't yet do any kind of anchor
 ; optimization, so there should be no offset on the MVHI itself.
 define void @f9() {
-; CHECK-NOFP: f9:
+; CHECK-NOFP-LABEL: f9:
 ; CHECK-NOFP: lay %r1, 12296(%r15)
 ; CHECK-NOFP: mvhi 0(%r1), 42
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f9:
+; CHECK-FP-LABEL: f9:
 ; CHECK-FP: lay %r1, 12296(%r11)
 ; CHECK-FP: mvhi 0(%r1), 42
 ; CHECK-FP: br %r14
@@ -207,14 +207,14 @@ define void @f9() {
 ; call-clobbered registers are live and no call-saved ones have been
 ; allocated).
 define void @f10(i32 *%vptr) {
-; CHECK-NOFP: f10:
+; CHECK-NOFP-LABEL: f10:
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lay [[REGISTER]], 4096(%r15)
 ; CHECK-NOFP: mvhi 0([[REGISTER]]), 42
 ; CHECK-NOFP: lg [[REGISTER]], [[OFFSET]](%r15)
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f10:
+; CHECK-FP-LABEL: f10:
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lay [[REGISTER]], 4096(%r11)
 ; CHECK-FP: mvhi 0([[REGISTER]]), 42
@@ -244,7 +244,7 @@ define void @f10(i32 *%vptr) {
 ; However, the FP case uses %r11 as the frame pointer and must therefore
 ; spill a second register.  This leads to an extra displacement of 8.
 define void @f11(i32 *%vptr) {
-; CHECK-NOFP: f11:
+; CHECK-NOFP-LABEL: f11:
 ; CHECK-NOFP: stmg %r6, %r15,
 ; CHECK-NOFP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r15)
 ; CHECK-NOFP: lay [[REGISTER]], 4096(%r15)
@@ -253,7 +253,7 @@ define void @f11(i32 *%vptr) {
 ; CHECK-NOFP: lmg %r6, %r15,
 ; CHECK-NOFP: br %r14
 ;
-; CHECK-FP: f11:
+; CHECK-FP-LABEL: f11:
 ; CHECK-FP: stmg %r6, %r15,
 ; CHECK-FP: stg [[REGISTER:%r[1-9][0-4]?]], [[OFFSET:160|168]](%r11)
 ; CHECK-FP: lay [[REGISTER]], 4096(%r11)

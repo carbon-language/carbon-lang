@@ -2,12 +2,12 @@
 ; RUN: llc -march=mips -mno-check-zero-division < %s |\
 ; RUN: FileCheck %s -check-prefix=NOCHECK
 
-; TRAP: sdiv1:
+; TRAP-LABEL: sdiv1:
 ; TRAP: div $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; TRAP: teq $[[R0]], $zero, 7
 ; TRAP: mflo
 
-; NOCHECK: sdiv1:
+; NOCHECK-LABEL: sdiv1:
 ; NOCHECK-NOT: teq
 ; NOCHECK: .end sdiv1
 
@@ -17,7 +17,7 @@ entry:
   ret i32 %div
 }
 
-; TRAP: srem1:
+; TRAP-LABEL: srem1:
 ; TRAP: div $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; TRAP: teq $[[R0]], $zero, 7
 ; TRAP: mfhi
@@ -28,7 +28,7 @@ entry:
   ret i32 %rem
 }
 
-; TRAP: udiv1:
+; TRAP-LABEL: udiv1:
 ; TRAP: divu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; TRAP: teq $[[R0]], $zero, 7
 ; TRAP: mflo
@@ -39,7 +39,7 @@ entry:
   ret i32 %div
 }
 
-; TRAP: urem1:
+; TRAP-LABEL: urem1:
 ; TRAP: divu $zero, ${{[0-9]+}}, $[[R0:[0-9]+]]
 ; TRAP: teq $[[R0]], $zero, 7
 ; TRAP: mfhi

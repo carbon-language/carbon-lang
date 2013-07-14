@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=xcore | FileCheck %s
 define void @_Z1fz(...) {
 entry:
-; CHECK: _Z1fz:
+; CHECK-LABEL: _Z1fz:
 ; CHECK: extsp 3
 ; CHECK: stw r[[REG:[0-3]{1,1}]]
 ; CHECK: , sp{{\[}}[[REG]]{{\]}}

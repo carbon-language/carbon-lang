@@ -13,7 +13,7 @@ declare i1 @qux()
 ; BranchFolding should tail-merge the stores since they all precede
 ; direct branches to the same place.
 
-; CHECK: tail_merge_me:
+; CHECK-LABEL: tail_merge_me:
 ; CHECK-NOT:  GHJK
 ; CHECK:      movl $0, GHJK(%rip)
 ; CHECK-NEXT: movl $1, HABC(%rip)
@@ -60,7 +60,7 @@ declare i8* @choose(i8*, i8*)
 ; BranchFolding should tail-duplicate the indirect jump to avoid
 ; redundant branching.
 
-; CHECK: tail_duplicate_me:
+; CHECK-LABEL: tail_duplicate_me:
 ; CHECK:      movl $0, GHJK(%rip)
 ; CHECK-NEXT: jmpq *%r
 ; CHECK:      movl $0, GHJK(%rip)
@@ -107,7 +107,7 @@ altret:
 ; BranchFolding shouldn't try to merge the tails of two blocks
 ; with only a branch in common, regardless of the fallthrough situation.
 
-; CHECK: dont_merge_oddly:
+; CHECK-LABEL: dont_merge_oddly:
 ; CHECK-NOT:   ret
 ; CHECK:        ucomiss %xmm{{[0-2]}}, %xmm{{[0-2]}}
 ; CHECK-NEXT:   jbe .LBB2_3
@@ -153,7 +153,7 @@ bb30:
 ; Do any-size tail-merging when two candidate blocks will both require
 ; an unconditional jump to complete a two-way conditional branch.
 
-; CHECK: c_expand_expr_stmt:
+; CHECK-LABEL: c_expand_expr_stmt:
 ;
 ; This test only works when register allocation happens to use %rax for both
 ; load addresses.
@@ -275,7 +275,7 @@ declare fastcc %union.tree_node* @default_conversion(%union.tree_node*) nounwind
 ; instructions are involved. This function should have only
 ; one ret instruction.
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 ; CHECK:        callq func
 ; CHECK-NEXT: .LBB4_2:
 ; CHECK-NEXT:   popq
@@ -298,7 +298,7 @@ declare void @func()
 
 ; one - One instruction may be tail-duplicated even with optsize.
 
-; CHECK: one:
+; CHECK-LABEL: one:
 ; CHECK: movl $0, XYZ(%rip)
 ; CHECK: movl $0, XYZ(%rip)
 
@@ -335,7 +335,7 @@ return:
 ; tail instead of one. This is too much to be merged, given
 ; the optsize attribute.
 
-; CHECK: two:
+; CHECK-LABEL: two:
 ; CHECK-NOT: XYZ
 ; CHECK: ret
 ; CHECK: movl $0, XYZ(%rip)
@@ -374,7 +374,7 @@ return:
 ; two_nosize - Same as two, but without the optsize attribute.
 ; Now two instructions are enough to be tail-duplicated.
 
-; CHECK: two_nosize:
+; CHECK-LABEL: two_nosize:
 ; CHECK: movl $0, XYZ(%rip)
 ; CHECK: movl $1, XYZ(%rip)
 ; CHECK: movl $0, XYZ(%rip)
@@ -412,7 +412,7 @@ return:
 ; Tail-merging should merge the two ret instructions since one side
 ; can fall-through into the ret and the other side has to branch anyway.
 
-; CHECK: TESTE:
+; CHECK-LABEL: TESTE:
 ; CHECK: ret
 ; CHECK-NOT: ret
 ; CHECK: size TESTE

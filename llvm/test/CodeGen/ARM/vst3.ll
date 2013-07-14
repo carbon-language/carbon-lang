@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm -mattr=+neon -fast-isel=0 -O0 | FileCheck %s
 
 define void @vst3i8(i8* %A, <8 x i8>* %B) nounwind {
-;CHECK: vst3i8:
+;CHECK-LABEL: vst3i8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;This test runs at -O0 so do not check for specific register numbers.
 ;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]
@@ -11,7 +11,7 @@ define void @vst3i8(i8* %A, <8 x i8>* %B) nounwind {
 }
 
 define void @vst3i16(i16* %A, <4 x i16>* %B) nounwind {
-;CHECK: vst3i16:
+;CHECK-LABEL: vst3i16:
 ;CHECK: vst3.16
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
@@ -20,7 +20,7 @@ define void @vst3i16(i16* %A, <4 x i16>* %B) nounwind {
 }
 
 define void @vst3i32(i32* %A, <2 x i32>* %B) nounwind {
-;CHECK: vst3i32:
+;CHECK-LABEL: vst3i32:
 ;CHECK: vst3.32
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <2 x i32>* %B
@@ -30,7 +30,7 @@ define void @vst3i32(i32* %A, <2 x i32>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst3i32_update(i32** %ptr, <2 x i32>* %B) nounwind {
-;CHECK: vst3i32_update:
+;CHECK-LABEL: vst3i32_update:
 ;CHECK: vst3.32 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}]!
 	%A = load i32** %ptr
 	%tmp0 = bitcast i32* %A to i8*
@@ -42,7 +42,7 @@ define void @vst3i32_update(i32** %ptr, <2 x i32>* %B) nounwind {
 }
 
 define void @vst3f(float* %A, <2 x float>* %B) nounwind {
-;CHECK: vst3f:
+;CHECK-LABEL: vst3f:
 ;CHECK: vst3.32
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <2 x float>* %B
@@ -51,7 +51,7 @@ define void @vst3f(float* %A, <2 x float>* %B) nounwind {
 }
 
 define void @vst3i64(i64* %A, <1 x i64>* %B) nounwind {
-;CHECK: vst3i64:
+;CHECK-LABEL: vst3i64:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;This test runs at -O0 so do not check for specific register numbers.
 ;CHECK: vst1.64 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]
@@ -62,7 +62,7 @@ define void @vst3i64(i64* %A, <1 x i64>* %B) nounwind {
 }
 
 define void @vst3Qi8(i8* %A, <16 x i8>* %B) nounwind {
-;CHECK: vst3Qi8:
+;CHECK-LABEL: vst3Qi8:
 ;Check the alignment value.  Max for this instruction is 64 bits:
 ;This test runs at -O0 so do not check for specific register numbers.
 ;CHECK: vst3.8 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}:64]!
@@ -73,7 +73,7 @@ define void @vst3Qi8(i8* %A, <16 x i8>* %B) nounwind {
 }
 
 define void @vst3Qi16(i16* %A, <8 x i16>* %B) nounwind {
-;CHECK: vst3Qi16:
+;CHECK-LABEL: vst3Qi16:
 ;CHECK: vst3.16
 ;CHECK: vst3.16
 	%tmp0 = bitcast i16* %A to i8*
@@ -84,7 +84,7 @@ define void @vst3Qi16(i16* %A, <8 x i16>* %B) nounwind {
 
 ;Check for a post-increment updating store.
 define void @vst3Qi16_update(i16** %ptr, <8 x i16>* %B) nounwind {
-;CHECK: vst3Qi16_update:
+;CHECK-LABEL: vst3Qi16_update:
 ;CHECK: vst3.16 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}]!
 ;CHECK: vst3.16 {d{{.*}}, d{{.*}}, d{{.*}}}, [r{{.*}}]!
 	%A = load i16** %ptr
@@ -97,7 +97,7 @@ define void @vst3Qi16_update(i16** %ptr, <8 x i16>* %B) nounwind {
 }
 
 define void @vst3Qi32(i32* %A, <4 x i32>* %B) nounwind {
-;CHECK: vst3Qi32:
+;CHECK-LABEL: vst3Qi32:
 ;CHECK: vst3.32
 ;CHECK: vst3.32
 	%tmp0 = bitcast i32* %A to i8*
@@ -107,7 +107,7 @@ define void @vst3Qi32(i32* %A, <4 x i32>* %B) nounwind {
 }
 
 define void @vst3Qf(float* %A, <4 x float>* %B) nounwind {
-;CHECK: vst3Qf:
+;CHECK-LABEL: vst3Qf:
 ;CHECK: vst3.32
 ;CHECK: vst3.32
 	%tmp0 = bitcast float* %A to i8*

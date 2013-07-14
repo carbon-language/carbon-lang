@@ -10,7 +10,7 @@
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 (%struct.asl_file_t*, i64, i64*)* @t to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]
 
 define i32 @t(%struct.asl_file_t* %s, i64 %off, i64* %out) nounwind optsize {
-; CHECK: t:
+; CHECK-LABEL: t:
 ; CHECK: adds {{r[0-7]}}, #8
 entry:
   %val = alloca i64, align 4                      ; <i64*> [#uses=3]

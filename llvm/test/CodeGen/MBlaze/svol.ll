@@ -6,7 +6,7 @@
 @.str = private constant [28 x i8] c"The interrupt has gone off\0A\00"
 
 define cc74 void @mysvol() nounwind noinline {
-  ; CHECK:        mysvol:
+  ; CHECK-LABEL:        mysvol:
   ; CHECK:        swi   r3, r1
   ; CHECK:        swi   r4, r1
   ; CHECK:        swi   r5, r1
@@ -41,7 +41,7 @@ define cc74 void @mysvol() nounwind noinline {
 }
 
 define cc74 void @mysvol2() nounwind noinline {
-  ; CHECK:        mysvol2:
+  ; CHECK-LABEL:        mysvol2:
   ; CHECK-NOT:    swi   r3, r1
   ; CHECK-NOT:    swi   r4, r1
   ; CHECK-NOT:    swi   r5, r1

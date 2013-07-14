@@ -17,7 +17,7 @@ if.end523:                                        ; preds = %if.end453
   ret void
 }
 
-; CHECK: foo:
+; CHECK-LABEL: foo:
 
 declare void @bar(i64)
 

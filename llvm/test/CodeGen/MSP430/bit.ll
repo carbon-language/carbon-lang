@@ -11,7 +11,7 @@ define i8 @bitbrr(i8 %a, i8 %b) nounwind {
 	%t3 = zext i1 %t2 to i8
 	ret i8 %t3
 }
-; CHECK: bitbrr:
+; CHECK-LABEL: bitbrr:
 ; CHECK: bit.b	r14, r15
 
 define i8 @bitbri(i8 %a) nounwind {
@@ -20,7 +20,7 @@ define i8 @bitbri(i8 %a) nounwind {
 	%t3 = zext i1 %t2 to i8
 	ret i8 %t3
 }
-; CHECK: bitbri:
+; CHECK-LABEL: bitbri:
 ; CHECK: bit.b	#15, r15
 
 define i8 @bitbir(i8 %a) nounwind {
@@ -29,7 +29,7 @@ define i8 @bitbir(i8 %a) nounwind {
 	%t3 = zext i1 %t2 to i8
 	ret i8 %t3
 }
-; CHECK: bitbir:
+; CHECK-LABEL: bitbir:
 ; CHECK: bit.b	#15, r15
 
 define i8 @bitbmi() nounwind {
@@ -39,7 +39,7 @@ define i8 @bitbmi() nounwind {
 	%t4 = zext i1 %t3 to i8
 	ret i8 %t4
 }
-; CHECK: bitbmi:
+; CHECK-LABEL: bitbmi:
 ; CHECK: bit.b	#15, &foo8
 
 define i8 @bitbim() nounwind {
@@ -49,7 +49,7 @@ define i8 @bitbim() nounwind {
 	%t4 = zext i1 %t3 to i8
 	ret i8 %t4
 }
-; CHECK: bitbim:
+; CHECK-LABEL: bitbim:
 ; CHECK: bit.b	#15, &foo8
 
 define i8 @bitbrm(i8 %a) nounwind {
@@ -59,7 +59,7 @@ define i8 @bitbrm(i8 %a) nounwind {
 	%t4 = zext i1 %t3 to i8
 	ret i8 %t4
 }
-; CHECK: bitbrm:
+; CHECK-LABEL: bitbrm:
 ; CHECK: bit.b	&foo8, r15
 
 define i8 @bitbmr(i8 %a) nounwind {
@@ -69,7 +69,7 @@ define i8 @bitbmr(i8 %a) nounwind {
 	%t4 = zext i1 %t3 to i8
 	ret i8 %t4
 }
-; CHECK: bitbmr:
+; CHECK-LABEL: bitbmr:
 ; CHECK: bit.b	r15, &foo8
 
 define i8 @bitbmm() nounwind {
@@ -80,7 +80,7 @@ define i8 @bitbmm() nounwind {
 	%t5 = zext i1 %t4 to i8
 	ret i8 %t5
 }
-; CHECK: bitbmm:
+; CHECK-LABEL: bitbmm:
 ; CHECK: bit.b	&bar8, &foo8
 
 @foo16 = external global i16
@@ -92,7 +92,7 @@ define i16 @bitwrr(i16 %a, i16 %b) nounwind {
 	%t3 = zext i1 %t2 to i16
 	ret i16 %t3
 }
-; CHECK: bitwrr:
+; CHECK-LABEL: bitwrr:
 ; CHECK: bit.w	r14, r15
 
 define i16 @bitwri(i16 %a) nounwind {
@@ -101,7 +101,7 @@ define i16 @bitwri(i16 %a) nounwind {
 	%t3 = zext i1 %t2 to i16
 	ret i16 %t3
 }
-; CHECK: bitwri:
+; CHECK-LABEL: bitwri:
 ; CHECK: bit.w	#4080, r15
 
 define i16 @bitwir(i16 %a) nounwind {
@@ -110,7 +110,7 @@ define i16 @bitwir(i16 %a) nounwind {
 	%t3 = zext i1 %t2 to i16
 	ret i16 %t3
 }
-; CHECK: bitwir:
+; CHECK-LABEL: bitwir:
 ; CHECK: bit.w	#4080, r15
 
 define i16 @bitwmi() nounwind {
@@ -120,7 +120,7 @@ define i16 @bitwmi() nounwind {
 	%t4 = zext i1 %t3 to i16
 	ret i16 %t4
 }
-; CHECK: bitwmi:
+; CHECK-LABEL: bitwmi:
 ; CHECK: bit.w	#4080, &foo16
 
 define i16 @bitwim() nounwind {
@@ -130,7 +130,7 @@ define i16 @bitwim() nounwind {
 	%t4 = zext i1 %t3 to i16
 	ret i16 %t4
 }
-; CHECK: bitwim:
+; CHECK-LABEL: bitwim:
 ; CHECK: bit.w	#4080, &foo16
 
 define i16 @bitwrm(i16 %a) nounwind {
@@ -140,7 +140,7 @@ define i16 @bitwrm(i16 %a) nounwind {
 	%t4 = zext i1 %t3 to i16
 	ret i16 %t4
 }
-; CHECK: bitwrm:
+; CHECK-LABEL: bitwrm:
 ; CHECK: bit.w	&foo16, r15
 
 define i16 @bitwmr(i16 %a) nounwind {
@@ -150,7 +150,7 @@ define i16 @bitwmr(i16 %a) nounwind {
 	%t4 = zext i1 %t3 to i16
 	ret i16 %t4
 }
-; CHECK: bitwmr:
+; CHECK-LABEL: bitwmr:
 ; CHECK: bit.w	r15, &foo16
 
 define i16 @bitwmm() nounwind {
@@ -161,6 +161,6 @@ define i16 @bitwmm() nounwind {
 	%t5 = zext i1 %t4 to i16
 	ret i16 %t5
 }
-; CHECK: bitwmm:
+; CHECK-LABEL: bitwmm:
 ; CHECK: bit.w	&bar16, &foo16
 

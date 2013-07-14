@@ -2,7 +2,7 @@
 ; RUN: llc < %s -mtriple=armv7s-apple-darwin | FileCheck %s -check-prefix=VFP4
 
 define <4 x float> @muladd(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind {
-; CHECK: muladd:
+; CHECK-LABEL: muladd:
 ; CHECK: fmaf
 ; CHECK: fmaf
 ; CHECK: fmaf
@@ -17,7 +17,7 @@ define <4 x float> @muladd(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounw
 declare <4 x float> @llvm.fma.v4f32(<4 x float>, <4 x float>, <4 x float>) #1
 
 define <2 x float> @muladd2(<2 x float> %a, <2 x float> %b, <2 x float> %c) nounwind {
-; CHECK: muladd2:
+; CHECK-LABEL: muladd2:
 ; CHECK: fmaf
 ; CHECK: fmaf
 ; CHECK-NOT: fmaf

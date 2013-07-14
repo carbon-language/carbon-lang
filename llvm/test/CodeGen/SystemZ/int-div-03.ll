@@ -7,7 +7,7 @@ declare i64 @foo()
 
 ; Test register division.  The result is in the second of the two registers.
 define void @f1(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgfr %r2, %r4
 ; CHECK: stg %r3, 0(%r5)
@@ -20,7 +20,7 @@ define void @f1(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
 
 ; Test register remainder.  The result is in the first of the two registers.
 define void @f2(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgfr %r2, %r4
 ; CHECK: stg %r2, 0(%r5)
@@ -33,7 +33,7 @@ define void @f2(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
 
 ; Test that division and remainder use a single instruction.
 define i64 @f3(i64 %dummy, i64 %a, i32 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgfr %r2, %r4
 ; CHECK: ogr %r2, %r3
@@ -48,7 +48,7 @@ define i64 @f3(i64 %dummy, i64 %a, i32 %b) {
 ; Test register division when the dividend is zero rather than sign extended.
 ; We can't use dsgfr here
 define void @f4(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: dsgfr
 ; CHECK: br %r14
   %bext = zext i32 %b to i64
@@ -59,7 +59,7 @@ define void @f4(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
 
 ; ...likewise remainder.
 define void @f5(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: dsgfr
 ; CHECK: br %r14
   %bext = zext i32 %b to i64
@@ -70,7 +70,7 @@ define void @f5(i64 %dummy, i64 %a, i32 %b, i64 *%dest) {
 
 ; Test memory division with no displacement.
 define void @f6(i64 %dummy, i64 %a, i32 *%src, i64 *%dest) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: stg %r3, 0(%r5)
@@ -84,7 +84,7 @@ define void @f6(i64 %dummy, i64 %a, i32 *%src, i64 *%dest) {
 
 ; Test memory remainder with no displacement.
 define void @f7(i64 %dummy, i64 %a, i32 *%src, i64 *%dest) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: stg %r2, 0(%r5)
@@ -98,7 +98,7 @@ define void @f7(i64 %dummy, i64 %a, i32 *%src, i64 *%dest) {
 
 ; Test both memory division and memory remainder.
 define i64 @f8(i64 %dummy, i64 %a, i32 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK-NOT: {{dsgf|dsgfr}}
@@ -114,7 +114,7 @@ define i64 @f8(i64 %dummy, i64 %a, i32 *%src) {
 
 ; Check the high end of the DSGF range.
 define i64 @f9(i64 %dummy, i64 %a, i32 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: dsgf %r2, 524284(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 131071
@@ -127,7 +127,7 @@ define i64 @f9(i64 %dummy, i64 %a, i32 *%src) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f10(i64 %dummy, i64 %a, i32 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agfi %r4, 524288
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: br %r14
@@ -140,7 +140,7 @@ define i64 @f10(i64 %dummy, i64 %a, i32 *%src) {
 
 ; Check the high end of the negative aligned DSGF range.
 define i64 @f11(i64 %dummy, i64 %a, i32 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: dsgf %r2, -4(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -1
@@ -152,7 +152,7 @@ define i64 @f11(i64 %dummy, i64 %a, i32 *%src) {
 
 ; Check the low end of the DSGF range.
 define i64 @f12(i64 %dummy, i64 %a, i32 *%src) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: dsgf %r2, -524288(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -131072
@@ -165,7 +165,7 @@ define i64 @f12(i64 %dummy, i64 %a, i32 *%src) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f13(i64 %dummy, i64 %a, i32 *%src) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: agfi %r4, -524292
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: br %r14
@@ -178,7 +178,7 @@ define i64 @f13(i64 %dummy, i64 %a, i32 *%src) {
 
 ; Check that DSGF allows an index.
 define i64 @f14(i64 %dummy, i64 %a, i64 %src, i64 %index) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: dsgf %r2, 524287(%r5,%r4)
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -193,7 +193,7 @@ define i64 @f14(i64 %dummy, i64 %a, i64 %src, i64 %index) {
 ; Make sure that we still use DSGFR rather than DSGR in cases where
 ; a load and division cannot be combined.
 define void @f15(i64 *%dest, i32 *%src) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: l [[B:%r[0-9]+]], 0(%r3)
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: lgr %r1, %r2

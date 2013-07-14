@@ -5,7 +5,7 @@
 @var = global %struct zeroinitializer
 
 define i64 @check_size() {
-; CHECK: check_size:
+; CHECK-LABEL: check_size:
   %starti = ptrtoint %struct* @var to i64
 
   %endp = getelementptr %struct* @var, i64 1
@@ -17,7 +17,7 @@ define i64 @check_size() {
 }
 
 define i64 @check_field() {
-; CHECK: check_field:
+; CHECK-LABEL: check_field:
   %starti = ptrtoint %struct* @var to i64
 
   %endp = getelementptr %struct* @var, i64 0, i32 1

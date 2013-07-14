@@ -4,7 +4,7 @@
 declare void @bar()
 
 define void @foo() {
-; CHECK: foo:
+; CHECK-LABEL: foo:
        %func = load void()** @var
 
        ; Calling a function encourages @foo to use a callee-saved register,

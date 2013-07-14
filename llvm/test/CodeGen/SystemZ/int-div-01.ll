@@ -6,7 +6,7 @@ declare i32 @foo()
 
 ; Test register division.  The result is in the second of the two registers.
 define void @f1(i32 *%dest, i32 %a, i32 %b) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lgfr %r1, %r3
 ; CHECK: dsgfr %r0, %r4
 ; CHECK: st %r1, 0(%r2)
@@ -18,7 +18,7 @@ define void @f1(i32 *%dest, i32 %a, i32 %b) {
 
 ; Test register remainder.  The result is in the first of the two registers.
 define void @f2(i32 *%dest, i32 %a, i32 %b) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lgfr %r1, %r3
 ; CHECK: dsgfr %r0, %r4
 ; CHECK: st %r0, 0(%r2)
@@ -30,7 +30,7 @@ define void @f2(i32 *%dest, i32 %a, i32 %b) {
 
 ; Test that division and remainder use a single instruction.
 define i32 @f3(i32 %dummy, i32 %a, i32 %b) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK-NOT: %r2
 ; CHECK: lgfr %r3, %r3
 ; CHECK-NOT: %r2
@@ -47,7 +47,7 @@ define i32 @f3(i32 %dummy, i32 %a, i32 %b) {
 ; Check that the sign extension of the dividend is elided when the argument
 ; is already sign-extended.
 define i32 @f4(i32 %dummy, i32 signext %a, i32 %b) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK-NOT: {{%r[234]}}
 ; CHECK: dsgfr %r2, %r4
 ; CHECK-NOT: dsgfr
@@ -61,7 +61,7 @@ define i32 @f4(i32 %dummy, i32 signext %a, i32 %b) {
 
 ; Test that memory dividends are loaded using sign extension (LGF).
 define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK-NOT: %r2
 ; CHECK: lgf %r3, 0(%r3)
 ; CHECK-NOT: %r2
@@ -78,7 +78,7 @@ define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
 
 ; Test memory division with no displacement.
 define void @f6(i32 *%dest, i32 %a, i32 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: lgfr %r1, %r3
 ; CHECK: dsgf %r0, 0(%r4)
 ; CHECK: st %r1, 0(%r2)
@@ -91,7 +91,7 @@ define void @f6(i32 *%dest, i32 %a, i32 *%src) {
 
 ; Test memory remainder with no displacement.
 define void @f7(i32 *%dest, i32 %a, i32 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lgfr %r1, %r3
 ; CHECK: dsgf %r0, 0(%r4)
 ; CHECK: st %r0, 0(%r2)
@@ -104,7 +104,7 @@ define void @f7(i32 *%dest, i32 %a, i32 *%src) {
 
 ; Test both memory division and memory remainder.
 define i32 @f8(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK-NOT: %r2
 ; CHECK: lgfr %r3, %r3
 ; CHECK-NOT: %r2
@@ -121,7 +121,7 @@ define i32 @f8(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check the high end of the DSGF range.
 define i32 @f9(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: dsgf %r2, 524284(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 131071
@@ -133,7 +133,7 @@ define i32 @f9(i32 %dummy, i32 %a, i32 *%src) {
 ; Check the next word up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f10(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: agfi %r4, 524288
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: br %r14
@@ -145,7 +145,7 @@ define i32 @f10(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check the high end of the negative aligned DSGF range.
 define i32 @f11(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: dsgf %r2, -4(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -1
@@ -156,7 +156,7 @@ define i32 @f11(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check the low end of the DSGF range.
 define i32 @f12(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: dsgf %r2, -524288(%r4)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%src, i64 -131072
@@ -168,7 +168,7 @@ define i32 @f12(i32 %dummy, i32 %a, i32 *%src) {
 ; Check the next word down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i32 @f13(i32 %dummy, i32 %a, i32 *%src) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: agfi %r4, -524292
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: br %r14
@@ -180,7 +180,7 @@ define i32 @f13(i32 %dummy, i32 %a, i32 *%src) {
 
 ; Check that DSGF allows an index.
 define i32 @f14(i32 %dummy, i32 %a, i64 %src, i64 %index) {
-; CHECK: f14:
+; CHECK-LABEL: f14:
 ; CHECK: dsgf %r2, 524287(%r5,%r4)
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -194,7 +194,7 @@ define i32 @f14(i32 %dummy, i32 %a, i64 %src, i64 %index) {
 ; Make sure that we still use DSGFR rather than DSGR in cases where
 ; a load and division cannot be combined.
 define void @f15(i32 *%dest, i32 *%src) {
-; CHECK: f15:
+; CHECK-LABEL: f15:
 ; CHECK: l [[B:%r[0-9]+]], 0(%r3)
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: lgfr %r1, %r2
@@ -209,7 +209,7 @@ define void @f15(i32 *%dest, i32 *%src) {
 
 ; Check that divisions of spilled values can use DSGF rather than DSGFR.
 define i32 @f16(i32 *%ptr0) {
-; CHECK: f16:
+; CHECK-LABEL: f16:
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: dsgf {{%r[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14

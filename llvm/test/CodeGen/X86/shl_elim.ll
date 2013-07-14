@@ -8,7 +8,7 @@ define i32 @test1(i64 %a) nounwind {
         %tmp456 = sext i16 %tmp45 to i32                ; <i32> [#uses=1]
         ret i32 %tmp456
 
-; CHECK: test1:
+; CHECK-LABEL: test1:
 ; CHECK: movl 8(%esp), %eax
 ; CHECK: shrl %eax
 ; CHECK: cwtl

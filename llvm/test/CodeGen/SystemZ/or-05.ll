@@ -4,7 +4,7 @@
 
 ; Check the lowest useful constant, expressed as a signed integer.
 define void @f1(i8 *%ptr) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: oi 0(%r2), 1
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -15,7 +15,7 @@ define void @f1(i8 *%ptr) {
 
 ; Check the highest useful constant, expressed as a signed integer.
 define void @f2(i8 *%ptr) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: oi 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -26,7 +26,7 @@ define void @f2(i8 *%ptr) {
 
 ; Check the lowest useful constant, expressed as an unsigned integer.
 define void @f3(i8 *%ptr) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: oi 0(%r2), 1
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -37,7 +37,7 @@ define void @f3(i8 *%ptr) {
 
 ; Check the highest useful constant, expressed as a unsigned integer.
 define void @f4(i8 *%ptr) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: oi 0(%r2), 254
 ; CHECK: br %r14
   %val = load i8 *%ptr
@@ -48,7 +48,7 @@ define void @f4(i8 *%ptr) {
 
 ; Check the high end of the OI range.
 define void @f5(i8 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: oi 4095(%r2), 127
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 4095
@@ -60,7 +60,7 @@ define void @f5(i8 *%src) {
 
 ; Check the next byte up, which should use OIY instead of OI.
 define void @f6(i8 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: oiy 4096(%r2), 127
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 4096
@@ -72,7 +72,7 @@ define void @f6(i8 *%src) {
 
 ; Check the high end of the OIY range.
 define void @f7(i8 *%src) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: oiy 524287(%r2), 127
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 524287
@@ -85,7 +85,7 @@ define void @f7(i8 *%src) {
 ; Check the next byte up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f8(i8 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: agfi %r2, 524288
 ; CHECK: oi 0(%r2), 127
 ; CHECK: br %r14
@@ -98,7 +98,7 @@ define void @f8(i8 *%src) {
 
 ; Check the high end of the negative OIY range.
 define void @f9(i8 *%src) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: oiy -1(%r2), 127
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 -1
@@ -110,7 +110,7 @@ define void @f9(i8 *%src) {
 
 ; Check the low end of the OIY range.
 define void @f10(i8 *%src) {
-; CHECK: f10:
+; CHECK-LABEL: f10:
 ; CHECK: oiy -524288(%r2), 127
 ; CHECK: br %r14
   %ptr = getelementptr i8 *%src, i64 -524288
@@ -123,7 +123,7 @@ define void @f10(i8 *%src) {
 ; Check the next byte down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define void @f11(i8 *%src) {
-; CHECK: f11:
+; CHECK-LABEL: f11:
 ; CHECK: agfi %r2, -524289
 ; CHECK: oi 0(%r2), 127
 ; CHECK: br %r14
@@ -136,7 +136,7 @@ define void @f11(i8 *%src) {
 
 ; Check that OI does not allow an index
 define void @f12(i64 %src, i64 %index) {
-; CHECK: f12:
+; CHECK-LABEL: f12:
 ; CHECK: agr %r2, %r3
 ; CHECK: oi 4095(%r2), 127
 ; CHECK: br %r14
@@ -151,7 +151,7 @@ define void @f12(i64 %src, i64 %index) {
 
 ; Check that OIY does not allow an index
 define void @f13(i64 %src, i64 %index) {
-; CHECK: f13:
+; CHECK-LABEL: f13:
 ; CHECK: agr %r2, %r3
 ; CHECK: oiy 4096(%r2), 127
 ; CHECK: br %r14

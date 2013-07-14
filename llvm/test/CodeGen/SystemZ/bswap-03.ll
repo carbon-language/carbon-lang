@@ -6,7 +6,7 @@ declare i64 @llvm.bswap.i64(i64 %a)
 
 ; Check LRVG with no displacement.
 define i64 @f1(i64 *%src) {
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: lrvg %r2, 0(%r2)
 ; CHECK: br %r14
   %a = load i64 *%src
@@ -16,7 +16,7 @@ define i64 @f1(i64 *%src) {
 
 ; Check the high end of the aligned LRVG range.
 define i64 @f2(i64 *%src) {
-; CHECK: f2:
+; CHECK-LABEL: f2:
 ; CHECK: lrvg %r2, 524280(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 65535
@@ -28,7 +28,7 @@ define i64 @f2(i64 *%src) {
 ; Check the next doubleword up, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f3(i64 *%src) {
-; CHECK: f3:
+; CHECK-LABEL: f3:
 ; CHECK: agfi %r2, 524288
 ; CHECK: lrvg %r2, 0(%r2)
 ; CHECK: br %r14
@@ -40,7 +40,7 @@ define i64 @f3(i64 *%src) {
 
 ; Check the high end of the negative aligned LRVG range.
 define i64 @f4(i64 *%src) {
-; CHECK: f4:
+; CHECK-LABEL: f4:
 ; CHECK: lrvg %r2, -8(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 -1
@@ -51,7 +51,7 @@ define i64 @f4(i64 *%src) {
 
 ; Check the low end of the LRVG range.
 define i64 @f5(i64 *%src) {
-; CHECK: f5:
+; CHECK-LABEL: f5:
 ; CHECK: lrvg %r2, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%src, i64 -65536
@@ -63,7 +63,7 @@ define i64 @f5(i64 *%src) {
 ; Check the next doubleword down, which needs separate address logic.
 ; Other sequences besides this one would be OK.
 define i64 @f6(i64 *%src) {
-; CHECK: f6:
+; CHECK-LABEL: f6:
 ; CHECK: agfi %r2, -524296
 ; CHECK: lrvg %r2, 0(%r2)
 ; CHECK: br %r14
@@ -75,7 +75,7 @@ define i64 @f6(i64 *%src) {
 
 ; Check that LRVG allows an index.
 define i64 @f7(i64 %src, i64 %index) {
-; CHECK: f7:
+; CHECK-LABEL: f7:
 ; CHECK: lrvg %r2, 524287({{%r3,%r2|%r2,%r3}})
 ; CHECK: br %r14
   %add1 = add i64 %src, %index
@@ -89,7 +89,7 @@ define i64 @f7(i64 %src, i64 %index) {
 ; Check that volatile accesses do not use LRVG, which might access the
 ; storage multple times.
 define i64 @f8(i64 *%src) {
-; CHECK: f8:
+; CHECK-LABEL: f8:
 ; CHECK: lg [[REG:%r[0-5]]], 0(%r2)
 ; CHECK: lrvgr %r2, [[REG]]
 ; CHECK: br %r14
@@ -101,7 +101,7 @@ define i64 @f8(i64 *%src) {
 ; Test a case where we spill the source of at least one LRVGR.  We want
 ; to use LRVG if possible.
 define void @f9(i64 *%ptr) {
-; CHECK: f9:
+; CHECK-LABEL: f9:
 ; CHECK: lrvg {{%r[0-9]+}}, 160(%r15)
 ; CHECK: br %r14
   %val0 = load volatile i64 *%ptr

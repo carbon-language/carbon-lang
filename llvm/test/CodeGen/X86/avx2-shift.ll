@@ -212,7 +212,7 @@ define <4 x i64> @variable_srl3_load(<4 x i64> %x, <4 x i64>* %y) {
 define <32 x i8> @shl9(<32 x i8> %A) nounwind {
   %B = shl <32 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
   ret <32 x i8> %B
-; CHECK: shl9:
+; CHECK-LABEL: shl9:
 ; CHECK: vpsllw $3
 ; CHECK: vpand
 ; CHECK: ret
@@ -221,7 +221,7 @@ define <32 x i8> @shl9(<32 x i8> %A) nounwind {
 define <32 x i8> @shr9(<32 x i8> %A) nounwind {
   %B = lshr <32 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
   ret <32 x i8> %B
-; CHECK: shr9:
+; CHECK-LABEL: shr9:
 ; CHECK: vpsrlw $3
 ; CHECK: vpand
 ; CHECK: ret
@@ -230,7 +230,7 @@ define <32 x i8> @shr9(<32 x i8> %A) nounwind {
 define <32 x i8> @sra_v32i8_7(<32 x i8> %A) nounwind {
   %B = ashr <32 x i8> %A, <i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7>
   ret <32 x i8> %B
-; CHECK: sra_v32i8_7:
+; CHECK-LABEL: sra_v32i8_7:
 ; CHECK: vpxor
 ; CHECK: vpcmpgtb
 ; CHECK: ret
@@ -239,7 +239,7 @@ define <32 x i8> @sra_v32i8_7(<32 x i8> %A) nounwind {
 define <32 x i8> @sra_v32i8(<32 x i8> %A) nounwind {
   %B = ashr <32 x i8> %A, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
   ret <32 x i8> %B
-; CHECK: sra_v32i8:
+; CHECK-LABEL: sra_v32i8:
 ; CHECK: vpsrlw $3
 ; CHECK: vpand
 ; CHECK: vpxor

@@ -2,7 +2,7 @@
 declare void @foo(i32)
 declare void @foo64(i64)
 
-; CHECK: neg:
+; CHECK-LABEL: neg:
 ; CHECK: negl %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -20,7 +20,7 @@ return:
   ret void
 }
 
-; CHECK: sar:
+; CHECK-LABEL: sar:
 ; CHECK: sarl %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -38,7 +38,7 @@ return:
   ret void
 }
 
-; CHECK: shr:
+; CHECK-LABEL: shr:
 ; CHECK: shrl %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -56,7 +56,7 @@ return:
   ret void
 }
 
-; CHECK: shri:
+; CHECK-LABEL: shri:
 ; CHECK: shrl $3, %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -74,7 +74,7 @@ return:
   ret void
 }
 
-; CHECK: shl:
+; CHECK-LABEL: shl:
 ; CHECK: addl %edi, %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -92,7 +92,7 @@ return:
   ret void
 }
 
-; CHECK: shli:
+; CHECK-LABEL: shli:
 ; CHECK: shll $4, %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -110,7 +110,7 @@ return:
   ret void
 }
 
-; CHECK: adc:
+; CHECK-LABEL: adc:
 ; CHECK: movabsq $-9223372036854775808, %rax
 ; CHECK-NEXT: addq  %rdi, %rax
 ; CHECK-NEXT: adcq  $0, %rsi
@@ -122,7 +122,7 @@ define zeroext i1 @adc(i128 %x) nounwind {
   ret i1 %cmp
 }
 
-; CHECK: sbb:
+; CHECK-LABEL: sbb:
 ; CHECK: cmpq  %rdx, %rdi
 ; CHECK-NEXT: sbbq  %rcx, %rsi
 ; CHECK-NEXT: setns %al
@@ -133,7 +133,7 @@ define zeroext i1 @sbb(i128 %x, i128 %y) nounwind {
   ret i1 %cmp
 }
 
-; CHECK: andn:
+; CHECK-LABEL: andn:
 ; CHECK: andnl   %esi, %edi, %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -152,7 +152,7 @@ return:
   ret void
 }
 
-; CHECK: bextr:
+; CHECK-LABEL: bextr:
 ; CHECK: bextrl   %esi, %edi, %edi
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
@@ -171,7 +171,7 @@ return:
   ret void
 }
 
-; CHECK: popcnt:
+; CHECK-LABEL: popcnt:
 ; CHECK: popcntl
 ; CHECK-NEXT: je
 ; CHECK: jmp foo
