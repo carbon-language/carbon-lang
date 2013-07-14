@@ -987,8 +987,8 @@ SDValue MSP430TargetLowering::LowerJumpTable(SDValue Op,
                                              SelectionDAG &DAG) const {
     JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
     SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
-    Result.getNode()->setDebugLoc(JT->getDebugLoc());
-    return Result;
+    return DAG.getNode(MSP430ISD::Wrapper, SDLoc(JT),
+                       getPointerTy(), Result);
 }
 
 /// getPostIndexedAddressParts - returns true by value, base pointer and
