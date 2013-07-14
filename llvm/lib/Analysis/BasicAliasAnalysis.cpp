@@ -857,8 +857,8 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   return ModRefResult(AliasAnalysis::getModRefInfo(CS, Loc) & Min);
 }
 
-static bool areVarIndicesEqual(SmallVector<VariableGEPIndex, 4> &Indices1,
-                               SmallVector<VariableGEPIndex, 4> &Indices2) {
+static bool areVarIndicesEqual(SmallVectorImpl<VariableGEPIndex> &Indices1,
+                               SmallVectorImpl<VariableGEPIndex> &Indices2) {
   unsigned Size1 = Indices1.size();
   unsigned Size2 = Indices2.size();
 

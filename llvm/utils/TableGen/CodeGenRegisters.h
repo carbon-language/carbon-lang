@@ -534,10 +534,10 @@ namespace llvm {
     // Find or create a sub-register index representing the concatenation of
     // non-overlapping sibling indices.
     CodeGenSubRegIndex *
-      getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8>&);
+      getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex *, 8>&);
 
     void
-    addConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8> &Parts,
+    addConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex *, 8> &Parts,
                          CodeGenSubRegIndex *Idx) {
       ConcatIdx.insert(std::make_pair(Parts, Idx));
     }

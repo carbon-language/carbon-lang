@@ -1299,7 +1299,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 /// always in the local (OverallLeftShift) coordinate space.
 ///
 static bool CollectBSwapParts(Value *V, int OverallLeftShift, uint32_t ByteMask,
-                              SmallVector<Value*, 8> &ByteValues) {
+                              SmallVectorImpl<Value *> &ByteValues) {
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     // If this is an or instruction, it may be an inner node of the bswap.
     if (I->getOpcode() == Instruction::Or) {

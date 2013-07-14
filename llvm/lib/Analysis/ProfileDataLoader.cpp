@@ -76,7 +76,7 @@ static unsigned ReadProfilingNumEntries(const char *ToolName, FILE *F,
 /// packet and then accumulate the entries into 'Data'.
 static void ReadProfilingBlock(const char *ToolName, FILE *F,
                                bool ShouldByteSwap,
-                               SmallVector<unsigned, 32> &Data) {
+                               SmallVectorImpl<unsigned> &Data) {
   // Read the number of entries...
   unsigned NumEntries = ReadProfilingNumEntries(ToolName, F, ShouldByteSwap);
 
@@ -99,7 +99,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
 /// run with when the current profiling data packet(s) were generated.
 static void ReadProfilingArgBlock(const char *ToolName, FILE *F,
                                   bool ShouldByteSwap,
-                                  SmallVector<std::string, 1> &CommandLines) {
+                                  SmallVectorImpl<std::string> &CommandLines) {
   // Read the number of bytes ...
   unsigned ArgLength = ReadProfilingNumEntries(ToolName, F, ShouldByteSwap);
 

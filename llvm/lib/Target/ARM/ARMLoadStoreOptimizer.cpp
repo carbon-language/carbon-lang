@@ -109,12 +109,12 @@ namespace {
                         unsigned PredReg,
                         unsigned Scratch,
                         DebugLoc dl,
-                        SmallVector<MachineBasicBlock::iterator, 4> &Merges);
+                        SmallVectorImpl<MachineBasicBlock::iterator> &Merges);
     void MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex, unsigned Base,
                       int Opcode, unsigned Size,
                       ARMCC::CondCodes Pred, unsigned PredReg,
                       unsigned Scratch, MemOpQueue &MemOps,
-                      SmallVector<MachineBasicBlock::iterator, 4> &Merges);
+                      SmallVectorImpl<MachineBasicBlock::iterator> &Merges);
 
     void AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps);
     bool FixInvalidRegPairOp(MachineBasicBlock &MBB,
@@ -371,7 +371,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
                                      ARMCC::CondCodes Pred, unsigned PredReg,
                                      unsigned Scratch,
                                      DebugLoc dl,
-                          SmallVector<MachineBasicBlock::iterator, 4> &Merges) {
+                         SmallVectorImpl<MachineBasicBlock::iterator> &Merges) {
   // First calculate which of the registers should be killed by the merged
   // instruction.
   const unsigned insertPos = memOps[insertAfter].Position;
@@ -444,10 +444,10 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
 /// load / store multiple instructions.
 void
 ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
-                          unsigned Base, int Opcode, unsigned Size,
-                          ARMCC::CondCodes Pred, unsigned PredReg,
-                          unsigned Scratch, MemOpQueue &MemOps,
-                          SmallVector<MachineBasicBlock::iterator, 4> &Merges) {
+                         unsigned Base, int Opcode, unsigned Size,
+                         ARMCC::CondCodes Pred, unsigned PredReg,
+                         unsigned Scratch, MemOpQueue &MemOps,
+                         SmallVectorImpl<MachineBasicBlock::iterator> &Merges) {
   bool isNotVFP = isi32Load(Opcode) || isi32Store(Opcode);
   int Offset = MemOps[SIndex].Offset;
   int SOffset = Offset;

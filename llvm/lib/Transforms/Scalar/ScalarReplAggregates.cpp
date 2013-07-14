@@ -166,21 +166,21 @@ namespace {
     void DeleteDeadInstructions();
 
     void RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
-                              SmallVector<AllocaInst*, 32> &NewElts);
+                              SmallVectorImpl<AllocaInst *> &NewElts);
     void RewriteBitCast(BitCastInst *BC, AllocaInst *AI, uint64_t Offset,
-                        SmallVector<AllocaInst*, 32> &NewElts);
+                        SmallVectorImpl<AllocaInst *> &NewElts);
     void RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
-                    SmallVector<AllocaInst*, 32> &NewElts);
+                    SmallVectorImpl<AllocaInst *> &NewElts);
     void RewriteLifetimeIntrinsic(IntrinsicInst *II, AllocaInst *AI,
                                   uint64_t Offset,
-                                  SmallVector<AllocaInst*, 32> &NewElts);
+                                  SmallVectorImpl<AllocaInst *> &NewElts);
     void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
                                       AllocaInst *AI,
-                                      SmallVector<AllocaInst*, 32> &NewElts);
+                                      SmallVectorImpl<AllocaInst *> &NewElts);
     void RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
-                                       SmallVector<AllocaInst*, 32> &NewElts);
+                                       SmallVectorImpl<AllocaInst *> &NewElts);
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
-                                      SmallVector<AllocaInst*, 32> &NewElts);
+                                      SmallVectorImpl<AllocaInst *> &NewElts);
     bool ShouldAttemptScalarRepl(AllocaInst *AI);
   };
 
@@ -1865,7 +1865,7 @@ bool SROA::TypeHasComponent(Type *T, uint64_t Offset, uint64_t Size) {
 /// Offset indicates the position within AI that is referenced by this
 /// instruction.
 void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
-                                SmallVector<AllocaInst*, 32> &NewElts) {
+                                SmallVectorImpl<AllocaInst *> &NewElts) {
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E;) {
     Use &TheUse = UI.getUse();
     Instruction *User = cast<Instruction>(*UI++);
@@ -1979,7 +1979,7 @@ void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
 /// RewriteBitCast - Update a bitcast reference to the alloca being replaced
 /// and recursively continue updating all of its uses.
 void SROA::RewriteBitCast(BitCastInst *BC, AllocaInst *AI, uint64_t Offset,
-                          SmallVector<AllocaInst*, 32> &NewElts) {
+                          SmallVectorImpl<AllocaInst *> &NewElts) {
   RewriteForScalarRepl(BC, AI, Offset, NewElts);
   if (BC->getOperand(0) != AI)
     return;
@@ -2037,7 +2037,7 @@ uint64_t SROA::FindElementAndOffset(Type *&T, uint64_t &Offset,
 /// elements of the alloca that are being split apart, and if so, rewrite
 /// the GEP to be relative to the new element.
 void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
-                      SmallVector<AllocaInst*, 32> &NewElts) {
+                      SmallVectorImpl<AllocaInst *> &NewElts) {
   uint64_t OldOffset = Offset;
   SmallVector<Value*, 8> Indices(GEPI->op_begin() + 1, GEPI->op_end());
   // If the GEP was dynamic then it must have been a dynamic vector lookup.
@@ -2099,7 +2099,7 @@ void SROA::RewriteGEP(GetElementPtrInst *GEPI, AllocaInst *AI, uint64_t Offset,
 /// to mark the lifetime of the scalarized memory.
 void SROA::RewriteLifetimeIntrinsic(IntrinsicInst *II, AllocaInst *AI,
                                     uint64_t Offset,
-                                    SmallVector<AllocaInst*, 32> &NewElts) {
+                                    SmallVectorImpl<AllocaInst *> &NewElts) {
   ConstantInt *OldSize = cast<ConstantInt>(II->getArgOperand(0));
   // Put matching lifetime markers on everything from Offset up to
   // Offset+OldSize.
@@ -2153,9 +2153,10 @@ void SROA::RewriteLifetimeIntrinsic(IntrinsicInst *II, AllocaInst *AI,
 
 /// RewriteMemIntrinUserOfAlloca - MI is a memcpy/memset/memmove from or to AI.
 /// Rewrite it to copy or set the elements of the scalarized memory.
-void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
-                                        AllocaInst *AI,
-                                        SmallVector<AllocaInst*, 32> &NewElts) {
+void
+SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
+                                   AllocaInst *AI,
+                                   SmallVectorImpl<AllocaInst *> &NewElts) {
   // If this is a memcpy/memmove, construct the other pointer as the
   // appropriate type.  The "Other" pointer is the pointer that goes to memory
   // that doesn't have anything to do with the alloca that we are promoting. For
@@ -2326,8 +2327,9 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
 /// RewriteStoreUserOfWholeAlloca - We found a store of an integer that
 /// overwrites the entire allocation.  Extract out the pieces of the stored
 /// integer and store them individually.
-void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
-                                         SmallVector<AllocaInst*, 32> &NewElts){
+void
+SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
+                                    SmallVectorImpl<AllocaInst *> &NewElts) {
   // Extract each element out of the integer according to its structure offset
   // and store the element value to the individual alloca.
   Value *SrcVal = SI->getOperand(0);
@@ -2440,8 +2442,9 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
 
 /// RewriteLoadUserOfWholeAlloca - We found a load of the entire allocation to
 /// an integer.  Load the individual pieces to form the aggregate value.
-void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
-                                        SmallVector<AllocaInst*, 32> &NewElts) {
+void
+SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
+                                   SmallVectorImpl<AllocaInst *> &NewElts) {
   // Extract each element out of the NewElts according to its structure offset
   // and form the result value.
   Type *AllocaEltTy = AI->getAllocatedType();

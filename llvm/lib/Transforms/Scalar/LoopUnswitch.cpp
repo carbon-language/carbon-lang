@@ -196,7 +196,7 @@ namespace {
 
     /// Split all of the edges from inside the loop to their exit blocks.
     /// Update the appropriate Phi nodes as we do so.
-    void SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks);
+    void SplitExitEdges(Loop *L, const SmallVectorImpl<BasicBlock *> &ExitBlocks);
 
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
@@ -752,7 +752,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
 /// SplitExitEdges - Split all of the edges from inside the loop to their exit
 /// blocks.  Update the appropriate Phi nodes as we do so.
 void LoopUnswitch::SplitExitEdges(Loop *L,
-                                const SmallVector<BasicBlock *, 8> &ExitBlocks){
+                               const SmallVectorImpl<BasicBlock *> &ExitBlocks){
 
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];

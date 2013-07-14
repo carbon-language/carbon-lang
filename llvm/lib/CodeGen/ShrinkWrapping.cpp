@@ -554,7 +554,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
 /// _outside_ the computed minimal placement regions have been covered.
 ///
 bool PEI::addUsesForMEMERegion(MachineBasicBlock* MBB,
-                               SmallVector<MachineBasicBlock*, 4>& blks) {
+                               SmallVectorImpl<MachineBasicBlock *> &blks) {
   if (MBB->succ_size() < 2 && MBB->pred_size() < 2) {
     bool processThisBlock = false;
     for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
@@ -629,7 +629,7 @@ bool PEI::addUsesForMEMERegion(MachineBasicBlock* MBB,
 /// addUsesForTopLevelLoops - add uses for CSRs used inside top
 /// level loops to the exit blocks of those loops.
 ///
-bool PEI::addUsesForTopLevelLoops(SmallVector<MachineBasicBlock*, 4>& blks) {
+bool PEI::addUsesForTopLevelLoops(SmallVectorImpl<MachineBasicBlock *> &blks) {
   bool addedUses = false;
 
   // Place restores for top level loops where needed.
@@ -674,7 +674,7 @@ bool PEI::addUsesForTopLevelLoops(SmallVector<MachineBasicBlock*, 4>& blks) {
 /// multi-entry/exit regions.
 ///
 bool PEI::calcSpillPlacements(MachineBasicBlock* MBB,
-                              SmallVector<MachineBasicBlock*, 4> &blks,
+                              SmallVectorImpl<MachineBasicBlock *> &blks,
                               CSRegBlockMap &prevSpills) {
   bool placedSpills = false;
   // Intersect (CSRegs - AnticIn[P]) for P in Predecessors(MBB)
@@ -736,7 +736,7 @@ bool PEI::calcSpillPlacements(MachineBasicBlock* MBB,
 /// multi-entry/exit regions.
 ///
 bool PEI::calcRestorePlacements(MachineBasicBlock* MBB,
-                                SmallVector<MachineBasicBlock*, 4> &blks,
+                                SmallVectorImpl<MachineBasicBlock *> &blks,
                                 CSRegBlockMap &prevRestores) {
   bool placedRestores = false;
   // Intersect (CSRegs - AvailOut[S]) for S in Successors(MBB)

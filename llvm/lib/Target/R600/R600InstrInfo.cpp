@@ -519,7 +519,7 @@ R600InstrInfo::fitsConstReadLimitations(const std::vector<MachineInstr *> &MIs)
     if (!isALUInstr(MI->getOpcode()))
       continue;
 
-    const SmallVector<std::pair<MachineOperand *, int64_t>, 3> &Srcs =
+    const SmallVectorImpl<std::pair<MachineOperand *, int64_t> > &Srcs =
         getSrcs(MI);
 
     for (unsigned j = 0, e = Srcs.size(); j < e; j++) {

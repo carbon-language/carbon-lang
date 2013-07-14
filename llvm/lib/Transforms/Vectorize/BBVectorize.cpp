@@ -356,7 +356,7 @@ namespace {
                      Instruction *J, unsigned o, bool IBeforeJ);
 
     void getReplacementInputsForPair(LLVMContext& Context, Instruction *I,
-                     Instruction *J, SmallVector<Value *, 3> &ReplacedOperands,
+                     Instruction *J, SmallVectorImpl<Value *> &ReplacedOperands,
                      bool IBeforeJ);
 
     void replaceOutputsOfPair(LLVMContext& Context, Instruction *I,
@@ -2687,7 +2687,7 @@ namespace {
   // to the vector instruction that fuses I with J.
   void BBVectorize::getReplacementInputsForPair(LLVMContext& Context,
                      Instruction *I, Instruction *J,
-                     SmallVector<Value *, 3> &ReplacedOperands,
+                     SmallVectorImpl<Value *> &ReplacedOperands,
                      bool IBeforeJ) {
     unsigned NumOperands = I->getNumOperands();
 

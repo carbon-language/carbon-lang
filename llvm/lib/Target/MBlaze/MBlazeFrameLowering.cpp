@@ -38,8 +38,8 @@ static cl::opt<bool> MBDisableStackAdjust(
   cl::desc("Disable MBlaze stack layout adjustment."),
   cl::Hidden);
 
-static void replaceFrameIndexes(MachineFunction &MF, 
-                                SmallVector<std::pair<int,int64_t>, 16> &FR) {
+static void replaceFrameIndexes(MachineFunction &MF,
+                                SmallVectorImpl<std::pair<int,int64_t> > &FR) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MBlazeFunctionInfo *MBlazeFI = MF.getInfo<MBlazeFunctionInfo>();
   const SmallVectorImpl<std::pair<int,int64_t> >::iterator FRB = FR.begin();

@@ -134,7 +134,7 @@ namespace {
     /// has a computable trip count and, if so, return a value that represents
     /// the trip count expression.
     CountValue *getLoopTripCount(MachineLoop *L,
-                                 SmallVector<MachineInstr*, 2> &OldInsts);
+                                 SmallVectorImpl<MachineInstr *> &OldInsts);
 
     /// \brief Return the expression that represents the number of times
     /// a loop iterates.  The function takes the operands that represent the
@@ -164,7 +164,7 @@ namespace {
 
     /// \brief Return true if the instruction is now dead.
     bool isDead(const MachineInstr *MI,
-                SmallVector<MachineInstr*, 1> &DeadPhis) const;
+                SmallVectorImpl<MachineInstr *> &DeadPhis) const;
 
     /// \brief Remove the instruction if it is now dead.
     void removeIfDead(MachineInstr *MI);
@@ -428,7 +428,7 @@ bool HexagonHardwareLoops::findInductionRegister(MachineLoop *L,
 /// induction variable patterns that are used in the calculation for
 /// the number of time the loop is executed.
 CountValue *HexagonHardwareLoops::getLoopTripCount(MachineLoop *L,
-                                SmallVector<MachineInstr*, 2> &OldInsts) {
+                                    SmallVectorImpl<MachineInstr *> &OldInsts) {
   MachineBasicBlock *TopMBB = L->getTopBlock();
   MachineBasicBlock::pred_iterator PI = TopMBB->pred_begin();
   assert(PI != TopMBB->pred_end() &&
@@ -890,7 +890,7 @@ bool HexagonHardwareLoops::containsInvalidInstruction(MachineLoop *L) const {
 /// for inline asm, physical registers and instructions with side effects
 /// removed.
 bool HexagonHardwareLoops::isDead(const MachineInstr *MI,
-                             SmallVector<MachineInstr*, 1> &DeadPhis) const {
+                              SmallVectorImpl<MachineInstr *> &DeadPhis) const {
   // Examine each operand.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);

@@ -1102,7 +1102,7 @@ void PredTransitions::getIntersectingVariants(
     TransVariant &Variant = Variants[VIdx];
     // Don't expand variants if the processor models don't intersect.
     // A zero processor index means any processor.
-    SmallVector<unsigned, 4> &ProcIndices = TransVec[TransIdx].ProcIndices;
+    SmallVectorImpl<unsigned> &ProcIndices = TransVec[TransIdx].ProcIndices;
     if (ProcIndices[0] && Variants[VIdx].ProcIdx) {
       unsigned Cnt = std::count(ProcIndices.begin(), ProcIndices.end(),
                                 Variant.ProcIdx);

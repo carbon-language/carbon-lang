@@ -3353,7 +3353,7 @@ static bool ForwardSwitchConditionToPHI(SwitchInst *SI) {
   for (ForwardingNodesMap::iterator I = ForwardingNodes.begin(),
        E = ForwardingNodes.end(); I != E; ++I) {
     PHINode *Phi = I->first;
-    SmallVector<int,4> &Indexes = I->second;
+    SmallVectorImpl<int> &Indexes = I->second;
 
     if (Indexes.size() < 2) continue;
 
@@ -3438,11 +3438,12 @@ static Constant *ConstantFold(Instruction *I,
 /// at the common destination basic block, *CommonDest, for one of the case
 /// destionations CaseDest corresponding to value CaseVal (0 for the default
 /// case), of a switch instruction SI.
-static bool GetCaseResults(SwitchInst *SI,
-                           ConstantInt *CaseVal,
-                           BasicBlock *CaseDest,
-                           BasicBlock **CommonDest,
-                           SmallVector<std::pair<PHINode*,Constant*>, 4> &Res) {
+static bool
+GetCaseResults(SwitchInst *SI,
+               ConstantInt *CaseVal,
+               BasicBlock *CaseDest,
+               BasicBlock **CommonDest,
+               SmallVectorImpl<std::pair<PHINode*,Constant*> > &Res) {
   // The block from which we enter the common destination.
   BasicBlock *Pred = SI->getParent();
 
@@ -3515,7 +3516,7 @@ namespace {
     SwitchLookupTable(Module &M,
                       uint64_t TableSize,
                       ConstantInt *Offset,
-               const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
+             const SmallVectorImpl<std::pair<ConstantInt*, Constant*> >& Values,
                       Constant *DefaultValue,
                       const DataLayout *TD);
 
@@ -3562,7 +3563,7 @@ namespace {
 SwitchLookupTable::SwitchLookupTable(Module &M,
                                      uint64_t TableSize,
                                      ConstantInt *Offset,
-               const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
+             const SmallVectorImpl<std::pair<ConstantInt*, Constant*> >& Values,
                                      Constant *DefaultValue,
                                      const DataLayout *TD)
     : SingleValue(0), BitMap(0), BitMapElementTy(0), Array(0) {

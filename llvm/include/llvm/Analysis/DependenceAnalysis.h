@@ -849,7 +849,7 @@ namespace llvm {
     bool propagate(const SCEV *&Src,
                    const SCEV *&Dst,
                    SmallBitVector &Loops,
-                   SmallVector<Constraint, 4> &Constraints,
+                   SmallVectorImpl<Constraint> &Constraints,
                    bool &Consistent);
 
     /// propagateDistance - Attempt to propagate a distance

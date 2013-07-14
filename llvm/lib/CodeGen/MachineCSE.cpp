@@ -84,11 +84,11 @@ namespace {
     bool hasLivePhysRegDefUses(const MachineInstr *MI,
                                const MachineBasicBlock *MBB,
                                SmallSet<unsigned,8> &PhysRefs,
-                               SmallVector<unsigned,2> &PhysDefs,
+                               SmallVectorImpl<unsigned> &PhysDefs,
                                bool &PhysUseDef) const;
     bool PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
                           SmallSet<unsigned,8> &PhysRefs,
-                          SmallVector<unsigned,2> &PhysDefs,
+                          SmallVectorImpl<unsigned> &PhysDefs,
                           bool &NonLocal) const;
     bool isCSECandidate(MachineInstr *MI);
     bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
@@ -193,7 +193,7 @@ MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
 bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
                                        const MachineBasicBlock *MBB,
                                        SmallSet<unsigned,8> &PhysRefs,
-                                       SmallVector<unsigned,2> &PhysDefs,
+                                       SmallVectorImpl<unsigned> &PhysDefs,
                                        bool &PhysUseDef) const{
   // First, add all uses to PhysRefs.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -244,7 +244,7 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
 
 bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
                                   SmallSet<unsigned,8> &PhysRefs,
-                                  SmallVector<unsigned,2> &PhysDefs,
+                                  SmallVectorImpl<unsigned> &PhysDefs,
                                   bool &NonLocal) const {
   // For now conservatively returns false if the common subexpression is
   // not in the same basic block as the given instruction. The only exception

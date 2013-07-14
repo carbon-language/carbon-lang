@@ -6077,9 +6077,10 @@ bool SDNode::hasPredecessor(const SDNode *N) const {
   return hasPredecessorHelper(N, Visited, Worklist);
 }
 
-bool SDNode::hasPredecessorHelper(const SDNode *N,
-                                  SmallPtrSet<const SDNode *, 32> &Visited,
-                                  SmallVector<const SDNode *, 16> &Worklist) const {
+bool
+SDNode::hasPredecessorHelper(const SDNode *N,
+                             SmallPtrSet<const SDNode *, 32> &Visited,
+                             SmallVectorImpl<const SDNode *> &Worklist) const {
   if (Visited.empty()) {
     Worklist.push_back(this);
   } else {

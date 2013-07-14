@@ -106,7 +106,7 @@ namespace {
     bool OverlapWithAssignments(LiveInterval *li, int Color) const;
     int ColorSlot(LiveInterval *li);
     bool ColorSlots(MachineFunction &MF);
-    void RewriteInstruction(MachineInstr *MI, SmallVector<int, 16> &SlotMapping,
+    void RewriteInstruction(MachineInstr *MI, SmallVectorImpl<int> &SlotMapping,
                             MachineFunction &MF);
     bool RemoveDeadStores(MachineBasicBlock* MBB);
   };
@@ -340,7 +340,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
 /// RewriteInstruction - Rewrite specified instruction by replacing references
 /// to old frame index with new one.
 void StackSlotColoring::RewriteInstruction(MachineInstr *MI,
-                                           SmallVector<int, 16> &SlotMapping,
+                                           SmallVectorImpl<int> &SlotMapping,
                                            MachineFunction &MF) {
   // Update the operands.
   for (unsigned i = 0, ee = MI->getNumOperands(); i != ee; ++i) {

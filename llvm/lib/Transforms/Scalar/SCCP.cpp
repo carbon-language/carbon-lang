@@ -439,7 +439,7 @@ private:
   // getFeasibleSuccessors - Return a vector of booleans to indicate which
   // successors are reachable from a given terminator instruction.
   //
-  void getFeasibleSuccessors(TerminatorInst &TI, SmallVector<bool, 16> &Succs);
+  void getFeasibleSuccessors(TerminatorInst &TI, SmallVectorImpl<bool> &Succs);
 
   // isEdgeFeasible - Return true if the control flow edge from the 'From' basic
   // block to the 'To' basic block is currently feasible.
@@ -513,7 +513,7 @@ private:
 // successors are reachable from a given terminator instruction.
 //
 void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
-                                       SmallVector<bool, 16> &Succs) {
+                                       SmallVectorImpl<bool> &Succs) {
   Succs.resize(TI.getNumSuccessors());
   if (BranchInst *BI = dyn_cast<BranchInst>(&TI)) {
     if (BI->isUnconditional()) {

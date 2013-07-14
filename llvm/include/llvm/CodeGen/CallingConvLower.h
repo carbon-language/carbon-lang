@@ -158,7 +158,7 @@ private:
   MachineFunction &MF;
   const TargetMachine &TM;
   const TargetRegisterInfo &TRI;
-  SmallVector<CCValAssign, 16> &Locs;
+  SmallVectorImpl<CCValAssign> &Locs;
   LLVMContext &Context;
 
   unsigned StackOffset;
@@ -219,7 +219,7 @@ protected:
 
 public:
   CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
-          const TargetMachine &TM, SmallVector<CCValAssign, 16> &locs,
+          const TargetMachine &TM, SmallVectorImpl<CCValAssign> &locs,
           LLVMContext &C);
 
   void addLoc(const CCValAssign &V) {

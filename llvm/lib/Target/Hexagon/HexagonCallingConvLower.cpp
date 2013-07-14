@@ -25,7 +25,7 @@ using namespace llvm;
 
 Hexagon_CCState::Hexagon_CCState(CallingConv::ID CC, bool isVarArg,
                                  const TargetMachine &tm,
-                                 SmallVector<CCValAssign, 16> &locs,
+                                 SmallVectorImpl<CCValAssign> &locs,
                                  LLVMContext &c)
   : CallingConv(CC), IsVarArg(isVarArg), TM(tm), Locs(locs), Context(c) {
   // No stack is used.

@@ -394,7 +394,7 @@ static bool AvoidsSinking(MachineInstr *MI, MachineRegisterInfo *MRI) {
 /// collectDebgValues - Scan instructions following MI and collect any
 /// matching DBG_VALUEs.
 static void collectDebugValues(MachineInstr *MI,
-                               SmallVector<MachineInstr *, 2> & DbgValues) {
+                               SmallVectorImpl<MachineInstr *> &DbgValues) {
   DbgValues.clear();
   if (!MI->getOperand(0).isReg())
     return;

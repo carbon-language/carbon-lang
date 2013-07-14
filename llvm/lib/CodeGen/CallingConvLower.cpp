@@ -24,7 +24,7 @@
 using namespace llvm;
 
 CCState::CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &mf,
-                 const TargetMachine &tm, SmallVector<CCValAssign, 16> &locs,
+                 const TargetMachine &tm, SmallVectorImpl<CCValAssign> &locs,
                  LLVMContext &C)
   : CallingConv(CC), IsVarArg(isVarArg), MF(mf), TM(tm),
     TRI(*TM.getRegisterInfo()), Locs(locs), Context(C),

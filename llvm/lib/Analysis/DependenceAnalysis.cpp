@@ -2977,7 +2977,7 @@ const SCEV *DependenceAnalysis::addToCoefficient(const SCEV *Expr,
 bool DependenceAnalysis::propagate(const SCEV *&Src,
                                    const SCEV *&Dst,
                                    SmallBitVector &Loops,
-                                   SmallVector<Constraint, 4> &Constraints,
+                                   SmallVectorImpl<Constraint> &Constraints,
                                    bool &Consistent) {
   bool Result = false;
   for (int LI = Loops.find_first(); LI >= 0; LI = Loops.find_next(LI)) {

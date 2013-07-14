@@ -369,7 +369,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Check if the link register (LR) must be saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
-  const SmallVector<unsigned, 3> &MustSaveCRs = FI->getMustSaveCRs();
+  const SmallVectorImpl<unsigned> &MustSaveCRs = FI->getMustSaveCRs();
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
 
@@ -642,7 +642,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   // Check if the link register (LR) has been saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
-  const SmallVector<unsigned, 3> &MustSaveCRs = FI->getMustSaveCRs();
+  const SmallVectorImpl<unsigned> &MustSaveCRs = FI->getMustSaveCRs();
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF);
 

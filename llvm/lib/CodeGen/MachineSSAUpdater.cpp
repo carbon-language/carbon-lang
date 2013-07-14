@@ -77,7 +77,7 @@ unsigned MachineSSAUpdater::GetValueAtEndOfBlock(MachineBasicBlock *BB) {
 
 static
 unsigned LookForIdenticalPHI(MachineBasicBlock *BB,
-          SmallVector<std::pair<MachineBasicBlock*, unsigned>, 8> &PredValues) {
+        SmallVectorImpl<std::pair<MachineBasicBlock*, unsigned> > &PredValues) {
   if (BB->empty())
     return 0;
 

@@ -107,7 +107,7 @@ private:
   bool SubstituteKCacheBank(MachineInstr *MI,
       std::vector<std::pair<unsigned, unsigned> > &CachedConsts) const {
     std::vector<std::pair<unsigned, unsigned> > UsedKCache;
-    const SmallVector<std::pair<MachineOperand *, int64_t>, 3> &Consts =
+    const SmallVectorImpl<std::pair<MachineOperand *, int64_t> > &Consts =
         TII->getSrcs(MI);
     assert((TII->isALUInstr(MI->getOpcode()) ||
         MI->getOpcode() == AMDGPU::DOT_4) && "Can't assign Const");

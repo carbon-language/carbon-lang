@@ -118,7 +118,7 @@ public:
     return false;
   }
 
-  const SmallVector<int, 16>& getLiveIn() const { return LiveInFI; }
+  const SmallVectorImpl<int> &getLiveIn() const { return LiveInFI; }
 
   void recordReplacement(int OFI, int NFI) {
     FIReplacements.insert(std::make_pair(OFI,NFI));

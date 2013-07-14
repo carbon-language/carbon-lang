@@ -229,8 +229,8 @@ private:
   void InsertCopiesAndMoveSuccs(SUnit*, unsigned,
                                 const TargetRegisterClass*,
                                 const TargetRegisterClass*,
-                                SmallVector<SUnit*, 2>&);
-  bool DelayForLiveRegsBottomUp(SUnit*, SmallVector<unsigned, 4>&);
+                                SmallVectorImpl<SUnit*>&);
+  bool DelayForLiveRegsBottomUp(SUnit*, SmallVectorImpl<unsigned>&);
 
   void releaseInterferences(unsigned Reg = 0);
 
@@ -1133,9 +1133,9 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 /// InsertCopiesAndMoveSuccs - Insert register copies and move all
 /// scheduled successors of the given SUnit to the last copy.
 void ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
-                                               const TargetRegisterClass *DestRC,
-                                               const TargetRegisterClass *SrcRC,
-                                               SmallVector<SUnit*, 2> &Copies) {
+                                              const TargetRegisterClass *DestRC,
+                                              const TargetRegisterClass *SrcRC,
+                                              SmallVectorImpl<SUnit*> &Copies) {
   SUnit *CopyFromSU = CreateNewSUnit(NULL);
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
@@ -1205,7 +1205,7 @@ static EVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
 static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
                                std::vector<SUnit*> &LiveRegDefs,
                                SmallSet<unsigned, 4> &RegAdded,
-                               SmallVector<unsigned, 4> &LRegs,
+                               SmallVectorImpl<unsigned> &LRegs,
                                const TargetRegisterInfo *TRI) {
   for (MCRegAliasIterator AliasI(Reg, TRI, true); AliasI.isValid(); ++AliasI) {
 
@@ -1227,7 +1227,7 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
 static void CheckForLiveRegDefMasked(SUnit *SU, const uint32_t *RegMask,
                                      std::vector<SUnit*> &LiveRegDefs,
                                      SmallSet<unsigned, 4> &RegAdded,
-                                     SmallVector<unsigned, 4> &LRegs) {
+                                     SmallVectorImpl<unsigned> &LRegs) {
   // Look at all live registers. Skip Reg0 and the special CallResource.
   for (unsigned i = 1, e = LiveRegDefs.size()-1; i != e; ++i) {
     if (!LiveRegDefs[i]) continue;
@@ -1252,7 +1252,7 @@ static const uint32_t *getNodeRegMask(const SDNode *N) {
 /// If the specific node is the last one that's available to schedule, do
 /// whatever is necessary (i.e. backtracking or cloning) to make it possible.
 bool ScheduleDAGRRList::
-DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
+DelayForLiveRegsBottomUp(SUnit *SU, SmallVectorImpl<unsigned> &LRegs) {
   if (NumLiveRegs == 0)
     return false;
 
@@ -1331,7 +1331,7 @@ void ScheduleDAGRRList::releaseInterferences(unsigned Reg) {
     SUnit *SU = Interferences[i-1];
     LRegsMapT::iterator LRegsPos = LRegsMap.find(SU);
     if (Reg) {
-      SmallVector<unsigned, 4> &LRegs = LRegsPos->second;
+      SmallVectorImpl<unsigned> &LRegs = LRegsPos->second;
       if (std::find(LRegs.begin(), LRegs.end(), Reg) == LRegs.end())
         continue;
     }
@@ -1385,7 +1385,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
   // to resolve it.
   for (unsigned i = 0, e = Interferences.size(); i != e; ++i) {
     SUnit *TrySU = Interferences[i];
-    SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
+    SmallVectorImpl<unsigned> &LRegs = LRegsMap[TrySU];
 
     // Try unscheduling up to the point where it's safe to schedule
     // this node.
@@ -1433,7 +1433,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
     // insert cross class copies.
     // If it's not too expensive, i.e. cost != -1, issue copies.
     SUnit *TrySU = Interferences[0];
-    SmallVector<unsigned, 4> &LRegs = LRegsMap[TrySU];
+    SmallVectorImpl<unsigned> &LRegs = LRegsMap[TrySU];
     assert(LRegs.size() == 1 && "Can't handle this yet!");
     unsigned Reg = LRegs[0];
     SUnit *LRDef = LiveRegDefs[Reg];

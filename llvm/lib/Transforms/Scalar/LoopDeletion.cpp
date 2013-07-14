@@ -51,8 +51,8 @@ namespace {
     }
 
   private:
-    bool isLoopDead(Loop *L, SmallVector<BasicBlock*, 4> &exitingBlocks,
-                    SmallVector<BasicBlock*, 4> &exitBlocks,
+    bool isLoopDead(Loop *L, SmallVectorImpl<BasicBlock *> &exitingBlocks,
+                    SmallVectorImpl<BasicBlock *> &exitBlocks,
                     bool &Changed, BasicBlock *Preheader);
 
   };
@@ -77,8 +77,8 @@ Pass *llvm::createLoopDeletionPass() {
 /// checked for unique exit and exiting blocks, and that the code is in LCSSA
 /// form.
 bool LoopDeletion::isLoopDead(Loop *L,
-                              SmallVector<BasicBlock*, 4> &exitingBlocks,
-                              SmallVector<BasicBlock*, 4> &exitBlocks,
+                              SmallVectorImpl<BasicBlock *> &exitingBlocks,
+                              SmallVectorImpl<BasicBlock *> &exitBlocks,
                               bool &Changed, BasicBlock *Preheader) {
   BasicBlock *exitBlock = exitBlocks[0];
 

@@ -112,13 +112,13 @@ namespace llvm {
     bool calcAvailInOut(MachineBasicBlock* MBB);
     void calculateAnticAvail(MachineFunction &Fn);
     bool addUsesForMEMERegion(MachineBasicBlock* MBB,
-                              SmallVector<MachineBasicBlock*, 4>& blks);
-    bool addUsesForTopLevelLoops(SmallVector<MachineBasicBlock*, 4>& blks);
+                              SmallVectorImpl<MachineBasicBlock *> &blks);
+    bool addUsesForTopLevelLoops(SmallVectorImpl<MachineBasicBlock *> &blks);
     bool calcSpillPlacements(MachineBasicBlock* MBB,
-                             SmallVector<MachineBasicBlock*, 4> &blks,
+                             SmallVectorImpl<MachineBasicBlock *> &blks,
                              CSRegBlockMap &prevSpills);
     bool calcRestorePlacements(MachineBasicBlock* MBB,
-                               SmallVector<MachineBasicBlock*, 4> &blks,
+                               SmallVectorImpl<MachineBasicBlock *> &blks,
                                CSRegBlockMap &prevRestores);
     void placeSpillsAndRestores(MachineFunction &Fn);
     void placeCSRSpillsAndRestores(MachineFunction &Fn);

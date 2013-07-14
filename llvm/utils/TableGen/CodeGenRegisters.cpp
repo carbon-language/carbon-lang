@@ -1088,7 +1088,7 @@ CodeGenRegBank::getCompositeSubRegIndex(CodeGenSubRegIndex *A,
 }
 
 CodeGenSubRegIndex *CodeGenRegBank::
-getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex*, 8> &Parts) {
+getConcatSubRegIndex(const SmallVector<CodeGenSubRegIndex *, 8> &Parts) {
   assert(Parts.size() > 1 && "Need two parts to concatenate");
 
   // Look for an existing entry.

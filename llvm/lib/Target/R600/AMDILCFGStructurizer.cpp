@@ -92,7 +92,7 @@ void PrintLoopinfo(const LoopinfoT &LoopInfo, llvm::raw_ostream &OS) {
 }
 
 template<class NodeT>
-void ReverseVector(SmallVector<NodeT *, DEFAULT_VEC_SLOTS> &Src) {
+void ReverseVector(SmallVectorImpl<NodeT *> &Src) {
   size_t sz = Src.size();
   for (size_t i = 0; i < sz/2; ++i) {
     NodeT *t = Src[i];
@@ -258,7 +258,7 @@ private:
   BlockT *normalizeInfiniteLoopExit(LoopT *LoopRep);
   void removeUnconditionalBranch(BlockT *SrcBlock);
   void removeRedundantConditionalBranch(BlockT *SrcBlock);
-  void addDummyExitBlock(SmallVector<BlockT *, DEFAULT_VEC_SLOTS> &RetBlocks);
+  void addDummyExitBlock(SmallVectorImpl<BlockT *> &RetBlocks);
 
   void removeSuccessor(BlockT *SrcBlock);
   BlockT *cloneBlockForPredecessor(BlockT *CurBlock, BlockT *PredBlock);
@@ -2076,8 +2076,8 @@ void CFGStructurizer<PassT>::removeRedundantConditionalBranch(BlockT *srcBlk) {
 } //removeRedundantConditionalBranch
 
 template<class PassT>
-void CFGStructurizer<PassT>::addDummyExitBlock(SmallVector<BlockT*,
-                                               DEFAULT_VEC_SLOTS> &retBlks) {
+void CFGStructurizer<PassT>::addDummyExitBlock(SmallVectorImpl<BlockT *>
+                                               &retBlks) {
   BlockT *dummyExitBlk = funcRep->CreateMachineBasicBlock();
   funcRep->push_back(dummyExitBlk);  //insert to function
   CFGTraits::insertInstrEnd(dummyExitBlk, AMDGPU::RETURN, passRep);

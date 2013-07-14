@@ -279,7 +279,7 @@ namespace {
     /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
     /// looking for aliasing nodes and adding them to the Aliases vector.
     void GatherAllAliases(SDNode *N, SDValue OriginalChain,
-                          SmallVector<SDValue, 8> &Aliases);
+                          SmallVectorImpl<SDValue> &Aliases);
 
     /// isAlias - Return true if there is any possibility that the two addresses
     /// overlap.
@@ -2950,7 +2950,7 @@ SDValue DAGCombiner::MatchBSwapHWordLow(SDNode *N, SDValue N0, SDValue N1,
 /// isBSwapHWordElement - Return true if the specified node is an element
 /// that makes up a 32-bit packed halfword byteswap. i.e.
 /// ((x&0xff)<<8)|((x&0xff00)>>8)|((x&0x00ff0000)<<8)|((x&0xff000000)>>8)
-static bool isBSwapHWordElement(SDValue N, SmallVector<SDNode*,4> &Parts) {
+static bool isBSwapHWordElement(SDValue N, SmallVectorImpl<SDNode *> &Parts) {
   if (!N.getNode()->hasOneUse())
     return false;
 
@@ -4309,7 +4309,7 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
 // mentioned transformation is profitable.
 static bool ExtendUsesToFormExtLoad(SDNode *N, SDValue N0,
                                     unsigned ExtOpc,
-                                    SmallVector<SDNode*, 4> &ExtendNodes,
+                                    SmallVectorImpl<SDNode *> &ExtendNodes,
                                     const TargetLowering &TLI) {
   bool HasCopyToRegUses = false;
   bool isTruncFree = TLI.isTruncateFree(N->getValueType(0), N0.getValueType());
@@ -10240,7 +10240,7 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
 /// looking for aliasing nodes and adding them to the Aliases vector.
 void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
-                                   SmallVector<SDValue, 8> &Aliases) {
+                                   SmallVectorImpl<SDValue> &Aliases) {
   SmallVector<SDValue, 8> Chains;     // List of chains to visit.
   SmallPtrSet<SDNode *, 16> Visited;  // Visited node set.
 

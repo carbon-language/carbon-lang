@@ -422,7 +422,7 @@ static bool canBeMerged(const ConstantRange &A, const ConstantRange &B) {
   return !A.intersectWith(B).isEmptySet() || isContiguous(A, B);
 }
 
-static bool tryMergeRange(SmallVector<Value*, 4> &EndPoints, ConstantInt *Low,
+static bool tryMergeRange(SmallVectorImpl<Value *> &EndPoints, ConstantInt *Low,
                           ConstantInt *High) {
   ConstantRange NewRange(Low->getValue(), High->getValue());
   unsigned Size = EndPoints.size();
@@ -439,7 +439,7 @@ static bool tryMergeRange(SmallVector<Value*, 4> &EndPoints, ConstantInt *Low,
   return false;
 }
 
-static void addRange(SmallVector<Value*, 4> &EndPoints, ConstantInt *Low,
+static void addRange(SmallVectorImpl<Value *> &EndPoints, ConstantInt *Low,
                      ConstantInt *High) {
   if (!EndPoints.empty())
     if (tryMergeRange(EndPoints, Low, High))

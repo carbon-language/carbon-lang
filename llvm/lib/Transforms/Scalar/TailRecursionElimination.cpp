@@ -99,16 +99,16 @@ namespace {
     bool EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
                                     BasicBlock *&OldEntry,
                                     bool &TailCallsAreMarkedTail,
-                                    SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                    SmallVectorImpl<PHINode *> &ArgumentPHIs,
                                     bool CannotTailCallElimCallsMarkedTail);
     bool FoldReturnAndProcessPred(BasicBlock *BB,
                                   ReturnInst *Ret, BasicBlock *&OldEntry,
                                   bool &TailCallsAreMarkedTail,
-                                  SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                  SmallVectorImpl<PHINode *> &ArgumentPHIs,
                                   bool CannotTailCallElimCallsMarkedTail);
     bool ProcessReturningBlock(ReturnInst *RI, BasicBlock *&OldEntry,
                                bool &TailCallsAreMarkedTail,
-                               SmallVector<PHINode*, 8> &ArgumentPHIs,
+                               SmallVectorImpl<PHINode *> &ArgumentPHIs,
                                bool CannotTailCallElimCallsMarkedTail);
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
@@ -445,7 +445,7 @@ TailCallElim::FindTRECandidate(Instruction *TI,
 bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
                                        BasicBlock *&OldEntry,
                                        bool &TailCallsAreMarkedTail,
-                                       SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                       SmallVectorImpl<PHINode *> &ArgumentPHIs,
                                        bool CannotTailCallElimCallsMarkedTail) {
   // If we are introducing accumulator recursion to eliminate operations after
   // the call instruction that are both associative and commutative, the initial
@@ -621,7 +621,7 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
 bool TailCallElim::FoldReturnAndProcessPred(BasicBlock *BB,
                                        ReturnInst *Ret, BasicBlock *&OldEntry,
                                        bool &TailCallsAreMarkedTail,
-                                       SmallVector<PHINode*, 8> &ArgumentPHIs,
+                                       SmallVectorImpl<PHINode *> &ArgumentPHIs,
                                        bool CannotTailCallElimCallsMarkedTail) {
   bool Change = false;
 
@@ -655,10 +655,11 @@ bool TailCallElim::FoldReturnAndProcessPred(BasicBlock *BB,
   return Change;
 }
 
-bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
-                                         bool &TailCallsAreMarkedTail,
-                                         SmallVector<PHINode*, 8> &ArgumentPHIs,
-                                       bool CannotTailCallElimCallsMarkedTail) {
+bool
+TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
+                                    bool &TailCallsAreMarkedTail,
+                                    SmallVectorImpl<PHINode *> &ArgumentPHIs,
+                                    bool CannotTailCallElimCallsMarkedTail) {
   CallInst *CI = FindTRECandidate(Ret, CannotTailCallElimCallsMarkedTail);
   if (!CI)
     return false;

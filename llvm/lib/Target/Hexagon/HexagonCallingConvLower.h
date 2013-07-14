@@ -48,14 +48,14 @@ class Hexagon_CCState {
   CallingConv::ID CallingConv;
   bool IsVarArg;
   const TargetMachine &TM;
-  SmallVector<CCValAssign, 16> &Locs;
+  SmallVectorImpl<CCValAssign> &Locs;
   LLVMContext &Context;
 
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
 public:
   Hexagon_CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &TM,
-                SmallVector<CCValAssign, 16> &locs, LLVMContext &c);
+                  SmallVectorImpl<CCValAssign> &locs, LLVMContext &c);
 
   void addLoc(const CCValAssign &V) {
     Locs.push_back(V);

@@ -160,7 +160,7 @@ public:
   int getCRSpillFrameIndex() const { return CRSpillFrameIndex; }
   void setCRSpillFrameIndex(int idx) { CRSpillFrameIndex = idx; }
 
-  const SmallVector<unsigned, 3> &
+  const SmallVectorImpl<unsigned> &
     getMustSaveCRs() const { return MustSaveCRs; }
   void addMustSaveCR(unsigned Reg) { MustSaveCRs.push_back(Reg); }
 };
