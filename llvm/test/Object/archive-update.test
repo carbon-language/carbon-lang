@@ -6,24 +6,32 @@ RUN: cd %T
 RUN: rm -f %t.a
 
 Create a file named evenlen that is newer than the evenlen on the source dir.
-RUN: mkdir -p %t.dir
-RUN: echo newer > %t.dir/evenlen
+RUN: mkdir -p %t.older
+RUN: echo older > %t.older/evenlen
+
+Either the shell supports the 'touch' command with a flag to manually set the
+mtime or we sleep for over a second so that the mtime is definitely observable.
+RUN: touch -m -t 200001010000 %t.older/evenlen || sleep 1.1
+
+RUN: mkdir -p %t.newer
+RUN: echo newer > %t.newer/evenlen
+RUN: touch %t.newer/evenlen
 
 Create an achive with the newest file
-RUN: llvm-ar r %t.a %t.dir/evenlen
+RUN: llvm-ar r %t.a %t.newer/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 Check that without the 'u' option the member is replaced with an older file.
-RUN: llvm-ar r %t.a %p/Inputs/evenlen
+RUN: llvm-ar r %t.a %t.older/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=OLDER %s
 
 Check that with the 'u' option the member is replaced with a newer file.
-RUN: llvm-ar ru %t.a %t.dir/evenlen
+RUN: llvm-ar ru %t.a %t.newer/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 Check that with the 'u' option the member is not replaced with an older file.
-RUN: llvm-ar ru %t.a %p/Inputs/evenlen
+RUN: llvm-ar ru %t.a %t.older/evenlen
 RUN: llvm-ar p %t.a | FileCheck --check-prefix=NEWER %s
 
 NEWER: newer
-OLDER: evenlen
+OLDER: older
