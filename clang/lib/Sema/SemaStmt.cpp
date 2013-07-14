@@ -1216,13 +1216,13 @@ namespace {
   // of the excluded constructs are used.
   class DeclExtractor : public EvaluatedExprVisitor<DeclExtractor> {
     llvm::SmallPtrSet<VarDecl*, 8> &Decls;
-    SmallVector<SourceRange, 10> &Ranges;
+    SmallVectorImpl<SourceRange> &Ranges;
     bool Simple;
   public:
     typedef EvaluatedExprVisitor<DeclExtractor> Inherited;
 
     DeclExtractor(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls,
-                  SmallVector<SourceRange, 10> &Ranges) :
+                  SmallVectorImpl<SourceRange> &Ranges) :
         Inherited(S.Context),
         Decls(Decls),
         Ranges(Ranges),

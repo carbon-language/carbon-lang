@@ -1041,7 +1041,7 @@ llvm::Value *CGObjCGNU::EmitNSAutoreleasePoolClassRef(CodeGenFunction &CGF) {
 llvm::Value *CGObjCGNU::GetSelector(CodeGenFunction &CGF, Selector Sel,
     const std::string &TypeEncoding, bool lval) {
 
-  SmallVector<TypedSelector, 2> &Types = SelectorTable[Sel];
+  SmallVectorImpl<TypedSelector> &Types = SelectorTable[Sel];
   llvm::GlobalAlias *SelValue = 0;
 
 
