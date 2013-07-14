@@ -183,10 +183,10 @@ let isBarrier = 1 in {
                     "br\t$brdst",
                     [(brind tblockaddress:$brdst)]>;
     def Br  : I16rr<0, (outs), (ins GR16:$brdst),
-                    "mov.w\t{$brdst, pc}",
+                    "br\t$brdst",
                     [(brind GR16:$brdst)]>;
     def Bm  : I16rm<0, (outs), (ins memsrc:$brdst),
-                    "mov.w\t{$brdst, pc}",
+                    "br\t$brdst",
                     [(brind (load addr:$brdst))]>;
   }
 }

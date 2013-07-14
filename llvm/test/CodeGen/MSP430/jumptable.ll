@@ -13,7 +13,7 @@ entry:
   %0 = load i16* %i.addr, align 2
 ; CHECK: mov.w #2, r14
 ; CHECK: call #__mulhi3hw_noint
-; CHECK: mov.w .LJTI0_0(r15), pc
+; CHECK: br .LJTI0_0(r15)
   switch i16 %0, label %sw.default [
     i16 0, label %sw.bb
     i16 1, label %sw.bb1
