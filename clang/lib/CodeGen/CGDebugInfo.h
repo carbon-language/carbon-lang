@@ -60,6 +60,7 @@ class CGDebugInfo {
   llvm::DIType OCLImage2dDITy, OCLImage2dArrayDITy;
   llvm::DIType OCLImage3dDITy;
   llvm::DIType OCLEventDITy;
+  llvm::DIType BlockLiteralGeneric;
 
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
@@ -78,9 +79,6 @@ class CGDebugInfo {
   /// ReplaceMap - Cache of forward declared types to RAUW at the end of
   /// compilation.
   std::vector<std::pair<void *, llvm::WeakVH> >ReplaceMap;
-
-  bool BlockLiteralGenericSet;
-  llvm::DIType BlockLiteralGeneric;
 
   // LexicalBlockStack - Keep track of our current nested lexical block.
   std::vector<llvm::TrackingVH<llvm::MDNode> > LexicalBlockStack;

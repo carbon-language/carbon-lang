@@ -41,9 +41,8 @@ using namespace clang;
 using namespace clang::CodeGen;
 
 CGDebugInfo::CGDebugInfo(CodeGenModule &CGM)
-  : CGM(CGM), DebugKind(CGM.getCodeGenOpts().getDebugInfo()),
-    DBuilder(CGM.getModule()),
-    BlockLiteralGenericSet(false) {
+    : CGM(CGM), DebugKind(CGM.getCodeGenOpts().getDebugInfo()),
+      DBuilder(CGM.getModule()) {
   CreateCompileUnit();
 }
 
@@ -650,7 +649,7 @@ llvm::DIType CGDebugInfo::getOrCreateStructPtrType(StringRef Name,
 
 llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
                                      llvm::DIFile Unit) {
-  if (BlockLiteralGenericSet)
+  if (BlockLiteralGeneric.isType())
     return BlockLiteralGeneric;
 
   SmallVector<llvm::Value *, 8> EltTys;
@@ -706,7 +705,6 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
                                     Unit, LineNo, FieldOffset, 0,
                                     Flags, llvm::DIType(), Elements);
 
-  BlockLiteralGenericSet = true;
   BlockLiteralGeneric = DBuilder.createPointerType(EltTy, Size);
   return BlockLiteralGeneric;
 }
