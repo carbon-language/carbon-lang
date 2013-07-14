@@ -19,6 +19,8 @@
 
 #include "isl/ctx.h"
 
+#include "llvm/Support/raw_ostream.h"
+
 struct isl_map;
 struct isl_union_map;
 struct isl_set;
@@ -59,6 +61,18 @@ std::string stringFromIslObj(__isl_keep isl_pw_multi_aff *pma);
 std::string stringFromIslObj(__isl_keep isl_aff *aff);
 std::string stringFromIslObj(__isl_keep isl_pw_aff *pwaff);
 //@}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                                     __isl_keep isl_union_map *Map) {
+  OS << polly::stringFromIslObj(Map);
+  return OS;
+}
+
+inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                                     __isl_keep isl_map *Map) {
+  OS << polly::stringFromIslObj(Map);
+  return OS;
+}
 } // end namespace polly
 
 #endif

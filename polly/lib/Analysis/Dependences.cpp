@@ -249,15 +249,9 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
 }
 
 void Dependences::printScop(raw_ostream &OS) const {
-  std::string RAWString, WARString, WAWString;
-
-  RAWString = polly::stringFromIslObj(RAW);
-  WARString = polly::stringFromIslObj(WAR);
-  WAWString = polly::stringFromIslObj(WAW);
-
-  OS << "\tRAW dependences:\n\t\t" << RAWString << "\n";
-  OS << "\tWAR dependences:\n\t\t" << WARString << "\n";
-  OS << "\tWAW dependences:\n\t\t" << WAWString << "\n";
+  OS << "\tRAW dependences:\n\t\t" << RAW << "\n";
+  OS << "\tWAR dependences:\n\t\t" << WAR << "\n";
+  OS << "\tWAW dependences:\n\t\t" << WAW << "\n";
 }
 
 void Dependences::releaseMemory() {

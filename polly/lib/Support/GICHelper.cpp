@@ -19,8 +19,6 @@
 #include "isl/union_set.h"
 #include "isl/val.h"
 
-#include "llvm/Support/raw_ostream.h"
-
 using namespace llvm;
 
 void polly::MPZ_from_APInt(mpz_t v, const APInt apint, bool is_signed) {
