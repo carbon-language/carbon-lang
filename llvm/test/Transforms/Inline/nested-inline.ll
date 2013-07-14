@@ -47,7 +47,7 @@ UnifiedReturnBlock:		; preds = %cond_next13
 	ret void
 }
 
-; CHECK-NOT-LABEL: @bar(
+; CHECK-NOT: @bar(
 define internal fastcc void @bar(i32 %X) {
 entry:
 	%ALL = alloca i32, align 4		; <i32*> [#uses=1]
@@ -101,7 +101,7 @@ declare void @ext(i32*)
 define void @test(i32 %X) {
 entry:
 ; CHECK: test
-; CHECK-NOT-LABEL: @bar(
+; CHECK-NOT: @bar(
 	tail call fastcc void @bar( i32 %X )
 	tail call fastcc void @bar( i32 %X )
 	tail call fastcc void @bar2( i32 %X )

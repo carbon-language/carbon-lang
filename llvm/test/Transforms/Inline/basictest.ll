@@ -20,7 +20,7 @@ define i32 @test1(i32 %W) {
 
 %T = type { i32, i32 }
 
-; CHECK-NOT-LABEL: @test2f(
+; CHECK-NOT: @test2f(
 define internal %T* @test2f(i1 %cond, %T* %P) {
   br i1 %cond, label %T, label %F
   

@@ -15,7 +15,7 @@ declare i32 @getval() nounwind
 ; CHECK-LABEL: @foo(
 ; CHECK: return:
 ; CHECK: %retval.0 = phi i32 [ %tmp7.i, %land.lhs.true ], [ 0, %do.cond ], [ %tmp7.i.1, %land.lhs.true.1 ], [ 0, %do.cond.1 ], [ %tmp7.i.2, %land.lhs.true.2 ], [ 0, %do.cond.2 ], [ %tmp7.i.3, %land.lhs.true.3 ], [ 0, %do.cond.3 ]
-; CHECK-NOT-LABEL: @bar(
+; CHECK-NOT: @bar(
 ; CHECK: bar.exit.3
 define i32 @foo() uwtable ssp align 2 {
 entry:

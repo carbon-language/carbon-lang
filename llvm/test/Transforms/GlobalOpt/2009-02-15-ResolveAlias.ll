@@ -1,7 +1,7 @@
 ; RUN: opt < %s -globalopt -S | FileCheck %s
 
 define internal void @f() {
-; CHECK-NOT-LABEL: @f(
+; CHECK-NOT: @f(
 ; CHECK: define void @a
 	ret void
 }
