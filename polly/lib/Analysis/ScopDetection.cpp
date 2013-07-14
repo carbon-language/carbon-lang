@@ -280,9 +280,9 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   // Check if the base pointer of the memory access does alias with
   // any other pointer. This cannot be handled at the moment.
-  AliasSet &AS = Context.AST
-    .getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
-                           Inst.getMetadata(LLVMContext::MD_tbaa));
+  AliasSet &AS =
+      Context.AST.getAliasSetForPointer(BaseValue, AliasAnalysis::UnknownSize,
+                                        Inst.getMetadata(LLVMContext::MD_tbaa));
 
   // INVALID triggers an assertion in verifying mode, if it detects that a
   // SCoP was detected by SCoP detection and that this SCoP was invalidated by
@@ -305,7 +305,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     std::sort(Pointers.begin(), Pointers.end());
 
     for (std::vector<Value *>::iterator PI = Pointers.begin(),
-           PE = Pointers.end();
+                                        PE = Pointers.end();
          ;) {
       Value *V = *PI;
 
