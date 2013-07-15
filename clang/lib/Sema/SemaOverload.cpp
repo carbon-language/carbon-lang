@@ -11355,13 +11355,11 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   case OR_No_Viable_Function:
     if (CandidateSet.empty()) {
       QualType BaseType = Base->getType();
+      Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
+        << BaseType << Base->getSourceRange();
       if (BaseType->isRecordType() && !BaseType->isPointerType()) {
-        Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-          << BaseType << 1 << Base->getSourceRange()
+        Diag(OpLoc, diag::note_typecheck_member_reference_suggestion)
           << FixItHint::CreateReplacement(OpLoc, ".");
-      } else {
-        Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
-          << BaseType << Base->getSourceRange();
       }
     } else
       Diag(OpLoc, diag::err_ovl_no_viable_oper)

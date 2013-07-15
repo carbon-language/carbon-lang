@@ -87,7 +87,8 @@ namespace test5 {
   }
 
   void test2(A &x) {
-    x->A::foo<int>(); // expected-error {{'test5::A' is not a pointer}}
+    x->A::foo<int>(); // expected-error {{'test5::A' is not a pointer}} \
+                      // expected-note {{did you meant to use '.' instead?}}
   }
 }
 
@@ -171,4 +172,17 @@ void f(int i) {
   int j = i. // expected-error {{member reference base type 'int' is not a structure or union}}
   j = 0;
 }
+}
+
+namespace PR15045 {
+  class Cl0 {
+  public:
+    int a;
+  };
+
+  int f() {
+    Cl0 c;
+    return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer}} \
+                  // expected-note {{did you meant to use '.' instead?}}
+  }
 }
