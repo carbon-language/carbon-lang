@@ -8100,7 +8100,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   LLVMContext *Context = DAG.getContext();
 
   // Build some magic constants.
-  const uint32_t CV0[] = { 0x43300000, 0x45300000, 0, 0 };
+  static const uint32_t CV0[] = { 0x43300000, 0x45300000, 0, 0 };
   Constant *C0 = ConstantDataVector::get(*Context, CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 
@@ -9399,8 +9399,8 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
       SDValue EQ = DAG.getNode(X86ISD::PCMPEQ, dl, MVT::v4i32, Op0, Op1);
 
       // Create masks for only the low parts/high parts of the 64 bit integers.
-      const int MaskHi[] = { 1, 1, 3, 3 };
-      const int MaskLo[] = { 0, 0, 2, 2 };
+      static const int MaskHi[] = { 1, 1, 3, 3 };
+      static const int MaskLo[] = { 0, 0, 2, 2 };
       SDValue EQHi = DAG.getVectorShuffle(MVT::v4i32, dl, EQ, EQ, MaskHi);
       SDValue GTLo = DAG.getVectorShuffle(MVT::v4i32, dl, GT, GT, MaskLo);
       SDValue GTHi = DAG.getVectorShuffle(MVT::v4i32, dl, GT, GT, MaskHi);
@@ -9427,7 +9427,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
       SDValue Result = DAG.getNode(Opc, dl, MVT::v4i32, Op0, Op1);
 
       // Make sure the lower and upper halves are both all-ones.
-      const int Mask[] = { 1, 0, 3, 2 };
+      static const int Mask[] = { 1, 0, 3, 2 };
       SDValue Shuf = DAG.getVectorShuffle(MVT::v4i32, dl, Result, Result, Mask);
       Result = DAG.getNode(ISD::AND, dl, MVT::v4i32, Result, Shuf);
 
@@ -11492,7 +11492,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
            "Should not custom lower when pmuldq is available!");
 
     // Extract the odd parts.
-    const int UnpackMask[] = { 1, -1, 3, -1 };
+    static const int UnpackMask[] = { 1, -1, 3, -1 };
     SDValue Aodds = DAG.getVectorShuffle(VT, dl, A, A, UnpackMask);
     SDValue Bodds = DAG.getVectorShuffle(VT, dl, B, B, UnpackMask);
 
@@ -11506,7 +11506,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
 
     // Merge the two vectors back together with a shuffle. This expands into 2
     // shuffles.
-    const int ShufMask[] = { 0, 4, 2, 6 };
+    static const int ShufMask[] = { 0, 4, 2, 6 };
     return DAG.getVectorShuffle(VT, dl, Evens, Odds, ShufMask);
   }
 
