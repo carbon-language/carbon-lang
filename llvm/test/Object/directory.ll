@@ -4,7 +4,7 @@
 
 ; opening a directory works on freebsd. On windows we just get a
 ; "permission denied"
-;XFAIL: freebsd, win32
+;XFAIL: freebsd, win32, mingw32
 
 ;RUN: rm -f %T/test.a
 ;RUN: touch %T/a-very-long-file-name
