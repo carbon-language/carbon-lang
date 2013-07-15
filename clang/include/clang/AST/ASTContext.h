@@ -1717,6 +1717,9 @@ public:
            getCanonicalType(T2).getTypePtr();
   }
 
+  bool ObjCMethodsAreEqual(const ObjCMethodDecl *MethodDecl,
+                           const ObjCMethodDecl *MethodImp);
+  
   bool UnwrapSimilarPointerTypes(QualType &T1, QualType &T2);
   
   /// \brief Retrieves the "canonical" nested name specifier for a

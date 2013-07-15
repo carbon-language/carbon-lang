@@ -238,8 +238,50 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
 static bool 
 ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
                                       const ObjCImplementationDecl *ImpDecl,
+                                       const ObjCInterfaceDecl *IDecl,
                                       ObjCProtocolDecl *Protocol) {
-  return false;
+  // In auto-synthesis, protocol properties are not synthesized. So,
+  // a conforming protocol must have its required properties declared
+  // in class interface.
+  if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition())
+    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+         E = PDecl->prop_end(); P != E; ++P) {
+      ObjCPropertyDecl *Property = *P;
+      if (Property->getPropertyImplementation() == ObjCPropertyDecl::Optional)
+        continue;
+      DeclContext::lookup_const_result R = IDecl->lookup(Property->getDeclName());
+      for (unsigned I = 0, N = R.size(); I != N; ++I) {
+        if (ObjCPropertyDecl *ClassProperty = dyn_cast<ObjCPropertyDecl>(R[0])) {
+          if (ClassProperty->getPropertyAttributes()
+              != Property->getPropertyAttributes())
+            return false;
+          if (!Ctx.hasSameType(ClassProperty->getType(), Property->getType()))
+            return false;
+        }
+      }
+    }
+  // At this point, all required properties in this protocol conform to those
+  // declared in the class.
+  // Check that class implements the required methods of the protocol too.
+  if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition())
+    for (ObjCContainerDecl::method_iterator M = PDecl->meth_begin(),
+         MEnd = PDecl->meth_end(); M != MEnd; ++M) {
+      ObjCMethodDecl *MD = (*M);
+      if (MD->getImplementationControl() == ObjCMethodDecl::Optional)
+        continue;
+      bool match = false;
+      DeclContext::lookup_const_result R = ImpDecl->lookup(MD->getDeclName());
+      for (unsigned I = 0, N = R.size(); I != N; ++I)
+        if (ObjCMethodDecl *ImpMD = dyn_cast<ObjCMethodDecl>(R[0]))
+          if (Ctx.ObjCMethodsAreEqual(MD, ImpMD)) {
+            match = true;
+            break;
+          }
+      if (!match)
+        return false;
+    }
+
+  return true;
 }
 
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
@@ -267,7 +309,7 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
   // methods and properties, then this class conforms to this protocol.
   llvm::SmallVector<ObjCProtocolDecl*, 8> ConformingProtocols;
   for (unsigned i = 0, e = PotentialImplicitProtocols.size(); i != e; i++)
-    if (ClassImplementsAllMethodsAndProperties(Ctx, ImpDecl, 
+    if (ClassImplementsAllMethodsAndProperties(Ctx, ImpDecl, IDecl,
                                               PotentialImplicitProtocols[i]))
       ConformingProtocols.push_back(PotentialImplicitProtocols[i]);
 }

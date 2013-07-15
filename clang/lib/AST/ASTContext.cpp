@@ -8129,3 +8129,35 @@ ASTContext::getParents(const ast_type_traits::DynTypedNode &Node) {
   }
   return I->second;
 }
+
+bool
+ASTContext::ObjCMethodsAreEqual(const ObjCMethodDecl *MethodDecl,
+                                const ObjCMethodDecl *MethodImpl) {
+  // No point trying to match an unavailable/deprecated mothod.
+  if (MethodDecl->hasAttr<UnavailableAttr>()
+      || MethodDecl->hasAttr<DeprecatedAttr>())
+    return false;
+  if (MethodDecl->getObjCDeclQualifier() !=
+      MethodImpl->getObjCDeclQualifier())
+    return false;
+  if (!hasSameType(MethodDecl->getResultType(),
+                   MethodImpl->getResultType()))
+    return false;
+  
+  if (MethodDecl->param_size() != MethodImpl->param_size())
+    return false;
+  
+  for (ObjCMethodDecl::param_const_iterator IM = MethodImpl->param_begin(),
+       IF = MethodDecl->param_begin(), EM = MethodImpl->param_end(),
+       EF = MethodDecl->param_end();
+       IM != EM && IF != EF; ++IM, ++IF) {
+    const ParmVarDecl *DeclVar = (*IF);
+    const ParmVarDecl *ImplVar = (*IM);
+    if (ImplVar->getObjCDeclQualifier() != DeclVar->getObjCDeclQualifier())
+      return false;
+    if (!hasSameType(DeclVar->getType(), ImplVar->getType()))
+      return false;
+  }
+  return (MethodDecl->isVariadic() == MethodImpl->isVariadic());
+  
+}
