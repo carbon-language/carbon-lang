@@ -16,6 +16,7 @@
 //===          is guaranteed to work on *all* Windows variants.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "Windows.h"
 #include <fcntl.h>
 #include <io.h>
