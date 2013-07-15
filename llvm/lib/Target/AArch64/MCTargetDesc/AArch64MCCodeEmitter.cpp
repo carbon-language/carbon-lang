@@ -152,10 +152,10 @@ getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
   switch (Expr->getKind()) {
   default: llvm_unreachable("Unexpected operand modifier");
   case AArch64MCExpr::VK_AARCH64_LO12: {
-    unsigned FixupsBySize[] = { AArch64::fixup_a64_ldst8_lo12,
-                                AArch64::fixup_a64_ldst16_lo12,
-                                AArch64::fixup_a64_ldst32_lo12,
-                                AArch64::fixup_a64_ldst64_lo12,
+    static const unsigned FixupsBySize[] = { AArch64::fixup_a64_ldst8_lo12,
+                                             AArch64::fixup_a64_ldst16_lo12,
+                                             AArch64::fixup_a64_ldst32_lo12,
+                                             AArch64::fixup_a64_ldst64_lo12,
                                 AArch64::fixup_a64_ldst128_lo12 };
     assert(MemSize <= 16 && "Invalid fixup for operation");
     FixupKind = FixupsBySize[Log2_32(MemSize)];
@@ -166,19 +166,23 @@ getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
     FixupKind = AArch64::fixup_a64_ld64_got_lo12_nc;
     break;
   case AArch64MCExpr::VK_AARCH64_DTPREL_LO12:  {
-    unsigned FixupsBySize[] = { AArch64::fixup_a64_ldst8_dtprel_lo12,
-                                AArch64::fixup_a64_ldst16_dtprel_lo12,
-                                AArch64::fixup_a64_ldst32_dtprel_lo12,
-                                AArch64::fixup_a64_ldst64_dtprel_lo12 };
+    static const unsigned FixupsBySize[] = {
+      AArch64::fixup_a64_ldst8_dtprel_lo12,
+      AArch64::fixup_a64_ldst16_dtprel_lo12,
+      AArch64::fixup_a64_ldst32_dtprel_lo12,
+      AArch64::fixup_a64_ldst64_dtprel_lo12
+    };
     assert(MemSize <= 8 && "Invalid fixup for operation");
     FixupKind = FixupsBySize[Log2_32(MemSize)];
     break;
   }
   case AArch64MCExpr::VK_AARCH64_DTPREL_LO12_NC: {
-    unsigned FixupsBySize[] = { AArch64::fixup_a64_ldst8_dtprel_lo12_nc,
-                                AArch64::fixup_a64_ldst16_dtprel_lo12_nc,
-                                AArch64::fixup_a64_ldst32_dtprel_lo12_nc,
-                                AArch64::fixup_a64_ldst64_dtprel_lo12_nc };
+    static const unsigned FixupsBySize[] = {
+      AArch64::fixup_a64_ldst8_dtprel_lo12_nc,
+      AArch64::fixup_a64_ldst16_dtprel_lo12_nc,
+      AArch64::fixup_a64_ldst32_dtprel_lo12_nc,
+      AArch64::fixup_a64_ldst64_dtprel_lo12_nc
+    };
     assert(MemSize <= 8 && "Invalid fixup for operation");
     FixupKind = FixupsBySize[Log2_32(MemSize)];
     break;
@@ -188,19 +192,23 @@ getOffsetUImm12OpValue(const MCInst &MI, unsigned OpIdx,
     FixupKind = AArch64::fixup_a64_ld64_gottprel_lo12_nc;
     break;
   case AArch64MCExpr::VK_AARCH64_TPREL_LO12:{
-    unsigned FixupsBySize[] = { AArch64::fixup_a64_ldst8_tprel_lo12,
-                                AArch64::fixup_a64_ldst16_tprel_lo12,
-                                AArch64::fixup_a64_ldst32_tprel_lo12,
-                                AArch64::fixup_a64_ldst64_tprel_lo12 };
+    static const unsigned FixupsBySize[] = {
+      AArch64::fixup_a64_ldst8_tprel_lo12,
+      AArch64::fixup_a64_ldst16_tprel_lo12,
+      AArch64::fixup_a64_ldst32_tprel_lo12,
+      AArch64::fixup_a64_ldst64_tprel_lo12
+    };
     assert(MemSize <= 8 && "Invalid fixup for operation");
     FixupKind = FixupsBySize[Log2_32(MemSize)];
     break;
   }
   case AArch64MCExpr::VK_AARCH64_TPREL_LO12_NC: {
-    unsigned FixupsBySize[] = { AArch64::fixup_a64_ldst8_tprel_lo12_nc,
-                                AArch64::fixup_a64_ldst16_tprel_lo12_nc,
-                                AArch64::fixup_a64_ldst32_tprel_lo12_nc,
-                                AArch64::fixup_a64_ldst64_tprel_lo12_nc };
+    static const unsigned FixupsBySize[] = {
+      AArch64::fixup_a64_ldst8_tprel_lo12_nc,
+      AArch64::fixup_a64_ldst16_tprel_lo12_nc,
+      AArch64::fixup_a64_ldst32_tprel_lo12_nc,
+      AArch64::fixup_a64_ldst64_tprel_lo12_nc
+    };
     assert(MemSize <= 8 && "Invalid fixup for operation");
     FixupKind = FixupsBySize[Log2_32(MemSize)];
     break;

@@ -454,7 +454,7 @@ public:
   }
 
   bool isMOVN32Imm() const {
-    static AArch64MCExpr::VariantKind PermittedModifiers[] = {
+    static const AArch64MCExpr::VariantKind PermittedModifiers[] = {
       AArch64MCExpr::VK_AARCH64_SABS_G0,
       AArch64MCExpr::VK_AARCH64_SABS_G1,
       AArch64MCExpr::VK_AARCH64_DTPREL_G1,
@@ -463,13 +463,13 @@ public:
       AArch64MCExpr::VK_AARCH64_TPREL_G1,
       AArch64MCExpr::VK_AARCH64_TPREL_G0,
     };
-    unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
+    const unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
 
     return isMoveWideImm(32, PermittedModifiers, NumModifiers);
   }
 
   bool isMOVN64Imm() const {
-    static AArch64MCExpr::VariantKind PermittedModifiers[] = {
+    static const AArch64MCExpr::VariantKind PermittedModifiers[] = {
       AArch64MCExpr::VK_AARCH64_SABS_G0,
       AArch64MCExpr::VK_AARCH64_SABS_G1,
       AArch64MCExpr::VK_AARCH64_SABS_G2,
@@ -481,14 +481,14 @@ public:
       AArch64MCExpr::VK_AARCH64_TPREL_G1,
       AArch64MCExpr::VK_AARCH64_TPREL_G0,
     };
-    unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
+    const unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
 
     return isMoveWideImm(64, PermittedModifiers, NumModifiers);
   }
 
 
   bool isMOVZ32Imm() const {
-    static AArch64MCExpr::VariantKind PermittedModifiers[] = {
+    static const AArch64MCExpr::VariantKind PermittedModifiers[] = {
       AArch64MCExpr::VK_AARCH64_ABS_G0,
       AArch64MCExpr::VK_AARCH64_ABS_G1,
       AArch64MCExpr::VK_AARCH64_SABS_G0,
@@ -499,13 +499,13 @@ public:
       AArch64MCExpr::VK_AARCH64_TPREL_G1,
       AArch64MCExpr::VK_AARCH64_TPREL_G0,
     };
-    unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
+    const unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
 
     return isMoveWideImm(32, PermittedModifiers, NumModifiers);
   }
 
   bool isMOVZ64Imm() const {
-    static AArch64MCExpr::VariantKind PermittedModifiers[] = {
+    static const AArch64MCExpr::VariantKind PermittedModifiers[] = {
       AArch64MCExpr::VK_AARCH64_ABS_G0,
       AArch64MCExpr::VK_AARCH64_ABS_G1,
       AArch64MCExpr::VK_AARCH64_ABS_G2,
@@ -521,13 +521,13 @@ public:
       AArch64MCExpr::VK_AARCH64_TPREL_G1,
       AArch64MCExpr::VK_AARCH64_TPREL_G0,
     };
-    unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
+    const unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
 
     return isMoveWideImm(64, PermittedModifiers, NumModifiers);
   }
 
   bool isMOVK32Imm() const {
-    static AArch64MCExpr::VariantKind PermittedModifiers[] = {
+    static const AArch64MCExpr::VariantKind PermittedModifiers[] = {
       AArch64MCExpr::VK_AARCH64_ABS_G0_NC,
       AArch64MCExpr::VK_AARCH64_ABS_G1_NC,
       AArch64MCExpr::VK_AARCH64_DTPREL_G1_NC,
@@ -536,13 +536,13 @@ public:
       AArch64MCExpr::VK_AARCH64_TPREL_G1_NC,
       AArch64MCExpr::VK_AARCH64_TPREL_G0_NC,
     };
-    unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
+    const unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
 
     return isMoveWideImm(32, PermittedModifiers, NumModifiers);
   }
 
   bool isMOVK64Imm() const {
-    static AArch64MCExpr::VariantKind PermittedModifiers[] = {
+    static const AArch64MCExpr::VariantKind PermittedModifiers[] = {
       AArch64MCExpr::VK_AARCH64_ABS_G0_NC,
       AArch64MCExpr::VK_AARCH64_ABS_G1_NC,
       AArch64MCExpr::VK_AARCH64_ABS_G2_NC,
@@ -553,13 +553,13 @@ public:
       AArch64MCExpr::VK_AARCH64_TPREL_G1_NC,
       AArch64MCExpr::VK_AARCH64_TPREL_G0_NC,
     };
-    unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
+    const unsigned NumModifiers = llvm::array_lengthof(PermittedModifiers);
 
     return isMoveWideImm(64, PermittedModifiers, NumModifiers);
   }
 
   bool isMoveWideImm(unsigned RegWidth,
-                     AArch64MCExpr::VariantKind *PermittedModifiers,
+                     const AArch64MCExpr::VariantKind *PermittedModifiers,
                      unsigned NumModifiers) const {
     if (!isImmWithLSL()) return false;
 

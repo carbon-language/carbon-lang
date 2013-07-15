@@ -264,16 +264,16 @@ EVT AArch64TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
 static void getExclusiveOperation(unsigned Size, AtomicOrdering Ord,
                                   unsigned &LdrOpc,
                                   unsigned &StrOpc) {
-  static unsigned LoadBares[] = {AArch64::LDXR_byte, AArch64::LDXR_hword,
-                                 AArch64::LDXR_word, AArch64::LDXR_dword};
-  static unsigned LoadAcqs[] = {AArch64::LDAXR_byte, AArch64::LDAXR_hword,
-                                AArch64::LDAXR_word, AArch64::LDAXR_dword};
-  static unsigned StoreBares[] = {AArch64::STXR_byte, AArch64::STXR_hword,
-                                  AArch64::STXR_word, AArch64::STXR_dword};
-  static unsigned StoreRels[] = {AArch64::STLXR_byte, AArch64::STLXR_hword,
-                                 AArch64::STLXR_word, AArch64::STLXR_dword};
+  static const unsigned LoadBares[] = {AArch64::LDXR_byte, AArch64::LDXR_hword,
+                                       AArch64::LDXR_word, AArch64::LDXR_dword};
+  static const unsigned LoadAcqs[] = {AArch64::LDAXR_byte, AArch64::LDAXR_hword,
+                                     AArch64::LDAXR_word, AArch64::LDAXR_dword};
+  static const unsigned StoreBares[] = {AArch64::STXR_byte, AArch64::STXR_hword,
+                                       AArch64::STXR_word, AArch64::STXR_dword};
+  static const unsigned StoreRels[] = {AArch64::STLXR_byte,AArch64::STLXR_hword,
+                                     AArch64::STLXR_word, AArch64::STLXR_dword};
 
-  unsigned *LoadOps, *StoreOps;
+  const unsigned *LoadOps, *StoreOps;
   if (Ord == Acquire || Ord == AcquireRelease || Ord == SequentiallyConsistent)
     LoadOps = LoadAcqs;
   else
