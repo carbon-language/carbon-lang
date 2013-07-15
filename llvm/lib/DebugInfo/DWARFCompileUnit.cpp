@@ -147,89 +147,95 @@ void DWARFCompileUnit::setDIERelations() {
     curr_die->setParent(die_array_begin);
 }
 
-size_t DWARFCompileUnit::extractDIEsIfNeeded(bool cu_die_only) {
-  const size_t initial_die_array_size = DieArray.size();
-  if ((cu_die_only && initial_die_array_size > 0) ||
-      initial_die_array_size > 1)
-    return 0; // Already parsed
+void DWARFCompileUnit::extractDIEsToVector(
+    bool AppendCUDie, bool AppendNonCUDies,
+    std::vector<DWARFDebugInfoEntryMinimal> &Dies) const {
+  if (!AppendCUDie && !AppendNonCUDies)
+    return;
 
   // Set the offset to that of the first DIE and calculate the start of the
   // next compilation unit header.
-  uint32_t offset = getFirstDIEOffset();
-  uint32_t next_cu_offset = getNextCompileUnitOffset();
-
-  DWARFDebugInfoEntryMinimal die;
-  // Keep a flat array of the DIE for binary lookup by DIE offset
-  uint32_t depth = 0;
-  // We are in our compile unit, parse starting at the offset
-  // we were told to parse
-
-  const uint8_t *fixed_form_sizes =
+  uint32_t Offset = getFirstDIEOffset();
+  uint32_t NextCUOffset = getNextCompileUnitOffset();
+  DWARFDebugInfoEntryMinimal DIE;
+  uint32_t Depth = 0;
+  const uint8_t *FixedFormSizes =
     DWARFFormValue::getFixedFormSizes(getAddressByteSize(), getVersion());
+  bool IsCUDie = true;
 
-  while (offset < next_cu_offset &&
-         die.extractFast(this, fixed_form_sizes, &offset)) {
-
-    if (depth == 0) {
-      uint64_t base_addr =
-        die.getAttributeValueAsUnsigned(this, DW_AT_low_pc, -1U);
-      if (base_addr == -1U)
-        base_addr = die.getAttributeValueAsUnsigned(this, DW_AT_entry_pc, 0);
-      setBaseAddress(base_addr);
+  while (Offset < NextCUOffset &&
+         DIE.extractFast(this, FixedFormSizes, &Offset)) {
+    if (IsCUDie) {
+      if (AppendCUDie)
+        Dies.push_back(DIE);
+      if (!AppendNonCUDies)
+        break;
+      // The average bytes per DIE entry has been seen to be
+      // around 14-20 so let's pre-reserve the needed memory for
+      // our DIE entries accordingly.
+      Dies.reserve(Dies.size() + getDebugInfoSize() / 14);
+      IsCUDie = false;
+    } else {
+      Dies.push_back(DIE);
     }
 
-    if (cu_die_only) {
-      addDIE(die);
-      return 1;
-    }
-    else if (depth == 0 && initial_die_array_size == 1)
-      // Don't append the CU die as we already did that
-      ;
-    else
-      addDIE(die);
-
-    const DWARFAbbreviationDeclaration *abbrDecl =
-      die.getAbbreviationDeclarationPtr();
-    if (abbrDecl) {
+    const DWARFAbbreviationDeclaration *AbbrDecl =
+      DIE.getAbbreviationDeclarationPtr();
+    if (AbbrDecl) {
       // Normal DIE
-      if (abbrDecl->hasChildren())
-        ++depth;
+      if (AbbrDecl->hasChildren())
+        ++Depth;
     } else {
       // NULL DIE.
-      if (depth > 0)
-        --depth;
-      if (depth == 0)
+      if (Depth > 0)
+        --Depth;
+      if (Depth == 0)
         break;  // We are done with this compile unit!
     }
-
   }
 
   // Give a little bit of info if we encounter corrupt DWARF (our offset
   // should always terminate at or before the start of the next compilation
   // unit header).
-  if (offset > next_cu_offset)
+  if (Offset > NextCUOffset)
     fprintf(stderr, "warning: DWARF compile unit extends beyond its "
-                    "bounds cu 0x%8.8x at 0x%8.8x'\n", getOffset(), offset);
+                    "bounds cu 0x%8.8x at 0x%8.8x'\n", getOffset(), Offset);
+}
+
+size_t DWARFCompileUnit::extractDIEsIfNeeded(bool CUDieOnly) {
+  if ((CUDieOnly && DieArray.size() > 0) ||
+      DieArray.size() > 1)
+    return 0; // Already parsed.
+
+  extractDIEsToVector(DieArray.empty(), !CUDieOnly, DieArray);
+
+  // Set the base address of current compile unit.
+  if (!DieArray.empty()) {
+    uint64_t BaseAddr =
+      DieArray[0].getAttributeValueAsUnsigned(this, DW_AT_low_pc, -1U);
+    if (BaseAddr == -1U)
+      BaseAddr = DieArray[0].getAttributeValueAsUnsigned(this, DW_AT_entry_pc, 0);
+    setBaseAddress(BaseAddr);
+  }
 
   setDIERelations();
   return DieArray.size();
 }
 
-void DWARFCompileUnit::clearDIEs(bool keep_compile_unit_die) {
-  if (DieArray.size() > (unsigned)keep_compile_unit_die) {
+void DWARFCompileUnit::clearDIEs(bool KeepCUDie) {
+  if (DieArray.size() > (unsigned)KeepCUDie) {
     // std::vectors never get any smaller when resized to a smaller size,
     // or when clear() or erase() are called, the size will report that it
     // is smaller, but the memory allocated remains intact (call capacity()
     // to see this). So we need to create a temporary vector and swap the
     // contents which will cause just the internal pointers to be swapped
-    // so that when "tmp_array" goes out of scope, it will destroy the
+    // so that when temporary vector goes out of scope, it will destroy the
     // contents.
-
+    std::vector<DWARFDebugInfoEntryMinimal> TmpArray;
+    DieArray.swap(TmpArray);
     // Save at least the compile unit DIE
-    std::vector<DWARFDebugInfoEntryMinimal> tmpArray;
-    DieArray.swap(tmpArray);
-    if (keep_compile_unit_die)
-      DieArray.push_back(tmpArray.front());
+    if (KeepCUDie)
+      DieArray.push_back(TmpArray.front());
   }
 }
 

@@ -39,7 +39,7 @@ class DWARFCompileUnit {
   const DWARFAbbreviationDeclarationSet *Abbrevs;
   uint8_t AddrSize;
   uint64_t BaseAddr;
-  // The compile unit debug information entry item.
+  // The compile unit debug information entry items.
   std::vector<DWARFDebugInfoEntryMinimal> DieArray;
 public:
 
@@ -64,7 +64,7 @@ public:
 
   /// extractDIEsIfNeeded - Parses a compile unit and indexes its DIEs if it
   /// hasn't already been done. Returns the number of DIEs parsed at this call.
-  size_t extractDIEsIfNeeded(bool cu_die_only);
+  size_t extractDIEsIfNeeded(bool CUDieOnly);
   /// extractRangeList - extracts the range list referenced by this compile
   /// unit from .debug_ranges section. Returns true on success.
   /// Requires that compile unit is already extracted.
@@ -98,9 +98,7 @@ public:
   const DWARFDebugInfoEntryMinimal *
   getCompileUnitDIE(bool extract_cu_die_only = true) {
     extractDIEsIfNeeded(extract_cu_die_only);
-    if (DieArray.empty())
-      return NULL;
-    return &DieArray[0];
+    return DieArray.empty() ? NULL : &DieArray[0];
   }
 
   const char *getCompilationDir();
@@ -110,25 +108,6 @@ public:
   /// parent, sibling and child pointers for quick DIE navigation.
   void setDIERelations();
 
-  void addDIE(DWARFDebugInfoEntryMinimal &die) {
-    // The average bytes per DIE entry has been seen to be
-    // around 14-20 so lets pre-reserve the needed memory for
-    // our DIE entries accordingly. Search forward for "Compute
-    // average bytes per DIE" to see #if'ed out code that does
-    // that determination.
-
-    // Only reserve the memory if we are adding children of
-    // the main compile unit DIE. The compile unit DIE is always
-    // the first entry, so if our size is 1, then we are adding
-    // the first compile unit child DIE and should reserve
-    // the memory.
-    if (DieArray.empty())
-      DieArray.reserve(getDebugInfoSize() / 14);
-    DieArray.push_back(die);
-  }
-
-  void clearDIEs(bool keep_compile_unit_die);
-
   void buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
                               bool clear_dies_if_already_not_parsed);
 
@@ -136,6 +115,13 @@ public:
   /// Returns empty chain if there is no subprogram containing address.
   DWARFDebugInfoEntryMinimal::InlinedChain getInlinedChainForAddress(
       uint64_t Address);
+
+private:
+  /// extractDIEsToVector - Appends all parsed DIEs to a vector.
+  void extractDIEsToVector(bool AppendCUDie, bool AppendNonCUDIEs,
+                           std::vector<DWARFDebugInfoEntryMinimal> &DIEs) const;
+  /// clearDIEs - Clear parsed DIEs to keep memory usage low.
+  void clearDIEs(bool KeepCUDie);
 };
 
 }
