@@ -137,6 +137,13 @@ public:
                      : "E-p:32:32-f64:64:64-i64:64:64-f128:64:128-n32";
   }
 
+  /// \brief Reset the features for the PowerPC target.
+  virtual void resetSubtargetFeatures(const MachineFunction *MF);
+private:
+  void initializeEnvironment();
+  void resetSubtargetFeatures(StringRef CPU, StringRef FS);
+
+public:
   /// isPPC64 - Return true if we are generating code for 64-bit pointer mode.
   ///
   bool isPPC64() const { return IsPPC64; }
