@@ -341,7 +341,7 @@ GetELFProcessCPUType (const char *exe_path, ProcessInstanceInfo &process_info)
 
     ModuleSpecList specs;
     FileSpec filespec (exe_path, false);
-    const size_t num_specs = ObjectFile::GetModuleSpecifications (filespec, 0, specs);
+    const size_t num_specs = ObjectFile::GetModuleSpecifications (filespec, 0, 0, specs);
     // GetModuleSpecifications() could fail if the executable has been deleted or is locked.
     // But it shouldn't return more than 1 architecture.
     assert(num_specs <= 1 && "Linux plugin supports only a single architecture");
