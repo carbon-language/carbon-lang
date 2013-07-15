@@ -17,21 +17,29 @@
 #include <regex>
 #include <cassert>
 
+static bool error_escape_thrown(const char *pat) 
+{
+    bool result = false;
+    try {
+        std::regex re(pat);
+    } catch (std::regex_error &ex) {
+        result = (ex.code() == std::regex_constants::error_escape);
+    }
+    return result;
+}
+
 int main() 
 {
-    // Correct: Exception thrown for invalid escape char in a character class
-    try {
-        std::regex char_class_escape("[\\a]");
-        assert(false);
-    } catch (std::regex_error &ex) {
-        assert(ex.code() == std::regex_constants::error_escape);
-    }
+    assert(error_escape_thrown("[\\a]"));
+    assert(error_escape_thrown("\\a"));
 
-    // Failure: No exception thrown for invalid escape char in this case.
-    try {
-        std::regex escape("\\a");
-        assert(false);
-    } catch (std::regex_error &ex) {
-        assert(ex.code() == std::regex_constants::error_escape);
-    }
+    assert(error_escape_thrown("[\\e]"));
+    assert(error_escape_thrown("\\e"));
+
+    assert(error_escape_thrown("[\\c:]"));
+    assert(error_escape_thrown("\\c:"));
+    assert(error_escape_thrown("\\c"));
+    assert(!error_escape_thrown("[\\cA]"));
+    assert(!error_escape_thrown("\\cA"));
+
 }

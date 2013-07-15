@@ -4418,7 +4418,8 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
         case 'c':
             if ((__t = _VSTD::next(__first)) != __last)
             {
-                if ('A' <= *__t <= 'Z' || 'a' <= *__t <= 'z')
+                if (('A' <= *__t && *__t <= 'Z') || 
+                    ('a' <= *__t && *__t <= 'z'))
                 {
                     if (__str)
                         *__str = _CharT(*__t % 32);
@@ -4426,7 +4427,15 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
                         __push_char(_CharT(*__t % 32));
                     __first = ++__t;
                 }
+#ifndef _LIBCPP_NO_EXCEPTIONS
+                else 
+                    throw regex_error(regex_constants::error_escape);
+#endif  // _LIBCPP_NO_EXCEPTIONS
             }
+#ifndef _LIBCPP_NO_EXCEPTIONS
+            else
+                throw regex_error(regex_constants::error_escape);
+#endif  // _LIBCPP_NO_EXCEPTIONS
             break;
         case 'u':
             ++__first;
