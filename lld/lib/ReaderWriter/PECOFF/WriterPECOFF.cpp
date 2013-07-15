@@ -259,7 +259,7 @@ class AtomChunk : public Chunk {
 public:
   virtual void write(uint8_t *fileBuffer) {
     for (const auto *layout : _atomLayouts) {
-      const DefinedAtom *atom = dyn_cast<const DefinedAtom>(layout->_atom);
+      const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
       ArrayRef<uint8_t> rawContent = atom->rawContent();
       std::memcpy(fileBuffer + layout->_fileOffset, rawContent.data(),
                   rawContent.size());
@@ -275,7 +275,7 @@ public:
   void applyRelocations(uint8_t *fileBuffer,
                         std::map<const Atom *, uint64_t> &atomRva) {
     for (const auto *layout : _atomLayouts) {
-      const DefinedAtom *atom = dyn_cast<const DefinedAtom>(layout->_atom);
+      const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
       for (const Reference *ref : *atom) {
         auto relocSite = reinterpret_cast<llvm::support::ulittle32_t *>(
             fileBuffer + layout->_fileOffset + ref->offsetInAtom());
@@ -316,7 +316,7 @@ public:
   /// not be (and should not be) fixed up because it's PC-relative.
   void addBaseRelocations(std::vector<uint64_t> &relocSites) {
     for (const auto *layout : _atomLayouts) {
-      const DefinedAtom *atom = dyn_cast<const DefinedAtom>(layout->_atom);
+      const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
       for (const Reference *ref : *atom)
         if (ref->kind() == llvm::COFF::IMAGE_REL_I386_DIR32 ||
             ref->kind() == llvm::COFF::IMAGE_REL_I386_DIR32NB)
