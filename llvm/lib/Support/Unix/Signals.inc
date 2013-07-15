@@ -84,7 +84,8 @@ static struct {
 
 
 static void RegisterHandler(int Signal) {
-  assert(NumRegisteredSignals < array_lengthof(RegisteredSignalInfo) &&
+  assert(NumRegisteredSignals <
+         sizeof(RegisteredSignalInfo)/sizeof(RegisteredSignalInfo[0]) &&
          "Out of space for signal handlers!");
 
   struct sigaction NewHandler;
