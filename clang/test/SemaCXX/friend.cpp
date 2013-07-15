@@ -166,24 +166,13 @@ namespace test9 {
 
 namespace test10 {
   struct A {
-    friend void f10();
+    friend void f();
   };
+  extern void f();
   struct B {
-    friend void f10();
+    friend void f();
   };
   void g() {
-    f10(); // expected-error {{undeclared identifier}}
+    ::test10::f();
   }
-}
-
-namespace PR16597 {
-  struct A {
-    friend void f_16597();
-  };
-  struct B {
-    friend void f_16597();
-  };
-  struct C {
-  };
-  void g(C a) { f_16597(a); } // expected-error {{undeclared identifier}}
 }
