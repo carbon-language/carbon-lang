@@ -728,7 +728,33 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
 void PEI::replaceFrameIndices(MachineFunction &Fn) {
   if (!Fn.getFrameInfo()->hasStackObjects()) return; // Nothing to do?
 
+  // Store SPAdj at exit of a basic block.
+  SmallVector<int, 8> SPState;
+  SPState.resize(Fn.getNumBlockIDs());
+  SmallPtrSet<MachineBasicBlock*, 8> Reachable;
+
+  // Iterate over the reachable blocks in DFS order.
+  for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
+       DFI = df_ext_begin(&Fn, Reachable), DFE = df_ext_end(&Fn, Reachable);
+       DFI != DFE; ++DFI) {
+    int SPAdj = 0;
+    // Check the exit state of the DFS stack predecessor.
+    if (DFI.getPathLength() >= 2) {
+      MachineBasicBlock *StackPred = DFI.getPath(DFI.getPathLength() - 2);
+      assert(Reachable.count(StackPred) &&
+             "DFS stack predecessor is already visited.\n");
+      SPAdj = SPState[StackPred->getNumber()];
+    }
+    MachineBasicBlock *BB = *DFI;
+    replaceFrameIndices(BB, Fn, SPAdj);
+    SPState[BB->getNumber()] = SPAdj;
+  }
+
+  // Handle the unreachable blocks.
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    if (Reachable.count(BB))
+      // Already handled in DFS traversal.
+      continue;
     int SPAdj = 0;
     replaceFrameIndices(BB, Fn, SPAdj);
   }
@@ -746,19 +772,12 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
   int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
   int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
-#ifndef NDEBUG
-  int SPAdjCount = 0; // frame setup / destroy count.
-#endif
   if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 
   for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
 
     if (I->getOpcode() == FrameSetupOpcode ||
         I->getOpcode() == FrameDestroyOpcode) {
-#ifndef NDEBUG
-      // Track whether we see even pairs of them
-      SPAdjCount += I->getOpcode() == FrameSetupOpcode ? 1 : -1;
-#endif
       // Remember how much SP has been adjusted to create the call
       // frame.
       int Size = I->getOperand(0).getImm();
@@ -833,14 +852,6 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
     // Update register states.
     if (RS && !FrameIndexVirtualScavenging && MI) RS->forward(MI);
   }
-
-  // If we have evenly matched pairs of frame setup / destroy instructions,
-  // make sure the adjustments come out to zero. If we don't have matched
-  // pairs, we can't be sure the missing bit isn't in another basic block
-  // due to a custom inserter playing tricks, so just asserting SPAdj==0
-  // isn't sufficient. See tMOVCC on Thumb1, for example.
-  assert((SPAdjCount || SPAdj == 0) &&
-         "Unbalanced call frame setup / destroy pairs?");
 }
 
 /// scavengeFrameVirtualRegs - Replace all frame index virtual registers
