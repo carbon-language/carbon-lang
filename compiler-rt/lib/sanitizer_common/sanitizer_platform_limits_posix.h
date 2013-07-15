@@ -193,9 +193,9 @@ namespace __sanitizer {
     char **gl_pathv;
     uptr gl_offs;
     int gl_flags;
-    
-    void (*gl_closedir)(void *);
-    void *(*gl_readdir)(void *);
+
+    void (*gl_closedir)(void *dirp);
+    void *(*gl_readdir)(void *dirp);
     void *(*gl_opendir)(const char *);
     int (*gl_lstat)(const char *, void *);
     int (*gl_stat)(const char *, void *);
@@ -208,7 +208,7 @@ namespace __sanitizer {
   extern unsigned path_max;
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
-      (defined(__i386) || defined (__x86_64))
+      (defined(__i386) || defined (__x86_64))  // NOLINT
   extern unsigned struct_user_regs_struct_sz;
   extern unsigned struct_user_fpregs_struct_sz;
   extern unsigned struct_user_fpxregs_struct_sz;

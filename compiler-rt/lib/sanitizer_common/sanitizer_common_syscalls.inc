@@ -161,7 +161,6 @@ POST_SYSCALL(clock_getres)(long res, int clk_id,
                            struct sanitizer_kernel_timespec *tp) {
   if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
 }
-
 }  // extern "C"
 
 #undef PRE_SYSCALL

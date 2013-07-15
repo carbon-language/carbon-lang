@@ -751,7 +751,7 @@ static void unpoison_glob_t(void *ctx, __sanitizer_glob_t *pglob) {
   }
 }
 
-static THREADLOCAL __sanitizer_glob_t* pglob_copy; 
+static THREADLOCAL __sanitizer_glob_t* pglob_copy;
 static THREADLOCAL void* glob_ctx;
 
 static void wrapped_gl_closedir(void *dir) {

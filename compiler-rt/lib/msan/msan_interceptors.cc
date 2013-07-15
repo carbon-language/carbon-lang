@@ -971,7 +971,8 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
   return res;
 }
 
-INTERCEPTOR(int, pthread_key_create, __sanitizer_pthread_key_t *key, void (*dtor) (void *)) {
+INTERCEPTOR(int, pthread_key_create, __sanitizer_pthread_key_t *key,
+            void (*dtor)(void *value)) {
   ENSURE_MSAN_INITED();
   int res = REAL(pthread_key_create)(key, dtor);
   if (!res && key)
