@@ -69,13 +69,6 @@ RegistryMaps::RegistryMaps() {
   // withInitializer
   // isWritten
   //
-  // Type traversal:
-  // hasElementType
-  // hasValueType
-  // hasDeducedType
-  // innerType
-  // pointee
-  //
   // Function overloaded by args:
   // hasType
   // callee
@@ -175,8 +168,10 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasCondition);
   REGISTER_MATCHER(hasConditionVariableStatement);
   REGISTER_MATCHER(hasDeclContext);
+  REGISTER_MATCHER(hasDeducedType);
   REGISTER_MATCHER(hasDestinationType);
   REGISTER_MATCHER(hasEitherOperand);
+  REGISTER_MATCHER(hasElementType);
   REGISTER_MATCHER(hasFalseExpression);
   REGISTER_MATCHER(hasImplicitDestinationType);
   REGISTER_MATCHER(hasIncrement);
@@ -200,6 +195,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasTargetDecl);
   REGISTER_MATCHER(hasTrueExpression);
   REGISTER_MATCHER(hasUnaryOperand);
+  REGISTER_MATCHER(hasValueType);
   REGISTER_MATCHER(ifStmt);
   REGISTER_MATCHER(ignoringImpCasts);
   REGISTER_MATCHER(ignoringParenCasts);
@@ -207,6 +203,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(implicitCastExpr);
   REGISTER_MATCHER(incompleteArrayType);
   REGISTER_MATCHER(initListExpr);
+  REGISTER_MATCHER(innerType);
   REGISTER_MATCHER(integerLiteral);
   REGISTER_MATCHER(isArrow);
   REGISTER_MATCHER(isConstQualified);
@@ -245,6 +242,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(operatorCallExpr);
   REGISTER_MATCHER(parameterCountIs);
   REGISTER_MATCHER(parenType);
+  REGISTER_MATCHER(pointee);
   REGISTER_MATCHER(pointerType);
   REGISTER_MATCHER(qualType);
   REGISTER_MATCHER(rValueReferenceType);

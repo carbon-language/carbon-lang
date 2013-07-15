@@ -1434,9 +1434,53 @@ private:
   TypeLoc (T::*TraverseFunction)() const;
 };
 
-template <typename T, typename InnerT>
-T makeTypeAllOfComposite(ArrayRef<const Matcher<InnerT> *> InnerMatchers) {
-  return T(makeAllOfComposite<InnerT>(InnerMatchers));
+/// \brief Converts a \c Matcher<InnerT> to a \c Matcher<OuterT>, where
+/// \c OuterT is any type that is supported by \c Getter.
+///
+/// \code Getter<OuterT>::value() \endcode returns a
+/// \code InnerTBase (OuterT::*)() \endcode, which is used to adapt a \c OuterT
+/// object into a \c InnerT
+template <typename InnerTBase,
+          template <typename OuterT> class Getter,
+          template <typename OuterT> class MatcherImpl,
+          typename ReturnTypesF>
+class TypeTraversePolymorphicMatcher {
+private:
+  typedef TypeTraversePolymorphicMatcher<InnerTBase, Getter, MatcherImpl,
+                                         ReturnTypesF> Self;
+  static Self create(ArrayRef<const Matcher<InnerTBase> *> InnerMatchers);
+
+public:
+  typedef typename ExtractFunctionArgMeta<ReturnTypesF>::type ReturnTypes;
+
+  explicit TypeTraversePolymorphicMatcher(
+      ArrayRef<const Matcher<InnerTBase> *> InnerMatchers)
+      : InnerMatcher(makeAllOfComposite(InnerMatchers)) {}
+
+  template <typename OuterT> operator Matcher<OuterT>() const {
+    return Matcher<OuterT>(
+        new MatcherImpl<OuterT>(InnerMatcher, Getter<OuterT>::value()));
+  }
+
+  struct Func : public llvm::VariadicFunction<Self, Matcher<InnerTBase>,
+                                              &Self::create> {
+    Func() {}
+  };
+
+private:
+  const Matcher<InnerTBase> InnerMatcher;
+};
+
+// Define the create() method out of line to silence a GCC warning about
+// the struct "Func" having greater visibility than its base, which comes from
+// using the flag -fvisibility-inlines-hidden.
+template <typename InnerTBase, template <typename OuterT> class Getter,
+          template <typename OuterT> class MatcherImpl, typename ReturnTypesF>
+TypeTraversePolymorphicMatcher<InnerTBase, Getter, MatcherImpl, ReturnTypesF>
+TypeTraversePolymorphicMatcher<
+    InnerTBase, Getter, MatcherImpl,
+    ReturnTypesF>::create(ArrayRef<const Matcher<InnerTBase> *> InnerMatchers) {
+  return Self(InnerMatchers);
 }
 
 } // end namespace internal

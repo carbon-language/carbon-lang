@@ -179,10 +179,12 @@ TEST(ParserTest, ParseMatcher) {
 using ast_matchers::internal::Matcher;
 
 TEST(ParserTest, FullParserTest) {
+  Diagnostics Error;
   OwningPtr<DynTypedMatcher> VarDecl(Parser::parseMatcherExpression(
       "varDecl(hasInitializer(binaryOperator(hasLHS(integerLiteral()),"
       "                                      hasOperatorName(\"+\"))))",
-      NULL));
+      &Error));
+  EXPECT_EQ("", Error.ToStringFull());
   Matcher<Decl> M = Matcher<Decl>::constructFrom(*VarDecl);
   EXPECT_TRUE(matches("int x = 1 + false;", M));
   EXPECT_FALSE(matches("int x = true + 1;", M));
@@ -190,13 +192,13 @@ TEST(ParserTest, FullParserTest) {
   EXPECT_FALSE(matches("int x = true - 1;", M));
 
   OwningPtr<DynTypedMatcher> HasParameter(Parser::parseMatcherExpression(
-      "functionDecl(hasParameter(1, hasName(\"x\")))", NULL));
+      "functionDecl(hasParameter(1, hasName(\"x\")))", &Error));
+  EXPECT_EQ("", Error.ToStringFull());
   M = Matcher<Decl>::constructFrom(*HasParameter);
 
   EXPECT_TRUE(matches("void f(int a, int x);", M));
   EXPECT_FALSE(matches("void f(int x, int a);", M));
 
-  Diagnostics Error;
   EXPECT_TRUE(Parser::parseMatcherExpression(
       "hasInitializer(\n    binaryOperator(hasLHS(\"A\")))", &Error) == NULL);
   EXPECT_EQ("1:1: Error parsing argument 1 for matcher hasInitializer.\n"

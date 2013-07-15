@@ -160,14 +160,17 @@ def act_on_decl(declaration, comment, allowed_types):
 
     m = re.match(""".*AST_TYPE(LOC)?_TRAVERSE_MATCHER\(
                        \s*([^\s,]+\s*),
-                       \s*(?:[^\s,]+\s*)
+                       \s*(?:[^\s,]+\s*),
+                       \s*AST_POLYMORPHIC_SUPPORTED_TYPES_([^(]*)\(([^)]*)\)
                      \)\s*;\s*$""", declaration, flags=re.X)
     if m:
-      loc = m.group(1)
-      name = m.group(2)
-      result_types = extract_result_types(comment)
-      if not result_types:
-        raise Exception('Did not find allowed result types for: %s' % name)
+      loc, name, n_results, results = m.groups()[0:4]
+      result_types = [r.strip() for r in results.split(',')]
+
+      comment_result_types = extract_result_types(comment)
+      if (comment_result_types and
+          sorted(result_types) != sorted(comment_result_types)):
+        raise Exception('Inconsistent documentation for: %s' % name)
       for result_type in result_types:
         add_matcher(result_type, name, 'Matcher<Type>', comment)
         if loc:

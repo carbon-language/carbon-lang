@@ -240,32 +240,32 @@ static MatcherList matcherMarshall2(ReturnType (*Func)(ArgType1, ArgType2),
 #undef CHECK_ARG_TYPE
 
 /// \brief Variadic marshaller function.
-template <typename BaseType, typename DerivedType>
-MatcherList VariadicMatcherCreateCallback(StringRef MatcherName,
+template <typename ResultT, typename ArgT,
+          ResultT (*Func)(ArrayRef<const ArgT *>)>
+MatcherList variadicMatcherCreateCallback(StringRef MatcherName,
                                           const SourceRange &NameRange,
                                           ArrayRef<ParserValue> Args,
                                           Diagnostics *Error) {
-  typedef ast_matchers::internal::Matcher<DerivedType> DerivedMatcherType;
-  DerivedMatcherType **InnerArgs = new DerivedMatcherType *[Args.size()]();
+  ArgT **InnerArgs = new ArgT *[Args.size()]();
 
   bool HasError = false;
   for (size_t i = 0, e = Args.size(); i != e; ++i) {
-    typedef ArgTypeTraits<DerivedMatcherType> DerivedTraits;
+    typedef ArgTypeTraits<ArgT> ArgTraits;
     const ParserValue &Arg = Args[i];
     const VariantValue &Value = Arg.Value;
-    if (!DerivedTraits::is(Value)) {
+    if (!ArgTraits::is(Value)) {
       Error->pushErrorFrame(Arg.Range, Error->ET_RegistryWrongArgType)
-          << (i + 1) << DerivedTraits::asString() << Value.getTypeAsString();
+          << (i + 1) << ArgTraits::asString() << Value.getTypeAsString();
       HasError = true;
       break;
     }
-    InnerArgs[i] = new DerivedMatcherType(DerivedTraits::get(Value));
+    InnerArgs[i] = new ArgT(ArgTraits::get(Value));
   }
 
   MatcherList Out;
   if (!HasError) {
-    Out = ast_matchers::internal::makeDynCastAllOfComposite<BaseType>(
-        ArrayRef<const DerivedMatcherType *>(InnerArgs, Args.size()));
+    Out = outvalueToMatcherList(
+        Func(ArrayRef<const ArgT *>(InnerArgs, Args.size())));
   }
 
   for (size_t i = 0, e = Args.size(); i != e; ++i) {
@@ -303,22 +303,14 @@ MatcherCreateCallback *makeMatcherAutoMarshall(ReturnType (*Func)(ArgType1,
       ReturnType (*)(ArgType1, ArgType2)>(matcherMarshall2, Func, MatcherName);
 }
 
-/// \brief Variadic overloads.
-template <typename MatcherType>
-MatcherCreateCallback *makeMatcherAutoMarshall(
-    ast_matchers::internal::VariadicAllOfMatcher<MatcherType> Func,
-    StringRef MatcherName) {
-  return new FreeFuncMatcherCreateCallback(
-      &VariadicMatcherCreateCallback<MatcherType, MatcherType>, MatcherName);
-}
-
-template <typename BaseType, typename MatcherType>
+/// \brief Variadic overload.
+template <typename ResultT, typename ArgT,
+          ResultT (*Func)(ArrayRef<const ArgT *>)>
 MatcherCreateCallback *
-makeMatcherAutoMarshall(ast_matchers::internal::VariadicDynCastAllOfMatcher<
-                            BaseType, MatcherType> Func,
+makeMatcherAutoMarshall(llvm::VariadicFunction<ResultT, ArgT, Func> VarFunc,
                         StringRef MatcherName) {
   return new FreeFuncMatcherCreateCallback(
-      &VariadicMatcherCreateCallback<BaseType, MatcherType>, MatcherName);
+      &variadicMatcherCreateCallback<ResultT, ArgT, Func>, MatcherName);
 }
 
 }  // namespace internal

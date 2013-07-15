@@ -163,6 +163,7 @@
 /// \c void(TypeList<Foo, Bar>), which works thanks to the parenthesis.
 /// The \c PolymorphicMatcherWithParam* classes will unpack the function type to
 /// extract the TypeList object.
+#define AST_POLYMORPHIC_SUPPORTED_TYPES_1(t1) void(internal::TypeList<t1>)
 #define AST_POLYMORPHIC_SUPPORTED_TYPES_2(t1, t2)                              \
   void(internal::TypeList<t1, t2>)
 #define AST_POLYMORPHIC_SUPPORTED_TYPES_3(t1, t2, t3)                          \
@@ -307,62 +308,27 @@
 /// For a specific \c SpecificType, the traversal is done using 
 /// \c SpecificType::FunctionName. The existance of such a function determines
 /// whether a corresponding matcher can be used on \c SpecificType.
-#define AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName)                   \
-  class Polymorphic##MatcherName##TypeMatcher {                                \
-  public:                                                                      \
-    Polymorphic##MatcherName##TypeMatcher(                                     \
-        const internal::Matcher<QualType> &InnerMatcher)                       \
-        : InnerMatcher(InnerMatcher) {                                         \
-    }                                                                          \
-    template <typename T> operator internal:: Matcher< T>() {                  \
-      return internal::Matcher<T>(new internal::TypeTraverseMatcher<T>(        \
-                                          InnerMatcher, &T::FunctionName));    \
-    }                                                                          \
-  private:                                                                     \
-    const internal::Matcher<QualType> InnerMatcher;                            \
+#define AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName, ReturnTypesF)     \
+  namespace internal {                                                         \
+  template <typename T> struct TypeMatcher##MatcherName##Getter {              \
+    static QualType (T::*value())() const { return &T::FunctionName; }         \
+  };                                                                           \
   }                                                                            \
-  ;                                                                            \
-  class Variadic##MatcherName##TypeTraverseMatcher                             \
-      : public llvm::VariadicFunction<                                         \
-          Polymorphic##MatcherName##TypeMatcher, internal::Matcher<QualType>,  \
-          internal::makeTypeAllOfComposite<                                    \
-              Polymorphic##MatcherName##TypeMatcher, QualType> > {             \
-  public:                                                                      \
-    Variadic##MatcherName##TypeTraverseMatcher() {                             \
-    }                                                                          \
-  }                                                                            \
-  ;                                                                            \
-  const Variadic##MatcherName##TypeTraverseMatcher MatcherName
+  const internal::TypeTraversePolymorphicMatcher<                              \
+      QualType, internal::TypeMatcher##MatcherName##Getter,                    \
+      internal::TypeTraverseMatcher, ReturnTypesF>::Func MatcherName
 
 /// \brief AST_TYPELOC_TRAVERSE_MATCHER(MatcherName, FunctionName) works
 /// identical to \c AST_TYPE_TRAVERSE_MATCHER but operates on \c TypeLocs.
-#define AST_TYPELOC_TRAVERSE_MATCHER(MatcherName, FunctionName)                \
-  class Polymorphic##MatcherName##TypeLocMatcher {                             \
-  public:                                                                      \
-    Polymorphic##MatcherName##TypeLocMatcher(                                  \
-        const internal::Matcher<TypeLoc> &InnerMatcher)                        \
-        : InnerMatcher(InnerMatcher) {                                         \
-    }                                                                          \
-    template <typename T> operator internal:: Matcher< T>() {                  \
-      return internal::Matcher<T>(                                             \
-          new internal::TypeLocTraverseMatcher<T>(InnerMatcher,                \
-                                                  &T::FunctionName##Loc));     \
-    }                                                                          \
-  private:                                                                     \
-    const internal::Matcher<TypeLoc> InnerMatcher;                             \
+#define AST_TYPELOC_TRAVERSE_MATCHER(MatcherName, FunctionName, ReturnTypesF)  \
+  namespace internal {                                                         \
+  template <typename T> struct TypeLocMatcher##MatcherName##Getter {           \
+    static TypeLoc (T::*value())() const { return &T::FunctionName##Loc; }     \
+  };                                                                           \
   }                                                                            \
-  ;                                                                            \
-  class Variadic##MatcherName##TypeLocTraverseMatcher                          \
-      : public llvm::VariadicFunction<                                         \
-          Polymorphic##MatcherName##TypeLocMatcher, internal::Matcher<TypeLoc>,\
-          internal::makeTypeAllOfComposite<                                    \
-              Polymorphic##MatcherName##TypeLocMatcher, TypeLoc> > {           \
-  public:                                                                      \
-    Variadic##MatcherName##TypeLocTraverseMatcher() {                          \
-    }                                                                          \
-  }                                                                            \
-  ;                                                                            \
-  const Variadic##MatcherName##TypeLocTraverseMatcher MatcherName##Loc;        \
-  AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName##Type)
+  const internal::TypeTraversePolymorphicMatcher<                              \
+      TypeLoc, internal::TypeLocMatcher##MatcherName##Getter,                  \
+      internal::TypeLocTraverseMatcher, ReturnTypesF>::Func MatcherName##Loc;  \
+  AST_TYPE_TRAVERSE_MATCHER(MatcherName, FunctionName##Type, ReturnTypesF)
 
 #endif // LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_MACROS_H
