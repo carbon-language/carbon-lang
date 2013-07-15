@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Options.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
 
@@ -36,7 +37,7 @@ namespace {
 class DriverOptTable : public OptTable {
 public:
   DriverOptTable()
-    : OptTable(InfoTable, sizeof(InfoTable) / sizeof(InfoTable[0])) {}
+    : OptTable(InfoTable, llvm::array_lengthof(InfoTable)) {}
 };
 
 }

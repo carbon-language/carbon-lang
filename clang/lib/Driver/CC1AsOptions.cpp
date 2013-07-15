@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/CC1AsOptions.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
 using namespace clang;
@@ -36,8 +37,7 @@ namespace {
 class CC1AsOptTable : public OptTable {
 public:
   CC1AsOptTable()
-    : OptTable(CC1AsInfoTable,
-               sizeof(CC1AsInfoTable) / sizeof(CC1AsInfoTable[0])) {}
+    : OptTable(CC1AsInfoTable, llvm::array_lengthof(CC1AsInfoTable)) {}
 };
 
 }

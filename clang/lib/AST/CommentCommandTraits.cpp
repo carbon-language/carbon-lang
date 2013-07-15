@@ -75,7 +75,7 @@ CommandTraits::getTypoCorrectCommandInfo(StringRef Typo) const {
   
   SmallVector<const CommandInfo *, 2> BestCommand;
   
-  int NumOfCommands = sizeof(Commands) / sizeof(CommandInfo);
+  const int NumOfCommands = llvm::array_lengthof(Commands);
   for (int i = 0; i < NumOfCommands; i++)
     HelperTypoCorrectCommandInfo(BestCommand, Typo, &Commands[i]);
   

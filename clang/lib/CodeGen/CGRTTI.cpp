@@ -972,6 +972,6 @@ void CodeGenModule::EmitFundamentalRTTIDescriptors() {
                                   Context.UnsignedLongLongTy, Context.FloatTy,
                                   Context.DoubleTy, Context.LongDoubleTy,
                                   Context.Char16Ty, Context.Char32Ty };
-  for (unsigned i = 0; i < sizeof(FundamentalTypes)/sizeof(QualType); ++i)
+  for (unsigned i = 0; i < llvm::array_lengthof(FundamentalTypes); ++i)
     EmitFundamentalRTTIDescriptor(FundamentalTypes[i]);
 }

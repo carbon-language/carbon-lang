@@ -3624,7 +3624,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       "extern", "inline", "static", "typedef"
     };
 
-    const unsigned NumCTypeSpecs = sizeof(CTypeSpecs) / sizeof(CTypeSpecs[0]);
+    const unsigned NumCTypeSpecs = llvm::array_lengthof(CTypeSpecs);
     for (unsigned I = 0; I != NumCTypeSpecs; ++I)
       Consumer.addKeywordResult(CTypeSpecs[I]);
 
@@ -3671,7 +3671,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       const char *CXXExprs[] = {
         "delete", "new", "operator", "throw", "typeid"
       };
-      const unsigned NumCXXExprs = sizeof(CXXExprs) / sizeof(CXXExprs[0]);
+      const unsigned NumCXXExprs = llvm::array_lengthof(CXXExprs);
       for (unsigned I = 0; I != NumCXXExprs; ++I)
         Consumer.addKeywordResult(CXXExprs[I]);
 
@@ -3697,7 +3697,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       // Statements.
       const char *CStmts[] = {
         "do", "else", "for", "goto", "if", "return", "switch", "while" };
-      const unsigned NumCStmts = sizeof(CStmts) / sizeof(CStmts[0]);
+      const unsigned NumCStmts = llvm::array_lengthof(CStmts);
       for (unsigned I = 0; I != NumCStmts; ++I)
         Consumer.addKeywordResult(CStmts[I]);
 

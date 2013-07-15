@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Types.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <cassert>
 #include <string.h>
@@ -28,7 +29,7 @@ static const TypeInfo TypeInfos[] = {
 #include "clang/Driver/Types.def"
 #undef TYPE
 };
-static const unsigned numTypes = sizeof(TypeInfos) / sizeof(TypeInfos[0]);
+static const unsigned numTypes = llvm::array_lengthof(TypeInfos);
 
 static const TypeInfo &getInfo(unsigned id) {
   assert(id > 0 && id - 1 < numTypes && "Invalid Type ID.");
