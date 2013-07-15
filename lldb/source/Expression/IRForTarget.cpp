@@ -2210,7 +2210,8 @@ IRForTarget::UnfoldConstant(Constant *old_constant,
                                                    llvm::cast<Instruction>(entry_instruction_finder.GetValue(function)));
                         });
                         
-                        return UnfoldConstant(constant_expr, bit_cast_maker, entry_instruction_finder);
+                        if (!UnfoldConstant(constant_expr, bit_cast_maker, entry_instruction_finder))
+                            return false;
                     }
                     break;
                 case Instruction::GetElementPtr:
@@ -2247,7 +2248,8 @@ IRForTarget::UnfoldConstant(Constant *old_constant,
                             return GetElementPtrInst::Create(ptr, indices, "", llvm::cast<Instruction>(entry_instruction_finder.GetValue(function)));
                         });
                         
-                        return UnfoldConstant(constant_expr, get_element_pointer_maker, entry_instruction_finder);
+                        if (!UnfoldConstant(constant_expr, get_element_pointer_maker, entry_instruction_finder))
+                            return false;
                     }
                     break;
                 }
@@ -2272,6 +2274,11 @@ IRForTarget::UnfoldConstant(Constant *old_constant,
                 return false;
             }
         }
+    }
+    
+    if (!isa<GlobalValue>(old_constant))
+    {
+        old_constant->destroyConstant();
     }
     
     return true;
