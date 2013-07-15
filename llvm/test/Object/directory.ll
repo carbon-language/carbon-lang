@@ -1,7 +1,10 @@
 ;RUN: rm -f %T/test.a
 ;RUN: not llvm-ar r %T/test.a . 2>&1 | FileCheck %s
 ;CHECK: .: Is a directory
-;XFAIL: freebsd
+
+; opening a directory works on freebsd. On windows we just get a
+; "permission denied"
+;XFAIL: freebsd, win32
 
 ;RUN: rm -f %T/test.a
 ;RUN: touch %T/a-very-long-file-name
