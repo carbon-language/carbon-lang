@@ -127,7 +127,7 @@ namespace format {
 
 void setDefaultPenalties(FormatStyle &Style) {
   Style.PenaltyBreakComment = 45;
-  Style.PenaltyBreakFirstLessLess = 180;
+  Style.PenaltyBreakFirstLessLess = 120;
   Style.PenaltyBreakString = 1000;
   Style.PenaltyExcessCharacter = 1000000;
 }
@@ -854,7 +854,7 @@ private:
       // If this ends the array subscript expr, reset the corresponding value.
       const FormatToken *NextNonComment = Current.getNextNonComment();
       if (NextNonComment && NextNonComment->isNot(tok::l_square))
-          State.Stack.back().StartOfArraySubscripts = 0;
+        State.Stack.back().StartOfArraySubscripts = 0;
     }
 
     // Remove scopes created by fake parenthesis.
@@ -1339,10 +1339,10 @@ public:
       : Style(Style), Lex(Lex), SourceMgr(SourceMgr),
         Whitespaces(SourceMgr, Style), Ranges(Ranges),
         Encoding(encoding::detectEncoding(Lex.getBuffer())) {
-    DEBUG(llvm::dbgs()
-          << "File encoding: "
-          << (Encoding == encoding::Encoding_UTF8 ? "UTF8" : "unknown")
-          << "\n");
+    DEBUG(llvm::dbgs() << "File encoding: "
+                       << (Encoding == encoding::Encoding_UTF8 ? "UTF8"
+                                                               : "unknown")
+                       << "\n");
   }
 
   virtual ~Formatter() {}
