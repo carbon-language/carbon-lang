@@ -637,8 +637,9 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                            uint64_t &FixedValue) {
   assert(Target.getSymA() != NULL && "Relocation must reference a symbol!");
 
-  const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData &A_SD = Asm.getSymbolData(*A);
+  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+  const MCSymbol &A = Symbol.AliasedSymbol();
+  MCSymbolData &A_SD = Asm.getSymbolData(A);
 
   MCSectionData const *SectionData = Fragment->getParent();
 
