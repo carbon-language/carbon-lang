@@ -38,3 +38,17 @@ define void @ashr_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %i
   store <4 x i32> %result, <4 x i32> addrspace(1)* %out
   ret void
 }
+
+;EG-CHECK: @ashr_i64
+;EG-CHECK: ASHR
+
+;SI-CHECK: @ashr_i64
+;SI-CHECK: V_ASHR_I64
+define void @ashr_i64(i64 addrspace(1)* %out, i32 %in) {
+entry:
+  %0 = sext i32 %in to i64
+  %1 = ashr i64 %0, 8
+  store i64 %1, i64 addrspace(1)* %out
+  ret void
+}
+

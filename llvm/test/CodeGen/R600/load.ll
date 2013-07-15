@@ -65,3 +65,45 @@ define void @load_const_addrspace_f32(float addrspace(1)* %out, float addrspace(
   store float %1, float addrspace(1)* %out
   ret void
 }
+
+; R600-CHECK: @load_i64
+; R600-CHECK: RAT
+; R600-CHECK: RAT
+
+; SI-CHECK: @load_i64
+; SI-CHECK: BUFFER_LOAD_DWORDX2
+define void @load_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
+entry:
+  %0 = load i64 addrspace(1)* %in
+  store i64 %0, i64 addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_i64_sext
+; R600-CHECK: RAT
+; R600-CHECK: RAT
+; R600-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, T{{[0-9]\.[XYZW]}},  literal.x
+; R600-CHECK: 31
+; SI-CHECK: @load_i64_sext
+; SI-CHECK: BUFFER_LOAD_DWORDX2 [[VAL:VGPR[0-9]_VGPR[0-9]]]
+; SI-CHECK: V_LSHL_B64 [[LSHL:VGPR[0-9]_VGPR[0-9]]], [[VAL]], 32
+; SI-CHECK: V_ASHR_I64 VGPR{{[0-9]}}_VGPR{{[0-9]}}, [[LSHL]], 32
+
+define void @load_i64_sext(i64 addrspace(1)* %out, i32 addrspace(1)* %in) {
+entry:
+  %0 = load i32 addrspace(1)* %in
+  %1 = sext i32 %0 to i64
+  store i64 %1, i64 addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_i64_zext
+; R600-CHECK: RAT
+; R600-CHECK: RAT
+define void @load_i64_zext(i64 addrspace(1)* %out, i32 addrspace(1)* %in) {
+entry:
+  %0 = load i32 addrspace(1)* %in
+  %1 = zext i32 %0 to i64
+  store i64 %1, i64 addrspace(1)* %out
+  ret void
+}

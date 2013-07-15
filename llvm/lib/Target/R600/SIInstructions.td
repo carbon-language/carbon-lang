@@ -1024,7 +1024,9 @@ def V_LSHL_B64 : VOP3_64_Shift <0x00000161, "V_LSHL_B64",
 def V_LSHR_B64 : VOP3_64_Shift <0x00000162, "V_LSHR_B64",
   [(set i64:$dst, (srl i64:$src0, i32:$src1))]
 >;
-def V_ASHR_I64 : VOP3_64_Shift <0x00000163, "V_ASHR_I64", []>;
+def V_ASHR_I64 : VOP3_64_Shift <0x00000163, "V_ASHR_I64",
+  [(set i64:$dst, (sra i64:$src0, i32:$src1))]
+>;
 
 let isCommutable = 1 in {
 
@@ -1738,6 +1740,10 @@ defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
                           global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32,
                           zextloadi8_global, zextloadi8_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
+                          global_load, constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
+                          az_extloadi32_global, az_extloadi32_constant>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, v2i32,
                           global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,

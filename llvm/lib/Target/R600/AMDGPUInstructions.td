@@ -86,12 +86,32 @@ def COND_NULL : PatLeaf <
 // Load/Store Pattern Fragments
 //===----------------------------------------------------------------------===//
 
+def az_extload : PatFrag<(ops node:$ptr), (unindexedload node:$ptr), [{
+  LoadSDNode *L = cast<LoadSDNode>(N);
+  return L->getExtensionType() == ISD::ZEXTLOAD ||
+         L->getExtensionType() == ISD::EXTLOAD;
+}]>;
+
 def zextloadi8_global : PatFrag<(ops node:$ptr), (zextloadi8 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
 def zextloadi8_constant : PatFrag<(ops node:$ptr), (zextloadi8 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+def az_extloadi32 : PatFrag<(ops node:$ptr), (az_extload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+
+def az_extloadi32_global : PatFrag<(ops node:$ptr),
+                                   (az_extloadi32 node:$ptr), [{
+  return isGlobalLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+def az_extloadi32_constant : PatFrag<(ops node:$ptr),
+                                     (az_extloadi32 node:$ptr), [{
+  return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
 }]>;
 
 def local_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
