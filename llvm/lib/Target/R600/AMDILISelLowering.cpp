@@ -39,7 +39,7 @@ using namespace llvm;
 // TargetLowering Class Implementation Begins
 //===----------------------------------------------------------------------===//
 void AMDGPUTargetLowering::InitAMDILLowering() {
-  int types[] = {
+  static const int types[] = {
     (int)MVT::i8,
     (int)MVT::i16,
     (int)MVT::i32,
@@ -58,19 +58,19 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
     (int)MVT::v2i64
   };
 
-  int IntTypes[] = {
+  static const int IntTypes[] = {
     (int)MVT::i8,
     (int)MVT::i16,
     (int)MVT::i32,
     (int)MVT::i64
   };
 
-  int FloatTypes[] = {
+  static const int FloatTypes[] = {
     (int)MVT::f32,
     (int)MVT::f64
   };
 
-  int VectorTypes[] = {
+  static const int VectorTypes[] = {
     (int)MVT::v2i8,
     (int)MVT::v4i8,
     (int)MVT::v2i16,

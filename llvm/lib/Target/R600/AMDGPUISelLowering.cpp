@@ -78,7 +78,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
 
-  int types[] = {
+  static const int types[] = {
     (int)MVT::v2i32,
     (int)MVT::v4i32
   };

@@ -42,27 +42,27 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   // never be necessary.
   assert(DestReg != AMDGPU::SCC && SrcReg != AMDGPU::SCC);
 
-  const int16_t Sub0_15[] = {
+  static const int16_t Sub0_15[] = {
     AMDGPU::sub0, AMDGPU::sub1, AMDGPU::sub2, AMDGPU::sub3,
     AMDGPU::sub4, AMDGPU::sub5, AMDGPU::sub6, AMDGPU::sub7,
     AMDGPU::sub8, AMDGPU::sub9, AMDGPU::sub10, AMDGPU::sub11,
     AMDGPU::sub12, AMDGPU::sub13, AMDGPU::sub14, AMDGPU::sub15, 0
   };
 
-  const int16_t Sub0_7[] = {
+  static const int16_t Sub0_7[] = {
     AMDGPU::sub0, AMDGPU::sub1, AMDGPU::sub2, AMDGPU::sub3,
     AMDGPU::sub4, AMDGPU::sub5, AMDGPU::sub6, AMDGPU::sub7, 0
   };
 
-  const int16_t Sub0_3[] = {
+  static const int16_t Sub0_3[] = {
     AMDGPU::sub0, AMDGPU::sub1, AMDGPU::sub2, AMDGPU::sub3, 0
   };
 
-  const int16_t Sub0_2[] = {
+  static const int16_t Sub0_2[] = {
     AMDGPU::sub0, AMDGPU::sub1, AMDGPU::sub2, 0
   };
 
-  const int16_t Sub0_1[] = {
+  static const int16_t Sub0_1[] = {
     AMDGPU::sub0, AMDGPU::sub1, 0
   };
 

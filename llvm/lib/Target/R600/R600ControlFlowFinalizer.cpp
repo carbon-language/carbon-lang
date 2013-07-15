@@ -172,7 +172,7 @@ private:
   }
 
   void getLiteral(MachineInstr *MI, std::vector<int64_t> &Lits) const {
-    unsigned LiteralRegs[] = {
+    static const unsigned LiteralRegs[] = {
       AMDGPU::ALU_LITERAL_X,
       AMDGPU::ALU_LITERAL_Y,
       AMDGPU::ALU_LITERAL_Z,
