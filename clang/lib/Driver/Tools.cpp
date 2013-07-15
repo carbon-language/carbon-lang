@@ -1199,13 +1199,9 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
 
   // If unspecified, choose the default based on the platform.
   if (FloatABI.empty()) {
-    switch (getToolChain().getTriple().getOS()) {
-    default:
-      // Assume "soft", but warn the user we are guessing.
-      FloatABI = "soft";
-      D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
-      break;
-    }
+    // Assume "soft", but warn the user we are guessing.
+    FloatABI = "soft";
+    D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
   }
 
   if (FloatABI == "soft") {
