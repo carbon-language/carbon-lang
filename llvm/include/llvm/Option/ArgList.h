@@ -12,10 +12,9 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Option/OptSpecifier.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/Allocator.h"
+#include <list>
 #include <string>
 #include <vector>
 
@@ -299,7 +298,7 @@ private:
   /// This is mutable since we treat the ArgList as being the list
   /// of Args, and allow routines to add new strings (to have a
   /// convenient place to store the memory) via MakeIndex.
-  mutable StringSet<BumpPtrAllocator> SynthesizedStrings;
+  mutable std::list<std::string> SynthesizedStrings;
 
   /// The number of original input argument strings.
   unsigned NumInputArgStrings;
