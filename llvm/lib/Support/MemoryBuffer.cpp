@@ -253,17 +253,6 @@ error_code MemoryBuffer::getFile(const char *Filename,
                                  OwningPtr<MemoryBuffer> &result,
                                  int64_t FileSize,
                                  bool RequiresNullTerminator) {
-  // FIXME: Review if this check is unnecessary on windows as well.
-#ifdef LLVM_ON_WIN32
-  // First check that the "file" is not a directory
-  bool is_dir = false;
-  error_code err = sys::fs::is_directory(Filename, is_dir);
-  if (err)
-    return err;
-  if (is_dir)
-    return make_error_code(errc::is_a_directory);
-#endif
-
   int OpenFlags = O_RDONLY;
 #ifdef O_BINARY
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
