@@ -90,7 +90,7 @@ public:
                        MachineBasicBlock::iterator MI,
                        const std::vector<CalleeSavedInfo> &CSI,
                        const TargetRegisterInfo *TRI,
-                       LoadStoreMethod PossibleClasses[],
+                       const LoadStoreMethod PossibleClasses[],
                        unsigned NumClasses) const;
 
 

@@ -425,7 +425,7 @@ AArch64FrameLowering::emitFrameMemOps(bool isPrologue, MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator MBBI,
                                       const std::vector<CalleeSavedInfo> &CSI,
                                       const TargetRegisterInfo *TRI,
-                                      LoadStoreMethod PossClasses[],
+                                      const LoadStoreMethod PossClasses[],
                                       unsigned NumClasses) const {
   DebugLoc DL = MBB.findDebugLoc(MBBI);
   MachineFunction &MF = *MBB.getParent();
@@ -528,11 +528,11 @@ AArch64FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (CSI.empty())
     return false;
 
-  static LoadStoreMethod PossibleClasses[] = {
+  static const LoadStoreMethod PossibleClasses[] = {
     {&AArch64::GPR64RegClass, AArch64::LSPair64_STR, AArch64::LS64_STR},
     {&AArch64::FPR64RegClass, AArch64::LSFPPair64_STR, AArch64::LSFP64_STR},
   };
-  unsigned NumClasses = llvm::array_lengthof(PossibleClasses);
+  const unsigned NumClasses = llvm::array_lengthof(PossibleClasses);
 
   emitFrameMemOps(/* isPrologue = */ true, MBB, MBBI, CSI, TRI,
                   PossibleClasses, NumClasses);
@@ -549,11 +549,11 @@ AArch64FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   if (CSI.empty())
     return false;
 
-  static LoadStoreMethod PossibleClasses[] = {
+  static const LoadStoreMethod PossibleClasses[] = {
     {&AArch64::GPR64RegClass, AArch64::LSPair64_LDR, AArch64::LS64_LDR},
     {&AArch64::FPR64RegClass, AArch64::LSFPPair64_LDR, AArch64::LSFP64_LDR},
   };
-  unsigned NumClasses = llvm::array_lengthof(PossibleClasses);
+  const unsigned NumClasses = llvm::array_lengthof(PossibleClasses);
 
   emitFrameMemOps(/* isPrologue = */ false, MBB, MBBI, CSI, TRI,
                   PossibleClasses, NumClasses);
