@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 using namespace llvm;
 
@@ -37,7 +38,6 @@ MCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
     { "FK_SecRel_8", 0, 64, 0 }
   };
 
-  assert((size_t)Kind <= sizeof(Builtins) / sizeof(Builtins[0]) &&
-         "Unknown fixup kind");
+  assert((size_t)Kind <= array_lengthof(Builtins) && "Unknown fixup kind");
   return Builtins[Kind];
 }

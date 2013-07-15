@@ -853,7 +853,7 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   
   // FIXME: This is a total hack, finish mc'izing the PPC backend.
   if (OutStreamer.hasRawTextSupport()) {
-    assert(Directive < sizeof(CPUDirectives) / sizeof(*CPUDirectives) &&
+    assert(Directive < array_lengthof(CPUDirectives) &&
            "CPUDirectives[] might not be up-to-date!");
     OutStreamer.EmitRawText("\t.machine " + Twine(CPUDirectives[Directive]));
   }

@@ -55,8 +55,7 @@ static std::vector<std::pair<void(*)(void*), void*> > CallBacksToRun;
 static const int IntSigs[] = {
   SIGHUP, SIGINT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
-static const int *const IntSigsEnd =
-  IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
+static const int *const IntSigsEnd = array_endof(IntSigs);
 
 // KillSigs - Signals that represent that we have a bug, and our prompt
 // termination has been ordered.
@@ -75,8 +74,7 @@ static const int KillSigs[] = {
   , SIGEMT
 #endif
 };
-static const int *const KillSigsEnd =
-  KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
+static const int *const KillSigsEnd = array_endof(KillSigs);
 
 static unsigned NumRegisteredSignals = 0;
 static struct {
@@ -86,8 +84,7 @@ static struct {
 
 
 static void RegisterHandler(int Signal) {
-  assert(NumRegisteredSignals <
-         sizeof(RegisteredSignalInfo)/sizeof(RegisteredSignalInfo[0]) &&
+  assert(NumRegisteredSignals < array_lengthof(RegisteredSignalInfo) &&
          "Out of space for signal handlers!");
 
   struct sigaction NewHandler;

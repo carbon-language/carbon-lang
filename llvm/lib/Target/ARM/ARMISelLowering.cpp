@@ -2732,7 +2732,7 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
     lastRegToSaveIndex = REnd - ARM::R0;
   } else {
     firstRegToSaveIndex = CCInfo.getFirstUnallocated
-      (GPRArgRegs, sizeof(GPRArgRegs) / sizeof(GPRArgRegs[0]));
+      (GPRArgRegs, array_lengthof(GPRArgRegs));
     lastRegToSaveIndex = 4;
   }
 
