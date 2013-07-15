@@ -604,9 +604,9 @@ public:
   /// page.
   ///
   /// By dividing 32 bit RVAs into blocks, COFF saves disk and memory space for
-  /// the base relocation. A block consists with a 32 bit page RVA and 16 bit
-  /// relocation entries which represent offsets in the page. That is a compact
-  /// represetation than a simple vector of 32 bit RVAs.
+  /// the base relocation. A block consists of a 32 bit page RVA and 16 bit
+  /// relocation entries which represent offsets in the page. That is a more
+  /// compact representation than a simple vector of 32 bit RVAs.
   void setContents(ChunkVectorT &chunks) {
     std::vector<uint64_t> relocSites = listRelocSites(chunks);
     PageOffsetT blocks = groupByPage(relocSites);
