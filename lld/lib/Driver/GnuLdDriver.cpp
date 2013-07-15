@@ -70,19 +70,23 @@ public:
 
 } // namespace
 
-bool GnuLdDriver::linkELF(int argc, const char *argv[]) {
+
+
+bool GnuLdDriver::linkELF(int argc, const char *argv[],
+                                                  raw_ostream &diagnostics) {
   std::unique_ptr<ELFTargetInfo> options;
-  bool error = parse(argc, argv, options);
+  bool error = parse(argc, argv, options, diagnostics);
   if (error)
     return true;
   if (!options)
     return false;
 
-  return link(*options);
+  return link(*options, diagnostics);
 }
 
 bool GnuLdDriver::parse(int argc, const char *argv[],
-                        std::unique_ptr<ELFTargetInfo> &targetInfo) {
+                        std::unique_ptr<ELFTargetInfo> &targetInfo,
+                        raw_ostream &diagnostics) {
   // Parse command line options using LDOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   GnuLdOptTable table;
@@ -91,16 +95,17 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   parsedArgs.reset(
       table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
   if (missingCount) {
-    llvm::errs() << "error: missing arg value for '"
-                 << parsedArgs->getArgString(missingIndex) << "' expected "
-                 << missingCount << " argument(s).\n";
+    diagnostics << "error: missing arg value for '"
+                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << missingCount << " argument(s).\n";
     return true;
   }
 
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    llvm::errs() << "warning: ignoring unknown argument: "
-                 << (*it)->getAsString(*parsedArgs) << "\n";
+    diagnostics << "warning: ignoring unknown argument: " << (*it)->getAsString(
+                                                                 *parsedArgs)
+                << "\n";
   }
 
   // Handle --help
@@ -118,7 +123,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   std::unique_ptr<ELFTargetInfo> options(ELFTargetInfo::create(triple));
 
   if (!options) {
-    llvm::errs() << "unknown target triple\n";
+    diagnostics << "unknown target triple\n";
     return true;
   }
 
@@ -248,8 +253,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
     case OPT_l:
       if (options->appendLibrary((*it)->getValue())) {
-        llvm::errs() << "Failed to find library for " << (*it)->getValue()
-                     << "\n";
+        diagnostics << "Failed to find library for " << (*it)->getValue()
+                    << "\n";
         return true;
       }
       break;
@@ -259,7 +264,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   }
 
   // Validate the combination of options used.
-  if (options->validate(llvm::errs()))
+  if (options->validate(diagnostics))
     return true;
 
   targetInfo.swap(options);

@@ -67,15 +67,17 @@ public:
 
 namespace lld {
 
-bool CoreDriver::link(int argc, const char *argv[]) {
+bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
   CoreTargetInfo info;
   if (parse(argc, argv, info))
     return true;
-
+  
   return Driver::link(info);
 }
 
-bool CoreDriver::parse(int argc, const char *argv[], CoreTargetInfo &info) {
+
+bool CoreDriver::parse(int argc, const char *argv[],  
+                          CoreTargetInfo &info, raw_ostream &diagnostics) {
   // Parse command line options using CoreOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   CoreOptTable table;
@@ -84,15 +86,15 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreTargetInfo &info) {
   parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], 
                                                 missingIndex, missingCount));
   if (missingCount) {
-    llvm::errs() << "error: missing arg value for '"
-                 << parsedArgs->getArgString(missingIndex) << "' expected "
-                 << missingCount << " argument(s).\n";
+    diagnostics  << "error: missing arg value for '"
+                 << parsedArgs->getArgString(missingIndex)
+                 << "' expected " << missingCount << " argument(s).\n";
     return true;
   }
 
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    llvm::errs() << "warning: ignoring unknown argument: "
+    diagnostics  << "warning: ignoring unknown argument: "
                  << (*it)->getAsString(*parsedArgs) << "\n";
   }
   

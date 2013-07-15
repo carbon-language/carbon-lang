@@ -70,16 +70,19 @@ public:
 
 namespace lld {
 
-bool DarwinLdDriver::linkMachO(int argc, const char *argv[]) {
+bool DarwinLdDriver::linkMachO(int argc, const char *argv[], 
+                                                    raw_ostream &diagnostics) {
   MachOTargetInfo info;
-  if (parse(argc, argv, info))
+  if (parse(argc, argv, info, diagnostics))
     return true;
-
-  return link(info);
+    
+  return link(info, diagnostics);
 }
 
-bool DarwinLdDriver::parse(int argc, const char *argv[],
-                           MachOTargetInfo &info) {
+
+
+bool DarwinLdDriver::parse(int argc, const char *argv[],  
+                          MachOTargetInfo &info, raw_ostream &diagnostics) {
   // Parse command line options using DarwinOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   DarwinLdOptTable table;
@@ -88,15 +91,15 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], 
                                                 missingIndex, missingCount));
   if (missingCount) {
-    llvm::errs() << "error: missing arg value for '"
-                 << parsedArgs->getArgString(missingIndex) << "' expected "
-                 << missingCount << " argument(s).\n";
+    diagnostics  << "error: missing arg value for '"
+                 << parsedArgs->getArgString(missingIndex)
+                 << "' expected " << missingCount << " argument(s).\n";
     return true;
   }
 
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
             ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    llvm::errs() << "warning: ignoring unknown argument: "
+    diagnostics  << "warning: ignoring unknown argument: "
                  << (*it)->getAsString(*parsedArgs) << "\n";
   }
   
@@ -155,19 +158,19 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     switch (minOS->getOption().getID()) {
     case OPT_macosx_version_min:
       if (info.setOS(MachOTargetInfo::OS::macOSX, minOS->getValue())) {
-        llvm::errs() << "error: malformed macosx_version_min value\n";
+        diagnostics << "error: malformed macosx_version_min value\n";
         return true;
       }
       break;
     case OPT_ios_version_min:
       if (info.setOS(MachOTargetInfo::OS::iOS, minOS->getValue())) {
-        llvm::errs() << "error: malformed ios_version_min value\n";
+        diagnostics << "error: malformed ios_version_min value\n";
         return true;
       }
       break;
     case OPT_ios_simulator_version_min:
       if (info.setOS(MachOTargetInfo::OS::iOS_simulator, minOS->getValue())) {
-        llvm::errs() << "error: malformed ios_simulator_version_min value\n";
+        diagnostics << "error: malformed ios_simulator_version_min value\n";
         return true;
       }
       break;
@@ -184,9 +187,9 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                               it != ie; ++it) {
     info.appendInputFile((*it)->getValue());
   }
-
+  
   // Validate the combination of options used.
-  if (info.validate(llvm::errs()))
+  if (info.validate(diagnostics))
     return true;
 
   return false;
