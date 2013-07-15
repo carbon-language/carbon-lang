@@ -20,10 +20,9 @@ FILE:   TimeDateStamp:
 FILE:   PointerToSymbolTable: 0x0
 FILE:   SymbolCount: 0
 FILE:   OptionalHeaderSize: 224
-FILE:   Characteristics [ (0x103)
+FILE:   Characteristics [ (0x102)
 FILE:     IMAGE_FILE_32BIT_MACHINE (0x100)
 FILE:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
-FILE:     IMAGE_FILE_RELOCS_STRIPPED (0x1)
 FILE:   ]
 FILE: }
 FILE: ImageOptionalHeader {

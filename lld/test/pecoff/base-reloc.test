@@ -1,0 +1,13 @@
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link -out %t1 -subsystem console -force -- %t.obj \
+# RUN:   && llvm-objdump -s %t1 | FileCheck %s
+
+# Because llvm-objdump cannot pretty-print the contents of .reloc section, we
+# have no choice other than comparing the result with this binary blob.
+#
+# TODO: Improve llvm-objdump to pretty print .reloc section as GNU binutil
+# objdump does.
+
+CHECK: Contents of section .reloc:
+CHECK-NEXT:  3000 00100000 0c000000 07300c30 00000000  .........0.0....
