@@ -38,10 +38,10 @@ template <class T, size_t N>
 void
 swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));
 
-template <class T> T&& forward(typename remove_reference<T>::type& t) noexcept;
-template <class T> T&& forward(typename remove_reference<T>::type&& t) noexcept;
+template <class T> T&& forward(typename remove_reference<T>::type& t) noexcept;  // constexpr in C++14
+template <class T> T&& forward(typename remove_reference<T>::type&& t) noexcept; // constexpr in C++14
 
-template <class T> typename remove_reference<T>::type&& move(T&&) noexcept;
+template <class T> typename remove_reference<T>::type&& move(T&&) noexcept;      // constexpr in C++14
 
 template <class T>
     typename conditional
@@ -50,7 +50,7 @@ template <class T>
         const T&,
         T&&
     >::type
-    move_if_noexcept(T& x) noexcept;
+    move_if_noexcept(T& x) noexcept; // constexpr in C++14
 
 template <class T> typename add_rvalue_reference<T>::type declval() noexcept;
 
@@ -221,7 +221,7 @@ swap(_Tp (&__a)[_Np], _Tp (&__b)[_Np]) _NOEXCEPT_(__is_nothrow_swappable<_Tp>::v
 }
 
 template <class _Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 typename conditional
 <

@@ -843,7 +843,7 @@ template <class _T1, class... _Args>
 inline _LIBCPP_INLINE_VISIBILITY
 constexpr _T1&& get(tuple<_Args...>&& __tup) noexcept
 {
-    return _VSTD::get<__find_exactly_one_t<_T1, _Args...>::value>(_VSTD::move<tuple<_Args...>>(__tup));
+    return _VSTD::get<__find_exactly_one_t<_T1, _Args...>::value>(_VSTD::move(__tup));
 }
 
 #endif
