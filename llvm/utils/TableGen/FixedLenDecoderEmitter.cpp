@@ -879,15 +879,20 @@ emitPredicateFunction(formatted_raw_ostream &OS, PredicateSet &Predicates,
   OS.indent(Indentation) << "static bool checkDecoderPredicate(unsigned Idx, "
     << "uint64_t Bits) {\n";
   Indentation += 2;
-  OS.indent(Indentation) << "switch (Idx) {\n";
-  OS.indent(Indentation) << "default: llvm_unreachable(\"Invalid index!\");\n";
-  unsigned Index = 0;
-  for (PredicateSet::const_iterator I = Predicates.begin(), E = Predicates.end();
-       I != E; ++I, ++Index) {
-    OS.indent(Indentation) << "case " << Index << ":\n";
-    OS.indent(Indentation+2) << "return (" << *I << ");\n";
+  if (!Predicates.empty()) {
+    OS.indent(Indentation) << "switch (Idx) {\n";
+    OS.indent(Indentation) << "default: llvm_unreachable(\"Invalid index!\");\n";
+    unsigned Index = 0;
+    for (PredicateSet::const_iterator I = Predicates.begin(), E = Predicates.end();
+         I != E; ++I, ++Index) {
+      OS.indent(Indentation) << "case " << Index << ":\n";
+      OS.indent(Indentation+2) << "return (" << *I << ");\n";
+    }
+    OS.indent(Indentation) << "}\n";
+  } else {
+    // No case statement to emit
+    OS.indent(Indentation) << "llvm_unreachable(\"Invalid index!\");\n";
   }
-  OS.indent(Indentation) << "}\n";
   Indentation -= 2;
   OS.indent(Indentation) << "}\n\n";
 }

@@ -270,33 +270,40 @@ void InstrInfoEmitter::emitOperandNameMappings(raw_ostream &OS,
   OS << "namespace llvm {";
   OS << "namespace " << Namespace << " {\n";
   OS << "int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIdx) {\n";
-  OS << "  static const int16_t OperandMap []["<< Operands.size() << "] = {\n";
-  for (OpNameMapTy::iterator i = OperandMap.begin(), e = OperandMap.end();
-                                                     i != e; ++i) {
-    const std::map<unsigned, unsigned> &OpList = i->first;
-    OS << "{";
+  if (!Operands.empty()) {
+    OS << "  static const int16_t OperandMap [][" << Operands.size()
+       << "] = {\n";
+    for (OpNameMapTy::iterator i = OperandMap.begin(), e = OperandMap.end();
+                                                       i != e; ++i) {
+      const std::map<unsigned, unsigned> &OpList = i->first;
+      OS << "{";
 
-    // Emit a row of the OperandMap table
-    for (unsigned ii = 0, ie = Operands.size(); ii != ie; ++ii)
-      OS << (OpList.count(ii) == 0 ? -1 : (int)OpList.find(ii)->second) << ", ";
+      // Emit a row of the OperandMap table
+      for (unsigned ii = 0, ie = Operands.size(); ii != ie; ++ii)
+        OS << (OpList.count(ii) == 0 ? -1 : (int)OpList.find(ii)->second)
+           << ", ";
 
-    OS << "},\n";
+      OS << "},\n";
+    }
+    OS << "};\n";
+
+    OS << "  switch(Opcode) {\n";
+    unsigned TableIndex = 0;
+    for (OpNameMapTy::iterator i = OperandMap.begin(), e = OperandMap.end();
+                                                       i != e; ++i) {
+      std::vector<std::string> &OpcodeList = i->second;
+
+      for (unsigned ii = 0, ie = OpcodeList.size(); ii != ie; ++ii)
+        OS << "  case " << OpcodeList[ii] << ":\n";
+
+      OS << "    return OperandMap[" << TableIndex++ << "][NamedIdx];\n";
+    }
+    OS << "    default: return -1;\n";
+    OS << "  }\n";
+  } else {
+    // There are no operands, so no need to emit anything
+    OS << "  return -1;\n";
   }
-  OS << "};\n";
-
-  OS << "  switch(Opcode) {\n";
-  unsigned TableIndex = 0;
-  for (OpNameMapTy::iterator i = OperandMap.begin(), e = OperandMap.end();
-                                                     i != e; ++i) {
-    std::vector<std::string> &OpcodeList = i->second;
-
-    for (unsigned ii = 0, ie = OpcodeList.size(); ii != ie; ++ii)
-      OS << "  case " << OpcodeList[ii] << ":\n";
-
-    OS << "    return OperandMap[" << TableIndex++ << "][NamedIdx];\n";
-  }
-  OS << "    default: return -1;\n";
-  OS << "  }\n";
   OS << "}\n";
   OS << "} // End namespace " << Namespace << "\n";
   OS << "} // End namespace llvm\n";

@@ -114,6 +114,7 @@
 #include <cassert>
 #include <map>
 #include <set>
+#include <sstream>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -2066,9 +2067,11 @@ static void emitIsSubclass(CodeGenTarget &Target,
   OS << "  if (A == B)\n";
   OS << "    return true;\n\n";
 
-  OS << "  switch (A) {\n";
-  OS << "  default:\n";
-  OS << "    return false;\n";
+  std::stringstream SS;
+  unsigned Count = 0;
+  SS << "  switch (A) {\n";
+  SS << "  default:\n";
+  SS << "    return false;\n";
   for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
          ie = Infos.end(); it != ie; ++it) {
     ClassInfo &A = **it;
@@ -2084,21 +2087,35 @@ static void emitIsSubclass(CodeGenTarget &Target,
 
     if (SuperClasses.empty())
       continue;
+    ++Count;
 
-    OS << "\n  case " << A.Name << ":\n";
+    SS << "\n  case " << A.Name << ":\n";
 
     if (SuperClasses.size() == 1) {
-      OS << "    return B == " << SuperClasses.back() << ";\n";
+      SS << "    return B == " << SuperClasses.back().str() << ";\n";
       continue;
     }
 
-    OS << "    switch (B) {\n";
-    OS << "    default: return false;\n";
-    for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-      OS << "    case " << SuperClasses[i] << ": return true;\n";
-    OS << "    }\n";
+    if (!SuperClasses.empty()) {
+      SS << "    switch (B) {\n";
+      SS << "    default: return false;\n";
+      for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
+        SS << "    case " << SuperClasses[i].str() << ": return true;\n";
+      SS << "    }\n";
+    } else {
+      // No case statement to emit
+      SS << "    return false;\n";
+    }
   }
-  OS << "  }\n";
+  SS << "  }\n";
+
+  // If there were case statements emitted into the string stream, write them
+  // to the output stream, otherwise write the default.
+  if (Count)
+    OS << SS.str();
+  else
+    OS << "  return false;\n";
+
   OS << "}\n\n";
 }
 
@@ -2194,18 +2211,24 @@ static void emitOperandDiagnosticTypes(AsmMatcherInfo &Info, raw_ostream &OS) {
 static void emitGetSubtargetFeatureName(AsmMatcherInfo &Info, raw_ostream &OS) {
   OS << "// User-level names for subtarget features that participate in\n"
      << "// instruction matching.\n"
-     << "static const char *getSubtargetFeatureName(unsigned Val) {\n"
-     << "  switch(Val) {\n";
-  for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
-         it = Info.SubtargetFeatures.begin(),
-         ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
-    SubtargetFeatureInfo &SFI = *it->second;
-    // FIXME: Totally just a placeholder name to get the algorithm working.
-    OS << "  case " << SFI.getEnumName() << ": return \""
-       << SFI.TheDef->getValueAsString("PredicateName") << "\";\n";
+     << "static const char *getSubtargetFeatureName(unsigned Val) {\n";
+  if (!Info.SubtargetFeatures.empty()) {
+    OS << "  switch(Val) {\n";
+    for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
+           it = Info.SubtargetFeatures.begin(),
+           ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
+      SubtargetFeatureInfo &SFI = *it->second;
+      // FIXME: Totally just a placeholder name to get the algorithm working.
+      OS << "  case " << SFI.getEnumName() << ": return \""
+         << SFI.TheDef->getValueAsString("PredicateName") << "\";\n";
+    }
+    OS << "  default: return \"(unknown)\";\n";
+    OS << "  }\n";
+  } else {
+    // Nothing to emit, so skip the switch
+    OS << "  return \"(unknown)\";\n";
   }
-  OS << "  default: return \"(unknown)\";\n";
-  OS << "  }\n}\n\n";
+  OS << "}\n\n";
 }
 
 /// emitComputeAvailableFeatures - Emit the function to compute the list of
