@@ -25,6 +25,7 @@
 
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -227,6 +228,8 @@ namespace {
     void verifyLiveIntervalValue(const LiveInterval&, VNInfo*);
     void verifyLiveIntervalSegment(const LiveInterval&,
                                    LiveInterval::const_iterator);
+
+    void verifyStackFrame();
   };
 
   struct MachineVerifierPass : public MachineFunctionPass {
@@ -475,6 +478,8 @@ void MachineVerifier::visitMachineFunctionBefore() {
 
   // Check that the register use lists are sane.
   MRI->verifyUseLists();
+
+  verifyStackFrame();
 }
 
 // Does iterator point to a and b as the first two elements?
@@ -1603,6 +1608,133 @@ void MachineVerifier::verifyLiveInterval(const LiveInterval &LI) {
             *OS << ' ' << (*I)->id;
         *OS << '\n';
       }
+    }
+  }
+}
+
+namespace {
+  // FrameSetup and FrameDestroy can have zero adjustment, so using a single
+  // integer, we can't tell whether it is a FrameSetup or FrameDestroy if the
+  // value is zero.
+  // We use a bool plus an integer to capture the stack state.
+  struct StackStateOfBB {
+    StackStateOfBB() : EntryValue(0), ExitValue(0), EntryIsSetup(false),
+      ExitIsSetup(false) { }
+    StackStateOfBB(int EntryVal, int ExitVal, bool EntrySetup, bool ExitSetup) :
+      EntryValue(EntryVal), ExitValue(ExitVal), EntryIsSetup(EntrySetup),
+      ExitIsSetup(ExitSetup) { }
+    // Can be negative, which means we are setting up a frame.
+    int EntryValue;
+    int ExitValue;
+    bool EntryIsSetup;
+    bool ExitIsSetup;
+  };
+}
+
+/// Make sure on every path through the CFG, a FrameSetup <n> is always followed
+/// by a FrameDestroy <n>, stack adjustments are identical on all
+/// CFG edges to a merge point, and frame is destroyed at end of a return block.
+void MachineVerifier::verifyStackFrame() {
+  int FrameSetupOpcode   = TII->getCallFrameSetupOpcode();
+  int FrameDestroyOpcode = TII->getCallFrameDestroyOpcode();
+
+  SmallVector<StackStateOfBB, 8> SPState;
+  SPState.resize(MF->getNumBlockIDs());
+  SmallPtrSet<const MachineBasicBlock*, 8> Reachable;
+
+  // Visit the MBBs in DFS order.
+  for (df_ext_iterator<const MachineFunction*,
+                       SmallPtrSet<const MachineBasicBlock*, 8> >
+       DFI = df_ext_begin(MF, Reachable), DFE = df_ext_end(MF, Reachable);
+       DFI != DFE; ++DFI) {
+    const MachineBasicBlock *MBB = *DFI;
+
+    StackStateOfBB BBState;
+    // Check the exit state of the DFS stack predecessor.
+    if (DFI.getPathLength() >= 2) {
+      const MachineBasicBlock *StackPred = DFI.getPath(DFI.getPathLength() - 2);
+      assert(Reachable.count(StackPred) &&
+             "DFS stack predecessor is already visited.\n");
+      BBState.EntryValue = SPState[StackPred->getNumber()].ExitValue;
+      BBState.EntryIsSetup = SPState[StackPred->getNumber()].ExitIsSetup;
+      BBState.ExitValue = BBState.EntryValue;
+      BBState.ExitIsSetup = BBState.EntryIsSetup;
+    }
+
+    // Update stack state by checking contents of MBB.
+    for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+         I != E; ++I) {
+      if (I->getOpcode() == FrameSetupOpcode) {
+        // The first operand of a FrameOpcode should be i32.
+        int Size = I->getOperand(0).getImm();
+        assert(Size >= 0 &&
+          "Value should be non-negative in FrameSetup and FrameDestroy.\n");
+
+        if (BBState.ExitIsSetup)
+          report("FrameSetup is after another FrameSetup", I); 
+        BBState.ExitValue -= Size;
+        BBState.ExitIsSetup = true;
+      }
+
+      if (I->getOpcode() == FrameDestroyOpcode) {
+        // The first operand of a FrameOpcode should be i32.
+        int Size = I->getOperand(0).getImm();
+        assert(Size >= 0 &&
+          "Value should be non-negative in FrameSetup and FrameDestroy.\n");
+
+        if (!BBState.ExitIsSetup)
+          report("FrameDestroy is not after a FrameSetup", I);
+        int AbsSPAdj = BBState.ExitValue < 0 ? -BBState.ExitValue :
+                                               BBState.ExitValue;
+        if (BBState.ExitIsSetup && AbsSPAdj != Size) {
+          report("FrameDestroy <n> is after FrameSetup <m>", I);
+          *OS << "FrameDestroy <" << Size << "> is after FrameSetup <"
+              << AbsSPAdj << ">.\n";
+        }
+        BBState.ExitValue += Size;
+        BBState.ExitIsSetup = false;
+      }
+    }
+    SPState[MBB->getNumber()] = BBState;
+
+    // Make sure the exit state of any predecessor is consistent with the entry
+    // state.
+    for (MachineBasicBlock::const_pred_iterator I = MBB->pred_begin(),
+         E = MBB->pred_end(); I != E; ++I) {
+      if (Reachable.count(*I) &&
+          (SPState[(*I)->getNumber()].ExitValue != BBState.EntryValue ||
+           SPState[(*I)->getNumber()].ExitIsSetup != BBState.EntryIsSetup)) {
+        report("The exit stack state of a predecessor is inconsistent.", MBB);
+        *OS << "Predecessor BB#" << (*I)->getNumber() << " has exit state ("
+            << SPState[(*I)->getNumber()].ExitValue << ", "
+            << SPState[(*I)->getNumber()].ExitIsSetup
+            << "), while BB#" << MBB->getNumber() << " has entry state ("
+            << BBState.EntryValue << ", " << BBState.EntryIsSetup << ").\n";
+      }
+    }
+
+    // Make sure the entry state of any successor is consistent with the exit
+    // state.
+    for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
+         E = MBB->succ_end(); I != E; ++I) {
+      if (Reachable.count(*I) &&
+          (SPState[(*I)->getNumber()].EntryValue != BBState.ExitValue ||
+           SPState[(*I)->getNumber()].EntryIsSetup != BBState.ExitIsSetup)) {
+        report("The entry stack state of a successor is inconsistent.", MBB);
+        *OS << "Successor BB#" << (*I)->getNumber() << " has entry state ("
+            << SPState[(*I)->getNumber()].EntryValue << ", "
+            << SPState[(*I)->getNumber()].EntryIsSetup
+            << "), while BB#" << MBB->getNumber() << " has exit state ("
+            << BBState.ExitValue << ", " << BBState.ExitIsSetup << ").\n";
+      }
+    }
+
+    // Make sure a basic block with return ends with zero stack adjustment.
+    if (!MBB->empty() && MBB->back().isReturn()) {
+      if (BBState.ExitIsSetup)
+        report("A return block ends with a FrameSetup.", MBB);
+      if (BBState.ExitValue)
+        report("A return block ends with a nonzero stack adjustment.", MBB);
     }
   }
 }
