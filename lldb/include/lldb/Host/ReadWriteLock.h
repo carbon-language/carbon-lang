@@ -170,64 +170,6 @@ public:
         DISALLOW_COPY_AND_ASSIGN(ReadLocker);
     };
 
-    class WriteLocker
-    {
-    public:
-        WriteLocker () :
-            m_lock (NULL)
-        {
-        }
-
-        WriteLocker (ReadWriteLock &lock) :
-            m_lock (NULL)
-        {
-            Lock(&lock);
-        }
-
-        WriteLocker (ReadWriteLock *lock) :
-            m_lock (NULL)
-        {
-            Lock(lock);
-        }
-
-        ~WriteLocker()
-        {
-            Unlock();
-        }
-
-        void
-        Lock (ReadWriteLock *lock)
-        {
-            if (m_lock)
-            {
-                if (m_lock == lock)
-                    return; // We already have this lock locked
-                else
-                    Unlock();
-            }
-            if (lock)
-            {
-                lock->WriteLock();
-                m_lock = lock;
-            }
-        }
-
-        void
-        Unlock ()
-        {
-            if (m_lock)
-            {
-                m_lock->WriteUnlock();
-                m_lock = NULL;
-            }
-        }
-        
-    protected:
-        ReadWriteLock *m_lock;
-    private:
-        DISALLOW_COPY_AND_ASSIGN(WriteLocker);
-    };
-
 protected:
     pthread_rwlock_t m_rwlock;
 private:

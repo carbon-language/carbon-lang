@@ -1393,7 +1393,6 @@ public:
     // try to lock it to see if they can immediately access the stopped
     // process. If the try read lock fails, then the process is running.
     typedef ReadWriteLock::ReadLocker StopLocker;
-    typedef ReadWriteLock::WriteLocker RunLocker;
 
     // These two functions fill out the Broadcaster interface:
     
