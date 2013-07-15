@@ -1082,7 +1082,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       Content = Content.drop_back(1).drop_front(1).trim();
       if (Content.size() > 1 &&
           (Content.back() == ':' || Content.back() == '='))
-        return 20;
+        return 50;
     }
     return prec::Shift;
   }

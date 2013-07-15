@@ -127,7 +127,7 @@ namespace format {
 
 void setDefaultPenalties(FormatStyle &Style) {
   Style.PenaltyBreakComment = 45;
-  Style.PenaltyBreakFirstLessLess = 100;
+  Style.PenaltyBreakFirstLessLess = 180;
   Style.PenaltyBreakString = 1000;
   Style.PenaltyExcessCharacter = 1000000;
 }
