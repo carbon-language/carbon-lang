@@ -1,6 +1,12 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -use-auto %t.cpp -- --std=c++11 -I %S/Inputs
 // RUN: FileCheck -input-file=%t.cpp %s
+//
+// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
+// RUN: cpp11-migrate -use-auto %t.cpp -- --std=c++11 -I %S/Inputs \
+// RUN:   -DUSE_INLINE_NAMESPACE=1
+// RUN: FileCheck -input-file=%t.cpp %s
+
 
 #define CONTAINER array
 #include "test_std_container.h"

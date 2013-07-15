@@ -15,17 +15,17 @@
 //
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -use-auto %t.cpp -- -DCONTAINER=array \
-// RUN:   -DUSE_INLINE_NAMESPACE -I %S/Inputs
+// RUN:   -DUSE_INLINE_NAMESPACE=1 -I %S/Inputs
 // RUN: FileCheck -input-file=%t.cpp %s
 //
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -use-auto %t.cpp -- -DCONTAINER=array \
-// RUN:   -DUSE_BASE_CLASS_ITERATORS -I %S/Inputs
+// RUN:   -DUSE_BASE_CLASS_ITERATORS=1 -I %S/Inputs
 // RUN: FileCheck -input-file=%t.cpp %s
 //
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -use-auto %t.cpp -- -DCONTAINER=array \
-// RUN:   -DUSE_INNER_CLASS_ITERATORS -I %S/Inputs
+// RUN:   -DUSE_INNER_CLASS_ITERATORS=1 -I %S/Inputs
 // RUN: FileCheck -input-file=%t.cpp %s
 //
 //

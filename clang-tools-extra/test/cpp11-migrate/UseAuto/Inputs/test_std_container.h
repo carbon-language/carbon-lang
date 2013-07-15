@@ -64,7 +64,7 @@ public:
 namespace std {
 
 #if USE_INLINE_NAMESPACE
-namespace _1 {
+inline namespace _1 {
 #endif
 
 template <typename T>
@@ -114,7 +114,6 @@ public:
 
 #if USE_INLINE_NAMESPACE
 } // namespace _1
-using _1::CONTAINER;
 #endif
 
 } // namespace std
