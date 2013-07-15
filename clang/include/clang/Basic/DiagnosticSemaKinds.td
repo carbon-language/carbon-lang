@@ -4242,7 +4242,7 @@ def err_typecheck_member_reference_arrow : Error<
 def err_typecheck_member_reference_suggestion : Error<
   "member reference type %0 is %select{a|not a}1 pointer; maybe you meant to use '%select{->|.}1'?">;
 def note_typecheck_member_reference_suggestion : Note<
-  "did you meant to use '.' instead?">;
+  "did you mean to use '.' instead?">;
 def err_typecheck_member_reference_type : Error<
   "cannot refer to type member %0 in %1 with '%select{.|->}2'">;
 def err_typecheck_member_reference_unknown : Error<

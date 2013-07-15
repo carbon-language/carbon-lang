@@ -88,7 +88,7 @@ namespace test5 {
 
   void test2(A &x) {
     x->A::foo<int>(); // expected-error {{'test5::A' is not a pointer}} \
-                      // expected-note {{did you meant to use '.' instead?}}
+                      // expected-note {{did you mean to use '.' instead?}}
   }
 }
 
@@ -183,6 +183,6 @@ namespace PR15045 {
   int f() {
     Cl0 c;
     return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer}} \
-                  // expected-note {{did you meant to use '.' instead?}}
+                  // expected-note {{did you mean to use '.' instead?}}
   }
 }
