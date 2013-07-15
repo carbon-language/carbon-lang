@@ -303,7 +303,7 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     bool FoundMatch = false;
     size_t i;
 
-    for (i = 0; i < llvm::array_lengthof(suffixes); ++i) {
+    for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
       if (ProgNameRef.endswith(suffixes[i].Suffix)) {
         FoundMatch = true;
         if (suffixes[i].IsCXX)
