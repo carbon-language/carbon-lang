@@ -615,7 +615,10 @@ void DAGTypeLegalizer::RemapValue(SDValue &N) {
     // replaced with other values.
     RemapValue(I->second);
     N = I->second;
-    assert(N.getNode()->getNodeId() != NewNode && "Mapped to new node!");
+
+    // Note that it is possible to have N.getNode()->getNodeId() == NewNode at
+    // this point because it is possible for a node to be put in the map before
+    // being processed.
   }
 }
 
