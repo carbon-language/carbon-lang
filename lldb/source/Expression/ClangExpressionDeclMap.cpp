@@ -204,13 +204,11 @@ ClangExpressionDeclMap::AddPersistentVariable
         
         uint32_t offset = m_parser_vars->m_materializer->AddResultVariable(user_type, is_lvalue, m_keep_result_in_memory, err);
         
-        m_found_entities.CreateVariable(exe_ctx.GetBestExecutionContextScope(),
-                                        name,
-                                        user_type,
-                                        m_parser_vars->m_target_info.byte_order,
-                                        m_parser_vars->m_target_info.address_byte_size);
-        
-        ClangExpressionVariableSP var_sp (m_found_entities.GetVariable(name));
+        ClangExpressionVariableSP var_sp = m_found_entities.CreateVariable(exe_ctx.GetBestExecutionContextScope(),
+                                                                           name,
+                                                                           user_type,
+                                                                           m_parser_vars->m_target_info.byte_order,
+                                                                           m_parser_vars->m_target_info.address_byte_size);
         
         if (!var_sp)
             return false;
@@ -254,14 +252,11 @@ ClangExpressionDeclMap::AddPersistentVariable
     if (!m_parser_vars->m_target_info.IsValid())
         return false;
     
-    if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx.GetBestExecutionContextScope (),
-                                                                     name, 
-                                                                     user_type, 
-                                                                     m_parser_vars->m_target_info.byte_order,
-                                                                     m_parser_vars->m_target_info.address_byte_size))
-        return false;
-    
-    ClangExpressionVariableSP var_sp (m_parser_vars->m_persistent_vars->GetVariable(name));
+    ClangExpressionVariableSP var_sp = m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx.GetBestExecutionContextScope (),
+                                                                                                   name,
+                                                                                                   user_type,
+                                                                                                   m_parser_vars->m_target_info.byte_order,
+                                                                                                   m_parser_vars->m_target_info.address_byte_size);
     
     if (!var_sp)
         return false;
