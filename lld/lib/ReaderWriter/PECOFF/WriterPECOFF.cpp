@@ -673,46 +673,6 @@ private:
 }  // end anonymous namespace
 
 class ExecutableWriter : public Writer {
-private:
-  /// Apply relocations to the output file buffer. This two pass. In the first
-  /// pass, we visit all atoms to create a map from atom to its virtual
-  /// address. In the second pass, we visit all relocation references to fix
-  /// up addresses in the buffer.
-  void applyAllRelocations(uint8_t *bufferStart) {
-    for (auto &cp : _chunks)
-      if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
-        chunk->applyRelocations(bufferStart, atomRva);
-  }
-
-  void addChunk(Chunk *chunk) {
-    _chunks.push_back(std::unique_ptr<Chunk>(chunk));
-  }
-
-  void addSectionChunk(SectionChunk *chunk,
-                       SectionHeaderTableChunk *table) {
-    _chunks.push_back(std::unique_ptr<Chunk>(chunk));
-    table->addSection(chunk);
-    _numSections++;
-
-    // Compute and set the starting address of sections when loaded in
-    // memory. They are different from positions on disk because sections need
-    // to be sector-aligned on disk but page-aligned in memory.
-    chunk->setVirtualAddress(_imageSizeInMemory);
-    chunk->buildAtomToVirtualAddr(atomRva);
-    _imageSizeInMemory = llvm::RoundUpToAlignment(
-        _imageSizeInMemory + chunk->size(), PAGE_SIZE);
-  }
-
-  void setImageSizeOnDisk() {
-    for (auto &chunk : _chunks) {
-      // Compute and set the offset of the chunk in the output file.
-      _imageSizeOnDisk = llvm::RoundUpToAlignment(_imageSizeOnDisk,
-                                                  chunk->align());
-      chunk->setFileOffset(_imageSizeOnDisk);
-      _imageSizeOnDisk += chunk->size();
-    }
-  }
-
 public:
   explicit ExecutableWriter(const PECOFFTargetInfo &targetInfo)
     : _PECOFFTargetInfo(targetInfo), _numSections(0),
@@ -789,6 +749,45 @@ public:
   }
 
 private:
+  /// Apply relocations to the output file buffer. This two pass. In the first
+  /// pass, we visit all atoms to create a map from atom to its virtual
+  /// address. In the second pass, we visit all relocation references to fix
+  /// up addresses in the buffer.
+  void applyAllRelocations(uint8_t *bufferStart) {
+    for (auto &cp : _chunks)
+      if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
+        chunk->applyRelocations(bufferStart, atomRva);
+  }
+
+  void addChunk(Chunk *chunk) {
+    _chunks.push_back(std::unique_ptr<Chunk>(chunk));
+  }
+
+  void addSectionChunk(SectionChunk *chunk,
+                       SectionHeaderTableChunk *table) {
+    _chunks.push_back(std::unique_ptr<Chunk>(chunk));
+    table->addSection(chunk);
+    _numSections++;
+
+    // Compute and set the starting address of sections when loaded in
+    // memory. They are different from positions on disk because sections need
+    // to be sector-aligned on disk but page-aligned in memory.
+    chunk->setVirtualAddress(_imageSizeInMemory);
+    chunk->buildAtomToVirtualAddr(atomRva);
+    _imageSizeInMemory = llvm::RoundUpToAlignment(
+        _imageSizeInMemory + chunk->size(), PAGE_SIZE);
+  }
+
+  void setImageSizeOnDisk() {
+    for (auto &chunk : _chunks) {
+      // Compute and set the offset of the chunk in the output file.
+      _imageSizeOnDisk = llvm::RoundUpToAlignment(_imageSizeOnDisk,
+                                                  chunk->align());
+      chunk->setFileOffset(_imageSizeOnDisk);
+      _imageSizeOnDisk += chunk->size();
+    }
+  }
+
   std::vector<std::unique_ptr<Chunk>> _chunks;
   const PECOFFTargetInfo &_PECOFFTargetInfo;
   uint32_t _numSections;
