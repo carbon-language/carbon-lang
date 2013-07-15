@@ -612,13 +612,13 @@ public:
     PageOffsetT blocks = groupByPage(relocSites);
     for (auto &i : blocks) {
       uint64_t pageAddr = i.first;
-      std::vector<uint16_t> offsetsInPage = i.second;
+      const std::vector<uint16_t> &offsetsInPage = i.second;
       appendAtom(createBaseRelocBlock(_file, pageAddr, offsetsInPage));
     }
   }
 
 private:
-  // When loaded into memory, data section should be readable and writable.
+  // When loaded into memory, reloc section should be readable and writable.
   static const uint32_t characteristics =
       llvm::COFF::IMAGE_SCN_MEM_READ |
       llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
@@ -644,7 +644,7 @@ private:
 
   // Create the content of a relocation block.
   DefinedAtom *createBaseRelocBlock(const File &file, uint64_t pageAddr,
-                                    std::vector<uint16_t> &offsets) {
+                                    const std::vector<uint16_t> &offsets) {
     uint32_t size = 8 + offsets.size() * 2;
     std::vector<uint8_t> contents(size);
 
