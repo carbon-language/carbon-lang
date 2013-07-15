@@ -25,6 +25,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
@@ -302,7 +303,7 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     bool FoundMatch = false;
     size_t i;
 
-    for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+    for (i = 0; i < llvm::array_lengthof(suffixes); ++i) {
       if (ProgNameRef.endswith(suffixes[i].Suffix)) {
         FoundMatch = true;
         if (suffixes[i].IsCXX)
