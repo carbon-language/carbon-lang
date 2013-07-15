@@ -298,7 +298,7 @@ struct SortInstByName {
 /// target, ordered by their enum value.
 void CodeGenTarget::ComputeInstrsByEnum() const {
   // The ordering here must match the ordering in TargetOpcodes.h.
-  const char *const FixedInstrs[] = {
+  static const char *const FixedInstrs[] = {
     "PHI",
     "INLINEASM",
     "PROLOG_LABEL",

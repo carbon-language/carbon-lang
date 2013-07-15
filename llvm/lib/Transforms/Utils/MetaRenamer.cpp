@@ -53,7 +53,7 @@ namespace {
     }
 
     bool runOnModule(Module &M) {
-      static const char *metaNames[] = {
+      static const char *const metaNames[] = {
         // See http://en.wikipedia.org/wiki/Metasyntactic_variable
         "foo", "bar", "baz", "quux", "barney", "snork", "zot", "blam", "hoge",
         "wibble", "wobble", "widget", "wombat", "ham", "eggs", "pluto", "spam"

@@ -2401,7 +2401,8 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
     bool RHasPhysReg = right->hasPhysRegDefs;
     if (LHasPhysReg != RHasPhysReg) {
       #ifndef NDEBUG
-      const char *const PhysRegMsg[] = {" has no physreg"," defines a physreg"};
+      static const char *const PhysRegMsg[] = { " has no physreg",
+                                                " defines a physreg" };
       #endif
       DEBUG(dbgs() << "  SU (" << left->NodeNum << ") "
             << PhysRegMsg[LHasPhysReg] << " SU(" << right->NodeNum << ") "
