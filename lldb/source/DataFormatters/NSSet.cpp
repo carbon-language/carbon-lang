@@ -74,7 +74,7 @@ lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& str
             return false;
         value &= (is_64bit ? ~0xFC00000000000000UL : ~0xFC000000U);
     }
-    else if (!strcmp(class_name,"__NSCFSet"))
+    /*else if (!strcmp(class_name,"__NSCFSet"))
     {
         Error error;
         value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + (is_64bit ? 20 : 12), 4, 0, error);
@@ -83,7 +83,7 @@ lldb_private::formatters::NSSetSummaryProvider (ValueObject& valobj, Stream& str
         if (is_64bit)
             value &= ~0x1fff000000000000UL;
     }
-    /*else if (!strcmp(class_name,"NSCountedSet"))
+    else if (!strcmp(class_name,"NSCountedSet"))
     {
         Error error;
         value = process_sp->ReadUnsignedIntegerFromMemory(valobj_addr + ptr_size, ptr_size, 0, error);
