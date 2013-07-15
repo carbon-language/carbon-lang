@@ -100,7 +100,7 @@ public:
   }
 
   void dump(raw_ostream &OS) const {
-    static const char *Table[] = {
+    static const char *const Table[] = {
       "Allocated",
       "Released",
       "Relinquished"

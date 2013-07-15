@@ -167,7 +167,7 @@ void BreakableStringLiteral::insertBreak(unsigned LineIndex,
 }
 
 static StringRef getLineCommentPrefix(StringRef Comment) {
-  const char *KnownPrefixes[] = { "/// ", "///", "// ", "//" };
+  static const char *const KnownPrefixes[] = { "/// ", "///", "// ", "//" };
   for (size_t i = 0, e = llvm::array_lengthof(KnownPrefixes); i != e; ++i)
     if (Comment.startswith(KnownPrefixes[i]))
       return KnownPrefixes[i];

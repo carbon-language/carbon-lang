@@ -3616,7 +3616,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
 
   if (CCC.WantTypeSpecifiers) {
     // Add type-specifier keywords to the set of results.
-    const char *CTypeSpecs[] = {
+    static const char *const CTypeSpecs[] = {
       "char", "const", "double", "enum", "float", "int", "long", "short",
       "signed", "struct", "union", "unsigned", "void", "volatile", 
       "_Complex", "_Imaginary",
@@ -3668,7 +3668,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
     }
 
     if (SemaRef.getLangOpts().CPlusPlus) {
-      const char *CXXExprs[] = {
+      static const char *const CXXExprs[] = {
         "delete", "new", "operator", "throw", "typeid"
       };
       const unsigned NumCXXExprs = llvm::array_lengthof(CXXExprs);
@@ -3695,7 +3695,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
   if (CCC.WantRemainingKeywords) {
     if (SemaRef.getCurFunctionOrMethodDecl() || SemaRef.getCurBlock()) {
       // Statements.
-      const char *CStmts[] = {
+      static const char *const CStmts[] = {
         "do", "else", "for", "goto", "if", "return", "switch", "while" };
       const unsigned NumCStmts = llvm::array_lengthof(CStmts);
       for (unsigned I = 0; I != NumCStmts; ++I)

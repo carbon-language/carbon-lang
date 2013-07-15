@@ -4511,7 +4511,7 @@ QualType ASTContext::getBlockDescriptorType() const {
     UnsignedLongTy,
   };
 
-  const char *FieldNames[] = {
+  static const char *const FieldNames[] = {
     "reserved",
     "Size"
   };
@@ -4552,7 +4552,7 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
     getPointerType(VoidPtrTy)
   };
 
-  const char *FieldNames[] = {
+  static const char *const FieldNames[] = {
     "reserved",
     "Size",
     "CopyFuncPtr",
