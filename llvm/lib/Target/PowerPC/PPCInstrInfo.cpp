@@ -448,7 +448,9 @@ bool PPCInstrInfo::canInsertSelect(const MachineBasicBlock &MBB,
 
   // isel is for regular integer GPRs only.
   if (!PPC::GPRCRegClass.hasSubClassEq(RC) &&
-      !PPC::G8RCRegClass.hasSubClassEq(RC))
+      !PPC::GPRC_NOR0RegClass.hasSubClassEq(RC) &&
+      !PPC::G8RCRegClass.hasSubClassEq(RC) &&
+      !PPC::G8RC_NOX0RegClass.hasSubClassEq(RC))
     return false;
 
   // FIXME: These numbers are for the A2, how well they work for other cores is
@@ -478,12 +480,15 @@ void PPCInstrInfo::insertSelect(MachineBasicBlock &MBB,
   const TargetRegisterClass *RC =
     RI.getCommonSubClass(MRI.getRegClass(TrueReg), MRI.getRegClass(FalseReg));
   assert(RC && "TrueReg and FalseReg must have overlapping register classes");
-  assert((PPC::GPRCRegClass.hasSubClassEq(RC) ||
-          PPC::G8RCRegClass.hasSubClassEq(RC)) &&
+
+  bool Is64Bit = PPC::G8RCRegClass.hasSubClassEq(RC) ||
+                 PPC::G8RC_NOX0RegClass.hasSubClassEq(RC);
+  assert((Is64Bit ||
+          PPC::GPRCRegClass.hasSubClassEq(RC) ||
+          PPC::GPRC_NOR0RegClass.hasSubClassEq(RC)) &&
          "isel is for regular integer GPRs only");
 
-  unsigned OpCode =
-    PPC::GPRCRegClass.hasSubClassEq(RC) ? PPC::ISEL : PPC::ISEL8;
+  unsigned OpCode = Is64Bit ? PPC::ISEL8 : PPC::ISEL;
   unsigned SelectPred = Cond[0].getImm();
 
   unsigned SubIdx;
