@@ -644,7 +644,8 @@ private:
             LeftOfParens &&
             LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof);
         if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
-            Contexts.back().IsExpression)
+            (Contexts.back().IsExpression ||
+             (Current.Next && Current.Next->isBinaryOperator())))
           IsCast = true;
         if (Current.Next && Current.Next->isNot(tok::string_literal) &&
             (Current.Next->Tok.isLiteral() ||
@@ -1084,7 +1085,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
           (Content.back() == ':' || Content.back() == '='))
         return 25;
     }
-    return 1;  // Breaking at a << is really cheap.
+    return 1; // Breaking at a << is really cheap.
   }
   if (Left.Type == TT_ConditionalExpr)
     return prec::Conditional;

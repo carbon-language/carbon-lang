@@ -3565,6 +3565,8 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("my_int a = (my_int)2.0f;");
   verifyFormat("my_int a = (my_int)sizeof(int);");
   verifyFormat("return (my_int)aaa;");
+  verifyFormat("#define x ((int)-1)");
+  verifyFormat("#define p(q) ((int *)&q)");
 
   // FIXME: Without type knowledge, this can still fall apart miserably.
   verifyFormat("void f() { my_int a = (my_int) * b; }");
