@@ -3588,6 +3588,13 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
       return cast<NamedDecl>((*Found->get<DeclArgumentPack *>())[PackIdx]);
     }
 
+    // If we're performing a partial substitution during template argument
+    // deduction, we may not have values for template parameters yet. They
+    // just map to themselves.
+    if (isa<NonTypeTemplateParmDecl>(D) || isa<TemplateTypeParmDecl>(D) ||
+        isa<TemplateTemplateParmDecl>(D))
+      return D;
+
     // If we didn't find the decl, then we must have a label decl that hasn't
     // been found yet.  Lazily instantiate it and return it now.
     assert(isa<LabelDecl>(D));

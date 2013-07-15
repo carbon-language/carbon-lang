@@ -2700,6 +2700,12 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
       break;
   }
 
+  // If we're performing a partial substitution during template argument
+  // deduction, we may not have values for template parameters yet.
+  if (isa<NonTypeTemplateParmDecl>(D) || isa<TemplateTypeParmDecl>(D) ||
+      isa<TemplateTemplateParmDecl>(D))
+    return 0;
+
   // If we didn't find the decl, then we either have a sema bug, or we have a
   // forward reference to a label declaration.  Return null to indicate that
   // we have an uninstantiated label.
