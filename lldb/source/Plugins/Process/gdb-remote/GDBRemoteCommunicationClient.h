@@ -285,14 +285,6 @@ public:
         return GetVContSupported ('a');
     }
     
-    uint32_t 
-    SetPacketTimeout (uint32_t packet_timeout)
-    {
-        const uint32_t old_packet_timeout = m_packet_timeout;
-        m_packet_timeout = packet_timeout;
-        return old_packet_timeout;
-    }
-
     bool
     GetStopReply (StringExtractorGDBRemote &response);
 

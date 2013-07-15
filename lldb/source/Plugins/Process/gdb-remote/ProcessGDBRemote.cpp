@@ -83,10 +83,67 @@ namespace lldb
     }
 }
 
-
 #define DEBUGSERVER_BASENAME    "debugserver"
 using namespace lldb;
 using namespace lldb_private;
+
+
+namespace {
+    
+    static PropertyDefinition
+    g_properties[] =
+    {
+        { "packet-timeout" , OptionValue::eTypeUInt64 , true , 1, NULL, NULL, "Specify the default packet timeout in seconds." },
+        {  NULL            , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
+    };
+    
+    enum
+    {
+        ePropertyPacketTimeout
+    };
+    
+    class PluginProperties : public Properties
+    {
+    public:
+        
+        static ConstString
+        GetSettingName ()
+        {
+            return ProcessGDBRemote::GetPluginNameStatic();
+        }
+        
+        PluginProperties() :
+        Properties ()
+        {
+            m_collection_sp.reset (new OptionValueProperties(GetSettingName()));
+            m_collection_sp->Initialize(g_properties);
+        }
+        
+        virtual
+        ~PluginProperties()
+        {
+        }
+        
+        uint64_t
+        GetPacketTimeout()
+        {
+            const uint32_t idx = ePropertyPacketTimeout;
+            return m_collection_sp->GetPropertyAtIndexAsUInt64(NULL, idx, g_properties[idx].default_uint_value);
+        }
+    };
+    
+    typedef std::shared_ptr<PluginProperties> ProcessKDPPropertiesSP;
+    
+    static const ProcessKDPPropertiesSP &
+    GetGlobalPluginProperties()
+    {
+        static ProcessKDPPropertiesSP g_settings_sp;
+        if (!g_settings_sp)
+            g_settings_sp.reset (new PluginProperties ());
+        return g_settings_sp;
+    }
+    
+} // anonymous namespace end
 
 static bool rand_initialized = false;
 
@@ -208,6 +265,9 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadDidExit,      "async thread did exit");
+    const uint64_t timeout_seconds = GetGlobalPluginProperties()->GetPacketTimeout();
+    if (timeout_seconds > 0)
+        m_gdb_comm.SetPacketTimeout(timeout_seconds);
 }
 
 //----------------------------------------------------------------------
@@ -2642,7 +2702,8 @@ ProcessGDBRemote::Initialize()
         g_initialized = true;
         PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                        GetPluginDescriptionStatic(),
-                                       CreateInstance);
+                                       CreateInstance,
+                                       DebuggerInitialize);
 
         Log::Callbacks log_callbacks = {
             ProcessGDBRemoteLog::DisableLog,
@@ -2651,6 +2712,19 @@ ProcessGDBRemote::Initialize()
         };
 
         Log::RegisterLogChannel (ProcessGDBRemote::GetPluginNameStatic(), log_callbacks);
+    }
+}
+
+void
+ProcessGDBRemote::DebuggerInitialize (lldb_private::Debugger &debugger)
+{
+    if (!PluginManager::GetSettingForProcessPlugin(debugger, PluginProperties::GetSettingName()))
+    {
+        const bool is_global_setting = true;
+        PluginManager::CreateSettingForProcessPlugin (debugger,
+                                                      GetGlobalPluginProperties()->GetValueProperties(),
+                                                      ConstString ("Properties for the gdb-remote process plug-in."),
+                                                      is_global_setting);
     }
 }
 

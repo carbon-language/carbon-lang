@@ -234,7 +234,8 @@ public:
     static bool
     RegisterPlugin (const ConstString &name,
                     const char *description,
-                    ProcessCreateInstance create_callback);
+                    ProcessCreateInstance create_callback,
+                    DebuggerInitializeCallback debugger_init_callback = NULL);
     
     static bool
     UnregisterPlugin (ProcessCreateInstance create_callback);
@@ -315,7 +316,7 @@ public:
     
     static lldb::OptionValuePropertiesSP
     GetSettingForDynamicLoaderPlugin (Debugger &debugger,
-                                       const ConstString &setting_name);
+                                      const ConstString &setting_name);
     
     static bool
     CreateSettingForDynamicLoaderPlugin (Debugger &debugger,
@@ -332,6 +333,17 @@ public:
                                          const lldb::OptionValuePropertiesSP &properties_sp,
                                          const ConstString &description,
                                          bool is_global_property);
+
+    static lldb::OptionValuePropertiesSP
+    GetSettingForProcessPlugin (Debugger &debugger,
+                                const ConstString &setting_name);
+    
+    static bool
+    CreateSettingForProcessPlugin (Debugger &debugger,
+                                   const lldb::OptionValuePropertiesSP &properties_sp,
+                                   const ConstString &description,
+                                   bool is_global_property);
+
 };
 
 

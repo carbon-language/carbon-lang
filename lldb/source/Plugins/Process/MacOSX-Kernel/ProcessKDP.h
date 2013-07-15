@@ -48,6 +48,9 @@ public:
     Initialize();
     
     static void
+    DebuggerInitialize (lldb_private::Debugger &debugger);
+
+    static void
     Terminate();
     
     static lldb_private::ConstString
