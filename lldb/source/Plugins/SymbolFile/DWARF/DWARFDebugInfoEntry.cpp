@@ -1475,6 +1475,16 @@ DWARFDebugInfoEntry::GetName
     DWARFFormValue form_value;
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
         return form_value.AsCString(&dwarf2Data->get_debug_str_data());
+    else
+    {
+        if (GetAttributeValue(dwarf2Data, cu, DW_AT_specification, form_value))
+        {
+            DWARFCompileUnitSP cu_sp_ptr;
+            const DWARFDebugInfoEntry* die = const_cast<SymbolFileDWARF*>(dwarf2Data)->DebugInfo()->GetDIEPtr(form_value.Reference(cu), &cu_sp_ptr);
+            if (die)
+                return die->GetName(dwarf2Data, cu_sp_ptr.get());
+        }
+    }
     return NULL;
 }
 
