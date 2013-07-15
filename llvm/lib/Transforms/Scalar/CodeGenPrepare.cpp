@@ -207,7 +207,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
       SmallVector<BasicBlock*, 2> Successors(succ_begin(BB), succ_end(BB));
 
       DeleteDeadBlock(BB);
-      
+
       for (SmallVectorImpl<BasicBlock*>::iterator
              II = Successors.begin(), IE = Successors.end(); II != IE; ++II)
         if (pred_begin(*II) == pred_end(*II))
@@ -832,7 +832,7 @@ struct ExtAddrMode : public TargetLowering::AddrMode {
   ExtAddrMode() : BaseReg(0), ScaledReg(0) {}
   void print(raw_ostream &OS) const;
   void dump() const;
-  
+
   bool operator==(const ExtAddrMode& O) const {
     return (BaseReg == O.BaseReg) && (ScaledReg == O.ScaledReg) &&
            (BaseGV == O.BaseGV) && (BaseOffs == O.BaseOffs) &&
@@ -892,16 +892,16 @@ class AddressingModeMatcher {
   /// the memory instruction that we're computing this address for.
   Type *AccessTy;
   Instruction *MemoryInst;
-  
+
   /// AddrMode - This is the addressing mode that we're building up.  This is
   /// part of the return value of this addressing mode matching stuff.
   ExtAddrMode &AddrMode;
-  
+
   /// IgnoreProfitability - This is set to true when we should not do
   /// profitability checks.  When true, IsProfitableToFoldIntoAddressingMode
   /// always returns true.
   bool IgnoreProfitability;
-  
+
   AddressingModeMatcher(SmallVectorImpl<Instruction*> &AMI,
                         const TargetLowering &T, Type *AT,
                         Instruction *MI, ExtAddrMode &AM)
@@ -909,7 +909,7 @@ class AddressingModeMatcher {
     IgnoreProfitability = false;
   }
 public:
-  
+
   /// Match - Find the maximal addressing mode that a load/store of V can fold,
   /// give an access type of AccessTy.  This returns a list of involved
   /// instructions in AddrModeInsts.
@@ -919,7 +919,7 @@ public:
                            const TargetLowering &TLI) {
     ExtAddrMode Result;
 
-    bool Success = 
+    bool Success =
       AddressingModeMatcher(AddrModeInsts, TLI, AccessTy,
                             MemoryInst, Result).MatchAddr(V, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
@@ -944,11 +944,11 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   // mode.  Just process that directly.
   if (Scale == 1)
     return MatchAddr(ScaleReg, Depth);
-  
+
   // If the scale is 0, it takes nothing to add this.
   if (Scale == 0)
     return true;
-  
+
   // If we already have a scale of this value, we can add to it, otherwise, we
   // need an available scale field.
   if (AddrMode.Scale != 0 && AddrMode.ScaledReg != ScaleReg)
@@ -967,7 +967,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
 
   // It was legal, so commit it.
   AddrMode = TestAddrMode;
-  
+
   // Okay, we decided that we can add ScaleReg+Scale to AddrMode.  Check now
   // to see if ScaleReg is actually X+C.  If so, we can turn this into adding
   // X*Scale + C*Scale to addr mode.
@@ -976,7 +976,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
       match(ScaleReg, m_Add(m_Value(AddLHS), m_ConstantInt(CI)))) {
     TestAddrMode.ScaledReg = AddLHS;
     TestAddrMode.BaseOffs += CI->getSExtValue()*TestAddrMode.Scale;
-      
+
     // If this addressing mode is legal, commit it and remember that we folded
     // this instruction.
     if (TLI.isLegalAddressingMode(TestAddrMode, AccessTy)) {
@@ -1027,7 +1027,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
                                                unsigned Depth) {
   // Avoid exponential behavior on extremely deep expression trees.
   if (Depth >= 5) return false;
-  
+
   switch (Opcode) {
   case Instruction::PtrToInt:
     // PtrToInt is always a noop, as we know that the int type is pointer sized.
@@ -1056,16 +1056,16 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     if (MatchAddr(AddrInst->getOperand(1), Depth+1) &&
         MatchAddr(AddrInst->getOperand(0), Depth+1))
       return true;
-    
+
     // Restore the old addr mode info.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
-    
+
     // Otherwise this was over-aggressive.  Try merging in the LHS then the RHS.
     if (MatchAddr(AddrInst->getOperand(0), Depth+1) &&
         MatchAddr(AddrInst->getOperand(1), Depth+1))
       return true;
-    
+
     // Otherwise we definitely can't merge the ADD in.
     AddrMode = BackupAddrMode;
     AddrModeInsts.resize(OldSize);
@@ -1082,7 +1082,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     int64_t Scale = RHS->getSExtValue();
     if (Opcode == Instruction::Shl)
       Scale = 1LL << Scale;
-    
+
     return MatchScaledValue(AddrInst->getOperand(0), Scale, Depth);
   }
   case Instruction::GetElementPtr: {
@@ -1090,7 +1090,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // one variable offset.
     int VariableOperand = -1;
     unsigned VariableScale = 0;
-    
+
     int64_t ConstantOffset = 0;
     const DataLayout *TD = TLI.getDataLayout();
     gep_type_iterator GTI = gep_type_begin(AddrInst);
@@ -1108,14 +1108,14 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
           // We only allow one variable index at the moment.
           if (VariableOperand != -1)
             return false;
-          
+
           // Remember the variable index.
           VariableOperand = i;
           VariableScale = TypeSize;
         }
       }
     }
-    
+
     // A common case is for the GEP to only do a constant offset.  In this case,
     // just add it to the disp field and check validity.
     if (VariableOperand == -1) {
@@ -1209,7 +1209,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
         AddrModeInsts.push_back(I);
         return true;
       }
-      
+
       // It isn't profitable to do this, roll back.
       //cerr << "NOT FOLDING: " << *I;
       AddrMode = BackupAddrMode;
@@ -1255,7 +1255,7 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
   TargetLowering::AsmOperandInfoVector TargetConstraints = TLI.ParseConstraints(ImmutableCallSite(CI));
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
-    
+
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, SDValue());
 
@@ -1280,7 +1280,7 @@ static bool FindAllMemoryUses(Instruction *I,
   // If we already considered this instruction, we're done.
   if (!ConsideredInsts.insert(I))
     return false;
-  
+
   // If this is an obviously unfoldable instruction, bail out.
   if (!MightBeFoldableInst(I))
     return true;
@@ -1294,24 +1294,24 @@ static bool FindAllMemoryUses(Instruction *I,
       MemoryUses.push_back(std::make_pair(LI, UI.getOperandNo()));
       continue;
     }
-    
+
     if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       unsigned opNo = UI.getOperandNo();
       if (opNo == 0) return true; // Storing addr, not into addr.
       MemoryUses.push_back(std::make_pair(SI, opNo));
       continue;
     }
-    
+
     if (CallInst *CI = dyn_cast<CallInst>(U)) {
       InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue());
       if (!IA) return true;
-      
+
       // If this is a memory operand, we're cool, otherwise bail out.
       if (!IsOperandAMemoryOperand(CI, IA, I, TLI))
         return true;
       continue;
     }
-    
+
     if (FindAllMemoryUses(cast<Instruction>(U), MemoryUses, ConsideredInsts,
                           TLI))
       return true;
@@ -1329,17 +1329,17 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
   // If Val is either of the known-live values, we know it is live!
   if (Val == 0 || Val == KnownLive1 || Val == KnownLive2)
     return true;
-  
+
   // All values other than instructions and arguments (e.g. constants) are live.
   if (!isa<Instruction>(Val) && !isa<Argument>(Val)) return true;
-  
+
   // If Val is a constant sized alloca in the entry block, it is live, this is
   // true because it is just a reference to the stack/frame pointer, which is
   // live for the whole function.
   if (AllocaInst *AI = dyn_cast<AllocaInst>(Val))
     if (AI->isStaticAlloca())
       return true;
-  
+
   // Check to see if this value is already used in the memory instruction's
   // block.  If so, it's already live into the block at the very least, so we
   // can reasonably fold it.
@@ -1371,7 +1371,7 @@ bool AddressingModeMatcher::
 IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
                                      ExtAddrMode &AMAfter) {
   if (IgnoreProfitability) return true;
-  
+
   // AMBefore is the addressing mode before this instruction was folded into it,
   // and AMAfter is the addressing mode after the instruction was folded.  Get
   // the set of registers referenced by AMAfter and subtract out those
@@ -1382,7 +1382,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
   // BaseReg and ScaleReg (global addresses are always available, as are any
   // folded immediates).
   Value *BaseReg = AMAfter.BaseReg, *ScaledReg = AMAfter.ScaledReg;
-  
+
   // If the BaseReg or ScaledReg was referenced by the previous addrmode, their
   // lifetime wasn't extended by adding this instruction.
   if (ValueAlreadyLiveAtInst(BaseReg, AMBefore.BaseReg, AMBefore.ScaledReg))
@@ -1403,7 +1403,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
   SmallPtrSet<Instruction*, 16> ConsideredInsts;
   if (FindAllMemoryUses(I, MemoryUses, ConsideredInsts, TLI))
     return false;  // Has a non-memory, non-foldable use!
-  
+
   // Now that we know that all uses of this instruction are part of a chain of
   // computation involving only operations that could theoretically be folded
   // into a memory use, loop over each of these uses and see if they could
@@ -1412,7 +1412,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
   for (unsigned i = 0, e = MemoryUses.size(); i != e; ++i) {
     Instruction *User = MemoryUses[i].first;
     unsigned OpNo = MemoryUses[i].second;
-    
+
     // Get the access type of this use.  If the use isn't a pointer, we don't
     // know what it accesses.
     Value *Address = User->getOperand(OpNo);
@@ -1420,7 +1420,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
       return false;
     Type *AddressAccessTy =
       cast<PointerType>(Address->getType())->getElementType();
-    
+
     // Do a match against the root of this address, ignoring profitability. This
     // will tell us if the addressing mode for the memory operation will
     // *actually* cover the shared instruction.
@@ -1435,10 +1435,10 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     if (std::find(MatchedAddrModeInsts.begin(), MatchedAddrModeInsts.end(),
                   I) == MatchedAddrModeInsts.end())
       return false;
-    
+
     MatchedAddrModeInsts.clear();
   }
-  
+
   return true;
 }
 
