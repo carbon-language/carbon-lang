@@ -52,7 +52,7 @@ public:
 
     std::string errorInfo;
     llvm::raw_fd_ostream out(outPath.data(), errorInfo,
-                              llvm::raw_fd_ostream::F_Binary);
+                             llvm::sys::fs::F_Binary);
     if (!errorInfo.empty())
       return error_code::success(); // FIXME
 
