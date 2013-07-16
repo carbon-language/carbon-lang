@@ -4383,14 +4383,44 @@ let usesCustomInserter = 1 in {
       [(ARMcopystructbyval GPR:$dst, GPR:$src, imm:$size, imm:$alignment)]>;
 }
 
+def ldrex_1 : PatFrag<(ops node:$ptr), (int_arm_ldrex node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+
+def ldrex_2 : PatFrag<(ops node:$ptr), (int_arm_ldrex node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+
+def ldrex_4 : PatFrag<(ops node:$ptr), (int_arm_ldrex node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+
+def strex_1 : PatFrag<(ops node:$val, node:$ptr),
+                      (int_arm_strex node:$val, node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i8;
+}]>;
+
+def strex_2 : PatFrag<(ops node:$val, node:$ptr),
+                      (int_arm_strex node:$val, node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i16;
+}]>;
+
+def strex_4 : PatFrag<(ops node:$val, node:$ptr),
+                      (int_arm_strex node:$val, node:$ptr), [{
+  return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::i32;
+}]>;
+
 let mayLoad = 1 in {
 def LDREXB : AIldrex<0b10, (outs GPR:$Rt), (ins addr_offset_none:$addr),
                      NoItinerary,
-                    "ldrexb", "\t$Rt, $addr", []>;
+                     "ldrexb", "\t$Rt, $addr",
+                     [(set GPR:$Rt, (ldrex_1 addr_offset_none:$addr))]>;
 def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addr_offset_none:$addr),
-                     NoItinerary, "ldrexh", "\t$Rt, $addr", []>;
+                     NoItinerary, "ldrexh", "\t$Rt, $addr",
+                     [(set GPR:$Rt, (ldrex_2 addr_offset_none:$addr))]>;
 def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addr_offset_none:$addr),
-                     NoItinerary, "ldrex", "\t$Rt, $addr", []>;
+                     NoItinerary, "ldrex", "\t$Rt, $addr",
+                     [(set GPR:$Rt, (ldrex_4 addr_offset_none:$addr))]>;
 let hasExtraDefRegAllocReq = 1 in
 def LDREXD: AIldrex<0b01, (outs GPRPairOp:$Rt),(ins addr_offset_none:$addr),
                       NoItinerary, "ldrexd", "\t$Rt, $addr", []> {
@@ -4400,11 +4430,14 @@ def LDREXD: AIldrex<0b01, (outs GPRPairOp:$Rt),(ins addr_offset_none:$addr),
 
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
 def STREXB: AIstrex<0b10, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
-                    NoItinerary, "strexb", "\t$Rd, $Rt, $addr", []>;
+                    NoItinerary, "strexb", "\t$Rd, $Rt, $addr",
+                    [(set GPR:$Rd, (strex_1 GPR:$Rt, addr_offset_none:$addr))]>;
 def STREXH: AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
-                    NoItinerary, "strexh", "\t$Rd, $Rt, $addr", []>;
+                    NoItinerary, "strexh", "\t$Rd, $Rt, $addr",
+                    [(set GPR:$Rd, (strex_2 GPR:$Rt, addr_offset_none:$addr))]>;
 def STREX : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
-                    NoItinerary, "strex", "\t$Rd, $Rt, $addr", []>;
+                    NoItinerary, "strex", "\t$Rd, $Rt, $addr",
+                    [(set GPR:$Rd, (strex_4 GPR:$Rt, addr_offset_none:$addr))]>;
 let hasExtraSrcRegAllocReq = 1 in
 def STREXD : AIstrex<0b01, (outs GPR:$Rd),
                     (ins GPRPairOp:$Rt, addr_offset_none:$addr),
@@ -4414,10 +4447,20 @@ def STREXD : AIstrex<0b01, (outs GPR:$Rd),
 }
 
 
-def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex", []>,
+def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
+                [(int_arm_clrex)]>,
             Requires<[IsARM, HasV7]>  {
   let Inst{31-0} = 0b11110101011111111111000000011111;
 }
+
+def : ARMPat<(and (ldrex_1 addr_offset_none:$addr), 0xff),
+             (LDREXB addr_offset_none:$addr)>;
+def : ARMPat<(and (ldrex_2 addr_offset_none:$addr), 0xffff),
+             (LDREXH addr_offset_none:$addr)>;
+def : ARMPat<(strex_1 (and GPR:$Rt, 0xff), addr_offset_none:$addr),
+             (STREXB GPR:$Rt, addr_offset_none:$addr)>;
+def : ARMPat<(strex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),
+             (STREXH GPR:$Rt, addr_offset_none:$addr)>;
 
 // SWP/SWPB are deprecated in V6/V7.
 let mayLoad = 1, mayStore = 1 in {

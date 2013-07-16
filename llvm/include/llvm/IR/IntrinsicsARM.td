@@ -34,12 +34,15 @@ def int_arm_usat : GCCBuiltin<"__builtin_arm_usat">,
     Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 //===----------------------------------------------------------------------===//
-// Load and Store exclusive doubleword
+// Load, Store and Clear exclusive
+
+def int_arm_ldrex : Intrinsic<[llvm_i32_ty], [llvm_anyptr_ty]>;
+def int_arm_strex : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_anyptr_ty]>;
+def int_arm_clrex : Intrinsic<[]>;
 
 def int_arm_strexd : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty,
-    llvm_ptr_ty], [IntrReadWriteArgMem]>;
-def int_arm_ldrexd : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_ptr_ty],
-    [IntrReadArgMem]>;
+    llvm_ptr_ty]>;
+def int_arm_ldrexd : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_ptr_ty]>;
 
 //===----------------------------------------------------------------------===//
 // VFP

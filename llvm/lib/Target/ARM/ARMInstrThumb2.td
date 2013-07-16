@@ -251,7 +251,8 @@ def t2am_imm8s4_offset : Operand<i32> {
 def MemImm0_1020s4OffsetAsmOperand : AsmOperandClass {
   let Name = "MemImm0_1020s4Offset";
 }
-def t2addrmode_imm0_1020s4 : Operand<i32> {
+def t2addrmode_imm0_1020s4 : Operand<i32>,
+                         ComplexPattern<i32, 2, "SelectT2AddrModeExclusive"> {
   let PrintMethod = "printT2AddrModeImm0_1020s4Operand";
   let EncoderMethod = "getT2AddrModeImm0_1020s4OpValue";
   let DecoderMethod = "DecodeT2AddrModeImm0_1020s4";
@@ -3201,13 +3202,16 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, int sz,
 let mayLoad = 1 in {
 def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
-                         "ldrexb", "\t$Rt, $addr", "", []>;
+                         "ldrexb", "\t$Rt, $addr", "",
+                         [(set rGPR:$Rt, (ldrex_1 addr_offset_none:$addr))]>;
 def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$Rt), (ins addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
-                         "ldrexh", "\t$Rt, $addr", "", []>;
+                         "ldrexh", "\t$Rt, $addr", "",
+                         [(set rGPR:$Rt, (ldrex_2 addr_offset_none:$addr))]>;
 def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins t2addrmode_imm0_1020s4:$addr),
                        AddrModeNone, 4, NoItinerary,
-                       "ldrex", "\t$Rt, $addr", "", []> {
+                       "ldrex", "\t$Rt, $addr", "",
+                     [(set rGPR:$Rt, (ldrex_4 t2addrmode_imm0_1020s4:$addr))]> {
   bits<4> Rt;
   bits<12> addr;
   let Inst{31-27} = 0b11101;
@@ -3232,16 +3236,22 @@ let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
 def t2STREXB : T2I_strex<0b00, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
-                         "strexb", "\t$Rd, $Rt, $addr", "", []>;
+                         "strexb", "\t$Rd, $Rt, $addr", "",
+                         [(set rGPR:$Rd, (strex_1 rGPR:$Rt,
+                                                  addr_offset_none:$addr))]>;
 def t2STREXH : T2I_strex<0b01, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
-                         "strexh", "\t$Rd, $Rt, $addr", "", []>;
+                         "strexh", "\t$Rd, $Rt, $addr", "",
+                         [(set rGPR:$Rd, (strex_2 rGPR:$Rt,
+                                                  addr_offset_none:$addr))]>;
+
 def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt,
                              t2addrmode_imm0_1020s4:$addr),
                   AddrModeNone, 4, NoItinerary,
                   "strex", "\t$Rd, $Rt, $addr", "",
-                  []> {
+                  [(set rGPR:$Rd, (strex_4 rGPR:$Rt,
+                                           t2addrmode_imm0_1020s4:$addr))]> {
   bits<4> Rd;
   bits<4> Rt;
   bits<12> addr;
@@ -3263,7 +3273,7 @@ def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
 }
 }
 
-def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", []>,
+def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", [(int_arm_clrex)]>,
             Requires<[IsThumb2, HasV7]>  {
   let Inst{31-16} = 0xf3bf;
   let Inst{15-14} = 0b10;
@@ -3273,6 +3283,15 @@ def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", []>,
   let Inst{7-4} = 0b0010;
   let Inst{3-0} = 0b1111;
 }
+
+def : T2Pat<(and (ldrex_1 addr_offset_none:$addr), 0xff),
+            (t2LDREXB addr_offset_none:$addr)>;
+def : T2Pat<(and (ldrex_2 addr_offset_none:$addr), 0xffff),
+            (t2LDREXH addr_offset_none:$addr)>;
+def : T2Pat<(strex_1 (and GPR:$Rt, 0xff), addr_offset_none:$addr),
+            (t2STREXB GPR:$Rt, addr_offset_none:$addr)>;
+def : T2Pat<(strex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),
+            (t2STREXH GPR:$Rt, addr_offset_none:$addr)>;
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics

@@ -10838,6 +10838,30 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.writeMem = true;
     return true;
   }
+  case Intrinsic::arm_ldrex: {
+    PointerType *PtrTy = cast<PointerType>(I.getArgOperand(0)->getType());
+    Info.opc = ISD::INTRINSIC_W_CHAIN;
+    Info.memVT = MVT::getVT(PtrTy->getElementType());
+    Info.ptrVal = I.getArgOperand(0);
+    Info.offset = 0;
+    Info.align = getDataLayout()->getABITypeAlignment(PtrTy->getElementType());
+    Info.vol = true;
+    Info.readMem = true;
+    Info.writeMem = false;
+    return true;
+  }
+  case Intrinsic::arm_strex: {
+    PointerType *PtrTy = cast<PointerType>(I.getArgOperand(1)->getType());
+    Info.opc = ISD::INTRINSIC_W_CHAIN;
+    Info.memVT = MVT::getVT(PtrTy->getElementType());
+    Info.ptrVal = I.getArgOperand(1);
+    Info.offset = 0;
+    Info.align = getDataLayout()->getABITypeAlignment(PtrTy->getElementType());
+    Info.vol = true;
+    Info.readMem = false;
+    Info.writeMem = true;
+    return true;
+  }
   case Intrinsic::arm_strexd: {
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     Info.memVT = MVT::i64;

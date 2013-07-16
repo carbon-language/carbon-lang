@@ -37,7 +37,7 @@ bool NVPTXAllocaHoisting::runOnFunction(Function &function) {
 }
 
 char NVPTXAllocaHoisting::ID = 1;
-RegisterPass<NVPTXAllocaHoisting>
+static RegisterPass<NVPTXAllocaHoisting>
 X("alloca-hoisting", "Hoisting alloca instructions in non-entry "
                      "blocks to the entry block");
 

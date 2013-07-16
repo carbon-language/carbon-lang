@@ -175,6 +175,7 @@ public:
                                  SDValue &OffImm);
   bool SelectT2AddrModeSoReg(SDValue N, SDValue &Base,
                              SDValue &OffReg, SDValue &ShImm);
+  bool SelectT2AddrModeExclusive(SDValue N, SDValue &Base, SDValue &OffImm);
 
   inline bool is_so_imm(unsigned Imm) const {
     return ARM_AM::getSOImmVal(Imm) != -1;
@@ -1414,6 +1415,34 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue N,
 
   ShImm = CurDAG->getTargetConstant(ShAmt, MVT::i32);
 
+  return true;
+}
+
+bool ARMDAGToDAGISel::SelectT2AddrModeExclusive(SDValue N, SDValue &Base,
+                                                SDValue &OffImm) {
+  // This *must* succeed since it's used for the irreplacable ldrex and strex
+  // instructions.
+  Base = N;
+  OffImm = CurDAG->getTargetConstant(0, MVT::i32);
+
+  if (N.getOpcode() != ISD::ADD || !CurDAG->isBaseWithConstantOffset(N))
+    return true;
+
+  ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1));
+  if (!RHS)
+    return true;
+
+  uint32_t RHSC = (int)RHS->getZExtValue();
+  if (RHSC > 1020 || RHSC % 4 != 0)
+    return true;
+
+  Base = N.getOperand(0);
+  if (Base.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+    Base = CurDAG->getTargetFrameIndex(FI, getTargetLowering()->getPointerTy());
+  }
+
+  OffImm = CurDAG->getTargetConstant(RHSC / 4, MVT::i32);
   return true;
 }
 
