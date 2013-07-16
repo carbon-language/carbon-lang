@@ -556,28 +556,24 @@ error_code status(const Twine &path, file_status &result) {
   }
 
   perms prms = static_cast<perms>(status.st_mode);
-  
-  if (S_ISDIR(status.st_mode))
-    result = file_status(file_type::directory_file, prms);
-  else if (S_ISREG(status.st_mode))
-    result = file_status(file_type::regular_file, prms);
-  else if (S_ISBLK(status.st_mode))
-    result = file_status(file_type::block_file, prms);
-  else if (S_ISCHR(status.st_mode))
-    result = file_status(file_type::character_file, prms);
-  else if (S_ISFIFO(status.st_mode))
-    result = file_status(file_type::fifo_file, prms);
-  else if (S_ISSOCK(status.st_mode))
-    result = file_status(file_type::socket_file, prms);
-  else
-    result = file_status(file_type::type_unknown, prms);
+  file_type Type = file_type::type_unknown;
 
-  result.fs_st_dev = status.st_dev;
-  result.fs_st_ino = status.st_ino;
-  result.fs_st_mtime = status.st_mtime;
-  result.fs_st_uid = status.st_uid;
-  result.fs_st_gid = status.st_gid;
-  result.fs_st_size = status.st_size;
+  if (S_ISDIR(status.st_mode))
+    Type = file_type::directory_file;
+  else if (S_ISREG(status.st_mode))
+    Type = file_type::regular_file;
+  else if (S_ISBLK(status.st_mode))
+    Type = file_type::block_file;
+  else if (S_ISCHR(status.st_mode))
+    Type = file_type::character_file;
+  else if (S_ISFIFO(status.st_mode))
+    Type = file_type::fifo_file;
+  else if (S_ISSOCK(status.st_mode))
+    Type = file_type::socket_file;
+
+  result =
+      file_status(Type, prms, status.st_dev, status.st_ino, status.st_mtime,
+                  status.st_uid, status.st_gid, status.st_size);
 
   return error_code::success();
 }

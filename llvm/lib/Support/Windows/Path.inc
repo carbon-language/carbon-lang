@@ -632,7 +632,6 @@ error_code status(const Twine &path, file_status &result) {
   if (attr & FILE_ATTRIBUTE_DIRECTORY)
     result = file_status(file_type::directory_file);
   else {
-    result = file_status(file_type::regular_file);
     ScopedFileHandle h(
       ::CreateFileW(path_utf16.begin(),
                     0, // Attributes only.
@@ -646,15 +645,13 @@ error_code status(const Twine &path, file_status &result) {
     BY_HANDLE_FILE_INFORMATION Info;
     if (!::GetFileInformationByHandle(h, &Info))
       goto handle_status_error;
-    result.FileIndexHigh      = Info.nFileIndexHigh;
-    result.FileIndexLow       = Info.nFileIndexLow;
-    result.FileSizeHigh       = Info.nFileSizeHigh;
-    result.FileSizeLow        = Info.nFileSizeLow;
-    result.LastWriteTimeHigh  = Info.ftLastWriteTime.dwHighDateTime;
-    result.LastWriteTimeLow   = Info.ftLastWriteTime.dwLowDateTime;
-    result.VolumeSerialNumber = Info.dwVolumeSerialNumber;
-  }
 
+    result = file_status(
+        file_type::regular_file, Info.ftLastWriteTime.dwHighDateTime,
+        Info.ftLastWriteTime.dwLowDateTime, Info.dwVolumeSerialNumber,
+        Info.nFileSizeHigh, Info.nFileSizeLow, Info.nFileIndexHigh,
+        Info.nFileIndexLow);
+  }
   return error_code::success();
 
 handle_status_error:

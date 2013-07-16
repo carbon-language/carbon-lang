@@ -164,14 +164,29 @@ class file_status
   uint32_t FileIndexLow;
   #endif
   friend bool equivalent(file_status A, file_status B);
-  friend error_code status(const Twine &path, file_status &result);
   friend error_code getUniqueID(const Twine Path, uint64_t &Result);
   file_type Type;
   perms Perms;
 public:
-  explicit file_status(file_type v=file_type::status_error, 
-                      perms prms=perms_not_known)
-    : Type(v), Perms(prms) {}
+  file_status() : Type(file_type::status_error) {}
+  file_status(file_type Type) : Type(Type) {}
+
+  #if defined(LLVM_ON_UNIX)
+    file_status(file_type Type, perms Perms, dev_t Dev, ino_t Ino, time_t MTime,
+                uid_t UID, gid_t GID, off_t Size)
+        : fs_st_dev(Dev), fs_st_ino(Ino), fs_st_mtime(MTime), fs_st_uid(UID),
+          fs_st_gid(GID), fs_st_size(Size), Type(Type), Perms(Perms) {}
+  #elif defined(LLVM_ON_WIN32)
+    file_status(file_type Type, uint32_t LastWriteTimeHigh,
+                uint32_t LastWriteTimeLow, uint32_t VolumeSerialNumber,
+                uint32_t FileSizeHigh, uint32_t FileSizeLow,
+                uint32_t FileIndexHigh, uint32_t FileIndexLow)
+        : LastWriteTimeHigh(LastWriteTimeHigh),
+          LastWriteTimeLow(LastWriteTimeLow),
+          VolumeSerialNumber(VolumeSerialNumber), FileSizeHigh(FileSizeHigh),
+          FileSizeLow(FileSizeLow), FileIndexHigh(FileIndexHigh),
+          FileIndexLow(FileIndexLow), Type(Type), Perms(perms_not_known) {}
+  #endif
 
   // getters
   file_type type() const { return Type; }
@@ -434,21 +449,6 @@ inline bool equivalent(const Twine &A, const Twine &B) {
   return !equivalent(A, B, result) && result;
 }
 
-/// @brief Get file size.
-///
-/// @param Path Input path.
-/// @param Result Set to the size of the file in \a Path.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-inline error_code file_size(const Twine &Path, uint64_t &Result) {
-  file_status Status;
-  error_code EC = status(Path, Status);
-  if (EC)
-    return EC;
-  Result = Status.getSize();
-  return error_code::success();
-}
-
 /// @brief Does status represent a directory?
 ///
 /// @param status A file_status previously returned from status.
@@ -528,6 +528,21 @@ error_code is_symlink(const Twine &path, bool &result);
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code status(const Twine &path, file_status &result);
+
+/// @brief Get file size.
+///
+/// @param Path Input path.
+/// @param Result Set to the size of the file in \a Path.
+/// @returns errc::success if result has been successfully set, otherwise a
+///          platform specific error_code.
+inline error_code file_size(const Twine &Path, uint64_t &Result) {
+  file_status Status;
+  error_code EC = status(Path, Status);
+  if (EC)
+    return EC;
+  Result = Status.getSize();
+  return error_code::success();
+}
 
 error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
 
