@@ -1,5 +1,7 @@
 ; RUN: opt %loadPolly -basicaa -polly-independent -S < %s | FileCheck %s
 ; RUN: opt %loadPolly -basicaa -polly-independent -polly-codegen-scev -S < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array -S < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array -polly-codegen-scev -S < %s | FileCheck %s -check-prefix=SCALARACCESS
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;
@@ -22,6 +24,8 @@ entry:
 ; CHECK: entry
 ; CHECK: %init.s2a = alloca i64
 ; CHECK: br label %for.i
+
+; SCALARACCESS-NOT: alloca
   br label %for.i
 
 for.i:
@@ -31,6 +35,7 @@ for.i:
 
 entry.next:
   %init = load i64* %init_ptr
+; SCALARACCESS-NOT: store
   br label %for.j
 
 for.j:
@@ -44,6 +49,9 @@ for.j:
 ; The SCEV of %init_sum is (%init + %init_2). It is referring to both an
 ; UnknownValue in the same and in a different basic block. We want only the
 ; reference to the different basic block to be replaced.
+
+; SCALARACCESS: %init_2 = load i64* %init_ptr
+; SCALARACCESS: %init_sum = add i64 %init, %init_2
   %scevgep = getelementptr i64* %A, i64 %indvar.j
   store i64 %init_sum, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1

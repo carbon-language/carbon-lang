@@ -1,5 +1,7 @@
 ; RUN: opt %loadPolly -basicaa -polly-independent < %s -S | FileCheck %s
 ; RUN: opt %loadPolly -basicaa -polly-independent -polly-codegen-scev < %s -S | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array -S < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array -polly-codegen-scev < %s -S | FileCheck %s -check-prefix=SCALARACCESS
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
@@ -36,6 +38,8 @@ entry:
   br label %for.cond
 ; CHECK: entry:
 ; CHECK-NOT: alloca
+; SCALARACCESS: entry:
+; SCALARACCESS-NOT: alloca
 
 for.cond:
   %indvar = phi i64 [ %indvar.next, %for.inc ], [ 0, %entry ]
@@ -51,6 +55,9 @@ for.body:
 ; CHECK: for.body:
 ; CHECK: %float = uitofp i64 %indvar to float
 ; CHECK: store float %float, float* %arrayidx
+; SCALARACCESS: for.body:
+; SCALARACCESS: %float = uitofp i64 %indvar to float
+; SCALARACCESS: store float %float, float* %arrayidx
 
 for.inc:
   %indvar.next = add i64 %indvar, 1
@@ -70,6 +77,9 @@ entry:
 ; CHECK: entry:
 ; CHECK: %scalar.s2a = alloca float
 ; CHECK: fence
+; SCALARACCESS: entry:
+; SCALARACCESS-NOT: alloca
+; SCALARACCESS: fence
 
 for.cond:
   %indvar = phi i64 [ %indvar.next, %for.inc ], [ 0, %entry ]
@@ -87,6 +97,12 @@ for.body.a:
 ; CHECK: store float %scalar, float* %scalar.s2a
 ; CHECK: br label %for.body.b
 
+; SCALARACCESS: for.body.a:
+; SCALARACCESS: %arrayidx = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+; SCALARACCESS: %scalar = load float* %arrayidx
+; SCALARACCESS-NOT: store
+; SCALARACCESS: br label %for.body.b
+
 for.body.b:
   %arrayidx2 = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
   %float = uitofp i64 %indvar to float
@@ -102,6 +118,14 @@ for.body.b:
 ; CHECK: store float %sum, float* %arrayidx2
 ; CHECK: br label %for.inc
 
+; SCALARACCESS: for.body.b:
+; SCALARACCESS: %arrayidx2 = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+; SCALARACCESS: %float = uitofp i64 %indvar to float
+; SCALARACCESS-NOT: load
+; SCALARACCESS: %sum = fadd float %scalar, %float
+; SCALARACCESS: store float %sum, float* %arrayidx2
+; SCALARACCESS: br label %for.inc
+
 for.inc:
   %indvar.next = add i64 %indvar, 1
   br label %for.cond
@@ -114,6 +138,8 @@ return:
 ; It is not possible to have a scop which accesses a scalar element that is
 ; a global variable. All global variables are pointers containing possibly
 ; a single element. Hence they do not need to be handled anyways.
+; Please note that this is still required when scalar to array rewritting is
+; disabled.
 
 ; CHECK: @use_after_scop()
 define i32 @use_after_scop() nounwind {
@@ -123,6 +149,10 @@ entry:
 ; CHECK: entry:
 ; CHECK: %scalar.s2a = alloca float
 ; CHECK: fence
+
+; SCALARACCESS: entry:
+; SCALARACCESS: %scalar.s2a = alloca float
+; SCALARACCESS: fence
 
 for.head:
   %indvar = phi i64 [ %indvar.next, %for.inc ], [ 0, %entry ]
@@ -136,6 +166,10 @@ for.body:
 ; CHECK: for.body:
 ; CHECK: %scalar = load float* %arrayidx
 ; CHECK: store float %scalar, float* %scalar.s2a
+
+; SCALARACCESS: for.body:
+; SCALARACCESS: %scalar = load float* %arrayidx
+; SCALARACCESS: store float %scalar, float* %scalar.s2a
 
 for.inc:
   %indvar.next = add i64 %indvar, 1
@@ -151,6 +185,11 @@ for.after:
 ; CHECK: %scalar.loadoutside = load float* %scalar.s2a
 ; CHECK: fence seq_cst
 ; CHECK: %return_value = fptosi float %scalar.loadoutside to i32
+
+; SCALARACCESS: for.after:
+; SCALARACCESS: %scalar.loadoutside = load float* %scalar.s2a
+; SCALARACCESS: fence seq_cst
+; SCALARACCESS: %return_value = fptosi float %scalar.loadoutside to i32
 
 return:
   ret i32 %return_value
@@ -186,6 +225,9 @@ for.body:
 
 ; CHECK: for.body:
 ; CHECK: store float %scalar, float* %arrayidx
+
+; SCALARACCESS: for.body:
+; SCALARACCESS: store float %scalar, float* %arrayidx
 
 for.inc:
   %indvar.next = add i64 %indvar, 1
