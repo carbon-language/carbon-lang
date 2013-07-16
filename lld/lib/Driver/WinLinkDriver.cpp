@@ -262,6 +262,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_no_nxcompat))
     info.setNxCompat(false);
 
+  // Hanlde -largeaddressaware
+  if (parsedArgs->getLastArg(OPT_largeaddressaware))
+    info.setLargeAddressAware(true);
+
   // Hanlde -out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());

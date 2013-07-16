@@ -26,7 +26,7 @@ public:
       : _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
-        _nxCompat(true) {}
+        _nxCompat(true), _largeAddressAware(false) {}
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -62,6 +62,9 @@ public:
   void setNxCompat(bool nxCompat) { _nxCompat = nxCompat; }
   bool getNxCompat() const { return _nxCompat; }
 
+  void setLargeAddressAware(bool option) { _largeAddressAware = option; }
+  bool getLargeAddressAware() const { return _largeAddressAware; }
+
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
@@ -80,6 +83,7 @@ private:
   llvm::COFF::WindowsSubsystem _subsystem;
   OSVersion _minOSVersion;
   bool _nxCompat;
+  bool _largeAddressAware;
 
   mutable std::unique_ptr<Reader> _reader;
   mutable std::unique_ptr<Writer> _writer;

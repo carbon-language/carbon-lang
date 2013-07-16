@@ -33,5 +33,10 @@ def nxcompat : Flag<["-", "/"], "nxcompat">,
 def no_nxcompat : Flag<["-", "/"], "nxcompat:no">,
     HelpText<"Disable data execution provention">;
 
+def largeaddressaware : Flag<["-", "/"], "largeaddressaware">,
+    HelpText<"Enable large addresses">;
+def no_largeaddressaware : Flag<["-", "/"], "largeaddressaware:no">,
+    HelpText<"Disable large addresses">;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;

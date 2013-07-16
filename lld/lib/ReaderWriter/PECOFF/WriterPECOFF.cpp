@@ -151,8 +151,11 @@ public:
     _coffHeader.SizeOfOptionalHeader = 224;
 
     // Attributes of the executable.
-    _coffHeader.Characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
-                                  llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
+    uint16_t characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
+                               llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
+    if (targetInfo.getLargeAddressAware())
+      characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
+    _coffHeader.Characteristics = characteristics;
 
     // 0x10b indicates a normal PE32 executable. For PE32+ it should be 0x20b.
     _peHeader.Magic = 0x10b;

@@ -48,6 +48,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(4096, info->getStackCommit());
   EXPECT_FALSE(info->allowRemainingUndefines());
   EXPECT_TRUE(info->getNxCompat());
+  EXPECT_FALSE(info->getLargeAddressAware());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -119,6 +120,16 @@ TEST_F(WinLinkParserTest, Force) {
 TEST_F(WinLinkParserTest, NoNxCompat) {
   parse("link.exe", "-nxcompat:no", nullptr);
   EXPECT_FALSE(info->getNxCompat());
+}
+
+TEST_F(WinLinkParserTest, LargeAddressAware) {
+  parse("link.exe", "-largeaddressaware", nullptr);
+  EXPECT_TRUE(info->getLargeAddressAware());
+}
+
+TEST_F(WinLinkParserTest, NoLargeAddressAware) {
+  parse("link.exe", "-largeaddressaware:no", nullptr);
+  EXPECT_FALSE(info->getLargeAddressAware());
 }
 
 } // end anonymous namespace
