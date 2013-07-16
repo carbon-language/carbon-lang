@@ -1599,12 +1599,16 @@ _func:
         pli [r6, #33]
         pli [r6, #257]
         pli [r7, #257]
+        pli [pc, #+4095]
+        pli [pc, #-4095]
 
 @ CHECK: pli	[r5, #-4]               @ encoding: [0x15,0xf9,0x04,0xfc]
 @ CHECK: pli	[r6, #32]               @ encoding: [0x96,0xf9,0x20,0xf0]
 @ CHECK: pli	[r6, #33]               @ encoding: [0x96,0xf9,0x21,0xf0]
 @ CHECK: pli	[r6, #257]              @ encoding: [0x96,0xf9,0x01,0xf1]
 @ CHECK: pli	[r7, #257]              @ encoding: [0x97,0xf9,0x01,0xf1]
+@ CHECK: pli    [pc, #4095]             @ encoding: [0x9f,0xf9,0xff,0xff]
+@ CHECK: pli    [pc, #-4095]            @ encoding: [0x1f,0xf9,0xff,0xff]
 
 
 @------------------------------------------------------------------------------
