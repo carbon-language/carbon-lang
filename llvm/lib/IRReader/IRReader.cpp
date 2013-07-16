@@ -22,8 +22,8 @@ namespace llvm {
   extern bool TimePassesIsEnabled;
 }
 
-static const char *TimeIRParsingGroupName = "LLVM IR Parsing";
-static const char *TimeIRParsingName = "Parse IR";
+static const char *const TimeIRParsingGroupName = "LLVM IR Parsing";
+static const char *const TimeIRParsingName = "Parse IR";
 
 
 Module *llvm::getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,

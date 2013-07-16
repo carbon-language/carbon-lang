@@ -63,25 +63,26 @@ static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
 static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
 
-static const char *kAsanModuleCtorName = "asan.module_ctor";
-static const char *kAsanModuleDtorName = "asan.module_dtor";
-static const int   kAsanCtorAndCtorPriority = 1;
-static const char *kAsanReportErrorTemplate = "__asan_report_";
-static const char *kAsanReportLoadN = "__asan_report_load_n";
-static const char *kAsanReportStoreN = "__asan_report_store_n";
-static const char *kAsanRegisterGlobalsName = "__asan_register_globals";
-static const char *kAsanUnregisterGlobalsName = "__asan_unregister_globals";
-static const char *kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
-static const char *kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
-static const char *kAsanInitName = "__asan_init_v3";
-static const char *kAsanHandleNoReturnName = "__asan_handle_no_return";
-static const char *kAsanMappingOffsetName = "__asan_mapping_offset";
-static const char *kAsanMappingScaleName = "__asan_mapping_scale";
-static const char *kAsanStackMallocName = "__asan_stack_malloc";
-static const char *kAsanStackFreeName = "__asan_stack_free";
-static const char *kAsanGenPrefix = "__asan_gen_";
-static const char *kAsanPoisonStackMemoryName = "__asan_poison_stack_memory";
-static const char *kAsanUnpoisonStackMemoryName =
+static const char *const kAsanModuleCtorName = "asan.module_ctor";
+static const char *const kAsanModuleDtorName = "asan.module_dtor";
+static const int         kAsanCtorAndCtorPriority = 1;
+static const char *const kAsanReportErrorTemplate = "__asan_report_";
+static const char *const kAsanReportLoadN = "__asan_report_load_n";
+static const char *const kAsanReportStoreN = "__asan_report_store_n";
+static const char *const kAsanRegisterGlobalsName = "__asan_register_globals";
+static const char *const kAsanUnregisterGlobalsName = "__asan_unregister_globals";
+static const char *const kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
+static const char *const kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
+static const char *const kAsanInitName = "__asan_init_v3";
+static const char *const kAsanHandleNoReturnName = "__asan_handle_no_return";
+static const char *const kAsanMappingOffsetName = "__asan_mapping_offset";
+static const char *const kAsanMappingScaleName = "__asan_mapping_scale";
+static const char *const kAsanStackMallocName = "__asan_stack_malloc";
+static const char *const kAsanStackFreeName = "__asan_stack_free";
+static const char *const kAsanGenPrefix = "__asan_gen_";
+static const char *const kAsanPoisonStackMemoryName =
+    "__asan_poison_stack_memory";
+static const char *const kAsanUnpoisonStackMemoryName =
     "__asan_unpoison_stack_memory";
 
 static const int kAsanStackLeftRedzoneMagic = 0xf1;

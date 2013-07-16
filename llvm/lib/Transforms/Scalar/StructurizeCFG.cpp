@@ -45,7 +45,7 @@ typedef DenseMap<BasicBlock *, BasicBlock*> BB2BBMap;
 
 // The name for newly created blocks.
 
-static const char *FlowBlockName = "Flow";
+static const char *const FlowBlockName = "Flow";
 
 /// @brief Find the nearest common dominator for multiple BasicBlocks
 ///

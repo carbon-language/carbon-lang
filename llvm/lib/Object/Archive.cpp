@@ -21,7 +21,7 @@
 using namespace llvm;
 using namespace object;
 
-static const char *Magic = "!<arch>\n";
+static const char *const Magic = "!<arch>\n";
 
 void Archive::anchor() { }
 

@@ -50,9 +50,9 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
-static const char *DWARFGroupName = "DWARF Emission";
-static const char *DbgTimerName = "DWARF Debug Writer";
-static const char *EHTimerName = "DWARF Exception Writer";
+static const char *const DWARFGroupName = "DWARF Emission";
+static const char *const DbgTimerName = "DWARF Debug Writer";
+static const char *const EHTimerName = "DWARF Exception Writer";
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 

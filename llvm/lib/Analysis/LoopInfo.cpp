@@ -51,7 +51,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_END(LoopInfo, "loops", "Natural Loop Information", true, true)
 
 // Loop identifier metadata name.
-static const char* LoopMDName = "llvm.loop";
+static const char *const LoopMDName = "llvm.loop";
 
 //===----------------------------------------------------------------------===//
 // Loop implementation

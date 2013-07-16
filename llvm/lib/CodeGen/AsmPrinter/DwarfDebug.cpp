@@ -92,8 +92,8 @@ static cl::opt<DefaultOnOff> SplitDwarf("split-dwarf", cl::Hidden,
      cl::init(Default));
 
 namespace {
-  const char *DWARFGroupName = "DWARF Emission";
-  const char *DbgTimerName = "DWARF Debug Writer";
+  const char *const DWARFGroupName = "DWARF Emission";
+  const char *const DbgTimerName = "DWARF Debug Writer";
 
   struct CompareFirst {
     template <typename T> bool operator()(const T &lhs, const T &rhs) const {

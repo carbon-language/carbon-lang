@@ -242,7 +242,7 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
 }
 
 #ifndef NDEBUG
-static const char *BundlingNotImplementedMsg =
+static const char *const BundlingNotImplementedMsg =
   "Aligned bundling is not implemented for this object format";
 #endif
 
