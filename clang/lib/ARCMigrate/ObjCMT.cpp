@@ -250,6 +250,8 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
       if (Property->getPropertyImplementation() == ObjCPropertyDecl::Optional)
         continue;
       DeclContext::lookup_const_result R = IDecl->lookup(Property->getDeclName());
+      if (R.size() == 0)
+        return false;
       for (unsigned I = 0, N = R.size(); I != N; ++I) {
         if (ObjCPropertyDecl *ClassProperty = dyn_cast<ObjCPropertyDecl>(R[0])) {
           if (ClassProperty->getPropertyAttributes()
@@ -263,14 +265,20 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
   // At this point, all required properties in this protocol conform to those
   // declared in the class.
   // Check that class implements the required methods of the protocol too.
-  if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition())
+  if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition()) {
+    if (PDecl->meth_begin() == PDecl->meth_end())
+      return false;
     for (ObjCContainerDecl::method_iterator M = PDecl->meth_begin(),
          MEnd = PDecl->meth_end(); M != MEnd; ++M) {
       ObjCMethodDecl *MD = (*M);
+      if (MD->isImplicit())
+        continue;
       if (MD->getImplementationControl() == ObjCMethodDecl::Optional)
         continue;
       bool match = false;
       DeclContext::lookup_const_result R = ImpDecl->lookup(MD->getDeclName());
+      if (R.size() == 0)
+        return false;
       for (unsigned I = 0, N = R.size(); I != N; ++I)
         if (ObjCMethodDecl *ImpMD = dyn_cast<ObjCMethodDecl>(R[0]))
           if (Ctx.ObjCMethodsAreEqual(MD, ImpMD)) {
@@ -280,6 +288,7 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
       if (!match)
         return false;
     }
+  }
 
   return true;
 }
@@ -312,6 +321,12 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
     if (ClassImplementsAllMethodsAndProperties(Ctx, ImpDecl, IDecl,
                                               PotentialImplicitProtocols[i]))
       ConformingProtocols.push_back(PotentialImplicitProtocols[i]);
+  
+  if (ConformingProtocols.empty())
+    return;
+  edit::Commit commit(*Editor);
+  edit::rewriteToObjCInterfaceDecl(IDecl, ConformingProtocols, *NSAPIObj, commit);
+  Editor->commit(commit);
 }
 
 namespace {

@@ -402,6 +402,38 @@ bool edit::rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   return true;
 }
 
+bool edit::rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,
+                  llvm::SmallVectorImpl<ObjCProtocolDecl*> &ConformingProtocols,
+                  const NSAPI &NS, Commit &commit) {
+  const ObjCList<ObjCProtocolDecl> &Protocols = IDecl->getReferencedProtocols();
+    
+  // ASTContext &Context = NS.getASTContext();
+  std::string ClassString = "@interface ";
+  ClassString += IDecl->getNameAsString();
+  
+  if (IDecl->getSuperClass()) {
+    ClassString += " : ";
+    ClassString += IDecl->getSuperClass()->getNameAsString();
+  }
+  if (Protocols.empty())
+    ClassString += '<';
+  
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+       E = Protocols.end(); I != E; ++I) {
+    ClassString += (I == Protocols.begin() ? '<' : ',');
+    ClassString += (*I)->getNameAsString();
+  }
+  if (!Protocols.empty())
+    ClassString += ',';
+  for (unsigned i = 0, e = ConformingProtocols.size(); i != e; i++) {
+    ClassString += ConformingProtocols[i]->getNameAsString();
+    if (i != (e-1))
+      ClassString += ',';
+  }
+  ClassString += "> ";
+  return true;
+}
+
 /// \brief Returns true if the immediate message arguments of \c Msg should not
 /// be rewritten because it will interfere with the rewrite of the parent
 /// message expression. e.g.
