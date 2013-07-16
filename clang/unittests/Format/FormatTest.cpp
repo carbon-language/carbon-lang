@@ -866,6 +866,13 @@ TEST_F(FormatTest, CorrectlyHandlesLengthOfBlockComments) {
              getLLVMStyleWithColumns(40)));
 }
 
+TEST_F(FormatTest, DontBreakNonTrailingBlockComments) {
+  EXPECT_EQ("void\n"
+            "ffffffffff(int aaaaa /* test */);",
+            format("void ffffffffff(int aaaaa /* test */);",
+                   getLLVMStyleWithColumns(35)));
+}
+
 TEST_F(FormatTest, SplitsLongCxxComments) {
   EXPECT_EQ("// A comment that\n"
             "// doesn't fit on\n"

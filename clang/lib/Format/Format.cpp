@@ -917,7 +917,7 @@ private:
 
       Token.reset(new BreakableStringLiteral(Current, StartColumn,
                                              Line.InPPDirective, Encoding));
-    } else if (Current.Type == TT_BlockComment) {
+    } else if (Current.Type == TT_BlockComment && Current.isTrailingComment()) {
       Token.reset(new BreakableBlockComment(
           Style, Current, StartColumn, OriginalStartColumn, !Current.Previous,
           Line.InPPDirective, Encoding));
