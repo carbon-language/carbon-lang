@@ -21,6 +21,7 @@
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
 #include <crt_externs.h>  // for _NSGetArgv
@@ -52,7 +53,9 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif  // SANITIZER_WORDSIZE
 }
 
-int GetMacosVersion() {
+MacosVersion cached_macos_version = MACOS_VERSION_UNINITIALIZED;
+
+MacosVersion GetMacosVersionInternal() {
   int mib[2] = { CTL_KERN, KERN_OSRELEASE };
   char version[100];
   uptr len = 0, maxlen = sizeof(version) / sizeof(version[0]);
@@ -74,6 +77,18 @@ int GetMacosVersion() {
     }
     default: return MACOS_VERSION_UNKNOWN;
   }
+}
+
+MacosVersion GetMacosVersion() {
+  atomic_uint32_t *cache =
+      reinterpret_cast<atomic_uint32_t*>(&cached_macos_version);
+  MacosVersion result =
+      static_cast<MacosVersion>(atomic_load(cache, memory_order_acquire));
+  if (result == MACOS_VERSION_UNINITIALIZED) {
+    result = GetMacosVersionInternal();
+    atomic_store(cache, result, memory_order_release);
+  }
+  return result;
 }
 
 bool PlatformHasDifferentMemcpyAndMemmove() {
