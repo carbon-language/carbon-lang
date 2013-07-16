@@ -114,9 +114,9 @@ public:
       if (result.isReference())
         return EmitLoadOfLValue(result.getReferenceLValue(CGF, E));
 
-      llvm::ConstantStruct *pair =
-        cast<llvm::ConstantStruct>(result.getValue());
-      return ComplexPairTy(pair->getOperand(0), pair->getOperand(1));
+      llvm::Constant *pair = result.getValue();
+      return ComplexPairTy(pair->getAggregateElement(0U),
+                           pair->getAggregateElement(1U));
     }
     return EmitLoadOfLValue(E);
   }

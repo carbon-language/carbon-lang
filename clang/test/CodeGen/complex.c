@@ -95,3 +95,6 @@ double t7(double _Complex c) {
 void t8() {
   __complex__ int *x = &(__complex__ int){1};
 }
+
+const _Complex double test9const = 0;
+_Complex double test9func() { return test9const; }
