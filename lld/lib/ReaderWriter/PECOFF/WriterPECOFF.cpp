@@ -44,6 +44,9 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileOutputBuffer.h"
 
+using llvm::support::ulittle16_t;
+using llvm::support::ulittle32_t;
+
 namespace lld {
 namespace pecoff {
 
@@ -277,7 +280,7 @@ public:
     for (const auto *layout : _atomLayouts) {
       const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
       for (const Reference *ref : *atom) {
-        auto relocSite = reinterpret_cast<llvm::support::ulittle32_t *>(
+        auto relocSite = reinterpret_cast<ulittle32_t *>(
             fileBuffer + layout->_fileOffset + ref->offsetInAtom());
         uint64_t targetAddr = atomRva[ref->target()];
 
@@ -645,23 +648,26 @@ private:
   // Create the content of a relocation block.
   DefinedAtom *createBaseRelocBlock(const File &file, uint64_t pageAddr,
                                     const std::vector<uint16_t> &offsets) {
-    uint32_t size = 8 + offsets.size() * 2;
+    uint32_t size = sizeof(ulittle32_t) * 2
+        + sizeof(ulittle16_t) * offsets.size();
     std::vector<uint8_t> contents(size);
+    uint8_t *ptr = &contents[0];
 
     // The first four bytes is the page RVA.
-    *reinterpret_cast<llvm::support::ulittle32_t *>(&contents[0]) = pageAddr;
+    *reinterpret_cast<ulittle32_t *>(ptr) = pageAddr;
+    ptr += sizeof(ulittle32_t);
 
     // The second four bytes is the size of the block, including the the page
     // RVA and this size field.
-    *reinterpret_cast<llvm::support::ulittle32_t *>(&contents[4]) = size;
+    *reinterpret_cast<ulittle32_t *>(ptr) = size;
+    ptr += sizeof(ulittle32_t);
 
     // The rest of the block consists of offsets in the page.
-    size_t i = 8;
     for (uint16_t offset : offsets) {
       assert(offset < PAGE_SIZE);
       uint16_t val = (llvm::COFF::IMAGE_REL_BASED_HIGHLOW << 12) | offset;
-      *reinterpret_cast<llvm::support::ulittle16_t *>(&contents[i]) = val;
-      i += 2;
+      *reinterpret_cast<ulittle16_t *>(ptr) = val;
+      ptr += sizeof(ulittle16_t);
     }
     return new (_alloc) BaseRelocAtom(file, std::move(contents));
   }
