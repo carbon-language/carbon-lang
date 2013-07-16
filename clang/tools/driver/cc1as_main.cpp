@@ -252,8 +252,8 @@ static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
 
   std::string Error;
   raw_fd_ostream *Out =
-    new raw_fd_ostream(Opts.OutputPath.c_str(), Error,
-                       (Binary ? raw_fd_ostream::F_Binary : 0));
+      new raw_fd_ostream(Opts.OutputPath.c_str(), Error,
+                         (Binary ? sys::fs::F_Binary : sys::fs::F_None));
   if (!Error.empty()) {
     Diags.Report(diag::err_fe_unable_to_open_output)
       << Opts.OutputPath << Error;

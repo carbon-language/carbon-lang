@@ -221,7 +221,7 @@ static bool format(std::string FileName) {
 
       std::string ErrorInfo;
       llvm::raw_fd_ostream FileStream(FileName.c_str(), ErrorInfo,
-                                      llvm::raw_fd_ostream::F_Binary);
+                                      llvm::sys::fs::F_Binary);
       if (!ErrorInfo.empty()) {
         llvm::errs() << "Error while writing file: " << ErrorInfo << "\n";
         return true;

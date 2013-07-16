@@ -274,9 +274,8 @@ int Compilation::ExecuteCommand(const Command &C,
     // output stream.
     if (getDriver().CCPrintOptions && getDriver().CCPrintOptionsFilename) {
       std::string Error;
-      OS = new llvm::raw_fd_ostream(getDriver().CCPrintOptionsFilename,
-                                    Error,
-                                    llvm::raw_fd_ostream::F_Append);
+      OS = new llvm::raw_fd_ostream(getDriver().CCPrintOptionsFilename, Error,
+                                    llvm::sys::fs::F_Append);
       if (!Error.empty()) {
         getDriver().Diag(clang::diag::err_drv_cc_print_options_failure)
           << Error;

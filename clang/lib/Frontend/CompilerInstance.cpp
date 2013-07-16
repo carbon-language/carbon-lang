@@ -111,8 +111,8 @@ static void SetUpDiagnosticLog(DiagnosticOptions *DiagOpts,
   if (DiagOpts->DiagnosticLogFile != "-") {
     // Create the output stream.
     llvm::raw_fd_ostream *FileOS(
-      new llvm::raw_fd_ostream(DiagOpts->DiagnosticLogFile.c_str(),
-                               ErrorInfo, llvm::raw_fd_ostream::F_Append));
+        new llvm::raw_fd_ostream(DiagOpts->DiagnosticLogFile.c_str(), ErrorInfo,
+                                 llvm::sys::fs::F_Append));
     if (!ErrorInfo.empty()) {
       Diags.Report(diag::warn_fe_cc_log_diagnostics_failure)
         << DiagOpts->DiagnosticLogFile << ErrorInfo;
@@ -138,8 +138,8 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
   std::string ErrorInfo;
   OwningPtr<llvm::raw_fd_ostream> OS;
   OS.reset(new llvm::raw_fd_ostream(OutputFile.str().c_str(), ErrorInfo,
-                                    llvm::raw_fd_ostream::F_Binary));
-  
+                                    llvm::sys::fs::F_Binary));
+
   if (!ErrorInfo.empty()) {
     Diags.Report(diag::warn_fe_serialized_diag_failure)
       << OutputFile << ErrorInfo;
@@ -567,9 +567,9 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
 
   if (!OS) {
     OSFile = OutFile;
-    OS.reset(
-      new llvm::raw_fd_ostream(OSFile.c_str(), Error,
-                               (Binary ? llvm::raw_fd_ostream::F_Binary : 0)));
+    OS.reset(new llvm::raw_fd_ostream(
+        OSFile.c_str(), Error,
+        (Binary ? llvm::sys::fs::F_Binary : llvm::sys::fs::F_None)));
     if (!Error.empty())
       return 0;
   }
@@ -1011,7 +1011,7 @@ static void checkConfigMacro(Preprocessor &PP, StringRef ConfigMacro,
 static void writeTimestampFile(StringRef TimestampFile) {
   std::string ErrorInfo;
   llvm::raw_fd_ostream Out(TimestampFile.str().c_str(), ErrorInfo,
-                           llvm::raw_fd_ostream::F_Binary);
+                           llvm::sys::fs::F_Binary);
 }
 
 /// \brief Prune the module cache of modules that haven't been accessed in

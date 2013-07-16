@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/FileSystemStatCache.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include <fcntl.h>
 
 // FIXME: This is terrible, we need this for ::close.
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -60,13 +60,9 @@ bool FileSystemStatCache::get(const char *Path, struct stat &StatBuf,
     //
     // Because of this, check to see if the file exists with 'open'.  If the
     // open succeeds, use fstat to get the stat info.
-    int OpenFlags = O_RDONLY;
-#ifdef O_BINARY
-    OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
-#endif
-    *FileDescriptor = ::open(Path, OpenFlags);
-    
-    if (*FileDescriptor == -1) {
+    llvm::error_code EC = llvm::sys::fs::openFileForRead(Path, *FileDescriptor);
+
+    if (EC) {
       // If the open fails, our "stat" fails.
       R = CacheMissing;
     } else {

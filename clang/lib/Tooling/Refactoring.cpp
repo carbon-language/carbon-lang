@@ -220,8 +220,8 @@ int RefactoringTool::saveRewrittenFiles(Rewriter &Rewrite) {
     const FileEntry *Entry =
         Rewrite.getSourceMgr().getFileEntryForID(I->first);
     std::string ErrorInfo;
-    llvm::raw_fd_ostream FileStream(
-        Entry->getName(), ErrorInfo, llvm::raw_fd_ostream::F_Binary);
+    llvm::raw_fd_ostream FileStream(Entry->getName(), ErrorInfo,
+                                    llvm::sys::fs::F_Binary);
     if (!ErrorInfo.empty())
       return 1;
     I->second.write(FileStream);
