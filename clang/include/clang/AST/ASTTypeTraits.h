@@ -18,7 +18,9 @@
 
 #include "clang/AST/ASTFwd.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/TemplateBase.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/AlignOf.h"
@@ -45,7 +47,7 @@ public:
   /// \brief Returns \c true if \c this and \c Other represent the same kind.
   bool isSame(ASTNodeKind Other) const;
 
-  /// \brief Returns \c true if \c this is a base kind of (or same as) \c Other
+  /// \brief Returns \c true if \c this is a base kind of (or same as) \c Other.
   bool isBaseOf(ASTNodeKind Other) const;
 
   /// \brief String representation of the kind.
@@ -57,6 +59,8 @@ private:
   /// Includes all possible base and derived kinds.
   enum NodeKindId {
     NKI_None,
+    NKI_CXXCtorInitializer,
+    NKI_TemplateArgument,
     NKI_NestedNameSpecifier,
     NKI_NestedNameSpecifierLoc,
     NKI_QualType,
@@ -77,7 +81,7 @@ private:
   ASTNodeKind(NodeKindId KindId) : KindId(KindId) {}
 
   /// \brief Returns \c true if \c Base is a base kind of (or same as) \c
-  ///   Derived
+  ///   Derived.
   static bool isBaseOf(NodeKindId Base, NodeKindId Derived);
 
   /// \brief Helper meta-function to convert a kind T to its enum value.
@@ -103,6 +107,8 @@ private:
   template <> struct ASTNodeKind::KindToKindId<Class> {                        \
     static const NodeKindId Id = NKI_##Class;                                  \
   };
+KIND_TO_KIND_ID(CXXCtorInitializer)
+KIND_TO_KIND_ID(TemplateArgument)
 KIND_TO_KIND_ID(NestedNameSpecifier)
 KIND_TO_KIND_ID(NestedNameSpecifierLoc)
 KIND_TO_KIND_ID(QualType)
@@ -127,7 +133,7 @@ KIND_TO_KIND_ID(Type)
 /// Use \c create(Node) to create a \c DynTypedNode from an AST node,
 /// and \c get<T>() to retrieve the node as type T if the types match.
 ///
-/// See \c NodeTypeTag for which node base types are currently supported;
+/// See \c ASTNodeKind for which node base types are currently supported;
 /// You can create DynTypedNodes for all nodes in the inheritance hierarchy of
 /// the supported base types.
 class DynTypedNode {
@@ -193,118 +199,109 @@ private:
   /// \brief Takes care of converting from and to \c T.
   template <typename T, typename EnablerT = void> struct BaseConverter;
 
+  /// \brief Converter that uses dyn_cast<T> from a stored BaseT*.
+  template <typename T, typename BaseT> struct DynCastPtrConverter {
+    static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
+      if (ASTNodeKind::getFromNodeKind<BaseT>().isBaseOf(NodeKind))
+        return dyn_cast<T>(*reinterpret_cast<BaseT *const *>(Storage));
+      return NULL;
+    }
+    static DynTypedNode create(const BaseT &Node) {
+      DynTypedNode Result;
+      Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      new (Result.Storage.buffer) const BaseT * (&Node);
+      return Result;
+    }
+  };
+
+  /// \brief Converter that stores T* (by pointer).
+  template <typename T> struct PtrConverter {
+    static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
+      if (ASTNodeKind::getFromNodeKind<T>().isSame(NodeKind))
+        return *reinterpret_cast<T *const *>(Storage);
+      return NULL;
+    }
+    static DynTypedNode create(const T &Node) {
+      DynTypedNode Result;
+      Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      new (Result.Storage.buffer) const T * (&Node);
+      return Result;
+    }
+  };
+
+  /// \brief Converter that stores T (by value).
+  template <typename T> struct ValueConverter {
+    static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
+      if (ASTNodeKind::getFromNodeKind<T>().isSame(NodeKind))
+        return reinterpret_cast<const T *>(Storage);
+      return NULL;
+    }
+    static DynTypedNode create(const T &Node) {
+      DynTypedNode Result;
+      Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
+      new (Result.Storage.buffer) T(Node);
+      return Result;
+    }
+  };
+
   ASTNodeKind NodeKind;
 
   /// \brief Stores the data of the node.
   ///
-  /// Note that we can store \c Decls, \c Stmts, \c Types and
-  /// \c NestedNameSpecifiers by pointer as they are guaranteed to be unique
-  /// pointers pointing to dedicated storage in the AST. \c QualTypes on the
-  /// other hand do not have storage or unique pointers and thus need to be
-  /// stored by value.
-  llvm::AlignedCharArrayUnion<Decl *, Stmt *, Type *, NestedNameSpecifier *,
+  /// Note that we can store \c Decls, \c Stmts, \c Types,
+  /// \c NestedNameSpecifiers and \c CXXCtorInitializer by pointer as they are
+  /// guaranteed to be unique pointers pointing to dedicated storage in the AST.
+  /// \c QualTypes, \c NestedNameSpecifierLocs, \c TypeLocs and
+  /// \c TemplateArguments on the other hand do not have storage or unique
+  /// pointers and thus need to be stored by value.
+  typedef llvm::AlignedCharArrayUnion<
+      Decl *, Stmt *, Type *, NestedNameSpecifier *, CXXCtorInitializer *>
+      KindsByPointer;
+  llvm::AlignedCharArrayUnion<KindsByPointer, TemplateArgument,
                               NestedNameSpecifierLoc, QualType, TypeLoc>
       Storage;
 };
 
-// FIXME: Pull out abstraction for the following.
-template<typename T> struct DynTypedNode::BaseConverter<T,
-    typename llvm::enable_if<llvm::is_base_of<Decl, T> >::type> {
-  static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<Decl>().isBaseOf(NodeKind))
-      return dyn_cast<T>(*reinterpret_cast<Decl*const*>(Storage));
-    return NULL;
-  }
-  static DynTypedNode create(const Decl &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
-    new (Result.Storage.buffer) const Decl*(&Node);
-    return Result;
-  }
-};
-template<typename T> struct DynTypedNode::BaseConverter<T,
-    typename llvm::enable_if<llvm::is_base_of<Stmt, T> >::type> {
-  static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<Stmt>().isBaseOf(NodeKind))
-      return dyn_cast<T>(*reinterpret_cast<Stmt*const*>(Storage));
-    return NULL;
-  }
-  static DynTypedNode create(const Stmt &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
-    new (Result.Storage.buffer) const Stmt*(&Node);
-    return Result;
-  }
-};
-template<typename T> struct DynTypedNode::BaseConverter<T,
-    typename llvm::enable_if<llvm::is_base_of<Type, T> >::type> {
-  static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<Type>().isBaseOf(NodeKind))
-      return dyn_cast<T>(*reinterpret_cast<Type*const*>(Storage));
-    return NULL;
-  }
-  static DynTypedNode create(const Type &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<T>();
-    new (Result.Storage.buffer) const Type*(&Node);
-    return Result;
-  }
-};
-template<> struct DynTypedNode::BaseConverter<NestedNameSpecifier, void> {
-  static const NestedNameSpecifier *get(ASTNodeKind NodeKind,
-                                        const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<NestedNameSpecifier>().isBaseOf(NodeKind))
-      return *reinterpret_cast<NestedNameSpecifier*const*>(Storage);
-    return NULL;
-  }
-  static DynTypedNode create(const NestedNameSpecifier &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<NestedNameSpecifier>();
-    new (Result.Storage.buffer) const NestedNameSpecifier*(&Node);
-    return Result;
-  }
-};
-template<> struct DynTypedNode::BaseConverter<NestedNameSpecifierLoc, void> {
-  static const NestedNameSpecifierLoc *get(ASTNodeKind NodeKind,
-                                           const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>().isBaseOf(
-            NodeKind))
-      return reinterpret_cast<const NestedNameSpecifierLoc*>(Storage);
-    return NULL;
-  }
-  static DynTypedNode create(const NestedNameSpecifierLoc &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>();
-    new (Result.Storage.buffer) NestedNameSpecifierLoc(Node);
-    return Result;
-  }
-};
-template<> struct DynTypedNode::BaseConverter<QualType, void> {
-  static const QualType *get(ASTNodeKind NodeKind, const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<QualType>().isBaseOf(NodeKind))
-      return reinterpret_cast<const QualType*>(Storage);
-    return NULL;
-  }
-  static DynTypedNode create(const QualType &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<QualType>();
-    new (Result.Storage.buffer) QualType(Node);
-    return Result;
-  }
-};
-template<> struct DynTypedNode::BaseConverter<TypeLoc, void> {
-  static const TypeLoc *get(ASTNodeKind NodeKind, const char Storage[]) {
-    if (ASTNodeKind::getFromNodeKind<TypeLoc>().isBaseOf(NodeKind))
-      return reinterpret_cast<const TypeLoc*>(Storage);
-    return NULL;
-  }
-  static DynTypedNode create(const TypeLoc &Node) {
-    DynTypedNode Result;
-    Result.NodeKind = ASTNodeKind::getFromNodeKind<TypeLoc>();
-    new (Result.Storage.buffer) TypeLoc(Node);
-    return Result;
-  }
-};
+template <typename T>
+struct DynTypedNode::BaseConverter<
+    T, typename llvm::enable_if<llvm::is_base_of<
+           Decl, T> >::type> : public DynCastPtrConverter<T, Decl> {};
+
+template <typename T>
+struct DynTypedNode::BaseConverter<
+    T, typename llvm::enable_if<llvm::is_base_of<
+           Stmt, T> >::type> : public DynCastPtrConverter<T, Stmt> {};
+
+template <typename T>
+struct DynTypedNode::BaseConverter<
+    T, typename llvm::enable_if<llvm::is_base_of<
+           Type, T> >::type> : public DynCastPtrConverter<T, Type> {};
+
+template <>
+struct DynTypedNode::BaseConverter<
+    NestedNameSpecifier, void> : public PtrConverter<NestedNameSpecifier> {};
+
+template <>
+struct DynTypedNode::BaseConverter<
+    CXXCtorInitializer, void> : public PtrConverter<CXXCtorInitializer> {};
+
+template <>
+struct DynTypedNode::BaseConverter<
+    TemplateArgument, void> : public ValueConverter<TemplateArgument> {};
+
+template <>
+struct DynTypedNode::BaseConverter<
+    NestedNameSpecifierLoc,
+    void> : public ValueConverter<NestedNameSpecifierLoc> {};
+
+template <>
+struct DynTypedNode::BaseConverter<QualType,
+                                   void> : public ValueConverter<QualType> {};
+
+template <>
+struct DynTypedNode::BaseConverter<
+    TypeLoc, void> : public ValueConverter<TypeLoc> {};
+
 // The only operation we allow on unsupported types is \c get.
 // This allows to conveniently use \c DynTypedNode when having an arbitrary
 // AST node that is not supported, but prevents misuse - a user cannot create

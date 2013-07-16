@@ -20,6 +20,8 @@ namespace ast_type_traits {
 
 const ASTNodeKind::KindInfo ASTNodeKind::AllKindInfo[] = {
   { NKI_None, "<None>" },
+  { NKI_None, "CXXCtorInitializer" },
+  { NKI_None, "TemplateArgument" },
   { NKI_None, "NestedNameSpecifier" },
   { NKI_None, "NestedNameSpecifierLoc" },
   { NKI_None, "QualType" },
