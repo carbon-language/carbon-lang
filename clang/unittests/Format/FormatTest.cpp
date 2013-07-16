@@ -1637,10 +1637,9 @@ TEST_F(FormatTest, NestedStaticInitializers) {
                "  { kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL }\n"
                "};");
   verifyGoogleFormat("SomeType Status::global_reps[3] = {\n"
-                     "  {kGlobalRef, OK_CODE, NULL, NULL, NULL},\n"
-                     "  {kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL},\n"
-                     "  {kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL}\n"
-                     "};");
+                     "    {kGlobalRef, OK_CODE, NULL, NULL, NULL},\n"
+                     "    {kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL},\n"
+                     "    {kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL}};");
   verifyFormat(
       "CGRect cg_rect = { { rect.fLeft, rect.fTop },\n"
       "                   { rect.fRight - rect.fLeft, rect.fBottom - rect.fTop"
@@ -1659,11 +1658,11 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "                              333333333333333333333333333333 } },\n"
       "                          { { 1, 2, 3 } }, { { 1, 2, 3 } } };");
   verifyGoogleFormat(
-      "SomeArrayOfSomeType a = {{{1, 2, 3}}, {{1, 2, 3}},\n"
-      "                         {{111111111111111111111111111111,\n"
-      "                           222222222222222222222222222222,\n"
-      "                           333333333333333333333333333333}},\n"
-      "                         {{1, 2, 3}}, {{1, 2, 3}}};");
+      "SomeArrayOfSomeType a = {\n"
+      "    {{1, 2, 3}}, {{1, 2, 3}},\n"
+      "    {{111111111111111111111111111111, 222222222222222222222222222222,\n"
+      "      333333333333333333333333333333}},\n"
+      "    {{1, 2, 3}}, {{1, 2, 3}}};");
 
   // FIXME: We might at some point want to handle this similar to parameter
   // lists, where we have an option to put each on a single line.
@@ -3902,7 +3901,7 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
         "                         });");
 
     FormatStyle NoSpaces = getLLVMStyle();
-    NoSpaces.SpacesInBracedLists = false;
+    NoSpaces.Cpp11BracedListStyle = true;
     verifyFormat("vector<int> x{1, 2, 3, 4};", NoSpaces);
     verifyFormat("vector<T> x{{}, {}, {}, {}};", NoSpaces);
     verifyFormat("f({1, 2});", NoSpaces);
@@ -5307,7 +5306,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(IndentCaseLabels);
   CHECK_PARSE_BOOL(ObjCSpaceBeforeProtocolList);
   CHECK_PARSE_BOOL(PointerBindsToType);
-  CHECK_PARSE_BOOL(SpacesInBracedLists);
+  CHECK_PARSE_BOOL(Cpp11BracedListStyle);
   CHECK_PARSE_BOOL(UseTab);
   CHECK_PARSE_BOOL(IndentFunctionDeclarationAfterType);
 

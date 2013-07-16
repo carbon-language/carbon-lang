@@ -146,8 +146,20 @@ struct FormatStyle {
   /// \brief The brace breaking style to use.
   BraceBreakingStyle BreakBeforeBraces;
 
-  /// \brief If \c true, format { 1 }, otherwise {1}.
-  bool SpacesInBracedLists;
+  /// \brief If \c true, format braced lists as best suited for C++11 braced
+  /// lists.
+  ///
+  /// Important differences:
+  /// - No spaces inside the braced list.
+  /// - No line break before the closing brace.
+  /// - Indentation with the continuation indent, not with the block indent.
+  ///
+  /// Fundamentally, C++11 braced lists are formatted exactly like function
+  /// calls would be formatted in their place. If the braced list follows a name
+  /// (e.g. a type or variable name), clang-format formats as if the "{}" were
+  /// the parentheses of a function call with that name. If there is no name,
+  /// a zero-length name is assumed.
+  bool Cpp11BracedListStyle;
 
   /// \brief If \c true, indent when breaking function declarations which
   /// are not also definitions after the type.
@@ -183,7 +195,7 @@ struct FormatStyle {
            PenaltyReturnTypeOnItsOwnLine == R.PenaltyReturnTypeOnItsOwnLine &&
            PointerBindsToType == R.PointerBindsToType &&
            SpacesBeforeTrailingComments == R.SpacesBeforeTrailingComments &&
-           SpacesInBracedLists == R.SpacesInBracedLists &&
+           Cpp11BracedListStyle == R.Cpp11BracedListStyle &&
            Standard == R.Standard && UseTab == R.UseTab &&
            IndentFunctionDeclarationAfterType ==
                R.IndentFunctionDeclarationAfterType;

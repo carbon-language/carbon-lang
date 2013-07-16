@@ -110,7 +110,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("PointerBindsToType", Style.PointerBindsToType);
     IO.mapOptional("SpacesBeforeTrailingComments",
                    Style.SpacesBeforeTrailingComments);
-    IO.mapOptional("SpacesInBracedLists", Style.SpacesInBracedLists);
+    IO.mapOptional("Cpp11BracedListStyle", Style.Cpp11BracedListStyle);
     IO.mapOptional("Standard", Style.Standard);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
     IO.mapOptional("UseTab", Style.UseTab);
@@ -151,7 +151,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.PointerBindsToType = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
-  LLVMStyle.SpacesInBracedLists = true;
+  LLVMStyle.Cpp11BracedListStyle = false;
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   LLVMStyle.IndentWidth = 2;
   LLVMStyle.UseTab = false;
@@ -183,7 +183,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.PointerBindsToType = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
-  GoogleStyle.SpacesInBracedLists = false;
+  GoogleStyle.Cpp11BracedListStyle = true;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.IndentWidth = 2;
   GoogleStyle.UseTab = false;
@@ -815,7 +815,8 @@ private:
       unsigned LastSpace = State.Stack.back().LastSpace;
       bool AvoidBinPacking;
       if (Current.is(tok::l_brace)) {
-        NewIndent = Style.IndentWidth + LastSpace;
+        NewIndent =
+            LastSpace + (Style.Cpp11BracedListStyle ? 4 : Style.IndentWidth);
         const FormatToken *NextNoComment = Current.getNextNonComment();
         AvoidBinPacking = NextNoComment &&
                           NextNoComment->Type == TT_DesignatedInitializerPeriod;
@@ -1139,8 +1140,9 @@ private:
     const FormatToken &Previous = *Current.Previous;
     if (Current.MustBreakBefore || Current.Type == TT_InlineASMColon)
       return true;
-    if (Current.is(tok::r_brace) && State.Stack.back().BreakBeforeClosingBrace)
-      return true;
+    if (!Style.Cpp11BracedListStyle && Current.is(tok::r_brace) &&
+        State.Stack.back().BreakBeforeClosingBrace)
+       return true;
     if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
       return true;
     if ((Previous.isOneOf(tok::comma, tok::semi) || Current.is(tok::question) ||

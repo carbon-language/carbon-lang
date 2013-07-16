@@ -1167,7 +1167,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
     return false; // No spaces in "{}".
   if (Left.is(tok::l_brace) || Right.is(tok::r_brace))
-    return Style.SpacesInBracedLists;
+    return !Style.Cpp11BracedListStyle;
   if (Right.Type == TT_UnaryOperator)
     return !Left.isOneOf(tok::l_paren, tok::l_square, tok::at) &&
            (Left.isNot(tok::colon) || Left.Type != TT_ObjCMethodExpr);
