@@ -756,7 +756,6 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   case readonly:  flprotect = PAGE_READONLY; break;
   case readwrite: flprotect = PAGE_READWRITE; break;
   case priv:      flprotect = PAGE_WRITECOPY; break;
-  default: llvm_unreachable("invalid mapping mode");
   }
 
   FileMappingHandle = ::CreateFileMapping(FileHandle,
@@ -780,7 +779,6 @@ error_code mapped_file_region::init(int FD, bool CloseFD, uint64_t Offset) {
   case readonly:  dwDesiredAccess = FILE_MAP_READ; break;
   case readwrite: dwDesiredAccess = FILE_MAP_WRITE; break;
   case priv:      dwDesiredAccess = FILE_MAP_COPY; break;
-  default: llvm_unreachable("invalid mapping mode");
   }
   Mapping = ::MapViewOfFile(FileMappingHandle,
                             dwDesiredAccess,
