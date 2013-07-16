@@ -905,6 +905,11 @@ private:
       // Only break up default narrow strings.
       if (!Current.TokenText.startswith("\""))
         return 0;
+      // Don't break string literals with escaped newlines. As clang-format must
+      // not change the string's content, it is unlikely that we'll end up with
+      // a better format.
+      if (Current.TokenText.find("\\\n") != StringRef::npos)
+        return 0;
       // Exempts unterminated string literals from line breaking. The user will
       // likely want to terminate the string before any line breaking is done.
       if (Current.IsUnterminatedLiteral)
@@ -919,6 +924,23 @@ private:
     } else if (Current.Type == TT_LineComment &&
                (Current.Previous == NULL ||
                 Current.Previous->Type != TT_ImplicitStringLiteral)) {
+      // Don't break line comments with escaped newlines. These look like
+      // separate line comments, but in fact contain a single line comment with
+      // multiple lines including leading whitespace and the '//' markers.
+      //
+      // FIXME: If we want to handle them correctly, we'll need to adjust
+      // leading whitespace in consecutive lines when changing indentation of
+      // the first line similar to what we do with block comments.
+      StringRef::size_type EscapedNewlinePos = Current.TokenText.find("\\\n");
+      if (EscapedNewlinePos != StringRef::npos) {
+        State.Column =
+            StartColumn +
+            encoding::getCodePointCount(
+                Current.TokenText.substr(0, EscapedNewlinePos), Encoding) +
+            1;
+        return 0;
+      }
+
       Token.reset(new BreakableLineComment(Current, StartColumn,
                                            Line.InPPDirective, Encoding));
     } else {

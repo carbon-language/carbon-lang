@@ -921,6 +921,32 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
                    getLLVMStyleWithColumns(20)));
 }
 
+TEST_F(FormatTest, DontSplitLineCommentsWithEscapedNewlines) {
+  EXPECT_EQ("// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+            "// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+            "// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            format("// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+                   "// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+                   "// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  EXPECT_EQ("int a; // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+            "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+            "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            format("int a; // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+                   "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+                   "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                   getLLVMStyleWithColumns(50)));
+  // FIXME: One day we might want to implement adjustment of leading whitespace
+  // of the consecutive lines in this kind of comment:
+  EXPECT_EQ("int\n"
+            "a; // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+            "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+            "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            format("int a; // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+                   "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\\\n"
+                   "       // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                   getLLVMStyleWithColumns(49)));
+}
+
 TEST_F(FormatTest, PriorityOfCommentBreaking) {
   EXPECT_EQ("if (xxx == yyy && // aaaaaaaaaaaa\n"
             "                  // bbbbbbbbb\n"
@@ -2969,6 +2995,21 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
             "     \"bbbb\"\n"
             "     \"cccc\");",
             format("aaaa(qqq, \"bbbb\" \"cccc\");", Break));
+  EXPECT_EQ("x = \"a\\\n"
+            "b\\\n"
+            "c\";",
+            format("x = \"a\\\n"
+                   "b\\\n"
+                   "c\";",
+                   NoBreak));
+  EXPECT_EQ("x =\n"
+            "    \"a\\\n"
+            "b\\\n"
+            "c\";",
+            format("x = \"a\\\n"
+                   "b\\\n"
+                   "c\";",
+                   Break));
 }
 
 TEST_F(FormatTest, AlignsPipes) {
@@ -4990,6 +5031,16 @@ TEST_F(FormatTest, BreakStringLiterals) {
       "  \"text \" \\\n"
       "  \"other\";",
       format("#define A \"some text other\";", AlignLeft));
+}
+
+TEST_F(FormatTest, DontSplitStringLiteralsWithEscapedNewlines) {
+  EXPECT_EQ("aaaaaaaaaaa =\n"
+            "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+            "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+            "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";",
+            format("aaaaaaaaaaa = \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+                   "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
+                   "  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\";"));
 }
 
 TEST_F(FormatTest, SkipsUnknownStringLiterals) {

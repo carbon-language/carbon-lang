@@ -967,8 +967,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                Current->is(tok::string_literal) &&
                Current->Previous->isNot(tok::lessless) &&
                Current->Previous->Type != TT_InlineASMColon &&
-               Current->getNextNonComment() &&
-               Current->getNextNonComment()->is(tok::string_literal)) {
+               ((Current->getNextNonComment() &&
+                 Current->getNextNonComment()->is(tok::string_literal)) ||
+                (Current->TokenText.find("\\\n") != StringRef::npos))) {
       Current->MustBreakBefore = true;
     }
     Current->CanBreakBefore =
