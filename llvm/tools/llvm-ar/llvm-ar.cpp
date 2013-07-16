@@ -555,13 +555,23 @@ static void performWriteOperation(ArchiveOperation Operation,
     printWithSpacePadding(Out, Name, 16);
 
     if (I->isNewMember()) {
-      // FIXME: we do a stat + open. We should do a open + fstat.
       const char *FileName = I->getNew();
+
+      int OpenFlags = O_RDONLY;
+#ifdef O_BINARY
+      OpenFlags |= O_BINARY;
+#endif
+      int FD = ::open(FileName, OpenFlags);
+      if (FD == -1)
+        return failIfError(error_code(errno, posix_category()), FileName);
+
       sys::fs::file_status Status;
-      failIfError(sys::fs::status(FileName, Status), FileName);
+      failIfError(sys::fs::status(FD, Status), FileName);
 
       OwningPtr<MemoryBuffer> File;
-      failIfError(MemoryBuffer::getFile(FileName, File), FileName);
+      failIfError(
+          MemoryBuffer::getOpenFile(FD, FileName, File, Status.getSize()),
+          FileName);
 
       uint64_t secondsSinceEpoch =
           Status.getLastModificationTime().toEpochTime();
