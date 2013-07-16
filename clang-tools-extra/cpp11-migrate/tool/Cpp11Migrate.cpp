@@ -197,7 +197,7 @@ int main(int argc, const char **argv) {
       std::string ErrorInfo;
       std::string MainFileName = I->getKey();
       llvm::raw_fd_ostream FileStream(MainFileName.c_str(), ErrorInfo,
-                                      llvm::raw_fd_ostream::F_Binary);
+                                      llvm::sys::fs::F_Binary);
       FileStream << Overrides.getMainFileContent();
     }
 
@@ -214,7 +214,7 @@ int main(int argc, const char **argv) {
       std::string ErrorInfo;
       std::string HeaderFileName = HeaderI->getKey();
       llvm::raw_fd_ostream HeaderStream(HeaderFileName.c_str(), ErrorInfo,
-                                        llvm::raw_fd_ostream::F_Binary);
+                                        llvm::sys::fs::F_Binary);
       HeaderStream << HeaderI->second.FileOverride;
     }
   }
