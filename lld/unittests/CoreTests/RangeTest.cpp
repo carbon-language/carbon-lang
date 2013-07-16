@@ -188,8 +188,8 @@ TEST(Range, slice) {
   test_slice<std::forward_list<int> >();
 #endif
   test_slice<std::list<int> >();
-  // gcc doesn't like this.
-#if !(defined(__GNUC__) && !defined(__clang__)) || defined(_MSC_VER)
+  // This doesn't build with libstdc++ 4.7
+#if 0
   test_slice<std::deque<int> >();
 #endif
 }
