@@ -2116,6 +2116,66 @@
 	risbg	%r0,%r0,256,0,0
 
 #CHECK: error: invalid operand
+#CHECK: rnsbg	%r0,%r0,0,0,-1
+#CHECK: error: invalid operand
+#CHECK: rnsbg	%r0,%r0,0,0,64
+#CHECK: error: invalid operand
+#CHECK: rnsbg	%r0,%r0,0,-1,0
+#CHECK: error: invalid operand
+#CHECK: rnsbg	%r0,%r0,0,256,0
+#CHECK: error: invalid operand
+#CHECK: rnsbg	%r0,%r0,-1,0,0
+#CHECK: error: invalid operand
+#CHECK: rnsbg	%r0,%r0,256,0,0
+
+	rnsbg	%r0,%r0,0,0,-1
+	rnsbg	%r0,%r0,0,0,64
+	rnsbg	%r0,%r0,0,-1,0
+	rnsbg	%r0,%r0,0,256,0
+	rnsbg	%r0,%r0,-1,0,0
+	rnsbg	%r0,%r0,256,0,0
+
+#CHECK: error: invalid operand
+#CHECK: rosbg	%r0,%r0,0,0,-1
+#CHECK: error: invalid operand
+#CHECK: rosbg	%r0,%r0,0,0,64
+#CHECK: error: invalid operand
+#CHECK: rosbg	%r0,%r0,0,-1,0
+#CHECK: error: invalid operand
+#CHECK: rosbg	%r0,%r0,0,256,0
+#CHECK: error: invalid operand
+#CHECK: rosbg	%r0,%r0,-1,0,0
+#CHECK: error: invalid operand
+#CHECK: rosbg	%r0,%r0,256,0,0
+
+	rosbg	%r0,%r0,0,0,-1
+	rosbg	%r0,%r0,0,0,64
+	rosbg	%r0,%r0,0,-1,0
+	rosbg	%r0,%r0,0,256,0
+	rosbg	%r0,%r0,-1,0,0
+	rosbg	%r0,%r0,256,0,0
+
+#CHECK: error: invalid operand
+#CHECK: rxsbg	%r0,%r0,0,0,-1
+#CHECK: error: invalid operand
+#CHECK: rxsbg	%r0,%r0,0,0,64
+#CHECK: error: invalid operand
+#CHECK: rxsbg	%r0,%r0,0,-1,0
+#CHECK: error: invalid operand
+#CHECK: rxsbg	%r0,%r0,0,256,0
+#CHECK: error: invalid operand
+#CHECK: rxsbg	%r0,%r0,-1,0,0
+#CHECK: error: invalid operand
+#CHECK: rxsbg	%r0,%r0,256,0,0
+
+	rxsbg	%r0,%r0,0,0,-1
+	rxsbg	%r0,%r0,0,0,64
+	rxsbg	%r0,%r0,0,-1,0
+	rxsbg	%r0,%r0,0,256,0
+	rxsbg	%r0,%r0,-1,0,0
+	rxsbg	%r0,%r0,256,0,0
+
+#CHECK: error: invalid operand
 #CHECK: rll	%r0,%r0,-524289
 #CHECK: error: invalid operand
 #CHECK: rll	%r0,%r0,524288

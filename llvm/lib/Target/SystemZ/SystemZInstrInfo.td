@@ -827,6 +827,14 @@ let Defs = [CC] in {
   def RISBG : RotateSelectRIEf<"risbg",  0xEC55, GR64, GR64>;
 }
 
+// Rotate second operand left and perform a logical operation with selected
+// bits of the first operand.
+let Defs = [CC] in {
+  def RNSBG : RotateSelectRIEf<"rnsbg", 0xEC54, GR64, GR64>;
+  def ROSBG : RotateSelectRIEf<"rosbg", 0xEC56, GR64, GR64>;
+  def RXSBG : RotateSelectRIEf<"rxsbg", 0xEC57, GR64, GR64>;
+}
+
 //===----------------------------------------------------------------------===//
 // Comparison
 //===----------------------------------------------------------------------===//
