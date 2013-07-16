@@ -71,7 +71,7 @@ static void EmitBranchToAt(uint64_t At, uint64_t To, bool isCall, bool is64Bit){
 extern "C" void PPC32CompilationCallback();
 extern "C" void PPC64CompilationCallback();
 
-#if !defined(__ppc__) || defined(__ppc64__)
+#if !defined(__powerpc__) || defined(__powerpc64__)
 void PPC32CompilationCallback() {
   llvm_unreachable("This is not a 32bit PowerPC, you can't execute this!");
 }
@@ -202,7 +202,7 @@ asm(
     );
 #endif
 
-#ifndef __ppc64__
+#ifndef __powerpc64__
 void PPC64CompilationCallback() {
   llvm_unreachable("This is not a 64bit PowerPC, you can't execute this!");
 }
