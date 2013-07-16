@@ -373,27 +373,31 @@ public:
                                   const DynTypedMatcher &Matcher,
                                   BoundNodesTreeBuilder *Builder, int MaxDepth,
                                   TraversalKind Traversal, BindKind Bind) {
+    // For AST-nodes that don't have an identity, we can't memoize.
+    if (!Node.getMemoizationData())
+      return matchesRecursively(Node, Matcher, Builder, MaxDepth, Traversal,
+                                Bind);
+
     MatchKey Key;
     Key.MatcherID = Matcher.getID();
     Key.Node = Node;
     // Note that we key on the bindings *before* the match.
     Key.BoundNodes = *Builder;
 
-    // For AST-nodes that don't have an identity, we can't memoize.
-    if (!Node.getMemoizationData())
-      return matchesRecursively(Node, Matcher, Builder, MaxDepth, Traversal,
-                                Bind);
-
-    std::pair<MemoizationMap::iterator, bool> InsertResult =
-        ResultCache.insert(std::make_pair(Key, MemoizedMatchResult()));
-    if (InsertResult.second) {
-      InsertResult.first->second.Nodes = *Builder;
-      InsertResult.first->second.ResultOfMatch =
-          matchesRecursively(Node, Matcher, &InsertResult.first->second.Nodes,
-                             MaxDepth, Traversal, Bind);
+    MemoizationMap::iterator I = ResultCache.find(Key);
+    if (I != ResultCache.end()) {
+      *Builder = I->second.Nodes;
+      return I->second.ResultOfMatch;
     }
-    *Builder = InsertResult.first->second.Nodes;
-    return InsertResult.first->second.ResultOfMatch;
+
+    MemoizedMatchResult Result;
+    Result.ResultOfMatch = false;
+    Result.Nodes = *Builder;
+    Result.ResultOfMatch = matchesRecursively(Node, Matcher, &Result.Nodes,
+                                              MaxDepth, Traversal, Bind);
+    ResultCache[Key] = Result;
+    *Builder = Result.Nodes;
+    return Result.ResultOfMatch;
   }
 
   // Matches children or descendants of 'Node' with 'BaseMatcher'.
@@ -502,57 +506,62 @@ private:
     Key.MatcherID = Matcher.getID();
     Key.Node = Node;
     Key.BoundNodes = *Builder;
-    std::pair<MemoizationMap::iterator, bool> InsertResult =
-        ResultCache.insert(std::make_pair(Key, MemoizedMatchResult()));
-    if (InsertResult.second) {
-      bool Matches = false;
-      if (Parents.size() == 1) {
-        // Only one parent - do recursive memoization.
-        const ast_type_traits::DynTypedNode Parent = Parents[0];
-        BoundNodesTreeBuilder Result(*Builder);
-        if (Matcher.matches(Parent, this, &Result)) {
-          InsertResult.first->second.Nodes = Result;
-          Matches = true;
-        } else if (MatchMode != ASTMatchFinder::AMM_ParentOnly) {
-          Matches = memoizedMatchesAncestorOfRecursively(Parent, Matcher,
-                                                         Builder, MatchMode);
-          // Once we get back from the recursive call, the result will be the
-          // same as the parent's result.
-          InsertResult.first->second.Nodes = *Builder;
-        }
-      } else {
-        // Multiple parents - BFS over the rest of the nodes.
-        llvm::DenseSet<const void *> Visited;
-        std::deque<ast_type_traits::DynTypedNode> Queue(Parents.begin(),
-                                                        Parents.end());
-        while (!Queue.empty()) {
-          BoundNodesTreeBuilder Result(*Builder);
-          if (Matcher.matches(Queue.front(), this, &Result)) {
-            InsertResult.first->second.Nodes = Result;
-            Matches = true;
-            break;
-          }
-          if (MatchMode != ASTMatchFinder::AMM_ParentOnly) {
-            ASTContext::ParentVector Ancestors =
-                ActiveASTContext->getParents(Queue.front());
-            for (ASTContext::ParentVector::const_iterator I = Ancestors.begin(),
-                                                          E = Ancestors.end();
-                 I != E; ++I) {
-              // Make sure we do not visit the same node twice.
-              // Otherwise, we'll visit the common ancestors as often as there
-              // are splits on the way down.
-              if (Visited.insert(I->getMemoizationData()).second)
-                Queue.push_back(*I);
-            }
-          }
-          Queue.pop_front();
-        }
-      }
 
-      InsertResult.first->second.ResultOfMatch = Matches;
+    // Note that we cannot use insert and reuse the iterator, as recursive
+    // calls to match might invalidate the result cache iterators.
+    MemoizationMap::iterator I = ResultCache.find(Key);
+    if (I != ResultCache.end()) {
+      *Builder = I->second.Nodes;
+      return I->second.ResultOfMatch;
     }
-    *Builder = InsertResult.first->second.Nodes;
-    return InsertResult.first->second.ResultOfMatch;
+    MemoizedMatchResult Result;
+    Result.ResultOfMatch = false;
+    Result.Nodes = *Builder;
+    if (Parents.size() == 1) {
+      // Only one parent - do recursive memoization.
+      const ast_type_traits::DynTypedNode Parent = Parents[0];
+      if (Matcher.matches(Parent, this, &Result.Nodes)) {
+        Result.ResultOfMatch = true;
+      } else if (MatchMode != ASTMatchFinder::AMM_ParentOnly) {
+        // Reset the results to not include the bound nodes from the failed
+        // match above.
+        Result.Nodes = *Builder;
+        Result.ResultOfMatch = memoizedMatchesAncestorOfRecursively(
+            Parent, Matcher, &Result.Nodes, MatchMode);
+        // Once we get back from the recursive call, the result will be the
+        // same as the parent's result.
+      }
+    } else {
+      // Multiple parents - BFS over the rest of the nodes.
+      llvm::DenseSet<const void *> Visited;
+      std::deque<ast_type_traits::DynTypedNode> Queue(Parents.begin(),
+                                                      Parents.end());
+      while (!Queue.empty()) {
+        Result.Nodes = *Builder;
+        if (Matcher.matches(Queue.front(), this, &Result.Nodes)) {
+          Result.ResultOfMatch = true;
+          break;
+        }
+        if (MatchMode != ASTMatchFinder::AMM_ParentOnly) {
+          ASTContext::ParentVector Ancestors =
+              ActiveASTContext->getParents(Queue.front());
+          for (ASTContext::ParentVector::const_iterator I = Ancestors.begin(),
+                                                        E = Ancestors.end();
+               I != E; ++I) {
+            // Make sure we do not visit the same node twice.
+            // Otherwise, we'll visit the common ancestors as often as there
+            // are splits on the way down.
+            if (Visited.insert(I->getMemoizationData()).second)
+              Queue.push_back(*I);
+          }
+        }
+        Queue.pop_front();
+      }
+    }
+    ResultCache[Key] = Result;
+
+    *Builder = Result.Nodes;
+    return Result.ResultOfMatch;
   }
 
   // Implements a BoundNodesTree::Visitor that calls a MatchCallback with
