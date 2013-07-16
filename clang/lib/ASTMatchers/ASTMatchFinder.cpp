@@ -391,7 +391,6 @@ public:
     }
 
     MemoizedMatchResult Result;
-    Result.ResultOfMatch = false;
     Result.Nodes = *Builder;
     Result.ResultOfMatch = matchesRecursively(Node, Matcher, &Result.Nodes,
                                               MaxDepth, Traversal, Bind);
