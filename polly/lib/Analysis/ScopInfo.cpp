@@ -486,6 +486,8 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
                                       E = AccFuncs->end();
        I != E; ++I) {
     MemAccs.push_back(new MemoryAccess(I->first, I->second, this));
+    assert(!InstructionToAccess.count(I->second)
+           && "Unexpected 1-to-N mapping on instruction to access map!");
     InstructionToAccess[I->second] = MemAccs.back();
   }
 }
