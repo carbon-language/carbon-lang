@@ -253,9 +253,10 @@ namespace sys {
 
     /// Converts the TimeValue into the corresponding number of "ticks" for
     /// Win32 platforms, correcting for the difference in Win32 zero time.
-    /// @brief Convert to windows time (seconds since 12:00:00a Jan 1, 1601)
+    /// @brief Convert to Win32's FILETIME
+    /// (100ns intervals since 00:00:00 Jan 1, 1601 UTC)
     uint64_t toWin32Time() const {
-      uint64_t result = seconds_ - Win32ZeroTimeSeconds;
+      uint64_t result = (uint64_t)10000000 * (seconds_ - Win32ZeroTimeSeconds);
       result += nanos_ / NANOSECONDS_PER_WIN32_TICK;
       return result;
     }

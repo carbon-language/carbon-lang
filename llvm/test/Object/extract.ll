@@ -3,9 +3,6 @@
 ; This test just makes sure that llvm-ar can extract bytecode members
 ; from various style archives.
 
-; FIXME: Investigate Win32's TimeValue stuff!
-; XFAIL: mingw32
-
 ; REQUIRES: shell
 
 ; RUN: cd %T
