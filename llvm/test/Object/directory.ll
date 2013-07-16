@@ -2,9 +2,9 @@
 ;RUN: not llvm-ar r %T/test.a . 2>&1 | FileCheck %s
 ;CHECK: .: Is a directory
 
-; opening a directory works on freebsd. On windows we just get a
-; "permission denied"
-;XFAIL: freebsd, win32, mingw32
+; Opening a directory works on cygwin and freebsd.
+; On windows we just get a "Permission denied."
+;XFAIL: freebsd, win32, mingw32, cygwin
 
 ;RUN: rm -f %T/test.a
 ;RUN: touch %T/a-very-long-file-name
