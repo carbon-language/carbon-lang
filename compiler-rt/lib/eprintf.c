@@ -22,7 +22,9 @@
  * It should never be exported from a dylib, so it is marked
  * visibility hidden.
  */
+#ifndef _WIN32
 __attribute__((visibility("hidden")))
+#endif
 void __eprintf(const char* format, const char* assertion_expression,
 				const char* line, const char* file)
 {

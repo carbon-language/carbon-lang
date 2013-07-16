@@ -24,7 +24,9 @@
 #ifdef KERNEL_USE
 
 extern void panic(const char *, ...) __attribute__((noreturn));
+#ifndef _WIN32
 __attribute__((visibility("hidden")))
+#endif
 void compilerrt_abort_impl(const char *file, int line, const char *function) {
   panic("%s:%d: abort in %s", file, line, function);
 }
@@ -35,8 +37,10 @@ void compilerrt_abort_impl(const char *file, int line, const char *function) {
 extern void __assert_rtn(const char *func, const char *file, 
                      int line, const char * message) __attribute__((noreturn));
 
+#ifndef _WIN32
 __attribute__((weak))
 __attribute__((visibility("hidden")))
+#endif
 void compilerrt_abort_impl(const char *file, int line, const char *function) {
   __assert_rtn(function, file, line, "libcompiler_rt abort");
 }
@@ -47,8 +51,10 @@ void compilerrt_abort_impl(const char *file, int line, const char *function) {
 /* Get the system definition of abort() */
 #include <stdlib.h>
 
+#ifndef _WIN32
 __attribute__((weak))
 __attribute__((visibility("hidden")))
+#endif
 void compilerrt_abort_impl(const char *file, int line, const char *function) {
   abort();
 }
