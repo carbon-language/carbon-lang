@@ -1956,6 +1956,23 @@ APFloat::convert(const fltSemantics &toSemantics,
     X86SpecialNan = true;
   }
 
+  // If this is a truncation of a denormal number, and the target semantics
+  // has larger exponent range than the source semantics (this can happen
+  // when truncating from PowerPC double-double to double format), the
+  // right shift could lose result mantissa bits.  Adjust exponent instead
+  // of performing excessive shift.
+  if (shift < 0 && isFiniteNonZero()) {
+    int exponentChange = significandMSB() + 1 - fromSemantics.precision;
+    if (exponent + exponentChange < toSemantics.minExponent)
+      exponentChange = toSemantics.minExponent - exponent;
+    if (exponentChange < shift)
+      exponentChange = shift;
+    if (exponentChange < 0) {
+      shift -= exponentChange;
+      exponent += exponentChange;
+    }
+  }
+
   // If this is a truncation, perform the shift before we narrow the storage.
   if (shift < 0 && (isFiniteNonZero() || category==fcNaN))
     lostFraction = shiftRight(significandParts(), oldPartCount, -shift);
