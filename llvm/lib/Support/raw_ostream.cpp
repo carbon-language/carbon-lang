@@ -461,7 +461,7 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
   if (Flags & F_Excl)
     OpenFlags |= O_EXCL;
 
-  while ((FD = open(Filename, OpenFlags, 0664)) < 0) {
+  while ((FD = open(Filename, OpenFlags, 0666)) < 0) {
     if (errno != EINTR) {
       ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
       ShouldClose = false;
