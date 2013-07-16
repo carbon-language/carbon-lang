@@ -8,6 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/SwapByteOrder.h"
+#include <string>
+#include <vector>
 
 namespace llvm {
 
@@ -69,6 +72,58 @@ bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr) {
     return false;
 
   ResultPtr = reinterpret_cast<char*>(TargetStart);
+  return true;
+}
+
+bool hasUTF16ByteOrderMark(ArrayRef<char> S) {
+  return (S.size() >= 2 &&
+          ((S[0] == '\xff' && S[1] == '\xfe') ||
+           (S[0] == '\xfe' && S[1] == '\xff')));
+}
+
+bool convertUTF16ToUTF8String(ArrayRef<char> SrcBytes, std::string &Out) {
+  assert(Out.empty());
+
+  // Error out on an uneven byte count.
+  if (SrcBytes.size() % 2)
+    return false;
+
+  // Avoid OOB by returning early on empty input.
+  if (SrcBytes.empty())
+    return true;
+
+  const UTF16 *Src = reinterpret_cast<const UTF16 *>(SrcBytes.begin());
+  const UTF16 *SrcEnd = reinterpret_cast<const UTF16 *>(SrcBytes.end());
+
+  // Byteswap if necessary.
+  std::vector<UTF16> ByteSwapped;
+  if (Src[0] == UNI_UTF16_BYTE_ORDER_MARK_SWAPPED) {
+    ByteSwapped.insert(ByteSwapped.end(), Src, SrcEnd);
+    for (unsigned I = 0, E = ByteSwapped.size(); I != E; ++I)
+      ByteSwapped[I] = llvm::sys::SwapByteOrder_16(ByteSwapped[I]);
+    Src = &ByteSwapped[0];
+    SrcEnd = &ByteSwapped[ByteSwapped.size() - 1] + 1;
+  }
+
+  // Skip the BOM for conversion.
+  if (Src[0] == UNI_UTF16_BYTE_ORDER_MARK_NATIVE)
+    Src++;
+
+  // Just allocate enough space up front.  We'll shrink it later.
+  Out.resize(SrcBytes.size() * UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
+  UTF8 *Dst = reinterpret_cast<UTF8 *>(&Out[0]);
+  UTF8 *DstEnd = Dst + Out.size();
+
+  ConversionResult CR =
+      ConvertUTF16toUTF8(&Src, SrcEnd, &Dst, DstEnd, strictConversion);
+  assert(CR != targetExhausted);
+
+  if (CR != conversionOK) {
+    Out.clear();
+    return false;
+  }
+
+  Out.resize(reinterpret_cast<char *>(Dst) - &Out[0]);
   return true;
 }
 
