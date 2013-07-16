@@ -5004,6 +5004,11 @@ TEST_F(FormatTest, SkipsUnknownStringLiterals) {
             format("L\"unsupported literal\";", getGoogleStyleWithColumns(15)));
   EXPECT_EQ("R\"x(raw literal)x\";",
             format("R\"x(raw literal)x\";", getGoogleStyleWithColumns(15)));
+  verifyFormat("string a = \"unterminated;");
+  EXPECT_EQ("function(\"unterminated,\n"
+            "         OtherParameter);",
+            format("function(  \"unterminated,\n"
+                   "    OtherParameter);"));
 }
 
 TEST_F(FormatTest, DoesNotTryToParseUDLiteralsInPreCpp11Code) {

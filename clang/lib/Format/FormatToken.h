@@ -77,11 +77,12 @@ struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), LastNewlineOffset(0),
         CodePointCount(0), IsFirst(false), MustBreakBefore(false),
-        BlockKind(BK_Unknown), Type(TT_Unknown), SpacesRequiredBefore(0),
-        CanBreakBefore(false), ClosesTemplateDeclaration(false),
-        ParameterCount(0), PackingKind(PPK_Inconclusive), TotalLength(0),
-        UnbreakableTailLength(0), BindingStrength(0), SplitPenalty(0),
-        LongestObjCSelectorName(0), FakeRParens(0), LastInChainOfCalls(false),
+        IsUnterminatedLiteral(false), BlockKind(BK_Unknown), Type(TT_Unknown),
+        SpacesRequiredBefore(0), CanBreakBefore(false),
+        ClosesTemplateDeclaration(false), ParameterCount(0),
+        PackingKind(PPK_Inconclusive), TotalLength(0), UnbreakableTailLength(0),
+        BindingStrength(0), SplitPenalty(0), LongestObjCSelectorName(0),
+        FakeRParens(0), LastInChainOfCalls(false),
         PartOfMultiVariableDeclStmt(false), MatchingParen(NULL), Previous(NULL),
         Next(NULL) {}
 
@@ -132,6 +133,9 @@ struct FormatToken {
   /// Contains the raw token text without leading whitespace and without leading
   /// escaped newlines.
   StringRef TokenText;
+
+  /// \brief Set to \c true if this token is an unterminated literal.
+  bool IsUnterminatedLiteral;
 
   /// \brief Contains the kind of block if this token is a brace.
   BraceBlockKind BlockKind;

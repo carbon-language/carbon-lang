@@ -948,12 +948,13 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       Current->SpacesRequiredBefore =
           spaceRequiredBefore(Line, *Current) ? 1 : 0;
 
-    if (Current->MustBreakBefore) {
-    } else if (Current->is(tok::comment)) {
+    if (Current->is(tok::comment)) {
       Current->MustBreakBefore = Current->NewlinesBefore > 0;
     } else if (Current->Previous->isTrailingComment() ||
                (Current->is(tok::string_literal) &&
                 Current->Previous->is(tok::string_literal))) {
+      Current->MustBreakBefore = true;
+    } else if (Current->Previous->IsUnterminatedLiteral) {
       Current->MustBreakBefore = true;
     } else if (Current->is(tok::lessless) && Current->Next &&
                Current->Previous->is(tok::string_literal) &&
@@ -969,8 +970,6 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
                Current->getNextNonComment() &&
                Current->getNextNonComment()->is(tok::string_literal)) {
       Current->MustBreakBefore = true;
-    } else {
-      Current->MustBreakBefore = false;
     }
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
