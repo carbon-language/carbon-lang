@@ -78,4 +78,18 @@ int main()
         assert( (p1 >  p2));
         assert( (p1 >= p2));
     }
+
+#if _LIBCPP_STD_VER > 11
+    {
+        typedef std::pair<int, short> P;
+        constexpr P p1(3, 4);
+        constexpr P p2(3, 2);
+        static_assert(!(p1 == p2), "");
+        static_assert( (p1 != p2), "");
+        static_assert(!(p1 <  p2), "");
+        static_assert(!(p1 <= p2), "");
+        static_assert( (p1 >  p2), "");
+        static_assert( (p1 >= p2), "");
+    }
+#endif
 }

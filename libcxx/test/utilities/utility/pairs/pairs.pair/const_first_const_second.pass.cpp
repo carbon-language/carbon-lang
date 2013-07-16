@@ -22,8 +22,19 @@ class A
 public:
     A(int data) : data_(data) {}
 
-    bool operator==(const A& a) {return data_ == a.data_;}
+    bool operator==(const A& a) const {return data_ == a.data_;}
 };
+
+#if _LIBCPP_STD_VER > 11
+class AC
+{
+    int data_;
+public:
+    constexpr AC(int data) : data_(data) {}
+
+    constexpr bool operator==(const AC& a) const {return data_ == a.data_;}
+};
+#endif
 
 int main()
 {
@@ -39,4 +50,19 @@ int main()
         assert(p.first == A(1));
         assert(p.second == 2);
     }
+
+#if _LIBCPP_STD_VER > 11
+    {
+        typedef std::pair<float, short*> P;
+        constexpr P p(3.5f, 0);
+        static_assert(p.first == 3.5f, "");
+        static_assert(p.second == nullptr, "");
+    }
+    {
+        typedef std::pair<AC, int> P;
+        constexpr P p(1, 2);
+        static_assert(p.first == AC(1), "");
+        static_assert(p.second == 2, "");
+    }
+#endif
 }
