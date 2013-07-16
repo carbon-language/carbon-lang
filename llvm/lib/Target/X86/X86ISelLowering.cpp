@@ -9351,8 +9351,8 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   // GT and EQ comparisons for integer, swapping operands and multiple
   // operations may be required for some comparisons.
   unsigned Opc;
-  bool Swap = false, Invert = false, FlipSigns = false;
-
+  bool Swap = false, Invert = false, FlipSigns = false, MinMax = false;
+  
   switch (SetCCOpcode) {
   default: llvm_unreachable("Unexpected SETCC condition");
   case ISD::SETNE:  Invert = true;
@@ -9366,6 +9366,23 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   case ISD::SETUGE: Swap = true;
   case ISD::SETULE: Opc = X86ISD::PCMPGT; FlipSigns = true; Invert = true; break;
   }
+  
+  // Special case: Use min/max operations for SETULE/SETUGE
+  MVT VET = VT.getVectorElementType();
+  bool hasMinMax =
+       (Subtarget->hasSSE41() && (VET >= MVT::i8 && VET <= MVT::i32))
+    || (Subtarget->hasSSE2()  && (VET == MVT::i8));
+  
+  if (hasMinMax) {
+    switch (SetCCOpcode) {
+    default: break;
+    case ISD::SETULE: Opc = X86ISD::UMIN; MinMax = true; break;
+    case ISD::SETUGE: Opc = X86ISD::UMAX; MinMax = true; break;
+    }
+    
+    if (MinMax) { Swap = false; Invert = false; FlipSigns = false; }
+  }
+  
   if (Swap)
     std::swap(Op0, Op1);
 
@@ -9452,6 +9469,9 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   // If the logical-not of the result is required, perform that now.
   if (Invert)
     Result = DAG.getNOT(dl, Result, VT);
+  
+  if (MinMax)
+    Result = DAG.getNode(X86ISD::PCMPEQ, dl, VT, Op0, Result);
 
   return Result;
 }
