@@ -1592,8 +1592,8 @@ static const Stmt *getTerminatorCondition(const CFGBlock *B) {
   return S;
 }
 
-static const char *const StrEnteringLoop = "Entering loop body";
-static const char *const StrLoopBodyZero = "Loop body executed 0 times";
+static const char StrEnteringLoop[] = "Entering loop body";
+static const char StrLoopBodyZero[] = "Loop body executed 0 times";
 
 static bool
 GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
@@ -1794,8 +1794,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
               if (!IsInLoopBody) {
                 str = StrLoopBodyZero;
               }
-            }
-            else {
+            } else {
               str = StrEnteringLoop;
             }
 
@@ -1808,9 +1807,8 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
                             PE->getLocation(), PDB.LC);
               PD.getActivePath().push_front(PE);
             }
-          }
-          else if (isa<BreakStmt>(Term) || isa<ContinueStmt>(Term) ||
-                   isa<GotoStmt>(Term)) {
+          } else if (isa<BreakStmt>(Term) || isa<ContinueStmt>(Term) ||
+                     isa<GotoStmt>(Term)) {
             PathDiagnosticLocation L(Term, SM, PDB.LC);
             addEdgeToPath(PD.getActivePath(), PrevLoc, L, PDB.LC);
           }
