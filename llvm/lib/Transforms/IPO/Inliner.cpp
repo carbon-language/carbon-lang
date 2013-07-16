@@ -116,7 +116,8 @@ static void AdjustCallerSSPLevel(Function *Caller, Function *Callee) {
 /// any new allocas to the set if not possible.
 static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
                                  InlinedArrayAllocasTy &InlinedArrayAllocas,
-                                 int InlineHistory, bool InsertLifetime) {
+                                 int InlineHistory, bool InsertLifetime,
+                                 const DataLayout *TD) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
@@ -189,6 +190,14 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
     bool MergedAwayAlloca = false;
     for (unsigned i = 0, e = AllocasForType.size(); i != e; ++i) {
       AllocaInst *AvailableAlloca = AllocasForType[i];
+
+      unsigned Align1 = AI->getAlignment(),
+               Align2 = AvailableAlloca->getAlignment();
+      // If we don't have data layout information, and only one alloca is using
+      // the target default, then we can't safely merge them because we can't
+      // pick the greater alignment.
+      if (!TD && (!Align1 || !Align2) && Align1 != Align2)
+        continue;
       
       // The available alloca has to be in the right function, not in some other
       // function in this SCC.
@@ -206,6 +215,11 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
                    << *AvailableAlloca << '\n');
       
       AI->replaceAllUsesWith(AvailableAlloca);
+
+      if (Align1 > Align2 || (!Align1 && TD &&
+          TD->getABITypeAlignment(AI->getAllocatedType()) > Align2))
+        AvailableAlloca->setAlignment(Align1);
+
       AI->eraseFromParent();
       MergedAwayAlloca = true;
       ++NumMergedAllocas;
@@ -482,7 +496,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
         // Attempt to inline the function.
         if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas,
-                                  InlineHistoryID, InsertLifetime))
+                                  InlineHistoryID, InsertLifetime, TD))
           continue;
         ++NumInlined;
         
