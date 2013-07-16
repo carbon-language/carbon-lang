@@ -92,6 +92,28 @@ struct SystemZAddressingMode {
   }
 };
 
+// Return a mask with Count low bits set.
+static uint64_t allOnes(unsigned int Count) {
+  return Count == 0 ? 0 : (uint64_t(1) << (Count - 1) << 1) - 1;
+}
+
+// Represents operands 2 to 5 of a ROTATE AND ... SELECTED BITS operation.
+// The operands are: Input (R2), Start (I3), End (I4) and Rotate (I5).
+// The operand value is effectively (and (rotl Input Rotate) Mask) and
+// has BitSize bits.
+struct RISBGOperands {
+  RISBGOperands(SDValue N)
+    : BitSize(N.getValueType().getSizeInBits()), Mask(allOnes(BitSize)),
+      Input(N), Start(64 - BitSize), End(63), Rotate(0) {}
+
+  unsigned BitSize;
+  uint64_t Mask;
+  SDValue Input;
+  unsigned Start;
+  unsigned End;
+  unsigned Rotate;
+};
+
 class SystemZDAGToDAGISel : public SelectionDAGISel {
   const SystemZTargetLowering &Lowering;
   const SystemZSubtarget &Subtarget;
@@ -200,15 +222,19 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
                          Addr, Base, Disp, Index);
   }
 
+  // Try to fold some of Ops.Input into other fields of Ops.  Return true
+  // on success.
+  bool expandRISBG(RISBGOperands &Ops);
+
   // Return an undefined i64 value.
   SDValue getUNDEF64(SDLoc DL);
 
   // Convert N to VT, if it isn't already.
   SDValue convertTo(SDLoc DL, EVT VT, SDValue N);
 
-  // Try to use RISBG to implement ISD::AND node N.  Return the selected
-  // node on success, otherwise return null.
-  SDNode *tryRISBGForAND(SDNode *N);
+  // Try to implement AND or shift node N using RISBG with the zero flag set.
+  // Return the selected node on success, otherwise return null.
+  SDNode *tryRISBGZero(SDNode *N);
 
   // If Op0 is null, then Node is a constant that can be loaded using:
   //
@@ -546,19 +572,15 @@ static bool isStringOfOnes(uint64_t Mask, unsigned &LSB, unsigned &Length) {
   return false;
 }
 
-// Return a mask with Count low bits set.
-static uint64_t allOnes(unsigned int Count) {
-  return Count == 0 ? 0 : (uint64_t(1) << (Count - 1) << 1) - 1;
-}
+// Try to update RISBG so that only the bits of Ops.Input in Mask are used.
+// Return true on success.
+static bool refineRISBGMask(RISBGOperands &RISBG, uint64_t Mask) {
+  if (RISBG.Rotate != 0)
+    Mask = (Mask << RISBG.Rotate) | (Mask >> (64 - RISBG.Rotate));
+  Mask &= RISBG.Mask;
 
-// Return true if RISBG can be used to extract the bits in Mask from
-// a value that has BitSize bits.  Store the start and end operands
-// (I3 and I4) in Start and End if so.
-static bool isRISBGMask(uint64_t Mask, unsigned BitSize, unsigned &Start,
-                        unsigned &End) {
-  // Reject trivial all-zero and all-one masks.
-  uint64_t Used = allOnes(BitSize);
-  if (Mask == 0 || Mask == Used)
+  // Reject trivial all-zero masks.
+  if (Mask == 0)
     return false;
 
   // Handle the 1+0+ or 0+1+0* cases.  Start then specifies the index of
@@ -566,23 +588,125 @@ static bool isRISBGMask(uint64_t Mask, unsigned BitSize, unsigned &Start,
   unsigned LSB, Length;
   if (isStringOfOnes(Mask, LSB, Length))
     {
-      Start = 63 - (LSB + Length - 1);
-      End = 63 - LSB;
+      RISBG.Mask = Mask;
+      RISBG.Start = 63 - (LSB + Length - 1);
+      RISBG.End = 63 - LSB;
       return true;
     }
 
   // Handle the wrap-around 1+0+1+ cases.  Start then specifies the msb
   // of the low 1s and End specifies the lsb of the high 1s.
-  if (isStringOfOnes(Mask ^ Used, LSB, Length))
+  if (isStringOfOnes(Mask ^ allOnes(RISBG.BitSize), LSB, Length))
     {
       assert(LSB > 0 && "Bottom bit must be set");
-      assert(LSB + Length < BitSize && "Top bit must be set");
-      Start = 63 - (LSB - 1);
-      End = 63 - (LSB + Length);
+      assert(LSB + Length < RISBG.BitSize && "Top bit must be set");
+      RISBG.Mask = Mask;
+      RISBG.Start = 63 - (LSB - 1);
+      RISBG.End = 63 - (LSB + Length);
       return true;
     }
 
   return false;
+}
+
+bool SystemZDAGToDAGISel::expandRISBG(RISBGOperands &RISBG) {
+  SDValue N = RISBG.Input;
+  switch (N.getOpcode()) {
+  case ISD::AND: {
+    ConstantSDNode *MaskNode =
+      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    if (!MaskNode)
+      return false;
+
+    SDValue Input = N.getOperand(0);
+    uint64_t Mask = MaskNode->getZExtValue();
+    if (!refineRISBGMask(RISBG, Mask)) {
+      // If some bits of Input are already known zeros, those bits will have
+      // been removed from the mask.  See if adding them back in makes the
+      // mask suitable.
+      APInt KnownZero, KnownOne;
+      CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
+      Mask |= KnownZero.getZExtValue();
+      if (!refineRISBGMask(RISBG, Mask))
+        return false;
+    }
+    RISBG.Input = Input;
+    return true;
+  }
+
+  case ISD::ROTL: {
+    // Any 64-bit rotate left can be merged into the RISBG.
+    if (RISBG.BitSize != 64)
+      return false;
+    ConstantSDNode *CountNode
+      = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    if (!CountNode)
+      return false;
+
+    RISBG.Rotate = (RISBG.Rotate + CountNode->getZExtValue()) & 63;
+    RISBG.Input = N.getOperand(0);
+    return true;
+  }
+      
+  case ISD::SHL: {
+    // Treat (shl X, count) as (and (rotl X, count), ~0<<count).
+    ConstantSDNode *CountNode =
+      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    if (!CountNode)
+      return false;
+
+    uint64_t Count = CountNode->getZExtValue();
+    if (Count < 1 ||
+        Count >= RISBG.BitSize ||
+        !refineRISBGMask(RISBG, allOnes(RISBG.BitSize - Count) << Count))
+      return false;
+
+    RISBG.Rotate = (RISBG.Rotate + Count) & 63;
+    RISBG.Input = N.getOperand(0);
+    return true;
+  }
+
+  case ISD::SRL: {
+    // Treat (srl X, count), mask) as (and (rotl X, size-count), ~0>>count),
+    // which is similar to SLL above.
+    ConstantSDNode *CountNode =
+      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    if (!CountNode)
+      return false;
+
+    uint64_t Count = CountNode->getZExtValue();
+    if (Count < 1 ||
+        Count >= RISBG.BitSize ||
+        !refineRISBGMask(RISBG, allOnes(RISBG.BitSize - Count)))
+      return false;
+
+    RISBG.Rotate = (RISBG.Rotate - Count) & 63;
+    RISBG.Input = N.getOperand(0);
+    return true;
+  }
+
+  case ISD::SRA: {
+    // Treat (sra X, count) as (rotl X, size-count) as long as the top
+    // count bits from Ops.Input are ignored.
+    ConstantSDNode *CountNode =
+      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    if (!CountNode)
+      return false;
+
+    uint64_t Count = CountNode->getZExtValue();
+    if (RISBG.Rotate != 0 ||
+        Count < 1 ||
+        Count >= RISBG.BitSize ||
+        RISBG.Start < 64 - (RISBG.BitSize - Count))
+      return false;
+
+    RISBG.Rotate = -Count & 63;
+    RISBG.Input = N.getOperand(0);
+    return true;
+  }
+  default:
+    return false;
+  }
 }
 
 SDValue SystemZDAGToDAGISel::getUNDEF64(SDLoc DL) {
@@ -607,87 +731,31 @@ SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) {
   return N;
 }
 
-SDNode *SystemZDAGToDAGISel::tryRISBGForAND(SDNode *N) {
+SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
+  RISBGOperands RISBG(SDValue(N, 0));
+  unsigned Count = 0;
+  while (expandRISBG(RISBG))
+    Count += 1;
+  // Prefer to use normal shift instructions over RISBG, since they can handle
+  // all cases and are sometimes shorter.  Prefer to use RISBG for ANDs though,
+  // since it is effectively a three-operand instruction in this case,
+  // and since it can handle some masks that AND IMMEDIATE can't.
+  if (Count < (N->getOpcode() == ISD::AND ? 1 : 2))
+    return 0;
+
+  // Prefer register extensions like LLC over RISBG.
+  if (RISBG.Rotate == 0 &&
+      (RISBG.Start == 32 || RISBG.Start == 48 || RISBG.Start == 56) &&
+      RISBG.End == 63)
+    return 0;
+
   EVT VT = N->getValueType(0);
-  unsigned BitSize = VT.getSizeInBits();
-  unsigned Start, End;
-  ConstantSDNode *MaskNode =
-    dyn_cast<ConstantSDNode>(N->getOperand(1).getNode());
-  if (!MaskNode)
-    return 0;
-
-  SDValue Input = N->getOperand(0);
-  uint64_t Mask = MaskNode->getZExtValue();
-  if (!isRISBGMask(Mask, BitSize, Start, End)) {
-    APInt KnownZero, KnownOne;
-    CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
-    Mask |= KnownZero.getZExtValue();
-    if (!isRISBGMask(Mask, BitSize, Start, End))
-      return 0;
-  }
-
-  unsigned Rotate = 0;
-  if (Input->getOpcode() == ISD::ROTL && BitSize == 64) {
-    // Any 64-bit rotate left can be merged into the RISBG.
-    if (ConstantSDNode *CountNode =
-        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
-      Rotate = CountNode->getZExtValue() & (BitSize - 1);
-      Input = Input->getOperand(0);
-    }
-  } else if (Input->getOpcode() == ISD::SHL) {
-    // Try to convert (and (shl X, count), mask) into
-    // (and (rotl X, count), mask&(~0<<count)), where the new mask
-    // removes bits from the original mask that are zeroed by the shl
-    // but that are not necessarily zero in X.
-    if (ConstantSDNode *CountNode =
-        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
-      uint64_t Count = CountNode->getZExtValue();
-      if (Count > 0 &&
-          Count < BitSize &&
-          isRISBGMask(Mask & (allOnes(BitSize - Count) << Count),
-                      BitSize, Start, End)) {
-        Rotate = Count;
-        Input = Input->getOperand(0);
-      }
-    }
-  } else if (Input->getOpcode() == ISD::SRL) {
-    // Try to convert (and (srl X, count), mask) into
-    // (and (rotl X, size-count), mask&(~0>>count)), which is similar
-    // to SLL above.
-    if (ConstantSDNode *CountNode =
-        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
-      uint64_t Count = CountNode->getZExtValue();
-      if (Count > 0 &&
-          Count < BitSize &&
-          isRISBGMask(Mask & allOnes(BitSize - Count), BitSize, Start, End)) {
-        Rotate = 64 - Count;
-        Input = Input->getOperand(0);
-      }
-    }
-  } else if (Start <= End && Input->getOpcode() == ISD::SRA) {
-    // Try to convert (and (sra X, count), mask) into
-    // (and (rotl X, size-count), mask).  The mask must not include
-    // any sign bits.
-    if (ConstantSDNode *CountNode =
-        dyn_cast<ConstantSDNode>(Input.getOperand(1).getNode())) {
-      uint64_t Count = CountNode->getZExtValue();
-      if (Count > 0 && Count < BitSize && Start >= 64 - (BitSize - Count)) {
-        Rotate = 64 - Count;
-        Input = Input->getOperand(0);
-      }
-    }
-  }
-
-  // Prefer register extensions like LLC over RSIBG.
-  if (Rotate == 0 && (Start == 32 || Start == 48 || Start == 56) && End == 63)
-    return 0;
-
   SDValue Ops[5] = {
     getUNDEF64(SDLoc(N)),
-    convertTo(SDLoc(N), MVT::i64, Input),
-    CurDAG->getTargetConstant(Start, MVT::i32),
-    CurDAG->getTargetConstant(End | 128, MVT::i32),
-    CurDAG->getTargetConstant(Rotate, MVT::i32)
+    convertTo(SDLoc(N), MVT::i64, RISBG.Input),
+    CurDAG->getTargetConstant(RISBG.Start, MVT::i32),
+    CurDAG->getTargetConstant(RISBG.End | 128, MVT::i32),
+    CurDAG->getTargetConstant(RISBG.Rotate, MVT::i32)
   };
   N = CurDAG->getMachineNode(SystemZ::RISBG, SDLoc(N), MVT::i64, Ops);
   return convertTo(SDLoc(N), VT, SDValue(N, 0)).getNode();
@@ -778,7 +846,10 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     break;
 
   case ISD::AND:
-    ResNode = tryRISBGForAND(Node);
+  case ISD::ROTL:
+  case ISD::SHL:
+  case ISD::SRL:
+    ResNode = tryRISBGZero(Node);
     break;
 
   case ISD::Constant:
