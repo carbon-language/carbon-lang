@@ -41,10 +41,13 @@ using namespace llvm;
 static StringRef ToolName;
 
 static const char *TemporaryOutput;
+static int TmpArchiveFD = -1;
 
 // fail - Show the error message and exit.
 LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
   outs() << ToolName << ": " << Error << ".\n";
+  if (TmpArchiveFD != -1)
+    close(TmpArchiveFD);
   if (TemporaryOutput)
     sys::fs::remove(TemporaryOutput);
   exit(1);
@@ -526,7 +529,6 @@ static void printWithSpacePadding(raw_ostream &OS, T Data, unsigned Size) {
 
 static void performWriteOperation(ArchiveOperation Operation,
                                   object::Archive *OldArchive) {
-  int TmpArchiveFD;
   SmallString<128> TmpArchive;
   failIfError(sys::fs::createUniqueFile(ArchiveName + ".temp-archive-%%%%%%%.a",
                                         TmpArchiveFD, TmpArchive));
