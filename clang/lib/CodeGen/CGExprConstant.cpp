@@ -609,6 +609,10 @@ public:
     return Visit(GE->getResultExpr());
   }
 
+  llvm::Constant *VisitChooseExpr(ChooseExpr *CE) {
+    return Visit(CE->getChosenSubExpr(CGM.getContext()));
+  }
+
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
   }
@@ -654,6 +658,7 @@ public:
     case CK_AtomicToNonAtomic:
     case CK_NonAtomicToAtomic:
     case CK_NoOp:
+    case CK_ConstructorConversion:
       return C;
 
     case CK_Dependent: llvm_unreachable("saw dependent cast!");
@@ -683,7 +688,6 @@ public:
     case CK_LValueBitCast:
     case CK_NullToMemberPointer:
     case CK_UserDefinedConversion:
-    case CK_ConstructorConversion:
     case CK_CPointerToObjCPointerCast:
     case CK_BlockPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:

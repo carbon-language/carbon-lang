@@ -2634,11 +2634,11 @@ bool Expr::hasAnyTypeDependentArguments(ArrayRef<Expr *> Exprs) {
 
 bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   // This function is attempting whether an expression is an initializer
-  // which can be evaluated at compile-time.  isEvaluatable handles most
-  // of the cases, but it can't deal with some initializer-specific
-  // expressions, and it can't deal with aggregates; we deal with those here,
-  // and fall back to isEvaluatable for the other cases.
-
+  // which can be evaluated at compile-time. It very closely parallels
+  // ConstExprEmitter in CGExprConstant.cpp; if they don't match, it
+  // will lead to unexpected results.  Like ConstExprEmitter, it falls back
+  // to isEvaluatable most of the time.
+  //
   // If we ever capture reference-binding directly in the AST, we can
   // kill the second parameter.
 
@@ -2649,30 +2649,23 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
 
   switch (getStmtClass()) {
   default: break;
-  case IntegerLiteralClass:
-  case FloatingLiteralClass:
   case StringLiteralClass:
-  case ObjCStringLiteralClass:
   case ObjCEncodeExprClass:
     return true;
   case CXXTemporaryObjectExprClass:
   case CXXConstructExprClass: {
     const CXXConstructExpr *CE = cast<CXXConstructExpr>(this);
 
-    // Only if it's
-    if (CE->getConstructor()->isTrivial()) {
-      // 1) an application of the trivial default constructor or
+    if (CE->getConstructor()->isTrivial() &&
+        CE->getConstructor()->getParent()->hasTrivialDestructor()) {
+      // Trivial default constructor
       if (!CE->getNumArgs()) return true;
 
-      // 2) an elidable trivial copy construction of an operand which is
-      //    itself a constant initializer.  Note that we consider the
-      //    operand on its own, *not* as a reference binding.
-      if (CE->isElidable() &&
-          CE->getArg(0)->isConstantInitializer(Ctx, false))
-        return true;
+      // Trivial copy constructor
+      assert(CE->getNumArgs() == 1 && "trivial ctor with > 1 argument");
+      return CE->getArg(0)->isConstantInitializer(Ctx, false);
     }
 
-    // 3) a foldable constexpr constructor.
     break;
   }
   case CompoundLiteralExprClass: {
@@ -2686,13 +2679,47 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
     // FIXME: This doesn't deal with fields with reference types correctly.
     // FIXME: This incorrectly allows pointers cast to integers to be assigned
     // to bitfields.
-    const InitListExpr *Exp = cast<InitListExpr>(this);
-    unsigned numInits = Exp->getNumInits();
-    for (unsigned i = 0; i < numInits; i++) {
-      if (!Exp->getInit(i)->isConstantInitializer(Ctx, false))
-        return false;
+    const InitListExpr *ILE = cast<InitListExpr>(this);
+    if (ILE->getType()->isArrayType()) {
+      unsigned numInits = ILE->getNumInits();
+      for (unsigned i = 0; i < numInits; i++) {
+        if (!ILE->getInit(i)->isConstantInitializer(Ctx, false))
+          return false;
+      }
+      return true;
     }
-    return true;
+
+    if (ILE->getType()->isRecordType()) {
+      unsigned ElementNo = 0;
+      RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+           FieldEnd = RD->field_end(); Field != FieldEnd; ++Field) {
+        // If this is a union, skip all the fields that aren't being initialized.
+        if (RD->isUnion() && ILE->getInitializedFieldInUnion() != *Field)
+          continue;
+
+        // Don't emit anonymous bitfields, they just affect layout.
+        if (Field->isUnnamedBitfield())
+          continue;
+
+        if (ElementNo < ILE->getNumInits()) {
+          const Expr *Elt = ILE->getInit(ElementNo++);
+          if (Field->isBitField()) {
+            // Bitfields have to evaluate to an integer.
+            llvm::APSInt ResultTmp;
+            if (!Elt->EvaluateAsInt(ResultTmp, Ctx))
+              return false;
+          } else {
+            bool RefType = Field->getType()->isReferenceType();
+            if (!Elt->isConstantInitializer(Ctx, RefType))
+              return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    break;
   }
   case ImplicitValueInitExprClass:
     return true;
@@ -2700,8 +2727,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
     return cast<ParenExpr>(this)->getSubExpr()
       ->isConstantInitializer(Ctx, IsForRef);
   case GenericSelectionExprClass:
-    if (cast<GenericSelectionExpr>(this)->isResultDependent())
-      return false;
     return cast<GenericSelectionExpr>(this)->getResultExpr()
       ->isConstantInitializer(Ctx, IsForRef);
   case ChooseExprClass:
@@ -2716,37 +2741,36 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   case CXXFunctionalCastExprClass:
   case CXXStaticCastExprClass:
   case ImplicitCastExprClass:
-  case CStyleCastExprClass: {
+  case CStyleCastExprClass:
+  case ObjCBridgedCastExprClass:
+  case CXXDynamicCastExprClass:
+  case CXXReinterpretCastExprClass:
+  case CXXConstCastExprClass: {
     const CastExpr *CE = cast<CastExpr>(this);
 
-    // If we're promoting an integer to an _Atomic type then this is constant
-    // if the integer is constant.  We also need to check the converse in case
-    // someone does something like:
-    //
-    // int a = (_Atomic(int))42;
-    //
-    // I doubt anyone would write code like this directly, but it's quite
-    // possible as the result of macro expansions.
-    if (CE->getCastKind() == CK_NonAtomicToAtomic ||
-        CE->getCastKind() == CK_AtomicToNonAtomic)
-      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
-
-    // Handle bitcasts of vector constants.
-    if (getType()->isVectorType() && CE->getCastKind() == CK_BitCast)
-      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
-
     // Handle misc casts we want to ignore.
-    // FIXME: Is it really safe to ignore all these?
     if (CE->getCastKind() == CK_NoOp ||
         CE->getCastKind() == CK_LValueToRValue ||
         CE->getCastKind() == CK_ToUnion ||
-        CE->getCastKind() == CK_ConstructorConversion)
+        CE->getCastKind() == CK_ConstructorConversion ||
+        CE->getCastKind() == CK_NonAtomicToAtomic ||
+        CE->getCastKind() == CK_AtomicToNonAtomic)
       return CE->getSubExpr()->isConstantInitializer(Ctx, false);
 
     break;
   }
   case MaterializeTemporaryExprClass:
     return cast<MaterializeTemporaryExpr>(this)->GetTemporaryExpr()
+                                            ->isConstantInitializer(Ctx, false);
+
+  case SubstNonTypeTemplateParmExprClass:
+    return cast<SubstNonTypeTemplateParmExpr>(this)->getReplacement()
+                                            ->isConstantInitializer(Ctx, false);
+  case CXXDefaultArgExprClass:
+    return cast<CXXDefaultArgExpr>(this)->getExpr()
+                                            ->isConstantInitializer(Ctx, false);
+  case CXXDefaultInitExprClass:
+    return cast<CXXDefaultInitExpr>(this)->getExpr()
                                             ->isConstantInitializer(Ctx, false);
   }
   return isEvaluatable(Ctx);

@@ -95,3 +95,9 @@ namespace pr8095 {
     static Bar b;
   }
 }
+
+namespace referencemember {
+  struct A { int &a; };
+  int a;
+  A b = { a };
+}

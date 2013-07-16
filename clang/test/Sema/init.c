@@ -157,3 +157,6 @@ int PR4386_zed() __attribute((weak));
 typedef char strty[10];
 struct vortexstruct { strty s; };
 struct vortexstruct vortexvar = { "asdf" };
+
+typedef struct { uintptr_t x : 2; } StructWithBitfield;
+StructWithBitfield bitfieldvar = { (uintptr_t)&bitfieldvar }; // expected-error {{initializer element is not a compile-time constant}}
