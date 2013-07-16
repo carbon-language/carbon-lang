@@ -406,31 +406,31 @@ bool edit::rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,
                   llvm::SmallVectorImpl<ObjCProtocolDecl*> &ConformingProtocols,
                   const NSAPI &NS, Commit &commit) {
   const ObjCList<ObjCProtocolDecl> &Protocols = IDecl->getReferencedProtocols();
-    
-  // ASTContext &Context = NS.getASTContext();
-  std::string ClassString = "@interface ";
-  ClassString += IDecl->getNameAsString();
+  std::string ClassString;
+  SourceLocation EndLoc =
+    IDecl->getSuperClass() ? IDecl->getSuperClassLoc() : IDecl->getLocation();
   
-  if (IDecl->getSuperClass()) {
-    ClassString += " : ";
-    ClassString += IDecl->getSuperClass()->getNameAsString();
+  if (Protocols.empty()) {
+    ClassString = '<';
+    for (unsigned i = 0, e = ConformingProtocols.size(); i != e; i++) {
+      ClassString += ConformingProtocols[i]->getNameAsString();
+      if (i != (e-1))
+        ClassString += ", ";
+    }
+    ClassString += "> ";
   }
-  if (Protocols.empty())
-    ClassString += '<';
+  else {
+    ClassString = ", ";
+    for (unsigned i = 0, e = ConformingProtocols.size(); i != e; i++) {
+      ClassString += ConformingProtocols[i]->getNameAsString();
+      if (i != (e-1))
+        ClassString += ", ";
+    }
+    ObjCInterfaceDecl::protocol_loc_iterator PL = IDecl->protocol_loc_end() - 1;
+    EndLoc = *PL;
+  }
   
-  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-       E = Protocols.end(); I != E; ++I) {
-    ClassString += (I == Protocols.begin() ? '<' : ',');
-    ClassString += (*I)->getNameAsString();
-  }
-  if (!Protocols.empty())
-    ClassString += ',';
-  for (unsigned i = 0, e = ConformingProtocols.size(); i != e; i++) {
-    ClassString += ConformingProtocols[i]->getNameAsString();
-    if (i != (e-1))
-      ClassString += ',';
-  }
-  ClassString += "> ";
+  commit.insertAfterToken(EndLoc, ClassString);
   return true;
 }
 
