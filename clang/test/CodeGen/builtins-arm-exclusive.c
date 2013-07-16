@@ -17,8 +17,7 @@ int atomic_inc(int *addr) {
 // CHECK:   [[INC:%.*]] = add nsw i32 [[OLDVAL]], 1
 // CHECK:   [[FAILURE:%.*]] = tail call i32 @llvm.arm.strex.p0i32(i32 [[INC]], i32* %addr)
 // CHECK:   [[TST:%.*]] = icmp eq i32 [[FAILURE]], 0
-// CHECK:   br i1 [[TST]], label %[[LOOP_END:[a-zA-Z0-9.]+]], label {{%[a-zA-Z0-9.]+}}
-// CHECK: [[LOOP_END]]:
+// CHECK:   br i1 [[TST]], label {{%[a-zA-Z0-9.]+}}, label {{%[a-zA-Z0-9.]+}}
 
 struct Simple {
   char a, b;
