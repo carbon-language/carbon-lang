@@ -53,7 +53,6 @@ public:
                          StringRef outputDir = StringRef());
 
   void remap(StringRef filePath, llvm::MemoryBuffer *memBuf);
-  void remap(StringRef filePath, StringRef newPath);
 
   void applyMappings(PreprocessorOptions &PPOpts) const;
 
