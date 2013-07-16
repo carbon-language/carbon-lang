@@ -25,7 +25,8 @@ class GnuLdParserTest : public ParserTest<GnuLdDriver, ELFTargetInfo> {
 protected:
   virtual ELFTargetInfo* doParse(int argc, const char **argv,
                                  raw_ostream &diag) {
-    std::unique_ptr<ELFTargetInfo> info(GnuLdDriver::parse(argc, argv, diag));
+    std::unique_ptr<ELFTargetInfo> info;
+    GnuLdDriver::parse(argc, argv, info, diag);
     return info.release();
   }
 };
