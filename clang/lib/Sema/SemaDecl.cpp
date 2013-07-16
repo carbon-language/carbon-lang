@@ -1743,6 +1743,8 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
   if (TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Old))
     New->setPreviousDeclaration(Typedef);
 
+  mergeDeclAttributes(New, Old);
+
   if (getLangOpts().MicrosoftExt)
     return;
 
