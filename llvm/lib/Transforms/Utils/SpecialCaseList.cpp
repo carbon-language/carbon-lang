@@ -99,7 +99,7 @@ void SpecialCaseList::init(const MemoryBuffer *MB) {
     // Add this regexp into the proper group by its prefix.
     if (!Regexps[Prefix][Category].empty())
       Regexps[Prefix][Category] += "|";
-    Regexps[Prefix][Category] += Regexp;
+    Regexps[Prefix][Category] += "^" + Regexp + "$";
   }
 
   // Iterate through each of the prefixes, and create Regexs for them.

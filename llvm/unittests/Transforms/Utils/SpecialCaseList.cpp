@@ -139,4 +139,20 @@ TEST_F(SpecialCaseListTest, GlobalIsIn) {
   EXPECT_TRUE(SCL->isIn(*Bar, "init"));
 }
 
+TEST_F(SpecialCaseListTest, Substring) {
+  Module M("othello", Ctx);
+  Function *F = makeFunction("tomfoolery", M);
+  GlobalVariable *GV = makeGlobal("bartender", "t", M);
+
+  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("src:hello\n"
+                                                     "fun:foo\n"
+                                                     "global:bar\n"));
+  EXPECT_FALSE(SCL->isIn(M));
+  EXPECT_FALSE(SCL->isIn(*F));
+  EXPECT_FALSE(SCL->isIn(*GV));
+
+  SCL.reset(makeSpecialCaseList("fun:*foo*\n"));
+  EXPECT_TRUE(SCL->isIn(*F));
+}
+
 }
