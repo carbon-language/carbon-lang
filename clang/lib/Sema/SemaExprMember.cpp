@@ -703,6 +703,7 @@ ExprResult
 Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
                                                SourceLocation loc,
                                                IndirectFieldDecl *indirectField,
+                                               DeclAccessPair foundDecl,
                                                Expr *baseObjectExpr,
                                                SourceLocation opLoc) {
   // First, build the expression that refers to the base object.
@@ -780,15 +781,15 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
   if (!baseVariable) {
     FieldDecl *field = cast<FieldDecl>(*FI);
     
-    // FIXME: use the real found-decl info!
-    DeclAccessPair foundDecl = DeclAccessPair::make(field, field->getAccess());
-    
     // Make a nameInfo that properly uses the anonymous name.
     DeclarationNameInfo memberNameInfo(field->getDeclName(), loc);
     
     result = BuildFieldReferenceExpr(*this, result, baseObjectIsPointer,
                                      EmptySS, field, foundDecl,
                                      memberNameInfo).take();
+    if (!result)
+      return ExprError();
+
     baseObjectIsPointer = false;
     
     // FIXME: check qualified member access
@@ -799,14 +800,15 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
   
   while (FI != FEnd) {
     FieldDecl *field = cast<FieldDecl>(*FI++);
-    
+
     // FIXME: these are somewhat meaningless
     DeclarationNameInfo memberNameInfo(field->getDeclName(), loc);
-    DeclAccessPair foundDecl = DeclAccessPair::make(field, field->getAccess());
-    
+    DeclAccessPair fakeFoundDecl =
+        DeclAccessPair::make(field, field->getAccess());
+
     result = BuildFieldReferenceExpr(*this, result, /*isarrow*/ false,
-                                     (FI == FEnd? SS : EmptySS), field, 
-                                     foundDecl, memberNameInfo).take();
+                                     (FI == FEnd? SS : EmptySS), field,
+                                     fakeFoundDecl, memberNameInfo).take();
   }
   
   return Owned(result);
@@ -990,7 +992,8 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
     // We may have found a field within an anonymous union or struct
     // (C++ [class.union]).
     return BuildAnonymousStructUnionMemberReference(SS, MemberLoc, FD,
-                                                    BaseExpr, OpLoc);
+                                                    FoundDecl, BaseExpr,
+                                                    OpLoc);
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
     return Owned(BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS,
@@ -1688,7 +1691,8 @@ Sema::BuildImplicitMemberExpr(const CXXScopeSpec &SS,
   // (C++ [class.union]).
   // FIXME: template-ids inside anonymous structs?
   if (IndirectFieldDecl *FD = R.getAsSingle<IndirectFieldDecl>())
-    return BuildAnonymousStructUnionMemberReference(SS, R.getNameLoc(), FD);
+    return BuildAnonymousStructUnionMemberReference(SS, R.getNameLoc(), FD,
+                                                    R.begin().getPair());
   
   // If this is known to be an instance access, go ahead and build an
   // implicit 'this' expression now.
