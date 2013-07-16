@@ -6451,8 +6451,8 @@ public:
                                         ObjCInterfaceDecl *ID);
 
   Decl *ActOnAtEnd(Scope *S, SourceRange AtEnd,
-                   ArrayRef<Decl *>allMethods = None,
-                   ArrayRef<DeclGroupPtrTy>allTUVars = None);
+                   ArrayRef<Decl *> allMethods = None,
+                   ArrayRef<DeclGroupPtrTy> allTUVars = None);
 
   Decl *ActOnProperty(Scope *S, SourceLocation AtLoc,
                       SourceLocation LParenLoc,
