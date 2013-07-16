@@ -280,11 +280,13 @@ private:
   /// COFFDataDirectoryAtom and set relocations to them, so that the address
   /// will be set by the writer.
   void createDataDirectoryAtoms(Context &ctx) {
-    auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(ctx.file, 1);
+    auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(
+        ctx.file, llvm::COFF::DataDirectoryIndex::IMPORT_TABLE);
     addDir32NBReloc(dir, ctx.importDirectories[0]);
     ctx.file.addAtom(*dir);
 
-    auto *iat = new (_alloc) coff::COFFDataDirectoryAtom(ctx.file, 12);
+    auto *iat = new (_alloc) coff::COFFDataDirectoryAtom(
+        ctx.file, llvm::COFF::DataDirectoryIndex::IAT);
     addDir32NBReloc(iat, ctx.importAddressTables[0]);
     ctx.file.addAtom(*iat);
   }
