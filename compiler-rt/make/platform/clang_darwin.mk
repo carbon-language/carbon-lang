@@ -127,12 +127,12 @@ CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 # FIXME: We can't build ASAN with our stub SDK yet.
 CFLAGS.asan_osx_dynamic := \
-	$(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
+	$(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin \
 	-gline-tables-only \
 	-DMAC_INTERPOSE_FUNCTIONS=1 \
   -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
 
-CFLAGS.ubsan_osx	:= $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin
+CFLAGS.ubsan_osx	:= $(CFLAGS) -mmacosx-version-min=10.6 -fno-builtin
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
