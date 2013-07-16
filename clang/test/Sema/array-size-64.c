@@ -2,6 +2,11 @@
 
 void f() {
   int a[2147483647U][2147483647U]; // expected-error{{array is too large}}
-  int b[1073741825U - 1U][2147483647U];
-  int c[18446744073709551615U/sizeof(int)/2];
+  int b[1073741825U - 1U][2147483647U]; // expected-error{{array is too large}}
 }
+
+void pr8256 () {
+  typedef char a[1LL<<61];  // expected-error {{array is too large}}
+  typedef char b[(long long)sizeof(a)-1];
+}
+

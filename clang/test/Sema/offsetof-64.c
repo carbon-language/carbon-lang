@@ -2,7 +2,7 @@
 
 // PR15216
 // Don't crash when taking computing the offset of structs with large arrays.
-const unsigned long Size = (1l << 62);
+const unsigned long Size = (1l << 60);
 
 struct Chunk1 {
   char padding[Size];

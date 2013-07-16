@@ -111,11 +111,12 @@ unsigned ConstantArrayType::getNumAddressingBits(ASTContext &Context,
 unsigned ConstantArrayType::getMaxSizeBits(ASTContext &Context) {
   unsigned Bits = Context.getTypeSize(Context.getSizeType());
   
-  // GCC appears to only allow 63 bits worth of address space when compiling
-  // for 64-bit, so we do the same.
-  if (Bits == 64)
-    --Bits;
-  
+  // Limit the number of bits in size_t so that maximal bit size fits 64 bit
+  // integer (see PR8256).  We can do this as currently there is no hardware
+  // that supports full 64-bit virtual space.
+  if (Bits > 61)
+    Bits = 61;
+
   return Bits;
 }
 
