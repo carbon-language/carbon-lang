@@ -983,6 +983,24 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   if (PtrA->getType() != PtrB->getType())
     return false;
 
+  // Calculate a constant offset from the base pointer without using SCEV
+  // in the supported cases. 
+  // TODO: Add support for the case where one of the pointers is a GEP that
+  // uses the other pointer.
+  GetElementPtrInst *GepA = dyn_cast<GetElementPtrInst>(PtrA);
+  GetElementPtrInst *GepB = dyn_cast<GetElementPtrInst>(PtrB);
+  if (GepA && GepB && GepA->getPointerOperand() == GepB->getPointerOperand()) {
+    unsigned BW = DL->getPointerSizeInBits(ASA);
+    APInt OffsetA(BW, 0) ,OffsetB(BW, 0);
+
+    if (GepA->accumulateConstantOffset(*DL, OffsetA) &&
+        GepB->accumulateConstantOffset(*DL, OffsetB)) {
+      Type *Ty = cast<PointerType>(PtrA->getType())->getElementType();
+      int64_t Sz = DL->getTypeStoreSize(Ty);
+      return ((OffsetB.getSExtValue() - OffsetA.getSExtValue()) == Sz);
+    }
+  }
+
   // Calculate the distance.
   const SCEV *PtrSCEVA = SE->getSCEV(PtrA);
   const SCEV *PtrSCEVB = SE->getSCEV(PtrB);
