@@ -1707,6 +1707,11 @@ TSAN_INTERCEPTOR(sighandler_t, signal, int sig, sighandler_t h) {
   return old.sa_handler;
 }
 
+TSAN_INTERCEPTOR(int, sigsuspend, const sigset_t *mask) {
+  SCOPED_TSAN_INTERCEPTOR(sigsuspend, mask);
+  return REAL(sigsuspend)(mask);
+}
+
 TSAN_INTERCEPTOR(int, raise, int sig) {
   SCOPED_TSAN_INTERCEPTOR(raise, sig);
   SignalContext *sctx = SigCtx(thr);
@@ -2071,6 +2076,7 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(sigaction);
   TSAN_INTERCEPT(signal);
+  TSAN_INTERCEPT(sigsuspend);
   TSAN_INTERCEPT(raise);
   TSAN_INTERCEPT(kill);
   TSAN_INTERCEPT(pthread_kill);

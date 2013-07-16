@@ -252,6 +252,7 @@ enum StatType {
   StatInt_poll,
   StatInt_sigaction,
   StatInt_signal,
+  StatInt_sigsuspend,
   StatInt_raise,
   StatInt_kill,
   StatInt_pthread_kill,

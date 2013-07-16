@@ -257,6 +257,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_poll]                     = "  poll                            ";
   name[StatInt_sigaction]                = "  sigaction                       ";
   name[StatInt_signal]                   = "  signal                          ";
+  name[StatInt_sigsuspend]               = "  sigsuspend                      ";
   name[StatInt_raise]                    = "  raise                           ";
   name[StatInt_kill]                     = "  kill                            ";
   name[StatInt_pthread_kill]             = "  pthread_kill                    ";
