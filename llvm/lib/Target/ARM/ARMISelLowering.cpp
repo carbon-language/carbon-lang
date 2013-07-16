@@ -1092,6 +1092,19 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VST2LN_UPD:    return "ARMISD::VST2LN_UPD";
   case ARMISD::VST3LN_UPD:    return "ARMISD::VST3LN_UPD";
   case ARMISD::VST4LN_UPD:    return "ARMISD::VST4LN_UPD";
+
+  case ARMISD::ATOMADD64_DAG:     return "ATOMADD64_DAG";
+  case ARMISD::ATOMSUB64_DAG:     return "ATOMSUB64_DAG";
+  case ARMISD::ATOMOR64_DAG:      return "ATOMOR64_DAG";
+  case ARMISD::ATOMXOR64_DAG:     return "ATOMXOR64_DAG";
+  case ARMISD::ATOMAND64_DAG:     return "ATOMAND64_DAG";
+  case ARMISD::ATOMNAND64_DAG:    return "ATOMNAND64_DAG";
+  case ARMISD::ATOMSWAP64_DAG:    return "ATOMSWAP64_DAG";
+  case ARMISD::ATOMCMPXCHG64_DAG: return "ATOMCMPXCHG64_DAG";
+  case ARMISD::ATOMMIN64_DAG:     return "ATOMMIN64_DAG";
+  case ARMISD::ATOMUMIN64_DAG:    return "ATOMUMIN64_DAG";
+  case ARMISD::ATOMMAX64_DAG:     return "ATOMMAX64_DAG";
+  case ARMISD::ATOMUMAX64_DAG:    return "ATOMUMAX64_DAG";
   }
 }
 
