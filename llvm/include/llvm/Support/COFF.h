@@ -488,6 +488,24 @@ namespace COFF {
     uint32_t Size;
   };
 
+  enum DataDirectoryIndex {
+    EXPORT_TABLE = 0,
+    IMPORT_TABLE,
+    RESOURCE_TABLE,
+    EXCEPTION_TABLE,
+    CERTIFICATE_TABLE,
+    BASE_RELOCATION_TABLE,
+    DEBUG,
+    ARCHITECTURE,
+    GLOBAL_PTR,
+    TLS_TABLE,
+    LOAD_CONFIG_TABLE,
+    BOUND_IMPORT,
+    IAT,
+    DELAY_IMPORT_DESCRIPTOR,
+    CLR_RUNTIME_HEADER
+  };
+
   enum WindowsSubsystem {
     IMAGE_SUBSYSTEM_UNKNOWN = 0, ///< An unknown subsystem.
     IMAGE_SUBSYSTEM_NATIVE = 1, ///< Device drivers and native Windows processes
