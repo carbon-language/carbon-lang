@@ -444,6 +444,9 @@ class Instruction {
   /// constraint. For example, "$Rn = $Rd".
   string TwoOperandAliasConstraint = "";
 
+  /// Does the instruction mnemonic allow '.'
+  bit MnemonicContainsDot = 0;
+
   ///@}
 
   /// UseNamedOperandTable - If set, the operand indices of this instruction

@@ -837,9 +837,12 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
     }
 
     case '.':
-      if (InTok)
-        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
-      Prev = i;
+      if (!(TheDef->getValue("MnemonicContainsDot")) ||
+          !(TheDef->getValueAsBit("MnemonicContainsDot"))) {
+        if (InTok)
+          AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
+        Prev = i;
+      }
       InTok = true;
       break;
 
@@ -2326,7 +2329,7 @@ static void emitMnemonicAliasVariant(raw_ostream &OS,const AsmMatcherInfo &Info,
   }
   if (AliasesFromMnemonic.empty())
     return;
-    
+
   // Process each alias a "from" mnemonic at a time, building the code executed
   // by the string remapper.
   std::vector<StringMatcher::StringPair> Cases;
