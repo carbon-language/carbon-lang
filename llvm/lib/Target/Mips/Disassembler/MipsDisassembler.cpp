@@ -183,11 +183,6 @@ static DecodeStatus DecodeSimm16(MCInst &Inst,
                                  uint64_t Address,
                                  const void *Decoder);
 
-static DecodeStatus DecodeCondCode(MCInst &Inst,
-                                   unsigned Insn,
-                                   uint64_t Address,
-                                   const void *Decoder);
-
 static DecodeStatus DecodeInsSize(MCInst &Inst,
                                   unsigned Insn,
                                   uint64_t Address,
@@ -461,15 +456,6 @@ static DecodeStatus DecodeHWRegsRegisterClass(MCInst &Inst,
   if (RegNo != 29)
     return  MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateReg(Mips::HWR29));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus DecodeCondCode(MCInst &Inst,
-                                   unsigned Insn,
-                                   uint64_t Address,
-                                   const void *Decoder) {
-  int CondCode = Insn & 0xf;
-  Inst.addOperand(MCOperand::CreateImm(CondCode));
   return MCDisassembler::Success;
 }
 
