@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "Data-stream"
 #include "llvm/Support/DataStream.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/system_error.h"
 #include <cerrno>
@@ -27,7 +28,6 @@
 #else
 #include <io.h>
 #endif
-#include <fcntl.h>
 using namespace llvm;
 
 // Interface goals:
@@ -69,15 +69,8 @@ public:
       sys::ChangeStdinToBinary();
       return error_code::success();
     }
-  
-    int OpenFlags = O_RDONLY;
-#ifdef O_BINARY
-    OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
-#endif
-    Fd = ::open(Filename.c_str(), OpenFlags);
-    if (Fd == -1)
-      return error_code(errno, posix_category());
-    return error_code::success();
+
+    return sys::fs::openFileForRead(Filename, Fd);
   }
 };
 

@@ -18,6 +18,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
@@ -25,13 +26,9 @@
 #include <cctype>
 #include <cerrno>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #if defined(HAVE_UNISTD_H)
 # include <unistd.h>
-#endif
-#if defined(HAVE_FCNTL_H)
-# include <fcntl.h>
 #endif
 #if defined(HAVE_SYS_UIO_H) && defined(HAVE_WRITEV)
 #  include <sys/uio.h>
@@ -43,7 +40,6 @@
 
 #if defined(_MSC_VER)
 #include <io.h>
-#include <fcntl.h>
 #ifndef STDIN_FILENO
 # define STDIN_FILENO 0
 #endif
@@ -424,14 +420,9 @@ void format_object_base::home() {
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
-                               unsigned Flags)
-  : Error(false), UseAtomicWrites(false), pos(0)
-{
+                               sys::fs::OpenFlags Flags)
+    : Error(false), UseAtomicWrites(false), pos(0) {
   assert(Filename != 0 && "Filename is null");
-  // Verify that we don't have both "append" and "excl".
-  assert((!(Flags & F_Excl) || !(Flags & F_Append)) &&
-         "Cannot specify both 'excl' and 'append' file creation flags!");
-
   ErrorInfo.clear();
 
   // Handle "-" as stdout. Note that when we do this, we consider ourself
@@ -441,32 +432,19 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
     FD = STDOUT_FILENO;
     // If user requested binary then put stdout into binary mode if
     // possible.
-    if (Flags & F_Binary)
+    if (Flags & sys::fs::F_Binary)
       sys::ChangeStdoutToBinary();
     // Close stdout when we're done, to detect any output errors.
     ShouldClose = true;
     return;
   }
 
-  int OpenFlags = O_WRONLY|O_CREAT;
-#ifdef O_BINARY
-  if (Flags & F_Binary)
-    OpenFlags |= O_BINARY;
-#endif
+  error_code EC = sys::fs::openFileForWrite(Filename, FD, Flags);
 
-  if (Flags & F_Append)
-    OpenFlags |= O_APPEND;
-  else
-    OpenFlags |= O_TRUNC;
-  if (Flags & F_Excl)
-    OpenFlags |= O_EXCL;
-
-  while ((FD = open(Filename, OpenFlags, 0666)) < 0) {
-    if (errno != EINTR) {
-      ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
-      ShouldClose = false;
-      return;
-    }
+  if (EC) {
+    ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
+    ShouldClose = false;
+    return;
   }
 
   // Ok, we successfully opened the file, so it'll need to be closed.

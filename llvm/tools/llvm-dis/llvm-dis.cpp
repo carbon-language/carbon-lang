@@ -168,9 +168,8 @@ int main(int argc, char **argv) {
   }
 
   std::string ErrorInfo;
-  OwningPtr<tool_output_file>
-  Out(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                           raw_fd_ostream::F_Binary));
+  OwningPtr<tool_output_file> Out(new tool_output_file(
+      OutputFilename.c_str(), ErrorInfo, sys::fs::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;

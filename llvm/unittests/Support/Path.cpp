@@ -350,8 +350,7 @@ TEST_F(FileSystemTest, Magic) {
     SmallString<128> file_pathname(TestDirectory);
     path::append(file_pathname, i->filename);
     std::string ErrMsg;
-    raw_fd_ostream file(file_pathname.c_str(), ErrMsg,
-                        raw_fd_ostream::F_Binary);
+    raw_fd_ostream file(file_pathname.c_str(), ErrMsg, sys::fs::F_Binary);
     ASSERT_FALSE(file.has_error());
     StringRef magic(i->magic_str, i->magic_str_len);
     file << magic;

@@ -18,6 +18,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
 
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
@@ -689,6 +690,51 @@ error_code createUniqueDirectory(const Twine &Prefix,
   int Dummy;
   return createUniqueEntity(Prefix + "-%%%%%%", Dummy, ResultPath,
                             true, 0, FS_Dir);
+}
+
+error_code openFileForWrite(const Twine &Name, int &ResultFD,
+                            sys::fs::OpenFlags Flags, unsigned Mode) {
+  // Verify that we don't have both "append" and "excl".
+  assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
+         "Cannot specify both 'excl' and 'append' file creation flags!");
+
+  int OpenFlags = O_WRONLY | O_CREAT;
+
+#ifdef O_BINARY
+  if (Flags & F_Binary)
+    OpenFlags |= O_BINARY;
+#endif
+
+  if (Flags & F_Append)
+    OpenFlags |= O_APPEND;
+  else
+    OpenFlags |= O_TRUNC;
+
+  if (Flags & F_Excl)
+    OpenFlags |= O_EXCL;
+
+  SmallString<128> Storage;
+  StringRef P = Name.toNullTerminatedStringRef(Storage);
+  while ((ResultFD = open(P.begin(), OpenFlags, Mode)) < 0) {
+    if (errno != EINTR)
+      return error_code(errno, system_category());
+  }
+  return error_code::success();
+}
+
+error_code openFileForRead(const Twine &Name, int &ResultFD) {
+  int OpenFlags = O_RDONLY;
+#ifdef O_BINARY
+  OpenFlags |= O_BINARY; // Open input file in binary mode on win32.
+#endif
+
+  SmallString<128> Storage;
+  StringRef P = Name.toNullTerminatedStringRef(Storage);
+  while ((ResultFD = open(P.begin(), OpenFlags)) < 0) {
+    if (errno != EINTR)
+      return error_code(errno, system_category());
+  }
+  return error_code::success();
 }
 
 error_code make_absolute(SmallVectorImpl<char> &path) {

@@ -616,7 +616,7 @@ int main(int argc, char **argv) {
 
     std::string ErrorInfo;
     Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                                   raw_fd_ostream::F_Binary));
+                                   sys::fs::F_Binary));
     if (!ErrorInfo.empty()) {
       errs() << ErrorInfo << '\n';
       return 1;
@@ -679,7 +679,7 @@ int main(int argc, char **argv) {
 
       std::string ErrorInfo;
       Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                                     raw_fd_ostream::F_Binary));
+                                     sys::fs::F_Binary));
       if (!ErrorInfo.empty()) {
         errs() << ErrorInfo << '\n';
         return 1;

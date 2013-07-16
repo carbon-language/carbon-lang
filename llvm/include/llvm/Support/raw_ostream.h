@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/FileSystem.h"
 
 namespace llvm {
   class format_object_base;
@@ -335,22 +336,6 @@ class raw_fd_ostream : public raw_ostream {
   void error_detected() { Error = true; }
 
 public:
-
-  enum {
-    /// F_Excl - When opening a file, this flag makes raw_fd_ostream
-    /// report an error if the file already exists.
-    F_Excl  = 1,
-
-    /// F_Append - When opening a file, if it already exists append to the
-    /// existing file instead of returning an error.  This may not be specified
-    /// with F_Excl.
-    F_Append = 2,
-
-    /// F_Binary - The file should be opened in binary mode on platforms that
-    /// make this distinction.
-    F_Binary = 4
-  };
-
   /// raw_fd_ostream - Open the specified file for writing. If an error occurs,
   /// information about the error is put into ErrorInfo, and the stream should
   /// be immediately destroyed; the string will be empty if no error occurred.
@@ -362,7 +347,7 @@ public:
   /// file descriptor when it is done (this is necessary to detect
   /// output errors).
   raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
-                 unsigned Flags = 0);
+                 sys::fs::OpenFlags Flags = sys::fs::F_None);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.

@@ -26,7 +26,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdlib>
-#include <fcntl.h>
 #include <memory>
 
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
@@ -299,19 +298,14 @@ static void doDisplayTable(StringRef Name, object::Archive::child_iterator I) {
 // Implement the 'x' operation. This function extracts files back to the file
 // system.
 static void doExtract(StringRef Name, object::Archive::child_iterator I) {
-  // Open up a file stream for writing
-  // FIXME: we should abstract this, O_BINARY in particular.
-  int OpenFlags = O_TRUNC | O_WRONLY | O_CREAT;
-#ifdef O_BINARY
-  OpenFlags |= O_BINARY;
-#endif
-
   // Retain the original mode.
   sys::fs::perms Mode = I->getAccessMode();
+  SmallString<128> Storage = Name;
 
-  int FD = open(Name.str().c_str(), OpenFlags, Mode);
-  if (FD < 0)
-    fail("Could not open output file");
+  int FD;
+  failIfError(
+      sys::fs::openFileForWrite(Storage.c_str(), FD, sys::fs::F_None, Mode),
+      Storage.c_str());
 
   {
     raw_fd_ostream file(FD, false);
@@ -559,13 +553,8 @@ static void performWriteOperation(ArchiveOperation Operation,
     if (I->isNewMember()) {
       const char *FileName = I->getNew();
 
-      int OpenFlags = O_RDONLY;
-#ifdef O_BINARY
-      OpenFlags |= O_BINARY;
-#endif
-      int FD = ::open(FileName, OpenFlags);
-      if (FD == -1)
-        return failIfError(error_code(errno, posix_category()), FileName);
+      int FD;
+      failIfError(sys::fs::openFileForRead(FileName, FD), FileName);
 
       sys::fs::file_status Status;
       failIfError(sys::fs::status(FD, Status), FileName);

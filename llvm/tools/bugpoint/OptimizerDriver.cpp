@@ -68,7 +68,7 @@ bool BugDriver::writeProgramToFile(const std::string &Filename, int FD,
 bool BugDriver::writeProgramToFile(const std::string &Filename,
                                    const Module *M) const {
   std::string ErrInfo;
-  tool_output_file Out(Filename.c_str(), ErrInfo, raw_fd_ostream::F_Binary);
+  tool_output_file Out(Filename.c_str(), ErrInfo, sys::fs::F_Binary);
   if (ErrInfo.empty())
     return writeProgramToFileAux(Out, M);
   return true;

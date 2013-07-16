@@ -137,8 +137,7 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
 
   // create output file
   std::string ErrInfo;
-  tool_output_file Out(path, ErrInfo,
-                       raw_fd_ostream::F_Binary);
+  tool_output_file Out(path, ErrInfo, sys::fs::F_Binary);
   if (!ErrInfo.empty()) {
     errMsg = "could not open bitcode file for writing: ";
     errMsg += path;

@@ -37,9 +37,8 @@ tool_output_file::CleanupInstaller::~CleanupInstaller() {
 }
 
 tool_output_file::tool_output_file(const char *filename, std::string &ErrorInfo,
-                                   unsigned Flags)
-  : Installer(filename),
-    OS(filename, ErrorInfo, Flags) {
+                                   sys::fs::OpenFlags Flags)
+    : Installer(filename), OS(filename, ErrorInfo, Flags) {
   // If open fails, no cleanup is needed.
   if (!ErrorInfo.empty())
     Installer.Keep = true;

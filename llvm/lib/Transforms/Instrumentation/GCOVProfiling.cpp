@@ -426,7 +426,7 @@ void GCOVProfiler::emitProfileNotes() {
     DICompileUnit CU(CU_Nodes->getOperand(i));
     std::string ErrorInfo;
     raw_fd_ostream out(mangleName(CU, "gcno").c_str(), ErrorInfo,
-                       raw_fd_ostream::F_Binary);
+                       sys::fs::F_Binary);
     out.write("oncg", 4);
     out.write(ReversedVersion, 4);
     out.write("MVLL", 4);

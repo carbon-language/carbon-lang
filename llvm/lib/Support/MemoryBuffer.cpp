@@ -41,7 +41,6 @@
 #define S_ISBLK(x) (0)
 #endif
 #endif
-#include <fcntl.h>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -253,13 +252,10 @@ error_code MemoryBuffer::getFile(const char *Filename,
                                  OwningPtr<MemoryBuffer> &result,
                                  int64_t FileSize,
                                  bool RequiresNullTerminator) {
-  int OpenFlags = O_RDONLY;
-#ifdef O_BINARY
-  OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
-#endif
-  int FD = ::open(Filename, OpenFlags);
-  if (FD == -1)
-    return error_code(errno, posix_category());
+  int FD;
+  error_code EC = sys::fs::openFileForRead(Filename, FD);
+  if (EC)
+    return EC;
 
   error_code ret = getOpenFile(FD, Filename, result, FileSize, FileSize,
                                0, RequiresNullTerminator);
