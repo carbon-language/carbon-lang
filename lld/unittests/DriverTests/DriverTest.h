@@ -21,17 +21,26 @@ namespace {
 using namespace llvm;
 using namespace lld;
 
-template<typename Driver, typename TargetInfo>
+template<typename D, typename T>
 class ParserTest : public testing::Test {
 protected:
-  void SetUp() {
-    os.reset(new raw_string_ostream(diags));
+
+  virtual const TargetInfo *targetInfo() = 0;
+  
+  std::string &errorMessage() { return  _errorMessage; }
+  
+  // Convenience method for getting number of input files.
+  int inputFileCount() {
+    return targetInfo()->inputFiles().size();
   }
 
-  virtual TargetInfo *doParse(int argc, const char **argv,
-                              raw_ostream &diag) = 0;
+  // Convenience method for getting i'th input files name.
+  std::string inputFile(unsigned index) {
+    return targetInfo()->inputFiles()[index].getPath().str();
+  }
 
-  void parse(const char *args, ...) {
+  // For unit tests to call driver with various command lines.
+  bool parse(const char *args, ...) {
     // Construct command line options from varargs.
     std::vector<const char *> vec;
     vec.push_back(args);
@@ -42,18 +51,12 @@ protected:
     va_end(ap);
 
     // Call the parser.
-    info.reset(doParse(vec.size(), &vec[0], *os));
-
-    // Copy the output file name for the sake of convenience.
-    if (info)
-      for (const LinkerInput &input : info->inputFiles())
-        inputFiles.push_back(input.getPath().str());
+    raw_string_ostream os(_errorMessage);
+    return D::parse(vec.size(), &vec[0], _info, os);
   }
 
-  std::unique_ptr<TargetInfo> info;
-  std::string diags;
-  std::unique_ptr<raw_string_ostream> os;
-  std::vector<std::string> inputFiles;
+  T           _info;
+  std::string _errorMessage;
 };
 
 }

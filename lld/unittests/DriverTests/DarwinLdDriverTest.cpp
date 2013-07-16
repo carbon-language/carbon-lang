@@ -24,66 +24,63 @@ namespace {
 
 class DarwinLdParserTest : public ParserTest<DarwinLdDriver, MachOTargetInfo> {
 protected:
-  virtual MachOTargetInfo* doParse(int argc, const char **argv,
-                                   raw_ostream &diag) {
-    auto *info = new MachOTargetInfo();
-    DarwinLdDriver::parse(argc, argv, *info, diag);
-    return info;
+  virtual const TargetInfo *targetInfo() {
+    return &_info;
   }
 };
 
 TEST_F(DarwinLdParserTest, Basic) {
-  parse("ld", "foo.o", "bar.o", nullptr);
-  EXPECT_FALSE(info->allowRemainingUndefines());
-  EXPECT_FALSE(info->deadStrip());
-  EXPECT_EQ(2, (int)inputFiles.size());
-  EXPECT_EQ("foo.o", inputFiles[0]);
-  EXPECT_EQ("bar.o", inputFiles[1]);
+  EXPECT_FALSE(parse("ld", "foo.o", "bar.o", nullptr));
+  EXPECT_FALSE(_info.allowRemainingUndefines());
+  EXPECT_FALSE(_info.deadStrip());
+  EXPECT_EQ(2, inputFileCount());
+  EXPECT_EQ("foo.o", inputFile(0));
+  EXPECT_EQ("bar.o", inputFile(1));
 }
 
 TEST_F(DarwinLdParserTest, Dylib) {
-  parse("ld", "-dylib", "foo.o", nullptr);
-  EXPECT_EQ(mach_o::MH_DYLIB, info->outputFileType());
+  EXPECT_FALSE(parse("ld", "-dylib", "foo.o", nullptr));
+  EXPECT_EQ(mach_o::MH_DYLIB, _info.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Relocatable) {
-  parse("ld", "-r", "foo.o", nullptr);
-  EXPECT_EQ(mach_o::MH_OBJECT, info->outputFileType());
+  EXPECT_FALSE(parse("ld", "-r", "foo.o", nullptr));
+  EXPECT_EQ(mach_o::MH_OBJECT, _info.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Bundle) {
-  parse("ld", "-bundle", "foo.o", nullptr);
-  EXPECT_EQ(mach_o::MH_BUNDLE, info->outputFileType());
+  EXPECT_FALSE(parse("ld", "-bundle", "foo.o", nullptr));
+  EXPECT_EQ(mach_o::MH_BUNDLE, _info.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Preload) {
-  parse("ld", "-preload", "foo.o", nullptr);
-  EXPECT_EQ(mach_o::MH_PRELOAD, info->outputFileType());
+  EXPECT_FALSE(parse("ld", "-preload", "foo.o", nullptr));
+  EXPECT_EQ(mach_o::MH_PRELOAD, _info.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Static) {
-  parse("ld", "-static", "foo.o", nullptr);
-  EXPECT_EQ(mach_o::MH_EXECUTE, info->outputFileType());
+  EXPECT_FALSE(parse("ld", "-static", "foo.o", nullptr));
+  EXPECT_EQ(mach_o::MH_EXECUTE, _info.outputFileType());
 }
 
 TEST_F(DarwinLdParserTest, Entry) {
-  parse("ld", "-e", "entryFunc", "foo.o", nullptr);
-  EXPECT_EQ("entryFunc", info->entrySymbolName());
+  EXPECT_FALSE(parse("ld", "-e", "entryFunc", "foo.o", nullptr));
+  EXPECT_EQ("entryFunc", _info.entrySymbolName());
 }
 
 TEST_F(DarwinLdParserTest, OutputPath) {
-  parse("ld", "-o", "foo", "foo.o", nullptr);
-  EXPECT_EQ("foo", info->outputPath());
+  EXPECT_FALSE(parse("ld", "-o", "foo", "foo.o", nullptr));
+  EXPECT_EQ("foo", _info.outputPath());
 }
 
 TEST_F(DarwinLdParserTest, DeadStrip) {
-  parse("ld", "-dead_strip", "foo.o", nullptr);
-  EXPECT_TRUE(info->deadStrip());
+  EXPECT_FALSE(parse("ld", "-dead_strip", "foo.o", nullptr));
+  EXPECT_TRUE(_info.deadStrip());
 }
 
 TEST_F(DarwinLdParserTest, Arch) {
-  parse("ld", "-arch", "x86_64", "foo.o", nullptr);
-  EXPECT_EQ(MachOTargetInfo::arch_x86_64, info->arch());
+  EXPECT_FALSE(parse("ld", "-arch", "x86_64", "foo.o", nullptr));
+  EXPECT_EQ(MachOTargetInfo::arch_x86_64, _info.arch());
 }
 
 }  // end anonymous namespace

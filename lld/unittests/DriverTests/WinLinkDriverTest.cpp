@@ -24,112 +24,110 @@ namespace {
 
 class WinLinkParserTest : public ParserTest<WinLinkDriver, PECOFFTargetInfo> {
 protected:
-  virtual PECOFFTargetInfo *doParse(int argc, const char **argv,
-                                    raw_ostream &diag) {
-    PECOFFTargetInfo *info = new PECOFFTargetInfo();
-    EXPECT_FALSE(WinLinkDriver::parse(argc, argv, *info, diag));
-    return info;
+  virtual const TargetInfo *targetInfo() {
+    return &_info;
   }
 };
 
 TEST_F(WinLinkParserTest, Basic) {
-  parse("link.exe", "-subsystem", "console", "-out", "a.exe",
-        "-entry", "_start", "a.obj", "b.obj", "c.obj", nullptr);
-  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, info->getSubsystem());
-  EXPECT_EQ("a.exe", info->outputPath());
-  EXPECT_EQ("_start", info->entrySymbolName());
-  EXPECT_EQ(3, (int)inputFiles.size());
-  EXPECT_EQ("a.obj", inputFiles[0]);
-  EXPECT_EQ("b.obj", inputFiles[1]);
-  EXPECT_EQ("c.obj", inputFiles[2]);
-  EXPECT_EQ(6, info->getMinOSVersion().majorVersion);
-  EXPECT_EQ(0, info->getMinOSVersion().minorVersion);
-  EXPECT_EQ(1024 * 1024, info->getStackReserve());
-  EXPECT_EQ(4096, info->getStackCommit());
-  EXPECT_FALSE(info->allowRemainingUndefines());
-  EXPECT_TRUE(info->getNxCompat());
-  EXPECT_FALSE(info->getLargeAddressAware());
+  EXPECT_FALSE(parse("link.exe", "-subsystem", "console", "-out", "a.exe",
+        "-entry", "_start", "a.obj", "b.obj", "c.obj", nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _info.getSubsystem());
+  EXPECT_EQ("a.exe", _info.outputPath());
+  EXPECT_EQ("_start", _info.entrySymbolName());
+  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("b.obj", inputFile(1));
+  EXPECT_EQ("c.obj", inputFile(2));
+  EXPECT_EQ(6, _info.getMinOSVersion().majorVersion);
+  EXPECT_EQ(0, _info.getMinOSVersion().minorVersion);
+  EXPECT_EQ(1024 * 1024ULL, _info.getStackReserve());
+  EXPECT_EQ(4096ULL, _info.getStackCommit());
+  EXPECT_FALSE(_info.allowRemainingUndefines());
+  EXPECT_TRUE(_info.getNxCompat());
+  EXPECT_FALSE(_info.getLargeAddressAware());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
-  parse("link.exe", "/subsystem:console", "/out:a.exe", "a.obj", nullptr);
-  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, info->getSubsystem());
-  EXPECT_EQ("a.exe", info->outputPath());
-  EXPECT_EQ(1, (int)inputFiles.size());
-  EXPECT_EQ("a.obj", inputFiles[0]);
+  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe", "a.obj", 
+                  nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _info.getSubsystem());
+  EXPECT_EQ("a.exe", _info.outputPath());
+  EXPECT_EQ(1, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
 }
 
 TEST_F(WinLinkParserTest, NoFileExtension) {
-  parse("link.exe", "foo", "bar", nullptr);
-  EXPECT_EQ("foo.exe", info->outputPath());
-  EXPECT_EQ(2, (int)inputFiles.size());
-  EXPECT_EQ("foo.obj", inputFiles[0]);
-  EXPECT_EQ("bar.obj", inputFiles[1]);
+  EXPECT_FALSE(parse("link.exe", "foo", "bar", nullptr));
+  EXPECT_EQ("foo.exe", _info.outputPath());
+  EXPECT_EQ(2, inputFileCount());
+  EXPECT_EQ("foo.obj", inputFile(0));
+  EXPECT_EQ("bar.obj", inputFile(1));
 }
 
 TEST_F(WinLinkParserTest, NonStandardFileExtension) {
-  parse("link.exe", "foo.o", nullptr);
-  EXPECT_EQ("foo.exe", info->outputPath());
-  EXPECT_EQ(1, (int)inputFiles.size());
-  EXPECT_EQ("foo.o", inputFiles[0]);
+  EXPECT_FALSE(parse("link.exe", "foo.o", nullptr));
+  EXPECT_EQ("foo.exe", _info.outputPath());
+  EXPECT_EQ(1, inputFileCount());
+  EXPECT_EQ("foo.o", inputFile(0));
 }
 
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {
-  parse("link.exe", "-subsystem", "windows,3", "foo.o", nullptr);
-  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, info->getSubsystem());
-  EXPECT_EQ(3, info->getMinOSVersion().majorVersion);
-  EXPECT_EQ(0, info->getMinOSVersion().minorVersion);
+  EXPECT_FALSE(parse("link.exe", "-subsystem", "windows,3", "foo.o", nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _info.getSubsystem());
+  EXPECT_EQ(3, _info.getMinOSVersion().majorVersion);
+  EXPECT_EQ(0, _info.getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
-  parse("link.exe", "-subsystem", "windows,3.1", "foo.o", nullptr);
-  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, info->getSubsystem());
-  EXPECT_EQ(3, info->getMinOSVersion().majorVersion);
-  EXPECT_EQ(1, info->getMinOSVersion().minorVersion);
+  EXPECT_FALSE(parse("link.exe", "-subsystem", "windows,3.1", "foo.o", nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _info.getSubsystem());
+  EXPECT_EQ(3, _info.getMinOSVersion().majorVersion);
+  EXPECT_EQ(1, _info.getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, StackReserve) {
-  parse("link.exe", "-stack", "8192", nullptr);
-  EXPECT_EQ(8192, info->getStackReserve());
-  EXPECT_EQ(4096, info->getStackCommit());
+  EXPECT_FALSE(parse("link.exe", "-stack", "8192", nullptr));
+  EXPECT_EQ(8192ULL, _info.getStackReserve());
+  EXPECT_EQ(4096ULL, _info.getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, StackReserveAndCommit) {
-  parse("link.exe", "-stack", "16384,8192", nullptr);
-  EXPECT_EQ(16384, info->getStackReserve());
-  EXPECT_EQ(8192, info->getStackCommit());
+  EXPECT_FALSE(parse("link.exe", "-stack", "16384,8192", nullptr));
+  EXPECT_EQ(16384ULL, _info.getStackReserve());
+  EXPECT_EQ(8192ULL, _info.getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, HeapReserve) {
-  parse("link.exe", "-heap", "8192", nullptr);
-  EXPECT_EQ(8192, info->getHeapReserve());
-  EXPECT_EQ(4096, info->getHeapCommit());
+  EXPECT_FALSE(parse("link.exe", "-heap", "8192", nullptr));
+  EXPECT_EQ(8192ULL, _info.getHeapReserve());
+  EXPECT_EQ(4096ULL, _info.getHeapCommit());
 }
 
 TEST_F(WinLinkParserTest, HeapReserveAndCommit) {
-  parse("link.exe", "-heap", "16384,8192", nullptr);
-  EXPECT_EQ(16384, info->getHeapReserve());
-  EXPECT_EQ(8192, info->getHeapCommit());
+  EXPECT_FALSE(parse("link.exe", "-heap", "16384,8192", nullptr));
+  EXPECT_EQ(16384ULL, _info.getHeapReserve());
+  EXPECT_EQ(8192ULL, _info.getHeapCommit());
 }
 
 TEST_F(WinLinkParserTest, Force) {
-  parse("link.exe", "-force", nullptr);
-  EXPECT_TRUE(info->allowRemainingUndefines());
+  EXPECT_FALSE(parse("link.exe", "-force", nullptr));
+  EXPECT_TRUE(_info.allowRemainingUndefines());
 }
 
 TEST_F(WinLinkParserTest, NoNxCompat) {
-  parse("link.exe", "-nxcompat:no", nullptr);
-  EXPECT_FALSE(info->getNxCompat());
+  EXPECT_FALSE(parse("link.exe", "-nxcompat:no", nullptr));
+  EXPECT_FALSE(_info.getNxCompat());
 }
 
 TEST_F(WinLinkParserTest, LargeAddressAware) {
   parse("link.exe", "-largeaddressaware", nullptr);
-  EXPECT_TRUE(info->getLargeAddressAware());
+  EXPECT_TRUE(_info.getLargeAddressAware());
 }
 
 TEST_F(WinLinkParserTest, NoLargeAddressAware) {
   parse("link.exe", "-largeaddressaware:no", nullptr);
-  EXPECT_FALSE(info->getLargeAddressAware());
+  EXPECT_FALSE(_info.getLargeAddressAware());
 }
 
 } // end anonymous namespace
