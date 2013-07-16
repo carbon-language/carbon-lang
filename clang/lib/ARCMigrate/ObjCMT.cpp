@@ -250,17 +250,22 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
       if (Property->getPropertyImplementation() == ObjCPropertyDecl::Optional)
         continue;
       DeclContext::lookup_const_result R = IDecl->lookup(Property->getDeclName());
-      if (R.size() == 0)
-        return false;
-      for (unsigned I = 0, N = R.size(); I != N; ++I) {
-        if (ObjCPropertyDecl *ClassProperty = dyn_cast<ObjCPropertyDecl>(R[0])) {
-          if (ClassProperty->getPropertyAttributes()
-              != Property->getPropertyAttributes())
-            return false;
-          if (!Ctx.hasSameType(ClassProperty->getType(), Property->getType()))
-            return false;
-        }
+      if (R.size() == 0) {
+        // Relax the rule and look into class's implementation for a synthesize
+        // or dynamic declaration. Class is implementing a property coming from
+        // another protocol. This still makes the target protocol as conforming.
+        if (!ImpDecl->FindPropertyImplDecl(
+                                  Property->getDeclName().getAsIdentifierInfo()))
+          return false;
       }
+      else if (ObjCPropertyDecl *ClassProperty = dyn_cast<ObjCPropertyDecl>(R[0])) {
+          if ((ClassProperty->getPropertyAttributes()
+              != Property->getPropertyAttributes()) ||
+              !Ctx.hasSameType(ClassProperty->getType(), Property->getType()))
+            return false;
+      }
+      else
+        return false;
     }
   // At this point, all required properties in this protocol conform to those
   // declared in the class.

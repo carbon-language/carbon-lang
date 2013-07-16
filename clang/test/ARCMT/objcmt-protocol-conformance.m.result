@@ -46,3 +46,18 @@
 - (id) Meth1: (double) arg { return 0; }
 @end
 
+// Test5 - conforms to P3 because it implement's P3's property.
+@protocol P3
+@property (copy) id Prop;
+@end
+
+@protocol P4
+@property (copy) id Prop;
+@end
+
+@interface Test5 : NSObject<P3, P4>
+@end
+
+@implementation Test5
+@synthesize Prop=_XXX;
+@end
