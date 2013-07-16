@@ -78,15 +78,13 @@ class MipsAsmParser : public MCTargetAsmParser {
                         SMLoc NameLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
-  bool parseMathOperation(StringRef Name, SMLoc NameLoc,
-                        SmallVectorImpl<MCParsedAsmOperand*> &Operands);
-
   bool ParseDirective(AsmToken DirectiveID);
 
   MipsAsmParser::OperandMatchResultTy
   parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          int RegKind);
- MipsAsmParser::OperandMatchResultTy
+
+  MipsAsmParser::OperandMatchResultTy
   parseMemOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
@@ -1274,6 +1272,7 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   }
   return MatchOperand_NoMatch;
 }
+
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseCPU64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
@@ -1335,9 +1334,9 @@ bool MipsAsmParser::searchSymbolAlias(
         APInt IntVal(32, -1);
         if (!DefSymbol.substr(1).getAsInteger(10, IntVal))
           RegNum = matchRegisterByNumber(IntVal.getZExtValue(),
-                                         isMips64()
-                                           ? Mips::CPU64RegsRegClassID
-                                           : Mips::CPURegsRegClassID);
+                                     isMips64()
+                                       ? Mips::CPU64RegsRegClassID
+                                       : Mips::CPURegsRegClassID);
         else {
           // Lookup for the register with the corresponding name.
           switch (Kind) {
@@ -1368,7 +1367,7 @@ bool MipsAsmParser::searchSymbolAlias(
       Parser.Lex();
       const MCConstantExpr *Const = static_cast<const MCConstantExpr*>(Expr);
       MipsOperand *op = MipsOperand::CreateImm(Const, S,
-                                               Parser.getTok().getLoc());
+          Parser.getTok().getLoc());
       Operands.push_back(op);
       return true;
     }
@@ -1492,130 +1491,17 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
 
   return VK;
 }
-// Converts condition string to immediate operand value.
-static int ConvertCcString(StringRef CondString) {
-  int CC = StringSwitch<unsigned>(CondString)
-    .Case(".f",    0)
-    .Case(".un",   1)
-    .Case(".eq",   2)
-    .Case(".ueq",  3)
-    .Case(".olt",  4)
-    .Case(".ult",  5)
-    .Case(".ole",  6)
-    .Case(".ule",  7)
-    .Case(".sf",   8)
-    .Case(".ngle", 9)
-    .Case(".seq",  10)
-    .Case(".ngl",  11)
-    .Case(".lt",   12)
-    .Case(".nge",  13)
-    .Case(".le",   14)
-    .Case(".ngt",  15)
-    .Default(-1);
-
-  return CC;
-}
-
-bool MipsAsmParser::
-parseMathOperation(StringRef Name, SMLoc NameLoc,
-                   SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // Split the format.
-  size_t Start = Name.find('.'), Next = Name.rfind('.');
-  StringRef Format1 = Name.slice(Start, Next);
-  // Add the first format to the operands.
-  Operands.push_back(MipsOperand::CreateToken(Format1, NameLoc));
-  // Now for the second format.
-  StringRef Format2 = Name.slice(Next, StringRef::npos);
-  Operands.push_back(MipsOperand::CreateToken(Format2, NameLoc));
-
-  // Set the format for the first register.
-  setFpFormat(Format1);
-
-  // Read the remaining operands.
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    // Read the first operand.
-    if (ParseOperand(Operands, Name)) {
-      SMLoc Loc = getLexer().getLoc();
-      Parser.eatToEndOfStatement();
-      return Error(Loc, "unexpected token in argument list");
-    }
-
-    if (getLexer().isNot(AsmToken::Comma)) {
-      SMLoc Loc = getLexer().getLoc();
-      Parser.eatToEndOfStatement();
-      return Error(Loc, "unexpected token in argument list");
-    }
-    Parser.Lex(); // Eat the comma.
-
-    // Set the format for the first register
-    setFpFormat(Format2);
-
-    // Parse and remember the operand.
-    if (ParseOperand(Operands, Name)) {
-      SMLoc Loc = getLexer().getLoc();
-      Parser.eatToEndOfStatement();
-      return Error(Loc, "unexpected token in argument list");
-    }
-  }
-
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    SMLoc Loc = getLexer().getLoc();
-    Parser.eatToEndOfStatement();
-    return Error(Loc, "unexpected token in argument list");
-  }
-
-  Parser.Lex(); // Consume the EndOfStatement.
-  return false;
-}
 
 bool MipsAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  StringRef Mnemonic;
-
-  setDefaultFpFormat();
-  // Create the leading tokens for the mnemonic, split by '.' characters.
-  size_t Start = 0, Next = Name.find('.');
-  Mnemonic = Name.slice(Start, Next);
-
-  Operands.push_back(MipsOperand::CreateToken(Mnemonic, NameLoc));
-
-  if (Next != StringRef::npos) {
-    // There is a format token in mnemonic.
-    size_t Dot = Name.find('.', Next + 1);
-    StringRef Format = Name.slice(Next, Dot);
-    if (Dot == StringRef::npos) // Only one '.' in a string, it's a format.
-      Operands.push_back(MipsOperand::CreateToken(Format, NameLoc));
-    else {
-      if (Name.startswith("c.")) {
-        // Floating point compare, add '.' and immediate represent for cc.
-        Operands.push_back(MipsOperand::CreateToken(".", NameLoc));
-        int Cc = ConvertCcString(Format);
-        if (Cc == -1) {
-          return Error(NameLoc, "Invalid conditional code");
-        }
-        SMLoc E = SMLoc::getFromPointer(
-            Parser.getTok().getLoc().getPointer() - 1);
-        Operands.push_back(
-            MipsOperand::CreateImm(MCConstantExpr::Create(Cc, getContext()),
-                                   NameLoc, E));
-      } else {
-        // trunc, ceil, floor ...
-        return parseMathOperation(Name, NameLoc, Operands);
-      }
-
-      // The rest is a format.
-      Format = Name.slice(Dot, StringRef::npos);
-      Operands.push_back(MipsOperand::CreateToken(Format, NameLoc));
-    }
-
-    setFpFormat(Format);
-  }
+  // First operand in MCInst is instruction mnemonic.
+  Operands.push_back(MipsOperand::CreateToken(Name, NameLoc));
 
   // Read the remaining operands.
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
-    if (ParseOperand(Operands, Mnemonic)) {
+    if (ParseOperand(Operands, Name)) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
       return Error(Loc, "unexpected token in argument list");
@@ -1623,7 +1509,6 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
 
     while (getLexer().is(AsmToken::Comma)) {
       Parser.Lex(); // Eat the comma.
-
       // Parse and remember the operand.
       if (ParseOperand(Operands, Name)) {
         SMLoc Loc = getLexer().getLoc();
@@ -1632,13 +1517,11 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       }
     }
   }
-
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
     Parser.eatToEndOfStatement();
     return Error(Loc, "unexpected token in argument list");
   }
-
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }

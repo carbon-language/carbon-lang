@@ -97,6 +97,7 @@ class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
   let Predicates = [HasStdEnc];
   string BaseOpcode = opstr;
   string Arch;
+  let MnemonicContainsDot = 1;
 }
 
 // Mips Pseudo Instructions Format
@@ -677,6 +678,10 @@ class CEQS_FM<bits<5> fmt> {
   let Inst{10-8} = 0; // cc
   let Inst{7-4} = 0x3;
   let Inst{3-0} = cond;
+}
+
+class C_COND_FM<bits<5> fmt, bits<4> c> : CEQS_FM<fmt> {
+  let cond = c;
 }
 
 class CMov_I_F_FM<bits<6> funct, bits<5> fmt> {
