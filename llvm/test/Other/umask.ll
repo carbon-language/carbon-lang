@@ -1,4 +1,5 @@
 ; REQUIRES: shell
+; XFAIL: mingw32
 
 ; RUN: umask 000
 ; RUN: rm -f %t.000
