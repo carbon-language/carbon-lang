@@ -63,8 +63,14 @@ int main()
         std::ostream os(&sb);
         const void* n = 0;
         os << n;
-        assert(sb.str() == "0x0" || sb.str() == "(nil)");
         assert(os.good());
+        // %p is implementation defined.
+        // On some platforms (Windows), it's a hex number without
+        // any leading 0x like prefix.
+        // In that format, we assume a null pointer will yield 2 '0' hex digits
+        // for each 8 bits of address space.
+        assert(sb.str() == "0x0" || sb.str() == "(nil)" ||
+                                  sb.str() == std::string(sizeof(void*)*2,'0'));
     }
     {
         testbuf<char> sb;
