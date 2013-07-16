@@ -28,7 +28,7 @@ add_llvm_unittest(SupportTests
   ProgramTest.cpp
   RegexTest.cpp
   SwapByteOrderTest.cpp
-  TimeValue.cpp
+  TimeValueTest.cpp
   ValueHandleTest.cpp
   YAMLIOTest.cpp
   YAMLParserTest.cpp
