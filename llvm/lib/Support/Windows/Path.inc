@@ -598,6 +598,35 @@ static bool isReservedName(StringRef path) {
   return false;
 }
 
+static error_code getStatus(HANDLE FileHandle, file_status &Result) {
+  if (FileHandle == INVALID_HANDLE_VALUE)
+    goto handle_status_error;
+
+  BY_HANDLE_FILE_INFORMATION Info;
+  if (!::GetFileInformationByHandle(FileHandle, &Info))
+    goto handle_status_error;
+
+  Result = file_status(
+        file_type::regular_file, Info.ftLastWriteTime.dwHighDateTime,
+        Info.ftLastWriteTime.dwLowDateTime, Info.dwVolumeSerialNumber,
+        Info.nFileSizeHigh, Info.nFileSizeLow, Info.nFileIndexHigh,
+        Info.nFileIndexLow);
+  return error_code::success();
+
+handle_status_error:
+  error_code EC = windows_error(::GetLastError());
+  if (EC == windows_error::file_not_found ||
+      EC == windows_error::path_not_found)
+    Result = file_status(file_type::file_not_found);
+  else if (EC == windows_error::sharing_violation)
+    Result = file_status(file_type::type_unknown);
+  else {
+    Result = file_status(file_type::status_error);
+    return EC;
+  }
+  return error_code::success();
+}
+
 error_code status(const Twine &path, file_status &result) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
@@ -613,7 +642,7 @@ error_code status(const Twine &path, file_status &result) {
 
   DWORD attr = ::GetFileAttributesW(path_utf16.begin());
   if (attr == INVALID_FILE_ATTRIBUTES)
-    goto handle_status_error;
+    return getStatus(INVALID_HANDLE_VALUE, result);
 
   // Handle reparse points.
   if (attr & FILE_ATTRIBUTE_REPARSE_POINT) {
@@ -626,7 +655,7 @@ error_code status(const Twine &path, file_status &result) {
                     FILE_FLAG_BACKUP_SEMANTICS,
                     0));
     if (!h)
-      goto handle_status_error;
+      return getStatus(INVALID_HANDLE_VALUE, result);
   }
 
   if (attr & FILE_ATTRIBUTE_DIRECTORY)
@@ -641,32 +670,19 @@ error_code status(const Twine &path, file_status &result) {
                     FILE_FLAG_BACKUP_SEMANTICS,
                     0));
     if (!h)
-      goto handle_status_error;
+      return getStatus(INVALID_HANDLE_VALUE, result);
     BY_HANDLE_FILE_INFORMATION Info;
     if (!::GetFileInformationByHandle(h, &Info))
-      goto handle_status_error;
+      return getStatus(INVALID_HANDLE_VALUE, result);
 
-    result = file_status(
-        file_type::regular_file, Info.ftLastWriteTime.dwHighDateTime,
-        Info.ftLastWriteTime.dwLowDateTime, Info.dwVolumeSerialNumber,
-        Info.nFileSizeHigh, Info.nFileSizeLow, Info.nFileIndexHigh,
-        Info.nFileIndexLow);
+    return getStatus(h, result);
   }
   return error_code::success();
+}
 
-handle_status_error:
-  error_code ec = windows_error(::GetLastError());
-  if (ec == windows_error::file_not_found ||
-      ec == windows_error::path_not_found)
-    result = file_status(file_type::file_not_found);
-  else if (ec == windows_error::sharing_violation)
-    result = file_status(file_type::type_unknown);
-  else {
-    result = file_status(file_type::status_error);
-    return ec;
-  }
-
-  return error_code::success();
+error_code status(int FD, file_status &Result) {
+  HANDLE FileHandle = reinterpret_cast<HANDLE>(_get_osfhandle(FD));
+  return getStatus(FileHandle, Result);
 }
 
 error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {

@@ -529,6 +529,9 @@ error_code is_symlink(const Twine &path, bool &result);
 ///          platform specific error_code.
 error_code status(const Twine &path, file_status &result);
 
+/// @brief A version for when a file descriptor is already available.
+error_code status(int FD, file_status &Result);
+
 /// @brief Get file size.
 ///
 /// @param Path Input path.
