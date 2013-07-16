@@ -1645,7 +1645,7 @@ bool SLPVectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain,
 }
 
 bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
-                                      int costThreshold, BoUpSLP &R) {
+                                    int costThreshold, BoUpSLP &R) {
   SetVector<Value *> Heads, Tails;
   SmallDenseMap<Value *, Value *> ConsecutiveChain;
 
@@ -1656,9 +1656,11 @@ bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
 
   // Do a quadratic search on all of the given stores and find
   // all of the pairs of stores that follow each other.
-  for (unsigned i = 0, e = Stores.size(); i < e; ++i)
+  for (unsigned i = 0, e = Stores.size(); i < e; ++i) {
+    if (Heads.count(Stores[i]))
+      continue;
     for (unsigned j = 0; j < e; ++j) {
-      if (i == j)
+      if (i == j || Tails.count(Stores[j]))
         continue;
 
       if (R.isConsecutiveAccess(Stores[i], Stores[j])) {
@@ -1667,6 +1669,7 @@ bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
         ConsecutiveChain[Stores[i]] = Stores[j];
       }
     }
+  }
 
   // For stores that start but don't end a link in the chain:
   for (SetVector<Value *>::iterator it = Heads.begin(), e = Heads.end();
@@ -1879,9 +1882,14 @@ bool SLPVectorizer::vectorizeStoreChains(BoUpSLP &R) {
       continue;
 
     DEBUG(dbgs() << "SLP: Analyzing a store chain of length "
-                 << it->second.size() << ".\n");
+          << it->second.size() << ".\n");
 
-    Changed |= vectorizeStores(it->second, -SLPCostThreshold, R);
+    // Process the stores in chunks of 16.
+    for (unsigned CI = 0, CE = it->second.size(); CI < CE; CI+=16) {
+      unsigned Len = std::min<unsigned>(CE - CI, 16);
+      ArrayRef<StoreInst *> Chunk(&it->second[CI], Len);
+      Changed |= vectorizeStores(Chunk, -SLPCostThreshold, R);
+    }
   }
   return Changed;
 }
