@@ -295,6 +295,11 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   if (!isUnpredicatedTerminator(I))
     return false;
 
+  // Check whether the second-to-last branch is indirect, return
+  // 'unanalyzeable' here too.
+  if (I != MBB.begin() && prior(I)->isIndirectBranch())
+    return true;
+
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (isUncondBranchOpcode(LastOpc)) {
@@ -322,6 +327,8 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
       LastInst->eraseFromParent();
       LastInst = SecondLastInst;
       LastOpc = LastInst->getOpcode();
+      if (I != MBB.begin() && prior(I)->isIndirectBranch())
+        return true; // Indirect branches are unanalyzeable.
       if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
         // Return now the only terminator is an unconditional branch.
         TBB = LastInst->getOperand(0).getMBB();
