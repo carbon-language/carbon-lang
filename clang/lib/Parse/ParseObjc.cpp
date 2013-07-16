@@ -537,10 +537,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
 
   // Insert collected methods declarations into the @interface object.
   // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
-  Actions.ActOnAtEnd(getCurScope(), AtEnd,
-                     allMethods.data(), allMethods.size(),
-                     allProperties.data(), allProperties.size(),
-                     allTUVariables.data(), allTUVariables.size());
+  Actions.ActOnAtEnd(getCurScope(), AtEnd, allMethods, allTUVariables);
 }
 
 ///   Parse property attribute declarations.

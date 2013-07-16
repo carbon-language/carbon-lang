@@ -2492,13 +2492,9 @@ Sema::ObjCContainerKind Sema::getObjCContainerKind() const {
   }
 }
 
-// Note: For class/category implemenations, allMethods/allProperties is
-// always null.
-Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
-                       Decl **allMethods, unsigned allNum,
-                       Decl **allProperties, unsigned pNum,
-                       DeclGroupPtrTy *allTUVars, unsigned tuvNum) {
-
+// Note: For class/category implementations, allMethods is always null.
+Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *>allMethods,
+                       ArrayRef<DeclGroupPtrTy>allTUVars) {
   if (getObjCContainerKind() == Sema::OCK_None)
     return 0;
 
@@ -2516,7 +2512,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   llvm::DenseMap<Selector, const ObjCMethodDecl*> InsMap;
   llvm::DenseMap<Selector, const ObjCMethodDecl*> ClsMap;
 
-  for (unsigned i = 0; i < allNum; i++ ) {
+  for (unsigned i = 0, e = allMethods.size(); i != e; i++ ) {
     ObjCMethodDecl *Method =
       cast_or_null<ObjCMethodDecl>(allMethods[i]);
 
@@ -2683,7 +2679,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   }
   if (isInterfaceDeclKind) {
     // Reject invalid vardecls.
-    for (unsigned i = 0; i != tuvNum; i++) {
+    for (unsigned i = 0, e = allTUVars.size(); i != e; i++) {
       DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         if (VarDecl *VDecl = dyn_cast<VarDecl>(*I)) {
@@ -2694,7 +2690,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   }
   ActOnObjCContainerFinishDefinition();
 
-  for (unsigned i = 0; i != tuvNum; i++) {
+  for (unsigned i = 0, e = allTUVars.size(); i != e; i++) {
     DeclGroupRef DG = allTUVars[i].getAsVal<DeclGroupRef>();
     for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
       (*I)->setTopLevelDeclInObjCContainer();
