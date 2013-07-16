@@ -405,6 +405,10 @@ public:
   /// getModuleFlagsMetadata - Returns the module flags in the provided vector.
   void getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const;
 
+  /// Return the corresponding value if Key appears in module flags, otherwise
+  /// return null.
+  Value *getModuleFlag(StringRef Key) const;
+
   /// getModuleFlagsMetadata - Returns the NamedMDNode in the module that
   /// represents module-level flags. This method returns null if there are no
   /// module-level flags.

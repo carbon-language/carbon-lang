@@ -164,17 +164,10 @@ DIType DbgVariable::getType() const {
 
 /// Return Dwarf Version by checking module flags.
 static unsigned getDwarfVersionFromModule(const Module *M) {
-  SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
-  M->getModuleFlagsMetadata(ModuleFlags);
-  for (unsigned I = 0, E = ModuleFlags.size(); I < E; ++I) {
-    const Module::ModuleFlagEntry &MFE = ModuleFlags[I];
-    StringRef Key = MFE.Key->getString();
-    Value *Val = MFE.Val;
-
-    if (Key == "Dwarf Version")
-      return cast<ConstantInt>(Val)->getZExtValue();
-  }
-  return dwarf::DWARF_VERSION;
+  Value *Val = M->getModuleFlag("Dwarf Version");
+  if (!Val)
+    return dwarf::DWARF_VERSION;
+  return cast<ConstantInt>(Val)->getZExtValue();
 }
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)

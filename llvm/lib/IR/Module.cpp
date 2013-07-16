@@ -325,6 +325,19 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
   }
 }
 
+/// Return the corresponding value if Key appears in module flags, otherwise
+/// return null.
+Value *Module::getModuleFlag(StringRef Key) const {
+  SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
+  getModuleFlagsMetadata(ModuleFlags);
+  for (unsigned I = 0, E = ModuleFlags.size(); I < E; ++I) {
+    const ModuleFlagEntry &MFE = ModuleFlags[I];
+    if (Key == MFE.Key->getString())
+      return MFE.Val;
+  }
+  return 0;
+}
+
 /// getModuleFlagsMetadata - Returns the NamedMDNode in the module that
 /// represents module-level flags. This method returns null if there are no
 /// module-level flags.
