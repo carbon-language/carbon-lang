@@ -51,7 +51,7 @@ class HintNameAtom;
 class ImportTableEntryAtom;
 
 void addDir32NBReloc(COFFBaseDefinedAtom *atom, const Atom *target,
-                     size_t offsetInAtom) {
+                     size_t offsetInAtom = 0) {
   atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
       target, offsetInAtom, llvm::COFF::IMAGE_REL_I386_DIR32NB)));
 }
@@ -197,7 +197,7 @@ private:
     for (COFFSharedLibraryAtom *shared : sharedAtoms) {
       HintNameAtom *hintName = createHintNameAtom(ctx, shared);
       ImportTableEntryAtom *entry = new (_alloc) ImportTableEntryAtom(ctx);
-      addDir32NBReloc(entry, hintName, 0);
+      addDir32NBReloc(entry, hintName);
       ret.push_back(entry);
       if (shouldAddReference)
         shared->setImportTableEntry(entry);
@@ -281,11 +281,11 @@ private:
   /// will be set by the writer.
   void createDataDirectoryAtoms(Context &ctx) {
     auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(ctx.file, 1);
-    addDir32NBReloc(dir, ctx.importDirectories[0], 0);
+    addDir32NBReloc(dir, ctx.importDirectories[0]);
     ctx.file.addAtom(*dir);
 
     auto *iat = new (_alloc) coff::COFFDataDirectoryAtom(ctx.file, 12);
-    addDir32NBReloc(iat, ctx.importAddressTables[0], 0);
+    addDir32NBReloc(iat, ctx.importAddressTables[0]);
     ctx.file.addAtom(*iat);
   }
 
