@@ -1592,8 +1592,8 @@ static const Stmt *getTerminatorCondition(const CFGBlock *B) {
   return S;
 }
 
-static const char *StrEnteringLoop = "Entering loop body";
-static const char *StrLoopBodyZero = "Loop body executed 0 times";
+static const char *const StrEnteringLoop = "Entering loop body";
+static const char *const StrLoopBodyZero = "Loop body executed 0 times";
 
 static bool
 GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
