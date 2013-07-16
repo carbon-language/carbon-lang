@@ -251,11 +251,11 @@ private:
   void LRE_WillShrinkVirtReg(unsigned);
   void LRE_DidCloneVirtReg(unsigned, unsigned);
 
-  float calcSpillCost();
-  bool addSplitConstraints(InterferenceCache::Cursor, float&);
+  BlockFrequency calcSpillCost();
+  bool addSplitConstraints(InterferenceCache::Cursor, BlockFrequency&);
   void addThroughConstraints(InterferenceCache::Cursor, ArrayRef<unsigned>);
   void growRegion(GlobalSplitCandidate &Cand);
-  float calcGlobalSplitCost(GlobalSplitCandidate&);
+  BlockFrequency calcGlobalSplitCost(GlobalSplitCandidate&);
   bool calcCompactRegion(GlobalSplitCandidate&);
   void splitAroundRegion(LiveRangeEdit&, ArrayRef<unsigned>);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
@@ -703,12 +703,12 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
 /// that all preferences in SplitConstraints are met.
 /// Return false if there are no bundles with positive bias.
 bool RAGreedy::addSplitConstraints(InterferenceCache::Cursor Intf,
-                                   float &Cost) {
+                                   BlockFrequency &Cost) {
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
 
   // Reset interference dependent info.
   SplitConstraints.resize(UseBlocks.size());
-  float StaticCost = 0;
+  BlockFrequency StaticCost = 0;
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
     SpillPlacement::BlockConstraint &BC = SplitConstraints[i];
@@ -746,8 +746,8 @@ bool RAGreedy::addSplitConstraints(InterferenceCache::Cursor Intf,
     }
 
     // Accumulate the total frequency of inserted spill code.
-    if (Ins)
-      StaticCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
+    while (Ins--)
+      StaticCost += SpillPlacer->getBlockFrequency(BC.Number);
   }
   Cost = StaticCost;
 
@@ -880,7 +880,7 @@ bool RAGreedy::calcCompactRegion(GlobalSplitCandidate &Cand) {
   SpillPlacer->prepare(Cand.LiveBundles);
 
   // The static split cost will be zero since Cand.Intf reports no interference.
-  float Cost;
+  BlockFrequency Cost;
   if (!addSplitConstraints(Cand.Intf, Cost)) {
     DEBUG(dbgs() << ", none.\n");
     return false;
@@ -905,8 +905,8 @@ bool RAGreedy::calcCompactRegion(GlobalSplitCandidate &Cand) {
 
 /// calcSpillCost - Compute how expensive it would be to split the live range in
 /// SA around all use blocks instead of forming bundle regions.
-float RAGreedy::calcSpillCost() {
-  float Cost = 0;
+BlockFrequency RAGreedy::calcSpillCost() {
+  BlockFrequency Cost = 0;
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
     const SplitAnalysis::BlockInfo &BI = UseBlocks[i];
@@ -925,8 +925,8 @@ float RAGreedy::calcSpillCost() {
 /// pattern in LiveBundles. This cost should be added to the local cost of the
 /// interference pattern in SplitConstraints.
 ///
-float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand) {
-  float GlobalCost = 0;
+BlockFrequency RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand) {
+  BlockFrequency GlobalCost = 0;
   const BitVector &LiveBundles = Cand.LiveBundles;
   ArrayRef<SplitAnalysis::BlockInfo> UseBlocks = SA->getUseBlocks();
   for (unsigned i = 0; i != UseBlocks.size(); ++i) {
@@ -940,8 +940,8 @@ float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand) {
       Ins += RegIn != (BC.Entry == SpillPlacement::PrefReg);
     if (BI.LiveOut)
       Ins += RegOut != (BC.Exit == SpillPlacement::PrefReg);
-    if (Ins)
-      GlobalCost += Ins * SpillPlacer->getBlockFrequency(BC.Number);
+    while (Ins--)
+      GlobalCost += SpillPlacer->getBlockFrequency(BC.Number);
   }
 
   for (unsigned i = 0, e = Cand.ActiveBlocks.size(); i != e; ++i) {
@@ -953,8 +953,10 @@ float RAGreedy::calcGlobalSplitCost(GlobalSplitCandidate &Cand) {
     if (RegIn && RegOut) {
       // We need double spill code if this block has interference.
       Cand.Intf.moveToBlock(Number);
-      if (Cand.Intf.hasInterference())
-        GlobalCost += 2*SpillPlacer->getBlockFrequency(Number);
+      if (Cand.Intf.hasInterference()) {
+        GlobalCost += SpillPlacer->getBlockFrequency(Number);
+        GlobalCost += SpillPlacer->getBlockFrequency(Number);
+      }
       continue;
     }
     // live-in / stack-out or stack-in live-out.
@@ -1119,7 +1121,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                                   SmallVectorImpl<LiveInterval*> &NewVRegs) {
   unsigned NumCands = 0;
   unsigned BestCand = NoCand;
-  float BestCost;
+  BlockFrequency BestCost;
   SmallVector<unsigned, 8> UsedCands;
 
   // Check if we can split this live range around a compact region.
@@ -1127,11 +1129,11 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   if (HasCompact) {
     // Yes, keep GlobalCand[0] as the compact region candidate.
     NumCands = 1;
-    BestCost = HUGE_VALF;
+    BestCost = BlockFrequency::getMaxFrequency();
   } else {
     // No benefit from the compact region, our fallback will be per-block
     // splitting. Make sure we find a solution that is cheaper than spilling.
-    BestCost = Hysteresis * calcSpillCost();
+    BestCost = calcSpillCost();
     DEBUG(dbgs() << "Cost of isolating all blocks = " << BestCost << '\n');
   }
 
@@ -1161,7 +1163,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     Cand.reset(IntfCache, PhysReg);
 
     SpillPlacer->prepare(Cand.LiveBundles);
-    float Cost;
+    BlockFrequency Cost;
     if (!addSplitConstraints(Cand.Intf, Cost)) {
       DEBUG(dbgs() << PrintReg(PhysReg, TRI) << "\tno positive bundles\n");
       continue;
@@ -1197,7 +1199,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     });
     if (Cost < BestCost) {
       BestCand = NumCands;
-      BestCost = Hysteresis * Cost; // Prevent rounding effects.
+      BestCost = Cost;
     }
     ++NumCands;
   }
@@ -1515,7 +1517,9 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   unsigned BestAfter = 0;
   float BestDiff = 0;
 
-  const float blockFreq = SpillPlacer->getBlockFrequency(BI.MBB->getNumber());
+  const float blockFreq =
+    SpillPlacer->getBlockFrequency(BI.MBB->getNumber()).getFrequency() *
+    (1.0f / BlockFrequency::getEntryFrequency());
   SmallVector<float, 8> GapWeight;
 
   Order.rewind();

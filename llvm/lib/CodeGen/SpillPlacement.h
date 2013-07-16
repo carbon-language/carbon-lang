@@ -140,10 +140,8 @@ public:
 
   /// getBlockFrequency - Return the estimated block execution frequency per
   /// function invocation.
-  float getBlockFrequency(unsigned Number) const {
-    // FIXME: Return the BlockFrequency directly.
-    const float Scale = 1.0f / BlockFrequency::getEntryFrequency();
-    return BlockFrequencies[Number].getFrequency() * Scale;
+  BlockFrequency getBlockFrequency(unsigned Number) const {
+    return BlockFrequencies[Number];
   }
 
 private:
