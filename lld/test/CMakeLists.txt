@@ -22,6 +22,7 @@ if ( NOT LLD_BUILT_STANDALONE )
     FileCheck not llvm-nm
     lld llvm-objdump llvm-readobj
     linker-script-test
+    LLDUnitTests
     )
   set(LLD_TEST_PARAMS
     lld_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
