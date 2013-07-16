@@ -14,7 +14,9 @@
 // Project includes
 #include "lldb/Breakpoint/BreakpointLocationList.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -114,7 +116,24 @@ BreakpointLocationList::FindByAddress (const Address &addr) const
     BreakpointLocationSP bp_loc_sp;
     if (!m_locations.empty())
     {
-        addr_map::const_iterator pos = m_address_to_location.find (addr);
+        Address so_addr;
+
+        if (addr.IsSectionOffset())
+        {
+            so_addr = addr;
+        }
+        else
+        {
+            // Try and resolve as a load address if possible.
+            m_owner.GetTarget().GetSectionLoadList().ResolveLoadAddress (addr.GetOffset(), so_addr);
+            if (!so_addr.IsValid())
+            {    
+                // The address didn't resolve, so just set to passed in addr.
+                so_addr = addr;
+            }
+        }
+
+        addr_map::const_iterator pos = m_address_to_location.find (so_addr);
         if (pos != m_address_to_location.end())
             bp_loc_sp = pos->second;
     }

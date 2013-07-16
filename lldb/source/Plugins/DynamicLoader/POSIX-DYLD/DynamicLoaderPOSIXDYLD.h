@@ -92,6 +92,9 @@ protected:
     /// Auxiliary vector of the inferior process.
     std::unique_ptr<AuxVector> m_auxv;
 
+    /// Rendezvous breakpoint.
+    lldb::break_id_t m_dyld_bid;
+
     /// Enables a breakpoint on a function called by the runtime
     /// linker each time a module is loaded or unloaded.
     void

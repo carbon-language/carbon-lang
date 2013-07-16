@@ -20,6 +20,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanRunToAddress.h"
+#include "lldb/Breakpoint/BreakpointLocation.h"
 
 #include "AuxVector.h"
 #include "DynamicLoaderPOSIXDYLD.h"
@@ -93,12 +94,18 @@ DynamicLoaderPOSIXDYLD::DynamicLoaderPOSIXDYLD(Process *process)
       m_rendezvous(process),
       m_load_offset(LLDB_INVALID_ADDRESS),
       m_entry_point(LLDB_INVALID_ADDRESS),
-      m_auxv()
+      m_auxv(),
+      m_dyld_bid(LLDB_INVALID_BREAK_ID)
 {
 }
 
 DynamicLoaderPOSIXDYLD::~DynamicLoaderPOSIXDYLD()
 {
+    if (m_dyld_bid != LLDB_INVALID_BREAK_ID)
+    {
+        m_process->GetTarget().RemoveBreakpointByID (m_dyld_bid);
+        m_dyld_bid = LLDB_INVALID_BREAK_ID;
+    }
 }
 
 void
@@ -263,13 +270,19 @@ DynamicLoaderPOSIXDYLD::EntryBreakpointHit(void *baton,
 void
 DynamicLoaderPOSIXDYLD::SetRendezvousBreakpoint()
 {
-    Breakpoint *dyld_break;
-    addr_t break_addr;
+    addr_t break_addr = m_rendezvous.GetBreakAddress();
+    Target &target = m_process->GetTarget();
 
-    break_addr = m_rendezvous.GetBreakAddress();
-    dyld_break = m_process->GetTarget().CreateBreakpoint(break_addr, true).get();
-    dyld_break->SetCallback(RendezvousBreakpointHit, this, true);
-    dyld_break->SetBreakpointKind ("shared-library-event");
+    if (m_dyld_bid == LLDB_INVALID_BREAK_ID)
+    {
+        Breakpoint *dyld_break = target.CreateBreakpoint (break_addr, true).get();
+        dyld_break->SetCallback(RendezvousBreakpointHit, this, true);
+        dyld_break->SetBreakpointKind ("shared-library-event");
+        m_dyld_bid = dyld_break->GetID();
+    }
+
+    // Make sure our breakpoint is at the right address.
+    assert (target.GetBreakpointByID(m_dyld_bid)->FindLocationByAddress(break_addr)->GetBreakpoint().GetID() == m_dyld_bid);
 }
 
 bool
