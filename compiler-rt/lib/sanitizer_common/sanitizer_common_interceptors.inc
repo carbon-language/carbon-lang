@@ -28,6 +28,48 @@
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
 
+#if SANITIZER_INTERCEPT_STRCMP
+static inline int CharCmpX(unsigned char c1, unsigned char c2) {
+  return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
+}
+
+INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strcmp, s1, s2);
+  unsigned char c1, c2;
+  uptr i;
+  for (i = 0; ; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (c1 != c2 || c1 == '\0') break;
+  }
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, i + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, i + 1);
+  return CharCmpX(c1, c2);
+}
+
+INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strncmp, s1, s2, size);
+  unsigned char c1 = 0, c2 = 0;
+  uptr i;
+  for (i = 0; i < size; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (c1 != c2 || c1 == '\0') break;
+  }
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s1, Min(i + 1, size));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s2, Min(i + 1, size));
+  return CharCmpX(c1, c2);
+}
+
+#define INIT_STRCMP INTERCEPT_FUNCTION(strcmp)
+#define INIT_STRNCMP INTERCEPT_FUNCTION(strncmp)
+#else
+#define INIT_STRCMP
+#define INIT_STRNCMP
+#endif
+
 #if SANITIZER_INTERCEPT_STRCASECMP
 static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
   int c1_low = ToLower(c1);
@@ -1706,6 +1748,8 @@ INTERCEPTOR(char *, canonicalize_file_name, const char *path) {
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
+  INIT_STRCMP;                             \
+  INIT_STRNCMP;                            \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
   INIT_READ;                               \
