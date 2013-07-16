@@ -41,6 +41,7 @@ extern uptr SanitizerVerbosity;
 uptr GetPageSize();
 uptr GetPageSizeCached();
 uptr GetMmapGranularity();
+uptr GetMaxVirtualAddress();
 // Threads
 uptr GetTid();
 uptr GetThreadSelf();

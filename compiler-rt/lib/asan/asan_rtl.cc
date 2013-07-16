@@ -328,22 +328,12 @@ static void asan_atexit() {
 
 static void InitializeHighMemEnd() {
 #if !ASAN_FIXED_MAPPING
-#if SANITIZER_WORDSIZE == 64
-# if defined(__powerpc64__)
-  // FIXME:
-  // On PowerPC64 we have two different address space layouts: 44- and 46-bit.
-  // We somehow need to figure our which one we are using now and choose
-  // one of 0x00000fffffffffffUL and 0x00003fffffffffffUL.
-  // Note that with 'ulimit -s unlimited' the stack is moved away from the top
-  // of the address space, so simply checking the stack address is not enough.
-  kHighMemEnd = (1ULL << 44) - 1;  // 0x00000fffffffffffUL
-# else
-  kHighMemEnd = (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
-# endif
-#else  // SANITIZER_WORDSIZE == 32
-  kHighMemEnd = (1ULL << 32) - 1;  // 0xffffffff;
-#endif  // SANITIZER_WORDSIZE
+  kHighMemEnd = GetMaxVirtualAddress();
+  // Increase kHighMemEnd to make sure it's properly
+  // aligned together with kHighMemBeg:
+  kHighMemEnd |= SHADOW_GRANULARITY * GetPageSizeCached() - 1;
 #endif  // !ASAN_FIXED_MAPPING
+  CHECK_EQ((kHighMemBeg % GetPageSizeCached()), 0);
 }
 
 static void ProtectGap(uptr a, uptr size) {
@@ -486,10 +476,10 @@ void __asan_init() {
   ReplaceOperatorsNewAndDelete();
 
   uptr shadow_start = kLowShadowBeg;
-  if (kLowShadowBeg) shadow_start -= GetMmapGranularity();
-  uptr shadow_end = kHighShadowEnd;
+  if (kLowShadowBeg)
+    shadow_start -= GetMmapGranularity();
   bool full_shadow_is_available =
-      MemoryRangeIsAvailable(shadow_start, shadow_end);
+      MemoryRangeIsAvailable(shadow_start, kHighShadowEnd);
 
 #if SANITIZER_LINUX && defined(__x86_64__) && !ASAN_FIXED_MAPPING
   if (!full_shadow_is_available) {
@@ -515,7 +505,7 @@ void __asan_init() {
     ProtectGap(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
   } else if (kMidMemBeg &&
       MemoryRangeIsAvailable(shadow_start, kMidMemBeg - 1) &&
-      MemoryRangeIsAvailable(kMidMemEnd + 1, shadow_end)) {
+      MemoryRangeIsAvailable(kMidMemEnd + 1, kHighShadowEnd)) {
     CHECK(kLowShadowBeg != kLowShadowEnd);
     // mmap the low shadow plus at least one page at the left.
     ReserveShadowMemoryRange(shadow_start, kLowShadowEnd);

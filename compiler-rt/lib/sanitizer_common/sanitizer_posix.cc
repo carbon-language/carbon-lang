@@ -29,6 +29,24 @@ uptr GetMmapGranularity() {
   return GetPageSize();
 }
 
+uptr GetMaxVirtualAddress() {
+#if SANITIZER_WORDSIZE == 64
+# if defined(__powerpc64__)
+  // On PowerPC64 we have two different address space layouts: 44- and 46-bit.
+  // We somehow need to figure our which one we are using now and choose
+  // one of 0x00000fffffffffffUL and 0x00003fffffffffffUL.
+  // Note that with 'ulimit -s unlimited' the stack is moved away from the top
+  // of the address space, so simply checking the stack address is not enough.
+  return (1ULL << 44) - 1;  // 0x00000fffffffffffUL
+# else
+  return (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
+# endif
+#else  // SANITIZER_WORDSIZE == 32
+  // FIXME: We can probably lower this on Android?
+  return (1ULL << 32) - 1;  // 0xffffffff;
+#endif  // SANITIZER_WORDSIZE
+}
+
 void *MmapOrDie(uptr size, const char *mem_type) {
   size = RoundUpTo(size, GetPageSizeCached());
   uptr res = internal_mmap(0, size,

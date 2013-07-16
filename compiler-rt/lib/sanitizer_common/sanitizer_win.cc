@@ -40,6 +40,12 @@ uptr GetMmapGranularity() {
   return 1U << 16;  // FIXME: is this configurable?
 }
 
+uptr GetMaxVirtualAddress() {
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  return (uptr)si.lpMaximumApplicationAddress;
+}
+
 bool FileExists(const char *filename) {
   UNIMPLEMENTED();
 }
