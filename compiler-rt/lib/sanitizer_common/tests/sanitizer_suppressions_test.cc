@@ -24,19 +24,38 @@ static bool MyMatch(const char *templ, const char *func) {
 }
 
 TEST(Suppressions, Match) {
+  EXPECT_TRUE(MyMatch("foobar$", "foobar"));
+
   EXPECT_TRUE(MyMatch("foobar", "foobar"));
+  EXPECT_TRUE(MyMatch("*foobar*", "foobar"));
   EXPECT_TRUE(MyMatch("foobar", "prefix_foobar_postfix"));
   EXPECT_TRUE(MyMatch("*foobar*", "prefix_foobar_postfix"));
   EXPECT_TRUE(MyMatch("foo*bar", "foo_middle_bar"));
   EXPECT_TRUE(MyMatch("foo*bar", "foobar"));
   EXPECT_TRUE(MyMatch("foo*bar*baz", "foo_middle_bar_another_baz"));
   EXPECT_TRUE(MyMatch("foo*bar*baz", "foo_middle_barbaz"));
+  EXPECT_TRUE(MyMatch("^foobar", "foobar"));
+  EXPECT_TRUE(MyMatch("^foobar", "foobar_postfix"));
+  EXPECT_TRUE(MyMatch("^*foobar", "foobar"));
+  EXPECT_TRUE(MyMatch("^*foobar", "prefix_foobar"));
+  EXPECT_TRUE(MyMatch("foobar$", "foobar"));
+  EXPECT_TRUE(MyMatch("foobar$", "prefix_foobar"));
+  EXPECT_TRUE(MyMatch("*foobar*$", "foobar"));
+  EXPECT_TRUE(MyMatch("*foobar*$", "foobar_postfix"));
+  EXPECT_TRUE(MyMatch("^foobar$", "foobar"));
 
   EXPECT_FALSE(MyMatch("foo", "baz"));
   EXPECT_FALSE(MyMatch("foobarbaz", "foobar"));
   EXPECT_FALSE(MyMatch("foobarbaz", "barbaz"));
   EXPECT_FALSE(MyMatch("foo*bar", "foobaz"));
   EXPECT_FALSE(MyMatch("foo*bar", "foo_baz"));
+  EXPECT_FALSE(MyMatch("^foobar", "prefix_foobar"));
+  EXPECT_FALSE(MyMatch("foobar$", "foobar_postfix"));
+  EXPECT_FALSE(MyMatch("^foobar$", "prefix_foobar"));
+  EXPECT_FALSE(MyMatch("^foobar$", "foobar_postfix"));
+  EXPECT_FALSE(MyMatch("foo^bar", "foobar"));
+  EXPECT_FALSE(MyMatch("foo$bar", "foobar"));
+  EXPECT_FALSE(MyMatch("foo$^bar", "foobar"));
 }
 
 TEST(Suppressions, TypeStrings) {
