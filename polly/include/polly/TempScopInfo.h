@@ -292,7 +292,10 @@ class TempScopInfo : public FunctionPass {
   ///
   /// @param Inst The instruction to be analyzed
   /// @param R    The SCoP region
-  void buildScalarDependences(Instruction *Inst, Region *R);
+  ///
+  /// @return     True if the Instruction is used in other BB and a scalar write
+  ///             Access is required.
+  bool buildScalarDependences(Instruction *Inst, Region *R);
 
   void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
 

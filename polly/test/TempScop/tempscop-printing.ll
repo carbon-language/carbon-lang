@@ -1,4 +1,5 @@
 ; RUN: opt %loadPolly -basicaa -polly-analyze-ir -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -basicaa -polly-analyze-ir -analyze -disable-polly-intra-scop-scalar-to-array < %s | FileCheck %s -check-prefix=SCALARACCESS
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;
@@ -25,9 +26,12 @@ for.i:
 
 entry.next:
 ; CHECK: BB: entry.next
+; SCALARACCESS: BB: entry.next
   %init = load i64* %init_ptr
 ; CHECK:  Read init_ptr[0]
 ; CHECK:  Write init.s2a[0]
+; SCALARACCESS: Read init_ptr[0]
+; SCALARACCESS:  Write init[0]
   br label %for.j
 
 for.j:
@@ -35,9 +39,48 @@ for.j:
 ; CHECK: BB: for.j
 ; CHECK: Read init.s2a[0]
 ; CHECK: Write A[{0,+,8}<%for.j>]
+
+; SCALARACCESS: BB: for.j
+; SCALARACCESS: Read init
+; SCALARACCESS: Write A[{0,+,8}<%for.j>]
   %init_plus_two = add i64 %init, 2
   %scevgep = getelementptr i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
+  %indvar.j.next = add nsw i64 %indvar.j, 1
+  %exitcond.j = icmp eq i64 %indvar.j.next, %N
+  br i1 %exitcond.j, label %for.i.end, label %for.j
+
+for.i.end:
+  %exitcond.i = icmp eq i64 %indvar.i.next, %N
+  br i1 %exitcond.i, label %return, label %for.i
+
+return:
+  ret void
+}
+
+define void @g(i64* noalias %A, i64 %N, i64* noalias %init_ptr) nounwind {
+entry:
+  br label %for.i
+
+for.i:
+  %indvar.i = phi i64 [ 0, %entry ], [ %indvar.i.next, %for.i.end ]
+  %indvar.i.next = add nsw i64 %indvar.i, 1
+  br label %entry.next
+
+entry.next:
+; SCALARACCESS: BB: entry.next
+  %init = load i64* %init_ptr
+; SCALARACCESS: Read init_ptr[0]
+; SCALARACCESS:  Write init[0]
+  br label %for.j
+
+for.j:
+; SCALARACCESS: BB: for.j
+  %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
+  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  store i64 %init, i64* %scevgep
+; SCALARACCESS: Read init
+; SCALARACCESS: Write A[{0,+,8}<%for.j>]
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N
   br i1 %exitcond.j, label %for.i.end, label %for.j
