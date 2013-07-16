@@ -129,6 +129,14 @@ struct data_directory {
   support::ulittle32_t Size;
 };
 
+struct import_directory_table_entry {
+  support::ulittle32_t ImportLookupTableRVA;
+  support::ulittle32_t TimeDateStamp;
+  support::ulittle32_t ForwarderChain;
+  support::ulittle32_t NameRVA;
+  support::ulittle32_t ImportAddressTableRVA;
+};
+
 struct coff_symbol {
   struct StringTableOffset {
     support::ulittle32_t Zeroes;
