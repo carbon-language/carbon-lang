@@ -797,7 +797,9 @@ CHECK_SIZE_AND_OFFSET(cmsghdr, cmsg_type);
 
 COMPILER_CHECK(sizeof(__sanitizer_dirent) <= sizeof(dirent));
 CHECK_SIZE_AND_OFFSET(dirent, d_ino);
-#ifndef SANITIZER_MAC
+#if SANITIZER_MAC
+CHECK_SIZE_AND_OFFSET(dirent, d_seekoff);
+#else
 CHECK_SIZE_AND_OFFSET(dirent, d_off);
 #endif
 CHECK_SIZE_AND_OFFSET(dirent, d_reclen);

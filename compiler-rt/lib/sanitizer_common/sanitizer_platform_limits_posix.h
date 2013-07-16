@@ -96,7 +96,8 @@ namespace __sanitizer {
 
 #if SANITIZER_MAC
   struct __sanitizer_dirent {
-    unsigned d_ino;
+    unsigned long long d_ino;
+    unsigned long long d_seekoff;
     unsigned short d_reclen;
     // more fields that we don't care about
   };
