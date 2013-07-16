@@ -68,6 +68,7 @@ int GetMacosVersion() {
         case '0': return MACOS_VERSION_SNOW_LEOPARD;
         case '1': return MACOS_VERSION_LION;
         case '2': return MACOS_VERSION_MOUNTAIN_LION;
+        case '3': return MACOS_VERSION_MAVERICKS;
         default: return MACOS_VERSION_UNKNOWN;
       }
     }
