@@ -387,7 +387,7 @@ public:
   NewArchiveIterator(std::vector<std::string>::const_iterator I, Twine Name);
   bool isNewMember() const;
   object::Archive::child_iterator getOld() const;
-  StringRef getNew() const;
+  const char *getNew() const;
   StringRef getMemberName() const { return MemberName; }
 };
 }
@@ -411,9 +411,9 @@ object::Archive::child_iterator NewArchiveIterator::getOld() const {
   return OldI;
 }
 
-StringRef NewArchiveIterator::getNew() const {
+const char *NewArchiveIterator::getNew() const {
   assert(IsNewMember);
-  return *NewI;
+  return NewI->c_str();
 }
 
 template <typename T>
@@ -556,7 +556,7 @@ static void performWriteOperation(ArchiveOperation Operation,
 
     if (I->isNewMember()) {
       // FIXME: we do a stat + open. We should do a open + fstat.
-      StringRef FileName = I->getNew();
+      const char *FileName = I->getNew();
       sys::fs::file_status Status;
       failIfError(sys::fs::status(FileName, Status), FileName);
 
