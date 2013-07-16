@@ -5384,27 +5384,33 @@ def err_builtin_fn_use : Error<"builtin functions must be directly called">;
 def warn_call_wrong_number_of_arguments : Warning<
   "too %select{few|many}0 arguments in call to %1">;
 def err_atomic_builtin_must_be_pointer : Error<
-  "first argument to atomic builtin must be a pointer (%0 invalid)">;
+  "address argument to atomic builtin must be a pointer (%0 invalid)">;
 def err_atomic_builtin_must_be_pointer_intptr : Error<
-  "first argument to atomic builtin must be a pointer to integer or pointer"
+  "address argument to atomic builtin must be a pointer to integer or pointer"
   " (%0 invalid)">;
+def err_atomic_builtin_must_be_pointer_intfltptr : Error<
+  "address argument to atomic builtin must be a pointer to integer,"
+  " floating-point or pointer (%0 invalid)">;
 def err_atomic_builtin_pointer_size : Error<
-  "first argument to atomic builtin must be a pointer to 1,2,4,8 or 16 byte "
+  "address argument to atomic builtin must be a pointer to 1,2,4,8 or 16 byte "
   "type (%0 invalid)">;
+def err_atomic_exclusive_builtin_pointer_size : Error<
+  "address argument to load or store exclusive builtin must be a pointer to"
+  " 1,2,4 or 8 byte type (%0 invalid)">;
 def err_atomic_op_needs_atomic : Error<
-  "first argument to atomic operation must be a pointer to _Atomic "
+  "address argument to atomic operation must be a pointer to _Atomic "
   "type (%0 invalid)">;
 def err_atomic_op_needs_non_const_atomic : Error<
-  "first argument to atomic operation must be a pointer to non-const _Atomic "
+  "address argument to atomic operation must be a pointer to non-const _Atomic "
   "type (%0 invalid)">;
 def err_atomic_op_needs_trivial_copy : Error<
-  "first argument to atomic operation must be a pointer to a trivially-copyable"
-  " type (%0 invalid)">;
+  "address argument to atomic operation must be a pointer to a "
+  "trivially-copyable type (%0 invalid)">;
 def err_atomic_op_needs_atomic_int_or_ptr : Error<
-  "first argument to atomic operation must be a pointer to %select{|atomic }0"
+  "address argument to atomic operation must be a pointer to %select{|atomic }0"
   "integer or pointer (%1 invalid)">;
 def err_atomic_op_bitwise_needs_atomic_int : Error<
-  "first argument to bitwise atomic operation must be a pointer to "
+  "address argument to bitwise atomic operation must be a pointer to "
   "%select{|atomic }0integer (%1 invalid)">;
   
 def err_atomic_load_store_uses_lib : Error<

@@ -86,8 +86,8 @@ void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
   __c11_atomic_init(I, 5); // expected-error {{pointer to _Atomic}}
   __c11_atomic_load(0); // expected-error {{too few arguments to function}}
   __c11_atomic_load(0,0,0); // expected-error {{too many arguments to function}}
-  __c11_atomic_store(0,0,0); // expected-error {{first argument to atomic builtin must be a pointer}}
-  __c11_atomic_store((int*)0,0,0); // expected-error {{first argument to atomic operation must be a pointer to _Atomic}}
+  __c11_atomic_store(0,0,0); // expected-error {{address argument to atomic builtin must be a pointer}}
+  __c11_atomic_store((int*)0,0,0); // expected-error {{address argument to atomic operation must be a pointer to _Atomic}}
 
   __c11_atomic_load(i, memory_order_seq_cst);
   __c11_atomic_load(p, memory_order_seq_cst);
@@ -169,9 +169,9 @@ void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
   (int)__atomic_clear(&flag, memory_order_seq_cst); // expected-error {{operand of type 'void'}}
 
   const _Atomic(int) const_atomic;
-  __c11_atomic_init(&const_atomic, 0); // expected-error {{first argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
-  __c11_atomic_store(&const_atomic, 0, memory_order_release); // expected-error {{first argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
-  __c11_atomic_load(&const_atomic, memory_order_acquire); // expected-error {{first argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
+  __c11_atomic_init(&const_atomic, 0); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
+  __c11_atomic_store(&const_atomic, 0, memory_order_release); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
+  __c11_atomic_load(&const_atomic, memory_order_acquire); // expected-error {{address argument to atomic operation must be a pointer to non-const _Atomic type ('const _Atomic(int) *' invalid)}}
 }
 
 _Atomic(int*) PR12527_a;

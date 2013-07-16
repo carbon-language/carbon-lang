@@ -371,8 +371,116 @@ static QualType getNeonEltType(NeonTypeFlags Flags, ASTContext &Context) {
   llvm_unreachable("Invalid NeonTypeFlag!");
 }
 
+bool Sema::CheckARMBuiltinExclusiveCall(unsigned BuiltinID, CallExpr *TheCall) {
+  assert((BuiltinID == ARM::BI__builtin_arm_ldrex ||
+          BuiltinID == ARM::BI__builtin_arm_strex) &&
+         "unexpected ARM builtin");
+  bool IsLdrex = BuiltinID == ARM::BI__builtin_arm_ldrex;
+
+  DeclRefExpr *DRE =cast<DeclRefExpr>(TheCall->getCallee()->IgnoreParenCasts());
+
+  // Ensure that we have the proper number of arguments.
+  if (checkArgCount(*this, TheCall, IsLdrex ? 1 : 2))
+    return true;
+
+  // Inspect the pointer argument of the atomic builtin.  This should always be
+  // a pointer type, whose element is an integral scalar or pointer type.
+  // Because it is a pointer type, we don't have to worry about any implicit
+  // casts here.
+  Expr *PointerArg = TheCall->getArg(IsLdrex ? 0 : 1);
+  ExprResult PointerArgRes = DefaultFunctionArrayLvalueConversion(PointerArg);
+  if (PointerArgRes.isInvalid())
+    return true;
+  PointerArg = PointerArgRes.take();
+
+  const PointerType *pointerType = PointerArg->getType()->getAs<PointerType>();
+  if (!pointerType) {
+    Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
+      << PointerArg->getType() << PointerArg->getSourceRange();
+    return true;
+  }
+
+  // ldrex takes a "const volatile T*" and strex takes a "volatile T*". Our next
+  // task is to insert the appropriate casts into the AST. First work out just
+  // what the appropriate type is.
+  QualType ValType = pointerType->getPointeeType();
+  QualType AddrType = ValType.getUnqualifiedType().withVolatile();
+  if (IsLdrex)
+    AddrType.addConst();
+
+  // Issue a warning if the cast is dodgy.
+  CastKind CastNeeded = CK_NoOp;
+  if (!AddrType.isAtLeastAsQualifiedAs(ValType)) {
+    CastNeeded = CK_BitCast;
+    Diag(DRE->getLocStart(), diag::ext_typecheck_convert_discards_qualifiers)
+      << PointerArg->getType()
+      << Context.getPointerType(AddrType)
+      << AA_Passing << PointerArg->getSourceRange();
+  }
+
+  // Finally, do the cast and replace the argument with the corrected version.
+  AddrType = Context.getPointerType(AddrType);
+  PointerArgRes = ImpCastExprToType(PointerArg, AddrType, CastNeeded);
+  if (PointerArgRes.isInvalid())
+    return true;
+  PointerArg = PointerArgRes.take();
+
+  TheCall->setArg(IsLdrex ? 0 : 1, PointerArg);
+
+  // In general, we allow ints, floats and pointers to be loaded and stored.
+  if (!ValType->isIntegerType() && !ValType->isAnyPointerType() &&
+      !ValType->isBlockPointerType() && !ValType->isFloatingType()) {
+    Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer_intfltptr)
+      << PointerArg->getType() << PointerArg->getSourceRange();
+    return true;
+  }
+
+  // But ARM doesn't have instructions to deal with 128-bit versions.
+  if (Context.getTypeSize(ValType) > 64) {
+    Diag(DRE->getLocStart(), diag::err_atomic_exclusive_builtin_pointer_size)
+      << PointerArg->getType() << PointerArg->getSourceRange();
+    return true;
+  }
+
+  switch (ValType.getObjCLifetime()) {
+  case Qualifiers::OCL_None:
+  case Qualifiers::OCL_ExplicitNone:
+    // okay
+    break;
+
+  case Qualifiers::OCL_Weak:
+  case Qualifiers::OCL_Strong:
+  case Qualifiers::OCL_Autoreleasing:
+    Diag(DRE->getLocStart(), diag::err_arc_atomic_ownership)
+      << ValType << PointerArg->getSourceRange();
+    return true;
+  }
+
+
+  if (IsLdrex) {
+    TheCall->setType(ValType);
+    return false;
+  }
+
+  // Initialize the argument to be stored.
+  ExprResult ValArg = TheCall->getArg(0);
+  InitializedEntity Entity = InitializedEntity::InitializeParameter(
+      Context, ValType, /*consume*/ false);
+  ValArg = PerformCopyInitialization(Entity, SourceLocation(), ValArg);
+  if (ValArg.isInvalid())
+    return true;
+
+  TheCall->setArg(0, ValArg.get());
+  return false;
+}
+
 bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   llvm::APSInt Result;
+
+  if (BuiltinID == ARM::BI__builtin_arm_ldrex ||
+      BuiltinID == ARM::BI__builtin_arm_strex) {
+    return CheckARMBuiltinExclusiveCall(BuiltinID, TheCall);
+  }
 
   uint64_t mask = 0;
   unsigned TV = 0;

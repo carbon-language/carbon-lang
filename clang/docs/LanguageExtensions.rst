@@ -1656,6 +1656,36 @@ C11's ``<stdatomic.h>`` header.  These builtins provide the semantics of the
 * ``__c11_atomic_fetch_or``
 * ``__c11_atomic_fetch_xor``
 
+Low-level ARM exclusive memory builtins
+---------------------------------------
+
+Clang provides overloaded builtins giving direct access to the three key ARM
+instructions for implementing atomic operations.
+
+.. code-block:: c
+  T __builtin_arm_ldrex(const volatile T *addr);
+  int __builtin_arm_strex(T val, volatile T *addr);
+  void __builtin_arm_clrex(void);
+
+The types ``T`` currently supported are:
+* Integer types with width at most 64 bits.
+* Floating-point types
+* Pointer types.
+
+Note that the compiler does not guarantee it will not insert stores which clear
+the exclusive monitor in between an ``ldrex`` and its paired ``strex``. In
+practice this is only usually a risk when the extra store is on the same cache
+line as the variable being modified and Clang will only insert stack stores on
+its own, so it is best not to use these operations on variables with automatic
+storage duration.
+
+Also, loads and stores may be implicit in code written between the ``ldrex`` and
+``strex``. Clang will not necessarily mitigate the effects of these either, so
+care should be exercised.
+
+For these reasons the higher level atomic primitives should be preferred where
+possible.
+
 Non-standard C++11 Attributes
 =============================
 
