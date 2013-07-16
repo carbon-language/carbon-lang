@@ -122,7 +122,9 @@ private:
 
       if (CurrentToken->is(tok::r_paren)) {
         if (MightBeFunctionType && CurrentToken->Next &&
-            CurrentToken->Next->isOneOf(tok::l_paren, tok::l_square))
+            (CurrentToken->Next->is(tok::l_paren) ||
+             (CurrentToken->Next->is(tok::l_square) &&
+              !Contexts.back().IsExpression)))
           Left->Type = TT_FunctionTypeLParen;
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;

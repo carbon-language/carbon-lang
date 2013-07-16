@@ -3628,6 +3628,8 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   // Other constructs can look somewhat like function types:
   verifyFormat("A<sizeof(*x)> a;");
   verifyFormat("#define DEREF_AND_CALL_F(x) f(*x)");
+  verifyFormat("some_var = function(*some_pointer_var)[0];");
+  verifyFormat("void f() { function(*some_pointer_var)[0] = 10; }");
 }
 
 TEST_F(FormatTest, BreaksLongDeclarations) {
