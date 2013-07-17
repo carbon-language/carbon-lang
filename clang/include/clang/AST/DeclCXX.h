@@ -2786,6 +2786,9 @@ public:
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
 
+  /// \brief Return true if it is a C++03 access declaration (no 'using').
+  bool isAccessDeclaration() const { return UsingLocation.isInvalid(); }
+
   /// \brief Return true if the using declaration has 'typename'.
   bool isTypeName() const { return FirstUsingShadow.getInt(); }
 
@@ -2851,10 +2854,8 @@ public:
                            bool IsTypeNameArg);
 
   static UsingDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(UsingLocation, getNameInfo().getEndLoc());
-  }
+
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Using; }
@@ -2904,6 +2905,9 @@ public:
   /// \brief Set the source location of the 'using' keyword.
   void setUsingLoc(SourceLocation L) { UsingLocation = L; }
 
+  /// \brief Return true if it is a C++03 access declaration (no 'using').
+  bool isAccessDeclaration() const { return UsingLocation.isInvalid(); }
+
   /// \brief Retrieve the nested-name-specifier that qualifies the name,
   /// with source-location information.
   NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
@@ -2925,9 +2929,7 @@ public:
   static UnresolvedUsingValueDecl *
   CreateDeserialized(ASTContext &C, unsigned ID);
 
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(UsingLocation, getNameInfo().getEndLoc());
-  }
+  SourceRange getSourceRange() const LLVM_READONLY;
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == UnresolvedUsingValue; }

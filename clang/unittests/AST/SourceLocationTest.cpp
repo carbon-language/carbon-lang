@@ -224,5 +224,25 @@ TEST(CXXUnresolvedConstructExpr, SourceRange) {
       unresolvedConstructExpr(), Args, Lang_CXX11));
 }
 
+TEST(UsingDecl, SourceRange) {
+  RangeVerifier<UsingDecl> Verifier;
+  Verifier.expectRange(2, 22, 2, 25);
+  EXPECT_TRUE(Verifier.match(
+      "class B { protected: int i; };\n"
+      "class D : public B { B::i; };",
+      usingDecl()));
+}
+
+TEST(UnresolvedUsingValueDecl, SourceRange) {
+  RangeVerifier<UnresolvedUsingValueDecl> Verifier;
+  Verifier.expectRange(3, 3, 3, 6);
+  EXPECT_TRUE(Verifier.match(
+      "template <typename B>\n"
+      "class D : public B {\n"
+      "  B::i;\n"
+      "};",
+      unresolvedUsingValueDecl()));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang

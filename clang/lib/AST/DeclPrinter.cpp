@@ -1155,7 +1155,10 @@ void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
 }
 
 void DeclPrinter::VisitUsingDecl(UsingDecl *D) {
-  Out << "using ";
+  if (!D->isAccessDeclaration())
+    Out << "using ";
+  if (D->isTypeName())
+    Out << "typename ";
   D->getQualifier()->print(Out, Policy);
   Out << *D;
 }
@@ -1168,7 +1171,8 @@ DeclPrinter::VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D) {
 }
 
 void DeclPrinter::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
-  Out << "using ";
+  if (!D->isAccessDeclaration())
+    Out << "using ";
   D->getQualifier()->print(Out, Policy);
   Out << D->getName();
 }

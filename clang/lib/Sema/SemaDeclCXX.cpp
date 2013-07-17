@@ -6770,13 +6770,8 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
     return 0;
 
   // Warn about access declarations.
-  // TODO: store that the declaration was written without 'using' and
-  // talk about access decls instead of using decls in the
-  // diagnostics.
   if (!HasUsingKeyword) {
-    UsingLoc = Name.getLocStart();
-
-    Diag(UsingLoc,
+    Diag(Name.getLocStart(),
          getLangOpts().CPlusPlus11 ? diag::err_access_decl
                                    : diag::warn_access_decl_deprecated)
       << FixItHint::CreateInsertion(SS.getRange().getBegin(), "using ");

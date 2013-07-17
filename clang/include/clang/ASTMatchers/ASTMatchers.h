@@ -626,6 +626,21 @@ const internal::VariadicDynCastAllOfMatcher<Stmt, InitListExpr> initListExpr;
 ///   matches \code using X::x \endcode
 const internal::VariadicDynCastAllOfMatcher<Decl, UsingDecl> usingDecl;
 
+/// \brief Matches unresolved using value declarations.
+///
+/// Given
+/// \code
+///   template<typename X>
+///   class C : private X {
+///     using X::x;
+///   };
+/// \endcode
+/// unresolvedUsingValueDecl()
+///   matches \code using X::x \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  UnresolvedUsingValueDecl> unresolvedUsingValueDecl;
+
 /// \brief Matches constructor call expressions (including implicit ones).
 ///
 /// Example matches string(ptr, n) and ptr within arguments of f
