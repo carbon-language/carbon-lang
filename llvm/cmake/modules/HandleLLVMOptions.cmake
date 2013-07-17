@@ -17,9 +17,9 @@ if( LLVM_ENABLE_ASSERTIONS )
   if( NOT MSVC )
     add_definitions( -D_DEBUG )
   endif()
-  # On Release builds cmake automatically defines NDEBUG, so we
+  # On non-Debug builds cmake automatically defines NDEBUG, so we
   # explicitly undefine it:
-  if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
+  if( NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG" )
     add_definitions( -UNDEBUG )
     # Also remove /D NDEBUG to avoid MSVC warnings about conflicting defines.
     string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
