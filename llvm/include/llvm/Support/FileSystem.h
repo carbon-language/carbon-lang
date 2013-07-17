@@ -464,6 +464,13 @@ bool is_directory(file_status status);
 ///          platform specific error_code.
 error_code is_directory(const Twine &path, bool &result);
 
+/// @brief Simpler version of is_directory for clients that don't need to
+///        differentiate between an error and false.
+inline bool is_directory(const Twine &Path) {
+  bool Result;
+  return !is_directory(Path, Result) && Result;
+}
+
 /// @brief Does status represent a regular file?
 ///
 /// @param status A file_status previously returned from status.
