@@ -20,7 +20,7 @@ entry:
   %2 = load <4 x float>* %p3, align 16
   %3 = load <4 x float>* %p4, align 16
   %4 = load <4 x float>* %p5, align 16
-; CHECK:      movaps {{%xmm[0-7]}}, (%esp)
+; CHECK:      movups {{%xmm[0-7]}}, (%esp)
 ; CHECK-NEXT: calll _dovectortest 
   call void @dovectortest(<4 x float> %0, <4 x float> %1, <4 x float> %2, <4 x float> %3, <4 x float> %4)
   ret void

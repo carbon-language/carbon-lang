@@ -79,8 +79,10 @@ private:
 
   bool X86FastEmitLoad(EVT VT, const X86AddressMode &AM, unsigned &RR);
 
-  bool X86FastEmitStore(EVT VT, const Value *Val, const X86AddressMode &AM);
-  bool X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM);
+  bool X86FastEmitStore(EVT VT, const Value *Val, const X86AddressMode &AM,
+                        bool Aligned = false);
+  bool X86FastEmitStore(EVT VT, unsigned ValReg, const X86AddressMode &AM,
+                        bool Aligned = false);
 
   bool X86FastEmitExtend(ISD::NodeType Opc, EVT DstVT, unsigned Src, EVT SrcVT,
                          unsigned &ResultReg);
@@ -233,7 +235,8 @@ bool X86FastISel::X86FastEmitLoad(EVT VT, const X86AddressMode &AM,
 /// and a displacement offset, or a GlobalAddress,
 /// i.e. V. Return true if it is possible.
 bool
-X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
+X86FastISel::X86FastEmitStore(EVT VT, unsigned ValReg,
+                              const X86AddressMode &AM, bool Aligned) {
   // Get opcode and regclass of the output for the given store instruction.
   unsigned Opc = 0;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -243,8 +246,8 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
     // Mask out all but lowest bit.
     unsigned AndResult = createResultReg(&X86::GR8RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-            TII.get(X86::AND8ri), AndResult).addReg(Val).addImm(1);
-    Val = AndResult;
+            TII.get(X86::AND8ri), AndResult).addReg(ValReg).addImm(1);
+    ValReg = AndResult;
   }
   // FALLTHROUGH, handling i1 as i8.
   case MVT::i8:  Opc = X86::MOV8mr;  break;
@@ -260,26 +263,35 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned Val, const X86AddressMode &AM) {
           (Subtarget->hasAVX() ? X86::VMOVSDmr : X86::MOVSDmr) : X86::ST_Fp64m;
     break;
   case MVT::v4f32:
-    Opc = X86::MOVAPSmr;
+    if (Aligned)
+      Opc = X86::MOVAPSmr;
+    else
+      Opc = X86::MOVUPSmr;
     break;
   case MVT::v2f64:
-    Opc = X86::MOVAPDmr;
+    if (Aligned)
+      Opc = X86::MOVAPSmr;
+    else
+      Opc = X86::MOVUPSmr;
     break;
   case MVT::v4i32:
   case MVT::v2i64:
   case MVT::v8i16:
   case MVT::v16i8:
-    Opc = X86::MOVDQAmr;
+    if (Aligned)
+      Opc = X86::MOVDQAmr;
+    else
+      Opc = X86::MOVDQUmr;
     break;
   }
 
   addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
-                         DL, TII.get(Opc)), AM).addReg(Val);
+                         DL, TII.get(Opc)), AM).addReg(ValReg);
   return true;
 }
 
 bool X86FastISel::X86FastEmitStore(EVT VT, const Value *Val,
-                                   const X86AddressMode &AM) {
+                                   const X86AddressMode &AM, bool Aligned) {
   // Handle 'null' like i32/i64 0.
   if (isa<ConstantPointerNull>(Val))
     Val = Constant::getNullValue(TD.getIntPtrType(Val->getContext()));
@@ -314,7 +326,7 @@ bool X86FastISel::X86FastEmitStore(EVT VT, const Value *Val,
   if (ValReg == 0)
     return false;
 
-  return X86FastEmitStore(VT, ValReg, AM);
+  return X86FastEmitStore(VT, ValReg, AM, Aligned);
 }
 
 /// X86FastEmitExtend - Emit a machine instruction to extend a value Src of
@@ -688,6 +700,10 @@ bool X86FastISel::X86SelectStore(const Instruction *I) {
   if (S->isAtomic())
     return false;
 
+  unsigned SABIAlignment =
+    TD.getABITypeAlignment(S->getValueOperand()->getType());
+  bool Aligned = S->getAlignment() == 0 || S->getAlignment() >= SABIAlignment;
+
   MVT VT;
   if (!isTypeLegal(I->getOperand(0)->getType(), VT, /*AllowI1=*/true))
     return false;
@@ -696,7 +712,7 @@ bool X86FastISel::X86SelectStore(const Instruction *I) {
   if (!X86SelectAddress(I->getOperand(1), AM))
     return false;
 
-  return X86FastEmitStore(VT, I->getOperand(0), AM);
+  return X86FastEmitStore(VT, I->getOperand(0), AM, Aligned);
 }
 
 /// X86SelectRet - Select and emit code to implement ret instructions.
