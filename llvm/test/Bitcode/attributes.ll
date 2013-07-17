@@ -179,6 +179,34 @@ define void @f30() "cpu"="cortex-a8"
         ret void;
 }
 
+define i8 @f31(i8 returned %A)
+; CHECK: define i8 @f31(i8 returned %A)
+{
+        ret i8 %A;
+}
+
+define void @f32() sspstrong
+; CHECK: define void @f32() #21
+{
+        ret void;
+}
+
+define void @f33() minsize
+; CHECK: define void @f33() #22
+{
+        ret void;
+}
+
+declare void @nobuiltin()
+
+define void @f34()
+; CHECK: define void @f34()
+{
+        call void @nobuiltin() nobuiltin
+; CHECK: call void @nobuiltin() #23
+        ret void;
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }
@@ -200,3 +228,6 @@ define void @f30() "cpu"="cortex-a8"
 ; CHECK: attributes #18 = { sanitize_thread }
 ; CHECK: attributes #19 = { sanitize_memory }
 ; CHECK: attributes #20 = { "cpu"="cortex-a8" }
+; CHECK: attributes #21 = { sspstrong }
+; CHECK: attributes #22 = { minsize }
+; CHECK: attributes #23 = { nobuiltin }
