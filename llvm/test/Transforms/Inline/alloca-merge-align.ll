@@ -35,6 +35,21 @@ entry:
   ret void
 }
 
+define void @foo1(%struct.s* byval nocapture readonly %a) {
+entry:
+  %x = alloca [2 x i32], align 1
+  %a1 = getelementptr inbounds %struct.s* %a, i64 0, i32 0
+  %0 = load i32* %a1, align 4, !tbaa !0
+  %arrayidx = getelementptr inbounds [2 x i32]* %x, i64 0, i64 0
+  store i32 %0, i32* %arrayidx, align 4, !tbaa !0
+  %b = getelementptr inbounds %struct.s* %a, i64 0, i32 1
+  %1 = load i32* %b, align 4, !tbaa !0
+  %arrayidx2 = getelementptr inbounds [2 x i32]* %x, i64 0, i64 1
+  store i32 %1, i32* %arrayidx2, align 4, !tbaa !0
+  call void @bar(i32* %arrayidx) #2
+  ret void
+}
+
 declare void @bar(i32*) #1
 
 define void @goo(%struct.s* byval nocapture readonly %a) {
@@ -85,6 +100,24 @@ entry:
   call void @foo0(%struct.s* byval %tmpcast)
   store i32 2, i32* %a1, align 8, !tbaa !0
   call void @goo(%struct.s* byval %tmpcast)
+  ret i32 0
+}
+
+; CHECK-LABEL: @test1
+; CHECK: {{alloca \[2 x i32\]$}}
+; CHECK-NOT: alloca [2 x i32]
+; CHECK: ret i32 0
+
+define signext i32 @test1() {
+entry:
+  %a = alloca i64, align 8
+  %tmpcast = bitcast i64* %a to %struct.s*
+  store i64 0, i64* %a, align 8
+  %a1 = bitcast i64* %a to i32*
+  store i32 1, i32* %a1, align 8, !tbaa !0
+  call void @foo0(%struct.s* byval %tmpcast)
+  store i32 2, i32* %a1, align 8, !tbaa !0
+  call void @foo1(%struct.s* byval %tmpcast)
   ret i32 0
 }
 

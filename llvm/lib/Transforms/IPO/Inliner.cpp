@@ -216,9 +216,18 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
       
       AI->replaceAllUsesWith(AvailableAlloca);
 
-      if (Align1 > Align2 || (!Align1 && TD &&
-          TD->getABITypeAlignment(AI->getAllocatedType()) > Align2))
-        AvailableAlloca->setAlignment(Align1);
+      if (Align1 != Align2) {
+        if (!Align1 || !Align2) {
+          assert(TD && "DataLayout required to compare default alignments");
+          unsigned TypeAlign = TD->getABITypeAlignment(AI->getAllocatedType());
+
+          Align1 = Align1 ? Align1 : TypeAlign;
+          Align2 = Align2 ? Align2 : TypeAlign;
+        }
+
+        if (Align1 > Align2)
+          AvailableAlloca->setAlignment(AI->getAlignment());
+      }
 
       AI->eraseFromParent();
       MergedAwayAlloca = true;
