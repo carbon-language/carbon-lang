@@ -1793,6 +1793,7 @@ struct TsanInterceptorContext {
 #undef SANITIZER_INTERCEPT_GETPWNAM_R_AND_FRIENDS
 // Causes interceptor recursion (getaddrinfo() and fopen())
 #undef SANITIZER_INTERCEPT_GETADDRINFO
+#undef SANITIZER_INTERCEPT_GETNAMEINFO
 // Causes interceptor recursion (glob64() calls lstat64())
 #undef SANITIZER_INTERCEPT_GLOB
 
