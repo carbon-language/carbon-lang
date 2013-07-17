@@ -223,7 +223,9 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
       assert(MBBI->getOpcode() == XCore::RETSP_u6
         || MBBI->getOpcode() == XCore::RETSP_lu6);
       int Opcode = (isU6) ? XCore::RETSP_u6 : XCore::RETSP_lu6;
-      BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(FrameSize);
+      MachineInstrBuilder MIB  = BuildMI(MBB, MBBI, dl, TII.get(Opcode)).addImm(FrameSize);
+      for (unsigned i = 3, e = MBBI->getNumOperands(); i < e; ++i)
+        MIB->addOperand(MBBI->getOperand(i)); // copy any variadic operands
       MBB.erase(MBBI);
     } else {
       int Opcode = (isU6) ? XCore::LDAWSP_ru6 : XCore::LDAWSP_lru6;
