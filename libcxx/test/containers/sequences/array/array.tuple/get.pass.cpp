@@ -14,6 +14,16 @@
 #include <array>
 #include <cassert>
 
+#if __cplusplus > 201103L
+struct S {
+   std::array<int, 3> a;
+   int k;
+   constexpr S() : a{1,2,3}, k(std::get<2>(a)) {}
+   };
+
+constexpr std::array<int, 2> getArr () { return { 3, 4 }; }
+#endif
+
 int main()
 {
     {
@@ -25,4 +35,18 @@ int main()
         assert(c[1] == 5.5);
         assert(c[2] == 3.5);
     }
+#if _LIBCPP_STD_VER > 11
+    {
+        typedef double T;
+        typedef std::array<T, 3> C;
+        constexpr C c = {1, 2, 3.5};
+        static_assert(std::get<0>(c) == 1, "");
+        static_assert(std::get<1>(c) == 2, "");
+        static_assert(std::get<2>(c) == 3.5, "");
+    }
+    {
+        static_assert(S().k == 3, "");
+        static_assert(std::get<1>(getArr()) == 4, "");
+    }
+#endif
 }

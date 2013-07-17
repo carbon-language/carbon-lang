@@ -79,47 +79,47 @@ template <class _T1, class _T2> struct __tuple_like<pair<_T1, _T2> > : true_type
 template <class _Tp, size_t _Size> struct __tuple_like<array<_Tp, _Size> > : true_type {};
 
 template <size_t _Ip, class ..._Tp>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(tuple<_Tp...>&) _NOEXCEPT;
 
 template <size_t _Ip, class ..._Tp>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(const tuple<_Tp...>&) _NOEXCEPT;
 
 template <size_t _Ip, class ..._Tp>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, tuple<_Tp...> >::type&&
 get(tuple<_Tp...>&&) _NOEXCEPT;
 
 template <size_t _Ip, class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(pair<_T1, _T2>&) _NOEXCEPT;
 
 template <size_t _Ip, class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const typename tuple_element<_Ip, pair<_T1, _T2> >::type&
 get(const pair<_T1, _T2>&) _NOEXCEPT;
 
 template <size_t _Ip, class _T1, class _T2>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&&
 get(pair<_T1, _T2>&&) _NOEXCEPT;
 
 template <size_t _Ip, class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp&
 get(array<_Tp, _Size>&) _NOEXCEPT;
 
 template <size_t _Ip, class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const _Tp&
 get(const array<_Tp, _Size>&) _NOEXCEPT;
 
 template <size_t _Ip, class _Tp, size_t _Size>
-_LIBCPP_INLINE_VISIBILITY
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 _Tp&&
 get(array<_Tp, _Size>&&) _NOEXCEPT;
 

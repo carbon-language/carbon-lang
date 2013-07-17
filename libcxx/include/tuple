@@ -86,13 +86,13 @@ template <intsize_t I, class... T> class tuple_element<I, tuple<T...>>;
 // 20.4.1.5, element access:
 template <intsize_t I, class... T>
     typename tuple_element<I, tuple<T...>>::type&
-    get(tuple<T...>&) noexcept;
+    get(tuple<T...>&) noexcept; // constexpr in C++14
 template <intsize_t I, class... T>
     typename tuple_element<I, tuple<T...>>::type const&
-    get(const tuple<T...>&) noexcept;
+    get(const tuple<T...>&) noexcept; // constexpr in C++14
 template <intsize_t I, class... T>
     typename tuple_element<I, tuple<T...>>::type&&
-    get(tuple<T...>&&) noexcept;
+    get(tuple<T...>&&) noexcept; // constexpr in C++14
 
 template <class T1, class... T>
     constexpr T1& get(tuple<T...>&) noexcept;  // C++14
@@ -546,11 +546,11 @@ class _LIBCPP_TYPE_VIS tuple
 
     base base_;
 
-    template <size_t _Jp, class ..._Up> friend
+    template <size_t _Jp, class ..._Up> friend _LIBCPP_CONSTEXPR_AFTER_CXX11
         typename tuple_element<_Jp, tuple<_Up...> >::type& get(tuple<_Up...>&) _NOEXCEPT;
-    template <size_t _Jp, class ..._Up> friend
+    template <size_t _Jp, class ..._Up> friend _LIBCPP_CONSTEXPR_AFTER_CXX11
         const typename tuple_element<_Jp, tuple<_Up...> >::type& get(const tuple<_Up...>&) _NOEXCEPT;
-    template <size_t _Jp, class ..._Up> friend
+    template <size_t _Jp, class ..._Up> friend _LIBCPP_CONSTEXPR_AFTER_CXX11
         typename tuple_element<_Jp, tuple<_Up...> >::type&& get(tuple<_Up...>&&) _NOEXCEPT;
 public:
 
@@ -763,7 +763,7 @@ swap(tuple<_Tp...>& __t, tuple<_Tp...>& __u)
 // get
 
 template <size_t _Ip, class ..._Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(tuple<_Tp...>& __t) _NOEXCEPT
 {
@@ -772,7 +772,7 @@ get(tuple<_Tp...>& __t) _NOEXCEPT
 }
 
 template <size_t _Ip, class ..._Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 const typename tuple_element<_Ip, tuple<_Tp...> >::type&
 get(const tuple<_Tp...>& __t) _NOEXCEPT
 {
@@ -781,7 +781,7 @@ get(const tuple<_Tp...>& __t) _NOEXCEPT
 }
 
 template <size_t _Ip, class ..._Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 typename tuple_element<_Ip, tuple<_Tp...> >::type&&
 get(tuple<_Tp...>&& __t) _NOEXCEPT
 {

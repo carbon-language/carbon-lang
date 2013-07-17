@@ -18,6 +18,16 @@
 #include <utility>
 #include <cassert>
 
+#if __cplusplus > 201103L
+struct S {
+   std::pair<int, int> a;
+   int k;
+   constexpr S() : a{1,2}, k(std::get<0>(a)) {}
+   };
+
+constexpr std::pair<int, int> getP () { return { 3, 4 }; }
+#endif
+
 int main()
 {
     {
@@ -30,4 +40,12 @@ int main()
         assert(std::get<0>(p) == 5);
         assert(std::get<1>(p) == 6);
     }
+
+#if __cplusplus > 201103L
+    {
+        static_assert(S().k == 1, "");
+        static_assert(std::get<1>(getP()) == 4, "");
+    }
+#endif
+
 }

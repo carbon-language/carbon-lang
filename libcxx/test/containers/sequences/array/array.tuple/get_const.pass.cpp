@@ -24,4 +24,14 @@ int main()
         assert(std::get<1>(c) == 2);
         assert(std::get<2>(c) == 3.5);
     }
+#if _LIBCPP_STD_VER > 11
+    {
+        typedef double T;
+        typedef std::array<T, 3> C;
+        constexpr const C c = {1, 2, 3.5};
+        static_assert(std::get<0>(c) == 1, "");
+        static_assert(std::get<1>(c) == 2, "");
+        static_assert(std::get<2>(c) == 3.5, "");
+    }
+#endif
 }
