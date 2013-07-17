@@ -2981,27 +2981,34 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
   NoBreak.AlwaysBreakBeforeMultilineStrings = false;
   FormatStyle Break = getLLVMStyle();
   Break.AlwaysBreakBeforeMultilineStrings = true;
-  EXPECT_EQ("aaaa = \"bbbb\"\n"
-            "       \"cccc\";",
-            format("aaaa=\"bbbb\" \"cccc\";", NoBreak));
-  EXPECT_EQ("aaaa =\n"
-            "    \"bbbb\"\n"
-            "    \"cccc\";",
-            format("aaaa=\"bbbb\" \"cccc\";", Break));
-  EXPECT_EQ("aaaa(\"bbbb\"\n"
-            "     \"cccc\");",
-            format("aaaa(\"bbbb\" \"cccc\");", NoBreak));
-  EXPECT_EQ("aaaa(\n"
-            "    \"bbbb\"\n"
-            "    \"cccc\");",
-            format("aaaa(\"bbbb\" \"cccc\");", Break));
-  EXPECT_EQ("aaaa(qqq, \"bbbb\"\n"
-            "          \"cccc\");",
-            format("aaaa(qqq, \"bbbb\" \"cccc\");", NoBreak));
-  EXPECT_EQ("aaaa(qqq,\n"
-            "     \"bbbb\"\n"
-            "     \"cccc\");",
-            format("aaaa(qqq, \"bbbb\" \"cccc\");", Break));
+  verifyFormat("aaaa = \"bbbb\"\n"
+               "       \"cccc\";",
+               NoBreak);
+  verifyFormat("aaaa =\n"
+               "    \"bbbb\"\n"
+               "    \"cccc\";",
+               Break);
+  verifyFormat("aaaa(\"bbbb\"\n"
+               "     \"cccc\");",
+               NoBreak);
+  verifyFormat("aaaa(\n"
+               "    \"bbbb\"\n"
+               "    \"cccc\");",
+               Break);
+  verifyFormat("aaaa(qqq, \"bbbb\"\n"
+               "          \"cccc\");",
+               NoBreak);
+  verifyFormat("aaaa(qqq,\n"
+               "     \"bbbb\"\n"
+               "     \"cccc\");",
+               Break);
+
+  // Don't break if there is no column gain.
+  verifyFormat("f(\"aaaa\"\n"
+               "  \"bbbb\");",
+               Break);
+
+  // Treat literals with escaped newlines like multi-line string literals.
   EXPECT_EQ("x = \"a\\\n"
             "b\\\n"
             "c\";",

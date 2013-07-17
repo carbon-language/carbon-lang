@@ -963,18 +963,12 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     } else if (Current->Previous->ClosesTemplateDeclaration &&
                Style.AlwaysBreakTemplateDeclarations) {
       Current->MustBreakBefore = true;
-    } else if (Style.AlwaysBreakBeforeMultilineStrings &&
-               Current->is(tok::string_literal) &&
-               Current->Previous->isNot(tok::lessless) &&
-               Current->Previous->Type != TT_InlineASMColon &&
-               ((Current->getNextNonComment() &&
-                 Current->getNextNonComment()->is(tok::string_literal)) ||
-                (Current->TokenText.find("\\\n") != StringRef::npos))) {
-      Current->MustBreakBefore = true;
     }
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
-    if (Current->MustBreakBefore)
+    if (Current->MustBreakBefore ||
+        (Current->is(tok::string_literal) &&
+         Current->TokenText.find("\\\n") != StringRef::npos))
       Current->TotalLength = Current->Previous->TotalLength + Style.ColumnLimit;
     else
       Current->TotalLength = Current->Previous->TotalLength +

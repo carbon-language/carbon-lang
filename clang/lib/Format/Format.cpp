@@ -1177,6 +1177,14 @@ private:
         !Current.isTrailingComment() &&
         !Current.isOneOf(tok::r_paren, tok::r_brace))
       return true;
+    if (Style.AlwaysBreakBeforeMultilineStrings &&
+        State.Column > State.Stack.back().Indent &&
+        Current.is(tok::string_literal) && Previous.isNot(tok::lessless) &&
+        Previous.Type != TT_InlineASMColon &&
+        ((Current.getNextNonComment() &&
+          Current.getNextNonComment()->is(tok::string_literal)) ||
+         (Current.TokenText.find("\\\n") != StringRef::npos)))
+      return true;
 
     // If we need to break somewhere inside the LHS of a binary expression, we
     // should also break after the operator. Otherwise, the formatting would
