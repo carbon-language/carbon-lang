@@ -282,7 +282,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
   // Verify that substring after colon form a valid arch name.
   if (ColonPos != std::string::npos) {
     std::string ArchStr = ModuleName.substr(ColonPos + 1);
-    if (Triple(ArchStr).getArch() != Triple::ArchType::UnknownArch) {
+    if (Triple(ArchStr).getArch() != Triple::UnknownArch) {
       BinaryName = ModuleName.substr(0, ColonPos);
       ArchName = ArchStr;
     }
