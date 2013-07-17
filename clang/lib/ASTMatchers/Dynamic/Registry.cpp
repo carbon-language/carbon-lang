@@ -56,10 +56,6 @@ void RegistryMaps::registerMatcher(StringRef MatcherName,
 RegistryMaps::RegistryMaps() {
   // TODO: Here is the list of the missing matchers, grouped by reason.
   //
-  // Need DynTypedNode fixes:
-  // hasAnyTemplateArgument
-  // hasTemplateArgument
-  //
   // Need Variant/Parser fixes:
   // ofKind
   //
@@ -155,6 +151,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasAnyConstructorInitializer);
   REGISTER_MATCHER(hasAnyParameter);
   REGISTER_MATCHER(hasAnySubstatement);
+  REGISTER_MATCHER(hasAnyTemplateArgument);
   REGISTER_MATCHER(hasAnyUsingShadowDecl);
   REGISTER_MATCHER(hasArgument);
   REGISTER_MATCHER(hasArgumentOfType);
@@ -189,6 +186,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasSizeExpr);
   REGISTER_MATCHER(hasSourceExpression);
   REGISTER_MATCHER(hasTargetDecl);
+  REGISTER_MATCHER(hasTemplateArgument);
   REGISTER_MATCHER(hasTrueExpression);
   REGISTER_MATCHER(hasUnaryOperand);
   REGISTER_MATCHER(hasValueType);

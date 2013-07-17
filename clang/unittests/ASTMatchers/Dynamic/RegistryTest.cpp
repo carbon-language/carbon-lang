@@ -157,6 +157,20 @@ TEST_F(RegistryTest, PolymorphicMatchers) {
 #endif
 }
 
+TEST_F(RegistryTest, TemplateArgument) {
+  Matcher<Decl> HasTemplateArgument = constructMatcher(
+      "classTemplateSpecializationDecl",
+      constructMatcher(
+          "hasAnyTemplateArgument",
+          constructMatcher("refersToType",
+                           constructMatcher("asString", std::string("int")))))
+      .getTypedMatcher<Decl>();
+  EXPECT_TRUE(matches("template<typename T> class A {}; A<int> a;",
+                      HasTemplateArgument));
+  EXPECT_FALSE(matches("template<typename T> class A {}; A<char> a;",
+                       HasTemplateArgument));
+}
+
 TEST_F(RegistryTest, TypeTraversal) {
   Matcher<Type> M = constructMatcher(
       "pointerType",
