@@ -154,10 +154,10 @@ static std::string getFunctionName(DISubprogram SP) {
 namespace {
   class GCOVRecord {
    protected:
-    static const char *LinesTag;
-    static const char *FunctionTag;
-    static const char *BlockTag;
-    static const char *EdgeTag;
+    static const char *const LinesTag;
+    static const char *const FunctionTag;
+    static const char *const BlockTag;
+    static const char *const EdgeTag;
 
     GCOVRecord() {}
 
@@ -191,10 +191,10 @@ namespace {
 
     raw_ostream *os;
   };
-  const char *GCOVRecord::LinesTag = "\0\0\x45\x01";
-  const char *GCOVRecord::FunctionTag = "\0\0\0\1";
-  const char *GCOVRecord::BlockTag = "\0\0\x41\x01";
-  const char *GCOVRecord::EdgeTag = "\0\0\x43\x01";
+  const char *const GCOVRecord::LinesTag = "\0\0\x45\x01";
+  const char *const GCOVRecord::FunctionTag = "\0\0\0\1";
+  const char *const GCOVRecord::BlockTag = "\0\0\x41\x01";
+  const char *const GCOVRecord::EdgeTag = "\0\0\x43\x01";
 
   class GCOVFunction;
   class GCOVBlock;
