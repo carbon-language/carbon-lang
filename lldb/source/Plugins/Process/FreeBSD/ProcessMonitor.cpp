@@ -240,7 +240,7 @@ ReadOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
-/// @class ReadOperation
+/// @class WriteOperation
 /// @brief Implements ProcessMonitor::WriteMemory.
 class WriteOperation : public Operation
 {
