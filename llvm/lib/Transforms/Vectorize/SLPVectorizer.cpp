@@ -1004,19 +1004,14 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   // Calculate the distance.
   const SCEV *PtrSCEVA = SE->getSCEV(PtrA);
   const SCEV *PtrSCEVB = SE->getSCEV(PtrB);
-  const SCEV *OffsetSCEV = SE->getMinusSCEV(PtrSCEVB, PtrSCEVA);
-  const SCEVConstant *ConstOffSCEV = dyn_cast<SCEVConstant>(OffsetSCEV);
-
-  // Non constant distance.
-  if (!ConstOffSCEV)
-    return false;
-
-  int64_t Offset = ConstOffSCEV->getValue()->getSExtValue();
   Type *Ty = cast<PointerType>(PtrA->getType())->getElementType();
-  // The Instructions are consecutive if the size of the first load/store is
+  // The instructions are consecutive if the size of the first load/store is
   // the same as the offset.
   int64_t Sz = DL->getTypeStoreSize(Ty);
-  return (Offset == Sz);
+
+  const SCEV *C = SE->getConstant(PtrSCEVA->getType(), Sz);
+  const SCEV *X = SE->getAddExpr(PtrSCEVA, C);
+  return X == PtrSCEVB;
 }
 
 Value *BoUpSLP::getSinkBarrier(Instruction *Src, Instruction *Dst) {
