@@ -766,6 +766,8 @@ TEST(APFloatTest, fromDecimalString) {
   EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "-99e99999").isInfinity());
   EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "1e-99999").isPosZero());
   EXPECT_TRUE(APFloat(APFloat::IEEEdouble, "-1e-99999").isNegZero());
+
+  EXPECT_EQ(2.71828, convertToDoubleFromString("2.71828"));
 }
 
 TEST(APFloatTest, fromHexadecimalString) {
@@ -849,7 +851,10 @@ TEST(APFloatTest, fromHexadecimalString) {
   EXPECT_EQ(1.0625, APFloat(APFloat::IEEEdouble, "0x1.1p0").convertToDouble());
   EXPECT_EQ(1.0, APFloat(APFloat::IEEEdouble, "0x1p0").convertToDouble());
 
-  EXPECT_EQ(2.71828, convertToDoubleFromString("2.71828"));
+  EXPECT_EQ(convertToDoubleFromString("0x1p-150"),
+            convertToDoubleFromString("+0x800000000000000001.p-221"));
+  EXPECT_EQ(2251799813685248.5,
+            convertToDoubleFromString("0x80000000000004000000.010p-28"));
 }
 
 TEST(APFloatTest, toString) {
