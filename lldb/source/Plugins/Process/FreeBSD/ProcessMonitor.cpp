@@ -526,12 +526,12 @@ SingleStepOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
-/// @class SiginfoOperation
-/// @brief Implements ProcessMonitor::GetSignalInfo.
-class SiginfoOperation : public Operation
+/// @class LwpInfoOperation
+/// @brief Implements ProcessMonitor::GetLwpInfo.
+class LwpInfoOperation : public Operation
 {
 public:
-    SiginfoOperation(lldb::tid_t tid, void *info, bool &result, int &ptrace_err)
+    LwpInfoOperation(lldb::tid_t tid, void *info, bool &result, int &ptrace_err)
         : m_tid(tid), m_info(info), m_result(result), m_err(ptrace_err) { }
 
     void Execute(ProcessMonitor *monitor);
@@ -544,7 +544,7 @@ private:
 };
 
 void
-SiginfoOperation::Execute(ProcessMonitor *monitor)
+LwpInfoOperation::Execute(ProcessMonitor *monitor)
 {
     struct ptrace_lwpinfo plwp;
 
@@ -552,7 +552,7 @@ SiginfoOperation::Execute(ProcessMonitor *monitor)
         m_result = false;
         m_err = errno;
     } else {
-        memcpy(m_info, &plwp.pl_siginfo, sizeof(siginfo_t));
+        memcpy(m_info, &plwp, sizeof(plwp));
         m_result = true;
     }
 }
@@ -1105,7 +1105,7 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
     ProcessFreeBSD *process = monitor->m_process;
     assert(process);
     bool stop_monitoring;
-    siginfo_t info;
+    struct ptrace_lwpinfo plwp;
     int ptrace_err;
 
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
@@ -1119,17 +1119,17 @@ ProcessMonitor::MonitorCallback(void *callback_baton,
         return pid == process->GetID();
     }
 
-    if (!monitor->GetSignalInfo(pid, &info, ptrace_err))
+    if (!monitor->GetLwpInfo(pid, &plwp, ptrace_err))
         stop_monitoring = true; // pid is gone.  Bail.
     else {
-        switch (info.si_signo)
+        switch (plwp.pl_siginfo.si_signo)
         {
         case SIGTRAP:
-            message = MonitorSIGTRAP(monitor, &info, pid);
+            message = MonitorSIGTRAP(monitor, &plwp.pl_siginfo, pid);
             break;
             
         default:
-            message = MonitorSignal(monitor, &info, pid);
+            message = MonitorSignal(monitor, &plwp.pl_siginfo, pid);
             break;
         }
 
@@ -1588,10 +1588,10 @@ ProcessMonitor::BringProcessIntoLimbo()
 }
 
 bool
-ProcessMonitor::GetSignalInfo(lldb::tid_t tid, void *siginfo, int &ptrace_err)
+ProcessMonitor::GetLwpInfo(lldb::tid_t tid, void *lwpinfo, int &ptrace_err)
 {
     bool result;
-    SiginfoOperation op(tid, siginfo, result, ptrace_err);
+    LwpInfoOperation op(tid, lwpinfo, result, ptrace_err);
     DoOperation(&op);
     return result;
 }
