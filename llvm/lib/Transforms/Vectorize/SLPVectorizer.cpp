@@ -979,7 +979,7 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   if (!PtrA || !PtrB || (ASA != ASB))
     return false;
 
-  // Check that A and B are of the same type.
+  // Make sure that A and B are different pointers of the same type.
   if (PtrA == PtrB || PtrA->getType() != PtrB->getType())
     return false;
 
