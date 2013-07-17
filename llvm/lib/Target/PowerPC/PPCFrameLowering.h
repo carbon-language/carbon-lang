@@ -96,11 +96,7 @@ public:
 
   /// getBasePointerSaveOffset - Return the previous frame offset to save the
   /// base pointer.
-  static unsigned getBasePointerSaveOffset(bool isPPC64, bool isDarwinABI,
-                                           bool hasFP) {
-    if (!hasFP)
-      return getFramePointerSaveOffset(isPPC64, isDarwinABI);
-
+  static unsigned getBasePointerSaveOffset(bool isPPC64, bool isDarwinABI) {
     if (isDarwinABI)
       return isPPC64 ? -16U : -8U;
 

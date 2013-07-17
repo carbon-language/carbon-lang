@@ -26,20 +26,20 @@ entry:
 
 ; CHECK-DAG: mflr 0
 ; CHECK-DAG: rldicl [[REG:[0-9]+]], 1, 0, 59
-; CHECK-DAG: std 31, -8(1)
-; CHECK-DAG: mr 31, 1
+; CHECK-DAG: std 30, -16(1)
+; CHECK-DAG: mr 30, 1
 ; CHECK-DAG: std 0, 16(1)
 ; CHECK-DAG: subfic 0, [[REG]], -160
 ; CHECK: stdux 1, 1, 0
 
-; CHECK: .cfi_offset r31, -8
+; CHECK: .cfi_offset r30, -16
 ; CHECK: .cfi_offset lr, 16
 
-; CHECK: std 3, 48(31)
+; CHECK: std 3, 48(30)
 
 ; CHECK: ld 1, 0(1)
 ; CHECK-DAG: ld 0, 16(1)
-; CHECK-DAG: ld 31, -8(1)
+; CHECK-DAG: ld 30, -16(1)
 ; CHECK-DAG: mtlr 0
 ; CHECK: blr
 
@@ -91,8 +91,8 @@ entry:
 ; CHECK-DAG: rldicl [[REG3:[0-9]+]], 1, 0, 59
 ; CHECK-DAG: mflr 0
 ; CHECK-DAG: ori [[REG2:[0-9]+]], [[REG1]], 51808
-; CHECK-DAG: std 31, -8(1)
-; CHECK-DAG: mr 31, 1
+; CHECK-DAG: std 30, -16(1)
+; CHECK-DAG: mr 30, 1
 ; CHECK-DAG: std 0, 16(1)
 ; CHECK-DAG: subfc 0, [[REG3]], [[REG2]]
 ; CHECK: stdux 1, 1, 0
@@ -121,13 +121,13 @@ entry:
 
 ; CHECK-DAG: mflr 0
 ; CHECK-DAG: rldicl [[REG:[0-9]+]], 1, 0, 59
-; CHECK-DAG: std 31, -24(1)
-; CHECK-DAG: mr 31, 1
+; CHECK-DAG: std 30, -32(1)
+; CHECK-DAG: mr 30, 1
 ; CHECK-DAG: std 0, 16(1)
-; CHECK-DAG: subfic 0, [[REG]], -160
+; CHECK-DAG: subfic 0, [[REG]], -192
 ; CHECK: stdux 1, 1, 0
 
-; CHECK: stfd 30, -16(31)
+; CHECK: stfd 30, -16(30)
 
 ; CHECK: blr
 

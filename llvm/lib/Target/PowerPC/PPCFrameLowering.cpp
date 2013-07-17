@@ -297,6 +297,12 @@ void PPCFrameLowering::replaceFPWithRealFP(MachineFunction &MF) const {
   unsigned FPReg  = is31 ? PPC::R31 : PPC::R1;
   unsigned FP8Reg = is31 ? PPC::X31 : PPC::X1;
 
+  const PPCRegisterInfo *RegInfo =
+    static_cast<const PPCRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  bool HasBP = RegInfo->hasBasePointer(MF);
+  unsigned BPReg  = HasBP ? (unsigned) PPC::R30 : FPReg;
+  unsigned BP8Reg = HasBP ? (unsigned) PPC::X30 : FPReg;
+
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
        BI != BE; ++BI)
     for (MachineBasicBlock::iterator MBBI = BI->end(); MBBI != BI->begin(); ) {
@@ -313,6 +319,13 @@ void PPCFrameLowering::replaceFPWithRealFP(MachineFunction &MF) const {
         case PPC::FP8:
           MO.setReg(FP8Reg);
           break;
+        case PPC::BP:
+          MO.setReg(BPReg);
+          break;
+        case PPC::BP8:
+          MO.setReg(BP8Reg);
+          break;
+
         }
       }
     }
@@ -393,8 +406,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       BPOffset = FFI->getObjectOffset(BPIndex);
     } else {
       BPOffset =
-        PPCFrameLowering::getBasePointerSaveOffset(isPPC64, isDarwinABI,
-                                                   HasFP);
+        PPCFrameLowering::getBasePointerSaveOffset(isPPC64, isDarwinABI);
     }
   }
 
@@ -417,7 +429,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (HasBP)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STD))
-        .addReg(HasFP ? PPC::X30 : PPC::X31)
+        .addReg(PPC::X30)
         .addImm(BPOffset)
         .addReg(PPC::X1);
 
@@ -448,7 +460,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       // FIXME: On PPC32 SVR4, FPOffset is negative and access to negative
       // offsets of R1 is not allowed.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
-        .addReg(HasFP ? PPC::R30 : PPC::R31)
+        .addReg(PPC::R30)
         .addImm(BPOffset)
         .addReg(PPC::R1);
 
@@ -475,8 +487,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (HasBP) {
       // Save a copy of r1 as the base pointer.
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::OR),
-              HasFP ? PPC::R30 : PPC::R31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::OR), PPC::R30)
         .addReg(PPC::R1)
         .addReg(PPC::R1);
     }
@@ -527,8 +538,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   } else {    // PPC64.
     if (HasBP) {
       // Save a copy of r1 as the base pointer.
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::OR8),
-              HasFP ? PPC::X30 : PPC::X31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::OR8), PPC::X30)
         .addReg(PPC::X1)
         .addReg(PPC::X1);
     }
@@ -597,8 +607,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     }
 
     if (HasBP) {
-      unsigned Reg = isPPC64 ? (HasFP ? PPC::X30 : PPC::X31) :
-                               (HasFP ? PPC::R30 : PPC::R31);
+      unsigned Reg = isPPC64 ? PPC::X30 : PPC::R30;
       Reg = MRI->getDwarfRegNum(Reg, true);
       MMI.addFrameInst(
           MCCFIInstruction::createOffset(FrameLabel, Reg, BPOffset));
@@ -739,8 +748,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
       BPOffset = FFI->getObjectOffset(BPIndex);
     } else {
       BPOffset =
-        PPCFrameLowering::getBasePointerSaveOffset(isPPC64, isDarwinABI,
-                                                   HasFP);
+        PPCFrameLowering::getBasePointerSaveOffset(isPPC64, isDarwinABI);
     }
   }
 
@@ -836,7 +844,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
         .addImm(FPOffset).addReg(PPC::X1);
 
     if (HasBP)
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), HasFP ? PPC::X30 : PPC::X31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LD), PPC::X30)
         .addImm(BPOffset).addReg(PPC::X1);
 
     if (!MustSaveCRs.empty())
@@ -859,7 +867,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
           .addImm(FPOffset).addReg(PPC::R1);
 
     if (HasBP)
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ), HasFP ? PPC::R30 : PPC::R31)
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ), PPC::R30)
           .addImm(FPOffset).addReg(PPC::R1);
 
     if (MustSaveLR)
@@ -968,7 +976,7 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   int BPSI = FI->getBasePointerSaveIndex();
   if (!BPSI && RegInfo->hasBasePointer(MF)) {
-    int BPOffset = getBasePointerSaveOffset(isPPC64, isDarwinABI, needsFP(MF));
+    int BPOffset = getBasePointerSaveOffset(isPPC64, isDarwinABI);
     // Allocate the frame index for the base pointer save area.
     BPSI = MFI->CreateFixedObject(isPPC64? 8 : 4, BPOffset, true);
     // Save the result.

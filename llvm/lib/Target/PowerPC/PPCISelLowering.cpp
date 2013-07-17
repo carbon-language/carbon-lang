@@ -6084,6 +6084,7 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   // thisMBB:
   const int64_t LabelOffset = 1 * PVT.getStoreSize();
   const int64_t TOCOffset   = 3 * PVT.getStoreSize();
+  const int64_t BPOffset    = 4 * PVT.getStoreSize();
 
   // Prepare IP either in reg.
   const TargetRegisterClass *PtrRC = getRegClassFor(PVT);
@@ -6095,9 +6096,24 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
             .addReg(PPC::X2)
             .addImm(TOCOffset)
             .addReg(BufReg);
-
     MIB.setMemRefs(MMOBegin, MMOEnd);
   }
+
+  // Naked functions never have a base pointer, and so we use r1. For all
+  // other functions, this decision must be delayed until during PEI.
+  unsigned BaseReg;
+  if (MF->getFunction()->getAttributes().hasAttribute(
+          AttributeSet::FunctionIndex, Attribute::Naked))
+    BaseReg = PPCSubTarget.isPPC64() ? PPC::X1 : PPC::R1;
+  else
+    BaseReg = PPCSubTarget.isPPC64() ? PPC::BP8 : PPC::BP;
+
+  MIB = BuildMI(*thisMBB, MI, DL,
+                TII->get(PPCSubTarget.isPPC64() ? PPC::STD : PPC::STW))
+          .addReg(BaseReg)
+          .addImm(BPOffset)
+          .addReg(BufReg);
+  MIB.setMemRefs(MMOBegin, MMOEnd);
 
   // Setup
   MIB = BuildMI(*thisMBB, MI, DL, TII->get(PPC::BCLalways)).addMBB(mainMBB);
@@ -6170,12 +6186,14 @@ PPCTargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   // Since FP is only updated here but NOT referenced, it's treated as GPR.
   unsigned FP  = (PVT == MVT::i64) ? PPC::X31 : PPC::R31;
   unsigned SP  = (PVT == MVT::i64) ? PPC::X1 : PPC::R1;
+  unsigned BP  = (PVT == MVT::i64) ? PPC::X30 : PPC::R30;
 
   MachineInstrBuilder MIB;
 
   const int64_t LabelOffset = 1 * PVT.getStoreSize();
   const int64_t SPOffset    = 2 * PVT.getStoreSize();
   const int64_t TOCOffset   = 3 * PVT.getStoreSize();
+  const int64_t BPOffset    = 4 * PVT.getStoreSize();
 
   unsigned BufReg = MI->getOperand(0).getReg();
 
@@ -6217,8 +6235,17 @@ PPCTargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   }
   MIB.setMemRefs(MMOBegin, MMOEnd);
 
-  // FIXME: When we also support base pointers, that register must also be
-  // restored here.
+  // Reload BP
+  if (PVT == MVT::i64) {
+    MIB = BuildMI(*MBB, MI, DL, TII->get(PPC::LD), BP)
+            .addImm(BPOffset)
+            .addReg(BufReg);
+  } else {
+    MIB = BuildMI(*MBB, MI, DL, TII->get(PPC::LWZ), BP)
+            .addImm(BPOffset)
+            .addReg(BufReg);
+  }
+  MIB.setMemRefs(MMOBegin, MMOEnd);
 
   // Reload TOC
   if (PVT == MVT::i64 && PPCSubTarget.isSVR4ABI()) {

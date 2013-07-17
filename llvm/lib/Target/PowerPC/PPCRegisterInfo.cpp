@@ -152,6 +152,11 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(PPC::FP);
   Reserved.set(PPC::FP8);
 
+  // The BP register is also not really a register, but is the representation
+  // of the base pointer register used by setjmp.
+  Reserved.set(PPC::BP);
+  Reserved.set(PPC::BP8);
+
   // The counter registers must be reserved so that counter-based loops can
   // be correctly formed (and the mtctr instructions are not DCE'd).
   Reserved.set(PPC::CTR);
@@ -178,14 +183,11 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(PPC::X1);
     Reserved.set(PPC::X13);
 
-    if (PPCFI->needsFP(MF) || hasBasePointer(MF)) {
+    if (PPCFI->needsFP(MF))
       Reserved.set(PPC::X31);
 
-      // If we need a base pointer, and we also have a frame pointer, then use
-      // r30 as the base pointer.
-      if (PPCFI->needsFP(MF) && hasBasePointer(MF))
-        Reserved.set(PPC::X30);
-    }
+    if (hasBasePointer(MF))
+      Reserved.set(PPC::X30);
 
     // The 64-bit SVR4 ABI reserves r2 for the TOC pointer.
     if (Subtarget.isSVR4ABI()) {
@@ -193,12 +195,11 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     }
   }
 
-  if (PPCFI->needsFP(MF) || hasBasePointer(MF)) {
+  if (PPCFI->needsFP(MF))
     Reserved.set(PPC::R31);
 
-    if (PPCFI->needsFP(MF) && hasBasePointer(MF))
-      Reserved.set(PPC::R30);
-  }
+  if (hasBasePointer(MF))
+    Reserved.set(PPC::R30);
 
   // Reserve Altivec registers when Altivec is unavailable.
   if (!Subtarget.hasAltivec())
@@ -675,15 +676,10 @@ unsigned PPCRegisterInfo::getEHHandlerRegister() const {
 }
 
 unsigned PPCRegisterInfo::getBaseRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
-
   if (!hasBasePointer(MF))
     return getFrameRegister(MF);
 
-  if (!Subtarget.isPPC64())
-    return TFI->hasFP(MF) ? PPC::R30 : PPC::R31;
-  else
-    return TFI->hasFP(MF) ? PPC::X30 : PPC::X31;
+  return Subtarget.isPPC64() ? PPC::X30 : PPC::R30;
 }
 
 bool PPCRegisterInfo::hasBasePointer(const MachineFunction &MF) const {

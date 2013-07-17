@@ -94,6 +94,10 @@ def ZERO8 : GP8<ZERO, "0">;
 def FP   : GPR<0 /* arbitrary */, "**FRAME POINTER**">;
 def FP8  : GP8<FP, "**FRAME POINTER**">;
 
+// Representations of the base pointer used by setjmp.
+def BP   : GPR<0 /* arbitrary */, "**BASE POINTER**">;
+def BP8  : GP8<BP, "**BASE POINTER**">;
+
 // Condition register bits
 def CR0LT : CRBIT< 0, "0">;
 def CR0GT : CRBIT< 1, "1">;
@@ -172,11 +176,11 @@ def RM: SPR<512, "**ROUNDING MODE**">;
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
 def GPRC : RegisterClass<"PPC", [i32], 32, (add (sequence "R%u", 2, 12),
                                                 (sequence "R%u", 30, 13),
-                                                R31, R0, R1, FP)>;
+                                                R31, R0, R1, FP, BP)>;
 
 def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
                                                 (sequence "X%u", 30, 14),
-                                                X31, X13, X0, X1, FP8)>;
+                                                X31, X13, X0, X1, FP8, BP8)>;
 
 // For some instructions r0 is special (representing the value 0 instead of
 // the value in the r0 register), and we use these register subclasses to

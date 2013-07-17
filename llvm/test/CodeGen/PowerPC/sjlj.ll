@@ -20,6 +20,7 @@ entry:
 ; CHECK: ld [[REG2:[0-9]+]], 8([[REG]])
 ; CHECK: ld 1, 16([[REG]])
 ; CHECK: mtctr [[REG2]]
+; CHECK: ld 30, 32([[REG]])
 ; CHECK: ld 2, 24([[REG]])
 ; CHECK: bctr
 
@@ -98,6 +99,52 @@ return:                                           ; preds = %if.end, %if.then
 ; CHECK-NOAV-NOT: lvx
 ; CHECK-NOAV: blr
 }
+
+define signext i32 @main2() #0 {
+entry:
+  %a = alloca i8, align 64
+  call void @bar(i8* %a)
+  %retval = alloca i32, align 4
+  store i32 0, i32* %retval
+  %0 = call i8* @llvm.frameaddress(i32 0)
+  store i8* %0, i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**)
+  %1 = call i8* @llvm.stacksave()
+  store i8* %1, i8** getelementptr (i8** bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8**), i32 2)
+  %2 = call i32 @llvm.eh.sjlj.setjmp(i8* bitcast ([1 x %struct.__jmp_buf_tag]* @env_sigill to i8*))
+  %tobool = icmp ne i32 %2, 0
+  br i1 %tobool, label %if.then, label %if.else
+
+if.then:                                          ; preds = %entry
+  store i32 1, i32* %retval
+  br label %return
+
+if.else:                                          ; preds = %entry
+  call void @foo()
+  br label %if.end
+
+if.end:                                           ; preds = %if.else
+  store i32 0, i32* %retval
+  br label %return
+
+return:                                           ; preds = %if.end, %if.then
+  %3 = load i32* %retval
+  ret i32 %3
+
+; CHECK: @main2
+
+; CHECK: addis [[REG:[0-9]+]], 2, env_sigill@toc@ha
+; CHECK: std 31, env_sigill@toc@l([[REG]])
+; CHECK: addi [[REG]], [[REG]], env_sigill@toc@l
+; CHECK: std [[REG]], [[OFF:[0-9]+]](31)                  # 8-byte Folded Spill
+; CHECK: std 1, 16([[REG]])
+; CHECK: std 2, 24([[REG]])
+; CHECK: std 30, 32([[REG]])
+; CHECK: bcl 20, 31,
+
+; CHECK: blr
+}
+
+declare void @bar(i8*) #3
 
 declare i8* @llvm.frameaddress(i32) #2
 
