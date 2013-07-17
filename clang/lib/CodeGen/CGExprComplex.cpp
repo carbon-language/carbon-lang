@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
+#include <algorithm>
 using namespace clang;
 using namespace CodeGen;
 
@@ -297,19 +298,26 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(LValue lvalue) {
 
   llvm::Value *SrcPtr = lvalue.getAddress();
   bool isVolatile = lvalue.isVolatileQualified();
+  unsigned AlignR = lvalue.getAlignment().getQuantity();
+  ASTContext &C = CGF.getContext();
+  QualType ComplexTy = lvalue.getType();
+  unsigned ComplexAlign = C.getTypeAlignInChars(ComplexTy).getQuantity();
+  unsigned AlignI = std::min(AlignR, ComplexAlign);
 
   llvm::Value *Real=0, *Imag=0;
 
   if (!IgnoreReal || isVolatile) {
     llvm::Value *RealP = Builder.CreateStructGEP(SrcPtr, 0,
                                                  SrcPtr->getName() + ".realp");
-    Real = Builder.CreateLoad(RealP, isVolatile, SrcPtr->getName() + ".real");
+    Real = Builder.CreateAlignedLoad(RealP, AlignR, isVolatile,
+                                     SrcPtr->getName() + ".real");
   }
 
   if (!IgnoreImag || isVolatile) {
     llvm::Value *ImagP = Builder.CreateStructGEP(SrcPtr, 1,
                                                  SrcPtr->getName() + ".imagp");
-    Imag = Builder.CreateLoad(ImagP, isVolatile, SrcPtr->getName() + ".imag");
+    Imag = Builder.CreateAlignedLoad(ImagP, AlignI, isVolatile,
+                                     SrcPtr->getName() + ".imag");
   }
   return ComplexPairTy(Real, Imag);
 }
@@ -325,10 +333,16 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val,
   llvm::Value *Ptr = lvalue.getAddress();
   llvm::Value *RealPtr = Builder.CreateStructGEP(Ptr, 0, "real");
   llvm::Value *ImagPtr = Builder.CreateStructGEP(Ptr, 1, "imag");
+  unsigned AlignR = lvalue.getAlignment().getQuantity();
+  ASTContext &C = CGF.getContext();
+  QualType ComplexTy = lvalue.getType();
+  unsigned ComplexAlign = C.getTypeAlignInChars(ComplexTy).getQuantity();
+  unsigned AlignI = std::min(AlignR, ComplexAlign);
 
-  // TODO: alignment
-  Builder.CreateStore(Val.first, RealPtr, lvalue.isVolatileQualified());
-  Builder.CreateStore(Val.second, ImagPtr, lvalue.isVolatileQualified());
+  Builder.CreateAlignedStore(Val.first, RealPtr, AlignR,
+                             lvalue.isVolatileQualified());
+  Builder.CreateAlignedStore(Val.second, ImagPtr, AlignI,
+                             lvalue.isVolatileQualified());
 }
 
 
