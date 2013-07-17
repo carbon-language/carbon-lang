@@ -7286,8 +7286,8 @@ public:
   /// Returns false on success.
   /// Can optionally return whether the bit-field is of width 0
   ExprResult VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
-                            QualType FieldTy, Expr *BitWidth,
-                            bool *ZeroWidth = 0);
+                            QualType FieldTy, bool IsMsStruct,
+                            Expr *BitWidth, bool *ZeroWidth = 0);
 
   enum CUDAFunctionTarget {
     CFT_Device,
