@@ -652,6 +652,11 @@ class BRK_FT<string opstr> :
   InstSE<(outs), (ins uimm10:$code_1, uimm10:$code_2),
          !strconcat(opstr, "\t$code_1, $code_2"), [], NoItinerary, FrmOther>;
 
+// (D)Eret
+class ER_FT<string opstr> :
+  InstSE<(outs), (ins),
+         opstr, [], NoItinerary, FrmOther>;
+
 // Sync
 let hasSideEffects = 1 in
 class SYNC_FT :
@@ -957,6 +962,9 @@ def TEQ : TEQ_FT<"teq", CPURegsOpnd>, TEQ_FM<0x34>;
 
 def BREAK : BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
+
+def ERET : ER_FT<"eret">, ER_FM<0x18>;
+def DERET : ER_FT<"deret">, ER_FM<0x1f>;
 
 /// Load-linked, Store-conditional
 let Predicates = [NotN64, HasStdEnc] in {
