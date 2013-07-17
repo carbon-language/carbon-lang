@@ -612,7 +612,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   switch (S->getStmtClass()) {
     // C++ and ARC stuff we don't support yet.
     case Expr::ObjCIndirectCopyRestoreExprClass:
-    case Stmt::CXXDefaultInitExprClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::CXXTryStmtClass:
@@ -737,7 +736,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       break;
     }
 
-    case Stmt::CXXDefaultArgExprClass: {
+    case Stmt::CXXDefaultArgExprClass:
+    case Stmt::CXXDefaultInitExprClass: {
       Bldr.takeNodes(Pred);
       ExplodedNodeSet PreVisit;
       getCheckerManager().runCheckersForPreStmt(PreVisit, Pred, S, *this);
@@ -745,9 +745,13 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       ExplodedNodeSet Tmp;
       StmtNodeBuilder Bldr2(PreVisit, Tmp, *currBldrCtx);
 
-      const LocationContext *LCtx = Pred->getLocationContext();
-      const CXXDefaultArgExpr *DefaultE = cast<CXXDefaultArgExpr>(S);
-      const Expr *ArgE = DefaultE->getExpr();
+      const Expr *ArgE;
+      if (const CXXDefaultArgExpr *DefE = dyn_cast<CXXDefaultArgExpr>(S))
+        ArgE = DefE->getExpr();
+      else if (const CXXDefaultInitExpr *DefE = dyn_cast<CXXDefaultInitExpr>(S))
+        ArgE = DefE->getExpr();
+      else
+        llvm_unreachable("unknown constant wrapper kind");
 
       bool IsTemporary = false;
       if (const MaterializeTemporaryExpr *MTE =
@@ -760,13 +764,15 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       if (!ConstantVal)
         ConstantVal = UnknownVal();
 
+      const LocationContext *LCtx = Pred->getLocationContext();
       for (ExplodedNodeSet::iterator I = PreVisit.begin(), E = PreVisit.end();
            I != E; ++I) {
         ProgramStateRef State = (*I)->getState();
-        State = State->BindExpr(DefaultE, LCtx, *ConstantVal);
+        State = State->BindExpr(S, LCtx, *ConstantVal);
         if (IsTemporary)
-          State = createTemporaryRegionIfNeeded(State, LCtx, DefaultE,
-                                                DefaultE);
+          State = createTemporaryRegionIfNeeded(State, LCtx,
+                                                cast<Expr>(S),
+                                                cast<Expr>(S));
         Bldr2.generateNode(S, *I, State);
       }
 
