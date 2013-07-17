@@ -1495,6 +1495,11 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
 bool MipsAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Check if we have valid mnemonic
+  if (!mnemonicIsValid(Name)) {
+    Parser.eatToEndOfStatement();
+    return Error(NameLoc, "Unknown instruction");
+  }
   // First operand in MCInst is instruction mnemonic.
   Operands.push_back(MipsOperand::CreateToken(Name, NameLoc));
 
