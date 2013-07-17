@@ -147,91 +147,20 @@ let Namespace = "Mips" in {
   def RA_64   : Mips64GPRReg< 31, "ra",  [RA]>, DwarfRegNum<[31]>;
 
   /// Mips Single point precision FPU Registers
-  def F0  : FPR< 0,  "f0">, DwarfRegNum<[32]>;
-  def F1  : FPR< 1,  "f1">, DwarfRegNum<[33]>;
-  def F2  : FPR< 2,  "f2">, DwarfRegNum<[34]>;
-  def F3  : FPR< 3,  "f3">, DwarfRegNum<[35]>;
-  def F4  : FPR< 4,  "f4">, DwarfRegNum<[36]>;
-  def F5  : FPR< 5,  "f5">, DwarfRegNum<[37]>;
-  def F6  : FPR< 6,  "f6">, DwarfRegNum<[38]>;
-  def F7  : FPR< 7,  "f7">, DwarfRegNum<[39]>;
-  def F8  : FPR< 8,  "f8">, DwarfRegNum<[40]>;
-  def F9  : FPR< 9,  "f9">, DwarfRegNum<[41]>;
-  def F10 : FPR<10, "f10">, DwarfRegNum<[42]>;
-  def F11 : FPR<11, "f11">, DwarfRegNum<[43]>;
-  def F12 : FPR<12, "f12">, DwarfRegNum<[44]>;
-  def F13 : FPR<13, "f13">, DwarfRegNum<[45]>;
-  def F14 : FPR<14, "f14">, DwarfRegNum<[46]>;
-  def F15 : FPR<15, "f15">, DwarfRegNum<[47]>;
-  def F16 : FPR<16, "f16">, DwarfRegNum<[48]>;
-  def F17 : FPR<17, "f17">, DwarfRegNum<[49]>;
-  def F18 : FPR<18, "f18">, DwarfRegNum<[50]>;
-  def F19 : FPR<19, "f19">, DwarfRegNum<[51]>;
-  def F20 : FPR<20, "f20">, DwarfRegNum<[52]>;
-  def F21 : FPR<21, "f21">, DwarfRegNum<[53]>;
-  def F22 : FPR<22, "f22">, DwarfRegNum<[54]>;
-  def F23 : FPR<23, "f23">, DwarfRegNum<[55]>;
-  def F24 : FPR<24, "f24">, DwarfRegNum<[56]>;
-  def F25 : FPR<25, "f25">, DwarfRegNum<[57]>;
-  def F26 : FPR<26, "f26">, DwarfRegNum<[58]>;
-  def F27 : FPR<27, "f27">, DwarfRegNum<[59]>;
-  def F28 : FPR<28, "f28">, DwarfRegNum<[60]>;
-  def F29 : FPR<29, "f29">, DwarfRegNum<[61]>;
-  def F30 : FPR<30, "f30">, DwarfRegNum<[62]>;
-  def F31 : FPR<31, "f31">, DwarfRegNum<[63]>;
+  foreach I = 0-31 in
+  def F#I : FPR<I, "f"#I>, DwarfRegNum<[!add(I, 32)]>;
 
   /// Mips Double point precision FPU Registers (aliased
   /// with the single precision to hold 64 bit values)
-  def D0  : AFPR< 0,  "f0", [F0,   F1]>;
-  def D1  : AFPR< 2,  "f2", [F2,   F3]>;
-  def D2  : AFPR< 4,  "f4", [F4,   F5]>;
-  def D3  : AFPR< 6,  "f6", [F6,   F7]>;
-  def D4  : AFPR< 8,  "f8", [F8,   F9]>;
-  def D5  : AFPR<10, "f10", [F10, F11]>;
-  def D6  : AFPR<12, "f12", [F12, F13]>;
-  def D7  : AFPR<14, "f14", [F14, F15]>;
-  def D8  : AFPR<16, "f16", [F16, F17]>;
-  def D9  : AFPR<18, "f18", [F18, F19]>;
-  def D10 : AFPR<20, "f20", [F20, F21]>;
-  def D11 : AFPR<22, "f22", [F22, F23]>;
-  def D12 : AFPR<24, "f24", [F24, F25]>;
-  def D13 : AFPR<26, "f26", [F26, F27]>;
-  def D14 : AFPR<28, "f28", [F28, F29]>;
-  def D15 : AFPR<30, "f30", [F30, F31]>;
+  foreach I = 0-15 in
+  def D#I : AFPR<!shl(I, 1), "f"#!shl(I, 1),
+                 [!cast<FPR>("F"#!shl(I, 1)),
+                  !cast<FPR>("F"#!add(!shl(I, 1), 1))]>;
 
   /// Mips Double point precision FPU Registers in MFP64 mode.
-  def D0_64  : AFPR64<0, "f0", [F0]>, DwarfRegNum<[32]>;
-  def D1_64  : AFPR64<1, "f1", [F1]>, DwarfRegNum<[33]>;
-  def D2_64  : AFPR64<2, "f2", [F2]>, DwarfRegNum<[34]>;
-  def D3_64  : AFPR64<3, "f3", [F3]>, DwarfRegNum<[35]>;
-  def D4_64  : AFPR64<4, "f4", [F4]>, DwarfRegNum<[36]>;
-  def D5_64  : AFPR64<5, "f5", [F5]>, DwarfRegNum<[37]>;
-  def D6_64  : AFPR64<6, "f6", [F6]>, DwarfRegNum<[38]>;
-  def D7_64  : AFPR64<7, "f7", [F7]>, DwarfRegNum<[39]>;
-  def D8_64  : AFPR64<8, "f8", [F8]>, DwarfRegNum<[40]>;
-  def D9_64  : AFPR64<9, "f9", [F9]>, DwarfRegNum<[41]>;
-  def D10_64  : AFPR64<10, "f10", [F10]>, DwarfRegNum<[42]>;
-  def D11_64  : AFPR64<11, "f11", [F11]>, DwarfRegNum<[43]>;
-  def D12_64  : AFPR64<12, "f12", [F12]>, DwarfRegNum<[44]>;
-  def D13_64  : AFPR64<13, "f13", [F13]>, DwarfRegNum<[45]>;
-  def D14_64  : AFPR64<14, "f14", [F14]>, DwarfRegNum<[46]>;
-  def D15_64  : AFPR64<15, "f15", [F15]>, DwarfRegNum<[47]>;
-  def D16_64  : AFPR64<16, "f16", [F16]>, DwarfRegNum<[48]>;
-  def D17_64  : AFPR64<17, "f17", [F17]>, DwarfRegNum<[49]>;
-  def D18_64  : AFPR64<18, "f18", [F18]>, DwarfRegNum<[50]>;
-  def D19_64  : AFPR64<19, "f19", [F19]>, DwarfRegNum<[51]>;
-  def D20_64  : AFPR64<20, "f20", [F20]>, DwarfRegNum<[52]>;
-  def D21_64  : AFPR64<21, "f21", [F21]>, DwarfRegNum<[53]>;
-  def D22_64  : AFPR64<22, "f22", [F22]>, DwarfRegNum<[54]>;
-  def D23_64  : AFPR64<23, "f23", [F23]>, DwarfRegNum<[55]>;
-  def D24_64  : AFPR64<24, "f24", [F24]>, DwarfRegNum<[56]>;
-  def D25_64  : AFPR64<25, "f25", [F25]>, DwarfRegNum<[57]>;
-  def D26_64  : AFPR64<26, "f26", [F26]>, DwarfRegNum<[58]>;
-  def D27_64  : AFPR64<27, "f27", [F27]>, DwarfRegNum<[59]>;
-  def D28_64  : AFPR64<28, "f28", [F28]>, DwarfRegNum<[60]>;
-  def D29_64  : AFPR64<29, "f29", [F29]>, DwarfRegNum<[61]>;
-  def D30_64  : AFPR64<30, "f30", [F30]>, DwarfRegNum<[62]>;
-  def D31_64  : AFPR64<31, "f31", [F31]>, DwarfRegNum<[63]>;
+  foreach I = 0-31 in
+  def D#I#_64 : AFPR64<I, "f"#I, [!cast<FPR>("F"#I)]>,
+                DwarfRegNum<[!add(I, 32)]>;
 
   // Hi/Lo registers
   def HI  : Register<"ac0">, DwarfRegNum<[64]>;
