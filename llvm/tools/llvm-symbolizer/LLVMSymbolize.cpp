@@ -278,15 +278,14 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     return I->second;
   std::string BinaryName = ModuleName;
   std::string ArchName = Opts.DefaultArch;
-  size_t ColonPos = ModuleName.find(':');
-#if defined(_WIN32)
-  // Recognize a drive letter on win32.
-  if (ColonPos == 1 && isalpha(ModuleName[0]))
-    ColonPos = ModuleName.find(':', 2);
-#endif
+  size_t ColonPos = ModuleName.find_last_of(':');
+  // Verify that substring after colon form a valid arch name.
   if (ColonPos != std::string::npos) {
-    BinaryName = ModuleName.substr(0, ColonPos);
-    ArchName = ModuleName.substr(ColonPos + 1);
+    std::string ArchStr = ModuleName.substr(ColonPos + 1);
+    if (Triple(ArchStr).getArch() != Triple::ArchType::UnknownArch) {
+      BinaryName = ModuleName.substr(0, ColonPos);
+      ArchName = ArchStr;
+    }
   }
   BinaryPair Binaries = getOrCreateBinary(BinaryName);
   ObjectFile *Obj = getObjectFileFromBinary(Binaries.first, ArchName);
