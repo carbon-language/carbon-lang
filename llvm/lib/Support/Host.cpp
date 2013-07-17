@@ -603,7 +603,7 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features){
 #endif
 
 std::string sys::getProcessTriple() {
-  Triple PT(LLVM_HOST_TRIPLE);
+  Triple PT(Triple::normalize(LLVM_HOST_TRIPLE));
 
   if (sizeof(void *) == 8 && PT.isArch32Bit())
     PT = PT.get64BitArchVariant();
