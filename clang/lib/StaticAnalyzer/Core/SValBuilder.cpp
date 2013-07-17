@@ -266,6 +266,17 @@ Optional<SVal> SValBuilder::getConstantVal(const Expr *E) {
   case Stmt::CXXNullPtrLiteralExprClass:
     return makeNull();
 
+  case Stmt::ImplicitCastExprClass: {
+    const CastExpr *CE = cast<CastExpr>(E);
+    if (CE->getCastKind() == CK_ArrayToPointerDecay) {
+      Optional<SVal> ArrayVal = getConstantVal(CE->getSubExpr());
+      if (!ArrayVal)
+        return None;
+      return evalCast(*ArrayVal, CE->getType(), CE->getSubExpr()->getType());
+    }
+    // FALLTHROUGH
+  }
+
   // If we don't have a special case, fall back to the AST's constant evaluator.
   default: {
     // Don't try to come up with a value for materialized temporaries.

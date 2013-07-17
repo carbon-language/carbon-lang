@@ -1497,7 +1497,7 @@ SVal RegionStoreManager::getBindingForElement(RegionBindingsConstRef B,
     // FIXME: Handle loads from strings where the literal is treated as
     // an integer, e.g., *((unsigned int*)"hello")
     QualType T = Ctx.getAsArrayType(StrR->getValueType())->getElementType();
-    if (T != Ctx.getCanonicalType(R->getElementType()))
+    if (!Ctx.hasSameUnqualifiedType(T, R->getElementType()))
       return UnknownVal();
 
     const StringLiteral *Str = StrR->getStringLiteral();

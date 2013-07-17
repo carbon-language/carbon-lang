@@ -290,6 +290,15 @@ namespace DefaultArgs {
     clang_analyzer_eval(defaultFloatReferenceZero(1) == -1); // expected-warning{{UNKNOWN}}
     clang_analyzer_eval(defaultFloatReferenceZero() == 0); // expected-warning{{UNKNOWN}}
   }
+
+  char defaultString(const char *s = "abc") {
+    return s[1];
+  }
+
+  void testString() {
+    clang_analyzer_eval(defaultString("xyz") == 'y'); // expected-warning{{TRUE}}
+    clang_analyzer_eval(defaultString() == 'b'); // expected-warning{{TRUE}}
+  }
 }
 
 namespace OperatorNew {
