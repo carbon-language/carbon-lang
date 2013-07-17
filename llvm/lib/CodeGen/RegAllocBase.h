@@ -93,7 +93,7 @@ protected:
                                  SmallVectorImpl<LiveInterval*> &splitLVRs) = 0;
 
   // Use this group name for NamedRegionTimer.
-  static const char *TimerGroupName;
+  static const char TimerGroupName[];
 
 public:
   /// VerifyEnabled - True when -verify-regalloc is given.

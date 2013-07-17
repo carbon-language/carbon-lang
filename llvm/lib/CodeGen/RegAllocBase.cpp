@@ -43,7 +43,7 @@ static cl::opt<bool, true>
 VerifyRegAlloc("verify-regalloc", cl::location(RegAllocBase::VerifyEnabled),
                cl::desc("Verify during register allocation"));
 
-const char *RegAllocBase::TimerGroupName = "Register Allocation";
+const char RegAllocBase::TimerGroupName[] = "Register Allocation";
 bool RegAllocBase::VerifyEnabled = false;
 
 //===----------------------------------------------------------------------===//
