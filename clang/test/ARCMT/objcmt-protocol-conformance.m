@@ -61,3 +61,19 @@
 @implementation Test5
 @synthesize Prop=_XXX;
 @end
+
+@protocol P5 <P3, P4>
+@property (copy) id Prop;
+@end
+
+@protocol P6 <P3, P4, P5>
+@property (copy) id Prop;
+@end
+
+@interface Test6 : NSObject // Test for minimal listing of conforming protocols
+@property (copy) id Prop;
+@end
+
+@implementation Test6 
+@end
+

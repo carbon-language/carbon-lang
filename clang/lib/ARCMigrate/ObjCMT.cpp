@@ -329,8 +329,29 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
   
   if (ConformingProtocols.empty())
     return;
+  
+  // Further reduce number of conforming protocols. If protocol P1 is in the list
+  // protocol P2 (P2<P1>), No need to include P1.
+  llvm::SmallVector<ObjCProtocolDecl*, 8> MinimalConformingProtocols;
+  for (unsigned i = 0, e = ConformingProtocols.size(); i != e; i++) {
+    bool DropIt = false;
+    ObjCProtocolDecl *TargetPDecl = ConformingProtocols[i];
+    for (unsigned i1 = 0, e1 = ConformingProtocols.size(); i1 != e1; i1++) {
+      ObjCProtocolDecl *PDecl = ConformingProtocols[i1];
+      if (PDecl == TargetPDecl)
+        continue;
+      if (PDecl->lookupProtocolNamed(
+            TargetPDecl->getDeclName().getAsIdentifierInfo())) {
+        DropIt = true;
+        break;
+      }
+    }
+    if (!DropIt)
+      MinimalConformingProtocols.push_back(TargetPDecl);
+  }
   edit::Commit commit(*Editor);
-  edit::rewriteToObjCInterfaceDecl(IDecl, ConformingProtocols, *NSAPIObj, commit);
+  edit::rewriteToObjCInterfaceDecl(IDecl, MinimalConformingProtocols,
+                                   *NSAPIObj, commit);
   Editor->commit(commit);
 }
 
