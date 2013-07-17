@@ -26,11 +26,25 @@ struct compat_timeval
 // simply reading data from the buffer.
 // The following macros are used to specify the size.
 // Calculating size using sizeof() wont work because of padding.
+#ifdef __FreeBSD__
+#define ELFPRSTATUS64_SIZE (48)
+#define ELFPRPSINFO64_SIZE (120)
+#else
 #define ELFPRSTATUS64_SIZE (112)
 #define ELFPRPSINFO64_SIZE (132)
+#endif
 
 struct ELFPrStatus
 {
+#ifdef __FreeBSD__
+    int32_t         pr_version;
+    uint64_t        pr_statussz;
+    uint64_t        pr_gregsetsz;
+    uint64_t        pr_fpregsetsz;
+    int32_t         pr_osreldate;
+    int32_t         pr_cursig;
+    uint32_t        pr_pid;
+#else
     int32_t         si_signo;
     int32_t         si_code;
     int32_t         si_errno;
@@ -49,6 +63,7 @@ struct ELFPrStatus
     compat_timeval  pr_stime;
     compat_timeval  pr_cutime;
     compat_timeval  pr_cstime;
+#endif
 
     ELFPrStatus();
 
@@ -70,6 +85,12 @@ struct ELFPrStatus
 
 struct ELFPrPsInfo
 {
+#ifdef __FreeBSD__
+    int32_t     pr_version;
+    uint64_t    pr_psinfosz;
+    char        pr_fname[17];
+    char        pr_psargs[81];
+#else
     char        pr_state;
     char        pr_sname;
     char        pr_zomb;
@@ -83,6 +104,7 @@ struct ELFPrPsInfo
     int32_t     pr_sid;
     char        pr_fname[16];
     char        pr_psargs[80];
+#endif
 
     ELFPrPsInfo();
 

@@ -212,7 +212,11 @@ ProcessElfCore::DoLoadCore ()
             arch.SetTriple ("i386", m_target.GetPlatform().get());
             break;
         case ArchSpec::eCore_x86_64_x86_64:
+#ifdef __FreeBSD__
+            arch.SetTriple ("x86_64-freebsd-unknown", m_target.GetPlatform().get());
+#else
             arch.SetTriple ("x86_64-linux-gnu", m_target.GetPlatform().get());
+#endif
             break;
         default:
             assert(false && "Unhandled core type");

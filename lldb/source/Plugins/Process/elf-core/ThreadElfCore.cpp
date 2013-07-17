@@ -16,6 +16,7 @@
 
 #include "ThreadElfCore.h"
 #include "ProcessElfCore.h"
+#include "RegisterContextCoreFreeBSD_x86_64.h"
 #include "RegisterContextCoreLinux_x86_64.h"
 
 using namespace lldb;
@@ -94,7 +95,11 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
         switch (arch.GetMachine())
         {
             case llvm::Triple::x86_64:
+#ifdef __FreeBSD__
+                m_thread_reg_ctx_sp.reset(new RegisterContextCoreFreeBSD_x86_64 (*this, gpregset_data, m_fpregset_data));
+#else
                 m_thread_reg_ctx_sp.reset(new RegisterContextCoreLinux_x86_64 (*this, gpregset_data, m_fpregset_data));
+#endif
                 break;
             default:
                 if (log)
