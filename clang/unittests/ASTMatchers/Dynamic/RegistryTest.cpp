@@ -173,6 +173,17 @@ TEST_F(RegistryTest, TypeTraversal) {
   EXPECT_TRUE(matches("int b[7];", M));
 }
 
+TEST_F(RegistryTest, CXXCtorInitializer) {
+  Matcher<Decl> CtorDecl = constructMatcher(
+      "constructorDecl",
+      constructMatcher("hasAnyConstructorInitializer",
+                       constructMatcher("forField", hasName("foo"))))
+      .getTypedMatcher<Decl>();
+  EXPECT_TRUE(matches("struct Foo { Foo() : foo(1) {} int foo; };", CtorDecl));
+  EXPECT_FALSE(matches("struct Foo { Foo() {} int foo; };", CtorDecl));
+  EXPECT_FALSE(matches("struct Foo { Foo() : bar(1) {} int bar; };", CtorDecl));
+}
+
 TEST_F(RegistryTest, Errors) {
   // Incorrect argument count.
   OwningPtr<Diagnostics> Error(new Diagnostics());

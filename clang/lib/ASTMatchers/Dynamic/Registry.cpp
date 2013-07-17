@@ -63,12 +63,6 @@ RegistryMaps::RegistryMaps() {
   // Need Variant/Parser fixes:
   // ofKind
   //
-  // CXXCtorInitializer support:
-  // hasAnyConstructorInitializer
-  // forField
-  // withInitializer
-  // isWritten
-  //
   // Function overloaded by args:
   // hasType
   // callee
@@ -149,6 +143,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(explicitCastExpr);
   REGISTER_MATCHER(expr);
   REGISTER_MATCHER(fieldDecl);
+  REGISTER_MATCHER(forField);
   REGISTER_MATCHER(forRangeStmt);
   REGISTER_MATCHER(forStmt);
   REGISTER_MATCHER(functionDecl);
@@ -157,6 +152,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(functionalCastExpr);
   REGISTER_MATCHER(gotoStmt);
   REGISTER_MATCHER(hasAnyArgument);
+  REGISTER_MATCHER(hasAnyConstructorInitializer);
   REGISTER_MATCHER(hasAnyParameter);
   REGISTER_MATCHER(hasAnySubstatement);
   REGISTER_MATCHER(hasAnyUsingShadowDecl);
@@ -218,6 +214,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isPublic);
   REGISTER_MATCHER(isTemplateInstantiation);
   REGISTER_MATCHER(isVirtual);
+  REGISTER_MATCHER(isWritten);
   REGISTER_MATCHER(lValueReferenceType);
   REGISTER_MATCHER(labelStmt);
   REGISTER_MATCHER(lambdaExpr);
@@ -280,6 +277,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(varDecl);
   REGISTER_MATCHER(variableArrayType);
   REGISTER_MATCHER(whileStmt);
+  REGISTER_MATCHER(withInitializer);
 }
 
 RegistryMaps::~RegistryMaps() {
