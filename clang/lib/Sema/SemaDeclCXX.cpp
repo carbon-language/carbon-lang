@@ -590,7 +590,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
   }
 
   // C++11 [dcl.fct.default]p4: If a friend declaration specifies a default
-  // argument expression, that declaration shall be a deﬁnition and shall be
+  // argument expression, that declaration shall be a definition and shall be
   // the only declaration of the function or function template in the
   // translation unit.
   if (Old->getFriendObjectKind() == Decl::FOK_Undeclared &&
