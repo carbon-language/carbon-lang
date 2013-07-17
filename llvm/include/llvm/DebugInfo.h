@@ -102,6 +102,13 @@ namespace llvm {
     operator MDNode *() const { return const_cast<MDNode*>(DbgNode); }
     MDNode *operator ->() const { return const_cast<MDNode*>(DbgNode); }
 
+    // An explicit operator bool so that we can do testing of DI values
+    // easily.
+    // FIXME: This operator bool isn't actually protecting anything at the
+    // moment due to the conversion operator above making DIDescriptor nodes
+    // implicitly convertable to pointer.
+    LLVM_EXPLICIT operator bool() const { return DbgNode != 0; }
+
     unsigned getTag() const {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
