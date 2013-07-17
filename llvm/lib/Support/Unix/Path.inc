@@ -815,6 +815,15 @@ error_code unmap_file_pages(void *base, size_t size) {
   return error_code::success();
 }
 
+error_code openFileForRead(const Twine &Name, int &ResultFD) {
+  SmallString<128> Storage;
+  StringRef P = Name.toNullTerminatedStringRef(Storage);
+  while ((ResultFD = open(P.begin(), O_RDONLY)) < 0) {
+    if (errno != EINTR)
+      return error_code(errno, system_category());
+  }
+  return error_code::success();
+}
 
 } // end namespace fs
 } // end namespace sys

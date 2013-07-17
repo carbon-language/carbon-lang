@@ -1041,7 +1041,38 @@ error_code unmap_file_pages(void *base, size_t size) {
   return windows_error::invalid_function;
 }
 
+error_code openFileForRead(const Twine &Name, int &ResultFD) {
+  SmallString<128> PathStorage;
+  SmallVector<wchar_t, 128> PathUTF16;
 
+  if (error_code EC = UTF8ToUTF16(Name.toStringRef(PathStorage),
+                                  PathUTF16))
+    return EC;
+
+  HANDLE H = ::CreateFileW(PathUTF16.begin(), GENERIC_READ,
+                           FILE_SHARE_READ, NULL,
+                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (H == INVALID_HANDLE_VALUE) {
+    error_code EC = windows_error(::GetLastError());
+    // Provide a better error massage when trying to open directories.
+    // This only runs if we failed to open the file, so there is probably
+    // no performances issues.
+    if (EC != windows_error::access_denied)
+      return EC;
+    if (is_directory(Name))
+      return error_code(errc::is_a_directory, posix_category());
+    return EC;
+  }
+
+  int FD = ::_open_osfhandle(intptr_t(H), 0);
+  if (FD == -1) {
+    ::CloseHandle(H);
+    return windows_error::invalid_handle;
+  }
+
+  ResultFD = FD;
+  return error_code::success();
+}
 
 } // end namespace fs
 } // end namespace sys

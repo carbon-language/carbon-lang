@@ -722,21 +722,6 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   return error_code::success();
 }
 
-error_code openFileForRead(const Twine &Name, int &ResultFD) {
-  int OpenFlags = O_RDONLY;
-#ifdef O_BINARY
-  OpenFlags |= O_BINARY; // Open input file in binary mode on win32.
-#endif
-
-  SmallString<128> Storage;
-  StringRef P = Name.toNullTerminatedStringRef(Storage);
-  while ((ResultFD = open(P.begin(), OpenFlags)) < 0) {
-    if (errno != EINTR)
-      return error_code(errno, system_category());
-  }
-  return error_code::success();
-}
-
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
 
