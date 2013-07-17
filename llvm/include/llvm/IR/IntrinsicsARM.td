@@ -180,10 +180,12 @@ let Properties = [IntrNoMem, Commutative] in {
   // Vector Maximum.
   def int_arm_neon_vmaxs : Neon_2Arg_Intrinsic;
   def int_arm_neon_vmaxu : Neon_2Arg_Intrinsic;
+  def int_arm_neon_vmaxnm : Neon_2Arg_Intrinsic;
 
   // Vector Minimum.
   def int_arm_neon_vmins : Neon_2Arg_Intrinsic;
   def int_arm_neon_vminu : Neon_2Arg_Intrinsic;
+  def int_arm_neon_vminnm : Neon_2Arg_Intrinsic;
 
   // Vector Reciprocal Step.
   def int_arm_neon_vrecps : Neon_2Arg_Intrinsic;

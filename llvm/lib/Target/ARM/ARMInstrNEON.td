@@ -2541,6 +2541,16 @@ class N3VDInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
   let TwoOperandAliasConstraint = "$Vn = $Vd";
   let isCommutable = Commutable;
 }
+
+class N3VDIntnp<bits<5> op27_23, bits<2> op21_20, bits<4> op11_8, bit op6,
+                bit op4, Format f, InstrItinClass itin, string OpcodeStr,
+                string Dt, ValueType ResTy, ValueType OpTy,
+                SDPatternOperator IntOp, bit Commutable>
+  : N3Vnp<op27_23, op21_20, op11_8, op6, op4,
+          (outs DPR:$Vd), (ins DPR:$Vn, DPR:$Vm), f, itin, OpcodeStr, Dt,
+          ResTy, OpTy, IntOp, Commutable,
+          [(set DPR:$Vd, (ResTy (IntOp (OpTy DPR:$Vn), (OpTy DPR:$Vm))))]>;
+
 class N3VDIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                 string OpcodeStr, string Dt, ValueType Ty, SDPatternOperator IntOp>
   : N3VLane32<0, 1, op21_20, op11_8, 1, 0,
@@ -2552,6 +2562,7 @@ class N3VDIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                                            imm:$lane)))))]> {
   let isCommutable = 0;
 }
+
 class N3VDIntSL16<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                   string OpcodeStr, string Dt, ValueType Ty, SDPatternOperator IntOp>
   : N3VLane16<0, 1, op21_20, op11_8, 1, 0,
@@ -2584,6 +2595,16 @@ class N3VQInt<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op4,
   let TwoOperandAliasConstraint = "$Vn = $Vd";
   let isCommutable = Commutable;
 }
+
+class N3VQIntnp<bits<5> op27_23, bits<2> op21_20, bits<4> op11_8, bit op6,
+                bit op4, Format f, InstrItinClass itin, string OpcodeStr,
+                string Dt, ValueType ResTy, ValueType OpTy,
+                SDPatternOperator IntOp, bit Commutable>
+  : N3Vnp<op27_23, op21_20, op11_8, op6, op4,
+          (outs QPR:$Vd), (ins QPR:$Vn, QPR:$Vm), f, itin, OpcodeStr, Dt,
+          ResTy, OpTy, IntOp, Commutable,
+          [(set QPR:$Vd, (ResTy (IntOp (OpTy QPR:$Vn), (OpTy QPR:$Vm))))]>;
+
 class N3VQIntSL<bits<2> op21_20, bits<4> op11_8, InstrItinClass itin,
                 string OpcodeStr, string Dt,
                 ValueType ResTy, ValueType OpTy, SDPatternOperator IntOp>
@@ -4659,6 +4680,18 @@ def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINQ,
                         "vmax", "f32",
                         v4f32, v4f32, int_arm_neon_vmaxs, 1>;
 
+// VMAXNM
+let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
+  def VMAXNMND  : N3VDIntnp<0b000110, 0b00, 0b1111, 0, 1,
+                            N3RegFrm, NoItinerary, "vmaxnm", "f32",
+                            v2f32, v2f32, int_arm_neon_vmaxnm, 1>,
+                            Requires<[HasV8, HasNEON]>;
+  def VMAXNMNQ  : N3VQIntnp<0b00110, 0b00, 0b1111, 1, 1,
+                            N3RegFrm, NoItinerary, "vmaxnm", "f32",
+                            v4f32, v4f32, int_arm_neon_vmaxnm, 1>,
+                            Requires<[HasV8, HasNEON]>;
+}
+
 //   VMIN     : Vector Minimum
 defm VMINs    : N3VInt_QHS<0, 0, 0b0110, 1, N3RegFrm,
                            IIC_VSUBi4D, IIC_VSUBi4D, IIC_VSUBi4Q, IIC_VSUBi4Q,
@@ -4672,6 +4705,18 @@ def  VMINfd   : N3VDInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBIND,
 def  VMINfq   : N3VQInt<0, 0, 0b10, 0b1111, 0, N3RegFrm, IIC_VBINQ,
                         "vmin", "f32",
                         v4f32, v4f32, int_arm_neon_vmins, 1>;
+
+// VMINNM
+let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
+  def VMINNMND  : N3VDIntnp<0b00110, 0b10, 0b1111, 0, 1,
+                            N3RegFrm, NoItinerary, "vminnm", "f32",
+                            v2f32, v2f32, int_arm_neon_vminnm, 1>,
+                            Requires<[HasV8, HasNEON]>;
+  def VMINNMNQ  : N3VQIntnp<0b00110, 0b10, 0b1111, 1, 1,
+                            N3RegFrm, NoItinerary, "vminnm", "f32",
+                            v4f32, v4f32, int_arm_neon_vminnm, 1>,
+                            Requires<[HasV8, HasNEON]>;
+}
 
 // Vector Pairwise Operations.
 

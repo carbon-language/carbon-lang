@@ -1830,6 +1830,21 @@ class NeonXI<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
   let DecoderNamespace = "NEON";
 }
 
+// Same as NeonI except it is not predicated
+class NeonInp<dag oops, dag iops, AddrMode am, IndexMode im, Format f,
+            InstrItinClass itin, string opc, string dt, string asm, string cstr,
+            list<dag> pattern>
+  : InstARM<am, 4, im, f, NeonDomain, cstr, itin> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
+  let AsmString = !strconcat(opc, ".", dt, "\t", asm);
+  let Pattern = pattern;
+  list<Predicate> Predicates = [HasNEON];
+  let DecoderNamespace = "NEON";
+
+  let Inst{31-28} = 0b1111;
+}
+
 class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
             dag oops, dag iops, InstrItinClass itin,
             string opc, string dt, string asm, string cstr, list<dag> pattern>
@@ -2028,6 +2043,32 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{7}     = Vn{4};
   let Inst{3-0}   = Vm{3-0};
   let Inst{5}     = Vm{4};
+}
+
+class N3Vnp<bits<5> op27_23, bits<2> op21_20, bits<4> op11_8, bit op6,
+                bit op4, dag oops, dag iops,Format f, InstrItinClass itin,
+                string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
+                SDPatternOperator IntOp, bit Commutable, list<dag> pattern>
+  : NeonInp<oops, iops, AddrModeNone, IndexModeNone, f, itin, OpcodeStr,
+            Dt, "$Vd, $Vn, $Vm", "", pattern> {
+  bits<5> Vd;
+  bits<5> Vn;
+  bits<5> Vm;
+
+  // Encode instruction operands
+  let Inst{22} = Vd{4};
+  let Inst{15-12} = Vd{3-0};
+  let Inst{19-16} = Vn{3-0};
+  let Inst{7} = Vn{4};
+  let Inst{5} = Vm{4};
+  let Inst{3-0} = Vm{3-0};
+
+  // Encode constant bits
+  let Inst{27-23} = op27_23;
+  let Inst{21-20} = op21_20;
+  let Inst{11-8}  = op11_8;
+  let Inst{6}     = op6;
+  let Inst{4}     = op4;
 }
 
 class N3VLane32<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,

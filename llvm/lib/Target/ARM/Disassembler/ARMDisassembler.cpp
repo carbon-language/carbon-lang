@@ -499,7 +499,14 @@ DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   MI.clear();
+  result = decodeInstruction(DecoderTablev8NEON32, MI, insn, Address,
+                             this, STI);
+  if (result != MCDisassembler::Fail) {
+    Size = 4;
+    return result;
+  }
 
+  MI.clear();
   Size = 0;
   return MCDisassembler::Fail;
 }
@@ -818,6 +825,17 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     }
   }
 
+  MI.clear();
+  uint32_t NEONv8Insn = insn32;
+  NEONv8Insn &= 0xF3FFFFFF; // Clear bits 27-26
+  result = decodeInstruction(DecoderTablev8NEON32, MI, NEONv8Insn, Address,
+                             this, STI);
+  if (result != MCDisassembler::Fail) {
+    Size = 4;
+    return result;
+  }
+
+  MI.clear();
   Size = 0;
   return MCDisassembler::Fail;
 }

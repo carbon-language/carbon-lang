@@ -315,6 +315,8 @@ public:
                                           unsigned EncodedValue) const;
   unsigned NEONThumb2DupPostEncoder(const MCInst &MI,
                                     unsigned EncodedValue) const;
+  unsigned NEONThumb2V8PostEncoder(const MCInst &MI,
+                                   unsigned EncodedValue) const;
 
   unsigned VFPThumb2PostEncoder(const MCInst &MI,
                                 unsigned EncodedValue) const;
@@ -384,6 +386,17 @@ unsigned ARMMCCodeEmitter::NEONThumb2DupPostEncoder(const MCInst &MI,
   if (isThumb2()) {
     EncodedValue &= 0x00FFFFFF;
     EncodedValue |= 0xEE000000;
+  }
+
+  return EncodedValue;
+}
+
+/// Post-process encoded NEON v8 instructions, and rewrite them to Thumb2 form
+/// if we are in Thumb2.
+unsigned ARMMCCodeEmitter::NEONThumb2V8PostEncoder(const MCInst &MI,
+                                                 unsigned EncodedValue) const {
+  if (isThumb2()) {
+    EncodedValue |= 0xC000000; // Set bits 27-26
   }
 
   return EncodedValue;
