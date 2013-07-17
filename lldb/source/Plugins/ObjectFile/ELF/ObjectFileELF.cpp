@@ -911,7 +911,8 @@ ObjectFileELF::CreateSections(SectionList &unified_section_list)
             // .debug_pubtypes – Lookup table for mapping type names to compilation units
             // .debug_ranges – Address ranges used in DW_AT_ranges attributes
             // .debug_str – String table used in .debug_info
-            // MISSING? .debug-index http://src.chromium.org/viewvc/chrome/trunk/src/build/gdb-add-index?pathrev=144644
+            // MISSING? .gnu_debugdata - "mini debuginfo / MiniDebugInfo" section, http://sourceware.org/gdb/onlinedocs/gdb/MiniDebugInfo.html
+            // MISSING? .debug-index - http://src.chromium.org/viewvc/chrome/trunk/src/build/gdb-add-index?pathrev=144644
             // MISSING? .debug_types - Type descriptions from DWARF 4? See http://gcc.gnu.org/wiki/DwarfSeparateTypeInfo
             else if (name == g_sect_name_dwarf_debug_abbrev)    sect_type = eSectionTypeDWARFDebugAbbrev;
             else if (name == g_sect_name_dwarf_debug_aranges)   sect_type = eSectionTypeDWARFDebugAranges;

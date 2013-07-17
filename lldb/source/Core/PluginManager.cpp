@@ -75,7 +75,7 @@ SetPluginInfo (const FileSpec &plugin_file_spec, const PluginInfo &plugin_info)
 {
     Mutex::Locker locker (GetPluginMapMutex ());
     PluginTerminateMap &plugin_map = GetPluginMap ();
-    assert (plugin_map.find (plugin_file_spec) != plugin_map.end());
+    assert (plugin_map.find (plugin_file_spec) == plugin_map.end());
     plugin_map[plugin_file_spec] = plugin_info;
 }
 

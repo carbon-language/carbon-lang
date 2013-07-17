@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <execinfo.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -509,12 +510,28 @@ Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
 void
 Host::Backtrace (Stream &strm, uint32_t max_frames)
 {
-    // TODO: Is there a way to backtrace the current process on linux?
+    if (max_frames > 0)
+    {
+        std::vector<void *> frame_buffer (max_frames, NULL);
+        int num_frames = ::backtrace (&frame_buffer[0], frame_buffer.size());
+        char** strs = ::backtrace_symbols (&frame_buffer[0], num_frames);
+        if (strs)
+        {
+            // Start at 1 to skip the "Host::Backtrace" frame
+            for (int i = 1; i < num_frames; ++i)
+                strm.Printf("%s\n", strs[i]);
+            ::free (strs);
+        }
+    }
 }
 
 size_t
 Host::GetEnvironment (StringList &env)
 {
-    // TODO: Is there a way to the host environment for this process on linux?
-    return 0;
+    char **host_env = environ;
+    char *env_entry;
+    size_t i;
+    for (i=0; (env_entry = host_env[i]) != NULL; ++i)
+        env.AppendString(env_entry);
+    return i;
 }

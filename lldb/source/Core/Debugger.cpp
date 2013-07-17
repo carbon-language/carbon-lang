@@ -413,6 +413,7 @@ Debugger::LoadPlugin (const FileSpec& spec, Error& error)
     }
     lldb::DebuggerSP debugger_sp(shared_from_this());
     lldb::SBDebugger debugger_sb(debugger_sp);
+    // This calls the bool lldb::PluginInitialize(lldb::SBDebugger debugger) function.
     // TODO: mangle this differently for your system - on OSX, the first underscore needs to be removed and the second one stays
     LLDBCommandPluginInit init_func = dynlib_sp->GetSymbol<LLDBCommandPluginInit>("_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
     if (!init_func)
@@ -440,6 +441,7 @@ LoadPluginCallback
     Error error;
     
     static ConstString g_dylibext("dylib");
+    static ConstString g_solibext("so");
     
     if (!baton)
         return FileSpec::eEnumerateDirectoryResultQuit;
@@ -457,8 +459,11 @@ LoadPluginCallback
         FileSpec plugin_file_spec (file_spec);
         plugin_file_spec.ResolvePath ();
         
-        if (plugin_file_spec.GetFileNameExtension() != g_dylibext)
+        if (plugin_file_spec.GetFileNameExtension() != g_dylibext &&
+            plugin_file_spec.GetFileNameExtension() != g_solibext)
+        {
             return FileSpec::eEnumerateDirectoryResultNext;
+        }
 
         Error plugin_load_error;
         debugger->LoadPlugin (plugin_file_spec, plugin_load_error);
