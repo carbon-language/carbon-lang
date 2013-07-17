@@ -980,7 +980,7 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
     return false;
 
   // Check that A and B are of the same type.
-  if (PtrA->getType() != PtrB->getType())
+  if (PtrA == PtrB || PtrA->getType() != PtrB->getType())
     return false;
 
   // Calculate a constant offset from the base pointer without using SCEV
