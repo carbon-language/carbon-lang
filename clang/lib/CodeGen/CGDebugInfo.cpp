@@ -2638,7 +2638,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   if (isa<ImplicitParamDecl>(VD) && ArgNo == 1)
     Flags |= llvm::DIDescriptor::FlagObjectPointer;
   if (llvm::Argument *Arg = dyn_cast<llvm::Argument>(Storage))
-    if (Arg->getType()->isPointerTy() && !Arg->hasByValAttr() && !VD->getType()->isPointerType())
+    if (Arg->getType()->isPointerTy() && !Arg->hasByValAttr() &&
+        !VD->getType()->isPointerType())
       Flags |= llvm::DIDescriptor::FlagIndirectVariable;
 
   llvm::MDNode *Scope = LexicalBlockStack.back();
