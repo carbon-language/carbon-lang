@@ -124,13 +124,13 @@ typedef std::set<Replacement, Replacement::Less> Replacements;
 /// other applications.
 ///
 /// \returns true if all replacements apply. false otherwise.
-bool applyAllReplacements(Replacements &Replaces, Rewriter &Rewrite);
+bool applyAllReplacements(const Replacements &Replaces, Rewriter &Rewrite);
 
 /// \brief Applies all replacements in \p Replaces to \p Code.
 ///
 /// This completely ignores the path stored in each replacement. If one or more
 /// replacements cannot be applied, this returns an empty \c string.
-std::string applyAllReplacements(StringRef Code, Replacements &Replaces);
+std::string applyAllReplacements(StringRef Code, const Replacements &Replaces);
 
 /// \brief Calculates how a code \p Position is shifted when \p Replaces are
 /// applied.

@@ -123,7 +123,7 @@ void Replacement::setFromSourceRange(SourceManager &Sources,
                         getRangeSize(Sources, Range), ReplacementText);
 }
 
-bool applyAllReplacements(Replacements &Replaces, Rewriter &Rewrite) {
+bool applyAllReplacements(const Replacements &Replaces, Rewriter &Rewrite) {
   bool Result = true;
   for (Replacements::const_iterator I = Replaces.begin(),
                                     E = Replaces.end();
@@ -137,7 +137,7 @@ bool applyAllReplacements(Replacements &Replaces, Rewriter &Rewrite) {
   return Result;
 }
 
-std::string applyAllReplacements(StringRef Code, Replacements &Replaces) {
+std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
   FileManager Files((FileSystemOptions()));
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
@@ -152,8 +152,8 @@ std::string applyAllReplacements(StringRef Code, Replacements &Replaces) {
   SourceMgr.overrideFileContents(Entry, Buf);
   FileID ID =
       SourceMgr.createFileID(Entry, SourceLocation(), clang::SrcMgr::C_User);
-  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
-       ++I) {
+  for (Replacements::const_iterator I = Replaces.begin(), E = Replaces.end();
+       I != E; ++I) {
     Replacement Replace("<stdin>", I->getOffset(), I->getLength(),
                         I->getReplacementText());
     if (!Replace.apply(Rewrite))
