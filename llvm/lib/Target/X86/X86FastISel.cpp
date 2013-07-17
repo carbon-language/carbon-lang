@@ -264,24 +264,24 @@ X86FastISel::X86FastEmitStore(EVT VT, unsigned ValReg,
     break;
   case MVT::v4f32:
     if (Aligned)
-      Opc = X86::MOVAPSmr;
+      Opc = Subtarget->hasAVX() ? X86::VMOVAPSmr : X86::MOVAPSmr;
     else
-      Opc = X86::MOVUPSmr;
+      Opc = Subtarget->hasAVX() ? X86::VMOVUPSmr : X86::MOVUPSmr;
     break;
   case MVT::v2f64:
     if (Aligned)
-      Opc = X86::MOVAPSmr;
+      Opc = Subtarget->hasAVX() ? X86::VMOVAPSmr : X86::MOVAPSmr;
     else
-      Opc = X86::MOVUPSmr;
+      Opc = Subtarget->hasAVX() ? X86::VMOVUPSmr : X86::MOVUPSmr;
     break;
   case MVT::v4i32:
   case MVT::v2i64:
   case MVT::v8i16:
   case MVT::v16i8:
     if (Aligned)
-      Opc = X86::MOVDQAmr;
+      Opc = Subtarget->hasAVX() ? X86::VMOVDQAmr : X86::MOVDQAmr;
     else
-      Opc = X86::MOVDQUmr;
+      Opc = Subtarget->hasAVX() ? X86::VMOVDQUmr : X86::MOVDQUmr;
     break;
   }
 
