@@ -1052,8 +1052,7 @@ static void pruneModuleCache(const HeaderSearchOptions &HSOpts) {
          Dir(ModuleCachePathNative.str(), EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
     // If we don't have a directory, there's nothing to look into.
-    bool IsDirectory;
-    if (llvm::sys::fs::is_directory(Dir->path(), IsDirectory) || !IsDirectory)
+    if (!llvm::sys::fs::is_directory(Dir->path()))
       continue;
 
     // Walk all of the files within this directory.

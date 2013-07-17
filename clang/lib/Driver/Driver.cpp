@@ -1569,8 +1569,7 @@ std::string Driver::GetProgramPath(const char *Name,
   // attempting to use this prefix when looking for program paths.
   for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
        ie = PrefixDirs.end(); it != ie; ++it) {
-    bool IsDirectory;
-    if (!llvm::sys::fs::is_directory(*it, IsDirectory) && IsDirectory) {
+    if (llvm::sys::fs::is_directory(*it)) {
       SmallString<128> P(*it);
       llvm::sys::path::append(P, TargetSpecificExecutable);
       if (llvm::sys::fs::can_execute(Twine(P)))
