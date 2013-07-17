@@ -28,8 +28,10 @@ namespace __sanitizer {
 static const char* const kSymbolizerArch = "--default-arch=x86_64";
 #elif defined(__i386__)
 static const char* const kSymbolizerArch = "--default-arch=i386";
+#elif defined(__powerpc64__)
+static const char* const kSymbolizerArch = "--default-arch=powerpc64";
 #else
-static const char* const kSymbolizerArch = "";
+static const char* const kSymbolizerArch = "--default-arch=unknown";
 #endif
 
 bool StartSymbolizerSubprocess(const char *path_to_symbolizer,
