@@ -48,6 +48,14 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+EnableBasePointer("ppc-use-base-pointer", cl::Hidden, cl::init(true),
+         cl::desc("Enable use of a base pointer for complex stack frames"));
+
+static cl::opt<bool>
+AlwaysBasePointer("ppc-always-use-base-pointer", cl::Hidden, cl::init(false),
+         cl::desc("Force the use of a base pointer in every function"));
+
 PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST)
   : PPCGenRegisterInfo(ST.isPPC64() ? PPC::LR8 : PPC::LR,
                        ST.isPPC64() ? 0 : 1,
@@ -170,8 +178,14 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(PPC::X1);
     Reserved.set(PPC::X13);
 
-    if (PPCFI->needsFP(MF))
+    if (PPCFI->needsFP(MF) || hasBasePointer(MF)) {
       Reserved.set(PPC::X31);
+
+      // If we need a base pointer, and we also have a frame pointer, then use
+      // r30 as the base pointer.
+      if (PPCFI->needsFP(MF) && hasBasePointer(MF))
+        Reserved.set(PPC::X30);
+    }
 
     // The 64-bit SVR4 ABI reserves r2 for the TOC pointer.
     if (Subtarget.isSVR4ABI()) {
@@ -179,8 +193,12 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     }
   }
 
-  if (PPCFI->needsFP(MF))
+  if (PPCFI->needsFP(MF) || hasBasePointer(MF)) {
     Reserved.set(PPC::R31);
+
+    if (PPCFI->needsFP(MF) && hasBasePointer(MF))
+      Reserved.set(PPC::R30);
+  }
 
   // Reserve Altivec registers when Altivec is unavailable.
   if (!Subtarget.hasAltivec())
@@ -524,7 +542,6 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   DebugLoc dl = MI.getDebugLoc();
 
   unsigned OffsetOperandNo = getOffsetONFromFION(MI, FIOperandNum);
@@ -562,12 +579,8 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
-
-  bool is64Bit = Subtarget.isPPC64();
-  MI.getOperand(FIOperandNum).ChangeToRegister(TFI->hasFP(MF) ?
-                                              (is64Bit ? PPC::X31 : PPC::R31) :
-                                                (is64Bit ? PPC::X1 : PPC::R1),
-                                              false);
+  MI.getOperand(FIOperandNum).ChangeToRegister(
+    FrameIndex < 0 ? getBaseRegister(MF) : getFrameRegister(MF), false);
 
   // Figure out if the offset in the instruction is shifted right two bits.
   bool isIXAddr = usesIXAddr(MI);
@@ -586,8 +599,10 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Naked functions have stack size 0, although getStackSize may not reflect that
   // because we didn't call all the pieces that compute it for naked functions.
   if (!MF.getFunction()->getAttributes().
-        hasAttribute(AttributeSet::FunctionIndex, Attribute::Naked))
-    Offset += MFI->getStackSize();
+        hasAttribute(AttributeSet::FunctionIndex, Attribute::Naked)) {
+    if (!(hasBasePointer(MF) && FrameIndex < 0))
+      Offset += MFI->getStackSize();
+  }
 
   // If we can, encode the offset directly into the instruction.  If this is a
   // normal PPC "ri" instruction, any 16-bit value can be safely encoded.  If
@@ -605,6 +620,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // The offset doesn't fit into a single register, scavenge one to build the
   // offset in.
 
+  bool is64Bit = Subtarget.isPPC64();
   const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
   const TargetRegisterClass *RC = is64Bit ? G8RC : GPRC;
@@ -656,6 +672,49 @@ unsigned PPCRegisterInfo::getEHExceptionRegister() const {
 
 unsigned PPCRegisterInfo::getEHHandlerRegister() const {
   return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
+}
+
+unsigned PPCRegisterInfo::getBaseRegister(const MachineFunction &MF) const {
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+
+  if (!hasBasePointer(MF))
+    return getFrameRegister(MF);
+
+  if (!Subtarget.isPPC64())
+    return TFI->hasFP(MF) ? PPC::R30 : PPC::R31;
+  else
+    return TFI->hasFP(MF) ? PPC::X30 : PPC::X31;
+}
+
+bool PPCRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
+  if (!EnableBasePointer)
+    return false;
+  if (AlwaysBasePointer)
+    return true;
+
+  // If we need to realign the stack, then the stack pointer can no longer
+  // serve as an offset into the caller's stack space. As a result, we need a
+  // base pointer.
+  return needsStackRealignment(MF);
+}
+
+bool PPCRegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  if (!MF.getTarget().Options.RealignStack)
+    return false;
+
+  return true;
+}
+
+bool PPCRegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const Function *F = MF.getFunction();
+  unsigned StackAlign = MF.getTarget().getFrameLowering()->getStackAlignment();
+  bool requiresRealignment =
+    ((MFI->getMaxAlignment() > StackAlign) ||
+     F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                     Attribute::StackAlignment));
+
+  return requiresRealignment && canRealignStack(MF);
 }
 
 /// Returns true if the instruction's frame index

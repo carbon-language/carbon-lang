@@ -92,6 +92,12 @@ public:
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;
 
+  // Base pointer (stack realignment) support.
+  unsigned getBaseRegister(const MachineFunction &MF) const;
+  bool hasBasePointer(const MachineFunction &MF) const;
+  bool canRealignStack(const MachineFunction &MF) const;
+  bool needsStackRealignment(const MachineFunction &MF) const;
+
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;

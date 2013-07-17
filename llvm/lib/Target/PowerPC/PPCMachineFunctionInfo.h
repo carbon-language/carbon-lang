@@ -32,6 +32,9 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   ///
   int ReturnAddrSaveIndex;
 
+  /// Frame index where the old base pointer is stored.
+  int BasePointerSaveIndex;
+
   /// MustSaveLR - Indicates whether LR is defined (or clobbered) in the current
   /// function.  This is only valid after the initial scan of the function by
   /// PEI.
@@ -93,6 +96,7 @@ public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
+      BasePointerSaveIndex(0),
       HasSpills(false),
       HasNonRISpills(false),
       SpillsCR(false),
@@ -112,6 +116,9 @@ public:
   
   int getReturnAddrSaveIndex() const { return ReturnAddrSaveIndex; }
   void setReturnAddrSaveIndex(int idx) { ReturnAddrSaveIndex = idx; }
+
+  int getBasePointerSaveIndex() const { return BasePointerSaveIndex; }
+  void setBasePointerSaveIndex(int Idx) { BasePointerSaveIndex = Idx; }
 
   unsigned getMinReservedArea() const { return MinReservedArea; }
   void setMinReservedArea(unsigned size) { MinReservedArea = size; }
