@@ -1,4 +1,4 @@
-//===---- InstrEmitter.h - Emit MachineInstrs for the SelectionDAG class ---==//
+//===- InstrEmitter.h - Emit MachineInstrs for the SelectionDAG -*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
