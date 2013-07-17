@@ -2493,7 +2493,7 @@ Sema::ObjCContainerKind Sema::getObjCContainerKind() const {
 }
 
 // Note: For class/category implementations, allMethods is always null.
-Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *>allMethods,
+Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
                        ArrayRef<DeclGroupPtrTy> allTUVars) {
   if (getObjCContainerKind() == Sema::OCK_None)
     return 0;
