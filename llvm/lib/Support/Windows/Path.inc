@@ -1050,7 +1050,7 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
     return EC;
 
   HANDLE H = ::CreateFileW(PathUTF16.begin(), GENERIC_READ,
-                           FILE_SHARE_READ, NULL,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (H == INVALID_HANDLE_VALUE) {
     error_code EC = windows_error(::GetLastError());
