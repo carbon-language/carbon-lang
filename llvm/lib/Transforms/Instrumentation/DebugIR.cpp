@@ -220,7 +220,7 @@ public:
         DICompileUnit(CUNode), F.getName(), MangledName, DIFile(FileNode), Line,
         Sig, Local, IsDefinition, ScopeLine, FuncFlags, IsOptimized, &F);
     assert(Sub.isSubprogram());
-    DEBUG(dbgs() << "create subprogram mdnode " << Sub << ": "
+    DEBUG(dbgs() << "create subprogram mdnode " << *Sub << ": "
                  << "\n");
 
     SubprogramDescriptors.insert(std::make_pair(&F, Sub));

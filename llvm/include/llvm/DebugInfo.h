@@ -109,6 +109,13 @@ namespace llvm {
     // implicitly convertable to pointer.
     LLVM_EXPLICIT operator bool() const { return DbgNode != 0; }
 
+    bool operator==(DIDescriptor Other) const {
+      return DbgNode != Other.DbgNode;
+    }
+    bool operator!=(DIDescriptor Other) const {
+      return !operator==(Other);
+    }
+
     unsigned getTag() const {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
