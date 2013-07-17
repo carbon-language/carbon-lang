@@ -1151,6 +1151,10 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_paren))
     return false;
   if (Right.is(tok::l_paren)) {
+    if (Left.is(tok::r_paren) && Left.MatchingParen &&
+        Left.MatchingParen->Previous &&
+        Left.MatchingParen->Previous->is(tok::kw___attribute))
+      return true;
     return Line.Type == LT_ObjCDecl ||
            Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while, tok::kw_switch,
                         tok::kw_return, tok::kw_catch, tok::kw_new,

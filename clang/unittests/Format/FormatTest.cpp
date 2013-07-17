@@ -3546,6 +3546,10 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("delete *x;", PointerLeft);
 }
 
+TEST_F(FormatTest, UnderstandsAttributes) {
+  verifyFormat("SomeType s __attribute__((unused)) (InitValue);");
+}
+
 TEST_F(FormatTest, UnderstandsEllipsis) {
   verifyFormat("int printf(const char *fmt, ...);");
   verifyFormat("template <class... Ts> void Foo(Ts... ts) { Foo(ts...); }");
