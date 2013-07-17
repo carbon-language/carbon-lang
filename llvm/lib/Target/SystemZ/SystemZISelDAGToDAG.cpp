@@ -781,7 +781,7 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
   // all cases and are sometimes shorter.  Prefer to use RISBG for ANDs though,
   // since it is effectively a three-operand instruction in this case,
   // and since it can handle some masks that AND IMMEDIATE can't.
-  if (Count < (N->getOpcode() == ISD::AND ? 1 : 2))
+  if (Count < (N->getOpcode() == ISD::AND ? 1U : 2U))
     return 0;
 
   // Prefer register extensions like LLC over RISBG.
