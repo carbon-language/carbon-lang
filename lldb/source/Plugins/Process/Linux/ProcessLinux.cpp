@@ -32,9 +32,9 @@ using namespace lldb_private;
 // Static functions.
 
 ProcessSP
-ProcessLinux::CreateInstance(Target &target, Listener &listener, const FileSpec *)
+ProcessLinux::CreateInstance(Target &target, Listener &listener, const FileSpec *core_file)
 {
-    return ProcessSP(new ProcessLinux(target, listener));
+    return ProcessSP(new ProcessLinux(target, listener, (FileSpec *)core_file));
 }
 
 void
@@ -63,8 +63,8 @@ ProcessLinux::Initialize()
 //------------------------------------------------------------------------------
 // Constructors and destructors.
 
-ProcessLinux::ProcessLinux(Target& target, Listener &listener)
-    : ProcessPOSIX(target, listener), m_stopping_threads(false)
+ProcessLinux::ProcessLinux(Target& target, Listener &listener, FileSpec *core_file)
+    : ProcessPOSIX(target, listener), m_stopping_threads(false), m_core_file(core_file)
 {
 #if 0
     // FIXME: Putting this code in the ctor and saving the byte order in a
@@ -170,3 +170,17 @@ ProcessLinux::StopAllThreads(lldb::tid_t stop_tid)
     if (log)
         log->Printf ("ProcessLinux::%s() finished", __FUNCTION__);
 }
+
+bool
+ProcessLinux::CanDebug(Target &target, bool plugin_specified_by_name)
+{
+    if (plugin_specified_by_name)
+        return true;
+
+    /* If core file is specified then let elf-core plugin handle it */
+    if (m_core_file)
+        return false;
+
+    return ProcessPOSIX::CanDebug(target, plugin_specified_by_name);
+}
+

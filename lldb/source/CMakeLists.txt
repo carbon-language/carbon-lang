@@ -90,6 +90,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
     lldbHostLinux
     lldbPluginProcessLinux
     lldbPluginProcessPOSIX
+    lldbPluginProcessElfCore
     )
 endif ()
 
@@ -99,6 +100,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD" )
     lldbHostFreeBSD
     lldbPluginProcessFreeBSD
     lldbPluginProcessPOSIX
+    lldbPluginProcessElfCore
     )
 endif ()
 

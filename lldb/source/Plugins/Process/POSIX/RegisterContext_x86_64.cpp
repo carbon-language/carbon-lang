@@ -21,10 +21,13 @@
 #include "llvm/Support/Compiler.h"
 
 #include "ProcessPOSIX.h"
+#if defined(__linux__) or defined(__FreeBSD__)
 #include "ProcessMonitor.h"
+#endif
 #include "RegisterContext_i386.h"
 #include "RegisterContext_x86.h"
 #include "RegisterContext_x86_64.h"
+#include "Plugins/Process/elf-core/ProcessElfCore.h"
 
 using namespace lldb_private;
 using namespace lldb;
@@ -497,6 +500,11 @@ RegisterContext_x86_64::RegisterContext_x86_64(Thread &thread,
 
     ::memset(&m_fpr, 0, sizeof(RegisterContext_x86_64::FPR));
 
+    // elf-core yet to support ReadFPR()
+    ProcessSP base = CalculateProcess();
+    if (base.get()->GetPluginName() ==  ProcessElfCore::GetPluginNameStatic())
+        return;
+    
     // TODO: Use assembly to call cpuid on the inferior and query ebx or ecx
     m_fpr_type = eXSAVE; // extended floating-point registers, if available
     if (false == ReadFPR())
@@ -505,14 +513,6 @@ RegisterContext_x86_64::RegisterContext_x86_64(Thread &thread,
 
 RegisterContext_x86_64::~RegisterContext_x86_64()
 {
-}
-
-ProcessMonitor &
-RegisterContext_x86_64::GetMonitor()
-{
-    ProcessSP base = CalculateProcess();
-    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
-    return process->GetMonitor();
 }
 
 void
@@ -696,9 +696,7 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
             return false;
     }
     else {
-        ProcessMonitor &monitor = GetMonitor();
-        bool success = monitor.ReadRegisterValue(m_thread.GetID(), GetRegisterOffset(reg),
-                                                 GetRegisterName(reg), GetRegisterSize(reg), value);
+        bool success = ReadRegister(reg, value);
 
         // If an i386 register should be parsed from an x86_64 register...
         if (success && reg >= k_first_i386 && reg <= k_last_i386)
@@ -801,8 +799,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     if (IsGPR(reg)) {
-        ProcessMonitor &monitor = GetMonitor();
-        return monitor.WriteRegisterValue(m_thread.GetID(), GetRegisterOffset(reg), GetRegisterName(reg), value);
+        return WriteRegister(reg, value);
     }
 
     if (IsFPR(reg, m_fpr_type)) {
@@ -895,29 +892,6 @@ RegisterContext_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
         }
     }
     return success;
-}
-
-bool
-RegisterContext_x86_64::ReadRegister(const unsigned reg,
-                                     RegisterValue &value)
-{
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(m_thread.GetID(),
-                                     GetRegisterOffset(reg),
-                                     GetRegisterName(reg),
-                                     GetRegisterSize(reg),
-                                     value);
-}
-
-bool
-RegisterContext_x86_64::WriteRegister(const unsigned reg,
-                                      const RegisterValue &value)
-{
-    ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(m_thread.GetID(),
-                                      GetRegisterOffset(reg),
-                                      GetRegisterName(reg),
-                                      value);
 }
 
 bool
@@ -1469,6 +1443,16 @@ RegisterContext_x86_64::HardwareSingleStep(bool enable)
     return WriteRegisterFromUnsigned(gpr_rflags, rflags);
 }
 
+#if defined(__linux__) or defined(__FreeBSD__)
+
+ProcessMonitor &
+RegisterContext_x86_64::GetMonitor()
+{
+    ProcessSP base = CalculateProcess();
+    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
+    return process->GetMonitor();
+}
+
 bool
 RegisterContext_x86_64::ReadGPR()
 {
@@ -1507,3 +1491,73 @@ RegisterContext_x86_64::WriteFPR()
     return false;
 }
 
+bool
+RegisterContext_x86_64::ReadRegister(const unsigned reg,
+                                     RegisterValue &value)
+{
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.ReadRegisterValue(m_thread.GetID(),
+                                     GetRegisterOffset(reg),
+                                     GetRegisterName(reg),
+                                     GetRegisterSize(reg),
+                                     value);
+}
+
+bool
+RegisterContext_x86_64::WriteRegister(const unsigned reg,
+                                      const RegisterValue &value)
+{
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.WriteRegisterValue(m_thread.GetID(),
+                                      GetRegisterOffset(reg),
+                                      GetRegisterName(reg),
+                                      value);
+}
+
+#else
+
+bool
+RegisterContext_x86_64::ReadGPR()
+{
+    llvm_unreachable("not implemented");
+    return false;
+}
+
+bool
+RegisterContext_x86_64::ReadFPR()
+{
+    llvm_unreachable("not implemented");
+    return false;
+}
+
+bool
+RegisterContext_x86_64::WriteGPR()
+{
+    llvm_unreachable("not implemented");
+    return false;
+}
+
+bool
+RegisterContext_x86_64::WriteFPR()
+{
+    llvm_unreachable("not implemented");
+    return false;
+}
+
+bool
+RegisterContext_x86_64::ReadRegister(const unsigned reg,
+                                     RegisterValue &value)
+{
+    llvm_unreachable("not implemented");
+    return false;
+}
+
+bool
+RegisterContext_x86_64::WriteRegister(const unsigned reg,
+                                      const RegisterValue &value)
+{
+    llvm_unreachable("not implemented");
+    return false;
+}
+
+#endif
