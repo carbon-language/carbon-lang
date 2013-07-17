@@ -6,7 +6,7 @@ void foo() { bar(); }
 
 // CHECK: [config]
 // CHECK-NEXT: cfg-conditional-static-initializers = true
-// CHECK-NEXT: cfg-temporary-dtors = false
+// CHECK-NEXT: cfg-temporary-dtors = true
 // CHECK-NEXT: faux-bodies = true
 // CHECK-NEXT: graph-trim-interval = 1000
 // CHECK-NEXT: ipa = dynamic-bifurcate

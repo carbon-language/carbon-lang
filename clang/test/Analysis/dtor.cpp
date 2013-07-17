@@ -416,4 +416,19 @@ namespace NoReturn {
     f(&x);
     *x = 47; // no warning
   }
+
+  void g2(int *x) {
+    if (! x) NR();
+    *x = 47; // no warning
+  }
+
+  void f3(int **x) {
+    NR();
+  }
+
+  void g3() {
+    int *x;
+    f3(&x);
+    *x = 47; // no warning
+  }
 }

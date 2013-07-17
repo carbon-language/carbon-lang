@@ -108,6 +108,24 @@ TestCtorInits::TestCtorInits()
   : a(int(A()) + int(B()))
   , b() {}
 
+class NoReturn {
+public:
+  ~NoReturn() __attribute__((noreturn));
+  void f();
+};
+
+void test_noreturn1() {
+  int a;
+  NoReturn().f();
+  int b;
+}
+
+void test_noreturn2() {
+  int a;
+  NoReturn(), 47;
+  int b;
+}
+
 // CHECK:   [B1 (ENTRY)]
 // CHECK:     Succs (1): B0
 // CHECK:   [B0 (EXIT)]
@@ -846,3 +864,36 @@ TestCtorInits::TestCtorInits()
 // CHECK:   [B0 (EXIT)]
 // CHECK:     Preds (1): B1
 
+// CHECK:   [B3 (ENTRY)]
+// CHECK:     Succs (1): B2
+// CHECK:   [B1]
+// CHECK:     1: int b;
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: int a;
+// CHECK:     2: NoReturn() (CXXConstructExpr, class NoReturn)
+// CHECK:     3: [B2.2] (BindTemporary)
+// CHECK:     4: [B2.3].f
+// CHECK:     5: [B2.4]()
+// CHECK:     6: ~NoReturn() (Temporary object destructor)
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (2): B1 B2
+
+// CHECK:   [B3 (ENTRY)]
+// CHECK:     Succs (1): B2
+// CHECK:   [B1]
+// CHECK:     1: int b;
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: int a;
+// CHECK:     2: NoReturn() (CXXConstructExpr, class NoReturn)
+// CHECK:     3: [B2.2] (BindTemporary)
+// CHECK:     4: 47
+// CHECK:     5: ... , [B2.4]
+// CHECK:     6: ~NoReturn() (Temporary object destructor)
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (2): B1 B2
