@@ -171,7 +171,7 @@ namespace {
 
     // Returns the length measured in 4-byte blocks that will be used to
     // represent this string in a GCOV file
-    unsigned lengthOfGCOVString(StringRef s) {
+    static unsigned lengthOfGCOVString(StringRef s) {
       // A GCOV string is a length, followed by a NUL, then between 0 and 3 NULs
       // padding out to the next 4-byte word. The length is measured in 4-byte
       // words including padding, not bytes of actual string.
@@ -208,7 +208,7 @@ namespace {
       Lines.push_back(Line);
     }
 
-    uint32_t length() {
+    uint32_t length() const {
       // Here 2 = 1 for string length + 1 for '0' id#.
       return lengthOfGCOVString(Filename) + 2 + Lines.size();
     }
