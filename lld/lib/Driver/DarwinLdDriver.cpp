@@ -109,6 +109,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     switch (kind->getOption().getID()) {
     case OPT_dylib:
       info.setOutputFileType(mach_o::MH_DYLIB);
+      info.setGlobalsAreDeadStripRoots(true);
       break;
     case OPT_relocatable:
       info.setPrintRemainingUndefines(false);
@@ -138,6 +139,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle -dead_strip
   if (parsedArgs->getLastArg(OPT_dead_strip))
     info.setDeadStripping(true);
+  
+  // Handle -all_load
+  if (parsedArgs->getLastArg(OPT_all_load))
+    info.setForceLoadAllArchives(true);
   
   // Handle -arch xxx
   if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {

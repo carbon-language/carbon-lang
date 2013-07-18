@@ -66,10 +66,12 @@ public:
   };
 
   Arch arch() const { return _arch; }
+  OS os() const { return _os; }
 
   void setOutputFileType(uint32_t type) { _outputFileType = type; }
   void setArch(Arch arch) { _arch = arch; }
   bool setOS(OS os, StringRef minOSVersion);
+  bool minOS(StringRef mac, StringRef iOS) const;
 
 private:
   virtual Writer &writer() const;
@@ -87,7 +89,6 @@ private:
     uint32_t    _value;
   };
 
-  bool minOS(StringRef mac, StringRef iOS) const;
 
   uint32_t        _outputFileType; // e.g MH_EXECUTE
   bool            _outputFileTypeStatic; // Disambiguate static vs dynamic prog

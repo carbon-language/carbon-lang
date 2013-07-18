@@ -20,6 +20,7 @@ def ios_version_min : Separate<["-"], "ios_version_min">,
                           HelpText<"min iOS version">;
 def ios_simulator_version_min : Separate<["-"], "ios_simulator_version_min">, 
                           HelpText<"min iOS simulator version">;
+def all_load : Flag<["-"], "all_load">;
 
 // search options
 def L : Joined<["-"], "L">;
