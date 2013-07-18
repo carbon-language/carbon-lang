@@ -9,3 +9,4 @@
 -Dfoo10=foo10\"bar10\"zed10
 -D foo11
 -Dfoo12=zed12\
+-Dfoo13='one\\two'

@@ -29,6 +29,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -189,78 +190,6 @@ extern int cc1_main(const char **ArgBegin, const char **ArgEnd,
 extern int cc1as_main(const char **ArgBegin, const char **ArgEnd,
                       const char *Argv0, void *MainAddr);
 
-static void ExpandArgsFromBuf(const char *Arg,
-                              SmallVectorImpl<const char*> &ArgVector,
-                              std::set<std::string> &SavedStrings) {
-  const char *FName = Arg + 1;
-  OwningPtr<llvm::MemoryBuffer> MemBuf;
-  if (llvm::MemoryBuffer::getFile(FName, MemBuf)) {
-    ArgVector.push_back(SaveStringInSet(SavedStrings, Arg));
-    return;
-  }
-
-  const char *Buf = MemBuf->getBufferStart();
-  char InQuote = ' ';
-  std::string CurArg;
-
-  for (const char *P = Buf; ; ++P) {
-    if (*P == '\0' || (isWhitespace(*P) && InQuote == ' ')) {
-      if (!CurArg.empty()) {
-
-        if (CurArg[0] != '@') {
-          ArgVector.push_back(SaveStringInSet(SavedStrings, CurArg));
-        } else {
-          ExpandArgsFromBuf(CurArg.c_str(), ArgVector, SavedStrings);
-        }
-
-        CurArg = "";
-      }
-      if (*P == '\0')
-        break;
-      else
-        continue;
-    }
-
-    if (isWhitespace(*P)) {
-      if (InQuote != ' ')
-        CurArg.push_back(*P);
-      continue;
-    }
-
-    if (*P == '"' || *P == '\'') {
-      if (InQuote == *P)
-        InQuote = ' ';
-      else if (InQuote == ' ')
-        InQuote = *P;
-      else
-        CurArg.push_back(*P);
-      continue;
-    }
-
-    if (*P == '\\') {
-      ++P;
-      if (*P != '\0')
-        CurArg.push_back(*P);
-      continue;
-    }
-    CurArg.push_back(*P);
-  }
-}
-
-static void ExpandArgv(int argc, const char **argv,
-                       SmallVectorImpl<const char*> &ArgVector,
-                       std::set<std::string> &SavedStrings) {
-  for (int i = 0; i < argc; ++i) {
-    const char *Arg = argv[i];
-    if (Arg[0] != '@') {
-      ArgVector.push_back(SaveStringInSet(SavedStrings, std::string(Arg)));
-      continue;
-    }
-
-    ExpandArgsFromBuf(Arg, ArgVector, SavedStrings);
-  }
-}
-
 static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
                           std::set<std::string> &SavedStrings,
                           Driver &TheDriver)
@@ -342,14 +271,26 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
   }
 }
 
+namespace {
+  class StringSetSaver : public llvm::cl::StringSaver {
+  public:
+    StringSetSaver(std::set<std::string> &Storage) : Storage(Storage) {}
+    const char *SaveString(const char *Str) LLVM_OVERRIDE {
+      return SaveStringInSet(Storage, Str);
+    }
+  private:
+    std::set<std::string> &Storage;
+  };
+}
+
 int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
 
   std::set<std::string> SavedStrings;
-  SmallVector<const char*, 256> argv;
-
-  ExpandArgv(argc_, argv_, argv, SavedStrings);
+  SmallVector<const char*, 256> argv(argv_, argv_ + argc_);
+  StringSetSaver Saver(SavedStrings);
+  llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, argv);
 
   // Handle -cc1 integrated tools.
   if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1")) {
