@@ -4682,7 +4682,7 @@ def  VMAXfq   : N3VQInt<0, 0, 0b00, 0b1111, 0, N3RegFrm, IIC_VBINQ,
 
 // VMAXNM
 let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
-  def VMAXNMND  : N3VDIntnp<0b000110, 0b00, 0b1111, 0, 1,
+  def VMAXNMND  : N3VDIntnp<0b00110, 0b00, 0b1111, 0, 1,
                             N3RegFrm, NoItinerary, "vmaxnm", "f32",
                             v2f32, v2f32, int_arm_neon_vmaxnm, 1>,
                             Requires<[HasV8, HasNEON]>;
