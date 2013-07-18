@@ -255,13 +255,13 @@ actual source of the problem.
 
 In order to produce better error messages in these cases, the "``CHECK-LABEL:``"
 directive can be used. It is treated identically to a normal ``CHECK``
-directive except that the FileCheck utility makes an additional assumption that
-a line matched by the directive cannot also be matched by any other check
-present in ``match-filename``; this is intended to be used for lines containing
-labels or other unique identifiers. Conceptually, the presence of
-``CHECK-LABEL`` divides the input stream into separate blocks, each of which is
-processed independently, preventing a ``CHECK:`` directive in one block
-matching a line in another block. For example,
+directive except that FileCheck makes an additional assumption that a line
+matched by the directive cannot also be matched by any other check present in
+``match-filename``; this is intended to be used for lines containing labels or
+other unique identifiers. Conceptually, the presence of ``CHECK-LABEL`` divides
+the input stream into separate blocks, each of which is processed independently,
+preventing a ``CHECK:`` directive in one block matching a line in another block.
+For example,
 
 .. code-block:: llvm
 
@@ -285,7 +285,9 @@ matching a line in another block. For example,
 The use of ``CHECK-LABEL:`` directives in this case ensures that the three
 ``CHECK:`` directives only accept lines corresponding to the body of the
 ``@C_ctor_base`` function, even if the patterns match lines found later in
-the file.
+the file. Furthermore, if one of these three ``CHECK:`` directives fail,
+FileCheck will recover by continuing to the next block, allowing multiple test
+failures to be detected in a single invocation.
 
 There is no requirement that ``CHECK-LABEL:`` directives contain strings that
 correspond to actual syntactic labels in a source or output language: they must
