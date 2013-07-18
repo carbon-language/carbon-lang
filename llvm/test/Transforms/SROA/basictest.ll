@@ -1308,7 +1308,7 @@ end:
 
 define void @PR15805(i1 %a, i1 %b) {
 ; CHECK-LABEL: @PR15805(
-; CHECK: select i1 undef, i64* %c, i64* %c
+; CHECK-NOT: alloca
 ; CHECK: ret void
 
   %c = alloca i64, align 8
