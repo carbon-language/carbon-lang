@@ -1,10 +1,10 @@
 // RUN: %clang --help | FileCheck %s -check-prefix=HELP
 // HELP: isystem
 // HELP-NOT: ast-dump
-// HELP-NOT: ccc-cxx
+// HELP-NOT: driver-mode
 
 // RUN: %clang --help-hidden | FileCheck %s -check-prefix=HELP-HIDDEN
-// HELP-HIDDEN: ccc-cxx
+// HELP-HIDDEN: driver-mode
 
 // RUN: %clang -dumpversion | FileCheck %s -check-prefix=DUMPVERSION
 // DUMPVERSION: 4.2.1

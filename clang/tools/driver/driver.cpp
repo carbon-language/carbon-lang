@@ -210,19 +210,18 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
   // is gets added via -target as implicit first argument.
   static const struct {
     const char *Suffix;
-    bool IsCXX;
-    bool IsCPP;
+    const char *ModeFlag;
   } suffixes [] = {
-    { "clang", false, false },
-    { "clang++", true, false },
-    { "clang-c++", true, false },
-    { "clang-cc", false, false },
-    { "clang-cpp", false, true },
-    { "clang-g++", true, false },
-    { "clang-gcc", false, false },
-    { "cc", false, false },
-    { "cpp", false, true },
-    { "++", true, false },
+    { "clang",     0 },
+    { "clang++",   "--driver-mode=g++" },
+    { "clang-c++", "--driver-mode=g++" },
+    { "clang-cc",  0 },
+    { "clang-cpp", "--driver-mode=cpp" },
+    { "clang-g++", "--driver-mode=g++" },
+    { "clang-gcc", 0 },
+    { "cc",        0 },
+    { "cpp",       "--driver-mode=cpp" },
+    { "++",        "--driver-mode=g++" },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
   StringRef ProgNameRef(ProgName);
@@ -235,10 +234,11 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
       if (ProgNameRef.endswith(suffixes[i].Suffix)) {
         FoundMatch = true;
-        if (suffixes[i].IsCXX)
-          TheDriver.CCCIsCXX = true;
-        if (suffixes[i].IsCPP)
-          TheDriver.CCCIsCPP = true;
+        SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
+        if (it != ArgVector.end())
+          ++it;
+        if (suffixes[i].ModeFlag)
+          ArgVector.insert(it, suffixes[i].ModeFlag);
         break;
       }
     }

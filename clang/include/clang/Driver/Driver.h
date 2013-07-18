@@ -51,6 +51,12 @@ class Driver {
 
   DiagnosticsEngine &Diags;
 
+  enum DriverMode {
+    GCCMode,
+    GXXMode,
+    CPPMode
+  } Mode;
+
 public:
   // Diag - Forwarding function for diagnostics.
   DiagnosticBuilder Diag(unsigned DiagID) const {
@@ -117,10 +123,10 @@ public:
       InputList;
 
   /// Whether the driver should follow g++ like behavior.
-  unsigned CCCIsCXX : 1;
+  bool CCCIsCXX() const { return Mode == GXXMode; }
 
   /// Whether the driver is just the preprocessor.
-  unsigned CCCIsCPP : 1;
+  bool CCCIsCPP() const { return Mode == CPPMode; }
 
   /// Echo commands while executing (in -v style).
   unsigned CCCEcho : 1;
@@ -235,6 +241,9 @@ public:
 
   /// @name Driver Steps
   /// @{
+
+  /// ParseDriverMode - Look for and handle the driver mode option in Args.
+  void ParseDriverMode(ArrayRef<const char *> Args);
 
   /// ParseArgStrings - Parse the given list of strings into an
   /// ArgList.

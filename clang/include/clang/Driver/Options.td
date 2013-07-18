@@ -112,8 +112,8 @@ def ccc_debug_Group : OptionGroup<"<clang debug/development internal options>">,
   Group<ccc_Group>, HelpText<"DEBUG/DEVELOPMENT OPTIONS">;
 
 class CCCDriverOpt : Group<ccc_driver_Group>, Flags<[DriverOption, HelpHidden]>;
-def ccc_cxx : Flag<["-"], "ccc-cxx">, CCCDriverOpt,
-  HelpText<"Act as a C++ driver">;
+def driver_mode : Joined<["--"], "driver-mode=">, CCCDriverOpt,
+  HelpText<"Set the driver mode to either 'gcc', 'g++' or 'cpp'">;
 def ccc_echo : Flag<["-"], "ccc-echo">, CCCDriverOpt,
   HelpText<"Echo commands before running them">;
 def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, CCCDriverOpt,
