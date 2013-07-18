@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Config/config.h"
 #include "gtest/gtest.h"
@@ -116,6 +117,29 @@ TEST(CommandLineTest, UseOptionCategory) {
 
   ASSERT_EQ(&TestCategory,TestOption2.Category) << "Failed to assign Option "
                                                   "Category.";
+}
+
+class StrDupSaver : public cl::StringSaver {
+  const char *SaveString(const char *Str) LLVM_OVERRIDE {
+    return strdup(Str);
+  }
+};
+
+TEST(CommandLineTest, TokenizeGNUCommandLine) {
+  const char *Input = "foo\\ bar \"foo bar\" \'foo bar\' 'foo\\\\bar' "
+                      "foo\"bar\"baz C:\\src\\foo.cpp \"C:\\src\\foo.cpp\"";
+  const char *const Output[] = { "foo bar", "foo bar", "foo bar", "foo\\bar",
+                                 "foobarbaz", "C:\\src\\foo.cpp",
+                                 "C:\\src\\foo.cpp" };
+  SmallVector<const char *, 0> Actual;
+  StrDupSaver Saver;
+  cl::TokenizeGNUCommandLine(Input, Saver, Actual);
+  EXPECT_EQ(array_lengthof(Output), Actual.size());
+  for (unsigned I = 0, E = Actual.size(); I != E; ++I) {
+    if (I < array_lengthof(Output))
+      EXPECT_STREQ(Output[I], Actual[I]);
+    free(const_cast<char *>(Actual[I]));
+  }
 }
 
 }  // anonymous namespace

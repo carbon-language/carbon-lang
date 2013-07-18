@@ -1745,6 +1745,59 @@ void PrintHelpMessage(bool Hidden=false, bool Categorized=false);
 /// llvm::cl::ParseCommandLineOptions().
 void getRegisteredOptions(StringMap<Option*> &Map);
 
+//===----------------------------------------------------------------------===//
+// Standalone command line processing utilities.
+//
+
+/// \brief Saves strings in the inheritor's stable storage and returns a stable
+/// raw character pointer.
+class StringSaver {
+public:
+  virtual const char *SaveString(const char *Str) = 0;
+  virtual ~StringSaver() {};  // Pacify -Wnon-virtual-dtor.
+};
+
+/// \brief Tokenizes a command line that can contain escapes and quotes.
+//
+/// The quoting rules match those used by GCC and other tools that use
+/// libiberty's buildargv() or expandargv() utilities, and do not match bash.
+/// They differ from buildargv() on treatment of backslashes that do not escape
+/// a special character to make it possible to accept most Windows file paths.
+///
+/// \param [in] Source The string to be split on whitespace with quotes.
+/// \param [in] Saver Delegates back to the caller for saving parsed strings.
+/// \param [out] NewArgv All parsed strings are appended to NewArgv.
+void TokenizeGNUCommandLine(StringRef Source, StringSaver &Saver,
+                            SmallVectorImpl<const char *> &NewArgv);
+
+/// \brief Tokenizes a Windows command line which may contain quotes and escaped
+/// quotes.
+///
+/// See MSDN docs for CommandLineToArgvW for information on the quoting rules.
+/// http://msdn.microsoft.com/en-us/library/windows/desktop/17w5ykft(v=vs.85).aspx
+///
+/// \param [in] Source The string to be split on whitespace with quotes.
+/// \param [in] Saver Delegates back to the caller for saving parsed strings.
+/// \param [out] NewArgv All parsed strings are appended to NewArgv.
+void TokenizeWindowsCommandLine(StringRef Source, StringSaver &Saver,
+                                SmallVectorImpl<const char *> &NewArgv);
+
+/// \brief String tokenization function type.  Should be compatible with either
+/// Windows or Unix command line tokenizers.
+typedef void (*TokenizerCallback)(StringRef Source, StringSaver &Saver,
+                                  SmallVectorImpl<const char *> &NewArgv);
+
+/// \brief Expand response files on a command line recursively using the given
+/// StringSaver and tokenization strategy.  Argv should contain the command line
+/// before expansion and will be modified in place.
+///
+/// \param [in] Saver Delegates back to the caller for saving parsed strings.
+/// \param [in] Tokenize Tokenization strategy. Typically Unix or Windows.
+/// \param [in,out] Argv Command line into which to expand response files.
+/// \return true if all @files were expanded successfully or there were none.
+bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
+                         SmallVectorImpl<const char *> &Argv);
+
 } // End namespace cl
 
 } // End namespace llvm

@@ -17,12 +17,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
@@ -434,39 +436,137 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
          O->getNumOccurrencesFlag() == cl::OneOrMore;
 }
 
-/// ParseCStringVector - Break INPUT up wherever one or more
-/// whitespace characters are found, and store the resulting tokens in
-/// OUTPUT. The tokens stored in OUTPUT are dynamically allocated
-/// using strdup(), so it is the caller's responsibility to free()
-/// them later.
-///
-static void ParseCStringVector(std::vector<char *> &OutputVector,
-                               const char *Input) {
-  // Characters which will be treated as token separators:
-  StringRef Delims = " \v\f\t\r\n";
+static bool isWhitespace(char C) {
+  return strchr(" \t\n\r\f\v", C);
+}
 
-  StringRef WorkStr(Input);
-  while (!WorkStr.empty()) {
-    // If the first character is a delimiter, strip them off.
-    if (Delims.find(WorkStr[0]) != StringRef::npos) {
-      size_t Pos = WorkStr.find_first_not_of(Delims);
-      if (Pos == StringRef::npos) Pos = WorkStr.size();
-      WorkStr = WorkStr.substr(Pos);
+static bool isQuote(char C) {
+  return C == '\"' || C == '\'';
+}
+
+static bool isGNUSpecial(char C) {
+  return strchr("\\\"\' ", C);
+}
+
+void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
+                                SmallVectorImpl<const char *> &NewArgv) {
+  SmallString<128> Token;
+  for (size_t I = 0, E = Src.size(); I != E; ++I) {
+    // Consume runs of whitespace.
+    if (Token.empty()) {
+      while (I != E && isWhitespace(Src[I]))
+        ++I;
+      if (I == E) break;
+    }
+
+    // Backslashes can escape backslashes, spaces, and other quotes.  Otherwise
+    // they are literal.  This makes it much easier to read Windows file paths.
+    if (I + 1 < E && Src[I] == '\\' && isGNUSpecial(Src[I + 1])) {
+      ++I;  // Skip the escape.
+      Token.push_back(Src[I]);
       continue;
     }
 
-    // Find position of first delimiter.
-    size_t Pos = WorkStr.find_first_of(Delims);
-    if (Pos == StringRef::npos) Pos = WorkStr.size();
+    // Consume a quoted string.
+    if (isQuote(Src[I])) {
+      char Quote = Src[I++];
+      while (I != E && Src[I] != Quote) {
+        // Backslashes are literal, unless they escape a special character.
+        if (Src[I] == '\\' && I + 1 != E && isGNUSpecial(Src[I + 1]))
+          ++I;
+        Token.push_back(Src[I]);
+        ++I;
+      }
+      if (I == E) break;
+      continue;
+    }
 
-    // Everything from 0 to Pos is the next word to copy.
-    char *NewStr = (char*)malloc(Pos+1);
-    memcpy(NewStr, WorkStr.data(), Pos);
-    NewStr[Pos] = 0;
-    OutputVector.push_back(NewStr);
+    // End the token if this is whitespace.
+    if (isWhitespace(Src[I])) {
+      if (!Token.empty())
+        NewArgv.push_back(Saver.SaveString(Token.c_str()));
+      Token.clear();
+      continue;
+    }
 
-    WorkStr = WorkStr.substr(Pos);
+    // This is a normal character.  Append it.
+    Token.push_back(Src[I]);
   }
+
+  // Append the last token after hitting EOF with no whitespace.
+  if (!Token.empty())
+    NewArgv.push_back(Saver.SaveString(Token.c_str()));
+}
+
+void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
+                                    SmallVectorImpl<const char *> &NewArgv) {
+  llvm_unreachable("FIXME not implemented");
+}
+
+static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
+                               TokenizerCallback Tokenizer,
+                               SmallVectorImpl<const char *> &NewArgv) {
+  OwningPtr<MemoryBuffer> MemBuf;
+  if (MemoryBuffer::getFile(FName, MemBuf))
+    return false;
+  StringRef Str(MemBuf->getBufferStart(), MemBuf->getBufferSize());
+
+  // If we have a UTF-16 byte order mark, convert to UTF-8 for parsing.
+  ArrayRef<char> BufRef(MemBuf->getBufferStart(), MemBuf->getBufferEnd());
+  std::string UTF8Buf;
+  if (hasUTF16ByteOrderMark(BufRef)) {
+    if (!convertUTF16ToUTF8String(BufRef, UTF8Buf))
+      return false;
+    Str = StringRef(UTF8Buf);
+  }
+
+  // Tokenize the contents into NewArgv.
+  Tokenizer(Str, Saver, NewArgv);
+
+  return true;
+}
+
+/// \brief Expand response files on a command line recursively using the given
+/// StringSaver and tokenization strategy.
+bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
+                             SmallVectorImpl<const char *> &Argv) {
+  unsigned RspFiles = 0;
+  bool AllExpanded = false;
+
+  // Don't cache Argv.size() because it can change.
+  for (unsigned I = 0; I != Argv.size(); ) {
+    const char *Arg = Argv[I];
+    if (Arg[0] != '@') {
+      ++I;
+      continue;
+    }
+
+    // If we have too many response files, leave some unexpanded.  This avoids
+    // crashing on self-referential response files.
+    if (RspFiles++ > 20)
+      return false;
+
+    // Replace this response file argument with the tokenization of its
+    // contents.  Nested response files are expanded in subsequent iterations.
+    // FIXME: If a nested response file uses a relative path, is it relative to
+    // the cwd of the process or the response file?
+    SmallVector<const char *, 0> ExpandedArgv;
+    if (!ExpandResponseFile(Arg + 1, Saver, Tokenizer, ExpandedArgv)) {
+      AllExpanded = false;
+      continue;
+    }
+    Argv.erase(Argv.begin() + I);
+    Argv.insert(Argv.begin() + I, ExpandedArgv.begin(), ExpandedArgv.end());
+  }
+  return AllExpanded;
+}
+
+namespace {
+  class StrDupSaver : public StringSaver {
+    const char *SaveString(const char *Str) LLVM_OVERRIDE {
+      return strdup(Str);
+    }
+  };
 }
 
 /// ParseEnvironmentOptions - An alternative entry point to the
@@ -487,45 +587,21 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
 
   // Get program's "name", which we wouldn't know without the caller
   // telling us.
-  std::vector<char*> newArgv;
+  SmallVector<const char *, 20> newArgv;
   newArgv.push_back(strdup(progName));
 
   // Parse the value of the environment variable into a "command line"
   // and hand it off to ParseCommandLineOptions().
-  ParseCStringVector(newArgv, envValue);
+  StrDupSaver Saver;
+  TokenizeGNUCommandLine(envValue, Saver, newArgv);
   int newArgc = static_cast<int>(newArgv.size());
   ParseCommandLineOptions(newArgc, &newArgv[0], Overview);
 
   // Free all the strdup()ed strings.
-  for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
+  for (SmallVectorImpl<const char *>::iterator i = newArgv.begin(),
+                                               e = newArgv.end();
        i != e; ++i)
-    free(*i);
-}
-
-
-/// ExpandResponseFiles - Copy the contents of argv into newArgv,
-/// substituting the contents of the response files for the arguments
-/// of type @file.
-static void ExpandResponseFiles(unsigned argc, const char*const* argv,
-                                std::vector<char*>& newArgv) {
-  for (unsigned i = 1; i != argc; ++i) {
-    const char *arg = argv[i];
-
-    if (arg[0] == '@') {
-      // TODO: we should also support recursive loading of response files,
-      // since this is how gcc behaves. (From their man page: "The file may
-      // itself contain additional @file options; any such options will be
-      // processed recursively.")
-
-      // Mmap the response file into memory.
-      OwningPtr<MemoryBuffer> respFilePtr;
-      if (!MemoryBuffer::getFile(arg + 1, respFilePtr)) {
-        ParseCStringVector(newArgv, respFilePtr->getBufferStart());
-        continue;
-      }
-    }
-    newArgv.push_back(strdup(arg));
-  }
+    free(const_cast<char *>(*i));
 }
 
 void cl::ParseCommandLineOptions(int argc, const char * const *argv,
@@ -540,9 +616,11 @@ void cl::ParseCommandLineOptions(int argc, const char * const *argv,
          "No options specified!");
 
   // Expand response files.
-  std::vector<char*> newArgv;
-  newArgv.push_back(strdup(argv[0]));
-  ExpandResponseFiles(argc, argv, newArgv);
+  SmallVector<const char *, 20> newArgv;
+  for (int i = 0; i != argc; ++i)
+    newArgv.push_back(strdup(argv[i]));
+  StrDupSaver Saver;
+  ExpandResponseFiles(Saver, TokenizeGNUCommandLine, newArgv);
   argv = &newArgv[0];
   argc = static_cast<int>(newArgv.size());
 
@@ -838,9 +916,10 @@ void cl::ParseCommandLineOptions(int argc, const char * const *argv,
 
   // Free the memory allocated by ExpandResponseFiles.
   // Free all the strdup()ed strings.
-  for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
+  for (SmallVectorImpl<const char *>::iterator i = newArgv.begin(),
+                                               e = newArgv.end();
        i != e; ++i)
-    free(*i);
+    free(const_cast<char *>(*i));
 
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
