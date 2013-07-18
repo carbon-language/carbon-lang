@@ -1337,15 +1337,15 @@ Thread::UnwindInnermostExpression()
 }
 
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueFundamentalPlan (bool abort_other_plans)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanBase(*this));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepSingleInstruction
 (
     bool step_over, 
@@ -1355,10 +1355,10 @@ Thread::QueueThreadPlanForStepSingleInstruction
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepInstruction (*this, step_over, stop_other_threads, eVoteNoOpinion, eVoteNoOpinion));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepOverRange
 (
     bool abort_other_plans, 
@@ -1371,10 +1371,10 @@ Thread::QueueThreadPlanForStepOverRange
     thread_plan_sp.reset (new ThreadPlanStepOverRange (*this, range, addr_context, stop_other_threads));
 
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepInRange
 (
     bool abort_other_plans, 
@@ -1396,19 +1396,19 @@ Thread::QueueThreadPlanForStepInRange
     thread_plan_sp.reset (plan);
 
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepOverBreakpointPlan (bool abort_other_plans)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepOverBreakpoint (*this));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepOut 
 (
     bool abort_other_plans, 
@@ -1431,26 +1431,26 @@ Thread::QueueThreadPlanForStepOut
     if (thread_plan_sp->ValidatePlan(NULL))
     {
         QueueThreadPlan (thread_plan_sp, abort_other_plans);
-        return thread_plan_sp.get();
+        return thread_plan_sp;
     }
     else
     {
-        return NULL;
+        return ThreadPlanSP();
     }
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepThrough (StackID &return_stack_id, bool abort_other_plans, bool stop_other_threads)
 {
     ThreadPlanSP thread_plan_sp(new ThreadPlanStepThrough (*this, return_stack_id, stop_other_threads));
     if (!thread_plan_sp || !thread_plan_sp->ValidatePlan (NULL))
-        return NULL;
+        return ThreadPlanSP();
 
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForCallFunction (bool abort_other_plans,
                                         Address& function,
                                         lldb::addr_t arg,
@@ -1466,20 +1466,20 @@ Thread::QueueThreadPlanForCallFunction (bool abort_other_plans,
                                                              unwind_on_error,
                                                              ignore_breakpoints));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForRunToAddress (bool abort_other_plans,
                                         Address &target_addr,
                                         bool stop_other_threads)
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanRunToAddress (*this, target_addr, stop_other_threads));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 }
 
-ThreadPlan *
+ThreadPlanSP
 Thread::QueueThreadPlanForStepUntil (bool abort_other_plans,
                                      lldb::addr_t *address_list,
                                      size_t num_addresses,
@@ -1488,7 +1488,7 @@ Thread::QueueThreadPlanForStepUntil (bool abort_other_plans,
 {
     ThreadPlanSP thread_plan_sp (new ThreadPlanStepUntil (*this, address_list, num_addresses, stop_other_threads, frame_idx));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
-    return thread_plan_sp.get();
+    return thread_plan_sp;
 
 }
 

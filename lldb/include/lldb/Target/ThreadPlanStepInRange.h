@@ -54,7 +54,7 @@ public:
         m_step_into_target.SetCString(target);
     }
     
-    static ThreadPlan *
+    static lldb::ThreadPlanSP
     DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton);
 
     static void
@@ -77,12 +77,12 @@ protected:
 
 private:
 
-    friend ThreadPlan *
+    friend lldb::ThreadPlanSP
     Thread::QueueThreadPlanForStepOverRange (bool abort_other_plans,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
                                          lldb::RunMode stop_others);
-    friend ThreadPlan *
+    friend lldb::ThreadPlanSP
     Thread::QueueThreadPlanForStepInRange (bool abort_other_plans,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
@@ -95,6 +95,7 @@ private:
     // from step in.
 
     static uint32_t s_default_flag_values;
+    lldb::ThreadPlanSP m_sub_plan_sp;  // Keep track of the last plan we were running.  If it fails, we should stop.
     std::unique_ptr<RegularExpression> m_avoid_regexp_ap;
     bool m_step_past_prologue;  // FIXME: For now hard-coded to true, we could put a switch in for this if there's
                                 // demand for that.

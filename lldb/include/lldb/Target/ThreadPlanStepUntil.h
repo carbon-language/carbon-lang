@@ -61,7 +61,7 @@ private:
 
     void Clear();
 
-    friend ThreadPlan *
+    friend lldb::ThreadPlanSP
     Thread::QueueThreadPlanForStepUntil (bool abort_other_plans,
                                          lldb::addr_t *address_list,
                                          size_t num_addresses,

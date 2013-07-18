@@ -59,7 +59,7 @@ protected:
     ThreadPlanBase (Thread &thread);
 
 private:
-    friend ThreadPlan *
+    friend lldb::ThreadPlanSP
     Thread::QueueFundamentalPlan(bool abort_other_plans);
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanBase);

@@ -567,28 +567,28 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
         Thread *thread = exe_ctx.GetThreadPtr();
         bool abort_other_plans = false;
         StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
-        ThreadPlan *new_plan = NULL;
 
+        ThreadPlanSP new_plan_sp;
         if (frame_sp)
         {
             if (frame_sp->HasDebugInformation ())
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-                new_plan = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
+                new_plan_sp = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
                                                                     sc.line_entry.range,
                                                                     sc,
                                                                     stop_other_threads);
             }
             else
             {
-                new_plan = thread->QueueThreadPlanForStepSingleInstruction (true,
+                new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (true,
                                                                             abort_other_plans, 
                                                                             stop_other_threads);
             }
         }
 
         // This returns an error, we should use it!
-        ResumeNewPlan (exe_ctx, new_plan);
+        ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
 }
 
@@ -618,13 +618,13 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
 
         Thread *thread = exe_ctx.GetThreadPtr();
         StackFrameSP frame_sp(thread->GetStackFrameAtIndex (0));
-        ThreadPlan *new_plan = NULL;
+        ThreadPlanSP new_plan_sp;
 
         if (frame_sp && frame_sp->HasDebugInformation ())
         {
             bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-            new_plan = thread->QueueThreadPlanForStepInRange (abort_other_plans,
+            new_plan_sp = thread->QueueThreadPlanForStepInRange (abort_other_plans,
                                                               sc.line_entry.range,
                                                               sc,
                                                               target_name,
@@ -633,13 +633,13 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
         }
         else
         {
-            new_plan = thread->QueueThreadPlanForStepSingleInstruction (false,
+            new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (false,
                                                                         abort_other_plans, 
                                                                         stop_other_threads);
         }
         
         // This returns an error, we should use it!
-        ResumeNewPlan (exe_ctx, new_plan);
+        ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
 }
 
@@ -662,16 +662,16 @@ SBThread::StepOut ()
 
         Thread *thread = exe_ctx.GetThreadPtr();
 
-        ThreadPlan *new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans,
+        ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepOut (abort_other_plans,
                                                                   NULL, 
                                                                   false, 
                                                                   stop_other_threads, 
                                                                   eVoteYes, 
                                                                   eVoteNoOpinion,
-                                                                  0);
+                                                                  0));
                                                                   
         // This returns an error, we should use it!
-        ResumeNewPlan (exe_ctx, new_plan);
+        ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
 }
 
@@ -697,16 +697,16 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
         bool stop_other_threads = false;
         Thread *thread = exe_ctx.GetThreadPtr();
 
-        ThreadPlan *new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans,
+        ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepOut (abort_other_plans,
                                                                     NULL, 
                                                                     false, 
                                                                     stop_other_threads, 
                                                                     eVoteYes, 
                                                                     eVoteNoOpinion,
-                                                                    frame_sp->GetFrameIndex());
+                                                                    frame_sp->GetFrameIndex()));
                                                                     
         // This returns an error, we should use it!
-        ResumeNewPlan (exe_ctx, new_plan);
+        ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
 }
 
@@ -726,10 +726,10 @@ SBThread::StepInstruction (bool step_over)
     if (exe_ctx.HasThreadScope())
     {
         Thread *thread = exe_ctx.GetThreadPtr();
-        ThreadPlan *new_plan = thread->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
+        ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepSingleInstruction (step_over, true, true));
         
         // This returns an error, we should use it!
-        ResumeNewPlan (exe_ctx, new_plan);
+        ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
 }
 
@@ -754,10 +754,10 @@ SBThread::RunToAddress (lldb::addr_t addr)
 
         Thread *thread = exe_ctx.GetThreadPtr();
 
-        ThreadPlan *new_plan = thread->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
+        ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads));
         
         // This returns an error, we should use it!
-        ResumeNewPlan (exe_ctx, new_plan);
+        ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
 }
 
@@ -893,13 +893,13 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         }
         else
         {
-            ThreadPlan *new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans,
+            ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepUntil (abort_other_plans,
                                                                         &step_over_until_addrs[0],
                                                                         step_over_until_addrs.size(),
                                                                         stop_other_threads,
-                                                                        frame_sp->GetFrameIndex());      
+                                                                        frame_sp->GetFrameIndex()));
 
-            sb_error = ResumeNewPlan (exe_ctx, new_plan);
+            sb_error = ResumeNewPlan (exe_ctx, new_plan_sp.get());
         }
     }
     else

@@ -926,7 +926,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 log->Printf("Asked to step to dispatch to nil object, returning empty plan.");
             return ret_plan_sp;
         }
-            
+        
         ExecutionContext exe_ctx (thread.shared_from_this());
         Process *process = exe_ctx.GetProcessPtr();
         // isa_addr will store the class pointer that the method is being dispatched to - so either the class

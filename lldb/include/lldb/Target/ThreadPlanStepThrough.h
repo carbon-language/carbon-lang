@@ -48,7 +48,7 @@ protected:
     HitOurBackstopBreakpoint();
 
 private:
-    friend ThreadPlan *
+    friend lldb::ThreadPlanSP
     Thread::QueueThreadPlanForStepThrough (StackID &return_stack_id,
                                            bool abort_other_plans,
                                            bool stop_others);

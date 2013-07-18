@@ -460,6 +460,19 @@ public:
     // The idea is that particular Platform plugins can override these methods to
     // provide the implementation of these basic operations appropriate to their
     // environment.
+    //
+    // NB: All the QueueThreadPlanXXX providers return Shared Pointers to
+    // Thread plans.  This is useful so that you can modify the plans after
+    // creation in ways specific to that plan type.  Also, it is often necessary for
+    // ThreadPlans that utilize other ThreadPlans to implement their task to keep a shared
+    // pointer to the sub-plan.
+    // But besides that, the shared pointers should only be held onto by entities who live no longer
+    // than the thread containing the ThreadPlan.
+    // FIXME: If this becomes a problem, we can make a version that just returns a pointer,
+    // which it is clearly unsafe to hold onto, and a shared pointer version, and only allow
+    // ThreadPlan and Co. to use the latter.  That is made more annoying to do because there's
+    // no elegant way to friend a method to all sub-classes of a given class.
+    //
     //------------------------------------------------------------------
 
     //------------------------------------------------------------------
@@ -474,9 +487,9 @@ public:
     ///    Otherwise this plan will go on the end of the plan stack.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueFundamentalPlan (bool abort_other_plans);
 
     //------------------------------------------------------------------
@@ -489,9 +502,9 @@ public:
     ///    Otherwise this plan will go on the end of the plan stack.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOverBreakpointPlan (bool abort_other_plans);
 
     //------------------------------------------------------------------
@@ -508,9 +521,9 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepSingleInstruction (bool step_over,
                                              bool abort_other_plans,
                                              bool stop_other_threads);
@@ -540,9 +553,9 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOverRange (bool abort_other_plans,
                                  const AddressRange &range,
                                  const SymbolContext &addr_context,
@@ -578,9 +591,9 @@ public:
     ///    If \b true we will step out if we step into code with no debug info.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepInRange (bool abort_other_plans,
                                  const AddressRange &range,
                                  const SymbolContext &addr_context,
@@ -614,9 +627,9 @@ public:
     ///    See standard meanings for the stop & run votes in ThreadPlan.h.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOut (bool abort_other_plans,
                                SymbolContext *addr_context,
                                bool first_insn,
@@ -642,9 +655,9 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepThrough (StackID &return_stack_id,
                                    bool abort_other_plans,
                                    bool stop_other_threads);
@@ -665,21 +678,21 @@ public:
     ///    \b true if we will stop other threads while we single step this one.
     ///
     /// @return
-    ///     A pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForRunToAddress (bool abort_other_plans,
                                     Address &target_addr,
                                     bool stop_other_threads);
 
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepUntil (bool abort_other_plans,
                                  lldb::addr_t *address_list,
                                  size_t num_addresses,
                                  bool stop_others,
                                  uint32_t frame_idx);
 
-    virtual ThreadPlan *
+    virtual lldb::ThreadPlanSP
     QueueThreadPlanForCallFunction (bool abort_other_plans,
                                     Address& function,
                                     lldb::addr_t arg,

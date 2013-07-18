@@ -66,7 +66,7 @@ private:
     Function *m_immediate_step_from_function;
     lldb::ValueObjectSP m_return_valobj_sp;
 
-    friend ThreadPlan *
+    friend lldb::ThreadPlanSP
     Thread::QueueThreadPlanForStepOut (bool abort_other_plans,
                                        SymbolContext *addr_context,
                                        bool first_insn,

@@ -53,7 +53,7 @@ public:
     void
     SetShouldStopHereCallback (ThreadPlanShouldStopHereCallback callback, void *baton);
 
-    ThreadPlan *
+    lldb::ThreadPlanSP
     InvokeShouldStopHereCallback ();
 
     lldb_private::Flags &

@@ -82,7 +82,11 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
     {
         s->Printf ("Stepping through range (stepping into functions): ");
         DumpRanges(s);
-        s->Printf ("targeting %s.", m_step_into_target.AsCString());
+        const char *step_into_target = m_step_into_target.AsCString();
+        if (step_into_target && step_into_target[0] != '\0')
+            s->Printf (" targeting %s.", m_step_into_target.AsCString());
+        else
+            s->PutChar('.');
     }
 }
 
@@ -90,7 +94,6 @@ bool
 ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    m_no_more_plans = false;
     
     if (log)
     {
@@ -103,13 +106,24 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     if (IsPlanComplete())
         return true;
         
-    ThreadPlan* new_plan = NULL;
-
+    m_no_more_plans = false;
+    if (m_sub_plan_sp && m_sub_plan_sp->IsPlanComplete())
+    {
+        if (!m_sub_plan_sp->PlanSucceeded())
+        {
+            SetPlanComplete();
+            m_no_more_plans = true;
+            return true;
+        }
+        else
+            m_sub_plan_sp.reset();
+    }
+    
     if (m_virtual_step)
     {
         // If we've just completed a virtual step, all we need to do is check for a ShouldStopHere plan, and otherwise
         // we're done.
-        new_plan = InvokeShouldStopHereCallback();
+        m_sub_plan_sp = InvokeShouldStopHereCallback();
     }
     else
     {
@@ -131,8 +145,8 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             // A caveat to this is if we think the frame is older but we're actually in a trampoline.
             // I'm going to make the assumption that you wouldn't RETURN to a trampoline.  So if we are
             // in a trampoline we think the frame is older because the trampoline confused the backtracer.
-            new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
-            if (new_plan == NULL)
+            m_sub_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+            if (!m_sub_plan_sp)
                 return true;
             else if (log)
             {
@@ -167,26 +181,26 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         
         // We may have set the plan up above in the FrameIsOlder section:
         
-        if (new_plan == NULL)
-            new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+        if (!m_sub_plan_sp)
+            m_sub_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
         
         if (log)
         {
-            if (new_plan != NULL)
-                log->Printf ("Found a step through plan: %s", new_plan->GetName());
+            if (m_sub_plan_sp)
+                log->Printf ("Found a step through plan: %s", m_sub_plan_sp->GetName());
             else
                 log->Printf ("No step through plan found.");
         }
         
         // If not, give the "should_stop" callback a chance to push a plan to get us out of here.
         // But only do that if we actually have stepped in.
-        if (!new_plan && frame_order == eFrameCompareYounger)
-            new_plan = InvokeShouldStopHereCallback();
+        if (!m_sub_plan_sp && frame_order == eFrameCompareYounger)
+            m_sub_plan_sp = InvokeShouldStopHereCallback();
 
         // If we've stepped in and we are going to stop here, check to see if we were asked to
         // run past the prologue, and if so do that.
         
-        if (new_plan == NULL && frame_order == eFrameCompareYounger && m_step_past_prologue)
+        if (!m_sub_plan_sp && frame_order == eFrameCompareYounger && m_step_past_prologue)
         {
             lldb::StackFrameSP curr_frame = m_thread.GetStackFrameAtIndex(0);
             if (curr_frame)
@@ -217,13 +231,13 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
                     if (log)
                         log->Printf ("Pushing past prologue ");
                         
-                    new_plan = m_thread.QueueThreadPlanForRunToAddress(false, func_start_address,true);
+                    m_sub_plan_sp = m_thread.QueueThreadPlanForRunToAddress(false, func_start_address,true);
                 }
             }
         }
      }
     
-     if (new_plan == NULL)
+     if (!m_sub_plan_sp)
      {
         m_no_more_plans = true;
         SetPlanComplete();
@@ -303,7 +317,7 @@ ThreadPlanStepInRange::FrameMatchesAvoidRegexp ()
     return false;
 }
 
-ThreadPlan *
+ThreadPlanSP
 ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton)
 {
     bool should_step_out = false;
@@ -375,7 +389,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
                                                                     0); // Frame index
     }
 
-    return NULL;
+    return ThreadPlanSP();
 }
 
 bool

@@ -87,7 +87,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     else 
         stop_others = false;
 
-    ThreadPlan* new_plan = NULL;
+    ThreadPlanSP new_plan_sp;
     
     FrameComparison frame_order = CompareCurrentFrameToStartFrame();
     
@@ -100,9 +100,9 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         // in a trampoline we think the frame is older because the trampoline confused the backtracer.
         // As below, we step through first, and then try to figure out how to get back out again.
         
-        new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+        new_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
 
-        if (new_plan != NULL && log)
+        if (new_plan_sp && log)
             log->Printf("Thought I stepped out, but in fact arrived at a trampoline.");
     }
     else if (frame_order == eFrameCompareYounger)
@@ -142,7 +142,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         
             if (older_ctx_is_equivalent)
             {
-                new_plan = m_thread.QueueThreadPlanForStepOut (false, 
+                new_plan_sp = m_thread.QueueThreadPlanForStepOut (false,
                                                            NULL, 
                                                            true, 
                                                            stop_others, 
@@ -152,7 +152,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             }
             else 
             {
-                new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+                new_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
                 
             }
         }
@@ -173,7 +173,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             // in which case we need to get out of there.  But if we are in a stub then it's 
             // likely going to be hard to get out from here.  It is probably easiest to step into the
             // stub, and then it will be straight-forward to step out.        
-            new_plan = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+            new_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
         }
         else
         {
@@ -254,7 +254,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                                         {
                                             const bool abort_other_plans = false;
                                             const bool stop_other_threads = false;
-                                            new_plan = m_thread.QueueThreadPlanForRunToAddress(abort_other_plans,
+                                            new_plan_sp = m_thread.QueueThreadPlanForRunToAddress(abort_other_plans,
                                                                                                next_line_address,
                                                                                                stop_other_threads);
                                             break;
@@ -273,12 +273,12 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     // If we get to this point, we're not going to use a previously set "next branch" breakpoint, so delete it:
     ClearNextBranchBreakpoint();
     
-    if (new_plan == NULL)
+    if (!new_plan_sp)
         m_no_more_plans = true;
     else
         m_no_more_plans = false;
 
-    if (new_plan == NULL)
+    if (!new_plan_sp)
     {
         // For efficiencies sake, we know we're done here so we don't have to do this
         // calculation again in MischiefManaged.

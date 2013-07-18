@@ -461,7 +461,7 @@ protected:
         else
             bool_stop_other_threads = true;
 
-        ThreadPlan *new_plan = NULL;
+        ThreadPlanSP new_plan_sp;
         
         if (m_step_type == eStepTypeInto)
         {
@@ -469,20 +469,20 @@ protected:
 
             if (frame->HasDebugInformation ())
             {
-                new_plan = thread->QueueThreadPlanForStepInRange (abort_other_plans,
+                new_plan_sp = thread->QueueThreadPlanForStepInRange (abort_other_plans,
                                                                 frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
                                                                 frame->GetSymbolContext(eSymbolContextEverything),
                                                                 m_options.m_step_in_target.c_str(),
                                                                 stop_other_threads,
                                                                 m_options.m_avoid_no_debug);
-                if (new_plan && !m_options.m_avoid_regexp.empty())
+                if (new_plan_sp && !m_options.m_avoid_regexp.empty())
                 {
-                    ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (new_plan);
+                    ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (new_plan_sp.get());
                     step_in_range_plan->SetAvoidRegexp(m_options.m_avoid_regexp.c_str());
                 }
             }
             else
-                new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
+                new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
                 
         }
         else if (m_step_type == eStepTypeOver)
@@ -490,27 +490,27 @@ protected:
             StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
 
             if (frame->HasDebugInformation())
-                new_plan = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
+                new_plan_sp = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
                                                                     frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
                                                                     frame->GetSymbolContext(eSymbolContextEverything), 
                                                                     stop_other_threads);
             else
-                new_plan = thread->QueueThreadPlanForStepSingleInstruction (true, 
+                new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (true,
                                                                             abort_other_plans, 
                                                                             bool_stop_other_threads);
 
         }
         else if (m_step_type == eStepTypeTrace)
         {
-            new_plan = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
+            new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (false, abort_other_plans, bool_stop_other_threads);
         }
         else if (m_step_type == eStepTypeTraceOver)
         {
-            new_plan = thread->QueueThreadPlanForStepSingleInstruction (true, abort_other_plans, bool_stop_other_threads);
+            new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (true, abort_other_plans, bool_stop_other_threads);
         }
         else if (m_step_type == eStepTypeOut)
         {
-            new_plan = thread->QueueThreadPlanForStepOut (abort_other_plans, 
+            new_plan_sp = thread->QueueThreadPlanForStepOut (abort_other_plans,
                                                           NULL, 
                                                           false, 
                                                           bool_stop_other_threads, 
@@ -528,10 +528,10 @@ protected:
         // If we got a new plan, then set it to be a master plan (User level Plans should be master plans
         // so that they can be interruptible).  Then resume the process.
         
-        if (new_plan != NULL)
+        if (new_plan_sp)
         {
-            new_plan->SetIsMasterPlan (true);
-            new_plan->SetOkayToDiscard (false);
+            new_plan_sp->SetIsMasterPlan (true);
+            new_plan_sp->SetOkayToDiscard (false);
 
             process->GetThreadList().SetSelectedThreadByID (thread->GetID());
             process->Resume ();
@@ -1001,7 +1001,7 @@ protected:
                 return false;
             }
 
-            ThreadPlan *new_plan = NULL;
+            ThreadPlanSP new_plan_sp;
 
             if (frame->HasDebugInformation ())
             {
@@ -1064,7 +1064,7 @@ protected:
                     return false;
                 }
                 
-                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, 
+                new_plan_sp = thread->QueueThreadPlanForStepUntil (abort_other_plans,
                                                                 &address_list.front(), 
                                                                 address_list.size(), 
                                                                 m_options.m_stop_others, 
@@ -1072,8 +1072,8 @@ protected:
                 // User level plans should be master plans so they can be interrupted (e.g. by hitting a breakpoint)
                 // and other plans executed by the user (stepping around the breakpoint) and then a "continue"
                 // will resume the original plan.
-                new_plan->SetIsMasterPlan (true);
-                new_plan->SetOkayToDiscard(false);
+                new_plan_sp->SetIsMasterPlan (true);
+                new_plan_sp->SetOkayToDiscard(false);
             }
             else
             {
