@@ -86,9 +86,10 @@ public:
   SourceLocation findConditionalDirectiveRegionLoc(SourceLocation Loc) const;
 
 private:
-  virtual void If(SourceLocation Loc, SourceRange ConditionRange);
+  virtual void If(SourceLocation Loc, SourceRange ConditionRange,
+                  bool ConditionValue);
   virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
-                    SourceLocation IfLoc);
+                    bool ConditionValue, SourceLocation IfLoc);
   virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
                      const MacroDirective *MD);
   virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
