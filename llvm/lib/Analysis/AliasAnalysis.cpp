@@ -361,9 +361,11 @@ AliasAnalysis::getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
 }
 
 namespace {
-  // Conservatively return true. Return false, if there is a single path
-  // starting from "From" and the path does not reach "To".
-  static bool hasPath(const BasicBlock *From, const BasicBlock *To) {
+  /// Determine whether there is a path from From to To within a single
+  /// function. Returns false only if we can prove that once 'From' has been
+  /// executed then 'To' can not be executed. Conservatively returns true.
+  static bool isPotentiallyReachable(const BasicBlock *From,
+                                     const BasicBlock *To) {
     const unsigned MaxCheck = 5;
     const BasicBlock *Current = From;
     for (unsigned I = 0; I < MaxCheck; I++) {
@@ -400,7 +402,7 @@ namespace {
       // there is no need to explore the use if BeforeHere dominates use.
       // Check whether there is a path from I to BeforeHere.
       if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
-          !hasPath(BB, BeforeHere->getParent()))
+          !isPotentiallyReachable(BB, BeforeHere->getParent()))
         return false;
       return true;
     }
@@ -412,7 +414,7 @@ namespace {
       if (BeforeHere != I && !DT->isReachableFromEntry(BB))
         return false;
       if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
-          !hasPath(BB, BeforeHere->getParent()))
+          !isPotentiallyReachable(BB, BeforeHere->getParent()))
         return false;
       Captured = true;
       return true;
