@@ -152,14 +152,14 @@ private:
 /// \brief Helper macros to check the arguments on all marshaller functions.
 #define CHECK_ARG_COUNT(count)                                                 \
   if (Args.size() != count) {                                                  \
-    Error->pushErrorFrame(NameRange, Error->ET_RegistryWrongArgCount)          \
+    Error->addError(NameRange, Error->ET_RegistryWrongArgCount)                \
         << count << Args.size();                                               \
     return MatcherList();                                                      \
   }
 
 #define CHECK_ARG_TYPE(index, type)                                            \
   if (!ArgTypeTraits<type>::is(Args[index].Value)) {                           \
-    Error->pushErrorFrame(Args[index].Range, Error->ET_RegistryWrongArgType)   \
+    Error->addError(Args[index].Range, Error->ET_RegistryWrongArgType)         \
         << (index + 1) << ArgTypeTraits<type>::asString()                      \
         << Args[index].Value.getTypeAsString();                                \
     return MatcherList();                                                      \
@@ -254,7 +254,7 @@ MatcherList variadicMatcherCreateCallback(StringRef MatcherName,
     const ParserValue &Arg = Args[i];
     const VariantValue &Value = Arg.Value;
     if (!ArgTraits::is(Value)) {
-      Error->pushErrorFrame(Arg.Range, Error->ET_RegistryWrongArgType)
+      Error->addError(Arg.Range, Error->ET_RegistryWrongArgType)
           << (i + 1) << ArgTraits::asString() << Value.getTypeAsString();
       HasError = true;
       break;

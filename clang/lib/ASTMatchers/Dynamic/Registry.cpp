@@ -298,8 +298,7 @@ MatcherList Registry::constructMatcher(StringRef MatcherName,
   ConstructorMap::const_iterator it =
       RegistryData->constructors().find(MatcherName);
   if (it == RegistryData->constructors().end()) {
-    Error->pushErrorFrame(NameRange, Error->ET_RegistryNotFound)
-        << MatcherName;
+    Error->addError(NameRange, Error->ET_RegistryNotFound) << MatcherName;
     return MatcherList();
   }
 
@@ -322,7 +321,7 @@ MatcherList Registry::constructBoundMatcher(StringRef MatcherName,
       return *Bound;
     }
   }
-  Error->pushErrorFrame(NameRange, Error->ET_RegistryNotBindable);
+  Error->addError(NameRange, Error->ET_RegistryNotBindable);
   return MatcherList();
 }
 

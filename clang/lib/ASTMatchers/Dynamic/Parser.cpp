@@ -162,8 +162,7 @@ private:
       SourceRange Range;
       Range.Start = Result->Range.Start;
       Range.End = currentLocation();
-      Error->pushErrorFrame(Range, Error->ET_ParserUnsignedError)
-          << Result->Text;
+      Error->addError(Range, Error->ET_ParserUnsignedError) << Result->Text;
       Result->Kind = TokenInfo::TK_Error;
     }
   }
@@ -198,8 +197,7 @@ private:
     SourceRange Range;
     Range.Start = Result->Range.Start;
     Range.End = currentLocation();
-    Error->pushErrorFrame(Range, Error->ET_ParserStringError)
-        << ErrorText;
+    Error->addError(Range, Error->ET_ParserStringError) << ErrorText;
     Result->Kind = TokenInfo::TK_Error;
   }
 
@@ -239,7 +237,7 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
   assert(NameToken.Kind == TokenInfo::TK_Ident);
   const TokenInfo OpenToken = Tokenizer->consumeNextToken();
   if (OpenToken.Kind != TokenInfo::TK_OpenParen) {
-    Error->pushErrorFrame(OpenToken.Range, Error->ET_ParserNoOpenParen)
+    Error->addError(OpenToken.Range, Error->ET_ParserNoOpenParen)
         << OpenToken.Text;
     return false;
   }
@@ -256,27 +254,24 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
       // We must find a , token to continue.
       const TokenInfo CommaToken = Tokenizer->consumeNextToken();
       if (CommaToken.Kind != TokenInfo::TK_Comma) {
-        Error->pushErrorFrame(CommaToken.Range, Error->ET_ParserNoComma)
+        Error->addError(CommaToken.Range, Error->ET_ParserNoComma)
             << CommaToken.Text;
         return false;
       }
     }
 
+    Diagnostics::Context Ctx(Diagnostics::Context::MatcherArg, Error,
+                             NameToken.Text, NameToken.Range, Args.size() + 1);
     ParserValue ArgValue;
     ArgValue.Text = Tokenizer->peekNextToken().Text;
     ArgValue.Range = Tokenizer->peekNextToken().Range;
-    if (!parseExpressionImpl(&ArgValue.Value)) {
-      Error->pushErrorFrame(NameToken.Range,
-                            Error->ET_ParserMatcherArgFailure)
-          << (Args.size() + 1) << NameToken.Text;
-      return false;
-    }
+    if (!parseExpressionImpl(&ArgValue.Value)) return false;
 
     Args.push_back(ArgValue);
   }
 
   if (EndToken.Kind == TokenInfo::TK_Eof) {
-    Error->pushErrorFrame(OpenToken.Range, Error->ET_ParserNoCloseParen);
+    Error->addError(OpenToken.Range, Error->ET_ParserNoCloseParen);
     return false;
   }
 
@@ -293,35 +288,32 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
     //       explicit about the syntax error.
     if (BindToken.Kind != TokenInfo::TK_Ident ||
         BindToken.Text != TokenInfo::ID_Bind) {
-      Error->pushErrorFrame(BindToken.Range, Error->ET_ParserMalformedBindExpr);
+      Error->addError(BindToken.Range, Error->ET_ParserMalformedBindExpr);
       return false;
     }
     if (OpenToken.Kind != TokenInfo::TK_OpenParen) {
-      Error->pushErrorFrame(OpenToken.Range, Error->ET_ParserMalformedBindExpr);
+      Error->addError(OpenToken.Range, Error->ET_ParserMalformedBindExpr);
       return false;
     }
     if (IDToken.Kind != TokenInfo::TK_Literal || !IDToken.Value.isString()) {
-      Error->pushErrorFrame(IDToken.Range, Error->ET_ParserMalformedBindExpr);
+      Error->addError(IDToken.Range, Error->ET_ParserMalformedBindExpr);
       return false;
     }
     if (CloseToken.Kind != TokenInfo::TK_CloseParen) {
-      Error->pushErrorFrame(CloseToken.Range,
-                            Error->ET_ParserMalformedBindExpr);
+      Error->addError(CloseToken.Range, Error->ET_ParserMalformedBindExpr);
       return false;
     }
     BindID = IDToken.Value.getString();
   }
 
   // Merge the start and end infos.
+  Diagnostics::Context Ctx(Diagnostics::Context::ConstructMatcher, Error,
+                           NameToken.Text, NameToken.Range);
   SourceRange MatcherRange = NameToken.Range;
   MatcherRange.End = EndToken.Range.End;
   MatcherList Result = S->actOnMatcherExpression(
       NameToken.Text, MatcherRange, BindID, Args, Error);
-  if (Result.empty()) {
-    Error->pushErrorFrame(NameToken.Range, Error->ET_ParserMatcherFailure)
-        << NameToken.Text;
-    return false;
-  }
+  if (Result.empty()) return false;
 
   *Value = Result;
   return true;
@@ -338,8 +330,8 @@ bool Parser::parseExpressionImpl(VariantValue *Value) {
     return parseMatcherExpressionImpl(Value);
 
   case TokenInfo::TK_Eof:
-    Error->pushErrorFrame(Tokenizer->consumeNextToken().Range,
-                          Error->ET_ParserNoCode);
+    Error->addError(Tokenizer->consumeNextToken().Range,
+                    Error->ET_ParserNoCode);
     return false;
 
   case TokenInfo::TK_Error:
@@ -352,8 +344,7 @@ bool Parser::parseExpressionImpl(VariantValue *Value) {
   case TokenInfo::TK_Period:
   case TokenInfo::TK_InvalidChar:
     const TokenInfo Token = Tokenizer->consumeNextToken();
-    Error->pushErrorFrame(Token.Range, Error->ET_ParserInvalidToken)
-        << Token.Text;
+    Error->addError(Token.Range, Error->ET_ParserInvalidToken) << Token.Text;
     return false;
   }
 
@@ -392,8 +383,8 @@ bool Parser::parseExpression(StringRef Code, Sema *S,
   CodeTokenizer Tokenizer(Code, Error);
   if (!Parser(&Tokenizer, S, Error).parseExpressionImpl(Value)) return false;
   if (Tokenizer.peekNextToken().Kind != TokenInfo::TK_Eof) {
-    Error->pushErrorFrame(Tokenizer.peekNextToken().Range,
-                          Error->ET_ParserTrailingCode);
+    Error->addError(Tokenizer.peekNextToken().Range,
+                    Error->ET_ParserTrailingCode);
     return false;
   }
   return true;
@@ -412,11 +403,11 @@ DynTypedMatcher *Parser::parseMatcherExpression(StringRef Code,
   if (!parseExpression(Code, S, &Value, Error))
     return NULL;
   if (!Value.isMatchers()) {
-    Error->pushErrorFrame(SourceRange(), Error->ET_ParserNotAMatcher);
+    Error->addError(SourceRange(), Error->ET_ParserNotAMatcher);
     return NULL;
   }
   if (Value.getMatchers().matchers().size() != 1) {
-    Error->pushErrorFrame(SourceRange(), Error->ET_ParserOverloadedType)
+    Error->addError(SourceRange(), Error->ET_ParserOverloadedType)
         << Value.getTypeAsString();
     return NULL;
   }

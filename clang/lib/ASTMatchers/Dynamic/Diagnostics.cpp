@@ -13,20 +13,56 @@ namespace clang {
 namespace ast_matchers {
 namespace dynamic {
 
-Diagnostics::ArgStream &
-Diagnostics::ArgStream::operator<<(const Twine &Arg) {
+Diagnostics::ArgStream Diagnostics::pushContextFrame(ContextType Type,
+                                                     SourceRange Range) {
+  ContextStack.push_back(ContextFrame());
+  ContextFrame& data = ContextStack.back();
+  data.Type = Type;
+  data.Range = Range;
+  return ArgStream(&data.Args);
+}
+
+Diagnostics::Context::Context(ConstructMatcherEnum, Diagnostics *Error,
+                              StringRef MatcherName,
+                              const SourceRange &MatcherRange)
+    : Error(Error) {
+  Error->pushContextFrame(CT_MatcherConstruct, MatcherRange) << MatcherName;
+}
+
+Diagnostics::Context::Context(MatcherArgEnum, Diagnostics *Error,
+                              StringRef MatcherName,
+                              const SourceRange &MatcherRange,
+                              unsigned ArgNumber)
+    : Error(Error) {
+  Error->pushContextFrame(CT_MatcherArg, MatcherRange) << ArgNumber
+                                                       << MatcherName;
+}
+
+Diagnostics::Context::~Context() { Error->ContextStack.pop_back(); }
+
+Diagnostics::ArgStream &Diagnostics::ArgStream::operator<<(const Twine &Arg) {
   Out->push_back(Arg.str());
   return *this;
 }
 
-Diagnostics::ArgStream Diagnostics::pushErrorFrame(const SourceRange &Range,
-                                                   ErrorType Error) {
-  Frames.insert(Frames.begin(), ErrorFrame());
-  ErrorFrame &Last = Frames.front();
+Diagnostics::ArgStream Diagnostics::addError(const SourceRange &Range,
+                                             ErrorType Error) {
+  Errors.push_back(ErrorContent());
+  ErrorContent &Last = Errors.back();
+  Last.ContextStack = ContextStack;
   Last.Range = Range;
   Last.Type = Error;
-  ArgStream Out = { &Last.Args };
-  return Out;
+  return ArgStream(&Last.Args);
+}
+
+StringRef ContextTypeToString(Diagnostics::ContextType Type) {
+  switch (Type) {
+    case Diagnostics::CT_MatcherConstruct:
+      return "Error building matcher $0.";
+    case Diagnostics::CT_MatcherArg:
+      return "Error parsing argument $0 for matcher $1.";
+  }
+  llvm_unreachable("Unknown ContextType value.");
 }
 
 StringRef ErrorTypeToString(Diagnostics::ErrorType Type) {
@@ -42,10 +78,6 @@ StringRef ErrorTypeToString(Diagnostics::ErrorType Type) {
 
   case Diagnostics::ET_ParserStringError:
     return "Error parsing string token: <$0>";
-  case Diagnostics::ET_ParserMatcherArgFailure:
-    return "Error parsing argument $0 for matcher $1.";
-  case Diagnostics::ET_ParserMatcherFailure:
-    return "Error building matcher $0.";
   case Diagnostics::ET_ParserNoOpenParen:
     return "Error parsing matcher. Found token <$0> while looking for '('.";
   case Diagnostics::ET_ParserNoCloseParen:
@@ -95,25 +127,42 @@ std::string FormatErrorString(StringRef FormatString,
   return Out;
 }
 
-std::string Diagnostics::ErrorFrame::ToString() const {
-  StringRef FormatString = ErrorTypeToString(Type);
-  std::string ErrorOut = FormatErrorString(FormatString, Args);
+static std::string MaybeAddLineAndColumn(Twine Input,
+                                         const SourceRange &Range) {
   if (Range.Start.Line > 0 && Range.Start.Column > 0)
     return (Twine(Range.Start.Line) + ":" + Twine(Range.Start.Column) + ": " +
-            ErrorOut).str();
-  return ErrorOut;
+            Input).str();
+  return Input.str();
+}
+
+std::string Diagnostics::ContextFrame::ToString() const {
+  return MaybeAddLineAndColumn(
+      FormatErrorString(ContextTypeToString(Type), Args), Range);
+}
+
+std::string Diagnostics::ErrorContent::ToString() const {
+  return MaybeAddLineAndColumn(FormatErrorString(ErrorTypeToString(Type), Args),
+                               Range);
 }
 
 std::string Diagnostics::ToString() const {
-  if (Frames.empty()) return "";
-  return Frames[Frames.size() - 1].ToString();
+  std::string Result;
+  for (size_t i = 0, e = Errors.size(); i != e; ++i) {
+    if (i != 0) Result += "\n";
+    Result += Errors[i].ToString();
+  }
+  return Result;
 }
 
 std::string Diagnostics::ToStringFull() const {
   std::string Result;
-  for (size_t i = 0, end = Frames.size(); i != end; ++i) {
-    if (i > 0) Result += "\n";
-    Result += Frames[i].ToString();
+  for (size_t i = 0, e = Errors.size(); i != e; ++i) {
+    if (i != 0) Result += "\n";
+    const ErrorContent &Error = Errors[i];
+    for (size_t i = 0, e = Error.ContextStack.size(); i != e; ++i) {
+      Result += Error.ContextStack[i].ToString() + "\n";
+    }
+    Result += Error.ToString();
   }
   return Result;
 }
