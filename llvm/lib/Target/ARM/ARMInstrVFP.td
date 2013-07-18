@@ -584,7 +584,7 @@ def VCVTTDH : ADuI<0b11101, 0b11, 0b0011, 0b11, 0,
 }
 
 multiclass vcvt_inst<string opc, bits<2> rm> {
-  let PostEncoderMethod = "" in {
+  let PostEncoderMethod = "", DecoderNamespace = "VFPV8" in {
     def SS : ASuInp<0b11101, 0b11, 0b1100, 0b11, 0,
                     (outs SPR:$Sd), (ins SPR:$Sm),
                     NoItinerary, !strconcat("vcvt", opc, ".s32.f32\t$Sd, $Sm"),
@@ -670,7 +670,7 @@ defm VRINTR : vrint_inst_zrx<"r", 0, 0>;
 defm VRINTX : vrint_inst_zrx<"x", 1, 0>;
 
 multiclass vrint_inst_anpm<string opc, bits<2> rm> {
-  let PostEncoderMethod = "" in {
+  let PostEncoderMethod = "", DecoderNamespace = "VFPV8" in {
     def S : ASuInp<0b11101, 0b11, 0b1000, 0b01, 0,
                    (outs SPR:$Sd), (ins SPR:$Sm),
                    NoItinerary, !strconcat("vrint", opc, ".f32\t$Sd, $Sm"),
