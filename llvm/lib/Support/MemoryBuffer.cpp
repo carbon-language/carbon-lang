@@ -283,12 +283,11 @@ static bool shouldUseMmap(int FD,
   // FIXME: this chunk of code is duplicated, but it avoids a fstat when
   // RequiresNullTerminator = false and MapSize != -1.
   if (FileSize == size_t(-1)) {
-    struct stat FileInfo;
-    // TODO: This should use fstat64 when available.
-    if (fstat(FD, &FileInfo) == -1) {
-      return error_code(errno, posix_category());
-    }
-    FileSize = FileInfo.st_size;
+    sys::fs::file_status Status;
+    error_code EC = sys::fs::status(FD, Status);
+    if (EC)
+      return EC;
+    FileSize = Status.getSize();
   }
 
   // If we need a null terminator and the end of the map is inside the file,
@@ -318,20 +317,20 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
     // If we don't know the file size, use fstat to find out.  fstat on an open
     // file descriptor is cheaper than stat on a random path.
     if (FileSize == uint64_t(-1)) {
-      struct stat FileInfo;
-      // TODO: This should use fstat64 when available.
-      if (fstat(FD, &FileInfo) == -1) {
-        return error_code(errno, posix_category());
-      }
+      sys::fs::file_status Status;
+      error_code EC = sys::fs::status(FD, Status);
+      if (EC)
+        return EC;
 
       // If this not a file or a block device (e.g. it's a named pipe
       // or character device), we can't trust the size. Create the memory
       // buffer by copying off the stream.
-      if (!S_ISREG(FileInfo.st_mode) && !S_ISBLK(FileInfo.st_mode)) {
+      sys::fs::file_type Type = Status.type();
+      if (Type != sys::fs::file_type::regular_file &&
+          Type != sys::fs::file_type::block_file)
         return getMemoryBufferForStream(FD, Filename, result);
-      }
 
-      FileSize = FileInfo.st_size;
+      FileSize = Status.getSize();
     }
     MapSize = FileSize;
   }
