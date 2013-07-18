@@ -43,13 +43,13 @@ FA fa2{X<2>{}}; // expected-error {{calling a private constructor}}
 
 // It is deleted if the corresponding constructor [...] is deleted.
 struct G {
-  G(int) = delete;
-  template<typename T> G(T*) = delete;
+  G(int) = delete; // expected-note {{function has been explicitly marked deleted here}}
+  template<typename T> G(T*) = delete; // expected-note {{function has been explicitly marked deleted here}}
 };
 struct H : G {
-  using G::G; // expected-note 2{{marked deleted here}}
+  using G::G; // expected-note 2{{deleted constructor was inherited here}}
 };
-H h1(5); // expected-error {{call to implicitly-deleted function of 'H'}}
+H h1(5); // expected-error {{call to deleted constructor of 'H'}}
 H h2("foo"); // expected-error {{call to deleted constructor of 'H'}}
 
 
@@ -58,15 +58,14 @@ H h2("foo"); // expected-error {{call to deleted constructor of 'H'}}
 namespace DRnnnn {
   struct A {
     constexpr A(int, float = 0) {}
-    explicit A(int, int = 0) {}
+    explicit A(int, int = 0) {} // expected-note {{constructor cannot be inherited}}
 
     A(int, int, int = 0) = delete;
   };
   struct B : A {
-    // FIXME: produce notes indicating why it was deleted
     using A::A; // expected-note {{here}}
   };
 
   constexpr B b0(0, 0.0f); // ok, constexpr
-  B b1(0, 1); // expected-error {{call to implicitly-deleted}}
+  B b1(0, 1); // expected-error {{call to deleted constructor of 'DRnnnn::B'}}
 }

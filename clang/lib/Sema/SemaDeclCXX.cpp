@@ -9991,9 +9991,7 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
 }
 
 bool Sema::isImplicitlyDeleted(FunctionDecl *FD) {
-  return FD->isDeleted() && 
-         (FD->isDefaulted() || FD->isImplicit()) &&
-         isa<CXXMethodDecl>(FD);
+  return FD->isDeleted() && FD->isDefaulted() && isa<CXXMethodDecl>(FD);
 }
 
 /// \brief Mark the call operator of the given lambda closure type as "used".

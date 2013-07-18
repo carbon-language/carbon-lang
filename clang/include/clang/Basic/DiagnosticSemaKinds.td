@@ -3398,6 +3398,10 @@ def note_unavailable_here : Note<
   "%select{unavailable|deleted|deprecated}1 here">;
 def note_implicitly_deleted : Note<
   "explicitly defaulted function was implicitly deleted here">;
+def note_inherited_deleted_here : Note<
+  "deleted constructor was inherited here">;
+def note_cannot_inherit : Note<
+  "constructor cannot be inherited">;
 def warn_not_enough_argument : Warning<
   "not enough variable arguments in %0 declaration to fit a sentinel">,
   InGroup<Sentinel>;

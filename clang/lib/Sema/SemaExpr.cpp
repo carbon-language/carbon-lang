@@ -140,11 +140,13 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
     return Result;
 }
 
-/// \brief Emit a note explaining that this function is deleted or unavailable.
+/// \brief Emit a note explaining that this function is deleted.
 void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
+  assert(Decl->isDeleted());
+
   CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Decl);
 
-  if (Method && Method->isDeleted() && !Method->isDeletedAsWritten()) {
+  if (Method && Method->isDeleted() && Method->isDefaulted()) {
     // If the method was explicitly defaulted, point at that declaration.
     if (!Method->isImplicit())
       Diag(Decl->getLocation(), diag::note_implicitly_deleted);
@@ -158,8 +160,23 @@ void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
     return;
   }
 
+  if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(Decl)) {
+    if (CXXConstructorDecl *BaseCD =
+            const_cast<CXXConstructorDecl*>(CD->getInheritedConstructor())) {
+      Diag(Decl->getLocation(), diag::note_inherited_deleted_here);
+      if (BaseCD->isDeleted()) {
+        NoteDeletedFunction(BaseCD);
+      } else {
+        // FIXME: An explanation of why exactly it can't be inherited
+        // would be nice.
+        Diag(BaseCD->getLocation(), diag::note_cannot_inherit);
+      }
+      return;
+    }
+  }
+
   Diag(Decl->getLocation(), diag::note_unavailable_here)
-    << 1 << Decl->isDeleted();
+    << 1 << true;
 }
 
 /// \brief Determine whether a FunctionDecl was ever declared with an
