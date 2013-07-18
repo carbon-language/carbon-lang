@@ -53,6 +53,14 @@ static cl::list<unsigned>
                      "of the file.\n"
                      "Can only be used with one input file."),
             cl::cat(ClangFormatCategory));
+static cl::list<std::string>
+LineRanges("lines", cl::desc("<start line>:<end line> - format a range of\n"
+                             "lines (both 1-based).\n"
+                             "Multiple ranges can be formatted by specifying\n"
+                             "several -lines arguments.\n"
+                             "Can't be used with -offset and -length.\n"
+                             "Can only be used with one input file."),
+           cl::cat(ClangFormatCategory));
 static cl::opt<std::string>
     Style("style",
           cl::desc("Coding style, currently supports:\n"
@@ -150,21 +158,43 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName) {
   return Style;
 }
 
+// Parses <start line>:<end line> input to a pair of line numbers.
 // Returns true on error.
-static bool format(std::string FileName) {
-  FileManager Files((FileSystemOptions()));
-  DiagnosticsEngine Diagnostics(
-      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
-      new DiagnosticOptions);
-  SourceManager Sources(Diagnostics, Files);
-  OwningPtr<MemoryBuffer> Code;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
-    llvm::errs() << ec.message() << "\n";
-    return true;
+static bool parseLineRange(StringRef Input, unsigned &FromLine,
+                           unsigned &ToLine) {
+  std::pair<StringRef, StringRef> LineRange = Input.split(':');
+  return LineRange.first.getAsInteger(0, FromLine) ||
+         LineRange.second.getAsInteger(0, ToLine);
+}
+
+static bool fillRanges(SourceManager &Sources, FileID ID,
+                       const MemoryBuffer *Code,
+                       std::vector<CharSourceRange> &Ranges) {
+  if (!LineRanges.empty()) {
+    if (!Offsets.empty() || !Lengths.empty()) {
+      llvm::errs() << "error: cannot use -lines with -offset/-length\n";
+      return true;
+    }
+
+    for (unsigned i = 0, e = LineRanges.size(); i < e; ++i) {
+      unsigned FromLine, ToLine;
+      if (parseLineRange(LineRanges[i], FromLine, ToLine)) {
+        llvm::errs() << "error: invalid <start line>:<end line> pair\n";
+        return true;
+      }
+      if (FromLine > ToLine) {
+        llvm::errs() << "error: start line should be less than end line\n";
+        return true;
+      }
+      SourceLocation Start = Sources.translateLineCol(ID, FromLine, 1);
+      SourceLocation End = Sources.translateLineCol(ID, ToLine, UINT_MAX);
+      if (Start.isInvalid() || End.isInvalid())
+        return true;
+      Ranges.push_back(CharSourceRange::getCharRange(Start, End));
+    }
+    return false;
   }
-  if (Code->getBufferSize() == 0)
-    return true; // Empty files are formatted correctly.
-  FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
+
   if (Offsets.empty())
     Offsets.push_back(0);
   if (Offsets.size() != Lengths.size() &&
@@ -173,7 +203,6 @@ static bool format(std::string FileName) {
         << "error: number of -offset and -length arguments must match.\n";
     return true;
   }
-  std::vector<CharSourceRange> Ranges;
   for (unsigned i = 0, e = Offsets.size(); i != e; ++i) {
     if (Offsets[i] >= Code->getBufferSize()) {
       llvm::errs() << "error: offset " << Offsets[i]
@@ -196,6 +225,28 @@ static bool format(std::string FileName) {
     }
     Ranges.push_back(CharSourceRange::getCharRange(Start, End));
   }
+  return false;
+}
+
+// Returns true on error.
+static bool format(std::string FileName) {
+  FileManager Files((FileSystemOptions()));
+  DiagnosticsEngine Diagnostics(
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
+      new DiagnosticOptions);
+  SourceManager Sources(Diagnostics, Files);
+  OwningPtr<MemoryBuffer> Code;
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
+    llvm::errs() << ec.message() << "\n";
+    return true;
+  }
+  if (Code->getBufferSize() == 0)
+    return true; // Empty files are formatted correctly.
+  FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
+  std::vector<CharSourceRange> Ranges;
+  if (fillRanges(Sources, ID, Code.get(), Ranges))
+    return true;
+
   FormatStyle FormatStyle = getStyle(Style, FileName);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources,
             getFormattingLangOpts(FormatStyle.Standard));
@@ -282,8 +333,8 @@ int main(int argc, const char **argv) {
     Error = clang::format::format(FileNames[0]);
     break;
   default:
-    if (!Offsets.empty() || !Lengths.empty()) {
-      llvm::errs() << "error: \"-offset\" and \"-length\" can only be used for "
+    if (!Offsets.empty() || !Lengths.empty() || !LineRanges.empty()) {
+      llvm::errs() << "error: -offset, -length and -lines can only be used for "
                       "single file.\n";
       return 1;
     }
