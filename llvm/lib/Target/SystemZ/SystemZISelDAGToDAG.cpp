@@ -97,15 +97,24 @@ static uint64_t allOnes(unsigned int Count) {
   return Count == 0 ? 0 : (uint64_t(1) << (Count - 1) << 1) - 1;
 }
 
-// Represents operands 2 to 5 of a ROTATE AND ... SELECTED BITS operation.
-// The operands are: Input (R2), Start (I3), End (I4) and Rotate (I5).
-// The operand value is effectively (and (rotl Input Rotate) Mask) and
-// has BitSize bits.
+// Represents operands 2 to 5 of the ROTATE AND ... SELECTED BITS operation
+// given by Opcode.  The operands are: Input (R2), Start (I3), End (I4) and
+// Rotate (I5).  The combined operand value is effectively:
+//
+//   (or (rotl Input, Rotate), ~Mask)
+//
+// for RNSBG and:
+//
+//   (and (rotl Input, Rotate), Mask)
+//
+// otherwise.  The value has BitSize bits.
 struct RxSBGOperands {
-  RxSBGOperands(SDValue N)
-    : BitSize(N.getValueType().getSizeInBits()), Mask(allOnes(BitSize)),
-      Input(N), Start(64 - BitSize), End(63), Rotate(0) {}
+  RxSBGOperands(unsigned Op, SDValue N)
+    : Opcode(Op), BitSize(N.getValueType().getSizeInBits()),
+      Mask(allOnes(BitSize)), Input(N), Start(64 - BitSize), End(63),
+      Rotate(0) {}
 
+  unsigned Opcode;
   unsigned BitSize;
   uint64_t Mask;
   SDValue Input;
@@ -671,6 +680,9 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
   unsigned Opcode = N.getOpcode();
   switch (Opcode) {
   case ISD::AND: {
+    if (RxSBG.Opcode == SystemZ::RNSBG)
+      return false;
+
     ConstantSDNode *MaskNode =
       dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!MaskNode)
@@ -685,6 +697,31 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
       APInt KnownZero, KnownOne;
       CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
       Mask |= KnownZero.getZExtValue();
+      if (!refineRxSBGMask(RxSBG, Mask))
+        return false;
+    }
+    RxSBG.Input = Input;
+    return true;
+  }
+
+  case ISD::OR: {
+    if (RxSBG.Opcode != SystemZ::RNSBG)
+      return false;
+
+    ConstantSDNode *MaskNode =
+      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    if (!MaskNode)
+      return false;
+
+    SDValue Input = N.getOperand(0);
+    uint64_t Mask = ~MaskNode->getZExtValue();
+    if (!refineRxSBGMask(RxSBG, Mask)) {
+      // If some bits of Input are already known ones, those bits will have
+      // been removed from the mask.  See if adding them back in makes the
+      // mask suitable.
+      APInt KnownZero, KnownOne;
+      CurDAG->ComputeMaskedBits(Input, KnownZero, KnownOne);
+      Mask &= ~KnownOne.getZExtValue();
       if (!refineRxSBGMask(RxSBG, Mask))
         return false;
     }
@@ -707,17 +744,25 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
   }
       
   case ISD::SHL: {
-    // Treat (shl X, count) as (and (rotl X, count), ~0<<count).
     ConstantSDNode *CountNode =
       dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!CountNode)
       return false;
 
     uint64_t Count = CountNode->getZExtValue();
-    if (Count < 1 ||
-        Count >= RxSBG.BitSize ||
-        !refineRxSBGMask(RxSBG, allOnes(RxSBG.BitSize - Count) << Count))
+    if (Count < 1 || Count >= RxSBG.BitSize)
       return false;
+
+    if (RxSBG.Opcode == SystemZ::RNSBG) {
+      // Treat (shl X, count) as (rotl X, size-count) as long as the bottom
+      // count bits from RxSBG.Input are ignored.
+      if (shiftedInBitsMatter(RxSBG, Count, true))
+        return false;
+    } else {
+      // Treat (shl X, count) as (and (rotl X, count), ~0<<count).
+      if (!refineRxSBGMask(RxSBG, allOnes(RxSBG.BitSize - Count) << Count))
+        return false;
+    }
 
     RxSBG.Rotate = (RxSBG.Rotate + Count) & 63;
     RxSBG.Input = N.getOperand(0);
@@ -735,9 +780,9 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
     if (Count < 1 || Count >= RxSBG.BitSize)
       return false;
 
-    if (Opcode == ISD::SRA) {
-      // Treat (sra X, count) as (rotl X, size-count) as long as the top
-      // Count bits from RxSBG.Input are ignored.
+    if (RxSBG.Opcode == SystemZ::RNSBG || Opcode == ISD::SRA) {
+      // Treat (srl|sra X, count) as (rotl X, size-count) as long as the top
+      // count bits from RxSBG.Input are ignored.
       if (shiftedInBitsMatter(RxSBG, Count, false))
         return false;
     } else {
@@ -779,7 +824,7 @@ SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) {
 }
 
 SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
-  RxSBGOperands RISBG(SDValue(N, 0));
+  RxSBGOperands RISBG(SystemZ::RISBG, SDValue(N, 0));
   unsigned Count = 0;
   while (expandRxSBG(RISBG))
     Count += 1;
@@ -811,7 +856,10 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
 SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
   // Try treating each operand of N as the second operand of the RxSBG
   // and see which goes deepest.
-  RxSBGOperands RxSBG[] = { N->getOperand(0), N->getOperand(1) };
+  RxSBGOperands RxSBG[] = {
+    RxSBGOperands(Opcode, N->getOperand(0)),
+    RxSBGOperands(Opcode, N->getOperand(1))
+  };
   unsigned Count[] = { 0, 0 };
   for (unsigned I = 0; I < 2; ++I)
     while (expandRxSBG(RxSBG[I]))
@@ -941,6 +989,9 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     break;
 
   case ISD::AND:
+    if (Node->getOperand(1).getOpcode() != ISD::Constant)
+      ResNode = tryRxSBG(Node, SystemZ::RNSBG);
+    // Fall through.
   case ISD::ROTL:
   case ISD::SHL:
   case ISD::SRL:

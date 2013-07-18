@@ -118,11 +118,6 @@ such as ICM and STCM.
 
 --
 
-We could make more use of the ROTATE AND ... SELECTED BITS instructions.
-At the moment we only use RISBG, and only then for subword atomic operations.
-
---
-
 DAGCombiner can detect integer absolute, but there's not yet an associated
 ISD opcode.  We could add one and implement it using LOAD POSITIVE.
 Negated absolutes could use LOAD NEGATIVE.
