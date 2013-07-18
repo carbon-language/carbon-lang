@@ -416,3 +416,41 @@ define i64 @f37(i64 %foo) {
   %shl = lshr i64 %and, 1
   ret i64 %shl
 }
+
+; Test a combination involving a large ASHR and a shift left.  We can't
+; use RISBG there.
+define i64 @f38(i64 %foo) {
+; CHECK-LABEL: f38:
+; CHECK: srag {{%r[0-5]}}
+; CHECK: sllg {{%r[0-5]}}
+; CHECK: br %r14
+  %ashr = ashr i64 %foo, 32
+  %shl = shl i64 %ashr, 5
+  ret i64 %shl
+}
+
+; Try a similar thing in which no shifted sign bits are kept.
+define i64 @f39(i64 %foo, i64 *%dest) {
+; CHECK-LABEL: f39:
+; CHECK: srag [[REG:%r[01345]]], %r2, 35
+; CHECK: risbg %r2, %r2, 33, 189, 31
+; CHECK: br %r14
+  %ashr = ashr i64 %foo, 35
+  store i64 %ashr, i64 *%dest
+  %shl = shl i64 %ashr, 2
+  %and = and i64 %shl, 2147483647
+  ret i64 %and
+}
+
+; ...and again with the next highest shift value, where one sign bit is kept.
+define i64 @f40(i64 %foo, i64 *%dest) {
+; CHECK-LABEL: f40:
+; CHECK: srag [[REG:%r[01345]]], %r2, 36
+; CHECK: risbg %r2, [[REG]], 33, 189, 2
+; CHECK: br %r14
+  %ashr = ashr i64 %foo, 36
+  store i64 %ashr, i64 *%dest
+  %shl = shl i64 %ashr, 2
+  %and = and i64 %shl, 2147483647
+  ret i64 %and
+}

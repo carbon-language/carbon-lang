@@ -647,9 +647,29 @@ static bool refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask) {
   return false;
 }
 
+// RxSBG.Input is a shift of Count bits in the direction given by IsLeft.
+// Return true if the result depends on the signs or zeros that are
+// shifted in.
+static bool shiftedInBitsMatter(RxSBGOperands &RxSBG, uint64_t Count,
+                                bool IsLeft) {
+  // Work out which bits of the shift result are zeros or sign copies.
+  uint64_t ShiftedIn = allOnes(Count);
+  if (!IsLeft)
+    ShiftedIn <<= RxSBG.BitSize - Count;
+
+  // Rotate that mask in the same way as RxSBG.Input is rotated.
+  if (RxSBG.Rotate != 0)
+    ShiftedIn = ((ShiftedIn << RxSBG.Rotate) |
+                 (ShiftedIn >> (64 - RxSBG.Rotate)));
+
+  // Fail if any of the zero or sign bits are used.
+  return (ShiftedIn & RxSBG.Mask) != 0;
+}
+
 bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
   SDValue N = RxSBG.Input;
-  switch (N.getOpcode()) {
+  unsigned Opcode = N.getOpcode();
+  switch (Opcode) {
   case ISD::AND: {
     ConstantSDNode *MaskNode =
       dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
@@ -704,41 +724,30 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) {
     return true;
   }
 
-  case ISD::SRL: {
-    // Treat (srl X, count), mask) as (and (rotl X, size-count), ~0>>count),
-    // which is similar to SLL above.
+  case ISD::SRL:
+  case ISD::SRA: {
     ConstantSDNode *CountNode =
       dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!CountNode)
       return false;
 
     uint64_t Count = CountNode->getZExtValue();
-    if (Count < 1 ||
-        Count >= RxSBG.BitSize ||
-        !refineRxSBGMask(RxSBG, allOnes(RxSBG.BitSize - Count)))
+    if (Count < 1 || Count >= RxSBG.BitSize)
       return false;
+
+    if (Opcode == ISD::SRA) {
+      // Treat (sra X, count) as (rotl X, size-count) as long as the top
+      // Count bits from RxSBG.Input are ignored.
+      if (shiftedInBitsMatter(RxSBG, Count, false))
+        return false;
+    } else {
+      // Treat (srl X, count), mask) as (and (rotl X, size-count), ~0>>count),
+      // which is similar to SLL above.
+      if (!refineRxSBGMask(RxSBG, allOnes(RxSBG.BitSize - Count)))
+        return false;
+    }
 
     RxSBG.Rotate = (RxSBG.Rotate - Count) & 63;
-    RxSBG.Input = N.getOperand(0);
-    return true;
-  }
-
-  case ISD::SRA: {
-    // Treat (sra X, count) as (rotl X, size-count) as long as the top
-    // count bits from Ops.Input are ignored.
-    ConstantSDNode *CountNode =
-      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
-    if (!CountNode)
-      return false;
-
-    uint64_t Count = CountNode->getZExtValue();
-    if (RxSBG.Rotate != 0 ||
-        Count < 1 ||
-        Count >= RxSBG.BitSize ||
-        RxSBG.Start < 64 - (RxSBG.BitSize - Count))
-      return false;
-
-    RxSBG.Rotate = -Count & 63;
     RxSBG.Input = N.getOperand(0);
     return true;
   }
