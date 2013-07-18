@@ -153,7 +153,7 @@ def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
   (add SGPR_32, M0Reg)
 >;
 
-def SReg_64 : RegisterClass<"AMDGPU", [i64, i1], 64,
+def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, i1], 64,
   (add SGPR_64, VCCReg, EXECReg)
 >;
 

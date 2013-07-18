@@ -41,6 +41,20 @@ entry:
   ret void
 }
 
+; load a v2f32 value from the global address space
+; R600-CHECK: @load_v2f32
+; R600-CHECK: VTX_READ_32
+; R600-CHECK: VTX_READ_32
+
+; SI-CHECK: @load_v2f32
+; SI-CHECK: BUFFER_LOAD_DWORDX2
+define void @load_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)* %in) {
+entry:
+  %0 = load <2 x float> addrspace(1)* %in
+  store <2 x float> %0, <2 x float> addrspace(1)* %out
+  ret void
+}
+
 ; Load an i32 value from the constant address space.
 ; R600-CHECK: @load_const_addrspace_i32
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
