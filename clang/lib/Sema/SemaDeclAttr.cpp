@@ -1547,10 +1547,8 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+  if (!checkAttributeNumArgs(S, Attr, 1))
     return;
-  }
 
   Expr *Arg = Attr.getArg(0);
   Arg = Arg->IgnoreParenCasts();
@@ -1670,10 +1668,8 @@ static void handleAlwaysInlineAttr(Sema &S, Decl *D,
 static void handleTLSModelAttr(Sema &S, Decl *D,
                                const AttributeList &Attr) {
   // Check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+  if (!checkAttributeNumArgs(S, Attr, 1))
     return;
-  }
 
   Expr *Arg = Attr.getArg(0);
   Arg = Arg->IgnoreParenCasts();
@@ -3130,8 +3126,7 @@ static void handleInitPriorityAttr(Sema &S, Decl *D,
     return;
   }
   
-  if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+  if (!checkAttributeNumArgs(S, Attr, 1)) {
     Attr.setInvalid();
     return;
   }
@@ -4146,8 +4141,7 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
   if (Attr.isInvalid())
     return true;
 
-  if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+  if (!checkAttributeNumArgs(*this, Attr, 1)) {
     Attr.setInvalid();
     return true;
   }
