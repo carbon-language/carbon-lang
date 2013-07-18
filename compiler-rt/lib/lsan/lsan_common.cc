@@ -125,7 +125,7 @@ void ScanRangeForPointers(uptr begin, uptr end,
   if (pp % alignment)
     pp = pp + alignment - pp % alignment;
   for (; pp + sizeof(void *) <= end; pp += alignment) {  // NOLINT
-    void *p = *reinterpret_cast<void**>(pp);
+    void *p = *reinterpret_cast<void **>(pp);
     if (!CanBeAHeapPointer(reinterpret_cast<uptr>(p))) continue;
     uptr chunk = PointsIntoChunk(p);
     if (!chunk) continue;
@@ -353,7 +353,7 @@ void DoLeakCheck() {
   EnsureMainThreadIDIsCorrect();
   BlockingMutexLock l(&global_mutex);
   static bool already_done;
-  CHECK(!already_done);
+  if (already_done) return;
   already_done = true;
   if (&__lsan_is_turned_off && __lsan_is_turned_off())
     return;
@@ -541,6 +541,13 @@ void __lsan_enable() {
     Die();
   }
   __lsan::disable_counter--;
+#endif
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __lsan_do_leak_check() {
+#if CAN_SANITIZE_LEAKS
+  __lsan::DoLeakCheck();
 #endif
 }
 
