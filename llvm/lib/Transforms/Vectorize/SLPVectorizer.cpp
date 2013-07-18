@@ -1033,6 +1033,12 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
   if (GepA && GepA->getPointerOperand() == PtrB)
     return false;
 
+  ConstantInt *CA = dyn_cast<ConstantInt>(PtrA);
+  ConstantInt *CB = dyn_cast<ConstantInt>(PtrB);
+  if (CA && CB) {
+    return (CA->getSExtValue() + Sz == CB->getSExtValue());
+  }
+
   // Calculate the distance.
   const SCEV *PtrSCEVA = SE->getSCEV(PtrA);
   const SCEV *PtrSCEVB = SE->getSCEV(PtrB);
