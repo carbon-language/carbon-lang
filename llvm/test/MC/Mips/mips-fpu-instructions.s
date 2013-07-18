@@ -158,6 +158,8 @@
 # CHECK:  mtc2    $9, $4, 5               # encoding: [0x05,0x20,0x89,0x48]
 # CHECK:  movf    $2, $1, $fcc0           # encoding: [0x01,0x10,0x20,0x00]
 # CHECK:  movt    $2, $1, $fcc0           # encoding: [0x01,0x10,0x21,0x00]
+# CHECK:  luxc1   $f0, $6($5)             # encoding: [0x05,0x00,0xa6,0x4c]
+# CHECK:  suxc1   $f4, $24($5)            # encoding: [0x0d,0x20,0xb8,0x4c]
 
    cfc1    $a2,$0
    mfc1    $a2,$f7
@@ -179,3 +181,5 @@
    mtc2    $9, $4, 5
    movf    $2, $1, $fcc0
    movt    $2, $1, $fcc0
+   luxc1 $f0, $a2($a1)
+   suxc1 $f4, $t8($a1)

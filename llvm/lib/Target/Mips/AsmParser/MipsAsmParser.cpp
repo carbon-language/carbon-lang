@@ -1268,6 +1268,18 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     // Set the proper register kind.
     MipsOperand* op = static_cast<MipsOperand*>(Operands.back());
     op->setRegKind(Kind);
+    if ((Kind == MipsOperand::Kind_CPURegs)
+      && (getLexer().is(AsmToken::LParen))) {
+      // Check if it is indexed addressing operand.
+      Operands.push_back(MipsOperand::CreateToken("(", getLexer().getLoc()));
+      Parser.Lex(); // Eat the parenthesis.
+      if (parseRegs(Operands,RegKind) != MatchOperand_Success)
+        return MatchOperand_NoMatch;
+      if (getLexer().isNot(AsmToken::RParen))
+        return MatchOperand_NoMatch;
+      Operands.push_back(MipsOperand::CreateToken(")", getLexer().getLoc()));
+      Parser.Lex();
+    }
     return MatchOperand_Success;
   }
   return MatchOperand_NoMatch;
