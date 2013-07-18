@@ -48,7 +48,7 @@ namespace CodeGen {
 /// the backend.
 class CGDebugInfo {
   friend class NoLocation;
-  friend class BuiltinLocation;
+  friend class ArtificialLocation;
   CodeGenModule &CGM;
   const CodeGenOptions::DebugInfoKind DebugKind;
   llvm::DIBuilder DBuilder;
@@ -403,8 +403,8 @@ public:
   ~NoLocation();
 };
 
-/// BuiltinLocation - An RAII object that temporarily switches to an
-/// artificial debug location that has a valid scope, but no line
+/// ArtificialLocation - An RAII object that temporarily switches to
+/// an artificial debug location that has a valid scope, but no line
 /// information. This is useful when emitting compiler-generated
 /// helper functions that have no source location associated with
 /// them.
@@ -412,14 +412,14 @@ public:
 /// This is necessary because pasing an empty SourceLocation to
 /// CGDebugInfo::setLocation() will result in the last valid location
 /// being reused.
-class BuiltinLocation {
+class ArtificialLocation {
   SourceLocation SavedLoc;
   CGDebugInfo *DI;
   CGBuilderTy &Builder;
 public:
-  BuiltinLocation(CodeGenFunction &CGF, CGBuilderTy &B);
+  ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B);
   /// ~BuildinLocation - Autorestore everything back to normal.
-  ~BuiltinLocation();
+  ~ArtificialLocation();
 };
 
 

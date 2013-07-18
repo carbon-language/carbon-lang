@@ -68,7 +68,7 @@ NoLocation::~NoLocation() {
   }
 }
 
-BuiltinLocation::BuiltinLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+ArtificialLocation::ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B)
   : DI(CGF.getDebugInfo()), Builder(B) {
   if (DI) {
     SavedLoc = DI->getLocation();
@@ -83,7 +83,7 @@ BuiltinLocation::BuiltinLocation(CodeGenFunction &CGF, CGBuilderTy &B)
   }
 }
 
-BuiltinLocation::~BuiltinLocation() {
+ArtificialLocation::~ArtificialLocation() {
   if (DI) {
     assert(Builder.getCurrentDebugLocation().getLine() == 0);
     DI->CurLoc = SavedLoc;
