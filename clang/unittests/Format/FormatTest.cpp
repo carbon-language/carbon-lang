@@ -3335,6 +3335,10 @@ TEST_F(FormatTest, UnderstandsPointersToMembers) {
                "  ((*a).*f)();\n"
                "  a.*x;\n"
                "}");
+  verifyFormat("void f() {\n"
+               "  (a->*aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)(\n"
+               "      aaaa, bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb);\n"
+               "}");
   FormatStyle Style = getLLVMStyle();
   Style.PointerBindsToType = true;
   verifyFormat("typedef bool* (Class::*Member)() const;", Style);
@@ -3632,6 +3636,11 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("my_int a = (my_int) ~0;");
   verifyFormat("my_int a = (my_int)++ a;");
   verifyFormat("my_int a = (my_int) + 2;");
+
+  // Don't break after a cast's
+  verifyFormat("int aaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+               "    (aaaaaaaaaaaaaaaaaaaaaaaaaa *)(aaaaaaaaaaaaaaaaaaaaaa +\n"
+               "                                   bbbbbbbbbbbbbbbbbbbbbb);");
 
   // These are not casts.
   verifyFormat("void f(int *) {}");
