@@ -15,6 +15,7 @@
 
 #include <cstdlib>
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
@@ -175,11 +176,10 @@ StringRef canonicalizeInputFileName(PECOFFTargetInfo &info, std::string path) {
 
 // Replace a file extension with ".exe". If the given file has no
 // extension, just add ".exe".
-StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, std::string path) {
-  StringRef ext = llvm::sys::path::extension(path);
-  if (!ext.empty())
-    path.erase(path.size() - ext.size());
-  return info.allocateString(path.append(".exe"));
+StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, StringRef path) {
+  SmallString<128> smallStr = path;
+  llvm::sys::path::replace_extension(smallStr, ".exe");
+  return info.allocateString(smallStr.str());
 }
 
 } // namespace
