@@ -52,7 +52,8 @@ enum AttributeDeclKind {
   ExpectedTLSVar,
   ExpectedVariableOrField,
   ExpectedVariableFieldOrTag,
-  ExpectedTypeOrNamespace
+  ExpectedTypeOrNamespace,
+  ExpectedObjectiveCInterface
 };
 
 //===----------------------------------------------------------------------===//
@@ -2078,7 +2079,8 @@ static void handleArcWeakrefUnavailableAttr(Sema &S, Decl *D,
 static void handleObjCRootClassAttr(Sema &S, Decl *D, 
                                     const AttributeList &Attr) {
   if (!isa<ObjCInterfaceDecl>(D)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_requires_objc_interface);
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedObjectiveCInterface;
     return;
   }
   
@@ -2490,7 +2492,8 @@ static void handleObjCExceptionAttr(Sema &S, Decl *D,
 
   ObjCInterfaceDecl *OCI = dyn_cast<ObjCInterfaceDecl>(D);
   if (OCI == 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_requires_objc_interface);
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedObjectiveCInterface;
     return;
   }
 

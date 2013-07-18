@@ -8,9 +8,9 @@ __attribute__((__objc_exception__))
 @end
 
 
-__attribute__((__objc_exception__)) // expected-error {{attribute may only be applied to an Objective-C interface}}
+__attribute__((__objc_exception__)) // expected-error {{'__objc_exception__' attribute only applies to Objective-C interfaces}}
 int X;
 
-__attribute__((__objc_exception__)) // expected-error {{attribute may only be applied to an Objective-C interface}}
+__attribute__((__objc_exception__)) // expected-error {{'__objc_exception__' attribute only applies to Objective-C interfaces}}
 void foo();
 

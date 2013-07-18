@@ -1805,8 +1805,6 @@ def err_attribute_argument_n_not_identifier : Error<
   "'%0' attribute requires parameter %1 to be an identifier">;
 def err_attribute_argument_out_of_bounds : Error<
   "'%0' attribute parameter %1 is out of bounds">;
-def err_attribute_requires_objc_interface : Error<
-  "attribute may only be applied to an Objective-C interface">;
 def err_attribute_uuid_malformed_guid : Error<
   "uuid attribute contains a malformed GUID">;
 def warn_nonnull_pointers_only : Warning<
@@ -2006,7 +2004,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables, functions and labels|fields and global variables|structs|"
   "variables, functions and tag types|thread-local variables|"
   "variables and fields|variables, data members and tag types|"
-  "types and namespaces}1">,
+  "types and namespaces|Objective-C interfaces}1">,
   InGroup<IgnoredAttributes>;
 def err_attribute_wrong_decl_type : Error<
   "%0 attribute only applies to %select{functions|unions|"
@@ -2016,7 +2014,7 @@ def err_attribute_wrong_decl_type : Error<
   "variables, functions and labels|fields and global variables|structs|"
   "variables, functions and tag types|thread-local variables|"
   "variables and fields|variables, data members and tag types|"
-  "types and namespaces}1">;
+  "types and namespaces|Objective-C interfaces}1">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">,
   InGroup<IgnoredAttributes>;

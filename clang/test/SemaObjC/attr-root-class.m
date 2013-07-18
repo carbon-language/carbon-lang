@@ -11,6 +11,6 @@ __attribute__((objc_root_class))
 @implementation NonRootClass
 @end
 
-__attribute__((objc_root_class)) static void nonClassDeclaration()  // expected-error {{attribute may only be applied to an Objective-C interface}}
+__attribute__((objc_root_class)) static void nonClassDeclaration()  // expected-error {{'objc_root_class' attribute only applies to Objective-C interfaces}}
 {
 }
