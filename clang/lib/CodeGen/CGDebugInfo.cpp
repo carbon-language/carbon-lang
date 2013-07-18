@@ -77,7 +77,7 @@ BuiltinLocation::BuiltinLocation(CodeGenFunction &CGF, CGBuilderTy &B)
     DI->CurLoc = SourceLocation();
     // Construct a location that has a valid scope, but no line info.
     llvm::MDNode *Scope = DI->LexicalBlockStack.empty() ?
-      DI->TheCU : DI->LexicalBlockStack.back();
+      DI->TheCU() : DI->LexicalBlockStack.back();
     Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
   }
 }
