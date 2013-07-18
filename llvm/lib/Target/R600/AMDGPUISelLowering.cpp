@@ -77,6 +77,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
+  setOperationAction(ISD::VSELECT, MVT::v2f32, Expand);
+  setOperationAction(ISD::VSELECT, MVT::v4f32, Expand);
 
   static const int types[] = {
     (int)MVT::v2i32,
@@ -97,6 +99,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::SUB,  VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction(ISD::VSELECT, VT, Expand);
     setOperationAction(ISD::XOR,  VT, Expand);
   }
 }
