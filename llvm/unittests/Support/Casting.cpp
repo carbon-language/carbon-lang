@@ -10,10 +10,15 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/User.h"
 #include "gtest/gtest.h"
 #include <cstdlib>
 
 namespace llvm {
+// Used to test illegal cast. If a cast doesn't match any of the "real" ones,
+// it will match this one.
+struct IllegalCast;
+template <typename T> IllegalCast *cast(...) { return 0; }
 
 // set up two example classes
 // with conversion facility
@@ -60,9 +65,24 @@ foo *bar::naz() {
 
 
 bar *fub();
+
+template <> struct simplify_type<foo> {
+  typedef int SimpleType;
+  static SimpleType getSimplifiedValue(foo &Val) { return 0; }
+};
+
 } // End llvm namespace
 
 using namespace llvm;
+
+
+// Test the peculiar behavior of Use in simplify_type.
+int Check1[is_same<simplify_type<Use>::SimpleType, Value *>::value ? 1 : -1];
+int Check2[is_same<simplify_type<Use *>::SimpleType, Value *>::value ? 1 : -1];
+
+// Test that a regular class behaves as expected.
+int Check3[is_same<simplify_type<foo>::SimpleType, int>::value ? 1 : -1];
+int Check4[is_same<simplify_type<foo *>::SimpleType, foo *>::value ? 1 : -1];
 
 namespace {
 
@@ -203,3 +223,8 @@ TEST(CastingTest, InferredUpcastTakesPrecedence) {
 
 } // end namespace inferred_upcasting
 } // end anonymous namespace
+// Test that we reject casts of temporaries (and so the illegal cast gets used).
+namespace TemporaryCast {
+struct pod {};
+IllegalCast *testIllegalCast() { return cast<foo>(pod()); }
+}

@@ -206,7 +206,10 @@ template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
   }
 };
 
-
+template <class X> struct is_simple_type {
+  static const bool value =
+      is_same<X, typename simplify_type<X>::SimpleType>::value;
+};
 
 // cast<X> - Return the argument parameter cast to the specified type.  This
 // casting operator asserts that the type is correct, so it does not return null
@@ -216,10 +219,12 @@ template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
 //  cast<Instruction>(myVal)->getParent()
 //
 template <class X, class Y>
-inline typename cast_retty<X, const Y>::ret_type cast(const Y &Val) {
+inline typename enable_if_c<!is_simple_type<Y>::value,
+                            typename cast_retty<X, const Y>::ret_type>::type
+cast(const Y &Val) {
   assert(isa<X>(Val) && "cast<Ty>() argument of incompatible type!");
-  return cast_convert_val<X, const Y,
-                        typename simplify_type<const Y>::SimpleType>::doit(Val);
+  return cast_convert_val<
+      X, const Y, typename simplify_type<const Y>::SimpleType>::doit(Val);
 }
 
 template <class X, class Y>
@@ -230,10 +235,7 @@ inline typename cast_retty<X, Y>::ret_type cast(Y &Val) {
 }
 
 template <class X, class Y>
-inline typename enable_if<
-  is_same<Y, typename simplify_type<Y>::SimpleType>,
-  typename cast_retty<X, Y*>::ret_type
->::type cast(Y *Val) {
+inline typename cast_retty<X, Y *>::ret_type cast(Y *Val) {
   assert(isa<X>(Val) && "cast<Ty>() argument of incompatible type!");
   return cast_convert_val<X, Y*,
                           typename simplify_type<Y*>::SimpleType>::doit(Val);
@@ -259,7 +261,9 @@ inline typename cast_retty<X, Y*>::ret_type cast_or_null(Y *Val) {
 //
 
 template <class X, class Y>
-inline typename cast_retty<X, const Y>::ret_type dyn_cast(const Y &Val) {
+inline typename enable_if_c<!is_simple_type<Y>::value,
+                            typename cast_retty<X, const Y>::ret_type>::type
+dyn_cast(const Y &Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
@@ -269,10 +273,7 @@ inline typename cast_retty<X, Y>::ret_type dyn_cast(Y &Val) {
 }
 
 template <class X, class Y>
-inline typename enable_if<
-  is_same<Y, typename simplify_type<Y>::SimpleType>,
-  typename cast_retty<X, Y*>::ret_type
->::type dyn_cast(Y *Val) {
+inline typename cast_retty<X, Y *>::ret_type dyn_cast(Y *Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;
 }
 
