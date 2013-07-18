@@ -10,6 +10,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Config/config.h"
 
 using namespace llvm;
 
@@ -66,7 +67,11 @@ int main(int argc, char **argv) {
   std::string ErrorInfo;
   OwningPtr<tool_output_file> Out
   (new tool_output_file(OutputFilename.c_str(), ErrorInfo,
+#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 3)
+                        sys::fs::F_Binary));
+#else
                         raw_fd_ostream::F_Binary));
+#endif
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     exit(1);
