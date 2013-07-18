@@ -9,6 +9,9 @@
 ; XFAIL: vg_leak
 ; REQUIRES: shell
 
+; FIXME: sys::fs::status() doesn't work on pipes, since r186560.
+; XFAIL: mingw32
+
 ; opt will fail to open /dev/null on native win32.
 ; XFAIL: win32
 
