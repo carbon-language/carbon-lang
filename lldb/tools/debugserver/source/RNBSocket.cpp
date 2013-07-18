@@ -320,10 +320,8 @@ RNBSocket::Disconnect (bool save_errno)
     {
         m_fd_from_lockdown = false;
         m_fd = -1;
-        if (lockdown_deactivate (m_ld_conn) == 0)
-            return rnb_success;
-        else
-            return rnb_err;
+        lockdown_disconnect (m_ld_conn);
+        return rnb_success;
     }
 #endif
     return ClosePort (m_fd, save_errno);
