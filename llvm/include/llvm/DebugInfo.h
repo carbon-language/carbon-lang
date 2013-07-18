@@ -106,7 +106,7 @@ namespace llvm {
     // easily.
     // FIXME: This operator bool isn't actually protecting anything at the
     // moment due to the conversion operator above making DIDescriptor nodes
-    // implicitly convertable to pointer.
+    // implicitly convertable to bool.
     LLVM_EXPLICIT operator bool() const { return DbgNode != 0; }
 
     bool operator==(DIDescriptor Other) const {
