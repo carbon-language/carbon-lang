@@ -17,24 +17,72 @@
 using namespace llvm;
 using namespace clang;
 
-TEST(SourceOverridesTest, Interface) {
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
-      new DiagnosticOptions());
-  DiagnosticsEngine Diagnostics(
-      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-      DiagOpts.getPtr());
-  FileManager Files((FileSystemOptions()));
-  SourceManager SM(Diagnostics, Files);
-  StringRef FileName = "<text>";
-  StringRef Code =
-      "std::vector<such_a_long_name_for_a_type>::const_iterator long_type =\n"
-      "    vec.begin();\n"
-      "int   x;"; // to test that it's not the whole file that is reformatted
-  llvm::MemoryBuffer *Buf = llvm::MemoryBuffer::getMemBuffer(Code, FileName);
-  const clang::FileEntry *Entry =
-      Files.getVirtualFile(FileName, Buf->getBufferSize(), 0);
-  SM.overrideFileContents(Entry, Buf);
+// Test fixture object that setup some files once for all test cases and remove
+// them when the tests are done.
+class SourceOverridesTest : public ::testing::Test {
+protected:
+  static void SetUpTestCase() {
+    DiagOpts =
+        new IntrusiveRefCntPtr<DiagnosticOptions>(new DiagnosticOptions());
+    Diagnostics = new DiagnosticsEngine(
+        IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
+        DiagOpts->getPtr());
+  }
 
+  static void TearDownTestCase() {
+    delete DiagOpts;
+    delete Diagnostics;
+  }
+
+  virtual void SetUp() {
+    Files = new FileManager(FileSystemOptions());
+    Sources = NULL;
+    FileName = NULL;
+    Code = NULL;
+  }
+
+  void setFilename(const char *F) { FileName = F; }
+  void setCode(const char *C) { Code = C; }
+
+  virtual void TearDown() {
+    delete Files;
+    delete Sources;
+  }
+
+  // Creates a new SourceManager with the virtual file and content
+  SourceManager &getNewSourceManager() {
+    assert(FileName && Code && "expected Code and FileName to be set.");
+    delete Sources;
+    Sources = new SourceManager(*Diagnostics, *Files);
+    MemoryBuffer *Buf = MemoryBuffer::getMemBuffer(Code, FileName);
+    const FileEntry *Entry = Files->getVirtualFile(
+        FileName, Buf->getBufferSize(), /*ModificationTime=*/0);
+    Sources->overrideFileContents(Entry, Buf);
+    return *Sources;
+  }
+
+  static SourceManager *Sources;
+  static const char *FileName;
+  static const char *Code;
+
+private:
+  static IntrusiveRefCntPtr<DiagnosticOptions> *DiagOpts;
+  static DiagnosticsEngine *Diagnostics;
+  static FileManager *Files;
+};
+
+IntrusiveRefCntPtr<DiagnosticOptions> *SourceOverridesTest::DiagOpts = NULL;
+DiagnosticsEngine *SourceOverridesTest::Diagnostics = NULL;
+FileManager *SourceOverridesTest::Files = NULL;
+SourceManager *SourceOverridesTest::Sources = NULL;
+const char *SourceOverridesTest::FileName;
+const char *SourceOverridesTest::Code;
+
+TEST_F(SourceOverridesTest, Interface) {
+  setFilename("<test-file>");
+  setCode(
+      "std::vector<such_a_long_name_for_a_type>::const_iterator long_type =\n"
+      "    vec.begin();\n");
   SourceOverrides Overrides(FileName);
 
   EXPECT_EQ(FileName, Overrides.getMainFileName());
@@ -45,12 +93,11 @@ TEST(SourceOverridesTest, Interface) {
       strlen("std::vector<such_a_long_name_for_a_type>::const_iterator");
   Replaces.insert(
       tooling::Replacement(FileName, 0, ReplacementLength, "auto"));
-  Overrides.applyReplacements(Replaces, SM);
+  Overrides.applyReplacements(Replaces, getNewSourceManager());
   EXPECT_TRUE(Overrides.isSourceOverriden());
 
   std::string ExpectedContent = "auto long_type =\n"
-                                "    vec.begin();\n"
-                                "int   x;";
+                                "    vec.begin();\n";
 
   EXPECT_EQ(ExpectedContent, Overrides.getMainFileContent());
 }
