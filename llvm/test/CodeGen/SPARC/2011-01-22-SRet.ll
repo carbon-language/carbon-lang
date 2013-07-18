@@ -20,7 +20,7 @@ define i32 @test() nounwind {
 entry:
 ;CHECK: test
 ;CHECK: st {{.+}}, [%sp+64]
-;CHECK: make_foo
+;CHECK: call make_foo
 ;CHECK: unimp 12
   %f = alloca %struct.foo_t, align 8
   call void @make_foo(%struct.foo_t* noalias sret %f, i32 10, i32 20, i32 30) nounwind

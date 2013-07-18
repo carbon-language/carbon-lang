@@ -147,7 +147,7 @@ declare x86_fp80 @ceil(x86_fp80)
 ; PR4484
 ; test1 leaves a value on the stack that is needed after the asm.
 ; CHECK: testPR4484
-; CHECK: test1
+; CHECK: calll _test1
 ; CHECK-NOT: fstp
 ; Load %a from stack after ceil
 ; CHECK: fldt

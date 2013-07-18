@@ -3,7 +3,7 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 
 ; Very basic fast-isel functionality.
-define i32 @add(i32 %a, i32 %b) nounwind {
+define i32 @test0(i32 %a, i32 %b) nounwind {
 entry:
   %a.addr = alloca i32, align 4
   %b.addr = alloca i32, align 4

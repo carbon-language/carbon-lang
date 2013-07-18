@@ -161,7 +161,7 @@ entry:
 
 define i32 @restore_sethi_3bit(i32 %a) {
 entry:
-;CHECK: restore_sethi
+;CHECK: restore_sethi_3bit
 ;CHECK: sethi  6
 ;CHECK-NOT: restore %g0, 6144, %o0
   %0 = tail call i32 @bar(i32 %a) nounwind
@@ -172,7 +172,7 @@ entry:
 
 define i32 @restore_sethi_large(i32 %a) {
 entry:
-;CHECK: restore_sethi
+;CHECK: restore_sethi_large
 ;CHECK: sethi  4000, %i0
 ;CHECK: restore %g0, %g0, %g0
   %0 = tail call i32 @bar(i32 %a) nounwind

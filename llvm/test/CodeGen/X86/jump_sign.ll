@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=x86 -mcpu=pentiumpro -verify-machineinstrs | FileCheck %s
 
-define i32 @f(i32 %X) {
+define i32 @func_f(i32 %X) {
 entry:
-; CHECK-LABEL: f:
+; CHECK-LABEL: func_f:
 ; CHECK: jns
 	%tmp1 = add i32 %X, 1		; <i32> [#uses=1]
 	%tmp = icmp slt i32 %tmp1, 0		; <i1> [#uses=1]
@@ -23,9 +23,9 @@ declare i32 @baz(...)
 
 ; rdar://10633221
 ; rdar://11355268
-define i32 @g(i32 %a, i32 %b) nounwind {
+define i32 @func_g(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: g:
+; CHECK-LABEL: func_g:
 ; CHECK-NOT: test
 ; CHECK: cmovs
   %sub = sub nsw i32 %a, %b
@@ -35,9 +35,9 @@ entry:
 }
 
 ; rdar://10734411
-define i32 @h(i32 %a, i32 %b) nounwind {
+define i32 @func_h(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: h:
+; CHECK-LABEL: func_h:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -47,9 +47,9 @@ entry:
   %cond = select i1 %cmp, i32 %sub, i32 0
   ret i32 %cond
 }
-define i32 @i(i32 %a, i32 %b) nounwind {
+define i32 @func_i(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: i:
+; CHECK-LABEL: func_i:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -59,9 +59,9 @@ entry:
   %cond = select i1 %cmp, i32 %sub, i32 0
   ret i32 %cond
 }
-define i32 @j(i32 %a, i32 %b) nounwind {
+define i32 @func_j(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: j:
+; CHECK-LABEL: func_j:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -71,9 +71,9 @@ entry:
   %cond = select i1 %cmp, i32 %sub, i32 0
   ret i32 %cond
 }
-define i32 @k(i32 %a, i32 %b) nounwind {
+define i32 @func_k(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: k:
+; CHECK-LABEL: func_k:
 ; CHECK-NOT: cmp
 ; CHECK: cmov
 ; CHECK-NOT: movl
@@ -84,18 +84,18 @@ entry:
   ret i32 %cond
 }
 ; redundant cmp instruction
-define i32 @l(i32 %a, i32 %b) nounwind {
+define i32 @func_l(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: l:
+; CHECK-LABEL: func_l:
 ; CHECK-NOT: cmp
   %cmp = icmp slt i32 %b, %a
   %sub = sub nsw i32 %a, %b
   %cond = select i1 %cmp, i32 %sub, i32 %a
   ret i32 %cond
 }
-define i32 @m(i32 %a, i32 %b) nounwind {
+define i32 @func_m(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: m:
+; CHECK-LABEL: func_m:
 ; CHECK-NOT: cmp
   %cmp = icmp sgt i32 %a, %b
   %sub = sub nsw i32 %a, %b
@@ -104,9 +104,9 @@ entry:
 }
 ; If EFLAGS is live-out, we can't remove cmp if there exists
 ; a swapped sub.
-define i32 @l2(i32 %a, i32 %b) nounwind {
+define i32 @func_l2(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: l2:
+; CHECK-LABEL: func_l2:
 ; CHECK: cmp
   %cmp = icmp eq i32 %b, %a
   %sub = sub nsw i32 %a, %b
@@ -120,9 +120,9 @@ if.then:
 if.else:
   ret i32 %sub
 }
-define i32 @l3(i32 %a, i32 %b) nounwind {
+define i32 @func_l3(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: l3:
+; CHECK-LABEL: func_l3:
 ; CHECK: sub
 ; CHECK-NOT: cmp
 ; CHECK: jge
@@ -139,9 +139,9 @@ if.else:
 }
 ; rdar://11830760
 ; When Movr0 is between sub and cmp, we need to move "Movr0" before sub.
-define i32 @l4(i32 %a, i32 %b) nounwind {
+define i32 @func_l4(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: l4:
+; CHECK-LABEL: func_l4:
 ; CHECK: xor
 ; CHECK: sub
 ; CHECK-NOT: cmp
@@ -151,9 +151,9 @@ entry:
   ret i32 %.sub
 }
 ; rdar://11540023
-define i32 @n(i32 %x, i32 %y) nounwind {
+define i32 @func_n(i32 %x, i32 %y) nounwind {
 entry:
-; CHECK-LABEL: n:
+; CHECK-LABEL: func_n:
 ; CHECK-NOT: sub
 ; CHECK: cmp
   %sub = sub nsw i32 %x, %y
@@ -162,7 +162,7 @@ entry:
   ret i32 %y.x
 }
 ; PR://13046
-define void @o() nounwind uwtable {
+define void @func_o() nounwind uwtable {
 entry:
   %0 = load i16* undef, align 2
   br i1 undef, label %if.then.i, label %if.end.i
@@ -177,7 +177,7 @@ sw.bb:                                            ; preds = %if.end.i
   br i1 undef, label %if.then44, label %if.end29
 
 if.end29:                                         ; preds = %sw.bb
-; CHECK-LABEL: o:
+; CHECK-LABEL: func_o:
 ; CHECK: cmp
   %1 = urem i16 %0, 10
   %cmp25 = icmp eq i16 %1, 0
@@ -204,9 +204,9 @@ if.else.i104:                                     ; preds = %if.then44
   ret void
 }
 ; rdar://11855129
-define i32 @p(i32 %a, i32 %b) nounwind {
+define i32 @func_p(i32 %a, i32 %b) nounwind {
 entry:
-; CHECK-LABEL: p:
+; CHECK-LABEL: func_p:
 ; CHECK-NOT: test
 ; CHECK: cmovs
   %add = add nsw i32 %b, %a
@@ -217,8 +217,8 @@ entry:
 ; PR13475
 ; If we have sub a, b and cmp b, a and the result of cmp is used
 ; by sbb, we should not optimize cmp away.
-define i32 @q(i32 %j.4, i32 %w, i32 %el) {
-; CHECK-LABEL: q:
+define i32 @func_q(i32 %j.4, i32 %w, i32 %el) {
+; CHECK-LABEL: func_q:
 ; CHECK: cmp
 ; CHECK-NEXT: sbb
   %tmp532 = add i32 %j.4, %w
@@ -230,9 +230,9 @@ define i32 @q(i32 %j.4, i32 %w, i32 %el) {
   ret i32 %j.5
 }
 ; rdar://11873276
-define i8* @r(i8* %base, i32* nocapture %offset, i32 %size) nounwind {
+define i8* @func_r(i8* %base, i32* nocapture %offset, i32 %size) nounwind {
 entry:
-; CHECK-LABEL: r:
+; CHECK-LABEL: func_r:
 ; CHECK: sub
 ; CHECK-NOT: cmp
 ; CHECK: j
@@ -254,9 +254,9 @@ return:
 }
 
 ; Test optimizations of dec/inc.
-define i32 @dec(i32 %a) nounwind {
+define i32 @func_dec(i32 %a) nounwind {
 entry:
-; CHECK-LABEL: dec:
+; CHECK-LABEL: func_dec:
 ; CHECK: decl
 ; CHECK-NOT: test
 ; CHECK: cmovsl
@@ -266,9 +266,9 @@ entry:
   ret i32 %cond
 }
 
-define i32 @inc(i32 %a) nounwind {
+define i32 @func_inc(i32 %a) nounwind {
 entry:
-; CHECK-LABEL: inc:
+; CHECK-LABEL: func_inc:
 ; CHECK: incl
 ; CHECK-NOT: test
 ; CHECK: cmovsl
@@ -281,9 +281,9 @@ entry:
 ; PR13966
 @b = common global i32 0, align 4
 @a = common global i32 0, align 4
-define i32 @test1(i32 %p1) nounwind uwtable {
+define i32 @func_test1(i32 %p1) nounwind uwtable {
 entry:
-; CHECK-LABEL: test1:
+; CHECK-LABEL: func_test1:
 ; CHECK: testb
 ; CHECK: j
 ; CHECK: ret

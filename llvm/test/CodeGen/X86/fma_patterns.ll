@@ -182,11 +182,11 @@ define float @test_x86_fnmsub_ss(float %a0, float %a1, float %a2) {
   ret float %res
 }
 
-; CHECK: test_x86_fmadd_ps
+; CHECK: test_x86_fmadd_ps_load
 ; CHECK: vmovaps         (%rdi), %xmm2
 ; CHECK: vfmadd213ps     %xmm1, %xmm0, %xmm2
 ; CHECK: ret
-; CHECK_FMA4: test_x86_fmadd_ps
+; CHECK_FMA4: test_x86_fmadd_ps_load
 ; CHECK_FMA4: vfmaddps     %xmm1, (%rdi), %xmm0, %xmm0
 ; CHECK_FMA4: ret
 define <4 x float> @test_x86_fmadd_ps_load(<4 x float>* %a0, <4 x float> %a1, <4 x float> %a2) {
@@ -196,11 +196,11 @@ define <4 x float> @test_x86_fmadd_ps_load(<4 x float>* %a0, <4 x float> %a1, <4
   ret <4 x float> %res
 }
 
-; CHECK: test_x86_fmsub_ps
+; CHECK: test_x86_fmsub_ps_load
 ; CHECK: vmovaps         (%rdi), %xmm2
 ; CHECK: fmsub213ps     %xmm1, %xmm0, %xmm2
 ; CHECK: ret
-; CHECK_FMA4: test_x86_fmsub_ps
+; CHECK_FMA4: test_x86_fmsub_ps_load
 ; CHECK_FMA4: vfmsubps     %xmm1, (%rdi), %xmm0, %xmm0
 ; CHECK_FMA4: ret
 define <4 x float> @test_x86_fmsub_ps_load(<4 x float>* %a0, <4 x float> %a1, <4 x float> %a2) {

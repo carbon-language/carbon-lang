@@ -83,7 +83,7 @@ define i64 @shl64pi(i64* %p) nounwind uwtable readnone {
 entry:
   %x = load i64* %p
   %shl = shl i64 %x, 7
-; BMI264: shl64p
+; BMI264: shl64pi
 ; BMI264-NOT: shlxq
 ; BMI264: ret
   ret i64 %shl
@@ -108,7 +108,7 @@ entry:
 ; BMI2: lshr32p
 ; BMI2: shrxl %{{.+}}, ({{.+}}), %{{.+}}
 ; BMI2: ret
-; BMI264: lshr32
+; BMI264: lshr32p
 ; BMI264: shrxl %{{.+}}, ({{.+}}), %{{.+}}
 ; BMI264: ret
   ret i32 %shl
@@ -152,7 +152,7 @@ entry:
 ; BMI2: ashr32p
 ; BMI2: sarxl %{{.+}}, ({{.+}}), %{{.+}}
 ; BMI2: ret
-; BMI264: ashr32
+; BMI264: ashr32p
 ; BMI264: sarxl %{{.+}}, ({{.+}}), %{{.+}}
 ; BMI264: ret
   ret i32 %shl
