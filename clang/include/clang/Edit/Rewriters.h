@@ -31,19 +31,8 @@ bool rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
                                 const NSAPI &NS, Commit &commit,
                                 const ParentMap *PMap);
   
-bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
-                           const ObjCMethodDecl *Setter,
-                           const NSAPI &NS, Commit &commit);
-bool rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,
-                                llvm::SmallVectorImpl<ObjCProtocolDecl*> &Protocols,
-                                const NSAPI &NS, Commit &commit);
-
 bool rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
-  
-bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
-                         const TypedefDecl *TypedefDcl,
-                         const NSAPI &NS, Commit &commit);
 
 }
 
