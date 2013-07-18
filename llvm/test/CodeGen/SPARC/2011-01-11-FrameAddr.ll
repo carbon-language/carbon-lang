@@ -6,12 +6,12 @@
 
 define i8* @frameaddr() nounwind readnone {
 entry:
-;V8: frameaddr
+;V8-LABEL: frameaddr:
 ;V8: save %sp, -96, %sp
 ;V8: jmp %i7+8
 ;V8: restore %g0, %fp, %o0
 
-;V9: frameaddr
+;V9-LABEL: frameaddr:
 ;V9: save %sp, -96, %sp
 ;V9: jmp %i7+8
 ;V9: restore %g0, %fp, %o0
@@ -21,13 +21,13 @@ entry:
 
 define i8* @frameaddr2() nounwind readnone {
 entry:
-;V8: frameaddr2
+;V8-LABEL: frameaddr2:
 ;V8: ta 3
 ;V8: ld [%fp+56], {{.+}}
 ;V8: ld [{{.+}}+56], {{.+}}
 ;V8: ld [{{.+}}+56], {{.+}}
 
-;V9: frameaddr2
+;V9-LABEL: frameaddr2:
 ;V9: flushw
 ;V9: ld [%fp+56], {{.+}}
 ;V9: ld [{{.+}}+56], {{.+}}
@@ -42,10 +42,10 @@ declare i8* @llvm.frameaddress(i32) nounwind readnone
 
 define i8* @retaddr() nounwind readnone {
 entry:
-;V8: retaddr
+;V8-LABEL: retaddr:
 ;V8: or %g0, %o7, {{.+}}
 
-;V9: retaddr
+;V9-LABEL: retaddr:
 ;V9: or %g0, %o7, {{.+}}
 
   %0 = tail call i8* @llvm.returnaddress(i32 0)
@@ -54,25 +54,25 @@ entry:
 
 define i8* @retaddr2() nounwind readnone {
 entry:
-;V8: retaddr2
+;V8-LABEL: retaddr2:
 ;V8: ta 3
 ;V8: ld [%fp+56], {{.+}}
 ;V8: ld [{{.+}}+56], {{.+}}
 ;V8: ld [{{.+}}+60], {{.+}}
 
-;V9: retaddr2
+;V9-LABEL: retaddr2:
 ;V9: flushw
 ;V9: ld [%fp+56], {{.+}}
 ;V9: ld [{{.+}}+56], {{.+}}
 ;V9: ld [{{.+}}+60], {{.+}}
 
-;V8LEAF: retaddr2
+;V8LEAF-LABEL: retaddr2:
 ;V8LEAF: ta 3
 ;V8LEAF: ld [%fp+56], %[[R:[goli][0-7]]]
 ;V8LEAF: ld [%[[R]]+56], %[[R1:[goli][0-7]]]
 ;V8LEAF: ld [%[[R1]]+60], {{.+}}
 
-;V9LEAF: retaddr2
+;V9LEAF-LABEL: retaddr2:
 ;V9LEAF: flushw
 ;V9LEAF: ld [%fp+56], %[[R:[goli][0-7]]]
 ;V9LEAF: ld [%[[R]]+56], %[[R1:[goli][0-7]]]

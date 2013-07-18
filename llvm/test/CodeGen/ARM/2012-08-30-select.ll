@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios | FileCheck %s
 ; rdar://12201387
 
-;CHECK: select_s_v_v
+;CHECK-LABEL: select_s_v_v:
 ;CHECK: it  ne
 ;CHECK-NEXT: vmovne.i32
 ;CHECK: bx

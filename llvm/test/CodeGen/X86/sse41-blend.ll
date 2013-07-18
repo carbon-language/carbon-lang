@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 -mattr=+sse41 | FileCheck %s
 
-;CHECK: vsel_float
+;CHECK-LABEL: vsel_float:
 ;CHECK: blendvps
 ;CHECK: ret
 define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
@@ -9,7 +9,7 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 }
 
 
-;CHECK: vsel_4xi8
+;CHECK-LABEL: vsel_4xi8:
 ;CHECK: blendvps
 ;CHECK: ret
 define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
@@ -17,7 +17,7 @@ define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
   ret <4 x i8> %vsel
 }
 
-;CHECK: vsel_4xi16
+;CHECK-LABEL: vsel_4xi16:
 ;CHECK: blendvps
 ;CHECK: ret
 define <4 x i16> @vsel_4xi16(<4 x i16> %v1, <4 x i16> %v2) {
@@ -26,7 +26,7 @@ define <4 x i16> @vsel_4xi16(<4 x i16> %v1, <4 x i16> %v2) {
 }
 
 
-;CHECK: vsel_i32
+;CHECK-LABEL: vsel_i32:
 ;CHECK: blendvps
 ;CHECK: ret
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
@@ -35,7 +35,7 @@ define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
 }
 
 
-;CHECK: vsel_double
+;CHECK-LABEL: vsel_double:
 ;CHECK: blendvpd
 ;CHECK: ret
 define <4 x double> @vsel_double(<4 x double> %v1, <4 x double> %v2) {
@@ -44,7 +44,7 @@ define <4 x double> @vsel_double(<4 x double> %v1, <4 x double> %v2) {
 }
 
 
-;CHECK: vsel_i64
+;CHECK-LABEL: vsel_i64:
 ;CHECK: blendvpd
 ;CHECK: ret
 define <4 x i64> @vsel_i64(<4 x i64> %v1, <4 x i64> %v2) {
@@ -53,7 +53,7 @@ define <4 x i64> @vsel_i64(<4 x i64> %v1, <4 x i64> %v2) {
 }
 
 
-;CHECK: vsel_i8
+;CHECK-LABEL: vsel_i8:
 ;CHECK: pblendvb
 ;CHECK: ret
 define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {

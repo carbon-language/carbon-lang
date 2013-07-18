@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
 
 define <8 x i32> @zext_8i16_to_8i32(<8 x i16> %A) nounwind uwtable readnone ssp {
-;CHECK: zext_8i16_to_8i32
+;CHECK-LABEL: zext_8i16_to_8i32:
 ;CHECK: vpunpckhwd
 ;CHECK: ret
 
@@ -10,7 +10,7 @@ define <8 x i32> @zext_8i16_to_8i32(<8 x i16> %A) nounwind uwtable readnone ssp 
 }
 
 define <4 x i64> @zext_4i32_to_4i64(<4 x i32> %A) nounwind uwtable readnone ssp {
-;CHECK: zext_4i32_to_4i64
+;CHECK-LABEL: zext_4i32_to_4i64:
 ;CHECK: vpunpckhdq
 ;CHECK: ret
 
@@ -19,7 +19,7 @@ define <4 x i64> @zext_4i32_to_4i64(<4 x i32> %A) nounwind uwtable readnone ssp 
 }
 
 define <8 x i32> @zext_8i8_to_8i32(<8 x i8> %z) {
-;CHECK: zext_8i8_to_8i32
+;CHECK-LABEL: zext_8i8_to_8i32:
 ;CHECK: vpunpckhwd
 ;CHECK: vpmovzxwd
 ;CHECK: vinsertf128

@@ -2,7 +2,7 @@
 
 ; AVX128 tests:
 
-;CHECK: vsel_float
+;CHECK-LABEL: vsel_float:
 ;CHECK: vblendvps
 ;CHECK: ret
 define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
@@ -11,7 +11,7 @@ define <4 x float> @vsel_float(<4 x float> %v1, <4 x float> %v2) {
 }
 
 
-;CHECK: vsel_i32
+;CHECK-LABEL: vsel_i32:
 ;CHECK: vblendvps
 ;CHECK: ret
 define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
@@ -20,7 +20,7 @@ define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
 }
 
 
-;CHECK: vsel_double
+;CHECK-LABEL: vsel_double:
 ;CHECK: vblendvpd
 ;CHECK: ret
 define <2 x double> @vsel_double(<2 x double> %v1, <2 x double> %v2) {
@@ -29,7 +29,7 @@ define <2 x double> @vsel_double(<2 x double> %v1, <2 x double> %v2) {
 }
 
 
-;CHECK: vsel_i64
+;CHECK-LABEL: vsel_i64:
 ;CHECK: vblendvpd
 ;CHECK: ret
 define <2 x i64> @vsel_i64(<2 x i64> %v1, <2 x i64> %v2) {
@@ -38,7 +38,7 @@ define <2 x i64> @vsel_i64(<2 x i64> %v1, <2 x i64> %v2) {
 }
 
 
-;CHECK: vsel_i8
+;CHECK-LABEL: vsel_i8:
 ;CHECK: vpblendvb
 ;CHECK: ret
 define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
@@ -50,7 +50,7 @@ define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
 ; AVX256 tests:
 
 
-;CHECK: vsel_float8
+;CHECK-LABEL: vsel_float8:
 ;CHECK: vblendvps
 ;CHECK: ret
 define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
@@ -58,7 +58,7 @@ define <8 x float> @vsel_float8(<8 x float> %v1, <8 x float> %v2) {
   ret <8 x float> %vsel
 }
 
-;CHECK: vsel_i328
+;CHECK-LABEL: vsel_i328:
 ;CHECK: vblendvps
 ;CHECK: ret
 define <8 x i32> @vsel_i328(<8 x i32> %v1, <8 x i32> %v2) {
@@ -66,7 +66,7 @@ define <8 x i32> @vsel_i328(<8 x i32> %v1, <8 x i32> %v2) {
   ret <8 x i32> %vsel
 }
 
-;CHECK: vsel_double8
+;CHECK-LABEL: vsel_double8:
 ;CHECK: vblendvpd
 ;CHECK: ret
 define <8 x double> @vsel_double8(<8 x double> %v1, <8 x double> %v2) {
@@ -74,7 +74,7 @@ define <8 x double> @vsel_double8(<8 x double> %v1, <8 x double> %v2) {
   ret <8 x double> %vsel
 }
 
-;CHECK: vsel_i648
+;CHECK-LABEL: vsel_i648:
 ;CHECK: vblendvpd
 ;CHECK: ret
 define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {

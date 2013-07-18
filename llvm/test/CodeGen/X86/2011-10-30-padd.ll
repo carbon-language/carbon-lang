@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -mcpu=corei7 | FileCheck %s
 
-;CHECK: addXX_test
+;CHECK-LABEL: addXX_test:
 ;CHECK: padd
 ;CHECK: ret
 
@@ -10,7 +10,7 @@ define <16 x i8> @addXX_test(<16 x i8> %a) {
       ret <16 x i8> %b
 }
 
-;CHECK: instcombine_test
+;CHECK-LABEL: instcombine_test:
 ;CHECK: padd
 ;CHECK: ret
 define <16 x i8> @instcombine_test(<16 x i8> %a) {

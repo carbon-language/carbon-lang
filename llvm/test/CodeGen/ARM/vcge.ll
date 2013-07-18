@@ -187,7 +187,7 @@ define <8 x i8> @vclei8Z(<8 x i8>* %A) nounwind {
 ; Floating-point comparisons against zero produce results with integer
 ; elements, not floating-point elements.
 define void @test_vclez_fp() nounwind optsize {
-;CHECK: test_vclez_fp
+;CHECK-LABEL: test_vclez_fp:
 ;CHECK: vcle.f32
 entry:
   %0 = fcmp ole <4 x float> undef, zeroinitializer

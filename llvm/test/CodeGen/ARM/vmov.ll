@@ -386,7 +386,7 @@ entry:
 ; rdar://10723651
 define void @any_extend(<4 x i1> %x, <4 x i32> %y) nounwind ssp {
 entry:
-;CHECK: any_extend
+;CHECK-LABEL: any_extend:
 ;CHECK: vmovl
   %and.i186 = zext <4 x i1> %x to <4 x i32>
   %add.i185 = sub <4 x i32> %and.i186, %y

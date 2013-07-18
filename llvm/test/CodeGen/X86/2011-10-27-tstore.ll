@@ -2,7 +2,7 @@
 
 target triple = "x86_64-unknown-linux-gnu"
 
-;CHECK: ltstore
+;CHECK-LABEL: ltstore:
 ;CHECK: movq
 ;CHECK: movq
 ;CHECK: ret

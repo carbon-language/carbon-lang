@@ -297,8 +297,8 @@ bb3:
 }
 
 
-;YESCOLOR: multi_region_bb
-;NOCOLOR: multi_region_bb
+;YESCOLOR-LABEL: multi_region_bb:
+;NOCOLOR-LABEL: multi_region_bb:
 define void @multi_region_bb() nounwind ssp {
 entry:
   %A.i1 = alloca [100 x i32], align 4
@@ -353,9 +353,9 @@ bb3:
 
 ; Regression test for PR15707.  %buf1 and %buf2 should not be merged
 ; in this test case.
-;YESCOLOR: myCall_pr15707
+;YESCOLOR-LABEL: myCall_pr15707:
 ;YESCOLOR: subq $200008, %rsp
-;NOCOLOR: myCall_pr15707
+;NOCOLOR-LABEL: myCall_pr15707:
 ;NOCOLOR: subq $200008, %rsp
 define void @myCall_pr15707() {
   %buf1 = alloca i8, i32 100000, align 16
@@ -374,8 +374,8 @@ define void @myCall_pr15707() {
 
 ; Check that we don't assert and crash even when there are allocas
 ; outside the declared lifetime regions.
-;YESCOLOR: bad_range
-;NOCOLOR:  bad_range
+;YESCOLOR-LABEL: bad_range:
+;NOCOLOR-LABEL:  bad_range:
 define void @bad_range() nounwind ssp {
 entry:
   %A.i1 = alloca [100 x i32], align 4
@@ -400,8 +400,8 @@ block2:
 
 ; Check that we don't assert and crash even when there are usages
 ; of allocas which do not read or write outside the declared lifetime regions.
-;YESCOLOR: shady_range
-;NOCOLOR:  shady_range
+;YESCOLOR-LABEL: shady_range:
+;NOCOLOR-LABEL:  shady_range:
 
 %struct.Klass = type { i32, i32 }
 

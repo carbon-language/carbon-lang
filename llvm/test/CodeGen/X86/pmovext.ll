@@ -2,7 +2,7 @@
 
 ; rdar://11897677
 
-;CHECK: intrin_pmov
+;CHECK-LABEL: intrin_pmov:
 ;CHECK: pmovzxbw  (%{{.*}}), %xmm0
 ;CHECK-NEXT: movdqu
 ;CHECK-NEXT: ret

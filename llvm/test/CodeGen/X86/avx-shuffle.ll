@@ -220,7 +220,7 @@ define <16 x i16> @narrow(<16 x i16> %a) nounwind alwaysinline {
   ret <16 x i16> %t
 }
 
-;CHECK: test17
+;CHECK-LABEL: test17:
 ;CHECK-NOT: vinsertf128
 ;CHECK: ret
 define   <8 x float> @test17(<4 x float> %y) {

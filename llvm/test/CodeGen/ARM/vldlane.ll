@@ -502,7 +502,7 @@ declare %struct.__neon_float32x4x4_t @llvm.arm.neon.vld4lane.v4f32(i8*, <4 x flo
 ; we don't currently have a QQQQ_VFP2 super-regclass.  (The "0" for the low
 ; part of %ins67 is supposed to be loaded by a VLDRS instruction in this test.)
 define <8 x i16> @test_qqqq_regsequence_subreg([6 x i64] %b) nounwind {
-;CHECK: test_qqqq_regsequence_subreg
+;CHECK-LABEL: test_qqqq_regsequence_subreg:
 ;CHECK: vld3.16
   %tmp63 = extractvalue [6 x i64] %b, 5
   %tmp64 = zext i64 %tmp63 to i128

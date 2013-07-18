@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mcpu=corei7-avx -mtriple=x86_64-linux | FileCheck %s
 
-;CHECK: cftx020
+;CHECK-LABEL: cftx020:
 ;CHECK: vmovsd  (%rdi), %xmm{{.*}}
 ;CHECK: vmovsd  16(%rdi), %xmm{{.*}}
 ;CHECK: vmovhpd  8(%rdi), %xmm{{.*}}

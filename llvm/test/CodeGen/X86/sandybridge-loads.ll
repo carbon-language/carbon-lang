@@ -1,6 +1,6 @@
 ; RUN: llc -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -o - < %s | FileCheck %s
 
-;CHECK: wideloads
+;CHECK-LABEL: wideloads:
 ;CHECK: vmovaps
 ;CHECK: vinsertf128
 ;CHECK: vmovaps

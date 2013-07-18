@@ -263,7 +263,7 @@ define void @redundantVdup(<8 x i8>* %ptr) nounwind {
 }
 
 define <4 x i32> @tdupi(i32 %x, i32 %y) {
-;CHECK: tdupi
+;CHECK-LABEL: tdupi:
 ;CHECK: vdup.32
   %1 = insertelement <4 x i32> undef, i32 %x, i32 0
   %2 = insertelement <4 x i32> %1, i32 %x, i32 1
@@ -273,7 +273,7 @@ define <4 x i32> @tdupi(i32 %x, i32 %y) {
 }
 
 define <4 x float> @tdupf(float %x, float %y) {
-;CHECK: tdupf
+;CHECK-LABEL: tdupf:
 ;CHECK: vdup.32
   %1 = insertelement <4 x float> undef, float %x, i32 0
   %2 = insertelement <4 x float> %1, float %x, i32 1
@@ -285,7 +285,7 @@ define <4 x float> @tdupf(float %x, float %y) {
 ; This test checks that when splatting an element from a vector into another,
 ; the value isn't moved out to GPRs first.
 define <4 x i32> @tduplane(<4 x i32> %invec) {
-;CHECK: tduplane
+;CHECK-LABEL: tduplane:
 ;CHECK-NOT: vmov {{.*}}, d16[1]
 ;CHECK: vdup.32 {{.*}}, d16[1]
   %in = extractelement <4 x i32> %invec, i32 1

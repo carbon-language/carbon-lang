@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios | FileCheck %s
 
-;CHECK: foo
+;CHECK-LABEL: foo:
 ;CHECK: adds
 ;CHECK-NEXT: adc
 ;CHECK-NEXT: bx

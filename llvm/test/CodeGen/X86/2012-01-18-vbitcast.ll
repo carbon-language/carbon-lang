@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=corei7 -mtriple=x86_64-pc-win32 | FileCheck %s
 
-;CHECK: vcast
+;CHECK-LABEL: vcast:
 define <2 x i32> @vcast(<2 x float> %a, <2 x float> %b) {
 ;CHECK: pmovzxdq
 ;CHECK: pmovzxdq

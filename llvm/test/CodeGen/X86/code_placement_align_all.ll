@@ -1,6 +1,6 @@
 ; RUN: llc  -mcpu=corei7 -mtriple=x86_64-linux -align-all-blocks=16 < %s | FileCheck %s
 
-;CHECK: foo
+;CHECK-LABEL: foo:
 ;CHECK: .align  65536, 0x90
 ;CHECK: .align  65536, 0x90
 ;CHECK: .align  65536, 0x90

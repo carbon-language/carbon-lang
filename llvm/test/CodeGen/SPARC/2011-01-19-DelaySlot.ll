@@ -54,7 +54,7 @@ bb5:                                              ; preds = %bb, %entry
 
 define i32 @test_inlineasm(i32 %a) nounwind {
 entry:
-;CHECK:      test_inlineasm
+;CHECK-LABEL:      test_inlineasm:
 ;CHECK:      sethi
 ;CHECK:      !NO_APP
 ;CHECK-NEXT: cmp
@@ -80,7 +80,7 @@ declare i32 @bar(i32)
 
 define i32 @test_implicit_def() nounwind {
 entry:
-;UNOPT:       test_implicit_def
+;UNOPT-LABEL:       test_implicit_def:
 ;UNOPT:       call func
 ;UNOPT-NEXT:  nop
   %0 = tail call i32 @func(i32* undef) nounwind
@@ -89,7 +89,7 @@ entry:
 
 define i32 @prevent_o7_in_call_delay_slot(i32 %i0) {
 entry:
-;CHECK:       prevent_o7_in_call_delay_slot
+;CHECK-LABEL:       prevent_o7_in_call_delay_slot:
 ;CHECK:       add %i0, 2, %o5
 ;CHECK:       add %i0, 3, %o7
 ;CHECK:       add %o5, %o7, %o0
@@ -150,7 +150,7 @@ entry:
 
 define i32 @restore_sethi(i32 %a) {
 entry:
-;CHECK: restore_sethi
+;CHECK-LABEL: restore_sethi:
 ;CHECK-NOT: sethi  3
 ;CHECK: restore %g0, 3072, %o0
   %0 = tail call i32 @bar(i32 %a) nounwind
@@ -161,7 +161,7 @@ entry:
 
 define i32 @restore_sethi_3bit(i32 %a) {
 entry:
-;CHECK: restore_sethi_3bit
+;CHECK-LABEL: restore_sethi_3bit:
 ;CHECK: sethi  6
 ;CHECK-NOT: restore %g0, 6144, %o0
   %0 = tail call i32 @bar(i32 %a) nounwind
@@ -172,7 +172,7 @@ entry:
 
 define i32 @restore_sethi_large(i32 %a) {
 entry:
-;CHECK: restore_sethi_large
+;CHECK-LABEL: restore_sethi_large:
 ;CHECK: sethi  4000, %i0
 ;CHECK: restore %g0, %g0, %g0
   %0 = tail call i32 @bar(i32 %a) nounwind

@@ -63,10 +63,10 @@ entry:
 
 define i32 @test_select_int_fcc(float %f, i32 %a, i32 %b) nounwind readnone noinline {
 entry:
-;V8: test_select_int_fcc
+;V8-LABEL: test_select_int_fcc:
 ;V8: fcmps
 ;V8: {{fbe|fbne}}
-;V9: test_select_int_fcc
+;V9-LABEL: test_select_int_fcc:
 ;V9: fcmps
 ;V9-NOT: {{fbe|fbne}}
 ;V9: mov{{e|ne}} %fcc0
@@ -78,10 +78,10 @@ entry:
 
 define float @test_select_fp_fcc(float %f, float %f1, float %f2) nounwind readnone noinline {
 entry:
-;V8: test_select_fp_fcc
+;V8-LABEL: test_select_fp_fcc:
 ;V8: fcmps
 ;V8: {{fbe|fbne}}
-;V9: test_select_fp_fcc
+;V9-LABEL: test_select_fp_fcc:
 ;V9: fcmps
 ;V9-NOT: {{fbe|fbne}}
 ;V9: fmovs{{e|ne}} %fcc0
@@ -92,10 +92,10 @@ entry:
 
 define double @test_select_dfp_fcc(double %f, double %f1, double %f2) nounwind readnone noinline {
 entry:
-;V8: test_select_dfp_fcc
+;V8-LABEL: test_select_dfp_fcc:
 ;V8: fcmpd
 ;V8: {{fbne|fbe}}
-;V9: test_select_dfp_fcc
+;V9-LABEL: test_select_dfp_fcc:
 ;V9: fcmpd
 ;V9-NOT: {{fbne|fbe}}
 ;V9: fmovd{{e|ne}} %fcc0

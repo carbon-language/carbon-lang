@@ -147,7 +147,7 @@ define void @merge_nonconst_store(i32 %count, i8 %zz, %struct.A* nocapture %p) n
 }
 
 
-;CHECK: merge_loads_i16
+;CHECK-LABEL: merge_loads_i16:
 ; load:
 ;CHECK: movw
 ; store:
@@ -181,7 +181,7 @@ define void @merge_loads_i16(i32 %count, %struct.A* noalias nocapture %q, %struc
 }
 
 ; The loads and the stores are interleved. Can't merge them.
-;CHECK: no_merge_loads
+;CHECK-LABEL: no_merge_loads:
 ;CHECK: movb
 ;CHECK: movb
 ;CHECK: movb
@@ -215,7 +215,7 @@ a4:                                       ; preds = %4, %.lr.ph
 }
 
 
-;CHECK: merge_loads_integer
+;CHECK-LABEL: merge_loads_integer:
 ; load:
 ;CHECK: movq
 ; store:
@@ -249,7 +249,7 @@ define void @merge_loads_integer(i32 %count, %struct.B* noalias nocapture %q, %s
 }
 
 
-;CHECK: merge_loads_vector
+;CHECK-LABEL: merge_loads_vector:
 ; load:
 ;CHECK: movups
 ; store:
@@ -290,7 +290,7 @@ block4:                                       ; preds = %4, %.lr.ph
   ret void
 }
 
-;CHECK: merge_loads_no_align
+;CHECK-LABEL: merge_loads_no_align:
 ; load:
 ;CHECK: movl
 ;CHECK: movl

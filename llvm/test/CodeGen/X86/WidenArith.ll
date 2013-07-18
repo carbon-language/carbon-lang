@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx | FileCheck %s
 
-;CHECK: test
+;CHECK-LABEL: test:
 ;CHECK: vaddps
 ;CHECK: vmulps
 ;CHECK: vsubps

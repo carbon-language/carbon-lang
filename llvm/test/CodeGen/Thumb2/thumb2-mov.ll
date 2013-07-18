@@ -259,7 +259,7 @@ define i32 @f5(i32 %a) {
 }
 
 define i32 @f6(i32 %a) {
-;CHECK: f6
+;CHECK-LABEL: f6:
 ;CHECK: movw    r0, #65535
     %tmp = add i32 0, 65535
     ret i32 %tmp

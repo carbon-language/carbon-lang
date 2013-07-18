@@ -8,7 +8,7 @@
 %class.A = type { i32 (...)** }
 
 define i32 @test1() #0 {
-  ;ATOM: test1
+  ;ATOM-LABEL: test1:
 entry:
   %call = tail call %class.A* @_Z3facv()
   %0 = bitcast %class.A* %call to void (%class.A*)***
@@ -30,7 +30,7 @@ declare %class.A* @_Z3facv() #1
 @p = external global void (i32)**
 
 define i32 @test2() #0 {
-  ;ATOM: test2
+  ;ATOM-LABEL: test2:
 entry:
   %0 = load void (i32)*** @p, align 8
   %1 = load void (i32)** %0, align 8

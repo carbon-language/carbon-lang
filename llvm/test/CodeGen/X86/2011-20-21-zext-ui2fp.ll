@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; 0x1 means that we only look at the first bit.
 
 ;CHECK: 0x1
-;CHECK: ui_to_fp_conv
+;CHECK-LABEL: ui_to_fp_conv:
 ;CHECK: ret
 define void @ui_to_fp_conv(<8 x float> * nocapture %aFOO, <8 x float>* nocapture %RET) nounwind {
 allocas:
