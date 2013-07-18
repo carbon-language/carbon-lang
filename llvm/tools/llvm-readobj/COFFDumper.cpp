@@ -60,8 +60,6 @@ private:
 
   void printRelocation(section_iterator SecI, relocation_iterator RelI);
 
-  void printDataDirectory(uint32_t Index, const std::string &FieldName);
-
   void printX64UnwindInfo();
 
   void printRuntimeFunction(
@@ -562,14 +560,6 @@ void COFFDumper::cacheRelocations() {
   }
 }
 
-void COFFDumper::printDataDirectory(uint32_t Index, const std::string &FieldName) {
-  const data_directory *Data;
-  if (Obj->getDataDirectory(Index, Data))
-    return;
-  W.printHex(FieldName + "RVA", Data->RelativeVirtualAddress);
-  W.printHex(FieldName + "Size", Data->Size);
-}
-
 void COFFDumper::printFileHeaders() {
   // Print COFF header
   const coff_file_header *COFFHeader = 0;
@@ -631,20 +621,6 @@ void COFFDumper::printFileHeaders() {
     W.printNumber("SizeOfHeapReserve", PEHeader->SizeOfHeapReserve);
     W.printNumber("SizeOfHeapCommit", PEHeader->SizeOfHeapCommit);
     W.printNumber("NumberOfRvaAndSize", PEHeader->NumberOfRvaAndSize);
-
-    if (PEHeader->NumberOfRvaAndSize > 0) {
-      DictScope D(W, "DataDirectory");
-      static const char * const directory[] = {
-        "ExportTable", "ImportTable", "ResourceTable", "ExceptionTable",
-        "CertificateTable", "BaseRelocationTable", "Debug", "Architecture",
-        "GlobalPtr", "TLSTable", "LoadConfigTable", "BoundImport", "IAT",
-        "DelayImportDescriptor", "CLRRuntimeHeader", "Reserved"
-      };
-
-      for (uint32_t i = 0; i < PEHeader->NumberOfRvaAndSize; ++i) {
-        printDataDirectory(i, directory[i]);
-      }
-    }
   }
 }
 
