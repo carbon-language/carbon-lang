@@ -6,6 +6,11 @@ double dfoo(double)  __attribute__((__unavailable__("NO LONGER"))); // expected-
 
 void bar() __attribute__((__unavailable__)); // expected-note {{explicitly marked unavailable}}
 
+int quux(void) __attribute__((__unavailable__(12))); // expected-error {{argument to '__unavailable__' attribute was not a string literal}}
+
+#define ACCEPTABLE	"Use something else"
+int quux2(void) __attribute__((__unavailable__(ACCEPTABLE)));
+
 void test_foo() {
   int ir = foo(1); // expected-error {{'foo' is unavailable: USE IFOO INSTEAD}}
   double dr = dfoo(1.0); // expected-error {{'dfoo' is unavailable: NO LONGER}}

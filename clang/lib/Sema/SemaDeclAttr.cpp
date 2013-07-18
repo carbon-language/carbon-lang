@@ -2038,8 +2038,8 @@ static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 template <typename AttrTy>
-static void handleAttrWithMessage(Sema &S, Decl *D, const AttributeList &Attr,
-                                  const char *Name) {
+static void handleAttrWithMessage(Sema &S, Decl *D,
+                                  const AttributeList &Attr) {
   unsigned NumArgs = Attr.getNumArgs();
   if (NumArgs > 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 1;
@@ -2052,7 +2052,7 @@ static void handleAttrWithMessage(Sema &S, Decl *D, const AttributeList &Attr,
     StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getArg(0));
     if (!SE) {
       S.Diag(Attr.getArg(0)->getLocStart(), diag::err_attribute_not_string)
-        << Name;
+        << Attr.getName();
       return;
     }
     Str = SE->getString();
@@ -4792,7 +4792,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     handleCXX11NoReturnAttr(S, D, Attr);
     break;
   case AttributeList::AT_Deprecated:
-    handleAttrWithMessage<DeprecatedAttr>(S, D, Attr, "deprecated");
+    handleAttrWithMessage<DeprecatedAttr>(S, D, Attr);
     break;
   case AttributeList::AT_Destructor:  handleDestructorAttr  (S, D, Attr); break;
   case AttributeList::AT_ExtVectorType:
@@ -4873,7 +4873,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Packed:      handlePackedAttr      (S, D, Attr); break;
   case AttributeList::AT_Section:     handleSectionAttr     (S, D, Attr); break;
   case AttributeList::AT_Unavailable:
-    handleAttrWithMessage<UnavailableAttr>(S, D, Attr, "unavailable");
+    handleAttrWithMessage<UnavailableAttr>(S, D, Attr);
     break;
   case AttributeList::AT_ArcWeakrefUnavailable: 
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
