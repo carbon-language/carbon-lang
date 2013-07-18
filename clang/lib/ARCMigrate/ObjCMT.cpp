@@ -35,6 +35,8 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateObjCInterfaceDecl(ASTContext &Ctx, ObjCInterfaceDecl *D);
   void migrateProtocolConformance(ASTContext &Ctx,
                                   const ObjCImplementationDecl *ImpDecl);
+  void migrateNSEnumDecl(ASTContext &Ctx, const EnumDecl *EnumDcl,
+                     const TypedefDecl *TypedefDcl);
 
 public:
   std::string MigrateDir;
@@ -355,6 +357,25 @@ void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
   Editor->commit(commit);
 }
 
+void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
+                                           const EnumDecl *EnumDcl,
+                                           const TypedefDecl *TypedefDcl) {
+  if (!EnumDcl->isCompleteDefinition() || EnumDcl->getIdentifier() ||
+      !TypedefDcl->getIdentifier())
+    return;
+  
+  QualType qt = TypedefDcl->getTypeSourceInfo()->getType();
+  if (!NSAPIObj->isObjCNSIntegerType(qt))
+    return;
+  
+  // NS_ENUM must be available.
+  if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
+    return;
+  edit::Commit commit(*Editor);
+  edit::rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit);
+  Editor->commit(commit);
+}
+
 namespace {
 
 class RewritesReceiver : public edit::EditsReceiver {
@@ -386,6 +407,12 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       else if (const ObjCImplementationDecl *ImpDecl =
                dyn_cast<ObjCImplementationDecl>(*D))
         migrateProtocolConformance(Ctx, ImpDecl);
+      else if (const EnumDecl *ED = dyn_cast<EnumDecl>(*D)) {
+        DeclContext::decl_iterator N = D;
+        ++N;
+        if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*N))
+          migrateNSEnumDecl(Ctx, ED, TD);
+      }
     }
   
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());

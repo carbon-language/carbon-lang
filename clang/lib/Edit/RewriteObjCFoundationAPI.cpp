@@ -434,6 +434,19 @@ bool edit::rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,
   return true;
 }
 
+bool edit::rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
+                               const TypedefDecl *TypedefDcl,
+                               const NSAPI &NS, Commit &commit) {
+  std::string ClassString = "typedef NS_ENUM(NSInteger, ";
+  ClassString += TypedefDcl->getIdentifier()->getName();
+  ClassString += ')';
+  SourceRange R(EnumDcl->getLocStart(), EnumDcl->getLocStart());
+  commit.replace(R, ClassString);
+  commit.remove(SourceRange(TypedefDcl->getLocStart(), TypedefDcl->getLocEnd()));
+  return true;
+  
+}
+
 /// \brief Returns true if the immediate message arguments of \c Msg should not
 /// be rewritten because it will interfere with the rewrite of the parent
 /// message expression. e.g.

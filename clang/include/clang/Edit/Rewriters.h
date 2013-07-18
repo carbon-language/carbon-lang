@@ -17,6 +17,8 @@ namespace clang {
   class ObjCInterfaceDecl;
   class ObjCProtocolDecl;
   class NSAPI;
+  class EnumDecl;
+  class TypedefDecl;
   class ParentMap;
 
 namespace edit {
@@ -38,6 +40,10 @@ bool rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,
 
 bool rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
+  
+bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
+                         const TypedefDecl *TypedefDcl,
+                         const NSAPI &NS, Commit &commit);
 
 }
 
