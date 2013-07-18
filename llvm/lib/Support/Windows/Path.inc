@@ -579,6 +579,19 @@ static error_code getStatus(HANDLE FileHandle, file_status &Result) {
   if (FileHandle == INVALID_HANDLE_VALUE)
     goto handle_status_error;
 
+  switch (::GetFileType(FileHandle)) {
+  default:
+  case FILE_TYPE_UNKNOWN:
+  case FILE_TYPE_DISK:
+    break;
+  case FILE_TYPE_CHAR:
+    Result = file_status(file_type::character_file);
+    return error_code::success();
+  case FILE_TYPE_PIPE:
+    Result = file_status(file_type::fifo_file);
+    return error_code::success();
+  }
+
   BY_HANDLE_FILE_INFORMATION Info;
   if (!::GetFileInformationByHandle(FileHandle, &Info))
     goto handle_status_error;
