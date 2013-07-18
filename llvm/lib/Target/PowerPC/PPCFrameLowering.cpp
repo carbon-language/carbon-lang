@@ -1237,8 +1237,12 @@ PPCFrameLowering::addScavengingSpillSlot(MachineFunction &MF,
                                                        RC->getAlignment(),
                                                        false));
 
+    // Might we have over-aligned allocas?
+    bool HasAlVars = MFI->hasVarSizedObjects() &&
+                     MFI->getMaxAlignment() > getStackAlignment();
+
     // These kinds of spills might need two registers.
-    if (spillsCR(MF) || spillsVRSAVE(MF))
+    if (spillsCR(MF) || spillsVRSAVE(MF) || HasAlVars)
       RS->addScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                          RC->getAlignment(),
                                                          false));

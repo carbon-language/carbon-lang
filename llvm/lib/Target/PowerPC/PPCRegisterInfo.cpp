@@ -269,8 +269,8 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Get stack alignments.
   unsigned TargetAlign = MF.getTarget().getFrameLowering()->getStackAlignment();
   unsigned MaxAlign = MFI->getMaxAlignment();
-  if (MaxAlign > TargetAlign)
-    report_fatal_error("Dynamic alloca with large aligns not supported");
+  assert((maxCallFrameSize & (MaxAlign-1)) == 0 &&
+         "Maximum call-frame size not sufficiently aligned");
 
   // Determine the previous frame's address.  If FrameSize can't be
   // represented as 16 bits or we need special alignment, then we load the
@@ -295,40 +295,62 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
       .addImm(0)
       .addReg(PPC::R1);
   }
-  
+
+  bool KillNegSizeReg = MI.getOperand(1).isKill();
+  unsigned NegSizeReg = MI.getOperand(1).getReg();
+
   // Grow the stack and update the stack pointer link, then determine the
   // address of new allocated space.
   if (LP64) {
+    if (MaxAlign > TargetAlign) {
+      unsigned UnalNegSizeReg = NegSizeReg;
+      NegSizeReg = MF.getRegInfo().createVirtualRegister(G8RC);
+
+      // Unfortunately, there is no andi, only andi., and we can't insert that
+      // here because we might clobber cr0 while it is live.
+      BuildMI(MBB, II, dl, TII.get(PPC::LI8), NegSizeReg)
+        .addImm(~(MaxAlign-1));
+
+      unsigned NegSizeReg1 = NegSizeReg;
+      NegSizeReg = MF.getRegInfo().createVirtualRegister(G8RC);
+      BuildMI(MBB, II, dl, TII.get(PPC::AND8), NegSizeReg)
+        .addReg(UnalNegSizeReg, getKillRegState(KillNegSizeReg))
+        .addReg(NegSizeReg1, RegState::Kill);
+      KillNegSizeReg = true;
+    }
+
     BuildMI(MBB, II, dl, TII.get(PPC::STDUX), PPC::X1)
       .addReg(Reg, RegState::Kill)
       .addReg(PPC::X1)
-      .addReg(MI.getOperand(1).getReg());
-    if (!MI.getOperand(1).isKill())
-      BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
-        .addReg(PPC::X1)
-        .addImm(maxCallFrameSize);
-    else
-      // Implicitly kill the register.
-      BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
-        .addReg(PPC::X1)
-        .addImm(maxCallFrameSize)
-        .addReg(MI.getOperand(1).getReg(), RegState::ImplicitKill);
+      .addReg(NegSizeReg, getKillRegState(KillNegSizeReg));
+    BuildMI(MBB, II, dl, TII.get(PPC::ADDI8), MI.getOperand(0).getReg())
+      .addReg(PPC::X1)
+      .addImm(maxCallFrameSize);
   } else {
+    if (MaxAlign > TargetAlign) {
+      unsigned UnalNegSizeReg = NegSizeReg;
+      NegSizeReg = MF.getRegInfo().createVirtualRegister(GPRC);
+
+      // Unfortunately, there is no andi, only andi., and we can't insert that
+      // here because we might clobber cr0 while it is live.
+      BuildMI(MBB, II, dl, TII.get(PPC::LI), NegSizeReg)
+        .addImm(~(MaxAlign-1));
+
+      unsigned NegSizeReg1 = NegSizeReg;
+      NegSizeReg = MF.getRegInfo().createVirtualRegister(GPRC);
+      BuildMI(MBB, II, dl, TII.get(PPC::AND), NegSizeReg)
+        .addReg(UnalNegSizeReg, getKillRegState(KillNegSizeReg))
+        .addReg(NegSizeReg1, RegState::Kill);
+      KillNegSizeReg = true;
+    }
+
     BuildMI(MBB, II, dl, TII.get(PPC::STWUX), PPC::R1)
       .addReg(Reg, RegState::Kill)
       .addReg(PPC::R1)
-      .addReg(MI.getOperand(1).getReg());
-
-    if (!MI.getOperand(1).isKill())
-      BuildMI(MBB, II, dl, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
-        .addReg(PPC::R1)
-        .addImm(maxCallFrameSize);
-    else
-      // Implicitly kill the register.
-      BuildMI(MBB, II, dl, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
-        .addReg(PPC::R1)
-        .addImm(maxCallFrameSize)
-        .addReg(MI.getOperand(1).getReg(), RegState::ImplicitKill);
+      .addReg(NegSizeReg, getKillRegState(KillNegSizeReg));
+    BuildMI(MBB, II, dl, TII.get(PPC::ADDI), MI.getOperand(0).getReg())
+      .addReg(PPC::R1)
+      .addImm(maxCallFrameSize);
   }
   
   // Discard the DYNALLOC instruction.
