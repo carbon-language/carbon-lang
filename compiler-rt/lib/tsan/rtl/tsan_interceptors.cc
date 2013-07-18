@@ -77,6 +77,7 @@ const int SIGFPE = 8;
 const int SIGSEGV = 11;
 const int SIGPIPE = 13;
 const int SIGBUS = 7;
+const int SIGSYS = 31;
 void *const MAP_FAILED = (void*)-1;
 const int PTHREAD_BARRIER_SERIAL_THREAD = -1;
 const int MAP_FIXED = 0x10;
@@ -1608,7 +1609,7 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
   SignalContext *sctx = SigCtx(thr);
   // Don't mess with synchronous signals.
   if (sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
-      sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE ||
+      sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE || sig == SIGSYS ||
       // If we are sending signal to ourselves, we must process it now.
       (sctx && sig == sctx->int_signal_send) ||
       // If we are in blocking function, we can safely process it now
