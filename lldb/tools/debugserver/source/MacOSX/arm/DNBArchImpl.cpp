@@ -322,8 +322,9 @@ DNBArchMachARM::SetDBGState(bool also_set_on_task)
     {
         kern_return_t task_kret = ::task_set_state (m_thread->Process()->Task().TaskPort(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE_COUNT);
         if (task_kret != KERN_SUCCESS)
-            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::SetDBGState failed to set debug control register state: 0x%8.8x.", kret);
+             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::SetDBGState failed to set debug control register state: 0x%8.8x.", kret);
     }
+
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
     return kret;                                // Return the error code
@@ -360,7 +361,7 @@ DNBArchMachARM::ThreadWillResume()
                 return;
             }
 
-            DisableHardwareWatchpoint0(m_watchpoint_hw_index, true);
+            DisableHardwareWatchpoint0(m_watchpoint_hw_index, true, false);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
                              m_watchpoint_hw_index);
 
@@ -397,7 +398,7 @@ DNBArchMachARM::ThreadDidStop()
         {
             if (m_watchpoint_did_occur && m_watchpoint_hw_index >= 0)
             {
-                EnableHardwareWatchpoint0(m_watchpoint_hw_index, true);
+                EnableHardwareWatchpoint0(m_watchpoint_hw_index, true, false);
                 m_watchpoint_resume_single_step_enabled = false;
                 m_watchpoint_did_occur = false;
                 m_watchpoint_hw_index = -1;
@@ -893,13 +894,13 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
     // Divide-and-conquer for size == 8.
     if (size == 8)
     {
-        uint32_t lo = EnableHardwareWatchpoint(addr, 4, read, write);
+        uint32_t lo = EnableHardwareWatchpoint(addr, 4, read, write, also_set_on_task);
         if (lo == INVALID_NUB_HW_INDEX)
             return INVALID_NUB_HW_INDEX;
-        uint32_t hi = EnableHardwareWatchpoint(addr+4, 4, read, write);
+        uint32_t hi = EnableHardwareWatchpoint(addr+4, 4, read, write, also_set_on_task);
         if (hi == INVALID_NUB_HW_INDEX)
         {
-            DisableHardwareWatchpoint(lo);
+            DisableHardwareWatchpoint(lo, also_set_on_task);
             return INVALID_NUB_HW_INDEX;
         }
         // Tag this lo->hi mapping in our database.
@@ -986,7 +987,7 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
 }
 
 bool
-DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
+DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate, bool also_set_on_task)
 {
     kern_return_t kret = GetDBGState(false);
     if (kret != KERN_SUCCESS)
@@ -998,8 +999,8 @@ DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
 
     if (Delegate && LoHi[hw_index]) {
         // Enable lo and hi watchpoint hardware indexes.
-        return EnableHardwareWatchpoint0(hw_index, false) &&
-            EnableHardwareWatchpoint0(LoHi[hw_index], false);
+        return EnableHardwareWatchpoint0(hw_index, false, also_set_on_task) &&
+            EnableHardwareWatchpoint0(LoHi[hw_index], false, also_set_on_task);
     }
 
     m_state.dbg.__wcr[hw_index] |= (nub_addr_t)WCR_ENABLE;
@@ -1016,12 +1017,12 @@ DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
 }
 
 bool
-DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index)
+DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index, bool also_set_on_task)
 {
-    return DisableHardwareWatchpoint0(hw_index, true);
+        return DisableHardwareWatchpoint0(hw_index, true, also_set_on_task);
 }
 bool
-DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
+DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate, bool also_set_on_task)
 {
     kern_return_t kret = GetDBGState(false);
     if (kret != KERN_SUCCESS)
@@ -1033,8 +1034,8 @@ DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
 
     if (Delegate && LoHi[hw_index]) {
         // Disable lo and hi watchpoint hardware indexes.
-        return DisableHardwareWatchpoint0(hw_index, false) &&
-            DisableHardwareWatchpoint0(LoHi[hw_index], false);
+        return DisableHardwareWatchpoint0(hw_index, false, also_set_on_task) &&
+            DisableHardwareWatchpoint0(LoHi[hw_index], false, also_set_on_task);
     }
 
     m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)WCR_ENABLE);
@@ -1045,7 +1046,7 @@ DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate)
                      hw_index,
                      m_state.dbg.__wcr[hw_index]);
 
-    kret = SetDBGState();
+    kret = SetDBGState(also_set_on_task);
 
     return (kret == KERN_SUCCESS);
 }

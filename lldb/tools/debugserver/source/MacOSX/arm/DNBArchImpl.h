@@ -74,8 +74,8 @@ public:
     virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task);
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_break_index);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index, bool also_set_on_task);
-    virtual bool            EnableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate);
-    virtual bool            DisableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate);
+    virtual bool            EnableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate, bool also_set_on_task);
+    virtual bool            DisableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate, bool also_set_on_task);
     virtual bool            StepNotComplete ();
     virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
