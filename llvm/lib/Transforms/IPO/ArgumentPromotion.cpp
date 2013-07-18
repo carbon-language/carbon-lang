@@ -126,12 +126,10 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   if (!F || !F->hasLocalLinkage()) return 0;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
-  SmallVector<std::pair<Argument*, unsigned>, 16> PointerArgs;
-  unsigned ArgNo = 0;
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
-       I != E; ++I, ++ArgNo)
+  SmallVector<Argument*, 16> PointerArgs;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (I->getType()->isPointerTy())
-      PointerArgs.push_back(std::pair<Argument*, unsigned>(I, ArgNo));
+      PointerArgs.push_back(I);
   if (PointerArgs.empty()) return 0;
 
   // Second check: make sure that all callers are direct callers.  We can't
@@ -152,15 +150,13 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   // add it to ArgsToPromote.
   SmallPtrSet<Argument*, 8> ArgsToPromote;
   SmallPtrSet<Argument*, 8> ByValArgsToTransform;
-  for (unsigned i = 0; i != PointerArgs.size(); ++i) {
-    bool isByVal=F->getAttributes().
-      hasAttribute(PointerArgs[i].second+1, Attribute::ByVal);
-    Argument *PtrArg = PointerArgs[i].first;
+  for (unsigned i = 0, e = PointerArgs.size(); i != e; ++i) {
+    Argument *PtrArg = PointerArgs[i];
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
     // If this is a byval argument, and if the aggregate type is small, just
     // pass the elements, which is always safe.
-    if (isByVal) {
+    if (PtrArg->hasByValAttr()) {
       if (StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (maxElements > 0 && STy->getNumElements() > maxElements) {
           DEBUG(dbgs() << "argpromotion disable promoting argument '"
@@ -205,7 +201,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     }
     
     // Otherwise, see if we can promote the pointer to its value.
-    if (isSafeToPromoteArgument(PtrArg, isByVal))
+    if (isSafeToPromoteArgument(PtrArg, PtrArg->hasByValAttr()))
       ArgsToPromote.insert(PtrArg);
   }
 
@@ -221,8 +217,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 static bool AllCallersPassInValidPointerForArgument(Argument *Arg) {
   Function *Callee = Arg->getParent();
 
-  unsigned ArgNo = std::distance(Callee->arg_begin(),
-                                 Function::arg_iterator(Arg));
+  unsigned ArgNo = Arg->getArgNo();
 
   // Look at all call sites of the function.  At this pointer we know we only
   // have direct callees.
