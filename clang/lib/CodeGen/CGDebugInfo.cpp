@@ -2445,7 +2445,8 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 }
 
 /// EmitLocation - Emit metadata to indicate a change in line/column
-/// information in the source file.
+/// information in the source file. If the location is invalid, the
+/// previous location will be reused.
 void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
                                bool ForceColumnInfo) {
 
