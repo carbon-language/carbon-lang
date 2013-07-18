@@ -2379,6 +2379,21 @@ class N2VQInt<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
         (ins QPR:$Vm), itin, OpcodeStr, Dt, "$Vd, $Vm", "",
         [(set QPR:$Vd, (ResTy (IntOp (OpTy QPR:$Vm))))]>;
 
+// Same as above, but not predicated.
+class N2VDIntnp<bits<2> op17_16, bits<3> op10_8, bit op7,
+              InstrItinClass itin, string OpcodeStr, string Dt,
+              ValueType ResTy, ValueType OpTy, SDPatternOperator IntOp>
+  : N2Vnp<op17_16, op10_8, op7, 0,  (outs DPR:$Vd), (ins DPR:$Vm),
+          itin, OpcodeStr, Dt, ResTy, OpTy,
+          [(set DPR:$Vd, (ResTy (IntOp (OpTy DPR:$Vm))))]>;
+
+class N2VQIntnp<bits<2> op17_16, bits<3> op10_8, bit op7,
+              InstrItinClass itin, string OpcodeStr, string Dt,
+              ValueType ResTy, ValueType OpTy, SDPatternOperator IntOp>
+  : N2Vnp<op17_16, op10_8, op7, 1,  (outs QPR:$Vd), (ins QPR:$Vm),
+          itin, OpcodeStr, Dt, ResTy, OpTy,
+          [(set QPR:$Vd, (ResTy (IntOp (OpTy QPR:$Vm))))]>;
+
 // Narrow 2-register operations.
 class N2VN<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18,
            bits<2> op17_16, bits<5> op11_7, bit op6, bit op4,
@@ -5430,6 +5445,26 @@ def  VCVTs2fq : N2VQ<0b11, 0b11, 0b10, 0b11, 0b01100, 0, "vcvt", "f32.s32",
                      v4f32, v4i32, sint_to_fp>;
 def  VCVTu2fq : N2VQ<0b11, 0b11, 0b10, 0b11, 0b01101, 0, "vcvt", "f32.u32",
                      v4f32, v4i32, uint_to_fp>;
+
+// VCVT{A, N, P, M}
+multiclass VCVT_FPI<string op, bits<3> op10_8, SDPatternOperator IntS,
+                    SDPatternOperator IntU> {
+  let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
+    def SD : N2VDIntnp<0b11, op10_8, 0, NoItinerary, !strconcat("vcvt", op),
+                       "s32.f32", v2i32, v2f32, IntS>, Requires<[HasV8, HasNEON]>;
+    def SQ : N2VQIntnp<0b11, op10_8, 0, NoItinerary, !strconcat("vcvt", op),
+                       "s32.f32", v4i32, v4f32, IntS>, Requires<[HasV8, HasNEON]>;
+    def UD : N2VDIntnp<0b11, op10_8, 1, NoItinerary, !strconcat("vcvt", op),
+                       "u32.f32", v2i32, v2f32, IntU>, Requires<[HasV8, HasNEON]>;
+    def UQ : N2VQIntnp<0b11, op10_8, 1, NoItinerary, !strconcat("vcvt", op),
+                       "u32.f32", v4i32, v4f32, IntU>, Requires<[HasV8, HasNEON]>;
+  }
+}
+
+defm VCVTAn : VCVT_FPI<"a", 0b000, int_arm_neon_vcvtas, int_arm_neon_vcvtau>;
+defm VCVTNn : VCVT_FPI<"n", 0b001, int_arm_neon_vcvtns, int_arm_neon_vcvtnu>;
+defm VCVTPn : VCVT_FPI<"p", 0b010, int_arm_neon_vcvtps, int_arm_neon_vcvtpu>;
+defm VCVTMn : VCVT_FPI<"m", 0b011, int_arm_neon_vcvtms, int_arm_neon_vcvtmu>;
 
 //   VCVT     : Vector Convert Between Floating-Point and Fixed-Point.
 let DecoderMethod = "DecodeVCVTD" in {

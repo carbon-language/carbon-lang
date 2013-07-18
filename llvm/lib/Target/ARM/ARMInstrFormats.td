@@ -1964,6 +1964,35 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
   let Inst{5}     = Vm{4};
 }
 
+// Same as N2V but not predicated.
+class N2Vnp<bits<2> op17_16, bits<3> op10_8, bit op7, bit op6,
+            dag oops, dag iops, InstrItinClass itin, string OpcodeStr,
+            string Dt, ValueType ResTy, ValueType OpTy, list<dag> pattern>
+   : NeonInp<oops, iops, AddrModeNone, IndexModeNone, N2RegFrm, itin,
+             OpcodeStr, Dt, "$Vd, $Vm", "", pattern> {
+  bits<5> Vd;
+  bits<5> Vm;
+
+  // Encode instruction operands
+  let Inst{22}    = Vd{4};
+  let Inst{15-12} = Vd{3-0};
+  let Inst{5}     = Vm{4};
+  let Inst{3-0}   = Vm{3-0};
+
+  // Encode constant bits
+  let Inst{27-23} = 0b00111;
+  let Inst{21-20} = 0b11;
+  let Inst{19-18} = 0b10;
+  let Inst{17-16} = op17_16;
+  let Inst{11} = 0;
+  let Inst{10-8} = op10_8;
+  let Inst{7} = op7;
+  let Inst{6} = op6;
+  let Inst{4} = 0;
+
+  let DecoderNamespace = "NEON";
+}
+
 // Same as N2V except it doesn't have a datatype suffix.
 class N2VX<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
            bits<5> op11_7, bit op6, bit op4,
