@@ -1006,12 +1006,20 @@ bool BoUpSLP::isConsecutiveAccess(Value *A, Value *B) {
         GepB->accumulateConstantOffset(*DL, OffsetB))
       return ((OffsetB.getSExtValue() - OffsetA.getSExtValue()) == Sz);
 
+    if (GepA->getNumIndices() != GepB->getNumIndices())
+      return false;
+
     // Try to strip the geps. This makes SCEV faster.
-    if (GepA->getNumIndices() == 1 && GepB->getNumIndices() == 1) {
-      PtrA = GepA->getOperand(1);
-      PtrB = GepB->getOperand(1);
-      Sz = 1;
+    // Make sure that all of the indices except for the last are identical.
+    int LastIdx = GepA->getNumIndices();
+    for (int i = 0; i < LastIdx - 1; i++) {
+      if (GepA->getOperand(i+1) != GepB->getOperand(i+1))
+          return false;
     }
+
+    PtrA = GepA->getOperand(LastIdx);
+    PtrB = GepB->getOperand(LastIdx);
+    Sz = 1;
   }
 
   // Check if PtrA is the base and PtrB is a constant offset.
