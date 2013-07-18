@@ -5,7 +5,7 @@
 
 %0 = type { i32, i32 }
 
-; CHECK: f0:
+; CHECK-LABEL: f0:
 ; CHECK: ldrexd
 define i64 @f0(i8* %p) nounwind readonly {
 entry:
@@ -19,7 +19,7 @@ entry:
   ret i64 %4
 }
 
-; CHECK: f1:
+; CHECK-LABEL: f1:
 ; CHECK: strexd
 define i32 @f1(i8* %ptr, i64 %val) nounwind {
 entry:
@@ -33,7 +33,7 @@ entry:
 declare %0 @llvm.arm.ldrexd(i8*) nounwind readonly
 declare i32 @llvm.arm.strexd(i32, i32, i8*) nounwind
 
-; CHECK: test_load_i8:
+; CHECK-LABEL: test_load_i8:
 ; CHECK: ldrexb r0, [r0]
 ; CHECK-NOT: uxtb
 define i32 @test_load_i8(i8* %addr) {
@@ -41,7 +41,7 @@ define i32 @test_load_i8(i8* %addr) {
   ret i32 %val
 }
 
-; CHECK: test_load_i16:
+; CHECK-LABEL: test_load_i16:
 ; CHECK: ldrexh r0, [r0]
 ; CHECK-NOT: uxth
 define i32 @test_load_i16(i16* %addr) {
@@ -49,7 +49,7 @@ define i32 @test_load_i16(i16* %addr) {
   ret i32 %val
 }
 
-; CHECK: test_load_i32:
+; CHECK-LABEL: test_load_i32:
 ; CHECK: ldrex r0, [r0]
 define i32 @test_load_i32(i32* %addr) {
   %val = call i32 @llvm.arm.ldrex.p0i32(i32* %addr)
@@ -60,7 +60,7 @@ declare i32 @llvm.arm.ldrex.p0i8(i8*) nounwind readonly
 declare i32 @llvm.arm.ldrex.p0i16(i16*) nounwind readonly
 declare i32 @llvm.arm.ldrex.p0i32(i32*) nounwind readonly
 
-; CHECK: test_store_i8:
+; CHECK-LABEL: test_store_i8:
 ; CHECK-NOT: uxtb
 ; CHECK: strexb r0, r1, [r2]
 define i32 @test_store_i8(i32, i8 %val, i8* %addr) {
@@ -69,7 +69,7 @@ define i32 @test_store_i8(i32, i8 %val, i8* %addr) {
   ret i32 %res
 }
 
-; CHECK: test_store_i16:
+; CHECK-LABEL: test_store_i16:
 ; CHECK-NOT: uxth
 ; CHECK: strexh r0, r1, [r2]
 define i32 @test_store_i16(i32, i16 %val, i16* %addr) {
@@ -78,7 +78,7 @@ define i32 @test_store_i16(i32, i16 %val, i16* %addr) {
   ret i32 %res
 }
 
-; CHECK: test_store_i32:
+; CHECK-LABEL: test_store_i32:
 ; CHECK: strex r0, r1, [r2]
 define i32 @test_store_i32(i32, i32 %val, i32* %addr) {
   %res = call i32 @llvm.arm.strex.p0i32(i32 %val, i32* %addr)
@@ -89,7 +89,7 @@ declare i32 @llvm.arm.strex.p0i8(i32, i8*) nounwind
 declare i32 @llvm.arm.strex.p0i16(i32, i16*) nounwind
 declare i32 @llvm.arm.strex.p0i32(i32, i32*) nounwind
 
-; CHECK: test_clear:
+; CHECK-LABEL: test_clear:
 ; CHECK: clrex
 define void @test_clear() {
   call void @llvm.arm.clrex()
@@ -101,7 +101,7 @@ declare void @llvm.arm.clrex() nounwind
 @base = global i32* null
 
 define void @excl_addrmode() {
-; CHECK-T2ADDRMODE: excl_addrmode:
+; CHECK-T2ADDRMODE-LABEL: excl_addrmode:
   %base1020 = load i32** @base
   %offset1020 = getelementptr i32* %base1020, i32 255
   call i32 @llvm.arm.ldrex.p0i32(i32* %offset1020)

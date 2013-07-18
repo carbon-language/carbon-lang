@@ -6,7 +6,7 @@ target triple = "armv4t--linux-gnueabihf"
 %big_struct0 = type { [517 x i32] }
 %big_struct1 = type { [516 x i32] }
 
-;CHECK: f:
+;CHECK-LABEL: f:
 define void @f(%big_struct0* %p0, %big_struct1* %p1) {
 
 ;CHECK: sub sp, sp, #8
