@@ -53,7 +53,7 @@ CGDebugInfo::~CGDebugInfo() {
 
 void CGDebugInfo::setLocation(SourceLocation Loc) {
   // If the new location isn't valid return.
-  if (!Loc.isValid()) return;
+  if (Loc.isInvalid()) return;
 
   CurLoc = CGM.getContext().getSourceManager().getExpansionLoc(Loc);
 
