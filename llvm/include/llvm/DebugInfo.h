@@ -110,7 +110,7 @@ namespace llvm {
     LLVM_EXPLICIT operator bool() const { return DbgNode != 0; }
 
     bool operator==(DIDescriptor Other) const {
-      return DbgNode != Other.DbgNode;
+      return DbgNode == Other.DbgNode;
     }
     bool operator!=(DIDescriptor Other) const {
       return !operator==(Other);
