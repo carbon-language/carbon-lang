@@ -1314,6 +1314,8 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           false,
                                           false);
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  // Don't emit any line table entries for the body of this function.
+  BuiltinLocation BL(*this, Builder);
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
@@ -1487,6 +1489,8 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           SC_Static,
                                           false, false);
   StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  // Don't emit any line table entries for the body of this function.
+  BuiltinLocation BL(*this, Builder);
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
 
