@@ -73,22 +73,6 @@ private:
   int v_;
 };
 
-/// copy_option - An "enum class" enumeration of copy semantics for copy
-///               operations.
-struct copy_option {
-  enum _ {
-    fail_if_exists,
-    overwrite_if_exists
-  };
-
-  copy_option(_ v) : v_(v) {}
-  explicit copy_option(int v) : v_(_(v)) {}
-  operator int() const {return v_;}
-
-private:
-  int v_;
-};
-
 /// space_info - Self explanatory.
 struct space_info {
   uint64_t capacity;
@@ -268,18 +252,6 @@ private:
 /// @returns errc::success if \a path has been made absolute, otherwise a
 ///          platform specific error_code.
 error_code make_absolute(SmallVectorImpl<char> &path);
-
-/// @brief Copy the file at \a from to the path \a to.
-///
-/// @param from The path to copy the file from.
-/// @param to The path to copy the file to.
-/// @param copt Behavior if \a to already exists.
-/// @returns errc::success if the file has been successfully copied.
-///          errc::file_exists if \a to already exists and \a copt ==
-///          copy_option::fail_if_exists. Otherwise a platform specific
-///          error_code.
-error_code copy_file(const Twine &from, const Twine &to,
-                     copy_option copt = copy_option::fail_if_exists);
 
 /// @brief Create all the non-existent directories in path.
 ///

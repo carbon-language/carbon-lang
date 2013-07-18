@@ -320,65 +320,6 @@ error_code current_path(SmallVectorImpl<char> &result) {
   return error_code::success();
 }
 
-error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
- // Get arguments.
-  SmallString<128> from_storage;
-  SmallString<128> to_storage;
-  StringRef f = from.toNullTerminatedStringRef(from_storage);
-  StringRef t = to.toNullTerminatedStringRef(to_storage);
-
-  const size_t buf_sz = 32768;
-  char buffer[buf_sz];
-  int from_file = -1, to_file = -1;
-
-  // Open from.
-  if ((from_file = ::open(f.begin(), O_RDONLY)) < 0)
-    return error_code(errno, system_category());
-  AutoFD from_fd(from_file);
-
-  // Stat from.
-  struct stat from_stat;
-  if (::stat(f.begin(), &from_stat) != 0)
-    return error_code(errno, system_category());
-
-  // Setup to flags.
-  int to_flags = O_CREAT | O_WRONLY;
-  if (copt == copy_option::fail_if_exists)
-    to_flags |= O_EXCL;
-
-  // Open to.
-  if ((to_file = ::open(t.begin(), to_flags, from_stat.st_mode)) < 0)
-    return error_code(errno, system_category());
-  AutoFD to_fd(to_file);
-
-  // Copy!
-  ssize_t sz, sz_read = 1, sz_write;
-  while (sz_read > 0 &&
-         (sz_read = ::read(from_fd, buffer, buf_sz)) > 0) {
-    // Allow for partial writes - see Advanced Unix Programming (2nd Ed.),
-    // Marc Rochkind, Addison-Wesley, 2004, page 94
-    sz_write = 0;
-    do {
-      if ((sz = ::write(to_fd, buffer + sz_write, sz_read - sz_write)) < 0) {
-        sz_read = sz;  // cause read loop termination.
-        break;         // error.
-      }
-      sz_write += sz;
-    } while (sz_write < sz_read);
-  }
-
-  // After all the file operations above the return value of close actually
-  // matters.
-  if (::close(from_fd.take()) < 0) sz_read = -1;
-  if (::close(to_fd.take()) < 0) sz_read = -1;
-
-  // Check for errors.
-  if (sz_read < 0)
-    return error_code(errno, system_category());
-
-  return error_code::success();
-}
-
 error_code create_directory(const Twine &path, bool &existed) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);

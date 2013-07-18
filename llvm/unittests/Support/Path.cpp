@@ -219,14 +219,8 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_NO_ERROR(fs::status(Twine(TempPath2), B));
   EXPECT_FALSE(fs::equivalent(A, B));
 
-  // Try to copy the first to the second.
-  EXPECT_EQ(
-    fs::copy_file(Twine(TempPath), Twine(TempPath2)), errc::file_exists);
-
   ::close(FD2);
-  // Try again with the proper options.
-  ASSERT_NO_ERROR(fs::copy_file(Twine(TempPath), Twine(TempPath2),
-                                fs::copy_option::overwrite_if_exists));
+
   // Remove Temp2.
   ASSERT_NO_ERROR(fs::remove(Twine(TempPath2), TempFileExists));
   EXPECT_TRUE(TempFileExists);
