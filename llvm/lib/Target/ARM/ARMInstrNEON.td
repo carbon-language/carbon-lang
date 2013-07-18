@@ -5461,10 +5461,10 @@ multiclass VCVT_FPI<string op, bits<3> op10_8, SDPatternOperator IntS,
   }
 }
 
-defm VCVTAn : VCVT_FPI<"a", 0b000, int_arm_neon_vcvtas, int_arm_neon_vcvtau>;
-defm VCVTNn : VCVT_FPI<"n", 0b001, int_arm_neon_vcvtns, int_arm_neon_vcvtnu>;
-defm VCVTPn : VCVT_FPI<"p", 0b010, int_arm_neon_vcvtps, int_arm_neon_vcvtpu>;
-defm VCVTMn : VCVT_FPI<"m", 0b011, int_arm_neon_vcvtms, int_arm_neon_vcvtmu>;
+defm VCVTAN : VCVT_FPI<"a", 0b000, int_arm_neon_vcvtas, int_arm_neon_vcvtau>;
+defm VCVTNN : VCVT_FPI<"n", 0b001, int_arm_neon_vcvtns, int_arm_neon_vcvtnu>;
+defm VCVTPN : VCVT_FPI<"p", 0b010, int_arm_neon_vcvtps, int_arm_neon_vcvtpu>;
+defm VCVTMN : VCVT_FPI<"m", 0b011, int_arm_neon_vcvtms, int_arm_neon_vcvtmu>;
 
 //   VCVT     : Vector Convert Between Floating-Point and Fixed-Point.
 let DecoderMethod = "DecodeVCVTD" in {
