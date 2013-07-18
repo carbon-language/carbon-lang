@@ -1792,7 +1792,7 @@ typedef void (*TokenizerCallback)(StringRef Source, StringSaver &Saver,
 /// before expansion and will be modified in place.
 ///
 /// \param [in] Saver Delegates back to the caller for saving parsed strings.
-/// \param [in] Tokenize Tokenization strategy. Typically Unix or Windows.
+/// \param [in] Tokenizer Tokenization strategy. Typically Unix or Windows.
 /// \param [in,out] Argv Command line into which to expand response files.
 /// \return true if all @files were expanded successfully or there were none.
 bool ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
