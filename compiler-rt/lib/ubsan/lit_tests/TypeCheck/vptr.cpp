@@ -1,4 +1,4 @@
-// RUN: %clang -ccc-cxx -fsanitize=vptr %s -O3 -o %t
+// RUN: %clang --driver-mode=g++ -fsanitize=vptr %s -O3 -o %t
 // RUN: %t rT && %t mT && %t fT && %t cT
 // RUN: %t rU && %t mU && %t fU && %t cU
 // RUN: %t rS && %t rV && %t oV
