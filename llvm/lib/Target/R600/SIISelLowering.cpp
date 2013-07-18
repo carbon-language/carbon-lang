@@ -34,6 +34,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
 
+  addRegisterClass(MVT::v2i1, &AMDGPU::VReg_64RegClass);
+  addRegisterClass(MVT::v4i1, &AMDGPU::VReg_128RegClass);
+
   addRegisterClass(MVT::v16i8, &AMDGPU::SReg_128RegClass);
   addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v64i8, &AMDGPU::SReg_512RegClass);
@@ -71,6 +74,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
+
+  setOperationAction(ISD::SETCC, MVT::v2i1, Expand);
+  setOperationAction(ISD::SETCC, MVT::v4i1, Expand);
 
   setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
 
@@ -318,7 +324,10 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
 }
 
 EVT SITargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
-  return MVT::i1;
+  if (!VT.isVector()) {
+    return MVT::i1;
+  }
+  return MVT::getVectorVT(MVT::i1, VT.getVectorNumElements());
 }
 
 MVT SITargetLowering::getScalarShiftAmountTy(EVT VT) const {
