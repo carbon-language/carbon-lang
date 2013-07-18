@@ -581,7 +581,14 @@ static error_code getStatus(HANDLE FileHandle, file_status &Result) {
 
   switch (::GetFileType(FileHandle)) {
   default:
-  case FILE_TYPE_UNKNOWN:
+    llvm_unreachable("Don't know anything about this file type");
+  case FILE_TYPE_UNKNOWN: {
+    DWORD Err = ::GetLastError();
+    if (Err != NO_ERROR)
+      return windows_error(Err);
+    Result = file_status(file_type::type_unknown);
+    return error_code::success();
+  }
   case FILE_TYPE_DISK:
     break;
   case FILE_TYPE_CHAR:
