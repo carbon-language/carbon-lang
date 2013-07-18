@@ -47,6 +47,8 @@ namespace CodeGen {
 /// and is responsible for emitting to llvm globals or pass directly to
 /// the backend.
 class CGDebugInfo {
+  friend class NoLocation;
+  friend class BuiltinLocation;
   CodeGenModule &CGM;
   const CodeGenOptions::DebugInfoKind DebugKind;
   llvm::DIBuilder DBuilder;
@@ -387,6 +389,40 @@ private:
   /// \param Force  Assume DebugColumnInfo option is true.
   unsigned getColumnNumber(SourceLocation Loc, bool Force=false);
 };
+
+/// NoLocation - An RAII object that temporarily disables debug
+/// locations. This is useful for emitting instructions that should be
+/// counted towards the function prologue.
+class NoLocation {
+  SourceLocation SavedLoc;
+  CGDebugInfo *DI;
+  CGBuilderTy &Builder;
+public:
+  NoLocation(CodeGenFunction &CGF, CGBuilderTy &B);
+  /// ~NoLocation - Autorestore everything back to normal.
+  ~NoLocation();
+};
+
+/// BuiltinLocation - An RAII object that temporarily switches to an
+/// artificial debug location that has a valid scope, but no line
+/// information. This is useful when emitting compiler-generated
+/// helper functions that have no source location associated with
+/// them.
+///
+/// This is necessary because pasing an empty SourceLocation to
+/// CGDebugInfo::setLocation() will result in the last valid location
+/// being reused.
+class BuiltinLocation {
+  SourceLocation SavedLoc;
+  CGDebugInfo *DI;
+  CGBuilderTy &Builder;
+public:
+  BuiltinLocation(CodeGenFunction &CGF, CGBuilderTy &B);
+  /// ~BuildinLocation - Autorestore everything back to normal.
+  ~BuiltinLocation();
+};
+
+
 } // namespace CodeGen
 } // namespace clang
 

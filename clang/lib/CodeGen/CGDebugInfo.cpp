@@ -51,6 +51,44 @@ CGDebugInfo::~CGDebugInfo() {
          "Region stack mismatch, stack not empty!");
 }
 
+
+NoLocation::NoLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+  : DI(CGF.getDebugInfo()), Builder(B) {
+  if (DI) {
+    SavedLoc = DI->getLocation();
+    DI->CurLoc = SourceLocation();
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
+  }
+}
+
+NoLocation::~NoLocation() {
+  if (DI) {
+    assert(Builder.getCurrentDebugLocation().isUnknown());
+    DI->CurLoc = SavedLoc;
+  }
+}
+
+BuiltinLocation::BuiltinLocation(CodeGenFunction &CGF, CGBuilderTy &B)
+  : DI(CGF.getDebugInfo()), Builder(B) {
+  if (DI) {
+    SavedLoc = DI->getLocation();
+    // Sync the Builder.
+    DI->EmitLocation(Builder, SavedLoc);
+    DI->CurLoc = SourceLocation();
+    // Construct a location that has a valid scope, but no line info.
+    llvm::MDNode *Scope = DI->LexicalBlockStack.empty() ?
+      DI->TheCU : DI->LexicalBlockStack.back();
+    Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(0, 0, Scope));
+  }
+}
+
+BuiltinLocation::~BuiltinLocation() {
+  if (DI) {
+    assert(Builder.getCurrentDebugLocation().getLine() == 0);
+    DI->CurLoc = SavedLoc;
+  }
+}
+
 void CGDebugInfo::setLocation(SourceLocation Loc) {
   // If the new location isn't valid return.
   if (Loc.isInvalid()) return;
@@ -2449,7 +2487,6 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
 /// previous location will be reused.
 void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc,
                                bool ForceColumnInfo) {
-
   // Update our current location
   setLocation(Loc);
 
