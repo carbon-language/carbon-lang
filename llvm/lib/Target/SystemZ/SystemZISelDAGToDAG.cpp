@@ -241,9 +241,9 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   // Return the selected node on success, otherwise return null.
   SDNode *tryRISBGZero(SDNode *N);
 
-  // Try to use RISBG or ROSBG to implement OR node N.  Return the selected
-  // node on success, otherwise return null.
-  SDNode *tryRISBGOrROSBG(SDNode *N);
+  // Try to use RISBG or Opcode to implement OR or XOR node N.
+  // Return the selected node on success, otherwise return null.
+  SDNode *tryRxSBG(SDNode *N, unsigned Opcode);
 
   // If Op0 is null, then Node is a constant that can be loaded using:
   //
@@ -799,8 +799,8 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
   return convertTo(SDLoc(N), VT, SDValue(N, 0)).getNode();
 }
 
-SDNode *SystemZDAGToDAGISel::tryRISBGOrROSBG(SDNode *N) {
-  // Try treating each operand of N as the second operand of RISBG or ROSBG
+SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
+  // Try treating each operand of N as the second operand of the RxSBG
   // and see which goes deepest.
   RxSBGOperands RxSBG[] = { N->getOperand(0), N->getOperand(1) };
   unsigned Count[] = { 0, 0 };
@@ -817,15 +817,14 @@ SDNode *SystemZDAGToDAGISel::tryRISBGOrROSBG(SDNode *N) {
   SDValue Op0 = N->getOperand(I ^ 1);
 
   // Prefer IC for character insertions from memory.
-  if ((RxSBG[I].Mask & 0xff) == 0)
+  if (Opcode == SystemZ::ROSBG && (RxSBG[I].Mask & 0xff) == 0)
     if (LoadSDNode *Load = dyn_cast<LoadSDNode>(Op0.getNode()))
       if (Load->getMemoryVT() == MVT::i8)
         return 0;
 
   // See whether we can avoid an AND in the first operand by converting
   // ROSBG to RISBG.
-  unsigned Opcode = SystemZ::ROSBG;
-  if (detectOrAndInsertion(Op0, RxSBG[I].Mask))
+  if (Opcode == SystemZ::ROSBG && detectOrAndInsertion(Op0, RxSBG[I].Mask))
     Opcode = SystemZ::RISBG;
            
   EVT VT = N->getValueType(0);
@@ -913,9 +912,14 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
   switch (Opcode) {
   case ISD::OR:
     if (Node->getOperand(1).getOpcode() != ISD::Constant)
-      ResNode = tryRISBGOrROSBG(Node);
-    // Fall through.
+      ResNode = tryRxSBG(Node, SystemZ::ROSBG);
+    goto or_xor;
+
   case ISD::XOR:
+    if (Node->getOperand(1).getOpcode() != ISD::Constant)
+      ResNode = tryRxSBG(Node, SystemZ::RXSBG);
+    // Fall through.
+  or_xor:
     // If this is a 64-bit operation in which both 32-bit halves are nonzero,
     // split the operation into two.
     if (!ResNode && Node->getValueType(0) == MVT::i64)
@@ -931,7 +935,8 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
   case ISD::ROTL:
   case ISD::SHL:
   case ISD::SRL:
-    ResNode = tryRISBGZero(Node);
+    if (!ResNode)
+      ResNode = tryRISBGZero(Node);
     break;
 
   case ISD::Constant:
