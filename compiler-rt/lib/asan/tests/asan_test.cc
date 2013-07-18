@@ -373,6 +373,7 @@ TEST(AddressSanitizer, ReallocFreedPointerTest) {
 TEST(AddressSanitizer, ReallocInvalidPointerTest) {
   void *ptr = Ident(malloc(42));
   EXPECT_DEATH(ptr = realloc((int*)ptr + 1, 77), "attempting free.*not malloc");
+  free(ptr);
 }
 
 TEST(AddressSanitizer, ZeroSizeMallocTest) {
@@ -411,6 +412,7 @@ TEST(AddressSanitizer, MallocUsableSizeTest) {
                kMallocUsableSizeErrorMsg);
   free(array);
   EXPECT_DEATH(malloc_usable_size(array), kMallocUsableSizeErrorMsg);
+  delete int_ptr;
 }
 #endif
 
