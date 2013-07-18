@@ -1,6 +1,5 @@
 // RUN: %clang_cc1 -std=c++11 -verify %s
 
-// expected-no-diagnostics
 struct A {
   constexpr A(const int&) : rval(false) {}
   constexpr A(const int&&) : rval(true) {}
@@ -28,3 +27,6 @@ struct D : C {
   using C::C;
 };
 static_assert(D(123).v == 123, "");
+
+// FIXME: This diagnostic sucks.
+template<typename T> constexpr D::D(T t) : C(t) {} // expected-error {{definition of implicitly declared function}}

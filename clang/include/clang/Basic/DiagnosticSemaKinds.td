@@ -3422,7 +3422,7 @@ def err_redefinition : Error<"redefinition of %0">;
 def err_definition_of_implicitly_declared_member : Error<
   "definition of implicitly declared %select{default constructor|copy "
   "constructor|move constructor|copy assignment operator|move assignment "
-  "operator|destructor}1">;
+  "operator|destructor|function}1">;
 def err_definition_of_explicitly_defaulted_member : Error<
   "definition of explicitly defaulted %select{default constructor|copy "
   "constructor|move constructor|copy assignment operator|move assignment "
