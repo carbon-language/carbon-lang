@@ -29,7 +29,6 @@ namespace llvm {
   class MDNode;
   class StringRef;
   class DIBasicType;
-  class DICompileUnit;
   class DICompositeType;
   class DIDerivedType;
   class DIDescriptor;
@@ -54,6 +53,7 @@ namespace llvm {
     private:
     Module &M;
     LLVMContext & VMContext;
+    MDNode *TheCU;
 
     MDNode *TempEnumTypes;
     MDNode *TempRetainTypes;
@@ -81,6 +81,7 @@ namespace llvm {
 
     public:
     explicit DIBuilder(Module &M);
+    const MDNode *getCU() { return TheCU; }
     enum ComplexAddrKind { OpPlus=1, OpDeref };
 
     /// finalize - Construct any deferred debug info descriptors.
@@ -102,11 +103,10 @@ namespace llvm {
     ///                 Objective-C.
     /// @param SplitName The name of the file that we'll split debug info out
     ///                  into.
-    DICompileUnit createCompileUnit(unsigned Lang, StringRef File,
-                                    StringRef Dir, StringRef Producer,
-                                    bool isOptimized, StringRef Flags,
-                                    unsigned RV,
-                                    StringRef SplitName = StringRef());
+    void createCompileUnit(unsigned Lang, StringRef File, StringRef Dir,
+                           StringRef Producer, bool isOptimized,
+                           StringRef Flags, unsigned RV,
+                           StringRef SplitName = StringRef());
 
     /// createFile - Create a file descriptor to hold debugging information
     /// for a file.

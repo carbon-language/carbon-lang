@@ -30,7 +30,7 @@ static Constant *GetTagConstant(LLVMContext &VMContext, unsigned Tag) {
 }
 
 DIBuilder::DIBuilder(Module &m)
-  : M(m), VMContext(M.getContext()), TempEnumTypes(0),
+  : M(m), VMContext(M.getContext()), TheCU(0), TempEnumTypes(0),
     TempRetainTypes(0), TempSubprograms(0), TempGVs(0), DeclareFn(0),
     ValueFn(0)
 {}
@@ -86,11 +86,10 @@ static MDNode *createFilePathPair(LLVMContext &VMContext, StringRef Filename,
 
 /// createCompileUnit - A CompileUnit provides an anchor for all debugging
 /// information generated during this instance of compilation.
-DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
-                                           StringRef Directory,
-                                           StringRef Producer, bool isOptimized,
-                                           StringRef Flags, unsigned RunTimeVer,
-                                           StringRef SplitName) {
+void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
+                                  StringRef Directory, StringRef Producer,
+                                  bool isOptimized, StringRef Flags,
+                                  unsigned RunTimeVer, StringRef SplitName) {
   assert(((Lang <= dwarf::DW_LANG_Python && Lang >= dwarf::DW_LANG_C89) ||
           (Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)) &&
          "Invalid Language tag");
@@ -122,14 +121,11 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     TempImportedModules,
     MDString::get(VMContext, SplitName)
   };
-
-  MDNode *CUNode = MDNode::get(VMContext, Elts);
+  TheCU = DICompileUnit(MDNode::get(VMContext, Elts));
 
   // Create a named metadata so that it is easier to find cu in a module.
   NamedMDNode *NMD = M.getOrInsertNamedMetadata("llvm.dbg.cu");
-  NMD->addOperand(CUNode);
-
-  return DICompileUnit(CUNode);
+  NMD->addOperand(TheCU);
 }
 
 static DIImportedEntity
@@ -220,7 +216,7 @@ DIBasicType DIBuilder::createUnspecifiedType(StringRef Name) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_unspecified_type),
     NULL, // Filename
-    NULL, // Unused
+    NULL, //TheCU,
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
@@ -248,7 +244,7 @@ DIBuilder::createBasicType(StringRef Name, uint64_t SizeInBits,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_base_type),
     NULL, // File/directory name
-    NULL, // Unused
+    NULL, //TheCU,
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
@@ -267,7 +263,7 @@ DIDerivedType DIBuilder::createQualifiedType(unsigned Tag, DIType FromTy) {
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
     NULL, // Filename
-    NULL, // Unused
+    NULL, //TheCU,
     MDString::get(VMContext, StringRef()), // Empty name.
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Size
@@ -287,7 +283,7 @@ DIBuilder::createPointerType(DIType PointeeTy, uint64_t SizeInBits,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_pointer_type),
     NULL, // Filename
-    NULL, // Unused
+    NULL, //TheCU,
     MDString::get(VMContext, Name),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
@@ -305,7 +301,7 @@ DIDerivedType DIBuilder::createMemberPointerType(DIType PointeeTy,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_ptr_to_member_type),
     NULL, // Filename
-    NULL, // Unused
+    NULL, //TheCU,
     NULL,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
     ConstantInt::get(Type::getInt64Ty(VMContext), 0),
@@ -741,7 +737,7 @@ DICompositeType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_array_type),
     NULL, // Filename/Directory,
-    NULL, // Unused
+    NULL, //TheCU,
     MDString::get(VMContext, ""),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), Size),
@@ -764,7 +760,7 @@ DICompositeType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_array_type),
     NULL, // Filename/Directory,
-    NULL, // Unused
+    NULL, //TheCU,
     MDString::get(VMContext, ""),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt64Ty(VMContext), Size),

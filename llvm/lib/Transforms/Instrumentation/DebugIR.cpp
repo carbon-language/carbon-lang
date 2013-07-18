@@ -289,9 +289,9 @@ private:
           "LLVM Version " STR(LLVM_VERSION_MAJOR) "." STR(LLVM_VERSION_MINOR);
     }
 
-    CUNode =
-        Builder.createCompileUnit(dwarf::DW_LANG_C99, Filename, Directory,
-                                  Producer, IsOptimized, Flags, RuntimeVersion);
+    Builder.createCompileUnit(dwarf::DW_LANG_C99, Filename, Directory, Producer,
+                              IsOptimized, Flags, RuntimeVersion);
+    CUNode = Builder.getCU();
 
     if (CUToReplace)
       CUToReplace->replaceAllUsesWith(const_cast<MDNode *>(CUNode));
