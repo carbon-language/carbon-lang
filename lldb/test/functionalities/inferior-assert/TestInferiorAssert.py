@@ -15,8 +15,6 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting()
 
-    @skipIfGcc # avoid an xpass on the buildbots where libc was not built with -fomit-frame-pointer
-    @expectedFailureLinux # llvm.org/pr15671 - backtrace does not include the assert site
     def test_inferior_asserting_dwarf(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
         self.buildDwarf()
@@ -45,8 +43,6 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting_expr()
 
-    @skipIfGcc # avoid an xpass on the buildbots where libc was not built with -fomit-frame-pointer
-    @expectedFailureLinux # llvm.org/pr15671 - backtrace does not include the assert site
     def test_inferior_asserting_expr(self):
         """Test that the lldb expression interpreter can read from the inferior after asserting (command)."""
         self.buildDwarf()
@@ -58,8 +54,6 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_asserting_step()
 
-    @skipIfGcc # avoid an xpass on the buildbots where libc was not built with -fomit-frame-pointer
-    @expectedFailureLinux # llvm.org/pr15671 - backtrace does not include the assert site
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDwarf()

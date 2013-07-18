@@ -17,6 +17,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/DWARFExpression.h"
+#include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -201,17 +202,14 @@ RegisterContextLLDB::InitializeZerothFrame()
     }
 
 
-    addr_t cfa_regval;
+    addr_t cfa_regval = LLDB_INVALID_ADDRESS;
     if (!ReadGPRValue (row_register_kind, active_row->GetCFARegister(), cfa_regval))
     {
         m_frame_type = eNotAValidFrame;
         return;
     }
-    else
-    {
-    }
-    cfa_offset = active_row->GetCFAOffset ();
 
+    cfa_offset = active_row->GetCFAOffset ();
     m_cfa = cfa_regval + cfa_offset;
 
     UnwindLogMsg ("cfa_regval = 0x%16.16" PRIx64 " (cfa_regval = 0x%16.16" PRIx64 ", cfa_offset = %i)", m_cfa, cfa_regval, cfa_offset);
@@ -322,7 +320,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             m_all_registers_available = false;
             m_current_offset = -1;
             m_current_offset_backed_up_one = -1;
-            addr_t cfa_regval;
+            addr_t cfa_regval = LLDB_INVALID_ADDRESS;
             int row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
             UnwindPlan::RowSP row = m_full_unwind_plan_sp->GetRowForFunctionOffset(0);
             if (row.get())
@@ -429,7 +427,11 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_current_offset = m_current_pc.GetOffset() - m_start_pc.GetOffset();
         m_current_offset_backed_up_one = m_current_offset;
         if (decr_pc_and_recompute_addr_range && m_current_offset_backed_up_one > 0)
+        {
             m_current_offset_backed_up_one--;
+            if (m_sym_ctx_valid)
+                m_current_pc.SetOffset(m_current_pc.GetOffset() - 1);
+        }
     }
     else
     {
@@ -496,15 +498,15 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         return;
     }
 
-    addr_t cfa_regval;
+    addr_t cfa_regval = LLDB_INVALID_ADDRESS;
     if (!ReadGPRValue (row_register_kind, active_row->GetCFARegister(), cfa_regval))
     {
         UnwindLogMsg ("failed to get cfa reg %d/%d", row_register_kind, active_row->GetCFARegister());
         m_frame_type = eNotAValidFrame;
         return;
     }
-    cfa_offset = active_row->GetCFAOffset ();
 
+    cfa_offset = active_row->GetCFAOffset ();
     m_cfa = cfa_regval + cfa_offset;
 
     UnwindLogMsg ("cfa_regval = 0x%16.16" PRIx64 " (cfa_regval = 0x%16.16" PRIx64 ", cfa_offset = %i)", m_cfa, cfa_regval, cfa_offset);
@@ -677,10 +679,24 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         func_unwinders_sp = pc_module_sp->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
     }
 
-    // No FuncUnwinders available for this pc, try using architectural default unwind.
+    // No FuncUnwinders available for this pc (i.e. a stripped function symbol and -fomit-frame-pointer).
+    // Try using the eh_frame information relative to the current PC,
+    // and finally fall back on the architectural default unwind.
     if (!func_unwinders_sp)
     {
+        DWARFCallFrameInfo *eh_frame = pc_module_sp && pc_module_sp->GetObjectFile() ? 
+            pc_module_sp->GetObjectFile()->GetUnwindTable().GetEHFrameInfo() : nullptr;
+
         m_frame_type = eNormalFrame;
+        if (eh_frame && m_current_pc.IsValid())
+        {
+            unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+            // Even with -fomit-frame-pointer, we can try eh_frame to get back on track.
+            if (eh_frame->GetUnwindPlan (m_current_pc, *unwind_plan_sp))
+                return unwind_plan_sp;
+            else
+                unwind_plan_sp.reset();
+        }
         return arch_default_unwind_plan_sp;
     }
 
@@ -1249,7 +1265,7 @@ RegisterContextLLDB::InvalidateFullUnwindPlan ()
                 }
                 m_registers.clear();
                 m_full_unwind_plan_sp = arch_default_unwind_plan_sp;
-                addr_t cfa_regval;
+                addr_t cfa_regval = LLDB_INVALID_ADDRESS;
                 if (ReadGPRValue (arch_default_unwind_plan_sp->GetRegisterKind(), active_row->GetCFARegister(), cfa_regval))
                 {
                     m_cfa = cfa_regval + active_row->GetCFAOffset ();
