@@ -15,6 +15,24 @@ define void @store_f32(float addrspace(1)* %out, float %in) {
   ret void
 }
 
+; vec2 floating-point stores
+; EG-CHECK: @store_v2f32
+; EG-CHECK: RAT_WRITE_CACHELESS_32_eg
+; EG-CHECK-NEXT: RAT_WRITE_CACHELESS_32_eg
+; CM-CHECK: @store_v2f32
+; CM-CHECK: EXPORT_RAT_INST_STORE_DWORD
+; CM-CHECK-NEXT: EXPORT_RAT_INST_STORE_DWORD
+; SI-CHECK: @store_v2f32
+; SI-CHECK: BUFFER_STORE_DWORDX2
+
+define void @store_v2f32(<2 x float> addrspace(1)* %out, float %a, float %b) {
+entry:
+  %0 = insertelement <2 x float> <float 0.0, float 0.0>, float %a, i32 0
+  %1 = insertelement <2 x float> %0, float %b, i32 0
+  store <2 x float> %1, <2 x float> addrspace(1)* %out
+  ret void
+}
+
 ; The stores in this function are combined by the optimizer to create a
 ; 64-bit store with 32-bit alignment.  This is legal for SI and the legalizer
 ; should not try to split the 64-bit store back into 2 32-bit stores.

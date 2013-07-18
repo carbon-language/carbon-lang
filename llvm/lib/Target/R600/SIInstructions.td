@@ -1484,6 +1484,9 @@ def : BitConvert <i64, f64, VReg_64>;
 
 def : BitConvert <f64, i64, VReg_64>;
 
+def : BitConvert <v2f32, v2i32, VReg_64>;
+def : BitConvert <v2i32, v2f32, VReg_64>;
+
 /********** =================== **********/
 /********** Src & Dst modifiers **********/
 /********** =================== **********/
