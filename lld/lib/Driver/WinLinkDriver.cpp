@@ -175,12 +175,32 @@ StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, StringRef path) {
   return info.allocateString(smallStr.str());
 }
 
+// Split the given string with the path separator.
+std::vector<StringRef> splitPathList(StringRef str) {
+  std::vector<StringRef> ret;
+  while (!str.empty()) {
+    StringRef path;
+    llvm::tie(path, str) = str.split(';');
+    ret.push_back(path);
+  }
+  return std::move(ret);
+}
+
+// Process "LIB" environment variable. The variable contains a list of
+// search paths separated by semicolons.
+void processLibEnvVar(PECOFFTargetInfo &info) {
+  if (char *envp = ::getenv("LIB"))
+    for (StringRef path : splitPathList(envp))
+      info.appendInputSearchPath(info.allocateString(path));
+}
+
 } // namespace
 
 
 bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
   PECOFFTargetInfo info;
+  processLibEnvVar(info);
   if (parse(argc, argv, info, diagnostics))
     return true;
   return link(info, diagnostics);
