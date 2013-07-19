@@ -51,7 +51,7 @@ public:
 static bool PrintInsts(const MCDisassembler &DisAsm,
                        const ByteArrayTy &Bytes,
                        SourceMgr &SM, raw_ostream &Out,
-                       MCStreamer &Streamer) {
+                       MCStreamer &Streamer, bool InAtomicBlock) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
 
@@ -70,8 +70,13 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
       SM.PrintMessage(SMLoc::getFromPointer(Bytes[Index].second),
                       SourceMgr::DK_Warning,
                       "invalid instruction encoding");
+      // Don't try to resynchronise the stream in a block
+      if (InAtomicBlock)
+        return true;
+
       if (Size == 0)
         Size = 1; // skip illegible bytes
+
       break;
 
     case MCDisassembler::SoftFail:
@@ -89,14 +94,11 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
   return false;
 }
 
-static bool ByteArrayFromString(ByteArrayTy &ByteArray,
-                                StringRef &Str,
-                                SourceMgr &SM) {
-  while (!Str.empty()) {
-    // Strip horizontal whitespace.
-    if (size_t Pos = Str.find_first_not_of(" \t\r")) {
+static bool SkipToToken(StringRef &Str) {
+  while (!Str.empty() && Str.find_first_not_of(" \t\r\n#,") != 0) {
+    // Strip horizontal whitespace and commas.
+    if (size_t Pos = Str.find_first_not_of(" \t\r,")) {
       Str = Str.substr(Pos);
-      continue;
     }
 
     // If this is the end of a line or start of a comment, remove the rest of
@@ -113,9 +115,22 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
       }
       continue;
     }
+  }
+
+  return !Str.empty();
+}
+
+
+static bool ByteArrayFromString(ByteArrayTy &ByteArray,
+                                StringRef &Str,
+                                SourceMgr &SM) {
+  while (SkipToToken(Str)) {
+    // Handled by higher level
+    if (Str[0] == '[' || Str[0] == ']')
+      return false;
 
     // Get the current token.
-    size_t Next = Str.find_first_of(" \t\n\r#");
+    size_t Next = Str.find_first_of(" \t\n\r,#[]");
     StringRef Value = Str.substr(0, Next);
 
     // Convert to a byte and add to the byte vector.
@@ -157,11 +172,44 @@ int Disassembler::disassemble(const Target &T,
   // Convert the input to a vector for disassembly.
   ByteArrayTy ByteArray;
   StringRef Str = Buffer.getBuffer();
+  bool InAtomicBlock = false;
 
-  ErrorOccurred |= ByteArrayFromString(ByteArray, Str, SM);
+  while (SkipToToken(Str)) {
+    ByteArray.clear();
 
-  if (!ByteArray.empty())
-    ErrorOccurred |= PrintInsts(*DisAsm, ByteArray, SM, Out, Streamer);
+    if (Str[0] == '[') {
+      if (InAtomicBlock) {
+        SM.PrintMessage(SMLoc::getFromPointer(Str.data()), SourceMgr::DK_Error,
+                        "nested atomic blocks make no sense");
+        ErrorOccurred = true;
+      }
+      InAtomicBlock = true;
+      Str = Str.drop_front();
+      continue;
+    } else if (Str[0] == ']') {
+      if (!InAtomicBlock) {
+        SM.PrintMessage(SMLoc::getFromPointer(Str.data()), SourceMgr::DK_Error,
+                        "attempt to close atomic block without opening");
+        ErrorOccurred = true;
+      }
+      InAtomicBlock = false;
+      Str = Str.drop_front();
+      continue;
+    }
+
+    // It's a real token, get the bytes and emit them
+    ErrorOccurred |= ByteArrayFromString(ByteArray, Str, SM);
+
+    if (!ByteArray.empty())
+      ErrorOccurred |= PrintInsts(*DisAsm, ByteArray, SM, Out, Streamer,
+                                  InAtomicBlock);
+  }
+
+  if (InAtomicBlock) {
+    SM.PrintMessage(SMLoc::getFromPointer(Str.data()), SourceMgr::DK_Error,
+                    "unclosed atomic block");
+    ErrorOccurred = true;
+  }
 
   return ErrorOccurred;
 }

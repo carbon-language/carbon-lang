@@ -1,7 +1,0 @@
-# VMOV cmode=0b1111 op=1
-# RUN: echo "0x70 0xef 0xc7 0xf3" | llvm-mc -triple=armv7 -disassemble 2>&1 | FileCheck %s
-
-# VMOV cmode=0b1111 op=1
-# RUN: echo "0x30 0x0f 0x80 0xf3" | llvm-mc -triple=armv7 -disassemble 2>&1 | FileCheck %s
-
-# CHECK: invalid instruction encoding
