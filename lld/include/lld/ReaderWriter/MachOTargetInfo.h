@@ -72,6 +72,8 @@ public:
   void setArch(Arch arch) { _arch = arch; }
   bool setOS(OS os, StringRef minOSVersion);
   bool minOS(StringRef mac, StringRef iOS) const;
+  void setDoNothing(bool value) { _doNothing = value; }
+  bool doNothing() const { return _doNothing; }
 
 private:
   virtual Writer &writer() const;
@@ -92,6 +94,7 @@ private:
 
   uint32_t        _outputFileType; // e.g MH_EXECUTE
   bool            _outputFileTypeStatic; // Disambiguate static vs dynamic prog
+  bool            _doNothing;   // for -help and -v which just print info
   Arch            _arch;
   OS              _os;
   PackedVersion   _osMinVersion;

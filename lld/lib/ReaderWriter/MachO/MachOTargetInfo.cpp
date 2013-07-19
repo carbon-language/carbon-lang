@@ -89,6 +89,7 @@ bool MachOTargetInfo::PackedVersion::operator==(
 MachOTargetInfo::MachOTargetInfo() 
   : _outputFileType(mach_o::MH_EXECUTE)
   , _outputFileTypeStatic(false)
+  , _doNothing(false)
   , _arch(arch_unknown)
   , _os(OS::macOSX)
   , _osMinVersion("0.0")
@@ -182,6 +183,11 @@ bool MachOTargetInfo::addUnixThreadLoadCommand() const {
 }
 
 bool MachOTargetInfo::validateImpl(raw_ostream &diagnostics) {
+  if (_inputFiles.empty()) {
+    diagnostics << "no object files specified\n";
+    return true;
+  }
+
   if ((_outputFileType == mach_o::MH_EXECUTE) && _entrySymbolName.empty()) {
     if (_outputFileTypeStatic) {
       _entrySymbolName = "start";

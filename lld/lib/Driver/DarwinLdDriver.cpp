@@ -75,6 +75,8 @@ bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
   MachOTargetInfo info;
   if (parse(argc, argv, info, diagnostics))
     return true;
+  if ( info.doNothing() )
+    return false;
     
   return link(info, diagnostics);
 }
@@ -193,6 +195,16 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     info.appendInputFile((*it)->getValue());
   }
   
+  // Handle -help
+  if (parsedArgs->getLastArg(OPT_help)) {
+    table.PrintHelp(llvm::outs(), argv[0], "LLVM Darwin Linker", false);
+    // If only -help on command line, don't try to do any linking
+    if ( argc == 2 ) {
+      info.setDoNothing(true);
+      return false;
+    }
+  }
+
   // Validate the combination of options used.
   if (info.validate(diagnostics))
     return true;
