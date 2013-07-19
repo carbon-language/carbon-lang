@@ -1,6 +1,6 @@
 ; Test 64-bit atomic ANDs.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Check ANDs of a variable.
 define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {

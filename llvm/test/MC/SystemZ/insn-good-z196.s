@@ -1,6 +1,18 @@
 # For z196 and above.
 # RUN: llvm-mc -triple s390x-linux-gnu -mcpu=z196 -show-encoding %s | FileCheck %s
 
+#CHECK: ngrk	%r0, %r0, %r0           # encoding: [0xb9,0xe4,0x00,0x00]
+#CHECK: ngrk	%r0, %r0, %r15          # encoding: [0xb9,0xe4,0xf0,0x00]
+#CHECK: ngrk	%r0, %r15, %r0          # encoding: [0xb9,0xe4,0x00,0x0f]
+#CHECK: ngrk	%r15, %r0, %r0          # encoding: [0xb9,0xe4,0x00,0xf0]
+#CHECK: ngrk	%r7, %r8, %r9           # encoding: [0xb9,0xe4,0x90,0x78]
+
+	ngrk	%r0,%r0,%r0
+	ngrk	%r0,%r0,%r15
+	ngrk	%r0,%r15,%r0
+	ngrk	%r15,%r0,%r0
+	ngrk	%r7,%r8,%r9
+
 #CHECK: nrk	%r0, %r0, %r0           # encoding: [0xb9,0xf4,0x00,0x00]
 #CHECK: nrk	%r0, %r0, %r15          # encoding: [0xb9,0xf4,0xf0,0x00]
 #CHECK: nrk	%r0, %r15, %r0          # encoding: [0xb9,0xf4,0x00,0x0f]
@@ -12,6 +24,18 @@
 	nrk	%r0,%r15,%r0
 	nrk	%r15,%r0,%r0
 	nrk	%r7,%r8,%r9
+
+#CHECK: ogrk	%r0, %r0, %r0           # encoding: [0xb9,0xe6,0x00,0x00]
+#CHECK: ogrk	%r0, %r0, %r15          # encoding: [0xb9,0xe6,0xf0,0x00]
+#CHECK: ogrk	%r0, %r15, %r0          # encoding: [0xb9,0xe6,0x00,0x0f]
+#CHECK: ogrk	%r15, %r0, %r0          # encoding: [0xb9,0xe6,0x00,0xf0]
+#CHECK: ogrk	%r7, %r8, %r9           # encoding: [0xb9,0xe6,0x90,0x78]
+
+	ogrk	%r0,%r0,%r0
+	ogrk	%r0,%r0,%r15
+	ogrk	%r0,%r15,%r0
+	ogrk	%r15,%r0,%r0
+	ogrk	%r7,%r8,%r9
 
 #CHECK: ork	%r0, %r0, %r0           # encoding: [0xb9,0xf6,0x00,0x00]
 #CHECK: ork	%r0, %r0, %r15          # encoding: [0xb9,0xf6,0xf0,0x00]
@@ -102,6 +126,18 @@
 	srlk	%r0,%r0,0(%r15)
 	srlk	%r0,%r0,524287(%r1)
 	srlk	%r0,%r0,524287(%r15)
+
+#CHECK: xgrk	%r0, %r0, %r0           # encoding: [0xb9,0xe7,0x00,0x00]
+#CHECK: xgrk	%r0, %r0, %r15          # encoding: [0xb9,0xe7,0xf0,0x00]
+#CHECK: xgrk	%r0, %r15, %r0          # encoding: [0xb9,0xe7,0x00,0x0f]
+#CHECK: xgrk	%r15, %r0, %r0          # encoding: [0xb9,0xe7,0x00,0xf0]
+#CHECK: xgrk	%r7, %r8, %r9           # encoding: [0xb9,0xe7,0x90,0x78]
+
+	xgrk	%r0,%r0,%r0
+	xgrk	%r0,%r0,%r15
+	xgrk	%r0,%r15,%r0
+	xgrk	%r15,%r0,%r0
+	xgrk	%r7,%r8,%r9
 
 #CHECK: xrk	%r0, %r0, %r0           # encoding: [0xb9,0xf7,0x00,0x00]
 #CHECK: xrk	%r0, %r0, %r15          # encoding: [0xb9,0xf7,0xf0,0x00]

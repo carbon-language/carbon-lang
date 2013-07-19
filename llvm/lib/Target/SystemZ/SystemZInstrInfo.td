@@ -649,7 +649,7 @@ let Defs = [CC] in {
   // ANDs of a register.
   let isCommutable = 1 in {
     defm NR : BinaryRRAndK<"n", 0x14, 0xB9F4, and, GR32, GR32>;
-    def NGR : BinaryRRE<"ng", 0xB980, and, GR64, GR64>;
+    defm NGR : BinaryRREAndK<"ng", 0xB980, 0xB9E4, and, GR64, GR64>;
   }
 
   // ANDs of a 16-bit immediate, leaving other bits unaffected.
@@ -686,7 +686,7 @@ let Defs = [CC] in {
   // ORs of a register.
   let isCommutable = 1 in {
     defm OR : BinaryRRAndK<"o", 0x16, 0xB9F6, or, GR32, GR32>;
-    def OGR : BinaryRRE<"og", 0xB981, or, GR64, GR64>;
+    defm OGR : BinaryRREAndK<"og", 0xB981, 0xB9E6, or, GR64, GR64>;
   }
 
   // ORs of a 16-bit immediate, leaving other bits unaffected.
@@ -723,7 +723,7 @@ let Defs = [CC] in {
   // XORs of a register.
   let isCommutable = 1 in {
     defm XR : BinaryRRAndK<"x", 0x17, 0xB9F7, xor, GR32, GR32>;
-    def XGR : BinaryRRE<"xg", 0xB982, xor, GR64, GR64>;
+    defm XGR : BinaryRREAndK<"xg", 0xB982, 0xB9E7, xor, GR64, GR64>;
   }
 
   // XORs of a 32-bit immediate, leaving other bits unaffected.

@@ -1900,6 +1900,11 @@
 	ng	%r0, -524289
 	ng	%r0, 524288
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: ngrk	%r2,%r3,%r4
+
+	ngrk	%r2,%r3,%r4
+
 #CHECK: error: invalid operand
 #CHECK: ni	-1, 0
 #CHECK: error: invalid operand
@@ -2010,6 +2015,11 @@
 
 	og	%r0, -524289
 	og	%r0, 524288
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: ogrk	%r2,%r3,%r4
+
+	ogrk	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: oi	-1, 0
@@ -2645,6 +2655,11 @@
 
 	xg	%r0, -524289
 	xg	%r0, 524288
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: xgrk	%r2,%r3,%r4
+
+	xgrk	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: xi	-1, 0

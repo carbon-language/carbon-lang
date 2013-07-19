@@ -747,6 +747,18 @@ multiclass BinaryRRAndK<string mnemonic, bits<8> opcode1, bits<16> opcode2,
   }
 }
 
+multiclass BinaryRREAndK<string mnemonic, bits<16> opcode1, bits<16> opcode2,
+                         SDPatternOperator operator, RegisterOperand cls1,
+                         RegisterOperand cls2> {
+  let NumOpsKey = mnemonic in {
+    let NumOpsValue = "3" in
+      def K : BinaryRRFK<mnemonic, opcode2, null_frag, cls1, cls2>,
+              Requires<[FeatureDistinctOps]>;
+    let NumOpsValue = "2", isConvertibleToThreeAddress = 1 in
+      def "" : BinaryRRE<mnemonic, opcode1, operator, cls1, cls2>;
+  }
+}
+
 class BinaryRI<string mnemonic, bits<12> opcode, SDPatternOperator operator,
                RegisterOperand cls, Immediate imm>
   : InstRI<opcode, (outs cls:$R1), (ins cls:$R1src, imm:$I2),
