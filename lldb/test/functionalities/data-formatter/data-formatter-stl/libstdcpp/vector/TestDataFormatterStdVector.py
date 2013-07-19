@@ -20,7 +20,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @dwarf_test
-    @expectedFailureGcc(15301, ["==", "4.6.3"]) # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
+    @expectedFailureClang # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
