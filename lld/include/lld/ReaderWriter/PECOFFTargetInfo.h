@@ -53,6 +53,9 @@ public:
     return _inputSearchPaths;
   }
 
+  bool appendInputFileOrLibrary(std::string path);
+  bool appendLibraryFile(StringRef path);
+
   void setStackReserve(uint64_t size) { _stackReserve = size; }
   void setStackCommit(uint64_t size) { _stackCommit = size; }
   uint64_t getStackReserve() const { return _stackReserve; }

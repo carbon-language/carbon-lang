@@ -167,13 +167,6 @@ bool parseSubsystemOption(PECOFFTargetInfo &info, std::string arg,
   return true;
 }
 
-// Add ".obj" extension if the given path name has no file extension.
-StringRef canonicalizeInputFileName(PECOFFTargetInfo &info, std::string path) {
-  if (llvm::sys::path::extension(path).empty())
-    path.append(".obj");
-  return info.allocateString(path);
-}
-
 // Replace a file extension with ".exe". If the given file has no
 // extension, just add ".exe".
 StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, StringRef path) {
@@ -290,12 +283,12 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     for (int i = doubleDashPosition + 1; i < argc; ++i)
       inputPaths.push_back(argv[i]);
 
-  // Add ".obj" extension for those who have no file extension.
   for (const StringRef &path : inputPaths)
-    info.appendInputFile(canonicalizeInputFileName(info, path));
+    info.appendInputFileOrLibrary(path);
 
   // If -out option was not specified, the default output file name is
-  // constructed by replacing an extension with ".exe".
+  // constructed by replacing an extension of the first input file
+  // with ".exe".
   if (info.outputPath().empty() && !inputPaths.empty())
     info.setOutputPath(getDefaultOutputFileName(info, inputPaths[0]));
 
