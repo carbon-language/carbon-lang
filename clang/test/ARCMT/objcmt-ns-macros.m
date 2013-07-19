@@ -27,6 +27,14 @@ enum {
 
 typedef NSUInteger UITableViewCellStyle;
 
+typedef enum {
+    UIViewAnimationTransitionNone,
+    UIViewAnimationTransitionFlipFromLeft,
+    UIViewAnimationTransitionFlipFromRight,
+    UIViewAnimationTransitionCurlUp,
+    UIViewAnimationTransitionCurlDown,
+} UIViewAnimationTransition;
+
 enum {
   UNOne,
   UNTwo
