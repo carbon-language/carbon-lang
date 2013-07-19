@@ -347,6 +347,9 @@ public:
         MaxStack = 1;
       }
       std::vector<ClauseFile> FetchClauses, AluClauses;
+      std::vector<MachineInstr *> LastAlu(1);
+      std::vector<MachineInstr *> ToPopAfter;
+      
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
           I != E;) {
         if (TII->usesTextureCache(I) || TII->usesVertexCache(I)) {
@@ -357,6 +360,10 @@ public:
         }
 
         MachineBasicBlock::iterator MI = I;
+        if (MI->getOpcode() != AMDGPU::ENDIF)
+          LastAlu.back() = 0;
+        if (MI->getOpcode() == AMDGPU::CF_ALU)
+          LastAlu.back() = MI;
         I++;
         switch (MI->getOpcode()) {
         case AMDGPU::CF_ALU_PUSH_BEFORE:
@@ -403,6 +410,7 @@ public:
           break;
         }
         case AMDGPU::IF_PREDICATE_SET: {
+          LastAlu.push_back(0);
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_JUMP))
               .addImm(0)
@@ -420,7 +428,7 @@ public:
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_ELSE))
               .addImm(0)
-              .addImm(1);
+              .addImm(0);
           DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
           IfThenElseStack.push_back(MIb);
           MI->eraseFromParent();
@@ -429,17 +437,24 @@ public:
         }
         case AMDGPU::ENDIF: {
           CurrentStack--;
+          if (LastAlu.back()) {
+            ToPopAfter.push_back(LastAlu.back());
+          } else {
+            MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
+                getHWInstrDesc(CF_POP))
+                .addImm(CfCount + 1)
+                .addImm(1);
+            (void)MIb;
+            DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
+            CfCount++;
+          }
+          
           MachineInstr *IfOrElseInst = IfThenElseStack.back();
           IfThenElseStack.pop_back();
-          CounterPropagateAddr(IfOrElseInst, CfCount + 1);
-          MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
-              getHWInstrDesc(CF_POP))
-              .addImm(CfCount + 1)
-              .addImm(1);
-          (void)MIb;
-          DEBUG(dbgs() << CfCount << ":"; MIb->dump(););
+          CounterPropagateAddr(IfOrElseInst, CfCount);
+          IfOrElseInst->getOperand(1).setImm(1);
+          LastAlu.pop_back();
           MI->eraseFromParent();
-          CfCount++;
           break;
         }
         case AMDGPU::PREDICATED_BREAK: {
@@ -483,6 +498,21 @@ public:
         default:
           break;
         }
+      }
+      for (unsigned i = 0, e = ToPopAfter.size(); i < e; ++i) {
+        MachineInstr *Alu = ToPopAfter[i];
+        BuildMI(MBB, Alu, MBB.findDebugLoc((MachineBasicBlock::iterator)Alu),
+            TII->get(AMDGPU::CF_ALU_POP_AFTER))
+            .addImm(Alu->getOperand(0).getImm())
+            .addImm(Alu->getOperand(1).getImm())
+            .addImm(Alu->getOperand(2).getImm())
+            .addImm(Alu->getOperand(3).getImm())
+            .addImm(Alu->getOperand(4).getImm())
+            .addImm(Alu->getOperand(5).getImm())
+            .addImm(Alu->getOperand(6).getImm())
+            .addImm(Alu->getOperand(7).getImm())
+            .addImm(Alu->getOperand(8).getImm());
+        Alu->eraseFromParent();
       }
       MFI->StackSize = getHWStackSize(MaxStack, HasPush);
     }

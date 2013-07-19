@@ -1039,8 +1039,11 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
   } else if (FalseMBB->succ_size() == 1
              && *FalseMBB->succ_begin() == TrueMBB) {
     // Triangle pattern, true is empty
-    LandBlk = TrueMBB;
-    TrueMBB = NULL;
+    // We reverse the predicate to make a triangle, empty false pattern;
+    std::swap(TrueMBB, FalseMBB);
+    reversePredicateSetter(MBB->end());
+    LandBlk = FalseMBB;
+    FalseMBB = NULL;
   } else if (FalseMBB->succ_size() == 1
              && isSameloopDetachedContbreak(TrueMBB, FalseMBB)) {
     LandBlk = *FalseMBB->succ_begin();
@@ -1456,6 +1459,7 @@ void AMDGPUCFGStructurizer::mergeSerialBlock(MachineBasicBlock *DstMBB,
 void AMDGPUCFGStructurizer::mergeIfthenelseBlock(MachineInstr *BranchMI,
     MachineBasicBlock *MBB, MachineBasicBlock *TrueMBB,
     MachineBasicBlock *FalseMBB, MachineBasicBlock *LandMBB) {
+  assert (TrueMBB);
   DEBUG(
     dbgs() << "ifPattern BB" << MBB->getNumber();
     dbgs() << "{  ";

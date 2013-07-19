@@ -624,6 +624,7 @@ ins, AsmPrint, [] >, CF_WORD0_EG, CF_WORD1_EG {
 
 def CF_ALU : ALU_CLAUSE<8, "ALU">;
 def CF_ALU_PUSH_BEFORE : ALU_CLAUSE<9, "ALU_PUSH_BEFORE">;
+def CF_ALU_POP_AFTER : ALU_CLAUSE<10, "ALU_POP_AFTER">;
 
 def FETCH_CLAUSE : AMDGPUInst <(outs),
 (ins i32imm:$addr), "Fetch clause starting at $addr:", [] > {
