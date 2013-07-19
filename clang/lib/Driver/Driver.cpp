@@ -96,6 +96,7 @@ void Driver::ParseDriverMode(ArrayRef<const char *> Args) {
         .Case("gcc", GCCMode)
         .Case("g++", GXXMode)
         .Case("cpp", CPPMode)
+        .Case("cl",  CLMode)
         .Default(~0U);
 
     if (M != ~0U)

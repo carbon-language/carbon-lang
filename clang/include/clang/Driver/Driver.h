@@ -54,7 +54,8 @@ class Driver {
   enum DriverMode {
     GCCMode,
     GXXMode,
-    CPPMode
+    CPPMode,
+    CLMode
   } Mode;
 
 public:

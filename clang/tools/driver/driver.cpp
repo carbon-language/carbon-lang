@@ -219,8 +219,10 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     { "clang-cpp", "--driver-mode=cpp" },
     { "clang-g++", "--driver-mode=g++" },
     { "clang-gcc", 0 },
+    { "clang-cl",  "--driver-mode=cl"  },
     { "cc",        0 },
     { "cpp",       "--driver-mode=cpp" },
+    { "cl" ,       "--driver-mode=cl"  },
     { "++",        "--driver-mode=g++" },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));

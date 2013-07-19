@@ -19,9 +19,16 @@ endif()
 set(bindir "${CLANGXX_DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/")
 set(clang "clang${EXECUTABLE_SUFFIX}")
 set(clangxx "clang++${EXECUTABLE_SUFFIX}")
+set(clang_cl "clang-cl${EXECUTABLE_SUFFIX}")
 
 message("Creating clang++ executable based on ${clang}")
 
 execute_process(
   COMMAND "${CMAKE_COMMAND}" -E ${CLANGXX_LINK_OR_COPY} "${clang}" "${clangxx}"
+  WORKING_DIRECTORY "${bindir}")
+
+message("Creating clang-cl executable based on ${clang}")
+
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E ${CLANGXX_LINK_OR_COPY} "${clang}" "${clang_cl}"
   WORKING_DIRECTORY "${bindir}")

@@ -76,8 +76,16 @@ add_custom_command(TARGET clang POST_BUILD
 set_property(DIRECTORY APPEND
   PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_pp})
 
+# Create the clang-cl symlink in the build directory.
+set(clang_cl "${LLVM_BINARY_DIR}/bin/${CMAKE_CFG_INTDIR}/clang-cl${CMAKE_EXECUTABLE_SUFFIX}")
+add_custom_command(TARGET clang POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E ${CLANGXX_LINK_OR_COPY} "${clang_binary}" "${clang_cl}")
+
+set_property(DIRECTORY APPEND
+  PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${clang_cl})
+
 install(TARGETS clang
   RUNTIME DESTINATION bin)
 
-# Create the clang++ symlink at installation time.
+# Create the clang++ and clang-cl symlinks at installation time.
 install(SCRIPT clang_symlink.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\")
