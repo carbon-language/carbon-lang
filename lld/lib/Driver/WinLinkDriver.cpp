@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdlib>
+#include <sstream>
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -175,6 +176,14 @@ StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, StringRef path) {
   return info.allocateString(smallStr.str());
 }
 
+// Split the given string with spaces.
+std::vector<std::string> splitArgList(std::string str) {
+  std::stringstream stream(str);
+  std::istream_iterator<std::string> begin(stream);
+  std::istream_iterator<std::string> end;
+  return std::vector<std::string>(begin, end);
+}
+
 // Split the given string with the path separator.
 std::vector<StringRef> splitPathList(StringRef str) {
   std::vector<StringRef> ret;
@@ -186,9 +195,31 @@ std::vector<StringRef> splitPathList(StringRef str) {
   return std::move(ret);
 }
 
-// Process "LIB" environment variable. The variable contains a list of
-// search paths separated by semicolons.
-void processLibEnvVar(PECOFFTargetInfo &info) {
+// Process "LINK" environment variable. If defined, the value of the variable
+// should be processed as command line arguments.
+std::vector<const char *> processLinkEnv(PECOFFTargetInfo &info,
+                                         int argc, const char **argv) {
+  std::vector<const char *> ret;
+  // The first argument is the name of the command. This should stay at the head
+  // of the argument list.
+  assert(argc > 0);
+  ret.push_back(argv[0]);
+
+  // Add arguments specified by the LINK environment variable.
+  if (char *envp = ::getenv("LINK"))
+    for (std::string &arg : splitArgList(envp))
+      ret.push_back(info.allocateString(arg).data());
+
+  // Add the rest of arguments passed via the command line.
+  for (int i = 1; i < argc; ++i)
+    ret.push_back(argv[i]);
+  ret.push_back(nullptr);
+  return std::move(ret);
+}
+
+// Process "LIB" environment variable. The variable contains a list of search
+// paths separated by semicolons.
+void processLibEnv(PECOFFTargetInfo &info) {
   if (char *envp = ::getenv("LIB"))
     for (StringRef path : splitPathList(envp))
       info.appendInputSearchPath(info.allocateString(path));
@@ -200,8 +231,9 @@ void processLibEnvVar(PECOFFTargetInfo &info) {
 bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
   PECOFFTargetInfo info;
-  processLibEnvVar(info);
-  if (parse(argc, argv, info, diagnostics))
+  std::vector<const char *> newargv = processLinkEnv(info, argc, argv);
+  processLibEnv(info);
+  if (parse(newargv.size() - 1, &newargv[0], info, diagnostics))
     return true;
   return link(info, diagnostics);
 }
