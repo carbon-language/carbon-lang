@@ -4269,6 +4269,10 @@ bool TreeTransform<Derived>::
           if (NewType.isNull())
             return true;
 
+          if (NewType->containsUnexpandedParameterPack())
+            NewType = getSema().Context.getPackExpansionType(NewType,
+                                                             NumExpansions);
+
           OutParamTypes.push_back(NewType);
           if (PVars)
             PVars->push_back(0);
