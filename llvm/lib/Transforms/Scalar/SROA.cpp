@@ -59,9 +59,9 @@ using namespace llvm;
 
 STATISTIC(NumAllocasAnalyzed, "Number of allocas analyzed for replacement");
 STATISTIC(NumAllocaPartitions, "Number of alloca partitions formed");
-STATISTIC(MaxPartitionsPerAlloca, "Maximum number of partitions");
-STATISTIC(NumAllocaPartitionUses, "Number of alloca partition uses found");
-STATISTIC(MaxPartitionUsesPerAlloca, "Maximum number of partition uses");
+STATISTIC(MaxPartitionsPerAlloca, "Maximum number of partitions per alloca");
+STATISTIC(NumAllocaPartitionUses, "Number of alloca partition uses rewritten");
+STATISTIC(MaxUsesPerAllocaPartition, "Maximum number of uses of a partition");
 STATISTIC(NumNewAllocas, "Number of new, smaller allocas introduced");
 STATISTIC(NumPromoted, "Number of allocas promoted to SSA values");
 STATISTIC(NumLoadsSpeculated, "Number of loads speculated to allow promotion");
@@ -682,15 +682,6 @@ AllocaSlices::AllocaSlices(const DataLayout &DL, AllocaInst &AI)
 
   Slices.erase(std::remove_if(Slices.begin(), Slices.end(), IsSliceDead()),
                Slices.end());
-
-  // Record how many slices we end up with.
-  NumAllocaPartitions += Slices.size();
-  MaxPartitionsPerAlloca =
-      std::max<unsigned>(Slices.size(), MaxPartitionsPerAlloca);
-
-  NumAllocaPartitionUses += Slices.size();
-  MaxPartitionUsesPerAlloca =
-      std::max<unsigned>(Slices.size(), MaxPartitionUsesPerAlloca);
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -3045,6 +3036,10 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   unsigned SPOldSize = SpeculatablePHIs.size();
   unsigned SSOldSize = SpeculatableSelects.size();
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+  unsigned NumUses = 0;
+#endif
+
   AllocaSliceRewriter Rewriter(*DL, S, *this, AI, *NewAI, BeginOffset,
                                EndOffset, IsVectorPromotable,
                                IsIntegerPromotable);
@@ -3055,12 +3050,24 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
     DEBUG(dbgs() << "  rewriting split ");
     DEBUG(S.printSlice(dbgs(), *SUI, ""));
     Promotable &= Rewriter.visit(*SUI);
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+    ++NumUses;
+#endif
   }
   for (AllocaSlices::iterator I = B; I != E; ++I) {
     DEBUG(dbgs() << "  rewriting ");
     DEBUG(S.printSlice(dbgs(), I, ""));
     Promotable &= Rewriter.visit(I);
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+    ++NumUses;
+#endif
   }
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+  NumAllocaPartitionUses += NumUses;
+  MaxUsesPerAllocaPartition =
+      std::max<unsigned>(NumUses, MaxUsesPerAllocaPartition);
+#endif
 
   if (Promotable && (SpeculatablePHIs.size() > SPOldSize ||
                      SpeculatableSelects.size() > SSOldSize)) {
@@ -3135,6 +3142,10 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
   if (S.begin() == S.end())
     return false;
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+  unsigned NumPartitions = 0;
+#endif
+
   bool Changed = false;
   SmallVector<AllocaSlices::iterator, 4> SplitUses;
   uint64_t MaxSplitUseEndOffset = 0;
@@ -3181,6 +3192,9 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
       // Rewrite a sequence of overlapping slices.
       Changed |=
           rewritePartition(AI, S, SI, SJ, BeginOffset, MaxEndOffset, SplitUses);
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+      ++NumPartitions;
+#endif
 
       removeFinishedSplitUses(SplitUses, MaxSplitUseEndOffset, MaxEndOffset);
     }
@@ -3220,6 +3234,10 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
 
     Changed |= rewritePartition(AI, S, SJ, SJ, MaxEndOffset, PostSplitEndOffset,
                                 SplitUses);
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+    ++NumPartitions;
+#endif
+
     if (SJ == SE)
       break; // Skip the rest, we don't need to do any cleanup.
 
@@ -3229,6 +3247,12 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
     // Now just reset the begin offset for the next iteration.
     BeginOffset = SJ->beginOffset();
   }
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
+  NumAllocaPartitions += NumPartitions;
+  MaxPartitionsPerAlloca =
+      std::max<unsigned>(NumPartitions, MaxPartitionsPerAlloca);
+#endif
 
   return Changed;
 }
