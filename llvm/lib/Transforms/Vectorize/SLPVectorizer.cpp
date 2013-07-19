@@ -115,7 +115,7 @@ private:
   /// Maps instructions to numbers and back.
   SmallDenseMap<Instruction *, int> InstrIdx;
   /// Maps integers to Instructions.
-  std::vector<Instruction *> InstrVec;
+  SmallVector<Instruction *, 32> InstrVec;
 };
 
 /// \returns the parent basic block if all of the instructions in \p VL
@@ -391,7 +391,7 @@ private:
   SetVector<Instruction *> GatherSeq;
 
   /// Numbers instructions in different blocks.
-  std::map<BasicBlock *, BlockNumbering> BlocksNumbers;
+  DenseMap<BasicBlock *, BlockNumbering> BlocksNumbers;
 
   // Analysis and block reference.
   Function *F;
