@@ -17,6 +17,7 @@ integer/rotate.cl
 integer/sub_sat.cl
 integer/sub_sat_if.ll
 integer/sub_sat_impl.ll
+integer/upsample.cl
 math/fmax.cl
 math/fmin.cl
 math/hypot.cl

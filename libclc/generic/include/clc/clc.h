@@ -68,6 +68,7 @@
 #include <clc/integer/mul24.h>
 #include <clc/integer/rotate.h>
 #include <clc/integer/sub_sat.h>
+#include <clc/integer/upsample.h>
 
 /* 6.11.2 and 6.11.3 Shared Integer/Math Functions */
 #include <clc/shared/clamp.h>
