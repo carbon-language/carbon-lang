@@ -96,14 +96,14 @@ using namespace clang;
 using namespace llvm;
 
 // Option to specify a file name for a list of header files to check.
-cl::opt<std::string> ListFileName(
-    cl::Positional,
-    cl::desc("<name of file containing list of headers to check>"));
+cl::opt<std::string>
+ListFileName(cl::Positional,
+             cl::desc("<name of file containing list of headers to check>"));
 
 // Collect all other arguments, which will be passed to the front end.
 cl::list<std::string>
-    CC1Arguments(cl::ConsumeAfter,
-                 cl::desc("<arguments to be passed to front end>..."));
+CC1Arguments(cl::ConsumeAfter,
+             cl::desc("<arguments to be passed to front end>..."));
 
 // Option to specify a prefix to be prepended to the header names.
 cl::opt<std::string> HeaderPrefix(
@@ -205,7 +205,6 @@ struct Location {
   friend bool operator>=(const Location &X, const Location &Y) {
     return !(X < Y);
   }
-
 };
 
 struct Entry {
@@ -505,7 +504,7 @@ int main(int argc, const char **argv) {
       if (eCount <= 1)
         continue;
       LocationArray::iterator FI = DI->begin();
-      StringRef kindName = Entry::getKindName((Entry::EntryKind) kindIndex);
+      StringRef kindName = Entry::getKindName((Entry::EntryKind)kindIndex);
       errs() << "error: " << kindName << " '" << E->first()
              << "' defined at multiple locations:\n";
       for (LocationArray::iterator FE = DI->end(); FI != FE; ++FI) {
