@@ -1423,8 +1423,8 @@ void BoUpSLP::vectorizeTree() {
 
       Type *Ty = Scalar->getType();
       if (!Ty->isVoidTy()) {
-        for (Value::use_iterator User = Scalar->use_begin(), UE = Scalar->use_end();
-             User != UE; ++User) {
+        for (Value::use_iterator User = Scalar->use_begin(),
+             UE = Scalar->use_end(); User != UE; ++User) {
           DEBUG(dbgs() << "SLP: \tvalidating user:" << **User << ".\n");
           assert(!MustGather.count(*User) &&
                  "Replacing gathered value with undef");
