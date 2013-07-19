@@ -1694,20 +1694,14 @@ isIntegerWideningViable(const DataLayout &TD, Type *AllocaTy,
       !canConvertValue(TD, IntTy, AllocaTy))
     return false;
 
-  // If we have no actual uses of this partition, we're forming a fully
-  // splittable partition. Assume all the operations are easy to widen (they
-  // are if they're splittable), and just check that it's a good idea to form
-  // a single integer.
-  if (I == E)
-    return TD.isLegalInteger(SizeInBits);
-
   uint64_t Size = TD.getTypeStoreSize(AllocaTy);
 
   // While examining uses, we ensure that the alloca has a covering load or
   // store. We don't want to widen the integer operations only to fail to
   // promote due to some other unsplittable entry (which we may make splittable
-  // later).
-  bool WholeAllocaOp = false;
+  // later). However, if there are only splittable uses, go ahead and assume
+  // that we cover the alloca.
+  bool WholeAllocaOp = (I != E) ? false : TD.isLegalInteger(SizeInBits);
 
   for (; I != E; ++I)
     if (!isIntegerWideningViableForPartitioning(TD, AllocaTy, AllocBeginOffset,

@@ -1317,3 +1317,23 @@ define void @PR15805(i1 %a, i1 %b) {
   %cond = load i64* %cond.in, align 8
   ret void
 }
+
+define void @PR16651(i8* %a) {
+; This test case caused a crash due to the volatile memcpy in combination with
+; lowering to integer loads and stores of a width other than that of the original
+; memcpy.
+;
+; CHECK-LABEL: @PR16651(
+; CHECK: alloca i16
+; CHECK: alloca i8
+; CHECK: alloca i8
+; CHECK: unreachable
+
+entry:
+  %b = alloca i32, align 4
+  %b.cast = bitcast i32* %b to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %b.cast, i8* %a, i32 4, i32 4, i1 true)
+  %b.gep = getelementptr inbounds i8* %b.cast, i32 2
+  load i8* %b.gep, align 2
+  unreachable
+}
