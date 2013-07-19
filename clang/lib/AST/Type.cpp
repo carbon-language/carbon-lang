@@ -1842,6 +1842,47 @@ bool TagType::isBeingDefined() const {
   return getDecl()->isBeingDefined();
 }
 
+bool AttributedType::isMSTypeSpec() const {
+  switch (getAttrKind()) {
+  default:  return false;
+  case attr_ptr32:
+  case attr_ptr64:
+  case attr_sptr:
+  case attr_uptr:
+    return true;
+  }
+  llvm_unreachable("invalid attr kind");
+}
+
+bool AttributedType::isCallingConv() const {
+  switch (getAttrKind()) {
+  case attr_ptr32:
+  case attr_ptr64:
+  case attr_sptr:
+  case attr_uptr:
+  case attr_address_space:
+  case attr_regparm:
+  case attr_vector_size:
+  case attr_neon_vector_type:
+  case attr_neon_polyvector_type:
+  case attr_objc_gc:
+  case attr_objc_ownership:
+  case attr_noreturn:
+      return false;
+  case attr_pcs:
+  case attr_pcs_vfp:
+  case attr_cdecl:
+  case attr_fastcall:
+  case attr_stdcall:
+  case attr_thiscall:
+  case attr_pascal:
+  case attr_pnaclcall:
+  case attr_inteloclbicc:
+    return true;
+  }
+  llvm_unreachable("invalid attr kind");
+}
+
 CXXRecordDecl *InjectedClassNameType::getDecl() const {
   return cast<CXXRecordDecl>(getInterestingTagDecl(Decl));
 }

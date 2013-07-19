@@ -82,9 +82,15 @@ namespace InstantiateFunctionTypedef {
   struct X {
     typedef int functype(int, int);
     functype func;
+
+    typedef int stdfunctype(int, int) __attribute__((stdcall));
+    __attribute__((stdcall)) functype stdfunc1;
+    stdfunctype stdfunc2;
   };
 
   void f(X<int> x) {
     (void)x.func(1, 2);
+    (void)x.stdfunc1(1, 2);
+    (void)x.stdfunc2(1, 2);
   }
 }

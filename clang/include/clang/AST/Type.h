@@ -3360,9 +3360,10 @@ public:
     attr_objc_gc,
     attr_objc_ownership,
     attr_pcs,
+    attr_pcs_vfp,
 
     FirstEnumOperandKind = attr_objc_gc,
-    LastEnumOperandKind = attr_pcs,
+    LastEnumOperandKind = attr_pcs_vfp,
 
     // No operand.
     attr_noreturn,
@@ -3406,16 +3407,9 @@ public:
   bool isSugared() const { return true; }
   QualType desugar() const { return getEquivalentType(); }
 
-  bool isMSTypeSpec() const {
-    switch (getAttrKind()) {
-    default:  return false;
-    case attr_ptr32:
-    case attr_ptr64:
-    case attr_sptr:
-    case attr_uptr:
-      return true;
-    }
-  }
+  bool isMSTypeSpec() const;
+
+  bool isCallingConv() const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getAttrKind(), ModifiedType, EquivalentType);

@@ -546,12 +546,7 @@ distributeFunctionTypeAttrToInnermost(TypeProcessingState &state,
     return true;
   }
 
-  if (handleFunctionTypeAttr(state, attr, declSpecType)) {
-    spliceAttrOutOfList(attr, attrList);
-    return true;
-  }
-
-  return false;
+  return handleFunctionTypeAttr(state, attr, declSpecType);
 }
 
 /// A function type attribute was written in the decl spec.  Try to
@@ -3345,6 +3340,7 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
   case AttributedType::attr_pascal:
     return AttributeList::AT_Pascal;
   case AttributedType::attr_pcs:
+  case AttributedType::attr_pcs_vfp:
     return AttributeList::AT_Pcs;
   case AttributedType::attr_pnaclcall:
     return AttributeList::AT_PnaclCall;
@@ -4302,6 +4298,36 @@ static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &State,
   return false;
 }
 
+static AttributedType::Kind getCCTypeAttrKind(AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  switch (Attr.getKind()) {
+  default:
+    llvm_unreachable("not a calling convention attribute");
+  case AttributeList::AT_CDecl:
+    return AttributedType::attr_cdecl;
+  case AttributeList::AT_FastCall:
+    return AttributedType::attr_fastcall;
+  case AttributeList::AT_StdCall:
+    return AttributedType::attr_stdcall;
+  case AttributeList::AT_ThisCall:
+    return AttributedType::attr_thiscall;
+  case AttributeList::AT_Pascal:
+    return AttributedType::attr_pascal;
+  case AttributeList::AT_Pcs: {
+    // We know attr is valid so it can only have one of two strings args.
+    StringLiteral *Str = cast<StringLiteral>(Attr.getArg(0));
+    return llvm::StringSwitch<AttributedType::Kind>(Str->getString())
+        .Case("aapcs", AttributedType::attr_pcs)
+        .Case("aapcs-vfp", AttributedType::attr_pcs_vfp);
+  }
+  case AttributeList::AT_PnaclCall:
+    return AttributedType::attr_pnaclcall;
+  case AttributeList::AT_IntelOclBicc:
+    return AttributedType::attr_inteloclbicc;
+  }
+  llvm_unreachable("unexpected attribute kind!");
+}
+
 /// Process an individual function attribute.  Returns true to
 /// indicate that the attribute was handled, false if it wasn't.
 static bool handleFunctionTypeAttr(TypeProcessingState &state,
@@ -4421,8 +4447,13 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
     }
   }
 
+  // Modify the CC from the wrapped function type, wrap it all back, and then
+  // wrap the whole thing in an AttributedType as written.  The modified type
+  // might have a different CC if we ignored the attribute.
   FunctionType::ExtInfo EI = unwrapped.get()->getExtInfo().withCallingConv(CC);
-  type = unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
+  QualType Equivalent =
+      unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
+  type = S.Context.getAttributedType(getCCTypeAttrKind(attr), type, Equivalent);
   return true;
 }
 
