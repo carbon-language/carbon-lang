@@ -231,7 +231,8 @@ public:
   
   /// \brief Hook called whenever the 'defined' operator is seen.
   /// \param MD The MacroDirective if the name was a macro, null otherwise.
-  virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD) {
+  virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD,
+                       SourceRange Range) {
   }
   
   /// \brief Hook called when a source range is skipped.
@@ -410,9 +411,10 @@ public:
     Second->MacroUndefined(MacroNameTok, MD);
   }
 
-  virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD) {
-    First->Defined(MacroNameTok, MD);
-    Second->Defined(MacroNameTok, MD);
+  virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD,
+                       SourceRange Range) {
+    First->Defined(MacroNameTok, MD, Range);
+    Second->Defined(MacroNameTok, MD, Range);
   }
 
   virtual void SourceRangeSkipped(SourceRange Range) {

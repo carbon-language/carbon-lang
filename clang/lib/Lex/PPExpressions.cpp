@@ -82,7 +82,8 @@ struct DefinedTracker {
 static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
                             bool ValueLive, Preprocessor &PP) {
   IdentifierInfo *II;
-  Result.setBegin(PeekTok.getLocation());
+  SourceLocation beginLoc(PeekTok.getLocation());
+  Result.setBegin(beginLoc);
 
   // Get the next token, don't expand it.
   PP.LexUnexpandedNonComment(PeekTok);
@@ -119,14 +120,8 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.markMacroAsUsed(Macro->getMacroInfo());
   }
 
-  // Invoke the 'defined' callback.
-  if (PPCallbacks *Callbacks = PP.getPPCallbacks()) {
-    MacroDirective *MD = Macro;
-    // Pass the MacroInfo for the macro name even if the value is dead.
-    if (!MD && Result.Val != 0)
-      MD = PP.getMacroDirective(II);
-    Callbacks->Defined(PeekTok, MD);
-  }
+  // Save macro token for callback.
+  Token macroToken(PeekTok);
 
   // If we are in parens, ensure we have a trailing ).
   if (LParenLoc.isValid()) {
@@ -146,6 +141,16 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // Consume identifier.
     Result.setEnd(PeekTok.getLocation());
     PP.LexNonComment(PeekTok);
+  }
+
+  // Invoke the 'defined' callback.
+  if (PPCallbacks *Callbacks = PP.getPPCallbacks()) {
+    MacroDirective *MD = Macro;
+    // Pass the MacroInfo for the macro name even if the value is dead.
+    if (!MD && Result.Val != 0)
+      MD = PP.getMacroDirective(II);
+    Callbacks->Defined(macroToken, MD,
+                       SourceRange(beginLoc, PeekTok.getLocation()));
   }
 
   // Success, remember that we saw defined(X).

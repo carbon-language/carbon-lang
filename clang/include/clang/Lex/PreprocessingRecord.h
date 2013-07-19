@@ -576,7 +576,8 @@ namespace clang {
     virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
                         const MacroDirective *MD);
     /// \brief Hook called whenever the 'defined' operator is seen.
-    virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD);
+    virtual void Defined(const Token &MacroNameTok, const MacroDirective *MD,
+                         SourceRange Range);
 
     void addMacroExpansion(const Token &Id, const MacroInfo *MI,
                            SourceRange Range);
