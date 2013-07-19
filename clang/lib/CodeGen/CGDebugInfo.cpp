@@ -386,12 +386,11 @@ void CGDebugInfo::CreateCompileUnit() {
     RuntimeVers = LO.ObjCRuntime.isNonFragile() ? 2 : 1;
 
   // Create new compile unit.
-  DBuilder.createCompileUnit(LangTag, Filename, getCurrentDirname(),
-                             Producer, LO.Optimize,
-                             CGM.getCodeGenOpts().DwarfDebugFlags,
-                             RuntimeVers, SplitDwarfFilename);
   // FIXME - Eliminate TheCU.
-  TheCU = llvm::DICompileUnit(DBuilder.getCU());
+  TheCU = DBuilder.createCompileUnit(LangTag, Filename, getCurrentDirname(),
+                                     Producer, LO.Optimize,
+                                     CGM.getCodeGenOpts().DwarfDebugFlags,
+                                     RuntimeVers, SplitDwarfFilename);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new
