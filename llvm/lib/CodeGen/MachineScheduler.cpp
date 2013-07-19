@@ -1593,6 +1593,7 @@ findMaxLatency(ArrayRef<SUnit*> ReadySUs) {
 // resource index, or zero if the zone is issue limited.
 unsigned ConvergingScheduler::SchedBoundary::
 getOtherResourceCount(unsigned &OtherCritIdx) {
+  OtherCritIdx = 0;
   if (!SchedModel->hasInstrSchedModel())
     return 0;
 
@@ -1600,7 +1601,6 @@ getOtherResourceCount(unsigned &OtherCritIdx) {
     + (RetiredMOps * SchedModel->getMicroOpFactor());
   DEBUG(dbgs() << "  " << Available.getName() << " + Remain MOps: "
         << OtherCritCount / SchedModel->getMicroOpFactor() << '\n');
-  OtherCritIdx = 0;
   for (unsigned PIdx = 1, PEnd = SchedModel->getNumProcResourceKinds();
        PIdx != PEnd; ++PIdx) {
     unsigned OtherCount = getResourceCount(PIdx) + Rem->RemainingCounts[PIdx];
