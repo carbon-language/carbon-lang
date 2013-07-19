@@ -1,0 +1,24 @@
+<map id="SBModule.h" name="SBModule.h">
+<area shape="rect" id="node3" href="$SBDefines_8h.html" title="lldb/API/SBDefines.h" alt="" coords="1133,486,1275,514"/>
+<area shape="rect" id="node15" href="$SBError_8h.html" title="lldb/API/SBError.h" alt="" coords="2051,83,2176,111"/>
+<area shape="rect" id="node18" href="$SBSection_8h.html" title="lldb/API/SBSection.h" alt="" coords="1555,323,1699,351"/>
+<area shape="rect" id="node24" href="$SBSymbolContext_8h.html" title="lldb/API/SBSymbolContext.h" alt="" coords="1224,83,1411,111"/>
+<area shape="rect" id="node33" href="$SBValueList_8h.html" title="lldb/API/SBValueList.h" alt="" coords="1773,323,1925,351"/>
+<area shape="rect" id="node21" href="$SBData_8h.html" title="lldb/API/SBData.h" alt="" coords="1421,409,1547,437"/>
+<area shape="rect" id="node27" href="$SBBlock_8h.html" title="lldb/API/SBBlock.h" alt="" coords="1668,161,1801,189"/>
+<area shape="rect" id="node68" href="$SBCompileUnit_8h.html" title="lldb/API/SBCompileUnit.h" alt="" coords="181,238,352,266"/>
+<area shape="rect" id="node72" href="$SBFunction_8h.html" title="lldb/API/SBFunction.h" alt="" coords="477,238,627,266"/>
+<area shape="rect" id="node81" href="$SBLineEntry_8h.html" title="lldb/API/SBLineEntry.h" alt="" coords="5,238,157,266"/>
+<area shape="rect" id="node87" href="$SBSymbol_8h.html" title="lldb/API/SBSymbol.h" alt="" coords="644,161,785,189"/>
+<area shape="rect" id="node30" href="$SBFrame_8h.html" title="lldb/API/SBFrame.h" alt="" coords="1667,238,1803,266"/>
+<area shape="rect" id="node36" href="$SBTarget_8h.html" title="lldb/API/SBTarget.h" alt="" coords="943,238,1079,266"/>
+<area shape="rect" id="node39" href="$SBAddress_8h.html" title="lldb/API/SBAddress.h" alt="" coords="277,323,424,351"/>
+<area shape="rect" id="node43" href="$SBBroadcaster_8h.html" title="lldb/API/SBBroadcaster.h" alt="" coords="592,409,760,437"/>
+<area shape="rect" id="node46" href="$SBFileSpec_8h.html" title="lldb/API/SBFileSpec.h" alt="" coords="53,323,203,351"/>
+<area shape="rect" id="node49" href="$SBFileSpecList_8h.html" title="lldb/API/SBFileSpecList.h" alt="" coords="784,409,955,437"/>
+<area shape="rect" id="node52" href="$SBSymbolContextList_8h.html" title="lldb/API/SBSymbolContext\lList.h" alt="" coords="1355,315,1531,359"/>
+<area shape="rect" id="node56" href="$SBType_8h.html" title="lldb/API/SBType.h" alt="" coords="979,409,1107,437"/>
+<area shape="rect" id="node59" href="$SBValue_8h.html" title="lldb/API/SBValue.h" alt="" coords="1048,323,1179,351"/>
+<area shape="rect" id="node64" href="$SBWatchpoint_8h.html" title="lldb/API/SBWatchpoint.h" alt="" coords="1181,409,1347,437"/>
+<area shape="rect" id="node76" href="$SBInstructionList_8h.html" title="lldb/API/SBInstructionList.h" alt="" coords="499,323,677,351"/>
+</map>
