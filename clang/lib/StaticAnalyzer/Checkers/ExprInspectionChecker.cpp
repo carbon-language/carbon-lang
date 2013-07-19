@@ -22,6 +22,7 @@ class ExprInspectionChecker : public Checker< eval::Call > {
 
   void analyzerEval(const CallExpr *CE, CheckerContext &C) const;
   void analyzerCheckInlined(const CallExpr *CE, CheckerContext &C) const;
+  void analyzerCrash(const CallExpr *CE, CheckerContext &C) const;
 
   typedef void (ExprInspectionChecker::*FnCheck)(const CallExpr *,
                                                  CheckerContext &C) const;
@@ -39,6 +40,7 @@ bool ExprInspectionChecker::evalCall(const CallExpr *CE,
     .Case("clang_analyzer_eval", &ExprInspectionChecker::analyzerEval)
     .Case("clang_analyzer_checkInlined",
           &ExprInspectionChecker::analyzerCheckInlined)
+    .Case("clang_analyzer_crash", &ExprInspectionChecker::analyzerCrash)
     .Default(0);
 
   if (!Handler)
@@ -115,6 +117,11 @@ void ExprInspectionChecker::analyzerCheckInlined(const CallExpr *CE,
 
   BugReport *R = new BugReport(*BT, getArgumentValueString(CE, C), N);
   C.emitReport(R);
+}
+
+void ExprInspectionChecker::analyzerCrash(const CallExpr *CE,
+                                          CheckerContext &C) const {
+  LLVM_BUILTIN_TRAP;
 }
 
 void ento::registerExprInspectionChecker(CheckerManager &Mgr) {

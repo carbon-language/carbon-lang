@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "ExprEngine"
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
+#include "PrettyStackTraceLocationContext.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ParentMap.h"
@@ -39,6 +40,8 @@ STATISTIC(NumReachedInlineCountMax,
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
   const StackFrameContext *calleeCtx = CE.getCalleeContext();
+  PrettyStackTraceLocationContext CrashInfo(calleeCtx);
+
   const CFG *CalleeCFG = calleeCtx->getCFG();
   const CFGBlock *Entry = &(CalleeCFG->getEntry());
   
@@ -214,7 +217,7 @@ static bool isTemporaryPRValue(const CXXConstructExpr *E, SVal V) {
 /// 5. PostStmt<CallExpr>
 void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   // Step 1 CEBNode was generated before the call.
-
+  PrettyStackTraceLocationContext CrashInfo(CEBNode->getLocationContext());
   const StackFrameContext *calleeCtx =
       CEBNode->getLocationContext()->getCurrentStackFrame();
   

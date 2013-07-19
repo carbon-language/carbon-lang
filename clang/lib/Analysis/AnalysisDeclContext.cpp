@@ -410,7 +410,7 @@ bool LocationContext::isParentOf(const LocationContext *LC) const {
   return false;
 }
 
-void LocationContext::dumpStack() const {
+void LocationContext::dumpStack(raw_ostream &OS, StringRef Indent) const {
   ASTContext &Ctx = getAnalysisDeclContext()->getASTContext();
   PrintingPolicy PP(Ctx.getLangOpts());
   PP.TerseOutput = 1;
@@ -419,20 +419,24 @@ void LocationContext::dumpStack() const {
   for (const LocationContext *LCtx = this; LCtx; LCtx = LCtx->getParent()) {
     switch (LCtx->getKind()) {
     case StackFrame:
-      llvm::errs() << '#' << Frame++ << ' ';
-      cast<StackFrameContext>(LCtx)->getDecl()->print(llvm::errs(), PP);
-      llvm::errs() << '\n';
+      OS << Indent << '#' << Frame++ << ' ';
+      cast<StackFrameContext>(LCtx)->getDecl()->print(OS, PP);
+      OS << '\n';
       break;
     case Scope:
-      llvm::errs() << "    (scope)\n";
+      OS << Indent << "    (scope)\n";
       break;
     case Block:
-      llvm::errs() << "    (block context: "
+      OS << Indent << "    (block context: "
                    << cast<BlockInvocationContext>(LCtx)->getContextData()
                    << ")\n";
       break;
     }
   }
+}
+
+void LocationContext::dumpStack() const {
+  dumpStack(llvm::errs());
 }
 
 //===----------------------------------------------------------------------===//
