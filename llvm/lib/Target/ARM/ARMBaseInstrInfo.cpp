@@ -272,111 +272,90 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                                 MachineBasicBlock *&FBB,
                                 SmallVectorImpl<MachineOperand> &Cond,
                                 bool AllowModify) const {
-  // If the block has no terminators, it just falls into the block after it.
+  TBB = 0;
+  FBB = 0;
+
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin())
-    return false;
+    return false; // Empty blocks are easy.
   --I;
-  while (I->isDebugValue()) {
+
+  // Walk backwards from the end of the basic block until the branch is
+  // analyzed or we give up.
+  while (isPredicated(I) || I->isTerminator()) {
+
+    // Flag to be raised on unanalyzeable instructions. This is useful in cases
+    // where we want to clean up on the end of the basic block before we bail
+    // out.
+    bool CantAnalyze = false;
+
+    // Skip over DEBUG values and predicated nonterminators.
+    while (I->isDebugValue() || !I->isTerminator()) {
+      if (I == MBB.begin())
+        return false;
+      --I;
+    }
+
+    if (isIndirectBranchOpcode(I->getOpcode()) ||
+        isJumpTableBranchOpcode(I->getOpcode())) {
+      // Indirect branches and jump tables can't be analyzed, but we still want
+      // to clean up any instructions at the tail of the basic block.
+      CantAnalyze = true;
+    } else if (isUncondBranchOpcode(I->getOpcode())) {
+      TBB = I->getOperand(0).getMBB();
+    } else if (isCondBranchOpcode(I->getOpcode())) {
+      // Bail out if we encounter multiple conditional branches.
+      if (!Cond.empty())
+        return true;
+
+      assert(!FBB && "FBB should have been null.");
+      FBB = TBB;
+      TBB = I->getOperand(0).getMBB();
+      Cond.push_back(I->getOperand(1));
+      Cond.push_back(I->getOperand(2));
+    } else if (I->isReturn()) {
+      // Returns can't be analyzed, but we should run cleanup.
+      CantAnalyze = !isPredicated(I);
+    } else {
+      // We encountered other unrecognized terminator. Bail out immediately.
+      return true;
+    }
+
+    // Cleanup code - to be run for unpredicated unconditional branches and
+    //                returns.
+    if (!isPredicated(I) &&
+          (isUncondBranchOpcode(I->getOpcode()) ||
+           isIndirectBranchOpcode(I->getOpcode()) ||
+           isJumpTableBranchOpcode(I->getOpcode()) ||
+           I->isReturn())) {
+      // Forget any previous condition branch information - it no longer applies.
+      Cond.clear();
+      FBB = 0;
+
+      // If we can modify the function, delete everything below this
+      // unconditional branch.
+      if (AllowModify) {
+        MachineBasicBlock::iterator DI = llvm::next(I);
+        while (DI != MBB.end()) {
+          MachineInstr *InstToDelete = DI;
+          ++DI;
+          InstToDelete->eraseFromParent();
+        }
+      }
+    }
+
+    if (CantAnalyze)
+      return true;
+
     if (I == MBB.begin())
       return false;
+
     --I;
   }
 
-  // Get the last instruction in the block.
-  MachineInstr *LastInst = I;
-  unsigned LastOpc = LastInst->getOpcode();
-
-  // Check if it's an indirect branch first, this should return 'unanalyzable'
-  // even if it's predicated.
-  if (isIndirectBranchOpcode(LastOpc))
-    return true;
-
-  if (!isUnpredicatedTerminator(I))
-    return false;
-
-  // Check whether the second-to-last branch is indirect, return
-  // 'unanalyzeable' here too.
-  if (I != MBB.begin() && prior(I)->isIndirectBranch())
-    return true;
-
-  // If there is only one terminator instruction, process it.
-  if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-    if (isUncondBranchOpcode(LastOpc)) {
-      TBB = LastInst->getOperand(0).getMBB();
-      return false;
-    }
-    if (isCondBranchOpcode(LastOpc)) {
-      // Block ends with fall-through condbranch.
-      TBB = LastInst->getOperand(0).getMBB();
-      Cond.push_back(LastInst->getOperand(1));
-      Cond.push_back(LastInst->getOperand(2));
-      return false;
-    }
-    return true;  // Can't handle indirect branch.
-  }
-
-  // Get the instruction before it if it is a terminator.
-  MachineInstr *SecondLastInst = I;
-  unsigned SecondLastOpc = SecondLastInst->getOpcode();
-
-  // If AllowModify is true and the block ends with two or more unconditional
-  // branches, delete all but the first unconditional branch.
-  if (AllowModify && isUncondBranchOpcode(LastOpc)) {
-    while (isUncondBranchOpcode(SecondLastOpc)) {
-      LastInst->eraseFromParent();
-      LastInst = SecondLastInst;
-      LastOpc = LastInst->getOpcode();
-      if (I != MBB.begin() && prior(I)->isIndirectBranch())
-        return true; // Indirect branches are unanalyzeable.
-      if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-        // Return now the only terminator is an unconditional branch.
-        TBB = LastInst->getOperand(0).getMBB();
-        return false;
-      } else {
-        SecondLastInst = I;
-        SecondLastOpc = SecondLastInst->getOpcode();
-      }
-    }
-  }
-
-  // If there are three terminators, we don't know what sort of block this is.
-  if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
-    return true;
-
-  // If the block ends with a B and a Bcc, handle it.
-  if (isCondBranchOpcode(SecondLastOpc) && isUncondBranchOpcode(LastOpc)) {
-    TBB =  SecondLastInst->getOperand(0).getMBB();
-    Cond.push_back(SecondLastInst->getOperand(1));
-    Cond.push_back(SecondLastInst->getOperand(2));
-    FBB = LastInst->getOperand(0).getMBB();
-    return false;
-  }
-
-  // If the block ends with two unconditional branches, handle it.  The second
-  // one is not executed, so remove it.
-  if (isUncondBranchOpcode(SecondLastOpc) && isUncondBranchOpcode(LastOpc)) {
-    TBB = SecondLastInst->getOperand(0).getMBB();
-    I = LastInst;
-    if (AllowModify)
-      I->eraseFromParent();
-    return false;
-  }
-
-  // ...likewise if it ends with a branch table followed by an unconditional
-  // branch. The branch folder can create these, and we must get rid of them for
-  // correctness of Thumb constant islands.
-  if ((isJumpTableBranchOpcode(SecondLastOpc) ||
-       isIndirectBranchOpcode(SecondLastOpc)) &&
-      isUncondBranchOpcode(LastOpc)) {
-    I = LastInst;
-    if (AllowModify)
-      I->eraseFromParent();
-    return true;
-  }
-
-  // Otherwise, can't handle this.
-  return true;
+  // We made it past the terminators without bailing out - we must have
+  // analyzed this branch successfully.
+  return false;
 }
 
 

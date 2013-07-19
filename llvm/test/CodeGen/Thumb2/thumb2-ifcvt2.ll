@@ -29,13 +29,13 @@ declare i32 @bar(...)
 define fastcc i32 @CountTree(%struct.quad_struct* %tree) {
 entry:
 ; CHECK-LABEL: CountTree:
-; CHECK: itt eq
-; CHECK: moveq
-; CHECK: popeq
 ; CHECK: bne
 ; CHECK: cmp
 ; CHECK: it eq
 ; CHECK: cmpeq
+; CHECK: itt eq
+; CHECK: moveq
+; CHECK: popeq
 	br label %tailrecurse
 
 tailrecurse:		; preds = %bb, %entry
