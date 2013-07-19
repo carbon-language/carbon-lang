@@ -1216,6 +1216,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                            D->getCanonicalDecl()->getStorageClass(),
                            D->isInlineSpecified(), D->hasWrittenPrototype(),
                            D->isConstexpr());
+  Function->setRangeEnd(D->getSourceRange().getEnd());
 
   if (D->isInlined())
     Function->setImplicitlyInline();

@@ -45,6 +45,7 @@
 #ifndef LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_H
 #define LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_H
 
+#include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"
 #include "clang/ASTMatchers/ASTMatchersMacros.h"
@@ -549,6 +550,16 @@ const internal::VariadicDynCastAllOfMatcher<Decl, FunctionDecl> functionDecl;
 const internal::VariadicDynCastAllOfMatcher<
   Decl,
   FunctionTemplateDecl> functionTemplateDecl;
+
+/// \brief Matches friend declarations.
+///
+/// Given
+/// \code
+///   class X { friend void foo(); };
+/// \endcode
+/// friendDecl()
+///   matches 'friend void foo()'.
+const internal::VariadicDynCastAllOfMatcher<Decl, FriendDecl> friendDecl;
 
 /// \brief Matches statements.
 ///

@@ -244,5 +244,18 @@ TEST(UnresolvedUsingValueDecl, SourceRange) {
       unresolvedUsingValueDecl()));
 }
 
+TEST(FriendDecl, InstantiationSourceRange) {
+  RangeVerifier<FriendDecl> Verifier;
+  Verifier.expectRange(4, 3, 4, 35);
+  EXPECT_TRUE(Verifier.match(
+      "template <typename T> class S;\n"
+      "template<class T> void operator+(S<T> x);\n"
+      "template<class T> struct S {\n"
+      "  friend void operator+<>(S<T> src);\n"
+      "};\n"
+      "void test(S<double> s) { +s; }",
+      friendDecl(hasParent(recordDecl(isTemplateInstantiation())))));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
