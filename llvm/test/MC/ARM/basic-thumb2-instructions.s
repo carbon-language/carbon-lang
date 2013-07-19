@@ -1573,6 +1573,9 @@ _func:
 @ FIXME: pld	_foo                    @ encoding: [0x9f'A',0xf8'A',A,0xf0'A']
             @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 
+        pld [pc,#-4095]
+@ CHECK: pld [pc, #-4095]            @ encoding: [0x1f,0xf8,0xff,0xff]
+
 
 @------------------------------------------------------------------------------
 @ PLD(register)

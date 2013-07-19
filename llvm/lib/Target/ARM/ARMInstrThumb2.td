@@ -4428,7 +4428,12 @@ def : t2InstAlias<"ldrsh${p}.w $Rt, $addr",
 def : t2InstAlias<"add${p} $Rd, pc, $imm",
                   (t2ADR rGPR:$Rd, imm0_4095:$imm, pred:$p)>;
 
-// PLI with alternate literal form.
+// PLD/PLDW/PLI with alternate literal form.
+def : t2InstAlias<"pld${p} $addr",
+                  (t2PLDpci t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def : InstAlias<"pldw${p} $addr",
+                 (t2PLDWpci  t2ldr_pcrel_imm12:$addr, pred:$p)>,
+      Requires<[IsThumb2,HasV7,HasMP]>;
 def : InstAlias<"pli${p} $addr",
                  (t2PLIpci  t2ldr_pcrel_imm12:$addr, pred:$p)>,
       Requires<[IsThumb2,HasV7]>;
