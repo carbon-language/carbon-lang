@@ -971,9 +971,17 @@ are listed below.
       group.
 
    The ``-fsanitize=`` argument must also be provided when linking, in
-   order to link to the appropriate runtime library. It is not possible
-   to combine the ``-fsanitize=address`` and ``-fsanitize=thread``
-   checkers in the same program.
+   order to link to the appropriate runtime library. When using
+   ``-fsanitize=vptr`` (or a group that includes it, such as
+   ``-fsanitize=undefined``) with a C++ program, the link must be
+   performed by ``clang++``, not ``clang``, in order to link against the
+   C++-specific parts of the runtime library.
+
+   It is not possible to combine more than one of the ``-fsanitize=address``,
+   ``-fsanitize=thread``, and ``-fsanitize=memory`` checkers in the same
+   program. The ``-fsanitize=undefined`` checks can be combined with other
+   sanitizers.
+
 **-f[no-]address-sanitizer**
    Deprecated synonym for :ref:`-f[no-]sanitize=address
    <opt_fsanitize_address>`.
