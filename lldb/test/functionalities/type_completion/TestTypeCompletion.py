@@ -20,7 +20,8 @@ class TypeCompletionTestCase(TestBase):
         self.type_completion_commands()
 
     @dwarf_test
-    @expectedFailureGcc # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
+    @expectedFailureIcc # often fails with 'NameAndAddress should be valid'
+    @expectedFailureGcc(15301, [">", "4.6"]) # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     def test_with_dwarf_and_run_command(self):
         """Check that types only get completed when necessary."""
         self.buildDwarf()

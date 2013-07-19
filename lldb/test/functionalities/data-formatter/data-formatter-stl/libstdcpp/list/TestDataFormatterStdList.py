@@ -20,7 +20,7 @@ class StdListDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @dwarf_test
-    @expectedFailureLinux('llvm.org/pr15301', ['gcc', 'icc']) # LLDB prints incorrect sizes of STL containers
+    @expectedFailureLinux('llvm.org/pr15301', ['icc']) # LLDB prints incorrect sizes of STL containers
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
