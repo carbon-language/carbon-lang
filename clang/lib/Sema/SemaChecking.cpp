@@ -1651,19 +1651,19 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   // 3) binary, scalar mask: (lhs, rhs, index, ..., index)
   QualType resType = TheCall->getArg(0)->getType();
   unsigned numElements = 0;
-  
+
   if (!TheCall->getArg(0)->isTypeDependent() &&
       !TheCall->getArg(1)->isTypeDependent()) {
     QualType LHSType = TheCall->getArg(0)->getType();
     QualType RHSType = TheCall->getArg(1)->getType();
-    
+
     if (!LHSType->isVectorType() || !RHSType->isVectorType()) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
         << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());
       return ExprError();
     }
-    
+
     numElements = LHSType->getAs<VectorType>()->getNumElements();
     unsigned numResElements = TheCall->getNumArgs() - 2;
 
@@ -1676,8 +1676,7 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
         Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
           << SourceRange(TheCall->getArg(1)->getLocStart(),
                          TheCall->getArg(1)->getLocEnd());
-    }
-    else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
+    } else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
         << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());
