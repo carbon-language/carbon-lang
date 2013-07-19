@@ -5176,6 +5176,7 @@ bool ARMAsmParser::shouldOmitPredicateOperand(
              .contains(static_cast<ARMOperand *>(Operands[RegIdx])->getReg())))
       return true;
   }
+  return false;
 }
 
 static bool isDataTypeToken(StringRef Tok) {
