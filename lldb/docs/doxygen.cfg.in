@@ -581,9 +581,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = @abs_top_srcdir@/include \
-                         @abs_top_srcdir@/scripts/Python/interface \
-                         @abs_top_srcdir@/source \
+INPUT                  = @abs_top_srcdir@/include/lldb/API \
                          @abs_top_srcdir@/docs/doxygen.intro
 
 # This tag can be used to specify the character encoding of the source files
