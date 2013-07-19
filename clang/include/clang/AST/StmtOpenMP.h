@@ -275,7 +275,6 @@ protected:
   /// \param K Kind of OpenMP directive.
   /// \param StartLoc Starting location of the directive (directive keyword).
   /// \param EndLoc Ending location of the directive.
-  /// \param Clauses A list of clauses.
   ///
   template <typename T>
   OMPExecutableDirective(const T *, StmtClass SC, OpenMPDirectiveKind K,
