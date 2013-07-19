@@ -111,6 +111,7 @@ inline reverse_iterator rend(StringRef path) {
 /// @code
 ///   directory/filename.cpp => directory/
 ///   directory/             => directory
+///   filename.cpp           => <empty>
 ///   /                      => /
 /// @endcode
 ///
