@@ -1039,6 +1039,14 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     }
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_mcheck_zero_division,
+                               options::OPT_mno_check_zero_division)) {
+    if (A->getOption().matches(options::OPT_mno_check_zero_division)) {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-mno-check-zero-division");
+    }
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_G)) {
     StringRef v = A->getValue();
     CmdArgs.push_back("-mllvm");
