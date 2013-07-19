@@ -324,6 +324,9 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   // If we are migrating code that gets the '-fobjc-arc' flag, make sure
   // to remove it so that we don't get errors from normal compilation.
   origCI.getLangOpts()->ObjCAutoRefCount = false;
+  // Disable auto-synthesize to avoid "@synthesize of 'weak' property is only
+  // allowed in ARC" errors.
+  origCI.getLangOpts()->ObjCDefaultSynthProperties = false;
 
   return capturedDiags.hasErrors() || testAct.hasReportedErrors();
 }
