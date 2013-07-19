@@ -37,18 +37,19 @@ bool checkSize(const MemoryBuffer *m, error_code &ec, uint64_t size) {
   return true;
 }
 
-// Returns false if any bytes in [addr, addr + size) fall outsize of m.
-bool checkAddr(const MemoryBuffer *m,
-               error_code &ec,
-               uintptr_t addr,
-               uint64_t size) {
-  if (addr + size < addr ||
-      addr + size < size ||
-      addr + size > uintptr_t(m->getBufferEnd())) {
-    ec = object_error::unexpected_eof;
-    return false;
+// Sets Obj unless any bytes in [addr, addr + size) fall outsize of m.
+// Returns unexpected_eof if error.
+template<typename T>
+error_code getObject(const T *&Obj, const MemoryBuffer *M, const uint8_t *Ptr,
+                     const size_t Size = sizeof(T)) {
+  uintptr_t Addr = uintptr_t(Ptr);
+  if (Addr + Size < Addr ||
+      Addr + Size < Size ||
+      Addr + Size > uintptr_t(M->getBufferEnd())) {
+    return object_error::unexpected_eof;
   }
-  return true;
+  Obj = reinterpret_cast<const T *>(Addr);
+  return object_error::success;
 }
 }
 
@@ -432,6 +433,7 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
   : ObjectFile(Binary::ID_COFF, Object)
   , COFFHeader(0)
   , PE32Header(0)
+  , DataDirectory(0)
   , SectionTable(0)
   , SymbolTable(0)
   , StringTable(0)
@@ -461,48 +463,49 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
     hasPEHeader = true;
   }
 
-  COFFHeader = reinterpret_cast<const coff_file_header *>(base() + CurPtr);
-  if (!checkAddr(Data, ec, uintptr_t(COFFHeader), sizeof(coff_file_header)))
+  if ((ec = getObject(COFFHeader, Data, base() + CurPtr)))
     return;
   CurPtr += sizeof(coff_file_header);
 
   if (hasPEHeader) {
-    PE32Header = reinterpret_cast<const pe32_header *>(base() + CurPtr);
-    if (!checkAddr(Data, ec, uintptr_t(PE32Header), sizeof(pe32_header)))
+    if ((ec = getObject(PE32Header, Data, base() + CurPtr)))
       return;
-    // We only support PE32. If this is PE32 (not PE32+), the magic byte
-    // should be 0x10b. If this is not PE32, continue as if there's no PE
-    // header in this file.
-    if (PE32Header->Magic != 0x10b)
+    if (PE32Header->Magic != 0x10b) {
+      // We only support PE32. If this is PE32 (not PE32+), the magic byte
+      // should be 0x10b. If this is not PE32, continue as if there's no PE
+      // header in this file.
       PE32Header = 0;
-    // There may be optional data directory after PE header. Skip them.
+    } else if (PE32Header->NumberOfRvaAndSize > 0) {
+      const uint8_t *addr = base() + CurPtr + sizeof(pe32_header);
+      uint64_t size = sizeof(data_directory) * PE32Header->NumberOfRvaAndSize;
+      if ((ec = getObject(DataDirectory, Data, addr, size)))
+        return;
+    }
     CurPtr += COFFHeader->SizeOfOptionalHeader;
   }
 
-  SectionTable =
-    reinterpret_cast<const coff_section *>(base() + CurPtr);
-  if (!checkAddr(Data, ec, uintptr_t(SectionTable),
-                 COFFHeader->NumberOfSections * sizeof(coff_section)))
+  if ((ec = getObject(SectionTable, Data, base() + CurPtr,
+                      COFFHeader->NumberOfSections * sizeof(coff_section))))
     return;
 
   if (COFFHeader->PointerToSymbolTable != 0) {
-    SymbolTable =
-      reinterpret_cast<const coff_symbol *>(base()
-                                            + COFFHeader->PointerToSymbolTable);
-    if (!checkAddr(Data, ec, uintptr_t(SymbolTable),
-                   COFFHeader->NumberOfSymbols * sizeof(coff_symbol)))
+    if ((ec = getObject(SymbolTable, Data,
+                        base() + COFFHeader->PointerToSymbolTable,
+                        COFFHeader->NumberOfSymbols * sizeof(coff_symbol))))
       return;
 
-    // Find string table.
-    StringTable = reinterpret_cast<const char *>(base())
-                  + COFFHeader->PointerToSymbolTable
-                  + COFFHeader->NumberOfSymbols * sizeof(coff_symbol);
-    if (!checkAddr(Data, ec, uintptr_t(StringTable), sizeof(ulittle32_t)))
+    // Find string table. The first four byte of the string table contains the
+    // total size of the string table, including the size field itself. If the
+    // string table is empty, the value of the first four byte would be 4.
+    const uint8_t *StringTableAddr = base() + COFFHeader->PointerToSymbolTable
+        + COFFHeader->NumberOfSymbols * sizeof(coff_symbol);
+    const ulittle32_t *StringTableSizePtr;
+    if ((ec = getObject(StringTableSizePtr, Data, StringTableAddr)))
+      return;
+    StringTableSize = *StringTableSizePtr;
+    if ((ec = getObject(StringTable, Data, StringTableAddr, StringTableSize)))
       return;
 
-    StringTableSize = *reinterpret_cast<const ulittle32_t *>(StringTable);
-    if (!checkAddr(Data, ec, uintptr_t(StringTable), StringTableSize))
-      return;
     // Check that the string table is null terminated if has any in it.
     if (StringTableSize < 4
         || (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0)) {
@@ -604,6 +607,15 @@ error_code COFFObjectFile::getCOFFHeader(const coff_file_header *&Res) const {
 
 error_code COFFObjectFile::getPE32Header(const pe32_header *&Res) const {
   Res = PE32Header;
+  return object_error::success;
+}
+
+error_code COFFObjectFile::getDataDirectory(uint32_t index,
+                                            const data_directory *&Res) const {
+  // Error if if there's no data directory or the index is out of range.
+  if (!DataDirectory || index > PE32Header->NumberOfRvaAndSize)
+    return object_error::parse_failed;
+  Res = &DataDirectory[index];
   return object_error::success;
 }
 
