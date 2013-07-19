@@ -241,6 +241,17 @@ const internal::VariadicDynCastAllOfMatcher<
   Decl,
   AccessSpecDecl> accessSpecDecl;
 
+/// \brief Matches constructor initializers.
+///
+/// Examples matches \c i(42).
+/// \code
+///   class C {
+///     C() : i(42) {}
+///     int i;
+///   };
+/// \endcode
+const internal::VariadicAllOfMatcher<CXXCtorInitializer> ctorInitializer;
+
 /// \brief Matches public C++ declarations.
 ///
 /// Given
@@ -3488,6 +3499,31 @@ AST_MATCHER_P(SwitchStmt, forEachSwitchCase, internal::Matcher<SwitchCase>,
     if (CaseMatched) {
       Matched = true;
       Result.addMatch(CaseBuilder);
+    }
+  }
+  *Builder = Result;
+  return Matched;
+}
+
+/// \brief Matches each constructor initializer in a constructor definition.
+///
+/// Given
+/// \code
+///   class A { A() : i(42), j(42) {} int i; int j; };
+/// \endcode
+/// constructorDecl(forEachConstructorInitializer(forField(decl().bind("x"))))
+///   will trigger two matches, binding for 'i' and 'j' respectively.
+AST_MATCHER_P(CXXConstructorDecl, forEachConstructorInitializer,
+              internal::Matcher<CXXCtorInitializer>, InnerMatcher) {
+  BoundNodesTreeBuilder Result;
+  bool Matched = false;
+  for (CXXConstructorDecl::init_const_iterator I = Node.init_begin(),
+                                               E = Node.init_end();
+       I != E; ++I) {
+    BoundNodesTreeBuilder InitBuilder(*Builder);
+    if (InnerMatcher.matches(**I, Finder, &InitBuilder)) {
+      Matched = true;
+      Result.addMatch(InitBuilder);
     }
   }
   *Builder = Result;

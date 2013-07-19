@@ -2967,6 +2967,12 @@ TEST(SwitchCase, MatchesEachCase) {
       new VerifyIdIsBoundTo<CaseStmt>("x", 3)));
 }
 
+TEST(ForEachConstructorInitializer, MatchesInitializers) {
+  EXPECT_TRUE(matches(
+      "struct X { X() : i(42), j(42) {} int i, j; };",
+      constructorDecl(forEachConstructorInitializer(ctorInitializer()))));
+}
+
 TEST(ExceptionHandling, SimpleCases) {
   EXPECT_TRUE(matches("void foo() try { } catch(int X) { }", catchStmt()));
   EXPECT_TRUE(matches("void foo() try { } catch(int X) { }", tryStmt()));
@@ -3156,6 +3162,11 @@ TEST(LoopingMatchers, DoNotOverwritePreviousMatchResultOnFailure) {
   EXPECT_TRUE(matchAndVerifyResultTrue(
       "class A {};",
       recordDecl(hasName("::A"), decl().bind("x"), unless(hasName("fooble"))),
+      new VerifyIdIsBoundTo<Decl>("x", 1)));
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "class A { A() : s(), i(42) {} const char *s; int i; };",
+      constructorDecl(hasName("::A::A"), decl().bind("x"),
+                      forEachConstructorInitializer(forField(hasName("i")))),
       new VerifyIdIsBoundTo<Decl>("x", 1)));
 }
 
