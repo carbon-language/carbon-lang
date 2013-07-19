@@ -5925,13 +5925,13 @@ Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
 ///
 /// \param Previous the set of declarations that may be specialized by
 /// this function specialization.
-bool
-Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
-                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
-                                          LookupResult &Previous) {
+bool Sema::CheckFunctionTemplateSpecialization(
+    FunctionDecl *FD, TemplateArgumentListInfo *ExplicitTemplateArgs,
+    LookupResult &Previous) {
   // The set of function template specializations that could match this
   // explicit function template specialization.
   UnresolvedSet<8> Candidates;
+  TemplateSpecCandidateSet FailedCandidates(FD->getLocation());
 
   DeclContext *FDLookupContext = FD->getDeclContext()->getRedeclContext();
   for (LookupResult::iterator I = Previous.begin(), E = Previous.end();
@@ -5969,13 +5969,16 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
       // Perform template argument deduction to determine whether we may be
       // specializing this template.
       // FIXME: It is somewhat wasteful to build
-      TemplateDeductionInfo Info(FD->getLocation());
+      TemplateDeductionInfo Info(FailedCandidates.getLocation());
       FunctionDecl *Specialization = 0;
       if (TemplateDeductionResult TDK
             = DeduceTemplateArguments(FunTmpl, ExplicitTemplateArgs, FT,
                                       Specialization, Info)) {
-        // FIXME: Template argument deduction failed; record why it failed, so
+        // Template argument deduction failed; record why it failed, so
         // that we can provide nifty diagnostics.
+        FailedCandidates.addCandidate()
+            .set(FunTmpl->getTemplatedDecl(),
+                 MakeDeductionFailureInfo(Context, TDK, Info));
         (void)TDK;
         continue;
       }
@@ -5986,14 +5989,14 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   }
 
   // Find the most specialized function template.
-  UnresolvedSetIterator Result
-    = getMostSpecialized(Candidates.begin(), Candidates.end(),
-                         TPOC_Other, 0, FD->getLocation(),
-                  PDiag(diag::err_function_template_spec_no_match)
-                    << FD->getDeclName(),
-                  PDiag(diag::err_function_template_spec_ambiguous)
-                    << FD->getDeclName() << (ExplicitTemplateArgs != 0),
-                  PDiag(diag::note_function_template_spec_matched));
+  UnresolvedSetIterator Result = getMostSpecialized(
+      Candidates.begin(), Candidates.end(), FailedCandidates, TPOC_Other, 0,
+      FD->getLocation(),
+      PDiag(diag::err_function_template_spec_no_match) << FD->getDeclName(),
+      PDiag(diag::err_function_template_spec_ambiguous)
+          << FD->getDeclName() << (ExplicitTemplateArgs != 0),
+      PDiag(diag::note_function_template_spec_matched));
+
   if (Result == Candidates.end())
     return true;
 
@@ -6812,6 +6815,7 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   //  instantiated from the member definition associated with its class
   //  template.
   UnresolvedSet<8> Matches;
+  TemplateSpecCandidateSet FailedCandidates(D.getIdentifierLoc());
   for (LookupResult::iterator P = Previous.begin(), PEnd = Previous.end();
        P != PEnd; ++P) {
     NamedDecl *Prev = *P;
@@ -6831,13 +6835,16 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     if (!FunTmpl)
       continue;
 
-    TemplateDeductionInfo Info(D.getIdentifierLoc());
+    TemplateDeductionInfo Info(FailedCandidates.getLocation());
     FunctionDecl *Specialization = 0;
     if (TemplateDeductionResult TDK
           = DeduceTemplateArguments(FunTmpl,
                                (HasExplicitTemplateArgs ? &TemplateArgs : 0),
                                     R, Specialization, Info)) {
-      // FIXME: Keep track of almost-matches?
+      // Keep track of almost-matches.
+      FailedCandidates.addCandidate()
+          .set(FunTmpl->getTemplatedDecl(),
+               MakeDeductionFailureInfo(Context, TDK, Info));
       (void)TDK;
       continue;
     }
@@ -6846,12 +6853,12 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   }
 
   // Find the most specialized function template specialization.
-  UnresolvedSetIterator Result
-    = getMostSpecialized(Matches.begin(), Matches.end(), TPOC_Other, 0,
-                         D.getIdentifierLoc(),
-                     PDiag(diag::err_explicit_instantiation_not_known) << Name,
-                     PDiag(diag::err_explicit_instantiation_ambiguous) << Name,
-                         PDiag(diag::note_explicit_instantiation_candidate));
+  UnresolvedSetIterator Result = getMostSpecialized(
+      Matches.begin(), Matches.end(), FailedCandidates, TPOC_Other, 0,
+      D.getIdentifierLoc(),
+      PDiag(diag::err_explicit_instantiation_not_known) << Name,
+      PDiag(diag::err_explicit_instantiation_ambiguous) << Name,
+      PDiag(diag::note_explicit_instantiation_candidate));
 
   if (Result == Matches.end())
     return true;

@@ -189,10 +189,3 @@ namespace PR16646 {
     }
   }
 }
-
-namespace VariadicAliasWithFunctionType {
-  template <class T> struct A { };
-  template <class ...Args> using B = A<int(Args ...x)>;
-  template <class ...Args> void f(B<A<int>, A<Args>...>) {}
-  void g() { f(A<int(A<int>,A<int>)>()); }
-}

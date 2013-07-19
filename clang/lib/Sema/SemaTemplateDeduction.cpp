@@ -4148,23 +4148,18 @@ static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
 ///
 /// \returns the most specialized function template specialization, if
 /// found. Otherwise, returns SpecEnd.
-///
-/// \todo FIXME: Consider passing in the "also-ran" candidates that failed
-/// template argument deduction.
-UnresolvedSetIterator
-Sema::getMostSpecialized(UnresolvedSetIterator SpecBegin,
-                         UnresolvedSetIterator SpecEnd,
-                         TemplatePartialOrderingContext TPOC,
-                         unsigned NumCallArguments,
-                         SourceLocation Loc,
-                         const PartialDiagnostic &NoneDiag,
-                         const PartialDiagnostic &AmbigDiag,
-                         const PartialDiagnostic &CandidateDiag,
-                         bool Complain,
-                         QualType TargetType) {
+UnresolvedSetIterator Sema::getMostSpecialized(
+    UnresolvedSetIterator SpecBegin, UnresolvedSetIterator SpecEnd,
+    TemplateSpecCandidateSet &FailedCandidates,
+    TemplatePartialOrderingContext TPOC, unsigned NumCallArguments,
+    SourceLocation Loc, const PartialDiagnostic &NoneDiag,
+    const PartialDiagnostic &AmbigDiag, const PartialDiagnostic &CandidateDiag,
+    bool Complain, QualType TargetType) {
   if (SpecBegin == SpecEnd) {
-    if (Complain)
+    if (Complain) {
       Diag(Loc, NoneDiag);
+      FailedCandidates.NoteCandidates(*this, Loc);
+    }
     return SpecEnd;
   }
 

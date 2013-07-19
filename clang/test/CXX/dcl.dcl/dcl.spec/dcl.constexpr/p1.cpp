@@ -72,7 +72,8 @@ template <typename T> constexpr T ft(T t) { return t; }
 template <typename T> T gt(T t) { return t; }
 struct S {
   template<typename T> constexpr T f(); // expected-warning {{C++1y}}
-  template<typename T> T g() const;
+  template <typename T>
+  T g() const; // expected-note {{candidate template ignored: could not match 'T () const' against 'char ()'}}
 };
 
 // explicit specialization can differ in constepxr
