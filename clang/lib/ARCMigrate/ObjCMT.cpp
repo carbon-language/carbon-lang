@@ -382,8 +382,10 @@ static bool rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,
 
 static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
                                 const TypedefDecl *TypedefDcl,
-                                const NSAPI &NS, edit::Commit &commit) {
-  std::string ClassString = "typedef NS_ENUM(NSInteger, ";
+                                const NSAPI &NS, edit::Commit &commit,
+                                bool IsNSIntegerType) {
+  std::string ClassString = 
+    IsNSIntegerType ? "typedef NS_ENUM(NSInteger, " : "typedef NS_OPTIONS(NSUInteger, ";
   ClassString += TypedefDcl->getIdentifier()->getName();
   ClassString += ')';
   SourceRange R(EnumDcl->getLocStart(), EnumDcl->getLocStart());
@@ -462,14 +464,19 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
     return;
   
   QualType qt = TypedefDcl->getTypeSourceInfo()->getType();
-  if (!NSAPIObj->isObjCNSIntegerType(qt))
+  bool IsNSIntegerType = NSAPIObj->isObjCNSIntegerType(qt);
+  bool IsNSUIntegerType = !IsNSIntegerType && NSAPIObj->isObjCNSUIntegerType(qt);
+  if (!IsNSIntegerType && !IsNSUIntegerType)
     return;
   
   // NS_ENUM must be available.
-  if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
+  if (IsNSIntegerType && !Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
+    return;
+  // NS_OPTIONS must be available.
+  if (IsNSUIntegerType && !Ctx.Idents.get("NS_OPTIONS").hasMacroDefinition())
     return;
   edit::Commit commit(*Editor);
-  rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit);
+  rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, IsNSIntegerType);
   Editor->commit(commit);
 }
 
