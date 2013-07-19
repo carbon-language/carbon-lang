@@ -1054,7 +1054,7 @@ namespace clang {
       DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION,
       /// \brief An ImportDecl recording a module import.
       DECL_IMPORT,
-      /// \brief A OMPThreadPrivateDecl record.
+      /// \brief An OMPThreadPrivateDecl record.
       DECL_OMP_THREADPRIVATE,
       /// \brief An EmptyDecl record.
       DECL_EMPTY
@@ -1319,7 +1319,10 @@ namespace clang {
       STMT_SEH_EXCEPT,            // SEHExceptStmt
       STMT_SEH_FINALLY,           // SEHFinallyStmt
       STMT_SEH_TRY,               // SEHTryStmt
-      
+
+      // OpenMP drectives
+      STMT_OMP_PARALLEL_DIRECTIVE,
+
       // ARC
       EXPR_OBJC_BRIDGED_CAST,     // ObjCBridgedCastExpr
       

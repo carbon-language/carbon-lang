@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 -verify -fopenmp -ast-print %s | FileCheck %s
+// RUN: %clang_cc1 -fopenmp -x c++ -std=c++11 -emit-pch -o %t
+// RUN: %clang_cc1 -fopenmp -std=c++11 -include-pch %t -fsyntax-only -verify %s -ast-print
 // expected-no-diagnostics
+
+#ifndef HEADER
+#define HEADER
 
 struct St{
  int a;
@@ -41,3 +46,5 @@ int main () {
   a=2;
   return (foo<int>());
 }
+
+#endif

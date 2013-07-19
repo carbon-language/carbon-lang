@@ -252,6 +252,40 @@ StmtProfiler::VisitObjCAutoreleasePoolStmt(const ObjCAutoreleasePoolStmt *S) {
   VisitStmt(S);
 }
 
+namespace {
+class OMPClauseProfiler : public ConstOMPClauseVisitor<OMPClauseProfiler> {
+  StmtProfiler *Profiler;
+public:
+  OMPClauseProfiler(StmtProfiler *P) : Profiler(P) { }
+#define OPENMP_CLAUSE(Name, Class)                                             \
+  void Visit##Class(const Class *C);
+#include "clang/Basic/OpenMPKinds.def"
+};
+
+void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
+#define PROCESS_OMP_CLAUSE_LIST(Class, Node)                                   \
+  for (OMPVarList<Class>::varlist_const_iterator I = Node->varlist_begin(),    \
+                                                 E = Node->varlist_end();      \
+         I != E; ++I)                                                          \
+    Profiler->VisitStmt(*I);
+
+void OMPClauseProfiler::VisitOMPPrivateClause(const OMPPrivateClause *C) {
+  PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
+}
+#undef PROCESS_OMP_CLAUSE_LIST
+}
+
+void
+StmtProfiler::VisitOMPParallelDirective(const OMPParallelDirective *S) {
+  VisitStmt(S);
+  OMPClauseProfiler P(this);
+  ArrayRef<OMPClause *> Clauses = S->clauses();
+  for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
+       I != E; ++I)
+    if (*I)
+      P.Visit(*I);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

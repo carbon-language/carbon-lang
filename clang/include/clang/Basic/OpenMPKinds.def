@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 /// \file
-/// \brief This file defines the list of supported OpenMP directives and 
+/// \brief This file defines the list of supported OpenMP directives and
 /// clauses.
 ///
 //===----------------------------------------------------------------------===//
@@ -15,9 +15,34 @@
 #ifndef OPENMP_DIRECTIVE
 #  define OPENMP_DIRECTIVE(Name)
 #endif
+#ifndef OPENMP_CLAUSE
+#  define OPENMP_CLAUSE(Name, Class)
+#endif
+#ifndef OPENMP_PARALLEL_CLAUSE
+#  define OPENMP_PARALLEL_CLAUSE(Name)
+#endif
+#ifndef OPENMP_DEFAULT_KIND
+#  define OPENMP_DEFAULT_KIND(Name)
+#endif
 
 // OpenMP directives.
 OPENMP_DIRECTIVE(threadprivate)
 OPENMP_DIRECTIVE(parallel)
+OPENMP_DIRECTIVE(task)
 
+// OpenMP clauses.
+OPENMP_CLAUSE(default, OMPDefaultClause)
+OPENMP_CLAUSE(private, OMPPrivateClause)
+
+// Clauses allowed for OpenMP directives.
+OPENMP_PARALLEL_CLAUSE(default)
+OPENMP_PARALLEL_CLAUSE(private)
+
+// Static attributes for 'default' clause.
+OPENMP_DEFAULT_KIND(none)
+OPENMP_DEFAULT_KIND(shared)
+
+#undef OPENMP_DEFAULT_KIND
 #undef OPENMP_DIRECTIVE
+#undef OPENMP_CLAUSE
+#undef OPENMP_PARALLEL_CLAUSE

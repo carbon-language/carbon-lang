@@ -1802,6 +1802,7 @@ public:
   }
 };
 class EnqueueVisitor : public ConstStmtVisitor<EnqueueVisitor, void> {
+  friend class OMPClauseEnqueue;
   VisitorWorkList &WL;
   CXCursor Parent;
 public:
@@ -1853,6 +1854,8 @@ public:
   void VisitPseudoObjectExpr(const PseudoObjectExpr *E);
   void VisitOpaqueValueExpr(const OpaqueValueExpr *E);
   void VisitLambdaExpr(const LambdaExpr *E);
+  void VisitOMPExecutableDirective(const OMPExecutableDirective *D);
+  void VisitOMPParallelDirective(const OMPParallelDirective *D);
 
 private:
   void AddDeclarationNameInfo(const Stmt *S);
@@ -1863,6 +1866,7 @@ private:
   void AddDecl(const Decl *D, bool isFirst = true);
   void AddTypeLoc(TypeSourceInfo *TI);
   void EnqueueChildren(const Stmt *S);
+  void EnqueueChildren(const OMPClause *S);
 };
 } // end anonyous namespace
 
@@ -1904,6 +1908,39 @@ void EnqueueVisitor::EnqueueChildren(const Stmt *S) {
   for (Stmt::const_child_range Child = S->children(); Child; ++Child) {
     AddStmt(*Child);
   }
+  if (size == WL.size())
+    return;
+  // Now reverse the entries we just added.  This will match the DFS
+  // ordering performed by the worklist.
+  VisitorWorkList::iterator I = WL.begin() + size, E = WL.end();
+  std::reverse(I, E);
+}
+namespace {
+class OMPClauseEnqueue : public ConstOMPClauseVisitor<OMPClauseEnqueue> {
+  EnqueueVisitor *Visitor;
+public:
+  OMPClauseEnqueue(EnqueueVisitor *Visitor) : Visitor(Visitor) { }
+#define OPENMP_CLAUSE(Name, Class)                                             \
+  void Visit##Class(const Class *C);
+#include "clang/Basic/OpenMPKinds.def"
+};
+
+void OMPClauseEnqueue::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
+#define PROCESS_OMP_CLAUSE_LIST(Class, Node)                                   \
+  for (OMPVarList<Class>::varlist_const_iterator I = Node->varlist_begin(),    \
+                                                 E = Node->varlist_end();      \
+         I != E; ++I)                                                          \
+    Visitor->AddStmt(*I);
+
+void OMPClauseEnqueue::VisitOMPPrivateClause(const OMPPrivateClause *C) {
+  PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
+}
+#undef PROCESS_OMP_CLAUSE_LIST
+}
+void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {
+  unsigned size = WL.size();
+  OMPClauseEnqueue Visitor(this);
+  Visitor.Visit(S);
   if (size == WL.size())
     return;
   // Now reverse the entries we just added.  This will match the DFS
@@ -2187,6 +2224,19 @@ void EnqueueVisitor::VisitLambdaExpr(const LambdaExpr *E) {
 void EnqueueVisitor::VisitPseudoObjectExpr(const PseudoObjectExpr *E) {
   // Treat the expression like its syntactic form.
   Visit(E->getSyntacticForm());
+}
+
+void EnqueueVisitor::VisitOMPExecutableDirective(
+  const OMPExecutableDirective *D) {
+  EnqueueChildren(D);
+  for (ArrayRef<OMPClause *>::iterator I = D->clauses().begin(),
+                                       E = D->clauses().end();
+       I != E; ++I)
+    EnqueueChildren(*I);
+}
+
+void EnqueueVisitor::VisitOMPParallelDirective(const OMPParallelDirective *D) {
+  VisitOMPExecutableDirective(D);
 }
 
 void CursorVisitor::EnqueueWorkList(VisitorWorkList &WL, const Stmt *S) {
@@ -3766,6 +3816,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("CXXAccessSpecifier");
   case CXCursor_ModuleImportDecl:
     return cxstring::createRef("ModuleImport");
+  case CXCursor_OMPParallelDirective:
+      return cxstring::createRef("OMPParallelDirective");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

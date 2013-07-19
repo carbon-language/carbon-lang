@@ -505,6 +505,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::MSDependentExistsStmtClass:
     K = CXCursor_UnexposedStmt;
     break;
+  case Stmt::OMPParallelDirectiveClass:
+    K = CXCursor_OMPParallelDirective;
+    break;
+  
   }
   
   CXCursor C = { K, 0, { Parent, S, TU } };

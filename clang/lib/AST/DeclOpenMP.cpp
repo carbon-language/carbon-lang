@@ -58,3 +58,4 @@ void OMPThreadPrivateDecl::setVars(ArrayRef<Expr *> VL) {
   Expr **Vars = reinterpret_cast<Expr **>(this + 1);
   std::copy(VL.begin(), VL.end(), Vars);
 }
+

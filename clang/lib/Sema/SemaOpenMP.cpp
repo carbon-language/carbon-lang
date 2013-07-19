@@ -14,10 +14,17 @@
 
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclOpenMP.h"
+#include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtOpenMP.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Sema/Initialization.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Scope.h"
+#include "clang/Sema/ScopeInfo.h"
 using namespace clang;
 
 namespace {
@@ -165,7 +172,8 @@ OMPThreadPrivateDecl *Sema::CheckOMPThreadPrivateDecl(
     //   A threadprivate variable must not have a reference type.
     if (VD->getType()->isReferenceType()) {
       Diag(ILoc, diag::err_omp_ref_type_arg)
-        << getOpenMPDirectiveName(OMPD_threadprivate);
+        << getOpenMPDirectiveName(OMPD_threadprivate)
+        << VD->getType();
       bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
                     VarDecl::DeclarationOnly;
       Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
@@ -189,5 +197,217 @@ OMPThreadPrivateDecl *Sema::CheckOMPThreadPrivateDecl(
               0 : OMPThreadPrivateDecl::Create(Context,
                                                getCurLexicalContext(),
                                                Loc, Vars);
+}
+
+StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
+                                                ArrayRef<OMPClause *> Clauses,
+                                                Stmt *AStmt,
+                                                SourceLocation StartLoc,
+                                                SourceLocation EndLoc) {
+  StmtResult Res = StmtError();
+  switch (Kind) {
+  case OMPD_parallel:
+    Res = ActOnOpenMPParallelDirective(Clauses, AStmt, StartLoc, EndLoc);
+    break;
+  case OMPD_threadprivate:
+  case OMPD_task:
+    llvm_unreachable("OpenMP Directive is not allowed");
+  case OMPD_unknown:
+  case NUM_OPENMP_DIRECTIVES:
+    llvm_unreachable("Unknown OpenMP directive");
+  }
+  return Res;
+}
+
+StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
+                                              Stmt *AStmt,
+                                              SourceLocation StartLoc,
+                                              SourceLocation EndLoc) {
+  getCurFunction()->setHasBranchProtectedScope();
+
+  return Owned(OMPParallelDirective::Create(Context, StartLoc, EndLoc,
+                                            Clauses, AStmt));
+}
+
+OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
+                                         unsigned Argument,
+                                         SourceLocation ArgumentLoc,
+                                         SourceLocation StartLoc,
+                                         SourceLocation LParenLoc,
+                                         SourceLocation EndLoc) {
+  OMPClause *Res = 0;
+  switch (Kind) {
+  case OMPC_default:
+    Res = ActOnOpenMPDefaultClause(
+                             static_cast<OpenMPDefaultClauseKind>(Argument),
+                             ArgumentLoc, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_private:
+  case OMPC_threadprivate:
+  case OMPC_unknown:
+  case NUM_OPENMP_CLAUSES:
+    llvm_unreachable("Clause is not allowed.");
+  }
+  return Res;
+}
+
+OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
+                                          SourceLocation KindKwLoc,
+                                          SourceLocation StartLoc,
+                                          SourceLocation LParenLoc,
+                                          SourceLocation EndLoc) {
+  if (Kind == OMPC_DEFAULT_unknown) {
+    std::string Values;
+    std::string Sep(NUM_OPENMP_DEFAULT_KINDS > 1 ? ", " : "");
+    for (unsigned i = OMPC_DEFAULT_unknown + 1;
+         i < NUM_OPENMP_DEFAULT_KINDS; ++i) {
+      Values += "'";
+      Values += getOpenMPSimpleClauseTypeName(OMPC_default, i);
+      Values += "'";
+      switch (i) {
+      case NUM_OPENMP_DEFAULT_KINDS - 2:
+        Values += " or ";
+        break;
+      case NUM_OPENMP_DEFAULT_KINDS - 1:
+        break;
+      default:
+        Values += Sep;
+        break;
+      }
+    }
+    Diag(KindKwLoc, diag::err_omp_unexpected_clause_value)
+      << Values << getOpenMPClauseName(OMPC_default);
+    return 0;
+  }
+  return new (Context) OMPDefaultClause(Kind, KindKwLoc, StartLoc, LParenLoc,
+                                        EndLoc);
+}
+
+OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
+                                          ArrayRef<Expr *> VarList,
+                                          SourceLocation StartLoc,
+                                          SourceLocation LParenLoc,
+                                          SourceLocation EndLoc) {
+  OMPClause *Res = 0;
+  switch (Kind) {
+  case OMPC_private:
+    Res = ActOnOpenMPPrivateClause(VarList, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_default:
+  case OMPC_threadprivate:
+  case OMPC_unknown:
+  case NUM_OPENMP_CLAUSES:
+    llvm_unreachable("Clause is not allowed.");
+  }
+  return Res;
+}
+
+OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
+                                          SourceLocation StartLoc,
+                                          SourceLocation LParenLoc,
+                                          SourceLocation EndLoc) {
+  SmallVector<Expr *, 8> Vars;
+  for (ArrayRef<Expr *>::iterator I = VarList.begin(), E = VarList.end();
+       I != E; ++I) {
+    if (*I && isa<DependentScopeDeclRefExpr>(*I)) {
+      // It will be analyzed later.
+      Vars.push_back(*I);
+      continue;
+    }
+
+    SourceLocation ELoc = (*I)->getExprLoc();
+    // OpenMP [2.1, C/C++]
+    //  A list item is a variable name.
+    // OpenMP  [2.9.3.3, Restrictions, p.1]
+    //  A variable that is part of another variable (as an array or
+    //  structure element) cannot appear in a private clause.
+    DeclRefExpr *DE = dyn_cast_or_null<DeclRefExpr>(*I);
+    if (!DE || !isa<VarDecl>(DE->getDecl())) {
+      Diag(ELoc, diag::err_omp_expected_var_name)
+        << (*I)->getSourceRange();
+      continue;
+    }
+    Decl *D = DE->getDecl();
+    VarDecl *VD = cast<VarDecl>(D);
+
+    QualType Type = VD->getType();
+    if (Type->isDependentType() || Type->isInstantiationDependentType()) {
+      // It will be analyzed later.
+      Vars.push_back(DE);
+      continue;
+    }
+
+    // OpenMP [2.9.3.3, Restrictions, C/C++, p.3]
+    //  A variable that appears in a private clause must not have an incomplete
+    //  type or a reference type.
+    if (RequireCompleteType(ELoc, Type,
+                            diag::err_omp_private_incomplete_type)) {
+      continue;
+    }
+    if (Type->isReferenceType()) {
+      Diag(ELoc, diag::err_omp_clause_ref_type_arg)
+        << getOpenMPClauseName(OMPC_private) << Type;
+      bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                    VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
+                                       diag::note_defined_here) << VD;
+      continue;
+    }
+
+    // OpenMP [2.9.3.3, Restrictions, C/C++, p.1]
+    //  A variable of class type (or array thereof) that appears in a private
+    //  clause requires an accesible, unambiguous default constructor for the
+    //  class type.
+    while (Type.getNonReferenceType()->isArrayType()) {
+      Type = cast<ArrayType>(
+                 Type.getNonReferenceType().getTypePtr())->getElementType();
+    }
+    CXXRecordDecl *RD = getLangOpts().CPlusPlus ?
+                          Type.getNonReferenceType()->getAsCXXRecordDecl() : 0;
+    if (RD) {
+      CXXConstructorDecl *CD = LookupDefaultConstructor(RD);
+      PartialDiagnostic PD =
+        PartialDiagnostic(PartialDiagnostic::NullDiagnostic());
+      if (!CD ||
+          CheckConstructorAccess(ELoc, CD,
+                                 InitializedEntity::InitializeTemporary(Type),
+                                 CD->getAccess(), PD) == AR_inaccessible ||
+          CD->isDeleted()) {
+        Diag(ELoc, diag::err_omp_required_method)
+             << getOpenMPClauseName(OMPC_private) << 0;
+        bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                      VarDecl::DeclarationOnly;
+        Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
+                                         diag::note_defined_here) << VD;
+        Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+        continue;
+      }
+      MarkFunctionReferenced(ELoc, CD);
+      DiagnoseUseOfDecl(CD, ELoc);
+
+      CXXDestructorDecl *DD = RD->getDestructor();
+      if (DD) {
+        if (CheckDestructorAccess(ELoc, DD, PD) == AR_inaccessible ||
+            DD->isDeleted()) {
+          Diag(ELoc, diag::err_omp_required_method)
+               << getOpenMPClauseName(OMPC_private) << 4;
+          bool IsDecl = VD->isThisDeclarationADefinition(Context) ==
+                        VarDecl::DeclarationOnly;
+          Diag(VD->getLocation(), IsDecl ? diag::note_previous_decl :
+                                           diag::note_defined_here) << VD;
+          Diag(RD->getLocation(), diag::note_previous_decl) << RD;
+          continue;
+        }
+        MarkFunctionReferenced(ELoc, DD);
+        DiagnoseUseOfDecl(DD, ELoc);
+      }
+    }
+
+    Vars.push_back(DE);
+  }
+
+  if (Vars.empty()) return 0;
+
+  return OMPPrivateClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
 }
 

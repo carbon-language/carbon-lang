@@ -1710,6 +1710,21 @@ Sema::AccessResult Sema::CheckAllocationAccess(SourceLocation OpLoc,
   return CheckAccess(*this, OpLoc, Entity);
 }
 
+/// \brief Checks access to a member.
+Sema::AccessResult Sema::CheckMemberAccess(SourceLocation UseLoc,
+                                           CXXRecordDecl *NamingClass,
+                                           NamedDecl *D) {
+  if (!getLangOpts().AccessControl ||
+      !NamingClass ||
+      D->getAccess() == AS_public)
+    return AR_accessible;
+
+  AccessTarget Entity(Context, AccessTarget::Member, NamingClass,
+                      DeclAccessPair::make(D, D->getAccess()), QualType());
+
+  return CheckAccess(*this, UseLoc, Entity);
+}
+
 /// Checks access to an overloaded member operator, including
 /// conversion operators.
 Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,

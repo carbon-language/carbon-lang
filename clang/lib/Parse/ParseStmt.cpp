@@ -306,9 +306,8 @@ Retry:
     return HandlePragmaCaptured();
 
   case tok::annot_pragma_openmp:
-    SourceLocation DeclStart = Tok.getLocation();
-    DeclGroupPtrTy Res = ParseOpenMPDeclarativeDirective();
-    return Actions.ActOnDeclStmt(Res, DeclStart, Tok.getLocation());
+    return ParseOpenMPDeclarativeOrExecutableDirective();
+
   }
 
   // If we reached this code, the statement must end in a semicolon.

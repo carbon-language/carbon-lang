@@ -24,6 +24,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtOpenMP.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Designator.h"
 #include "clang/Sema/Lookup.h"
@@ -313,6 +314,16 @@ public:
   /// \returns the transformed statement.
   StmtResult TransformStmt(Stmt *S);
 
+  /// \brief Transform the given statement.
+  ///
+  /// By default, this routine transforms a statement by delegating to the
+  /// appropriate TransformOMPXXXClause function to transform a specific kind
+  /// of clause. Subclasses may override this function to transform statements
+  /// using some other mechanism.
+  ///
+  /// \returns the transformed OpenMP clause.
+  OMPClause *TransformOMPClause(OMPClause *S);
+
   /// \brief Transform the given expression.
   ///
   /// By default, this routine transforms an expression by delegating to the
@@ -593,6 +604,10 @@ public:
   ExprResult Transform##Node(Node *E);
 #define ABSTRACT_STMT(Stmt)
 #include "clang/AST/StmtNodes.inc"
+
+#define OPENMP_CLAUSE(Name, Class)                        \
+  OMPClause *Transform ## Class(Class *S);
+#include "clang/Basic/OpenMPKinds.def"
 
   /// \brief Build a new pointer type given its pointee type.
   ///
@@ -1253,6 +1268,43 @@ public:
   StmtResult RebuildObjCAtThrowStmt(SourceLocation AtLoc,
                                           Expr *Operand) {
     return getSema().BuildObjCAtThrowStmt(AtLoc, Operand);
+  }
+
+  /// \brief Build a new OpenMP parallel directive.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  StmtResult RebuildOMPParallelDirective(ArrayRef<OMPClause *> Clauses,
+                                         Stmt *AStmt,
+                                         SourceLocation StartLoc,
+                                         SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPParallelDirective(Clauses, AStmt,
+                                                  StartLoc, EndLoc);
+  }
+
+  /// \brief Build a new OpenMP 'default' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPDefaultClause(OpenMPDefaultClauseKind Kind,
+                                     SourceLocation KindKwLoc,
+                                     SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPDefaultClause(Kind, KindKwLoc,
+                                              StartLoc, LParenLoc, EndLoc);
+  }
+
+  /// \brief Build a new OpenMP 'private' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPPrivateClause(ArrayRef<Expr *> VarList,
+                                     SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPPrivateClause(VarList, StartLoc, LParenLoc,
+                                              EndLoc);
   }
 
   /// \brief Rebuild the operand to an Objective-C \@synchronized statement.
@@ -2598,6 +2650,23 @@ StmtResult TreeTransform<Derived>::TransformStmt(Stmt *S) {
   }
 
   return SemaRef.Owned(S);
+}
+
+template<typename Derived>
+OMPClause *TreeTransform<Derived>::TransformOMPClause(OMPClause *S) {
+  if (!S)
+    return S;
+
+  switch (S->getClauseKind()) {
+  default: break;
+  // Transform individual clause nodes
+#define OPENMP_CLAUSE(Name, Class)                                             \
+  case OMPC_ ## Name :                                                         \
+    return getDerived().Transform ## Class(cast<Class>(S));
+#include "clang/Basic/OpenMPKinds.def"
+  }
+
+  return S;
 }
 
 
@@ -6176,6 +6245,67 @@ TreeTransform<Derived>::TransformSEHHandler(Stmt *Handler) {
     return getDerived().TransformSEHFinallyStmt(cast<SEHFinallyStmt>(Handler));
   else
     return getDerived().TransformSEHExceptStmt(cast<SEHExceptStmt>(Handler));
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
+  // Transform the clauses
+  llvm::SmallVector<OMPClause *, 5> TClauses;
+  ArrayRef<OMPClause *> Clauses = D->clauses();
+  TClauses.reserve(Clauses.size());
+  for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
+       I != E; ++I) {
+    if (*I) {
+      OMPClause *Clause = getDerived().TransformOMPClause(*I);
+      if (!Clause)
+        return StmtError();
+      TClauses.push_back(Clause);
+    }
+    else {
+      TClauses.push_back(0);
+    }
+  }
+  if (!D->getAssociatedStmt())
+    return StmtError();
+  StmtResult AssociatedStmt =
+    getDerived().TransformStmt(D->getAssociatedStmt());
+  if (AssociatedStmt.isInvalid())
+    return StmtError();
+
+  return getDerived().RebuildOMPParallelDirective(TClauses,
+                                                  AssociatedStmt.take(),
+                                                  D->getLocStart(),
+                                                  D->getLocEnd());
+}
+
+template<typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPDefaultClause(OMPDefaultClause *C) {
+  return getDerived().RebuildOMPDefaultClause(C->getDefaultKind(),
+                                              C->getDefaultKindKwLoc(),
+                                              C->getLocStart(),
+                                              C->getLParenLoc(),
+                                              C->getLocEnd());
+}
+
+template<typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPPrivateClause(OMPPrivateClause *C) {
+  llvm::SmallVector<Expr *, 5> Vars;
+  Vars.reserve(C->varlist_size());
+  for (OMPVarList<OMPPrivateClause>::varlist_iterator I = C->varlist_begin(),
+                                                      E = C->varlist_end();
+       I != E; ++I) {
+    ExprResult EVar = getDerived().TransformExpr(cast<Expr>(*I));
+    if (EVar.isInvalid())
+      return 0;
+    Vars.push_back(EVar.take());
+  }
+  return getDerived().RebuildOMPPrivateClause(Vars,
+                                              C->getLocStart(),
+                                              C->getLParenLoc(),
+                                              C->getLocEnd());
 }
 
 //===----------------------------------------------------------------------===//

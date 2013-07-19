@@ -23,9 +23,11 @@
 #include "clang/AST/MangleNumberingContext.h"
 #include "clang/AST/NSAPI.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/ExpressionTraits.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
@@ -4807,6 +4809,9 @@ public:
                                      const PartialDiagnostic &PDiag,
                                      QualType objectType = QualType());
   AccessResult CheckFriendAccess(NamedDecl *D);
+  AccessResult CheckMemberAccess(SourceLocation UseLoc,
+                                 CXXRecordDecl *NamingClass,
+                                 NamedDecl *D);
   AccessResult CheckMemberOperatorAccess(SourceLocation Loc,
                                          Expr *ObjectExpr,
                                          Expr *ArgExpr,
@@ -6780,6 +6785,42 @@ public:
   OMPThreadPrivateDecl *CheckOMPThreadPrivateDecl(
                                      SourceLocation Loc,
                                      ArrayRef<Expr *> VarList);
+
+  StmtResult ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
+                                            ArrayRef<OMPClause *> Clauses,
+                                            Stmt *AStmt,
+                                            SourceLocation StartLoc,
+                                            SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp parallel' after parsing
+  /// of the  associated statement.
+  StmtResult ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
+                                          Stmt *AStmt,
+                                          SourceLocation StartLoc,
+                                          SourceLocation EndLoc);
+
+  OMPClause *ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
+                                     unsigned Argument,
+                                     SourceLocation ArgumentLoc,
+                                     SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation EndLoc);
+  /// \brief Called on well-formed 'default' clause.
+  OMPClause *ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
+                                      SourceLocation KindLoc,
+                                      SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation EndLoc);
+
+  OMPClause *ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
+                                      ArrayRef<Expr *> Vars,
+                                      SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation EndLoc);
+  /// \brief Called on well-formed 'private' clause.
+  OMPClause *ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
+                                      SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation EndLoc);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

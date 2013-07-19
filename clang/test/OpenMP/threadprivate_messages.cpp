@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -verify -fopenmp -ferror-limit 100 %s
 
-#pragma omp threadprivate // expected-error {{expected '(' after 'threadprivate'}} expected-error {{expected identifier}}
+#pragma omp threadprivate // expected-error {{expected '(' after 'threadprivate'}}
 #pragma omp threadprivate( // expected-error {{expected identifier}} expected-error {{expected ')'}} expected-note {{to match this '('}}
 #pragma omp threadprivate() // expected-error {{expected identifier}}
 #pragma omp threadprivate(1) // expected-error {{expected unqualified-id}}
@@ -24,7 +24,7 @@ int foo() { // expected-note {{declared here}}
   return (a);
 }
 
-#pragma omp threadprivate a // expected-error {{expected '(' after 'threadprivate'}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'a'}}
+#pragma omp threadprivate a // expected-error {{expected '(' after 'threadprivate'}}
 #pragma omp threadprivate(d // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}}
 #pragma omp threadprivate(d)) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'd'}} expected-warning {{extra tokens at the end of '#pragma omp threadprivate' are ignored}}
 int x, y;
@@ -44,7 +44,7 @@ extern IncompleteSt e;
 #pragma omp threadprivate (e) // expected-error {{threadprivate variable with incomplete type 'IncompleteSt'}}
 
 int &f = a; // expected-note {{'f' defined here}}
-#pragma omp threadprivate (f) // expected-error {{arguments of '#pragma omp threadprivate' cannot be of reference type}}
+#pragma omp threadprivate (f) // expected-error {{arguments of '#pragma omp threadprivate' cannot be of reference type 'int &'}}
 
 class Class {
   private:

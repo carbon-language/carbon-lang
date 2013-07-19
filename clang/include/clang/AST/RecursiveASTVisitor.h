@@ -27,6 +27,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
@@ -417,6 +418,10 @@ private:
   bool TraverseDeclContextHelper(DeclContext *DC);
   bool TraverseFunctionHelper(FunctionDecl *D);
   bool TraverseVarHelper(VarDecl *D);
+  bool TraverseOMPClause(OMPClause *C);
+#define OPENMP_CLAUSE(Name, Class)                                      \
+  bool Visit##Class(Class *C);
+#include "clang/Basic/OpenMPKinds.def"
 
   struct EnqueueJob {
     Stmt *S;
@@ -2297,6 +2302,48 @@ DEF_TRAVERSE_STMT(ObjCDictionaryLiteral, { })
   
 // Traverse OpenCL: AsType, Convert.
 DEF_TRAVERSE_STMT(AsTypeExpr, { })
+
+// OpenMP directives.
+DEF_TRAVERSE_STMT(OMPParallelDirective, {
+  ArrayRef<OMPClause *> Clauses = S->clauses();
+  for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
+       I != E; ++I)
+    if (!TraverseOMPClause(*I)) return false;
+})
+
+// OpenMP clauses.
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseOMPClause(OMPClause *C) {
+  if (!C) return true;
+  switch (C->getClauseKind()) {
+#define OPENMP_CLAUSE(Name, Class)                                      \
+  case OMPC_##Name:                                                     \
+    return getDerived().Visit##Class(static_cast<Class*>(C));
+#include "clang/Basic/OpenMPKinds.def"
+  default: break;
+  }
+  return true;
+}
+
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C) {
+  return true;
+}
+
+#define PROCESS_OMP_CLAUSE_LIST(Class, Node)                                   \
+  for (OMPVarList<Class>::varlist_iterator I = Node->varlist_begin(),          \
+                                           E = Node->varlist_end();            \
+         I != E; ++I)                                                          \
+    TraverseStmt(*I);
+
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::VisitOMPPrivateClause(
+                                                      OMPPrivateClause *C) {
+  PROCESS_OMP_CLAUSE_LIST(OMPPrivateClause, C)
+  return true;
+}
+
+#undef PROCESS_OMP_CLAUSE_LIST
 
 // FIXME: look at the following tricky-seeming exprs to see if we
 // need to recurse on anything.  These are ones that have methods
