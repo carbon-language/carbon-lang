@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
@@ -29,6 +30,12 @@ enum ID {
 #include "Opts.inc"
 #undef PREFIX
 
+enum OptionFlags {
+  OptFlag1 = (1 << 4),
+  OptFlag2 = (1 << 5),
+  OptFlag3 = (1 << 6)
+};
+
 static const OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
@@ -42,7 +49,7 @@ namespace {
 class TestOptTable : public OptTable {
 public:
   TestOptTable()
-    : OptTable(InfoTable, sizeof(InfoTable) / sizeof(InfoTable[0])) {}
+    : OptTable(InfoTable, array_lengthof(InfoTable)) {}
 };
 }
 
@@ -58,14 +65,10 @@ const char *Args[] = {
   "-Gchuu", "2"
   };
 
-TEST(Support, OptionParsing) {
+TEST(Option, OptionParsing) {
   TestOptTable T;
   unsigned MAI, MAC;
-  OwningPtr<InputArgList>
-    AL(T.ParseArgs(Args,
-                   Args + (sizeof(Args) / sizeof(Args[0])),
-                   MAI,
-                   MAC));
+  OwningPtr<InputArgList> AL(T.ParseArgs(Args, array_endof(Args), MAI, MAC));
 
   // Check they all exist.
   EXPECT_TRUE(AL->hasArg(OPT_A));
@@ -103,4 +106,33 @@ TEST(Support, OptionParsing) {
   ASSERT_EQ(ASL.size(), 2u);
   EXPECT_EQ(StringRef(ASL[0]), "-C");
   EXPECT_EQ(StringRef(ASL[1]), "desu");
+}
+
+TEST(Option, ParseWithFlagExclusions) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+  OwningPtr<InputArgList> AL;
+
+  // Exclude flag3 to avoid parsing as OPT_SLASH_C.
+  AL.reset(T.ParseArgs(Args, array_endof(Args), MAI, MAC,
+                       /*FlagsToInclude=*/0,
+                       /*FlagsToExclude=*/OptFlag3));
+  EXPECT_TRUE(AL->hasArg(OPT_A));
+  EXPECT_TRUE(AL->hasArg(OPT_C));
+  EXPECT_FALSE(AL->hasArg(OPT_SLASH_C));
+
+  // Exclude flag1 to avoid parsing as OPT_C.
+  AL.reset(T.ParseArgs(Args, array_endof(Args), MAI, MAC,
+                       /*FlagsToInclude=*/0,
+                       /*FlagsToExclude=*/OptFlag1));
+  EXPECT_TRUE(AL->hasArg(OPT_B));
+  EXPECT_FALSE(AL->hasArg(OPT_C));
+  EXPECT_TRUE(AL->hasArg(OPT_SLASH_C));
+
+  const char *NewArgs[] = { "/C", "foo", "--C=bar" };
+  AL.reset(T.ParseArgs(NewArgs, array_endof(NewArgs), MAI, MAC));
+  EXPECT_TRUE(AL->hasArg(OPT_SLASH_C));
+  EXPECT_TRUE(AL->hasArg(OPT_C));
+  EXPECT_EQ(AL->getLastArgValue(OPT_SLASH_C), "foo");
+  EXPECT_EQ(AL->getLastArgValue(OPT_C), "bar");
 }
