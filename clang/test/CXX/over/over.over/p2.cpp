@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-template <typename T>
-T f0(T, T); // expected-note{{candidate}} expected-note{{candidate function}}
+template<typename T> T f0(T, T); //expected-note{{candidate}}
 
 void test_f0() {
   int (*f0a)(int, int) = f0;

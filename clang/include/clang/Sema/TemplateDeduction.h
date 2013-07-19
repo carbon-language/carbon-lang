@@ -20,7 +20,6 @@
 namespace clang {
 
 class TemplateArgumentList;
-class Sema;
 
 namespace sema {
 
@@ -163,124 +162,7 @@ public:
   Expr *Expression;
 };
 
-} // end namespace sema
-
-/// A structure used to record information about a failed
-/// template argument deduction, for diagnosis.
-struct DeductionFailureInfo {
-  /// A Sema::TemplateDeductionResult.
-  unsigned Result : 8;
-
-  /// \brief Indicates whether a diagnostic is stored in Diagnostic.
-  unsigned HasDiagnostic : 1;
-
-  /// \brief Opaque pointer containing additional data about
-  /// this deduction failure.
-  void *Data;
-
-  /// \brief A diagnostic indicating why deduction failed.
-  union {
-    void *Align;
-    char Diagnostic[sizeof(PartialDiagnosticAt)];
-  };
-
-  /// \brief Retrieve the diagnostic which caused this deduction failure,
-  /// if any.
-  PartialDiagnosticAt *getSFINAEDiagnostic();
-
-  /// \brief Retrieve the template parameter this deduction failure
-  /// refers to, if any.
-  TemplateParameter getTemplateParameter();
-
-  /// \brief Retrieve the template argument list associated with this
-  /// deduction failure, if any.
-  TemplateArgumentList *getTemplateArgumentList();
-
-  /// \brief Return the first template argument this deduction failure
-  /// refers to, if any.
-  const TemplateArgument *getFirstArg();
-
-  /// \brief Return the second template argument this deduction failure
-  /// refers to, if any.
-  const TemplateArgument *getSecondArg();
-
-  /// \brief Return the expression this deduction failure refers to,
-  /// if any.
-  Expr *getExpr();
-
-  /// \brief Free any memory associated with this deduction failure.
-  void Destroy();
-};
-
-/// TemplateSpecCandidate - This is a generalization of OverloadCandidate
-/// which keeps track of template argument deduction failure info, when
-/// handling explicit specializations (and instantiations) of templates
-/// beyond function overloading.
-/// For now, assume that the candidates are non-matching specializations.
-/// TODO: In the future, we may need to unify/generalize this with
-/// OverloadCandidate.
-struct TemplateSpecCandidate {
-  /// Specialization - The actual specialization that this candidate
-  /// represents. When NULL, this may be a built-in candidate.
-  Decl *Specialization;
-
-  /// Template argument deduction info
-  DeductionFailureInfo DeductionFailure;
-
-  void set(Decl *Spec, DeductionFailureInfo Info) {
-    Specialization = Spec;
-    DeductionFailure = Info;
-  }
-
-  /// Diagnose a template argument deduction failure.
-  void NoteDeductionFailure(Sema &S);
-};
-
-/// TemplateSpecCandidateSet - A set of generalized overload candidates,
-/// used in template specializations.
-/// TODO: In the future, we may need to unify/generalize this with
-/// OverloadCandidateSet.
-class TemplateSpecCandidateSet {
-  SmallVector<TemplateSpecCandidate, 16> Candidates;
-  SourceLocation Loc;
-
-  TemplateSpecCandidateSet(
-      const TemplateSpecCandidateSet &) LLVM_DELETED_FUNCTION;
-  void operator=(const TemplateSpecCandidateSet &) LLVM_DELETED_FUNCTION;
-
-  void destroyCandidates();
-
-public:
-  TemplateSpecCandidateSet(SourceLocation Loc) : Loc(Loc) {}
-  ~TemplateSpecCandidateSet() { destroyCandidates(); }
-
-  SourceLocation getLocation() const { return Loc; }
-
-  /// \brief Clear out all of the candidates.
-  /// TODO: This may be unnecessary.
-  void clear();
-
-  typedef SmallVector<TemplateSpecCandidate, 16>::iterator iterator;
-  iterator begin() { return Candidates.begin(); }
-  iterator end() { return Candidates.end(); }
-
-  size_t size() const { return Candidates.size(); }
-  bool empty() const { return Candidates.empty(); }
-
-  /// \brief Add a new candidate with NumConversions conversion sequence slots
-  /// to the overload set.
-  TemplateSpecCandidate &addCandidate() {
-    Candidates.push_back(TemplateSpecCandidate());
-    return Candidates.back();
-  }
-
-  void NoteCandidates(Sema &S, SourceLocation Loc);
-
-  void NoteCandidates(Sema &S, SourceLocation Loc) const {
-    const_cast<TemplateSpecCandidateSet *>(this)->NoteCandidates(S, Loc);
-  }
-};
-
-} // end namespace clang
+}
+}
 
 #endif

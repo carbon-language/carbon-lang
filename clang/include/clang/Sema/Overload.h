@@ -22,7 +22,6 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/Sema/SemaFixItUtils.h"
-#include "clang/Sema/TemplateDeduction.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
@@ -657,6 +656,53 @@ namespace clang {
     /// \brief The number of call arguments that were explicitly provided,
     /// to be used while performing partial ordering of function templates.
     unsigned ExplicitCallArguments;
+    
+    /// A structure used to record information about a failed
+    /// template argument deduction.
+    struct DeductionFailureInfo {
+      /// A Sema::TemplateDeductionResult.
+      unsigned Result : 8;
+
+      /// \brief Indicates whether a diagnostic is stored in Diagnostic.
+      unsigned HasDiagnostic : 1;
+
+      /// \brief Opaque pointer containing additional data about
+      /// this deduction failure.
+      void *Data;
+
+      /// \brief A diagnostic indicating why deduction failed.
+      union {
+        void *Align;
+        char Diagnostic[sizeof(PartialDiagnosticAt)];
+      };
+
+      /// \brief Retrieve the diagnostic which caused this deduction failure,
+      /// if any.
+      PartialDiagnosticAt *getSFINAEDiagnostic();
+      
+      /// \brief Retrieve the template parameter this deduction failure
+      /// refers to, if any.
+      TemplateParameter getTemplateParameter();
+      
+      /// \brief Retrieve the template argument list associated with this
+      /// deduction failure, if any.
+      TemplateArgumentList *getTemplateArgumentList();
+      
+      /// \brief Return the first template argument this deduction failure
+      /// refers to, if any.
+      const TemplateArgument *getFirstArg();
+
+      /// \brief Return the second template argument this deduction failure
+      /// refers to, if any.
+      const TemplateArgument *getSecondArg();
+
+      /// \brief Return the expression this deduction failure refers to,
+      /// if any.
+      Expr *getExpr();
+      
+      /// \brief Free any memory associated with this deduction failure.
+      void Destroy();
+    };
 
     union {
       DeductionFailureInfo DeductionFailure;

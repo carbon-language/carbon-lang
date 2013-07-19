@@ -15,9 +15,9 @@ struct X0 {
     return x + 1;  // expected-error{{invalid operands}}
   } 
   T* f0(T*, T*) { return T(); } // expected-warning{{expression which evaluates to zero treated as a null pointer constant of type 'int *'}}
-
-  template <typename U> T f0(T, U) { return T(); } // expected-note {{candidate template ignored: could not match 'int (int, U)' against 'int (int) const'}} \
-                                                   // expected-note {{candidate template ignored: could not match 'int' against 'int *'}}
+  
+  template<typename U>
+  T f0(T, U) { return T(); }
 };
 
 template<typename T>
@@ -59,14 +59,13 @@ template int *X2::f1(int *); // okay
 
 template void X2::f2(int *, int *); // expected-error{{ambiguous}}
 
-template <typename T>
-void print_type() {} // expected-note {{candidate template ignored: could not match 'void ()' against 'void (float *)'}}
+
+template<typename T> void print_type() { }
 
 template void print_type<int>();
 template void print_type<float>();
 
-template <typename T>
-void print_type(T *) {} // expected-note {{candidate template ignored: could not match 'void (int *)' against 'void (float *)'}}
+template<typename T> void print_type(T*) { }
 
 template void print_type(int*);
 template void print_type<int>(float*); // expected-error{{does not refer}}
@@ -95,7 +94,7 @@ namespace PR7622 {
 
   template<typename,typename>
   struct basic_streambuf{friend bob<>()}; // expected-error{{unknown type name 'bob'}} \
-                                          // expected-error{{expected member name or ';' after declaration specifiers}}
+  // expected-error{{expected member name or ';' after declaration specifiers}}
   template struct basic_streambuf<int>;
 }
 

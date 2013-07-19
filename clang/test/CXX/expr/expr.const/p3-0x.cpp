@@ -93,7 +93,7 @@ void c() {
     break;
   }
 }
-template <bool B> int f() { return B; } // expected-note {{candidate template ignored: invalid explicitly-specified argument for template parameter 'B'}}
+template<bool B> int f() { return B; }
 template int f<&S::operator int>(); // expected-error {{does not refer to a function template}}
 template int f<(bool)&S::operator int>();
 

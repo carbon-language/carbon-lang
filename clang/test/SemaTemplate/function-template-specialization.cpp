@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-template <int N>
-void f0(int (&array)[N]); // expected-note {{candidate template ignored: could not match 'int' against 'char'}}
+template<int N> void f0(int (&array)[N]);
 
 // Simple function template specialization (using overloading)
 template<> void f0(int (&array)[1]);
