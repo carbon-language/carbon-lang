@@ -141,8 +141,6 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = Mips::FMOV_D32;
   else if (Mips::FGR64RegClass.contains(DestReg, SrcReg))
     Opc = Mips::FMOV_D64;
-  else if (Mips::CCRRegClass.contains(DestReg, SrcReg))
-    Opc = Mips::MOVCCRToCCR;
   else if (Mips::CPU64RegsRegClass.contains(DestReg)) { // Copy to CPU64 Reg.
     if (Mips::CPU64RegsRegClass.contains(SrcReg))
       Opc = Mips::OR64, ZeroReg = Mips::ZERO_64;
