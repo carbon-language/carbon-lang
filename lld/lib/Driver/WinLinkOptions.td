@@ -9,6 +9,10 @@ def out : Separate<["-", "/"], "out">,
     HelpText<"Path to file to write output">;
 def out_c : Joined<["-", "/"], "out:">, Alias<out>;
 
+def defaultlib : Separate<["-", "/"], "defaultlib">,
+    HelpText<"Add the library to the list of input files">;
+def defaultlib_c : Joined<["-", "/"], "defaultlib:">, Alias<defaultlib>;
+
 def stack : Separate<["-", "/"], "stack">,
     HelpText<"Size of the stack">;
 def stack_c: Joined<["-", "/"], "stack:">, Alias<stack>;

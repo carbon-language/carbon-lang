@@ -9,6 +9,9 @@
 # RUN: lld -flavor link -out %t1 -subsystem console -libpath %p/Inputs \
 # RUN:    -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
 #
+# RUN: lld -flavor link -out %t1 -subsystem console -libpath %p/Inputs \
+# RUN:    -defaultlib vars.lib -- %t.obj && llvm-objdump -d %t1 | FileCheck %s
+#
 # RUN: LIB=%p/Inputs lld -flavor link -out %t1 -subsystem console \
 # RUN:    -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
 

@@ -290,6 +290,14 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());
 
+  // Handle -defaultlib
+  std::vector<StringRef> defaultLibs;
+  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_defaultlib),
+                               ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    defaultLibs.push_back((*it)->getValue());
+  }
+
   // Add input files
   std::vector<StringRef> inputPaths;
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
@@ -303,8 +311,15 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     for (int i = doubleDashPosition + 1; i < argc; ++i)
       inputPaths.push_back(argv[i]);
 
-  for (const StringRef &path : inputPaths)
+  // Add input files specified via the command line.
+  for (const StringRef path : inputPaths)
     info.appendInputFileOrLibrary(path);
+
+  // Add the library files specified by -defaultlib option. The files
+  // specified by the option should have lower precedence than the other files
+  // added above, which is important for link.exe compatibility.
+  for (const StringRef path : defaultLibs)
+    info.appendLibraryFile(path);
 
   // If -out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file
