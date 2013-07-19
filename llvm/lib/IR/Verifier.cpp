@@ -460,7 +460,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
   }
 
   if (GV.hasName() && (GV.getName() == "llvm.used" ||
-                       GV.getName() == "llvm.compiler_used")) {
+                       GV.getName() == "llvm.compiler.used")) {
     Assert1(!GV.hasInitializer() || GV.hasAppendingLinkage(),
             "invalid linkage for intrinsic global variable", &GV);
     Type *GVType = GV.getType()->getElementType();

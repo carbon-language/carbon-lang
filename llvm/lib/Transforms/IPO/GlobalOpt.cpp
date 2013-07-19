@@ -3040,7 +3040,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   return true;
 }
 
-/// \brief Given "llvm.used" or "llvm.compiler_used" as a global name, collect
+/// \brief Given "llvm.used" or "llvm.compiler.used" as a global name, collect
 /// the initializer elements of that global in Set and return the global itself.
 static GlobalVariable *
 collectUsedGlobalVariables(const Module &M, const char *Name,
@@ -3093,7 +3093,7 @@ static void setUsedInitializer(GlobalVariable &V,
 }
 
 namespace {
-/// \brief An easy to access representation of llvm.used and llvm.compiler_used.
+/// \brief An easy to access representation of llvm.used and llvm.compiler.used.
 class LLVMUsed {
   SmallPtrSet<GlobalValue *, 8> Used;
   SmallPtrSet<GlobalValue *, 8> CompilerUsed;
@@ -3104,7 +3104,7 @@ public:
   LLVMUsed(const Module &M) {
     UsedV = collectUsedGlobalVariables(M, "llvm.used", Used);
     CompilerUsedV =
-        collectUsedGlobalVariables(M, "llvm.compiler_used", CompilerUsed);
+        collectUsedGlobalVariables(M, "llvm.compiler.used", CompilerUsed);
   }
   typedef SmallPtrSet<GlobalValue *, 8>::iterator iterator;
   iterator usedBegin() { return Used.begin(); }
@@ -3135,13 +3135,13 @@ static bool hasUseOtherThanLLVMUsed(GlobalAlias &GA, const LLVMUsed &U) {
 
   assert((!U.usedCount(&GA) || !U.compilerUsedCount(&GA)) &&
          "We should have removed the duplicated "
-         "element from llvm.compiler_used");
+         "element from llvm.compiler.used");
   if (!GA.hasOneUse())
     // Strictly more than one use. So at least one is not in llvm.used and
-    // llvm.compiler_used.
+    // llvm.compiler.used.
     return true;
 
-  // Exactly one use. Check if it is in llvm.used or llvm.compiler_used.
+  // Exactly one use. Check if it is in llvm.used or llvm.compiler.used.
   return !U.usedCount(&GA) && !U.compilerUsedCount(&GA);
 }
 
@@ -3150,7 +3150,7 @@ static bool hasMoreThanOneUseOtherThanLLVMUsed(GlobalValue &V,
   unsigned N = 2;
   assert((!U.usedCount(&V) || !U.compilerUsedCount(&V)) &&
          "We should have removed the duplicated "
-         "element from llvm.compiler_used");
+         "element from llvm.compiler.used");
   if (U.usedCount(&V) || U.compilerUsedCount(&V))
     ++N;
   return V.hasNUsesOrMore(N);
