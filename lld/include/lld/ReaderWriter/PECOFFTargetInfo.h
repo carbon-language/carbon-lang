@@ -10,6 +10,8 @@
 #ifndef LLD_READER_WRITER_PECOFF_TARGET_INFO_H
 #define LLD_READER_WRITER_PECOFF_TARGET_INFO_H
 
+#include <vector>
+
 #include "lld/Core/TargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -42,6 +44,14 @@ public:
   virtual bool validateImpl(raw_ostream &diagnostics);
 
   virtual void addPasses(PassManager &pm) const;
+
+  void appendInputSearchPath(StringRef dirPath) {
+    _inputSearchPaths.push_back(dirPath);
+  }
+
+  const std::vector<StringRef> getInputSearchPaths() {
+    return _inputSearchPaths;
+  }
 
   void setStackReserve(uint64_t size) { _stackReserve = size; }
   void setStackCommit(uint64_t size) { _stackCommit = size; }
@@ -85,6 +95,7 @@ private:
   bool _nxCompat;
   bool _largeAddressAware;
 
+  std::vector<StringRef> _inputSearchPaths;
   mutable std::unique_ptr<Reader> _reader;
   mutable std::unique_ptr<Writer> _writer;
   llvm::BumpPtrAllocator _extraStrings;

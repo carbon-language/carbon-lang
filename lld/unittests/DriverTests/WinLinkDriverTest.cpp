@@ -17,6 +17,8 @@
 #include "lld/ReaderWriter/PECOFFTargetInfo.h"
 #include "llvm/Support/COFF.h"
 
+#include <vector>
+
 using namespace llvm;
 using namespace lld;
 
@@ -39,6 +41,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ("a.obj", inputFile(0));
   EXPECT_EQ("b.obj", inputFile(1));
   EXPECT_EQ("c.obj", inputFile(2));
+  EXPECT_TRUE(_info.getInputSearchPaths().empty());
   EXPECT_EQ(6, _info.getMinOSVersion().majorVersion);
   EXPECT_EQ(0, _info.getMinOSVersion().minorVersion);
   EXPECT_EQ(1024 * 1024ULL, _info.getStackReserve());
@@ -49,7 +52,7 @@ TEST_F(WinLinkParserTest, Basic) {
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
-  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe", "a.obj", 
+  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe", "a.obj",
                   nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _info.getSubsystem());
   EXPECT_EQ("a.exe", _info.outputPath());
@@ -70,6 +73,15 @@ TEST_F(WinLinkParserTest, NonStandardFileExtension) {
   EXPECT_EQ("foo.exe", _info.outputPath());
   EXPECT_EQ(1, inputFileCount());
   EXPECT_EQ("foo.o", inputFile(0));
+}
+
+TEST_F(WinLinkParserTest, Libpath) {
+  EXPECT_FALSE(parse("link.exe", "-libpath", "dir1", "-libpath", "dir2",
+                     nullptr));
+  const std::vector<StringRef> &paths = _info.getInputSearchPaths();
+  EXPECT_EQ((size_t)2, paths.size());
+  EXPECT_EQ("dir1", paths[0]);
+  EXPECT_EQ("dir2", paths[1]);
 }
 
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {

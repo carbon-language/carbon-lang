@@ -254,6 +254,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
     info.setEntrySymbolName(arg->getValue());
 
+  // Hanlde -libpath
+  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_libpath),
+                               ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    info.appendInputSearchPath((*it)->getValue());
+  }
+
   // Handle -force
   if (parsedArgs->getLastArg(OPT_force))
     info.setAllowRemainingUndefines(true);

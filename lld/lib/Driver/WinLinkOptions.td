@@ -25,6 +25,10 @@ def entry : Separate<["-", "/"], "entry">,
     HelpText<"Name of entry point symbol">;
 def entry_c: Joined<["-", "/"], "entry:">, Alias<entry>;
 
+def libpath : Separate<["-", "/"], "libpath">,
+    HelpText<"Additional library search path">;
+def libpath_c: Joined<["-", "/"], "libpath:">, Alias<libpath>;
+
 def force : Flag<["-", "/"], "force">,
     HelpText<"Allow undefined symbols when creating executables">;
 
