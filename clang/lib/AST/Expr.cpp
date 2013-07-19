@@ -2080,9 +2080,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     if (Ctx.getLangOpts().ObjCAutoRefCount &&
         ME->isInstanceMessage() &&
         !ME->getType()->isVoidType() &&
-        ME->getSelector().getIdentifierInfoForSlot(0) &&
-        ME->getSelector().getIdentifierInfoForSlot(0)
-                                               ->getName().startswith("init")) {
+        ME->getMethodFamily() == OMF_init) {
       WarnE = this;
       Loc = getExprLoc();
       R1 = ME->getSourceRange();
