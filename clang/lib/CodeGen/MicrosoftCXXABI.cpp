@@ -490,7 +490,8 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   const CGFunctionInfo *FInfo
       = &CGM.getTypes().arrangeCXXDestructor(Dtor, Dtor_Deleting);
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
-  llvm::Value *Callee = CGF.BuildVirtualCall(Dtor, Dtor_Deleting, This, Ty);
+  llvm::Value *Callee
+      = CGF.BuildVirtualCall(GlobalDecl(Dtor, Dtor_Deleting), This, Ty);
 
   ASTContext &Context = CGF.getContext();
   llvm::Value *ImplicitParam

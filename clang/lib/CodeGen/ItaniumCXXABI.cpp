@@ -834,7 +834,8 @@ void ItaniumCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
   const CGFunctionInfo *FInfo
     = &CGM.getTypes().arrangeCXXDestructor(Dtor, DtorType);
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
-  llvm::Value *Callee = CGF.BuildVirtualCall(Dtor, DtorType, This, Ty);
+  llvm::Value *Callee
+    = CGF.BuildVirtualCall(GlobalDecl(Dtor, DtorType), This, Ty);
 
   CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
                         /*ImplicitParam=*/0, QualType(), 0, 0);
