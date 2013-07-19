@@ -541,8 +541,8 @@ let Defs = [CC] in {
   def AGFR : BinaryRRE<"agf", 0xB918, null_frag, GR64, GR32>;
 
   // Addition of signed 16-bit immediates.
-  def AHI  : BinaryRI<"ahi",  0xA7A, add, GR32, imm32sx16>;
-  def AGHI : BinaryRI<"aghi", 0xA7B, add, GR64, imm64sx16>;
+  defm AHI  : BinaryRIAndK<"ahi",  0xA7A, 0xECD8, add, GR32, imm32sx16>;
+  defm AGHI : BinaryRIAndK<"aghi", 0xA7B, 0xECD9, add, GR64, imm64sx16>;
 
   // Addition of signed 32-bit immediates.
   def AFI  : BinaryRIL<"afi",  0xC29, add, GR32, simm32>;

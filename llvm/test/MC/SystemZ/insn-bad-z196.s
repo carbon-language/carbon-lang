@@ -1,6 +1,29 @@
 # For z196 only.
 # RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=z196 < %s 2> %t
 # RUN: FileCheck < %t %s
+
+#CHECK: error: invalid operand
+#CHECK: aghik	%r0, %r1, -32769
+#CHECK: error: invalid operand
+#CHECK: aghik	%r0, %r1, 32768
+#CHECK: error: invalid operand
+#CHECK: aghik	%r0, %r1, foo
+
+	aghik	%r0, %r1, -32769
+	aghik	%r0, %r1, 32768
+	aghik	%r0, %r1, foo
+
+#CHECK: error: invalid operand
+#CHECK: ahik	%r0, %r1, -32769
+#CHECK: error: invalid operand
+#CHECK: ahik	%r0, %r1, 32768
+#CHECK: error: invalid operand
+#CHECK: ahik	%r0, %r1, foo
+
+	ahik	%r0, %r1, -32769
+	ahik	%r0, %r1, 32768
+	ahik	%r0, %r1, foo
+
 #CHECK: error: invalid operand
 #CHECK: sllk	%r0,%r0,-524289
 #CHECK: error: invalid operand

@@ -70,6 +70,11 @@
 	aghi	%r0, foo
 
 #CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: aghik	%r1, %r2, 3
+
+	aghik	%r1, %r2, 3
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
 #CHECK: agrk	%r2,%r3,%r4
 
 	agrk	%r2,%r3,%r4
@@ -109,6 +114,11 @@
 	ahi	%r0, -32769
 	ahi	%r0, 32768
 	ahi	%r0, foo
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: ahik	%r1, %r2, 3
+
+	ahik	%r1, %r2, 3
 
 #CHECK: error: invalid operand
 #CHECK: ahy	%r0, -524289
