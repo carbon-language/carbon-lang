@@ -160,6 +160,16 @@
 	alfi	%r0, -1
 	alfi	%r0, (1 << 32)
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: alghsik	%r1, %r2, 3
+
+	alghsik	%r1, %r2, 3
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: alhsik	%r1, %r2, 3
+
+	alhsik	%r1, %r2, 3
+
 #CHECK: error: invalid operand
 #CHECK: alg	%r0, -524289
 #CHECK: error: invalid operand
