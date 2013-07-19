@@ -71,8 +71,8 @@ else:
   output = json.loads(lines[0])
   lines = lines[1:]
   if '\n'.join(lines) != text:
-    for i in range(min(len(buf), len(lines))):
-      buf[i] = lines[i]
+    common_length = min(len(buf), len(lines))
+    buf[:common_length] = lines[:common_length]
     for line in lines[len(buf):]:
       buf.append(line)
     del buf[len(lines):]
