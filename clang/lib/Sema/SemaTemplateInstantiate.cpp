@@ -2252,15 +2252,18 @@ Sema::InstantiateClassTemplateSpecialization(
   SmallVector<MatchResult, 4> Matched;
   SmallVector<ClassTemplatePartialSpecializationDecl *, 4> PartialSpecs;
   Template->getPartialSpecializations(PartialSpecs);
+  TemplateSpecCandidateSet FailedCandidates(PointOfInstantiation);
   for (unsigned I = 0, N = PartialSpecs.size(); I != N; ++I) {
     ClassTemplatePartialSpecializationDecl *Partial = PartialSpecs[I];
-    TemplateDeductionInfo Info(PointOfInstantiation);
+    TemplateDeductionInfo Info(FailedCandidates.getLocation());
     if (TemplateDeductionResult Result
           = DeduceTemplateArguments(Partial,
                                     ClassTemplateSpec->getTemplateArgs(),
                                     Info)) {
-      // FIXME: Store the failed-deduction information for use in
-      // diagnostics, later.
+      // Store the failed-deduction information for use in diagnostics, later.
+      // TODO: Actually use the failed-deduction info?
+      FailedCandidates.addCandidate()
+          .set(Partial, MakeDeductionFailureInfo(Context, Result, Info));
       (void)Result;
     } else {
       Matched.push_back(PartialSpecMatchResult());
