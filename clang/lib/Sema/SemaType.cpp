@@ -38,6 +38,12 @@
 
 using namespace clang;
 
+enum TypeDiagSelector {
+  TDS_Function,
+  TDS_Pointer,
+  TDS_ObjCObjOrBlock
+};
+
 /// isOmittedBlockReturnType - Return true if this declarator is missing a
 /// return type because this is a omitted return type on a block literal.
 static bool isOmittedBlockReturnType(const Declarator &D) {
@@ -59,23 +65,15 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
 /// doesn't apply to the given type.
 static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
                                      QualType type) {
-  bool useExpansionLoc = false;
-
-  unsigned diagID = 0;
+  TypeDiagSelector WhichType;
+  bool useExpansionLoc = true;
   switch (attr.getKind()) {
-  case AttributeList::AT_ObjCGC:
-    diagID = diag::warn_pointer_attribute_wrong_type;
-    useExpansionLoc = true;
-    break;
-
-  case AttributeList::AT_ObjCOwnership:
-    diagID = diag::warn_objc_object_attribute_wrong_type;
-    useExpansionLoc = true;
-    break;
-
+  case AttributeList::AT_ObjCGC:        WhichType = TDS_Pointer; break;
+  case AttributeList::AT_ObjCOwnership: WhichType = TDS_ObjCObjOrBlock; break;
   default:
     // Assume everything else was a function attribute.
-    diagID = diag::warn_function_attribute_wrong_type;
+    WhichType = TDS_Function;
+    useExpansionLoc = false;
     break;
   }
 
@@ -91,7 +89,8 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
     }
   }
 
-  S.Diag(loc, diagID) << name << type;
+  S.Diag(loc, diag::warn_type_attribute_wrong_type) << name << WhichType
+    << type;
 }
 
 // objc_gc applies to Objective-C pointers or, otherwise, to the
@@ -4004,8 +4003,8 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     case Qualifiers::OCL_Weak: name = "__weak"; break;
     case Qualifiers::OCL_Autoreleasing: name = "__autoreleasing"; break;
     }
-    S.Diag(AttrLoc, diag::warn_objc_object_attribute_wrong_type)
-      << name << type;
+    S.Diag(AttrLoc, diag::warn_type_attribute_wrong_type) << name
+      << TDS_ObjCObjOrBlock << type;
   }
 
   QualType origType = type;
