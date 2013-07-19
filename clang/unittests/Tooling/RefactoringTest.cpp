@@ -332,5 +332,20 @@ TEST(Replacement, TemplatedFunctionCall) {
   expectReplacementAt(CallToF.Replace, "input.cc", 43, 8);
 }
 
+TEST(Range, overlaps) {
+  EXPECT_TRUE(Range(10, 10).overlapsWith(Range(0, 11)));
+  EXPECT_TRUE(Range(0, 11).overlapsWith(Range(10, 10)));
+  EXPECT_FALSE(Range(10, 10).overlapsWith(Range(0, 10)));
+  EXPECT_FALSE(Range(0, 10).overlapsWith(Range(10, 10)));
+  EXPECT_TRUE(Range(0, 10).overlapsWith(Range(2, 6)));
+}
+
+TEST(Range, contains) {
+  EXPECT_TRUE(Range(0, 10).contains(Range(0, 10)));
+  EXPECT_TRUE(Range(0, 10).contains(Range(2, 6)));
+  EXPECT_FALSE(Range(2, 6).contains(Range(0, 10)));
+  EXPECT_FALSE(Range(0, 10).contains(Range(0, 11)));
+}
+
 } // end namespace tooling
 } // end namespace clang
