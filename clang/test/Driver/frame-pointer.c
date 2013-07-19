@@ -11,6 +11,11 @@
 // RUN: %clang -target x86_64-pc-linux -### -S -O3 %s -o %t.s 2>&1 | FileCheck -check-prefix=CHECK3-64 %s
 // RUN: %clang -target x86_64-pc-linux -### -S -Os %s -o %t.s 2>&1 | FileCheck -check-prefix=CHECKs-64 %s
 
+// Trust the above to get the optimizations right, and just test other targets
+// that want this by default.
+// RUN: %clang -target s390x-pc-linux -### -S -O0 %s -o %t.s 2>&1 | FileCheck -check-prefix=CHECK0-64 %s
+// RUN: %clang -target s390x-pc-linux -### -S -O1 %s -o %t.s 2>&1 | FileCheck -check-prefix=CHECK1-64 %s
+
 // CHECK0-32: -mdisable-fp-elim
 // CHECK1-32-NOT: -mdisable-fp-elim
 // CHECK2-32-NOT: -mdisable-fp-elim

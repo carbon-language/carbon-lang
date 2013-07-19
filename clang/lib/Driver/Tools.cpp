@@ -1799,9 +1799,10 @@ static bool shouldUseFramePointer(const ArgList &Args,
                                options::OPT_fomit_frame_pointer))
     return A->getOption().matches(options::OPT_fno_omit_frame_pointer);
 
-  // Don't use a frame pointer on linux x86 and x86_64 if optimizing.
+  // Don't use a frame pointer on linux x86, x86_64 and z if optimizing.
   if ((Triple.getArch() == llvm::Triple::x86_64 ||
-       Triple.getArch() == llvm::Triple::x86) &&
+       Triple.getArch() == llvm::Triple::x86 ||
+       Triple.getArch() == llvm::Triple::systemz) &&
       Triple.getOS() == llvm::Triple::Linux) {
     if (Arg *A = Args.getLastArg(options::OPT_O_Group))
       if (!A->getOption().matches(options::OPT_O0))
@@ -1817,9 +1818,10 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
                                options::OPT_momit_leaf_frame_pointer))
     return A->getOption().matches(options::OPT_mno_omit_leaf_frame_pointer);
 
-  // Don't use a leaf frame pointer on linux x86 and x86_64 if optimizing.
+  // Don't use a leaf frame pointer on linux x86, x86_64 and z if optimizing.
   if ((Triple.getArch() == llvm::Triple::x86_64 ||
-       Triple.getArch() == llvm::Triple::x86) &&
+       Triple.getArch() == llvm::Triple::x86 ||
+       Triple.getArch() == llvm::Triple::systemz) &&
       Triple.getOS() == llvm::Triple::Linux) {
     if (Arg *A = Args.getLastArg(options::OPT_O_Group))
       if (!A->getOption().matches(options::OPT_O0))
