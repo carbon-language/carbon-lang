@@ -692,36 +692,6 @@ error_code createUniqueDirectory(const Twine &Prefix,
                             true, 0, FS_Dir);
 }
 
-error_code openFileForWrite(const Twine &Name, int &ResultFD,
-                            sys::fs::OpenFlags Flags, unsigned Mode) {
-  // Verify that we don't have both "append" and "excl".
-  assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
-         "Cannot specify both 'excl' and 'append' file creation flags!");
-
-  int OpenFlags = O_WRONLY | O_CREAT;
-
-#ifdef O_BINARY
-  if (Flags & F_Binary)
-    OpenFlags |= O_BINARY;
-#endif
-
-  if (Flags & F_Append)
-    OpenFlags |= O_APPEND;
-  else
-    OpenFlags |= O_TRUNC;
-
-  if (Flags & F_Excl)
-    OpenFlags |= O_EXCL;
-
-  SmallString<128> Storage;
-  StringRef P = Name.toNullTerminatedStringRef(Storage);
-  while ((ResultFD = open(P.begin(), OpenFlags, Mode)) < 0) {
-    if (errno != EINTR)
-      return error_code(errno, system_category());
-  }
-  return error_code::success();
-}
-
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
 

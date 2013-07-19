@@ -1071,6 +1071,60 @@ error_code openFileForRead(const Twine &Name, int &ResultFD) {
   return error_code::success();
 }
 
+error_code openFileForWrite(const Twine &Name, int &ResultFD,
+                            sys::fs::OpenFlags Flags, unsigned Mode) {
+  // Verify that we don't have both "append" and "excl".
+  assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
+         "Cannot specify both 'excl' and 'append' file creation flags!");
+
+  SmallString<128> PathStorage;
+  SmallVector<wchar_t, 128> PathUTF16;
+
+  if (error_code EC = UTF8ToUTF16(Name.toStringRef(PathStorage),
+                                  PathUTF16))
+    return EC;
+
+  DWORD CreationDisposition;
+  if (Flags & F_Excl)
+    CreationDisposition = CREATE_NEW;
+  else if (Flags & F_Append) 
+    CreationDisposition = OPEN_ALWAYS;
+  else
+    CreationDisposition = CREATE_ALWAYS;
+
+  HANDLE H = ::CreateFileW(PathUTF16.begin(), GENERIC_WRITE,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                           CreationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
+
+  if (H == INVALID_HANDLE_VALUE) {
+    error_code EC = windows_error(::GetLastError());
+    // Provide a better error message when trying to open directories.
+    // This only runs if we failed to open the file, so there is probably
+    // no performances issues.
+    if (EC != windows_error::access_denied)
+      return EC;
+    if (is_directory(Name))
+      return error_code(errc::is_a_directory, posix_category());
+    return EC;
+  }
+
+  int OpenFlags = 0;
+  if (Flags & F_Append)
+    OpenFlags |= _O_APPEND;
+
+  if (!(Flags & F_Binary))
+    OpenFlags |= _O_TEXT;
+
+  int FD = ::_open_osfhandle(intptr_t(H), OpenFlags);
+  if (FD == -1) {
+    ::CloseHandle(H);
+    return windows_error::invalid_handle;
+  }
+
+  ResultFD = FD;
+  return error_code::success();
+}
+
 } // end namespace fs
 } // end namespace sys
 } // end namespace llvm
