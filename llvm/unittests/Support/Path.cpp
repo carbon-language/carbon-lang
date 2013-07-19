@@ -10,6 +10,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
@@ -355,6 +356,36 @@ TEST_F(FileSystemTest, Magic) {
     EXPECT_EQ(i->magic, fs::identify_magic(magic));
   }
 }
+
+#ifdef LLVM_ON_WIN32
+TEST_F(FileSystemTest, CarriageReturn) {
+  SmallString<128> FilePathname(TestDirectory);
+  std::string ErrMsg;
+  path::append(FilePathname, "test");
+
+  {
+    raw_fd_ostream File(FilePathname.c_str(), ErrMsg);
+    EXPECT_EQ(ErrMsg, "");
+    File << '\n';
+  }
+  {
+    OwningPtr<MemoryBuffer> Buf;
+    MemoryBuffer::getFile(FilePathname, Buf);
+    EXPECT_EQ(Buf->getBuffer(), "\r\n");
+  }
+
+  {
+    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_Binary);
+    EXPECT_EQ(ErrMsg, "");
+    File << '\n';
+  }
+  {
+    OwningPtr<MemoryBuffer> Buf;
+    MemoryBuffer::getFile(FilePathname, Buf);
+    EXPECT_EQ(Buf->getBuffer(), "\n");
+  }
+}
+#endif
 
 TEST_F(FileSystemTest, FileMapping) {
   // Create a temp file.
