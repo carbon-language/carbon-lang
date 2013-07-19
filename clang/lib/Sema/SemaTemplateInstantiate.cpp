@@ -883,6 +883,16 @@ bool TemplateInstantiator::AlreadyTransformed(QualType T) {
   return true;
 }
 
+static TemplateArgument
+getPackSubstitutedTemplateArgument(Sema &S, TemplateArgument Arg) {
+  assert(S.ArgumentPackSubstitutionIndex >= 0);        
+  assert(S.ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
+  Arg = Arg.pack_begin()[S.ArgumentPackSubstitutionIndex];
+  if (Arg.isPackExpansion())
+    Arg = Arg.getPackExpansionPattern();
+  return Arg;
+}
+
 Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
   if (!D)
     return 0;
@@ -902,10 +912,7 @@ Decl *TemplateInstantiator::TransformDecl(SourceLocation Loc, Decl *D) {
       if (TTP->isParameterPack()) {
         assert(Arg.getKind() == TemplateArgument::Pack && 
                "Missing argument pack");
-        
-        assert(getSema().ArgumentPackSubstitutionIndex >= 0);        
-        assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
-        Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+        Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
       }
 
       TemplateName Template = Arg.getAsTemplate();
@@ -950,8 +957,7 @@ TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D,
         if (getSema().ArgumentPackSubstitutionIndex == -1)
           return 0;
         
-        assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
-        Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+        Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
       }
 
       QualType T = Arg.getAsType();
@@ -1053,9 +1059,8 @@ TemplateName TemplateInstantiator::TransformTemplateName(CXXScopeSpec &SS,
           // keep the entire argument pack.
           return getSema().Context.getSubstTemplateTemplateParmPack(TTP, Arg);
         }
-        
-        assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
-        Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+
+        Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
       }
       
       TemplateName Template = Arg.getAsTemplate();
@@ -1077,11 +1082,9 @@ TemplateName TemplateInstantiator::TransformTemplateName(CXXScopeSpec &SS,
     if (getSema().ArgumentPackSubstitutionIndex == -1)
       return Name;
     
-    const TemplateArgument &ArgPack = SubstPack->getArgumentPack();
-    assert(getSema().ArgumentPackSubstitutionIndex < (int)ArgPack.pack_size() &&
-           "Pack substitution index out-of-range");
-    return ArgPack.pack_begin()[getSema().ArgumentPackSubstitutionIndex]
-    .getAsTemplate();
+    TemplateArgument Arg = SubstPack->getArgumentPack();
+    Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
+    return Arg.getAsTemplate();
   }
   
   return inherited::TransformTemplateName(SS, Name, NameLoc, ObjectType, 
@@ -1146,8 +1149,7 @@ TemplateInstantiator::TransformTemplateParmRefExpr(DeclRefExpr *E,
                                                                     Arg);
     }
     
-    assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
-    Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+    Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
   }
 
   return transformNonTypeTemplateParmRef(NTTP, E->getLocation(), Arg);
@@ -1159,14 +1161,6 @@ ExprResult TemplateInstantiator::transformNonTypeTemplateParmRef(
                                                  TemplateArgument arg) {
   ExprResult result;
   QualType type;
-
-  // If the argument is a pack expansion, the parameter must actually be a
-  // parameter pack, and we should substitute the pattern itself, producing
-  // an expression which contains an unexpanded parameter pack.
-  if (arg.isPackExpansion()) {
-    assert(parm->isParameterPack() && "pack expansion for non-pack");
-    arg = arg.getPackExpansionPattern();
-  }
 
   // The template argument itself might be an expression, in which
   // case we just return that expression.
@@ -1233,12 +1227,9 @@ TemplateInstantiator::TransformSubstNonTypeTemplateParmPackExpr(
     // We aren't expanding the parameter pack, so just return ourselves.
     return getSema().Owned(E);
   }
-  
-  const TemplateArgument &ArgPack = E->getArgumentPack();
-  unsigned Index = (unsigned)getSema().ArgumentPackSubstitutionIndex;
-  assert(Index < ArgPack.pack_size() && "Substitution index out-of-range");
-  
-  const TemplateArgument &Arg = ArgPack.pack_begin()[Index];
+
+  TemplateArgument Arg = E->getArgumentPack();
+  Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
   return transformNonTypeTemplateParmRef(E->getParameterPack(),
                                          E->getParameterPackLocation(),
                                          Arg);
@@ -1409,8 +1400,7 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
         return Result;
       }
       
-      assert(getSema().ArgumentPackSubstitutionIndex < (int)Arg.pack_size());
-      Arg = Arg.pack_begin()[getSema().ArgumentPackSubstitutionIndex];
+      Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
     }
     
     assert(Arg.getKind() == TemplateArgument::Type &&
@@ -1458,12 +1448,11 @@ TemplateInstantiator::TransformSubstTemplateTypeParmPackType(
     NewTL.setNameLoc(TL.getNameLoc());
     return TL.getType();
   }
-  
-  const TemplateArgument &ArgPack = TL.getTypePtr()->getArgumentPack();
-  unsigned Index = (unsigned)getSema().ArgumentPackSubstitutionIndex;
-  assert(Index < ArgPack.pack_size() && "Substitution index out-of-range");
-  
-  QualType Result = ArgPack.pack_begin()[Index].getAsType();
+
+  TemplateArgument Arg = TL.getTypePtr()->getArgumentPack();
+  Arg = getPackSubstitutedTemplateArgument(getSema(), Arg);
+  QualType Result = Arg.getAsType();
+
   Result = getSema().Context.getSubstTemplateTypeParmType(
                                       TL.getTypePtr()->getReplacedParameter(),
                                                           Result);
