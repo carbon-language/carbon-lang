@@ -64,7 +64,7 @@ public:
   /// This constructor can change argc and argv contents, e.g. consume
   /// command-line options used for creating FixedCompilationDatabase.
   /// This constructor exits program in case of error.
-  CommonOptionsParser(int &argc, const char **argv);
+  CommonOptionsParser(int &argc, const char **argv, const char *Overview = 0);
 
   /// Returns a reference to the loaded compilations database.
   CompilationDatabase &getCompilations() {
