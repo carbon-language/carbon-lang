@@ -1253,7 +1253,7 @@ public:
     // Count scheduled resources that have been executed. Resources are
     // considered executed if they become ready in the time that it takes to
     // saturate any resource including the one in question. Counts are scaled
-    // for direct comparison with other resources. Counts ca be compared with
+    // for direct comparison with other resources. Counts can be compared with
     // MOps * getMicroOpFactor and Latency * getLatencyFactor.
     SmallVector<unsigned, 16> ExecutedResCounts;
 
@@ -1658,7 +1658,7 @@ void ConvergingScheduler::SchedBoundary::setPolicy(CandPolicy &Policy,
           << Rem->CriticalPath << "\n");
   }
   // If the same resource is limiting inside and outside the zone, do nothing.
-  if (IsResourceLimited && OtherResLimited && (ZoneCritResIdx == OtherCritIdx))
+  if (ZoneCritResIdx == OtherCritIdx)
     return;
 
   DEBUG(
@@ -1760,11 +1760,9 @@ countResource(unsigned PIdx, unsigned Cycles, unsigned ReadyCycle) {
   assert(Rem->RemainingCounts[PIdx] >= Count && "resource double counted");
   Rem->RemainingCounts[PIdx] -= Count;
 
-  // Check if this resource exceeds the current critical resource by a full
-  // cycle. If so, it becomes the critical resource.
-  if (ZoneCritResIdx != PIdx
-      && ((int)(getResourceCount(PIdx) - getCriticalCount())
-          >= (int)SchedModel->getLatencyFactor())) {
+  // Check if this resource exceeds the current critical resource. If so, it
+  // becomes the critical resource.
+  if (ZoneCritResIdx != PIdx && (getResourceCount(PIdx) > getCriticalCount())) {
     ZoneCritResIdx = PIdx;
     DEBUG(dbgs() << "  *** Critical resource "
           << getResourceName(PIdx) << ": "
