@@ -79,6 +79,7 @@ namespace SystemZII {
 
 class SystemZInstrInfo : public SystemZGenInstrInfo {
   const SystemZRegisterInfo RI;
+  SystemZTargetMachine &TM;
 
   void splitMove(MachineBasicBlock::iterator MI, unsigned NewOpcode) const;
   void splitAdjDynAlloc(MachineBasicBlock::iterator MI) const;
@@ -119,6 +120,10 @@ public:
                          unsigned DestReg, int FrameIdx,
                          const TargetRegisterClass *RC,
                          const TargetRegisterInfo *TRI) const LLVM_OVERRIDE;
+  virtual MachineInstr *
+    convertToThreeAddress(MachineFunction::iterator &MFI,
+                          MachineBasicBlock::iterator &MBBI,
+                          LiveVariables *LV) const;
   virtual MachineInstr *
     foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                           const SmallVectorImpl<unsigned> &Ops,

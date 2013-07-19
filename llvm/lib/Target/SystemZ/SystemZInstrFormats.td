@@ -34,6 +34,12 @@ class InstSystemZ<int size, dag outs, dag ins, string asmstr,
   string OpKey = "";
   string OpType = "none";
 
+  // Many distinct-operands instructions have older 2-operand equivalents.
+  // NumOpsKey uniquely identifies one of these 2-operand and 3-operand pairs,
+  // with NumOpsValue being "2" or "3" as appropriate.
+  string NumOpsKey = "";
+  string NumOpsValue = "none";
+
   // True if this instruction is a simple D(X,B) load of a register
   // (with no sign or zero extension).
   bit SimpleBDXLoad = 0;
@@ -86,12 +92,22 @@ def getDisp20Opcode : InstrMapping {
   let ValueCols = [["20"]];
 }
 
+// Return the memory form of a register instruction.
 def getMemOpcode : InstrMapping {
   let FilterClass = "InstSystemZ";
   let RowFields = ["OpKey"];
   let ColFields = ["OpType"];
   let KeyCol = ["reg"];
   let ValueCols = [["mem"]];
+}
+
+// Return the 3-operand form of a 2-operand instruction.
+def getThreeOperandOpcode : InstrMapping {
+  let FilterClass = "InstSystemZ";
+  let RowFields = ["NumOpsKey"];
+  let ColFields = ["NumOpsValue"];
+  let KeyCol = ["2"];
+  let ValueCols = [["3"]];
 }
 
 //===----------------------------------------------------------------------===//
@@ -833,9 +849,13 @@ class ShiftRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
 
 multiclass ShiftRSAndK<string mnemonic, bits<8> opcode1, bits<16> opcode2,
                        SDPatternOperator operator, RegisterOperand cls> {
-  def K  : ShiftRSY<mnemonic##"k", opcode2, null_frag, cls>,
-           Requires<[FeatureDistinctOps]>;
-  def "" : ShiftRS<mnemonic, opcode1, operator, cls>;
+  let NumOpsKey = mnemonic in {
+    let NumOpsValue = "3" in
+      def K  : ShiftRSY<mnemonic##"k", opcode2, null_frag, cls>,
+               Requires<[FeatureDistinctOps]>;
+    let NumOpsValue = "2", isConvertibleToThreeAddress = 1 in
+      def "" : ShiftRS<mnemonic, opcode1, operator, cls>;
+  }
 }
 
 class CompareRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,

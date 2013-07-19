@@ -12,9 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZInstrInfo.h"
+#include "SystemZTargetMachine.h"
 #include "SystemZInstrBuilder.h"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Target/TargetMachine.h"
 
 #define GET_INSTRINFO_CTOR
 #define GET_INSTRMAP_INFO
@@ -24,7 +25,7 @@ using namespace llvm;
 
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
   : SystemZGenInstrInfo(SystemZ::ADJCALLSTACKDOWN, SystemZ::ADJCALLSTACKUP),
-    RI(tm) {
+    RI(tm), TM(tm) {
 }
 
 // MI is a 128-bit load or store.  Split it into two 64-bit loads or stores,
@@ -349,6 +350,48 @@ static bool isSimpleBD12Move(const MachineInstr *MI, unsigned Flag) {
   return ((MCID.TSFlags & Flag) &&
           isUInt<12>(MI->getOperand(2).getImm()) &&
           MI->getOperand(3).getReg() == 0);
+}
+
+MachineInstr *
+SystemZInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
+                                        MachineBasicBlock::iterator &MBBI,
+                                        LiveVariables *LV) const {
+  MachineInstr *MI = MBBI;
+  MachineBasicBlock *MBB = MI->getParent();
+
+  unsigned Opcode = MI->getOpcode();
+  unsigned NumOps = MI->getNumOperands();
+
+  // Try to convert something like SLL into SLLK, if supported.
+  // We prefer to keep the two-operand form where possible both
+  // because it tends to be shorter and because some instructions
+  // have memory forms that can be used during spilling.
+  if (TM.getSubtargetImpl()->hasDistinctOps()) {
+    int ThreeOperandOpcode = SystemZ::getThreeOperandOpcode(Opcode);
+    if (ThreeOperandOpcode >= 0) {
+      unsigned DestReg = MI->getOperand(0).getReg();
+      MachineOperand &Src = MI->getOperand(1);
+      MachineInstrBuilder MIB = BuildMI(*MBB, MBBI, MI->getDebugLoc(),
+                                        get(ThreeOperandOpcode), DestReg);
+      // Keep the kill state, but drop the tied flag.
+      MIB.addReg(Src.getReg(), getKillRegState(Src.isKill()));
+      // Keep the remaining operands as-is.
+      for (unsigned I = 2; I < NumOps; ++I)
+        MIB.addOperand(MI->getOperand(I));
+      MachineInstr *NewMI = MIB;
+
+      // Transfer killing information to the new instruction.
+      if (LV) {
+        for (unsigned I = 1; I < NumOps; ++I) {
+          MachineOperand &Op = MI->getOperand(I);
+          if (Op.isReg() && Op.isKill())
+            LV->replaceKillInstruction(Op.getReg(), MI, NewMI);
+        }
+      }
+      return MIB;
+    }
+  }
+  return 0;
 }
 
 MachineInstr *
