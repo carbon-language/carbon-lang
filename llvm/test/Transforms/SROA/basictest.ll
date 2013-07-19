@@ -1318,12 +1318,12 @@ define void @PR15805(i1 %a, i1 %b) {
   ret void
 }
 
-define void @PR16651(i8* %a) {
+define void @PR16651.1(i8* %a) {
 ; This test case caused a crash due to the volatile memcpy in combination with
 ; lowering to integer loads and stores of a width other than that of the original
 ; memcpy.
 ;
-; CHECK-LABEL: @PR16651(
+; CHECK-LABEL: @PR16651.1(
 ; CHECK: alloca i16
 ; CHECK: alloca i8
 ; CHECK: alloca i8
@@ -1336,4 +1336,24 @@ entry:
   %b.gep = getelementptr inbounds i8* %b.cast, i32 2
   load i8* %b.gep, align 2
   unreachable
+}
+
+define void @PR16651.2() {
+; This test case caused a crash due to failing to promote given a select that
+; can't be speculated. It shouldn't be promoted, but we missed that fact when
+; analyzing whether we could form a vector promotion because that code didn't
+; bail on select instructions.
+;
+; CHECK-LABEL: @PR16651.2(
+; CHECK: alloca <2 x float>
+; CHECK: ret void
+
+entry:
+  %tv1 = alloca { <2 x float>, <2 x float> }, align 8
+  %0 = getelementptr { <2 x float>, <2 x float> }* %tv1, i64 0, i32 1
+  store <2 x float> undef, <2 x float>* %0, align 8
+  %1 = getelementptr inbounds { <2 x float>, <2 x float> }* %tv1, i64 0, i32 1, i64 0
+  %cond105.in.i.i = select i1 undef, float* null, float* %1
+  %cond105.i.i = load float* %cond105.in.i.i, align 8
+  ret void
 }

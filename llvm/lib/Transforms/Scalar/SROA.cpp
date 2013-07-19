@@ -1539,6 +1539,8 @@ static bool isVectorPromotionViableForSlice(
     }
     if (!canConvertValue(DL, STy, SliceTy))
       return false;
+  } else {
+    return false;
   }
 
   return true;
