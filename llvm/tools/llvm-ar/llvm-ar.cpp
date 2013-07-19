@@ -382,12 +382,15 @@ class NewArchiveIterator {
 public:
   NewArchiveIterator(object::Archive::child_iterator I, Twine Name);
   NewArchiveIterator(std::vector<std::string>::const_iterator I, Twine Name);
+  NewArchiveIterator();
   bool isNewMember() const;
   object::Archive::child_iterator getOld() const;
   const char *getNew() const;
   StringRef getMemberName() const { return MemberName; }
 };
 }
+
+NewArchiveIterator::NewArchiveIterator() {}
 
 NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
                                        Twine Name)
@@ -415,14 +418,20 @@ const char *NewArchiveIterator::getNew() const {
 
 template <typename T>
 void addMember(std::vector<NewArchiveIterator> &Members,
-               std::string &StringTable, T I, StringRef Name) {
+               std::string &StringTable, T I, StringRef Name, int Pos = -1) {
   if (Name.size() < 16) {
     NewArchiveIterator NI(I, Twine(Name) + "/");
-    Members.push_back(NI);
+    if (Pos == -1)
+      Members.push_back(NI);
+    else
+      Members[Pos] = NI;
   } else {
     int MapIndex = StringTable.size();
     NewArchiveIterator NI(I, Twine("/") + Twine(MapIndex));
-    Members.push_back(NI);
+    if (Pos == -1)
+      Members.push_back(NI);
+    else
+      Members[Pos] = NI;
     StringTable += Name;
     StringTable += "/\n";
   }
@@ -462,6 +471,8 @@ computeNewArchiveMembers(ArchiveOperation Operation,
         else
           InsertPos = Pos + 1;
       }
+      if (InsertPos == Pos)
+        Ret.resize(Ret.size() + Members.size());
       if (Operation != QuickAppend && !Members.empty()) {
         std::vector<std::string>::iterator MI =
             std::find_if(Members.begin(), Members.end(), HasName(Name));
@@ -488,23 +499,30 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   if (Operation == Delete)
     return Ret;
 
+  if (!RelPos.empty() && InsertPos == -1)
+    fail("Insertion point not found");
+
   if (Operation == Move) {
+    if (Members.size() != Moved.size())
+      fail("A member to be moved is not present in the archive");
+
     if (RelPos.empty()) {
       Ret.insert(Ret.end(), Moved.begin(), Moved.end());
       return Ret;
     }
-    if (InsertPos == -1)
-      fail("Insertion point not found");
     assert(unsigned(InsertPos) <= Ret.size());
-    Ret.insert(Ret.begin() + InsertPos, Moved.begin(), Moved.end());
+    std::copy(Moved.begin(), Moved.end(), Ret.begin() + InsertPos);
     return Ret;
   }
 
+  int Pos = InsertPos;
   for (std::vector<std::string>::iterator I = Members.begin(),
                                           E = Members.end();
        I != E; ++I) {
     StringRef Name = sys::path::filename(*I);
-    addMember(Ret, StringTable, I, Name);
+    addMember(Ret, StringTable, I, Name, Pos);
+    if (Pos != -1)
+      ++Pos;
   }
 
   return Ret;
