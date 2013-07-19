@@ -564,10 +564,16 @@ defm : SXB<add, GR64, AGFR>;
 let Defs = [CC] in {
   // Addition of a register.
   let isCommutable = 1 in {
-    def ALR  : BinaryRR <"al",  0x1E,   addc, GR32, GR32>;
-    def ALGR : BinaryRRE<"alg", 0xB90A, addc, GR64, GR64>;
+    defm ALR : BinaryRRAndK<"al", 0x1E, 0xB9FA, addc, GR32, GR32>;
+    defm ALGR : BinaryRREAndK<"alg", 0xB90A, 0xB9EA, addc, GR64, GR64>;
   }
   def ALGFR : BinaryRRE<"algf", 0xB91A, null_frag, GR64, GR32>;
+
+  // Addition of signed 16-bit immediates.
+  def ALHSIK  : BinaryRIE<"alhsik",  0xECDA, addc, GR32, imm32sx16>,
+                Requires<[FeatureDistinctOps]>;
+  def ALGHSIK : BinaryRIE<"alghsik", 0xECDB, addc, GR64, imm64sx16>,
+                Requires<[FeatureDistinctOps]>;
 
   // Addition of unsigned 32-bit immediates.
   def ALFI  : BinaryRIL<"alfi",  0xC2B, addc, GR32, uimm32>;
@@ -614,9 +620,9 @@ defm : SXB<sub, GR64, SGFR>;
 // Subtraction producing a carry.
 let Defs = [CC] in {
   // Subtraction of a register.
-  def SLR   : BinaryRR <"sl",   0x1F,   subc,      GR32, GR32>;
+  defm SLR : BinaryRRAndK<"sl", 0x1F, 0xB9FB, subc, GR32, GR32>;
   def SLGFR : BinaryRRE<"slgf", 0xB91B, null_frag, GR64, GR32>;
-  def SLGR  : BinaryRRE<"slg",  0xB90B, subc,      GR64, GR64>;
+  defm SLGR : BinaryRREAndK<"slg", 0xB90B, 0xB9EB, subc, GR64, GR64>;
 
   // Subtraction of unsigned 32-bit immediates.  These don't match
   // subc because we prefer addc for constants.

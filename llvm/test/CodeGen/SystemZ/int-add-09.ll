@@ -1,6 +1,6 @@
 ; Test 128-bit addition in which the second operand is constant.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Check additions of 1.  The XOR ensures that we don't instead load the
 ; constant into a register and use memory addition.

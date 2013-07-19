@@ -184,6 +184,16 @@
 	algfi	%r0, -1
 	algfi	%r0, (1 << 32)
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: algrk	%r2,%r3,%r4
+
+	algrk	%r2,%r3,%r4
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: alrk	%r2,%r3,%r4
+
+	alrk	%r2,%r3,%r4
+
 #CHECK: error: invalid operand
 #CHECK: aly	%r0, -524289
 #CHECK: error: invalid operand
@@ -2361,6 +2371,11 @@
 	slgfi	%r0, -1
 	slgfi	%r0, (1 << 32)
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: slgrk	%r2,%r3,%r4
+
+	slgrk	%r2,%r3,%r4
+
 #CHECK: error: invalid operand
 #CHECK: sll	%r0,-1
 #CHECK: error: invalid operand
@@ -2393,6 +2408,11 @@
 #CHECK: sllk	%r2,%r3,4(%r5)
 
 	sllk	%r2,%r3,4(%r5)
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: slrk	%r2,%r3,%r4
+
+	slrk	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: sly	%r0, -524289

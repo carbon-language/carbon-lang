@@ -49,6 +49,30 @@
 	ahik	%r15, %r0, 0
 	ahik	%r7, %r8, -16
 
+#CHECK: algrk	%r0, %r0, %r0           # encoding: [0xb9,0xea,0x00,0x00]
+#CHECK: algrk	%r0, %r0, %r15          # encoding: [0xb9,0xea,0xf0,0x00]
+#CHECK: algrk	%r0, %r15, %r0          # encoding: [0xb9,0xea,0x00,0x0f]
+#CHECK: algrk	%r15, %r0, %r0          # encoding: [0xb9,0xea,0x00,0xf0]
+#CHECK: algrk	%r7, %r8, %r9           # encoding: [0xb9,0xea,0x90,0x78]
+
+	algrk	%r0,%r0,%r0
+	algrk	%r0,%r0,%r15
+	algrk	%r0,%r15,%r0
+	algrk	%r15,%r0,%r0
+	algrk	%r7,%r8,%r9
+
+#CHECK: alrk	%r0, %r0, %r0           # encoding: [0xb9,0xfa,0x00,0x00]
+#CHECK: alrk	%r0, %r0, %r15          # encoding: [0xb9,0xfa,0xf0,0x00]
+#CHECK: alrk	%r0, %r15, %r0          # encoding: [0xb9,0xfa,0x00,0x0f]
+#CHECK: alrk	%r15, %r0, %r0          # encoding: [0xb9,0xfa,0x00,0xf0]
+#CHECK: alrk	%r7, %r8, %r9           # encoding: [0xb9,0xfa,0x90,0x78]
+
+	alrk	%r0,%r0,%r0
+	alrk	%r0,%r0,%r15
+	alrk	%r0,%r15,%r0
+	alrk	%r15,%r0,%r0
+	alrk	%r7,%r8,%r9
+
 #CHECK: ark	%r0, %r0, %r0           # encoding: [0xb9,0xf8,0x00,0x00]
 #CHECK: ark	%r0, %r0, %r15          # encoding: [0xb9,0xf8,0xf0,0x00]
 #CHECK: ark	%r0, %r15, %r0          # encoding: [0xb9,0xf8,0x00,0x0f]
@@ -120,6 +144,30 @@
 	sgrk	%r0,%r15,%r0
 	sgrk	%r15,%r0,%r0
 	sgrk	%r7,%r8,%r9
+
+#CHECK: slgrk	%r0, %r0, %r0           # encoding: [0xb9,0xeb,0x00,0x00]
+#CHECK: slgrk	%r0, %r0, %r15          # encoding: [0xb9,0xeb,0xf0,0x00]
+#CHECK: slgrk	%r0, %r15, %r0          # encoding: [0xb9,0xeb,0x00,0x0f]
+#CHECK: slgrk	%r15, %r0, %r0          # encoding: [0xb9,0xeb,0x00,0xf0]
+#CHECK: slgrk	%r7, %r8, %r9           # encoding: [0xb9,0xeb,0x90,0x78]
+
+	slgrk	%r0,%r0,%r0
+	slgrk	%r0,%r0,%r15
+	slgrk	%r0,%r15,%r0
+	slgrk	%r15,%r0,%r0
+	slgrk	%r7,%r8,%r9
+
+#CHECK: slrk	%r0, %r0, %r0           # encoding: [0xb9,0xfb,0x00,0x00]
+#CHECK: slrk	%r0, %r0, %r15          # encoding: [0xb9,0xfb,0xf0,0x00]
+#CHECK: slrk	%r0, %r15, %r0          # encoding: [0xb9,0xfb,0x00,0x0f]
+#CHECK: slrk	%r15, %r0, %r0          # encoding: [0xb9,0xfb,0x00,0xf0]
+#CHECK: slrk	%r7, %r8, %r9           # encoding: [0xb9,0xfb,0x90,0x78]
+
+	slrk	%r0,%r0,%r0
+	slrk	%r0,%r0,%r15
+	slrk	%r0,%r15,%r0
+	slrk	%r15,%r0,%r0
+	slrk	%r7,%r8,%r9
 
 #CHECK: sllk	%r0, %r0, 0             # encoding: [0xeb,0x00,0x00,0x00,0x00,0xdf]
 #CHECK: sllk	%r15, %r1, 0            # encoding: [0xeb,0xf1,0x00,0x00,0x00,0xdf]
