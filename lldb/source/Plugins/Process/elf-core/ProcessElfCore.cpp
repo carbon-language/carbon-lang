@@ -429,6 +429,8 @@ AlignToNext(uint32_t value, int alignment_bytes)
 ///        This case is little tricker since while parsing we have to find where the
 ///        new thread starts. The current implementation marks begining of 
 ///        new thread when it finds NT_PRSTATUS or NT_PRPSINFO NOTE entry.
+///    For case (b) there may be either one NT_PRPSINFO per thread, or a single
+///    one that applies to all threads (depending on the platform type).
 void
 ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *segment_header, 
                                                    DataExtractor segment_data)
@@ -436,29 +438,26 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
     assert(segment_header && segment_header->p_type == llvm::ELF::PT_NOTE);
 
     lldb::offset_t offset = 0;
-    ThreadData *thread_data = NULL;
+    ThreadData *thread_data = new ThreadData();
+    bool have_prstatus = false;
+    bool have_prpsinfo = false;
 
     // Loop through the NOTE entires in the segment
     while (offset < segment_header->p_filesz)
     {
-        static unsigned lead_n_type = -1;
         ELFNote note = ELFNote();
         note.Parse(segment_data, &offset);
 
-        if ((lead_n_type == (unsigned)-1) &&
-           ((note.n_type == NT_PRSTATUS) || (note.n_type == NT_PRPSINFO)))
-            lead_n_type = note.n_type;
-
         // Begining of new thread
-        if (note.n_type == lead_n_type)
+        if ((note.n_type == NT_PRSTATUS && have_prstatus) ||
+            (note.n_type == NT_PRPSINFO && have_prpsinfo))
         {
-            if (thread_data)
-            {
-                assert(thread_data->prstatus.GetByteSize() > 0);
-                // Add the new thread to thread list
-                m_thread_data.push_back(*thread_data);
-            }
+            assert(thread_data->prstatus.GetByteSize() > 0);
+            // Add the new thread to thread list
+            m_thread_data.push_back(*thread_data);
             thread_data = new ThreadData();
+            have_prstatus = false;
+            have_prpsinfo = false;
         }
 
         size_t note_start, note_size;
@@ -470,12 +469,14 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
         switch (note.n_type)
         {
             case NT_PRSTATUS:
+                have_prstatus = true;
                 thread_data->prstatus = note_data;
                 break;
             case NT_FPREGSET:
                 thread_data->fpregset = note_data;
                 break;
             case NT_PRPSINFO:
+                have_prpsinfo = true;
                 thread_data->prpsinfo = note_data;
                 break;
             case NT_AUXV:
