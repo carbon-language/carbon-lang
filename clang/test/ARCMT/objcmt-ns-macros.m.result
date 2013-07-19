@@ -27,3 +27,8 @@ typedef NS_OPTIONS(NSUInteger, UITableViewCellStyle) {
 
 
 
+enum {
+  UNOne,
+  UNTwo
+};
+

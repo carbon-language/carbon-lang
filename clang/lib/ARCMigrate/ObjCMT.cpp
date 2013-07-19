@@ -399,7 +399,7 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   return false;
 }
 
-void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,
+void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,   
                                             const ObjCImplementationDecl *ImpDecl) {
   const ObjCInterfaceDecl *IDecl = ImpDecl->getClassInterface();
   if (!IDecl || ObjCProtocolDecls.empty())
@@ -514,8 +514,9 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       else if (const EnumDecl *ED = dyn_cast<EnumDecl>(*D)) {
         DeclContext::decl_iterator N = D;
         ++N;
-        if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*N))
-          migrateNSEnumDecl(Ctx, ED, TD);
+        if (N != DEnd)
+          if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*N))
+            migrateNSEnumDecl(Ctx, ED, TD);
       }
     }
   

@@ -27,3 +27,8 @@ enum {
 
 typedef NSUInteger UITableViewCellStyle;
 
+enum {
+  UNOne,
+  UNTwo
+};
+
