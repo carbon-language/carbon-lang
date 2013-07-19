@@ -185,7 +185,7 @@ retry_random_path:
   random_path_utf16.push_back(0);
   random_path_utf16.pop_back();
 
-  HANDLE TempFileHandle;
+  HANDLE TempFileHandle = INVALID_HANDLE_VALUE;
 
   switch (Type) {
   case FS_File: {
