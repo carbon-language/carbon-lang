@@ -116,11 +116,17 @@ public:
   /// \param [in,out] Index - The current parsing position in the argument
   /// string list; on return this will be the index of the next argument
   /// string to parse.
+  /// \param [in] FlagsToInclude - Only parse options with any of these flags.
+  /// Zero is the default which includes all flags.
+  /// \param [in] FlagsToExclude - Don't parse options with this flag.  Zero
+  /// is the default and means exclude nothing.
   ///
   /// \return The parsed argument, or 0 if the argument is missing values
   /// (in which case Index still points at the conceptual next argument string
   /// to parse).
-  Arg *ParseOneArg(const ArgList &Args, unsigned &Index) const;
+  Arg *ParseOneArg(const ArgList &Args, unsigned &Index,
+                   unsigned FlagsToInclude = 0,
+                   unsigned FlagsToExclude = 0) const;
 
   /// \brief Parse an list of arguments into an InputArgList.
   ///
@@ -136,12 +142,18 @@ public:
   /// \param MissingArgIndex - On error, the index of the option which could
   /// not be parsed.
   /// \param MissingArgCount - On error, the number of missing options.
+  /// \param FlagsToInclude - Only parse options with any of these flags.
+  /// Zero is the default which includes all flags.
+  /// \param FlagsToExclude - Don't parse options with this flag.  Zero
+  /// is the default and means exclude nothing.
   /// \return An InputArgList; on error this will contain all the options
   /// which could be parsed.
   InputArgList *ParseArgs(const char* const *ArgBegin,
                           const char* const *ArgEnd,
                           unsigned &MissingArgIndex,
-                          unsigned &MissingArgCount) const;
+                          unsigned &MissingArgCount,
+                          unsigned FlagsToInclude = 0,
+                          unsigned FlagsToExclude = 0) const;
 
   /// \brief Render the help text for an option table.
   ///

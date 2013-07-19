@@ -180,7 +180,9 @@ static unsigned matchOption(const OptTable::Info *I, StringRef Str) {
   return 0;
 }
 
-Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
+Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
+                           unsigned FlagsToInclude,
+                           unsigned FlagsToExclude) const {
   unsigned Prev = Index;
   const char *Str = Args.getArgString(Index);
 
@@ -213,8 +215,15 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
     if (Start == End)
       break;
 
+    Option Opt(Start, this);
+
+    if (FlagsToInclude && !Opt.hasFlag(FlagsToInclude))
+      continue;
+    if (Opt.hasFlag(FlagsToExclude))
+      continue;
+
     // See if this option matches.
-    if (Arg *A = Option(Start, this).accept(Args, Index, ArgSize))
+    if (Arg *A = Opt.accept(Args, Index, ArgSize))
       return A;
 
     // Otherwise, see if this argument was missing values.
@@ -222,13 +231,20 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index) const {
       return 0;
   }
 
+  // If we failed to find an option and this arg started with /, then it's
+  // probably an input path.
+  if (Str[0] == '/')
+    return new Arg(getOption(TheInputOptionID), Str, Index++, Str);
+
   return new Arg(getOption(TheUnknownOptionID), Str, Index++, Str);
 }
 
-InputArgList *OptTable::ParseArgs(const char* const *ArgBegin,
-                                  const char* const *ArgEnd,
+InputArgList *OptTable::ParseArgs(const char *const *ArgBegin,
+                                  const char *const *ArgEnd,
                                   unsigned &MissingArgIndex,
-                                  unsigned &MissingArgCount) const {
+                                  unsigned &MissingArgCount,
+                                  unsigned FlagsToInclude,
+                                  unsigned FlagsToExclude) const {
   InputArgList *Args = new InputArgList(ArgBegin, ArgEnd);
 
   // FIXME: Handle '@' args (or at least error on them).
@@ -243,7 +259,7 @@ InputArgList *OptTable::ParseArgs(const char* const *ArgBegin,
     }
 
     unsigned Prev = Index;
-    Arg *A = ParseOneArg(*Args, Index);
+    Arg *A = ParseOneArg(*Args, Index, FlagsToInclude, FlagsToExclude);
     assert(Index > Prev && "Parser failed to consume argument.");
 
     // Check for missing argument error.
