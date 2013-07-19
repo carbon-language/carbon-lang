@@ -273,8 +273,8 @@ protected:
   ///
   /// \param SC Statement class.
   /// \param K Kind of OpenMP directive.
-  /// \brief StartLoc Starting location of the directive (directive keyword).
-  /// \param EndLocL Ending location of the directive.
+  /// \param StartLoc Starting location of the directive (directive keyword).
+  /// \param EndLoc Ending location of the directive.
   /// \param Clauses A list of clauses.
   ///
   template <typename T>
@@ -363,7 +363,7 @@ public:
 class OMPParallelDirective : public OMPExecutableDirective {
   /// \brief Build directive with the given start and end location.
   ///
-  /// \brief StartLoc Starting location of the directive (directive keyword).
+  /// \param StartLoc Starting location of the directive (directive keyword).
   /// \param EndLoc Ending Location of the directive.
   ///
   OMPParallelDirective(SourceLocation StartLoc, SourceLocation EndLoc,
