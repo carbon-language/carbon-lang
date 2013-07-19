@@ -36,6 +36,6 @@ if(EPYDOC_EXECUTABLE)
       ${EPYDOC_OPTIONS}
       DEPENDS swig_wrapper liblldb
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../../lib/python2.7/site-packages
-      COMMENT "Generating LLDB Python API reference with epidoc" VERBATIM
+      COMMENT "Generating LLDB Python API reference with epydoc" VERBATIM
     )
 endif(EPYDOC_EXECUTABLE)

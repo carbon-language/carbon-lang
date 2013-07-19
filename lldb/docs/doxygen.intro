@@ -15,5 +15,5 @@
 /// of LLDB are very stable. 
 ///
 /// @section main_changelog Change Log
-/// - Adapted for LLDB 05/25 by Daniel Malea
+/// - Adapted for LLDB 05/25/2013 by Daniel Malea
 /// - Original content written 12/30/2003 by Reid Spencer
