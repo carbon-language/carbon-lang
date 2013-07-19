@@ -8,11 +8,12 @@
 /// \file
 //==-----------------------------------------------------------------------===//
 
-#define DEBUGME 0
 #define DEBUG_TYPE "structcfg"
 
 #include "AMDGPU.h"
 #include "AMDGPUInstrInfo.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -62,22 +63,22 @@ STATISTIC(numClonedInstr,           "CFGStructurizer cloned instructions");
 //===----------------------------------------------------------------------===//
 namespace {
 #define SHOWNEWINSTR(i) \
-  if (DEBUGME) errs() << "New instr: " << *i << "\n"
+  DEBUG(dbgs() << "New instr: " << *i << "\n");
 
 #define SHOWNEWBLK(b, msg) \
-if (DEBUGME) { \
-  errs() << msg << "BB" << b->getNumber() << "size " << b->size(); \
-  errs() << "\n"; \
-}
+DEBUG( \
+  dbgs() << msg << "BB" << b->getNumber() << "size " << b->size(); \
+  dbgs() << "\n"; \
+);
 
 #define SHOWBLK_DETAIL(b, msg) \
-if (DEBUGME) { \
+DEBUG( \
   if (b) { \
-  errs() << msg << "BB" << b->getNumber() << "size " << b->size(); \
-  b->print(errs()); \
-  errs() << "\n"; \
+  dbgs() << msg << "BB" << b->getNumber() << "size " << b->size(); \
+  b->print(dbgs()); \
+  dbgs() << "\n"; \
   } \
-}
+);
 
 #define INVALIDSCCNUM -1
 #define INVALIDREGNUM 0
@@ -332,21 +333,27 @@ bool CFGStructurizer<PassT>::prepare(FuncT &func, PassT &pass,
 
   //FIXME: if not reducible flow graph, make it so ???
 
-  if (DEBUGME) {
-        errs() << "AMDGPUCFGStructurizer::prepare\n";
-  }
+  DEBUG(
+        dbgs() << "AMDGPUCFGStructurizer::prepare\n";
+  );
 
   loopInfo = CFGTraits::getLoopInfo(pass);
-  if (DEBUGME) {
-    errs() << "LoopInfo:\n";
-    PrintLoopinfo(*loopInfo, errs());
-  }
+  DEBUG(
+    dbgs() << "LoopInfo:\n";
+    PrintLoopinfo(*loopInfo, dbgs());
+  );
 
   orderBlocks();
-  if (DEBUGME) {
-    errs() << "Ordered blocks:\n";
-    printOrderedBlocks(errs());
-  }
+  DEBUG(
+    for (typename SmallVectorImpl<BlockT *>::const_iterator
+        iterBlk = orderedBlks.begin(), iterBlkEnd = orderedBlks.end();
+        iterBlk != iterBlkEnd;
+        ++iterBlk) {
+      (*iterBlk)->dump();
+    }
+    dbgs() << "Ordered blocks:\n";
+    printOrderedBlocks(dbgs());
+  );
 
   SmallVector<BlockT *, DEFAULT_VEC_SLOTS> retBlks;
 
@@ -396,26 +403,26 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
   TRI = tri;
 
   //Assume reducible CFG...
-  if (DEBUGME) {
-    errs() << "AMDGPUCFGStructurizer::run\n";
+  DEBUG(
+    dbgs() << "AMDGPUCFGStructurizer::run\n";
     func.viewCFG();
-  }
+  );
 
   domTree = CFGTraits::getDominatorTree(pass);
-  if (DEBUGME) {
-    domTree->print(errs(), (const llvm::Module*)0);
-  }
+  DEBUG(
+    domTree->print(dbgs(), (const llvm::Module*)0);
+  );
 
   postDomTree = CFGTraits::getPostDominatorTree(pass);
-  if (DEBUGME) {
-    postDomTree->print(errs());
-  }
+  DEBUG(
+    postDomTree->print(dbgs());
+  );
 
   loopInfo = CFGTraits::getLoopInfo(pass);
-  if (DEBUGME) {
-    errs() << "LoopInfo:\n";
-    PrintLoopinfo(*loopInfo, errs());
-  }
+  DEBUG(
+    dbgs() << "LoopInfo:\n";
+    PrintLoopinfo(*loopInfo, dbgs());
+  );
 
   orderBlocks();
 #ifdef STRESSTEST
@@ -423,10 +430,10 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
   ReverseVector(orderedBlks);
 #endif
 
-  if (DEBUGME) {
-    errs() << "Ordered blocks:\n";
-    printOrderedBlocks(errs());
-  }
+  DEBUG(
+    dbgs() << "Ordered blocks:\n";
+    printOrderedBlocks(dbgs());
+  );
   int numIter = 0;
   bool finish = false;
   BlockT *curBlk;
@@ -436,10 +443,10 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
 
   do {
     ++numIter;
-    if (DEBUGME) {
-      errs() << "numIter = " << numIter
+    DEBUG(
+      dbgs() << "numIter = " << numIter
              << ", numRemaintedBlk = " << numRemainedBlk << "\n";
-    }
+    );
 
     typename SmallVectorImpl<BlockT *>::const_iterator
       iterBlk = orderedBlks.begin();
@@ -461,10 +468,10 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
         sccBeginBlk = curBlk;
         sccNumIter = 0;
         sccNumBlk = numRemainedBlk; // Init to maximum possible number.
-        if (DEBUGME) {
-              errs() << "start processing SCC" << getSCCNum(sccBeginBlk);
-              errs() << "\n";
-        }
+        DEBUG(
+              dbgs() << "start processing SCC" << getSCCNum(sccBeginBlk);
+              dbgs() << "\n";
+        );
       }
 
       if (!isRetiredBlock(curBlk)) {
@@ -480,21 +487,21 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
         ++sccNumIter;
         int sccRemainedNumBlk = countActiveBlock(sccBeginIter, iterBlk);
         if (sccRemainedNumBlk != 1 && sccRemainedNumBlk >= sccNumBlk) {
-          if (DEBUGME) {
-            errs() << "Can't reduce SCC " << getSCCNum(curBlk)
+          DEBUG(
+            dbgs() << "Can't reduce SCC " << getSCCNum(curBlk)
                    << ", sccNumIter = " << sccNumIter;
-            errs() << "doesn't make any progress\n";
-          }
+            dbgs() << "doesn't make any progress\n";
+          );
           contNextScc = true;
         } else if (sccRemainedNumBlk != 1 && sccRemainedNumBlk < sccNumBlk) {
           sccNumBlk = sccRemainedNumBlk;
           iterBlk = sccBeginIter;
           contNextScc = false;
-          if (DEBUGME) {
-            errs() << "repeat processing SCC" << getSCCNum(curBlk)
+          DEBUG(
+            dbgs() << "repeat processing SCC" << getSCCNum(curBlk)
                    << "sccNumIter = " << sccNumIter << "\n";
             func.viewCFG();
-          }
+          );
         } else {
           // Finish the current scc.
           contNextScc = true;
@@ -512,9 +519,9 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
     BlockT *entryBlk = FuncGTraits::nodes_begin(&func);
     if (entryBlk->succ_size() == 0) {
       finish = true;
-      if (DEBUGME) {
-        errs() << "Reduce to one block\n";
-      }
+      DEBUG(
+        dbgs() << "Reduce to one block\n";
+      );
     } else {
       int newnumRemainedBlk
         = countActiveBlock(orderedBlks.begin(), orderedBlks.end());
@@ -524,9 +531,9 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
         numRemainedBlk = newnumRemainedBlk;
       } else {
         makeProgress = false;
-        if (DEBUGME) {
-          errs() << "No progress\n";
-        }
+        DEBUG(
+          dbgs() << "No progress\n";
+        );
       }
     }
   } while (!finish && makeProgress);
@@ -539,9 +546,9 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
        iterEndMap = blockInfoMap.end(); iterMap != iterEndMap; ++iterMap) {
     if ((*iterMap).second && (*iterMap).second->isRetired) {
       assert(((*iterMap).first)->getNumber() != -1);
-      if (DEBUGME) {
-        errs() << "Erase BB" << ((*iterMap).first)->getNumber() << "\n";
-      }
+      DEBUG(
+        dbgs() << "Erase BB" << ((*iterMap).first)->getNumber() << "\n";
+      );
       (*iterMap).first->eraseFromParent();  //Remove from the parent Function.
     }
     delete (*iterMap).second;
@@ -555,12 +562,12 @@ bool CFGStructurizer<PassT>::run(FuncT &func, PassT &pass,
   }
   loopLandInfoMap.clear();
 
-  if (DEBUGME) {
+  DEBUG(
     func.viewCFG();
-  }
+  );
 
   if (!finish) {
-    assert(!"IRREDUCIBL_CF");
+    llvm_unreachable("IRREDUCIBL_CF");
   }
 
   return true;
@@ -609,7 +616,7 @@ template<class PassT> void CFGStructurizer<PassT>::orderBlocks() {
     BlockT *bb = &(*blockIter1);
     sccNum = getSCCNum(bb);
     if (sccNum == INVALIDSCCNUM) {
-      errs() << "unreachable block BB" << bb->getNumber() << "\n";
+      dbgs() << "unreachable block BB" << bb->getNumber() << "\n";
     }
   }
 } //orderBlocks
@@ -618,18 +625,18 @@ template<class PassT> int CFGStructurizer<PassT>::patternMatch(BlockT *curBlk) {
   int numMatch = 0;
   int curMatch;
 
-  if (DEBUGME) {
-        errs() << "Begin patternMatch BB" << curBlk->getNumber() << "\n";
-  }
+  DEBUG(
+        dbgs() << "Begin patternMatch BB" << curBlk->getNumber() << "\n";
+  );
 
   while ((curMatch = patternMatchGroup(curBlk)) > 0) {
     numMatch += curMatch;
   }
 
-  if (DEBUGME) {
-        errs() << "End patternMatch BB" << curBlk->getNumber()
+  DEBUG(
+        dbgs() << "End patternMatch BB" << curBlk->getNumber()
       << ", numMatch = " << numMatch << "\n";
-  }
+  );
 
   return numMatch;
 } //patternMatch
@@ -811,9 +818,9 @@ int CFGStructurizer<PassT>::loopbreakPatternMatch(LoopT *loopRep,
   BlockTSmallerVector exitingBlks;
   loopRep->getExitingBlocks(exitingBlks);
 
-  if (DEBUGME) {
-    errs() << "Loop has " << exitingBlks.size() << " exiting blocks\n";
-  }
+  DEBUG(
+    dbgs() << "Loop has " << exitingBlks.size() << " exiting blocks\n";
+  );
 
   if (exitingBlks.size() == 0) {
     setLoopLandBlock(loopRep);
@@ -834,9 +841,9 @@ int CFGStructurizer<PassT>::loopbreakPatternMatch(LoopT *loopRep,
   assert(exitBlkSet.size() > 0);
   assert(exitBlks.size() == exitingBlks.size());
 
-  if (DEBUGME) {
-    errs() << "Loop has " << exitBlkSet.size() << " exit blocks\n";
-  }
+  DEBUG(
+    dbgs() << "Loop has " << exitBlkSet.size() << " exit blocks\n";
+  );
 
   // Find exitLandBlk.
   BlockT *exitLandBlk = NULL;
@@ -861,19 +868,19 @@ int CFGStructurizer<PassT>::loopbreakPatternMatch(LoopT *loopRep,
       BlockT *exitBlk = *iter;
 
       PathToKind pathKind = singlePathTo(exitBlk, exitLandBlk, true);
-      if (DEBUGME) {
-        errs() << "BB" << exitBlk->getNumber()
+      DEBUG(
+        dbgs() << "BB" << exitBlk->getNumber()
                << " to BB" << exitLandBlk->getNumber() << " PathToKind="
                << pathKind << "\n";
-      }
+      );
 
       allInPath = allInPath && (pathKind == SinglePath_InPath);
       allNotInPath = allNotInPath && (pathKind == SinglePath_NotInPath);
 
       if (!allInPath && !allNotInPath) {
-        if (DEBUGME) {
-              errs() << "singlePath check fail\n";
-        }
+        DEBUG(
+              dbgs() << "singlePath check fail\n";
+        );
         return -1;
       }
     } // check all exit blocks
@@ -891,19 +898,19 @@ int CFGStructurizer<PassT>::loopbreakPatternMatch(LoopT *loopRep,
                                                loopRep,
                                                exitBlkSet,
                                                exitLandBlk)) != NULL) {
-        if (DEBUGME) {
-          errs() << "relocateLoopcontBlock success\n";
-        }
+        DEBUG(
+          dbgs() << "relocateLoopcontBlock success\n";
+        );
       } else if ((exitLandBlk = addLoopEndbranchBlock(loopRep,
                                                       exitingBlks,
                                                       exitBlks)) != NULL) {
-        if (DEBUGME) {
-          errs() << "insertEndbranchBlock success\n";
-        }
+        DEBUG(
+          dbgs() << "insertEndbranchBlock success\n";
+        );
       } else {
-        if (DEBUGME) {
-          errs() << "loop exit fail\n";
-        }
+        DEBUG(
+          dbgs() << "loop exit fail\n";
+        );
         return -1;
       }
     }
@@ -1017,11 +1024,11 @@ bool CFGStructurizer<PassT>::isSameloopDetachedContbreak(BlockT *src1Blk,
     if (loopRep != NULL && loopRep == loopInfo->getLoopFor(src2Blk)) {
       LoopLandInfo *&theEntry = loopLandInfoMap[loopRep];
       if (theEntry != NULL) {
-        if (DEBUGME) {
-          errs() << "isLoopContBreakBlock yes src1 = BB"
+        DEBUG(
+          dbgs() << "isLoopContBreakBlock yes src1 = BB"
                  << src1Blk->getNumber()
                  << " src2 = BB" << src2Blk->getNumber() << "\n";
-        }
+        );
         return true;
       }
     }
@@ -1035,9 +1042,9 @@ int CFGStructurizer<PassT>::handleJumpintoIf(BlockT *headBlk,
                                              BlockT *falseBlk) {
   int num = handleJumpintoIfImp(headBlk, trueBlk, falseBlk);
   if (num == 0) {
-    if (DEBUGME) {
-      errs() << "handleJumpintoIf swap trueBlk and FalseBlk" << "\n";
-    }
+    DEBUG(
+      dbgs() << "handleJumpintoIf swap trueBlk and FalseBlk" << "\n";
+    );
     num = handleJumpintoIfImp(headBlk, falseBlk, trueBlk);
   }
   return num;
@@ -1053,22 +1060,22 @@ int CFGStructurizer<PassT>::handleJumpintoIfImp(BlockT *headBlk,
   //trueBlk could be the common post dominator
   downBlk = trueBlk;
 
-  if (DEBUGME) {
-    errs() << "handleJumpintoIfImp head = BB" << headBlk->getNumber()
+  DEBUG(
+    dbgs() << "handleJumpintoIfImp head = BB" << headBlk->getNumber()
            << " true = BB" << trueBlk->getNumber()
            << ", numSucc=" << trueBlk->succ_size()
            << " false = BB" << falseBlk->getNumber() << "\n";
-  }
+  );
 
   while (downBlk) {
-    if (DEBUGME) {
-      errs() << "check down = BB" << downBlk->getNumber();
-    }
+    DEBUG(
+      dbgs() << "check down = BB" << downBlk->getNumber();
+    );
 
     if (singlePathTo(falseBlk, downBlk) == SinglePath_InPath) {
-      if (DEBUGME) {
-        errs() << " working\n";
-      }
+      DEBUG(
+        dbgs() << " working\n";
+      );
 
       num += cloneOnSideEntryTo(headBlk, trueBlk, downBlk);
       num += cloneOnSideEntryTo(headBlk, falseBlk, downBlk);
@@ -1081,9 +1088,9 @@ int CFGStructurizer<PassT>::handleJumpintoIfImp(BlockT *headBlk,
 
       break;
     }
-    if (DEBUGME) {
-      errs() << " not working\n";
-    }
+    DEBUG(
+      dbgs() << " not working\n";
+    );
     downBlk = (downBlk->succ_size() == 1) ? (*downBlk->succ_begin()) : NULL;
   } // walk down the postDomTree
 
@@ -1096,43 +1103,43 @@ void CFGStructurizer<PassT>::showImproveSimpleJumpintoIf(BlockT *headBlk,
                                                          BlockT *falseBlk,
                                                          BlockT *landBlk,
                                                          bool detail) {
-  errs() << "head = BB" << headBlk->getNumber()
+  dbgs() << "head = BB" << headBlk->getNumber()
          << " size = " << headBlk->size();
   if (detail) {
-    errs() << "\n";
-    headBlk->print(errs());
-    errs() << "\n";
+    dbgs() << "\n";
+    headBlk->print(dbgs());
+    dbgs() << "\n";
   }
 
   if (trueBlk) {
-    errs() << ", true = BB" << trueBlk->getNumber() << " size = "
+    dbgs() << ", true = BB" << trueBlk->getNumber() << " size = "
            << trueBlk->size() << " numPred = " << trueBlk->pred_size();
     if (detail) {
-      errs() << "\n";
-      trueBlk->print(errs());
-      errs() << "\n";
+      dbgs() << "\n";
+      trueBlk->print(dbgs());
+      dbgs() << "\n";
     }
   }
   if (falseBlk) {
-    errs() << ", false = BB" << falseBlk->getNumber() << " size = "
+    dbgs() << ", false = BB" << falseBlk->getNumber() << " size = "
            << falseBlk->size() << " numPred = " << falseBlk->pred_size();
     if (detail) {
-      errs() << "\n";
-      falseBlk->print(errs());
-      errs() << "\n";
+      dbgs() << "\n";
+      falseBlk->print(dbgs());
+      dbgs() << "\n";
     }
   }
   if (landBlk) {
-    errs() << ", land = BB" << landBlk->getNumber() << " size = "
+    dbgs() << ", land = BB" << landBlk->getNumber() << " size = "
            << landBlk->size() << " numPred = " << landBlk->pred_size();
     if (detail) {
-      errs() << "\n";
-      landBlk->print(errs());
-      errs() << "\n";
+      dbgs() << "\n";
+      landBlk->print(dbgs());
+      dbgs() << "\n";
     }
   }
 
-    errs() << "\n";
+    dbgs() << "\n";
 } //showImproveSimpleJumpintoIf
 
 template<class PassT>
@@ -1169,10 +1176,10 @@ int CFGStructurizer<PassT>::improveSimpleJumpintoIf(BlockT *headBlk,
     migrateFalse = true;
   }
 
-  if (DEBUGME) {
-    errs() << "before improveSimpleJumpintoIf: ";
+  DEBUG(
+    dbgs() << "before improveSimpleJumpintoIf: ";
     showImproveSimpleJumpintoIf(headBlk, trueBlk, falseBlk, landBlk, 0);
-  }
+  );
 
   // org: headBlk => if () {trueBlk} else {falseBlk} => landBlk
   //
@@ -1269,10 +1276,10 @@ int CFGStructurizer<PassT>::improveSimpleJumpintoIf(BlockT *headBlk,
       }
     } //for
   }
-  if (DEBUGME) {
-    errs() << "result from improveSimpleJumpintoIf: ";
+  DEBUG(
+    dbgs() << "result from improveSimpleJumpintoIf: ";
     showImproveSimpleJumpintoIf(headBlk, trueBlk, falseBlk, landBlk, 0);
-  }
+  );
 
   // update landBlk
   *plandBlk = landBlk;
@@ -1286,10 +1293,10 @@ void CFGStructurizer<PassT>::handleLoopbreak(BlockT *exitingBlk,
                                              BlockT *exitBlk,
                                               LoopT *exitLoop,
                                              BlockT *landBlk) {
-  if (DEBUGME) {
-    errs() << "Trying to break loop-depth = " << getLoopDepth(exitLoop)
+  DEBUG(
+    dbgs() << "Trying to break loop-depth = " << getLoopDepth(exitLoop)
            << " from loop-depth = " << getLoopDepth(exitingLoop) << "\n";
-  }
+  );
   const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
 
   RegiT initReg = INVALIDREGNUM;
@@ -1314,14 +1321,14 @@ void CFGStructurizer<PassT>::handleLoopcontBlock(BlockT *contingBlk,
                                                   LoopT *contingLoop,
                                                  BlockT *contBlk,
                                                   LoopT *contLoop) {
-  if (DEBUGME) {
-    errs() << "loopcontPattern cont = BB" << contingBlk->getNumber()
+  DEBUG(
+    dbgs() << "loopcontPattern cont = BB" << contingBlk->getNumber()
            << " header = BB" << contBlk->getNumber() << "\n";
 
-    errs() << "Trying to continue loop-depth = "
+    dbgs() << "Trying to continue loop-depth = "
            << getLoopDepth(contLoop)
            << " from loop-depth = " << getLoopDepth(contingLoop) << "\n";
-  }
+  );
 
   RegiT initReg = INVALIDREGNUM;
   const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
@@ -1343,10 +1350,10 @@ void CFGStructurizer<PassT>::handleLoopcontBlock(BlockT *contingBlk,
 
 template<class PassT>
 void CFGStructurizer<PassT>::mergeSerialBlock(BlockT *dstBlk, BlockT *srcBlk) {
-  if (DEBUGME) {
-    errs() << "serialPattern BB" << dstBlk->getNumber()
+  DEBUG(
+    dbgs() << "serialPattern BB" << dstBlk->getNumber()
            << " <= BB" << srcBlk->getNumber() << "\n";
-  }
+  );
   dstBlk->splice(dstBlk->end(), srcBlk, srcBlk->begin(), srcBlk->end());
 
   dstBlk->removeSuccessor(srcBlk);
@@ -1362,26 +1369,26 @@ void CFGStructurizer<PassT>::mergeIfthenelseBlock(InstrT *branchInstr,
                                                   BlockT *trueBlk,
                                                   BlockT *falseBlk,
                                                   BlockT *landBlk) {
-  if (DEBUGME) {
-    errs() << "ifPattern BB" << curBlk->getNumber();
-    errs() << "{  ";
+  DEBUG(
+    dbgs() << "ifPattern BB" << curBlk->getNumber();
+    dbgs() << "{  ";
     if (trueBlk) {
-      errs() << "BB" << trueBlk->getNumber();
+      dbgs() << "BB" << trueBlk->getNumber();
     }
-    errs() << "  } else ";
-    errs() << "{  ";
+    dbgs() << "  } else ";
+    dbgs() << "{  ";
     if (falseBlk) {
-      errs() << "BB" << falseBlk->getNumber();
+      dbgs() << "BB" << falseBlk->getNumber();
     }
-    errs() << "  }\n ";
-    errs() << "landBlock: ";
+    dbgs() << "  }\n ";
+    dbgs() << "landBlock: ";
     if (landBlk == NULL) {
-      errs() << "NULL";
+      dbgs() << "NULL";
     } else {
-      errs() << "BB" << landBlk->getNumber();
+      dbgs() << "BB" << landBlk->getNumber();
     }
-    errs() << "\n";
-  }
+    dbgs() << "\n";
+  );
 
   int oldOpcode = branchInstr->getOpcode();
   DebugLoc branchDL = branchInstr->getDebugLoc();
@@ -1435,10 +1442,10 @@ void CFGStructurizer<PassT>::mergeLooplandBlock(BlockT *dstBlk,
                                                 LoopLandInfo *loopLand) {
   BlockT *landBlk = loopLand->landBlk;
 
-  if (DEBUGME) {
-    errs() << "loopPattern header = BB" << dstBlk->getNumber()
+  DEBUG(
+    dbgs() << "loopPattern header = BB" << dstBlk->getNumber()
            << " land = BB" << landBlk->getNumber() << "\n";
-  }
+  );
 
   // Loop contInitRegs are init at the beginning of the loop.
   for (typename std::set<RegiT>::const_iterator iter =
@@ -1521,7 +1528,7 @@ void CFGStructurizer<PassT>::reversePredicateSetter(typename BlockT::iterator I)
         static_cast<MachineInstr *>(I)->getOperand(2).setImm(OPCODE_IS_ZERO);
         return;
       default:
-        assert(0 && "PRED_X Opcode invalid!");
+        llvm_unreachable("PRED_X Opcode invalid!");
       }
     }
   }
@@ -1532,11 +1539,11 @@ void CFGStructurizer<PassT>::mergeLoopbreakBlock(BlockT *exitingBlk,
                                                  BlockT *exitBlk,
                                                  BlockT *exitLandBlk,
                                                  RegiT  setReg) {
-  if (DEBUGME) {
-    errs() << "loopbreakPattern exiting = BB" << exitingBlk->getNumber()
+  DEBUG(
+    dbgs() << "loopbreakPattern exiting = BB" << exitingBlk->getNumber()
            << " exit = BB" << exitBlk->getNumber()
            << " land = BB" << exitLandBlk->getNumber() << "\n";
-  }
+  );
 
   InstrT *branchInstr = CFGTraits::getLoopendBlockBranchInstr(exitingBlk);
   assert(branchInstr && CFGTraits::isCondBranch(branchInstr));
@@ -1596,11 +1603,11 @@ template<class PassT>
 void CFGStructurizer<PassT>::settleLoopcontBlock(BlockT *contingBlk,
                                                  BlockT *contBlk,
                                                  RegiT   setReg) {
-  if (DEBUGME) {
-    errs() << "settleLoopcontBlock conting = BB"
+  DEBUG(
+    dbgs() << "settleLoopcontBlock conting = BB"
            << contingBlk->getNumber()
            << ", cont = BB" << contBlk->getNumber() << "\n";
-  }
+  );
 
   InstrT *branchInstr = CFGTraits::getLoopendBlockBranchInstr(contingBlk);
   if (branchInstr) {
@@ -1711,10 +1718,10 @@ CFGStructurizer<PassT>::relocateLoopcontBlock(LoopT *parentLoopRep,
         contInstr->eraseFromParent();
       }
       endBlk->addSuccessor(newBlk);
-      if (DEBUGME) {
-        errs() << "Add new continue Block to BB"
+      DEBUG(
+        dbgs() << "Add new continue Block to BB"
                << endBlk->getNumber() << " successors\n";
-      }
+      );
   }
 
   return newBlk;
@@ -1927,10 +1934,10 @@ CFGStructurizer<PassT>::cloneBlockForPredecessor(BlockT *curBlk,
 
   numClonedInstr += curBlk->size();
 
-  if (DEBUGME) {
-    errs() << "Cloned block: " << "BB"
+  DEBUG(
+    dbgs() << "Cloned block: " << "BB"
            << curBlk->getNumber() << "size " << curBlk->size() << "\n";
-  }
+  );
 
   SHOWNEWBLK(cloneBlk, "result of Cloned block: ");
 
@@ -1966,29 +1973,29 @@ void CFGStructurizer<PassT>::migrateInstruction(BlockT *srcBlk,
   //look for the input branchinstr, not the AMDGPU branchinstr
   InstrT *branchInstr = CFGTraits::getNormalBlockBranchInstr(srcBlk);
   if (branchInstr == NULL) {
-    if (DEBUGME) {
-      errs() << "migrateInstruction don't see branch instr\n" ;
-    }
+    DEBUG(
+      dbgs() << "migrateInstruction don't see branch instr\n" ;
+    );
     spliceEnd = srcBlk->end();
   } else {
-    if (DEBUGME) {
-      errs() << "migrateInstruction see branch instr\n" ;
+    DEBUG(
+      dbgs() << "migrateInstruction see branch instr\n" ;
       branchInstr->dump();
-    }
+    );
     spliceEnd = CFGTraits::getInstrPos(srcBlk, branchInstr);
   }
-  if (DEBUGME) {
-    errs() << "migrateInstruction before splice dstSize = " << dstBlk->size()
+  DEBUG(
+    dbgs() << "migrateInstruction before splice dstSize = " << dstBlk->size()
       << "srcSize = " << srcBlk->size() << "\n";
-  }
+  );
 
   //splice insert before insertPos
   dstBlk->splice(insertPos, srcBlk, srcBlk->begin(), spliceEnd);
 
-  if (DEBUGME) {
-    errs() << "migrateInstruction after splice dstSize = " << dstBlk->size()
+  DEBUG(
+    dbgs() << "migrateInstruction after splice dstSize = " << dstBlk->size()
       << "srcSize = " << srcBlk->size() << "\n";
-  }
+  );
 } //migrateInstruction
 
 // normalizeInfiniteLoopExit change
@@ -2016,7 +2023,7 @@ CFGStructurizer<PassT>::normalizeInfiniteLoopExit(LoopT* LoopRep) {
       funcRep->push_back(dummyExitBlk);  //insert to function
       SHOWNEWBLK(dummyExitBlk, "DummyExitBlock to normalize infiniteLoop: ");
 
-      if (DEBUGME) errs() << "Old branch instr: " << *branchInstr << "\n";
+      DEBUG(dbgs() << "Old branch instr: " << *branchInstr << "\n";);
 
       typename BlockT::iterator insertPos =
         CFGTraits::getInstrPos(loopLatch, branchInstr);
@@ -2047,10 +2054,10 @@ void CFGStructurizer<PassT>::removeUnconditionalBranch(BlockT *srcBlk) {
   // test_fc_do_while_or.c need to fix the upstream on this to remove the loop.
   while ((branchInstr = CFGTraits::getLoopendBlockBranchInstr(srcBlk))
           && CFGTraits::isUncondBranch(branchInstr)) {
-    if (DEBUGME) {
-          errs() << "Removing unconditional branch instruction" ;
+    DEBUG(
+          dbgs() << "Removing unconditional branch instruction" ;
       branchInstr->dump();
-    }
+    );
     branchInstr->eraseFromParent();
   }
 } //removeUnconditionalBranch
@@ -2064,10 +2071,10 @@ void CFGStructurizer<PassT>::removeRedundantConditionalBranch(BlockT *srcBlk) {
     if (blk1 == blk2) {
       InstrT *branchInstr = CFGTraits::getNormalBlockBranchInstr(srcBlk);
       assert(branchInstr && CFGTraits::isCondBranch(branchInstr));
-      if (DEBUGME) {
-        errs() << "Removing unneeded conditional branch instruction" ;
+      DEBUG(
+        dbgs() << "Removing unneeded conditional branch instruction" ;
         branchInstr->dump();
-      }
+      );
       branchInstr->eraseFromParent();
       SHOWNEWBLK(blk1, "Removing redundant successor");
       srcBlk->removeSuccessor(blk1);
@@ -2091,10 +2098,10 @@ void CFGStructurizer<PassT>::addDummyExitBlock(SmallVectorImpl<BlockT *>
       curInstr->eraseFromParent();
     }
     curBlk->addSuccessor(dummyExitBlk);
-    if (DEBUGME) {
-      errs() << "Add dummyExitBlock to BB" << curBlk->getNumber()
+    DEBUG(
+      dbgs() << "Add dummyExitBlock to BB" << curBlk->getNumber()
              << " successors\n";
-    }
+    );
   } //for
 
   SHOWNEWBLK(dummyExitBlk, "DummyExitBlock: ");
@@ -2126,9 +2133,9 @@ int CFGStructurizer<PassT>::getSCCNum(BlockT *srcBlk) {
 
 template<class PassT>
 void CFGStructurizer<PassT>::retireBlock(BlockT *dstBlk, BlockT *srcBlk) {
-  if (DEBUGME) {
-        errs() << "Retiring BB" << srcBlk->getNumber() << "\n";
-  }
+  DEBUG(
+        dbgs() << "Retiring BB" << srcBlk->getNumber() << "\n";
+  );
 
   BlockInfo *&srcBlkInfo = blockInfoMap[srcBlk];
 
@@ -2245,11 +2252,11 @@ void CFGStructurizer<PassT>::setLoopLandBlock(LoopT *loopRep, BlockT *blk) {
 
   theEntry->landBlk = blk;
 
-  if (DEBUGME) {
-    errs() << "setLoopLandBlock loop-header = BB"
+  DEBUG(
+    dbgs() << "setLoopLandBlock loop-header = BB"
            << loopRep->getHeader()->getNumber()
            << "  landing-block = BB" << blk->getNumber() << "\n";
-  }
+  );
 } // setLoopLandBlock
 
 template<class PassT>
@@ -2262,11 +2269,11 @@ void CFGStructurizer<PassT>::addLoopBreakOnReg(LoopT *loopRep, RegiT regNum) {
 
   theEntry->breakOnRegs.insert(regNum);
 
-  if (DEBUGME) {
-    errs() << "addLoopBreakOnReg loop-header = BB"
+  DEBUG(
+    dbgs() << "addLoopBreakOnReg loop-header = BB"
            << loopRep->getHeader()->getNumber()
            << "  regNum = " << regNum << "\n";
-  }
+  );
 } // addLoopBreakOnReg
 
 template<class PassT>
@@ -2278,11 +2285,11 @@ void CFGStructurizer<PassT>::addLoopContOnReg(LoopT *loopRep, RegiT regNum) {
   }
   theEntry->contOnRegs.insert(regNum);
 
-  if (DEBUGME) {
-    errs() << "addLoopContOnReg loop-header = BB"
+  DEBUG(
+    dbgs() << "addLoopContOnReg loop-header = BB"
            << loopRep->getHeader()->getNumber()
            << "  regNum = " << regNum << "\n";
-  }
+  );
 } // addLoopContOnReg
 
 template<class PassT>
@@ -2294,11 +2301,11 @@ void CFGStructurizer<PassT>::addLoopBreakInitReg(LoopT *loopRep, RegiT regNum) {
   }
   theEntry->breakInitRegs.insert(regNum);
 
-  if (DEBUGME) {
-    errs() << "addLoopBreakInitReg loop-header = BB"
+  DEBUG(
+    dbgs() << "addLoopBreakInitReg loop-header = BB"
            << loopRep->getHeader()->getNumber()
            << "  regNum = " << regNum << "\n";
-  }
+  );
 } // addLoopBreakInitReg
 
 template<class PassT>
@@ -2310,11 +2317,11 @@ void CFGStructurizer<PassT>::addLoopContInitReg(LoopT *loopRep, RegiT regNum) {
   }
   theEntry->contInitRegs.insert(regNum);
 
-  if (DEBUGME) {
-    errs() << "addLoopContInitReg loop-header = BB"
+  DEBUG(
+    dbgs() << "addLoopContInitReg loop-header = BB"
            << loopRep->getHeader()->getNumber()
            << "  regNum = " << regNum << "\n";
-  }
+  );
 } // addLoopContInitReg
 
 template<class PassT>
@@ -2327,11 +2334,11 @@ void CFGStructurizer<PassT>::addLoopEndbranchInitReg(LoopT *loopRep,
   }
   theEntry->endbranchInitRegs.insert(regNum);
 
-  if (DEBUGME) {
-        errs() << "addLoopEndbranchInitReg loop-header = BB"
+  DEBUG(
+        dbgs() << "addLoopEndbranchInitReg loop-header = BB"
       << loopRep->getHeader()->getNumber()
       << "  regNum = " << regNum << "\n";
-  }
+  );
 } // addLoopEndbranchInitReg
 
 template<class PassT>
@@ -2437,14 +2444,14 @@ CFGStructurizer<PassT>::findNearestCommonPostDom
     }
   }
 
-  if (DEBUGME) {
-    errs() << "Common post dominator for exit blocks is ";
+  DEBUG(
+    dbgs() << "Common post dominator for exit blocks is ";
     if (commonDom) {
-          errs() << "BB" << commonDom->getNumber() << "\n";
+          dbgs() << "BB" << commonDom->getNumber() << "\n";
     } else {
-      errs() << "NULL\n";
+      dbgs() << "NULL\n";
     }
-  }
+  );
 
   return commonDom;
 } //findNearestCommonPostDom
@@ -2591,7 +2598,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     case AMDGPU::BRANCH_COND_i32:
     case AMDGPU::BRANCH_COND_f32: return AMDGPU::IF_LOGICALNZ_f32;
     default:
-      assert(0 && "internal error");
+      llvm_unreachable("internal error");
     }
     return -1;
   }
@@ -2603,7 +2610,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     case AMDGPU::BRANCH_COND_i32:
     case AMDGPU::BRANCH_COND_f32: return AMDGPU::IF_LOGICALZ_f32;
     default:
-      assert(0 && "internal error");
+      llvm_unreachable("internal error");
     }
     return -1;
   }
@@ -2613,7 +2620,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     case AMDGPU::JUMP_COND:
     case AMDGPU::JUMP: return AMDGPU::CONTINUE_LOGICALNZ_i32;
     default:
-      assert(0 && "internal error");
+      llvm_unreachable("internal error");
     };
     return -1;
   }
@@ -2623,7 +2630,7 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     case AMDGPU::JUMP_COND:
     case AMDGPU::JUMP: return AMDGPU::CONTINUE_LOGICALZ_i32;
     default:
-      assert(0 && "internal error");
+      llvm_unreachable("internal error");
     }
     return -1;
   }
@@ -2753,10 +2760,10 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     if (instr) {
       assert(isReturn);
     } else if (isReturn) {
-      if (DEBUGME) {
-        errs() << "BB" << blk->getNumber()
+      DEBUG(
+        dbgs() << "BB" << blk->getNumber()
                <<" is return block without RETURN instr\n";
-      }
+      );
     }
 
     return  isReturn;
