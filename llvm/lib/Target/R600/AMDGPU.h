@@ -31,7 +31,6 @@ FunctionPass *createR600ExpandSpecialInstrsPass(TargetMachine &tm);
 FunctionPass *createR600EmitClauseMarkers(TargetMachine &tm);
 FunctionPass *createR600Packetizer(TargetMachine &tm);
 FunctionPass *createR600ControlFlowFinalizer(TargetMachine &tm);
-FunctionPass *createAMDGPUCFGPreparationPass(TargetMachine &tm);
 FunctionPass *createAMDGPUCFGStructurizerPass(TargetMachine &tm);
 
 // SI Passes
