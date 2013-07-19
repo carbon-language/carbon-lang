@@ -14,13 +14,10 @@
 include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
-// SystemZ supported processors
+// SystemZ supported processors and features
 //===----------------------------------------------------------------------===//
 
-class Proc<string Name, list<SubtargetFeature> Features>
- : Processor<Name, NoItineraries, Features>;
-
-def : Proc<"z10", []>;
+include "SystemZProcessors.td"
 
 //===----------------------------------------------------------------------===//
 // Register file description

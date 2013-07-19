@@ -9,6 +9,7 @@
 
 #include "SystemZSubtarget.h"
 #include "llvm/IR/GlobalValue.h"
+#include "MCTargetDesc/SystemZMCTargetDesc.h"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
@@ -19,7 +20,8 @@ using namespace llvm;
 SystemZSubtarget::SystemZSubtarget(const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS)
-  : SystemZGenSubtargetInfo(TT, CPU, FS), TargetTriple(TT) {
+  : SystemZGenSubtargetInfo(TT, CPU, FS), HasDistinctOps(false),
+    TargetTriple(TT) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "z10";

@@ -1,4 +1,5 @@
-# RUN: not llvm-mc -triple s390x-linux-gnu < %s 2> %t
+# For z10 only.
+# RUN: not llvm-mc -triple s390x-linux-gnu -mcpu=z10 < %s 2> %t
 # RUN: FileCheck < %t %s
 
 #CHECK: error: invalid operand
@@ -2343,6 +2344,11 @@
 	sllg	%r0,%r0,0(%r0)
 	sllg	%r0,%r0,0(%r1,%r2)
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: sllk	%r2,%r3,4(%r5)
+
+	sllk	%r2,%r3,4(%r5)
+
 #CHECK: error: invalid operand
 #CHECK: sly	%r0, -524289
 #CHECK: error: invalid operand
@@ -2403,6 +2409,11 @@
 	srag	%r0,%r0,0(%r0)
 	srag	%r0,%r0,0(%r1,%r2)
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: srak	%r2,%r3,4(%r5)
+
+	srak	%r2,%r3,4(%r5)
+
 #CHECK: error: invalid operand
 #CHECK: srl	%r0,-1
 #CHECK: error: invalid operand
@@ -2430,6 +2441,11 @@
 	srlg	%r0,%r0,524288
 	srlg	%r0,%r0,0(%r0)
 	srlg	%r0,%r0,0(%r1,%r2)
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: srlk	%r2,%r3,4(%r5)
+
+	srlk	%r2,%r3,4(%r5)
 
 #CHECK: error: invalid operand
 #CHECK: st	%r0, -1

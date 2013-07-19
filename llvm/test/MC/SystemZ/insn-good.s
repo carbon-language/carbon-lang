@@ -1,3 +1,4 @@
+# For z10 and above.
 # RUN: llvm-mc -triple s390x-linux-gnu -show-encoding %s | FileCheck %s
 
 #CHECK: a	%r0, 0                  # encoding: [0x5a,0x00,0x00,0x00]

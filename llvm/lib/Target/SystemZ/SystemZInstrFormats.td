@@ -816,20 +816,27 @@ multiclass BinarySIPair<string mnemonic, bits<8> siOpcode,
 }
 
 class ShiftRS<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-              RegisterOperand cls, AddressingMode mode>
-  : InstRS<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$BD2),
+              RegisterOperand cls>
+  : InstRS<opcode, (outs cls:$R1), (ins cls:$R1src, shift12only:$BD2),
            mnemonic#"\t$R1, $BD2",
-           [(set cls:$R1, (operator cls:$R1src, mode:$BD2))]> {
+           [(set cls:$R1, (operator cls:$R1src, shift12only:$BD2))]> {
   let R3 = 0;
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
 }
 
 class ShiftRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-               RegisterOperand cls, AddressingMode mode>
-  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R3, mode:$BD2),
+               RegisterOperand cls>
+  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R3, shift20only:$BD2),
             mnemonic#"\t$R1, $R3, $BD2",
-            [(set cls:$R1, (operator cls:$R3, mode:$BD2))]>;
+            [(set cls:$R1, (operator cls:$R3, shift20only:$BD2))]>;
+
+multiclass ShiftRSAndK<string mnemonic, bits<8> opcode1, bits<16> opcode2,
+                       SDPatternOperator operator, RegisterOperand cls> {
+  def K  : ShiftRSY<mnemonic##"k", opcode2, null_frag, cls>,
+           Requires<[FeatureDistinctOps]>;
+  def "" : ShiftRS<mnemonic, opcode1, operator, cls>;
+}
 
 class CompareRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                 RegisterOperand cls1, RegisterOperand cls2>
