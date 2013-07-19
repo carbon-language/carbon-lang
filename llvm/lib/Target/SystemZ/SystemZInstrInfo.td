@@ -535,8 +535,8 @@ def : Pat<(or (zext32 GR32:$src), imm64hf32:$imm),
 let Defs = [CC] in {
   // Addition of a register.
   let isCommutable = 1 in {
-    def AR  : BinaryRR <"a",  0x1A,   add, GR32, GR32>;
-    def AGR : BinaryRRE<"ag", 0xB908, add, GR64, GR64>;
+    defm AR : BinaryRRAndK<"a", 0x1A, 0xB9F8, add, GR32, GR32>;
+    defm AGR : BinaryRREAndK<"ag", 0xB908, 0xB9E8, add, GR64, GR64>;
   }
   def AGFR : BinaryRRE<"agf", 0xB918, null_frag, GR64, GR32>;
 
@@ -599,9 +599,9 @@ let Defs = [CC], Uses = [CC] in {
 // add-immediate instruction instead.
 let Defs = [CC] in {
   // Subtraction of a register.
-  def SR   : BinaryRR <"s",   0x1B,   sub,       GR32, GR32>;
+  defm SR : BinaryRRAndK<"s", 0x1B, 0xB9F9, sub, GR32, GR32>;
   def SGFR : BinaryRRE<"sgf", 0xB919, null_frag, GR64, GR32>;
-  def SGR  : BinaryRRE<"sg",  0xB909, sub,       GR64, GR64>;
+  defm SGR : BinaryRREAndK<"sg", 0xB909, 0xB9E9, sub, GR64, GR64>;
 
   // Subtraction of memory.
   defm SH  : BinaryRXPair<"sh", 0x4B, 0xE37B, sub, GR32, sextloadi16, 2>;

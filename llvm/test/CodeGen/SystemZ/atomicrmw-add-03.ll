@@ -1,6 +1,6 @@
 ; Test 32-bit atomic additions.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Check addition of a variable.
 define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {

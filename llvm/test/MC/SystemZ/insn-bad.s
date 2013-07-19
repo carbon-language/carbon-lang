@@ -69,6 +69,11 @@
 	aghi	%r0, 32768
 	aghi	%r0, foo
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: agrk	%r2,%r3,%r4
+
+	agrk	%r2,%r3,%r4
+
 #CHECK: error: invalid operand
 #CHECK: agsi	-524289, 0
 #CHECK: error: invalid operand
@@ -176,6 +181,11 @@
 
 	aly	%r0, -524289
 	aly	%r0, 524288
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: ark	%r2,%r3,%r4
+
+	ark	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: asi	-524289, 0
@@ -2264,6 +2274,11 @@
 	sgf	%r0, -524289
 	sgf	%r0, 524288
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: sgrk	%r2,%r3,%r4
+
+	sgrk	%r2,%r3,%r4
+
 #CHECK: error: invalid operand
 #CHECK: sh	%r0, -1
 #CHECK: error: invalid operand
@@ -2433,6 +2448,11 @@
 #CHECK: srak	%r2,%r3,4(%r5)
 
 	srak	%r2,%r3,4(%r5)
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: srk	%r2,%r3,%r4
+
+	srk	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: srl	%r0,-1

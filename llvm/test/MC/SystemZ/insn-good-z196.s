@@ -1,6 +1,30 @@
 # For z196 and above.
 # RUN: llvm-mc -triple s390x-linux-gnu -mcpu=z196 -show-encoding %s | FileCheck %s
 
+#CHECK: agrk	%r0, %r0, %r0           # encoding: [0xb9,0xe8,0x00,0x00]
+#CHECK: agrk	%r0, %r0, %r15          # encoding: [0xb9,0xe8,0xf0,0x00]
+#CHECK: agrk	%r0, %r15, %r0          # encoding: [0xb9,0xe8,0x00,0x0f]
+#CHECK: agrk	%r15, %r0, %r0          # encoding: [0xb9,0xe8,0x00,0xf0]
+#CHECK: agrk	%r7, %r8, %r9           # encoding: [0xb9,0xe8,0x90,0x78]
+
+	agrk	%r0,%r0,%r0
+	agrk	%r0,%r0,%r15
+	agrk	%r0,%r15,%r0
+	agrk	%r15,%r0,%r0
+	agrk	%r7,%r8,%r9
+
+#CHECK: ark	%r0, %r0, %r0           # encoding: [0xb9,0xf8,0x00,0x00]
+#CHECK: ark	%r0, %r0, %r15          # encoding: [0xb9,0xf8,0xf0,0x00]
+#CHECK: ark	%r0, %r15, %r0          # encoding: [0xb9,0xf8,0x00,0x0f]
+#CHECK: ark	%r15, %r0, %r0          # encoding: [0xb9,0xf8,0x00,0xf0]
+#CHECK: ark	%r7, %r8, %r9           # encoding: [0xb9,0xf8,0x90,0x78]
+
+	ark	%r0,%r0,%r0
+	ark	%r0,%r0,%r15
+	ark	%r0,%r15,%r0
+	ark	%r15,%r0,%r0
+	ark	%r7,%r8,%r9
+
 #CHECK: ngrk	%r0, %r0, %r0           # encoding: [0xb9,0xe4,0x00,0x00]
 #CHECK: ngrk	%r0, %r0, %r15          # encoding: [0xb9,0xe4,0xf0,0x00]
 #CHECK: ngrk	%r0, %r15, %r0          # encoding: [0xb9,0xe4,0x00,0x0f]
@@ -48,6 +72,18 @@
 	ork	%r0,%r15,%r0
 	ork	%r15,%r0,%r0
 	ork	%r7,%r8,%r9
+
+#CHECK: sgrk	%r0, %r0, %r0           # encoding: [0xb9,0xe9,0x00,0x00]
+#CHECK: sgrk	%r0, %r0, %r15          # encoding: [0xb9,0xe9,0xf0,0x00]
+#CHECK: sgrk	%r0, %r15, %r0          # encoding: [0xb9,0xe9,0x00,0x0f]
+#CHECK: sgrk	%r15, %r0, %r0          # encoding: [0xb9,0xe9,0x00,0xf0]
+#CHECK: sgrk	%r7, %r8, %r9           # encoding: [0xb9,0xe9,0x90,0x78]
+
+	sgrk	%r0,%r0,%r0
+	sgrk	%r0,%r0,%r15
+	sgrk	%r0,%r15,%r0
+	sgrk	%r15,%r0,%r0
+	sgrk	%r7,%r8,%r9
 
 #CHECK: sllk	%r0, %r0, 0             # encoding: [0xeb,0x00,0x00,0x00,0x00,0xdf]
 #CHECK: sllk	%r15, %r1, 0            # encoding: [0xeb,0xf1,0x00,0x00,0x00,0xdf]
@@ -100,6 +136,18 @@
 	srak	%r0,%r0,0(%r15)
 	srak	%r0,%r0,524287(%r1)
 	srak	%r0,%r0,524287(%r15)
+
+#CHECK: srk	%r0, %r0, %r0           # encoding: [0xb9,0xf9,0x00,0x00]
+#CHECK: srk	%r0, %r0, %r15          # encoding: [0xb9,0xf9,0xf0,0x00]
+#CHECK: srk	%r0, %r15, %r0          # encoding: [0xb9,0xf9,0x00,0x0f]
+#CHECK: srk	%r15, %r0, %r0          # encoding: [0xb9,0xf9,0x00,0xf0]
+#CHECK: srk	%r7, %r8, %r9           # encoding: [0xb9,0xf9,0x90,0x78]
+
+	srk	%r0,%r0,%r0
+	srk	%r0,%r0,%r15
+	srk	%r0,%r15,%r0
+	srk	%r15,%r0,%r0
+	srk	%r7,%r8,%r9
 
 #CHECK: srlk	%r0, %r0, 0             # encoding: [0xeb,0x00,0x00,0x00,0x00,0xde]
 #CHECK: srlk	%r15, %r1, 0            # encoding: [0xeb,0xf1,0x00,0x00,0x00,0xde]
