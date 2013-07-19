@@ -7926,6 +7926,19 @@ TreeTransform<Derived>::TransformTypeTraitExpr(TypeTraitExpr *E) {
       if (To.isNull())
         return ExprError();
 
+      if (To->containsUnexpandedParameterPack()) {
+        To = getDerived().RebuildPackExpansionType(To,
+                                                   PatternTL.getSourceRange(),
+                                                   ExpansionTL.getEllipsisLoc(),
+                                                   NumExpansions);
+        if (To.isNull())
+          return ExprError();
+
+        PackExpansionTypeLoc ToExpansionTL
+          = TLB.push<PackExpansionTypeLoc>(To);
+        ToExpansionTL.setEllipsisLoc(ExpansionTL.getEllipsisLoc());
+      }
+
       Args.push_back(TLB.getTypeSourceInfo(SemaRef.Context, To));
     }
 
