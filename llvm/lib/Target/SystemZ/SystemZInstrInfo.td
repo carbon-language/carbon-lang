@@ -648,7 +648,7 @@ let Defs = [CC], Uses = [CC] in {
 let Defs = [CC] in {
   // ANDs of a register.
   let isCommutable = 1 in {
-    def NR  : BinaryRR <"n",  0x14,   and, GR32, GR32>;
+    defm NR : BinaryRRAndK<"n", 0x14, 0xB9F4, and, GR32, GR32>;
     def NGR : BinaryRRE<"ng", 0xB980, and, GR64, GR64>;
   }
 
@@ -685,7 +685,7 @@ defm : RMWIByte<and, bdaddr20pair, NIY>;
 let Defs = [CC] in {
   // ORs of a register.
   let isCommutable = 1 in {
-    def OR  : BinaryRR <"o",  0x16,   or, GR32, GR32>;
+    defm OR : BinaryRRAndK<"o", 0x16, 0xB9F6, or, GR32, GR32>;
     def OGR : BinaryRRE<"og", 0xB981, or, GR64, GR64>;
   }
 
@@ -722,7 +722,7 @@ defm : RMWIByte<or, bdaddr20pair, OIY>;
 let Defs = [CC] in {
   // XORs of a register.
   let isCommutable = 1 in {
-    def XR  : BinaryRR <"x",  0x17,   xor, GR32, GR32>;
+    defm XR : BinaryRRAndK<"x", 0x17, 0xB9F7, xor, GR32, GR32>;
     def XGR : BinaryRRE<"xg", 0xB982, xor, GR64, GR64>;
   }
 

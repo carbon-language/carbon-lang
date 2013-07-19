@@ -1,6 +1,30 @@
 # For z196 and above.
 # RUN: llvm-mc -triple s390x-linux-gnu -mcpu=z196 -show-encoding %s | FileCheck %s
 
+#CHECK: nrk	%r0, %r0, %r0           # encoding: [0xb9,0xf4,0x00,0x00]
+#CHECK: nrk	%r0, %r0, %r15          # encoding: [0xb9,0xf4,0xf0,0x00]
+#CHECK: nrk	%r0, %r15, %r0          # encoding: [0xb9,0xf4,0x00,0x0f]
+#CHECK: nrk	%r15, %r0, %r0          # encoding: [0xb9,0xf4,0x00,0xf0]
+#CHECK: nrk	%r7, %r8, %r9           # encoding: [0xb9,0xf4,0x90,0x78]
+
+	nrk	%r0,%r0,%r0
+	nrk	%r0,%r0,%r15
+	nrk	%r0,%r15,%r0
+	nrk	%r15,%r0,%r0
+	nrk	%r7,%r8,%r9
+
+#CHECK: ork	%r0, %r0, %r0           # encoding: [0xb9,0xf6,0x00,0x00]
+#CHECK: ork	%r0, %r0, %r15          # encoding: [0xb9,0xf6,0xf0,0x00]
+#CHECK: ork	%r0, %r15, %r0          # encoding: [0xb9,0xf6,0x00,0x0f]
+#CHECK: ork	%r15, %r0, %r0          # encoding: [0xb9,0xf6,0x00,0xf0]
+#CHECK: ork	%r7, %r8, %r9           # encoding: [0xb9,0xf6,0x90,0x78]
+
+	ork	%r0,%r0,%r0
+	ork	%r0,%r0,%r15
+	ork	%r0,%r15,%r0
+	ork	%r15,%r0,%r0
+	ork	%r7,%r8,%r9
+
 #CHECK: sllk	%r0, %r0, 0             # encoding: [0xeb,0x00,0x00,0x00,0x00,0xdf]
 #CHECK: sllk	%r15, %r1, 0            # encoding: [0xeb,0xf1,0x00,0x00,0x00,0xdf]
 #CHECK: sllk	%r1, %r15, 0            # encoding: [0xeb,0x1f,0x00,0x00,0x00,0xdf]
@@ -78,3 +102,15 @@
 	srlk	%r0,%r0,0(%r15)
 	srlk	%r0,%r0,524287(%r1)
 	srlk	%r0,%r0,524287(%r15)
+
+#CHECK: xrk	%r0, %r0, %r0           # encoding: [0xb9,0xf7,0x00,0x00]
+#CHECK: xrk	%r0, %r0, %r15          # encoding: [0xb9,0xf7,0xf0,0x00]
+#CHECK: xrk	%r0, %r15, %r0          # encoding: [0xb9,0xf7,0x00,0x0f]
+#CHECK: xrk	%r15, %r0, %r0          # encoding: [0xb9,0xf7,0x00,0xf0]
+#CHECK: xrk	%r7, %r8, %r9           # encoding: [0xb9,0xf7,0x90,0x78]
+
+	xrk	%r0,%r0,%r0
+	xrk	%r0,%r0,%r15
+	xrk	%r0,%r15,%r0
+	xrk	%r15,%r0,%r0
+	xrk	%r7,%r8,%r9

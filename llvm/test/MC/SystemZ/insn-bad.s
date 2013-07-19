@@ -1982,6 +1982,11 @@
 	niy	0, -1
 	niy	0, 256
 
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: nrk	%r2,%r3,%r4
+
+	nrk	%r2,%r3,%r4
+
 #CHECK: error: invalid operand
 #CHECK: ny	%r0, -524289
 #CHECK: error: invalid operand
@@ -2087,6 +2092,11 @@
 	oiy	0(%r1,%r2), 0
 	oiy	0, -1
 	oiy	0, 256
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: ork	%r2,%r3,%r4
+
+	ork	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: oy	%r0, -524289
@@ -2685,6 +2695,11 @@
 	xiy	0(%r1,%r2), 0
 	xiy	0, -1
 	xiy	0, 256
+
+#CHECK: error: {{(instruction requires: distinct-ops)?}}
+#CHECK: xrk	%r2,%r3,%r4
+
+	xrk	%r2,%r3,%r4
 
 #CHECK: error: invalid operand
 #CHECK: xy	%r0, -524289
