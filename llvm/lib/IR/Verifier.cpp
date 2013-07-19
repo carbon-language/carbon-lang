@@ -53,6 +53,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -66,6 +67,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -73,6 +75,9 @@
 #include <algorithm>
 #include <cstdarg>
 using namespace llvm;
+
+static cl::opt<bool> DisableDebugInfoVerifier("disable-debug-info-verifier",
+                                              cl::init(false));
 
 namespace {  // Anonymous namespace for class
   struct PreVerifier : public FunctionPass {
@@ -202,6 +207,9 @@ namespace {
 
       visitModuleFlags(M);
 
+      // Verify Debug Info.
+      verifyDebugInfo(M);
+
       // If the module is broken, abort at this time.
       return abortIfBroken();
     }
@@ -308,6 +316,8 @@ namespace {
                               bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
                              const Value *V);
+
+    void verifyDebugInfo(Module &M);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -2182,6 +2192,28 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert1(isa<ConstantInt>(CI.getArgOperand(1)),
             "llvm.invariant.end parameter #2 must be a constant integer", &CI);
     break;
+  }
+}
+
+void Verifier::verifyDebugInfo(Module &M) {
+  // Verify Debug Info.
+  if (!DisableDebugInfoVerifier) {
+    DebugInfoFinder Finder;
+    Finder.processModule(M);
+
+    for (DebugInfoFinder::iterator I = Finder.compile_unit_begin(),
+         E = Finder.compile_unit_end(); I != E; ++I)
+      Assert1(DICompileUnit(*I).Verify(), "DICompileUnit does not Verify!", *I);
+    for (DebugInfoFinder::iterator I = Finder.subprogram_begin(),
+         E = Finder.subprogram_end(); I != E; ++I)
+      Assert1(DISubprogram(*I).Verify(), "DISubprogram does not Verify!", *I);
+    for (DebugInfoFinder::iterator I = Finder.global_variable_begin(),
+         E = Finder.global_variable_end(); I != E; ++I)
+      Assert1(DIGlobalVariable(*I).Verify(),
+              "DIGlobalVariable does not Verify!", *I);
+    for (DebugInfoFinder::iterator I = Finder.type_begin(),
+         E = Finder.type_end(); I != E; ++I)
+      Assert1(DIType(*I).Verify(), "DIType does not Verify!", *I);
   }
 }
 

@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-macosx -darwin-gdb-compat=Disable %s -o %t -filetype=obj
+; RUN: llc -mtriple=x86_64-macosx -disable-debug-info-verifier -darwin-gdb-compat=Disable %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: DW_TAG_subprogram [9] *

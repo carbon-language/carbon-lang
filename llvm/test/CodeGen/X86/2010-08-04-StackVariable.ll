@@ -1,4 +1,4 @@
-; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s | grep DW_OP_breg7
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin -disable-debug-info-verifier < %s | grep DW_OP_breg7
 ; Use DW_OP_breg7 in variable's location expression if the variable is in a stack slot.
 
 %struct.SVal = type { i8*, i32 }

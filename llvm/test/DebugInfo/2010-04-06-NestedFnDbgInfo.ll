@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -asm-verbose -O0 | grep AT_specification | count 2
+; RUN: llvm-as -disable-debug-info-verifier < %s | llc -asm-verbose -O0 -disable-debug-info-verifier | grep AT_specification | count 2
 ; Radar 7833483
 ; Do not emit AT_specification for nested function foo.
 

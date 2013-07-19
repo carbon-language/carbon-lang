@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-macosx10.7 %s -o %t -filetype=obj
+; RUN: llc -mtriple=x86_64-apple-macosx10.7 -disable-debug-info-verifier %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: b_ref

@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-linux < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -disable-debug-info-verifier < %s | FileCheck %s
 
 ; CHECK: DW_AT_const_value
 ; CHECK-NEXT: 42

@@ -1,6 +1,6 @@
-; RUN: llc -mtriple=x86_64-apple-darwin %s -filetype=obj -o %t
+; RUN: llc -mtriple=x86_64-apple-darwin -disable-debug-info-verifier %s -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
-; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic %s -filetype=obj -o %t
+; RUN: llc -mtriple=x86_64-apple-darwin -disable-debug-info-verifier -regalloc=basic %s -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ;CHECK: DW_TAG_inlined_subroutine
