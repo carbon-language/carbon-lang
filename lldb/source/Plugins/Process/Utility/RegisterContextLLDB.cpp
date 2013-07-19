@@ -936,15 +936,10 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         }
     }
 
-    static uint32_t sp_regnum = LLDB_INVALID_REGNUM;
-    static uint32_t pc_regnum = LLDB_INVALID_REGNUM;
-    static bool generic_registers_initialized = false;
-    if (!generic_registers_initialized)
-    {
-        m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, eRegisterKindLLDB, sp_regnum);
-        m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, eRegisterKindLLDB, pc_regnum);
-        generic_registers_initialized = true;
-    }
+    uint32_t sp_regnum = LLDB_INVALID_REGNUM;
+    uint32_t pc_regnum = LLDB_INVALID_REGNUM;
+    m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, eRegisterKindLLDB, sp_regnum);
+    m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, eRegisterKindLLDB, pc_regnum);
 
     // Are we looking for the CALLER's stack pointer?  The stack pointer is defined to be the same as THIS frame's
     // CFA so just return the CFA value.  This is true on x86-32/x86-64 at least.
