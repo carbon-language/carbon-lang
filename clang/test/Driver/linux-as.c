@@ -1,4 +1,4 @@
-// Check passing options to the assembler for ARM targets.
+// Check passing options to the assembler for various linux targets.
 //
 // RUN: %clang -target arm-linux -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -54,3 +54,12 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=PPC-NO-MCPU %s
 // CHECK-PPC-NO-MCPU-NOT: as{{.*}} "-mcpu=invalid-cpu"
+//
+// RUN: %clang -target s390x-linux -### -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=Z-DEFAULT-ARCH %s
+// CHECK-Z-DEFAULT-ARCH: as{{.*}} "-march=z10"
+//
+// RUN: %clang -target s390x-linux -march=z196 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=Z-ARCH-Z196 %s
+// CHECK-Z-ARCH-Z196: as{{.*}} "-march=z196"

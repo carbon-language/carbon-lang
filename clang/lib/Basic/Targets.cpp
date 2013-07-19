@@ -4396,6 +4396,17 @@ namespace {
     virtual BuiltinVaListKind getBuiltinVaListKind() const {
       return TargetInfo::SystemZBuiltinVaList;
     }
+    virtual bool setCPU(const std::string &Name) {
+      bool CPUKnown = llvm::StringSwitch<bool>(Name)
+        .Case("z10", true)
+        .Case("z196", true)
+        .Case("zEC12", true)
+        .Default(false);
+
+      // No need to store the CPU yet.  There aren't any CPU-specific
+      // macros to define.
+      return CPUKnown;
+    }
   };
 
   const char *const SystemZTargetInfo::GCCRegNames[] = {
