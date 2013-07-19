@@ -263,6 +263,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
   bool shouldOmitCCOutOperand(StringRef Mnemonic,
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  bool shouldOmitPredicateOperand(StringRef Mnemonic,
+                              SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
 public:
   enum ARMMatchResultTy {
@@ -5157,6 +5159,25 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
   return false;
 }
 
+bool ARMAsmParser::shouldOmitPredicateOperand(
+    StringRef Mnemonic, SmallVectorImpl<MCParsedAsmOperand *> &Operands) {
+  // VRINT{Z, R, X} have a predicate operand in VFP, but not in NEON
+  unsigned RegIdx = 3;
+  if ((Mnemonic == "vrintz" || Mnemonic == "vrintx" || Mnemonic == "vrintr") &&
+      static_cast<ARMOperand *>(Operands[2])->getToken() == ".f32") {
+    if (static_cast<ARMOperand *>(Operands[3])->isToken() &&
+        static_cast<ARMOperand *>(Operands[3])->getToken() == ".f32")
+      RegIdx = 4;
+
+    if (static_cast<ARMOperand *>(Operands[RegIdx])->isReg() &&
+        (ARMMCRegisterClasses[ARM::DPRRegClassID]
+             .contains(static_cast<ARMOperand *>(Operands[RegIdx])->getReg()) ||
+         ARMMCRegisterClasses[ARM::QPRRegClassID]
+             .contains(static_cast<ARMOperand *>(Operands[RegIdx])->getReg())))
+      return true;
+  }
+}
+
 static bool isDataTypeToken(StringRef Tok) {
   return Tok == ".8" || Tok == ".16" || Tok == ".32" || Tok == ".64" ||
     Tok == ".i8" || Tok == ".i16" || Tok == ".i32" || Tok == ".i64" ||
@@ -5354,6 +5375,15 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // mnemonic, of course (CarrySetting == true). Reason number #317 the
   // table driven matcher doesn't fit well with the ARM instruction set.
   if (!CarrySetting && shouldOmitCCOutOperand(Mnemonic, Operands)) {
+    ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
+    Operands.erase(Operands.begin() + 1);
+    delete Op;
+  }
+
+  // Some instructions have the same mnemonic, but don't always
+  // have a predicate. Distinguish them here and delete the
+  // predicate if needed.
+  if (shouldOmitPredicateOperand(Mnemonic, Operands)) {
     ARMOperand *Op = static_cast<ARMOperand*>(Operands[1]);
     Operands.erase(Operands.begin() + 1);
     delete Op;

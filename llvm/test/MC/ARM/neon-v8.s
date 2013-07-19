@@ -44,3 +44,40 @@ vcvtp.s32.f32	q4, q15
 @ CHECK: vcvtp.s32.f32	q4, q15 @ encoding: [0x6e,0x82,0xbb,0xf3]
 vcvtp.u32.f32	q9, q8
 @ CHECK: vcvtp.u32.f32	q9, q8 @ encoding: [0xe0,0x22,0xfb,0xf3]
+
+vrintn.f32 d3, d0
+@ CHECK: vrintn.f32 d3, d0 @ encoding: [0x00,0x34,0xba,0xf3]
+vrintn.f32 q1, q4
+@ CHECK: vrintn.f32 q1, q4 @ encoding: [0x48,0x24,0xba,0xf3]
+vrintx.f32 d5, d12
+@ CHECK: vrintx.f32 d5, d12 @ encoding: [0x8c,0x54,0xba,0xf3]
+vrintx.f32 q0, q3
+@ CHECK: vrintx.f32 q0, q3 @ encoding: [0xc6,0x04,0xba,0xf3]
+vrinta.f32 d3, d0
+@ CHECK: vrinta.f32 d3, d0 @ encoding: [0x00,0x35,0xba,0xf3]
+vrinta.f32 q8, q2
+@ CHECK: vrinta.f32 q8, q2 @ encoding: [0x44,0x05,0xfa,0xf3]
+vrintz.f32 d12, d18
+@ CHECK: vrintz.f32 d12, d18 @ encoding: [0xa2,0xc5,0xba,0xf3]
+vrintz.f32 q9, q4
+@ CHECK: vrintz.f32 q9, q4 @ encoding: [0xc8,0x25,0xfa,0xf3]
+vrintm.f32 d3, d0
+@ CHECK: vrintm.f32 d3, d0 @ encoding: [0x80,0x36,0xba,0xf3]
+vrintm.f32 q1, q4
+@ CHECK: vrintm.f32 q1, q4 @ encoding: [0xc8,0x26,0xba,0xf3]
+vrintp.f32 d3, d0
+@ CHECK: vrintp.f32 d3, d0 @ encoding: [0x80,0x37,0xba,0xf3]
+vrintp.f32 q1, q4
+@ CHECK: vrintp.f32 q1, q4 @ encoding: [0xc8,0x27,0xba,0xf3]
+
+@ test the aliases of vrint
+vrintn.f32.f32 d3, d0
+@ CHECK: vrintn.f32 d3, d0 @ encoding: [0x00,0x34,0xba,0xf3]
+vrintx.f32.f32 q0, q3
+@ CHECK: vrintx.f32 q0, q3 @ encoding: [0xc6,0x04,0xba,0xf3]
+vrinta.f32.f32 d3, d0
+@ CHECK: vrinta.f32 d3, d0 @ encoding: [0x00,0x35,0xba,0xf3]
+vrintz.f32.f32 q9, q4
+@ CHECK: vrintz.f32 q9, q4 @ encoding: [0xc8,0x25,0xfa,0xf3]
+vrintp.f32.f32 q1, q4
+@ CHECK: vrintp.f32 q1, q4 @ encoding: [0xc8,0x27,0xba,0xf3]

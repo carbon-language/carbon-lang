@@ -364,6 +364,14 @@ def int_arm_neon_vtbx2 : Neon_Tbl4Arg_Intrinsic;
 def int_arm_neon_vtbx3 : Neon_Tbl5Arg_Intrinsic;
 def int_arm_neon_vtbx4 : Neon_Tbl6Arg_Intrinsic;
 
+// Vector Rounding
+def int_arm_neon_vrintn : Neon_1Arg_Intrinsic;
+def int_arm_neon_vrintx : Neon_1Arg_Intrinsic;
+def int_arm_neon_vrinta : Neon_1Arg_Intrinsic;
+def int_arm_neon_vrintz : Neon_1Arg_Intrinsic;
+def int_arm_neon_vrintm : Neon_1Arg_Intrinsic;
+def int_arm_neon_vrintp : Neon_1Arg_Intrinsic;
+
 // De-interleaving vector loads from N-element structures.
 // Source operands are the address and alignment.
 def int_arm_neon_vld1 : Intrinsic<[llvm_anyvector_ty],

@@ -5738,6 +5738,34 @@ def  VTBX4Pseudo
                 IIC_VTBX4, "$orig = $dst", []>;
 } // DecoderMethod = "DecodeTBLInstruction"
 
+// VRINT      : Vector Rounding
+multiclass VRINT_FPI<string op, bits<3> op9_7, SDPatternOperator Int> {
+  let PostEncoderMethod = "NEONThumb2V8PostEncoder", DecoderNamespace = "v8NEON" in {
+    def D : N2VDIntnp<0b10, 0b100, 0, NoItinerary,
+                      !strconcat("vrint", op), "f32",
+                      v2f32, v2f32, Int>, Requires<[HasV8, HasNEON]> {
+      let Inst{9-7} = op9_7;
+    }
+    def Q : N2VQIntnp<0b10, 0b100, 0, NoItinerary,
+                      !strconcat("vrint", op), "f32",
+                      v4f32, v4f32, Int>, Requires<[HasV8, HasNEON]> {
+      let Inst{9-7} = op9_7;
+    }
+  }
+
+  def : InstAlias<!strconcat("vrint", op, ".f32.f32\t$Dd, $Dm"),
+                  (!cast<Instruction>(NAME#"D") DPR:$Dd, DPR:$Dm)>;
+  def : InstAlias<!strconcat("vrint", op, ".f32.f32\t$Qd, $Qm"),
+                  (!cast<Instruction>(NAME#"Q") QPR:$Qd, QPR:$Qm)>;
+}
+
+defm VRINTNN : VRINT_FPI<"n", 0b000, int_arm_neon_vrintn>;
+defm VRINTXN : VRINT_FPI<"x", 0b001, int_arm_neon_vrintx>;
+defm VRINTAN : VRINT_FPI<"a", 0b010, int_arm_neon_vrinta>;
+defm VRINTZN : VRINT_FPI<"z", 0b011, int_arm_neon_vrintz>;
+defm VRINTMN : VRINT_FPI<"m", 0b101, int_arm_neon_vrintm>;
+defm VRINTPN : VRINT_FPI<"p", 0b111, int_arm_neon_vrintp>;
+
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math
 //===----------------------------------------------------------------------===//
