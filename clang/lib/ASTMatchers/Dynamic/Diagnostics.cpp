@@ -55,7 +55,7 @@ Diagnostics::ArgStream Diagnostics::addError(const SourceRange &Range,
   return ArgStream(&Last.Args);
 }
 
-StringRef ContextTypeToString(Diagnostics::ContextType Type) {
+StringRef contextTypeToFormatString(Diagnostics::ContextType Type) {
   switch (Type) {
     case Diagnostics::CT_MatcherConstruct:
       return "Error building matcher $0.";
@@ -65,7 +65,7 @@ StringRef ContextTypeToString(Diagnostics::ContextType Type) {
   llvm_unreachable("Unknown ContextType value.");
 }
 
-StringRef ErrorTypeToString(Diagnostics::ErrorType Type) {
+StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
   switch (Type) {
   case Diagnostics::ET_RegistryNotFound:
     return "Matcher not found: $0";
@@ -105,12 +105,11 @@ StringRef ErrorTypeToString(Diagnostics::ErrorType Type) {
   llvm_unreachable("Unknown ErrorType value.");
 }
 
-std::string FormatErrorString(StringRef FormatString,
-                              ArrayRef<std::string> Args) {
-  std::string Out;
+void formatErrorString(StringRef FormatString, ArrayRef<std::string> Args,
+                       llvm::raw_ostream &OS) {
   while (!FormatString.empty()) {
     std::pair<StringRef, StringRef> Pieces = FormatString.split("$");
-    Out += Pieces.first.str();
+    OS << Pieces.first.str();
     if (Pieces.second.empty()) break;
 
     const char Next = Pieces.second.front();
@@ -118,53 +117,64 @@ std::string FormatErrorString(StringRef FormatString,
     if (Next >= '0' && Next <= '9') {
       const unsigned Index = Next - '0';
       if (Index < Args.size()) {
-        Out += Args[Index];
+        OS << Args[Index];
       } else {
-        Out += "<Argument_Not_Provided>";
+        OS << "<Argument_Not_Provided>";
       }
     }
   }
-  return Out;
 }
 
-static std::string MaybeAddLineAndColumn(Twine Input,
-                                         const SourceRange &Range) {
-  if (Range.Start.Line > 0 && Range.Start.Column > 0)
-    return (Twine(Range.Start.Line) + ":" + Twine(Range.Start.Column) + ": " +
-            Input).str();
-  return Input.str();
-}
-
-std::string Diagnostics::ContextFrame::ToString() const {
-  return MaybeAddLineAndColumn(
-      FormatErrorString(ContextTypeToString(Type), Args), Range);
-}
-
-std::string Diagnostics::ErrorContent::ToString() const {
-  return MaybeAddLineAndColumn(FormatErrorString(ErrorTypeToString(Type), Args),
-                               Range);
-}
-
-std::string Diagnostics::ToString() const {
-  std::string Result;
-  for (size_t i = 0, e = Errors.size(); i != e; ++i) {
-    if (i != 0) Result += "\n";
-    Result += Errors[i].ToString();
+static void maybeAddLineAndColumn(const SourceRange &Range,
+                                  llvm::raw_ostream &OS) {
+  if (Range.Start.Line > 0 && Range.Start.Column > 0) {
+    OS << Range.Start.Line << ":" << Range.Start.Column << ": ";
   }
-  return Result;
 }
 
-std::string Diagnostics::ToStringFull() const {
-  std::string Result;
+static void printContextFrameToStream(const Diagnostics::ContextFrame &Frame,
+                                      llvm::raw_ostream &OS) {
+  maybeAddLineAndColumn(Frame.Range, OS);
+  formatErrorString(contextTypeToFormatString(Frame.Type), Frame.Args, OS);
+}
+
+static void printErrorContentToStream(const Diagnostics::ErrorContent &Content,
+                                      llvm::raw_ostream &OS) {
+  maybeAddLineAndColumn(Content.Range, OS);
+  formatErrorString(errorTypeToFormatString(Content.Type), Content.Args, OS);
+}
+
+void Diagnostics::printToStream(llvm::raw_ostream &OS) const {
   for (size_t i = 0, e = Errors.size(); i != e; ++i) {
-    if (i != 0) Result += "\n";
+    if (i != 0) OS << "\n";
+    printErrorContentToStream(Errors[i], OS);
+  }
+}
+
+std::string Diagnostics::toString() const {
+  std::string S;
+  llvm::raw_string_ostream OS(S);
+  printToStream(OS);
+  return OS.str();
+}
+
+void Diagnostics::printToStreamFull(llvm::raw_ostream &OS) const {
+  for (size_t i = 0, e = Errors.size(); i != e; ++i) {
+    if (i != 0) OS << "\n";
     const ErrorContent &Error = Errors[i];
     for (size_t i = 0, e = Error.ContextStack.size(); i != e; ++i) {
-      Result += Error.ContextStack[i].ToString() + "\n";
+      printContextFrameToStream(Error.ContextStack[i], OS);
+      OS << "\n";
     }
-    Result += Error.ToString();
+    printErrorContentToStream(Error, OS);
   }
-  return Result;
+}
+
+std::string Diagnostics::toStringFull() const {
+  std::string S;
+  llvm::raw_string_ostream OS(S);
+  printToStreamFull(OS);
+  return OS.str();
 }
 
 }  // namespace dynamic

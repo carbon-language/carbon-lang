@@ -42,7 +42,7 @@ public:
     if (!Error) Error = &DummyError;
     const MatcherList Out =
         Registry::constructMatcher(MatcherName, SourceRange(), Args(), Error);
-    EXPECT_EQ("", DummyError.ToStringFull());
+    EXPECT_EQ("", DummyError.toStringFull());
     return Out;
   }
 
@@ -52,7 +52,7 @@ public:
     if (!Error) Error = &DummyError;
     const MatcherList Out = Registry::constructMatcher(
         MatcherName, SourceRange(), Args(Arg1), Error);
-    EXPECT_EQ("", DummyError.ToStringFull());
+    EXPECT_EQ("", DummyError.toStringFull());
     return Out;
   }
 
@@ -63,7 +63,7 @@ public:
     if (!Error) Error = &DummyError;
     const MatcherList Out = Registry::constructMatcher(
         MatcherName, SourceRange(), Args(Arg1, Arg2), Error);
-    EXPECT_EQ("", DummyError.ToStringFull());
+    EXPECT_EQ("", DummyError.toStringFull());
     return Out;
   }
 };
@@ -203,24 +203,24 @@ TEST_F(RegistryTest, Errors) {
   OwningPtr<Diagnostics> Error(new Diagnostics());
   EXPECT_TRUE(constructMatcher("hasInitializer", Error.get()).empty());
   EXPECT_EQ("Incorrect argument count. (Expected = 1) != (Actual = 0)",
-            Error->ToString());
+            Error->toString());
   Error.reset(new Diagnostics());
   EXPECT_TRUE(constructMatcher("isArrow", std::string(), Error.get()).empty());
   EXPECT_EQ("Incorrect argument count. (Expected = 0) != (Actual = 1)",
-            Error->ToString());
+            Error->toString());
 
   // Bad argument type
   Error.reset(new Diagnostics());
   EXPECT_TRUE(constructMatcher("ofClass", std::string(), Error.get()).empty());
   EXPECT_EQ("Incorrect type for arg 1. (Expected = Matcher<CXXRecordDecl>) != "
             "(Actual = String)",
-            Error->ToString());
+            Error->toString());
   Error.reset(new Diagnostics());
   EXPECT_TRUE(constructMatcher("recordDecl", recordDecl(), parameterCountIs(3),
                                Error.get()).empty());
   EXPECT_EQ("Incorrect type for arg 2. (Expected = Matcher<CXXRecordDecl>) != "
             "(Actual = Matcher<FunctionDecl>)",
-            Error->ToString());
+            Error->toString());
 }
 
 } // end anonymous namespace

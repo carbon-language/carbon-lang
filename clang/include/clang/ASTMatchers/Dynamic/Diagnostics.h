@@ -23,6 +23,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 namespace ast_matchers {
@@ -125,8 +126,6 @@ public:
     ContextType Type;
     SourceRange Range;
     std::vector<std::string> Args;
-
-    std::string ToString() const;
   };
 
   /// \brief Information stored for each error found.
@@ -135,20 +134,20 @@ public:
     SourceRange Range;
     ErrorType Type;
     std::vector<std::string> Args;
-
-    std::string ToString() const;
   };
   ArrayRef<ErrorContent> errors() const { return Errors; }
 
   /// \brief Returns a simple string representation of each error.
   ///
   /// Each error only shows the error message without any context.
-  std::string ToString() const;
+  void printToStream(llvm::raw_ostream &OS) const;
+  std::string toString() const;
 
   /// \brief Returns the full string representation of each error.
   ///
   /// Each error message contains the full context.
-  std::string ToStringFull() const;
+  void printToStreamFull(llvm::raw_ostream &OS) const;
+  std::string toStringFull() const;
 
 private:
   /// \brief Helper function used by the constructors of ContextFrame.

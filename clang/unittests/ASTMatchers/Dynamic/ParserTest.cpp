@@ -73,7 +73,7 @@ public:
     VariantValue Value;
     Parser::parseExpression(Code, this, &Value, &Error);
     Values.push_back(Value);
-    Errors.push_back(Error.ToStringFull());
+    Errors.push_back(Error.toStringFull());
   }
 
   MatcherList actOnMatcherExpression(StringRef MatcherName,
@@ -184,7 +184,7 @@ TEST(ParserTest, FullParserTest) {
       "varDecl(hasInitializer(binaryOperator(hasLHS(integerLiteral()),"
       "                                      hasOperatorName(\"+\"))))",
       &Error));
-  EXPECT_EQ("", Error.ToStringFull());
+  EXPECT_EQ("", Error.toStringFull());
   Matcher<Decl> M = Matcher<Decl>::constructFrom(*VarDecl);
   EXPECT_TRUE(matches("int x = 1 + false;", M));
   EXPECT_FALSE(matches("int x = true + 1;", M));
@@ -193,7 +193,7 @@ TEST(ParserTest, FullParserTest) {
 
   OwningPtr<DynTypedMatcher> HasParameter(Parser::parseMatcherExpression(
       "functionDecl(hasParameter(1, hasName(\"x\")))", &Error));
-  EXPECT_EQ("", Error.ToStringFull());
+  EXPECT_EQ("", Error.toStringFull());
   M = Matcher<Decl>::constructFrom(*HasParameter);
 
   EXPECT_TRUE(matches("void f(int a, int x);", M));
@@ -206,20 +206,20 @@ TEST(ParserTest, FullParserTest) {
             "2:20: Error building matcher hasLHS.\n"
             "2:27: Incorrect type for arg 1. "
             "(Expected = Matcher<Expr>) != (Actual = String)",
-            Error.ToStringFull());
+            Error.toStringFull());
 }
 
 std::string ParseWithError(StringRef Code) {
   Diagnostics Error;
   VariantValue Value;
   Parser::parseExpression(Code, &Value, &Error);
-  return Error.ToStringFull();
+  return Error.toStringFull();
 }
 
 std::string ParseMatcherWithError(StringRef Code) {
   Diagnostics Error;
   Parser::parseMatcherExpression(Code, &Error);
-  return Error.ToStringFull();
+  return Error.toStringFull();
 }
 
 TEST(ParserTest, Errors) {
