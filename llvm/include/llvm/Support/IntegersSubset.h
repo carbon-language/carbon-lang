@@ -361,7 +361,7 @@ public:
                        FlatCollection.end(),
                        CheckingVal) != FlatCollection.end();
 
-    for (unsigned i = 0, e = getNumItems(); i < e; ++i) {
+    for (size_t i = 0, e = getNumItems(); i < e; ++i) {
       if (RangeLinks[i].first == RangeLinks[i].second) {
         if (*RangeLinks[i].first == CheckingVal)
           return true;
@@ -382,7 +382,7 @@ public:
   }
 
   /// Return number of items (ranges) stored in set.
-  unsigned getNumItems() const {
+  size_t getNumItems() const {
     return RangeLinks.size();
   }
 
@@ -409,7 +409,7 @@ public:
   ///       for range [<0>, <1>, <5>] the size will 3
   unsigned getSize() const {
     APInt sz(((const APInt&)getItem(0).getLow()).getBitWidth(), 0);
-    for (unsigned i = 0, e = getNumItems(); i != e; ++i) {
+    for (size_t i = 0, e = getNumItems(); i != e; ++i) {
       const APInt Low = getItem(i).getLow();
       const APInt High = getItem(i).getHigh();
       APInt S = High - Low + 1;

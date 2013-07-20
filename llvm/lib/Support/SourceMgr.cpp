@@ -52,9 +52,9 @@ SourceMgr::~SourceMgr() {
 /// AddIncludeFile - Search for a file with the specified name in the current
 /// directory or in one of the IncludeDirs.  If no file is found, this returns
 /// ~0, otherwise it returns the buffer ID of the stacked file.
-unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
-                                   SMLoc IncludeLoc,
-                                   std::string &IncludedFile) {
+size_t SourceMgr::AddIncludeFile(const std::string &Filename,
+                                 SMLoc IncludeLoc,
+                                 std::string &IncludedFile) {
   OwningPtr<MemoryBuffer> NewBuf;
   IncludedFile = Filename;
   MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
