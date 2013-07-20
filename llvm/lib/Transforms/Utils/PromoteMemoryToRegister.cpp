@@ -76,9 +76,6 @@ struct DenseMapInfo<std::pair<BasicBlock*, unsigned> > {
 };
 }
 
-/// isAllocaPromotable - Return true if this alloca is legal for promotion.
-/// This is true if there are only loads and stores to the alloca.
-///
 bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
   // assignments to subsections of the memory unit.
@@ -144,27 +141,28 @@ namespace {
       Values.swap(RHS.Values);
     }
   };
-  
-  /// LargeBlockInfo - This assigns and keeps a per-bb relative ordering of
-  /// load/store instructions in the block that directly load or store an alloca.
+
+  /// \brief This assigns and keeps a per-bb relative ordering of load/store
+  /// instructions in the block that directly load or store an alloca.
   ///
   /// This functionality is important because it avoids scanning large basic
   /// blocks multiple times when promoting many allocas in the same block.
   class LargeBlockInfo {
-    /// InstNumbers - For each instruction that we track, keep the index of the
-    /// instruction.  The index starts out as the number of the instruction from
-    /// the start of the block.
+    /// \brief For each instruction that we track, keep the index of the
+    /// instruction.
+    ///
+    /// The index starts out as the number of the instruction from the start of
+    /// the block.
     DenseMap<const Instruction *, unsigned> InstNumbers;
   public:
     
-    /// isInterestingInstruction - This code only looks at accesses to allocas.
+    /// This code only looks at accesses to allocas.
     static bool isInterestingInstruction(const Instruction *I) {
       return (isa<LoadInst>(I) && isa<AllocaInst>(I->getOperand(0))) ||
              (isa<StoreInst>(I) && isa<AllocaInst>(I->getOperand(1)));
     }
     
-    /// getInstructionIndex - Get or calculate the index of the specified
-    /// instruction.
+    /// Get or calculate the index of the specified instruction.
     unsigned getInstructionIndex(const Instruction *I) {
       assert(isInterestingInstruction(I) &&
              "Not a load/store to/from an alloca?");
@@ -198,55 +196,51 @@ namespace {
   };
 
   struct PromoteMem2Reg {
-    /// Allocas - The alloca instructions being promoted.
-    ///
+    /// The alloca instructions being promoted.
     std::vector<AllocaInst*> Allocas;
     DominatorTree &DT;
     DIBuilder *DIB;
 
-    /// AST - An AliasSetTracker object to update.  If null, don't update it.
-    ///
+    /// An AliasSetTracker object to update.  If null, don't update it.
     AliasSetTracker *AST;
     
-    /// AllocaLookup - Reverse mapping of Allocas.
-    ///
+    /// Reverse mapping of Allocas.
     DenseMap<AllocaInst*, unsigned>  AllocaLookup;
 
-    /// NewPhiNodes - The PhiNodes we're adding.  That map is used to simplify
-    /// some Phi nodes as we iterate over it, so it should have deterministic
-    /// iterators.  We could use a MapVector, but since we already maintain a
-    /// map from BasicBlock* to a stable numbering (BBNumbers), the DenseMap is
-    /// more efficient (also supports removal).
+    /// \brief The PhiNodes we're adding.
     ///
+    /// That map is used to simplify some Phi nodes as we iterate over it, so
+    /// it should have deterministic iterators.  We could use a MapVector, but
+    /// since we already maintain a map from BasicBlock* to a stable numbering
+    /// (BBNumbers), the DenseMap is more efficient (also supports removal).
     DenseMap<std::pair<unsigned, unsigned>, PHINode*> NewPhiNodes;
     
-    /// PhiToAllocaMap - For each PHI node, keep track of which entry in Allocas
-    /// it corresponds to.
+    /// For each PHI node, keep track of which entry in Allocas it corresponds
+    /// to.
     DenseMap<PHINode*, unsigned> PhiToAllocaMap;
     
-    /// PointerAllocaValues - If we are updating an AliasSetTracker, then for
-    /// each alloca that is of pointer type, we keep track of what to copyValue
-    /// to the inserted PHI nodes here.
-    ///
+    /// If we are updating an AliasSetTracker, then for each alloca that is of
+    /// pointer type, we keep track of what to copyValue to the inserted PHI
+    /// nodes here.
     std::vector<Value*> PointerAllocaValues;
 
-    /// AllocaDbgDeclares - For each alloca, we keep track of the dbg.declare
-    /// intrinsic that describes it, if any, so that we can convert it to a
-    /// dbg.value intrinsic if the alloca gets promoted.
+    /// For each alloca, we keep track of the dbg.declare intrinsic that
+    /// describes it, if any, so that we can convert it to a dbg.value
+    /// intrinsic if the alloca gets promoted.
     SmallVector<DbgDeclareInst*, 8> AllocaDbgDeclares;
 
-    /// Visited - The set of basic blocks the renamer has already visited.
+    /// The set of basic blocks the renamer has already visited.
     ///
     SmallPtrSet<BasicBlock*, 16> Visited;
 
-    /// BBNumbers - Contains a stable numbering of basic blocks to avoid
-    /// non-determinstic behavior.
+    /// Contains a stable numbering of basic blocks to avoid non-determinstic
+    /// behavior.
     DenseMap<BasicBlock*, unsigned> BBNumbers;
 
-    /// DomLevels - Maps DomTreeNodes to their level in the dominator tree.
+    /// Maps DomTreeNodes to their level in the dominator tree.
     DenseMap<DomTreeNode*, unsigned> DomLevels;
 
-    /// BBNumPreds - Lazily compute the number of predecessors a block has.
+    /// Lazily compute the number of predecessors a block has.
     DenseMap<const BasicBlock*, unsigned> BBNumPreds;
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
@@ -258,8 +252,7 @@ namespace {
 
     void run();
 
-    /// dominates - Return true if BB1 dominates BB2 using the DominatorTree.
-    ///
+    /// Return true if BB1 dominates BB2 using the DominatorTree.
     bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
       return DT.dominates(BB1, BB2);
     }
@@ -316,8 +309,8 @@ namespace {
       DbgDeclare = 0;
     }
     
-    /// AnalyzeAlloca - Scan the uses of the specified alloca, filling in our
-    /// ivars.
+    /// Scan the uses of the specified alloca, filling in the AllocaInfo used
+    /// by the rest of the pass to reason about the uses of this alloca.
     void AnalyzeAlloca(AllocaInst *AI) {
       clear();
 
@@ -675,10 +668,11 @@ void PromoteMem2Reg::run() {
 }
 
 
-/// ComputeLiveInBlocks - Determine which blocks the value is live in.  These
-/// are blocks which lead to uses.  Knowing this allows us to avoid inserting
-/// PHI nodes into blocks which don't lead to uses (thus, the inserted phi nodes
-/// would be dead).
+/// \brief Determine which blocks the value is live in.
+///
+/// These are blocks which lead to uses.  Knowing this allows us to avoid
+/// inserting PHI nodes into blocks which don't lead to uses (thus, the
+/// inserted phi nodes would be dead).
 void PromoteMem2Reg::
 ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info, 
                     const SmallPtrSet<BasicBlock*, 32> &DefBlocks,
@@ -747,10 +741,10 @@ ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info,
   }
 }
 
-/// DetermineInsertionPoint - At this point, we're committed to promoting the
-/// alloca using IDF's, and the standard SSA construction algorithm.  Determine
-/// which blocks need phi nodes and see if we can optimize out some work by
-/// avoiding insertion of dead phi nodes.
+/// At this point, we're committed to promoting the alloca using IDF's, and the
+/// standard SSA construction algorithm.  Determine which blocks need phi nodes
+/// and see if we can optimize out some work by avoiding insertion of dead phi
+/// nodes.
 void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
                                              AllocaInfo &Info) {
   // Unique the set of defining blocks for efficient lookup.
@@ -836,9 +830,8 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
     QueuePhiNode(DFBlocks[i].second, AllocaNum, CurrentVersion);
 }
 
-/// RewriteSingleStoreAlloca - If there is only a single store to this value,
-/// replace any loads of it that are directly dominated by the definition with
-/// the value stored.
+/// If there is only a single store to this value, replace any loads of it that
+/// are directly dominated by the definition with the value stored.
 void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
                                               AllocaInfo &Info,
                                               LargeBlockInfo &LBI) {
@@ -902,8 +895,7 @@ void PromoteMem2Reg::RewriteSingleStoreAlloca(AllocaInst *AI,
 
 namespace {
 
-/// StoreIndexSearchPredicate - This is a helper predicate used to search by the
-/// first element of a pair.
+/// This is a helper predicate used to search by the first element of a pair.
 struct StoreIndexSearchPredicate {
   bool operator()(const std::pair<unsigned, StoreInst*> &LHS,
                   const std::pair<unsigned, StoreInst*> &RHS) {
@@ -913,10 +905,10 @@ struct StoreIndexSearchPredicate {
 
 }
 
-/// PromoteSingleBlockAlloca - Many allocas are only used within a single basic
-/// block.  If this is the case, avoid traversing the CFG and inserting a lot of
-/// potentially useless PHI nodes by just performing a single linear pass over
-/// the basic block using the Alloca.
+/// Many allocas are only used within a single basic block.  If this is the
+/// case, avoid traversing the CFG and inserting a lot of potentially useless
+/// PHI nodes by just performing a single linear pass over the basic block
+/// using the Alloca.
 ///
 /// If we cannot promote this alloca (because it is read before it is written),
 /// return true.  This is necessary in cases where, due to control flow, the
@@ -926,7 +918,6 @@ struct StoreIndexSearchPredicate {
 ///   for (...) { if (c) { A = undef; undef = B; } }
 ///
 /// ... so long as A is not used before undef is set.
-///
 void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
                                               LargeBlockInfo &LBI) {
   // The trickiest case to handle is when we have large blocks. Because of this,
@@ -994,9 +985,9 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
   }
 }
 
-// QueuePhiNode - queues a phi-node to be added to a basic-block for a specific
-// Alloca returns true if there wasn't already a phi-node for that variable
-//
+/// \brief Queue a phi-node to be added to a basic-block for a specific Alloca.
+///
+/// Returns true if there wasn't already a phi-node for that variable
 bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
                                   unsigned &Version) {
   // Look up the basic-block in question.
@@ -1019,10 +1010,11 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   return true;
 }
 
-// RenamePass - Recursively traverse the CFG of the function, renaming loads and
-// stores to the allocas which we are promoting.  IncomingVals indicates what
-// value each Alloca contains on exit from the predecessor block Pred.
-//
+/// \brief Recursively traverse the CFG of the function, renaming loads and
+/// stores to the allocas which we are promoting.
+///
+/// IncomingVals indicates what value each Alloca contains on exit from the
+/// predecessor block Pred.
 void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
                                 RenamePassData::ValVector &IncomingVals,
                                 std::vector<RenamePassData> &Worklist) {
@@ -1132,14 +1124,6 @@ NextIteration:
   goto NextIteration;
 }
 
-/// PromoteMemToReg - Promote the specified list of alloca instructions into
-/// scalar registers, inserting PHI nodes as appropriate.  This function does
-/// not modify the CFG of the function at all.  All allocas must be from the
-/// same function.
-///
-/// If AST is specified, the specified tracker is updated to reflect changes
-/// made to the IR.
-///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            DominatorTree &DT, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
