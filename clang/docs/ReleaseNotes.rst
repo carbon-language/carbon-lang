@@ -74,6 +74,10 @@ C11 Feature Support
 C++ Language Changes in Clang
 -----------------------------
 
+- Fixed an ABI regression, introduced in Clang 3.2, which affected
+  member offsets for classes inheriting from certain classes with tail padding.
+  See PR16537.
+
 - ...
 
 C++11 Feature Support

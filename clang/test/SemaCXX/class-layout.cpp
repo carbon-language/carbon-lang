@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -fsyntax-only -verify 
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -fsyntax-only -verify -std=c++98
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -fsyntax-only -verify -std=c++11
 // expected-no-diagnostics
 
 #define SA(n, p) int a##n[(p) ? 1 : -1]
@@ -103,3 +104,469 @@ struct H { G g; };
 SA(0, sizeof(H) == 24);
 
 }
+
+namespace PR16537 {
+namespace test1 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only {
+    char may_go_into_tail_padding;
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test2 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11 __attribute__((aligned(16)));
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only {
+    char may_go_into_tail_padding;
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test3 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+
+  struct second_base {
+      char foo;
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only, public second_base {
+
+  };
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test4 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+
+  struct second_base {
+    char foo;
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only, public second_base {
+    char may_go_into_tail_padding;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test5 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+
+  struct pod_in_11_only2 {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+
+  struct second_base {
+    pod_in_11_only2 two;
+    char foo;
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only, public second_base {
+    char may_go_into_tail_padding;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 32);
+}
+
+namespace test6 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+
+  struct pod_in_11_only2 {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+
+  struct second_base {
+    pod_in_11_only2 two;
+    char foo;
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only, public second_base {
+    char may_go_into_tail_padding;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 32);
+}
+
+namespace test7 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    pod_in_11_only pod12;
+    char tail_padding;
+  };
+    
+  struct might_use_tail_padding : public tail_padded_pod_in_11_only {
+    char may_go_into_tail_padding;
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 24);
+}
+
+namespace test8 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+
+  struct another_layer {
+    tail_padded_pod_in_11_only pod;
+    char padding;
+  };
+    
+  struct might_use_tail_padding : public another_layer {
+    char may_go_into_tail_padding;
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 24);
+}
+
+namespace test9 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct tail_padded_pod_in_11_only {
+    pod_in_11_only pod11;
+    char tail_padding;
+  };
+
+  struct another_layer : tail_padded_pod_in_11_only {
+  };
+    
+  struct might_use_tail_padding : public another_layer {
+    char may_go_into_tail_padding;
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test10 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct B {
+    char b;
+  };
+
+  struct C {
+    pod_in_11_only c;
+    char cpad;
+  };
+
+  struct D {
+    char d;
+  };
+    
+  struct might_use_tail_padding : public A, public B, public C, public D {
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 32);
+}
+
+namespace test11 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct B {
+    char b_pre;
+    pod_in_11_only b;
+    char bpad;
+  };
+
+  struct C {
+    char c_pre;
+    pod_in_11_only c;
+    char cpad;
+  };
+
+  struct D {
+    char d_pre;
+    pod_in_11_only d;
+    char dpad;
+  };
+    
+  struct might_use_tail_padding : public A, public B, public C, public D {
+    char m;
+  };
+
+  SA(0, sizeof(might_use_tail_padding) == 88);
+}
+
+namespace test12 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a __attribute__((aligned(128)));
+  };
+
+  struct B {
+    char bpad;
+  };
+
+  struct C {
+    char cpad;
+  };
+
+  struct D {
+    char dpad;
+  };
+    
+  struct might_use_tail_padding : public A, public B, public C, public D {
+    char m;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 128);
+}
+
+namespace test13 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct B {
+  };
+
+  struct C {
+    char c_pre;
+    pod_in_11_only c;
+    char cpad;
+  };
+
+  struct D {
+  };
+    
+  struct might_use_tail_padding : public A, public B, public C, public D {
+    char m;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 40);
+}
+
+namespace test14 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct might_use_tail_padding : public A {
+    struct {
+      int : 0;
+    } x;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test15 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct might_use_tail_padding : public A {
+    struct {
+      char a:1;
+      char b:2;
+      char c:2;
+      char d:2;
+      char e:1;
+    } x;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 16);
+}
+
+namespace test16 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A  {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct B {
+    char bpod;
+    pod_in_11_only b;
+    char bpad;
+  };
+
+  struct C : public A, public B {
+  };
+  
+  struct D : public C {
+  };
+
+  struct might_use_tail_padding : public D {
+    char m;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 40);
+}
+
+namespace test17 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A {
+    pod_in_11_only a __attribute__((aligned(512)));
+  };
+
+  struct B {
+    char bpad;
+    pod_in_11_only foo;
+    char btail;
+  };
+
+  struct C {
+    char cpad;
+  };
+
+  struct D {
+    char dpad;
+  };
+    
+  struct might_use_tail_padding : public A, public B, public C, public D {
+    char a;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 512);
+}
+
+namespace test18 {
+  struct pod_in_11_only {
+  private:
+    long long x;
+  };
+   
+  struct A  {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct B {
+    char bpod;
+    pod_in_11_only b;
+    char bpad;
+  };
+
+  struct A1  {
+    pod_in_11_only a;
+    char apad;
+  };
+
+  struct B1 {
+    char bpod;
+    pod_in_11_only b;
+    char bpad;
+  };
+
+  struct C : public A, public B {
+  };
+
+  struct D : public A1, public B1 {
+  };
+
+  struct E : public D, public C {
+  };
+
+  struct F : public E {
+  };
+
+  struct might_use_tail_padding : public F {
+    char m;
+  };
+  SA(0, sizeof(might_use_tail_padding) == 80);
+}
+} // namespace PR16537

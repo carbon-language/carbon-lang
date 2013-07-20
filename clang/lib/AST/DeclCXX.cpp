@@ -662,7 +662,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       if (!Context.getLangOpts().ObjCAutoRefCount ||
           T.getObjCLifetime() != Qualifiers::OCL_ExplicitNone)
         setHasObjectMember(true);
-    } else if (!T.isPODType(Context))
+    } else if (!T.isCXX98PODType(Context))
       data().PlainOldData = false;
     
     if (T->isReferenceType()) {
