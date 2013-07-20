@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the auto-upgrade helper functions 
+// This file implements the auto-upgrade helper functions
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,14 +55,14 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   case 'a': {
     if (Name.startswith("arm.neon.vclz")) {
       Type* args[2] = {
-        F->arg_begin()->getType(), 
+        F->arg_begin()->getType(),
         Type::getInt1Ty(F->getContext())
       };
       // Can't use Intrinsic::getDeclaration here as it adds a ".i1" to
       // the end of the name. Change name from llvm.arm.neon.vclz.* to
       //  llvm.ctlz.*
       FunctionType* fType = FunctionType::get(F->getReturnType(), args, false);
-      NewFn = Function::Create(fType, F->getLinkage(), 
+      NewFn = Function::Create(fType, F->getLinkage(),
                                "llvm.ctlz." + Name.substr(14), F->getParent());
       return true;
     }
@@ -369,8 +369,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   }
 }
 
-// This tests each Function to determine if it needs upgrading. When we find 
-// one we are interested in, we then upgrade all calls to reflect the new 
+// This tests each Function to determine if it needs upgrading. When we find
+// one we are interested in, we then upgrade all calls to reflect the new
 // function.
 void llvm::UpgradeCallsToIntrinsic(Function* F) {
   assert(F && "Illegal attempt to upgrade a non-existent intrinsic.");
