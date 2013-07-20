@@ -13,6 +13,10 @@ def defaultlib : Separate<["-", "/"], "defaultlib">,
     HelpText<"Add the library to the list of input files">;
 def defaultlib_c : Joined<["-", "/"], "defaultlib:">, Alias<defaultlib>;
 
+def base : Separate<["-", "/"], "base">,
+    HelpText<"Base address of the program">;
+def base_c: Joined<["-", "/"], "base:">, Alias<base>;
+
 def stack : Separate<["-", "/"], "stack">,
     HelpText<"Size of the stack">;
 def stack_c: Joined<["-", "/"], "stack:">, Alias<stack>;

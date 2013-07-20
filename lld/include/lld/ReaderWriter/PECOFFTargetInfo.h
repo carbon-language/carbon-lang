@@ -25,7 +25,7 @@ namespace lld {
 class PECOFFTargetInfo : public TargetInfo {
 public:
   PECOFFTargetInfo()
-      : _stackReserve(1024 * 1024), _stackCommit(4096),
+      : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
         _nxCompat(true), _largeAddressAware(false) {}
@@ -55,6 +55,9 @@ public:
 
   bool appendInputFileOrLibrary(std::string path);
   bool appendLibraryFile(StringRef path);
+
+  void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
+  uint64_t getBaseAddress() const { return _baseAddress; }
 
   void setStackReserve(uint64_t size) { _stackReserve = size; }
   void setStackCommit(uint64_t size) { _stackCommit = size; }
@@ -89,6 +92,10 @@ public:
   }
 
 private:
+  // The start address for the program. The default value for the executable is
+  // 0x400000, but can be altered using -base command line option.
+  uint64_t _baseAddress;
+
   uint64_t _stackReserve;
   uint64_t _stackCommit;
   uint64_t _heapReserve;

@@ -80,20 +80,40 @@ bool checkNumber(StringRef version, const char *errorMessage,
   return true;
 }
 
-// Parse an argument for -stack or -heap. The expected string is
-// "reserveSize[,stackCommitSize]".
+// Parse an argument for -base, -stack or -heap. The expected string
+// is "<integer>[,<integer>]".
 bool parseMemoryOption(const StringRef &arg, raw_ostream &diagnostics,
                        uint64_t &reserve, uint64_t &commit) {
   StringRef reserveStr, commitStr;
   llvm::tie(reserveStr, commitStr) = arg.split(',');
-  if (!checkNumber(reserveStr, "invalid stack size: ", diagnostics))
+  if (!checkNumber(reserveStr, "invalid size: ", diagnostics))
     return false;
   reserve = atoi(reserveStr.str().c_str());
   if (!commitStr.empty()) {
-    if (!checkNumber(commitStr, "invalid stack size: ", diagnostics))
+    if (!checkNumber(commitStr, "invalid size: ", diagnostics))
       return false;
     commit = atoi(commitStr.str().c_str());
   }
+  return true;
+}
+
+// Parse -base command line option. The argument for the parameter is in the
+// form of "<address>[:<size>]".
+bool parseBaseOption(PECOFFTargetInfo &info, const StringRef &arg,
+                      raw_ostream &diagnostics) {
+  // Size should be set to SizeOfImage field in the COFF header, and if it's
+  // smaller than the actual size, the linker should warn about that. Currently
+  // we just ignore the value of size parameter.
+  uint64_t addr, size;
+  if (!parseMemoryOption(arg, diagnostics, addr, size))
+    return false;
+  // It's an error if the base address is not multiple of 64K.
+  if (addr & 0xffff) {
+    diagnostics << "Base address have to be multiple of 64K, but got "
+                << addr << "\n";
+    return false;
+  }
+  info.setBaseAddress(addr);
   return true;
 }
 
@@ -279,6 +299,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
        it != ie; ++it) {
     info.appendLLVMOption((*it)->getValue());
   }
+
+  // Handle -base
+  if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_base))
+    if (!parseBaseOption(info, arg->getValue(), diagnostics))
+      return true;
 
   // Handle -stack
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))

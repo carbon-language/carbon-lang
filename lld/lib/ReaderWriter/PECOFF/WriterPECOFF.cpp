@@ -166,7 +166,7 @@ public:
 
     // The address of the executable when loaded into memory. The default for
     // DLLs is 0x10000000. The default for executables is 0x400000.
-    _peHeader.ImageBase = IMAGE_BASE;
+    _peHeader.ImageBase = targetInfo.getBaseAddress();
 
     // Sections should be page-aligned when loaded into memory, which is 4KB on
     // x86.
@@ -279,7 +279,8 @@ public:
   }
 
   void applyRelocations(uint8_t *fileBuffer,
-                        std::map<const Atom *, uint64_t> &atomRva) {
+                        std::map<const Atom *, uint64_t> &atomRva,
+                        uint64_t imageBaseAddress) {
     for (const auto *layout : _atomLayouts) {
       const DefinedAtom *atom = cast<DefinedAtom>(layout->_atom);
       for (const Reference *ref : *atom) {
@@ -297,7 +298,7 @@ public:
           break;
         case llvm::COFF::IMAGE_REL_I386_DIR32:
           // Set target's 32-bit VA.
-          *relocSite = targetAddr + IMAGE_BASE;
+          *relocSite = targetAddr + imageBaseAddress;
           break;
         case llvm::COFF::IMAGE_REL_I386_DIR32NB:
           // Set target's 32-bit RVA.
@@ -765,7 +766,8 @@ private:
   void applyAllRelocations(uint8_t *bufferStart) {
     for (auto &cp : _chunks)
       if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
-        chunk->applyRelocations(bufferStart, atomRva);
+        chunk->applyRelocations(bufferStart, atomRva,
+                                _PECOFFTargetInfo.getBaseAddress());
   }
 
   void addChunk(Chunk *chunk) {

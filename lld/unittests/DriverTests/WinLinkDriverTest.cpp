@@ -44,6 +44,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_info.getInputSearchPaths().empty());
   EXPECT_EQ(6, _info.getMinOSVersion().majorVersion);
   EXPECT_EQ(0, _info.getMinOSVersion().minorVersion);
+  EXPECT_EQ(0x400000, _info.getBaseAddress());
   EXPECT_EQ(1024 * 1024ULL, _info.getStackReserve());
   EXPECT_EQ(4096ULL, _info.getStackCommit());
   EXPECT_FALSE(_info.allowRemainingUndefines());
@@ -96,6 +97,11 @@ TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _info.getSubsystem());
   EXPECT_EQ(3, _info.getMinOSVersion().majorVersion);
   EXPECT_EQ(1, _info.getMinOSVersion().minorVersion);
+}
+
+TEST_F(WinLinkParserTest, Base) {
+  EXPECT_FALSE(parse("link.exe", "-base", "8388608", nullptr));
+  EXPECT_EQ(0x800000, _info.getBaseAddress());
 }
 
 TEST_F(WinLinkParserTest, StackReserve) {

@@ -1,0 +1,11 @@
+# RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link -out %t1 -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=DEFAULT %s
+#
+# RUN: lld -flavor link -out %t1 -base 8388608 -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t1 | FileCheck -check-prefix=BASE %s
+
+DEFAULT: ImageBase: 0x400000
+
+BASE: ImageBase: 0x800000
