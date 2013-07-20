@@ -124,7 +124,7 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   bool visitIntToPtr(IntToPtrInst &I);
   bool visitCastInst(CastInst &I);
   bool visitUnaryInstruction(UnaryInstruction &I);
-  bool visitICmp(ICmpInst &I);
+  bool visitCmpInst(CmpInst &I);
   bool visitSub(BinaryOperator &I);
   bool visitBinaryOperator(BinaryOperator &I);
   bool visitLoad(LoadInst &I);
@@ -490,7 +490,7 @@ bool CallAnalyzer::visitUnaryInstruction(UnaryInstruction &I) {
   return false;
 }
 
-bool CallAnalyzer::visitICmp(ICmpInst &I) {
+bool CallAnalyzer::visitCmpInst(CmpInst &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   // First try to handle simplified comparisons.
   if (!isa<Constant>(LHS))
@@ -499,12 +499,16 @@ bool CallAnalyzer::visitICmp(ICmpInst &I) {
   if (!isa<Constant>(RHS))
     if (Constant *SimpleRHS = SimplifiedValues.lookup(RHS))
       RHS = SimpleRHS;
-  if (Constant *CLHS = dyn_cast<Constant>(LHS))
+  if (Constant *CLHS = dyn_cast<Constant>(LHS)) {
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      if (Constant *C = ConstantExpr::getICmp(I.getPredicate(), CLHS, CRHS)) {
+      if (Constant *C = ConstantExpr::getCompare(I.getPredicate(), CLHS, CRHS)) {
         SimplifiedValues[&I] = C;
         return true;
       }
+  }
+
+  if (I.getOpcode() == Instruction::FCmp)
+    return false;
 
   // Otherwise look for a comparison between constant offset pointers with
   // a common base.

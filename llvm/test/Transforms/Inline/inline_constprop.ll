@@ -187,6 +187,37 @@ bb.false:
   ret i64 %y8
 }
 
+define float @caller6() {
+; Check that we can constant-prop through fcmp instructions
+;
+; CHECK-LABEL: @caller6(
+; CHECK-NOT: call
+; CHECK: ret
+  %x = call float @callee6(float 42.0)
+  ret float %x
+}
+
+define float @callee6(float %x) {
+  %icmp = fcmp ugt float %x, 42.0
+  br i1 %icmp, label %bb.true, label %bb.false
+
+bb.true:
+  ; This block musn't be counted in the inline cost.
+  %x1 = fadd float %x, 1.0
+  %x2 = fadd float %x1, 1.0
+  %x3 = fadd float %x2, 1.0
+  %x4 = fadd float %x3, 1.0
+  %x5 = fadd float %x4, 1.0
+  %x6 = fadd float %x5, 1.0
+  %x7 = fadd float %x6, 1.0
+  %x8 = fadd float %x7, 1.0
+  ret float %x8
+
+bb.false:
+  ret float %x
+}
+
+
 
 define i32 @PR13412.main() {
 ; This is a somewhat complicated three layer subprogram that was reported to
