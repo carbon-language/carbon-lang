@@ -3070,6 +3070,11 @@ static int compareNames(const void *A, const void *B) {
 
 static void setUsedInitializer(GlobalVariable &V,
                                SmallPtrSet<GlobalValue *, 8> Init) {
+  if (Init.empty()) {
+    V.eraseFromParent();
+    return;
+  }
+
   SmallVector<llvm::Constant *, 8> UsedArray;
   PointerType *Int8PtrTy = Type::getInt8PtrTy(V.getContext());
 
