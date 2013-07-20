@@ -2415,6 +2415,10 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Method);
     SmallVector<Expr*, 8> ConstructorArgs;
 
+    if (S.RequireNonAbstractType(CastLoc, Ty,
+                                 diag::err_allocation_of_abstract_type))
+      return ExprError();
+
     if (S.CompleteConstructorCall(Constructor, From, CastLoc, ConstructorArgs))
       return ExprError();
 
@@ -2500,7 +2504,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
           BeforeToType = Ctor->getParamDecl(0)->getType().getNonReferenceType();
         }
       }
-      // Watch out for elipsis conversion.
+      // Watch out for ellipsis conversion.
       if (!ICS.UserDefined.EllipsisConversion) {
         ExprResult Res =
           PerformImplicitConversion(From, BeforeToType,

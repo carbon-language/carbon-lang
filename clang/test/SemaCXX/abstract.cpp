@@ -250,6 +250,13 @@ namespace test4 {
   };
 }
 
+namespace test5 {
+  struct A { A(int); virtual ~A() = 0; }; // expected-note {{pure virtual method}}
+  const A &a = 0; // expected-error {{abstract class}}
+  void f(const A &a = 0); // expected-error {{abstract class}}
+  void g() { f(0); } // expected-error {{abstract class}}
+}
+
 // PR9247: Crash on invalid in clang::Sema::ActOnFinishCXXMemberSpecification
 namespace pr9247 {
   struct A {
