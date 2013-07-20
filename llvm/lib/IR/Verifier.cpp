@@ -498,18 +498,29 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
           "Alias and aliasee types should match!", &GA);
   Assert1(!GA.hasUnnamedAddr(), "Alias cannot have unnamed_addr!", &GA);
 
-  if (!isa<GlobalValue>(GA.getAliasee())) {
-    const ConstantExpr *CE = dyn_cast<ConstantExpr>(GA.getAliasee());
+  Constant *Aliasee = GA.getAliasee();
+
+  if (!isa<GlobalValue>(Aliasee)) {
+    ConstantExpr *CE = dyn_cast<ConstantExpr>(Aliasee);
     Assert1(CE &&
             (CE->getOpcode() == Instruction::BitCast ||
              CE->getOpcode() == Instruction::GetElementPtr) &&
             isa<GlobalValue>(CE->getOperand(0)),
             "Aliasee should be either GlobalValue or bitcast of GlobalValue",
             &GA);
+
+    if (CE->getOpcode() == Instruction::BitCast) {
+      unsigned SrcAS = CE->getOperand(0)->getType()->getPointerAddressSpace();
+      unsigned DstAS = CE->getType()->getPointerAddressSpace();
+
+      Assert1(SrcAS == DstAS,
+              "Alias bitcasts cannot be between different address spaces",
+              &GA);
+    }
   }
 
-  const GlobalValue* Aliasee = GA.resolveAliasedGlobal(/*stopOnWeak*/ false);
-  Assert1(Aliasee,
+  const GlobalValue* Resolved = GA.resolveAliasedGlobal(/*stopOnWeak*/ false);
+  Assert1(Resolved,
           "Aliasing chain should end with function or global variable", &GA);
 
   visitGlobalValue(GA);
