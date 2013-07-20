@@ -2668,6 +2668,17 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                           Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleWarnUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // Check the attribute arguments.
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(D))
+    RD->addAttr(::new (S.Context) WarnUnusedAttr(Attr.getRange(), S.Context));
+  else
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+}
+
 static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (!checkAttributeNumArgs(S, Attr, 0))
@@ -4891,6 +4902,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_TypeVisibility:
     handleVisibilityAttr(S, D, Attr, true);
+    break;
+  case AttributeList::AT_WarnUnused:
+    handleWarnUnusedAttr(S, D, Attr);
     break;
   case AttributeList::AT_WarnUnusedResult: handleWarnUnusedResult(S, D, Attr);
     break;

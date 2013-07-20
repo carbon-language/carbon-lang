@@ -1320,7 +1320,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
         return false;
 
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Tag)) {
-        if (!RD->hasTrivialDestructor())
+        if (!RD->hasTrivialDestructor() && !RD->hasAttr<WarnUnusedAttr>())
           return false;
 
         if (const Expr *Init = VD->getInit()) {
@@ -1330,7 +1330,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
             dyn_cast<CXXConstructExpr>(Init);
           if (Construct && !Construct->isElidable()) {
             CXXConstructorDecl *CD = Construct->getConstructor();
-            if (!CD->isTrivial())
+            if (!CD->isTrivial() && !RD->hasAttr<WarnUnusedAttr>())
               return false;
           }
         }
