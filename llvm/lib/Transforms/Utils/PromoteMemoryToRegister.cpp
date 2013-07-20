@@ -102,7 +102,63 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
 
 namespace {
 
-struct AllocaInfo;
+struct AllocaInfo {
+  SmallVector<BasicBlock *, 32> DefiningBlocks;
+  SmallVector<BasicBlock *, 32> UsingBlocks;
+
+  StoreInst *OnlyStore;
+  BasicBlock *OnlyBlock;
+  bool OnlyUsedInOneBlock;
+
+  Value *AllocaPointerVal;
+  DbgDeclareInst *DbgDeclare;
+
+  void clear() {
+    DefiningBlocks.clear();
+    UsingBlocks.clear();
+    OnlyStore = 0;
+    OnlyBlock = 0;
+    OnlyUsedInOneBlock = true;
+    AllocaPointerVal = 0;
+    DbgDeclare = 0;
+  }
+
+  /// Scan the uses of the specified alloca, filling in the AllocaInfo used
+  /// by the rest of the pass to reason about the uses of this alloca.
+  void AnalyzeAlloca(AllocaInst *AI) {
+    clear();
+
+    // As we scan the uses of the alloca instruction, keep track of stores,
+    // and decide whether all of the loads and stores to the alloca are within
+    // the same basic block.
+    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+         UI != E;) {
+      Instruction *User = cast<Instruction>(*UI++);
+
+      if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+        // Remember the basic blocks which define new values for the alloca
+        DefiningBlocks.push_back(SI->getParent());
+        AllocaPointerVal = SI->getOperand(0);
+        OnlyStore = SI;
+      } else {
+        LoadInst *LI = cast<LoadInst>(User);
+        // Otherwise it must be a load instruction, keep track of variable
+        // reads.
+        UsingBlocks.push_back(LI->getParent());
+        AllocaPointerVal = LI;
+      }
+
+      if (OnlyUsedInOneBlock) {
+        if (OnlyBlock == 0)
+          OnlyBlock = User->getParent();
+        else if (OnlyBlock != User->getParent())
+          OnlyUsedInOneBlock = false;
+      }
+    }
+
+    DbgDeclare = FindAllocaDbgDeclare(AI);
+  }
+};
 
 // Data package used by RenamePass()
 class RenamePassData {
@@ -264,64 +320,6 @@ private:
                   RenamePassData::ValVector &IncVals,
                   std::vector<RenamePassData> &Worklist);
   bool QueuePhiNode(BasicBlock *BB, unsigned AllocaIdx, unsigned &Version);
-};
-
-struct AllocaInfo {
-  SmallVector<BasicBlock *, 32> DefiningBlocks;
-  SmallVector<BasicBlock *, 32> UsingBlocks;
-
-  StoreInst *OnlyStore;
-  BasicBlock *OnlyBlock;
-  bool OnlyUsedInOneBlock;
-
-  Value *AllocaPointerVal;
-  DbgDeclareInst *DbgDeclare;
-
-  void clear() {
-    DefiningBlocks.clear();
-    UsingBlocks.clear();
-    OnlyStore = 0;
-    OnlyBlock = 0;
-    OnlyUsedInOneBlock = true;
-    AllocaPointerVal = 0;
-    DbgDeclare = 0;
-  }
-
-  /// Scan the uses of the specified alloca, filling in the AllocaInfo used
-  /// by the rest of the pass to reason about the uses of this alloca.
-  void AnalyzeAlloca(AllocaInst *AI) {
-    clear();
-
-    // As we scan the uses of the alloca instruction, keep track of stores,
-    // and decide whether all of the loads and stores to the alloca are within
-    // the same basic block.
-    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-         UI != E;) {
-      Instruction *User = cast<Instruction>(*UI++);
-
-      if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-        // Remember the basic blocks which define new values for the alloca
-        DefiningBlocks.push_back(SI->getParent());
-        AllocaPointerVal = SI->getOperand(0);
-        OnlyStore = SI;
-      } else {
-        LoadInst *LI = cast<LoadInst>(User);
-        // Otherwise it must be a load instruction, keep track of variable
-        // reads.
-        UsingBlocks.push_back(LI->getParent());
-        AllocaPointerVal = LI;
-      }
-
-      if (OnlyUsedInOneBlock) {
-        if (OnlyBlock == 0)
-          OnlyBlock = User->getParent();
-        else if (OnlyBlock != User->getParent())
-          OnlyUsedInOneBlock = false;
-      }
-    }
-
-    DbgDeclare = FindAllocaDbgDeclare(AI);
-  }
 };
 
 } // end of anonymous namespace
