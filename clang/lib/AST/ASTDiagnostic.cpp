@@ -1054,10 +1054,14 @@ class TemplateDiff {
 
     if (!Iter.isEnd())
       return Iter->getAsType();
-    if (!isVariadic)
-      return DefaultTTPD->getDefaultArgument();
+    if (isVariadic)
+      return QualType();
 
-    return QualType();
+    QualType ArgType = DefaultTTPD->getDefaultArgument();
+    if (ArgType->isDependentType())
+      return Iter.getDesugar().getAsType();
+
+    return ArgType;
   }
 
   /// GetExpr - Retrieves the template expression argument, including default
