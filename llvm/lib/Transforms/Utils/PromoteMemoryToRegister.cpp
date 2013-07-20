@@ -324,14 +324,6 @@ struct AllocaInfo {
   }
 };
 
-typedef std::pair<DomTreeNode *, unsigned> DomTreeNodePair;
-
-struct DomTreeNodeCompare {
-  bool operator()(const DomTreeNodePair &LHS, const DomTreeNodePair &RHS) {
-    return LHS.second < RHS.second;
-  }
-};
-
 } // end of anonymous namespace
 
 static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
@@ -723,6 +715,16 @@ void PromoteMem2Reg::ComputeLiveInBlocks(
     }
   }
 }
+
+namespace {
+typedef std::pair<DomTreeNode *, unsigned> DomTreeNodePair;
+
+struct DomTreeNodeCompare {
+  bool operator()(const DomTreeNodePair &LHS, const DomTreeNodePair &RHS) {
+    return LHS.second < RHS.second;
+  }
+};
+} // end anonymous namespace
 
 /// At this point, we're committed to promoting the alloca using IDF's, and the
 /// standard SSA construction algorithm.  Determine which blocks need phi nodes
