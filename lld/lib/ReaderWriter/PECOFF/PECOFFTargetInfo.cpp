@@ -57,7 +57,7 @@ bool PECOFFTargetInfo::validateImpl(raw_ostream &diagnostics) {
 /// Append the given file to the input file list. The file must be an object
 /// file or an import library file.
 bool PECOFFTargetInfo::appendInputFileOrLibrary(std::string path) {
-  StringRef ext = llvm::sys::path::extension(path).lower();
+  std::string ext = llvm::sys::path::extension(path).lower();
   // This is an import library file. Look for the library file in the search
   // paths, unless the path contains a directory name.
   if (ext == ".lib") {
