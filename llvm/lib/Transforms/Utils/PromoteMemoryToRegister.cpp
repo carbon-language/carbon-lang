@@ -56,26 +56,6 @@ STATISTIC(NumSingleStore,   "Number of alloca's promoted with a single store");
 STATISTIC(NumDeadAlloca,    "Number of dead alloca's removed");
 STATISTIC(NumPHIInsert,     "Number of PHI nodes inserted");
 
-namespace llvm {
-template<>
-struct DenseMapInfo<std::pair<BasicBlock*, unsigned> > {
-  typedef std::pair<BasicBlock*, unsigned> EltTy;
-  static inline EltTy getEmptyKey() {
-    return EltTy(reinterpret_cast<BasicBlock*>(-1), ~0U);
-  }
-  static inline EltTy getTombstoneKey() {
-    return EltTy(reinterpret_cast<BasicBlock*>(-2), 0U);
-  }
-  static unsigned getHashValue(const std::pair<BasicBlock*, unsigned> &Val) {
-    using llvm::hash_value;
-    return static_cast<unsigned>(hash_value(Val));
-  }
-  static bool isEqual(const EltTy &LHS, const EltTy &RHS) {
-    return LHS == RHS;
-  }
-};
-}
-
 bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
   // assignments to subsections of the memory unit.
