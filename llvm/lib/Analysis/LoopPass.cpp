@@ -188,6 +188,10 @@ bool LPPassManager::runOnFunction(Function &F) {
   // advantage in deleting uses in a later loop before optimizing the
   // definitions in an earlier loop. If we find a clear reason to process in
   // forward order, then a forward variant of LoopPassManager should be created.
+  //
+  // Note that LoopInfo::iterator visits loops in reverse program
+  // order. Here, reverse_iterator gives us a forward order, and the LoopQueue
+  // reverses the order a third time by popping from the back.
   for (LoopInfo::reverse_iterator I = LI->rbegin(), E = LI->rend(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
 
