@@ -28,7 +28,8 @@ namespace clang {
   namespace diag {
     // Start position for diagnostics.
     enum {
-      DIAG_START_DRIVER        =                               300,
+      DIAG_START_COMMON        =                                 0,
+      DIAG_START_DRIVER        = DIAG_START_COMMON          +  300,
       DIAG_START_FRONTEND      = DIAG_START_DRIVER          +  100,
       DIAG_START_SERIALIZATION = DIAG_START_FRONTEND        +  100,
       DIAG_START_LEX           = DIAG_START_SERIALIZATION   +  120,
@@ -49,6 +50,7 @@ namespace clang {
     enum {
 #define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,\
              SFINAE,ACCESS,CATEGORY,NOWERROR,SHOWINSYSHEADER) ENUM,
+#define COMMONSTART
 #include "clang/Basic/DiagnosticCommonKinds.inc"
       NUM_BUILTIN_COMMON_DIAGNOSTICS
 #undef DIAG
