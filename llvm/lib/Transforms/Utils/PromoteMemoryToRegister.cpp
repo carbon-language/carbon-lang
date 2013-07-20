@@ -178,7 +178,7 @@ struct PromoteMem2Reg {
   /// The alloca instructions being promoted.
   std::vector<AllocaInst *> Allocas;
   DominatorTree &DT;
-  DIBuilder *DIB;
+  DIBuilder DIB;
 
   /// An AliasSetTracker object to update.  If null, don't update it.
   AliasSetTracker *AST;
@@ -225,8 +225,8 @@ struct PromoteMem2Reg {
 public:
   PromoteMem2Reg(const std::vector<AllocaInst *> &Allocas, DominatorTree &DT,
                  AliasSetTracker *AST)
-      : Allocas(Allocas), DT(DT), DIB(0), AST(AST) {}
-  ~PromoteMem2Reg() { delete DIB; }
+      : Allocas(Allocas), DT(DT), DIB(*DT.getRoot()->getParent()->getParent()),
+        AST(AST) {}
 
   void run();
 
@@ -405,9 +405,7 @@ void PromoteMem2Reg::run() {
         // Record debuginfo for the store and remove the declaration's
         // debuginfo.
         if (DbgDeclareInst *DDI = Info.DbgDeclare) {
-          if (!DIB)
-            DIB = new DIBuilder(*DDI->getParent()->getParent()->getParent());
-          ConvertDebugDeclareToDebugValue(DDI, Info.OnlyStore, *DIB);
+          ConvertDebugDeclareToDebugValue(DDI, Info.OnlyStore, DIB);
           DDI->eraseFromParent();
         }
         // Remove the (now dead) store and alloca.
@@ -440,11 +438,8 @@ void PromoteMem2Reg::run() {
         while (!AI->use_empty()) {
           StoreInst *SI = cast<StoreInst>(AI->use_back());
           // Record debuginfo for the store before removing it.
-          if (DbgDeclareInst *DDI = Info.DbgDeclare) {
-            if (!DIB)
-              DIB = new DIBuilder(*SI->getParent()->getParent()->getParent());
-            ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
-          }
+          if (DbgDeclareInst *DDI = Info.DbgDeclare)
+            ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
           SI->eraseFromParent();
           LBI.deleteValue(SI);
         }
@@ -1089,11 +1084,8 @@ NextIteration:
       // what value were we writing?
       IncomingVals[ai->second] = SI->getOperand(0);
       // Record debuginfo for the store before removing it.
-      if (DbgDeclareInst *DDI = AllocaDbgDeclares[ai->second]) {
-        if (!DIB)
-          DIB = new DIBuilder(*SI->getParent()->getParent()->getParent());
-        ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
-      }
+      if (DbgDeclareInst *DDI = AllocaDbgDeclares[ai->second])
+        ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
       BB->getInstList().erase(SI);
     }
   }
