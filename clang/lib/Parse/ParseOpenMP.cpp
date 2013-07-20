@@ -303,7 +303,7 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
     return 0;
 
   unsigned Type = Tok.isAnnotation() ?
-                     OMPC_DEFAULT_unknown :
+                     unsigned(OMPC_DEFAULT_unknown) :
                      getOpenMPSimpleClauseType(Kind, PP.getSpelling(Tok));
   SourceLocation TypeLoc = Tok.getLocation();
   if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::comma) &&
