@@ -223,9 +223,9 @@ struct PromoteMem2Reg {
   DenseMap<const BasicBlock *, unsigned> BBNumPreds;
 
 public:
-  PromoteMem2Reg(const std::vector<AllocaInst *> &A, DominatorTree &dt,
-                 AliasSetTracker *ast)
-      : Allocas(A), DT(dt), DIB(0), AST(ast) {}
+  PromoteMem2Reg(const std::vector<AllocaInst *> &Allocas, DominatorTree &DT,
+                 AliasSetTracker *AST)
+      : Allocas(Allocas), DT(DT), DIB(0), AST(AST) {}
   ~PromoteMem2Reg() { delete DIB; }
 
   void run();
