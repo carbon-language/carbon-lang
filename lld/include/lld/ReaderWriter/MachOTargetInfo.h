@@ -74,7 +74,12 @@ public:
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
-
+  
+  static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
+  static Arch archFromName(StringRef archName);
+  static uint32_t cpuTypeFromArch(Arch arch);
+  static uint32_t cpuSubtypeFromArch(Arch arch);
+  
 private:
   virtual Writer &writer() const;
 
@@ -90,7 +95,6 @@ private:
 
     uint32_t    _value;
   };
-
 
   uint32_t        _outputFileType; // e.g MH_EXECUTE
   bool            _outputFileTypeStatic; // Disambiguate static vs dynamic prog

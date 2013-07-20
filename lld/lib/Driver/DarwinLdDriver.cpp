@@ -148,13 +148,13 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   
   // Handle -arch xxx
   if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {
-    info.setArch(llvm::StringSwitch<MachOTargetInfo::Arch>(archStr->getValue())
-           .Case("x86_64",  MachOTargetInfo::arch_x86_64)
-           .Case("i386",    MachOTargetInfo::arch_x86)
-           .Case("armv6",   MachOTargetInfo::arch_armv6)
-           .Case("armv7",   MachOTargetInfo::arch_armv7)
-           .Case("armv7s",  MachOTargetInfo::arch_armv7s)
-           .Default(MachOTargetInfo::arch_unknown));
+    info.setArch(MachOTargetInfo::archFromName(archStr->getValue()));
+    if (info.arch() == MachOTargetInfo::arch_unknown) {
+      diagnostics << "error: unknown arch named '" 
+                  << archStr->getValue()
+                  << "'\n";
+      return true;
+    }
   }
 
   // Handle -macosx_version_min or -ios_version_min

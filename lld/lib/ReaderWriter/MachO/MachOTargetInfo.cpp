@@ -85,6 +85,67 @@ bool MachOTargetInfo::PackedVersion::operator==(
   return _value == rhs._value;
 }
 
+struct ArchInfo {
+  StringRef               archName;
+  MachOTargetInfo::Arch   arch;
+  uint32_t                cputype;
+  uint32_t                cpusubtype;
+};
+
+static ArchInfo archInfos[] = {
+  { "x86_64", MachOTargetInfo::arch_x86_64, mach_o::CPU_TYPE_X86_64, 
+                                            mach_o::CPU_SUBTYPE_X86_64_ALL },
+  { "i386",   MachOTargetInfo::arch_x86,    mach_o::CPU_TYPE_I386,   
+                                            mach_o::CPU_SUBTYPE_X86_ALL },
+  { "armv6",  MachOTargetInfo::arch_armv6,  mach_o::CPU_TYPE_ARM,   
+                                            mach_o::CPU_SUBTYPE_ARM_V6 },
+  { "armv7",  MachOTargetInfo::arch_armv7,  mach_o::CPU_TYPE_ARM,   
+                                            mach_o::CPU_SUBTYPE_ARM_V7 },
+  { "armv7s", MachOTargetInfo::arch_armv7s, mach_o::CPU_TYPE_ARM,   
+                                            mach_o::CPU_SUBTYPE_ARM_V7S },
+  { StringRef(),  MachOTargetInfo::arch_unknown, 0, 0 }
+
+};
+
+MachOTargetInfo::Arch 
+MachOTargetInfo::archFromCpuType(uint32_t cputype, uint32_t cpusubtype) {
+  for (ArchInfo *info = archInfos; !info->archName.empty(); ++info) {
+    if ( (info->cputype == cputype) && (info->cpusubtype == cpusubtype)) {
+      return info->arch;
+    }
+  }
+  return arch_unknown;
+}
+
+MachOTargetInfo::Arch MachOTargetInfo::archFromName(StringRef archName) {
+  for (ArchInfo *info = archInfos; !info->archName.empty(); ++info) {
+    if (info->archName.equals(archName)) {
+      return info->arch;
+    }
+  }
+  return arch_unknown;
+}
+
+uint32_t MachOTargetInfo::cpuTypeFromArch(Arch arch) { 
+  assert(arch != arch_unknown);
+  for (ArchInfo *info = archInfos; !info->archName.empty(); ++info) {
+    if (info->arch == arch) {
+      return info->cputype;
+    }
+  }
+  llvm_unreachable("Unknown arch type");
+}
+
+uint32_t MachOTargetInfo::cpuSubtypeFromArch(Arch arch) {
+  assert(arch != arch_unknown);
+  for (ArchInfo *info = archInfos; !info->archName.empty(); ++info) {
+    if (info->arch == arch) {
+      return info->cpusubtype;
+    }
+  }
+  llvm_unreachable("Unknown arch type");
+}
+
 
 MachOTargetInfo::MachOTargetInfo() 
   : _outputFileType(mach_o::MH_EXECUTE)
@@ -102,37 +163,11 @@ MachOTargetInfo::~MachOTargetInfo() {
 }
 
 uint32_t MachOTargetInfo::getCPUType() const {
-  switch (_arch) {
-  case MachOTargetInfo::arch_x86:
-    return mach_o::CPU_TYPE_I386;
-  case MachOTargetInfo::arch_x86_64:
-    return mach_o::CPU_TYPE_X86_64;
-  case MachOTargetInfo::arch_armv6:
-  case MachOTargetInfo::arch_armv7:
-  case MachOTargetInfo::arch_armv7s:
-    return mach_o::CPU_TYPE_ARM;
-  case MachOTargetInfo::arch_unknown:
-    break;
-  }
-  llvm_unreachable("Unknown arch type");
+  return cpuTypeFromArch(_arch);
 }
 
 uint32_t MachOTargetInfo::getCPUSubType() const {
-  switch (_arch) {
-  case MachOTargetInfo::arch_x86:
-    return mach_o::CPU_SUBTYPE_X86_ALL;
-  case MachOTargetInfo::arch_x86_64:
-    return mach_o::CPU_SUBTYPE_X86_64_ALL;
-  case MachOTargetInfo::arch_armv6:
-    return mach_o::CPU_SUBTYPE_ARM_V6;
-  case MachOTargetInfo::arch_armv7:
-    return mach_o::CPU_SUBTYPE_ARM_V7;
-  case MachOTargetInfo::arch_armv7s:
-    return mach_o::CPU_SUBTYPE_ARM_V7S;
-  case MachOTargetInfo::arch_unknown:
-    break;
-  }
-  llvm_unreachable("Unknown arch type");
+  return cpuSubtypeFromArch(_arch);
 }
 
 
