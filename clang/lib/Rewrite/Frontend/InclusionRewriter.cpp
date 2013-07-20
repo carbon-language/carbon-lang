@@ -365,7 +365,7 @@ bool InclusionRewriter::Process(FileID FileId,
       RawLex.LexFromRawLexer(RawToken);
       if (RawToken.is(tok::raw_identifier))
         PP.LookUpIdentifierInfo(RawToken);
-      if (RawToken.is(tok::identifier) || RawToken.is(tok::kw_if)) {
+      if (RawToken.getIdentifierInfo() != NULL) {
         switch (RawToken.getIdentifierInfo()->getPPKeywordID()) {
           case tok::pp_include:
           case tok::pp_include_next:
@@ -412,7 +412,9 @@ bool InclusionRewriter::Process(FileID FileId,
             break;
           }
           case tok::pp_if:
-          case tok::pp_elif:
+          case tok::pp_elif: {
+            bool elif = (RawToken.getIdentifierInfo()->getPPKeywordID() ==
+                         tok::pp_elif);
             // Rewrite special builtin macros to avoid pulling in host details.
             do {
               // Walk over the directive.
@@ -453,8 +455,33 @@ bool InclusionRewriter::Process(FileID FileId,
                 OS << "*/";
               }
             } while (RawToken.isNot(tok::eod));
-
+            if (elif) {
+              OutputContentUpTo(FromFile, NextToWrite,
+                                SM.getFileOffset(RawToken.getLocation()) +
+                                    RawToken.getLength(),
+                                EOL, Line, /*EnsureNewLine*/ true);
+              WriteLineInfo(FileName, Line, FileType, EOL);
+            }
             break;
+          }
+          case tok::pp_endif:
+          case tok::pp_else: {
+            // We surround every #include by #if 0 to comment it out, but that
+            // changes line numbers. These are fixed up right after that, but
+            // the whole #include could be inside a preprocessor conditional
+            // that is not processed. So it is necessary to fix the line
+            // numbers one the next line after each #else/#endif as well.
+            RawLex.SetKeepWhitespaceMode(true);
+            do {
+              RawLex.LexFromRawLexer(RawToken);
+            } while (RawToken.isNot(tok::eod) && RawToken.isNot(tok::eof));
+            OutputContentUpTo(
+                FromFile, NextToWrite,
+                SM.getFileOffset(RawToken.getLocation()) + RawToken.getLength(),
+                EOL, Line, /*EnsureNewLine*/ true);
+            WriteLineInfo(FileName, Line, FileType, EOL);
+            RawLex.SetKeepWhitespaceMode(false);
+          }
           default:
             break;
         }
