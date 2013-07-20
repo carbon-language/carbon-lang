@@ -2214,6 +2214,9 @@ void Verifier::verifyDebugInfo(Module &M) {
     for (DebugInfoFinder::iterator I = Finder.type_begin(),
          E = Finder.type_end(); I != E; ++I)
       Assert1(DIType(*I).Verify(), "DIType does not Verify!", *I);
+    for (DebugInfoFinder::iterator I = Finder.scope_begin(),
+         E = Finder.scope_end(); I != E; ++I)
+      Assert1(DIScope(*I).Verify(), "DIScope does not Verify!", *I);
   }
 }
 

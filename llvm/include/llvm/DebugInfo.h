@@ -768,6 +768,8 @@ namespace llvm {
     /// addType - Add type into Tys.
     bool addType(DIType DT);
 
+    bool addScope(DIScope Scope);
+
   public:
     typedef SmallVectorImpl<MDNode *>::const_iterator iterator;
     iterator compile_unit_begin()    const { return CUs.begin(); }
@@ -778,17 +780,21 @@ namespace llvm {
     iterator global_variable_end()   const { return GVs.end(); }
     iterator type_begin()            const { return TYs.begin(); }
     iterator type_end()              const { return TYs.end(); }
+    iterator scope_begin()           const { return Scopes.begin(); }
+    iterator scope_end()             const { return Scopes.end(); }
 
     unsigned compile_unit_count()    const { return CUs.size(); }
     unsigned global_variable_count() const { return GVs.size(); }
     unsigned subprogram_count()      const { return SPs.size(); }
     unsigned type_count()            const { return TYs.size(); }
+    unsigned scope_count()           const { return Scopes.size(); }
 
   private:
     SmallVector<MDNode *, 8> CUs;  // Compile Units
     SmallVector<MDNode *, 8> SPs;  // Subprograms
     SmallVector<MDNode *, 8> GVs;  // Global Variables;
     SmallVector<MDNode *, 8> TYs;  // Types
+    SmallVector<MDNode *, 8> Scopes; // Scopes
     SmallPtrSet<MDNode *, 64> NodesSeen;
   };
 } // end namespace llvm

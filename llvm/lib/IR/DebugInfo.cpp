@@ -436,9 +436,6 @@ bool DIObjCProperty::Verify() const {
   if (!isObjCProperty())
     return false;
 
-  DIType Ty = getType();
-  if (!Ty.Verify()) return false;
-
   // Don't worry about the rest of the strings for now.
   return DbgNode->getNumOperands() == 8;
 }
@@ -446,8 +443,6 @@ bool DIObjCProperty::Verify() const {
 /// Verify - Verify that a type descriptor is well formed.
 bool DIType::Verify() const {
   if (!isType())
-    return false;
-  if (getContext() && !getContext().Verify())
     return false;
   unsigned Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
@@ -481,8 +476,6 @@ bool DIDerivedType::Verify() const {
 bool DICompositeType::Verify() const {
   if (!isCompositeType())
     return false;
-  if (getContext() && !getContext().Verify())
-    return false;
 
   return DbgNode->getNumOperands() >= 10 && DbgNode->getNumOperands() <= 14;
 }
@@ -492,12 +485,6 @@ bool DISubprogram::Verify() const {
   if (!isSubprogram())
     return false;
 
-  if (getContext() && !getContext().Verify())
-    return false;
-
-  DICompositeType Ty = getType();
-  if (!Ty.Verify())
-    return false;
   return DbgNode->getNumOperands() == 20;
 }
 
@@ -509,26 +496,12 @@ bool DIGlobalVariable::Verify() const {
   if (getDisplayName().empty())
     return false;
 
-  if (getContext() && !getContext().Verify())
-    return false;
-
-  DIType Ty = getType();
-  if (!Ty.Verify())
-    return false;
-
   return DbgNode->getNumOperands() == 13;
 }
 
 /// Verify - Verify that a variable descriptor is well formed.
 bool DIVariable::Verify() const {
   if (!isVariable())
-    return false;
-
-  if (getContext() && !getContext().Verify())
-    return false;
-
-  DIType Ty = getType();
-  if (!Ty.Verify())
     return false;
 
   return DbgNode->getNumOperands() >= 8;
@@ -883,8 +856,10 @@ void DebugInfoFinder::processModule(const Module &M) {
       DIArray GVs = CU.getGlobalVariables();
       for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
         DIGlobalVariable DIG(GVs.getElement(i));
-        if (addGlobalVariable(DIG))
+        if (addGlobalVariable(DIG)) {
+          addScope(DIG.getContext());
           processType(DIG.getType());
+        }
       }
       DIArray SPs = CU.getSubprograms();
       for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
@@ -922,6 +897,7 @@ void DebugInfoFinder::processLocation(DILocation Loc) {
 void DebugInfoFinder::processType(DIType DT) {
   if (!addType(DT))
     return;
+  addScope(DT.getContext());
   if (DT.isCompositeType()) {
     DICompositeType DCT(DT);
     processType(DCT.getTypeDerivedFrom());
@@ -956,6 +932,7 @@ void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (!addSubprogram(SP))
     return;
+  addScope(SP.getContext());
   processType(SP.getType());
 }
 
@@ -1018,6 +995,15 @@ bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
     return false;
 
   SPs.push_back(SP);
+  return true;
+}
+
+bool DebugInfoFinder::addScope(DIScope Scope) {
+  if (!Scope)
+    return false;
+  if (!NodesSeen.insert(Scope))
+    return false;
+  Scopes.push_back(Scope);
   return true;
 }
 
