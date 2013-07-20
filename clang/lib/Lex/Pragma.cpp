@@ -101,7 +101,11 @@ void PragmaNamespace::HandlePragma(Preprocessor &PP,
 
 /// HandlePragmaDirective - The "\#pragma" directive has been parsed.  Lex the
 /// rest of the pragma, passing it to the registered pragma handlers.
-void Preprocessor::HandlePragmaDirective(unsigned Introducer) {
+void Preprocessor::HandlePragmaDirective(SourceLocation IntroducerLoc,
+                                         PragmaIntroducerKind Introducer) {
+  if (Callbacks)
+    Callbacks->PragmaDirective(IntroducerLoc, Introducer);
+
   if (!PragmasEnabled)
     return;
 
@@ -109,7 +113,7 @@ void Preprocessor::HandlePragmaDirective(unsigned Introducer) {
 
   // Invoke the first level of pragma handlers which reads the namespace id.
   Token Tok;
-  PragmaHandlers->HandlePragma(*this, PragmaIntroducerKind(Introducer), Tok);
+  PragmaHandlers->HandlePragma(*this, Introducer, Tok);
 
   // If the pragma handler didn't read the rest of the line, consume it now.
   if ((CurTokenLexer && CurTokenLexer->isParsingPreprocessorDirective()) 
@@ -287,7 +291,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   EnterSourceFileWithLexer(TL, 0);
 
   // With everything set up, lex this as a #pragma directive.
-  HandlePragmaDirective(PIK__Pragma);
+  HandlePragmaDirective(PragmaLoc, PIK__Pragma);
 
   // Finally, return whatever came after the pragma directive.
   return Lex(Tok);
@@ -336,7 +340,7 @@ void Preprocessor::HandleMicrosoft__pragma(Token &Tok) {
   EnterTokenStream(TokArray, PragmaToks.size(), true, true);
 
   // With everything set up, lex this as a #pragma directive.
-  HandlePragmaDirective(PIK___pragma);
+  HandlePragmaDirective(PragmaLoc, PIK___pragma);
 
   // Finally, return whatever came after the pragma directive.
   return Lex(Tok);

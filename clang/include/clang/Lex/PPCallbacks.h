@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Lex/ModuleLoader.h"
+#include "clang/Lex/Pragma.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 
@@ -153,6 +154,11 @@ public:
   /// \param str The text of the directive.
   ///
   virtual void Ident(SourceLocation Loc, const std::string &str) {
+  }
+
+  /// \brief Callback invoked when start reading any pragma directive.
+  virtual void PragmaDirective(SourceLocation Loc,
+                               PragmaIntroducerKind Introducer) {
   }
 
   /// \brief Callback invoked when a \#pragma comment directive is read.

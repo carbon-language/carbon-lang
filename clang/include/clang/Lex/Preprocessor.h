@@ -1457,7 +1457,8 @@ private:
   void HandleElifDirective(Token &Tok);
 
   // Pragmas.
-  void HandlePragmaDirective(unsigned Introducer);
+  void HandlePragmaDirective(SourceLocation IntroducerLoc,
+                             PragmaIntroducerKind Introducer);
 public:
   void HandlePragmaOnce(Token &OnceTok);
   void HandlePragmaMark();
