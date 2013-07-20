@@ -653,12 +653,6 @@ private:
   }
 };
 
-namespace {
-struct IsSliceDead {
-  bool operator()(const Slice &S) { return S.isDead(); }
-};
-}
-
 AllocaSlices::AllocaSlices(const DataLayout &DL, AllocaInst &AI)
     :
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -676,12 +670,13 @@ AllocaSlices::AllocaSlices(const DataLayout &DL, AllocaInst &AI)
     return;
   }
 
+  Slices.erase(std::remove_if(Slices.begin(), Slices.end(),
+                              std::mem_fun_ref(&Slice::isDead)),
+               Slices.end());
+
   // Sort the uses. This arranges for the offsets to be in ascending order,
   // and the sizes to be in descending order.
   std::sort(Slices.begin(), Slices.end());
-
-  Slices.erase(std::remove_if(Slices.begin(), Slices.end(), IsSliceDead()),
-               Slices.end());
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
