@@ -3475,10 +3475,12 @@ class ChooseExpr : public Expr {
   enum { COND, LHS, RHS, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
   SourceLocation BuiltinLoc, RParenLoc;
+  bool CondIsTrue;
 public:
   ChooseExpr(SourceLocation BLoc, Expr *cond, Expr *lhs, Expr *rhs,
              QualType t, ExprValueKind VK, ExprObjectKind OK,
-             SourceLocation RP, bool TypeDependent, bool ValueDependent)
+             SourceLocation RP, bool condIsTrue,
+             bool TypeDependent, bool ValueDependent)
     : Expr(ChooseExprClass, t, VK, OK, TypeDependent, ValueDependent,
            (cond->isInstantiationDependent() ||
             lhs->isInstantiationDependent() ||
@@ -3486,7 +3488,7 @@ public:
            (cond->containsUnexpandedParameterPack() ||
             lhs->containsUnexpandedParameterPack() ||
             rhs->containsUnexpandedParameterPack())),
-      BuiltinLoc(BLoc), RParenLoc(RP) {
+      BuiltinLoc(BLoc), RParenLoc(RP), CondIsTrue(condIsTrue) {
       SubExprs[COND] = cond;
       SubExprs[LHS] = lhs;
       SubExprs[RHS] = rhs;
@@ -3497,12 +3499,21 @@ public:
 
   /// isConditionTrue - Return whether the condition is true (i.e. not
   /// equal to zero).
-  bool isConditionTrue(const ASTContext &C) const;
+  bool isConditionTrue() const {
+    assert(!isConditionDependent() &&
+           "Dependent condition isn't true or false");
+    return CondIsTrue;
+  }
+  void setIsConditionTrue(bool isTrue) { CondIsTrue = isTrue; }
+
+  bool isConditionDependent() const {
+    return getCond()->isTypeDependent() || getCond()->isValueDependent();
+  }
 
   /// getChosenSubExpr - Return the subexpression chosen according to the
   /// condition.
-  Expr *getChosenSubExpr(const ASTContext &C) const {
-    return isConditionTrue(C) ? getLHS() : getRHS();
+  Expr *getChosenSubExpr() const {
+    return isConditionTrue() ? getLHS() : getRHS();
   }
 
   Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }

@@ -9868,6 +9868,7 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
   ExprObjectKind OK = OK_Ordinary;
   QualType resType;
   bool ValueDependent = false;
+  bool CondIsTrue = false;
   if (CondExpr->isTypeDependent() || CondExpr->isValueDependent()) {
     resType = Context.DependentTy;
     ValueDependent = true;
@@ -9880,9 +9881,10 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
     if (CondICE.isInvalid())
       return ExprError();
     CondExpr = CondICE.take();
+    CondIsTrue = condEval.getZExtValue();
 
     // If the condition is > zero, then the AST type is the same as the LSHExpr.
-    Expr *ActiveExpr = condEval.getZExtValue() ? LHSExpr : RHSExpr;
+    Expr *ActiveExpr = CondIsTrue ? LHSExpr : RHSExpr;
 
     resType = ActiveExpr->getType();
     ValueDependent = ActiveExpr->isValueDependent();
@@ -9891,7 +9893,7 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
   }
 
   return Owned(new (Context) ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr,
-                                        resType, VK, OK, RPLoc,
+                                        resType, VK, OK, RPLoc, CondIsTrue,
                                         resType->isDependentType(),
                                         ValueDependent));
 }

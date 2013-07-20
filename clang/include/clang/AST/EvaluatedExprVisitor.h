@@ -53,7 +53,7 @@ public:
     if (E->getCond()->isValueDependent())
       return;
     // Only the selected subexpression matters; the other one is not evaluated.
-    return this->Visit(E->getChosenSubExpr(Context));
+    return this->Visit(E->getChosenSubExpr());
   }
 
   void VisitDesignatedInitExpr(DesignatedInitExpr *E) {

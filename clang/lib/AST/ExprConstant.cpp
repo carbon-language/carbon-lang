@@ -3585,7 +3585,7 @@ public:
   RetTy VisitUnaryPlus(const UnaryOperator *E)
     { return StmtVisitorTy::Visit(E->getSubExpr()); }
   RetTy VisitChooseExpr(const ChooseExpr *E)
-    { return StmtVisitorTy::Visit(E->getChosenSubExpr(Info.Ctx)); }
+    { return StmtVisitorTy::Visit(E->getChosenSubExpr()); }
   RetTy VisitGenericSelectionExpr(const GenericSelectionExpr *E)
     { return StmtVisitorTy::Visit(E->getResultExpr()); }
   RetTy VisitSubstNonTypeTemplateParmExpr(const SubstNonTypeTemplateParmExpr *E)
@@ -8263,7 +8263,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXDefaultInitExprClass:
     return CheckICE(cast<CXXDefaultInitExpr>(E)->getExpr(), Ctx);
   case Expr::ChooseExprClass: {
-    return CheckICE(cast<ChooseExpr>(E)->getChosenSubExpr(Ctx), Ctx);
+    return CheckICE(cast<ChooseExpr>(E)->getChosenSubExpr(), Ctx);
   }
   }
 

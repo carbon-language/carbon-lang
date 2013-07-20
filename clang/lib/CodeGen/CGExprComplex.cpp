@@ -778,7 +778,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitChooseExpr(ChooseExpr *E) {
-  return Visit(E->getChosenSubExpr(CGF.getContext()));
+  return Visit(E->getChosenSubExpr());
 }
 
 ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {

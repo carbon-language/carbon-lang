@@ -610,7 +610,7 @@ public:
   }
 
   llvm::Constant *VisitChooseExpr(ChooseExpr *CE) {
-    return Visit(CE->getChosenSubExpr(CGM.getContext()));
+    return Visit(CE->getChosenSubExpr());
   }
 
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {

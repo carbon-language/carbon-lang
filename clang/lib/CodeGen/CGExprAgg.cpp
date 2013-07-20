@@ -920,7 +920,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
 }
 
 void AggExprEmitter::VisitChooseExpr(const ChooseExpr *CE) {
-  Visit(CE->getChosenSubExpr(CGF.getContext()));
+  Visit(CE->getChosenSubExpr());
 }
 
 void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {

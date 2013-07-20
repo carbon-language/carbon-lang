@@ -101,6 +101,25 @@ namespace {
                                                     resultIndex);
       }
 
+      if (ChooseExpr *ce = dyn_cast<ChooseExpr>(e)) {
+        assert(!ce->isConditionDependent());
+
+        Expr *LHS = ce->getLHS(), *RHS = ce->getRHS();
+        Expr *&rebuiltExpr = ce->isConditionTrue() ? LHS : RHS;
+        rebuiltExpr = rebuild(rebuiltExpr);
+
+        return new (S.Context) ChooseExpr(ce->getBuiltinLoc(),
+                                          ce->getCond(),
+                                          LHS, RHS,
+                                          rebuiltExpr->getType(),
+                                          rebuiltExpr->getValueKind(),
+                                          rebuiltExpr->getObjectKind(),
+                                          ce->getRParenLoc(),
+                                          ce->isConditionTrue(),
+                                          rebuiltExpr->isTypeDependent(),
+                                          rebuiltExpr->isValueDependent());
+      }
+
       llvm_unreachable("bad expression to rebuild!");
     }
   };

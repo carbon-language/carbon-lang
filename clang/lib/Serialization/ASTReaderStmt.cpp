@@ -835,6 +835,7 @@ void ASTStmtReader::VisitChooseExpr(ChooseExpr *E) {
   E->setRHS(Reader.ReadSubExpr());
   E->setBuiltinLoc(ReadSourceLocation(Record, Idx));
   E->setRParenLoc(ReadSourceLocation(Record, Idx));
+  E->setIsConditionTrue(Record[Idx++]);
 }
 
 void ASTStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {

@@ -678,19 +678,8 @@ bool IdempotentOperationChecker::CanVary(const Expr *Ex,
     return CanVary(B->getRHS(), AC)
         || CanVary(B->getLHS(), AC);
    }
-  case Stmt::UnaryOperatorClass: {
-    const UnaryOperator *U = cast<const UnaryOperator>(Ex);
-    // Handle trivial case first
-    switch (U->getOpcode()) {
-    case UO_Extension:
-      return false;
-    default:
-      return CanVary(U->getSubExpr(), AC);
-    }
-  }
-  case Stmt::ChooseExprClass:
-    return CanVary(cast<const ChooseExpr>(Ex)->getChosenSubExpr(
-        AC->getASTContext()), AC);
+  case Stmt::UnaryOperatorClass:
+    return CanVary(cast<UnaryOperator>(Ex)->getSubExpr(), AC);
   case Stmt::ConditionalOperatorClass:
   case Stmt::BinaryConditionalOperatorClass:
     return CanVary(cast<AbstractConditionalOperator>(Ex)->getCond(), AC);

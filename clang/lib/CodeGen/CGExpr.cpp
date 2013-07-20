@@ -851,7 +851,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::BinaryConditionalOperatorClass:
     return EmitConditionalOperatorLValue(cast<BinaryConditionalOperator>(E));
   case Expr::ChooseExprClass:
-    return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr(getContext()));
+    return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr());
   case Expr::OpaqueValueExprClass:
     return EmitOpaqueValueLValue(cast<OpaqueValueExpr>(E));
   case Expr::SubstNonTypeTemplateParmExprClass:

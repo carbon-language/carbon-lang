@@ -3101,7 +3101,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
-  return Visit(E->getChosenSubExpr(CGF.getContext()));
+  return Visit(E->getChosenSubExpr());
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {

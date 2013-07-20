@@ -773,6 +773,7 @@ void ASTStmtWriter::VisitChooseExpr(ChooseExpr *E) {
   Writer.AddStmt(E->getRHS());
   Writer.AddSourceLocation(E->getBuiltinLoc(), Record);
   Writer.AddSourceLocation(E->getRParenLoc(), Record);
+  Record.push_back(E->isConditionDependent() ? false : E->isConditionTrue());
   Code = serialization::EXPR_CHOOSE;
 }
 
