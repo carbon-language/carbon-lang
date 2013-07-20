@@ -990,10 +990,19 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   if (Value *V = SimplifyFDivInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
+  if (isa<Constant>(Op0))
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+      if (Instruction *R = FoldOpIntoSelect(I, SI))
+        return R;
+
   bool AllowReassociate = I.hasUnsafeAlgebra();
   bool AllowReciprocal = I.hasAllowReciprocal();
 
   if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
+      if (Instruction *R = FoldOpIntoSelect(I, SI))
+        return R;
+
     if (AllowReassociate) {
       ConstantFP *C1 = 0;
       ConstantFP *C2 = Op1C;

@@ -1186,9 +1186,15 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   if (Value *V = SimplifyFAddInst(LHS, RHS, I.getFastMathFlags(), TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (isa<Constant>(RHS) && isa<PHINode>(LHS))
-    if (Instruction *NV = FoldOpIntoPhi(I))
-      return NV;
+  if (isa<Constant>(RHS)) {
+    if (isa<PHINode>(LHS))
+      if (Instruction *NV = FoldOpIntoPhi(I))
+        return NV;
+
+    if (SelectInst *SI = dyn_cast<SelectInst>(LHS))
+      if (Instruction *NV = FoldOpIntoSelect(I, SI))
+        return NV;
+  }
 
   // -A + B  -->  B - A
   // -A + -B  -->  -(A + B)
@@ -1516,6 +1522,11 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
 
   if (Value *V = SimplifyFSubInst(Op0, Op1, I.getFastMathFlags(), TD))
     return ReplaceInstUsesWith(I, V);
+
+  if (isa<Constant>(Op0))
+    if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
+      if (Instruction *NV = FoldOpIntoSelect(I, SI))
+        return NV;
 
   // If this is a 'B = x-(-A)', change to B = x+A...
   if (Value *V = dyn_castFNegVal(Op1))
