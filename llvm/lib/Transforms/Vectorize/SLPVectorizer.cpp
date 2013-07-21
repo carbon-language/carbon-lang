@@ -1700,10 +1700,8 @@ bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
   // Do a quadratic search on all of the given stores and find
   // all of the pairs of stores that follow each other.
   for (unsigned i = 0, e = Stores.size(); i < e; ++i) {
-    if (Heads.count(Stores[i]))
-      continue;
     for (unsigned j = 0; j < e; ++j) {
-      if (i == j || Tails.count(Stores[j]))
+      if (i == j)
         continue;
 
       if (R.isConsecutiveAccess(Stores[i], Stores[j])) {
