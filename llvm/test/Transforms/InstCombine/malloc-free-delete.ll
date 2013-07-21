@@ -120,3 +120,27 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry, %if.then
   ret void
 }
+
+declare i8* @_ZnwmRKSt9nothrow_t(i64, i8*) nobuiltin
+declare void @_ZdlPvRKSt9nothrow_t(i8*, i8*) nobuiltin
+declare i32 @__gxx_personality_v0(...)
+declare void @_ZN1AC2Ev(i8* %this)
+
+; CHECK-LABEL: @test7(
+define void @test7() {
+entry:
+  %nt = alloca i8
+  ; CHECK-NOT: call {{.*}}@_ZnwmRKSt9nothrow_t(
+  %call.i = tail call i8* @_ZnwmRKSt9nothrow_t(i64 1, i8* %nt) builtin nounwind
+  invoke void @_ZN1AC2Ev(i8* undef)
+          to label %.noexc.i unwind label %lpad.i
+
+.noexc.i:                                         ; preds = %entry
+  unreachable
+
+lpad.i:                                           ; preds = %entry
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) cleanup
+  ; CHECK-NOT: call {{.*}}@_ZdlPvRKSt9nothrow_t(
+  call void @_ZdlPvRKSt9nothrow_t(i8* %call.i, i8* %nt) builtin nounwind
+  resume { i8*, i32 } %0
+}

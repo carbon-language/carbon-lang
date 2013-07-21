@@ -24,8 +24,12 @@ namespace llvm {
       under_IO_putc,
       /// void operator delete[](void*);
       ZdaPv,
+      /// void operator delete[](void*, nothrow);
+      ZdaPvRKSt9nothrow_t,
       /// void operator delete(void*);
       ZdlPv,
+      /// void operator delete(void*, nothrow);
+      ZdlPvRKSt9nothrow_t,
       /// void *new[](unsigned int);
       Znaj,
       /// void *new[](unsigned int, nothrow);
