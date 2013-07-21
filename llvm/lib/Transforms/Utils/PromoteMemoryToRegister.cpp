@@ -29,7 +29,6 @@
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -473,7 +472,8 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
 
   // Sort the stores by their index, making it efficient to do a lookup with a
   // binary search.
-  std::sort(StoresByIndex.begin(), StoresByIndex.end());
+  std::sort(StoresByIndex.begin(), StoresByIndex.end(),
+            StoreIndexSearchPredicate());
 
   // Walk all of the loads from this alloca, replacing them with the nearest
   // store above them, if any.
@@ -484,11 +484,11 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
 
     unsigned LoadIdx = LBI.getInstructionIndex(LI);
 
-    // Find the nearest store that has a lower than this load.
-    StoresByIndexTy::iterator I = std::lower_bound(
-        StoresByIndex.begin(), StoresByIndex.end(),
-        std::pair<unsigned, StoreInst *>(LoadIdx, static_cast<StoreInst *>(0)),
-        StoreIndexSearchPredicate());
+    // Find the nearest store that has a lower index than this load.
+    StoresByIndexTy::iterator I =
+        std::lower_bound(StoresByIndex.begin(), StoresByIndex.end(),
+                         std::make_pair(LoadIdx, static_cast<StoreInst *>(0)),
+                         StoreIndexSearchPredicate());
 
     if (I == StoresByIndex.begin())
       // If there is no store before this load, the load takes the undef value.
@@ -996,10 +996,7 @@ NextIteration:
       // operands so far.  Remember this count.
       unsigned NewPHINumOperands = APN->getNumOperands();
 
-      unsigned NumEdges = 0;
-      for (succ_iterator I = succ_begin(Pred), E = succ_end(Pred); I != E; ++I)
-        if (*I == BB)
-          ++NumEdges;
+      unsigned NumEdges = std::count(succ_begin(Pred), succ_end(Pred), BB);
       assert(NumEdges && "Must be at least one edge from Pred to BB!");
 
       // Add entries for all the phis.
