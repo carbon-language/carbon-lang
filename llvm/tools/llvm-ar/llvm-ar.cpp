@@ -458,10 +458,10 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   int InsertPos = -1;
   StringRef PosName = sys::path::filename(RelPos);
   if (OldArchive) {
-    int Pos = 0;
     for (object::Archive::child_iterator I = OldArchive->begin_children(),
                                          E = OldArchive->end_children();
-         I != E; ++I, ++Pos) {
+         I != E; ++I) {
+      int Pos = Ret.size();
       StringRef Name;
       failIfError(I->getName(Name));
       if (Name == PosName) {
