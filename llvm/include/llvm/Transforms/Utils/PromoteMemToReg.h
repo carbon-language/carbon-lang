@@ -15,7 +15,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
 #define LLVM_TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
 
-#include <vector>
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 
@@ -40,8 +40,8 @@ bool isAllocaPromotable(const AllocaInst *AI);
 ///
 /// If AST is specified, the specified tracker is updated to reflect changes
 /// made to the IR.
-void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
-                     DominatorTree &DT, AliasSetTracker *AST = 0);
+void PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
+                     AliasSetTracker *AST = 0);
 
 } // End llvm namespace
 

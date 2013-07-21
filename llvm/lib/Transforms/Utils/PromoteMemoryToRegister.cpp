@@ -27,6 +27,7 @@
 
 #define DEBUG_TYPE "mem2reg"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
@@ -279,10 +280,10 @@ struct PromoteMem2Reg {
   DenseMap<const BasicBlock *, unsigned> BBNumPreds;
 
 public:
-  PromoteMem2Reg(const std::vector<AllocaInst *> &Allocas, DominatorTree &DT,
+  PromoteMem2Reg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
                  AliasSetTracker *AST)
-      : Allocas(Allocas), DT(DT), DIB(*DT.getRoot()->getParent()->getParent()),
-        AST(AST) {}
+      : Allocas(Allocas.begin(), Allocas.end()), DT(DT),
+        DIB(*DT.getRoot()->getParent()->getParent()), AST(AST) {}
 
   void run();
 
@@ -1089,8 +1090,8 @@ NextIteration:
   goto NextIteration;
 }
 
-void llvm::PromoteMemToReg(const std::vector<AllocaInst *> &Allocas,
-                           DominatorTree &DT, AliasSetTracker *AST) {
+void llvm::PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
+                           AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty())
     return;
