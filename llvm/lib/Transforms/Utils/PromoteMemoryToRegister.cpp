@@ -339,9 +339,15 @@ static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
   }
 }
 
-/// If there is only a single store to this value, replace any loads of it that
-/// are directly dominated by the definition with the value stored.
-static void rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
+/// \brief Rewrite as many loads as possible given a single store.
+///
+/// When there is only a single store, we can use the domtree to trivially
+/// replace all of the dominated loads with the stored value. Do so, and return
+/// true if this has successfully promoted the alloca entirely. If this returns
+/// false there were some loads which were not dominated by the single store
+/// and thus must be phi-ed with undef. We fall back to the standard alloca
+/// promotion algorithm in that case.
+static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
                                      LargeBlockInfo &LBI,
                                      DominatorTree &DT,
                                      AliasSetTracker *AST) {
@@ -401,6 +407,27 @@ static void rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
     LI->eraseFromParent();
     LBI.deleteValue(LI);
   }
+
+  // Finally, after the scan, check to see if the store is all that is left.
+  if (!Info.UsingBlocks.empty())
+    return false; // If not, we'll have to fall back for the remainder.
+
+  // Record debuginfo for the store and remove the declaration's
+  // debuginfo.
+  if (DbgDeclareInst *DDI = Info.DbgDeclare) {
+    DIBuilder DIB(*AI->getParent()->getParent()->getParent());
+    ConvertDebugDeclareToDebugValue(DDI, Info.OnlyStore, DIB);
+    DDI->eraseFromParent();
+  }
+  // Remove the (now dead) store and alloca.
+  Info.OnlyStore->eraseFromParent();
+  LBI.deleteValue(Info.OnlyStore);
+
+  if (AST)
+    AST->deleteValue(AI);
+  AI->eraseFromParent();
+  LBI.deleteValue(AI);
+  return true;
 }
 
 namespace {
@@ -537,28 +564,9 @@ void PromoteMem2Reg::run() {
     // If there is only a single store to this value, replace any loads of
     // it that are directly dominated by the definition with the value stored.
     if (Info.DefiningBlocks.size() == 1) {
-      rewriteSingleStoreAlloca(AI, Info, LBI, DT, AST);
-
-      // Finally, after the scan, check to see if the store is all that is left.
-      if (Info.UsingBlocks.empty()) {
-        // Record debuginfo for the store and remove the declaration's
-        // debuginfo.
-        if (DbgDeclareInst *DDI = Info.DbgDeclare) {
-          ConvertDebugDeclareToDebugValue(DDI, Info.OnlyStore, DIB);
-          DDI->eraseFromParent();
-        }
-        // Remove the (now dead) store and alloca.
-        Info.OnlyStore->eraseFromParent();
-        LBI.deleteValue(Info.OnlyStore);
-
-        if (AST)
-          AST->deleteValue(AI);
-        AI->eraseFromParent();
-        LBI.deleteValue(AI);
-
+      if (rewriteSingleStoreAlloca(AI, Info, LBI, DT, AST)) {
         // The alloca has been processed, move on.
         RemoveFromAllocasList(AllocaNum);
-
         ++NumSingleStore;
         continue;
       }
