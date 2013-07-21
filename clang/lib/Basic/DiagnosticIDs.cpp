@@ -36,7 +36,7 @@ enum {
 };
 
 struct StaticDiagInfoRec {
-  unsigned short DiagID;
+  uint16_t DiagID;
   unsigned Mapping : 3;
   unsigned Class : 3;
   unsigned SFINAE : 1;
