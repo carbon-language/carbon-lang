@@ -122,9 +122,9 @@ namespace {
       return CategoryIDs[CategoryString];
     }
 
-    typedef std::vector<std::string>::iterator iterator;
-    iterator begin() { return CategoryStrings.begin(); }
-    iterator end() { return CategoryStrings.end(); }
+    typedef std::vector<std::string>::const_iterator const_iterator;
+    const_iterator begin() const { return CategoryStrings.begin(); }
+    const_iterator end() const { return CategoryStrings.end(); }
   };
 
   struct GroupInfo {
@@ -619,12 +619,12 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
   // that are mapped to.
   OS << "\n#ifdef GET_DIAG_ARRAYS\n";
   unsigned MaxLen = 0;
-  for (std::map<std::string, GroupInfo>::iterator
+  for (std::map<std::string, GroupInfo>::const_iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     MaxLen = std::max(MaxLen, (unsigned)I->first.size());
     const bool IsPedantic = I->first == "pedantic";
 
-    std::vector<const Record*> &V = I->second.DiagsInGroup;
+    const std::vector<const Record*> &V = I->second.DiagsInGroup;
     if (!V.empty() || (IsPedantic && !DiagsInPedantic.empty())) {
       OS << "static const short DiagArray" << I->second.IDNo << "[] = { ";
       for (unsigned i = 0, e = V.size(); i != e; ++i)
@@ -641,7 +641,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
     if (!SubGroups.empty() || (IsPedantic && !GroupsInPedantic.empty())) {
       OS << "static const short DiagSubGroup" << I->second.IDNo << "[] = { ";
       for (unsigned i = 0, e = SubGroups.size(); i != e; ++i) {
-        std::map<std::string, GroupInfo>::iterator RI =
+        std::map<std::string, GroupInfo>::const_iterator RI =
           DiagsInGroup.find(SubGroups[i]);
         assert(RI != DiagsInGroup.end() && "Referenced without existing?");
         OS << RI->second.IDNo << ", ";
@@ -651,7 +651,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
         for (unsigned i = 0, e = GroupsInPedantic.size(); i != e; ++i) {
           const std::string &GroupName =
             GroupsInPedantic[i]->getValueAsString("GroupName");
-          std::map<std::string, GroupInfo>::iterator RI =
+          std::map<std::string, GroupInfo>::const_iterator RI =
             DiagsInGroup.find(GroupName);
           assert(RI != DiagsInGroup.end() && "Referenced without existing?");
           OS << RI->second.IDNo << ", ";
@@ -665,7 +665,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
 
   // Emit the table now.
   OS << "\n#ifdef GET_DIAG_TABLE\n";
-  for (std::map<std::string, GroupInfo>::iterator
+  for (std::map<std::string, GroupInfo>::const_iterator
        I = DiagsInGroup.begin(), E = DiagsInGroup.end(); I != E; ++I) {
     // Group option string.
     OS << "  { ";
@@ -704,7 +704,7 @@ void EmitClangDiagGroups(RecordKeeper &Records, raw_ostream &OS) {
   // Emit the category table next.
   DiagCategoryIDMap CategoriesByID(Records);
   OS << "\n#ifdef GET_CATEGORY_TABLE\n";
-  for (DiagCategoryIDMap::iterator I = CategoriesByID.begin(),
+  for (DiagCategoryIDMap::const_iterator I = CategoriesByID.begin(),
        E = CategoriesByID.end(); I != E; ++I)
     OS << "CATEGORY(\"" << *I << "\", " << getDiagCategoryEnum(*I) << ")\n";
   OS << "#endif // GET_CATEGORY_TABLE\n\n";
