@@ -1662,6 +1662,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     BuildMI(*MBB, I, MI->getDebugLoc(), TII->get(X86::CALLpcrel32))
       .addExternalSymbol("_ftol2")
       .addReg(X86::ST0, RegState::ImplicitKill)
+      .addReg(X86::ECX, RegState::ImplicitDefine)
       .addReg(X86::EAX, RegState::Define | RegState::Implicit)
       .addReg(X86::EDX, RegState::Define | RegState::Implicit)
       .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
