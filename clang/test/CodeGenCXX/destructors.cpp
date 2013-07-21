@@ -418,4 +418,4 @@ namespace test9 {
   // CHECK: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK: ret void
 
-  // CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+  // CHECK: attributes [[NUW]] = {{[{].*}} nounwind {{.*[}]}}

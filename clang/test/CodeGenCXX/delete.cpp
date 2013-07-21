@@ -145,4 +145,4 @@ namespace test5 {
   }
 }
 
-// CHECK: attributes [[NUW]] = { nounwind{{.*}} }
+// CHECK: attributes [[NUW]] = {{[{].*}} nounwind {{.*[}]}}

@@ -119,7 +119,7 @@ struct D {
 
 void use_D() { D c; }
 
-// DTORS: attributes [[NUW]] = { nounwind{{.*}} }
+// DTORS: attributes [[NUW]] = {{[{].*}} nounwind {{.*[}]}}
 
 } // end namespace basic
 
