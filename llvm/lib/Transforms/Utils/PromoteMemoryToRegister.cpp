@@ -426,16 +426,13 @@ struct StoreIndexSearchPredicate {
 ///   for (...) { if (c) { A = undef; undef = B; } }
 ///
 /// ... so long as A is not used before undef is set.
-static void promoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
+static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
                                      LargeBlockInfo &LBI,
                                      AliasSetTracker *AST) {
   // The trickiest case to handle is when we have large blocks. Because of this,
   // this code is optimized assuming that large blocks happen.  This does not
   // significantly pessimize the small block case.  This uses LargeBlockInfo to
   // make it efficient to get the index of various operations in the block.
-
-  // Clear out UsingBlocks.  We will reconstruct it here if needed.
-  Info.UsingBlocks.clear();
 
   // Walk the use-def list of the alloca, getting the locations of all stores.
   typedef SmallVector<std::pair<unsigned, StoreInst *>, 64> StoresByIndexTy;
@@ -445,19 +442,6 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
        ++UI)
     if (StoreInst *SI = dyn_cast<StoreInst>(*UI))
       StoresByIndex.push_back(std::make_pair(LBI.getInstructionIndex(SI), SI));
-
-  // If there are no stores to the alloca, just replace any loads with undef.
-  if (StoresByIndex.empty()) {
-    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;)
-      if (LoadInst *LI = dyn_cast<LoadInst>(*UI++)) {
-        LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
-        if (AST && LI->getType()->isPointerTy())
-          AST->deleteValue(LI);
-        LBI.deleteValue(LI);
-        LI->eraseFromParent();
-      }
-    return;
-  }
 
   // Sort the stores by their index, making it efficient to do a lookup with a
   // binary search.
@@ -478,21 +462,41 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
         std::pair<unsigned, StoreInst *>(LoadIdx, static_cast<StoreInst *>(0)),
         StoreIndexSearchPredicate());
 
-    // If there is no store before this load, then we can't promote this load.
-    if (I == StoresByIndex.begin()) {
-      // Can't handle this load, bail out.
-      Info.UsingBlocks.push_back(LI->getParent());
-      continue;
-    }
+    if (I == StoresByIndex.begin())
+      // If there is no store before this load, the load takes the undef value.
+      LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
+    else
+      // Otherwise, there was a store before this load, the load takes its value.
+      LI->replaceAllUsesWith(llvm::prior(I)->second->getOperand(0));
 
-    // Otherwise, there was a store before this load, the load takes its value.
-    --I;
-    LI->replaceAllUsesWith(I->second->getOperand(0));
     if (AST && LI->getType()->isPointerTy())
       AST->deleteValue(LI);
     LI->eraseFromParent();
     LBI.deleteValue(LI);
   }
+
+  // Remove the (now dead) stores and alloca.
+  while (!AI->use_empty()) {
+    StoreInst *SI = cast<StoreInst>(AI->use_back());
+    // Record debuginfo for the store before removing it.
+    if (DbgDeclareInst *DDI = Info.DbgDeclare) {
+      DIBuilder DIB(*AI->getParent()->getParent()->getParent());
+      ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
+    }
+    SI->eraseFromParent();
+    LBI.deleteValue(SI);
+  }
+
+  if (AST)
+    AST->deleteValue(AI);
+  AI->eraseFromParent();
+  LBI.deleteValue(AI);
+
+  // The alloca's debuginfo can be removed as well.
+  if (DbgDeclareInst *DDI = Info.DbgDeclare)
+    DDI->eraseFromParent();
+
+  ++NumLocalPromoted;
 }
 
 void PromoteMem2Reg::run() {
@@ -565,35 +569,9 @@ void PromoteMem2Reg::run() {
     if (Info.OnlyUsedInOneBlock) {
       promoteSingleBlockAlloca(AI, Info, LBI, AST);
 
-      // Finally, after the scan, check to see if the stores are all that is
-      // left.
-      if (Info.UsingBlocks.empty()) {
-
-        // Remove the (now dead) stores and alloca.
-        while (!AI->use_empty()) {
-          StoreInst *SI = cast<StoreInst>(AI->use_back());
-          // Record debuginfo for the store before removing it.
-          if (DbgDeclareInst *DDI = Info.DbgDeclare)
-            ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
-          SI->eraseFromParent();
-          LBI.deleteValue(SI);
-        }
-
-        if (AST)
-          AST->deleteValue(AI);
-        AI->eraseFromParent();
-        LBI.deleteValue(AI);
-
-        // The alloca has been processed, move on.
-        RemoveFromAllocasList(AllocaNum);
-
-        // The alloca's debuginfo can be removed as well.
-        if (DbgDeclareInst *DDI = Info.DbgDeclare)
-          DDI->eraseFromParent();
-
-        ++NumLocalPromoted;
-        continue;
-      }
+      // The alloca has been processed, move on.
+      RemoveFromAllocasList(AllocaNum);
+      continue;
     }
 
     // If we haven't computed dominator tree levels, do so now.
