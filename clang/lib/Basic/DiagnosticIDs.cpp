@@ -92,13 +92,17 @@ static const unsigned StaticDiagInfoSize = llvm::array_lengthof(StaticDiagInfo);
 static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
   // If assertions are enabled, verify that the StaticDiagInfo array is sorted.
 #ifndef NDEBUG
-  for (unsigned i = 1; i != StaticDiagInfoSize; ++i) {
-    assert(StaticDiagInfo[i-1].DiagID != StaticDiagInfo[i].DiagID &&
-           "Diag ID conflict, the enums at the start of clang::diag (in "
-           "DiagnosticIDs.h) probably need to be increased");
+  static bool IsFirst = true; // So the check is only performed on first call.
+  if (IsFirst) {
+    for (unsigned i = 1; i != StaticDiagInfoSize; ++i) {
+      assert(StaticDiagInfo[i-1].DiagID != StaticDiagInfo[i].DiagID &&
+             "Diag ID conflict, the enums at the start of clang::diag (in "
+             "DiagnosticIDs.h) probably need to be increased");
 
-    assert(StaticDiagInfo[i-1] < StaticDiagInfo[i] &&
-           "Improperly sorted diag info");
+      assert(StaticDiagInfo[i-1] < StaticDiagInfo[i] &&
+             "Improperly sorted diag info");
+    }
+    IsFirst = false;
   }
 #endif
 
