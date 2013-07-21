@@ -286,11 +286,6 @@ public:
 
   void run();
 
-  /// Return true if BB1 dominates BB2 using the DominatorTree.
-  bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
-    return DT.dominates(BB1, BB2);
-  }
-
 private:
   void RemoveFromAllocasList(unsigned &AllocaIdx) {
     Allocas[AllocaIdx] = Allocas.back();
