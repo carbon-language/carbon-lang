@@ -2075,8 +2075,17 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     return false;
 
   case CXXTemporaryObjectExprClass:
-  case CXXConstructExprClass:
+  case CXXConstructExprClass: {
+    if (const CXXRecordDecl *Type = getType()->getAsCXXRecordDecl()) {
+      if (Type->hasAttr<WarnUnusedAttr>()) {
+        WarnE = this;
+        Loc = getLocStart();
+        R1 = getSourceRange();
+        return true;
+      }
+    }
     return false;
+  }
 
   case ObjCMessageExprClass: {
     const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(this);
