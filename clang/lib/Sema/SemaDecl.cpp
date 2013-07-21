@@ -4926,16 +4926,11 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // determine whether we have a template or a template specialization.
     isExplicitSpecialization = false;
     bool Invalid = false;
-    if (TemplateParameterList *TemplateParams
-        = MatchTemplateParametersToScopeSpecifier(
-                                  D.getDeclSpec().getLocStart(),
-                                                  D.getIdentifierLoc(),
-                                                  D.getCXXScopeSpec(),
-                                                  TemplateParamLists.data(),
-                                                  TemplateParamLists.size(),
-                                                  /*never a friend*/ false,
-                                                  isExplicitSpecialization,
-                                                  Invalid)) {
+    if (TemplateParameterList *TemplateParams =
+            MatchTemplateParametersToScopeSpecifier(
+                D.getDeclSpec().getLocStart(), D.getIdentifierLoc(),
+                D.getCXXScopeSpec(), TemplateParamLists,
+                /*never a friend*/ false, isExplicitSpecialization, Invalid)) {
       if (TemplateParams->size() > 0) {
         // There is no such thing as a variable template.
         Diag(D.getIdentifierLoc(), diag::err_template_variable)
@@ -6147,16 +6142,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // Match up the template parameter lists with the scope specifier, then
     // determine whether we have a template or a template specialization.
     bool Invalid = false;
-    if (TemplateParameterList *TemplateParams
-          = MatchTemplateParametersToScopeSpecifier(
-                                  D.getDeclSpec().getLocStart(),
-                                  D.getIdentifierLoc(),
-                                  D.getCXXScopeSpec(),
-                                  TemplateParamLists.data(),
-                                  TemplateParamLists.size(),
-                                  isFriend,
-                                  isExplicitSpecialization,
-                                  Invalid)) {
+    if (TemplateParameterList *TemplateParams =
+            MatchTemplateParametersToScopeSpecifier(
+                D.getDeclSpec().getLocStart(), D.getIdentifierLoc(),
+                D.getCXXScopeSpec(), TemplateParamLists, isFriend,
+                isExplicitSpecialization, Invalid)) {
       if (TemplateParams->size() > 0) {
         // This is a function template
 
@@ -9718,13 +9708,10 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // for non-C++ cases.
   if (TemplateParameterLists.size() > 0 ||
       (SS.isNotEmpty() && TUK != TUK_Reference)) {
-    if (TemplateParameterList *TemplateParams
-          = MatchTemplateParametersToScopeSpecifier(KWLoc, NameLoc, SS,
-                                                TemplateParameterLists.data(),
-                                                TemplateParameterLists.size(),
-                                                    TUK == TUK_Friend,
-                                                    isExplicitSpecialization,
-                                                    Invalid)) {
+    if (TemplateParameterList *TemplateParams =
+            MatchTemplateParametersToScopeSpecifier(
+                KWLoc, NameLoc, SS, TemplateParameterLists, TUK == TUK_Friend,
+                isExplicitSpecialization, Invalid)) {
       if (Kind == TTK_Enum) {
         Diag(KWLoc, diag::err_enum_template);
         return 0;

@@ -4972,15 +4972,10 @@ public:
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,
                                   TemplateParameterList *OldParams,
                                   TemplateParamListContext TPC);
-  TemplateParameterList *
-  MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
-                                          SourceLocation DeclLoc,
-                                          const CXXScopeSpec &SS,
-                                          TemplateParameterList **ParamLists,
-                                          unsigned NumParamLists,
-                                          bool IsFriend,
-                                          bool &IsExplicitSpecialization,
-                                          bool &Invalid);
+  TemplateParameterList *MatchTemplateParametersToScopeSpecifier(
+      SourceLocation DeclStartLoc, SourceLocation DeclLoc,
+      const CXXScopeSpec &SS, ArrayRef<TemplateParameterList *> ParamLists,
+      bool IsFriend, bool &IsExplicitSpecialization, bool &Invalid);
 
   DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                 SourceLocation KWLoc, CXXScopeSpec &SS,

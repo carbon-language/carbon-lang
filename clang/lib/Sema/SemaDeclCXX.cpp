@@ -10996,13 +10996,10 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
   bool isExplicitSpecialization = false;
   bool Invalid = false;
 
-  if (TemplateParameterList *TemplateParams
-        = MatchTemplateParametersToScopeSpecifier(TagLoc, NameLoc, SS,
-                                                  TempParamLists.data(),
-                                                  TempParamLists.size(),
-                                                  /*friend*/ true,
-                                                  isExplicitSpecialization,
-                                                  Invalid)) {
+  if (TemplateParameterList *TemplateParams =
+          MatchTemplateParametersToScopeSpecifier(
+              TagLoc, NameLoc, SS, TempParamLists, /*friend*/ true,
+              isExplicitSpecialization, Invalid)) {
     if (TemplateParams->size() > 0) {
       // This is a declaration of a class template.
       if (Invalid)
