@@ -2132,13 +2132,18 @@ void FunctionDecl::setPure(bool P) {
       Parent->markedVirtualFunctionPure();
 }
 
+template<std::size_t Len>
+static bool isNamed(const NamedDecl *ND, const char (&Str)[Len]) {
+  IdentifierInfo *II = ND->getIdentifier();
+  return II && II->isStr(Str);
+}
+
 bool FunctionDecl::isMain() const {
   const TranslationUnitDecl *tunit =
     dyn_cast<TranslationUnitDecl>(getDeclContext()->getRedeclContext());
   return tunit &&
          !tunit->getASTContext().getLangOpts().Freestanding &&
-         getIdentifier() &&
-         getIdentifier()->isStr("main");
+         isNamed(this, "main");
 }
 
 bool FunctionDecl::isReservedGlobalPlacementOperator() const {
@@ -2161,6 +2166,47 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
   // The result type and first argument type are constant across all
   // these operators.  The second argument must be exactly void*.
   return (proto->getArgType(1).getCanonicalType() == Context.VoidPtrTy);
+}
+
+static bool isNamespaceStd(const DeclContext *DC) {
+  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC->getRedeclContext());
+  return ND && isNamed(ND, "std") &&
+         ND->getParent()->getRedeclContext()->isTranslationUnit();
+}
+
+bool FunctionDecl::isReplaceableGlobalAllocationFunction() const {
+  if (getDeclName().getNameKind() != DeclarationName::CXXOperatorName)
+    return false;
+  if (getDeclName().getCXXOverloadedOperator() != OO_New &&
+      getDeclName().getCXXOverloadedOperator() != OO_Delete &&
+      getDeclName().getCXXOverloadedOperator() != OO_Array_New &&
+      getDeclName().getCXXOverloadedOperator() != OO_Array_Delete)
+    return false;
+
+  if (isa<CXXRecordDecl>(getDeclContext()))
+    return false;
+  assert(getDeclContext()->getRedeclContext()->isTranslationUnit());
+
+  const FunctionProtoType *FPT = getType()->castAs<FunctionProtoType>();
+  if (FPT->getNumArgs() > 2 || FPT->isVariadic())
+    return false;
+
+  // If this is a single-parameter function, it must be a replaceable global
+  // allocation or deallocation function.
+  if (FPT->getNumArgs() == 1)
+    return true;
+
+  // Otherwise, we're looking for a second parameter whose type is
+  // 'const std::nothrow_t &'.
+  QualType Ty = FPT->getArgType(1);
+  if (!Ty->isReferenceType())
+    return false;
+  Ty = Ty->getPointeeType();
+  if (Ty.getCVRQualifiers() != Qualifiers::Const)
+    return false;
+  // FIXME: Recognise nothrow_t in an inline namespace inside std?
+  const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
+  return RD && isNamed(RD, "nothrow_t") && isNamespaceStd(RD->getDeclContext());
 }
 
 LanguageLinkage FunctionDecl::getLanguageLinkage() const {

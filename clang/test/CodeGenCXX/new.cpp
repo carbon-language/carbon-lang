@@ -2,15 +2,37 @@
 
 typedef __typeof__(sizeof(0)) size_t;
 
+// Ensure that this declaration doesn't cause operator new to lose its
+// 'noalias' attribute.
+void *operator new[](size_t);
+
 void t1() {
-  int* a = new int;
+  delete new int;
+  delete [] new int [3];
 }
+
+// CHECK: declare noalias i8* @_Znwm(i64) [[ATTR_NOBUILTIN:#[^ ]*]]
+// CHECK: declare void @_ZdlPv(i8*) [[ATTR_NOBUILTIN_NOUNWIND:#[^ ]*]]
+// CHECK: declare noalias i8* @_Znam(i64) [[ATTR_NOBUILTIN]]
+// CHECK: declare void @_ZdaPv(i8*) [[ATTR_NOBUILTIN_NOUNWIND]]
+
+namespace std {
+  struct nothrow_t {};
+}
+std::nothrow_t nothrow;
 
 // Declare the reserved placement operators.
 void *operator new(size_t, void*) throw();
 void operator delete(void*, void*) throw();
 void *operator new[](size_t, void*) throw();
 void operator delete[](void*, void*) throw();
+
+// Declare the replaceable global allocation operators.
+void *operator new(size_t, const std::nothrow_t &) throw();
+void *operator new[](size_t, const std::nothrow_t &) throw();
+void operator delete(void *, const std::nothrow_t &) throw();
+void operator delete[](void *, const std::nothrow_t &) throw();
+
 
 void t2(int* a) {
   int* b = new (a) int;
@@ -76,10 +98,6 @@ void t8(int n) {
   new U[10];
   new U[n];
 }
-
-// noalias
-// CHECK: declare noalias i8* @_Znam
-void *operator new[](size_t);
 
 void t9() {
   bool b;
@@ -260,3 +278,63 @@ namespace PR13380 {
   // CHECK-NEXT: call void @_ZN7PR133801BC1Ev
   void* f() { return new B[2](); }
 }
+
+struct MyPlacementType {} mpt;
+void *operator new(size_t, MyPlacementType);
+
+namespace N3664 {
+  struct S { S() throw(int); };
+
+  // CHECK-LABEL: define void @_ZN5N36641fEv
+  void f() {
+    // CHECK: call noalias i8* @_Znwm(i64 4) [[ATTR_BUILTIN_NEW:#[^ ]*]]
+    int *p = new int;
+    // CHECK: call void @_ZdlPv({{.*}}) [[ATTR_BUILTIN_DELETE:#[^ ]*]]
+    delete p;
+
+    // CHECK: call noalias i8* @_Znam(i64 12) [[ATTR_BUILTIN_NEW]]
+    int *q = new int[3];
+    // CHECK: call void @_ZdaPv({{.*}}) [[ATTR_BUILTIN_DELETE]]
+    delete [] p;
+
+    // CHECK: call i8* @_ZnamRKSt9nothrow_t(i64 3, {{.*}}) [[ATTR_BUILTIN_NOTHROW_NEW:#[^ ]*]]
+    (void) new (nothrow) S[3];
+
+    // CHECK: call i8* @_Znwm15MyPlacementType(i64 4){{$}}
+    (void) new (mpt) int;
+  }
+
+  // FIXME: Can we mark this noalias?
+  // CHECK: declare i8* @_ZnamRKSt9nothrow_t(i64, {{.*}}) [[ATTR_NOBUILTIN_NOUNWIND]]
+
+  // CHECK-LABEL: define void @_ZN5N36641gEv
+  void g() {
+    // It's OK for there to be attributes here, so long as we don't have a
+    // 'builtin' attribute.
+    // CHECK: call noalias i8* @_Znwm(i64 4){{$}}
+    int *p = (int*)operator new(4);
+    // CHECK: call void @_ZdlPv({{.*}}) [[ATTR_NOUNWIND:#[^ ]*]]
+    operator delete(p);
+
+    // CHECK: call noalias i8* @_Znam(i64 12){{$}}
+    int *q = (int*)operator new[](12);
+    // CHECK: call void @_ZdaPv({{.*}}) [[ATTR_NOUNWIND]]
+    operator delete [](p);
+
+    // CHECK: call i8* @_ZnamRKSt9nothrow_t(i64 3, {{.*}}) [[ATTR_NOUNWIND]]
+    (void) operator new[](3, nothrow);
+  }
+}
+
+// CHECK-DAG: attributes [[ATTR_NOBUILTIN]] = {{[{].*}} nobuiltin {{.*[}]}}
+// CHECK-DAG: attributes [[ATTR_NOBUILTIN_NOUNWIND]] = {{[{].*}} nobuiltin nounwind {{.*[}]}}
+
+// CHECK: attributes [[ATTR_NOUNWIND]] =
+// CHECK-NOT: builtin
+// CHECK-NOT: attributes
+// CHECK: nounwind
+// CHECK-NOT: builtin
+// CHECK: attributes
+
+// CHECK-DAG: attributes [[ATTR_BUILTIN_NEW]] = {{[{].*}} builtin {{.*[}]}}
+// CHECK-DAG: attributes [[ATTR_BUILTIN_DELETE]] = {{[{].*}} builtin {{.*[}]}}

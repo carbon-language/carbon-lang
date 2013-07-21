@@ -744,6 +744,12 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
 
   if (const SectionAttr *SA = FD->getAttr<SectionAttr>())
     F->setSection(SA->getName());
+
+  // A replaceable global allocation function does not act like a builtin by
+  // default, only if it is invoked by a new-expression or delete-expression.
+  if (FD->isReplaceableGlobalAllocationFunction())
+    F->addAttribute(llvm::AttributeSet::FunctionIndex,
+                    llvm::Attribute::NoBuiltin);
 }
 
 void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
