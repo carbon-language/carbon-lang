@@ -4390,7 +4390,7 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
         continue;
 
       unsigned C = getInstructionCost(it, VF);
-      Cost += C;
+      BlockCost += C;
       DEBUG(dbgs() << "LV: Found an estimated cost of "<< C <<" for VF " <<
             VF << " For instruction: "<< *it << "\n");
     }
@@ -4398,7 +4398,7 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
     // We assume that if-converted blocks have a 50% chance of being executed.
     // When the code is scalar then some of the blocks are avoided due to CF.
     // When the code is vectorized we execute all code paths.
-    if (Legal->blockNeedsPredication(*bb) && VF == 1)
+    if (VF == 1 && Legal->blockNeedsPredication(*bb))
       BlockCost /= 2;
 
     Cost += BlockCost;
