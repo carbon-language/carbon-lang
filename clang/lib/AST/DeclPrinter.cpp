@@ -1157,7 +1157,7 @@ void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
 void DeclPrinter::VisitUsingDecl(UsingDecl *D) {
   if (!D->isAccessDeclaration())
     Out << "using ";
-  if (D->isTypeName())
+  if (D->hasTypename())
     Out << "typename ";
   D->getQualifier()->print(Out, Policy);
   Out << *D;

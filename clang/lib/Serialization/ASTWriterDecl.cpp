@@ -909,11 +909,11 @@ void ASTDeclWriter::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
 
 void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
   VisitNamedDecl(D);
-  Writer.AddSourceLocation(D->getUsingLocation(), Record);
+  Writer.AddSourceLocation(D->getUsingLoc(), Record);
   Writer.AddNestedNameSpecifierLoc(D->getQualifierLoc(), Record);
   Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Writer.AddDeclRef(D->FirstUsingShadow.getPointer(), Record);
-  Record.push_back(D->isTypeName());
+  Record.push_back(D->hasTypename());
   Writer.AddDeclRef(Context.getInstantiatedFromUsingDecl(D), Record);
   Code = serialization::DECL_USING;
 }

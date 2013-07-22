@@ -1959,8 +1959,8 @@ void UsingDecl::removeShadowDecl(UsingShadowDecl *S) {
 UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation UL,
                              NestedNameSpecifierLoc QualifierLoc,
                              const DeclarationNameInfo &NameInfo,
-                             bool IsTypeNameArg) {
-  return new (C) UsingDecl(DC, UL, QualifierLoc, NameInfo, IsTypeNameArg);
+                             bool HasTypename) {
+  return new (C) UsingDecl(DC, UL, QualifierLoc, NameInfo, HasTypename);
 }
 
 UsingDecl *UsingDecl::CreateDeserialized(ASTContext &C, unsigned ID) {

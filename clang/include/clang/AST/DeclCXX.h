@@ -2741,7 +2741,7 @@ public:
 class UsingDecl : public NamedDecl {
   virtual void anchor();
 
-  /// \brief The source location of the "using" location itself.
+  /// \brief The source location of the 'using' keyword itself.
   SourceLocation UsingLocation;
 
   /// \brief The nested-name-specifier that precedes the name.
@@ -2760,18 +2760,18 @@ class UsingDecl : public NamedDecl {
 
   UsingDecl(DeclContext *DC, SourceLocation UL,
             NestedNameSpecifierLoc QualifierLoc,
-            const DeclarationNameInfo &NameInfo, bool IsTypeNameArg)
+            const DeclarationNameInfo &NameInfo, bool HasTypenameKeyword)
     : NamedDecl(Using, DC, NameInfo.getLoc(), NameInfo.getName()),
       UsingLocation(UL), QualifierLoc(QualifierLoc),
-      DNLoc(NameInfo.getInfo()), FirstUsingShadow(0, IsTypeNameArg) {
+      DNLoc(NameInfo.getInfo()), FirstUsingShadow(0, HasTypenameKeyword) {
   }
 
 public:
-  /// \brief Returns the source location of the "using" keyword.
-  SourceLocation getUsingLocation() const { return UsingLocation; }
+  /// \brief Return the source location of the 'using' keyword.
+  SourceLocation getUsingLoc() const { return UsingLocation; }
 
   /// \brief Set the source location of the 'using' keyword.
-  void setUsingLocation(SourceLocation L) { UsingLocation = L; }
+  void setUsingLoc(SourceLocation L) { UsingLocation = L; }
 
   /// \brief Retrieve the nested-name-specifier that qualifies the name,
   /// with source-location information.
@@ -2790,10 +2790,10 @@ public:
   bool isAccessDeclaration() const { return UsingLocation.isInvalid(); }
 
   /// \brief Return true if the using declaration has 'typename'.
-  bool isTypeName() const { return FirstUsingShadow.getInt(); }
+  bool hasTypename() const { return FirstUsingShadow.getInt(); }
 
   /// \brief Sets whether the using declaration has 'typename'.
-  void setTypeName(bool TN) { FirstUsingShadow.setInt(TN); }
+  void setTypename(bool TN) { FirstUsingShadow.setInt(TN); }
 
   /// \brief Iterates through the using shadow declarations associated with
   /// this using declaration.
@@ -2851,7 +2851,7 @@ public:
                            SourceLocation UsingL,
                            NestedNameSpecifierLoc QualifierLoc,
                            const DeclarationNameInfo &NameInfo,
-                           bool IsTypeNameArg);
+                           bool HasTypenameKeyword);
 
   static UsingDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 

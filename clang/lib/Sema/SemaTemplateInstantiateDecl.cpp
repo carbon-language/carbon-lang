@@ -2102,10 +2102,10 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
                     Sema::ForRedeclaration);
 
   UsingDecl *NewUD = UsingDecl::Create(SemaRef.Context, Owner,
-                                       D->getUsingLocation(),
+                                       D->getUsingLoc(),
                                        QualifierLoc,
                                        NameInfo,
-                                       D->isTypeName());
+                                       D->hasTypename());
 
   CXXScopeSpec SS;
   SS.Adopt(QualifierLoc);
@@ -2114,15 +2114,15 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
     SemaRef.LookupQualifiedName(Prev, Owner);
 
     // Check for invalid redeclarations.
-    if (SemaRef.CheckUsingDeclRedeclaration(D->getUsingLocation(),
-                                            D->isTypeName(), SS,
+    if (SemaRef.CheckUsingDeclRedeclaration(D->getUsingLoc(),
+                                            D->hasTypename(), SS,
                                             D->getLocation(), Prev))
       NewUD->setInvalidDecl();
 
   }
 
   if (!NewUD->isInvalidDecl() &&
-      SemaRef.CheckUsingDeclQualifier(D->getUsingLocation(), SS,
+      SemaRef.CheckUsingDeclQualifier(D->getUsingLoc(), SS,
                                       D->getLocation()))
     NewUD->setInvalidDecl();
 

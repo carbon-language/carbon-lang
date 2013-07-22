@@ -9385,7 +9385,7 @@ QualType TreeTransform<Derived>::RebuildUnresolvedUsingType(Decl *D) {
   TypeDecl *Ty;
   if (isa<UsingDecl>(D)) {
     UsingDecl *Using = cast<UsingDecl>(D);
-    assert(Using->isTypeName() &&
+    assert(Using->hasTypename() &&
            "UnresolvedUsingTypenameDecl transformed to non-typename using");
 
     // A valid resolved using typename decl points to exactly one type decl.

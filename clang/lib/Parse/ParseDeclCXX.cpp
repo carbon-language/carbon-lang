@@ -451,7 +451,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                                     Decl **OwnedType) {
   CXXScopeSpec SS;
   SourceLocation TypenameLoc;
-  bool IsTypeName = false;
+  bool HasTypenameKeyword = false;
   ParsedAttributesWithRange Attrs(AttrFactory);
 
   // FIXME: Simply skip the attributes and diagnose, don't bother parsing them.
@@ -464,7 +464,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   // FIXME: This is wrong; we should parse this as a typename-specifier.
   if (Tok.is(tok::kw_typename)) {
     TypenameLoc = ConsumeToken();
-    IsTypeName = true;
+    HasTypenameKeyword = true;
   }
 
   // Parse nested-name-specifier.
@@ -549,7 +549,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
       // No removal fixit: can't recover from this.
       SkipUntil(tok::semi);
       return 0;
-    } else if (IsTypeName)
+    } else if (HasTypenameKeyword)
       Diag(TypenameLoc, diag::err_alias_declaration_not_identifier)
         << FixItHint::CreateRemoval(SourceRange(TypenameLoc,
                              SS.isNotEmpty() ? SS.getEndLoc() : TypenameLoc));
@@ -593,11 +593,11 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
 
   // "typename" keyword is allowed for identifiers only,
   // because it may be a type definition.
-  if (IsTypeName && Name.getKind() != UnqualifiedId::IK_Identifier) {
+  if (HasTypenameKeyword && Name.getKind() != UnqualifiedId::IK_Identifier) {
     Diag(Name.getSourceRange().getBegin(), diag::err_typename_identifiers_only)
       << FixItHint::CreateRemoval(SourceRange(TypenameLoc));
-    // Proceed parsing, but reset the IsTypeName flag.
-    IsTypeName = false;
+    // Proceed parsing, but reset the HasTypenameKeyword flag.
+    HasTypenameKeyword = false;
   }
 
   if (IsAliasDecl) {
@@ -610,9 +610,10 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                                          TypeAlias);
   }
 
-  return Actions.ActOnUsingDeclaration(getCurScope(), AS, true, UsingLoc, SS,
-                                       Name, Attrs.getList(),
-                                       IsTypeName, TypenameLoc);
+  return Actions.ActOnUsingDeclaration(getCurScope(), AS,
+                                       /* HasUsingKeyword */ true, UsingLoc,
+                                       SS, Name, Attrs.getList(),
+                                       HasTypenameKeyword, TypenameLoc);
 }
 
 /// ParseStaticAssertDeclaration - Parse C++0x or C11 static_assert-declaration.
@@ -1971,10 +1972,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         return;
 
       Actions.ActOnUsingDeclaration(getCurScope(), AS,
-                                    false, SourceLocation(),
+                                    /* HasUsingKeyword */ false,
+                                    SourceLocation(),
                                     SS, Name,
                                     /* AttrList */ 0,
-                                    /* IsTypeName */ false,
+                                    /* HasTypenameKeyword */ false,
                                     SourceLocation());
       return;
     }

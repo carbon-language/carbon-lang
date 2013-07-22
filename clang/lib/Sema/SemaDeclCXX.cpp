@@ -6756,7 +6756,7 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
                                   CXXScopeSpec &SS,
                                   UnqualifiedId &Name,
                                   AttributeList *AttrList,
-                                  bool IsTypeName,
+                                  bool HasTypenameKeyword,
                                   SourceLocation TypenameLoc) {
   assert(S->getFlags() & Scope::DeclScope && "Invalid Scope.");
 
@@ -6812,7 +6812,7 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
   NamedDecl *UD = BuildUsingDeclaration(S, AS, UsingLoc, SS,
                                         TargetNameInfo, AttrList,
                                         /* IsInstantiation */ false,
-                                        IsTypeName, TypenameLoc);
+                                        HasTypenameKeyword, TypenameLoc);
   if (UD)
     PushOnScopeChains(UD, S, /*AddToContext*/ false);
 
@@ -7049,9 +7049,10 @@ void Sema::HideUsingShadowDecl(Scope *S, UsingShadowDecl *Shadow) {
 
 class UsingValidatorCCC : public CorrectionCandidateCallback {
 public:
-  UsingValidatorCCC(bool IsTypeName, bool IsInstantiation)
-      : IsTypeName(IsTypeName), IsInstantiation(IsInstantiation) {}
-  
+  UsingValidatorCCC(bool HasTypenameKeyword, bool IsInstantiation)
+      : HasTypenameKeyword(HasTypenameKeyword),
+        IsInstantiation(IsInstantiation) {}
+
   virtual bool ValidateCandidate(const TypoCorrection &Candidate) {
     if (NamedDecl *ND = Candidate.getCorrectionDecl()) {
       if (isa<NamespaceDecl>(ND))
@@ -7062,9 +7063,9 @@ public:
       if (droppedSpecifier)
         return false;
       else if (isa<TypeDecl>(ND))
-        return IsTypeName || !IsInstantiation;
+        return HasTypenameKeyword || !IsInstantiation;
       else
-        return !IsTypeName;
+        return !HasTypenameKeyword;
     } else {
       // Keywords are not valid here.
       return false;
@@ -7072,7 +7073,7 @@ public:
   }
 
 private:
-  bool IsTypeName;
+  bool HasTypenameKeyword;
   bool IsInstantiation;
 };
 
@@ -7087,7 +7088,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                        const DeclarationNameInfo &NameInfo,
                                        AttributeList *AttrList,
                                        bool IsInstantiation,
-                                       bool IsTypeName,
+                                       bool HasTypenameKeyword,
                                        SourceLocation TypenameLoc) {
   assert(!SS.isInvalid() && "Invalid CXXScopeSpec.");
   SourceLocation IdentLoc = NameInfo.getLoc();
@@ -7122,7 +7123,8 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   }
 
   // Check for invalid redeclarations.
-  if (CheckUsingDeclRedeclaration(UsingLoc, IsTypeName, SS, IdentLoc, Previous))
+  if (CheckUsingDeclRedeclaration(UsingLoc, HasTypenameKeyword,
+                                  SS, IdentLoc, Previous))
     return 0;
 
   // Check for bad qualifiers.
@@ -7133,7 +7135,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   NamedDecl *D;
   NestedNameSpecifierLoc QualifierLoc = SS.getWithLocInContext(Context);
   if (!LookupContext) {
-    if (IsTypeName) {
+    if (HasTypenameKeyword) {
       // FIXME: not all declaration name kinds are legal here
       D = UnresolvedUsingTypenameDecl::Create(Context, CurContext,
                                               UsingLoc, TypenameLoc,
@@ -7145,7 +7147,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     }
   } else {
     D = UsingDecl::Create(Context, CurContext, UsingLoc, QualifierLoc,
-                          NameInfo, IsTypeName);
+                          NameInfo, HasTypenameKeyword);
   }
   D->setAccess(AS);
   CurContext->addDecl(D);
@@ -7187,7 +7189,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
   // Try to correct typos if possible.
   if (R.empty()) {
-    UsingValidatorCCC CCC(IsTypeName, IsInstantiation);
+    UsingValidatorCCC CCC(HasTypenameKeyword, IsInstantiation);
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), S, &SS, CCC)){
       // We reject any correction for which ND would be NULL.
@@ -7218,7 +7220,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     return UD;
   }
 
-  if (IsTypeName) {
+  if (HasTypenameKeyword) {
     // If we asked for a typename and got a non-type decl, error out.
     if (!R.getAsSingle<TypeDecl>()) {
       Diag(IdentLoc, diag::err_using_typename_non_type);
@@ -7259,7 +7261,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
 
 /// Additional checks for a using declaration referring to a constructor name.
 bool Sema::CheckInheritingConstructorUsingDecl(UsingDecl *UD) {
-  assert(!UD->isTypeName() && "expecting a constructor name");
+  assert(!UD->hasTypename() && "expecting a constructor name");
 
   const Type *SourceType = UD->getQualifier()->getAsType();
   assert(SourceType &&
@@ -7280,7 +7282,7 @@ bool Sema::CheckInheritingConstructorUsingDecl(UsingDecl *UD) {
 
   if (BaseIt == BaseE) {
     // Did not find SourceType in the bases.
-    Diag(UD->getUsingLocation(),
+    Diag(UD->getUsingLoc(),
          diag::err_using_decl_constructor_not_in_direct_base)
       << UD->getNameInfo().getSourceRange()
       << QualType(SourceType, 0) << TargetClass;
@@ -7297,7 +7299,7 @@ bool Sema::CheckInheritingConstructorUsingDecl(UsingDecl *UD) {
 /// redeclaration.  Note that this is checking only for the using decl
 /// itself, not for any ill-formedness among the UsingShadowDecls.
 bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
-                                       bool isTypeName,
+                                       bool HasTypenameKeyword,
                                        const CXXScopeSpec &SS,
                                        SourceLocation NameLoc,
                                        const LookupResult &Prev) {
@@ -7320,7 +7322,7 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
     bool DTypename;
     NestedNameSpecifier *DQual;
     if (UsingDecl *UD = dyn_cast<UsingDecl>(D)) {
-      DTypename = UD->isTypeName();
+      DTypename = UD->hasTypename();
       DQual = UD->getQualifier();
     } else if (UnresolvedUsingValueDecl *UD
                  = dyn_cast<UnresolvedUsingValueDecl>(D)) {
@@ -7334,7 +7336,7 @@ bool Sema::CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
 
     // using decls differ if one says 'typename' and the other doesn't.
     // FIXME: non-dependent using decls?
-    if (isTypeName != DTypename) continue;
+    if (HasTypenameKeyword != DTypename) continue;
 
     // using decls differ if they name different scopes (but note that
     // template instantiation can cause this check to trigger when it

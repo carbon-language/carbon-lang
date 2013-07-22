@@ -3565,7 +3565,7 @@ public:
                                         NamedDecl *Target);
 
   bool CheckUsingDeclRedeclaration(SourceLocation UsingLoc,
-                                   bool isTypeName,
+                                   bool HasTypenameKeyword,
                                    const CXXScopeSpec &SS,
                                    SourceLocation NameLoc,
                                    const LookupResult &Previous);
@@ -3579,7 +3579,7 @@ public:
                                    const DeclarationNameInfo &NameInfo,
                                    AttributeList *AttrList,
                                    bool IsInstantiation,
-                                   bool IsTypeName,
+                                   bool HasTypenameKeyword,
                                    SourceLocation TypenameLoc);
 
   bool CheckInheritingConstructorUsingDecl(UsingDecl *UD);
@@ -3591,7 +3591,7 @@ public:
                               CXXScopeSpec &SS,
                               UnqualifiedId &Name,
                               AttributeList *AttrList,
-                              bool IsTypeName,
+                              bool HasTypenameKeyword,
                               SourceLocation TypenameLoc);
   Decl *ActOnAliasDeclaration(Scope *CurScope,
                               AccessSpecifier AS,
