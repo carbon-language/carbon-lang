@@ -24,6 +24,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/Linker.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -77,6 +78,7 @@ LTOCodeGenerator::LTOCodeGenerator()
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
+  initializeLTOPasses();
 }
 
 LTOCodeGenerator::~LTOCodeGenerator() {
@@ -87,6 +89,36 @@ LTOCodeGenerator::~LTOCodeGenerator() {
   for (std::vector<char*>::iterator I = _codegenOptions.begin(),
          E = _codegenOptions.end(); I != E; ++I)
     free(*I);
+}
+
+// Initialize LTO passes. Please keep this funciton in sync with
+// PassManagerBuilder::populateLTOPassManager(), and  make sure all LTO
+// passes are initialized. 
+//
+void LTOCodeGenerator::initializeLTOPasses() {
+  PassRegistry &R = *PassRegistry::getPassRegistry();
+
+  initializeInternalizePassPass(R);
+  initializeIPSCCPPass(R);
+  initializeGlobalOptPass(R);
+  initializeConstantMergePass(R);
+  initializeDAHPass(R);
+  initializeInstCombinerPass(R);
+  initializeSimpleInlinerPass(R);
+  initializePruneEHPass(R);
+  initializeGlobalDCEPass(R);
+  initializeArgPromotionPass(R);
+  initializeJumpThreadingPass(R);
+  initializeSROAPass(R);
+  initializeSROA_DTPass(R);
+  initializeSROA_SSAUpPass(R);
+  initializeFunctionAttrsPass(R);
+  initializeGlobalsModRefPass(R);
+  initializeLICMPass(R);
+  initializeGVNPass(R);
+  initializeMemCpyOptPass(R);
+  initializeDCEPass(R);
+  initializeCFGSimplifyPassPass(R);
 }
 
 bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg) {

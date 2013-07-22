@@ -56,6 +56,8 @@ struct LTOCodeGenerator {
   void setCodeGenDebugOptions(const char *opts);
 
 private:
+  void initializeLTOPasses();
+
   bool generateObjectFile(llvm::raw_ostream &out, std::string &errMsg);
   void applyScopeRestrictions();
   void applyRestriction(llvm::GlobalValue &GV,
