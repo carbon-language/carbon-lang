@@ -81,7 +81,7 @@ namespace {
     /// Return the condition of the branch terminating the given basic block.
     static Value *getBrCondtion(BasicBlock *);
 
-    /// Derive the precondition block (i.e the block that guards the loop 
+    /// Derive the precondition block (i.e the block that guards the loop
     /// preheader) from the given preheader.
     static BasicBlock *getPrecondBb(BasicBlock *PreHead);
   };
@@ -111,7 +111,7 @@ namespace {
     /// beween a variable and zero, and if the variable is non-zero, the
     /// control yeilds to the loop entry. If the branch matches the behavior,
     /// the variable involved in the comparion is returned. This function will
-    /// be called to see if the precondition and postcondition of the loop 
+    /// be called to see if the precondition and postcondition of the loop
     /// are in desirable form.
     Value *matchCondition (BranchInst *Br, BasicBlock *NonZeroTarget) const;
 
@@ -274,11 +274,11 @@ static void deleteIfDeadInstruction(Value *V, ScalarEvolution &SE,
 //
 //===----------------------------------------------------------------------===//
 
-// This fucntion will return true iff the given block contains nothing but goto. 
-// A typical usage of this function is to check if the preheader fucntion is 
-// "almost" empty such that generated intrinsic function can be moved across 
-// preheader and to be placed at the end of the preconditiona block without 
-// concerning of breaking data dependence.
+// This function will return true iff the given block contains nothing but goto.
+// A typical usage of this function is to check if the preheader function is
+// "almost" empty such that generated intrinsic functions can be moved across
+// the preheader and be placed at the end of the precondition block without
+// the concern of breaking data dependence.
 bool LIRUtil::isAlmostEmpty(BasicBlock *BB) {
   if (BranchInst *Br = getBranch(BB)) {
     return Br->isUnconditional() && BB->size() == 1;
@@ -339,7 +339,7 @@ bool NclPopcountRecognize::preliminaryScreen() {
   PreCondBB = LIRUtil::getPrecondBb(PreHead);
   if (!PreCondBB)
     return false;
- 
+
   return true;
 }
 
@@ -504,7 +504,7 @@ void NclPopcountRecognize::transform(Instruction *CntInst,
   // Assuming before transformation, the loop is following:
   //  if (x) // the precondition
   //     do { cnt++; x &= x - 1; } while(x);
- 
+
   // Step 1: Insert the ctpop instruction at the end of the precondition block
   IRBuilderTy Builder(PreCondBr);
   Value *PopCnt, *PopCntZext, *NewCount, *TripCnt;
@@ -611,7 +611,7 @@ void NclPopcountRecognize::transform(Instruction *CntInst,
   SE->forgetLoop(CurLoop);
 }
 
-CallInst *NclPopcountRecognize::createPopcntIntrinsic(IRBuilderTy &IRBuilder, 
+CallInst *NclPopcountRecognize::createPopcntIntrinsic(IRBuilderTy &IRBuilder,
                                                       Value *Val, DebugLoc DL) {
   Value *Ops[] = { Val };
   Type *Tys[] = { Val->getType() };
@@ -667,13 +667,13 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
   if (!getDataLayout())
     return false;
 
-  // set DT 
+  // set DT
   (void)getDominatorTree();
 
   LoopInfo &LI = getAnalysis<LoopInfo>();
   TLI = &getAnalysis<TargetLibraryInfo>();
 
-  // set TLI 
+  // set TLI
   (void)getTargetLibraryInfo();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
