@@ -578,7 +578,7 @@ def COM_FIPr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
 let SchedRW = [WriteALU] in {
 let Defs = [AX], Uses = [FPSW] in
 def FNSTSW16r : I<0xE0, RawFrm,                  // AX = fp flags
-                  (outs), (ins), "fnstsw %ax",
+                  (outs), (ins), "fnstsw\t{%ax|AX}",
                   [(set AX, (X86fp_stsw FPSW))], IIC_FNSTSW>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world

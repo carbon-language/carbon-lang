@@ -5477,12 +5477,12 @@ def MWAITrr   : I<0x01, MRM_C9, (outs), (ins), "mwait",
                 TB, Requires<[HasSSE3]>;
 } // SchedRW
 
-def : InstAlias<"mwait %eax, %ecx", (MWAITrr)>, Requires<[In32BitMode]>;
-def : InstAlias<"mwait %rax, %rcx", (MWAITrr)>, Requires<[In64BitMode]>;
+def : InstAlias<"mwait\t{%eax, %ecx|ECX, EAX}", (MWAITrr)>, Requires<[In32BitMode]>;
+def : InstAlias<"mwait\t{%rax, %rcx|RCX, RAX}", (MWAITrr)>, Requires<[In64BitMode]>;
 
-def : InstAlias<"monitor %eax, %ecx, %edx", (MONITORrrr)>,
+def : InstAlias<"monitor\t{%eax, %ecx, %edx|EDX, ECX, EAX}", (MONITORrrr)>,
       Requires<[In32BitMode]>;
-def : InstAlias<"monitor %rax, %rcx, %rdx", (MONITORrrr)>,
+def : InstAlias<"monitor\t{%rax, %rcx, %rdx|RDX, RCX, RAX}", (MONITORrrr)>,
       Requires<[In64BitMode]>;
 
 //===----------------------------------------------------------------------===//
