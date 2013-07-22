@@ -264,11 +264,15 @@ private:
   /// This is the recursive part of buildTree.
   void buildTree_rec(ArrayRef<Value *> Roots, unsigned Depth);
 
-  /// Vectorizer a single entry in the tree.
+  /// Vectorize a single entry in the tree.
   Value *vectorizeTree(TreeEntry *E);
 
-  /// Vectorizer a single entry in the tree, starting in \p VL.
+  /// Vectorize a single entry in the tree, starting in \p VL.
   Value *vectorizeTree(ArrayRef<Value *> VL);
+
+  /// \returns the pointer to the vectorized value if \p VL is already
+  /// vectorized, or NULL. They may happen in cycles.
+  Value *alreadyVectorized(ArrayRef<Value *> VL);
 
   /// \brief Take the pointer operand from the Load/Store instruction.
   /// \returns NULL if this is not a valid Load/Store instruction.
@@ -1117,6 +1121,16 @@ Value *BoUpSLP::Gather(ArrayRef<Value *> VL, VectorType *Ty) {
   return Vec;
 }
 
+Value *BoUpSLP::alreadyVectorized(ArrayRef<Value *> VL) {
+  if (ScalarToTreeEntry.count(VL[0])) {
+    int Idx = ScalarToTreeEntry[VL[0]];
+    TreeEntry *En = &VectorizableTree[Idx];
+    if (En->isSame(VL) && En->VectorizedValue)
+      return En->VectorizedValue;
+  }
+  return 0;
+}
+
 Value *BoUpSLP::vectorizeTree(ArrayRef<Value *> VL) {
   if (ScalarToTreeEntry.count(VL[0])) {
     int Idx = ScalarToTreeEntry[VL[0]];
@@ -1206,6 +1220,10 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
       Value *InVec = vectorizeTree(INVL);
+
+      if (Value *V = alreadyVectorized(E->Scalars))
+        return V;
+
       CastInst *CI = dyn_cast<CastInst>(VL0);
       Value *V = Builder.CreateCast(CI->getOpcode(), InVec, VecTy);
       E->VectorizedValue = V;
@@ -1222,9 +1240,12 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
       Value *L = vectorizeTree(LHSV);
       Value *R = vectorizeTree(RHSV);
-      Value *V;
+
+      if (Value *V = alreadyVectorized(E->Scalars))
+        return V;
 
       CmpInst::Predicate P0 = dyn_cast<CmpInst>(VL0)->getPredicate();
+      Value *V;
       if (Opcode == Instruction::FCmp)
         V = Builder.CreateFCmp(P0, L, R);
       else
@@ -1245,6 +1266,10 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       Value *Cond = vectorizeTree(CondVec);
       Value *True = vectorizeTree(TrueVec);
       Value *False = vectorizeTree(FalseVec);
+
+      if (Value *V = alreadyVectorized(E->Scalars))
+        return V;
+      
       Value *V = Builder.CreateSelect(Cond, True, False);
       E->VectorizedValue = V;
       return V;
@@ -1280,6 +1305,9 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       if (LHS == RHS && isa<Instruction>(LHS)) {
         assert((VL0->getOperand(0) == VL0->getOperand(1)) && "Invalid order");
       }
+
+      if (Value *V = alreadyVectorized(E->Scalars))
+        return V;
 
       BinaryOperator *BinOp = cast<BinaryOperator>(VL0);
       Value *V = Builder.CreateBinOp(BinOp->getOpcode(), LHS, RHS);
