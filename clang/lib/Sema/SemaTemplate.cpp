@@ -1319,7 +1319,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       } else if (OldTypeParm && OldTypeParm->hasDefaultArgument()) {
         // Merge the default argument from the old declaration to the
         // new declaration.
-        SawDefaultArgument = true;
         NewTypeParm->setDefaultArgument(OldTypeParm->getDefaultArgumentInfo(),
                                         true);
         PreviousDefaultArgLoc = OldTypeParm->getDefaultArgumentLoc();
@@ -1356,7 +1355,7 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
         if (!NewNonTypeParm->isPackExpansion())
           SawParameterPack = true;
       } else if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument() &&
-          NewNonTypeParm->hasDefaultArgument()) {
+                 NewNonTypeParm->hasDefaultArgument()) {
         OldDefaultLoc = OldNonTypeParm->getDefaultArgumentLoc();
         NewDefaultLoc = NewNonTypeParm->getDefaultArgumentLoc();
         SawDefaultArgument = true;
@@ -1365,7 +1364,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       } else if (OldNonTypeParm && OldNonTypeParm->hasDefaultArgument()) {
         // Merge the default argument from the old declaration to the
         // new declaration.
-        SawDefaultArgument = true;
         // FIXME: We need to create a new kind of "default argument"
         // expression that points to a previous non-type template
         // parameter.
@@ -1413,7 +1411,6 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
       } else if (OldTemplateParm && OldTemplateParm->hasDefaultArgument()) {
         // Merge the default argument from the old declaration to the
         // new declaration.
-        SawDefaultArgument = true;
         // FIXME: We need to create a new kind of "default argument" expression
         // that points to a previous template template parameter.
         NewTemplateParm->setDefaultArgument(

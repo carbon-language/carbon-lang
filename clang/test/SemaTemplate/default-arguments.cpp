@@ -136,3 +136,14 @@ namespace PR9643 {
     vector<int, allocator<int> > v = initializer<vector>(5);
   }
 }
+
+namespace PR16288 {
+  template<typename X>
+  struct S {
+    template<typename T = int, typename U> // expected-warning {{C++11}}
+    void f();
+  };
+  template<typename X>
+  template<typename T, typename U>
+  void S<X>::f() {}
+}
