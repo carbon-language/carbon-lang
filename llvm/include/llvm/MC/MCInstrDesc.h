@@ -268,8 +268,20 @@ public:
     if (isBranch() || isCall() || isReturn() || isIndirectBranch())
       return true;
     unsigned PC = RI.getProgramCounter();
-    if (PC == 0) return false;
-    return hasDefOfPhysReg(MI, PC, RI);
+    if (PC == 0)
+      return false;
+    if (hasDefOfPhysReg(MI, PC, RI))
+      return true;
+    // A variadic instruction may define PC in the variable operand list.
+    // There's currently no indication of which entries in a variable
+    // list are defs and which are uses. While that's the case, this function
+    // needs to assume they're defs in order to be conservatively correct.
+    for (int i = NumOperands, e = MI.getNumOperands(); i != e; ++i) {
+      if (MI.getOperand(i).isReg() &&
+          RI.isSubRegisterEq(PC, MI.getOperand(i).getReg()))
+        return true;
+    }
+    return false;
   }
 
   /// \brief Return true if this instruction has a predicate operand
