@@ -11,7 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "gtest/gtest.h"
 
@@ -93,6 +95,37 @@ TEST_F(MemoryBufferTest, make_new) {
   EXPECT_TRUE(0 != Four.get());
   for (size_t i = 0; i < 123; ++i)
     EXPECT_EQ(0, Four->getBufferStart()[0]);
+}
+
+TEST_F(MemoryBufferTest, getOpenFileNoNullTerminator) {
+  // Test that MemoryBuffer::getOpenFile works properly when no null
+  // terminator is requested and the size is large enough to trigger
+  // the usage of memory mapping.
+  int TestFD;
+  SmallString<64> TestPath;
+  // Create a temporary file and write data into it.
+  sys::fs::createTemporaryFile("prefix", "temp", TestFD, TestPath);
+  // OF is responsible for closing the file, and is unbuffered so that
+  // the results are immediately visible through the fd.
+  raw_fd_ostream OF(TestFD, true, true);
+  for (int i = 0; i < 60000; ++i) {
+    OF << "0123456789";
+  }
+
+  OwningBuffer Buf;
+  error_code EC = MemoryBuffer::getOpenFile(TestFD,
+                                            TestPath.c_str(),
+                                            Buf,
+                                            40000,    // Size
+                                            -1,
+                                            8000,     // Offset
+                                            false);
+  EXPECT_FALSE(EC);
+
+  StringRef BufData = Buf->getBuffer();
+  EXPECT_EQ(BufData.size(), 40000U);
+  EXPECT_EQ(BufData[0], '0');
+  EXPECT_EQ(BufData[9], '9');
 }
 
 }
