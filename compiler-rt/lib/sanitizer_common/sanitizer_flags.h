@@ -39,6 +39,8 @@ struct CommonFlags {
   int malloc_context_size;
   // Write logs to "log_path.pid" instead of stderr.
   const char *log_path;
+  // Enable memory leak detection.
+  bool detect_leaks;
 };
 
 extern CommonFlags common_flags_dont_use_directly;

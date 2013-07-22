@@ -29,6 +29,7 @@ void ParseCommonFlagsFromString(const char *str) {
   ParseFlag(str, &f->symbolize, "symbolize");
   ParseFlag(str, &f->handle_ioctl, "handle_ioctl");
   ParseFlag(str, &f->log_path, "log_path");
+  ParseFlag(str, &f->detect_leaks, "detect_leaks");
 }
 
 static bool GetFlagValue(const char *env, const char *name,

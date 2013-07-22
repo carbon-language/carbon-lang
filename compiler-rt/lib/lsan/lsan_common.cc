@@ -550,8 +550,9 @@ void __lsan_enable() {
 SANITIZER_INTERFACE_ATTRIBUTE
 void __lsan_do_leak_check() {
 #if CAN_SANITIZE_LEAKS
-  __lsan::DoLeakCheck();
-#endif
+  if (common_flags()->detect_leaks)
+    __lsan::DoLeakCheck();
+#endif  // CAN_SANITIZE_LEAKS
 }
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS

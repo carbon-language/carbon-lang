@@ -30,6 +30,7 @@ static void InitializeCommonFlags() {
   cf->strip_path_prefix = "";
   cf->fast_unwind_on_malloc = true;
   cf->malloc_context_size = 30;
+  cf->detect_leaks = true;
 
   ParseCommonFlagsFromString(GetEnv("LSAN_OPTIONS"));
 }

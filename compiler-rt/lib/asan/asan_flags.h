@@ -106,8 +106,6 @@ struct Flags {
   // If true, assume that dynamic initializers can never access globals from
   // other modules, even if the latter are already initialized.
   bool strict_init_order;
-  // Invoke LeakSanitizer at process exit.
-  bool detect_leaks;
 };
 
 extern Flags asan_flags_dont_use_directly;
