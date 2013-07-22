@@ -1586,8 +1586,6 @@ static SourceRange getRangeOfTypeInNestedNameSpecifier(ASTContext &Context,
 /// \param ParamLists the template parameter lists, from the outermost to the
 /// innermost template parameter lists.
 ///
-/// \param NumParamLists the number of template parameter lists in ParamLists.
-///
 /// \param IsFriend Whether to apply the slightly different rules for
 /// matching template parameters to scope specifiers in friend
 /// declarations.
