@@ -101,6 +101,7 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
         log->Printf("ptrace() failed; errno=%d (%s)", errno, str);
     }
 
+#ifdef __amd64__
     if (log) {
         if (req == PT_GETREGS) {
             struct reg *r = (struct reg *) addr;
@@ -111,6 +112,7 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
             log->Printf("PT_GETREGS: ax=0x%lx", r->r_rax);
         }
     }
+#endif
      
     return result;
 }
