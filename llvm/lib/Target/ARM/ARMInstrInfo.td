@@ -2293,7 +2293,6 @@ multiclass AI2_ldridx<bit isByte, string opc,
     let Inst{19-16} = addr{16-13};
     let Inst{11-0} = addr{11-0};
     let DecoderMethod = "DecodeLDRPreImm";
-    let AsmMatchConverter = "cvtLdWriteBackRegAddrModeImm12";
   }
 
   def _PRE_REG  : AI2ldstidx<1, isByte, 1, (outs GPR:$Rt, GPR:$Rn_wb),
@@ -2306,7 +2305,6 @@ multiclass AI2_ldridx<bit isByte, string opc,
     let Inst{11-0} = addr{11-0};
     let Inst{4} = 0;
     let DecoderMethod = "DecodeLDRPreReg";
-    let AsmMatchConverter = "cvtLdWriteBackRegAddrMode2";
   }
 
   def _POST_REG : AI2ldstidx<1, isByte, 0, (outs GPR:$Rt, GPR:$Rn_wb),
@@ -2364,7 +2362,6 @@ multiclass AI3_ldridx<bits<4> op, string opc, InstrItinClass itin> {
     let Inst{19-16} = addr{12-9};   // Rn
     let Inst{11-8}  = addr{7-4};    // imm7_4/zero
     let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-    let AsmMatchConverter = "cvtLdWriteBackRegAddrMode3";
     let DecoderMethod = "DecodeAddrMode3Instruction";
   }
   def _POST : AI3ldstidx<op, 1, 0, (outs GPR:$Rt, GPR:$Rn_wb),
@@ -2400,7 +2397,6 @@ def LDRD_PRE : AI3ldstidx<0b1101, 0, 1, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
   let DecoderMethod = "DecodeAddrMode3Instruction";
-  let AsmMatchConverter = "cvtLdrdPre";
 }
 def LDRD_POST: AI3ldstidx<0b1101, 0, 0, (outs GPR:$Rt, GPR:$Rt2, GPR:$Rn_wb),
                           (ins addr_offset_none:$addr, am3offset:$offset),
@@ -2503,7 +2499,6 @@ multiclass AI3ldrT<bits<4> op, string opc> {
     let Inst{22} = 1;
     let Inst{11-8} = offset{7-4};
     let Inst{3-0} = offset{3-0};
-    let AsmMatchConverter = "cvtLdExtTWriteBackImm";
   }
   def r : AI3ldstidxT<op, 1, (outs GPRnopc:$Rt, GPRnopc:$base_wb),
                       (ins addr_offset_none:$addr, postidx_reg:$Rm),
@@ -2515,7 +2510,6 @@ multiclass AI3ldrT<bits<4> op, string opc> {
     let Inst{11-8} = 0;
     let Unpredictable{11-8} = 0b1111;
     let Inst{3-0} = Rm{3-0};
-    let AsmMatchConverter = "cvtLdExtTWriteBackReg";
     let DecoderMethod = "DecodeLDR";
   }
 }
@@ -2553,7 +2547,6 @@ multiclass AI2_stridx<bit isByte, string opc,
     let Inst{23}    = addr{12};     // U (add = ('U' == 1))
     let Inst{19-16} = addr{16-13};  // Rn
     let Inst{11-0}  = addr{11-0};   // imm12
-    let AsmMatchConverter = "cvtStWriteBackRegAddrModeImm12";
     let DecoderMethod = "DecodeSTRPreImm";
   }
 
@@ -2567,7 +2560,6 @@ multiclass AI2_stridx<bit isByte, string opc,
     let Inst{19-16} = addr{16-13}; // Rn
     let Inst{11-0}  = addr{11-0};
     let Inst{4}     = 0;           // Inst{4} = 0
-    let AsmMatchConverter = "cvtStWriteBackRegAddrMode2";
     let DecoderMethod = "DecodeSTRPreReg";
   }
   def _POST_REG : AI2ldstidx<0, isByte, 0, (outs GPR:$Rn_wb),
@@ -2676,7 +2668,6 @@ def STRH_PRE  : AI3ldstidx<0b1011, 0, 1, (outs GPR:$Rn_wb),
   let Inst{19-16} = addr{12-9};   // Rn
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
-  let AsmMatchConverter = "cvtStWriteBackRegAddrMode3";
   let DecoderMethod = "DecodeAddrMode3Instruction";
 }
 
@@ -2710,7 +2701,6 @@ def STRD_PRE : AI3ldstidx<0b1111, 0, 1, (outs GPR:$Rn_wb),
   let Inst{11-8}  = addr{7-4};    // imm7_4/zero
   let Inst{3-0}   = addr{3-0};    // imm3_0/Rm
   let DecoderMethod = "DecodeAddrMode3Instruction";
-  let AsmMatchConverter = "cvtStrdPre";
 }
 
 def STRD_POST: AI3ldstidx<0b1111, 0, 0, (outs GPR:$Rn_wb),
@@ -2817,7 +2807,6 @@ multiclass AI3strT<bits<4> op, string opc> {
     let Inst{22} = 1;
     let Inst{11-8} = offset{7-4};
     let Inst{3-0} = offset{3-0};
-    let AsmMatchConverter = "cvtStExtTWriteBackImm";
   }
   def r : AI3ldstidxT<op, 0, (outs GPR:$base_wb),
                       (ins GPR:$Rt, addr_offset_none:$addr, postidx_reg:$Rm),
@@ -2828,7 +2817,6 @@ multiclass AI3strT<bits<4> op, string opc> {
     let Inst{22} = 0;
     let Inst{11-8} = 0;
     let Inst{3-0} = Rm{3-0};
-    let AsmMatchConverter = "cvtStExtTWriteBackReg";
   }
 }
 
