@@ -16,3 +16,9 @@ void Test() {
   B<int> b(0);  // expected-note{{in instantiation of function template}}
 }
 
+
+// Don't crash here.
+namespace PR16134 {
+  template <class P> struct S // expected-error {{expected ';'}}
+  template <> static S<Q>::f() // expected-error +{{}}
+}
