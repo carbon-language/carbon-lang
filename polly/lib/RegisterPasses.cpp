@@ -126,15 +126,16 @@ static cl::opt<bool> DeadCodeElim("polly-run-dce",
                                   cl::cat(PollyCategory));
 
 static cl::opt<bool>
-PollyViewer("polly-show", cl::desc("Enable the Polly DOT viewer in -O3"),
-            cl::Hidden, cl::value_desc("Run the Polly DOT viewer at -O3"),
+PollyViewer("polly-show",
+            cl::desc("Highlight the code regions that will be optimized in a "
+                     "(CFG BBs and LLVM-IR instructions)"),
             cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-static cl::opt<bool> PollyOnlyViewer(
-    "polly-show-only",
-    cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"), cl::Hidden,
-    cl::value_desc("Run the Polly DOT viewer at -O3 (no BB content"),
-    cl::init(false), cl::cat(PollyCategory));
+static cl::opt<bool>
+PollyOnlyViewer("polly-show-only",
+                cl::desc("Highlight the code regions that will be optimized in "
+                         "a (CFG only BBs)"),
+                cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
 PollyPrinter("polly-dot", cl::desc("Enable the Polly DOT printer in -O3"),
