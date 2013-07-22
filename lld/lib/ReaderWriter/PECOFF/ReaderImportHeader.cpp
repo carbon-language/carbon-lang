@@ -170,8 +170,8 @@ public:
     const char *end = mb->getBufferEnd();
 
     // The size of the string that follows the header.
-    uint32_t dataSize =
-        *reinterpret_cast<const support::ulittle32_t *>(buf + 12);
+    uint32_t dataSize = *reinterpret_cast<const support::ulittle32_t *>(
+        buf + offsetof(COFF::ImportHeader, SizeOfData));
 
     // Check if the total size is valid. The file header is 20 byte long.
     if (end - buf != 20 + dataSize) {
@@ -179,13 +179,15 @@ public:
       return;
     }
 
-    uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(buf + 16);
+    uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(
+        buf + offsetof(COFF::ImportHeader, OrdinalHint));
     StringRef symbolName(buf + 20);
     StringRef dllName(buf + 20 + symbolName.size() + 1);
 
     const COFFSharedLibraryAtom *dataAtom = addSharedLibraryAtom(
         hint, symbolName, dllName);
-    int type = *reinterpret_cast<const support::ulittle16_t *>(buf + 18) >> 16;
+    int type = *reinterpret_cast<const support::ulittle16_t *>(
+        buf + offsetof(COFF::ImportHeader, TypeInfo)) >> 14;
     if (type == llvm::COFF::IMPORT_CODE)
       addDefinedAtom(symbolName, dllName, dataAtom);
 
