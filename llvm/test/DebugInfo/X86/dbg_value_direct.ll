@@ -1,4 +1,4 @@
-; RUN: llc -filetype=obj -O0 -stack-protector-buffer-size=1 < %s
+; RUN: llc -filetype=obj -O0 < %s
 ; Test that we handle DBG_VALUEs in a register without crashing.
 ;
 ; Generated from clang with -fsanitize=address:
@@ -23,7 +23,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @__asan_gen_ = private unnamed_addr constant [16 x i8] c"1 32 4 5 .addr \00", align 1
 
 ; Function Attrs: sanitize_address uwtable
-define void @_Z4funci(%struct.A* noalias sret %agg.result, i32) #0 {
+define void @_Z4funci(%struct.A* noalias sret %agg.result, i32) #0 "stack-protector-buffer-size"="1" {
 entry:
   %MyAlloca = alloca [96 x i8], align 32
   %1 = ptrtoint [96 x i8]* %MyAlloca to i64
@@ -89,7 +89,7 @@ declare void @llvm.dbg.declare(metadata, metadata) #1
 
 declare void @_ZN1AC1Ev(%struct.A*) #2
 
-define internal void @asan.module_ctor() {
+define internal void @asan.module_ctor()  "stack-protector-buffer-size"="1" {
   call void @__asan_init_v3()
   %1 = load volatile i64* @__asan_mapping_offset
   %2 = load volatile i64* @__asan_mapping_scale

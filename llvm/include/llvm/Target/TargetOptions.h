@@ -48,7 +48,7 @@ namespace llvm {
           UseSoftFloat(false), NoZerosInBSS(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
           GuaranteedTailCallOpt(false), DisableTailCalls(false),
-          StackAlignmentOverride(0), RealignStack(true), SSPBufferSize(0),
+          StackAlignmentOverride(0), RealignStack(true),
           EnableFastISel(false), PositionIndependentExecutable(false),
           EnableSegmentedStacks(false), UseInitArray(false), TrapFuncName(""),
           FloatABIType(FloatABI::Default), AllowFPOpFusion(FPOpFusion::Standard)
@@ -151,10 +151,6 @@ namespace llvm {
     /// automatically realigned, if needed.
     unsigned RealignStack : 1;
 
-    /// SSPBufferSize - The minimum size of buffers that will receive stack
-    /// smashing protection when -fstack-protection is used.
-    unsigned SSPBufferSize;
-
     /// EnableFastISel - This flag enables fast-path instruction selection
     /// which trades away generated code quality in favor of reducing
     /// compile time.
@@ -224,7 +220,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(DisableTailCalls) &&
     ARE_EQUAL(StackAlignmentOverride) &&
     ARE_EQUAL(RealignStack) &&
-    ARE_EQUAL(SSPBufferSize) &&
     ARE_EQUAL(EnableFastISel) &&
     ARE_EQUAL(PositionIndependentExecutable) &&
     ARE_EQUAL(EnableSegmentedStacks) &&
