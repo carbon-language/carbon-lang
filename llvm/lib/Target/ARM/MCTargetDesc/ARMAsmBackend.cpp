@@ -152,7 +152,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   switch (Op) {
   default: return Op;
   case ARM::tBcc:       return ARM::t2Bcc;
-  case ARM::tLDRpciASM: return ARM::t2LDRpci;
+  case ARM::tLDRpci:    return ARM::t2LDRpci;
   case ARM::tADR:       return ARM::t2ADR;
   case ARM::tB:         return ARM::t2B;
   }

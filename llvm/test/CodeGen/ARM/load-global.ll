@@ -26,7 +26,7 @@ define i32 @test1() {
 ; PIC: .long L_G$non_lazy_ptr-(LPC0_0+8)
 
 ; PIC_T: _test1
-; PIC_T: ldr.n r0, LCPI0_0
+; PIC_T: ldr r0, LCPI0_0
 ; PIC_T: add r0, pc
 ; PIC_T: ldr r0, [r0]
 ; PIC_T: ldr r0, [r0]

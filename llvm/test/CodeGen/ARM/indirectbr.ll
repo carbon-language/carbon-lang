@@ -51,12 +51,12 @@ L1:                                               ; preds = %L2, %bb2
 ; ARM: ldr [[R1:r[0-9]+]], LCPI
 ; ARM: add [[R1b:r[0-9]+]], pc, [[R1]]
 ; ARM: str [[R1b]]
-; THUMB: ldr.n
+; THUMB: ldr
 ; THUMB: add
-; THUMB: ldr.n [[R2:r[0-9]+]], LCPI
+; THUMB: ldr [[R2:r[0-9]+]], LCPI
 ; THUMB: add [[R2]], pc
 ; THUMB: str [[R2]]
-; THUMB2: ldr.n [[R2:r[0-9]+]], LCPI
+; THUMB2: ldr [[R2:r[0-9]+]], LCPI
 ; THUMB2-NEXT: str{{(.w)?}} [[R2]]
   store i8* blockaddress(@foo, %L5), i8** @nextaddr, align 4
   ret i32 %res.3

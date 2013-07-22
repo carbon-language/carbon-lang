@@ -10,7 +10,7 @@ define void @test1() {
 
 define void @test2() {
 ; CHECK-LABEL: test2:
-; CHECK: ldr.n r0, LCPI
+; CHECK: ldr r0, LCPI
 ; CHECK: add sp, r0
 ; CHECK: subs r4, r7, #4
 ; CHECK: mov sp, r4
@@ -20,9 +20,9 @@ define void @test2() {
 
 define i32 @test3() {
 ; CHECK-LABEL: test3:
-; CHECK: ldr.n r1, LCPI
+; CHECK: ldr r1, LCPI
 ; CHECK: add sp, r1
-; CHECK: ldr.n r1, LCPI
+; CHECK: ldr r1, LCPI
 ; CHECK: add r1, sp
 ; CHECK: subs r4, r7, #4
 ; CHECK: mov sp, r4

@@ -772,6 +772,23 @@ _func:
 @ CHECK: ldr.w	lr, _strcmp-4           @ encoding: [0x5f'A',0xf8'A',A,0xe0'A']
 @ CHECK: @   fixup A - offset: 0, value: _strcmp-4, kind: fixup_t2_ldst_pcrel_12
 
+        ldr r4, [pc, #1020]
+        ldr r3, [pc, #-1020]
+        ldr r6, [pc, #1024]
+        ldr r0, [pc, #-1024]
+        ldr r2, [pc, #4095]
+        ldr r1, [pc, #-4095]
+        ldr.n r8, [pc, #132]
+        ldr.w r8, [pc, #132]
+
+@ CHECK: ldr	r4, [pc, #1020]       @ encoding: [0xff,0x4c]
+@ CHECK: ldr	r3, [pc, #-1020]      @ encoding: [0x01,0x4b]
+@ CHECK: ldr.w	r6, [pc, #1024]       @ encoding: [0xdf,0xf8,0x00,0x64]
+@ CHECK: ldr.w	r0, [pc, #-1024]      @ encoding: [0x5f,0xf8,0x00,0x04]
+@ CHECK: ldr.w	r2, [pc, #4095]       @ encoding: [0xdf,0xf8,0xff,0x2f]
+@ CHECK: ldr.w	r1, [pc, #-4095]      @ encoding: [0x5f,0xf8,0xff,0x1f]
+@ CHECK: ldr	r8, [pc, #132]        @ encoding: [0x21,0x48]
+@ CHECK: ldr.w	r8, [pc, #132]        @ encoding: [0xdf,0xf8,0x84,0x80]
 
 @------------------------------------------------------------------------------
 @ LDR(register)
@@ -3569,5 +3586,5 @@ _func:
 @ CHECK: ldrsh.w r11, [pc, #-22]        @ encoding: [0x3f,0xf9,0x16,0xb0]
 
 @ rdar://12596361
-        ldr r1, [pc, #12]
-@ CHECK: ldr.n r1, [pc, #12]        @ encoding: [0x03,0x49]
+         ldr r1, [pc, #12]
+@ CHECK: ldr r1, [pc, #12]              @ encoding: [0x03,0x49]

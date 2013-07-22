@@ -609,6 +609,26 @@ public:
     }
     return false;
   }
+  // checks whether this operand is a memory operand computed as an offset
+  // applied to PC. the offset may have 8 bits of magnitude and is represented
+  // with two bits of shift. textually it may be either [pc, #imm], #imm or 
+  // relocable expression...
+  bool isThumbMemPC() const {
+    int64_t Val = 0;
+    if (isImm()) {
+      if (isa<MCSymbolRefExpr>(Imm.Val)) return true;
+      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val);
+      if (!CE) return false;
+      Val = CE->getValue();
+    }
+    else if (isMem()) {
+      if(!Memory.OffsetImm || Memory.OffsetRegNum) return false;
+      if(Memory.BaseRegNum != ARM::PC) return false;
+      Val = Memory.OffsetImm->getValue();
+    }
+    else return false;
+    return ((Val % 4) == 0) && (Val >= -1020) && (Val <= 1020);
+  }
   bool isFPImm() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -1696,6 +1716,26 @@ public:
     const MCSymbolRefExpr *SR = dyn_cast<MCSymbolRefExpr>(Imm.Val);
     assert(SR && "Unknown value type!");
     Inst.addOperand(MCOperand::CreateExpr(SR));
+  }
+
+  void addThumbMemPCOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    if (isImm()) {
+      const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+      if (CE) {
+        Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+        return;
+      }
+
+      const MCSymbolRefExpr *SR = dyn_cast<MCSymbolRefExpr>(Imm.Val);
+      assert(SR && "Unknown value type!");
+      Inst.addOperand(MCOperand::CreateExpr(SR));
+      return;
+    }
+
+    assert(isMem()  && "Unknown value type!");
+    assert(isa<MCConstantExpr>(Memory.OffsetImm) && "Unknown value type!");
+    Inst.addOperand(MCOperand::CreateImm(Memory.OffsetImm->getValue()));
   }
 
   void addARMSOImmNotOperands(MCInst &Inst, unsigned N) const {
