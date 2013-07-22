@@ -72,8 +72,8 @@ using namespace llvm;
 
 static cl::opt<bool>
 EnableGlobalMergeOnConst("global-merge-on-const", cl::Hidden,
-                  	cl::desc("Enable global merge pass on constants"),
-                  	cl::init(false));
+                         cl::desc("Enable global merge pass on constants"),
+                         cl::init(false));
 
 STATISTIC(NumMerged      , "Number of globals merged");
 namespace {
