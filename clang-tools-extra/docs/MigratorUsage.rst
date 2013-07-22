@@ -66,43 +66,6 @@ General Command Line Options
   earlier transforms are already caught when subsequent transforms parse the
   file.
 
-.. option:: -format-style=<string>
-
-  After all transformations have been applied, reformat the changes using the
-  style ``string`` given as argument to the option. The style can be a builtin
-  style, one of LLVM, Google, Chromium, Mozilla; or a YAML configuration file.
-
-  If you want a place to start for using your own custom configuration file,
-  ClangFormat_ can generate a file with ``clang-format -dump-config``.
-
-  Example:
-
-  .. code-block:: c++
-    :emphasize-lines: 10-12,18
-
-      // file.cpp
-      for (std::vector<int>::const_iterator I = my_container.begin(),
-                                            E = my_container.end();
-           I != E; ++I) {
-        std::cout << *I << std::endl;
-      }
-
-      // No reformatting:
-      //     cpp11-migrate -use-auto file.cpp --
-      for (auto I = my_container.begin(),
-                                            E = my_container.end();
-           I != E; ++I) {
-        std::cout << *I << std::endl;
-      }
-
-      // With reformatting enabled:
-      //     cpp11-migrate -format-style=LLVM -use-auto file.cpp --
-      for (auto I = my_container.begin(), E = my_container.end(); I != E; ++I) {
-        std::cout << *I << std::endl;
-      }
-
-.. _ClangFormat: http://clang.llvm.org/docs/ClangFormat.html
-
 .. option:: -summary
 
   Displays a summary of the number of changes each transform made or could have

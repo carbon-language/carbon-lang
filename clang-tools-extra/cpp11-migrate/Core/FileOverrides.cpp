@@ -17,6 +17,8 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/FileSystem.h"
@@ -27,11 +29,10 @@
 using namespace clang;
 using namespace clang::tooling;
 
-SourceOverrides::SourceOverrides(llvm::StringRef MainFileName,
-                                 bool TrackChanges)
-    : MainFileName(MainFileName), TrackChanges(TrackChanges) {}
+SourceOverrides::SourceOverrides(llvm::StringRef MainFileName)
+    : MainFileName(MainFileName) {}
 
-void SourceOverrides::applyReplacements(Replacements &Replaces) {
+void SourceOverrides::applyReplacements(tooling::Replacements &Replaces) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
       new DiagnosticOptions());
   DiagnosticsEngine Diagnostics(
@@ -56,8 +57,6 @@ void SourceOverrides::applyReplacements(tooling::Replacements &Replaces,
     llvm::errs() << "error: failed to apply some replacements.";
 
   applyRewrites(Rewrites);
-  if (TrackChanges)
-    adjustChangedRanges(Replaces);
 }
 
 void SourceOverrides::applyRewrites(Rewriter &Rewrites) {
@@ -94,30 +93,6 @@ void SourceOverrides::applyRewrites(Rewriter &Rewrites) {
     // "Create" HeaderOverride if not already existing
     if (HeaderOv.FileName.empty())
       HeaderOv.FileName = FileName;
-  }
-}
-
-void SourceOverrides::adjustChangedRanges(const Replacements &Replaces) {
-  // Start by grouping replacements by file name
-  Replacements MainFileReplaces;
-  llvm::StringMap<Replacements> HeadersReplaces;
-
-  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
-       ++I) {
-    llvm::StringRef ReplacementFileName = I->getFilePath();
-
-    if (ReplacementFileName == MainFileName)
-      MainFileReplaces.insert(*I);
-    else
-      HeadersReplaces[ReplacementFileName].insert(*I);
-  }
-
-  // Then adjust the changed ranges for each individual file
-  MainFileChanges.adjustChangedRanges(Replaces);
-  for (llvm::StringMap<Replacements>::iterator I = HeadersReplaces.begin(),
-                                               E = HeadersReplaces.end();
-       I != E; ++I) {
-    Headers[I->getKey()].Changes.adjustChangedRanges(I->getValue());
   }
 }
 
@@ -179,109 +154,6 @@ SourceOverrides &FileOverrides::getOrCreate(llvm::StringRef Filename) {
   SourceOverrides *&Override = Overrides[Filename];
 
   if (Override == NULL)
-    Override = new SourceOverrides(Filename, TrackChanges);
+    Override = new SourceOverrides(Filename);
   return *Override;
-}
-
-namespace {
-
-/// \brief Comparator to be able to order tooling::Range based on their offset.
-bool rangeLess(clang::tooling::Range A, clang::tooling::Range B) {
-  if (A.getOffset() == B.getOffset())
-    return A.getLength() < B.getLength();
-  return A.getOffset() < B.getOffset();
-}
-
-/// \brief Functor that returns the given range without its overlaps with the
-/// replacement given in the constructor.
-struct RangeReplacedAdjuster {
-  RangeReplacedAdjuster(const tooling::Replacement &Replace)
-      : Replace(Replace.getOffset(), Replace.getLength()),
-        ReplaceNewSize(Replace.getReplacementText().size()) {}
-
-  tooling::Range operator()(clang::tooling::Range Range) const {
-    if (!Range.overlapsWith(Replace))
-      return Range;
-    // range inside replacement -> make the range length null
-    if (Replace.contains(Range))
-      return tooling::Range(Range.getOffset(), 0);
-    // replacement inside range -> resize the range
-    if (Range.contains(Replace)) {
-      int Difference = ReplaceNewSize - Replace.getLength();
-      return tooling::Range(Range.getOffset(), Range.getLength() + Difference);
-    }
-    // beginning of the range replaced -> truncate range beginning
-    if (Range.getOffset() > Replace.getOffset()) {
-      unsigned ReplaceEnd = Replace.getOffset() + Replace.getLength();
-      unsigned RangeEnd = Range.getOffset() + Range.getLength();
-      return tooling::Range(ReplaceEnd, RangeEnd - ReplaceEnd);
-    }
-    // end of the range replaced -> truncate range end
-    if (Range.getOffset() < Replace.getOffset())
-      return tooling::Range(Range.getOffset(),
-                            Replace.getOffset() - Range.getOffset());
-    llvm_unreachable("conditions not handled properly");
-  }
-
-  const tooling::Range Replace;
-  const unsigned ReplaceNewSize;
-};
-
-} // end anonymous namespace
-
-void ChangedRanges::adjustChangedRanges(const tooling::Replacements &Replaces) {
-  // first adjust existing ranges in case they overlap with the replacements
-  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
-       ++I) {
-    const tooling::Replacement &Replace = *I;
-
-    std::transform(Ranges.begin(), Ranges.end(), Ranges.begin(),
-                   RangeReplacedAdjuster(Replace));
-  }
-
-  // then shift existing ranges to reflect the new positions
-  for (RangeVec::iterator I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
-    unsigned ShiftedOffset =
-        tooling::shiftedCodePosition(Replaces, I->getOffset());
-    *I = tooling::Range(ShiftedOffset, I->getLength());
-  }
-
-  // then generate the new ranges from the replacements
-  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
-       ++I) {
-    const tooling::Replacement &R = *I;
-    unsigned Offset = tooling::shiftedCodePosition(Replaces, R.getOffset());
-    unsigned Length = R.getReplacementText().size();
-
-    Ranges.push_back(tooling::Range(Offset, Length));
-  }
-
-  // cleanups unecessary ranges to finish
-  coalesceRanges();
-}
-
-void ChangedRanges::coalesceRanges() {
-  // sort the ranges by offset and then for each group of adjacent/overlapping
-  // ranges the first one in the group is extended to cover the whole group.
-  std::sort(Ranges.begin(), Ranges.end(), &rangeLess);
-  RangeVec::iterator FirstInGroup = Ranges.begin();
-  assert(!Ranges.empty() && "unexpected empty vector");
-  for (RangeVec::iterator I = Ranges.begin() + 1, E = Ranges.end(); I != E;
-       ++I) {
-    unsigned GroupEnd = FirstInGroup->getOffset() + FirstInGroup->getLength();
-
-    // no contact
-    if (I->getOffset() > GroupEnd)
-      FirstInGroup = I;
-    else {
-      unsigned GrpBegin = FirstInGroup->getOffset();
-      unsigned GrpEnd = std::max(GroupEnd, I->getOffset() + I->getLength());
-      *FirstInGroup = tooling::Range(GrpBegin, GrpEnd - GrpBegin);
-    }
-  }
-
-  // remove the ranges that are covered by the first member of the group
-  Ranges.erase(std::unique(Ranges.begin(), Ranges.end(),
-                           std::mem_fun_ref(&Range::contains)),
-               Ranges.end());
 }
