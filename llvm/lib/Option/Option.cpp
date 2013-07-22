@@ -24,7 +24,7 @@ Option::Option(const OptTable::Info *info, const OptTable *owner)
 
   // Multi-level aliases are not supported. This just simplifies option
   // tracking, it is not an inherent limitation.
-  assert(!Info || !getAlias().isValid() || !getAlias().getAlias().isValid() &&
+  assert((!Info || !getAlias().isValid() || !getAlias().getAlias().isValid()) &&
          "Multi-level aliases are not supported.");
 }
 
