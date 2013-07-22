@@ -206,21 +206,6 @@ ProcessElfCore::DoLoadCore ()
     // Even if the architecture is set in the target, we need to override
     // it to match the core file which is always single arch.
     ArchSpec arch (m_core_module_sp->GetArchitecture());
-    switch (arch.GetCore())
-    {
-        case ArchSpec::eCore_x86_32_i486:
-            arch.SetTriple ("i386", m_target.GetPlatform().get());
-            break;
-        case ArchSpec::eCore_x86_64_x86_64:
-#ifdef __FreeBSD__
-            arch.SetTriple ("x86_64-freebsd-unknown", m_target.GetPlatform().get());
-#else
-            arch.SetTriple ("x86_64-linux-gnu", m_target.GetPlatform().get());
-#endif
-            break;
-        default:
-            assert(false && "Unhandled core type");
-    }
     if (arch.IsValid())
         m_target.SetArchitecture(arch);            
 
