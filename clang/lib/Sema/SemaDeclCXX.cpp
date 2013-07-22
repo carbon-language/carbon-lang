@@ -5076,10 +5076,8 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
         SMI.shouldDeleteForBase(BI))
       return true;
 
-  // Defect report (no number yet): do not consider virtual bases of
-  // constructors of abstract classes, since we are not going to construct
-  // them. This is an extension of DR257 into the C++11 behavior for special
-  // members.
+  // Per DR1611, do not consider virtual bases of constructors of abstract
+  // classes, since we are not going to construct them.
   if (!RD->isAbstract() || !SMI.IsConstructor) {
     for (CXXRecordDecl::base_class_iterator BI = RD->vbases_begin(),
                                             BE = RD->vbases_end();
