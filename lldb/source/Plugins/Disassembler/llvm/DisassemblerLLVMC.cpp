@@ -613,17 +613,9 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
         }
     }
     
-    m_disasm_ap.reset (new LLVMCDisassembler(triple, flavor, *this));
-    if (!m_disasm_ap->IsValid())
-    {
-        // We use m_disasm_ap.get() to tell whether we are valid or not, so if this isn't good for some reason,
-        // we reset it, and then we won't be valid and FindPlugin will fail and we won't get used.
-        m_disasm_ap.reset();
-    }
-    
+    ArchSpec thumb_arch(arch);
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
-        ArchSpec thumb_arch(arch);
         std::string thumb_arch_name (thumb_arch.GetTriple().getArchName().str());
         // Replace "arm" with "thumb" so we get all thumb variants correct
         if (thumb_arch_name.size() > 3)
@@ -636,6 +628,27 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
             thumb_arch_name = "thumbv7";
         }
         thumb_arch.GetTriple().setArchName(llvm::StringRef(thumb_arch_name.c_str()));
+    }
+    
+    // Cortex-M3 devices (e.g. armv7m) can only execute thumb (T2) instructions, 
+    // so hardcode the primary disassembler to thumb mode.
+    if (arch.GetTriple().getArch() == llvm::Triple::arm
+        && (arch.GetCore() == ArchSpec::Core::eCore_arm_armv7m || arch.GetCore() == ArchSpec::Core::eCore_arm_armv7em))
+    {
+        triple = thumb_arch.GetTriple().getTriple().c_str();
+    }
+
+    m_disasm_ap.reset (new LLVMCDisassembler(triple, flavor, *this));
+    if (!m_disasm_ap->IsValid())
+    {
+        // We use m_disasm_ap.get() to tell whether we are valid or not, so if this isn't good for some reason,
+        // we reset it, and then we won't be valid and FindPlugin will fail and we won't get used.
+        m_disasm_ap.reset();
+    }
+
+    // For arm CPUs that can execute arm or thumb instructions, also create a thumb instruction disassembler.
+    if (arch.GetTriple().getArch() == llvm::Triple::arm)
+    {
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
         m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), flavor, *this));
         if (!m_alternate_disasm_ap->IsValid())
