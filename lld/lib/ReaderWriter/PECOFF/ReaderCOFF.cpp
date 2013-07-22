@@ -59,8 +59,8 @@ public:
     if (EC)
       return;
 
-    Obj.reset(llvm::dyn_cast<const llvm::object::COFFObjectFile>(Bin.get()));
-    if (!Obj) {
+    _obj.reset(llvm::dyn_cast<const llvm::object::COFFObjectFile>(Bin.get()));
+    if (!_obj) {
       EC = make_error_code(llvm::object::object_error::invalid_file_type);
       return;
     }
@@ -71,7 +71,7 @@ public:
     // added to symbolToAtom.
     SectionToSymbolsT definedSymbols;
     SymbolNameToAtomT symbolToAtom;
-    if ((EC = readSymbolTable(AbsoluteAtoms._atoms, UndefinedAtoms._atoms,
+    if ((EC = readSymbolTable(_absoluteAtoms._atoms, _undefinedAtoms._atoms,
                               definedSymbols, symbolToAtom)))
       return;
 
@@ -79,7 +79,7 @@ public:
     // because in order to create an atom for a symbol we need to the adjacent
     // symbols.
     SectionToAtomsT sectionToAtoms;
-    if ((EC = AtomizeDefinedSymbols(definedSymbols, DefinedAtoms._atoms,
+    if ((EC = AtomizeDefinedSymbols(definedSymbols, _definedAtoms._atoms,
                                     symbolToAtom, sectionToAtoms)))
       return;
 
@@ -87,19 +87,19 @@ public:
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {
-    return DefinedAtoms;
+    return _definedAtoms;
   }
 
   virtual const atom_collection<UndefinedAtom> &undefined() const {
-    return UndefinedAtoms;
+    return _undefinedAtoms;
   }
 
   virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
-    return SharedLibraryAtoms;
+    return _sharedLibraryAtoms;
   }
 
   virtual const atom_collection<AbsoluteAtom> &absolute() const {
-    return AbsoluteAtoms;
+    return _absoluteAtoms;
   }
 
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
@@ -114,15 +114,15 @@ private:
                              SectionToSymbolsT &definedSymbols,
                              SymbolNameToAtomT &symbolToAtom) const {
     const llvm::object::coff_file_header *Header = nullptr;
-    if (error_code ec = Obj->getHeader(Header))
+    if (error_code ec = _obj->getHeader(Header))
       return ec;
 
     for (uint32_t i = 0, e = Header->NumberOfSymbols; i != e; ++i) {
       const coff_symbol *Symb;
-      if (error_code ec = Obj->getSymbol(i, Symb))
+      if (error_code ec = _obj->getSymbol(i, Symb))
         return ec;
       StringRef Name;
-      if (error_code ec = Obj->getSymbolName(Symb, Name))
+      if (error_code ec = _obj->getSymbolName(Symb, Name))
         return ec;
 
       int16_t SectionIndex = Symb->SectionNumber;
@@ -132,7 +132,7 @@ private:
       i += Symb->NumberOfAuxSymbols;
       // Create an absolute atom.
       if (SectionIndex == llvm::COFF::IMAGE_SYM_ABSOLUTE) {
-        auto *atom = new (AtomStorage.Allocate<COFFAbsoluteAtom>())
+        auto *atom = new (_atomStorage.Allocate<COFFAbsoluteAtom>())
             COFFAbsoluteAtom(*this, Name, Symb);
         if (!Name.empty())
           symbolToAtom[Name] = atom;
@@ -141,7 +141,7 @@ private:
       }
       // Create an undefined atom.
       if (SectionIndex == llvm::COFF::IMAGE_SYM_UNDEFINED) {
-        auto *atom = new (AtomStorage.Allocate<COFFUndefinedAtom>())
+        auto *atom = new (_atomStorage.Allocate<COFFUndefinedAtom>())
             COFFUndefinedAtom(*this, Name);
         if (!Name.empty())
           symbolToAtom[Name] = atom;
@@ -159,7 +159,7 @@ private:
         return llvm::object::object_error::parse_failed;
       }
       const coff_section *Sec;
-      if (error_code ec = Obj->getSection(SectionIndex, Sec))
+      if (error_code ec = _obj->getSection(SectionIndex, Sec))
         return ec;
       assert(Sec && "SectionIndex > 0, Sec must be non-null!");
       definedSymbols[Sec].push_back(Symb);
@@ -185,9 +185,9 @@ private:
 
     ArrayRef<uint8_t> SecData;
     StringRef sectionName;
-    if (error_code ec = Obj->getSectionContents(section, SecData))
+    if (error_code ec = _obj->getSectionContents(section, SecData))
       return ec;
-    if (error_code ec = Obj->getSectionName(section, sectionName))
+    if (error_code ec = _obj->getSectionName(section, sectionName))
       return ec;
     uint64_t ordinal = 0;
 
@@ -201,7 +201,7 @@ private:
     // Create an atom for the entire section.
     if (symbols.empty()) {
       ArrayRef<uint8_t> Data(SecData.data(), SecData.size());
-      atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
+      atoms.push_back(new (_atomStorage.Allocate<COFFDefinedAtom>())
                       COFFDefinedAtom(*this, "", nullptr, section, Data,
                                       sectionName, ordinal++));
       return error_code::success();
@@ -212,7 +212,7 @@ private:
     if (symbols[0]->Value != 0) {
       uint64_t Size = symbols[0]->Value;
       ArrayRef<uint8_t> Data(SecData.data(), Size);
-      atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
+      atoms.push_back(new (_atomStorage.Allocate<COFFDefinedAtom>())
                       COFFDefinedAtom(*this, "", nullptr, section, Data,
                                       sectionName, ordinal++));
     }
@@ -225,9 +225,9 @@ private:
           : SecData.data() + (*(si + 1))->Value;
       ArrayRef<uint8_t> Data(start, end);
       StringRef name;
-      if (error_code ec = Obj->getSymbolName(*si, name))
+      if (error_code ec = _obj->getSymbolName(*si, name))
         return ec;
-      atoms.push_back(new (AtomStorage.Allocate<COFFDefinedAtom>())
+      atoms.push_back(new (_atomStorage.Allocate<COFFDefinedAtom>())
                       COFFDefinedAtom(*this, name, *si, section, Data,
                                       sectionName, ordinal++));
     }
@@ -284,10 +284,10 @@ private:
                                   SymbolNameToAtomT symbolToAtom,
                                   Atom *&ret) const {
     const coff_symbol *symbol;
-    if (error_code ec = Obj->getSymbol(index, symbol))
+    if (error_code ec = _obj->getSymbol(index, symbol))
       return ec;
     StringRef symbolName;
-    if (error_code ec = Obj->getSymbolName(symbol, symbolName))
+    if (error_code ec = _obj->getSymbolName(symbol, symbolName))
       return ec;
     ret = symbolToAtom[symbolName];
     assert(ret);
@@ -326,12 +326,12 @@ private:
                                            SectionToAtomsT &sectionToAtoms) {
     // Relocation entries are defined for each section.
     error_code ec;
-    for (auto si = Obj->begin_sections(), se = Obj->end_sections(); si != se;
+    for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
          si.increment(ec)) {
-      const coff_section *section = Obj->getCOFFSection(si);
+      const coff_section *section = _obj->getCOFFSection(si);
       for (auto ri = si->begin_relocations(), re = si->end_relocations();
            ri != re; ri.increment(ec)) {
-        const coff_relocation *rel = Obj->getCOFFRelocation(ri);
+        const coff_relocation *rel = _obj->getCOFFRelocation(ri);
         if ((ec = addRelocationReference(rel, section, sectionToAtoms[section],
                                          symbolToAtom)))
           return ec;
@@ -340,12 +340,12 @@ private:
     return error_code::success();
   }
 
-  std::unique_ptr<const llvm::object::COFFObjectFile> Obj;
-  atom_collection_vector<DefinedAtom> DefinedAtoms;
-  atom_collection_vector<UndefinedAtom>     UndefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> SharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> AbsoluteAtoms;
-  mutable llvm::BumpPtrAllocator AtomStorage;
+  std::unique_ptr<const llvm::object::COFFObjectFile> _obj;
+  atom_collection_vector<DefinedAtom> _definedAtoms;
+  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
+  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+  mutable llvm::BumpPtrAllocator _atomStorage;
   const TargetInfo &_targetInfo;
 };
 
