@@ -33,6 +33,12 @@ int main()
     }
     
     {
+    constexpr std::tuple<int, const int, double, double> p5 { 1, 2, 3.4, 5.6 };
+    static_assert ( std::get<int>(p5) == 1, "" );
+    static_assert ( std::get<const int>(p5) == 2, "" );
+    }
+
+    {
     const std::tuple<int, const int, double, double> p5 { 1, 2, 3.4, 5.6 };
     const int &i1 = std::get<int>(p5);
     const int &i2 = std::get<const int>(p5);

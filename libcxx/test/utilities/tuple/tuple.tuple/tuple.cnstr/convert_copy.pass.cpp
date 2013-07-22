@@ -30,6 +30,26 @@ struct D
     explicit D(int i) : B(i) {}
 };
 
+#if _LIBCPP_STD_VER > 11 
+
+struct A
+{
+    int id_;
+
+    constexpr A(int i) : id_(i) {}
+    friend constexpr bool operator==(const A& x, const A& y) {return x.id_ == y.id_;}
+};
+
+struct C
+{
+    int id_;
+
+    constexpr explicit C(int i) : id_(i) {}
+    friend constexpr bool operator==(const C& x, const C& y) {return x.id_ == y.id_;}
+};
+
+#endif
+
 int main()
 {
     {
@@ -39,6 +59,22 @@ int main()
         T1 t1 = t0;
         assert(std::get<0>(t1) == 2);
     }
+#if _LIBCPP_STD_VER > 11 
+    {
+        typedef std::tuple<double> T0;
+        typedef std::tuple<A> T1;
+        constexpr T0 t0(2.5);
+        constexpr T1 t1 = t0;
+        static_assert(std::get<0>(t1) == 2, "");
+    }
+    {
+        typedef std::tuple<int> T0;
+        typedef std::tuple<C> T1;
+        constexpr T0 t0(2);
+        constexpr T1 t1{t0};
+        static_assert(std::get<0>(t1) == C(2), "");
+    }
+#endif
     {
         typedef std::tuple<double, char> T0;
         typedef std::tuple<int, int> T1;

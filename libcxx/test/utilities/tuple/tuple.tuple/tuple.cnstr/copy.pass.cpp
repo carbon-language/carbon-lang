@@ -17,6 +17,8 @@
 #include <string>
 #include <cassert>
 
+struct Empty {};
+
 int main()
 {
     {
@@ -45,4 +47,17 @@ int main()
         assert(std::get<1>(t) == 'a');
         assert(std::get<2>(t) == "some text");
     }
+#if _LIBCPP_STD_VER > 11 
+    {
+        typedef std::tuple<int> T;
+        constexpr T t0(2);
+        constexpr T t = t0;
+        static_assert(std::get<0>(t) == 2, "");
+    }
+    {
+        typedef std::tuple<Empty> T;
+        constexpr T t0;
+        constexpr T t = t0;
+    }
+#endif
 }

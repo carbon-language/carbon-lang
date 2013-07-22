@@ -141,4 +141,14 @@ int main()
         assert(!(t1 == t2));
         assert(t1 != t2);
     }
+#if _LIBCPP_STD_VER > 11 
+    {
+        typedef std::tuple<char, int, double> T1;
+        typedef std::tuple<double, char, int> T2;
+        constexpr T1 t1(1, 2, 3);
+        constexpr T2 t2(1.1, 3, 2);
+        static_assert(!(t1 == t2), "");
+        static_assert(t1 != t2, "");
+    }
+#endif
 }

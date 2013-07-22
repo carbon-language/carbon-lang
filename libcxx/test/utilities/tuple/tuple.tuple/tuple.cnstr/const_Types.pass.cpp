@@ -23,11 +23,28 @@ int main()
         std::tuple<int> t(2);
         assert(std::get<0>(t) == 2);
     }
+#if _LIBCPP_STD_VER > 11 
+    {
+        constexpr std::tuple<int> t(2);
+        static_assert(std::get<0>(t) == 2, "");
+    }
+    {
+        constexpr std::tuple<int> t;
+        static_assert(std::get<0>(t) == 0, "");
+    }
+#endif
     {
         std::tuple<int, char*> t(2, 0);
         assert(std::get<0>(t) == 2);
         assert(std::get<1>(t) == nullptr);
     }
+#if _LIBCPP_STD_VER > 11 
+    {
+        constexpr std::tuple<int, char*> t(2, nullptr);
+        static_assert(std::get<0>(t) == 2, "");
+        static_assert(std::get<1>(t) == nullptr, "");
+    }
+#endif
     {
         std::tuple<int, char*> t(2, nullptr);
         assert(std::get<0>(t) == 2);

@@ -19,6 +19,20 @@
 #include <string>
 #include <cassert>
 
+#if __cplusplus > 201103L
+
+struct Empty {};
+
+struct S {
+   std::tuple<int, Empty> a;
+   int k;
+   Empty e;
+   constexpr S() : a{1,Empty{}}, k(std::get<0>(a)), e(std::get<1>(a)) {}
+   };
+
+constexpr std::tuple<int, int> getP () { return { 3, 4 }; }
+#endif
+
 int main()
 {
     {
@@ -53,4 +67,15 @@ int main()
         assert(std::get<2>(t) == 4);
         assert(d == 2.5);
     }
+#if _LIBCPP_STD_VER > 11 
+    { // get on an rvalue tuple
+        static_assert ( std::get<0> ( std::make_tuple ( 0.0f, 1, 2.0, 3L )) == 0, "" );
+        static_assert ( std::get<1> ( std::make_tuple ( 0.0f, 1, 2.0, 3L )) == 1, "" );
+        static_assert ( std::get<2> ( std::make_tuple ( 0.0f, 1, 2.0, 3L )) == 2, "" );
+        static_assert ( std::get<3> ( std::make_tuple ( 0.0f, 1, 2.0, 3L )) == 3, "" );
+        static_assert(S().k == 1, "");
+        static_assert(std::get<1>(getP()) == 4, "");
+    }
+#endif
+
 }

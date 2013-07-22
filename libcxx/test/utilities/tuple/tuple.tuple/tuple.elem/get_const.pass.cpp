@@ -19,6 +19,8 @@
 #include <string>
 #include <cassert>
 
+struct Empty {};
+
 int main()
 {
     {
@@ -32,6 +34,19 @@ int main()
         assert(std::get<0>(t) == "high");
         assert(std::get<1>(t) == 5);
     }
+#if _LIBCPP_STD_VER > 11 
+    {
+        typedef std::tuple<double, int> T;
+        constexpr T t(2.718, 5);
+        static_assert(std::get<0>(t) == 2.718, "");
+        static_assert(std::get<1>(t) == 5, "");
+    }
+    {
+        typedef std::tuple<Empty> T;
+        constexpr T t{Empty()};
+        constexpr Empty e = std::get<0>(t);
+    }
+#endif
     {
         typedef std::tuple<double&, std::string, int> T;
         double d = 1.5;

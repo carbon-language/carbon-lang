@@ -36,12 +36,38 @@ int main()
     {
         std::tuple<> t = std::tuple_cat(std::array<int, 0>());
     }
-
     {
         std::tuple<int> t1(1);
         std::tuple<int> t = std::tuple_cat(t1);
         assert(std::get<0>(t) == 1);
     }
+
+#if _LIBCPP_STD_VER > 11 
+    {
+        constexpr std::tuple<> t = std::tuple_cat();
+    }
+    {
+        constexpr std::tuple<> t1;
+        constexpr std::tuple<> t2 = std::tuple_cat(t1);
+    }
+    {
+        constexpr std::tuple<> t = std::tuple_cat(std::tuple<>());
+    }
+    {
+        constexpr std::tuple<> t = std::tuple_cat(std::array<int, 0>());
+    }
+    {
+        constexpr std::tuple<int> t1(1);
+        constexpr std::tuple<int> t = std::tuple_cat(t1);
+        static_assert(std::get<0>(t) == 1, "");
+    }
+    {
+        constexpr std::tuple<int> t1(1);
+        constexpr std::tuple<int, int> t = std::tuple_cat(t1, t1);
+        static_assert(std::get<0>(t) == 1, "");
+        static_assert(std::get<1>(t) == 1, "");
+    }
+#endif
     {
         std::tuple<int, MoveOnly> t =
                                 std::tuple_cat(std::tuple<int, MoveOnly>(1, 2));

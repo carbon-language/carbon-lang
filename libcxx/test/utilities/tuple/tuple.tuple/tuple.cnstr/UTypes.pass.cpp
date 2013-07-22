@@ -19,6 +19,17 @@
 
 #include "../MoveOnly.h"
 
+#if _LIBCPP_STD_VER > 11
+
+struct Empty {};
+struct A
+{
+    int id_;
+    explicit constexpr A(int i) : id_(i) {}
+};
+
+#endif
+
 int main()
 {
     {
@@ -52,4 +63,13 @@ int main()
         assert(std::get<1>(t) == MoveOnly());
         assert(std::get<2>(t) == MoveOnly());
     }
+#if _LIBCPP_STD_VER > 11
+    {
+        constexpr std::tuple<Empty> t0{Empty()};
+    }
+    {
+        constexpr std::tuple<A, A> t(3, 2);
+        static_assert(std::get<0>(t).id_ == 3, "");
+    }
+#endif
 }
