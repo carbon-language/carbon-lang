@@ -25,11 +25,6 @@
 
 using namespace llvm;
 
-static cl::opt<bool> UseFMADInstruction(
-    "nvptx-mad-enable", cl::ZeroOrMore,
-    cl::desc("NVPTX Specific: Enable generating FMAD instructions"),
-    cl::init(false));
-
 static cl::opt<int>
 FMAContractLevel("nvptx-fma-level", cl::ZeroOrMore,
                  cl::desc("NVPTX Specific: FMA contraction (0: don't do it"
@@ -47,6 +42,12 @@ UsePrecSqrtF32("nvptx-prec-sqrtf32",
           cl::desc("NVPTX Specific: 0 use sqrt.approx, 1 use sqrt.rn."),
           cl::init(true));
 
+static cl::opt<bool>
+FtzEnabled("nvptx-f32ftz", cl::ZeroOrMore,
+           cl::desc("NVPTX Specific: Flush f32 subnormals to sign-preserving zero."),
+           cl::init(false));
+
+
 /// createNVPTXISelDag - This pass converts a legalized DAG into a
 /// NVPTX-specific DAG, ready for instruction scheduling.
 FunctionPass *llvm::createNVPTXISelDag(NVPTXTargetMachine &TM,
@@ -58,12 +59,7 @@ NVPTXDAGToDAGISel::NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,
                                      CodeGenOpt::Level OptLevel)
     : SelectionDAGISel(tm, OptLevel),
       Subtarget(tm.getSubtarget<NVPTXSubtarget>()) {
-  // Always do fma.f32 fpcontract if the target supports the instruction.
-  // Always do fma.f64 fpcontract if the target supports the instruction.
-  // Do mad.f32 is nvptx-mad-enable is specified and the target does not
-  // support fma.f32.
 
-  doFMADF32 = (OptLevel > 0) && UseFMADInstruction && !Subtarget.hasFMAF32();
   doFMAF32 = (OptLevel > 0) && Subtarget.hasFMAF32() && (FMAContractLevel >= 1);
   doFMAF64 = (OptLevel > 0) && Subtarget.hasFMAF64() && (FMAContractLevel >= 1);
   doFMAF32AGG =
@@ -71,20 +67,51 @@ NVPTXDAGToDAGISel::NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,
   doFMAF64AGG =
       (OptLevel > 0) && Subtarget.hasFMAF64() && (FMAContractLevel == 2);
 
-  allowFMA = (FMAContractLevel >= 1) || UseFMADInstruction;
-
-  UseF32FTZ = false;
+  allowFMA = (FMAContractLevel >= 1);
 
   doMulWide = (OptLevel > 0);
+}
 
-  // Decide how to translate f32 div
-  do_DIVF32_PREC = UsePrecDivF32;
-  // Decide how to translate f32 sqrt
-  do_SQRTF32_PREC = UsePrecSqrtF32;
-  // sm less than sm_20 does not support div.rnd. Use div.full.
-  if (do_DIVF32_PREC == 2 && !Subtarget.reqPTX20())
-    do_DIVF32_PREC = 1;
+int NVPTXDAGToDAGISel::getDivF32Level() const {
+  if (UsePrecDivF32.getNumOccurrences() > 0) {
+    // If nvptx-prec-div32=N is used on the command-line, always honor it
+    return UsePrecDivF32;
+  } else {
+    // Otherwise, use div.approx if fast math is enabled
+    if (TM.Options.UnsafeFPMath)
+      return 0;
+    else
+      return 2;
+  }
+}
 
+bool NVPTXDAGToDAGISel::usePrecSqrtF32() const {
+  if (UsePrecSqrtF32.getNumOccurrences() > 0) {
+    // If nvptx-prec-sqrtf32 is used on the command-line, always honor it
+    return UsePrecSqrtF32;
+  } else {
+    // Otherwise, use sqrt.approx if fast math is enabled
+    if (TM.Options.UnsafeFPMath)
+      return false;
+    else
+      return true;
+  }
+}
+
+bool NVPTXDAGToDAGISel::useF32FTZ() const {
+  if (FtzEnabled.getNumOccurrences() > 0) {
+    // If nvptx-f32ftz is used on the command-line, always honor it
+    return FtzEnabled;
+  } else {
+    const Function *F = MF->getFunction();
+    // Otherwise, check for an nvptx-f32ftz attribute on the function
+    if (F->hasFnAttribute("nvptx-f32ftz"))
+      return (F->getAttributes().getAttribute(AttributeSet::FunctionIndex,
+                                              "nvptx-f32ftz")
+                                              .getValueAsString() == "true");
+    else
+      return false;
+  }
 }
 
 /// Select - Select instructions not customized! Used for

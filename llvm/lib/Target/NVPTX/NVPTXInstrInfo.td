@@ -136,28 +136,26 @@ def hasLDG : Predicate<"Subtarget.hasLDG()">;
 def hasLDU : Predicate<"Subtarget.hasLDU()">;
 def hasGenericLdSt : Predicate<"Subtarget.hasGenericLdSt()">;
 
-def doF32FTZ : Predicate<"UseF32FTZ==1">;
-def doNoF32FTZ : Predicate<"UseF32FTZ==0">;
+def doF32FTZ : Predicate<"useF32FTZ()">;
+def doNoF32FTZ : Predicate<"!useF32FTZ()">;
 
 def doFMAF32      : Predicate<"doFMAF32">;
-def doFMAF32_ftz  : Predicate<"(doFMAF32 && UseF32FTZ)">;
+def doFMAF32_ftz  : Predicate<"(doFMAF32 && useF32FTZ())">;
 def doFMAF32AGG      : Predicate<"doFMAF32AGG">;
-def doFMAF32AGG_ftz  : Predicate<"(doFMAF32AGG && UseF32FTZ)">;
+def doFMAF32AGG_ftz  : Predicate<"(doFMAF32AGG && useF32FTZ())">;
 def doFMAF64      : Predicate<"doFMAF64">;
 def doFMAF64AGG      : Predicate<"doFMAF64AGG">;
-def doFMADF32     : Predicate<"doFMADF32">;
-def doFMADF32_ftz : Predicate<"(doFMADF32 && UseF32FTZ)">;
 
 def doMulWide      : Predicate<"doMulWide">;
 
 def allowFMA : Predicate<"allowFMA">;
-def allowFMA_ftz : Predicate<"(allowFMA && UseF32FTZ)">;
+def allowFMA_ftz : Predicate<"(allowFMA && useF32FTZ())">;
 
-def do_DIVF32_APPROX : Predicate<"do_DIVF32_PREC==0">;
-def do_DIVF32_FULL : Predicate<"do_DIVF32_PREC==1">;
+def do_DIVF32_APPROX : Predicate<"getDivF32Level()==0">;
+def do_DIVF32_FULL : Predicate<"getDivF32Level()==1">;
 
-def do_SQRTF32_APPROX : Predicate<"do_SQRTF32_PREC==0">;
-def do_SQRTF32_RN : Predicate<"do_SQRTF32_PREC==1">;
+def do_SQRTF32_APPROX : Predicate<"!usePrecSqrtF32()">;
+def do_SQRTF32_RN : Predicate<"usePrecSqrtF32()">;
 
 def hasHWROT32 : Predicate<"Subtarget.hasHWROT32()">;
 
@@ -864,8 +862,6 @@ multiclass FPCONTRACT64<string OpcStr, Predicate Pred> {
 // If we reverse the order of the following two lines, then rrr2 rule will be
 // generated for FMA32, but not for rrr.
 // Therefore, we manually write the rrr2 rule in FPCONTRACT32.
-defm FMAD32_ftz : FPCONTRACT32<"mad.ftz.f32", doFMADF32_ftz>;
-defm FMAD32 : FPCONTRACT32<"mad.f32", doFMADF32>;
 defm FMA32_ftz  : FPCONTRACT32<"fma.rn.ftz.f32", doFMAF32_ftz>;
 defm FMA32  : FPCONTRACT32<"fma.rn.f32", doFMAF32>;
 defm FMA64  : FPCONTRACT64<"fma.rn.f64", doFMAF64>;
@@ -904,8 +900,6 @@ multiclass FPCONTRACT64_SUB_PAT<NVPTXInst Inst, Predicate Pred> {
 
 defm FMAF32ext_ftz  : FPCONTRACT32_SUB_PAT<FMA32_ftzrrr, doFMAF32AGG_ftz>;
 defm FMAF32ext  : FPCONTRACT32_SUB_PAT<FMA32rrr, doFMAF32AGG>;
-defm FMADF32ext_ftz : FPCONTRACT32_SUB_PAT_MAD<FMAD32_ftzrrr, doFMADF32_ftz>;
-defm FMADF32ext : FPCONTRACT32_SUB_PAT_MAD<FMAD32rrr, doFMADF32>;
 defm FMAF64ext  : FPCONTRACT64_SUB_PAT<FMA64rrr, doFMAF64AGG>;
 
 def SINF:  NVPTXInst<(outs Float32Regs:$dst), (ins Float32Regs:$src),

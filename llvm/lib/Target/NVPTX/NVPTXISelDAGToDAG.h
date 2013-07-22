@@ -28,38 +28,22 @@ class LLVM_LIBRARY_VISIBILITY NVPTXDAGToDAGISel : public SelectionDAGISel {
 
   // If true, generate corresponding FPCONTRACT. This is
   // language dependent (i.e. CUDA and OpenCL works differently).
-  bool doFMADF32;
   bool doFMAF64;
   bool doFMAF32;
   bool doFMAF64AGG;
   bool doFMAF32AGG;
   bool allowFMA;
 
-  // 0: use div.approx
-  // 1: use div.full
-  // 2: For sm_20 and later, ieee-compliant div.rnd.f32 can be generated;
-  //    Otherwise, use div.full
-  int do_DIVF32_PREC;
-
-  // If true, generate sqrt.rn, else generate sqrt.approx. If FTZ
-  // is true, then generate the corresponding FTZ version.
-  bool do_SQRTF32_PREC;
-
-  // If true, add .ftz to f32 instructions.
-  // This is only meaningful for sm_20 and later, as the default
-  // is not ftz.
-  // For sm earlier than sm_20, f32 denorms are always ftz by the
-  // hardware.
-  // We always add the .ftz modifier regardless of the sm value
-  // when Use32FTZ is true.
-  bool UseF32FTZ;
-
   // If true, generate mul.wide from sext and mul
   bool doMulWide;
 
+  int getDivF32Level() const;
+  bool usePrecSqrtF32() const;
+  bool useF32FTZ() const;
+
 public:
   explicit NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,
-                             CodeGenOpt::Level OptLevel);
+                             CodeGenOpt::Level   OptLevel);
 
   // Pass Name
   virtual const char *getPassName() const {
