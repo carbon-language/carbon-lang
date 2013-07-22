@@ -1181,7 +1181,7 @@ MachOObjectFile::getRelocationHidden(DataRefImpl Rel, bool &Result) const {
     if (Type == macho::RIT_Pair) Result = true;
   } else if (Arch == Triple::x86_64) {
     // On x86_64, X86_64_RELOC_UNSIGNED is hidden only when it follows
-    // an X864_64_RELOC_SUBTRACTOR.
+    // an X86_64_RELOC_SUBTRACTOR.
     if (Type == macho::RIT_X86_64_Unsigned && Rel.d.a > 0) {
       DataRefImpl RelPrev = Rel;
       RelPrev.d.a--;
