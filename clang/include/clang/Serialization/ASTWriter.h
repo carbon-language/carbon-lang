@@ -424,7 +424,8 @@ private:
                          StringRef isysroot, const std::string &OutputFile);
   void WriteInputFiles(SourceManager &SourceMgr,
                        HeaderSearchOptions &HSOpts,
-                       StringRef isysroot);
+                       StringRef isysroot,
+                       bool Modules);
   void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
                                StringRef isysroot);

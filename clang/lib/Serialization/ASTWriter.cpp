@@ -1233,7 +1233,8 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
 
   WriteInputFiles(Context.SourceMgr,
                   PP.getHeaderSearchInfo().getHeaderSearchOpts(),
-                  isysroot);
+                  isysroot,
+                  PP.getLangOpts().Modules);
   Stream.ExitBlock();
 }
 
@@ -1248,7 +1249,8 @@ namespace  {
 
 void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
                                 HeaderSearchOptions &HSOpts,
-                                StringRef isysroot) {
+                                StringRef isysroot,
+                                bool Modules) {
   using namespace llvm;
   Stream.EnterSubblock(INPUT_FILES_BLOCK_ID, 4);
   RecordData Record;
@@ -1298,6 +1300,19 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr,
     llvm::sys::path::append(SDKSettingsFileName, "SDKSettings.plist");
     if (const FileEntry *SDKSettingsFile = FileMgr.getFile(SDKSettingsFileName)) {
       InputFileEntry Entry = { SDKSettingsFile, false, false };
+      SortedFiles.push_front(Entry);
+    }
+  }
+
+  // Add the compiler's own module.map in the set of (non-system) input files.
+  // This is a simple heuristic for detecting whether the compiler's headers
+  // have changed, because we don't want to stat() all of them.
+  if (Modules && !Chain) {
+    SmallString<128> P = StringRef(HSOpts.ResourceDir);
+    llvm::sys::path::append(P, "include");
+    llvm::sys::path::append(P, "module.map");
+    if (const FileEntry *ModuleMapFile = FileMgr.getFile(P)) {
+      InputFileEntry Entry = { ModuleMapFile, false, false };
       SortedFiles.push_front(Entry);
     }
   }
