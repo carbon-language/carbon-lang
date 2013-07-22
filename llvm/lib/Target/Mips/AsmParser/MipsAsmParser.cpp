@@ -1449,30 +1449,23 @@ MipsAsmParser::parseHW64Regs(
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  unsigned RegNum;
   // If the first token is not '$' we have an error.
   if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_NoMatch;
+    return MatchOperand_ParseFail;
+
   SMLoc S = Parser.getTok().getLoc();
   Parser.Lex(); // Eat the '$'
 
   const AsmToken &Tok = Parser.getTok(); // Get next token.
-  if (Tok.is(AsmToken::Integer)) {
-    RegNum = Tok.getIntVal();
-    // At the moment only fcc0 is supported.
-    if (RegNum != 0)
-      return MatchOperand_ParseFail;
-  } else if (Tok.is(AsmToken::Identifier)) {
-    // At the moment only fcc0 is supported.
-    if (Tok.getIdentifier() != "fcc0")
-      return MatchOperand_ParseFail;
-  } else
-    return MatchOperand_NoMatch;
 
-  MipsOperand *op = MipsOperand::CreateReg(Mips::FCC0, S,
-                                           Parser.getTok().getLoc());
-  op->setRegKind(MipsOperand::Kind_CCRRegs);
-  Operands.push_back(op);
+  if (Tok.isNot(AsmToken::Integer))
+    return MatchOperand_ParseFail;
+
+  unsigned Reg = matchRegisterByNumber(Tok.getIntVal(), Mips::CCRRegClassID);
+
+  MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
+  Op->setRegKind(MipsOperand::Kind_CCRRegs);
+  Operands.push_back(Op);
 
   Parser.Lex(); // Eat the register number.
   return MatchOperand_Success;

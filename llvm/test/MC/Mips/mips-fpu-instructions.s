@@ -138,7 +138,8 @@
 # FP move instructions
 #------------------------------------------------------------------------------
 
-# CHECK:  cfc1    $6, $fcc0            # encoding: [0x00,0x00,0x46,0x44]
+# CHECK:  cfc1    $6, $0               # encoding: [0x00,0x00,0x46,0x44]
+# CHECK:  ctc1    $10, $31             # encoding: [0x00,0xf8,0xca,0x44]
 # CHECK:  mfc1    $6, $f7              # encoding: [0x00,0x38,0x06,0x44]
 # CHECK:  mfhi    $5                   # encoding: [0x10,0x28,0x00,0x00]
 # CHECK:  mflo    $5                   # encoding: [0x12,0x28,0x00,0x00]
@@ -162,6 +163,7 @@
 # CHECK:  suxc1   $f4, $24($5)            # encoding: [0x0d,0x20,0xb8,0x4c]
 
    cfc1    $a2,$0
+   ctc1    $10,$31
    mfc1    $a2,$f7
    mfhi    $a1
    mflo    $a1
