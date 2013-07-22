@@ -7785,6 +7785,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       // for an object that has aggregate or union type shall be
       // constant expressions.
       else if (!getLangOpts().C99 && VDecl->getType()->isAggregateType() &&
+               isa<InitListExpr>(Init) &&
                !Init->isConstantInitializer(Context, false))
         Diag(Init->getExprLoc(),
              diag::ext_aggregate_init_not_constant)
