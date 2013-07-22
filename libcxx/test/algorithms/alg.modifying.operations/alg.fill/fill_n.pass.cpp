@@ -45,6 +45,55 @@ test_int()
     assert(ia[3] == 1);
 }
 
+void
+test_int_array()
+{
+    const unsigned n = 4;
+    int ia[n] = {0};
+    assert(std::fill_n(ia, n, static_cast<char>(1)) == std::next(ia, n));
+    assert(ia[0] == 1);
+    assert(ia[1] == 1);
+    assert(ia[2] == 1);
+    assert(ia[3] == 1);
+}
+
+struct source {
+    source() : i(0) { }
+    
+    operator int() const { return i++; }
+    mutable int i;
+};
+
+void
+test_int_array_struct_source()
+{
+    const unsigned n = 4;
+    int ia[n] = {0};
+    assert(std::fill_n(ia, n, source()) == std::next(ia, n));
+    assert(ia[0] == 0);
+    assert(ia[1] == 1);
+    assert(ia[2] == 2);
+    assert(ia[3] == 3);
+}
+
+struct test1 {
+    test1() : c(0) { }
+    test1(char c) : c(c + 1) { }
+    char c;
+};
+
+void
+test_struct_array()
+{
+    const unsigned n = 4;
+    test1 test1a[n] = {0};
+    assert(std::fill_n(test1a, n, static_cast<char>(10)) == std::next(test1a, n));    
+    assert(test1a[0].c == 11);
+    assert(test1a[1].c == 11);
+    assert(test1a[2].c == 11);
+    assert(test1a[3].c == 11);
+}
+
 int main()
 {
     test_char<forward_iterator<char*> >();
@@ -56,4 +105,8 @@ int main()
     test_int<bidirectional_iterator<int*> >();
     test_int<random_access_iterator<int*> >();
     test_int<int*>();
+    
+    test_int_array();
+    test_int_array_struct_source();
+    test_struct_array();
 }
