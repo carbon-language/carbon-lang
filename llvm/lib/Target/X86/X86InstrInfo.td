@@ -2021,9 +2021,9 @@ def : InstAlias<"fucompi",      (UCOM_FIPr   ST1)>;
 // instructions like "fadd %st(0), %st(0)" as "fadd %st(0)" for consistency with
 // gas.
 multiclass FpUnaryAlias<string Mnemonic, Instruction Inst, bit EmitAlias = 1> {
- def : InstAlias<!strconcat(Mnemonic, " $op, %st(0)"),
+ def : InstAlias<!strconcat(Mnemonic, "\t{$op, %st(0)|ST(0), $op}"),
                  (Inst RST:$op), EmitAlias>;
- def : InstAlias<!strconcat(Mnemonic, " %st(0), %st(0)"),
+ def : InstAlias<!strconcat(Mnemonic, "\t{%st(0), %st(0)|ST(0), ST(0)}"),
                  (Inst ST0), EmitAlias>;
 }
 
@@ -2048,12 +2048,12 @@ defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 // Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they
 // commute.  We also allow fdiv[r]p/fsubrp even though they don't commute,
 // solely because gas supports it.
-def : InstAlias<"faddp %st(0), $op", (ADD_FPrST0 RST:$op), 0>;
-def : InstAlias<"fmulp %st(0), $op", (MUL_FPrST0 RST:$op)>;
-def : InstAlias<"fsubp %st(0), $op", (SUBR_FPrST0 RST:$op)>;
-def : InstAlias<"fsubrp %st(0), $op", (SUB_FPrST0 RST:$op)>;
-def : InstAlias<"fdivp %st(0), $op", (DIVR_FPrST0 RST:$op)>;
-def : InstAlias<"fdivrp %st(0), $op", (DIV_FPrST0 RST:$op)>;
+def : InstAlias<"faddp\t{%st(0), $op|$op, ST(0)}", (ADD_FPrST0 RST:$op), 0>;
+def : InstAlias<"fmulp\t{%st(0), $op|$op, ST(0)}", (MUL_FPrST0 RST:$op)>;
+def : InstAlias<"fsub{|r}p\t{%st(0), $op|$op, ST(0)}", (SUBR_FPrST0 RST:$op)>;
+def : InstAlias<"fsub{r|}p\t{%st(0), $op|$op, ST(0)}", (SUB_FPrST0 RST:$op)>;
+def : InstAlias<"fdiv{|r}p\t{%st(0), $op|$op, ST(0)}", (DIVR_FPrST0 RST:$op)>;
+def : InstAlias<"fdiv{r|}p\t{%st(0), $op|$op, ST(0)}", (DIV_FPrST0 RST:$op)>;
 
 // We accept "fnstsw %eax" even though it only writes %ax.
 def : InstAlias<"fnstsw %eax", (FNSTSW16r)>;
