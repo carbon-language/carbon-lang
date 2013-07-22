@@ -7016,17 +7016,17 @@ defm PBLENDVB : SS41I_ternary_int<0x10, "pblendvb", memopv2i64, i128mem,
                                   int_x86_sse41_pblendvb>;
 
 // Aliases with the implicit xmm0 argument
-def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}",
+def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, XMM0}",
                 (BLENDVPDrr0 VR128:$dst, VR128:$src2)>;
-def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}",
+def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, XMM0}",
                 (BLENDVPDrm0 VR128:$dst, f128mem:$src2)>;
-def : InstAlias<"blendvps\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}",
+def : InstAlias<"blendvps\t{%xmm0, $src2, $dst|$dst, $src2, XMM0}",
                 (BLENDVPSrr0 VR128:$dst, VR128:$src2)>;
-def : InstAlias<"blendvps\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}",
+def : InstAlias<"blendvps\t{%xmm0, $src2, $dst|$dst, $src2, XMM0}",
                 (BLENDVPSrm0 VR128:$dst, f128mem:$src2)>;
-def : InstAlias<"pblendvb\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}",
+def : InstAlias<"pblendvb\t{%xmm0, $src2, $dst|$dst, $src2, XMM0}",
                 (PBLENDVBrr0 VR128:$dst, VR128:$src2)>;
-def : InstAlias<"pblendvb\t{%xmm0, $src2, $dst|$dst, $src2, %xmm0}",
+def : InstAlias<"pblendvb\t{%xmm0, $src2, $dst|$dst, $src2, XMM0}",
                 (PBLENDVBrm0 VR128:$dst, i128mem:$src2)>;
 
 let Predicates = [UseSSE41] in {
