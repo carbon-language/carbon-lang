@@ -35,6 +35,11 @@ error_code PECOFFTargetInfo::parseFile(
 }
 
 bool PECOFFTargetInfo::validateImpl(raw_ostream &diagnostics) {
+  if (_inputFiles.empty()) {
+    diagnostics << "No input files\n";
+    return true;
+  }
+
   if (_stackReserve < _stackCommit) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "
                 << "greater than commit size, but got "

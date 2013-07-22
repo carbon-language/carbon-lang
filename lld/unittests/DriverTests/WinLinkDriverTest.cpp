@@ -78,7 +78,7 @@ TEST_F(WinLinkParserTest, NonStandardFileExtension) {
 
 TEST_F(WinLinkParserTest, Libpath) {
   EXPECT_FALSE(parse("link.exe", "-libpath", "dir1", "-libpath", "dir2",
-                     nullptr));
+                     "a.obj", nullptr));
   const std::vector<StringRef> &paths = _info.getInputSearchPaths();
   EXPECT_EQ((size_t)2, paths.size());
   EXPECT_EQ("dir1", paths[0]);
@@ -100,52 +100,58 @@ TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
 }
 
 TEST_F(WinLinkParserTest, Base) {
-  EXPECT_FALSE(parse("link.exe", "-base", "8388608", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-base", "8388608", "a.obj", nullptr));
   EXPECT_EQ(0x800000, _info.getBaseAddress());
 }
 
 TEST_F(WinLinkParserTest, StackReserve) {
-  EXPECT_FALSE(parse("link.exe", "-stack", "8192", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-stack", "8192", "a.obj", nullptr));
   EXPECT_EQ(8192ULL, _info.getStackReserve());
   EXPECT_EQ(4096ULL, _info.getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, StackReserveAndCommit) {
-  EXPECT_FALSE(parse("link.exe", "-stack", "16384,8192", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-stack", "16384,8192", "a.obj", nullptr));
   EXPECT_EQ(16384ULL, _info.getStackReserve());
   EXPECT_EQ(8192ULL, _info.getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, HeapReserve) {
-  EXPECT_FALSE(parse("link.exe", "-heap", "8192", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-heap", "8192", "a.obj", nullptr));
   EXPECT_EQ(8192ULL, _info.getHeapReserve());
   EXPECT_EQ(4096ULL, _info.getHeapCommit());
 }
 
 TEST_F(WinLinkParserTest, HeapReserveAndCommit) {
-  EXPECT_FALSE(parse("link.exe", "-heap", "16384,8192", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-heap", "16384,8192", "a.obj", nullptr));
   EXPECT_EQ(16384ULL, _info.getHeapReserve());
   EXPECT_EQ(8192ULL, _info.getHeapCommit());
 }
 
 TEST_F(WinLinkParserTest, Force) {
-  EXPECT_FALSE(parse("link.exe", "-force", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-force", "a.obj", nullptr));
   EXPECT_TRUE(_info.allowRemainingUndefines());
 }
 
 TEST_F(WinLinkParserTest, NoNxCompat) {
-  EXPECT_FALSE(parse("link.exe", "-nxcompat:no", nullptr));
+  EXPECT_FALSE(parse("link.exe", "-nxcompat:no", "a.obj", nullptr));
   EXPECT_FALSE(_info.getNxCompat());
 }
 
 TEST_F(WinLinkParserTest, LargeAddressAware) {
-  parse("link.exe", "-largeaddressaware", nullptr);
+  EXPECT_FALSE(parse("link.exe", "-largeaddressaware", "a.obj", nullptr));
   EXPECT_TRUE(_info.getLargeAddressAware());
 }
 
 TEST_F(WinLinkParserTest, NoLargeAddressAware) {
-  parse("link.exe", "-largeaddressaware:no", nullptr);
+  EXPECT_FALSE(parse("link.exe", "-largeaddressaware:no", "a.obj", nullptr));
   EXPECT_FALSE(_info.getLargeAddressAware());
+}
+
+
+TEST_F(WinLinkParserTest, NoInputFiles) {
+  EXPECT_TRUE(parse("link.exe", nullptr));
+  EXPECT_EQ("No input files\n", errorMessage());
 }
 
 } // end anonymous namespace
