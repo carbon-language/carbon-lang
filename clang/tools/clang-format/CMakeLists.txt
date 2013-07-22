@@ -12,6 +12,5 @@ target_link_libraries(clang-format
   clangRewriteFrontend
   )
 
-install(TARGETS clang-format
-  RUNTIME DESTINATION bin)
-
+install(TARGETS clang-format RUNTIME DESTINATION bin)
+install(PROGRAMS git-clang-format DESTINATION bin)
