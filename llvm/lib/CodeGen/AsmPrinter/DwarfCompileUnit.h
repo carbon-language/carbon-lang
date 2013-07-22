@@ -150,7 +150,7 @@ public:
     DIEs.push_back(Die);
   }
   void addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die) {
-    std::vector<std::pair<DIE*, unsigned > > &DIEs = AccelTypes[Name];
+    std::vector<std::pair<DIE *, unsigned> > &DIEs = AccelTypes[Name];
     DIEs.push_back(Die);
   }
 
