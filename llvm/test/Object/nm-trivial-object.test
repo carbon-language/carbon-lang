@@ -18,6 +18,7 @@ COFF:          U {{_?}}SomeOtherFunction
 COFF: 00000000 T {{_?}}main
 COFF:          U {{_?}}puts
 
+ELF-NOT:      U
 ELF:          U SomeOtherFunction
 ELF: 00000000 T main
 ELF:          U puts

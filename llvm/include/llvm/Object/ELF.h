@@ -1232,7 +1232,8 @@ error_code ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb,
     Result |= SymbolRef::SF_Absolute;
 
   if (symb->getType() == ELF::STT_FILE ||
-      symb->getType() == ELF::STT_SECTION)
+      symb->getType() == ELF::STT_SECTION ||
+      Symb == begin_symbols()->getRawDataRefImpl())
     Result |= SymbolRef::SF_FormatSpecific;
 
   if (getSymbolTableIndex(symb) == ELF::SHN_UNDEF)
