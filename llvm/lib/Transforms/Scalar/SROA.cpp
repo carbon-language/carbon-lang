@@ -480,7 +480,7 @@ private:
       if (!II.isVolatile())
         return markAsDead(II);
 
-      return insertUse(II, Offset, Size, /*IsSplittable=*/false);;
+      return insertUse(II, Offset, Size, /*IsSplittable=*/false);
     }
 
     // If we have seen both source and destination for a mem transfer, then
