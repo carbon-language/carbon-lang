@@ -40,6 +40,25 @@ Diagnostics::Context::Context(MatcherArgEnum, Diagnostics *Error,
 
 Diagnostics::Context::~Context() { Error->ContextStack.pop_back(); }
 
+Diagnostics::OverloadContext::OverloadContext(Diagnostics *Error)
+    : Error(Error), BeginIndex(Error->Errors.size()) {}
+
+Diagnostics::OverloadContext::~OverloadContext() {
+  // Merge all errors that happened while in this context.
+  if (BeginIndex < Error->Errors.size()) {
+    Diagnostics::ErrorContent &Dest = Error->Errors[BeginIndex];
+    for (size_t i = BeginIndex + 1, e = Error->Errors.size(); i < e; ++i) {
+      Dest.Messages.push_back(Error->Errors[i].Messages[0]);
+    }
+    Error->Errors.resize(BeginIndex + 1);
+  }
+}
+
+void Diagnostics::OverloadContext::revertErrors() {
+  // Revert the errors.
+  Error->Errors.resize(BeginIndex);
+}
+
 Diagnostics::ArgStream &Diagnostics::ArgStream::operator<<(const Twine &Arg) {
   Out->push_back(Arg.str());
   return *this;
@@ -50,9 +69,10 @@ Diagnostics::ArgStream Diagnostics::addError(const SourceRange &Range,
   Errors.push_back(ErrorContent());
   ErrorContent &Last = Errors.back();
   Last.ContextStack = ContextStack;
-  Last.Range = Range;
-  Last.Type = Error;
-  return ArgStream(&Last.Args);
+  Last.Messages.push_back(ErrorContent::Message());
+  Last.Messages.back().Range = Range;
+  Last.Messages.back().Type = Error;
+  return ArgStream(&Last.Messages.back().Args);
 }
 
 StringRef contextTypeToFormatString(Diagnostics::ContextType Type) {
@@ -75,6 +95,9 @@ StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
     return "Incorrect type for arg $0. (Expected = $1) != (Actual = $2)";
   case Diagnostics::ET_RegistryNotBindable:
     return "Matcher does not support binding.";
+  case Diagnostics::ET_RegistryAmbiguousOverload:
+    // TODO: Add type info about the overload error.
+    return "Ambiguous matcher overload.";
 
   case Diagnostics::ET_ParserStringError:
     return "Error parsing string token: <$0>";
@@ -138,10 +161,25 @@ static void printContextFrameToStream(const Diagnostics::ContextFrame &Frame,
   formatErrorString(contextTypeToFormatString(Frame.Type), Frame.Args, OS);
 }
 
+static void
+printMessageToStream(const Diagnostics::ErrorContent::Message &Message,
+                     const Twine Prefix, llvm::raw_ostream &OS) {
+  maybeAddLineAndColumn(Message.Range, OS);
+  OS << Prefix;
+  formatErrorString(errorTypeToFormatString(Message.Type), Message.Args, OS);
+}
+
 static void printErrorContentToStream(const Diagnostics::ErrorContent &Content,
                                       llvm::raw_ostream &OS) {
-  maybeAddLineAndColumn(Content.Range, OS);
-  formatErrorString(errorTypeToFormatString(Content.Type), Content.Args, OS);
+  if (Content.Messages.size() == 1) {
+    printMessageToStream(Content.Messages[0], "", OS);
+  } else {
+    for (size_t i = 0, e = Content.Messages.size(); i != e; ++i) {
+      if (i != 0) OS << "\n";
+      printMessageToStream(Content.Messages[i],
+                           "Candidate " + Twine(i + 1) + ": ", OS);
+    }
+  }
 }
 
 void Diagnostics::printToStream(llvm::raw_ostream &OS) const {

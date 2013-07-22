@@ -48,9 +48,66 @@ void RegistryMaps::registerMatcher(StringRef MatcherName,
   Constructors[MatcherName] = Callback;
 }
 
+/// \brief MatcherCreateCallback that wraps multiple "overloads" of the same
+///   matcher.
+///
+/// It will try every overload and generate appropriate errors for when none or
+/// more than one overloads match the arguments.
+class OverloadedMatcherCreateCallback : public MatcherCreateCallback {
+ public:
+   OverloadedMatcherCreateCallback(ArrayRef<MatcherCreateCallback *> Callbacks)
+       : Overloads(Callbacks) {}
+
+  virtual ~OverloadedMatcherCreateCallback() {
+    for (size_t i = 0, e = Overloads.size(); i != e; ++i)
+      delete Overloads[i];
+  }
+
+  virtual MatcherList run(const SourceRange &NameRange,
+                          ArrayRef<ParserValue> Args,
+                          Diagnostics *Error) const {
+    std::vector<MatcherList> Constructed;
+    Diagnostics::OverloadContext Ctx(Error);
+    for (size_t i = 0, e = Overloads.size(); i != e; ++i) {
+      MatcherList SubMatcher = Overloads[i]->run(NameRange, Args, Error);
+      if (!SubMatcher.empty()) {
+        Constructed.push_back(SubMatcher);
+      }
+    }
+
+    if (Constructed.empty()) return MatcherList();  // No overload matched.
+    // We ignore the errors if any matcher succeeded.
+    Ctx.revertErrors();
+    if (Constructed.size() > 1) {
+      // More than one constructed. It is ambiguous.
+      Error->addError(NameRange, Error->ET_RegistryAmbiguousOverload);
+      return MatcherList();
+    }
+    return Constructed[0];
+  }
+
+ private:
+  std::vector<MatcherCreateCallback*> Overloads;
+};
+
 #define REGISTER_MATCHER(name)                                                 \
   registerMatcher(#name, internal::makeMatcherAutoMarshall(                    \
                              ::clang::ast_matchers::name, #name));
+
+#define SPECIFIC_MATCHER_OVERLOAD(name, Id)                                    \
+  static_cast< ::clang::ast_matchers::name##_Type##Id>(                        \
+      ::clang::ast_matchers::name)
+
+#define REGISTER_OVERLOADED_2(name)                                            \
+  do {                                                                         \
+    MatcherCreateCallback *Callbacks[] = {                                     \
+      internal::makeMatcherAutoMarshall(SPECIFIC_MATCHER_OVERLOAD(name, 0),    \
+                                        #name),                                \
+      internal::makeMatcherAutoMarshall(SPECIFIC_MATCHER_OVERLOAD(name, 1),    \
+                                        #name)                                 \
+    };                                                                         \
+    registerMatcher(#name, new OverloadedMatcherCreateCallback(Callbacks));    \
+  } while (0)
 
 /// \brief Generate a registry map with all the known matchers.
 RegistryMaps::RegistryMaps() {
@@ -58,16 +115,6 @@ RegistryMaps::RegistryMaps() {
   //
   // Need Variant/Parser fixes:
   // ofKind
-  //
-  // Function overloaded by args:
-  // hasType
-  // callee
-  // hasPrefix
-  // isDerivedFrom
-  // isSameOrDerivedFrom
-  // pointsTo
-  // references
-  // thisPointerType
   //
   // Polymorphic + argument overload:
   // unless
@@ -89,6 +136,15 @@ RegistryMaps::RegistryMaps() {
   // equals
   // equalsNode
   // hasDeclaration
+
+  REGISTER_OVERLOADED_2(callee);
+  REGISTER_OVERLOADED_2(hasPrefix);
+  REGISTER_OVERLOADED_2(hasType);
+  REGISTER_OVERLOADED_2(isDerivedFrom);
+  REGISTER_OVERLOADED_2(isSameOrDerivedFrom);
+  REGISTER_OVERLOADED_2(pointsTo);
+  REGISTER_OVERLOADED_2(references);
+  REGISTER_OVERLOADED_2(thisPointerType);
 
   REGISTER_MATCHER(accessSpecDecl);
   REGISTER_MATCHER(alignOfExpr);

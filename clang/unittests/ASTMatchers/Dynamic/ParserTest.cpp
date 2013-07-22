@@ -256,6 +256,15 @@ TEST(ParserTest, Errors) {
             ParseMatcherWithError("hasBody(stmt())"));
 }
 
+TEST(ParserTest, OverloadErrors) {
+  EXPECT_EQ("1:1: Error building matcher callee.\n"
+            "1:8: Candidate 1: Incorrect type for arg 1. "
+            "(Expected = Matcher<Stmt>) != (Actual = String)\n"
+            "1:8: Candidate 2: Incorrect type for arg 1. "
+            "(Expected = Matcher<Decl>) != (Actual = String)",
+            ParseWithError("callee(\"A\")"));
+}
+
 }  // end anonymous namespace
 }  // end namespace dynamic
 }  // end namespace ast_matchers

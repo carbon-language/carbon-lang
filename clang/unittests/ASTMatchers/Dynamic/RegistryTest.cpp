@@ -124,6 +124,30 @@ TEST_F(RegistryTest, ConstructWithMatcherArgs) {
   EXPECT_FALSE(matches("void f(int x, int a);", HasParameter));
 }
 
+TEST_F(RegistryTest, OverloadedMatchers) {
+  Matcher<Stmt> CallExpr0 = constructMatcher(
+      "callExpr",
+      constructMatcher("callee", constructMatcher("memberExpr",
+                                                  constructMatcher("isArrow"))))
+      .getTypedMatcher<Stmt>();
+
+  Matcher<Stmt> CallExpr1 = constructMatcher(
+      "callExpr",
+      constructMatcher(
+          "callee",
+          constructMatcher("methodDecl",
+                           constructMatcher("hasName", std::string("x")))))
+      .getTypedMatcher<Stmt>();
+
+  std::string Code = "class Y { public: void x(); }; void z() { Y y; y.x(); }";
+  EXPECT_FALSE(matches(Code, CallExpr0));
+  EXPECT_TRUE(matches(Code, CallExpr1));
+
+  Code = "class Z { public: void z() { this->z(); } };";
+  EXPECT_TRUE(matches(Code, CallExpr0));
+  EXPECT_FALSE(matches(Code, CallExpr1));
+}
+
 TEST_F(RegistryTest, PolymorphicMatchers) {
   const MatcherList IsDefinition = constructMatcher("isDefinition");
   Matcher<Decl> Var =

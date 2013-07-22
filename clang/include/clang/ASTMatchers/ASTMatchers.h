@@ -1536,24 +1536,25 @@ AST_MATCHER_P(CXXRecordDecl, isDerivedFrom,
 }
 
 /// \brief Overloaded method as shortcut for \c isDerivedFrom(hasName(...)).
-inline internal::Matcher<CXXRecordDecl> isDerivedFrom(StringRef BaseName) {
+AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isDerivedFrom, StringRef, BaseName, 1) {
   assert(!BaseName.empty());
-  return isDerivedFrom(hasName(BaseName));
+  return isDerivedFrom(hasName(BaseName)).matches(Node, Finder, Builder);
 }
 
 /// \brief Similar to \c isDerivedFrom(), but also matches classes that directly
 /// match \c Base.
-inline internal::Matcher<CXXRecordDecl> isSameOrDerivedFrom(
-    internal::Matcher<NamedDecl> Base) {
-  return anyOf(Base, isDerivedFrom(Base));
+AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isSameOrDerivedFrom,
+                       internal::Matcher<NamedDecl>, Base, 0) {
+  return Matcher<CXXRecordDecl>(anyOf(Base, isDerivedFrom(Base)))
+      .matches(Node, Finder, Builder);
 }
 
 /// \brief Overloaded method as shortcut for
 /// \c isSameOrDerivedFrom(hasName(...)).
-inline internal::Matcher<CXXRecordDecl> isSameOrDerivedFrom(
-    StringRef BaseName) {
+AST_MATCHER_P_OVERLOAD(CXXRecordDecl, isSameOrDerivedFrom, StringRef, BaseName,
+                       1) {
   assert(!BaseName.empty());
-  return isSameOrDerivedFrom(hasName(BaseName));
+  return isSameOrDerivedFrom(hasName(BaseName)).matches(Node, Finder, Builder);
 }
 
 /// \brief Matches the first method of a class or struct that satisfies \c
@@ -1822,9 +1823,9 @@ AST_MATCHER_P(CallExpr, callee, internal::Matcher<Stmt>,
 ///   class Y { public: void x(); };
 ///   void z() { Y y; y.x();
 /// \endcode
-inline internal::Matcher<CallExpr> callee(
-    const internal::Matcher<Decl> &InnerMatcher) {
-  return callExpr(hasDeclaration(InnerMatcher));
+AST_MATCHER_P_OVERLOAD(CallExpr, callee, internal::Matcher<Decl>, InnerMatcher,
+                       1) {
+  return callExpr(hasDeclaration(InnerMatcher)).matches(Node, Finder, Builder);
 }
 
 /// \brief Matches if the expression's or declaration's type matches a type
@@ -1836,9 +1837,9 @@ inline internal::Matcher<CallExpr> callee(
 ///  class X {};
 ///  void y(X &x) { x; X z; }
 /// \endcode
-AST_POLYMORPHIC_MATCHER_P(hasType,
-                          AST_POLYMORPHIC_SUPPORTED_TYPES_2(Expr, ValueDecl),
-                          internal::Matcher<QualType>, InnerMatcher) {
+AST_POLYMORPHIC_MATCHER_P_OVERLOAD(
+    hasType, AST_POLYMORPHIC_SUPPORTED_TYPES_2(Expr, ValueDecl),
+    internal::Matcher<QualType>, InnerMatcher, 0) {
   return InnerMatcher.matches(Node.getType(), Finder, Builder);
 }
 
@@ -1859,11 +1860,11 @@ AST_POLYMORPHIC_MATCHER_P(hasType,
 /// \endcode
 ///
 /// Usable as: Matcher<Expr>, Matcher<ValueDecl>
-inline internal::PolymorphicMatcherWithParam1<
-    internal::matcher_hasType0Matcher, internal::Matcher<QualType>,
-    AST_POLYMORPHIC_SUPPORTED_TYPES_2(Expr, ValueDecl)>
-hasType(const internal::Matcher<Decl> &InnerMatcher) {
-  return hasType(qualType(hasDeclaration(InnerMatcher)));
+AST_POLYMORPHIC_MATCHER_P_OVERLOAD(
+    hasType, AST_POLYMORPHIC_SUPPORTED_TYPES_2(Expr, ValueDecl),
+    internal::Matcher<Decl>, InnerMatcher, 1) {
+  return qualType(hasDeclaration(InnerMatcher))
+      .matches(Node.getType(), Finder, Builder);
 }
 
 /// \brief Matches if the type location of the declarator decl's type matches
@@ -1912,9 +1913,10 @@ AST_MATCHER_P(
 }
 
 /// \brief Overloaded to match the pointee type's declaration.
-inline internal::Matcher<QualType> pointsTo(
-    const internal::Matcher<Decl> &InnerMatcher) {
-  return pointsTo(qualType(hasDeclaration(InnerMatcher)));
+AST_MATCHER_P_OVERLOAD(QualType, pointsTo, internal::Matcher<Decl>,
+                       InnerMatcher, 1) {
+  return pointsTo(qualType(hasDeclaration(InnerMatcher)))
+      .matches(Node, Finder, Builder);
 }
 
 /// \brief Matches if the matched type is a reference type and the referenced
@@ -1955,9 +1957,10 @@ AST_MATCHER_P(QualType, hasCanonicalType, internal::Matcher<QualType>,
 }
 
 /// \brief Overloaded to match the referenced type's declaration.
-inline internal::Matcher<QualType> references(
-    const internal::Matcher<Decl> &InnerMatcher) {
-  return references(qualType(hasDeclaration(InnerMatcher)));
+AST_MATCHER_P_OVERLOAD(QualType, references, internal::Matcher<Decl>,
+                       InnerMatcher, 1) {
+  return references(qualType(hasDeclaration(InnerMatcher)))
+      .matches(Node, Finder, Builder);
 }
 
 AST_MATCHER_P(CXXMemberCallExpr, onImplicitObjectArgument,
@@ -1969,17 +1972,19 @@ AST_MATCHER_P(CXXMemberCallExpr, onImplicitObjectArgument,
 
 /// \brief Matches if the expression's type either matches the specified
 /// matcher, or is a pointer to a type that matches the InnerMatcher.
-inline internal::Matcher<CXXMemberCallExpr> thisPointerType(
-    const internal::Matcher<QualType> &InnerMatcher) {
+AST_MATCHER_P_OVERLOAD(CXXMemberCallExpr, thisPointerType,
+                       internal::Matcher<QualType>, InnerMatcher, 0) {
   return onImplicitObjectArgument(
-      anyOf(hasType(InnerMatcher), hasType(pointsTo(InnerMatcher))));
+      anyOf(hasType(InnerMatcher), hasType(pointsTo(InnerMatcher))))
+      .matches(Node, Finder, Builder);
 }
 
 /// \brief Overloaded to match the type's declaration.
-inline internal::Matcher<CXXMemberCallExpr> thisPointerType(
-    const internal::Matcher<Decl> &InnerMatcher) {
+AST_MATCHER_P_OVERLOAD(CXXMemberCallExpr, thisPointerType,
+                       internal::Matcher<Decl>, InnerMatcher, 1) {
   return onImplicitObjectArgument(
-      anyOf(hasType(InnerMatcher), hasType(pointsTo(InnerMatcher))));
+      anyOf(hasType(InnerMatcher), hasType(pointsTo(InnerMatcher))))
+      .matches(Node, Finder, Builder);
 }
 
 /// \brief Matches a DeclRefExpr that refers to a declaration that matches the
