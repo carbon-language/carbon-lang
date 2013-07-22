@@ -45,3 +45,7 @@ extern const CFStringRef kUTTypeRTF;
 
 @implementation Test
 @end
+
+#if ! __has_feature(objc_arc)
+#error This file must be compiled with ARC (set -fobjc_arc flag on file)
+#endif

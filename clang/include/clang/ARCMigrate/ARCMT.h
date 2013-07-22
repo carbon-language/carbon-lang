@@ -97,6 +97,8 @@ class MigrationProcess {
   FileRemapper Remapper;
 
 public:
+  bool HadARCErrors;
+
   MigrationProcess(const CompilerInvocation &CI, DiagnosticConsumer *diagClient,
                    StringRef outputDir = StringRef());
 
