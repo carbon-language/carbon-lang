@@ -1328,13 +1328,15 @@ void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
 llvm::Constant *
 CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        llvm::Type *Ty,
-                                       GlobalDecl D, bool ForVTable,
+                                       GlobalDecl GD, bool ForVTable,
                                        llvm::AttributeSet ExtraAttrs) {
+  const Decl *D = GD.getDecl();
+
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
     if (WeakRefReferences.erase(Entry)) {
-      const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl());
+      const FunctionDecl *FD = cast_or_null<FunctionDecl>(D);
       if (FD && !FD->hasAttr<WeakAttr>())
         Entry->setLinkage(llvm::Function::ExternalLinkage);
     }
@@ -1363,8 +1365,8 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                              llvm::Function::ExternalLinkage,
                                              MangledName, &getModule());
   assert(F->getName() == MangledName && "name was uniqued!");
-  if (D.getDecl())
-    SetFunctionAttributes(D, F, IsIncompleteFunction);
+  if (D)
+    SetFunctionAttributes(GD, F, IsIncompleteFunction);
   if (ExtraAttrs.hasAttributes(llvm::AttributeSet::FunctionIndex)) {
     llvm::AttrBuilder B(ExtraAttrs, llvm::AttributeSet::FunctionIndex);
     F->addAttributes(llvm::AttributeSet::FunctionIndex,
@@ -1394,18 +1396,18 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   //
   // We also don't emit a definition for a function if it's going to be an entry
   // in a vtable, unless it's already marked as used.
-  } else if (getLangOpts().CPlusPlus && D.getDecl()) {
+  } else if (getLangOpts().CPlusPlus && D) {
     // Look for a declaration that's lexically in a record.
-    const FunctionDecl *FD = cast<FunctionDecl>(D.getDecl());
+    const FunctionDecl *FD = cast<FunctionDecl>(D);
     FD = FD->getMostRecentDecl();
     do {
       if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
         if (FD->isImplicit() && !ForVTable) {
           assert(FD->isUsed() && "Sema didn't mark implicit function as used!");
-          DeferredDeclsToEmit.push_back(D.getWithDecl(FD));
+          DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
           break;
         } else if (FD->doesThisDeclarationHaveABody()) {
-          DeferredDeclsToEmit.push_back(D.getWithDecl(FD));
+          DeferredDeclsToEmit.push_back(GD.getWithDecl(FD));
           break;
         }
       }
