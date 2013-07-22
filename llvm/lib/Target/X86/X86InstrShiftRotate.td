@@ -537,7 +537,7 @@ def ROL32mCL : I<0xD3, MRM0m, (outs), (ins i32mem:$dst),
                  [(store (rotl (loadi32 addr:$dst), CL), addr:$dst)],
                  IIC_SR>;
 def ROL64mCL :  RI<0xD3, MRM0m, (outs), (ins i64mem:$dst),
-                   "rol{q}\t{%cl, $dst|$dst, %cl}",
+                   "rol{q}\t{%cl, $dst|$dst, CL}",
                    [(store (rotl (loadi64 addr:$dst), CL), addr:$dst)],
                    IIC_SR>;
 }
