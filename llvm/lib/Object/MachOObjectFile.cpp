@@ -1284,8 +1284,8 @@ StringRef MachOObjectFile::getFileFormatName() const {
 
   // Make sure the cpu type has the correct mask.
   assert((CPUType & llvm::MachO::CPUArchABI64)
-	 == llvm::MachO::CPUArchABI64 &&
-	 "32-bit object file when we're 64-bit?");
+         == llvm::MachO::CPUArchABI64 &&
+         "32-bit object file when we're 64-bit?");
 
   switch (CPUType) {
   case llvm::MachO::CPUTypeX86_64:
@@ -1384,30 +1384,32 @@ MachOObjectFile::isRelocationScattered(const macho::RelocationEntry &RE)
   return getPlainRelocationAddress(RE) & macho::RF_Scattered;
 }
 
-unsigned MachOObjectFile::getPlainRelocationSymbolNum(const macho::RelocationEntry &RE) const {
+unsigned MachOObjectFile::getPlainRelocationSymbolNum(
+    const macho::RelocationEntry &RE) const {
   if (isLittleEndian())
     return RE.Word1 & 0xffffff;
   return RE.Word1 >> 8;
 }
 
-bool MachOObjectFile::getPlainRelocationExternal(const macho::RelocationEntry &RE) const {
+bool MachOObjectFile::getPlainRelocationExternal(
+    const macho::RelocationEntry &RE) const {
   if (isLittleEndian())
     return (RE.Word1 >> 27) & 1;
   return (RE.Word1 >> 4) & 1;
 }
 
-bool
-MachOObjectFile::getScatteredRelocationScattered(const macho::RelocationEntry &RE) const {
+bool MachOObjectFile::getScatteredRelocationScattered(
+    const macho::RelocationEntry &RE) const {
   return RE.Word0 >> 31;
 }
 
-uint32_t
-MachOObjectFile::getScatteredRelocationValue(const macho::RelocationEntry &RE) const {
+uint32_t MachOObjectFile::getScatteredRelocationValue(
+    const macho::RelocationEntry &RE) const {
   return RE.Word1;
 }
 
-unsigned
-MachOObjectFile::getAnyRelocationAddress(const macho::RelocationEntry &RE) const {
+unsigned MachOObjectFile::getAnyRelocationAddress(
+    const macho::RelocationEntry &RE) const {
   if (isRelocationScattered(RE))
     return getScatteredRelocationAddress(RE);
   return getPlainRelocationAddress(RE);
@@ -1420,8 +1422,8 @@ MachOObjectFile::getAnyRelocationPCRel(const macho::RelocationEntry &RE) const {
   return getPlainRelocationPCRel(this, RE);
 }
 
-unsigned
-MachOObjectFile::getAnyRelocationLength(const macho::RelocationEntry &RE) const {
+unsigned MachOObjectFile::getAnyRelocationLength(
+    const macho::RelocationEntry &RE) const {
   if (isRelocationScattered(RE))
     return getScatteredRelocationLength(RE);
   return getPlainRelocationLength(this, RE);
@@ -1494,8 +1496,8 @@ MachOObjectFile::getSymbol64TableEntry(DataRefImpl DRI) const {
   return getStruct<macho::Symbol64TableEntry>(this, P);
 }
 
-macho::LinkeditDataLoadCommand
-MachOObjectFile::getLinkeditDataLoadCommand(const MachOObjectFile::LoadCommandInfo &L) const {
+macho::LinkeditDataLoadCommand MachOObjectFile::getLinkeditDataLoadCommand(
+    const MachOObjectFile::LoadCommandInfo &L) const {
   return getStruct<macho::LinkeditDataLoadCommand>(this, L.Ptr);
 }
 
