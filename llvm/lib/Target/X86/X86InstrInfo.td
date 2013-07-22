@@ -1979,22 +1979,22 @@ def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
 
 // div and idiv aliases for explicit A register.
-def : InstAlias<"divb $src, %al",  (DIV8r  GR8 :$src)>;
-def : InstAlias<"divw $src, %ax",  (DIV16r GR16:$src)>;
-def : InstAlias<"divl $src, %eax", (DIV32r GR32:$src)>;
-def : InstAlias<"divq $src, %rax", (DIV64r GR64:$src)>;
-def : InstAlias<"divb $src, %al",  (DIV8m  i8mem :$src)>;
-def : InstAlias<"divw $src, %ax",  (DIV16m i16mem:$src)>;
-def : InstAlias<"divl $src, %eax", (DIV32m i32mem:$src)>;
-def : InstAlias<"divq $src, %rax", (DIV64m i64mem:$src)>;
-def : InstAlias<"idivb $src, %al",  (IDIV8r  GR8 :$src)>;
-def : InstAlias<"idivw $src, %ax",  (IDIV16r GR16:$src)>;
-def : InstAlias<"idivl $src, %eax", (IDIV32r GR32:$src)>;
-def : InstAlias<"idivq $src, %rax", (IDIV64r GR64:$src)>;
-def : InstAlias<"idivb $src, %al",  (IDIV8m  i8mem :$src)>;
-def : InstAlias<"idivw $src, %ax",  (IDIV16m i16mem:$src)>;
-def : InstAlias<"idivl $src, %eax", (IDIV32m i32mem:$src)>;
-def : InstAlias<"idivq $src, %rax", (IDIV64m i64mem:$src)>;
+def : InstAlias<"div{b}\t{$src, %al|AL, $src}", (DIV8r  GR8 :$src)>;
+def : InstAlias<"div{w}\t{$src, %ax|AX, $src}", (DIV16r GR16:$src)>;
+def : InstAlias<"div{l}\t{$src, %eax|EAX, $src}", (DIV32r GR32:$src)>;
+def : InstAlias<"div{q}\t{$src, %rax|RAX, $src}", (DIV64r GR64:$src)>;
+def : InstAlias<"div{b}\t{$src, %al|AL, $src}", (DIV8m  i8mem :$src)>;
+def : InstAlias<"div{w}\t{$src, %ax|AX, $src}", (DIV16m i16mem:$src)>;
+def : InstAlias<"div{l}\t{$src, %eax|EAX, $src}", (DIV32m i32mem:$src)>;
+def : InstAlias<"div{q}\t{$src, %rax|RAX, $src}", (DIV64m i64mem:$src)>;
+def : InstAlias<"idiv{b}\t{$src, %al|AL, $src}", (IDIV8r  GR8 :$src)>;
+def : InstAlias<"idiv{w}\t{$src, %ax|AX, $src}", (IDIV16r GR16:$src)>;
+def : InstAlias<"idiv{l}\t{$src, %eax|EAX, $src}", (IDIV32r GR32:$src)>;
+def : InstAlias<"idiv{q}\t{$src, %rax|RAX, $src}", (IDIV64r GR64:$src)>;
+def : InstAlias<"idiv{b}\t{$src, %al|AL, $src}", (IDIV8m  i8mem :$src)>;
+def : InstAlias<"idiv{w}\t{$src, %ax|AX, $src}", (IDIV16m i16mem:$src)>;
+def : InstAlias<"idiv{l}\t{$src, %eax|EAX, $src}", (IDIV32m i32mem:$src)>;
+def : InstAlias<"idiv{q}\t{$src, %rax|RAX, $src}", (IDIV64m i64mem:$src)>;
 
 
 
@@ -2076,12 +2076,12 @@ def : InstAlias<"imulq $imm, $r",(IMUL64rri32 GR64:$r, GR64:$r,i64i32imm:$imm)>;
 def : InstAlias<"imulq $imm, $r", (IMUL64rri8 GR64:$r, GR64:$r, i64i8imm:$imm)>;
 
 // inb %dx -> inb %al, %dx
-def : InstAlias<"inb %dx", (IN8rr)>;
-def : InstAlias<"inw %dx", (IN16rr)>;
-def : InstAlias<"inl %dx", (IN32rr)>;
-def : InstAlias<"inb $port", (IN8ri i8imm:$port)>;
-def : InstAlias<"inw $port", (IN16ri i8imm:$port)>;
-def : InstAlias<"inl $port", (IN32ri i8imm:$port)>;
+def : InstAlias<"inb\t{%dx|DX}", (IN8rr), 0>;
+def : InstAlias<"inw\t{%dx|DX}", (IN16rr), 0>;
+def : InstAlias<"inl\t{%dx|DX}", (IN32rr), 0>;
+def : InstAlias<"inb\t$port", (IN8ri i8imm:$port), 0>;
+def : InstAlias<"inw\t$port", (IN16ri i8imm:$port), 0>;
+def : InstAlias<"inl\t$port", (IN32ri i8imm:$port), 0>;
 
 
 // jmp and call aliases for lcall and ljmp.  jmp $42,$5 -> ljmp
@@ -2130,12 +2130,12 @@ def : InstAlias<"movzx $src, $dst", (MOVZX64rr16_Q GR64:$dst, GR16:$src), 0>;
 // Note: No GR32->GR64 movzx form.
 
 // outb %dx -> outb %al, %dx
-def : InstAlias<"outb %dx", (OUT8rr)>;
-def : InstAlias<"outw %dx", (OUT16rr)>;
-def : InstAlias<"outl %dx", (OUT32rr)>;
-def : InstAlias<"outb $port", (OUT8ir i8imm:$port)>;
-def : InstAlias<"outw $port", (OUT16ir i8imm:$port)>;
-def : InstAlias<"outl $port", (OUT32ir i8imm:$port)>;
+def : InstAlias<"outb\t{%dx|DX}", (OUT8rr), 0>;
+def : InstAlias<"outw\t{%dx|DX}", (OUT16rr), 0>;
+def : InstAlias<"outl\t{%dx|DX}", (OUT32rr), 0>;
+def : InstAlias<"outb\t$port", (OUT8ir i8imm:$port), 0>;
+def : InstAlias<"outw\t$port", (OUT16ir i8imm:$port), 0>;
+def : InstAlias<"outl\t$port", (OUT32ir i8imm:$port), 0>;
 
 // 'sldt <mem>' can be encoded with either sldtw or sldtq with the same
 // effect (both store to a 16-bit mem).  Force to sldtw to avoid ambiguity
