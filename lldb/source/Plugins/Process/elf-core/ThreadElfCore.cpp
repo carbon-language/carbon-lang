@@ -95,16 +95,27 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
         switch (arch.GetMachine())
         {
             case llvm::Triple::x86_64:
-#ifdef __FreeBSD__
-                m_thread_reg_ctx_sp.reset(new RegisterContextCoreFreeBSD_x86_64 (*this, gpregset_data, m_fpregset_data));
-#else
-                m_thread_reg_ctx_sp.reset(new RegisterContextCoreLinux_x86_64 (*this, gpregset_data, m_fpregset_data));
-#endif
+                switch (arch.GetTriple().getOS())
+                {
+                    case llvm::Triple::FreeBSD:
+                        m_thread_reg_ctx_sp.reset(new RegisterContextCoreFreeBSD_x86_64 (*this, gpregset_data, m_fpregset_data));
+                        break;
+                    case llvm::Triple::Linux:
+                        m_thread_reg_ctx_sp.reset(new RegisterContextCoreLinux_x86_64 (*this, gpregset_data, m_fpregset_data));
+                        break;
+                    default:
+                        if (log)
+                            log->Printf ("elf-core::%s:: OS(%d) not supported",
+                                         __FUNCTION__, arch.GetTriple().getOS());
+                        assert (false && "OS not supported");
+                        break;
+                }
                 break;
             default:
                 if (log)
                     log->Printf ("elf-core::%s:: Architecture(%d) not supported",
                                  __FUNCTION__, arch.GetMachine());
+                assert (false && "Architecture not supported");
         }
         reg_ctx_sp = m_thread_reg_ctx_sp;
     }
