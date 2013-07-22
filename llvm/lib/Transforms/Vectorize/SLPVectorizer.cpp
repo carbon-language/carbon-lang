@@ -301,12 +301,6 @@ private:
   /// \returns the Instrucion in the bundle \p VL.
   Instruction *getLastInstruction(ArrayRef<Value *> VL);
 
-  /// \returns the Instruction at index \p Index which is in Block \p BB.
-  Instruction *getInstructionForIndex(unsigned Index, BasicBlock *BB);
-
-  /// \returns the index of the first User of \p VL.
-  int getFirstUserIndex(ArrayRef<Value *> VL);
-
   /// \returns a vector from a collection of scalars in \p VL.
   Value *Gather(ArrayRef<Value *> VL, VectorType *Ty);
 
@@ -1091,32 +1085,6 @@ Instruction *BoUpSLP::getLastInstruction(ArrayRef<Value *> VL) {
   Instruction *I = BN.getInstruction(MaxIdx);
   assert(I && "bad location");
   return I;
-}
-
-Instruction *BoUpSLP::getInstructionForIndex(unsigned Index, BasicBlock *BB) {
-  BlockNumbering &BN = BlocksNumbers[BB];
-  return BN.getInstruction(Index);
-}
-
-int BoUpSLP::getFirstUserIndex(ArrayRef<Value *> VL) {
-  BasicBlock *BB = getSameBlock(VL);
-  assert(BB && "All instructions must come from the same block");
-  BlockNumbering &BN = BlocksNumbers[BB];
-
-  // Find the first user of the values.
-  int FirstUser = BN.getIndex(BB->getTerminator());
-  for (unsigned i = 0, e = VL.size(); i < e; ++i) {
-    for (Value::use_iterator U = VL[i]->use_begin(), UE = VL[i]->use_end();
-         U != UE; ++U) {
-      Instruction *Instr = dyn_cast<Instruction>(*U);
-
-      if (!Instr || Instr->getParent() != BB)
-        continue;
-
-      FirstUser = std::min(FirstUser, BN.getIndex(Instr));
-    }
-  }
-  return FirstUser;
 }
 
 Value *BoUpSLP::Gather(ArrayRef<Value *> VL, VectorType *Ty) {
