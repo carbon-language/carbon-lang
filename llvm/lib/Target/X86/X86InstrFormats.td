@@ -628,6 +628,13 @@ class RIi64<bits<8> o, Format f, dag outs, dag ins, string asm,
   let CodeSize = 3;
 }
 
+class RIi64_NOREX<bits<8> o, Format f, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+  : X86Inst<o, f, Imm64, outs, ins, asm, itin> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
+
 class RSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : SSI<o, F, outs, ins, asm, pattern, itin>, REX_W;

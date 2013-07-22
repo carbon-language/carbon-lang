@@ -1060,21 +1060,33 @@ def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
                      Requires<[In32BitMode]>;
 }
 
-// FIXME: These definitions are utterly broken
-// Just leave them commented out for now because they're useless outside
-// of the large code model, and most compilers won't generate the instructions
-// in question.
-/*
-def MOV64o8a : RIi8<0xA0, RawFrm, (outs), (ins offset8:$src),
-                      "mov{q}\t{$src, %rax|RAX, $src}", []>;
-def MOV64o64a : RIi32<0xA1, RawFrm, (outs), (ins offset64:$src),
-                       "mov{q}\t{$src, %rax|RAX, $src}", []>;
-def MOV64ao8 : RIi8<0xA2, RawFrm, (outs offset8:$dst), (ins),
-                       "mov{q}\t{%rax, $dst|$dst, RAX}", []>;
-def MOV64ao64 : RIi32<0xA3, RawFrm, (outs offset64:$dst), (ins),
-                       "mov{q}\t{%rax, $dst|$dst, RAX}", []>;
-*/
+// These forms all have full 64-bit absolute addresses in their instructions
+// and use the movabs mnemonic to indicate this specific form.
+def MOV64o8a : RIi64_NOREX<0xA0, RawFrm, (outs), (ins offset64:$src),
+                     "movabs{b}\t{$src, %al|AL, $src}", []>,
+                     Requires<[In64BitMode]>;
+def MOV64o16a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset64:$src),
+                     "movabs{w}\t{$src, %ax|AX, $src}", []>, OpSize,
+                     Requires<[In64BitMode]>;
+def MOV64o32a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset64:$src),
+                     "movabs{l}\t{$src, %eax|AEX, $src}", []>,
+                     Requires<[In64BitMode]>;
+def MOV64o64a : RIi64<0xA1, RawFrm, (outs), (ins offset64:$src),
+                     "movabs{q}\t{$src, %rax|RAX, $src}", []>,
+                     Requires<[In64BitMode]>;
 
+def MOV64ao8 : RIi64_NOREX<0xA2, RawFrm, (outs offset64:$dst), (ins),
+                     "movabs{b}\t{%al, $dst|$dst, AL}", []>,
+                     Requires<[In64BitMode]>;
+def MOV64ao16 : RIi64_NOREX<0xA3, RawFrm, (outs offset64:$dst), (ins),
+                     "movabs{w}\t{%ax, $dst|$dst, AX}", []>, OpSize,
+                     Requires<[In64BitMode]>;
+def MOV64ao32 : RIi64_NOREX<0xA3, RawFrm, (outs offset64:$dst), (ins),
+                     "movabs{l}\t{%eax, $dst|$dst, EAX}", []>,
+                     Requires<[In64BitMode]>;
+def MOV64ao64 : RIi64<0xA3, RawFrm, (outs offset64:$dst), (ins),
+                     "movabs{q}\t{%rax, $dst|$dst, RAX}", []>,
+                     Requires<[In64BitMode]>;
 
 let isCodeGenOnly = 1, hasSideEffects = 0, SchedRW = [WriteMove] in {
 def MOV8rr_REV : I<0x8A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src),
