@@ -61,9 +61,6 @@ inline static const char *NVPTXCondCodeToString(NVPTXCC::CondCodes CC) {
 
 FunctionPass *
 createNVPTXISelDag(NVPTXTargetMachine &TM, llvm::CodeGenOpt::Level OptLevel);
-FunctionPass *createLowerStructArgsPass(NVPTXTargetMachine &);
-FunctionPass *createNVPTXReMatPass(NVPTXTargetMachine &);
-FunctionPass *createNVPTXReMatBlockPass(NVPTXTargetMachine &);
 ModulePass *createGenericToNVVMPass();
 ModulePass *createNVVMReflectPass();
 ModulePass *createNVVMReflectPass(const StringMap<int>& Mapping);
