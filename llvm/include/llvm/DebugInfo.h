@@ -756,6 +756,8 @@ namespace llvm {
     /// processLocation - Process DILocation.
     void processLocation(DILocation Loc);
 
+    void processScope(DIScope Scope);
+
     /// addCompileUnit - Add compile unit into CUs.
     bool addCompileUnit(DICompileUnit CU);
 

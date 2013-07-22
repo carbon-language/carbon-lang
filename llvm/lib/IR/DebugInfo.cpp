@@ -857,7 +857,7 @@ void DebugInfoFinder::processModule(const Module &M) {
       for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
         DIGlobalVariable DIG(GVs.getElement(i));
         if (addGlobalVariable(DIG)) {
-          addScope(DIG.getContext());
+          processScope(DIG.getContext());
           processType(DIG.getType());
         }
       }
@@ -897,7 +897,7 @@ void DebugInfoFinder::processLocation(DILocation Loc) {
 void DebugInfoFinder::processType(DIType DT) {
   if (!addType(DT))
     return;
-  addScope(DT.getContext());
+  processScope(DT.getContext());
   if (DT.isCompositeType()) {
     DICompositeType DCT(DT);
     processType(DCT.getTypeDerivedFrom());
@@ -912,6 +912,26 @@ void DebugInfoFinder::processType(DIType DT) {
   } else if (DT.isDerivedType()) {
     DIDerivedType DDT(DT);
     processType(DDT.getTypeDerivedFrom());
+  }
+}
+
+void DebugInfoFinder::processScope(DIScope Scope) {
+  if (Scope.isType()) {
+    DIType Ty(Scope);
+    processType(Ty);
+    return;
+  }
+  if (!addScope(Scope))
+    return;
+  if (Scope.isLexicalBlock()) {
+    DILexicalBlock LB(Scope);
+    processScope(LB.getContext());
+  } else if (Scope.isLexicalBlockFile()) {
+    DILexicalBlockFile LBF = DILexicalBlockFile(Scope);
+    processScope(LBF.getScope());
+  } else if (Scope.isNameSpace()) {
+    DINameSpace NS(Scope);
+    processScope(NS.getContext());
   }
 }
 
@@ -932,7 +952,7 @@ void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (!addSubprogram(SP))
     return;
-  addScope(SP.getContext());
+  processScope(SP.getContext());
   processType(SP.getType());
 }
 
