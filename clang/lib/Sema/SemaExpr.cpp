@@ -7392,6 +7392,8 @@ static void diagnoseLogicalNotOnLHSofComparison(Sema &S, ExprResult &LHS,
   SourceLocation FirstOpen = SubExpr->getLocStart();
   SourceLocation FirstClose = RHS.get()->getLocEnd();
   FirstClose = S.getPreprocessor().getLocForEndOfToken(FirstClose);
+  if (FirstClose.isInvalid())
+    FirstOpen = SourceLocation();
   S.Diag(UO->getOperatorLoc(), diag::note_logical_not_fix)
       << FixItHint::CreateInsertion(FirstOpen, "(")
       << FixItHint::CreateInsertion(FirstClose, ")");
@@ -7400,6 +7402,8 @@ static void diagnoseLogicalNotOnLHSofComparison(Sema &S, ExprResult &LHS,
   SourceLocation SecondOpen = LHS.get()->getLocStart();
   SourceLocation SecondClose = LHS.get()->getLocEnd();
   SecondClose = S.getPreprocessor().getLocForEndOfToken(SecondClose);
+  if (SecondClose.isInvalid())
+    SecondOpen = SourceLocation();
   S.Diag(UO->getOperatorLoc(), diag::note_logical_not_silence_with_parens)
       << FixItHint::CreateInsertion(SecondOpen, "(")
       << FixItHint::CreateInsertion(SecondClose, ")");
