@@ -118,7 +118,6 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
     assert(!Context.Verifying &&#NAME);                                        \
     if (!Context.Verifying)                                                    \
       ++Bad##NAME##ForScop;                                                    \
-    return false;                                                              \
   } while (0)
 
 #define INVALID_NOVERIFY(NAME, MESSAGE)                                        \
@@ -133,7 +132,6 @@ STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
     /* DISABLED: assert(!Context.Verifying && #NAME); */                       \
     if (!Context.Verifying)                                                    \
       ++Bad##NAME##ForScop;                                                    \
-    return false;                                                              \
   } while (0)
 
 BADSCOP_STAT(CFG, "CFG too complex");
@@ -171,8 +169,10 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
 
   BranchInst *Br = dyn_cast<BranchInst>(TI);
 
-  if (!Br)
+  if (!Br) {
     INVALID(CFG, "Non branch instruction terminates BB: " + BB.getName());
+    return false;
+  }
 
   if (Br->isUnconditional())
     return true;
@@ -180,13 +180,17 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
   Value *Condition = Br->getCondition();
 
   // UndefValue is not allowed as condition.
-  if (isa<UndefValue>(Condition))
+  if (isa<UndefValue>(Condition)) {
     INVALID(AffFunc, "Condition based on 'undef' value in BB: " + BB.getName());
+    return false;
+  }
 
   // Only Constant and ICmpInst are allowed as condition.
-  if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition)))
+  if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition))) {
     INVALID(AffFunc, "Condition in BB '" + BB.getName() +
                          "' neither constant nor an icmp instruction");
+    return false;
+  }
 
   // Allow perfectly nested conditions.
   assert(Br->getNumSuccessors() == 2 && "Unexpected number of successors");
@@ -202,18 +206,22 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
 
     // Are both operands of the ICmp affine?
     if (isa<UndefValue>(ICmp->getOperand(0)) ||
-        isa<UndefValue>(ICmp->getOperand(1)))
+        isa<UndefValue>(ICmp->getOperand(1))) {
       INVALID(AffFunc, "undef operand in branch at BB: " + BB.getName());
+      return false;
+    }
 
     Loop *L = LI->getLoopFor(ICmp->getParent());
     const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
     const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
 
     if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
-        !isAffineExpr(&Context.CurRegion, RHS, *SE))
+        !isAffineExpr(&Context.CurRegion, RHS, *SE)) {
       INVALID(AffFunc,
               "Non affine branch in BB '" << BB.getName() << "' with LHS: "
                                           << *LHS << " and RHS: " << *RHS);
+      return false;
+    }
   }
 
   // Allow loop exit conditions.
@@ -223,8 +231,10 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
 
   // Allow perfectly nested conditions.
   Region *R = RI->getRegionFor(&BB);
-  if (R->getEntry() != &BB)
+  if (R->getEntry() != &BB) {
     INVALID(CFG, "Not well structured condition at BB: " + BB.getName());
+    return false;
+  }
 
   return true;
 }
@@ -256,24 +266,32 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   BasePointer = dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
-  if (!BasePointer)
+  if (!BasePointer) {
     INVALID(AffFunc, "No base pointer");
+    return false;
+  }
 
   BaseValue = BasePointer->getValue();
 
-  if (isa<UndefValue>(BaseValue))
+  if (isa<UndefValue>(BaseValue)) {
     INVALID(AffFunc, "Undefined base pointer");
+    return false;
+  }
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
   if (!AllowNonAffine &&
-      !isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue))
+      !isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue)) {
     INVALID(AffFunc, "Non affine access function: " << *AccessFunction);
+    return false;
+  }
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.
-  if (isa<IntToPtrInst>(BaseValue))
+  if (isa<IntToPtrInst>(BaseValue)) {
     INVALID(Other, "Find bad intToptr prt: " << *BaseValue);
+    return false;
+  }
 
   if (IgnoreAliasing)
     return true;
@@ -323,6 +341,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     }
 
     INVALID_NOVERIFY(Alias, OS.str());
+    return false;
   }
 
   return true;
@@ -332,11 +351,15 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
                                        DetectionContext &Context) const {
   if (PHINode *PN = dyn_cast<PHINode>(&Inst))
     if (!canSynthesize(PN, LI, SE, &Context.CurRegion)) {
-      if (SCEVCodegen)
+      if (SCEVCodegen) {
         INVALID(IndVar,
                 "SCEV of PHI node refers to SSA names in region: " << Inst);
-      else
+        return false;
+
+      } else {
         INVALID(IndVar, "Non canonical PHI node: " << Inst);
+        return false;
+      }
     }
 
   // We only check the call instruction but not invoke instruction.
@@ -345,13 +368,15 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
       return true;
 
     INVALID(FuncCall, "Call instruction: " << Inst);
+    return false;
   }
 
   if (!Inst.mayWriteToMemory() && !Inst.mayReadFromMemory()) {
-    if (isa<AllocaInst>(Inst))
-      INVALID(Other, "Alloca instruction: " << Inst);
+    if (!isa<AllocaInst>(Inst))
+      return true;
 
-    return true;
+    INVALID(Other, "Alloca instruction: " << Inst);
+    return false;
   }
 
   // Check the access function.
@@ -360,6 +385,7 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 
   // We do not know this instruction, therefore we assume it is invalid.
   INVALID(Other, "Unknown instruction: " << Inst);
+  return false;
 }
 
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
@@ -367,16 +393,20 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
     // If code generation is not in scev based mode, we need to ensure that
     // each loop has a canonical induction variable.
     PHINode *IndVar = L->getCanonicalInductionVariable();
-    if (!IndVar)
+    if (!IndVar) {
       INVALID(IndVar,
               "No canonical IV at loop header: " << L->getHeader()->getName());
+      return false;
+    }
   }
 
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
-  if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE))
+  if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE)) {
     INVALID(LoopBound, "Non affine loop bound '" << *LoopCount << "' in loop: "
                                                  << L->getHeader()->getName());
+    return false;
+  }
 
   return true;
 }
@@ -524,8 +554,10 @@ bool ScopDetection::isValidExit(DetectionContext &Context) const {
   // PHI nodes are not allowed in the exit basic block.
   if (BasicBlock *Exit = R.getExit()) {
     BasicBlock::iterator I = Exit->begin();
-    if (I != Exit->end() && isa<PHINode>(*I))
+    if (I != Exit->end() && isa<PHINode>(*I)) {
       INVALID(Other, "PHI node in exit BB");
+      return false;
+    }
   }
 
   return true;
@@ -547,23 +579,29 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
     Loop *L = LI->getLoopFor(entry);
 
     if (L) {
-      if (!L->isLoopSimplifyForm())
+      if (!L->isLoopSimplifyForm()) {
         INVALID(SimpleLoop, "Loop not in simplify form is invalid!");
+        return false;
+      }
 
       for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
            ++PI) {
         // Region entering edges come from the same loop but outside the region
         // are not allowed.
-        if (L->contains(*PI) && !R.contains(*PI))
+        if (L->contains(*PI) && !R.contains(*PI)) {
           INVALID(IndEdge, "Region has invalid entering edges!");
+          return false;
+        }
       }
     }
   }
 
   // SCoP cannot contain the entry block of the function, because we need
   // to insert alloca instruction there when translate scalar to array.
-  if (R.getEntry() == &(R.getEntry()->getParent()->getEntryBlock()))
+  if (R.getEntry() == &(R.getEntry()->getParent()->getEntryBlock())) {
     INVALID(Other, "Region containing entry block of function is invalid!");
+    return false;
+  }
 
   if (!isValidExit(Context))
     return false;
