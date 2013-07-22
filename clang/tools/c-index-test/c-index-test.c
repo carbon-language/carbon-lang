@@ -542,8 +542,7 @@ static void PrintCursorComments(CXCursor Cursor,
   }
 
   {
-    CXComment Comment;
-    Comment = clang_Cursor_getParsedComment(Cursor);
+    CXComment Comment = clang_Cursor_getParsedComment(Cursor);
     if (clang_Comment_getKind(Comment) != CXComment_Null) {
       PrintCXStringWithPrefixAndDispose("FullCommentAsHTML",
                                         clang_FullComment_getAsHTML(Comment));
@@ -577,8 +576,7 @@ static void PrintCursor(CXCursor Cursor,
                         CommentXMLValidationData *ValidationData) {
   CXTranslationUnit TU = clang_Cursor_getTranslationUnit(Cursor);
   if (clang_isInvalid(Cursor.kind)) {
-    CXString ks;
-    ks = clang_getCursorKindSpelling(Cursor.kind);
+    CXString ks = clang_getCursorKindSpelling(Cursor.kind);
     printf("Invalid Cursor => %s", clang_getCString(ks));
     clang_disposeString(ks);
   }
@@ -614,9 +612,8 @@ static void PrintCursor(CXCursor Cursor,
         unsigned I, N = clang_getNumOverloadedDecls(Referenced);
         printf("[");
         for (I = 0; I != N; ++I) {
+          CXCursor Ovl = clang_getOverloadedDecl(Referenced, I);
           CXSourceLocation Loc;
-          CXCursor Ovl;
-          Ovl = clang_getOverloadedDecl(Referenced, I);
           if (I)
             printf(", ");
           
@@ -626,8 +623,7 @@ static void PrintCursor(CXCursor Cursor,
         }
         printf("]");
       } else {
-        CXSourceLocation Loc;
-        Loc = clang_getCursorLocation(Referenced);
+        CXSourceLocation Loc = clang_getCursorLocation(Referenced);
         clang_getSpellingLocation(Loc, 0, &line, &column, 0);
         printf(":%d:%d", line, column);
       }
@@ -706,10 +702,9 @@ static void PrintCursor(CXCursor Cursor,
       printf(" (@optional)");
 
     if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
-      CXType T;
-      CXString S;
-      T = clang_getCanonicalType(clang_getIBOutletCollectionType(Cursor));
-      S = clang_getTypeKindSpelling(T.kind);
+      CXType T =
+        clang_getCanonicalType(clang_getIBOutletCollectionType(Cursor));
+      CXString S = clang_getTypeKindSpelling(T.kind);
       printf(" [IBOutletCollection=%s]", clang_getCString(S));
       clang_disposeString(S);
     }
@@ -736,10 +731,8 @@ static void PrintCursor(CXCursor Cursor,
     
     SpecializationOf = clang_getSpecializedCursorTemplate(Cursor);
     if (!clang_equalCursors(SpecializationOf, clang_getNullCursor())) {
-      CXSourceLocation Loc;
-      CXString Name;
-      Loc = clang_getCursorLocation(SpecializationOf);
-      Name = clang_getCursorSpelling(SpecializationOf);
+      CXSourceLocation Loc = clang_getCursorLocation(SpecializationOf);
+      CXString Name = clang_getCursorSpelling(SpecializationOf);
       clang_getSpellingLocation(Loc, 0, &line, &column, 0);
       printf(" [Specialization of %s:%d:%d]", 
              clang_getCString(Name), line, column);
@@ -753,8 +746,7 @@ static void PrintCursor(CXCursor Cursor,
       assert(num_overridden <= 50);
       printf(" [Overrides ");
       for (I = 0; I != num_overridden; ++I) {
-        CXSourceLocation Loc;
-        Loc = clang_getCursorLocation(overridden[I]);
+        CXSourceLocation Loc = clang_getCursorLocation(overridden[I]);
         clang_getSpellingLocation(Loc, 0, &line, &column, 0);
         lineCols[I].line = line;
         lineCols[I].col = column;
@@ -771,10 +763,8 @@ static void PrintCursor(CXCursor Cursor,
     }
     
     if (Cursor.kind == CXCursor_InclusionDirective) {
-      CXFile File;
-      CXString Included;
-      File = clang_getIncludedFile(Cursor);
-      Included = clang_getFileName(File);
+      CXFile File = clang_getIncludedFile(Cursor);
+      CXString Included = clang_getFileName(File);
       printf(" (%s)", clang_getCString(Included));
       clang_disposeString(Included);
       
@@ -845,10 +835,9 @@ static void PrintCursor(CXCursor Cursor,
 }
 
 static const char* GetCursorSource(CXCursor Cursor) {
+  CXSourceLocation Loc = clang_getCursorLocation(Cursor);
   CXString source;
   CXFile file;
-  CXSourceLocation Loc;
-  Loc = clang_getCursorLocation(Cursor);
   clang_getExpansionLocation(Loc, &file, 0, 0, 0);
   source = clang_getFileName(file);
   if (!clang_getCString(source)) {
@@ -893,13 +882,11 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
   fprintf(stderr, "Number FIX-ITs = %d\n", num_fixits);
   for (i = 0; i != num_fixits; ++i) {
     CXSourceRange range;
+    CXString insertion_text = clang_getDiagnosticFixIt(Diagnostic, i, &range);
+    CXSourceLocation start = clang_getRangeStart(range);
+    CXSourceLocation end = clang_getRangeEnd(range);
     unsigned start_line, start_column, end_line, end_column;
     CXFile start_file, end_file;
-    CXString insertion_text;
-    CXSourceLocation start, end;
-    insertion_text = clang_getDiagnosticFixIt(Diagnostic, i, &range);
-    start = clang_getRangeStart(range);
-    end = clang_getRangeEnd(range);
     clang_getSpellingLocation(start, &start_file, &start_line,
                               &start_column, 0);
     clang_getSpellingLocation(end, &end_file, &end_line, &end_column, 0);
@@ -948,8 +935,7 @@ void PrintDiagnostics(CXTranslationUnit TU) {
 void PrintMemoryUsage(CXTranslationUnit TU) {
   unsigned long total = 0;
   unsigned i = 0;
-  CXTUResourceUsage usage;
-  usage = clang_getCXTUResourceUsage(TU);
+  CXTUResourceUsage usage = clang_getCXTUResourceUsage(TU);
   fprintf(stderr, "Memory usage:\n");
   for (i = 0 ; i != usage.numEntries; ++i) {
     const char *name = clang_getTUResourceUsageName(usage.entries[i].kind);
@@ -968,7 +954,8 @@ void PrintMemoryUsage(CXTranslationUnit TU) {
 /******************************************************************************/
 
 static void PrintCursorExtent(CXCursor C) {
-  PrintRange(clang_getCursorExtent(C), "Extent");
+  CXSourceRange extent = clang_getCursorExtent(C);
+  PrintRange(extent, "Extent");
 }
 
 /* Data used by the visitors. */
@@ -984,9 +971,8 @@ enum CXChildVisitResult FilteredPrintingVisitor(CXCursor Cursor,
                                                 CXClientData ClientData) {
   VisitorData *Data = (VisitorData *)ClientData;
   if (!Data->Filter || (Cursor.kind == *(enum CXCursorKind *)Data->Filter)) {
+    CXSourceLocation Loc = clang_getCursorLocation(Cursor);
     unsigned line, column;
-    CXSourceLocation Loc;
-    Loc = clang_getCursorLocation(Cursor);
     clang_getSpellingLocation(Loc, 0, &line, &column, 0);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), line, column);
@@ -1052,8 +1038,8 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
 
     source = clang_getFileName(file);
     if (clang_getCString(source)) {
-      CXSourceLocation RefLoc;
-      RefLoc = clang_getLocation(Data->TU, file, curLine, curColumn);
+      CXSourceLocation RefLoc
+        = clang_getLocation(Data->TU, file, curLine, curColumn);
       Ref = clang_getCursor(Data->TU, RefLoc);
       if (Ref.kind == CXCursor_NoDeclFound) {
         /* Nothing found here; that's fine. */
@@ -1079,10 +1065,8 @@ enum CXChildVisitResult USRVisitor(CXCursor C, CXCursor parent,
                                    CXClientData ClientData) {
   VisitorData *Data = (VisitorData *)ClientData;
   if (!Data->Filter || (C.kind == *(enum CXCursorKind *)Data->Filter)) {
-    const char *cstr;
-    CXString USR;
-    USR = clang_getCursorUSR(C);
-    cstr = clang_getCString(USR);
+    CXString USR = clang_getCursorUSR(C);
+    const char *cstr = clang_getCString(USR);
     if (!cstr || cstr[0] == '\0') {
       clang_disposeString(USR);
       return CXChildVisit_Recurse;
@@ -1175,8 +1159,7 @@ static void PrintTypeAndTypeKind(CXType T, const char *Format) {
 static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
                                          CXClientData d) {
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
-    CXType T;
-    T = clang_getCursorType(cursor);
+    CXType T = clang_getCursorType(cursor);
     PrintCursor(cursor, NULL);
     PrintTypeAndTypeKind(T, " [type=%s] [typekind=%s]");
     if (clang_isConstQualifiedType(T))
@@ -1187,16 +1170,14 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
       printf(" restrict");
     /* Print the canonical type if it is different. */
     {
-      CXType CT;
-      CT = clang_getCanonicalType(T);
+      CXType CT = clang_getCanonicalType(T);
       if (!clang_equalTypes(T, CT)) {
         PrintTypeAndTypeKind(CT, " [canonicaltype=%s] [canonicaltypekind=%s]");
       }
     }
     /* Print the return type if it exists. */
     {
-      CXType RT;
-      RT = clang_getCursorResultType(cursor);
+      CXType RT = clang_getCursorResultType(cursor);
       if (RT.kind != CXType_Invalid) {
         PrintTypeAndTypeKind(RT, " [resulttype=%s] [resulttypekind=%s]");
       }
@@ -1208,8 +1189,7 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
         int i;
         printf(" [args=");
         for (i = 0; i < numArgs; ++i) {
-          CXType T;
-          T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
+          CXType T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
           if (T.kind != CXType_Invalid) {
             PrintTypeAndTypeKind(T, " [%s] [%s]");
           }
@@ -1510,12 +1490,10 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
   CXIndex Idx;
   CXTranslationUnit TU;
   FILE *fp;
+  CXCursor prevCursor = clang_getNullCursor();
   CXFile file;
   unsigned line = 1, col = 1;
   unsigned start_line = 1, start_col = 1;
-  CXCursor prevCursor;
-
-  prevCursor = clang_getNullCursor();
 
   if (!(Idx = clang_createIndex(/* excludeDeclsFromPCH */ 1,
                                 /* displayDiagnostics=*/1))) {
@@ -1723,14 +1701,12 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
 void print_completion_result(CXCompletionResult *completion_result,
                              CXClientData client_data) {
   FILE *file = (FILE *)client_data;
+  CXString ks = clang_getCursorKindSpelling(completion_result->CursorKind);
   unsigned annotationCount;
   enum CXCursorKind ParentKind;
   CXString ParentName;
   CXString BriefComment;
   const char *BriefCommentCString;
-  CXString ks;
-
-  ks = clang_getCursorKindSpelling(completion_result->CursorKind);
   
   fprintf(file, "%s:", clang_getCString(ks));
   clang_disposeString(ks);
@@ -1774,8 +1750,7 @@ void print_completion_result(CXCompletionResult *completion_result,
     ParentName = clang_getCompletionParent(completion_result->CompletionString,
                                            &ParentKind);
     if (ParentKind != CXCursor_NotImplemented) {
-      CXString KindSpelling;
-      KindSpelling = clang_getCursorKindSpelling(ParentKind);
+      CXString KindSpelling = clang_getCursorKindSpelling(ParentKind);
       fprintf(file, " (parent: %s '%s')",
               clang_getCString(KindSpelling),
               clang_getCString(ParentName));
@@ -2095,13 +2070,12 @@ static int inspect_cursor_at(int argc, const char **argv) {
         return -1;
 
       if (I + 1 == Repeats) {
-        CXCompletionString completionString;
-        CXSourceLocation CursorLoc;
+        CXCompletionString completionString = clang_getCursorCompletionString(
+                                                                        Cursor);
+        CXSourceLocation CursorLoc = clang_getCursorLocation(Cursor);
         CXString Spelling;
         const char *cspell;
         unsigned line, column;
-        completionString = clang_getCursorCompletionString(Cursor);
-        CursorLoc = clang_getCursorLocation(Cursor);
         clang_getSpellingLocation(CursorLoc, 0, &line, &column, 0);
         printf("%d:%d ", line, column);
         PrintCursor(Cursor, NULL);
@@ -2112,8 +2086,8 @@ static int inspect_cursor_at(int argc, const char **argv) {
           unsigned pieceIndex;
           printf(" Spelling=%s (", cspell);
           for (pieceIndex = 0; ; ++pieceIndex) {
-            CXSourceRange range;
-            range = clang_Cursor_getSpellingNameRange(Cursor, pieceIndex, 0);
+            CXSourceRange range =
+              clang_Cursor_getSpellingNameRange(Cursor, pieceIndex, 0);
             if (clang_Range_isNull(range))
               break;
             PrintRange(range, 0);
@@ -2126,10 +2100,8 @@ static int inspect_cursor_at(int argc, const char **argv) {
         if (clang_Cursor_isDynamicCall(Cursor))
           printf(" Dynamic-call");
         if (Cursor.kind == CXCursor_ObjCMessageExpr) {
-          CXType T;
-          CXString S;
-          T = clang_Cursor_getReceiverType(Cursor);
-          S = clang_getTypeKindSpelling(T.kind);
+          CXType T = clang_Cursor_getReceiverType(Cursor);
+          CXString S = clang_getTypeKindSpelling(T.kind);
           printf(" Receiver-type=%s", clang_getCString(S));
           clang_disposeString(S);
         }
@@ -2150,10 +2122,8 @@ static int inspect_cursor_at(int argc, const char **argv) {
             clang_disposeString(name);
             clang_disposeString(astFilename);
             for (i = 0; i < numHeaders; ++i) {
-              CXFile file;
-              CXString filename;
-              file = clang_Module_getTopLevelHeader(TU, mod, i);
-              filename = clang_getFileName(file);
+              CXFile file = clang_Module_getTopLevelHeader(TU, mod, i);
+              CXString filename = clang_getFileName(file);
               printf("\n%s", clang_getCString(filename));
               clang_disposeString(filename);
             }
@@ -2436,8 +2406,7 @@ static void printCheck(IndexData *data) {
 }
 
 static void printCXIndexFile(CXIdxClientFile file) {
-  CXString filename;
-  filename = clang_getFileName((CXFile)file);
+  CXString filename = clang_getFileName((CXFile)file);
   printf("%s", clang_getCString(filename));
   clang_disposeString(filename);
 }
@@ -2692,8 +2661,7 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
   printCheck(index_data);
 
   if (index_data->importedASTs) {
-    CXString filename;
-    filename = clang_getFileName(info->file);
+    CXString filename = clang_getFileName(info->file);
     importedASTS_insert(index_data->importedASTs, clang_getCString(filename));
     clang_disposeString(filename);
   }
@@ -2701,8 +2669,7 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
   printf("[importedASTFile]: ");
   printCXIndexFile((CXIdxClientFile)info->file);
   if (info->module) {
-    CXString name;
-    name = clang_Module_getFullName(info->module);
+    CXString name = clang_Module_getFullName(info->module);
     printf(" | loc: ");
     printCXIndexLoc(info->loc, client_data);
     printf(" | name: \"%s\"", clang_getCString(name));
@@ -3236,12 +3203,9 @@ int perform_token_annotation(int argc, const char **argv) {
 
   for (i = 0; i != num_tokens; ++i) {
     const char *kind = "<unknown>";
-    CXString spelling;
-    CXSourceRange extent;
+    CXString spelling = clang_getTokenSpelling(TU, tokens[i]);
+    CXSourceRange extent = clang_getTokenExtent(TU, tokens[i]);
     unsigned start_line, start_column, end_line, end_column;
-
-    spelling = clang_getTokenSpelling(TU, tokens[i]);
-    extent = clang_getTokenExtent(TU, tokens[i]);
 
     switch (clang_getTokenKind(tokens[i])) {
     case CXToken_Punctuation: kind = "Punctuation"; break;
@@ -3644,8 +3608,7 @@ static void printRanges(CXDiagnostic D, unsigned indent) {
   
   for (i = 0; i < n; ++i) {
     CXSourceLocation Start, End;
-    CXSourceRange SR;
-    SR = clang_getDiagnosticRange(D, i);
+    CXSourceRange SR = clang_getDiagnosticRange(D, i);
     Start = clang_getRangeStart(SR);
     End = clang_getRangeEnd(SR);
     
