@@ -202,7 +202,7 @@ ISD::CondCode llvm::getICmpCondCode(ICmpInst::Predicate Pred) {
 }
 
 static bool isNoopBitcast(Type *T1, Type *T2,
-                          const TargetLowering& TLI) {
+                          const TargetLoweringBase& TLI) {
   return T1 == T2 || (T1->isPointerTy() && T2->isPointerTy()) ||
          (isa<VectorType>(T1) && isa<VectorType>(T2) &&
           TLI.isTypeLegal(EVT::getEVT(T1)) && TLI.isTypeLegal(EVT::getEVT(T2)));
@@ -215,7 +215,7 @@ static bool isNoopBitcast(Type *T1, Type *T2,
 static bool sameNoopInput(const Value *V1, const Value *V2,
                           SmallVectorImpl<unsigned> &Els1,
                           SmallVectorImpl<unsigned> &Els2,
-                          const TargetLowering &TLI) {
+                          const TargetLoweringBase &TLI) {
   using std::swap;
   bool swapParity = false;
   bool equalEls = Els1 == Els2;
