@@ -265,6 +265,46 @@ bool StackProtector::RequiresStackProtector() {
   return false;
 }
 
+/// Insert code into the entry block that stores the __stack_chk_guard
+/// variable onto the stack:
+///
+///   entry:
+///     StackGuardSlot = alloca i8*
+///     StackGuard = load __stack_chk_guard
+///     call void @llvm.stackprotect.create(StackGuard, StackGuardSlot)
+///
+static void CreatePrologue(Function *F, Module *M, ReturnInst *RI,
+                           const TargetLoweringBase *TLI, const Triple &Trip,
+                           AllocaInst *&AI, Value *&StackGuardVar) {
+  PointerType *PtrTy = Type::getInt8PtrTy(RI->getContext());
+  unsigned AddressSpace, Offset;
+  if (TLI->getStackCookieLocation(AddressSpace, Offset)) {
+    Constant *OffsetVal =
+      ConstantInt::get(Type::getInt32Ty(RI->getContext()), Offset);
+    
+    StackGuardVar = ConstantExpr::getIntToPtr(OffsetVal,
+                                              PointerType::get(PtrTy,
+                                                               AddressSpace));
+  } else if (Trip.getOS() == llvm::Triple::OpenBSD) {
+    StackGuardVar = M->getOrInsertGlobal("__guard_local", PtrTy);
+    cast<GlobalValue>(StackGuardVar)
+      ->setVisibility(GlobalValue::HiddenVisibility);
+  } else {
+    StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
+  }
+  
+  BasicBlock &Entry = F->getEntryBlock();
+  Instruction *InsPt = &Entry.front();
+  
+  AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
+  LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsPt);
+  
+  Value *Args[] = { LI, AI };
+  CallInst::
+    Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector),
+           Args, "", InsPt);
+}
+
 /// InsertStackProtectors - Insert code into the prologue and epilogue of the
 /// function.
 ///
@@ -283,41 +323,7 @@ bool StackProtector::InsertStackProtectors() {
     if (!RI) continue;
 
     if (!FailBB) {
-      // Insert code into the entry block that stores the __stack_chk_guard
-      // variable onto the stack:
-      //
-      //   entry:
-      //     StackGuardSlot = alloca i8*
-      //     StackGuard = load __stack_chk_guard
-      //     call void @llvm.stackprotect.create(StackGuard, StackGuardSlot)
-      //
-      PointerType *PtrTy = Type::getInt8PtrTy(RI->getContext());
-      unsigned AddressSpace, Offset;
-      if (TLI->getStackCookieLocation(AddressSpace, Offset)) {
-        Constant *OffsetVal =
-          ConstantInt::get(Type::getInt32Ty(RI->getContext()), Offset);
-
-        StackGuardVar = ConstantExpr::getIntToPtr(OffsetVal,
-                                      PointerType::get(PtrTy, AddressSpace));
-      } else if (Trip.getOS() == llvm::Triple::OpenBSD) {
-        StackGuardVar = M->getOrInsertGlobal("__guard_local", PtrTy);
-        cast<GlobalValue>(StackGuardVar)
-            ->setVisibility(GlobalValue::HiddenVisibility);
-      } else {
-        StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
-      }
-
-      BasicBlock &Entry = F->getEntryBlock();
-      Instruction *InsPt = &Entry.front();
-
-      AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
-      LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsPt);
-
-      Value *Args[] = { LI, AI };
-      CallInst::
-        Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector),
-               Args, "", InsPt);
-
+      CreatePrologue(F, M, RI, TLI, Trip, AI, StackGuardVar);
       // Create the basic block to jump to when the guard check fails.
       FailBB = CreateFailBB();
     }
