@@ -22,12 +22,10 @@ using namespace llvm::opt;
 Option::Option(const OptTable::Info *info, const OptTable *owner)
   : Info(info), Owner(owner) {
 
-  // Multi-level aliases are not supported, and alias options cannot
-  // have groups. This just simplifies option tracking, it is not an
-  // inherent limitation.
-  assert((!Info || !getAlias().isValid() || (!getAlias().getAlias().isValid() &&
-         !getGroup().isValid())) &&
-         "Multi-level aliases and aliases with groups are unsupported.");
+  // Multi-level aliases are not supported. This just simplifies option
+  // tracking, it is not an inherent limitation.
+  assert(!Info || !getAlias().isValid() || !getAlias().getAlias().isValid() &&
+         "Multi-level aliases are not supported.");
 }
 
 Option::~Option() {

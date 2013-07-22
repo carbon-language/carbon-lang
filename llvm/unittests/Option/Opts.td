@@ -16,3 +16,6 @@ def G : JoinedAndSeparate<["-"], "G">, HelpText<"The G option">, MetaVarName<"G"
 def Ceq : Joined<["-", "--"], "C=">, Alias<C>, Flags<[OptFlag1]>;
 
 def H : Flag<["-"], "H">, Flags<[HelpHidden]>;
+
+def my_group : OptionGroup<"my group">;
+def I : Flag<["-"], "I">, Alias<H>, Group<my_group>;

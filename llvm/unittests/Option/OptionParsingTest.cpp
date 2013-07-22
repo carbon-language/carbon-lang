@@ -136,3 +136,12 @@ TEST(Option, ParseWithFlagExclusions) {
   EXPECT_EQ(AL->getLastArgValue(OPT_SLASH_C), "foo");
   EXPECT_EQ(AL->getLastArgValue(OPT_C), "bar");
 }
+
+TEST(Option, ParseAliasInGroup) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-I" };
+  OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
+  EXPECT_TRUE(AL->hasArg(OPT_H));
+}
