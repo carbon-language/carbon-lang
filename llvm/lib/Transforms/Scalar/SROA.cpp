@@ -2540,7 +2540,7 @@ private:
     // as local as possible to the PHI. To do that, we re-use the location of
     // the old pointer, which necessarily must be in the right position to
     // dominate the PHI.
-    IRBuilderTy PtrBuilder(cast<Instruction>(OldPtr));
+    IRBuilderTy PtrBuilder(OldPtr);
     PtrBuilder.SetNamePrefix(Twine(NewAI.getName()) + "." + Twine(BeginOffset) +
                              ".");
 
