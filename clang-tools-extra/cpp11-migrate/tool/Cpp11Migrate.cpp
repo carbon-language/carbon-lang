@@ -20,6 +20,7 @@
 #include "Core/SyntaxCheck.h"
 #include "Core/Transform.h"
 #include "Core/Transforms.h"
+#include "Core/Reformatting.h"
 #include "LoopConvert/LoopConvert.h"
 #include "UseNullptr/UseNullptr.h"
 #include "UseAuto/UseAuto.h"
@@ -28,6 +29,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 
 namespace cl = llvm::cl;
@@ -43,9 +45,9 @@ static cl::extrahelp MoreHelp(
     "  cpp11-migrate -use-auto path/to/file.cpp -- -Ipath/to/include/\n"
     "\n"
     "Convert for loops to the new ranged-based for loops on all files in a "
-    "subtree:\n\n"
+    "subtree\nand reformat the code automatically using the LLVM style:\n\n"
     "  find path/in/subtree -name '*.cpp' -exec \\\n"
-    "    cpp11-migrate -p build/path -loop-convert {} ';'\n"
+    "    cpp11-migrate -p build/path -format-style=LLVM -loop-convert {} ';'\n"
     "\n"
     "Make use of both nullptr and the override specifier, using git ls-files:\n"
     "\n"
@@ -69,6 +71,14 @@ static cl::opt<bool> FinalSyntaxCheck(
     "final-syntax-check",
     cl::desc("Check for correct syntax after applying transformations"),
     cl::init(false));
+
+static cl::opt<std::string> FormatStyleOpt(
+    "format-style",
+    cl::desc("Coding style to use on the replacements, either a builtin style\n"
+             "or a YAML config file (see: clang-format -dump-config).\n"
+             "Currently supports 4 builtins style:\n"
+             "  LLVM, Google, Chromium, Mozilla.\n"),
+    cl::value_desc("string"));
 
 static cl::opt<bool>
 SummaryMode("summary", cl::desc("Print transform summary"),
@@ -108,6 +118,40 @@ static cl::opt<bool, /*ExternalStorage=*/true> EnableHeaderModifications(
     cl::location(GlobalOptions.EnableHeaderModifications),
     cl::init(false));
 
+/// \brief Creates the Reformatter if the format style option is provided,
+/// return a null pointer otherwise.
+///
+/// \param ProgName The name of the program, \c argv[0], used to print errors.
+/// \param Error If the \c -format-style is provided but with wrong parameters
+/// this is parameter is set to \c true, left untouched otherwise. An error
+/// message is printed with an explanation.
+static Reformatter *handleFormatStyle(const char *ProgName, bool &Error) {
+  if (FormatStyleOpt.getNumOccurrences() > 0) {
+    format::FormatStyle Style;
+    if (!format::getPredefinedStyle(FormatStyleOpt, &Style)) {
+      llvm::StringRef ConfigFilePath = FormatStyleOpt;
+      llvm::OwningPtr<llvm::MemoryBuffer> Text;
+      llvm::error_code ec;
+
+      ec = llvm::MemoryBuffer::getFile(ConfigFilePath, Text);
+      if (!ec)
+        ec = parseConfiguration(Text->getBuffer(), &Style);
+
+      if (ec) {
+        llvm::errs() << ProgName << ": invalid format style " << FormatStyleOpt
+                     << ": " << ec.message() << "\n";
+        Error = true;
+        return 0;
+      }
+    }
+
+    // force mode to C++11
+    Style.Standard = clang::format::FormatStyle::LS_Cpp11;
+    return new Reformatter(Style);
+  }
+  return 0;
+}
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
@@ -137,6 +181,13 @@ int main(int argc, const char **argv) {
   // against the default value when the command line option is not specified.
   GlobalOptions.EnableTiming = (TimingDirectoryName != NoTiming);
 
+  // Check the reformatting style option
+  bool BadStyle = false;
+  llvm::OwningPtr<Reformatter> ChangesReformatter(
+      handleFormatStyle(argv[0], BadStyle));
+  if (BadStyle)
+    return 1;
+
   // Populate the ModifiableHeaders structure if header modifications are
   // enabled.
   if (GlobalOptions.EnableHeaderModifications) {
@@ -153,7 +204,10 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  FileOverrides FileStates;
+  // if reformatting is enabled we wants to track file changes so that it's
+  // possible to reformat them.
+  bool TrackReplacements = static_cast<bool>(ChangesReformatter);
+  FileOverrides FileStates(TrackReplacements);
   SourcePerfData PerfData;
 
   // Apply transforms.
@@ -182,6 +236,15 @@ int main(int argc, const char **argv) {
       llvm::outs() << "\n";
     }
   }
+
+  // Reformat changes if a reformatter is provided.
+  if (ChangesReformatter)
+    for (FileOverrides::const_iterator I = FileStates.begin(),
+                                       E = FileStates.end();
+         I != E; ++I) {
+      SourceOverrides &Overrides = *I->second;
+      ChangesReformatter->reformatChanges(Overrides);
+    }
 
   if (FinalSyntaxCheck)
     if (!doSyntaxCheck(OptionsParser.getCompilations(),

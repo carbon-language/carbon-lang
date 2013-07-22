@@ -161,7 +161,7 @@ TEST(Transform, Timings) {
 
   // Transform's handle* functions require FileOverrides to be set, even if
   // there aren't any.
-  FileOverrides Overrides;
+  FileOverrides Overrides(/*TrackFileChanges=*/false);
   T.setOverrides(Overrides);
 
   Tool.run(clang::tooling::newFrontendActionFactory(&Factory, &Callbacks));
