@@ -96,7 +96,7 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (Mips::CPURegsRegClass.contains(DestReg)) { // Copy to CPU Reg.
     if (Mips::CPURegsRegClass.contains(SrcReg))
-      Opc = Mips::OR, ZeroReg = Mips::ZERO;
+      Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
     else if (Mips::CCRRegClass.contains(SrcReg))
       Opc = Mips::CFC1;
     else if (Mips::FGR32RegClass.contains(SrcReg))
@@ -143,7 +143,7 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = Mips::FMOV_D64;
   else if (Mips::CPU64RegsRegClass.contains(DestReg)) { // Copy to CPU64 Reg.
     if (Mips::CPU64RegsRegClass.contains(SrcReg))
-      Opc = Mips::OR64, ZeroReg = Mips::ZERO_64;
+      Opc = Mips::DADDu, ZeroReg = Mips::ZERO_64;
     else if (Mips::HIRegs64RegClass.contains(SrcReg))
       Opc = Mips::MFHI64, SrcReg = 0;
     else if (Mips::LORegs64RegClass.contains(SrcReg))
@@ -511,7 +511,6 @@ void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
   // indirect jump to TargetReg
   const MipsSubtarget &STI = TM.getSubtarget<MipsSubtarget>();
   unsigned ADDU = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
-  unsigned OR = STI.isABI_N64() ? Mips::OR64 : Mips::OR;
   unsigned JR = STI.isABI_N64() ? Mips::JR64 : Mips::JR;
   unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
   unsigned RA = STI.isABI_N64() ? Mips::RA_64 : Mips::RA;
@@ -520,13 +519,13 @@ void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
   unsigned OffsetReg = I->getOperand(0).getReg();
   unsigned TargetReg = I->getOperand(1).getReg();
 
-  // or   $ra, $v0, $zero
+  // addu $ra, $v0, $zero
   // addu $sp, $sp, $v1
   // jr   $ra
   if (TM.getRelocationModel() == Reloc::PIC_)
-    BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(OR), T9)
+    BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(ADDU), T9)
         .addReg(TargetReg).addReg(ZERO);
-  BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(OR), RA)
+  BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(ADDU), RA)
       .addReg(TargetReg).addReg(ZERO);
   BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(ADDU), SP)
       .addReg(SP).addReg(OffsetReg);
