@@ -12,7 +12,8 @@ CHECK: .foo
 CHECK-NEXT: .zed
 CHECK-NEXT: .bar
 
-RUN: llvm-ar rc %t.a %t.foo %t.bar
+RUN: rm -f %t.a
+RUN: llvm-ar rc %t.a %t.zed %t.foo %t.bar
 RUN: llvm-ar t %t.a | FileCheck --check-prefix=CHECK2 %s
 
 CHECK2: .zed
