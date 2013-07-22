@@ -513,6 +513,12 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
 llvm::GlobalValue::LinkageTypes
 CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
+
+  if (isa<CXXDestructorDecl>(D) &&
+      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                         GD.getDtorType()))
+    return llvm::Function::LinkOnceODRLinkage;
+
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
   if (Linkage == GVA_Internal)
@@ -1347,6 +1353,14 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     // Make sure the result is of the correct type.
     return llvm::ConstantExpr::getBitCast(Entry, Ty->getPointerTo());
   }
+
+  // All MSVC dtors other than the base dtor are linkonce_odr and delegate to
+  // each other bottoming out with the base dtor.  Therefore we emit non-base
+  // dtors on usage, even if there is no dtor definition in the TU.
+  if (D && isa<CXXDestructorDecl>(D) &&
+      getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
+                                         GD.getDtorType()))
+    DeferredDeclsToEmit.push_back(GD);
 
   // This function doesn't have a complete type (for example, the return
   // type is an incomplete struct). Use a fake type instead, and make
@@ -2869,7 +2883,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::CXXDestructor:
     if (cast<FunctionDecl>(D)->isLateTemplateParsed())
       return;
-    EmitCXXDestructors(cast<CXXDestructorDecl>(D));
+    getCXXABI().EmitCXXDestructors(cast<CXXDestructorDecl>(D));
     break;
 
   case Decl::StaticAssert:

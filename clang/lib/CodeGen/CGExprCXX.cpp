@@ -260,7 +260,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
   else
     FInfo = &CGM.getTypes().arrangeCXXMethodDeclaration(CalleeDecl);
 
-  llvm::Type *Ty = CGM.getTypes().GetFunctionType(*FInfo);
+  llvm::FunctionType *Ty = CGM.getTypes().GetFunctionType(*FInfo);
 
   // C++ [class.virtual]p12:
   //   Explicit qualification with the scope operator (5.1) suppresses the
@@ -284,7 +284,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
           ME->hasQualifier())
         Callee = BuildAppleKextVirtualCall(MD, ME->getQualifier(), Ty);
       else if (!DevirtualizedMethod)
-        Callee = CGM.GetAddrOfFunction(GlobalDecl(Dtor, Dtor_Complete), Ty);
+        Callee = CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete, FInfo, Ty);
       else {
         const CXXDestructorDecl *DDtor =
           cast<CXXDestructorDecl>(DevirtualizedMethod);

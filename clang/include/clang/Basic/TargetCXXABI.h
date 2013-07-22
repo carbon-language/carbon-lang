@@ -152,12 +152,6 @@ public:
     return isItaniumFamily();
   }
 
-  /// \brief Does this ABI have different entrypoints for complete-object
-  /// and base-subobject destructors?
-  bool hasDestructorVariants() const {
-    return isItaniumFamily();
-  }
-
   /// \brief Does this ABI allow virtual bases to be primary base classes?
   bool hasPrimaryVBases() const {
     return isItaniumFamily();

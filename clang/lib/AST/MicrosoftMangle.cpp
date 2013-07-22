@@ -522,9 +522,9 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
         // use the type we were given.
         mangleCXXDtorType(static_cast<CXXDtorType>(StructorType));
       else
-        // Otherwise, use the complete destructor name. This is relevant if a
+        // Otherwise, use the base destructor name. This is relevant if a
         // class with a destructor is declared within a destructor.
-        mangleCXXDtorType(Dtor_Complete);
+        mangleCXXDtorType(Dtor_Base);
       break;
       
     case DeclarationName::CXXConversionFunctionName:
@@ -594,18 +594,19 @@ void MicrosoftCXXNameMangler::manglePostfix(const DeclContext *DC,
 }
 
 void MicrosoftCXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
+  // Microsoft uses the names on the case labels for these dtor variants.  Clang
+  // uses the Itanium terminology internally.  Everything in this ABI delegates
+  // towards the base dtor.
   switch (T) {
-  case Dtor_Deleting:
-    Out << "?_G";
-    return;
-  case Dtor_Base:
-    // FIXME: We should be asked to mangle base dtors.
-    // However, fixing this would require larger changes to the CodeGenModule.
-    // Please put llvm_unreachable here when CGM is changed.
-    // For now, just mangle a base dtor the same way as a complete dtor...
-  case Dtor_Complete:
-    Out << "?1";
-    return;
+  // <operator-name> ::= ?1  # destructor
+  case Dtor_Base: Out << "?1"; return;
+  // <operator-name> ::= ?_D # vbase destructor
+  case Dtor_Complete: Out << "?_D"; return;
+  // <operator-name> ::= ?_G # scalar deleting destructor
+  case Dtor_Deleting: Out << "?_G"; return;
+  // <operator-name> ::= ?_E # vector deleting destructor
+  // FIXME: Add a vector deleting dtor type.  It goes in the vtable, so we need
+  // it.
   }
   llvm_unreachable("Unsupported dtor type?");
 }

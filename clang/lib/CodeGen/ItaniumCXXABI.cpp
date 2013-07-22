@@ -113,6 +113,16 @@ public:
                                 CanQualType &ResTy,
                                 SmallVectorImpl<CanQualType> &ArgTys);
 
+  bool useThunkForDtorVariant(const CXXDestructorDecl *Dtor,
+                              CXXDtorType DT) const {
+    // Itanium does not emit any destructor variant as an inline thunk.
+    // Delegating may occur as an optimization, but all variants are either
+    // emitted with external linkage or as linkonce if they are inline and used.
+    return false;
+  }
+
+  void EmitCXXDestructors(const CXXDestructorDecl *D);
+
   void BuildInstanceFunctionParams(CodeGenFunction &CGF,
                                    QualType &ResTy,
                                    FunctionArgList &Params);
@@ -759,6 +769,22 @@ void ItaniumCXXABI::BuildDestructorSignature(const CXXDestructorDecl *Dtor,
   // Check if we need to add a VTT parameter (which has type void **).
   if (Type == Dtor_Base && Dtor->getParent()->getNumVBases() != 0)
     ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+}
+
+void ItaniumCXXABI::EmitCXXDestructors(const CXXDestructorDecl *D) {
+  // The destructor in a virtual table is always a 'deleting'
+  // destructor, which calls the complete destructor and then uses the
+  // appropriate operator delete.
+  if (D->isVirtual())
+    CGM.EmitGlobal(GlobalDecl(D, Dtor_Deleting));
+
+  // The destructor used for destructing this as a most-derived class;
+  // call the base destructor and then destructs any virtual bases.
+  CGM.EmitGlobal(GlobalDecl(D, Dtor_Complete));
+
+  // The destructor used for destructing this as a base class; ignores
+  // virtual bases.
+  CGM.EmitGlobal(GlobalDecl(D, Dtor_Base));
 }
 
 void ItaniumCXXABI::BuildInstanceFunctionParams(CodeGenFunction &CGF,
