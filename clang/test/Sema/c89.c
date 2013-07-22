@@ -116,3 +116,7 @@ long long ll1 = /* expected-warning {{'long long' is an extension when C99 mode 
 unsigned long long ull1 = /* expected-warning {{'long long' is an extension when C99 mode is not enabled}} */
                    42ULL; /* expected-warning {{'long long' is an extension when C99 mode is not enabled}} */
 
+void test17(int v, int w) {
+  int a[2] = { v, w }; /* expected-warning {{initializer for aggregate is not a compile-time constant}} */
+}
+
