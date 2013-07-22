@@ -1969,7 +1969,8 @@ def : InstAlias<"aad", (AAD8i8 10)>;
 def : InstAlias<"aam", (AAM8i8 10)>;
 
 // Disambiguate the mem/imm form of bt-without-a-suffix as btl.
-def : InstAlias<"bt $imm, $mem", (BT32mi8 i32mem:$mem, i32i8imm:$imm)>;
+def : InstAlias<"bt {$imm, $mem|$mem, $imm}",
+                (BT32mi8 i32mem:$mem, i32i8imm:$imm), 0>;
 
 // clr aliases.
 def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)>;
