@@ -241,21 +241,24 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 }
 
 static bool isUnmovableInstruction(Instruction *I) {
-  if (I->getOpcode() == Instruction::PHI ||
-      I->getOpcode() == Instruction::LandingPad ||
-      I->getOpcode() == Instruction::Alloca ||
-      I->getOpcode() == Instruction::Load ||
-      I->getOpcode() == Instruction::Invoke ||
-      (I->getOpcode() == Instruction::Call &&
-       !isa<DbgInfoIntrinsic>(I)) ||
-      I->getOpcode() == Instruction::UDiv ||
-      I->getOpcode() == Instruction::SDiv ||
-      I->getOpcode() == Instruction::FDiv ||
-      I->getOpcode() == Instruction::URem ||
-      I->getOpcode() == Instruction::SRem ||
-      I->getOpcode() == Instruction::FRem)
+  switch (I->getOpcode()) {
+  case Instruction::PHI:
+  case Instruction::LandingPad:
+  case Instruction::Alloca:
+  case Instruction::Load:
+  case Instruction::Invoke:
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::FDiv:
+  case Instruction::URem:
+  case Instruction::SRem:
+  case Instruction::FRem:
     return true;
-  return false;
+  case Instruction::Call:
+    return !isa<DbgInfoIntrinsic>(I);
+  default:
+    return false;
+  }
 }
 
 void Reassociate::BuildRankMap(Function &F) {
