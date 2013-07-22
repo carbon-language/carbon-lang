@@ -377,11 +377,11 @@ class NewArchiveIterator {
   bool IsNewMember;
   SmallString<16> MemberName;
   object::Archive::child_iterator OldI;
-  std::vector<std::string>::const_iterator NewI;
+  std::string NewFilename;
 
 public:
   NewArchiveIterator(object::Archive::child_iterator I, Twine Name);
-  NewArchiveIterator(std::vector<std::string>::const_iterator I, Twine Name);
+  NewArchiveIterator(std::string *I, Twine Name);
   NewArchiveIterator();
   bool isNewMember() const;
   object::Archive::child_iterator getOld() const;
@@ -398,9 +398,8 @@ NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
   Name.toVector(MemberName);
 }
 
-NewArchiveIterator::NewArchiveIterator(
-    std::vector<std::string>::const_iterator I, Twine Name)
-    : IsNewMember(true), NewI(I) {
+NewArchiveIterator::NewArchiveIterator(std::string *NewFilename, Twine Name)
+    : IsNewMember(true), NewFilename(*NewFilename) {
   Name.toVector(MemberName);
 }
 
@@ -413,25 +412,24 @@ object::Archive::child_iterator NewArchiveIterator::getOld() const {
 
 const char *NewArchiveIterator::getNew() const {
   assert(IsNewMember);
-  return NewI->c_str();
+  return NewFilename.c_str();
 }
 
 template <typename T>
 void addMember(std::vector<NewArchiveIterator> &Members,
                std::string &StringTable, T I, StringRef Name, int Pos = -1) {
+  if (Pos == -1) {
+    Pos = Members.size();
+    Members.resize(Pos + 1);
+  }
+
   if (Name.size() < 16) {
     NewArchiveIterator NI(I, Twine(Name) + "/");
-    if (Pos == -1)
-      Members.push_back(NI);
-    else
-      Members[Pos] = NI;
+    Members[Pos] = NI;
   } else {
     int MapIndex = StringTable.size();
     NewArchiveIterator NI(I, Twine("/") + Twine(MapIndex));
-    if (Pos == -1)
-      Members.push_back(NI);
-    else
-      Members[Pos] = NI;
+    Members[Pos] = NI;
     StringTable += Name;
     StringTable += "/\n";
   }
@@ -445,6 +443,60 @@ public:
   HasName(StringRef Name) : Name(Name) {}
   bool operator()(StringRef Path) { return Name == sys::path::filename(Path); }
 };
+}
+
+enum InsertAction {
+  IA_AddOldMember,
+  IA_AddNewMeber,
+  IA_Delete,
+  IA_MoveOldMember,
+  IA_MoveNewMember
+};
+
+static InsertAction
+computeInsertAction(ArchiveOperation Operation,
+                    object::Archive::child_iterator I, StringRef Name,
+                    std::vector<std::string>::iterator &Pos) {
+  if (Operation == QuickAppend || Members.empty())
+    return IA_AddOldMember;
+
+  std::vector<std::string>::iterator MI =
+      std::find_if(Members.begin(), Members.end(), HasName(Name));
+
+  if (MI == Members.end())
+    return IA_AddOldMember;
+
+  Pos = MI;
+
+  if (Operation == Delete)
+    return IA_Delete;
+
+  if (Operation == Move)
+    return IA_MoveOldMember;
+
+  if (Operation == ReplaceOrInsert) {
+    StringRef PosName = sys::path::filename(RelPos);
+    if (!OnlyUpdate) {
+      if (PosName.empty())
+        return IA_AddNewMeber;
+      return IA_MoveNewMember;
+    }
+
+    // We could try to optimize this to a fstat, but it is not a common
+    // operation.
+    sys::fs::file_status Status;
+    failIfError(sys::fs::status(*MI, Status));
+    if (Status.getLastModificationTime() < I->getLastModified()) {
+      if (PosName.empty())
+        return IA_AddOldMember;
+      return IA_MoveOldMember;
+    }
+
+    if (PosName.empty())
+      return IA_AddNewMeber;
+    return IA_MoveNewMember;
+  }
+  llvm_unreachable("No such operation");
 }
 
 // We have to walk this twice and computing it is not trivial, so creating an
@@ -471,28 +523,27 @@ computeNewArchiveMembers(ArchiveOperation Operation,
         else
           InsertPos = Pos + 1;
       }
-      if (InsertPos == Pos)
-        Ret.resize(Ret.size() + Members.size());
-      if (Operation != QuickAppend && !Members.empty()) {
-        std::vector<std::string>::iterator MI =
-            std::find_if(Members.begin(), Members.end(), HasName(Name));
-        if (MI != Members.end()) {
-          if (Operation == Move) {
-            addMember(Moved, StringTable, I, Name);
-            continue;
-          }
-          if (Operation != ReplaceOrInsert || !OnlyUpdate)
-            continue;
-          // Ignore if the file if it is older than the member.
-          sys::fs::file_status Status;
-          failIfError(sys::fs::status(*MI, Status));
-          if (Status.getLastModificationTime() < I->getLastModified())
-            Members.erase(MI);
-          else
-            continue;
-        }
+
+      std::vector<std::string>::iterator MemberI = Members.end();
+      InsertAction Action = computeInsertAction(Operation, I, Name, MemberI);
+      switch (Action) {
+      case IA_AddOldMember:
+        addMember(Ret, StringTable, I, Name);
+        break;
+      case IA_AddNewMeber:
+        addMember(Ret, StringTable, &*MemberI, Name);
+        break;
+      case IA_Delete:
+        break;
+      case IA_MoveOldMember:
+        addMember(Moved, StringTable, I, Name);
+        break;
+      case IA_MoveNewMember:
+        addMember(Moved, StringTable, &*MemberI, Name);
+        break;
       }
-      addMember(Ret, StringTable, I, Name);
+      if (MemberI != Members.end())
+        Members.erase(MemberI);
     }
   }
 
@@ -502,27 +553,19 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   if (!RelPos.empty() && InsertPos == -1)
     fail("Insertion point not found");
 
-  if (Operation == Move) {
-    if (Members.size() != Moved.size())
-      fail("A member to be moved is not present in the archive");
+  if (RelPos.empty())
+    InsertPos = Ret.size();
 
-    if (RelPos.empty()) {
-      Ret.insert(Ret.end(), Moved.begin(), Moved.end());
-      return Ret;
-    }
-    assert(unsigned(InsertPos) <= Ret.size());
-    std::copy(Moved.begin(), Moved.end(), Ret.begin() + InsertPos);
-    return Ret;
-  }
+  assert(unsigned(InsertPos) <= Ret.size());
+  Ret.insert(Ret.begin() + InsertPos, Moved.begin(), Moved.end());
 
+  Ret.insert(Ret.begin() + InsertPos, Members.size(), NewArchiveIterator());
   int Pos = InsertPos;
   for (std::vector<std::string>::iterator I = Members.begin(),
-                                          E = Members.end();
-       I != E; ++I) {
+         E = Members.end();
+       I != E; ++I, ++Pos) {
     StringRef Name = sys::path::filename(*I);
-    addMember(Ret, StringTable, I, Name, Pos);
-    if (Pos != -1)
-      ++Pos;
+    addMember(Ret, StringTable, &*I, Name, Pos);
   }
 
   return Ret;
