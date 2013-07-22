@@ -1,4 +1,4 @@
-//===-- PrologEpilogInserter.h - Prolog/Epilog code insertion -*- C++ -* --===//
+//===-- PrologEpilogInserter.h - Prolog/Epilog code insertion -*- C++ -*---===//
 //
 //                     The LLVM Compiler Infrastructure
 //
