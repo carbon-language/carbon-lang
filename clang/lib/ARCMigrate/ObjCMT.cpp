@@ -399,10 +399,12 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   return false;
 }
 
-static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
+static bool rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
                                 const TypedefDecl *TypedefDcl,
-                                const NSAPI &NS, edit::Commit &commit) {
-  std::string ClassString = "NS_ENUM(NSInteger, ";
+                                const NSAPI &NS, edit::Commit &commit,
+                                 bool IsNSIntegerType) {
+  std::string ClassString =
+    IsNSIntegerType ? "NS_ENUM(NSInteger, " : "NS_OPTIONS(NSUInteger, ";
   ClassString += TypedefDcl->getIdentifier()->getName();
   ClassString += ')';
   SourceRange R(EnumDcl->getLocStart(), EnumDcl->getLocStart());
@@ -410,6 +412,29 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   SourceLocation TypedefLoc = TypedefDcl->getLocEnd();
   commit.remove(SourceRange(TypedefLoc, TypedefLoc));
   return true;
+}
+
+static bool UseNSOptionsMacro(ASTContext &Ctx,
+                              const EnumDecl *EnumDcl) {
+  bool PowerOfTwo = true;
+  for (EnumDecl::enumerator_iterator EI = EnumDcl->enumerator_begin(),
+       EE = EnumDcl->enumerator_end(); EI != EE; ++EI) {
+    EnumConstantDecl *Enumerator = (*EI);
+    const Expr *InitExpr = Enumerator->getInitExpr();
+    if (!InitExpr) {
+      PowerOfTwo = false;
+      continue;
+    }
+    InitExpr = InitExpr->IgnoreImpCasts();
+    if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(InitExpr))
+      if (BO->isShiftOp() || BO->isBitwiseOp())
+        return true;
+    
+    uint64_t EnumVal = Enumerator->getInitVal().getZExtValue();
+    if (PowerOfTwo && EnumVal && !llvm::isPowerOf2_64(EnumVal))
+      PowerOfTwo = false;
+  }
+  return PowerOfTwo;
 }
 
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,   
@@ -479,23 +504,29 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   QualType qt = TypedefDcl->getTypeSourceInfo()->getType();
   bool IsNSIntegerType = NSAPIObj->isObjCNSIntegerType(qt);
   bool IsNSUIntegerType = !IsNSIntegerType && NSAPIObj->isObjCNSUIntegerType(qt);
+  
   if (!IsNSIntegerType && !IsNSUIntegerType) {
     // Also check for typedef enum {...} TD;
     if (const EnumType *EnumTy = qt->getAs<EnumType>()) {
       if (EnumTy->getDecl() == EnumDcl) {
-        // NS_ENUM must be available.
-        if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
+        bool NSOptions = UseNSOptionsMacro(Ctx, EnumDcl);
+        if (NSOptions) {
+          if (!Ctx.Idents.get("NS_OPTIONS").hasMacroDefinition())
+            return;
+        }
+        else if (!Ctx.Idents.get("NS_ENUM").hasMacroDefinition())
           return;
         edit::Commit commit(*Editor);
-        rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit);
+        rewriteToNSMacroDecl(EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
         Editor->commit(commit);
-        return;
       }
-      else
-        return;
     }
-    else
-      return;
+    return;
+  }
+  if (IsNSIntegerType && UseNSOptionsMacro(Ctx, EnumDcl)) {
+    // We may still use NS_OPTIONS based on what we find in the enumertor list.
+    IsNSIntegerType = false;
+    IsNSUIntegerType = true;
   }
   
   // NS_ENUM must be available.
