@@ -271,7 +271,7 @@ public:
   }
 
   /// \brief Fetch the type representing a pointer to an integer value.
-  IntegerType* getIntPtrTy(DataLayout *DL, unsigned AddrSpace = 0) {
+  IntegerType* getIntPtrTy(const DataLayout *DL, unsigned AddrSpace = 0) {
     return DL->getIntPtrType(Context, AddrSpace);
   }
 
