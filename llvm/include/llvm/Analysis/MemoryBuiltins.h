@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This family of functions identifies calls to builtin functions that allocate
-// or free memory.  
+// or free memory.
 //
 //===----------------------------------------------------------------------===//
 
@@ -78,7 +78,7 @@ static inline CallInst *extractMallocCall(Value *I,
   return const_cast<CallInst*>(extractMallocCall((const Value*)I, TLI));
 }
 
-/// isArrayMalloc - Returns the corresponding CallInst if the instruction 
+/// isArrayMalloc - Returns the corresponding CallInst if the instruction
 /// is a call to malloc whose array size can be determined and the array size
 /// is not constant 1.  Otherwise, return NULL.
 const CallInst *isArrayMalloc(const Value *I, const DataLayout *TD,
@@ -98,7 +98,7 @@ PointerType *getMallocType(const CallInst *CI, const TargetLibraryInfo *TLI);
 ///  >1: Unique PointerType cannot be determined, return NULL.
 Type *getMallocAllocatedType(const CallInst *CI, const TargetLibraryInfo *TLI);
 
-/// getMallocArraySize - Returns the array size of a malloc call.  If the 
+/// getMallocArraySize - Returns the array size of a malloc call.  If the
 /// argument passed to malloc is a multiple of the size of the malloced type,
 /// then return that multiple.  For non-array mallocs, the multiple is
 /// constant 1.  Otherwise, return NULL for mallocs whose array size cannot be
@@ -127,12 +127,12 @@ static inline CallInst *extractCallocCall(Value *I,
 
 /// isFreeCall - Returns non-null if the value is a call to the builtin free()
 const CallInst *isFreeCall(const Value *I, const TargetLibraryInfo *TLI);
-  
+
 static inline CallInst *isFreeCall(Value *I, const TargetLibraryInfo *TLI) {
   return const_cast<CallInst*>(isFreeCall((const Value*)I, TLI));
 }
 
-  
+
 //===----------------------------------------------------------------------===//
 //  Utility functions to compute size of objects.
 //
@@ -150,7 +150,7 @@ bool getObjectSize(const Value *Ptr, uint64_t &Size, const DataLayout *TD,
 
 typedef std::pair<APInt, APInt> SizeOffsetType;
 
-/// \brief Evaluate the size and offset of an object ponted by a Value*
+/// \brief Evaluate the size and offset of an object pointed to by a Value*
 /// statically. Fails if size or offset are not known at compile time.
 class ObjectSizeOffsetVisitor
   : public InstVisitor<ObjectSizeOffsetVisitor, SizeOffsetType> {
@@ -206,7 +206,7 @@ public:
 typedef std::pair<Value*, Value*> SizeOffsetEvalType;
 
 
-/// \brief Evaluate the size and offset of an object ponted by a Value*.
+/// \brief Evaluate the size and offset of an object pointed to by a Value*.
 /// May create code to compute the result at run-time.
 class ObjectSizeOffsetEvaluator
   : public InstVisitor<ObjectSizeOffsetEvaluator, SizeOffsetEvalType> {
