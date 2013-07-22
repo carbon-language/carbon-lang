@@ -293,12 +293,14 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
   // In auto-synthesis, protocol properties are not synthesized. So,
   // a conforming protocol must have its required properties declared
   // in class interface.
+  bool HasAtleastOneRequiredProperty = false;
   if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition())
     for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
          E = PDecl->prop_end(); P != E; ++P) {
       ObjCPropertyDecl *Property = *P;
       if (Property->getPropertyImplementation() == ObjCPropertyDecl::Optional)
         continue;
+      HasAtleastOneRequiredProperty = true;
       DeclContext::lookup_const_result R = IDecl->lookup(Property->getDeclName());
       if (R.size() == 0) {
         // Relax the rule and look into class's implementation for a synthesize
@@ -317,12 +319,14 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
       else
         return false;
     }
+  
   // At this point, all required properties in this protocol conform to those
   // declared in the class.
   // Check that class implements the required methods of the protocol too.
+  bool HasAtleastOneRequiredMethod = false;
   if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition()) {
     if (PDecl->meth_begin() == PDecl->meth_end())
-      return false;
+      return HasAtleastOneRequiredProperty;
     for (ObjCContainerDecl::method_iterator M = PDecl->meth_begin(),
          MEnd = PDecl->meth_end(); M != MEnd; ++M) {
       ObjCMethodDecl *MD = (*M);
@@ -330,10 +334,11 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
         continue;
       if (MD->getImplementationControl() == ObjCMethodDecl::Optional)
         continue;
-      bool match = false;
       DeclContext::lookup_const_result R = ImpDecl->lookup(MD->getDeclName());
       if (R.size() == 0)
         return false;
+      bool match = false;
+      HasAtleastOneRequiredMethod = true;
       for (unsigned I = 0, N = R.size(); I != N; ++I)
         if (ObjCMethodDecl *ImpMD = dyn_cast<ObjCMethodDecl>(R[0]))
           if (Ctx.ObjCMethodsAreEqual(MD, ImpMD)) {
@@ -344,8 +349,9 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
         return false;
     }
   }
-
-  return true;
+  if (HasAtleastOneRequiredProperty || HasAtleastOneRequiredMethod)
+    return true;
+  return false;
 }
 
 static bool rewriteToObjCInterfaceDecl(const ObjCInterfaceDecl *IDecl,

@@ -77,3 +77,38 @@
 @implementation Test6 
 @end
 
+@class UIDynamicAnimator, UIWindow;
+@interface UIResponder : NSObject
+@end
+
+@protocol EmptyProtocol
+@end
+
+@protocol OptionalMethodsOnly
+@optional
+- (void)dynamicAnimatorWillResume:(UIDynamicAnimator*)animator;
+- (void)dynamicAnimatorDidPause:(UIDynamicAnimator*)animator;
+@end
+
+@protocol OptionalPropertiesOnly
+@optional
+@property (strong, nonatomic) id OptionalProperty;
+@end
+
+@protocol OptionalEvrything
+@optional
+- (void)dynamicAnimatorWillResume:(UIDynamicAnimator*)animator;
+@property (strong, nonatomic) id OptionalProperty;
+- (void)dynamicAnimatorDidPause:(UIDynamicAnimator*)animator;
+@end
+
+@protocol UIApplicationDelegate
+@end
+
+@interface Test7 : UIResponder <UIApplicationDelegate>
+@property (strong, nonatomic) UIWindow *window;
+@end
+
+@implementation Test7
+@end
+
