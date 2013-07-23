@@ -1174,13 +1174,15 @@ public:
 
   /// Return true if an fneg operation is free to the point where it is never
   /// worthwhile to replace it with a bitwise operation.
-  virtual bool isFNegFree(EVT) const {
+  virtual bool isFNegFree(EVT VT) const {
+    assert(VT.isFloatingPoint());
     return false;
   }
 
   /// Return true if an fneg operation is free to the point where it is never
   /// worthwhile to replace it with a bitwise operation.
-  virtual bool isFAbsFree(EVT) const {
+  virtual bool isFAbsFree(EVT VT) const {
+    assert(VT.isFloatingPoint());
     return false;
   }
 

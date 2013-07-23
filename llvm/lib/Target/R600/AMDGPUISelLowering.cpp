@@ -115,6 +115,20 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 }
 
 //===---------------------------------------------------------------------===//
+// Target Properties
+//===---------------------------------------------------------------------===//
+
+bool AMDGPUTargetLowering::isFAbsFree(EVT VT) const {
+  assert(VT.isFloatingPoint());
+  return VT == MVT::f32;
+}
+
+bool AMDGPUTargetLowering::isFNegFree(EVT VT) const {
+  assert(VT.isFloatingPoint());
+  return VT == MVT::f32;
+}
+
+//===---------------------------------------------------------------------===//
 // TargetLowering Callbacks
 //===---------------------------------------------------------------------===//
 
