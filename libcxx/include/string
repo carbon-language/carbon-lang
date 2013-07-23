@@ -422,6 +422,11 @@ template <> struct hash<u16string>;
 template <> struct hash<u32string>;
 template <> struct hash<wstring>;
 
+basic_string<char>     operator "" s( const char *str,     size_t len ); // C++14
+basic_string<wchar_t>  operator "" s( const wchar_t *str,  size_t len ); // C++14
+basic_string<char16_t> operator "" s( const char16_t *str, size_t len ); // C++14
+basic_string<char32_t> operator "" s( const char32_t *str, size_t len ); // C++14
+
 }  // std
 
 */
@@ -4096,6 +4101,42 @@ getline(basic_istream<_CharT, _Traits>&& __is,
         basic_string<_CharT, _Traits, _Allocator>& __str);
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#if _LIBCPP_STD_VER > 11 
+// Literal suffixes for basic_string [basic.string.literals]
+// inline // Deviation from N3690.
+//    We believe the inline to be a defect and have submitted an LWG issue.
+//    An LWG issue number has not yet been assigned.
+namespace literals
+{
+  inline namespace string_literals
+  {
+	inline _LIBCPP_INLINE_VISIBILITY
+	basic_string<char> operator "" s( const char *__str, size_t __len )
+	{
+		return basic_string<char> (__str, __len);
+	}
+
+	inline _LIBCPP_INLINE_VISIBILITY
+	basic_string<wchar_t> operator "" s( const wchar_t *__str, size_t __len )
+	{
+		return basic_string<wchar_t> (__str, __len);
+	}
+
+	inline _LIBCPP_INLINE_VISIBILITY
+	basic_string<char16_t> operator "" s( const char16_t *__str, size_t __len )
+	{
+		return basic_string<char16_t> (__str, __len);
+	}
+
+	inline _LIBCPP_INLINE_VISIBILITY
+	basic_string<char32_t> operator "" s( const char32_t *__str, size_t __len )
+	{
+		return basic_string<char32_t> (__str, __len);
+	}
+  }
+}
+#endif
 
 _LIBCPP_EXTERN_TEMPLATE(class basic_string<char>)
 _LIBCPP_EXTERN_TEMPLATE(class basic_string<wchar_t>)
