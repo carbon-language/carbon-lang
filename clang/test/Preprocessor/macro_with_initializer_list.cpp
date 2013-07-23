@@ -150,13 +150,13 @@ void test() {
   INIT(e, {1, 2, 3});
   // expected-error@-1 {{too many arguments provided}}
   // expected-error@-2 {{use of undeclared identifier}}
-  // expected-note@-3 {{cannot use initializer list at the beginning of an macro argument}}
+  // expected-note@-3 {{cannot use initializer list at the beginning of a macro argument}}
 
   // Can't be fixed by parentheses.
   INIT(e, {1, 2, 3} + {1, 2, 3});
   // expected-error@-1 {{too many arguments provided}}
   // expected-error@-2 {{use of undeclared identifier}}
-  // expected-note@-3 {{cannot use initializer list at the beginning of an macro argument}}
+  // expected-note@-3 {{cannot use initializer list at the beginning of a macro argument}}
 }
 
 // CHECK: fix-it:"{{.*}}macro_with_initializer_list.cpp":{145:11-145:11}:"("
@@ -178,5 +178,5 @@ void test2() {
         {1,2,3}, {1,2,3}, {1,2,3}, {1,2,3}, {1,2,3}, {1,2,3});
   // expected-error@-2 {{too many arguments provided}}
   // expected-error@-3 {{use of undeclared identifier}}
-  // expected-note@-4 {{cannot use initializer list at the beginning of an macro argument}}
+  // expected-note@-4 {{cannot use initializer list at the beginning of a macro argument}}
 }
