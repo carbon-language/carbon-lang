@@ -173,6 +173,9 @@ def FP_ONE : PatLeaf <
   [{return N->isExactlyValue(1.0);}]
 >;
 
+def U24 : ComplexPattern<i32, 1, "SelectU24", [], []>;
+def I24 : ComplexPattern<i32, 1, "SelectI24", [], []>;
+
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
 let usesCustomInserter = 1  in {
@@ -365,6 +368,16 @@ class ROTRPattern <Instruction BIT_ALIGN> : Pat <
   (rotr i32:$src0, i32:$src1),
   (BIT_ALIGN $src0, $src0, $src1)
 >;
+
+// 24-bit arithmetic patterns
+def umul24 : PatFrag <(ops node:$x, node:$y), (mul node:$x, node:$y)>;
+
+/*
+class UMUL24Pattern <Instruction UMUL24> : Pat <
+  (mul U24:$x, U24:$y),
+  (UMUL24 $x, $y)
+>;
+*/
 
 include "R600Instructions.td"
 

@@ -1473,6 +1473,9 @@ let Predicates = [isEGorCayman] in {
   def CNDGE_eg : CNDGE_Common<0x1B>;
   def MUL_LIT_eg : MUL_LIT_Common<0x1F>;
   def LOG_CLAMPED_eg : LOG_CLAMPED_Common<0x82>;
+  def MUL_UINT24_eg : R600_2OP <0xB5, "MUL_UINT24",
+    [(set i32:$dst, (mul U24:$src0, U24:$src1))], VecALU
+  >;
   def DOT4_eg : DOT4_Common<0xBE>;
   defm CUBE_eg : CUBE_Common<0xC0>;
 
@@ -1702,6 +1705,10 @@ defm R600_ : RegisterLoadStore <R600_Reg32, FRAMEri, ADDRIndirect>;
 //===----------------------------------------------------------------------===//
 
 let Predicates = [isCayman] in {
+
+def MUL_INT24_cm : R600_2OP <0x5B, "MUL_INT24",
+  [(set i32:$dst, (mul I24:$src0, I24:$src1))], VecALU
+>;
 
 let isVector = 1 in {
 
