@@ -1483,6 +1483,9 @@ TypeKind.FUNCTIONNOPROTO = TypeKind(110)
 TypeKind.FUNCTIONPROTO = TypeKind(111)
 TypeKind.CONSTANTARRAY = TypeKind(112)
 TypeKind.VECTOR = TypeKind(113)
+TypeKind.INCOMPLETEARRAY = TypeKind(114)
+TypeKind.VARIABLEARRAY = TypeKind(115)
+TypeKind.DEPENDENTSIZEDARRAY = TypeKind(116)
 
 class Type(Structure):
     """

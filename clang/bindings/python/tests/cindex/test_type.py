@@ -237,12 +237,20 @@ void bar(int a, int b);
 
 def test_element_type():
     """Ensure Type.element_type works."""
-    tu = get_tu('int i[5];')
+    tu = get_tu('int c[5]; int i[]; int x; int v[x];')
+    c = get_cursor(tu, 'c')
     i = get_cursor(tu, 'i')
+    v = get_cursor(tu, 'v')
+    assert c is not None
     assert i is not None
+    assert v is not None
 
-    assert i.type.kind == TypeKind.CONSTANTARRAY
+    assert c.type.kind == TypeKind.CONSTANTARRAY
+    assert c.type.element_type.kind == TypeKind.INT
+    assert i.type.kind == TypeKind.INCOMPLETEARRAY
     assert i.type.element_type.kind == TypeKind.INT
+    assert v.type.kind == TypeKind.VARIABLEARRAY
+    assert v.type.element_type.kind == TypeKind.INT
 
 @raises(Exception)
 def test_invalid_element_type():
