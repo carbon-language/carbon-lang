@@ -29,6 +29,34 @@ class SourceManager;
 class Rewriter;
 } // namespace clang
 
+/// \brief Class encapsulating a list of \c tooling::Range with some
+/// convenience methods.
+///
+/// The ranges stored are used to keep track of the overriden parts of a file.
+class ChangedRanges {
+  typedef std::vector<clang::tooling::Range> RangeVec;
+
+public:
+  typedef RangeVec::const_iterator const_iterator;
+
+  /// \brief Create new ranges from the replacements and adjust existing one
+  /// to remove replaced parts.
+  ///
+  /// Note that all replacements should come from the same file.
+  void adjustChangedRanges(const clang::tooling::Replacements &Replaces);
+
+  /// \brief Iterators.
+  /// @{
+  const_iterator begin() const { return Ranges.begin(); }
+  const_iterator end() const { return Ranges.end(); }
+  /// @}
+
+private:
+  void coalesceRanges();
+
+  RangeVec Ranges;
+};
+
 /// \brief Container for storing override information for a single headers.
 struct HeaderOverride {
   HeaderOverride() {}
@@ -36,6 +64,7 @@ struct HeaderOverride {
 
   std::string FileName;
   std::string FileOverride;
+  ChangedRanges Changes;
 };
 
 /// \brief Container mapping header file names to override information.
@@ -46,12 +75,18 @@ typedef llvm::StringMap<HeaderOverride> HeaderOverrides;
 /// which changes have been made.
 class SourceOverrides {
 public:
-  SourceOverrides(llvm::StringRef MainFileName);
+  SourceOverrides(llvm::StringRef MainFileName, bool TrackChanges);
 
   /// \brief Accessors.
   /// @{
   llvm::StringRef getMainFileName() const { return MainFileName; }
   llvm::StringRef getMainFileContent() const { return MainFileOverride; }
+  const ChangedRanges &getChangedRanges() const { return MainFileChanges; }
+
+  /// \brief Is file change tracking enabled?
+  ///
+  /// Tracking file changes can be useful to reformat the code for example.
+  bool isTrackingFileChanges() const { return TrackChanges; }
   /// @}
 
   /// \brief Indicates if the source file has been overridden.
@@ -87,8 +122,14 @@ private:
   /// file content overrides.
   void applyRewrites(clang::Rewriter &Rewrite);
 
+  /// \brief Adjust the changed ranges to reflect the parts of the files that
+  /// have been replaced.
+  void adjustChangedRanges(const clang::tooling::Replacements &Replaces);
+
   const std::string MainFileName;
   std::string MainFileOverride;
+  const bool TrackChanges;
+  ChangedRanges MainFileChanges;
   HeaderOverrides Headers;
 };
 
@@ -98,7 +139,11 @@ public:
   typedef llvm::StringMap<SourceOverrides *> SourceOverridesMap;
   typedef SourceOverridesMap::const_iterator const_iterator;
 
-  FileOverrides() {}
+  /// \brief Construct the SourceOverrides manager.
+  ///
+  /// \param TrackChanges Wether or not the \c SourceOverrides should keep track
+  /// of changes. See \c SourceOverrides::isTrackingFileChanges().
+  FileOverrides(bool TrackChanges) : TrackChanges(TrackChanges) {}
   ~FileOverrides();
 
   const_iterator find(llvm::StringRef Filename) const {
@@ -120,6 +165,7 @@ private:
   FileOverrides &operator=(const FileOverrides &) LLVM_DELETED_FUNCTION;
 
   SourceOverridesMap Overrides;
+  const bool TrackChanges;
 };
 
 /// \brief Generate a unique filename to store the replacements.

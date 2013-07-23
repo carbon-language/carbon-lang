@@ -7,9 +7,12 @@ add_clang_library(migrateCore
   Transform.cpp
   IncludeExcludeInfo.cpp
   PerfSupport.cpp
+  Reformatting.cpp
   )
 target_link_libraries(migrateCore
+  clangFormat
   clangTooling
   clangBasic
   clangASTMatchers
+  clangRewriteFrontend
   )
