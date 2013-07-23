@@ -15,6 +15,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
@@ -121,6 +122,7 @@ static bool Create = false;        ///< 'c' modifier
 static bool OriginalDates = false; ///< 'o' modifier
 static bool OnlyUpdate = false;    ///< 'u' modifier
 static bool Verbose = false;       ///< 'v' modifier
+static bool Symtab = true;         ///< 's' modifier
 
 // Relative Positional Argument (for insert/move). This variable holds
 // the name of the archive member to which the 'a', 'b' or 'i' modifier
@@ -196,8 +198,12 @@ static ArchiveOperation parseCommandLine() {
     case 'c': Create = true; break;
     case 'l': /* accepted but unused */ break;
     case 'o': OriginalDates = true; break;
-    case 's': break; // Ignore for now.
-    case 'S': break; // Ignore for now.
+    case 's':
+      Symtab = true;
+      break;
+    case 'S':
+      Symtab = false;
+      break;
     case 'u': OnlyUpdate = true; break;
     case 'v': Verbose = true; break;
     case 'a':
@@ -375,33 +381,31 @@ static void performReadOperation(ArchiveOperation Operation,
 namespace {
 class NewArchiveIterator {
   bool IsNewMember;
-  SmallString<16> MemberName;
+  StringRef Name;
   object::Archive::child_iterator OldI;
   std::string NewFilename;
 
 public:
-  NewArchiveIterator(object::Archive::child_iterator I, Twine Name);
-  NewArchiveIterator(std::string *I, Twine Name);
+  NewArchiveIterator(object::Archive::child_iterator I, StringRef Name);
+  NewArchiveIterator(std::string *I, StringRef Name);
   NewArchiveIterator();
   bool isNewMember() const;
   object::Archive::child_iterator getOld() const;
   const char *getNew() const;
-  StringRef getMemberName() const { return MemberName; }
+  StringRef getName() const;
 };
 }
 
 NewArchiveIterator::NewArchiveIterator() {}
 
 NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
-                                       Twine Name)
-    : IsNewMember(false), OldI(I) {
-  Name.toVector(MemberName);
-}
+                                       StringRef Name)
+    : IsNewMember(false), Name(Name), OldI(I) {}
 
-NewArchiveIterator::NewArchiveIterator(std::string *NewFilename, Twine Name)
-    : IsNewMember(true), NewFilename(*NewFilename) {
-  Name.toVector(MemberName);
-}
+NewArchiveIterator::NewArchiveIterator(std::string *NewFilename, StringRef Name)
+    : IsNewMember(true), Name(Name), NewFilename(*NewFilename) {}
+
+StringRef NewArchiveIterator::getName() const { return Name; }
 
 bool NewArchiveIterator::isNewMember() const { return IsNewMember; }
 
@@ -416,23 +420,13 @@ const char *NewArchiveIterator::getNew() const {
 }
 
 template <typename T>
-void addMember(std::vector<NewArchiveIterator> &Members,
-               std::string &StringTable, T I, StringRef Name, int Pos = -1) {
-  if (Pos == -1) {
-    Pos = Members.size();
-    Members.resize(Pos + 1);
-  }
-
-  if (Name.size() < 16) {
-    NewArchiveIterator NI(I, Twine(Name) + "/");
+void addMember(std::vector<NewArchiveIterator> &Members, T I, StringRef Name,
+               int Pos = -1) {
+  NewArchiveIterator NI(I, Name);
+  if (Pos == -1)
+    Members.push_back(NI);
+  else
     Members[Pos] = NI;
-  } else {
-    int MapIndex = StringTable.size();
-    NewArchiveIterator NI(I, Twine("/") + Twine(MapIndex));
-    Members[Pos] = NI;
-    StringTable += Name;
-    StringTable += "/\n";
-  }
 }
 
 namespace {
@@ -503,8 +497,7 @@ computeInsertAction(ArchiveOperation Operation,
 // explicit std::vector is actually fairly efficient.
 static std::vector<NewArchiveIterator>
 computeNewArchiveMembers(ArchiveOperation Operation,
-                         object::Archive *OldArchive,
-                         std::string &StringTable) {
+                         object::Archive *OldArchive) {
   std::vector<NewArchiveIterator> Ret;
   std::vector<NewArchiveIterator> Moved;
   int InsertPos = -1;
@@ -528,18 +521,18 @@ computeNewArchiveMembers(ArchiveOperation Operation,
       InsertAction Action = computeInsertAction(Operation, I, Name, MemberI);
       switch (Action) {
       case IA_AddOldMember:
-        addMember(Ret, StringTable, I, Name);
+        addMember(Ret, I, Name);
         break;
       case IA_AddNewMeber:
-        addMember(Ret, StringTable, &*MemberI, Name);
+        addMember(Ret, &*MemberI, Name);
         break;
       case IA_Delete:
         break;
       case IA_MoveOldMember:
-        addMember(Moved, StringTable, I, Name);
+        addMember(Moved, I, Name);
         break;
       case IA_MoveNewMember:
-        addMember(Moved, StringTable, &*MemberI, Name);
+        addMember(Moved, &*MemberI, Name);
         break;
       }
       if (MemberI != Members.end())
@@ -565,7 +558,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
          E = Members.end();
        I != E; ++I, ++Pos) {
     StringRef Name = sys::path::filename(*I);
-    addMember(Ret, StringTable, &*I, Name, Pos);
+    addMember(Ret, &*I, Name, Pos);
   }
 
   return Ret;
@@ -582,6 +575,143 @@ static void printWithSpacePadding(raw_ostream &OS, T Data, unsigned Size) {
     OS << ' ';
 }
 
+static void print32BE(raw_fd_ostream &Out, unsigned Val) {
+  for (int I = 3; I >= 0; --I) {
+    char V = (Val >> (8 * I)) & 0xff;
+    Out << V;
+  }
+}
+
+static void printRestOfMemberHeader(raw_fd_ostream &Out,
+                                    const sys::TimeValue &ModTime, unsigned UID,
+                                    unsigned GID, unsigned Perms,
+                                    unsigned Size) {
+  printWithSpacePadding(Out, ModTime.toEpochTime(), 12);
+  printWithSpacePadding(Out, UID, 6);
+  printWithSpacePadding(Out, GID, 6);
+  printWithSpacePadding(Out, format("%o", Perms), 8);
+  printWithSpacePadding(Out, Size, 10);
+  Out << "`\n";
+}
+
+static void printMemberHeader(raw_fd_ostream &Out, StringRef Name,
+                              const sys::TimeValue &ModTime, unsigned UID,
+                              unsigned GID, unsigned Perms, unsigned Size) {
+  printWithSpacePadding(Out, Twine(Name) + "/", 16);
+  printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
+}
+
+static void printMemberHeader(raw_fd_ostream &Out, unsigned NameOffset,
+                              const sys::TimeValue &ModTime, unsigned UID,
+                              unsigned GID, unsigned Perms, unsigned Size) {
+  Out << '/';
+  printWithSpacePadding(Out, NameOffset, 15);
+  printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
+}
+
+static void writeStringTable(raw_fd_ostream &Out,
+                             ArrayRef<NewArchiveIterator> Members,
+                             std::vector<unsigned> &StringMapIndexes) {
+  unsigned StartOffset = 0;
+  for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
+                                              E = Members.end();
+       I != E; ++I) {
+    StringRef Name = I->getName();
+    if (Name.size() < 16)
+      continue;
+    if (StartOffset == 0) {
+      printWithSpacePadding(Out, "//", 58);
+      Out << "`\n";
+      StartOffset = Out.tell();
+    }
+    StringMapIndexes.push_back(Out.tell() - StartOffset);
+    Out << Name << "/\n";
+  }
+  if (StartOffset == 0)
+    return;
+  if (Out.tell() % 2)
+    Out << '\n';
+  int Pos = Out.tell();
+  Out.seek(StartOffset - 12);
+  printWithSpacePadding(Out, Pos - StartOffset, 10);
+  Out.seek(Pos);
+}
+
+static void writeSymbolTable(
+    raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
+    std::vector<std::pair<unsigned, unsigned> > &MemberOffsetRefs) {
+  unsigned StartOffset = 0;
+  unsigned MemberNum = 0;
+  std::vector<StringRef> SymNames;
+  std::vector<OwningPtr<object::ObjectFile> > DeleteIt;
+  for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
+                                              E = Members.end();
+       I != E; ++I, ++MemberNum) {
+    object::ObjectFile *Obj;
+    if (I->isNewMember()) {
+      const char *Filename = I->getNew();
+      Obj = object::ObjectFile::createObjectFile(Filename);
+    } else {
+      object::Archive::child_iterator OldMember = I->getOld();
+      OwningPtr<object::Binary> Binary;
+      error_code EC = OldMember->getAsBinary(Binary);
+      if (EC) { // FIXME: check only for "not an object file" errors.
+        Obj = NULL;
+      } else {
+        Obj = dyn_cast<object::ObjectFile>(Binary.get());
+        if (Obj)
+          Binary.take();
+      }
+    }
+    if (!Obj)
+      continue;
+    DeleteIt.push_back(OwningPtr<object::ObjectFile>(Obj));
+    if (!StartOffset) {
+      printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
+      StartOffset = Out.tell();
+      print32BE(Out, 0);
+    }
+
+    error_code Err;
+    for (object::symbol_iterator I = Obj->begin_symbols(),
+                                 E = Obj->end_symbols();
+         I != E; I.increment(Err), failIfError(Err)) {
+      uint32_t Symflags;
+      failIfError(I->getFlags(Symflags));
+      if (Symflags & object::SymbolRef::SF_FormatSpecific)
+        continue;
+      if (!(Symflags & object::SymbolRef::SF_Global))
+        continue;
+      if (Symflags & object::SymbolRef::SF_Undefined)
+        continue;
+      StringRef Name;
+      failIfError(I->getName(Name));
+      SymNames.push_back(Name);
+      MemberOffsetRefs.push_back(std::make_pair(Out.tell(), MemberNum));
+      print32BE(Out, 0);
+    }
+  }
+  for (std::vector<StringRef>::iterator I = SymNames.begin(),
+                                        E = SymNames.end();
+       I != E; ++I) {
+    Out << *I;
+    Out << '\0';
+  }
+
+  if (StartOffset == 0)
+    return;
+
+  if (Out.tell() % 2)
+    Out << '\0';
+
+  unsigned Pos = Out.tell();
+  Out.seek(StartOffset - 12);
+  printWithSpacePadding(Out, Pos - StartOffset, 10);
+  Out.seek(StartOffset);
+  print32BE(Out, SymNames.size());
+  Out.seek(Pos);
+}
+
 static void performWriteOperation(ArchiveOperation Operation,
                                   object::Archive *OldArchive) {
   SmallString<128> TmpArchive;
@@ -593,23 +723,35 @@ static void performWriteOperation(ArchiveOperation Operation,
   raw_fd_ostream &Out = Output.os();
   Out << "!<arch>\n";
 
-  std::string StringTable;
   std::vector<NewArchiveIterator> NewMembers =
-      computeNewArchiveMembers(Operation, OldArchive, StringTable);
-  if (!StringTable.empty()) {
-    if (StringTable.size() % 2)
-      StringTable += '\n';
-    printWithSpacePadding(Out, "//", 48);
-    printWithSpacePadding(Out, StringTable.size(), 10);
-    Out << "`\n";
-    Out << StringTable;
+      computeNewArchiveMembers(Operation, OldArchive);
+
+  std::vector<std::pair<unsigned, unsigned> > MemberOffsetRefs;
+
+  if (Symtab) {
+    writeSymbolTable(Out, NewMembers, MemberOffsetRefs);
   }
 
+  std::vector<unsigned> StringMapIndexes;
+  writeStringTable(Out, NewMembers, StringMapIndexes);
+
+  std::vector<std::pair<unsigned, unsigned> >::iterator MemberRefsI =
+      MemberOffsetRefs.begin();
+
+  unsigned MemberNum = 0;
+  unsigned LongNameMemberNum = 0;
   for (std::vector<NewArchiveIterator>::iterator I = NewMembers.begin(),
                                                  E = NewMembers.end();
-       I != E; ++I) {
-    StringRef Name = I->getMemberName();
-    printWithSpacePadding(Out, Name, 16);
+       I != E; ++I, ++MemberNum) {
+
+    unsigned Pos = Out.tell();
+    while (MemberRefsI != MemberOffsetRefs.end() &&
+           MemberRefsI->second == MemberNum) {
+      Out.seek(MemberRefsI->first);
+      print32BE(Out, Pos);
+      ++MemberRefsI;
+    }
+    Out.seek(Pos);
 
     if (I->isNewMember()) {
       const char *FileName = I->getNew();
@@ -625,29 +767,30 @@ static void performWriteOperation(ArchiveOperation Operation,
           MemoryBuffer::getOpenFile(FD, FileName, File, Status.getSize()),
           FileName);
 
-      uint64_t secondsSinceEpoch =
-          Status.getLastModificationTime().toEpochTime();
-      printWithSpacePadding(Out, secondsSinceEpoch, 12);
-
-      printWithSpacePadding(Out, Status.getUser(), 6);
-      printWithSpacePadding(Out, Status.getGroup(), 6);
-      printWithSpacePadding(Out, format("%o", Status.permissions()), 8);
-      printWithSpacePadding(Out, Status.getSize(), 10);
-      Out << "`\n";
-
+      StringRef Name = sys::path::filename(FileName);
+      if (Name.size() < 16)
+        printMemberHeader(Out, Name, Status.getLastModificationTime(),
+                          Status.getUser(), Status.getGroup(),
+                          Status.permissions(), Status.getSize());
+      else
+        printMemberHeader(Out, StringMapIndexes[LongNameMemberNum++],
+                          Status.getLastModificationTime(), Status.getUser(),
+                          Status.getGroup(), Status.permissions(),
+                          Status.getSize());
       Out << File->getBuffer();
     } else {
       object::Archive::child_iterator OldMember = I->getOld();
+      StringRef Name = I->getName();
 
-      uint64_t secondsSinceEpoch = OldMember->getLastModified().toEpochTime();
-      printWithSpacePadding(Out, secondsSinceEpoch, 12);
-
-      printWithSpacePadding(Out, OldMember->getUID(), 6);
-      printWithSpacePadding(Out, OldMember->getGID(), 6);
-      printWithSpacePadding(Out, format("%o", OldMember->getAccessMode()), 8);
-      printWithSpacePadding(Out, OldMember->getSize(), 10);
-      Out << "`\n";
-
+      if (Name.size() < 16)
+        printMemberHeader(Out, Name, OldMember->getLastModified(),
+                          OldMember->getUID(), OldMember->getGID(),
+                          OldMember->getAccessMode(), OldMember->getSize());
+      else
+        printMemberHeader(Out, StringMapIndexes[LongNameMemberNum++],
+                          OldMember->getLastModified(), OldMember->getUID(),
+                          OldMember->getGID(), OldMember->getAccessMode(),
+                          OldMember->getSize());
       Out << OldMember->getBuffer();
     }
 
