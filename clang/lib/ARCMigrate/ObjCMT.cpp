@@ -557,8 +557,14 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
   if (OIT_Family == OIT_None)
     return;
   // TODO. Many more to come
-  if (OIT_Family != OIT_Array)
-    return;
+  switch (OIT_Family) {
+    case OIT_Array:
+      break;
+    case OIT_Dictionary:
+      break;
+    default:
+      return;
+  }
   if (!OM->getResultType()->isObjCIdType())
     return;
   
@@ -569,7 +575,14 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     else if (ObjCImplDecl *ImpDecl = dyn_cast<ObjCImplDecl>(CDecl))
       IDecl = ImpDecl->getClassInterface();
   }
-  if (!IDecl || !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSArray")))
+  if (!IDecl)
+    return;
+  
+  if (OIT_Family ==  OIT_Array &&
+      !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSArray")))
+    return;
+  else if (OIT_Family == OIT_Dictionary &&
+           !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSDictionary")))
     return;
   
   TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo();

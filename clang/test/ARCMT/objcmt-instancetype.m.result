@@ -44,12 +44,12 @@ typedef signed char BOOL;
 @end
 
 @interface NSDictionary (NSDictionaryCreation)
-+ (id)dictionary;
-+ (id)dictionaryWithObject:(id)object forKey:(id)key;
-+ (id)dictionaryWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
-+ (id)dictionaryWithObjectsAndKeys:(id)firstObject, ...;
-+ (id)dictionaryWithDictionary:(NSDictionary *)dict;
-+ (id)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
++ (instancetype)dictionary;
++ (instancetype)dictionaryWithObject:(id)object forKey:(id)key;
++ (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
++ (instancetype)dictionaryWithObjectsAndKeys:(id)firstObject, ...;
++ (instancetype)dictionaryWithDictionary:(NSDictionary *)dict;
++ (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
 
 - (id)initWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
 - (id)initWithObjectsAndKeys:(id)firstObject, ...;
