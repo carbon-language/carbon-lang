@@ -356,6 +356,20 @@ IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module)
         
         if (value_ptr)
             *value_ptr = value;
+
+        // If we are replacing a function with the nobuiltin attribute, it may
+        // be called with the builtin attribute on call sites. Remove any such
+        // attributes since it's illegal to have a builtin call to something
+        // other than a nobuiltin function.
+        if (fun->hasFnAttribute(Attribute::NoBuiltin)) {
+            Attribute builtin = Attribute::get(fun->getContext(), Attribute::Builtin);
+
+            for (auto u = fun->use_begin(), e = fun->use_end(); u != e; ++u) {
+                if (auto call = dyn_cast<CallInst>(*u)) {
+                    call->removeAttribute(AttributeSet::FunctionIndex, builtin);
+                }
+            }
+        }
         
         fun->replaceAllUsesWith(value);
     }
