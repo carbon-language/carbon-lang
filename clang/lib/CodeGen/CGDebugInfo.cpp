@@ -2599,10 +2599,12 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
   Qualifiers::ObjCLifetime Lifetime;
   if (CGM.getContext().getByrefLifetime(Type,
                                         Lifetime, HasByrefExtendedLayout)
-      && HasByrefExtendedLayout)
+      && HasByrefExtendedLayout) {
+    FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
     EltTys.push_back(CreateMemberType(Unit, FType,
                                       "__byref_variable_layout",
                                       &FieldOffset));
+  }
 
   CharUnits Align = CGM.getContext().getDeclAlign(VD);
   if (Align > CGM.getContext().toCharUnitsFromBits(
@@ -2626,7 +2628,6 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
   llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
   FieldSize = CGM.getContext().getTypeSize(FType);
   FieldAlign = CGM.getContext().toBits(Align);
-  FieldOffset += FieldOffset % FieldAlign;
 
   *XOffset = FieldOffset;
   FieldTy = DBuilder.createMemberType(Unit, VD->getName(), Unit,
