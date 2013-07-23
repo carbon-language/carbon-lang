@@ -619,7 +619,11 @@ namespace llvm {
   class DILexicalBlockFile : public DIScope {
   public:
     explicit DILexicalBlockFile(const MDNode *N = 0) : DIScope(N) {}
-    DIScope getContext() const { if (getScope().isSubprogram()) return getScope(); return getScope().getContext(); }
+    DIScope getContext() const {
+      if (getScope().isSubprogram())
+        return getScope();
+      return getScope().getContext();
+    }
     unsigned getLineNumber() const { return getScope().getLineNumber(); }
     unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
     DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
