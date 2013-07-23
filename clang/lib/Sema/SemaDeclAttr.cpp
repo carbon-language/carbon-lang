@@ -2499,10 +2499,8 @@ static void handleObjCExceptionAttr(Sema &S, Decl *D,
 }
 
 static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+  if (!checkAttributeNumArgs(S, Attr, 0))
     return;
-  }
   if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
     QualType T = TD->getUnderlyingType();
     if (!T->isCARCBridgableType()) {
@@ -2533,10 +2531,8 @@ static void handleObjCNSObject(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void
 handleOverloadableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+  if (!checkAttributeNumArgs(S, Attr, 0))
     return;
-  }
 
   if (!isa<FunctionDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_overloadable_not_function);
