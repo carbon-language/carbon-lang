@@ -74,10 +74,8 @@ static Value *getField(const MDNode *DbgNode, unsigned Elt) {
   return DbgNode->getOperand(Elt);
 }
 
-static const MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
-  if (const MDNode *R = dyn_cast_or_null<MDNode>(getField(DbgNode, Elt)))
-    return R;
-  return 0;
+static MDNode *getNodeField(const MDNode *DbgNode, unsigned Elt) {
+  return dyn_cast_or_null<MDNode>(getField(DbgNode, Elt));
 }
 
 static StringRef getStringField(const MDNode *DbgNode, unsigned Elt) {
@@ -115,13 +113,8 @@ int64_t DIDescriptor::getInt64Field(unsigned Elt) const {
 }
 
 DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
-  if (DbgNode == 0)
-    return DIDescriptor();
-
-  if (Elt < DbgNode->getNumOperands())
-    return
-      DIDescriptor(dyn_cast_or_null<const MDNode>(DbgNode->getOperand(Elt)));
-  return DIDescriptor();
+  MDNode *Field = getNodeField(DbgNode, Elt);
+  return DIDescriptor(Field);
 }
 
 GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
@@ -167,7 +160,7 @@ unsigned DIVariable::getNumAddrElements() const {
 
 /// getInlinedAt - If this variable is inlined then return inline location.
 MDNode *DIVariable::getInlinedAt() const {
-  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(7));
+  return getNodeField(DbgNode, 7);
 }
 
 //===----------------------------------------------------------------------===//
@@ -534,7 +527,7 @@ bool DINameSpace::Verify() const {
 
 /// \brief Retrieve the MDNode for the directory/file pair.
 MDNode *DIFile::getFileNode() const {
-  return const_cast<MDNode*>(getNodeField(DbgNode, 1));
+  return getNodeField(DbgNode, 1);
 }
 
 /// \brief Verify that the file descriptor is well formed.
@@ -609,9 +602,7 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
 
 /// getObjCProperty - Return property node, if this ivar is associated with one.
 MDNode *DIDerivedType::getObjCProperty() const {
-  if (DbgNode->getNumOperands() <= 10)
-    return NULL;
-  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(10));
+  return getNodeField(DbgNode, 10);
 }
 
 /// \brief Set the array of member DITypes.
@@ -666,15 +657,11 @@ unsigned DISubprogram::isOptimized() const {
 }
 
 MDNode *DISubprogram::getVariablesNodes() const {
-  if (!DbgNode || DbgNode->getNumOperands() <= 18)
-    return NULL;
-  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(18));
+  return getNodeField(DbgNode, 18);
 }
 
 DIArray DISubprogram::getVariables() const {
-  if (!DbgNode || DbgNode->getNumOperands() <= 18)
-    return DIArray();
-  if (MDNode *T = dyn_cast_or_null<MDNode>(DbgNode->getOperand(18)))
+  if (MDNode *T = getNodeField(DbgNode, 18))
     return DIArray(T);
   return DIArray();
 }
@@ -687,7 +674,7 @@ void DIScope::setFilename(StringRef Name, LLVMContext &Context) {
   if (!DbgNode)
     return;
   MDString *MDName(MDString::get(Context, Name));
-  const_cast<MDNode*>(getNodeField(DbgNode, 1))->replaceOperandWith(0, MDName);
+  getNodeField(DbgNode, 1)->replaceOperandWith(0, MDName);
 }
 
 StringRef DIScope::getFilename() const {
@@ -706,7 +693,7 @@ DIArray DICompileUnit::getEnumTypes() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(7)))
+  if (MDNode *N = getNodeField(DbgNode, 7))
     return DIArray(N);
   return DIArray();
 }
@@ -715,7 +702,7 @@ DIArray DICompileUnit::getRetainedTypes() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(8)))
+  if (MDNode *N = getNodeField(DbgNode, 8))
     return DIArray(N);
   return DIArray();
 }
@@ -724,7 +711,7 @@ DIArray DICompileUnit::getSubprograms() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(9)))
+  if (MDNode *N = getNodeField(DbgNode, 9))
     return DIArray(N);
   return DIArray();
 }
@@ -734,7 +721,7 @@ DIArray DICompileUnit::getGlobalVariables() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(10)))
+  if (MDNode *N = getNodeField(DbgNode, 10))
     return DIArray(N);
   return DIArray();
 }
@@ -743,7 +730,7 @@ DIArray DICompileUnit::getImportedEntities() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = dyn_cast_or_null<MDNode>(DbgNode->getOperand(11)))
+  if (MDNode *N = getNodeField(DbgNode, 11))
     return DIArray(N);
   return DIArray();
 }
