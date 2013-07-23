@@ -837,12 +837,8 @@ def err_omp_unknown_directive : Error <
   "expected an OpenMP directive">;
 def err_omp_unexpected_directive : Error <
   "unexpected OpenMP directive '#pragma omp %0'">;
-def err_omp_expected_var : Error <
-  "expected '#pragma omp %0' argument to be a variable name">;
 def err_omp_expected_punc : Error <
   "expected ',' or ')' in %select{'#pragma omp %1'|'%1' clause}0">;
-def err_omp_unknown_clause : Error <
-  "expected OpenMP clause for directive '#pragma omp %0' or end of directive">;
 def err_omp_unexpected_clause : Error <
   "unexpected OpenMP clause '%0' in directive '#pragma omp %1'">;
 def err_omp_more_one_clause : Error <
