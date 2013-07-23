@@ -76,6 +76,13 @@ namespace llvm {
 
   bool mustBeLastInClause(unsigned Opcode) const;
 
+  /// \returns The operand index for the given source number.  Legal values
+  /// for SrcNum are 0, 1, and 2.
+  int getSrcIdx(unsigned Opcode, unsigned SrcNum) const;
+  /// \returns The operand Index for the Sel operand given an index to one
+  /// of the instruction's src operands.
+  int getSelIdx(unsigned Opcode, unsigned SrcIdx) const;
+
   /// \returns a pair for each src of an ALU instructions.
   /// The first member of a pair is the register id.
   /// If register is ALU_CONST, second member is SEL.

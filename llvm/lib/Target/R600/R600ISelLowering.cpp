@@ -1154,6 +1154,30 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     return DAG.getMergeValues(MergedValues, 2, DL);
   }
 
+  // For most operations returning SDValue() will result int he node being
+  // expanded by the DAG Legalizer.  This is not the case for ISD::LOAD, so
+  // we need to manually expand loads that may be legal in some address spaces
+  // and illegal in others.  SEXT loads from CONSTANT_BUFFER_0 are supported
+  // for compute shaders, since the data is sign extended when it is uploaded
+  // to the buffer.  Howerver SEXT loads from other addresspaces are not
+  // supported, so we need to expand them here.
+  if (LoadNode->getExtensionType() == ISD::SEXTLOAD) {
+    EVT MemVT = LoadNode->getMemoryVT();
+    assert(!MemVT.isVector() && (MemVT == MVT::i16 || MemVT == MVT::i8));
+    SDValue ShiftAmount =
+          DAG.getConstant(VT.getSizeInBits() - MemVT.getSizeInBits(), MVT::i32);
+    SDValue NewLoad = DAG.getExtLoad(ISD::EXTLOAD, DL, VT, Chain, Ptr,
+                                  LoadNode->getPointerInfo(), MemVT,
+                                  LoadNode->isVolatile(),
+                                  LoadNode->isNonTemporal(),
+                                  LoadNode->getAlignment());
+    SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, NewLoad, ShiftAmount);
+    SDValue Sra = DAG.getNode(ISD::SRA, DL, VT, Shl, ShiftAmount);
+
+    SDValue MergedValues[2] = { Sra, Chain };
+    return DAG.getMergeValues(MergedValues, 2, DL);
+  }
+
   if (LoadNode->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
     return SDValue();
   }

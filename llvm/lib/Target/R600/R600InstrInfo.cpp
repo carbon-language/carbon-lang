@@ -186,6 +186,42 @@ bool R600InstrInfo::mustBeLastInClause(unsigned Opcode) const {
   }
 }
 
+int R600InstrInfo::getSrcIdx(unsigned Opcode, unsigned SrcNum) const {
+  static const unsigned OpTable[] = {
+    AMDGPU::OpName::src0,
+    AMDGPU::OpName::src1,
+    AMDGPU::OpName::src2
+  };
+
+  assert (SrcNum < 3);
+  return getOperandIdx(Opcode, OpTable[SrcNum]);
+}
+
+#define SRC_SEL_ROWS 11
+int R600InstrInfo::getSelIdx(unsigned Opcode, unsigned SrcIdx) const {
+  static const unsigned SrcSelTable[SRC_SEL_ROWS][2] = {
+    {AMDGPU::OpName::src0, AMDGPU::OpName::src0_sel},
+    {AMDGPU::OpName::src1, AMDGPU::OpName::src1_sel},
+    {AMDGPU::OpName::src2, AMDGPU::OpName::src2_sel},
+    {AMDGPU::OpName::src0_X, AMDGPU::OpName::src0_sel_X},
+    {AMDGPU::OpName::src0_Y, AMDGPU::OpName::src0_sel_Y},
+    {AMDGPU::OpName::src0_Z, AMDGPU::OpName::src0_sel_Z},
+    {AMDGPU::OpName::src0_W, AMDGPU::OpName::src0_sel_W},
+    {AMDGPU::OpName::src1_X, AMDGPU::OpName::src1_sel_X},
+    {AMDGPU::OpName::src1_Y, AMDGPU::OpName::src1_sel_Y},
+    {AMDGPU::OpName::src1_Z, AMDGPU::OpName::src1_sel_Z},
+    {AMDGPU::OpName::src1_W, AMDGPU::OpName::src1_sel_W}
+  };
+
+  for (unsigned i = 0; i < SRC_SEL_ROWS; ++i) {
+    if (getOperandIdx(Opcode, SrcSelTable[i][0]) == (int)SrcIdx) {
+      return getOperandIdx(Opcode, SrcSelTable[i][1]);
+    }
+  }
+  return -1;
+}
+#undef SRC_SEL_ROWS
+
 SmallVector<std::pair<MachineOperand *, int64_t>, 3>
 R600InstrInfo::getSrcs(MachineInstr *MI) const {
   SmallVector<std::pair<MachineOperand *, int64_t>, 3> Result;
