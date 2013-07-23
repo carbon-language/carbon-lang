@@ -4,20 +4,10 @@
 // expression (256) that locates it inside of the byref descriptor:
 // CHECK: metadata !"foo", i32 0, i64 {{[0-9]+}}, i64 64, i64 256, i32 0, metadata
 
-@interface NSObject {
-}
-@end
-typedef struct Buffer *BufferRef;
-typedef struct Foo_s {
-    unsigned char *data;
-} Foo;
-@interface FileReader : NSObject {
-}
-@end
-@implementation FileReader
-- (BufferRef) bar:(int *)index
-{
-  __attribute__((__blocks__(byref))) Foo foo;
+struct Foo {
+  unsigned char *data;
+};
+int func() {
+  __attribute__((__blocks__(byref))) struct Foo foo;
   return 0;
 }
-@end
