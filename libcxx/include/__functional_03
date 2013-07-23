@@ -102,98 +102,98 @@ mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2))
 
 template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)()>
+__mem_fn<_Rp (_Tp::*)() const>
 mem_fn(_Rp (_Tp::* __pm)() const)
 {
-    return __mem_fn<_Rp (_Tp::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)() const>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0)>
+__mem_fn<_Rp (_Tp::*)(_A0) const>
 mem_fn(_Rp (_Tp::* __pm)(_A0) const)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0) const>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+__mem_fn<_Rp (_Tp::*)(_A0, _A1) const>
 mem_fn(_Rp (_Tp::* __pm)(_A0, _A1) const)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1) const>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2) const>
 mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2) const)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2) const>(__pm);
 }
 
 template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)()>
+__mem_fn<_Rp (_Tp::*)() volatile>
 mem_fn(_Rp (_Tp::* __pm)() volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)() volatile>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0)>
+__mem_fn<_Rp (_Tp::*)(_A0) volatile>
 mem_fn(_Rp (_Tp::* __pm)(_A0) volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0) volatile>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+__mem_fn<_Rp (_Tp::*)(_A0, _A1) volatile>
 mem_fn(_Rp (_Tp::* __pm)(_A0, _A1) volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1) volatile>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2) volatile>
 mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2) volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2) volatile>(__pm);
 }
 
 template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)()>
+__mem_fn<_Rp (_Tp::*)() const volatile>
 mem_fn(_Rp (_Tp::* __pm)() const volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)() const volatile>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0)>
+__mem_fn<_Rp (_Tp::*)(_A0) const volatile>
 mem_fn(_Rp (_Tp::* __pm)(_A0) const volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0) const volatile>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+__mem_fn<_Rp (_Tp::*)(_A0, _A1) const volatile>
 mem_fn(_Rp (_Tp::* __pm)(_A0, _A1) const volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1) const volatile>(__pm);
 }
 
 template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2) const volatile>
 mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2) const volatile)
 {
-    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2) const volatile>(__pm);
 }
 
 // bad_function_call
