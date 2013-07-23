@@ -4674,7 +4674,9 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
   if (ValueCounts.size() == 0)
     return DAG.getUNDEF(VT);
 
-  if (isOnlyLowElement)
+  // Loads are better lowered with insert_vector_elt/ARMISD::BUILD_VECTOR.
+  // Keep going if we are hitting this case.
+  if (isOnlyLowElement && !ISD::isNormalLoad(Value.getNode()))
     return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value);
 
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();

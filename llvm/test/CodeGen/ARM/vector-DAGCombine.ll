@@ -184,3 +184,17 @@ entry:
 
 ; Function Attrs: nounwind readnone
 declare <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8>, <8 x i8>)
+
+; Check that (insert_vector_elt (load)) => (vector_load).
+; Thus, check that scalar_to_vector do not interfer with that.
+define <8 x i16> @t4(i8* nocapture %sp0) {
+; CHECK: t4
+; CHECK: vld1.32 {{{d[0-9]+}}[0]}, [r0]
+entry:
+  %pix_sp0.0.cast = bitcast i8* %sp0 to i32*
+  %pix_sp0.0.copyload = load i32* %pix_sp0.0.cast, align 1
+  %vec = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
+  %0 = bitcast <2 x i32> %vec to <8 x i8>
+  %vmull.i = tail call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %0, <8 x i8> %0)
+  ret <8 x i16> %vmull.i
+}
