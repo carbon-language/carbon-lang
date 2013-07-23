@@ -1,4 +1,5 @@
 // RUN: not --crash %clang_cc1 -analyze -analyzer-checker=debug.ExprInspection %s 2>&1 | FileCheck %s
+// REQUIRES: crash-recovery
 
 void clang_analyzer_crash(void);
 
