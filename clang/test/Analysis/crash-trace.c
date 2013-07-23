@@ -16,4 +16,4 @@ void test() {
 // CHECK-NEXT: 2. While analyzing stack: 
 // CHECK-NEXT:  #0 void inlined()
 // CHECK-NEXT:  #1 void test()
-// CHECK-NEXT: 3.	{{.*}}crash-trace.c:6:3: Error evaluating statement
+// CHECK-NEXT: 3.	{{.*}}crash-trace.c:{{[0-9]+}}:3: Error evaluating statement
