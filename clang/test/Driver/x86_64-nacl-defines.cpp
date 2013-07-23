@@ -2,7 +2,7 @@
 // RUN: %clang -target x86_64-unknown-nacl %s -emit-llvm -S -c -o - | FileCheck %s
 // RUN: %clang -target x86_64-unknown-nacl %s -emit-llvm -S -c -pthread -o - | FileCheck %s -check-prefix=THREADS
 
-// ECHO: {{.*}} -cc1 {{.*}}x86_64-nacl-defines.c
+// ECHO: {{.*}} "-cc1" {{.*}}x86_64-nacl-defines.c
 
 // Check platform defines
 
