@@ -436,6 +436,20 @@ struct ELFNote
 };
 
 static void
+ParseFreeBSDPrStatus(ThreadData *thread_data, DataExtractor &data,
+                     ArchSpec &arch)
+{
+    lldb::offset_t offset;
+    size_t len;
+
+    offset = 36;
+    thread_data->signo = data.GetU32(&offset);
+    offset = 48;
+    len = data.GetByteSize() - offset;
+    thread_data->gpregset = DataExtractor(data, offset, len);
+}
+
+static void
 ParseFreeBSDThrMisc(ThreadData *thread_data, DataExtractor &data)
 {
     lldb::offset_t offset = 0;
@@ -507,11 +521,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
             {
                 case NT_FREEBSD_PRSTATUS:
                     have_prstatus = true;
-                    prstatus.Parse(note_data, arch);
-                    thread_data->signo = prstatus.pr_cursig;
-                    header_size = ELFPrStatus::GetSize(arch);
-                    len = note_data.GetByteSize() - header_size;
-                    thread_data->gpregset = DataExtractor(note_data, header_size, len);
+                    ParseFreeBSDPrStatus(thread_data, note_data, arch);
                     break;
                 case NT_FREEBSD_FPREGSET:
                     thread_data->fpregset = note_data;
