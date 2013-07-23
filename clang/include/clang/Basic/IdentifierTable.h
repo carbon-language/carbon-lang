@@ -578,6 +578,20 @@ enum { ObjCMethodFamilyBitWidth = 4 };
 /// \brief An invalid value of ObjCMethodFamily.
 enum { InvalidObjCMethodFamily = (1 << ObjCMethodFamilyBitWidth) - 1 };
 
+/// \brief A family of Objective-C methods.
+///
+/// These are family of methods whose result type is initially 'id', but
+/// but are candidate for the result type to be changed to 'instancetype'.
+enum ObjCInstanceTypeFamily {
+  OIT_None,
+  OIT_Array,
+  OIT_Dictionary,
+  OIT_MemManage,
+  OIT_NSString,
+  OIT_NSSet,
+  OIT_NSURL
+};
+
 /// \brief Smart pointer class that efficiently represents Objective-C method
 /// names.
 ///
@@ -623,6 +637,8 @@ class Selector {
   }
 
   static ObjCMethodFamily getMethodFamilyImpl(Selector sel);
+  
+  static ObjCInstanceTypeFamily getInstTypeMethodFamilyImpl(Selector sel);
 
 public:
   friend class SelectorTable; // only the SelectorTable can create these

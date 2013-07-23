@@ -452,6 +452,39 @@ ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {
   return OMF_None;
 }
 
+ObjCInstanceTypeFamily Selector::getInstTypeMethodFamilyImpl(Selector sel) {
+  IdentifierInfo *first = sel.getIdentifierInfoForSlot(0);
+  if (!first) return OIT_None;
+  
+  StringRef name = first->getName();
+  
+  if (name.empty()) return OIT_None;
+  switch (name.front()) {
+    case 'a':
+      if (startsWithWord(name, "alloc")) return OIT_MemManage;
+      else
+        if (startsWithWord(name, "array")) return OIT_Array;
+      break;
+    case 'd':
+      if (startsWithWord(name, "dictionary")) return OIT_Dictionary;
+      break;
+    case 'i':
+      if (startsWithWord(name, "init")) return OIT_MemManage;
+      break;
+    case 's':
+      if (startsWithWord(name, "string")) return OIT_NSString;
+      else
+        if (startsWithWord(name, "set")) return OIT_NSSet;
+      break;
+    case 'U':
+      if (startsWithWord(name, "URL")) return OIT_NSURL;
+      break;
+    default:
+      break;
+  }
+  return OIT_None;
+}
+
 namespace {
   struct SelectorTableImpl {
     llvm::FoldingSet<MultiKeywordSelector> Table;
