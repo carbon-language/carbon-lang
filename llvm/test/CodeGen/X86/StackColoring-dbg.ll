@@ -25,6 +25,6 @@ declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
 
 declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 
-!16 = metadata !{i32 786468, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6}
+!16 = metadata !{i32 786468, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6}
 !2 = metadata !{i32 0}
-!22 = metadata !{i32 786688, metadata !2, metadata !"x", metadata !2, i32 16, metadata !16, i32 0, i32 0}
+!22 = metadata !{i32 786688, null, metadata !"x", metadata !2, i32 16, metadata !16, i32 0, i32 0}

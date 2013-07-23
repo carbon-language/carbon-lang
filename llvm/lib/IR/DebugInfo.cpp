@@ -908,6 +908,14 @@ void DebugInfoFinder::processScope(DIScope Scope) {
     processType(Ty);
     return;
   }
+  if (Scope.isCompileUnit()) {
+    addCompileUnit(DICompileUnit(Scope));
+    return;
+  }
+  if (Scope.isSubprogram()) {
+    processSubprogram(DISubprogram(Scope));
+    return;
+  }
   if (!addScope(Scope))
     return;
   if (Scope.isLexicalBlock()) {
@@ -954,6 +962,7 @@ void DebugInfoFinder::processDeclare(const DbgDeclareInst *DDI) {
 
   if (!NodesSeen.insert(DV))
     return;
+  processScope(DIVariable(N).getContext());
   processType(DIVariable(N).getType());
 }
 

@@ -10,7 +10,7 @@ entry:
 }
 
 !0 = metadata !{i32 524545, metadata !1, metadata !"sy", metadata !2, i32 890, metadata !7} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 892, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 524334, metadata !2, metadata !3, metadata !"foo", metadata !"foo", metadata !"foo", i32 892, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 524329, metadata !"qpainter.h", metadata !"QtGui", metadata !3} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 524305, i32 0, i32 4, metadata !"splineeditor.cpp", metadata !"editor", metadata !"clang 1.1", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !4 = metadata !{i32 524309, metadata !5, metadata !"", metadata !5, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]

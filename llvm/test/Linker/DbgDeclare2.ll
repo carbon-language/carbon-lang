@@ -54,7 +54,7 @@ declare i32 @puts(i8*)
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4}
 !4 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"print_args", metadata !"print_args", metadata !"test", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32, i8**)* @test, null, null, metadata !1, i32 5} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 786478, metadata !6, null, metadata !"print_args", metadata !"print_args", metadata !"test", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (i32, i8**)* @test, null, null, metadata !1, i32 5} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 786473, metadata !"test.cpp", metadata !"/private/tmp", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null, metadata !9, metadata !10}
