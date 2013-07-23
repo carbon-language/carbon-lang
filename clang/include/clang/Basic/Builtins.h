@@ -171,6 +171,10 @@ public:
 
 private:
   const Info &GetRecord(unsigned ID) const;
+
+  /// \brief Is this builtin supported according to the given language options?
+  bool BuiltinIsSupported(const Builtin::Info &BuiltinInfo,
+                          const LangOptions &LangOpts);
 };
 
 }
