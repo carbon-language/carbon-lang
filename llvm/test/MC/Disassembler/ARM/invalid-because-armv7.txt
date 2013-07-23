@@ -1,4 +1,4 @@
-# RUN: llvm-mc -disassemble -triple armv7 -show-encoding < %s 2>&1 | FileCheck %s
+# RUN: not llvm-mc -disassemble -triple armv7 -show-encoding < %s 2>&1 | FileCheck %s
 
 # This file is checking encodings that are valid on some triples, but not on the
 # ARMv7 triple, probably because the relevant instruction is v8, though there
