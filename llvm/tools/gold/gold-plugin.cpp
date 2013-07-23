@@ -253,8 +253,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
       offset = file->offset;
     }
     if (error_code ec =
-        MemoryBuffer::getOpenFile(file->fd, file->name, buffer, file->filesize,
-                                  -1, offset, false)) {
+        MemoryBuffer::getOpenFile(file->fd, file->name, buffer, -1,
+                                  file->filesize, offset, false)) {
       (*message)(LDPL_ERROR, ec.message().c_str());
       return LDPS_ERR;
     }
