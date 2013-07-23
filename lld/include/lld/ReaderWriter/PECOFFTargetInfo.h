@@ -28,7 +28,8 @@ public:
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
-        _nxCompat(true), _largeAddressAware(false), _baseRelocationEnabled(true) {}
+        _nxCompat(true), _largeAddressAware(false), _baseRelocationEnabled(true),
+        _terminalServerAware(true) {}
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -76,13 +77,16 @@ public:
   OSVersion getMinOSVersion() const { return _minOSVersion; }
 
   void setNxCompat(bool nxCompat) { _nxCompat = nxCompat; }
-  bool getNxCompat() const { return _nxCompat; }
+  bool isNxCompat() const { return _nxCompat; }
 
   void setLargeAddressAware(bool val) { _largeAddressAware = val; }
   bool getLargeAddressAware() const { return _largeAddressAware; }
 
   void setBaseRelocationEnabled(bool val) { _baseRelocationEnabled = val; }
   bool getBaseRelocationEnabled() const { return _baseRelocationEnabled; }
+
+  void setTerminalServerAware(bool val) { _terminalServerAware = val; }
+  bool isTerminalServerAware() const { return _terminalServerAware; }
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
@@ -108,6 +112,7 @@ private:
   bool _nxCompat;
   bool _largeAddressAware;
   bool _baseRelocationEnabled;
+  bool _terminalServerAware;
 
   std::vector<StringRef> _inputSearchPaths;
   mutable std::unique_ptr<Reader> _reader;

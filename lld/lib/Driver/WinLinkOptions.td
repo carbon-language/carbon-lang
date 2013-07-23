@@ -55,5 +55,10 @@ def fixed : Flag<["-", "/"], "fixed">,
 def no_fixed : Flag<["-", "/"], "fixed:no">,
     HelpText<"Enable base relocations">;
 
+def tsaware : Flag<["-", "/"], "tsaware">,
+    HelpText<"Create Terminal Server aware executable">;
+def no_tsaware : Flag<["-", "/"], "tsaware:no">,
+    HelpText<"Create non-Terminal Server aware executable">;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;

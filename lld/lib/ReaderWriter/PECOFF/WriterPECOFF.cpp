@@ -196,9 +196,11 @@ public:
     // them.
     uint16_t dllCharacteristics =
         llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE |
-        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH |
-        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
-    if (targetInfo.getNxCompat())
+        llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH;
+    if (targetInfo.isTerminalServerAware())
+      dllCharacteristics |=
+          llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
+    if (targetInfo.isNxCompat())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
     _peHeader.DLLCharacteristics = dllCharacteristics;
 

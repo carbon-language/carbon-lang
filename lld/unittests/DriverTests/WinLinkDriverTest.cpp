@@ -50,9 +50,10 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(1024 * 1024ULL, _info.getStackReserve());
   EXPECT_EQ(4096ULL, _info.getStackCommit());
   EXPECT_FALSE(_info.allowRemainingUndefines());
-  EXPECT_TRUE(_info.getNxCompat());
+  EXPECT_TRUE(_info.isNxCompat());
   EXPECT_FALSE(_info.getLargeAddressAware());
   EXPECT_TRUE(_info.getBaseRelocationEnabled());
+  EXPECT_TRUE(_info.isTerminalServerAware());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -138,7 +139,7 @@ TEST_F(WinLinkParserTest, Force) {
 
 TEST_F(WinLinkParserTest, NoNxCompat) {
   EXPECT_FALSE(parse("link.exe", "-nxcompat:no", "a.obj", nullptr));
-  EXPECT_FALSE(_info.getNxCompat());
+  EXPECT_FALSE(_info.isNxCompat());
 }
 
 TEST_F(WinLinkParserTest, LargeAddressAware) {
@@ -159,6 +160,16 @@ TEST_F(WinLinkParserTest, Fixed) {
 TEST_F(WinLinkParserTest, NoFixed) {
   EXPECT_FALSE(parse("link.exe", "-fixed:no", "a.out", nullptr));
   EXPECT_TRUE(_info.getBaseRelocationEnabled());
+}
+
+TEST_F(WinLinkParserTest, TerminalServerAware) {
+  EXPECT_FALSE(parse("link.exe", "-tsaware", "a.out", nullptr));
+  EXPECT_TRUE(_info.isTerminalServerAware());
+}
+
+TEST_F(WinLinkParserTest, NoTerminalServerAware) {
+  EXPECT_FALSE(parse("link.exe", "-tsaware:no", "a.out", nullptr));
+  EXPECT_FALSE(_info.isTerminalServerAware());
 }
 
 TEST_F(WinLinkParserTest, NoInputFiles) {
