@@ -1229,9 +1229,17 @@ SDValue R600TargetLowering::LowerFormalArguments(
     } else {
       ArgVT = VT;
     }
+
+    ISD::LoadExtType LoadType = ISD::EXTLOAD;
+    if (Ins[i].Flags.isZExt()) {
+      LoadType = ISD::ZEXTLOAD;
+    } else if (Ins[i].Flags.isSExt()) {
+      LoadType = ISD::SEXTLOAD;
+    }
+
     PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
                                                     AMDGPUAS::PARAM_I_ADDRESS);
-    SDValue Arg = DAG.getExtLoad(ISD::ZEXTLOAD, DL, VT, DAG.getRoot(),
+    SDValue Arg = DAG.getExtLoad(LoadType, DL, VT, DAG.getRoot(),
                                 DAG.getConstant(ParamOffsetBytes, MVT::i32),
                                        MachinePointerInfo(UndefValue::get(PtrTy)),
                                        ArgVT, false, false, ArgBytes);
