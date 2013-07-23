@@ -147,6 +147,9 @@ namespace {
     /// the same personality function.
     const Value *PersonalityFn;
 
+    /// Finder keeps track of all debug info MDNodes in a Module.
+    DebugInfoFinder Finder;
+
     Verifier()
       : FunctionPass(ID), Broken(false),
         action(AbortProcessAction), Mod(0), Context(0), DT(0),
@@ -162,6 +165,7 @@ namespace {
     bool doInitialization(Module &M) {
       Mod = &M;
       Context = &M.getContext();
+      Finder.reset();
 
       // We must abort before returning back to the pass manager, or else the
       // pass manager may try to run other passes on the broken module.
@@ -2144,7 +2148,17 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     MDNode *MD = cast<MDNode>(CI.getArgOperand(0));
     Assert1(MD->getNumOperands() == 1,
                 "invalid llvm.dbg.declare intrinsic call 2", &CI);
+    if (!DisableDebugInfoVerifier)
+      Finder.processDeclare(cast<DbgDeclareInst>(&CI));
   } break;
+  case Intrinsic::dbg_value: { //llvm.dbg.value
+    if (!DisableDebugInfoVerifier) {
+      Assert1(CI.getArgOperand(0) && isa<MDNode>(CI.getArgOperand(0)),
+              "invalid llvm.dbg.value intrinsic call 1", &CI);
+      Finder.processValue(cast<DbgValueInst>(&CI));
+    }
+    break;
+  }
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
   case Intrinsic::memset:
@@ -2209,7 +2223,6 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 void Verifier::verifyDebugInfo(Module &M) {
   // Verify Debug Info.
   if (!DisableDebugInfoVerifier) {
-    DebugInfoFinder Finder;
     Finder.processModule(M);
 
     for (DebugInfoFinder::iterator I = Finder.compile_unit_begin(),

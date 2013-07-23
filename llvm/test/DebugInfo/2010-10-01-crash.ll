@@ -1,4 +1,4 @@
-; RUN: llc -O0 %s -o /dev/null
+; RUN: llc -O0 -disable-debug-info-verifier %s -o /dev/null
 ; XFAIL: hexagon
 ; PR 8235
 

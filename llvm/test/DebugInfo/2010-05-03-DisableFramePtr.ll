@@ -1,4 +1,4 @@
-; RUN: llc  -o /dev/null -disable-non-leaf-fp-elim < %s
+; RUN: llc  -disable-debug-info-verifier -o /dev/null -disable-non-leaf-fp-elim < %s
 ; Radar 7937664
 %struct.AppleEvent = type opaque
 

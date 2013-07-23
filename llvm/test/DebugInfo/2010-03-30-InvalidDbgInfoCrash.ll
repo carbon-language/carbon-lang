@@ -1,4 +1,4 @@
-; RUN: llc < %s -o /dev/null
+; RUN: llc -disable-debug-info-verifier < %s -o /dev/null
 
 define void @baz(i32 %i) nounwind ssp {
 entry:

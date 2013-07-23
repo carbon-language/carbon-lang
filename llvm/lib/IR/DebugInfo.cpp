@@ -847,6 +847,15 @@ bool llvm::isSubprogramContext(const MDNode *Context) {
 // DebugInfoFinder implementations.
 //===----------------------------------------------------------------------===//
 
+void DebugInfoFinder::reset() {
+  CUs.clear();
+  SPs.clear();
+  GVs.clear();
+  TYs.clear();
+  Scopes.clear();
+  NodesSeen.clear();
+}
+
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(const Module &M) {
   if (NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu")) {
@@ -959,6 +968,19 @@ void DebugInfoFinder::processSubprogram(DISubprogram SP) {
 /// processDeclare - Process DbgDeclareInst.
 void DebugInfoFinder::processDeclare(const DbgDeclareInst *DDI) {
   MDNode *N = dyn_cast<MDNode>(DDI->getVariable());
+  if (!N) return;
+
+  DIDescriptor DV(N);
+  if (!DV.isVariable())
+    return;
+
+  if (!NodesSeen.insert(DV))
+    return;
+  processType(DIVariable(N).getType());
+}
+
+void DebugInfoFinder::processValue(const DbgValueInst *DVI) {
+  MDNode *N = dyn_cast<MDNode>(DVI->getVariable());
   if (!N) return;
 
   DIDescriptor DV(N);

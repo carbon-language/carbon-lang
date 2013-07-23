@@ -1,4 +1,4 @@
-; RUN: llc -O1 < %s
+; RUN: llc -O1 -disable-debug-info-verifier < %s
 ; ModuleID = 'pr6157.bc'
 ; formerly crashed in SelectionDAGBuilder
 

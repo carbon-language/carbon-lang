@@ -1,4 +1,4 @@
-; RUN: llvm-link %s %p/2011-08-18-unique-class-type2.ll -S -o - | FileCheck %s
+; RUN: llvm-link -disable-debug-info-verifier %s %p/2011-08-18-unique-class-type2.ll -S -o - | FileCheck %s
 ; CHECK: DW_TAG_class_type
 ; CHECK-NOT: DW_TAG_class_type
 ; Test to check there is only one MDNode for class A after linking.

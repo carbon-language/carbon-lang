@@ -1,4 +1,4 @@
-; RUN: llc %s -o /dev/null
+; RUN: llc -disable-debug-info-verifier %s -o /dev/null
 ; PR 2613.
 
 %struct.__class_type_info_pseudo = type { %struct.__type_info_pseudo }

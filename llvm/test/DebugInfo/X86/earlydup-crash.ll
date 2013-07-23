@@ -1,4 +1,4 @@
-; RUN: llc %s -mtriple=i386-apple-macosx10.6.7 -o /dev/null
+; RUN: llc -disable-debug-info-verifier %s -mtriple=i386-apple-macosx10.6.7 -o /dev/null
 
 ; This used to crash because early dup was not ignoring debug instructions.
 

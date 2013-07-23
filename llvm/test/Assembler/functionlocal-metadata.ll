@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis | FileCheck %s
+; RUN: llvm-as -disable-debug-info-verifier < %s | llvm-dis | FileCheck %s
 
 define void @Foo(i32 %a, i32 %b) {
 entry:

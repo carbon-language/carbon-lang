@@ -1,5 +1,5 @@
 
-;RUN: llc < %s -o /dev/null
+;RUN: llc -disable-debug-info-verifier < %s -o /dev/null
 ;Radar 7937109
 
 %struct.anon = type { i64, i32, i32, i32, [1 x i32] }
