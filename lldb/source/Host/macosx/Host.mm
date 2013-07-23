@@ -1044,7 +1044,7 @@ Host::GetOSVersion
                 {
                     CFStringRef product_version_cfstr = (CFStringRef) product_version_value;
                     product_version_str = CFStringGetCStringPtr(product_version_cfstr, kCFStringEncodingUTF8);
-                    if (product_version_str == NULL) {
+                    if (product_version_str != NULL) {
                         if (CFStringGetCString(product_version_cfstr, buffer, 256, kCFStringEncodingUTF8))
                             product_version_str = buffer;
                     }
