@@ -2013,20 +2013,20 @@ def : InstAlias<"idiv{q}\t{$src, %rax|RAX, $src}", (IDIV64m i64mem:$src)>;
 // Various unary fpstack operations default to operating on on ST1.
 // For example, "fxch" -> "fxch %st(1)"
 def : InstAlias<"faddp",        (ADD_FPrST0  ST1), 0>;
-def : InstAlias<"fsubp",        (SUBR_FPrST0 ST1)>;
-def : InstAlias<"fsubrp",       (SUB_FPrST0  ST1)>;
-def : InstAlias<"fmulp",        (MUL_FPrST0  ST1)>;
-def : InstAlias<"fdivp",        (DIVR_FPrST0 ST1)>;
-def : InstAlias<"fdivrp",       (DIV_FPrST0  ST1)>;
-def : InstAlias<"fxch",         (XCH_F       ST1)>;
-def : InstAlias<"fcom",         (COM_FST0r   ST1)>;
-def : InstAlias<"fcomp",        (COMP_FST0r  ST1)>;
-def : InstAlias<"fcomi",        (COM_FIr     ST1)>;
-def : InstAlias<"fcompi",       (COM_FIPr    ST1)>;
-def : InstAlias<"fucom",        (UCOM_Fr     ST1)>;
-def : InstAlias<"fucomp",       (UCOM_FPr    ST1)>;
-def : InstAlias<"fucomi",       (UCOM_FIr    ST1)>;
-def : InstAlias<"fucompi",      (UCOM_FIPr   ST1)>;
+def : InstAlias<"fsubp",        (SUBR_FPrST0 ST1), 0>;
+def : InstAlias<"fsubrp",       (SUB_FPrST0  ST1), 0>;
+def : InstAlias<"fmulp",        (MUL_FPrST0  ST1), 0>;
+def : InstAlias<"fdivp",        (DIVR_FPrST0 ST1), 0>;
+def : InstAlias<"fdivrp",       (DIV_FPrST0  ST1), 0>;
+def : InstAlias<"fxch",         (XCH_F       ST1), 0>;
+def : InstAlias<"fcom",         (COM_FST0r   ST1), 0>;
+def : InstAlias<"fcomp",        (COMP_FST0r  ST1), 0>;
+def : InstAlias<"fcomi",        (COM_FIr     ST1), 0>;
+def : InstAlias<"fcompi",       (COM_FIPr    ST1), 0>;
+def : InstAlias<"fucom",        (UCOM_Fr     ST1), 0>;
+def : InstAlias<"fucomp",       (UCOM_FPr    ST1), 0>;
+def : InstAlias<"fucomi",       (UCOM_FIr    ST1), 0>;
+def : InstAlias<"fucompi",      (UCOM_FIPr   ST1), 0>;
 
 // Handle fmul/fadd/fsub/fdiv instructions with explicitly written st(0) op.
 // For example, "fadd %st(4), %st(0)" -> "fadd %st(4)".  We also disambiguate
