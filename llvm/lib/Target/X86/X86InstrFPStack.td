@@ -343,7 +343,7 @@ def CMOVBE_F : FPI<0xD0, AddRegFrm, (outs RST:$op), (ins),
 def CMOVE_F  : FPI<0xC8, AddRegFrm, (outs RST:$op), (ins),
                   "fcmove\t{$op, %st(0)|ST(0), $op}">, DA;
 def CMOVP_F  : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovu\t {$op, %st(0)|ST(0), $op}">, DA;
+                  "fcmovu\t{$op, %st(0)|ST(0), $op}">, DA;
 def CMOVNB_F : FPI<0xC0, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovnb\t{$op, %st(0)|ST(0), $op}">, DB;
 def CMOVNBE_F: FPI<0xD0, AddRegFrm, (outs RST:$op), (ins),
