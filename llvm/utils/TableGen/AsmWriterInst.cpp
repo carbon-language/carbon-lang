@@ -226,8 +226,7 @@ unsigned AsmWriterInst::MatchesAllButOneOp(const AsmWriterInst &Other)const{
     if (Operands[i] != Other.Operands[i]) {
       if (MismatchOperand != ~0U)  // Already have one mismatch?
         return ~1U;
-      else
-        MismatchOperand = i;
+      MismatchOperand = i;
     }
   }
   return MismatchOperand;
