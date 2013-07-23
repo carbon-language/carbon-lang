@@ -983,8 +983,12 @@ let neverHasSideEffects = 1 in {
 
 def V_MAD_LEGACY_F32 : VOP3_32 <0x00000140, "V_MAD_LEGACY_F32", []>;
 def V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32", []>;
-//def V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24", []>;
-//def V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24", []>;
+def V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24",
+  [(set i32:$dst, (add (mul I24:$src0, I24:$src1), i32:$src2))]
+>;
+def V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24",
+  [(set i32:$dst, (add (mul U24:$src0, U24:$src1), i32:$src2))]
+>;
 
 } // End neverHasSideEffects
 def V_CUBEID_F32 : VOP3_32 <0x00000144, "V_CUBEID_F32", []>;

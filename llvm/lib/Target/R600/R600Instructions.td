@@ -1460,6 +1460,9 @@ let Predicates = [isEGorCayman] in {
   def BFI_INT_eg : R600_3OP <0x06, "BFI_INT", [], VecALU>;
   defm : BFIPatterns <BFI_INT_eg>;
 
+  def MULADD_UINT24_eg : R600_3OP <0x10, "MULADD_UINT24",
+    [(set i32:$dst, (add (mul U24:$src0, U24:$src1), i32:$src2))], VecALU
+  >;
   def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT", [], VecALU>;
   def : ROTRPattern <BIT_ALIGN_INT_eg>;
 
@@ -1706,6 +1709,9 @@ defm R600_ : RegisterLoadStore <R600_Reg32, FRAMEri, ADDRIndirect>;
 
 let Predicates = [isCayman] in {
 
+def MULADD_INT24_cm : R600_3OP <0x08, "MULADD_INT24",
+  [(set i32:$dst, (add (mul I24:$src0, I24:$src1), i32:$src2))], VecALU
+>;
 def MUL_INT24_cm : R600_2OP <0x5B, "MUL_INT24",
   [(set i32:$dst, (mul I24:$src0, I24:$src1))], VecALU
 >;
