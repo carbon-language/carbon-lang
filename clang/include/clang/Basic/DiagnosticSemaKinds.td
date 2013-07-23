@@ -6452,16 +6452,22 @@ def err_invalid_astype_of_different_size : Error<
   "invalid reinterpretation: sizes of %0 and %1 must match">;
 def err_static_kernel : Error<
   "kernel functions cannot be declared static">;
-def err_opencl_ptrptr_kernel_arg : Error<
-  "kernel argument cannot be declared as a pointer to a pointer">;
+def err_opencl_ptrptr_kernel_param : Error<
+  "kernel parameter cannot be declared as a pointer to a pointer">;
 def err_static_function_scope : Error<
   "variables in function scope cannot be declared static">;
 def err_opencl_bitfields : Error<
   "bitfields are not supported in OpenCL">;
 def err_opencl_vla : Error<
   "variable length arrays are not supported in OpenCL">;
-def err_event_t_kernel_arg : Error<
-  "the event_t type cannot be used to declare a kernel function argument">;
+def err_bad_kernel_param_type : Error<
+  "%0 cannot be used as the type of a kernel parameter">;
+def err_record_with_pointers_kernel_param : Error<
+  "%select{struct|union}0 kernel parameters may not contain pointers">;
+def note_within_field_of_type : Note<
+  "within field of type %0 declared here">;
+def note_illegal_field_declared_here : Note<
+  "field of illegal %select{type|pointer type}0 %1 declared here">;
 def err_event_t_global_var : Error<
   "the event_t type cannot be used to declare a program scope variable">;
 def err_event_t_struct_field : Error<

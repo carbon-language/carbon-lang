@@ -1454,6 +1454,7 @@ public:
   void MaybeSuggestAddingStaticToDecl(const FunctionDecl *D);
   void ActOnStartFunctionDeclarator();
   void ActOnEndFunctionDeclarator();
+
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      TypeSourceInfo *TInfo,
                                      LookupResult &Previous,
