@@ -2580,11 +2580,6 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  // Normalize the attribute name, __foo__ becomes foo.
-  StringRef AttrName = Attr.getName()->getName();
-  if (AttrName.startswith("__") && AttrName.endswith("__"))
-    AttrName = AttrName.substr(2, AttrName.size() - 4);
-
   unsigned sentinel = 0;
   if (Attr.getNumArgs() > 0) {
     Expr *E = Attr.getArg(0);
@@ -2592,7 +2587,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << "'" + AttrName.str() + "'" << 1 << ArgumentIntegerConstant
+        << Attr.getName() << 1 << ArgumentIntegerConstant
         << E->getSourceRange();
       return;
     }
@@ -2613,7 +2608,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << "'" + AttrName.str() + "'" << 2 << ArgumentIntegerConstant
+        << Attr.getName() << 2 << ArgumentIntegerConstant
         << E->getSourceRange();
       return;
     }
