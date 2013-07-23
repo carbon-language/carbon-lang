@@ -2952,9 +2952,6 @@ public:
 class UnresolvedUsingTypenameDecl : public TypeDecl {
   virtual void anchor();
 
-  /// \brief The source location of the 'using' keyword
-  SourceLocation UsingLocation;
-
   /// \brief The source location of the 'typename' keyword
   SourceLocation TypenameLocation;
 
