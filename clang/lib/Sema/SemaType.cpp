@@ -3840,8 +3840,8 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   llvm::APSInt addrSpace(32);
   if (ASArgExpr->isTypeDependent() || ASArgExpr->isValueDependent() ||
       !ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int)
-      << ASArgExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
+      << Attr.getName()->getName() << ASArgExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
