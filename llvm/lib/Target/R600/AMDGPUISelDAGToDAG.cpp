@@ -620,6 +620,13 @@ bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int CbId) const {
 }
 
 bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {
+  if (N->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS) {
+    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+    if (ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
+        N->getMemoryVT().bitsLT(MVT::i32)) {
+      return true;
+    }
+  }
   return checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
 
