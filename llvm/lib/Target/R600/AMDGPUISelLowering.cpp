@@ -78,6 +78,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::LOAD, MVT::f64, Promote);
   AddPromotedToType(ISD::LOAD, MVT::f64, MVT::i64);
 
+  setOperationAction(ISD::FNEG, MVT::v2f32, Expand);
+  setOperationAction(ISD::FNEG, MVT::v4f32, Expand);
+
   setOperationAction(ISD::MUL, MVT::i64, Expand);
 
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
