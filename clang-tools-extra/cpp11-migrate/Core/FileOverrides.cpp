@@ -31,7 +31,8 @@ SourceOverrides::SourceOverrides(llvm::StringRef MainFileName,
                                  bool TrackChanges)
     : MainFileName(MainFileName), TrackChanges(TrackChanges) {}
 
-void SourceOverrides::applyReplacements(Replacements &Replaces) {
+void
+SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
       new DiagnosticOptions());
   DiagnosticsEngine Diagnostics(
@@ -42,8 +43,8 @@ void SourceOverrides::applyReplacements(Replacements &Replaces) {
   applyReplacements(Replaces, SM);
 }
 
-void SourceOverrides::applyReplacements(tooling::Replacements &Replaces,
-                                        SourceManager &SM) {
+void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
+                                        clang::SourceManager &SM) {
   applyOverrides(SM);
 
   Rewriter Rewrites(SM, LangOptions());
