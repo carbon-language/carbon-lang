@@ -23,24 +23,17 @@ using namespace lldb;
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
-// Construct a Thread object with given PRSTATUS, PRPSINFO and FPREGSET
+// Construct a Thread object with given data
 //----------------------------------------------------------------------
-ThreadElfCore::ThreadElfCore (Process &process, tid_t tid, DataExtractor prstatus,
-                              DataExtractor prpsinfo, DataExtractor fpregset) :
+ThreadElfCore::ThreadElfCore (Process &process, tid_t tid,
+                              const ThreadData &td) :
     Thread(process, tid),
-    m_thread_reg_ctx_sp ()
+    m_thread_name(td.name),
+    m_thread_reg_ctx_sp (),
+    m_signo(td.signo),
+    m_gpregset_data(td.gpregset),
+    m_fpregset_data(td.fpregset)
 {
-    ProcessElfCore *pr = static_cast<ProcessElfCore *>(GetProcess().get());
-    ArchSpec arch = pr->GetArchitecture();
-
-    /* Parse the datastructures from the file */
-    m_prstatus.Parse(prstatus, arch);
-    m_prpsinfo.Parse(prpsinfo, arch);
-
-    m_prstatus_data = prstatus;
-    m_fpregset_data = fpregset;
-
-    m_thread_name = std::string(m_prpsinfo.pr_fname);
 }
 
 ThreadElfCore::~ThreadElfCore ()
@@ -89,19 +82,16 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
 
         ProcessElfCore *process = static_cast<ProcessElfCore *>(GetProcess().get());
         ArchSpec arch = process->GetArchitecture();
-        size_t header_size = ELFPrStatus::GetSize(arch);
-        size_t len = m_prstatus_data.GetByteSize() - header_size;
-        DataExtractor gpregset_data = DataExtractor(m_prstatus_data, header_size, len);
         switch (arch.GetMachine())
         {
             case llvm::Triple::x86_64:
                 switch (arch.GetTriple().getOS())
                 {
                     case llvm::Triple::FreeBSD:
-                        m_thread_reg_ctx_sp.reset(new RegisterContextCoreFreeBSD_x86_64 (*this, gpregset_data, m_fpregset_data));
+                        m_thread_reg_ctx_sp.reset(new RegisterContextCoreFreeBSD_x86_64 (*this, m_gpregset_data, m_fpregset_data));
                         break;
                     case llvm::Triple::Linux:
-                        m_thread_reg_ctx_sp.reset(new RegisterContextCoreLinux_x86_64 (*this, gpregset_data, m_fpregset_data));
+                        m_thread_reg_ctx_sp.reset(new RegisterContextCoreLinux_x86_64 (*this, m_gpregset_data, m_fpregset_data));
                         break;
                     default:
                         if (log)
@@ -132,7 +122,7 @@ ThreadElfCore::CalculateStopInfo ()
     ProcessSP process_sp (GetProcess());
     if (process_sp)
     {
-        SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, m_prstatus.pr_cursig));
+        SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, m_signo));
         return true;
     }
     return false;

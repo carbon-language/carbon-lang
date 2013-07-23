@@ -125,13 +125,19 @@ struct ELFPrPsInfo
 
 };
 
+struct ThreadData
+{
+    lldb_private::DataExtractor gpregset;
+    lldb_private::DataExtractor fpregset;
+    int signo;
+    std::string name;
+};
+
 class ThreadElfCore : public lldb_private::Thread
 {
 public:
     ThreadElfCore (lldb_private::Process &process, lldb::tid_t tid,
-                   lldb_private::DataExtractor prstatus,
-                   lldb_private::DataExtractor prpsinfo,
-                   lldb_private::DataExtractor fpregset);
+                   const ThreadData &td);
 
     virtual
     ~ThreadElfCore ();
@@ -178,9 +184,9 @@ protected:
     std::string m_thread_name;
     lldb::RegisterContextSP m_thread_reg_ctx_sp;
 
-    ELFPrStatus m_prstatus;
-    ELFPrPsInfo m_prpsinfo;
-    lldb_private::DataExtractor m_prstatus_data;
+    int m_signo;
+
+    lldb_private::DataExtractor m_gpregset_data;
     lldb_private::DataExtractor m_fpregset_data;
 
     virtual bool CalculateStopInfo();

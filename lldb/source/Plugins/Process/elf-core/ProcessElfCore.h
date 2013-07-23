@@ -28,6 +28,8 @@
 
 #include "Plugins/ObjectFile/ELF/ELFHeader.h"
 
+struct ThreadData;
+
 class ProcessElfCore : public lldb_private::Process
 {
 public:
@@ -134,15 +136,6 @@ private:
     //------------------------------------------------------------------
     typedef lldb_private::Range<lldb::addr_t, lldb::addr_t> FileRange;
     typedef lldb_private::RangeDataArray<lldb::addr_t, lldb::addr_t, FileRange, 1> VMRangeToFileOffset;
-
-    // In ELF core file thread context is described mainly by 3 Note entries
-    // The following structure holds pointers to those note entries.
-    struct ThreadData
-    {
-        lldb_private::DataExtractor prstatus;
-        lldb_private::DataExtractor fpregset;
-        lldb_private::DataExtractor prpsinfo;
-    };
 
     lldb::ModuleSP m_core_module_sp;
     lldb_private::FileSpec m_core_file;

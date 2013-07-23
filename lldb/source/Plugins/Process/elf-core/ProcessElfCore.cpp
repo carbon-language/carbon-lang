@@ -231,8 +231,7 @@ ProcessElfCore::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_t
     for (lldb::tid_t tid = 0; tid < num_threads; ++tid)
     {
         const ThreadData &td = m_thread_data[tid];
-        lldb::ThreadSP thread_sp(new ThreadElfCore (*this, tid, td.prstatus,
-                                                    td.prpsinfo, td.fpregset));
+        lldb::ThreadSP thread_sp(new ThreadElfCore (*this, tid, td));
         new_thread_list.AddThread (thread_sp);
     }
     return new_thread_list.GetSize(false) > 0;
@@ -436,6 +435,13 @@ struct ELFNote
     }
 };
 
+static void
+ParseFreeBSDThrMisc(ThreadData *thread_data, DataExtractor &data)
+{
+    lldb::offset_t offset = 0;
+    thread_data->name = data.GetCStr(&offset, 20);
+}
+
 /// Parse Thread context from PT_NOTE segment and store it in the thread list
 /// Notes:
 /// 1) A PT_NOTE segment is composed of one or more NOTE entries.
@@ -465,6 +471,12 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
     bool have_prstatus = false;
     bool have_prpsinfo = false;
 
+    ArchSpec arch = GetArchitecture();
+    ELFPrPsInfo prpsinfo;
+    ELFPrStatus prstatus;
+    size_t header_size;
+    size_t len;
+
     // Loop through the NOTE entires in the segment
     while (offset < segment_header->p_filesz)
     {
@@ -475,7 +487,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
         if ((note.n_type == NT_PRSTATUS && have_prstatus) ||
             (note.n_type == NT_PRPSINFO && have_prpsinfo))
         {
-            assert(thread_data->prstatus.GetByteSize() > 0);
+            assert(thread_data->gpregset.GetByteSize() > 0);
             // Add the new thread to thread list
             m_thread_data.push_back(*thread_data);
             thread_data = new ThreadData();
@@ -495,14 +507,24 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
             {
                 case NT_FREEBSD_PRSTATUS:
                     have_prstatus = true;
-                    thread_data->prstatus = note_data;
+                    prstatus.Parse(note_data, arch);
+                    thread_data->signo = prstatus.pr_cursig;
+                    header_size = ELFPrStatus::GetSize(arch);
+                    len = note_data.GetByteSize() - header_size;
+                    thread_data->gpregset = DataExtractor(note_data, header_size, len);
                     break;
                 case NT_FREEBSD_FPREGSET:
                     thread_data->fpregset = note_data;
                     break;
                 case NT_FREEBSD_PRPSINFO:
                     have_prpsinfo = true;
-                    thread_data->prpsinfo = note_data;
+                    break;
+                case NT_FREEBSD_THRMISC:
+                    ParseFreeBSDThrMisc(thread_data, note_data);
+                    break;
+                case NT_FREEBSD_PROCSTAT_AUXV:
+                    // FIXME: FreeBSD sticks an int at the beginning of the note
+                    m_auxv = DataExtractor(segment_data, note_start + 4, note_size - 4);
                     break;
                 default:
                     break;
@@ -514,14 +536,19 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
             {
                 case NT_PRSTATUS:
                     have_prstatus = true;
-                    thread_data->prstatus = note_data;
+                    prstatus.Parse(note_data, arch);
+                    thread_data->signo = prstatus.pr_cursig;
+                    header_size = ELFPrStatus::GetSize(arch);
+                    len = note_data.GetByteSize() - header_size;
+                    thread_data->gpregset = DataExtractor(note_data, header_size, len);
                     break;
                 case NT_FPREGSET:
                     thread_data->fpregset = note_data;
                     break;
                 case NT_PRPSINFO:
                     have_prpsinfo = true;
-                    thread_data->prpsinfo = note_data;
+                    prpsinfo.Parse(note_data, arch);
+                    thread_data->name = prpsinfo.pr_fname;
                     break;
                 case NT_AUXV:
                     m_auxv = DataExtractor(note_data);
@@ -534,7 +561,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
         offset += note_size;
     }
     // Add last entry in the note section
-    if (thread_data && thread_data->prstatus.GetByteSize() > 0)
+    if (thread_data && thread_data->gpregset.GetByteSize() > 0)
     {
         m_thread_data.push_back(*thread_data);
     }
