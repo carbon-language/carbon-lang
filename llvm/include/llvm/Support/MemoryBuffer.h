@@ -74,13 +74,17 @@ public:
                             int64_t FileSize = -1,
                             bool RequiresNullTerminator = true);
 
-  /// getOpenFile - Given an already-open file descriptor, read the file and
-  /// return a MemoryBuffer.
+  // Get a MemoryBuffer of part of a file. Since this is in the middle of a
+  // file, the buffer is not null terminated.
+  static error_code getOpenFileSlice(int FD, const char *Filename,
+                                     OwningPtr<MemoryBuffer> &Result,
+                                     uint64_t MapSize, int64_t Offset);
+
+  /// Given an already-open file descriptor, read the file and return a
+  /// MemoryBuffer.
   static error_code getOpenFile(int FD, const char *Filename,
-                                OwningPtr<MemoryBuffer> &result,
-                                uint64_t FileSize = -1,
-                                uint64_t MapSize = -1,
-                                int64_t Offset = 0,
+                                OwningPtr<MemoryBuffer> &Result,
+                                uint64_t FileSize,
                                 bool RequiresNullTerminator = true);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note

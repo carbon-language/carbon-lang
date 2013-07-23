@@ -770,9 +770,9 @@ static void performWriteOperation(ArchiveOperation Operation,
       failIfError(sys::fs::status(FD, Status), FileName);
 
       OwningPtr<MemoryBuffer> File;
-      failIfError(
-          MemoryBuffer::getOpenFile(FD, FileName, File, Status.getSize()),
-          FileName);
+      failIfError(MemoryBuffer::getOpenFile(FD, FileName, File,
+                                            Status.getSize(), false),
+                  FileName);
 
       StringRef Name = sys::path::filename(FileName);
       if (Name.size() < 16)

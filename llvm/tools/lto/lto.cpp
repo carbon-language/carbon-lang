@@ -78,8 +78,7 @@ lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
                                                  size_t file_size,
                                                  size_t map_size,
                                                  off_t offset) {
-  return LTOModule::makeLTOModule(fd, path, file_size, map_size,
-                                  offset, sLastErrorString);
+  return LTOModule::makeLTOModule(fd, path, map_size, offset, sLastErrorString);
 }
 
 /// lto_module_create_from_memory - Loads an object file from memory. Returns

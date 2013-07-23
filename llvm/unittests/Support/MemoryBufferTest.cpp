@@ -113,13 +113,10 @@ TEST_F(MemoryBufferTest, getOpenFileNoNullTerminator) {
   }
 
   OwningBuffer Buf;
-  error_code EC = MemoryBuffer::getOpenFile(TestFD,
-                                            TestPath.c_str(),
-                                            Buf,
-                                            40000,    // Size
-                                            -1,
-                                            8000,     // Offset
-                                            false);
+  error_code EC = MemoryBuffer::getOpenFileSlice(TestFD, TestPath.c_str(), Buf,
+                                                 40000, // Size
+                                                 8000   // Offset
+                                                 );
   EXPECT_FALSE(EC);
 
   StringRef BufData = Buf->getBuffer();

@@ -209,17 +209,16 @@ LTOModule *LTOModule::makeLTOModule(const char *path, std::string &errMsg) {
 
 LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
                                     size_t size, std::string &errMsg) {
-  return makeLTOModule(fd, path, size, size, 0, errMsg);
+  return makeLTOModule(fd, path, size, 0, errMsg);
 }
 
 LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
-                                    size_t file_size,
                                     size_t map_size,
                                     off_t offset,
                                     std::string &errMsg) {
   OwningPtr<MemoryBuffer> buffer;
-  if (error_code ec = MemoryBuffer::getOpenFile(fd, path, buffer, file_size,
-                                                map_size, offset, false)) {
+  if (error_code ec =
+          MemoryBuffer::getOpenFileSlice(fd, path, buffer, map_size, offset)) {
     errMsg = ec.message();
     return NULL;
   }

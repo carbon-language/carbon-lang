@@ -248,6 +248,11 @@ error_code MemoryBuffer::getFile(StringRef Filename,
                                RequiresNullTerminator);
 }
 
+static error_code getOpenFileImpl(int FD, const char *Filename,
+                                  OwningPtr<MemoryBuffer> &Result,
+                                  uint64_t FileSize, uint64_t MapSize,
+                                  int64_t Offset, bool RequiresNullTerminator);
+
 error_code MemoryBuffer::getFile(const char *Filename,
                                  OwningPtr<MemoryBuffer> &result,
                                  int64_t FileSize,
@@ -257,8 +262,8 @@ error_code MemoryBuffer::getFile(const char *Filename,
   if (EC)
     return EC;
 
-  error_code ret = getOpenFile(FD, Filename, result, FileSize, FileSize,
-                               0, RequiresNullTerminator);
+  error_code ret = getOpenFileImpl(FD, Filename, result, FileSize, FileSize, 0,
+                                   RequiresNullTerminator);
   close(FD);
   return ret;
 }
@@ -305,11 +310,10 @@ static bool shouldUseMmap(int FD,
   return true;
 }
 
-error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
-                                     OwningPtr<MemoryBuffer> &result,
-                                     uint64_t FileSize, uint64_t MapSize,
-                                     int64_t Offset,
-                                     bool RequiresNullTerminator) {
+static error_code getOpenFileImpl(int FD, const char *Filename,
+                                  OwningPtr<MemoryBuffer> &result,
+                                  uint64_t FileSize, uint64_t MapSize,
+                                  int64_t Offset, bool RequiresNullTerminator) {
   static int PageSize = sys::process::get_self()->page_size();
 
   // Default is to map the full file.
@@ -384,6 +388,20 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
 
   result.swap(SB);
   return error_code::success();
+}
+
+error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
+                                     OwningPtr<MemoryBuffer> &Result,
+                                     uint64_t FileSize,
+                                     bool RequiresNullTerminator) {
+  return getOpenFileImpl(FD, Filename, Result, FileSize, FileSize, 0,
+                         RequiresNullTerminator);
+}
+
+error_code MemoryBuffer::getOpenFileSlice(int FD, const char *Filename,
+                                          OwningPtr<MemoryBuffer> &Result,
+                                          uint64_t MapSize, int64_t Offset) {
+  return getOpenFileImpl(FD, Filename, Result, -1, MapSize, Offset, false);
 }
 
 //===----------------------------------------------------------------------===//
