@@ -14,11 +14,11 @@ add_public_tablegen_target(AMDGPUCommonTableGen)
 add_llvm_target(R600CodeGen
   AMDILCFGStructurizer.cpp
   AMDILIntrinsicInfo.cpp
-  AMDILISelDAGToDAG.cpp
   AMDILISelLowering.cpp
   AMDGPUAsmPrinter.cpp
   AMDGPUFrameLowering.cpp
   AMDGPUIndirectAddressing.cpp
+  AMDGPUISelDAGToDAG.cpp
   AMDGPUMCInstLower.cpp
   AMDGPUMachineFunction.cpp
   AMDGPUSubtarget.cpp
