@@ -1985,10 +1985,10 @@ def : InstAlias<"bt {$imm, $mem|$mem, $imm}",
                 (BT32mi8 i32mem:$mem, i32i8imm:$imm), 0>;
 
 // clr aliases.
-def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg)>;
-def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg)>;
-def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg)>;
-def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg)>;
+def : InstAlias<"clrb $reg", (XOR8rr  GR8 :$reg, GR8 :$reg), 0>;
+def : InstAlias<"clrw $reg", (XOR16rr GR16:$reg, GR16:$reg), 0>;
+def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg), 0>;
+def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg), 0>;
 
 // div and idiv aliases for explicit A register.
 def : InstAlias<"div{b}\t{$src, %al|AL, $src}", (DIV8r  GR8 :$src)>;
