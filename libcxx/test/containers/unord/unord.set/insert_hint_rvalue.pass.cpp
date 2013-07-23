@@ -15,6 +15,10 @@
 
 // iterator insert(const_iterator p, value_type&& x);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_set>
 #include <cassert>
 
@@ -118,5 +122,17 @@ int main()
         assert(*r == 5);
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        typedef std::unordered_set<double> C;
+        typedef C::iterator R;
+        typedef C::value_type P;
+        C c;
+        C c2;
+        C::const_iterator e = c2.end();
+        R r = c.insert(e, P(3.5));
+        assert(false);
+    }
+#endif
 #endif
 }

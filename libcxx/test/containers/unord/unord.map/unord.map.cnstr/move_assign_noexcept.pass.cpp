@@ -48,12 +48,12 @@ int main()
     }
     {
         typedef std::unordered_map<MoveOnly, MoveOnly, std::hash<MoveOnly>,
-                           std::equal_to<MoveOnly>, test_allocator<MoveOnly>> C;
+                           std::equal_to<MoveOnly>, test_allocator<std::pair<const MoveOnly, MoveOnly>>> C;
         static_assert(!std::is_nothrow_move_assignable<C>::value, "");
     }
     {
         typedef std::unordered_map<MoveOnly, MoveOnly, std::hash<MoveOnly>,
-                          std::equal_to<MoveOnly>, other_allocator<MoveOnly>> C;
+                          std::equal_to<MoveOnly>, other_allocator<std::pair<const MoveOnly, MoveOnly>>> C;
         static_assert(std::is_nothrow_move_assignable<C>::value, "");
     }
     {

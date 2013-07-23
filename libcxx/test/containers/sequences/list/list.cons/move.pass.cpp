@@ -61,5 +61,14 @@ int main()
         assert(l2.get_allocator() == lo.get_allocator());
     }
 #endif
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::list<int> l1 = {1, 2, 3};
+        std::list<int>::iterator i = l1.begin();
+        std::list<int> l2 = std::move(l1);
+        assert(*l2.erase(i) == 2);
+        assert(l2.size() == 2);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

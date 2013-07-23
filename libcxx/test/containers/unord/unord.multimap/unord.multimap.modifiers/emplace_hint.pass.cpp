@@ -36,7 +36,7 @@ int main()
         assert(r->first == 3);
         assert(r->second == Emplaceable());
 
-        r = c.emplace_hint(e, std::pair<const int, Emplaceable>(3, Emplaceable(5, 6)));
+        r = c.emplace_hint(c.end(), std::pair<const int, Emplaceable>(3, Emplaceable(5, 6)));
         assert(c.size() == 2);
         assert(r->first == 3);
         assert(r->second == Emplaceable(5, 6));
@@ -68,7 +68,7 @@ int main()
         assert(r->first == 3);
         assert(r->second == Emplaceable());
 
-        r = c.emplace_hint(e, std::pair<const int, Emplaceable>(3, Emplaceable(5, 6)));
+        r = c.emplace_hint(c.end(), std::pair<const int, Emplaceable>(3, Emplaceable(5, 6)));
         assert(c.size() == 2);
         assert(r->first == 3);
         assert(r->second == Emplaceable(5, 6));

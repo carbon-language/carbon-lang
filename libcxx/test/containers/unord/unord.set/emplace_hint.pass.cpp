@@ -16,6 +16,10 @@
 // template <class... Args>
 //     iterator emplace_hint(const_iterator p, Args&&... args);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_set>
 #include <cassert>
 
@@ -60,6 +64,16 @@ int main()
         r = c.emplace_hint(r, 5, 6);
         assert(c.size() == 2);
         assert(*r == Emplaceable(5, 6));
+    }
+#endif
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        typedef std::unordered_set<Emplaceable> C;
+        typedef C::iterator R;
+        C c1;
+        C c2;
+        R r = c1.emplace_hint(c2.begin(), 5, 6);
+        assert(false);
     }
 #endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

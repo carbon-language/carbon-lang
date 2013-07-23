@@ -34,7 +34,7 @@ int main()
         assert(c.size() == 1);
         assert(*r == Emplaceable());
 
-        r = c.emplace_hint(e, Emplaceable(5, 6));
+        r = c.emplace_hint(c.end(), Emplaceable(5, 6));
         assert(c.size() == 2);
         assert(*r == Emplaceable(5, 6));
 
@@ -53,7 +53,7 @@ int main()
         assert(c.size() == 1);
         assert(*r == Emplaceable());
 
-        r = c.emplace_hint(e, Emplaceable(5, 6));
+        r = c.emplace_hint(c.end(), Emplaceable(5, 6));
         assert(c.size() == 2);
         assert(*r == Emplaceable(5, 6));
 

@@ -32,15 +32,15 @@ int main()
         assert(c.size() == 1);
         assert(*r == 3.5);
 
-        r = c.insert(e, P(3.5));
+        r = c.insert(c.end(), P(3.5));
         assert(c.size() == 2);
         assert(*r == 3.5);
 
-        r = c.insert(e, P(4.5));
+        r = c.insert(c.end(), P(4.5));
         assert(c.size() == 3);
         assert(*r == 4.5);
 
-        r = c.insert(e, P(5.5));
+        r = c.insert(c.end(), P(5.5));
         assert(c.size() == 4);
         assert(*r == 5.5);
     }
@@ -56,15 +56,15 @@ int main()
         assert(c.size() == 1);
         assert(*r == 3.5);
 
-        r = c.insert(e, P(3.5));
+        r = c.insert(c.end(), P(3.5));
         assert(c.size() == 2);
         assert(*r == 3.5);
 
-        r = c.insert(e, P(4.5));
+        r = c.insert(c.end(), P(4.5));
         assert(c.size() == 3);
         assert(*r == 4.5);
 
-        r = c.insert(e, P(5.5));
+        r = c.insert(c.end(), P(5.5));
         assert(c.size() == 4);
         assert(*r == 5.5);
     }
