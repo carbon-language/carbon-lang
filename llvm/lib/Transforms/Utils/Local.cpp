@@ -936,7 +936,7 @@ unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
   ComputeMaskedBits(V, KnownZero, KnownOne, TD);
   unsigned TrailZ = KnownZero.countTrailingOnes();
 
-  // Avoid trouble with rediculously large TrailZ values, such as
+  // Avoid trouble with ridiculously large TrailZ values, such as
   // those computed from a null pointer.
   TrailZ = std::min(TrailZ, unsigned(sizeof(unsigned) * CHAR_BIT - 1));
 
