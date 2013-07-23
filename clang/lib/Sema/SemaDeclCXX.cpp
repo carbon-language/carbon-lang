@@ -27,6 +27,7 @@
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/DeclSpec.h"
@@ -10650,7 +10651,8 @@ FinishedParams:
     // C++11 [usrlit.suffix]p1:
     //   Literal suffix identifiers that do not start with an underscore
     //   are reserved for future standardization.
-    Diag(FnDecl->getLocation(), diag::warn_user_literal_reserved);
+    Diag(FnDecl->getLocation(), diag::warn_user_literal_reserved)
+      << NumericLiteralParser::isValidUDSuffix(getLangOpts(), LiteralName);
   }
 
   return false;

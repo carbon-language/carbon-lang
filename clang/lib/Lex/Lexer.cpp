@@ -1586,7 +1586,8 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
 
 /// LexUDSuffix - Lex the ud-suffix production for user-defined literal suffixes
 /// in C++11, or warn on a ud-suffix in C++98.
-const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
+const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr,
+                               bool IsStringLiteral) {
   assert(getLangOpts().CPlusPlus);
 
   // Maximally munch an identifier. FIXME: UCNs.
@@ -1606,9 +1607,20 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
     // that does not start with an underscore is ill-formed. As a conforming
     // extension, we treat all such suffixes as if they had whitespace before
     // them.
-    if (C != '_') {
+    bool IsUDSuffix = false;
+    if (C == '_')
+      IsUDSuffix = true;
+    else if (IsStringLiteral && C == 's' && getLangOpts().CPlusPlus1y) {
+      // In C++1y, "s" is a valid ud-suffix for a string literal.
+      unsigned NextSize;
+      if (!isIdentifierBody(getCharAndSizeNoWarn(CurPtr + Size, NextSize,
+                                                 getLangOpts())))
+        IsUDSuffix = true;
+    }
+
+    if (!IsUDSuffix) {
       if (!isLexingRawMode())
-        Diag(CurPtr, getLangOpts().MicrosoftMode ? 
+        Diag(CurPtr, getLangOpts().MicrosoftMode ?
             diag::ext_ms_reserved_user_defined_literal :
             diag::ext_reserved_user_defined_literal)
           << FixItHint::CreateInsertion(getSourceLocation(CurPtr), " ");
@@ -1667,7 +1679,7 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
 
   // If we are in C++11, lex the optional ud-suffix.
   if (getLangOpts().CPlusPlus)
-    CurPtr = LexUDSuffix(Result, CurPtr);
+    CurPtr = LexUDSuffix(Result, CurPtr, true);
 
   // If a nul character existed in the string, warn about it.
   if (NulCharacter && !isLexingRawMode())
@@ -1750,7 +1762,7 @@ void Lexer::LexRawStringLiteral(Token &Result, const char *CurPtr,
 
   // If we are in C++11, lex the optional ud-suffix.
   if (getLangOpts().CPlusPlus)
-    CurPtr = LexUDSuffix(Result, CurPtr);
+    CurPtr = LexUDSuffix(Result, CurPtr, true);
 
   // Update the location of token as well as BufferPtr.
   const char *TokStart = BufferPtr;
@@ -1840,7 +1852,7 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
 
   // If we are in C++11, lex the optional ud-suffix.
   if (getLangOpts().CPlusPlus)
-    CurPtr = LexUDSuffix(Result, CurPtr);
+    CurPtr = LexUDSuffix(Result, CurPtr, false);
 
   // If a nul character existed in the character, warn about it.
   if (NulCharacter && !isLexingRawMode())

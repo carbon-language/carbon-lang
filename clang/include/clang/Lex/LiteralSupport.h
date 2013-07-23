@@ -79,6 +79,8 @@ public:
     return SuffixBegin - ThisTokBegin;
   }
 
+  static bool isValidUDSuffix(const LangOptions &LangOpts, StringRef Suffix);
+
   unsigned getRadix() const { return radix; }
 
   /// GetIntegerValue - Convert this numeric literal value to an APInt that
