@@ -56,7 +56,7 @@ Non-comprehensive list of changes in this release
 
 * Support for building using Visual Studio 2008 has been dropped. Use VS 2010
   or later instead. For more information, see the `Getting Started using Visual
-  Studio <GettingStartedVS.html>` page).
+  Studio <GettingStartedVS.html>`_ page).
 
 * ... next change ...
 
