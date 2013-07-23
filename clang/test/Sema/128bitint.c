@@ -16,10 +16,10 @@ __uint128_t b = (__uint128_t)-1;
 __int128 i = (__int128)0;
 unsigned __int128 u = (unsigned __int128)-1;
 
-long long SignedTooBig = 123456789012345678901234567890; // expected-warning {{integer constant is too large for its type}}
+long long SignedTooBig = 123456789012345678901234567890; // expected-error {{constant is larger than the largest unsigned integer type}}
 __int128_t Signed128 = 123456789012345678901234567890i128;
 long long Signed64 = 123456789012345678901234567890i128; // expected-warning {{implicit conversion from '__int128' to 'long long' changes value from 123456789012345678901234567890 to -4362896299872285998}}
-unsigned long long UnsignedTooBig = 123456789012345678901234567890; // expected-warning {{integer constant is too large for its type}}
+unsigned long long UnsignedTooBig = 123456789012345678901234567890; // expected-error {{constant is larger than the largest unsigned integer type}}
 __uint128_t Unsigned128 = 123456789012345678901234567890Ui128;
 unsigned long long Unsigned64 = 123456789012345678901234567890Ui128; // expected-warning {{implicit conversion from 'unsigned __int128' to 'unsigned long long' changes value from 123456789012345678901234567890 to 14083847773837265618}}
 

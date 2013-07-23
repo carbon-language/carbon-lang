@@ -245,7 +245,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // Parse the integer literal into Result.
     if (Literal.GetIntegerValue(Result.Val)) {
       // Overflow parsing integer literal.
-      if (ValueLive) PP.Diag(PeekTok, diag::warn_integer_too_large);
+      if (ValueLive) PP.Diag(PeekTok, diag::err_integer_too_large);
       Result.Val.setIsUnsigned(true);
     } else {
       // Set the signedness of the result to match whether there was a U suffix
@@ -257,9 +257,9 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       // large that it is unsigned" e.g. on 12345678901234567890 where intmax_t
       // is 64-bits.
       if (!Literal.isUnsigned && Result.Val.isNegative()) {
-        // Don't warn for a hex literal: 0x8000..0 shouldn't warn.
-        if (ValueLive && Literal.getRadix() != 16)
-          PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
+        // Don't warn for a hex or octal literal: 0x8000..0 shouldn't warn.
+        if (ValueLive && Literal.getRadix() == 10)
+          PP.Diag(PeekTok, diag::err_integer_too_large_for_signed);
         Result.Val.setIsUnsigned(true);
       }
     }

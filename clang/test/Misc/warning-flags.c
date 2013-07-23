@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (140):
+CHECK: Warnings without flags (136):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -81,14 +81,11 @@ CHECK-NEXT:   warn_fe_cc_log_diagnostics_failure
 CHECK-NEXT:   warn_fe_cc_print_header_failure
 CHECK-NEXT:   warn_fe_macro_contains_embedded_newline
 CHECK-NEXT:   warn_file_asm_volatile
-CHECK-NEXT:   warn_hex_escape_too_large
 CHECK-NEXT:   warn_ignoring_ftabstop_value
 CHECK-NEXT:   warn_implements_nscopying
 CHECK-NEXT:   warn_incompatible_qualified_id
 CHECK-NEXT:   warn_initializer_string_for_char_array_too_long
 CHECK-NEXT:   warn_inline_namespace_reopened_noninline
-CHECK-NEXT:   warn_integer_too_large
-CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
 CHECK-NEXT:   warn_many_braces_around_scalar_init
 CHECK-NEXT:   warn_maynot_respond
@@ -104,7 +101,6 @@ CHECK-NEXT:   warn_nonnull_pointers_only
 CHECK-NEXT:   warn_not_compound_assign
 CHECK-NEXT:   warn_objc_property_copy_missing_on_block
 CHECK-NEXT:   warn_objc_protocol_qualifier_missing_id
-CHECK-NEXT:   warn_octal_escape_too_large
 CHECK-NEXT:   warn_on_superclass_use
 CHECK-NEXT:   warn_param_default_argument_redefinition
 CHECK-NEXT:   warn_partial_specs_not_deducible

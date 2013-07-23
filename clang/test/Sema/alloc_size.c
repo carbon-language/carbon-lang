@@ -19,7 +19,7 @@ void* fn7(unsigned) __attribute__((alloc_size)); // expected-error {{attribute t
 
 void *fn8(int, int) __attribute__((alloc_size(1, 1))); // OK
 
-void* fn9(unsigned) __attribute__((alloc_size(12345678901234567890123))); // expected-warning {{integer constant is too large for its type}} // expected-error {{attribute parameter 1 is out of bounds}}
+void* fn9(unsigned) __attribute__((alloc_size(12345678901234567890123))); // expected-error {{integer constant is larger than the largest unsigned integer type}} // expected-error {{attribute parameter 1 is out of bounds}}
 
 void* fn10(size_t, size_t) __attribute__((alloc_size(1,2))); // expected-error{{redefinition of parameter}} \
                                                              // expected-error{{a parameter list without types is only allowed in a function definition}} \

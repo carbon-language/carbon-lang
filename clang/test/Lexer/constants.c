@@ -13,7 +13,12 @@ float Y = 08.123456;
 // PR2252
 #if -0x8000000000000000  // should not warn.
 #endif
-
+#if -01000000000000000000000  // should not warn.
+#endif
+#if 9223372036854775808 // expected-error {{integer constant is larger than the largest signed integer type}}
+#endif
+#if 0x10000000000000000 // expected-error {{integer constant is larger than the largest unsigned integer type}}
+#endif
 
 int c[] = {
   'df',   // expected-warning {{multi-character character constant}}

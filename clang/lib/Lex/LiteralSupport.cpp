@@ -157,7 +157,7 @@ static unsigned ProcessCharEscape(const char *ThisTokBegin,
     // Check for overflow.
     if (Overflow && Diags)   // Too many digits to fit in
       Diag(Diags, Features, Loc, ThisTokBegin, EscapeBegin, ThisTokBuf,
-           diag::warn_hex_escape_too_large);
+           diag::err_hex_escape_too_large);
     break;
   }
   case '0': case '1': case '2': case '3':
@@ -180,7 +180,7 @@ static unsigned ProcessCharEscape(const char *ThisTokBegin,
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
       if (Diags)
         Diag(Diags, Features, Loc, ThisTokBegin, EscapeBegin, ThisTokBuf,
-             diag::warn_octal_escape_too_large);
+             diag::err_octal_escape_too_large);
       ResultChar &= ~0U >> (32-CharWidth);
     }
     break;

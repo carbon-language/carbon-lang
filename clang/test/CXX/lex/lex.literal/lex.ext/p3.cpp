@@ -9,7 +9,7 @@ int &i2 = 45_x1;
 template<char...> char &operator "" _x1 ();
 int &i3 = 0377_x1;
 
-int &i4 = 90000000000000000000000000000000000000000000000_x1; // expected-warning {{integer constant is too large}}
+int &i4 = 90000000000000000000000000000000000000000000000_x1; // expected-error {{integer constant is larger than the largest unsigned integer type}}
 
 double &operator "" _x2 (const char *);
 double &i5 = 123123123123123123123123123123123123123123123_x2;

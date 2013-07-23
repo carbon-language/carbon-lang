@@ -180,8 +180,8 @@ def warn_cxx11_compat_binary_literal : Warning<
   "binary integer literals are incompatible with C++ standards before C++1y">,
   InGroup<CXXPre1yCompatPedantic>, DefaultIgnore;
 def err_pascal_string_too_long : Error<"Pascal string is too long">;
-def warn_octal_escape_too_large : ExtWarn<"octal escape sequence out of range">;
-def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
+def err_octal_escape_too_large : Error<"octal escape sequence out of range">;
+def err_hex_escape_too_large : Error<"hex escape sequence out of range">;
 def ext_string_too_long : Extension<"string literal of length %0 exceeds "
   "maximum length %1 that %select{C90|ISO C99|C++}2 compilers are required to "
   "support">, InGroup<OverlengthStrings>;

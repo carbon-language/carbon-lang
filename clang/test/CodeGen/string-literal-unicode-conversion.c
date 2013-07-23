@@ -31,10 +31,11 @@ void f() {
   wchar_t const *b = L"Кошка";
 
   // CHECK-C: private unnamed_addr constant [4 x i32] [i32 20320, i32 22909, i32 66304, i32 0], align 4
-  // CHECK-SHORTWCHAR: private unnamed_addr constant [4 x i16] [i16 20320, i16 22909, i16 768, i16 0], align 2
   // CHECK-CPP0X: private unnamed_addr constant [4 x i32] [i32 20320, i32 22909, i32 66304, i32 0], align 4
+#if __WCHAR_MAX__ == 2147483647
   wchar_t const *b2 = L"\x4f60\x597d\x10300";
-  
+#endif
+
 #if __cplusplus >= 201103L
   
   // CHECK-CPP0X: private unnamed_addr constant [12 x i8] c"1\D0\9A\D0\BE\D1\88\D0\BA\D0\B0\00", align 1
