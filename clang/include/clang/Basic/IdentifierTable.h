@@ -637,8 +637,6 @@ class Selector {
   }
 
   static ObjCMethodFamily getMethodFamilyImpl(Selector sel);
-  
-  static ObjCInstanceTypeFamily getInstTypeMethodFamilyImpl(Selector sel);
 
 public:
   friend class SelectorTable; // only the SelectorTable can create these
@@ -714,6 +712,8 @@ public:
   static Selector getTombstoneMarker() {
     return Selector(uintptr_t(-2));
   }
+  
+  static ObjCInstanceTypeFamily getInstTypeMethodFamily(Selector sel);
 };
 
 /// \brief This table allows us to fully hide how we implement

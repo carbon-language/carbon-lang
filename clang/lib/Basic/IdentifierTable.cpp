@@ -452,7 +452,7 @@ ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {
   return OMF_None;
 }
 
-ObjCInstanceTypeFamily Selector::getInstTypeMethodFamilyImpl(Selector sel) {
+ObjCInstanceTypeFamily Selector::getInstTypeMethodFamily(Selector sel) {
   IdentifierInfo *first = sel.getIdentifierInfoForSlot(0);
   if (!first) return OIT_None;
   

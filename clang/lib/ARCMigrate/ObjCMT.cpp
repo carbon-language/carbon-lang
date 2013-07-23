@@ -38,6 +38,7 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
                                   const ObjCImplementationDecl *ImpDecl);
   void migrateNSEnumDecl(ASTContext &Ctx, const EnumDecl *EnumDcl,
                      const TypedefDecl *TypedefDcl);
+  void migrateInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl);
 
 public:
   std::string MigrateDir;
@@ -546,6 +547,43 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   Editor->commit(commit);
 }
 
+static void
+migrateMethodInstanceType(ASTContext &Ctx,
+                          ObjCContainerDecl *CDecl,
+                          ObjCMethodDecl *OM) {
+  ObjCInstanceTypeFamily OIT_Family =
+    Selector::getInstTypeMethodFamily(OM->getSelector());
+  if (OIT_Family == OIT_None)
+    return;
+  // TODO. Many more to come
+  if (OIT_Family != OIT_Array)
+    return;
+  if (!OM->getResultType()->isObjCIdType())
+    return;
+  
+  ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl);
+  if (!IDecl) {
+    if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(CDecl))
+      IDecl = CatDecl->getClassInterface();
+    else if (ObjCImplDecl *ImpDecl = dyn_cast<ObjCImplDecl>(CDecl))
+      IDecl = ImpDecl->getClassInterface();
+  }
+  if (!IDecl || !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSArray")))
+    return;
+  
+}
+
+void ObjCMigrateASTConsumer::migrateInstanceType(ASTContext &Ctx,
+                                                 ObjCContainerDecl *CDecl) {
+  // migrate methods which can have instancetype as their result type.
+  for (ObjCContainerDecl::method_iterator M = CDecl->meth_begin(),
+       MEnd = CDecl->meth_end();
+       M != MEnd; ++M) {
+    ObjCMethodDecl *Method = (*M);
+    migrateMethodInstanceType(Ctx, CDecl, Method);
+  }
+}
+
 namespace {
 
 class RewritesReceiver : public edit::EditsReceiver {
@@ -584,6 +622,9 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
           if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*N))
             migrateNSEnumDecl(Ctx, ED, TD);
       }
+      // migrate methods which can have instancetype as their result type.
+      if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(*D))
+        migrateInstanceType(Ctx, CDecl);
     }
   
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
