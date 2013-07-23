@@ -14,6 +14,10 @@ endif(BUILD_SHARED_LIBS)
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+  )
 
 if ( NOT LLD_BUILT_STANDALONE )
 
@@ -28,9 +32,10 @@ if ( NOT LLD_BUILT_STANDALONE )
     lld_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     )
 
-  add_lit_testsuite(check-lld "Running lld regression tests"
+  add_lit_testsuite(check-lld "Running lld test suite"
     ${CMAKE_CURRENT_BINARY_DIR}
-    PARAMS ${LLD_TEST_PARAMS}
+    PARAMS lld_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+         lld_unit_site_config=${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
     DEPENDS ${LLD_TEST_DEPS}
     )
 
