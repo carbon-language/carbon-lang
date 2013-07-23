@@ -2801,11 +2801,11 @@ public:
          it != ie; ++it) {
       // We rely on the default argument classification for the most part.
       // One exception:  An aggregate containing a single floating-point
-      // item must be passed in a register if one is available.
+      // or vector item must be passed in a register if one is available.
       const Type *T = isSingleElementStruct(it->type, getContext());
       if (T) {
         const BuiltinType *BT = T->getAs<BuiltinType>();
-        if (BT && BT->isFloatingPoint()) {
+        if (T->isVectorType() || (BT && BT->isFloatingPoint())) {
           QualType QT(T, 0);
           it->info = ABIArgInfo::getDirectInReg(CGT.ConvertType(QT));
           continue;
