@@ -92,7 +92,7 @@ LTOCodeGenerator::~LTOCodeGenerator() {
 }
 
 // Initialize LTO passes. Please keep this funciton in sync with
-// PassManagerBuilder::populateLTOPassManager(), and  make sure all LTO
+// PassManagerBuilder::populateLTOPassManager(), and make sure all LTO
 // passes are initialized. 
 //
 void LTOCodeGenerator::initializeLTOPasses() {
