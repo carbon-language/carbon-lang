@@ -74,8 +74,9 @@ public:
                             int64_t FileSize = -1,
                             bool RequiresNullTerminator = true);
 
-  // Get a MemoryBuffer of part of a file. Since this is in the middle of a
-  // file, the buffer is not null terminated.
+  /// Given an already-open file descriptor, map some slice of it into a
+  /// MemoryBuffer. The slice is specified by an \p Offset and \p MapSize.
+  /// Since this is in the middle of a file, the buffer is not null terminated.
   static error_code getOpenFileSlice(int FD, const char *Filename,
                                      OwningPtr<MemoryBuffer> &Result,
                                      uint64_t MapSize, int64_t Offset);
