@@ -16,6 +16,7 @@
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -1212,11 +1213,17 @@ SDValue R600TargetLowering::LowerFormalArguments(
                                       const SmallVectorImpl<ISD::InputArg> &Ins,
                                       SDLoc DL, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
-  unsigned ParamOffsetBytes = 36;
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                 getTargetMachine(), ArgLocs, *DAG.getContext());
+
+  AnalyzeFormalArguments(CCInfo, Ins);
+
   Function::const_arg_iterator FuncArg =
                             DAG.getMachineFunction().getFunction()->arg_begin();
   for (unsigned i = 0, e = Ins.size(); i < e; ++i, ++FuncArg) {
-    EVT VT = Ins[i].VT;
+    CCValAssign &VA = ArgLocs[i];
+    EVT VT = VA.getLocVT();
     Type *ArgType = FuncArg->getType();
     unsigned ArgSizeInBits = ArgType->isPointerTy() ?
                              32 : ArgType->getPrimitiveSizeInBits();
@@ -1239,12 +1246,14 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
     PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
                                                     AMDGPUAS::PARAM_I_ADDRESS);
+
+    // The first 36 bytes of the input buffer contains information about
+    // thread group and global sizes.
     SDValue Arg = DAG.getExtLoad(LoadType, DL, VT, DAG.getRoot(),
-                                DAG.getConstant(ParamOffsetBytes, MVT::i32),
-                                       MachinePointerInfo(UndefValue::get(PtrTy)),
-                                       ArgVT, false, false, ArgBytes);
+                           DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
+                           MachinePointerInfo(UndefValue::get(PtrTy)),
+                           ArgVT, false, false, ArgBytes);
     InVals.push_back(Arg);
-    ParamOffsetBytes += ArgBytes;
   }
   return Chain;
 }
