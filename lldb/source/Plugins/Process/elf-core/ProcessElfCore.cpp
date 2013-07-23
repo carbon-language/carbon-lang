@@ -486,8 +486,8 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
     bool have_prpsinfo = false;
 
     ArchSpec arch = GetArchitecture();
-    ELFPrPsInfo prpsinfo;
-    ELFPrStatus prstatus;
+    ELFLinuxPrPsInfo prpsinfo;
+    ELFLinuxPrStatus prstatus;
     size_t header_size;
     size_t len;
 
@@ -548,7 +548,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
                     have_prstatus = true;
                     prstatus.Parse(note_data, arch);
                     thread_data->signo = prstatus.pr_cursig;
-                    header_size = ELFPrStatus::GetSize(arch);
+                    header_size = ELFLinuxPrStatus::GetSize(arch);
                     len = note_data.GetByteSize() - header_size;
                     thread_data->gpregset = DataExtractor(note_data, header_size, len);
                     break;

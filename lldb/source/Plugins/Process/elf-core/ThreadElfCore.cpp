@@ -131,21 +131,21 @@ ThreadElfCore::CalculateStopInfo ()
 //----------------------------------------------------------------
 // Parse PRSTATUS from NOTE entry
 //----------------------------------------------------------------
-ELFPrStatus::ELFPrStatus()
+ELFLinuxPrStatus::ELFLinuxPrStatus()
 {
-    memset(this, 0, sizeof(ELFPrStatus));
+    memset(this, 0, sizeof(ELFLinuxPrStatus));
 }
 
 bool
-ELFPrStatus::Parse(DataExtractor &data, ArchSpec &arch)
+ELFLinuxPrStatus::Parse(DataExtractor &data, ArchSpec &arch)
 {
     ByteOrder byteorder = data.GetByteOrder();
     size_t len;
     switch(arch.GetCore())
     {
         case ArchSpec::eCore_x86_64_x86_64:
-            len = data.ExtractBytes(0, ELFPRSTATUS64_SIZE, byteorder, this);
-            return len == ELFPRSTATUS64_SIZE;
+            len = data.ExtractBytes(0, ELFLINUXPRSTATUS64_SIZE, byteorder, this);
+            return len == ELFLINUXPRSTATUS64_SIZE;
         default:
             return false;
     }
@@ -154,21 +154,21 @@ ELFPrStatus::Parse(DataExtractor &data, ArchSpec &arch)
 //----------------------------------------------------------------
 // Parse PRPSINFO from NOTE entry
 //----------------------------------------------------------------
-ELFPrPsInfo::ELFPrPsInfo()
+ELFLinuxPrPsInfo::ELFLinuxPrPsInfo()
 {
-    memset(this, 0, sizeof(ELFPrPsInfo));
+    memset(this, 0, sizeof(ELFLinuxPrPsInfo));
 }
 
 bool
-ELFPrPsInfo::Parse(DataExtractor &data, ArchSpec &arch)
+ELFLinuxPrPsInfo::Parse(DataExtractor &data, ArchSpec &arch)
 {
     ByteOrder byteorder = data.GetByteOrder();
     size_t len;
     switch(arch.GetCore())
     {
         case ArchSpec::eCore_x86_64_x86_64:
-            len = data.ExtractBytes(0, ELFPRPSINFO64_SIZE, byteorder, this);
-            return len == ELFPRPSINFO64_SIZE;
+            len = data.ExtractBytes(0, ELFLINUXPRPSINFO64_SIZE, byteorder, this);
+            return len == ELFLINUXPRPSINFO64_SIZE;
         default:
             return false;
     }
