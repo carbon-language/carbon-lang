@@ -117,6 +117,7 @@ class ProcessLaunchTestCase(TestBase):
         self.setTearDownCleanup(self.d)
         self.my_working_dir_test()
 
+    @skipIfFreeBSD # llvm.org/pr16684
     @dwarf_test
     def test_set_working_dir_with_dwarf (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
