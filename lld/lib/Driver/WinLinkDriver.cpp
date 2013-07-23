@@ -324,7 +324,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
     info.setEntrySymbolName(arg->getValue());
 
-  // Hanlde -libpath
+  // Handle -libpath
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_libpath),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
@@ -335,15 +335,19 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_force))
     info.setAllowRemainingUndefines(true);
 
-  // Hanlde -nxcompat:no
+  // Handle -nxcompat:no
   if (parsedArgs->getLastArg(OPT_no_nxcompat))
     info.setNxCompat(false);
 
-  // Hanlde -largeaddressaware
+  // Handle -largeaddressaware
   if (parsedArgs->getLastArg(OPT_largeaddressaware))
     info.setLargeAddressAware(true);
 
-  // Hanlde -out
+  // Handle -fixed
+  if (parsedArgs->getLastArg(OPT_fixed))
+    info.setBaseRelocationEnabled(false);
+
+  // Handle -out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());
 

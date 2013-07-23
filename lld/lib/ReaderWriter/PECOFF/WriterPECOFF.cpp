@@ -698,7 +698,9 @@ public:
     auto *text = new TextSectionChunk(linkedFile);
     auto *rdata = new RDataSectionChunk(linkedFile);
     auto *data = new DataSectionChunk(linkedFile);
-    auto *baseReloc = new BaseRelocChunk(linkedFile);
+    BaseRelocChunk *baseReloc = nullptr;
+    if (_PECOFFTargetInfo.getBaseRelocationEnabled())
+      baseReloc = new BaseRelocChunk(linkedFile);
 
     addChunk(dosStub);
     addChunk(peHeader);
@@ -717,11 +719,13 @@ public:
     // Now that we know the addresses of all defined atoms that needs to be
     // relocated. So we can create the ".reloc" section which contains all the
     // relocation sites.
-    baseReloc->setContents(_chunks);
-    if (baseReloc->size()) {
-      dataDirectory->setBaseRelocField(baseReloc->getSectionRva(),
-                                       baseReloc->rawSize());
-      addSectionChunk(baseReloc, sectionTable);
+    if (baseReloc) {
+      baseReloc->setContents(_chunks);
+      if (baseReloc->size()) {
+        dataDirectory->setBaseRelocField(baseReloc->getSectionRva(),
+                                         baseReloc->rawSize());
+        addSectionChunk(baseReloc, sectionTable);
+      }
     }
 
     setImageSizeOnDisk();

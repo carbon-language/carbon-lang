@@ -50,5 +50,10 @@ def largeaddressaware : Flag<["-", "/"], "largeaddressaware">,
 def no_largeaddressaware : Flag<["-", "/"], "largeaddressaware:no">,
     HelpText<"Disable large addresses">;
 
+def fixed : Flag<["-", "/"], "fixed">,
+    HelpText<"Disable base relocations">;
+def no_fixed : Flag<["-", "/"], "fixed:no">,
+    HelpText<"Enable base relocations">;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;

@@ -28,7 +28,7 @@ public:
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
-        _nxCompat(true), _largeAddressAware(false) {}
+        _nxCompat(true), _largeAddressAware(false), _baseRelocationEnabled(true) {}
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -78,8 +78,11 @@ public:
   void setNxCompat(bool nxCompat) { _nxCompat = nxCompat; }
   bool getNxCompat() const { return _nxCompat; }
 
-  void setLargeAddressAware(bool option) { _largeAddressAware = option; }
+  void setLargeAddressAware(bool val) { _largeAddressAware = val; }
   bool getLargeAddressAware() const { return _largeAddressAware; }
+
+  void setBaseRelocationEnabled(bool val) { _baseRelocationEnabled = val; }
+  bool getBaseRelocationEnabled() const { return _baseRelocationEnabled; }
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
@@ -104,6 +107,7 @@ private:
   OSVersion _minOSVersion;
   bool _nxCompat;
   bool _largeAddressAware;
+  bool _baseRelocationEnabled;
 
   std::vector<StringRef> _inputSearchPaths;
   mutable std::unique_ptr<Reader> _reader;

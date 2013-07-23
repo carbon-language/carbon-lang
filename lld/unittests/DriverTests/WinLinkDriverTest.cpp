@@ -42,6 +42,8 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ("b.obj", inputFile(1));
   EXPECT_EQ("c.obj", inputFile(2));
   EXPECT_TRUE(_info.getInputSearchPaths().empty());
+
+  // Unspecified flags will have default values.
   EXPECT_EQ(6, _info.getMinOSVersion().majorVersion);
   EXPECT_EQ(0, _info.getMinOSVersion().minorVersion);
   EXPECT_EQ((uint64_t)0x400000, _info.getBaseAddress());
@@ -50,6 +52,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(_info.allowRemainingUndefines());
   EXPECT_TRUE(_info.getNxCompat());
   EXPECT_FALSE(_info.getLargeAddressAware());
+  EXPECT_TRUE(_info.getBaseRelocationEnabled());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -148,6 +151,15 @@ TEST_F(WinLinkParserTest, NoLargeAddressAware) {
   EXPECT_FALSE(_info.getLargeAddressAware());
 }
 
+TEST_F(WinLinkParserTest, Fixed) {
+  EXPECT_FALSE(parse("link.exe", "-fixed", "a.out", nullptr));
+  EXPECT_FALSE(_info.getBaseRelocationEnabled());
+}
+
+TEST_F(WinLinkParserTest, NoFixed) {
+  EXPECT_FALSE(parse("link.exe", "-fixed:no", "a.out", nullptr));
+  EXPECT_TRUE(_info.getBaseRelocationEnabled());
+}
 
 TEST_F(WinLinkParserTest, NoInputFiles) {
   EXPECT_TRUE(parse("link.exe", nullptr));
