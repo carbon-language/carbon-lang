@@ -72,10 +72,10 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v2i32, Expand);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Expand);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
   setOperationAction(ISD::STORE, MVT::i8, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
   setOperationAction(ISD::STORE, MVT::v2i32, Expand);
@@ -775,7 +775,7 @@ SDValue R600TargetLowering::LowerImplicitParameter(SelectionDAG &DAG, EVT VT,
                                                    unsigned DwordOffset) const {
   unsigned ByteOffset = DwordOffset * 4;
   PointerType * PtrType = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
-                                      AMDGPUAS::PARAM_I_ADDRESS);
+                                      AMDGPUAS::CONSTANT_BUFFER_0);
 
   // We shouldn't be using an offset wider than 16-bits for implicit parameters.
   assert(isInt<16>(ByteOffset));
@@ -1219,40 +1219,20 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
   AnalyzeFormalArguments(CCInfo, Ins);
 
-  Function::const_arg_iterator FuncArg =
-                            DAG.getMachineFunction().getFunction()->arg_begin();
-  for (unsigned i = 0, e = Ins.size(); i < e; ++i, ++FuncArg) {
+  for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
     CCValAssign &VA = ArgLocs[i];
     EVT VT = VA.getLocVT();
-    Type *ArgType = FuncArg->getType();
-    unsigned ArgSizeInBits = ArgType->isPointerTy() ?
-                             32 : ArgType->getPrimitiveSizeInBits();
-    unsigned ArgBytes = ArgSizeInBits >> 3;
-    EVT ArgVT;
-    if (ArgSizeInBits < VT.getSizeInBits()) {
-      assert(!ArgType->isFloatTy() &&
-             "Extending floating point arguments not supported yet");
-      ArgVT = MVT::getIntegerVT(ArgSizeInBits);
-    } else {
-      ArgVT = VT;
-    }
-
-    ISD::LoadExtType LoadType = ISD::EXTLOAD;
-    if (Ins[i].Flags.isZExt()) {
-      LoadType = ISD::ZEXTLOAD;
-    } else if (Ins[i].Flags.isSExt()) {
-      LoadType = ISD::SEXTLOAD;
-    }
 
     PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
-                                                    AMDGPUAS::PARAM_I_ADDRESS);
+                                                   AMDGPUAS::CONSTANT_BUFFER_0);
 
     // The first 36 bytes of the input buffer contains information about
     // thread group and global sizes.
-    SDValue Arg = DAG.getExtLoad(LoadType, DL, VT, DAG.getRoot(),
+    SDValue Arg = DAG.getLoad(VT, DL, Chain,
                            DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
-                           MachinePointerInfo(UndefValue::get(PtrTy)),
-                           ArgVT, false, false, ArgBytes);
+                           MachinePointerInfo(UndefValue::get(PtrTy)), false,
+                           false, false, 4); // 4 is the prefered alignment for
+                                             // the CONSTANT memory space.
     InVals.push_back(Arg);
   }
   return Chain;

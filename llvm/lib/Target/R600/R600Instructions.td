@@ -313,7 +313,7 @@ class VTX_READ <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
 
 class LoadParamFrag <PatFrag load_type> : PatFrag <
   (ops node:$ptr), (load_type node:$ptr),
-  [{ return isParamLoad(dyn_cast<LoadSDNode>(N)); }]
+  [{ return isConstantLoad(dyn_cast<LoadSDNode>(N), 0); }]
 >;
 
 def load_param : LoadParamFrag<load>;

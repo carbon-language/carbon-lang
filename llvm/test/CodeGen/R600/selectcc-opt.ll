@@ -29,7 +29,6 @@ ENDIF:
 ; for the icmp instruction
 
 ; CHECK: @test_b
-; CHECK: VTX_READ
 ; CHECK: SET{{[GTEQN]+}}_DX10
 ; CHECK-NEXT: PRED_
 ; CHECK-NEXT: ALU clause starting

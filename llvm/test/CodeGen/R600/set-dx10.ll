@@ -5,7 +5,7 @@
 ; SET*DX10 instructions.
 
 ; CHECK: @fcmp_une_select_fptosi
-; CHECK: SETNE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETNE_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_une_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -18,7 +18,7 @@ entry:
 }
 
 ; CHECK: @fcmp_une_select_i32
-; CHECK: SETNE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETNE_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_une_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -29,7 +29,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ueq_select_fptosi
-; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ueq_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -42,7 +42,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ueq_select_i32
-; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETE_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ueq_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -53,7 +53,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ugt_select_fptosi
-; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ugt_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -66,7 +66,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ugt_select_i32
-; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ugt_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -77,7 +77,7 @@ entry:
 }
 
 ; CHECK: @fcmp_uge_select_fptosi
-; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_uge_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -90,7 +90,7 @@ entry:
 }
 
 ; CHECK: @fcmp_uge_select_i32
-; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, T{{[0-9]+\.[XYZW]}}, literal.x,
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, KC0[2].Z, literal.x,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_uge_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -101,7 +101,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ule_select_fptosi
-; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ule_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -114,7 +114,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ule_select_i32
-; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK: SETGE_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ule_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -125,7 +125,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ult_select_fptosi
-; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ult_select_fptosi(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -138,7 +138,7 @@ entry:
 }
 
 ; CHECK: @fcmp_ult_select_i32
-; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, T{{[0-9]+\.[XYZW]}},
+; CHECK: SETGT_DX10 * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z,
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @fcmp_ult_select_i32(i32 addrspace(1)* %out, float %in) {
 entry:

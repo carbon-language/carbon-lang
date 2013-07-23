@@ -19,7 +19,7 @@ entry:
 ; R600-CHECK: @rotl
 ; R600-CHECK: SUB_INT {{\** T[0-9]+\.[XYZW]}}, literal.x
 ; R600-CHECK-NEXT: 32
-; R600-CHECK: BIT_ALIGN_INT {{\** T[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW], PV.[XYZW]}}
+; R600-CHECK: BIT_ALIGN_INT {{\** T[0-9]+\.[XYZW]}}, KC0[2].Z, KC0[2].Z, PV.{{[XYZW]}}
 
 ; SI-CHECK: @rotl
 ; SI-CHECK: V_SUB_I32_e64 [[DST:VGPR[0-9]+]], 32, {{[SV]GPR[0-9]+}}

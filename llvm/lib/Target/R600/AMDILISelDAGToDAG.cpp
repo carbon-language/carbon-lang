@@ -565,24 +565,11 @@ bool AMDGPUDAGToDAGISel::isRegionStore(const StoreSDNode *N) {
   return checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS);
 }
 
-bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int cbID) const {
-  if (checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_ADDRESS)) {
-    return true;
+bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int CbId) const {
+  if (CbId == -1) {
+    return checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_ADDRESS);
   }
-
-  const DataLayout *DL = TM.getDataLayout();
-  MachineMemOperand *MMO = N->getMemOperand();
-  const Value *V = MMO->getValue();
-  const Value *BV = GetUnderlyingObject(V, DL, 0);
-  if (MMO
-      && MMO->getValue()
-      && ((V && dyn_cast<GlobalValue>(V))
-          || (BV && dyn_cast<GlobalValue>(
-                GetUnderlyingObject(MMO->getValue(), DL, 0))))) {
-    return checkType(N->getSrcValue(), AMDGPUAS::PRIVATE_ADDRESS);
-  } else {
-    return false;
-  }
+  return checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_BUFFER_0 + CbId);
 }
 
 bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {

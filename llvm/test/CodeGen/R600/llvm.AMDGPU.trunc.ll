@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck --check-prefix=SI-CHECK %s
 
 ; R600-CHECK: @amdgpu_trunc
-; R600-CHECK: TRUNC * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; R600-CHECK: TRUNC * T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK: @amdgpu_trunc
 ; SI-CHECK: V_TRUNC_F32
 

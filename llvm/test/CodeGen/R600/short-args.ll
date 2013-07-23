@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s
 
 ; CHECK: @i8_arg
-; CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
+; CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 
 define void @i8_arg(i32 addrspace(1)* nocapture %out, i8 %in) nounwind {
 entry:
@@ -12,7 +12,7 @@ entry:
 }
 
 ; CHECK: @i8_zext_arg
-; CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
+; CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 
 define void @i8_zext_arg(i32 addrspace(1)* nocapture %out, i8 zeroext %in) nounwind {
 entry:
@@ -22,7 +22,7 @@ entry:
 }
 
 ; CHECK: @i8_sext_arg
-; CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}
+; CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 define void @i8_sext_arg(i32 addrspace(1)* nocapture %out, i8 signext %in) nounwind {
 entry:
   %0 = sext i8 %in to i32
@@ -31,7 +31,7 @@ entry:
 }
 
 ; CHECK: @i16_arg
-; CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
+; CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 
 define void @i16_arg(i32 addrspace(1)* nocapture %out, i16 %in) nounwind {
 entry:
@@ -41,7 +41,7 @@ entry:
 }
 
 ; CHECK: @i16_zext_arg
-; CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
+; CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 
 define void @i16_zext_arg(i32 addrspace(1)* nocapture %out, i16 zeroext %in) nounwind {
 entry:
@@ -51,7 +51,7 @@ entry:
 }
 
 ; CHECK: @i16_sext_arg
-; CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
+; CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 
 define void @i16_sext_arg(i32 addrspace(1)* nocapture %out, i16 signext %in) nounwind {
 entry:

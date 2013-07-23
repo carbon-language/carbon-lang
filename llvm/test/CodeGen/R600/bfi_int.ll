@@ -36,8 +36,8 @@ entry:
 ; SHA-256 Ma function
 ; ((x & z) | (y & (x | z)))
 ; R600-CHECK: @bfi_sha256_ma
-; R600-CHECK: XOR_INT * [[DST:T[0-9]+\.[XYZW]]], {{T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; R600-CHECK: BFI_INT * {{T[0-9]+\.[XYZW]}}, {{[[DST]]|PV\.[XYZW]}}, {{T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; R600-CHECK: XOR_INT * [[DST:T[0-9]+\.[XYZW]]],
+; R600-CHECK: BFI_INT * {{T[0-9]+\.[XYZW]}}, {{[[DST]]|PV\.[XYZW]}}, KC0[3].X, KC0[2].W
 ; SI-CHECK: V_XOR_B32_e64 [[DST:VGPR[0-9]+]], {{[SV]GPR[0-9]+, [SV]GPR[0-9]+}}
 ; SI-CHECK: V_BFI_B32 {{VGPR[0-9]+}}, [[DST]], {{[SV]GPR[0-9]+, [SV]GPR[0-9]+}}
 

@@ -2,12 +2,12 @@
 
 ; Test using an integer literal constant.
 ; Generated ASM should be:
-; ADD_INT REG literal.x, 5
+; ADD_INT KC0[2].Z literal.x, 5
 ; or
-; ADD_INT literal.x REG, 5
+; ADD_INT literal.x KC0[2].Z, 5
 
 ; CHECK: @i32_literal
-; CHECK: ADD_INT * {{[A-Z0-9,. ]*}}literal.x
+; CHECK: ADD_INT * T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
 ; CHECK-NEXT: 5
 define void @i32_literal(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -18,12 +18,12 @@ entry:
 
 ; Test using a float literal constant.
 ; Generated ASM should be:
-; ADD REG literal.x, 5.0
+; ADD KC0[2].Z literal.x, 5.0
 ; or
-; ADD literal.x REG, 5.0
+; ADD literal.x KC0[2].Z, 5.0
 
 ; CHECK: @float_literal
-; CHECK: ADD * {{[A-Z0-9,. ]*}}literal.x
+; CHECK: ADD * T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
 ; CHECK-NEXT: 1084227584(5.0
 define void @float_literal(float addrspace(1)* %out, float %in) {
 entry:
