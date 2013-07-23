@@ -31,6 +31,7 @@
 #include <langinfo.h>
 #endif // _!WIN32
 #include <stdlib.h>
+#include <stdio.h>
 
 // On Linux, wint_t and wchar_t have different signed-ness, and this causes
 // lots of noise in the build log, but no bugs that I know of. 
@@ -1017,6 +1018,7 @@ ctype<char>::classic_table()  _NOEXCEPT
     // Platform not supported: abort so the person doing the port knows what to
     // fix
 # warning  ctype<char>::classic_table() is not implemented
+    printf("ctype<char>::classic_table() is not implemented\n");
     abort();
     return NULL;
 #endif

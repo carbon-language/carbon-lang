@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "exception"
 
@@ -88,12 +89,14 @@ terminate() _NOEXCEPT
 #endif  // _LIBCPP_NO_EXCEPTIONS
         (*get_terminate())();
         // handler should not return
+        printf("terminate_handler unexpectedly returned\n");
         ::abort ();
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
     catch (...)
     {
         // handler should not throw exception
+        printf("terminate_handler unexpectedly threw an exception\n");
         ::abort ();
     }
 #endif  // _LIBCPP_NO_EXCEPTIONS
@@ -109,6 +112,7 @@ bool uncaught_exception() _NOEXCEPT
     return __cxa_uncaught_exception();
 #else  // __APPLE__
     #warning uncaught_exception not yet implemented
+    printf("uncaught_exception not yet implemented\n");
     ::abort();
 #endif  // __APPLE__
 }
@@ -146,6 +150,7 @@ exception_ptr::~exception_ptr() _NOEXCEPT
     __cxa_decrement_exception_refcount(__ptr_);
 #else
     #warning exception_ptr not yet implemented
+    printf("exception_ptr not yet implemented\n");
     ::abort();
 #endif  // __APPLE__
 }
@@ -157,6 +162,7 @@ exception_ptr::exception_ptr(const exception_ptr& other) _NOEXCEPT
     __cxa_increment_exception_refcount(__ptr_);
 #else
     #warning exception_ptr not yet implemented
+    printf("exception_ptr not yet implemented\n");
     ::abort();
 #endif  // __APPLE__
 }
@@ -173,6 +179,7 @@ exception_ptr& exception_ptr::operator=(const exception_ptr& other) _NOEXCEPT
     return *this;
 #else  // __APPLE__
     #warning exception_ptr not yet implemented
+    printf("exception_ptr not yet implemented\n");
     ::abort();
 #endif  // __APPLE__
 }
@@ -207,6 +214,7 @@ exception_ptr current_exception() _NOEXCEPT
     return ptr;
 #else  // __APPLE__
     #warning exception_ptr not yet implemented
+    printf("exception_ptr not yet implemented\n");
     ::abort();
 #endif  // __APPLE__
 }
@@ -220,6 +228,7 @@ void rethrow_exception(exception_ptr p)
     terminate();
 #else  // __APPLE__
     #warning exception_ptr not yet implemented
+    printf("exception_ptr not yet implemented\n");
     ::abort();
 #endif  // __APPLE__
 }

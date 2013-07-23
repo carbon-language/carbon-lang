@@ -16,6 +16,7 @@
 #ifdef _WIN32
 #include "support/win32/support.h"
 #endif // _WIN32
+#include <stdio.h>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -38,6 +39,7 @@ void throw_helper( const string& msg )
 #ifndef _LIBCPP_NO_EXCEPTIONS
     throw T( msg );
 #else
+    printf("%s\n", msg.c_str());
     abort();
 #endif
 }
