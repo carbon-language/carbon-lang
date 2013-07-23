@@ -119,7 +119,7 @@ bool AnalyzerOptions::getBooleanOption(Optional<bool> &V, StringRef Name,
 bool AnalyzerOptions::includeTemporaryDtorsInCFG() {
   return getBooleanOption(IncludeTemporaryDtorsInCFG,
                           "cfg-temporary-dtors",
-                          /* Default = */ true);
+                          /* Default = */ false);
 }
 
 bool AnalyzerOptions::mayInlineCXXStandardLibrary() {

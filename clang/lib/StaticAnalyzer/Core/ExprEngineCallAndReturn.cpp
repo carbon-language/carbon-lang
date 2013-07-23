@@ -807,12 +807,6 @@ bool ExprEngine::shouldInlineCall(const CallEvent &Call, const Decl *D,
   AnalysisDeclContextManager &ADCMgr = AMgr.getAnalysisDeclContextManager();
   AnalysisDeclContext *CalleeADC = ADCMgr.getContext(D);
 
-  // Temporary object destructor processing is currently broken, so we never
-  // inline them.
-  // FIME: Remove this once temp destructors are working.
-  if ((*currBldrCtx->getBlock())[currStmtIdx].getAs<CFGTemporaryDtor>())
-    return false;
-
   // The auto-synthesized bodies are essential to inline as they are
   // usually small and commonly used. Note: we should do this check early on to
   // ensure we always inline these calls.
