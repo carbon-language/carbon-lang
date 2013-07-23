@@ -15,6 +15,6 @@ __attribute__((objc_root_class)) static void nonClassDeclaration()  // expected-
 {
 }
 
-__attribute__((objc_root_class(1))) // expected-error {{attribute 'objc_root_class' takes no arguments}}
+__attribute__((objc_root_class(1))) // expected-error {{attribute takes no arguments}}
 @interface I1
 @end
