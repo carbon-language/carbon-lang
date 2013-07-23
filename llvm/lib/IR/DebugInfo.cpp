@@ -458,6 +458,16 @@ bool DIType::Verify() const {
       Tag != dwarf::DW_TAG_friend &&
       getFilename().empty())
     return false;
+  // DIType is abstract, it should be a BasicType, a DerivedType or
+  // a CompositeType.
+  if (isBasicType())
+    DIBasicType(DbgNode).Verify();
+  else if (isCompositeType())
+    DICompositeType(DbgNode).Verify();
+  else if (isDerivedType())
+    DIDerivedType(DbgNode).Verify();
+  else
+    return false;
   return true;
 }
 
