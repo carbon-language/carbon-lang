@@ -46,50 +46,51 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
-static cl::opt<bool> DisableDebugInfoPrinting("disable-debug-info-print",
-                                              cl::Hidden,
-     cl::desc("Disable debug info printing"));
+static cl::opt<bool>
+DisableDebugInfoPrinting("disable-debug-info-print", cl::Hidden,
+                         cl::desc("Disable debug info printing"));
 
-static cl::opt<bool> UnknownLocations("use-unknown-locations", cl::Hidden,
-     cl::desc("Make an absence of debug location information explicit."),
-     cl::init(false));
+static cl::opt<bool> UnknownLocations(
+    "use-unknown-locations", cl::Hidden,
+    cl::desc("Make an absence of debug location information explicit."),
+    cl::init(false));
 
-static cl::opt<bool> GenerateDwarfPubNamesSection("generate-dwarf-pubnames",
-     cl::Hidden, cl::init(false),
-     cl::desc("Generate DWARF pubnames section"));
+static cl::opt<bool>
+GenerateDwarfPubNamesSection("generate-dwarf-pubnames", cl::Hidden,
+                             cl::init(false),
+                             cl::desc("Generate DWARF pubnames section"));
 
 namespace {
-  enum DefaultOnOff {
-    Default, Enable, Disable
-  };
+enum DefaultOnOff {
+  Default,
+  Enable,
+  Disable
+};
 }
 
-static cl::opt<DefaultOnOff> DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
-     cl::desc("Output prototype dwarf accelerator tables."),
-     cl::values(
-                clEnumVal(Default, "Default for platform"),
-                clEnumVal(Enable, "Enabled"),
-                clEnumVal(Disable, "Disabled"),
-                clEnumValEnd),
-     cl::init(Default));
+static cl::opt<DefaultOnOff>
+DwarfAccelTables("dwarf-accel-tables", cl::Hidden,
+                 cl::desc("Output prototype dwarf accelerator tables."),
+                 cl::values(clEnumVal(Default, "Default for platform"),
+                            clEnumVal(Enable, "Enabled"),
+                            clEnumVal(Disable, "Disabled"), clEnumValEnd),
+                 cl::init(Default));
 
-static cl::opt<DefaultOnOff> DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
-     cl::desc("Compatibility with Darwin gdb."),
-     cl::values(
-                clEnumVal(Default, "Default for platform"),
-                clEnumVal(Enable, "Enabled"),
-                clEnumVal(Disable, "Disabled"),
-                clEnumValEnd),
-     cl::init(Default));
+static cl::opt<DefaultOnOff>
+DarwinGDBCompat("darwin-gdb-compat", cl::Hidden,
+                cl::desc("Compatibility with Darwin gdb."),
+                cl::values(clEnumVal(Default, "Default for platform"),
+                           clEnumVal(Enable, "Enabled"),
+                           clEnumVal(Disable, "Disabled"), clEnumValEnd),
+                cl::init(Default));
 
-static cl::opt<DefaultOnOff> SplitDwarf("split-dwarf", cl::Hidden,
-     cl::desc("Output prototype dwarf split debug info."),
-     cl::values(
-                clEnumVal(Default, "Default for platform"),
-                clEnumVal(Enable, "Enabled"),
-                clEnumVal(Disable, "Disabled"),
-                clEnumValEnd),
-     cl::init(Default));
+static cl::opt<DefaultOnOff>
+SplitDwarf("split-dwarf", cl::Hidden,
+           cl::desc("Output prototype dwarf split debug info."),
+           cl::values(clEnumVal(Default, "Default for platform"),
+                      clEnumVal(Enable, "Enabled"),
+                      clEnumVal(Disable, "Disabled"), clEnumValEnd),
+           cl::init(Default));
 
 namespace {
   const char *const DWARFGroupName = "DWARF Emission";
