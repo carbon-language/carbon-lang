@@ -24,7 +24,7 @@ public:
     case native_reader_error::success:
       return "Success";
     case native_reader_error::unknown_file_format:
-      return "Unknown file foramt";
+      return "Unknown file format";
     case native_reader_error::file_too_short:
       return "file truncated";
     case native_reader_error::file_malformed:
