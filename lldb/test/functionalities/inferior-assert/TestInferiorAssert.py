@@ -31,6 +31,13 @@ class AssertingInferiorTestCase(TestBase):
         self.buildDwarf()
         self.inferior_asserting_registers()
 
+    @skipIfGcc # Avoid xpasses as the verion of libc used on the gcc buildbot has the required function symbols.
+    @expectedFailureLinux # ResolveSymbolContextForAddress can fail using ELF with stripped function symbols.
+    def test_inferior_asserting_disassemble(self):
+        """Test that lldb reliably disassemblers frames after asserting (command)."""
+        self.buildDefault()
+        self.inferior_asserting_disassemble()
+
     @python_api_test
     def test_inferior_asserting_python(self):
         """Test that lldb reliably catches the inferior asserting (Python API)."""
@@ -129,6 +136,33 @@ class AssertingInferiorTestCase(TestBase):
         # lldb should be able to read from registers from the inferior after asserting.
         self.expect("register read eax",
             substrs = ['eax = 0x'])
+
+    def inferior_asserting_disassemble(self):
+        """Test that lldb can disassemble frames after asserting."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        # Launch the process, and do not stop at the entry point.
+        target.LaunchSimple(None, None, os.getcwd())
+        self.check_stop_reason()
+
+        process = target.GetProcess()
+        self.assertTrue(process.IsValid(), "current process is valid")
+
+        thread = process.GetThreadAtIndex(0)
+        self.assertTrue(thread.IsValid(), "current thread is valid")
+
+        # lldb should be able to disassemble frames from the inferior after asserting.
+        for frame in thread:
+            self.assertTrue(frame.IsValid(), "current frame is valid")
+
+            self.runCmd("frame select " + str(frame.GetFrameID()), RUN_SUCCEEDED)
+
+            self.expect("disassemble -a %s" % frame.GetPC(),
+                substrs = ['->', frame.GetFunctionName()])
 
     def check_expr_in_main(self, thread):
         depth = thread.GetNumFrames()
