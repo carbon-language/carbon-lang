@@ -460,6 +460,11 @@ def err_unterm_macro_invoc : Error<
   "unterminated function-like macro invocation">;
 def err_too_many_args_in_macro_invoc : Error<
   "too many arguments provided to function-like macro invocation">;
+def note_suggest_parens_for_macro : Note<
+  "parentheses are required around macro argument containing braced "
+  "initializer list">;
+def note_init_list_at_beginning_of_macro_argument : Note<
+  "cannot use initializer list at the beginning of an macro argument">;
 def err_too_few_args_in_macro_invoc : Error<
   "too few arguments provided to function-like macro invocation">;
 def err_pp_bad_paste : Error<

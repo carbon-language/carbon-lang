@@ -390,6 +390,136 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   return false;
 }
 
+enum Bracket {
+  Brace,
+  Paren
+};
+
+/// CheckMatchedBrackets - Returns true if the braces and parentheses in the
+/// token vector are properly nested.
+static bool CheckMatchedBrackets(const SmallVectorImpl<Token> &Tokens) {
+  SmallVector<Bracket, 8> Brackets;
+  for (SmallVectorImpl<Token>::const_iterator I = Tokens.begin(),
+                                              E = Tokens.end();
+       I != E; ++I) {
+    if (I->is(tok::l_paren)) {
+      Brackets.push_back(Paren);
+    } else if (I->is(tok::r_paren)) {
+      if (Brackets.empty() || Brackets.back() == Brace)
+        return false;
+      Brackets.pop_back();
+    } else if (I->is(tok::l_brace)) {
+      Brackets.push_back(Brace);
+    } else if (I->is(tok::r_brace)) {
+      if (Brackets.empty() || Brackets.back() == Paren)
+        return false;
+      Brackets.pop_back();
+    }
+  }
+  if (!Brackets.empty())
+    return false;
+  return true;
+}
+
+/// GenerateNewArgTokens - Returns true if OldTokens can be converted to a new
+/// vector of tokens in NewTokens.  The new number of arguments will be placed
+/// in NumArgs and the ranges which need to surrounded in parentheses will be
+/// in ParenHints.
+/// Returns false if the token stream cannot be changed.  If this is because
+/// of an initializer list starting a macro argument, the range of those
+/// initializer lists will be place in InitLists.
+static bool GenerateNewArgTokens(Preprocessor &PP,
+                                 SmallVectorImpl<Token> &OldTokens,
+                                 SmallVectorImpl<Token> &NewTokens,
+                                 unsigned &NumArgs,
+                                 SmallVectorImpl<SourceRange> &ParenHints,
+                                 SmallVectorImpl<SourceRange> &InitLists) {
+  if (!CheckMatchedBrackets(OldTokens))
+    return false;
+
+  // Once it is known that the brackets are matched, only a simple count of the
+  // braces is needed.
+  unsigned Braces = 0;
+
+  // First token of a new macro argument.
+  SmallVectorImpl<Token>::iterator ArgStartIterator = OldTokens.begin();
+
+  // First closing brace in a new macro argument.  Used to generate
+  // SourceRanges for InitLists.
+  SmallVectorImpl<Token>::iterator ClosingBrace = OldTokens.end();
+  NumArgs = 0;
+  Token TempToken;
+  // Set to true when a macro separator token is found inside a braced list.
+  // If true, the fixed argument spans multiple old arguments and ParenHints
+  // will be updated.
+  bool FoundSeparatorToken = false;
+  for (SmallVectorImpl<Token>::iterator I = OldTokens.begin(),
+                                        E = OldTokens.end();
+       I != E; ++I) {
+    if (I->is(tok::l_brace)) {
+      ++Braces;
+    } else if (I->is(tok::r_brace)) {
+      --Braces;
+      if (Braces == 0 && ClosingBrace == E && FoundSeparatorToken)
+        ClosingBrace = I;
+    } else if (I->is(tok::eof)) {
+      // EOF token is used to separate macro arguments
+      if (Braces != 0) {
+        // Assume comma separator is actually braced list separator and change
+        // it back to a comma.
+        FoundSeparatorToken = true;
+        I->setKind(tok::comma);
+        I->setLength(1);
+      } else { // Braces == 0
+        // Separator token still separates arguments.
+        ++NumArgs;
+
+        // If the argument starts with a brace, it can't be fixed with
+        // parentheses.  A different diagnostic will be given.
+        if (FoundSeparatorToken && ArgStartIterator->is(tok::l_brace)) {
+          InitLists.push_back(
+              SourceRange(ArgStartIterator->getLocation(),
+                          PP.getLocForEndOfToken(ClosingBrace->getLocation())));
+          ClosingBrace = E;
+        }
+
+        // Add left paren
+        if (FoundSeparatorToken) {
+          TempToken.startToken();
+          TempToken.setKind(tok::l_paren);
+          TempToken.setLocation(ArgStartIterator->getLocation());
+          TempToken.setLength(0);
+          NewTokens.push_back(TempToken);
+        }
+
+        // Copy over argument tokens
+        NewTokens.insert(NewTokens.end(), ArgStartIterator, I);
+
+        // Add right paren and store the paren locations in ParenHints
+        if (FoundSeparatorToken) {
+          SourceLocation Loc = PP.getLocForEndOfToken((I - 1)->getLocation());
+          TempToken.startToken();
+          TempToken.setKind(tok::r_paren);
+          TempToken.setLocation(Loc);
+          TempToken.setLength(0);
+          NewTokens.push_back(TempToken);
+          ParenHints.push_back(SourceRange(ArgStartIterator->getLocation(),
+                                           Loc));
+        }
+
+        // Copy separator token
+        NewTokens.push_back(*I);
+
+        // Reset values
+        ArgStartIterator = I + 1;
+        FoundSeparatorToken = false;
+      }
+    }
+  }
+
+  return !ParenHints.empty() && InitLists.empty();
+}
+
 /// ReadFunctionLikeMacroArgs - After reading "MACRO" and knowing that the next
 /// token is the '(' of the macro, this method is invoked to read all of the
 /// actual arguments specified for the macro invocation.  This returns null on
@@ -414,6 +544,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   // heap allocations in the common case.
   SmallVector<Token, 64> ArgTokens;
   bool ContainsCodeCompletionTok = false;
+
+  SourceLocation TooManyArgsLoc;
 
   unsigned NumActuals = 0;
   while (Tok.isNot(tok::r_paren)) {
@@ -504,22 +636,15 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 
     // If this is not a variadic macro, and too many args were specified, emit
     // an error.
-    if (!isVariadic && NumFixedArgsLeft == 0) {
+    if (!isVariadic && NumFixedArgsLeft == 0 && TooManyArgsLoc.isInvalid()) {
       if (ArgTokens.size() != ArgTokenStart)
-        ArgStartLoc = ArgTokens[ArgTokenStart].getLocation();
-
-      if (!ContainsCodeCompletionTok) {
-        // Emit the diagnostic at the macro name in case there is a missing ).
-        // Emitting it at the , could be far away from the macro name.
-        Diag(ArgStartLoc, diag::err_too_many_args_in_macro_invoc);
-        Diag(MI->getDefinitionLoc(), diag::note_macro_here)
-          << MacroName.getIdentifierInfo();
-        return 0;
-      }
+        TooManyArgsLoc = ArgTokens[ArgTokenStart].getLocation();
+      else
+        TooManyArgsLoc = ArgStartLoc;
     }
 
-    // Empty arguments are standard in C99 and C++0x, and are supported as an extension in
-    // other modes.
+    // Empty arguments are standard in C99 and C++0x, and are supported as an
+    // extension in other modes.
     if (ArgTokens.size() == ArgTokenStart && !LangOpts.C99)
       Diag(Tok, LangOpts.CPlusPlus11 ?
            diag::warn_cxx98_compat_empty_fnmacro_arg :
@@ -533,15 +658,65 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     EOFTok.setLength(0);
     ArgTokens.push_back(EOFTok);
     ++NumActuals;
-    if (!ContainsCodeCompletionTok || NumFixedArgsLeft != 0) {
-      assert(NumFixedArgsLeft != 0 && "Too many arguments parsed");
+    if (!ContainsCodeCompletionTok && NumFixedArgsLeft != 0)
       --NumFixedArgsLeft;
-    }
   }
 
   // Okay, we either found the r_paren.  Check to see if we parsed too few
   // arguments.
   unsigned MinArgsExpected = MI->getNumArgs();
+
+  // If this is not a variadic macro, and too many args were specified, emit
+  // an error.
+  if (!isVariadic && NumActuals > MinArgsExpected &&
+      !ContainsCodeCompletionTok) {
+    // Emit the diagnostic at the macro name in case there is a missing ).
+    // Emitting it at the , could be far away from the macro name.
+    Diag(TooManyArgsLoc, diag::err_too_many_args_in_macro_invoc);
+    Diag(MI->getDefinitionLoc(), diag::note_macro_here)
+      << MacroName.getIdentifierInfo();
+
+    // Commas from braced initializer lists will be treated as argument
+    // separators inside macros.  Attempt to correct for this with parentheses.
+    // TODO: See if this can be generalized to angle brackets for templates
+    // inside macro arguments.
+
+    SmallVector<Token, 64> FixedArgTokens;
+    unsigned FixedNumArgs = 0;
+    SmallVector<SourceRange, 4> ParenHints, InitLists;
+    if (!GenerateNewArgTokens(*this, ArgTokens, FixedArgTokens, FixedNumArgs,
+                              ParenHints, InitLists)) {
+      if (!InitLists.empty()) {
+        DiagnosticBuilder DB =
+            Diag(MacroName,
+                 diag::note_init_list_at_beginning_of_macro_argument);
+        for (SmallVector<SourceRange, 4>::iterator
+                 Range = InitLists.begin(), RangeEnd = InitLists.end();
+                 Range != RangeEnd; ++Range) {
+          if (DB.hasMaxRanges())
+            break;
+          DB << *Range;
+        }
+      }
+      return 0;
+    }
+    if (FixedNumArgs != MinArgsExpected)
+      return 0;
+
+    DiagnosticBuilder DB = Diag(MacroName, diag::note_suggest_parens_for_macro);
+    for (SmallVector<SourceRange, 4>::iterator
+             ParenLocation = ParenHints.begin(), ParenEnd = ParenHints.end();
+         ParenLocation != ParenEnd; ++ParenLocation) {
+      if (DB.hasMaxFixItHints())
+        break;
+      DB << FixItHint::CreateInsertion(ParenLocation->getBegin(), "(");
+      if (DB.hasMaxFixItHints())
+        break;
+      DB << FixItHint::CreateInsertion(ParenLocation->getEnd(), ")");
+    }
+    ArgTokens.swap(FixedArgTokens);
+    NumActuals = FixedNumArgs;
+  }
 
   // See MacroArgs instance var for description of this.
   bool isVarargsElided = false;

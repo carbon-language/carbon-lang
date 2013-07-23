@@ -990,6 +990,10 @@ public:
   bool hasMaxRanges() const {
     return NumRanges == DiagnosticsEngine::MaxRanges;
   }
+
+  bool hasMaxFixItHints() const {
+    return NumFixits == DiagnosticsEngine::MaxFixItHints;
+  }
 };
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,

@@ -13,7 +13,8 @@ zero(1, 2, 3);    /* expected-error {{too many arguments provided to function-li
 
 one()   /* ok */
 one(a)
-one(a,)           /* expected-error {{too many arguments provided to function-like macro invocation}} */
+one(a,)           /* expected-error {{too many arguments provided to function-like macro invocation}} \
+                     expected-warning {{empty macro arguments are a C99 feature}}*/
 one(a, b)         /* expected-error {{too many arguments provided to function-like macro invocation}} */
 
 two()       /* expected-error {{too few arguments provided to function-like macro invocation}} */
@@ -25,7 +26,7 @@ two(
     ,     /* expected-warning {{empty macro arguments are a C99 feature}} */
     ,     /* expected-warning {{empty macro arguments are a C99 feature}}  \
              expected-error {{too many arguments provided to function-like macro invocation}} */
-    )     
+    )     /* expected-warning {{empty macro arguments are a C99 feature}} */
 two(,)      /* expected-warning 2 {{empty macro arguments are a C99 feature}} */
 
 
