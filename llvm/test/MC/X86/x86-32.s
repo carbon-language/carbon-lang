@@ -894,9 +894,9 @@ pshufw $90, %mm4, %mm0
 	movsw	%ds:(%esi), %es:(%edi)
 	movsw	(%esi), %es:(%edi)
 
-// CHECK: movsd # encoding: [0xa5]
-// CHECK: movsd
-// CHECK: movsd
+// CHECK: movsl # encoding: [0xa5]
+// CHECK: movsl
+// CHECK: movsl
 	movsl
 	movsl	%ds:(%esi), %es:(%edi)
 	movsl	(%esi), %es:(%edi)

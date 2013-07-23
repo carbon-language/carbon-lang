@@ -2128,7 +2128,7 @@ def : InstAlias<"movq $src, $dst",
 
 // movsd with no operands (as opposed to the SSE scalar move of a double) is an
 // alias for movsl. (as in rep; movsd)
-def : InstAlias<"movsd", (MOVSD)>;
+def : InstAlias<"movsd", (MOVSD), 0>;
 
 // movsx aliases
 def : InstAlias<"movsx $src, $dst", (MOVSX16rr8 GR16:$dst, GR8:$src), 0>;

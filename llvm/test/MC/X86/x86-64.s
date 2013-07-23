@@ -115,12 +115,12 @@
 // rdar://8470918
 smovb // CHECK: movsb
 smovw // CHECK: movsw
-smovl // CHECK: movsd
+smovl // CHECK: movsl
 smovq // CHECK: movsq
 
 // rdar://8456361
 // CHECK: rep
-// CHECK: movsd
+// CHECK: movsl
         rep movsd
 
 // CHECK: rep
@@ -627,7 +627,7 @@ movsq
 // CHECK:   encoding: [0x48,0xa5]
 
 movsl
-// CHECK: movsd
+// CHECK: movsl
 // CHECK:   encoding: [0xa5]
 
 stosq
@@ -845,7 +845,7 @@ lock/incl 1(%rsp)
 rep movsl
 // CHECK: rep
 // CHECK: encoding: [0xf3]
-// CHECK: movsd
+// CHECK: movsl
 // CHECK: encoding: [0xa5]
 
 
@@ -1083,14 +1083,14 @@ xsetbv // CHECK: xsetbv # encoding: [0x0f,0x01,0xd1]
 	movsw	%ds:(%rsi), %es:(%rdi)
 	movsw	(%rsi), %es:(%rdi)
 
-// CHECK: movsd # encoding: [0xa5]
-// CHECK: movsd
-// CHECK: movsd
+// CHECK: movsl # encoding: [0xa5]
+// CHECK: movsl
+// CHECK: movsl
 	movsl
 	movsl	%ds:(%rsi), %es:(%rdi)
 	movsl	(%rsi), %es:(%rdi)
 // rdar://10883092
-// CHECK: movsd
+// CHECK: movsl
 	movsl	(%rsi), (%rdi)
 
 // CHECK: movsq # encoding: [0x48,0xa5]

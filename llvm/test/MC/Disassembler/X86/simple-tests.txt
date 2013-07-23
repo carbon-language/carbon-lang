@@ -756,7 +756,7 @@
 
 # rdar://13493622 lldb doesn't print the x86 rep/repne prefix when disassembling
 # CHECK: repne
-# CHECK-NEXT: movsd
+# CHECK-NEXT: movsl
 0xf2 0xa5
 # CHECK: repne
 # CHECK-NEXT: movsq
