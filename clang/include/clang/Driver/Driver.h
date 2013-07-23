@@ -129,9 +129,6 @@ public:
   /// Whether the driver is just the preprocessor.
   bool CCCIsCPP() const { return Mode == CPPMode; }
 
-  /// Echo commands while executing (in -v style).
-  unsigned CCCEcho : 1;
-
   /// Only print tool bindings, don't build any jobs.
   unsigned CCCPrintBindings : 1;
 

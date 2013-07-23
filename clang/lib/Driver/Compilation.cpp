@@ -266,7 +266,7 @@ int Compilation::ExecuteCommand(const Command &C,
   std::copy(C.getArguments().begin(), C.getArguments().end(), Argv+1);
   Argv[C.getArguments().size() + 1] = 0;
 
-  if ((getDriver().CCCEcho || getDriver().CCPrintOptions ||
+  if ((getDriver().CCPrintOptions ||
        getArgs().hasArg(options::OPT_v)) && !getDriver().CCGenDiagnostics) {
     raw_ostream *OS = &llvm::errs();
 
