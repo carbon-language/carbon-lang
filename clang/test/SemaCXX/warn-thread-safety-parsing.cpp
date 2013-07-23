@@ -760,11 +760,11 @@ int etf_function_9() EXCLUSIVE_TRYLOCK_FUNCTION(true);
 
 // illegal attribute arguments
 int etf_function_bad_1() EXCLUSIVE_TRYLOCK_FUNCTION(mu1); // \
-  // expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
+  // expected-error {{'exclusive_trylock_function' attribute requires parameter 1 to be int or bool}}
 int etf_function_bad_2() EXCLUSIVE_TRYLOCK_FUNCTION("mu"); // \
-  // expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
+  // expected-error {{'exclusive_trylock_function' attribute requires parameter 1 to be int or bool}}
 int etf_function_bad_3() EXCLUSIVE_TRYLOCK_FUNCTION(muDoublePointer); // \
-  // expected-error {{'exclusive_trylock_function' attribute first argument must be of int or bool type}}
+  // expected-error {{'exclusive_trylock_function' attribute requires parameter 1 to be int or bool}}
 
 int etf_function_bad_4() EXCLUSIVE_TRYLOCK_FUNCTION(1, "mu"); // \
   // expected-warning {{ignoring 'exclusive_trylock_function' attribute because its argument is invalid}}
@@ -834,11 +834,11 @@ int stf_function_9() SHARED_TRYLOCK_FUNCTION(true);
 
 // illegal attribute arguments
 int stf_function_bad_1() SHARED_TRYLOCK_FUNCTION(mu1); // \
-  // expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
+  // expected-error {{'shared_trylock_function' attribute requires parameter 1 to be int or bool}}
 int stf_function_bad_2() SHARED_TRYLOCK_FUNCTION("mu"); // \
-  // expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
+  // expected-error {{'shared_trylock_function' attribute requires parameter 1 to be int or bool}}
 int stf_function_bad_3() SHARED_TRYLOCK_FUNCTION(muDoublePointer); // \
-  // expected-error {{'shared_trylock_function' attribute first argument must be of int or bool type}}
+  // expected-error {{'shared_trylock_function' attribute requires parameter 1 to be int or bool}}
 
 int stf_function_bad_4() SHARED_TRYLOCK_FUNCTION(1, "mu"); // \
   // expected-warning {{ignoring 'shared_trylock_function' attribute because its argument is invalid}}
