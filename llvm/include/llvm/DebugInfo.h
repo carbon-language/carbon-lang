@@ -196,9 +196,6 @@ namespace llvm {
   public:
     explicit DIScope(const MDNode *N = 0) : DIDescriptor (N) {}
 
-    /// Set the filename by allocating a new string MDNode for
-    /// it and attaching it to the underlying node.
-    void setFilename(StringRef Name, LLVMContext &Context);
     StringRef getFilename() const;
     StringRef getDirectory() const;
   };
