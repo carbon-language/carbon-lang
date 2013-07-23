@@ -5,9 +5,9 @@
 extern NSString *fa2 (const NSString *) __attribute__((format_arg(1)));
 extern NSString *fa3 (NSString *) __attribute__((format_arg(1)));
 
-extern void fc1 (const NSString *) __attribute__((format_arg));  // expected-error {{attribute takes one argument}}
-extern void fc2 (const NSString *) __attribute__((format_arg())); // expected-error {{attribute takes one argument}}
-extern void fc3 (const NSString *) __attribute__((format_arg(1, 2))); // expected-error {{attribute takes one argument}}
+extern void fc1 (const NSString *) __attribute__((format_arg));  // expected-error {{'format_arg' attribute takes one argument}}
+extern void fc2 (const NSString *) __attribute__((format_arg())); // expected-error {{'format_arg' attribute takes one argument}}
+extern void fc3 (const NSString *) __attribute__((format_arg(1, 2))); // expected-error {{'format_arg' attribute takes one argument}}
 
 struct s1 { int i; } __attribute__((format_arg(1)));  // expected-warning {{'format_arg' attribute only applies to functions}}
 union u1 { int i; } __attribute__((format_arg(1)));  // expected-warning {{'format_arg' attribute only applies to functions}}

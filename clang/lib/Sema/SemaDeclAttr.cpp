@@ -219,7 +219,8 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
 static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
                                   unsigned int Num) {
   if (Attr.getNumArgs() != Num) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << Num;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << Num;
     return false;
   }
 
@@ -1111,7 +1112,8 @@ static void handleIBOutletCollection(Sema &S, Decl *D,
 
   // The iboutletcollection attribute can have zero or one arguments.
   if (Attr.getParameterName() && Attr.getNumArgs() > 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -1344,14 +1346,16 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   case AttributeList::AT_ownership_takes:
     K = OwnershipAttr::Takes;
     if (AL.getNumArgs() < 1) {
-      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << AL.getName() << 2;
       return;
     }
     break;
   case AttributeList::AT_ownership_holds:
     K = OwnershipAttr::Holds;
     if (AL.getNumArgs() < 1) {
-      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+      S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << AL.getName() << 2;
       return;
     }
     break;
@@ -1359,7 +1363,7 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
     K = OwnershipAttr::Returns;
     if (AL.getNumArgs() > 1) {
       S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
-          << AL.getNumArgs() + 1;
+        << AL.getName() << AL.getNumArgs() + 1;
       return;
     }
     break;
@@ -1471,7 +1475,8 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
   llvm::array_pod_sort(start, start + size);
 
   if (K != OwnershipAttr::Returns && OwnershipArgs.empty()) {
-    S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments) << 2;
+    S.Diag(AL.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << AL.getName() << 2;
     return;
   }
 
@@ -1483,7 +1488,8 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
 static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -1660,7 +1666,8 @@ static void handleAlwaysInlineAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   // Check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -1713,7 +1720,8 @@ static void handleTLSModelAttr(Sema &S, Decl *D,
 static void handleMallocAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -1786,7 +1794,8 @@ static void handleNoReturnAttr(Sema &S, Decl *D, const AttributeList &attr) {
 
 bool Sema::CheckNoReturnAttr(const AttributeList &attr) {
   if (attr.hasParameterOrArguments()) {
-    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << attr.getName() << 0;
     attr.setInvalid();
     return true;
   }
@@ -1924,7 +1933,8 @@ static void handleDependencyAttr(Sema &S, Scope *Scope, Decl *D,
 static void handleUnusedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -1944,7 +1954,8 @@ static void handleReturnsTwiceAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -1962,7 +1973,8 @@ static void handleReturnsTwiceAttr(Sema &S, Decl *D,
 static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -2445,7 +2457,8 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
         << Attr.getName() << 1 << ArgumentString;
     } else {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << Attr.getName() << 0;
     }
     Attr.setInvalid();
     return;
@@ -2555,7 +2568,8 @@ static void handleBlocksAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -2711,7 +2725,8 @@ static void handleWarnUnusedResult(Sema &S, Decl *D, const AttributeList &Attr) 
 static void handleWeakAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -2908,7 +2923,8 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleNothrowAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
   
@@ -2925,7 +2941,8 @@ static void handleNothrowAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleConstAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.hasParameterOrArguments()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 0;
     return;
   }
 
@@ -2951,12 +2968,14 @@ static void handlePureAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
 static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!Attr.getParameterName()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
   if (Attr.getNumArgs() != 0) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -3200,7 +3219,8 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   if (Attr.getNumArgs() != 2) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 3;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 3;
     return;
   }
 
@@ -3434,7 +3454,8 @@ static void handleAnnotateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleAlignedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     return;
   }
 
@@ -3834,7 +3855,8 @@ static void handleConstantAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (S.LangOpts.CUDA) {
     // check the attribute arguments.
     if (Attr.hasParameterOrArguments()) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << Attr.getName() << 0;
       return;
     }
 
@@ -3856,7 +3878,8 @@ static void handleDeviceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (S.LangOpts.CUDA) {
     // check the attribute arguments.
     if (Attr.getNumArgs() != 0) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << Attr.getName() << 0;
       return;
     }
 
@@ -4076,7 +4099,8 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
 
   unsigned ReqArgs = attr.getKind() == AttributeList::AT_Pcs ? 1 : 0;
   if (attr.getNumArgs() != ReqArgs || attr.getParameterName()) {
-    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << ReqArgs;
+    Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << attr.getName() << ReqArgs;
     attr.setInvalid();
     return true;
   }
@@ -4249,7 +4273,7 @@ static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
 
   if (Attr.getNumArgs() != 2) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << /* required args = */ 3;
+      << Attr.getName() << /* required args = */ 3;
     return;
   }
 

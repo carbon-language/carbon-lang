@@ -103,7 +103,7 @@ class Bar {
 void noanal_fun() NO_THREAD_SAFETY_ANALYSIS;
 
 void noanal_fun_args() __attribute__((no_thread_safety_analysis(1))); // \
-  // expected-error {{attribute takes no arguments}}
+  // expected-error {{'no_thread_safety_analysis' attribute takes no arguments}}
 
 int noanal_testfn(int y) NO_THREAD_SAFETY_ANALYSIS;
 
@@ -142,13 +142,13 @@ void noanal_fun_params(int lvar NO_THREAD_SAFETY_ANALYSIS); // \
 int gv_var_noargs GUARDED_VAR;
 
 int gv_var_args __attribute__((guarded_var(1))); // \
-  // expected-error {{attribute takes no arguments}}
+  // expected-error {{'guarded_var' attribute takes no arguments}}
 
 class GVFoo {
  private:
   int gv_field_noargs GUARDED_VAR;
   int gv_field_args __attribute__((guarded_var(1))); // \
-    // expected-error {{attribute takes no arguments}}
+    // expected-error {{'guarded_var' attribute takes no arguments}}
 };
 
 class GUARDED_VAR GV { // \
@@ -188,7 +188,7 @@ class PGVFoo {
   int field_noargs PT_GUARDED_VAR; // \
     // expected-warning {{'pt_guarded_var' only applies to pointer types; type here is 'int'}}
   int *gv_field_args __attribute__((pt_guarded_var(1))); // \
-    // expected-error {{attribute takes no arguments}}
+    // expected-error {{'pt_guarded_var' attribute takes no arguments}}
 };
 
 class PT_GUARDED_VAR PGV { // \
@@ -196,7 +196,7 @@ class PT_GUARDED_VAR PGV { // \
 };
 
 int *pgv_var_args __attribute__((pt_guarded_var(1))); // \
-  // expected-error {{attribute takes no arguments}}
+  // expected-error {{'pt_guarded_var' attribute takes no arguments}}
 
 
 void pgv_function() PT_GUARDED_VAR; // \
@@ -225,7 +225,7 @@ class LOCKABLE LTestClass {
 };
 
 class __attribute__((lockable (1))) LTestClass_args { // \
-    // expected-error {{attribute takes no arguments}}
+    // expected-error {{'lockable' attribute takes no arguments}}
 };
 
 void l_test_function() LOCKABLE;  // \
@@ -265,7 +265,7 @@ class SCOPED_LOCKABLE SLTestClass {
 };
 
 class __attribute__((scoped_lockable (1))) SLTestClass_args { // \
-  // expected-error {{attribute takes no arguments}}
+  // expected-error {{'scoped_lockable' attribute takes no arguments}}
 };
 
 void sl_test_function() SCOPED_LOCKABLE;  // \
@@ -308,15 +308,15 @@ void sl_function_params(int lvar SCOPED_LOCKABLE); // \
 int gb_var_arg GUARDED_BY(mu1);
 
 int gb_var_args __attribute__((guarded_by(mu1, mu2))); // \
-  // expected-error {{attribute takes one argument}}
+  // expected-error {{'guarded_by' attribute takes one argument}}
 
 int gb_var_noargs __attribute__((guarded_by)); // \
-  // expected-error {{attribute takes one argument}}
+  // expected-error {{'guarded_by' attribute takes one argument}}
 
 class GBFoo {
  private:
   int gb_field_noargs __attribute__((guarded_by)); // \
-    // expected-error {{attribute takes one argument}}
+    // expected-error {{'guarded_by' attribute takes one argument}}
   int gb_field_args GUARDED_BY(mu1);
 };
 
@@ -374,12 +374,12 @@ int gb_var_arg_bad_4 GUARDED_BY(umu); // \
 //1. Check applied to the right types & argument number
 
 int *pgb_var_noargs __attribute__((pt_guarded_by)); // \
-  // expected-error {{attribute takes one argument}}
+  // expected-error {{'pt_guarded_by' attribute takes one argument}}
 
 int *pgb_ptr_var_arg PT_GUARDED_BY(mu1);
 
 int *pgb_ptr_var_args __attribute__((pt_guarded_by(mu1, mu2))); // \
-  // expected-error {{attribute takes one argument}}
+  // expected-error {{'pt_guarded_by' attribute takes one argument}}
 
 int pgb_var_args PT_GUARDED_BY(mu1); // \
   // expected-warning {{'pt_guarded_by' only applies to pointer types; type here is 'int'}}
@@ -387,7 +387,7 @@ int pgb_var_args PT_GUARDED_BY(mu1); // \
 class PGBFoo {
  private:
   int *pgb_field_noargs __attribute__((pt_guarded_by)); // \
-    // expected-error {{attribute takes one argument}}
+    // expected-error {{'pt_guarded_by' attribute takes one argument}}
   int *pgb_field_args PT_GUARDED_BY(mu1);
 };
 
@@ -931,12 +931,12 @@ int uf_function_bad_7() UNLOCK_FUNCTION(0); // \
 // Takes exactly one argument, a var/field
 
 void lr_function() __attribute__((lock_returned)); // \
-  // expected-error {{attribute takes one argument}}
+  // expected-error {{'lock_returned' attribute takes one argument}}
 
 void lr_function_arg() LOCK_RETURNED(mu1);
 
 void lr_function_args() __attribute__((lock_returned(mu1, mu2))); // \
-  // expected-error {{attribute takes one argument}}
+  // expected-error {{'lock_returned' attribute takes one argument}}
 
 int lr_testfn(int y) LOCK_RETURNED(mu1);
 

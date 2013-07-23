@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
 typedef struct CGColor * __attribute__ ((NSObject)) CGColorRef;
-typedef struct CGColor * __attribute__((NSObject(12))) Illegal;  // expected-error {{attribute takes no arguments}}
+typedef struct CGColor * __attribute__((NSObject(12))) Illegal;  // expected-error {{'NSObject' attribute takes no arguments}}
 
 static int count;
 static CGColorRef tmp = 0;

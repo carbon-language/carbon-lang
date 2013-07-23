@@ -9,7 +9,7 @@
 void noanal_fun() NO_SANITIZE_ADDRESS;
 
 void noanal_fun_args() __attribute__((no_sanitize_address(1))); // \
-  // expected-error {{attribute takes no arguments}}
+  // expected-error {{'no_sanitize_address' attribute takes no arguments}}
 
 int noanal_testfn(int y) NO_SANITIZE_ADDRESS;
 

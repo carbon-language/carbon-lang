@@ -13,7 +13,7 @@ int f1() __attribute__((noreturn));
 
 int g0 __attribute__((noreturn)); // expected-warning {{'noreturn' only applies to function types; type here is 'int'}}
 
-int f2() __attribute__((noreturn(1, 2))); // expected-error {{attribute takes no arguments}}
+int f2() __attribute__((noreturn(1, 2))); // expected-error {{'noreturn' attribute takes no arguments}}
 
 void f3() __attribute__((noreturn));
 void f3() {
@@ -33,7 +33,7 @@ extern void f5 (unsigned long) __attribute__ ((__noreturn__));
 void
 f5 (unsigned long size)
 {
-  
+
 }
 
 // PR2461
@@ -41,4 +41,4 @@ __attribute__((noreturn)) void f(__attribute__((noreturn)) void (*x)(void)) {
   x();
 }
 
-typedef void (*Fun)(void) __attribute__ ((noreturn(2))); // expected-error {{attribute takes no arguments}}
+typedef void (*Fun)(void) __attribute__ ((noreturn(2))); // expected-error {{'noreturn' attribute takes no arguments}}

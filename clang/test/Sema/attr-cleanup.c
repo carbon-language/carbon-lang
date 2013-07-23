@@ -8,11 +8,11 @@ static int g3 __attribute((cleanup(c1))); // expected-warning {{cleanup attribut
 
 void t1()
 {
-    int v1 __attribute((cleanup)); // expected-error {{attribute takes one argument}}
-    int v2 __attribute((cleanup(1, 2))); // expected-error {{attribute takes one argument}}
-    
+    int v1 __attribute((cleanup)); // expected-error {{'cleanup' attribute takes one argument}}
+    int v2 __attribute((cleanup(1, 2))); // expected-error {{'cleanup' attribute takes one argument}}
+
     static int v3 __attribute((cleanup(c1))); // expected-warning {{cleanup attribute ignored}}
-    
+
     int v4 __attribute((cleanup(h))); // expected-error {{'cleanup' argument 'h' not found}}
 
     int v5 __attribute((cleanup(c1)));

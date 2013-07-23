@@ -154,6 +154,6 @@ __attribute ((objc_requires_property_definitions)) // expected-error {{objc_requ
 @synthesize failureCount = _failureCount;
 @end
 
-__attribute ((objc_requires_property_definitions(1))) // expected-error {{attribute takes no arguments}}
+__attribute ((objc_requires_property_definitions(1))) // expected-error {{'objc_requires_property_definitions' attribute takes no arguments}}
 @interface I1
 @end

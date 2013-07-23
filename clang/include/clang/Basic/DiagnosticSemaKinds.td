@@ -1756,8 +1756,8 @@ def err_attribute_can_be_applied_only_to_symbol_declaration : Error<
 def err_attributes_are_not_compatible : Error<
   "%0 and %1 attributes are not compatible">;
 def err_attribute_wrong_number_arguments : Error<
-  "attribute %plural{0:takes no arguments|1:takes one argument|"
-  ":requires exactly %0 arguments}0">;
+  "%0 attribute %plural{0:takes no arguments|1:takes one argument|"
+  ":requires exactly %1 arguments}1">;
 def err_attribute_too_many_arguments : Error<
   "attribute takes no more than %0 argument%s0">;
 def err_suppress_autosynthesis : Error<

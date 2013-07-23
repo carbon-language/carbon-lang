@@ -87,6 +87,6 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @synthesize font = _font;
 @end
 
-__attribute__((objc_arc_weak_reference_unavailable(1)))	// expected-error {{attribute takes no arguments}}
+__attribute__((objc_arc_weak_reference_unavailable(1)))	// expected-error {{'objc_arc_weak_reference_unavailable' attribute takes no arguments}}
 @interface I3
 @end

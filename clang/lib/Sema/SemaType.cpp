@@ -3832,7 +3832,8 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     Attr.setInvalid();
     return;
   }
@@ -4079,7 +4080,8 @@ static bool handleObjCGCTypeAttr(TypeProcessingState &state,
   }
   Qualifiers::GC GCAttr;
   if (attr.getNumArgs() != 0) {
-    S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << attr.getName() << 1;
     attr.setInvalid();
     return true;
   }
@@ -4463,7 +4465,8 @@ static void HandleOpenCLImageAccessAttribute(QualType& CurType,
                                              Sema &S) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     Attr.setInvalid();
     return;
   }
@@ -4503,7 +4506,8 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
                                  Sema &S) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     Attr.setInvalid();
     return;
   }
@@ -4569,7 +4573,8 @@ static void HandleExtVectorTypeAttr(QualType &CurType,
   } else {
     // check the attribute arguments.
     if (Attr.getNumArgs() != 1) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+        << Attr.getName() << 1;
       return;
     }
     sizeExpr = Attr.getArg(0);
@@ -4594,7 +4599,8 @@ static void HandleNeonVectorTypeAttr(QualType& CurType,
                                      const char *AttrName) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
+      << Attr.getName() << 1;
     Attr.setInvalid();
     return;
   }
