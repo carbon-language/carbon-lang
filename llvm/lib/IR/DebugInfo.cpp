@@ -661,9 +661,7 @@ MDNode *DISubprogram::getVariablesNodes() const {
 }
 
 DIArray DISubprogram::getVariables() const {
-  if (MDNode *T = getNodeField(DbgNode, 18))
-    return DIArray(T);
-  return DIArray();
+  return DIArray(getNodeField(DbgNode, 18));
 }
 
 Value *DITemplateValueParameter::getValue() const {
@@ -686,27 +684,21 @@ DIArray DICompileUnit::getEnumTypes() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = getNodeField(DbgNode, 7))
-    return DIArray(N);
-  return DIArray();
+  return DIArray(getNodeField(DbgNode, 7));
 }
 
 DIArray DICompileUnit::getRetainedTypes() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = getNodeField(DbgNode, 8))
-    return DIArray(N);
-  return DIArray();
+  return DIArray(getNodeField(DbgNode, 8));
 }
 
 DIArray DICompileUnit::getSubprograms() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = getNodeField(DbgNode, 9))
-    return DIArray(N);
-  return DIArray();
+  return DIArray(getNodeField(DbgNode, 9));
 }
 
 
@@ -714,18 +706,14 @@ DIArray DICompileUnit::getGlobalVariables() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = getNodeField(DbgNode, 10))
-    return DIArray(N);
-  return DIArray();
+  return DIArray(getNodeField(DbgNode, 10));
 }
 
 DIArray DICompileUnit::getImportedEntities() const {
   if (!DbgNode || DbgNode->getNumOperands() < 13)
     return DIArray();
 
-  if (MDNode *N = getNodeField(DbgNode, 11))
-    return DIArray(N);
-  return DIArray();
+  return DIArray(getNodeField(DbgNode, 11));
 }
 
 /// fixupSubprogramName - Replace contains special characters used
