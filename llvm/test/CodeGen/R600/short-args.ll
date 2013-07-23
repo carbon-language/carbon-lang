@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s
 
 ; CHECK: @i8_arg
 ; CHECK: VTX_READ_8 T{{[0-9]+\.X, T[0-9]+\.X}}

@@ -71,10 +71,10 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v2i32, Expand);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
-  setLoadExtAction(ISD::EXTLOAD, MVT::v4i8, Custom);
-  setLoadExtAction(ISD::EXTLOAD, MVT::i8, Custom);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i8, Custom);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
   setOperationAction(ISD::STORE, MVT::i8, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
   setOperationAction(ISD::STORE, MVT::v2i32, Expand);

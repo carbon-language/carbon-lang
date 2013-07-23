@@ -317,8 +317,8 @@ class LoadParamFrag <PatFrag load_type> : PatFrag <
 >;
 
 def load_param : LoadParamFrag<load>;
-def load_param_zexti8 : LoadParamFrag<zextloadi8>;
-def load_param_zexti16 : LoadParamFrag<zextloadi16>;
+def load_param_exti8 : LoadParamFrag<az_extloadi8>;
+def load_param_exti16 : LoadParamFrag<az_extloadi16>;
 
 def isR600 : Predicate<"Subtarget.getGeneration() <= AMDGPUSubtarget::R700">;
 def isR700 : Predicate<"Subtarget.getGeneration() == AMDGPUSubtarget::R700">;
@@ -1380,11 +1380,11 @@ class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
 //===----------------------------------------------------------------------===//
 
 def VTX_READ_PARAM_8_eg : VTX_READ_8_eg <0,
-  [(set i32:$dst_gpr, (load_param_zexti8 ADDRVTX_READ:$src_gpr))]
+  [(set i32:$dst_gpr, (load_param_exti8 ADDRVTX_READ:$src_gpr))]
 >;
 
 def VTX_READ_PARAM_16_eg : VTX_READ_16_eg <0,
-  [(set i32:$dst_gpr, (load_param_zexti16 ADDRVTX_READ:$src_gpr))]
+  [(set i32:$dst_gpr, (load_param_exti16 ADDRVTX_READ:$src_gpr))]
 >;
 
 def VTX_READ_PARAM_32_eg : VTX_READ_32_eg <0,
@@ -1401,7 +1401,7 @@ def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
 
 // 8-bit reads
 def VTX_READ_GLOBAL_8_eg : VTX_READ_8_eg <1,
-  [(set i32:$dst_gpr, (zextloadi8_global ADDRVTX_READ:$src_gpr))]
+  [(set i32:$dst_gpr, (az_extloadi8_global ADDRVTX_READ:$src_gpr))]
 >;
 
 // 32-bit reads
@@ -1828,11 +1828,11 @@ class VTX_READ_128_cm <bits<8> buffer_id, list<dag> pattern>
 // VTX Read from parameter memory space
 //===----------------------------------------------------------------------===//
 def VTX_READ_PARAM_8_cm : VTX_READ_8_cm <0,
-  [(set i32:$dst_gpr, (load_param_zexti8 ADDRVTX_READ:$src_gpr))]
+  [(set i32:$dst_gpr, (load_param_exti8 ADDRVTX_READ:$src_gpr))]
 >;
 
 def VTX_READ_PARAM_16_cm : VTX_READ_16_cm <0,
-  [(set i32:$dst_gpr, (load_param_zexti16 ADDRVTX_READ:$src_gpr))]
+  [(set i32:$dst_gpr, (load_param_exti16 ADDRVTX_READ:$src_gpr))]
 >;
 
 def VTX_READ_PARAM_32_cm : VTX_READ_32_cm <0,
@@ -1849,7 +1849,7 @@ def VTX_READ_PARAM_128_cm : VTX_READ_128_cm <0,
 
 // 8-bit reads
 def VTX_READ_GLOBAL_8_cm : VTX_READ_8_cm <1,
-  [(set i32:$dst_gpr, (zextloadi8_global ADDRVTX_READ:$src_gpr))]
+  [(set i32:$dst_gpr, (az_extloadi8_global ADDRVTX_READ:$src_gpr))]
 >;
 
 // 32-bit reads
