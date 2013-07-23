@@ -643,7 +643,7 @@ static void writeSymbolTable(
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
   std::vector<StringRef> SymNames;
-  std::vector<OwningPtr<object::ObjectFile> > DeleteIt;
+  std::vector<object::ObjectFile *> DeleteIt;
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
@@ -665,7 +665,7 @@ static void writeSymbolTable(
     }
     if (!Obj)
       continue;
-    DeleteIt.push_back(OwningPtr<object::ObjectFile>(Obj));
+    DeleteIt.push_back(Obj);
     if (!StartOffset) {
       printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
       StartOffset = Out.tell();
@@ -696,6 +696,13 @@ static void writeSymbolTable(
        I != E; ++I) {
     Out << *I;
     Out << '\0';
+  }
+
+  for (std::vector<object::ObjectFile *>::iterator I = DeleteIt.begin(),
+                                                   E = DeleteIt.end();
+       I != E; ++I) {
+    object::ObjectFile *O = *I;
+    delete O;
   }
 
   if (StartOffset == 0)
