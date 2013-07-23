@@ -16,6 +16,7 @@
 // CHECK: bar
 // CHECK: zed12
 // CHECK: one\two
+// CHECK: c:\foo\bar.c
 
 foo1
 foo2
@@ -32,3 +33,4 @@ bar
 #endif
 foo12
 foo13
+foo14

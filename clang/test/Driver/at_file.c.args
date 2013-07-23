@@ -10,3 +10,4 @@
 -D foo11
 -Dfoo12=zed12\
 -Dfoo13='one\\two'
+-Dfoo14='c:\foo\bar.c'
