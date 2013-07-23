@@ -47,10 +47,10 @@ foreach Index = 0-127 in {
 foreach Index = 159-128 in {
   foreach Chan = [ "X", "Y", "Z", "W" ] in {
     // 32-bit Temporary Registers
-    def KC0_#Index#_#Chan : R600RegWithChan <"KC0["#Index#"-128]."#Chan, Index, Chan>;
+    def KC0_#Index#_#Chan : R600RegWithChan <"KC0["#!add(Index,-128)#"]."#Chan, Index, Chan>;
   }
   // 128-bit Temporary Registers
-  def KC0_#Index#_XYZW : R600Reg_128 <"KC0["#Index#"-128].XYZW",
+  def KC0_#Index#_XYZW : R600Reg_128 <"KC0["#!add(Index, -128)#"].XYZW",
                                  [!cast<Register>("KC0_"#Index#"_X"),
                                   !cast<Register>("KC0_"#Index#"_Y"),
                                   !cast<Register>("KC0_"#Index#"_Z"),
@@ -62,10 +62,10 @@ foreach Index = 159-128 in {
 foreach Index = 191-160 in {
   foreach Chan = [ "X", "Y", "Z", "W" ] in {
     // 32-bit Temporary Registers
-    def KC1_#Index#_#Chan : R600RegWithChan <"KC1["#Index#"-160]."#Chan, Index, Chan>;
+    def KC1_#Index#_#Chan : R600RegWithChan <"KC1["#!add(Index,-160)#"]."#Chan, Index, Chan>;
   }
   // 128-bit Temporary Registers
-  def KC1_#Index#_XYZW : R600Reg_128 <"KC1["#Index#"-160].XYZW",
+  def KC1_#Index#_XYZW : R600Reg_128 <"KC1["#!add(Index, -160)#"].XYZW",
                                  [!cast<Register>("KC1_"#Index#"_X"),
                                   !cast<Register>("KC1_"#Index#"_Y"),
                                   !cast<Register>("KC1_"#Index#"_Z"),
