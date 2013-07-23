@@ -39,6 +39,8 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateNSEnumDecl(ASTContext &Ctx, const EnumDecl *EnumDcl,
                      const TypedefDecl *TypedefDcl);
   void migrateInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl);
+  void migrateMethodInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl,
+                                 ObjCMethodDecl *OM);
 
 public:
   std::string MigrateDir;
@@ -547,10 +549,9 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   Editor->commit(commit);
 }
 
-static void
-migrateMethodInstanceType(ASTContext &Ctx,
-                          ObjCContainerDecl *CDecl,
-                          ObjCMethodDecl *OM) {
+void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
+                                                       ObjCContainerDecl *CDecl,
+                                                       ObjCMethodDecl *OM) {
   ObjCInstanceTypeFamily OIT_Family =
     Selector::getInstTypeMethodFamily(OM->getSelector());
   if (OIT_Family == OIT_None)
@@ -571,6 +572,13 @@ migrateMethodInstanceType(ASTContext &Ctx,
   if (!IDecl || !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSArray")))
     return;
   
+  TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo();
+  TypeLoc TL = TSInfo->getTypeLoc();
+  SourceRange R = SourceRange(TL.getBeginLoc(), TL.getEndLoc());
+  edit::Commit commit(*Editor);
+  std::string ClassString = "instancetype";
+  commit.replace(R, ClassString);
+  Editor->commit(commit);
 }
 
 void ObjCMigrateASTConsumer::migrateInstanceType(ASTContext &Ctx,
