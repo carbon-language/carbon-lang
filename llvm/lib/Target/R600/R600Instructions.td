@@ -1404,6 +1404,10 @@ def VTX_READ_GLOBAL_8_eg : VTX_READ_8_eg <1,
   [(set i32:$dst_gpr, (az_extloadi8_global ADDRVTX_READ:$src_gpr))]
 >;
 
+def VTX_READ_GLOBAL_16_eg : VTX_READ_16_eg <1,
+  [(set i32:$dst_gpr, (az_extloadi16_global ADDRVTX_READ:$src_gpr))]
+>;
+
 // 32-bit reads
 def VTX_READ_GLOBAL_32_eg : VTX_READ_32_eg <1,
   [(set i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
@@ -1850,6 +1854,10 @@ def VTX_READ_PARAM_128_cm : VTX_READ_128_cm <0,
 // 8-bit reads
 def VTX_READ_GLOBAL_8_cm : VTX_READ_8_cm <1,
   [(set i32:$dst_gpr, (az_extloadi8_global ADDRVTX_READ:$src_gpr))]
+>;
+
+def VTX_READ_GLOBAL_16_cm : VTX_READ_16_cm <1,
+  [(set i32:$dst_gpr, (az_extloadi16_global ADDRVTX_READ:$src_gpr))]
 >;
 
 // 32-bit reads

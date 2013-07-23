@@ -403,9 +403,9 @@ defm BUFFER_LOAD_FORMAT_XYZW : MUBUF_Load_Helper <0x00000003, "BUFFER_LOAD_FORMA
 //def BUFFER_STORE_FORMAT_XYZ : MUBUF_ <0x00000006, "BUFFER_STORE_FORMAT_XYZ", []>;
 //def BUFFER_STORE_FORMAT_XYZW : MUBUF_ <0x00000007, "BUFFER_STORE_FORMAT_XYZW", []>;
 defm BUFFER_LOAD_UBYTE : MUBUF_Load_Helper <0x00000008, "BUFFER_LOAD_UBYTE", VReg_32>;
-//def BUFFER_LOAD_SBYTE : MUBUF_ <0x00000009, "BUFFER_LOAD_SBYTE", []>;
-//def BUFFER_LOAD_USHORT : MUBUF_ <0x0000000a, "BUFFER_LOAD_USHORT", []>;
-//def BUFFER_LOAD_SSHORT : MUBUF_ <0x0000000b, "BUFFER_LOAD_SSHORT", []>;
+defm BUFFER_LOAD_SBYTE : MUBUF_Load_Helper <0x00000009, "BUFFER_LOAD_SBYTE", VReg_32>;
+defm BUFFER_LOAD_USHORT : MUBUF_Load_Helper <0x0000000a, "BUFFER_LOAD_USHORT", VReg_32>;
+defm BUFFER_LOAD_SSHORT : MUBUF_Load_Helper <0x0000000b, "BUFFER_LOAD_SSHORT", VReg_32>;
 defm BUFFER_LOAD_DWORD : MUBUF_Load_Helper <0x0000000c, "BUFFER_LOAD_DWORD", VReg_32>;
 defm BUFFER_LOAD_DWORDX2 : MUBUF_Load_Helper <0x0000000d, "BUFFER_LOAD_DWORDX2", VReg_64>;
 defm BUFFER_LOAD_DWORDX4 : MUBUF_Load_Helper <0x0000000e, "BUFFER_LOAD_DWORDX4", VReg_128>;
@@ -1741,12 +1741,16 @@ multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
   >;
 }
 
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
-                          global_load, constant_load>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
-                          global_load, constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_SBYTE_ADDR64, i32,
+                          sextloadi8_global, sextloadi8_constant>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32,
                           az_extloadi8_global, az_extloadi8_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_SSHORT_ADDR64, i32,
+                          sextloadi16_global, sextloadi16_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_USHORT_ADDR64, i32,
+                          az_extloadi16_global, az_extloadi16_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
+                          global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
                           global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,

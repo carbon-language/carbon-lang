@@ -116,9 +116,9 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT,
                            MRI.getLiveInVirtReg(AMDGPU::SGPR0_SGPR1), MVT::i64);
   SDValue Ptr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
                                              DAG.getConstant(Offset, MVT::i64));
-  return DAG.getExtLoad(ISD::ZEXTLOAD, DL, VT, Chain, Ptr,
+  return DAG.getLoad(VT, DL, Chain, Ptr,
                             MachinePointerInfo(UndefValue::get(PtrTy)),
-                            VT, false, false, ArgVT.getSizeInBits() >> 3);
+                            false, false, false, ArgVT.getSizeInBits() >> 3);
 
 }
 

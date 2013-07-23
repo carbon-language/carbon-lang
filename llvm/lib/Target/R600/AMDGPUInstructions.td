@@ -96,11 +96,19 @@ def az_extloadi8 : PatFrag<(ops node:$ptr), (az_extload node:$ptr), [{
   return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
 }]>;
 
-def az_extloadi8_global : PatFrag<(ops node:$ptr), (az_extloadi8 node:$ptr), [{
+def sextloadi8_global : PatFrag<(ops node:$ptr), (sextloadi8 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
 def az_extloadi8_constant : PatFrag<(ops node:$ptr), (az_extloadi8 node:$ptr), [{
+    return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
+}]>;
+
+def sextloadi8_constant : PatFrag<(ops node:$ptr), (sextloadi8 node:$ptr), [{
+    return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
+}]>;
+
+def az_extloadi8_global : PatFrag<(ops node:$ptr), (az_extloadi8 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
@@ -112,8 +120,16 @@ def az_extloadi16_global : PatFrag<(ops node:$ptr), (az_extloadi16 node:$ptr), [
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
 
-def az_extloadi16_constant : PatFrag<(ops node:$ptr), (az_extloadi16 node:$ptr), [{
+def sextloadi16_global : PatFrag<(ops node:$ptr), (sextloadi16 node:$ptr), [{
     return isGlobalLoad(dyn_cast<LoadSDNode>(N));
+}]>;
+
+def az_extloadi16_constant : PatFrag<(ops node:$ptr), (az_extloadi16 node:$ptr), [{
+    return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
+}]>;
+
+def sextloadi16_constant : PatFrag<(ops node:$ptr), (sextloadi16 node:$ptr), [{
+    return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
 }]>;
 
 def az_extloadi32 : PatFrag<(ops node:$ptr), (az_extload node:$ptr), [{

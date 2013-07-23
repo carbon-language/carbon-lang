@@ -15,6 +15,51 @@ define void @load_i8(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
   ret void
 }
 
+; R600-CHECK: @load_i8_sext
+; R600-CHECK: VTX_READ_8 [[DST:T[0-9]\.[XYZW]]], [[DST]]
+; R600-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
+; R600-CHECK: 24
+; R600-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
+; R600-CHECK: 24
+; SI-CHECK: @load_i8_sext
+; SI-CHECK: BUFFER_LOAD_SBYTE
+define void @load_i8_sext(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
+entry:
+  %0 = load i8 addrspace(1)* %in
+  %1 = sext i8 %0 to i32
+  store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
+; Load an i16 value from the global address space.
+; R600-CHECK: @load_i16
+; R600-CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
+; SI-CHECK: @load_i16
+; SI-CHECK: BUFFER_LOAD_USHORT
+define void @load_i16(i32 addrspace(1)* %out, i16 addrspace(1)* %in) {
+entry:
+  %0 = load i16	 addrspace(1)* %in
+  %1 = zext i16 %0 to i32
+  store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_i16_sext
+; R600-CHECK: VTX_READ_16 [[DST:T[0-9]\.[XYZW]]], [[DST]]
+; R600-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], [[DST]]
+; R600-CHECK: 16
+; R600-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]]
+; R600-CHECK: 16
+; SI-CHECK: @load_i16_sext
+; SI-CHECK: BUFFER_LOAD_SSHORT
+define void @load_i16_sext(i32 addrspace(1)* %out, i16 addrspace(1)* %in) {
+entry:
+  %0 = load i16 addrspace(1)* %in
+  %1 = sext i16 %0 to i32
+  store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
 ; load an i32 value from the global address space.
 ; R600-CHECK: @load_i32
 ; R600-CHECK: VTX_READ_32 T{{[0-9]+}}.X, T{{[0-9]+}}.X, 0
