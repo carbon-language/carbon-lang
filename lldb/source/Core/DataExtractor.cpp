@@ -1069,14 +1069,10 @@ DataExtractor::CopyByteOrderedData (offset_t src_offset,
 
 
 //----------------------------------------------------------------------
-// Extracts a AsCString (fixed length, or variable length) from
-// the data at the offset pointed to by "offset_ptr". If
-// "length" is zero, then a variable length NULL terminated C
-// string will be extracted from the data the "offset_ptr" will be
-// updated with the offset of the byte that follows the NULL
-// terminator byte. If "length" is greater than zero, then
-// the function will make sure there are "length" bytes
-// available in the current data and if so, return a valid pointer.
+// Extracts a variable length NULL terminated C string from
+// the data at the offset pointed to by "offset_ptr".  The
+// "offset_ptr" will be updated with the offset of the byte that
+// follows the NULL terminator byte.
 //
 // If the offset pointed to by "offset_ptr" is out of bounds, or if
 // "length" is non-zero and there aren't enough avaialable
@@ -1107,6 +1103,33 @@ DataExtractor::GetCStr (offset_t *offset_ptr) const
         // terminator. Fall through and return NULL otherwise anyone that
         // would have used the result as a C string can wonder into
         // unknown memory...
+    }
+    return NULL;
+}
+
+//----------------------------------------------------------------------
+// Extracts a NULL terminated C string from the fixed length field of
+// length "len" at the offset pointed to by "offset_ptr".
+// The "offset_ptr" will be updated with the offset of the byte that
+// follows the fixed length field.
+//
+// If the offset pointed to by "offset_ptr" is out of bounds, or if
+// the offset plus the length of the field is out of bounds, or if the
+// field does not contain a NULL terminator byte, NULL will be returned
+// and "offset_ptr" will not be updated.
+//----------------------------------------------------------------------
+const char*
+DataExtractor::GetCStr (offset_t *offset_ptr, offset_t len) const
+{
+    const char *cstr = (const char *)PeekData (*offset_ptr, len);
+    if (cstr)
+    {
+        if (memchr (cstr, '\0', len) == NULL)
+        {
+            return NULL;
+        }
+        *offset_ptr += len;
+        return cstr;
     }
     return NULL;
 }

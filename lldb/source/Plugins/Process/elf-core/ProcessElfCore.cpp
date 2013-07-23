@@ -19,6 +19,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "ProcessPOSIXLog.h"
 
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
@@ -355,6 +356,21 @@ enum {
     NT_AUXV
 };
 
+enum {
+    NT_FREEBSD_PRSTATUS      = 1,
+    NT_FREEBSD_FPREGSET,
+    NT_FREEBSD_PRPSINFO,
+    NT_FREEBSD_THRMISC       = 7,
+    NT_FREEBSD_PROCSTAT_AUXV = 16
+};
+
+/// Align the given value to next boundary specified by the alignment bytes
+static uint32_t
+AlignToNext(uint32_t value, int alignment_bytes)
+{
+    return (value + alignment_bytes - 1) & ~(alignment_bytes - 1);
+}
+
 /// Note Structure found in ELF core dumps.
 /// This is PT_NOTE type program/segments in the core file.
 struct ELFNote
@@ -363,9 +379,10 @@ struct ELFNote
     elf::elf_word n_descsz;
     elf::elf_word n_type;
 
-    ELFNote()
+    std::string n_name;
+
+    ELFNote() : n_namesz(0), n_descsz(0), n_type(0)
     {
-        memset(this, 0, sizeof(ELFNote));
     }
 
     /// Parse an ELFNote entry from the given DataExtractor starting at position
@@ -387,16 +404,37 @@ struct ELFNote
         if (data.GetU32(offset, &n_namesz, 3) == NULL)
             return false;
 
+        // The name field is required to be nul-terminated, and n_namesz
+        // includes the terminating nul in observed implementations (contrary
+        // to the ELF-64 spec).  A special case is needed for cores generated
+        // by some older Linux versions, which write a note named "CORE"
+        // without a nul terminator and n_namesz = 4.
+        if (n_namesz == 4)
+        {
+            char buf[4];
+            if (data.ExtractBytes (*offset, 4, data.GetByteOrder(), buf) != 4)
+                return false;
+            if (strncmp (buf, "CORE", 4) == 0)
+            {
+                n_name = "CORE";
+                *offset += 4;
+                return true;
+            }
+        }
+
+        const char *cstr = data.GetCStr(offset, AlignToNext(n_namesz, 4));
+        if (cstr == NULL)
+        {
+            Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+            if (log)
+                log->Printf("Failed to parse note name lacking nul terminator");
+
+            return false;
+        }
+        n_name = cstr;
         return true;
     }
 };
-
-/// Align the given value to next boundary specified by the alignment bytes
-static uint32_t
-AlignToNext(uint32_t value, int alignment_bytes)
-{
-    return (value + alignment_bytes - 1) & ~(alignment_bytes - 1);
-}
 
 /// Parse Thread context from PT_NOTE segment and store it in the thread list
 /// Notes:
@@ -446,32 +484,54 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
         }
 
         size_t note_start, note_size;
-        note_start = offset + AlignToNext(note.n_namesz, 4);
+        note_start = offset;
         note_size = AlignToNext(note.n_descsz, 4);
 
         // Store the NOTE information in the current thread
         DataExtractor note_data (segment_data, note_start, note_size);
-        switch (note.n_type)
+        if (note.n_name == "FreeBSD")
         {
-            case NT_PRSTATUS:
-                have_prstatus = true;
-                thread_data->prstatus = note_data;
-                break;
-            case NT_FPREGSET:
-                thread_data->fpregset = note_data;
-                break;
-            case NT_PRPSINFO:
-                have_prpsinfo = true;
-                thread_data->prpsinfo = note_data;
-                break;
-            case NT_AUXV:
-                m_auxv = DataExtractor(note_data);
-                break;
-            default:
-                break;
+            switch (note.n_type)
+            {
+                case NT_FREEBSD_PRSTATUS:
+                    have_prstatus = true;
+                    thread_data->prstatus = note_data;
+                    break;
+                case NT_FREEBSD_FPREGSET:
+                    thread_data->fpregset = note_data;
+                    break;
+                case NT_FREEBSD_PRPSINFO:
+                    have_prpsinfo = true;
+                    thread_data->prpsinfo = note_data;
+                    break;
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            switch (note.n_type)
+            {
+                case NT_PRSTATUS:
+                    have_prstatus = true;
+                    thread_data->prstatus = note_data;
+                    break;
+                case NT_FPREGSET:
+                    thread_data->fpregset = note_data;
+                    break;
+                case NT_PRPSINFO:
+                    have_prpsinfo = true;
+                    thread_data->prpsinfo = note_data;
+                    break;
+                case NT_AUXV:
+                    m_auxv = DataExtractor(note_data);
+                    break;
+                default:
+                    break;
+            }
         }
 
-        offset += AlignToNext(note.n_namesz, 4) + note_size;
+        offset += note_size;
     }
     // Add last entry in the note section
     if (thread_data && thread_data->prstatus.GetByteSize() > 0)
