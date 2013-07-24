@@ -2576,7 +2576,6 @@ private:
     // occurs.
     if (isSafePHIToSpeculate(PN, &DL)) {
       Pass.SpeculatablePHIs.insert(&PN);
-      Pass.Worklist.insert(&NewAI);
       IsUsedByRewrittenSpeculatableInstructions = true;
       return true;
     }
@@ -2606,7 +2605,6 @@ private:
     // speculation occurs.
     if (isSafeSelectToSpeculate(SI, &DL)) {
       Pass.SpeculatableSelects.insert(&SI);
-      Pass.Worklist.insert(&NewAI);
       IsUsedByRewrittenSpeculatableInstructions = true;
       return true;
     }
@@ -3090,10 +3088,18 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   if (Promotable && !Rewriter.isUsedByRewrittenSpeculatableInstructions()) {
     DEBUG(dbgs() << "  and queuing for promotion\n");
     PromotableAllocas.push_back(NewAI);
-  } else if (NewAI != &AI) {
+  } else if (NewAI != &AI ||
+             (Promotable &&
+              Rewriter.isUsedByRewrittenSpeculatableInstructions())) {
     // If we can't promote the alloca, iterate on it to check for new
     // refinements exposed by splitting the current alloca. Don't iterate on an
     // alloca which didn't actually change and didn't get promoted.
+    //
+    // Alternatively, if we could promote the alloca but have speculatable
+    // instructions then we will speculate them after finishing our processing
+    // of the original alloca. Mark the new one for re-visiting in the next
+    // iteration so the speculated operations can be rewritten.
+    //
     // FIXME: We should actually track whether the rewriter changed anything.
     Worklist.insert(NewAI);
   }

@@ -346,6 +346,43 @@ exit:
   ret i32 %load
 }
 
+define i32 @test14(i1 %b1, i1 %b2, i32* %ptr) {
+; Check for problems when there are both selects and phis and one is
+; speculatable toward promotion but the other is not. That should block all of
+; the speculation.
+; CHECK-LABEL: @test14(
+; CHECK: alloca
+; CHECK: alloca
+; CHECK: select
+; CHECK: phi
+; CHECK: phi
+; CHECK: select
+; CHECK: ret i32
+
+entry:
+  %f = alloca i32
+  %g = alloca i32
+  store i32 0, i32* %f
+  store i32 0, i32* %g
+  %f.select = select i1 %b1, i32* %f, i32* %ptr
+  br i1 %b2, label %then, label %else
+
+then:
+  br label %exit
+
+else:
+  br label %exit
+
+exit:
+  %f.phi = phi i32* [ %f, %then ], [ %f.select, %else ]
+  %g.phi = phi i32* [ %g, %then ], [ %ptr, %else ]
+  %f.loaded = load i32* %f.phi
+  %g.select = select i1 %b1, i32* %g, i32* %g.phi
+  %g.loaded = load i32* %g.select
+  %result = add i32 %f.loaded, %g.loaded
+  ret i32 %result
+}
+
 define i32 @PR13905() {
 ; Check a pattern where we have a chain of dead phi nodes to ensure they are
 ; deleted and promotion can proceed.
