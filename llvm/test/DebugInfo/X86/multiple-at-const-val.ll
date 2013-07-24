@@ -1,4 +1,4 @@
-; RUN: llc -O0 -disable-debug-info-verifier %s -mtriple=x86_64-apple-darwin -filetype=obj -o %t
+; RUN: llc -O0 %s -mtriple=x86_64-apple-darwin -filetype=obj -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; rdar://13071590
@@ -50,10 +50,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !56 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !77 = metadata !{i32 786445, metadata !1801, metadata !49, metadata !"badbit", i32 331, i64 0, i64 0, i64 0, i32 4096, metadata !78, i32 1} ; [ DW_TAG_member ]
 !78 = metadata !{i32 786470, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !79} ; [ DW_TAG_const_type ]
-!79 = metadata !{i32 786454, metadata !49, metadata !"ostate", metadata !5, i32 327, i64 0, i64 0, i64 0, i32 0, metadata !26} ; [ DW_TAG_typedef ]
+!79 = metadata !{i32 786454, metadata !1801, metadata !49, metadata !"ostate", i32 327, i64 0, i64 0, i64 0, i32 0, metadata !26} ; [ DW_TAG_typedef ]
 !955 = metadata !{i32 0}
 !956 = metadata !{metadata !960}
-!960 = metadata !{i32 786478, i32 0, metadata !961, metadata !"main", metadata !"main", metadata !"", metadata !961, i32 73, metadata !54, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 ()* @main, null, null, metadata !955, i32 73} ; [ DW_TAG_subprogram ]
+!960 = metadata !{i32 786478, metadata !961, null, metadata !"main", metadata !"main", metadata !"", i32 73, metadata !54, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 ()* @main, null, null, metadata !955, i32 73} ; [ DW_TAG_subprogram ]
 !961 = metadata !{i32 786473, metadata !1802} ; [ DW_TAG_file_type ]
 !1786 = metadata !{metadata !1800}
 !1800 = metadata !{i32 786484, i32 0, metadata !5, metadata !"badbit", metadata !"badbit", metadata !"badbit", metadata !5, i32 331, metadata !78, i32 1, i32 1, i32 1, metadata !77} ; [ DW_TAG_variable ]

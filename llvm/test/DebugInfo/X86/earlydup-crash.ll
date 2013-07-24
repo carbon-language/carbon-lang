@@ -1,4 +1,4 @@
-; RUN: llc -disable-debug-info-verifier %s -mtriple=i386-apple-macosx10.6.7 -o /dev/null
+; RUN: llc %s -mtriple=i386-apple-macosx10.6.7 -o /dev/null
 
 ; This used to crash because early dup was not ignoring debug instructions.
 
@@ -54,7 +54,7 @@ declare void @foobar(i32)
 !9 = metadata !{i32 589839, metadata !3, metadata !"", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ]
 !10 = metadata !{i32 589862, metadata !3, metadata !"", metadata !3, i32 0, i64 8, i64 8, i64 0, i32 0, metadata !8} ; [ DW_TAG_const_type ]
 !11 = metadata !{i32 589839, metadata !3, metadata !"", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !12} ; [ DW_TAG_pointer_type ]
-!12 = metadata !{i32 589846, metadata !13, metadata !"cpp_dir", metadata !13, i32 45, i64 0, i64 0, i64 0, i32 0, metadata !14} ; [ DW_TAG_typedef ]
+!12 = metadata !{i32 589846, metadata !41, metadata !13, metadata !"cpp_dir", i32 45, i64 0, i64 0, i64 0, i32 0, metadata !14} ; [ DW_TAG_typedef ]
 !13 = metadata !{i32 589865, metadata !"cpplib.h", metadata !"/Users/espindola/llvm/build-llvm-gcc/gcc/../../llvm-gcc-4.2/gcc/../libcpp/include", metadata !4} ; [ DW_TAG_file_type ]
 !14 = metadata !{i32 589843, metadata !3, metadata !"cpp_dir", metadata !13, i32 43, i64 352, i64 32, i64 0, i32 0, null, metadata !15, i32 0, null} ; [ DW_TAG_structure_type ]
 !15 = metadata !{metadata !16, metadata !18, metadata !19, metadata !21, metadata !23, metadata !25, metadata !27, metadata !29, metadata !33, metadata !36}
@@ -72,14 +72,17 @@ declare void @foobar(i32)
 !27 = metadata !{i32 589837, metadata !14, metadata !"construct", metadata !13, i32 597, i64 32, i64 32, i64 192, i32 0, metadata !28} ; [ DW_TAG_member ]
 !28 = metadata !{i32 589839, metadata !3, metadata !"", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
 !29 = metadata !{i32 589837, metadata !14, metadata !"ino", metadata !13, i32 601, i64 64, i64 64, i64 224, i32 0, metadata !30} ; [ DW_TAG_member ]
-!30 = metadata !{i32 589846, metadata !31, metadata !"ino_t", metadata !31, i32 141, i64 0, i64 0, i64 0, i32 0, metadata !32} ; [ DW_TAG_typedef ]
+!30 = metadata !{i32 589846, metadata !42, metadata !31, metadata !"ino_t", i32 141, i64 0, i64 0, i64 0, i32 0, metadata !32} ; [ DW_TAG_typedef ]
 !31 = metadata !{i32 589865, metadata !"types.h", metadata !"/usr/include/sys", metadata !4} ; [ DW_TAG_file_type ]
 !32 = metadata !{i32 589860, metadata !3, metadata !"long long unsigned int", metadata !3, i32 0, i64 64, i64 64, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !33 = metadata !{i32 589837, metadata !14, metadata !"dev", metadata !13, i32 602, i64 32, i64 32, i64 288, i32 0, metadata !34} ; [ DW_TAG_member ]
-!34 = metadata !{i32 589846, metadata !31, metadata !"dev_t", metadata !31, i32 107, i64 0, i64 0, i64 0, i32 0, metadata !35} ; [ DW_TAG_typedef ]
+!34 = metadata !{i32 589846, metadata !42, metadata !31, metadata !"dev_t", i32 107, i64 0, i64 0, i64 0, i32 0, metadata !35} ; [ DW_TAG_typedef ]
 !35 = metadata !{i32 589860, metadata !3, metadata !"int", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !36 = metadata !{i32 589837, metadata !14, metadata !"user_supplied_p", metadata !13, i32 605, i64 8, i64 8, i64 320, i32 0, metadata !37} ; [ DW_TAG_member ]
 !37 = metadata !{i32 589860, metadata !3, metadata !"_Bool", metadata !3, i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ]
-!38 = metadata !{i32 589846, metadata !39, metadata !"size_t", metadata !39, i32 326, i64 0, i64 0, i64 0, i32 0, metadata !40} ; [ DW_TAG_typedef ]
-!39 = metadata !{i32 589865, metadata !"stddef.h", metadata !"/Users/espindola/llvm/build-llvm-gcc/./prev-gcc/include", metadata !4} ; [ DW_TAG_file_type ]
+!38 = metadata !{i32 589846, metadata !43, metadata !39, metadata !"size_t", i32 326, i64 0, i64 0, i64 0, i32 0, metadata !40} ; [ DW_TAG_typedef ]
+!39 = metadata !{i32 589865, metadata !43} ; [ DW_TAG_file_type ]
 !40 = metadata !{i32 589860, metadata !3, metadata !"long unsigned int", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
+!41 = metadata !{metadata !"cpplib.h", metadata !"/Users/espindola/llvm/build-llvm-gcc/gcc/../../llvm-gcc-4.2/gcc/../libcpp/include"}
+!42 = metadata !{metadata !"types.h", metadata !"/usr/include/sys"}
+!43 = metadata !{metadata !"stddef.h", metadata !"/Users/espindola/llvm/build-llvm-gcc/./prev-gcc/include"}
