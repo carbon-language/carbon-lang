@@ -327,11 +327,11 @@ unsigned DIArray::getNumElements() const {
   return DbgNode->getNumOperands();
 }
 
-/// replaceAllUsesWith - Replace all uses of debug info referenced by
-/// this descriptor.
+/// replaceAllUsesWith - Replace all uses of the MDNode used by this
+/// type with the one in the passed descriptor.
 void DIType::replaceAllUsesWith(DIDescriptor &D) {
-  if (!DbgNode)
-    return;
+
+  assert(DbgNode && "Trying to replace an unverified type!");
 
   // Since we use a TrackingVH for the node, its easy for clients to manufacture
   // legitimate situations where they want to replaceAllUsesWith() on something
@@ -347,11 +347,11 @@ void DIType::replaceAllUsesWith(DIDescriptor &D) {
   }
 }
 
-/// replaceAllUsesWith - Replace all uses of debug info referenced by
-/// this descriptor.
+/// replaceAllUsesWith - Replace all uses of the MDNode used by this
+/// type with the one in D.
 void DIType::replaceAllUsesWith(MDNode *D) {
-  if (!DbgNode)
-    return;
+
+  assert(DbgNode && "Trying to replace an unverified type!");
 
   // Since we use a TrackingVH for the node, its easy for clients to manufacture
   // legitimate situations where they want to replaceAllUsesWith() on something
