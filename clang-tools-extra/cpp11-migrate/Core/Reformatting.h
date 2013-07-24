@@ -44,10 +44,11 @@ public:
   /// Since this routine use \c clang::format::reformat() the rules that applies
   /// on the ranges are identical:
   ///
-  /// <blockquote> Each range is extended on either end to its next bigger logic
+  /// \par
+  /// Each range is extended on either end to its next bigger logic
   /// unit, i.e. everything that might influence its formatting or might be
   /// influenced by its formatting.
-  /// -- \c clang::format::reformat()</blockquote>
+  /// -- \c clang::format::reformat()
   clang::tooling::Replacements reformatSingleFile(llvm::StringRef FileName,
                                                   const ChangedRanges &Changes,
                                                   clang::SourceManager &SM);
