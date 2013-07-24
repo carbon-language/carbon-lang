@@ -20,31 +20,34 @@ namespace cl = llvm::cl;
 static cl::OptionCategory TransformCategory("Transforms");
 
 Transforms::~Transforms() {
-  for (std::vector<Transform*>::iterator I = ChosenTransforms.begin(),
-       E = ChosenTransforms.end(); I != E; ++I) {
+  for (std::vector<Transform *>::iterator I = ChosenTransforms.begin(),
+                                          E = ChosenTransforms.end();
+       I != E; ++I)
     delete *I;
-  }
-  for (OptionVec::iterator I = Options.begin(),
-       E = Options.end(); I != E; ++I) {
-    delete I->first;
-  }
+
+  for (OptionMap::iterator I = Options.begin(), E = Options.end(); I != E; ++I)
+    delete I->getValue();
 }
 
-void Transforms::registerTransform(llvm::StringRef OptName,
-                                   llvm::StringRef Description,
-                                   TransformCreator Creator) {
-  Options.push_back(OptionVec::value_type(
-      new cl::opt<bool>(OptName.data(), cl::desc(Description.data()),
-                        cl::cat(TransformCategory)),
-      Creator));
+void Transforms::registerTransforms() {
+  for (TransformFactoryRegistry::iterator I = TransformFactoryRegistry::begin(),
+                                          E = TransformFactoryRegistry::end();
+       I != E; ++I)
+    Options[I->getName()] = new cl::opt<bool>(
+        I->getName(), cl::desc(I->getDesc()), cl::cat(TransformCategory));
 }
 
 void
 Transforms::createSelectedTransforms(const TransformOptions &GlobalOptions) {
-  for (OptionVec::iterator I = Options.begin(),
-       E = Options.end(); I != E; ++I) {
-    if (*I->first) {
-      ChosenTransforms.push_back(I->second(GlobalOptions));
-    }
+  for (TransformFactoryRegistry::iterator I = TransformFactoryRegistry::begin(),
+                                          E = TransformFactoryRegistry::end();
+       I != E; ++I) {
+    bool OptionEnabled = *Options[I->getName()];
+
+    if (!OptionEnabled)
+      continue;
+
+    llvm::OwningPtr<TransformFactory> Factory(I->instantiate());
+    ChosenTransforms.push_back(Factory->createTransform(GlobalOptions));
   }
 }

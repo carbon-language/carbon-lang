@@ -131,3 +131,5 @@ void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
 FrontendActionFactory *Transform::createActionFactory(MatchFinder &Finder) {
   return new ActionFactory(Finder, /*Owner=*/ *this);
 }
+
+TransformFactory::~TransformFactory() {}

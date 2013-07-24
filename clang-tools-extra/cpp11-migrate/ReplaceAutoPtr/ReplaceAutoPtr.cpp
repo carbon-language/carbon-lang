@@ -48,3 +48,18 @@ ReplaceAutoPtrTransform::apply(FileOverrides &InputStates,
 
   return 0;
 }
+
+struct ReplaceAutoPtrFactory : TransformFactory {
+  Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
+    return new ReplaceAutoPtrTransform(Opts);
+  }
+};
+
+// Register the factory using this statically initialized variable.
+static TransformFactoryRegistry::Add<ReplaceAutoPtrFactory>
+X("replace-auto_ptr", "Replace std::auto_ptr (deprecated) by std::unique_ptr"
+                      " (EXPERIMENTAL)");
+
+// This anchor is used to force the linker to link in the generated object file
+// and thus register the factory.
+volatile int ReplaceAutoPtrTransformAnchorSource = 0;

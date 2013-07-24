@@ -21,11 +21,6 @@
 #include "Core/Transform.h"
 #include "Core/Transforms.h"
 #include "Core/Reformatting.h"
-#include "LoopConvert/LoopConvert.h"
-#include "UseNullptr/UseNullptr.h"
-#include "UseAuto/UseAuto.h"
-#include "AddOverride/AddOverride.h"
-#include "ReplaceAutoPtr/ReplaceAutoPtr.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
@@ -156,23 +151,7 @@ int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
 
-  TransformManager.registerTransform(
-      "loop-convert", "Make use of range-based for loops where possible",
-      &ConstructTransform<LoopConvertTransform>);
-  TransformManager.registerTransform(
-      "use-nullptr", "Make use of nullptr keyword where possible",
-      &ConstructTransform<UseNullptrTransform>);
-  TransformManager.registerTransform(
-      "use-auto", "Use of 'auto' type specifier",
-      &ConstructTransform<UseAutoTransform>);
-  TransformManager.registerTransform(
-      "add-override", "Make use of override specifier where possible",
-      &ConstructTransform<AddOverrideTransform>);
-  TransformManager.registerTransform(
-      "replace-auto_ptr", "Replace auto_ptr (deprecated) by unique_ptr"
-                          " (EXPERIMENTAL)",
-      &ConstructTransform<ReplaceAutoPtrTransform>);
-  // Add more transform options here.
+  TransformManager.registerTransforms();
 
   // This causes options to be parsed.
   CommonOptionsParser OptionsParser(argc, argv);
@@ -293,3 +272,18 @@ int main(int argc, const char **argv) {
 
   return 0;
 }
+
+// These anchors are used to force the linker to link the transforms
+extern volatile int AddOverrideTransformAnchorSource;
+extern volatile int LoopConvertTransformAnchorSource;
+extern volatile int ReplaceAutoPtrTransformAnchorSource;
+extern volatile int UseAutoTransformAnchorSource;
+extern volatile int UseNullptrTransformAnchorSource;
+
+static int TransformsAnchorsDestination[] = {
+  AddOverrideTransformAnchorSource,
+  LoopConvertTransformAnchorSource,
+  ReplaceAutoPtrTransformAnchorSource,
+  UseAutoTransformAnchorSource,
+  UseNullptrTransformAnchorSource
+};

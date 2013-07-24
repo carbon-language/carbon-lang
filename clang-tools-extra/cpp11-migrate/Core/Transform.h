@@ -20,8 +20,8 @@
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Registry.h"
 #include "llvm/Support/Timer.h"
-
 #include <string>
 #include <vector>
 
@@ -221,5 +221,36 @@ private:
   unsigned RejectedChanges;
   unsigned DeferredChanges;
 };
+
+/// \brief A factory that can instantiate a specific transform.
+///
+/// Each transform should subclass it and implement the \c createTransform()
+/// methods. Use \c TransformFactoryRegistry to register the transform globally.
+///
+/// Example:
+/// \code
+/// class MyTransform : public Transform { ... };
+///
+/// struct MyFactory : TransformFactory {
+///   Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
+///     return new MyTransform(Opts);
+///   }
+/// };
+///
+/// // Register the factory using this statically initialized variable.
+/// static TransformFactoryRegistry::Add<MyFactory>
+/// X("my-transform", "<Short description of my transform>");
+///
+/// // This anchor is used to force the linker to link in the generated object
+/// // file and thus register the factory.
+/// volatile int MyTransformAnchorSource = 0;
+/// \endcode
+class TransformFactory {
+public:
+  virtual ~TransformFactory();
+  virtual Transform *createTransform(const TransformOptions &) = 0;
+};
+
+typedef llvm::Registry<TransformFactory> TransformFactoryRegistry;
 
 #endif // CPP11_MIGRATE_TRANSFORM_H

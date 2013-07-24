@@ -59,3 +59,17 @@ bool AddOverrideTransform::handleBeginSource(clang::CompilerInstance &CI,
   Fixer->setPreprocessor(CI.getPreprocessor());
   return Transform::handleBeginSource(CI, Filename);
 }
+
+struct AddOverrideFactory : TransformFactory {
+  Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
+    return new AddOverrideTransform(Opts);
+  }
+};
+
+// Register the factory using this statically initialized variable.
+static TransformFactoryRegistry::Add<AddOverrideFactory>
+X("add-override", "Make use of override specifier where possible");
+
+// This anchor is used to force the linker to link in the generated object file
+// and thus register the factory.
+volatile int AddOverrideTransformAnchorSource = 0;

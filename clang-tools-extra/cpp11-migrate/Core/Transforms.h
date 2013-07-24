@@ -48,12 +48,11 @@ public:
 
   ~Transforms();
 
-  /// \brief Registers a transform causing the transform to be made available
-  /// on the command line.
+  /// \brief Registers all available transforms causing them to be made
+  /// available on the command line.
   ///
   /// Be sure to register all transforms *before* parsing command line options.
-  void registerTransform(llvm::StringRef OptName, llvm::StringRef Description,
-                         TransformCreator Creator);
+  void registerTransforms();
 
   /// \brief Instantiate all transforms that were selected on the command line.
   ///
@@ -69,12 +68,11 @@ public:
   const_iterator end() const { return ChosenTransforms.end(); }
 
 private:
-  typedef std::vector<std::pair<llvm::cl::opt<bool>*, TransformCreator> >
-    OptionVec;
+  typedef llvm::StringMap<llvm::cl::opt<bool> *> OptionMap;
 
 private:
   TransformVec ChosenTransforms;
-  OptionVec Options;
+  OptionMap Options;
 };
 
 #endif // CPP11_MIGRATE_TRANSFORMS_H
