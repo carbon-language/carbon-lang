@@ -1,8 +1,8 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t_risky.cpp
-// RUN: cpp11-migrate -loop-convert -use-nullptr %t.cpp --
+// RUN: cpp11-migrate -loop-convert -use-nullptr %t.cpp -- -std=c++11
 // RUN: FileCheck -input-file=%t.cpp %s
-// RUN: cpp11-migrate -loop-convert -use-nullptr -risk=risky %t_risky.cpp --
+// RUN: cpp11-migrate -loop-convert -use-nullptr -risk=risky %t_risky.cpp -- -std=c++11
 // RUN: FileCheck -check-prefix=RISKY -input-file=%t_risky.cpp %s
 
 #define NULL 0
