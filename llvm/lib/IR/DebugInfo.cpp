@@ -344,12 +344,6 @@ bool DIDescriptor::isImportedEntity() const {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-DIType::DIType(const MDNode *N) : DIScope(N) {
-  if (!N) return;
-  if (!isType())
-    DbgNode = 0;
-}
-
 unsigned DIArray::getNumElements() const {
   if (!DbgNode)
     return 0;

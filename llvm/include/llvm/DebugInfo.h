@@ -209,10 +209,10 @@ namespace llvm {
     void printInternal(raw_ostream &OS) const;
 
   public:
+    DIType(const MDNode *N = 0) : DIScope(N) {}
+
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
-    explicit DIType(const MDNode *N);
-    explicit DIType() {}
 
     DIScope getContext() const          { return getFieldAs<DIScope>(2); }
     StringRef getName() const           { return getStringField(3);     }
