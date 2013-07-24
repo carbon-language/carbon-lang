@@ -346,10 +346,7 @@ namespace llvm {
   class DIFile : public DIScope {
     friend class DIDescriptor;
   public:
-    explicit DIFile(const MDNode *N = 0) : DIScope(N) {
-      if (DbgNode && !isFile())
-        DbgNode = 0;
-    }
+    explicit DIFile(const MDNode *N = 0) : DIScope(N) {}
     MDNode *getFileNode() const;
     bool Verify() const;
   };
