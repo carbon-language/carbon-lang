@@ -219,6 +219,15 @@ FormatStyle getMozillaStyle() {
   return MozillaStyle;
 }
 
+FormatStyle getWebKitStyle() {
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 0;
+  Style.IndentWidth = 4;
+  Style.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
+  Style.PointerBindsToType = true;
+  return Style;
+}
+
 bool getPredefinedStyle(StringRef Name, FormatStyle *Style) {
   if (Name.equals_lower("llvm"))
     *Style = getLLVMStyle();
@@ -228,6 +237,8 @@ bool getPredefinedStyle(StringRef Name, FormatStyle *Style) {
     *Style = getMozillaStyle();
   else if (Name.equals_lower("google"))
     *Style = getGoogleStyle();
+  else if (Name.equals_lower("webkit"))
+    *Style = getWebKitStyle();
   else
     return false;
 
@@ -298,6 +309,11 @@ public:
 
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State, /*DryRun=*/false, /*Newline=*/false);
+
+    if (Style.ColumnLimit == 0) {
+      formatWithoutColumnLimit(State);
+      return;
+    }
 
     // If everything fits on a single line, just put it there.
     unsigned ColumnLimit = Style.ColumnLimit;
@@ -505,6 +521,15 @@ private:
       return Stack < Other.Stack;
     }
   };
+
+  /// \brief Formats the line starting at \p State, simply keeping all of the
+  /// input's line breaking decisions.
+  void formatWithoutColumnLimit(LineState &State) {
+    while (State.NextToken != NULL) {
+      bool Newline = State.NextToken->NewlinesBefore > 0;
+      addTokenToState(Newline, /*DryRun=*/false, State);
+    }
+  }
 
   /// \brief Appends the next token to \p State and updates information
   /// necessary for indentation.
@@ -1590,6 +1615,9 @@ private:
                                 std::vector<AnnotatedLine>::iterator E) {
     // We can never merge stuff if there are trailing line comments.
     if (I->Last->Type == TT_LineComment)
+      return;
+
+    if (Indent > Style.ColumnLimit)
       return;
 
     unsigned Limit = Style.ColumnLimit - Indent;

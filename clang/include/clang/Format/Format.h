@@ -31,6 +31,10 @@ namespace format {
 /// specific guidelines.
 struct FormatStyle {
   /// \brief The column limit.
+  ///
+  /// A column limit of \c 0 means that there is no column limit. In this case,
+  /// clang-format will respect the input's line breaking decisions within
+  /// statements.
   unsigned ColumnLimit;
 
   /// \brief The maximum number of consecutive empty lines to keep.
@@ -217,6 +221,10 @@ FormatStyle getChromiumStyle();
 /// \brief Returns a format style complying with Mozilla's style guide:
 /// https://developer.mozilla.org/en-US/docs/Developer_Guide/Coding_Style.
 FormatStyle getMozillaStyle();
+
+/// \brief Returns a format style complying with Webkit's style guide:
+/// http://www.webkit.org/coding/coding-style.html
+FormatStyle getWebKitStyle();
 
 /// \brief Gets a predefined style by name.
 ///

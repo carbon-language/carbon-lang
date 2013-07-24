@@ -5361,6 +5361,11 @@ TEST_F(FormatTest, GetsPredefinedStyleByName) {
   EXPECT_TRUE(getPredefinedStyle("moZILla", &Styles[2]));
   EXPECT_TRUE(allStylesEqual(Styles));
 
+  Styles[0] = getWebKitStyle();
+  EXPECT_TRUE(getPredefinedStyle("WebKit", &Styles[1]));
+  EXPECT_TRUE(getPredefinedStyle("wEbKit", &Styles[2]));
+  EXPECT_TRUE(allStylesEqual(Styles));
+
   EXPECT_FALSE(getPredefinedStyle("qwerty", &Styles[0]));
 }
 
@@ -5513,6 +5518,79 @@ TEST_F(FormatTest, SplitsUTF8BlockComments) {
             " * 𝕓𝕪𝕥𝕖\n"
             " * 𝖀𝕿𝕱-𝟠 */",
             format("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯 𝕓𝕪𝕥𝕖 𝖀𝕿𝕱-𝟠 */", getLLVMStyleWithColumns(12)));
+}
+
+TEST_F(FormatTest, FormatsWithWebKitStyle) {
+  FormatStyle Style = getWebKitStyle();
+
+  // Don't indent in outer namespaces.
+  verifyFormat("namespace outer {\n"
+               "int i;\n"
+               "namespace inner {\n"
+               "int i;\n" // FIXME: This should be indented.
+               "} // namespace inner\n"
+               "} // namespace outer\n"
+               "namespace other_outer {\n"
+               "int i;\n"
+               "}",
+               Style);
+
+  // Don't indent case labels.
+  verifyFormat("switch (variable) {\n"
+               "case 1:\n"
+               "case 2:\n"
+               "    doSomething();\n"
+               "    break;\n"
+               "default:\n"
+               "    ++variable;\n"
+               "}",
+               Style);
+
+  // Wrap before binary operators.
+  EXPECT_EQ(
+      "void f()\n"
+      "{\n"
+      "    if (aaaaaaaaaaaaaaaa\n"
+      "        && bbbbbbbbbbbbbbbbbbbbbbbb\n"
+      "        && (cccccccccccccccccccccccccc || dddddddddddddddddddd))\n"
+      "        return;\n"
+      "}",
+      format(
+          "void f() {\n"
+          "if (aaaaaaaaaaaaaaaa\n"
+          "&& bbbbbbbbbbbbbbbbbbbbbbbb\n"
+          "&& (cccccccccccccccccccccccccc || dddddddddddddddddddd))\n"
+          "return;\n"
+          "}",
+          Style));
+
+  // Constructor initializers are formatted one per line with the "," on the
+  // new line.
+  // FIXME: This needs to be implemented.
+  // verifyFormat("Constructor()\n"
+  //              "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+  //              "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+  //              "                               aaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+  //              "    , aaaaaaaaaaaaaaaaaaaaaaa() {}",
+  //              Style);
+
+  // Do not align comments.
+  // FIXME: Implement option to suppress comment alignment.
+  // verifyFormat("int a; // Do not\n"
+  //              "double b; // align comments.");
+
+  // Accept input's line breaks.
+  EXPECT_EQ("if (aaaaaaaaaaaaaaa\n"
+            "    || bbbbbbbbbbbbbbb) {\n"
+            "    i++;\n"
+            "}",
+            format("if (aaaaaaaaaaaaaaa\n"
+                   "|| bbbbbbbbbbbbbbb) { i++; }",
+                   Style));
+  EXPECT_EQ("if (aaaaaaaaaaaaaaa || bbbbbbbbbbbbbbb) {\n"
+            "    i++;\n"
+            "}",
+            format("if (aaaaaaaaaaaaaaa || bbbbbbbbbbbbbbb) { i++; }", Style));
 }
 
 #endif
