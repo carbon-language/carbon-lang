@@ -1451,7 +1451,7 @@ MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // If the first token is not '$' we have an error.
   if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_ParseFail;
+    return MatchOperand_NoMatch;
 
   SMLoc S = Parser.getTok().getLoc();
   Parser.Lex(); // Eat the '$'
@@ -1459,7 +1459,7 @@ MipsAsmParser::parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   const AsmToken &Tok = Parser.getTok(); // Get next token.
 
   if (Tok.isNot(AsmToken::Integer))
-    return MatchOperand_ParseFail;
+    return MatchOperand_NoMatch;
 
   unsigned Reg = matchRegisterByNumber(Tok.getIntVal(), Mips::CCRRegClassID);
 
