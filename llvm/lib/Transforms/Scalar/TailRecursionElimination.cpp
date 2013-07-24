@@ -145,19 +145,20 @@ static bool CanTRE(AllocaInst *AI) {
          isa<ConstantInt>(AI->getArraySize());
 }
 
+namespace {
 struct AllocaCaptureTracker : public CaptureTracker {
   AllocaCaptureTracker() : Captured(false) {}
 
-  void tooManyUses() { Captured = true; }
+  void tooManyUses() LLVM_OVERRIDE { Captured = true; }
 
-  bool shouldExplore(Use *U) {
+  bool shouldExplore(Use *U) LLVM_OVERRIDE {
     Value *V = U->getUser();
     if (isa<CallInst>(V) || isa<InvokeInst>(V))
       UsesAlloca.insert(V);
     return true;
   }
 
-  bool captured(Use *U) {
+  bool captured(Use *U) LLVM_OVERRIDE {
     if (isa<ReturnInst>(U->getUser()))
       return false;
     Captured = true;
@@ -165,8 +166,9 @@ struct AllocaCaptureTracker : public CaptureTracker {
   }
 
   bool Captured;
-  SmallPtrSet<const Value *, 64> UsesAlloca;
+  SmallPtrSet<const Value *, 16> UsesAlloca;
 };
+} // end anonymous namespace
 
 bool TailCallElim::runOnFunction(Function &F) {
   // If this function is a varargs function, we won't be able to PHI the args
