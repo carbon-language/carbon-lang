@@ -1293,17 +1293,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BIpow:
   case Builtin::BIpowf:
   case Builtin::BIpowl: {
-    // Transform a call to pow* into a @llvm.pow.* intrinsic call, but only
-    // if the target agrees.
-    if (getTargetHooks().emitIntrinsicForPow()) {
-      if (!FD->hasAttr<ConstAttr>())
-        break;
-      Value *Base = EmitScalarExpr(E->getArg(0));
-      Value *Exponent = EmitScalarExpr(E->getArg(1));
-      llvm::Type *ArgType = Base->getType();
-      Value *F = CGM.getIntrinsic(Intrinsic::pow, ArgType);
-      return RValue::get(Builder.CreateCall2(F, Base, Exponent));
-    }
+    // Transform a call to pow* into a @llvm.pow.* intrinsic call.
+    if (!FD->hasAttr<ConstAttr>())
+      break;
+    Value *Base = EmitScalarExpr(E->getArg(0));
+    Value *Exponent = EmitScalarExpr(E->getArg(1));
+    llvm::Type *ArgType = Base->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::pow, ArgType);
+    return RValue::get(Builder.CreateCall2(F, Base, Exponent));
     break;
   }
 
