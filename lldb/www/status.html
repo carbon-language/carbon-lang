@@ -52,7 +52,7 @@
 								</tr>
 								<tr>
 									<td>Backtracing</td>
-									<td>OK (except with targets built with -fomit-frame-pointer)</td>
+									<td>OK</td>
 									<td>OK</td>
 								</tr>
 								<tr>
@@ -84,8 +84,8 @@
 								</tr>
 								<tr>
 									<td>Core file debugging</td>
-									<td>Not implemented</td>
-									<td>OK</td>
+									<td>OK (ELF)</td>
+									<td>OK (MachO)</td>
 								</tr>
 								<tr>
 									<td>Debugserver (remote debugging)</td>
@@ -101,6 +101,11 @@
 									<td>Expression evaluation</td>
 									<td>Works with some bugs</td>
 									<td>OK</td>
+								</tr>
+								<tr>
+									<td>JIT debugging</td>
+									<td>Symbolic debugging only</td>
+									<td>Untested</td>
 								</tr>
 								<tr>
 									<td>Objective-C 2.0:
