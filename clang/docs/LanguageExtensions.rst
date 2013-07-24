@@ -807,8 +807,7 @@ Use ``__has_feature(cxx_contextual_conversions)`` or
 ``__has_extension(cxx_contextual_conversions)`` to determine if the C++1y rules
 are used when performing an implicit conversion for an array bound in a
 *new-expression*, the operand of a *delete-expression*, an integral constant
-expression, or a condition in a ``switch`` statement. Clang does not yet
-support this feature.
+expression, or a condition in a ``switch`` statement.
 
 C++1y decltype(auto)
 ^^^^^^^^^^^^^^^^^^^^
@@ -849,7 +848,6 @@ Use ``__has_feature(cxx_relaxed_constexpr)`` or
 ``__has_extension(cxx_relaxed_constexpr)`` to determine if variable
 declarations, local variable modification, and control flow constructs
 are permitted in ``constexpr`` functions.
-Clang's implementation of this feature is incomplete.
 
 C++1y return type deduction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

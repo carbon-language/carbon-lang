@@ -974,10 +974,10 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_variadic_templates", LangOpts.CPlusPlus11)
            // C++1y features
            .Case("cxx_binary_literals", LangOpts.CPlusPlus1y)
-           //.Case("cxx_contextual_conversions", LangOpts.CPlusPlus1y)
+           .Case("cxx_contextual_conversions", LangOpts.CPlusPlus1y)
            //.Case("cxx_generalized_capture", LangOpts.CPlusPlus1y)
            //.Case("cxx_generic_lambda", LangOpts.CPlusPlus1y)
-           //.Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus1y)
+           .Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus1y)
            .Case("cxx_return_type_deduction", LangOpts.CPlusPlus1y)
            //.Case("cxx_runtime_array", LangOpts.CPlusPlus1y)
            .Case("cxx_aggregate_nsdmi", LangOpts.CPlusPlus1y)
