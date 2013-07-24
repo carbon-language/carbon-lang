@@ -51,9 +51,9 @@
               	<div class="postfooter"></div>
           	</div>
     		<div class="post">
-    			<h1 class ="postheader">Building LLDB on Linux</h1>
+    			<h1 class ="postheader">Building LLDB on Linux and FreeBSD</h1>
     			<div class="postcontent">
-    			    <p>This document describes the steps needed to compile LLDB on most Linux systems.</a></p>
+    			    <p>This document describes the steps needed to compile LLDB on most Linux systems, and FreeBSD.</a></p>
     			</div>
     			<div class="postcontent">
                 <h2>Preliminaries</h2>
@@ -71,18 +71,22 @@
                   <li><a href="http://gcc.gnu.org">GCC</a> 4.6.2 (later versions should work as well)</li>
                 </ul>
                 <p>It is recommended to use libstdc++ 4.6 (or higher) to build LLDB on Linux, but using libc++ is also known to work.</p>
+                <p>On FreeBSD the base system Clang and libc++ may be used to build LLDB,
+                or the GCC port or package.</p>
                 <p>In addition to any dependencies required by LLVM and Clang, LLDB needs a few
                 development packages that may also need to be installed depending on your
                 system.  The current list of dependencies are:</p>
     			<ul>
                     <li><a href="http://swig.org">Swig</a></li>
-                    <li><a href="http://www.thrysoee.dk/editline">libedit</a></li>
+                    <li><a href="http://www.thrysoee.dk/editline">libedit</a> (Linux only)</li>
                     <li><a href="http://www.python.org">Python</a></li>
                 </ul>
                 <p>So for example, on a Fedora system one might run:</p>
                 <code>&gt; yum install swig python-devel libedit-devel</code>
                 <p>On an Ubuntu system one might run:</p>
                 <code>&gt; sudo apt-get install build-essential subversion swig python-dev libedit-dev </code>
+                <p>On FreeBSD one might run:</p>
+                <code>&gt; pkg install swig python</code>
                 <p>If you wish to build the optional reference documentation, additional dependencies are required:</p>
                 <ul>
                   <li> Graphviz (for the 'dot' tool).
