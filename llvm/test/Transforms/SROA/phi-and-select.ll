@@ -427,3 +427,40 @@ if.end:
   ret i64 %result
 ; CHECK-NEXT: ret i64 %[[result]]
 }
+
+define float @PR16687(i64 %x, i1 %flag) {
+; CHECK-LABEL: @PR16687(
+; Check that even when we try to speculate the same phi twice (in two slices)
+; on an otherwise promotable construct, we don't get ahead of ourselves and try
+; to promote one of the slices prior to speculating it.
+
+entry:
+  %a = alloca i64, align 8
+  store i64 %x, i64* %a
+  br i1 %flag, label %then, label %else
+; CHECK-NOT: alloca
+; CHECK-NOT: store
+; CHECK: %[[lo:.*]] = trunc i64 %x to i32
+; CHECK: %[[shift:.*]] = lshr i64 %x, 32
+; CHECK: %[[hi:.*]] = trunc i64 %[[shift]] to i32
+
+then:
+  %a.f = bitcast i64* %a to float*
+  br label %end
+; CHECK: %[[lo_cast:.*]] = bitcast i32 %[[lo]] to float
+
+else:
+  %a.raw = bitcast i64* %a to i8*
+  %a.raw.4 = getelementptr i8* %a.raw, i64 4
+  %a.raw.4.f = bitcast i8* %a.raw.4 to float*
+  br label %end
+; CHECK: %[[hi_cast:.*]] = bitcast i32 %[[hi]] to float
+
+end:
+  %a.phi.f = phi float* [ %a.f, %then ], [ %a.raw.4.f, %else ]
+  %f = load float* %a.phi.f
+  ret float %f
+; CHECK: %[[phi:.*]] = phi float [ %[[lo_cast]], %then ], [ %[[hi_cast]], %else ]
+; CHECK-NOT: load
+; CHECK: ret float %[[phi]]
+}

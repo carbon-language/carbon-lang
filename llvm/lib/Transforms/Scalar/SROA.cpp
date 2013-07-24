@@ -1869,6 +1869,10 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   Use *OldUse;
   Instruction *OldPtr;
 
+  // Output members carrying state about the result of visiting and rewriting
+  // the slice of the alloca.
+  bool IsUsedByRewrittenSpeculatableInstructions;
+
   // Utility IR builder, whose name prefix is setup for each visited use, and
   // the insertion point is set to point to the user.
   IRBuilderTy IRB;
@@ -1891,7 +1895,8 @@ public:
                         DL.getTypeSizeInBits(NewAI.getAllocatedType()))
                   : 0),
         BeginOffset(), EndOffset(), IsSplittable(), IsSplit(), OldUse(),
-        OldPtr(), IRB(NewAI.getContext(), ConstantFolder()) {
+        OldPtr(), IsUsedByRewrittenSpeculatableInstructions(false),
+        IRB(NewAI.getContext(), ConstantFolder()) {
     if (VecTy) {
       assert((DL.getTypeSizeInBits(ElementTy) % 8) == 0 &&
              "Only multiple-of-8 sized vector elements are viable");
@@ -1921,6 +1926,20 @@ public:
     if (VecTy || IntTy)
       assert(CanSROA);
     return CanSROA;
+  }
+
+  /// \brief Query whether this slice is used by speculatable instructions after
+  /// rewriting.
+  ///
+  /// These instructions (PHIs and Selects currently) require the alloca slice
+  /// to run back through the rewriter. Thus, they are promotable, but not on
+  /// this iteration. This is distinct from a slice which is unpromotable for
+  /// some other reason, in which case we don't even want to perform the
+  /// speculation. This can be querried at any time and reflects whether (at
+  /// that point) a visit call has rewritten a speculatable instruction on the
+  /// current slice.
+  bool isUsedByRewrittenSpeculatableInstructions() const {
+    return IsUsedByRewrittenSpeculatableInstructions;
   }
 
 private:
@@ -2553,10 +2572,12 @@ private:
     deleteIfTriviallyDead(OldPtr);
 
     // Check whether we can speculate this PHI node, and if so remember that
-    // fact and return that this alloca remains viable for promotion to an SSA
-    // value.
+    // fact and queue it up for another iteration after the speculation
+    // occurs.
     if (isSafePHIToSpeculate(PN, &DL)) {
       Pass.SpeculatablePHIs.insert(&PN);
+      Pass.Worklist.insert(&NewAI);
+      IsUsedByRewrittenSpeculatableInstructions = true;
       return true;
     }
 
@@ -2581,10 +2602,12 @@ private:
     deleteIfTriviallyDead(OldPtr);
 
     // Check whether we can speculate this select instruction, and if so
-    // remember that fact and return that this alloca remains viable for
-    // promotion to an SSA value.
+    // remember that fact and queue it up for another iteration after the
+    // speculation occurs.
     if (isSafeSelectToSpeculate(SI, &DL)) {
       Pass.SpeculatableSelects.insert(&SI);
+      Pass.Worklist.insert(&NewAI);
+      IsUsedByRewrittenSpeculatableInstructions = true;
       return true;
     }
 
@@ -3064,13 +3087,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
       std::max<unsigned>(NumUses, MaxUsesPerAllocaPartition);
 #endif
 
-  if (Promotable && (SpeculatablePHIs.size() > SPOldSize ||
-                     SpeculatableSelects.size() > SSOldSize)) {
-    // If we have a promotable alloca except for some unspeculated loads below
-    // PHIs or Selects, iterate once. We will speculate the loads and on the
-    // next iteration rewrite them into a promotable form.
-    Worklist.insert(NewAI);
-  } else if (Promotable) {
+  if (Promotable && !Rewriter.isUsedByRewrittenSpeculatableInstructions()) {
     DEBUG(dbgs() << "  and queuing for promotion\n");
     PromotableAllocas.push_back(NewAI);
   } else if (NewAI != &AI) {
