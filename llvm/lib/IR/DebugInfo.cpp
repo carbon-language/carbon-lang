@@ -231,11 +231,6 @@ bool DIDescriptor::isGlobalVariable() const {
                      getTag() == dwarf::DW_TAG_constant);
 }
 
-/// isGlobal - Return true if the specified tag is legal for DIGlobal.
-bool DIDescriptor::isGlobal() const {
-  return isGlobalVariable();
-}
-
 /// isUnspecifiedParmeter - Return true if the specified tag is
 /// DW_TAG_unspecified_parameters.
 bool DIDescriptor::isUnspecifiedParameter() const {

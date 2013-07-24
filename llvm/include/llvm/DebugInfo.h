@@ -129,7 +129,6 @@ namespace llvm {
     bool isSubrange() const;
     bool isEnumerator() const;
     bool isType() const;
-    bool isGlobal() const;
     bool isUnspecifiedParameter() const;
     bool isTemplateTypeParameter() const;
     bool isTemplateValueParameter() const;
