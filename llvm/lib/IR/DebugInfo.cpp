@@ -437,18 +437,17 @@ bool DIObjCProperty::Verify() const {
 bool DIType::Verify() const {
   if (!isType())
     return false;
+  // FIXME: Sink this into the various subclass verifies.
   unsigned Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
       Tag != dwarf::DW_TAG_volatile_type && Tag != dwarf::DW_TAG_pointer_type &&
       Tag != dwarf::DW_TAG_ptr_to_member_type &&
       Tag != dwarf::DW_TAG_reference_type &&
       Tag != dwarf::DW_TAG_rvalue_reference_type &&
-      Tag != dwarf::DW_TAG_restrict_type &&
-      Tag != dwarf::DW_TAG_array_type &&
+      Tag != dwarf::DW_TAG_restrict_type && Tag != dwarf::DW_TAG_array_type &&
       Tag != dwarf::DW_TAG_enumeration_type &&
       Tag != dwarf::DW_TAG_subroutine_type &&
-      Tag != dwarf::DW_TAG_inheritance &&
-      Tag != dwarf::DW_TAG_friend &&
+      Tag != dwarf::DW_TAG_inheritance && Tag != dwarf::DW_TAG_friend &&
       getFilename().empty())
     return false;
   // DIType is abstract, it should be a BasicType, a DerivedType or
