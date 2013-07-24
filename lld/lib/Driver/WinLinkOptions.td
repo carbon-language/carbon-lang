@@ -60,5 +60,9 @@ def tsaware : Flag<["-", "/"], "tsaware">,
 def no_tsaware : Flag<["-", "/"], "tsaware:no">,
     HelpText<"Create non-Terminal Server aware executable">;
 
+def incl : Separate<["-", "/"], "include">,
+    HelpText<"Force symbol to be added to symbol table as undefined one">;
+def incl_c : Joined<["-", "/"], "include:">, Alias<incl>;
+
 def help : Flag<["-", "/"], "help">;
 def help_q : Flag<["-", "/"], "?">, Alias<help>;

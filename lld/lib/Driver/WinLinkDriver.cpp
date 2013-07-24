@@ -351,6 +351,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_no_tsaware))
     info.setTerminalServerAware(false);
 
+  // Handle -include
+  if (llvm::opt::Arg *sym = parsedArgs->getLastArg(OPT_incl))
+    info.addInitialUndefinedSymbol(sym->getValue());
+
   // Handle -out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());

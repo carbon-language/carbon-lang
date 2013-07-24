@@ -46,6 +46,8 @@ public:
 
   virtual void addPasses(PassManager &pm) const;
 
+  virtual void addImplicitFiles(InputFiles &) const;
+
   void appendInputSearchPath(StringRef dirPath) {
     _inputSearchPaths.push_back(dirPath);
   }
@@ -92,7 +94,7 @@ public:
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
 
   StringRef allocateString(const StringRef &ref) {
-    char *x = _extraStrings.Allocate<char>(ref.size() + 1);
+    char *x = _alloc.Allocate<char>(ref.size() + 1);
     memcpy(x, ref.data(), ref.size());
     x[ref.size()] = '\0';
     return x;
@@ -117,7 +119,7 @@ private:
   std::vector<StringRef> _inputSearchPaths;
   mutable std::unique_ptr<Reader> _reader;
   mutable std::unique_ptr<Writer> _writer;
-  llvm::BumpPtrAllocator _extraStrings;
+  mutable llvm::BumpPtrAllocator _alloc;
 };
 
 } // end namespace lld

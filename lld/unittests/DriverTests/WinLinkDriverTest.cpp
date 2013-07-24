@@ -54,6 +54,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_FALSE(_info.getLargeAddressAware());
   EXPECT_TRUE(_info.getBaseRelocationEnabled());
   EXPECT_TRUE(_info.isTerminalServerAware());
+  EXPECT_TRUE(_info.initialUndefinedSymbols().empty());
 }
 
 TEST_F(WinLinkParserTest, WindowsStyleOption) {
@@ -170,6 +171,15 @@ TEST_F(WinLinkParserTest, TerminalServerAware) {
 TEST_F(WinLinkParserTest, NoTerminalServerAware) {
   EXPECT_FALSE(parse("link.exe", "-tsaware:no", "a.out", nullptr));
   EXPECT_FALSE(_info.isTerminalServerAware());
+}
+
+TEST_F(WinLinkParserTest, Include) {
+  EXPECT_FALSE(parse("link.exe", "-include", "foo", "a.out", nullptr));
+  auto symbols = _info.initialUndefinedSymbols();
+  EXPECT_FALSE(symbols.empty());
+  EXPECT_EQ("foo", symbols[0]);
+  symbols.pop_front();
+  EXPECT_TRUE(symbols.empty());
 }
 
 TEST_F(WinLinkParserTest, NoInputFiles) {
