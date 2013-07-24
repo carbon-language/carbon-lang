@@ -435,17 +435,31 @@ struct ELFNote
     }
 };
 
+// Parse a FreeBSD NT_PRSTATUS note - see FreeBSD sys/procfs.h for details.
 static void
 ParseFreeBSDPrStatus(ThreadData *thread_data, DataExtractor &data,
                      ArchSpec &arch)
 {
-    lldb::offset_t offset;
-    size_t len;
+    lldb::offset_t offset = 0;
+    bool have_padding = (arch.GetMachine() == llvm::Triple::x86_64);
+    int pr_version = data.GetU32(&offset);
 
-    offset = 36;
-    thread_data->signo = data.GetU32(&offset);
-    offset = 48;
-    len = data.GetByteSize() - offset;
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    if (log)
+    {
+        if (pr_version > 1)
+            log->Printf("FreeBSD PRSTATUS unexpected version %d", pr_version);
+    }
+
+    if (have_padding)
+        offset += 4;
+    offset += 28;       // pr_statussz, pr_gregsetsz, pr_fpregsetsz, pr_osreldate
+    thread_data->signo = data.GetU32(&offset); // pr_cursig
+    offset += 4;        // pr_pid
+    if (have_padding)
+        offset += 4;
+    
+    size_t len = data.GetByteSize() - offset;
     thread_data->gpregset = DataExtractor(data, offset, len);
 }
 
