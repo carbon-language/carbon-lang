@@ -1,5 +1,5 @@
-; RUN: llc -O2 -disable-debug-info-verifier < %s | FileCheck %s
-; RUN: llc -O2 -regalloc=basic -disable-debug-info-verifier < %s | FileCheck %s
+; RUN: llc -O2 < %s | FileCheck %s
+; RUN: llc -O2 -regalloc=basic < %s | FileCheck %s
 ; Test to check that unused argument 'this' is not undefined in debug info.
 
 target triple = "x86_64-apple-darwin10.2"
@@ -23,28 +23,28 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786689, metadata !1, metadata !"this", metadata !3, i32 11, metadata !12, i32 0, null} ; [ DW_TAG_arg_variable ]
 !1 = metadata !{i32 786478, metadata !3, metadata !2, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEi", i32 11, metadata !9, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 (%struct.foo*, i32)* @_ZN3foo3bazEi, null, null, null, i32 11} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786451, metadata !3, metadata !"foo", metadata !3, i32 3, i64 32, i64 32, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_structure_type ]
+!2 = metadata !{i32 786451, metadata !31, metadata !3, metadata !"foo", i32 3, i64 32, i64 32, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_structure_type ]
 !3 = metadata !{i32 786473, metadata !31} ; [ DW_TAG_file_type ]
 !4 = metadata !{i32 786449, i32 0, i32 4, metadata !"foo.cp", metadata !"/tmp/", metadata !"4.2.1 LLVM build", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !5 = metadata !{metadata !6, metadata !1, metadata !8}
-!6 = metadata !{i32 786445, metadata !2, metadata !"y", metadata !3, i32 8, i64 32, i64 32, i64 0, i32 0, metadata !7} ; [ DW_TAG_member ]
-!7 = metadata !{i32 786468, metadata !3, metadata !"int", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!6 = metadata !{i32 786445, metadata !31, metadata !2, metadata !"y", i32 8, i64 32, i64 32, i64 0, i32 0, metadata !7} ; [ DW_TAG_member ]
+!7 = metadata !{i32 786468, metadata !31, metadata !3, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !8 = metadata !{i32 786478, metadata !3, metadata !2, metadata !"baz", metadata !"baz", metadata !"_ZN3foo3bazEi", i32 15, metadata !9, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 (%struct.foo*, i32)* @_ZN3foo3bazEi, null, null, null, i32 15} ; [ DW_TAG_subprogram ]
-!9 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !10, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!9 = metadata !{i32 786453, metadata !31, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !10, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !10 = metadata !{metadata !7, metadata !11, metadata !7}
-!11 = metadata !{i32 786447, metadata !3, metadata !"", metadata !3, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !2} ; [ DW_TAG_pointer_type ]
-!12 = metadata !{i32 786470, metadata !3, metadata !"", metadata !3, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !13} ; [ DW_TAG_const_type ]
-!13 = metadata !{i32 786447, metadata !3, metadata !"", metadata !3, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !2} ; [ DW_TAG_pointer_type ]
+!11 = metadata !{i32 786447, metadata !31, metadata !3, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 64, metadata !2} ; [ DW_TAG_pointer_type ]
+!12 = metadata !{i32 786470, metadata !31, metadata !3, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 64, metadata !13} ; [ DW_TAG_const_type ]
+!13 = metadata !{i32 786447, metadata !31, metadata !3, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !2} ; [ DW_TAG_pointer_type ]
 !14 = metadata !{i32 786689, metadata !1, metadata !"x", metadata !3, i32 11, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
 !15 = metadata !{i32 786689, metadata !8, metadata !"this", metadata !3, i32 15, metadata !12, i32 0, null} ; [ DW_TAG_arg_variable ]
 !16 = metadata !{i32 786689, metadata !8, metadata !"x", metadata !3, i32 15, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
 !17 = metadata !{i32 786689, metadata !18, metadata !"argc", metadata !3, i32 19, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
 !18 = metadata !{i32 786478, metadata !3, metadata !3, metadata !"main", metadata !"main", metadata !"main", i32 19, metadata !19, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, null, null, null, null, i32 19} ; [ DW_TAG_subprogram ]
-!19 = metadata !{i32 786453, metadata !3, metadata !"", metadata !3, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !20, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!19 = metadata !{i32 786453, metadata !31, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !20, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !20 = metadata !{metadata !7, metadata !7, metadata !21}
-!21 = metadata !{i32 786447, metadata !3, metadata !"", metadata !3, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !22} ; [ DW_TAG_pointer_type ]
-!22 = metadata !{i32 786447, metadata !3, metadata !"", metadata !3, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !23} ; [ DW_TAG_pointer_type ]
-!23 = metadata !{i32 786468, metadata !3, metadata !"char", metadata !3, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
+!21 = metadata !{i32 786447, metadata !31, metadata !3, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !22} ; [ DW_TAG_pointer_type ]
+!22 = metadata !{i32 786447, metadata !31, metadata !3, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !23} ; [ DW_TAG_pointer_type ]
+!23 = metadata !{i32 786468, metadata !31, metadata !3, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !24 = metadata !{i32 786689, metadata !18, metadata !"argv", metadata !3, i32 19, metadata !21, i32 0, null} ; [ DW_TAG_arg_variable ]
 !25 = metadata !{i32 786688, metadata !26, metadata !"a", metadata !3, i32 20, metadata !2, i32 0, null} ; [ DW_TAG_auto_variable ]
 !26 = metadata !{i32 786443, metadata !27, i32 19, i32 0} ; [ DW_TAG_lexical_block ]
