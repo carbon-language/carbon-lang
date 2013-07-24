@@ -456,6 +456,8 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
                                            uint32_t Value,
                                            uint32_t Type,
                                            int32_t Addend) {
+  uint32_t *Placeholder = reinterpret_cast<uint32_t*>(Section.ObjAddress +
+                                                      Offset);
   uint32_t* TargetPtr = (uint32_t*)(Section.Address + Offset);
   Value += Addend;
 
@@ -473,19 +475,30 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
     llvm_unreachable("Not implemented relocation type!");
     break;
   case ELF::R_MIPS_32:
-    *TargetPtr = Value + (*TargetPtr);
+    *TargetPtr = Value + (*Placeholder);
     break;
   case ELF::R_MIPS_26:
-    *TargetPtr = ((*TargetPtr) & 0xfc000000) | (( Value & 0x0fffffff) >> 2);
+    *TargetPtr = ((*Placeholder) & 0xfc000000) | (( Value & 0x0fffffff) >> 2);
     break;
   case ELF::R_MIPS_HI16:
     // Get the higher 16-bits. Also add 1 if bit 15 is 1.
-    Value += ((*TargetPtr) & 0x0000ffff) << 16;
+    Value += ((*Placeholder) & 0x0000ffff) << 16;
+    *TargetPtr = ((*Placeholder) & 0xffff0000) |
+                 (((Value + 0x8000) >> 16) & 0xffff);
+    break;
+  case ELF::R_MIPS_LO16:
+    Value += ((*Placeholder) & 0x0000ffff);
+    *TargetPtr = ((*Placeholder) & 0xffff0000) | (Value & 0xffff);
+    break;
+  case ELF::R_MIPS_UNUSED1:
+    // Similar to ELF::R_ARM_PRIVATE_0, R_MIPS_UNUSED1 and R_MIPS_UNUSED2
+    // are used for internal JIT purpose. These relocations are similar to
+    // R_MIPS_HI16 and R_MIPS_LO16, but they do not take any addend into
+    // account.
     *TargetPtr = ((*TargetPtr) & 0xffff0000) |
                  (((Value + 0x8000) >> 16) & 0xffff);
     break;
-   case ELF::R_MIPS_LO16:
-    Value += ((*TargetPtr) & 0x0000ffff);
+  case ELF::R_MIPS_UNUSED2:
     *TargetPtr = ((*TargetPtr) & 0xffff0000) | (Value & 0xffff);
     break;
    }
@@ -954,10 +967,10 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
       // Creating Hi and Lo relocations for the filled stub instructions.
       RelocationEntry REHi(SectionID,
                            StubTargetAddr - Section.Address,
-                           ELF::R_MIPS_HI16, Value.Addend);
+                           ELF::R_MIPS_UNUSED1, Value.Addend);
       RelocationEntry RELo(SectionID,
                            StubTargetAddr - Section.Address + 4,
-                           ELF::R_MIPS_LO16, Value.Addend);
+                           ELF::R_MIPS_UNUSED2, Value.Addend);
 
       if (Value.SymbolName) {
         addRelocationForSymbol(REHi, Value.SymbolName);

@@ -868,6 +868,8 @@ enum {
   R_MIPS_PC16              = 10,
   R_MIPS_CALL16            = 11,
   R_MIPS_GPREL32           = 12,
+  R_MIPS_UNUSED1           = 13,
+  R_MIPS_UNUSED2           = 14,
   R_MIPS_SHIFT5            = 16,
   R_MIPS_SHIFT6            = 17,
   R_MIPS_64                = 18,
