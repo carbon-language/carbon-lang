@@ -269,6 +269,9 @@ ProcessPOSIX::DoResume()
     SetPrivateState(eStateRunning);
 
     bool did_resume = false;
+
+    Mutex::Locker lock(m_thread_list.GetMutex());
+
     uint32_t thread_count = m_thread_list.GetSize(false);
     for (uint32_t i = 0; i < thread_count; ++i)
     {
@@ -327,6 +330,8 @@ ProcessPOSIX::DoDetach(bool keep_stopped)
         return error;
     }
 
+    Mutex::Locker lock(m_thread_list.GetMutex());
+
     uint32_t thread_count = m_thread_list.GetSize(false);
     for (uint32_t i = 0; i < thread_count; ++i)
     {
@@ -379,6 +384,8 @@ void
 ProcessPOSIX::SendMessage(const ProcessMessage &message)
 {
     Mutex::Locker lock(m_message_mutex);
+
+    Mutex::Locker thread_lock(m_thread_list.GetMutex());
 
     POSIXThread *thread = static_cast<POSIXThread*>(
         m_thread_list.FindThreadByID(message.GetTID(), false).get());
@@ -506,6 +513,8 @@ ProcessPOSIX::RefreshStateAfterStop()
             POSIXThread *thread = static_cast<POSIXThread*>(thread_sp.get());
             thread->SetName(Host::GetThreadName(GetID(), child_tid).c_str());
 
+            Mutex::Locker lock(m_thread_list.GetMutex());
+
             m_thread_list.AddThread(thread_sp);
         }
 
@@ -519,6 +528,9 @@ ProcessPOSIX::RefreshStateAfterStop()
             // FIXME: We should tell the user about this, but the limbo message is probably better for that.
             if (log)
                 log->Printf ("ProcessPOSIX::%s() removing thread, tid = %" PRIi64, __FUNCTION__, tid);
+
+            Mutex::Locker lock(m_thread_list.GetMutex());
+
             ThreadSP thread_sp = m_thread_list.RemoveThreadByID(tid, false);
             thread_sp.reset();
             m_seen_initial_stop.erase(tid);
@@ -669,6 +681,7 @@ ProcessPOSIX::EnableWatchpoint(Watchpoint *wp, bool notify)
 
         // Try to find a vacant watchpoint slot in the inferiors' main thread
         uint32_t wp_hw_index = LLDB_INVALID_INDEX32;
+        Mutex::Locker lock(m_thread_list.GetMutex());
         POSIXThread *thread = static_cast<POSIXThread*>(
                                m_thread_list.GetThreadAtIndex(0, false).get());
 
@@ -738,6 +751,7 @@ ProcessPOSIX::DisableWatchpoint(Watchpoint *wp, bool notify)
         if (wp->IsHardware())
         {
             bool wp_disabled = true;
+            Mutex::Locker lock(m_thread_list.GetMutex());
             uint32_t thread_count = m_thread_list.GetSize(false);
             for (uint32_t i = 0; i < thread_count; ++i)
             {
@@ -767,6 +781,7 @@ Error
 ProcessPOSIX::GetWatchpointSupportInfo(uint32_t &num)
 {
     Error error;
+    Mutex::Locker lock(m_thread_list.GetMutex());
     POSIXThread *thread = static_cast<POSIXThread*>(
                           m_thread_list.GetThreadAtIndex(0, false).get());
     if (thread)
@@ -789,6 +804,7 @@ ProcessPOSIX::GetWatchpointSupportInfo(uint32_t &num, bool &after)
 uint32_t
 ProcessPOSIX::UpdateThreadListIfNeeded()
 {
+    Mutex::Locker lock(m_thread_list.GetMutex());
     // Do not allow recursive updates.
     return m_thread_list.GetSize(false);
 }
@@ -881,6 +897,7 @@ bool
 ProcessPOSIX::IsAThreadRunning()
 {
     bool is_running = false;
+    Mutex::Locker lock(m_thread_list.GetMutex());
     uint32_t thread_count = m_thread_list.GetSize(false);
     for (uint32_t i = 0; i < thread_count; ++i)
     {
