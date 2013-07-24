@@ -207,9 +207,7 @@ namespace llvm {
   protected:
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
-    // This ctor is used when the Tag has already been validated by a derived
-    // ctor.
-    DIType(const MDNode *N, bool, bool) : DIScope(N) {}
+
   public:
     /// Verify - Verify that a type descriptor is well formed.
     bool Verify() const;
@@ -289,12 +287,10 @@ namespace llvm {
   class DIDerivedType : public DIType {
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
-  protected:
-    explicit DIDerivedType(const MDNode *N, bool, bool)
-      : DIType(N, true, true) {}
+
   public:
     explicit DIDerivedType(const MDNode *N = 0)
-      : DIType(N, true, true) {}
+      : DIType(N) {}
 
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
 
@@ -331,7 +327,7 @@ namespace llvm {
     void printInternal(raw_ostream &OS) const;
   public:
     explicit DICompositeType(const MDNode *N = 0)
-      : DIDerivedType(N, true, true) {
+      : DIDerivedType(N) {
       if (N && !isCompositeType())
         DbgNode = 0;
     }
