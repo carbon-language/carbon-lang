@@ -17,7 +17,8 @@ int
 call_me (int some_value)
 {
   int ret_val = 0;
-  for (int i = 0; i < some_value; i++)
+  int i;
+  for (i = 0; i < some_value; i++)
     {
       int result = 0;
       if (i%2 == 0)
@@ -37,7 +38,8 @@ int
 call_me_nosig (int some_value)
 {
   int ret_val = 0;
-  for (int i = 0; i < some_value; i++)
+  int i;
+  for (i = 0; i < some_value; i++)
     weird_value += i % 4;
 
   nosig_no += some_value;
