@@ -44,19 +44,21 @@ class LongjmpTestCase(TestBase):
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
             substrs = ['stopped', 'stop reason = breakpoint'])
 
+    def check_status(self):
+        # Note: Depending on the generated mapping of DWARF to assembly,
+        # the process may have stopped or exited.
+        self.expect("process status", PROCESS_STOPPED,
+            patterns = ['Process .*'])
+
     def step_out(self):
         self.start_test("do_jump")
-
         self.runCmd("thread step-out", RUN_SUCCEEDED)
-        self.expect("process status", PROCESS_STOPPED,
-            patterns = ['Process .* exited with status = 0'])
+        self.check_status()
 
     def step_over(self):
         self.start_test("do_jump")
-
         self.runCmd("thread step-over", RUN_SUCCEEDED)
-        self.expect("process status", PROCESS_STOPPED,
-            patterns = ['Process .* exited with status = 0'])
+        self.check_status()
 
     def step_back_out(self):
         self.start_test("main")
@@ -64,8 +66,7 @@ class LongjmpTestCase(TestBase):
         self.runCmd("thread step-over", RUN_SUCCEEDED)
         self.runCmd("thread step-in", RUN_SUCCEEDED)
         self.runCmd("thread step-out", RUN_SUCCEEDED)
-        self.expect("process status", PROCESS_STOPPED,
-            patterns = ['Process .* exited with status = 0'])
+        self.check_status()
 
 if __name__ == '__main__':
     import atexit
