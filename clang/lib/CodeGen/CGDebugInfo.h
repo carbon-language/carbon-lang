@@ -407,9 +407,11 @@ public:
 /// an artificial debug location that has a valid scope, but no line
 /// information. This is useful when emitting compiler-generated
 /// helper functions that have no source location associated with
-/// them.
+/// them. The DWARF specification allows the compiler to use the
+/// special line number 0 to indicate code that can not be attributed
+/// to any source location.
 ///
-/// This is necessary because pasing an empty SourceLocation to
+/// This is necessary because passing an empty SourceLocation to
 /// CGDebugInfo::setLocation() will result in the last valid location
 /// being reused.
 class ArtificialLocation {
@@ -418,7 +420,12 @@ class ArtificialLocation {
   CGBuilderTy &Builder;
 public:
   ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B);
-  /// ~BuildinLocation - Autorestore everything back to normal.
+
+  /// Set the current location to line 0, but within the current scope
+  /// (= the top of the LexicalScopeStack).
+  void Emit();
+
+  /// ~ArtificialLocation - Autorestore everything back to normal.
   ~ArtificialLocation();
 };
 

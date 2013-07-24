@@ -15,11 +15,14 @@
 // Test that we do emit scope info for the helper functions.
 // CHECK: define {{.*}} @__copy_helper_block_{{.*}}(i8*, i8*)
 // CHECK-NOT: ret
+// CHECK: call {{.*}}, !dbg ![[DBG_LINE:[0-9]+]]
+// CHECK-NOT: ret
 // CHECK: load {{.*}}, !dbg ![[COPY_LINE:[0-9]+]]
 // CHECK: define {{.*}} @__destroy_helper_block_{{.*}}(i8*)
 // CHECK-NOT: ret
 // CHECK: load {{.*}}, !dbg ![[DESTROY_LINE:[0-9]+]]
 
+// CHECK-DAG: [[DBG_LINE]] = metadata !{i32 0, i32 0, metadata ![[COPY_SP:[0-9]+]], null}
 // CHECK-DAG: [[COPY_LINE]] = metadata !{i32 0, i32 0, metadata ![[COPY_SP:[0-9]+]], null}
 // CHECK-DAG: [[COPY_SP]] = {{.*}}[ DW_TAG_subprogram ]{{.*}}[__copy_helper_block_]
 // CHECK-DAG: [[DESTROY_LINE]] = metadata !{i32 0, i32 0, metadata ![[DESTROY_SP:[0-9]+]], null}
