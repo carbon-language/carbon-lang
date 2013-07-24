@@ -826,9 +826,9 @@ for default initializers in aggregate members is enabled.
 C++1y generalized lambda capture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Use ``__has_feature(cxx_generalized_capture)`` or
-``__has_extension(cxx_generalized_capture`` to determine if support for
-generalized lambda captures is enabled
+Use ``__has_feature(cxx_init_capture)`` or
+``__has_extension(cxx_init_capture)`` to determine if support for
+lambda captures with explicit initializers is enabled
 (for instance, ``[n(0)] { return ++n; }``).
 Clang does not yet support this feature.
 
