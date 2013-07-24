@@ -2162,19 +2162,19 @@ def : InstAlias<"outl\t$port", (OUT32ir i8imm:$port), 0>;
 def : InstAlias<"sldt $mem", (SLDT16m i16mem:$mem)>;
 
 // shld/shrd op,op -> shld op, op, CL
-def : InstAlias<"shldw $r2, $r1", (SHLD16rrCL GR16:$r1, GR16:$r2)>;
-def : InstAlias<"shldl $r2, $r1", (SHLD32rrCL GR32:$r1, GR32:$r2)>;
-def : InstAlias<"shldq $r2, $r1", (SHLD64rrCL GR64:$r1, GR64:$r2)>;
-def : InstAlias<"shrdw $r2, $r1", (SHRD16rrCL GR16:$r1, GR16:$r2)>;
-def : InstAlias<"shrdl $r2, $r1", (SHRD32rrCL GR32:$r1, GR32:$r2)>;
-def : InstAlias<"shrdq $r2, $r1", (SHRD64rrCL GR64:$r1, GR64:$r2)>;
+def : InstAlias<"shld{w}\t{$r2, $r1|$r1, $r2}", (SHLD16rrCL GR16:$r1, GR16:$r2), 0>;
+def : InstAlias<"shld{l}\t{$r2, $r1|$r1, $r2}", (SHLD32rrCL GR32:$r1, GR32:$r2), 0>;
+def : InstAlias<"shld{q}\t{$r2, $r1|$r1, $r2}", (SHLD64rrCL GR64:$r1, GR64:$r2), 0>;
+def : InstAlias<"shrd{w}\t{$r2, $r1|$r1, $r2}", (SHRD16rrCL GR16:$r1, GR16:$r2), 0>;
+def : InstAlias<"shrd{l}\t{$r2, $r1|$r1, $r2}", (SHRD32rrCL GR32:$r1, GR32:$r2), 0>;
+def : InstAlias<"shrd{q}\t{$r2, $r1|$r1, $r2}", (SHRD64rrCL GR64:$r1, GR64:$r2), 0>;
 
-def : InstAlias<"shldw $reg, $mem", (SHLD16mrCL i16mem:$mem, GR16:$reg)>;
-def : InstAlias<"shldl $reg, $mem", (SHLD32mrCL i32mem:$mem, GR32:$reg)>;
-def : InstAlias<"shldq $reg, $mem", (SHLD64mrCL i64mem:$mem, GR64:$reg)>;
-def : InstAlias<"shrdw $reg, $mem", (SHRD16mrCL i16mem:$mem, GR16:$reg)>;
-def : InstAlias<"shrdl $reg, $mem", (SHRD32mrCL i32mem:$mem, GR32:$reg)>;
-def : InstAlias<"shrdq $reg, $mem", (SHRD64mrCL i64mem:$mem, GR64:$reg)>;
+def : InstAlias<"shld{w}\t{$reg, $mem|$mem, $reg}", (SHLD16mrCL i16mem:$mem, GR16:$reg), 0>;
+def : InstAlias<"shld{l}\t{$reg, $mem|$mem, $reg}", (SHLD32mrCL i32mem:$mem, GR32:$reg), 0>;
+def : InstAlias<"shld{q}\t{$reg, $mem|$mem, $reg}", (SHLD64mrCL i64mem:$mem, GR64:$reg), 0>;
+def : InstAlias<"shrd{w}\t{$reg, $mem|$mem, $reg}", (SHRD16mrCL i16mem:$mem, GR16:$reg), 0>;
+def : InstAlias<"shrd{l}\t{$reg, $mem|$mem, $reg}", (SHRD32mrCL i32mem:$mem, GR32:$reg), 0>;
+def : InstAlias<"shrd{q}\t{$reg, $mem|$mem, $reg}", (SHRD64mrCL i64mem:$mem, GR64:$reg), 0>;
 
 /*  FIXME: This is disabled because the asm matcher is currently incapable of
  *  matching a fixed immediate like $1.
