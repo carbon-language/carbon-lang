@@ -680,6 +680,13 @@ protected:
         else if (m_format_options.GetFormatValue().GetCurrentValue() != eFormatCString)
         {
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
+            if (data_sp->GetBytes() == NULL)
+            {
+                result.AppendErrorWithFormat ("can't allocate 0x%zx bytes for the memory read buffer, specify a smaller size to read", total_byte_size);
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
+
             Address address(addr, NULL);
             bytes_read = target->ReadMemory(address, false, data_sp->GetBytes (), data_sp->GetByteSize(), error);
             if (bytes_read == 0)
@@ -710,6 +717,12 @@ protected:
             if (!m_format_options.GetCountValue().OptionWasSet())
                 item_count = 1;
             data_sp.reset (new DataBufferHeap ((item_byte_size+1) * item_count, '\0')); // account for NULLs as necessary
+            if (data_sp->GetBytes() == NULL)
+            {
+                result.AppendErrorWithFormat ("can't allocate 0x%" PRIx64 " bytes for the memory read buffer, specify a smaller size to read", (uint64_t)((item_byte_size+1) * item_count));
+                result.SetStatus(eReturnStatusFailed);
+                return false;
+            }
             uint8_t *data_ptr = data_sp->GetBytes();
             auto data_addr = addr;
             auto count = item_count;
