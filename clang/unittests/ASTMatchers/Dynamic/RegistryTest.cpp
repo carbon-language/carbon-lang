@@ -222,6 +222,37 @@ TEST_F(RegistryTest, CXXCtorInitializer) {
   EXPECT_FALSE(matches("struct Foo { Foo() : bar(1) {} int bar; };", CtorDecl));
 }
 
+TEST_F(RegistryTest, Adaptative) {
+  Matcher<Decl> D = constructMatcher(
+      "recordDecl",
+      constructMatcher(
+          "has",
+          constructMatcher("recordDecl",
+                           constructMatcher("hasName", std::string("X")))))
+      .getTypedMatcher<Decl>();
+  EXPECT_TRUE(matches("class X {};", D));
+  EXPECT_TRUE(matches("class Y { class X {}; };", D));
+  EXPECT_FALSE(matches("class Y { class Z {}; };", D));
+
+  Matcher<Stmt> S = constructMatcher(
+      "forStmt",
+      constructMatcher(
+          "hasDescendant",
+          constructMatcher("varDecl",
+                           constructMatcher("hasName", std::string("X")))))
+      .getTypedMatcher<Stmt>();
+  EXPECT_TRUE(matches("void foo() { for(int X;;); }", S));
+  EXPECT_TRUE(matches("void foo() { for(;;) { int X; } }", S));
+  EXPECT_FALSE(matches("void foo() { for(;;); }", S));
+  EXPECT_FALSE(matches("void foo() { if (int X = 0){} }", S));
+
+  S = constructMatcher(
+      "compoundStmt", constructMatcher("hasParent", constructMatcher("ifStmt")))
+      .getTypedMatcher<Stmt>();
+  EXPECT_TRUE(matches("void foo() { if (true) { int x = 42; } }", S));
+  EXPECT_FALSE(matches("void foo() { if (true) return; }", S));
+}
+
 TEST_F(RegistryTest, Errors) {
   // Incorrect argument count.
   OwningPtr<Diagnostics> Error(new Diagnostics());

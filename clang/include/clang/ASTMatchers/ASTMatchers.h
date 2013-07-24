@@ -1708,11 +1708,13 @@ findAll(const internal::Matcher<T> &Matcher) {
 ///
 /// Usable as: Any Matcher
 template <typename ParentT>
-internal::ArgumentAdaptingMatcher<internal::HasParentMatcher, ParentT>
+internal::ArgumentAdaptingMatcher<internal::HasParentMatcher, ParentT,
+                                  internal::TypeList<Decl, Stmt>,
+                                  internal::TypeList<Decl, Stmt> >
 hasParent(const internal::Matcher<ParentT> &ParentMatcher) {
   return internal::ArgumentAdaptingMatcher<
-    internal::HasParentMatcher,
-    ParentT>(ParentMatcher);
+      internal::HasParentMatcher, ParentT, internal::TypeList<Decl, Stmt>,
+      internal::TypeList<Decl, Stmt> >(ParentMatcher);
 }
 
 /// \brief Matches AST nodes that have an ancestor that matches the provided
@@ -1727,11 +1729,13 @@ hasParent(const internal::Matcher<ParentT> &ParentMatcher) {
 ///
 /// Usable as: Any Matcher
 template <typename AncestorT>
-internal::ArgumentAdaptingMatcher<internal::HasAncestorMatcher, AncestorT>
+internal::ArgumentAdaptingMatcher<internal::HasAncestorMatcher, AncestorT,
+                                  internal::TypeList<Decl, Stmt>,
+                                  internal::TypeList<Decl, Stmt> >
 hasAncestor(const internal::Matcher<AncestorT> &AncestorMatcher) {
   return internal::ArgumentAdaptingMatcher<
-    internal::HasAncestorMatcher,
-    AncestorT>(AncestorMatcher);
+      internal::HasAncestorMatcher, AncestorT, internal::TypeList<Decl, Stmt>,
+      internal::TypeList<Decl, Stmt> >(AncestorMatcher);
 }
 
 /// \brief Matches if the provided matcher does not match.

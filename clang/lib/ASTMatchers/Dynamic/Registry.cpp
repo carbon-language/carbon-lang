@@ -109,6 +109,64 @@ class OverloadedMatcherCreateCallback : public MatcherCreateCallback {
     registerMatcher(#name, new OverloadedMatcherCreateCallback(Callbacks));    \
   } while (0)
 
+/// \brief Class that allows us to bind to the constructor of an
+///   \c ArgumentAdaptingMatcher.
+/// This class, together with \c collectAdaptativeMatcherOverloads below, help
+/// us detect the Adapter class and create overload functions for the
+/// appropriate To/From types.
+/// We instantiate the \c createAdatingMatcher function for every type in
+/// \c FromTypes. \c ToTypes is handled on the marshaller side by using the
+/// \c ReturnTypes typedef in \c ArgumentAdaptingMatcher.
+template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
+          typename FromTypes, typename ToTypes>
+struct AdaptativeMatcherWrapper {
+  template <typename FromArg>
+  static ast_matchers::internal::ArgumentAdaptingMatcher<
+      ArgumentAdapterT, FromArg, FromTypes, ToTypes>
+  createAdatingMatcher(
+      const ast_matchers::internal::Matcher<FromArg> &InnerMatcher) {
+    return ast_matchers::internal::ArgumentAdaptingMatcher<
+        ArgumentAdapterT, FromArg, FromTypes, ToTypes>(InnerMatcher);
+  }
+
+  static void collectOverloads(StringRef Name,
+                               std::vector<MatcherCreateCallback *> &Out,
+                               ast_matchers::internal::EmptyTypeList) {}
+
+  template <typename FromTypeList>
+  static void collectOverloads(StringRef Name,
+                               std::vector<MatcherCreateCallback *> &Out,
+                               FromTypeList TypeList) {
+    Out.push_back(internal::makeMatcherAutoMarshall(
+        &createAdatingMatcher<typename FromTypeList::head>, Name));
+    collectOverloads(Name, Out, typename FromTypeList::tail());
+  }
+
+  static void collectOverloads(StringRef Name,
+                               std::vector<MatcherCreateCallback *> &Out) {
+    collectOverloads(Name, Out, FromTypes());
+  }
+};
+
+template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
+          typename DummyArg, typename FromTypes, typename ToTypes>
+void collectAdaptativeMatcherOverloads(
+    StringRef Name,
+    ast_matchers::internal::ArgumentAdaptingMatcher<ArgumentAdapterT, DummyArg,
+                                                    FromTypes, ToTypes>(
+        *func)(const ast_matchers::internal::Matcher<DummyArg> &),
+    std::vector<MatcherCreateCallback *> &Out) {
+  AdaptativeMatcherWrapper<ArgumentAdapterT, FromTypes,
+                           ToTypes>::collectOverloads(Name, Out);
+}
+
+#define REGISTER_ADAPTATIVE(name)                                              \
+  do {                                                                         \
+    std::vector<MatcherCreateCallback *> Overloads;                            \
+    collectAdaptativeMatcherOverloads(#name, &name<Decl>, Overloads);          \
+    registerMatcher(#name, new OverloadedMatcherCreateCallback(Overloads));    \
+  } while (0)
+
 /// \brief Generate a registry map with all the known matchers.
 RegistryMaps::RegistryMaps() {
   // TODO: Here is the list of the missing matchers, grouped by reason.
@@ -122,14 +180,6 @@ RegistryMaps::RegistryMaps() {
   // anyOf
   // allOf
   // findAll
-  //
-  // Adaptative matcher (similar to polymorphic matcher):
-  // has
-  // forEach
-  // forEachDescendant
-  // hasDescendant
-  // hasParent
-  // hasAncestor
   //
   // Other:
   // loc
@@ -145,6 +195,13 @@ RegistryMaps::RegistryMaps() {
   REGISTER_OVERLOADED_2(pointsTo);
   REGISTER_OVERLOADED_2(references);
   REGISTER_OVERLOADED_2(thisPointerType);
+
+  REGISTER_ADAPTATIVE(forEach);
+  REGISTER_ADAPTATIVE(forEachDescendant);
+  REGISTER_ADAPTATIVE(has);
+  REGISTER_ADAPTATIVE(hasAncestor);
+  REGISTER_ADAPTATIVE(hasDescendant);
+  REGISTER_ADAPTATIVE(hasParent);
 
   REGISTER_MATCHER(accessSpecDecl);
   REGISTER_MATCHER(alignOfExpr);

@@ -732,35 +732,6 @@ protected:
                                  AncestorMatchMode MatchMode) = 0;
 };
 
-/// \brief Converts a \c Matcher<T> to a matcher of desired type \c To by
-/// "adapting" a \c To into a \c T.
-///
-/// The \c ArgumentAdapterT argument specifies how the adaptation is done.
-///
-/// For example:
-///   \c ArgumentAdaptingMatcher<HasMatcher, T>(InnerMatcher);
-/// Given that \c InnerMatcher is of type \c Matcher<T>, this returns a matcher
-/// that is convertible into any matcher of type \c To by constructing
-/// \c HasMatcher<To, T>(InnerMatcher).
-///
-/// If a matcher does not need knowledge about the inner type, prefer to use
-/// PolymorphicMatcherWithParam1.
-template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
-          typename T>
-class ArgumentAdaptingMatcher {
-public:
-  explicit ArgumentAdaptingMatcher(const Matcher<T> &InnerMatcher)
-      : InnerMatcher(InnerMatcher) {}
-
-  template <typename To>
-  operator Matcher<To>() const {
-    return Matcher<To>(new ArgumentAdapterT<To, T>(InnerMatcher));
-  }
-
-private:
-  const Matcher<T> InnerMatcher;
-};
-
 /// \brief A simple type-list implementation.
 ///
 /// It is implemented as a flat struct with a maximum number of arguments to
@@ -811,6 +782,43 @@ typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
 template <class T> struct ExtractFunctionArgMeta;
 template <class T> struct ExtractFunctionArgMeta<void(T)> {
   typedef T type;
+};
+
+/// \brief Default type lists for ArgumentAdaptingMatcher matchers.
+typedef AllNodeBaseTypes AdaptativeDefaultFromTypes;
+typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
+                 TypeLoc, QualType> AdaptativeDefaultToTypes;
+
+/// \brief Converts a \c Matcher<T> to a matcher of desired type \c To by
+/// "adapting" a \c To into a \c T.
+///
+/// The \c ArgumentAdapterT argument specifies how the adaptation is done.
+///
+/// For example:
+///   \c ArgumentAdaptingMatcher<HasMatcher, T>(InnerMatcher);
+/// Given that \c InnerMatcher is of type \c Matcher<T>, this returns a matcher
+/// that is convertible into any matcher of type \c To by constructing
+/// \c HasMatcher<To, T>(InnerMatcher).
+///
+/// If a matcher does not need knowledge about the inner type, prefer to use
+/// PolymorphicMatcherWithParam1.
+template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
+          typename T, typename FromTypes = AdaptativeDefaultFromTypes,
+          typename ToTypes = AdaptativeDefaultToTypes>
+class ArgumentAdaptingMatcher {
+public:
+  explicit ArgumentAdaptingMatcher(const Matcher<T> &InnerMatcher)
+      : InnerMatcher(InnerMatcher) {}
+
+  typedef ToTypes ReturnTypes;
+
+  template <typename To>
+  operator Matcher<To>() const {
+    return Matcher<To>(new ArgumentAdapterT<To, T>(InnerMatcher));
+  }
+
+private:
+  const Matcher<T> InnerMatcher;
 };
 
 /// \brief A PolymorphicMatcherWithParamN<MatcherT, P1, ..., PN> object can be
