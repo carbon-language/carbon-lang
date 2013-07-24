@@ -1,4 +1,4 @@
-; RUN: llc -disable-debug-info-verifier -mtriple=x86_64-apple-darwin10 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin10 < %s | FileCheck %s
 
 %struct.a = type { i32 }
 
@@ -27,9 +27,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !5 = metadata !{i32 786468, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{i32 786689, metadata !0, metadata !"b", metadata !1, i32 5, metadata !7, i32 0, null} ; [ DW_TAG_arg_variable ]
 !7 = metadata !{i32 786447, metadata !2, metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !8} ; [ DW_TAG_pointer_type ]
-!8 = metadata !{i32 786451, metadata !2, metadata !"a", metadata !1, i32 1, i64 32, i64 32, i32 0, i32 0, i32 0, metadata !9, i32 0, i32 0} ; [ DW_TAG_structure_type ]
+!8 = metadata !{i32 786451, metadata !22, metadata !2, metadata !"a", i32 1, i64 32, i64 32, i32 0, i32 0, i32 0, metadata !9, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !9 = metadata !{metadata !10}
-!10 = metadata !{i32 786445, metadata !1, metadata !"c", metadata !1, i32 2, i64 32, i64 32, i64 0, i32 0, metadata !5} ; [ DW_TAG_member ]
+!10 = metadata !{i32 786445, metadata !22, metadata !1, metadata !"c", i32 2, i64 32, i64 32, i64 0, i32 0, metadata !5} ; [ DW_TAG_member ]
 !11 = metadata !{i32 786688, metadata !12, metadata !"x", metadata !1, i32 6, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
 !12 = metadata !{i32 786443, metadata !22, metadata !0, i32 5, i32 22, i32 0} ; [ DW_TAG_lexical_block ]
 !13 = metadata !{i32 5, i32 19, metadata !0, null}

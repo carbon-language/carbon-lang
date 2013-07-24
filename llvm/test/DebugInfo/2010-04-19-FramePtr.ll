@@ -1,6 +1,6 @@
-; RUN: llc -disable-debug-info-verifier -asm-verbose -O1 -o %t < %s 
+; RUN: llc -asm-verbose -O1 -o %t < %s 
 ; RUN: grep DW_AT_APPLE_omit_frame_ptr %t
-; RUN: llc -disable-debug-info-verifier -disable-fp-elim -asm-verbose -O1 -o %t < %s 
+; RUN: llc -disable-fp-elim -asm-verbose -O1 -o %t < %s 
 ; RUN: grep -v DW_AT_APPLE_omit_frame_ptr %t
 
 
@@ -23,7 +23,7 @@ return:                                           ; preds = %entry
 !9 = metadata !{metadata !1}
 
 !0 = metadata !{i32 2, i32 0, metadata !1, null}
-!1 = metadata !{i32 786478, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", metadata !2, i32 2, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 ()* @foo, null, null, null, i32 2} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786478, metadata !2, null, metadata !"foo", metadata !"foo", metadata !"foo", i32 2, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @foo, null, null, null, i32 2} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !"a.c", metadata !"/tmp", metadata !3} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786449, i32 1, metadata !2, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !9, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
 !4 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]

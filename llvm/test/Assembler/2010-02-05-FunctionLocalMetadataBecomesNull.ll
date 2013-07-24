@@ -1,4 +1,4 @@
-; RUN: opt -std-compile-opts -disable-debug-info-verifier < %s | llvm-dis | not grep badref 
+; RUN: opt -std-compile-opts < %s | llvm-dis | not grep badref 
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.2"
@@ -25,8 +25,9 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !7 = metadata !{metadata !1}
 !6 = metadata !{i32 786449, i32 0, i32 12, metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b", metadata !"clang version 3.0 (trunk 131941)", i1 true, i1 false, metadata !"", i32 0, null, null, metadata !7, null, null} ; [ DW_TAG_compile_unit ]
 !0 = metadata !{i32 786688, metadata !1, metadata !"c", metadata !2, i32 2, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
-!1 = metadata !{i32 786478, i32 0, metadata !2, metadata !"main", metadata !"main", metadata !"", metadata !2, i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 ()* @main, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 786473, metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b", metadata !0} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 786453, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!1 = metadata !{i32 786478, metadata !8, metadata !2, metadata !"main", metadata !"main", metadata !"", i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 ()* @main, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
+!2 = metadata !{i32 786473, metadata !8} ; [ DW_TAG_file_type ]
+!3 = metadata !{i32 786453, metadata !8, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !6, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!8 = metadata !{metadata !"/d/j/debug-test.c", metadata !"/Volumes/Data/b"}

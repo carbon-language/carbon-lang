@@ -1,6 +1,6 @@
-; RUN: llc -mtriple=x86_64-apple-darwin -disable-debug-info-verifier %s -filetype=obj -o %t
+; RUN: llc -mtriple=x86_64-apple-darwin %s -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
-; RUN: llc -mtriple=x86_64-apple-darwin -disable-debug-info-verifier -regalloc=basic %s -filetype=obj -o %t
+; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic %s -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ;CHECK: DW_TAG_inlined_subroutine
@@ -54,7 +54,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !3 = metadata !{i32 786453, metadata !42, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"", i32 15, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 true, void ()* @foobar} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"foobar", metadata !"foobar", metadata !"", i32 15, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 0, i1 true, void ()* @foobar, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !7 = metadata !{i32 786453, metadata !42, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}
 !9 = metadata !{i32 786689, metadata !0, metadata !"sp", metadata !1, i32 7, metadata !10, i32 0, metadata !32} ; [ DW_TAG_arg_variable ]

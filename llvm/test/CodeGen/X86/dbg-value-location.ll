@@ -1,5 +1,5 @@
-; RUN: llc -disable-debug-info-verifier < %s | FileCheck %s
-; RUN: llc -disable-debug-info-verifier < %s -regalloc=basic | FileCheck %s
+; RUN: llc < %s | FileCheck %s
+; RUN: llc < %s -regalloc=basic | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-apple-darwin10.0.0"
 ;Radar 8950491
@@ -53,9 +53,9 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !3 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"bar3", metadata !"bar3", metadata !"", i32 14827, metadata !3, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @bar3} ; [ DW_TAG_subprogram ]
-!7 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"bar2", metadata !"bar2", metadata !"", i32 15397, metadata !3, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @bar2} ; [ DW_TAG_subprogram ]
-!8 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"bar", metadata !"bar", metadata !"", i32 12382, metadata !9, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i32*)* @bar} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"bar3", metadata !"bar3", metadata !"", i32 14827, metadata !3, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @bar3, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!7 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"bar2", metadata !"bar2", metadata !"", i32 15397, metadata !3, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32)* @bar2, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!8 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"bar", metadata !"bar", metadata !"", i32 12382, metadata !9, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i32*)* @bar, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !9 = metadata !{i32 786453, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !10, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !10 = metadata !{metadata !11}
 !11 = metadata !{i32 786468, metadata !2, metadata !"unsigned char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 8} ; [ DW_TAG_base_type ]
@@ -63,7 +63,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !13 = metadata !{i32 19509, i32 20, metadata !0, null}
 !14 = metadata !{i32 18091, i32 2, metadata !15, metadata !17}
 !15 = metadata !{i32 786443, metadata !1, metadata !16, i32 18086, i32 1, i32 748} ; [ DW_TAG_lexical_block ]
-!16 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"foo_bar", metadata !"foo_bar", metadata !"", i32 18086, metadata !3, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null} ; [ DW_TAG_subprogram ]
+!16 = metadata !{i32 786478, metadata !1, metadata !1, metadata !"foo_bar", metadata !"foo_bar", metadata !"", i32 18086, metadata !3, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !17 = metadata !{i32 19514, i32 2, metadata !18, null}
 !18 = metadata !{i32 786443, metadata !1, metadata !0, i32 19510, i32 1, i32 99} ; [ DW_TAG_lexical_block ]
 !22 = metadata !{i32 18094, i32 2, metadata !15, metadata !17}

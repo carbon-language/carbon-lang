@@ -1,4 +1,4 @@
-; RUN: llc -O0 -disable-debug-info-verifier < %s | FileCheck %s
+; RUN: llc -O0 < %s | FileCheck %s
 ; Radar 10464995
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.7.2"
@@ -17,8 +17,8 @@ entry:
 !0 = metadata !{i32 786449, i32 12, metadata !6, metadata !"clang version 3.1 (trunk 144833)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !11,  metadata !11, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
-!5 = metadata !{i32 720942, metadata !6, metadata !"bar", metadata !"bar", metadata !"", metadata !6, i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @bar, null, null, metadata !9} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 720937, metadata !"small.c", metadata !"/private/tmp", null} ; [ DW_TAG_file_type ]
+!5 = metadata !{i32 720942, metadata !21, metadata !6, metadata !"bar", metadata !"bar", metadata !"", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @bar, null, null, metadata !9, i32 0} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 720937, metadata !21} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{null}
 !9 = metadata !{metadata !10}
@@ -30,5 +30,6 @@ entry:
 !16 = metadata !{metadata !17}
 !17 = metadata !{i32 720929, i64 0, i64 4294967296} ; [ DW_TAG_subrange_type ]
 !18 = metadata !{i32 5, i32 3, metadata !19, null}
-!19 = metadata !{i32 786443, metadata !5, i32 4, i32 1, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!19 = metadata !{i32 786443, metadata !21, metadata !5, i32 4, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !20 = metadata !{i32 6, i32 1, metadata !19, null}
+!21 = metadata !{metadata !"small.c", metadata !"/private/tmp"}

@@ -1,4 +1,4 @@
-; RUN: llc -O2 -disable-debug-info-verifier %s -o - | FileCheck %s
+; RUN: llc -O2 %s -o - | FileCheck %s
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK:	DW_TAG_structure_type
@@ -23,13 +23,13 @@ entry:
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, metadata !1, metadata !"foo", metadata !"foo", metadata !"", metadata !1, i32 9, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null, null, null, metadata !24, i32 9} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 786478, metadata !27, metadata !1, metadata !"foo", metadata !"foo", metadata !"", i32 9, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null, null, null, metadata !24, i32 9} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !27} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, i32 1, metadata !1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, null, null, metadata !25, metadata !26,  metadata !26, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !27, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5, metadata !5}
 !5 = metadata !{i32 786468, metadata !27, metadata !1, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 786478, metadata !1, metadata !"bar", metadata !"bar", metadata !"bar", metadata !1, i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @bar} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786478, metadata !27, metadata !1, metadata !"bar", metadata !"bar", metadata !"bar", i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @bar, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !7 = metadata !{i32 786453, metadata !27, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !5}
 !9 = metadata !{i32 786689, metadata !0, metadata !"j", metadata !1, i32 9, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
@@ -39,7 +39,7 @@ entry:
 !13 = metadata !{metadata !14, metadata !15}
 !14 = metadata !{i32 786445, metadata !27, metadata !12, metadata !"a", i32 10, i64 32, i64 32, i64 0, i32 0, metadata !5} ; [ DW_TAG_member ]
 !15 = metadata !{i32 786445, metadata !27, metadata !12, metadata !"b", i32 10, i64 32, i64 32, i64 32, i32 0, metadata !5} ; [ DW_TAG_member ]
-!16 = metadata !{i32 786484, i32 0, metadata !1, metadata !"i", metadata !"i", metadata !"", metadata !1, i32 5, metadata !5, i1 false, i1 true, i32* @i} ; [ DW_TAG_variable ]
+!16 = metadata !{i32 786484, i32 0, metadata !1, metadata !"i", metadata !"i", metadata !"", metadata !1, i32 5, metadata !5, i1 false, i1 true, i32* @i, null} ; [ DW_TAG_variable ]
 !17 = metadata !{i32 15, i32 0, metadata !18, null}
 !18 = metadata !{i32 786443, metadata !1, metadata !6, i32 14, i32 0, i32 1} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{i32 9, i32 0, metadata !0, metadata !17}

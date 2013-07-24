@@ -1,4 +1,4 @@
-; RUN: llc -O0 -disable-debug-info-verifier < %s | FileCheck %s
+; RUN: llc -O0 < %s | FileCheck %s
 ; CHECK: @DEBUG_VALUE: mydata <- [SP+{{[0-9]+}}]
 ; Radar 9331779
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"
@@ -94,7 +94,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 16, metadata !40, metadata !"Apple clang version 2.1", i1 false, metadata !"", i32 2, metadata !147, null, metadata !148, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !40, i32 16, metadata !"Apple clang version 2.1", i1 false, metadata !"", i32 2, metadata !147, null, metadata !148, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786433, metadata !160, metadata !0, metadata !"", i32 248, i64 32, i64 32, i32 0, i32 0, i32 0, metadata !3, i32 0, i32 0} ; [ DW_TAG_enumeration_type ]
 !2 = metadata !{i32 786473, metadata !160} ; [ DW_TAG_file_type ]
 !3 = metadata !{metadata !4}
@@ -162,15 +162,15 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !65 = metadata !{i32 786473, metadata !155} ; [ DW_TAG_file_type ]
 !66 = metadata !{metadata !67}
 !67 = metadata !{i32 786445, metadata !155, metadata !65, metadata !"isa", i32 67, i64 32, i64 32, i64 0, i32 2, metadata !68, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
-!68 = metadata !{i32 786454, metadata !0, metadata !"Class", metadata !40, i32 197, i64 0, i64 0, i64 0, i32 0, metadata !69} ; [ DW_TAG_typedef ]
+!68 = metadata !{i32 786454, metadata !153, metadata !0, metadata !"Class", i32 197, i64 0, i64 0, i64 0, i32 0, metadata !69} ; [ DW_TAG_typedef ]
 !69 = metadata !{i32 786447, null, metadata !0, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !70} ; [ DW_TAG_pointer_type ]
-!70 = metadata !{i32 786451, metadata !40, metadata !0, metadata !"objc_class", i32 0, i64 0, i64 0, i32 0, i32 4, i32 0, null, i32 0, i32 0} ; [ DW_TAG_structure_type ]
+!70 = metadata !{i32 786451, metadata !153, metadata !0, metadata !"objc_class", i32 0, i64 0, i64 0, i32 0, i32 4, i32 0, null, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !71 = metadata !{i32 786445, metadata !154, metadata !61, metadata !"_mydataRef", i32 28, i64 32, i64 32, i64 32, i32 0, metadata !72, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
-!72 = metadata !{i32 786454, metadata !0, metadata !"CFTypeRef", metadata !24, i32 313, i64 0, i64 0, i64 0, i32 0, metadata !73} ; [ DW_TAG_typedef ]
+!72 = metadata !{i32 786454, metadata !152, metadata !0, metadata !"CFTypeRef", i32 313, i64 0, i64 0, i64 0, i32 0, metadata !73} ; [ DW_TAG_typedef ]
 !73 = metadata !{i32 786447, null, metadata !0, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !74} ; [ DW_TAG_pointer_type ]
 !74 = metadata !{i32 786470, null, metadata !0, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_const_type ]
 !75 = metadata !{i32 786445, metadata !154, metadata !61, metadata !"_scale", i32 29, i64 32, i64 32, i64 64, i32 0, metadata !76, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
-!76 = metadata !{i32 786454, metadata !0, metadata !"Float", metadata !77, i32 89, i64 0, i64 0, i64 0, i32 0, metadata !78} ; [ DW_TAG_typedef ]
+!76 = metadata !{i32 786454, metadata !156, metadata !0, metadata !"Float", i32 89, i64 0, i64 0, i64 0, i32 0, metadata !78} ; [ DW_TAG_typedef ]
 !77 = metadata !{i32 786473, metadata !156} ; [ DW_TAG_file_type ]
 !78 = metadata !{i32 786468, null, metadata !0, metadata !"float", i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !79 = metadata !{i32 786445, metadata !154, metadata !61, metadata !"_mydataFlags", i32 37, i64 8, i64 8, i64 96, i32 0, metadata !80, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
@@ -187,13 +187,13 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !90 = metadata !{i32 786447, null, metadata !0, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !91} ; [ DW_TAG_pointer_type ]
 !91 = metadata !{i32 786451, metadata !152, metadata !40, metadata !"MyWork", i32 36, i64 384, i64 32, i32 0, i32 0, i32 0, metadata !92, i32 16, i32 0} ; [ DW_TAG_structure_type ]
 !92 = metadata !{metadata !93, metadata !98, metadata !101, metadata !107, metadata !123}
-!93 = metadata !{i32 786460, metadata !91, null, metadata !24, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !94} ; [ DW_TAG_inheritance ]
+!93 = metadata !{i32 786460, metadata !152, metadata !91, null, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !94} ; [ DW_TAG_inheritance ]
 !94 = metadata !{i32 786451, metadata !157, metadata !40, metadata !"twork", i32 43, i64 32, i64 32, i32 0, i32 0, i32 0, metadata !96, i32 16, i32 0} ; [ DW_TAG_structure_type ]
 !95 = metadata !{i32 786473, metadata !157} ; [ DW_TAG_file_type ]
 !96 = metadata !{metadata !97}
 !97 = metadata !{i32 786460, metadata !94, null, metadata !95, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !64} ; [ DW_TAG_inheritance ]
 !98 = metadata !{i32 786445, metadata !152, metadata !24, metadata !"_itemID", i32 38, i64 64, i64 32, i64 32, i32 1, metadata !99, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
-!99 = metadata !{i32 786454, metadata !0, metadata !"uint64_t", metadata !40, i32 55, i64 0, i64 0, i64 0, i32 0, metadata !100} ; [ DW_TAG_typedef ]
+!99 = metadata !{i32 786454, metadata !153, metadata !0, metadata !"uint64_t", i32 55, i64 0, i64 0, i64 0, i32 0, metadata !100} ; [ DW_TAG_typedef ]
 !100 = metadata !{i32 786468, null, metadata !0, metadata !"long long unsigned int", i32 0, i64 64, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !101 = metadata !{i32 786445, metadata !152, metadata !24, metadata !"_library", i32 39, i64 32, i64 32, i64 96, i32 1, metadata !102, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
 !102 = metadata !{i32 786447, null, metadata !0, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !103} ; [ DW_TAG_pointer_type ]
@@ -202,24 +202,24 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !105 = metadata !{metadata !106}
 !106 = metadata !{i32 786460, metadata !103, null, metadata !104, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !64} ; [ DW_TAG_inheritance ]
 !107 = metadata !{i32 786445, metadata !152, metadata !24, metadata !"_bounds", i32 40, i64 128, i64 32, i64 128, i32 1, metadata !108, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
-!108 = metadata !{i32 786454, metadata !0, metadata !"CR", metadata !40, i32 33, i64 0, i64 0, i64 0, i32 0, metadata !109} ; [ DW_TAG_typedef ]
+!108 = metadata !{i32 786454, metadata !153, metadata !0, metadata !"CR", i32 33, i64 0, i64 0, i64 0, i32 0, metadata !109} ; [ DW_TAG_typedef ]
 !109 = metadata !{i32 786451, metadata !156, metadata !0, metadata !"CR", i32 29, i64 128, i64 32, i32 0, i32 0, i32 0, metadata !110, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !110 = metadata !{metadata !111, metadata !117}
 !111 = metadata !{i32 786445, metadata !156, metadata !77, metadata !"origin", i32 30, i64 64, i64 32, i64 0, i32 0, metadata !112} ; [ DW_TAG_member ]
-!112 = metadata !{i32 786454, metadata !0, metadata !"CP", metadata !77, i32 17, i64 0, i64 0, i64 0, i32 0, metadata !113} ; [ DW_TAG_typedef ]
+!112 = metadata !{i32 786454, metadata !156, metadata !0, metadata !"CP", i32 17, i64 0, i64 0, i64 0, i32 0, metadata !113} ; [ DW_TAG_typedef ]
 !113 = metadata !{i32 786451, metadata !156, metadata !0, metadata !"CP", i32 13, i64 64, i64 32, i32 0, i32 0, i32 0, metadata !114, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !114 = metadata !{metadata !115, metadata !116}
 !115 = metadata !{i32 786445, metadata !156, metadata !77, metadata !"x", i32 14, i64 32, i64 32, i64 0, i32 0, metadata !76} ; [ DW_TAG_member ]
 !116 = metadata !{i32 786445, metadata !156, metadata !77, metadata !"y", i32 15, i64 32, i64 32, i64 32, i32 0, metadata !76} ; [ DW_TAG_member ]
 !117 = metadata !{i32 786445, metadata !156, metadata !77, metadata !"size", i32 31, i64 64, i64 32, i64 64, i32 0, metadata !118} ; [ DW_TAG_member ]
-!118 = metadata !{i32 786454, metadata !0, metadata !"Size", metadata !77, i32 25, i64 0, i64 0, i64 0, i32 0, metadata !119} ; [ DW_TAG_typedef ]
+!118 = metadata !{i32 786454, metadata !156, metadata !0, metadata !"Size", i32 25, i64 0, i64 0, i64 0, i32 0, metadata !119} ; [ DW_TAG_typedef ]
 !119 = metadata !{i32 786451, metadata !156, metadata !0, metadata !"Size", i32 21, i64 64, i64 32, i32 0, i32 0, i32 0, metadata !120, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !120 = metadata !{metadata !121, metadata !122}
 !121 = metadata !{i32 786445, metadata !156, metadata !77, metadata !"width", i32 22, i64 32, i64 32, i64 0, i32 0, metadata !76} ; [ DW_TAG_member ]
 !122 = metadata !{i32 786445, metadata !156, metadata !77, metadata !"height", i32 23, i64 32, i64 32, i64 32, i32 0, metadata !76} ; [ DW_TAG_member ]
 !123 = metadata !{i32 786445, metadata !152, metadata !24, metadata !"_data", i32 40, i64 128, i64 32, i64 256, i32 1, metadata !108, metadata !"", metadata !"", metadata !"", i32 0} ; [ DW_TAG_member ]
 !124 = metadata !{i32 786445, metadata !152, metadata !24, metadata !"semi", i32 609, i64 32, i64 32, i64 224, i32 0, metadata !125} ; [ DW_TAG_member ]
-!125 = metadata !{i32 786454, metadata !0, metadata !"d_t", metadata !24, i32 35, i64 0, i64 0, i64 0, i32 0, metadata !126} ; [ DW_TAG_typedef ]
+!125 = metadata !{i32 786454, metadata !152, metadata !0, metadata !"d_t", i32 35, i64 0, i64 0, i64 0, i32 0, metadata !126} ; [ DW_TAG_typedef ]
 !126 = metadata !{i32 786447, null, metadata !0, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !127} ; [ DW_TAG_pointer_type ]
 !127 = metadata !{i32 786451, metadata !159, metadata !0, metadata !"my_struct", i32 49, i64 0, i64 0, i32 0, i32 4, i32 0, null, i32 0, i32 0} ; [ DW_TAG_structure_type ]
 !128 = metadata !{i32 786473, metadata !159} ; [ DW_TAG_file_type ]
@@ -236,7 +236,7 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !139 = metadata !{i32 786688, metadata !23, metadata !"semi", metadata !24, i32 607, metadata !125, i32 0, null, i64 1, i64 28} ; [ DW_TAG_auto_variable ]
 !140 = metadata !{i32 607, i32 30, metadata !23, null}
 !141 = metadata !{i32 610, i32 17, metadata !142, null}
-!142 = metadata !{i32 786443, metadata !23, i32 609, i32 200, metadata !24, i32 94} ; [ DW_TAG_lexical_block ]
+!142 = metadata !{i32 786443, metadata !152, metadata !23, i32 609, i32 200, i32 94} ; [ DW_TAG_lexical_block ]
 !143 = metadata !{i32 611, i32 17, metadata !142, null}
 !144 = metadata !{i32 612, i32 17, metadata !142, null}
 !145 = metadata !{i32 613, i32 17, metadata !142, null}

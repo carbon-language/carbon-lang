@@ -1,4 +1,4 @@
-; RUN: llc -O0 -disable-debug-info-verifier < %s | grep AT_decl_file |  grep 2
+; RUN: llc -O0 < %s | grep AT_decl_file |  grep 2
 ; Here _ZN1S3fooEv is defined in header file identified as AT_decl_file no. 2 in debug info.
 %struct.S = type <{ i8 }>
 
@@ -39,9 +39,9 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!5}
 
 !0 = metadata !{i32 786688, metadata !1, metadata !"s1", metadata !4, i32 3, metadata !9, i32 0, null} ; [ DW_TAG_auto_variable ]
-!1 = metadata !{i32 786443, metadata !2, i32 3, i32 0} ; [ DW_TAG_lexical_block ]
-!2 = metadata !{i32 786443, metadata !3, i32 3, i32 0} ; [ DW_TAG_lexical_block ]
-!3 = metadata !{i32 786478, metadata !4, metadata !4, metadata !"bar", metadata !"bar", metadata !"_Z3barv", i32 3, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 ()* @_Z3barv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786443, metadata !25, metadata !2, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!2 = metadata !{i32 786443, metadata !25, metadata !3, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!3 = metadata !{i32 786478, metadata !25, metadata !4, metadata !"bar", metadata !"bar", metadata !"_Z3barv", i32 3, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, i32 ()* @_Z3barv, null, null, null, i32 3} ; [ DW_TAG_subprogram ]
 !4 = metadata !{i32 786473, metadata !25} ; [ DW_TAG_file_type ]
 !5 = metadata !{i32 786449, i32 4, metadata !4, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !24, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
 !6 = metadata !{i32 786453, metadata !25, metadata !4, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null} ; [ DW_TAG_subroutine_type ]
@@ -61,7 +61,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !20 = metadata !{i32 786447, metadata !25, metadata !4, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !9} ; [ DW_TAG_pointer_type ]
 !21 = metadata !{i32 3, i32 0, metadata !12, null}
 !22 = metadata !{i32 3, i32 0, metadata !23, null}
-!23 = metadata !{i32 786443, metadata !12, i32 3, i32 0} ; [ DW_TAG_lexical_block ]
+!23 = metadata !{i32 786443, metadata !26, metadata !12, i32 3, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !24 = metadata !{metadata !3, metadata !12}
 !25 = metadata !{metadata !"one.cc", metadata !"/tmp/"}
 !26 = metadata !{metadata !"one.h", metadata !"/tmp/"}
