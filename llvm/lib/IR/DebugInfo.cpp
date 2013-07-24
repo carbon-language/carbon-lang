@@ -948,6 +948,7 @@ void DebugInfoFinder::processValue(const DbgValueInst *DVI) {
 
   if (!NodesSeen.insert(DV))
     return;
+  processScope(DIVariable(N).getContext());
   processType(DIVariable(N).getType());
 }
 

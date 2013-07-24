@@ -13,7 +13,7 @@ entry:
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 524545, metadata !1, metadata !"b", metadata !2, i32 93, metadata !6} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"__addvsi3", metadata !"__addvsi3", metadata !"__addvsi3", metadata !2, i32 94, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 524334, metadata !12, null, metadata !"__addvsi3", metadata !"__addvsi3", metadata !"__addvsi3", i32 94, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 524329, metadata !12} ; [ DW_TAG_file_type ]
 !12 = metadata !{metadata !"libgcc2.c", metadata !"/Users/bwilson/local/nightly/test-2010-04-14/build/llvmgcc.roots/llvmgcc~obj/src/gcc"}
 !3 = metadata !{i32 524305, i32 0, i32 1, metadata !"libgcc2.c", metadata !"/Users/bwilson/local/nightly/test-2010-04-14/build/llvmgcc.roots/llvmgcc~obj/src/gcc", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 00)", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]

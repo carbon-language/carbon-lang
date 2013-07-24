@@ -21,7 +21,7 @@ entry:
 !6 = metadata !{i32 786473, metadata !15} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!9 = metadata !{i32 786468, metadata !15, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{metadata !11}
 !11 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ]
 !12 = metadata !{i32 786478, metadata !15, metadata !6, metadata !"t", metadata !"t", metadata !"", i32 2, metadata !7, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 false, null, null, null, metadata !10} ; [ DW_TAG_subprogram ]

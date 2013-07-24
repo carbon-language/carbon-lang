@@ -23,16 +23,16 @@ entry:
 !llvm.dbg.lv.foo = !{!14}
 !llvm.dbg.gv = !{!15, !16}
 
-!0 = metadata !{i32 524334, i32 0, metadata !1, metadata !"bar", metadata !"bar", metadata !"", metadata !1, i32 5, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 524334, metadata !1, null, metadata !"bar", metadata !"bar", metadata !"", i32 5, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 524329, metadata !"g.c", metadata !"/tmp/", metadata !2} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 524305, i32 0, i32 1, metadata !"g.c", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 524309, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null}
-!5 = metadata !{i32 524334, i32 0, metadata !1, metadata !"fn", metadata !"fn", metadata !"fn", metadata !1, i32 6, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @fn} ; [ DW_TAG_subprogram ]
+!5 = metadata !{i32 524334, metadata !1, null, metadata !"fn", metadata !"fn", metadata !"fn", i32 6, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @fn, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !6 = metadata !{i32 524309, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !7 = metadata !{metadata !8}
 !8 = metadata !{i32 524324, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!9 = metadata !{i32 524334, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"foo", metadata !1, i32 7, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 (i32)* @foo} ; [ DW_TAG_subprogram ]
+!9 = metadata !{i32 524334, metadata !1, null, metadata !"foo", metadata !"foo", metadata !"foo", i32 7, metadata !10, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 (i32)* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !10 = metadata !{i32 524309, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !11, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !11 = metadata !{metadata !8, metadata !8}
 !12 = metadata !{i32 524544, metadata !13, metadata !"bb", metadata !1, i32 5, metadata !8} ; [ DW_TAG_auto_variable ]

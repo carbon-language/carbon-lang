@@ -48,7 +48,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.gv = !{!14}
 
 !0 = metadata !{i32 524545, metadata !1, metadata !"buf", metadata !2, i32 4, metadata !6} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 524334, i32 0, metadata !2, metadata !"x0", metadata !"x0", metadata !"x0", metadata !2, i32 5, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, null} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 524334, metadata !2, null, metadata !"x0", metadata !"x0", metadata !"x0", i32 5, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 524329, metadata !"t.c", metadata !"/private/tmp", metadata !3} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 524305, i32 0, i32 12, metadata !"t.c", metadata !".", metadata !"clang 2.0", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !4 = metadata !{i32 524309, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0, null} ; [ DW_TAG_subroutine_type ]
@@ -58,7 +58,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !8 = metadata !{i32 524545, metadata !1, metadata !"nbytes", metadata !2, i32 4, metadata !9} ; [ DW_TAG_arg_variable ]
 !9 = metadata !{i32 524324, metadata !2, metadata !"unsigned long", metadata !2, i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !10 = metadata !{i32 524544, metadata !11, metadata !"nread", metadata !2, i32 6, metadata !9} ; [ DW_TAG_auto_variable ]
-!11 = metadata !{i32 524299, metadata !1, i32 5, i32 1} ; [ DW_TAG_lexical_block ]
+!11 = metadata !{i32 524299, metadata !2, metadata !1, i32 5, i32 1, i32 0} ; [ DW_TAG_lexical_block ]
 !12 = metadata !{i32 524544, metadata !11, metadata !"c", metadata !2, i32 7, metadata !13} ; [ DW_TAG_auto_variable ]
 !13 = metadata !{i32 524324, metadata !2, metadata !"int", metadata !2, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !14 = metadata !{i32 524340, i32 0, metadata !2, metadata !"length", metadata !"length", metadata !"length", metadata !2, i32 1, metadata !13, i1 false, i1 true, i32* @length} ; [ DW_TAG_variable ]
