@@ -26,6 +26,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.call_function()
 
     @dwarf_test
+    @expectedFailureFreeBSD # llvm.org/pr16697
     @expectedFailureGcc # llvm.org/pr14437, fails with GCC 4.6.3 and 4.7.2
     def test_with_dwarf(self):
         """Test calling std::String member function."""
