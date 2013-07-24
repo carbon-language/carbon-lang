@@ -720,9 +720,9 @@ bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
   if (BBI.IsDone || BBI.IsUnpredicable)
     return false;
 
-  // If it is already predicated, check if its predicate subsumes the new
-  // predicate.
-  if (BBI.Predicate.size() && !TII->SubsumesPredicate(BBI.Predicate, Pred))
+  // If it is already predicated, check if the new predicate subsumes
+  // its predicate.
+  if (BBI.Predicate.size() && !TII->SubsumesPredicate(Pred, BBI.Predicate))
     return false;
 
   if (BBI.BrCond.size()) {
