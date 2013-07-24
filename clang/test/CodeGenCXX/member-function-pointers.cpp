@@ -4,6 +4,9 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=i386-unknown-unknown | FileCheck -check-prefix GLOBAL-LP32 %s
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=armv7-unknown-unknown | FileCheck -check-prefix GLOBAL-ARM %s
 
+// PNaCl uses the same representation of method pointers as ARM.
+// RUN: %clang_cc1 %s -emit-llvm -o - -triple=le32-unknown-nacl | FileCheck -check-prefix GLOBAL-ARM %s
+
 struct A { int a; void f(); virtual void vf1(); virtual void vf2(); };
 struct B { int b; virtual void g(); };
 struct C : B, A { };
