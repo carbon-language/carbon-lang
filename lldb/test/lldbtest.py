@@ -516,6 +516,42 @@ def expectedFailurei386(bugnumber=None):
               return wrapper
         return expectedFailurei386_impl
 
+def expectedFailureFreeBSD(bugnumber=None, compilers=None):
+     if callable(bugnumber):
+        @wraps(bugnumber)
+        def expectedFailureFreeBSD_easy_wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            platform = sys.platform
+            try:
+                bugnumber(*args, **kwargs)
+            except Exception:
+                if "freebsd" in platform and self.expectedCompiler(compilers):
+                    raise case._ExpectedFailure(sys.exc_info(),None)
+                else:
+                    raise
+            if "freebsd" in platform and self.expectedCompiler(compilers):
+                raise case._UnexpectedSuccess(sys.exc_info(),None)
+        return expectedFailureFreeBSD_easy_wrapper
+     else:
+        def expectedFailureFreeBSD_impl(func):
+              @wraps(func)
+              def wrapper(*args, **kwargs):
+                from unittest2 import case
+                self = args[0]
+                platform = sys.platform
+                try:
+                    func(*args, **kwargs)
+                except Exception:
+                    if "freebsd" in platform and self.expectedCompiler(compilers):
+                        raise case._ExpectedFailure(sys.exc_info(),bugnumber)
+                    else:
+                        raise
+                if "freebsd" in platform and self.expectedCompiler(compilers):
+                    raise case._UnexpectedSuccess(sys.exc_info(),bugnumber)
+              return wrapper
+        return expectedFailureFreeBSD_impl
+
 def expectedFailureLinux(bugnumber=None, compilers=None):
      if callable(bugnumber):
         @wraps(bugnumber)
