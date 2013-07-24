@@ -34,24 +34,6 @@ using namespace llvm::dwarf;
 // DIDescriptor
 //===----------------------------------------------------------------------===//
 
-DIDescriptor::DIDescriptor(const DIFile F) : DbgNode(F.DbgNode) {
-}
-
-DIDescriptor::DIDescriptor(const DISubprogram F) : DbgNode(F.DbgNode) {
-}
-
-DIDescriptor::DIDescriptor(const DILexicalBlockFile F) : DbgNode(F.DbgNode) {
-}
-
-DIDescriptor::DIDescriptor(const DILexicalBlock F) : DbgNode(F.DbgNode) {
-}
-
-DIDescriptor::DIDescriptor(const DIVariable F) : DbgNode(F.DbgNode) {
-}
-
-DIDescriptor::DIDescriptor(const DIType F) : DbgNode(F.DbgNode) {
-}
-
 bool DIDescriptor::Verify() const {
   return DbgNode &&
          (DIDerivedType(DbgNode).Verify() ||

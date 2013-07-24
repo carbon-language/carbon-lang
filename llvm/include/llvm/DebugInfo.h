@@ -89,14 +89,7 @@ namespace llvm {
     void replaceFunctionField(unsigned Elt, Function *F);
 
   public:
-    explicit DIDescriptor() : DbgNode(0) {}
-    explicit DIDescriptor(const MDNode *N) : DbgNode(N) {}
-    explicit DIDescriptor(const DIFile F);
-    explicit DIDescriptor(const DISubprogram F);
-    explicit DIDescriptor(const DILexicalBlockFile F);
-    explicit DIDescriptor(const DILexicalBlock F);
-    explicit DIDescriptor(const DIVariable F);
-    explicit DIDescriptor(const DIType F);
+    explicit DIDescriptor(const MDNode *N = 0) : DbgNode(N) {}
 
     bool Verify() const;
 
@@ -165,8 +158,7 @@ namespace llvm {
   /// DIArray - This descriptor holds an array of descriptors.
   class DIArray : public DIDescriptor {
   public:
-    explicit DIArray(const MDNode *N = 0)
-      : DIDescriptor(N) {}
+    explicit DIArray(const MDNode *N = 0) : DIDescriptor(N) {}
 
     unsigned getNumElements() const;
     DIDescriptor getElement(unsigned Idx) const {
@@ -289,8 +281,7 @@ namespace llvm {
     void printInternal(raw_ostream &OS) const;
 
   public:
-    explicit DIDerivedType(const MDNode *N = 0)
-      : DIType(N) {}
+    explicit DIDerivedType(const MDNode *N = 0) : DIType(N) {}
 
     DIType getTypeDerivedFrom() const { return getFieldAs<DIType>(9); }
 
@@ -326,8 +317,7 @@ namespace llvm {
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
-    explicit DICompositeType(const MDNode *N = 0)
-      : DIDerivedType(N) {}
+    explicit DICompositeType(const MDNode *N = 0) : DIDerivedType(N) {}
 
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
@@ -570,8 +560,7 @@ namespace llvm {
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
   public:
-    explicit DIVariable(const MDNode *N = 0)
-      : DIDescriptor(N) {}
+    explicit DIVariable(const MDNode *N = 0) : DIDescriptor(N) {}
 
     DIScope getContext() const          { return getFieldAs<DIScope>(1); }
     StringRef getName() const           { return getStringField(2);     }
