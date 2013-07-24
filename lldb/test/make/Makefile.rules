@@ -96,12 +96,6 @@ LDFLAGS += $(LD_EXTRAS)
 OBJECTS =
 EXE ?= a.out
 
-ifneq (,$(findstring g++,$(CXX)))
-	# GCC 4.6 cannot handle -std=c++11, so replace it with -std=c++0x
-	# instead. FIXME: remove once GCC version is upgraded.
-	override CXXFLAGS := $(subst -std=c++11,-std=c++0x,$(CXXFLAGS))
-endif
-
 ifneq "$(DYLIB_NAME)" ""
 	ifeq "$(OS)" "Darwin"
 		DYLIB_FILENAME = lib$(DYLIB_NAME).dylib
@@ -224,6 +218,17 @@ ifneq "$(strip $(ARCHIVE_OBJCXX_SOURCES))" ""
 	endif
 endif
 
+#----------------------------------------------------------------------
+# Check if we are compiling with gcc 4.6
+#----------------------------------------------------------------------
+ifneq (,$(filter g++,$(CXX)))
+	CXXVERSION = $(shell g++ -dumpversion | cut -b 1-3)
+	ifeq "$(CXXVERSION)" "4.6"
+                # GCC 4.6 cannot handle -std=c++11, so replace it with -std=c++0x
+                # instead. FIXME: remove once GCC version is upgraded.
+		override CXXFLAGS := $(subst -std=c++11,-std=c++0x,$(CXXFLAGS))
+	endif
+endif
 
 #----------------------------------------------------------------------
 # DYLIB_ONLY variable can be used to skip the building of a.out.
