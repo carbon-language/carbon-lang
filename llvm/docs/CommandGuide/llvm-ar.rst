@@ -21,64 +21,24 @@ LLVM program. However, the archive can contain any kind of file. By default,
 only the symbol table needs to be consulted, not each individual file member
 of the archive.
 
-The **llvm-ar** command can be used to *read* both SVR4 and BSD style archive
-files. However, it cannot be used to write them.  While the **llvm-ar** command
-produces files that are *almost* identical to the format used by other ``ar``
-implementations, it has two significant departures in order to make the
-archive appropriate for LLVM. The first departure is that **llvm-ar** only
-uses BSD4.4 style long path names (stored immediately after the header) and
-never contains a string table for long names. The second departure is that the
-symbol table is formated for efficient construction of an in-memory data
-structure that permits rapid (red-black tree) lookups. Consequently, archives
-produced with **llvm-ar** usually won't be readable or editable with any
-``ar`` implementation or useful for linking.  Using the ``f`` modifier to flatten
-file names will make the archive readable by other ``ar`` implementations
-but not for linking because the symbol table format for LLVM is unique. If an
+The **llvm-ar** command can be used to *read* SVR4, GNU and BSD style archive
+files. However, right now it can only write in the GNU format. If an
 SVR4 or BSD style archive is used with the ``r`` (replace) or ``q`` (quick
-update) operations, the archive will be reconstructed in LLVM format. This
-means that the string table will be dropped (in deference to BSD 4.4 long names)
-and an LLVM symbol table will be added (by default). The system symbol table
-will be retained.
+update) operations, the archive will be reconstructed in GNU format.
 
 Here's where **llvm-ar** departs from previous ``ar`` implementations:
 
 
 *Symbol Table*
 
- Since **llvm-ar** is intended to archive bitcode files, the symbol table
- won't make much sense to anything but LLVM. Consequently, the symbol table's
- format has been simplified. It consists simply of a sequence of pairs
- of a file member index number as an LSB 4byte integer and a null-terminated
- string.
-
+ Since **llvm-ar** supports bitcode files. The symbol table it creates
+ is in GNU format and includes both native and bitcode files.
 
 
 *Long Paths*
 
- Some ``ar`` implementations (SVR4) use a separate file member to record long
- path names (> 15 characters). **llvm-ar** takes the BSD 4.4 and Mac OS X
- approach which is to simply store the full path name immediately preceding
- the data for the file. The path name is null terminated and may contain the
- slash (/) character.
-
-
-
-*Directory Recursion*
-
- Most ``ar`` implementations do not recurse through directories but simply
- ignore directories if they are presented to the program in the *files*
- option. **llvm-ar**, however, can recurse through directory structures and
- add all the files under a directory, if requested.
-
-
-
-*TOC Verbose Output*
-
- When **llvm-ar** prints out the verbose table of contents (``tv`` option), it
- precedes the usual output with a character indicating the basic kind of
- content in the file. A blank means the file is a regular file. A 'B' means
- the file is an LLVM bitcode file. An 'S' means the file is the symbol table.
-
+ Currently **llvm-ar** can read GNU and BSD long file names, but only writes
+ archives with the GNU format.
 
 
 
