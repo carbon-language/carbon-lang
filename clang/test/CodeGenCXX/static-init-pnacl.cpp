@@ -9,6 +9,6 @@ int f();
 void g() {
   static int a = f();
 }
-// CHECK: load atomic i8* bitcast (i64* @_ZGVZ1gvE1a to i8*) acquire
-// CHECK-NEXT: %guard.uninitialized = icmp eq i8 %0, 0
-// CHECK-NEXT: br i1 %guard.uninitialized, label %init.check, label %init.end
+// CHECK: [[LOAD:%.*]] = load atomic i8* bitcast (i64* @_ZGVZ1gvE1a to i8*) acquire
+// CHECK-NEXT: [[GUARD:%.*]] = icmp eq i8 [[LOAD]], 0
+// CHECK-NEXT: br i1 [[GUARD]]
