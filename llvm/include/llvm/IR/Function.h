@@ -166,42 +166,45 @@ public:
                          (static_cast<unsigned>(CC) << 1));
   }
 
-  /// getAttributes - Return the attribute list for this Function.
-  ///
+  /// @brief Return the attribute list for this Function.
   AttributeSet getAttributes() const { return AttributeSets; }
 
-  /// setAttributes - Set the attribute list for this Function.
-  ///
+  /// @brief Set the attribute list for this Function.
   void setAttributes(AttributeSet attrs) { AttributeSets = attrs; }
 
-  /// addFnAttr - Add function attributes to this function.
-  ///
+  /// @brief Add function attributes to this function.
   void addFnAttr(Attribute::AttrKind N) {
     setAttributes(AttributeSets.addAttribute(getContext(),
                                              AttributeSet::FunctionIndex, N));
   }
 
-  /// removeFnAttr - Remove function attributes from this function.
-  ///
+  /// @brief Remove function attributes from this function.
   void removeFnAttr(Attribute::AttrKind N) {
     setAttributes(AttributeSets.removeAttribute(
         getContext(), AttributeSet::FunctionIndex, N));
   }
 
-  /// addFnAttr - Add function attributes to this function.
-  ///
+  /// @brief Add function attributes to this function.
   void addFnAttr(StringRef Kind) {
     setAttributes(
       AttributeSets.addAttribute(getContext(),
                                  AttributeSet::FunctionIndex, Kind));
   }
 
-  /// \brief Return true if the function has the attribute.
+  /// @brief Return true if the function has the attribute.
   bool hasFnAttribute(Attribute::AttrKind Kind) const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex, Kind);
   }
   bool hasFnAttribute(StringRef Kind) const {
     return AttributeSets.hasAttribute(AttributeSet::FunctionIndex, Kind);
+  }
+
+  /// @brief Return the attribute for the given attribute kind.
+  Attribute getFnAttribute(Attribute::AttrKind Kind) const {
+    return AttributeSets.getAttribute(AttributeSet::FunctionIndex, Kind);
+  }
+  Attribute getFnAttribute(StringRef Kind) const {
+    return AttributeSets.getAttribute(AttributeSet::FunctionIndex, Kind);
   }
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
