@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 
-// Check the line numbers for cleanup code with EH in combinatin with
+// Check the line numbers for cleanup code with EH in combination with
 // simple return expressions.
 
 // CHECK: define {{.*}}foo
