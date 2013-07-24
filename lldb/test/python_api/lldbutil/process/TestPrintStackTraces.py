@@ -18,6 +18,7 @@ class ThreadsStackTracesTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.cpp', '// Set break point at this line.')
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # live debugging lacks threaded inferior support
     @expectedFailureLinux # llvm.org/pr14323
     @python_api_test
     def test_stack_traces(self):
