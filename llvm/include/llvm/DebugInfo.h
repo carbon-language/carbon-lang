@@ -327,10 +327,7 @@ namespace llvm {
     void printInternal(raw_ostream &OS) const;
   public:
     explicit DICompositeType(const MDNode *N = 0)
-      : DIDerivedType(N) {
-      if (N && !isCompositeType())
-        DbgNode = 0;
-    }
+      : DIDerivedType(N) {}
 
     DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
     void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
