@@ -86,6 +86,16 @@ def FeatureAVX     : SubtargetFeature<"avx", "X86SSELevel", "AVX",
 def FeatureAVX2    : SubtargetFeature<"avx2", "X86SSELevel", "AVX2",
                                       "Enable AVX2 instructions",
                                       [FeatureAVX]>;
+def FeatureAVX512   : SubtargetFeature<"avx-512", "X86SSELevel", "AVX512",
+                                      "Enable AVX-512 instructions",
+                                      [FeatureAVX2]>;
+def FeatureERI      : SubtargetFeature<"avx-512-eri", "HasERI", "true",
+                      "Enable AVX-512 Exponential and Reciprocal Instructions">;
+def FeatureCDI      : SubtargetFeature<"avx-512-cdi", "HasCDI", "true",
+                      "Enable AVX-512 Conflict Detection Instructions">;
+def FeaturePFI      : SubtargetFeature<"avx-512-pfi", "HasPFI", "true",
+                      "Enable AVX-512 PreFetch Instructions">;
+
 def FeaturePCLMUL  : SubtargetFeature<"pclmul", "HasPCLMUL", "true",
                          "Enable packed carry-less multiplication instructions",
                                [FeatureSSE2]>;
@@ -226,6 +236,15 @@ def : ProcessorModel<"core-avx2", HaswellModel,
                       FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
                       FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
                       FeatureHLE]>;
+
+// KNL
+// FIXME: define KNL model
+def : ProcessorModel<"knl", HaswellModel,
+                     [FeatureAVX512, FeatureERI, FeatureCDI, FeaturePFI,
+                      FeatureCMPXCHG16B, FeatureFastUAMem, FeaturePOPCNT,
+                      FeatureAES, FeaturePCLMUL, FeatureRDRAND, FeatureF16C,
+                      FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT, FeatureBMI,
+                      FeatureBMI2, FeatureFMA, FeatureRTM, FeatureHLE]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;

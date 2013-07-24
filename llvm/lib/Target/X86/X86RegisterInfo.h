@@ -137,6 +137,9 @@ public:
 // e.g. getX86SubSuperRegister(X86::EAX, MVT::i16) return X86:AX
 unsigned getX86SubSuperRegister(unsigned, MVT::SimpleValueType, bool High=false);
 
+//get512BitRegister - X86 utility - returns 512-bit super register
+unsigned get512BitSuperRegister(unsigned Reg);
+
 } // End llvm namespace
 
 #endif

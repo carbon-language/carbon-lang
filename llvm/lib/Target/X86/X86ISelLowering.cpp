@@ -18595,6 +18595,11 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       case MVT::v8f32:
       case MVT::v4f64:
         return std::make_pair(0U, &X86::VR256RegClass);
+      case MVT::v8f64:
+      case MVT::v16f32:
+      case MVT::v16i32:
+      case MVT::v8i64:
+        return std::make_pair(0U, &X86::VR512RegClass);
       }
       break;
     }
@@ -18705,7 +18710,13 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     }
   } else if (Res.second == &X86::FR32RegClass ||
              Res.second == &X86::FR64RegClass ||
-             Res.second == &X86::VR128RegClass) {
+             Res.second == &X86::VR128RegClass ||
+             Res.second == &X86::VR256RegClass ||
+             Res.second == &X86::FR32XRegClass ||
+             Res.second == &X86::FR64XRegClass ||
+             Res.second == &X86::VR128XRegClass ||
+             Res.second == &X86::VR256XRegClass ||
+             Res.second == &X86::VR512RegClass) {
     // Handle references to XMM physical registers that got mapped into the
     // wrong class.  This can happen with constraints like {xmm0} where the
     // target independent register mapper will just pick the first match it can
@@ -18719,6 +18730,8 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       Res.second = &X86::VR128RegClass;
     else if (X86::VR256RegClass.hasType(VT))
       Res.second = &X86::VR256RegClass;
+    else if (X86::VR512RegClass.hasType(VT))
+      Res.second = &X86::VR512RegClass;
   }
 
   return Res;

@@ -105,23 +105,28 @@ FunctionPass *llvm::createX86IssueVZeroUpperPass() {
 }
 
 static bool isYmmReg(unsigned Reg) {
-  if (Reg >= X86::YMM0 && Reg <= X86::YMM15)
-    return true;
+  return (Reg >= X86::YMM0 && Reg <= X86::YMM31);
+}
 
-  return false;
+static bool isZmmReg(unsigned Reg) {
+  return (Reg >= X86::ZMM0 && Reg <= X86::ZMM31);
 }
 
 static bool checkFnHasLiveInYmm(MachineRegisterInfo &MRI) {
   for (MachineRegisterInfo::livein_iterator I = MRI.livein_begin(),
        E = MRI.livein_end(); I != E; ++I)
-    if (isYmmReg(I->first))
+    if (isYmmReg(I->first) || isZmmReg(I->first))
       return true;
 
   return false;
 }
 
 static bool clobbersAllYmmRegs(const MachineOperand &MO) {
-  for (unsigned reg = X86::YMM0; reg < X86::YMM15; ++reg) {
+  for (unsigned reg = X86::YMM0; reg < X86::YMM31; ++reg) {
+    if (!MO.clobbersPhysReg(reg))
+      return false;
+  }
+  for (unsigned reg = X86::ZMM0; reg < X86::ZMM31; ++reg) {
     if (!MO.clobbersPhysReg(reg))
       return false;
   }

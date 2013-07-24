@@ -241,6 +241,11 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
   case CallingConv::Intel_OCL_BI: {
     bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
+    bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();
+    if (HasAVX512 && IsWin64)
+      return CSR_Win64_Intel_OCL_BI_AVX512_SaveList;
+    if (HasAVX512 && Is64Bit)
+      return CSR_64_Intel_OCL_BI_AVX512_SaveList;
     if (HasAVX && IsWin64)
       return CSR_Win64_Intel_OCL_BI_AVX_SaveList;
     if (HasAVX && Is64Bit)
@@ -275,8 +280,13 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const uint32_t*
 X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
+  bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();
 
   if (CC == CallingConv::Intel_OCL_BI) {
+    if (IsWin64 && HasAVX512)
+      return CSR_Win64_Intel_OCL_BI_AVX512_RegMask;
+    if (Is64Bit && HasAVX512)
+      return CSR_64_Intel_OCL_BI_AVX512_RegMask;
     if (IsWin64 && HasAVX)
       return CSR_Win64_Intel_OCL_BI_AVX_RegMask;
     if (Is64Bit && HasAVX)
@@ -377,6 +387,12 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         X86::XMM12, X86::XMM13, X86::XMM14, X86::XMM15
       };
       for (MCRegAliasIterator AI(XMMReg[n], this, true); AI.isValid(); ++AI)
+        Reserved.set(*AI);
+    }
+  }
+  if (!Is64Bit || !TM.getSubtarget<X86Subtarget>().hasAVX512()) {
+    for (unsigned n = 16; n != 32; ++n) {
+      for (MCRegAliasIterator AI(X86::XMM0 + n, this, true); AI.isValid(); ++AI)
         Reserved.set(*AI);
     }
   }
@@ -690,4 +706,16 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
     }
   }
 }
+
+unsigned get512BitSuperRegister(unsigned Reg) {
+  if (Reg >= X86::XMM0 && Reg <= X86::XMM31)
+    return X86::ZMM0 + (Reg - X86::XMM0);
+  if (Reg >= X86::YMM0 && Reg <= X86::YMM31)
+    return X86::ZMM0 + (Reg - X86::YMM0);
+  if (Reg >= X86::ZMM0 && Reg <= X86::ZMM31)
+    return Reg;
+  llvm_unreachable("Unexpected SIMD register");
+  return 0;
+}
+
 }
