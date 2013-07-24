@@ -128,7 +128,6 @@ void Transform::addTiming(llvm::StringRef Label, llvm::TimeRecord Duration) {
   Timings.push_back(std::make_pair(Label.str(), Duration));
 }
 
-FrontendActionFactory *
-Transform::createActionFactory(MatchFinder &Finder) {
+FrontendActionFactory *Transform::createActionFactory(MatchFinder &Finder) {
   return new ActionFactory(Finder, /*Owner=*/ *this);
 }
