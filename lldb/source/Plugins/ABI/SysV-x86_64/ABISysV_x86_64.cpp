@@ -1188,7 +1188,7 @@ ABISysV_x86_64::RegisterIsVolatile (const RegisterInfo *reg_info)
 // "AMD64 Architecture Processor Supplement" 
 // (or "x86-64(tm) Architecture Processor Supplement" in earlier revisions)
 // Edited by Michael Matz, Jan Hubicka, Andreas Jaeger, and Mark Mitchell
-// current version is 0.99.6 released 2012-05-15 at http://x86-64.org/documentation/abi.pdf
+// current version is 0.99.6 released 2012-07-02 at http://refspecs.linuxfoundation.org/elf/x86-64-abi-0.99.pdf
 
 bool
 ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
