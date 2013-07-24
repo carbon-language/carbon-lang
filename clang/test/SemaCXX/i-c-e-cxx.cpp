@@ -16,7 +16,7 @@ void f() {
 }
 
 int a() {
-  const int t=t; // expected-note {{declared here}}
+  const int t=t; // expected-note {{declared here}} expected-note {{read of object outside its lifetime}}
   switch(1) { // expected-warning {{no case matching constant switch condition '1'}}
     case t:; // expected-error {{not an integral constant expression}} expected-note {{initializer of 't' is not a constant expression}}
   }

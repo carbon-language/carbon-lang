@@ -1709,3 +1709,21 @@ namespace ConstexprConstructorRecovery {
   }; 
   constexpr X x{};
 }
+
+namespace Lifetime {
+  void f() {
+    constexpr int &n = n; // expected-error {{constant expression}} expected-note {{use of reference outside its lifetime}} expected-warning {{not yet bound to a value}}
+    constexpr int m = m; // expected-error {{constant expression}} expected-note {{read of object outside its lifetime}}
+  }
+
+  constexpr int &get(int &&n) { return n; }
+  struct S {
+    int &&r; // expected-note 2{{declared here}}
+    int &s;
+    int t;
+    constexpr S() : r(0), s(get(0)), t(r) {} // expected-warning {{temporary}}
+    constexpr S(int) : r(0), s(get(0)), t(s) {} // expected-warning {{temporary}} expected-note {{read of object outside its lifetime}}
+  };
+  constexpr int k1 = S().t; // ok, int is lifetime-extended to end of constructor
+  constexpr int k2 = S(0).t; // expected-error {{constant expression}} expected-note {{in call}}
+}

@@ -93,6 +93,9 @@ def note_constexpr_lifetime_ended : Note<
 def note_constexpr_access_uninit : Note<
   "%select{read of|assignment to|increment of|decrement of}0 "
   "object outside its lifetime is not allowed in a constant expression">;
+def note_constexpr_use_uninit_reference : Note<
+  "use of reference outside its lifetime "
+  "is not allowed in a constant expression">;
 def note_constexpr_modify_const_type : Note<
   "modification of object of const-qualified type %0 is not allowed "
   "in a constant expression">;

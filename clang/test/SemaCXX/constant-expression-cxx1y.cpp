@@ -814,3 +814,59 @@ namespace VirtualFromBase {
   constexpr X<S2> *q = const_cast<X<X<S2>>*>(&xxs2);
   static_assert(q->f() == sizeof(X<S2>), ""); // expected-error {{constant expression}} expected-note {{virtual function call}}
 }
+
+namespace Lifetime {
+  constexpr int &get(int &&r) { return r; }
+  constexpr int f() {
+    int &r = get(123);
+    return r; // expected-note {{read of object outside its lifetime}}
+  }
+  static_assert(f() == 123, ""); // expected-error {{constant expression}} expected-note {{in call}}
+
+  constexpr int g() {
+    int *p = 0;
+    {
+      int n = 0;
+      p = &n;
+      n = 42;
+    }
+    *p = 123; // expected-note {{assignment to object outside its lifetime}}
+    return *p;
+  }
+  static_assert(g() == 42, ""); // expected-error {{constant expression}} expected-note {{in call}}
+
+  constexpr int h(int n) {
+    int *p[4] = {};
+    int &&r = 1;
+    p[0] = &r;
+    while (int a = 1) {
+      p[1] = &a;
+      for (int b = 1; int c = 1; ) {
+        p[2] = &b, p[3] = &c;
+        break;
+      }
+      break;
+    }
+    *p[n] = 0; // expected-note 3{{assignment to object outside its lifetime}}
+    return *p[n];
+  }
+  static_assert(h(0) == 0, ""); // ok, lifetime-extended
+  static_assert(h(1) == 0, ""); // expected-error {{constant expression}} expected-note {{in call}}
+  static_assert(h(2) == 0, ""); // expected-error {{constant expression}} expected-note {{in call}}
+  static_assert(h(3) == 0, ""); // expected-error {{constant expression}} expected-note {{in call}}
+
+  // FIXME: This function should be treated as non-constant.
+  constexpr void lifetime_versus_loops() {
+    int *p = 0;
+    for (int i = 0; i != 2; ++i) {
+      int *q = p;
+      int n = 0;
+      p = &n;
+      if (i)
+        // This modifies the 'n' from the previous iteration of the loop outside
+        // its lifetime.
+        ++*q;
+    }
+  }
+  static_assert((lifetime_versus_loops(), true), "");
+}
