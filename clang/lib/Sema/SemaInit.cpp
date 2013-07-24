@@ -2455,10 +2455,10 @@ InitializedEntity::InitializedEntity(ASTContext &Context, unsigned Index,
   }
 }
 
-InitializedEntity InitializedEntity::InitializeBase(ASTContext &Context,
-                                                    CXXBaseSpecifier *Base,
-                                                    bool IsInheritedVirtualBase)
-{
+InitializedEntity
+InitializedEntity::InitializeBase(ASTContext &Context,
+                                  const CXXBaseSpecifier *Base,
+                                  bool IsInheritedVirtualBase) {
   InitializedEntity Result;
   Result.Kind = EK_Base;
   Result.Parent = 0;

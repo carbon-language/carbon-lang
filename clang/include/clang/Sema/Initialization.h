@@ -274,7 +274,7 @@ public:
 
   /// \brief Create the initialization entity for a base class subobject.
   static InitializedEntity InitializeBase(ASTContext &Context,
-                                          CXXBaseSpecifier *Base,
+                                          const CXXBaseSpecifier *Base,
                                           bool IsInheritedVirtualBase);
 
   /// \brief Create the initialization entity for a delegated constructor.
@@ -359,9 +359,9 @@ public:
   }
                                   
   /// \brief Retrieve the base specifier.
-  CXXBaseSpecifier *getBaseSpecifier() const {
+  const CXXBaseSpecifier *getBaseSpecifier() const {
     assert(getKind() == EK_Base && "Not a base specifier");
-    return reinterpret_cast<CXXBaseSpecifier *>(Base & ~0x1);
+    return reinterpret_cast<const CXXBaseSpecifier *>(Base & ~0x1);
   }
 
   /// \brief Return whether the base is an inherited virtual base.
