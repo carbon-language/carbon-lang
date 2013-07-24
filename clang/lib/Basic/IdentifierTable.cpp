@@ -471,6 +471,9 @@ ObjCInstanceTypeFamily Selector::getInstTypeMethodFamily(Selector sel) {
     case 'i':
       if (startsWithWord(name, "init")) return OIT_MemManage;
       break;
+    case 'r':
+      if (startsWithWord(name, "retain")) return OIT_MemManage;
+      break;
     case 's':
       if (startsWithWord(name, "string")) return OIT_NSString;
       else

@@ -7,12 +7,12 @@ typedef signed char BOOL;
 #define nil ((void*) 0)
 
 @interface NSObject
-+ (id)alloc;
++ (instancetype)alloc;
 @end
 
 @interface NSString : NSObject
 + (id)stringWithString:(NSString *)string;
-- (id)initWithString:(NSString *)aString;
+- (instancetype)initWithString:(NSString *)aString;
 @end
 
 @interface NSArray : NSObject
@@ -27,9 +27,9 @@ typedef signed char BOOL;
 + (instancetype)arrayWithObjects:(id)firstObj, ...;
 + (instancetype) arrayWithArray:(NSArray *)array;
 
-- (id)initWithObjects:(const id [])objects count:(unsigned long)cnt;
-- (id)initWithObjects:(id)firstObj, ...;
-- (id)initWithArray:(NSArray *)array;
+- (instancetype)initWithObjects:(const id [])objects count:(unsigned long)cnt;
+- (instancetype)initWithObjects:(id)firstObj, ...;
+- (instancetype)initWithArray:(NSArray *)array;
 
 - (id)objectAtIndex:(unsigned long)index;
 @end
@@ -51,10 +51,10 @@ typedef signed char BOOL;
 + (instancetype)dictionaryWithDictionary:(NSDictionary *)dict;
 + (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
 
-- (id)initWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
-- (id)initWithObjectsAndKeys:(id)firstObject, ...;
-- (id)initWithDictionary:(NSDictionary *)otherDictionary;
-- (id)initWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
+- (instancetype)initWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
+- (instancetype)initWithObjectsAndKeys:(id)firstObject, ...;
+- (instancetype)initWithDictionary:(NSDictionary *)otherDictionary;
+- (instancetype)initWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
 
 - (id)objectForKey:(id)aKey;
 @end

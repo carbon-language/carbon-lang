@@ -556,11 +556,16 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     Selector::getInstTypeMethodFamily(OM->getSelector());
   if (OIT_Family == OIT_None)
     return;
-  // TODO. Many more to come
+  std::string ClassName;
   switch (OIT_Family) {
     case OIT_Array:
+      ClassName = "NSArray";
       break;
     case OIT_Dictionary:
+      ClassName = "NSDictionary";
+      break;
+    case OIT_MemManage:
+      ClassName = "NSObject";
       break;
     default:
       return;
@@ -575,14 +580,8 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     else if (ObjCImplDecl *ImpDecl = dyn_cast<ObjCImplDecl>(CDecl))
       IDecl = ImpDecl->getClassInterface();
   }
-  if (!IDecl)
-    return;
-  
-  if (OIT_Family ==  OIT_Array &&
-      !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSArray")))
-    return;
-  else if (OIT_Family == OIT_Dictionary &&
-           !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSDictionary")))
+  if (!IDecl ||
+      !IDecl->lookupInheritedClass(&Ctx.Idents.get(ClassName)))
     return;
   
   SourceRange R;
