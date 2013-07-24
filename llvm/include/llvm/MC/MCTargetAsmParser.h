@@ -143,7 +143,7 @@ public:
 
   /// mnemonicIsValid - This returns true if this is a valid mnemonic and false
   /// otherwise.
-  virtual bool mnemonicIsValid(StringRef Mnemonic) = 0;
+  virtual bool mnemonicIsValid(StringRef Mnemonic, unsigned VariantID) = 0;
 
   /// MatchAndEmitInstruction - Recognize a series of operands of a parsed
   /// instruction as an actual MCInst and emit it to the specified MCStreamer.

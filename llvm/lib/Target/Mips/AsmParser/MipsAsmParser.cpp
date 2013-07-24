@@ -1501,7 +1501,7 @@ bool MipsAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // Check if we have valid mnemonic
-  if (!mnemonicIsValid(Name)) {
+  if (!mnemonicIsValid(Name, 0)) {
     Parser.eatToEndOfStatement();
     return Error(NameLoc, "Unknown instruction");
   }
