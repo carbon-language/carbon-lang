@@ -1,4 +1,4 @@
-; RUN: opt -S -deadargelim < %s | FileCheck %s
+; RUN: opt -S -deadargelim -disable-debug-info-verifier < %s | FileCheck %s
 
 @.str = private constant [1 x i8] zeroinitializer, align 1 ; <[1 x i8]*> [#uses=1]
 

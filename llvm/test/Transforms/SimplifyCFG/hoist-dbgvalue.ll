@@ -1,4 +1,4 @@
-; RUN: opt -simplifycfg -S < %s | FileCheck %s
+; RUN: opt -simplifycfg -S -disable-debug-info-verifier < %s | FileCheck %s
 
 define i32 @foo(i32 %i) nounwind ssp {
   call void @llvm.dbg.value(metadata !{i32 %i}, i64 0, metadata !6), !dbg !7
