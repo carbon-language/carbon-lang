@@ -417,10 +417,12 @@ bool DIType::isUnsignedDIType() {
 bool DICompileUnit::Verify() const {
   if (!isCompileUnit())
     return false;
-  StringRef N = getFilename();
-  if (N.empty())
+
+  // Don't bother verifying the compilation directory or producer string
+  // as those could be empty.
+  if (getFilename().empty())
     return false;
-  // It is possible that directory and produce string is empty.
+
   return DbgNode->getNumOperands() == 13;
 }
 
