@@ -585,11 +585,19 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
            !IDecl->lookupInheritedClass(&Ctx.Idents.get("NSDictionary")))
     return;
   
-  TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo();
-  TypeLoc TL = TSInfo->getTypeLoc();
-  SourceRange R = SourceRange(TL.getBeginLoc(), TL.getEndLoc());
+  SourceRange R;
+  std::string ClassString;
+  if (TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo()) {
+    TypeLoc TL = TSInfo->getTypeLoc();
+    R = SourceRange(TL.getBeginLoc(), TL.getEndLoc());
+    ClassString = "instancetype";
+  }
+  else {
+    R = SourceRange(OM->getLocStart(), OM->getLocStart());
+    ClassString = OM->isInstanceMethod() ? '-' : '+';
+    ClassString += " (instancetype)";
+  }
   edit::Commit commit(*Editor);
-  std::string ClassString = "instancetype";
   commit.replace(R, ClassString);
   Editor->commit(commit);
 }

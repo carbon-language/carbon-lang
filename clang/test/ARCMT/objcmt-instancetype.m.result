@@ -25,7 +25,7 @@ typedef signed char BOOL;
 + (instancetype)arrayWithObject:(id)anObject;
 + (instancetype)arrayWithObjects:(const id [])objects count:(unsigned long)cnt;
 + (instancetype)arrayWithObjects:(id)firstObj, ...;
-+ (instancetype)arrayWithArray:(NSArray *)array;
++ (instancetype) arrayWithArray:(NSArray *)array;
 
 - (id)initWithObjects:(const id [])objects count:(unsigned long)cnt;
 - (id)initWithObjects:(id)firstObj, ...;
@@ -47,7 +47,7 @@ typedef signed char BOOL;
 + (instancetype)dictionary;
 + (instancetype)dictionaryWithObject:(id)object forKey:(id)key;
 + (instancetype)dictionaryWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
-+ (instancetype)dictionaryWithObjectsAndKeys:(id)firstObject, ...;
++ (instancetype) dictionaryWithObjectsAndKeys:(id)firstObject, ...;
 + (instancetype)dictionaryWithDictionary:(NSDictionary *)dict;
 + (instancetype)dictionaryWithObjects:(NSArray *)objects forKeys:(NSArray *)keys;
 
