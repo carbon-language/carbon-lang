@@ -563,8 +563,19 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
 
 namespace {
   class StrDupSaver : public StringSaver {
+    std::vector<char*> Dups;
+  public:
+    ~StrDupSaver() {
+      for (std::vector<char *>::iterator I = Dups.begin(), E = Dups.end();
+           I != E; ++I) {
+        char *Dup = *I;
+        free(Dup);
+      }
+    }
     const char *SaveString(const char *Str) LLVM_OVERRIDE {
-      return strdup(Str);
+      char *Dup = strdup(Str);
+      Dups.push_back(Dup);
+      return Dup;
     }
   };
 }
@@ -588,20 +599,14 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // Get program's "name", which we wouldn't know without the caller
   // telling us.
   SmallVector<const char *, 20> newArgv;
-  newArgv.push_back(strdup(progName));
+  StrDupSaver Saver;
+  newArgv.push_back(Saver.SaveString(progName));
 
   // Parse the value of the environment variable into a "command line"
   // and hand it off to ParseCommandLineOptions().
-  StrDupSaver Saver;
   TokenizeGNUCommandLine(envValue, Saver, newArgv);
   int newArgc = static_cast<int>(newArgv.size());
   ParseCommandLineOptions(newArgc, &newArgv[0], Overview);
-
-  // Free all the strdup()ed strings.
-  for (SmallVectorImpl<const char *>::iterator i = newArgv.begin(),
-                                               e = newArgv.end();
-       i != e; ++i)
-    free(const_cast<char *>(*i));
 }
 
 void cl::ParseCommandLineOptions(int argc, const char * const *argv,
@@ -618,7 +623,7 @@ void cl::ParseCommandLineOptions(int argc, const char * const *argv,
   // Expand response files.
   SmallVector<const char *, 20> newArgv;
   for (int i = 0; i != argc; ++i)
-    newArgv.push_back(strdup(argv[i]));
+    newArgv.push_back(argv[i]);
   StrDupSaver Saver;
   ExpandResponseFiles(Saver, TokenizeGNUCommandLine, newArgv);
   argv = &newArgv[0];
@@ -913,13 +918,6 @@ void cl::ParseCommandLineOptions(int argc, const char * const *argv,
   Opts.clear();
   PositionalOpts.clear();
   MoreHelp->clear();
-
-  // Free the memory allocated by ExpandResponseFiles.
-  // Free all the strdup()ed strings.
-  for (SmallVectorImpl<const char *>::iterator i = newArgv.begin(),
-                                               e = newArgv.end();
-       i != e; ++i)
-    free(const_cast<char *>(*i));
 
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
