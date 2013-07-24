@@ -141,24 +141,24 @@ Tuning/Configuration Options
 
 .. option:: --regalloc=<allocator>
 
- Specify the register allocator to use.  The default ``allocator`` is *local*.
+ Specify the register allocator to use.
  Valid register allocators are:
 
- *simple*
+ *basic*
 
-  Very simple "always spill" register allocator
+  Basic register allocator.
 
- *local*
+ *fast*
 
-  Local register allocator
+  Fast register allcator. It is default for unoptimized code.
 
- *linearscan*
+ *greedy*
 
-  Linear scan global register allocator
+  Greedy register allcator. It is default for optimized code.
 
- *iterativescan*
+ *pbqp*
 
-  Iterative scan global register allocator
+  Register allocator based on 'Partitioned Boolean Quadratic Programming'.
 
 .. option:: --spiller=<spiller>
 
