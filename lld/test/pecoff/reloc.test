@@ -2,7 +2,7 @@
 #
 # RUN: llvm-objdump -d %t.obj | FileCheck -check-prefix=BEFORE %s
 #
-# RUN: lld -flavor link -out %t1 -subsystem console -force -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj \
 # RUN:   && llvm-objdump -d %t1 | FileCheck -check-prefix=AFTER %s
 
 BEFORE: Disassembly of section .text:

@@ -3,19 +3,19 @@
 #
 # RUN: yaml2obj %p/Inputs/vars-main.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link -out %t1 -subsystem console -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /subsystem:console -- %t.obj \
 # RUN:    %p/Inputs/vars.lib && llvm-objdump -d %t1 | FileCheck %s
 #
-# RUN: lld -flavor link -out %t1 -subsystem console -libpath %p/Inputs \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /libpath:%p/Inputs \
 # RUN:    -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
 #
-# RUN: lld -flavor link -out %t1 -subsystem console -libpath %p/Inputs \
-# RUN:    -defaultlib vars.lib -- %t.obj && llvm-objdump -d %t1 | FileCheck %s
+# RUN: lld -flavor link /out:%t1 /subsystem:console /libpath:%p/Inputs \
+# RUN:    /defaultlib:vars.lib -- %t.obj && llvm-objdump -d %t1 | FileCheck %s
 #
-# RUN: LIB=%p/Inputs lld -flavor link -out %t1 -subsystem console \
+# RUN: LIB=%p/Inputs lld -flavor link /out:%t1 /subsystem:console \
 # RUN:    -- %t.obj vars.lib && llvm-objdump -d %t1 | FileCheck %s
 #
-# RUN: LINK="-out %t1 -subsystem console -- %t.obj" lld -flavor link \
+# RUN: LINK="/out:%t1 /subsystem:console -- %t.obj" lld -flavor link \
 # RUN:    %p/Inputs/vars.lib && llvm-objdump -d %t1 | FileCheck %s
 
 CHECK: Disassembly of section .text:

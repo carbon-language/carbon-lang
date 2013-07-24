@@ -1,9 +1,9 @@
 # RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link -out %t1 -subsystem console -force -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force -- %t.obj \
 # RUN:   && llvm-objdump -s %t1 | FileCheck %s --check-prefix=BASEREL
 #
-# RUN: lld -flavor link -out %t1 -subsystem console -force -fixed -- %t.obj \
+# RUN: lld -flavor link /out:%t1 /subsystem:console /force /fixed -- %t.obj \
 # RUN:   && llvm-objdump -s %t1 | FileCheck %s --check-prefix=NOBASEREL
 
 # Because llvm-objdump cannot pretty-print the contents of .reloc section, we

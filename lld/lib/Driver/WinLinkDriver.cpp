@@ -80,7 +80,7 @@ bool checkNumber(StringRef version, const char *errorMessage,
   return true;
 }
 
-// Parse an argument for -base, -stack or -heap. The expected string
+// Parse an argument for /base, /stack or /heap. The expected string
 // is "<integer>[,<integer>]".
 bool parseMemoryOption(const StringRef &arg, raw_ostream &diagnostics,
                        uint64_t &reserve, uint64_t &commit) {
@@ -97,7 +97,7 @@ bool parseMemoryOption(const StringRef &arg, raw_ostream &diagnostics,
   return true;
 }
 
-// Parse -base command line option. The argument for the parameter is in the
+// Parse /base command line option. The argument for the parameter is in the
 // form of "<address>[:<size>]".
 bool parseBaseOption(PECOFFTargetInfo &info, const StringRef &arg,
                       raw_ostream &diagnostics) {
@@ -117,7 +117,7 @@ bool parseBaseOption(PECOFFTargetInfo &info, const StringRef &arg,
   return true;
 }
 
-// Parse -stack command line option
+// Parse /stack command line option
 bool parseStackOption(PECOFFTargetInfo &info, const StringRef &arg,
                       raw_ostream &diagnostics) {
   uint64_t reserve;
@@ -129,7 +129,7 @@ bool parseStackOption(PECOFFTargetInfo &info, const StringRef &arg,
   return true;
 }
 
-// Parse -heap command line option.
+// Parse /heap command line option.
 bool parseHeapOption(PECOFFTargetInfo &info, const StringRef &arg,
                      raw_ostream &diagnostics) {
   uint64_t reserve;
@@ -166,7 +166,7 @@ bool parseMinOSVersion(PECOFFTargetInfo &info, const StringRef &osVersion,
   return true;
 }
 
-// Parse -subsystem command line option. The form of -subsystem is
+// Parse /subsystem command line option. The form of /subsystem is
 // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
 bool parseSubsystemOption(PECOFFTargetInfo &info, std::string arg,
                           raw_ostream &diagnostics) {
@@ -280,7 +280,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     return true;
   }
 
-  // Handle -help
+  // handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
     return true;
@@ -300,66 +300,66 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     info.appendLLVMOption((*it)->getValue());
   }
 
-  // Handle -base
+  // handle /base
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_base))
     if (!parseBaseOption(info, arg->getValue(), diagnostics))
       return true;
 
-  // Handle -stack
+  // handle /stack
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
     if (!parseStackOption(info, arg->getValue(), diagnostics))
       return true;
 
-  // Handle -heap
+  // handle /heap
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_heap))
     if (!parseHeapOption(info, arg->getValue(), diagnostics))
       return true;
 
-  // Handle -subsystem
+  // handle /subsystem
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))
     if (!parseSubsystemOption(info, arg->getValue(), diagnostics))
       return true;
 
-  // Handle -entry
+  // handle /entry
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
     info.setEntrySymbolName(arg->getValue());
 
-  // Handle -libpath
+  // handle /libpath
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_libpath),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
     info.appendInputSearchPath((*it)->getValue());
   }
 
-  // Handle -force
+  // handle /force
   if (parsedArgs->getLastArg(OPT_force))
     info.setAllowRemainingUndefines(true);
 
-  // Handle -nxcompat:no
+  // handle /nxcompat:no
   if (parsedArgs->getLastArg(OPT_no_nxcompat))
     info.setNxCompat(false);
 
-  // Handle -largeaddressaware
+  // handle /largeaddressaware
   if (parsedArgs->getLastArg(OPT_largeaddressaware))
     info.setLargeAddressAware(true);
 
-  // Handle -fixed
+  // handle /fixed
   if (parsedArgs->getLastArg(OPT_fixed))
     info.setBaseRelocationEnabled(false);
 
-  // Handle -tsaware:no
+  // handle /tsaware:no
   if (parsedArgs->getLastArg(OPT_no_tsaware))
     info.setTerminalServerAware(false);
 
-  // Handle -include
+  // handle /include
   if (llvm::opt::Arg *sym = parsedArgs->getLastArg(OPT_incl))
     info.addInitialUndefinedSymbol(sym->getValue());
 
-  // Handle -out
+  // handle /out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
     info.setOutputPath(outpath->getValue());
 
-  // Handle -defaultlib
+  // handle /defaultlib
   std::vector<StringRef> defaultLibs;
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_defaultlib),
                                ie = parsedArgs->filtered_end();
@@ -384,13 +384,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   for (const StringRef path : inputPaths)
     info.appendInputFileOrLibrary(path);
 
-  // Add the library files specified by -defaultlib option. The files
+  // Add the library files specified by /defaultlib option. The files
   // specified by the option should have lower precedence than the other files
   // added above, which is important for link.exe compatibility.
   for (const StringRef path : defaultLibs)
     info.appendLibraryFile(path);
 
-  // If -out option was not specified, the default output file name is
+  // If /out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file
   // with ".exe".
   if (info.outputPath().empty() && !inputPaths.empty())

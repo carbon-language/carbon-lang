@@ -32,8 +32,8 @@ protected:
 };
 
 TEST_F(WinLinkParserTest, Basic) {
-  EXPECT_FALSE(parse("link.exe", "-subsystem", "console", "-out", "a.exe",
-        "-entry", "_start", "a.obj", "b.obj", "c.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe",
+        "-entry:_start", "a.obj", "b.obj", "c.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _info.getSubsystem());
   EXPECT_EQ("a.exe", _info.outputPath());
   EXPECT_EQ("_start", _info.entrySymbolName());
@@ -57,9 +57,9 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_info.initialUndefinedSymbols().empty());
 }
 
-TEST_F(WinLinkParserTest, WindowsStyleOption) {
-  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe", "a.obj",
-                  nullptr));
+TEST_F(WinLinkParserTest, UnixStyleOption) {
+  EXPECT_FALSE(parse("link.exe", "-subsystem", "console", "-out", "a.exe",
+                     "a.obj", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _info.getSubsystem());
   EXPECT_EQ("a.exe", _info.outputPath());
   EXPECT_EQ(1, inputFileCount());
@@ -82,7 +82,7 @@ TEST_F(WinLinkParserTest, NonStandardFileExtension) {
 }
 
 TEST_F(WinLinkParserTest, Libpath) {
-  EXPECT_FALSE(parse("link.exe", "-libpath", "dir1", "-libpath", "dir2",
+  EXPECT_FALSE(parse("link.exe", "/libpath:dir1", "/libpath:dir2",
                      "a.obj", nullptr));
   const std::vector<StringRef> &paths = _info.getInputSearchPaths();
   EXPECT_EQ(2U, paths.size());
@@ -91,90 +91,90 @@ TEST_F(WinLinkParserTest, Libpath) {
 }
 
 TEST_F(WinLinkParserTest, MinMajorOSVersion) {
-  EXPECT_FALSE(parse("link.exe", "-subsystem", "windows,3", "foo.o", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/subsystem:windows,3", "foo.o", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _info.getSubsystem());
   EXPECT_EQ(3, _info.getMinOSVersion().majorVersion);
   EXPECT_EQ(0, _info.getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
-  EXPECT_FALSE(parse("link.exe", "-subsystem", "windows,3.1", "foo.o", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/subsystem:windows,3.1", "foo.o", nullptr));
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI, _info.getSubsystem());
   EXPECT_EQ(3, _info.getMinOSVersion().majorVersion);
   EXPECT_EQ(1, _info.getMinOSVersion().minorVersion);
 }
 
 TEST_F(WinLinkParserTest, Base) {
-  EXPECT_FALSE(parse("link.exe", "-base", "8388608", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/base:8388608", "a.obj", nullptr));
   EXPECT_EQ(0x800000U, _info.getBaseAddress());
 }
 
 TEST_F(WinLinkParserTest, StackReserve) {
-  EXPECT_FALSE(parse("link.exe", "-stack", "8192", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/stack:8192", "a.obj", nullptr));
   EXPECT_EQ(8192U, _info.getStackReserve());
   EXPECT_EQ(4096U, _info.getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, StackReserveAndCommit) {
-  EXPECT_FALSE(parse("link.exe", "-stack", "16384,8192", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/stack:16384,8192", "a.obj", nullptr));
   EXPECT_EQ(16384U, _info.getStackReserve());
   EXPECT_EQ(8192U, _info.getStackCommit());
 }
 
 TEST_F(WinLinkParserTest, HeapReserve) {
-  EXPECT_FALSE(parse("link.exe", "-heap", "8192", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/heap:8192", "a.obj", nullptr));
   EXPECT_EQ(8192U, _info.getHeapReserve());
   EXPECT_EQ(4096U, _info.getHeapCommit());
 }
 
 TEST_F(WinLinkParserTest, HeapReserveAndCommit) {
-  EXPECT_FALSE(parse("link.exe", "-heap", "16384,8192", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/heap:16384,8192", "a.obj", nullptr));
   EXPECT_EQ(16384U, _info.getHeapReserve());
   EXPECT_EQ(8192U, _info.getHeapCommit());
 }
 
 TEST_F(WinLinkParserTest, Force) {
-  EXPECT_FALSE(parse("link.exe", "-force", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/force", "a.obj", nullptr));
   EXPECT_TRUE(_info.allowRemainingUndefines());
 }
 
 TEST_F(WinLinkParserTest, NoNxCompat) {
-  EXPECT_FALSE(parse("link.exe", "-nxcompat:no", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/nxcompat:no", "a.obj", nullptr));
   EXPECT_FALSE(_info.isNxCompat());
 }
 
 TEST_F(WinLinkParserTest, LargeAddressAware) {
-  EXPECT_FALSE(parse("link.exe", "-largeaddressaware", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/largeaddressaware", "a.obj", nullptr));
   EXPECT_TRUE(_info.getLargeAddressAware());
 }
 
 TEST_F(WinLinkParserTest, NoLargeAddressAware) {
-  EXPECT_FALSE(parse("link.exe", "-largeaddressaware:no", "a.obj", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/largeaddressaware:no", "a.obj", nullptr));
   EXPECT_FALSE(_info.getLargeAddressAware());
 }
 
 TEST_F(WinLinkParserTest, Fixed) {
-  EXPECT_FALSE(parse("link.exe", "-fixed", "a.out", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/fixed", "a.out", nullptr));
   EXPECT_FALSE(_info.getBaseRelocationEnabled());
 }
 
 TEST_F(WinLinkParserTest, NoFixed) {
-  EXPECT_FALSE(parse("link.exe", "-fixed:no", "a.out", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/fixed:no", "a.out", nullptr));
   EXPECT_TRUE(_info.getBaseRelocationEnabled());
 }
 
 TEST_F(WinLinkParserTest, TerminalServerAware) {
-  EXPECT_FALSE(parse("link.exe", "-tsaware", "a.out", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/tsaware", "a.out", nullptr));
   EXPECT_TRUE(_info.isTerminalServerAware());
 }
 
 TEST_F(WinLinkParserTest, NoTerminalServerAware) {
-  EXPECT_FALSE(parse("link.exe", "-tsaware:no", "a.out", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/tsaware:no", "a.out", nullptr));
   EXPECT_FALSE(_info.isTerminalServerAware());
 }
 
 TEST_F(WinLinkParserTest, Include) {
-  EXPECT_FALSE(parse("link.exe", "-include", "foo", "a.out", nullptr));
+  EXPECT_FALSE(parse("link.exe", "/include:foo", "a.out", nullptr));
   auto symbols = _info.initialUndefinedSymbols();
   EXPECT_FALSE(symbols.empty());
   EXPECT_EQ("foo", symbols[0]);

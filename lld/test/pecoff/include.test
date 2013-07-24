@@ -1,7 +1,7 @@
 # RUN: yaml2obj %p/Inputs/nop.obj.yaml > %t.obj
 #
-# RUN: not lld -flavor link -out %t1 -subsystem console \
-# RUN:   -include nosuchsym -- %t.obj 2> %t1
+# RUN: not lld -flavor link /out:%t1 /subsystem:console \
+# RUN:   /include:nosuchsym -- %t.obj 2> %t1
 # RUN: FileCheck %s < %t1
 
 CHECK: Undefined Symbol: Linker Internal File : nosuchsym
