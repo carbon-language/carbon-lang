@@ -484,7 +484,7 @@ ParseFreeBSDThrMisc(ThreadData *thread_data, DataExtractor &data)
 ///    a) Each thread context(2 or more NOTE entries) contained in its own segment (PT_NOTE)
 ///    b) All thread context is stored in a single segment(PT_NOTE).
 ///        This case is little tricker since while parsing we have to find where the
-///        new thread starts. The current implementation marks begining of 
+///        new thread starts. The current implementation marks beginning of 
 ///        new thread when it finds NT_PRSTATUS or NT_PRPSINFO NOTE entry.
 ///    For case (b) there may be either one NT_PRPSINFO per thread, or a single
 ///    one that applies to all threads (depending on the platform type).
@@ -511,7 +511,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
         ELFNote note = ELFNote();
         note.Parse(segment_data, &offset);
 
-        // Begining of new thread
+        // Beginning of new thread
         if ((note.n_type == NT_PRSTATUS && have_prstatus) ||
             (note.n_type == NT_PRPSINFO && have_prpsinfo))
         {
