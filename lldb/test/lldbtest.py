@@ -296,6 +296,8 @@ def getsource_if_available(obj):
         return repr(obj)
 
 def builder_module():
+    if sys.platform.startswith("freebsd"):
+        return __import__("builder_freebsd")
     return __import__("builder_" + sys.platform)
 
 #
