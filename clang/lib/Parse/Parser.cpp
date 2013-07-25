@@ -279,6 +279,16 @@ bool Parser::SkipUntil(ArrayRef<tok::TokenKind> Toks, bool StopAtSemi,
       }
     }
 
+    // Important special case: The caller has given up and just wants us to
+    // skip the rest of the file. Do this without recursing, since we can
+    // get here precisely because the caller detected too much recursion.
+    if (Toks.size() == 1 && Toks[0] == tok::eof && !StopAtSemi &&
+        !StopAtCodeCompletion) {
+      while (Tok.getKind() != tok::eof)
+        ConsumeAnyToken();
+      return true;
+    }
+
     switch (Tok.getKind()) {
     case tok::eof:
       // Ran out of tokens.
@@ -1908,7 +1918,7 @@ bool BalancedDelimiterTracker::diagnoseOverflow() {
   P.Diag(P.Tok, diag::err_bracket_depth_exceeded)
     << P.getLangOpts().BracketDepth;
   P.Diag(P.Tok, diag::note_bracket_depth);
-  P.SkipUntil(tok::eof, FinalToken);
+  P.SkipUntil(tok::eof, false);
   return true;  
 }
 
