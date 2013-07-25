@@ -1320,7 +1320,7 @@ class Base(unittest2.TestCase):
                  'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
                  'LD_EXTRAS' : "%s -rpath %s" % (dsym, self.lib_dir),
                 }
-        elif sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
+        elif sys.platform.startswith('freebsd') or sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'CXX_SOURCES' : sources, 
                  'EXE' : exe_name,
                  'CFLAGS_EXTRAS' : "%s -I%s" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
