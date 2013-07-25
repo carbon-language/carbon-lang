@@ -19,6 +19,7 @@ class DeadStripTestCase(TestBase):
         self.buildDsym()
         self.dead_strip()
 
+    @skipIfFreeBSD # The -dead_strip linker option isn't supported on FreeBSD versions of ld.
     @skipIfLinux # The -dead_strip linker option isn't supported on Linux versions of ld.
     @dwarf_test
     def test_with_dwarf(self):
