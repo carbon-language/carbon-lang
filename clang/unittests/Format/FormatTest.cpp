@@ -544,7 +544,21 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                      "  }\n"
                      "}");
   verifyGoogleFormat("switch (test)\n"
-                     "    ;");
+                     "  ;");
+
+  verifyGoogleFormat("#define OPERATION_CASE(name) \\\n"
+                     "  case OP_name:              \\\n"
+                     "    return operations::Operation##name\n");
+  verifyGoogleFormat("Operation codeToOperation(OperationCode OpCode) {\n"
+                     "  // Get the correction operation class.\n"
+                     "  switch (OpCode) {\n"
+                     "    CASE(Add);\n"
+                     "    CASE(Subtract);\n"
+                     "    default:\n"
+                     "      return operations::Unknown;\n"
+                     "  }\n"
+                     "#undef OPERATION_CASE\n"
+                     "}");
 }
 
 TEST_F(FormatTest, FormatsLabels) {

@@ -213,6 +213,7 @@ void UnwrappedLineParser::parseFile() {
 }
 
 void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
+  bool SwitchLabelEncountered = false;
   do {
     switch (FormatTok->Tok.getKind()) {
     case tok::comment:
@@ -231,6 +232,13 @@ void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       StructuralError = true;
       nextToken();
       addUnwrappedLine();
+      break;
+    case tok::kw_default:
+    case tok::kw_case:
+      if (!SwitchLabelEncountered)
+        Line->Level += Style.IndentCaseLabels;
+      SwitchLabelEncountered = true;
+      parseStructuralElement();
       break;
     default:
       parseStructuralElement();
@@ -314,6 +322,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
 void UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
                                      unsigned AddLevels) {
   assert(FormatTok->Tok.is(tok::l_brace) && "'{' expected");
+  unsigned InitialLevel = Line->Level;
   nextToken();
 
   addUnwrappedLine();
@@ -324,13 +333,13 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
   parseLevel(/*HasOpeningBrace=*/true);
 
   if (!FormatTok->Tok.is(tok::r_brace)) {
-    Line->Level -= AddLevels;
+    Line->Level = InitialLevel;
     StructuralError = true;
     return;
   }
 
   nextToken(); // Munch the closing brace.
-  Line->Level -= AddLevels;
+  Line->Level = InitialLevel;
 }
 
 void UnwrappedLineParser::parsePPDirective() {
@@ -865,13 +874,13 @@ void UnwrappedLineParser::parseSwitch() {
   if (FormatTok->Tok.is(tok::l_paren))
     parseParens();
   if (FormatTok->Tok.is(tok::l_brace)) {
-    parseBlock(/*MustBeDeclaration=*/false, Style.IndentCaseLabels ? 2 : 1);
+    parseBlock(/*MustBeDeclaration=*/false, 1);
     addUnwrappedLine();
   } else {
     addUnwrappedLine();
-    Line->Level += (Style.IndentCaseLabels ? 2 : 1);
+    ++Line->Level;
     parseStructuralElement();
-    Line->Level -= (Style.IndentCaseLabels ? 2 : 1);
+    --Line->Level;
   }
 }
 
