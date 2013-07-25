@@ -212,7 +212,7 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
 
 /// constructScopeNest
 void LexicalScopes::constructScopeNest(LexicalScope *Scope) {
-  assert (Scope && "Unable to calculate scop edominance graph!");
+  assert (Scope && "Unable to calculate scope dominance graph!");
   SmallVector<LexicalScope *, 4> WorkStack;
   WorkStack.push_back(Scope);
   unsigned Counter = 0;
