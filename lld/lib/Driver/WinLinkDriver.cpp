@@ -373,8 +373,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     info.setTerminalServerAware(false);
 
   // handle /include
-  if (llvm::opt::Arg *sym = parsedArgs->getLastArg(OPT_incl))
-    info.addInitialUndefinedSymbol(sym->getValue());
+  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_incl),
+                               ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    info.addInitialUndefinedSymbol((*it)->getValue());
+  }
 
   // handle /out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
