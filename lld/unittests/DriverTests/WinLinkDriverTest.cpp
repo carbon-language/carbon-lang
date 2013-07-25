@@ -187,4 +187,15 @@ TEST_F(WinLinkParserTest, NoInputFiles) {
   EXPECT_EQ("No input files\n", errorMessage());
 }
 
+TEST_F(WinLinkParserTest, FailIfMismatch_Match) {
+  EXPECT_FALSE(parse("link.exe", "/failifmismatch:foo=bar",
+                     "/failifmismatch:foo=bar", "/failifmismatch:abc=def",
+                     "a.out", nullptr));
+}
+
+TEST_F(WinLinkParserTest, FailIfMismatch_Mismatch) {
+  EXPECT_TRUE(parse("link.exe", "/failifmismatch:foo=bar",
+                    "/failifmismatch:foo=baz", "a.out", nullptr));
+}
+
 } // end anonymous namespace

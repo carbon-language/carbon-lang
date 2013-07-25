@@ -59,5 +59,9 @@ def incl : _Separate<"include">,
     HelpText<"Force symbol to be added to symbol table as undefined one">;
 def incl_c : _Joined<"include:", incl>;
 
+// No help text because /failifmismatch is not intended to be used by the user.
+def failifmismatch : _Separate<"failifmismatch">;
+def failifmismatch_c : _Joined<"failifmismatch:", failifmismatch>;
+
 def help : _Flag<"help">;
 def help_q : _Flag<"?">, Alias<help>;

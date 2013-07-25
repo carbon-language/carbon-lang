@@ -15,6 +15,7 @@
 
 #include <cstdlib>
 #include <sstream>
+#include <map>
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -215,6 +216,26 @@ std::vector<StringRef> splitPathList(StringRef str) {
   return std::move(ret);
 }
 
+// Handle /failifmatch option.
+bool handleFailIfMismatchOption(StringRef option,
+                                std::map<StringRef, StringRef> &mustMatch,
+                                raw_ostream &diagnostics) {
+  StringRef key, value;
+  llvm::tie(key, value) = option.split('=');
+  if (key.empty() || value.empty()) {
+    diagnostics << "error: malformed /failifmatch option: " << option << "\n";
+    return false;
+  }
+  auto it = mustMatch.find(key);
+  if (it != mustMatch.end() && it->second != value) {
+    diagnostics << "error: mismatch detected: '" << it->second << "' and '"
+                << value << "' for key '" << key << "'\n";
+    return false;
+  }
+  mustMatch[key] = value;
+  return true;
+}
+
 // Process "LINK" environment variable. If defined, the value of the variable
 // should be processed as command line arguments.
 std::vector<const char *> processLinkEnv(PECOFFTargetInfo &info,
@@ -365,6 +386,23 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
     defaultLibs.push_back((*it)->getValue());
+  }
+
+  // Handle /failifmismatch. /failifmismatch is the hidden linker option behind
+  // the scenes of "detect_mismatch" pragma. If the compiler finds "#pragma
+  // detect_mismatch(name, value)", it outputs "/failifmismatch:name=value" to
+  // the .drectve section of the resultant object file. The linker raises an
+  // error if conflicting /failmismatch options are given. Conflicting options
+  // are the options with the same key but with different values.
+  //
+  // This feature is used to prevent inconsistent object files from linking.
+  std::map<StringRef, StringRef> mustMatch;
+  for (llvm::opt::arg_iterator
+           it = parsedArgs->filtered_begin(OPT_failifmismatch),
+           ie = parsedArgs->filtered_end();
+       it != ie; ++it) {
+    if (!handleFailIfMismatchOption((*it)->getValue(), mustMatch, diagnostics))
+      return true;
   }
 
   // Add input files
