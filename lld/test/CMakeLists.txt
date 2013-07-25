@@ -24,7 +24,7 @@ if ( NOT LLD_BUILT_STANDALONE )
   set(LLD_TEST_DEPS
     lld-test.deps
     FileCheck not llvm-nm
-    lld llvm-objdump llvm-readobj
+    lld llvm-objdump llvm-readobj yaml2obj
     linker-script-test
     LLDUnitTests
     )
