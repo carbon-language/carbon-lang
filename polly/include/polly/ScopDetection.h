@@ -72,6 +72,8 @@ class Value;
 namespace polly {
 typedef std::set<const SCEV *> ParamSetType;
 
+extern bool PollyTrackFailures;
+
 //===----------------------------------------------------------------------===//
 /// @brief Pass to detect the maximal static control parts (Scops) of a
 /// function.
@@ -144,6 +146,13 @@ class ScopDetection : public FunctionPass {
   /// @param CI The call instruction to check.
   /// @return True if the call instruction is valid, false otherwise.
   static bool isValidCallInst(CallInst &CI);
+
+  /// @brief Format the invalid alias message.
+  ///
+  /// @param AS The alias set.
+  ///
+  /// @return The failure message why the alias is invalid.
+  std::string formatInvalidAlias(AliasSet &AS) const;
 
   /// @brief Check if a memory access can be part of a Scop.
   ///
