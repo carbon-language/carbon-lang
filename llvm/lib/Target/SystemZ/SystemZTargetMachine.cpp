@@ -48,6 +48,7 @@ public:
   }
 
   virtual bool addInstSelector() LLVM_OVERRIDE;
+  virtual bool addPreSched2() LLVM_OVERRIDE;
   virtual bool addPreEmitPass() LLVM_OVERRIDE;
 };
 } // end anonymous namespace
@@ -55,6 +56,12 @@ public:
 bool SystemZPassConfig::addInstSelector() {
   addPass(createSystemZISelDag(getSystemZTargetMachine(), getOptLevel()));
   return false;
+}
+
+bool SystemZPassConfig::addPreSched2() {
+  if (getSystemZTargetMachine().getSubtargetImpl()->hasLoadStoreOnCond())
+    addPass(&IfConverterID);
+  return true;
 }
 
 bool SystemZPassConfig::addPreEmitPass() {

@@ -277,6 +277,58 @@ SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return Count;
 }
 
+// If Opcode is a move that has a conditional variant, return that variant,
+// otherwise return 0.
+static unsigned getConditionalMove(unsigned Opcode) {
+  switch (Opcode) {
+  case SystemZ::LR:  return SystemZ::LOCR;
+  case SystemZ::LGR: return SystemZ::LOCGR;
+  default:           return 0;
+  }
+}
+
+bool SystemZInstrInfo::isPredicable(MachineInstr *MI) const {
+  unsigned Opcode = MI->getOpcode();
+  if (TM.getSubtargetImpl()->hasLoadStoreOnCond() &&
+      getConditionalMove(Opcode))
+    return true;
+  return false;
+}
+
+bool SystemZInstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &MBB,
+                    unsigned NumCycles, unsigned ExtraPredCycles,
+                    const BranchProbability &Probability) const {
+  // For now only convert single instructions.
+  return NumCycles == 1;
+}
+
+bool SystemZInstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                    unsigned NumCyclesT, unsigned ExtraPredCyclesT,
+                    MachineBasicBlock &FMBB,
+                    unsigned NumCyclesF, unsigned ExtraPredCyclesF,
+                    const BranchProbability &Probability) const {
+  // For now avoid converting mutually-exclusive cases.
+  return false;
+}
+
+bool SystemZInstrInfo::
+PredicateInstruction(MachineInstr *MI,
+                     const SmallVectorImpl<MachineOperand> &Pred) const {
+  unsigned CCMask = Pred[0].getImm();
+  assert(CCMask > 0 && CCMask < 15 && "Invalid predicate");
+  unsigned Opcode = MI->getOpcode();
+  if (TM.getSubtargetImpl()->hasLoadStoreOnCond()) {
+    if (unsigned CondOpcode = getConditionalMove(Opcode)) {
+      MI->setDesc(get(CondOpcode));
+      MachineInstrBuilder(*MI->getParent()->getParent(), MI).addImm(CCMask);
+      return true;
+    }
+  }
+  return false;
+}
+
 void
 SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 			      MachineBasicBlock::iterator MBBI, DebugLoc DL,

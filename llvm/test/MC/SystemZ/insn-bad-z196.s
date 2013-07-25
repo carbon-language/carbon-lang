@@ -59,6 +59,22 @@
 	locg	%r0,0(%r1,%r2),1
 
 #CHECK: error: invalid operand
+#CHECK: locgr	%r0,%r0,-1
+#CHECK: error: invalid operand
+#CHECK: locgr	%r0,%r0,16
+
+	locgr	%r0,%r0,-1
+	locgr	%r0,%r0,16
+
+#CHECK: error: invalid operand
+#CHECK: locr	%r0,%r0,-1
+#CHECK: error: invalid operand
+#CHECK: locr	%r0,%r0,16
+
+	locr	%r0,%r0,-1
+	locr	%r0,%r0,16
+
+#CHECK: error: invalid operand
 #CHECK: sllk	%r0,%r0,-524289
 #CHECK: error: invalid operand
 #CHECK: sllk	%r0,%r0,524288

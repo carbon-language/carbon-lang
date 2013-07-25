@@ -112,6 +112,8 @@ multiclass CondExtendedMnemonic<bits<4> ccmask, string name> {
     def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
                      "jg"##name##"\t$I2", []>;
   }
+  def LOCR  : FixedCondUnaryRRF<"locr"##name,  0xB9F2, GR32, GR32, ccmask>;
+  def LOCGR : FixedCondUnaryRRF<"locgr"##name, 0xB9E2, GR64, GR64, ccmask>;
   def LOC   : FixedCondUnaryRSY<"loc"##name,   0xEBF2, GR32, ccmask, 4>;
   def LOCG  : FixedCondUnaryRSY<"locg"##name,  0xEBE2, GR64, ccmask, 8>;
   def STOC  : FixedCondStoreRSY<"stoc"##name,  0xEBF3, GR32, ccmask, 4>;
@@ -223,6 +225,16 @@ def AsmBASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
 let neverHasSideEffects = 1 in {
   def LR  : UnaryRR <"l",  0x18,   null_frag, GR32, GR32>;
   def LGR : UnaryRRE<"lg", 0xB904, null_frag, GR64, GR64>;
+}
+
+// Move on condition.
+let isCodeGenOnly = 1, Uses = [CC] in {
+  def LOCR  : CondUnaryRRF<"loc",  0xB9F2, GR32, GR32>;
+  def LOCGR : CondUnaryRRF<"locg", 0xB9E2, GR64, GR64>;
+}
+let Uses = [CC] in {
+  def AsmLOCR  : AsmCondUnaryRRF<"loc",  0xB9F2, GR32, GR32>;
+  def AsmLOCGR : AsmCondUnaryRRF<"locg", 0xB9E2, GR64, GR64>;
 }
 
 // Immediate moves.

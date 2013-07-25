@@ -217,6 +217,78 @@
 	locgnh  %r1,2(%r3)
 	locgno  %r1,2(%r3)
 
+#CHECK: locgr	%r1, %r2, 0             # encoding: [0xb9,0xe2,0x00,0x12]
+#CHECK: locgr	%r1, %r2, 15            # encoding: [0xb9,0xe2,0xf0,0x12]
+
+	locgr	%r1,%r2,0
+	locgr	%r1,%r2,15
+
+#CHECK: locgro   %r1, %r3               # encoding: [0xb9,0xe2,0x10,0x13]
+#CHECK: locgrh   %r1, %r3               # encoding: [0xb9,0xe2,0x20,0x13]
+#CHECK: locgrnle %r1, %r3               # encoding: [0xb9,0xe2,0x30,0x13]
+#CHECK: locgrl   %r1, %r3               # encoding: [0xb9,0xe2,0x40,0x13]
+#CHECK: locgrnhe %r1, %r3               # encoding: [0xb9,0xe2,0x50,0x13]
+#CHECK: locgrlh  %r1, %r3               # encoding: [0xb9,0xe2,0x60,0x13]
+#CHECK: locgrne  %r1, %r3               # encoding: [0xb9,0xe2,0x70,0x13]
+#CHECK: locgre   %r1, %r3               # encoding: [0xb9,0xe2,0x80,0x13]
+#CHECK: locgrnlh %r1, %r3               # encoding: [0xb9,0xe2,0x90,0x13]
+#CHECK: locgrhe  %r1, %r3               # encoding: [0xb9,0xe2,0xa0,0x13]
+#CHECK: locgrnl  %r1, %r3               # encoding: [0xb9,0xe2,0xb0,0x13]
+#CHECK: locgrle  %r1, %r3               # encoding: [0xb9,0xe2,0xc0,0x13]
+#CHECK: locgrnh  %r1, %r3               # encoding: [0xb9,0xe2,0xd0,0x13]
+#CHECK: locgrno  %r1, %r3               # encoding: [0xb9,0xe2,0xe0,0x13]
+
+	locgro   %r1,%r3
+	locgrh   %r1,%r3
+	locgrnle %r1,%r3
+	locgrl   %r1,%r3
+	locgrnhe %r1,%r3
+	locgrlh  %r1,%r3
+	locgrne  %r1,%r3
+	locgre   %r1,%r3
+	locgrnlh %r1,%r3
+	locgrhe  %r1,%r3
+	locgrnl  %r1,%r3
+	locgrle  %r1,%r3
+	locgrnh  %r1,%r3
+	locgrno  %r1,%r3
+
+#CHECK: locr	%r1, %r2, 0             # encoding: [0xb9,0xf2,0x00,0x12]
+#CHECK: locr	%r1, %r2, 15            # encoding: [0xb9,0xf2,0xf0,0x12]
+
+	locr	%r1,%r2,0
+	locr	%r1,%r2,15
+
+#CHECK: locro   %r1, %r3                # encoding: [0xb9,0xf2,0x10,0x13]
+#CHECK: locrh   %r1, %r3                # encoding: [0xb9,0xf2,0x20,0x13]
+#CHECK: locrnle %r1, %r3                # encoding: [0xb9,0xf2,0x30,0x13]
+#CHECK: locrl   %r1, %r3                # encoding: [0xb9,0xf2,0x40,0x13]
+#CHECK: locrnhe %r1, %r3                # encoding: [0xb9,0xf2,0x50,0x13]
+#CHECK: locrlh  %r1, %r3                # encoding: [0xb9,0xf2,0x60,0x13]
+#CHECK: locrne  %r1, %r3                # encoding: [0xb9,0xf2,0x70,0x13]
+#CHECK: locre   %r1, %r3                # encoding: [0xb9,0xf2,0x80,0x13]
+#CHECK: locrnlh %r1, %r3                # encoding: [0xb9,0xf2,0x90,0x13]
+#CHECK: locrhe  %r1, %r3                # encoding: [0xb9,0xf2,0xa0,0x13]
+#CHECK: locrnl  %r1, %r3                # encoding: [0xb9,0xf2,0xb0,0x13]
+#CHECK: locrle  %r1, %r3                # encoding: [0xb9,0xf2,0xc0,0x13]
+#CHECK: locrnh  %r1, %r3                # encoding: [0xb9,0xf2,0xd0,0x13]
+#CHECK: locrno  %r1, %r3                # encoding: [0xb9,0xf2,0xe0,0x13]
+
+	locro   %r1,%r3
+	locrh   %r1,%r3
+	locrnle %r1,%r3
+	locrl   %r1,%r3
+	locrnhe %r1,%r3
+	locrlh  %r1,%r3
+	locrne  %r1,%r3
+	locre   %r1,%r3
+	locrnlh %r1,%r3
+	locrhe  %r1,%r3
+	locrnl  %r1,%r3
+	locrle  %r1,%r3
+	locrnh  %r1,%r3
+	locrno  %r1,%r3
+
 #CHECK: ngrk	%r0, %r0, %r0           # encoding: [0xb9,0xe4,0x00,0x00]
 #CHECK: ngrk	%r0, %r0, %r15          # encoding: [0xb9,0xe4,0xf0,0x00]
 #CHECK: ngrk	%r0, %r15, %r0          # encoding: [0xb9,0xe4,0x00,0x0f]
