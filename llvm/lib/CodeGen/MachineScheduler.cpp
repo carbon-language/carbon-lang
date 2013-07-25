@@ -2024,6 +2024,30 @@ static bool tryGreater(int TryVal, int CandVal,
   return false;
 }
 
+static bool tryPressure(const PressureElement &TryP,
+                        const PressureElement &CandP,
+                        ConvergingScheduler::SchedCandidate &TryCand,
+                        ConvergingScheduler::SchedCandidate &Cand,
+                        ConvergingScheduler::CandReason Reason) {
+  // If both candidates affect the same set, go with the smallest increase.
+  if (TryP.PSetID == CandP.PSetID) {
+    return tryLess(TryP.UnitIncrease, CandP.UnitIncrease, TryCand, Cand,
+                   Reason);
+  }
+  // If one candidate decreases and the other increases, go with it.
+  if (tryLess(TryP.UnitIncrease < 0, CandP.UnitIncrease < 0, TryCand, Cand,
+              Reason)) {
+    return true;
+  }
+  // If TryP has lower Rank, it has a higher priority.
+  int TryRank = TryP.PSetRank();
+  int CandRank = CandP.PSetRank();
+  // If the candidates are decreasing pressure, reverse priority.
+  if (TryP.UnitIncrease < 0)
+    std::swap(TryRank, CandRank);
+  return tryGreater(TryRank, CandRank, TryCand, Cand, Reason);
+}
+
 static unsigned getWeakLeft(const SUnit *SU, bool isTop) {
   return (isTop) ? SU->WeakPredsLeft : SU->WeakSuccsLeft;
 }
@@ -2089,15 +2113,15 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
                  TryCand, Cand, PhysRegCopy))
     return;
 
-  // Avoid exceeding the target's limit.
-  if (tryLess(TryCand.RPDelta.Excess.UnitIncrease,
-              Cand.RPDelta.Excess.UnitIncrease, TryCand, Cand, RegExcess))
+  // Avoid exceeding the target's limit. If signed PSetID is negative, it is
+  // invalid; convert it to INT_MAX to give it lowest priority.
+  if (tryPressure(TryCand.RPDelta.Excess, Cand.RPDelta.Excess, TryCand, Cand,
+                  RegExcess))
     return;
 
   // Avoid increasing the max critical pressure in the scheduled region.
-  if (tryLess(TryCand.RPDelta.CriticalMax.UnitIncrease,
-              Cand.RPDelta.CriticalMax.UnitIncrease,
-              TryCand, Cand, RegCritical))
+  if (tryPressure(TryCand.RPDelta.CriticalMax, Cand.RPDelta.CriticalMax,
+                  TryCand, Cand, RegCritical))
     return;
 
   // Keep clustered nodes together to encourage downstream peephole
@@ -2119,8 +2143,8 @@ void ConvergingScheduler::tryCandidate(SchedCandidate &Cand,
     return;
   }
   // Avoid increasing the max pressure of the entire region.
-  if (tryLess(TryCand.RPDelta.CurrentMax.UnitIncrease,
-              Cand.RPDelta.CurrentMax.UnitIncrease, TryCand, Cand, RegMax))
+  if (tryPressure(TryCand.RPDelta.CurrentMax, Cand.RPDelta.CurrentMax,
+                  TryCand, Cand, RegMax))
     return;
 
   // Avoid critical resource consumption and balance the schedule.

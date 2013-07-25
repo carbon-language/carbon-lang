@@ -99,6 +99,10 @@ struct PressureElement {
   PressureElement(unsigned id, int inc): PSetID(id), UnitIncrease(inc) {}
 
   bool isValid() const { return PSetID != ~0U; }
+
+  // If signed PSetID is negative, it is invalid; convert it to INT_MAX to give
+  // it lowest priority.
+  int PSetRank() const { return PSetID & INT_MAX; }
 };
 
 /// Store the effects of a change in pressure on things that MI scheduler cares
