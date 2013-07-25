@@ -63,5 +63,8 @@ def incl_c : _Joined<"include:", incl>;
 def failifmismatch : _Separate<"failifmismatch">;
 def failifmismatch_c : _Joined<"failifmismatch:", failifmismatch>;
 
+// NOLOGO does nothing. It is defined only for link.exe compatibility.
+def nologo : _Flag<"nologo">;
+
 def help : _Flag<"help">;
 def help_q : _Flag<"?">, Alias<help>;

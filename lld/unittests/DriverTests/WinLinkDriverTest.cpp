@@ -198,4 +198,12 @@ TEST_F(WinLinkParserTest, FailIfMismatch_Mismatch) {
                     "/failifmismatch:foo=baz", "a.out", nullptr));
 }
 
+TEST_F(WinLinkParserTest, Nologo) {
+  // NOLOGO flag is for link.exe compatibility. It's recognized but is ignored.
+  EXPECT_FALSE(parse("link.exe", "/nologo", "a.obj", nullptr));
+  EXPECT_EQ("", errorMessage());
+  EXPECT_EQ(1, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+}
+
 } // end anonymous namespace
