@@ -90,6 +90,10 @@ namespace llvm {
     /*implicit*/ StringRef(const std::string &Str)
       : Data(Str.data()), Length(Str.length()) {}
 
+    /// Construct a string ref from a boolean.
+    explicit StringRef(bool B)
+      : Data(B ? "true" : "false"), Length(::strlen(Data)) {}
+
     /// @}
     /// @name Iterators
     /// @{
