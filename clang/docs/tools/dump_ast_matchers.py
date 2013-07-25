@@ -154,8 +154,10 @@ def act_on_decl(declaration, comment, allowed_types):
       inner, name = m.groups()
       add_matcher('Type', name, 'Matcher<%s>...' % inner,
                   comment, is_dyncast=True)
-      add_matcher('TypeLoc', '%sLoc' % name, 'Matcher<%sLoc>...' % inner,
-                  comment, is_dyncast=True)
+      # FIXME: re-enable once we have implemented casting on the TypeLoc
+      # hierarchy.
+      # add_matcher('TypeLoc', '%sLoc' % name, 'Matcher<%sLoc>...' % inner,
+      #             comment, is_dyncast=True)
       return
 
     m = re.match(""".*AST_TYPE(LOC)?_TRAVERSE_MATCHER\(
