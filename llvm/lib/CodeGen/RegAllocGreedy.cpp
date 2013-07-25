@@ -434,7 +434,8 @@ void RAGreedy::enqueue(LiveInterval *LI) {
     if (VRM->hasKnownPreference(Reg))
       Prio |= (1u << 30);
   }
-
+  // The virtual register number is a tie breaker for same-sized ranges.
+  // Give lower vreg numbers higher priority to assign them first.
   Queue.push(std::make_pair(Prio, ~Reg));
 }
 
