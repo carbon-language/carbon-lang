@@ -280,8 +280,13 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   } else
     setOperationAction(ISD::VAARG, MVT::Other, Expand);
 
+  if (Subtarget->isSVR4ABI() && !isPPC64)
+    // VACOPY is custom lowered with the 32-bit SVR4 ABI.
+    setOperationAction(ISD::VACOPY            , MVT::Other, Custom);
+  else
+    setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
+
   // Use the default implementation.
-  setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE      , MVT::Other, Custom);
@@ -1648,6 +1653,18 @@ SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
 
   return DAG.getLoad(VT, dl, InChain, Result, MachinePointerInfo(),
                      false, false, false, 0);
+}
+
+SDValue PPCTargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG,
+                                       const PPCSubtarget &Subtarget) const {
+  assert(!Subtarget.isPPC64() && "LowerVACOPY is PPC32 only");
+
+  // We have to copy the entire va_list struct:
+  // 2*sizeof(char) + 2 Byte alignment + 2*sizeof(char*) = 12 Byte
+  return DAG.getMemcpy(Op.getOperand(0), Op,
+                       Op.getOperand(1), Op.getOperand(2),
+                       DAG.getConstant(12, MVT::i32), 8, false, true,
+                       MachinePointerInfo(), MachinePointerInfo());
 }
 
 SDValue PPCTargetLowering::LowerADJUST_TRAMPOLINE(SDValue Op,
@@ -5714,6 +5731,9 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
   case ISD::VAARG:
     return LowerVAARG(Op, DAG, PPCSubTarget);
+
+  case ISD::VACOPY:
+    return LowerVACOPY(Op, DAG, PPCSubTarget);
 
   case ISD::STACKRESTORE:       return LowerSTACKRESTORE(Op, DAG, PPCSubTarget);
   case ISD::DYNAMIC_STACKALLOC:

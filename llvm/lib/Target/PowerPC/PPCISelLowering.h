@@ -498,6 +498,8 @@ namespace llvm {
                          const PPCSubtarget &Subtarget) const;
     SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG,
                        const PPCSubtarget &Subtarget) const;
+    SDValue LowerVACOPY(SDValue Op, SelectionDAG &DAG,
+                        const PPCSubtarget &Subtarget) const;
     SDValue LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
                                 const PPCSubtarget &Subtarget) const;
     SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
