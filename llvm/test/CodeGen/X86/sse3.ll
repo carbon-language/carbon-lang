@@ -14,7 +14,7 @@ entry:
                 <8 x i32> < i32 8, i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef  >
 	store <8 x i16> %tmp6, <8 x i16>* %dest
 	ret void
-        
+
 ; X64-LABEL: t0:
 ; X64:	movdqa	(%rsi), %xmm0
 ; X64:	pslldq	$2, %xmm0
@@ -27,7 +27,7 @@ define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 	%tmp2 = load <8 x i16>* %B
 	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> < i32 8, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >
 	ret <8 x i16> %tmp3
-        
+
 ; X64-LABEL: t1:
 ; X64: 	movdqa	(%rdi), %xmm0
 ; X64: 	pinsrw	$0, (%rsi), %xmm0
@@ -63,7 +63,7 @@ define <8 x i16> @t4(<8 x i16> %A, <8 x i16> %B) nounwind {
 ; X64: 	pshufhw	$100, [[XMM0]], [[XMM1:%xmm[0-9]+]]
 ; X64: 	pinsrw	$1, %eax, [[XMM1]]
 ; X64: 	pextrw	$1, [[XMM0]], %eax
-; X64: 	pinsrw	$4, %eax, %xmm0
+; X64: 	pinsrw	$4, %eax, %xmm{{[0-9]}}
 ; X64: 	ret
 }
 
@@ -127,13 +127,13 @@ define void @t9(<4 x float>* %r, <2 x i32>* %A) nounwind {
 	%tmp.upgrd.3 = bitcast <2 x i32>* %A to double*
 	%tmp.upgrd.4 = load double* %tmp.upgrd.3
 	%tmp.upgrd.5 = insertelement <2 x double> undef, double %tmp.upgrd.4, i32 0
-	%tmp5 = insertelement <2 x double> %tmp.upgrd.5, double undef, i32 1	
-	%tmp6 = bitcast <2 x double> %tmp5 to <4 x float>	
-	%tmp.upgrd.6 = extractelement <4 x float> %tmp, i32 0	
-	%tmp7 = extractelement <4 x float> %tmp, i32 1		
-	%tmp8 = extractelement <4 x float> %tmp6, i32 0		
-	%tmp9 = extractelement <4 x float> %tmp6, i32 1		
-	%tmp10 = insertelement <4 x float> undef, float %tmp.upgrd.6, i32 0	
+	%tmp5 = insertelement <2 x double> %tmp.upgrd.5, double undef, i32 1
+	%tmp6 = bitcast <2 x double> %tmp5 to <4 x float>
+	%tmp.upgrd.6 = extractelement <4 x float> %tmp, i32 0
+	%tmp7 = extractelement <4 x float> %tmp, i32 1
+	%tmp8 = extractelement <4 x float> %tmp6, i32 0
+	%tmp9 = extractelement <4 x float> %tmp6, i32 1
+	%tmp10 = insertelement <4 x float> undef, float %tmp.upgrd.6, i32 0
 	%tmp11 = insertelement <4 x float> %tmp10, float %tmp7, i32 1
 	%tmp12 = insertelement <4 x float> %tmp11, float %tmp8, i32 2
 	%tmp13 = insertelement <4 x float> %tmp12, float %tmp9, i32 3
@@ -155,21 +155,21 @@ define void @t9(<4 x float>* %r, <2 x i32>* %A) nounwind {
 @g2 = external constant <4 x i16>
 
 define internal void @t10() nounwind {
-        load <4 x i32>* @g1, align 16 
+        load <4 x i32>* @g1, align 16
         bitcast <4 x i32> %1 to <8 x i16>
         shufflevector <8 x i16> %2, <8 x i16> undef, <8 x i32> < i32 0, i32 2, i32 4, i32 6, i32 undef, i32 undef, i32 undef, i32 undef >
-        bitcast <8 x i16> %3 to <2 x i64>  
-        extractelement <2 x i64> %4, i32 0 
-        bitcast i64 %5 to <4 x i16>        
+        bitcast <8 x i16> %3 to <2 x i64>
+        extractelement <2 x i64> %4, i32 0
+        bitcast i64 %5 to <4 x i16>
         store <4 x i16> %6, <4 x i16>* @g2, align 8
         ret void
 ; X64: 	t10:
-; X64: 		pextrw	$4, [[X0:%xmm[0-9]+]], %ecx
-; X64: 		pextrw	$6, [[X0]], %eax
+; X64: 		pextrw	$4, [[X0:%xmm[0-9]+]], %e{{..}}
+; X64: 		pextrw	$6, [[X0]], %e{{..}}
 ; X64: 		movlhps [[X0]], [[X0]]
 ; X64: 		pshuflw	$8, [[X0]], [[X0]]
-; X64: 		pinsrw	$2, %ecx, [[X0]]
-; X64: 		pinsrw	$3, %eax, [[X0]]
+; X64: 		pinsrw	$2, %e{{..}}, [[X0]]
+; X64: 		pinsrw	$3, %e{{..}}, [[X0]]
 }
 
 

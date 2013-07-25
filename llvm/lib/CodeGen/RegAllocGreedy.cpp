@@ -160,6 +160,8 @@ class RAGreedy : public MachineFunctionPass,
 
     EvictionCost(unsigned B = 0) : BrokenHints(B), MaxWeight(0) {}
 
+    bool isMax() const { return BrokenHints == ~0u; }
+
     bool operator<(const EvictionCost &O) const {
       if (BrokenHints != O.BrokenHints)
         return BrokenHints < O.BrokenHints;
@@ -411,9 +413,21 @@ void RAGreedy::enqueue(LiveInterval *LI) {
     // everything else has been allocated.
     Prio = Size;
   } else {
-    // Everything is allocated in long->short order. Long ranges that don't fit
-    // should be spilled (or split) ASAP so they don't create interference.
-    Prio = (1u << 31) + Size;
+    if (ExtraRegInfo[Reg].Stage == RS_Assign && !LI->empty() &&
+        LIS->intervalIsInOneMBB(*LI)) {
+      // Allocate original local ranges in linear instruction order. Since they
+      // are singly defined, this produces optimal coloring in the absence of
+      // global interference and other constraints.
+      Prio = LI->beginIndex().distance(Indexes->getLastIndex());
+    }
+    else {
+      // Allocate global and split ranges in long->short order. Long ranges that
+      // don't fit should be spilled (or split) ASAP so they don't create
+      // interference.  Mark a bit to prioritize global above local ranges.
+      Prio = (1u << 29) + Size;
+    }
+    // Mark a higher bit to prioritize global and local above RS_Split.
+    Prio |= (1u << 31);
 
     // Boost ranges that have a physical register hint.
     if (VRM->hasKnownPreference(Reg))
@@ -520,6 +534,8 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
   if (Matrix->checkInterference(VirtReg, PhysReg) > LiveRegMatrix::IK_VirtReg)
     return false;
 
+  bool IsLocal = LIS->intervalIsInOneMBB(VirtReg);
+
   // Find VirtReg's cascade number. This will be unassigned if VirtReg was never
   // involved in an eviction before. If a cascade number was assigned, deny
   // evicting anything with the same or a newer cascade number. This prevents
@@ -573,8 +589,15 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       // Abort if this would be too expensive.
       if (!(Cost < MaxCost))
         return false;
+      if (Urgent)
+        continue;
+      // If !MaxCost.isMax(), then we're just looking for a cheap register.
+      // Evicting another local live range in this case could lead to suboptimal
+      // coloring.
+      if (!MaxCost.isMax() && IsLocal && LIS->intervalIsInOneMBB(*Intf))
+        return false;
       // Finally, apply the eviction policy for non-urgent evictions.
-      if (!Urgent && !shouldEvict(VirtReg, IsHint, *Intf, BreaksHint))
+      if (!shouldEvict(VirtReg, IsHint, *Intf, BreaksHint))
         return false;
     }
   }

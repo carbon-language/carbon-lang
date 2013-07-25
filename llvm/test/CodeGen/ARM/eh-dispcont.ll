@@ -65,10 +65,10 @@ attributes #2 = { noreturn }
 
 ; THUMB1-PIC: cxa_throw
 ; THUMB1-PIC: trap
-; THUMB1-PIC: adr [[REG0:r[0-9]+]], [[LJTI:.*]]
-; THUMB1-PIC: adds [[REG1:r[0-9]+]], [[REG1]], [[REG0]]
-; THUMB1-PIC: ldr [[REG1]]
-; THUMB1-PIC: adds [[REG0]], [[REG1]], [[REG0]]
+; THUMB1-PIC: adr [[REG1:r[0-9]+]], [[LJTI:.*]]
+; THUMB1-PIC: adds [[REG0:r[0-9]+]], [[REG0]], [[REG1]]
+; THUMB1-PIC: ldr [[REG0]]
+; THUMB1-PIC: adds [[REG0]], [[REG0]], [[REG1]]
 ; THUMB1-PIC: mov pc, [[REG0]]
 ; THUMB1-PIC: [[LJTI]]
 ; THUMB1-PIC: .data_region jt32

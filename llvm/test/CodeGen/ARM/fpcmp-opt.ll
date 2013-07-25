@@ -31,11 +31,10 @@ define arm_apcscc i32 @t2(double* %a, double* %b) nounwind {
 entry:
 ; CHECK-LABEL: t2:
 ; CHECK-NOT: vldr
-; CHECK: ldr [[REG1:(r[0-9]+)]], [r0]
-; CHECK: ldr [[REG2:(r[0-9]+)]], [r0, #4]
+; CHECK: ldrd [[REG1:(r[0-9]+)]], [[REG2:(r[0-9]+)]], [r0]
 ; CHECK-NOT: b LBB
-; CHECK: cmp [[REG1]], #0
 ; CHECK: bfc [[REG2]], #31, #1
+; CHECK: cmp [[REG1]], #0
 ; CHECK: cmpeq [[REG2]], #0
 ; CHECK-NOT: vcmpe.f32
 ; CHECK-NOT: vmrs

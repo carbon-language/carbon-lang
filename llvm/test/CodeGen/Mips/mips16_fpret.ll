@@ -62,10 +62,10 @@ entry:
   %0 = load { double, double }* %retval
   ret { double, double } %0
 ; 1: 	.ent	foodcx
-; 1: 	lw	$2, %lo(dcx)(${{[0-9]+}})
+; 1: 	lw	${{[0-9]}}, %lo(dcx)(${{[0-9]+}})
 ; 1:	jal	__mips16_ret_dc
 ; 2: 	.ent	foodcx
-; 2:	lw	$3, 4(${{[0-9]+}})
+; 2:	lw	${{[0-9]}}, 4(${{[0-9]+}})
 ; 2:	jal	__mips16_ret_dc
 ; 3: 	.ent	foodcx
 ; 3:	lw	$4, 8(${{[0-9]+}})
@@ -74,4 +74,3 @@ entry:
 ; 4:	lw	$5, 12(${{[0-9]+}})
 ; 4:	jal	__mips16_ret_dc
 }
-

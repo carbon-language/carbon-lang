@@ -35,7 +35,7 @@ entry:
 
 ; CHECK:      addl	$2138875574, %e[[REGISTER_zext:[a-z0-9]+]]
 ; CHECK-NEXT: cmpl	$-8608074, %e[[REGISTER_zext]]
-; CHECK-NEXT: movslq	%e[[REGISTER_zext]], [[REGISTER_tmp:%r[a-z0-9]+]]
+; CHECK:      movslq	%e[[REGISTER_zext]], [[REGISTER_tmp:%r[a-z0-9]+]]
 ; CHECK:      movq	[[REGISTER_tmp]], [[REGISTER_sext:%r[a-z0-9]+]]
 ; CHECK-NOT:  [[REGISTER_zext]]
 ; CHECK:      subq	%r[[REGISTER_zext]], [[REGISTER_sext]]

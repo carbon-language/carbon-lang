@@ -27,11 +27,8 @@ entry:
 ; CHECK: movw [[BASE:r[0-9]+]], :lower16:static_val
 ; CHECK: movt [[BASE]], :upper16:static_val
 ; ldm is not formed when the coalescer failed to coalesce everything.
-; CHECK: ldr     r2, {{\[}}[[BASE]]{{\]}}
-; CHECK: ldr     [[TMP:r[0-9]+]], {{\[}}[[BASE]], #4{{\]}}
+; CHECK: ldrd    r2, [[TMP:r[0-9]+]], {{\[}}[[BASE]]{{\]}}
 ; CHECK: movw r0, #555
-; Currently the coalescer misses this opportunity.
-; CHECK: mov r3, [[TMP]]
 define i32 @main() {
 entry:
   call void (i32, ...)* @test_byval_8_bytes_alignment(i32 555, %struct_t* byval @static_val)
@@ -57,14 +54,10 @@ entry:
 ; CHECK: movw [[BASE:r[0-9]+]], :lower16:static_val
 ; CHECK: movt [[BASE]], :upper16:static_val
 ; ldm is not formed when the coalescer failed to coalesce everything.
-; CHECK: ldr     r2, {{\[}}[[BASE]]{{\]}}
-; CHECK: ldr     [[TMP:r[0-9]+]], {{\[}}[[BASE]], #4{{\]}}
+; CHECK: ldrd     r2, [[TMP:r[0-9]+]], {{\[}}[[BASE]]{{\]}}
 ; CHECK: movw r0, #555
-; Currently the coalescer misses this opportunity.
-; CHECK: mov r3, [[TMP]]
 define i32 @main_fixed_arg() {
 entry:
   call void (i32, %struct_t*)* @test_byval_8_bytes_alignment_fixed_arg(i32 555, %struct_t* byval @static_val)
   ret i32 0
 }
-

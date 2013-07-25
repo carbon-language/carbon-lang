@@ -7,7 +7,7 @@
 ; CHECK-NEXT: jne
 
 ; ATOM-LABEL: t:
-; ATOM: movl (%r9,%rax,4), %eax
+; ATOM: movl (%r9,%r{{.+}},4), %eax
 ; ATOM-NEXT: decq
 ; ATOM-NEXT: jne
 
@@ -190,4 +190,3 @@ for.end:                                          ; preds = %for.body, %entry
   %bi.0.lcssa = phi i32 [ 0, %entry ], [ %i.addr.0.bi.0, %for.body ]
   ret i32 %bi.0.lcssa
 }
-

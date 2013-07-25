@@ -102,7 +102,7 @@ entry:
 ; The MOVXCC instruction can't use %g0 for its tied operand.
 ; CHECK: select_consti64_xcc
 ; CHECK: cmp
-; CHECK: movg %xcc, 123, %i0
+; CHECK: movg %xcc, 123, %i{{[0-2]}}
 define i64 @select_consti64_xcc(i64 %x, i64 %y) {
 entry:
   %tobool = icmp sgt i64 %x, %y

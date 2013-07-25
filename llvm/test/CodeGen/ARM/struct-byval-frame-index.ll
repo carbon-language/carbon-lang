@@ -143,6 +143,7 @@ land.lhs.true246:                                 ; preds = %if.end236
   br i1 undef, label %if.end249, label %if.then248
 
 if.then248:                                       ; preds = %land.lhs.true246
+  tail call void asm sideeffect "", "~{r1},~{r2},~{r3},~{r4},~{r5},~{r6},~{r7},~{r8},~{r9},~{r10},~{r11}"() nounwind
   tail call void @RestoreMVBlock8x8(i32 1, i32 0, %structN* byval @tr8x8, i32 0) #0
   tail call void @RestoreMVBlock8x8(i32 1, i32 2, %structN* byval @tr8x8, i32 0) #0
   tail call void @RestoreMVBlock8x8(i32 1, i32 3, %structN* byval @tr8x8, i32 0) #0

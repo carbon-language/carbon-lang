@@ -16,5 +16,5 @@ define void @foo2(i32 %h) {
   ret void
 ; CHECK: foo2
 ; CHECK: andl $-32, %esp
-; CHECK: andl $-32, %eax
+; CHECK: andl $-32, %e{{..}}
 }
