@@ -1695,34 +1695,6 @@ static MachineBasicBlock *splitBlockAfter(MachineInstr *MI,
   return NewMBB;
 }
 
-bool SystemZTargetLowering::
-convertPrevCompareToBranch(MachineBasicBlock *MBB,
-                           MachineBasicBlock::iterator MBBI,
-                           unsigned CCMask, MachineBasicBlock *Target) const {
-  MachineBasicBlock::iterator Compare = MBBI;
-  MachineBasicBlock::iterator Begin = MBB->begin();
-  do
-    {
-      if (Compare == Begin)
-        return false;
-      --Compare;
-    }
-  while (Compare->isDebugValue());
-
-  const SystemZInstrInfo *TII = TM.getInstrInfo();
-  unsigned FusedOpcode = TII->getCompareAndBranch(Compare->getOpcode(),
-                                                  Compare);
-  if (!FusedOpcode)
-    return false;
-
-  DebugLoc DL = Compare->getDebugLoc();
-  BuildMI(*MBB, MBBI, DL, TII->get(FusedOpcode))
-    .addOperand(Compare->getOperand(0)).addOperand(Compare->getOperand(1))
-    .addImm(CCMask).addMBB(Target);
-  Compare->removeFromParent();
-  return true;
-}
-
 // Implement EmitInstrWithCustomInserter for pseudo Select* instruction MI.
 MachineBasicBlock *
 SystemZTargetLowering::emitSelect(MachineInstr *MI,
@@ -1742,15 +1714,8 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   //  StartMBB:
   //   BRC CCMask, JoinMBB
   //   # fallthrough to FalseMBB
-  //
-  // The original DAG glues comparisons to their uses, both to ensure
-  // that no CC-clobbering instructions are inserted between them, and
-  // to ensure that comparison results are not reused.  This means that
-  // this Select is the sole user of any preceding comparison instruction
-  // and that we can try to use a fused compare and branch instead.
   MBB = StartMBB;
-  if (!convertPrevCompareToBranch(MBB, MI, CCMask, JoinMBB))
-    BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
   MBB->addSuccessor(JoinMBB);
   MBB->addSuccessor(FalseMBB);
 
@@ -1814,15 +1779,8 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
   //  StartMBB:
   //   BRC CCMask, JoinMBB
   //   # fallthrough to FalseMBB
-  //
-  // The original DAG glues comparisons to their uses, both to ensure
-  // that no CC-clobbering instructions are inserted between them, and
-  // to ensure that comparison results are not reused.  This means that
-  // this CondStore is the sole user of any preceding comparison instruction
-  // and that we can try to use a fused compare and branch instead.
   MBB = StartMBB;
-  if (!convertPrevCompareToBranch(MBB, MI, CCMask, JoinMBB))
-    BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
   MBB->addSuccessor(JoinMBB);
   MBB->addSuccessor(FalseMBB);
 
@@ -2475,16 +2433,6 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
 
   case SystemZ::ATOMIC_CMP_SWAPW:
     return emitAtomicCmpSwapW(MI, MBB);
-  case SystemZ::BRC:
-    // The original DAG glues comparisons to their uses, both to ensure
-    // that no CC-clobbering instructions are inserted between them, and
-    // to ensure that comparison results are not reused.  This means that
-    // a BRC is the sole user of a preceding comparison and that we can
-    // try to use a fused compare and branch instead.
-    if (convertPrevCompareToBranch(MBB, MI, MI->getOperand(0).getImm(),
-                                   MI->getOperand(1).getMBB()))
-      MI->eraseFromParent();
-    return MBB;
   case SystemZ::MVCWrapper:
     return emitMVCWrapper(MI, MBB);
   default:

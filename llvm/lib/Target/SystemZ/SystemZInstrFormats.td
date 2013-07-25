@@ -1036,6 +1036,7 @@ class CompareRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
            [(operator cls1:$R1, cls2:$R2)]> {
   let OpKey = mnemonic ## cls1;
   let OpType = "reg";
+  let isCompare = 1;
 }
 
 class CompareRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
@@ -1045,25 +1046,31 @@ class CompareRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
             [(operator cls1:$R1, cls2:$R2)]> {
   let OpKey = mnemonic ## cls1;
   let OpType = "reg";
+  let isCompare = 1;
 }
 
 class CompareRI<string mnemonic, bits<12> opcode, SDPatternOperator operator,
                 RegisterOperand cls, Immediate imm>
   : InstRI<opcode, (outs), (ins cls:$R1, imm:$I2),
            mnemonic#"\t$R1, $I2",
-           [(operator cls:$R1, imm:$I2)]>;
+           [(operator cls:$R1, imm:$I2)]> {
+  let isCompare = 1;
+}
 
 class CompareRIL<string mnemonic, bits<12> opcode, SDPatternOperator operator,
                  RegisterOperand cls, Immediate imm>
   : InstRIL<opcode, (outs), (ins cls:$R1, imm:$I2),
             mnemonic#"\t$R1, $I2",
-            [(operator cls:$R1, imm:$I2)]>;
+            [(operator cls:$R1, imm:$I2)]> {
+  let isCompare = 1;
+}
 
 class CompareRILPC<string mnemonic, bits<12> opcode, SDPatternOperator operator,
                    RegisterOperand cls, SDPatternOperator load>
   : InstRIL<opcode, (outs), (ins cls:$R1, pcrel32:$I2),
             mnemonic#"\t$R1, $I2",
             [(operator cls:$R1, (load pcrel32:$I2))]> {
+  let isCompare = 1;
   let mayLoad = 1;
   // We want PC-relative addresses to be tried ahead of BD and BDX addresses.
   // However, BDXs have two extra operands and are therefore 6 units more
@@ -1079,6 +1086,7 @@ class CompareRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
            [(operator cls:$R1, (load mode:$XBD2))]> {
   let OpKey = mnemonic ## cls;
   let OpType = "mem";
+  let isCompare = 1;
   let mayLoad = 1;
   let AccessBytes = bytes;
 }
@@ -1090,6 +1098,7 @@ class CompareRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
             [(operator cls:$R1, (load bdxaddr12only:$XBD2))]> {
   let OpKey = mnemonic ## cls;
   let OpType = "mem";
+  let isCompare = 1;
   let mayLoad = 1;
   let AccessBytes = bytes;
 }
@@ -1102,6 +1111,7 @@ class CompareRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
             [(operator cls:$R1, (load mode:$XBD2))]> {
   let OpKey = mnemonic ## cls;
   let OpType = "mem";
+  let isCompare = 1;
   let mayLoad = 1;
   let AccessBytes = bytes;
 }
@@ -1125,6 +1135,7 @@ class CompareSI<string mnemonic, bits<8> opcode, SDPatternOperator operator,
   : InstSI<opcode, (outs), (ins mode:$BD1, imm:$I2),
            mnemonic#"\t$BD1, $I2",
            [(operator (load mode:$BD1), imm:$I2)]> {
+  let isCompare = 1;
   let mayLoad = 1;
 }
 
@@ -1133,6 +1144,7 @@ class CompareSIL<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   : InstSIL<opcode, (outs), (ins bdaddr12only:$BD1, imm:$I2),
             mnemonic#"\t$BD1, $I2",
             [(operator (load bdaddr12only:$BD1), imm:$I2)]> {
+  let isCompare = 1;
   let mayLoad = 1;
 }
 
@@ -1142,6 +1154,7 @@ class CompareSIY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   : InstSIY<opcode, (outs), (ins mode:$BD1, imm:$I2),
             mnemonic#"\t$BD1, $I2",
             [(operator (load mode:$BD1), imm:$I2)]> {
+  let isCompare = 1;
   let mayLoad = 1;
 }
 

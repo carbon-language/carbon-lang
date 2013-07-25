@@ -58,18 +58,13 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
 // in their raw BRC/BRCL form, with the 4-bit condition-code mask being
 // the first operand.  It seems friendlier to use mnemonic forms like
 // JE and JLH when writing out the assembly though.
-//
-// Using a custom inserter for BRC gives us a chance to convert the BRC
-// and a preceding compare into a single compare-and-branch instruction.
-// The inserter makes no change in cases where a separate branch really
-// is needed.
 multiclass CondBranches<Operand ccmask, string short, string long> {
   let isBranch = 1, isTerminator = 1, Uses = [CC] in {
     def "" : InstRI<0xA74, (outs), (ins ccmask:$R1, brtarget16:$I2), short, []>;
     def L  : InstRIL<0xC04, (outs), (ins ccmask:$R1, brtarget32:$I2), long, []>;
   }
 }
-let isCodeGenOnly = 1, usesCustomInserter = 1 in
+let isCodeGenOnly = 1 in
   defm BRC : CondBranches<cond4, "j$R1\t$I2", "jg$R1\t$I2">;
 defm AsmBRC : CondBranches<uimm8zx4, "brc\t$R1, $I2", "brcl\t$R1, $I2">;
 

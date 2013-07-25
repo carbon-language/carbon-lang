@@ -277,6 +277,109 @@ SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return Count;
 }
 
+bool SystemZInstrInfo::analyzeCompare(const MachineInstr *MI,
+                                      unsigned &SrcReg, unsigned &SrcReg2,
+                                      int &Mask, int &Value) const {
+  assert(MI->isCompare() && "Caller should check that this is a compare");
+
+  // Ignore comparisons involving memory for now.
+  if (MI->getNumExplicitOperands() != 2)
+    return false;
+
+  SrcReg = MI->getOperand(0).getReg();
+  if (MI->getOperand(1).isReg()) {
+    SrcReg2 = MI->getOperand(1).getReg();
+    Value = 0;
+    Mask = ~0;
+    return true;
+  } else if (MI->getOperand(1).isImm()) {
+    SrcReg2 = 0;
+    Value = MI->getOperand(1).getImm();
+    Mask = ~0;
+    return true;
+  }
+  return false;
+}
+
+// Return true if CC is live after MBBI.  We can't rely on kill information
+// because of the way InsertBranch is used.
+static bool isCCLiveAfter(MachineBasicBlock::iterator MBBI,
+                          const TargetRegisterInfo *TRI) {
+  if (MBBI->killsRegister(SystemZ::CC, TRI))
+    return false;
+
+  MachineBasicBlock *MBB = MBBI->getParent();
+  MachineBasicBlock::iterator MBBE = MBB->end();
+  for (++MBBI; MBBI != MBBE; ++MBBI)
+    if (MBBI->readsRegister(SystemZ::CC, TRI))
+      return true;
+
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI)
+    if ((*SI)->isLiveIn(SystemZ::CC))
+      return true;
+
+  return false;
+}
+
+bool
+SystemZInstrInfo::optimizeCompareInstr(MachineInstr *Compare,
+                                       unsigned SrcReg, unsigned SrcReg2,
+                                       int Mask, int Value,
+                                       const MachineRegisterInfo *MRI) const {
+  MachineBasicBlock *MBB = Compare->getParent();
+  const TargetRegisterInfo *TRI = &getRegisterInfo();
+
+  // Try to fold a comparison into a following branch, if it is only used once.
+  if (unsigned FusedOpcode = getCompareAndBranch(Compare->getOpcode(),
+                                                 Compare)) {
+    MachineBasicBlock::iterator MBBI = Compare, MBBE = MBB->end();
+    for (++MBBI; MBBI != MBBE; ++MBBI) {
+      if (MBBI->getOpcode() == SystemZ::BRC && !isCCLiveAfter(MBBI, TRI)) {
+        // Read the branch mask and target.
+        MachineOperand CCMask(MBBI->getOperand(0));
+        MachineOperand Target(MBBI->getOperand(1));
+
+        // Clear out all current operands.
+        int CCUse = MBBI->findRegisterUseOperandIdx(SystemZ::CC, false, TRI);
+        assert(CCUse >= 0 && "BRC must use CC");
+        MBBI->RemoveOperand(CCUse);
+        MBBI->RemoveOperand(1);
+        MBBI->RemoveOperand(0);
+
+        // Rebuild MBBI as a fused compare and branch.
+        MBBI->setDesc(get(FusedOpcode));
+        MachineInstrBuilder(*MBB->getParent(), MBBI)
+          .addOperand(Compare->getOperand(0))
+          .addOperand(Compare->getOperand(1))
+          .addOperand(CCMask)
+          .addOperand(Target);
+
+        // Clear any intervening kills of SrcReg and SrcReg2.
+        MBBI = Compare;
+        for (++MBBI; MBBI != MBBE; ++MBBI) {
+          MBBI->clearRegisterKills(SrcReg, TRI);
+          if (SrcReg2)
+            MBBI->clearRegisterKills(SrcReg2, TRI);
+        }
+        Compare->removeFromParent();
+        return true;
+      }
+
+      // Stop if we find another reference to CC before a branch.
+      if (MBBI->readsRegister(SystemZ::CC, TRI) ||
+          MBBI->modifiesRegister(SystemZ::CC, TRI))
+        break;
+
+      // Stop if we find another assignment to the registers before the branch.
+      if (MBBI->modifiesRegister(SrcReg, TRI) ||
+          (SrcReg2 && MBBI->modifiesRegister(SrcReg2, TRI)))
+        break;
+    }
+  }
+  return false;
+}
+
 // If Opcode is a move that has a conditional variant, return that variant,
 // otherwise return 0.
 static unsigned getConditionalMove(unsigned Opcode) {
