@@ -75,6 +75,8 @@ Host::ThreadCreated (const char *thread_name)
     {
         ::pthread_setspecific (g_thread_create_key, new FreeBSDThread(thread_name));
     }
+
+    Host::SetShortThreadName (LLDB_INVALID_PROCESS_ID, LLDB_INVALID_THREAD_ID, thread_name, 16);
 }
 
 std::string

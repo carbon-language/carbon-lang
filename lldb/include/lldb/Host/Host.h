@@ -304,6 +304,27 @@ public:
     SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name);
 
     //------------------------------------------------------------------
+    /// Sets a shortened name of a thread in the current process.
+    ///
+    /// @param[in] pid
+    ///     The process ID in which we are trying to name a thread.
+    ///
+    /// @param[in] tid
+    ///     The thread ID which we are trying to name.
+    ///
+    /// @param[in] name
+    ///     The current thread's name in the current process to \a name.
+    ///
+    /// @param[in] len
+    ///     The maximum length for the thread's shortened name.
+    ///
+    /// @return
+    ///     \b true if the thread name was able to be set, \b false
+    ///     otherwise.
+    static bool
+    SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name, size_t len);
+
+    //------------------------------------------------------------------
     /// Gets the FileSpec of the current process (the process that
     /// that is running the LLDB code).
     ///

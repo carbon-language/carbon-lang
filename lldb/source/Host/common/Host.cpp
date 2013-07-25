@@ -648,6 +648,22 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
             return true;
     }
     return false;
+#elif defined (__FreeBSD__)
+    lldb::pid_t curr_pid = Host::GetCurrentProcessID();
+    lldb::tid_t curr_tid = Host::GetCurrentThreadID();
+    if (pid == LLDB_INVALID_PROCESS_ID)
+        pid = curr_pid;
+
+    if (tid == LLDB_INVALID_THREAD_ID)
+        tid = curr_tid;
+
+    // Set the pthread name if possible
+    if (pid == curr_pid && tid == curr_tid)
+    {
+        ::pthread_set_name_np(::pthread_self(), name);
+        return true;
+    }
+    return false;
 #elif defined (__linux__) || defined (__GLIBC__)
     void *fn = dlsym (RTLD_DEFAULT, "pthread_setname_np");
     if (fn)
@@ -674,6 +690,37 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
 #else
     return false;
 #endif
+}
+
+bool
+Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
+                          const char *thread_name, size_t len)
+{
+    char *namebuf = (char *)::malloc (len + 1);
+
+    // Thread names are coming in like '<lldb.comm.debugger.edit>' and
+    // '<lldb.comm.debugger.editline>'.  So just chopping the end of the string
+    // off leads to a lot of similar named threads.  Go through the thread name
+    // and search for the last dot and use that.
+    const char *lastdot = ::strrchr (thread_name, '.');
+
+    if (lastdot && lastdot != thread_name)
+        thread_name = lastdot + 1;
+    ::strncpy (namebuf, thread_name, len);
+    namebuf[len] = 0;
+
+    int namebuflen = strlen(namebuf);
+    if (namebuflen > 0)
+    {
+        if (namebuf[namebuflen - 1] == '(' || namebuf[namebuflen - 1] == '>')
+        {
+            // Trim off trailing '(' and '>' characters for a bit more cleanup.
+            namebuflen--;
+            namebuf[namebuflen] = 0;
+        }
+        return Host::SetThreadName (pid, tid, namebuf);
+    }
+    return false;
 }
 
 FileSpec
