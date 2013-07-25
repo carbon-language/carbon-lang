@@ -1,6 +1,7 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: not cpp11-migrate -format-style=FOO -use-auto %t.cpp -- -std=c++11
-// RUN: not cpp11-migrate -format-style=/tmp/ -use-auto %t.cpp -- -std=c++11
+// RUN: not cpp11-migrate -format-style=non_existent_file.yaml -use-auto %t.cpp -- -std=c++11
+// RUN: touch %T/non_format_config.yaml
+// RUN: not cpp11-migrate -format-style=%T/non_format_config.yaml -use-auto %t.cpp -- -std=c++11
 // RUN: cpp11-migrate -format-style=LLVM -use-auto %t.cpp -- -std=c++11
 // RUN: FileCheck --strict-whitespace -input-file=%t.cpp %s
 
