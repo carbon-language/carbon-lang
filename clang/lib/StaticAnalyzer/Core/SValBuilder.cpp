@@ -412,7 +412,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
       return makeNonLoc(Sym, BO_NE, BVF.getValue(0, Sym->getType()), castTy);
     }
 
-    assert(val.getAs<Loc>());
+    assert(val.getAs<Loc>() || val.getAs<nonloc::LocAsInteger>());
     return makeTruthVal(true, castTy);
   }
 
