@@ -190,6 +190,11 @@ public:
       AttributeSets.addAttribute(getContext(),
                                  AttributeSet::FunctionIndex, Kind));
   }
+  void addFnAttr(StringRef Kind, StringRef Value) {
+    setAttributes(
+      AttributeSets.addAttribute(getContext(),
+                                 AttributeSet::FunctionIndex, Kind, Value));
+  }
 
   /// @brief Return true if the function has the attribute.
   bool hasFnAttribute(Attribute::AttrKind Kind) const {
