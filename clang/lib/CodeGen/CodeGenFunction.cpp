@@ -191,14 +191,20 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
          "mismatched push/pop in break/continue stack!");
 
   bool OnlySimpleReturnStmts = NumSimpleReturnExprs > 0
-    && NumSimpleReturnExprs == NumReturnExprs;
-  // If the function contains only a simple return statement, the
-  // location before the cleanup code becomes the last useful
-  // breakpoint in the function, because the simple return expression
-  // will be evaluated after the cleanup code. To be safe, set the
-  // debug location for cleanup code to the location of the return
-  // statement. Otherwise the cleanup code should be at the end of the
-  // function's lexical scope.
+    && NumSimpleReturnExprs == NumReturnExprs
+    && ReturnBlock.getBlock()->use_empty();
+  // Usually the return expression is evaluated before the cleanup
+  // code.  If the function contains only a simple return statement,
+  // such as a constant, the location before the cleanup code becomes
+  // the last useful breakpoint in the function, because the simple
+  // return expression will be evaluated after the cleanup code. To be
+  // safe, set the debug location for cleanup code to the location of
+  // the return statement.  Otherwise the cleanup code should be at the
+  // end of the function's lexical scope.
+  //
+  // If there are multiple branches to the return block, the branch
+  // instructions will get the location of the return statements and
+  // all will be fine.
   if (CGDebugInfo *DI = getDebugInfo()) {
     if (OnlySimpleReturnStmts)
       DI->EmitLocation(Builder, LastStopPoint);
