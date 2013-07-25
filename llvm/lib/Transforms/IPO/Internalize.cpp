@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "internalize"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/IR/Module.h"
@@ -22,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <fstream>
 #include <set>
 using namespace llvm;
@@ -116,6 +118,24 @@ bool InternalizePass::runOnModule(Module &M) {
   // FIXME: We should probably add this (and the __stack_chk_guard) via some
   // type of call-back in CodeGen.
   ExternalNames.insert("__stack_chk_fail");
+
+  SmallPtrSet<GlobalValue *, 8> Used;
+  collectUsedGlobalVariables(M, Used, false);
+
+  // We must assume that globals in llvm.used have a reference that not even
+  // the linker can see, so we don't internalize them.
+  // For llvm.compiler.used the situation is a bit fuzzy. The assembler and
+  // linker can drop those symbols. If this pass is running as part of LTO,
+  // one might think that it could just drop llvm.compiler.used. The problem
+  // is that even in LTO llvm doesn't see every reference. For example,
+  // we don't see references from function local inline assembly. To be
+  // conservative, we internalize symbols in llvm.compiler.used, but we
+  // keep llvm.compiler.used so that the symbol is not deleted by llvm.
+  for (SmallPtrSet<GlobalValue *, 8>::iterator I = Used.begin(), E = Used.end();
+       I != E; ++I) {
+    GlobalValue *V = *I;
+    ExternalNames.insert(V->getName());
+  }
 
   // Mark all functions not in the api as internal.
   // FIXME: maybe use private linkage?

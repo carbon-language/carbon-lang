@@ -38,6 +38,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLibraryInfo.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -3040,24 +3041,6 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   return true;
 }
 
-/// \brief Given "llvm.used" or "llvm.compiler.used" as a global name, collect
-/// the initializer elements of that global in Set and return the global itself.
-static GlobalVariable *
-collectUsedGlobalVariables(Module &M, const char *Name,
-                           SmallPtrSet<GlobalValue *, 8> &Set) {
-  GlobalVariable *GV = M.getGlobalVariable(Name);
-  if (!GV || !GV->hasInitializer())
-    return GV;
-
-  const ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
-  for (unsigned I = 0, E = Init->getNumOperands(); I != E; ++I) {
-    Value *Op = Init->getOperand(I);
-    GlobalValue *G = cast<GlobalValue>(Op->stripPointerCastsNoFollowAliases());
-    Set.insert(G);
-  }
-  return GV;
-}
-
 static int compareNames(const void *A, const void *B) {
   const GlobalValue *VA = *reinterpret_cast<GlobalValue* const*>(A);
   const GlobalValue *VB = *reinterpret_cast<GlobalValue* const*>(B);
@@ -3107,9 +3090,8 @@ class LLVMUsed {
 
 public:
   LLVMUsed(Module &M) {
-    UsedV = collectUsedGlobalVariables(M, "llvm.used", Used);
-    CompilerUsedV =
-        collectUsedGlobalVariables(M, "llvm.compiler.used", CompilerUsed);
+    UsedV = collectUsedGlobalVariables(M, Used, false);
+    CompilerUsedV = collectUsedGlobalVariables(M, CompilerUsed, true);
   }
   typedef SmallPtrSet<GlobalValue *, 8>::iterator iterator;
   iterator usedBegin() { return Used.begin(); }
