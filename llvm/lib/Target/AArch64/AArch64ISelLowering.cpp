@@ -2048,7 +2048,7 @@ AArch64TargetLowering::LowerGlobalTLSAddress(SDValue Op,
                                                AArch64II::MO_TPREL_G0_NC);
 
     TPOff = SDValue(DAG.getMachineNode(AArch64::MOVZxii, DL, PtrVT, HiVar,
-                                       DAG.getTargetConstant(0, MVT::i32)), 0);
+                                       DAG.getTargetConstant(1, MVT::i32)), 0);
     TPOff = SDValue(DAG.getMachineNode(AArch64::MOVKxii, DL, PtrVT,
                                        TPOff, LoVar,
                                        DAG.getTargetConstant(0, MVT::i32)), 0);
