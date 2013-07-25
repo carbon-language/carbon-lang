@@ -30,21 +30,7 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
   ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
 
-  SVal V = state->getSVal(tempExpr, LCtx);
-
-  // If the value is already a CXXTempObjectRegion, it is fine as it is.
-  // Otherwise, create a new CXXTempObjectRegion, and copy the value into it.
-  // This is an optimization for when an rvalue is constructed and then
-  // immediately materialized.
-  const MemRegion *MR = V.getAsRegion();
-  if (const CXXTempObjectRegion *TR =
-        dyn_cast_or_null<CXXTempObjectRegion>(MR)) {
-    if (getContext().hasSameUnqualifiedType(TR->getValueType(), ME->getType()))
-      state = state->BindExpr(ME, LCtx, V);
-  }
-
-  if (state == Pred->getState())
-    state = createTemporaryRegionIfNeeded(state, LCtx, tempExpr, ME);
+  state = createTemporaryRegionIfNeeded(state, LCtx, tempExpr, ME);
   Bldr.generateNode(ME, Pred, state);
 }
 
