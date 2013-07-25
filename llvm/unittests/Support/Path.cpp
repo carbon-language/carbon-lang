@@ -213,6 +213,7 @@ TEST_F(FileSystemTest, TempFiles) {
   int FD2;
   SmallString<64> TempPath2;
   ASSERT_NO_ERROR(fs::createTemporaryFile("prefix", "temp", FD2, TempPath2));
+  ASSERT_TRUE(TempPath2.endswith(".temp"));
   ASSERT_NE(TempPath.str(), TempPath2.str());
 
   fs::file_status A, B;
@@ -229,6 +230,10 @@ TEST_F(FileSystemTest, TempFiles) {
   // Make sure Temp2 doesn't exist.
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath2), TempFileExists));
   EXPECT_FALSE(TempFileExists);
+
+  SmallString<64> TempPath3;
+  ASSERT_NO_ERROR(fs::createTemporaryFile("prefix", "", TempPath3));
+  ASSERT_FALSE(TempPath3.endswith("."));
 
   // Create a hard link to Temp1.
   ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));

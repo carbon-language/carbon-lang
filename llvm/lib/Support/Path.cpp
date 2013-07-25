@@ -665,7 +665,8 @@ static error_code
 createTemporaryFile(const Twine &Prefix, StringRef Suffix, int &ResultFD,
                     llvm::SmallVectorImpl<char> &ResultPath,
                     FSEntity Type) {
-  return createTemporaryFile(Prefix + "-%%%%%%." + Suffix, ResultFD, ResultPath,
+  const char *Middle = Suffix.empty() ? "-%%%%%%" : "-%%%%%%.";
+  return createTemporaryFile(Prefix + Middle + Suffix, ResultFD, ResultPath,
                              Type);
 }
 
