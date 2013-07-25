@@ -20,6 +20,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
         self.disassemble_call_stack()
 
     @dwarf_test
+    @expectedFailureFreeBSD('llvm.org/pr14540')
     @expectedFailureLinux # due to llvm.org/pr14540
     def test_with_dwarf_and_run_command(self):
         """Disassemble each call frame when stopped on C's constructor."""
@@ -36,6 +37,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @expectedFailureFreeBSD('llvm.org/pr14540')
     @expectedFailureLinux # due to llvm.org/pr14540
     def test_with_dwarf_and_python_api(self):
         """Disassemble each call frame when stopped on C's constructor."""
