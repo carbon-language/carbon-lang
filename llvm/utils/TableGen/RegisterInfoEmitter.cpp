@@ -223,7 +223,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "getRegPressureSetName(unsigned Idx) const {\n"
      << "  static const char *PressureNameTable[] = {\n";
   for (unsigned i = 0; i < NumSets; ++i ) {
-    OS << "    \"" << RegBank.getRegPressureSet(i).Name << "\",\n";
+    OS << "    \"" << RegBank.getRegSetAt(i).Name << "\",\n";
   }
   OS << "    0 };\n"
      << "  return PressureNameTable[Idx];\n"
@@ -235,9 +235,9 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
      << "getRegPressureSetLimit(unsigned Idx) const {\n"
      << "  static const unsigned PressureLimitTable[] = {\n";
   for (unsigned i = 0; i < NumSets; ++i ) {
-    const RegUnitSet &RegUnits = RegBank.getRegPressureSet(i);
-    OS << "    " << RegBank.getRegUnitSetWeight(RegUnits.Units)
-       << ",  \t// " << i << ": " << RegUnits.Name << "\n";
+    const RegUnitSet &RegUnits = RegBank.getRegSetAt(i);
+    OS << "    " << RegUnits.Weight << ",  \t// " << i << ": "
+       << RegUnits.Name << "\n";
   }
   OS << "    0 };\n"
      << "  return PressureLimitTable[Idx];\n"
@@ -252,9 +252,15 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
   for (unsigned i = 0, StartIdx = 0, e = NumRCUnitSets; i != e; ++i) {
     RCSetStarts[i] = StartIdx;
     ArrayRef<unsigned> PSetIDs = RegBank.getRCPressureSetIDs(i);
+    std::vector<unsigned> PSets;
+    PSets.reserve(PSetIDs.size());
     for (ArrayRef<unsigned>::iterator PSetI = PSetIDs.begin(),
            PSetE = PSetIDs.end(); PSetI != PSetE; ++PSetI) {
-      OS << *PSetI << ",  ";
+      PSets.push_back(RegBank.getRegPressureSet(*PSetI).Order);
+    }
+    std::sort(PSets.begin(), PSets.end());
+    for (unsigned i = 0, e = PSets.size(); i < e; ++i) {
+      OS << PSets[i] << ",  ";
       ++StartIdx;
     }
     OS << "-1,  \t// #" << RCSetStarts[i] << " ";
@@ -264,7 +270,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
       OS << "inferred";
       for (ArrayRef<unsigned>::iterator PSetI = PSetIDs.begin(),
              PSetE = PSetIDs.end(); PSetI != PSetE; ++PSetI) {
-        OS << "~" << RegBank.getRegPressureSet(*PSetI).Name;
+        OS << "~" << RegBank.getRegSetAt(*PSetI).Name;
       }
     }
     OS << "\n    ";

@@ -956,7 +956,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
     std::sort(TupRegsCopy.begin(), TupRegsCopy.end(), LessRecordRegister());
     for (unsigned j = 0, je = TupRegsCopy.size(); j != je; ++j)
       getReg((TupRegsCopy)[j]);
-    TupRegsCopy.clear();    
+    TupRegsCopy.clear();
   }
 
   // Now all the registers are known. Build the object graph of explicit
@@ -1620,6 +1620,16 @@ void CodeGenRegBank::computeRegUnitSets() {
   }
 }
 
+struct LessUnits {
+  const CodeGenRegBank &RegBank;
+  LessUnits(const CodeGenRegBank &RB): RegBank(RB) {}
+
+  bool operator()(unsigned ID1, unsigned ID2) {
+    return RegBank.getRegPressureSet(ID1).Units.size()
+      < RegBank.getRegPressureSet(ID2).Units.size();
+  }
+};
+
 void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
   computeSubRegIndexLaneMasks();
@@ -1631,6 +1641,21 @@ void CodeGenRegBank::computeDerivedInfo() {
   // Compute a unique set of RegUnitSets. One for each RegClass and inferred
   // supersets for the union of overlapping sets.
   computeRegUnitSets();
+
+  // Get the weight of each set.
+  for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx)
+    RegUnitSets[Idx].Weight = getRegUnitSetWeight(RegUnitSets[Idx].Units);
+
+  // Find the order of each set.
+  RegUnitSetOrder.reserve(RegUnitSets.size());
+  for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx)
+    RegUnitSetOrder.push_back(Idx);
+
+  std::stable_sort(RegUnitSetOrder.begin(), RegUnitSetOrder.end(),
+                   LessUnits(*this));
+  for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx) {
+    RegUnitSets[RegUnitSetOrder[Idx]].Order = Idx;
+  }
 }
 
 //

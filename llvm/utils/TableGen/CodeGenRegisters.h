@@ -433,6 +433,10 @@ namespace llvm {
 
     std::string Name;
     std::vector<unsigned> Units;
+    unsigned Weight; // Cache the sum of all unit weights.
+    unsigned Order;  // Cache the sort key.
+
+    RegUnitSet() : Weight(0), Order(0) {}
   };
 
   // Base vector for identifying TopoSigs. The contents uniquely identify a
@@ -483,6 +487,9 @@ namespace llvm {
     // register units to lists of unit sets. If the list of unit sets does not
     // already exist for a register class, we create a new entry in this vector.
     std::vector<std::vector<unsigned> > RegClassUnitSets;
+
+    // Give each register unit set an order based on sorting criteria.
+    std::vector<unsigned> RegUnitSetOrder;
 
     // Add RC to *2RC maps.
     void addToMaps(CodeGenRegisterClass*);
@@ -622,6 +629,13 @@ namespace llvm {
       return Weight;
     }
 
+    unsigned getRegSetIDAt(unsigned Order) const {
+      return RegUnitSetOrder[Order];
+    }
+    const RegUnitSet &getRegSetAt(unsigned Order) const {
+      return RegUnitSets[RegUnitSetOrder[Order]];
+    }
+
     // Increase a RegUnitWeight.
     void increaseRegUnitWeight(unsigned RUID, unsigned Inc) {
       getRegUnit(RUID).Weight += Inc;
@@ -631,7 +645,7 @@ namespace llvm {
     unsigned getNumRegPressureSets() const { return RegUnitSets.size(); }
 
     // Get a set of register unit IDs for a given dimension of pressure.
-    RegUnitSet getRegPressureSet(unsigned Idx) const {
+    const RegUnitSet &getRegPressureSet(unsigned Idx) const {
       return RegUnitSets[Idx];
     }
 
