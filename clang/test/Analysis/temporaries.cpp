@@ -109,3 +109,35 @@ namespace compound_literals {
   }
 }
 
+namespace destructors {
+  void testPR16664Crash() {
+    struct Dtor {
+      ~Dtor();
+    };
+    extern bool coin();
+    extern bool check(const Dtor &);
+
+    // Don't crash here.
+    if (coin() && (coin() || coin() || check(Dtor()))) {
+      Dtor();
+    }
+  }
+
+  void testConsistency(int i) {
+    struct NoReturnDtor {
+      ~NoReturnDtor() __attribute__((noreturn));
+    };
+    extern bool check(const NoReturnDtor &);
+    
+    if (i == 5 && (i == 4 || i == 5 || check(NoReturnDtor())))
+      clang_analyzer_eval(true); // expected-warning{{TRUE}}
+
+    if (i != 5)
+      return;
+    if (i == 5 && (i == 4 || check(NoReturnDtor()) || i == 5)) {
+      // FIXME: Should be no-warning, because the noreturn destructor should
+      // fire on all paths.
+      clang_analyzer_eval(true); // expected-warning{{TRUE}}
+    }
+  }
+}
