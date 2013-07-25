@@ -799,10 +799,12 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                 case DW_AT_high_pc:
                     hi_pc = form_value.Unsigned();
                     if (form_value.Form() != DW_FORM_addr)
+                    {
                         if (lo_pc == LLDB_INVALID_ADDRESS)
                             do_offset = hi_pc != LLDB_INVALID_ADDRESS;
                         else
                             hi_pc += lo_pc; // DWARF 4 introduces <offset-from-lo-pc> to save on relocations
+                    }
                     break;
 
                 case DW_AT_ranges:
