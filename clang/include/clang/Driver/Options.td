@@ -45,8 +45,10 @@ def NoDriverOption : OptionFlag;
 /////////
 // Groups
 
-// Meta-group which defines
+// Meta-group for options which are only used for compilation,
+// and not linking etc.
 def CompileOnly_Group     : OptionGroup<"<CompileOnly group>">;
+
 def Action_Group          : OptionGroup<"<action group>">;
 
 def I_Group               : OptionGroup<"<I group>">, Group<CompileOnly_Group>;
