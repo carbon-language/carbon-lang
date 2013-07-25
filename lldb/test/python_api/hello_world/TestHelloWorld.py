@@ -67,6 +67,7 @@ class HelloWorldTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_name_api()
 
+    @expectedFailureFreeBSD('llvm.org/pr16699') # attach by name not on FreeBSD yet
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_attach_to_process_with_name_api(self):

@@ -32,6 +32,7 @@ class ProcessAttachTestCase(TestBase):
         self.buildDsym()
         self.process_attach_by_name()
 
+    @expectedFailureFreeBSD('llvm.org/pr16699')
     @dwarf_test
     def test_attach_to_process_by_name_with_dwarf(self):
         """Test attach by process name"""
