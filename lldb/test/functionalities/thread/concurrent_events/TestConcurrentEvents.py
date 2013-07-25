@@ -62,18 +62,21 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for concurrent signal and breakpoint
     #
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_signal_break_dwarf(self):
         """Test signal and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_signal_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_delay_signal_break_dwarf(self):
         """Test (1-second delay) signal and a breakpoint in multiple threads."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=1, num_delay_signal_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_signal_delay_break_dwarf(self):
         """Test signal and a (1 second delay) breakpoint in multiple threads."""
@@ -127,12 +130,14 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Tests for multiple breakpoint threads
     #
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_two_breakpoint_threads_dwarf(self):
         """Test two threads that trigger a breakpoint. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_breakpoint_one_delay_breakpoint_threads_dwarf(self):
         """Test threads that trigger a breakpoint where one thread has a 1 second delay. """
@@ -140,12 +145,14 @@ class ConcurrentEventsTestCase(TestBase):
         self.do_thread_actions(num_breakpoint_threads=1,
                                num_delay_breakpoint_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_two_breakpoints_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one signal thread. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_breakpoint_threads=2, num_signal_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_breakpoint_delay_breakpoint_one_signal_dwarf(self):
         """Test two threads that trigger a breakpoint (one with a 1 second delay) and one signal thread. """
@@ -154,6 +161,7 @@ class ConcurrentEventsTestCase(TestBase):
                                num_delay_breakpoint_threads=1,
                                num_signal_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_two_breakpoints_one_delay_signal_dwarf(self):
         """Test two threads that trigger a breakpoint and one (1 second delay) signal thread. """
@@ -246,6 +254,7 @@ class ConcurrentEventsTestCase(TestBase):
     #
     ## Test for crashing threads happening concurrently with other events
     #
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_crash_with_break_dwarf(self):
         """ Test a thread that crashes while another thread hits a breakpoint."""
@@ -258,6 +267,7 @@ class ConcurrentEventsTestCase(TestBase):
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_crash_threads=1, num_watchpoint_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_crash_with_signal_dwarf(self):
         """ Test a thread that crashes while another thread generates a signal."""
@@ -281,6 +291,7 @@ class ConcurrentEventsTestCase(TestBase):
                                num_breakpoint_threads=1,
                                num_watchpoint_threads=1)
 
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_delayed_crash_with_breakpoint_signal_dwarf(self):
         """ Test a thread with a delayed crash while other threads generate a signal and hit a breakpoint. """

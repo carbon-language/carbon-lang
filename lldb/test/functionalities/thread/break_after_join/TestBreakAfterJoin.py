@@ -21,6 +21,7 @@ class BreakpointAfterJoinTestCase(TestBase):
         self.breakpoint_after_join_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_with_dwarf(self):
         """Test breakpoint handling after a thread join."""

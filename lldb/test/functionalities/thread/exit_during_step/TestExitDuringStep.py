@@ -37,6 +37,7 @@ class ExitDuringStepTestCase(TestBase):
         self.exit_during_step_in_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_with_dwarf(self):
         """Test thread exit during step handling."""
@@ -44,6 +45,7 @@ class ExitDuringStepTestCase(TestBase):
         self.exit_during_step_inst_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread exit during step-over handling."""
@@ -51,6 +53,7 @@ class ExitDuringStepTestCase(TestBase):
         self.exit_during_step_over_test()
 
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr16696") # threaded inferior not yet implemented on FreeBSD
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread exit during step-in handling."""
