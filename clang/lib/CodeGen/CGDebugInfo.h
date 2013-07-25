@@ -422,7 +422,7 @@ public:
   ArtificialLocation(CodeGenFunction &CGF, CGBuilderTy &B);
 
   /// Set the current location to line 0, but within the current scope
-  /// (= the top of the LexicalScopeStack).
+  /// (= the top of the LexicalBlockStack).
   void Emit();
 
   /// ~ArtificialLocation - Autorestore everything back to normal.
