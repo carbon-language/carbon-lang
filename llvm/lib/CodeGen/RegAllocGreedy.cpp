@@ -261,6 +261,7 @@ private:
   bool calcCompactRegion(GlobalSplitCandidate&);
   void splitAroundRegion(LiveRangeEdit&, ArrayRef<unsigned>);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
+  unsigned canReassign(LiveInterval &VirtReg, unsigned PhysReg);
   bool shouldEvict(LiveInterval &A, bool, LiveInterval &B, bool);
   bool canEvictInterference(LiveInterval&, unsigned, bool, EvictionCost&);
   void evictInterference(LiveInterval&, unsigned,
@@ -494,6 +495,31 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 //                         Interference eviction
 //===----------------------------------------------------------------------===//
 
+unsigned RAGreedy::canReassign(LiveInterval &VirtReg, unsigned PrevReg) {
+  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
+  unsigned PhysReg;
+  while ((PhysReg = Order.next())) {
+    if (PhysReg == PrevReg)
+      continue;
+
+    MCRegUnitIterator Units(PhysReg, TRI);
+    for (; Units.isValid(); ++Units) {
+      // Instantiate a "subquery", not to be confused with the Queries array.
+      LiveIntervalUnion::Query subQ(&VirtReg, &Matrix->getLiveUnions()[*Units]);
+      if (subQ.checkInterference())
+        break;
+    }
+    // If no units have interference, break out with the current PhysReg.
+    if (!Units.isValid())
+      break;
+  }
+  if (PhysReg)
+    DEBUG(dbgs() << "can reassign: " << VirtReg << " from "
+          << PrintReg(PrevReg, TRI) << " to " << PrintReg(PhysReg, TRI)
+          << '\n');
+  return PhysReg;
+}
+
 /// shouldEvict - determine if A should evict the assigned live range B. The
 /// eviction policy defined by this function together with the allocation order
 /// defined by enqueue() decides which registers ultimately end up being split
@@ -594,8 +620,10 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       // If !MaxCost.isMax(), then we're just looking for a cheap register.
       // Evicting another local live range in this case could lead to suboptimal
       // coloring.
-      if (!MaxCost.isMax() && IsLocal && LIS->intervalIsInOneMBB(*Intf))
+      if (!MaxCost.isMax() && IsLocal && LIS->intervalIsInOneMBB(*Intf) &&
+          !canReassign(*Intf, PhysReg)) {
         return false;
+      }
       // Finally, apply the eviction policy for non-urgent evictions.
       if (!shouldEvict(VirtReg, IsHint, *Intf, BreaksHint))
         return false;

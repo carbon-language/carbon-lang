@@ -7,7 +7,7 @@
 ; flag to disable it for this test case.
 ;
 ; CHECK: @wrap_mul4
-; CHECK: 21 regalloc - Number of spills inserted
+; CHECK: 22 regalloc - Number of spills inserted
 
 define void @wrap_mul4(double* nocapture %Out, [4 x double]* nocapture %A, [4 x double]* nocapture %B) #0 {
 entry:
