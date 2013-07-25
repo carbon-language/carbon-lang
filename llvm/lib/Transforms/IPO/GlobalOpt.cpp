@@ -3043,7 +3043,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
 /// \brief Given "llvm.used" or "llvm.compiler.used" as a global name, collect
 /// the initializer elements of that global in Set and return the global itself.
 static GlobalVariable *
-collectUsedGlobalVariables(const Module &M, const char *Name,
+collectUsedGlobalVariables(Module &M, const char *Name,
                            SmallPtrSet<GlobalValue *, 8> &Set) {
   GlobalVariable *GV = M.getGlobalVariable(Name);
   if (!GV || !GV->hasInitializer())
@@ -3106,7 +3106,7 @@ class LLVMUsed {
   GlobalVariable *CompilerUsedV;
 
 public:
-  LLVMUsed(const Module &M) {
+  LLVMUsed(Module &M) {
     UsedV = collectUsedGlobalVariables(M, "llvm.used", Used);
     CompilerUsedV =
         collectUsedGlobalVariables(M, "llvm.compiler.used", CompilerUsed);
