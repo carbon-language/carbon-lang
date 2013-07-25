@@ -54,12 +54,6 @@ public:
     }
 
     bool
-    ReadLock ()
-    {
-        return ::pthread_rwlock_rdlock (&m_rwlock) == 0;
-    }
-
-    bool
     ReadTryLock ()
     {
         return ::pthread_rwlock_tryrdlock (&m_rwlock) == 0;
@@ -97,39 +91,9 @@ public:
         {
         }
 
-        ReadLocker (ReadWriteLock &lock) :
-            m_lock (NULL)
-        {
-            Lock(&lock);
-        }
-    
-
-        ReadLocker (ReadWriteLock *lock) :
-            m_lock (NULL)
-        {
-            Lock(lock);
-        }
-        
         ~ReadLocker()
         {
             Unlock();
-        }
-
-        void
-        Lock (ReadWriteLock *lock)
-        {
-            if (m_lock)
-            {
-                if (m_lock == lock)
-                    return; // We already have this lock locked
-                else
-                    Unlock();
-            }
-            if (lock)
-            {
-                lock->ReadLock();
-                m_lock = lock;
-            }
         }
 
         // Try to lock the read lock, but only do so if there are no writers.
@@ -154,6 +118,7 @@ public:
             return false;
         }
 
+    protected:
         void
         Unlock ()
         {
@@ -164,7 +129,6 @@ public:
             }
         }
         
-    protected:
         ReadWriteLock *m_lock;
     private:
         DISALLOW_COPY_AND_ASSIGN(ReadLocker);
