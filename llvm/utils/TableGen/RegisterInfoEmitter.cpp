@@ -259,8 +259,8 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
       PSets.push_back(RegBank.getRegPressureSet(*PSetI).Order);
     }
     std::sort(PSets.begin(), PSets.end());
-    for (unsigned i = 0, e = PSets.size(); i < e; ++i) {
-      OS << PSets[i] << ",  ";
+    for (unsigned j = 0, e = PSets.size(); j < e; ++j) {
+      OS << PSets[j] << ",  ";
       ++StartIdx;
     }
     OS << "-1,  \t// #" << RCSetStarts[i] << " ";
