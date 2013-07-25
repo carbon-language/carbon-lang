@@ -419,8 +419,10 @@ public:
                               BoundNodesTreeBuilder *Builder,
                               TraversalKind Traversal,
                               BindKind Bind) {
-    return matchesRecursively(Node, Matcher, Builder, 1, Traversal,
-                              Bind);
+    if (ResultCache.size() > MaxMemoizationEntries)
+      ResultCache.clear();
+    return memoizedMatchesRecursively(Node, Matcher, Builder, 1, Traversal,
+                                      Bind);
   }
   // Implements ASTMatchFinder::matchesDescendantOf.
   virtual bool matchesDescendantOf(const ast_type_traits::DynTypedNode &Node,
