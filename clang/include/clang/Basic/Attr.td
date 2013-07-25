@@ -423,16 +423,6 @@ def MSP430Interrupt : InheritableAttr {
   let SemaHandler = 0;
 }
 
-def MBlazeInterruptHandler : InheritableAttr {
-  let Spellings = [];
-  let SemaHandler = 0;
-}
-
-def MBlazeSaveVolatiles : InheritableAttr {
-  let Spellings = [];
-  let SemaHandler = 0;
-}
-
 def Mips16 : InheritableAttr {
   let Spellings = [GNU<"mips16">, CXX11<"gnu", "mips16">];
   let Subjects = [Function];
