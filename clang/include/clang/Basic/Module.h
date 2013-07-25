@@ -16,6 +16,7 @@
 #define LLVM_CLANG_BASIC_MODULE_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SetVector.h"
@@ -74,6 +75,9 @@ private:
 
   /// \brief top-level header filenames that aren't resolved to FileEntries yet.
   std::vector<std::string> TopHeaderNames;
+
+  /// \brief Cache of modules visible to lookup in this module.
+  mutable llvm::DenseSet<const Module*> VisibleModulesCache;
 
 public:
   /// \brief The headers that are part of this module.
@@ -369,6 +373,14 @@ public:
   /// \returns The submodule if found, or NULL otherwise.
   Module *findSubmodule(StringRef Name) const;
 
+  /// \brief Determine whether the specified module would be visible to
+  /// a lookup at the end of this module.
+  bool isModuleVisible(const Module *M) const {
+    if (VisibleModulesCache.empty())
+      buildVisibleModulesCache();
+    return VisibleModulesCache.count(M);
+  }
+
   typedef std::vector<Module *>::iterator submodule_iterator;
   typedef std::vector<Module *>::const_iterator submodule_const_iterator;
   
@@ -390,6 +402,9 @@ public:
   
   /// \brief Dump the contents of this module to the given output stream.
   void dump() const;
+
+private:
+  void buildVisibleModulesCache() const;
 };
 
 } // end namespace clang

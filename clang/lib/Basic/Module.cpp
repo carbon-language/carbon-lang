@@ -242,6 +242,24 @@ void Module::getExportedModules(SmallVectorImpl<Module *> &Exported) const {
   }
 }
 
+void Module::buildVisibleModulesCache() const {
+  assert(VisibleModulesCache.empty() && "cache does not need building");
+
+  // This module is visible to itself.
+  VisibleModulesCache.insert(this);
+
+  llvm::SmallVector<Module*, 4> Exported;
+  for (unsigned I = 0, N = Imports.size(); I != N; ++I) {
+    // Every imported module is visible.
+    VisibleModulesCache.insert(Imports[I]);
+
+    // Every module exported by an imported module is visible.
+    Imports[I]->getExportedModules(Exported);
+    VisibleModulesCache.insert(Exported.begin(), Exported.end());
+    Exported.clear();
+  }
+}
+
 void Module::print(raw_ostream &OS, unsigned Indent) const {
   OS.indent(Indent);
   if (IsFramework)

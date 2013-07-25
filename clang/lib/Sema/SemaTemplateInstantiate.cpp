@@ -398,6 +398,18 @@ void Sema::InstantiatingTemplate::Clear() {
     }
     SemaRef.InNonInstantiationSFINAEContext
       = SavedInNonInstantiationSFINAEContext;
+
+    // Name lookup no longer looks in this template's defining module.
+    assert(SemaRef.ActiveTemplateInstantiations.size() >=
+           SemaRef.ActiveTemplateInstantiationLookupModules.size() &&
+           "forgot to remove a lookup module for a template instantiation");
+    if (SemaRef.ActiveTemplateInstantiations.size() ==
+        SemaRef.ActiveTemplateInstantiationLookupModules.size()) {
+      if (Module *M = SemaRef.ActiveTemplateInstantiationLookupModules.back())
+        SemaRef.LookupModulesCache.erase(M);
+      SemaRef.ActiveTemplateInstantiationLookupModules.pop_back();
+    }
+
     SemaRef.ActiveTemplateInstantiations.pop_back();
     Invalid = true;
   }

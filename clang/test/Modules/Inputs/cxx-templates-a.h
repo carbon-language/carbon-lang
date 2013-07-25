@@ -14,3 +14,9 @@ template<template<typename T, typename U, T> class> int template_param_kinds_3()
 template<typename T> struct SomeTemplate<T*>;
 template<typename T> struct SomeTemplate<T*> {};
 typedef SomeTemplate<int*> SomeTemplateIntPtr;
+
+template<typename T> void PerformDelayedLookup(T &t) {
+  t.f();
+  typename T::Inner inner;
+  FoundByADL(t);
+}

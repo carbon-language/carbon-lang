@@ -4907,7 +4907,7 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
   NamedDecl *Def = 0;
   if (!T->isIncompleteType(&Def)) {
     // If we know about the definition but it is not visible, complain.
-    if (!Diagnoser.Suppressed && Def && !LookupResult::isVisible(Def)) {
+    if (!Diagnoser.Suppressed && Def && !LookupResult::isVisible(*this, Def)) {
       // Suppress this error outside of a SFINAE context if we've already
       // emitted the error once for this type. There's no usefulness in
       // repeating the diagnostic.

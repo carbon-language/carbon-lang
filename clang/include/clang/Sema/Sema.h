@@ -5932,6 +5932,20 @@ public:
   SmallVector<ActiveTemplateInstantiation, 16>
     ActiveTemplateInstantiations;
 
+  /// \brief Extra modules inspected when performing a lookup during a template
+  /// instantiation. Computed lazily.
+  SmallVector<Module*, 16> ActiveTemplateInstantiationLookupModules;
+
+  /// \brief Cache of additional modules that should be used for name lookup
+  /// within the current template instantiation. Computed lazily; use
+  /// getLookupModules() to get a complete set.
+  llvm::DenseSet<Module*> LookupModulesCache;
+
+  /// \brief Get the set of additional modules that should be checked during
+  /// name lookup. A module and its imports become visible when instanting a
+  /// template defined within it.
+  llvm::DenseSet<Module*> &getLookupModules();
+
   /// \brief Whether we are in a SFINAE context that is not associated with
   /// template instantiation.
   ///

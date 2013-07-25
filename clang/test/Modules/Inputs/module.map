@@ -196,6 +196,10 @@ module cxx_templates_a {
   header "cxx-templates-a.h"
 }
 
+module cxx_templates_b_impl {
+  header "cxx-templates-b-impl.h"
+}
+
 module cxx_templates_b {
   header "cxx-templates-b.h"
 }

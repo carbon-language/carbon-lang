@@ -523,13 +523,13 @@ public:
     NextInContextAndBits.setInt(Bits);
   }
 
-protected:
   /// \brief Whether this declaration was marked as being private to the
   /// module in which it was defined.
-  bool isModulePrivate() const { 
+  bool isModulePrivate() const {
     return NextInContextAndBits.getInt() & ModulePrivateFlag;
   }
-  
+
+protected:
   /// \brief Specify whether this declaration was marked as being private
   /// to the module in which it was defined.
   void setModulePrivate(bool MP = true) {

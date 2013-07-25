@@ -283,33 +283,36 @@ public:
 
   /// \brief Determine whether the given declaration is visible to the
   /// program.
-  static bool isVisible(NamedDecl *D) {
+  static bool isVisible(Sema &SemaRef, NamedDecl *D) {
     // If this declaration is not hidden, it's visible.
     if (!D->isHidden())
       return true;
-    
-    // FIXME: We should be allowed to refer to a module-private name from 
-    // within the same module, e.g., during template instantiation.
-    // This requires us know which module a particular declaration came from.
-    return false;
+
+    if (SemaRef.ActiveTemplateInstantiations.empty())
+      return false;
+
+    // During template instantiation, we can refer to hidden declarations, if
+    // they were visible in any module along the path of instantiation.
+    return isVisibleSlow(SemaRef, D);
   }
-  
+
   /// \brief Retrieve the accepted (re)declaration of the given declaration,
   /// if there is one.
   NamedDecl *getAcceptableDecl(NamedDecl *D) const {
     if (!D->isInIdentifierNamespace(IDNS))
       return 0;
-    
-    if (isHiddenDeclarationVisible() || isVisible(D))
+
+    if (isHiddenDeclarationVisible() || isVisible(SemaRef, D))
       return D;
-    
+
     return getAcceptableDeclSlow(D);
   }
-  
+
 private:
+  static bool isVisibleSlow(Sema &SemaRef, NamedDecl *D);
   NamedDecl *getAcceptableDeclSlow(NamedDecl *D) const;
+
 public:
-  
   /// \brief Returns the identifier namespace mask for this lookup.
   unsigned getIdentifierNamespace() const {
     return IDNS;
