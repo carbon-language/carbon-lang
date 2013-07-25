@@ -1179,7 +1179,7 @@ public:
     return false;
   }
 
-  /// Return true if an fneg operation is free to the point where it is never
+  /// Return true if an fabs operation is free to the point where it is never
   /// worthwhile to replace it with a bitwise operation.
   virtual bool isFAbsFree(EVT VT) const {
     assert(VT.isFloatingPoint());
