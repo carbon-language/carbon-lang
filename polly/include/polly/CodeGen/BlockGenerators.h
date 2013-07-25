@@ -106,6 +106,19 @@ protected:
   Value *getNewValue(const Value *Old, ValueMapT &BBMap, ValueMapT &GlobalMap,
                      LoopToScevMapT &LTS, Loop *L);
 
+  /// @brief Get the new version of a Value if it is available.
+  ///
+  /// @param Old       The old Value.
+  /// @param BBMap     A mapping from old values to their new values
+  ///                  (for values recalculated within this basic block).
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                   within this basic block).
+  ///
+  /// @returns  The new value, if available.
+  Value *lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
+                              ValueMapT &GlobalMap) const;
+
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
                       ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 

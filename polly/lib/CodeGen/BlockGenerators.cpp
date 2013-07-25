@@ -158,9 +158,8 @@ BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P)
     : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {
 }
 
-Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
-                                   ValueMapT &GlobalMap, LoopToScevMapT &LTS,
-                                   Loop *L) {
+Value *BlockGenerator::lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
+                                            ValueMapT &GlobalMap) const {
   // We assume constants never change.
   // This avoids map lookups for many calls to this function.
   if (isa<Constant>(Old))
@@ -174,7 +173,25 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
     return New;
   }
 
+  // Or it is probably a scop-constant value defined as global, function
+  // parameter or an instruction not within the scop.
+  if (isa<GlobalValue>(Old) || isa<Argument>(Old))
+    return const_cast<Value *>(Old);
+
+  if (const Instruction *Inst = dyn_cast<Instruction>(Old))
+    if (!Statement.getParent()->getRegion().contains(Inst->getParent()))
+      return const_cast<Value *>(Old);
+
   if (Value *New = BBMap.lookup(Old))
+    return New;
+
+  return NULL;
+}
+
+Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
+                                   ValueMapT &GlobalMap, LoopToScevMapT &LTS,
+                                   Loop *L) {
+  if (Value *New = lookupAvailableValue(Old, BBMap, GlobalMap))
     return New;
 
   if (SCEVCodegen && SE.isSCEVable(Old->getType()))
@@ -194,15 +211,10 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
       }
     }
 
-  if (const Instruction *Inst = dyn_cast<Instruction>(Old)) {
-    (void)Inst;
-    assert(!Statement.getParent()->getRegion().contains(Inst->getParent()) &&
-           "unexpected scalar dependence in region");
-  }
-
-  // Everything else is probably a scop-constant value defined as global,
-  // function parameter or an instruction not within the scop.
-  return const_cast<Value *>(Old);
+  // Now the scalar dependence is neither available nor SCEVCodegenable, this
+  // should never happen in the current code generator.
+  llvm_unreachable("Unexpected scalar dependence in region!");
+  return NULL;
 }
 
 void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
