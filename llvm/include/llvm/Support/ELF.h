@@ -276,7 +276,6 @@ enum {
   EM_STM8          = 186, // STMicroeletronics STM8 8-bit microcontroller
   EM_TILE64        = 187, // Tilera TILE64 multicore architecture family
   EM_TILEPRO       = 188, // Tilera TILEPro multicore architecture family
-  EM_MICROBLAZE    = 189, // Xilinx MicroBlaze 32-bit RISC soft processor core
   EM_CUDA          = 190, // NVIDIA CUDA architecture
   EM_TILEGX        = 191, // Tilera TILE-Gx multicore architecture family
   EM_CLOUDSHIELD   = 192, // CloudShield architecture family
@@ -287,8 +286,7 @@ enum {
   EM_RL78          = 197, // Renesas RL78 family
   EM_VIDEOCORE5    = 198, // Broadcom VideoCore V processor
   EM_78KOR         = 199, // Renesas 78KOR family
-  EM_56800EX       = 200, // Freescale 56800EX Digital Signal Controller (DSC)
-  EM_MBLAZE        = 47787 // Xilinx MicroBlaze
+  EM_56800EX       = 200  // Freescale 56800EX Digital Signal Controller (DSC)
 };
 
 // Object file classes.
@@ -416,32 +414,6 @@ enum {
   R_386_TLS_DESC      = 41,
   R_386_IRELATIVE     = 42,
   R_386_NUM           = 43
-};
-
-// MBlaze relocations.
-enum {
-  R_MICROBLAZE_NONE           = 0,
-  R_MICROBLAZE_32             = 1,
-  R_MICROBLAZE_32_PCREL       = 2,
-  R_MICROBLAZE_64_PCREL       = 3,
-  R_MICROBLAZE_32_PCREL_LO    = 4,
-  R_MICROBLAZE_64             = 5,
-  R_MICROBLAZE_32_LO          = 6,
-  R_MICROBLAZE_SRO32          = 7,
-  R_MICROBLAZE_SRW32          = 8,
-  R_MICROBLAZE_64_NONE        = 9,
-  R_MICROBLAZE_32_SYM_OP_SYM  = 10,
-  R_MICROBLAZE_GNU_VTINHERIT  = 11,
-  R_MICROBLAZE_GNU_VTENTRY    = 12,
-  R_MICROBLAZE_GOTPC_64       = 13,
-  R_MICROBLAZE_GOT_64         = 14,
-  R_MICROBLAZE_PLT_64         = 15,
-  R_MICROBLAZE_REL            = 16,
-  R_MICROBLAZE_JUMP_SLOT      = 17,
-  R_MICROBLAZE_GLOB_DAT       = 18,
-  R_MICROBLAZE_GOTOFF_64      = 19,
-  R_MICROBLAZE_GOTOFF_32      = 20,
-  R_MICROBLAZE_COPY           = 21
 };
 
 // ELF Relocation types for PPC32

@@ -310,7 +310,6 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   xcore-*)                llvm_cv_target_arch="XCore" ;;
   msp430-*)               llvm_cv_target_arch="MSP430" ;;
   hexagon-*)              llvm_cv_target_arch="Hexagon" ;;
-  mblaze-*)               llvm_cv_target_arch="MBlaze" ;;
   nvptx-*)                llvm_cv_target_arch="NVPTX" ;;
   s390x-*)                llvm_cv_target_arch="SystemZ" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
@@ -481,7 +480,6 @@ else
     XCore)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     MSP430)      AC_SUBST(TARGET_HAS_JIT,0) ;;
     Hexagon)     AC_SUBST(TARGET_HAS_JIT,0) ;;
-    MBlaze)      AC_SUBST(TARGET_HAS_JIT,0) ;;
     NVPTX)       AC_SUBST(TARGET_HAS_JIT,0) ;;
     SystemZ)     AC_SUBST(TARGET_HAS_JIT,1) ;;
     *)           AC_SUBST(TARGET_HAS_JIT,0) ;;
@@ -600,7 +598,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC AArch64 ARM Mips XCore MSP430 CppBackend MBlaze NVPTX Hexagon SystemZ R600" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC AArch64 ARM Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ R600" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -617,7 +615,6 @@ case "$enableval" in
         msp430)   TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
         cpp)      TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
         hexagon)  TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
-        mblaze)   TARGETS_TO_BUILD="MBlaze $TARGETS_TO_BUILD" ;;
         nvptx)    TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
         systemz)  TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
         r600)     TARGETS_TO_BUILD="R600 $TARGETS_TO_BUILD" ;;
@@ -629,7 +626,6 @@ case "$enableval" in
             AArch64)     TARGETS_TO_BUILD="AArch64 $TARGETS_TO_BUILD" ;;
             ARM)         TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
             Mips)        TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
-            MBlaze)      TARGETS_TO_BUILD="MBlaze $TARGETS_TO_BUILD" ;;
             XCore)       TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
             MSP430)      TARGETS_TO_BUILD="MSP430 $TARGETS_TO_BUILD" ;;
             Hexagon)     TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;

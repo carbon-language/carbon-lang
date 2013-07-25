@@ -758,7 +758,7 @@ The following options can be used to set or enable LLVM specific options:
   target names that you want available in llc. The target names use all lower
   case. The current set of targets is:
 
-    ``arm, cpp, hexagon, mblaze, mips, mipsel, msp430, powerpc, ptx, sparc, spu,
+    ``arm, cpp, hexagon, mips, mipsel, msp430, powerpc, ptx, sparc, spu,
     systemz, x86, x86_64, xcore``.
 
 ``--enable-doxygen``

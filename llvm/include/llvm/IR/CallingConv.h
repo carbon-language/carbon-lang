@@ -93,13 +93,6 @@ namespace CallingConv {
     /// Passes all arguments in register or parameter space.
     PTX_Device = 72,
 
-    /// MBLAZE_INTR - Calling convention used for MBlaze interrupt routines.
-    MBLAZE_INTR = 73,
-
-    /// MBLAZE_INTR - Calling convention used for MBlaze interrupt support
-    /// routines (i.e. GCC's save_volatiles attribute).
-    MBLAZE_SVOL = 74,
-
     /// SPIR_FUNC - Calling convention for SPIR non-kernel device functions.
     /// No lowering or expansion of arguments.
     /// Structures are passed as a pointer to a struct with the byval attribute.

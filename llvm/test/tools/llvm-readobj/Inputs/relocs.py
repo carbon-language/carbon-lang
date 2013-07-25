@@ -533,30 +533,6 @@ class Relocs_Elf_i386(Enum):
   R_386_IRELATIVE     = 42
   R_386_NUM           = 43
 
-class Relocs_Elf_MBlaze(Enum):
-  R_MICROBLAZE_NONE           = 0
-  R_MICROBLAZE_32             = 1
-  R_MICROBLAZE_32_PCREL       = 2
-  R_MICROBLAZE_64_PCREL       = 3
-  R_MICROBLAZE_32_PCREL_LO    = 4
-  R_MICROBLAZE_64             = 5
-  R_MICROBLAZE_32_LO          = 6
-  R_MICROBLAZE_SRO32          = 7
-  R_MICROBLAZE_SRW32          = 8
-  R_MICROBLAZE_64_NONE        = 9
-  R_MICROBLAZE_32_SYM_OP_SYM  = 10
-  R_MICROBLAZE_GNU_VTINHERIT  = 11
-  R_MICROBLAZE_GNU_VTENTRY    = 12
-  R_MICROBLAZE_GOTPC_64       = 13
-  R_MICROBLAZE_GOT_64         = 14
-  R_MICROBLAZE_PLT_64         = 15
-  R_MICROBLAZE_REL            = 16
-  R_MICROBLAZE_JUMP_SLOT      = 17
-  R_MICROBLAZE_GLOB_DAT       = 18
-  R_MICROBLAZE_GOTOFF_64      = 19
-  R_MICROBLAZE_GOTOFF_32      = 20
-  R_MICROBLAZE_COPY           = 21
-
 class Relocs_Elf_PPC32(Enum):
   R_PPC_NONE                  = 0
   R_PPC_ADDR32                = 1
@@ -1071,7 +1047,6 @@ craftElf("relocs.obj.elf-aarch64",  "aarch64",                     Relocs_Elf_AA
 craftElf("relocs.obj.elf-arm",      "arm-unknown-unknown",         Relocs_Elf_ARM.entries(), "b sym")
 craftElf("relocs.obj.elf-mips",     "mips-unknown-linux",          Relocs_Elf_Mips.entries(), "lui $2, %hi(sym)")
 craftElf("relocs.obj.elf-mips64el", "mips64el-unknown-linux",        Relocs_Elf_Mips.entries(), "lui $2, %hi(sym)")
-#craftElf("relocs.obj.elf-mblaze",   "mblaze-unknown-unknown",      Relocs_Elf_MBlaze.entries(), ...)
 #craftElf("relocs.obj.elf-hexagon",  "hexagon-unknown-unknown",     Relocs_Elf_Hexagon.entries(), ...)
 
 craftCoff("relocs.obj.coff-i386",   "i386-pc-win32",   Relocs_Coff_i386.entries(),   "mov foo@imgrel(%ebx, %ecx, 4), %eax")
