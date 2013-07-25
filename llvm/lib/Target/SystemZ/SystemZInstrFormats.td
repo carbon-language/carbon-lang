@@ -704,6 +704,46 @@ class UnaryRILPC<string mnemonic, bits<12> opcode, SDPatternOperator operator,
   let AddedComplexity = 7;
 }
 
+class CondUnaryRSY<string mnemonic, bits<16> opcode,
+                   RegisterOperand cls, bits<5> bytes,
+                   AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$BD2, cond4:$R3),
+            mnemonic#"$R3\t$R1, $BD2", []>,
+    Requires<[FeatureLoadStoreOnCond]> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+  let mayLoad = 1;
+  let AccessBytes = bytes;
+}
+
+// Like CondUnaryRSY, but used for the raw assembly form.  The condition-code
+// mask is the third operand rather than being part of the mnemonic.
+class AsmCondUnaryRSY<string mnemonic, bits<16> opcode,
+                      RegisterOperand cls, bits<5> bytes,
+                      AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$BD2, uimm8zx4:$R3),
+            mnemonic#"\t$R1, $BD2, $R3", []>,
+    Requires<[FeatureLoadStoreOnCond]> {
+  let mayLoad = 1;
+  let AccessBytes = bytes;
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+// Like CondUnaryRSY, but with a fixed CC mask.
+class FixedCondUnaryRSY<string mnemonic, bits<16> opcode,
+                        RegisterOperand cls, bits<4> ccmask, bits<5> bytes,
+                        AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$BD2),
+            mnemonic#"\t$R1, $BD2", []>,
+    Requires<[FeatureLoadStoreOnCond]> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+  let R3 = ccmask;
+  let mayLoad = 1;
+  let AccessBytes = bytes;
+}
+
 class UnaryRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
               RegisterOperand cls, bits<5> bytes,
               AddressingMode mode = bdxaddr12only>

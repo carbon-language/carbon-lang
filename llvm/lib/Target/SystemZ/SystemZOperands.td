@@ -111,6 +111,15 @@ class BDLMode<string type, string bitsize, string dispsize, string suffix,
                         !cast<Immediate>("imm"##bitsize))>;
 
 //===----------------------------------------------------------------------===//
+// Manipulating CC masks
+//===----------------------------------------------------------------------===//
+
+def INVCC : SDNodeXForm<imm, [{
+  unsigned Value = N->getZExtValue() ^ SystemZ::CCMASK_ANY;
+  return CurDAG->getTargetConstant(Value, MVT::i8);
+}]>;
+
+//===----------------------------------------------------------------------===//
 // Extracting immediate operands from nodes
 // These all create MVT::i64 nodes to ensure the value is not sign-extended
 // when converted from an SDNode to a MachineOperand later on.

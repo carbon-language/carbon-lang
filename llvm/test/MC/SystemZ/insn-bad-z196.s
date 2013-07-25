@@ -25,6 +25,40 @@
 	ahik	%r0, %r1, foo
 
 #CHECK: error: invalid operand
+#CHECK: loc	%r0,0,-1
+#CHECK: error: invalid operand
+#CHECK: loc	%r0,0,16
+#CHECK: error: invalid operand
+#CHECK: loc	%r0,-524289,1
+#CHECK: error: invalid operand
+#CHECK: loc	%r0,524288,1
+#CHECK: error: invalid use of indexed addressing
+#CHECK: loc	%r0,0(%r1,%r2),1
+
+	loc	%r0,0,-1
+	loc	%r0,0,16
+	loc	%r0,-524289,1
+	loc	%r0,524288,1
+	loc	%r0,0(%r1,%r2),1
+
+#CHECK: error: invalid operand
+#CHECK: locg	%r0,0,-1
+#CHECK: error: invalid operand
+#CHECK: locg	%r0,0,16
+#CHECK: error: invalid operand
+#CHECK: locg	%r0,-524289,1
+#CHECK: error: invalid operand
+#CHECK: locg	%r0,524288,1
+#CHECK: error: invalid use of indexed addressing
+#CHECK: locg	%r0,0(%r1,%r2),1
+
+	locg	%r0,0,-1
+	locg	%r0,0,16
+	locg	%r0,-524289,1
+	locg	%r0,524288,1
+	locg	%r0,0(%r1,%r2),1
+
+#CHECK: error: invalid operand
 #CHECK: sllk	%r0,%r0,-524289
 #CHECK: error: invalid operand
 #CHECK: sllk	%r0,%r0,524288
