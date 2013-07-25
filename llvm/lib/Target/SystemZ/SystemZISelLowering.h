@@ -211,7 +211,8 @@ private:
                                 MachineBasicBlock *BB) const;
   MachineBasicBlock *emitCondStore(MachineInstr *MI,
                                    MachineBasicBlock *BB,
-                                   unsigned StoreOpcode, bool Invert) const;
+                                   unsigned StoreOpcode, unsigned STOCOpcode,
+                                   bool Invert) const;
   MachineBasicBlock *emitExt128(MachineInstr *MI,
                                 MachineBasicBlock *MBB,
                                 bool ClearEven, unsigned SubReg) const;

@@ -21,6 +21,13 @@ def FeatureDistinctOps : SystemZFeature<
   "Assume that the distinct-operands facility is installed"
 >;
 
+def FeatureLoadStoreOnCond : SystemZFeature<
+  "load-store-on-cond", "LoadStoreOnCond",
+  "Assume that the load/store-on-condition facility is installed"
+>;
+
 def : Processor<"z10",   NoItineraries, []>;
-def : Processor<"z196",  NoItineraries, [FeatureDistinctOps]>;
-def : Processor<"zEC12", NoItineraries, [FeatureDistinctOps]>;
+def : Processor<"z196",  NoItineraries,
+                [FeatureDistinctOps, FeatureLoadStoreOnCond]>;
+def : Processor<"zEC12", NoItineraries,
+                [FeatureDistinctOps, FeatureLoadStoreOnCond]>;

@@ -451,9 +451,11 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 // Instruction definitions with semantics
 //===----------------------------------------------------------------------===//
 //
-// These classes have the form <Category><Format>, where <Format> is one
+// These classes have the form [Cond]<Category><Format>, where <Format> is one
 // of the formats defined above and where <Category> describes the inputs
-// and outputs.  <Category> can be one of:
+// and outputs.  "Cond" is used if the instruction is conditional,
+// in which case the 4-bit condition-code mask is added as a final operand.
+// <Category> can be one of:
 //
 //   Inherent:
 //     One register output operand and no input operands.
@@ -616,6 +618,40 @@ multiclass StoreSIPair<string mnemonic, bits<8> siOpcode, bits<16> siyOpcode,
     let DispSize = "20" in
       def Y  : StoreSIY<mnemonic#"y", siyOpcode, operator, imm, bdaddr20pair>;
   }
+}
+
+class CondStoreRSY<string mnemonic, bits<16> opcode,
+                   RegisterOperand cls, bits<5> bytes,
+                   AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs), (ins cls:$R1, mode:$BD2, cond4:$R3),
+            mnemonic#"$R3\t$R1, $BD2", []>,
+    Requires<[FeatureLoadStoreOnCond]> {
+  let mayStore = 1;
+  let AccessBytes = bytes;
+}
+
+// Like CondStoreRSY, but used for the raw assembly form.  The condition-code
+// mask is the third operand rather than being part of the mnemonic.
+class AsmCondStoreRSY<string mnemonic, bits<16> opcode,
+                      RegisterOperand cls, bits<5> bytes,
+                      AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs), (ins cls:$R1, mode:$BD2, uimm8zx4:$R3),
+            mnemonic#"\t$R1, $BD2, $R3", []>,
+    Requires<[FeatureLoadStoreOnCond]> {
+  let mayStore = 1;
+  let AccessBytes = bytes;
+}
+
+// Like CondStoreRSY, but with a fixed CC mask.
+class FixedCondStoreRSY<string mnemonic, bits<16> opcode,
+                        RegisterOperand cls, bits<4> ccmask, bits<5> bytes,
+                        AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs), (ins cls:$R1, mode:$BD2),
+            mnemonic#"\t$R1, $BD2", []>,
+    Requires<[FeatureLoadStoreOnCond]> {
+  let mayStore = 1;
+  let AccessBytes = bytes;
+  let R3 = ccmask;
 }
 
 class UnaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
@@ -1151,12 +1187,12 @@ class SelectWrapper<RegisterOperand cls>
 multiclass CondStores<RegisterOperand cls, SDPatternOperator store,
                       SDPatternOperator load, AddressingMode mode> {
   let Defs = [CC], Uses = [CC], usesCustomInserter = 1 in {
-    def "" : Pseudo<(outs), (ins mode:$addr, cls:$new, i8imm:$cc),
+    def "" : Pseudo<(outs), (ins cls:$new, mode:$addr, uimm8zx4:$cc),
                     [(store (z_select_ccmask cls:$new, (load mode:$addr),
-                                             imm:$cc), mode:$addr)]>;
-    def Inv : Pseudo<(outs), (ins mode:$addr, cls:$new, i8imm:$cc),
+                                             uimm8zx4:$cc), mode:$addr)]>;
+    def Inv : Pseudo<(outs), (ins cls:$new, mode:$addr, uimm8zx4:$cc),
                      [(store (z_select_ccmask (load mode:$addr), cls:$new,
-                                              imm:$cc), mode:$addr)]>;
+                                              uimm8zx4:$cc), mode:$addr)]>;
   }
 }
 

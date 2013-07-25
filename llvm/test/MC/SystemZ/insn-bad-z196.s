@@ -65,3 +65,37 @@
 	srlk	%r0,%r0,524288
 	srlk	%r0,%r0,0(%r0)
 	srlk	%r0,%r0,0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: stoc	%r0,0,-1
+#CHECK: error: invalid operand
+#CHECK: stoc	%r0,0,16
+#CHECK: error: invalid operand
+#CHECK: stoc	%r0,-524289,1
+#CHECK: error: invalid operand
+#CHECK: stoc	%r0,524288,1
+#CHECK: error: invalid use of indexed addressing
+#CHECK: stoc	%r0,0(%r1,%r2),1
+
+	stoc	%r0,0,-1
+	stoc	%r0,0,16
+	stoc	%r0,-524289,1
+	stoc	%r0,524288,1
+	stoc	%r0,0(%r1,%r2),1
+
+#CHECK: error: invalid operand
+#CHECK: stocg	%r0,0,-1
+#CHECK: error: invalid operand
+#CHECK: stocg	%r0,0,16
+#CHECK: error: invalid operand
+#CHECK: stocg	%r0,-524289,1
+#CHECK: error: invalid operand
+#CHECK: stocg	%r0,524288,1
+#CHECK: error: invalid use of indexed addressing
+#CHECK: stocg	%r0,0(%r1,%r2),1
+
+	stocg	%r0,0,-1
+	stocg	%r0,0,16
+	stocg	%r0,-524289,1
+	stocg	%r0,524288,1
+	stocg	%r0,0(%r1,%r2),1

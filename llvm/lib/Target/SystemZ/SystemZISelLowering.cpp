@@ -1773,21 +1773,35 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
 
 // Implement EmitInstrWithCustomInserter for pseudo CondStore* instruction MI.
 // StoreOpcode is the store to use and Invert says whether the store should
-// happen when the condition is false rather than true.
+// happen when the condition is false rather than true.  If a STORE ON
+// CONDITION is available, STOCOpcode is its opcode, otherwise it is 0.
 MachineBasicBlock *
 SystemZTargetLowering::emitCondStore(MachineInstr *MI,
                                      MachineBasicBlock *MBB,
-                                     unsigned StoreOpcode, bool Invert) const {
+                                     unsigned StoreOpcode, unsigned STOCOpcode,
+                                     bool Invert) const {
   const SystemZInstrInfo *TII = TM.getInstrInfo();
 
-  MachineOperand Base = MI->getOperand(0);
-  int64_t Disp        = MI->getOperand(1).getImm();
-  unsigned IndexReg   = MI->getOperand(2).getReg();
-  unsigned SrcReg     = MI->getOperand(3).getReg();
+  unsigned SrcReg     = MI->getOperand(0).getReg();
+  MachineOperand Base = MI->getOperand(1);
+  int64_t Disp        = MI->getOperand(2).getImm();
+  unsigned IndexReg   = MI->getOperand(3).getReg();
   unsigned CCMask     = MI->getOperand(4).getImm();
   DebugLoc DL         = MI->getDebugLoc();
 
   StoreOpcode = TII->getOpcodeForOffset(StoreOpcode, Disp);
+
+  // Use STOCOpcode if possible.  We could use different store patterns in
+  // order to avoid matching the index register, but the performance trade-offs
+  // might be more complicated in that case.
+  if (STOCOpcode && !IndexReg && TM.getSubtargetImpl()->hasLoadStoreOnCond()) {
+    if (Invert)
+      CCMask = CCMask ^ SystemZ::CCMASK_ANY;
+    BuildMI(*MBB, MI, DL, TII->get(STOCOpcode))
+      .addReg(SrcReg).addOperand(Base).addImm(Disp).addImm(CCMask);
+    MI->eraseFromParent();
+    return MBB;
+  }
 
   // Get the condition needed to branch around the store.
   if (!Invert)
@@ -2249,41 +2263,41 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitSelect(MI, MBB);
 
   case SystemZ::CondStore8_32:
-    return emitCondStore(MI, MBB, SystemZ::STC32, false);
+    return emitCondStore(MI, MBB, SystemZ::STC32, 0, false);
   case SystemZ::CondStore8_32Inv:
-    return emitCondStore(MI, MBB, SystemZ::STC32, true);
+    return emitCondStore(MI, MBB, SystemZ::STC32, 0, true);
   case SystemZ::CondStore16_32:
-    return emitCondStore(MI, MBB, SystemZ::STH32, false);
+    return emitCondStore(MI, MBB, SystemZ::STH32, 0, false);
   case SystemZ::CondStore16_32Inv:
-    return emitCondStore(MI, MBB, SystemZ::STH32, true);
+    return emitCondStore(MI, MBB, SystemZ::STH32, 0, true);
   case SystemZ::CondStore32_32:
-    return emitCondStore(MI, MBB, SystemZ::ST32, false);
+    return emitCondStore(MI, MBB, SystemZ::ST32, SystemZ::STOC32, false);
   case SystemZ::CondStore32_32Inv:
-    return emitCondStore(MI, MBB, SystemZ::ST32, true);
+    return emitCondStore(MI, MBB, SystemZ::ST32, SystemZ::STOC32, true);
   case SystemZ::CondStore8:
-    return emitCondStore(MI, MBB, SystemZ::STC, false);
+    return emitCondStore(MI, MBB, SystemZ::STC, 0, false);
   case SystemZ::CondStore8Inv:
-    return emitCondStore(MI, MBB, SystemZ::STC, true);
+    return emitCondStore(MI, MBB, SystemZ::STC, 0, true);
   case SystemZ::CondStore16:
-    return emitCondStore(MI, MBB, SystemZ::STH, false);
+    return emitCondStore(MI, MBB, SystemZ::STH, 0, false);
   case SystemZ::CondStore16Inv:
-    return emitCondStore(MI, MBB, SystemZ::STH, true);
+    return emitCondStore(MI, MBB, SystemZ::STH, 0, true);
   case SystemZ::CondStore32:
-    return emitCondStore(MI, MBB, SystemZ::ST, false);
+    return emitCondStore(MI, MBB, SystemZ::ST, SystemZ::STOC, false);
   case SystemZ::CondStore32Inv:
-    return emitCondStore(MI, MBB, SystemZ::ST, true);
+    return emitCondStore(MI, MBB, SystemZ::ST, SystemZ::STOC, true);
   case SystemZ::CondStore64:
-    return emitCondStore(MI, MBB, SystemZ::STG, false);
+    return emitCondStore(MI, MBB, SystemZ::STG, SystemZ::STOCG, false);
   case SystemZ::CondStore64Inv:
-    return emitCondStore(MI, MBB, SystemZ::STG, true);
+    return emitCondStore(MI, MBB, SystemZ::STG, SystemZ::STOCG, true);
   case SystemZ::CondStoreF32:
-    return emitCondStore(MI, MBB, SystemZ::STE, false);
+    return emitCondStore(MI, MBB, SystemZ::STE, 0, false);
   case SystemZ::CondStoreF32Inv:
-    return emitCondStore(MI, MBB, SystemZ::STE, true);
+    return emitCondStore(MI, MBB, SystemZ::STE, 0, true);
   case SystemZ::CondStoreF64:
-    return emitCondStore(MI, MBB, SystemZ::STD, false);
+    return emitCondStore(MI, MBB, SystemZ::STD, 0, false);
   case SystemZ::CondStoreF64Inv:
-    return emitCondStore(MI, MBB, SystemZ::STD, true);
+    return emitCondStore(MI, MBB, SystemZ::STD, 0, true);
 
   case SystemZ::AEXT128_64:
     return emitExt128(MI, MBB, false, SystemZ::subreg_low);

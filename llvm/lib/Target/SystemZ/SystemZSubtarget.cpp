@@ -21,7 +21,7 @@ SystemZSubtarget::SystemZSubtarget(const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS)
   : SystemZGenSubtargetInfo(TT, CPU, FS), HasDistinctOps(false),
-    TargetTriple(TT) {
+    HasLoadStoreOnCond(false), TargetTriple(TT) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "z10";

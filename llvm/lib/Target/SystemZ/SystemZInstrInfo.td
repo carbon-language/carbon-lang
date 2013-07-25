@@ -107,26 +107,28 @@ defm AsmC : CompareBranches<uimm8zx4, "", "$M3, ">;
 // (integer or floating-point)
 multiclass CondExtendedMnemonic<bits<4> ccmask, string name> {
   let R1 = ccmask in {
-    def "" : InstRI<0xA74, (outs), (ins brtarget16:$I2),
-                    "j"##name##"\t$I2", []>;
-    def L  : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
+    def J : InstRI<0xA74, (outs), (ins brtarget16:$I2),
+                   "j"##name##"\t$I2", []>;
+    def JG : InstRIL<0xC04, (outs), (ins brtarget32:$I2),
                      "jg"##name##"\t$I2", []>;
   }
+  def STOC  : FixedCondStoreRSY<"stoc"##name,  0xEBF3, GR32, ccmask, 4>;
+  def STOCG : FixedCondStoreRSY<"stocg"##name, 0xEBE3, GR64, ccmask, 8>;
 }
-defm AsmJO   : CondExtendedMnemonic<1,  "o">;
-defm AsmJH   : CondExtendedMnemonic<2,  "h">;
-defm AsmJNLE : CondExtendedMnemonic<3,  "nle">;
-defm AsmJL   : CondExtendedMnemonic<4,  "l">;
-defm AsmJNHE : CondExtendedMnemonic<5,  "nhe">;
-defm AsmJLH  : CondExtendedMnemonic<6,  "lh">;
-defm AsmJNE  : CondExtendedMnemonic<7,  "ne">;
-defm AsmJE   : CondExtendedMnemonic<8,  "e">;
-defm AsmJNLH : CondExtendedMnemonic<9,  "nlh">;
-defm AsmJHE  : CondExtendedMnemonic<10, "he">;
-defm AsmJNL  : CondExtendedMnemonic<11, "nl">;
-defm AsmJLE  : CondExtendedMnemonic<12, "le">;
-defm AsmJNH  : CondExtendedMnemonic<13, "nh">;
-defm AsmJNO  : CondExtendedMnemonic<14, "no">;
+defm AsmO   : CondExtendedMnemonic<1,  "o">;
+defm AsmH   : CondExtendedMnemonic<2,  "h">;
+defm AsmNLE : CondExtendedMnemonic<3,  "nle">;
+defm AsmL   : CondExtendedMnemonic<4,  "l">;
+defm AsmNHE : CondExtendedMnemonic<5,  "nhe">;
+defm AsmLH  : CondExtendedMnemonic<6,  "lh">;
+defm AsmNE  : CondExtendedMnemonic<7,  "ne">;
+defm AsmE   : CondExtendedMnemonic<8,  "e">;
+defm AsmNLH : CondExtendedMnemonic<9,  "nlh">;
+defm AsmHE  : CondExtendedMnemonic<10, "he">;
+defm AsmNL  : CondExtendedMnemonic<11, "nl">;
+defm AsmLE  : CondExtendedMnemonic<12, "le">;
+defm AsmNH  : CondExtendedMnemonic<13, "nh">;
+defm AsmNO  : CondExtendedMnemonic<14, "no">;
 
 // Define AsmParser mnemonics for each integer condition-code mask.
 // This is like the list above, except that condition 3 is not possible
@@ -273,6 +275,17 @@ let SimpleBDXStore = 1 in {
 let isCodeGenOnly = 1 in
   def STRL32 : StoreRILPC<"strl", 0xC4F, aligned_store, GR32>;
 def STGRL : StoreRILPC<"stgrl", 0xC4B, aligned_store, GR64>;
+
+// Store on condition.
+let isCodeGenOnly = 1, Uses = [CC] in {
+  def STOC32 : CondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
+  def STOC   : CondStoreRSY<"stoc",  0xEBF3, GR64, 4>;
+  def STOCG  : CondStoreRSY<"stocg", 0xEBE3, GR64, 8>;
+}
+let Uses = [CC] in {
+  def AsmSTOC  : AsmCondStoreRSY<"stoc",  0xEBF3, GR32, 4>;
+  def AsmSTOCG : AsmCondStoreRSY<"stocg", 0xEBE3, GR64, 8>;
+}
 
 // 8-bit immediate stores to 8-bit fields.
 defm MVI : StoreSIPair<"mvi", 0x92, 0xEB52, truncstorei8, imm32zx8trunc>;
