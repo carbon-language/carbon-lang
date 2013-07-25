@@ -204,7 +204,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
 
   if (VerifyScheduling) {
-    DEBUG(LIS->print(dbgs()));
+    DEBUG(LIS->dump());
     MF->verify(this, "Before machine scheduling.");
   }
   RegClassInfo->runOnMachineFunction(*MF);
@@ -294,7 +294,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
     Scheduler->finishBlock();
   }
   Scheduler->finalizeSchedule();
-  DEBUG(LIS->print(dbgs()));
+  DEBUG(LIS->dump());
   if (VerifyScheduling)
     MF->verify(this, "After machine scheduling.");
   return true;
