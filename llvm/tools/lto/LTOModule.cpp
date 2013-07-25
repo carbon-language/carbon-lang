@@ -50,11 +50,6 @@ DisableFPElim("disable-fp-elim",
   cl::init(false));
 
 static cl::opt<bool>
-DisableFPElimNonLeaf("disable-non-leaf-fp-elim",
-  cl::desc("Disable frame pointer elimination optimization for non-leaf funcs"),
-  cl::init(false));
-
-static cl::opt<bool>
 EnableUnsafeFPMath("enable-unsafe-fp-math",
   cl::desc("Enable optimizations that may decrease FP precision"),
   cl::init(false));
@@ -236,7 +231,6 @@ LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
 void LTOModule::getTargetOptions(TargetOptions &Options) {
   Options.LessPreciseFPMADOption = EnableFPMAD;
   Options.NoFramePointerElim = DisableFPElim;
-  Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
   Options.AllowFPOpFusion = FuseFPOps;
   Options.UnsafeFPMath = EnableUnsafeFPMath;
   Options.NoInfsFPMath = EnableNoInfsFPMath;

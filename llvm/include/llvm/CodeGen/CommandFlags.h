@@ -110,11 +110,6 @@ DisableFPElim("disable-fp-elim",
               cl::init(false));
 
 cl::opt<bool>
-DisableFPElimNonLeaf("disable-non-leaf-fp-elim",
-  cl::desc("Disable frame pointer elimination optimization for non-leaf funcs"),
-  cl::init(false));
-
-cl::opt<bool>
 EnableUnsafeFPMath("enable-unsafe-fp-math",
                 cl::desc("Enable optimizations that may decrease FP precision"),
                 cl::init(false));

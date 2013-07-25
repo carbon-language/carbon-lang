@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/IR/Function.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetOptions.h"
@@ -21,6 +22,9 @@ using namespace llvm;
 bool TargetOptions::DisableFramePointerElim(const MachineFunction &MF) const {
   // Check to see if we should eliminate non-leaf frame pointers and then
   // check to see if we should eliminate all frame pointers.
+  bool NoFramePointerElimNonLeaf =
+    MF.getFunction()->getFnAttribute("no-frame-pointer-elim-non-leaf")
+      .getValueAsString() == "true";
   if (NoFramePointerElimNonLeaf && !NoFramePointerElim) {
     const MachineFrameInfo *MFI = MF.getFrameInfo();
     return MFI->hasCalls();

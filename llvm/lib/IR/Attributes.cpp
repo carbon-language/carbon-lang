@@ -104,24 +104,28 @@ bool Attribute::isStringAttribute() const {
 }
 
 Attribute::AttrKind Attribute::getKindAsEnum() const {
+  if (!pImpl) return None;
   assert((isEnumAttribute() || isAlignAttribute()) &&
          "Invalid attribute type to get the kind as an enum!");
   return pImpl ? pImpl->getKindAsEnum() : None;
 }
 
 uint64_t Attribute::getValueAsInt() const {
+  if (!pImpl) return 0;
   assert(isAlignAttribute() &&
          "Expected the attribute to be an alignment attribute!");
   return pImpl ? pImpl->getValueAsInt() : 0;
 }
 
 StringRef Attribute::getKindAsString() const {
+  if (!pImpl) return StringRef();
   assert(isStringAttribute() &&
          "Invalid attribute type to get the kind as a string!");
   return pImpl ? pImpl->getKindAsString() : StringRef();
 }
 
 StringRef Attribute::getValueAsString() const {
+  if (!pImpl) return StringRef();
   assert(isStringAttribute() &&
          "Invalid attribute type to get the value as a string!");
   return pImpl ? pImpl->getValueAsString() : StringRef();

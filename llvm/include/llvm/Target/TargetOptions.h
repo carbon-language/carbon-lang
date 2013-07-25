@@ -42,7 +42,7 @@ namespace llvm {
   public:
     TargetOptions()
         : PrintMachineCode(false), NoFramePointerElim(false),
-          NoFramePointerElimNonLeaf(false), LessPreciseFPMADOption(false),
+          LessPreciseFPMADOption(false),
           UnsafeFPMath(false), NoInfsFPMath(false),
           NoNaNsFPMath(false), HonorSignDependentRoundingFPMathOption(false),
           UseSoftFloat(false), NoZerosInBSS(false),
@@ -63,12 +63,6 @@ namespace llvm {
     /// specified on the command line.  If the target supports the frame pointer
     /// elimination optimization, this option should disable it.
     unsigned NoFramePointerElim : 1;
-
-    /// NoFramePointerElimNonLeaf - This flag is enabled when the
-    /// -disable-non-leaf-fp-elim is specified on the command line. If the
-    /// target supports the frame pointer elimination optimization, this option
-    /// should disable it for non-leaf functions.
-    unsigned NoFramePointerElimNonLeaf : 1;
 
     /// DisableFramePointerElim - This returns true if frame pointer elimination
     /// optimization should be disabled for the given machine function.
