@@ -774,6 +774,8 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
         uint32_t i;
         dw_attr_t attr;
         dw_form_t form;
+        bool do_offset = false;
+
         for (i=0; i<numAttributes; ++i)
         {
             abbrevDecl->GetAttrAndFormByIndexUnchecked(i, attr, form);
@@ -783,12 +785,24 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                 switch (attr)
                 {
                 case DW_AT_low_pc:
+                    lo_pc = form_value.Unsigned();
+
+                    if (do_offset)
+                        hi_pc += lo_pc;
+                    do_offset = false;
+                    break;
+
                 case DW_AT_entry_pc:
                     lo_pc = form_value.Unsigned();
                     break;
 
                 case DW_AT_high_pc:
                     hi_pc = form_value.Unsigned();
+                    if (form_value.Form() != DW_FORM_addr)
+                        if (lo_pc == LLDB_INVALID_ADDRESS)
+                            do_offset = hi_pc != LLDB_INVALID_ADDRESS;
+                        else
+                            hi_pc += lo_pc; // DWARF 4 introduces <offset-from-lo-pc> to save on relocations
                     break;
 
                 case DW_AT_ranges:
@@ -1410,6 +1424,64 @@ DWARFDebugInfoEntry::GetAttributeValueAsReference
 }
 
 //----------------------------------------------------------------------
+// GetAttributeHighPC
+//
+// Get the hi_pc, adding hi_pc to lo_pc when specified
+// as an <offset-from-low-pc>.
+//
+// Returns the hi_pc or fail_value.
+//----------------------------------------------------------------------
+dw_addr_t
+DWARFDebugInfoEntry::GetAttributeHighPC
+(
+    SymbolFileDWARF* dwarf2Data,
+    const DWARFCompileUnit* cu,
+    dw_addr_t lo_pc,
+    uint64_t fail_value
+) const
+{
+    DWARFFormValue form_value;
+
+    if (GetAttributeValue(dwarf2Data, cu, DW_AT_high_pc, form_value))
+    {
+        dw_addr_t hi_pc = form_value.Unsigned();
+        if (form_value.Form() != DW_FORM_addr)
+            hi_pc += lo_pc; // DWARF4 can specify the hi_pc as an <offset-from-lowpc>
+        return hi_pc; 
+    }
+    return fail_value;
+}
+
+//----------------------------------------------------------------------
+// GetAttributeAddressRange
+//
+// Get the lo_pc and hi_pc, adding hi_pc to lo_pc when specified
+// as an <offset-from-low-pc>.
+//
+// Returns true or sets lo_pc and hi_pc to fail_value.
+//----------------------------------------------------------------------
+bool
+DWARFDebugInfoEntry::GetAttributeAddressRange
+(
+    SymbolFileDWARF* dwarf2Data,
+    const DWARFCompileUnit* cu,
+    dw_addr_t& lo_pc,
+    dw_addr_t& hi_pc,
+    uint64_t fail_value
+) const
+{
+    lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, fail_value);
+    if (lo_pc != fail_value)
+    {
+        hi_pc = GetAttributeHighPC(dwarf2Data, cu, lo_pc, fail_value);
+        if (hi_pc != fail_value)
+          return true;
+    }
+    lo_pc = fail_value;
+    hi_pc = fail_value;
+    return false;
+}
+//----------------------------------------------------------------------
 // GetAttributeValueAsLocation
 //
 // Get the value of an attribute as reference and fix up and compile
@@ -1740,13 +1812,11 @@ DWARFDebugInfoEntry::BuildAddressRangeTable
     {
         if (m_tag == DW_TAG_subprogram)
         {
+            dw_addr_t lo_pc = LLDB_INVALID_ADDRESS;
             dw_addr_t hi_pc = LLDB_INVALID_ADDRESS;
-            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
-            if (lo_pc != LLDB_INVALID_ADDRESS)
-                hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, LLDB_INVALID_ADDRESS);
-            if (hi_pc != LLDB_INVALID_ADDRESS)
+            if (GetAttributeAddressRange(dwarf2Data, cu, lo_pc, hi_pc, LLDB_INVALID_ADDRESS))
             {
-            /// printf("BuildAddressRangeTable() 0x%8.8x: %30s: [0x%8.8x - 0x%8.8x)\n", m_offset, DW_TAG_value_to_name(tag), lo_pc, hi_pc);
+                /// printf("BuildAddressRangeTable() 0x%8.8x: %30s: [0x%8.8x - 0x%8.8x)\n", m_offset, DW_TAG_value_to_name(tag), lo_pc, hi_pc);
                 debug_aranges->AppendRange (cu->GetOffset(), lo_pc, hi_pc);
             }
         }
@@ -1781,11 +1851,9 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
     {
         if (m_tag == DW_TAG_subprogram)
         {
+            dw_addr_t lo_pc = LLDB_INVALID_ADDRESS;
             dw_addr_t hi_pc = LLDB_INVALID_ADDRESS;
-            dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
-            if (lo_pc != LLDB_INVALID_ADDRESS)
-                hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, LLDB_INVALID_ADDRESS);
-            if (hi_pc != LLDB_INVALID_ADDRESS)
+            if (GetAttributeAddressRange(dwarf2Data, cu, lo_pc, hi_pc, LLDB_INVALID_ADDRESS))
             {
             //  printf("BuildAddressRangeTable() 0x%8.8x: [0x%16.16" PRIx64 " - 0x%16.16" PRIx64 ")\n", m_offset, lo_pc, hi_pc); // DEBUG ONLY
                 debug_aranges->AppendRange (GetOffset(), lo_pc, hi_pc);
@@ -2075,7 +2143,7 @@ DWARFDebugInfoEntry::LookupAddress
             dw_addr_t lo_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_low_pc, LLDB_INVALID_ADDRESS);
             if (lo_pc != LLDB_INVALID_ADDRESS)
             {
-                dw_addr_t hi_pc = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_high_pc, LLDB_INVALID_ADDRESS);
+                dw_addr_t hi_pc = GetAttributeHighPC(dwarf2Data, cu, lo_pc, LLDB_INVALID_ADDRESS);
                 if (hi_pc != LLDB_INVALID_ADDRESS)
                 {
                     //  printf("\n0x%8.8x: %30s: address = 0x%8.8x  [0x%8.8x - 0x%8.8x) ", m_offset, DW_TAG_value_to_name(tag), address, lo_pc, hi_pc);

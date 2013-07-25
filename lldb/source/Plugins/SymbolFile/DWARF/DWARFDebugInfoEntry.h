@@ -197,6 +197,19 @@ public:
                     const dw_attr_t attr,
                     int64_t fail_value) const;
 
+    dw_addr_t   GetAttributeHighPC(
+                    SymbolFileDWARF* dwarf2Data,
+                    const DWARFCompileUnit* cu,
+                    dw_addr_t lo_pc,
+                    uint64_t fail_value) const;
+
+    bool        GetAttributeAddressRange(
+                    SymbolFileDWARF* dwarf2Data,
+                    const DWARFCompileUnit* cu,
+                    dw_addr_t& lo_pc,
+                    dw_addr_t& hi_pc,
+                    uint64_t fail_value) const;
+
     dw_offset_t GetAttributeValueAsLocation(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,
