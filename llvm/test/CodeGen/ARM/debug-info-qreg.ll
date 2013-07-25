@@ -37,7 +37,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!2}
 
-!0 = metadata !{i32 786478, metadata !1, metadata !"test0001", metadata !"test0001", metadata !"", metadata !1, i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 3} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 786478, metadata !54, metadata !1, metadata !"test0001", metadata !"test0001", metadata !"", i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 3} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !54} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, metadata !54, i32 12, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, null, null, metadata !50, null,  null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !54, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -47,11 +47,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !7 = metadata !{i32 786468, null, metadata !2, metadata !"float", i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786465, i64 0, i64 4}         ; [ DW_TAG_subrange_type ]
-!10 = metadata !{i32 786478, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**)* @main, null, null, metadata !52, i32 59} ; [ DW_TAG_subprogram ]
+!10 = metadata !{i32 786478, metadata !54, metadata !1, metadata !"main", metadata !"main", metadata !"", i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**)* @main, null, null, metadata !52, i32 59} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 786453, metadata !54, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !12, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !12 = metadata !{metadata !13}
 !13 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
-!14 = metadata !{i32 786478, metadata !15, metadata !"printFV", metadata !"printFV", metadata !"", metadata !15, i32 41, metadata !16, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, null, metadata !53, i32 41} ; [ DW_TAG_subprogram ]
+!14 = metadata !{i32 786478, metadata !55, metadata !15, metadata !"printFV", metadata !"printFV", metadata !"", i32 41, metadata !16, i1 true, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, null, null, null, metadata !53, i32 41} ; [ DW_TAG_subprogram ]
 !15 = metadata !{i32 786473, metadata !55} ; [ DW_TAG_file_type ]
 !16 = metadata !{i32 786453, metadata !55, metadata !15, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !17, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !17 = metadata !{null}
@@ -62,7 +62,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !22 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !23} ; [ DW_TAG_pointer_type ]
 !23 = metadata !{i32 786468, null, metadata !2, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !24 = metadata !{i32 786688, metadata !25, metadata !"i", metadata !1, i32 60, metadata !13, i32 0, null} ; [ DW_TAG_auto_variable ]
-!25 = metadata !{i32 786443, metadata !1, metadata !10, i32 59, i32 33, i32 14} ; [ DW_TAG_lexical_block ]
+!25 = metadata !{i32 786443, metadata !54, metadata !10, i32 59, i32 33, i32 14} ; [ DW_TAG_lexical_block ]
 !26 = metadata !{i32 786688, metadata !25, metadata !"j", metadata !1, i32 60, metadata !13, i32 0, null} ; [ DW_TAG_auto_variable ]
 !27 = metadata !{i32 786688, metadata !25, metadata !"x", metadata !1, i32 61, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
 !28 = metadata !{i32 786688, metadata !25, metadata !"y", metadata !1, i32 62, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
@@ -77,14 +77,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !37 = metadata !{i32 786445, metadata !55, metadata !15, metadata !"A", i32 24, i64 128, i64 32, i64 0, i32 0, metadata !38} ; [ DW_TAG_member ]
 !38 = metadata !{i32 786433, null, metadata !2, metadata !"", i32 0, i64 128, i64 32, i32 0, i32 0, metadata !7, metadata !8, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !39 = metadata !{i32 79, i32 7, metadata !40, null}
-!40 = metadata !{i32 786443, metadata !1, metadata !41, i32 75, i32 35, i32 18} ; [ DW_TAG_lexical_block ]
-!41 = metadata !{i32 786443, metadata !1, metadata !42, i32 75, i32 5, i32 17} ; [ DW_TAG_lexical_block ]
-!42 = metadata !{i32 786443, metadata !1, metadata !43, i32 71, i32 32, i32 16} ; [ DW_TAG_lexical_block ]
-!43 = metadata !{i32 786443, metadata !1, metadata !25, i32 71, i32 3, i32 15} ; [ DW_TAG_lexical_block ]
+!40 = metadata !{i32 786443, metadata !54, metadata !41, i32 75, i32 35, i32 18} ; [ DW_TAG_lexical_block ]
+!41 = metadata !{i32 786443, metadata !54, metadata !42, i32 75, i32 5, i32 17} ; [ DW_TAG_lexical_block ]
+!42 = metadata !{i32 786443, metadata !54, metadata !43, i32 71, i32 32, i32 16} ; [ DW_TAG_lexical_block ]
+!43 = metadata !{i32 786443, metadata !54, metadata !25, i32 71, i32 3, i32 15} ; [ DW_TAG_lexical_block ]
 !44 = metadata !{i32 75, i32 5, metadata !42, null}
 !45 = metadata !{i32 42, i32 2, metadata !46, metadata !48}
-!46 = metadata !{i32 786443, metadata !15, metadata !47, i32 42, i32 2, i32 20} ; [ DW_TAG_lexical_block ]
-!47 = metadata !{i32 786443, metadata !15, metadata !14, i32 41, i32 28, i32 19} ; [ DW_TAG_lexical_block ]
+!46 = metadata !{i32 786443, metadata !55, metadata !47, i32 42, i32 2, i32 20} ; [ DW_TAG_lexical_block ]
+!47 = metadata !{i32 786443, metadata !55, metadata !14, i32 41, i32 28, i32 19} ; [ DW_TAG_lexical_block ]
 !48 = metadata !{i32 95, i32 3, metadata !25, null}
 !49 = metadata !{i32 99, i32 3, metadata !25, null}
 !50 = metadata !{metadata !0, metadata !10, metadata !14}
