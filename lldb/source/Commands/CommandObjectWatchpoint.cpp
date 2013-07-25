@@ -1185,6 +1185,8 @@ protected:
     virtual bool
     DoExecute (const char *raw_command, CommandReturnObject &result)
     {
+        m_option_group.NotifyOptionParsingStarting(); // This is a raw command, so notify the option group
+        
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
         StackFrame *frame = m_exe_ctx.GetFramePtr();
 
