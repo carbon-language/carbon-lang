@@ -1,4 +1,4 @@
-; RUN: opt < %s -mem2reg -S | FileCheck %s
+; RUN: opt -disable-debug-info-verifier < %s -mem2reg -S | FileCheck %s
 
 define double @testfunc(i32 %i, double %j) nounwind ssp {
 entry:

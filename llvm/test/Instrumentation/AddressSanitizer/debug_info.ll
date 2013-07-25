@@ -1,4 +1,4 @@
-; RUN: opt < %s -asan -asan-module -S | FileCheck %s
+; RUN: opt -disable-debug-info-verifier < %s -asan -asan-module -S | FileCheck %s
 
 ; Checks that llvm.dbg.declare instructions are updated 
 ; accordingly as we merge allocas.

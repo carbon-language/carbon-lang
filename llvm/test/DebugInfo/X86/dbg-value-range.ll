@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-darwin10 < %s | FileCheck %s
+; RUN: llc -disable-debug-info-verifier -mtriple=x86_64-apple-darwin10 < %s | FileCheck %s
 
 %struct.a = type { i32 }
 

@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | FileCheck %s
+; RUN: opt -disable-debug-info-verifier < %s -instcombine -S | FileCheck %s
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
