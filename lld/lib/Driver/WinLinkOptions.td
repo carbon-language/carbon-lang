@@ -2,67 +2,62 @@ include "llvm/Option/OptParser.td"
 
 // link.exe accepts options starting with either a dash or a slash.
 
-def mllvm : Separate<["-", "/"], "mllvm">,
-    HelpText<"Options to pass to LLVM">;
+class _Flag<string name> : Flag<["-", "/"], name>;
+class _Separate<string name> : Separate<["-", "/"], name>;
+class _Joined<string name, Option alias> : Joined<["-", "/"], name>,
+      Alias<alias>;
 
-def out : Separate<["-", "/"], "out">,
-    HelpText<"Path to file to write output">;
-def out_c : Joined<["-", "/"], "out:">, Alias<out>;
+def mllvm : _Flag<"mllvm">, HelpText<"Options to pass to LLVM">;
 
-def defaultlib : Separate<["-", "/"], "defaultlib">,
+def out : _Separate<"out">, HelpText<"Path to file to write output">;
+def out_c : _Joined<"out:", out>;
+
+def defaultlib : _Separate<"defaultlib">,
     HelpText<"Add the library to the list of input files">;
-def defaultlib_c : Joined<["-", "/"], "defaultlib:">, Alias<defaultlib>;
+def defaultlib_c : _Joined<"defaultlib:", defaultlib>;
 
-def base : Separate<["-", "/"], "base">,
-    HelpText<"Base address of the program">;
-def base_c: Joined<["-", "/"], "base:">, Alias<base>;
+def base : _Separate<"base">, HelpText<"Base address of the program">;
+def base_c: _Joined<"base:", base>;
 
-def stack : Separate<["-", "/"], "stack">,
-    HelpText<"Size of the stack">;
-def stack_c: Joined<["-", "/"], "stack:">, Alias<stack>;
+def stack : _Separate<"stack">, HelpText<"Size of the stack">;
+def stack_c: _Joined<"stack:", stack>;
 
-def heap : Separate<["-", "/"], "heap">,
-    HelpText<"Size of the heap">;
-def heap_c: Joined<["-", "/"], "heap:">, Alias<heap>;
+def heap : _Separate<"heap">, HelpText<"Size of the heap">;
+def heap_c: _Joined<"heap:", heap>;
 
-def subsystem : Separate<["-", "/"], "subsystem">,
-    HelpText<"Specify subsystem">;
-def subsystem_c: Joined<["-", "/"], "subsystem:">, Alias<subsystem>;
+def subsystem : _Separate<"subsystem">, HelpText<"Specify subsystem">;
+def subsystem_c: _Joined<"subsystem:", subsystem>;
 
-def entry : Separate<["-", "/"], "entry">,
-    HelpText<"Name of entry point symbol">;
-def entry_c: Joined<["-", "/"], "entry:">, Alias<entry>;
+def entry : _Separate<"entry">, HelpText<"Name of entry point symbol">;
+def entry_c: _Joined<"entry:", entry>;
 
-def libpath : Separate<["-", "/"], "libpath">,
-    HelpText<"Additional library search path">;
-def libpath_c: Joined<["-", "/"], "libpath:">, Alias<libpath>;
+def libpath : _Separate<"libpath">, HelpText<"Additional library search path">;
+def libpath_c: _Joined<"libpath:", libpath>;
 
-def force : Flag<["-", "/"], "force">,
+def force : _Flag<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
 
-def nxcompat : Flag<["-", "/"], "nxcompat">,
+def nxcompat : _Flag<"nxcompat">,
     HelpText<"Enable data execution provention">;
-def no_nxcompat : Flag<["-", "/"], "nxcompat:no">,
+def no_nxcompat : _Flag<"nxcompat:no">,
     HelpText<"Disable data execution provention">;
 
-def largeaddressaware : Flag<["-", "/"], "largeaddressaware">,
+def largeaddressaware : _Flag<"largeaddressaware">,
     HelpText<"Enable large addresses">;
-def no_largeaddressaware : Flag<["-", "/"], "largeaddressaware:no">,
+def no_largeaddressaware : _Flag<"largeaddressaware:no">,
     HelpText<"Disable large addresses">;
 
-def fixed : Flag<["-", "/"], "fixed">,
-    HelpText<"Disable base relocations">;
-def no_fixed : Flag<["-", "/"], "fixed:no">,
-    HelpText<"Enable base relocations">;
+def fixed : _Flag<"fixed">, HelpText<"Disable base relocations">;
+def no_fixed : _Flag<"fixed:no">, HelpText<"Enable base relocations">;
 
-def tsaware : Flag<["-", "/"], "tsaware">,
+def tsaware : _Flag<"tsaware">,
     HelpText<"Create Terminal Server aware executable">;
-def no_tsaware : Flag<["-", "/"], "tsaware:no">,
+def no_tsaware : _Flag<"tsaware:no">,
     HelpText<"Create non-Terminal Server aware executable">;
 
-def incl : Separate<["-", "/"], "include">,
+def incl : _Separate<"include">,
     HelpText<"Force symbol to be added to symbol table as undefined one">;
-def incl_c : Joined<["-", "/"], "include:">, Alias<incl>;
+def incl_c : _Joined<"include:", incl>;
 
-def help : Flag<["-", "/"], "help">;
-def help_q : Flag<["-", "/"], "?">, Alias<help>;
+def help : _Flag<"help">;
+def help_q : _Flag<"?">, Alias<help>;
