@@ -412,13 +412,10 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   // Set frame pointer elimination mode.
   if (!CodeGenOpts.DisableFPElim) {
     Options.NoFramePointerElim = false;
-    Options.NoFramePointerElimNonLeaf = false;
   } else if (CodeGenOpts.OmitLeafFramePointer) {
     Options.NoFramePointerElim = false;
-    Options.NoFramePointerElimNonLeaf = true;
   } else {
     Options.NoFramePointerElim = true;
-    Options.NoFramePointerElimNonLeaf = true;
   }
 
   if (CodeGenOpts.UseInitArray)
