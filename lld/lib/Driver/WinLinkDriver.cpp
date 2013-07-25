@@ -266,6 +266,33 @@ void processLibEnv(PECOFFTargetInfo &info) {
       info.appendInputSearchPath(info.allocateString(path));
 }
 
+// Parses the given command line options and returns the result. Returns NULL if
+// there's an error in the options.
+std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
+                                                   raw_ostream &diagnostics) {
+  // Parse command line options using WinLinkOptions.td
+  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
+  WinLinkOptTable table;
+  unsigned missingIndex;
+  unsigned missingCount;
+  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
+  if (missingCount) {
+    diagnostics << "error: missing arg value for '"
+                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << missingCount << " argument(s).\n";
+    return nullptr;
+  }
+
+  // Show warning for unknown arguments
+  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
+            ie = parsedArgs->filtered_end(); it != ie; ++it) {
+    diagnostics << "warning: ignoring unknown argument: "
+                << (*it)->getAsString(*parsedArgs) << "\n";
+  }
+
+  return parsedArgs;
+}
+
 } // namespace
 
 
@@ -287,31 +314,17 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   int doubleDashPosition = findDoubleDash(argc, argv);
   int argEnd = (doubleDashPosition > 0) ? doubleDashPosition : argc;
 
-  // Parse command line options using WinLinkOptions.td
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
-  WinLinkOptTable table;
-  unsigned missingIndex;
-  unsigned missingCount;
-  parsedArgs.reset(
-      table.ParseArgs(&argv[1], &argv[argEnd], missingIndex, missingCount));
-  if (missingCount) {
-    diagnostics << "error: missing arg value for '"
-                << parsedArgs->getArgString(missingIndex) << "' expected "
-                << missingCount << " argument(s).\n";
+  // Parse the options.
+  std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
+      argEnd, argv, diagnostics);
+  if (!parsedArgs)
     return true;
-  }
 
   // handle /help
   if (parsedArgs->getLastArg(OPT_help)) {
+    WinLinkOptTable table;
     table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
     return true;
-  }
-
-  // Show warning for unknown arguments
-  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
-            ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    diagnostics << "warning: ignoring unknown argument: "
-                << (*it)->getAsString(*parsedArgs) << "\n";
   }
 
   // Copy -mllvm
