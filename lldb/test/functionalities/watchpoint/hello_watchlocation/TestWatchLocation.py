@@ -21,6 +21,7 @@ class HelloWatchLocationTestCase(TestBase):
         self.setTearDownCleanup(dictionary=self.d)
         self.hello_watchlocation()
 
+    @expectedFailureFreeBSD('llvm.org/pr16706') # Watchpoints fail on FreeBSD
     @dwarf_test
     def test_hello_watchlocation_with_dwarf(self):
         """Test watching a location with '-x size' option."""
