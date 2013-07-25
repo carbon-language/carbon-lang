@@ -77,14 +77,11 @@ def show_inst : Flag<["-"], "show-inst">,
 // Assemble Options
 //===----------------------------------------------------------------------===//
 
-def relax_all : Flag<["-"], "relax-all">,
+def mrelax_all : Flag<["-"], "mrelax-all">,
     HelpText<"Relax all fixups (for performance testing)">;
 
-def no_exec_stack : Flag<["--"], "noexecstack">,
+def mno_exec_stack : Flag<["-"], "mnoexecstack">,
     HelpText<"Mark the file as not needing an executable stack">;
-
-def fatal_warnings : Flag<["--"], "fatal-warnings">,
-    HelpText<"Consider warnings as errors">;
 
 def g : Flag<["-"], "g">, HelpText<"Generate source level debug information">;
 

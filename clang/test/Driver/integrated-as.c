@@ -4,4 +4,4 @@
 // REQUIRES: clang-driver
 
 // CHECK: cc1as
-// CHECK: -relax-all
+// CHECK: -mrelax-all
