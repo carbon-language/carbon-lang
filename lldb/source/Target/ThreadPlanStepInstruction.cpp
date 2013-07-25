@@ -45,6 +45,9 @@ ThreadPlanStepInstruction::ThreadPlanStepInstruction
 {
     m_instruction_addr = m_thread.GetRegisterContext()->GetPC(0);
     m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+    StackFrameSP parent_frame_sp = m_thread.GetStackFrameAtIndex(1);
+    if (parent_frame_sp)
+        m_parent_frame_id = parent_frame_sp->GetStackID();
 }
 
 ThreadPlanStepInstruction::~ThreadPlanStepInstruction ()
@@ -120,29 +123,42 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
             StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
             if (return_frame)
             {
-                if (log)
+                if (return_frame->GetStackID() != m_parent_frame_id)
                 {
-                    StreamString s;
-                    s.PutCString ("Stepped in to: ");
-                    addr_t stop_addr = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
-                    s.Address (stop_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
-                    s.PutCString (" stepping out to: ");
-                    addr_t return_addr = return_frame->GetRegisterContext()->GetPC();
-                    s.Address (return_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
-                    log->Printf("%s.", s.GetData());
+                    if (log)
+                    {
+                        StreamString s;
+                        s.PutCString ("Stepped in to: ");
+                        addr_t stop_addr = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
+                        s.Address (stop_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
+                        s.PutCString (" stepping out to: ");
+                        addr_t return_addr = return_frame->GetRegisterContext()->GetPC();
+                        s.Address (return_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
+                        log->Printf("%s.", s.GetData());
+                    }
+                    
+                    // StepInstruction should probably have the tri-state RunMode, but for now it is safer to
+                    // run others.
+                    const bool stop_others = false;
+                    m_thread.QueueThreadPlanForStepOut(false,
+                                                       NULL,
+                                                       true,
+                                                       stop_others,
+                                                       eVoteNo,
+                                                       eVoteNoOpinion,
+                                                       0);
+                    return false;
                 }
-                
-                // StepInstruction should probably have the tri-state RunMode, but for now it is safer to
-                // run others.
-                const bool stop_others = false;
-                m_thread.QueueThreadPlanForStepOut(false,
-                                                   NULL,
-                                                   true,
-                                                   stop_others,
-                                                   eVoteNo,
-                                                   eVoteNoOpinion,
-                                                   0);
-                return false;
+                else
+                {
+                    if (log)
+                    {
+                        log->PutCString("The stack id we are stepping in changed, but our parent frame did not.  "
+                        "We are probably just confused about where we are, stopping.");
+                    }
+                    SetPlanComplete();
+                    return true;
+                }
             }
             else
             {
