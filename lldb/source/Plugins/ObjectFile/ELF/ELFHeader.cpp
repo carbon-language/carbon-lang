@@ -183,8 +183,6 @@ ELFHeader::GetRelocationJumpSlotType() const
     case EM_ARM:
         slot = R_ARM_JUMP_SLOT;
         break;
-    case EM_MBLAZE:
-        slot = R_MICROBLAZE_JUMP_SLOT;
     }
 
     return slot;
