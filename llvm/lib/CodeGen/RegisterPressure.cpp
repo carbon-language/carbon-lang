@@ -553,9 +553,10 @@ static void computeExcessPressureDelta(ArrayRef<unsigned> OldPressureVec,
     else if (Limit > PNew)
       PDiff = Limit - POld;   // Just obeyed limit.
 
-    if (std::abs(PDiff) > std::abs(ExcessUnits)) {
+    if (PDiff) {
       ExcessUnits = PDiff;
       PSetID = i;
+      break;
     }
   }
   Delta.Excess.PSetID = PSetID;
@@ -583,23 +584,28 @@ static void computeMaxPressureDelta(ArrayRef<unsigned> OldMaxPressureVec,
     if (PNew == POld) // No change in this set in the common case.
       continue;
 
-    while (CritIdx != CritEnd && CriticalPSets[CritIdx].PSetID < i)
-      ++CritIdx;
+    if (!Delta.CriticalMax.isValid()) {
+      while (CritIdx != CritEnd && CriticalPSets[CritIdx].PSetID < i)
+        ++CritIdx;
 
-    if (CritIdx != CritEnd && CriticalPSets[CritIdx].PSetID == i) {
-      int PDiff = (int)PNew - (int)CriticalPSets[CritIdx].UnitIncrease;
-      if (PDiff > Delta.CriticalMax.UnitIncrease) {
-        Delta.CriticalMax.PSetID = i;
-        Delta.CriticalMax.UnitIncrease = PDiff;
+      if (CritIdx != CritEnd && CriticalPSets[CritIdx].PSetID == i) {
+        int PDiff = (int)PNew - (int)CriticalPSets[CritIdx].UnitIncrease;
+        if (PDiff > 0) {
+          Delta.CriticalMax.PSetID = i;
+          Delta.CriticalMax.UnitIncrease = PDiff;
+        }
       }
     }
-
-    // Find the greatest increase above MaxPressureLimit.
+    // Find the first increase above MaxPressureLimit.
     // (Ignores negative MDiff).
-    int MDiff = (int)PNew - (int)MaxPressureLimit[i];
-    if (MDiff > Delta.CurrentMax.UnitIncrease) {
-      Delta.CurrentMax.PSetID = i;
-      Delta.CurrentMax.UnitIncrease = MDiff;
+    if (!Delta.CurrentMax.isValid()) {
+      int MDiff = (int)PNew - (int)MaxPressureLimit[i];
+      if (MDiff > 0) {
+        Delta.CurrentMax.PSetID = i;
+        Delta.CurrentMax.UnitIncrease = MDiff;
+        if (CritIdx == CritEnd || Delta.CriticalMax.isValid())
+          break;
+      }
     }
   }
 }
