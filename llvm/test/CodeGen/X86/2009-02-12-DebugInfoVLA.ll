@@ -70,14 +70,14 @@ declare void @llvm.stackrestore(i8*) nounwind
 !1 = metadata !{i32 458798, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", i32 2, metadata !3, i1 false, i1 true,
                 i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 458769, i32 0, i32 1, metadata !"vla.c", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 458773, metadata !2, metadata !"", metadata !2, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
+!3 = metadata !{i32 458773, null, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5, metadata !6}
-!5 = metadata !{i32 458788, metadata !2, metadata !"char", metadata !2, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
-!6 = metadata !{i32 458767, metadata !2, metadata !"", metadata !2, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
+!5 = metadata !{i32 458788, null, metadata !2, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
+!6 = metadata !{i32 458767, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
 !7 = metadata !{i32 2, i32 0, metadata !1, null}
 !8 = metadata !{i32 459008, metadata !1, metadata !"str.0", metadata !2, i32 3, metadata !9} ; [ DW_TAG_auto_variable ]
-!9 = metadata !{i32 458767, metadata !2, metadata !"", metadata !2, i32 0, i64 64, i64 64, i64 0, i32 64, metadata !10} ; [ DW_TAG_pointer_type ]
-!10 = metadata !{i32 458753, metadata !2, metadata !"", metadata !2, i32 0, i64 8, i64 8, i64 0, i32 0, metadata !5, metadata !11, i32 0, null} ; [ DW_TAG_array_type ]
+!9 = metadata !{i32 458767, null, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 64, metadata !10} ; [ DW_TAG_pointer_type ]
+!10 = metadata !{i32 458753, null, metadata !2, metadata !"", i32 0, i64 8, i64 8, i64 0, i32 0, metadata !5, metadata !11, i32 0, null} ; [ DW_TAG_array_type ]
 !11 = metadata !{metadata !12}
 !12 = metadata !{i32 458785, i64 0, i64 1}        ; [ DW_TAG_subrange_type ]
 !13 = metadata !{i32 3, i32 0, metadata !14, null}

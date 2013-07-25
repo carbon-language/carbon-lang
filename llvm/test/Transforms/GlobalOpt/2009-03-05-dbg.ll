@@ -57,7 +57,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 458804, i32 0, metadata !1, metadata !"Stop", metadata !"Stop", metadata !"", metadata !1, i32 2, metadata !2, i1 true, i1 true, i32* @Stop} ; [ DW_TAG_variable ]
 !1 = metadata !{i32 458769, i32 0, i32 1, metadata !"g.c", metadata !"/tmp", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!2 = metadata !{i32 458788, metadata !1, metadata !"int", metadata !1, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!2 = metadata !{i32 458788, null, metadata !1, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !3 = metadata !{i32 459009, metadata !4, metadata !"i", metadata !1, i32 4, metadata !2} ; [ DW_TAG_arg_variable ]
 !4 = metadata !{i32 458798, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"foo", i32 4, metadata !5, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !5 = metadata !{i32 458773, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]

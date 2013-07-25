@@ -420,6 +420,10 @@ static bool fieldIsMDNode(const MDNode *DbgNode, unsigned Elt) {
 bool DIType::Verify() const {
   if (!isType())
     return false;
+  // Make sure Context @ field 2 is MDNode.
+  if (!fieldIsMDNode(DbgNode, 2))
+    return false;
+
   // FIXME: Sink this into the various subclass verifies.
   unsigned Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&

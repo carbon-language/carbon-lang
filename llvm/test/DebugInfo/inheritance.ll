@@ -112,12 +112,12 @@ declare void @_ZdlPv(i8*) nounwind
 !4 = metadata !{i32 458769, i32 0, i32 4, metadata !"inheritance.cpp", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !5 = metadata !{i32 458773, metadata !4, metadata !"", metadata !4, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !6 = metadata !{metadata !7}
-!7 = metadata !{i32 458788, metadata !4, metadata !"int", metadata !4, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!7 = metadata !{i32 458788, null, metadata !4, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !8 = metadata !{i32 458771, metadata !44, metadata !4, metadata !"test1", i32 1, i64 64, i64 64, i64 0, i32 0, null, metadata !9, i32 0, metadata !8} ; [ DW_TAG_structure_type ]
 !9 = metadata !{metadata !10, metadata !14, metadata !18}
 !10 = metadata !{i32 458765, metadata !44, metadata !8, metadata !"_vptr$test1", i32 1, i64 64, i64 64, i64 0, i32 0, metadata !11} ; [ DW_TAG_member ]
 !11 = metadata !{i32 458767, metadata !4, metadata !"", metadata !4, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !12} ; [ DW_TAG_pointer_type ]
-!12 = metadata !{i32 458767, metadata !4, metadata !"__vtbl_ptr_type", metadata !13, i32 0, i64 0, i64 0, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
+!12 = metadata !{i32 458767, null, metadata !4, metadata !"__vtbl_ptr_type", i32 0, i64 0, i64 0, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
 !13 = metadata !{i32 458769, i32 0, i32 4, metadata !"<built-in>", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
 !14 = metadata !{i32 458798, i32 0, metadata !8, metadata !"test1", metadata !"test1", metadata !"", i32 1, metadata !15, i1 false, i1 false, i32 0, i32 0, null, i1 true, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !15 = metadata !{i32 458773, metadata !4, metadata !"", metadata !4, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, null} ; [ DW_TAG_subroutine_type ]

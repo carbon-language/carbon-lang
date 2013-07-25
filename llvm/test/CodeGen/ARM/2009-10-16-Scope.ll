@@ -29,5 +29,5 @@ declare i32 @foo(i32) ssp
 !3 = metadata !{i32 458769, i32 0, i32 12, metadata !"genmodes.i", metadata !"/Users/yash/Downloads", metadata !"clang 1.1", i1 true, i1 false, metadata !"", i32 0}; [DW_TAG_compile_unit ]
 !4 = metadata !{i32 459008, metadata !5, metadata !"count_", metadata !3, i32 5, metadata !6}; [ DW_TAG_auto_variable ]
 !5 = metadata !{i32 458763, null, metadata !1, i32 1, i32 1, i32 0}; [DW_TAG_lexical_block ]
-!6 = metadata !{i32 458788, metadata !3, metadata !"int", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5}; [DW_TAG_base_type ]
+!6 = metadata !{i32 458788, null, metadata !3, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5}; [DW_TAG_base_type ]
 !7 = metadata !{i32 6, i32 1, metadata !2, null}

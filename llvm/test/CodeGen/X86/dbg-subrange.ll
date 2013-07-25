@@ -14,7 +14,7 @@ entry:
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 12, metadata !6, metadata !"clang version 3.1 (trunk 144833)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !11,  metadata !11, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !21, i32 12, metadata !"clang version 3.1 (trunk 144833)", i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !11,  metadata !11, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 0}
 !3 = metadata !{metadata !5}
 !5 = metadata !{i32 720942, metadata !21, metadata !6, metadata !"bar", metadata !"bar", metadata !"", i32 4, metadata !7, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, void ()* @bar, null, null, metadata !9, i32 0} ; [ DW_TAG_subprogram ]
@@ -26,7 +26,7 @@ entry:
 !11 = metadata !{metadata !13}
 !13 = metadata !{i32 720948, i32 0, null, metadata !"s", metadata !"s", metadata !"", metadata !6, i32 2, metadata !14, i32 0, i32 1, [4294967296 x i8]* @s, null} ; [ DW_TAG_variable ]
 !14 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 34359738368, i64 8, i32 0, i32 0, metadata !15, metadata !16, i32 0, i32 0} ; [ DW_TAG_array_type ]
-!15 = metadata !{i32 720932, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
+!15 = metadata !{i32 720932, null, null, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !16 = metadata !{metadata !17}
 !17 = metadata !{i32 720929, i64 0, i64 4294967296} ; [ DW_TAG_subrange_type ]
 !18 = metadata !{i32 5, i32 3, metadata !19, null}
