@@ -18,7 +18,7 @@ include "llvm/Option/OptParser.td"
 // Flags
 
 // DriverOption - The option is a "driver" option, and should not be forwarded
-// to gcc.
+// to other tools.
 def DriverOption : OptionFlag;
 
 // LinkerInput - The option is a linker input.
@@ -32,9 +32,6 @@ def NoArgumentUnused : OptionFlag;
 // Unsupported - The option is unsupported, and the driver will reject command
 // lines that use it.
 def Unsupported : OptionFlag;
-
-// NoForward - The option should not be implicitly forwarded to other tools.
-def NoForward : OptionFlag;
 
 // CC1Option - This option should be accepted by clang -cc1.
 def CC1Option : OptionFlag;
@@ -254,7 +251,7 @@ def Xassembler : Separate<["-"], "Xassembler">,
   HelpText<"Pass <arg> to the assembler">, MetaVarName<"<arg>">;
 def Xclang : Separate<["-"], "Xclang">,
   HelpText<"Pass <arg> to the clang compiler">, MetaVarName<"<arg>">,
-  Flags<[NoForward]>;
+  Flags<[DriverOption]>;
 def Xlinker : Separate<["-"], "Xlinker">, Flags<[LinkerInput, RenderAsInput]>,
   HelpText<"Pass <arg> to the linker">, MetaVarName<"<arg>">;
 def Xpreprocessor : Separate<["-"], "Xpreprocessor">,
@@ -342,7 +339,8 @@ def fast : Flag<["-"], "fast">, Group<f_Group>;
 def fasynchronous_unwind_tables : Flag<["-"], "fasynchronous-unwind-tables">, Group<f_Group>;
 
 def fautolink : Flag <["-"], "fautolink">, Group<f_Group>;
-def fno_autolink : Flag <["-"], "fno-autolink">, Group<f_Group>, Flags<[NoForward, CC1Option]>,
+def fno_autolink : Flag <["-"], "fno-autolink">, Group<f_Group>,
+  Flags<[DriverOption, CC1Option]>,
   HelpText<"Disable generation of linker directives for automatic library linking">;
 
 def fblocks : Flag<["-"], "fblocks">, Group<f_Group>, Flags<[CC1Option]>,
@@ -380,7 +378,8 @@ def fno_crash_diagnostics : Flag<["-"], "fno-crash-diagnostics">, Group<f_clang_
 def fcreate_profile : Flag<["-"], "fcreate-profile">, Group<f_Group>;
 def fcxx_exceptions: Flag<["-"], "fcxx-exceptions">, Group<f_Group>,
   HelpText<"Enable C++ exceptions">, Flags<[CC1Option]>;
-def fcxx_modules : Flag <["-"], "fcxx-modules">, Group<f_Group>, Flags<[NoForward]>;
+def fcxx_modules : Flag <["-"], "fcxx-modules">, Group<f_Group>,
+  Flags<[DriverOption]>;
 def fdebug_pass_arguments : Flag<["-"], "fdebug-pass-arguments">, Group<f_Group>;
 def fdebug_pass_structure : Flag<["-"], "fdebug-pass-structure">, Group<f_Group>;
 def fdiagnostics_fixit_info : Flag<["-"], "fdiagnostics-fixit-info">, Group<f_clang_Group>;
@@ -536,7 +535,7 @@ def fdelayed_template_parsing : Flag<["-"], "fdelayed-template-parsing">, Group<
   HelpText<"Parse templated function definitions at the end of the "
            "translation unit ">,  Flags<[CC1Option]>;
 def fmodules_cache_path : Joined<["-"], "fmodules-cache-path=">, Group<i_Group>,
-  Flags<[NoForward,CC1Option]>, MetaVarName<"<directory>">,
+  Flags<[DriverOption, CC1Option]>, MetaVarName<"<directory>">,
   HelpText<"Specify the module cache path">;
 def fmodules_prune_interval : Joined<["-"], "fmodules-prune-interval=">, Group<i_Group>,
   Flags<[CC1Option]>, MetaVarName<"<seconds>">,
@@ -544,7 +543,8 @@ def fmodules_prune_interval : Joined<["-"], "fmodules-prune-interval=">, Group<i
 def fmodules_prune_after : Joined<["-"], "fmodules-prune-after=">, Group<i_Group>,
   Flags<[CC1Option]>, MetaVarName<"<seconds>">,
   HelpText<"Specify the interval (in seconds) after which a module file will be considered unused">;
-def fmodules : Flag <["-"], "fmodules">, Group<f_Group>, Flags<[NoForward,CC1Option]>,
+def fmodules : Flag <["-"], "fmodules">, Group<f_Group>,
+  Flags<[DriverOption, CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
 def fmodules_ignore_macro : Joined<["-"], "fmodules-ignore-macro=">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Ignore the definition of the given macro when building and loading modules">;
@@ -580,7 +580,8 @@ def fno_constant_cfstrings : Flag<["-"], "fno-constant-cfstrings">, Group<f_Grou
   Flags<[CC1Option]>,
   HelpText<"Disable creation of CodeFoundation-type constant strings">;
 def fno_cxx_exceptions: Flag<["-"], "fno-cxx-exceptions">, Group<f_Group>;
-def fno_cxx_modules : Flag <["-"], "fno-cxx-modules">, Group<f_Group>, Flags<[NoForward]>;
+def fno_cxx_modules : Flag <["-"], "fno-cxx-modules">, Group<f_Group>,
+  Flags<[DriverOption]>;
 def fno_diagnostics_fixit_info : Flag<["-"], "fno-diagnostics-fixit-info">, Group<f_Group>,
   Flags<[CC1Option]>, HelpText<"Do not include fixit information in diagnostics">;
 def fno_diagnostics_show_name : Flag<["-"], "fno-diagnostics-show-name">, Group<f_Group>;
@@ -603,7 +604,8 @@ def fno_limit_debug_info : Flag<["-"], "fno-limit-debug-info">, Group<f_Group>, 
   HelpText<"Do not limit debug information produced to reduce size of debug binary">;
 def fno_merge_all_constants : Flag<["-"], "fno-merge-all-constants">, Group<f_Group>,
     Flags<[CC1Option]>, HelpText<"Disallow merging of constants">;
-def fno_modules : Flag <["-"], "fno-modules">, Group<f_Group>, Flags<[NoForward]>;
+def fno_modules : Flag <["-"], "fno-modules">, Group<f_Group>,
+  Flags<[DriverOption]>;
 def fno_ms_extensions : Flag<["-"], "fno-ms-extensions">, Group<f_Group>;
 def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>;
 def fno_delayed_template_parsing : Flag<["-"], "fno-delayed-template-parsing">, Group<f_Group>;
@@ -908,7 +910,8 @@ def miphoneos_version_min_EQ : Joined<["-"], "miphoneos-version-min=">, Group<m_
 def mios_version_min_EQ : Joined<["-"], "mios-version-min=">, Alias<miphoneos_version_min_EQ>;
 def mios_simulator_version_min_EQ : Joined<["-"], "mios-simulator-version-min=">, Group<m_Group>;
 def mkernel : Flag<["-"], "mkernel">, Group<m_Group>;
-def mlinker_version_EQ : Joined<["-"], "mlinker-version=">, Flags<[NoForward]>;
+def mlinker_version_EQ : Joined<["-"], "mlinker-version=">,
+  Flags<[DriverOption]>;
 def mllvm : Separate<["-"], "mllvm">, Flags<[CC1Option]>,
   HelpText<"Additional arguments to forward to LLVM's option processing">;
 def mmacosx_version_min_EQ : Joined<["-"], "mmacosx-version-min=">, Group<m_Group>;

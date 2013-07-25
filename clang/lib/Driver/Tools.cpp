@@ -228,7 +228,6 @@ static bool forwardToGCC(const Option &O) {
   // Don't forward inputs from the original command line.  They are added from
   // InputInfoList.
   return O.getKind() != Option::InputClass &&
-         !O.hasFlag(options::NoForward) &&
          !O.hasFlag(options::DriverOption) &&
          !O.hasFlag(options::LinkerInput);
 }
