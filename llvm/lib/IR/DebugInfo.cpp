@@ -406,9 +406,12 @@ bool DIObjCProperty::Verify() const {
   return DbgNode->getNumOperands() == 8;
 }
 
-/// We allow an empty string to represent null. But we don't allow
-/// a non-empty string in a MDNode field.
+/// Check if a field at position Elt of a MDNode is a MDNode.
+/// We currently allow an empty string and an integer.
+/// But we don't allow a non-empty string in a MDNode field.
 static bool fieldIsMDNode(const MDNode *DbgNode, unsigned Elt) {
+  // FIXME: This function should return true, if the field is null or the field
+  // is indeed a MDNode: return !Fld || isa<MDNode>(Fld).
   Value *Fld = getField(DbgNode, Elt);
   if (Fld && isa<MDString>(Fld) &&
       !cast<MDString>(Fld)->getString().empty())
