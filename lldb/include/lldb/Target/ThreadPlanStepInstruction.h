@@ -50,6 +50,7 @@ private:
     bool m_stop_other_threads;
     bool m_step_over;
     // These two are used only for the step over case.
+    bool m_start_has_symbol;
     StackID m_stack_id;
     StackID m_parent_frame_id;
 

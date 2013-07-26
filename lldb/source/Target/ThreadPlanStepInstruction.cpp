@@ -44,7 +44,11 @@ ThreadPlanStepInstruction::ThreadPlanStepInstruction
     m_step_over (step_over)
 {
     m_instruction_addr = m_thread.GetRegisterContext()->GetPC(0);
-    m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+    StackFrameSP m_start_frame_sp(m_thread.GetStackFrameAtIndex(0));
+    m_stack_id = m_start_frame_sp->GetStackID();
+    
+    m_start_has_symbol = m_start_frame_sp->GetSymbolContext(eSymbolContextSymbol).symbol != NULL;
+    
     StackFrameSP parent_frame_sp = m_thread.GetStackFrameAtIndex(1);
     if (parent_frame_sp)
         m_parent_frame_id = parent_frame_sp->GetStackID();
@@ -68,6 +72,9 @@ ThreadPlanStepInstruction::GetDescription (Stream *s, lldb::DescriptionLevel lev
     {
         s->Printf ("Stepping one instruction past ");
         s->Address(m_instruction_addr, sizeof (addr_t));
+        if (!m_start_has_symbol)
+            s->Printf(" which has no symbol");
+        
         if (m_step_over)
             s->Printf(" stepping over calls");
         else
@@ -123,7 +130,7 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
             StackFrame *return_frame = m_thread.GetStackFrameAtIndex(1).get();
             if (return_frame)
             {
-                if (return_frame->GetStackID() != m_parent_frame_id)
+                if (return_frame->GetStackID() != m_parent_frame_id || m_start_has_symbol)
                 {
                     if (log)
                     {
@@ -153,7 +160,7 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
                 {
                     if (log)
                     {
-                        log->PutCString("The stack id we are stepping in changed, but our parent frame did not.  "
+                        log->PutCString("The stack id we are stepping in changed, but our parent frame did not when stepping from code with no symbols.  "
                         "We are probably just confused about where we are, stopping.");
                     }
                     SetPlanComplete();
