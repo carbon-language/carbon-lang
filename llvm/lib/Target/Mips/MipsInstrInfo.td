@@ -826,6 +826,11 @@ class SCBase<string opstr, RegisterOperand RO, Operand Mem> :
 class MFC3OP<dag outs, dag ins, string asmstr> :
   InstSE<outs, ins, asmstr, [], NoItinerary, FrmFR>;
 
+let isBarrier = 1, isTerminator = 1, isCodeGenOnly = 1 in
+def TRAP : InstSE<(outs), (ins), "break", [(trap)], NoItinerary, FrmOther> {
+   let Inst = 0x0000000d;
+}
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
