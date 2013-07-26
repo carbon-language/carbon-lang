@@ -154,8 +154,10 @@ private:
       uint8_t SC = Symb->StorageClass;
       if (SC != llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL &&
           SC != llvm::COFF::IMAGE_SYM_CLASS_STATIC &&
-          SC != llvm::COFF::IMAGE_SYM_CLASS_FUNCTION) {
-        llvm::errs() << "Unable to create atom for: " << Name << "\n";
+          SC != llvm::COFF::IMAGE_SYM_CLASS_FUNCTION &&
+          SC != llvm::COFF::IMAGE_SYM_CLASS_LABEL) {
+        llvm::errs() << "Unable to create atom for: " << Name
+                     << " (" << (int)SC << ")\n";
         return llvm::object::object_error::parse_failed;
       }
       const coff_section *Sec;

@@ -179,6 +179,7 @@ public:
     case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
       return scopeGlobal;
     case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
+    case llvm::COFF::IMAGE_SYM_CLASS_LABEL:
       return scopeTranslationUnit;
     }
     llvm_unreachable("Unknown scope!");
