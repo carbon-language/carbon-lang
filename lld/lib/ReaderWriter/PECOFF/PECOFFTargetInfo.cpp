@@ -89,32 +89,32 @@ void PECOFFTargetInfo::addImplicitFiles(InputFiles &files) const {
 
 /// Append the given file to the input file list. The file must be an object
 /// file or an import library file.
-bool PECOFFTargetInfo::appendInputFileOrLibrary(std::string path) {
+void PECOFFTargetInfo::appendInputFileOrLibrary(std::string path) {
   std::string ext = llvm::sys::path::extension(path).lower();
   // This is an import library file. Look for the library file in the search
   // paths, unless the path contains a directory name.
   if (ext == ".lib") {
     if (containDirectoryName(path)) {
       appendInputFile(path);
-      return true;
+      return;
     }
-    return appendLibraryFile(path);
+    appendLibraryFile(path);
+    return;
   }
   // This is an object file otherwise. Add ".obj" extension if the given path
   // name has no file extension.
   if (ext.empty())
     path.append(".obj");
   appendInputFile(allocateString(path));
-  return true;
 }
 
 /// Try to find the input library file from the search paths and append it to
 /// the input file list. Returns true if the library file is found.
-bool PECOFFTargetInfo::appendLibraryFile(StringRef filename) {
+void PECOFFTargetInfo::appendLibraryFile(StringRef filename) {
   // Current directory always takes precedence over the search paths.
   if (llvm::sys::fs::exists(filename)) {
     appendInputFile(filename);
-    return true;
+    return;
   }
   // Iterate over the search paths.
   for (StringRef dir : _inputSearchPaths) {
@@ -122,10 +122,10 @@ bool PECOFFTargetInfo::appendLibraryFile(StringRef filename) {
     llvm::sys::path::append(path, filename);
     if (llvm::sys::fs::exists(path.str())) {
       appendInputFile(allocateString(path.str()));
-      return true;
+      return;
     }
   }
-  return false;
+  appendInputFile(filename);
 }
 
 Writer &PECOFFTargetInfo::writer() const {

@@ -56,8 +56,8 @@ public:
     return _inputSearchPaths;
   }
 
-  bool appendInputFileOrLibrary(std::string path);
-  bool appendLibraryFile(StringRef path);
+  void appendInputFileOrLibrary(std::string path);
+  void appendLibraryFile(StringRef path);
 
   void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
   uint64_t getBaseAddress() const { return _baseAddress; }

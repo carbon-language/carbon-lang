@@ -111,6 +111,13 @@ TEST_F(WinLinkParserTest, MinMajorMinorOSVersion) {
   EXPECT_EQ(1, _info.getMinOSVersion().minorVersion);
 }
 
+TEST_F(WinLinkParserTest, DefaultLib) {
+  EXPECT_FALSE(parse("link.exe", "/defaultlib:user32.lib", "a.obj", nullptr));
+  EXPECT_EQ(2, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("user32.lib", inputFile(1));
+}
+
 TEST_F(WinLinkParserTest, Base) {
   EXPECT_FALSE(parse("link.exe", "/base:8388608", "a.obj", nullptr));
   EXPECT_EQ(0x800000U, _info.getBaseAddress());
