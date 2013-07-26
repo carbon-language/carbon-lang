@@ -839,7 +839,8 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
     "power6",
     "power6x",
     "power7",
-    "ppc64"
+    "ppc64",
+    "ppc64le"
   };
 
   unsigned Directive = Subtarget.getDarwinDirective();

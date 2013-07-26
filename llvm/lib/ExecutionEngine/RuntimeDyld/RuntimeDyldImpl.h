@@ -172,7 +172,7 @@ protected:
       return 8; // 32-bit instruction and 32-bit address
     else if (Arch == Triple::mipsel || Arch == Triple::mips)
       return 16;
-    else if (Arch == Triple::ppc64)
+    else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le)
       return 44;
     else if (Arch == Triple::x86_64)
       return 8; // GOT

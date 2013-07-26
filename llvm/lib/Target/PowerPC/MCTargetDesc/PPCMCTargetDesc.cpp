@@ -42,7 +42,8 @@ static MCInstrInfo *createPPCMCInstrInfo() {
 
 static MCRegisterInfo *createPPCMCRegisterInfo(StringRef TT) {
   Triple TheTriple(TT);
-  bool isPPC64 = (TheTriple.getArch() == Triple::ppc64);
+  bool isPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
+                  TheTriple.getArch() == Triple::ppc64le);
   unsigned Flavour = isPPC64 ? 0 : 1;
   unsigned RA = isPPC64 ? PPC::LR8 : PPC::LR;
 
@@ -60,7 +61,8 @@ static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
 
 static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   Triple TheTriple(TT);
-  bool isPPC64 = TheTriple.getArch() == Triple::ppc64;
+  bool isPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
+                  TheTriple.getArch() == Triple::ppc64le);
 
   MCAsmInfo *MAI;
   if (TheTriple.isOSDarwin())
@@ -91,7 +93,8 @@ static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
   }
   if (CM == CodeModel::Default) {
     Triple T(TT);
-    if (!T.isOSDarwin() && T.getArch() == Triple::ppc64)
+    if (!T.isOSDarwin() &&
+        (T.getArch() == Triple::ppc64 || T.getArch() == Triple::ppc64le))
       CM = CodeModel::Medium;
   }
   X->InitMCCodeGenInfo(RM, CM, OL);
@@ -125,38 +128,52 @@ extern "C" void LLVMInitializePowerPCTargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn C(ThePPC32Target, createPPCMCAsmInfo);
   RegisterMCAsmInfoFn D(ThePPC64Target, createPPCMCAsmInfo);  
+  RegisterMCAsmInfoFn E(ThePPC64LETarget, createPPCMCAsmInfo);  
 
   // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(ThePPC32Target, createPPCMCCodeGenInfo);
   TargetRegistry::RegisterMCCodeGenInfo(ThePPC64Target, createPPCMCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(ThePPC64LETarget,
+                                        createPPCMCCodeGenInfo);
 
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(ThePPC32Target, createPPCMCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(ThePPC64Target, createPPCMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(ThePPC64LETarget,
+                                      createPPCMCInstrInfo);
 
   // Register the MC register info.
   TargetRegistry::RegisterMCRegInfo(ThePPC32Target, createPPCMCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(ThePPC64Target, createPPCMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(ThePPC64LETarget, createPPCMCRegisterInfo);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(ThePPC32Target,
                                           createPPCMCSubtargetInfo);
   TargetRegistry::RegisterMCSubtargetInfo(ThePPC64Target,
                                           createPPCMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(ThePPC64LETarget,
+                                          createPPCMCSubtargetInfo);
 
   // Register the MC Code Emitter
   TargetRegistry::RegisterMCCodeEmitter(ThePPC32Target, createPPCMCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(ThePPC64Target, createPPCMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(ThePPC64LETarget,
+                                        createPPCMCCodeEmitter);
   
     // Register the asm backend.
   TargetRegistry::RegisterMCAsmBackend(ThePPC32Target, createPPCAsmBackend);
   TargetRegistry::RegisterMCAsmBackend(ThePPC64Target, createPPCAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(ThePPC64LETarget, createPPCAsmBackend);
   
   // Register the object streamer.
   TargetRegistry::RegisterMCObjectStreamer(ThePPC32Target, createMCStreamer);
   TargetRegistry::RegisterMCObjectStreamer(ThePPC64Target, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(ThePPC64LETarget, createMCStreamer);
 
   // Register the MCInstPrinter.
   TargetRegistry::RegisterMCInstPrinter(ThePPC32Target, createPPCMCInstPrinter);
   TargetRegistry::RegisterMCInstPrinter(ThePPC64Target, createPPCMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(ThePPC64LETarget,
+                                        createPPCMCInstPrinter);
 }

@@ -89,6 +89,7 @@ protected:
   bool IsBookE;
   bool HasLazyResolverStubs;
   bool IsJITCodeModel;
+  bool IsLittleEndian;
 
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
@@ -165,6 +166,9 @@ public:
 
   // isJITCodeModel - True if we're generating code for the JIT
   bool isJITCodeModel() const { return IsJITCodeModel; }
+
+  // isLittleEndian - True if generating little-endian code
+  bool isLittleEndian() const { return IsLittleEndian; }
 
   // Specific obvious features.
   bool hasFSQRT() const { return HasFSQRT; }

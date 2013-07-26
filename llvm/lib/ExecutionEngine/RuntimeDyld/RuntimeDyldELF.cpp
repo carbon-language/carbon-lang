@@ -770,7 +770,8 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
                           (uint32_t)(Value & 0xffffffffL), Type,
                           (uint32_t)(Addend & 0xffffffffL));
     break;
-  case Triple::ppc64:
+  case Triple::ppc64:   // Fall through.
+  case Triple::ppc64le:
     resolvePPC64Relocation(Section, Offset, Value, Type, Addend);
     break;
   case Triple::systemz:
@@ -985,7 +986,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
                         RelType, 0);
       Section.StubOffset += getMaxStubSize();
     }
-  } else if (Arch == Triple::ppc64) {
+  } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
     if (RelType == ELF::R_PPC64_REL24) {
       // A PPC branch relocation will need a stub function if the target is
       // an external symbol (Symbol::ST_Unknown) or if the target address

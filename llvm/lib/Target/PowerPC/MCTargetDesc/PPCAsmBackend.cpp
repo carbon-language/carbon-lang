@@ -158,7 +158,7 @@ public:
 
   unsigned getPointerSize() const {
     StringRef Name = TheTarget.getName();
-    if (Name == "ppc64") return 8;
+    if (Name == "ppc64" || Name == "ppc64le") return 8;
     assert(Name == "ppc32" && "Unknown target name!");
     return 4;
   }

@@ -2796,7 +2796,8 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
     return (ELFT::TargetEndianness == support::little) ?
            Triple::mipsel : Triple::mips;
   case ELF::EM_PPC64:
-    return Triple::ppc64;
+    return (ELFT::TargetEndianness == support::little) ?
+           Triple::ppc64le : Triple::ppc64;
   case ELF::EM_S390:
     return Triple::systemz;
   default:

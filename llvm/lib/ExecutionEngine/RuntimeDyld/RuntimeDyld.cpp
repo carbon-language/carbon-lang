@@ -396,7 +396,7 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     StubAddr++;
     *StubAddr = NopInstr;
     return Addr;
-  } else if (Arch == Triple::ppc64) {
+  } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
     // PowerPC64 stub: the address points to a function descriptor
     // instead of the function itself. Load the function address
     // on r11 and sets it to control register. Also loads the function

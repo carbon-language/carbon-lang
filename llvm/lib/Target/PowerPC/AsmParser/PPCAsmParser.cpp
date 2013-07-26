@@ -222,7 +222,8 @@ public:
     : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     // Check for 64-bit vs. 32-bit pointer mode.
     Triple TheTriple(STI.getTargetTriple());
-    IsPPC64 = TheTriple.getArch() == Triple::ppc64;
+    IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
+               TheTriple.getArch() == Triple::ppc64le);
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
@@ -1313,6 +1314,7 @@ bool PPCAsmParser::ParseDirectiveMachine(SMLoc L) {
 extern "C" void LLVMInitializePowerPCAsmParser() {
   RegisterMCAsmParser<PPCAsmParser> A(ThePPC32Target);
   RegisterMCAsmParser<PPCAsmParser> B(ThePPC64Target);
+  RegisterMCAsmParser<PPCAsmParser> C(ThePPC64LETarget);
 }
 
 #define GET_REGISTER_MATCHER

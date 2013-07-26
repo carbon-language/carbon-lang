@@ -252,6 +252,11 @@ def : ProcessorModel<"ppc64", G5Model,
                    FeatureMFOCRF, FeatureFSqrt, FeatureFRES,
                    FeatureFRSQRTE, FeatureSTFIWX,
                    Feature64Bit /*, Feature64BitRegs */]>;
+def : ProcessorModel<"ppc64le", G5Model,
+                  [Directive64, FeatureAltivec,
+                   FeatureMFOCRF, FeatureFSqrt, FeatureFRES,
+                   FeatureFRSQRTE, FeatureSTFIWX,
+                   Feature64Bit /*, Feature64BitRegs */]>;
 
 //===----------------------------------------------------------------------===//
 // Calling Conventions

@@ -137,6 +137,9 @@ void PPCSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // is enabled because external functions will assume this alignment.
   if (hasQPX() || isBGQ())
     StackAlignment = 32;
+
+  // Determine endianness.
+  IsLittleEndian = (TargetTriple.getArch() == Triple::ppc64le);
 }
 
 /// hasLazyResolverStub - Return true if accesses to the specified global have

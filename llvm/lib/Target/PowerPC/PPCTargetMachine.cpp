@@ -30,6 +30,7 @@ extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
   RegisterTargetMachine<PPC64TargetMachine> B(ThePPC64Target);
+  RegisterTargetMachine<PPC64TargetMachine> C(ThePPC64LETarget);
 }
 
 PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,

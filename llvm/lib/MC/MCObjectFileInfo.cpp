@@ -79,7 +79,8 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   // to using it in -static mode.
   SixteenByteConstantSection = 0;
   if (RelocM != Reloc::Static &&
-      T.getArch() != Triple::x86_64 && T.getArch() != Triple::ppc64)
+      T.getArch() != Triple::x86_64 && T.getArch() != Triple::ppc64 &&
+      T.getArch() != Triple::ppc64le)
     SixteenByteConstantSection =   // .literal16
       Ctx->getMachOSection("__TEXT", "__literal16",
                            MCSectionMachO::S_16BYTE_LITERALS,
@@ -288,7 +289,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_udata4;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
-  } else if (T.getArch() == Triple::ppc64) {
+  } else if (T.getArch() == Triple::ppc64 || T.getArch() == Triple::ppc64le) {
     PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
       dwarf::DW_EH_PE_udata8;
     LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8;
