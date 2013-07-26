@@ -310,14 +310,14 @@ void Memory::InvalidateInstructionCache(const void *Addr,
 // icache invalidation for PPC and ARM.
 #if defined(__APPLE__)
 
-#  if (defined(__POWERPC__) || defined (__ppc__) || \
+#  if (defined(__POWERPC__) || defined (__ppc__) || defined (__powerpc__) \
      defined(_POWER) || defined(_ARCH_PPC)) || defined(__arm__)
   sys_icache_invalidate(const_cast<void *>(Addr), Len);
 #  endif
 
 #else
 
-#  if (defined(__POWERPC__) || defined (__ppc__) || \
+#  if (defined(__POWERPC__) || defined (__ppc__) || defined (__powerpc__) || \
        defined(_POWER) || defined(_ARCH_PPC)) && defined(__GNUC__)
   const size_t LineSize = 32;
 
