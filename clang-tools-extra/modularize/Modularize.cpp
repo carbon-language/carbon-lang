@@ -90,12 +90,10 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#include "PreprocessorTracker.h"
 
 using namespace clang::tooling;
 using namespace clang;
 using namespace llvm;
-using namespace Modularize;
 
 // Option to specify a file name for a list of header files to check.
 cl::opt<std::string>
@@ -384,14 +382,8 @@ private:
 
 class CollectEntitiesConsumer : public ASTConsumer {
 public:
-  CollectEntitiesConsumer(EntityMap &Entities,
-                          PreprocessorTracker &preprocessorTracker,
-                          Preprocessor &PP, StringRef InFile)
-      : Entities(Entities), PPTracker(preprocessorTracker), PP(PP) {
-    PPTracker.handlePreprocessorEntry(PP, InFile);
-  }
-
-  ~CollectEntitiesConsumer() { PPTracker.handlePreprocessorExit(); }
+  CollectEntitiesConsumer(EntityMap &Entities, Preprocessor &PP)
+      : Entities(Entities), PP(PP) {}
 
   virtual void HandleTranslationUnit(ASTContext &Ctx) {
     SourceManager &SM = Ctx.getSourceManager();
@@ -417,41 +409,33 @@ public:
 
 private:
   EntityMap &Entities;
-  PreprocessorTracker &PPTracker;
   Preprocessor &PP;
 };
 
 class CollectEntitiesAction : public SyntaxOnlyAction {
 public:
-  CollectEntitiesAction(EntityMap &Entities,
-                        PreprocessorTracker &preprocessorTracker)
-      : Entities(Entities), PPTracker(preprocessorTracker) {}
+  CollectEntitiesAction(EntityMap &Entities) : Entities(Entities) {}
 
 protected:
   virtual clang::ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) {
-    return new CollectEntitiesConsumer(Entities, PPTracker,
-                                       CI.getPreprocessor(), InFile);
+    return new CollectEntitiesConsumer(Entities, CI.getPreprocessor());
   }
 
 private:
   EntityMap &Entities;
-  PreprocessorTracker &PPTracker;
 };
 
 class ModularizeFrontendActionFactory : public FrontendActionFactory {
 public:
-  ModularizeFrontendActionFactory(EntityMap &Entities,
-                                  PreprocessorTracker &preprocessorTracker)
-      : Entities(Entities), PPTracker(preprocessorTracker) {}
+  ModularizeFrontendActionFactory(EntityMap &Entities) : Entities(Entities) {}
 
   virtual CollectEntitiesAction *create() {
-    return new CollectEntitiesAction(Entities, PPTracker);
+    return new CollectEntitiesAction(Entities);
   }
 
 private:
   EntityMap &Entities;
-  PreprocessorTracker &PPTracker;
 };
 
 int main(int argc, const char **argv) {
@@ -480,14 +464,10 @@ int main(int argc, const char **argv) {
   Compilations.reset(
       new FixedCompilationDatabase(Twine(PathBuf), CC1Arguments));
 
-  // Create preprocessor tracker, to watch for macro and conditional problems.
-  OwningPtr<PreprocessorTracker> PPTracker(PreprocessorTracker::create());
-
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;
   ClangTool Tool(*Compilations, Headers);
-  int HadErrors =
-      Tool.run(new ModularizeFrontendActionFactory(Entities, *PPTracker));
+  int HadErrors = Tool.run(new ModularizeFrontendActionFactory(Entities));
 
   // Create a place to save duplicate entity locations, separate bins per kind.
   typedef SmallVector<Location, 8> LocationArray;
@@ -535,16 +515,6 @@ int main(int argc, const char **argv) {
     }
   }
 
-  // Complain about macro instance in header files that differ based on how
-  // they are included.
-  if (PPTracker->reportInconsistentMacros(errs()))
-    HadErrors = 1;
-
-  // Complain about preprocessor conditional directives in header files that
-  // differ based on how they are included.
-  if (PPTracker->reportInconsistentConditionals(errs()))
-    HadErrors = 1;
-
   // Complain about any headers that have contents that differ based on how
   // they are included.
   // FIXME: Could we provide information about which preprocessor conditionals
@@ -560,7 +530,7 @@ int main(int argc, const char **argv) {
 
     HadErrors = 1;
     errs() << "error: header '" << H->first->getName()
-           << "' has different contents depending on how it was included.\n";
+           << "' has different contents depending on how it was included\n";
     for (unsigned I = 0, N = H->second.size(); I != N; ++I) {
       errs() << "note: '" << H->second[I].Name << "' in "
              << H->second[I].Loc.File->getName() << " at "
