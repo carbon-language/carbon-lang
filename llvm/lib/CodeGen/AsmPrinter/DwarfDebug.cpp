@@ -995,15 +995,6 @@ static void addStringToHash(MD5 &Hash, StringRef Str) {
   Hash.update(NBVal);
 }
 
-/// \brief Adds the character string in \p Str to the hash in \p Hash. This does
-/// not hash a trailing NULL on the character.
-static void addLetterToHash(MD5 &Hash, StringRef Str) {
-  DEBUG(dbgs() << "Adding letter " << Str << " to hash.\n");
-  assert(Str.size() == 1 && "Trying to add a too large letter?");
-  HashValue SVal((const uint8_t *)Str.data(), Str.size());
-  Hash.update(SVal);
-}
-
 // FIXME: These are copied and only slightly modified out of LEB128.h.
 
 /// \brief Adds the unsigned in \p N to the hash in \p Hash. This also encodes
@@ -1035,7 +1026,7 @@ static void addParentContextToHash(MD5 &Hash, DIE *Parent) {
     addParentContextToHash(Hash, Parent->getParent());
 
   // Append the letter "C" to the sequence.
-  addLetterToHash(Hash, "C");
+  addULEB128ToHash(Hash, 'C');
 
   // Followed by the DWARF tag of the construct.
   addULEB128ToHash(Hash, Parent->getTag());
