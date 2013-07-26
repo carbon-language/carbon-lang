@@ -21,18 +21,11 @@
 #include "Core/Transform.h"
 #include "Core/Transforms.h"
 #include "Core/Reformatting.h"
-#include "Core/ReplacementsYaml.h"
-#include "LoopConvert/LoopConvert.h"
-#include "UseNullptr/UseNullptr.h"
-#include "UseAuto/UseAuto.h"
-#include "AddOverride/AddOverride.h"
-#include "ReplaceAutoPtr/ReplaceAutoPtr.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Support/FileSystem.h"
 
 namespace cl = llvm::cl;
 using namespace clang;
@@ -258,40 +251,13 @@ int main(int argc, const char **argv) {
     for (HeaderOverrides::const_iterator HeaderI = Overrides.headers_begin(),
                                          HeaderE = Overrides.headers_end();
          HeaderI != HeaderE; ++HeaderI) {
-      assert(!HeaderI->second.getContentOverride().empty() &&
+      assert(!HeaderI->second.FileOverride.empty() &&
              "A header override should not be empty");
       std::string ErrorInfo;
       std::string HeaderFileName = HeaderI->getKey();
       llvm::raw_fd_ostream HeaderStream(HeaderFileName.c_str(), ErrorInfo,
                                         llvm::sys::fs::F_Binary);
-      if (!ErrorInfo.empty()) {
-        llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
-        continue;
-      }
-      HeaderStream << HeaderI->second.getContentOverride();
-
-      // Replacements for header files need to be written in a YAML file for
-      // every transform and will be merged together with an external tool.
-      llvm::SmallString<128> ReplacementsHeaderName;
-      llvm::SmallString<64> Error;
-      bool Result = generateReplacementsFileName(I->getKey(), HeaderFileName,
-                                                 ReplacementsHeaderName, Error);
-      if (!Result) {
-        llvm::errs() << "Failed to generate replacements filename:" << Error
-                     << "\n";
-        continue;
-      }
-
-      llvm::raw_fd_ostream ReplacementsFile(ReplacementsHeaderName.c_str(),
-                                            ErrorInfo,
-                                            llvm::sys::fs::F_Binary);
-      if (!ErrorInfo.empty()) {
-        llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
-        continue;
-      }
-      llvm::yaml::Output YAML(ReplacementsFile);
-      YAML << const_cast<TransformDocument &>(
-                  HeaderI->getValue().getTransformReplacementsDoc());
+      HeaderStream << HeaderI->second.FileOverride;
     }
   }
 
