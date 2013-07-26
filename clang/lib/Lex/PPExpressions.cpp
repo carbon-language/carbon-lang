@@ -259,7 +259,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       if (!Literal.isUnsigned && Result.Val.isNegative()) {
         // Don't warn for a hex or octal literal: 0x8000..0 shouldn't warn.
         if (ValueLive && Literal.getRadix() == 10)
-          PP.Diag(PeekTok, diag::err_integer_too_large_for_signed);
+          PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
         Result.Val.setIsUnsigned(true);
       }
     }

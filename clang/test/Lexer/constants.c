@@ -15,7 +15,7 @@ float Y = 08.123456;
 #endif
 #if -01000000000000000000000  // should not warn.
 #endif
-#if 9223372036854775808 // expected-error {{integer constant is larger than the largest signed integer type}}
+#if 9223372036854775808 // expected-warning {{integer constant is larger than the largest signed integer type}}
 #endif
 #if 0x10000000000000000 // expected-error {{integer constant is larger than the largest unsigned integer type}}
 #endif
