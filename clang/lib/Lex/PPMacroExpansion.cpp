@@ -918,6 +918,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("objc_nonfragile_abi", LangOpts.ObjCRuntime.isNonFragile())
            .Case("objc_property_explicit_atomic", true) // Does clang support explicit "atomic" keyword?
            .Case("objc_weak_class", LangOpts.ObjCRuntime.hasWeakClassImport())
+           .Case("objc_msg_lookup_stret", LangOpts.ObjCRuntime.getKind() == ObjCRuntime::ObjFW)
            .Case("ownership_holds", true)
            .Case("ownership_returns", true)
            .Case("ownership_takes", true)

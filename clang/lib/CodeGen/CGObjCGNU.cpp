@@ -454,13 +454,15 @@ protected:
   virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
                                  llvm::Value *&Receiver,
                                  llvm::Value *cmd,
-                                 llvm::MDNode *node) = 0;
+                                 llvm::MDNode *node,
+                                 MessageSendInfo &MSI) = 0;
   /// Looks up the method for sending a message to a superclass.  This
   /// mechanism differs between the GCC and GNU runtimes, so this method must
   /// be overridden in subclasses.
   virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
                                       llvm::Value *ObjCSuper,
-                                      llvm::Value *cmd) = 0;
+                                      llvm::Value *cmd,
+                                      MessageSendInfo &MSI) = 0;
   /// Libobjc2 uses a bitfield representation where small(ish) bitfields are
   /// stored in a 64-bit value with the low bit set to 1 and the remaining 63
   /// bits set to their values, LSB first, while larger ones are stored in a
@@ -596,7 +598,8 @@ protected:
   virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
                                  llvm::Value *&Receiver,
                                  llvm::Value *cmd,
-                                 llvm::MDNode *node) {
+                                 llvm::MDNode *node,
+                                 MessageSendInfo &MSI) {
     CGBuilderTy &Builder = CGF.Builder;
     llvm::Value *args[] = {
             EnforceType(Builder, Receiver, IdTy),
@@ -607,7 +610,8 @@ protected:
   }
   virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
                                       llvm::Value *ObjCSuper,
-                                      llvm::Value *cmd) {
+                                      llvm::Value *cmd,
+                                      MessageSendInfo &MSI) {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper,
           PtrToObjCSuperTy), cmd};
@@ -655,7 +659,8 @@ class CGObjCGNUstep : public CGObjCGNU {
     virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
                                    llvm::Value *&Receiver,
                                    llvm::Value *cmd,
-                                   llvm::MDNode *node) {
+                                   llvm::MDNode *node,
+                                   MessageSendInfo &MSI) {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Function *LookupFn = SlotLookupFn;
 
@@ -693,7 +698,8 @@ class CGObjCGNUstep : public CGObjCGNU {
     }
     virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
                                         llvm::Value *ObjCSuper,
-                                        llvm::Value *cmd) {
+                                        llvm::Value *cmd,
+                                        MessageSendInfo &MSI) {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
 
@@ -797,31 +803,46 @@ protected:
   /// The GCC ABI message lookup function.  Returns an IMP pointing to the
   /// method implementation for this message.
   LazyRuntimeFunction MsgLookupFn;
+  /// stret lookup function.  While this does not seem to make sense at the
+  /// first look, this is required to call the correct forwarding function.
+  LazyRuntimeFunction MsgLookupFnSRet;
   /// The GCC ABI superclass message lookup function.  Takes a pointer to a
   /// structure describing the receiver and the class, and a selector as
   /// arguments.  Returns the IMP for the corresponding method.
-  LazyRuntimeFunction MsgLookupSuperFn;
+  LazyRuntimeFunction MsgLookupSuperFn, MsgLookupSuperFnSRet;
 
   virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
                                  llvm::Value *&Receiver,
                                  llvm::Value *cmd,
-                                 llvm::MDNode *node) {
+                                 llvm::MDNode *node,
+                                 MessageSendInfo &MSI) {
     CGBuilderTy &Builder = CGF.Builder;
     llvm::Value *args[] = {
             EnforceType(Builder, Receiver, IdTy),
             EnforceType(Builder, cmd, SelectorTy) };
-    llvm::CallSite imp = CGF.EmitRuntimeCallOrInvoke(MsgLookupFn, args);
+
+    llvm::CallSite imp;
+    if (CGM.ReturnTypeUsesSRet(MSI.CallInfo))
+      imp = CGF.EmitRuntimeCallOrInvoke(MsgLookupFnSRet, args);
+    else
+      imp = CGF.EmitRuntimeCallOrInvoke(MsgLookupFn, args);
+
     imp->setMetadata(msgSendMDKind, node);
     return imp.getInstruction();
   }
 
   virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
                                       llvm::Value *ObjCSuper,
-                                      llvm::Value *cmd) {
+                                      llvm::Value *cmd,
+                                      MessageSendInfo &MSI) {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper,
           PtrToObjCSuperTy), cmd};
-      return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFn, lookupArgs);
+
+      if (CGM.ReturnTypeUsesSRet(MSI.CallInfo))
+        return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFnSRet, lookupArgs);
+      else
+        return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFn, lookupArgs);
     }
 
   virtual llvm::Value *GetClassNamed(CodeGenFunction &CGF,
@@ -847,9 +868,13 @@ public:
   CGObjCObjFW(CodeGenModule &Mod): CGObjCGNU(Mod, 9, 3) {
     // IMP objc_msg_lookup(id, SEL);
     MsgLookupFn.init(&CGM, "objc_msg_lookup", IMPTy, IdTy, SelectorTy, NULL);
+    MsgLookupFnSRet.init(&CGM, "objc_msg_lookup_stret", IMPTy, IdTy,
+                         SelectorTy, NULL);
     // IMP objc_msg_lookup_super(struct objc_super*, SEL);
     MsgLookupSuperFn.init(&CGM, "objc_msg_lookup_super", IMPTy,
                           PtrToObjCSuperTy, SelectorTy, NULL);
+    MsgLookupSuperFnSRet.init(&CGM, "objc_msg_lookup_super_stret", IMPTy,
+                              PtrToObjCSuperTy, SelectorTy, NULL);
   }
 };
 } // end anonymous namespace
@@ -1291,7 +1316,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   ObjCSuper = EnforceType(Builder, ObjCSuper, PtrToObjCSuperTy);
 
   // Get the IMP
-  llvm::Value *imp = LookupIMPSuper(CGF, ObjCSuper, cmd);
+  llvm::Value *imp = LookupIMPSuper(CGF, ObjCSuper, cmd, MSI);
   imp = EnforceType(Builder, imp, MSI.MessengerType);
 
   llvm::Value *impMD[] = {
@@ -1390,7 +1415,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   // given platform), so we 
   switch (CGM.getCodeGenOpts().getObjCDispatchMethod()) {
     case CodeGenOptions::Legacy:
-      imp = LookupIMP(CGF, Receiver, cmd, node);
+      imp = LookupIMP(CGF, Receiver, cmd, node, MSI);
       break;
     case CodeGenOptions::Mixed:
     case CodeGenOptions::NonLegacy:

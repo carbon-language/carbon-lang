@@ -1255,6 +1255,23 @@ Further examples of these attributes are available in the static analyzer's `lis
 Query for these features with ``__has_attribute(ns_consumed)``,
 ``__has_attribute(ns_returns_retained)``, etc.
 
+objc_msg_lookup_stret
+---------------------
+
+Traditionally, if a runtime is used that follows the GNU Objective-C ABI, a
+call to objc_msg_lookup() would be emitted for each message send, which would
+return a pointer to the actual implementation of the method. However,
+objc_msg_lookup() has no information at all about the method signature of the
+actual method. Therefore, certain features like forwarding messages cannot be
+correctly implemented for methods returning structs using objc_msg_lookup(), as
+methods returning structs use a slightly different calling convention.
+
+To work around this, Clang emits calls to objc_msg_lookup_stret() instead for
+methods that return structs if the runtime supports this, allowing the runtime
+to use a different forwarding handler for methods returning structs.
+
+To check if Clang emits calls to objc_msg_lookup_stret(),
+__has_feature(objc_msg_lookup_stret) can be used.
 
 Function Overloading in C
 =========================
