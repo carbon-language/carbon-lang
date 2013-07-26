@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
+; RUN: not opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
 
 ;#define M 36
 ;#define N 36
