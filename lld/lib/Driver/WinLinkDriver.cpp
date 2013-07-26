@@ -236,6 +236,15 @@ bool handleFailIfMismatchOption(StringRef option,
   return true;
 }
 
+// Add ".lib" extension if the path does not already have the extension to mimic
+// link.exe behavior.
+StringRef canonicalizeImportLibraryPath(PECOFFTargetInfo &info, StringRef path) {
+  std::string s(path.lower());
+  if (StringRef(s).endswith(".lib"))
+    return path;
+  return info.allocateString(std::string(path).append(".lib"));
+}
+
 // Process "LINK" environment variable. If defined, the value of the variable
 // should be processed as command line arguments.
 std::vector<const char *> processLinkEnv(PECOFFTargetInfo &info,
@@ -442,7 +451,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // specified by the option should have lower precedence than the other files
   // added above, which is important for link.exe compatibility.
   for (const StringRef path : defaultLibs)
-    info.appendLibraryFile(path);
+    info.appendLibraryFile(canonicalizeImportLibraryPath(info, path));
 
   // If /out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file
