@@ -166,7 +166,6 @@ if( MSVC )
     -D_SCL_SECURE_NO_WARNINGS
 
     # Disabled warnings.
-    -wd4065 # Suppress 'switch statement contains 'default' but no 'case' labels'
     -wd4146 # Suppress 'unary minus operator applied to unsigned type, result still unsigned'
     -wd4180 # Suppress 'qualifier applied to function type has no meaning; ignored'
     -wd4181 # Suppress 'qualifier applied to reference type; ignored'
