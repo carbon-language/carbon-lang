@@ -193,34 +193,6 @@ static int AvoidMessageBoxHook(int ReportType, char *Message, int *Return) {
   return TRUE;
 }
 
-/// CRTReportHook - Function called on a CRT debugging event.
-static int CRTReportHook(int ReportType, char *Message, int *Return) {
-  // Don't cause a DebugBreak() on return.
-  if (Return)
-    *Return = 0;
-
-  switch (ReportType) {
-  default:
-  case _CRT_ASSERT:
-    fprintf(stderr, "CRT assert: %s\n", Message);
-    // FIXME: Is there a way to just crash? Perhaps throw to the unhandled
-    // exception code? Perhaps SetErrorMode() handles this.
-    _exit(3);
-    break;
-  case _CRT_ERROR:
-    fprintf(stderr, "CRT error: %s\n", Message);
-    // FIXME: Is there a way to just crash? Perhaps throw to the unhandled
-    // exception code? Perhaps SetErrorMode() handles this.
-    _exit(3);
-    break;
-  case _CRT_WARN:
-    fprintf(stderr, "CRT warn: %s\n", Message);
-    break;
-  }
-
-  // Don't call _CrtDbgReport.
-  return TRUE;
-}
 #endif
 
 static void RegisterHandler() {
@@ -253,19 +225,10 @@ static void RegisterHandler() {
   OldFilter = SetUnhandledExceptionFilter(LLVMUnhandledExceptionFilter);
   SetConsoleCtrlHandler(LLVMConsoleCtrlHandler, TRUE);
 
-#ifdef _MSC_VER
-  const char *EnableMsgbox = getenv("LLVM_ENABLE_CRT_REPORT");
-  if (!EnableMsgbox || strcmp("0", EnableMsgbox) == 0) {
-    // Setting a report hook overrides the default behavior of popping an "abort,
-    // retry, or ignore" dialog.
-    _CrtSetReportHook(AvoidMessageBoxHook);
-  }
-#endif
-
   // Environment variable to disable any kind of crash dialog.
   if (getenv("LLVM_DISABLE_CRASH_REPORT")) {
 #ifdef _MSC_VER
-    _CrtSetReportHook(CRTReportHook);
+    _CrtSetReportHook(AvoidMessageBoxHook);
 #endif
     SetErrorMode(SEM_FAILCRITICALERRORS |
                  SEM_NOGPFAULTERRORBOX |
