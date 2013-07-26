@@ -80,6 +80,23 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Or:</td></tr>
+                        <td class="content">
+                            <b>(gdb)</b> set args 1 2 3<br>
+                            <b>(gdb)</b> run<br>
+                            ...<br>
+                            <b>(gdb)</b> run<br>
+                            ...<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> settings set target.run-args 1 2 3<br>
+                            <b>(lldb)</b> run<br>
+                            ...<br>
+                            <b>(lldb)</b> run<br>
+                            ...<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Launch a process with arguments in new terminal window (Mac OS X only).</td></tr>
                         <td class="content">
                         </td>
@@ -108,6 +125,21 @@
                             <b>(lldb)</b> env DEBUG=1<br>
                         </td>
                     </tr>
+
+                    <tr><td class="header" colspan="2">Show the arguments that will be or were passed to the program when run.</td></tr>
+                        <td class="content">
+                            <b>(gdb)</b> show args<br>
+                            Argument list to give program being debugged when it is started is &quot;1 2 3&quot.<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> settings show target.run-args<br>
+                            target.run-args (array of strings) =<br>
+                            [0]: &quot;1&quot;<br>
+                            [1]: &quot;2&quot;<br>
+                            [2]: &quot;3&quot;<br>
+                        </td>
+                    </tr>
+
 
                     <tr><td class="header" colspan="2">Set environment variables for process and launch process in one command.</td></tr>
                         <td class="content">
