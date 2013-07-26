@@ -49,13 +49,11 @@ def CompileOnly_Group     : OptionGroup<"<CompileOnly group>">;
 def Action_Group          : OptionGroup<"<action group>">;
 
 def I_Group               : OptionGroup<"<I group>">, Group<CompileOnly_Group>;
-def L_Group               : OptionGroup<"<L group>">, Group<CompileOnly_Group>;
 def M_Group               : OptionGroup<"<M group>">, Group<CompileOnly_Group>;
 def T_Group               : OptionGroup<"<T group>">;
 def O_Group               : OptionGroup<"<O group>">, Group<CompileOnly_Group>;
 def W_Group               : OptionGroup<"<W group>">, Group<CompileOnly_Group>;
 def X_Group               : OptionGroup<"<X group>">;
-def a_Group               : OptionGroup<"<a group>">;
 def d_Group               : OptionGroup<"<d group>">;
 def f_Group               : OptionGroup<"<f group>">, Group<CompileOnly_Group>;
 def f_clang_Group         : OptionGroup<"<f (clang-only) group>">, Group<CompileOnly_Group>;
@@ -262,11 +260,11 @@ def Z_Flag : Flag<["-"], "Z">;
 def Z_Joined : Joined<["-"], "Z">;
 def all__load : Flag<["-"], "all_load">;
 def allowable__client : Separate<["-"], "allowable_client">;
-def ansi : Flag<["-", "--"], "ansi">, Group<a_Group>;
+def ansi : Flag<["-", "--"], "ansi">;
 def arch__errors__fatal : Flag<["-"], "arch_errors_fatal">;
 def arch : Separate<["-"], "arch">, Flags<[DriverOption]>;
 def arch__only : Separate<["-"], "arch_only">;
-def a : Joined<["-"], "a">, Group<a_Group>;
+def a : Joined<["-"], "a">;
 def bind__at__load : Flag<["-"], "bind_at_load">;
 def bundle__loader : Separate<["-"], "bundle_loader">;
 def bundle : Flag<["-"], "bundle">;
@@ -1134,8 +1132,8 @@ def static_libgcc : Flag<["-"], "static-libgcc">;
 def static_libstdcxx : Flag<["-"], "static-libstdc++">;
 def static : Flag<["-", "--"], "static">, Flags<[NoArgumentUnused]>;
 def std_default_EQ : Joined<["-"], "std-default=">;
-def std_EQ : Joined<["-", "--"], "std=">, Flags<[CC1Option]>, Group<L_Group>,
-  HelpText<"Language standard to compile for">;
+def std_EQ : Joined<["-", "--"], "std=">, Flags<[CC1Option]>,
+  Group<CompileOnly_Group>, HelpText<"Language standard to compile for">;
 def stdlib_EQ : Joined<["-", "--"], "stdlib=">, Flags<[CC1Option]>,
   HelpText<"C++ standard library to use">;
 def sub__library : JoinedOrSeparate<["-"], "sub_library">;
