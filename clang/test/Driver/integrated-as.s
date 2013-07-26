@@ -5,5 +5,5 @@
 // CHECK: cc1as
 // CHECK-NOT: -relax-all
 
-// RUN: %clang -c -integrated-as -Wa,--compress-debug-sections %s 2>&1 | FileCheck --check-prefix=INVALID %s
+// RUN: not %clang -c -integrated-as -Wa,--compress-debug-sections %s 2>&1 | FileCheck --check-prefix=INVALID %s
 // INVALID: error: unsupported argument '--compress-debug-sections' to option 'Wa,'
