@@ -243,3 +243,11 @@ namespace PR13854 {
 namespace PR14518 {
   auto f = [](void) { return __func__; }; // no-warning
 }
+
+namespace PR16708 {
+  auto L = []() {
+    auto ret = 0;
+    return ret;
+    return 0;
+  };
+}
