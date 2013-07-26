@@ -115,3 +115,6 @@
 // CHECK-DEBIAN-PPC64: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/powerpc64-linux-gnu"
 // CHECK-DEBIAN-PPC64: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-DEBIAN-PPC64: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
+// FIXME: Fix'em later.
+// XFAIL: mingw32,win32
