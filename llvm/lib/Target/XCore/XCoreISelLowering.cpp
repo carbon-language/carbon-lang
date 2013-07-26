@@ -1080,7 +1080,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
   unsigned LRSaveSize = StackSlotSize;
 
-  // TODO: need to make copies of byVal arguments
+  // TODO: need to make copies of any byVal arguments
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
 
