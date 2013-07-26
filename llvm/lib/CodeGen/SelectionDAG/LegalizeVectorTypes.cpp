@@ -1031,6 +1031,10 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
         dbgs() << "\n");
   SDValue Res = SDValue();
 
+  // See if the target wants to custom split this node.
+  if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
+    return false;
+
   if (Res.getNode() == 0) {
     switch (N->getOpcode()) {
     default:

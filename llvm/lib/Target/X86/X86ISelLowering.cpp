@@ -996,7 +996,7 @@ void X86TargetLowering::resetOperationActions() {
     setLoadExtAction(ISD::EXTLOAD,              MVT::v2f32, Legal);
   }
 
-  if (Subtarget->hasSSE41()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasSSE41()) {
     setOperationAction(ISD::FFLOOR,             MVT::f32,   Legal);
     setOperationAction(ISD::FCEIL,              MVT::f32,   Legal);
     setOperationAction(ISD::FTRUNC,             MVT::f32,   Legal);
