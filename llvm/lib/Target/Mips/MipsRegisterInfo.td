@@ -356,15 +356,15 @@ def FGR32AsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseFGR32Regs";
 }
 
-def CPURegsOpnd : RegisterOperand<CPURegs, "printCPURegs"> {
+def CPURegsOpnd : RegisterOperand<CPURegs> {
   let ParserMatchClass = CPURegsAsmOperand;
 }
 
-def CPU64RegsOpnd : RegisterOperand<CPU64Regs, "printCPURegs"> {
+def CPU64RegsOpnd : RegisterOperand<CPU64Regs> {
   let ParserMatchClass = CPU64RegsAsmOperand;
 }
 
-def CCROpnd : RegisterOperand<CCR, "printCPURegs"> {
+def CCROpnd : RegisterOperand<CCR> {
   let ParserMatchClass = CCRAsmOperand;
 }
 
@@ -378,11 +378,11 @@ def HW64RegsAsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseHW64Regs";
 }
 
-def HWRegsOpnd : RegisterOperand<HWRegs, "printCPURegs"> {
+def HWRegsOpnd : RegisterOperand<HWRegs> {
   let ParserMatchClass = HWRegsAsmOperand;
 }
 
-def HW64RegsOpnd : RegisterOperand<HWRegs64, "printCPURegs"> {
+def HW64RegsOpnd : RegisterOperand<HWRegs64> {
   let ParserMatchClass = HW64RegsAsmOperand;
 }
 

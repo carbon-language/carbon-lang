@@ -158,11 +158,6 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
     OS << ')';
 }
 
-void MipsInstPrinter::printCPURegs(const MCInst *MI, unsigned OpNo,
-                                   raw_ostream &O) {
-  printRegName(O, MI->getOperand(OpNo).getReg());
-}
-
 void MipsInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                    raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
