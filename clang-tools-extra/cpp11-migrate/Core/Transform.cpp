@@ -117,7 +117,7 @@ bool Transform::handleBeginSource(CompilerInstance &CI, StringRef Filename) {
 void Transform::handleEndSource() {
   if (!getReplacements().empty()) {
     SourceOverrides &SO = Overrides->getOrCreate(CurrentSource);
-    SO.applyReplacements(getReplacements());
+    SO.applyReplacements(getReplacements(), getName());
   }
 
   if (Options().EnableTiming)

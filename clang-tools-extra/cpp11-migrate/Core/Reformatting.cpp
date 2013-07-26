@@ -47,10 +47,10 @@ void Reformatter::reformatChanges(SourceOverrides &Overrides,
        I != E; ++I) {
     const HeaderOverride &Header = I->getValue();
     const tooling::Replacements &HeaderReplaces =
-        reformatSingleFile(Header.FileName, Header.Changes, SM);
+        reformatSingleFile(Header.getFileName(), Header.getChanges(), SM);
     Replaces.insert(HeaderReplaces.begin(), HeaderReplaces.end());
   }
-  Overrides.applyReplacements(Replaces, SM);
+  Overrides.applyReplacements(Replaces, SM, "reformatter");
 }
 
 tooling::Replacements Reformatter::reformatSingleFile(
