@@ -321,6 +321,7 @@ private:
     return getFnValueByID(ValNo, Ty);
   }
 
+  bool ParseAttrKind(uint64_t Code, Attribute::AttrKind *Kind);
   bool ParseModule(bool Resume);
   bool ParseAttributeBlock();
   bool ParseAttributeGroupBlock();

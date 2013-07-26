@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/AutoUpgrade.h"
+#include "llvm/Bitcode/LLVMBitCodes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InlineAsm.h"
@@ -22,6 +23,7 @@
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 enum {
@@ -506,6 +508,125 @@ bool BitcodeReader::ParseAttributeBlock() {
   }
 }
 
+bool BitcodeReader::ParseAttrKind(uint64_t Code, Attribute::AttrKind *Kind) {
+  switch (Code) {
+  case bitc::ATTR_KIND_ALIGNMENT:
+    *Kind = Attribute::Alignment;
+    return false;
+  case bitc::ATTR_KIND_ALWAYS_INLINE:
+    *Kind = Attribute::AlwaysInline;
+    return false;
+  case bitc::ATTR_KIND_BUILTIN:
+    *Kind = Attribute::Builtin;
+    return false;
+  case bitc::ATTR_KIND_BY_VAL:
+    *Kind = Attribute::ByVal;
+    return false;
+  case bitc::ATTR_KIND_COLD:
+    *Kind = Attribute::Cold;
+    return false;
+  case bitc::ATTR_KIND_INLINE_HINT:
+    *Kind = Attribute::InlineHint;
+    return false;
+  case bitc::ATTR_KIND_IN_REG:
+    *Kind = Attribute::InReg;
+    return false;
+  case bitc::ATTR_KIND_MIN_SIZE:
+    *Kind = Attribute::MinSize;
+    return false;
+  case bitc::ATTR_KIND_NAKED:
+    *Kind = Attribute::Naked;
+    return false;
+  case bitc::ATTR_KIND_NEST:
+    *Kind = Attribute::Nest;
+    return false;
+  case bitc::ATTR_KIND_NO_ALIAS:
+    *Kind = Attribute::NoAlias;
+    return false;
+  case bitc::ATTR_KIND_NO_BUILTIN:
+    *Kind = Attribute::NoBuiltin;
+    return false;
+  case bitc::ATTR_KIND_NO_CAPTURE:
+    *Kind = Attribute::NoCapture;
+    return false;
+  case bitc::ATTR_KIND_NO_DUPLICATE:
+    *Kind = Attribute::NoDuplicate;
+    return false;
+  case bitc::ATTR_KIND_NO_IMPLICIT_FLOAT:
+    *Kind = Attribute::NoImplicitFloat;
+    return false;
+  case bitc::ATTR_KIND_NO_INLINE:
+    *Kind = Attribute::NoInline;
+    return false;
+  case bitc::ATTR_KIND_NON_LAZY_BIND:
+    *Kind = Attribute::NonLazyBind;
+    return false;
+  case bitc::ATTR_KIND_NO_RED_ZONE:
+    *Kind = Attribute::NoRedZone;
+    return false;
+  case bitc::ATTR_KIND_NO_RETURN:
+    *Kind = Attribute::NoReturn;
+    return false;
+  case bitc::ATTR_KIND_NO_UNWIND:
+    *Kind = Attribute::NoUnwind;
+    return false;
+  case bitc::ATTR_KIND_OPTIMIZE_FOR_SIZE:
+    *Kind = Attribute::OptimizeForSize;
+    return false;
+  case bitc::ATTR_KIND_READ_NONE:
+    *Kind = Attribute::ReadNone;
+    return false;
+  case bitc::ATTR_KIND_READ_ONLY:
+    *Kind = Attribute::ReadOnly;
+    return false;
+  case bitc::ATTR_KIND_RETURNED:
+    *Kind = Attribute::Returned;
+    return false;
+  case bitc::ATTR_KIND_RETURNS_TWICE:
+    *Kind = Attribute::ReturnsTwice;
+    return false;
+  case bitc::ATTR_KIND_S_EXT:
+    *Kind = Attribute::SExt;
+    return false;
+  case bitc::ATTR_KIND_STACK_ALIGNMENT:
+    *Kind = Attribute::StackAlignment;
+    return false;
+  case bitc::ATTR_KIND_STACK_PROTECT:
+    *Kind = Attribute::StackProtect;
+    return false;
+  case bitc::ATTR_KIND_STACK_PROTECT_REQ:
+    *Kind = Attribute::StackProtectReq;
+    return false;
+  case bitc::ATTR_KIND_STACK_PROTECT_STRONG:
+    *Kind = Attribute::StackProtectStrong;
+    return false;
+  case bitc::ATTR_KIND_STRUCT_RET:
+    *Kind = Attribute::StructRet;
+    return false;
+  case bitc::ATTR_KIND_SANITIZE_ADDRESS:
+    *Kind = Attribute::SanitizeAddress;
+    return false;
+  case bitc::ATTR_KIND_SANITIZE_THREAD:
+    *Kind = Attribute::SanitizeThread;
+    return false;
+  case bitc::ATTR_KIND_SANITIZE_MEMORY:
+    *Kind = Attribute::SanitizeMemory;
+    return false;
+  case bitc::ATTR_KIND_UW_TABLE:
+    *Kind = Attribute::UWTable;
+    return false;
+  case bitc::ATTR_KIND_Z_EXT:
+    *Kind = Attribute::ZExt;
+    return false;
+  default:
+    std::string Buf;
+    raw_string_ostream fmt(Buf);
+    fmt << "Unknown attribute kind (" << Code << ")";
+    fmt.flush();
+    return Error(Buf.c_str());
+  }
+}
+
 bool BitcodeReader::ParseAttributeGroupBlock() {
   if (Stream.EnterSubBlock(bitc::PARAMATTR_GROUP_BLOCK_ID))
     return Error("Malformed block record");
@@ -545,9 +666,16 @@ bool BitcodeReader::ParseAttributeGroupBlock() {
       AttrBuilder B;
       for (unsigned i = 2, e = Record.size(); i != e; ++i) {
         if (Record[i] == 0) {        // Enum attribute
-          B.addAttribute(Attribute::AttrKind(Record[++i]));
+          Attribute::AttrKind Kind;
+          if (ParseAttrKind(Record[++i], &Kind))
+            return true;
+
+          B.addAttribute(Kind);
         } else if (Record[i] == 1) { // Align attribute
-          if (Attribute::AttrKind(Record[++i]) == Attribute::Alignment)
+          Attribute::AttrKind Kind;
+          if (ParseAttrKind(Record[++i], &Kind))
+            return true;
+          if (Kind == Attribute::Alignment)
             B.addAlignmentAttr(Record[++i]);
           else
             B.addStackAlignmentAttr(Record[++i]);
