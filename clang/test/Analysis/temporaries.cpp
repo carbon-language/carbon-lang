@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++03 %s
-// RUN: %clang_cc1 -triple x86_64-pc-linux -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++11 %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++11 %s
 
 extern bool clang_analyzer_eval(bool);
 
@@ -149,7 +149,7 @@ void testStaticMaterializeTemporaryExpr() {
   static const Trivial &directRef = Trivial(42);
   clang_analyzer_eval(directRef.value == 42); // expected-warning{{TRUE}}
 
-#if __cplusplus >= 201103L
+#if __has_feature(cxx_thread_local)
   thread_local static const Trivial &threadRef = getTrivial();
   clang_analyzer_eval(threadRef.value == 42); // expected-warning{{TRUE}}
 
