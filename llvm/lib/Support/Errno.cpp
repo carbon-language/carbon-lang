@@ -14,8 +14,6 @@
 #include "llvm/Support/Errno.h"
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/raw_ostream.h"
-
-#if HAVE_STRING_H
 #include <string.h>
 
 #if HAVE_ERRNO_H
@@ -75,5 +73,3 @@ std::string StrError(int errnum) {
 
 }  // namespace sys
 }  // namespace llvm
-
-#endif  // HAVE_STRING_H

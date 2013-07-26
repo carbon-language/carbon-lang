@@ -18,6 +18,8 @@
 
 #include "Unix.h"
 #include "llvm/Support/Process.h"
+#include <limits.h>
+#include <stdio.h>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -42,12 +44,6 @@
 # if HAVE_NDIR_H
 #  include <ndir.h>
 # endif
-#endif
-#if HAVE_STDIO_H
-#include <stdio.h>
-#endif
-#if HAVE_LIMITS_H
-#include <limits.h>
 #endif
 
 #ifdef __APPLE__

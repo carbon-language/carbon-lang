@@ -26,7 +26,6 @@
 #ifndef SUPPORT_DATATYPES_H
 #define SUPPORT_DATATYPES_H
 
-#undef HAVE_SYS_TYPES_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_STDINT_H
 #undef HAVE_UINT64_T
@@ -54,9 +53,7 @@
 #endif
 
 /* Note that <inttypes.h> includes <stdint.h>, if this is a C99 system. */
-#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
 
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
