@@ -1069,14 +1069,24 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CharacterLiteral> characterLiteral;
 
-/// \brief Matches integer literals of all sizes / encodings.
+/// \brief Matches integer literals of all sizes / encodings, e.g.
+/// 1, 1L, 0x1 and 1U.
 ///
-/// Not matching character-encoded integers such as L'a'.
-///
-/// Example matches 1, 1L, 0x1, 1U
+/// Does not match character-encoded integers such as L'a'.
 const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   IntegerLiteral> integerLiteral;
+
+/// \brief Matches float literals of all sizes / encodings, e.g.
+/// 1.0, 1.0f, 1.0L and 1e10.
+///
+/// Does not match implicit conversions such as
+/// \code
+///   float a = 10;
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Stmt,
+  FloatingLiteral> floatLiteral;
 
 /// \brief Matches user defined literal operator call.
 ///

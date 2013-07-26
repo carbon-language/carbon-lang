@@ -252,6 +252,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(explicitCastExpr);
   REGISTER_MATCHER(expr);
   REGISTER_MATCHER(fieldDecl);
+  REGISTER_MATCHER(floatLiteral);
   REGISTER_MATCHER(forField);
   REGISTER_MATCHER(forRangeStmt);
   REGISTER_MATCHER(forStmt);

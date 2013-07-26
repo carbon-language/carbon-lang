@@ -1853,6 +1853,17 @@ TEST(Matcher, IntegerLiterals) {
   EXPECT_TRUE(notMatches("int i = 10.0;", HasIntLiteral));
 }
 
+TEST(Matcher, FloatLiterals) {
+  StatementMatcher HasFloatLiteral = floatLiteral();
+  EXPECT_TRUE(matches("float i = 10.0;", HasFloatLiteral));
+  EXPECT_TRUE(matches("float i = 10.0f;", HasFloatLiteral));
+  EXPECT_TRUE(matches("double i = 10.0;", HasFloatLiteral));
+  EXPECT_TRUE(matches("double i = 10.0L;", HasFloatLiteral));
+  EXPECT_TRUE(matches("double i = 1e10;", HasFloatLiteral));
+
+  EXPECT_TRUE(notMatches("float i = 10;", HasFloatLiteral));
+}
+
 TEST(Matcher, NullPtrLiteral) {
   EXPECT_TRUE(matches("int* i = nullptr;", nullPtrLiteralExpr()));
 }
