@@ -31,6 +31,20 @@
 // CHECK-UBUNTU-13-04: "-internal-externc-isystem" "[[SYSROOT]]/include"
 // CHECK-UBUNTU-13-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
 //
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target arm-linux-gnueabihf \
+// RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04-CROSS %s
+// CHECK-UBUNTU-13-04-CROSS: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-UBUNTU-13-04-CROSS: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc-cross/arm-linux-gnueabihf/4.7/../../../../include/c++/4.7"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc-cross/arm-linux-gnueabihf/4.7/../../../../include/c++/4.7/backward"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc-cross/arm-linux-gnueabihf/4.7/../../../../include/arm-linux-gnueabihf/c++/4.7"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-isystem" "{{.*}}/lib{{(64|32)?}}/clang/{{[0-9]\.[0-9]}}/include"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-UBUNTU-13-04-CROSS: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+//
 // Test Ubuntu/Debian's new version of multiarch, with -m32.
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target x86_64-unknown-linux-gnu -m32 \

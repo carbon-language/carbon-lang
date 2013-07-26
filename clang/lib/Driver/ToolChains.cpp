@@ -1343,6 +1343,8 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
   // up to the lib directory.
   const std::string LibSuffixes[] = {
     "/gcc/" + CandidateTriple.str(),
+    // Debian puts cross-compilers in gcc-cross
+    "/gcc-cross/" + CandidateTriple.str(),
     "/" + CandidateTriple.str() + "/gcc/" + CandidateTriple.str(),
 
     // The Freescale PPC SDK has the gcc libraries in
@@ -1355,8 +1357,13 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
     // triple.
     "/i386-linux-gnu/gcc/" + CandidateTriple.str()
   };
-  const std::string InstallSuffixes[] = { "/../../..", "/../../../..", "/../..",
-                                          "/../../../.." };
+  const std::string InstallSuffixes[] = {
+    "/../../..",    // gcc/
+    "/../../..",    // gcc-cross/
+    "/../../../..", // <triple>/gcc/
+    "/../..",       // <triple>/
+    "/../../../.."  // i386-linux-gnu/gcc/<triple>/
+  };
   // Only look at the final, weird Ubuntu suffix for i386-linux-gnu.
   const unsigned NumLibSuffixes =
       (llvm::array_lengthof(LibSuffixes) - (TargetArch != llvm::Triple::x86));
