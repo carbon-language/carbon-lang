@@ -14,7 +14,7 @@ class A1 {
   friend union A; // expected-error {{use of 'A' with tag type that does not match previous declaration}}
 
   friend enum A; // expected-error {{use of 'A' with tag type that does not match previous declaration}}
-  friend enum E; // expected-warning {{cannot be a friend}}
+  friend enum E; // expected-warning {{befriending enumeration type 'enum E' is a C++11 extension}}
 };
 
 template <class T> struct B { // expected-note {{previous use is here}}

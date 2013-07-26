@@ -18,9 +18,8 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (136):
+CHECK: Warnings without flags (135):
 CHECK-NEXT:   ext_delete_void_ptr_operand
-CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_specialization_storage_class
 CHECK-NEXT:   ext_implicit_lib_function_decl
