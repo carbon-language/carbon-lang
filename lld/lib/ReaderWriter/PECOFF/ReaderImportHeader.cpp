@@ -215,16 +215,15 @@ public:
 private:
   const COFFSharedLibraryAtom *addSharedLibraryAtom(
       uint16_t hint, StringRef symbolName, StringRef dllName) {
-    auto *atom = new (_allocator.Allocate<COFFSharedLibraryAtom>())
-        COFFSharedLibraryAtom(*this, hint, symbolName, dllName);
+    auto *atom = new (_alloc) COFFSharedLibraryAtom(
+        *this, hint, symbolName, dllName);
     _sharedLibraryAtoms._atoms.push_back(atom);
     return atom;
   }
 
   void addDefinedAtom(StringRef symbolName, StringRef dllName,
                       const COFFSharedLibraryAtom *dataAtom) {
-    auto *atom = new (_allocator.Allocate<FuncAtom>())
-        FuncAtom(*this, symbolName);
+    auto *atom = new (_alloc) FuncAtom(*this, symbolName);
 
     // The first two byte of the atom is JMP instruction.
     atom->addReference(std::unique_ptr<COFFReference>(
@@ -235,7 +234,7 @@ private:
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   const TargetInfo &_targetInfo;
-  mutable llvm::BumpPtrAllocator _allocator;
+  mutable llvm::BumpPtrAllocator _alloc;
 };
 
 } // end anonymous namespace
