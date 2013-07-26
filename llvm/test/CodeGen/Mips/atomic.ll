@@ -14,7 +14,7 @@ entry:
 ; CHECK-EL:   ll      $[[R1:[0-9]+]], 0($[[R0]])
 ; CHECK-EL:   addu    $[[R2:[0-9]+]], $[[R1]], $4
 ; CHECK-EL:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EL:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
 
 ; CHECK-EB-LABEL:   AtomicLoadAdd32:
 ; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
@@ -22,7 +22,7 @@ entry:
 ; CHECK-EB:   ll      $[[R1:[0-9]+]], 0($[[R0]])
 ; CHECK-EB:   addu    $[[R2:[0-9]+]], $[[R1]], $4
 ; CHECK-EB:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EB:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
 }
 
 define i32 @AtomicLoadNand32(i32 %incr) nounwind {
@@ -37,7 +37,7 @@ entry:
 ; CHECK-EL:   and     $[[R3:[0-9]+]], $[[R1]], $4
 ; CHECK-EL:   nor     $[[R2:[0-9]+]], $zero, $[[R3]]
 ; CHECK-EL:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EL:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
 
 ; CHECK-EB-LABEL:   AtomicLoadNand32:
 ; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
@@ -46,7 +46,7 @@ entry:
 ; CHECK-EB:   and     $[[R3:[0-9]+]], $[[R1]], $4
 ; CHECK-EB:   nor     $[[R2:[0-9]+]], $zero, $[[R3]]
 ; CHECK-EB:   sc      $[[R2]], 0($[[R0]])
-; CHECK-EB:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
 }
 
 define i32 @AtomicSwap32(i32 %newval) nounwind {
@@ -62,14 +62,14 @@ entry:
 ; CHECK-EL:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK-EL:   ll      ${{[0-9]+}}, 0($[[R0]])
 ; CHECK-EL:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EL:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
 
 ; CHECK-EB-LABEL:   AtomicSwap32:
 ; CHECK-EB:   lw      $[[R0:[0-9]+]], %got(x)
 ; CHECK-EB:   $[[BB0:[A-Z_0-9]+]]:
 ; CHECK-EB:   ll      ${{[0-9]+}}, 0($[[R0]])
 ; CHECK-EB:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EB:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
 }
 
 define i32 @AtomicCmpSwap32(i32 %oldval, i32 %newval) nounwind {
@@ -86,7 +86,7 @@ entry:
 ; CHECK-EL:   ll      $2, 0($[[R0]])
 ; CHECK-EL:   bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
 ; CHECK-EL:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EL:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R2]], $[[BB0]]
 ; CHECK-EL:   $[[BB1]]:
 
 ; CHECK-EB-LABEL:   AtomicCmpSwap32:
@@ -95,7 +95,7 @@ entry:
 ; CHECK-EB:   ll      $2, 0($[[R0]])
 ; CHECK-EB:   bne     $2, $4, $[[BB1:[A-Z_0-9]+]]
 ; CHECK-EB:   sc      $[[R2:[0-9]+]], 0($[[R0]])
-; CHECK-EB:   beq     $[[R2]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R2]], $[[BB0]]
 ; CHECK-EB:   $[[BB1]]:
 }
 
@@ -126,7 +126,7 @@ entry:
 ; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
 ; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
 ; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
@@ -152,7 +152,7 @@ entry:
 ; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
 ; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
 ; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
@@ -183,7 +183,7 @@ entry:
 ; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
 ; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
 ; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
@@ -209,7 +209,7 @@ entry:
 ; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
 ; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
 ; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
@@ -241,7 +241,7 @@ entry:
 ; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
 ; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
 ; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
@@ -268,7 +268,7 @@ entry:
 ; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
 ; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R12]]
 ; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
@@ -298,7 +298,7 @@ entry:
 ; CHECK-EL:   and     $[[R13:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EL:   or      $[[R14:[0-9]+]], $[[R13]], $[[R18]]
 ; CHECK-EL:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EL:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EL:   and     $[[R15:[0-9]+]], $[[R10]], $[[R6]]
 ; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R4]]
@@ -323,7 +323,7 @@ entry:
 ; CHECK-EB:   and     $[[R13:[0-9]+]], $[[R10]], $[[R8]]
 ; CHECK-EB:   or      $[[R14:[0-9]+]], $[[R13]], $[[R18]]
 ; CHECK-EB:   sc      $[[R14]], 0($[[R2]])
-; CHECK-EB:   beq     $[[R14]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R14]], $[[BB0]]
 
 ; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R10]], $[[R7]]
 ; CHECK-EB:   srlv    $[[R16:[0-9]+]], $[[R15]], $[[R5]]
@@ -358,7 +358,7 @@ entry:
 ; CHECK-EL:   and     $[[R14:[0-9]+]], $[[R12]], $[[R7]]
 ; CHECK-EL:   or      $[[R15:[0-9]+]], $[[R14]], $[[R11]]
 ; CHECK-EL:   sc      $[[R15]], 0($[[R2]])
-; CHECK-EL:   beq     $[[R15]], $zero, $[[BB0]]
+; CHECK-EL:   beqz    $[[R15]], $[[BB0]]
 
 ; CHECK-EL:   $[[BB1]]:
 ; CHECK-EL:   srlv    $[[R16:[0-9]+]], $[[R13]], $[[R4]]
@@ -388,7 +388,7 @@ entry:
 ; CHECK-EB:   and     $[[R15:[0-9]+]], $[[R13]], $[[R8]]
 ; CHECK-EB:   or      $[[R16:[0-9]+]], $[[R15]], $[[R12]]
 ; CHECK-EB:   sc      $[[R16]], 0($[[R2]])
-; CHECK-EB:   beq     $[[R16]], $zero, $[[BB0]]
+; CHECK-EB:   beqz    $[[R16]], $[[BB0]]
 
 ; CHECK-EB:   $[[BB1]]:
 ; CHECK-EB:   srlv    $[[R17:[0-9]+]], $[[R14]], $[[R5]]

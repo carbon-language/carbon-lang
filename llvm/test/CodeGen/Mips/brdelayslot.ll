@@ -133,7 +133,7 @@ declare void @foo11()
 ; SUCCBB-LABEL:      succbbs_loop1:
 ; SUCCBB:      blez $5, $BB
 ; SUCCBB-NEXT: addiu
-; SUCCBB:      bne ${{[0-9]+}}, $zero, $BB
+; SUCCBB:      bnez ${{[0-9]+}}, $BB
 ; SUCCBB-NEXT: addiu
 
 define i32 @succbbs_loop1(i32* nocapture %a, i32 %n) {
@@ -159,7 +159,7 @@ for.end:                                          ; preds = %for.body, %entry
 ; Check that the first branch has its slot filled.
 ;
 ; SUCCBB-LABEL:      succbbs_br1:
-; SUCCBB:      beq ${{[0-9]+}}, $zero, $BB
+; SUCCBB:      beqz ${{[0-9]+}}, $BB
 ; SUCCBB-NEXT: lw $25, %call16(foo100)
 
 define void @succbbs_br1(i32 %a) {

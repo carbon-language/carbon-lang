@@ -97,6 +97,12 @@ private:
   void printMemOperand(const MCInst *MI, int opNum, raw_ostream &O);
   void printMemOperandEA(const MCInst *MI, int opNum, raw_ostream &O);
   void printFCCOperand(const MCInst *MI, int opNum, raw_ostream &O);
+
+  bool printAlias(const char *Str, const MCInst &MI, unsigned OpNo,
+                  raw_ostream &OS);
+  bool printAlias(const char *Str, const MCInst &MI, unsigned OpNo0,
+                  unsigned OpNo1, raw_ostream &OS);
+  bool printAlias(const MCInst &MI, raw_ostream &OS);
 };
 } // end namespace llvm
 

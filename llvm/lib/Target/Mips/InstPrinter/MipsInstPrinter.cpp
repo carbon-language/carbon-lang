@@ -26,6 +26,12 @@ using namespace llvm;
 #define PRINT_ALIAS_INSTR
 #include "MipsGenAsmWriter.inc"
 
+template<unsigned R>
+static bool isReg(const MCInst &MI, unsigned OpNo) {
+  assert(MI.getOperand(OpNo).isReg() && "Register operand expected.");
+  return MI.getOperand(OpNo).getReg() == R;
+}
+
 const char* Mips::MipsFCCToString(Mips::CondCode CC) {
   switch (CC) {
   case FCOND_F:
@@ -80,7 +86,7 @@ void MipsInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
   }
 
   // Try to print any aliases first.
-  if (!printAliasInstr(MI, O))
+  if (!printAliasInstr(MI, O) && !printAlias(*MI, O))
     printInstruction(MI, O);
   printAnnotation(O, Annot);
 
@@ -208,4 +214,48 @@ void MipsInstPrinter::
 printFCCOperand(const MCInst *MI, int opNum, raw_ostream &O) {
   const MCOperand& MO = MI->getOperand(opNum);
   O << MipsFCCToString((Mips::CondCode)MO.getImm());
+}
+
+bool MipsInstPrinter::printAlias(const char *Str, const MCInst &MI,
+                                 unsigned OpNo, raw_ostream &OS) {
+  OS << "\t" << Str << "\t";
+  printOperand(&MI, OpNo, OS);
+  return true;
+}
+
+bool MipsInstPrinter::printAlias(const char *Str, const MCInst &MI,
+                                 unsigned OpNo0, unsigned OpNo1,
+                                 raw_ostream &OS) {
+  printAlias(Str, MI, OpNo0, OS);
+  OS << ", ";
+  printOperand(&MI, OpNo1, OS);
+  return true;
+}
+
+bool MipsInstPrinter::printAlias(const MCInst &MI, raw_ostream &OS) {
+  switch (MI.getOpcode()) {
+  case Mips::BEQ:
+    if (isReg<Mips::ZERO>(MI, 1) && printAlias("beqz", MI, 0, 2, OS))
+      return true;
+    break;
+  case Mips::BEQ64:
+    if (isReg<Mips::ZERO_64>(MI, 1) && printAlias("beqz", MI, 0, 2, OS))
+      return true;
+    break;
+  case Mips::BNE:
+    if (isReg<Mips::ZERO>(MI, 1) && printAlias("bnez", MI, 0, 2, OS))
+      return true;
+    break;
+  case Mips::BNE64:
+    if (isReg<Mips::ZERO_64>(MI, 1) && printAlias("bnez", MI, 0, 2, OS))
+      return true;
+    break;
+  case Mips::OR:
+    if (isReg<Mips::ZERO>(MI, 2) && printAlias("move", MI, 0, 1, OS))
+      return true;
+    break;
+  default: return false;
+  }
+
+  return false;
 }

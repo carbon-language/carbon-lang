@@ -24,7 +24,7 @@ entry:
 
 ; CHECK-LABEL: slti_beq0:
 ; CHECK: slti $[[R0:[0-9]+]], $4, -32768
-; CHECK: beq $[[R0]], $zero
+; CHECK: beqz $[[R0]]
 
 define void @slti_beq0(i32 %a) {
 entry:
@@ -57,7 +57,7 @@ if.end:
 
 ; CHECK-LABEL: slti_beq2:
 ; CHECK: slti $[[R0:[0-9]+]], $4, 32767
-; CHECK: beq $[[R0]], $zero
+; CHECK: beqz $[[R0]]
 
 define void @slti_beq2(i32 %a) {
 entry:
@@ -90,7 +90,7 @@ if.end:
 
 ; CHECK-LABEL: sltiu_beq0:
 ; CHECK: sltiu $[[R0:[0-9]+]], $4, 32767
-; CHECK: beq $[[R0]], $zero
+; CHECK: beqz $[[R0]]
 
 define void @sltiu_beq0(i32 %a) {
 entry:
@@ -123,7 +123,7 @@ if.end:
 
 ; CHECK-LABEL: sltiu_beq2:
 ; CHECK: sltiu $[[R0:[0-9]+]], $4, -32768
-; CHECK: beq $[[R0]], $zero
+; CHECK: beqz $[[R0]]
 
 define void @sltiu_beq2(i32 %a) {
 entry:
