@@ -48,7 +48,7 @@ class TestingConfig:
                                    test_source_root = None,
                                    excludes = [],
                                    available_features = available_features,
-                                   pipefail = False)
+                                   pipefail = True)
 
         if os.path.exists(path):
             # FIXME: Improve detection and error reporting of errors in the
