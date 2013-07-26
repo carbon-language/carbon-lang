@@ -1256,18 +1256,18 @@ SBFrame::FindRegister (const char *name)
             else
             {
                 if (log)
-                    log->Printf ("SBFrame::GetRegisterByName () => error: could not reconstruct frame object for this SBFrame.");
+                    log->Printf ("SBFrame::FindRegister () => error: could not reconstruct frame object for this SBFrame.");
             }
         }
         else
         {
             if (log)
-                log->Printf ("SBFrame::GetRegisterByName () => error: process is running");
+                log->Printf ("SBFrame::FindRegister () => error: process is running");
         }            
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::GetRegisterByName () => SBValue(%p)", frame, value_sp.get());
+        log->Printf ("SBFrame(%p)::FindRegister () => SBValue(%p)", frame, value_sp.get());
 
     return result;
 }
