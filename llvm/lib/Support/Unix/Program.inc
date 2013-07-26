@@ -186,7 +186,7 @@ static bool Execute(void **Data, StringRef Program, const char **args,
     posix_spawn_file_actions_t *FileActions = 0;
 
     // If we call posix_spawn_file_actions_addopen we have to make sure the
-    // c strings we pass to it stay alive until the call to posix_spaw,
+    // c strings we pass to it stay alive until the call to posix_spawn,
     // so we copy any StringRefs into this variable.
     std::string RedirectsStorage[3];
 
