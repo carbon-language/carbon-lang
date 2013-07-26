@@ -1187,6 +1187,7 @@ ABISysV_x86_64::RegisterIsVolatile (const RegisterInfo *reg_info)
 // "System V Application Binary Interface"
 // "AMD64 Architecture Processor Supplement" 
 // (or "x86-64(tm) Architecture Processor Supplement" in earlier revisions)
+// (this doc is also commonly referred to as the x86-64/AMD64 psABI)
 // Edited by Michael Matz, Jan Hubicka, Andreas Jaeger, and Mark Mitchell
 // current version is 0.99.6 released 2012-07-02 at http://refspecs.linuxfoundation.org/elf/x86-64-abi-0.99.pdf
 

@@ -211,6 +211,9 @@ public:
     lldb::SBValue
     FindVariable (const char *var_name, lldb::DynamicValueType use_dynamic);
 
+    lldb::SBValue
+    FindRegister (const char *name);
+
     %feature("docstring", "
     /// Get a lldb.SBValue for a variable path. 
     ///

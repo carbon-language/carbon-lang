@@ -159,6 +159,9 @@ public:
     lldb::SBValueList
     GetRegisters ();
 
+    lldb::SBValue
+    FindRegister (const char *name);
+
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
     lldb::SBValue
