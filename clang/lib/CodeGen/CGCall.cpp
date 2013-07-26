@@ -1061,15 +1061,15 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     }
 
     FuncAttrs.addAttribute("less-precise-fpmad",
-                           CodeGenOpts.LessPreciseFPMAD ? "true" : "false");
+                           llvm::toStringRef(CodeGenOpts.LessPreciseFPMAD));
     FuncAttrs.addAttribute("no-infs-fp-math",
-                           CodeGenOpts.NoInfsFPMath ? "true" : "false");
+                           llvm::toStringRef(CodeGenOpts.NoInfsFPMath));
     FuncAttrs.addAttribute("no-nans-fp-math",
-                           CodeGenOpts.NoNaNsFPMath ? "true" : "false");
+                           llvm::toStringRef(CodeGenOpts.NoNaNsFPMath));
     FuncAttrs.addAttribute("unsafe-fp-math",
-                           CodeGenOpts.UnsafeFPMath ? "true" : "false");
+                           llvm::toStringRef(CodeGenOpts.UnsafeFPMath));
     FuncAttrs.addAttribute("use-soft-float",
-                           CodeGenOpts.SoftFloat ? "true" : "false");
+                           llvm::toStringRef(CodeGenOpts.SoftFloat));
     FuncAttrs.addAttribute("stack-protector-buffer-size",
                            llvm::utostr(CodeGenOpts.SSPBufferSize));
 
@@ -1083,7 +1083,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     }
 
     FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf",
-                           NoFramePointerElimNonLeaf ? "true" : "false");
+                           llvm::toStringRef(NoFramePointerElimNonLeaf));
   }
 
   QualType RetTy = FI.getReturnType();
