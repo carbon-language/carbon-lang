@@ -736,6 +736,10 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     case llvm::Triple::ppc64:
       llvm::outs() << "ppc64;@m64" << "\n";
       break;
+
+    case llvm::Triple::ppc64le:
+      llvm::outs() << "ppc64le;@m64" << "\n";
+      break;
     }
     return false;
   }
@@ -757,6 +761,10 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
 
     case llvm::Triple::ppc64:
       llvm::outs() << "ppc64" << "\n";
+      break;
+
+    case llvm::Triple::ppc64le:
+      llvm::outs() << "ppc64le" << "\n";
       break;
     }
     return false;

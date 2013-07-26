@@ -550,6 +550,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
       return true;
     return false;
 
+  case llvm::Triple::ppc64le:
   case llvm::Triple::systemz:
     return false;
   }
@@ -1109,6 +1110,7 @@ static std::string getPPCTargetCPU(const ArgList &Args) {
       .Case("pwr7", "pwr7")
       .Case("powerpc", "ppc")
       .Case("powerpc64", "ppc64")
+      .Case("powerpc64le", "ppc64le")
       .Default("");
   }
 
@@ -1126,6 +1128,8 @@ void Clang::AddPPCTargetArgs(const ArgList &Args,
   if (TargetCPUName.empty() && !Triple.isOSDarwin()) {
     if (Triple.getArch() == llvm::Triple::ppc64)
       TargetCPUName = "ppc64";
+    else if (Triple.getArch() == llvm::Triple::ppc64le)
+      TargetCPUName = "ppc64le";
     else
       TargetCPUName = "ppc";
   }
@@ -2470,6 +2474,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
     AddPPCTargetArgs(Args, CmdArgs);
     break;
 
@@ -2913,9 +2918,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Report an error for -faltivec on anything other than PowerPC.
   if (const Arg *A = Args.getLastArg(options::OPT_faltivec))
     if (!(getToolChain().getArch() == llvm::Triple::ppc ||
-          getToolChain().getArch() == llvm::Triple::ppc64))
+          getToolChain().getArch() == llvm::Triple::ppc64 ||
+          getToolChain().getArch() == llvm::Triple::ppc64le))
       D.Diag(diag::err_drv_argument_only_allowed_with)
-        << A->getAsString(Args) << "ppc/ppc64";
+        << A->getAsString(Args) << "ppc/ppc64/ppc64le";
 
   if (getToolChain().SupportsProfiling())
     Args.AddLastArg(CmdArgs, options::OPT_pg);
@@ -3949,6 +3955,8 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("ppc");
     else if (Arch == llvm::Triple::ppc64)
       CmdArgs.push_back("ppc64");
+    else if (Arch == llvm::Triple::ppc64le)
+      CmdArgs.push_back("ppc64le");
     else
       CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName()));
   }
@@ -3960,7 +3968,8 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
   // here.
   if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc)
     CmdArgs.push_back("-m32");
-  else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64)
+  else if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64 ||
+           Arch == llvm::Triple::ppc64le)
     CmdArgs.push_back("-m64");
 
   if (Output.isFilename()) {
@@ -5912,6 +5921,10 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-a64");
     CmdArgs.push_back("-mppc64");
     CmdArgs.push_back("-many");
+  } else if (getToolChain().getArch() == llvm::Triple::ppc64le) {
+    CmdArgs.push_back("-a64");
+    CmdArgs.push_back("-mppc64le");
+    CmdArgs.push_back("-many");
   } else if (getToolChain().getArch() == llvm::Triple::arm) {
     StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
@@ -6057,6 +6070,7 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
   } else if (ToolChain.getArch() == llvm::Triple::ppc)
     return "/lib/ld.so.1";
   else if (ToolChain.getArch() == llvm::Triple::ppc64 ||
+           ToolChain.getArch() == llvm::Triple::ppc64le ||
            ToolChain.getArch() == llvm::Triple::systemz)
     return "/lib64/ld64.so.1";
   else

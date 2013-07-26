@@ -5416,6 +5416,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
       return *(TheTargetCodeGenInfo = new PPC64_SVR4_TargetCodeGenInfo(Types));
     else
       return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
+  case llvm::Triple::ppc64le:
+    assert(Triple.isOSBinFormatELF() && "PPC64 LE non-ELF not supported!");
+    return *(TheTargetCodeGenInfo = new PPC64_SVR4_TargetCodeGenInfo(Types));
 
   case llvm::Triple::nvptx:
   case llvm::Triple::nvptx64:

@@ -752,7 +752,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     else if (Name == "ppc970")
       DAL->AddJoinedArg(0, MCpu, "970");
 
-    else if (Name == "ppc64")
+    else if (Name == "ppc64" || Name == "ppc64le")
       DAL->AddFlagArg(0, Opts.getOption(options::OPT_m64));
 
     else if (Name == "i386")
@@ -1104,6 +1104,11 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
                                               "powerpc64-unknown-linux-gnu",
                                               "powerpc64-suse-linux",
                                               "ppc64-redhat-linux" };
+  static const char *const PPC64LELibDirs[] = { "/lib64", "/lib" };
+  static const char *const PPC64LETriples[] = { "powerpc64le-linux-gnu",
+                                                "powerpc64le-unknown-linux-gnu",
+                                                "powerpc64le-suse-linux",
+                                                "ppc64le-redhat-linux" };
 
   static const char *const SystemZLibDirs[] = { "/lib64", "/lib" };
   static const char *const SystemZTriples[] = {
@@ -1213,6 +1218,12 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
                          PPCLibDirs + llvm::array_lengthof(PPCLibDirs));
     BiarchTripleAliases.append(PPCTriples,
                                PPCTriples + llvm::array_lengthof(PPCTriples));
+    break;
+  case llvm::Triple::ppc64le:
+    LibDirs.append(PPC64LELibDirs,
+                   PPC64LELibDirs + llvm::array_lengthof(PPC64LELibDirs));
+    TripleAliases.append(PPC64LETriples,
+                         PPC64LETriples + llvm::array_lengthof(PPC64LETriples));
     break;
   case llvm::Triple::systemz:
     LibDirs.append(SystemZLibDirs,
@@ -2124,6 +2135,9 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
   case llvm::Triple::ppc64:
     if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64-linux-gnu"))
       return "powerpc64-linux-gnu";
+  case llvm::Triple::ppc64le:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64le-linux-gnu"))
+      return "powerpc64le-linux-gnu";
     return TargetTriple.str();
   }
 }

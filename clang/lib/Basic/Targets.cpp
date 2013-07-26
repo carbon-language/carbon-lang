@@ -268,6 +268,7 @@ public:
     case llvm::Triple::mipsel:
     case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
+    case llvm::Triple::ppc64le:
       this->MCountName = "_mcount";
       break;
     case llvm::Triple::arm:
@@ -631,6 +632,7 @@ class PPCTargetInfo : public TargetInfo {
   std::string CPU;
 public:
   PPCTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    BigEndian = (Triple.getArch() != llvm::Triple::ppc64le);
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::PPCDoubleDouble;
   }
@@ -702,6 +704,8 @@ public:
       .Case("ppc", true)
       .Case("powerpc64", true)
       .Case("ppc64", true)
+      .Case("powerpc64le", true)
+      .Case("ppc64le", true)
       .Default(false);
 
     if (CPUKnown)
@@ -867,10 +871,15 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   }
 
   // Target properties.
-  if (getTriple().getOS() != llvm::Triple::NetBSD &&
-      getTriple().getOS() != llvm::Triple::OpenBSD)
-    Builder.defineMacro("_BIG_ENDIAN");
-  Builder.defineMacro("__BIG_ENDIAN__");
+  if (getTriple().getArch() == llvm::Triple::ppc64le) {
+    Builder.defineMacro("_LITTLE_ENDIAN");
+    Builder.defineMacro("__LITTLE_ENDIAN__");
+  } else {
+    if (getTriple().getOS() != llvm::Triple::NetBSD &&
+        getTriple().getOS() != llvm::Triple::OpenBSD)
+      Builder.defineMacro("_BIG_ENDIAN");
+    Builder.defineMacro("__BIG_ENDIAN__");
+  }
 
   // Subtarget options.
   Builder.defineMacro("__NATURAL_ALIGNMENT__");
@@ -1006,6 +1015,7 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Case("pwr6", true)
     .Case("pwr7", true)
     .Case("ppc64", true)
+    .Case("ppc64le", true)
     .Default(false);
 
   Features["qpx"] = (CPU == "a2q");
@@ -1167,6 +1177,8 @@ public:
 };
 } // end anonymous namespace.
 
+// Note: ABI differences may eventually require us to have a separate
+// TargetInfo for little endian.
 namespace {
 class PPC64TargetInfo : public PPCTargetInfo {
 public:
@@ -2967,6 +2979,7 @@ public:
     case llvm::Triple::mipsel:
     case llvm::Triple::ppc:
     case llvm::Triple::ppc64:
+    case llvm::Triple::ppc64le:
       // this->MCountName = "_mcount";
       break;
     case llvm::Triple::arm:
@@ -5232,6 +5245,14 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new FreeBSDTargetInfo<PPC64TargetInfo>(Triple);
     case llvm::Triple::NetBSD:
       return new NetBSDTargetInfo<PPC64TargetInfo>(Triple);
+    default:
+      return new PPC64TargetInfo(Triple);
+    }
+
+  case llvm::Triple::ppc64le:
+    switch (os) {
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<PPC64TargetInfo>(Triple);
     default:
       return new PPC64TargetInfo(Triple);
     }

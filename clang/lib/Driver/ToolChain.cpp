@@ -52,6 +52,8 @@ std::string ToolChain::getDefaultUniversalArchName() const {
     return "ppc";
   case llvm::Triple::ppc64:
     return "ppc64";
+  case llvm::Triple::ppc64le:
+    return "ppc64le";
   default:
     return Triple.getArchName();
   }
