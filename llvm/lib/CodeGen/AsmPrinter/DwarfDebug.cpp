@@ -36,6 +36,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/MD5.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/ValueHandle.h"
@@ -59,6 +60,11 @@ static cl::opt<bool>
 GenerateDwarfPubNamesSection("generate-dwarf-pubnames", cl::Hidden,
                              cl::init(false),
                              cl::desc("Generate DWARF pubnames section"));
+
+static cl::opt<bool>
+GenerateODRHash("generate-odr-hash", cl::Hidden,
+                cl::desc("Add an ODR hash to external type DIEs."),
+                cl::init(false));
 
 namespace {
 enum DefaultOnOff {
@@ -956,6 +962,135 @@ void DwarfDebug::collectDeadVariables() {
   DeleteContainerSeconds(DeadFnScopeMap);
 }
 
+// Type Signature computation code.
+typedef ArrayRef<uint8_t> HashValue;
+
+/// \brief Grabs the string in whichever attribute is passed in and returns
+/// a reference to it.
+static StringRef getDIEStringAttr(DIE *Die, unsigned Attr) {
+  const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
+  const DIEAbbrev &Abbrevs = Die->getAbbrev();
+
+  // Iterate through all the attributes until we find the one we're
+  // looking for, if we can't find it return an empty string.
+  for (size_t i = 0; i < Values.size(); ++i) {
+    if (Abbrevs.getData()[i].getAttribute() == Attr) {
+      DIEValue *V = Values[i];
+      assert(isa<DIEString>(V) && "String requested. Not a string.");
+      DIEString *S = cast<DIEString>(V);
+      return S->getString();
+    }
+  }
+  return StringRef("");
+}
+
+/// \brief Adds the string in \p Str to the hash in \p Hash. This also hashes
+/// a trailing NULL with the string.
+static void addStringToHash(MD5 &Hash, StringRef Str) {
+  DEBUG(dbgs() << "Adding string " << Str << " to hash.\n");
+  HashValue SVal((const uint8_t *)Str.data(), Str.size());
+  const uint8_t NB = '\0';
+  HashValue NBVal((const uint8_t *)&NB, 1);
+  Hash.update(SVal);
+  Hash.update(NBVal);
+}
+
+/// \brief Adds the character string in \p Str to the hash in \p Hash. This does
+/// not hash a trailing NULL on the character.
+static void addLetterToHash(MD5 &Hash, StringRef Str) {
+  DEBUG(dbgs() << "Adding letter " << Str << " to hash.\n");
+  assert(Str.size() == 1 && "Trying to add a too large letter?");
+  HashValue SVal((const uint8_t *)Str.data(), Str.size());
+  Hash.update(SVal);
+}
+
+// FIXME: These are copied and only slightly modified out of LEB128.h.
+
+/// \brief Adds the unsigned in \p N to the hash in \p Hash. This also encodes
+/// the unsigned as a ULEB128.
+static void addULEB128ToHash(MD5 &Hash, uint64_t Value) {
+  DEBUG(dbgs() << "Adding ULEB128 " << Value << " to hash.\n");
+  do {
+    uint8_t Byte = Value & 0x7f;
+    Value >>= 7;
+    if (Value != 0)
+      Byte |= 0x80; // Mark this byte to show that more bytes will follow.
+    Hash.update(Byte);
+  } while (Value != 0);
+}
+
+/// \brief Including \p Parent adds the context of Parent to \p Hash.
+static void addParentContextToHash(MD5 &Hash, DIE *Parent) {
+  unsigned Tag = Parent->getTag();
+
+  DEBUG(dbgs() << "Adding parent context to hash...\n");
+  
+  // For each surrounding type or namespace...
+  if (Tag != dwarf::DW_TAG_namespace && Tag != dwarf::DW_TAG_class_type &&
+      Tag != dwarf::DW_TAG_structure_type)
+    return;
+
+  // ... beginning with the outermost such construct...
+  if (Parent->getParent() != NULL)
+    addParentContextToHash(Hash, Parent->getParent());
+
+  // Append the letter "C" to the sequence.
+  addLetterToHash(Hash, "C");
+
+  // Followed by the DWARF tag of the construct.
+  addULEB128ToHash(Hash, Parent->getTag());
+
+  // Then the name, taken from the DW_AT_name attribute.
+  StringRef Name = getDIEStringAttr(Parent, dwarf::DW_AT_name);
+  if (!Name.empty())
+    addStringToHash(Hash, Name);
+}
+
+/// This is based on the type signature computation given in section 7.27 of the
+/// DWARF4 standard. It is the md5 hash of a flattened description of the DIE.
+static void addDIEODRSignature(MD5 &Hash, CompileUnit *CU, DIE *Die) {
+
+  // Add the contexts to the hash.
+  DIE *Parent = Die->getParent();
+  if (Parent)
+    addParentContextToHash(Hash, Parent);
+
+  // Add the current DIE information.
+
+  // Add the DWARF tag of the DIE.
+  addULEB128ToHash(Hash, Die->getTag());
+
+  // Add the name of the type to the hash.
+  addStringToHash(Hash, getDIEStringAttr(Die, dwarf::DW_AT_name));
+
+  // Now get the result.
+  MD5::MD5Result Result;
+  Hash.final(Result);
+
+  // ... take the least significant 8 bytes and store those as the attribute.
+  uint64_t Signature;
+  memcpy(&Signature, &Result[8], 8);
+
+  // FIXME: This should be added onto the type unit, not the type, but this
+  // works as an intermediate stage.
+  CU->addUInt(Die, dwarf::DW_AT_GNU_odr_signature, dwarf::DW_FORM_data8,
+              Signature);
+}
+
+/// Return true if the current DIE is contained within an anonymous namespace.
+static bool isContainedInAnonNamespace(DIE *Die) {
+  DIE *Parent = Die->getParent();
+
+  while (Parent) {
+    if (Die->getTag() == dwarf::DW_TAG_namespace &&
+        getDIEStringAttr(Die, dwarf::DW_AT_name) == "")
+      return true;
+    Parent = Parent->getParent();
+  }
+
+  return false;
+}
+
 void DwarfDebug::finalizeModuleInfo() {
   // Collect info for variables that were optimized out.
   collectDeadVariables();
@@ -969,6 +1104,20 @@ void DwarfDebug::finalizeModuleInfo() {
          CUE = CUMap.end(); CUI != CUE; ++CUI) {
     CompileUnit *TheCU = CUI->second;
     TheCU->constructContainingTypeDIEs();
+  }
+
+  // For types that we'd like to move to type units or ODR check go ahead
+  // and either move the types out or add the ODR attribute now.
+  // FIXME: Do type splitting.
+  for (unsigned i = 0, e = TypeUnits.size(); i != e; ++i) {
+    MD5 Hash;
+    DIE *Die = TypeUnits[i];
+    // If we're in C++ and we want to generate the hash then go ahead and do
+    // that now.
+    if (GenerateODRHash &&
+        CUMap.begin()->second->getLanguage() == dwarf::DW_LANG_C_plus_plus &&
+        !isContainedInAnonNamespace(Die))
+      addDIEODRSignature(Hash, CUMap.begin()->second, Die);
   }
 
    // Compute DIE offsets and sizes.

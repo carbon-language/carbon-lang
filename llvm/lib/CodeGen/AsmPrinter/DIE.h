@@ -346,6 +346,36 @@ namespace llvm {
   };
 
   //===--------------------------------------------------------------------===//
+  /// DIEString - A container for string values.
+  ///
+  class DIEString : public DIEValue {
+    const DIEValue *Access;
+    const StringRef Str;
+
+  public:
+    DIEString(const DIEValue *Acc, const StringRef S)
+        : DIEValue(isString), Access(Acc), Str(S) {}
+
+    /// getString - Grab the string out of the object.
+    StringRef getString() const { return Str; }
+
+    /// EmitValue - Emit delta value.
+    ///
+    virtual void EmitValue(AsmPrinter *AP, unsigned Form) const;
+
+    /// SizeOf - Determine size of delta value in bytes.
+    ///
+    virtual unsigned SizeOf(AsmPrinter *AP, unsigned Form) const;
+
+    // Implement isa/cast/dyncast.
+    static bool classof(const DIEValue *D) { return D->getType() == isString; }
+
+  #ifndef NDEBUG
+    virtual void print(raw_ostream &O) const;
+  #endif
+  };
+
+  //===--------------------------------------------------------------------===//
   /// DIEEntry - A pointer to another debug information entry.  An instance of
   /// this class can also be used as a proxy for a debug information entry not
   /// yet defined (ie. types.)

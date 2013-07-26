@@ -428,6 +428,9 @@ class DwarfDebug {
     ImportedEntityMap;
   ImportedEntityMap ScopesWithImportedEntities;
 
+  // Holder for types that are going to be extracted out into a type unit.
+  std::vector<DIE *> TypeUnits;
+
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
@@ -650,6 +653,10 @@ public:
 
   /// \brief Process end of an instruction.
   void endInstruction(const MachineInstr *MI);
+
+  /// \brief Add a DIE to the set of types that we're going to pull into
+  /// type units.
+  void addTypeUnitType(DIE *Die) { TypeUnits.push_back(Die); }
 
   /// \brief Look up the source id with the given directory and source file
   /// names. If none currently exists, create a new id and insert it in the

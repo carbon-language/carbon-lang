@@ -132,21 +132,24 @@ void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
 /// into another table which gets us the static offset into the string
 /// table.
 void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
+  DIEValue *Value;
+  unsigned Form;
   if (!DD->useSplitDwarf()) {
     MCSymbol *Symb = DU->getStringPoolEntry(String);
-    DIEValue *Value;
     if (Asm->needsRelocationsForDwarfStringPool())
       Value = new (DIEValueAllocator) DIELabel(Symb);
     else {
       MCSymbol *StringPool = DU->getStringPoolSym();
       Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
     }
-    Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);
+    Form = dwarf::DW_FORM_strp;
   } else {
     unsigned idx = DU->getStringPoolIndex(String);
-    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
-    Die->addValue(Attribute, dwarf::DW_FORM_GNU_str_index, Value);
+    Value = new (DIEValueAllocator) DIEInteger(idx);
+    Form = dwarf::DW_FORM_GNU_str_index;
   }
+  DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
+  Die->addValue(Attribute, Form, Str);
 }
 
 /// addLocalString - Add a string attribute data and value. This is guaranteed
@@ -878,6 +881,39 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
     addSourceLine(&Buffer, DTy);
 }
 
+/// Return true if the type is appropriately scoped to be contained inside
+/// its own type unit.
+static bool isTypeUnitScoped(DIType Ty) {
+  DIScope Parent = Ty.getContext();
+  while (Parent) {
+    // Don't generate a hash for anything scoped inside a function.
+    if (Parent.isSubprogram())
+      return false;
+    Parent = Parent.getContext();
+  }
+  return true;
+}
+
+/// Return true if the type should be split out into a type unit.
+static bool shouldCreateTypeUnit(DICompositeType CTy) {
+  unsigned Tag = CTy.getTag();
+
+  switch (Tag) {
+  case dwarf::DW_TAG_structure_type:
+  case dwarf::DW_TAG_union_type:
+  case dwarf::DW_TAG_enumeration_type:
+  case dwarf::DW_TAG_class_type:
+    // If this is a class, structure, union, or enumeration type
+    // that is not a declaration, is a type definition, and not scoped
+    // inside a function then separate this out as a type unit.
+    if (CTy.isForwardDecl() || !isTypeUnitScoped(CTy))
+      return 0;
+    return 1;
+  default:
+    return 0;
+  }
+}
+
 /// constructTypeDIE - Construct type DIE from DICompositeType.
 void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   // Get core information.
@@ -1075,6 +1111,10 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addUInt(&Buffer, dwarf::DW_AT_APPLE_runtime_class,
               dwarf::DW_FORM_data1, RLang);
   }
+  // If this is a type applicable to a type unit it then add it to the
+  // list of types we'll compute a hash for later.
+  if (shouldCreateTypeUnit(CTy))
+    DD->addTypeUnitType(&Buffer);
 }
 
 /// getOrCreateTemplateTypeParameterDIE - Find existing DIE or create new DIE

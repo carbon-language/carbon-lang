@@ -24,6 +24,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/MD5.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -319,6 +320,29 @@ unsigned DIEDelta::SizeOf(AsmPrinter *AP, unsigned Form) const {
 #ifndef NDEBUG
 void DIEDelta::print(raw_ostream &O) const {
   O << "Del: " << LabelHi->getName() << "-" << LabelLo->getName();
+}
+#endif
+
+//===----------------------------------------------------------------------===//
+// DIEString Implementation
+//===----------------------------------------------------------------------===//
+
+/// EmitValue - Emit string value.
+///
+void DIEString::EmitValue(AsmPrinter *AP, unsigned Form) const {
+  Access->EmitValue(AP, Form);
+}
+
+/// SizeOf - Determine size of delta value in bytes.
+///
+unsigned DIEString::SizeOf(AsmPrinter *AP, unsigned Form) const {
+  return Access->SizeOf(AP, Form);
+}
+
+#ifndef NDEBUG
+void DIEString::print(raw_ostream &O) const {
+  O << "String: " << Str << "\tSymbol: ";
+  Access->print(O);
 }
 #endif
 
