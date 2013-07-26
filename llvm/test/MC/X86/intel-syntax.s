@@ -354,3 +354,225 @@ _main:
     cmovnge eax, ebx
 // CHECK: cmovgl %ebx, %eax
     cmovnle eax, ebx
+
+// CHECK: shldw	%cl, %bx, %dx
+// CHECK: shldw	%cl, %bx, %dx
+// CHECK: shldw	$1, %bx, %dx
+// CHECK: shldw	%cl, %bx, (%rax)
+// CHECK: shldw	%cl, %bx, (%rax)
+// CHECK: shrdw	%cl, %bx, %dx
+// CHECK: shrdw	%cl, %bx, %dx
+// CHECK: shrdw	$1, %bx, %dx
+// CHECK: shrdw	%cl, %bx, (%rax)
+// CHECK: shrdw	%cl, %bx, (%rax)
+
+shld  DX, BX
+shld  DX, BX, CL
+shld  DX, BX, 1
+shld  [RAX], BX
+shld  [RAX], BX, CL
+shrd  DX, BX
+shrd  DX, BX, CL
+shrd  DX, BX, 1
+shrd  [RAX], BX
+shrd  [RAX], BX, CL
+
+// CHECK: btl $1, (%eax)
+// CHECK: btsl $1, (%eax)
+// CHECK: btrl $1, (%eax)
+// CHECK: btcl $1, (%eax)
+    bt DWORD PTR [EAX], 1
+    bt DWORD PTR [EAX], 1
+    bts DWORD PTR [EAX], 1
+    btr DWORD PTR [EAX], 1
+    btc DWORD PTR [EAX], 1
+
+//CHECK: divb	%bl
+//CHECK: divw	%bx
+//CHECK: divl	%ecx
+//CHECK: divl	3735928559(%ebx,%ecx,8)
+//CHECK: divl	69
+//CHECK: divl	32493
+//CHECK: divl	3133065982
+//CHECK: divl	305419896
+//CHECK: idivb	%bl
+//CHECK: idivw	%bx
+//CHECK: idivl	%ecx
+//CHECK: idivl	3735928559(%ebx,%ecx,8)
+//CHECK: idivl	69
+//CHECK: idivl	32493
+//CHECK: idivl	3133065982
+//CHECK: idivl	305419896
+    div AL, BL
+    div AX, BX
+    div EAX, ECX
+    div EAX, [ECX*8+EBX+0xdeadbeef]
+    div EAX, [0x45]
+    div EAX, [0x7eed]
+    div EAX, [0xbabecafe]
+    div EAX, [0x12345678]
+    idiv AL, BL
+    idiv AX, BX
+    idiv EAX, ECX
+    idiv EAX, [ECX*8+EBX+0xdeadbeef]
+    idiv EAX, [0x45]
+    idiv EAX, [0x7eed]
+    idiv EAX, [0xbabecafe]
+    idiv EAX, [0x12345678]
+
+
+// CHECK: inb %dx, %al
+// CHECK: inw %dx, %ax
+// CHECK: inl %dx, %eax
+// CHECK: outb %al, %dx
+// CHECK: outw %ax, %dx
+// CHECK: outl %eax, %dx
+    inb DX
+    inw DX
+    inl DX
+    outb DX
+    outw DX
+    outl DX
+
+// CHECK: xchgq %rcx, %rax
+// CHECK: xchgq %rcx, %rax
+// CHECK: xchgl %ecx, %eax
+// CHECK: xchgl %ecx, %eax
+// CHECK: xchgw %cx, %ax
+// CHECK: xchgw %cx, %ax
+xchg RAX, RCX
+xchg RCX, RAX
+xchg EAX, ECX
+xchg ECX, EAX
+xchg AX, CX
+xchg CX, AX
+
+// CHECK: xchgq %rax, (%ecx)
+// CHECK: xchgq %rax, (%ecx)
+// CHECK: xchgl %eax, (%ecx)
+// CHECK: xchgl %eax, (%ecx)
+// CHECK: xchgw %ax, (%ecx)
+// CHECK: xchgw %ax, (%ecx)
+xchg RAX, [ECX]
+xchg [ECX], RAX
+xchg EAX, [ECX]
+xchg [ECX], EAX
+xchg AX, [ECX]
+xchg [ECX], AX
+
+// CHECK: testq (%ecx), %rax
+// CHECK: testq (%ecx), %rax
+// CHECK: testl (%ecx), %eax
+// CHECK: testl (%ecx), %eax
+// CHECK: testw (%ecx), %ax
+// CHECK: testw (%ecx), %ax
+// CHECK: testb (%ecx), %al
+// CHECK: testb (%ecx), %al
+test RAX, [ECX]
+test [ECX], RAX
+test EAX, [ECX]
+test [ECX], EAX
+test AX, [ECX]
+test [ECX], AX
+test AL, [ECX]
+test [ECX], AL
+
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+fnstsw
+fnstsw AX
+fnstsw EAX
+fnstsw AL
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fdivrp %st(1)
+// CHECK: fdivp %st(1)
+faddp ST(1), ST(0)
+fmulp ST(1), ST(0)
+fsubp ST(1), ST(0)
+fsubrp ST(1), ST(0)
+fdivp ST(1), ST(0)
+fdivrp ST(1), ST(0)
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fdivrp %st(1)
+// CHECK: fdivp %st(1)
+faddp ST(0), ST(1)
+fmulp ST(0), ST(1)
+fsubp ST(0), ST(1)
+fsubrp ST(0), ST(1)
+fdivp ST(0), ST(1)
+fdivrp ST(0), ST(1)
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fdivrp %st(1)
+// CHECK: fdivp %st(1)
+faddp ST(1)
+fmulp ST(1)
+fsubp ST(1)
+fsubrp ST(1)
+fdivp ST(1)
+fdivrp ST(1)
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fdivrp %st(1)
+// CHECK: fdivp %st(1)
+faddp
+fmulp
+fsubp
+fsubrp
+fdivp
+fdivrp
+
+// CHECK: fadd %st(1)
+// CHECK: fmul %st(1)
+// CHECK: fsub %st(1)
+// CHECK: fsubr %st(1)
+// CHECK: fdiv %st(1)
+// CHECK: fdivr %st(1)
+fadd ST(0), ST(1)
+fmul ST(0), ST(1)
+fsub ST(0), ST(1)
+fsubr ST(0), ST(1)
+fdiv ST(0), ST(1)
+fdivr ST(0), ST(1)
+
+// CHECK: fadd %st(0), %st(1)
+// CHECK: fmul %st(0), %st(1)
+// CHECK: fsubr %st(0), %st(1)
+// CHECK: fsub %st(0), %st(1)
+// CHECK: fdivr %st(0), %st(1)
+// CHECK: fdiv %st(0), %st(1)
+fadd ST(1), ST(0)
+fmul ST(1), ST(0)
+fsub ST(1), ST(0)
+fsubr ST(1), ST(0)
+fdiv ST(1), ST(0)
+fdivr ST(1), ST(0)
+
+// CHECK: fadd %st(1)
+// CHECK: fmul %st(1)
+// CHECK: fsub %st(1)
+// CHECK: fsubr %st(1)
+// CHECK: fdiv %st(1)
+// CHECK: fdivr %st(1)
+fadd ST(1)
+fmul ST(1)
+fsub ST(1)
+fsubr ST(1)
+fdiv ST(1)
+fdivr ST(1)

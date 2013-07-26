@@ -3948,7 +3948,7 @@
 // CHECK:  encoding: [0xd9,0xca]
         	fxch	%st(2)
 
-// CHECK: fcom
+// CHECK: fcom	%st(1)
 // CHECK:  encoding: [0xd8,0xd1]
         	fcom
 
@@ -3972,7 +3972,7 @@
 // CHECK:  encoding: [0xda,0x15,0x78,0x56,0x34,0x12]
         	ficoml	0x12345678
 
-// CHECK: fcomp
+// CHECK: fcomp	%st(1)
 // CHECK:  encoding: [0xd8,0xd9]
         	fcomp
 
@@ -19660,3 +19660,37 @@ blendvps %xmm0, %xmm2, %xmm1
 blendvps (%eax), %xmm1
 // CHECK: blendvps (%eax), %xmm1
 blendvps %xmm0, (%eax), %xmm1
+
+
+// CHECK: btl $4, (%eax)
+// CHECK: btw $4, (%eax)
+// CHECK: btl $4, (%eax)
+// CHECK: btq $4, (%eax)
+// CHECK: btsl $4, (%eax)
+// CHECK: btsw $4, (%eax)
+// CHECK: btsl $4, (%eax)
+// CHECK: btsq $4, (%eax)
+// CHECK: btrl $4, (%eax)
+// CHECK: btrw $4, (%eax)
+// CHECK: btrl $4, (%eax)
+// CHECK: btrq $4, (%eax)
+// CHECK: btcl $4, (%eax)
+// CHECK: btcw $4, (%eax)
+// CHECK: btcl $4, (%eax)
+// CHECK: btcq $4, (%eax)
+bt $4, (%eax)
+btw $4, (%eax)
+btl $4, (%eax)
+btq $4, (%eax)
+bts $4, (%eax)
+btsw $4, (%eax)
+btsl $4, (%eax)
+btsq $4, (%eax)
+btr $4, (%eax)
+btrw $4, (%eax)
+btrl $4, (%eax)
+btrq $4, (%eax)
+btc $4, (%eax)
+btcw $4, (%eax)
+btcl $4, (%eax)
+btcq $4, (%eax)

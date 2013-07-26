@@ -283,16 +283,16 @@ inl	(%dx), %eax
 
 // rdar://8431422
 
-// CHECK: fxch
-// CHECK: fucom
-// CHECK: fucomp
-// CHECK: faddp
+// CHECK: fxch %st(1)
+// CHECK: fucom %st(1)
+// CHECK: fucomp %st(1)
+// CHECK: faddp %st(1)
 // CHECK: faddp	%st(0)
-// CHECK: fsubp
-// CHECK: fsubrp
-// CHECK: fmulp
-// CHECK: fdivp
-// CHECK: fdivrp
+// CHECK: fsubp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fdivp %st(1)
+// CHECK: fdivrp %st(1)
 
 fxch
 fucom
@@ -305,9 +305,9 @@ fmulp
 fdivp
 fdivrp
 
-// CHECK: fcomi
+// CHECK: fcomi %st(1)
 // CHECK: fcomi	%st(2)
-// CHECK: fucomi
+// CHECK: fucomi %st(1)
 // CHECK: fucomi %st(2)
 // CHECK: fucomi %st(2)
 
@@ -317,10 +317,10 @@ fucomi
 fucomi	%st(2)
 fucomi	%st(2), %st
 
-// CHECK: fnstsw
-// CHECK: fnstsw
-// CHECK: fnstsw
-// CHECK: fnstsw
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
+// CHECK: fnstsw %ax
 
 fnstsw
 fnstsw %ax
@@ -990,6 +990,22 @@ mov %gs, (%rsi)  // CHECK: movl	%gs, (%rsi) # encoding: [0x8c,0x2e]
 
 
 // rdar://8431864
+//CHECK: divb	%bl
+//CHECK: divw	%bx
+//CHECK: divl	%ecx
+//CHECK: divl	3735928559(%ebx,%ecx,8)
+//CHECK: divl	69
+//CHECK: divl	32493
+//CHECK: divl	3133065982
+//CHECK: divl	305419896
+//CHECK: idivb	%bl
+//CHECK: idivw	%bx
+//CHECK: idivl	%ecx
+//CHECK: idivl	3735928559(%ebx,%ecx,8)
+//CHECK: idivl	69
+//CHECK: idivl	32493
+//CHECK: idivl	3133065982
+//CHECK: idivl	305419896
 	div	%bl,%al
 	div	%bx,%ax
 	div	%ecx,%eax
@@ -1268,3 +1284,94 @@ clac
 // CHECK: stac
 // CHECK: encoding: [0x0f,0x01,0xcb]
 stac
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fdivp %st(1)
+// CHECK: fdivrp %st(1)
+faddp %st(0), %st(1)
+fmulp %st(0), %st(1)
+fsubp %st(0), %st(1)
+fsubrp %st(0), %st(1)
+fdivp %st(0), %st(1)
+fdivrp %st(0), %st(1)
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fdivp %st(1)
+// CHECK: fdivrp %st(1)
+faddp %st(1), %st(0)
+fmulp %st(1), %st(0)
+fsubp %st(1), %st(0)
+fsubrp %st(1), %st(0)
+fdivp %st(1), %st(0)
+fdivrp %st(1), %st(0)
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fdivp %st(1)
+// CHECK: fdivrp %st(1)
+faddp %st(1)
+fmulp %st(1)
+fsubp %st(1)
+fsubrp %st(1)
+fdivp %st(1)
+fdivrp %st(1)
+
+// CHECK: faddp %st(1)
+// CHECK: fmulp %st(1)
+// CHECK: fsubp %st(1)
+// CHECK: fsubrp %st(1)
+// CHECK: fdivp %st(1)
+// CHECK: fdivrp %st(1)
+faddp
+fmulp
+fsubp
+fsubrp
+fdivp
+fdivrp
+
+// CHECK: fadd %st(1)
+// CHECK: fmul %st(1)
+// CHECK: fsub %st(1)
+// CHECK: fsubr %st(1)
+// CHECK: fdiv %st(1)
+// CHECK: fdivr %st(1)
+fadd %st(1), %st(0)
+fmul %st(1), %st(0)
+fsub %st(1), %st(0)
+fsubr %st(1), %st(0)
+fdiv %st(1), %st(0)
+fdivr %st(1), %st(0)
+
+// CHECK: fadd %st(0), %st(1)
+// CHECK: fmul %st(0), %st(1)
+// CHECK: fsub %st(0), %st(1)
+// CHECK: fsubr %st(0), %st(1)
+// CHECK: fdiv %st(0), %st(1)
+// CHECK: fdivr %st(0), %st(1)
+fadd %st(0), %st(1)
+fmul %st(0), %st(1)
+fsub %st(0), %st(1)
+fsubr %st(0), %st(1)
+fdiv %st(0), %st(1)
+fdivr %st(0), %st(1)
+
+// CHECK: fadd %st(1)
+// CHECK: fmul %st(1)
+// CHECK: fsub %st(1)
+// CHECK: fsubr %st(1)
+// CHECK: fdiv %st(1)
+// CHECK: fdivr %st(1)
+fadd %st(1)
+fmul %st(1)
+fsub %st(1)
+fsubr %st(1)
+fdiv %st(1)
+fdivr %st(1)
