@@ -71,7 +71,7 @@ static void EmitBranchToAt(uint64_t At, uint64_t To, bool isCall, bool is64Bit){
 extern "C" void PPC32CompilationCallback();
 extern "C" void PPC64CompilationCallback();
 
-#if defined(__powerpc64__) || defined(__ppc64__)
+#if (!defined(__ppc__) && !defined(__powerpc__)) || defined(__powerpc64__) || defined(__ppc64__)
 void PPC32CompilationCallback() {
   llvm_unreachable("This is not a 32bit PowerPC, you can't execute this!");
 }
@@ -356,8 +356,8 @@ TargetJITInfo::StubLayout PPCJITInfo::getStubLayout() {
   return Result;
 }
 
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(__powerpc__) || \
-defined(_POWER)) && defined(__APPLE__)
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+defined(__APPLE__)
 extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 #endif
 

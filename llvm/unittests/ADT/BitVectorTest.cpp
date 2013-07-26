@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // Some of these tests fail on PowerPC for unknown reasons.
-#if !defined(__ppc__) && !defined(__powerpc__)
+#ifndef __ppc__
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallBitVector.h"
