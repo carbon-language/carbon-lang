@@ -271,6 +271,18 @@ public:
   unsigned getPointerSizeInBits(unsigned AS = 0) const {
     return getPointerSize(AS) * 8;
   }
+
+  /// Layout pointer size, in bits, based on the type.  If this function is
+  /// called with a pointer type, then the type size of the pointer is returned.
+  /// If this function is called with a vector of pointers, then the type size
+  /// of the pointer is returned.  This should only be called with a pointer or
+  /// vector of pointers.
+  unsigned getPointerTypeSizeInBits(Type *) const;
+
+  unsigned getPointerTypeSize(Type *Ty) const {
+    return getPointerTypeSizeInBits(Ty) / 8;
+  }
+
   /// Size examples:
   ///
   /// Type        SizeInBits  StoreSizeInBits  AllocSizeInBits[*]

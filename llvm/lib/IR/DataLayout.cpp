@@ -507,6 +507,16 @@ std::string DataLayout::getStringRepresentation() const {
   return OS.str();
 }
 
+unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const {
+  assert(Ty->isPtrOrPtrVectorTy() &&
+         "This should only be called with a pointer or pointer vector type");
+
+  if (Ty->isPointerTy())
+    return getTypeSizeInBits(Ty);
+
+  Type *EleTy = cast<VectorType>(Ty)->getElementType();
+  return getTypeSizeInBits(EleTy);
+}
 
 /*!
   \param abi_or_pref Flag that determines which alignment is returned. true
