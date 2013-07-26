@@ -22,8 +22,9 @@ endif
 OPTIONAL_PARALLEL_DIRS := extra
 
 ifeq ($(BUILD_CLANG_ONLY),YES)
-  PARALLEL_DIRS := driver libclang c-index-test
-  OPTIONAL_DIRS :=
+  DIRS := libclang c-index-test
+  PARALLEL_DIRS := driver
+  OPTIONAL_PARALLEL_DIRS :=
 endif
 
 include $(CLANG_LEVEL)/Makefile
