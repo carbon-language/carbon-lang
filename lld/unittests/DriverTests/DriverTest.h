@@ -26,9 +26,9 @@ class ParserTest : public testing::Test {
 protected:
 
   virtual const TargetInfo *targetInfo() = 0;
-  
+
   std::string &errorMessage() { return  _errorMessage; }
-  
+
   // Convenience method for getting number of input files.
   int inputFileCount() {
     return targetInfo()->inputFiles().size();
