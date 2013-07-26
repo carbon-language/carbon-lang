@@ -281,12 +281,14 @@ private:
   /// will be set by the writer.
   void createDataDirectoryAtoms(Context &ctx) {
     auto *dir = new (_alloc) coff::COFFDataDirectoryAtom(
-        ctx.file, llvm::COFF::DataDirectoryIndex::IMPORT_TABLE);
+        ctx.file, llvm::COFF::DataDirectoryIndex::IMPORT_TABLE,
+        ctx.importDirectories.size() * ctx.importDirectories[0]->size());
     addDir32NBReloc(dir, ctx.importDirectories[0]);
     ctx.file.addAtom(*dir);
 
     auto *iat = new (_alloc) coff::COFFDataDirectoryAtom(
-        ctx.file, llvm::COFF::DataDirectoryIndex::IAT);
+        ctx.file, llvm::COFF::DataDirectoryIndex::IAT,
+        ctx.importAddressTables.size() * ctx.importAddressTables[0]->size());
     addDir32NBReloc(iat, ctx.importAddressTables[0]);
     ctx.file.addAtom(*iat);
   }
