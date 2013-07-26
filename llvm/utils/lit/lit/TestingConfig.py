@@ -92,6 +92,7 @@ class TestingConfig:
         self.test_source_root = test_source_root
         self.excludes = set(excludes)
         self.available_features = set(available_features)
+        self.pipefail = True
 
     def clone(self, path):
         # FIXME: Chain implementations?

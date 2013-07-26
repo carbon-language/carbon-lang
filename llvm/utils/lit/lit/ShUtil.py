@@ -166,8 +166,9 @@ class ShLexer:
 ###
  
 class ShParser:
-    def __init__(self, data, win32Escapes = False):
+    def __init__(self, data, win32Escapes = False, pipefail = False):
         self.data = data
+        self.pipefail = pipefail
         self.tokens = ShLexer(data, win32Escapes = win32Escapes).lex()
     
     def lex(self):
@@ -224,7 +225,7 @@ class ShParser:
         while self.look() == ('|',):
             self.lex()
             commands.append(self.parse_command())
-        return Pipeline(commands, negate)
+        return Pipeline(commands, negate, self.pipefail)
             
     def parse(self):
         lhs = self.parse_pipeline()

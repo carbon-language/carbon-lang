@@ -316,6 +316,10 @@ executed, two important global variables are predefined:
  *on_clone* function will generally modify), and (3) the test path to the new
  directory being scanned.
 
+ **pipefail** Normally a test using a shell pipe fails if any of the commands
+ on the pipe fail. If this is not desired, setting this variable to false
+ makes the test fail only if the last command in the pipe fails.
+
 TEST DISCOVERY
 ~~~~~~~~~~~~~~
 

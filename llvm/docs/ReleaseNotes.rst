@@ -41,6 +41,10 @@ Non-comprehensive list of changes in this release
    functionality, or simply have a lot to talk about), see the `NOTE` below
    for adding a new subsection.
 
+* The regression tests now fail if any command in a pipe fails. To disable it in
+  a directory, just add ``config.pipefail = False`` to its ``lit.local.cfg``.
+  See :doc:`Lit <CommandGuide/lit>` for the details.
+
 * Support for exception handling has been removed from the old JIT. Use MCJIT
   if you need EH support.
 

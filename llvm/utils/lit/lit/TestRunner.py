@@ -245,7 +245,8 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
     cmds = []
     for ln in commands:
         try:
-            cmds.append(ShUtil.ShParser(ln, litConfig.isWindows).parse())
+            cmds.append(ShUtil.ShParser(ln, litConfig.isWindows,
+                                        test.config.pipefail).parse())
         except:
             return (Test.FAIL, "shell parser error on: %r" % ln)
 
@@ -284,6 +285,8 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
     if isWin32CMDEXE:
         f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
     else:
+        if test.config.pipefail:
+            f.write('set -o pipefail;')
         f.write('{ ' + '; } &&\n{ '.join(commands) + '; }')
     f.write('\n')
     f.close()
