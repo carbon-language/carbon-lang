@@ -33,6 +33,24 @@
 /* Define to 1 if you have the `arc4random' function. */
 #undef HAVE_ARC4RANDOM
 
+/* Define to 1 if you have the `argz_append' function. */
+#undef HAVE_ARGZ_APPEND
+
+/* Define to 1 if you have the `argz_create_sep' function. */
+#undef HAVE_ARGZ_CREATE_SEP
+
+/* Define to 1 if you have the <argz.h> header file. */
+#undef HAVE_ARGZ_H
+
+/* Define to 1 if you have the `argz_insert' function. */
+#undef HAVE_ARGZ_INSERT
+
+/* Define to 1 if you have the `argz_next' function. */
+#undef HAVE_ARGZ_NEXT
+
+/* Define to 1 if you have the `argz_stringify' function. */
+#undef HAVE_ARGZ_STRINGIFY
+
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
 
@@ -160,9 +178,6 @@
 /* Define if the gv program is available */
 #undef HAVE_GV
 
-/* Define to 1 if you have the `index' function. */
-#undef HAVE_INDEX
-
 /* Define to 1 if the system has the type `int64_t'. */
 #undef HAVE_INT64_T
 
@@ -208,6 +223,9 @@
 /* Define if you can use -Wl,-export-dynamic. */
 #undef HAVE_LINK_EXPORT_DYNAMIC
 
+/* Define to 1 if you have the <link.h> header file. */
+#undef HAVE_LINK_H
+
 /* Define if you can use -Wl,-R. to pass -R. to the linker, in order to add
    the current directory to the dynamic linker search path. */
 #undef HAVE_LINK_R
@@ -241,6 +259,9 @@
 
 /* Define to 1 if you have the `malloc_zone_statistics' function. */
 #undef HAVE_MALLOC_ZONE_STATISTICS
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
 
 /* Define to 1 if you have the `mkdtemp' function. */
 #undef HAVE_MKDTEMP
@@ -309,9 +330,6 @@
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
 
-/* Define to 1 if you have the `rindex' function. */
-#undef HAVE_RINDEX
-
 /* Define to 1 if you have the `rintf' function. */
 #undef HAVE_RINTF
 
@@ -329,6 +347,9 @@
 
 /* Define to 1 if you have the `setjmp' function. */
 #undef HAVE_SETJMP
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#undef HAVE_SETJMP_H
 
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
@@ -348,6 +369,9 @@
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
 /* Set to 1 if the std::isinf function is found in <cmath> */
 #undef HAVE_STD_ISINF_IN_CMATH
 
@@ -359,6 +383,12 @@
 
 /* Define to 1 if you have the `strerror_r' function. */
 #undef HAVE_STRERROR_R
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
 
 /* Define to 1 if you have the `strtof' function. */
 #undef HAVE_STRTOF
@@ -397,6 +427,9 @@
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
 
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #undef HAVE_SYS_UIO_H
