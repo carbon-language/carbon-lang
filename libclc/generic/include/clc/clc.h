@@ -70,6 +70,9 @@
 #include <clc/integer/sub_sat.h>
 #include <clc/integer/upsample.h>
 
+/* 6.11.3 Integer Definitions */
+#include <clc/integer/definitions.h>
+
 /* 6.11.2 and 6.11.3 Shared Integer/Math Functions */
 #include <clc/shared/clamp.h>
 #include <clc/shared/max.h>
