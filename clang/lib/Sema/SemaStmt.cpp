@@ -2376,9 +2376,15 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         return StmtError();
       RetValExp = Result.take();
 
-      if (!CurContext->isDependentContext())
+      if (!CurContext->isDependentContext()) {
         FnRetType = RetValExp->getType();
-      else
+        // In C++11, we take the type of the expression after decay and
+        // lvalue-to-rvalue conversion, so a class type can be cv-qualified.
+        // In C++1y, we perform template argument deduction as if the return
+        // type were 'auto', so an implicit return type is never cv-qualified.
+        if (getLangOpts().CPlusPlus1y && FnRetType.hasQualifiers())
+          FnRetType = FnRetType.getUnqualifiedType();
+      } else
         FnRetType = CurCap->ReturnType = Context.DependentTy;
     } else {
       if (RetValExp) {

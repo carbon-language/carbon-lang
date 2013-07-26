@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -std=c++0x -Wno-unused-value -fsyntax-only -verify -fblocks %s
+// RUN: %clang_cc1 -std=c++11 -Wno-unused-value -fsyntax-only -verify -fblocks %s
+// RUN: %clang_cc1 -std=c++1y -Wno-unused-value -fsyntax-only -verify -fblocks %s
 
 namespace std { class type_info; };
 
@@ -250,4 +251,17 @@ namespace PR16708 {
     return ret;
     return 0;
   };
+}
+
+namespace TypeDeduction {
+  struct S {};
+  void f() {
+    const S s {};
+    S &&t = [&] { return s; } ();
+#if __cplusplus <= 201103L
+    // expected-error@-2 {{drops qualifiers}}
+#else
+    S &&u = [&] () -> auto { return s; } ();
+#endif
+  }
 }

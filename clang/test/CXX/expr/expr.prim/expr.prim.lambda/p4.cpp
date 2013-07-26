@@ -39,7 +39,10 @@ X infer_X_return_type_fail(X x) {
     if (y > 0)
       return X();
     else
-      return x; // expected-error{{return type 'const X' must match previous return type 'X' when lambda expression has unspecified explicit return type}}
+      return x;
+#if __cplusplus <= 201103L
+    // expected-error@-2 {{return type 'const X' must match previous return type 'X' when lambda expression has unspecified explicit return type}}
+#endif
   }(5);
 }
 
