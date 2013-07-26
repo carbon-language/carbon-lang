@@ -123,6 +123,11 @@ static DecodeStatus DecodeCCRRegisterClass(MCInst &Inst,
                                            uint64_t Address,
                                            const void *Decoder);
 
+static DecodeStatus DecodeFCCRegisterClass(MCInst &Inst,
+                                           unsigned RegNo,
+                                           uint64_t Address,
+                                           const void *Decoder);
+
 static DecodeStatus DecodeHWRegsRegisterClass(MCInst &Inst,
                                               unsigned Insn,
                                               uint64_t Address,
@@ -157,12 +162,6 @@ static DecodeStatus DecodeBranchTarget(MCInst &Inst,
                                        unsigned Offset,
                                        uint64_t Address,
                                        const void *Decoder);
-
-static DecodeStatus DecodeBC1(MCInst &Inst,
-                              unsigned Insn,
-                              uint64_t Address,
-                              const void *Decoder);
-
 
 static DecodeStatus DecodeJumpTarget(MCInst &Inst,
                                      unsigned Insn,
@@ -407,6 +406,17 @@ static DecodeStatus DecodeCCRRegisterClass(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeFCCRegisterClass(MCInst &Inst,
+                                           unsigned RegNo,
+                                           uint64_t Address,
+                                           const void *Decoder) {
+  if (RegNo > 7)
+    return MCDisassembler::Fail;
+  unsigned Reg = getReg(Decoder, Mips::FCCRegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus DecodeMem(MCInst &Inst,
                               unsigned Insn,
                               uint64_t Address,
@@ -524,16 +534,6 @@ static DecodeStatus DecodeBranchTarget(MCInst &Inst,
                                        uint64_t Address,
                                        const void *Decoder) {
   unsigned BranchOffset = Offset & 0xffff;
-  BranchOffset = SignExtend32<18>(BranchOffset << 2) + 4;
-  Inst.addOperand(MCOperand::CreateImm(BranchOffset));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus DecodeBC1(MCInst &Inst,
-                              unsigned Insn,
-                              uint64_t Address,
-                              const void *Decoder) {
-  unsigned BranchOffset = Insn & 0xffff;
   BranchOffset = SignExtend32<18>(BranchOffset << 2) + 4;
   Inst.addOperand(MCOperand::CreateImm(BranchOffset));
   return MCDisassembler::Success;

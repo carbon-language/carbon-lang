@@ -665,13 +665,14 @@ class SWXC1_FM<bits<6> funct> {
 }
 
 class BC1F_FM<bit nd, bit tf> {
+  bits<3>  fcc;
   bits<16> offset;
 
   bits<32> Inst;
 
   let Inst{31-26} = 0x11;
   let Inst{25-21} = 0x8;
-  let Inst{20-18} = 0; // cc
+  let Inst{20-18} = fcc;
   let Inst{17} = nd;
   let Inst{16} = tf;
   let Inst{15-0} = offset;

@@ -245,6 +245,14 @@ bool MipsInstPrinter::printAlias(const MCInst &MI, raw_ostream &OS) {
     if (isReg<Mips::ZERO_64>(MI, 1) && printAlias("bnez", MI, 0, 2, OS))
       return true;
     break;
+  case Mips::BC1T:
+    if (isReg<Mips::FCC0>(MI, 0) && printAlias("bc1t", MI, 1, OS))
+      return true;
+    break;
+  case Mips::BC1F:
+    if (isReg<Mips::FCC0>(MI, 0) && printAlias("bc1f", MI, 1, OS))
+      return true;
+    break;
   case Mips::OR:
     if (isReg<Mips::ZERO>(MI, 2) && printAlias("move", MI, 0, 1, OS))
       return true;
