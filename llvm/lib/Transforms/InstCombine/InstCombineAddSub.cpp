@@ -1528,9 +1528,21 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
       if (Instruction *NV = FoldOpIntoSelect(I, SI))
         return NV;
 
-  // If this is a 'B = x-(-A)', change to B = x+A...
+  // If this is a 'B = x-(-A)', change to B = x+A, potentially looking
+  // through FP extensions/truncations along the way.
   if (Value *V = dyn_castFNegVal(Op1))
     return BinaryOperator::CreateFAdd(Op0, V);
+  if (FPTruncInst *FPTI = dyn_cast<FPTruncInst>(Op1)) {
+    if (Value *V = dyn_castFNegVal(FPTI->getOperand(0))) {
+      Value *NewTrunc = Builder->CreateFPTrunc(V, I.getType());
+      return BinaryOperator::CreateFAdd(Op0, NewTrunc);
+    }
+  } else if (FPExtInst *FPEI = dyn_cast<FPExtInst>(Op1)) {
+    if (Value *V = dyn_castFNegVal(FPEI->getOperand(0))) {
+      Value *NewTrunc = Builder->CreateFPExt(V, I.getType());
+      return BinaryOperator::CreateFAdd(Op0, NewTrunc);
+    }
+  }
 
   if (I.hasUnsafeAlgebra()) {
     if (Value *V = FAddCombine(Builder).simplify(&I))
