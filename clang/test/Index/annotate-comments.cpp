@@ -247,6 +247,13 @@ void isdoxy52(int);
  */
 void isdoxy53(int);
 
+#define MYMAC(x,y)
+/**
+ * Aaa. IS_DOXYGEN_START IS_DOXYGEN_END
+ */
+MYMAC(0,0)
+void isdoxy54(int);
+
 #endif
 
 // RUN: rm -rf %t
@@ -327,4 +334,5 @@ void isdoxy53(int);
 // CHECK: annotate-comments.cpp:222:6: FunctionDecl=isdoxy50:{{.*}} BriefComment=[Returns ddd IS_DOXYGEN_END]
 // CHECK: annotate-comments.cpp:231:6: FunctionDecl=isdoxy51:{{.*}} BriefComment=[Aaa. IS_DOXYGEN_START]
 // CHECK: annotate-comments.cpp:241:6: FunctionDecl=isdoxy52:{{.*}} BriefComment=[Aaa. IS_DOXYGEN_START Bbb.]
-
+// CHECK: annotate-comments.cpp:248:6: FunctionDecl=isdoxy53:{{.*}} BriefComment=[Aaa. IS_DOXYGEN_START IS_DOXYGEN_END]
+// CHECK: annotate-comments.cpp:255:6: FunctionDecl=isdoxy54:{{.*}} BriefComment=[Aaa. IS_DOXYGEN_START IS_DOXYGEN_END]

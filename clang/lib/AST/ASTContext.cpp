@@ -227,7 +227,7 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
 
   // There should be no other declarations or preprocessor directives between
   // comment and declaration.
-  if (Text.find_first_of(",;{}#@") != StringRef::npos)
+  if (Text.find_first_of(";{}#@") != StringRef::npos)
     return NULL;
 
   return *Comment;
