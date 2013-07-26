@@ -37,7 +37,7 @@ class CMov_F_I_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
   InstSE<(outs RC:$rd), (ins RC:$rs, RC:$F),
          !strconcat(opstr, "\t$rd, $rs, $$fcc0"),
          [(set RC:$rd, (OpNode RC:$rs, RC:$F))], Itin, FrmFR> {
-  let Uses = [FCR31];
+  let Uses = [FCC0];
   let Constraints = "$F = $rd";
 }
 
@@ -47,7 +47,7 @@ class CMov_F_F_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
   InstSE<(outs RC:$fd), (ins RC:$fs, RC:$F),
          !strconcat(opstr, "\t$fd, $fs, $$fcc0"),
          [(set RC:$fd, (OpNode RC:$fs, RC:$F))], Itin, FrmFR> {
-  let Uses = [FCR31];
+  let Uses = [FCC0];
   let Constraints = "$F = $fd";
 }
 

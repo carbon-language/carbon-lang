@@ -194,7 +194,7 @@ class BC1F_FT<string opstr, InstrItinClass Itin,
   let isTerminator = 1;
   let hasDelaySlot = 1;
   let Defs = [AT];
-  let Uses = [FCR31];
+  let Uses = [FCC0];
 }
 
 class CEQS_FT<string typestr, RegisterClass RC, InstrItinClass Itin,
@@ -202,7 +202,7 @@ class CEQS_FT<string typestr, RegisterClass RC, InstrItinClass Itin,
   InstSE<(outs), (ins RC:$fs, RC:$ft, condcode:$cond),
          !strconcat("c.$cond.", typestr, "\t$fs, $ft"),
          [(OpNode RC:$fs, RC:$ft, imm:$cond)], Itin, FrmFR> {
-  let Defs = [FCR31];
+  let Defs = [FCC0];
   let isCodeGenOnly = 1;
 }
 
