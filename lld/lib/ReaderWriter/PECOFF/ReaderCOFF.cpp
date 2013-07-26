@@ -200,6 +200,11 @@ private:
     if (sectionName == ".debug$S")
       return error_code::success();
 
+    // A section with IMAGE_SCN_LNK_REMOVE attribute will never become
+    // a part of the output image. That's what the COFF spec says.
+    if (section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
+      return error_code::success();
+
     // Create an atom for the entire section.
     if (symbols.empty()) {
       ArrayRef<uint8_t> Data(SecData.data(), SecData.size());
