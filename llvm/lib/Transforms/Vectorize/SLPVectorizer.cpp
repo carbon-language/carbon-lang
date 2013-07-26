@@ -898,8 +898,12 @@ int BoUpSLP::getTreeCost() {
   DEBUG(dbgs() << "SLP: Calculating cost for tree of size " <<
         VectorizableTree.size() << ".\n");
 
-  if (!VectorizableTree.size()) {
-    assert(!ExternalUses.size() && "We should not have any external users");
+  // Don't vectorize tiny trees. Small load/store chains or consecutive stores
+  // of constants will be vectoried in SelectionDAG in MergeConsecutiveStores.
+  if (VectorizableTree.size() < 3) {
+    if (!VectorizableTree.size()) {
+      assert(!ExternalUses.size() && "We should not have any external users");
+    }
     return 0;
   }
 

@@ -16,11 +16,13 @@ define double @foo(double* nocapture %D) {
   %3 = getelementptr inbounds double* %D, i32 %2
   %4 = load double* %3, align 4
   %A4 = fmul double %4, %4
+  %A42 = fmul double %A4, %A4
   %5 = or i32 %2, 1
   %6 = getelementptr inbounds double* %D, i32 %5
   %7 = load double* %6, align 4
   %A7 = fmul double %7, %7
-  %8 = fadd double %A4, %A7
+  %A72 = fmul double %A7, %A7
+  %8 = fadd double %A42, %A72
   %9 = fadd double %sum.01, %8
   %10 = add nsw i32 %i.02, 1
   %exitcond = icmp eq i32 %10, 100
