@@ -181,8 +181,9 @@ let Namespace = "Mips" in {
   foreach I = 0-31 in
   def FCR#I : MipsReg<#I, ""#I>;
 
-  // fcc0 register
-  def FCC0 : MipsReg<0, "fcc0">;
+  // FP condition code registers.
+  foreach I = 0-7 in
+  def FCC#I : MipsReg<#I, "fcc"#I>;
 
   // PC register
   def PC : Register<"pc">;
@@ -292,7 +293,8 @@ def CCR : RegisterClass<"Mips", [i32], 32, (sequence "FCR%u", 0, 31)>,
           Unallocatable;
 
 // FP condition code registers.
-def FCC : RegisterClass<"Mips", [i32], 32, (add FCC0)>, Unallocatable;
+def FCC : RegisterClass<"Mips", [i32], 32, (sequence "FCC%u", 0, 7)>,
+          Unallocatable;
 
 // Hi/Lo Registers
 def LORegs : RegisterClass<"Mips", [i32], 32, (add LO)>;
