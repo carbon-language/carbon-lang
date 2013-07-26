@@ -711,7 +711,7 @@ DIScope DIScope::getContext() const {
   if (isNameSpace())
     return DINameSpace(DbgNode).getContext();
 
-  assert(isFile() || isCompileUnit() && "Unhandled type of scope.");
+  assert((isFile() || isCompileUnit()) && "Unhandled type of scope.");
   return DIScope();
 }
 
