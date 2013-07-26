@@ -7,7 +7,7 @@ class _Separate<string name> : Separate<["-", "/"], name>;
 class _Joined<string name, Option alias> : Joined<["-", "/"], name>,
       Alias<alias>;
 
-def mllvm : _Flag<"mllvm">, HelpText<"Options to pass to LLVM">;
+def mllvm : _Separate<"mllvm">, HelpText<"Options to pass to LLVM">;
 
 def out : _Separate<"out">, HelpText<"Path to file to write output">;
 def out_c : _Joined<"out:", out>;

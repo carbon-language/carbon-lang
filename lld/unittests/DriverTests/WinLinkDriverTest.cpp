@@ -66,6 +66,13 @@ TEST_F(WinLinkParserTest, UnixStyleOption) {
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
+TEST_F(WinLinkParserTest, Mllvm) {
+  EXPECT_FALSE(parse("link.exe", "-mllvm", "-debug", "a.obj", nullptr));
+  const std::vector<const char *> &options = _info.llvmOptions();
+  EXPECT_EQ(1U, options.size());
+  EXPECT_EQ("-debug", options[0]);
+}
+
 TEST_F(WinLinkParserTest, NoFileExtension) {
   EXPECT_FALSE(parse("link.exe", "foo", "bar", nullptr));
   EXPECT_EQ("foo.exe", _info.outputPath());
