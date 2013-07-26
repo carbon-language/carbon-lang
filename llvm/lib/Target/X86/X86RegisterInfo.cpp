@@ -354,14 +354,8 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(X86::GS);
 
   // Mark the floating point stack registers as reserved.
-  Reserved.set(X86::ST0);
-  Reserved.set(X86::ST1);
-  Reserved.set(X86::ST2);
-  Reserved.set(X86::ST3);
-  Reserved.set(X86::ST4);
-  Reserved.set(X86::ST5);
-  Reserved.set(X86::ST6);
-  Reserved.set(X86::ST7);
+  for (unsigned n = 0; n != 8; ++n)
+    Reserved.set(X86::ST0 + n);
 
   // Reserve the registers that only exist in 64-bit mode.
   if (!Is64Bit) {
@@ -374,19 +368,11 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
     for (unsigned n = 0; n != 8; ++n) {
       // R8, R9, ...
-      static const uint16_t GPR64[] = {
-        X86::R8,  X86::R9,  X86::R10, X86::R11,
-        X86::R12, X86::R13, X86::R14, X86::R15
-      };
-      for (MCRegAliasIterator AI(GPR64[n], this, true); AI.isValid(); ++AI)
+      for (MCRegAliasIterator AI(X86::R8 + n, this, true); AI.isValid(); ++AI)
         Reserved.set(*AI);
 
       // XMM8, XMM9, ...
-      static const uint16_t XMMReg[] = {
-        X86::XMM8,  X86::XMM9, X86::XMM10, X86::XMM11,
-        X86::XMM12, X86::XMM13, X86::XMM14, X86::XMM15
-      };
-      for (MCRegAliasIterator AI(XMMReg[n], this, true); AI.isValid(); ++AI)
+      for (MCRegAliasIterator AI(X86::XMM8 + n, this, true); AI.isValid(); ++AI)
         Reserved.set(*AI);
     }
   }
