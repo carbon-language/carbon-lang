@@ -1,4 +1,4 @@
-; RUN: llc -O2 %s -o - | FileCheck %s
+; RUN: llc -disable-debug-info-verifier -O2 %s -o - | FileCheck %s
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK:	DW_TAG_structure_type
