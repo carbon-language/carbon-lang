@@ -34,20 +34,18 @@ class CMov_I_F_FT<string opstr, RegisterOperand CRC, RegisterOperand DRC,
 // cond:float, data:int
 class CMov_F_I_FT<string opstr, RegisterOperand RC, InstrItinClass Itin,
                   SDPatternOperator OpNode = null_frag> :
-  InstSE<(outs RC:$rd), (ins RC:$rs, RC:$F),
-         !strconcat(opstr, "\t$rd, $rs, $$fcc0"),
-         [(set RC:$rd, (OpNode RC:$rs, RC:$F))], Itin, FrmFR> {
-  let Uses = [FCC0];
+  InstSE<(outs RC:$rd), (ins RC:$rs, FCC:$fcc, RC:$F),
+         !strconcat(opstr, "\t$rd, $rs, $fcc"),
+         [(set RC:$rd, (OpNode RC:$rs, FCC:$fcc, RC:$F))], Itin, FrmFR> {
   let Constraints = "$F = $rd";
 }
 
 // cond:float, data:float
 class CMov_F_F_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
                   SDPatternOperator OpNode = null_frag> :
-  InstSE<(outs RC:$fd), (ins RC:$fs, RC:$F),
-         !strconcat(opstr, "\t$fd, $fs, $$fcc0"),
-         [(set RC:$fd, (OpNode RC:$fs, RC:$F))], Itin, FrmFR> {
-  let Uses = [FCC0];
+  InstSE<(outs RC:$fd), (ins RC:$fs, FCC:$fcc, RC:$F),
+         !strconcat(opstr, "\t$fd, $fs, $fcc"),
+         [(set RC:$fd, (OpNode RC:$fs, FCC:$fcc, RC:$F))], Itin, FrmFR> {
   let Constraints = "$F = $fd";
 }
 

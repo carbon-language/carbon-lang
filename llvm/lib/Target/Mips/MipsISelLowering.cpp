@@ -519,9 +519,10 @@ static SDValue createCMovFP(SelectionDAG &DAG, SDValue Cond, SDValue True,
                             SDValue False, SDLoc DL) {
   ConstantSDNode *CC = cast<ConstantSDNode>(Cond.getOperand(2));
   bool invert = invertFPCondCodeUser((Mips::CondCode)CC->getSExtValue());
+  SDValue FCC0 = DAG.getRegister(Mips::FCC0, MVT::i32);
 
   return DAG.getNode((invert ? MipsISD::CMovFP_F : MipsISD::CMovFP_T), DL,
-                     True.getValueType(), True, False, Cond);
+                     True.getValueType(), True, FCC0, False, Cond);
 }
 
 static SDValue performSELECTCombine(SDNode *N, SelectionDAG &DAG,
