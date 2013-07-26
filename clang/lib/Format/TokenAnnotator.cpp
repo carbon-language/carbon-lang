@@ -405,6 +405,8 @@ private:
     case tok::comma:
       if (Contexts.back().FirstStartOfName)
         Contexts.back().FirstStartOfName->PartOfMultiVariableDeclStmt = true;
+      if (Contexts.back().InCtorInitializer)
+        Tok->Type = TT_CtorInitializerComma;
       break;
     default:
       break;
@@ -538,7 +540,8 @@ private:
           LongestObjCSelectorName(0), ColonIsForRangeExpr(false),
           ColonIsObjCDictLiteral(false), ColonIsObjCMethodExpr(false),
           FirstObjCSelectorName(NULL), FirstStartOfName(NULL),
-          IsExpression(IsExpression), CanBeExpression(true) {}
+          IsExpression(IsExpression), CanBeExpression(true),
+          InCtorInitializer(false) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
@@ -550,6 +553,7 @@ private:
     FormatToken *FirstStartOfName;
     bool IsExpression;
     bool CanBeExpression;
+    bool InCtorInitializer;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
@@ -595,6 +599,7 @@ private:
     } else if (Current.Previous &&
                Current.Previous->Type == TT_CtorInitializerColon) {
       Contexts.back().IsExpression = true;
+      Contexts.back().InCtorInitializer = true;
     } else if (Current.is(tok::kw_new)) {
       Contexts.back().CanBeExpression = false;
     } else if (Current.is(tok::semi)) {
@@ -963,6 +968,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     } else if (Current->Previous->ClosesTemplateDeclaration &&
                Style.AlwaysBreakTemplateDeclarations) {
       Current->MustBreakBefore = true;
+    } else if (Current->Type == TT_CtorInitializerComma &&
+               Style.BreakConstructorInitializersBeforeComma) {
+      Current->MustBreakBefore = true;
     }
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
@@ -1278,7 +1286,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
 
   // We only break before r_brace if there was a corresponding break before
   // the l_brace, which is tracked by BreakBeforeClosingBrace.
-  if (Right.isOneOf(tok::r_brace, tok::r_paren, tok::greater))
+  if (Right.isOneOf(tok::r_brace, tok::r_paren) ||
+      Right.Type == TT_TemplateCloser)
     return false;
 
   // Allow breaking after a trailing 'const', e.g. after a method declaration,
@@ -1292,7 +1301,14 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
 
   if (Left.is(tok::identifier) && Right.is(tok::string_literal))
     return true;
-  return (Left.isBinaryOperator() && Left.isNot(tok::lessless)) ||
+
+  if (Left.Type == TT_CtorInitializerComma &&
+      Style.BreakConstructorInitializersBeforeComma)
+    return false;
+  if (Right.isBinaryOperator() && Style.BreakBeforeBinaryOperators)
+    return true;
+  return (Left.isBinaryOperator() && Left.isNot(tok::lessless) &&
+          !Style.BreakBeforeBinaryOperators) ||
          Left.isOneOf(tok::comma, tok::coloncolon, tok::semi, tok::l_brace,
                       tok::kw_class, tok::kw_struct) ||
          Right.isOneOf(tok::lessless, tok::arrow, tok::period, tok::colon) ||

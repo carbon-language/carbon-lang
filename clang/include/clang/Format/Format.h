@@ -108,6 +108,10 @@ struct FormatStyle {
   /// initializer on its own line.
   bool ConstructorInitializerAllOnOneLineOrOnePerLine;
 
+  /// \brief Always break constructor initializers before commas and align
+  /// the commas with the colon.
+  bool BreakConstructorInitializersBeforeComma;
+
   /// \brief If true, "if (a) return;" can be put on a single line.
   bool AllowShortIfStatementsOnASingleLine;
 
@@ -135,6 +139,9 @@ struct FormatStyle {
   /// \brief If true, \c IndentWidth consecutive spaces will be replaced with
   /// tab characters.
   bool UseTab;
+
+  /// \brief If \c true, binary operators will be placed after line breaks.
+  bool BreakBeforeBinaryOperators;
 
   /// \brief Different ways to attach braces to their surrounding context.
   enum BraceBreakingStyle {

@@ -28,6 +28,7 @@ enum TokenType {
   TT_CastRParen,
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
+  TT_CtorInitializerComma,
   TT_DesignatedInitializerPeriod,
   TT_ImplicitStringLiteral,
   TT_InlineASMColon,
