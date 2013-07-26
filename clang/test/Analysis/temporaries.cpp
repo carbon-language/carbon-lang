@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++03 %s
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++11 %s
+// RUN: %clang_cc1 -triple x86_64-pc-linux -analyze -analyzer-checker=core,debug.ExprInspection -verify -w -std=c++11 %s
 
 extern bool clang_analyzer_eval(bool);
 
