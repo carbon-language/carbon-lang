@@ -112,7 +112,7 @@ def ccc_debug_Group : OptionGroup<"<clang debug/development internal options>">,
 
 class CCCDriverOpt : Group<ccc_driver_Group>, Flags<[DriverOption, HelpHidden]>;
 def driver_mode : Joined<["--"], "driver-mode=">, CCCDriverOpt,
-  HelpText<"Set the driver mode to either 'gcc', 'g++' or 'cpp'">;
+  HelpText<"Set the driver mode to either 'gcc', 'g++', 'cpp' or 'cl'">;
 def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, CCCDriverOpt,
   HelpText<"Name for native GCC compiler">,
   MetaVarName<"<gcc-path>">;
