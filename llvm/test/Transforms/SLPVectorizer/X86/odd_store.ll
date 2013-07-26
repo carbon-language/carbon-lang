@@ -10,12 +10,12 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;}
 
 ;CHECK-LABEL: @foo(
-;CHECK: load <3 x float>
-;CHECK: fmul <3 x float>
-;CHECK: fpext <3 x float>
-;CHECK: fadd <3 x double>
-;CHECK: fptosi <3 x double>
-;CHECK: store <3 x i8>
+;CHECK-NOT: load <3 x float>
+;CHECK-NOT: fmul <3 x float>
+;CHECK-NOT: fpext <3 x float>
+;CHECK-NOT: fadd <3 x double>
+;CHECK-NOT: fptosi <3 x double>
+;CHECK-NOT: store <3 x i8>
 ;CHECK: ret
 define i32 @foo(i8* noalias nocapture %A, float* noalias nocapture %B, float %T) {
   %1 = getelementptr inbounds float* %B, i64 10

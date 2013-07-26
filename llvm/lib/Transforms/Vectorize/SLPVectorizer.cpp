@@ -1664,23 +1664,7 @@ bool SLPVectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain,
     }
   }
 
-  if (Changed || ChainLen > VF)
     return Changed;
-
-  // Handle short chains. This helps us catch types such as <3 x float> that
-  // are smaller than vector size.
-  R.buildTree(Chain);
-
-  int Cost = R.getTreeCost();
-
-  if (Cost < CostThreshold) {
-    DEBUG(dbgs() << "SLP: Found store chain cost = " << Cost
-          << " for size = " << ChainLen << "\n");
-    R.vectorizeTree();
-    return true;
-  }
-
-  return false;
 }
 
 bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
