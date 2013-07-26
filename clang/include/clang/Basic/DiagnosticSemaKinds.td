@@ -1829,6 +1829,7 @@ def err_init_method_bad_return_type : Error<
 def err_attribute_invalid_size : Error<
   "vector size not an integral multiple of component size">;
 def err_attribute_zero_size : Error<"zero vector size">;
+def err_attribute_size_too_large : Error<"vector size too large">;
 def err_typecheck_vector_not_convertable : Error<
   "can't convert between vector values of different size (%0 and %1)">;
 def err_typecheck_ext_vector_not_typedef : Error<

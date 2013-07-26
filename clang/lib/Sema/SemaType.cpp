@@ -1645,6 +1645,12 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
       return QualType();
     }
 
+    if (VectorType::isVectorSizeTooLarge(vectorSize)) {
+      Diag(AttrLoc, diag::err_attribute_size_too_large)
+        << ArraySize->getSourceRange();
+      return QualType();
+    }
+
     return Context.getExtVectorType(T, vectorSize);
   }
 
@@ -4521,7 +4527,8 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
     return;
   }
   // the base type must be integer or float, and can't already be a vector.
-  if (!CurType->isIntegerType() && !CurType->isRealFloatingType()) {
+  if (!CurType->isBuiltinType() ||
+      (!CurType->isIntegerType() && !CurType->isRealFloatingType())) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
     Attr.setInvalid();
     return;
@@ -4533,6 +4540,12 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
   // the vector size needs to be an integral multiple of the type size.
   if (vectorSize % typeSize) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size)
+      << sizeExpr->getSourceRange();
+    Attr.setInvalid();
+    return;
+  }
+  if (VectorType::isVectorSizeTooLarge(vectorSize / typeSize)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_size_too_large)
       << sizeExpr->getSourceRange();
     Attr.setInvalid();
     return;

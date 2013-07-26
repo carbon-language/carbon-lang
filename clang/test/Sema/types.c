@@ -64,3 +64,11 @@ void test(int i) {
 void test2(int i) {
   char c = (char __attribute__((may_alias))) i;
 }
+
+// vector size too large
+int __attribute__ ((vector_size(8192))) x1; // expected-error {{vector size too large}}
+typedef int __attribute__ ((ext_vector_type(8192))) x2; // expected-error {{vector size too large}}
+
+// no support for vector enum type
+enum { e_2 } x3 __attribute__((vector_size(64))); // expected-error {{invalid vector element type}}
+

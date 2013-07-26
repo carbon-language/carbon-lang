@@ -1315,6 +1315,8 @@ protected:
 
     /// NumElements - The number of elements in the vector.
     unsigned NumElements : 29 - NumTypeBits;
+
+    enum { MaxNumElements = (1 << (29 - NumTypeBits)) - 1 };
   };
 
   class AttributedTypeBitfields {
@@ -2524,6 +2526,9 @@ public:
 
   QualType getElementType() const { return ElementType; }
   unsigned getNumElements() const { return VectorTypeBits.NumElements; }
+  static bool isVectorSizeTooLarge(unsigned NumElements) {
+    return NumElements > VectorTypeBitfields::MaxNumElements;
+  }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
