@@ -864,6 +864,12 @@ MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
   return getSubRegion<BlockDataRegion>(BC, LC, sReg);
 }
 
+const CXXTempObjectRegion *
+MemRegionManager::getCXXStaticTempObjectRegion(const Expr *Ex) {
+  return getSubRegion<CXXTempObjectRegion>(
+      Ex, getGlobalsRegion(MemRegion::GlobalInternalSpaceRegionKind, NULL));
+}
+
 const CompoundLiteralRegion*
 MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr *CL,
                                            const LocationContext *LC) {

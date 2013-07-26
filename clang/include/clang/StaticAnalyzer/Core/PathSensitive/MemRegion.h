@@ -1272,6 +1272,11 @@ public:
   const BlockDataRegion *getBlockDataRegion(const BlockTextRegion *bc,
                                             const LocationContext *lc = NULL);
 
+  /// Create a CXXTempObjectRegion for temporaries which are lifetime-extended
+  /// by static references. This differs from getCXXTempObjectRegion in the
+  /// super-region used.
+  const CXXTempObjectRegion *getCXXStaticTempObjectRegion(const Expr *Ex);
+
 private:
   template <typename RegionTy, typename A1>
   RegionTy* getRegion(const A1 a1);

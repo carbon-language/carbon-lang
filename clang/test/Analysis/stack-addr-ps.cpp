@@ -20,6 +20,10 @@ const int& g3() {
   return s3; // expected-warning{{Address of stack memory associated with local variable 's1' returned}} expected-warning {{reference to stack memory associated with local variable 's1' returned}}
 }
 
+void g4() {
+  static const int &x = 3; // no warning
+}
+
 int get_value();
 
 const int &get_reference1() { return get_value(); } // expected-warning{{Address of stack memory associated with temporary object of type 'int' returned}} expected-warning {{returning reference to local temporary}}
