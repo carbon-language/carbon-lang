@@ -388,7 +388,6 @@ public:
   }
 
   virtual void write(uint8_t *fileBuffer) {
-    fileBuffer += fileOffset();
     for (const AtomLayout *layout : _atomLayouts) {
       if (!layout)
         continue;
