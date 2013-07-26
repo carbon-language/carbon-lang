@@ -122,19 +122,19 @@ static bool RedirectIO(const StringRef *Path, int FD, std::string* ErrMsg) {
 }
 
 #ifdef HAVE_POSIX_SPAWN
-static bool RedirectIO_PS(const StringRef *Path, int FD, std::string *ErrMsg,
+static bool RedirectIO_PS(const std::string *Path, int FD, std::string *ErrMsg,
                           posix_spawn_file_actions_t *FileActions) {
   if (Path == 0) // Noop
     return false;
-  std::string File;
+  const char *File;
   if (Path->empty())
     // Redirect empty paths to /dev/null
     File = "/dev/null";
   else
-    File = *Path;
+    File = Path->c_str();
 
   if (int Err = posix_spawn_file_actions_addopen(
-          FileActions, FD, File.c_str(),
+          FileActions, FD, File,
           FD == 0 ? O_RDONLY : O_WRONLY | O_CREAT, 0666))
     return MakeErrMsg(ErrMsg, "Cannot dup2", Err);
   return false;
@@ -185,18 +185,32 @@ static bool Execute(void **Data, StringRef Program, const char **args,
     posix_spawn_file_actions_t FileActionsStore;
     posix_spawn_file_actions_t *FileActions = 0;
 
+    // If we call posix_spawn_file_actions_addopen we have to make sure the
+    // c strings we pass to it stay alive until the call to posix_spaw,
+    // so we copy any StringRefs into this variable.
+    std::string RedirectsStorage[3];
+
     if (redirects) {
+      std::string *RedirectsStr[3] = {0, 0, 0};
+      for (int I = 0; I < 3; ++I) {
+        if (redirects[I]) {
+          RedirectsStorage[I] = *redirects[I];
+          RedirectsStr[I] = &RedirectsStorage[I];
+        }
+      }
+
       FileActions = &FileActionsStore;
       posix_spawn_file_actions_init(FileActions);
 
       // Redirect stdin/stdout.
-      if (RedirectIO_PS(redirects[0], 0, ErrMsg, FileActions) ||
-          RedirectIO_PS(redirects[1], 1, ErrMsg, FileActions))
+      if (RedirectIO_PS(RedirectsStr[0], 0, ErrMsg, FileActions) ||
+          RedirectIO_PS(RedirectsStr[1], 1, ErrMsg, FileActions))
         return false;
       if (redirects[1] == 0 || redirects[2] == 0 ||
           *redirects[1] != *redirects[2]) {
         // Just redirect stderr
-        if (RedirectIO_PS(redirects[2], 2, ErrMsg, FileActions)) return false;
+        if (RedirectIO_PS(RedirectsStr[2], 2, ErrMsg, FileActions))
+          return false;
       } else {
         // If stdout and stderr should go to the same place, redirect stderr
         // to the FD already open for stdout.
