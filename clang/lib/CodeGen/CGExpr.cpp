@@ -3096,8 +3096,15 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   const FunctionType *FnType
     = cast<FunctionType>(cast<PointerType>(CalleeType)->getPointeeType());
 
+  // Force column info to differentiate multiple inlined call sites on
+  // the same line, analoguous to EmitCallExpr.
+  bool ForceColumnInfo = false;
+  if (const FunctionDecl* FD = dyn_cast_or_null<const FunctionDecl>(TargetDecl))
+    ForceColumnInfo = FD->isInlineSpecified();
+
   CallArgList Args;
-  EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
+  EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd,
+               ForceColumnInfo);
 
   const CGFunctionInfo &FnInfo =
     CGM.getTypes().arrangeFreeFunctionCall(Args, FnType);

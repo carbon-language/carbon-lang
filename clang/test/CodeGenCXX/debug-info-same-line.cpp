@@ -83,6 +83,21 @@ main(int argc, char const *argv[])
 // result
 // CHECK: call void @llvm.dbg.declare
 
+// We want to see a distinct !dbg node.
+// CHECK-NOT: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD]]), !dbg ![[A_DI]]
+// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD]]), !dbg !{{.*}}
+// CHECK-NOT: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg ![[B_DI]]
+// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg !{{.*}}
+// result
+// CHECK: call void @llvm.dbg.declare
+
+// Again: we want to see a distinct !dbg node.
+// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[X_MD:[0-9]+]]), !dbg ![[X_DI:[0-9]+]]
+// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[Y_MD:[0-9]+]]), !dbg ![[Y_DI:[0-9]+]]
+// result
+// CHECK: call void @llvm.dbg.declare
+
+
 // CHECK: define {{.*}} @main
 // CHECK: call {{.*}} @_Z3fooii
 // CHECK: call {{.*}} @_Z3fooii
@@ -96,3 +111,13 @@ main(int argc, char const *argv[])
 // CHECK: load {{.*}} !dbg ![[DBG]]
 // CHECK: call {{.*}} @_Z11strange_maxii(i32 {{.*}}, i32 {{.*}}), !dbg ![[DBG]]
 // CHECK: call {{.*}} @_Z11strange_maxii(i32 {{.*}}, i32 {{.*}}), !dbg ![[DBG]]
+
+
+// Verify that product() has its own inlined_at location at column 15.
+// CHECK-DAG: ![[A_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [a]
+// CHECK-DAG: ![[B_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [b]
+// CHECK-DAG: ![[X_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [x]
+// CHECK-DAG: ![[Y_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [y]
+// CHECK-DAG: ![[X_DI]] = metadata !{i32 {{[0-9]+}}, i32 {{[0-9]+}}, metadata !{{[0-9]+}}, metadata ![[PRODUCT:[0-9]+]]}
+// CHECK-DAG: [[PRODUCT]] = metadata !{i32 {{.*}}, i32 16, metadata !{{.*}}, null}
+// CHECK-DAG: ![[Y_DI]] = metadata !{i32 {{[0-9]+}}, i32 {{[0-9]+}}, metadata !{{[0-9]+}}, metadata ![[PRODUCT]]}

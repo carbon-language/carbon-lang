@@ -2483,8 +2483,13 @@ private:
   template<typename T>
   void EmitCallArgs(CallArgList& Args, const T* CallArgTypeInfo,
                     CallExpr::const_arg_iterator ArgBeg,
-                    CallExpr::const_arg_iterator ArgEnd) {
-      CallExpr::const_arg_iterator Arg = ArgBeg;
+                    CallExpr::const_arg_iterator ArgEnd,
+                    bool ForceColumnInfo = false) {
+    CGDebugInfo *DI = getDebugInfo();
+    SourceLocation CallLoc;
+    if (DI) CallLoc = DI->getLocation();
+
+    CallExpr::const_arg_iterator Arg = ArgBeg;
 
     // First, use the argument types that the type info knows about
     if (CallArgTypeInfo) {
@@ -2513,6 +2518,10 @@ private:
                "type mismatch in call argument!");
 #endif
         EmitCallArg(Args, *Arg, ArgType);
+
+        // Each argument expression could modify the debug
+        // location. Restore it.
+        if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
       }
 
       // Either we've emitted all the call args, or we have a call to a
@@ -2523,8 +2532,12 @@ private:
     }
 
     // If we still have any arguments, emit them using the type of the argument.
-    for (; Arg != ArgEnd; ++Arg)
+    for (; Arg != ArgEnd; ++Arg) {
       EmitCallArg(Args, *Arg, Arg->getType());
+
+      // Restore the debug location.
+      if (DI) DI->EmitLocation(Builder, CallLoc, ForceColumnInfo);
+    }
   }
 
   const TargetCodeGenInfo &getTargetHooks() const {
