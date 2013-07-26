@@ -36,13 +36,12 @@ declare void @test(i32, i8**)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 4, metadata !"main.cpp", metadata !"/private/tmp", metadata !"clang version 3.3 (trunk 173515)", i1 true, i1 false, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !20, i32 4, metadata !"clang version 3.3 (trunk 173515)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !6, null, metadata !"main", metadata !"main", metadata !"", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32, i8**)* @main, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ]
-!6 = metadata !{i32 786473, metadata !"main.cpp", metadata !"/private/tmp", null} ; [ DW_TAG_file_type ]
+!3 = metadata !{metadata !5}
+!5 = metadata !{i32 786478, metadata !20, null, metadata !"main", metadata !"main", metadata !"", i32 3, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32, i8**)* @main, null, null, metadata !1, i32 4} ; [ DW_TAG_subprogram ]
+!6 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !8 = metadata !{metadata !9, metadata !9, metadata !10}
 !9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -54,5 +53,6 @@ declare void @test(i32, i8**)
 !15 = metadata !{i32 3, i32 0, metadata !5, null}
 !16 = metadata !{i32 786689, metadata !5, metadata !"argv", metadata !6, i32 33554435, metadata !10, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 !17 = metadata !{i32 5, i32 0, metadata !18, null}
-!18 = metadata !{i32 786443, metadata !5, i32 4, i32 0, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
+!18 = metadata !{i32 786443, metadata !20, metadata !5, i32 4, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{i32 6, i32 0, metadata !18, null}
+!20 = metadata !{metadata !"main.cpp", metadata !"/private/tmp"}

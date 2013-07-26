@@ -16,7 +16,7 @@ entry:
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 declare void @"tart.reflect.ComplexType.create->tart.core.Object"(%tart.reflect.ComplexType*) nounwind readnone
 
-!0 = metadata !{i32 458769, i32 0, i32 1, metadata !"sm.c", metadata !"/Volumes/MacOS9/tests/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 458769, metadata !15, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !16, metadata !16, null, null, null, i32 0} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 458790, metadata !15, metadata !0, metadata !"", i32 0, i64 192, i64 64, i64 0, i32 0, metadata !2} ; [ DW_TAG_const_type ]
 !2 = metadata !{i32 458771, metadata !15, metadata !0, metadata !"C", i32 1, i64 192, i64 64, i64 0, i32 0, null, metadata !3, i32 0, null} ; [ DW_TAG_structure_type ]
 !3 = metadata !{metadata !4, metadata !6, metadata !7}
@@ -32,3 +32,4 @@ declare void @"tart.reflect.ComplexType.create->tart.core.Object"(%tart.reflect.
 !13 = metadata !{i32 458788, metadata !15, metadata !0, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !14 = metadata !{%tart.reflect.ComplexType* @.type.SwitchStmtTest}
 !15 = metadata !{metadata !"sm.c", metadata !""}
+!16 = metadata !{i32 0}

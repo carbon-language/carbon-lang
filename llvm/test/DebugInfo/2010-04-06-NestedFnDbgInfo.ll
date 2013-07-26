@@ -57,7 +57,7 @@ entry:
 !1 = metadata !{i32 786443, metadata !38, metadata !2, i32 15, i32 12, i32 0} ; [ DW_TAG_lexical_block ]
 !2 = metadata !{i32 786478, metadata !38, metadata !3, metadata !"main", metadata !"main", metadata !"main", i32 15, metadata !5, i1 false, i1 true, i32 0, i32 0, null, i1 false, i32 0, i32 ()* @main, null, null, null, i32 15} ; [ DW_TAG_subprogram ]
 !3 = metadata !{i32 786473, metadata !38} ; [ DW_TAG_file_type ]
-!4 = metadata !{i32 786449, i32 4, metadata !3, metadata !"clang 1.5", i1 false, metadata !"", i32 0, null, null, metadata !37, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 786449, metadata !38, i32 4, metadata !"clang 1.5", i1 false, metadata !"", i32 0, metadata !39, metadata !39, metadata !37, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
 !5 = metadata !{i32 786453, metadata !38, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !6 = metadata !{metadata !7}
 !7 = metadata !{i32 786468, metadata !38, metadata !3, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -91,3 +91,4 @@ entry:
 !35 = metadata !{i32 7, i32 19, metadata !36, null}
 !36 = metadata !{i32 786443, metadata !38, metadata !23, i32 7, i32 17, i32 0} ; [ DW_TAG_lexical_block ]
 !38 = metadata !{metadata !"one.cc", metadata !"/tmp" }
+!39 = metadata !{i32 0}

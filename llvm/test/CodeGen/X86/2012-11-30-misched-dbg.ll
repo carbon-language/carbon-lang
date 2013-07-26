@@ -64,7 +64,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, i32 0, i32 12, metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", metadata !"MultiSource/Benchmarks/MiBench/consumer-typeset", metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/MiBench/consumer-typeset/MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !19, i32 12, metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, metadata !"", i32 0, metadata !1, metadata !2, metadata !3, metadata !1, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/MiBench/consumer-typeset/MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c] [DW_LANG_C99]
 !1 = metadata !{metadata !2}
 !2 = metadata !{i32 0}
 !3 = metadata !{}
@@ -129,7 +129,7 @@ declare void @_Znwm()
 
 !llvm.dbg.cu = !{!30}
 
-!30 = metadata !{i32 786449, i32 0, i32 4, metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++", metadata !"clang version 3.3 (trunk 169129) (llvm/trunk 169135)", i1 true, i1 true, metadata !"", i32 0, null, null, null, null} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
+!30 = metadata !{i32 786449, metadata !34, i32 4, metadata !"clang version 3.3 (trunk 169129) (llvm/trunk 169135)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
 !31 = metadata !{i32 786688, null, metadata !"X", null, i32 29, metadata !32, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [X] [line 29]
 !32 = metadata !{i32 786454, metadata !34, null, metadata !"HM", i32 28, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
 !33 = metadata !{i32 786473, metadata !34} ; [ DW_TAG_file_type ]

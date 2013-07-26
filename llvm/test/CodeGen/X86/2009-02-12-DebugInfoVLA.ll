@@ -69,7 +69,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !0 = metadata !{i32 459009, metadata !1, metadata !"s1", metadata !2, i32 2, metadata !6} ; [ DW_TAG_arg_variable ]
 !1 = metadata !{i32 458798, i32 0, metadata !2, metadata !"foo", metadata !"foo", metadata !"foo", i32 2, metadata !3, i1 false, i1 true,
                 i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
-!2 = metadata !{i32 458769, i32 0, i32 1, metadata !"vla.c", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 458769, metadata !17, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !18, metadata !18, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 458773, null, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5, metadata !6}
 !5 = metadata !{i32 458788, null, metadata !2, metadata !"char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
@@ -84,3 +84,5 @@ declare void @llvm.stackrestore(i8*) nounwind
 !14 = metadata !{i32 458763, metadata !1, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 4, i32 0, metadata !14, null}
 !16 = metadata !{i32 5, i32 0, metadata !14, null}
+!17 = metadata !{metadata !"vla.c", metadata !"/tmp/"}
+!18 = metadata !{i32 0}

@@ -1041,9 +1041,6 @@ bool DebugInfoFinder::addType(DIType DT) {
 
 /// addCompileUnit - Add compile unit into CUs.
 bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
-  if (!CU.Verify())
-    return false;
-
   if (!NodesSeen.insert(CU))
     return false;
 

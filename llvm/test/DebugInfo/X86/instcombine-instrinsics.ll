@@ -61,7 +61,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !48, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !48, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !"i1", metadata !""}
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4, metadata !21, metadata !33, metadata !47}
