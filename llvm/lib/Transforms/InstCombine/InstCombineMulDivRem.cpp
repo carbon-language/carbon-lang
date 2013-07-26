@@ -560,10 +560,10 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     if (I.hasNoNaNs() && I.hasNoInfs() && I.hasNoSignedZeros()) {
       Value *LHS = Op0, *RHS = Op1;
       Value *B, *C;
-      if (!match(RHS, m_UIToFp(m_Value(C))))
+      if (!match(RHS, m_UIToFP(m_Value(C))))
         std::swap(LHS, RHS);
 
-      if (match(RHS, m_UIToFp(m_Value(C))) && C->getType()->isIntegerTy(1)) {
+      if (match(RHS, m_UIToFP(m_Value(C))) && C->getType()->isIntegerTy(1)) {
         B = LHS;
         Value *Zero = ConstantFP::getNegativeZero(B->getType());
         return SelectInst::Create(C, B, Zero);
@@ -574,10 +574,10 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     if (I.hasNoNaNs() && I.hasNoInfs() && I.hasNoSignedZeros()) {
       Value *LHS = Op0, *RHS = Op1;
       Value *A, *C;
-      if (!match(RHS, m_FSub(m_FPOne(), m_UIToFp(m_Value(C)))))
+      if (!match(RHS, m_FSub(m_FPOne(), m_UIToFP(m_Value(C)))))
         std::swap(LHS, RHS);
 
-      if (match(RHS, m_FSub(m_FPOne(), m_UIToFp(m_Value(C)))) &&
+      if (match(RHS, m_FSub(m_FPOne(), m_UIToFP(m_Value(C)))) &&
           C->getType()->isIntegerTy(1)) {
         A = LHS;
         Value *Zero = ConstantFP::getNegativeZero(A->getType());

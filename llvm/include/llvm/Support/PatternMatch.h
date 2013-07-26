@@ -696,8 +696,15 @@ m_ZExt(const OpTy &Op) {
 /// m_UIToFP
 template<typename OpTy>
 inline CastClass_match<OpTy, Instruction::UIToFP>
-m_UIToFp(const OpTy &Op) { 
+m_UIToFP(const OpTy &Op) { 
   return CastClass_match<OpTy, Instruction::UIToFP>(Op);
+}
+
+/// m_SIToFP
+template<typename OpTy>
+inline CastClass_match<OpTy, Instruction::SIToFP>
+m_SIToFP(const OpTy &Op) { 
+  return CastClass_match<OpTy, Instruction::SIToFP>(Op);
 }
 
 //===----------------------------------------------------------------------===//
