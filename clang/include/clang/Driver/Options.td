@@ -102,43 +102,46 @@ def clang_ignored_m_Group : OptionGroup<"<clang ignored m group>">,
 
 // Developer Driver Options
 
-def ccc_Group : OptionGroup<"<clang internal options>">;
-def ccc_driver_Group : OptionGroup<"<clang driver internal options>">,
-  Group<ccc_Group>, HelpText<"DRIVER OPTIONS">;
-def ccc_debug_Group : OptionGroup<"<clang debug/development internal options>">,
-  Group<ccc_Group>, HelpText<"DEBUG/DEVELOPMENT OPTIONS">;
+def internal_Group : OptionGroup<"<clang internal options>">;
+def internal_driver_Group : OptionGroup<"<clang driver internal options>">,
+  Group<internal_Group>, HelpText<"DRIVER OPTIONS">;
+def internal_debug_Group :
+  OptionGroup<"<clang debug/development internal options>">,
+  Group<internal_Group>, HelpText<"DEBUG/DEVELOPMENT OPTIONS">;
 
-class CCCDriverOpt : Group<ccc_driver_Group>, Flags<[DriverOption, HelpHidden]>;
-def driver_mode : Joined<["--"], "driver-mode=">, CCCDriverOpt,
-  HelpText<"Set the driver mode to either 'gcc', 'g++', 'cpp' or 'cl'">;
-def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, CCCDriverOpt,
+class InternalDriverOpt : Group<internal_driver_Group>,
+  Flags<[DriverOption, HelpHidden]>;
+def driver_mode : Joined<["--"], "driver-mode=">, InternalDriverOpt,
+  HelpText<"Set the driver mode to either 'gcc', 'g++', 'cpp', or 'cl'">;
+def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, InternalDriverOpt,
   HelpText<"Name for native GCC compiler">,
   MetaVarName<"<gcc-path>">;
-def ccc_clang_archs : Separate<["-"], "ccc-clang-archs">, CCCDriverOpt,
+def ccc_clang_archs : Separate<["-"], "ccc-clang-archs">, InternalDriverOpt,
   HelpText<"Comma separate list of architectures to use the clang compiler for">,
   MetaVarName<"<arch-list>">;
-def ccc_pch_is_pch : Flag<["-"], "ccc-pch-is-pch">, CCCDriverOpt,
+def ccc_pch_is_pch : Flag<["-"], "ccc-pch-is-pch">, InternalDriverOpt,
   HelpText<"Use lazy PCH for precompiled headers">;
-def ccc_pch_is_pth : Flag<["-"], "ccc-pch-is-pth">, CCCDriverOpt,
+def ccc_pch_is_pth : Flag<["-"], "ccc-pch-is-pth">, InternalDriverOpt,
   HelpText<"Use pretokenized headers for precompiled headers">;
 
-class CCCDebugOpt : Group<ccc_debug_Group>, Flags<[DriverOption, HelpHidden]>;
-def ccc_install_dir : Separate<["-"], "ccc-install-dir">, CCCDebugOpt,
+class InternalDebugOpt : Group<internal_debug_Group>,
+  Flags<[DriverOption, HelpHidden]>;
+def ccc_install_dir : Separate<["-"], "ccc-install-dir">, InternalDebugOpt,
   HelpText<"Simulate installation in the given directory">;
-def ccc_print_options : Flag<["-"], "ccc-print-options">, CCCDebugOpt,
+def ccc_print_options : Flag<["-"], "ccc-print-options">, InternalDebugOpt,
   HelpText<"Dump parsed command line arguments">;
-def ccc_print_phases : Flag<["-"], "ccc-print-phases">, CCCDebugOpt,
+def ccc_print_phases : Flag<["-"], "ccc-print-phases">, InternalDebugOpt,
   HelpText<"Dump list of actions to perform">;
-def ccc_print_bindings : Flag<["-"], "ccc-print-bindings">, CCCDebugOpt,
+def ccc_print_bindings : Flag<["-"], "ccc-print-bindings">, InternalDebugOpt,
   HelpText<"Show bindings of tools to actions">;
 
-def ccc_arcmt_check : Flag<["-"], "ccc-arcmt-check">, CCCDriverOpt,
+def ccc_arcmt_check : Flag<["-"], "ccc-arcmt-check">, InternalDriverOpt,
   HelpText<"Check for ARC migration issues that need manual handling">;
-def ccc_arcmt_modify : Flag<["-"], "ccc-arcmt-modify">, CCCDriverOpt,
+def ccc_arcmt_modify : Flag<["-"], "ccc-arcmt-modify">, InternalDriverOpt,
   HelpText<"Apply modifications to files to conform to ARC">;
 def ccc_arrmt_check : Flag<["-"], "ccc-arrmt-check">, Alias<ccc_arcmt_check>;
 def ccc_arrmt_modify : Flag<["-"], "ccc-arrmt-modify">, Alias<ccc_arcmt_modify>;
-def ccc_arcmt_migrate : Separate<["-"], "ccc-arcmt-migrate">, CCCDriverOpt,
+def ccc_arcmt_migrate : Separate<["-"], "ccc-arcmt-migrate">, InternalDriverOpt,
   HelpText<"Apply modifications and produces temporary files that conform to ARC">;
 def arcmt_migrate_report_output : Separate<["-"], "arcmt-migrate-report-output">,
   HelpText<"Output path for the plist report">,  Flags<[CC1Option]>;
@@ -148,7 +151,8 @@ def arcmt_migrate_emit_arc_errors : Flag<["-"], "arcmt-migrate-emit-errors">,
 
 def _migrate : Flag<["--"], "migrate">, Flags<[DriverOption]>,
   HelpText<"Run the migrator">;
-def ccc_objcmt_migrate : Separate<["-"], "ccc-objcmt-migrate">, CCCDriverOpt,
+def ccc_objcmt_migrate : Separate<["-"], "ccc-objcmt-migrate">,
+  InternalDriverOpt,
   HelpText<"Apply modifications and produces temporary files to migrate to "
    "modern ObjC syntax">;
 def objcmt_migrate_literals : Flag<["-"], "objcmt-migrate-literals">, Flags<[CC1Option]>,
@@ -158,7 +162,7 @@ def objcmt_migrate_subscripting : Flag<["-"], "objcmt-migrate-subscripting">, Fl
 def objcmt_migrate_property : Flag<["-"], "objcmt-migrate-property">, Flags<[CC1Option]>,
   HelpText<"Enable migration to modern ObjC property">;
 // Make sure all other -ccc- options are rejected.
-def ccc_ : Joined<["-"], "ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;
+def ccc_ : Joined<["-"], "ccc-">, Group<internal_Group>, Flags<[Unsupported]>;
 
 // Standard Options
 
