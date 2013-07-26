@@ -1539,8 +1539,8 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
     }
   } else if (FPExtInst *FPEI = dyn_cast<FPExtInst>(Op1)) {
     if (Value *V = dyn_castFNegVal(FPEI->getOperand(0))) {
-      Value *NewTrunc = Builder->CreateFPExt(V, I.getType());
-      return BinaryOperator::CreateFAdd(Op0, NewTrunc);
+      Value *NewExt = Builder->CreateFPExt(V, I.getType());
+      return BinaryOperator::CreateFAdd(Op0, NewExt);
     }
   }
 
