@@ -4604,7 +4604,7 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
             *status = invalid_args;
         return nullptr;
     }
-    size_t internal_size = n != nullptr ? *n : 0;
+    size_t internal_size = buf != nullptr ? *n : 0;
     arena<bs> a;
     struct Db
     {
@@ -4663,7 +4663,11 @@ __cxa_demangle(const char* mangled_name, char* buf, size_t* n, int* status)
                 buf = nullptr;
             }
             else
+            {
                 buf = newbuf;
+                if (n != nullptr)
+                    *n = sz;
+            }
         }
         if (buf != nullptr)
         {
