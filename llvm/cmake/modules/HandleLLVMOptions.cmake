@@ -168,10 +168,8 @@ if( MSVC )
     # Disabled warnings.
     -wd4146 # Suppress 'unary minus operator applied to unsigned type, result still unsigned'
     -wd4180 # Suppress 'qualifier applied to function type has no meaning; ignored'
-    -wd4181 # Suppress 'qualifier applied to reference type; ignored'
     -wd4244 # Suppress ''argument' : conversion from 'type1' to 'type2', possible loss of data'
     -wd4267 # Suppress ''var' : conversion from 'size_t' to 'type', possible loss of data'
-    -wd4275 # Suppress 'An exported class was derived from a class that was not exported.'
     -wd4345 # Suppress 'behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized'
     -wd4351 # Suppress 'new behavior: elements of array 'array' will be default initialized'
     -wd4355 # Suppress ''this' : used in base member initializer list'
