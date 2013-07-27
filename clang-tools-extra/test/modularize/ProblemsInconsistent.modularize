@@ -17,14 +17,14 @@ Inputs/InconsistentHeader2.h
 # CHECK-NEXT:     {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentHeader1.h
 # CHECK-NEXT:       {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h
 # CHECK-NEXT: {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h:4:9:
-# CHECK-NEXT: #define FUNC_STYLE(a, b) a || b
+# CHECK-NEXT: #define FUNC_STYLE(a, b) a||b
 # CHECK-NEXT:         ^
 # CHECK-NEXT: Macro defined here.
 # CHECK-NEXT:   'FUNC_STYLE(1, 0);' expanded to: '1&&0' with respect to these inclusion paths:
 # CHECK-NEXT:     {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentHeader2.h
 # CHECK-NEXT:       {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h
 # CHECK-NEXT: {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h:8:9:
-# CHECK-NEXT: #define FUNC_STYLE(a, b) a &&b
+# CHECK-NEXT: #define FUNC_STYLE(a, b) a&&b
 # CHECK-NEXT:         ^
 # CHECK-NEXT: Macro defined here.
 # CHECK-NEXT: {{.*}}{{[/\\]}}Inputs{{[/\\]}}InconsistentSubHeader.h:11:5:
