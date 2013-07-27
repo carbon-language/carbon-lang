@@ -31,23 +31,24 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.dbg.sp = !{!0}
 
-!0 = metadata !{i32 589870, i32 0, metadata !1, metadata !"foo", metadata !"foo", metadata !"", metadata !1, i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32)* @foo} ; [ DW_TAG_subprogram ]
-!1 = metadata !{i32 589865, metadata !"b.c", metadata !"/private/tmp", metadata !2} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 589841, i32 0, i32 12, metadata !"b.c", metadata !"/private/tmp", metadata !"clang", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
-!3 = metadata !{i32 589845, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
+!0 = metadata !{i32 589870, metadata !20, metadata !1, metadata !"foo", metadata !"foo", metadata !"", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32)* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 589865, metadata !20} ; [ DW_TAG_file_type ]
+!2 = metadata !{i32 589841, metadata !20, i32 12, metadata !"clang", i1 true, metadata !"", i32 0, metadata !8, metadata !8, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{i32 589845, metadata !20, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
-!5 = metadata !{i32 589860, metadata !2, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
+!5 = metadata !{i32 589860, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !6 = metadata !{i32 590081, metadata !0, metadata !"i", metadata !1, i32 16777218, metadata !5, i32 0} ; [ DW_TAG_arg_variable ]
 !7 = metadata !{i32 2, i32 13, metadata !0, null}
 !8 = metadata !{i32 0}
 !9 = metadata !{i32 590080, metadata !10, metadata !"k", metadata !1, i32 3, metadata !5, i32 0} ; [ DW_TAG_auto_variable ]
-!10 = metadata !{i32 589835, metadata !0, i32 2, i32 16, metadata !1, i32 0} ; [ DW_TAG_lexical_block ]
+!10 = metadata !{i32 589835, metadata !20, metadata !0, i32 2, i32 16, i32 0} ; [ DW_TAG_lexical_block ]
 !11 = metadata !{i32 3, i32 12, metadata !10, null}
 !12 = metadata !{i32 4, i32 3, metadata !10, null}
 !13 = metadata !{i32 5, i32 5, metadata !14, null}
-!14 = metadata !{i32 589835, metadata !10, i32 4, i32 10, metadata !1, i32 1} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 589835, metadata !20, metadata !10, i32 4, i32 10, i32 1} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 6, i32 3, metadata !14, null}
 !16 = metadata !{i32 7, i32 5, metadata !17, null}
-!17 = metadata !{i32 589835, metadata !10, i32 6, i32 10, metadata !1, i32 2} ; [ DW_TAG_lexical_block ]
+!17 = metadata !{i32 589835, metadata !20, metadata !10, i32 6, i32 10, i32 2} ; [ DW_TAG_lexical_block ]
 !18 = metadata !{i32 8, i32 3, metadata !17, null}
 !19 = metadata !{i32 9, i32 3, metadata !10, null}
+!20 = metadata !{metadata !"b.c", metadata !"/private/tmp"}

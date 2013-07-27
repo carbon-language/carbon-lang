@@ -908,6 +908,10 @@ void DebugInfoFinder::processModule(const Module &M) {
       return;
     }
   }
+  if (NamedMDNode *SP_Nodes = M.getNamedMetadata("llvm.dbg.sp")) {
+    for (unsigned i = 0, e = SP_Nodes->getNumOperands(); i != e; ++i)
+      processSubprogram(DISubprogram(SP_Nodes->getOperand(i)));
+  }
 }
 
 /// processLocation - Process DILocation.
@@ -1029,7 +1033,7 @@ void DebugInfoFinder::processValue(const DbgValueInst *DVI) {
 
 /// addType - Add type into Tys.
 bool DebugInfoFinder::addType(DIType DT) {
-  if (!DT.isValid())
+  if (!DT)
     return false;
 
   if (!NodesSeen.insert(DT))
@@ -1041,6 +1045,8 @@ bool DebugInfoFinder::addType(DIType DT) {
 
 /// addCompileUnit - Add compile unit into CUs.
 bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
+  if (!CU)
+    return false;
   if (!NodesSeen.insert(CU))
     return false;
 
@@ -1050,7 +1056,7 @@ bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
 
 /// addGlobalVariable - Add global variable into GVs.
 bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
-  if (!DIDescriptor(DIG).isGlobalVariable())
+  if (!DIG)
     return false;
 
   if (!NodesSeen.insert(DIG))
@@ -1062,7 +1068,7 @@ bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
 
 // addSubprogram - Add subprgoram into SPs.
 bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
-  if (!DIDescriptor(SP).isSubprogram())
+  if (!SP)
     return false;
 
   if (!NodesSeen.insert(SP))

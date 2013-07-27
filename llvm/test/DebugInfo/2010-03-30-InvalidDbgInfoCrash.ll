@@ -8,12 +8,14 @@ entry:
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
+!llvm.dbg.cu = !{!5}
+
 !0 = metadata !{{ [0 x i8] }** undef}
 !1 = metadata !{i32 524544, metadata !2, metadata !"x", metadata !4, i32 11, metadata !9} ; [ DW_TAG_auto_variable ]
 !2 = metadata !{i32 524299, metadata !20, metadata !3, i32 8, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !3 = metadata !{i32 524334, metadata !20, null, metadata !"baz", metadata !"baz", metadata !"baz", i32 8, metadata !6, i1 true, i1 true, i32 0, i32 0, null, i1 false, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !4 = metadata !{i32 524329, metadata !20} ; [ DW_TAG_file_type ]
-!5 = metadata !{i32 524305, i32 0, i32 1, metadata !"2007-12-VarArrayDebug.c", metadata !"/Users/sabre/llvm/test/FrontendC/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!5 = metadata !{i32 524305, metadata !20, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !21, metadata !21, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !6 = metadata !{i32 524309, metadata !20, metadata !4, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !7 = metadata !{null, metadata !8}
 !8 = metadata !{i32 524324, metadata !20, metadata !4, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -29,3 +31,4 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !18 = metadata !{metadata !"llvm.mdnode.fwdref.19"}
 !19 = metadata !{metadata !"llvm.mdnode.fwdref.23"}
 !20 = metadata !{metadata !"2007-12-VarArrayDebug.c", metadata !"/Users/sabre/llvm/test/FrontendC/"}
+!21 = metadata !{i32 0}

@@ -35,9 +35,8 @@ invoke.cont44:                                    ; preds = %if.end
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 786449, metadata !6, i32 4, metadata !"clang version 3.3 (trunk 168984) (llvm/trunk 168983)", i1 true, metadata !"", i32 0, metadata !1, metadata !7, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Bullet/MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp] [DW_LANG_C_plus_plus]
-!1 = metadata !{metadata !2}
-!2 = metadata !{null, null}
+!0 = metadata !{i32 786449, metadata !6, i32 4, metadata !"clang version 3.3 (trunk 168984) (llvm/trunk 168983)", i1 true, metadata !"", i32 0, metadata !2, metadata !7, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Bullet/MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp] [DW_LANG_C_plus_plus]
+!2 = metadata !{null}
 !3 = metadata !{i32 786688, null, metadata !"callback", null, i32 214, metadata !4, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [callback] [line 214]
 !4 = metadata !{i32 786451, metadata !6, null, metadata !"btCompoundLeafCallback", i32 90, i64 512, i64 64, i32 0, i32 0, null, null, i32 0, null, null} ; [ DW_TAG_structure_type ] [btCompoundLeafCallback] [line 90, size 512, align 64, offset 0] [from ]
 !5 = metadata !{i32 786473, metadata !6} ; [ DW_TAG_file_type ]

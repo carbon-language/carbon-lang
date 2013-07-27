@@ -81,7 +81,7 @@ for.end:
 
 !0 = metadata !{i32 589870, metadata !18, metadata !1, metadata !"tak", metadata !"tak", metadata !"", i32 32, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32, i32, i32)* @tak, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 589865, metadata !18} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 589841, i32 0, i32 12, metadata !"/Volumes/Lalgate/cj/llvm/projects/llvm-test/SingleSource/Benchmarks/BenchmarkGame/recursive.c", metadata !"/Volumes/Lalgate/cj/D/projects/llvm-test/SingleSource/Benchmarks/BenchmarkGame", metadata !"clang version 2.9 (trunk 125492)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 589841, metadata !18, i32 12, metadata !"clang version 2.9 (trunk 125492)", i1 true, metadata !"", i32 0, metadata !19, metadata !19, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 589845, metadata !18, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 589860, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -98,3 +98,4 @@ for.end:
 !16 = metadata !{i32 36, i32 3, metadata !13, null}
 !17 = metadata !{i32 37, i32 1, metadata !13, null}
 !18 = metadata !{metadata !"/Volumes/Lalgate/cj/llvm/projects/llvm-test/SingleSource/Benchmarks/BenchmarkGame/recursive.c", metadata !"/Volumes/Lalgate/cj/D/projects/llvm-test/SingleSource/Benchmarks/BenchmarkGame"}
+!19 = metadata !{i32 0}

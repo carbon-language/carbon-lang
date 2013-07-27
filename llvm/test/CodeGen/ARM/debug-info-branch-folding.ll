@@ -40,11 +40,11 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786478, metadata !54, null, metadata !"test0001", metadata !"test0001", metadata !"", i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !54} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !54, i32 12, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, null, null, metadata !50, null,  null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !54, i32 12, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, metadata !17, metadata !17, metadata !50, null,  null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !54, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786454, metadata !54, metadata !2, metadata !"v4f32", i32 14, i64 0, i64 0, i64 0, i32 0, metadata !6} ; [ DW_TAG_typedef ]
-!6 = metadata !{i32 786691, metadata !2, metadata !"", metadata !2, i32 0, i64 128, i64 128, i32 0, i32 0, metadata !7, metadata !8, i32 0, i32 0} ; [ DW_TAG_vector_type ]
+!6 = metadata !{i32 786433, metadata !54, metadata !2, metadata !"", i32 0, i64 128, i64 128, i32 0, i32 0, metadata !7, metadata !8, i32 0, i32 0} ; [ DW_TAG_vector_type ]
 !7 = metadata !{i32 786468, null, metadata !2, metadata !"float", i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !8 = metadata !{metadata !9}
 !9 = metadata !{i32 786465, i64 0, i64 4}         ; [ DW_TAG_subrange_type ]

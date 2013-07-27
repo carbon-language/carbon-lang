@@ -34,13 +34,13 @@ for.end:                                          ; preds = %for.body
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 
-!0 = metadata !{i32 786449, i32 0, i32 12, metadata !"hwloop-dbg.c", metadata !"/usr2/kparzysz/s.hex/t", metadata !"QuIC LLVM Hexagon Clang version 6.1-pre-unknown, (git://git-hexagon-aus.quicinc.com/llvm/clang-mainline.git e9382867661454cdf44addb39430741578e9765c) (llvm/llvm-mainline.git 36412bb1fcf03ed426d4437b41198bae066675ac)", i1 true, i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c] [DW_LANG_C99]
-!1 = metadata !{metadata !2}
+!llvm.dbg.cu = !{!0}
+
+!0 = metadata !{i32 786449, metadata !28, i32 12, metadata !"QuIC LLVM Hexagon Clang version 6.1-pre-unknown, (git://git-hexagon-aus.quicinc.com/llvm/clang-mainline.git e9382867661454cdf44addb39430741578e9765c) (llvm/llvm-mainline.git 36412bb1fcf03ed426d4437b41198bae066675ac)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c] [DW_LANG_C99]
 !2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5}
-!5 = metadata !{i32 786478, metadata !6, null, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (i32*, i32*)* @foo, null, null, metadata !11, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!6 = metadata !{i32 786473, metadata !"hwloop-dbg.c", metadata !"/usr2/kparzysz/s.hex/t", null} ; [ DW_TAG_file_type ]
+!3 = metadata !{metadata !5}
+!5 = metadata !{i32 786478, metadata !28, null, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (i32*, i32*)* @foo, null, null, metadata !11, i32 1} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
+!6 = metadata !{i32 786473, metadata !28} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{null, metadata !9, metadata !9}
 !9 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !10} ; [ DW_TAG_pointer_type ] [line 0, size 32, align 32, offset 0] [from int]
@@ -50,12 +50,13 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !13 = metadata !{i32 786689, metadata !5, metadata !"a", metadata !6, i32 16777217, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [a] [line 1]
 !14 = metadata !{i32 786689, metadata !5, metadata !"b", metadata !6, i32 33554433, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [b] [line 1]
 !15 = metadata !{i32 786688, metadata !16, metadata !"i", metadata !6, i32 2, metadata !10, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [i] [line 2]
-!16 = metadata !{i32 786443, metadata !5, i32 1, i32 26, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
+!16 = metadata !{i32 786443, metadata !28, metadata !5, i32 1, i32 26, i32 0} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
 !17 = metadata !{i32 1, i32 15, metadata !5, null}
 !18 = metadata !{i32 1, i32 23, metadata !5, null}
 !19 = metadata !{i32 3, i32 8, metadata !20, null}
-!20 = metadata !{i32 786443, metadata !16, i32 3, i32 3, metadata !6, i32 1} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
+!20 = metadata !{i32 786443, metadata !28, metadata !16, i32 3, i32 3, i32 1} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
 !21 = metadata !{i32 4, i32 5, metadata !22, null}
-!22 = metadata !{i32 786443, metadata !20, i32 3, i32 28, metadata !6, i32 2} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
+!22 = metadata !{i32 786443, metadata !28, metadata !20, i32 3, i32 28, i32 2} ; [ DW_TAG_lexical_block ] [/usr2/kparzysz/s.hex/t/hwloop-dbg.c]
 !26 = metadata !{i32 3, i32 23, metadata !20, null}
 !27 = metadata !{i32 6, i32 1, metadata !16, null}
+!28 = metadata !{metadata !"hwloop-dbg.c", metadata !"/usr2/kparzysz/s.hex/t"}

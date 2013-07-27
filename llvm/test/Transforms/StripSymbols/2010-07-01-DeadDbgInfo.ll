@@ -18,14 +18,15 @@ entry:
   ret i32 %.0, !dbg !20
 }
 
+!llvm.dbg.cu = !{!2}
 !llvm.dbg.sp = !{!0, !5, !9}
 !llvm.dbg.lv.bar = !{!12}
 !llvm.dbg.lv.foo = !{!14}
 !llvm.dbg.gv = !{!15, !16}
 
-!0 = metadata !{i32 524334, metadata !1, null, metadata !"bar", metadata !"bar", metadata !"", i32 5, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
+!0 = metadata !{i32 524334, metadata !22, null, metadata !"bar", metadata !"bar", metadata !"", i32 5, metadata !3, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 524329, metadata !22} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 524305, i32 0, i32 1, metadata !"g.c", metadata !"/tmp/", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 524305, metadata !22, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !4, metadata !4, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 524309, metadata !22, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !4 = metadata !{null}
 !5 = metadata !{i32 524334, metadata !22, null, metadata !"fn", metadata !"fn", metadata !"fn", i32 6, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, i32 ()* @fn, null, null, null, i32 0} ; [ DW_TAG_subprogram ]

@@ -6,8 +6,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 !llvm.dbg.cu = !{!0}
 
-!0 = metadata !{i32 720913, metadata !4, i32 12, metadata !"clang version 3.1 (trunk 143523)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !1, metadata !1, null, metadata !""} ; [ DW_TAG_compile_unit ]
-!1 = metadata !{metadata !2}
+!0 = metadata !{i32 720913, metadata !4, i32 12, metadata !"clang version 3.1 (trunk 143523)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !2 = metadata !{i32 0}
 !3 = metadata !{i32 786473, metadata !4} ; [ DW_TAG_file_type ]
 !4 = metadata !{metadata !"empty.c", metadata !"/home/nlewycky"}

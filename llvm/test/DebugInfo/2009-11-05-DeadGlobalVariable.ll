@@ -19,9 +19,8 @@ entry:
 !9 = metadata !{i32 720932, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !10 = metadata !{metadata !11}
 !11 = metadata !{i32 720932}                      ; [ DW_TAG_base_type ]
-!12 = metadata !{metadata !13}
-!13 = metadata !{metadata !14}
-!14 = metadata !{i32 720948, i32 0, metadata !5, metadata !"bar", metadata !"bar", metadata !"", metadata !6, i32 2, metadata !9, i32 1, i32 1, null} ; [ DW_TAG_variable ]
+!12 = metadata !{metadata !14}
+!14 = metadata !{i32 720948, i32 0, metadata !5, metadata !"bar", metadata !"bar", metadata !"", metadata !6, i32 2, metadata !9, i32 1, i32 1, null, null} ; [ DW_TAG_variable ]
 !15 = metadata !{i32 3, i32 3, metadata !16, null}
 !16 = metadata !{i32 720907, metadata !17, metadata !5, i32 1, i32 11, i32 0} ; [ DW_TAG_lexical_block ]
 !17 = metadata !{metadata !"fb.c", metadata !"/private/tmp"}
