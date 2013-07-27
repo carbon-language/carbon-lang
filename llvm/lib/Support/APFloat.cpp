@@ -1354,6 +1354,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
   case PackCategoriesIntoKey(fcInfinity, fcNaN):
+    sign = false;
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
@@ -1472,11 +1473,13 @@ APFloat::multiplySpecials(const APFloat &rhs)
   case PackCategoriesIntoKey(fcNaN, fcNormal):
   case PackCategoriesIntoKey(fcNaN, fcInfinity):
   case PackCategoriesIntoKey(fcNaN, fcNaN):
+    sign = false;
     return opOK;
 
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
   case PackCategoriesIntoKey(fcInfinity, fcNaN):
+    sign = false;
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
@@ -1510,21 +1513,20 @@ APFloat::divideSpecials(const APFloat &rhs)
   default:
     llvm_unreachable(0);
 
-  case PackCategoriesIntoKey(fcNaN, fcZero):
-  case PackCategoriesIntoKey(fcNaN, fcNormal):
-  case PackCategoriesIntoKey(fcNaN, fcInfinity):
-  case PackCategoriesIntoKey(fcNaN, fcNaN):
-  case PackCategoriesIntoKey(fcInfinity, fcZero):
-  case PackCategoriesIntoKey(fcInfinity, fcNormal):
-  case PackCategoriesIntoKey(fcZero, fcInfinity):
-  case PackCategoriesIntoKey(fcZero, fcNormal):
-    return opOK;
-
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
   case PackCategoriesIntoKey(fcInfinity, fcNaN):
     category = fcNaN;
     copySignificand(rhs);
+  case PackCategoriesIntoKey(fcNaN, fcZero):
+  case PackCategoriesIntoKey(fcNaN, fcNormal):
+  case PackCategoriesIntoKey(fcNaN, fcInfinity):
+  case PackCategoriesIntoKey(fcNaN, fcNaN):
+    sign = false;
+  case PackCategoriesIntoKey(fcInfinity, fcZero):
+  case PackCategoriesIntoKey(fcInfinity, fcNormal):
+  case PackCategoriesIntoKey(fcZero, fcInfinity):
+  case PackCategoriesIntoKey(fcZero, fcNormal):
     return opOK;
 
   case PackCategoriesIntoKey(fcNormal, fcInfinity):
@@ -1564,6 +1566,7 @@ APFloat::modSpecials(const APFloat &rhs)
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
   case PackCategoriesIntoKey(fcInfinity, fcNaN):
+    sign = false;
     category = fcNaN;
     copySignificand(rhs);
     return opOK;
