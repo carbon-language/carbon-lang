@@ -900,6 +900,7 @@ int BoUpSLP::getTreeCost() {
 
   // Don't vectorize tiny trees. Small load/store chains or consecutive stores
   // of constants will be vectoried in SelectionDAG in MergeConsecutiveStores.
+  // The SelectionDAG vectorizer can only handle pairs (trees of height = 2).
   if (VectorizableTree.size() < 3) {
     if (!VectorizableTree.size()) {
       assert(!ExternalUses.size() && "We should not have any external users");
