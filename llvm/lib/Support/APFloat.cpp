@@ -778,6 +778,7 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
 APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value) {
   initialize(&ourSemantics);
   sign = 0;
+  category = fcNormal;
   zeroSignificand();
   exponent = ourSemantics.precision - 1;
   significandParts()[0] = value;
@@ -845,7 +846,6 @@ APFloat::significandParts()
 void
 APFloat::zeroSignificand()
 {
-  category = fcNormal;
   APInt::tcSet(significandParts(), 0, partCount());
 }
 
@@ -2301,9 +2301,9 @@ APFloat::convertFromHexadecimalString(StringRef s, roundingMode rounding_mode)
 {
   lostFraction lost_fraction = lfExactlyZero;
 
+  category = fcNormal;
   zeroSignificand();
   exponent = 0;
-  category = fcNormal;
 
   integerPart *significand = significandParts();
   unsigned partsCount = partCount();
@@ -2512,6 +2512,7 @@ APFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode)
              (D.normalizedExponent + 1) * 28738 <=
                8651 * (semantics->minExponent - (int) semantics->precision)) {
     /* Underflow to zero and round.  */
+    category = fcNormal;
     zeroSignificand();
     fs = normalize(rounding_mode, lfLessThanHalf);
 
@@ -3398,6 +3399,7 @@ APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
   //   exponent = 0..0
   //   significand = 10..0
 
+  Val.category = fcNormal;
   Val.zeroSignificand();
   Val.sign = Negative;
   Val.exponent = Sem.minExponent;
