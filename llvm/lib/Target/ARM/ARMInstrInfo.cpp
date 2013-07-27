@@ -106,13 +106,14 @@ namespace {
       if (TM->getRelocationModel() != Reloc::PIC_)
         return false;
 
-      LLVMContext* Context = &MF.getFunction()->getContext();
-      GlobalValue *GV = new GlobalVariable(Type::getInt32Ty(*Context), false,
-                                           GlobalValue::ExternalLinkage, 0,
-                                           "_GLOBAL_OFFSET_TABLE_");
-      unsigned Id = AFI->createPICLabelUId();
-      ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(GV, Id);
-      unsigned Align = TM->getDataLayout()->getPrefTypeAlignment(GV->getType());
+      LLVMContext *Context = &MF.getFunction()->getContext();
+      unsigned ARMPCLabelIndex = AFI->createPICLabelUId();
+      unsigned PCAdj = TM->getSubtarget<ARMSubtarget>().isThumb() ? 4 : 8;
+      ARMConstantPoolValue *CPV = ARMConstantPoolSymbol::Create(
+          *Context, "_GLOBAL_OFFSET_TABLE_", ARMPCLabelIndex, PCAdj);
+
+      unsigned Align = TM->getDataLayout()
+          ->getPrefTypeAlignment(Type::getInt32PtrTy(*Context));
       unsigned Idx = MF.getConstantPool()->getConstantPoolIndex(CPV, Align);
 
       MachineBasicBlock &FirstMBB = MF.front();
