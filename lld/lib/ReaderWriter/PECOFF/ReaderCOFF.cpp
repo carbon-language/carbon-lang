@@ -334,6 +334,13 @@ private:
     for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
          si.increment(ec)) {
       const coff_section *section = _obj->getCOFFSection(si);
+
+      // Skip there's no atom for the section. Currently we do not create any
+      // atoms for some sections, such as "debug$S", and such sections need to
+      // be skipped here too.
+      if (sectionToAtoms.find(section) == sectionToAtoms.end())
+        continue;
+
       for (auto ri = si->begin_relocations(), re = si->end_relocations();
            ri != re; ri.increment(ec)) {
         const coff_relocation *rel = _obj->getCOFFRelocation(ri);
