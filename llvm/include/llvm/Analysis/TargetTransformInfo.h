@@ -171,6 +171,12 @@ public:
   /// comments for a detailed explanation of the cost values.
   virtual unsigned getUserCost(const User *U) const;
 
+  /// \brief hasBranchDivergence - Return true if branch divergence exists.
+  /// Branch divergence has a significantly negative impact on GPU performance
+  /// when threads in the same wavefront take different paths due to conditional
+  /// branches.
+  virtual bool hasBranchDivergence() const;
+
   /// \brief Test whether calls to a function lower to actual program function
   /// calls.
   ///

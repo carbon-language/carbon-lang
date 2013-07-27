@@ -65,6 +65,8 @@ public:
     return this;
   }
 
+  virtual bool hasBranchDivergence() const;
+
   /// \name Scalar TTI Implementations
   /// @{
 
@@ -124,6 +126,7 @@ llvm::createBasicTargetTransformInfoPass(const TargetMachine *TM) {
   return new BasicTTI(TM);
 }
 
+bool BasicTTI::hasBranchDivergence() const { return false; }
 
 bool BasicTTI::isLegalAddImmediate(int64_t imm) const {
   return getTLI()->isLegalAddImmediate(imm);

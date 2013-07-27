@@ -88,6 +88,10 @@ unsigned TargetTransformInfo::getUserCost(const User *U) const {
   return PrevTTI->getUserCost(U);
 }
 
+bool TargetTransformInfo::hasBranchDivergence() const {
+  return PrevTTI->hasBranchDivergence();
+}
+
 bool TargetTransformInfo::isLoweredToCall(const Function *F) const {
   return PrevTTI->isLoweredToCall(F);
 }
@@ -419,6 +423,8 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
                             U->getNumOperands() == 1 ?
                                 U->getOperand(0)->getType() : 0);
   }
+
+  bool hasBranchDivergence() const { return false; }
 
   bool isLoweredToCall(const Function *F) const {
     // FIXME: These should almost certainly not be handled here, and instead

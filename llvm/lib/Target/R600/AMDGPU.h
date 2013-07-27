@@ -45,6 +45,10 @@ FunctionPass *createAMDGPUConvertToISAPass(TargetMachine &tm);
 FunctionPass *createAMDGPUIndirectAddressingPass(TargetMachine &tm);
 FunctionPass *createAMDGPUISelDag(TargetMachine &tm);
 
+/// \brief Creates an AMDGPU-specific Target Transformation Info pass.
+ImmutablePass *
+createAMDGPUTargetTransformInfoPass(const AMDGPUTargetMachine *TM);
+
 extern Target TheAMDGPUTarget;
 
 } // End namespace llvm

@@ -61,6 +61,9 @@ public:
   }
   virtual const DataLayout *getDataLayout() const { return &Layout; }
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+
+  /// \brief Register R600 analysis passes with a pass manager.
+  virtual void addAnalysisPasses(PassManagerBase &PM);
 };
 
 } // End namespace llvm

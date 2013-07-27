@@ -667,6 +667,9 @@ int main(int argc, char **argv) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (TD)
       FPasses->add(new DataLayout(*TD));
+    if (TM.get())
+      TM->addAnalysisPasses(*FPasses);
+
   }
 
   if (PrintBreakpoints) {

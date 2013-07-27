@@ -39,6 +39,7 @@ class DataLayout;
 class TargetLibraryInfo;
 class TargetTransformInfo;
 class DIBuilder;
+class AliasAnalysis;
 
 template<typename T> class SmallVectorImpl;
   
@@ -136,7 +137,7 @@ bool EliminateDuplicatePHINodes(BasicBlock *BB);
 /// the basic block that was pointed to.
 ///
 bool SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
-                 const DataLayout *TD = 0);
+                 const DataLayout *TD = 0, AliasAnalysis *AA = 0);
 
 /// FoldBranchToCommonDest - If this basic block is ONLY a setcc and a branch,
 /// and if a predecessor branches to us and one of our successors, fold the
