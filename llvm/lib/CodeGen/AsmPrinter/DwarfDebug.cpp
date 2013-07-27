@@ -951,9 +951,9 @@ void DwarfDebug::collectDeadVariables() {
         for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
           DIVariable DV(Variables.getElement(vi));
           if (!DV.isVariable()) continue;
-          DbgVariable *NewVar = new DbgVariable(DV, NULL);
+          DbgVariable NewVar(DV, NULL);
           if (DIE *VariableDIE =
-              SPCU->constructVariableDIE(NewVar, Scope->isAbstractScope()))
+              SPCU->constructVariableDIE(&NewVar, Scope->isAbstractScope()))
             ScopeDIE->addChild(VariableDIE);
         }
       }
