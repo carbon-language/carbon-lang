@@ -514,8 +514,7 @@ unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const {
   if (Ty->isPointerTy())
     return getTypeSizeInBits(Ty);
 
-  Type *EleTy = cast<VectorType>(Ty)->getElementType();
-  return getTypeSizeInBits(EleTy);
+  return getTypeSizeInBits(Ty->getScalarType());
 }
 
 /*!
