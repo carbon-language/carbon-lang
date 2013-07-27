@@ -945,7 +945,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
     //   x = extract val n
     //   newv = insert newv, x, i
     llvm::VectorType *RTy = llvm::VectorType::get(LTy->getElementType(),
-                                                        MTy->getNumElements());
+                                                  MTy->getNumElements());
     Value* NewV = llvm::UndefValue::get(RTy);
     for (unsigned i = 0, e = MTy->getNumElements(); i != e; ++i) {
       Value *IIndx = Builder.getInt32(i);
