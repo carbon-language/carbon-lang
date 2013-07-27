@@ -1059,8 +1059,9 @@ static void addDIEODRSignature(MD5 &Hash, CompileUnit *CU, DIE *Die) {
   Hash.final(Result);
 
   // ... take the least significant 8 bytes and store those as the attribute.
-  uint64_t Signature;
-  memcpy(&Signature, &Result[8], 8);
+  // Our MD5 implementation always returns its results in little endian, swap
+  // bytes appropriately.
+  uint64_t Signature = *reinterpret_cast<support::ulittle64_t *>(Result + 8);
 
   // FIXME: This should be added onto the type unit, not the type, but this
   // works as an intermediate stage.
