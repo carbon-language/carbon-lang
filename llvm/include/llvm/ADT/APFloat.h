@@ -117,7 +117,7 @@ enum lostFraction { // Example of truncated bits:
 /// New formats: x87 in single and double precision mode (IEEE apart from
 /// extended exponent range) (hard).
 ///
-/// New operations: sqrt, IEEE remainder, C90 fmod, nextafter, nexttoward.
+/// New operations: sqrt, IEEE remainder, C90 fmod, nexttoward.
 ///
 class APFloat {
 public:
