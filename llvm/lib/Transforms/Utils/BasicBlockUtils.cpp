@@ -14,6 +14,7 @@
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/CFG.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
@@ -233,22 +234,6 @@ void llvm::ReplaceInstWithInst(BasicBlock::InstListType &BIL,
 void llvm::ReplaceInstWithInst(Instruction *From, Instruction *To) {
   BasicBlock::iterator BI(From);
   ReplaceInstWithInst(From->getParent()->getInstList(), BI, To);
-}
-
-/// GetSuccessorNumber - Search for the specified successor of basic block BB
-/// and return its position in the terminator instruction's list of
-/// successors.  It is an error to call this with a block that is not a
-/// successor.
-unsigned llvm::GetSuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
-  TerminatorInst *Term = BB->getTerminator();
-#ifndef NDEBUG
-  unsigned e = Term->getNumSuccessors();
-#endif
-  for (unsigned i = 0; ; ++i) {
-    assert(i != e && "Didn't find edge?");
-    if (Term->getSuccessor(i) == Succ)
-      return i;
-  }
 }
 
 /// SplitEdge -  Split the edge connecting specified block. Pass P must
@@ -596,52 +581,6 @@ void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
     LPad->replaceAllUsesWith(Clone1);
     LPad->eraseFromParent();
   }
-}
-
-/// FindFunctionBackedges - Analyze the specified function to find all of the
-/// loop backedges in the function and return them.  This is a relatively cheap
-/// (compared to computing dominators and loop info) analysis.
-///
-/// The output is added to Result, as pairs of <from,to> edge info.
-void llvm::FindFunctionBackedges(const Function &F,
-     SmallVectorImpl<std::pair<const BasicBlock*,const BasicBlock*> > &Result) {
-  const BasicBlock *BB = &F.getEntryBlock();
-  if (succ_begin(BB) == succ_end(BB))
-    return;
-
-  SmallPtrSet<const BasicBlock*, 8> Visited;
-  SmallVector<std::pair<const BasicBlock*, succ_const_iterator>, 8> VisitStack;
-  SmallPtrSet<const BasicBlock*, 8> InStack;
-
-  Visited.insert(BB);
-  VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
-  InStack.insert(BB);
-  do {
-    std::pair<const BasicBlock*, succ_const_iterator> &Top = VisitStack.back();
-    const BasicBlock *ParentBB = Top.first;
-    succ_const_iterator &I = Top.second;
-
-    bool FoundNew = false;
-    while (I != succ_end(ParentBB)) {
-      BB = *I++;
-      if (Visited.insert(BB)) {
-        FoundNew = true;
-        break;
-      }
-      // Successor is in VisitStack, it's a back edge.
-      if (InStack.count(BB))
-        Result.push_back(std::make_pair(ParentBB, BB));
-    }
-
-    if (FoundNew) {
-      // Go down one level if there is a unvisited successor.
-      InStack.insert(BB);
-      VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
-    } else {
-      // Go up one level.
-      InStack.erase(VisitStack.pop_back_val().first);
-    }
-  } while (!VisitStack.empty());
 }
 
 /// FoldReturnIntoUncondBranch - This method duplicates the specified return
