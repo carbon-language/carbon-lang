@@ -208,6 +208,8 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
   Top.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
   Bot.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
 
+  delete Top.ResourceModel;
+  delete Bot.ResourceModel;
   Top.ResourceModel = new VLIWResourceModel(TM, DAG->getSchedModel());
   Bot.ResourceModel = new VLIWResourceModel(TM, DAG->getSchedModel());
 
