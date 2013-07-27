@@ -3051,10 +3051,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   unsigned PPWOldSize = PostPromotionWorklist.size();
   unsigned SPOldSize = SpeculatablePHIs.size();
   unsigned SSOldSize = SpeculatableSelects.size();
-
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
   unsigned NumUses = 0;
-#endif
 
   AllocaSliceRewriter Rewriter(*DL, S, *this, AI, *NewAI, BeginOffset,
                                EndOffset, IsVectorPromotable,
@@ -3066,24 +3063,18 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
     DEBUG(dbgs() << "  rewriting split ");
     DEBUG(S.printSlice(dbgs(), *SUI, ""));
     Promotable &= Rewriter.visit(*SUI);
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
     ++NumUses;
-#endif
   }
   for (AllocaSlices::iterator I = B; I != E; ++I) {
     DEBUG(dbgs() << "  rewriting ");
     DEBUG(S.printSlice(dbgs(), I, ""));
     Promotable &= Rewriter.visit(I);
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
     ++NumUses;
-#endif
   }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
   NumAllocaPartitionUses += NumUses;
   MaxUsesPerAllocaPartition =
       std::max<unsigned>(NumUses, MaxUsesPerAllocaPartition);
-#endif
 
   if (Promotable && !Rewriter.isUsedByRewrittenSpeculatableInstructions()) {
     DEBUG(dbgs() << "  and queuing for promotion\n");
@@ -3160,10 +3151,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
   if (S.begin() == S.end())
     return false;
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
   unsigned NumPartitions = 0;
-#endif
-
   bool Changed = false;
   SmallVector<AllocaSlices::iterator, 4> SplitUses;
   uint64_t MaxSplitUseEndOffset = 0;
@@ -3210,9 +3198,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
       // Rewrite a sequence of overlapping slices.
       Changed |=
           rewritePartition(AI, S, SI, SJ, BeginOffset, MaxEndOffset, SplitUses);
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
       ++NumPartitions;
-#endif
 
       removeFinishedSplitUses(SplitUses, MaxSplitUseEndOffset, MaxEndOffset);
     }
@@ -3252,9 +3238,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
 
     Changed |= rewritePartition(AI, S, SJ, SJ, MaxEndOffset, PostSplitEndOffset,
                                 SplitUses);
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
     ++NumPartitions;
-#endif
 
     if (SJ == SE)
       break; // Skip the rest, we don't need to do any cleanup.
@@ -3266,11 +3250,9 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
     BeginOffset = SJ->beginOffset();
   }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_STATS)
   NumAllocaPartitions += NumPartitions;
   MaxPartitionsPerAlloca =
       std::max<unsigned>(NumPartitions, MaxPartitionsPerAlloca);
-#endif
 
   return Changed;
 }
