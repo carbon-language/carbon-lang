@@ -981,7 +981,7 @@ MemRegionManager::getCXXBaseObjectRegion(const CXXRecordDecl *RD,
                                          bool IsVirtual) {
   if (isa<TypedValueRegion>(Super)) {
     assert(isValidBaseClass(RD, dyn_cast<TypedValueRegion>(Super), IsVirtual));
-    (void)isValidBaseClass;
+    (void)&isValidBaseClass;
 
     if (IsVirtual) {
       // Virtual base regions should not be layered, since the layout rules
