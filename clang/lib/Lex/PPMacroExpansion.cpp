@@ -681,7 +681,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     // TODO: See if this can be generalized to angle brackets for templates
     // inside macro arguments.
 
-    SmallVector<Token, 64> FixedArgTokens;
+    SmallVector<Token, 4> FixedArgTokens;
     unsigned FixedNumArgs = 0;
     SmallVector<SourceRange, 4> ParenHints, InitLists;
     if (!GenerateNewArgTokens(*this, ArgTokens, FixedArgTokens, FixedNumArgs,
