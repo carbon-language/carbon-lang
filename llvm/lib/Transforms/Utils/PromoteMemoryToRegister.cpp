@@ -63,6 +63,7 @@ namespace {
 struct AllocaInfo : private InstVisitor<AllocaInfo, bool> {
   SmallVector<BasicBlock *, 32> DefiningBlocks;
   SmallVector<BasicBlock *, 32> UsingBlocks;
+  SmallVector<Instruction *, 8> DeadInsts;
 
   Type *AllocaTy;
   StoreInst *OnlyStore;
@@ -75,6 +76,7 @@ struct AllocaInfo : private InstVisitor<AllocaInfo, bool> {
   void clear() {
     DefiningBlocks.clear();
     UsingBlocks.clear();
+    DeadInsts.clear();
     AllocaTy = 0;
     OnlyStore = 0;
     OnlyBlock = 0;
@@ -153,13 +155,18 @@ private:
   }
 
   bool visitBitCastInst(BitCastInst &BC) {
-    enqueueUsers(BC);
+    if (BC.use_empty())
+      DeadInsts.push_back(&BC);
+    else
+      enqueueUsers(BC);
     return true;
   }
 
   bool visitGetElementPtrInst(GetElementPtrInst &GEPI) {
-    if (GEPI.use_empty())
+    if (GEPI.use_empty()) {
+      DeadInsts.push_back(&GEPI);
       return true;
+    }
 
     enqueueUsers(GEPI);
 
@@ -168,7 +175,10 @@ private:
 
   // We can promote through debug info intrinsics as they don't alter the
   // value stored in memory.
-  bool visitDbgInfoIntrinsic(DbgInfoIntrinsic &I) { return true; }
+  bool visitDbgInfoIntrinsic(DbgInfoIntrinsic &I) {
+    DeadInsts.push_back(&I);
+    return true;
+  }
 
   bool visitIntrinsicInst(IntrinsicInst &II) {
     switch (II.getIntrinsicID()) {
@@ -180,6 +190,7 @@ private:
       // lifetime.
     case Intrinsic::lifetime_start:
     case Intrinsic::lifetime_end:
+      DeadInsts.push_back(&II);
       return true;
     }
   }
@@ -341,35 +352,15 @@ private:
 
 } // end of anonymous namespace
 
-static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
-  // Knowing that this alloca is promotable, we know that it's safe to kill all
-  // instructions except for load and store.
-  // FIXME: This function isn't actually specific to lifetime instrinsics. It
-  // also is redundant with the actual analysis of the loads and stores and
-  // should be folded into that.
-
-  SmallVector<Instruction *, 8> Worklist;
-  SmallPtrSet<Instruction *, 8> Visited;
-  SmallVector<Instruction *, 8> Dead;
-  Worklist.push_back(AI);
-
-  do {
-    Instruction *I = Worklist.pop_back_val();
-
-    if (I->use_empty()) {
-      Dead.push_back(I);
-      continue;
-    }
-
-    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-         UI != UE; ++UI)
-      if (!isa<LoadInst>(*UI) && !isa<StoreInst>(*UI) &&
-          Visited.insert(cast<Instruction>(*UI)))
-        Worklist.push_back(cast<Instruction>(*UI));
-  } while (!Worklist.empty());
-
-  while (!Dead.empty()) {
-    Instruction *I = Dead.pop_back_val();
+/// \brief Walk a small vector of dead instructions and recursively remove them
+/// and subsequently dead instructions.
+///
+/// This is only valid to call on dead instructions using an alloca which is
+/// promotable, as we leverage that assumption to delete them faster.
+static void removeDeadInstructions(AllocaInst *AI,
+                                   SmallVectorImpl<Instruction *> &DeadInsts) {
+  while (!DeadInsts.empty()) {
+    Instruction *I = DeadInsts.pop_back_val();
 
     // Don't delete the alloca itself.
     if (I == AI)
@@ -393,7 +384,7 @@ static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
       if (!Op->use_empty())
         continue;
 
-      Dead.push_back(Op);
+      DeadInsts.push_back(Op);
     }
     I->eraseFromParent();
   }
@@ -600,11 +591,17 @@ void PromoteMem2Reg::run() {
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
     AllocaInst *AI = Allocas[AllocaNum];
 
-    //assert(isAllocaPromotable(AI) && "Cannot promote non-promotable alloca!");
     assert(AI->getParent()->getParent() == &F &&
            "All allocas should be in the same function, which is same as DF!");
 
-    removeLifetimeIntrinsicUsers(AI);
+    // Calculate the set of read and write-locations for each alloca.  This is
+    // analogous to finding the 'uses' and 'definitions' of each variable.
+    bool Good = Info.analyzeAlloca(*AI);
+    (void)Good;
+    assert(Good && "Cannot promote non-promotable alloca!");
+
+    // Nuke all of the dead instructions.
+    removeDeadInstructions(AI, Info.DeadInsts);
 
     if (AI->use_empty()) {
       // If there are no uses of the alloca, just delete it now.
@@ -617,12 +614,6 @@ void PromoteMem2Reg::run() {
       ++NumDeadAlloca;
       continue;
     }
-
-    // Calculate the set of read and write-locations for each alloca.  This is
-    // analogous to finding the 'uses' and 'definitions' of each variable.
-    bool Good = Info.analyzeAlloca(*AI);
-    (void)Good;
-    assert(Good && "Cannot promote non-promotable alloca!");
 
     // If there is only a single store to this value, replace any loads of
     // it that are directly dominated by the definition with the value stored.
