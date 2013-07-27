@@ -2185,10 +2185,14 @@ unsigned ARMFastISel::ARMSelectCallOp(bool UseReg) {
 }
 
 unsigned ARMFastISel::getLibcallReg(const Twine &Name) {
+  // Manually compute the global's type to avoid building it when unnecessary.
+  Type *GVTy = Type::getInt32PtrTy(*Context, /*AS=*/0);
+  EVT LCREVT = TLI.getValueType(GVTy);
+  if (!LCREVT.isSimple()) return 0;
+
   GlobalValue *GV = new GlobalVariable(Type::getInt32Ty(*Context), false,
                                        GlobalValue::ExternalLinkage, 0, Name);
-  EVT LCREVT = TLI.getValueType(GV->getType());
-  if (!LCREVT.isSimple()) return 0;
+  assert(GV->getType() == GVTy && "We miscomputed the type for the global!");
   return ARMMaterializeGV(GV, LCREVT.getSimpleVT());
 }
 
