@@ -33,6 +33,10 @@ def NoArgumentUnused : OptionFlag;
 // lines that use it.
 def Unsupported : OptionFlag;
 
+// CLOption - This is a cl.exe compatibility option. Options with this flag
+// are made available when the driver is running in CL compatibility mode.
+def CLOption : OptionFlag;
+
 // CC1Option - This option should be accepted by clang -cc1.
 def CC1Option : OptionFlag;
 
@@ -95,6 +99,7 @@ def clang_ignored_m_Group : OptionGroup<"<clang ignored m group>">,
 //   _ => __
 //   - => _
 //   # => _HASH
+//   ? => _QUESTION
 //   , => _COMMA
 //   = => _EQ
 //   C++ => CXX
@@ -1315,5 +1320,7 @@ def Z_reserved_lib_stdcxx : Flag<["-"], "Z-reserved-lib-stdc++">,
     Flags<[LinkerInput, NoArgumentUnused, Unsupported]>, Group<reserved_lib_Group>;
 def Z_reserved_lib_cckext : Flag<["-"], "Z-reserved-lib-cckext">,
     Flags<[LinkerInput, NoArgumentUnused, Unsupported]>, Group<reserved_lib_Group>;
+
+include "CLCompatOptions.td"
 
 include "CC1Options.td"

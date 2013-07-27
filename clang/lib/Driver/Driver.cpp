@@ -20,6 +20,7 @@
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
@@ -108,9 +109,17 @@ void Driver::ParseDriverMode(ArrayRef<const char *> Args) {
 
 InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Command line argument parsing");
+
+  unsigned IncludedFlagsBitmask;
+  unsigned ExcludedFlagsBitmask;
+  llvm::tie(IncludedFlagsBitmask, ExcludedFlagsBitmask) =
+    getIncludeExcludeOptionFlagMasks();
+
   unsigned MissingArgIndex, MissingArgCount;
   InputArgList *Args = getOpts().ParseArgs(ArgList.begin(), ArgList.end(),
-                                           MissingArgIndex, MissingArgCount);
+                                           MissingArgIndex, MissingArgCount,
+                                           IncludedFlagsBitmask,
+                                           ExcludedFlagsBitmask);
 
   // Check for missing argument error.
   if (MissingArgCount)
@@ -607,9 +616,17 @@ void Driver::PrintOptions(const ArgList &Args) const {
 }
 
 void Driver::PrintHelp(bool ShowHidden) const {
-  getOpts().PrintHelp(
-      llvm::outs(), Name.c_str(), DriverTitle.c_str(), /*Include*/ 0,
-      /*Exclude*/ options::NoDriverOption | (ShowHidden ? 0 : HelpHidden));
+  unsigned IncludedFlagsBitmask;
+  unsigned ExcludedFlagsBitmask;
+  llvm::tie(IncludedFlagsBitmask, ExcludedFlagsBitmask) =
+    getIncludeExcludeOptionFlagMasks();
+
+  ExcludedFlagsBitmask |= options::NoDriverOption;
+  if (!ShowHidden)
+    ExcludedFlagsBitmask |= HelpHidden;
+
+  getOpts().PrintHelp(llvm::outs(), Name.c_str(), DriverTitle.c_str(),
+                      IncludedFlagsBitmask, ExcludedFlagsBitmask);
 }
 
 void Driver::PrintVersion(const Compilation &C, raw_ostream &OS) const {
@@ -1855,4 +1872,19 @@ bool Driver::GetReleaseVersion(const char *Str, unsigned &Major,
     return false;
   HadExtra = true;
   return true;
+}
+
+std::pair<unsigned, unsigned> Driver::getIncludeExcludeOptionFlagMasks() const {
+  unsigned IncludedFlagsBitmask = 0;
+  unsigned ExcludedFlagsBitmask = 0;
+
+  if (Mode == CLMode) {
+    // Only allow CL options.
+    // FIXME: Also allow "core" Clang options.
+    IncludedFlagsBitmask = options::CLOption;
+  } else {
+    ExcludedFlagsBitmask |= options::CLOption;
+  }
+
+  return std::make_pair(IncludedFlagsBitmask, ExcludedFlagsBitmask);
 }

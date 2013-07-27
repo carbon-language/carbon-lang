@@ -27,8 +27,9 @@ enum ClangFlags {
   LinkerInput = (1 << 5),
   NoArgumentUnused = (1 << 6),
   Unsupported = (1 << 7),
-  CC1Option = (1 << 8),
-  NoDriverOption = (1 << 9)
+  CLOption = (1 << 8),
+  CC1Option = (1 << 9),
+  NoDriverOption = (1 << 10)
 };
 
 enum ID {

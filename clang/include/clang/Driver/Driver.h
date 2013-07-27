@@ -396,6 +396,10 @@ private:
 
   /// @}
 
+  /// \brief Get bitmasks for which option flags to include and exclude based on
+  /// the driver mode.
+  std::pair<unsigned, unsigned> getIncludeExcludeOptionFlagMasks() const;
+
 public:
   /// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and
   /// return the grouped values as integers. Numbers which are not
