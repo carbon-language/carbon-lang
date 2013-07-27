@@ -1141,11 +1141,8 @@ void PreprocessorCallbacks::FileChanged(
       PPTracker.handleHeaderExit(getSourceLocationFile(PP, Loc));
     break;
   case SystemHeaderPragma:
-    return;
   case RenameFile:
-    return;
-  default:
-    return;
+    break;
   }
 }
 
