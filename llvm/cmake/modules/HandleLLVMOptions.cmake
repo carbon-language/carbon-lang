@@ -176,7 +176,8 @@ if( MSVC )
     -wd4503 # Suppress ''identifier' : decorated name length exceeded, name was truncated'
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
-
+    -wd4275 # Suppress 'An exported class was derived from a class that was not exported.'
+    
     # Promoted warnings.
     -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.
 
