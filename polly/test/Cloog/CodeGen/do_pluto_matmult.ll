@@ -1,7 +1,4 @@
-; RUN: not opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
-; This broke after Raphael's changes. Temporarily disable it to stop the
-; annoying buildbot.
-; XFAIL: *
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
 
 ;#define M 36
 ;#define N 36
@@ -81,7 +78,7 @@
 ; RUN: opt %loadPolly %defaultOpts -polly-codegen -disable-output %s
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze < %s | FileCheck -check-prefix=REVERSE %s > /dev/null
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze < %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
+; RUN: not --crash opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze < %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s
 ; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=%S -polly-codegen -S < %s | FileCheck -check-prefix=CODEGEN %s
 
