@@ -19,7 +19,6 @@
 #include "X86ModRMFilters.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <string>
-#include <stdio.h>
 
 using namespace llvm;
 
@@ -308,9 +307,8 @@ InstructionContext RecognizableInstr::insnContext() const {
 
   if (HasEVEXPrefix) {
     if (HasVEX_LPrefix && HasEVEX_L2Prefix) {
-      char msg[200];
-      sprintf(msg, "Don't support VEX.L if EVEX_L2 is enabled: %s", Name.c_str());
-      llvm_unreachable(msg);
+      errs() << "Don't support VEX.L if EVEX_L2 is enabled: " << Name << "\n";
+      llvm_unreachable("Don't support VEX.L if EVEX_L2 is enabled");
     }
     // VEX_L & VEX_W
     if (HasVEX_LPrefix && HasVEX_WPrefix) {
