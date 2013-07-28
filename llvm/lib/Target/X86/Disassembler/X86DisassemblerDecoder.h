@@ -219,7 +219,23 @@ extern "C" {
   ENTRY(XMM12)    \
   ENTRY(XMM13)    \
   ENTRY(XMM14)    \
-  ENTRY(XMM15)
+  ENTRY(XMM15)    \
+  ENTRY(XMM16)    \
+  ENTRY(XMM17)    \
+  ENTRY(XMM18)    \
+  ENTRY(XMM19)    \
+  ENTRY(XMM20)    \
+  ENTRY(XMM21)    \
+  ENTRY(XMM22)    \
+  ENTRY(XMM23)    \
+  ENTRY(XMM24)    \
+  ENTRY(XMM25)    \
+  ENTRY(XMM26)    \
+  ENTRY(XMM27)    \
+  ENTRY(XMM28)    \
+  ENTRY(XMM29)    \
+  ENTRY(XMM30)    \
+  ENTRY(XMM31)
 
 #define REGS_YMM  \
   ENTRY(YMM0)     \
@@ -237,7 +253,57 @@ extern "C" {
   ENTRY(YMM12)    \
   ENTRY(YMM13)    \
   ENTRY(YMM14)    \
-  ENTRY(YMM15)
+  ENTRY(YMM15)    \
+  ENTRY(YMM16)    \
+  ENTRY(YMM17)    \
+  ENTRY(YMM18)    \
+  ENTRY(YMM19)    \
+  ENTRY(YMM20)    \
+  ENTRY(YMM21)    \
+  ENTRY(YMM22)    \
+  ENTRY(YMM23)    \
+  ENTRY(YMM24)    \
+  ENTRY(YMM25)    \
+  ENTRY(YMM26)    \
+  ENTRY(YMM27)    \
+  ENTRY(YMM28)    \
+  ENTRY(YMM29)    \
+  ENTRY(YMM30)    \
+  ENTRY(YMM31)
+
+#define REGS_ZMM  \
+  ENTRY(ZMM0)     \
+  ENTRY(ZMM1)     \
+  ENTRY(ZMM2)     \
+  ENTRY(ZMM3)     \
+  ENTRY(ZMM4)     \
+  ENTRY(ZMM5)     \
+  ENTRY(ZMM6)     \
+  ENTRY(ZMM7)     \
+  ENTRY(ZMM8)     \
+  ENTRY(ZMM9)     \
+  ENTRY(ZMM10)    \
+  ENTRY(ZMM11)    \
+  ENTRY(ZMM12)    \
+  ENTRY(ZMM13)    \
+  ENTRY(ZMM14)    \
+  ENTRY(ZMM15)    \
+  ENTRY(ZMM16)    \
+  ENTRY(ZMM17)    \
+  ENTRY(ZMM18)    \
+  ENTRY(ZMM19)    \
+  ENTRY(ZMM20)    \
+  ENTRY(ZMM21)    \
+  ENTRY(ZMM22)    \
+  ENTRY(ZMM23)    \
+  ENTRY(ZMM24)    \
+  ENTRY(ZMM25)    \
+  ENTRY(ZMM26)    \
+  ENTRY(ZMM27)    \
+  ENTRY(ZMM28)    \
+  ENTRY(ZMM29)    \
+  ENTRY(ZMM30)    \
+  ENTRY(ZMM31)
 
 #define REGS_SEGMENT \
   ENTRY(ES)          \
@@ -285,6 +351,7 @@ extern "C" {
   REGS_MMX            \
   REGS_XMM            \
   REGS_YMM            \
+  REGS_ZMM            \
   REGS_SEGMENT        \
   REGS_DEBUG          \
   REGS_CONTROL        \
@@ -319,6 +386,7 @@ typedef enum {
   ALL_EA_BASES
   REGS_XMM
   REGS_YMM
+  REGS_ZMM
 #undef ENTRY
   SIB_INDEX_max
 } SIBIndex;

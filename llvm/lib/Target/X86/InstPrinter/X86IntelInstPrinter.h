@@ -69,6 +69,10 @@ public:
     O << "YMMWORD PTR ";
     printMemReference(MI, OpNo, O);
   }
+  void printi512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "ZMMWORD PTR ";
+    printMemReference(MI, OpNo, O);
+  }
   void printf32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "DWORD PTR ";
     printMemReference(MI, OpNo, O);
@@ -87,6 +91,10 @@ public:
   }
   void printf256mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
     O << "YMMWORD PTR ";
+    printMemReference(MI, OpNo, O);
+  }
+  void printf512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    O << "ZMMWORD PTR ";
     printMemReference(MI, OpNo, O);
   }
 };

@@ -462,20 +462,54 @@ namespace X86II {
     // prefix. Usually used for scalar instructions. Needed by disassembler.
     VEX_LIG     = 1U << 6,
 
+    // TODO: we should combine VEX_L and VEX_LIG together to form a 2-bit field
+    // with following encoding:
+    // - 00 V128
+    // - 01 V256
+    // - 10 V512
+    // - 11 LIG (but, in insn encoding, leave VEX.L and EVEX.L in zeros.
+    // this will save 1 tsflag bit
+
+    // VEX_EVEX - Specifies that this instruction use EVEX form which provides
+    // syntax support up to 32 512-bit register operands and up to 7 16-bit
+    // mask operands as well as source operand data swizzling/memory operand
+    // conversion, eviction hint, and rounding mode.
+    EVEX        = 1U << 7,
+
+    // EVEX_K - Set if this instruction requires masking
+    EVEX_K      = 1U << 8,
+
+    // EVEX_Z - Set if this instruction has EVEX.Z field set.
+    EVEX_Z      = 1U << 9,
+
+    // EVEX_L2 - Set if this instruction has EVEX.L' field set.
+    EVEX_L2     = 1U << 10,
+
+    // EVEX_B - Set if this instruction has EVEX.B field set.
+    EVEX_B      = 1U << 11,
+
+    // EVEX_CD8E - compressed disp8 form, element-size
+    EVEX_CD8EShift = VEXShift + 12,
+    EVEX_CD8EMask = 3,
+
+    // EVEX_CD8V - compressed disp8 form, vector-width
+    EVEX_CD8VShift = EVEX_CD8EShift + 2,
+    EVEX_CD8VMask = 7,
+
     /// Has3DNow0F0FOpcode - This flag indicates that the instruction uses the
     /// wacky 0x0F 0x0F prefix for 3DNow! instructions.  The manual documents
     /// this as having a 0x0F prefix with a 0x0F opcode, and each instruction
     /// storing a classifier in the imm8 field.  To simplify our implementation,
     /// we handle this by storeing the classifier in the opcode field and using
     /// this flag to indicate that the encoder should do the wacky 3DNow! thing.
-    Has3DNow0F0FOpcode = 1U << 7,
+    Has3DNow0F0FOpcode = 1U << 17,
 
     /// MemOp4 - Used to indicate swapping of operand 3 and 4 to be encoded in
     /// ModRM or I8IMM. This is used for FMA4 and XOP instructions.
-    MemOp4 = 1U << 8,
+    MemOp4 = 1U << 18,
 
     /// XOP - Opcode prefix used by XOP instructions.
-    XOP = 1U << 9
+    XOP = 1U << 19
 
   };
 
@@ -533,12 +567,19 @@ namespace X86II {
     unsigned CurOp = 0;
     if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) == 0)
       ++CurOp;
-    else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0) {
-      assert(Desc.getOperandConstraint(NumOps - 1, MCOI::TIED_TO) == 1);
+    else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0 &&
+             Desc.getOperandConstraint(3, MCOI::TIED_TO) == 1)
+      // Special case for AVX-512 GATHER with 2 TIED_TO operands
+      // Skip the first 2 operands: dst, mask_wb
+      CurOp += 2;
+    else if (NumOps > 3 && Desc.getOperandConstraint(2, MCOI::TIED_TO) == 0 &&
+             Desc.getOperandConstraint(NumOps - 1, MCOI::TIED_TO) == 1)
       // Special case for GATHER with 2 TIED_TO operands
       // Skip the first 2 operands: dst, mask_wb
       CurOp += 2;
-    }
+    else if (NumOps > 2 && Desc.getOperandConstraint(NumOps - 2, MCOI::TIED_TO) == 0)
+      // SCATTER
+      ++CurOp;
     return CurOp;
   }
 
@@ -569,12 +610,15 @@ namespace X86II {
     case X86II::MRMSrcMem: {
       bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
       bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
+      bool HasEVEX = (TSFlags >> X86II::VEXShift) & X86II::EVEX;
+      bool HasEVEX_K = HasEVEX && ((TSFlags >> X86II::VEXShift) & X86II::EVEX_K);
       unsigned FirstMemOp = 1;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
       if (HasMemOp4)
         ++FirstMemOp;// Skip the register source (which is encoded in I8IMM).
-
+      if (HasEVEX_K)
+        ++FirstMemOp;// Skip the mask register
       // FIXME: Maybe lea should have its own form?  This is a horrible hack.
       //if (Opcode == X86::LEA64r || Opcode == X86::LEA64_32r ||
       //    Opcode == X86::LEA16r || Opcode == X86::LEA32r)
@@ -611,6 +655,14 @@ namespace X86II {
   /// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended (r8 or
   /// higher) register?  e.g. r8, xmm8, xmm13, etc.
   inline bool isX86_64ExtendedReg(unsigned RegNo) {
+    if ((RegNo > X86::XMM7 && RegNo <= X86::XMM15) ||
+        (RegNo > X86::XMM23 && RegNo <= X86::XMM31) ||
+        (RegNo > X86::YMM7 && RegNo <= X86::YMM15) ||
+        (RegNo > X86::YMM23 && RegNo <= X86::YMM31) ||
+        (RegNo > X86::ZMM7 && RegNo <= X86::ZMM15) ||
+        (RegNo > X86::ZMM23 && RegNo <= X86::ZMM31))
+      return true;
+
     switch (RegNo) {
     default: break;
     case X86::R8:    case X86::R9:    case X86::R10:   case X86::R11:
@@ -621,16 +673,21 @@ namespace X86II {
     case X86::R12W:  case X86::R13W:  case X86::R14W:  case X86::R15W:
     case X86::R8B:   case X86::R9B:   case X86::R10B:  case X86::R11B:
     case X86::R12B:  case X86::R13B:  case X86::R14B:  case X86::R15B:
-    case X86::XMM8:  case X86::XMM9:  case X86::XMM10: case X86::XMM11:
-    case X86::XMM12: case X86::XMM13: case X86::XMM14: case X86::XMM15:
-    case X86::YMM8:  case X86::YMM9:  case X86::YMM10: case X86::YMM11:
-    case X86::YMM12: case X86::YMM13: case X86::YMM14: case X86::YMM15:
     case X86::CR8:   case X86::CR9:   case X86::CR10:  case X86::CR11:
     case X86::CR12:  case X86::CR13:  case X86::CR14:  case X86::CR15:
         return true;
     }
     return false;
   }
+
+  /// is32ExtendedReg - Is the MemoryOperand a 32 extended (zmm16 or higher)
+  /// registers? e.g. zmm21, etc.
+  static inline bool is32ExtendedReg(unsigned RegNo) {
+    return ((RegNo > X86::XMM15 && RegNo <= X86::XMM31) ||
+            (RegNo > X86::YMM15 && RegNo <= X86::YMM31) ||
+            (RegNo > X86::ZMM15 && RegNo <= X86::ZMM31));
+  }
+
   
   inline bool isX86_64NonExtLowByteReg(unsigned reg) {
     return (reg == X86::SPL || reg == X86::BPL ||

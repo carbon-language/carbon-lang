@@ -1255,6 +1255,8 @@ static int readModRM(struct InternalInstruction* insn) {
       return prefix##_EAX + index;                        \
     case TYPE_R64:                                        \
       return prefix##_RAX + index;                        \
+    case TYPE_XMM512:                                     \
+      return prefix##_ZMM0 + index;                       \
     case TYPE_XMM256:                                     \
       return prefix##_YMM0 + index;                       \
     case TYPE_XMM128:                                     \

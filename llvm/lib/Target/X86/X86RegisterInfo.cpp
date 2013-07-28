@@ -701,7 +701,6 @@ unsigned get512BitSuperRegister(unsigned Reg) {
   if (Reg >= X86::ZMM0 && Reg <= X86::ZMM31)
     return Reg;
   llvm_unreachable("Unexpected SIMD register");
-  return 0;
 }
 
 }

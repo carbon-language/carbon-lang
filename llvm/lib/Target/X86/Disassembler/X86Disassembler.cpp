@@ -286,6 +286,9 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   case TYPE_XMM256:
     mcInst.addOperand(MCOperand::CreateReg(X86::YMM0 + (immediate >> 4)));
     return;
+  case TYPE_XMM512:
+    mcInst.addOperand(MCOperand::CreateReg(X86::ZMM0 + (immediate >> 4)));
+    return;
   case TYPE_REL8:
     isBranch = true;
     pcrel = insn.startLocation + insn.immediateOffset + insn.immediateSize;
@@ -443,6 +446,7 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
       EA_BASES_64BIT
       REGS_XMM
       REGS_YMM
+      REGS_ZMM
 #undef ENTRY
       }
     } else {
@@ -565,6 +569,7 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
   case TYPE_XMM64:
   case TYPE_XMM128:
   case TYPE_XMM256:
+  case TYPE_XMM512:
   case TYPE_DEBUGREG:
   case TYPE_CONTROLREG:
     return translateRMRegister(mcInst, insn);

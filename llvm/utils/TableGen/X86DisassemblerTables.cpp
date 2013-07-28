@@ -81,16 +81,20 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_64BIT_REXW_OPSIZE:
     return false;
   case IC_VEX:
-    return inheritsFrom(child, IC_VEX_W) ||
+    return inheritsFrom(child, IC_VEX_L_W) ||
+           inheritsFrom(child, IC_VEX_W) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L));
   case IC_VEX_XS:
-    return inheritsFrom(child, IC_VEX_W_XS) ||
+    return inheritsFrom(child, IC_VEX_L_W_XS) ||
+           inheritsFrom(child, IC_VEX_W_XS) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L_XS));
   case IC_VEX_XD:
-    return inheritsFrom(child, IC_VEX_W_XD) ||
+    return inheritsFrom(child, IC_VEX_L_W_XD) ||
+           inheritsFrom(child, IC_VEX_W_XD) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L_XD));
   case IC_VEX_OPSIZE:
-    return inheritsFrom(child, IC_VEX_W_OPSIZE) ||
+    return inheritsFrom(child, IC_VEX_L_W_OPSIZE) ||
+           inheritsFrom(child, IC_VEX_W_OPSIZE) ||
            (VEX_LIG && inheritsFrom(child, IC_VEX_L_OPSIZE));
   case IC_VEX_W:
   case IC_VEX_W_XS:
@@ -100,10 +104,89 @@ static inline bool inheritsFrom(InstructionContext child,
   case IC_VEX_L:
   case IC_VEX_L_XS:
   case IC_VEX_L_XD:
-    return false;
   case IC_VEX_L_OPSIZE:
-    return inheritsFrom(child, IC_VEX_L_W_OPSIZE);
+    return false;
+  case IC_VEX_L_W:
+  case IC_VEX_L_W_XS:
+  case IC_VEX_L_W_XD:
   case IC_VEX_L_W_OPSIZE:
+    return false;
+  case IC_EVEX:
+    return inheritsFrom(child, IC_EVEX_W) ||
+           inheritsFrom(child, IC_EVEX_L_W);
+  case IC_EVEX_XS:
+    return inheritsFrom(child, IC_EVEX_W_XS) ||
+           inheritsFrom(child, IC_EVEX_L_W_XS);
+  case IC_EVEX_XD:
+    return inheritsFrom(child, IC_EVEX_W_XD) ||
+           inheritsFrom(child, IC_EVEX_L_W_XD);
+  case IC_EVEX_OPSIZE:
+    return inheritsFrom(child, IC_EVEX_W_OPSIZE) ||
+           inheritsFrom(child, IC_EVEX_W_OPSIZE);
+  case IC_EVEX_W:
+  case IC_EVEX_W_XS:
+  case IC_EVEX_W_XD:
+  case IC_EVEX_W_OPSIZE:
+    return false;
+  case IC_EVEX_L:
+  case IC_EVEX_L_XS:
+  case IC_EVEX_L_XD:
+  case IC_EVEX_L_OPSIZE:
+    return false;
+  case IC_EVEX_L_W:
+  case IC_EVEX_L_W_XS:
+  case IC_EVEX_L_W_XD:
+  case IC_EVEX_L_W_OPSIZE:
+    return false;
+  case IC_EVEX_L2:
+  case IC_EVEX_L2_XS:
+  case IC_EVEX_L2_XD:
+  case IC_EVEX_L2_OPSIZE:
+    return false;
+  case IC_EVEX_L2_W:
+  case IC_EVEX_L2_W_XS:
+  case IC_EVEX_L2_W_XD:
+  case IC_EVEX_L2_W_OPSIZE:
+    return false;
+  case IC_EVEX_K:
+    return inheritsFrom(child, IC_EVEX_W_K) ||
+           inheritsFrom(child, IC_EVEX_L_W_K);
+  case IC_EVEX_XS_K:
+    return inheritsFrom(child, IC_EVEX_W_XS_K) ||
+           inheritsFrom(child, IC_EVEX_L_W_XS_K);
+  case IC_EVEX_XD_K:
+    return inheritsFrom(child, IC_EVEX_W_XD_K) ||
+           inheritsFrom(child, IC_EVEX_L_W_XD_K);
+  case IC_EVEX_OPSIZE_K:
+    return inheritsFrom(child, IC_EVEX_W_OPSIZE_K) ||
+           inheritsFrom(child, IC_EVEX_W_OPSIZE_K);
+  case IC_EVEX_W_K:
+  case IC_EVEX_W_XS_K:
+  case IC_EVEX_W_XD_K:
+  case IC_EVEX_W_OPSIZE_K:
+    return false;
+  case IC_EVEX_L_K:
+  case IC_EVEX_L_XS_K:
+  case IC_EVEX_L_XD_K:
+  case IC_EVEX_L_OPSIZE_K:
+    return false;
+  case IC_EVEX_L_W_K:
+  case IC_EVEX_L_W_XS_K:
+  case IC_EVEX_L_W_XD_K:
+  case IC_EVEX_L_W_OPSIZE_K:
+    return false;
+  case IC_EVEX_L2_K:
+  case IC_EVEX_L2_B:
+  case IC_EVEX_L2_XS_K:
+  case IC_EVEX_L2_XD_K:
+  case IC_EVEX_L2_OPSIZE_K:
+  case IC_EVEX_L2_OPSIZE_B:
+    return false;
+  case IC_EVEX_L2_W_K:
+  case IC_EVEX_L2_W_XS_K:
+  case IC_EVEX_L2_W_XD_K:
+  case IC_EVEX_L2_W_OPSIZE_K:
+  case IC_EVEX_L2_W_OPSIZE_B:
     return false;
   default:
     llvm_unreachable("Unknown instruction class");
@@ -123,10 +206,13 @@ static inline bool outranks(InstructionContext upper,
   assert(lower < IC_max);
 
 #define ENUM_ENTRY(n, r, d) r,
+#define ENUM_ENTRY_K_B(n, r, d) ENUM_ENTRY(n, r, d) \
+  ENUM_ENTRY(n##_K_B, r, d) ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)
   static int ranks[IC_max] = {
     INSTRUCTION_CONTEXTS
   };
 #undef ENUM_ENTRY
+#undef ENUM_ENTRY_K_B
 
   return (ranks[upper] > ranks[lower]);
 }
@@ -142,8 +228,11 @@ static inline const char* stringForContext(InstructionContext insnContext) {
   default:
     llvm_unreachable("Unhandled instruction class");
 #define ENUM_ENTRY(n, r, d)   case n: return #n; break;
+#define ENUM_ENTRY_K_B(n, r, d) ENUM_ENTRY(n, r, d) ENUM_ENTRY(n##_K_B, r, d)\
+        ENUM_ENTRY(n##_K, r, d) ENUM_ENTRY(n##_B, r, d)
   INSTRUCTION_CONTEXTS
 #undef ENUM_ENTRY
+#undef ENUM_ENTRY_K_B
   }
 }
 

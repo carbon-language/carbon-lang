@@ -96,6 +96,20 @@ def SSEPackedSingle : Domain<1>;
 def SSEPackedDouble : Domain<2>;
 def SSEPackedInt    : Domain<3>;
 
+// Class specifying the vector form of the decompressed
+// displacement of 8-bit.
+class CD8VForm<bits<3> val> {
+  bits<3> Value = val;
+}
+def CD8VF  : CD8VForm<0>;  // v := VL
+def CD8VH  : CD8VForm<1>;  // v := VL/2
+def CD8VQ  : CD8VForm<2>;  // v := VL/4
+def CD8VO  : CD8VForm<3>;  // v := VL/8
+def CD8VT1 : CD8VForm<4>;  // v := 1
+def CD8VT2 : CD8VForm<5>;  // v := 2
+def CD8VT4 : CD8VForm<6>;  // v := 4
+def CD8VT8 : CD8VForm<7>;  // v := 8
+
 // Prefix byte classes which are used to indicate to the ad-hoc machine code
 // emitter that various prefix bytes are required.
 class OpSize { bit hasOpSizePrefix = 1; }
@@ -132,6 +146,19 @@ class VEX_4VOp3 : VEX { bit hasVEX_4VOp3Prefix = 1; }
 class VEX_I8IMM { bit hasVEX_i8ImmReg = 1; }
 class VEX_L  { bit hasVEX_L = 1; }
 class VEX_LIG { bit ignoresVEX_L = 1; }
+class EVEX : VEX { bit hasEVEXPrefix = 1; }
+class EVEX_4V : VEX_4V { bit hasEVEXPrefix = 1; }
+class EVEX_K { bit hasEVEX_K = 1; }
+class EVEX_KZ : EVEX_K { bit hasEVEX_Z = 1; }
+class EVEX_B { bit hasEVEX_B = 1; }
+class EVEX_V512 { bit hasEVEX_L2 = 1; bit hasVEX_L = 0; }
+class EVEX_CD8<int esize, CD8VForm form> {
+  bits<2> EVEX_CD8E = !if(!eq(esize, 8),  0b00,
+                      !if(!eq(esize, 16), 0b01,
+                      !if(!eq(esize, 32), 0b10,
+                      !if(!eq(esize, 64), 0b11, ?))));
+  bits<3> EVEX_CD8V = form.Value;
+}
 class Has3DNow0F0FOpcode  { bit has3DNow0F0FOpcode = 1; }
 class MemOp4 { bit hasMemOp4Prefix = 1; }
 class XOP { bit hasXOP_Prefix = 1; }
@@ -177,6 +204,13 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
                             // to be encoded in a immediate field?
   bit hasVEX_L = 0;         // Does this inst use large (256-bit) registers?
   bit ignoresVEX_L = 0;     // Does this instruction ignore the L-bit
+  bit hasEVEXPrefix = 0;    // Does this inst require EVEX form?
+  bit hasEVEX_K = 0;        // Does this inst require masking?
+  bit hasEVEX_Z = 0;        // Does this inst set the EVEX_Z field?
+  bit hasEVEX_L2 = 0;       // Does this inst set the EVEX_L2 field?
+  bit hasEVEX_B = 0;        // Does this inst set the EVEX_B field?
+  bits<2> EVEX_CD8E = 0;    // Compressed disp8 form - element-size.
+  bits<3> EVEX_CD8V = 0;    // Compressed disp8 form - vector-width.
   bit has3DNow0F0FOpcode =0;// Wacky 3dNow! encoding?
   bit hasMemOp4Prefix = 0;  // Same bit as VEX_W, but used for swapping operands
   bit hasXOP_Prefix = 0;    // Does this inst require an XOP prefix?
@@ -200,9 +234,16 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{37}    = hasVEX_i8ImmReg;
   let TSFlags{38}    = hasVEX_L;
   let TSFlags{39}    = ignoresVEX_L;
-  let TSFlags{40}    = has3DNow0F0FOpcode;
-  let TSFlags{41}    = hasMemOp4Prefix;
-  let TSFlags{42}    = hasXOP_Prefix;
+  let TSFlags{40}    = hasEVEXPrefix;
+  let TSFlags{41}    = hasEVEX_K;
+  let TSFlags{42}    = hasEVEX_Z;
+  let TSFlags{43}    = hasEVEX_L2;
+  let TSFlags{44}    = hasEVEX_B;
+  let TSFlags{46-45} = EVEX_CD8E;
+  let TSFlags{49-47} = EVEX_CD8V;
+  let TSFlags{50}    = has3DNow0F0FOpcode;
+  let TSFlags{51}    = hasMemOp4Prefix;
+  let TSFlags{52}    = hasXOP_Prefix;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
@@ -552,6 +593,74 @@ class AVX2AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA, OpSize,
         Requires<[HasAVX2]>;
+
+
+// AVX-512 Instruction Templates:
+//   Instructions introduced in AVX-512 (no SSE equivalent forms)
+//
+//   AVX5128I - AVX-512 instructions with T8 and OpSize prefix.
+//   AVX512AIi8 - AVX-512 instructions with TA, OpSize prefix and ImmT = Imm8.
+//   AVX512PDI  - AVX-512 instructions with TB, OpSize, double packed.
+//   AVX512PSI  - AVX-512 instructions with TB, single packed.
+//   AVX512XS8I - AVX-512 instructions with T8 and XS prefixes.
+//   AVX512XSI  - AVX-512 instructions with XS prefix, generic domain.
+//   AVX512BI   - AVX-512 instructions with TB, OpSize, int packed domain.
+//   AVX512SI   - AVX-512 scalar instructions with TB and OpSize prefixes.
+
+class AVX5128I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8, OpSize,
+        Requires<[HasAVX512]>;
+class AVX512XS8I<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, T8XS,
+        Requires<[HasAVX512]>;
+class AVX512XSI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin>, XS,
+        Requires<[HasAVX512]>;
+class AVX512XDI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, XD,
+        Requires<[HasAVX512]>;
+class AVX512BI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TB, OpSize,
+        Requires<[HasAVX512]>;
+class AVX512BIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TB, OpSize,
+        Requires<[HasAVX512]>;
+class AVX512SI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TB, OpSize,
+        Requires<[HasAVX512]>;
+class AVX512AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TA, OpSize,
+        Requires<[HasAVX512]>;
+class AVX512Ii8<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>,
+      Requires<[HasAVX512]>;
+class AVX512PDI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedDouble>, TB,
+        OpSize, Requires<[HasAVX512]>;
+class AVX512PSI<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, SSEPackedSingle>, TB,
+        Requires<[HasAVX512]>;
+class AVX512PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern, Domain d, InstrItinClass itin = NoItinerary>
+      : Ii8<o, F, outs, ins, asm, pattern, itin, d>, Requires<[HasAVX512]>;
+class AVX512PI<bits<8> o, Format F, dag outs, dag ins, string asm,
+              list<dag> pattern, Domain d, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin, d>, Requires<[HasAVX512]>;
+class AVX512FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag>pattern, InstrItinClass itin = NoItinerary>
+      : I<o, F, outs, ins, asm, pattern, itin>, T8,
+        OpSize, EVEX_4V, Requires<[HasAVX512]>;
 
 // AES Instruction Templates:
 //

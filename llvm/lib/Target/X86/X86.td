@@ -90,11 +90,14 @@ def FeatureAVX512   : SubtargetFeature<"avx-512", "X86SSELevel", "AVX512",
                                       "Enable AVX-512 instructions",
                                       [FeatureAVX2]>;
 def FeatureERI      : SubtargetFeature<"avx-512-eri", "HasERI", "true",
-                      "Enable AVX-512 Exponential and Reciprocal Instructions">;
+                      "Enable AVX-512 Exponential and Reciprocal Instructions",
+                                      [FeatureAVX512]>;
 def FeatureCDI      : SubtargetFeature<"avx-512-cdi", "HasCDI", "true",
-                      "Enable AVX-512 Conflict Detection Instructions">;
+                      "Enable AVX-512 Conflict Detection Instructions",
+                                      [FeatureAVX512]>;
 def FeaturePFI      : SubtargetFeature<"avx-512-pfi", "HasPFI", "true",
-                      "Enable AVX-512 PreFetch Instructions">;
+                      "Enable AVX-512 PreFetch Instructions",
+                                      [FeatureAVX512]>;
 
 def FeaturePCLMUL  : SubtargetFeature<"pclmul", "HasPCLMUL", "true",
                          "Enable packed carry-less multiplication instructions",

@@ -317,6 +317,16 @@ def X86MemVY64Operand : AsmOperandClass {
   let Name = "MemVY64"; let PredicateMethod = "isMemVY64";
 }
 
+def X86MemVZ64Operand : AsmOperandClass {
+  let Name = "MemVZ64"; let PredicateMethod = "isMemVZ64";
+}
+def X86MemVZ32Operand : AsmOperandClass {
+  let Name = "MemVZ32"; let PredicateMethod = "isMemVZ32";
+}
+def X86Mem512AsmOperand : AsmOperandClass {
+  let Name = "Mem512"; let PredicateMethod = "isMem512";
+}
+
 def X86AbsMemAsmOperand : AsmOperandClass {
   let Name = "AbsMem";
   let SuperClasses = [X86MemAsmOperand];
@@ -345,6 +355,8 @@ def i128mem : X86MemOperand<"printi128mem"> {
   let ParserMatchClass = X86Mem128AsmOperand; }
 def i256mem : X86MemOperand<"printi256mem"> { 
   let ParserMatchClass = X86Mem256AsmOperand; }
+def i512mem : X86MemOperand<"printi512mem"> { 
+  let ParserMatchClass = X86Mem512AsmOperand; }
 def f32mem  : X86MemOperand<"printf32mem"> { 
   let ParserMatchClass = X86Mem32AsmOperand; }
 def f64mem  : X86MemOperand<"printf64mem"> { 
@@ -355,6 +367,12 @@ def f128mem : X86MemOperand<"printf128mem"> {
   let ParserMatchClass = X86Mem128AsmOperand; }
 def f256mem : X86MemOperand<"printf256mem">{ 
   let ParserMatchClass = X86Mem256AsmOperand; }
+def f512mem : X86MemOperand<"printf512mem">{
+  let ParserMatchClass = X86Mem512AsmOperand; }
+def v512mem : Operand<iPTR> {
+  let PrintMethod = "printf512mem";
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR512, i32imm, i8imm);
+  let ParserMatchClass = X86Mem512AsmOperand; }
 
 // Gather mem operands
 def vx32mem : X86MemOperand<"printi32mem">{
@@ -369,6 +387,15 @@ def vx64mem : X86MemOperand<"printi64mem">{
 def vy64mem : X86MemOperand<"printi64mem">{
   let MIOperandInfo = (ops ptr_rc, i8imm, VR256, i32imm, i8imm);
   let ParserMatchClass = X86MemVY64Operand; }
+def vy64xmem : X86MemOperand<"printi64mem">{
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR256X, i32imm, i8imm);
+  let ParserMatchClass = X86MemVY64Operand; }
+def vz32mem : X86MemOperand<"printi32mem">{
+  let MIOperandInfo = (ops ptr_rc, i16imm, VR512, i32imm, i8imm);
+  let ParserMatchClass = X86MemVZ32Operand; }
+def vz64mem : X86MemOperand<"printi64mem">{
+  let MIOperandInfo = (ops ptr_rc, i8imm, VR512, i32imm, i8imm);
+  let ParserMatchClass = X86MemVZ64Operand; }
 }
 
 // A version of i8mem for use on x86-64 that uses GR64_NOREX instead of
@@ -590,11 +617,19 @@ def HasSSE4A     : Predicate<"Subtarget->hasSSE4A()">;
 def HasAVX       : Predicate<"Subtarget->hasAVX()">;
 def HasAVX2      : Predicate<"Subtarget->hasAVX2()">;
 def HasAVX1Only  : Predicate<"Subtarget->hasAVX() && !Subtarget->hasAVX2()">;
+def HasAVX512      : Predicate<"Subtarget->hasAVX512()">;
+def UseAVX       : Predicate<"Subtarget->hasAVX() && !Subtarget->hasAVX512()">;
+def UseAVX2      : Predicate<"Subtarget->hasAVX2() && !Subtarget->hasAVX512()">;
+def NoAVX512       : Predicate<"!Subtarget->hasAVX512()">;
+def HasCDI       : Predicate<"Subtarget->hasCDI()">;
+def HasPFI       : Predicate<"Subtarget->hasPFI()">;
+def HasEMI       : Predicate<"Subtarget->hasERI()">;
 
 def HasPOPCNT    : Predicate<"Subtarget->hasPOPCNT()">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
 def HasPCLMUL    : Predicate<"Subtarget->hasPCLMUL()">;
 def HasFMA       : Predicate<"Subtarget->hasFMA()">;
+def UseFMAOnAVX  : Predicate<"Subtarget->hasFMA() && !Subtarget->hasAVX512()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def HasXOP       : Predicate<"Subtarget->hasXOP()">;
 def HasMOVBE     : Predicate<"Subtarget->hasMOVBE()">;
