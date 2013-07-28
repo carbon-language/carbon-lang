@@ -18,9 +18,10 @@
 #include "codecvt"
 #include "vector"
 #include "algorithm"
-#include "algorithm"
 #include "typeinfo"
-#include "type_traits"
+#ifndef _LIBCPP_NO_EXCEPTIONS
+#  include "type_traits"
+#endif
 #include "clocale"
 #include "cstring"
 #include "cwctype"
