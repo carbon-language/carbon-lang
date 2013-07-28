@@ -455,6 +455,8 @@ bool FrontendAction::shouldEraseOutputFiles() {
 
 void ASTFrontendAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();
+  if (!CI.hasPreprocessor())
+    return;
 
   // FIXME: Move the truncation aspect of this into Sema, we delayed this till
   // here so the source manager would be initialized.
