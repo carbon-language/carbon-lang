@@ -16,6 +16,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
@@ -27,6 +28,7 @@ STATISTIC(NumPromoted, "Number of alloca's promoted");
 namespace {
   struct PromotePass : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
+
     PromotePass() : FunctionPass(ID) {
       initializePromotePassPass(*PassRegistry::getPassRegistry());
     }
@@ -62,6 +64,7 @@ bool PromotePass::runOnFunction(Function &F) {
   bool Changed  = false;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();
+  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
 
   while (1) {
     Allocas.clear();
@@ -70,12 +73,12 @@ bool PromotePass::runOnFunction(Function &F) {
     // the entry node
     for (BasicBlock::iterator I = BB.begin(), E = --BB.end(); I != E; ++I)
       if (AllocaInst *AI = dyn_cast<AllocaInst>(I))       // Is it an alloca?
-        if (isAllocaPromotable(AI))
+        if (isAllocaPromotable(AI, DL))
           Allocas.push_back(AI);
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, DT);
+    PromoteMemToReg(Allocas, DT, DL);
     NumPromoted += Allocas.size();
     Changed = true;
   }

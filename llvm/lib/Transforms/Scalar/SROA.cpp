@@ -3376,7 +3376,7 @@ bool SROA::promoteAllocas(Function &F) {
 
   if (DT && !ForceSSAUpdater) {
     DEBUG(dbgs() << "Promoting allocas with mem2reg...\n");
-    PromoteMemToReg(PromotableAllocas, *DT);
+    PromoteMemToReg(PromotableAllocas, *DT, DL);
     PromotableAllocas.clear();
     return true;
   }

@@ -1426,7 +1426,7 @@ bool SROA::performPromotion(Function &F) {
     if (Allocas.empty()) break;
 
     if (HasDomTree)
-      PromoteMemToReg(Allocas, *DT);
+      PromoteMemToReg(Allocas, *DT, TD);
     else {
       SSAUpdater SSA;
       for (unsigned i = 0, e = Allocas.size(); i != e; ++i) {

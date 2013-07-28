@@ -61,6 +61,8 @@ STATISTIC(NumPHIInsert,     "Number of PHI nodes inserted");
 namespace {
 
 struct AllocaInfo : private InstVisitor<AllocaInfo, bool> {
+  const DataLayout *DL;
+
   SmallVector<BasicBlock *, 32> DefiningBlocks;
   SmallVector<BasicBlock *, 32> UsingBlocks;
   SmallVector<Instruction *, 8> DeadInsts;
@@ -72,6 +74,8 @@ struct AllocaInfo : private InstVisitor<AllocaInfo, bool> {
 
   Value *AllocaPointerVal;
   DbgDeclareInst *DbgDeclare;
+
+  AllocaInfo(const DataLayout *DL) : DL(DL) {}
 
   void clear() {
     DefiningBlocks.clear();
@@ -274,6 +278,7 @@ struct PromoteMem2Reg {
   std::vector<AllocaInst *> Allocas;
   DominatorTree &DT;
   DIBuilder DIB;
+  const DataLayout *DL;
 
   /// An AliasSetTracker object to update.  If null, don't update it.
   AliasSetTracker *AST;
@@ -319,9 +324,9 @@ struct PromoteMem2Reg {
 
 public:
   PromoteMem2Reg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
-                 AliasSetTracker *AST)
+                 const DataLayout *DL, AliasSetTracker *AST)
       : Allocas(Allocas.begin(), Allocas.end()), DT(DT),
-        DIB(*DT.getRoot()->getParent()->getParent()), AST(AST) {}
+        DIB(*DT.getRoot()->getParent()->getParent()), DL(DL), AST(AST) {}
 
   void run();
 
@@ -585,7 +590,7 @@ void PromoteMem2Reg::run() {
     PointerAllocaValues.resize(Allocas.size());
   AllocaDbgDeclares.resize(Allocas.size());
 
-  AllocaInfo Info;
+  AllocaInfo Info(DL);
   LargeBlockInfo LBI;
 
   for (unsigned AllocaNum = 0; AllocaNum != Allocas.size(); ++AllocaNum) {
@@ -1140,19 +1145,19 @@ NextIteration:
   goto NextIteration;
 }
 
-bool llvm::isAllocaPromotable(const AllocaInst *AI) {
+bool llvm::isAllocaPromotable(const AllocaInst *AI, const DataLayout *DL) {
   // We cast away constness because we re-use the non-const analysis that the
   // actual promotion routine uses. While it is non-const, it doesn't actually
   // mutate anything at this phase, and we discard the non-const results that
   // promotion uses to mutate the alloca.
-  return AllocaInfo().analyzeAlloca(*const_cast<AllocaInst *>(AI));
+  return AllocaInfo(DL).analyzeAlloca(*const_cast<AllocaInst *>(AI));
 }
 
-void llvm::PromoteMemToReg(ArrayRef<AllocaInst *> Allocas,
-                           DominatorTree &DT, AliasSetTracker *AST) {
+void llvm::PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
+                           const DataLayout *DL, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty())
     return;
 
-  PromoteMem2Reg(Allocas, DT, AST).run();
+  PromoteMem2Reg(Allocas, DT, DL, AST).run();
 }
