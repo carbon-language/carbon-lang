@@ -1642,8 +1642,8 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 2)
     return ExprError(Diag(TheCall->getLocEnd(),
                           diag::err_typecheck_call_too_few_args_at_least)
-      << 0 /*function call*/ << 2 << TheCall->getNumArgs()
-      << TheCall->getSourceRange());
+                     << 0 /*function call*/ << 2 << TheCall->getNumArgs()
+                     << TheCall->getSourceRange());
 
   // Determine which of the following types of shufflevector we're checking:
   // 1) unary, vector mask: (lhs, mask)
@@ -1696,13 +1696,13 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     llvm::APSInt Result(32);
     if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context))
       return ExprError(Diag(TheCall->getLocStart(),
-                  diag::err_shufflevector_nonconstant_argument)
-                << TheCall->getArg(i)->getSourceRange());
+                            diag::err_shufflevector_nonconstant_argument)
+                       << TheCall->getArg(i)->getSourceRange());
 
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
       return ExprError(Diag(TheCall->getLocStart(),
-                  diag::err_shufflevector_argument_too_large)
-               << TheCall->getArg(i)->getSourceRange());
+                            diag::err_shufflevector_argument_too_large)
+                       << TheCall->getArg(i)->getSourceRange());
   }
 
   SmallVector<Expr*, 32> exprs;
