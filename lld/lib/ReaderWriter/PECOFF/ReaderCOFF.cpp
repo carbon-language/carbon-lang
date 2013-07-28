@@ -269,7 +269,6 @@ private:
   /// Find the atom that is at \p targetOffset in \p section. It is assumed
   /// that \p atoms are sorted by position in the section.
   COFFDefinedAtom *findAtomAt(uint32_t targetOffset,
-                              const coff_section *section,
                               const vector<COFFDefinedAtom *> &atoms) const {
     assert(std::is_sorted(atoms.begin(), atoms.end(),
                           [](const COFFDefinedAtom * a,
@@ -318,7 +317,7 @@ private:
                                              symbolToAtom, targetAtom))
       return ec;
 
-    COFFDefinedAtom *atom = findAtomAt(rel->VirtualAddress, section, atoms);
+    COFFDefinedAtom *atom = findAtomAt(rel->VirtualAddress, atoms);
     uint32_t offsetInAtom = itemAddress - atom->originalOffset();
     assert(offsetInAtom < atom->size());
     atom->addReference(std::unique_ptr<COFFReference>(
