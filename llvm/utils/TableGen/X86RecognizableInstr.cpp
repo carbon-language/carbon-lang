@@ -19,6 +19,7 @@
 #include "X86ModRMFilters.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <string>
+#include <stdio.h>
 
 using namespace llvm;
 
