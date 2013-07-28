@@ -612,7 +612,7 @@ public:
 /// insertFrom - Add mapping of [a;b] to y if possible, coalescing as much as
 /// possible. This may cause the node to grow by 1, or it may cause the node
 /// to shrink because of coalescing.
-/// @param i    Starting index = insertFrom(0, size, a)
+/// @param Pos  Starting index = insertFrom(0, size, a)
 /// @param Size Number of elements in node.
 /// @param a    Interval start.
 /// @param b    Interval stop.
@@ -1956,7 +1956,7 @@ iterator::eraseNode(unsigned Level) {
 /// overflow - Distribute entries of the current node evenly among
 /// its siblings and ensure that the current node is not full.
 /// This may require allocating a new node.
-/// @param NodeT The type of node at Level (Leaf or Branch).
+/// @tparam NodeT The type of node at Level (Leaf or Branch).
 /// @param Level path index of the overflowing node.
 /// @return True when the tree height was changed.
 template <typename KeyT, typename ValT, unsigned N, typename Traits>

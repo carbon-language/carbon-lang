@@ -120,10 +120,10 @@ class SimplifyCFGOpt {
   /// the if-region with an adjacent if-region upstream if two if-regions
   /// contain identical instructions.
   bool MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder, Pass *P = 0);
-  /// \brief Compare a pair of blocks: \param Block1 and \param Block2, which
-  /// are from two if-regions whose entry blocks are \param Head1 and \param
-  /// Head2.  \returns true if \param Block1 and \param Block2 contain identical
-  /// instructions, and have no memory reference alias with \param Head2.
+  /// \brief Compare a pair of blocks: \p Block1 and \p Block2, which
+  /// are from two if-regions whose entry blocks are \p Head1 and \p
+  /// Head2.  \returns true if \p Block1 and \p Block2 contain identical
+  /// instructions, and have no memory reference alias with \p Head2.
   /// This is used as a legality check for merging if-regions.
   bool CompareIfRegionBlock(BasicBlock *Head1, BasicBlock *Head2,
                             BasicBlock *Block1, BasicBlock *Block2);
