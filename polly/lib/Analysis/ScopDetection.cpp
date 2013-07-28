@@ -229,9 +229,9 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
 
     if (!isAffineExpr(&Context.CurRegion, LHS, *SE) ||
         !isAffineExpr(&Context.CurRegion, RHS, *SE)) {
-      INVALID(AffFunc,
-              "Non affine branch in BB '" << BB.getName() << "' with LHS: "
-                                          << *LHS << " and RHS: " << *RHS);
+      INVALID(AffFunc, "Non affine branch in BB '" << BB.getName()
+                                                   << "' with LHS: " << *LHS
+                                                   << " and RHS: " << *RHS);
       return false;
     }
   }
@@ -468,8 +468,8 @@ Region *ScopDetection::expandRegion(Region &R) {
     }
   }
 
-  DEBUG(if (LastValidRegion)
-            dbgs() << "\tto " << LastValidRegion->getNameStr() << "\n";
+  DEBUG(if (LastValidRegion) dbgs() << "\tto " << LastValidRegion->getNameStr()
+                                    << "\n";
         else dbgs() << "\tExpanding " << R.getNameStr() << " failed\n";);
 
   return LastValidRegion;
