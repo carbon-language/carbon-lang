@@ -71,6 +71,8 @@ static void EmitBranchToAt(uint64_t At, uint64_t To, bool isCall, bool is64Bit){
 extern "C" void PPC32CompilationCallback();
 extern "C" void PPC64CompilationCallback();
 
+// The first clause of the preprocessor directive looks wrong, but it is
+// necessary when compiling this code on non-PowerPC hosts.
 #if (!defined(__ppc__) && !defined(__powerpc__)) || defined(__powerpc64__) || defined(__ppc64__)
 void PPC32CompilationCallback() {
   llvm_unreachable("This is not a 32bit PowerPC, you can't execute this!");
