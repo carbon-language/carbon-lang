@@ -953,7 +953,11 @@ public:
     template <class _Key>
         _LIBCPP_INLINE_VISIBILITY
         size_type bucket(const _Key& __k) const
-            {return __constrain_hash(hash_function()(__k), bucket_count());}
+        {
+            _LIBCPP_ASSERT(bucket_count() > 0,
+                "unordered container::bucket(key) called when bucket_count() == 0");
+            return __constrain_hash(hash_function()(__k), bucket_count());
+        }
 
     template <class _Key>
         iterator       find(const _Key& __x);
@@ -1009,12 +1013,18 @@ public:
         return __bc != 0 ? (float)size() / __bc : 0.f;
     }
     _LIBCPP_INLINE_VISIBILITY void max_load_factor(float __mlf) _NOEXCEPT
-        {max_load_factor() = _VSTD::max(__mlf, load_factor());}
+    {
+        _LIBCPP_ASSERT(__mlf > 0,
+            "unordered container::max_load_factor(lf) called with lf <= 0");
+        max_load_factor() = _VSTD::max(__mlf, load_factor());
+    }
 
     _LIBCPP_INLINE_VISIBILITY
     local_iterator
     begin(size_type __n)
     {
+        _LIBCPP_ASSERT(__n < bucket_count(),
+            "unordered container::begin(n) called with n >= bucket_count()");
 #if _LIBCPP_DEBUG_LEVEL >= 2
         return local_iterator(__bucket_list_[__n], __n, bucket_count(), this);
 #else
@@ -1026,6 +1036,8 @@ public:
     local_iterator
     end(size_type __n)
     {
+        _LIBCPP_ASSERT(__n < bucket_count(),
+            "unordered container::end(n) called with n >= bucket_count()");
 #if _LIBCPP_DEBUG_LEVEL >= 2
         return local_iterator(nullptr, __n, bucket_count(), this);
 #else
@@ -1037,6 +1049,8 @@ public:
     const_local_iterator
     cbegin(size_type __n) const
     {
+        _LIBCPP_ASSERT(__n < bucket_count(),
+            "unordered container::cbegin(n) called with n >= bucket_count()");
 #if _LIBCPP_DEBUG_LEVEL >= 2
         return const_local_iterator(__bucket_list_[__n], __n, bucket_count(), this);
 #else
@@ -1048,6 +1062,8 @@ public:
     const_local_iterator
     cend(size_type __n) const
     {
+        _LIBCPP_ASSERT(__n < bucket_count(),
+            "unordered container::cend(n) called with n >= bucket_count()");
 #if _LIBCPP_DEBUG_LEVEL >= 2
         return const_local_iterator(nullptr, __n, bucket_count(), this);
 #else
@@ -1830,6 +1846,11 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_hint_multi(
         const_iterator __p, _Args&&... __args)
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    _LIBCPP_ASSERT(__get_const_db()->__find_c_from_i(&__p) == this,
+        "unordered container::emplace_hint(const_iterator, args...) called with an iterator not"
+        " referring to this unordered container");
+#endif
     __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     iterator __r = __node_insert_multi(__p, __h.get());
     __h.release();
@@ -1871,6 +1892,11 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(const_iterator __p,
                                                          _Pp&& __x)
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    _LIBCPP_ASSERT(__get_const_db()->__find_c_from_i(&__p) == this,
+        "unordered container::insert(const_iterator, rvalue) called with an iterator not"
+        " referring to this unordered container");
+#endif
     __node_holder __h = __construct_node(_VSTD::forward<_Pp>(__x));
     iterator __r = __node_insert_multi(__p, __h.get());
     __h.release();
@@ -1894,6 +1920,11 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(const_iterator __p,
                                                          const value_type& __x)
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    _LIBCPP_ASSERT(__get_const_db()->__find_c_from_i(&__p) == this,
+        "unordered container::insert(const_iterator, lvalue) called with an iterator not"
+        " referring to this unordered container");
+#endif
     __node_holder __h = __construct_node(__x);
     iterator __r = __node_insert_multi(__p, __h.get());
     __h.release();
@@ -2364,6 +2395,8 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::size_type
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::bucket_size(size_type __n) const
 {
+    _LIBCPP_ASSERT(__n < bucket_count(),
+        "unordered container::bucket_size(n) called with n >= bucket_count()");
     __node_const_pointer __np = __bucket_list_[__n];
     size_type __bc = bucket_count();
     size_type __r = 0;

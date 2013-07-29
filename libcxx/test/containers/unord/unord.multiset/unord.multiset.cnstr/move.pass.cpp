@@ -179,5 +179,16 @@ int main()
         assert(c0.empty());
     }
 #endif
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::unordered_multiset<int> s1 = {1, 2, 3};
+        std::unordered_multiset<int>::iterator i = s1.begin();
+        int k = *i;
+        std::unordered_multiset<int> s2 = std::move(s1);
+        assert(*i == k);
+        s2.erase(i);
+        assert(s2.size() == 2);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

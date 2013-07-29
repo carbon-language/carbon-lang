@@ -15,6 +15,10 @@
 
 // size_type bucket(const key_type& __k) const;
 
+#ifdef _LIBCPP_DEBUG2
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_set>
 #include <cassert>
 
@@ -58,6 +62,14 @@ int main()
         assert(bc >= 5);
         for (size_t i = 0; i < 13; ++i)
             assert(c.bucket(i) == i % bc);
+    }
+#endif
+#if _LIBCPP_DEBUG_LEVEL >= 1
+    {
+        typedef std::unordered_set<int> C;
+        C c;
+        C::size_type i = c.bucket(3);
+        assert(false);
     }
 #endif
 }
