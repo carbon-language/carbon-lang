@@ -105,7 +105,8 @@ static void appendMangledQuotedName(SmallVectorImpl<char> &OutName,
 /// and the specified name as the global variable name.  GVName must not be
 /// empty.
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const Twine &GVName, ManglerPrefixTy PrefixTy) {
+                                const Twine &GVName, ManglerPrefixTy PrefixTy,
+                                bool UseGlobalPrefix) {
   SmallString<256> TmpData;
   StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
@@ -124,13 +125,16 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
       OutName.append(Prefix, Prefix+strlen(Prefix));
     }
 
-    const char *Prefix = MAI->getGlobalPrefix();
-    if (Prefix[0] == 0)
-      ; // Common noop, no prefix.
-    else if (Prefix[1] == 0)
-      OutName.push_back(Prefix[0]);  // Common, one character prefix.
-    else
-      OutName.append(Prefix, Prefix+strlen(Prefix)); // Arbitrary length prefix.
+    if (UseGlobalPrefix) {
+      const char *Prefix = MAI->getGlobalPrefix();
+      if (Prefix[0] == 0)
+        ; // Common noop, no prefix.
+      else if (Prefix[1] == 0)
+        OutName.push_back(Prefix[0]);  // Common, one character prefix.
+      else
+        // Arbitrary length prefix.
+        OutName.append(Prefix, Prefix+strlen(Prefix));
+    }
   }
   
   // If this is a simple string that doesn't need escaping, just append it.
@@ -179,8 +183,8 @@ static void AddFastCallStdCallSuffix(SmallVectorImpl<char> &OutName,
 /// and the specified global variable's name.  If the global variable doesn't
 /// have a name, this fills in a unique name for the global.
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const GlobalValue *GV,
-                                bool isImplicitlyPrivate) {
+                                const GlobalValue *GV, bool isImplicitlyPrivate,
+                                bool UseGlobalPrefix) {
   ManglerPrefixTy PrefixTy = Mangler::Default;
   if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
     PrefixTy = Mangler::Private;
@@ -190,7 +194,7 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   // If this global has a name, handle it simply.
   if (GV->hasName()) {
     StringRef Name = GV->getName();
-    getNameWithPrefix(OutName, Name, PrefixTy);
+    getNameWithPrefix(OutName, Name, PrefixTy, UseGlobalPrefix);
     // No need to do anything else if the global has the special "do not mangle"
     // flag in the name.
     if (Name[0] == 1)
@@ -202,7 +206,8 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
     if (ID == 0) ID = NextAnonGlobalID++;
   
     // Must mangle the global into a unique ID.
-    getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy);
+    getNameWithPrefix(OutName, "__unnamed_" + Twine(ID), PrefixTy,
+                      UseGlobalPrefix);
   }
   
   // If we are supposed to add a microsoft-style suffix for stdcall/fastcall,

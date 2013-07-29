@@ -726,9 +726,8 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     Selection = COFF::IMAGE_COMDAT_SELECT_ANY;
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
-    MCSymbol *Sym = Mang->getSymbol(GV);
     Name.append("$");
-    Name.append(Sym->getName().begin() + 1, Sym->getName().end());
+    Mang->getNameWithPrefix(Name, GV, false, false);
   }
   return getContext().getCOFFSection(Name,
                                      Characteristics,
@@ -761,8 +760,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (GV->isWeakForLinker()) {
     const char *Prefix = getCOFFSectionPrefixForUniqueGlobal(Kind);
     SmallString<128> Name(Prefix, Prefix+strlen(Prefix));
-    MCSymbol *Sym = Mang->getSymbol(GV);
-    Name.append(Sym->getName().begin() + 1, Sym->getName().end());
+    Mang->getNameWithPrefix(Name, GV, false, false);
 
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
