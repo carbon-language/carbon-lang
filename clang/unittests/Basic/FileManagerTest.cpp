@@ -125,6 +125,14 @@ TEST_F(FileManagerTest, getFileReturnsValidFileEntryForExistingRealFile) {
   FakeStatCache *statCache = new FakeStatCache;
   statCache->InjectDirectory("/tmp", 42);
   statCache->InjectFile("/tmp/test", 43);
+
+#ifdef _WIN32
+  const char *DirName = "C:.";
+  const char *FileName = "C:test";
+  statCache->InjectDirectory(DirName, 44);
+  statCache->InjectFile(FileName, 45);
+#endif
+
   manager.addStatCache(statCache);
 
   const FileEntry *file = manager.getFile("/tmp/test");
@@ -134,6 +142,15 @@ TEST_F(FileManagerTest, getFileReturnsValidFileEntryForExistingRealFile) {
   const DirectoryEntry *dir = file->getDir();
   ASSERT_TRUE(dir != NULL);
   EXPECT_STREQ("/tmp", dir->getName());
+
+#ifdef _WIN32
+  file = manager.getFile(FileName);
+  ASSERT_TRUE(file != NULL);
+
+  dir = file->getDir();
+  ASSERT_TRUE(dir != NULL);
+  EXPECT_STREQ(DirName, dir->getName());
+#endif
 }
 
 // getFile() returns non-NULL if a virtual file exists at the given path.

@@ -292,6 +292,16 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
       DirName != llvm::sys::path::root_path(DirName) &&
       llvm::sys::path::is_separator(DirName.back()))
     DirName = DirName.substr(0, DirName.size()-1);
+#ifdef LLVM_ON_WIN32
+  // Fixing a problem with "clang C:test.c" on Windows.
+  // Stat("C:") does not recognize "C:" as a valid directory
+  std::string DirNameStr;
+  if (DirName.size() > 1 && DirName.back() == ':' &&
+      DirName.equals_lower(llvm::sys::path::root_name(DirName))) {
+    DirNameStr = DirName.str() + '.';
+    DirName = DirNameStr;
+  }
+#endif
 
   ++NumDirLookups;
   llvm::StringMapEntry<DirectoryEntry *> &NamedDirEnt =
