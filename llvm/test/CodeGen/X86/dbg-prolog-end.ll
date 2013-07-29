@@ -35,7 +35,7 @@ entry:
 !llvm.dbg.cu = !{!0}
 !18 = metadata !{metadata !1, metadata !6}
 
-!0 = metadata !{i32 786449, metadata !19, i32 12, metadata !"clang version 3.0 (trunk 131100)", i1 false, metadata !"", i32 0, null, null, metadata !18, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !19, i32 12, metadata !"clang version 3.0 (trunk 131100)", i1 false, metadata !"", i32 0, metadata !20, metadata !20, metadata !18, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, metadata !19, metadata !2, metadata !"foo", metadata !"foo", metadata !"", i32 1, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 false, i32 (i32)* @foo, null, null, null, i32 1} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !19, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -54,3 +54,4 @@ entry:
 !16 = metadata !{i32 8, i32 2, metadata !17, null}
 !17 = metadata !{i32 786443, metadata !19, metadata !6, i32 7, i32 12, i32 1} ; [ DW_TAG_lexical_block ]
 !19 = metadata !{metadata !"/tmp/a.c", metadata !"/private/tmp"}
+!20 = metadata !{i32 0}

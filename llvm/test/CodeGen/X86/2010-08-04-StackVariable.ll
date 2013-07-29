@@ -1,4 +1,4 @@
-; RUN: llc -disable-debug-info-verifier -O0 -mtriple=x86_64-apple-darwin < %s | grep DW_OP_breg7
+; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s | grep DW_OP_breg7
 ; Use DW_OP_breg7 in variable's location expression if the variable is in a stack slot.
 
 %struct.SVal = type { i8*, i32 }
@@ -80,7 +80,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !0 = metadata !{i32 786478, metadata !47, metadata !1, metadata !"SVal", metadata !"SVal", metadata !"", i32 11, metadata !14, i1 false, i1 false, i32 0, i32 0, null, i1 false, i1 false, null, null, null, null, i32 11} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786451, metadata !47, metadata !2, metadata !"SVal", i32 1, i64 128, i64 64, i64 0, i32 0, null, metadata !4, i32 0, null} ; [ DW_TAG_structure_type ]
 !2 = metadata !{i32 786473, metadata !47} ; [ DW_TAG_file_type ]
-!3 = metadata !{i32 786449, i32 4, metadata !2, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, null, null, metadata !46, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
+!3 = metadata !{i32 786449, metadata !47, i32 4, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 false, metadata !"", i32 0, metadata !48, metadata !48, metadata !46, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
 !4 = metadata !{metadata !5, metadata !7, metadata !0, metadata !9}
 !5 = metadata !{i32 786445, metadata !47, metadata !1, metadata !"Data", i32 7, i64 64, i64 64, i64 0, i32 0, metadata !6} ; [ DW_TAG_member ]
 !6 = metadata !{i32 786447, metadata !47, metadata !2, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, null} ; [ DW_TAG_pointer_type ]
@@ -124,3 +124,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !44 = metadata !{i32 786688, metadata !39, metadata !"k", metadata !2, i32 26, metadata !13, i32 0, null} ; [ DW_TAG_auto_variable ]
 !45 = metadata !{i32 27, i32 0, metadata !39, null}
 !47 = metadata !{metadata !"small.cc", metadata !"/Users/manav/R8248330"}
+!48 = metadata !{i32 0}

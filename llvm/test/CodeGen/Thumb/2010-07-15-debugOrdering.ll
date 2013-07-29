@@ -46,12 +46,13 @@ declare double @sqrt(double) nounwind readonly
 
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
+!llvm.dbg.cu = !{!5}
 !0 = metadata !{i32 46, i32 0, metadata !1, null}
 !1 = metadata !{i32 524299, metadata !101, metadata !2, i32 44, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !2 = metadata !{i32 524299, metadata !101, metadata !3, i32 44, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !3 = metadata !{i32 524334, metadata !101, null, metadata !"getClosestDiagonal3", metadata !"getClosestDiagonal3", metadata !"_Z19getClosestDiagonal3ii", i32 44, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !4 = metadata !{i32 524329, metadata !101} ; [ DW_TAG_file_type ]
-!5 = metadata !{i32 524305, i32 0, i32 4, metadata !"ggEdgeDiscrepancy.cc", metadata !"/Volumes/Home/grosbaj/sources/llvm-externals/speccpu2000/benchspec/CINT2000/252.eon/src", metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 00)", i1 true, i1 false, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!5 = metadata !{i32 524305, metadata !101, i32 4, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build 00)", i1 true, metadata !"", i32 0, metadata !102, metadata !102, metadata !103, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !6 = metadata !{i32 524309, metadata !101, metadata !4, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !7, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !7 = metadata !{metadata !8, metadata !22, metadata !22}
 !8 = metadata !{i32 524307, metadata !99, null, metadata !"ggVector3", i32 66, i64 192, i64 32, i64 0, i32 0, null, metadata !10, i32 0, null} ; [ DW_TAG_structure_type ]
@@ -148,3 +149,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !97 = metadata !{i32 227, i32 0, metadata !94, metadata !96}
 !98 = metadata !{i32 52, i32 0, metadata !1, null}
 !101 = metadata !{metadata !"ggEdgeDiscrepancy.cc", metadata !"/Volumes/Home/grosbaj/sources/llvm-externals/speccpu2000/benchspec/CINT2000/252.eon/src"}
+!102 = metadata !{i32 0}
+!103 = metadata !{metadata !3}

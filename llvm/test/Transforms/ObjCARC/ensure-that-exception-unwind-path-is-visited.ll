@@ -1,4 +1,4 @@
-; RUN: opt -objc-arc -S -disable-debug-info-verifier < %s | FileCheck %s
+; RUN: opt -objc-arc -S < %s | FileCheck %s
 ; rdar://11744105
 ; bugzilla://14584
 
@@ -113,16 +113,14 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!33, !34, !35, !36}
 
-!0 = metadata !{i32 786449, i32 0, i32 16, metadata !"test.m", metadata !"/Volumes/Files/gottesmmcab/Radar/12906997", metadata !"clang version 3.3 ", i1 true, i1 true, metadata !"", i32 2, metadata !1, metadata !1, metadata !3, metadata !1} ; [ DW_TAG_compile_unit ] [/Volumes/Files/gottesmmcab/Radar/12906997/test.m] [DW_LANG_ObjC]
-!1 = metadata !{metadata !2}
-!2 = metadata !{i32 0}
-!3 = metadata !{metadata !4}
-!4 = metadata !{metadata !5, metadata !27}
+!0 = metadata !{i32 786449, metadata !60, i32 16, metadata !"clang version 3.3 ", i1 true, metadata !"", i32 2, metadata !1, metadata !1, metadata !3, metadata !1, null, metadata !""} ; [ DW_TAG_compile_unit ] [/Volumes/Files/gottesmmcab/Radar/12906997/test.m] [DW_LANG_ObjC]
+!1 = metadata !{i32 0}
+!3 = metadata !{metadata !5, metadata !27}
 !5 = metadata !{i32 786478, metadata !60, metadata !6, metadata !"main", metadata !"main", metadata !"", i32 9, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 ()* @main, null, null, metadata !10, i32 10} ; [ DW_TAG_subprogram ] [line 9] [def] [scope 10] [main]
 !6 = metadata !{i32 786473, metadata !60} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 786468, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !10 = metadata !{metadata !11}
 !11 = metadata !{metadata !12, metadata !21, metadata !25}
 !12 = metadata !{i32 786688, metadata !13, metadata !"obj", metadata !6, i32 11, metadata !14, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [obj] [line 11]
@@ -137,7 +135,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !21 = metadata !{i32 786688, metadata !22, metadata !"ok", metadata !6, i32 13, metadata !23, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [ok] [line 13]
 !22 = metadata !{i32 786443, metadata !60, metadata !13, i32 12, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/Volumes/Files/gottesmmcab/Radar/12906997/test.m]
 !23 = metadata !{i32 786454, metadata !60, null, metadata !"BOOL", i32 62, i64 0, i64 0, i64 0, i32 0, metadata !24} ; [ DW_TAG_typedef ] [BOOL] [line 62, size 0, align 0, offset 0] [from signed char]
-!24 = metadata !{i32 786468, null, metadata !"signed char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [signed char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
+!24 = metadata !{i32 786468, null, null, metadata !"signed char", i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [signed char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
 !25 = metadata !{i32 786688, metadata !26, metadata !"obj2", metadata !6, i32 15, metadata !14, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [obj2] [line 15]
 !26 = metadata !{i32 786443, metadata !60, metadata !22, i32 14, i32 0, i32 2} ; [ DW_TAG_lexical_block ] [/Volumes/Files/gottesmmcab/Radar/12906997/test.m]
 !27 = metadata !{i32 786478, metadata !60, metadata !6, metadata !"ThrowFunc", metadata !"ThrowFunc", metadata !"", i32 4, metadata !28, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, void (i8*)* @ThrowFunc, null, null, metadata !30, i32 5} ; [ DW_TAG_subprogram ] [line 4] [local] [def] [scope 5] [ThrowFunc]

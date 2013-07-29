@@ -42,11 +42,12 @@ bb33:                                             ; preds = %bb31, %bb22, %bb18,
 
 declare void @foobar(i32)
 
+!llvm.dbg.cu = !{!4}
 !0 = metadata !{i32 590080, metadata !1, metadata !"frname_len", metadata !3, i32 517, metadata !38, i32 0} ; [ DW_TAG_auto_variable ]
 !1 = metadata !{i32 589835, metadata !44, metadata !2, i32 515, i32 0, i32 19} ; [ DW_TAG_lexical_block ]
 !2 = metadata !{i32 589870, metadata !44, null, metadata !"framework_construct_pathname", metadata !"framework_construct_pathname", metadata !"", i32 515, metadata !5, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, i8* (i8*, %struct.cpp_dir*)* @framework_construct_pathname, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !3 = metadata !{i32 589865, metadata !44}  ; [ DW_TAG_file_type ]
-!4 = metadata !{i32 589841, metadata !44, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, null, null, metadata !45, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 589841, metadata !44, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !46, metadata !46, metadata !45, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !5 = metadata !{i32 589845, metadata !44, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !6 = metadata !{metadata !7, metadata !9, metadata !11}
 !7 = metadata !{i32 589839, metadata !44, metadata !3, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !8} ; [ DW_TAG_pointer_type ]
@@ -88,3 +89,4 @@ declare void @foobar(i32)
 !43 = metadata !{metadata !"stddef.h", metadata !"/Users/espindola/llvm/build-llvm-gcc/./prev-gcc/include"}
 !44 = metadata !{metadata !"darwin-c.c", metadata !"/Users/espindola/llvm/build-llvm-gcc/gcc/../../llvm-gcc-4.2/gcc/config"}
 !45 = metadata !{metadata !2}
+!46 = metadata !{i32 0}

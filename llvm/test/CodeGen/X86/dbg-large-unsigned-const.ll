@@ -30,7 +30,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !30 = metadata !{metadata !7, metadata !11}
 !31 = metadata !{metadata !12}
 
-!0 = metadata !{i32 786449, metadata !32, i32 4, metadata !"clang version 3.0 (trunk 135593)", i1 true, metadata !"", i32 0, null, null, metadata !29, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !32, i32 4, metadata !"clang version 3.0 (trunk 135593)", i1 true, metadata !"", i32 0, metadata !33, metadata !33, metadata !29, null, null, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, metadata !32, null, metadata !"ise", metadata !"ise", metadata !"_Z3iseRKxS0_", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i1 (i64*, i64*)* @_Z3iseRKxS0_, null, null, metadata !30, i32 2} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786473, metadata !32} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !32, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !4, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
@@ -57,3 +57,4 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !27 = metadata !{i32 2, i32 49, metadata !1, metadata !22}
 !28 = metadata !{i32 3, i32 3, metadata !16, metadata !22}
 !32 = metadata !{metadata !"lli.cc", metadata !"/private/tmp"}
+!33 = metadata !{i32 0}

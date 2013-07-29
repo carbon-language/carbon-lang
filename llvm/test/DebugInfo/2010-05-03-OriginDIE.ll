@@ -48,11 +48,12 @@ declare i64 @llvm.bswap.i64(i64) nounwind readnone
 
 declare void @uuid_LtoB(i8*, i8*)
 
+!llvm.dbg.cu = !{!4}
 !0 = metadata !{i32 808, i32 0, metadata !1, null}
 !1 = metadata !{i32 524299, metadata !39, metadata !2, i32 807, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !2 = metadata !{i32 524334, metadata !39, null, metadata !"gpt2gpm", metadata !"gpt2gpm", metadata !"gpt2gpm", i32 807, metadata !5, i1 true, i1 true, i32 0, i32 0, null, i1 false, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !3 = metadata !{i32 524329, metadata !39} ; [ DW_TAG_file_type ]
-!4 = metadata !{i32 524305, i32 0, i32 1, metadata !"G.c", metadata !"/tmp", metadata !"llvm-gcc", i1 true, i1 true, metadata !"", i32 0} ; [ DW_TAG_compile_unit ]
+!4 = metadata !{i32 524305, metadata !39, i32 1, metadata !"llvm-gcc", i1 true, metadata !"", i32 0, metadata !18, metadata !18, metadata !40, null, null, i32 0} ; [ DW_TAG_compile_unit ]
 !5 = metadata !{i32 524309, metadata !39, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !6 = metadata !{null}
 !7 = metadata !{i32 810, i32 0, metadata !1, null}
@@ -88,3 +89,4 @@ declare void @uuid_LtoB(i8*, i8*)
 !37 = metadata !{metadata !"types.h", metadata !"/usr/include/ppc"}
 !38 = metadata !{metadata !"OSByteOrder.h", metadata !"/usr/include/libkern/ppc"}
 !39 = metadata !{metadata !"G.c", metadata !"/tmp"}
+!40 = metadata !{metadata !2, metadata !9, metadata !16}
