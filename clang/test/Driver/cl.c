@@ -22,3 +22,6 @@
 // are not available in clang-cl.
 // DEFAULT: -fapple-kext
 // CL-NOT: -fapple-kext
+
+// Don't attempt slash switches on msys bash.
+// REQUIRES: shell-preserves-root
