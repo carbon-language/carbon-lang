@@ -1104,10 +1104,12 @@ void DwarfDebug::finalizeModuleInfo() {
   for (unsigned i = 0, e = TypeUnits.size(); i != e; ++i) {
     MD5 Hash;
     DIE *Die = TypeUnits[i];
-    // If we've requested ODR hashes, the current language is C++, and the type
-    // isn't located inside a C++ anonymous namespace then add the attribute now.
+    // If we've requested ODR hashes, the current language is C++, the type is
+    // named, and the type isn't located inside a C++ anonymous namespace then
+    // add the ODR signature attribute now.
     if (GenerateODRHash &&
         CUMap.begin()->second->getLanguage() == dwarf::DW_LANG_C_plus_plus &&
+        (getDIEStringAttr(Die, dwarf::DW_AT_name) != "") &&
         !isContainedInAnonNamespace(Die))
       addDIEODRSignature(Hash, CUMap.begin()->second, Die);
   }
