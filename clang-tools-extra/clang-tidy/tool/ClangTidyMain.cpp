@@ -16,8 +16,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "../ClangTidy.h"
-#include "clang/Driver/OptTable.h"
-#include "clang/Driver/Options.h"
+#include "llvm/Option/OptTable.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
 #include <vector>
 
