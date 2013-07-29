@@ -1,4 +1,4 @@
-##===- tools/extra/test/Unit/Makefile ----------------------*- Makefile -*-===##
+##===- clang-tidy/google/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,10 +6,7 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
-CLANG_LEVEL := ../../..
-include $(CLANG_LEVEL)/../../Makefile.config
-
-PARALLEL_DIRS := cpp11-migrate clang-tidy
+CLANG_LEVEL := ../../../..
+LIBRARYNAME := clangTidyGoogleModule
 
 include $(CLANG_LEVEL)/Makefile

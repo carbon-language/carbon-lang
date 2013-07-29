@@ -6,3 +6,4 @@ function(add_extra_unittest test_dirname)
 endfunction()
 
 add_subdirectory(cpp11-migrate)
+add_subdirectory(clang-tidy)
