@@ -222,16 +222,74 @@ private:
   unsigned DeferredChanges;
 };
 
+/// \brief Describes a version number of the form major[.minor] (minor being
+/// optional).
+struct Version {
+  explicit Version(unsigned Major = 0, unsigned Minor = 0)
+      : Major(Major), Minor(Minor) {}
+
+  bool operator<(Version RHS) const {
+    if (Major < RHS.Major)
+      return true;
+    if (Major == RHS.Major)
+      return Minor < RHS.Minor;
+    return false;
+  }
+
+  bool operator==(Version RHS) const {
+    return Major == RHS.Major && Minor == RHS.Minor;
+  }
+
+  bool operator!=(Version RHS) const { return !(*this == RHS); }
+  bool operator>(Version RHS) const { return RHS < *this; }
+  bool operator<=(Version RHS) const { return !(*this > RHS); }
+  bool operator>=(Version RHS) const { return !(*this < RHS); }
+
+  bool isNull() const { return Minor == 0 && Major == 0; }
+  unsigned getMajor() const { return Major; }
+  unsigned getMinor() const { return Minor; }
+
+  /// \brief Creates a version from a string of the form \c major[.minor].
+  ///
+  /// Note that any version component after \c minor is ignored.
+  ///
+  /// \return A null version is returned on error.
+  static Version getFromString(llvm::StringRef VersionStr);
+
+private:
+  unsigned Major;
+  unsigned Minor;
+};
+
+/// \brief Convenience structure to store the version of some compilers.
+struct CompilerVersions {
+  Version Clang, Gcc, Icc, Msvc;
+};
+
 /// \brief A factory that can instantiate a specific transform.
 ///
-/// Each transform should subclass it and implement the \c createTransform()
-/// methods. Use \c TransformFactoryRegistry to register the transform globally.
+/// Each transform should subclass this class and implement
+/// \c createTransform().
+///
+/// In the sub-classed factory constructor, specify the earliest versions since
+/// the compilers in \c CompilerVersions support the feature introduced by the
+/// transform. See the example below.
+///
+/// Note that you should use \c TransformFactoryRegistry to register the
+/// transform globally.
 ///
 /// Example:
 /// \code
 /// class MyTransform : public Transform { ... };
 ///
 /// struct MyFactory : TransformFactory {
+///   MyFactory() {
+///     Since.Clang = Version(3, 0);
+///     Since.Gcc = Version(4, 7);
+///     Since.Icc = Version(12);
+///     Since.Msvc = Version(10);
+///   }
+///
 ///   Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
 ///     return new MyTransform(Opts);
 ///   }
@@ -249,6 +307,17 @@ class TransformFactory {
 public:
   virtual ~TransformFactory();
   virtual Transform *createTransform(const TransformOptions &) = 0;
+
+  /// \brief Whether the transform is supported by the required compilers or
+  /// not.
+  bool supportsCompilers(CompilerVersions Required) const;
+
+protected:
+  /// \brief Since when the C++11 feature introduced by this transform has been
+  /// available.
+  ///
+  /// Can be set by the sub-class in the constructor body.
+  CompilerVersions Since;
 };
 
 typedef llvm::Registry<TransformFactory> TransformFactoryRegistry;

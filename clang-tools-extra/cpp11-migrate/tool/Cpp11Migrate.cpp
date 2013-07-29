@@ -24,6 +24,8 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 
@@ -36,8 +38,8 @@ TransformOptions GlobalOptions;
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static cl::extrahelp MoreHelp(
     "EXAMPLES:\n\n"
-    "Use 'auto' type specifier, no compilation database:\n\n"
-    "  cpp11-migrate -use-auto path/to/file.cpp -- -Ipath/to/include/\n"
+    "Apply all transforms on a given file, no compilation database:\n\n"
+    "  cpp11-migrate path/to/file.cpp -- -Ipath/to/include/\n"
     "\n"
     "Convert for loops to the new ranged-based for loops on all files in a "
     "subtree\nand reformat the code automatically using the LLVM style:\n\n"
@@ -47,7 +49,10 @@ static cl::extrahelp MoreHelp(
     "Make use of both nullptr and the override specifier, using git ls-files:\n"
     "\n"
     "  git ls-files '*.cpp' | xargs -I{} cpp11-migrate -p build/path \\\n"
-    "    -use-nullptr -add-override -override-macros {}\n");
+    "    -use-nullptr -add-override -override-macros {}\n"
+    "\n"
+    "Apply all transforms supported by both clang >= 3.0 and gcc >= 4.7:\n\n"
+    "  cpp11-migrate -for-compilers=clang-3.0,gcc-4.7 foo.cpp -- -Ibar\n");
 
 static cl::opt<RiskLevel, /*ExternalStorage=*/true> MaxRiskLevel(
     "risk", cl::desc("Select a maximum risk level:"),
@@ -113,6 +118,68 @@ static cl::opt<bool, /*ExternalStorage=*/true> EnableHeaderModifications(
     cl::location(GlobalOptions.EnableHeaderModifications),
     cl::init(false));
 
+cl::opt<std::string> SupportedCompilers(
+    "for-compilers", cl::value_desc("string"),
+    cl::desc("Select transforms targeting the intersection of\n"
+             "language features supported by the given compilers.\n"
+             "Takes a comma-seperated list of <compiler>-<version>.\n"
+             "\t<compiler> can be any of: clang, gcc, icc, msvc\n"
+             "\t<version> is <major>[.<minor>]\n"));
+
+/// \brief Extract the minimum compiler versions as requested on the command
+/// line by the switch \c -for-compilers.
+///
+/// \param ProgName The name of the program, \c argv[0], used to print errors.
+/// \param Error If an error occur while parsing the versions this parameter is
+/// set to \c true, otherwise it will be left untouched.
+static CompilerVersions handleSupportedCompilers(const char *ProgName,
+                                                 bool &Error) {
+  if (SupportedCompilers.getNumOccurrences() == 0)
+    return CompilerVersions();
+  CompilerVersions RequiredVersions;
+  llvm::SmallVector<llvm::StringRef, 4> Compilers;
+
+  llvm::StringRef(SupportedCompilers).split(Compilers, ",");
+
+  for (llvm::SmallVectorImpl<llvm::StringRef>::iterator I = Compilers.begin(),
+                                                        E = Compilers.end();
+       I != E; ++I) {
+    llvm::StringRef Compiler, VersionStr;
+    llvm::tie(Compiler, VersionStr) = I->split('-');
+    Version *V = llvm::StringSwitch<Version *>(Compiler)
+        .Case("clang", &RequiredVersions.Clang)
+        .Case("gcc", &RequiredVersions.Gcc).Case("icc", &RequiredVersions.Icc)
+        .Case("msvc", &RequiredVersions.Msvc).Default(NULL);
+
+    if (V == NULL) {
+      llvm::errs() << ProgName << ": " << Compiler
+                   << ": unsupported platform\n";
+      Error = true;
+      continue;
+    }
+    if (VersionStr.empty()) {
+      llvm::errs() << ProgName << ": " << *I
+                   << ": missing version number in platform\n";
+      Error = true;
+      continue;
+    }
+
+    Version Version = Version::getFromString(VersionStr);
+    if (Version.isNull()) {
+      llvm::errs()
+          << ProgName << ": " << *I
+          << ": invalid version, please use \"<major>[.<minor>]\" instead of \""
+          << VersionStr << "\"\n";
+      Error = true;
+      continue;
+    }
+    // support the lowest version given
+    if (V->isNull() || Version < *V)
+      *V = Version;
+  }
+  return RequiredVersions;
+}
+
 /// \brief Creates the Reformatter if the format style option is provided,
 /// return a null pointer otherwise.
 ///
@@ -161,10 +228,13 @@ int main(int argc, const char **argv) {
   GlobalOptions.EnableTiming = (TimingDirectoryName != NoTiming);
 
   // Check the reformatting style option
-  bool BadStyle = false;
+  bool CmdSwitchError = false;
   llvm::OwningPtr<Reformatter> ChangesReformatter(
-      handleFormatStyle(argv[0], BadStyle));
-  if (BadStyle)
+      handleFormatStyle(argv[0], CmdSwitchError));
+
+  CompilerVersions RequiredVersions =
+      handleSupportedCompilers(argv[0], CmdSwitchError);
+  if (CmdSwitchError)
     return 1;
 
   // Populate the ModifiableHeaders structure if header modifications are
@@ -176,10 +246,14 @@ int main(int argc, const char **argv) {
         .readListFromFile(IncludeFromFile, ExcludeFromFile);
   }
 
-  TransformManager.createSelectedTransforms(GlobalOptions);
+  TransformManager.createSelectedTransforms(GlobalOptions, RequiredVersions);
 
   if (TransformManager.begin() == TransformManager.end()) {
-    llvm::errs() << argv[0] << ": No selected transforms\n";
+    if (SupportedCompilers.empty())
+      llvm::errs() << argv[0] << ": no selected transforms\n";
+    else
+      llvm::errs() << argv[0]
+                   << ": no transforms available for specified compilers\n";
     return 1;
   }
 

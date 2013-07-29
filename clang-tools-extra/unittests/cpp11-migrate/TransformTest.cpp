@@ -302,3 +302,25 @@ TEST(Transform, isFileModifiable) {
     Tool.run(tooling::newFrontendActionFactory(&Finder));
   }
 }
+
+TEST(VersionTest, Interface) {
+  Version V;
+
+  ASSERT_TRUE(V.isNull());
+  ASSERT_TRUE(Version(1) < Version(1, 1));
+  ASSERT_TRUE(Version(1) < Version(2));
+  ASSERT_TRUE(Version(1, 1) < Version(2));
+  ASSERT_TRUE(Version(1, 1) == Version(1, 1));
+  ASSERT_EQ(Version(1).getMajor(), unsigned(1));
+  ASSERT_EQ(Version(1).getMinor(), unsigned(0));
+  ASSERT_EQ(Version(1, 2).getMinor(), unsigned(2));
+}
+
+TEST(VersionTest, getFromString) {
+  ASSERT_EQ(Version(1), Version::getFromString("1"));
+  ASSERT_EQ(Version(1, 2), Version::getFromString("1.2"));
+  ASSERT_TRUE(Version::getFromString("foo").isNull());
+  ASSERT_TRUE(Version::getFromString("1bar").isNull());
+  // elements after major.minor are ignored
+  ASSERT_EQ(Version(1, 2), Version::getFromString("1.2.3"));
+}

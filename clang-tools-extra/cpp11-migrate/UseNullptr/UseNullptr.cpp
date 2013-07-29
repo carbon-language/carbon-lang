@@ -50,6 +50,13 @@ int UseNullptrTransform::apply(FileOverrides &InputStates,
 }
 
 struct UseNullptrFactory : TransformFactory {
+  UseNullptrFactory() {
+    Since.Clang = Version(3, 0);
+    Since.Gcc = Version(4, 6);
+    Since.Icc = Version(12, 1);
+    Since.Msvc = Version(10);
+  }
+
   Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
     return new UseNullptrTransform(Opts);
   }

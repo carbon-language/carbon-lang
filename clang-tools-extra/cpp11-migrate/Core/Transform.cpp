@@ -20,6 +20,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 
@@ -132,4 +133,36 @@ FrontendActionFactory *Transform::createActionFactory(MatchFinder &Finder) {
   return new ActionFactory(Finder, /*Owner=*/ *this);
 }
 
+Version Version::getFromString(llvm::StringRef VersionStr) {
+  llvm::StringRef MajorStr, MinorStr;
+  Version V;
+
+  llvm::tie(MajorStr, MinorStr) = VersionStr.split('.');
+  if (!MinorStr.empty()) {
+    llvm::StringRef Ignore;
+    llvm::tie(MinorStr, Ignore) = MinorStr.split('.');
+    if (MinorStr.getAsInteger(10, V.Minor))
+      return Version();
+  }
+  if (MajorStr.getAsInteger(10, V.Major))
+    return Version();
+  return V;
+}
+
 TransformFactory::~TransformFactory() {}
+
+namespace {
+bool versionSupported(Version Required, Version AvailableSince) {
+  // null version, means no requirements, means supported
+  if (Required.isNull())
+    return true;
+  return Required >= AvailableSince;
+}
+} // end anonymous namespace
+
+bool TransformFactory::supportsCompilers(CompilerVersions Required) const {
+  return versionSupported(Required.Clang, Since.Clang) &&
+         versionSupported(Required.Gcc, Since.Gcc) &&
+         versionSupported(Required.Icc, Since.Icc) &&
+         versionSupported(Required.Msvc, Since.Msvc);
+}

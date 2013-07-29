@@ -30,6 +30,7 @@ class Option;
 } // namespace llvm
 class Transform;
 struct TransformOptions;
+struct CompilerVersions;
 
 typedef Transform *(*TransformCreator)(const TransformOptions &);
 template <typename T>
@@ -57,7 +58,8 @@ public:
   /// \brief Instantiate all transforms that were selected on the command line.
   ///
   /// Call *after* parsing options.
-  void createSelectedTransforms(const TransformOptions &Options);
+  void createSelectedTransforms(const TransformOptions &Options,
+                                const CompilerVersions &RequiredVersions);
 
   /// \brief Return an iterator to the start of a container of instantiated
   /// transforms.
@@ -68,6 +70,8 @@ public:
   const_iterator end() const { return ChosenTransforms.end(); }
 
 private:
+  bool hasAnyExplicitOption() const;
+
   typedef llvm::StringMap<llvm::cl::opt<bool> *> OptionMap;
 
 private:

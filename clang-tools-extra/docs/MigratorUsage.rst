@@ -7,7 +7,16 @@ cpp11-migrate Usage
 ``<source#>`` specifies the path to the source to migrate. This path may be
 relative to the current directory.
 
-At least one transform must be enabled.
+By default all transformations are applied. There are two ways to enable a
+subset of the transformations:
+
+1. Explicitly, by referring to the transform options directly, see
+   :ref:`transform-specific-command-line-options`.
+2. Implicitly, based on the compilers to support, see
+   :ref:`-for-compilers=\<string\> <for-compilers-option>`.
+
+If both ways of specifying transforms are used only explicitly specified
+transformations that are supported by the given compilers will be applied.
 
 General Command Line Options
 ============================
@@ -113,6 +122,54 @@ General Command Line Options
   with other accepted changes. Re-applying the transform will resolve deferred
   changes.
 
+.. _for-compilers-option:
+
+.. option:: -for-compilers=<string>
+
+  Select transforms targeting the intersection of language features supported by
+  the given compilers.
+
+  Four compilers are supported. The transforms are enabled according to this
+  table:
+
+  ===============  =====  ===  ====  ====
+  Transforms       clang  gcc  icc   mscv
+  ===============  =====  ===  ====  ====
+  AddOverride (1)  3.0    4.7  14    8
+  LoopConvert      3.0    4.6  13    11
+  ReplaceAutoPtr   3.0    4.6  13    11
+  UseAuto          2.9    4.4  12    10
+  UseNullptr       3.0    4.6  12.1  10
+  ===============  =====  ===  ====  ====
+
+  (1): if *-override-macros* is provided it's assumed that the macros are C++11
+  aware and the transform is enabled without regard to the supported compilers.
+
+  The structure of the argument to the `-for-compilers` option is
+  **<compiler>-<major ver>[.<minor ver>]** where **<compiler>** is one of the
+  compilers from the above table.
+
+  Some examples:
+
+  1. To support `Clang >= 3.0`, `gcc >= 4.6` and `MSVC >= 11`:
+
+     ``cpp11-migrate -for-compilers=clang-3.0,gcc-4.6,msvc-11 <args..>``
+
+     Enables LoopConvert, ReplaceAutoPtr, UseAuto, UseNullptr.
+
+  2. To support `icc >= 12` while using a C++11-aware macro for the `override`
+     virtual specifier:
+
+     ``cpp11-migrate -for-compilers=icc-12 -override-macros <args..>``
+
+     Enables AddOverride and UseAuto.
+
+  .. warning::
+
+    If your version of Clang depends on the GCC headers (e.g: when `libc++` is
+    not used), then you probably want to add the GCC version to the targeted
+    platforms as well.
+
 .. option:: -perf[=<directory>]
 
   Turns on performance measurement and output functionality. The time it takes to
@@ -123,6 +180,8 @@ General Command Line Options
 
   The time recorded for a transform includes parsing and creating source code
   replacements.
+
+.. _transform-specific-command-line-options:
 
 Transform-Specific Command Line Options
 =======================================

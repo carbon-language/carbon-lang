@@ -49,6 +49,13 @@ int UseAutoTransform::apply(FileOverrides &InputStates,
 }
 
 struct UseAutoFactory : TransformFactory {
+  UseAutoFactory() {
+    Since.Clang = Version(2, 9);
+    Since.Gcc = Version(4, 4);
+    Since.Icc = Version(12);
+    Since.Msvc = Version(10);
+  }
+
   Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
     return new UseAutoTransform(Opts);
   }

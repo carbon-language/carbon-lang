@@ -37,17 +37,35 @@ void Transforms::registerTransforms() {
         I->getName(), cl::desc(I->getDesc()), cl::cat(TransformCategory));
 }
 
+bool Transforms::hasAnyExplicitOption() const {
+  for (OptionMap::const_iterator I = Options.begin(), E = Options.end(); I != E;
+       ++I)
+    if (*I->second)
+      return true;
+  return false;
+}
+
 void
-Transforms::createSelectedTransforms(const TransformOptions &GlobalOptions) {
+Transforms::createSelectedTransforms(const TransformOptions &GlobalOptions,
+                                     const CompilerVersions &RequiredVersions) {
+  // if at least one transform is set explicitly on the command line, do not
+  // enable non-explicit ones
+  bool EnableAllTransformsByDefault = !hasAnyExplicitOption();
+
   for (TransformFactoryRegistry::iterator I = TransformFactoryRegistry::begin(),
                                           E = TransformFactoryRegistry::end();
        I != E; ++I) {
-    bool OptionEnabled = *Options[I->getName()];
+    bool ExplicitlyEnabled = *Options[I->getName()];
+    bool OptionEnabled = EnableAllTransformsByDefault || ExplicitlyEnabled;
 
     if (!OptionEnabled)
       continue;
 
     llvm::OwningPtr<TransformFactory> Factory(I->instantiate());
-    ChosenTransforms.push_back(Factory->createTransform(GlobalOptions));
+    if (Factory->supportsCompilers(RequiredVersions))
+      ChosenTransforms.push_back(Factory->createTransform(GlobalOptions));
+    else if (ExplicitlyEnabled)
+      llvm::errs() << "note: " << '-' << I->getName()
+                   << ": transform not available for specified compilers\n";
   }
 }

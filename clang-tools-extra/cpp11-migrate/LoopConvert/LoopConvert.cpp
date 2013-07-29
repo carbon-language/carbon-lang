@@ -68,6 +68,13 @@ int LoopConvertTransform::apply(FileOverrides &InputStates,
 }
 
 struct LoopConvertFactory : TransformFactory {
+  LoopConvertFactory() {
+    Since.Clang = Version(3, 0);
+    Since.Gcc = Version(4, 6);
+    Since.Icc = Version(13);
+    Since.Msvc = Version(11);
+  }
+
   Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
     return new LoopConvertTransform(Opts);
   }

@@ -61,6 +61,18 @@ bool AddOverrideTransform::handleBeginSource(clang::CompilerInstance &CI,
 }
 
 struct AddOverrideFactory : TransformFactory {
+  AddOverrideFactory() {
+    // if detecting macros is enabled, do not impose requirements on the
+    // compiler. It is assumed that the macros use is "C++11-aware", meaning it
+    // won't expand to override if the compiler doesn't support the specifier.
+    if (!DetectMacros) {
+      Since.Clang = Version(3, 0);
+      Since.Gcc = Version(4, 7);
+      Since.Icc = Version(14);
+      Since.Msvc = Version(8);
+    }
+  }
+
   Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
     return new AddOverrideTransform(Opts);
   }
