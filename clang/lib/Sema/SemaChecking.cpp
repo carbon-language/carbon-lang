@@ -1657,12 +1657,11 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     QualType LHSType = TheCall->getArg(0)->getType();
     QualType RHSType = TheCall->getArg(1)->getType();
 
-    if (!LHSType->isVectorType() || !RHSType->isVectorType()) {
-      Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
-        << SourceRange(TheCall->getArg(0)->getLocStart(),
-                       TheCall->getArg(1)->getLocEnd());
-      return ExprError();
-    }
+    if (!LHSType->isVectorType() || !RHSType->isVectorType())
+      return ExprError(Diag(TheCall->getLocStart(),
+                            diag::err_shufflevector_non_vector)
+                       << SourceRange(TheCall->getArg(0)->getLocStart(),
+                                      TheCall->getArg(1)->getLocEnd()));
 
     numElements = LHSType->getAs<VectorType>()->getNumElements();
     unsigned numResElements = TheCall->getNumArgs() - 2;
@@ -1673,14 +1672,15 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     if (TheCall->getNumArgs() == 2) {
       if (!RHSType->hasIntegerRepresentation() ||
           RHSType->getAs<VectorType>()->getNumElements() != numElements)
-        Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
-          << SourceRange(TheCall->getArg(1)->getLocStart(),
-                         TheCall->getArg(1)->getLocEnd());
+        return ExprError(Diag(TheCall->getLocStart(),
+                              diag::err_shufflevector_incompatible_vector)
+                         << SourceRange(TheCall->getArg(1)->getLocStart(),
+                                        TheCall->getArg(1)->getLocEnd()));
     } else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
-      Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
-        << SourceRange(TheCall->getArg(0)->getLocStart(),
-                       TheCall->getArg(1)->getLocEnd());
-      return ExprError();
+      return ExprError(Diag(TheCall->getLocStart(),
+                            diag::err_shufflevector_incompatible_vector)
+                       << SourceRange(TheCall->getArg(0)->getLocStart(),
+                                      TheCall->getArg(1)->getLocEnd()));
     } else if (numElements != numResElements) {
       QualType eltType = LHSType->getAs<VectorType>()->getElementType();
       resType = Context.getVectorType(eltType, numResElements,
