@@ -1734,7 +1734,7 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
   const SLocEntry &Entry = getSLocEntry(FID, &Invalid);
   if (Invalid)
     return SourceLocation();
-  
+
   if (!Entry.isFile())
     return SourceLocation();
 
@@ -1747,7 +1747,7 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
     = const_cast<ContentCache *>(Entry.getFile().getContentCache());
   if (!Content)
     return SourceLocation();
-    
+
   // If this is the first use of line information for this buffer, compute the
   // SourceLineCache for it on demand.
   if (Content->SourceLineCache == 0) {
@@ -1776,10 +1776,7 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
   // Check that the given column is valid.
   while (i < BufLength-1 && i < Col-1 && Buf[i] != '\n' && Buf[i] != '\r')
     ++i;
-  if (i < Col-1)
-    return FileLoc.getLocWithOffset(FilePos + i);
-
-  return FileLoc.getLocWithOffset(FilePos + Col - 1);
+  return FileLoc.getLocWithOffset(FilePos + i);
 }
 
 /// \brief Compute a map of macro argument chunks to their expanded source
