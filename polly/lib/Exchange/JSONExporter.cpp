@@ -244,6 +244,10 @@ bool JSONImporter::runOnScop(Scop &scop) {
   if (!D->isValidScattering(&NewScattering)) {
     errs() << "JScop file contains a scattering that changes the "
            << "dependences. Use -disable-polly-legality to continue anyways\n";
+    for (StatementToIslMapTy::iterator SI = NewScattering.begin(),
+                                       SE = NewScattering.end();
+         SI != SE; ++SI)
+      isl_map_free(SI->second);
     return false;
   }
 
