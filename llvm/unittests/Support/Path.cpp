@@ -169,7 +169,7 @@ TEST_F(FileSystemTest, Unique) {
       fs::createTemporaryFile("prefix", "temp", FileDescriptor, TempPath));
 
   // The same file should return an identical unique id.
-  uint64_t F1, F2;
+  fs::UniqueID F1, F2;
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath), F1));
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath), F2));
   ASSERT_EQ(F1, F2);
@@ -180,7 +180,7 @@ TEST_F(FileSystemTest, Unique) {
   ASSERT_NO_ERROR(
       fs::createTemporaryFile("prefix", "temp", FileDescriptor2, TempPath2));
 
-  uint64_t D;
+  fs::UniqueID D;
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath2), D));
   ASSERT_NE(D, F1);
   ::close(FileDescriptor2);
@@ -190,7 +190,7 @@ TEST_F(FileSystemTest, Unique) {
   // Two paths representing the same file on disk should still provide the
   // same unique id.  We can test this by making a hard link.
   ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
-  uint64_t D2;
+  fs::UniqueID D2;
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath2), D2));
   ASSERT_EQ(D2, F1);
 

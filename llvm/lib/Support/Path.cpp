@@ -638,6 +638,15 @@ bool is_relative(const Twine &path) {
 
 namespace fs {
 
+error_code getUniqueID(const Twine Path, UniqueID &Result) {
+  file_status Status;
+  error_code EC = status(Path, Status);
+  if (EC)
+    return EC;
+  Result = Status.getUniqueID();
+  return error_code::success();
+}
+
 error_code createUniqueFile(const Twine &Model, int &ResultFd,
                             SmallVectorImpl<char> &ResultPath, unsigned Mode) {
   return createUniqueEntity(Model, ResultFd, ResultPath, false, Mode, FS_File);

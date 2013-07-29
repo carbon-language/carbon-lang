@@ -293,6 +293,10 @@ TimeValue file_status::getLastModificationTime() const {
   return Ret;
 }
 
+UniqueID file_status::getUniqueID() {
+  return UniqueID(fs_st_dev, fs_st_ino);
+}
+
 error_code current_path(SmallVectorImpl<char> &result) {
 #ifdef MAXPATHLEN
   result.reserve(MAXPATHLEN);
@@ -454,18 +458,6 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   if (error_code ec = status(A, fsA)) return ec;
   if (error_code ec = status(B, fsB)) return ec;
   result = equivalent(fsA, fsB);
-  return error_code::success();
-}
-
-error_code getUniqueID(const Twine Path, uint64_t &Result) {
-  SmallString<128> Storage;
-  StringRef P = Path.toNullTerminatedStringRef(Storage);
-
-  struct stat Status;
-  if (::stat(P.begin(), &Status) != 0)
-    return error_code(errno, system_category());
-
-  Result = Status.st_ino;
   return error_code::success();
 }
 
