@@ -230,35 +230,26 @@ bool MipsInstPrinter::printAlias(const char *Str, const MCInst &MI,
 bool MipsInstPrinter::printAlias(const MCInst &MI, raw_ostream &OS) {
   switch (MI.getOpcode()) {
   case Mips::BEQ:
-    if (isReg<Mips::ZERO>(MI, 1) && printAlias("beqz", MI, 0, 2, OS))
-      return true;
-    break;
+    // beq $r0, $zero, $L2 => beqz $r0, $L2
+    return isReg<Mips::ZERO>(MI, 1) && printAlias("beqz", MI, 0, 2, OS);
   case Mips::BEQ64:
-    if (isReg<Mips::ZERO_64>(MI, 1) && printAlias("beqz", MI, 0, 2, OS))
-      return true;
-    break;
+    // beq $r0, $zero, $L2 => beqz $r0, $L2
+    return isReg<Mips::ZERO_64>(MI, 1) && printAlias("beqz", MI, 0, 2, OS);
   case Mips::BNE:
-    if (isReg<Mips::ZERO>(MI, 1) && printAlias("bnez", MI, 0, 2, OS))
-      return true;
-    break;
+    // bne $r0, $zero, $L2 => bnez $r0, $L2
+    return isReg<Mips::ZERO>(MI, 1) && printAlias("bnez", MI, 0, 2, OS);
   case Mips::BNE64:
-    if (isReg<Mips::ZERO_64>(MI, 1) && printAlias("bnez", MI, 0, 2, OS))
-      return true;
-    break;
+    // bne $r0, $zero, $L2 => bnez $r0, $L2
+    return isReg<Mips::ZERO_64>(MI, 1) && printAlias("bnez", MI, 0, 2, OS);
   case Mips::BC1T:
-    if (isReg<Mips::FCC0>(MI, 0) && printAlias("bc1t", MI, 1, OS))
-      return true;
-    break;
+    // bc1t $fcc0, $L1 => bc1t $L1
+    return isReg<Mips::FCC0>(MI, 0) && printAlias("bc1t", MI, 1, OS);
   case Mips::BC1F:
-    if (isReg<Mips::FCC0>(MI, 0) && printAlias("bc1f", MI, 1, OS))
-      return true;
-    break;
+    // bc1f $fcc0, $L1 => bc1f $L1
+    return isReg<Mips::FCC0>(MI, 0) && printAlias("bc1f", MI, 1, OS);
   case Mips::OR:
-    if (isReg<Mips::ZERO>(MI, 2) && printAlias("move", MI, 0, 1, OS))
-      return true;
-    break;
+    // or $r0, $r1, $zero => move $r0, $r1
+    return isReg<Mips::ZERO>(MI, 2) && printAlias("move", MI, 0, 1, OS);
   default: return false;
   }
-
-  return false;
 }
