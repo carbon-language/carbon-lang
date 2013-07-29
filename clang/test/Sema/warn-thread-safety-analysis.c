@@ -1,7 +1,5 @@
 // RUN: %clang -fsyntax-only -verify -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
 
-#include <assert.h>
-
 #define LOCKABLE            __attribute__ ((lockable))
 #define SCOPED_LOCKABLE     __attribute__ ((scoped_lockable))
 #define GUARDED_BY(x)       __attribute__ ((guarded_by(x)))
@@ -111,14 +109,14 @@ int main() {
   set_value(&a_, 1);
   mutex_unlock(foo_.mu_);
   mutex_shared_lock(foo_.mu_);
-  assert(get_value(b_) == 1);
+  (void)(get_value(b_) == 1);
   mutex_unlock(foo_.mu_);
 
   c_ = 0; // expected-warning{{writing variable 'c_' requires locking any mutex exclusively}}
-  assert(*d_ == 0); // expected-warning{{reading the value pointed to by 'd_' requires locking any mutex}}
+  (void)(*d_ == 0); // expected-warning{{reading the value pointed to by 'd_' requires locking any mutex}}
   mutex_exclusive_lock(foo_.mu_);
   c_ = 1;
-  assert(*d_ == 1);
+  (void)(*d_ == 1);
   mutex_unlock(foo_.mu_);
 
   return 0;
