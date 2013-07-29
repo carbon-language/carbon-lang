@@ -37,7 +37,7 @@
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Host/ReadWriteLock.h"
+#include "lldb/Host/ProcessRunLock.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
@@ -1392,7 +1392,7 @@ public:
     // stopped can block waiting for the process to stop, or just
     // try to lock it to see if they can immediately access the stopped
     // process. If the try read lock fails, then the process is running.
-    typedef ReadWriteLock::ReadLocker StopLocker;
+    typedef ProcessRunLock::ProcessRunLocker StopLocker;
 
     // These two functions fill out the Broadcaster interface:
     
@@ -3516,7 +3516,7 @@ public:
     void
     ClearPreResumeActions ();
                               
-    ReadWriteLock &
+    ProcessRunLock &
     GetRunLock ()
     {
         if (Host::GetCurrentThread() == m_private_state_thread)
@@ -3671,8 +3671,8 @@ protected:
     LanguageRuntimeCollection   m_language_runtimes;
     std::unique_ptr<NextEventAction> m_next_event_action_ap;
     std::vector<PreResumeCallbackAndBaton> m_pre_resume_actions;
-    ReadWriteLock               m_public_run_lock;
-    ReadWriteLock               m_private_run_lock;
+    ProcessRunLock              m_public_run_lock;
+    ProcessRunLock              m_private_run_lock;
     Predicate<bool>             m_currently_handling_event; // This predicate is set in HandlePrivateEvent while all its business is being done.
     bool                        m_currently_handling_do_on_removals;
     bool                        m_resume_requested;         // If m_currently_handling_event or m_currently_handling_do_on_removals are true, Resume will only request a resume, using this flag to check.

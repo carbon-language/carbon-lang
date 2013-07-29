@@ -1,4 +1,4 @@
-//===-- ReadWriteLock.h -----------------------------------------*- C++ -*-===//
+//===-- ProcessRunLock.h ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ReadWriteLock_h_
-#define liblldb_ReadWriteLock_h_
+#ifndef liblldb_ProcessRunLock_h_
+#define liblldb_ProcessRunLock_h_
 #if defined(__cplusplus)
 
 #include "lldb/Host/Mutex.h"
@@ -23,21 +23,18 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class ReadWriteLock ReadWriteLock.h "lldb/Host/ReadWriteLock.h"
-/// @brief A C++ wrapper class for providing threaded access to a value
-/// of type T.
-///
-/// A templatized class that provides multi-threaded access to a value
-/// of type T. Threads can efficiently wait for bits within T to be set
-/// or reset, or wait for T to be set to be equal/not equal to a
-/// specified values.
+/// @class ProcessRunLock ProcessRunLock.h "lldb/Host/ProcessRunLock.h"
+/// @brief A class used to prevent the process from starting while other
+/// threads are accessing its data, and prevent access to its data while
+/// it is running.
 //----------------------------------------------------------------------
     
-class ReadWriteLock
+class ProcessRunLock
 {
 public:
-    ReadWriteLock () :
-        m_rwlock()
+    ProcessRunLock () :
+        m_rwlock(),
+        m_running(false)
     {
         int err = ::pthread_rwlock_init(&m_rwlock, NULL); (void)err;
 //#if LLDB_CONFIGURATION_DEBUG
@@ -45,7 +42,7 @@ public:
 //#endif
     }
 
-    ~ReadWriteLock ()
+    ~ProcessRunLock ()
     {
         int err = ::pthread_rwlock_destroy (&m_rwlock); (void)err;
 //#if LLDB_CONFIGURATION_DEBUG
@@ -56,7 +53,13 @@ public:
     bool
     ReadTryLock ()
     {
-        return ::pthread_rwlock_tryrdlock (&m_rwlock) == 0;
+        ::pthread_rwlock_rdlock (&m_rwlock);
+        if (m_running == false)
+        {
+            return true;
+        }
+        ::pthread_rwlock_unlock (&m_rwlock);
+        return false;
     }
 
     bool
@@ -66,39 +69,54 @@ public:
     }
     
     bool
-    WriteLock()
+    SetRunning()
     {
-        return ::pthread_rwlock_wrlock (&m_rwlock) == 0;
+        ::pthread_rwlock_wrlock (&m_rwlock);
+        m_running = true;
+        ::pthread_rwlock_unlock (&m_rwlock);
+        return true;
     }
     
     bool
-    WriteTryLock()
+    TrySetRunning()
     {
-        return ::pthread_rwlock_trywrlock (&m_rwlock) == 0;
+        bool r;
+
+        if (::pthread_rwlock_trywrlock (&m_rwlock) == 0)
+        {
+            r = !m_running;
+            m_running = true;
+            ::pthread_rwlock_unlock (&m_rwlock);
+            return r;
+        }
+        return false;
     }
     
     bool
-    WriteUnlock ()
+    SetStopped ()
     {
-        return ::pthread_rwlock_unlock (&m_rwlock) == 0;
+        ::pthread_rwlock_wrlock (&m_rwlock);
+        m_running = false;
+        ::pthread_rwlock_unlock (&m_rwlock);
+        return true;
     }
 
-    class ReadLocker
+    class ProcessRunLocker
     {
     public:
-        ReadLocker () :
+        ProcessRunLocker () :
             m_lock (NULL)
         {
         }
 
-        ~ReadLocker()
+        ~ProcessRunLocker()
         {
             Unlock();
         }
 
         // Try to lock the read lock, but only do so if there are no writers.
         bool
-        TryLock (ReadWriteLock *lock)
+        TryLock (ProcessRunLock *lock)
         {
             if (m_lock)
             {
@@ -129,18 +147,19 @@ public:
             }
         }
         
-        ReadWriteLock *m_lock;
+        ProcessRunLock *m_lock;
     private:
-        DISALLOW_COPY_AND_ASSIGN(ReadLocker);
+        DISALLOW_COPY_AND_ASSIGN(ProcessRunLocker);
     };
 
 protected:
     pthread_rwlock_t m_rwlock;
+    bool m_running;
 private:
-    DISALLOW_COPY_AND_ASSIGN(ReadWriteLock);
+    DISALLOW_COPY_AND_ASSIGN(ProcessRunLock);
 };
 
 } // namespace lldb_private
 
 #endif  // #if defined(__cplusplus)
-#endif // #ifndef liblldb_ReadWriteLock_h_
+#endif // #ifndef liblldb_ProcessRunLock_h_
