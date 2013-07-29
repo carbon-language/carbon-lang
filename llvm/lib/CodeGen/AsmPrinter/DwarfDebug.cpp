@@ -1074,8 +1074,8 @@ static bool isContainedInAnonNamespace(DIE *Die) {
   DIE *Parent = Die->getParent();
 
   while (Parent) {
-    if (Die->getTag() == dwarf::DW_TAG_namespace &&
-        getDIEStringAttr(Die, dwarf::DW_AT_name) == "")
+    if (Parent->getTag() == dwarf::DW_TAG_namespace &&
+        getDIEStringAttr(Parent, dwarf::DW_AT_name) == "")
       return true;
     Parent = Parent->getParent();
   }
