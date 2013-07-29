@@ -651,7 +651,7 @@ void ForEachMappedRegion(link_map *map, void (*cb)(const void *, uptr)) {
   // Find the segment with the minimum base so we can "relocate" the p_vaddr
   // fields.  Typically ET_DYN objects (DSOs) have base of zero and ET_EXEC
   // objects have a non-zero base.
-  uptr preferred_base = ~0ULL;
+  uptr preferred_base = (uptr)-1;
   for (char *iter = phdrs; iter != phdrs_end; iter += ehdr->e_phentsize) {
     Elf_Phdr *phdr = (Elf_Phdr *)iter;
     if (phdr->p_type == PT_LOAD && preferred_base > (uptr)phdr->p_vaddr)
