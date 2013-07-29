@@ -262,7 +262,9 @@ def UseMulOps        : Predicate<"Subtarget->useMulOps()">;
 def UseFusedMAC      : Predicate<"(TM.Options.AllowFPOpFusion =="
                                  " FPOpFusion::Fast) && "
                                  "!Subtarget->isTargetDarwin()">;
-def DontUseFusedMAC  : Predicate<"!Subtarget->hasVFP4() || "
+def DontUseFusedMAC  : Predicate<"!(TM.Options.AllowFPOpFusion =="
+                                 " FPOpFusion::Fast &&"
+                                 " Subtarget->hasVFP4()) || "
                                  "Subtarget->isTargetDarwin()">;
 
 // VGETLNi32 is microcoded on Swift - prefer VMOV.

@@ -179,7 +179,7 @@ def ProcSwift   : SubtargetFeature<"swift", "ARMProcFamily", "Swift",
 // FIXME: It has not been determined if A15 has these features.
 def ProcA15      : SubtargetFeature<"a15", "ARMProcFamily", "CortexA15",
                                    "Cortex-A15 ARM processors",
-                                   [FeatureT2XtPk, FeatureFP16,
+                                   [FeatureT2XtPk, FeatureFP16, FeatureVFP4,
                                     FeatureAvoidPartialCPSR,
                                     FeatureTrustZone]>;
 def ProcR5      : SubtargetFeature<"r5", "ARMProcFamily", "CortexR5",
