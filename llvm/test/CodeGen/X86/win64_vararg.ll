@@ -18,6 +18,7 @@ entry:
 }
 
 declare void @llvm.va_start(i8*) nounwind
+declare void @llvm.va_copy(i8*, i8*) nounwind
 
 ; CHECK-LABEL: f5:
 ; CHECK: pushq
@@ -50,4 +51,63 @@ entry:
   %ap1 = bitcast i8** %ap to i8*
   call void @llvm.va_start(i8* %ap1)
   ret i8* %ap1
+}
+
+; WinX86_64 uses char* for va_list. Verify that the correct amount of bytes
+; are copied using va_copy.
+
+; CHECK-LABEL: copy1:
+; CHECK: subq $16
+; CHECK: leaq 32(%rsp), [[REG_copy1:%[a-z]+]]
+; CHECK: movq [[REG_copy1]], 8(%rsp)
+; CHECK: movq [[REG_copy1]], (%rsp)
+; CHECK: addq $16
+; CHECK: ret
+define void @copy1(i64 %a0, ...) nounwind {
+entry:
+  %ap = alloca i8*, align 8
+  %cp = alloca i8*, align 8
+  %ap1 = bitcast i8** %ap to i8*
+  %cp1 = bitcast i8** %cp to i8*
+  call void @llvm.va_start(i8* %ap1)
+  call void @llvm.va_copy(i8* %cp1, i8* %ap1)
+  ret void
+}
+
+; CHECK-LABEL: copy4:
+; CHECK: subq $16
+; CHECK: leaq 56(%rsp), [[REG_copy4:%[a-z]+]]
+; CHECK: movq [[REG_copy4]], 8(%rsp)
+; CHECK: movq [[REG_copy4]], (%rsp)
+; CHECK: addq $16
+; CHECK: ret
+define void @copy4(i64 %a0, i64 %a1, i64 %a2, i64 %a3, ...) nounwind {
+entry:
+  %ap = alloca i8*, align 8
+  %cp = alloca i8*, align 8
+  %ap1 = bitcast i8** %ap to i8*
+  %cp1 = bitcast i8** %cp to i8*
+  call void @llvm.va_start(i8* %ap1)
+  call void @llvm.va_copy(i8* %cp1, i8* %ap1)
+  ret void
+}
+
+; CHECK-LABEL: arg4:
+; CHECK: pushq
+; va_start:
+; CHECK: leaq 48(%rsp), [[REG_arg4_1:%[a-z]+]]
+; CHECK: movq [[REG_arg4_1]], (%rsp)
+; va_arg:
+; CHECK: leaq 52(%rsp), [[REG_arg4_2:%[a-z]+]]
+; CHECK: movq [[REG_arg4_2]], (%rsp)
+; CHECK: movl 48(%rsp), %eax
+; CHECK: popq
+; CHECK: ret
+define i32 @arg4(i64 %a0, i64 %a1, i64 %a2, i64 %a3, ...) nounwind {
+entry:
+  %ap = alloca i8*, align 8
+  %ap1 = bitcast i8** %ap to i8*
+  call void @llvm.va_start(i8* %ap1)
+  %tmp = va_arg i8** %ap, i32
+  ret i32 %tmp
 }
