@@ -186,7 +186,7 @@ public:
   file_type type() const { return Type; }
   perms permissions() const { return Perms; }
   TimeValue getLastModificationTime() const;
-  UniqueID getUniqueID();
+  UniqueID getUniqueID() const;
 
   #if defined(LLVM_ON_UNIX)
   uint32_t getUser() const { return fs_st_uid; }

@@ -293,7 +293,7 @@ TimeValue file_status::getLastModificationTime() const {
   return Ret;
 }
 
-UniqueID file_status::getUniqueID() {
+UniqueID file_status::getUniqueID() const {
   return UniqueID(fs_st_dev, fs_st_ino);
 }
 

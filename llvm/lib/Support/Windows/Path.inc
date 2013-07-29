@@ -269,7 +269,7 @@ std::string getMainExecutable(const char *argv0, void *MainExecAddr) {
   return ret != MAX_PATH ? pathname : "";
 }
 
-UniqueID file_status::getUniqueID() {
+UniqueID file_status::getUniqueID() const {
   // The file is uniquely identified by the volume serial number along
   // with the 64-bit file identifier.
   uint64_t FileID = (static_cast<uint64_t>(FileIndexHigh) << 32ULL) |
