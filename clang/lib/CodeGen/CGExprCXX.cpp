@@ -1009,9 +1009,10 @@ static RValue EmitNewDeleteCall(CodeGenFunction &CGF,
                                 const FunctionProtoType *CalleeType,
                                 const CallArgList &Args) {
   llvm::Instruction *CallOrInvoke;
+  llvm::Value *CalleeAddr = CGF.CGM.GetAddrOfFunction(Callee);
   RValue RV =
       CGF.EmitCall(CGF.CGM.getTypes().arrangeFreeFunctionCall(Args, CalleeType),
-                   CGF.CGM.GetAddrOfFunction(Callee), ReturnValueSlot(), Args,
+                   CalleeAddr, ReturnValueSlot(), Args,
                    Callee, &CallOrInvoke);
 
   /// C++1y [expr.new]p10:
@@ -1019,7 +1020,9 @@ static RValue EmitNewDeleteCall(CodeGenFunction &CGF,
   ///   to a replaceable global allocation function.
   ///
   /// We model such elidable calls with the 'builtin' attribute.
-  if (Callee->isReplaceableGlobalAllocationFunction()) {
+  llvm::Function *Fn = dyn_cast<llvm::Function>(CalleeAddr);
+  if (Callee->isReplaceableGlobalAllocationFunction() &&
+      Fn && Fn->hasFnAttribute(llvm::Attribute::NoBuiltin)) {
     // FIXME: Add addAttribute to CallSite.
     if (llvm::CallInst *CI = dyn_cast<llvm::CallInst>(CallOrInvoke))
       CI->addAttribute(llvm::AttributeSet::FunctionIndex,
