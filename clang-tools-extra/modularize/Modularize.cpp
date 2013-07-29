@@ -35,16 +35,42 @@
 // Modularize will do normal parsing, reporting normal errors and warnings,
 // but will also report special error messages like the following:
 //
-// error: '(symbol)' defined at multiple locations:
-//     (file):(row):(column)
-//     (file):(row):(column)
+//   error: '(symbol)' defined at multiple locations:
+//       (file):(row):(column)
+//       (file):(row):(column)
 //
-// error: header '(file)' has different contents dependening on how it was
-//   included
+//   error: header '(file)' has different contents dependening on how it was
+//     included
 //
 // The latter might be followed by messages like the following:
 //
-// note: '(symbol)' in (file) at (row):(column) not always provided
+//   note: '(symbol)' in (file) at (row):(column) not always provided
+//
+// Checks will also be performed for macro expansions, defined(macro)
+// expressions, and preprocessor conditional directives that evaluate
+// inconsistently, and can produce error messages like the following:
+//
+//   (...)/SubHeader.h:11:5:
+//   #if SYMBOL == 1
+//       ^
+//   error: Macro instance 'SYMBOL' has different values in this header,
+//          depending on how it was included.
+//     'SYMBOL' expanded to: '1' with respect to these inclusion paths:
+//       (...)/Header1.h
+//         (...)/SubHeader.h
+//   (...)/SubHeader.h:3:9:
+//   #define SYMBOL 1
+//             ^
+//   Macro defined here.
+//     'SYMBOL' expanded to: '2' with respect to these inclusion paths:
+//       (...)/Header2.h
+//           (...)/SubHeader.h
+//   (...)/SubHeader.h:7:9:
+//   #define SYMBOL 2
+//             ^
+//   Macro defined here.
+//
+// See PreprocessorTracker.cpp for additional details.
 //
 // Future directions:
 //
@@ -54,7 +80,7 @@
 // Some ideas:
 //
 // 1. Try to figure out the preprocessor conditional directives that
-// contribute to problems.
+// contribute to problems and tie them to the inconsistent definitions.
 //
 // 2. Check for correct and consistent usage of extern "C" {} and other
 // directives. Warn about #include inside extern "C" {}.

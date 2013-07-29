@@ -1,37 +1,60 @@
-//=- PreprocessorTracker.cpp - Preprocessor tracking -*- C++ -*-=//
+//===--- PreprocessorTracker.cpp - Preprocessor tracking -*- C++ -*------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
+//===--------------------------------------------------------------------===//
+//
 // The Basic Idea
 //
 // Basically we install a PPCallbacks-derived object to track preprocessor
 // activity, namely when a header file is entered/exited, when a macro
-// is expanded, when “defined” is used, and when #if, #elif, #ifdef,
-// and #ifndef are used.  We save the state of macro and “defined”
+// is expanded, when "defined" is used, and when #if, #elif, #ifdef,
+// and #ifndef are used.  We save the state of macro and "defined"
 // expressions in a map, keyed on a name/file/line/column quadruple.
-// The map entries store the different states (values) a macro expansion,
-// “defined” expression, or condition expression has in the course of
+// The map entries store the different states (values) that a macro expansion,
+// "defined" expression, or condition expression has in the course of
 // processing for the one location in the one header containing it,
 // plus a list of the nested include stacks for the states.  When a macro
-// or “defined” expression evaluates to the same value, which is the
+// or "defined" expression evaluates to the same value, which is the
 // desired case, only one state is stored.  Similarly, for conditional
 // directives, we save the condition expression states in a separate map.
 //
 // This information is collected as modularize compiles all the headers
 // given to it to process.  After all the compilations are performed,
-// a check is performed for any entries in the map that contain more
-// than one different state, and an output message is generated, such
-// as the one shown previously.
+// a check is performed for any entries in the maps that contain more
+// than one different state, and for these an output message is generated.
+//
+// For example:
+//
+//   (...)/SubHeader.h:11:5:
+//   #if SYMBOL == 1
+//       ^
+//   error: Macro instance 'SYMBOL' has different values in this header,
+//          depending on how it was included.
+//     'SYMBOL' expanded to: '1' with respect to these inclusion paths:
+//       (...)/Header1.h
+//         (...)/SubHeader.h
+//   (...)/SubHeader.h:3:9:
+//   #define SYMBOL 1
+//             ^
+//   Macro defined here.
+//     'SYMBOL' expanded to: '2' with respect to these inclusion paths:
+//       (...)/Header2.h
+//           (...)/SubHeader.h
+//   (...)/SubHeader.h:7:9:
+//   #define SYMBOL 2
+//             ^
+//   Macro defined here.
 //
 // Design and Implementation Details
 //
 // A PreprocessorTrackerImpl class implements the PreprocessorTracker
 // interface. It uses a PreprocessorCallbacks class derived from PPCallbacks
 // to track preprocessor activity, namely entering/exiting a header, macro
-// expansions, use of “defined” expressions, and #if, #elif, #ifdef, and
+// expansions, use of "defined" expressions, and #if, #elif, #ifdef, and
 // #ifndef conditional directives. PreprocessorTrackerImpl stores a map
 // of MacroExpansionTracker objects keyed on a name/file/line/column
 // value represented by a light-weight PPItemKey value object. This
@@ -41,7 +64,7 @@
 // directives.
 //
 // The MacroExpansionTracker object represents one macro reference or use
-// of a “defined” expression in a header file. It stores a handle to a
+// of a "defined" expression in a header file. It stores a handle to a
 // string representing the unexpanded macro instance, a handle to a string
 // representing the unpreprocessed source line containing the unexpanded
 // macro instance, and a vector of one or more MacroExpansionInstance
@@ -65,7 +88,7 @@
 // a different place, a new MacroExpansionInstance object representing
 // that case will be added to the vector in MacroExpansionTracker. If a
 // macro instance expands to a value already seen before, the
-// InclusionPathHandle representing that case’s include file hierarchy
+// InclusionPathHandle representing that case's include file hierarchy
 // will be added to the existing MacroExpansionInstance object.
 
 // For checking conditional directives, the ConditionalTracker class
@@ -83,18 +106,18 @@
 // to the strings.
 //
 // PreprocessorTrackerImpl also maintains a list representing the unique
-// headers, which is just a vector of StringHandles for the header file
+// headers, which is just a vector of StringHandle's for the header file
 // paths. A HeaderHandle abstracts a reference to a header, and is simply
 // the index of the stored header file path.
 //
-// A HeaderInclusionPath class abstract a unique hierarchy of header file
+// A HeaderInclusionPath class abstracts a unique hierarchy of header file
 // inclusions. It simply stores a vector of HeaderHandles ordered from the
 // top-most header (the one from the header list passed to modularize) down
 // to the header containing the macro reference. PreprocessorTrackerImpl
 // stores a vector of these objects. An InclusionPathHandle typedef
 // abstracts a reference to one of the HeaderInclusionPath objects, and is
 // simply the index of the stored HeaderInclusionPath object. The
-// MacroExpansionInstance object stores a vector of these handle so that
+// MacroExpansionInstance object stores a vector of these handles so that
 // the reporting function can display the include hierarchies for the macro
 // expansion instances represented by that object, to help the user
 // understand how the header was included. (A future enhancement might
@@ -109,15 +132,15 @@
 // through the compilation. A PreprocessorTracker instance is created and
 // passed down to the AST action and consumer objects in modularize. For
 // each new compilation instance, the consumer calls the
-// PreprocessorTracker’s handleNewPreprocessorEntry function, which sets
+// PreprocessorTracker's handleNewPreprocessorEntry function, which sets
 // up a PreprocessorCallbacks object for the preprocessor. At the end of
-// the compilation instance, the PreprocessorTracker’s
+// the compilation instance, the PreprocessorTracker's
 // handleNewPreprocessorExit function handles cleaning up with respect
 // to the preprocessing instance.
 //
 // The PreprocessorCallbacks object uses an overidden FileChanged callback
 // to determine when a header is entered and exited (including exiting the
-// header during #include directives). It calls PreprocessorTracker’s
+// header during #include directives). It calls PreprocessorTracker's
 // handleHeaderEntry and handleHeaderExit functions upon entering and
 // exiting a header. These functions manage a stack of header handles
 // representing by a vector, pushing and popping header handles as headers
@@ -127,14 +150,14 @@
 // The PreprocessorCallbacks object uses an overridden MacroExpands callback
 // to track when a macro expansion is performed. It calls a couple of helper
 // functions to get the unexpanded and expanded macro values as strings, but
-// then calls PreprocessorTrackerImpl’s addMacroExpansionInstance function to
+// then calls PreprocessorTrackerImpl's addMacroExpansionInstance function to
 // do the rest of the work. The getMacroExpandedString function uses the
-// preprocessor’s getSpelling to convert tokens to strings using the
+// preprocessor's getSpelling to convert tokens to strings using the
 // information passed to the MacroExpands callback, and simply concatenates
 // them. It makes recursive calls to itself to handle nested macro
 // definitions, and also handles function-style macros.
 //
-// PreprocessorTrackerImpl’s addMacroExpansionInstance function looks for
+// PreprocessorTrackerImpl's addMacroExpansionInstance function looks for
 // an existing MacroExpansionTracker entry in its map of MacroExampleTracker
 // objects. If none exists, it adds one with one MacroExpansionInstance and
 // returns. If a MacroExpansionTracker object already exists, it looks for
@@ -148,14 +171,14 @@
 // the macro reference and the macro definition stored as string handles.
 // These helper functions use the current source manager from the
 // preprocessor. This is done in advance at this point in time because the
-// source manager doesn’t exist at the time of the reporting.
+// source manager doesn't exist at the time of the reporting.
 //
 // For conditional check, the PreprocessorCallbacks class overrides the
 // PPCallbacks handlers for #if, #elif, #ifdef, and #ifndef.  These handlers
 // call the addConditionalExpansionInstance method of
 // PreprocessorTrackerImpl.  The process is similar to that of macros, but
 // with some different data and error messages.  A lookup is performed for
-// the conditional, and if a ConditionalTracker object doesn’t yet exist for
+// the conditional, and if a ConditionalTracker object doesn't yet exist for
 // the conditional, a new one is added, including adding a
 // ConditionalExpansionInstance object to it to represent the condition
 // expression state.  If a ConditionalTracker for the conditional does
@@ -169,16 +192,16 @@
 // 
 // After modularize has performed all the compilations, it enters a phase
 // of error reporting. This new feature adds to this reporting phase calls
-// to the PreprocessorTracker’s reportInconsistentMacros and
+// to the PreprocessorTracker's reportInconsistentMacros and
 // reportInconsistentConditionals functions. These functions walk the maps
-// of MacroExpansionTracker’s and ConditionalTracker’s respectively. If
+// of MacroExpansionTracker's and ConditionalTracker's respectively. If
 // any of these objects have more than one MacroExpansionInstance or
 // ConditionalExpansionInstance objects, it formats and outputs an error
 // message like the example shown previously, using the stored data.
 //
 // A potential issue is that there is some overlap between the #if/#elif
 // conditional and macro reporting.  I could disable the #if and #elif,
-// leaving just the #ifdef and #ifndef, since these don’t overlap.  Or,
+// leaving just the #ifdef and #ifndef, since these don't overlap.  Or,
 // to make clearer the separate reporting phases, I could add an output
 // message marking the phases.
 //
@@ -531,7 +554,7 @@ public:
 //
 // This class represents an instance of a macro expansion with a
 // unique value.  It also stores the unique header inclusion paths
-// for use in telling the user the nested include path f
+// for use in telling the user the nested include path to the header.
 class MacroExpansionInstance {
 public:
   MacroExpansionInstance(StringHandle MacroExpanded,
@@ -577,7 +600,7 @@ public:
 // This class represents one macro expansion, keyed by a PPItemKey.
 // It stores a string representing the macro reference in the source,
 // and a list of ConditionalExpansionInstances objects representing
-// the unique value the condition expands to in instances of the header.
+// the unique values the condition expands to in instances of the header.
 class MacroExpansionTracker {
 public:
   MacroExpansionTracker(StringHandle MacroUnexpanded,
@@ -634,9 +657,9 @@ public:
 
 // Conditional expansion instance.
 //
-// This class represents an instance of a macro expansion with a
-// unique value.  It also stores the unique header inclusion paths
-// for use in telling the user the nested include path f
+// This class represents an instance of a condition exoression result
+// with a unique value.  It also stores the unique header inclusion paths
+// for use in telling the user the nested include path to the header.
 class ConditionalExpansionInstance {
 public:
   ConditionalExpansionInstance(bool ConditionValue, InclusionPathHandle H)
@@ -673,8 +696,9 @@ public:
 //
 // This class represents one conditional directive, keyed by a PPItemKey.
 // It stores a string representing the macro reference in the source,
-// and a list of MacroExpansionInstance objects representing
-// the unique value the macro expands to in instances of the header.
+// and a list of ConditionExpansionInstance objects representing
+// the unique value the condition expression expands to in instances of
+// the header.
 class ConditionalTracker {
 public:
   ConditionalTracker(clang::tok::PPKeywordKind DirectiveKind,
@@ -927,6 +951,7 @@ public:
     PPItemKey InstanceKey(PP, MacroName, H, InstanceLoc);
     PPItemKey DefinitionKey(PP, MacroName, H, DefinitionLoc);
     MacroExpansionMapIter I = MacroExpansions.find(InstanceKey);
+    // If existing instance of expansion not found, add one.
     if (I == MacroExpansions.end()) {
       std::string InstanceSourceLine =
           getSourceLocationString(PP, InstanceLoc) + ":\n" +
@@ -939,13 +964,17 @@ public:
           addString(InstanceSourceLine), DefinitionKey,
           addString(DefinitionSourceLine), InclusionPathHandle);
     } else {
+      // We've seen the macro before.  Get its tracker.
       MacroExpansionTracker &CondTracker = I->second;
+      // Look up an existing instance value for the macro.
       MacroExpansionInstance *MacroInfo =
           CondTracker.findMacroExpansionInstance(addString(MacroExpanded),
                                                  DefinitionKey);
+      // If found, just add the inclusion path to the instance.
       if (MacroInfo != NULL)
         MacroInfo->addInclusionPathHandle(InclusionPathHandle);
       else {
+        // Otherwise add a new instance with the unique value.
         std::string DefinitionSourceLine =
             getSourceLocationString(PP, DefinitionLoc) + ":\n" +
             getSourceLine(PP, DefinitionLoc) + "\n";
@@ -967,6 +996,7 @@ public:
     StringHandle ConditionUnexpandedHandle(addString(ConditionUnexpanded));
     PPItemKey InstanceKey(PP, ConditionUnexpandedHandle, H, InstanceLoc);
     ConditionalExpansionMapIter I = ConditionalExpansions.find(InstanceKey);
+    // If existing instance of condition not found, add one.
     if (I == ConditionalExpansions.end()) {
       std::string InstanceSourceLine =
           getSourceLocationString(PP, InstanceLoc) + ":\n" +
@@ -975,12 +1005,16 @@ public:
           ConditionalTracker(DirectiveKind, ConditionValue, ConditionUnexpandedHandle,
                              InclusionPathHandle);
     } else {
+      // We've seen the conditional before.  Get its tracker.
       ConditionalTracker &CondTracker = I->second;
+      // Look up an existing instance value for the condition.
       ConditionalExpansionInstance *MacroInfo =
           CondTracker.findConditionalExpansionInstance(ConditionValue);
+      // If found, just add the inclusion path to the instance.
       if (MacroInfo != NULL)
         MacroInfo->addInclusionPathHandle(InclusionPathHandle);
       else {
+        // Otherwise add a new instance with the unique value.
         CondTracker.addConditionalExpansionInstance(ConditionValue,
                                                     InclusionPathHandle);
       }
@@ -991,20 +1025,25 @@ public:
   // Returns true if any mismatches.
   bool reportInconsistentMacros(llvm::raw_ostream &OS) {
     bool ReturnValue = false;
+    // Walk all the macro expansion trackers in the map.
     for (MacroExpansionMapIter I = MacroExpansions.begin(),
                                E = MacroExpansions.end();
          I != E; ++I) {
       const PPItemKey &ItemKey = I->first;
       MacroExpansionTracker &MacroExpTracker = I->second;
+      // If no mismatch (only one instance value) continue.
       if (!MacroExpTracker.hasMismatch())
         continue;
+      // Tell caller we found one or more errors.
       ReturnValue = true;
+      // Start the error message.
       OS << *MacroExpTracker.InstanceSourceLine;
       if (ItemKey.Column > 0)
         OS << std::string(ItemKey.Column - 1, ' ') << "^\n";
       OS << "error: Macro instance '" << *MacroExpTracker.MacroUnexpanded
          << "' has different values in this header, depending on how it was "
             "included.\n";
+      // Walk all the instances.
       for (std::vector<MacroExpansionInstance>::iterator
                IMT = MacroExpTracker.MacroExpansionInstances.begin(),
                EMT = MacroExpTracker.MacroExpansionInstances.end();
@@ -1013,6 +1052,7 @@ public:
         OS << "  '" << *MacroExpTracker.MacroUnexpanded << "' expanded to: '"
            << *MacroInfo.MacroExpanded
            << "' with respect to these inclusion paths:\n";
+        // Walk all the inclusion path hierarchies.
         for (std::vector<InclusionPathHandle>::iterator
                  IIP = MacroInfo.InclusionPathHandles.begin(),
                  EIP = MacroInfo.InclusionPathHandles.end();
@@ -1046,6 +1086,7 @@ public:
   // Returns true if any mismatches.
   bool reportInconsistentConditionals(llvm::raw_ostream &OS) {
     bool ReturnValue = false;
+    // Walk all the conditional trackers in the map.
     for (ConditionalExpansionMapIter I = ConditionalExpansions.begin(),
                                      E = ConditionalExpansions.end();
          I != E; ++I) {
@@ -1053,7 +1094,9 @@ public:
       ConditionalTracker &CondTracker = I->second;
       if (!CondTracker.hasMismatch())
         continue;
+      // Tell caller we found one or more errors.
       ReturnValue = true;
+      // Start the error message.
       OS << *HeaderPaths[ItemKey.File] << ":" << ItemKey.Line << ":"
          << ItemKey.Column << "\n";
       OS << "#" << getDirectiveSpelling(CondTracker.DirectiveKind) << " "
@@ -1063,6 +1106,7 @@ public:
          << *CondTracker.ConditionUnexpanded
          << "' has different values in this header, depending on how it was "
             "included.\n";
+      // Walk all the instances.
       for (std::vector<ConditionalExpansionInstance>::iterator
                IMT = CondTracker.ConditionalExpansionInstances.begin(),
                EMT = CondTracker.ConditionalExpansionInstances.end();
@@ -1071,6 +1115,7 @@ public:
         OS << "  '" << *CondTracker.ConditionUnexpanded << "' expanded to: '"
            << (MacroInfo.ConditionValue ? "true" : "false")
            << "' with respect to these inclusion paths:\n";
+        // Walk all the inclusion path hierarchies.
         for (std::vector<InclusionPathHandle>::iterator
                  IIP = MacroInfo.InclusionPathHandles.begin(),
                  EIP = MacroInfo.InclusionPathHandles.end();
