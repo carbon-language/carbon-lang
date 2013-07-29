@@ -1580,11 +1580,12 @@ unsigned SourceManager::getFileIDSize(FileID FID) const {
 ///
 /// This routine involves a system call, and therefore should only be used
 /// in non-performance-critical code.
-static Optional<uint64_t> getActualFileUID(const FileEntry *File) {
+static Optional<llvm::sys::fs::UniqueID>
+getActualFileUID(const FileEntry *File) {
   if (!File)
     return None;
 
-  uint64_t ID;
+  llvm::sys::fs::UniqueID ID;
   if (llvm::sys::fs::getUniqueID(File->getName(), ID))
     return None;
 
@@ -1617,7 +1618,7 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
 
   // First, check the main file ID, since it is common to look for a
   // location in the main file.
-  Optional<uint64_t> SourceFileUID;
+  Optional<llvm::sys::fs::UniqueID> SourceFileUID;
   Optional<StringRef> SourceFileName;
   if (!MainFileID.isInvalid()) {
     bool Invalid = false;
@@ -1640,7 +1641,8 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
         if (*SourceFileName == llvm::sys::path::filename(MainFile->getName())) {
           SourceFileUID = getActualFileUID(SourceFile);
           if (SourceFileUID) {
-            if (Optional<uint64_t> MainFileUID = getActualFileUID(MainFile)) {
+            if (Optional<llvm::sys::fs::UniqueID> MainFileUID =
+                    getActualFileUID(MainFile)) {
               if (*SourceFileUID == *MainFileUID) {
                 FirstFID = MainFileID;
                 SourceFile = MainFile;
@@ -1703,7 +1705,8 @@ FileID SourceManager::translateFile(const FileEntry *SourceFile) const {
       const FileEntry *Entry =FileContentCache? FileContentCache->OrigEntry : 0;
         if (Entry && 
             *SourceFileName == llvm::sys::path::filename(Entry->getName())) {
-          if (Optional<uint64_t> EntryUID = getActualFileUID(Entry)) {
+          if (Optional<llvm::sys::fs::UniqueID> EntryUID =
+                  getActualFileUID(Entry)) {
             if (*SourceFileUID == *EntryUID) {
               FirstFID = FileID::get(I);
               SourceFile = Entry;
