@@ -1557,6 +1557,11 @@ struct SLPVectorizer : public FunctionPass {
     if (!DL)
       return false;
 
+    // Don't vectorize when the attribute NoImplicitFloat is used.
+    if (F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                       Attribute::NoImplicitFloat))
+      return false;
+
     DEBUG(dbgs() << "SLP: Analyzing blocks in " << F.getName() << ".\n");
 
     // Use the bollom up slp vectorizer to construct chains that start with
