@@ -149,6 +149,7 @@ std::string sys::getHostCPUName() {
   DetectX86FamilyModel(EAX, Family, Model);
 
   bool HasSSE3 = (ECX & 0x1);
+  bool HasSSE41 = (ECX & 0x80000);
   // If CPUID indicates support for XSAVE, XRESTORE and AVX, and XGETBV 
   // indicates that the AVX registers will be saved and restored on context
   // switch, then we have full AVX support.
@@ -244,7 +245,8 @@ std::string sys::getHostCPUName() {
                // 17h. All processors are manufactured using the 45 nm process.
                //
                // 45nm: Penryn , Wolfdale, Yorkfield (XE)
-        return "penryn";
+        // Not all Penryn processors support SSE 4.1 (such as the Pentium brand)
+        return HasSSE41 ? "penryn" : "core2";
 
       case 26: // Intel Core i7 processor and Intel Xeon processor. All
                // processors are manufactured using the 45 nm process.
