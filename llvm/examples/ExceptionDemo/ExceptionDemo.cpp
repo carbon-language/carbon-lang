@@ -339,7 +339,7 @@ void deleteOurException(OurUnwindException *expToDelete) {
 /// This function is the struct _Unwind_Exception API mandated delete function
 /// used by foreign exception handlers when deleting our exception
 /// (OurException), instances.
-/// @param reason @link http://mentorembedded.github.com/cxx-abi/abi-eh.html
+/// @param reason See @link http://mentorembedded.github.com/cxx-abi/abi-eh.html
 /// @unlink
 /// @param expToDelete exception instance to delete
 void deleteFromUnwindOurException(_Unwind_Reason_Code reason,
