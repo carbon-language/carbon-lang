@@ -1,4 +1,4 @@
-; RUN: not opt -polly-analyze-ir -analyze < %s 2>&1 | not FileCheck %s
+; RUN: opt %loadPolly -polly-analyze-ir -analyze < %s 2>&1 | not FileCheck %s
 
 ;#define TYPE float
 ;#define NUM 4
