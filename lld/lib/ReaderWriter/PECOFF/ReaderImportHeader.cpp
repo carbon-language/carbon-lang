@@ -173,16 +173,16 @@ public:
     uint32_t dataSize = *reinterpret_cast<const support::ulittle32_t *>(
         buf + offsetof(COFF::ImportHeader, SizeOfData));
 
-    // Check if the total size is valid. The file header is 20 byte long.
-    if (end - buf != 20 + dataSize) {
+    // Check if the total size is valid.
+    if (end - buf != sizeof(COFF::ImportHeader) + dataSize) {
       ec = make_error_code(native_reader_error::unknown_file_format);
       return;
     }
 
     uint16_t hint = *reinterpret_cast<const support::ulittle16_t *>(
         buf + offsetof(COFF::ImportHeader, OrdinalHint));
-    StringRef symbolName(buf + 20);
-    StringRef dllName(buf + 20 + symbolName.size() + 1);
+    StringRef symbolName(buf + sizeof(COFF::ImportHeader));
+    StringRef dllName(buf + sizeof(COFF::ImportHeader) + symbolName.size() + 1);
 
     const COFFSharedLibraryAtom *dataAtom = addSharedLibraryAtom(
         hint, symbolName, dllName);
@@ -245,7 +245,9 @@ error_code parseCOFFImportLibrary(const TargetInfo &targetInfo,
   // Check the file magic.
   const char *buf = mb->getBufferStart();
   const char *end = mb->getBufferEnd();
-  if (end - buf < 20 || memcmp(buf, "\0\0\xFF\xFF", 4))
+  // Error if the file is too small or does not start with the magic.
+  if (end - buf < static_cast<ptrdiff_t>(sizeof(COFF::ImportHeader)) ||
+      memcmp(buf, "\0\0\xFF\xFF", 4))
     return make_error_code(native_reader_error::unknown_file_format);
 
   error_code ec;
