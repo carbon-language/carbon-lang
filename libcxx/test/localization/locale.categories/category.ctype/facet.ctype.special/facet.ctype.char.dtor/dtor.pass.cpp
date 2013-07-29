@@ -19,6 +19,11 @@
 
 unsigned delete_called = 0;
 
+void* operator new[](size_t sz)
+{
+    return operator new(sz);
+}
+
 void operator delete[](void* p) throw()
 {
     operator delete(p);
