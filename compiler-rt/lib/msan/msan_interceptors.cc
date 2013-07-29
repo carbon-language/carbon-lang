@@ -827,7 +827,7 @@ INTERCEPTOR(void *, dlopen, const char *filename, int flag) {
   if (!__msan_has_dynamic_component() && map) {
     // If msandr didn't clear the shadow before the initializers ran, we do it
     // ourselves afterwards.
-    UnpoisonMappedDSO(map);
+    ForEachMappedRegion(map, __msan_unpoison);
   }
   return (void *)map;
 }
