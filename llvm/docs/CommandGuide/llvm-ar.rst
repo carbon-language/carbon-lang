@@ -161,34 +161,9 @@ section (above) to determine which modifiers are applicable to which operations.
 
 
 
-[f]
-
- Normally, **llvm-ar** stores the full path name to a file as presented to it on
- the command line. With this option, truncated (15 characters max) names are
- used. This ensures name compatibility with older versions of ``ar`` but may also
- thwart correct extraction of the files (duplicates may overwrite). If used with
- the *R* option, the directory recursion will be performed but the file names
- will all be flattened to simple file names.
-
-
-
 [i]
 
  A synonym for the *b* option.
-
-
-
-[k]
-
- Normally, **llvm-ar** will not print the contents of bitcode files when the
- *p* operation is used. This modifier defeats the default and allows the
- bitcode members to be printed.
-
-
-
-[N]
-
- This option is ignored by **llvm-ar** but provided for compatibility.
 
 
 
@@ -196,22 +171,6 @@ section (above) to determine which modifiers are applicable to which operations.
 
  When extracting files, this option will cause **llvm-ar** to preserve the
  original modification times of the files it writes.
-
-
-
-[P]
-
- use full path names when matching
-
-
-
-[R]
-
- This modifier instructions the *r* option to recursively process directories.
- Without *R*, directories are ignored and only those *files* that refer to
- files will be added to the archive. When *R* is used, any directories specified
- with *files* will be scanned (recursively) to find files to be added to the
- archive. Any file whose name begins with a dot will not be added.
 
 
 
