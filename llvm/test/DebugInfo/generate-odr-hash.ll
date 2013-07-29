@@ -44,7 +44,9 @@
 ; CHECK: DW_TAG_structure_type
 ; CHECK-NEXT: debug_str{{.*}}"baz"
 ; CHECK-NOT: DW_AT_GNU_odr_signature
-; FIXME: we may want to generate debug info for walrus, but still no hash. 
+; FIXME: PR16740 we may want to generate debug info for walrus, but still no hash since
+; the type is contained in an anonymous namespace and not visible externally even if
+; the variable is...
 ; CHECK-NOT: debug_str{{.*}}"walrus"
 
 
