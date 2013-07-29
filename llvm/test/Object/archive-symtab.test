@@ -16,3 +16,35 @@ CHECK-NEXT: trivial-object-test2.elf-x86-64:
 CHECK-NEXT: 00000000 t bar
 CHECK-NEXT: 00000006 T foo
 CHECK-NEXT: 00000016 T main
+
+RUN: rm -f %t.a
+RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
+RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=NOMAP
+
+NOMAP-NOT: Archive map
+
+RUN: llvm-ar s %t.a
+RUN: llvm-nm -s %t.a | FileCheck %s
+
+check that the archive does have a corrupt symbol table.
+RUN: rm -f %t.a
+RUN: cp %p/Inputs/archive-test.a-corrupt-symbol-table %t.a
+RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=CORRUPT
+
+CORRUPT: Archive map
+CORRUPT-NEXT: mbin in trivial-object-test.elf-x86-64
+CORRUPT-NEXT: foo in trivial-object-test2.elf-x86-64
+CORRUPT-NEXT: main in trivial-object-test2.elf-x86-64
+
+CORRUPT: trivial-object-test.elf-x86-64:
+CORRUPT-NEXT:         U SomeOtherFunction
+CORRUPT-NEXT: 00000000 T main
+CORRUPT-NEXT:         U puts
+CORRUPT-NEXT: trivial-object-test2.elf-x86-64:
+CORRUPT-NEXT: 00000000 t bar
+CORRUPT-NEXT: 00000006 T foo
+CORRUPT-NEXT: 00000016 T main
+
+check that the we *don't* update the symbol table.
+RUN: llvm-ar s %t.a
+RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=CORRUPT

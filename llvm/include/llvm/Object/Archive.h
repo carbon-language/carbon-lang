@@ -188,6 +188,8 @@ public:
   // check if a symbol is in the archive
   child_iterator findSym(StringRef name) const;
 
+  bool hasSymbolTable() const;
+
 private:
   child_iterator SymbolTable;
   child_iterator StringTable;

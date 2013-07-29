@@ -112,7 +112,8 @@ enum ArchiveOperation {
   QuickAppend,      ///< Quickly append to end of archive
   ReplaceOrInsert,  ///< Replace or Insert members
   DisplayTable,     ///< Display the table of contents
-  Extract           ///< Extract files back to file system
+  Extract,          ///< Extract files back to file system
+  CreateSymTab      ///< Create a symbol table in an existing archive
 };
 
 // Modifiers to follow operation to vary behavior
@@ -186,6 +187,8 @@ static ArchiveOperation parseCommandLine() {
   // Keep track of which operation was requested
   ArchiveOperation Operation;
 
+  bool MaybeJustCreateSymTab = false;
+
   for(unsigned i=0; i<Options.size(); ++i) {
     switch(Options[i]) {
     case 'd': ++NumOperations; Operation = Delete; break;
@@ -200,6 +203,7 @@ static ArchiveOperation parseCommandLine() {
     case 'o': OriginalDates = true; break;
     case 's':
       Symtab = true;
+      MaybeJustCreateSymTab = true;
       break;
     case 'S':
       Symtab = false;
@@ -232,6 +236,13 @@ static ArchiveOperation parseCommandLine() {
 
   // Everything on the command line at this point is a member.
   getMembers();
+
+ if (NumOperations == 0 && MaybeJustCreateSymTab) {
+    NumOperations = 1;
+    Operation = CreateSymTab;
+    if (!Members.empty())
+      show_help("The s operation takes only an archive as argument");
+  }
 
   // Perform various checks on the operation/modifier specification
   // to make sure we are dealing with a legal request.
@@ -340,6 +351,7 @@ static bool shouldCreateArchive(ArchiveOperation Op) {
   case Move:
   case DisplayTable:
   case Extract:
+  case CreateSymTab:
     return false;
 
   case QuickAppend:
@@ -810,6 +822,19 @@ static void performWriteOperation(ArchiveOperation Operation,
   TemporaryOutput = NULL;
 }
 
+static void createSymbolTable(object::Archive *OldArchive) {
+  // When an archive is created or modified, if the s option is given, the
+  // resulting archive will have a current symbol table. If the S option
+  // is given, it will have no symbol table.
+  // In summary, we only need to update the symbol table if we have none.
+  // This is actually very common because of broken build systems that think
+  // they have to run ranlib.
+  if (OldArchive->hasSymbolTable())
+    return;
+
+  performWriteOperation(CreateSymTab, OldArchive);
+}
+
 static void performOperation(ArchiveOperation Operation,
                              object::Archive *OldArchive) {
   switch (Operation) {
@@ -824,6 +849,9 @@ static void performOperation(ArchiveOperation Operation,
   case QuickAppend:
   case ReplaceOrInsert:
     performWriteOperation(Operation, OldArchive);
+    return;
+  case CreateSymTab:
+    createSymbolTable(OldArchive);
     return;
   }
   llvm_unreachable("Unknown operation.");

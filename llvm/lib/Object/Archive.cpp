@@ -385,7 +385,7 @@ Archive::Symbol Archive::Symbol::getNext() const {
 }
 
 Archive::symbol_iterator Archive::begin_symbols() const {
-  if (SymbolTable == end_children())
+  if (!hasSymbolTable())
     return symbol_iterator(Symbol(this, 0, 0));
 
   const char *buf = SymbolTable->getBuffer().begin();
@@ -408,7 +408,7 @@ Archive::symbol_iterator Archive::begin_symbols() const {
 }
 
 Archive::symbol_iterator Archive::end_symbols() const {
-  if (SymbolTable == end_children())
+  if (!hasSymbolTable())
     return symbol_iterator(Symbol(this, 0, 0));
 
   const char *buf = SymbolTable->getBuffer().begin();
@@ -443,4 +443,8 @@ Archive::child_iterator Archive::findSym(StringRef name) const {
     }
   }
   return end_children();
+}
+
+bool Archive::hasSymbolTable() const {
+  return SymbolTable != end_children();
 }
