@@ -433,7 +433,7 @@ void showCycleDetectedError(AtomToAtomT &followOnNexts,
     }
     atom = followOnNexts[atom];
   } while (atom != start);
-  llvm_unreachable("Cycle detected");
+  llvm::report_fatal_error("Cycle detected");
 }
 
 /// Exit if there's a cycle in a followon chain reachable from the

@@ -1,6 +1,7 @@
 # REQUIRES: debug
-# RUN: lld -core --add-pass layout -mllvm -debug-only=LayoutPass %s 2>&1 \
-# RUN:   | FileCheck %s -check-prefix=CHECK
+# RUN: not lld -core --add-pass layout -mllvm -debug-only=LayoutPass \
+# RUN:   %s 2> %t.err
+# RUN:   FileCheck %s -check-prefix=CHECK < %t.err
 
 ---
 defined-atoms:
