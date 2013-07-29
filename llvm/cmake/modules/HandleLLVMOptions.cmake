@@ -151,10 +151,16 @@ endif()
 if( MSVC )
   include(ChooseMSVCCRT)
 
-  if( MSVC11 )
+  if( MSVC10 )
+    # MSVC 10 will complain about headers in the STL not being exported, but
+    # will not complain in MSVC 11.
+    add_llvm_definitions(
+      -wd4275 # Suppress 'An exported class was derived from a class that was not exported.'
+    )
+  elseif( MSVC11 )
     add_llvm_definitions(-D_VARIADIC_MAX=10)
   endif()
-
+  
   # Add definitions that make MSVC much less annoying.
   add_llvm_definitions(
     # For some reason MS wants to deprecate a bunch of standard functions...
@@ -176,7 +182,6 @@ if( MSVC )
     -wd4503 # Suppress ''identifier' : decorated name length exceeded, name was truncated'
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
-    -wd4275 # Suppress 'An exported class was derived from a class that was not exported.'
     
     # Promoted warnings.
     -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.
