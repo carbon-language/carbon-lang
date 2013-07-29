@@ -1417,16 +1417,16 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
              REnd = PreprocessorOpts.remapped_file_end();
            !AnyFileChanged && R != REnd;
            ++R) {
-        struct stat StatBuf;
-        if (FileMgr->getNoncachedStatValue(R->second, StatBuf)) {
+        llvm::sys::fs::file_status Status;
+        if (FileMgr->getNoncachedStatValue(R->second, Status)) {
           // If we can't stat the file we're remapping to, assume that something
           // horrible happened.
           AnyFileChanged = true;
           break;
         }
-        
-        OverriddenFiles[R->first] = std::make_pair(StatBuf.st_size, 
-                                                   StatBuf.st_mtime);
+
+        OverriddenFiles[R->first] = std::make_pair(
+            Status.getSize(), Status.getLastModificationTime().toEpochTime());
       }
       for (PreprocessorOptions::remapped_file_buffer_iterator
                 R = PreprocessorOpts.remapped_file_buffer_begin(),
@@ -1455,12 +1455,13 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
         }
         
         // The file was not remapped; check whether it has changed on disk.
-        struct stat StatBuf;
-        if (FileMgr->getNoncachedStatValue(F->first(), StatBuf)) {
+        llvm::sys::fs::file_status Status;
+        if (FileMgr->getNoncachedStatValue(F->first(), Status)) {
           // If we can't stat the file, assume that something horrible happened.
           AnyFileChanged = true;
-        } else if (StatBuf.st_size != F->second.first || 
-                   StatBuf.st_mtime != F->second.second)
+        } else if (Status.getSize() != uint64_t(F->second.first) ||
+                   Status.getLastModificationTime().toEpochTime() !=
+                       uint64_t(F->second.second))
           AnyFileChanged = true;
       }
           

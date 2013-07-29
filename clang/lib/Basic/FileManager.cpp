@@ -587,12 +587,12 @@ bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
                                   isFile, FileDescriptor, StatCache.get());
 }
 
-bool FileManager::getNoncachedStatValue(StringRef Path, 
-                                        struct stat &StatBuf) {
+bool FileManager::getNoncachedStatValue(StringRef Path,
+                                        llvm::sys::fs::file_status &Result) {
   SmallString<128> FilePath(Path);
   FixupRelativePath(FilePath);
 
-  return ::stat(FilePath.c_str(), &StatBuf) != 0;
+  return llvm::sys::fs::status(FilePath.c_str(), Result);
 }
 
 void FileManager::invalidateCache(const FileEntry *Entry) {

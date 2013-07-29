@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/FileSystem.h"
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
 
@@ -243,7 +244,8 @@ public:
   ///
   /// If the path is relative, it will be resolved against the WorkingDir of the
   /// FileManager's FileSystemOptions.
-  bool getNoncachedStatValue(StringRef Path, struct stat &StatBuf);
+  bool getNoncachedStatValue(StringRef Path,
+                             llvm::sys::fs::file_status &Result);
 
   /// \brief Remove the real file \p Entry from the cache.
   void invalidateCache(const FileEntry *Entry);
