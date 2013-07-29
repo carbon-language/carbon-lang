@@ -39,7 +39,7 @@
 //       (file):(row):(column)
 //       (file):(row):(column)
 //
-//   error: header '(file)' has different contents dependening on how it was
+//   error: header '(file)' has different contents depending on how it was
 //     included
 //
 // The latter might be followed by messages like the following:
