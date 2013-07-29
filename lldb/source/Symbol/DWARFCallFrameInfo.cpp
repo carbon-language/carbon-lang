@@ -155,7 +155,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
         //    cie.offset = cie_offset;
         //    cie.length = length;
         //    cie.cieID = cieID;
-        cie_sp->ptr_encoding = DW_EH_PE_absptr;
+        cie_sp->ptr_encoding = DW_EH_PE_absptr; // default
         cie_sp->version = m_cfi_data.GetU8(&offset);
 
         for (i=0; i<CFI_AUG_MAX_SIZE; ++i)
@@ -233,6 +233,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
                             // Data shall include a 1 byte argument that
                             // represents the pointer encoding for the address
                             // pointers used in the FDE.
+                            // Example: 0x1B == DW_EH_PE_pcrel | DW_EH_PE_sdata4 
                             cie_sp->ptr_encoding = m_cfi_data.GetU8(&offset);
                             break;
                     }

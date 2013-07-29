@@ -37,6 +37,7 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
+#include "lldb/Target/StackID.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -2626,6 +2627,37 @@ DWARFExpression::Evaluate
         //----------------------------------------------------------------------
         case DW_OP_stack_value:
             stack.back().SetValueType(Value::eValueTypeScalar);
+            break;
+
+        //----------------------------------------------------------------------
+        // OPCODE: DW_OP_call_frame_cfa
+        // OPERANDS: None
+        // DESCRIPTION: Specifies a DWARF expression that pushes the value of
+        // the canonical frame address consistent with the call frame information
+        // located in .debug_frame (or in the FDEs of the eh_frame section).
+        //----------------------------------------------------------------------
+        case DW_OP_call_frame_cfa:
+            if (frame)
+            {
+                // Note that we don't have to parse FDEs because this DWARF expression
+                // is commonly evaluated with a valid stack frame.
+                StackID id = frame->GetStackID();                
+                addr_t cfa = id.GetCallFrameAddress();
+                if (cfa != LLDB_INVALID_ADDRESS)
+                {
+                    stack.push_back(Scalar(cfa));
+                    stack.back().SetValueType (Value::eValueTypeHostAddress);
+                }
+                else
+                    if (error_ptr)
+                        error_ptr->SetErrorString ("Stack frame does not include a canonical frame address for DW_OP_call_frame_cfa opcode.");
+            }
+            else
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorString ("Invalid stack frame in context for DW_OP_call_frame_cfa opcode.");
+                return false;
+            }
             break;
         }
     }
