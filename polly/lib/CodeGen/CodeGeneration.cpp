@@ -275,7 +275,8 @@ private:
                             std::vector<LoopToScevMapT> *VLTS = 0);
 
   void codegen(const clast_user_stmt *u, std::vector<Value *> *IVS = NULL,
-               const char *iterator = NULL, isl_set *scatteringDomain = 0);
+               const char *iterator = NULL,
+               __isl_take isl_set *scatteringDomain = 0);
 
   void codegen(const clast_block *b);
 
@@ -417,11 +418,13 @@ void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
 // PartialSchedule, where the PartialSchedule contains all the dimensions that
 // have been code generated up to this point.
 static __isl_give isl_map *extractPartialSchedule(ScopStmt *Statement,
-                                                  isl_set *Domain) {
+                                                  __isl_take isl_set *Domain) {
   isl_map *Schedule = Statement->getScattering();
   int ScheduledDimensions = isl_set_dim(Domain, isl_dim_set);
   int UnscheduledDimensions =
       isl_map_dim(Schedule, isl_dim_out) - ScheduledDimensions;
+
+  isl_set_free(Domain);
 
   return isl_map_project_out(Schedule, isl_dim_out, ScheduledDimensions,
                              UnscheduledDimensions);
@@ -429,7 +432,7 @@ static __isl_give isl_map *extractPartialSchedule(ScopStmt *Statement,
 
 void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
                                std::vector<Value *> *IVS, const char *iterator,
-                               isl_set *Domain) {
+                               __isl_take isl_set *Domain) {
   ScopStmt *Statement = (ScopStmt *)u->statement->usr;
 
   if (u->substitutions)
@@ -819,7 +822,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   for (int i = 1; i < VectorWidth; i++)
     IVS[i] = Builder.CreateAdd(IVS[i - 1], StrideValue, "p_vector_iv");
 
-  isl_set *Domain = isl_set_from_cloog_domain(F->domain);
+  isl_set *Domain = isl_set_copy(isl_set_from_cloog_domain(F->domain));
 
   // Add loop iv to symbols.
   ClastVars[F->iterator] = LB;
@@ -838,12 +841,12 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
 }
 
 bool ClastStmtCodeGen::isParallelFor(const clast_for *f) {
-  isl_set *Domain = isl_set_from_cloog_domain(f->domain);
+  isl_set *Domain = isl_set_copy(isl_set_from_cloog_domain(f->domain));
   assert(Domain && "Cannot access domain of loop");
 
   Dependences &D = P->getAnalysis<Dependences>();
 
-  return D.isParallelDimension(isl_set_copy(Domain), isl_set_n_dim(Domain));
+  return D.isParallelDimension(Domain, isl_set_n_dim(Domain));
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
