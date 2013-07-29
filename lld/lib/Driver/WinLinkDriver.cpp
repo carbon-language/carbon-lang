@@ -216,6 +216,14 @@ std::vector<StringRef> splitPathList(StringRef str) {
   return std::move(ret);
 }
 
+// Removes surrounding single or double quotes from the string. If it's not
+// quoted, return the argument as is.
+StringRef unquote(StringRef str) {
+  bool isQuoted = (str.startswith("\"") && str.endswith("\"")) ||
+      (str.startswith("'") && str.endswith("'"));
+  return isQuoted ? str.substr(1, str.size() - 2) : str;
+}
+
 // Handle /failifmatch option.
 bool handleFailIfMismatchOption(StringRef option,
                                 std::map<StringRef, StringRef> &mustMatch,
@@ -345,33 +353,33 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // handle /base
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_base))
-    if (!parseBaseOption(info, arg->getValue(), diagnostics))
+    if (!parseBaseOption(info, unquote(arg->getValue()), diagnostics))
       return true;
 
   // handle /stack
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
-    if (!parseStackOption(info, arg->getValue(), diagnostics))
+    if (!parseStackOption(info, unquote(arg->getValue()), diagnostics))
       return true;
 
   // handle /heap
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_heap))
-    if (!parseHeapOption(info, arg->getValue(), diagnostics))
+    if (!parseHeapOption(info, unquote(arg->getValue()), diagnostics))
       return true;
 
   // handle /subsystem
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))
-    if (!parseSubsystemOption(info, arg->getValue(), diagnostics))
+    if (!parseSubsystemOption(info, unquote(arg->getValue()), diagnostics))
       return true;
 
   // handle /entry
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
-    info.setEntrySymbolName(arg->getValue());
+    info.setEntrySymbolName(unquote(arg->getValue()));
 
   // handle /libpath
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_libpath),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    info.appendInputSearchPath((*it)->getValue());
+    info.appendInputSearchPath(unquote((*it)->getValue()));
   }
 
   // handle /force
@@ -398,19 +406,19 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_incl),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    info.addInitialUndefinedSymbol((*it)->getValue());
+    info.addInitialUndefinedSymbol(unquote((*it)->getValue()));
   }
 
   // handle /out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
-    info.setOutputPath(outpath->getValue());
+    info.setOutputPath(unquote(outpath->getValue()));
 
   // handle /defaultlib
   std::vector<StringRef> defaultLibs;
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_defaultlib),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    defaultLibs.push_back((*it)->getValue());
+    defaultLibs.push_back(unquote((*it)->getValue()));
   }
 
   // Handle /failifmismatch. /failifmismatch is the hidden linker option behind
@@ -426,7 +434,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
            it = parsedArgs->filtered_begin(OPT_failifmismatch),
            ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    if (!handleFailIfMismatchOption((*it)->getValue(), mustMatch, diagnostics))
+    if (!handleFailIfMismatchOption(unquote((*it)->getValue()),
+                                    mustMatch, diagnostics))
       return true;
   }
 
@@ -435,13 +444,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    inputPaths.push_back((*it)->getValue());
+    inputPaths.push_back(unquote((*it)->getValue()));
   }
 
   // Arguments after "--" are also input files
   if (doubleDashPosition > 0)
     for (int i = doubleDashPosition + 1; i < argc; ++i)
-      inputPaths.push_back(argv[i]);
+      inputPaths.push_back(unquote(argv[i]));
 
   // Add input files specified via the command line.
   for (const StringRef path : inputPaths)
