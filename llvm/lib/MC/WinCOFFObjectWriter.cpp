@@ -475,18 +475,21 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 /// name into the string table if needed
 void WinCOFFObjectWriter::MakeSectionReal(COFFSection &S, size_t Number) {
   if (S.Name.size() > COFF::NameSize) {
-    size_t StringTableEntry = Strings.insert(S.Name.c_str());
+    const unsigned Max6DecimalSize = 999999;
+    const unsigned Max7DecimalSize = 9999999;
+    uint64_t StringTableEntry = Strings.insert(S.Name.c_str());
 
-    // FIXME: Why is this number 999999? This number is never mentioned in the
-    // spec. I'm assuming this is due to the printed value needing to fit into
-    // the S.Header.Name field. In which case why not 9999999 (7 9's instead of
-    // 6)? The spec does not state if this entry should be null terminated in
-    // this case, and thus this seems to be the best way to do it. I think I
-    // just solved my own FIXME...
-    if (StringTableEntry > 999999)
-      report_fatal_error("COFF string table is greater than 999999 bytes.");
-
-    std::sprintf(S.Header.Name, "/%d", unsigned(StringTableEntry));
+    if (StringTableEntry <= Max6DecimalSize) {
+      std::sprintf(S.Header.Name, "/%d", unsigned(StringTableEntry));
+    } else if (StringTableEntry <= Max7DecimalSize) {
+      // With seven digits, we have to skip the terminating null. Because
+      // sprintf always appends it, we use a larger temporary buffer.
+      char buffer[9] = { };
+      std::sprintf(buffer, "/%d", unsigned(StringTableEntry));
+      std::memcpy(S.Header.Name, buffer, 8);
+    } else {
+      report_fatal_error("COFF string table is greater than 9,999,999 bytes.");
+    }
   } else
     std::memcpy(S.Header.Name, S.Name.c_str(), S.Name.size());
 
