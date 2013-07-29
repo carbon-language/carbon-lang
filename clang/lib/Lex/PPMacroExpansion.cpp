@@ -902,6 +902,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("attribute_unavailable_with_message", true)
            .Case("attribute_unused_on_fields", true)
            .Case("blocks", LangOpts.Blocks)
+           .Case("c_thread_safety_attributes", true)
            .Case("cxx_exceptions", LangOpts.Exceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
            .Case("enumerator_attributes", true)

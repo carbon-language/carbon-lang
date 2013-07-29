@@ -597,7 +597,7 @@ static bool checkLockableAttrCommon(Sema &S, Decl *D,
     return false;
 
   // FIXME: Lockable structs for C code.
-  if (!isa<CXXRecordDecl>(D)) {
+  if (!isa<RecordDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_thread_attribute_wrong_decl_type)
       << Attr.getName() << ThreadExpectedClassOrStruct;
     return false;
