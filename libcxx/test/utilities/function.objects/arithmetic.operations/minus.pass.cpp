@@ -21,4 +21,11 @@ int main()
     const F f = F();
     static_assert((std::is_base_of<std::binary_function<int, int, int>, F>::value), "");
     assert(f(3, 2) == 1);
+#if _LIBCPP_STD_VER > 11
+    typedef std::minus<> F2;
+    const F2 f2 = F2();
+    assert(f2(3,2) == 1);
+    assert(f2(3.0, 2) == 1);
+    assert(f2(3, 2.5) == 0.5);
+#endif
 }

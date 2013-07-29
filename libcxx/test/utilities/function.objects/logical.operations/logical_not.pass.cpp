@@ -22,4 +22,12 @@ int main()
     static_assert((std::is_base_of<std::unary_function<int, bool>, F>::value), "");
     assert(!f(36));
     assert(f(0));
+#if _LIBCPP_STD_VER > 11
+    typedef std::logical_not<> F2;
+    const F2 f2 = F2();
+    assert(!f2(36));
+    assert( f2(0));
+    assert(!f2(36L));
+    assert( f2(0L));
+#endif
 }

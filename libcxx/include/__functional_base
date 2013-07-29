@@ -50,12 +50,26 @@ public:
     static const bool value = sizeof(__test<_Tp>(0)) == 1;
 };
 
+#if _LIBCPP_STD_VER > 11
+template <class _Tp = void>
+#else
 template <class _Tp>
+#endif
 struct _LIBCPP_TYPE_VIS less : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x < __y;}
 };
+
+#if _LIBCPP_STD_VER > 11
+template <>
+struct _LIBCPP_TYPE_VIS less<void>
+{
+    template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
+    auto operator()(_T1&& __t, _T2&& __u) const
+        { return _VSTD::forward<_T1>(__t) < _VSTD::forward<_T2>(__u); }
+};
+#endif
 
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
