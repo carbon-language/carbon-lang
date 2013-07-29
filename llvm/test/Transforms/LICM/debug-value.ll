@@ -1,4 +1,4 @@
-; RUN: opt -licm -basicaa -disable-debug-info-verifier < %s -S | FileCheck %s
+; RUN: opt -licm -basicaa < %s -S | FileCheck %s
 
 define void @dgefa() nounwind ssp {
 entry:

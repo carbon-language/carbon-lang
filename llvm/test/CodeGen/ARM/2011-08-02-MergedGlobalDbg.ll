@@ -1,4 +1,4 @@
-; RUN: llc -disable-debug-info-verifier < %s | FileCheck %s
+; RUN: llc < %s | FileCheck %s
 
 ; Check debug info output for merged global.
 ; DW_AT_location
