@@ -184,10 +184,20 @@ public:
     StringRef symbolName(buf + sizeof(COFF::ImportHeader));
     StringRef dllName(buf + sizeof(COFF::ImportHeader) + symbolName.size() + 1);
 
+    // TypeInfo is a bitfield. The least significant 2 bits are import
+    // type, followed by 3 bit import name type.
+    uint16_t typeInfo = *reinterpret_cast<const support::ulittle16_t *>(
+        buf + offsetof(COFF::ImportHeader, TypeInfo));
+    int type = typeInfo & 0x3;
+    int nameType = (typeInfo >> 2) & 0x7;
+
+    // Symbol name used by the linker may be different from the symbol name used
+    // by the loader. The latter may lack symbol decorations, or may not even
+    // have name if it's imported by ordinal.
+    StringRef importName = symbolNameToImportName(symbolName, nameType);
+
     const COFFSharedLibraryAtom *dataAtom = addSharedLibraryAtom(
-        hint, symbolName, dllName);
-    int type = *reinterpret_cast<const support::ulittle16_t *>(
-        buf + offsetof(COFF::ImportHeader, TypeInfo)) >> 14;
+        hint, symbolName, importName, dllName);
     if (type == llvm::COFF::IMPORT_CODE)
       addDefinedAtom(symbolName, dllName, dataAtom);
 
@@ -213,10 +223,11 @@ public:
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
 
 private:
-  const COFFSharedLibraryAtom *addSharedLibraryAtom(
-      uint16_t hint, StringRef symbolName, StringRef dllName) {
+  const COFFSharedLibraryAtom *
+  addSharedLibraryAtom(uint16_t hint, StringRef symbolName,
+                       StringRef importName, StringRef dllName) {
     auto *atom = new (_alloc) COFFSharedLibraryAtom(
-        *this, hint, symbolName, dllName);
+        *this, hint, symbolName, importName, dllName);
     _sharedLibraryAtoms._atoms.push_back(atom);
     return atom;
   }
@@ -235,6 +246,32 @@ private:
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   const TargetInfo &_targetInfo;
   mutable llvm::BumpPtrAllocator _alloc;
+
+  // Convert the given symbol name to the import symbol name exported by the
+  // DLL.
+  StringRef symbolNameToImportName(StringRef symbolName, int nameType) const {
+    StringRef ret;
+    switch (nameType) {
+    case llvm::COFF::IMPORT_ORDINAL:
+      // The import is by ordinal. No symbol name will be used to identify the
+      // item in the DLL. Only its ordinal will be used.
+      return "";
+    case llvm::COFF::IMPORT_NAME:
+      // The import name in this case is identical to the symbol name.
+      return symbolName;
+    case llvm::COFF::IMPORT_NAME_NOPREFIX:
+      // The import name is the symbol name without leading ?, @ or _.
+      ret = symbolName.ltrim("?@_");
+      break;
+    case llvm::COFF::IMPORT_NAME_UNDECORATE:
+      // Similar to NOPREFIX, but we also need to truncate at the first @.
+      ret = symbolName.ltrim("?@_");
+      ret = ret.substr(0, ret.find('@'));
+      break;
+    }
+    std::string *str = new (_alloc) std::string(ret);
+    return *str;
+  }
 };
 
 } // end anonymous namespace

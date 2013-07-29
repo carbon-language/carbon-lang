@@ -264,17 +264,23 @@ private:
 // to an import address table entry in Idata pass.
 class COFFSharedLibraryAtom : public SharedLibraryAtom {
 public:
-  COFFSharedLibraryAtom(const File &file, uint16_t hint,
-                        StringRef symbolName, StringRef loadName)
-      : _file(file), _hint(hint), _unmangledName(symbolName),
-        _loadName(loadName), _mangledName(addImpPrefix(symbolName)),
+  COFFSharedLibraryAtom(const File &file, uint16_t hint, StringRef symbolName,
+                        StringRef importName, StringRef dllName)
+      : _file(file), _hint(hint), _mangledName(addImpPrefix(symbolName)),
+        _importName(importName), _dllName(dllName),
         _importTableEntry(nullptr) {}
 
   virtual const File &file() const { return _file; }
   uint16_t hint() const { return _hint; }
+
+  /// Returns the symbol name to be used by the core linker.
   virtual StringRef name() const { return _mangledName; }
-  virtual StringRef unmangledName() const { return _unmangledName; }
-  virtual StringRef loadName() const { return _loadName; }
+
+  /// Returns the symbol name to be used in the import description table in the
+  /// COFF header.
+  virtual StringRef importName() const { return _importName; }
+
+  virtual StringRef loadName() const { return _dllName; }
   virtual bool canBeNullAtRuntime() const { return false; }
 
   void setImportTableEntry(const DefinedAtom *atom) {
@@ -296,9 +302,9 @@ private:
 
   const File &_file;
   uint16_t _hint;
-  StringRef _unmangledName;
-  StringRef _loadName;
   std::string _mangledName;
+  std::string _importName;
+  StringRef _dllName;
   const DefinedAtom *_importTableEntry;
 };
 

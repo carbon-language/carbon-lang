@@ -116,41 +116,41 @@ private:
 /// loader can find the symbol quickly.
 class HintNameAtom : public IdataAtom {
 public:
-  HintNameAtom(Context &ctx, uint16_t hint, StringRef name)
-      : IdataAtom(ctx.file, assembleRawContent(hint, name)), _name(name) {
+  HintNameAtom(Context &ctx, uint16_t hint, StringRef importName)
+      : IdataAtom(ctx.file, assembleRawContent(hint, importName)),
+        _importName(importName) {
     ctx.hintNameAtoms.push_back(this);
   }
 
-  StringRef getContentString() { return _name; }
+  StringRef getContentString() { return _importName; }
 
 private:
   // The first two bytes of the content is a hint, followed by a null-terminated
   // symbol name. The total size needs to be multiple of 2.
-  vector<uint8_t> assembleRawContent(uint16_t hint, StringRef name) {
-    name = unmangle(name);
-    size_t size = llvm::RoundUpToAlignment(sizeof(hint) + name.size() + 1, 2);
+  vector<uint8_t> assembleRawContent(uint16_t hint, StringRef importName) {
+    size_t size = llvm::RoundUpToAlignment(sizeof(hint) + importName.size() + 1, 2);
     vector<uint8_t> ret(size);
-    ret[name.size()] = 0;
-    ret[name.size() - 1] = 0;
+    ret[importName.size()] = 0;
+    ret[importName.size() - 1] = 0;
     *reinterpret_cast<llvm::support::ulittle16_t *>(&ret[0]) = hint;
-    std::memcpy(&ret[2], name.data(), name.size());
+    std::memcpy(&ret[2], importName.data(), importName.size());
     return ret;
   }
 
-  /// Undo name mangling. In Windows, the symbol name for function is encoded
-  /// as "_name@X", where X is the number of bytes of the arguments.
-  StringRef unmangle(StringRef mangledName) {
-    assert(mangledName.startswith("_"));
-    return mangledName.substr(1).split('@').first;
-  }
-
-  StringRef _name;
+  StringRef _importName;
 };
 
 class ImportTableEntryAtom : public IdataAtom {
 public:
-  explicit ImportTableEntryAtom(Context &ctx)
-      : IdataAtom(ctx.file, vector<uint8_t>(4, 0)) {}
+  explicit ImportTableEntryAtom(Context &ctx, uint32_t contents)
+      : IdataAtom(ctx.file, assembleRawContent(contents)) {}
+
+private:
+  vector<uint8_t> assembleRawContent(uint32_t contents) {
+    vector<uint8_t> ret(4);
+    *reinterpret_cast<llvm::support::ulittle32_t *>(&ret[0]) = contents;
+    return ret;
+  }
 };
 
 /// An ImportDirectoryAtom includes information to load a DLL, including a DLL
@@ -194,21 +194,29 @@ private:
                            const vector<COFFSharedLibraryAtom *> &sharedAtoms,
                            bool shouldAddReference,
                            vector<ImportTableEntryAtom *> &ret) const {
-    for (COFFSharedLibraryAtom *shared : sharedAtoms) {
-      HintNameAtom *hintName = createHintNameAtom(ctx, shared);
-      ImportTableEntryAtom *entry = new (_alloc) ImportTableEntryAtom(ctx);
-      addDir32NBReloc(entry, hintName);
+    for (COFFSharedLibraryAtom *atom : sharedAtoms) {
+      ImportTableEntryAtom *entry = nullptr;
+      if (atom->importName().empty()) {
+        // Import by ordinal
+        uint32_t hint = (1U << 31) | atom->hint();
+        entry = new (_alloc) ImportTableEntryAtom(ctx, hint);
+      } else {
+        // Import by name
+        entry = new (_alloc) ImportTableEntryAtom(ctx, 0);
+        HintNameAtom *hintName = createHintNameAtom(ctx, atom);
+        addDir32NBReloc(entry, hintName);
+      }
       ret.push_back(entry);
       if (shouldAddReference)
-        shared->setImportTableEntry(entry);
+        atom->setImportTableEntry(entry);
     }
     // Add the NULL entry.
-    ret.push_back(new (_alloc) ImportTableEntryAtom(ctx));
+    ret.push_back(new (_alloc) ImportTableEntryAtom(ctx, 0));
   }
 
   HintNameAtom *createHintNameAtom(
       Context &ctx, const COFFSharedLibraryAtom *atom) const {
-    return new (_alloc) HintNameAtom(ctx, atom->hint(), atom->unmangledName());
+    return new (_alloc) HintNameAtom(ctx, atom->hint(), atom->importName());
   }
 
   mutable llvm::BumpPtrAllocator _alloc;
