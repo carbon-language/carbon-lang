@@ -58,8 +58,13 @@ static const unsigned RecursionMaxDepth = 12;
 /// RAII pattern to save the insertion point of the IR builder.
 class BuilderLocGuard {
 public:
-  BuilderLocGuard(IRBuilder<> &B) : Builder(B), Loc(B.GetInsertPoint()) {}
-  ~BuilderLocGuard() { if (Loc) Builder.SetInsertPoint(Loc); }
+  BuilderLocGuard(IRBuilder<> &B) : Builder(B), Loc(B.GetInsertPoint()),
+  DbgLoc(B.getCurrentDebugLocation()) {}
+  ~BuilderLocGuard() {
+    Builder.SetCurrentDebugLocation(DbgLoc);
+    if (Loc)
+      Builder.SetInsertPoint(Loc);
+  }
 
 private:
   // Prevent copying.
@@ -67,6 +72,7 @@ private:
   BuilderLocGuard &operator=(const BuilderLocGuard &);
   IRBuilder<> &Builder;
   AssertingVH<Instruction> Loc;
+  DebugLoc DbgLoc;
 };
 
 /// A helper class for numbering instructions in multible blocks.
@@ -1177,6 +1183,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::PHI: {
       PHINode *PH = dyn_cast<PHINode>(VL0);
       Builder.SetInsertPoint(PH->getParent()->getFirstInsertionPt());
+      Builder.SetCurrentDebugLocation(PH->getDebugLoc());
       PHINode *NewPhi = Builder.CreatePHI(VecTy, PH->getNumIncomingValues());
       E->VectorizedValue = NewPhi;
 
@@ -1190,6 +1197,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
                              getIncomingValueForBlock(IBB));
 
         Builder.SetInsertPoint(IBB->getTerminator());
+        Builder.SetCurrentDebugLocation(PH->getDebugLoc());
         Value *Vec = vectorizeTree(Operands);
         NewPhi->addIncoming(Vec, IBB);
       }
@@ -1224,6 +1232,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         INVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
 
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
+      Builder.SetCurrentDebugLocation(VL0->getDebugLoc());
+
       Value *InVec = vectorizeTree(INVL);
 
       if (Value *V = alreadyVectorized(E->Scalars))
@@ -1243,6 +1253,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       }
 
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
+      Builder.SetCurrentDebugLocation(VL0->getDebugLoc());
+
       Value *L = vectorizeTree(LHSV);
       Value *R = vectorizeTree(RHSV);
 
@@ -1268,6 +1280,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       }
 
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
+      Builder.SetCurrentDebugLocation(VL0->getDebugLoc());
+
       Value *Cond = vectorizeTree(CondVec);
       Value *True = vectorizeTree(TrueVec);
       Value *False = vectorizeTree(FalseVec);
@@ -1304,6 +1318,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       }
 
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
+      Builder.SetCurrentDebugLocation(VL0->getDebugLoc());
+
       Value *LHS = vectorizeTree(LHSVL);
       Value *RHS = vectorizeTree(RHSVL);
 
@@ -1323,6 +1339,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       // Loads are inserted at the head of the tree because we don't want to
       // sink them all the way down past store instructions.
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
+      Builder.SetCurrentDebugLocation(VL0->getDebugLoc());
+
       LoadInst *LI = cast<LoadInst>(VL0);
       Value *VecPtr =
       Builder.CreateBitCast(LI->getPointerOperand(), VecTy->getPointerTo());
@@ -1341,6 +1359,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         ValueOp.push_back(cast<StoreInst>(E->Scalars[i])->getValueOperand());
 
       Builder.SetInsertPoint(getLastInstruction(E->Scalars));
+      Builder.SetCurrentDebugLocation(VL0->getDebugLoc());
+
       Value *VecValue = vectorizeTree(ValueOp);
       Value *VecPtr =
       Builder.CreateBitCast(SI->getPointerOperand(), VecTy->getPointerTo());
