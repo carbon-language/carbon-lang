@@ -132,7 +132,7 @@ void start_threads(thread_vector& threads,
     }
 }
 
-int main ()
+int dotest()
 {
     g_watchme = 0;
 
@@ -188,5 +188,13 @@ int main ()
     for(thread_iterator t = threads.begin(); t != threads.end(); ++t)
         pthread_join(*t, 0);
 
+    return 0;
+}
+
+int main ()
+{
+    dotest();
     return 0; // Break here and verify one thread is active.
 }
+
+
