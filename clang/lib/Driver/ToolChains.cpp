@@ -1049,6 +1049,16 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   }
 }
 
+void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
+  for (SmallVectorImpl<std::string>::const_iterator
+           I = CandidateGCCInstallPaths.begin(),
+           E = CandidateGCCInstallPaths.end();
+       I != E; ++I)
+    OS << "Found candidate GCC installation: " << *I << "\n";
+
+  OS << "Selected GCC installation: " << GCCInstallPath << "\n";
+}
+
 /*static*/ void Generic_GCC::GCCInstallationDetector::CollectLibDirsAndTriples(
     const llvm::Triple &TargetTriple, const llvm::Triple &BiarchTriple,
     SmallVectorImpl<StringRef> &LibDirs,
@@ -1383,6 +1393,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
     llvm::error_code EC;
     for (llvm::sys::fs::directory_iterator LI(LibDir + LibSuffix, EC), LE;
          !EC && LI != LE; LI = LI.increment(EC)) {
+      CandidateGCCInstallPaths.push_back(LI->path());
       StringRef VersionText = llvm::sys::path::filename(LI->path());
       GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
       static const GCCVersion MinVersion = { "4.1.1", 4, 1, 1, "" };
@@ -1456,6 +1467,11 @@ Tool *Generic_GCC::buildAssembler() const {
 
 Tool *Generic_GCC::buildLinker() const {
   return new tools::gcc::Link(*this);
+}
+
+void Generic_GCC::printVerboseInfo(raw_ostream &OS) const {
+  // Print the information about how we detected the GCC installation.
+  GCCInstallation.print(OS);
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {

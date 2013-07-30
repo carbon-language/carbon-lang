@@ -145,6 +145,13 @@ public:
   std::string GetFilePath(const char *Name) const;
   std::string GetProgramPath(const char *Name) const;
 
+  /// \brief Dispatch to the specific toolchain for verbose printing.
+  ///
+  /// This is used when handling the verbose option to print detailed,
+  /// toolchain-specific information useful for understanding the behavior of
+  /// the driver on a specific platform.
+  virtual void printVerboseInfo(raw_ostream &OS) const {};
+
   // Platform defaults information
 
   /// HasNativeLTOLinker - Check whether the linker and related tools have

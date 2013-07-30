@@ -68,7 +68,6 @@ protected:
   /// information about it. It starts from the host information provided to the
   /// Driver, and has logic for fuzzing that where appropriate.
   class GCCInstallationDetector {
-
     bool IsValid;
     llvm::Triple GCCTriple;
 
@@ -78,6 +77,10 @@ protected:
     std::string GCCParentLibPath;
 
     GCCVersion Version;
+
+    // We retain the list of install paths that were considered and rejected in
+    // order to print out detailed information in verbose mode.
+    SmallVector<std::string, 4> CandidateGCCInstallPaths;
 
   public:
     GCCInstallationDetector(const Driver &D, const llvm::Triple &TargetTriple,
@@ -102,6 +105,9 @@ protected:
     /// \brief Get the detected GCC version string.
     const GCCVersion &getVersion() const { return Version; }
 
+    /// \brief Print information about the detected GCC installation.
+    void print(raw_ostream &OS) const;
+
   private:
     static void
     CollectLibDirsAndTriples(const llvm::Triple &TargetTriple,
@@ -124,6 +130,8 @@ public:
   Generic_GCC(const Driver &D, const llvm::Triple &Triple,
               const llvm::opt::ArgList &Args);
   ~Generic_GCC();
+
+  virtual void printVerboseInfo(raw_ostream &OS) const;
 
   virtual bool IsUnwindTablesDefault() const;
   virtual bool isPICDefault() const;

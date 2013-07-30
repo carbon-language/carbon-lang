@@ -695,6 +695,10 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   const ToolChain &TC = C.getDefaultToolChain();
+
+  if (C.getArgs().hasArg(options::OPT_v))
+    TC.printVerboseInfo(llvm::errs());
+
   if (C.getArgs().hasArg(options::OPT_print_search_dirs)) {
     llvm::outs() << "programs: =";
     for (ToolChain::path_list::const_iterator it = TC.getProgramPaths().begin(),
