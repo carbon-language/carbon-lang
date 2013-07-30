@@ -188,6 +188,17 @@ void SparcFrameLowering::remapRegsForLeafProc(MachineFunction &MF) const {
     MRI.setPhysRegUnused(reg);
   }
 
+  // Rewrite MBB's Live-ins.
+  for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
+       MBB != E; ++MBB) {
+    for (unsigned reg = SP::I0; reg <= SP::I7; ++reg) {
+      if (!MBB->isLiveIn(reg))
+        continue;
+      MBB->removeLiveIn(reg);
+      MBB->addLiveIn(reg - SP::I0 + SP::O0);
+    }
+  }
+
   assert(verifyLeafProcRegUse(&MRI));
 #ifdef XDEBUG
   MF.verify(0, "After LeafProc Remapping");
