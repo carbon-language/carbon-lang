@@ -205,13 +205,32 @@ private:
       return a->Value < b->Value;
     }));
 
-    ArrayRef<uint8_t> secData;
     StringRef sectionName;
-    if (error_code ec = _obj->getSectionContents(section, secData))
-      return ec;
     if (error_code ec = _obj->getSectionName(section, sectionName))
       return ec;
     uint64_t ordinal = -1;
+
+    // BSS section does not have contents. If this is the BSS section, create
+    // COFFBSSAtom instead of COFFDefinedAtom.
+    if (section->Characteristics &
+        llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
+      for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
+        const coff_symbol *sym = *si;
+        uint32_t size = (si + 1 == se)
+            ? section->SizeOfRawData - sym->Value
+            : si[1]->Value - sym->Value;
+        auto *atom = new (_alloc) COFFBSSAtom(
+            *this, _symbolName[sym], sym, section, size, sectionName,
+            ++ordinal);
+        atoms.push_back(atom);
+        _symbolAtom[sym] = atom;
+      }
+      return error_code::success();
+    }
+
+    ArrayRef<uint8_t> secData;
+    if (error_code ec = _obj->getSectionContents(section, secData))
+      return ec;
 
     // We do not support debug information yet. We could keep data in ".debug$S"
     // section in the resultant binary by copying as opaque bytes, but it would

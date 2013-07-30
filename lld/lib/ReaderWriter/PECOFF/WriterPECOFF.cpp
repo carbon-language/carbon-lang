@@ -432,7 +432,7 @@ public:
 
   virtual uint32_t getVirtualAddress() { return _sectionHeader.VirtualAddress; }
 
-  const llvm::object::coff_section &getSectionHeader() {
+  virtual llvm::object::coff_section &getSectionHeader() {
     // Fix up section size before returning it. VirtualSize should be the size
     // of the actual content, and SizeOfRawData should be aligned to the section
     // alignment.
@@ -444,7 +444,7 @@ public:
   void appendAtom(const DefinedAtom *atom) {
     auto *layout = new (_alloc) AtomLayout(atom, _size, _size);
     _atomLayouts.push_back(layout);
-    _size += atom->rawContent().size();
+    _size += atom->size();
   }
 
   static bool classof(const Chunk *c) { return c->getKind() == kindSection; }
@@ -578,6 +578,35 @@ private:
       llvm::COFF::IMAGE_SCN_MEM_WRITE;
 };
 
+// \brief A DataSectionChunk represents a .data section.
+class BssSectionChunk : public SectionChunk {
+public:
+  // BSS section does not have contents, so write should be no-op.
+  virtual void write(uint8_t *fileBuffer) {}
+
+  virtual llvm::object::coff_section &getSectionHeader() {
+    llvm::object::coff_section &sectionHeader =
+        SectionChunk::getSectionHeader();
+    sectionHeader.VirtualSize = 0;
+    sectionHeader.PointerToRawData = 0;
+    return sectionHeader;
+  }
+
+  BssSectionChunk(const File &linkedFile)
+      : SectionChunk(".bss", characteristics) {
+    buildContents(linkedFile, [](const DefinedAtom *atom) {
+      return atom->contentType() == DefinedAtom::typeZeroFill;
+    });
+  }
+
+private:
+  // When loaded into memory, bss section should be readable and writable.
+  static const uint32_t characteristics =
+      llvm::COFF::IMAGE_SCN_MEM_READ |
+      llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
+      llvm::COFF::IMAGE_SCN_MEM_WRITE;
+};
+
 /// A BaseRelocAtom represents a base relocation block in ".reloc" section.
 class BaseRelocAtom : public coff::COFFLinkerInternalAtom {
 public:
@@ -701,6 +730,7 @@ public:
     auto *text = new TextSectionChunk(linkedFile);
     auto *rdata = new RDataSectionChunk(linkedFile);
     auto *data = new DataSectionChunk(linkedFile);
+    auto *bss = new BssSectionChunk(linkedFile);
     BaseRelocChunk *baseReloc = nullptr;
     if (_PECOFFTargetInfo.getBaseRelocationEnabled())
       baseReloc = new BaseRelocChunk(linkedFile);
@@ -718,6 +748,8 @@ public:
       addSectionChunk(rdata, sectionTable);
     if (data->size())
       addSectionChunk(data, sectionTable);
+    if (bss->size())
+      addSectionChunk(bss, sectionTable);
 
     // Now that we know the addresses of all defined atoms that needs to be
     // relocated. So we can create the ".reloc" section which contains all the
@@ -745,6 +777,7 @@ public:
       peHeader->setBaseOfData(data->getVirtualAddress());
     }
     peHeader->setSizeOfInitializedData(rdata->size() + data->size());
+    peHeader->setSizeOfUninitializedData(bss->size());
     peHeader->setNumberOfSections(_numSections);
     peHeader->setSizeOfImage(_imageSizeInMemory);
   }
