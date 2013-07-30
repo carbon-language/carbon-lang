@@ -33,7 +33,7 @@ for.end:                                          ; preds = %for.body, %entry
 ; This case was a crasher in constrainLocalCopy.
 ; The problem was the t2LDR_PRE defining both the global and local lrg.
 ; CHECK-LABEL: *** Final schedule for BB#5 ***
-; CHECK: %[[R4:vreg[0-9]+]]<def>, %[[R1:vreg[0-9]+]]<def,tied2> = t2LDR_PRE %[[R1]]<tied1>, 4
+; CHECK: %[[R4:vreg[0-9]+]]<def>, %[[R1:vreg[0-9]+]]<def,tied2> = t2LDR_PRE %[[R1]]<tied1>
 ; CHECK: %vreg{{[0-9]+}}<def> = COPY %[[R1]]
 ; CHECK: %vreg{{[0-9]+}}<def> = COPY %[[R4]]
 ; CHECK-LABEL: MACHINEINSTRS
