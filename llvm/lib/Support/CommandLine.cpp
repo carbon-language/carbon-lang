@@ -498,9 +498,109 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
     NewArgv.push_back(Saver.SaveString(Token.c_str()));
 }
 
+/// Backslashes are interpreted in a rather complicated way in the Windows-style
+/// command line, because backslashes are used both to separate path and to
+/// escape double quote. This method consumes runs of backslashes as well as the
+/// following double quote if it's escaped.
+///
+///  * If an even number of backslashes is followed by a double quote, one
+///    backslash is output for every pair of backslashes, and the last double
+///    quote remains unconsumed. The double quote will later be interpreted as
+///    the start or end of a quoted string in the main loop outside of this
+///    function.
+///
+///  * If an odd number of backslashes is followed by a double quote, one
+///    backslash is output for every pair of backslashes, and a double quote is
+///    output for the last pair of backslash-double quote. The double quote is
+///    consumed in this case.
+///
+///  * Otherwise, backslashes are interpreted literally.
+static size_t parseBackslash(StringRef Src, size_t I, SmallString<128> &Token) {
+  size_t E = Src.size();
+  int BackslashCount = 0;
+  // Skip the backslashes.
+  do {
+    ++I;
+    ++BackslashCount;
+  } while (I != E && Src[I] == '\\');
+
+  bool FollowedByDoubleQuote = (I != E && Src[I] == '"');
+  if (FollowedByDoubleQuote) {
+    Token.append(BackslashCount / 2, '\\');
+    if (BackslashCount % 2 == 0)
+      return I - 1;
+    Token.push_back('"');
+    return I;
+  }
+  Token.append(BackslashCount, '\\');
+  return I - 1;
+}
+
 void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
                                     SmallVectorImpl<const char *> &NewArgv) {
-  llvm_unreachable("FIXME not implemented");
+  SmallString<128> Token;
+
+  // This is a small state machine to consume characters until it reaches the
+  // end of the source string.
+  enum { INIT, UNQUOTED, QUOTED } State = INIT;
+  for (size_t I = 0, E = Src.size(); I != E; ++I) {
+    // INIT state indicates that the current input index is at the start of
+    // the string or between tokens.
+    if (State == INIT) {
+      if (isWhitespace(Src[I]))
+        continue;
+      if (Src[I] == '"') {
+        State = QUOTED;
+        continue;
+      }
+      if (Src[I] == '\\') {
+        I = parseBackslash(Src, I, Token);
+        State = UNQUOTED;
+        continue;
+      }
+      Token.push_back(Src[I]);
+      State = UNQUOTED;
+      continue;
+    }
+
+    // UNQUOTED state means that it's reading a token not quoted by double
+    // quotes.
+    if (State == UNQUOTED) {
+      // Whitespace means the end of the token.
+      if (isWhitespace(Src[I])) {
+        NewArgv.push_back(Saver.SaveString(Token.c_str()));
+        Token.clear();
+        State = INIT;
+        continue;
+      }
+      if (Src[I] == '"') {
+        State = QUOTED;
+        continue;
+      }
+      if (Src[I] == '\\') {
+        I = parseBackslash(Src, I, Token);
+        continue;
+      }
+      Token.push_back(Src[I]);
+      continue;
+    }
+
+    // QUOTED state means that it's reading a token quoted by double quotes.
+    if (State == QUOTED) {
+      if (Src[I] == '"') {
+        State = UNQUOTED;
+        continue;
+      }
+      if (Src[I] == '\\') {
+        I = parseBackslash(Src, I, Token);
+        continue;
+      }
+      Token.push_back(Src[I]);
+    }
+  }
+  // Append the last token after hitting EOF with no whitespace.
+  if (!Token.empty())
+    NewArgv.push_back(Saver.SaveString(Token.c_str()));
 }
 
 static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
