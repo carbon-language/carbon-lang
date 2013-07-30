@@ -245,7 +245,7 @@ occurrences matching ``CHECK-DAG:`` after ``CHECK-NOT:``. For example,
 This case will reject input strings where ``BEFORE`` occurs after ``AFTER``.
 
 The "CHECK-LABEL:" directive
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes in a file containing multiple tests divided into logical blocks, one
 or more ``CHECK:`` directives may inadvertently succeed by matching lines in a
