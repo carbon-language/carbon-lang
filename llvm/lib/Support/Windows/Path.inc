@@ -592,12 +592,17 @@ static error_code getStatus(HANDLE FileHandle, file_status &Result) {
   if (!::GetFileInformationByHandle(FileHandle, &Info))
     goto handle_status_error;
 
-  Result = file_status(
-        file_type::regular_file, Info.ftLastWriteTime.dwHighDateTime,
-        Info.ftLastWriteTime.dwLowDateTime, Info.dwVolumeSerialNumber,
-        Info.nFileSizeHigh, Info.nFileSizeLow, Info.nFileIndexHigh,
-        Info.nFileIndexLow);
-  return error_code::success();
+  {
+    file_type Type = (Info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                         ? file_type::directory_file
+                         : file_type::regular_file;
+    Result =
+        file_status(Type, Info.ftLastWriteTime.dwHighDateTime,
+                    Info.ftLastWriteTime.dwLowDateTime,
+                    Info.dwVolumeSerialNumber, Info.nFileSizeHigh,
+                    Info.nFileSizeLow, Info.nFileIndexHigh, Info.nFileIndexLow);
+    return error_code::success();
+  }
 
 handle_status_error:
   error_code EC = windows_error(::GetLastError());
@@ -644,23 +649,14 @@ error_code status(const Twine &path, file_status &result) {
       return getStatus(INVALID_HANDLE_VALUE, result);
   }
 
-  if (attr & FILE_ATTRIBUTE_DIRECTORY)
-    result = file_status(file_type::directory_file);
-  else {
-    ScopedFileHandle h(
-      ::CreateFileW(path_utf16.begin(),
-                    0, // Attributes only.
+  ScopedFileHandle h(
+      ::CreateFileW(path_utf16.begin(), 0, // Attributes only.
                     FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                    NULL,
-                    OPEN_EXISTING,
-                    FILE_FLAG_BACKUP_SEMANTICS,
-                    0));
+                    NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0));
     if (!h)
       return getStatus(INVALID_HANDLE_VALUE, result);
 
     return getStatus(h, result);
-  }
-  return error_code::success();
 }
 
 error_code status(int FD, file_status &Result) {

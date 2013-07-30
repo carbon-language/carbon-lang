@@ -195,6 +195,19 @@ TEST_F(FileSystemTest, Unique) {
   ASSERT_EQ(D2, F1);
 
   ::close(FileDescriptor);
+
+  SmallString<128> Dir1;
+  ASSERT_NO_ERROR(
+     fs::createUniqueDirectory("dir1", Dir1));
+  ASSERT_NO_ERROR(fs::getUniqueID(Dir1.c_str(), F1));
+  ASSERT_NO_ERROR(fs::getUniqueID(Dir1.c_str(), F2));
+  ASSERT_EQ(F1, F2);
+
+  SmallString<128> Dir2;
+  ASSERT_NO_ERROR(
+     fs::createUniqueDirectory("dir2", Dir2));
+  ASSERT_NO_ERROR(fs::getUniqueID(Dir2.c_str(), F2));
+  ASSERT_NE(F1, F2);
 }
 
 TEST_F(FileSystemTest, TempFiles) {
