@@ -3372,6 +3372,8 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
                "  while (a < b && c > d) {\n"
                "  }\n"
                "}");
+  verifyFormat("template <typename... Types>\n"
+               "typename enable_if<0 < sizeof...(Types)>::type Foo() {}");
 }
 
 TEST_F(FormatTest, UnderstandsBinaryOperators) {
@@ -4107,7 +4109,7 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
       "    : Implementation(new ImplicitCastMatcher<F>(Other)) {}");
 
   // FIXME: This is still incorrectly handled at the formatter side.
-  verifyFormat("template <> struct X < 15, i < 3 && 42 < 50 && 33<28> {};");
+  verifyFormat("template <> struct X < 15, i<3 && 42 < 50 && 33 < 28> {};");
 
   // FIXME:
   // This now gets parsed incorrectly as class definition.
