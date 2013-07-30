@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: llc %s -o %t -filetype=obj -O0 -generate-odr-hash
+; RUN: llc %s -o %t -filetype=obj -O0 -generate-odr-hash -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 ;
 ; Generated from:
