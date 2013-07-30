@@ -3514,7 +3514,8 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   IdentifierInfo *Name = Attr.getParameterName();
   if (!Name) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_missing_parameter_name);
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type) << Attr.getName()
+      << AANT_ArgumentIdentifier;
     return;
   }
 
