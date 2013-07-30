@@ -41,7 +41,7 @@ class UnsignedTypesTestCase(TestBase):
         # if GCC is the target compiler, we cannot rely on an exact line match.
         need_exact = "gcc" not in self.getCompiler()
         # Break on line 19 in main() aftre the variables are assigned values.
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=1, loc_exact=need_exact)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1, loc_exact=need_exact)
 
         self.runCmd("run", RUN_SUCCEEDED)
 

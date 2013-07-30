@@ -3,6 +3,7 @@
 import os, sys, time
 import unittest2
 import lldb
+import time
 from lldbtest import *
 
 class HelloWorldTestCase(TestBase):
@@ -139,6 +140,9 @@ class HelloWorldTestCase(TestBase):
         popen = self.spawnSubprocess(self.exe, ["abc", "xyz"])
         self.addTearDownHook(self.cleanupSubprocesses)
 
+        # Give the subprocess time to start and wait for user input
+        time.sleep(0.25)
+
         listener = lldb.SBListener("my.attach.listener")
         error = lldb.SBError()
         process = target.AttachToProcessWithID(listener, popen.pid, error)
@@ -160,6 +164,9 @@ class HelloWorldTestCase(TestBase):
         # Spawn a new process
         popen = self.spawnSubprocess(self.exe, ["abc", "xyz"])
         self.addTearDownHook(self.cleanupSubprocesses)
+
+        # Give the subprocess time to start and wait for user input
+        time.sleep(0.25)
 
         listener = lldb.SBListener("my.attach.listener")
         error = lldb.SBError()

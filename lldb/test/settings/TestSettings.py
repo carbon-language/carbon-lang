@@ -332,7 +332,7 @@ class SettingsCommandTestCase(TestBase):
         self.runCmd ("settings set target.output-path /bin/ls")   # Set to known value
         self.runCmd ("settings set target.output-path /bin/cat ") # Set to new value with trailing whitespaces
         self.expect ("settings show target.output-path", SETTING_MSG("target.output-path"),
-            startstr = 'target.output-path (file) = "/bin/cat"')
+            startstr = 'target.output-path (file) = ', substrs=['/bin/cat"'])
         self.runCmd("settings clear target.output-path", check=False)
         # enum
         self.runCmd ("settings set stop-disassembly-display never")   # Set to known value

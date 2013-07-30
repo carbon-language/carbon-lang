@@ -41,10 +41,7 @@ class UniqueTypesTestCase(TestBase):
 
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
-
-        # GCC 4.6.3 (but not 4.4, 4.6.5 or 4.7) encodes two locations for the 'return 0' statement in main.cpp
-        locs = 2 if "gcc" in compiler_basename and "4.6.3" in self.getCompilerVersion() else 1
-        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=locs, loc_exact=True)
+        lldbutil.run_break_set_by_file_and_line (self, "main.cpp", self.line, num_expected_locations=-1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
 
