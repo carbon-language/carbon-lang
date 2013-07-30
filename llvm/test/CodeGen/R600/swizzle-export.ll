@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-; XFAIL: *
 
 ;EG-CHECK: @main
 ;EG-CHECK: EXPORT T{{[0-9]+}}.XYXX
