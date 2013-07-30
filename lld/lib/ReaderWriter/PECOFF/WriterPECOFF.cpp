@@ -578,7 +578,7 @@ private:
       llvm::COFF::IMAGE_SCN_MEM_WRITE;
 };
 
-// \brief A DataSectionChunk represents a .data section.
+// \brief A BSSSectionChunk represents a .bss section.
 class BssSectionChunk : public SectionChunk {
 public:
   // BSS section does not have contents, so write should be no-op.
