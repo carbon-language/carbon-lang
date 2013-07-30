@@ -59,7 +59,7 @@ namespace llvm {
     // poisoned, so that dangling SlotIndex access can be reliably detected.
     void setPoison() {
       intptr_t tmp = reinterpret_cast<intptr_t>(mi);
-      assert(((tmp & 0x1) == 0x0) && "Pointer already poisoned?");  
+      assert(((tmp & 0x1) == 0x0) && "Pointer already poisoned?");
       tmp |= 0x1;
       mi = reinterpret_cast<MachineInstr*>(tmp);
     }
@@ -672,7 +672,7 @@ namespace llvm {
     /// performance. Any remaining SlotIndex objects that point to the same
     /// index are left 'dangling' (much the same as a dangling pointer to a
     /// freed object) and should not be accessed, except to destruct them.
-    /// 
+    ///
     /// Like dangling pointers, access to dangling SlotIndexes can cause
     /// painful-to-track-down bugs, especially if the memory for the index
     /// previously pointed to has been re-used. To detect dangling SlotIndex
