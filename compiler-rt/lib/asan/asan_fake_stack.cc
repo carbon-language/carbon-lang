@@ -92,7 +92,10 @@ void FakeStack::Cleanup() {
 }
 
 uptr FakeStack::ClassMmapSize(uptr size_class) {
-  return RoundUpToPowerOfTwo(stack_size_);
+  // Limit allocation size to ClassSize * MaxDepth when running with unlimited
+  // stack.
+  return RoundUpTo(Min(ClassSize(size_class) * kMaxRecursionDepth, stack_size_),
+                   GetPageSizeCached());
 }
 
 void FakeStack::AllocateOneSizeClass(uptr size_class) {
