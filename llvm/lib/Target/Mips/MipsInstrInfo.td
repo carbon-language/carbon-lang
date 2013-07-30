@@ -635,14 +635,16 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 
 }
 
-class BAL_FT :
-  InstSE<(outs), (ins brtarget:$offset), "bal\t$offset", [], IIBranch, FrmI> {
+class BAL_BR_Pseudo<Instruction RealInst> :
+  PseudoSE<(outs), (ins brtarget:$offset), [], IIBranch>,
+  PseudoInstExpansion<(RealInst ZERO, brtarget:$offset)> {
   let isBranch = 1;
   let isTerminator = 1;
   let isBarrier = 1;
   let hasDelaySlot = 1;
   let Defs = [RA];
 }
+
 // Syscall
 class SYS_FT<string opstr> :
   InstSE<(outs), (ins uimm20:$code_),
@@ -994,13 +996,12 @@ def BGTZ    : CBranchZero<"bgtz", setgt, CPURegsOpnd>, BGEZ_FM<7, 0>;
 def BLEZ    : CBranchZero<"blez", setle, CPURegsOpnd>, BGEZ_FM<6, 0>;
 def BLTZ    : CBranchZero<"bltz", setlt, CPURegsOpnd>, BGEZ_FM<1, 0>;
 
-def BAL_BR: BAL_FT, BAL_FM;
-
 def JAL  : JumpLink<"jal">, FJ<3>;
 def JALR : JumpLinkReg<"jalr", CPURegs>, JALR_FM;
 def JALRPseudo : JumpLinkRegPseudo<CPURegs, JALR, RA>;
 def BGEZAL : BGEZAL_FT<"bgezal", CPURegsOpnd>, BGEZAL_FM<0x11>;
 def BLTZAL : BGEZAL_FT<"bltzal", CPURegsOpnd>, BGEZAL_FM<0x10>;
+def BAL_BR : BAL_BR_Pseudo<BGEZAL>;
 def TAILCALL : JumpFJ<calltarget, "j", MipsTailCall, imm>, FJ<2>, IsTailCall;
 def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
@@ -1104,7 +1105,7 @@ def MTC2_3OP : MFC3OP<(outs CPURegsOpnd:$rd, uimm16:$sel),
 def : InstAlias<"move $dst, $src",
                 (ADDu CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 1>,
       Requires<[NotMips64]>;
-def : InstAlias<"bal $offset", (BGEZAL RA, brtarget:$offset), 1>;
+def : InstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 1>;
 def : InstAlias<"addu $rs, $rt, $imm",
                 (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"add $rs, $rt, $imm",

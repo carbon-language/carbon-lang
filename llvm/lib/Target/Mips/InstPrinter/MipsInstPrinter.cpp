@@ -241,6 +241,9 @@ bool MipsInstPrinter::printAlias(const MCInst &MI, raw_ostream &OS) {
   case Mips::BNE64:
     // bne $r0, $zero, $L2 => bnez $r0, $L2
     return isReg<Mips::ZERO_64>(MI, 1) && printAlias("bnez", MI, 0, 2, OS);
+  case Mips::BGEZAL:
+    // bgezal $zero, $L1 => bal $L1
+    return isReg<Mips::ZERO>(MI, 0) && printAlias("bal", MI, 1, OS);
   case Mips::BC1T:
     // bc1t $fcc0, $L1 => bc1t $L1
     return isReg<Mips::FCC0>(MI, 0) && printAlias("bc1t", MI, 1, OS);
