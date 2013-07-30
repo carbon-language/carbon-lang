@@ -6,7 +6,7 @@ double dfoo(double)  __attribute__((__unavailable__("NO LONGER"))); // expected-
 
 void bar() __attribute__((__unavailable__)); // expected-note {{explicitly marked unavailable}}
 
-int quux(void) __attribute__((__unavailable__(12))); // expected-error {{argument to '__unavailable__' attribute was not a string literal}}
+int quux(void) __attribute__((__unavailable__(12))); // expected-error {{'__unavailable__' attribute requires a string}}
 
 #define ACCEPTABLE	"Use something else"
 int quux2(void) __attribute__((__unavailable__(ACCEPTABLE)));
@@ -37,13 +37,13 @@ enum foo {
     a = 1, // expected-note {{declared here}}
     b __attribute__((deprecated())) = 2, // expected-note {{declared here}}
     c = 3
-}__attribute__((deprecated()));  
+}__attribute__((deprecated()));
 
 enum fee { // expected-note {{declaration has been explicitly marked unavailable here}}
     r = 1, // expected-note {{declaration has been explicitly marked unavailable here}}
     s = 2,
     t = 3
-}__attribute__((unavailable()));  
+}__attribute__((unavailable()));
 
 enum fee f() { // expected-error {{'fee' is unavailable}}
     int i = a; // expected-warning {{'a' is deprecated}}

@@ -56,15 +56,6 @@ enum AttributeDeclKind {
   ExpectedObjectiveCInterface
 };
 
-/// These constants match the enumerated choices of
-/// err_attribute_argument_n_type.
-enum AttributeArgumentNType {
-  ArgumentIntOrBool,
-  ArgumentIntegerConstant,
-  ArgumentString,
-  ArgumentIdentifier
-};
-
 //===----------------------------------------------------------------------===//
 //  Helper functions
 //===----------------------------------------------------------------------===//
@@ -266,7 +257,7 @@ static bool checkFunctionOrMethodArgumentIndex(Sema &S, const Decl *D,
       !IdxExpr->isIntegerConstantExpr(IdxInt, S.Context)) {
     std::string Name = std::string("'") + AttrName.str() + std::string("'");
     S.Diag(AttrLoc, diag::err_attribute_argument_n_type) << Name.c_str()
-      << AttrArgNum << ArgumentIntegerConstant << IdxExpr->getSourceRange();
+      << AttrArgNum << AANT_ArgumentIntegerConstant << IdxExpr->getSourceRange();
     return false;
   }
 
@@ -846,7 +837,7 @@ static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
 
   if (!isIntOrBool(Attr.getArg(0))) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentIntOrBool;
+      << Attr.getName() << 1 << AANT_ArgumentIntOrBool;
     return false;
   }
 
@@ -1273,7 +1264,7 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
 
   if (!AL.getParameterName()) {
     S.Diag(AL.getLoc(), diag::err_attribute_argument_n_type)
-      << AL.getName()->getName() << 1 << ArgumentString;
+      << AL.getName()->getName() << 1 << AANT_ArgumentString;
     return;
   }
   // Figure out our Kind, and check arguments while we're at it.
@@ -1456,7 +1447,7 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
     if (!Str || !Str->isAscii()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 1 << ArgumentString;
+        << Attr.getName() << 1 << AANT_ArgumentString;
       return;
     }
     // GCC will accept anything as the argument of weakref. Should we
@@ -1480,8 +1471,8 @@ static void handleAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
   if (!Str || !Str->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentString;
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentString;
     return;
   }
 
@@ -1603,7 +1594,8 @@ static void handleTLSModelAttr(Sema &S, Decl *D,
 
   // Check that it is a string.
   if (!Str) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_not_string) << "tls_model";
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentString;
     return;
   }
 
@@ -1917,7 +1909,7 @@ static void handleConstructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 1 << ArgumentIntegerConstant
+        << Attr.getName() << 1 << AANT_ArgumentIntegerConstant
         << E->getSourceRange();
       return;
     }
@@ -1949,7 +1941,7 @@ static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 1 << ArgumentIntegerConstant
+        << Attr.getName() << 1 << AANT_ArgumentIntegerConstant
         << E->getSourceRange();
       return;
     }
@@ -1981,8 +1973,8 @@ static void handleAttrWithMessage(Sema &S, Decl *D,
   if (NumArgs == 1) {
     StringLiteral *SE = dyn_cast<StringLiteral>(Attr.getArg(0));
     if (!SE) {
-      S.Diag(Attr.getArg(0)->getLocStart(), diag::err_attribute_not_string)
-        << Attr.getName();
+      S.Diag(Attr.getArg(0)->getLocStart(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentString;
       return;
     }
     Str = SE->getString();
@@ -2311,8 +2303,8 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr,
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
 
   if (!Str || !Str->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentString;
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentString;
     return;
   }
 
@@ -2364,7 +2356,7 @@ static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,
   if (Attr.getNumArgs() != 0 || !Attr.getParameterName()) {
     if (!Attr.getParameterName() && Attr.getNumArgs() == 1) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 1 << ArgumentString;
+        << Attr.getName() << 1 << AANT_ArgumentString;
     } else {
       S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
         << Attr.getName() << 0;
@@ -2472,7 +2464,7 @@ handleOverloadableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleBlocksAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!Attr.getParameterName()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentString;
+      << Attr.getName() << 1 << AANT_ArgumentString;
     return;
   }
 
@@ -2510,7 +2502,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 1 << ArgumentIntegerConstant
+        << Attr.getName() << 1 << AANT_ArgumentIntegerConstant
         << E->getSourceRange();
       return;
     }
@@ -2531,7 +2523,7 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(Idx, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 2 << ArgumentIntegerConstant
+        << Attr.getName() << 2 << AANT_ArgumentIntegerConstant
         << E->getSourceRange();
       return;
     }
@@ -2803,7 +2795,8 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   Expr *ArgExpr = Attr.getArg(0);
   StringLiteral *SE = dyn_cast<StringLiteral>(ArgExpr);
   if (!SE) {
-    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) << "section";
+    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentString;
     return;
   }
 
@@ -3101,7 +3094,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   if (!Attr.getParameterName()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentString;
+      << Attr.getName() << 1 << AANT_ArgumentString;
     return;
   }
 
@@ -3147,7 +3140,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (IdxExpr->isTypeDependent() || IdxExpr->isValueDependent() ||
       !IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 2 << ArgumentIntegerConstant
+      << Attr.getName() << 2 << AANT_ArgumentIntegerConstant
       << IdxExpr->getSourceRange();
     return;
   }
@@ -3203,7 +3196,7 @@ static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (FirstArgExpr->isTypeDependent() || FirstArgExpr->isValueDependent() ||
       !FirstArgExpr->isIntegerConstantExpr(FirstArg, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 3 << ArgumentIntegerConstant
+      << Attr.getName() << 3 << AANT_ArgumentIntegerConstant
       << FirstArgExpr->getSourceRange();
     return;
   }
@@ -3321,7 +3314,8 @@ static void handleAnnotateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Make sure that there is a string literal as the annotation's single
   // argument.
   if (!SE) {
-    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) <<"annotate";
+    S.Diag(ArgExpr->getLocStart(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentString;
     return;
   }
 
@@ -4004,8 +3998,8 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC,
     Expr *Arg = attr.getArg(0);
     StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
     if (!Str || !Str->isAscii()) {
-      Diag(attr.getLoc(), diag::err_attribute_argument_n_type)
-        << attr.getName() << 1 << ArgumentString;
+      Diag(attr.getLoc(), diag::err_attribute_argument_type) << attr.getName()
+        << AANT_ArgumentString;
       attr.setInvalid();
       return true;
     }
@@ -4121,7 +4115,7 @@ static void handleLaunchBoundsAttr(Sema &S, Decl *D, const AttributeList &Attr){
         MaxThreadsExpr->isValueDependent() ||
         !MaxThreadsExpr->isIntegerConstantExpr(MaxThreads, S.Context)) {
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-        << Attr.getName() << 1 << ArgumentIntegerConstant
+        << Attr.getName() << 1 << AANT_ArgumentIntegerConstant
         << MaxThreadsExpr->getSourceRange();
       return;
     }
@@ -4133,7 +4127,7 @@ static void handleLaunchBoundsAttr(Sema &S, Decl *D, const AttributeList &Attr){
           MinBlocksExpr->isValueDependent() ||
           !MinBlocksExpr->isIntegerConstantExpr(MinBlocks, S.Context)) {
         S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-          << Attr.getName() << 2 << ArgumentIntegerConstant
+          << Attr.getName() << 2 << AANT_ArgumentIntegerConstant
           << MinBlocksExpr->getSourceRange();
         return;
       }
@@ -4154,7 +4148,7 @@ static void handleArgumentWithTypeTagAttr(Sema &S, Decl *D,
   StringRef AttrName = Attr.getName()->getName();
   if (!Attr.getParameterName()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << /* arg num = */ 1 << ArgumentIdentifier;
+      << Attr.getName() << /* arg num = */ 1 << AANT_ArgumentIdentifier;
     return;
   }
 
@@ -4205,7 +4199,7 @@ static void handleTypeTagForDatatypeAttr(Sema &S, Decl *D,
   IdentifierInfo *PointerKind = Attr.getParameterName();
   if (!PointerKind) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentIdentifier;
+      << Attr.getName() << 1 << AANT_ArgumentIdentifier;
     return;
   }
 
@@ -4562,8 +4556,8 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   Expr *Arg = Attr.getArg(0);
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
   if (!Str || !Str->isAscii()) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_type)
-      << Attr.getName() << 1 << ArgumentString;
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentString;
     return;
   }
 

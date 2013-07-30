@@ -3943,8 +3943,8 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     AttrLoc = S.getSourceManager().getImmediateExpansionRange(AttrLoc).first;
 
   if (!attr.getParameterName()) {
-    S.Diag(AttrLoc, diag::err_attribute_argument_n_type)
-      << attr.getName() << 1 << 2 /*string*/;
+    S.Diag(AttrLoc, diag::err_attribute_argument_type)
+      << attr.getName() << AANT_ArgumentString;
     attr.setInvalid();
     return true;
   }
@@ -4079,8 +4079,8 @@ static bool handleObjCGCTypeAttr(TypeProcessingState &state,
 
   // Check the attribute arguments.
   if (!attr.getParameterName()) {
-    S.Diag(attr.getLoc(), diag::err_attribute_argument_n_type)
-      << attr.getName() << 1 << 2 /*string*/;
+    S.Diag(attr.getLoc(), diag::err_attribute_argument_type)
+      << attr.getName() << AANT_ArgumentString;
     attr.setInvalid();
     return true;
   }

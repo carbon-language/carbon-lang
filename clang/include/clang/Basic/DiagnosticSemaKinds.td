@@ -1790,6 +1790,9 @@ def err_alignas_underaligned : Error<
 def err_attribute_argument_n_type : Error<
   "%0 attribute requires parameter %1 to be %select{int or bool|an integer "
   "constant|a string|an identifier}2">;
+def err_attribute_argument_type : Error<
+  "%0 attribute requires %select{int or bool|an integer "
+  "constant|a string|an identifier}1">;
 def err_attribute_argument_outof_range : Error<
   "init_priority attribute requires integer constant between "
   "101 and 65535 inclusive">;
@@ -1854,8 +1857,6 @@ def err_field_with_address_space : Error<
   "field may not be qualified with an address space">;
 def err_attr_objc_ownership_redundant : Error<
   "the type %0 is already explicitly ownership-qualified">;
-def err_attribute_not_string : Error<
-  "argument to %0 attribute was not a string literal">;
 def err_undeclared_nsnumber : Error<
   "NSNumber must be available to use Objective-C literals">;
 def err_invalid_nsnumber_type : Error<

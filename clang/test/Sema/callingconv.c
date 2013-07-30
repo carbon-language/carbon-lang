@@ -39,7 +39,7 @@ Handler H = foo;
 int __attribute__((pcs("aapcs", "aapcs"))) pcs1(void); // expected-error {{'pcs' attribute takes one argument}}
 int __attribute__((pcs())) pcs2(void); // expected-error {{'pcs' attribute takes one argument}}
 int __attribute__((pcs(pcs1))) pcs3(void); // expected-error {{'pcs' attribute takes one argument}}
-int __attribute__((pcs(0))) pcs4(void); // expected-error {{'pcs' attribute requires parameter 1 to be a string}}
+int __attribute__((pcs(0))) pcs4(void); // expected-error {{'pcs' attribute requires a string}}
 /* These are ignored because the target is i386 and not ARM */
 int __attribute__((pcs("aapcs"))) pcs5(void); // expected-warning {{calling convention 'pcs' ignored for this target}}
 int __attribute__((pcs("aapcs-vfp"))) pcs6(void); // expected-warning {{calling convention 'pcs' ignored for this target}}

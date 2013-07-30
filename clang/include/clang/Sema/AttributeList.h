@@ -798,6 +798,15 @@ private:
   AttributeList *list;
 };
 
+/// These constants match the enumerated choices of
+/// err_attribute_argument_n_type and err_attribute_argument_type.
+enum AttributeArgumentNType {
+  AANT_ArgumentIntOrBool,
+  AANT_ArgumentIntegerConstant,
+  AANT_ArgumentString,
+  AANT_ArgumentIdentifier
+};
+
 }  // end namespace clang
 
 #endif
