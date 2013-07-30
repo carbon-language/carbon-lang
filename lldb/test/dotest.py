@@ -1427,10 +1427,12 @@ for ia in range(len(archs) if iterArchs else 1):
             def _exc_info_to_string(self, err, test):
                 """Overrides superclass TestResult's method in order to append
                 our test config info string to the exception info string."""
-                modified_exc_string = '%sConfig=%s-%s' % (super(LLDBTestResult, self)._exc_info_to_string(err, test),
-                                                          test.getArchitecture(),
-                                                          test.getCompiler())
-                return modified_exc_string
+                if hasattr(test, "getArchitecture") and hasattr(test, "getCompiler"):
+                    return '%sConfig=%s-%s' % (super(LLDBTestResult, self)._exc_info_to_string(err, test),
+                                                              test.getArchitecture(),
+                                                              test.getCompiler())
+                else:
+                    return super(LLDBTestResult, self)._exc_info_to_string(err, test)
 
             def getDescription(self, test):
                 doc_first_line = test.shortDescription()
