@@ -172,3 +172,35 @@ define i32 @test17(i32 %X) {
   %A = urem i32 1, %X
   ret i32 %A
 }
+
+define i32 @test18(i16 %x, i32 %y) {
+; CHECK: @test18
+; CHECK-NEXT: [[AND:%.*]] = and i16 %x, 4
+; CHECK-NEXT: [[EXT:%.*]] = zext i16 [[AND]] to i32
+; CHECK-NEXT: [[SHL:%.*]] = shl nuw nsw i32 [[EXT]], 3
+; CHECK-NEXT: [[XOR:%.*]] = xor i32 [[SHL]], 63
+; CHECK-NEXT: [[REM:%.*]] = and i32 [[XOR]], %y
+; CHECK-NEXT: ret i32 [[REM]]
+	%1 = and i16 %x, 4
+	%2 = icmp ne i16 %1, 0
+	%3 = select i1 %2, i32 32, i32 64
+	%4 = urem i32 %y, %3
+	ret i32 %4
+}
+
+define i32 @test19(i32 %x, i32 %y) {
+; CHECK: @test19
+; CHECK-NEXT: [[SHL1:%.*]] = shl i32 1, %x
+; CHECK-NEXT: [[SHL2:%.*]] = shl i32 1, %y
+; CHECK-NEXT: [[AND:%.*]] = and i32 [[SHL1]], [[SHL2]]
+; CHECK-NEXT: [[ADD:%.*]] = add i32 [[AND]], [[SHL1]]
+; CHECK-NEXT: [[SUB:%.*]] = add i32 [[ADD]], -1
+; CHECK-NEXT: [[REM:%.*]] = and i32 [[SUB]], %y
+; CHECK-NEXT: ret i32 [[REM]]
+	%A = shl i32 1, %x
+	%B = shl i32 1, %y
+	%C = and i32 %A, %B
+	%D = add i32 %C, %A
+	%E = urem i32 %y, %D
+	ret i32 %E
+}

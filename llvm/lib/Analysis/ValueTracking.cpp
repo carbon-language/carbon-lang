@@ -855,22 +855,36 @@ bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
     return false;
   }
 
-  if (match(V, m_Add(m_Value(X), m_Value(Y))))
-    if (OverflowingBinaryOperator *VOBO = cast<OverflowingBinaryOperator>(V))
-      if (OrZero || VOBO->hasNoUnsignedWrap() || VOBO->hasNoSignedWrap()) {
-        // Adding a power of two to the same power of two is a power of two or
-        // zero.
-        if (BinaryOperator *XBO = dyn_cast<BinaryOperator>(X))
-          if (XBO->getOpcode() == Instruction::And)
-            if (XBO->getOperand(0) == Y || XBO->getOperand(1) == Y)
-              if (isKnownToBeAPowerOfTwo(Y, OrZero, Depth))
-                return true;
-        if (BinaryOperator *YBO = dyn_cast<BinaryOperator>(Y))
-          if (YBO->getOpcode() == Instruction::And)
-            if (YBO->getOperand(0) == X || YBO->getOperand(1) == X)
-              if (isKnownToBeAPowerOfTwo(X, OrZero, Depth))
-                return true;
-      }
+  // Adding a power-of-two or zero to the same power-of-two or zero yields
+  // either the original power-of-two, a larger power-of-two or zero.
+  if (match(V, m_Add(m_Value(X), m_Value(Y)))) {
+    OverflowingBinaryOperator *VOBO = cast<OverflowingBinaryOperator>(V);
+    if (OrZero || VOBO->hasNoUnsignedWrap() || VOBO->hasNoSignedWrap()) {
+      if (match(X, m_And(m_Specific(Y), m_Value())) ||
+          match(X, m_And(m_Value(), m_Specific(Y))))
+        if (isKnownToBeAPowerOfTwo(Y, OrZero, Depth))
+          return true;
+      if (match(Y, m_And(m_Specific(X), m_Value())) ||
+          match(Y, m_And(m_Value(), m_Specific(X))))
+        if (isKnownToBeAPowerOfTwo(X, OrZero, Depth))
+          return true;
+
+      unsigned BitWidth = V->getType()->getScalarSizeInBits();
+      APInt LHSZeroBits(BitWidth, 0), LHSOneBits(BitWidth, 0);
+      ComputeMaskedBits(X, LHSZeroBits, LHSOneBits, 0, Depth);
+
+      APInt RHSZeroBits(BitWidth, 0), RHSOneBits(BitWidth, 0);
+      ComputeMaskedBits(Y, RHSZeroBits, RHSOneBits, 0, Depth);
+      // If i8 V is a power of two or zero:
+      //  ZeroBits: 1 1 1 0 1 1 1 1
+      // ~ZeroBits: 0 0 0 1 0 0 0 0
+      if ((~(LHSZeroBits & RHSZeroBits)).isPowerOf2())
+        // If OrZero isn't set, we cannot give back a zero result.
+        // Make sure either the LHS or RHS has a bit set.
+        if (OrZero || RHSOneBits.getBoolValue() || LHSOneBits.getBoolValue())
+          return true;
+    }
+  }
 
   // An exact divide or right shift can only shift off zero bits, so the result
   // is a power of two only if the first operand is a power of two and not
