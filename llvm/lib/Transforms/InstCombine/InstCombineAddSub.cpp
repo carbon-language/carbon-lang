@@ -1530,17 +1530,24 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
 
   // If this is a 'B = x-(-A)', change to B = x+A, potentially looking
   // through FP extensions/truncations along the way.
-  if (Value *V = dyn_castFNegVal(Op1))
-    return BinaryOperator::CreateFAdd(Op0, V);
+  if (Value *V = dyn_castFNegVal(Op1)) {
+    Instruction *NewI = BinaryOperator::CreateFAdd(Op0, V);
+    NewI->copyFastMathFlags(&I);
+    return NewI;
+  }
   if (FPTruncInst *FPTI = dyn_cast<FPTruncInst>(Op1)) {
     if (Value *V = dyn_castFNegVal(FPTI->getOperand(0))) {
       Value *NewTrunc = Builder->CreateFPTrunc(V, I.getType());
-      return BinaryOperator::CreateFAdd(Op0, NewTrunc);
+      Instruction *NewI = BinaryOperator::CreateFAdd(Op0, NewTrunc);
+      NewI->copyFastMathFlags(&I);
+      return NewI;
     }
   } else if (FPExtInst *FPEI = dyn_cast<FPExtInst>(Op1)) {
     if (Value *V = dyn_castFNegVal(FPEI->getOperand(0))) {
       Value *NewExt = Builder->CreateFPExt(V, I.getType());
-      return BinaryOperator::CreateFAdd(Op0, NewExt);
+      Instruction *NewI = BinaryOperator::CreateFAdd(Op0, NewExt);
+      NewI->copyFastMathFlags(&I);
+      return NewI;
     }
   }
 
