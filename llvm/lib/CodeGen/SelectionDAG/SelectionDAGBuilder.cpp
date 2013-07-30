@@ -6146,13 +6146,11 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
       // Add information to the INLINEASM node to know that this register is
       // set.
-      OpInfo.AssignedRegs.AddInlineAsmOperands(OpInfo.isEarlyClobber ?
-                                           InlineAsm::Kind_RegDefEarlyClobber :
-                                               InlineAsm::Kind_RegDef,
-                                               false,
-                                               0,
-                                               DAG,
-                                               AsmNodeOperands);
+      OpInfo.AssignedRegs
+          .AddInlineAsmOperands(OpInfo.isEarlyClobber
+                                    ? InlineAsm::Kind_RegDefEarlyClobber
+                                    : InlineAsm::Kind_RegDef,
+                                false, 0, DAG, AsmNodeOperands);
       break;
     }
     case InlineAsm::isInput: {
