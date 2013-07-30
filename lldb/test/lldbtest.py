@@ -1318,7 +1318,7 @@ class Base(unittest2.TestCase):
                  'EXE' : exe_name,
                  'CFLAGS_EXTRAS' : "%s -stdlib=libc++" % stdflag,
                  'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
-                 'LD_EXTRAS' : "%s -rpath %s" % (dsym, self.lib_dir),
+                 'LD_EXTRAS' : "%s -Wl,-rpath,%s" % (dsym, self.lib_dir),
                 }
         elif sys.platform.startswith('freebsd') or sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'CXX_SOURCES' : sources, 
