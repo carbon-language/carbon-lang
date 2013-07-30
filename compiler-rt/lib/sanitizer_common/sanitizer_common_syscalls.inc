@@ -162,11 +162,11 @@ POST_SYSCALL(clock_getres)(long res, int clk_id,
   if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
 }
 
-PRE_SYSCALL(read)(unsigned int fd, char *buf, uptr count) {
+PRE_SYSCALL(read)(unsigned int fd, void *buf, uptr count) {
   if (buf) PRE_WRITE(buf, count);
 }
 
-POST_SYSCALL(read)(long res, unsigned int fd, char *buf, uptr count) {
+POST_SYSCALL(read)(long res, unsigned int fd, void *buf, uptr count) {
   if (res > 0 && buf) POST_WRITE(buf, res);
 }
 
