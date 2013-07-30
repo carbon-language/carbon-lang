@@ -465,6 +465,11 @@ namespace llvm {
     /// expanded to fmul + fadd.
     virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const;
 
+    /// createFastISel - This method returns a target-specific FastISel object,
+    /// or null if the target does not support "fast" instruction selection.
+    virtual FastISel *createFastISel(FunctionLoweringInfo &FuncInfo,
+                                     const TargetLibraryInfo *LibInfo) const;
+
   private:
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
@@ -623,6 +628,11 @@ namespace llvm {
     SDValue DAGCombineFastRecip(SDValue Op, DAGCombinerInfo &DCI) const;
     SDValue DAGCombineFastRecipFSQRT(SDValue Op, DAGCombinerInfo &DCI) const;
   };
+
+  namespace PPC {
+    FastISel *createFastISel(FunctionLoweringInfo &FuncInfo,
+                             const TargetLibraryInfo *LibInfo);
+  }
 
   bool CC_PPC32_SVR4_Custom_Dummy(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                   CCValAssign::LocInfo &LocInfo,
