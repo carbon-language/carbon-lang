@@ -1780,6 +1780,13 @@ SymbolFileDWARF::ParseChildMembers
                                         member_byte_offset = memberOffset.ResolveValue(NULL).UInt();
                                     }
                                 }
+                                else
+                                {
+                                    // With DWARF 3 and later, if the value is an integer constant,
+                                    // this form value is the offset in bytes from the beginning
+                                    // of the containing entity. 
+                                    member_byte_offset = form_value.Unsigned(); 
+                                }
                                 break;
 
                             case DW_AT_accessibility: accessibility = DW_ACCESS_to_AccessType (form_value.Unsigned()); break;
@@ -2164,15 +2171,27 @@ SymbolFileDWARF::ParseChildMembers
                                         member_byte_offset = memberOffset.ResolveValue(NULL).UInt();
                                     }
                                 }
+                                else
+                                {
+                                    // With DWARF 3 and later, if the value is an integer constant,
+                                    // this form value is the offset in bytes from the beginning
+                                    // of the containing entity. 
+                                    member_byte_offset = form_value.Unsigned(); 
+                                }
                                 break;
 
                             case DW_AT_accessibility:
                                 accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned());
                                 break;
 
-                            case DW_AT_virtuality: is_virtual = form_value.Boolean(); break;
-                            default:
+                            case DW_AT_virtuality:
+                                is_virtual = form_value.Boolean();
+                                break;
+                                                   
                             case DW_AT_sibling:
+                                break;
+
+                            default:
                                 break;
                             }
                         }
@@ -2620,7 +2639,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
         assert(false && "not a forward clang type decl!");
         break;
     }
-    return NULL;
+    return false;
 }
 
 Type*
