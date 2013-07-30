@@ -2059,8 +2059,7 @@ TEST(MemorySanitizer, SimpleThread) {
   EXPECT_NOT_POISONED(t);
   res = pthread_join(t, &p);
   assert(!res);
-  if (!__msan_has_dynamic_component())  // FIXME: intercept pthread_join (?).
-    __msan_unpoison(&p, sizeof(p));
+  EXPECT_NOT_POISONED(p);
   delete (int*)p;
 }
 

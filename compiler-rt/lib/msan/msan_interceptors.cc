@@ -980,6 +980,14 @@ INTERCEPTOR(int, pthread_key_create, __sanitizer_pthread_key_t *key,
   return res;
 }
 
+INTERCEPTOR(int, pthread_join, void *th, void **retval) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(pthread_join)(th, retval);
+  if (!res && retval)
+    __msan_unpoison(retval, sizeof(*retval));
+  return res;
+}
+
 struct MSanInterceptorContext {
   bool in_interceptor_scope;
 };
@@ -1223,6 +1231,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(signal);
   INTERCEPT_FUNCTION(pthread_create);
   INTERCEPT_FUNCTION(pthread_key_create);
+  INTERCEPT_FUNCTION(pthread_join);
   inited = 1;
 }
 }  // namespace __msan
