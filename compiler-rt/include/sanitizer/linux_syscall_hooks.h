@@ -33,6 +33,7 @@ void __sanitizer_syscall_pre_wait4(int pid, int *status, int options, void *r);
 void __sanitizer_syscall_pre_waitpid(int pid, int *status, int options);
 void __sanitizer_syscall_pre_clock_gettime(int clk_id, void *tp);
 void __sanitizer_syscall_pre_clock_getres(int clk_id, void *tp);
+void __sanitizer_syscall_pre_read(unsigned int fd, char *buf, size_t count);
 
 void __sanitizer_syscall_post_rt_sigpending(long res, void *p, size_t s);
 void __sanitizer_syscall_post_getdents(long res, int fd, void *dirp, int count);
@@ -46,6 +47,7 @@ void __sanitizer_syscall_post_waitpid(long res, int pid, int *status,
                                       int options);
 void __sanitizer_syscall_post_clock_gettime(long res, int clk_id, void *tp);
 void __sanitizer_syscall_post_clock_getres(long res, int clk_id, void *tp);
+void __sanitizer_syscall_post_read(long res, unsigned int fd, char *buf, size_t count);
 
 // And now a few syscalls we don't handle yet.
 
@@ -268,7 +270,6 @@ void __sanitizer_syscall_post_clock_getres(long res, int clk_id, void *tp);
 #define __sanitizer_syscall_pre_pwritev(...)
 #define __sanitizer_syscall_pre_query_module(...)
 #define __sanitizer_syscall_pre_quotactl(...)
-#define __sanitizer_syscall_pre_read(...)
 #define __sanitizer_syscall_pre_readahead(...)
 #define __sanitizer_syscall_pre_readdir(...)
 #define __sanitizer_syscall_pre_readlink(...)
@@ -645,7 +646,6 @@ void __sanitizer_syscall_post_clock_getres(long res, int clk_id, void *tp);
 #define __sanitizer_syscall_post_readdir(res, ...)
 #define __sanitizer_syscall_post_readlinkat(res, ...)
 #define __sanitizer_syscall_post_readlink(res, ...)
-#define __sanitizer_syscall_post_read(res, ...)
 #define __sanitizer_syscall_post_readv(res, ...)
 #define __sanitizer_syscall_post_reboot(res, ...)
 #define __sanitizer_syscall_post_recvfrom(res, ...)

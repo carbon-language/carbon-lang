@@ -59,5 +59,10 @@ int main(int argc, char *argv[]) {
   __msan_poison(buf, sizeof(buf));
   __sanitizer_syscall_post_clock_gettime(-1, 0, buf);
   assert(__msan_test_shadow(buf, sizeof(buf)) == 0);
+
+  __msan_poison(buf, sizeof(buf));
+  __sanitizer_syscall_post_read(5, 42, buf, 10);
+  assert(__msan_test_shadow(buf, sizeof(buf)) == 5);
+  
   return 0;
 }
