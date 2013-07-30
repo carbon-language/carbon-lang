@@ -16,7 +16,6 @@
 #ifndef CPP11_MIGRATE_FILE_OVERRIDES_H
 #define CPP11_MIGRATE_FILE_OVERRIDES_H
 
-#include "Core/ReplacementsYaml.h"
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -59,52 +58,13 @@ private:
 };
 
 /// \brief Container for storing override information for a single headers.
-class HeaderOverride {
-public:
-  /// \brief Constructors.
-  /// @{
+struct HeaderOverride {
   HeaderOverride() {}
-  HeaderOverride(llvm::StringRef FileName) {
-    TransformReplacementsDoc.FileName = FileName;
-  }
-  /// @}
+  HeaderOverride(llvm::StringRef FileName) : FileName(FileName) {}
 
-  /// \brief Getter for FileName.
-  llvm::StringRef getFileName() const {
-    return TransformReplacementsDoc.FileName;
-  }
-
-  /// \brief Accessor for ContentOverride.
-  /// @{
-  llvm::StringRef getContentOverride() const { return ContentOverride; }
-  void setContentOverride(const llvm::StringRef S) { ContentOverride = S; }
-  /// @}
-
-  /// \brief Getter for Changes.
-  const ChangedRanges &getChanges() const { return Changes; }
-
-  /// \brief Swaps the content of ContentOverride with \param S
-  void swapContentOverride(std::string &S) { ContentOverride.swap(S); }
-
-  /// \brief Getter for TransformReplacementsDoc.
-  const TransformDocument &getTransformReplacementsDoc() const {
-    return TransformReplacementsDoc;
-  }
-
-  /// \brief Stores the replacements made by a transform to the header this
-  /// object represents.
-  void recordReplacements(llvm::StringRef TransformID,
-                          const clang::tooling::Replacements &Replaces);
-
-  /// \brief Helper function to adjust the changed ranges.
-  void adjustChangedRanges(const clang::tooling::Replacements &Replaces) {
-    Changes.adjustChangedRanges(Replaces);
-  }
-
-private:
-  std::string ContentOverride;
+  std::string FileName;
+  std::string FileOverride;
   ChangedRanges Changes;
-  TransformDocument TransformReplacementsDoc;
 };
 
 /// \brief Container mapping header file names to override information.
@@ -140,10 +100,8 @@ public:
   /// \param Replaces The replacements to apply.
   /// \param SM A user provided SourceManager to be used when applying rewrites.
   void applyReplacements(clang::tooling::Replacements &Replaces,
-                         clang::SourceManager &SM,
-                         llvm::StringRef TransformName);
-  void applyReplacements(clang::tooling::Replacements &Replaces,
-                         llvm::StringRef TransformName);
+                         clang::SourceManager &SM);
+  void applyReplacements(clang::tooling::Replacements &Replaces);
 
   /// \brief Convenience function for applying this source's overrides to
   /// the given SourceManager.
@@ -160,16 +118,13 @@ public:
   /// @}
 
 private:
-  typedef llvm::StringMap<clang::tooling::Replacements> ReplacementsMap;
-
   /// \brief Flatten the Rewriter buffers of \p Rewrite and store results as
   /// file content overrides.
   void applyRewrites(clang::Rewriter &Rewrite);
 
   /// \brief Adjust the changed ranges to reflect the parts of the files that
   /// have been replaced.
-  void adjustChangedRanges(const clang::tooling::Replacements &Replaces,
-                           const ReplacementsMap &HeadersReplaces);
+  void adjustChangedRanges(const clang::tooling::Replacements &Replaces);
 
   const std::string MainFileName;
   std::string MainFileOverride;
