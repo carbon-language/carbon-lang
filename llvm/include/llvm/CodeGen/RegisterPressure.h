@@ -187,6 +187,9 @@ class RegPressureTracker {
   /// or RegisterPressure. If requireIntervals is false, LIS are ignored.
   bool RequireIntervals;
 
+  /// True if UntiedDefs will be populated.
+  bool TrackUntiedDefs;
+
   /// Register pressure corresponds to liveness before this instruction
   /// iterator. It may point to the end of the block or a DebugValue rather than
   /// an instruction.
@@ -198,16 +201,24 @@ class RegPressureTracker {
   /// Set of live registers.
   LiveRegSet LiveRegs;
 
+  /// Set of vreg defs that start a live range.
+  SparseSet<unsigned, VirtReg2IndexFunctor> UntiedDefs;
+  /// Live-through pressure.
+  std::vector<unsigned> LiveThruPressure;
+
 public:
   RegPressureTracker(IntervalPressure &rp) :
-    MF(0), TRI(0), RCI(0), LIS(0), MBB(0), P(rp), RequireIntervals(true) {}
+    MF(0), TRI(0), RCI(0), LIS(0), MBB(0), P(rp), RequireIntervals(true),
+    TrackUntiedDefs(false) {}
 
   RegPressureTracker(RegionPressure &rp) :
-    MF(0), TRI(0), RCI(0), LIS(0), MBB(0), P(rp), RequireIntervals(false) {}
+    MF(0), TRI(0), RCI(0), LIS(0), MBB(0), P(rp), RequireIntervals(false),
+    TrackUntiedDefs(false) {}
 
   void init(const MachineFunction *mf, const RegisterClassInfo *rci,
             const LiveIntervals *lis, const MachineBasicBlock *mbb,
-            MachineBasicBlock::const_iterator pos);
+            MachineBasicBlock::const_iterator pos,
+            bool ShouldTrackUntiedDefs = false);
 
   /// Force liveness of virtual registers or physical register
   /// units. Particularly useful to initialize the livein/out state of the
@@ -235,6 +246,17 @@ public:
 
   /// Finalize the region boundaries and recored live ins and live outs.
   void closeRegion();
+
+  /// Initialize the LiveThru pressure set based on the untied defs found in
+  /// RPTracker.
+  void initLiveThru(const RegPressureTracker &RPTracker);
+
+  /// Copy an existing live thru pressure result.
+  void initLiveThru(ArrayRef<unsigned> PressureSet) {
+    LiveThruPressure.assign(PressureSet.begin(), PressureSet.end());
+  }
+
+  ArrayRef<unsigned> getLiveThru() const { return LiveThruPressure; }
 
   /// Get the resulting register pressure over the traversed region.
   /// This result is complete if either advance() or recede() has returned true,
@@ -308,6 +330,10 @@ public:
     return getDownwardPressure(MI, PressureResult, MaxPressureResult);
   }
 
+  bool hasUntiedDef(unsigned VirtReg) const {
+    return UntiedDefs.count(VirtReg);
+  }
+
   void dump() const;
 
 protected:
@@ -319,6 +345,11 @@ protected:
   void bumpUpwardPressure(const MachineInstr *MI);
   void bumpDownwardPressure(const MachineInstr *MI);
 };
+
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+void dumpRegSetPressure(ArrayRef<unsigned> SetPressure,
+                        const TargetRegisterInfo *TRI);
+#endif
 } // end namespace llvm
 
 #endif
