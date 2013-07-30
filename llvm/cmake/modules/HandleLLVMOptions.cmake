@@ -261,6 +261,11 @@ if(LLVM_USE_SANITIZER)
   endif()
 endif()
 
+# Turn on -gsplit-dwarf if requested
+if(LLVM_USE_SPLIT_DWARF)
+  add_flag_if_supported("-gsplit-dwarf")
+endif()
+
 add_llvm_definitions( -D__STDC_CONSTANT_MACROS )
 add_llvm_definitions( -D__STDC_FORMAT_MACROS )
 add_llvm_definitions( -D__STDC_LIMIT_MACROS )
