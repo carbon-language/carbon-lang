@@ -639,6 +639,7 @@ bool LibraryNameIs(const char *full_name, const char *base_name) {
   return (name[base_name_length] == '-' || name[base_name_length] == '.');
 }
 
+#if !SANITIZER_ANDROID
 // Call cb for each region mapped by map.
 void ForEachMappedRegion(link_map *map, void (*cb)(const void *, uptr)) {
   typedef ElfW(Phdr) Elf_Phdr;
@@ -674,6 +675,7 @@ void ForEachMappedRegion(link_map *map, void (*cb)(const void *, uptr)) {
     }
   }
 }
+#endif
 
 }  // namespace __sanitizer
 
