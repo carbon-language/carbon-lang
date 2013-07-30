@@ -318,6 +318,7 @@ TEST(InstructionsTest, FPMathOperator) {
 TEST(InstructionsTest, isEliminableCastPair) {
   LLVMContext &C(getGlobalContext());
 
+  Type* Int16Ty = Type::getInt16Ty(C);
   Type* Int32Ty = Type::getInt32Ty(C);
   Type* Int64Ty = Type::getInt64Ty(C);
   Type* Int64PtrTy = Type::getInt64PtrTy(C);
@@ -329,11 +330,20 @@ TEST(InstructionsTest, isEliminableCastPair) {
                                            Int32Ty, 0, Int32Ty),
             CastInst::BitCast);
 
-  // Source and destination pointers have different sizes -> fail.
+  // Source and destination have unknown sizes, but the same address space and
+  // the intermediate int is the maximum pointer size -> bitcast
   EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
                                            CastInst::IntToPtr,
                                            Int64PtrTy, Int64Ty, Int64PtrTy,
-                                           Int32Ty, 0, Int64Ty),
+                                           0, 0, 0),
+            CastInst::BitCast);
+
+  // Source and destination have unknown sizes, but the same address space and
+  // the intermediate int is not the maximum pointer size -> nothing
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::PtrToInt,
+                                           CastInst::IntToPtr,
+                                           Int64PtrTy, Int32Ty, Int64PtrTy,
+                                           0, 0, 0),
             0U);
 
   // Middle pointer big enough -> bitcast.
@@ -349,7 +359,74 @@ TEST(InstructionsTest, isEliminableCastPair) {
                                            Int64Ty, Int64PtrTy, Int64Ty,
                                            0, Int32Ty, 0),
             0U);
+
+
+  // Test that we don't eliminate bitcasts between different address spaces,
+  // or if we don't have available pointer size information.
+  DataLayout DL("e-p:32:32:32-p1:16:16:16-p2:64:64:64-i1:8:8-i8:8:8-i16:16:16"
+                "-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64"
+                "-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128");
+
+  Type* Int64PtrTyAS1 = Type::getInt64PtrTy(C, 1);
+  Type* Int64PtrTyAS2 = Type::getInt64PtrTy(C, 2);
+
+  IntegerType *Int16SizePtr = DL.getIntPtrType(C, 1);
+  IntegerType *Int64SizePtr = DL.getIntPtrType(C, 2);
+
+  // Fail since the ptr int types are not provided
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
+                                           CastInst::BitCast,
+                                           Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
+                                           0, 0, 0),
+            0U);
+
+  // Fail since the the bitcast is between different sized address spaces
+  EXPECT_EQ(CastInst::isEliminableCastPair(
+              CastInst::IntToPtr,
+              CastInst::BitCast,
+              Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
+              0, Int16SizePtr, Int64SizePtr),
+            0U);
+
+  // Fail since the the bitcast is between different sized address spaces
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
+                                           CastInst::BitCast,
+                                           Int16Ty, Int64PtrTyAS1, Int64PtrTyAS2,
+                                           0, Int16SizePtr, Int64SizePtr),
+            0U);
+
+  // Pass since the bitcast address spaces are the same
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::IntToPtr,
+                                           CastInst::BitCast,
+                                           Int16Ty, Int64PtrTyAS1, Int64PtrTyAS1,
+                                           0, 0, 0),
+            CastInst::IntToPtr);
+
+
+  // Fail without known pointer sizes and different address spaces
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::BitCast,
+                                           CastInst::PtrToInt,
+                                           Int64PtrTyAS1, Int64PtrTyAS2, Int16Ty,
+                                           0, 0, 0),
+            0U);
+
+  // Pass since the address spaces are the same, even though the pointer sizes
+  // are unknown
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::BitCast,
+                                           CastInst::PtrToInt,
+                                           Int64PtrTyAS1, Int64PtrTyAS1, Int32Ty,
+                                           0, 0, 0),
+            Instruction::PtrToInt);
+
+  // Fail since the bitcast is the wrong size
+  EXPECT_EQ(CastInst::isEliminableCastPair(CastInst::BitCast,
+                                           CastInst::PtrToInt,
+                                           Int64PtrTyAS1, Int64PtrTyAS2, Int64Ty,
+                                           Int16SizePtr, Int64SizePtr, 0),
+            0U);
 }
 
 }  // end anonymous namespace
 }  // end namespace llvm
+
+
