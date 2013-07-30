@@ -401,17 +401,6 @@ class JALR_FM {
   let Inst{5-0}   = 9;
 }
 
-class BAL_FM {
-  bits<16> offset;
-
-  bits<32> Inst;
-
-  let Inst{31-26} = 1;
-  let Inst{25-21} = 0;
-  let Inst{20-16} = 0x11;
-  let Inst{15-0}  = offset;
-}
-
 class BGEZAL_FM<bits<5> funct> {
   bits<5>  rs;
   bits<16> offset;
