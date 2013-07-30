@@ -116,11 +116,35 @@ TEST(InstructionsTest, BranchInst) {
 TEST(InstructionsTest, CastInst) {
   LLVMContext &C(getGlobalContext());
 
-  Type* Int8Ty = Type::getInt8Ty(C);
-  Type* Int64Ty = Type::getInt64Ty(C);
-  Type* V8x8Ty = VectorType::get(Int8Ty, 8);
-  Type* V8x64Ty = VectorType::get(Int64Ty, 8);
-  Type* X86MMXTy = Type::getX86_MMXTy(C);
+  Type *Int8Ty = Type::getInt8Ty(C);
+  Type *Int16Ty = Type::getInt16Ty(C);
+  Type *Int32Ty = Type::getInt32Ty(C);
+  Type *Int64Ty = Type::getInt64Ty(C);
+  Type *V8x8Ty = VectorType::get(Int8Ty, 8);
+  Type *V8x64Ty = VectorType::get(Int64Ty, 8);
+  Type *X86MMXTy = Type::getX86_MMXTy(C);
+
+  Type *HalfTy = Type::getHalfTy(C);
+  Type *FloatTy = Type::getFloatTy(C);
+  Type *DoubleTy = Type::getDoubleTy(C);
+
+  Type *V2Int32Ty = VectorType::get(Int32Ty, 2);
+  Type *V2Int64Ty = VectorType::get(Int64Ty, 2);
+  Type *V4Int16Ty = VectorType::get(Int16Ty, 4);
+
+  Type *Int32PtrTy = PointerType::get(Int32Ty, 0);
+  Type *Int64PtrTy = PointerType::get(Int64Ty, 0);
+
+  Type *Int32PtrAS1Ty = PointerType::get(Int32Ty, 1);
+  Type *Int64PtrAS1Ty = PointerType::get(Int64Ty, 1);
+
+  Type *V2Int32PtrAS1Ty = VectorType::get(Int32PtrAS1Ty, 2);
+  Type *V2Int64PtrAS1Ty = VectorType::get(Int64PtrAS1Ty, 2);
+  Type *V4Int32PtrAS1Ty = VectorType::get(Int32PtrAS1Ty, 4);
+  Type *V4Int64PtrAS1Ty = VectorType::get(Int64PtrAS1Ty, 4);
+
+  Type *V2Int64PtrTy = VectorType::get(Int64PtrTy, 2);
+  Type *V2Int32PtrTy = VectorType::get(Int32PtrTy, 2);
 
   const Constant* c8 = Constant::getNullValue(V8x8Ty);
   const Constant* c64 = Constant::getNullValue(V8x64Ty);
@@ -132,9 +156,48 @@ TEST(InstructionsTest, CastInst) {
   EXPECT_TRUE(CastInst::isCastable(V8x8Ty, V8x64Ty));
   EXPECT_EQ(CastInst::Trunc, CastInst::getCastOpcode(c64, true, V8x8Ty, true));
   EXPECT_EQ(CastInst::SExt, CastInst::getCastOpcode(c8, true, V8x64Ty, true));
+
+  EXPECT_FALSE(CastInst::isBitCastable(V8x8Ty, X86MMXTy));
+  EXPECT_FALSE(CastInst::isBitCastable(X86MMXTy, V8x8Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(Int64Ty, X86MMXTy));
+  EXPECT_FALSE(CastInst::isBitCastable(V8x64Ty, V8x8Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(V8x8Ty, V8x64Ty));
+
+  // Check address space casts are rejected since we don't know the sizes here
+  EXPECT_FALSE(CastInst::isBitCastable(Int32PtrTy, Int32PtrAS1Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(Int32PtrAS1Ty, Int32PtrTy));
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrTy, V2Int32PtrAS1Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V2Int32PtrTy));
+  EXPECT_TRUE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V2Int64PtrAS1Ty));
+
+  // Test mismatched number of elements for pointers
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V4Int64PtrAS1Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(V4Int64PtrAS1Ty, V2Int32PtrAS1Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrAS1Ty, V4Int32PtrAS1Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(Int32PtrTy, V2Int32PtrTy));
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrTy, Int32PtrTy));
+
+  EXPECT_TRUE(CastInst::isBitCastable(Int32PtrTy, Int64PtrTy));
+  EXPECT_FALSE(CastInst::isBitCastable(DoubleTy, FloatTy));
+  EXPECT_FALSE(CastInst::isBitCastable(FloatTy, DoubleTy));
+  EXPECT_TRUE(CastInst::isBitCastable(FloatTy, FloatTy));
+  EXPECT_TRUE(CastInst::isBitCastable(FloatTy, FloatTy));
+  EXPECT_TRUE(CastInst::isBitCastable(FloatTy, Int32Ty));
+  EXPECT_TRUE(CastInst::isBitCastable(Int16Ty, HalfTy));
+  EXPECT_TRUE(CastInst::isBitCastable(Int32Ty, FloatTy));
+  EXPECT_TRUE(CastInst::isBitCastable(V2Int32Ty, Int64Ty));
+
+  EXPECT_TRUE(CastInst::isBitCastable(V2Int32Ty, V4Int16Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(Int32Ty, Int64Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(Int64Ty, Int32Ty));
+
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32PtrTy, Int64Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(Int64Ty, V2Int32PtrTy));
+  EXPECT_TRUE(CastInst::isBitCastable(V2Int64PtrTy, V2Int32PtrTy));
+  EXPECT_TRUE(CastInst::isBitCastable(V2Int32PtrTy, V2Int64PtrTy));
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int32Ty, V2Int64Ty));
+  EXPECT_FALSE(CastInst::isBitCastable(V2Int64Ty, V2Int32Ty));
 }
-
-
 
 TEST(InstructionsTest, VectorGep) {
   LLVMContext &C(getGlobalContext());

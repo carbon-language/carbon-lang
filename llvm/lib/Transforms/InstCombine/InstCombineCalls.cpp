@@ -1010,7 +1010,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     if (!Caller->use_empty() &&
         // void -> non-void is handled specially
-        !NewRetTy->isVoidTy() && !CastInst::isCastable(NewRetTy, OldRetTy))
+        !NewRetTy->isVoidTy() &&
+        !CastInst::isBitCastable(NewRetTy, OldRetTy))
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
@@ -1044,8 +1045,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     Type *ParamTy = FT->getParamType(i);
     Type *ActTy = (*AI)->getType();
 
-    if (!CastInst::isCastable(ActTy, ParamTy))
+    if (!CastInst::isBitCastable(ActTy, ParamTy)) {
       return false;   // Cannot transform this parameter value.
+    }
 
     if (AttrBuilder(CallerPAL.getParamAttributes(i + 1), i + 1).
           hasAttributes(AttributeFuncs::
@@ -1074,7 +1076,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       ParamTy == TD->getIntPtrType(Caller->getContext())) &&
               (ActTy->isPointerTy() ||
               ActTy == TD->getIntPtrType(Caller->getContext()))));
-    if (Callee->isDeclaration() && !isConvertible) return false;
+    if (Callee->isDeclaration() && !isConvertible)
+      return false;
   }
 
   if (Callee->isDeclaration()) {
@@ -1141,12 +1144,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
     Type *ParamTy = FT->getParamType(i);
+
     if ((*AI)->getType() == ParamTy) {
       Args.push_back(*AI);
     } else {
-      Instruction::CastOps opcode = CastInst::getCastOpcode(*AI,
-          false, ParamTy, false);
-      Args.push_back(Builder->CreateCast(opcode, *AI, ParamTy));
+      Args.push_back(Builder->CreateBitCast(*AI, ParamTy));
     }
 
     // Add any parameter attributes.
@@ -1217,9 +1219,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
     if (!NV->getType()->isVoidTy()) {
-      Instruction::CastOps opcode =
-        CastInst::getCastOpcode(NC, false, OldRetTy, false);
-      NV = NC = CastInst::Create(opcode, NC, OldRetTy);
+      NV = NC = CastInst::Create(CastInst::BitCast, NC, OldRetTy);
       NC->setDebugLoc(Caller->getDebugLoc());
 
       // If this is an invoke instruction, we should insert it after the first

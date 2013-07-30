@@ -2517,8 +2517,48 @@ bool CastInst::isCastable(Type *SrcTy, Type *DestTy) {
   }
 }
 
-// Provide a way to get a "cast" where the cast opcode is inferred from the 
-// types and size of the operand. This, basically, is a parallel of the 
+bool CastInst::isBitCastable(Type *SrcTy, Type *DestTy) {
+  if (!SrcTy->isFirstClassType() || !DestTy->isFirstClassType())
+    return false;
+
+  if (SrcTy == DestTy)
+    return true;
+
+  if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy)) {
+    if (VectorType *DestVecTy = dyn_cast<VectorType>(DestTy)) {
+      if (SrcVecTy->getNumElements() == DestVecTy->getNumElements()) {
+        // An element by element cast. Valid if casting the elements is valid.
+        SrcTy = SrcVecTy->getElementType();
+        DestTy = DestVecTy->getElementType();
+      }
+    }
+  }
+
+  if (PointerType *DestPtrTy = dyn_cast<PointerType>(DestTy)) {
+    if (PointerType *SrcPtrTy = dyn_cast<PointerType>(SrcTy)) {
+      return SrcPtrTy->getAddressSpace() == DestPtrTy->getAddressSpace();
+    }
+  }
+
+  unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr
+  unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr
+
+  // Could still have vectors of pointers if the number of elements doesn't
+  // match
+  if (SrcBits == 0 || DestBits == 0)
+    return false;
+
+  if (SrcBits != DestBits)
+    return false;
+
+  if (DestTy->isX86_MMXTy() || SrcTy->isX86_MMXTy())
+    return false;
+
+  return true;
+}
+
+// Provide a way to get a "cast" where the cast opcode is inferred from the
+// types and size of the operand. This, basically, is a parallel of the
 // logic in the castIsValid function below.  This axiom should hold:
 //   castIsValid( getCastOpcode(Val, Ty), Val, Ty)
 // should not assert in castIsValid. In other words, this produces a "correct"
@@ -2535,6 +2575,7 @@ CastInst::getCastOpcode(
   if (SrcTy == DestTy)
     return BitCast;
 
+  // FIXME: Check address space sizes here
   if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy))
     if (VectorType *DestVecTy = dyn_cast<VectorType>(DestTy))
       if (SrcVecTy->getNumElements() == DestVecTy->getNumElements()) {
@@ -2601,6 +2642,7 @@ CastInst::getCastOpcode(
     return BitCast;
   } else if (DestTy->isPointerTy()) {
     if (SrcTy->isPointerTy()) {
+      // TODO: Address space pointer sizes may not match
       return BitCast;                               // ptr -> ptr
     } else if (SrcTy->isIntegerTy()) {
       return IntToPtr;                              // int -> ptr
