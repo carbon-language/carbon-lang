@@ -7,7 +7,7 @@ void* my_realloc(void*, unsigned) __attribute__((alloc_size(2)));
 
 void* fn1(int) __attribute__((alloc_size("xpto"))); // expected-error{{'alloc_size' attribute requires parameter 1 to be an integer constant}}
 
-void* fn2(void*) __attribute__((alloc_size(1))); // expected-error{{attribute requires integer constant}}
+void* fn2(void*) __attribute__((alloc_size(1))); // expected-error{{'alloc_size' attribute requires an integer constant}}
 
 void* fn3(unsigned) __attribute__((alloc_size(0))); // expected-error{{attribute parameter 1 is out of bounds}}
 void* fn4(unsigned) __attribute__((alloc_size(2))); // expected-error{{attribute parameter 1 is out of bounds}}

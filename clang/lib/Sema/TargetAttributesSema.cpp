@@ -40,8 +40,9 @@ static void HandleMSP430InterruptAttr(Decl *d,
     Expr *NumParamsExpr = static_cast<Expr *>(Attr.getArg(0));
     llvm::APSInt NumParams(32);
     if (!NumParamsExpr->isIntegerConstantExpr(NumParams, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-        << "interrupt" << NumParamsExpr->getSourceRange();
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentIntegerConstant
+        << NumParamsExpr->getSourceRange();
       return;
     }
 

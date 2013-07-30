@@ -1630,8 +1630,9 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
   if (!ArraySize->isTypeDependent() && !ArraySize->isValueDependent()) {
     llvm::APSInt vecSize(32);
     if (!ArraySize->isIntegerConstantExpr(vecSize, Context)) {
-      Diag(AttrLoc, diag::err_attribute_argument_not_int)
-        << "ext_vector_type" << ArraySize->getSourceRange();
+      Diag(AttrLoc, diag::err_attribute_argument_type)
+        << "ext_vector_type" << AANT_ArgumentIntegerConstant
+        << ArraySize->getSourceRange();
       return QualType();
     }
 
@@ -3847,8 +3848,9 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   llvm::APSInt addrSpace(32);
   if (ASArgExpr->isTypeDependent() || ASArgExpr->isValueDependent() ||
       !ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << Attr.getName()->getName() << ASArgExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << ASArgExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
@@ -4480,8 +4482,9 @@ static void HandleOpenCLImageAccessAttribute(QualType& CurType,
   llvm::APSInt arg(32);
   if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
       !sizeExpr->isIntegerConstantExpr(arg, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << "opencl_image_access" << sizeExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << sizeExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
@@ -4521,8 +4524,9 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
   llvm::APSInt vecSize(32);
   if (sizeExpr->isTypeDependent() || sizeExpr->isValueDependent() ||
       !sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << "vector_size" << sizeExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << sizeExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
@@ -4608,8 +4612,7 @@ static void HandleExtVectorTypeAttr(QualType &CurType,
 /// match one of the standard Neon vector types.
 static void HandleNeonVectorTypeAttr(QualType& CurType,
                                      const AttributeList &Attr, Sema &S,
-                                     VectorType::VectorKind VecKind,
-                                     const char *AttrName) {
+                                     VectorType::VectorKind VecKind) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
@@ -4622,8 +4625,9 @@ static void HandleNeonVectorTypeAttr(QualType& CurType,
   llvm::APSInt numEltsInt(32);
   if (numEltsExpr->isTypeDependent() || numEltsExpr->isValueDependent() ||
       !numEltsExpr->isIntegerConstantExpr(numEltsInt, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << AttrName << numEltsExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << numEltsExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
@@ -4739,13 +4743,12 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       break;
     case AttributeList::AT_NeonVectorType:
       HandleNeonVectorTypeAttr(type, attr, state.getSema(),
-                               VectorType::NeonVector, "neon_vector_type");
+                               VectorType::NeonVector);
       attr.setUsedAsTypeAttr();
       break;
     case AttributeList::AT_NeonPolyVectorType:
       HandleNeonVectorTypeAttr(type, attr, state.getSema(),
-                               VectorType::NeonPolyVector,
-                               "neon_polyvector_type");
+                               VectorType::NeonPolyVector);
       attr.setUsedAsTypeAttr();
       break;
     case AttributeList::AT_OpenCLImageAccess:

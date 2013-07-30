@@ -1174,8 +1174,9 @@ static void handleAllocSizeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     // check if the function argument is of an integer type
     QualType T = getFunctionOrMethodArgType(D, Idx).getNonReferenceType();
     if (!T->isIntegerType()) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-        << "alloc_size" << Ex->getSourceRange();
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentIntegerConstant
+        << Ex->getSourceRange();
       return;
     }
     SizeArgs.push_back(Idx);
@@ -2691,8 +2692,9 @@ static void handleWorkGroupSize(Sema &S, Decl *D,
     llvm::APSInt ArgNum(32);
     if (E->isTypeDependent() || E->isValueDependent() ||
         !E->isIntegerConstantExpr(ArgNum, S.Context)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-        << Attr.getName()->getName() << E->getSourceRange();
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+        << Attr.getName() << AANT_ArgumentIntegerConstant
+        << E->getSourceRange();
       return;
     }
     WGSize[i] = (unsigned) ArgNum.getZExtValue();
@@ -3047,8 +3049,9 @@ static void handleInitPriorityAttr(Sema &S, Decl *D,
   llvm::APSInt priority(32);
   if (priorityExpr->isTypeDependent() || priorityExpr->isValueDependent() ||
       !priorityExpr->isIntegerConstantExpr(priority, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-    << "init_priority" << priorityExpr->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << priorityExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
@@ -3964,8 +3967,9 @@ static void handleOpenCLImageAccessAttr(Sema &S, Decl *D, const AttributeList &A
   llvm::APSInt ArgNum(32);
   if (E->isTypeDependent() || E->isValueDependent() ||
       !E->isIntegerConstantExpr(ArgNum, S.Context)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << Attr.getName()->getName() << E->getSourceRange();
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << E->getSourceRange();
     return;
   }
 
@@ -4070,8 +4074,9 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
   llvm::APSInt NumParams(32);
   if (NumParamsExpr->isTypeDependent() || NumParamsExpr->isValueDependent() ||
       !NumParamsExpr->isIntegerConstantExpr(NumParams, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_not_int)
-      << "regparm" << NumParamsExpr->getSourceRange();
+    Diag(Attr.getLoc(), diag::err_attribute_argument_type)
+      << Attr.getName() << AANT_ArgumentIntegerConstant
+      << NumParamsExpr->getSourceRange();
     Attr.setInvalid();
     return true;
   }

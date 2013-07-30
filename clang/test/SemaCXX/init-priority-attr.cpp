@@ -23,7 +23,7 @@ Two goo __attribute__((init_priority(2,3))) ( 5, 6 ); // expected-error {{'init_
 
 Two coo[2]  __attribute__((init_priority(3)));	// expected-error {{init_priority attribute requires integer constant between 101 and 65535 inclusive}}
 
-Two koo[4]  __attribute__((init_priority(1.13))); // expected-error {{'init_priority' attribute requires integer constant}}
+Two koo[4]  __attribute__((init_priority(1.13))); // expected-error {{'init_priority' attribute requires an integer constant}}
 
 
 Two func()  __attribute__((init_priority(1001))); // expected-error {{can only use 'init_priority' attribute on file-scope definitions of objects of class type}}
