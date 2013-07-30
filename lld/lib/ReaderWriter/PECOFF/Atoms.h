@@ -152,21 +152,20 @@ private:
   std::vector<std::unique_ptr<COFFReference>> _references;
 };
 
-/// A COFFDefinedAtom represents an atom read from a file.
-class COFFDefinedAtom : public COFFBaseDefinedAtom {
+/// This is the root class of the atom read from a file. This class have two
+/// subclasses; one for the regular atom and another for the BSS atom.
+class COFFDefinedFileAtom : public COFFBaseDefinedAtom {
 public:
-  COFFDefinedAtom(const File &file, StringRef name, const coff_symbol *symbol,
-                  const coff_section *section, ArrayRef<uint8_t> data,
-                  StringRef sectionName, uint64_t ordinal)
+  COFFDefinedFileAtom(const File &file, StringRef name,
+                      const coff_symbol *symbol, const coff_section *section,
+                      StringRef sectionName, uint64_t ordinal)
       : COFFBaseDefinedAtom(file, name, Kind::File), _symbol(symbol),
-        _section(section), _dataref(data), _sectionName(sectionName),
+        _section(section), _sectionName(sectionName),
         _ordinal(ordinal) {}
 
   virtual uint64_t ordinal() const { return _ordinal; }
   uint64_t originalOffset() const { return _symbol->Value; }
   virtual StringRef getSectionName() const { return _sectionName; }
-  virtual uint64_t size() const { return _dataref.size(); }
-  virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
@@ -211,10 +210,42 @@ public:
 private:
   const coff_symbol *_symbol;
   const coff_section *_section;
-  ArrayRef<uint8_t> _dataref;
   StringRef _sectionName;
   std::vector<std::unique_ptr<COFFReference>> _references;
   uint64_t _ordinal;
+};
+
+// A COFFDefinedAtom represents an atom read from a file and has contents.
+class COFFDefinedAtom : public COFFDefinedFileAtom {
+public:
+  COFFDefinedAtom(const File &file, StringRef name, const coff_symbol *symbol,
+                  const coff_section *section, ArrayRef<uint8_t> data,
+                  StringRef sectionName, uint64_t ordinal)
+      : COFFDefinedFileAtom(file, name, symbol, section, sectionName, ordinal),
+        _dataref(data) {}
+
+  virtual uint64_t size() const { return _dataref.size(); }
+  virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
+
+private:
+  ArrayRef<uint8_t> _dataref;
+};
+
+// A COFFDefinedAtom represents an atom for BSS section.
+class COFFBSSAtom : public COFFDefinedFileAtom {
+public:
+  COFFBSSAtom(const File &file, StringRef name, const coff_symbol *symbol,
+              const coff_section *section, uint32_t size,
+              StringRef sectionName, uint64_t ordinal)
+      : COFFDefinedFileAtom(file, name, symbol, section, sectionName, ordinal),
+        _size(size) {}
+
+  virtual uint64_t size() const { return _size; }
+  virtual ArrayRef<uint8_t> rawContent() const { return _contents; }
+
+private:
+  uint32_t _size;
+  std::vector<uint8_t> _contents;
 };
 
 /// A COFFLinkerInternalAtom represents a defined atom created by the linker,

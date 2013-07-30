@@ -31,7 +31,9 @@
 
 using std::vector;
 using lld::coff::COFFAbsoluteAtom;
+using lld::coff::COFFBSSAtom;
 using lld::coff::COFFDefinedAtom;
+using lld::coff::COFFDefinedFileAtom;
 using lld::coff::COFFReference;
 using lld::coff::COFFUndefinedAtom;
 using llvm::object::coff_relocation;
@@ -47,7 +49,7 @@ private:
   typedef vector<const coff_symbol *> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
   typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
-  typedef std::map<const coff_section *, vector<COFFDefinedAtom *> >
+  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *> >
       SectionToAtomsT;
 
 public:
@@ -192,8 +194,8 @@ private:
   error_code
   AtomizeDefinedSymbolsInSection(const coff_section *section,
                                  vector<const coff_symbol *> &symbols,
-                                 vector<COFFDefinedAtom *> &atoms) {
-      // Sort symbols by position.
+                                 vector<COFFDefinedFileAtom *> &atoms) {
+    // Sort symbols by position.
     std::stable_sort(symbols.begin(), symbols.end(),
       // For some reason MSVC fails to allow the lambda in this context with a
       // "illegal use of local type in type instantiation". MSVC is clearly
@@ -262,7 +264,7 @@ private:
     for (auto &i : definedSymbols) {
       const coff_section *section = i.first;
       vector<const coff_symbol *> &symbols = i.second;
-      vector<COFFDefinedAtom *> atoms;
+      vector<COFFDefinedFileAtom *> atoms;
       if (error_code ec =
               AtomizeDefinedSymbolsInSection(section, symbols, atoms))
         return ec;
@@ -270,7 +272,7 @@ private:
       // Connect atoms with layout-before/layout-after edges.
       connectAtomsWithLayoutEdge(atoms);
 
-      for (COFFDefinedAtom *atom : atoms) {
+      for (COFFDefinedFileAtom *atom : atoms) {
         _sectionAtoms[section].push_back(atom);
         definedAtoms.push_back(atom);
       }
@@ -280,15 +282,16 @@ private:
 
   /// Find the atom that is at \p targetOffset in \p section. It is assumed
   /// that \p atoms are sorted by position in the section.
-  COFFDefinedAtom *findAtomAt(uint32_t targetOffset,
-                              const vector<COFFDefinedAtom *> &atoms) const {
+  COFFDefinedFileAtom *
+  findAtomAt(uint32_t targetOffset,
+             const vector<COFFDefinedFileAtom *> &atoms) const {
     assert(std::is_sorted(atoms.begin(), atoms.end(),
-                          [](const COFFDefinedAtom * a,
-                             const COFFDefinedAtom * b) -> bool {
+                          [](const COFFDefinedFileAtom * a,
+                             const COFFDefinedFileAtom * b) -> bool {
                             return a->originalOffset() < b->originalOffset();
                           }));
 
-    for (COFFDefinedAtom *atom : atoms)
+    for (COFFDefinedFileAtom *atom : atoms)
       if (targetOffset < atom->originalOffset() + atom->size())
         return atom;
     llvm_unreachable("Relocation target out of range");
@@ -311,7 +314,7 @@ private:
   error_code
   addRelocationReference(const coff_relocation *rel,
                          const coff_section *section,
-                         const vector<COFFDefinedAtom *> &atoms) {
+                         const vector<COFFDefinedFileAtom *> &atoms) {
     assert(atoms.size() > 0);
     // The address of the item which relocation is applied. Section's
     // VirtualAddress needs to be added for historical reasons, but the value
@@ -322,7 +325,7 @@ private:
     if (error_code ec = getAtomBySymbolIndex(rel->SymbolTableIndex, targetAtom))
       return ec;
 
-    COFFDefinedAtom *atom = findAtomAt(rel->VirtualAddress, atoms);
+    COFFDefinedFileAtom *atom = findAtomAt(rel->VirtualAddress, atoms);
     uint32_t offsetInAtom = itemAddress - atom->originalOffset();
     assert(offsetInAtom < atom->size());
     atom->addReference(std::unique_ptr<COFFReference>(
@@ -368,7 +371,7 @@ private:
   std::map<const coff_symbol *, Atom *> _symbolAtom;
 
   // A map from section to its atoms.
-  std::map<const coff_section *, vector<COFFDefinedAtom *>> _sectionAtoms;
+  std::map<const coff_section *, vector<COFFDefinedFileAtom *>> _sectionAtoms;
 
   mutable llvm::BumpPtrAllocator _alloc;
   const TargetInfo &_targetInfo;
