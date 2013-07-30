@@ -55,12 +55,12 @@ entry:
 ; CHECK: psraw
   %0 = insertelement <8 x i16> undef, i16 %amt, i32 0
   %1 = insertelement <8 x i16> %0, i16 %amt, i32 1
-  %2 = insertelement <8 x i16> %0, i16 %amt, i32 2
-  %3 = insertelement <8 x i16> %0, i16 %amt, i32 3
-  %4 = insertelement <8 x i16> %0, i16 %amt, i32 4
-  %5 = insertelement <8 x i16> %0, i16 %amt, i32 5
-  %6 = insertelement <8 x i16> %0, i16 %amt, i32 6
-  %7 = insertelement <8 x i16> %0, i16 %amt, i32 7
+  %2 = insertelement <8 x i16> %1, i16 %amt, i32 2
+  %3 = insertelement <8 x i16> %2, i16 %amt, i32 3
+  %4 = insertelement <8 x i16> %3, i16 %amt, i32 4
+  %5 = insertelement <8 x i16> %4, i16 %amt, i32 5
+  %6 = insertelement <8 x i16> %5, i16 %amt, i32 6
+  %7 = insertelement <8 x i16> %6, i16 %amt, i32 7
   %ashr = ashr <8 x i16> %val, %7
   store <8 x i16> %ashr, <8 x i16>* %dst
   ret void

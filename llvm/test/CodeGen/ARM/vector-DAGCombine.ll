@@ -198,3 +198,29 @@ entry:
   %vmull.i = tail call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %0, <8 x i8> %0)
   ret <8 x i16> %vmull.i
 }
+
+; Make sure vector load is used for all three loads.
+; Lowering to build vector was breaking the single use property of the load of
+;  %pix_sp0.0.copyload.
+; CHECK: t5
+; CHECK: vld1.32 {[[REG1:d[0-9]+]][1]}, [r0]
+; CHECK: vorr [[REG2:d[0-9]+]], [[REG1]], [[REG1]]
+; CHECK: vld1.32 {[[REG1]][0]}, [r1]
+; CHECK: vld1.32 {[[REG2]][0]}, [r2]
+; CHECK: vmull.u8 q{{[0-9]+}}, [[REG1]], [[REG2]]
+define <8 x i16> @t5(i8* nocapture %sp0, i8* nocapture %sp1, i8* nocapture %sp2) {
+entry:
+  %pix_sp0.0.cast = bitcast i8* %sp0 to i32*
+  %pix_sp0.0.copyload = load i32* %pix_sp0.0.cast, align 1
+  %pix_sp1.0.cast = bitcast i8* %sp1 to i32*
+  %pix_sp1.0.copyload = load i32* %pix_sp1.0.cast, align 1
+  %pix_sp2.0.cast = bitcast i8* %sp2 to i32*
+  %pix_sp2.0.copyload = load i32* %pix_sp2.0.cast, align 1
+  %vec = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 1
+  %vecinit1 = insertelement <2 x i32> %vec, i32 %pix_sp1.0.copyload, i32 0
+  %vecinit2 = insertelement <2 x i32> %vec, i32 %pix_sp2.0.copyload, i32 0
+  %0 = bitcast <2 x i32> %vecinit1 to <8 x i8>
+  %1 = bitcast <2 x i32> %vecinit2 to <8 x i8>
+  %vmull.i = tail call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %0, <8 x i8> %1)
+  ret <8 x i16> %vmull.i
+}
