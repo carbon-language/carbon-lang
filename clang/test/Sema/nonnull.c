@@ -19,3 +19,4 @@ int main(void) {
 	Class_init(obj, "Hello World");
 }
 
+void foo(const char *str) __attribute__((nonnull("foo"))); // expected-error{{'nonnull' attribute requires parameter 1 to be an integer constant}}

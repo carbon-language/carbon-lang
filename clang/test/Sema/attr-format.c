@@ -78,3 +78,5 @@ extern void gcc_cxxformat (const char *, ...)
   __attribute__ ((__format__(__gcc_cxxdiag__, 1, 2)));
 extern void gcc_tformat (const char *, ...)
   __attribute__ ((__format__(__gcc_tdiag__, 1, 2)));
+
+const char *foo3(const char *format) __attribute__((format_arg("foo")));  // expected-error{{'format_arg' attribute requires parameter 1 to be an integer constant}}
