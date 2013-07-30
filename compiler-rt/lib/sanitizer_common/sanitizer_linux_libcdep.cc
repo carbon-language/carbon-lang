@@ -29,7 +29,7 @@ namespace __sanitizer {
 
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom) {
-  static const uptr kMaxThreadStackSize = 256 * (1 << 20);  // 256M
+  static const uptr kMaxThreadStackSize = 1 << 30;  // 1Gb
   CHECK(stack_top);
   CHECK(stack_bottom);
   if (at_initialization) {
@@ -70,9 +70,9 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   pthread_attr_getstack(&attr, &stackaddr, (size_t*)&stacksize);
   pthread_attr_destroy(&attr);
 
+  CHECK_LE(stacksize, kMaxThreadStackSize);  // Sanity check.
   *stack_top = (uptr)stackaddr + stacksize;
   *stack_bottom = (uptr)stackaddr;
-  CHECK(stacksize < kMaxThreadStackSize);  // Sanity check.
 }
 
 // Does not compile for Go because dlsym() requires -ldl
