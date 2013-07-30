@@ -657,9 +657,6 @@ error_code status(const Twine &path, file_status &result) {
                     0));
     if (!h)
       return getStatus(INVALID_HANDLE_VALUE, result);
-    BY_HANDLE_FILE_INFORMATION Info;
-    if (!::GetFileInformationByHandle(h, &Info))
-      return getStatus(INVALID_HANDLE_VALUE, result);
 
     return getStatus(h, result);
   }
