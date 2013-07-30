@@ -11,6 +11,7 @@ add_extra_unittest(Cpp11MigrateTests
   ReformattingTest.cpp
   IncludeExcludeTest.cpp
   PerfSupportTest.cpp
+  ReplacementsYamlTest.cpp
   TransformTest.cpp
   UniqueHeaderNameTest.cpp
   )

@@ -39,7 +39,8 @@ TEST(Reformatter, SingleReformat) {
       FileName, Changes, VFHelper.getNewSourceManager());
 
   SourceOverrides Overrides(FileName, /*TrackChanges=*/false);
-  Overrides.applyReplacements(Replaces, VFHelper.getNewSourceManager());
+  Overrides.applyReplacements(Replaces, VFHelper.getNewSourceManager(),
+                              "reformatter");
 
   std::string Expected, Result;
 

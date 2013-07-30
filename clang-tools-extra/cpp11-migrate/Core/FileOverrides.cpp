@@ -23,16 +23,26 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include <algorithm>
 
 using namespace clang;
 using namespace clang::tooling;
+
+void HeaderOverride::recordReplacements(
+    llvm::StringRef TransformID, const clang::tooling::Replacements &Replaces) {
+  TransformReplacements TR;
+  TR.TransformID = TransformID;
+  TR.GeneratedReplacements.resize(Replaces.size());
+  std::copy(Replaces.begin(), Replaces.end(), TR.GeneratedReplacements.begin());
+  TransformReplacementsDoc.Replacements.push_back(TR);
+}
 
 SourceOverrides::SourceOverrides(llvm::StringRef MainFileName,
                                  bool TrackChanges)
     : MainFileName(MainFileName), TrackChanges(TrackChanges) {}
 
-void
-SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces) {
+void SourceOverrides::applyReplacements(tooling::Replacements &Replaces,
+                                        llvm::StringRef TransformName) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
       new DiagnosticOptions());
   DiagnosticsEngine Diagnostics(
@@ -40,11 +50,12 @@ SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces) {
       DiagOpts.getPtr());
   FileManager Files((FileSystemOptions()));
   SourceManager SM(Diagnostics, Files);
-  applyReplacements(Replaces, SM);
+  applyReplacements(Replaces, SM, TransformName);
 }
 
-void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
-                                        clang::SourceManager &SM) {
+void SourceOverrides::applyReplacements(tooling::Replacements &Replaces,
+                                        SourceManager &SM,
+                                        llvm::StringRef TransformName) {
   applyOverrides(SM);
 
   Rewriter Rewrites(SM, LangOptions());
@@ -56,12 +67,6 @@ void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
   if (!Success)
     llvm::errs() << "error: failed to apply some replacements.";
 
-  applyRewrites(Rewrites);
-  if (TrackChanges)
-    adjustChangedRanges(Replaces);
-}
-
-void SourceOverrides::applyRewrites(Rewriter &Rewrites) {
   std::string ResultBuf;
 
   for (Rewriter::buffer_iterator I = Rewrites.buffer_begin(),
@@ -89,36 +94,50 @@ void SourceOverrides::applyRewrites(Rewriter &Rewrites) {
     // will be stored as well for later output to disk. Applying replacements
     // in memory will always be necessary as the source goes down the transform
     // pipeline.
-
     HeaderOverride &HeaderOv = Headers[FileName];
-    HeaderOv.FileOverride.swap(ResultBuf);
     // "Create" HeaderOverride if not already existing
-    if (HeaderOv.FileName.empty())
-      HeaderOv.FileName = FileName;
+    if (HeaderOv.getFileName().empty())
+      HeaderOv = HeaderOverride(FileName);
+
+    HeaderOv.swapContentOverride(ResultBuf);
   }
-}
 
-void SourceOverrides::adjustChangedRanges(const Replacements &Replaces) {
-  // Start by grouping replacements by file name
+  // Separate replacements to header files
   Replacements MainFileReplaces;
-  llvm::StringMap<Replacements> HeadersReplaces;
-
-  for (Replacements::iterator I = Replaces.begin(), E = Replaces.end(); I != E;
-       ++I) {
+  ReplacementsMap HeadersReplaces;
+  for (Replacements::const_iterator I = Replaces.begin(), E = Replaces.end();
+      I != E; ++I) {
     llvm::StringRef ReplacementFileName = I->getFilePath();
 
-    if (ReplacementFileName == MainFileName)
+    if (ReplacementFileName == MainFileName) {
       MainFileReplaces.insert(*I);
-    else
-      HeadersReplaces[ReplacementFileName].insert(*I);
+      continue;
+    }
+
+    HeadersReplaces[ReplacementFileName].insert(*I);
   }
 
-  // Then adjust the changed ranges for each individual file
-  MainFileChanges.adjustChangedRanges(Replaces);
-  for (llvm::StringMap<Replacements>::iterator I = HeadersReplaces.begin(),
-                                               E = HeadersReplaces.end();
+  // Record all replacements to headers.
+  for (ReplacementsMap::const_iterator I = HeadersReplaces.begin(),
+                                       E = HeadersReplaces.end();
        I != E; ++I) {
-    Headers[I->getKey()].Changes.adjustChangedRanges(I->getValue());
+    HeaderOverride &HeaderOv = Headers[I->getKey()];
+    HeaderOv.recordReplacements(TransformName, I->getValue());
+  }
+
+  if (TrackChanges)
+    adjustChangedRanges(MainFileReplaces, HeadersReplaces);
+}
+
+void
+SourceOverrides::adjustChangedRanges(const Replacements &MainFileReplaces,
+                                     const ReplacementsMap &HeadersReplaces) {
+  // Adjust the changed ranges for each individual file
+  MainFileChanges.adjustChangedRanges(MainFileReplaces);
+  for (ReplacementsMap::const_iterator I = HeadersReplaces.begin(),
+                                       E = HeadersReplaces.end();
+       I != E; ++I) {
+    Headers[I->getKey()].adjustChangedRanges(I->getValue());
   }
 }
 
@@ -131,11 +150,11 @@ void SourceOverrides::applyOverrides(SourceManager &SM) const {
 
   for (HeaderOverrides::const_iterator I = Headers.begin(), E = Headers.end();
        I != E; ++I) {
-    assert(!I->second.FileOverride.empty() &&
+    assert(!I->second.getContentOverride().empty() &&
            "Header override should not be empty!");
     SM.overrideFileContents(
-        FM.getFile(I->second.FileName),
-        llvm::MemoryBuffer::getMemBuffer(I->second.FileOverride));
+        FM.getFile(I->second.getFileName()),
+        llvm::MemoryBuffer::getMemBuffer(I->second.getContentOverride()));
   }
 }
 
