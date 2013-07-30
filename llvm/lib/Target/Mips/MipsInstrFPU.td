@@ -189,9 +189,9 @@ class SWXC1_FT<string opstr, RegisterOperand DRC, RegisterOperand PRC,
 
 class BC1F_FT<string opstr, InstrItinClass Itin,
               SDPatternOperator Op = null_frag>  :
-  InstSE<(outs), (ins FCC:$fcc, brtarget:$offset),
+  InstSE<(outs), (ins FCCRegsOpnd:$fcc, brtarget:$offset),
          !strconcat(opstr, "\t$fcc, $offset"),
-         [(MipsFPBrcond Op, FCC:$fcc, bb:$offset)], Itin, FrmFI> {
+         [(MipsFPBrcond Op, FCCRegsOpnd:$fcc, bb:$offset)], Itin, FrmFI> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;

@@ -111,6 +111,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   MipsAsmParser::OperandMatchResultTy
   parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
+  MipsAsmParser::OperandMatchResultTy
+  parseFCCRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          unsigned RegKind);
 
@@ -219,7 +222,8 @@ public:
     Kind_FGR32Regs,
     Kind_FGR64Regs,
     Kind_AFGR64Regs,
-    Kind_CCRRegs
+    Kind_CCRRegs,
+    Kind_FCCRegs
   };
 
 private:
@@ -400,6 +404,10 @@ public:
 
   bool isFGR32Asm() const {
     return (Kind == k_Register) && Reg.Kind == Kind_FGR32Regs;
+  }
+
+  bool isFCCRegsAsm() const {
+    return (Kind == k_Register) && Reg.Kind == Kind_FCCRegs;
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
@@ -1324,6 +1332,39 @@ MipsAsmParser::parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
  // Single operand is expected, set appropriate format
   setFpFormat(FP_FORMAT_S);
   return parseRegs(Operands, (int) MipsOperand::Kind_FGR32Regs);
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseFCCRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // If the first token is not '$' we have an error.
+  if (Parser.getTok().isNot(AsmToken::Dollar))
+    return MatchOperand_NoMatch;
+
+  SMLoc S = Parser.getTok().getLoc();
+  Parser.Lex(); // Eat the '$'
+
+  const AsmToken &Tok = Parser.getTok(); // Get next token.
+
+  if (Tok.isNot(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
+
+  if (!Tok.getIdentifier().startswith("fcc"))
+    return MatchOperand_NoMatch;
+
+  StringRef NumString = Tok.getIdentifier().substr(3);
+
+  unsigned IntVal;
+  if (NumString.getAsInteger(10, IntVal))
+    return MatchOperand_NoMatch;
+
+  unsigned Reg = matchRegisterByNumber(IntVal, Mips::FCCRegClassID);
+
+  MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
+  Op->setRegKind(MipsOperand::Kind_FCCRegs);
+  Operands.push_back(Op);
+
+  Parser.Lex(); // Eat the register number.
+  return MatchOperand_Success;
 }
 
 bool MipsAsmParser::searchSymbolAlias(

@@ -358,6 +358,11 @@ def FGR32AsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseFGR32Regs";
 }
 
+def FCCRegsAsmOperand : MipsAsmRegOperand {
+  let Name = "FCCRegsAsm";
+  let ParserMethod = "parseFCCRegs";
+}
+
 def CPURegsOpnd : RegisterOperand<CPURegs> {
   let ParserMatchClass = CPURegsAsmOperand;
 }
@@ -398,4 +403,8 @@ def FGR64RegsOpnd : RegisterOperand<FGR64> {
 
 def FGR32RegsOpnd : RegisterOperand<FGR32> {
   let ParserMatchClass = FGR32AsmOperand;
+}
+
+def FCCRegsOpnd : RegisterOperand<FCC> {
+  let ParserMatchClass = FCCRegsAsmOperand;
 }
