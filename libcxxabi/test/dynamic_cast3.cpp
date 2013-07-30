@@ -1041,7 +1041,7 @@ struct A1
 };
 
 struct A2
-    : private virtual A1
+    : protected virtual A1
 {
     char _[34981];
     virtual ~A2() {}
@@ -1216,7 +1216,7 @@ struct A1
 };
 
 struct A2
-    : private virtual A1
+    : protected virtual A1
 {
     char _[34981];
     virtual ~A2() {}
@@ -1330,7 +1330,7 @@ struct A1
 };
 
 struct A2
-    : private virtual A1
+    : protected virtual A1
 {
     char _[34981];
     virtual ~A2() {}
@@ -1387,7 +1387,7 @@ struct A1
 };
 
 struct A2
-    : private virtual A1
+    : protected virtual A1
 {
     char _[34981];
     virtual ~A2() {}
