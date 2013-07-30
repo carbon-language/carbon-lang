@@ -145,14 +145,18 @@ POSIXThread::GetRegisterContext()
             break;
 
         case ArchSpec::eCore_x86_64_x86_64:
-// TODO: Use target OS/architecture detection rather than ifdefs so that
-// lldb built on FreeBSD can debug on Linux and vice-versa.
-#ifdef __linux__
-            m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
-#endif
-#ifdef __FreeBSD__
-            m_reg_context_sp.reset(new RegisterContextFreeBSD_x86_64(*this, 0));
-#endif
+            switch (arch.GetTriple().getOS())
+            {
+                case llvm::Triple::FreeBSD:
+                    m_reg_context_sp.reset(new RegisterContextFreeBSD_x86_64(*this, 0));
+                    break;
+                case llvm::Triple::Linux:
+                    m_reg_context_sp.reset(new RegisterContextLinux_x86_64(*this, 0));
+                    break;
+                default:
+                    assert(false && "OS not supported");
+                    break;
+            }
             break;
         }
     }
