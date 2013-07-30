@@ -218,6 +218,13 @@ namespace llvm {
       return other.getIndex() - getIndex();
     }
 
+    /// Return the scaled distance from this index to the given one, where all
+    /// slots on the same instruction have zero distance.
+    int getInstrDistance(SlotIndex other) const {
+      return (other.listEntry()->getIndex() - listEntry()->getIndex())
+        / Slot_Count;
+    }
+
     /// isBlock - Returns true if this is a block boundary slot.
     bool isBlock() const { return getSlot() == Slot_Block; }
 

@@ -419,7 +419,7 @@ void RAGreedy::enqueue(LiveInterval *LI) {
       // Allocate original local ranges in linear instruction order. Since they
       // are singly defined, this produces optimal coloring in the absence of
       // global interference and other constraints.
-      Prio = LI->beginIndex().distance(Indexes->getLastIndex());
+      Prio = LI->beginIndex().getInstrDistance(Indexes->getLastIndex());
     }
     else {
       // Allocate global and split ranges in long->short order. Long ranges that
