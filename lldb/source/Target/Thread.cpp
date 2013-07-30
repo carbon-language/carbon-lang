@@ -292,6 +292,13 @@ Thread::DestroyThread ()
     m_plan_stack.clear();
     m_discarded_plan_stack.clear();
     m_completed_plan_stack.clear();
+    
+    // Push a ThreadPlanNull on the plan stack.  That way we can continue assuming that the
+    // plan stack is never empty, but if somebody errantly asks questions of a destroyed thread
+    // without checking first whether it is destroyed, they won't crash.
+    ThreadPlanSP null_plan_sp(new ThreadPlanNull (*this));
+    m_plan_stack.push_back (null_plan_sp);
+    
     m_stop_info_sp.reset();
     m_reg_context_sp.reset();
     m_unwinder_ap.reset();
@@ -362,6 +369,9 @@ Thread::SetSelectedFrameByIndexNoisily (uint32_t frame_idx, Stream &output_strea
 lldb::StopInfoSP
 Thread::GetStopInfo ()
 {
+    if (m_destroy_called)
+        return m_stop_info_sp;
+
     ThreadPlanSP plan_sp (GetCompletedPlan());
     ProcessSP process_sp (GetProcess());
     const uint32_t stop_id = process_sp ? process_sp->GetStopID() : UINT32_MAX;
@@ -387,6 +397,9 @@ Thread::GetStopInfo ()
 lldb::StopInfoSP
 Thread::GetPrivateStopInfo ()
 {
+    if (m_destroy_called)
+        return m_stop_info_sp;
+
     ProcessSP process_sp (GetProcess());
     if (process_sp)
     {

@@ -238,6 +238,7 @@ public:
     typedef enum
     {
         eKindGeneric,
+        eKindNull,
         eKindBase,
         eKindCallFunction,
         eKindStepInstruction,
@@ -435,7 +436,7 @@ public:
     virtual void
     WillPop();
 
-    // This pushes \a plan onto the plan stack of the current plan's thread.
+    // This pushes a plan onto the plan stack of the current plan's thread.
     void
     PushPlan (lldb::ThreadPlanSP &thread_plan_sp)
     {
@@ -598,6 +599,57 @@ private:
 
 private:
     DISALLOW_COPY_AND_ASSIGN(ThreadPlan);
+};
+
+//----------------------------------------------------------------------
+// ThreadPlanNull:
+// Threads are assumed to always have at least one plan on the plan stack.
+// This is put on the plan stack when a thread is destroyed so that if you
+// accidentally access a thread after it is destroyed you won't crash.
+// But asking questions of the ThreadPlanNull is definitely an error.
+//----------------------------------------------------------------------
+
+class ThreadPlanNull : public ThreadPlan
+{
+public:
+    ThreadPlanNull (Thread &thread);
+    virtual ~ThreadPlanNull ();
+    
+    virtual void
+    GetDescription (Stream *s,
+                    lldb::DescriptionLevel level);
+
+    virtual bool
+    ValidatePlan (Stream *error);
+
+    virtual bool
+    ShouldStop (Event *event_ptr);
+
+    virtual bool
+    MischiefManaged ();
+
+    virtual bool
+    WillStop ();
+
+    virtual bool
+    IsBasePlan()
+    {
+        return true;
+    }
+    
+    virtual bool
+    OkayToDiscard ()
+    {
+        return false;
+    }
+
+protected:
+    virtual bool
+    DoPlanExplainsStop (Event *event_ptr);
+    
+    virtual lldb::StateType
+    GetPlanRunState ();
+    
 };
 
 
