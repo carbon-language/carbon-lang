@@ -84,20 +84,19 @@ m[abi]
 
 
 
-p[k]
+p
 
- Print files to the standard output. The *k* modifier applies to this
- operation. This operation simply prints the *files* indicated to the
- standard output. If no *files* are specified, the entire archive is printed.
- Printing bitcode files is ill-advised as they might confuse your terminal
- settings. The *p* operation never modifies the archive.
+ Print files to the standard output. This operation simply prints the
+ *files* indicated to the standard output. If no *files* are
+ specified, the entire  archive is printed.  Printing bitcode files is
+ ill-advised as they might confuse your terminal settings. The *p*
+ operation never modifies the archive.
 
 
 
-q[Rf]
+q
 
- Quickly append files to the end of the archive. The *R*, and *f*
- modifiers apply to this operation.  This operation quickly adds the
+ Quickly append files to the end of the archive.  This operation quickly adds the
  *files* to the archive without checking for duplicates that should be
  removed first. If no *files* are specified, the archive is not modified.
  Because of the way that **llvm-ar** constructs the archive file, its dubious
@@ -105,9 +104,9 @@ q[Rf]
 
 
 
-r[Rabfu]
+r[abu]
 
- Replace or insert file members. The *R*, *a*, *b*, *f*, and *u*
+ Replace or insert file members. The *a*, *b*,  and *u*
  modifiers apply to this operation. This operation will replace existing
  *files* or insert them at the end of the archive if they do not exist. If no
  *files* are specified, the archive is not modified.
