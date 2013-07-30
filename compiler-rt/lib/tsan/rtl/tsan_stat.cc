@@ -352,6 +352,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_tcgetattr]                = "  tcgetattr                       ";
   name[StatInt_realpath]                 = "  realpath                        ";
   name[StatInt_canonicalize_file_name]   = "  canonicalize_file_name          ";
+  name[StatInt_confstr]                  = "  confstr                         ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

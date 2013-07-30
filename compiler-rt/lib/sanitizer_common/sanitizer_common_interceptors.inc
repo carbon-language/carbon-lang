@@ -1747,6 +1747,20 @@ INTERCEPTOR(char *, canonicalize_file_name, const char *path) {
 #define INIT_CANONICALIZE_FILE_NAME
 #endif
 
+#if SANITIZER_INTERCEPT_CONFSTR
+INTERCEPTOR(SIZE_T, confstr, int name, char *buf, SIZE_T len) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, confstr, name, buf, len);
+  SIZE_T res = REAL(confstr)(name, buf, len);
+  if (buf && res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, res < len ? res : len);
+  return res;
+}
+#define INIT_CONFSTR INTERCEPT_FUNCTION(confstr);
+#else
+#define INIT_CONFSTR
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -1805,4 +1819,5 @@ INTERCEPTOR(char *, canonicalize_file_name, const char *path) {
   INIT_WCSNRTOMBS;                         \
   INIT_TCGETATTR;                          \
   INIT_REALPATH;                           \
-  INIT_CANONICALIZE_FILE_NAME;
+  INIT_CANONICALIZE_FILE_NAME;             \
+  INIT_CONFSTR;
