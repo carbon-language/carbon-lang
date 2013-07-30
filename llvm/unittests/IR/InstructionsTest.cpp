@@ -149,6 +149,11 @@ TEST(InstructionsTest, CastInst) {
   const Constant* c8 = Constant::getNullValue(V8x8Ty);
   const Constant* c64 = Constant::getNullValue(V8x64Ty);
 
+  EXPECT_TRUE(CastInst::isCastable(V8x8Ty, X86MMXTy));
+  EXPECT_TRUE(CastInst::isCastable(X86MMXTy, V8x8Ty));
+  EXPECT_FALSE(CastInst::isCastable(Int64Ty, X86MMXTy));
+  EXPECT_TRUE(CastInst::isCastable(V8x64Ty, V8x8Ty));
+  EXPECT_TRUE(CastInst::isCastable(V8x8Ty, V8x64Ty));
   EXPECT_EQ(CastInst::Trunc, CastInst::getCastOpcode(c64, true, V8x8Ty, true));
   EXPECT_EQ(CastInst::SExt, CastInst::getCastOpcode(c8, true, V8x64Ty, true));
 

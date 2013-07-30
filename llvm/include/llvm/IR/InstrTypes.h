@@ -209,7 +209,7 @@ public:
     BO->setHasNoSignedWrap(true);
     return BO;
   }
-
+  
   static BinaryOperator *CreateNUW(BinaryOps Opc, Value *V1, Value *V2,
                                    const Twine &Name = "") {
     BinaryOperator *BO = Create(Opc, V1, V2, Name);
@@ -228,7 +228,7 @@ public:
     BO->setHasNoUnsignedWrap(true);
     return BO;
   }
-
+  
   static BinaryOperator *CreateExact(BinaryOps Opc, Value *V1, Value *V2,
                                      const Twine &Name = "") {
     BinaryOperator *BO = Create(Opc, V1, V2, Name);
@@ -247,7 +247,7 @@ public:
     BO->setIsExact(true);
     return BO;
   }
-
+  
 #define DEFINE_HELPERS(OPC, NUWNSWEXACT)                                     \
   static BinaryOperator *Create ## NUWNSWEXACT ## OPC                        \
            (Value *V1, Value *V2, const Twine &Name = "") {                  \
@@ -261,7 +261,7 @@ public:
            (Value *V1, Value *V2, const Twine &Name, Instruction *I) {       \
     return Create ## NUWNSWEXACT(Instruction::OPC, V1, V2, Name, I);         \
   }
-
+  
   DEFINE_HELPERS(Add, NSW)  // CreateNSWAdd
   DEFINE_HELPERS(Add, NUW)  // CreateNUWAdd
   DEFINE_HELPERS(Sub, NSW)  // CreateNSWSub
@@ -277,7 +277,7 @@ public:
   DEFINE_HELPERS(LShr, Exact)  // CreateExactLShr
 
 #undef DEFINE_HELPERS
-
+  
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
   ///
@@ -523,6 +523,12 @@ public:
     Type *Ty,          ///< The type to which operand is casted
     const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
+  /// @brief Check whether it is valid to call getCastOpcode for these types.
+  static bool isCastable(
+    Type *SrcTy, ///< The Type from which the value should be cast.
+    Type *DestTy ///< The Type to which the value should be cast.
   );
 
   /// @brief Check whether a bitcast between these types is valid

@@ -2454,6 +2454,69 @@ CastInst *CastInst::CreateFPCast(Value *C, Type *Ty,
   return Create(opcode, C, Ty, Name, InsertAtEnd);
 }
 
+// Check whether it is valid to call getCastOpcode for these types.
+// This routine must be kept in sync with getCastOpcode.
+bool CastInst::isCastable(Type *SrcTy, Type *DestTy) {
+  if (!SrcTy->isFirstClassType() || !DestTy->isFirstClassType())
+    return false;
+
+  if (SrcTy == DestTy)
+    return true;
+
+  if (VectorType *SrcVecTy = dyn_cast<VectorType>(SrcTy))
+    if (VectorType *DestVecTy = dyn_cast<VectorType>(DestTy))
+      if (SrcVecTy->getNumElements() == DestVecTy->getNumElements()) {
+        // An element by element cast.  Valid if casting the elements is valid.
+        SrcTy = SrcVecTy->getElementType();
+        DestTy = DestVecTy->getElementType();
+      }
+
+  // Get the bit sizes, we'll need these
+  unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr
+  unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr
+
+  // Run through the possibilities ...
+  if (DestTy->isIntegerTy()) {               // Casting to integral
+    if (SrcTy->isIntegerTy()) {                // Casting from integral
+        return true;
+    } else if (SrcTy->isFloatingPointTy()) {   // Casting from floating pt
+      return true;
+    } else if (SrcTy->isVectorTy()) {          // Casting from vector
+      return DestBits == SrcBits;
+    } else {                                   // Casting from something else
+      return SrcTy->isPointerTy();
+    }
+  } else if (DestTy->isFloatingPointTy()) {  // Casting to floating pt
+    if (SrcTy->isIntegerTy()) {                // Casting from integral
+      return true;
+    } else if (SrcTy->isFloatingPointTy()) {   // Casting from floating pt
+      return true;
+    } else if (SrcTy->isVectorTy()) {          // Casting from vector
+      return DestBits == SrcBits;
+    } else {                                   // Casting from something else
+      return false;
+    }
+  } else if (DestTy->isVectorTy()) {         // Casting to vector
+    return DestBits == SrcBits;
+  } else if (DestTy->isPointerTy()) {        // Casting to pointer
+    if (SrcTy->isPointerTy()) {                // Casting from pointer
+      return true;
+    } else if (SrcTy->isIntegerTy()) {         // Casting from integral
+      return true;
+    } else {                                   // Casting from something else
+      return false;
+    }
+  } else if (DestTy->isX86_MMXTy()) {
+    if (SrcTy->isVectorTy()) {
+      return DestBits == SrcBits;       // 64-bit vector to MMX
+    } else {
+      return false;
+    }
+  } else {                                   // Casting to something else
+    return false;
+  }
+}
+
 bool CastInst::isBitCastable(Type *SrcTy, Type *DestTy) {
   if (!SrcTy->isFirstClassType() || !DestTy->isFirstClassType())
     return false;
