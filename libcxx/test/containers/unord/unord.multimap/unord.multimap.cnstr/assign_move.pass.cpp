@@ -290,5 +290,17 @@ int main()
         assert(c.max_load_factor() == 1);
     }
 #endif
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        std::unordered_multimap<int, int> s1 = {{1, 1}, {2, 2}, {3, 3}};
+        std::unordered_multimap<int, int>::iterator i = s1.begin();
+        std::pair<const int, int> k = *i;
+        std::unordered_multimap<int, int> s2;
+        s2 = std::move(s1);
+        assert(*i == k);
+        s2.erase(i);
+        assert(s2.size() == 2);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

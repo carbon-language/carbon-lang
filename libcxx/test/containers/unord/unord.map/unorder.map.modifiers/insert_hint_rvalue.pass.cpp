@@ -36,17 +36,17 @@ int main()
         assert(r->first == 3.5);
         assert(r->second == 3);
 
-        r = c.insert(e, P(3.5, 4));
+        r = c.insert(c.end(), P(3.5, 4));
         assert(c.size() == 1);
         assert(r->first == 3.5);
         assert(r->second == 3);
 
-        r = c.insert(e, P(4.5, 4));
+        r = c.insert(c.end(), P(4.5, 4));
         assert(c.size() == 2);
         assert(r->first == 4.5);
         assert(r->second == 4);
 
-        r = c.insert(e, P(5.5, 4));
+        r = c.insert(c.end(), P(5.5, 4));
         assert(c.size() == 3);
         assert(r->first == 5.5);
         assert(r->second == 4);
@@ -63,17 +63,17 @@ int main()
         assert(r->first == 3);
         assert(r->second == 3);
 
-        r = c.insert(e, P(3, 4));
+        r = c.insert(c.end(), P(3, 4));
         assert(c.size() == 1);
         assert(r->first == 3);
         assert(r->second == 3);
 
-        r = c.insert(e, P(4, 4));
+        r = c.insert(c.end(), P(4, 4));
         assert(c.size() == 2);
         assert(r->first == 4);
         assert(r->second == 4);
 
-        r = c.insert(e, P(5, 4));
+        r = c.insert(c.end(), P(5, 4));
         assert(c.size() == 3);
         assert(r->first == 5);
         assert(r->second == 4);
@@ -92,17 +92,17 @@ int main()
         assert(r->first == 3.5);
         assert(r->second == 3);
 
-        r = c.insert(e, P(3.5, 4));
+        r = c.insert(c.end(), P(3.5, 4));
         assert(c.size() == 1);
         assert(r->first == 3.5);
         assert(r->second == 3);
 
-        r = c.insert(e, P(4.5, 4));
+        r = c.insert(c.end(), P(4.5, 4));
         assert(c.size() == 2);
         assert(r->first == 4.5);
         assert(r->second == 4);
 
-        r = c.insert(e, P(5.5, 4));
+        r = c.insert(c.end(), P(5.5, 4));
         assert(c.size() == 3);
         assert(r->first == 5.5);
         assert(r->second == 4);
@@ -120,17 +120,17 @@ int main()
         assert(r->first == 3);
         assert(r->second == 3);
 
-        r = c.insert(e, P(3, 4));
+        r = c.insert(c.end(), P(3, 4));
         assert(c.size() == 1);
         assert(r->first == 3);
         assert(r->second == 3);
 
-        r = c.insert(e, P(4, 4));
+        r = c.insert(c.end(), P(4, 4));
         assert(c.size() == 2);
         assert(r->first == 4);
         assert(r->second == 4);
 
-        r = c.insert(e, P(5, 4));
+        r = c.insert(c.end(), P(5, 4));
         assert(c.size() == 3);
         assert(r->first == 5);
         assert(r->second == 4);

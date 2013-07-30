@@ -36,12 +36,12 @@ int main()
         assert(r->first == 3);
         assert(r->second == Emplaceable());
 
-        r = c.emplace_hint(e, std::pair<const int, Emplaceable>(4, Emplaceable(5, 6)));
+        r = c.emplace_hint(c.end(), std::pair<const int, Emplaceable>(4, Emplaceable(5, 6)));
         assert(c.size() == 2);
         assert(r->first == 4);
         assert(r->second == Emplaceable(5, 6));
 
-        r = c.emplace_hint(e, std::piecewise_construct, std::forward_as_tuple(5),
+        r = c.emplace_hint(c.end(), std::piecewise_construct, std::forward_as_tuple(5),
                                                        std::forward_as_tuple(6, 7));
         assert(c.size() == 3);
         assert(r->first == 5);
@@ -60,12 +60,12 @@ int main()
         assert(r->first == 3);
         assert(r->second == Emplaceable());
 
-        r = c.emplace_hint(e, std::pair<const int, Emplaceable>(4, Emplaceable(5, 6)));
+        r = c.emplace_hint(c.end(), std::pair<const int, Emplaceable>(4, Emplaceable(5, 6)));
         assert(c.size() == 2);
         assert(r->first == 4);
         assert(r->second == Emplaceable(5, 6));
 
-        r = c.emplace_hint(e, std::piecewise_construct, std::forward_as_tuple(5),
+        r = c.emplace_hint(c.end(), std::piecewise_construct, std::forward_as_tuple(5),
                                                        std::forward_as_tuple(6, 7));
         assert(c.size() == 3);
         assert(r->first == 5);
