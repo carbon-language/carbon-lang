@@ -1017,6 +1017,12 @@ void CopyConstrain::constrainLocalCopy(SUnit *CopySU, ScheduleDAGMI *DAG) {
                                GlobalSegment->start)) {
       return;
     }
+    // If the prior global segment may be defined by the same two-address
+    // instruction that also defines LocalLI, then can't make a hole here.
+    if (SlotIndex::isSameInstr(llvm::prior(GlobalSegment)->start,
+                               LocalLI->beginIndex())) {
+      return;
+    }
     // If GlobalLI has a prior segment, it must be live into the EBB. Otherwise
     // it would be a disconnected component in the live range.
     assert(llvm::prior(GlobalSegment)->start < LocalLI->beginIndex() &&
