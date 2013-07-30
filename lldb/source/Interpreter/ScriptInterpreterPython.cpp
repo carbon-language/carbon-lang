@@ -2685,7 +2685,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
         error.SetErrorString("no function to execute");
         return false;
     }
-    if (!g_swig_run_script_keyword_thread)
+    if (!g_swig_run_script_keyword_target)
     {
         error.SetErrorString("internal helper function missing");
         return false;
@@ -2717,7 +2717,7 @@ ScriptInterpreterPython::RunScriptFormatKeyword (const char* impl_function,
         error.SetErrorString("no function to execute");
         return false;
     }
-    if (!g_swig_run_script_keyword_thread)
+    if (!g_swig_run_script_keyword_frame)
     {
         error.SetErrorString("internal helper function missing");
         return false;
