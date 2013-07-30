@@ -137,7 +137,7 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       MachineBasicBlock::iterator J = MI;
       ++J; // skip the delay filler.
       assert (J != MBB.end() && "MI needs a delay instruction.");
-      BuildMI(MBB, ++J, I->getDebugLoc(),
+      BuildMI(MBB, ++J, MI->getDebugLoc(),
               TII->get(SP::UNIMP)).addImm(structSize);
     }
   }
