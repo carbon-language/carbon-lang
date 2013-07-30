@@ -345,36 +345,7 @@ CommandObjectExpression::EvaluateExpression
                                                   exe_ctx.GetFramePtr(),
                                                   result_valobj_sp,
                                                   options);
-        
-        if ((exe_results == eExecutionInterrupted && !m_command_options.unwind_on_error)
-            ||(exe_results == eExecutionHitBreakpoint && !m_command_options.ignore_breakpoints))
-        {
-            uint32_t start_frame = 0;
-            uint32_t num_frames = 1;
-            uint32_t num_frames_with_source = 0;
-            Thread *thread = exe_ctx.GetThreadPtr();
-            if (thread)
-            {
-                thread->GetStatus (result->GetOutputStream(), 
-                                   start_frame, 
-                                   num_frames, 
-                                   num_frames_with_source);
-            }
-            else 
-            {
-                Process *process = exe_ctx.GetProcessPtr();
-                if (process)
-                {
-                    bool only_threads_with_stop_reason = true;
-                    process->GetThreadStatus (result->GetOutputStream(), 
-                                              only_threads_with_stop_reason, 
-                                              start_frame, 
-                                              num_frames, 
-                                              num_frames_with_source);
-                }
-            }
-        }
-        
+
         if (result_valobj_sp)
         {
             Format format = m_format_options.GetFormat();

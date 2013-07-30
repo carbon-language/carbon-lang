@@ -5030,11 +5030,17 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                                 if (log)
                                                     log->Printf ("Process::RunThreadPlan() stopped for breakpoint: %s.", stop_info_sp->GetDescription());
                                                 return_value = eExecutionHitBreakpoint;
+                                                if (!ignore_breakpoints)
+                                                {
+                                                    event_to_broadcast_sp = event_sp;
+                                                }
                                             }
                                             else
                                             {
                                                 if (log)
                                                     log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
+                                                if (!unwind_on_error)
+                                                    event_to_broadcast_sp = event_sp;
                                                 return_value = eExecutionInterrupted;
                                             }
                                         }
