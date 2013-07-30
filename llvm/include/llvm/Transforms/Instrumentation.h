@@ -91,12 +91,12 @@ FunctionPass *createBoundsCheckingPass();
 ///
 /// @param HideDebugIntrinsics  Omit debug intrinsics in emitted IR source file.
 /// @param HideDebugMetadata    Omit debug metadata in emitted IR source file.
-/// @param Filename             Embed this file name in the debug information.
 /// @param Directory            Embed this directory in the debug information.
+/// @param Filename             Embed this file name in the debug information.
 ModulePass *createDebugIRPass(bool HideDebugIntrinsics,
                               bool HideDebugMetadata,
-                              StringRef Filename = StringRef(),
-                              StringRef Directory = StringRef());
+                              StringRef Directory = StringRef(),
+                              StringRef Filename = StringRef());
 
 /// createDebugIRPass - Enable interactive stepping through LLVM IR in LLDB
 ///                     (or GDB) with an existing IR file on disk. When creating
