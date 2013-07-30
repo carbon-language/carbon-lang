@@ -89,6 +89,8 @@ public:
   void mangleNumber(const llvm::APSInt &Value);
   void mangleType(QualType T, SourceRange Range,
                   QualifierMangleMode QMM = QMM_Mangle);
+  void mangleFunctionType(const FunctionType *T, const FunctionDecl *D,
+                          bool IsStructor, bool IsInstMethod);
 
 private:
   void disableBackReferences() { UseNameBackReferences = false; }
@@ -122,8 +124,6 @@ private:
 #undef TYPE
   
   void mangleType(const TagType*);
-  void mangleFunctionType(const FunctionType *T, const FunctionDecl *D,
-                          bool IsStructor, bool IsInstMethod);
   void mangleDecayedArrayType(const ArrayType *T, bool IsGlobal);
   void mangleArrayType(const ArrayType *T);
   void mangleFunctionClass(const FunctionDecl *FD);
@@ -1781,13 +1781,30 @@ void MicrosoftMangleContext::mangleName(const NamedDecl *D,
   MicrosoftCXXNameMangler Mangler(*this, Out);
   return Mangler.mangle(D);
 }
+
 void MicrosoftMangleContext::mangleThunk(const CXXMethodDecl *MD,
                                          const ThunkInfo &Thunk,
-                                         raw_ostream &) {
-  unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle thunk for this method yet");
-  getDiags().Report(MD->getLocation(), DiagID);
+                                         raw_ostream &Out) {
+  // FIXME: this is not yet a complete implementation, but merely a
+  // reasonably-working stub to avoid crashing when required to emit a thunk.
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Out << "\01?";
+  Mangler.mangleName(MD);
+  if (Thunk.This.NonVirtual != 0) {
+    // FIXME: add support for protected/private or use mangleFunctionClass.
+    Out << "W";
+    llvm::APSInt APSNumber(/*BitWidth=*/32 /*FIXME: check on x64*/,
+                           /*isUnsigned=*/true);
+    APSNumber = -Thunk.This.NonVirtual;
+    Mangler.mangleNumber(APSNumber);
+  } else {
+    // FIXME: add support for protected/private or use mangleFunctionClass.
+    Out << "Q";
+  }
+  // FIXME: mangle return adjustment? Most likely includes using an overridee FPT?
+  Mangler.mangleFunctionType(MD->getType()->castAs<FunctionProtoType>(), MD, false, true);
 }
+
 void MicrosoftMangleContext::mangleCXXDtorThunk(const CXXDestructorDecl *DD,
                                                 CXXDtorType Type,
                                                 const ThisAdjustment &,

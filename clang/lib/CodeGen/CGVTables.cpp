@@ -29,7 +29,14 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenVTables::CodeGenVTables(CodeGenModule &CGM)
-  : CGM(CGM), VTContext(CGM.getContext()) { }
+  : CGM(CGM), VTContext(CGM.getContext()) {
+  if (CGM.getTarget().getCXXABI().isMicrosoft()) {
+    // FIXME: Eventually, we should only have one of V*TContexts available.
+    // Today we use both in the Microsoft ABI as MicrosoftVFTableContext
+    // is not completely supported in CodeGen yet.
+    VFTContext.reset(new MicrosoftVFTableContext(CGM.getContext()));
+  }
+}
 
 llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD, 
                                               const ThunkInfo &Thunk) {
@@ -389,6 +396,11 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
 void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk, 
                                bool UseAvailableExternallyLinkage)
 {
+  if (CGM.getTarget().getCXXABI().isMicrosoft()) {
+    // Emission of thunks is not supported yet in Microsoft ABI.
+    return;
+  }
+
   const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeGlobalDeclaration(GD);
 
   // FIXME: re-use FnInfo in this computation.
@@ -484,6 +496,12 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
   // We don't need to generate thunks for the base destructor.
   if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base)
     return;
+
+  if (VFTContext.isValid()) {
+    // FIXME: This is a temporary solution to force generation of vftables in
+    // Microsoft ABI. Remove when we thread VFTableContext through CodeGen.
+    VFTContext->getVFPtrOffsets(MD->getParent());
+  }
 
   const VTableContext::ThunkInfoVectorTy *ThunkInfoVector =
     VTContext.getThunkInfo(MD);
@@ -804,6 +822,12 @@ void CodeGenModule::EmitVTable(CXXRecordDecl *theClass, bool isRequired) {
 
 void 
 CodeGenVTables::GenerateClassData(const CXXRecordDecl *RD) {
+  if (VFTContext.isValid()) {
+    // FIXME: This is a temporary solution to force generation of vftables in
+    // Microsoft ABI. Remove when we thread VFTableContext through CodeGen.
+    VFTContext->getVFPtrOffsets(RD);
+  }
+
   // First off, check whether we've already emitted the v-table and
   // associated stuff.
   llvm::GlobalVariable *VTable = GetAddrOfVTable(RD);

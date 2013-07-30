@@ -32,6 +32,7 @@ class CodeGenVTables {
   CodeGenModule &CGM;
 
   VTableContext VTContext;
+  OwningPtr<MicrosoftVFTableContext> VFTContext;
 
   /// VTables - All the vtables which have been defined.
   llvm::DenseMap<const CXXRecordDecl *, llvm::GlobalVariable *> VTables;

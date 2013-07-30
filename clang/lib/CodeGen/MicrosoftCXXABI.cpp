@@ -20,6 +20,7 @@
 #include "MicrosoftVBTables.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/VTableBuilder.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -313,24 +314,6 @@ CharUnits MicrosoftCXXABI::GetVBPtrOffsetFromBases(const CXXRecordDecl *RD) {
     Total += RDLayout.getBaseClassOffset(RD);
   }
   return Total;
-}
-
-/// \brief Computes the index of BaseClassDecl in the vbtable of ClassDecl.
-/// BaseClassDecl must be a morally virtual base of ClassDecl.  The vbtable is
-/// an array of i32 offsets.  The first entry is a self entry, and the rest are
-/// offsets from the vbptr to virtual bases.  The bases are ordered the same way
-/// our vbases are ordered: as they appear in a left-to-right depth-first search
-/// of the hierarchy.
-static unsigned GetVBTableIndex(const CXXRecordDecl *ClassDecl,
-                                const CXXRecordDecl *BaseClassDecl) {
-  unsigned VBTableIndex = 1;  // Start with one to skip the self entry.
-  for (CXXRecordDecl::base_class_const_iterator I = ClassDecl->vbases_begin(),
-       E = ClassDecl->vbases_end(); I != E; ++I) {
-    if (I->getType()->getAsCXXRecordDecl() == BaseClassDecl)
-      return VBTableIndex;
-    VBTableIndex++;
-  }
-  llvm_unreachable("BaseClassDecl must be a vbase of ClassDecl");
 }
 
 llvm::Value *
