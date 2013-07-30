@@ -180,6 +180,7 @@ class BasicExprCommandsTestCase(TestBase):
 
     # rdar://problem/8686536
     # CommandInterpreter::HandleCommand is stripping \'s from input for WantsRawCommand commands
+    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     def test_expr_commands_can_handle_quotes(self):
         """Throw some expression commands with quotes at lldb."""
         self.buildDefault()

@@ -28,6 +28,7 @@ class CppVirtualMadness(TestBase):
         self.buildDsym()
         self.virtual_madness_test()
 
+    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     def test_virtual_madness_dwarf(self):
         """Test that expression works correctly with virtual inheritance as well as virtual function."""
         self.buildDwarf()

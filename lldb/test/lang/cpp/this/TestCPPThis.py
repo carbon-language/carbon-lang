@@ -19,6 +19,7 @@ class CPPThisTestCase(TestBase):
         self.static_method_commands()
 
     #rdar://problem/9962849
+    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     @expectedFailureGcc # llvm.org/pr15439 The 'this' pointer isn't available during expression evaluation when stopped in an inlined member function.
     @dwarf_test
     def test_with_dwarf_and_run_command(self):

@@ -25,6 +25,7 @@ class ExprFormattersTestCase(TestBase):
         self.buildDsym()
         self.do_my_test()
 
+    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     @dwarf_test
     def test_with_dwarf(self):
         """Test expr + formatters for good interoperability."""

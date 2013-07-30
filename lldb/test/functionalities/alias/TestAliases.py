@@ -18,6 +18,7 @@ class AliasTestCase(TestBase):
         self.buildDsym ()
         self.alias_tests ()
 
+    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf ()

@@ -16,6 +16,7 @@ class CPPBoolTestCase(TestBase):
         self.buildDsym()
         self.static_method_commands()
 
+    @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that bool types work in the expression parser"""
