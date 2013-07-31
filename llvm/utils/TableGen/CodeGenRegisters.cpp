@@ -1470,7 +1470,7 @@ static bool isRegUnitSubSet(const std::vector<unsigned> &RUSubSet,
                        RUSubSet.begin(), RUSubSet.end());
 }
 
-/// Iteratively prune unit sets. Prune subsets that are close the the superset,
+/// Iteratively prune unit sets. Prune subsets that are close to the superset,
 /// but with one or two registers removed. We occasionally have registers like
 /// APSR and PC thrown in with the general registers. We also see many
 /// special-purpose register subsets, such as tail-call and Thumb
