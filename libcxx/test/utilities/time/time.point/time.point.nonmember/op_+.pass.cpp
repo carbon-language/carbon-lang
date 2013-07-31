@@ -27,9 +27,20 @@ int main()
     typedef std::chrono::system_clock Clock;
     typedef std::chrono::milliseconds Duration1;
     typedef std::chrono::microseconds Duration2;
+    {
     std::chrono::time_point<Clock, Duration1> t1(Duration1(3));
     std::chrono::time_point<Clock, Duration2> t2 = t1 + Duration2(5);
     assert(t2.time_since_epoch() == Duration2(3005));
     t2 = Duration2(6) + t1;
     assert(t2.time_since_epoch() == Duration2(3006));
+    }
+#if _LIBCPP_STD_VER > 11
+    {
+    constexpr std::chrono::time_point<Clock, Duration1> t1(Duration1(3));
+    constexpr std::chrono::time_point<Clock, Duration2> t2 = t1 + Duration2(5);
+    static_assert(t2.time_since_epoch() == Duration2(3005), "");
+    constexpr std::chrono::time_point<Clock, Duration2> t3 = Duration2(6) + t1;
+    static_assert(t3.time_since_epoch() == Duration2(3006), "");
+    }
+#endif
 }

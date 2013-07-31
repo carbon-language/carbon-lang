@@ -22,6 +22,14 @@ int main()
 {
     typedef std::chrono::system_clock Clock;
     typedef std::chrono::duration<Rep, std::milli> Duration;
+    {
     std::chrono::time_point<Clock, Duration> t;
     assert(t.time_since_epoch() == Duration::zero());
+    }
+#if _LIBCPP_STD_VER > 11
+    {
+    constexpr std::chrono::time_point<Clock, Duration> t;
+    static_assert(t.time_since_epoch() == Duration::zero(), "");
+    }
+#endif
 }

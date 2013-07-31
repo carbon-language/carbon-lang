@@ -70,4 +70,39 @@ int main()
     assert( (t1 <= t2));
     assert(!(t1 >= t2));
     }
+
+#if _LIBCPP_STD_VER > 11
+    {
+    constexpr T1 t1(Duration1(3));
+    constexpr T1 t2(Duration1(3));
+    static_assert(!(t1 <  t2), "");
+    static_assert(!(t1 >  t2), "");
+    static_assert( (t1 <= t2), "");
+    static_assert( (t1 >= t2), "");
+    }
+    {
+    constexpr T1 t1(Duration1(3));
+    constexpr T1 t2(Duration1(4));
+    static_assert( (t1 <  t2), "");
+    static_assert(!(t1 >  t2), "");
+    static_assert( (t1 <= t2), "");
+    static_assert(!(t1 >= t2), "");
+    }
+    {
+    constexpr T1 t1(Duration1(3));
+    constexpr T2 t2(Duration2(3000));
+    static_assert(!(t1 <  t2), "");
+    static_assert(!(t1 >  t2), "");
+    static_assert( (t1 <= t2), "");
+    static_assert( (t1 >= t2), "");
+    }
+    {
+    constexpr T1 t1(Duration1(3));
+    constexpr T2 t2(Duration2(3001));
+    static_assert( (t1 <  t2), "");
+    static_assert(!(t1 >  t2), "");
+    static_assert( (t1 <= t2), "");
+    static_assert(!(t1 >= t2), "");
+    }
+#endif
 }

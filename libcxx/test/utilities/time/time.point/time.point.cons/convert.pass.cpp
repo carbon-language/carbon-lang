@@ -27,4 +27,11 @@ int main()
     std::chrono::time_point<Clock, Duration1> t1 = t2;
     assert(t1.time_since_epoch() == Duration1(3000));
     }
+#if _LIBCPP_STD_VER > 11
+    {
+    constexpr std::chrono::time_point<Clock, Duration2> t2(Duration2(3));
+    constexpr std::chrono::time_point<Clock, Duration1> t1 = t2;
+    static_assert(t1.time_since_epoch() == Duration1(3000), "");
+    }
+#endif
 }
