@@ -894,14 +894,11 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     
     const std::vector<Record *> Supers = R.getSuperClasses();
     assert(!Supers.empty() && "Forgot to specify a superclass for the attr");
-    bool IsTargetSpecific = false;
     std::string SuperName;
     for (std::vector<Record *>::const_reverse_iterator I = Supers.rbegin(),
          E = Supers.rend(); I != E; ++I) {
       const Record &R = **I;
-      if (R.getName() == "TargetSpecificAttr")
-        IsTargetSpecific = true;
-      else if (SuperName.empty())
+      if (R.getName() != "TargetSpecificAttr" && SuperName.empty())
         SuperName = R.getName();
     }
 
