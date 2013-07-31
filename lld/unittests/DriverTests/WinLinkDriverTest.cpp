@@ -66,16 +66,6 @@ TEST_F(WinLinkParserTest, UnixStyleOption) {
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
-TEST_F(WinLinkParserTest, Quote) {
-  EXPECT_FALSE(parse("link.exe", "/subsystem:\"console\"", "-out:'a.exe'",
-                     "/defaultlib:'user32.lib'", "'a.obj'", nullptr));
-  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _info.getSubsystem());
-  EXPECT_EQ("a.exe", _info.outputPath());
-  EXPECT_EQ(2, inputFileCount());
-  EXPECT_EQ("a.obj", inputFile(0));
-  EXPECT_EQ("user32.lib", inputFile(1));
-}
-
 TEST_F(WinLinkParserTest, Mllvm) {
   EXPECT_FALSE(parse("link.exe", "-mllvm", "-debug", "a.obj", nullptr));
   const std::vector<const char *> &options = _info.llvmOptions();
@@ -215,7 +205,7 @@ TEST_F(WinLinkParserTest, NoInputFiles) {
 
 TEST_F(WinLinkParserTest, FailIfMismatch_Match) {
   EXPECT_FALSE(parse("link.exe", "/failifmismatch:foo=bar",
-                     "/failifmismatch:\"foo=bar\"", "/failifmismatch:abc=def",
+                     "/failifmismatch:foo=bar", "/failifmismatch:abc=def",
                      "a.out", nullptr));
 }
 
