@@ -5076,15 +5076,44 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
   //   [...] When operator->returns, the operator-> is applied  to the value
   //   returned, with the original second operand.
   if (OpKind == tok::arrow) {
+    bool NoArrowOperatorFound = false;
+    bool FirstIteration = true;
+    FunctionDecl *CurFD = dyn_cast<FunctionDecl>(CurContext);
     // The set of types we've considered so far.
     llvm::SmallPtrSet<CanQualType,8> CTypes;
     SmallVector<SourceLocation, 8> Locations;
     CTypes.insert(Context.getCanonicalType(BaseType));
 
     while (BaseType->isRecordType()) {
-      Result = BuildOverloadedArrowExpr(S, Base, OpLoc);
-      if (Result.isInvalid())
+      Result = BuildOverloadedArrowExpr(
+          S, Base, OpLoc,
+          // When in a template specialization and on the first loop iteration,
+          // potentially give the default diagnostic (with the fixit in a
+          // separate note) instead of having the error reported back to here
+          // and giving a diagnostic with a fixit attached to the error itself.
+          (FirstIteration && CurFD && CurFD->isFunctionTemplateSpecialization())
+              ? 0
+              : &NoArrowOperatorFound);
+      if (Result.isInvalid()) {
+        if (NoArrowOperatorFound) {
+          if (FirstIteration) {
+            Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
+              << BaseType << 1 << Base->getSourceRange()
+              << FixItHint::CreateReplacement(OpLoc, ".");
+            OpKind = tok::period;
+            break;
+          } else {
+            Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
+              << BaseType << Base->getSourceRange();
+            CallExpr *CE = dyn_cast<CallExpr>(Base);
+            if (Decl *CD = (CE ? CE->getCalleeDecl() : 0)) {
+              Diag(CD->getLocStart(),
+                   diag::note_member_reference_arrow_from_operator_arrow);
+            }
+          }
+        }
         return ExprError();
+      }
       Base = Result.get();
       if (CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(Base))
         Locations.push_back(OpCall->getDirectCallee()->getLocation());
@@ -5096,9 +5125,11 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
           Diag(Locations[i], diag::note_declared_at);
         return ExprError();
       }
+      FirstIteration = false;
     }
 
-    if (BaseType->isPointerType() || BaseType->isObjCObjectPointerType())
+    if (OpKind == tok::arrow &&
+        (BaseType->isPointerType() || BaseType->isObjCObjectPointerType()))
       BaseType = BaseType->getPointeeType();
   }
 

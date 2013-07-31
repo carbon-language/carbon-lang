@@ -11463,7 +11463,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 ///  (if one exists), where @c Base is an expression of class type and
 /// @c Member is the name of the member we're trying to find.
 ExprResult
-Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
+Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
+                               bool *NoArrowOperatorFound) {
   assert(Base->getType()->isRecordType() &&
          "left-hand side must have class type");
 
@@ -11509,6 +11510,12 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
   case OR_No_Viable_Function:
     if (CandidateSet.empty()) {
       QualType BaseType = Base->getType();
+      if (NoArrowOperatorFound) {
+        // Report this specific error to the caller instead of emitting a
+        // diagnostic, as requested.
+        *NoArrowOperatorFound = true;
+        return ExprError();
+      }
       Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
         << BaseType << Base->getSourceRange();
       if (BaseType->isRecordType() && !BaseType->isPointerType()) {

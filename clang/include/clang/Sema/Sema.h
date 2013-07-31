@@ -2256,7 +2256,8 @@ public:
                                SourceLocation RParenLoc);
 
   ExprResult BuildOverloadedArrowExpr(Scope *S, Expr *Base,
-                                      SourceLocation OpLoc);
+                                      SourceLocation OpLoc,
+                                      bool *NoArrowOperatorFound = 0);
 
   /// CheckCallReturnType - Checks that a call expression's return type is
   /// complete. Returns true on failure. The location passed in is the location

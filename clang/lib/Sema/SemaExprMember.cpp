@@ -1136,10 +1136,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       //   foo->bar
       // This is actually well-formed in C++ if MyRecord has an
       // overloaded operator->, but that should have been dealt with
-      // by now.
-      Diag(OpLoc, diag::err_typecheck_member_reference_suggestion)
-        << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
-        << FixItHint::CreateReplacement(OpLoc, ".");
+      // by now--or a diagnostic message already issued if a problem
+      // was encountered while looking for the overloaded operator->.
       IsArrow = false;
     } else if (BaseType->isFunctionType()) {
       goto fail;
