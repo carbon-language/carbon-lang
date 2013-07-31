@@ -2718,7 +2718,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_w);
 
   // Handle -{std, ansi, trigraphs} -- take the last of -{std, ansi}
-  // (-ansi is equivalent to -std=c89).
+  // (-ansi is equivalent to -std=c89 or -std=c++98).
   //
   // If a std is supplied, only add -trigraphs if it follows the
   // option.
