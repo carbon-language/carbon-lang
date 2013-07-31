@@ -30,6 +30,9 @@
 #include <isl/map.h>
 #include <isl/set.h>
 
+#define DEBUG_TYPE "polly-dependence"
+#include "llvm/Support/Debug.h"
+
 using namespace polly;
 using namespace llvm;
 
@@ -88,7 +91,14 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
 void Dependences::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *Schedule;
 
+  DEBUG(dbgs() << "Scop: " << S << "\n");
+
   collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
+
+  DEBUG(dbgs() << "Read: " << Read << "\n";
+        dbgs() << "Write: " << Write << "\n";
+        dbgs() << "MayWrite: " << MayWrite << "\n";
+        dbgs() << "Schedule: " << Schedule << "\n");
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_map_compute_flow(
@@ -131,6 +141,8 @@ void Dependences::calculateDependences(Scop &S) {
   RAW = isl_union_map_coalesce(RAW);
   WAW = isl_union_map_coalesce(WAW);
   WAR = isl_union_map_coalesce(WAR);
+
+  DEBUG(printScop(dbgs()));
 }
 
 bool Dependences::runOnScop(Scop &S) {
