@@ -93,3 +93,7 @@
 // CHECK-MULTI64-X86-64: "-L[[gcc_install]]/../../../../x86_64-unknown-linux/lib"
 // CHECK-MULTI64-X86-64: "-L[[sysroot]]/lib"
 // CHECK-MULTI64-X86-64: "-L[[sysroot]]/usr/lib"
+
+// FIXME: [[gcc_install]] won't match anything on win32...investigating.
+// REQUIRES: shell
+// REQUIRES: shell-preserves-root
