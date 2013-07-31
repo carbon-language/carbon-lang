@@ -68,8 +68,6 @@ namespace llvm {
 
   bool isTransOnly(unsigned Opcode) const;
   bool isTransOnly(const MachineInstr *MI) const;
-  bool isVectorOnly(unsigned Opcode) const;
-  bool isVectorOnly(const MachineInstr *MI) const;
 
   bool usesVertexCache(unsigned Opcode) const;
   bool usesVertexCache(const MachineInstr *MI) const;

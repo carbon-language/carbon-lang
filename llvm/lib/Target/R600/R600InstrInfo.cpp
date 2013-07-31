@@ -150,21 +150,11 @@ bool R600InstrInfo::isLDSInstr(unsigned Opcode) const {
 }
 
 bool R600InstrInfo::isTransOnly(unsigned Opcode) const {
-  if (ST.hasCaymanISA())
-    return false;
-  return (get(Opcode).getSchedClass() == AMDGPU::TransALU);
+  return (get(Opcode).TSFlags & R600_InstFlag::TRANS_ONLY);
 }
 
 bool R600InstrInfo::isTransOnly(const MachineInstr *MI) const {
   return isTransOnly(MI->getOpcode());
-}
-
-bool R600InstrInfo::isVectorOnly(unsigned Opcode) const {
-  return (get(Opcode).getSchedClass() == AMDGPU::VecALU);
-}
-
-bool R600InstrInfo::isVectorOnly(const MachineInstr *MI) const {
-  return isVectorOnly(MI->getOpcode());
 }
 
 bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
