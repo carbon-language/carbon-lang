@@ -1470,7 +1470,23 @@ static bool isRegUnitSubSet(const std::vector<unsigned> &RUSubSet,
                        RUSubSet.begin(), RUSubSet.end());
 }
 
-// Iteratively prune unit sets.
+/// Iteratively prune unit sets. Prune subsets that are close the the superset,
+/// but with one or two registers removed. We occasionally have registers like
+/// APSR and PC thrown in with the general registers. We also see many
+/// special-purpose register subsets, such as tail-call and Thumb
+/// encodings. Generating all possible overlapping sets is combinatorial and
+/// overkill for modeling pressure. Ideally we could fix this statically in
+/// tablegen by (1) having the target define register classes that only include
+/// the allocatable registers and marking other classes as non-allocatable and
+/// (2) having a way to mark special purpose classes as "don't-care" classes for
+/// the purpose of pressure.  However, we make an attempt to handle targets that
+/// are not nicely defined by merging nearly identical register unit sets
+/// statically. This generates smaller tables. Then, dynamically, we adjust the
+/// set limit by filtering the reserved registers.
+///
+/// Merge sets only if the units have the same weight. For example, on ARM,
+/// Q-tuples with ssub index 0 include all S regs but also include D16+. We
+/// should not expand the S set to include D regs.
 void CodeGenRegBank::pruneUnitSets() {
   assert(RegClassUnitSets.empty() && "this invalidates RegClassUnitSets");
 
@@ -1484,9 +1500,12 @@ void CodeGenRegBank::pruneUnitSets() {
       if (SuperIdx == SubIdx)
         continue;
 
+      unsigned UnitWeight = RegUnits[SubSet.Units[0]].Weight;
       const RegUnitSet &SuperSet = RegUnitSets[SuperIdx];
       if (isRegUnitSubSet(SubSet.Units, SuperSet.Units)
-          && (SubSet.Units.size() + 3 > SuperSet.Units.size())) {
+          && (SubSet.Units.size() + 3 > SuperSet.Units.size())
+          && UnitWeight == RegUnits[SuperSet.Units[0]].Weight
+          && UnitWeight == RegUnits[SuperSet.Units.back()].Weight) {
         DEBUG(dbgs() << "UnitSet " << SubIdx << " subsumed by " << SuperIdx
               << "\n");
         break;
@@ -1559,7 +1578,8 @@ void CodeGenRegBank::computeRegUnitSets() {
           for (unsigned i = 0, e = Units.size(); i < e; ++i)
             dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
           dbgs() << "\n";
-        });
+        }
+        dbgs() << "\nUnion sets:\n");
 
   // Iterate over all unit sets, including new ones added by this loop.
   unsigned NumRegUnitSubSets = RegUnitSets.size();
@@ -1598,6 +1618,14 @@ void CodeGenRegBank::computeRegUnitSets() {
         findRegUnitSet(RegUnitSets, RegUnitSets.back());
       if (SetI != llvm::prior(RegUnitSets.end()))
         RegUnitSets.pop_back();
+      else {
+        DEBUG(dbgs() << "UnitSet " << RegUnitSets.size()-1
+              << " " << RegUnitSets.back().Name << ":";
+              ArrayRef<unsigned> Units = RegUnitSets.back().Units;
+              for (unsigned i = 0, e = Units.size(); i < e; ++i)
+                dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+              dbgs() << "\n";);
+      }
     }
   }
 
