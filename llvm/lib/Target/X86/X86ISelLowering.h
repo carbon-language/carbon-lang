@@ -434,25 +434,45 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace X86 {
-    /// isVEXTRACTF128Index - Return true if the specified
+    /// isVEXTRACT128Index - Return true if the specified
     /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
-    /// suitable for input to VEXTRACTF128.
-    bool isVEXTRACTF128Index(SDNode *N);
+    /// suitable for input to VEXTRACTF128, VEXTRACTI128 instructions.
+    bool isVEXTRACT128Index(SDNode *N);
 
-    /// isVINSERTF128Index - Return true if the specified
+    /// isVINSERT128Index - Return true if the specified
     /// INSERT_SUBVECTOR operand specifies a subvector insert that is
-    /// suitable for input to VINSERTF128.
-    bool isVINSERTF128Index(SDNode *N);
+    /// suitable for input to VINSERTF128, VINSERTI128 instructions.
+    bool isVINSERT128Index(SDNode *N);
 
-    /// getExtractVEXTRACTF128Immediate - Return the appropriate
+    /// isVEXTRACT256Index - Return true if the specified
+    /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
+    /// suitable for input to VEXTRACTF64X4, VEXTRACTI64X4 instructions.
+    bool isVEXTRACT256Index(SDNode *N);
+
+    /// isVINSERT256Index - Return true if the specified
+    /// INSERT_SUBVECTOR operand specifies a subvector insert that is
+    /// suitable for input to VINSERTF64X4, VINSERTI64X4 instructions.
+    bool isVINSERT256Index(SDNode *N);
+
+    /// getExtractVEXTRACT128Immediate - Return the appropriate
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
-    /// with VEXTRACTF128 instructions.
-    unsigned getExtractVEXTRACTF128Immediate(SDNode *N);
+    /// with VEXTRACTF128, VEXTRACTI128 instructions.
+    unsigned getExtractVEXTRACT128Immediate(SDNode *N);
 
-    /// getInsertVINSERTF128Immediate - Return the appropriate
+    /// getInsertVINSERT128Immediate - Return the appropriate
     /// immediate to insert at the specified INSERT_SUBVECTOR index
-    /// with VINSERTF128 instructions.
-    unsigned getInsertVINSERTF128Immediate(SDNode *N);
+    /// with VINSERTF128, VINSERT128 instructions.
+    unsigned getInsertVINSERT128Immediate(SDNode *N);
+
+    /// getExtractVEXTRACT256Immediate - Return the appropriate
+    /// immediate to extract the specified EXTRACT_SUBVECTOR index
+    /// with VEXTRACTF64X4, VEXTRACTI64x4 instructions.
+    unsigned getExtractVEXTRACT256Immediate(SDNode *N);
+
+    /// getInsertVINSERT256Immediate - Return the appropriate
+    /// immediate to insert at the specified INSERT_SUBVECTOR index
+    /// with VINSERTF64x4, VINSERTI64x4 instructions.
+    unsigned getInsertVINSERT256Immediate(SDNode *N);
 
     /// isZeroNode - Returns true if Elt is a constant zero or a floating point
     /// constant +0.0.

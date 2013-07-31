@@ -58,17 +58,14 @@ STATISTIC(NumTailCalls, "Number of tail calls");
 static SDValue getMOVL(SelectionDAG &DAG, SDLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
 
-/// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
-/// sets things up to match to an AVX VEXTRACTF128 instruction or a
-/// simple subregister reference.  Idx is an index in the 128 bits we
-/// want.  It need not be aligned to a 128-bit bounday.  That makes
-/// lowering EXTRACT_VECTOR_ELT operations easier.
-static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
-                                   SelectionDAG &DAG, SDLoc dl) {
+static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
+                                SelectionDAG &DAG, SDLoc dl,
+                                unsigned vectorWidth) {
+  assert((vectorWidth == 128 || vectorWidth == 256) &&
+         "Unsupported vector width");
   EVT VT = Vec.getValueType();
-  assert(VT.is256BitVector() && "Unexpected vector size!");
   EVT ElVT = VT.getVectorElementType();
-  unsigned Factor = VT.getSizeInBits()/128;
+  unsigned Factor = VT.getSizeInBits()/vectorWidth;
   EVT ResultVT = EVT::getVectorVT(*DAG.getContext(), ElVT,
                                   VT.getVectorNumElements()/Factor);
 
@@ -76,13 +73,12 @@ static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
   if (Vec.getOpcode() == ISD::UNDEF)
     return DAG.getUNDEF(ResultVT);
 
-  // Extract the relevant 128 bits.  Generate an EXTRACT_SUBVECTOR
-  // we can match to VEXTRACTF128.
-  unsigned ElemsPerChunk = 128 / ElVT.getSizeInBits();
+  // Extract the relevant vectorWidth bits.  Generate an EXTRACT_SUBVECTOR
+  unsigned ElemsPerChunk = vectorWidth / ElVT.getSizeInBits();
 
-  // This is the index of the first element of the 128-bit chunk
+  // This is the index of the first element of the vectorWidth-bit chunk
   // we want.
-  unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / 128)
+  unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits()) / vectorWidth)
                                * ElemsPerChunk);
 
   // If the input is a buildvector just emit a smaller one.
@@ -95,37 +91,69 @@ static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
                                VecIdx);
 
   return Result;
+  
+}
+/// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
+/// sets things up to match to an AVX VEXTRACTF128 / VEXTRACTI128
+/// or AVX-512 VEXTRACTF32x4 / VEXTRACTI32x4
+/// instructions or a simple subregister reference. Idx is an index in the
+/// 128 bits we want.  It need not be aligned to a 128-bit bounday.  That makes
+/// lowering EXTRACT_VECTOR_ELT operations easier.
+static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
+                                   SelectionDAG &DAG, SDLoc dl) {
+  assert(Vec.getValueType().is256BitVector() && "Unexpected vector size!");
+  return ExtractSubVector(Vec, IdxVal, DAG, dl, 128);
 }
 
+/// Generate a DAG to grab 256-bits from a 512-bit vector.
+static SDValue Extract256BitVector(SDValue Vec, unsigned IdxVal,
+                                   SelectionDAG &DAG, SDLoc dl) {
+  assert(Vec.getValueType().is512BitVector() && "Unexpected vector size!");
+  return ExtractSubVector(Vec, IdxVal, DAG, dl, 256);
+}
+
+static SDValue InsertSubVector(SDValue Result, SDValue Vec,
+                               unsigned IdxVal, SelectionDAG &DAG,
+                               SDLoc dl, unsigned vectorWidth) {
+  assert((vectorWidth == 128 || vectorWidth == 256) &&
+         "Unsupported vector width");
+  // Inserting UNDEF is Result
+  if (Vec.getOpcode() == ISD::UNDEF)
+    return Result;
+  EVT VT = Vec.getValueType();
+  EVT ElVT = VT.getVectorElementType();
+  EVT ResultVT = Result.getValueType();
+
+  // Insert the relevant vectorWidth bits.
+  unsigned ElemsPerChunk = vectorWidth/ElVT.getSizeInBits();
+
+  // This is the index of the first element of the vectorWidth-bit chunk
+  // we want.
+  unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits())/vectorWidth)
+                               * ElemsPerChunk);
+
+  SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
+  return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
+                     VecIdx);
+}
 /// Generate a DAG to put 128-bits into a vector > 128 bits.  This
-/// sets things up to match to an AVX VINSERTF128 instruction or a
+/// sets things up to match to an AVX VINSERTF128/VINSERTI128 or
+/// AVX-512 VINSERTF32x4/VINSERTI32x4 instructions or a
 /// simple superregister reference.  Idx is an index in the 128 bits
 /// we want.  It need not be aligned to a 128-bit bounday.  That makes
 /// lowering INSERT_VECTOR_ELT operations easier.
 static SDValue Insert128BitVector(SDValue Result, SDValue Vec,
                                   unsigned IdxVal, SelectionDAG &DAG,
                                   SDLoc dl) {
-  // Inserting UNDEF is Result
-  if (Vec.getOpcode() == ISD::UNDEF)
-    return Result;
+  assert(Vec.getValueType().is128BitVector() && "Unexpected vector size!");
+  return InsertSubVector(Result, Vec, IdxVal, DAG, dl, 128);
+}
 
-  EVT VT = Vec.getValueType();
-  assert(VT.is128BitVector() && "Unexpected vector size!");
-
-  EVT ElVT = VT.getVectorElementType();
-  EVT ResultVT = Result.getValueType();
-
-  // Insert the relevant 128 bits.
-  unsigned ElemsPerChunk = 128/ElVT.getSizeInBits();
-
-  // This is the index of the first element of the 128-bit chunk
-  // we want.
-  unsigned NormalizedIdxVal = (((IdxVal * ElVT.getSizeInBits())/128)
-                               * ElemsPerChunk);
-
-  SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
-  return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResultVT, Result, Vec,
-                     VecIdx);
+static SDValue Insert256BitVector(SDValue Result, SDValue Vec,
+                                  unsigned IdxVal, SelectionDAG &DAG,
+                                  SDLoc dl) {
+  assert(Vec.getValueType().is256BitVector() && "Unexpected vector size!");
+  return InsertSubVector(Result, Vec, IdxVal, DAG, dl, 256);
 }
 
 /// Concat two 128-bit vectors into a 256 bit vector using VINSERTF128
@@ -137,6 +165,13 @@ static SDValue Concat128BitVectors(SDValue V1, SDValue V2, EVT VT,
                                    SDLoc dl) {
   SDValue V = Insert128BitVector(DAG.getUNDEF(VT), V1, 0, DAG, dl);
   return Insert128BitVector(V, V2, NumElems/2, DAG, dl);
+}
+
+static SDValue Concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
+                                   unsigned NumElems, SelectionDAG &DAG,
+                                   SDLoc dl) {
+  SDValue V = Insert256BitVector(DAG.getUNDEF(VT), V1, 0, DAG, dl);
+  return Insert256BitVector(V, V2, NumElems/2, DAG, dl);
 }
 
 static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
@@ -1261,6 +1296,147 @@ void X86TargetLowering::resetOperationActions() {
     }
   }
 
+  if (!TM.Options.UseSoftFloat && Subtarget->hasAVX512()) {
+    addRegisterClass(MVT::v16i32, &X86::VR512RegClass);
+    addRegisterClass(MVT::v16f32, &X86::VR512RegClass);
+    addRegisterClass(MVT::v8i64,  &X86::VR512RegClass);
+    addRegisterClass(MVT::v8f64,  &X86::VR512RegClass);
+
+    addRegisterClass(MVT::v8i1,   &X86::VK8RegClass);
+    addRegisterClass(MVT::v16i1,  &X86::VK16RegClass);
+
+    setLoadExtAction(ISD::EXTLOAD,              MVT::v8f32, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v16f32, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v8f64, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v8i64, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v16i32, Legal);
+    setOperationAction(ISD::LOAD,               MVT::v16i1, Legal);
+
+    setOperationAction(ISD::FADD,               MVT::v16f32, Legal);
+    setOperationAction(ISD::FSUB,               MVT::v16f32, Legal);
+    setOperationAction(ISD::FMUL,               MVT::v16f32, Legal);
+    setOperationAction(ISD::FDIV,               MVT::v16f32, Legal);
+    setOperationAction(ISD::FSQRT,              MVT::v16f32, Legal);
+    setOperationAction(ISD::FNEG,               MVT::v16f32, Custom);
+
+    setOperationAction(ISD::FADD,               MVT::v8f64, Legal);
+    setOperationAction(ISD::FSUB,               MVT::v8f64, Legal);
+    setOperationAction(ISD::FMUL,               MVT::v8f64, Legal);
+    setOperationAction(ISD::FDIV,               MVT::v8f64, Legal);
+    setOperationAction(ISD::FSQRT,              MVT::v8f64, Legal);
+    setOperationAction(ISD::FNEG,               MVT::v8f64, Custom);
+    setOperationAction(ISD::FMA,                MVT::v8f64, Legal);
+    setOperationAction(ISD::FMA,                MVT::v16f32, Legal);
+    setOperationAction(ISD::SDIV,               MVT::v16i32, Custom);
+
+
+    setOperationAction(ISD::FP_TO_SINT,         MVT::v16i32, Legal);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v16i32, Legal);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v8i32, Legal);
+    setOperationAction(ISD::SINT_TO_FP,         MVT::v16i32, Legal);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v16i32, Legal);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v8i32, Legal);
+    setOperationAction(ISD::FP_ROUND,           MVT::v8f32, Legal);
+    setOperationAction(ISD::FP_EXTEND,          MVT::v8f32, Legal);
+
+    setOperationAction(ISD::TRUNCATE,           MVT::i1, Legal);
+    setOperationAction(ISD::TRUNCATE,           MVT::v16i8, Custom);
+    setOperationAction(ISD::TRUNCATE,           MVT::v8i32, Custom);
+    setOperationAction(ISD::TRUNCATE,           MVT::v8i1, Custom);
+    setOperationAction(ISD::TRUNCATE,           MVT::v16i1, Custom);
+    setOperationAction(ISD::ZERO_EXTEND,        MVT::v16i32, Custom);
+    setOperationAction(ISD::ZERO_EXTEND,        MVT::v8i64, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i32, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i64, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i8, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i16, Custom);
+    setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i16, Custom);
+
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8f64,  Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i64,  Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16f32,  Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16i32,  Custom);
+    setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i1,    Custom);
+
+    setOperationAction(ISD::SETCC,              MVT::v16i1, Custom);
+    setOperationAction(ISD::SETCC,              MVT::v8i1, Custom);
+
+    setOperationAction(ISD::MUL,              MVT::v8i64, Custom);
+
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i1, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v16i1, Custom);
+    setOperationAction(ISD::SELECT,             MVT::v8f64, Custom);
+    setOperationAction(ISD::SELECT,             MVT::v8i64, Custom);
+    setOperationAction(ISD::SELECT,             MVT::v16f32, Custom);
+
+    setOperationAction(ISD::ADD,                MVT::v8i64, Legal);
+    setOperationAction(ISD::ADD,                MVT::v16i32, Legal);
+
+    setOperationAction(ISD::SUB,                MVT::v8i64, Legal);
+    setOperationAction(ISD::SUB,                MVT::v16i32, Legal);
+
+    setOperationAction(ISD::MUL,                MVT::v16i32, Legal);
+
+    setOperationAction(ISD::SRL,                MVT::v8i64, Custom);
+    setOperationAction(ISD::SRL,                MVT::v16i32, Custom);
+
+    setOperationAction(ISD::SHL,                MVT::v8i64, Custom);
+    setOperationAction(ISD::SHL,                MVT::v16i32, Custom);
+
+    setOperationAction(ISD::SRA,                MVT::v8i64, Custom);
+    setOperationAction(ISD::SRA,                MVT::v16i32, Custom);
+
+    setOperationAction(ISD::AND,                MVT::v8i64, Legal);
+    setOperationAction(ISD::OR,                 MVT::v8i64, Legal);
+    setOperationAction(ISD::XOR,                MVT::v8i64, Legal);
+
+    // Custom lower several nodes.
+    for (int i = MVT::FIRST_VECTOR_VALUETYPE;
+             i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
+      MVT VT = (MVT::SimpleValueType)i;
+
+      // Extract subvector is special because the value type
+      // (result) is 256/128-bit but the source is 512-bit wide.
+      if (VT.is128BitVector() || VT.is256BitVector())
+        setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Custom);
+
+      if (VT.getVectorElementType() == MVT::i1)
+        setOperationAction(ISD::EXTRACT_SUBVECTOR, VT, Legal);
+
+      // Do not attempt to custom lower other non-512-bit vectors
+      if (!VT.is512BitVector())
+        continue;
+
+      if (VT != MVT::v8i64) {
+        setOperationAction(ISD::XOR,   VT, Promote);
+        AddPromotedToType (ISD::XOR,   VT, MVT::v8i64);
+        setOperationAction(ISD::OR,    VT, Promote);
+        AddPromotedToType (ISD::OR,    VT, MVT::v8i64);
+        setOperationAction(ISD::AND,   VT, Promote);
+        AddPromotedToType (ISD::AND,   VT, MVT::v8i64);
+      }
+      setOperationAction(ISD::VECTOR_SHUFFLE,      VT, Custom);
+      setOperationAction(ISD::INSERT_VECTOR_ELT,   VT, Custom);
+      setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
+      setOperationAction(ISD::VSELECT,             VT, Legal);
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT,  VT, Custom);
+      setOperationAction(ISD::SCALAR_TO_VECTOR,    VT, Custom);
+      setOperationAction(ISD::INSERT_SUBVECTOR,    VT, Custom);
+    }
+    for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
+      MVT VT = (MVT::SimpleValueType)i;
+
+      // Do not attempt to promote non-256-bit vectors
+      if (!VT.is512BitVector())
+        continue;
+
+      setOperationAction(ISD::LOAD,   VT, Promote);
+      AddPromotedToType (ISD::LOAD,   VT, MVT::v8i64);
+      setOperationAction(ISD::SELECT, VT, Promote);
+      AddPromotedToType (ISD::SELECT, VT, MVT::v8i64);
+    }
+  }// has  AVX-512
+
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
   // of this type with custom code.
   for (int VT = MVT::FIRST_VECTOR_VALUETYPE;
@@ -2007,12 +2183,18 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         RC = &X86::FR32RegClass;
       else if (RegVT == MVT::f64)
         RC = &X86::FR64RegClass;
+      else if (RegVT.is512BitVector())
+        RC = &X86::VR512RegClass;
       else if (RegVT.is256BitVector())
         RC = &X86::VR256RegClass;
       else if (RegVT.is128BitVector())
         RC = &X86::VR128RegClass;
       else if (RegVT == MVT::x86mmx)
         RC = &X86::VR64RegClass;
+      else if (RegVT == MVT::v8i1)
+        RC = &X86::VK8RegClass;
+      else if (RegVT == MVT::v16i1)
+        RC = &X86::VK16RegClass;
       else
         llvm_unreachable("Unknown argument type!");
 
@@ -4053,40 +4235,57 @@ static bool isMOVDDUPMask(ArrayRef<int> Mask, EVT VT) {
   return true;
 }
 
-/// isVEXTRACTF128Index - Return true if the specified
+/// isVEXTRACTIndex - Return true if the specified
 /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
-/// suitable for input to VEXTRACTF128.
-bool X86::isVEXTRACTF128Index(SDNode *N) {
+/// suitable for instruction that extract 128 or 256 bit vectors
+static bool isVEXTRACTIndex(SDNode *N, unsigned vecWidth) {
+  assert((vecWidth == 128 || vecWidth == 256) && "Unexpected vector width");
   if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
     return false;
 
-  // The index should be aligned on a 128-bit boundary.
+  // The index should be aligned on a vecWidth-bit boundary.
   uint64_t Index =
     cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
 
   MVT VT = N->getValueType(0).getSimpleVT();
   unsigned ElSize = VT.getVectorElementType().getSizeInBits();
-  bool Result = (Index * ElSize) % 128 == 0;
+  bool Result = (Index * ElSize) % vecWidth == 0;
 
   return Result;
 }
 
-/// isVINSERTF128Index - Return true if the specified INSERT_SUBVECTOR
+/// isVINSERTIndex - Return true if the specified INSERT_SUBVECTOR
 /// operand specifies a subvector insert that is suitable for input to
-/// VINSERTF128.
-bool X86::isVINSERTF128Index(SDNode *N) {
+/// insertion of 128 or 256-bit subvectors
+static bool isVINSERTIndex(SDNode *N, unsigned vecWidth) {
+  assert((vecWidth == 128 || vecWidth == 256) && "Unexpected vector width");
   if (!isa<ConstantSDNode>(N->getOperand(2).getNode()))
     return false;
-
-  // The index should be aligned on a 128-bit boundary.
+  // The index should be aligned on a vecWidth-bit boundary.
   uint64_t Index =
     cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
 
   MVT VT = N->getValueType(0).getSimpleVT();
   unsigned ElSize = VT.getVectorElementType().getSizeInBits();
-  bool Result = (Index * ElSize) % 128 == 0;
+  bool Result = (Index * ElSize) % vecWidth == 0;
 
   return Result;
+}
+
+bool X86::isVINSERT128Index(SDNode *N) {
+  return isVINSERTIndex(N, 128);
+}
+
+bool X86::isVINSERT256Index(SDNode *N) {
+  return isVINSERTIndex(N, 256);
+}
+
+bool X86::isVEXTRACT128Index(SDNode *N) {
+  return isVEXTRACTIndex(N, 128);
+}
+
+bool X86::isVEXTRACT256Index(SDNode *N) {
+  return isVEXTRACTIndex(N, 256);
 }
 
 /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
@@ -4192,12 +4391,10 @@ static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
   return (Val - i) * EltSize;
 }
 
-/// getExtractVEXTRACTF128Immediate - Return the appropriate immediate
-/// to extract the specified EXTRACT_SUBVECTOR index with VEXTRACTF128
-/// instructions.
-unsigned X86::getExtractVEXTRACTF128Immediate(SDNode *N) {
+static unsigned getExtractVEXTRACTImmediate(SDNode *N, unsigned vecWidth) {
+  assert((vecWidth == 128 || vecWidth == 256) && "Unsupported vector width");
   if (!isa<ConstantSDNode>(N->getOperand(1).getNode()))
-    llvm_unreachable("Illegal extract subvector for VEXTRACTF128");
+    llvm_unreachable("Illegal extract subvector for VEXTRACT");
 
   uint64_t Index =
     cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
@@ -4205,16 +4402,14 @@ unsigned X86::getExtractVEXTRACTF128Immediate(SDNode *N) {
   MVT VecVT = N->getOperand(0).getValueType().getSimpleVT();
   MVT ElVT = VecVT.getVectorElementType();
 
-  unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();
+  unsigned NumElemsPerChunk = vecWidth / ElVT.getSizeInBits();
   return Index / NumElemsPerChunk;
 }
 
-/// getInsertVINSERTF128Immediate - Return the appropriate immediate
-/// to insert at the specified INSERT_SUBVECTOR index with VINSERTF128
-/// instructions.
-unsigned X86::getInsertVINSERTF128Immediate(SDNode *N) {
+static unsigned getInsertVINSERTImmediate(SDNode *N, unsigned vecWidth) {
+  assert((vecWidth == 128 || vecWidth == 256) && "Unsupported vector width");
   if (!isa<ConstantSDNode>(N->getOperand(2).getNode()))
-    llvm_unreachable("Illegal insert subvector for VINSERTF128");
+    llvm_unreachable("Illegal insert subvector for VINSERT");
 
   uint64_t Index =
     cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
@@ -4222,8 +4417,36 @@ unsigned X86::getInsertVINSERTF128Immediate(SDNode *N) {
   MVT VecVT = N->getValueType(0).getSimpleVT();
   MVT ElVT = VecVT.getVectorElementType();
 
-  unsigned NumElemsPerChunk = 128 / ElVT.getSizeInBits();
+  unsigned NumElemsPerChunk = vecWidth / ElVT.getSizeInBits();
   return Index / NumElemsPerChunk;
+}
+
+/// getExtractVEXTRACT128Immediate - Return the appropriate immediate
+/// to extract the specified EXTRACT_SUBVECTOR index with VEXTRACTF128
+/// and VINSERTI128 instructions.
+unsigned X86::getExtractVEXTRACT128Immediate(SDNode *N) {
+  return getExtractVEXTRACTImmediate(N, 128);
+}
+
+/// getExtractVEXTRACT256Immediate - Return the appropriate immediate
+/// to extract the specified EXTRACT_SUBVECTOR index with VEXTRACTF64x4
+/// and VINSERTI64x4 instructions.
+unsigned X86::getExtractVEXTRACT256Immediate(SDNode *N) {
+  return getExtractVEXTRACTImmediate(N, 256);
+}
+
+/// getInsertVINSERT128Immediate - Return the appropriate immediate
+/// to insert at the specified INSERT_SUBVECTOR index with VINSERTF128
+/// and VINSERTI128 instructions.
+unsigned X86::getInsertVINSERT128Immediate(SDNode *N) {
+  return getInsertVINSERTImmediate(N, 128);
+}
+
+/// getInsertVINSERT256Immediate - Return the appropriate immediate
+/// to insert at the specified INSERT_SUBVECTOR index with VINSERTF46x4
+/// and VINSERTI64x4 instructions.
+unsigned X86::getInsertVINSERT256Immediate(SDNode *N) {
+  return getInsertVINSERTImmediate(N, 256);
 }
 
 /// getShuffleCLImmediate - Return the appropriate immediate to shuffle
@@ -5715,19 +5938,22 @@ static SDValue LowerAVXCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
   MVT ResVT = Op.getValueType().getSimpleVT();
 
-  assert(ResVT.is256BitVector() && "Value type must be 256-bit wide");
+  assert((ResVT.is256BitVector() ||
+          ResVT.is512BitVector()) && "Value type must be 256-/512-bit wide");
 
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
   unsigned NumElems = ResVT.getVectorNumElements();
+  if(ResVT.is256BitVector())
+    return Concat128BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
 
-  return Concat128BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
+  return Concat256BitVectors(V1, V2, ResVT, NumElems, DAG, dl);
 }
 
 static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getNumOperands() == 2);
 
-  // 256-bit AVX can use the vinsertf128 instruction to create 256-bit vectors
+  // AVX/AVX-512 can use the vinsertf128 instruction to create 256-bit vectors
   // from two other 128-bit ones.
   return LowerAVXCONCAT_VECTORS(Op, DAG);
 }
@@ -7197,6 +7423,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
 SDValue
 X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
                                            SelectionDAG &DAG) const {
+  SDLoc dl(Op);
   if (!isa<ConstantSDNode>(Op.getOperand(1)))
     return SDValue();
 
@@ -7205,17 +7432,19 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
 
   // If this is a 256-bit vector result, first extract the 128-bit vector and
   // then extract the element from the 128-bit vector.
-  if (VecVT.is256BitVector()) {
-    SDLoc dl(Op.getNode());
-    unsigned NumElems = VecVT.getVectorNumElements();
+  if (VecVT.is256BitVector() || VecVT.is512BitVector()) {
     SDValue Idx = Op.getOperand(1);
     unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
 
     // Get the 128-bit vector.
     Vec = Extract128BitVector(Vec, IdxVal, DAG, dl);
+    EVT EltVT = VecVT.getVectorElementType();
 
-    if (IdxVal >= NumElems/2)
-      IdxVal -= NumElems/2;
+    unsigned ElemsPerChunk = 128 / EltVT.getSizeInBits();
+
+    //if (IdxVal >= NumElems/2)
+    //  IdxVal -= NumElems/2;
+    IdxVal -= (IdxVal/ElemsPerChunk)*ElemsPerChunk;
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, Op.getValueType(), Vec,
                        DAG.getConstant(IdxVal, MVT::i32));
   }
@@ -7229,7 +7458,6 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
   }
 
   MVT VT = Op.getValueType().getSimpleVT();
-  SDLoc dl(Op);
   // TODO: handle v16i8.
   if (VT.getSizeInBits() == 16) {
     SDValue Vec = Op.getOperand(0);
@@ -7350,19 +7578,20 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
 
   // If this is a 256-bit vector result, first extract the 128-bit vector,
   // insert the element into the extracted half and then place it back.
-  if (VT.is256BitVector()) {
+  if (VT.is256BitVector() || VT.is512BitVector()) {
     if (!isa<ConstantSDNode>(N2))
       return SDValue();
 
     // Get the desired 128-bit vector half.
-    unsigned NumElems = VT.getVectorNumElements();
     unsigned IdxVal = cast<ConstantSDNode>(N2)->getZExtValue();
     SDValue V = Extract128BitVector(N0, IdxVal, DAG, dl);
 
     // Insert the element into the desired half.
-    bool Upper = IdxVal >= NumElems/2;
+    unsigned NumEltsIn128 = 128/EltVT.getSizeInBits();
+    unsigned IdxIn128 = IdxVal - (IdxVal/NumEltsIn128) * NumEltsIn128;
+
     V = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, V.getValueType(), V, N1,
-                 DAG.getConstant(Upper ? IdxVal-NumElems/2 : IdxVal, MVT::i32));
+                    DAG.getConstant(IdxIn128, MVT::i32));
 
     // Insert the changed part back to the 256-bit vector
     return Insert128BitVector(N0, V, IdxVal, DAG, dl);
@@ -7395,9 +7624,10 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
   // vector and then insert into the 256-bit vector.
   if (!OpVT.is128BitVector()) {
     // Insert into a 128-bit vector.
+    unsigned SizeFactor = OpVT.getSizeInBits()/128;
     EVT VT128 = EVT::getVectorVT(*Context,
                                  OpVT.getVectorElementType(),
-                                 OpVT.getVectorNumElements() / 2);
+                                 OpVT.getVectorNumElements() / SizeFactor);
 
     Op = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Op.getOperand(0));
 
@@ -7420,16 +7650,22 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
 // upper bits of a vector.
 static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
                                       SelectionDAG &DAG) {
-  if (Subtarget->hasFp256()) {
-    SDLoc dl(Op.getNode());
-    SDValue Vec = Op.getNode()->getOperand(0);
-    SDValue Idx = Op.getNode()->getOperand(1);
+  SDLoc dl(Op);
+  SDValue In =  Op.getOperand(0);
+  SDValue Idx = Op.getOperand(1);
+  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+  EVT ResVT   = Op.getValueType();
+  EVT InVT    = In.getValueType();
 
-    if (Op.getNode()->getValueType(0).is128BitVector() &&
-        Vec.getNode()->getValueType(0).is256BitVector() &&
+  if (Subtarget->hasFp256()) {
+    if (ResVT.is128BitVector() &&
+        (InVT.is256BitVector() || InVT.is512BitVector()) &&
         isa<ConstantSDNode>(Idx)) {
-      unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-      return Extract128BitVector(Vec, IdxVal, DAG, dl);
+      return Extract128BitVector(In, IdxVal, DAG, dl);
+    }
+    if (ResVT.is256BitVector() && InVT.is512BitVector() &&
+        isa<ConstantSDNode>(Idx)) {
+      return Extract256BitVector(In, IdxVal, DAG, dl);
     }
   }
   return SDValue();
@@ -7446,11 +7682,19 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
     SDValue SubVec = Op.getNode()->getOperand(1);
     SDValue Idx = Op.getNode()->getOperand(2);
 
-    if (Op.getNode()->getValueType(0).is256BitVector() &&
+    if ((Op.getNode()->getValueType(0).is256BitVector() ||
+         Op.getNode()->getValueType(0).is512BitVector()) &&
         SubVec.getNode()->getValueType(0).is128BitVector() &&
         isa<ConstantSDNode>(Idx)) {
       unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
       return Insert128BitVector(Vec, SubVec, IdxVal, DAG, dl);
+    }
+
+    if (Op.getNode()->getValueType(0).is512BitVector() &&
+        SubVec.getNode()->getValueType(0).is256BitVector() &&
+        isa<ConstantSDNode>(Idx)) {
+      unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+      return Insert256BitVector(Vec, SubVec, IdxVal, DAG, dl);
     }
   }
   return SDValue();
