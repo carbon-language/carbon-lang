@@ -56,6 +56,7 @@
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -128,6 +129,7 @@ namespace {
     Module *Mod;          // Module we are verifying right now
     LLVMContext *Context; // Context within which we are verifying
     DominatorTree *DT;    // Dominator Tree, caution can be null!
+    const DataLayout *DL;
 
     std::string Messages;
     raw_string_ostream MessagesStr;
@@ -152,13 +154,13 @@ namespace {
 
     Verifier()
       : FunctionPass(ID), Broken(false),
-        action(AbortProcessAction), Mod(0), Context(0), DT(0),
+        action(AbortProcessAction), Mod(0), Context(0), DT(0), DL(0),
         MessagesStr(Messages), PersonalityFn(0) {
       initializeVerifierPass(*PassRegistry::getPassRegistry());
     }
     explicit Verifier(VerifierFailureAction ctn)
       : FunctionPass(ID), Broken(false), action(ctn), Mod(0),
-        Context(0), DT(0), MessagesStr(Messages), PersonalityFn(0) {
+        Context(0), DT(0), DL(0), MessagesStr(Messages), PersonalityFn(0) {
       initializeVerifierPass(*PassRegistry::getPassRegistry());
     }
 
@@ -166,6 +168,8 @@ namespace {
       Mod = &M;
       Context = &M.getContext();
       Finder.reset();
+
+      DL = getAnalysisIfAvailable<DataLayout>();
 
       // We must abort before returning back to the pass manager, or else the
       // pass manager may try to run other passes on the broken module.
@@ -320,6 +324,9 @@ namespace {
                               bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
                              const Value *V);
+
+    void VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy);
+    void VerifyConstantExprBitcastType(const ConstantExpr *CE);
 
     void verifyDebugInfo(Module &M);
 
@@ -484,6 +491,33 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
           Assert1(V->hasName(), "members of llvm.used must be named", V);
         }
       }
+    }
+  }
+
+  if (!GV.hasInitializer()) {
+    visitGlobalValue(GV);
+    return;
+  }
+
+  // Walk any aggregate initializers looking for bitcasts between address spaces
+  SmallPtrSet<const Value *, 4> Visited;
+  SmallVector<const Value *, 4> WorkStack;
+  WorkStack.push_back(cast<Value>(GV.getInitializer()));
+
+  while (!WorkStack.empty()) {
+    const Value *V = WorkStack.pop_back_val();
+    if (!Visited.insert(V))
+      continue;
+
+    if (const User *U = dyn_cast<User>(V)) {
+      for (unsigned I = 0, N = U->getNumOperands(); I != N; ++I)
+        WorkStack.push_back(U->getOperand(I));
+    }
+
+    if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+      VerifyConstantExprBitcastType(CE);
+      if (Broken)
+        return;
     }
   }
 
@@ -863,6 +897,52 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
             Attrs.hasAttribute(AttributeSet::FunctionIndex,
                                Attribute::AlwaysInline)),
           "Attributes 'noinline and alwaysinline' are incompatible!", V);
+}
+
+void Verifier::VerifyBitcastType(const Value *V, Type *DestTy, Type *SrcTy) {
+  // Get the size of the types in bits, we'll need this later
+  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
+
+  // BitCast implies a no-op cast of type only. No bits change.
+  // However, you can't cast pointers to anything but pointers.
+  Assert1(SrcTy->isPointerTy() == DestTy->isPointerTy(),
+          "Bitcast requires both operands to be pointer or neither", V);
+  Assert1(SrcBitSize == DestBitSize,
+          "Bitcast requires types of same width", V);
+
+  // Disallow aggregates.
+  Assert1(!SrcTy->isAggregateType(),
+          "Bitcast operand must not be aggregate", V);
+  Assert1(!DestTy->isAggregateType(),
+          "Bitcast type must not be aggregate", V);
+
+  // Without datalayout, assume all address spaces are the same size.
+  // Don't check if both types are not pointers.
+  // Skip casts between scalars and vectors.
+  if (!DL ||
+      !SrcTy->isPtrOrPtrVectorTy() ||
+      !DestTy->isPtrOrPtrVectorTy() ||
+      SrcTy->isVectorTy() != DestTy->isVectorTy()) {
+    return;
+  }
+
+  unsigned SrcAS = SrcTy->getPointerAddressSpace();
+  unsigned DstAS = DestTy->getPointerAddressSpace();
+
+  unsigned SrcASSize = DL->getPointerSizeInBits(SrcAS);
+  unsigned DstASSize = DL->getPointerSizeInBits(DstAS);
+  Assert1(SrcASSize == DstASSize,
+          "Bitcasts between pointers of different address spaces must have "
+          "the same size pointers, otherwise use PtrToInt/IntToPtr.", V);
+}
+
+void Verifier::VerifyConstantExprBitcastType(const ConstantExpr *CE) {
+  if (CE->getOpcode() == Instruction::BitCast) {
+    Type *SrcTy = CE->getOperand(0)->getType();
+    Type *DstTy = CE->getType();
+    VerifyBitcastType(CE, DstTy, SrcTy);
+  }
 }
 
 bool Verifier::VerifyAttributeCount(AttributeSet Attrs, unsigned Params) {
@@ -1349,26 +1429,9 @@ void Verifier::visitIntToPtrInst(IntToPtrInst &I) {
 }
 
 void Verifier::visitBitCastInst(BitCastInst &I) {
-  // Get the source and destination types
   Type *SrcTy = I.getOperand(0)->getType();
   Type *DestTy = I.getType();
-
-  // Get the size of the types in bits, we'll need this later
-  unsigned SrcBitSize = SrcTy->getPrimitiveSizeInBits();
-  unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
-
-  // BitCast implies a no-op cast of type only. No bits change.
-  // However, you can't cast pointers to anything but pointers.
-  Assert1(SrcTy->isPointerTy() == DestTy->isPointerTy(),
-          "Bitcast requires both operands to be pointer or neither", &I);
-  Assert1(SrcBitSize == DestBitSize, "Bitcast requires types of same width",&I);
-
-  // Disallow aggregates.
-  Assert1(!SrcTy->isAggregateType(),
-          "Bitcast operand must not be aggregate", &I);
-  Assert1(!DestTy->isAggregateType(),
-          "Bitcast type must not be aggregate", &I);
-
+  VerifyBitcastType(&I, DestTy, SrcTy);
   visitInstruction(I);
 }
 
@@ -1992,6 +2055,27 @@ void Verifier::visitInstruction(Instruction &I) {
       Assert1((i + 1 == e && isa<CallInst>(I)) ||
               (i + 3 == e && isa<InvokeInst>(I)),
               "Cannot take the address of an inline asm!", &I);
+    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I.getOperand(i))) {
+      if (CE->getType()->isPtrOrPtrVectorTy()) {
+        // If we have a ConstantExpr pointer, we need to see if it came from an
+        // illegal bitcast (inttoptr <constant int> )
+        SmallVector<const ConstantExpr *, 4> Stack;
+        SmallPtrSet<const ConstantExpr *, 4> Visited;
+        Stack.push_back(CE);
+
+        while (!Stack.empty()) {
+          const ConstantExpr *V = Stack.pop_back_val();
+          if (!Visited.insert(V))
+            continue;
+
+          VerifyConstantExprBitcastType(V);
+
+          for (unsigned I = 0, N = V->getNumOperands(); I != N; ++I) {
+            if (ConstantExpr *Op = dyn_cast<ConstantExpr>(V->getOperand(I)))
+              Stack.push_back(Op);
+          }
+        }
+      }
     }
   }
 

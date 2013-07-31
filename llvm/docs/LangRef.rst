@@ -1061,7 +1061,9 @@ the specifications in the ``datalayout`` keyword. The default
 specifications are given in this list:
 
 -  ``E`` - big endian
--  ``p:64:64:64`` - 64-bit pointers with 64-bit alignment
+-  ``p:64:64:64`` - 64-bit pointers with 64-bit alignment.
+-  ``p[n]:64:64:64`` - Other address spaces are assumed to be the
+   same as the default address space.
 -  ``S0`` - natural stack alignment is unspecified
 -  ``i1:8:8`` - i1 is 8-bit (byte) aligned
 -  ``i8:8:8`` - i8 is 8-bit (byte) aligned
@@ -2583,7 +2585,7 @@ Examples:
 It is sometimes useful to attach information to loop constructs. Currently,
 loop metadata is implemented as metadata attached to the branch instruction
 in the loop latch block. This type of metadata refer to a metadata node that is
-guaranteed to be separate for each loop. The loop identifier metadata is 
+guaranteed to be separate for each loop. The loop identifier metadata is
 specified with the name ``llvm.loop``.
 
 The loop identifier metadata is implemented using a metadata that refers to
@@ -5613,24 +5615,24 @@ Arguments:
 
 The '``bitcast``' instruction takes a value to cast, which must be a
 non-aggregate first class value, and a type to cast it to, which must
-also be a non-aggregate :ref:`first class <t_firstclass>` type. The bit
-sizes of ``value`` and the destination type, ``ty2``, must be identical.
-If the source type is a pointer, the destination type must also be a
-pointer. This instruction supports bitwise conversion of vectors to
-integers and to vectors of other types (as long as they have the same
-size).
+also be a non-aggregate :ref:`first class <t_firstclass>` type. The
+bit sizes of ``value`` and the destination type, ``ty2``, must be
+identical.  If the source type is a pointer, the destination type must
+also be a pointer of the same size. This instruction supports bitwise
+conversion of vectors to integers and to vectors of other types (as
+long as they have the same size).
 
 Semantics:
 """"""""""
 
-The '``bitcast``' instruction converts ``value`` to type ``ty2``. It is
-always a *no-op cast* because no bits change with this conversion. The
-conversion is done as if the ``value`` had been stored to memory and
-read back as type ``ty2``. Pointer (or vector of pointers) types may
-only be converted to other pointer (or vector of pointers) types with
-this instruction. To convert pointers to other types, use the
-:ref:`inttoptr <i_inttoptr>` or :ref:`ptrtoint <i_ptrtoint>` instructions
-first.
+The '``bitcast``' instruction converts ``value`` to type ``ty2``. It
+is always a *no-op cast* because no bits change with this
+conversion. The conversion is done as if the ``value`` had been stored
+to memory and read back as type ``ty2``. Pointer (or vector of
+pointers) types may only be converted to other pointer (or vector of
+pointers) types with this instruction if the pointer sizes are
+equal. To convert pointers to other types, use the :ref:`inttoptr
+<i_inttoptr>` or :ref:`ptrtoint <i_ptrtoint>` instructions first.
 
 Example:
 """"""""
