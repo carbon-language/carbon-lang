@@ -909,12 +909,16 @@ class CNDE_Common <bits<5> inst> : R600_3OP <
 class CNDGT_Common <bits<5> inst> : R600_3OP <
   inst, "CNDGT",
   [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GT))]
->;
+> {
+  let Itinerary = VecALU;
+}
 
 class CNDGE_Common <bits<5> inst> : R600_3OP <
   inst, "CNDGE",
   [(set f32:$dst, (selectcc f32:$src0, FP_ZERO, f32:$src1, f32:$src2, COND_GE))]
->;
+> {
+  let Itinerary = VecALU;
+}
 
 
 let isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"  in {
@@ -984,35 +988,30 @@ multiclass CUBE_Common <bits<11> inst> {
 class EXP_IEEE_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "EXP_IEEE", fexp2
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class FLT_TO_INT_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "FLT_TO_INT", fp_to_sint
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class INT_TO_FLT_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "INT_TO_FLT", sint_to_fp
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class FLT_TO_UINT_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "FLT_TO_UINT", fp_to_uint
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class UINT_TO_FLT_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "UINT_TO_FLT", uint_to_fp
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
@@ -1023,7 +1022,6 @@ class LOG_CLAMPED_Common <bits<11> inst> : R600_1OP <
 class LOG_IEEE_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "LOG_IEEE", flog2
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
@@ -1033,72 +1031,61 @@ class ASHR_Common <bits<11> inst> : R600_2OP_Helper <inst, "ASHR", sra>;
 class MULHI_INT_Common <bits<11> inst> : R600_2OP_Helper <
   inst, "MULHI_INT", mulhs
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 class MULHI_UINT_Common <bits<11> inst> : R600_2OP_Helper <
   inst, "MULHI", mulhu
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 class MULLO_INT_Common <bits<11> inst> : R600_2OP_Helper <
   inst, "MULLO_INT", mul
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 class MULLO_UINT_Common <bits<11> inst> : R600_2OP <inst, "MULLO_UINT", []> {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class RECIP_CLAMPED_Common <bits<11> inst> : R600_1OP <
   inst, "RECIP_CLAMPED", []
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class RECIP_IEEE_Common <bits<11> inst> : R600_1OP <
   inst, "RECIP_IEEE", [(set f32:$dst, (fdiv FP_ONE, f32:$src0))]
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class RECIP_UINT_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "RECIP_UINT", AMDGPUurecip
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class RECIPSQRT_CLAMPED_Common <bits<11> inst> : R600_1OP_Helper <
   inst, "RECIPSQRT_CLAMPED", int_AMDGPU_rsq
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class RECIPSQRT_IEEE_Common <bits<11> inst> : R600_1OP <
   inst, "RECIPSQRT_IEEE", []
 > {
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class SIN_Common <bits<11> inst> : R600_1OP <
   inst, "SIN", [(set f32:$dst, (SIN_HW f32:$src0))]>{
   let Trig = 1;
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
 class COS_Common <bits<11> inst> : R600_1OP <
   inst, "COS", [(set f32:$dst, (COS_HW f32:$src0))]> {
   let Trig = 1;
-  let TransOnly = 1;
   let Itinerary = TransALU;
 }
 
@@ -1480,7 +1467,6 @@ let hasSideEffects = 1 in {
 
   def FLT_TO_INT_eg : FLT_TO_INT_Common<0x50> {
     let Pattern = [];
-    let TransOnly = 0;
     let Itinerary = AnyALU;
   }
 

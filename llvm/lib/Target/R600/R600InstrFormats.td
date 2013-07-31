@@ -16,7 +16,6 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
     : AMDGPUInst <outs, ins, asm, pattern> {
 
   field bits<64> Inst;
-  bit TransOnly = 0;
   bit Trig = 0;
   bit Op3 = 0;
   bit isVector = 0;
@@ -37,7 +36,6 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   let Pattern = pattern;
   let Itinerary = itin;
 
-  let TSFlags{0} = TransOnly;
   let TSFlags{4} = Trig;
   let TSFlags{5} = Op3;
 
