@@ -5418,6 +5418,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (GetThreadList().SetSelectedThreadByIndexID (selected_tid) && selected_stack_id.IsValid())
             {
                 // We were able to restore the selected thread, now restore the frame:
+                Mutex::Locker lock(GetThreadList().GetMutex());
                 StackFrameSP old_frame_sp = GetThreadList().GetSelectedThread()->GetFrameWithStackID(selected_stack_id);
                 if (old_frame_sp)
                     GetThreadList().GetSelectedThread()->SetSelectedFrame(old_frame_sp.get());
