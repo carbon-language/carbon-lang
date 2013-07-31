@@ -2281,32 +2281,47 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
                        GCCInstallation.getBiarchSuffix()),
                       Paths);
 
+    // Sourcery CodeBench MIPS toolchain holds some libraries under
+    // the parent prefix of the GCC installation.
+    // FIXME: It would be cleaner to model this as a variant of multilib. IE,
+    // instead of 'lib64' it would be 'lib/el'.
+    std::string MultilibSuffix;
+    appendMipsTargetSuffix(MultilibSuffix, Arch, Args);
+
+    // GCC cross compiling toolchains will install target libraries which ship
+    // as part of the toolchain under <prefix>/<triple>/<libdir> rather than as
+    // any part of the GCC installation in
+    // <prefix>/<libdir>/gcc/<triple>/<version>. This decision is somewhat
+    // debatable, but is the reality today. We need to search this tree even
+    // when we have a sysroot somewhere else. It is the responsibility of
+    // whomever is doing the cross build targetting a sysroot using a GCC
+    // installation that is *not* within the system root to ensure two things:
+    //
+    //  1) Any DSOs that are linked in from this tree or from the install path
+    //     above must be preasant on the system root and found via an
+    //     appropriate rpath.
+    //  2) There must not be libraries installed into
+    //     <prefix>/<triple>/<libdir> unless they should be preferred over
+    //     those within the system root.
+    //
+    // Note that this matches the GCC behavior. See the below comment for where
+    // Clang diverges from GCC's behavior.
+    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + Multilib +
+                        MultilibSuffix,
+                    Paths);
+
     // If the GCC installation we found is inside of the sysroot, we want to
     // prefer libraries installed in the parent prefix of the GCC installation.
     // It is important to *not* use these paths when the GCC installation is
     // outside of the system root as that can pick up unintended libraries.
     // This usually happens when there is an external cross compiler on the
     // host system, and a more minimal sysroot available that is the target of
-    // the cross.
+    // the cross. Note that GCC does include some of these directories in some
+    // configurations but this seems somewhere between questionable and simply
+    // a bug.
     if (StringRef(LibPath).startswith(SysRoot)) {
-      addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + Multilib,
-                      Paths);
       addPathIfExists(LibPath + "/" + MultiarchTriple, Paths);
       addPathIfExists(LibPath + "/../" + Multilib, Paths);
-    }
-    // On Android, libraries in the parent prefix of the GCC installation are
-    // preferred to the ones under sysroot.
-    if (IsAndroid) {
-      addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
-    }
-    // Sourcery CodeBench MIPS toolchain holds some libraries under
-    // the parent prefix of the GCC installation.
-    if (IsMips) {
-      std::string Suffix;
-      appendMipsTargetSuffix(Suffix, Arch, Args);
-      addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" +
-                      Multilib + Suffix,
-                      Paths);
     }
   }
   addPathIfExists(SysRoot + "/lib/" + MultiarchTriple, Paths);
@@ -2327,10 +2342,14 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
     if (!GCCInstallation.getBiarchSuffix().empty())
       addPathIfExists(GCCInstallation.getInstallPath(), Paths);
 
-    if (StringRef(LibPath).startswith(SysRoot)) {
-      addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
+    // See comments above on the multilib variant for details of why this is
+    // included even from outside the sysroot.
+    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
+
+    // See comments above on the multilib variant for details of why this is
+    // only included from within the sysroot.
+    if (StringRef(LibPath).startswith(SysRoot))
       addPathIfExists(LibPath, Paths);
-    }
   }
   addPathIfExists(SysRoot + "/lib", Paths);
   addPathIfExists(SysRoot + "/usr/lib", Paths);
