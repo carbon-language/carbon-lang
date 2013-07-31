@@ -8,7 +8,7 @@ declare i64 @foo(i64 *)
 define i64 @f1(i64 %easy, i64 *%ptr, i64 %limit) {
 ; CHECK-LABEL: f1:
 ; CHECK: clgfi %r4, 42
-; CHECK: locgnl %r2, 0(%r3)
+; CHECK: locghe %r2, 0(%r3)
 ; CHECK: br %r14
   %cond = icmp ult i64 %limit, 42
   %other = load i64 *%ptr
@@ -32,7 +32,7 @@ define i64 @f2(i64 %easy, i64 *%ptr, i64 %limit) {
 define i64 @f3(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK-LABEL: f3:
 ; CHECK: clgfi %r4, 42
-; CHECK: locgnl %r2, 524280(%r3)
+; CHECK: locghe %r2, 524280(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65535
   %cond = icmp ult i64 %limit, 42
@@ -46,7 +46,7 @@ define i64 @f4(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK-LABEL: f4:
 ; CHECK: agfi %r3, 524288
 ; CHECK: clgfi %r4, 42
-; CHECK: locgnl %r2, 0(%r3)
+; CHECK: locghe %r2, 0(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65536
   %cond = icmp ult i64 %limit, 42
@@ -59,7 +59,7 @@ define i64 @f4(i64 %easy, i64 *%base, i64 %limit) {
 define i64 @f5(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK-LABEL: f5:
 ; CHECK: clgfi %r4, 42
-; CHECK: locgnl %r2, -524288(%r3)
+; CHECK: locghe %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65536
   %cond = icmp ult i64 %limit, 42
@@ -73,7 +73,7 @@ define i64 @f6(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK-LABEL: f6:
 ; CHECK: agfi %r3, -524296
 ; CHECK: clgfi %r4, 42
-; CHECK: locgnl %r2, 0(%r3)
+; CHECK: locghe %r2, 0(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65537
   %cond = icmp ult i64 %limit, 42
@@ -86,7 +86,7 @@ define i64 @f6(i64 %easy, i64 *%base, i64 %limit) {
 define i64 @f7(i64 %alt, i64 %limit) {
 ; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
-; CHECK: locgnl %r2, {{[0-9]+}}(%r15)
+; CHECK: locghe %r2, {{[0-9]+}}(%r15)
 ; CHECK: br %r14
   %ptr = alloca i64
   %easy = call i64 @foo(i64 *%ptr)
@@ -100,7 +100,7 @@ define i64 @f7(i64 %alt, i64 %limit) {
 define i64 @f8(i64 %easy, i64 %limit, i64 %base, i64 %index) {
 ; CHECK-LABEL: f8:
 ; CHECK: clgfi %r3, 42
-; CHECK: locgnl %r2, 0({{%r[1-5]}})
+; CHECK: locghe %r2, 0({{%r[1-5]}})
 ; CHECK: br %r14
   %add = add i64 %base, %index
   %ptr = inttoptr i64 %add to i64 *

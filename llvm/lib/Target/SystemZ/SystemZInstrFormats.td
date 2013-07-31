@@ -735,10 +735,14 @@ class UnaryRILPC<string mnemonic, bits<12> opcode, SDPatternOperator operator,
 }
 
 class CondUnaryRSY<string mnemonic, bits<16> opcode,
-                   RegisterOperand cls, bits<5> bytes,
-                   AddressingMode mode = bdaddr20only>
-  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R1src, mode:$BD2, cond4:$R3),
-            mnemonic#"$R3\t$R1, $BD2", []>,
+                   SDPatternOperator operator, RegisterOperand cls,
+                   bits<5> bytes, AddressingMode mode = bdaddr20only>
+  : InstRSY<opcode, (outs cls:$R1),
+            (ins cls:$R1src, mode:$BD2, cond4:$valid, cond4:$R3),
+            mnemonic#"$R3\t$R1, $BD2",
+            [(set cls:$R1,
+                  (z_select_ccmask (load bdaddr20only:$BD2), cls:$R1src,
+                                   cond4:$valid, cond4:$R3))]>,
     Requires<[FeatureLoadStoreOnCond]> {
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";

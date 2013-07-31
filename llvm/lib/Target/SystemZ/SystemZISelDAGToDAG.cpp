@@ -1012,6 +1012,27 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
       }
     }
     break;
+
+  case SystemZISD::SELECT_CCMASK: {
+    SDValue Op0 = Node->getOperand(0);
+    SDValue Op1 = Node->getOperand(1);
+    // Prefer to put any load first, so that it can be matched as a
+    // conditional load.
+    if (Op1.getOpcode() == ISD::LOAD && Op0.getOpcode() != ISD::LOAD) {
+      SDValue CCValid = Node->getOperand(2);
+      SDValue CCMask = Node->getOperand(3);
+      uint64_t ConstCCValid =
+        cast<ConstantSDNode>(CCValid.getNode())->getZExtValue();
+      uint64_t ConstCCMask =
+        cast<ConstantSDNode>(CCMask.getNode())->getZExtValue();
+      // Invert the condition.
+      CCMask = CurDAG->getConstant(ConstCCValid ^ ConstCCMask,
+                                   CCMask.getValueType());
+      SDValue Op4 = Node->getOperand(4);
+      Node = CurDAG->UpdateNodeOperands(Node, Op1, Op0, CCValid, CCMask, Op4);
+    }
+    break;
+  }
   }
 
   // Select the default instruction

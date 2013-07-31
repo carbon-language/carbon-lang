@@ -272,15 +272,13 @@ let canFoldAsLoad = 1 in {
 
 // Load on condition.
 let isCodeGenOnly = 1, Uses = [CC] in {
-  def LOC  : CondUnaryRSY<"loc",  0xEBF2, GR32, 4>;
-  def LOCG : CondUnaryRSY<"locg", 0xEBE2, GR64, 8>;
+  def LOC  : CondUnaryRSY<"loc",  0xEBF2, nonvolatile_load, GR32, 4>;
+  def LOCG : CondUnaryRSY<"locg", 0xEBE2, nonvolatile_load, GR64, 8>;
 }
 let Uses = [CC] in {
   def AsmLOC  : AsmCondUnaryRSY<"loc",  0xEBF2, GR32, 4>;
   def AsmLOCG : AsmCondUnaryRSY<"locg", 0xEBE2, GR64, 8>;
 }
-defm : CondLoad<LOC,  GR32, nonvolatile_load>;
-defm : CondLoad<LOCG, GR64, nonvolatile_load>;
 
 // Register stores.
 let SimpleBDXStore = 1 in {

@@ -8,7 +8,7 @@ declare i32 @foo(i32 *)
 define i32 @f1(i32 %easy, i32 *%ptr, i32 %limit) {
 ; CHECK-LABEL: f1:
 ; CHECK: clfi %r4, 42
-; CHECK: locnl %r2, 0(%r3)
+; CHECK: loche %r2, 0(%r3)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 42
   %other = load i32 *%ptr
@@ -32,7 +32,7 @@ define i32 @f2(i32 %easy, i32 *%ptr, i32 %limit) {
 define i32 @f3(i32 %easy, i32 *%base, i32 %limit) {
 ; CHECK-LABEL: f3:
 ; CHECK: clfi %r4, 42
-; CHECK: locnl %r2, 524284(%r3)
+; CHECK: loche %r2, 524284(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 131071
   %cond = icmp ult i32 %limit, 42
@@ -46,7 +46,7 @@ define i32 @f4(i32 %easy, i32 *%base, i32 %limit) {
 ; CHECK-LABEL: f4:
 ; CHECK: agfi %r3, 524288
 ; CHECK: clfi %r4, 42
-; CHECK: locnl %r2, 0(%r3)
+; CHECK: loche %r2, 0(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 131072
   %cond = icmp ult i32 %limit, 42
@@ -59,7 +59,7 @@ define i32 @f4(i32 %easy, i32 *%base, i32 %limit) {
 define i32 @f5(i32 %easy, i32 *%base, i32 %limit) {
 ; CHECK-LABEL: f5:
 ; CHECK: clfi %r4, 42
-; CHECK: locnl %r2, -524288(%r3)
+; CHECK: loche %r2, -524288(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -131072
   %cond = icmp ult i32 %limit, 42
@@ -73,7 +73,7 @@ define i32 @f6(i32 %easy, i32 *%base, i32 %limit) {
 ; CHECK-LABEL: f6:
 ; CHECK: agfi %r3, -524292
 ; CHECK: clfi %r4, 42
-; CHECK: locnl %r2, 0(%r3)
+; CHECK: loche %r2, 0(%r3)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -131073
   %cond = icmp ult i32 %limit, 42
@@ -86,7 +86,7 @@ define i32 @f6(i32 %easy, i32 *%base, i32 %limit) {
 define i32 @f7(i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
-; CHECK: locnl %r2, {{[0-9]+}}(%r15)
+; CHECK: loche %r2, {{[0-9]+}}(%r15)
 ; CHECK: br %r14
   %ptr = alloca i32
   %easy = call i32 @foo(i32 *%ptr)
@@ -100,7 +100,7 @@ define i32 @f7(i32 %alt, i32 %limit) {
 define i32 @f8(i32 %easy, i32 %limit, i64 %base, i64 %index) {
 ; CHECK-LABEL: f8:
 ; CHECK: clfi %r3, 42
-; CHECK: locnl %r2, 0({{%r[1-5]}})
+; CHECK: loche %r2, 0({{%r[1-5]}})
 ; CHECK: br %r14
   %add = add i64 %base, %index
   %ptr = inttoptr i64 %add to i32 *
