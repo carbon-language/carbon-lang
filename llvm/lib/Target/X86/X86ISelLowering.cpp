@@ -101,7 +101,8 @@ static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
 /// lowering EXTRACT_VECTOR_ELT operations easier.
 static SDValue Extract128BitVector(SDValue Vec, unsigned IdxVal,
                                    SelectionDAG &DAG, SDLoc dl) {
-  assert(Vec.getValueType().is256BitVector() && "Unexpected vector size!");
+  assert((Vec.getValueType().is256BitVector() ||
+          Vec.getValueType().is512BitVector()) && "Unexpected vector size!");
   return ExtractSubVector(Vec, IdxVal, DAG, dl, 128);
 }
 
