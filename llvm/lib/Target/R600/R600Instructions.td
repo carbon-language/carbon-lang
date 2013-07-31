@@ -1883,9 +1883,6 @@ def VTX_READ_GLOBAL_128_cm : VTX_READ_128_cm <1,
 def IF_PREDICATE_SET  : ILFormat<(outs), (ins GPRI32:$src),
   "IF_PREDICATE_SET $src", []>;
 
-def PREDICATED_BREAK : ILFormat<(outs), (ins GPRI32:$src),
-  "PREDICATED_BREAK $src", []>;
-
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//

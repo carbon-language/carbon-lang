@@ -457,18 +457,11 @@ public:
           MI->eraseFromParent();
           break;
         }
-        case AMDGPU::PREDICATED_BREAK: {
-          CurrentStack--;
-          CfCount += 3;
-          BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_JUMP))
-              .addImm(CfCount)
-              .addImm(1);
+        case AMDGPU::BREAK: {
+          CfCount ++;
           MachineInstr *MIb = BuildMI(MBB, MI, MBB.findDebugLoc(MI),
               getHWInstrDesc(CF_LOOP_BREAK))
               .addImm(0);
-          BuildMI(MBB, MI, MBB.findDebugLoc(MI), getHWInstrDesc(CF_POP))
-              .addImm(CfCount)
-              .addImm(1);
           LoopStack.back().second.insert(MIb);
           MI->eraseFromParent();
           break;

@@ -89,21 +89,6 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         MI.eraseFromParent();
         continue;
         }
-      case AMDGPU::BREAK: {
-        MachineInstr *PredSet = TII->buildDefaultInstruction(MBB, I,
-                                          AMDGPU::PRED_SETE_INT,
-                                          AMDGPU::PREDICATE_BIT,
-                                          AMDGPU::ZERO,
-                                          AMDGPU::ZERO);
-        TII->addFlag(PredSet, 0, MO_FLAG_MASK);
-        TII->setImmOperand(PredSet, AMDGPU::OpName::update_exec_mask, 1);
-
-        BuildMI(MBB, I, MBB.findDebugLoc(I),
-                TII->get(AMDGPU::PREDICATED_BREAK))
-                .addReg(AMDGPU::PREDICATE_BIT);
-        MI.eraseFromParent();
-        continue;
-        }
 
       case AMDGPU::INTERP_PAIR_XY: {
         MachineInstr *BMI;

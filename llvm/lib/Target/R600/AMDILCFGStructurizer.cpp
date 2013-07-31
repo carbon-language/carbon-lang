@@ -251,7 +251,6 @@ protected:
   MachineInstr *getLoopendBlockBranchInstr(MachineBasicBlock *MBB);
   static MachineInstr *getReturnInstr(MachineBasicBlock *MBB);
   static MachineInstr *getContinueInstr(MachineBasicBlock *MBB);
-  static MachineInstr *getLoopBreakInstr(MachineBasicBlock *MBB);
   static bool isReturnBlock(MachineBasicBlock *MBB);
   static void cloneSuccessorList(MachineBasicBlock *DstMBB,
       MachineBasicBlock *SrcMBB) ;
@@ -663,16 +662,6 @@ MachineInstr *AMDGPUCFGStructurizer::getContinueInstr(MachineBasicBlock *MBB) {
   if (It != MBB->rend()) {
     MachineInstr *MI = &(*It);
     if (MI->getOpcode() == AMDGPU::CONTINUE)
-      return MI;
-  }
-  return NULL;
-}
-
-MachineInstr *AMDGPUCFGStructurizer::getLoopBreakInstr(MachineBasicBlock *MBB) {
-  for (MachineBasicBlock::iterator It = MBB->begin(); (It != MBB->end());
-      ++It) {
-    MachineInstr *MI = &(*It);
-    if (MI->getOpcode() == AMDGPU::PREDICATED_BREAK)
       return MI;
   }
   return NULL;
@@ -1529,26 +1518,8 @@ void AMDGPUCFGStructurizer::mergeLooplandBlock(MachineBasicBlock *DstBlk,
   DEBUG(dbgs() << "loopPattern header = BB" << DstBlk->getNumber()
                << " land = BB" << LandMBB->getNumber() << "\n";);
 
-  /* we last inserterd the DebugLoc in the
-   * BREAK_LOGICALZ_i32 or AMDGPU::BREAK_LOGICALNZ statement in the current
-   * dstBlk.
-   * search for the DebugLoc in the that statement.
-   * if not found, we have to insert the empty/default DebugLoc */
-  MachineInstr *LoopBreakInstr = getLoopBreakInstr(DstBlk);
-  DebugLoc DLBreak = (LoopBreakInstr) ? LoopBreakInstr->getDebugLoc() :
-      DebugLoc();
-
-  insertInstrBefore(DstBlk, AMDGPU::WHILELOOP, DLBreak);
-
-  /* we last inserterd the DebugLoc in the continue statement in the current
-   * dstBlk.
-   * search for the DebugLoc in the continue statement.
-   * if not found, we have to insert the empty/default DebugLoc */
-  MachineInstr *ContinueInstr = getContinueInstr(DstBlk);
-  DebugLoc DLContinue = (ContinueInstr) ? ContinueInstr->getDebugLoc() :
-      DebugLoc();
-
-  insertInstrEnd(DstBlk, AMDGPU::ENDLOOP, DLContinue);
+  insertInstrBefore(DstBlk, AMDGPU::WHILELOOP, DebugLoc());
+  insertInstrEnd(DstBlk, AMDGPU::ENDLOOP, DebugLoc());
   DstBlk->addSuccessor(LandMBB);
   DstBlk->removeSuccessor(DstBlk);
 }
@@ -1565,7 +1536,9 @@ void AMDGPUCFGStructurizer::mergeLoopbreakBlock(MachineBasicBlock *ExitingMBB,
   MachineBasicBlock::iterator I = BranchMI;
   if (TrueBranch != LandMBB)
     reversePredicateSetter(I);
-  insertCondBranchBefore(I, AMDGPU::PREDICATED_BREAK, DL);
+  insertCondBranchBefore(ExitingMBB, I, AMDGPU::IF_PREDICATE_SET, AMDGPU::PREDICATE_BIT, DL);
+  insertInstrBefore(I, AMDGPU::BREAK);
+  insertInstrBefore(I, AMDGPU::ENDIF);
   //now branchInst can be erase safely
   BranchMI->eraseFromParent();
   //now take care of successors, retire blocks
