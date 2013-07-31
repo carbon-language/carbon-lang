@@ -34,7 +34,7 @@
 // CHECK-MULTI32-I386: "[[gcc_install:.*/Inputs/multilib_32bit_linux_tree/usr/lib/gcc/i386-unknown-linux/4.6.0]]/../../../../i386-unknown-linux/bin{{/|\\}}ld"
 // CHECK-MULTI32-I386: "--sysroot=[[sysroot:.*/Inputs/basic_linux_tree]]"
 // CHECK-MULTI32-I386: "-m" "elf_i386"
-// CHECK-MULTI32-I386: "[[gcc_install]]{{/|\\}}crtbegin.o"
+// CHECK-MULTI32-I386: "{{.*/Inputs/multilib_32bit_linux_tree/usr/lib/gcc/i386-unknown-linux/4.6.0}}{{/|\\}}crtbegin.o"
 // CHECK-MULTI32-I386: "-L[[gcc_install]]"
 // CHECK-MULTI32-I386: "-L[[gcc_install]]/../../../../i386-unknown-linux/lib/../lib32"
 // CHECK-MULTI32-I386: "-L[[gcc_install]]/../../../../i386-unknown-linux/lib"
