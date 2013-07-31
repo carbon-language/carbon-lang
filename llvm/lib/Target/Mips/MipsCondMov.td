@@ -171,16 +171,16 @@ let Predicates = [IsFP64bit, HasStdEnc],
   }
 }
 
-def MOVT_I : CMov_F_I_FT<"movt", CPURegsOpnd, IIAlu, MipsCMovFP_T>,
+def MOVT_I : CMov_F_I_FT<"movt", CPURegsOpnd, IIArith, MipsCMovFP_T>,
              CMov_F_I_FM<1>;
-def MOVT_I64 : CMov_F_I_FT<"movt", CPU64RegsOpnd, IIAlu, MipsCMovFP_T>,
+def MOVT_I64 : CMov_F_I_FT<"movt", CPU64RegsOpnd, IIArith, MipsCMovFP_T>,
                CMov_F_I_FM<1>, Requires<[HasMips64, HasStdEnc]> {
   let DecoderNamespace = "Mips64";
 }
 
-def MOVF_I : CMov_F_I_FT<"movf", CPURegsOpnd, IIAlu, MipsCMovFP_F>,
+def MOVF_I : CMov_F_I_FT<"movf", CPURegsOpnd, IIArith, MipsCMovFP_F>,
              CMov_F_I_FM<0>;
-def MOVF_I64 : CMov_F_I_FT<"movf", CPU64RegsOpnd, IIAlu, MipsCMovFP_F>,
+def MOVF_I64 : CMov_F_I_FT<"movf", CPU64RegsOpnd, IIArith, MipsCMovFP_F>,
                CMov_F_I_FM<0>, Requires<[HasMips64, HasStdEnc]> {
   let DecoderNamespace = "Mips64";
 }

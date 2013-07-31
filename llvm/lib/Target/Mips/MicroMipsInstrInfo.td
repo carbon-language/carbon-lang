@@ -8,13 +8,11 @@ let isCodeGenOnly = 1 in {
                  SLTI_FM_MM<0x24>;
   def SLTiu_MM : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegs>,
                  SLTI_FM_MM<0x2c>;
-  def ANDi_MM  : MMRel, ArithLogicI<"andi", uimm16, CPURegsOpnd, immZExt16,
-                                     and>,
+  def ANDi_MM  : MMRel, ArithLogicI<"andi", uimm16, CPURegsOpnd>,
                  ADDI_FM_MM<0x34>;
-  def ORi_MM   : MMRel, ArithLogicI<"ori", uimm16, CPURegsOpnd, immZExt16, or>,
+  def ORi_MM   : MMRel, ArithLogicI<"ori", uimm16, CPURegsOpnd>,
                  ADDI_FM_MM<0x14>;
-  def XORi_MM  : MMRel, ArithLogicI<"xori", uimm16, CPURegsOpnd, immZExt16,
-                                     xor>,
+  def XORi_MM  : MMRel, ArithLogicI<"xori", uimm16, CPURegsOpnd>,
                  ADDI_FM_MM<0x1c>;
   def LUi_MM   : MMRel, LoadUpper<"lui", CPURegs, uimm16>, LUI_FM_MM;
 

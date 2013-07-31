@@ -78,31 +78,35 @@ let isPseudo = 1 in {
 let DecoderNamespace = "Mips64" in {
 /// Arithmetic Instructions (ALU Immediate)
 def DADDi   : ArithLogicI<"daddi", simm16_64, CPU64RegsOpnd>, ADDI_FM<0x18>;
-def DADDiu  : ArithLogicI<"daddiu", simm16_64, CPU64RegsOpnd, immSExt16, add>,
+def DADDiu  : ArithLogicI<"daddiu", simm16_64, CPU64RegsOpnd, IIArith,
+                          immSExt16, add>,
               ADDI_FM<0x19>, IsAsCheapAsAMove;
-def DANDi   : ArithLogicI<"andi", uimm16_64, CPU64RegsOpnd, immZExt16, and>,
+def DANDi   : ArithLogicI<"andi", uimm16_64, CPU64RegsOpnd, IILogic, immZExt16,
+                          and>,
               ADDI_FM<0xc>;
 def SLTi64  : SetCC_I<"slti", setlt, simm16_64, immSExt16, CPU64Regs>,
               SLTI_FM<0xa>;
 def SLTiu64 : SetCC_I<"sltiu", setult, simm16_64, immSExt16, CPU64Regs>,
               SLTI_FM<0xb>;
-def ORi64   : ArithLogicI<"ori", uimm16_64, CPU64RegsOpnd, immZExt16, or>,
+def ORi64   : ArithLogicI<"ori", uimm16_64, CPU64RegsOpnd, IILogic, immZExt16,
+                          or>,
               ADDI_FM<0xd>;
-def XORi64  : ArithLogicI<"xori", uimm16_64, CPU64RegsOpnd, immZExt16, xor>,
+def XORi64  : ArithLogicI<"xori", uimm16_64, CPU64RegsOpnd, IILogic, immZExt16,
+                          xor>,
               ADDI_FM<0xe>;
 def LUi64   : LoadUpper<"lui", CPU64Regs, uimm16_64>, LUI_FM;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADD   : ArithLogicR<"dadd", CPU64RegsOpnd>, ADD_FM<0, 0x2c>;
-def DADDu  : ArithLogicR<"daddu", CPU64RegsOpnd, 1, IIAlu, add>,
+def DADDu  : ArithLogicR<"daddu", CPU64RegsOpnd, 1, IIArith, add>,
                               ADD_FM<0, 0x2d>;
-def DSUBu  : ArithLogicR<"dsubu", CPU64RegsOpnd, 0, IIAlu, sub>,
+def DSUBu  : ArithLogicR<"dsubu", CPU64RegsOpnd, 0, IIArith, sub>,
                               ADD_FM<0, 0x2f>;
 def SLT64  : SetCC_R<"slt", setlt, CPU64Regs>, ADD_FM<0, 0x2a>;
 def SLTu64 : SetCC_R<"sltu", setult, CPU64Regs>, ADD_FM<0, 0x2b>;
-def AND64  : ArithLogicR<"and", CPU64RegsOpnd, 1, IIAlu, and>, ADD_FM<0, 0x24>;
-def OR64   : ArithLogicR<"or", CPU64RegsOpnd, 1, IIAlu, or>, ADD_FM<0, 0x25>;
-def XOR64  : ArithLogicR<"xor", CPU64RegsOpnd, 1, IIAlu, xor>, ADD_FM<0, 0x26>;
+def AND64  : ArithLogicR<"and", CPU64RegsOpnd, 1, IIArith, and>, ADD_FM<0, 0x24>;
+def OR64   : ArithLogicR<"or", CPU64RegsOpnd, 1, IIArith, or>, ADD_FM<0, 0x25>;
+def XOR64  : ArithLogicR<"xor", CPU64RegsOpnd, 1, IIArith, xor>, ADD_FM<0, 0x26>;
 def NOR64  : LogicNOR<"nor", CPU64RegsOpnd>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
@@ -232,11 +236,11 @@ let Pattern = []<dag> in {
 
 let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
   def DSLL64_32 : FR<0x00, 0x3c, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
-                     "dsll\t$rd, $rt, 32", [], IIAlu>;
+                     "dsll\t$rd, $rt, 32", [], IIArith>;
   def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
-                    "sll\t$rd, $rt, 0", [], IIAlu>;
+                    "sll\t$rd, $rt, 0", [], IIArith>;
   def SLL64_64 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPU64Regs:$rt),
-                    "sll\t$rd, $rt, 0", [], IIAlu>;
+                    "sll\t$rd, $rt, 0", [], IIArith>;
 }
 }
 //===----------------------------------------------------------------------===//
