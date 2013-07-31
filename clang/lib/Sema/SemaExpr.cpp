@@ -6443,9 +6443,13 @@ Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &RHS,
   // so that we can use references in built-in functions even in C.
   // The getNonReferenceType() call makes sure that the resulting expression
   // does not have reference type.
-  if (result != Incompatible && RHS.get()->getType() != LHSType)
-    RHS = ImpCastExprToType(RHS.take(),
-                            LHSType.getNonLValueExprType(Context), Kind);
+  if (result != Incompatible && RHS.get()->getType() != LHSType) {
+    QualType Ty = LHSType.getNonLValueExprType(Context);
+    Expr *E = RHS.take();
+    if (getLangOpts().ObjCAutoRefCount)
+      CheckObjCARCConversion(SourceRange(), Ty, E, CCK_ImplicitConversion);
+    RHS = ImpCastExprToType(E, Ty, Kind);
+  }
   return result;
 }
 
@@ -7698,12 +7702,20 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
         diagnoseDistinctPointerComparison(*this, Loc, LHS, RHS,
                                           /*isError*/false);
       }
-      if (LHSIsNull && !RHSIsNull)
-        LHS = ImpCastExprToType(LHS.take(), RHSType,
+      if (LHSIsNull && !RHSIsNull) {
+        Expr *E = LHS.take();
+        if (getLangOpts().ObjCAutoRefCount)
+          CheckObjCARCConversion(SourceRange(), RHSType, E, CCK_ImplicitConversion);
+        LHS = ImpCastExprToType(E, RHSType,
                                 RPT ? CK_BitCast :CK_CPointerToObjCPointerCast);
-      else
-        RHS = ImpCastExprToType(RHS.take(), LHSType,
+      }
+      else {
+        Expr *E = RHS.take();
+        if (getLangOpts().ObjCAutoRefCount)
+          CheckObjCARCConversion(SourceRange(), LHSType, E, CCK_ImplicitConversion);
+        RHS = ImpCastExprToType(E, LHSType,
                                 LPT ? CK_BitCast :CK_CPointerToObjCPointerCast);
+      }
       return ResultTy;
     }
     if (LHSType->isObjCObjectPointerType() &&

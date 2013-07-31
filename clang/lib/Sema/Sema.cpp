@@ -284,9 +284,6 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
   if (ExprTy == TypeTy)
     return Owned(E);
 
-  if (getLangOpts().ObjCAutoRefCount)
-    CheckObjCARCConversion(SourceRange(), Ty, E, CCK);
-
   // If this is a derived-to-base cast to a through a virtual base, we
   // need a vtable.
   if (Kind == CK_DerivedToBase &&

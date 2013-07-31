@@ -2765,7 +2765,8 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       (void) PrepareCastToObjCObjectPointer(E);
       From = E.take();
     }
-
+    if (getLangOpts().ObjCAutoRefCount)
+      CheckObjCARCConversion(SourceRange(), ToType, From, CCK);
     From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
              .take();
     break;
