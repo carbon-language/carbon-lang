@@ -90,10 +90,10 @@ void PECOFFTargetInfo::addImplicitFiles(InputFiles &files) const {
 /// Append the given file to the input file list. The file must be an object
 /// file or an import library file.
 void PECOFFTargetInfo::appendInputFileOrLibrary(std::string path) {
-  std::string ext = llvm::sys::path::extension(path).lower();
+  StringRef ext = llvm::sys::path::extension(path);
   // This is an import library file. Look for the library file in the search
   // paths, unless the path contains a directory name.
-  if (ext == ".lib") {
+  if (ext.equals_lower(".lib")) {
     if (containDirectoryName(path)) {
       appendInputFile(path);
       return;
