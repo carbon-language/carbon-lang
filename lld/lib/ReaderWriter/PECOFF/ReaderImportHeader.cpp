@@ -90,6 +90,25 @@
 /// data has to be accessed through dllimport'ed symbols or explicit _imp__
 /// prefix.
 ///
+/// Idata Sections in the Pseudo Object File
+/// ========================================
+///
+/// The object file created by cl.exe has several sections whose name starts
+/// with ".idata$" followed by a number. The contents of the sections seem the
+/// fragments of a complete ".idata" section. These sections has relocations for
+/// the data referenced from the idata secton. Generally, the linker discards
+/// "$" and all characters that follow from the section name and merges their
+/// contents to one section. So, it looks like if everything would work fine,
+/// the idata section would naturally be constructed without having any special
+/// code for doing that.
+///
+/// However, the LLD linker cannot do that. An idata section constructed in that
+/// way was never be in valid format. We don't know the reason yet. Our
+/// assumption on the idata fragment could simply be wrong, or the LLD linker is
+/// not powerful enough to do the job. Meanwhile, we construct the idata section
+/// ourselves. All the "idata$" sections in the pseudo object file are currently
+/// ignored.
+///
 /// Creating Atoms for the Import Address Table
 /// ===========================================
 ///
