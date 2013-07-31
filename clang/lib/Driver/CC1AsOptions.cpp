@@ -21,11 +21,13 @@ using namespace clang::driver::cc1asoptions;
 #undef PREFIX
 
 static const OptTable::Info CC1AsInfoTable[] = {
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, \
-    FLAGS, OPT_##GROUP, OPT_##ALIAS },
+    FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
+#define SUPPORT_ALIASARGS // FIXME: Remove when LLVM is updated.
 #include "clang/Driver/CC1AsOptions.inc"
+#undef SUPPORT_ALIASARGS
 #undef OPTION
 };
 

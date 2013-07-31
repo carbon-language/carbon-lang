@@ -35,10 +35,12 @@ enum ClangFlags {
 
 enum ID {
     OPT_INVALID = 0, // This is not an option ID.
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR) OPT_##ID,
+#define SUPPORT_ALIASARGS // FIXME: Remove when LLVM is updated.
 #include "clang/Driver/Options.inc"
     LastOption
+#undef SUPPORT_ALIASARGS
 #undef OPTION
   };
 }
