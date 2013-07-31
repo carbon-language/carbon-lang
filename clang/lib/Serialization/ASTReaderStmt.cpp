@@ -1739,6 +1739,8 @@ void ASTStmtReader::VisitOMPParallelDirective(OMPParallelDirective *D) {
 
 Stmt *ASTReader::ReadStmt(ModuleFile &F) {
   switch (ReadingKind) {
+  case Read_None:
+    llvm_unreachable("should not call this when not reading anything");
   case Read_Decl:
   case Read_Type:
     return ReadStmtFromStream(F);

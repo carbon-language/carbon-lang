@@ -7498,7 +7498,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
     TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
     PassingDeclsToConsumer(false),
-    NumCXXBaseSpecifiersLoaded(0)
+    NumCXXBaseSpecifiersLoaded(0), ReadingKind(Read_None)
 {
   SourceMgr.setExternalSLocEntrySource(this);
 }
