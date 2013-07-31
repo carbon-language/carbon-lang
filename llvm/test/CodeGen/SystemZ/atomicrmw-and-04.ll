@@ -10,7 +10,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: lgr %r0, %r2
 ; CHECK: ngr %r0, %r4
 ; CHECK: csg %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw and i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -33,7 +33,7 @@ define i64 @f3(i64 %dummy, i64 *%src) {
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: risbg %r0, %r2, 31, 191, 0
 ; CHECK: csg %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw and i64 *%src, i64 8589934591 seq_cst
   ret i64 %res
@@ -47,7 +47,7 @@ define i64 @f4(i64 %dummy, i64 *%src) {
 ; CHECK: lgr %r0, %r2
 ; CHECK: nihf %r0, 2
 ; CHECK: csg %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw and i64 *%src, i64 12884901887 seq_cst
   ret i64 %res

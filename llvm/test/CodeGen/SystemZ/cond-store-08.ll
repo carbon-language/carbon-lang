@@ -8,7 +8,7 @@ declare void @foo(i64 *)
 define void @f1(i64 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f1:
 ; CHECK: clfi %r4, 42
-; CHECK: stocgnl %r3, 0(%r2)
+; CHECK: stocghe %r3, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 42
   %orig = load i64 *%ptr
@@ -34,7 +34,7 @@ define void @f2(i64 *%ptr, i64 %alt, i32 %limit) {
 define void @f3(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f3:
 ; CHECK: clfi %r4, 42
-; CHECK: stocgnl %r3, 524280(%r2)
+; CHECK: stocghe %r3, 524280(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65535
   %cond = icmp ult i32 %limit, 42
@@ -49,7 +49,7 @@ define void @f4(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f4:
 ; CHECK: agfi %r2, 524288
 ; CHECK: clfi %r4, 42
-; CHECK: stocgnl %r3, 0(%r2)
+; CHECK: stocghe %r3, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 65536
   %cond = icmp ult i32 %limit, 42
@@ -63,7 +63,7 @@ define void @f4(i64 *%base, i64 %alt, i32 %limit) {
 define void @f5(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f5:
 ; CHECK: clfi %r4, 42
-; CHECK: stocgnl %r3, -524288(%r2)
+; CHECK: stocghe %r3, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65536
   %cond = icmp ult i32 %limit, 42
@@ -78,7 +78,7 @@ define void @f6(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f6:
 ; CHECK: agfi %r2, -524296
 ; CHECK: clfi %r4, 42
-; CHECK: stocgnl %r3, 0(%r2)
+; CHECK: stocghe %r3, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i64 *%base, i64 -65537
   %cond = icmp ult i32 %limit, 42
@@ -92,7 +92,7 @@ define void @f6(i64 *%base, i64 %alt, i32 %limit) {
 define void @f7(i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f7:
 ; CHECK: brasl %r14, foo@PLT
-; CHECK: stocgnl {{%r[0-9]+}}, {{[0-9]+}}(%r15)
+; CHECK: stocghe {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: br %r14
   %ptr = alloca i64

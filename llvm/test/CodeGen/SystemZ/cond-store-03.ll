@@ -24,7 +24,7 @@ define void @f1(i32 *%ptr, i32 %alt, i32 %limit) {
 define void @f2(i32 *%ptr, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f2:
 ; CHECK-NOT: %r2
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
 ; CHECK: st %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
@@ -59,7 +59,7 @@ define void @f3(i32 *%ptr, i64 %alt, i32 %limit) {
 define void @f4(i32 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f4:
 ; CHECK-NOT: %r2
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
 ; CHECK: st %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
@@ -96,7 +96,7 @@ define void @f5(i32 *%ptr, i64 %alt, i32 %limit) {
 define void @f6(i32 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f6:
 ; CHECK-NOT: %r2
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
 ; CHECK: st %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
@@ -253,7 +253,7 @@ define void @f14(i32 *%ptr, i32 %alt, i32 %limit) {
 ; ...likewise stores.  In this case we should have a conditional load into %r3.
 define void @f15(i32 *%ptr, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f15:
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK: l %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: st %r3, 0(%r2)
@@ -288,7 +288,7 @@ define void @f16(i32 *%ptr, i32 %alt, i32 %limit) {
 define void @f17(i32 *%ptr, i32 %alt, i32 %limit) {
 ; FIXME: should use a normal store instead of CS.
 ; CHECK-LABEL: f17:
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK: l %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: cs {{%r[0-5]}}, %r3, 0(%r2)

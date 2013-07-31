@@ -11,7 +11,7 @@ define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: nr %r0, %r4
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: cs %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw nand i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -26,7 +26,7 @@ define i32 @f2(i32 %dummy, i32 *%src) {
 ; CHECK: nilf %r0, 1
 ; CHECK: xilf %r0, 4294967295
 ; CHECK: cs %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw nand i32 *%src, i32 1 seq_cst
   ret i32 %res

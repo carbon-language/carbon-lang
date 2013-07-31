@@ -30,15 +30,27 @@ namespace llvm {
     const unsigned CCMASK_3 = 1 << 0;
     const unsigned CCMASK_ANY = CCMASK_0 | CCMASK_1 | CCMASK_2 | CCMASK_3;
 
-    // Condition-code mask assignments for floating-point comparisons.
+    // Condition-code mask assignments for integer and floating-point
+    // comparisons.
     const unsigned CCMASK_CMP_EQ = CCMASK_0;
     const unsigned CCMASK_CMP_LT = CCMASK_1;
     const unsigned CCMASK_CMP_GT = CCMASK_2;
-    const unsigned CCMASK_CMP_UO = CCMASK_3;
     const unsigned CCMASK_CMP_NE = CCMASK_CMP_LT | CCMASK_CMP_GT;
     const unsigned CCMASK_CMP_LE = CCMASK_CMP_EQ | CCMASK_CMP_LT;
     const unsigned CCMASK_CMP_GE = CCMASK_CMP_EQ | CCMASK_CMP_GT;
+
+    // Condition-code mask assignments for floating-point comparisons only.
+    const unsigned CCMASK_CMP_UO = CCMASK_3;
     const unsigned CCMASK_CMP_O  = CCMASK_ANY ^ CCMASK_CMP_UO;
+
+    // All condition-code values produced by comparisons.
+    const unsigned CCMASK_ICMP = CCMASK_0 | CCMASK_1 | CCMASK_2;
+    const unsigned CCMASK_FCMP = CCMASK_0 | CCMASK_1 | CCMASK_2 | CCMASK_3;
+
+    // Condition-code mask assignments for CS.
+    const unsigned CCMASK_CS_EQ = CCMASK_0;
+    const unsigned CCMASK_CS_NE = CCMASK_1;
+    const unsigned CCMASK_CS    = CCMASK_0 | CCMASK_1;
 
     // Return true if Val fits an LLILL operand.
     static inline bool isImmLL(uint64_t Val) {

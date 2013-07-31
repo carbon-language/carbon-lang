@@ -24,7 +24,7 @@ define i8 @f1(i8 *%src, i8 %b) {
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;
@@ -60,7 +60,7 @@ define i8 @f2(i8 *%src, i8 %b) {
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;
@@ -97,7 +97,7 @@ define i8 @f3(i8 *%src, i8 %b) {
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;
@@ -134,7 +134,7 @@ define i8 @f4(i8 *%src, i8 %b) {
 ; CHECK: [[KEEP]]:
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;

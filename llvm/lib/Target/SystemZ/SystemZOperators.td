@@ -15,13 +15,15 @@ def SDT_CallSeqEnd          : SDCallSeqEnd<[SDTCisVT<0, i64>,
                                             SDTCisVT<1, i64>]>;
 def SDT_ZCall               : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SDT_ZCmp                : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
-def SDT_ZBRCCMask           : SDTypeProfile<0, 2,
+def SDT_ZBRCCMask           : SDTypeProfile<0, 3,
                                             [SDTCisVT<0, i8>,
-                                             SDTCisVT<1, OtherVT>]>;
-def SDT_ZSelectCCMask       : SDTypeProfile<1, 3,
+                                             SDTCisVT<1, i8>,
+                                             SDTCisVT<2, OtherVT>]>;
+def SDT_ZSelectCCMask       : SDTypeProfile<1, 4,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisSameAs<1, 2>,
-                                             SDTCisVT<3, i8>]>;
+                                             SDTCisVT<3, i8>,
+                                             SDTCisVT<4, i8>]>;
 def SDT_ZWrapPtr            : SDTypeProfile<1, 1,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisPtrTy<0>]>;

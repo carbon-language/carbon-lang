@@ -9,7 +9,7 @@ declare void @foo() noreturn
 define i32 @f1(i32 %a, i32 %b) {
 ; CHECK-LABEL: f1:
 ; CHECK: clr %r2, %r3
-; CHECK: jnhe .L[[LABEL:.*]]
+; CHECK: jl .L[[LABEL:.*]]
 ; CHECK: br %r14
 ; CHECK: .L[[LABEL]]:
 ; CHECK: brasl %r14, foo@PLT
@@ -28,7 +28,7 @@ return:
 ; Same again with a fused compare and branch.
 define i32 @f2(i32 %a) {
 ; CHECK-LABEL: f2:
-; CHECK: cijnlh %r2, 0, .L[[LABEL:.*]]
+; CHECK: cije %r2, 0, .L[[LABEL:.*]]
 ; CHECK: br %r14
 ; CHECK: .L[[LABEL]]:
 ; CHECK: brasl %r14, foo@PLT

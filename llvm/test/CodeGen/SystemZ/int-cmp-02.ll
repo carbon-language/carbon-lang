@@ -166,11 +166,11 @@ define double @f11(double %a, double %b, i32 %i1, i64 %base, i64 %index) {
 ; critical edge %entry->%while.body, which lost the kills information for CC.
 define void @f12(i32 %a, i32 %b) {
 ; CHECK-LABEL: f12:
-; CHECK: crje %r2,
+; CHECK: cije %r2, 0
 ; CHECK: crjlh %r2,
 ; CHECK: br %r14
 entry:
-  %cmp11 = icmp eq i32 %a, %b
+  %cmp11 = icmp eq i32 %a, 0
   br i1 %cmp11, label %while.end, label %while.body
 
 while.body:

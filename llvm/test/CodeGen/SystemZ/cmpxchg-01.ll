@@ -22,7 +22,7 @@ define i8 @f1(i8 %dummy, i8 *%src, i8 %cmp, i8 %swap) {
 ; CHECK-MAIN: risbg %r5, %r2, 32, 55, 0
 ; CHECK-MAIN: rll [[NEW:%r[0-9]+]], %r5, -8({{%r[1-9]+}})
 ; CHECK-MAIN: cs [[OLD]], [[NEW]], 0(%r3)
-; CHECK-MAIN: jlh [[LOOP]]
+; CHECK-MAIN: jl [[LOOP]]
 ; CHECK-MAIN: [[EXIT]]:
 ; CHECK-MAIN-NOT: %r2
 ; CHECK-MAIN: br %r14

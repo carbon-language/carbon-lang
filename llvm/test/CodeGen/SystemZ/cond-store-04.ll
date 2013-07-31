@@ -24,7 +24,7 @@ define void @f1(i64 *%ptr, i64 %alt, i32 %limit) {
 define void @f2(i64 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f2:
 ; CHECK-NOT: %r2
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
 ; CHECK: stg %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
@@ -145,7 +145,7 @@ define void @f8(i64 *%ptr, i64 %alt, i32 %limit) {
 ; ...likewise stores.  In this case we should have a conditional load into %r3.
 define void @f9(i64 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f9:
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK: lg %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: stg %r3, 0(%r2)
@@ -180,7 +180,7 @@ define void @f10(i64 *%ptr, i64 %alt, i32 %limit) {
 define void @f11(i64 *%ptr, i64 %alt, i32 %limit) {
 ; FIXME: should use a normal store instead of CSG.
 ; CHECK-LABEL: f11:
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK: lg %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: csg {{%r[0-5]}}, %r3, 0(%r2)

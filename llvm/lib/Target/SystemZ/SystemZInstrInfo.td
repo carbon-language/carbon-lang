@@ -58,17 +58,19 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, R1 = 15 in {
 // in their raw BRC/BRCL form, with the 4-bit condition-code mask being
 // the first operand.  It seems friendlier to use mnemonic forms like
 // JE and JLH when writing out the assembly though.
-multiclass CondBranches<Operand ccmask, string short, string long> {
-  let isBranch = 1, isTerminator = 1, Uses = [CC] in {
-    def "" : InstRI<0xA74, (outs), (ins ccmask:$R1, brtarget16:$I2), short, []>;
-    def L  : InstRIL<0xC04, (outs), (ins ccmask:$R1, brtarget32:$I2), long, []>;
+let isBranch = 1, isTerminator = 1, Uses = [CC] in {
+  let isCodeGenOnly = 1 in {
+    def BRC : InstRI<0xA74, (outs), (ins cond4:$valid, cond4:$R1,
+                                         brtarget16:$I2), "j$R1\t$I2",
+                     [(z_br_ccmask cond4:$valid, cond4:$R1, bb:$I2)]>;
+    def BRCL : InstRIL<0xC04, (outs), (ins cond4:$valid, cond4:$R1,
+                                           brtarget32:$I2), "jg$R1\t$I2", []>;
   }
+  def AsmBRC : InstRI<0xA74, (outs), (ins uimm8zx4:$R1, brtarget16:$I2),
+                      "brc\t$R1, $I2", []>;
+  def AsmBRCL : InstRIL<0xC04, (outs), (ins uimm8zx4:$R1, brtarget32:$I2),
+                        "brcl\t$R1, $I2", []>;
 }
-let isCodeGenOnly = 1 in
-  defm BRC : CondBranches<cond4, "j$R1\t$I2", "jg$R1\t$I2">;
-defm AsmBRC : CondBranches<uimm8zx4, "brc\t$R1, $I2", "brcl\t$R1, $I2">;
-
-def : Pat<(z_br_ccmask cond4:$cond, bb:$dst), (BRC cond4:$cond, bb:$dst)>;
 
 // Fused compare-and-branch instructions.  As for normal branches,
 // we handle these instructions internally in their raw CRJ-like form,
@@ -1136,9 +1138,12 @@ def  : Pat<(sub GR64:$src1, (zextloadi32 bdxaddr20only:$addr)),
 
 // Optimize sign-extended 1/0 selects to -1/0 selects.  This is important
 // for vector legalization.
-def : Pat<(sra (shl (i32 (z_select_ccmask 1, 0, imm:$cc)), (i32 31)), (i32 31)),
-          (Select32 (LHI -1), (LHI 0), imm:$cc)>;
-def : Pat<(sra (shl (i64 (anyext (i32 (z_select_ccmask 1, 0, imm:$cc)))),
+def : Pat<(sra (shl (i32 (z_select_ccmask 1, 0, uimm8zx4:$valid, uimm8zx4:$cc)),
+                         (i32 31)),
+                    (i32 31)),
+          (Select32 (LHI -1), (LHI 0), uimm8zx4:$valid, uimm8zx4:$cc)>;
+def : Pat<(sra (shl (i64 (anyext (i32 (z_select_ccmask 1, 0, uimm8zx4:$valid,
+                                                       uimm8zx4:$cc)))),
                     (i32 63)),
                (i32 63)),
-          (Select64 (LGHI -1), (LGHI 0), imm:$cc)>;
+          (Select64 (LGHI -1), (LGHI 0), uimm8zx4:$valid, uimm8zx4:$cc)>;

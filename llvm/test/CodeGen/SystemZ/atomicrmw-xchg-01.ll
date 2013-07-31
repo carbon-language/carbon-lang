@@ -20,7 +20,7 @@ define i8 @f1(i8 *%src, i8 %b) {
 ; CHECK: risbg [[ROT]], %r3, 32, 39, 24
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: rll %r2, [[OLD]], 8([[SHIFT]])
 ; CHECK: br %r14
 ;

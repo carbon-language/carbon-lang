@@ -8,7 +8,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: csg %r2, %r4, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw xchg i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -81,7 +81,7 @@ define i64 @f7(i64 %dummy, i64 *%ptr) {
 ; CHECK: lg %r2, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: csg %r2, [[VALUE]], 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw xchg i64 *%ptr, i64 3000000000 seq_cst
   ret i64 %res

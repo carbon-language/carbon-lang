@@ -11,7 +11,7 @@ define i32 @f1(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: crjle %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw min i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -26,7 +26,7 @@ define i32 @f2(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: crjhe %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw max i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -42,7 +42,7 @@ define i32 @f3(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: jle [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw umin i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -58,7 +58,7 @@ define i32 @f4(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: jhe [[KEEP:\..*]]
 ; CHECK: lr [[NEW]], %r4
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw umax i32 *%src, i32 %b seq_cst
   ret i32 %res
@@ -166,7 +166,7 @@ define i32 @f13(i32 %dummy, i32 *%ptr) {
 ; CHECK: crjle %r2, [[LIMIT]], [[KEEP:\..*]]
 ; CHECK: lhi [[NEW]], 42
 ; CHECK: cs %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw min i32 *%ptr, i32 42 seq_cst
   ret i32 %res

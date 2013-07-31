@@ -9,7 +9,7 @@ define void @f1(i64 %val, i64 *%src) {
 ; CHECK: lg %r0, 0(%r3)
 ; CHECK: [[LABEL:\.[^:]*]]:
 ; CHECK: csg %r0, %r2, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   store atomic i64 %val, i64 *%src seq_cst, align 8
   ret void

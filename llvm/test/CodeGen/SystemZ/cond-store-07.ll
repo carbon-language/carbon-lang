@@ -8,7 +8,7 @@ declare void @foo(i32 *)
 define void @f1(i32 *%ptr, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f1:
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, 0(%r2)
+; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
@@ -35,7 +35,7 @@ define void @f2(i32 *%ptr, i32 %alt, i32 %limit) {
 define void @f3(i32 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f3:
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, 0(%r2)
+; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
@@ -66,7 +66,7 @@ define void @f4(i32 *%ptr, i64 %alt, i32 %limit) {
 define void @f5(i32 *%ptr, i64 %alt, i32 %limit) {
 ; CHECK-LABEL: f5:
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, 0(%r2)
+; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
@@ -96,7 +96,7 @@ define void @f6(i32 *%ptr, i64 %alt, i32 %limit) {
 define void @f7(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f7:
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, 524284(%r2)
+; CHECK: stoche %r3, 524284(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 131071
   %cond = icmp ult i32 %limit, 42
@@ -111,7 +111,7 @@ define void @f8(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f8:
 ; CHECK: agfi %r2, 524288
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, 0(%r2)
+; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 131072
   %cond = icmp ult i32 %limit, 42
@@ -125,7 +125,7 @@ define void @f8(i32 *%base, i32 %alt, i32 %limit) {
 define void @f9(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f9:
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, -524288(%r2)
+; CHECK: stoche %r3, -524288(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -131072
   %cond = icmp ult i32 %limit, 42
@@ -140,7 +140,7 @@ define void @f10(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f10:
 ; CHECK: agfi %r2, -524292
 ; CHECK: clfi %r4, 42
-; CHECK: stocnl %r3, 0(%r2)
+; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr i32 *%base, i64 -131073
   %cond = icmp ult i32 %limit, 42
@@ -154,7 +154,7 @@ define void @f10(i32 *%base, i32 %alt, i32 %limit) {
 define void @f11(i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f11:
 ; CHECK: brasl %r14, foo@PLT
-; CHECK: stocnl {{%r[0-9]+}}, {{[0-9]+}}(%r15)
+; CHECK: stoche {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: br %r14
   %ptr = alloca i32

@@ -297,13 +297,16 @@ bool SystemZLongBranch::fuseCompareAndBranch(MachineInstr *Compare) {
   for (++MBBI; MBBI != MBBE; ++MBBI) {
     if (MBBI->getOpcode() == SystemZ::BRC && !isCCLiveAfter(MBBI, TRI)) {
       // Read the branch mask and target.
-      MachineOperand CCMask(MBBI->getOperand(0));
-      MachineOperand Target(MBBI->getOperand(1));
+      MachineOperand CCMask(MBBI->getOperand(1));
+      MachineOperand Target(MBBI->getOperand(2));
+      assert((CCMask.getImm() & ~SystemZ::CCMASK_ICMP) == 0 &&
+             "Invalid condition-code mask for integer comparison");
 
       // Clear out all current operands.
       int CCUse = MBBI->findRegisterUseOperandIdx(SystemZ::CC, false, TRI);
       assert(CCUse >= 0 && "BRC must use CC");
       MBBI->RemoveOperand(CCUse);
+      MBBI->RemoveOperand(2);
       MBBI->RemoveOperand(1);
       MBBI->RemoveOperand(0);
 
@@ -441,10 +444,11 @@ void SystemZLongBranch::splitCompareBranch(MachineInstr *MI,
     .addOperand(MI->getOperand(0))
     .addOperand(MI->getOperand(1));
   MachineInstr *BRCL = BuildMI(*MBB, MI, DL, TII->get(SystemZ::BRCL))
+    .addImm(SystemZ::CCMASK_ICMP)
     .addOperand(MI->getOperand(2))
     .addOperand(MI->getOperand(3));
   // The implicit use of CC is a killing use.
-  BRCL->getOperand(2).setIsKill();
+  BRCL->addRegisterKilled(SystemZ::CC, &TII->getRegisterInfo());
   MI->eraseFromParent();
 }
 

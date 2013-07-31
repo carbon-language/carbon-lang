@@ -24,7 +24,7 @@ define void @f1(float *%ptr, float %alt, i32 %limit) {
 define void @f2(float *%ptr, float %alt, i32 %limit) {
 ; CHECK-LABEL: f2:
 ; CHECK-NOT: %r2
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK-NOT: %r2
 ; CHECK: ste %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
@@ -179,7 +179,7 @@ define void @f10(float *%ptr, float %alt, i32 %limit) {
 ; ...likewise stores.  In this case we should have a conditional load into %f0.
 define void @f11(float *%ptr, float %alt, i32 %limit) {
 ; CHECK-LABEL: f11:
-; CHECK: jnl [[LABEL:[^ ]*]]
+; CHECK: jhe [[LABEL:[^ ]*]]
 ; CHECK: le %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: ste %f0, 0(%r2)

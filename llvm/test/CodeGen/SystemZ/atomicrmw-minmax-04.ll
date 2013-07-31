@@ -11,7 +11,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: cgrjle %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], %r4
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw min i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -26,7 +26,7 @@ define i64 @f2(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: cgrjhe %r2, %r4, [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], %r4
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw max i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -42,7 +42,7 @@ define i64 @f3(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: jle [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], %r4
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw umin i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -58,7 +58,7 @@ define i64 @f4(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: jhe [[KEEP:\..*]]
 ; CHECK: lgr [[NEW]], %r4
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw umax i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -133,7 +133,7 @@ define i64 @f10(i64 %dummy, i64 *%ptr) {
 ; CHECK: cgrjle %r2, [[LIMIT]], [[KEEP:\..*]]
 ; CHECK: lghi [[NEW]], 42
 ; CHECK: csg %r2, [[NEW]], 0(%r3)
-; CHECK: jlh [[LOOP]]
+; CHECK: jl [[LOOP]]
 ; CHECK: br %r14
   %res = atomicrmw min i64 *%ptr, i64 42 seq_cst
   ret i64 %res

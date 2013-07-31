@@ -10,7 +10,7 @@ define i64 @f1(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: lgr %r0, %r2
 ; CHECK: ogr %r0, %r4
 ; CHECK: csg %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw or i64 *%src, i64 %b seq_cst
   ret i64 %res
@@ -24,7 +24,7 @@ define i64 @f2(i64 %dummy, i64 *%src) {
 ; CHECK: lgr %r0, %r2
 ; CHECK: oill %r0, 1
 ; CHECK: csg %r2, %r0, 0(%r3)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: br %r14
   %res = atomicrmw or i64 *%src, i64 1 seq_cst
   ret i64 %res

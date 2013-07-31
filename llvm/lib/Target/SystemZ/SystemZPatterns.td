@@ -58,10 +58,12 @@ multiclass RMWIByte<SDPatternOperator operator, AddressingMode mode,
 // register of class CLS.  The load may trap even if the condition is false.
 multiclass CondLoad<Instruction insn, RegisterOperand cls,
                     SDPatternOperator load> {
-  def : Pat<(z_select_ccmask (load bdaddr20only:$addr), cls:$new, uimm8zx4:$cc),
+  def : Pat<(z_select_ccmask (load bdaddr20only:$addr), cls:$new, uimm8zx4,
+                             uimm8zx4:$cc),
             (insn cls:$new, bdaddr20only:$addr, uimm8zx4:$cc)>,
         Requires<[FeatureLoadStoreOnCond]>;
-  def : Pat<(z_select_ccmask cls:$new, (load bdaddr20only:$addr), uimm8zx4:$cc),
+  def : Pat<(z_select_ccmask cls:$new, (load bdaddr20only:$addr), uimm8zx4,
+                             uimm8zx4:$cc),
             (insn cls:$new, bdaddr20only:$addr, (INVCC uimm8zx4:$cc))>,
         Requires<[FeatureLoadStoreOnCond]>;
 }

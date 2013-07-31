@@ -20,7 +20,7 @@ define i16 @f1(i16 *%src, i16 %b) {
 ; CHECK: risbg [[ROT]], %r3, 32, 47, 16
 ; CHECK: rll [[NEW:%r[0-9]+]], [[ROT]], 0({{%r[1-9]+}})
 ; CHECK: cs [[OLD]], [[NEW]], 0(%r2)
-; CHECK: jlh [[LABEL]]
+; CHECK: jl [[LABEL]]
 ; CHECK: rll %r2, [[OLD]], 16([[SHIFT]])
 ; CHECK: br %r14
 ;

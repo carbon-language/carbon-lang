@@ -1015,15 +1015,21 @@ static bool preferUnsignedComparison(SelectionDAG &DAG, SDValue CmpOp0,
   return false;
 }
 
-// Return a target node that compares CmpOp0 and CmpOp1.  Set CCMask to the
-// 4-bit condition-code mask for CC.
+// Return a target node that compares CmpOp0 with CmpOp1 and stores a
+// 2-bit result in CC.  Set CCValid to the CCMASK_* of all possible
+// 2-bit results and CCMask to the subset of those results that are
+// associated with Cond.
 static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
-                       ISD::CondCode CC, unsigned &CCMask) {
+                       ISD::CondCode Cond, unsigned &CCValid,
+                       unsigned &CCMask) {
   bool IsUnsigned = false;
-  CCMask = CCMaskForCondCode(CC);
-  if (!CmpOp0.getValueType().isFloatingPoint()) {
+  CCMask = CCMaskForCondCode(Cond);
+  if (CmpOp0.getValueType().isFloatingPoint())
+    CCValid = SystemZ::CCMASK_FCMP;
+  else {
     IsUnsigned = CCMask & SystemZ::CCMASK_CMP_UO;
-    CCMask &= ~SystemZ::CCMASK_CMP_UO;
+    CCValid = SystemZ::CCMASK_ICMP;
+    CCMask &= CCValid;
     adjustSubwordCmp(DAG, IsUnsigned, CmpOp0, CmpOp1, CCMask);
     if (preferUnsignedComparison(DAG, CmpOp0, CmpOp1, CCMask))
       IsUnsigned = true;
@@ -1065,10 +1071,11 @@ SDValue SystemZTargetLowering::lowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Dest     = Op.getOperand(4);
   SDLoc DL(Op);
 
-  unsigned CCMask;
-  SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCMask);
+  unsigned CCValid, CCMask;
+  SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCValid, CCMask);
   return DAG.getNode(SystemZISD::BR_CCMASK, DL, Op.getValueType(),
-                     Chain, DAG.getConstant(CCMask, MVT::i32), Dest, Flags);
+                     Chain, DAG.getConstant(CCValid, MVT::i32),
+                     DAG.getConstant(CCMask, MVT::i32), Dest, Flags);
 }
 
 SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
@@ -1080,12 +1087,13 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   SDLoc DL(Op);
 
-  unsigned CCMask;
-  SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCMask);
+  unsigned CCValid, CCMask;
+  SDValue Flags = emitCmp(DAG, CmpOp0, CmpOp1, CC, CCValid, CCMask);
 
-  SmallVector<SDValue, 4> Ops;
+  SmallVector<SDValue, 5> Ops;
   Ops.push_back(TrueOp);
   Ops.push_back(FalseOp);
+  Ops.push_back(DAG.getConstant(CCValid, MVT::i32));
   Ops.push_back(DAG.getConstant(CCMask, MVT::i32));
   Ops.push_back(Flags);
 
@@ -1704,7 +1712,8 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   unsigned DestReg  = MI->getOperand(0).getReg();
   unsigned TrueReg  = MI->getOperand(1).getReg();
   unsigned FalseReg = MI->getOperand(2).getReg();
-  unsigned CCMask   = MI->getOperand(3).getImm();
+  unsigned CCValid  = MI->getOperand(3).getImm();
+  unsigned CCMask   = MI->getOperand(4).getImm();
   DebugLoc DL       = MI->getDebugLoc();
 
   MachineBasicBlock *StartMBB = MBB;
@@ -1715,7 +1724,8 @@ SystemZTargetLowering::emitSelect(MachineInstr *MI,
   //   BRC CCMask, JoinMBB
   //   # fallthrough to FalseMBB
   MBB = StartMBB;
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(CCValid).addImm(CCMask).addMBB(JoinMBB);
   MBB->addSuccessor(JoinMBB);
   MBB->addSuccessor(FalseMBB);
 
@@ -1751,7 +1761,8 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
   MachineOperand Base = MI->getOperand(1);
   int64_t Disp        = MI->getOperand(2).getImm();
   unsigned IndexReg   = MI->getOperand(3).getReg();
-  unsigned CCMask     = MI->getOperand(4).getImm();
+  unsigned CCValid    = MI->getOperand(4).getImm();
+  unsigned CCMask     = MI->getOperand(5).getImm();
   DebugLoc DL         = MI->getDebugLoc();
 
   StoreOpcode = TII->getOpcodeForOffset(StoreOpcode, Disp);
@@ -1761,7 +1772,7 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
   // might be more complicated in that case.
   if (STOCOpcode && !IndexReg && TM.getSubtargetImpl()->hasLoadStoreOnCond()) {
     if (Invert)
-      CCMask = CCMask ^ SystemZ::CCMASK_ANY;
+      CCMask ^= CCValid;
     BuildMI(*MBB, MI, DL, TII->get(STOCOpcode))
       .addReg(SrcReg).addOperand(Base).addImm(Disp).addImm(CCMask);
     MI->eraseFromParent();
@@ -1770,7 +1781,7 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
 
   // Get the condition needed to branch around the store.
   if (!Invert)
-    CCMask = CCMask ^ SystemZ::CCMASK_ANY;
+    CCMask ^= CCValid;
 
   MachineBasicBlock *StartMBB = MBB;
   MachineBasicBlock *JoinMBB  = splitBlockAfter(MI, MBB);
@@ -1780,7 +1791,8 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
   //   BRC CCMask, JoinMBB
   //   # fallthrough to FalseMBB
   MBB = StartMBB;
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(CCMask).addMBB(JoinMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(CCValid).addImm(CCMask).addMBB(JoinMBB);
   MBB->addSuccessor(JoinMBB);
   MBB->addSuccessor(FalseMBB);
 
@@ -1812,7 +1824,6 @@ SystemZTargetLowering::emitAtomicLoadBinary(MachineInstr *MI,
   const SystemZInstrInfo *TII = TM.getInstrInfo();
   MachineFunction &MF = *MBB->getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  unsigned MaskNE = CCMaskForCondCode(ISD::SETNE);
   bool IsSubWord = (BitSize < 32);
 
   // Extract the operands.  Base can be a register or a frame index.
@@ -1912,7 +1923,8 @@ SystemZTargetLowering::emitAtomicLoadBinary(MachineInstr *MI,
       .addReg(RotatedNewVal).addReg(NegBitShift).addImm(0);
   BuildMI(MBB, DL, TII->get(CSOpcode), Dest)
     .addReg(OldVal).addReg(NewVal).addOperand(Base).addImm(Disp);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(SystemZ::CCMASK_CS).addImm(SystemZ::CCMASK_CS_NE).addMBB(LoopMBB);
   MBB->addSuccessor(LoopMBB);
   MBB->addSuccessor(DoneMBB);
 
@@ -1935,7 +1947,6 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
   const SystemZInstrInfo *TII = TM.getInstrInfo();
   MachineFunction &MF = *MBB->getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  unsigned MaskNE = CCMaskForCondCode(ISD::SETNE);
   bool IsSubWord = (BitSize < 32);
 
   // Extract the operands.  Base can be a register or a frame index.
@@ -2000,7 +2011,7 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
   BuildMI(MBB, DL, TII->get(CompareOpcode))
     .addReg(RotatedOldVal).addReg(Src2);
   BuildMI(MBB, DL, TII->get(SystemZ::BRC))
-    .addImm(KeepOldMask).addMBB(UpdateMBB);
+    .addImm(SystemZ::CCMASK_ICMP).addImm(KeepOldMask).addMBB(UpdateMBB);
   MBB->addSuccessor(UpdateMBB);
   MBB->addSuccessor(UseAltMBB);
 
@@ -2030,7 +2041,8 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
       .addReg(RotatedNewVal).addReg(NegBitShift).addImm(0);
   BuildMI(MBB, DL, TII->get(CSOpcode), Dest)
     .addReg(OldVal).addReg(NewVal).addOperand(Base).addImm(Disp);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(SystemZ::CCMASK_CS).addImm(SystemZ::CCMASK_CS_NE).addMBB(LoopMBB);
   MBB->addSuccessor(LoopMBB);
   MBB->addSuccessor(DoneMBB);
 
@@ -2046,7 +2058,6 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
   const SystemZInstrInfo *TII = TM.getInstrInfo();
   MachineFunction &MF = *MBB->getParent();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  unsigned MaskNE = CCMaskForCondCode(ISD::SETNE);
 
   // Extract the operands.  Base can be a register or a frame index.
   unsigned Dest        = MI->getOperand(0).getReg();
@@ -2122,7 +2133,8 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
   BuildMI(MBB, DL, TII->get(SystemZ::CR))
     .addReg(Dest).addReg(RetryCmpVal);
   BuildMI(MBB, DL, TII->get(SystemZ::BRC))
-    .addImm(MaskNE).addMBB(DoneMBB);
+    .addImm(SystemZ::CCMASK_ICMP)
+    .addImm(SystemZ::CCMASK_CMP_NE).addMBB(DoneMBB);
   MBB->addSuccessor(DoneMBB);
   MBB->addSuccessor(SetMBB);
 
@@ -2142,7 +2154,8 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
     .addReg(RetrySwapVal).addReg(NegBitShift).addImm(-BitSize);
   BuildMI(MBB, DL, TII->get(CSOpcode), RetryOldVal)
     .addReg(OldVal).addReg(StoreVal).addOperand(Base).addImm(Disp);
-  BuildMI(MBB, DL, TII->get(SystemZ::BRC)).addImm(MaskNE).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(SystemZ::CCMASK_CS).addImm(SystemZ::CCMASK_CS_NE).addMBB(LoopMBB);
   MBB->addSuccessor(LoopMBB);
   MBB->addSuccessor(DoneMBB);
 

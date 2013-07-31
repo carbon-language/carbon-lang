@@ -66,14 +66,18 @@ namespace SystemZII {
     // The type of the branch.
     BranchType Type;
 
+    // CCMASK_<N> is set if CC might be equal to N.
+    unsigned CCValid;
+
     // CCMASK_<N> is set if the branch should be taken when CC == N.
     unsigned CCMask;
 
     // The target of the branch.
     const MachineOperand *Target;
 
-    Branch(BranchType type, unsigned ccMask, const MachineOperand *target)
-      : Type(type), CCMask(ccMask), Target(target) {}
+    Branch(BranchType type, unsigned ccValid, unsigned ccMask,
+           const MachineOperand *target)
+      : Type(type), CCValid(ccValid), CCMask(ccMask), Target(target) {}
   };
 }
 
