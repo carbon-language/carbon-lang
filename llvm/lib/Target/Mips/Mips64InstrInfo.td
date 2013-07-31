@@ -81,13 +81,13 @@ def DADDi   : ArithLogicI<"daddi", simm16_64, CPU64RegsOpnd>, ADDI_FM<0x18>;
 def DADDiu  : ArithLogicI<"daddiu", simm16_64, CPU64RegsOpnd, IIArith,
                           immSExt16, add>,
               ADDI_FM<0x19>, IsAsCheapAsAMove;
-def DANDi   : ArithLogicI<"andi", uimm16_64, CPU64RegsOpnd, IILogic, immZExt16,
-                          and>,
-              ADDI_FM<0xc>;
 def SLTi64  : SetCC_I<"slti", setlt, simm16_64, immSExt16, CPU64Regs>,
               SLTI_FM<0xa>;
 def SLTiu64 : SetCC_I<"sltiu", setult, simm16_64, immSExt16, CPU64Regs>,
               SLTI_FM<0xb>;
+def ANDi64 : ArithLogicI<"andi", uimm16_64, CPU64RegsOpnd, IILogic, immZExt16,
+                         and>,
+             ADDI_FM<0xc>;
 def ORi64   : ArithLogicI<"ori", uimm16_64, CPU64RegsOpnd, IILogic, immZExt16,
                           or>,
               ADDI_FM<0xd>;
@@ -338,7 +338,7 @@ def : InstAlias<"move $dst, $src",
                 (DADDu CPU64RegsOpnd:$dst,  CPU64RegsOpnd:$src, ZERO_64), 1>,
       Requires<[HasMips64]>;
 def : InstAlias<"and $rs, $rt, $imm",
-                (DANDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
+                (ANDi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
                 1>,
       Requires<[HasMips64]>;
 def : InstAlias<"slt $rs, $rt, $imm",
