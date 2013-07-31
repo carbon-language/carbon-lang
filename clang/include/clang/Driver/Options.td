@@ -33,6 +33,10 @@ def NoArgumentUnused : OptionFlag;
 // lines that use it.
 def Unsupported : OptionFlag;
 
+// CoreOption - This is considered a "core" Clang option, available in both
+// clang and clang-cl modes.
+def CoreOption : OptionFlag;
+
 // CLOption - This is a cl.exe compatibility option. Options with this flag
 // are made available when the driver is running in CL compatibility mode.
 def CLOption : OptionFlag;
@@ -98,6 +102,7 @@ def clang_ignored_m_Group : OptionGroup<"<clang ignored m group>">,
 // substitutions:
 //   _ => __
 //   - => _
+//   / => _SLASH
 //   # => _HASH
 //   ? => _QUESTION
 //   , => _COMMA
@@ -116,7 +121,8 @@ def internal_debug_Group :
 
 class InternalDriverOpt : Group<internal_driver_Group>,
   Flags<[DriverOption, HelpHidden]>;
-def driver_mode : Joined<["--"], "driver-mode=">, InternalDriverOpt,
+def driver_mode : Joined<["--"], "driver-mode=">, Group<internal_driver_Group>,
+  Flags<[CoreOption, DriverOption, HelpHidden]>,
   HelpText<"Set the driver mode to either 'gcc', 'g++', 'cpp', or 'cl'">;
 def ccc_gcc_name : Separate<["-"], "ccc-gcc-name">, InternalDriverOpt,
   HelpText<"Name for native GCC compiler">,
@@ -171,7 +177,7 @@ def ccc_ : Joined<["-"], "ccc-">, Group<internal_Group>, Flags<[Unsupported]>;
 
 // Standard Options
 
-def _HASH_HASH_HASH : Flag<["-"], "###">, Flags<[DriverOption]>,
+def _HASH_HASH_HASH : Flag<["-"], "###">, Flags<[DriverOption, CoreOption]>,
     HelpText<"Print the commands to run for this compilation">;
 // The '--' option is here for the sake of compatibility with gcc, but is 
 // being ignored by the driver.

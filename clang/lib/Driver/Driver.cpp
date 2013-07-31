@@ -1883,9 +1883,9 @@ std::pair<unsigned, unsigned> Driver::getIncludeExcludeOptionFlagMasks() const {
   unsigned ExcludedFlagsBitmask = 0;
 
   if (Mode == CLMode) {
-    // Only allow CL options.
-    // FIXME: Also allow "core" Clang options.
-    IncludedFlagsBitmask = options::CLOption;
+    // Include CL and Core options.
+    IncludedFlagsBitmask |= options::CLOption;
+    IncludedFlagsBitmask |= options::CoreOption;
   } else {
     ExcludedFlagsBitmask |= options::CLOption;
   }
