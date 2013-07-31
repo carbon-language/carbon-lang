@@ -121,7 +121,7 @@ class BreakpointConditionsTestCase(TestBase):
         self.runCmd("breakpoint disable")
 
         self.runCmd("breakpoint set -p Loop")
-        self.runCmd("breakpoint modify -c ($eax&&!i)")
+        self.runCmd("breakpoint modify -c ($eax&&i)")
         self.runCmd("run")
         
         self.expect("process status", PROCESS_STOPPED,
