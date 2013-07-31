@@ -7,16 +7,26 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass makes sure that all branches are in range.  There are several ways
-// in which this could be done.  One aggressive approach is to assume that all
-// branches are in range and successively replace those that turn out not
-// to be in range with a longer form (branch relaxation).  A simple
-// implementation is to continually walk through the function relaxing
-// branches until no more changes are needed and a fixed point is reached.
-// However, in the pathological worst case, this implementation is
-// quadratic in the number of blocks; relaxing branch N can make branch N-1
-// go out of range, which in turn can make branch N-2 go out of range,
-// and so on.
+// This pass does two things:
+// (1) fuse compares and branches into COMPARE AND BRANCH instructions
+// (2) make sure that all branches are in range.
+//
+// We do (1) here rather than earlier because the fused form prevents
+// predication.
+//
+// Doing it so late makes it more likely that a register will be reused
+// between the compare and the branch, but it isn't clear whether preventing
+// that would be a win or not.
+//
+// There are several ways in which (2) could be done.  One aggressive
+// approach is to assume that all branches are in range and successively
+// replace those that turn out not to be in range with a longer form
+// (branch relaxation).  A simple implementation is to continually walk
+// through the function relaxing branches until no more changes are
+// needed and a fixed point is reached.  However, in the pathological
+// worst case, this implementation is quadratic in the number of blocks;
+// relaxing branch N can make branch N-1 go out of range, which in turn
+// can make branch N-2 go out of range, and so on.
 //
 // An alternative approach is to assume that all branches must be
 // converted to their long forms, then reinstate the short forms of
@@ -146,6 +156,7 @@ namespace {
     void skipTerminator(BlockPosition &Position, TerminatorInfo &Terminator,
                         bool AssumeRelaxed);
     TerminatorInfo describeTerminator(MachineInstr *MI);
+    bool fuseCompareAndBranch(MachineInstr *Compare);
     uint64_t initMBBInfo();
     bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
     bool mustRelaxABranch();
@@ -243,6 +254,90 @@ TerminatorInfo SystemZLongBranch::describeTerminator(MachineInstr *MI) {
   return Terminator;
 }
 
+// Return true if CC is live after MBBI.
+static bool isCCLiveAfter(MachineBasicBlock::iterator MBBI,
+                          const TargetRegisterInfo *TRI) {
+  if (MBBI->killsRegister(SystemZ::CC, TRI))
+    return false;
+
+  MachineBasicBlock *MBB = MBBI->getParent();
+  MachineBasicBlock::iterator MBBE = MBB->end();
+  for (++MBBI; MBBI != MBBE; ++MBBI) {
+    if (MBBI->readsRegister(SystemZ::CC, TRI))
+      return true;
+    if (MBBI->definesRegister(SystemZ::CC, TRI))
+      return false;
+  }
+
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI)
+    if ((*SI)->isLiveIn(SystemZ::CC))
+      return true;
+
+  return false;
+}
+
+// Try to fuse compare instruction Compare into a later branch.  Return
+// true on success and if Compare is therefore redundant.
+bool SystemZLongBranch::fuseCompareAndBranch(MachineInstr *Compare) {
+  if (MF->getTarget().getOptLevel() == CodeGenOpt::None)
+    return false;
+
+  unsigned FusedOpcode = TII->getCompareAndBranch(Compare->getOpcode(),
+                                                  Compare);
+  if (!FusedOpcode)
+    return false;
+
+  unsigned SrcReg = Compare->getOperand(0).getReg();
+  unsigned SrcReg2 = (Compare->getOperand(1).isReg() ?
+                      Compare->getOperand(1).getReg() : 0);
+  const TargetRegisterInfo *TRI = &TII->getRegisterInfo();
+  MachineBasicBlock *MBB = Compare->getParent();
+  MachineBasicBlock::iterator MBBI = Compare, MBBE = MBB->end();
+  for (++MBBI; MBBI != MBBE; ++MBBI) {
+    if (MBBI->getOpcode() == SystemZ::BRC && !isCCLiveAfter(MBBI, TRI)) {
+      // Read the branch mask and target.
+      MachineOperand CCMask(MBBI->getOperand(0));
+      MachineOperand Target(MBBI->getOperand(1));
+
+      // Clear out all current operands.
+      int CCUse = MBBI->findRegisterUseOperandIdx(SystemZ::CC, false, TRI);
+      assert(CCUse >= 0 && "BRC must use CC");
+      MBBI->RemoveOperand(CCUse);
+      MBBI->RemoveOperand(1);
+      MBBI->RemoveOperand(0);
+
+      // Rebuild MBBI as a fused compare and branch.
+      MBBI->setDesc(TII->get(FusedOpcode));
+      MachineInstrBuilder(*MBB->getParent(), MBBI)
+        .addOperand(Compare->getOperand(0))
+        .addOperand(Compare->getOperand(1))
+        .addOperand(CCMask)
+        .addOperand(Target);
+
+      // Clear any intervening kills of SrcReg and SrcReg2.
+      MBBI = Compare;
+      for (++MBBI; MBBI != MBBE; ++MBBI) {
+        MBBI->clearRegisterKills(SrcReg, TRI);
+        if (SrcReg2)
+          MBBI->clearRegisterKills(SrcReg2, TRI);
+      }
+      return true;
+    }
+
+    // Stop if we find another reference to CC before a branch.
+    if (MBBI->readsRegister(SystemZ::CC, TRI) ||
+        MBBI->modifiesRegister(SystemZ::CC, TRI))
+      return false;
+
+    // Stop if we find another assignment to the registers before the branch.
+    if (MBBI->modifiesRegister(SrcReg, TRI) ||
+        (SrcReg2 && MBBI->modifiesRegister(SrcReg2, TRI)))
+      return false;
+  }
+  return false;
+}
+
 // Fill MBBs and Terminators, setting the addresses on the assumption
 // that no branches need relaxation.  Return the size of the function under
 // this assumption.
@@ -268,8 +363,12 @@ uint64_t SystemZLongBranch::initMBBInfo() {
     MachineBasicBlock::iterator MI = MBB->begin();
     MachineBasicBlock::iterator End = MBB->end();
     while (MI != End && !MI->isTerminator()) {
-      Block.Size += TII->getInstSizeInBytes(MI);
+      MachineInstr *Current = MI;
       ++MI;
+      if (Current->isCompare() && fuseCompareAndBranch(Current))
+        Current->removeFromParent();
+      else
+        Block.Size += TII->getInstSizeInBytes(Current);
     }
     skipNonTerminators(Position, Block);
 

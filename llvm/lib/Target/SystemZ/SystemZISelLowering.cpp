@@ -1997,17 +1997,10 @@ SystemZTargetLowering::emitAtomicLoadMinMax(MachineInstr *MI,
   if (IsSubWord)
     BuildMI(MBB, DL, TII->get(SystemZ::RLL), RotatedOldVal)
       .addReg(OldVal).addReg(BitShift).addImm(0);
-  unsigned FusedOpcode = TII->getCompareAndBranch(CompareOpcode);
-  if (FusedOpcode)
-    BuildMI(MBB, DL, TII->get(FusedOpcode))
-      .addReg(RotatedOldVal).addReg(Src2)
-      .addImm(KeepOldMask).addMBB(UpdateMBB);
-  else {
-    BuildMI(MBB, DL, TII->get(CompareOpcode))
-      .addReg(RotatedOldVal).addReg(Src2);
-    BuildMI(MBB, DL, TII->get(SystemZ::BRC))
-      .addImm(KeepOldMask).addMBB(UpdateMBB);
-  }
+  BuildMI(MBB, DL, TII->get(CompareOpcode))
+    .addReg(RotatedOldVal).addReg(Src2);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(KeepOldMask).addMBB(UpdateMBB);
   MBB->addSuccessor(UpdateMBB);
   MBB->addSuccessor(UseAltMBB);
 
@@ -2109,7 +2102,8 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
   //                      ^^ Replace the upper 32-BitSize bits of the
   //                         comparison value with those that we loaded,
   //                         so that we can use a full word comparison.
-  //   CRJNE %Dest, %RetryCmpVal, DoneMBB
+  //   CR %Dest, %RetryCmpVal
+  //   JNE DoneMBB
   //   # Fall through to SetMBB
   MBB = LoopMBB;
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), OldVal)
@@ -2125,8 +2119,9 @@ SystemZTargetLowering::emitAtomicCmpSwapW(MachineInstr *MI,
     .addReg(OldVal).addReg(BitShift).addImm(BitSize);
   BuildMI(MBB, DL, TII->get(SystemZ::RISBG32), RetryCmpVal)
     .addReg(CmpVal).addReg(Dest).addImm(32).addImm(63 - BitSize).addImm(0);
-  BuildMI(MBB, DL, TII->get(SystemZ::CRJ))
-    .addReg(Dest).addReg(RetryCmpVal)
+  BuildMI(MBB, DL, TII->get(SystemZ::CR))
+    .addReg(Dest).addReg(RetryCmpVal);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
     .addImm(MaskNE).addMBB(DoneMBB);
   MBB->addSuccessor(DoneMBB);
   MBB->addSuccessor(SetMBB);
