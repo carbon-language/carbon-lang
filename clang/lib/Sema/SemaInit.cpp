@@ -5979,7 +5979,8 @@ InitializationSequence::Perform(Sema &S,
       QualType SourceType = CurInit.get()->getType();
       ExprResult Result = CurInit;
       Sema::AssignConvertType ConvTy =
-        S.CheckSingleAssignmentConstraints(Step->Type, Result);
+        S.CheckSingleAssignmentConstraints(Step->Type, Result, true,
+            Entity.getKind() == InitializedEntity::EK_Parameter_CF_Audited);
       if (Result.isInvalid())
         return ExprError();
       CurInit = Result;

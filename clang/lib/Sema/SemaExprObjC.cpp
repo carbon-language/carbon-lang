@@ -3157,7 +3157,8 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
 
 Sema::ARCConversionResult
 Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
-                             Expr *&castExpr, CheckedConversionKind CCK) {
+                             Expr *&castExpr, CheckedConversionKind CCK,
+                             bool DiagnoseCFAudited) {
   QualType castExprType = castExpr->getType();
 
   // For the purposes of the classification, we assume reference types
@@ -3238,8 +3239,14 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
       CCK != CCK_ImplicitConversion)
     return ACR_unbridged;
 
-  diagnoseObjCARCConversion(*this, castRange, castType, castACTC,
-                            castExpr, castExpr, exprACTC, CCK);
+  // Do not issue "bridge cast" diagnostic when implicit casting
+  // a retainable object to a CF type parameter belonging to an audited
+  // CF API function. Let caller issue a normal type mismatched diagnostic
+  // instead.
+  if (!DiagnoseCFAudited || exprACTC != ACTC_retainable ||
+      castACTC != ACTC_coreFoundation)
+    diagnoseObjCARCConversion(*this, castRange, castType, castACTC,
+                              castExpr, castExpr, exprACTC, CCK);
   return ACR_okay;
 }
 
