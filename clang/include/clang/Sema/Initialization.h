@@ -82,7 +82,10 @@ public:
     EK_CompoundLiteralInit,
     /// \brief The entity being implicitly initialized back to the formal
     /// result type.
-    EK_RelatedResult
+    EK_RelatedResult,
+    /// \brief The entity being initialized is a function parameter; function
+    /// is member of group of audited CF APIs.
+    EK_Parameter_CF_Audited
   };
   
 private:
@@ -351,10 +354,14 @@ public:
   /// value optimization, which also applies to thrown objects.
   bool allowsNRVO() const;
 
+  bool isParameterKind() const {
+    return (getKind() == EK_Parameter  ||
+            getKind() == EK_Parameter_CF_Audited);
+  }
   /// \brief Determine whether this initialization consumes the
   /// parameter.
   bool isParameterConsumed() const {
-    assert(getKind() == EK_Parameter && "Not a parameter");
+    assert(isParameterKind() && "Not a parameter");
     return (Parameter & 1);
   }
                                   
@@ -403,6 +410,10 @@ public:
   SourceLocation getCaptureLoc() const {
     assert(getKind() == EK_LambdaCapture && "Not a lambda capture!");
     return SourceLocation::getFromRawEncoding(Capture.Location);
+  }
+  
+  void setParameterCFAudited() {
+    Kind = EK_Parameter_CF_Audited;
   }
 
   /// Dump a representation of the initialized entity to standard error,
