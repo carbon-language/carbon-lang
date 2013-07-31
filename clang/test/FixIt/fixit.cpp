@@ -326,3 +326,15 @@ namespace PR5898 {
     return foo->(x) == y;  // expected-error {{unexpected '->' in function call; perhaps remove the '->'?}}
   }
 }
+
+namespace PR15045 {
+  class Cl0 {
+  public:
+    int a;
+  };
+
+  int f() {
+    Cl0 c;
+    return c->a;  // expected-error {{member reference type 'PR15045::Cl0' is not a pointer; maybe you meant to use '.'?}}
+  }
+}

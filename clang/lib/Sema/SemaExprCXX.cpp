@@ -5102,14 +5102,13 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
               << FixItHint::CreateReplacement(OpLoc, ".");
             OpKind = tok::period;
             break;
-          } else {
-            Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
-              << BaseType << Base->getSourceRange();
-            CallExpr *CE = dyn_cast<CallExpr>(Base);
-            if (Decl *CD = (CE ? CE->getCalleeDecl() : 0)) {
-              Diag(CD->getLocStart(),
-                   diag::note_member_reference_arrow_from_operator_arrow);
-            }
+          }
+          Diag(OpLoc, diag::err_typecheck_member_reference_arrow)
+            << BaseType << Base->getSourceRange();
+          CallExpr *CE = dyn_cast<CallExpr>(Base);
+          if (Decl *CD = (CE ? CE->getCalleeDecl() : 0)) {
+            Diag(CD->getLocStart(),
+                 diag::note_member_reference_arrow_from_operator_arrow);
           }
         }
         return ExprError();

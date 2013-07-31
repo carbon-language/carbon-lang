@@ -79,9 +79,11 @@ namespace test5 {
   };
 
   void test0(int x) {
+    x.A::foo<int>(); // expected-error {{'int' is not a structure or union}}
   }
 
   void test1(A *x) {
+    x.A::foo<int>(); // expected-error {{'test5::A *' is a pointer}}
   }
 
   void test2(A &x) {
