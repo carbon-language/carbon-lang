@@ -5138,6 +5138,26 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
     }
   }
 
+  // FIXME: As said above, this is all a pretty gross hack.  This instruction
+  // does not fit with other "subs" and tblgen.
+  // Adjust operands of B9.3.19 SUBS PC, LR, #imm (Thumb2) system instruction
+  // so the Mnemonic is the original name "subs" and delete the predicate
+  // operand so it will match the table entry.
+  if (isThumbTwo() && Mnemonic == "sub" && Operands.size() == 6 &&
+      static_cast<ARMOperand*>(Operands[3])->isReg() &&
+      static_cast<ARMOperand*>(Operands[3])->getReg() == ARM::PC &&
+      static_cast<ARMOperand*>(Operands[4])->isReg() &&
+      static_cast<ARMOperand*>(Operands[4])->getReg() == ARM::LR &&
+      static_cast<ARMOperand*>(Operands[5])->isImm()) {
+    ARMOperand *Op0 = static_cast<ARMOperand*>(Operands[0]);
+    Operands.erase(Operands.begin());
+    delete Op0;
+    Operands.insert(Operands.begin(), ARMOperand::CreateToken(Name, NameLoc));
+
+    ARMOperand *Op1 = static_cast<ARMOperand*>(Operands[1]);
+    Operands.erase(Operands.begin() + 1);
+    delete Op1;
+  }
   return false;
 }
 

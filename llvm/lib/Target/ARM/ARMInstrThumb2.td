@@ -3599,6 +3599,16 @@ def t2RFEIA  : T2RFE<0b111010011001,
                    (outs), (ins GPR:$Rn), NoItinerary, "rfeia", "\t$Rn",
                    [/* For disassembly only; pattern left blank */]>;
 
+// B9.3.19 SUBS PC, LR, #imm (Thumb2) system instruction.
+let Defs = [PC], Uses = [LR] in
+def t2SUBS_PC_LR : T2I <(outs), (ins imm0_255:$imm), NoItinerary,
+                   "subs", "\tpc, lr, $imm", []>, Requires<[IsThumb2]> {
+  let Inst{31-8} = 0b111100111101111010001111;
+
+  bits<8> imm;
+  let Inst{7-0} = imm;
+}
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //

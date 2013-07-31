@@ -3588,3 +3588,7 @@ _func:
 @ rdar://12596361
          ldr r1, [pc, #12]
 @ CHECK: ldr r1, [pc, #12]              @ encoding: [0x03,0x49]
+
+@ rdar://14214063
+         subs pc, lr, #4
+@ CHECK: subs pc, lr, #4                @ encoding: [0xde,0xf3,0x04,0x8f]
