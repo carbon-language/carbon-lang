@@ -105,13 +105,6 @@ ReadProcPseudoFile (lldb::pid_t pid, const char *name)
     return buf_sp;
 }
 
-lldb::DataBufferSP
-ReadProcPseudoFile (lldb::pid_t pid, lldb::tid_t tid, const char *name)
-{
-    std::string process_thread_pseudo_file = "task/" + std::to_string(tid) + "/" + name;
-    return ReadProcPseudoFile(pid, process_thread_pseudo_file.c_str());
-}
-
 } // anonymous namespace
 
 static bool
@@ -458,28 +451,18 @@ Host::ThreadCreated (const char *thread_name)
 std::string
 Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
 {
-    const size_t thread_name_max_size = 16;
-    char pthread_name[thread_name_max_size];
-    std::string thread_name;
-    // Read the /proc/$PID/stat file.
-    lldb::DataBufferSP buf_sp = ReadProcPseudoFile (pid, tid, "stat");
-
-    // The file/thread name of the executable is stored in parenthesis. Search for the first
-    // '(' and last ')' and copy everything in between.
-    const char *filename_start = ::strchr ((const char *)buf_sp->GetBytes(), '(');
-    const char *filename_end = ::strrchr ((const char *)buf_sp->GetBytes(), ')');
-
-    if (filename_start && filename_end)
+    // Read /proc/$TID/comm file.
+    lldb::DataBufferSP buf_sp = ReadProcPseudoFile (tid, "comm");
+    if (buf_sp->GetByteSize())
     {
-        ++filename_start;
-        size_t length = filename_end - filename_start;
-        if (length > thread_name_max_size)
-            length = thread_name_max_size;
-        strncpy(pthread_name, filename_start, length);
-        thread_name = std::string(pthread_name, length);
-    }
+        const char *comm_str = (const char *)buf_sp->GetBytes();
+        const char *cr_str = ::strchr(comm_str, '\n');
+        size_t length = cr_str ? (cr_str - comm_str) : buf_sp->GetByteSize();
 
-    return thread_name;
+        std::string thread_name(comm_str, length);
+        return thread_name;
+    }
+    return std::string("");
 }
 
 void
