@@ -103,6 +103,16 @@ public:
     return Owner->getOption(Info->AliasID);
   }
 
+  /// \brief Get the alias arguments as a \0 separated list.
+  /// E.g. ["foo", "bar"] would be returned as "foo\0bar\0".
+  const char *getAliasArgs() const {
+    assert(Info && "Must have a valid info!");
+    assert((!Info->AliasArgs || Info->AliasArgs[0] != 0) &&
+           "AliasArgs should be either 0 or non-empty.");
+
+    return Info->AliasArgs;
+  }
+
   /// \brief Get the default prefix for this option.
   StringRef getPrefix() const {
     const char *Prefix = *Info->Prefixes;

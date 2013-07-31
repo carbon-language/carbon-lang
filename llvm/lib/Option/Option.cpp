@@ -26,6 +26,13 @@ Option::Option(const OptTable::Info *info, const OptTable *owner)
   // tracking, it is not an inherent limitation.
   assert((!Info || !getAlias().isValid() || !getAlias().getAlias().isValid()) &&
          "Multi-level aliases are not supported.");
+
+  if (Info && getAliasArgs()) {
+    assert(getAlias().isValid() && "Only alias options can have alias args.");
+    assert(getKind() == FlagClass && "Only Flag aliases can have alias args.");
+    assert(getAlias().getKind() != FlagClass &&
+           "Cannot provide alias args to a flag option.");
+  }
 }
 
 Option::~Option() {
@@ -106,11 +113,22 @@ Arg *Option::accept(const ArgList &Args,
   }
 
   switch (getKind()) {
-  case FlagClass:
+  case FlagClass: {
     if (ArgSize != strlen(Args.getArgString(Index)))
       return 0;
 
-    return new Arg(UnaliasedOption, Spelling, Index++);
+    Arg *A = new Arg(UnaliasedOption, Spelling, Index++);
+    if (getAliasArgs()) {
+      const char *Val = getAliasArgs();
+      while (*Val != '\0') {
+        A->getValues().push_back(Val);
+
+        // Move past the '\0' to the next argument.
+        Val += strlen(Val) + 1;
+      }
+    }
+    return A;
+  }
   case JoinedClass: {
     const char *Value = Args.getArgString(Index) + ArgSize;
     return new Arg(UnaliasedOption, Spelling, Index++, Value);

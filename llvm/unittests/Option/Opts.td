@@ -19,3 +19,6 @@ def H : Flag<["-"], "H">, Flags<[HelpHidden]>;
 
 def my_group : OptionGroup<"my group">;
 def I : Flag<["-"], "I">, Alias<H>, Group<my_group>;
+
+def J : Flag<["-"], "J">, Alias<B>, AliasArgs<["foo"]>;
+def Joo : Flag<["-"], "Joo">, Alias<B>, AliasArgs<["bar"]>;

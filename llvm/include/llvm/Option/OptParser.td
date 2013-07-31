@@ -89,6 +89,7 @@ class Option<list<string> prefixes, string name, OptionKind kind> {
   list<OptionFlag> Flags = [];
   OptionGroup Group = ?;
   Option Alias = ?;
+  list<string> AliasArgs = [];
 }
 
 // Helpers for defining options.
@@ -113,6 +114,7 @@ class JoinedAndSeparate<list<string> prefixes, string name>
 // Mix-ins for adding optional attributes.
 
 class Alias<Option alias> { Option Alias = alias; }
+class AliasArgs<list<string> aliasargs> { list<string> AliasArgs = aliasargs; }
 class EnumName<string name> { string EnumName = name; }
 class Flags<list<OptionFlag> flags> { list<OptionFlag> Flags = flags; }
 class Group<OptionGroup group> { OptionGroup Group = group; }

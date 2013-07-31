@@ -44,6 +44,7 @@ public:
     unsigned short Flags;
     unsigned short GroupID;
     unsigned short AliasID;
+    const char *AliasArgs;
   };
 
 private:
