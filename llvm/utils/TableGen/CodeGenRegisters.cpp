@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "regalloc-emitter"
+
 #include "CodeGenRegisters.h"
 #include "CodeGenTarget.h"
 #include "llvm/ADT/IntEqClasses.h"
@@ -19,6 +21,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/TableGen/Error.h"
 
 using namespace llvm;
@@ -1329,9 +1332,18 @@ static void computeUberWeights(std::vector<UberRegSet> &UberSets,
     }
     if (Weight > MaxWeight)
       MaxWeight = Weight;
-
-    // Update the set weight.
-    I->Weight = MaxWeight;
+    if (I->Weight != MaxWeight) {
+      DEBUG(
+        dbgs() << "UberSet " << I - UberSets.begin() << " Weight " << MaxWeight;
+        for (CodeGenRegister::Set::iterator
+               UnitI = I->Regs.begin(), UnitE = I->Regs.end();
+             UnitI != UnitE; ++UnitI) {
+          dbgs() << " " << (*UnitI)->getName();
+        }
+        dbgs() << "\n");
+      // Update the set weight.
+      I->Weight = MaxWeight;
+    }
 
     // Find singular determinants.
     for (CodeGenRegister::Set::iterator RegI = I->Regs.begin(),
@@ -1475,6 +1487,8 @@ void CodeGenRegBank::pruneUnitSets() {
       const RegUnitSet &SuperSet = RegUnitSets[SuperIdx];
       if (isRegUnitSubSet(SubSet.Units, SuperSet.Units)
           && (SubSet.Units.size() + 3 > SuperSet.Units.size())) {
+        DEBUG(dbgs() << "UnitSet " << SubIdx << " subsumed by " << SuperIdx
+              << "\n");
         break;
       }
     }
@@ -1499,6 +1513,7 @@ void CodeGenRegBank::pruneUnitSets() {
 // RegisterInfoEmitter will map each RegClass to its RegUnitClass and any
 // RegUnitSet that is a superset of that RegUnitClass.
 void CodeGenRegBank::computeRegUnitSets() {
+  assert(RegUnitSets.empty() && "dirty RegUnitSets");
 
   // Compute a unique RegUnitSet for each RegClass.
   const ArrayRef<CodeGenRegisterClass*> &RegClasses = getRegClasses();
@@ -1521,8 +1536,30 @@ void CodeGenRegBank::computeRegUnitSets() {
       RegUnitSets.pop_back();
   }
 
+  DEBUG(dbgs() << "\nBefore pruning:\n";
+        for (unsigned USIdx = 0, USEnd = RegUnitSets.size();
+             USIdx < USEnd; ++USIdx) {
+          dbgs() << "UnitSet " << USIdx << " " << RegUnitSets[USIdx].Name
+                 << ":";
+          ArrayRef<unsigned> Units = RegUnitSets[USIdx].Units;
+          for (unsigned i = 0, e = Units.size(); i < e; ++i)
+            dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+          dbgs() << "\n";
+        });
+
   // Iteratively prune unit sets.
   pruneUnitSets();
+
+  DEBUG(dbgs() << "\nBefore union:\n";
+        for (unsigned USIdx = 0, USEnd = RegUnitSets.size();
+             USIdx < USEnd; ++USIdx) {
+          dbgs() << "UnitSet " << USIdx << " " << RegUnitSets[USIdx].Name
+                 << ":";
+          ArrayRef<unsigned> Units = RegUnitSets[USIdx].Units;
+          for (unsigned i = 0, e = Units.size(); i < e; ++i)
+            dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+          dbgs() << "\n";
+        });
 
   // Iterate over all unit sets, including new ones added by this loop.
   unsigned NumRegUnitSubSets = RegUnitSets.size();
@@ -1567,6 +1604,17 @@ void CodeGenRegBank::computeRegUnitSets() {
   // Iteratively prune unit sets after inferring supersets.
   pruneUnitSets();
 
+  DEBUG(dbgs() << "\n";
+        for (unsigned USIdx = 0, USEnd = RegUnitSets.size();
+             USIdx < USEnd; ++USIdx) {
+          dbgs() << "UnitSet " << USIdx << " " << RegUnitSets[USIdx].Name
+                 << ":";
+          ArrayRef<unsigned> Units = RegUnitSets[USIdx].Units;
+          for (unsigned i = 0, e = Units.size(); i < e; ++i)
+            dbgs() << " " << RegUnits[Units[i]].Roots[0]->getName();
+          dbgs() << "\n";
+        });
+
   // For each register class, list the UnitSets that are supersets.
   RegClassUnitSets.resize(NumRegClasses);
   for (unsigned RCIdx = 0, RCEnd = NumRegClasses; RCIdx != RCEnd; ++RCIdx) {
@@ -1574,19 +1622,27 @@ void CodeGenRegBank::computeRegUnitSets() {
       continue;
 
     // Recompute the sorted list of units in this class.
-    std::vector<unsigned> RegUnits;
-    RegClasses[RCIdx]->buildRegUnitSet(RegUnits);
+    std::vector<unsigned> RCRegUnits;
+    RegClasses[RCIdx]->buildRegUnitSet(RCRegUnits);
 
     // Don't increase pressure for unallocatable regclasses.
-    if (RegUnits.empty())
+    if (RCRegUnits.empty())
       continue;
+
+    DEBUG(dbgs() << "RC " << RegClasses[RCIdx]->getName() << " Units: \n";
+          for (unsigned i = 0, e = RCRegUnits.size(); i < e; ++i)
+            dbgs() << RegUnits[RCRegUnits[i]].getRoots()[0]->getName() << " ";
+          dbgs() << "\n  UnitSetIDs:");
 
     // Find all supersets.
     for (unsigned USIdx = 0, USEnd = RegUnitSets.size();
          USIdx != USEnd; ++USIdx) {
-      if (isRegUnitSubSet(RegUnits, RegUnitSets[USIdx].Units))
+      if (isRegUnitSubSet(RCRegUnits, RegUnitSets[USIdx].Units)) {
+        DEBUG(dbgs() << " " << USIdx);
         RegClassUnitSets[RCIdx].push_back(USIdx);
+      }
     }
+    DEBUG(dbgs() << "\n");
     assert(!RegClassUnitSets[RCIdx].empty() && "missing unit set for regclass");
   }
 
