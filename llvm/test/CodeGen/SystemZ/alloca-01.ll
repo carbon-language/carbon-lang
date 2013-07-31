@@ -18,15 +18,15 @@ define i64 @f1(i64 %length, i64 %index) {
 ;
 ;    lgr %r1, %r15
 ;    sgr %r1, %r2
-;    risbg %r1, %r1, 0, 188, 0
+;    nill %r1, 0xfff8
 ;    lgr %r15, %r1
 ;
 ; CHECK-LABEL: f1:
 ; CHECK-DAG: la [[REG1:%r[0-5]]], 7(%r2)
-; CHECK-DAG: risbg [[REG2:%r[0-5]]], [[REG1]], 0, 188, 0
-; CHECK-DAG: lgr [[REG3:%r[0-5]]], %r15
-; CHECK: sgr [[REG3]], [[REG2]]
-; CHECK: lgr %r15, [[REG3]]
+; CHECK-DAG: nill [[REG1]], 65528
+; CHECK-DAG: lgr [[REG2:%r[0-5]]], %r15
+; CHECK: sgr [[REG2]], [[REG1]]
+; CHECK: lgr %r15, [[REG2]]
 ;
 ; CHECK-A-LABEL: f1:
 ; CHECK-A: lgr %r15, %r1

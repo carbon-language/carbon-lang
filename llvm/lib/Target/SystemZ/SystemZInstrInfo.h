@@ -187,6 +187,12 @@ public:
   // exists.
   unsigned getOpcodeForOffset(unsigned Opcode, int64_t Offset) const;
 
+  // Return true if ROTATE AND ... SELECTED BITS can be used to select bits
+  // Mask of the R2 operand, given that only the low BitSize bits of Mask are
+  // significant.  Set Start and End to the I3 and I4 operands if so.
+  bool isRxSBGMask(uint64_t Mask, unsigned BitSize,
+                   unsigned &Start, unsigned &End) const;
+
   // If Opcode is a COMPARE opcode for which an associated COMPARE AND
   // BRANCH exists, return the opcode for the latter, otherwise return 0.
   // MI, if nonnull, is the compare instruction.

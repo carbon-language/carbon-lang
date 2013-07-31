@@ -63,12 +63,12 @@ define i64 @f6(i64 %foo) {
   ret i64 %and
 }
 
-; Try the next value up (mask ....1111001).  The mask itself is suitable
-; for RISBG, but the shift is still needed.
+; Try the next value up (mask ....1111001).  This needs a separate shift
+; and mask.
 define i32 @f7(i32 %foo) {
 ; CHECK-LABEL: f7:
 ; CHECK: srl %r2, 2
-; CHECK: risbg %r2, %r2, 63, 188, 0
+; CHECK: nill %r2, 65529
 ; CHECK: br %r14
   %shr = lshr i32 %foo, 2
   %and = and i32 %shr, -7
@@ -78,8 +78,8 @@ define i32 @f7(i32 %foo) {
 ; ...and again with i64.
 define i64 @f8(i64 %foo) {
 ; CHECK-LABEL: f8:
-; CHECK: srlg [[REG:%r[0-5]]], %r2, 2
-; CHECK: risbg %r2, [[REG]], 63, 188, 0
+; CHECK: srlg %r2, %r2, 2
+; CHECK: nill %r2, 65529
 ; CHECK: br %r14
   %shr = lshr i64 %foo, 2
   %and = and i64 %shr, -7
@@ -107,12 +107,12 @@ define i64 @f10(i64 %foo) {
   ret i64 %and
 }
 
-; Try a wrap-around mask (mask ....111100001111).  The mask itself is suitable
-; for RISBG, but the shift is still needed.
+; Try a wrap-around mask (mask ....111100001111).  This needs a separate shift
+; and mask.
 define i32 @f11(i32 %foo) {
 ; CHECK-LABEL: f11:
 ; CHECK: sll %r2, 2
-; CHECK: risbg %r2, %r2, 60, 183, 0
+; CHECK: nill %r2, 65295
 ; CHECK: br %r14
   %shr = shl i32 %foo, 2
   %and = and i32 %shr, -241
@@ -122,8 +122,8 @@ define i32 @f11(i32 %foo) {
 ; ...and again with i64.
 define i64 @f12(i64 %foo) {
 ; CHECK-LABEL: f12:
-; CHECK: sllg [[REG:%r[0-5]]], %r2, 2
-; CHECK: risbg %r2, [[REG]], 60, 183, 0
+; CHECK: sllg %r2, %r2, 2
+; CHECK: nill %r2, 65295
 ; CHECK: br %r14
   %shr = shl i64 %foo, 2
   %and = and i64 %shr, -241
@@ -181,12 +181,11 @@ define i64 @f16(i64 %foo) {
 }
 
 ; Test a 32-bit rotate in which both parts of the OR are needed.
-; This needs a separate shift (although RISBLG would be better
-; if supported).
+; This needs a separate shift and mask.
 define i32 @f17(i32 %foo) {
 ; CHECK-LABEL: f17:
-; CHECK: rll [[REG:%r[0-5]]], %r2, 4
-; CHECK: risbg %r2, [[REG]], 57, 190, 0
+; CHECK: rll %r2, %r2, 4
+; CHECK: nilf %r2, 126
 ; CHECK: br %r14
   %parta = shl i32 %foo, 4
   %partb = lshr i32 %foo, 28
@@ -208,18 +207,18 @@ define i64 @f18(i64 %foo) {
 }
 
 ; Test an arithmetic shift right in which some of the sign bits are kept.
-; The SRA is still needed.
+; This needs a separate shift and mask.
 define i32 @f19(i32 %foo) {
 ; CHECK-LABEL: f19:
 ; CHECK: sra %r2, 28
-; CHECK: risbg %r2, %r2, 59, 190, 0
+; CHECK: nilf %r2, 30
 ; CHECK: br %r14
   %shr = ashr i32 %foo, 28
   %and = and i32 %shr, 30
   ret i32 %and
 }
 
-; ...and again with i64.
+; ...and again with i64.  In this case RISBG is the best way of doing the AND.
 define i64 @f20(i64 %foo) {
 ; CHECK-LABEL: f20:
 ; CHECK: srag [[REG:%r[0-5]]], %r2, 60
@@ -265,11 +264,12 @@ define i64 @f23(i64 %foo) {
   ret i64 %and
 }
 
-; Test a case where the AND comes before a rotate.
+; Test a case where the AND comes before a rotate.  This needs a separate
+; mask and rotate.
 define i32 @f24(i32 %foo) {
 ; CHECK-LABEL: f24:
-; CHECK: risbg [[REG:%r[0-5]]], %r2, 60, 190, 0
-; CHECK: rll %r2, [[REG]], 3
+; CHECK: nilf %r2, 14
+; CHECK: rll %r2, %r2, 3
 ; CHECK: br %r14
   %and = and i32 %foo, 14
   %parta = shl i32 %and, 3
@@ -290,11 +290,12 @@ define i64 @f25(i64 %foo) {
   ret i64 %rotl
 }
 
-; Test a wrap-around case in which the rotate comes after the AND.
+; Test a wrap-around case in which the AND comes before a rotate.
+; This again needs a separate mask and rotate.
 define i32 @f26(i32 %foo) {
 ; CHECK-LABEL: f26:
-; CHECK: risbg [[REG:%r[0-5]]], %r2, 60, 185, 0
-; CHECK: rll %r2, [[REG]], 5
+; CHECK: nill %r2, 65487
+; CHECK: rll %r2, %r2, 5
 ; CHECK: br %r14
   %and = and i32 %foo, -49
   %parta = shl i32 %and, 5

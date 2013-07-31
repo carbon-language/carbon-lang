@@ -132,6 +132,14 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
 
+  const SystemZTargetMachine &getTargetMachine() const {
+    return static_cast<const SystemZTargetMachine &>(TM);
+  }
+
+  const SystemZInstrInfo *getInstrInfo() const {
+    return getTargetMachine().getInstrInfo();
+  }
+
   // Try to fold more of the base or index of AM into AM, where IsBase
   // selects between the base and index.
   bool expandAddress(SystemZAddressingMode &AM, bool IsBase);
@@ -235,6 +243,10 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   // of X into bits InsertMask of some Y != Op.  Return true if so and
   // set Op to that Y.
   bool detectOrAndInsertion(SDValue &Op, uint64_t InsertMask);
+
+  // Try to update RxSBG so that only the bits of RxSBG.Input in Mask are used.
+  // Return true on success.
+  bool refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask);
 
   // Try to fold some of RxSBG.Input into other fields of RxSBG.
   // Return true on success.
@@ -607,52 +619,15 @@ bool SystemZDAGToDAGISel::detectOrAndInsertion(SDValue &Op,
   return true;
 }
 
-// Return true if Mask matches the regexp 0*1+0*, given that zero masks
-// have already been filtered out.  Store the first set bit in LSB and
-// the number of set bits in Length if so.
-static bool isStringOfOnes(uint64_t Mask, unsigned &LSB, unsigned &Length) {
-  unsigned First = findFirstSet(Mask);
-  uint64_t Top = (Mask >> First) + 1;
-  if ((Top & -Top) == Top) {
-    LSB = First;
-    Length = findFirstSet(Top);
-    return true;
-  }
-  return false;
-}
-
-// Try to update RxSBG so that only the bits of RxSBG.Input in Mask are used.
-// Return true on success.
-static bool refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask) {
+bool SystemZDAGToDAGISel::refineRxSBGMask(RxSBGOperands &RxSBG, uint64_t Mask) {
+  const SystemZInstrInfo *TII = getInstrInfo();
   if (RxSBG.Rotate != 0)
     Mask = (Mask << RxSBG.Rotate) | (Mask >> (64 - RxSBG.Rotate));
   Mask &= RxSBG.Mask;
-
-  // Reject trivial all-zero masks.
-  if (Mask == 0)
-    return false;
-
-  // Handle the 1+0+ or 0+1+0* cases.  Start then specifies the index of
-  // the msb and End specifies the index of the lsb.
-  unsigned LSB, Length;
-  if (isStringOfOnes(Mask, LSB, Length)) {
+  if (TII->isRxSBGMask(Mask, RxSBG.BitSize, RxSBG.Start, RxSBG.End)) {
     RxSBG.Mask = Mask;
-    RxSBG.Start = 63 - (LSB + Length - 1);
-    RxSBG.End = 63 - LSB;
     return true;
   }
-
-  // Handle the wrap-around 1+0+1+ cases.  Start then specifies the msb
-  // of the low 1s and End specifies the lsb of the high 1s.
-  if (isStringOfOnes(Mask ^ allOnes(RxSBG.BitSize), LSB, Length)) {
-    assert(LSB > 0 && "Bottom bit must be set");
-    assert(LSB + Length < RxSBG.BitSize && "Top bit must be set");
-    RxSBG.Mask = Mask;
-    RxSBG.Start = 63 - (LSB - 1);
-    RxSBG.End = 63 - (LSB + Length);
-    return true;
-  }
-
   return false;
 }
 
@@ -824,24 +799,38 @@ SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) {
 }
 
 SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
+  EVT VT = N->getValueType(0);
   RxSBGOperands RISBG(SystemZ::RISBG, SDValue(N, 0));
   unsigned Count = 0;
   while (expandRxSBG(RISBG))
     Count += 1;
-  // Prefer to use normal shift instructions over RISBG, since they can handle
-  // all cases and are sometimes shorter.  Prefer to use RISBG for ANDs though,
-  // since it is effectively a three-operand instruction in this case,
-  // and since it can handle some masks that AND IMMEDIATE can't.
-  if (Count < (N->getOpcode() == ISD::AND ? 1U : 2U))
+  if (Count == 0)
     return 0;
+  if (Count == 1) {
+    // Prefer to use normal shift instructions over RISBG, since they can handle
+    // all cases and are sometimes shorter.
+    if (N->getOpcode() != ISD::AND)
+      return 0;
 
-  // Prefer register extensions like LLC over RISBG.
-  if (RISBG.Rotate == 0 &&
-      (RISBG.Start == 32 || RISBG.Start == 48 || RISBG.Start == 56) &&
-      RISBG.End == 63)
-    return 0;
+    // Prefer register extensions like LLC over RISBG.  Also prefer to start
+    // out with normal ANDs if one instruction would be enough.  We can convert
+    // these ANDs into an RISBG later if a three-address instruction is useful.
+    if (VT == MVT::i32 ||
+        RISBG.Mask == 0xff ||
+        RISBG.Mask == 0xffff ||
+        SystemZ::isImmLF(~RISBG.Mask) ||
+        SystemZ::isImmHF(~RISBG.Mask)) {
+      // Force the new mask into the DAG, since it may include known-one bits.
+      ConstantSDNode *MaskN = cast<ConstantSDNode>(N->getOperand(1).getNode());
+      if (MaskN->getZExtValue() != RISBG.Mask) {
+        SDValue NewMask = CurDAG->getConstant(RISBG.Mask, VT);
+        N = CurDAG->UpdateNodeOperands(N, N->getOperand(0), NewMask);
+        return SelectCode(N);
+      }
+      return 0;
+    }
+  }  
 
-  EVT VT = N->getValueType(0);
   SDValue Ops[5] = {
     getUNDEF64(SDLoc(N)),
     convertTo(SDLoc(N), MVT::i64, RISBG.Input),

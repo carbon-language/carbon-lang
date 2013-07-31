@@ -692,21 +692,23 @@ let Defs = [CC] in {
     defm NGR : BinaryRREAndK<"ng", 0xB980, 0xB9E4, and, GR64, GR64>;
   }
 
-  // ANDs of a 16-bit immediate, leaving other bits unaffected.
-  let isCodeGenOnly = 1 in {
-    def NILL32 : BinaryRI<"nill", 0xA57, and, GR32, imm32ll16c>;
-    def NILH32 : BinaryRI<"nilh", 0xA56, and, GR32, imm32lh16c>;
-  }
-  def NILL : BinaryRI<"nill", 0xA57, and, GR64, imm64ll16c>;
-  def NILH : BinaryRI<"nilh", 0xA56, and, GR64, imm64lh16c>;
-  def NIHL : BinaryRI<"nihl", 0xA55, and, GR64, imm64hl16c>;
-  def NIHH : BinaryRI<"nihh", 0xA54, and, GR64, imm64hh16c>;
+  let isConvertibleToThreeAddress = 1 in {
+    // ANDs of a 16-bit immediate, leaving other bits unaffected.
+    let isCodeGenOnly = 1 in {
+      def NILL32 : BinaryRI<"nill", 0xA57, and, GR32, imm32ll16c>;
+      def NILH32 : BinaryRI<"nilh", 0xA56, and, GR32, imm32lh16c>;
+    }
+    def NILL : BinaryRI<"nill", 0xA57, and, GR64, imm64ll16c>;
+    def NILH : BinaryRI<"nilh", 0xA56, and, GR64, imm64lh16c>;
+    def NIHL : BinaryRI<"nihl", 0xA55, and, GR64, imm64hl16c>;
+    def NIHH : BinaryRI<"nihh", 0xA54, and, GR64, imm64hh16c>;
 
-  // ANDs of a 32-bit immediate, leaving other bits unaffected.
-  let isCodeGenOnly = 1 in
-    def NILF32 : BinaryRIL<"nilf", 0xC0B, and, GR32, uimm32>;
-  def NILF : BinaryRIL<"nilf", 0xC0B, and, GR64, imm64lf32c>;
-  def NIHF : BinaryRIL<"nihf", 0xC0A, and, GR64, imm64hf32c>;
+    // ANDs of a 32-bit immediate, leaving other bits unaffected.
+    let isCodeGenOnly = 1 in
+      def NILF32 : BinaryRIL<"nilf", 0xC0B, and, GR32, uimm32>;
+    def NILF : BinaryRIL<"nilf", 0xC0B, and, GR64, imm64lf32c>;
+    def NIHF : BinaryRIL<"nihf", 0xC0A, and, GR64, imm64hf32c>;
+  }
 
   // ANDs of memory.
   defm N  : BinaryRXPair<"n", 0x54, 0xE354, and, GR32, load, 4>;
@@ -869,6 +871,9 @@ let Defs = [CC] in {
 
 // Forms of RISBG that only affect one word of the destination register.
 // They do not set CC.
+let isCodeGenOnly = 1 in
+  def RISBLG32 : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR32>,
+                 Requires<[FeatureHighWord]>;
 def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GR64, GR64>,
              Requires<[FeatureHighWord]>;
 def RISBLG : RotateSelectRIEf<"risblg", 0xEC51, GR64, GR64>,

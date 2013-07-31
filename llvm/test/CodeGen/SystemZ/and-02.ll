@@ -1,49 +1,49 @@
 ; Test 32-bit ANDs in which the second operand is constant.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z196 | FileCheck %s
 
-; ANDs with 1 should use RISBG
+; ANDs with 1 can use NILF.
 define i32 @f1(i32 %a) {
 ; CHECK-LABEL: f1:
-; CHECK: risbg %r2, %r2, 63, 191, 0
+; CHECK: nilf %r2, 1
 ; CHECK: br %r14
   %and = and i32 %a, 1
   ret i32 %and
 }
 
-; ...same for 2.
-define i32 @f2(i32 %a) {
+; ...but RISBLG is available as a three-address form.
+define i32 @f2(i32 %a, i32 %b) {
 ; CHECK-LABEL: f2:
-; CHECK: risbg %r2, %r2, 62, 190, 0
+; CHECK: risblg %r2, %r3, 31, 159, 0
 ; CHECK: br %r14
-  %and = and i32 %a, 2
+  %and = and i32 %b, 1
   ret i32 %and
 }
 
-; ...and 3.
-define i32 @f3(i32 %a) {
+; ...same for 4.
+define i32 @f3(i32 %a, i32 %b) {
 ; CHECK-LABEL: f3:
-; CHECK: risbg %r2, %r2, 62, 191, 0
+; CHECK: risblg %r2, %r3, 29, 157, 0
 ; CHECK: br %r14
-  %and = and i32 %a, 3
+  %and = and i32 %b, 4
   ret i32 %and
 }
 
-; ...and 4.
+; ANDs with 5 must use NILF.
 define i32 @f4(i32 %a) {
 ; CHECK-LABEL: f4:
-; CHECK: risbg %r2, %r2, 61, 189, 0
-; CHECK: br %r14
-  %and = and i32 %a, 4
-  ret i32 %and
-}
-
-; Check the lowest useful NILF value.
-define i32 @f5(i32 %a) {
-; CHECK-LABEL: f5:
 ; CHECK: nilf %r2, 5
 ; CHECK: br %r14
   %and = and i32 %a, 5
+  ret i32 %and
+}
+
+; ...a single RISBLG isn't enough.
+define i32 @f5(i32 %a, i32 %b) {
+; CHECK-LABEL: f5:
+; CHECK-NOT: risb
+; CHECK: br %r14
+  %and = and i32 %b, 5
   ret i32 %and
 }
 
@@ -56,174 +56,171 @@ define i32 @f6(i32 %a) {
   ret i32 %and
 }
 
-; ANDs of 0xffff are zero extensions from i16.
-define i32 @f7(i32 %a) {
+; ...a single RISBLG isn't enough.
+define i32 @f7(i32 %a, i32 %b) {
 ; CHECK-LABEL: f7:
-; CHECK: llhr %r2, %r2
+; CHECK-NOT: risb
 ; CHECK: br %r14
-  %and = and i32 %a, 65535
+  %and = and i32 %b, 65533
   ret i32 %and
 }
 
-; Check the next value up, which can use RISBG.
+; Check the next highest value, which can use NILF.
 define i32 @f8(i32 %a) {
 ; CHECK-LABEL: f8:
-; CHECK: risbg %r2, %r2, 47, 175, 0
+; CHECK: nilf %r2, 65534
+; CHECK: br %r14
+  %and = and i32 %a, 65534
+  ret i32 %and
+}
+
+; ...although the three-address case should use RISBLG.
+define i32 @f9(i32 %a, i32 %b) {
+; CHECK-LABEL: f9:
+; CHECK: risblg %r2, %r3, 16, 158, 0
+; CHECK: br %r14
+  %and = and i32 %b, 65534
+  ret i32 %and
+}
+
+; ANDs of 0xffff are zero extensions from i16.
+define i32 @f10(i32 %a, i32 %b) {
+; CHECK-LABEL: f10:
+; CHECK: llhr %r2, %r3
+; CHECK: br %r14
+  %and = and i32 %b, 65535
+  ret i32 %and
+}
+
+; Check the next value up, which must again use NILF.
+define i32 @f11(i32 %a) {
+; CHECK-LABEL: f11:
+; CHECK: nilf %r2, 65536
 ; CHECK: br %r14
   %and = and i32 %a, 65536
   ret i32 %and
 }
 
-; Check the next value up, which must again use NILF.
-define i32 @f9(i32 %a) {
-; CHECK-LABEL: f9:
-; CHECK: nilf %r2, 65537
+; ...but the three-address case can use RISBLG.
+define i32 @f12(i32 %a, i32 %b) {
+; CHECK-LABEL: f12:
+; CHECK: risblg %r2, %r3, 15, 143, 0
 ; CHECK: br %r14
-  %and = and i32 %a, 65537
+  %and = and i32 %b, 65536
   ret i32 %and
 }
 
-; This value is in range of NILH, but we use RISBG instead.
-define i32 @f10(i32 %a) {
-; CHECK-LABEL: f10:
-; CHECK: risbg %r2, %r2, 47, 191, 0
+; Check the lowest useful NILH value.
+define i32 @f13(i32 %a) {
+; CHECK-LABEL: f13:
+; CHECK: nilh %r2, 1
 ; CHECK: br %r14
   %and = and i32 %a, 131071
   ret i32 %and
 }
 
-; Check the lowest useful NILH value.
-define i32 @f11(i32 %a) {
-; CHECK-LABEL: f11:
-; CHECK: nilh %r2, 2
-; CHECK: br %r14
-  %and = and i32 %a, 196607
-  ret i32 %and
-}
-
-; Check the highest useful NILH value.
-define i32 @f12(i32 %a) {
-; CHECK-LABEL: f12:
-; CHECK: nilh %r2, 65530
-; CHECK: br %r14
-  %and = and i32 %a, -327681
-  ret i32 %and
-}
-
-; Check the equivalent of NILH of 65531, which can use RISBG.
-define i32 @f13(i32 %a) {
-; CHECK-LABEL: f13:
-; CHECK: risbg %r2, %r2, 46, 172, 0
-; CHECK: br %r14
-  %and = and i32 %a, -262145
-  ret i32 %and
-}
-
-; ...same for 65532.
-define i32 @f14(i32 %a) {
+; ...but RISBLG is OK in the three-address case.
+define i32 @f14(i32 %a, i32 %b) {
 ; CHECK-LABEL: f14:
-; CHECK: risbg %r2, %r2, 48, 173, 0
+; CHECK: risblg %r2, %r3, 15, 159, 0
 ; CHECK: br %r14
-  %and = and i32 %a, -196609
-  ret i32 %and
-}
-
-; ...and 65533.
-define i32 @f15(i32 %a) {
-; CHECK-LABEL: f15:
-; CHECK: risbg %r2, %r2, 47, 173, 0
-; CHECK: br %r14
-  %and = and i32 %a, -131073
+  %and = and i32 %b, 131071
   ret i32 %and
 }
 
 ; Check the highest useful NILF value.
-define i32 @f16(i32 %a) {
-; CHECK-LABEL: f16:
+define i32 @f15(i32 %a) {
+; CHECK-LABEL: f15:
 ; CHECK: nilf %r2, 4294901758
 ; CHECK: br %r14
   %and = and i32 %a, -65538
   ret i32 %and
 }
 
-; Check the next value up, which is the equivalent of an NILH of 65534.
-; We use RISBG instead.
-define i32 @f17(i32 %a) {
-; CHECK-LABEL: f17:
-; CHECK: risbg %r2, %r2, 48, 174, 0
+; Check the next value up, which is the highest useful NILH value.
+define i32 @f16(i32 %a) {
+; CHECK-LABEL: f16:
+; CHECK: nilh %r2, 65534
 ; CHECK: br %r14
   %and = and i32 %a, -65537
   ret i32 %and
 }
 
-; Check the next value up, which can also use RISBG.
-define i32 @f18(i32 %a) {
-; CHECK-LABEL: f18:
-; CHECK: risbg %r2, %r2, 32, 175, 0
+; Check the next value up, which is the first useful NILL value.
+define i32 @f17(i32 %a) {
+; CHECK-LABEL: f17:
+; CHECK: nill %r2, 0
 ; CHECK: br %r14
   %and = and i32 %a, -65536
   ret i32 %and
 }
 
-; ...and again.
+; ...although the three-address case should use RISBLG.
+define i32 @f18(i32 %a, i32 %b) {
+; CHECK-LABEL: f18:
+; CHECK: risblg %r2, %r3, 0, 143, 0
+; CHECK: br %r14
+  %and = and i32 %b, -65536
+  ret i32 %and
+}
+
+; Check the next value up again, which can still use NILL.
 define i32 @f19(i32 %a) {
 ; CHECK-LABEL: f19:
-; CHECK: risbg %r2, %r2, 63, 175, 0
+; CHECK: nill %r2, 1
 ; CHECK: br %r14
   %and = and i32 %a, -65535
   ret i32 %and
 }
 
-; Check the next value up again, which is the lowest useful NILL value.
-define i32 @f20(i32 %a) {
+; Check the next value up again, which cannot use RISBLG.
+define i32 @f20(i32 %a, i32 %b) {
 ; CHECK-LABEL: f20:
-; CHECK: nill %r2, 2
+; CHECK-NOT: risb
 ; CHECK: br %r14
-  %and = and i32 %a, -65534
+  %and = and i32 %b, -65534
   ret i32 %and
 }
 
-; Check the highest useful NILL value.
+; Check the last useful mask, which can use NILL.
 define i32 @f21(i32 %a) {
 ; CHECK-LABEL: f21:
-; CHECK: nill %r2, 65530
-; CHECK: br %r14
-  %and = and i32 %a, -6
-  ret i32 %and
-}
-
-; Check the next value up, which can use RISBG.
-define i32 @f22(i32 %a) {
-; CHECK-LABEL: f22:
-; CHECK: risbg %r2, %r2, 62, 188, 0
-; CHECK: br %r14
-  %and = and i32 %a, -5
-  ret i32 %and
-}
-
-; ...and again.
-define i32 @f23(i32 %a) {
-; CHECK-LABEL: f23:
-; CHECK: risbg %r2, %r2, 32, 189, 0
-; CHECK: br %r14
-  %and = and i32 %a, -4
-  ret i32 %and
-}
-
-; ...and again.
-define i32 @f24(i32 %a) {
-; CHECK-LABEL: f24:
-; CHECK: risbg %r2, %r2, 63, 189, 0
-; CHECK: br %r14
-  %and = and i32 %a, -3
-  ret i32 %and
-}
-
-; Check the last useful mask.
-define i32 @f25(i32 %a) {
-; CHECK-LABEL: f25:
-; CHECK: risbg %r2, %r2, 32, 190, 0
+; CHECK: nill %r2, 65534
 ; CHECK: br %r14
   %and = and i32 %a, -2
   ret i32 %and
+}
+
+; ...or RISBLG for the three-address case.
+define i32 @f22(i32 %a, i32 %b) {
+; CHECK-LABEL: f22:
+; CHECK: risblg %r2, %r3, 0, 158, 0
+; CHECK: br %r14
+  %and = and i32 %b, -2
+  ret i32 %and
+}
+
+; Test that RISBLG can be used when inserting a non-wraparound mask
+; into another register.
+define i64 @f23(i64 %a, i32 %b) {
+; CHECK-LABEL: f23:
+; CHECK: risblg %r2, %r3, 30, 158, 0
+; CHECK: br %r14
+  %and1 = and i64 %a, -4294967296
+  %and2 = and i32 %b, 2
+  %ext = zext i32 %and2 to i64
+  %or = or i64 %and1, %ext
+  ret i64 %or
+}
+
+; ...and when inserting a wrap-around mask.
+define i64 @f24(i64 %a, i32 %b) {
+; CHECK-LABEL: f24:
+; CHECK: risblg %r2, %r3, 30, 156
+; CHECK: br %r14
+  %and1 = and i64 %a, -4294967296
+  %and2 = and i32 %b, -5
+  %ext = zext i32 %and2 to i64
+  %or = or i64 %and1, %ext
+  ret i64 %or
 }
