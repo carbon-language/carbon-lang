@@ -943,7 +943,8 @@ def mno_constant_cfstrings : Flag<["-"], "mno-constant-cfstrings">, Group<m_Grou
 def mno_global_merge : Flag<["-"], "mno-global-merge">, Group<m_Group>, Flags<[CC1Option]>,
   HelpText<"Disable merging of globals">;
 def mno_mmx : Flag<["-"], "mno-mmx">, Group<m_x86_Features_Group>;
-def mno_pascal_strings : Flag<["-"], "mno-pascal-strings">, Group<m_Group>;
+def mno_pascal_strings : Flag<["-"], "mno-pascal-strings">,
+  Alias<fno_pascal_strings>;
 def mno_red_zone : Flag<["-"], "mno-red-zone">, Group<m_Group>;
 def mno_relax_all : Flag<["-"], "mno-relax-all">, Group<m_Group>;
 def mno_rtd: Flag<["-"], "mno-rtd">, Group<m_Group>;
@@ -982,7 +983,7 @@ def mno_omit_leaf_frame_pointer : Flag<["-"], "mno-omit-leaf-frame-pointer">, Gr
 def momit_leaf_frame_pointer : Flag<["-"], "momit-leaf-frame-pointer">, Group<m_Group>,
   HelpText<"Omit frame pointer setup for leaf functions">, Flags<[CC1Option]>;
 def moslib_EQ : Joined<["-"], "moslib=">, Group<m_Group>;
-def mpascal_strings : Flag<["-"], "mpascal-strings">, Group<m_Group>;
+def mpascal_strings : Flag<["-"], "mpascal-strings">, Alias<fpascal_strings>;
 def mred_zone : Flag<["-"], "mred-zone">, Group<m_Group>;
 def mregparm_EQ : Joined<["-"], "mregparm=">, Group<m_Group>;
 def mrelax_all : Flag<["-"], "mrelax-all">, Group<m_Group>, Flags<[CC1Option]>,

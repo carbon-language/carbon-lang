@@ -71,3 +71,9 @@
 // CHECK-EXTENDED-IDENTIFIERS: "-cc1"
 // CHECK-EXTENDED-IDENTIFIERS-NOT: "-fextended-identifiers"
 // CHECK-NO-EXTENDED-IDENTIFIERS: error: unsupported option '-fno-extended-identifiers'
+
+// RUN: %clang -### -S -fno-pascal-strings -mpascal-strings %s 2>&1 | FileCheck -check-prefix=CHECK-M-PASCAL-STRINGS %s
+// CHECK-M-PASCAL-STRINGS: "-fpascal-strings"
+
+// RUN: %clang -### -S -fpascal-strings -mno-pascal-strings %s 2>&1 | FileCheck -check-prefix=CHECK-NO-M-PASCAL-STRINGS %s
+// CHECK-NO-M-PASCAL-STRINGS-NOT: "-fpascal-strings"
