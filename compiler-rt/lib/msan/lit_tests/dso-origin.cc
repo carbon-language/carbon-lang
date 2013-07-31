@@ -2,7 +2,7 @@
 // Test that origin tracking is enabled at runtime.
 // RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %p/SharedLibs/dso-origin-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_msan -m64 -O0 %s %t-so.so -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_msan -m64 -O0 %s %t-so.so -o %t && not %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 
