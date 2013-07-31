@@ -7,7 +7,7 @@ define i32 @test1(i32 %A, i32 %B) {
 ; The above computation of %tmp4 should match a single lea, without using
 ; actual add instructions.
 ; CHECK-NOT: add
-; CHECK: lea {{[A-Z]+}}, DWORD PTR [{{[A-Z]+}} + 4*{{[A-Z]+}} - 5]
+; CHECK: lea {{[a-z]+}}, dword ptr [{{[a-z]+}} + 4*{{[a-z]+}} - 5]
 
   ret i32 %tmp4
 }

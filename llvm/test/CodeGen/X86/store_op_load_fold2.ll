@@ -17,10 +17,10 @@ cond_true2732.preheader:                ; preds = %entry
         store i64 %tmp2676.us.us, i64* %tmp2666
         ret i32 0
 
-; INTEL: 	and	{{E..}}, DWORD PTR [360]
-; INTEL:	and	DWORD PTR [356], {{E..}}
-; FIXME:	mov	DWORD PTR [360], {{E..}}
-; The above line comes out as 'mov 360, EAX', but when the register is ECX it works?
+; INTEL: 	and	{{e..}}, dword ptr [360]
+; INTEL:	and	dword ptr [356], {{e..}}
+; FIXME:	mov	dword ptr [360], {{e..}}
+; The above line comes out as 'mov 360, eax', but when the register is ecx it works?
 
 ; ATT: 	andl	360, %{{e..}}
 ; ATT:	andl	%{{e..}}, 356

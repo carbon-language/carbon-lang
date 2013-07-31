@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
-; RUN:   grep "shld.*CL"
+; RUN:   grep "shld.*cl"
 ; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
-; RUN:   not grep "mov CL, BL"
+; RUN:   not grep "mov cl, bl"
 
 ; PR687
 

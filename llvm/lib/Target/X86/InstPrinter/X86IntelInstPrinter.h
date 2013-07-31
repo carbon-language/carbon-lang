@@ -41,60 +41,60 @@ public:
   void printPCRelImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   
   void printopaquemem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "OPAQUE PTR ";
+    O << "opaque ptr ";
     printMemReference(MI, OpNo, O);
   }
   
   void printi8mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "BYTE PTR ";
+    O << "byte ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printi16mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "WORD PTR ";
+    O << "word ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printi32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "DWORD PTR ";
+    O << "dword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printi64mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "QWORD PTR ";
+    O << "qword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printi128mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "XMMWORD PTR ";
+    O << "xmmword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printi256mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "YMMWORD PTR ";
+    O << "ymmword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printi512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "ZMMWORD PTR ";
+    O << "zmmword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printf32mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "DWORD PTR ";
+    O << "dword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printf64mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "QWORD PTR ";
+    O << "qword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printf80mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "XWORD PTR ";
+    O << "xword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printf128mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "XMMWORD PTR ";
+    O << "xmmword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printf256mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "YMMWORD PTR ";
+    O << "ymmword ptr ";
     printMemReference(MI, OpNo, O);
   }
   void printf512mem(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
-    O << "ZMMWORD PTR ";
+    O << "zmmword ptr ";
     printMemReference(MI, OpNo, O);
   }
 };

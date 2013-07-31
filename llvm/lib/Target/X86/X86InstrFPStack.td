@@ -229,22 +229,22 @@ class FPrST0PInst<bits<8> o, string asm>
 // of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
 // we have to put some 'r's in and take them out of weird places.
 def ADD_FST0r   : FPST0rInst <0xC0, "fadd\t$op">;
-def ADD_FrST0   : FPrST0Inst <0xC0, "fadd\t{%st(0), $op|$op, ST(0)}">;
+def ADD_FrST0   : FPrST0Inst <0xC0, "fadd\t{%st(0), $op|$op, st(0)}">;
 def ADD_FPrST0  : FPrST0PInst<0xC0, "faddp\t$op">;
 def SUBR_FST0r  : FPST0rInst <0xE8, "fsubr\t$op">;
-def SUB_FrST0   : FPrST0Inst <0xE8, "fsub{r}\t{%st(0), $op|$op, ST(0)}">;
+def SUB_FrST0   : FPrST0Inst <0xE8, "fsub{r}\t{%st(0), $op|$op, st(0)}">;
 def SUB_FPrST0  : FPrST0PInst<0xE8, "fsub{r}p\t$op">;
 def SUB_FST0r   : FPST0rInst <0xE0, "fsub\t$op">;
-def SUBR_FrST0  : FPrST0Inst <0xE0, "fsub{|r}\t{%st(0), $op|$op, ST(0)}">;
+def SUBR_FrST0  : FPrST0Inst <0xE0, "fsub{|r}\t{%st(0), $op|$op, st(0)}">;
 def SUBR_FPrST0 : FPrST0PInst<0xE0, "fsub{|r}p\t$op">;
 def MUL_FST0r   : FPST0rInst <0xC8, "fmul\t$op">;
-def MUL_FrST0   : FPrST0Inst <0xC8, "fmul\t{%st(0), $op|$op, ST(0)}">;
+def MUL_FrST0   : FPrST0Inst <0xC8, "fmul\t{%st(0), $op|$op, st(0)}">;
 def MUL_FPrST0  : FPrST0PInst<0xC8, "fmulp\t$op">;
 def DIVR_FST0r  : FPST0rInst <0xF8, "fdivr\t$op">;
-def DIV_FrST0   : FPrST0Inst <0xF8, "fdiv{r}\t{%st(0), $op|$op, ST(0)}">;
+def DIV_FrST0   : FPrST0Inst <0xF8, "fdiv{r}\t{%st(0), $op|$op, st(0)}">;
 def DIV_FPrST0  : FPrST0PInst<0xF8, "fdiv{r}p\t$op">;
 def DIV_FST0r   : FPST0rInst <0xF0, "fdiv\t$op">;
-def DIVR_FrST0  : FPrST0Inst <0xF0, "fdiv{|r}\t{%st(0), $op|$op, ST(0)}">;
+def DIVR_FrST0  : FPrST0Inst <0xF0, "fdiv{|r}\t{%st(0), $op|$op, st(0)}">;
 def DIVR_FPrST0 : FPrST0PInst<0xF0, "fdiv{|r}p\t$op">;
 
 def COM_FST0r   : FPST0rInst <0xD0, "fcom\t$op">;
@@ -337,21 +337,21 @@ defm CMOVNP : FPCMov<X86_COND_NP>;
 let Predicates = [HasCMov] in {
 // These are not factored because there's no clean way to pass DA/DB.
 def CMOVB_F  : FPI<0xC0, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovb\t{$op, %st(0)|ST(0), $op}">, DA;
+                  "fcmovb\t{$op, %st(0)|st(0), $op}">, DA;
 def CMOVBE_F : FPI<0xD0, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovbe\t{$op, %st(0)|ST(0), $op}">, DA;
+                  "fcmovbe\t{$op, %st(0)|st(0), $op}">, DA;
 def CMOVE_F  : FPI<0xC8, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmove\t{$op, %st(0)|ST(0), $op}">, DA;
+                  "fcmove\t{$op, %st(0)|st(0), $op}">, DA;
 def CMOVP_F  : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovu\t{$op, %st(0)|ST(0), $op}">, DA;
+                  "fcmovu\t{$op, %st(0)|st(0), $op}">, DA;
 def CMOVNB_F : FPI<0xC0, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovnb\t{$op, %st(0)|ST(0), $op}">, DB;
+                  "fcmovnb\t{$op, %st(0)|st(0), $op}">, DB;
 def CMOVNBE_F: FPI<0xD0, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovnbe\t{$op, %st(0)|ST(0), $op}">, DB;
+                  "fcmovnbe\t{$op, %st(0)|st(0), $op}">, DB;
 def CMOVNE_F : FPI<0xC8, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovne\t{$op, %st(0)|ST(0), $op}">, DB;
+                  "fcmovne\t{$op, %st(0)|st(0), $op}">, DB;
 def CMOVNP_F : FPI<0xD8, AddRegFrm, (outs RST:$op), (ins),
-                  "fcmovnu\t{$op, %st(0)|ST(0), $op}">, DB;
+                  "fcmovnu\t{$op, %st(0)|st(0), $op}">, DB;
 } // Predicates = [HasCMov]
 
 // Floating point loads & stores.
@@ -578,7 +578,7 @@ def COM_FIPr : FPI<0xF0, AddRegFrm, (outs), (ins RST:$reg),
 let SchedRW = [WriteALU] in {
 let Defs = [AX], Uses = [FPSW] in
 def FNSTSW16r : I<0xE0, RawFrm,                  // AX = fp flags
-                  (outs), (ins), "fnstsw\t{%ax|AX}",
+                  (outs), (ins), "fnstsw\t{%ax|ax}",
                   [(set AX, (X86fp_stsw FPSW))], IIC_FNSTSW>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world

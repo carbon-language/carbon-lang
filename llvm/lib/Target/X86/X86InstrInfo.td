@@ -1076,51 +1076,51 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
 /// 32-bit offset from the PC.  These are only valid in x86-32 mode.
 let SchedRW = [WriteALU] in {
 def MOV8o8a : Ii32 <0xA0, RawFrm, (outs), (ins offset8:$src),
-                   "mov{b}\t{$src, %al|AL, $src}", [], IIC_MOV_MEM>,
+                   "mov{b}\t{$src, %al|al, $src}", [], IIC_MOV_MEM>,
                    Requires<[In32BitMode]>;
 def MOV16o16a : Ii32 <0xA1, RawFrm, (outs), (ins offset16:$src),
-                      "mov{w}\t{$src, %ax|AX, $src}", [], IIC_MOV_MEM>, OpSize,
+                      "mov{w}\t{$src, %ax|ax, $src}", [], IIC_MOV_MEM>, OpSize,
                      Requires<[In32BitMode]>;
 def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins offset32:$src),
-                      "mov{l}\t{$src, %eax|EAX, $src}", [], IIC_MOV_MEM>,
+                      "mov{l}\t{$src, %eax|eax, $src}", [], IIC_MOV_MEM>,
                      Requires<[In32BitMode]>;
 def MOV8ao8 : Ii32 <0xA2, RawFrm, (outs offset8:$dst), (ins),
-                   "mov{b}\t{%al, $dst|$dst, AL}", [], IIC_MOV_MEM>,
+                   "mov{b}\t{%al, $dst|$dst, al}", [], IIC_MOV_MEM>,
                   Requires<[In32BitMode]>;
 def MOV16ao16 : Ii32 <0xA3, RawFrm, (outs offset16:$dst), (ins),
-                      "mov{w}\t{%ax, $dst|$dst, AX}", [], IIC_MOV_MEM>, OpSize,
+                      "mov{w}\t{%ax, $dst|$dst, ax}", [], IIC_MOV_MEM>, OpSize,
                      Requires<[In32BitMode]>;
 def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs offset32:$dst), (ins),
-                      "mov{l}\t{%eax, $dst|$dst, EAX}", [], IIC_MOV_MEM>,
+                      "mov{l}\t{%eax, $dst|$dst, eax}", [], IIC_MOV_MEM>,
                      Requires<[In32BitMode]>;
 }
 
 // These forms all have full 64-bit absolute addresses in their instructions
 // and use the movabs mnemonic to indicate this specific form.
 def MOV64o8a : RIi64_NOREX<0xA0, RawFrm, (outs), (ins offset64:$src),
-                     "movabs{b}\t{$src, %al|AL, $src}", []>,
+                     "movabs{b}\t{$src, %al|al, $src}", []>,
                      Requires<[In64BitMode]>;
 def MOV64o16a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset64:$src),
-                     "movabs{w}\t{$src, %ax|AX, $src}", []>, OpSize,
+                     "movabs{w}\t{$src, %ax|ax, $src}", []>, OpSize,
                      Requires<[In64BitMode]>;
 def MOV64o32a : RIi64_NOREX<0xA1, RawFrm, (outs), (ins offset64:$src),
-                     "movabs{l}\t{$src, %eax|AEX, $src}", []>,
+                     "movabs{l}\t{$src, %eax|eax, $src}", []>,
                      Requires<[In64BitMode]>;
 def MOV64o64a : RIi64<0xA1, RawFrm, (outs), (ins offset64:$src),
-                     "movabs{q}\t{$src, %rax|RAX, $src}", []>,
+                     "movabs{q}\t{$src, %rax|rax, $src}", []>,
                      Requires<[In64BitMode]>;
 
 def MOV64ao8 : RIi64_NOREX<0xA2, RawFrm, (outs offset64:$dst), (ins),
-                     "movabs{b}\t{%al, $dst|$dst, AL}", []>,
+                     "movabs{b}\t{%al, $dst|$dst, al}", []>,
                      Requires<[In64BitMode]>;
 def MOV64ao16 : RIi64_NOREX<0xA3, RawFrm, (outs offset64:$dst), (ins),
-                     "movabs{w}\t{%ax, $dst|$dst, AX}", []>, OpSize,
+                     "movabs{w}\t{%ax, $dst|$dst, ax}", []>, OpSize,
                      Requires<[In64BitMode]>;
 def MOV64ao32 : RIi64_NOREX<0xA3, RawFrm, (outs offset64:$dst), (ins),
-                     "movabs{l}\t{%eax, $dst|$dst, EAX}", []>,
+                     "movabs{l}\t{%eax, $dst|$dst, eax}", []>,
                      Requires<[In64BitMode]>;
 def MOV64ao64 : RIi64<0xA3, RawFrm, (outs offset64:$dst), (ins),
-                     "movabs{q}\t{%rax, $dst|$dst, RAX}", []>,
+                     "movabs{q}\t{%rax, $dst|$dst, rax}", []>,
                      Requires<[In64BitMode]>;
 
 let isCodeGenOnly = 1, hasSideEffects = 0, SchedRW = [WriteMove] in {
@@ -1454,17 +1454,17 @@ def XCHG64rr : RI<0x87, MRMSrcReg, (outs GR64:$dst), (ins GR64:$val,GR64:$src),
 
 // Swap between EAX and other registers.
 def XCHG16ar : I<0x90, AddRegFrm, (outs), (ins GR16:$src),
-                  "xchg{w}\t{$src, %ax|AX, $src}", [], IIC_XCHG_REG>, OpSize;
+                  "xchg{w}\t{$src, %ax|ax, $src}", [], IIC_XCHG_REG>, OpSize;
 def XCHG32ar : I<0x90, AddRegFrm, (outs), (ins GR32:$src),
-                  "xchg{l}\t{$src, %eax|EAX, $src}", [], IIC_XCHG_REG>,
+                  "xchg{l}\t{$src, %eax|eax, $src}", [], IIC_XCHG_REG>,
                   Requires<[In32BitMode]>;
 // Uses GR32_NOAX in 64-bit mode to prevent encoding using the 0x90 NOP encoding.
 // xchg %eax, %eax needs to clear upper 32-bits of RAX so is not a NOP.
 def XCHG32ar64 : I<0x90, AddRegFrm, (outs), (ins GR32_NOAX:$src),
-                   "xchg{l}\t{$src, %eax|EAX, $src}", [], IIC_XCHG_REG>,
+                   "xchg{l}\t{$src, %eax|eax, $src}", [], IIC_XCHG_REG>,
                    Requires<[In64BitMode]>;
 def XCHG64ar : RI<0x90, AddRegFrm, (outs), (ins GR64:$src),
-                  "xchg{q}\t{$src, %rax|RAX, $src}", [], IIC_XCHG_REG>;
+                  "xchg{q}\t{$src, %rax|rax, $src}", [], IIC_XCHG_REG>;
 } // SchedRW
 
 let SchedRW = [WriteALU] in {
@@ -2033,22 +2033,22 @@ def : InstAlias<"clrl $reg", (XOR32rr GR32:$reg, GR32:$reg), 0>;
 def : InstAlias<"clrq $reg", (XOR64rr GR64:$reg, GR64:$reg), 0>;
 
 // div and idiv aliases for explicit A register.
-def : InstAlias<"div{b}\t{$src, %al|AL, $src}", (DIV8r  GR8 :$src)>;
-def : InstAlias<"div{w}\t{$src, %ax|AX, $src}", (DIV16r GR16:$src)>;
-def : InstAlias<"div{l}\t{$src, %eax|EAX, $src}", (DIV32r GR32:$src)>;
-def : InstAlias<"div{q}\t{$src, %rax|RAX, $src}", (DIV64r GR64:$src)>;
-def : InstAlias<"div{b}\t{$src, %al|AL, $src}", (DIV8m  i8mem :$src)>;
-def : InstAlias<"div{w}\t{$src, %ax|AX, $src}", (DIV16m i16mem:$src)>;
-def : InstAlias<"div{l}\t{$src, %eax|EAX, $src}", (DIV32m i32mem:$src)>;
-def : InstAlias<"div{q}\t{$src, %rax|RAX, $src}", (DIV64m i64mem:$src)>;
-def : InstAlias<"idiv{b}\t{$src, %al|AL, $src}", (IDIV8r  GR8 :$src)>;
-def : InstAlias<"idiv{w}\t{$src, %ax|AX, $src}", (IDIV16r GR16:$src)>;
-def : InstAlias<"idiv{l}\t{$src, %eax|EAX, $src}", (IDIV32r GR32:$src)>;
-def : InstAlias<"idiv{q}\t{$src, %rax|RAX, $src}", (IDIV64r GR64:$src)>;
-def : InstAlias<"idiv{b}\t{$src, %al|AL, $src}", (IDIV8m  i8mem :$src)>;
-def : InstAlias<"idiv{w}\t{$src, %ax|AX, $src}", (IDIV16m i16mem:$src)>;
-def : InstAlias<"idiv{l}\t{$src, %eax|EAX, $src}", (IDIV32m i32mem:$src)>;
-def : InstAlias<"idiv{q}\t{$src, %rax|RAX, $src}", (IDIV64m i64mem:$src)>;
+def : InstAlias<"div{b}\t{$src, %al|al, $src}", (DIV8r  GR8 :$src)>;
+def : InstAlias<"div{w}\t{$src, %ax|ax, $src}", (DIV16r GR16:$src)>;
+def : InstAlias<"div{l}\t{$src, %eax|eax, $src}", (DIV32r GR32:$src)>;
+def : InstAlias<"div{q}\t{$src, %rax|rax, $src}", (DIV64r GR64:$src)>;
+def : InstAlias<"div{b}\t{$src, %al|al, $src}", (DIV8m  i8mem :$src)>;
+def : InstAlias<"div{w}\t{$src, %ax|ax, $src}", (DIV16m i16mem:$src)>;
+def : InstAlias<"div{l}\t{$src, %eax|eax, $src}", (DIV32m i32mem:$src)>;
+def : InstAlias<"div{q}\t{$src, %rax|rax, $src}", (DIV64m i64mem:$src)>;
+def : InstAlias<"idiv{b}\t{$src, %al|al, $src}", (IDIV8r  GR8 :$src)>;
+def : InstAlias<"idiv{w}\t{$src, %ax|ax, $src}", (IDIV16r GR16:$src)>;
+def : InstAlias<"idiv{l}\t{$src, %eax|eax, $src}", (IDIV32r GR32:$src)>;
+def : InstAlias<"idiv{q}\t{$src, %rax|rax, $src}", (IDIV64r GR64:$src)>;
+def : InstAlias<"idiv{b}\t{$src, %al|al, $src}", (IDIV8m  i8mem :$src)>;
+def : InstAlias<"idiv{w}\t{$src, %ax|ax, $src}", (IDIV16m i16mem:$src)>;
+def : InstAlias<"idiv{l}\t{$src, %eax|eax, $src}", (IDIV32m i32mem:$src)>;
+def : InstAlias<"idiv{q}\t{$src, %rax|rax, $src}", (IDIV64m i64mem:$src)>;
 
 
 
@@ -2075,9 +2075,9 @@ def : InstAlias<"fucompi",      (UCOM_FIPr   ST1), 0>;
 // instructions like "fadd %st(0), %st(0)" as "fadd %st(0)" for consistency with
 // gas.
 multiclass FpUnaryAlias<string Mnemonic, Instruction Inst, bit EmitAlias = 1> {
- def : InstAlias<!strconcat(Mnemonic, "\t{$op, %st(0)|ST(0), $op}"),
+ def : InstAlias<!strconcat(Mnemonic, "\t{$op, %st(0)|st(0), $op}"),
                  (Inst RST:$op), EmitAlias>;
- def : InstAlias<!strconcat(Mnemonic, "\t{%st(0), %st(0)|ST(0), ST(0)}"),
+ def : InstAlias<!strconcat(Mnemonic, "\t{%st(0), %st(0)|st(0), st(0)}"),
                  (Inst ST0), EmitAlias>;
 }
 
@@ -2102,16 +2102,16 @@ defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 // Handle "f{mulp,addp} st(0), $op" the same as "f{mulp,addp} $op", since they
 // commute.  We also allow fdiv[r]p/fsubrp even though they don't commute,
 // solely because gas supports it.
-def : InstAlias<"faddp\t{%st(0), $op|$op, ST(0)}", (ADD_FPrST0 RST:$op), 0>;
-def : InstAlias<"fmulp\t{%st(0), $op|$op, ST(0)}", (MUL_FPrST0 RST:$op)>;
-def : InstAlias<"fsub{|r}p\t{%st(0), $op|$op, ST(0)}", (SUBR_FPrST0 RST:$op)>;
-def : InstAlias<"fsub{r|}p\t{%st(0), $op|$op, ST(0)}", (SUB_FPrST0 RST:$op)>;
-def : InstAlias<"fdiv{|r}p\t{%st(0), $op|$op, ST(0)}", (DIVR_FPrST0 RST:$op)>;
-def : InstAlias<"fdiv{r|}p\t{%st(0), $op|$op, ST(0)}", (DIV_FPrST0 RST:$op)>;
+def : InstAlias<"faddp\t{%st(0), $op|$op, st(0)}", (ADD_FPrST0 RST:$op), 0>;
+def : InstAlias<"fmulp\t{%st(0), $op|$op, st(0)}", (MUL_FPrST0 RST:$op)>;
+def : InstAlias<"fsub{|r}p\t{%st(0), $op|$op, st(0)}", (SUBR_FPrST0 RST:$op)>;
+def : InstAlias<"fsub{r|}p\t{%st(0), $op|$op, st(0)}", (SUB_FPrST0 RST:$op)>;
+def : InstAlias<"fdiv{|r}p\t{%st(0), $op|$op, st(0)}", (DIVR_FPrST0 RST:$op)>;
+def : InstAlias<"fdiv{r|}p\t{%st(0), $op|$op, st(0)}", (DIV_FPrST0 RST:$op)>;
 
 // We accept "fnstsw %eax" even though it only writes %ax.
-def : InstAlias<"fnstsw\t{%eax|EAX}", (FNSTSW16r)>;
-def : InstAlias<"fnstsw\t{%al|AL}" , (FNSTSW16r)>;
+def : InstAlias<"fnstsw\t{%eax|eax}", (FNSTSW16r)>;
+def : InstAlias<"fnstsw\t{%al|al}" , (FNSTSW16r)>;
 def : InstAlias<"fnstsw"     , (FNSTSW16r)>;
 
 // lcall and ljmp aliases.  This seems to be an odd mapping in 64-bit mode, but
@@ -2130,9 +2130,9 @@ def : InstAlias<"imulq $imm, $r",(IMUL64rri32 GR64:$r, GR64:$r,i64i32imm:$imm)>;
 def : InstAlias<"imulq $imm, $r", (IMUL64rri8 GR64:$r, GR64:$r, i64i8imm:$imm)>;
 
 // inb %dx -> inb %al, %dx
-def : InstAlias<"inb\t{%dx|DX}", (IN8rr), 0>;
-def : InstAlias<"inw\t{%dx|DX}", (IN16rr), 0>;
-def : InstAlias<"inl\t{%dx|DX}", (IN32rr), 0>;
+def : InstAlias<"inb\t{%dx|dx}", (IN8rr), 0>;
+def : InstAlias<"inw\t{%dx|dx}", (IN16rr), 0>;
+def : InstAlias<"inl\t{%dx|dx}", (IN32rr), 0>;
 def : InstAlias<"inb\t$port", (IN8ri i8imm:$port), 0>;
 def : InstAlias<"inw\t$port", (IN16ri i8imm:$port), 0>;
 def : InstAlias<"inl\t$port", (IN32ri i8imm:$port), 0>;
@@ -2184,9 +2184,9 @@ def : InstAlias<"movzx $src, $dst", (MOVZX64rr16_Q GR64:$dst, GR16:$src), 0>;
 // Note: No GR32->GR64 movzx form.
 
 // outb %dx -> outb %al, %dx
-def : InstAlias<"outb\t{%dx|DX}", (OUT8rr), 0>;
-def : InstAlias<"outw\t{%dx|DX}", (OUT16rr), 0>;
-def : InstAlias<"outl\t{%dx|DX}", (OUT32rr), 0>;
+def : InstAlias<"outb\t{%dx|dx}", (OUT8rr), 0>;
+def : InstAlias<"outw\t{%dx|dx}", (OUT16rr), 0>;
+def : InstAlias<"outl\t{%dx|dx}", (OUT32rr), 0>;
 def : InstAlias<"outb\t$port", (OUT8ir i8imm:$port), 0>;
 def : InstAlias<"outw\t$port", (OUT16ir i8imm:$port), 0>;
 def : InstAlias<"outl\t$port", (OUT32ir i8imm:$port), 0>;
@@ -2252,7 +2252,7 @@ def : InstAlias<"xchg{l}\t{$mem, $val|$val, $mem}", (XCHG32rm GR32:$val, i32mem:
 def : InstAlias<"xchg{q}\t{$mem, $val|$val, $mem}", (XCHG64rm GR64:$val, i64mem:$mem)>;
 
 // xchg: We accept "xchgX <reg>, %eax" and "xchgX %eax, <reg>" as synonyms.
-def : InstAlias<"xchg{w}\t{%ax, $src|$src, AX}", (XCHG16ar GR16:$src)>;
-def : InstAlias<"xchg{l}\t{%eax, $src|$src, EAX}", (XCHG32ar GR32:$src)>, Requires<[In32BitMode]>;
-def : InstAlias<"xchg{l}\t{%eax, $src|$src, EAX}", (XCHG32ar64 GR32_NOAX:$src)>, Requires<[In64BitMode]>;
-def : InstAlias<"xchg{q}\t{%rax, $src|$src, RAX}", (XCHG64ar GR64:$src)>;
+def : InstAlias<"xchg{w}\t{%ax, $src|$src, ax}", (XCHG16ar GR16:$src)>;
+def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar GR32:$src)>, Requires<[In32BitMode]>;
+def : InstAlias<"xchg{l}\t{%eax, $src|$src, eax}", (XCHG32ar64 GR32_NOAX:$src)>, Requires<[In64BitMode]>;
+def : InstAlias<"xchg{q}\t{%rax, $src|$src, rax}", (XCHG64ar GR64:$src)>;

@@ -137,16 +137,11 @@ void X86IntelInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
   }
 }
 
-static void PrintRegName(raw_ostream &O, StringRef RegName) {
-  for (unsigned i = 0, e = RegName.size(); i != e; ++i)
-    O << (char)toupper(RegName[i]);
-}
-
 void X86IntelInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
-    PrintRegName(O, getRegisterName(Op.getReg()));
+    printRegName(O, Op.getReg());
   } else if (Op.isImm()) {
     O << Op.getImm();
   } else {

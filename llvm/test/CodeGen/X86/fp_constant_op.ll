@@ -7,40 +7,40 @@ define double @foo_add(double %P) {
 	ret double %tmp.1
 }
 ; CHECK-LABEL: foo_add:
-; CHECK: fadd DWORD PTR
+; CHECK: fadd dword ptr
 
 define double @foo_mul(double %P) {
 	%tmp.1 = fmul double %P, 1.230000e+02		; <double> [#uses=1]
 	ret double %tmp.1
 }
 ; CHECK-LABEL: foo_mul:
-; CHECK: fmul DWORD PTR
+; CHECK: fmul dword ptr
 
 define double @foo_sub(double %P) {
 	%tmp.1 = fsub double %P, 1.230000e+02		; <double> [#uses=1]
 	ret double %tmp.1
 }
 ; CHECK-LABEL: foo_sub:
-; CHECK: fadd DWORD PTR
+; CHECK: fadd dword ptr
 
 define double @foo_subr(double %P) {
 	%tmp.1 = fsub double 1.230000e+02, %P		; <double> [#uses=1]
 	ret double %tmp.1
 }
 ; CHECK-LABEL: foo_subr:
-; CHECK: fsub QWORD PTR
+; CHECK: fsub qword ptr
 
 define double @foo_div(double %P) {
 	%tmp.1 = fdiv double %P, 1.230000e+02		; <double> [#uses=1]
 	ret double %tmp.1
 }
 ; CHECK-LABEL: foo_div:
-; CHECK: fdiv DWORD PTR
+; CHECK: fdiv dword ptr
 
 define double @foo_divr(double %P) {
 	%tmp.1 = fdiv double 1.230000e+02, %P		; <double> [#uses=1]
 	ret double %tmp.1
 }
 ; CHECK-LABEL: foo_divr:
-; CHECK: fdiv QWORD PTR
+; CHECK: fdiv qword ptr
 

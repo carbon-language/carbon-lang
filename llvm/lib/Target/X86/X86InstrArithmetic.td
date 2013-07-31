@@ -1041,13 +1041,13 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
   } // Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
-                           "{$src, %al|AL, $src}">;
+                           "{$src, %al|al, $src}">;
   def NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX,
-                           "{$src, %ax|AX, $src}">;
+                           "{$src, %ax|ax, $src}">;
   def NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX,
-                           "{$src, %eax|EAX, $src}">;
+                           "{$src, %eax|eax, $src}">;
   def NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
-                           "{$src, %rax|RAX, $src}">;
+                           "{$src, %rax|rax, $src}">;
 }
 
 /// ArithBinOp_RFF - This is an arithmetic binary operator where the pattern is
@@ -1112,13 +1112,13 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
   } // Uses = [EFLAGS], Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI_FF<BaseOpc4, mnemonic, Xi8 , AL,
-                              "{$src, %al|AL, $src}">;
+                              "{$src, %al|al, $src}">;
   def NAME#16i16 : BinOpAI_FF<BaseOpc4, mnemonic, Xi16, AX,
-                              "{$src, %ax|AX, $src}">;
+                              "{$src, %ax|ax, $src}">;
   def NAME#32i32 : BinOpAI_FF<BaseOpc4, mnemonic, Xi32, EAX,
-                              "{$src, %eax|EAX, $src}">;
+                              "{$src, %eax|eax, $src}">;
   def NAME#64i32 : BinOpAI_FF<BaseOpc4, mnemonic, Xi64, RAX,
-                              "{$src, %rax|RAX, $src}">;
+                              "{$src, %rax|rax, $src}">;
 }
 
 /// ArithBinOp_F - This is an arithmetic binary operator where the pattern is
@@ -1179,13 +1179,13 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
   } // Defs = [EFLAGS]
 
   def NAME#8i8   : BinOpAI<BaseOpc4, mnemonic, Xi8 , AL,
-                           "{$src, %al|AL, $src}">;
+                           "{$src, %al|al, $src}">;
   def NAME#16i16 : BinOpAI<BaseOpc4, mnemonic, Xi16, AX,
-                           "{$src, %ax|AX, $src}">;
+                           "{$src, %ax|ax, $src}">;
   def NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX,
-                           "{$src, %eax|EAX, $src}">;
+                           "{$src, %eax|eax, $src}">;
   def NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
-                           "{$src, %rax|RAX, $src}">;
+                           "{$src, %rax|rax, $src}">;
 }
 
 
@@ -1253,13 +1253,13 @@ let isCompare = 1 in {
   } // Defs = [EFLAGS]
 
   def TEST8i8    : BinOpAI<0xA8, "test", Xi8 , AL,
-                           "{$src, %al|AL, $src}">;
+                           "{$src, %al|al, $src}">;
   def TEST16i16  : BinOpAI<0xA8, "test", Xi16, AX,
-                           "{$src, %ax|AX, $src}">;
+                           "{$src, %ax|ax, $src}">;
   def TEST32i32  : BinOpAI<0xA8, "test", Xi32, EAX,
-                           "{$src, %eax|EAX, $src}">;
+                           "{$src, %eax|eax, $src}">;
   def TEST64i32  : BinOpAI<0xA8, "test", Xi64, RAX,
-                           "{$src, %rax|RAX, $src}">;
+                           "{$src, %rax|rax, $src}">;
 } // isCompare
 
 //===----------------------------------------------------------------------===//
