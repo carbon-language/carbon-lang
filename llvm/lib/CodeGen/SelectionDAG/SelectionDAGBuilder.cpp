@@ -6128,8 +6128,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         LLVMContext &Ctx = *DAG.getContext();
         Ctx.emitError(CS.getInstruction(),
                       "couldn't allocate output register for constraint '" +
-                           Twine(OpInfo.ConstraintCode) + "'");
-        break;
+                          Twine(OpInfo.ConstraintCode) + "'");
+        return;
       }
 
       // If this is an indirect operand, store through the pointer after the
@@ -6182,10 +6182,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
           if (OpInfo.isIndirect) {
             // This happens on gcc/testsuite/gcc.dg/pr8788-1.c
             LLVMContext &Ctx = *DAG.getContext();
-            Ctx.emitError(CS.getInstruction(),  "inline asm not supported yet:"
-                          " don't know how to handle tied "
-                          "indirect register inputs");
-            report_fatal_error("Cannot handle indirect register inputs!");
+            Ctx.emitError(CS.getInstruction(), "inline asm not supported yet:"
+                                               " don't know how to handle tied "
+                                               "indirect register inputs");
+            return;
           }
 
           RegsForValue MatchedRegs;
@@ -6199,10 +6199,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
               MatchedRegs.Regs.push_back(RegInfo.createVirtualRegister(RC));
             else {
               LLVMContext &Ctx = *DAG.getContext();
-              Ctx.emitError(CS.getInstruction(), "inline asm error: This value"
+              Ctx.emitError(CS.getInstruction(),
+                            "inline asm error: This value"
                             " type register class is not natively supported!");
-              report_fatal_error("inline asm error: This value type register "
-                                 "class is not natively supported!");
+              return;
             }
           }
           // Use the produced MatchedRegs object to
@@ -6240,8 +6240,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
           LLVMContext &Ctx = *DAG.getContext();
           Ctx.emitError(CS.getInstruction(),
                         "invalid operand for inline asm constraint '" +
-                        Twine(OpInfo.ConstraintCode) + "'");
-          break;
+                            Twine(OpInfo.ConstraintCode) + "'");
+          return;
         }
 
         // Add information to the INLINEASM node to know about this input.
@@ -6275,8 +6275,9 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         LLVMContext &Ctx = *DAG.getContext();
         Ctx.emitError(CS.getInstruction(),
                       "Don't know how to handle indirect register inputs yet "
-                      "for constraint '" + Twine(OpInfo.ConstraintCode) + "'");
-        break;
+                      "for constraint '" +
+                          Twine(OpInfo.ConstraintCode) + "'");
+        return;
       }
 
       // Copy the input into the appropriate registers.
@@ -6284,8 +6285,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         LLVMContext &Ctx = *DAG.getContext();
         Ctx.emitError(CS.getInstruction(),
                       "couldn't allocate input reg for constraint '" +
-                           Twine(OpInfo.ConstraintCode) + "'");
-        break;
+                          Twine(OpInfo.ConstraintCode) + "'");
+        return;
       }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurSDLoc(),
