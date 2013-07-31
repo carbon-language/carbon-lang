@@ -30,7 +30,10 @@ class GlobalVariablesTestCase(TestBase):
         self.line = line_number('main.c', '// Set break point at this line.')
         if sys.platform.startswith("linux"):
             # On Linux, LD_LIBRARY_PATH must be set so the shared libraries are found on startup
-            self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
+            if "LD_LIBRARY_PATH" in os.environ:
+                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.environ["LD_LIBRARY_PATH"] + ":" + os.getcwd())
+            else:
+                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
             self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars " + self.dylibPath))
 
     def global_variables(self):
@@ -42,6 +45,8 @@ class GlobalVariablesTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         self.runCmd("run", RUN_SUCCEEDED)
+
+        self.runCmd("process status", "Get process status")
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

@@ -40,7 +40,10 @@ class SharedLibTestCase(TestBase):
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set breakpoint 0 here.')
         if sys.platform.startswith("linux"):
-            self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
+            if "LD_LIBRARY_PATH" in os.environ:
+                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.environ["LD_LIBRARY_PATH"] + ":" + os.getcwd())
+            else:
+                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
             self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars " + self.dylibPath))
 
     def common_setup(self):
