@@ -58,6 +58,8 @@ class R600PacketizerList : public VLIWPacketizerList {
 private:
   const R600InstrInfo *TII;
   const R600RegisterInfo &TRI;
+  bool VLIW5;
+  bool ConsideredInstUsesAlreadyWrittenVectorElement;
 
   unsigned getSlot(const MachineInstr *MI) const {
     return TRI.getHWRegChan(MI->getOperand(0).getReg());
@@ -74,7 +76,13 @@ private:
     MachineBasicBlock::instr_iterator BI = I.getInstrIterator();
     if (I->isBundle())
       BI++;
+    int LastDstChan = -1;
     do {
+      bool isTrans = false;
+      int BISlot = getSlot(BI);
+      if (LastDstChan >= BISlot)
+        isTrans = true;
+      LastDstChan = BISlot;
       if (TII->isPredicated(BI))
         continue;
       int OperandIdx = TII->getOperandIdx(BI->getOpcode(), AMDGPU::OpName::write);
@@ -85,7 +93,7 @@ private:
         continue;
       }
       unsigned Dst = BI->getOperand(DstIdx).getReg();
-      if (TII->isTransOnly(BI)) {
+      if (isTrans || TII->isTransOnly(BI)) {
         Result[Dst] = AMDGPU::PS;
         continue;
       }
@@ -142,10 +150,14 @@ public:
                         MachineDominatorTree &MDT)
   : VLIWPacketizerList(MF, MLI, MDT, true),
     TII (static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo())),
-    TRI(TII->getRegisterInfo()) { }
+    TRI(TII->getRegisterInfo()) {
+    VLIW5 = !MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
+  }
 
   // initPacketizerState - initialize some internal flags.
-  void initPacketizerState() { }
+  void initPacketizerState() {
+    ConsideredInstUsesAlreadyWrittenVectorElement = false;
+  }
 
   // ignorePseudoInstruction - Ignore bundling of pseudo instructions.
   bool ignorePseudoInstruction(MachineInstr *MI, MachineBasicBlock *MBB) {
@@ -172,8 +184,8 @@ public:
   // together.
   bool isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
     MachineInstr *MII = SUI->getInstr(), *MIJ = SUJ->getInstr();
-    if (getSlot(MII) <= getSlot(MIJ) && !TII->isTransOnly(MII))
-      return false;
+    if (getSlot(MII) == getSlot(MIJ))
+      ConsideredInstUsesAlreadyWrittenVectorElement = true;
     // Does MII and MIJ share the same pred_sel ?
     int OpI = TII->getOperandIdx(MII->getOpcode(), AMDGPU::OpName::pred_sel),
         OpJ = TII->getOperandIdx(MIJ->getOpcode(), AMDGPU::OpName::pred_sel);
@@ -211,6 +223,20 @@ public:
                                  std::vector<R600InstrInfo::BankSwizzle> &BS,
                                  bool &isTransSlot) {
     isTransSlot = TII->isTransOnly(MI);
+    assert (!isTransSlot || VLIW5);
+
+    // Is the dst reg sequence legal ?
+    if (!isTransSlot && !CurrentPacketMIs.empty()) {
+      if (getSlot(MI) <= getSlot(CurrentPacketMIs.back())) {
+        if (ConsideredInstUsesAlreadyWrittenVectorElement  &&
+            !TII->isVectorOnly(MI) && VLIW5) {
+          isTransSlot = true;
+          DEBUG(dbgs() << "Considering as Trans Inst :"; MI->dump(););
+        }
+        else
+          return false;
+      }
+    }
 
     // Are the Constants limitations met ?
     CurrentPacketMIs.push_back(MI);
@@ -278,6 +304,8 @@ public:
       return It;
     }
     endPacket(MI->getParent(), MI);
+    if (TII->isTransOnly(MI))
+      return MI;
     return VLIWPacketizerList::addToPacket(MI);
   }
 };

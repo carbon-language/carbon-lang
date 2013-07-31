@@ -2,8 +2,8 @@
 ;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI-CHECK %s
 
 ;EG-CHECK: @test_select_v2i32
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: @test_select_v2i32
 ;SI-CHECK: V_CNDMASK_B32_e64
@@ -20,8 +20,8 @@ entry:
 }
 
 ;EG-CHECK: @test_select_v2f32
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: @test_select_v2f32
 ;SI-CHECK: V_CNDMASK_B32_e64
@@ -38,10 +38,10 @@ entry:
 }
 
 ;EG-CHECK: @test_select_v4i32
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: @test_select_v4i32
 ;SI-CHECK: V_CNDMASK_B32_e64
@@ -60,10 +60,10 @@ entry:
 }
 
 ;EG-CHECK: @test_select_v4f32
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: CNDE_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: CNDE_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @test_select_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in0, <4 x float> addrspace(1)* %in1) {
 entry:

@@ -469,6 +469,9 @@ static bool
 isConstCompatible(R600InstrInfo::BankSwizzle TransSwz,
                   const std::vector<std::pair<int, unsigned> > &TransOps,
                   unsigned ConstCount) {
+  // TransALU can't read 3 constants
+  if (ConstCount > 2)
+    return false;
   for (unsigned i = 0, e = TransOps.size(); i < e; ++i) {
     const std::pair<int, unsigned> &Src = TransOps[i];
     unsigned Cycle = getTransSwizzle(TransSwz, i);

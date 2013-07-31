@@ -12,7 +12,7 @@ entry:
 
 ; CHECK: @fneg_v4
 ; CHECK: -PV
-; CHECK: -PV
+; CHECK: -T
 ; CHECK: -PV
 ; CHECK: -PV
 define void @fneg_v4(<4 x float> addrspace(1)* nocapture %out, <4 x float> %in) {
