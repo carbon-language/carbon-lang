@@ -152,22 +152,11 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS) {
   OS << "/////////\n";
   OS << "// Groups\n\n";
   OS << "#ifdef OPTION\n";
-
-  // FIXME: Remove when option parsing clients are updated.
-  OS << "#ifdef SUPPORT_ALIASARGS\n";
-  OS << "#define OPTIONX OPTION\n";
-  OS << "#else\n";
-  OS << "#define OPTIONX(prefix, name, id, kind, group, alias, aliasargs, "
-     << "flags, param, helptext, metavar) "
-     << "OPTION(prefix, name, id, kind, "
-     << "group, alias, flags, param, helptext, metavar)\n";
-  OS << "#endif\n";
-
   for (unsigned i = 0, e = Groups.size(); i != e; ++i) {
     const Record &R = *Groups[i];
 
     // Start a single option entry.
-    OS << "OPTIONX(";
+    OS << "OPTION(";
 
     // The option prefix;
     OS << "0";
@@ -210,7 +199,7 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS) {
     const Record &R = *Opts[i];
 
     // Start a single option entry.
-    OS << "OPTIONX(";
+    OS << "OPTION(";
 
     // The option prefix;
     std::vector<std::string> prf = R.getValueAsListOfStrings("Prefixes");
@@ -287,7 +276,6 @@ void EmitOptParser(RecordKeeper &Records, raw_ostream &OS) {
 
     OS << ")\n";
   }
-  OS << "#undef OPTIONX\n"; // FIXME: Remove when option clients are updated.
   OS << "#endif\n";
 }
 } // end namespace llvm

@@ -17,8 +17,6 @@
 using namespace llvm;
 using namespace llvm::opt;
 
-#define SUPPORT_ALIASARGS // FIXME: Remove when no longer necessary.
-
 enum ID {
   OPT_INVALID = 0, // This is not an option ID.
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
