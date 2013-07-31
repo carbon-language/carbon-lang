@@ -4624,7 +4624,7 @@ InitializationSequence::~InitializationSequence() {
 // Perform initialization
 //===----------------------------------------------------------------------===//
 static Sema::AssignmentAction
-getAssignmentAction(const InitializedEntity &Entity) {
+getAssignmentAction(const InitializedEntity &Entity, bool Diagnose = false) {
   switch(Entity.getKind()) {
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_New:
@@ -4634,13 +4634,19 @@ getAssignmentAction(const InitializedEntity &Entity) {
     return Sema::AA_Initializing;
 
   case InitializedEntity::EK_Parameter:
-  case InitializedEntity::EK_Parameter_CF_Audited:
     if (Entity.getDecl() &&
         isa<ObjCMethodDecl>(Entity.getDecl()->getDeclContext()))
       return Sema::AA_Sending;
 
     return Sema::AA_Passing;
 
+  case InitializedEntity::EK_Parameter_CF_Audited:
+    if (Entity.getDecl() &&
+      isa<ObjCMethodDecl>(Entity.getDecl()->getDeclContext()))
+      return Sema::AA_Sending;
+      
+    return !Diagnose ? Sema::AA_Passing : Sema::AA_Passing_CFAudited;
+      
   case InitializedEntity::EK_Result:
     return Sema::AA_Returning;
 
@@ -6000,7 +6006,7 @@ InitializationSequence::Perform(Sema &S,
       if (S.DiagnoseAssignmentResult(ConvTy, Kind.getLocation(),
                                      Step->Type, SourceType,
                                      CurInit.get(),
-                                     getAssignmentAction(Entity),
+                                     getAssignmentAction(Entity, true),
                                      &Complained)) {
         PrintInitLocationNote(S, Entity);
         return ExprError();

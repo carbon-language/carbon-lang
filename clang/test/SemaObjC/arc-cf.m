@@ -45,3 +45,15 @@ void test2() {
   x = (id) CFMakeString3(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
   x = (id) CFCreateString3(); // expected-error {{requires a bridged cast}} expected-note {{CFBridgingRelease call to transfer}}
 }
+
+// rdar://14569171
+@interface NSString @end
+typedef signed int SInt32;
+#pragma clang arc_cf_code_audited begin
+extern SInt32 CFStringGetIntValue(CFStringRef str); // expected-note {{passing argument to parameter 'str' here}}
+#pragma clang arc_cf_code_audited end
+
+void test3() {
+    NSString* answer = @"42";
+    int ans = CFStringGetIntValue(answer); // expected-error {{incompatible pointer types passing retainable parameter of type 'NSString *__strong'to a CF function expecting 'CFStringRef'}}
+}

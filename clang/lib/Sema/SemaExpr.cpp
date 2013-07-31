@@ -4066,7 +4066,8 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
           FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
           (!Param || !Param->hasAttr<CFConsumedAttr>()))
         Arg = stripARCUnbridgedCast(Arg);
-      else if (FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
+      else if (getLangOpts().ObjCAutoRefCount &&
+               FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
                (!Param || !Param->hasAttr<CFConsumedAttr>()))
         CFAudited = true;
 
@@ -10391,7 +10392,10 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case IncompatiblePointer:
     MakeObjCStringLiteralFixItHint(*this, DstType, SrcExpr, Hint, IsNSString);
-    DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
+      DiagKind =
+        (Action == AA_Passing_CFAudited ?
+          diag::err_arc_typecheck_convert_incompatible_pointer :
+          diag::ext_typecheck_convert_incompatible_pointer);
     CheckInferredResultType = DstType->isObjCObjectPointerType() &&
       SrcType->isObjCObjectPointerType();
     if (Hint.isNull() && !CheckInferredResultType) {
@@ -10485,6 +10489,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
   case AA_Returning:
   case AA_Passing:
+  case AA_Passing_CFAudited:
   case AA_Converting:
   case AA_Sending:
   case AA_Casting:
@@ -10495,7 +10500,10 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   }
 
   PartialDiagnostic FDiag = PDiag(DiagKind);
-  FDiag << FirstType << SecondType << Action << SrcExpr->getSourceRange();
+  if (Action == AA_Passing_CFAudited)
+    FDiag << FirstType << SecondType << SrcExpr->getSourceRange();
+  else
+    FDiag << FirstType << SecondType << Action << SrcExpr->getSourceRange();
 
   // If we can fix the conversion, suggest the FixIts.
   assert(ConvHints.isNull() || Hint.isNull());

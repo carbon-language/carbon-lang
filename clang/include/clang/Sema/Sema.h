@@ -1857,7 +1857,8 @@ public:
     AA_Converting,
     AA_Initializing,
     AA_Sending,
-    AA_Casting
+    AA_Casting,
+    AA_Passing_CFAudited
   };
 
   /// C++ Overloading.
