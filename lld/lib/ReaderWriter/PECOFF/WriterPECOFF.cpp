@@ -579,6 +579,15 @@ private:
 };
 
 // \brief A BSSSectionChunk represents a .bss section.
+//
+// Seems link.exe does not emit .bss section but instead merges it with .data
+// section. In COFF, if the size of the section in the header is greater than
+// the size of the actual data on disk, the section on memory is zero-padded.
+// That's why .bss can be merge with .data just by appending it at the end of
+// the section.
+//
+// The executable with .bss is also valid and easier to understand. So we chose
+// to create .bss in LLD.
 class BssSectionChunk : public SectionChunk {
 public:
   // BSS section does not have contents, so write should be no-op.
