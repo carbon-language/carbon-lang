@@ -16,8 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "../ClangTidy.h"
-#include "llvm/Option/OptTable.h"
-#include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
 #include <vector>
 
