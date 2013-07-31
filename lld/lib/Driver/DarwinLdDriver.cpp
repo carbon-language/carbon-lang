@@ -34,10 +34,13 @@
 
 namespace {
 
+#define SUPPORT_ALIASARGS // FIXME: Remove when no longer necessary.
+
 // Create enum with OPT_xxx values for each option in DarwinOptions.td
 enum DarwinOpt {
   OPT_INVALID = 0,
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, HELP, META) \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
+               HELP, META) \
           OPT_##ID,
 #include "DarwinOptions.inc"
   LastOption
@@ -51,10 +54,10 @@ enum DarwinOpt {
 
 // Create table mapping all options defined in DarwinOptions.td
 static const llvm::opt::OptTable::Info infoTable[] = {
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, llvm::opt::Option::KIND##Class, \
-    PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS },
+    PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
 #include "DarwinOptions.inc"
 #undef OPTION
 };

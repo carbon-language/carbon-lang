@@ -30,10 +30,13 @@ namespace lld {
 
 namespace {
 
+#define SUPPORT_ALIASARGS // FIXME: Remove when no longer necessary.
+
 // Create enum with OPT_xxx values for each option in WinLinkOptions.td
 enum WinLinkOpt {
   OPT_INVALID = 0,
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, HELP, META) \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
+               HELP, META) \
           OPT_##ID,
 #include "WinLinkOptions.inc"
   LastOption
@@ -47,10 +50,10 @@ enum WinLinkOpt {
 
 // Create table mapping all options defined in WinLinkOptions.td
 static const llvm::opt::OptTable::Info infoTable[] = {
-#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
+#define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, llvm::opt::Option::KIND##Class, \
-    PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS },
+    PARAM, FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
 #include "WinLinkOptions.inc"
 #undef OPTION
 };
