@@ -52,6 +52,23 @@ TEST(IncludeExcludeTest, ParseString) {
   EXPECT_FALSE(IEManager.isFileIncluded("c/c2/c3/f.cpp"));
 }
 
+TEST(IncludeExcludeTest, ParseStringCases) {
+  IncludeExcludeInfo IEManager;
+  llvm::error_code Err = IEManager.readListFromString(
+      /*include=*/  "a/.,b/b2/,c/c2/c3/../../c4/,d/d2/./d3/,/e/e2/.",
+      /*exclude=*/ "");
+
+  ASSERT_EQ(Err, llvm::error_code::success());
+
+  EXPECT_TRUE(IEManager.isFileIncluded("a/f.cpp"));
+  EXPECT_TRUE(IEManager.isFileIncluded("b/b2/f.cpp"));
+  EXPECT_TRUE(IEManager.isFileIncluded("c/c4/f.cpp"));
+  EXPECT_TRUE(IEManager.isFileIncluded("d/d2/d3/f.cpp"));
+  EXPECT_TRUE(IEManager.isFileIncluded("/e/e2/f.cpp"));
+
+  EXPECT_FALSE(IEManager.isFileIncluded("c/c2/c3/f.cpp"));
+}
+
 // Utility for creating and filling files with data for IncludeExcludeFileTest
 // tests.
 struct InputFiles {

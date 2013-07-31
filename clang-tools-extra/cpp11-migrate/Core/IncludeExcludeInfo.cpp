@@ -26,6 +26,9 @@ namespace {
 /// \brief Helper function to determine whether a file has the same path
 /// prefix as \a Path.
 ///
+/// \a File shouldn't contain relative operators i.e. ".." or "." since Path
+/// comes from the include/exclude list of paths in which relative operators
+/// were removed.
 /// \a Path must be an absolute path.
 bool fileHasPathPrefix(StringRef File, StringRef Path) {
   // Converts File to its absolute path.
@@ -48,6 +51,31 @@ bool fileHasPathPrefix(StringRef File, StringRef Path) {
   return true;
 }
 
+/// \brief Helper function for removing relative operators from a given
+/// path i.e. "..", ".".
+std::string removeRelativeOperators(StringRef Path) {
+  sys::path::const_iterator PathI = sys::path::begin(Path);
+  sys::path::const_iterator PathE = sys::path::end(Path);
+  SmallVector<StringRef, 16> PathT;
+  while (PathI != PathE) {
+    if (PathI->equals("..")) {
+      // Test if we have reached the root then Path is invalid.
+      if (PathT.empty())
+        return "";
+      PathT.pop_back();
+    } else if (!PathI->equals("."))
+      PathT.push_back(*PathI);
+    ++PathI;
+  }
+  // Rebuild the new path.
+  SmallString<64> NewPath;
+  for (SmallVectorImpl<StringRef>::iterator I = PathT.begin(), E = PathT.end();
+       I != E; ++I) {
+    llvm::sys::path::append(NewPath, *I);
+  }
+  return NewPath.str();
+}
+
 /// \brief Helper function to tokenize a string of paths and populate
 /// the vector.
 error_code parseCLInput(StringRef Line, std::vector<std::string> &List,
@@ -61,13 +89,13 @@ error_code parseCLInput(StringRef Line, std::vector<std::string> &List,
     SmallString<64> Path = I->rtrim();
     if (error_code Err = sys::fs::make_absolute(Path))
       return Err;
-
-    // sys::fs::make_absolute will turn "." into "<pwd>/.". Need to strip "/."
-    // off or it interferes with prefix checking.
-    if (Path.endswith("/."))
-      List.push_back(Path.slice(0, Path.size() - 2).str());
+    // Remove relative operators from the path.
+    std::string AbsPath = removeRelativeOperators(Path);
+    // Add only non-empty paths to the list.
+    if (!AbsPath.empty())
+      List.push_back(AbsPath);
     else
-      List.push_back(Path.str());
+      llvm::errs() << "Unable to parse input path: " << *I << "\n";
 
     llvm::errs() << "Parse: " <<List.back() << "\n";
   }
