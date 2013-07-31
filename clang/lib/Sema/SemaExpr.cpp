@@ -4061,10 +4061,14 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
         Param = FDecl->getParamDecl(i);
 
       // Strip the unbridged-cast placeholder expression off, if applicable.
+      bool CFAudited = false;
       if (Arg->getType() == Context.ARCUnbridgedCastTy &&
           FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
           (!Param || !Param->hasAttr<CFConsumedAttr>()))
         Arg = stripARCUnbridgedCast(Arg);
+      else if (FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
+               (!Param || !Param->hasAttr<CFConsumedAttr>()))
+        CFAudited = true;
 
       InitializedEntity Entity = Param ?
           InitializedEntity::InitializeParameter(Context, Param, ProtoArgType)
@@ -4072,8 +4076,7 @@ bool Sema::GatherArgumentsForCall(SourceLocation CallLoc,
                                                  Proto->isArgConsumed(i));
       
       // Remember that parameter belongs to a CF audited API.
-      if (FDecl && FDecl->hasAttr<CFAuditedTransferAttr>() &&
-          (!Param || !Param->hasAttr<CFConsumedAttr>()))
+      if (CFAudited)
         Entity.setParameterCFAudited();
       
       ExprResult ArgE = PerformCopyInitialization(Entity,
