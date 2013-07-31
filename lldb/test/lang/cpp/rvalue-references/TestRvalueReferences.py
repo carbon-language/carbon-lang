@@ -6,7 +6,7 @@ import lldb
 from lldbtest import *
 import lldbutil
 
-class CPPThisTestCase(TestBase):
+class RvalueReferencesTestCase(TestBase):
     
     mydir = os.path.join("lang", "cpp", "rvalue-references")
     
@@ -20,8 +20,9 @@ class CPPThisTestCase(TestBase):
         self.static_method_commands()
 
     #rdar://problem/11479676
-    @expectedFailureClang
+    @expectedFailureClang # pr16762: Expression evaluation of an rvalue-reference does not show the correct type.
     @expectedFailureGcc # GCC (4.7) does not emit correct DWARF tags for rvalue-references
+    @expectedFailureIcc # ICC (13.1, 14-beta) do not emit DW_TAG_rvalue_reference_type.
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that rvalues are supported in the C++ expression parser"""
@@ -43,8 +44,14 @@ class CPPThisTestCase(TestBase):
 
         self.runCmd("process launch", RUN_SUCCEEDED)
 
+        # Note that clang as of r187480 doesn't emit DW_TAG_const_type, unlike gcc 4.8.1
+        # With gcc 4.8.1, lldb reports the type as (int &&const)
+        self.expect("frame variable i",
+                    startstr = "(int &&",
+                    substrs = ["i = 0x", "&i = 3"])
+
         self.expect("expression -- i",
-                    startstr = "(int &&) $0 =",
+                    startstr = "(int &&",
                     substrs = ["3"])
 
         self.expect("breakpoint delete 1")
