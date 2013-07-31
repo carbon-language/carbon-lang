@@ -21,6 +21,7 @@ class StdVectorDataFormatterTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureClang # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
+    @expectedFailureIcc # llvm.org/pr15301 LLDB prints incorrect sizes of STL containers
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         if "gcc" in self.getCompiler() and "4.8" in self.getCompilerVersion():
