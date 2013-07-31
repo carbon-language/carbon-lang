@@ -240,6 +240,10 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_NO_ERROR(fs::remove(Twine(TempPath2), TempFileExists));
   EXPECT_TRUE(TempFileExists);
 
+  error_code EC = fs::status(TempPath2.c_str(), B);
+  EXPECT_EQ(EC, errc::no_such_file_or_directory);
+  EXPECT_EQ(B.type(), fs::file_type::file_not_found);
+
   // Make sure Temp2 doesn't exist.
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath2), TempFileExists));
   EXPECT_FALSE(TempFileExists);

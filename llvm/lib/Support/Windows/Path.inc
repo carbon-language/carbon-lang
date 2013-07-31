@@ -399,8 +399,15 @@ error_code remove(const Twine &path, bool &existed) {
   SmallVector<wchar_t, 128> path_utf16;
 
   file_status st;
-  if (error_code ec = status(path, st))
-    return ec;
+  error_code EC = status(path, st);
+  if (EC) {
+    if (EC == windows_error::file_not_found ||
+        EC == windows_error::path_not_found) {
+      existed = false;
+      return error_code::success();
+    }
+    return EC;
+  }
 
   if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
                                   path_utf16))
@@ -611,11 +618,9 @@ handle_status_error:
     Result = file_status(file_type::file_not_found);
   else if (EC == windows_error::sharing_violation)
     Result = file_status(file_type::type_unknown);
-  else {
+  else
     Result = file_status(file_type::status_error);
-    return EC;
-  }
-  return error_code::success();
+  return EC;
 }
 
 error_code status(const Twine &path, file_status &result) {
