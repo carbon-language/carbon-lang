@@ -161,6 +161,10 @@ public:
       return true;
     if (MI->getOpcode() == AMDGPU::GROUP_BARRIER)
       return true;
+    // XXX: This can be removed once the packetizer properly handles all the
+    // LDS instruction group restrictions.
+    if (TII->isLDSInstr(MI->getOpcode()))
+      return true;
     return false;
   }
 
