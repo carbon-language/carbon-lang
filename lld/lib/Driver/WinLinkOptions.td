@@ -2,69 +2,55 @@ include "llvm/Option/OptParser.td"
 
 // link.exe accepts options starting with either a dash or a slash.
 
-class _Flag<string name> : Flag<["-", "/"], name>;
-class _Separate<string name> : Separate<["-", "/"], name>;
-class _Joined<string name, Option alias> : Joined<["-", "/"], name>,
-      Alias<alias>;
+class F<string name> : Flag<["-", "/"], name>;
 
-def mllvm : _Separate<"mllvm">, HelpText<"Options to pass to LLVM">;
+multiclass P<string name, string help> {
+  def "" : Separate<["-", "/"], name>, HelpText<help>;
+  def _c : Joined<["-", "/"], name#":">, Alias<!cast<Option>(name)>;
+}
 
-def out : _Separate<"out">, HelpText<"Path to file to write output">;
-def out_c : _Joined<"out:", out>;
+defm base    : P<"base", "Base address of the program">;
+defm defaultlib : P<"defaultlib", "Add the library to the list of input files">;
+defm entry   : P<"entry", "Name of entry point symbol">;
+// No help text because /failifmismatch is not intended to be used by the user.
+defm failifmismatch : P<"failifmismatch", "">;
+defm heap    : P<"heap", "Size of the heap">;
+defm libpath : P<"libpath", "Additional library search path">;
+defm mllvm   : P<"mllvm", "Options to pass to LLVM">;
+defm out     : P<"out", "Path to file to write output">;
+defm stack   : P<"stack", "Size of the stack">;
+defm subsystem : P<"subsystem", "Specify subsystem">;
 
-def defaultlib : _Separate<"defaultlib">,
-    HelpText<"Add the library to the list of input files">;
-def defaultlib_c : _Joined<"defaultlib:", defaultlib>;
+// We cannot use multiclass P because class name "incl" is different
+// from its command line option name. We do this because "include" is
+// a reserved keyword in tablegen.
+def incl : Separate<["-", "/"], "include">,
+    HelpText<"Force symbol to be added to symbol table as undefined one">;
+def incl_c : Joined<["-", "/"], "include:">, Alias<incl>;
 
-def base : _Separate<"base">, HelpText<"Base address of the program">;
-def base_c: _Joined<"base:", base>;
-
-def stack : _Separate<"stack">, HelpText<"Size of the stack">;
-def stack_c: _Joined<"stack:", stack>;
-
-def heap : _Separate<"heap">, HelpText<"Size of the heap">;
-def heap_c: _Joined<"heap:", heap>;
-
-def subsystem : _Separate<"subsystem">, HelpText<"Specify subsystem">;
-def subsystem_c: _Joined<"subsystem:", subsystem>;
-
-def entry : _Separate<"entry">, HelpText<"Name of entry point symbol">;
-def entry_c: _Joined<"entry:", entry>;
-
-def libpath : _Separate<"libpath">, HelpText<"Additional library search path">;
-def libpath_c: _Joined<"libpath:", libpath>;
-
-def force : _Flag<"force">,
+def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
 
-def nxcompat : _Flag<"nxcompat">,
+def nxcompat : F<"nxcompat">,
     HelpText<"Enable data execution provention">;
-def no_nxcompat : _Flag<"nxcompat:no">,
+def no_nxcompat : F<"nxcompat:no">,
     HelpText<"Disable data execution provention">;
 
-def largeaddressaware : _Flag<"largeaddressaware">,
+def largeaddressaware : F<"largeaddressaware">,
     HelpText<"Enable large addresses">;
-def no_largeaddressaware : _Flag<"largeaddressaware:no">,
+def no_largeaddressaware : F<"largeaddressaware:no">,
     HelpText<"Disable large addresses">;
 
-def fixed : _Flag<"fixed">, HelpText<"Disable base relocations">;
-def no_fixed : _Flag<"fixed:no">, HelpText<"Enable base relocations">;
+def fixed : F<"fixed">, HelpText<"Disable base relocations">;
+def no_fixed : F<"fixed:no">, HelpText<"Enable base relocations">;
 
-def tsaware : _Flag<"tsaware">,
+def tsaware : F<"tsaware">,
     HelpText<"Create Terminal Server aware executable">;
-def no_tsaware : _Flag<"tsaware:no">,
+def no_tsaware : F<"tsaware:no">,
     HelpText<"Create non-Terminal Server aware executable">;
 
-def incl : _Separate<"include">,
-    HelpText<"Force symbol to be added to symbol table as undefined one">;
-def incl_c : _Joined<"include:", incl>;
-
-// No help text because /failifmismatch is not intended to be used by the user.
-def failifmismatch : _Separate<"failifmismatch">;
-def failifmismatch_c : _Joined<"failifmismatch:", failifmismatch>;
-
 // NOLOGO does nothing. It is defined only for link.exe compatibility.
-def nologo : _Flag<"nologo">;
+def nologo : F<"nologo">;
 
-def help : _Flag<"help">;
-def help_q : _Flag<"?">, Alias<help>;
+def help : F<"help">;
+def help_q : F<"?">, Alias<help>;
