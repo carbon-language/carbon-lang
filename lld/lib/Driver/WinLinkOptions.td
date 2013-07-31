@@ -2,11 +2,11 @@ include "llvm/Option/OptParser.td"
 
 // link.exe accepts options starting with either a dash or a slash.
 
-class F<string name> : Flag<["-", "/"], name>;
+class F<string name> : Flag<["/", "-"], name>;
 
 multiclass P<string name, string help> {
-  def "" : Separate<["-", "/"], name>, HelpText<help>;
-  def _c : Joined<["-", "/"], name#":">, Alias<!cast<Option>(name)>;
+  def "" : Joined<["/", "-"], name#":">, HelpText<help>;
+  def _c : Separate<["/", "-"], name>, Alias<!cast<Option>(name)>;
 }
 
 defm base    : P<"base", "Base address of the program">;
@@ -24,28 +24,25 @@ defm subsystem : P<"subsystem", "Specify subsystem">;
 // We cannot use multiclass P because class name "incl" is different
 // from its command line option name. We do this because "include" is
 // a reserved keyword in tablegen.
-def incl : Separate<["-", "/"], "include">,
+def incl : Joined<["/", "-"], "include:">,
     HelpText<"Force symbol to be added to symbol table as undefined one">;
-def incl_c : Joined<["-", "/"], "include:">, Alias<incl>;
+def incl_c : Separate<["/", "-"], "include">, Alias<incl>;
 
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
 
-def nxcompat : F<"nxcompat">,
-    HelpText<"Enable data execution provention">;
+def nxcompat : F<"nxcompat">;
 def no_nxcompat : F<"nxcompat:no">,
     HelpText<"Disable data execution provention">;
 
-def largeaddressaware : F<"largeaddressaware">,
-    HelpText<"Enable large addresses">;
+def largeaddressaware : F<"largeaddressaware">;
 def no_largeaddressaware : F<"largeaddressaware:no">,
     HelpText<"Disable large addresses">;
 
-def fixed : F<"fixed">, HelpText<"Disable base relocations">;
+def fixed : F<"fixed">;
 def no_fixed : F<"fixed:no">, HelpText<"Enable base relocations">;
 
-def tsaware : F<"tsaware">,
-    HelpText<"Create Terminal Server aware executable">;
+def tsaware : F<"tsaware">;
 def no_tsaware : F<"tsaware:no">,
     HelpText<"Create non-Terminal Server aware executable">;
 
