@@ -19,7 +19,8 @@ class StaticVariableTestCase(TestBase):
         self.buildDsym()
         self.static_variable_commands()
 
-    @expectedFailureLinux # llvm.org/pr15261: lldb on Linux does not display the size of (class or file)static arrays
+    @expectedFailureClang # llvm.org/pr15261: lldb on Linux does not display the size of (class or file)static arrays
+    @expectedFailureGcc # llvm.org/pr15261: lldb on Linux does not display the size of (class or file)static arrays
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that file and class static variables display correctly."""

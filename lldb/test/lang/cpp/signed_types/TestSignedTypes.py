@@ -55,9 +55,9 @@ class UnsignedTypesTestCase(TestBase):
 
         # Test that signed types display correctly.
         self.expect("frame variable --show-types --no-args", VARIABLES_DISPLAYED_CORRECTLY,
-            patterns = ["\((short int|short)\) the_signed_short = 99"],
-            substrs = ["(signed char) the_signed_char = 'c'",
-                       "(int) the_signed_int = 99",
+            patterns = ["\((short int|short)\) the_signed_short = 99",
+                       "\((signed char|char)\) the_signed_char = 'c'"],
+            substrs = ["(int) the_signed_int = 99",
                        "(long) the_signed_long = 99",
                        "(long long) the_signed_long_long = 99"])
 
