@@ -3932,7 +3932,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
             << Fn->getSourceRange() << CorrectedQuotedStr
             << FixItHint::CreateReplacement(TC.getCorrectionRange(),
                                             CorrectedStr);
-        Diag(TC.getCorrectionDeclAs<FunctionDecl>()->getLocStart(),
+        Diag(TC.getCorrectionDecl()->getLocStart(),
              diag::note_previous_decl) << CorrectedQuotedStr;
       } else if (MinArgs == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
         Diag(RParenLoc, MinArgs == NumArgsInProto && !Proto->isVariadic()
@@ -3978,7 +3978,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
             << Fn->getSourceRange() << CorrectedQuotedStr
             << FixItHint::CreateReplacement(TC.getCorrectionRange(),
                                             CorrectedStr);
-        Diag(TC.getCorrectionDeclAs<FunctionDecl>()->getLocStart(),
+        Diag(TC.getCorrectionDecl()->getLocStart(),
              diag::note_previous_decl) << CorrectedQuotedStr;
       } else if (NumArgsInProto == 1 && FDecl && FDecl->getParamDecl(0)->getDeclName())
         Diag(Args[NumArgsInProto]->getLocStart(),
