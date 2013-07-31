@@ -18,7 +18,7 @@ declare void @llvm.AMDGPU.store.output(float, i32)
 ; CHECK: @fsub_v4f32
 ; CHECK: ADD T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: ADD * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; CHECK: ADD T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: ADD * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: ADD * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @fsub_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {

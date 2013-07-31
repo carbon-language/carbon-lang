@@ -12,7 +12,7 @@
 ; CHECK-NEXT: .long 8
 
 ; Make sure the lds writes are using different addresses.
-; CHECK: LDS_WRITE {{\** *}}{{PV|T}}[[ADDRW:[0-9]*\.[XYZW]]]
+; CHECK: LDS_WRITE {{[*]*}} {{PV|T}}[[ADDRW:[0-9]*\.[XYZW]]]
 ; CHECK-NOT: LDS_WRITE {{[*]*}} T[[ADDRW]]
 
 ; GROUP_BARRIER must be the last instruction in a clause

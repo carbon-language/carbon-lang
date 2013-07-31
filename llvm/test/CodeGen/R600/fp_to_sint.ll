@@ -2,9 +2,9 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK
 
 ; R600-CHECK: @fp_to_sint_v4i32
-; R600-CHECK: FLT_TO_INT * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
-; R600-CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW]}}
-; R600-CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
+; R600-CHECK: FLT_TO_INT {{[* ]*}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
+; R600-CHECK: FLT_TO_INT {{[* ]*}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
+; R600-CHECK: FLT_TO_INT {{[* ]*}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; R600-CHECK: FLT_TO_INT {{[* ]*}}T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; SI-CHECK: @fp_to_sint_v4i32
 ; SI-CHECK: V_CVT_I32_F32_e32

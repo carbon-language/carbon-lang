@@ -18,7 +18,7 @@ declare void @llvm.AMDGPU.store.output(float, i32)
 ; CHECK: @fmul_v4f32
 ; CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-; CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @fmul_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {

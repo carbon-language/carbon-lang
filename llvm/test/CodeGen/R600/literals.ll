@@ -7,8 +7,7 @@
 ; ADD_INT literal.x KC0[2].Z, 5
 
 ; CHECK: @i32_literal
-; CHECK: ADD_INT T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
-; CHECK-NEXT: LSHR
+; CHECK: ADD_INT * T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
 ; CHECK-NEXT: 5
 define void @i32_literal(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -24,8 +23,7 @@ entry:
 ; ADD literal.x KC0[2].Z, 5.0
 
 ; CHECK: @float_literal
-; CHECK: ADD T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
-; CHECK-NEXT: LSHR
+; CHECK: ADD * T{{[0-9]\.[XYZW]}}, KC0[2].Z, literal.x
 ; CHECK-NEXT: 1084227584(5.0
 define void @float_literal(float addrspace(1)* %out, float %in) {
 entry:

@@ -84,16 +84,15 @@ public:
 
 private:
   std::vector<MachineInstr *> InstructionsGroupCandidate;
-  bool VLIW5;
 
   int getInstKind(SUnit *SU);
   bool regBelongsToClass(unsigned Reg, const TargetRegisterClass *RC) const;
   AluKind getAluKind(SUnit *SU) const;
   void LoadAlu();
   unsigned AvailablesAluCount() const;
-  SUnit *AttemptFillSlot (unsigned Slot, bool AnyAlu);
+  SUnit *AttemptFillSlot (unsigned Slot);
   void PrepareNextSlot();
-  SUnit *PopInst(std::vector<SUnit*> &Q, bool AnyALU);
+  SUnit *PopInst(std::vector<SUnit*> &Q);
 
   void AssignSlot(MachineInstr *MI, unsigned Slot);
   SUnit* pickAlu();

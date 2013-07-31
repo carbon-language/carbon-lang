@@ -3,8 +3,7 @@
 ; These tests are for condition codes that are not supported by the hardware
 
 ; CHECK: @slt
-; CHECK: SETGT_INT {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGT_INT * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT: 5(7.006492e-45)
 define void @slt(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -15,8 +14,7 @@ entry:
 }
 
 ; CHECK: @ult_i32
-; CHECK: SETGT_UINT {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGT_UINT * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT: 5(7.006492e-45)
 define void @ult_i32(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -27,8 +25,7 @@ entry:
 }
 
 ; CHECK: @ult_float
-; CHECK: SETGT {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGT * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @ult_float(float addrspace(1)* %out, float %in) {
 entry:
@@ -39,8 +36,7 @@ entry:
 }
 
 ; CHECK: @olt
-; CHECK: SETGT {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGT * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ;CHECK-NEXT: 1084227584(5.000000e+00)
 define void @olt(float addrspace(1)* %out, float %in) {
 entry:
@@ -51,8 +47,7 @@ entry:
 }
 
 ; CHECK: @sle
-; CHECK: SETGT_INT {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGT_INT * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT: 6(8.407791e-45)
 define void @sle(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -63,8 +58,7 @@ entry:
 }
 
 ; CHECK: @ule_i32
-; CHECK: SETGT_UINT {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGT_UINT * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT: 6(8.407791e-45)
 define void @ule_i32(i32 addrspace(1)* %out, i32 %in) {
 entry:
@@ -75,8 +69,7 @@ entry:
 }
 
 ; CHECK: @ule_float
-; CHECK: SETGE {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGE * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT: 1084227584(5.000000e+00)
 define void @ule_float(float addrspace(1)* %out, float %in) {
 entry:
@@ -87,8 +80,7 @@ entry:
 }
 
 ; CHECK: @ole
-; CHECK: SETGE {{\** *}}T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
-; CHECK-NEXT: LSHR
+; CHECK: SETGE * T{{[0-9]+\.[XYZW]}}, literal.x, KC0[2].Z
 ; CHECK-NEXT:1084227584(5.000000e+00)
 define void @ole(float addrspace(1)* %out, float %in) {
 entry:

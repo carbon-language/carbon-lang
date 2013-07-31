@@ -21,7 +21,7 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
 ;EG-CHECK: @test4
 ;EG-CHECK: AND_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: AND_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: AND_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: AND_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;EG-CHECK: AND_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: @test4

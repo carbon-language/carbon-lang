@@ -2,7 +2,7 @@
 
 ; CHECK: @fp_to_uint_v4i32
 ; CHECK: FLT_TO_UINT * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
-; CHECK: FLT_TO_UINT * T{{[0-9]+\.[XYZW]}}
+; CHECK: FLT_TO_UINT * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; CHECK: FLT_TO_UINT * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 ; CHECK: FLT_TO_UINT * T{{[0-9]+\.[XYZW], PV\.[XYZW]}}
 

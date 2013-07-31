@@ -2,7 +2,7 @@
 
 ;CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;CHECK: MUL_IEEE  T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ;CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @test(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
