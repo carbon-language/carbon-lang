@@ -842,10 +842,10 @@ TEST_F(FormatTest, AlignsBlockComments) {
                    "           1.1.1. to keep the formatting.\n"
                    "   */"));
   EXPECT_EQ("/*\n"
-            "Don't try to outdent if there's not enough inentation.\n"
+            "Don't try to outdent if there's not enough indentation.\n"
             "*/",
             format("  /*\n"
-                   " Don't try to outdent if there's not enough inentation.\n"
+                   " Don't try to outdent if there's not enough indentation.\n"
                    " */"));
 
   EXPECT_EQ("int i; /* Comment with empty...\n"
@@ -1565,6 +1565,37 @@ TEST_F(FormatTest, FormatsNamespaces) {
                    "int i;\n"
                    "}    // my_namespace\n"
                    "#endif    // HEADER_GUARD"));
+
+  FormatStyle Style = getLLVMStyle();
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  EXPECT_EQ("namespace out {\n"
+            "  int i;\n"
+            "  namespace in {\n"
+            "    int i;\n"
+            "  } // namespace\n"
+            "} // namespace",
+            format("namespace out {\n"
+                   "int i;\n"
+                   "namespace in {\n"
+                   "int i;\n"
+                   "} // namespace\n"
+                   "} // namespace",
+                   Style));
+
+  Style.NamespaceIndentation = FormatStyle::NI_Inner;
+  EXPECT_EQ("namespace out {\n"
+            "int i;\n"
+            "namespace in {\n"
+            "  int i;\n"
+            "} // namespace\n"
+            "} // namespace",
+            format("namespace out {\n"
+                   "int i;\n"
+                   "namespace in {\n"
+                   "int i;\n"
+                   "} // namespace\n"
+                   "} // namespace",
+                   Style));
 }
 
 TEST_F(FormatTest, FormatsExternC) { verifyFormat("extern \"C\" {\nint a;"); }
@@ -5485,6 +5516,14 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("BreakBeforeBraces: Stroustrup", BreakBeforeBraces,
               FormatStyle::BS_Stroustrup);
 
+  Style.NamespaceIndentation = FormatStyle::NI_All;
+  CHECK_PARSE("NamespaceIndentation: None", NamespaceIndentation,
+              FormatStyle::NI_None);
+  CHECK_PARSE("NamespaceIndentation: Inner", NamespaceIndentation,
+              FormatStyle::NI_Inner);
+  CHECK_PARSE("NamespaceIndentation: All", NamespaceIndentation,
+              FormatStyle::NI_All);
+
 #undef CHECK_PARSE
 #undef CHECK_PARSE_BOOL
 }
@@ -5586,7 +5625,7 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
   verifyFormat("namespace outer {\n"
                "int i;\n"
                "namespace inner {\n"
-               "int i;\n" // FIXME: This should be indented.
+               "    int i;\n"
                "} // namespace inner\n"
                "} // namespace outer\n"
                "namespace other_outer {\n"
@@ -5630,6 +5669,13 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
                "    , aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaa, // break\n"
                "                               aaaaaaaaaaaaaa)\n"
                "    , aaaaaaaaaaaaaaaaaaaaaaa()\n{\n}",
+               Style);
+
+  // Access specifiers should be aligned left.
+  verifyFormat("class C {\n"
+               "public:\n"
+               "    int i;\n"
+               "};",
                Style);
 
   // Do not align comments.

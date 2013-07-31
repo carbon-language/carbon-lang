@@ -77,6 +77,15 @@ struct FormatStyle {
   /// Switch statement body is always indented one level more than case labels.
   bool IndentCaseLabels;
 
+  enum NamespaceIndentationKind {
+    NI_None,  // Don't indent in namespaces.
+    NI_Inner, // Indent only in inner namespaces (nested in other namespaces).
+    NI_All    // Indent in all namespaces.
+  };
+
+  /// \brief The indentation used for namespaces.
+  NamespaceIndentationKind NamespaceIndentation;
+
   /// \brief The number of spaces to before trailing line comments.
   unsigned SpacesBeforeTrailingComments;
 
@@ -198,6 +207,7 @@ struct FormatStyle {
            IndentCaseLabels == R.IndentCaseLabels &&
            IndentWidth == R.IndentWidth &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
+           NamespaceIndentation == R.NamespaceIndentation &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
            PenaltyBreakComment == R.PenaltyBreakComment &&
            PenaltyBreakFirstLessLess == R.PenaltyBreakFirstLessLess &&

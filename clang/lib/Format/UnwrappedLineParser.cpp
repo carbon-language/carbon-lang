@@ -319,8 +319,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
   FormatTok = Tokens->setPosition(StoredPosition);
 }
 
-void UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
-                                     unsigned AddLevels) {
+void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel) {
   assert(FormatTok->Tok.is(tok::l_brace) && "'{' expected");
   unsigned InitialLevel = Line->Level;
   nextToken();
@@ -329,7 +328,8 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration,
 
   ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
                                           MustBeDeclaration);
-  Line->Level += AddLevels;
+  if (AddLevel)
+    ++Line->Level;
   parseLevel(/*HasOpeningBrace=*/true);
 
   if (!FormatTok->Tok.is(tok::r_brace)) {
@@ -550,7 +550,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     if (FormatTok->Tok.is(tok::string_literal)) {
       nextToken();
       if (FormatTok->Tok.is(tok::l_brace)) {
-        parseBlock(/*MustBeDeclaration=*/true, 0);
+        parseBlock(/*MustBeDeclaration=*/true, /*AddLevel=*/false);
         addUnwrappedLine();
         return;
       }
@@ -794,7 +794,10 @@ void UnwrappedLineParser::parseNamespace() {
     if (Style.BreakBeforeBraces == FormatStyle::BS_Linux)
       addUnwrappedLine();
 
-    parseBlock(/*MustBeDeclaration=*/true, 0);
+    bool AddLevel = Style.NamespaceIndentation == FormatStyle::NI_All ||
+                    (Style.NamespaceIndentation == FormatStyle::NI_Inner &&
+                     DeclarationScopeStack.size() > 1);
+    parseBlock(/*MustBeDeclaration=*/true, AddLevel);
     // Munch the semicolon after a namespace. This is more common than one would
     // think. Puttin the semicolon into its own line is very ugly.
     if (FormatTok->Tok.is(tok::semi))
@@ -874,7 +877,7 @@ void UnwrappedLineParser::parseSwitch() {
   if (FormatTok->Tok.is(tok::l_paren))
     parseParens();
   if (FormatTok->Tok.is(tok::l_brace)) {
-    parseBlock(/*MustBeDeclaration=*/false, 1);
+    parseBlock(/*MustBeDeclaration=*/false);
     addUnwrappedLine();
   } else {
     addUnwrappedLine();
