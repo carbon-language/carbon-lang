@@ -2176,6 +2176,16 @@
 	risbg	%r0,%r0,-1,0,0
 	risbg	%r0,%r0,256,0,0
 
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: risbhg	%r1, %r2, 0, 0, 0
+
+	risbhg	%r1, %r2, 0, 0, 0
+
+#CHECK: error: {{(instruction requires: high-word)?}}
+#CHECK: risblg	%r1, %r2, 0, 0, 0
+
+	risblg	%r1, %r2, 0, 0, 0
+
 #CHECK: error: invalid operand
 #CHECK: rnsbg	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand

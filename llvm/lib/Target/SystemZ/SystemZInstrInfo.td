@@ -867,6 +867,13 @@ let Defs = [CC] in {
   def RISBG : RotateSelectRIEf<"risbg",  0xEC55, GR64, GR64>;
 }
 
+// Forms of RISBG that only affect one word of the destination register.
+// They do not set CC.
+def RISBHG : RotateSelectRIEf<"risbhg", 0xEC5D, GR64, GR64>,
+             Requires<[FeatureHighWord]>;
+def RISBLG : RotateSelectRIEf<"risblg", 0xEC51, GR64, GR64>,
+             Requires<[FeatureHighWord]>;
+
 // Rotate second operand left and perform a logical operation with selected
 // bits of the first operand.
 let Defs = [CC] in {

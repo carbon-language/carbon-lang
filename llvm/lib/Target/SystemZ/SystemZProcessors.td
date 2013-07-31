@@ -26,8 +26,13 @@ def FeatureLoadStoreOnCond : SystemZFeature<
   "Assume that the load/store-on-condition facility is installed"
 >;
 
+def FeatureHighWord : SystemZFeature<
+  "high-word", "HighWord",
+  "Assume that the high-word facility is installed"
+>;
+
 def : Processor<"z10",   NoItineraries, []>;
 def : Processor<"z196",  NoItineraries,
-                [FeatureDistinctOps, FeatureLoadStoreOnCond]>;
+                [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord]>;
 def : Processor<"zEC12", NoItineraries,
-                [FeatureDistinctOps, FeatureLoadStoreOnCond]>;
+                [FeatureDistinctOps, FeatureLoadStoreOnCond, FeatureHighWord]>;

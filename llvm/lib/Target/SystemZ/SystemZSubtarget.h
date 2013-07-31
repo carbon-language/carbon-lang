@@ -29,6 +29,7 @@ class SystemZSubtarget : public SystemZGenSubtargetInfo {
 protected:
   bool HasDistinctOps;
   bool HasLoadStoreOnCond;
+  bool HasHighWord;
 
 private:
   Triple TargetTriple;
@@ -45,6 +46,9 @@ public:
 
   // Return true if the target has the load/store-on-condition facility.
   bool hasLoadStoreOnCond() const { return HasLoadStoreOnCond; }
+
+  // Return true if the target has the high-word facility.
+  bool hasHighWord() const { return HasHighWord; }
 
   // Return true if GV can be accessed using LARL for reloc model RM
   // and code model CM.
