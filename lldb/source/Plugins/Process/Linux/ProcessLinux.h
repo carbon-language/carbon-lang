@@ -56,6 +56,7 @@ public:
 
     virtual bool
     UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list);
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -93,6 +94,9 @@ public:
     //------------------------------------------------------------------
     virtual void
     StopAllThreads(lldb::tid_t stop_tid);
+
+    virtual POSIXThread *
+    CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid);
 
 private:
 

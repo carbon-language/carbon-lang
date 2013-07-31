@@ -45,6 +45,7 @@ POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap (),
       m_breakpoint (),
+      m_thread_name_valid (false),
       m_thread_name ()
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
@@ -111,7 +112,8 @@ POSIXThread::GetInfo()
 void
 POSIXThread::SetName (const char *name)
 {
-    if (name && name[0])
+    m_thread_name_valid = (name && name[0]);
+    if (m_thread_name_valid)
         m_thread_name.assign (name);
     else
         m_thread_name.clear();
@@ -120,6 +122,12 @@ POSIXThread::SetName (const char *name)
 const char *
 POSIXThread::GetName ()
 {
+    if (!m_thread_name_valid)
+    {
+        SetName(Host::GetThreadName(GetProcess()->GetID(), GetID()).c_str());
+        m_thread_name_valid = true;
+    }
+
     if (m_thread_name.empty())
         return NULL;
     return m_thread_name.c_str();
@@ -460,22 +468,6 @@ POSIXThread::WatchNotify(const ProcessMessage &message)
 void
 POSIXThread::TraceNotify(const ProcessMessage &message)
 {
-#ifndef __FreeBSD__
-    RegisterContextPOSIX* reg_ctx = GetRegisterContextPOSIX();
-    if (reg_ctx)
-    {
-        uint32_t num_hw_wps = reg_ctx->NumSupportedHardwareWatchpoints();
-        uint32_t wp_idx;
-        for (wp_idx = 0; wp_idx < num_hw_wps; wp_idx++)
-        {
-            if (reg_ctx->IsWatchpointHit(wp_idx))
-            {
-                WatchNotify(message);
-                return;
-            }
-        }
-    }
-#endif
     SetStopInfo (StopInfo::CreateStopReasonToTrace(*this));
 }
 

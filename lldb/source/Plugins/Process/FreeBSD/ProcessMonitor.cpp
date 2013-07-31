@@ -1003,7 +1003,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         goto FINISH;
 
     // Update the process thread list with this new thread.
-    inferior.reset(new POSIXThread(*processSP, pid));
+    inferior.reset(process.CreateNewPOSIXThread(*processSP, pid));
     if (log)
         log->Printf ("ProcessMonitor::%s() adding pid = %" PRIu64, __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
@@ -1085,7 +1085,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     }
 
     // Update the process thread list with the attached thread.
-    inferior.reset(new POSIXThread(*processSP, pid));
+    inferior.reset(process.CreateNewPOSIXThread(*processSP, pid));
     tl.AddThread(inferior);
 
     // Let our process instance know the thread has stopped.

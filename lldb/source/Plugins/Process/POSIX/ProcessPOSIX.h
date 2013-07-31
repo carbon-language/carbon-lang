@@ -22,6 +22,7 @@
 #include "ProcessMessage.h"
 
 class ProcessMonitor;
+class POSIXThread;
 
 class ProcessPOSIX :
     public lldb_private::Process
@@ -165,6 +166,9 @@ public:
     /// The \p stop_tid paramter indicates the thread which the stop happened for.
     bool
     AddThreadForInitialStopIfNeeded(lldb::tid_t stop_tid);
+
+    virtual POSIXThread *
+    CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid);
 
 protected:
     /// Target byte order.

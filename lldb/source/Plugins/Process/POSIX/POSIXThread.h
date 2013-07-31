@@ -91,7 +91,7 @@ public:
 
     uint32_t FindVacantWatchpointIndex();
 
-private:
+protected:
     RegisterContextPOSIX *
     GetRegisterContextPOSIX ()
     {
@@ -107,6 +107,7 @@ private:
 
     lldb::BreakpointSiteSP m_breakpoint;
 
+    bool m_thread_name_valid;
     std::string m_thread_name;
 
     ProcessMonitor &
@@ -117,7 +118,7 @@ private:
 
     void BreakNotify(const ProcessMessage &message);
     void WatchNotify(const ProcessMessage &message);
-    void TraceNotify(const ProcessMessage &message);
+    virtual void TraceNotify(const ProcessMessage &message);
     void LimboNotify(const ProcessMessage &message);
     void SignalNotify(const ProcessMessage &message);
     void SignalDeliveredNotify(const ProcessMessage &message);

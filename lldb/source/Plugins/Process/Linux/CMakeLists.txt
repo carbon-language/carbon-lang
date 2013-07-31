@@ -7,5 +7,6 @@ add_lldb_library(lldbPluginProcessLinux
   ProcessLinux.cpp
   ProcessMonitor.cpp
   LinuxSignals.cpp
+  LinuxThread.cpp
   )
 

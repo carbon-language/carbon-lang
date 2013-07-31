@@ -479,6 +479,12 @@ ProcessPOSIX::AddThreadForInitialStopIfNeeded(lldb::tid_t stop_tid)
     return added_to_set;
 }
 
+POSIXThread *
+ProcessPOSIX::CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid)
+{
+    return new POSIXThread(process, tid);
+}
+
 void
 ProcessPOSIX::RefreshStateAfterStop()
 {
@@ -508,10 +514,7 @@ ProcessPOSIX::RefreshStateAfterStop()
                 log->Printf ("ProcessPOSIX::%s() adding thread, tid = %" PRIi64, __FUNCTION__, message.GetChildTID());
             lldb::tid_t child_tid = message.GetChildTID();
             ThreadSP thread_sp;
-            thread_sp.reset(new POSIXThread(*this, child_tid));
-
-            POSIXThread *thread = static_cast<POSIXThread*>(thread_sp.get());
-            thread->SetName(Host::GetThreadName(GetID(), child_tid).c_str());
+            thread_sp.reset(CreateNewPOSIXThread(*this, child_tid));
 
             Mutex::Locker lock(m_thread_list.GetMutex());
 
@@ -821,7 +824,7 @@ ProcessPOSIX::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thre
     assert(m_monitor);
     ThreadSP thread_sp (old_thread_list.FindThreadByID (GetID(), false));
     if (!thread_sp) {
-        thread_sp.reset(new POSIXThread(*this, GetID()));
+        thread_sp.reset(CreateNewPOSIXThread(*this, GetID()));
     }
 
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))

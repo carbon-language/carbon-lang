@@ -23,7 +23,7 @@
 #include "ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "ProcessMonitor.h"
-#include "POSIXThread.h"
+#include "LinuxThread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -64,7 +64,7 @@ ProcessLinux::Initialize()
 // Constructors and destructors.
 
 ProcessLinux::ProcessLinux(Target& target, Listener &listener, FileSpec *core_file)
-    : ProcessPOSIX(target, listener), m_stopping_threads(false), m_core_file(core_file)
+    : ProcessPOSIX(target, listener), m_core_file(core_file), m_stopping_threads(false)
 {
 #if 0
     // FIXME: Putting this code in the ctor and saving the byte order in a
@@ -81,6 +81,7 @@ void
 ProcessLinux::Terminate()
 {
 }
+
 lldb_private::ConstString
 ProcessLinux::GetPluginNameStatic()
 {
@@ -169,6 +170,13 @@ ProcessLinux::StopAllThreads(lldb::tid_t stop_tid)
 
     if (log)
         log->Printf ("ProcessLinux::%s() finished", __FUNCTION__);
+}
+
+// ProcessPOSIX override
+POSIXThread *
+ProcessLinux::CreateNewPOSIXThread(lldb_private::Process &process, lldb::tid_t tid)
+{
+    return new LinuxThread(process, tid);
 }
 
 bool
