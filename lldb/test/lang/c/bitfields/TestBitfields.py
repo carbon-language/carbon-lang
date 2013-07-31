@@ -119,6 +119,10 @@ class BitfieldsTestCase(TestBase):
         self.expect("expr (more_bits.d)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['uint8_t', '\\0'])
 
+        self.expect("target modules dump symfile a.out", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['Bits', 'uint32_t b3 : 3',
+                       'MoreBits', 'uint32_t a : 3'])
+
     def bitfields_variable_python(self):
         """Use Python APIs to inspect a bitfields variable."""
         exe = os.path.join(os.getcwd(), "a.out")
