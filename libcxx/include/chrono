@@ -418,9 +418,9 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
 #ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
-        duration() {}
-#else
         duration() = default;
+#else
+        duration() {}
 #endif
 
     template <class _Rep2>
