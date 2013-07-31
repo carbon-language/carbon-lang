@@ -50,7 +50,7 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   // Try to print any aliases first.
   if (!printAliasInstr(MI, OS))
     printInstruction(MI, OS);
-  
+
   // Next always print the annotation.
   printAnnotation(OS, Annot);
 
@@ -159,10 +159,10 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << markup("<imm:")
       << '$' << formatImm((int64_t)Op.getImm())
       << markup(">");
-    
+
     if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
       *CommentStream << format("imm = 0x%" PRIX64 "\n", (uint64_t)Op.getImm());
-    
+
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << markup("<imm:")
@@ -177,7 +177,7 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   const MCOperand &IndexReg = MI->getOperand(Op+2);
   const MCOperand &DispSpec = MI->getOperand(Op+3);
   const MCOperand &SegReg = MI->getOperand(Op+4);
-  
+
   O << markup("<mem:");
 
   // If this has a segment register, print it.
@@ -185,7 +185,7 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
     printOperand(MI, Op+4, O);
     O << ':';
   }
-  
+
   if (DispSpec.isImm()) {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
@@ -194,21 +194,21 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
     O << *DispSpec.getExpr();
   }
-  
+
   if (IndexReg.getReg() || BaseReg.getReg()) {
     O << '(';
     if (BaseReg.getReg())
       printOperand(MI, Op, O);
-    
+
     if (IndexReg.getReg()) {
       O << ',';
       printOperand(MI, Op+2, O);
       unsigned ScaleVal = MI->getOperand(Op+1).getImm();
       if (ScaleVal != 1) {
         O << ','
-	  << markup("<imm:")
+          << markup("<imm:")
           << ScaleVal // never printed in hex.
-	  << markup(">");
+          << markup(">");
       }
     }
     O << ')';
