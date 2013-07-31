@@ -1577,6 +1577,9 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
   for (unsigned I = 0, E = FP.getNumArgs(); I != E; ++I) {
     ParmVarDecl *P = FP.getArg(I);
 
+    // This must be synthesized from a typedef.
+    if (!P) continue;
+
     // The parameter's type as written might be dependent even if the
     // decayed type was not dependent.
     if (TypeSourceInfo *TSInfo = P->getTypeSourceInfo())

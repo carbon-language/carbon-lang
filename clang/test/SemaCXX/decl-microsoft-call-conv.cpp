@@ -29,6 +29,8 @@ void __cdecl    free_func_default(int *);
 void __thiscall free_func_cdecl(char *);
 void __cdecl    free_func_cdecl(double);
 
+typedef void void_fun_t();
+typedef void __cdecl cdecl_fun_t();
 
 // Pointers to member functions
 struct S {
@@ -38,7 +40,13 @@ struct S {
   void __cdecl    member_cdecl2(); // expected-note {{previous declaration is here}}
   void __thiscall member_thiscall1();
   void __thiscall member_thiscall2(); // expected-note {{previous declaration is here}}
-  
+
+  // Unless attributed, typedefs carry no calling convention and use the default
+  // based on context.
+  void_fun_t  member_typedef_default; // expected-note {{previous declaration is here}}
+  cdecl_fun_t member_typedef_cdecl; // expected-note {{previous declaration is here}}
+  __stdcall void_fun_t member_typedef_stdcall;
+
   // Static member functions can't be __thiscall
   static void            static_member_default1();
   static void            static_member_default2(); // expected-note {{previous declaration is here}}
@@ -57,6 +65,10 @@ struct S {
 
 void __cdecl    S::member_default1() {} // expected-error {{function declared 'cdecl' here was previously declared without calling convention}}
 void __thiscall S::member_default2() {}
+
+void __cdecl S::member_typedef_default() {} // expected-error {{function declared 'cdecl' here was previously declared without calling convention}}
+void __thiscall S::member_typedef_cdecl() {} // expected-error {{function declared 'thiscall' here was previously declared 'cdecl'}}
+void __stdcall S::member_typedef_stdcall() {}
 
 void            S::member_cdecl1() {}
 void __thiscall S::member_cdecl2() {} // expected-error {{function declared 'thiscall' here was previously declared 'cdecl'}}
@@ -84,3 +96,17 @@ void            S::static_member_variadic_cdecl(int x, ...) {
   (void)x;
 }
 
+// Declare a template using a calling convention.
+template <class CharT> inline int __cdecl mystrlen(const CharT *str) {
+  int i;
+  for (i = 0; str[i]; i++) { }
+  return i;
+}
+extern int sse_strlen(const char *str);
+template <> inline int __cdecl mystrlen(const char *str) {
+  return sse_strlen(str);
+}
+void use_tmpl(const char *str, const int *ints) {
+  mystrlen(str);
+  mystrlen(ints);
+}

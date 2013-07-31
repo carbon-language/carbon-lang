@@ -1233,26 +1233,9 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   Function->setLexicalDeclContext(LexicalDC);
 
   // Attach the parameters
-  if (isa<FunctionProtoType>(Function->getType().IgnoreParens())) {
-    // Adopt the already-instantiated parameters into our own context.
-    for (unsigned P = 0; P < Params.size(); ++P)
-      if (Params[P])
-        Params[P]->setOwningFunction(Function);
-  } else {
-    // Since we were instantiated via a typedef of a function type, create
-    // new parameters.
-    const FunctionProtoType *Proto
-      = Function->getType()->getAs<FunctionProtoType>();
-    assert(Proto && "No function prototype in template instantiation?");
-    for (FunctionProtoType::arg_type_iterator AI = Proto->arg_type_begin(),
-         AE = Proto->arg_type_end(); AI != AE; ++AI) {
-      ParmVarDecl *Param
-        = SemaRef.BuildParmVarDeclForTypedef(Function, Function->getLocation(),
-                                             *AI);
-      Param->setScopeInfo(0, Params.size());
-      Params.push_back(Param);
-    }
-  }
+  for (unsigned P = 0; P < Params.size(); ++P)
+    if (Params[P])
+      Params[P]->setOwningFunction(Function);
   Function->setParams(Params);
 
   SourceLocation InstantiateAtPOI;
@@ -1501,24 +1484,6 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   if (!TInfo)
     return 0;
   QualType T = adjustFunctionTypeForInstantiation(SemaRef.Context, D, TInfo);
-
-  // \brief If the type of this function, after ignoring parentheses,
-  // is not *directly* a function type, then we're instantiating a function
-  // that was declared via a typedef, e.g.,
-  //
-  //   typedef int functype(int, int);
-  //   functype func;
-  //
-  // In this case, we'll just go instantiate the ParmVarDecls that we
-  // synthesized in the method declaration.
-  if (!isa<FunctionProtoType>(T.IgnoreParens())) {
-    assert(!Params.size() && "Instantiating type could not yield parameters");
-    SmallVector<QualType, 4> ParamTypes;
-    if (SemaRef.SubstParmTypes(D->getLocation(), D->param_begin(),
-                               D->getNumParams(), TemplateArgs, ParamTypes,
-                               &Params))
-      return 0;
-  }
 
   NestedNameSpecifierLoc QualifierLoc = D->getQualifierLoc();
   if (QualifierLoc) {
@@ -2499,11 +2464,10 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   if (!NewTInfo)
     return 0;
 
-  if (NewTInfo != OldTInfo) {
-    // Get parameters from the new type info.
-    TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
-    if (FunctionProtoTypeLoc OldProtoLoc =
-            OldTL.getAs<FunctionProtoTypeLoc>()) {
+  TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
+  if (FunctionProtoTypeLoc OldProtoLoc = OldTL.getAs<FunctionProtoTypeLoc>()) {
+    if (NewTInfo != OldTInfo) {
+      // Get parameters from the new type info.
       TypeLoc NewTL = NewTInfo->getTypeLoc().IgnoreParens();
       FunctionProtoTypeLoc NewProtoLoc = NewTL.castAs<FunctionProtoTypeLoc>();
       unsigned NewIdx = 0;
@@ -2533,23 +2497,45 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
           }
         }
       }
-    }
-  } else {
-    // The function type itself was not dependent and therefore no
-    // substitution occurred. However, we still need to instantiate
-    // the function parameters themselves.
-    TypeLoc OldTL = OldTInfo->getTypeLoc().IgnoreParens();
-    if (FunctionProtoTypeLoc OldProtoLoc =
-            OldTL.getAs<FunctionProtoTypeLoc>()) {
+    } else {
+      // The function type itself was not dependent and therefore no
+      // substitution occurred. However, we still need to instantiate
+      // the function parameters themselves.
+      const FunctionProtoType *OldProto =
+          cast<FunctionProtoType>(OldProtoLoc.getType());
       for (unsigned i = 0, i_end = OldProtoLoc.getNumArgs(); i != i_end; ++i) {
+        ParmVarDecl *OldParam = OldProtoLoc.getArg(i);
+        if (!OldParam) {
+          Params.push_back(SemaRef.BuildParmVarDeclForTypedef(
+              D, D->getLocation(), OldProto->getArgType(i)));
+          continue;
+        }
+
         ParmVarDecl *Parm =
-            cast_or_null<ParmVarDecl>(VisitParmVarDecl(OldProtoLoc.getArg(i)));
+            cast_or_null<ParmVarDecl>(VisitParmVarDecl(OldParam));
         if (!Parm)
           return 0;
         Params.push_back(Parm);
       }
     }
+  } else {
+    // If the type of this function, after ignoring parentheses, is not
+    // *directly* a function type, then we're instantiating a function that
+    // was declared via a typedef or with attributes, e.g.,
+    //
+    //   typedef int functype(int, int);
+    //   functype func;
+    //   int __cdecl meth(int, int);
+    //
+    // In this case, we'll just go instantiate the ParmVarDecls that we
+    // synthesized in the method declaration.
+    SmallVector<QualType, 4> ParamTypes;
+    if (SemaRef.SubstParmTypes(D->getLocation(), D->param_begin(),
+                               D->getNumParams(), TemplateArgs, ParamTypes,
+                               &Params))
+      return 0;
   }
+
   return NewTInfo;
 }
 
