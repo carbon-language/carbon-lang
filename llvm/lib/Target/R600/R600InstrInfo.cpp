@@ -563,6 +563,7 @@ bool
 R600InstrInfo::fitsConstReadLimitations(const std::vector<MachineInstr *> &MIs)
     const {
   std::vector<unsigned> Consts;
+  SmallSet<int64_t, 4> Literals;
   for (unsigned i = 0, n = MIs.size(); i < n; i++) {
     MachineInstr *MI = MIs[i];
     if (!isALUInstr(MI->getOpcode()))
@@ -573,6 +574,10 @@ R600InstrInfo::fitsConstReadLimitations(const std::vector<MachineInstr *> &MIs)
 
     for (unsigned j = 0, e = Srcs.size(); j < e; j++) {
       std::pair<MachineOperand *, unsigned> Src = Srcs[j];
+      if (Src.first->getReg() == AMDGPU::ALU_LITERAL_X)
+        Literals.insert(Src.second);
+      if (Literals.size() > 4)
+        return false;
       if (Src.first->getReg() == AMDGPU::ALU_CONST)
         Consts.push_back(Src.second);
       if (AMDGPU::R600_KC0RegClass.contains(Src.first->getReg()) ||
