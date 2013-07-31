@@ -5472,6 +5472,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   EXPECT_FALSE(Style.FIELD);
 
   CHECK_PARSE_BOOL(AlignEscapedNewlinesLeft);
+  CHECK_PARSE_BOOL(AlignTrailingComments);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
   CHECK_PARSE_BOOL(AllowShortIfStatementsOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortLoopsOnASingleLine);
@@ -5679,9 +5680,9 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
                Style);
 
   // Do not align comments.
-  // FIXME: Implement option to suppress comment alignment.
-  // verifyFormat("int a; // Do not\n"
-  //              "double b; // align comments.");
+  verifyFormat("int a; // Do not\n"
+               "double b; // align comments.",
+               Style);
 
   // Accept input's line breaks.
   EXPECT_EQ("if (aaaaaaaaaaaaaaa\n"

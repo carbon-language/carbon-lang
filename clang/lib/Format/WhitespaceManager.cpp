@@ -124,6 +124,8 @@ void WhitespaceManager::alignTrailingComments() {
     unsigned ChangeMaxColumn = Style.ColumnLimit - Changes[i].TokenLength;
     Newlines += Changes[i].NewlinesBefore;
     if (Changes[i].IsTrailingComment) {
+      // If this comment follows an } in column 0, it probably documents the
+      // closing of a namespace and we don't want to align it.
       bool FollowsRBraceInColumn0 = i > 0 && Changes[i].NewlinesBefore == 0 &&
                                     Changes[i - 1].Kind == tok::r_brace &&
                                     Changes[i - 1].StartOfTokenColumn == 0;
@@ -140,9 +142,7 @@ void WhitespaceManager::alignTrailingComments() {
                Changes[i + 1].OriginalWhitespaceRange.getEnd())) &&
           // Which is not a comment itself.
           Changes[i + 1].Kind != tok::comment;
-      if (FollowsRBraceInColumn0) {
-        // If this comment follows an } in column 0, it probably documents the
-        // closing of a namespace and we don't want to align it.
+      if (!Style.AlignTrailingComments || FollowsRBraceInColumn0) {
         alignTrailingComments(StartOfSequence, i, MinColumn);
         MinColumn = ChangeMinColumn;
         MaxColumn = ChangeMinColumn;
