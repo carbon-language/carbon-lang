@@ -1220,7 +1220,8 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
         PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
       }
 
-      Value *VecPtr = Builder.CreateBitCast(PartPtr, DataTy->getPointerTo(AddressSpace));
+      Value *VecPtr = Builder.CreateBitCast(PartPtr,
+                                            DataTy->getPointerTo(AddressSpace));
       Builder.CreateStore(StoredVal[Part], VecPtr)->setAlignment(Alignment);
     }
     return;
@@ -1240,7 +1241,8 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
       PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
     }
 
-    Value *VecPtr = Builder.CreateBitCast(PartPtr, DataTy->getPointerTo(AddressSpace));
+    Value *VecPtr = Builder.CreateBitCast(PartPtr,
+                                          DataTy->getPointerTo(AddressSpace));
     Value *LI = Builder.CreateLoad(VecPtr, "wide.load");
     cast<LoadInst>(LI)->setAlignment(Alignment);
     Entry[Part] = Reverse ? reverseVector(LI) :  LI;
@@ -1911,7 +1913,8 @@ Value *createMinMaxOp(IRBuilder<> &Builder,
   }
 
   Value *Cmp;
-  if (RK == LoopVectorizationLegality::MRK_FloatMin || RK == LoopVectorizationLegality::MRK_FloatMax)
+  if (RK == LoopVectorizationLegality::MRK_FloatMin ||
+      RK == LoopVectorizationLegality::MRK_FloatMax)
     Cmp = Builder.CreateFCmp(P, Left, Right, "rdx.minmax.cmp");
   else
     Cmp = Builder.CreateICmp(P, Left, Right, "rdx.minmax.cmp");
@@ -2781,7 +2784,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           continue;
         }
         if (AddReductionVar(Phi, RK_FloatMinMax)) {
-          DEBUG(dbgs() << "LV: Found an float MINMAX reduction PHI."<< *Phi <<"\n");
+          DEBUG(dbgs() << "LV: Found an float MINMAX reduction PHI."<< *Phi <<
+                "\n");
           continue;
         }
 
@@ -3229,8 +3233,8 @@ static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
   // Make sure that the pointer does not point to aggregate types.
   const PointerType *PtrTy = cast<PointerType>(Ty);
   if (PtrTy->getElementType()->isAggregateType()) {
-    DEBUG(dbgs() << "LV: Bad stride - Not a pointer to a scalar type" << *Ptr
-          << "\n");
+    DEBUG(dbgs() << "LV: Bad stride - Not a pointer to a scalar type" << *Ptr <<
+          "\n");
     return 0;
   }
 
@@ -3244,8 +3248,8 @@ static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
 
   // The accesss function must stride over the innermost loop.
   if (Lp != AR->getLoop()) {
-    DEBUG(dbgs() << "LV: Bad stride - Not striding over innermost loop " << *Ptr
-          << " SCEV: " << *PtrScev << "\n");
+    DEBUG(dbgs() << "LV: Bad stride - Not striding over innermost loop " <<
+          *Ptr << " SCEV: " << *PtrScev << "\n");
   }
 
   // The address calculation must not wrap. Otherwise, a dependence could be
@@ -4064,7 +4068,8 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   unsigned MaxSafeDepDist = -1U;
   if (Legal->getMaxSafeDepDistBytes() != -1U)
     MaxSafeDepDist = Legal->getMaxSafeDepDistBytes() * 8;
-  WidestRegister = WidestRegister < MaxSafeDepDist ?  WidestRegister : MaxSafeDepDist;
+  WidestRegister = ((WidestRegister < MaxSafeDepDist) ?
+                    WidestRegister : MaxSafeDepDist);
   unsigned MaxVectorSize = WidestRegister / WidestType;
   DEBUG(dbgs() << "LV: The Widest type: " << WidestType << " bits.\n");
   DEBUG(dbgs() << "LV: The Widest register is:" << WidestRegister << "bits.\n");
