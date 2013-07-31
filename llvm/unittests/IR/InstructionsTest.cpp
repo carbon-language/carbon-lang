@@ -197,6 +197,17 @@ TEST(InstructionsTest, CastInst) {
   EXPECT_TRUE(CastInst::isBitCastable(V2Int32PtrTy, V2Int64PtrTy));
   EXPECT_FALSE(CastInst::isBitCastable(V2Int32Ty, V2Int64Ty));
   EXPECT_FALSE(CastInst::isBitCastable(V2Int64Ty, V2Int32Ty));
+
+
+  // Check that assertion is not hit when creating a cast with a vector of
+  // pointers
+  // First form
+  BasicBlock *BB = BasicBlock::Create(C);
+  Constant *NullV2I32Ptr = Constant::getNullValue(V2Int32PtrTy);
+  CastInst::CreatePointerCast(NullV2I32Ptr, V2Int32Ty, "foo", BB);
+
+  // Second form
+  CastInst::CreatePointerCast(NullV2I32Ptr, V2Int32Ty);
 }
 
 TEST(InstructionsTest, VectorGep) {

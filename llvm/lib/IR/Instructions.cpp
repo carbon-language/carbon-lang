@@ -2415,21 +2415,29 @@ CastInst *CastInst::CreateTruncOrBitCast(Value *S, Type *Ty,
 CastInst *CastInst::CreatePointerCast(Value *S, Type *Ty,
                                       const Twine &Name,
                                       BasicBlock *InsertAtEnd) {
-  assert(S->getType()->isPointerTy() && "Invalid cast");
-  assert((Ty->isIntegerTy() || Ty->isPointerTy()) &&
+  assert(S->getType()->isPtrOrPtrVectorTy() && "Invalid cast");
+  assert((Ty->isIntOrIntVectorTy() || Ty->isPtrOrPtrVectorTy()) &&
+         "Invalid cast");
+  assert(Ty->isVectorTy() == S->getType()->isVectorTy() && "Invalid cast");
+  assert(!Ty->isVectorTy() ||
+         Ty->getVectorNumElements() == S->getType()->getVectorNumElements() &&
          "Invalid cast");
 
-  if (Ty->isIntegerTy())
+  if (Ty->isIntOrIntVectorTy())
     return Create(Instruction::PtrToInt, S, Ty, Name, InsertAtEnd);
   return Create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
 }
 
 /// @brief Create a BitCast or a PtrToInt cast instruction
-CastInst *CastInst::CreatePointerCast(Value *S, Type *Ty, 
-                                      const Twine &Name, 
+CastInst *CastInst::CreatePointerCast(Value *S, Type *Ty,
+                                      const Twine &Name,
                                       Instruction *InsertBefore) {
   assert(S->getType()->isPtrOrPtrVectorTy() && "Invalid cast");
   assert((Ty->isIntOrIntVectorTy() || Ty->isPtrOrPtrVectorTy()) &&
+         "Invalid cast");
+  assert(Ty->isVectorTy() == S->getType()->isVectorTy() && "Invalid cast");
+  assert(!Ty->isVectorTy() ||
+         Ty->getVectorNumElements() == S->getType()->getVectorNumElements() &&
          "Invalid cast");
 
   if (Ty->isIntOrIntVectorTy())
