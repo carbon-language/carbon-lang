@@ -322,8 +322,17 @@ bool R600VectorRegMerger::runOnMachineFunction(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator MII = MB->begin(), MIIE = MB->end();
          MII != MIIE; ++MII) {
       MachineInstr *MI = MII;
-      if (MI->getOpcode() != AMDGPU::REG_SEQUENCE)
+      if (MI->getOpcode() != AMDGPU::REG_SEQUENCE) {
+        if (TII->get(MI->getOpcode()).TSFlags & R600_InstFlag::TEX_INST) {
+          unsigned Reg = MI->getOperand(1).getReg();
+          for (MachineRegisterInfo::def_iterator It = MRI->def_begin(Reg),
+              E = MRI->def_end(); It != E; ++It) {
+            RemoveMI(&(*It));
+          }
+        }
         continue;
+      }
+
 
       RegSeqInfo RSI(*MRI, MI);
 
