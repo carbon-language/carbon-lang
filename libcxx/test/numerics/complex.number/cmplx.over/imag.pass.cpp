@@ -19,29 +19,41 @@
 
 #include "../cases.h"
 
-template <class T>
+template <class T, int x>
 void
-test(T x, typename std::enable_if<std::is_integral<T>::value>::type* = 0)
+test(typename std::enable_if<std::is_integral<T>::value>::type* = 0)
 {
-    static_assert((std::is_same<decltype(std::imag(x)), double>::value), "");
+    static_assert((std::is_same<decltype(std::imag(T(x))), double>::value), "");
     assert(std::imag(x) == 0);
+#if _LIBCPP_STD_VER > 11
+    constexpr T val {x};
+    static_assert(std::imag(val) == 0, "");
+	constexpr std::complex<T> t{val, val};
+	static_assert(t.imag() == x, "" );
+#endif    
 }
 
-template <class T>
+template <class T, int x>
 void
-test(T x, typename std::enable_if<!std::is_integral<T>::value>::type* = 0)
+test(typename std::enable_if<!std::is_integral<T>::value>::type* = 0)
 {
-    static_assert((std::is_same<decltype(std::imag(x)), T>::value), "");
+    static_assert((std::is_same<decltype(std::imag(T(x))), T>::value), "");
     assert(std::imag(x) == 0);
+#if _LIBCPP_STD_VER > 11
+    constexpr T val {x};
+    static_assert(std::imag(val) == 0, "");
+	constexpr std::complex<T> t{val, val};
+	static_assert(t.imag() == x, "" );
+#endif    
 }
 
 template <class T>
 void
 test()
 {
-    test<T>(0);
-    test<T>(1);
-    test<T>(10);
+    test<T, 0>();
+    test<T, 1>();
+    test<T, 10>();
 }
 
 int main()

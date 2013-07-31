@@ -28,6 +28,21 @@ test()
     c /= c2;
     assert(c.real() == 1);
     assert(c.imag() == 0);
+    
+    std::complex<T> c3;
+
+    c3 = c;
+    std::complex<int> ic (1,1);
+    c3 /= ic;
+    assert(c3.real() ==  0.5);
+    assert(c3.imag() == -0.5);
+    
+    c3 = c;
+    std::complex<float> fc (1,1);
+    c3 /= fc;
+    assert(c3.real() ==  0.5);
+    assert(c3.imag() == -0.5);
+    
 }
 
 int main()
