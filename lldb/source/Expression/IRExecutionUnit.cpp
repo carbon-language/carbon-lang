@@ -171,9 +171,9 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
     
     const char *plugin_name = NULL;
     const char *flavor_string = NULL;
-    lldb::DisassemblerSP disassembler = Disassembler::FindPlugin(arch, flavor_string, plugin_name);
+    lldb::DisassemblerSP disassembler_sp = Disassembler::FindPlugin(arch, flavor_string, plugin_name);
     
-    if (!disassembler)
+    if (!disassembler_sp)
     {
         ret.SetErrorToGenericError();
         ret.SetErrorStringWithFormat("Unable to find disassembler plug-in for %s architecture.", arch.GetArchitectureName());
@@ -202,9 +202,9 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
                             DataExtractor::TypeUInt8);
     }
     
-    disassembler->DecodeInstructions (Address (func_remote_addr), extractor, 0, UINT32_MAX, false, false);
+    disassembler_sp->DecodeInstructions (Address (func_remote_addr), extractor, 0, UINT32_MAX, false, false);
     
-    InstructionList &instruction_list = disassembler->GetInstructionList();
+    InstructionList &instruction_list = disassembler_sp->GetInstructionList();
     const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();
     
     for (size_t instruction_index = 0, num_instructions = instruction_list.GetSize();
@@ -219,7 +219,9 @@ IRExecutionUnit::DisassembleFunction (Stream &stream,
                            &exe_ctx);
         stream.PutChar('\n');
     }
-    
+    // FIXME: The DisassemblerLLVMC has a reference cycle and won't go away if it has any active instructions.
+    // I'll fix that but for now, just clear the list and it will go away nicely.
+    disassembler_sp->GetInstructionList().Clear();
     return ret;
 }
 

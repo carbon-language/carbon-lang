@@ -316,14 +316,19 @@ Disassembler::Disassemble
             if (bytes_disassembled == 0)
                 return false;
 
-            return PrintInstructions (disasm_sp.get(),
-                                      debugger,
-                                      arch,
-                                      exe_ctx,
-                                      num_instructions,
-                                      num_mixed_context_lines,
-                                      options,
-                                      strm);
+            bool result = PrintInstructions (disasm_sp.get(),
+                                             debugger,
+                                             arch,
+                                             exe_ctx,
+                                             num_instructions,
+                                             num_mixed_context_lines,
+                                             options,
+                                             strm);
+            
+            // FIXME: The DisassemblerLLVMC has a reference cycle and won't go away if it has any active instructions.
+            // I'll fix that but for now, just clear the list and it will go away nicely.
+            disasm_sp->GetInstructionList().Clear();
+            return result;
         }
     }
     return false;
@@ -361,14 +366,19 @@ Disassembler::Disassemble
                                                                       prefer_file_cache);
             if (bytes_disassembled == 0)
                 return false;
-            return PrintInstructions (disasm_sp.get(),
-                                      debugger,
-                                      arch,
-                                      exe_ctx,
-                                      num_instructions,
-                                      num_mixed_context_lines,
-                                      options,
-                                      strm);
+            bool result = PrintInstructions (disasm_sp.get(),
+                                             debugger,
+                                             arch,
+                                             exe_ctx,
+                                             num_instructions,
+                                             num_mixed_context_lines,
+                                             options,
+                                             strm);
+            
+            // FIXME: The DisassemblerLLVMC has a reference cycle and won't go away if it has any active instructions.
+            // I'll fix that but for now, just clear the list and it will go away nicely.
+            disasm_sp->GetInstructionList().Clear();
+            return result;
         }
     }
     return false;
