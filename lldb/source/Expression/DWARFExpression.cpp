@@ -11,8 +11,6 @@
 
 #include <vector>
 
-#include "llvm/Support/ErrorHandling.h"
-
 #include "lldb/Core/DataEncoder.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Log.h"
@@ -2662,7 +2660,9 @@ DWARFExpression::Evaluate
             }
             break;
         default:
-            llvm::report_fatal_error("Unhandled DWARF expression opcode! Please file a bug at llvm.org/bugs and attach the binary you were debugging.");
+            if (log)
+                log->Printf("Unhandled opcode %s in DWARFExpression.", DW_OP_value_to_name(op));
+            break;
         }
     }
 
