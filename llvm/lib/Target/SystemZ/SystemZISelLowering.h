@@ -126,12 +126,15 @@ public:
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const LLVM_OVERRIDE {
     return MVT::i32;
   }
-  virtual EVT getSetCCResultType(LLVMContext &, EVT) const {
+  virtual EVT getSetCCResultType(LLVMContext &, EVT) const LLVM_OVERRIDE {
     return MVT::i32;
   }
   virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const LLVM_OVERRIDE;
-  virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
-  virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
+  virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const LLVM_OVERRIDE;
+  virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const
+     LLVM_OVERRIDE;
+  virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const
+    LLVM_OVERRIDE;
   virtual const char *getTargetNodeName(unsigned Opcode) const LLVM_OVERRIDE;
   virtual std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const std::string &Constraint,

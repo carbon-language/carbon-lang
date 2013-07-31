@@ -290,6 +290,21 @@ bool SystemZTargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
   return true;
 }
   
+bool SystemZTargetLowering::isLegalAddressingMode(const AddrMode &AM,
+                                                  Type *Ty) const {
+  // Punt on globals for now, although they can be used in limited
+  // RELATIVE LONG cases.
+  if (AM.BaseGV)
+    return false;
+
+  // Require a 20-bit signed offset.
+  if (!isInt<20>(AM.BaseOffs))
+    return false;
+
+  // Indexing is OK but no scale factor can be applied.
+  return AM.Scale == 0 || AM.Scale == 1;
+}
+
 //===----------------------------------------------------------------------===//
 // Inline asm support
 //===----------------------------------------------------------------------===//
