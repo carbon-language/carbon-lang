@@ -13,7 +13,8 @@
 
 let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
   // Miscellaneous instructions.
-  def int_xcore_bitrev : Intrinsic<[llvm_i32_ty],[llvm_i32_ty],[IntrNoMem]>;
+  def int_xcore_bitrev : Intrinsic<[llvm_i32_ty],[llvm_i32_ty],[IntrNoMem]>,
+                         GCCBuiltin<"__builtin_bitrev">;
   def int_xcore_crc8 : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
                                  [llvm_i32_ty,llvm_i32_ty,llvm_i32_ty],
                                  [IntrNoMem]>;
@@ -24,9 +25,12 @@ let TargetPrefix = "xcore" in {  // All intrinsics start with "llvm.xcore.".
                                  [IntrNoMem]>;
   def int_xcore_zext : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],
                                  [IntrNoMem]>;
-  def int_xcore_getid : Intrinsic<[llvm_i32_ty],[],[IntrNoMem]>;
-  def int_xcore_getps : Intrinsic<[llvm_i32_ty],[llvm_i32_ty]>;
-  def int_xcore_setps : Intrinsic<[],[llvm_i32_ty, llvm_i32_ty]>;
+  def int_xcore_getid : Intrinsic<[llvm_i32_ty],[],[IntrNoMem]>,
+                        GCCBuiltin<"__builtin_getid">;
+  def int_xcore_getps : Intrinsic<[llvm_i32_ty],[llvm_i32_ty]>,
+                        GCCBuiltin<"__builtin_getps">;
+  def int_xcore_setps : Intrinsic<[],[llvm_i32_ty, llvm_i32_ty]>,
+                        GCCBuiltin<"__builtin_setps">;
   def int_xcore_geted : Intrinsic<[llvm_i32_ty],[]>;
   def int_xcore_getet : Intrinsic<[llvm_i32_ty],[]>;
   def int_xcore_setsr : Intrinsic<[],[llvm_i32_ty]>;
