@@ -707,24 +707,26 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG) const
 SDValue XCoreTargetLowering::
 LowerVAARG(SDValue Op, SelectionDAG &DAG) const
 {
-  llvm_unreachable("unimplemented");
-  // FIXME Arguments passed by reference need a extra dereference.
+  // Whist llvm does not support aggregate varargs we can ignore
+  // the possibility of the ValueType being an implicit byVal vararg.
   SDNode *Node = Op.getNode();
+  EVT VT = Node->getValueType(0); // not an aggregate
+  SDValue InChain = Node->getOperand(0);
+  SDValue VAListPtr = Node->getOperand(1);
+  EVT PtrVT = VAListPtr.getValueType();
+  const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
   SDLoc dl(Node);
-  const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
-  EVT VT = Node->getValueType(0);
-  SDValue VAList = DAG.getLoad(getPointerTy(), dl, Node->getOperand(0),
-                               Node->getOperand(1), MachinePointerInfo(V),
+  SDValue VAList = DAG.getLoad(PtrVT, dl, InChain,
+                               VAListPtr, MachinePointerInfo(SV),
                                false, false, false, 0);
   // Increment the pointer, VAList, to the next vararg
-  SDValue Tmp3 = DAG.getNode(ISD::ADD, dl, getPointerTy(), VAList,
-                     DAG.getConstant(VT.getSizeInBits(),
-                                     getPointerTy()));
+  SDValue nextPtr = DAG.getNode(ISD::ADD, dl, PtrVT, VAList,
+                                DAG.getIntPtrConstant(VT.getSizeInBits() / 8));
   // Store the incremented VAList to the legalized pointer
-  Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Node->getOperand(1),
-                      MachinePointerInfo(V), false, false, 0);
+  InChain = DAG.getStore(VAList.getValue(1), dl, nextPtr, VAListPtr,
+                         MachinePointerInfo(SV), false, false, 0);
   // Load the actual argument out of the pointer VAList
-  return DAG.getLoad(VT, dl, Tmp3, VAList, MachinePointerInfo(),
+  return DAG.getLoad(VT, dl, InChain, VAList, MachinePointerInfo(),
                      false, false, false, 0);
 }
 
