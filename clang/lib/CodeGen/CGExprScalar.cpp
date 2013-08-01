@@ -922,16 +922,8 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
     llvm::VectorType *MTy = cast<llvm::VectorType>(Mask->getType());
     llvm::Constant* EltMask;
 
-    // Treat vec3 like vec4.
-    if ((LHSElts == 6) && (E->getNumSubExprs() == 3))
-      EltMask = llvm::ConstantInt::get(MTy->getElementType(),
-                                       (1 << llvm::Log2_32(LHSElts+2))-1);
-    else if ((LHSElts == 3) && (E->getNumSubExprs() == 2))
-      EltMask = llvm::ConstantInt::get(MTy->getElementType(),
-                                       (1 << llvm::Log2_32(LHSElts+1))-1);
-    else
-      EltMask = llvm::ConstantInt::get(MTy->getElementType(),
-                                       (1 << llvm::Log2_32(LHSElts))-1);
+    EltMask = llvm::ConstantInt::get(MTy->getElementType(),
+                                     llvm::NextPowerOf2(LHSElts-1)-1);
 
     // Mask off the high bits of each shuffle index.
     Value *MaskBits = llvm::ConstantVector::getSplat(MTy->getNumElements(),
