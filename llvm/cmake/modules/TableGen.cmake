@@ -66,7 +66,8 @@ if(CMAKE_CROSSCOMPILING)
 
   add_custom_command(OUTPUT ${CX_NATIVE_TG_DIR}/CMakeCache.txt
     COMMAND ${CMAKE_COMMAND} -UMAKE_TOOLCHAIN_FILE -DCMAKE_BUILD_TYPE=Release
-                             -DLLVM_BUILD_POLLY=OFF ${CMAKE_SOURCE_DIR}
+                             -DLLVM_BUILD_POLLY=OFF
+                             -G "${CMAKE_GENERATOR}" ${CMAKE_SOURCE_DIR}
     WORKING_DIRECTORY ${CX_NATIVE_TG_DIR}
     DEPENDS ${CX_NATIVE_TG_DIR}
     COMMENT "Configuring native TableGen...")
