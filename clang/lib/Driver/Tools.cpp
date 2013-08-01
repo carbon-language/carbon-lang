@@ -1974,12 +1974,6 @@ static bool isOptimizationLevelFast(const ArgList &Args) {
   return false;
 }
 
-static bool isOptimizationLevel3(const ArgList &Args) {
-  if (Arg *A = Args.getLastArg(options::OPT_O_Group))
-    return StringRef(A->getValue()).equals("3");
-  return false;
-}
-
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -3458,17 +3452,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_vectorize, true))
     CmdArgs.push_back("-vectorize-loops");
 
-  bool EnableSLP = false;
-  // If -fslp-vectorize or -fno-slp-vectorize are given, honor this selection.
-  if (Arg *A = Args.getLastArg(options::OPT_fslp_vectorize,
-                      options::OPT_fno_slp_vectorize)) {
-    EnableSLP = A->getOption().matches(options::OPT_fslp_vectorize);
-  } else {
-    // Also enable SLP vectorization on O3 or OFast
-    EnableSLP = isOptimizationLevel3(Args) || isOptimizationLevelFast(Args);
-  }
-
-  if (EnableSLP)
+  // -fslp-vectorize is default.
+  if (Args.hasFlag(options::OPT_fslp_vectorize,
+                   options::OPT_fno_slp_vectorize, true))
     CmdArgs.push_back("-vectorize-slp");
 
   // -fno-slp-vectorize-aggressive is default.
