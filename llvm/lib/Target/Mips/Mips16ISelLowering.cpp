@@ -37,6 +37,18 @@ struct Mips16Libcall {
     return std::strcmp(Name, RHS.Name) < 0;
   }
 };
+
+struct Mips16IntrinsicHelperType{
+  const char* Name;
+  const char* Helper;
+
+  bool operator<(const Mips16IntrinsicHelperType &RHS) const {
+    return std::strcmp(Name, RHS.Name) < 0;
+  }
+  bool operator==(const Mips16IntrinsicHelperType &RHS) const {
+    return std::strcmp(Name, RHS.Name) == 0;
+  }
+};
 }
 
 // Libcalls for which no helper is generated. Sorted by name for binary search.
@@ -75,6 +87,31 @@ static const Mips16Libcall HardFloatLibCalls[] = {
   { RTLIB::FPROUND_F64_F32, "__mips16_truncdfsf2" },
   { RTLIB::UO_F64, "__mips16_unorddf2" },
   { RTLIB::UO_F32, "__mips16_unordsf2" }
+};
+
+static const Mips16IntrinsicHelperType Mips16IntrinsicHelper[] = {
+  {"ceil",  "__mips16_call_stub_df_2"},
+  {"ceilf", "__mips16_call_stub_sf_1"},
+  {"copysign",  "__mips16_call_stub_df_10"},
+  {"copysignf", "__mips16_call_stub_sf_5"},
+  {"cos",  "__mips16_call_stub_df_2"},
+  {"cosf", "__mips16_call_stub_sf_1"},
+  {"exp2",  "__mips16_call_stub_df_2"},
+  {"exp2f", "__mips16_call_stub_sf_1"},
+  {"floor",  "__mips16_call_stub_df_2"},
+  {"floorf", "__mips16_call_stub_sf_1"},
+  {"log2",  "__mips16_call_stub_df_2"},
+  {"log2f", "__mips16_call_stub_sf_1"},
+  {"nearbyint",  "__mips16_call_stub_df_2"},
+  {"nearbyintf", "__mips16_call_stub_sf_1"},
+  {"rint",  "__mips16_call_stub_df_2"},
+  {"rintf", "__mips16_call_stub_sf_1"},
+  {"sin",  "__mips16_call_stub_df_2"},
+  {"sinf", "__mips16_call_stub_sf_1"},
+  {"sqrt",  "__mips16_call_stub_df_2"},
+  {"sqrtf", "__mips16_call_stub_sf_1"},
+  {"trunc",  "__mips16_call_stub_df_2"},
+  {"truncf", "__mips16_call_stub_sf_1"},
 };
 
 Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
@@ -398,6 +435,21 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
       if (std::binary_search(HardFloatLibCalls, array_endof(HardFloatLibCalls),
                              Find))
         LookupHelper = false;
+      else {
+        Mips16IntrinsicHelperType IntrinsicFind = {S->getSymbol(), ""};
+        // one more look at list of intrinsics
+        if (std::binary_search(Mips16IntrinsicHelper,
+            array_endof(Mips16IntrinsicHelper),
+                                     IntrinsicFind)) {
+          const Mips16IntrinsicHelperType *h =(std::find(Mips16IntrinsicHelper,
+              array_endof(Mips16IntrinsicHelper),
+                                       IntrinsicFind));
+          Mips16HelperFunction = h->Helper;
+          NeedMips16Helper = true;
+          LookupHelper = false;
+        }
+
+      }
     } else if (GlobalAddressSDNode *G =
                    dyn_cast<GlobalAddressSDNode>(CLI.Callee)) {
       Mips16Libcall Find = { RTLIB::UNKNOWN_LIBCALL,
