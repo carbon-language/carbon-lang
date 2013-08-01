@@ -969,13 +969,9 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Value* V1 = CGF.EmitScalarExpr(E->getExpr(0));
   Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
 
-  // Handle vec3 special since the index will be off by one for the RHS.
-  llvm::VectorType *VTy = cast<llvm::VectorType>(V1->getType());
   SmallVector<llvm::Constant*, 32> indices;
-  for (unsigned i = 2; i < E->getNumSubExprs(); i++) {
+  for (unsigned i = 2; i < E->getNumSubExprs(); ++i) {
     unsigned Idx = E->getShuffleMaskIdx(CGF.getContext(), i-2);
-    if (VTy->getNumElements() == 3 && Idx > 3)
-      Idx -= 1;
     indices.push_back(Builder.getInt32(Idx));
   }
 
