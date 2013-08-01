@@ -1,4 +1,4 @@
-##===- unittests/IR/Makefile -------------------------------*- Makefile -*-===##
+##===- unittests/Object/Makefile ---------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
