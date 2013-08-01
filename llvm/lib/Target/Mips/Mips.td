@@ -101,6 +101,7 @@ def MipsAsmWriter : AsmWriter {
 
 def MipsAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;
+  let MnemonicContainsDot = 1;
 }
 
 def MipsAsmParserVariant : AsmParserVariant {

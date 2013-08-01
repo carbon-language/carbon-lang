@@ -97,7 +97,6 @@ class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
   let Predicates = [HasStdEnc];
   string BaseOpcode = opstr;
   string Arch;
-  let MnemonicContainsDot = 1;
 }
 
 // Mips Pseudo Instructions Format

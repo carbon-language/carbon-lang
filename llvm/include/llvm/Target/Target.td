@@ -444,9 +444,6 @@ class Instruction {
   /// constraint. For example, "$Rn = $Rd".
   string TwoOperandAliasConstraint = "";
 
-  /// Does the instruction mnemonic allow '.'
-  bit MnemonicContainsDot = 0;
-
   ///@}
 
   /// UseNamedOperandTable - If set, the operand indices of this instruction
@@ -821,6 +818,9 @@ class AsmParser {
   // ShouldEmitMatchRegisterName - Set to false if the target needs a hand
   // written register name matcher
   bit ShouldEmitMatchRegisterName = 1;
+
+  /// Does the instruction mnemonic allow '.'
+  bit MnemonicContainsDot = 0;
 }
 def DefaultAsmParser : AsmParser;
 

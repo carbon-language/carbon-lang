@@ -837,8 +837,7 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
     }
 
     case '.':
-      if (!(TheDef->getValue("MnemonicContainsDot")) ||
-          !(TheDef->getValueAsBit("MnemonicContainsDot"))) {
+      if (!Info.AsmParser->getValueAsBit("MnemonicContainsDot")) {
         if (InTok)
           AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
         Prev = i;
