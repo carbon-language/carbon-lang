@@ -213,8 +213,8 @@ def MT : JoinedOrSeparate<["-"], "MT">, Group<M_Group>, Flags<[CC1Option]>,
     HelpText<"Specify target for dependency">;
 def Mach : Flag<["-"], "Mach">;
 def M : Flag<["-"], "M">, Group<M_Group>;
-def O0 : Joined<["-"], "O0">, Group<O_Group>, Flags<[CC1Option]>;
-def O4 : Joined<["-"], "O4">, Group<O_Group>, Flags<[CC1Option]>;
+def O0 : Flag<["-"], "O0">, Group<O_Group>, Flags<[CC1Option]>;
+def O4 : Flag<["-"], "O4">, Group<O_Group>, Flags<[CC1Option]>;
 def ObjCXX : Flag<["-"], "ObjC++">, Flags<[DriverOption]>,
   HelpText<"Treat source input files as Objective-C++ inputs">;
 def ObjC : Flag<["-"], "ObjC">, Flags<[DriverOption]>,
