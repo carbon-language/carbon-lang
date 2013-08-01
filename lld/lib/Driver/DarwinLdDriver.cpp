@@ -34,8 +34,6 @@
 
 namespace {
 
-#define SUPPORT_ALIASARGS // FIXME: Remove when no longer necessary.
-
 // Create enum with OPT_xxx values for each option in DarwinOptions.td
 enum DarwinOpt {
   OPT_INVALID = 0,

@@ -36,8 +36,6 @@ using namespace lld;
 
 namespace {
 
-#define SUPPORT_ALIASARGS // FIXME: Remove when no longer necessary.
-
 // Create enum with OPT_xxx values for each option in LDOptions.td
 enum LDOpt {
   OPT_INVALID = 0,

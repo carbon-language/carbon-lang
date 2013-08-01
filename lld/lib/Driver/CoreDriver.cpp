@@ -29,8 +29,6 @@ using namespace lld;
 
 namespace {
 
-#define SUPPORT_ALIASARGS // FIXME: Remove when no longer necessary.
-
 // Create enum with OPT_xxx values for each option in DarwinOptions.td
 enum CoreOpt {
   OPT_INVALID = 0,
