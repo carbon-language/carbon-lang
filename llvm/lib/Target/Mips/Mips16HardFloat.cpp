@@ -247,7 +247,7 @@ static void assureFPCallStub(Function &F, Module *M,
   bool LE = Subtarget.isLittle();
   std::string Name = F.getName();
   std::string SectionName = ".mips16.call.fp." + Name;
-  std::string StubName = "__call_stub_" + Name;
+  std::string StubName = "__call_stub_fp_" + Name;
   //
   // see if we already have the stub
   //
@@ -257,11 +257,13 @@ static void assureFPCallStub(Function &F, Module *M,
                            Function::InternalLinkage, StubName, M);
   FStub->addFnAttr("mips16_fp_stub");
   FStub->addFnAttr(llvm::Attribute::Naked);
+  FStub->addFnAttr(llvm::Attribute::NoInline);
   FStub->addFnAttr(llvm::Attribute::NoUnwind);
   FStub->addFnAttr("nomips16");
   FStub->setSection(SectionName);
   BasicBlock *BB = BasicBlock::Create(Context, "entry", FStub);
   InlineAsmHelper IAH(Context, BB);
+  IAH.Out(".set reorder");
   FPReturnVariant RV = whichFPReturnVariant(FStub->getReturnType());
   FPParamVariant PV = whichFPParamVariantNeeded(F);
   swapFPIntParams(PV, M, IAH, LE, true);
@@ -361,6 +363,8 @@ static bool fixupFPReturnAndCall
                            "__Mips16RetHelper");
         A = A.addAttribute(C, AttributeSet::FunctionIndex,
                            Attribute::ReadNone);
+        A = A.addAttribute(C, AttributeSet::FunctionIndex,
+                           Attribute::NoInline);
         Value *F = (M->getOrInsertFunction(Name, A, MyVoid, T, NULL));
         CallInst::Create(F, Params, "", &Inst );
       } else if (const CallInst *CI = dyn_cast<CallInst>(I)) {
@@ -389,10 +393,11 @@ static void createFPFnStub(Function *F, Module *M, FPParamVariant PV,
   std::string LocalName = "__fn_local_" + Name;
   Function *FStub = Function::Create
     (F->getFunctionType(),
-     Function::ExternalLinkage, StubName, M);
+     Function::InternalLinkage, StubName, M);
   FStub->addFnAttr("mips16_fp_stub");
   FStub->addFnAttr(llvm::Attribute::Naked);
   FStub->addFnAttr(llvm::Attribute::NoUnwind);
+  FStub->addFnAttr(llvm::Attribute::NoInline);
   FStub->addFnAttr("nomips16");
   FStub->setSection(SectionName);
   BasicBlock *BB = BasicBlock::Create(Context, "entry", FStub);
