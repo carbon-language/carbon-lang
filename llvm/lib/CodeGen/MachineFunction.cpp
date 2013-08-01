@@ -60,7 +60,8 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
     RegInfo = 0;
 
   MFInfo = 0;
-  FrameInfo = new (Allocator) MachineFrameInfo(TM, TM.Options.RealignStack);
+  FrameInfo =
+    new (Allocator) MachineFrameInfo(TM,!F->hasFnAttribute("no-realign-stack"));
 
   if (Fn->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                        Attribute::StackAlignment))

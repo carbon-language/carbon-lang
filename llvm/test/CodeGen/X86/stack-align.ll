@@ -1,4 +1,4 @@
-; RUN: llc < %s -relocation-model=static -realign-stack=1 -mcpu=yonah | FileCheck %s
+; RUN: llc < %s -relocation-model=static -mcpu=yonah | FileCheck %s
 
 ; The double argument is at 4(esp) which is 16-byte aligned, allowing us to
 ; fold the load into the andpd.

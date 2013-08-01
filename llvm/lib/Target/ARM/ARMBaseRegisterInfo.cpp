@@ -323,7 +323,7 @@ bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
   // 1. Dynamic stack realignment is explicitly disabled,
   // 2. This is a Thumb1 function (it's not useful, so we don't bother), or
   // 3. There are VLAs in the function and the base pointer is disabled.
-  if (!MF.getTarget().Options.RealignStack)
+  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
     return false;
   if (AFI->isThumb1OnlyFunction())
     return false;

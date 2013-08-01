@@ -181,11 +181,6 @@ OverrideStackAlignment("stack-alignment",
                        cl::desc("Override default stack alignment"),
                        cl::init(0));
 
-cl::opt<bool>
-EnableRealignStack("realign-stack",
-                   cl::desc("Realign stack if needed"),
-                   cl::init(true));
-
 cl::opt<std::string>
 TrapFuncName("trap-func", cl::Hidden,
         cl::desc("Emit a call to trap function rather than a trap instruction"),

@@ -411,10 +411,11 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 }
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
+  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
+    return false;
+
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const MachineRegisterInfo *MRI = &MF.getRegInfo();
-  if (!MF.getTarget().Options.RealignStack)
-    return false;
 
   // Stack realignment requires a frame pointer.  If we already started
   // register allocation with frame pointer elimination, it is too late now.

@@ -717,7 +717,7 @@ bool PPCRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 }
 
 bool PPCRegisterInfo::canRealignStack(const MachineFunction &MF) const {
-  if (!MF.getTarget().Options.RealignStack)
+  if (MF.getFunction()->hasFnAttribute("no-realign-stack"))
     return false;
 
   return true;

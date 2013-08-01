@@ -38,7 +38,7 @@ declare void @llvm.dbg.declare(metadata, metadata) #1
 
 declare void @llvm.dbg.value(metadata, i64, metadata) #1
 
-attributes #0 = { nounwind ssp uwtable "fp-contract-model"="standard" "no-frame-pointer-elim" "no-frame-pointer-elim-non-leaf" "realign-stack" "relocation-model"="pic" "ssp-buffers-size"="8" }
+attributes #0 = { nounwind ssp uwtable "fp-contract-model"="standard" "no-frame-pointer-elim" "no-frame-pointer-elim-non-leaf" "relocation-model"="pic" "ssp-buffers-size"="8" }
 attributes #1 = { nounwind readnone }
 
 !llvm.dbg.cu = !{!0}
