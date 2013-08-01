@@ -48,7 +48,7 @@ class LongjmpTestCase(TestBase):
         # Note: Depending on the generated mapping of DWARF to assembly,
         # the process may have stopped or exited.
         self.expect("process status", PROCESS_STOPPED,
-            patterns = ['Process .*'])
+            patterns = ['Process .* exited with status = 0'])
 
     def step_out(self):
         self.start_test("do_jump")
@@ -57,6 +57,7 @@ class LongjmpTestCase(TestBase):
 
     def step_over(self):
         self.start_test("do_jump")
+        self.runCmd("thread step-over", RUN_SUCCEEDED)
         self.runCmd("thread step-over", RUN_SUCCEEDED)
         self.check_status()
 

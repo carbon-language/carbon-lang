@@ -37,6 +37,7 @@ class STLTestCase(TestBase):
         self.sbtype_template_apis()
 
     @skipIfGcc # llvm.org/pr15036: crashes during DWARF parsing when built with GCC
+    @expectedFailureIcc # icc 13.1 and 14-beta do not emit DW_TAG_template_type_parameter
     @python_api_test
     @dwarf_test
     def test_SBType_template_aspects_with_dwarf(self):

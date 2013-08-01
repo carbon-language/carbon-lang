@@ -8,12 +8,16 @@
 //===----------------------------------------------------------------------===//
 #include <setjmp.h>
 #include <stdio.h>
+#include <time.h>
 
 jmp_buf j;
 
 void do_jump(void)
 {
-    longjmp(j, 1); // non-local goto
+    // We can't let the compiler know this will always happen or it might make
+    // optimizations that break our test.
+    if (!clock())
+        longjmp(j, 1); // non-local goto
 }
 
 int main (void)
