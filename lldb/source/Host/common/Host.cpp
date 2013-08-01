@@ -31,6 +31,7 @@
 
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
 #include <sys/wait.h>
+#include <sys/syscall.h>
 #endif
 
 #if defined (__FreeBSD__)
@@ -455,6 +456,8 @@ Host::GetCurrentThreadID()
     return thread_self;
 #elif defined(__FreeBSD__)
     return lldb::tid_t(pthread_getthreadid_np());
+#elif defined(__linux__)
+    return lldb::tid_t(syscall(SYS_gettid));
 #else
     return lldb::tid_t(pthread_self());
 #endif
@@ -660,7 +663,7 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
     // Set the pthread name if possible
     if (pid == curr_pid && tid == curr_tid)
     {
-        ::pthread_set_name_np(::pthread_self(), name);
+        ::pthread_set_name_np (::pthread_self(), name);
         return true;
     }
     return false;
@@ -668,21 +671,20 @@ Host::SetThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name)
     void *fn = dlsym (RTLD_DEFAULT, "pthread_setname_np");
     if (fn)
     {
-        int (*pthread_setname_np_func)(pthread_t thread, const char *name);
-        *reinterpret_cast<void **> (&pthread_setname_np_func) = fn;
-
         lldb::pid_t curr_pid = Host::GetCurrentProcessID();
         lldb::tid_t curr_tid = Host::GetCurrentThreadID();
-
         if (pid == LLDB_INVALID_PROCESS_ID)
             pid = curr_pid;
 
         if (tid == LLDB_INVALID_THREAD_ID)
             tid = curr_tid;
 
-        if (pid == curr_pid)
+        if (pid == curr_pid && tid == curr_tid)
         {
-            if (pthread_setname_np_func (tid, name) == 0)
+            int (*pthread_setname_np_func)(pthread_t thread, const char *name);
+            *reinterpret_cast<void **> (&pthread_setname_np_func) = fn;
+
+            if (pthread_setname_np_func (::pthread_self(), name) == 0)
                 return true;
         }
     }

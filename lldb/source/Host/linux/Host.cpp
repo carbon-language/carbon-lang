@@ -451,18 +451,17 @@ Host::ThreadCreated (const char *thread_name)
 std::string
 Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
 {
+    assert(pid != LLDB_INVALID_PROCESS_ID);
+    assert(tid != LLDB_INVALID_THREAD_ID);
+
     // Read /proc/$TID/comm file.
     lldb::DataBufferSP buf_sp = ReadProcPseudoFile (tid, "comm");
-    if (buf_sp->GetByteSize())
-    {
-        const char *comm_str = (const char *)buf_sp->GetBytes();
-        const char *cr_str = ::strchr(comm_str, '\n');
-        size_t length = cr_str ? (cr_str - comm_str) : buf_sp->GetByteSize();
+    const char *comm_str = (const char *)buf_sp->GetBytes();
+    const char *cr_str = ::strchr(comm_str, '\n');
+    size_t length = cr_str ? (cr_str - comm_str) : strlen(comm_str);
 
-        std::string thread_name(comm_str, length);
-        return thread_name;
-    }
-    return std::string("");
+    std::string thread_name(comm_str, length);
+    return thread_name;
 }
 
 void

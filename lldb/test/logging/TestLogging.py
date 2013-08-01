@@ -34,7 +34,10 @@ class LogTestCase(TestBase):
         if (os.path.exists (log_file)):
             os.remove (log_file)
 
-        self.runCmd ("log enable -f '%s' lldb commands" % (log_file))
+        # By default, Debugger::EnableLog() will set log options to
+        # PREPEND_THREAD_NAME + OPTION_THREADSAFE. We don't want the
+        # threadnames here, so we enable just threadsafe (-t).
+        self.runCmd ("log enable -t -f '%s' lldb commands" % (log_file))
         
         self.runCmd ("command alias bp breakpoint")
                      
