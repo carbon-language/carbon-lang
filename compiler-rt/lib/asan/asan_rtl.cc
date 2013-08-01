@@ -137,6 +137,7 @@ void InitializeFlags(Flags *f, const char *env) {
   cf->handle_ioctl = false;
   cf->log_path = 0;
   cf->detect_leaks = false;
+  cf->leak_check_at_exit = true;
 
   internal_memset(f, 0, sizeof(*f));
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
@@ -556,7 +557,7 @@ void __asan_init() {
 
 #if CAN_SANITIZE_LEAKS
   __lsan::InitCommonLsan();
-  if (common_flags()->detect_leaks) {
+  if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit) {
     Atexit(__lsan::DoLeakCheck);
   }
 #endif  // CAN_SANITIZE_LEAKS

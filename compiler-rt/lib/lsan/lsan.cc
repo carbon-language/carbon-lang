@@ -31,6 +31,7 @@ static void InitializeCommonFlags() {
   cf->fast_unwind_on_malloc = true;
   cf->malloc_context_size = 30;
   cf->detect_leaks = true;
+  cf->leak_check_at_exit = true;
 
   ParseCommonFlagsFromString(GetEnv("LSAN_OPTIONS"));
 }
@@ -59,7 +60,8 @@ void Init() {
   }
 
   InitCommonLsan();
-  Atexit(DoLeakCheck);
+  if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit)
+    Atexit(DoLeakCheck);
 }
 
 }  // namespace __lsan
