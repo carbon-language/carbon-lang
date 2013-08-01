@@ -3202,6 +3202,22 @@ void BugReporter::Register(BugType *BT) {
 }
 
 void BugReporter::emitReport(BugReport* R) {
+  // Defensive checking: throw the bug away if it comes from a BodyFarm-
+  // generated body. We do this very early because report processing relies
+  // on the report's location being valid.
+  if (const ExplodedNode *E = R->getErrorNode()) {
+    const LocationContext *LCtx = E->getLocationContext();
+    if (LCtx->getAnalysisDeclContext()->isBodyAutosynthesized())
+      return;
+  }
+  
+  bool ValidSourceLoc = R->getLocation(getSourceManager()).isValid();
+  assert(ValidSourceLoc);
+  // If we mess up in a release build, we'd still prefer to just drop the bug
+  // instead of trying to go on.
+  if (!ValidSourceLoc)
+    return;
+
   // Compute the bug report's hash to determine its equivalence class.
   llvm::FoldingSetNodeID ID;
   R->Profile(ID);
