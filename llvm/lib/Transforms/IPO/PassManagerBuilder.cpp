@@ -217,7 +217,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
 
   if (!LateVectorize) {
-    if (SLPVectorize)
+    if (SLPVectorize && OptLevel > 2)
       MPM.add(createSLPVectorizerPass());   // Vectorize parallel scalar chains.
 
     if (BBVectorize) {
