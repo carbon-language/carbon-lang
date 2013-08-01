@@ -11,6 +11,7 @@ import lldbutil
 class StaticVariableTestCase(TestBase):
 
     mydir = os.path.join("lang", "cpp", "class_static")
+    failing_compilers = ['clang', 'gcc']
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
@@ -19,8 +20,7 @@ class StaticVariableTestCase(TestBase):
         self.buildDsym()
         self.static_variable_commands()
 
-    @expectedFailureClang # llvm.org/pr15261: lldb on Linux does not display the size of (class or file)static arrays
-    @expectedFailureGcc # llvm.org/pr15261: lldb on Linux does not display the size of (class or file)static arrays
+    @expectedFailureLinux('llvm.org/pr15261', failing_compilers) # lldb on Linux does not display the size of (class or file)static arrays
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test that file and class static variables display correctly."""
