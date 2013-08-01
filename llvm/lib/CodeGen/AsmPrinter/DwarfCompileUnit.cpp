@@ -980,16 +980,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_structure_type:
   case dwarf::DW_TAG_union_type:
   case dwarf::DW_TAG_class_type: {
-    // Add elements to structure type.
-    DIArray Elements = CTy.getTypeArray();
-
-    // A forward struct declared type may not have elements available.
-    unsigned N = Elements.getNumElements();
-    if (N == 0)
+    if (CTy.isForwardDecl())
       break;
 
     // Add elements to structure type.
-    for (unsigned i = 0; i < N; ++i) {
+    DIArray Elements = CTy.getTypeArray();
+    for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Element = Elements.getElement(i);
       DIE *ElemDie = NULL;
       if (Element.isSubprogram()) {
