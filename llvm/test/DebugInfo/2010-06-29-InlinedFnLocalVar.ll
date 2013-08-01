@@ -1,8 +1,8 @@
-; RUN: llc -mtriple=x86_64-pc-linux-gnu -O2 %s -o - | FileCheck %s
+; RUN: llc -O2 %s -o - | FileCheck %s
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK:	DW_TAG_structure_type
-; CHECK-NEXT:	DW_AT_name
+; CHECK-NEXT:	Linfo_string
  
 
 @i = common global i32 0                          ; <i32*> [#uses=2]
