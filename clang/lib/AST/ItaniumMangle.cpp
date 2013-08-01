@@ -2230,6 +2230,7 @@ void CXXNameMangler::mangleAArch64NeonVectorType(const VectorType *T) {
   assert(EltType->isBuiltinType() && "Neon vector element not a BuiltinType");
   unsigned BitSize =
       (T->getNumElements() * getASTContext().getTypeSize(EltType));
+  (void)BitSize; // Silence warning.
 
   assert((BitSize == 64 || BitSize == 128) &&
          "Neon vector type not 64 or 128 bits");
