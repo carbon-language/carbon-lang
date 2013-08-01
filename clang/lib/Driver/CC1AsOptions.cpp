@@ -25,9 +25,7 @@ static const OptTable::Info CC1AsInfoTable[] = {
                HELPTEXT, METAVAR)   \
   { PREFIX, NAME, HELPTEXT, METAVAR, OPT_##ID, Option::KIND##Class, PARAM, \
     FLAGS, OPT_##GROUP, OPT_##ALIAS, ALIASARGS },
-#define SUPPORT_ALIASARGS // FIXME: Remove when LLVM is updated.
 #include "clang/Driver/CC1AsOptions.inc"
-#undef SUPPORT_ALIASARGS
 #undef OPTION
 };
 
