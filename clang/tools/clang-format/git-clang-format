@@ -137,9 +137,8 @@ def main():
   # The computed diff outputs absolute paths, so we must cd before accessing
   # those files.
   cd_to_toplevel()
-  changed_bytes = lines_to_bytes(changed_lines)
-  old_tree = create_tree_from_workdir(changed_bytes)
-  new_tree = run_clang_format_and_save_to_tree(changed_bytes,
+  old_tree = create_tree_from_workdir(changed_lines)
+  new_tree = run_clang_format_and_save_to_tree(changed_lines,
                                                binary=opts.binary,
                                                style=opts.style)
   if opts.verbose >= 1:
@@ -267,6 +266,9 @@ def compute_diff(commit, files):
 def extract_lines(patch_file):
   """Extract the changed lines in `patch_file`.
 
+  The return value is a dictionary mapping filename to a list of (start_line,
+  line_count) pairs.
+
   The input must have been produced with ``-U0``, meaning unidiff format with
   zero lines of context.  The return value is a dict mapping filename to a
   list of line `Range`s."""
@@ -304,41 +306,6 @@ def cd_to_toplevel():
   os.chdir(toplevel)
 
 
-def lines_to_bytes(changed_lines):
-  """Convert the mapping of changed line ranges to changed byte ranges.
-
-  This function opens each file to compute the byte ranges."""
-  changed_bytes = {}
-  for filename, line_ranges in changed_lines.iteritems():
-    with open(filename) as f:
-      changed_bytes[filename] = lines_to_bytes_single_file(f, line_ranges)
-  return changed_bytes
-
-
-def lines_to_bytes_single_file(file, line_ranges):
-  byte_ranges = []
-  line_ranges_iter = iter(line_ranges + [None])
-  r = next(line_ranges_iter)
-  linenum = 1
-  byte_idx = 0
-  byte_start = None
-  byte_count = None
-  for line in file:
-    if r is None:
-      break
-    if linenum == r.start:
-      byte_start = byte_idx
-    if linenum == r.start + r.count:
-      byte_ranges.append(Range(byte_start, byte_idx - byte_start - 1))
-      r = next(line_ranges_iter)
-    linenum += 1
-    byte_idx += len(line)
-  if r is not None:
-    # FIXME: Detect and warn if line ranges go past the end of file?
-    byte_ranges.append(Range(byte_start, byte_idx - byte_start - 1))
-  return byte_ranges
-
-
 def create_tree_from_workdir(filenames):
   """Create a new git tree with the given files from the working directory.
 
@@ -346,15 +313,15 @@ def create_tree_from_workdir(filenames):
   return create_tree(filenames, '--stdin')
 
 
-def run_clang_format_and_save_to_tree(changed_bytes, binary='clang-format',
+def run_clang_format_and_save_to_tree(changed_lines, binary='clang-format',
                                       style=None):
   """Run clang-format on each file and save the result to a git tree.
 
   Returns the object ID (SHA-1) of the created tree."""
   def index_info_generator():
-    for filename, byte_ranges in changed_bytes.iteritems():
+    for filename, line_ranges in changed_lines.iteritems():
       mode = oct(os.stat(filename).st_mode)
-      blob_id = clang_format_to_blob(filename, byte_ranges, binary=binary,
+      blob_id = clang_format_to_blob(filename, line_ranges, binary=binary,
                                      style=style)
       yield '%s %s\t%s' % (mode, blob_id, filename)
   return create_tree(index_info_generator(), '--index-info')
@@ -380,7 +347,7 @@ def create_tree(input_lines, mode):
     return tree_id
 
 
-def clang_format_to_blob(filename, byte_ranges, binary='clang-format',
+def clang_format_to_blob(filename, line_ranges, binary='clang-format',
                          style=None):
   """Run clang-format on the given file and save the result to a git blob.
 
@@ -388,8 +355,9 @@ def clang_format_to_blob(filename, byte_ranges, binary='clang-format',
   clang_format_cmd = [binary, filename]
   if style:
     clang_format_cmd.extend(['-style='+style])
-  for offset, length in byte_ranges:
-    clang_format_cmd.extend(['-offset='+str(offset), '-length='+str(length)])
+  clang_format_cmd.extend([
+      '-lines=%s:%s' % (start_line, start_line+line_count-1)
+      for start_line, line_count in line_ranges])
   try:
     clang_format = subprocess.Popen(clang_format_cmd, stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE)
