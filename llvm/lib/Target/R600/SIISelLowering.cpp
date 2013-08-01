@@ -79,6 +79,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SETCC, MVT::v4i1, Expand);
 
   setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
+  setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
@@ -346,6 +347,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND: return LowerSIGN_EXTEND(Op, DAG);
+  case ISD::ZERO_EXTEND: return LowerZERO_EXTEND(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddress(MFI, Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: {
     unsigned IntrinsicID =
@@ -525,6 +527,19 @@ SDValue SITargetLowering::LowerSIGN_EXTEND(SDValue Op,
                                                  DAG.getConstant(31, MVT::i32));
 
   return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Op.getOperand(0), Hi);
+}
+
+SDValue SITargetLowering::LowerZERO_EXTEND(SDValue Op,
+                                           SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  SDLoc DL(Op);
+
+  if (VT != MVT::i64) {
+    return SDValue();
+  }
+
+  return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Op.getOperand(0),
+                                              DAG.getConstant(0, MVT::i32));
 }
 
 //===----------------------------------------------------------------------===//
