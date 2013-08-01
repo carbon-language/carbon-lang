@@ -36,7 +36,7 @@ inline void encodeSLEB128(int64_t Value, raw_ostream &OS) {
 
 /// Utility function to encode a ULEB128 value to an output stream.
 inline void encodeULEB128(uint64_t Value, raw_ostream &OS,
-                                 unsigned Padding = 0) {
+                          unsigned Padding = 0) {
   do {
     uint8_t Byte = Value & 0x7f;
     Value >>= 7;
@@ -56,7 +56,7 @@ inline void encodeULEB128(uint64_t Value, raw_ostream &OS,
 /// Utility function to encode a ULEB128 value to a buffer. Returns
 /// the length in bytes of the encoded value.
 inline unsigned encodeULEB128(uint64_t Value, uint8_t *p,
-                                     unsigned Padding = 0) {
+                              unsigned Padding = 0) {
   uint8_t *orig_p = p;
   do {
     uint8_t Byte = Value & 0x7f;
