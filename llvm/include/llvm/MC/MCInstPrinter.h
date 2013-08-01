@@ -21,6 +21,13 @@ class MCInstrInfo;
 class MCRegisterInfo;
 class StringRef;
 
+namespace HexStyle {
+    enum Style {
+        C,          ///< 0xff
+        Asm         ///< 0ffh
+    };
+}
+
 /// MCInstPrinter - This is an instance of a target assembly language printer
 /// that converts an MCInst to valid target assembly syntax.
 class MCInstPrinter {
@@ -42,13 +49,16 @@ protected:
   /// True if we are printing immediates as hex.
   bool PrintImmHex;
 
+  /// Which style to use for printing hexadecimal values.
+  HexStyle::Style PrintHexStyle;
+
   /// Utility function for printing annotations.
   void printAnnotation(raw_ostream &OS, StringRef Annot);
 public:
   MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
                 const MCRegisterInfo &mri)
     : CommentStream(0), MAI(mai), MII(mii), MRI(mri), AvailableFeatures(0),
-      UseMarkup(0), PrintImmHex(0) {}
+      UseMarkup(0), PrintImmHex(0), PrintHexStyle(HexStyle::C) {}
 
   virtual ~MCInstPrinter();
 
@@ -80,8 +90,16 @@ public:
   bool getPrintImmHex() const { return PrintImmHex; }
   void setPrintImmHex(bool Value) { PrintImmHex = Value; }
 
+  HexStyle::Style getPrintHexStyleHex() const { return PrintHexStyle; }
+  void setPrintImmHex(HexStyle::Style Value) { PrintHexStyle = Value; }
+
   /// Utility function to print immediates in decimal or hex.
-  format_object1<int64_t> formatImm(const int64_t Value) const;
+  format_object1<int64_t> formatImm(const int64_t Value) const { return PrintImmHex ? formatHex(Value) : formatDec(Value); }
+
+  /// Utility functions to print decimal/hexadecimal values.
+  format_object1<int64_t> formatDec(const int64_t Value) const;
+  format_object1<int64_t> formatHex(const int64_t Value) const;
+  format_object1<uint64_t> formatHex(const uint64_t Value) const;
 };
 
 } // namespace llvm

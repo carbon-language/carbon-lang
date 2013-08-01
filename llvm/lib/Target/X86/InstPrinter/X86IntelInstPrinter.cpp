@@ -119,7 +119,7 @@ void X86IntelInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
-    O << Op.getImm();
+    O << formatImm(Op.getImm());
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
     // If a symbolic branch target was added as a constant expression then print
@@ -127,8 +127,7 @@ void X86IntelInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
     const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
     int64_t Address;
     if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
-      O << "0x";
-      O.write_hex(Address);
+      O << formatHex((uint64_t)Address);
     }
     else {
       // Otherwise, just print the expression.
@@ -143,7 +142,7 @@ void X86IntelInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     printRegName(O, Op.getReg());
   } else if (Op.isImm()) {
-    O << Op.getImm();
+    O << formatImm((int64_t)Op.getImm());
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << *Op.getExpr();
@@ -195,7 +194,7 @@ void X86IntelInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
           DispVal = -DispVal;
         }
       }
-      O << DispVal;
+      O << formatImm(DispVal);
     }
   }
   

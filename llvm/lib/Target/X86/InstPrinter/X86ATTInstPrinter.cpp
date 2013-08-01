@@ -139,8 +139,7 @@ void X86ATTInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
     const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
     int64_t Address;
     if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
-      O << "0x";
-      O.write_hex(Address);
+      O << formatHex((uint64_t)Address);
     }
     else {
       // Otherwise, just print the expression.
