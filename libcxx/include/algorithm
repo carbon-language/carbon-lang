@@ -1987,17 +1987,23 @@ replace_copy_if(_InputIterator __first, _InputIterator __last, _OutputIterator _
 template <class _OutputIterator, class _Size, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
-__fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_, false_type)
+__fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_)
 {
     for (; __n > 0; ++__first, --__n)
         *__first = __value_;
     return __first;
 }
 
-template <class _OutputIterator, class _Size, class _Tp>
+template <class _Tp, class _Size, class _Up>
 inline _LIBCPP_INLINE_VISIBILITY
-_OutputIterator
-__fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_, true_type)
+typename enable_if
+<
+    is_integral<_Tp>::value && sizeof(_Tp) == 1 &&
+    !is_same<_Tp, bool>::value &&
+    is_integral<_Up>::value && sizeof(_Up) == 1,
+    _Tp*
+>::type
+__fill_n(_Tp* __first, _Size __n,_Up __value_)
 {
     if (__n > 0)
         _VSTD::memset(__first, (unsigned char)__value_, (size_t)(__n));
@@ -2009,11 +2015,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 _OutputIterator
 fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_)
 {
-   return _VSTD::__fill_n(__first, __n, __value_, integral_constant<bool,
-                                              is_pointer<_OutputIterator>::value &&
-                                              is_trivially_assignable<typename remove_pointer<_OutputIterator>::type, _Tp>::value &&
-                                              is_convertible<_Tp, unsigned char>::value &&
-                                              sizeof(typename remove_pointer<_OutputIterator>::type) == 1>());
+   return _VSTD::__fill_n(__first, __n, __value_);
 }
 
 // fill

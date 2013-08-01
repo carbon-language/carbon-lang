@@ -94,6 +94,44 @@ test_struct_array()
     assert(test1a[3].c == 11);
 }
 
+class A
+{
+    char a_;
+public:
+    A() {}
+    explicit A(char a) : a_(a) {}
+    operator unsigned char() const {return 'b';}
+
+    friend bool operator==(const A& x, const A& y)
+        {return x.a_ == y.a_;}
+};
+
+void
+test5()
+{
+    A a[3];
+    assert(std::fill_n(&a[0], 3, A('a')) == a+3);
+    assert(a[0] == A('a'));
+    assert(a[1] == A('a'));
+    assert(a[2] == A('a'));
+}
+
+struct Storage
+{
+  union
+  {
+    unsigned char a;
+    unsigned char b;
+  };
+};
+ 
+void test6()
+{
+  Storage foo[5];
+  std::fill_n(&foo[0], 5, Storage());
+}
+
+
 int main()
 {
     test_char<forward_iterator<char*> >();
@@ -109,4 +147,7 @@ int main()
     test_int_array();
     test_int_array_struct_source();
     test_struct_array();
+
+    test5();
+    test6();
 }
