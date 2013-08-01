@@ -406,3 +406,84 @@ void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
   printAnnotation(O, Annot);
 }
+
+template <A64SE::ShiftExtSpecifiers Ext, bool isHalf>
+void AArch64InstPrinter::printNeonMovImmShiftOperand(const MCInst *MI,
+                                                     unsigned OpNum,
+                                                     raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNum);
+
+  assert(MO.isImm() &&
+         "Immediate operand required for Neon vector immediate inst.");
+
+  bool IsLSL = false;
+  if (Ext == A64SE::LSL)
+    IsLSL = true;
+  else if (Ext != A64SE::MSL)
+    llvm_unreachable("Invalid shift specifier in movi instruction");
+
+  int64_t Imm = MO.getImm();
+
+  // MSL and LSLH accepts encoded shift amount 0 or 1.
+  if ((!IsLSL || (IsLSL && isHalf)) && Imm != 0 && Imm != 1)
+    llvm_unreachable("Invalid shift amount in movi instruction");
+
+  // LSH accepts encoded shift amount 0, 1, 2 or 3.
+  if (IsLSL && (Imm < 0 || Imm > 3))
+    llvm_unreachable("Invalid shift amount in movi instruction");
+
+  // Print shift amount as multiple of 8 with MSL encoded shift amount
+  // 0 and 1 printed as 8 and 16.
+  if (!IsLSL)
+    Imm++;
+  Imm *= 8;
+
+  // LSL #0 is not printed
+  if (IsLSL) {
+    if (Imm == 0)
+      return;
+    O << ", lsl";
+  } else
+    O << ", msl";
+
+  O << " #" << Imm;
+}
+
+void AArch64InstPrinter::printNeonUImm0Operand(const MCInst *MI, unsigned OpNum,
+                                               raw_ostream &o) {
+  o << "#0x0";
+}
+
+void AArch64InstPrinter::printNeonUImm8Operand(const MCInst *MI, unsigned OpNum,
+                                               raw_ostream &O) {
+  const MCOperand &MOUImm = MI->getOperand(OpNum);
+
+  assert(MOUImm.isImm() &&
+         "Immediate operand required for Neon vector immediate inst.");
+
+  unsigned Imm = MOUImm.getImm();
+
+  O << "#0x";
+  O.write_hex(Imm);
+}
+
+void AArch64InstPrinter::printNeonUImm64MaskOperand(const MCInst *MI,
+                                                    unsigned OpNum,
+                                                    raw_ostream &O) {
+  const MCOperand &MOUImm8 = MI->getOperand(OpNum);
+
+  assert(MOUImm8.isImm() &&
+         "Immediate operand required for Neon vector immediate bytemask inst.");
+
+  uint32_t UImm8 = MOUImm8.getImm();
+  uint64_t Mask = 0;
+
+  // Replicates 0x00 or 0xff byte in a 64-bit vector
+  for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
+    if ((UImm8 >> ByteNum) & 1)
+      Mask |= (uint64_t)0xff << (8 * ByteNum);
+  }
+
+  O << "#0x";
+  O.write_hex(Mask);
+}

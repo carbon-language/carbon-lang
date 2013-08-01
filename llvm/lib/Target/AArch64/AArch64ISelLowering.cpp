@@ -42,6 +42,8 @@ static TargetLoweringObjectFile *createTLOF(AArch64TargetMachine &TM) {
 AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   : TargetLowering(TM, createTLOF(TM)), Itins(TM.getInstrItineraryData()) {
 
+  const AArch64Subtarget *Subtarget = &TM.getSubtarget<AArch64Subtarget>();
+
   // SIMD compares set the entire lane's bits to 1
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
@@ -52,6 +54,21 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
   addRegisterClass(MVT::f32, &AArch64::FPR32RegClass);
   addRegisterClass(MVT::f64, &AArch64::FPR64RegClass);
   addRegisterClass(MVT::f128, &AArch64::FPR128RegClass);
+
+  if (Subtarget->hasNEON()) {
+    // And the vectors
+    addRegisterClass(MVT::v8i8, &AArch64::VPR64RegClass);
+    addRegisterClass(MVT::v4i16, &AArch64::VPR64RegClass);
+    addRegisterClass(MVT::v2i32, &AArch64::VPR64RegClass);
+    addRegisterClass(MVT::v1i64, &AArch64::VPR64RegClass);
+    addRegisterClass(MVT::v2f32, &AArch64::VPR64RegClass);
+    addRegisterClass(MVT::v16i8, &AArch64::VPR128RegClass);
+    addRegisterClass(MVT::v8i16, &AArch64::VPR128RegClass);
+    addRegisterClass(MVT::v4i32, &AArch64::VPR128RegClass);
+    addRegisterClass(MVT::v2i64, &AArch64::VPR128RegClass);
+    addRegisterClass(MVT::v4f32, &AArch64::VPR128RegClass);
+    addRegisterClass(MVT::v2f64, &AArch64::VPR128RegClass);
+  }
 
   computeRegisterProperties();
 
@@ -251,6 +268,31 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   setExceptionPointerRegister(AArch64::X0);
   setExceptionSelectorRegister(AArch64::X1);
+
+  if (Subtarget->hasNEON()) {
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v8i8, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v16i8, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v8i16, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v1i64, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2i64, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2f32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v4f32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, MVT::v2f64, Custom);
+
+    setOperationAction(ISD::SETCC, MVT::v8i8, Custom);
+    setOperationAction(ISD::SETCC, MVT::v16i8, Custom);
+    setOperationAction(ISD::SETCC, MVT::v4i16, Custom);
+    setOperationAction(ISD::SETCC, MVT::v8i16, Custom);
+    setOperationAction(ISD::SETCC, MVT::v2i32, Custom);
+    setOperationAction(ISD::SETCC, MVT::v4i32, Custom);
+    setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
+    setOperationAction(ISD::SETCC, MVT::v2f32, Custom);
+    setOperationAction(ISD::SETCC, MVT::v4f32, Custom);
+    setOperationAction(ISD::SETCC, MVT::v2f64, Custom);
+  }
 }
 
 EVT AArch64TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
@@ -777,7 +819,22 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::WrapperLarge:   return "AArch64ISD::WrapperLarge";
   case AArch64ISD::WrapperSmall:   return "AArch64ISD::WrapperSmall";
 
-  default:                       return NULL;
+  case AArch64ISD::NEON_BSL:
+    return "AArch64ISD::NEON_BSL";
+  case AArch64ISD::NEON_MOVIMM:
+    return "AArch64ISD::NEON_MOVIMM";
+  case AArch64ISD::NEON_MVNIMM:
+    return "AArch64ISD::NEON_MVNIMM";
+  case AArch64ISD::NEON_FMOVIMM:
+    return "AArch64ISD::NEON_FMOVIMM";
+  case AArch64ISD::NEON_CMP:
+    return "AArch64ISD::NEON_CMP";
+  case AArch64ISD::NEON_CMPZ:
+    return "AArch64ISD::NEON_CMPZ";
+  case AArch64ISD::NEON_TST:
+    return "AArch64ISD::NEON_TST";
+  default:
+    return NULL;
   }
 }
 
@@ -2230,6 +2287,213 @@ AArch64TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getConstant(A64CC::NE, MVT::i32));
 }
 
+static SDValue LowerVectorSETCC(SDValue Op, SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  EVT VT = Op.getValueType();
+  bool Invert = false;
+  SDValue Op0, Op1;
+  unsigned Opcode;
+
+  if (LHS.getValueType().isInteger()) {
+
+    // Attempt to use Vector Integer Compare Mask Test instruction.
+    // TST = icmp ne (and (op0, op1), zero).
+    if (CC == ISD::SETNE) {
+      if (((LHS.getOpcode() == ISD::AND) &&
+           ISD::isBuildVectorAllZeros(RHS.getNode())) ||
+          ((RHS.getOpcode() == ISD::AND) &&
+           ISD::isBuildVectorAllZeros(LHS.getNode()))) {
+
+        SDValue AndOp = (LHS.getOpcode() == ISD::AND) ? LHS : RHS;
+        SDValue NewLHS = DAG.getNode(ISD::BITCAST, DL, VT, AndOp.getOperand(0));
+        SDValue NewRHS = DAG.getNode(ISD::BITCAST, DL, VT, AndOp.getOperand(1));
+        return DAG.getNode(AArch64ISD::NEON_TST, DL, VT, NewLHS, NewRHS);
+      }
+    }
+
+    // Attempt to use Vector Integer Compare Mask against Zero instr (Signed).
+    // Note: Compare against Zero does not support unsigned predicates.
+    if ((ISD::isBuildVectorAllZeros(RHS.getNode()) ||
+         ISD::isBuildVectorAllZeros(LHS.getNode())) &&
+        !isUnsignedIntSetCC(CC)) {
+
+      // If LHS is the zero value, swap operands and CondCode.
+      if (ISD::isBuildVectorAllZeros(LHS.getNode())) {
+        CC = getSetCCSwappedOperands(CC);
+        Op0 = RHS;
+      } else
+        Op0 = LHS;
+
+      // Ensure valid CondCode for Compare Mask against Zero instruction:
+      // EQ, GE, GT, LE, LT.
+      if (ISD::SETNE == CC) {
+        Invert = true;
+        CC = ISD::SETEQ;
+      }
+
+      // Using constant type to differentiate integer and FP compares with zero.
+      Op1 = DAG.getConstant(0, MVT::i32);
+      Opcode = AArch64ISD::NEON_CMPZ;
+
+    } else {
+      // Attempt to use Vector Integer Compare Mask instr (Signed/Unsigned).
+      // Ensure valid CondCode for Compare Mask instr: EQ, GE, GT, UGE, UGT.
+      bool Swap = false;
+      switch (CC) {
+      default:
+        llvm_unreachable("Illegal integer comparison.");
+      case ISD::SETEQ:
+      case ISD::SETGT:
+      case ISD::SETGE:
+      case ISD::SETUGT:
+      case ISD::SETUGE:
+        break;
+      case ISD::SETNE:
+        Invert = true;
+        CC = ISD::SETEQ;
+        break;
+      case ISD::SETULT:
+      case ISD::SETULE:
+      case ISD::SETLT:
+      case ISD::SETLE:
+        Swap = true;
+        CC = getSetCCSwappedOperands(CC);
+      }
+
+      if (Swap)
+        std::swap(LHS, RHS);
+
+      Opcode = AArch64ISD::NEON_CMP;
+      Op0 = LHS;
+      Op1 = RHS;
+    }
+
+    // Generate Compare Mask instr or Compare Mask against Zero instr.
+    SDValue NeonCmp =
+        DAG.getNode(Opcode, DL, VT, Op0, Op1, DAG.getCondCode(CC));
+
+    if (Invert)
+      NeonCmp = DAG.getNOT(DL, NeonCmp, VT);
+
+    return NeonCmp;
+  }
+
+  // Now handle Floating Point cases.
+  // Attempt to use Vector Floating Point Compare Mask against Zero instruction.
+  if (ISD::isBuildVectorAllZeros(RHS.getNode()) ||
+      ISD::isBuildVectorAllZeros(LHS.getNode())) {
+
+    // If LHS is the zero value, swap operands and CondCode.
+    if (ISD::isBuildVectorAllZeros(LHS.getNode())) {
+      CC = getSetCCSwappedOperands(CC);
+      Op0 = RHS;
+    } else
+      Op0 = LHS;
+
+    // Using constant type to differentiate integer and FP compares with zero.
+    Op1 = DAG.getConstantFP(0, MVT::f32);
+    Opcode = AArch64ISD::NEON_CMPZ;
+  } else {
+    // Attempt to use Vector Floating Point Compare Mask instruction.
+    Op0 = LHS;
+    Op1 = RHS;
+    Opcode = AArch64ISD::NEON_CMP;
+  }
+
+  SDValue NeonCmpAlt;
+  // Some register compares have to be implemented with swapped CC and operands,
+  // e.g.: OLT implemented as OGT with swapped operands.
+  bool SwapIfRegArgs = false;
+
+  // Ensure valid CondCode for FP Compare Mask against Zero instruction:
+  // EQ, GE, GT, LE, LT.
+  // And ensure valid CondCode for FP Compare Mask instruction: EQ, GE, GT.
+  switch (CC) {
+  default:
+    llvm_unreachable("Illegal FP comparison");
+  case ISD::SETUNE:
+  case ISD::SETNE:
+    Invert = true; // Fallthrough
+  case ISD::SETOEQ:
+  case ISD::SETEQ:
+    CC = ISD::SETEQ;
+    break;
+  case ISD::SETOLT:
+  case ISD::SETLT:
+    CC = ISD::SETLT;
+    SwapIfRegArgs = true;
+    break;
+  case ISD::SETOGT:
+  case ISD::SETGT:
+    CC = ISD::SETGT;
+    break;
+  case ISD::SETOLE:
+  case ISD::SETLE:
+    CC = ISD::SETLE;
+    SwapIfRegArgs = true;
+    break;
+  case ISD::SETOGE:
+  case ISD::SETGE:
+    CC = ISD::SETGE;
+    break;
+  case ISD::SETUGE:
+    Invert = true;
+    CC = ISD::SETLT;
+    SwapIfRegArgs = true;
+    break;
+  case ISD::SETULE:
+    Invert = true;
+    CC = ISD::SETGT;
+    break;
+  case ISD::SETUGT:
+    Invert = true;
+    CC = ISD::SETLE;
+    SwapIfRegArgs = true;
+    break;
+  case ISD::SETULT:
+    Invert = true;
+    CC = ISD::SETGE;
+    break;
+  case ISD::SETUEQ:
+    Invert = true; // Fallthrough
+  case ISD::SETONE:
+    // Expand this to (OGT |OLT).
+    NeonCmpAlt =
+        DAG.getNode(Opcode, DL, VT, Op0, Op1, DAG.getCondCode(ISD::SETGT));
+    CC = ISD::SETLT;
+    SwapIfRegArgs = true;
+    break;
+  case ISD::SETUO:
+    Invert = true; // Fallthrough
+  case ISD::SETO:
+    // Expand this to (OGE | OLT).
+    NeonCmpAlt =
+        DAG.getNode(Opcode, DL, VT, Op0, Op1, DAG.getCondCode(ISD::SETGE));
+    CC = ISD::SETLT;
+    SwapIfRegArgs = true;
+    break;
+  }
+
+  if (Opcode == AArch64ISD::NEON_CMP && SwapIfRegArgs) {
+    CC = getSetCCSwappedOperands(CC);
+    std::swap(Op0, Op1);
+  }
+
+  // Generate FP Compare Mask instr or FP Compare Mask against Zero instr
+  SDValue NeonCmp = DAG.getNode(Opcode, DL, VT, Op0, Op1, DAG.getCondCode(CC));
+
+  if (NeonCmpAlt.getNode())
+    NeonCmp = DAG.getNode(ISD::OR, DL, VT, NeonCmp, NeonCmpAlt);
+
+  if (Invert)
+    NeonCmp = DAG.getNOT(DL, NeonCmp, VT);
+
+  return NeonCmp;
+}
+
 // (SETCC lhs, rhs, condcode)
 SDValue
 AArch64TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
@@ -2238,6 +2502,9 @@ AArch64TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue RHS = Op.getOperand(1);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
   EVT VT = Op.getValueType();
+
+  if (VT.isVector())
+    return LowerVectorSETCC(Op, DAG);
 
   if (LHS.getValueType() == MVT::f128) {
     // f128 comparisons will be lowered to libcalls giving a valid LHS and RHS
@@ -2395,9 +2662,153 @@ AArch64TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SETCC: return LowerSETCC(Op, DAG);
   case ISD::VACOPY: return LowerVACOPY(Op, DAG);
   case ISD::VASTART: return LowerVASTART(Op, DAG);
+  case ISD::BUILD_VECTOR:
+    return LowerBUILD_VECTOR(Op, DAG, getSubtarget());
   }
 
   return SDValue();
+}
+
+/// Check if the specified splat value corresponds to a valid vector constant
+/// for a Neon instruction with a "modified immediate" operand (e.g., MOVI).  If
+/// so, return the encoded 8-bit immediate and the OpCmode instruction fields
+/// values.
+static bool isNeonModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
+                              unsigned SplatBitSize, SelectionDAG &DAG,
+                              bool is128Bits, NeonModImmType type, EVT &VT,
+                              unsigned &Imm, unsigned &OpCmode) {
+  switch (SplatBitSize) {
+  default:
+    llvm_unreachable("unexpected size for isNeonModifiedImm");
+  case 8: {
+    if (type != Neon_Mov_Imm)
+      return false;
+    assert((SplatBits & ~0xff) == 0 && "one byte splat value is too big");
+    // Neon movi per byte: Op=0, Cmode=1110.
+    OpCmode = 0xe;
+    Imm = SplatBits;
+    VT = is128Bits ? MVT::v16i8 : MVT::v8i8;
+    break;
+  }
+  case 16: {
+    // Neon move inst per halfword
+    VT = is128Bits ? MVT::v8i16 : MVT::v4i16;
+    if ((SplatBits & ~0xff) == 0) {
+      // Value = 0x00nn is 0x00nn LSL 0
+      // movi: Op=0, Cmode=1000; mvni: Op=1, Cmode=1000
+      // bic:  Op=1, Cmode=1001;  orr:  Op=0, Cmode=1001
+      // Op=x, Cmode=100y
+      Imm = SplatBits;
+      OpCmode = 0x8;
+      break;
+    }
+    if ((SplatBits & ~0xff00) == 0) {
+      // Value = 0xnn00 is 0x00nn LSL 8
+      // movi: Op=0, Cmode=1010; mvni: Op=1, Cmode=1010
+      // bic:  Op=1, Cmode=1011;  orr:  Op=0, Cmode=1011
+      // Op=x, Cmode=101x
+      Imm = SplatBits >> 8;
+      OpCmode = 0xa;
+      break;
+    }
+    // can't handle any other
+    return false;
+  }
+
+  case 32: {
+    // First the LSL variants (MSL is unusable by some interested instructions).
+
+    // Neon move instr per word, shift zeros
+    VT = is128Bits ? MVT::v4i32 : MVT::v2i32;
+    if ((SplatBits & ~0xff) == 0) {
+      // Value = 0x000000nn is 0x000000nn LSL 0
+      // movi: Op=0, Cmode= 0000; mvni: Op=1, Cmode= 0000
+      // bic:  Op=1, Cmode= 0001; orr:  Op=0, Cmode= 0001
+      // Op=x, Cmode=000x
+      Imm = SplatBits;
+      OpCmode = 0;
+      break;
+    }
+    if ((SplatBits & ~0xff00) == 0) {
+      // Value = 0x0000nn00 is 0x000000nn LSL 8
+      // movi: Op=0, Cmode= 0010;  mvni: Op=1, Cmode= 0010
+      // bic:  Op=1, Cmode= 0011;  orr : Op=0, Cmode= 0011
+      // Op=x, Cmode=001x
+      Imm = SplatBits >> 8;
+      OpCmode = 0x2;
+      break;
+    }
+    if ((SplatBits & ~0xff0000) == 0) {
+      // Value = 0x00nn0000 is 0x000000nn LSL 16
+      // movi: Op=0, Cmode= 0100; mvni: Op=1, Cmode= 0100
+      // bic:  Op=1, Cmode= 0101; orr:  Op=0, Cmode= 0101
+      // Op=x, Cmode=010x
+      Imm = SplatBits >> 16;
+      OpCmode = 0x4;
+      break;
+    }
+    if ((SplatBits & ~0xff000000) == 0) {
+      // Value = 0xnn000000 is 0x000000nn LSL 24
+      // movi: Op=0, Cmode= 0110; mvni: Op=1, Cmode= 0110
+      // bic:  Op=1, Cmode= 0111; orr:  Op=0, Cmode= 0111
+      // Op=x, Cmode=011x
+      Imm = SplatBits >> 24;
+      OpCmode = 0x6;
+      break;
+    }
+
+    // Now the MSL immediates.
+
+    // Neon move instr per word, shift ones
+    if ((SplatBits & ~0xffff) == 0 &&
+        ((SplatBits | SplatUndef) & 0xff) == 0xff) {
+      // Value = 0x0000nnff is 0x000000nn MSL 8
+      // movi: Op=0, Cmode= 1100; mvni: Op=1, Cmode= 1100
+      // Op=x, Cmode=1100
+      Imm = SplatBits >> 8;
+      OpCmode = 0xc;
+      break;
+    }
+    if ((SplatBits & ~0xffffff) == 0 &&
+        ((SplatBits | SplatUndef) & 0xffff) == 0xffff) {
+      // Value = 0x00nnffff is 0x000000nn MSL 16
+      // movi: Op=1, Cmode= 1101; mvni: Op=1, Cmode= 1101
+      // Op=x, Cmode=1101
+      Imm = SplatBits >> 16;
+      OpCmode = 0xd;
+      break;
+    }
+    // can't handle any other
+    return false;
+  }
+
+  case 64: {
+    if (type != Neon_Mov_Imm)
+      return false;
+    // Neon move instr bytemask, where each byte is either 0x00 or 0xff.
+    // movi Op=1, Cmode=1110.
+    OpCmode = 0x1e;
+    uint64_t BitMask = 0xff;
+    uint64_t Val = 0;
+    unsigned ImmMask = 1;
+    Imm = 0;
+    for (int ByteNum = 0; ByteNum < 8; ++ByteNum) {
+      if (((SplatBits | SplatUndef) & BitMask) == BitMask) {
+        Val |= BitMask;
+        Imm |= ImmMask;
+      } else if ((SplatBits & BitMask) != 0) {
+        return false;
+      }
+      BitMask <<= 8;
+      ImmMask <<= 1;
+    }
+    SplatBits = Val;
+    VT = is128Bits ? MVT::v2i64 : MVT::v1i64;
+    break;
+  }
+  }
+
+  return true;
 }
 
 static SDValue PerformANDCombine(SDNode *N,
@@ -2725,6 +3136,7 @@ static SDValue PerformORCombine(SDNode *N,
                                 const AArch64Subtarget *Subtarget) {
 
   SelectionDAG &DAG = DCI.DAG;
+  SDLoc DL(N);
   EVT VT = N->getValueType(0);
 
   if(!DAG.getTargetLoweringInfo().isTypeLegal(VT))
@@ -2744,6 +3156,44 @@ static SDValue PerformORCombine(SDNode *N,
   Res = tryCombineToEXTR(N, DCI);
   if (Res.getNode())
     return Res;
+
+  if (!Subtarget->hasNEON())
+    return SDValue();
+
+  // Attempt to use vector immediate-form BSL
+  // (or (and B, A), (and C, ~A)) => (VBSL A, B, C) when A is a constant.
+
+  SDValue N0 = N->getOperand(0);
+  if (N0.getOpcode() != ISD::AND)
+    return SDValue();
+
+  SDValue N1 = N->getOperand(1);
+  if (N1.getOpcode() != ISD::AND)
+    return SDValue();
+
+  if (VT.isVector() && DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
+    APInt SplatUndef;
+    unsigned SplatBitSize;
+    bool HasAnyUndefs;
+    BuildVectorSDNode *BVN0 = dyn_cast<BuildVectorSDNode>(N0->getOperand(1));
+    APInt SplatBits0;
+    if (BVN0 && BVN0->isConstantSplat(SplatBits0, SplatUndef, SplatBitSize,
+                                      HasAnyUndefs) &&
+        !HasAnyUndefs) {
+      BuildVectorSDNode *BVN1 = dyn_cast<BuildVectorSDNode>(N1->getOperand(1));
+      APInt SplatBits1;
+      if (BVN1 && BVN1->isConstantSplat(SplatBits1, SplatUndef, SplatBitSize,
+                                        HasAnyUndefs) &&
+          !HasAnyUndefs && SplatBits0 == ~SplatBits1) {
+        // Canonicalize the vector type to make instruction selection simpler.
+        EVT CanonicalVT = VT.is128BitVector() ? MVT::v16i8 : MVT::v8i8;
+        SDValue Result = DAG.getNode(AArch64ISD::NEON_BSL, DL, CanonicalVT,
+                                     N0->getOperand(1), N0->getOperand(0),
+                                     N1->getOperand(0));
+        return DAG.getNode(ISD::BITCAST, DL, VT, Result);
+      }
+    }
+  }
 
   return SDValue();
 }
@@ -2817,6 +3267,76 @@ AArch64TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   }
 
   return false;
+}
+
+// If this is a case we can't handle, return null and let the default
+// expansion code take care of it.
+SDValue
+AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
+                                         const AArch64Subtarget *ST) const {
+
+  BuildVectorSDNode *BVN = cast<BuildVectorSDNode>(Op.getNode());
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+
+  APInt SplatBits, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+
+  // Note we favor lowering MOVI over MVNI.
+  // This has implications on the definition of patterns in TableGen to select
+  // BIC immediate instructions but not ORR immediate instructions.
+  // If this lowering order is changed, TableGen patterns for BIC immediate and
+  // ORR immediate instructions have to be updated.
+  if (BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize, HasAnyUndefs)) {
+    if (SplatBitSize <= 64) {
+      // First attempt to use vector immediate-form MOVI
+      EVT NeonMovVT;
+      unsigned Imm = 0;
+      unsigned OpCmode = 0;
+
+      if (isNeonModifiedImm(SplatBits.getZExtValue(), SplatUndef.getZExtValue(),
+                            SplatBitSize, DAG, VT.is128BitVector(),
+                            Neon_Mov_Imm, NeonMovVT, Imm, OpCmode)) {
+        SDValue ImmVal = DAG.getTargetConstant(Imm, MVT::i32);
+        SDValue OpCmodeVal = DAG.getConstant(OpCmode, MVT::i32);
+
+        if (ImmVal.getNode() && OpCmodeVal.getNode()) {
+          SDValue NeonMov = DAG.getNode(AArch64ISD::NEON_MOVIMM, DL, NeonMovVT,
+                                        ImmVal, OpCmodeVal);
+          return DAG.getNode(ISD::BITCAST, DL, VT, NeonMov);
+        }
+      }
+
+      // Then attempt to use vector immediate-form MVNI
+      uint64_t NegatedImm = (~SplatBits).getZExtValue();
+      if (isNeonModifiedImm(NegatedImm, SplatUndef.getZExtValue(), SplatBitSize,
+                            DAG, VT.is128BitVector(), Neon_Mvn_Imm, NeonMovVT,
+                            Imm, OpCmode)) {
+        SDValue ImmVal = DAG.getTargetConstant(Imm, MVT::i32);
+        SDValue OpCmodeVal = DAG.getConstant(OpCmode, MVT::i32);
+        if (ImmVal.getNode() && OpCmodeVal.getNode()) {
+          SDValue NeonMov = DAG.getNode(AArch64ISD::NEON_MVNIMM, DL, NeonMovVT,
+                                        ImmVal, OpCmodeVal);
+          return DAG.getNode(ISD::BITCAST, DL, VT, NeonMov);
+        }
+      }
+
+      // Attempt to use vector immediate-form FMOV
+      if (((VT == MVT::v2f32 || VT == MVT::v4f32) && SplatBitSize == 32) ||
+          (VT == MVT::v2f64 && SplatBitSize == 64)) {
+        APFloat RealVal(
+            SplatBitSize == 32 ? APFloat::IEEEsingle : APFloat::IEEEdouble,
+            SplatBits);
+        uint32_t ImmVal;
+        if (A64Imms::isFPImm(RealVal, ImmVal)) {
+          SDValue Val = DAG.getTargetConstant(ImmVal, MVT::i32);
+          return DAG.getNode(AArch64ISD::NEON_FMOVIMM, DL, VT, Val);
+        }
+      }
+    }
+  }
+  return SDValue();
 }
 
 AArch64TargetLowering::ConstraintType

@@ -11,6 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// ARM Instruction Predicate Definitions.
+//
+def HasNEON          : Predicate<"Subtarget->hasNEON()">,
+                                 AssemblerPredicate<"FeatureNEON", "neon">;
+def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
+                                 AssemblerPredicate<"FeatureCrypto","crypto">;
+
+// Use fused MAC if more precision in FP computation is allowed.
+def UseFusedMAC      : Predicate<"(TM.Options.AllowFPOpFusion =="
+                                 " FPOpFusion::Fast)">;
 include "AArch64InstrFormats.td"
 
 //===----------------------------------------------------------------------===//
@@ -2172,6 +2183,29 @@ def FMADDdddd  : A64I_fpdp3Impl<"fmadd",  FPR64, f64, 0b01, 0b0, 0b0, fma>;
 def FMSUBdddd  : A64I_fpdp3Impl<"fmsub",  FPR64, f64, 0b01, 0b0, 0b1, fmsub>;
 def FNMADDdddd : A64I_fpdp3Impl<"fnmadd", FPR64, f64, 0b01, 0b1, 0b0, fnmadd>;
 def FNMSUBdddd : A64I_fpdp3Impl<"fnmsub", FPR64, f64, 0b01, 0b1, 0b1, fnmsub>;
+
+// Extra patterns for when we're allowed to optimise separate multiplication and
+// addition.
+let Predicates = [UseFusedMAC] in {
+def : Pat<(fadd FPR32:$Ra, (fmul FPR32:$Rn, FPR32:$Rm)),
+          (FMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+def : Pat<(fsub FPR32:$Ra, (fmul FPR32:$Rn, FPR32:$Rm)),
+          (FMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+def : Pat<(fsub (fmul FPR32:$Rn, FPR32:$Rm), FPR32:$Ra),
+          (FNMADDssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+def : Pat<(fsub (fneg FPR32:$Ra), (fmul FPR32:$Rn, FPR32:$Rm)),
+          (FNMSUBssss FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+
+def : Pat<(fadd FPR64:$Ra, (fmul FPR64:$Rn, FPR64:$Rm)),
+          (FMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+def : Pat<(fsub FPR64:$Ra, (fmul FPR64:$Rn, FPR64:$Rm)),
+          (FMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+def : Pat<(fsub (fmul FPR64:$Rn, FPR64:$Rm), FPR64:$Ra),
+          (FNMADDdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+def : Pat<(fsub (fneg FPR64:$Ra), (fmul FPR64:$Rn, FPR64:$Rm)),
+          (FNMSUBdddd FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Floating-point <-> fixed-point conversion instructions
@@ -5123,3 +5157,9 @@ defm : regoff_pats<"Xm", (add i64:$Rn, i64:$Rm),
 
 defm : regoff_pats<"Xm", (add i64:$Rn, (shl i64:$Rm, SHIFT)),
                    (i64 i64:$Rn), (i64 i64:$Rm), (i64 3)>;
+
+//===----------------------------------------------------------------------===//
+// Advanced SIMD (NEON) Support
+//
+
+include "AArch64InstrNEON.td"

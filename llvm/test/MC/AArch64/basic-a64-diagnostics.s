@@ -1,4 +1,4 @@
-// RUN: not llvm-mc -triple=aarch64 < %s 2> %t
+// RUN: not llvm-mc -triple aarch64-none-linux-gnu < %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ERROR < %t %s
 
 //------------------------------------------------------------------------------
@@ -2892,13 +2892,13 @@
         movi wzr, #0x44444444
         movi w3, #0xffff
         movi x9, #0x0000ffff00000000
-// CHECK-ERROR: error: invalid instruction
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         movi wzr, #0x44444444
 // CHECK-ERROR-NEXT:         ^
-// CHECK-ERROR: error: invalid instruction
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         movi w3, #0xffff
 // CHECK-ERROR-NEXT:         ^
-// CHECK-ERROR: error: invalid instruction
+// CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         movi x9, #0x0000ffff00000000
 // CHECK-ERROR-NEXT:         ^
 

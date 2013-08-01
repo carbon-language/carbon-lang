@@ -40,7 +40,7 @@ MCSubtargetInfo *AArch64_MC::createAArch64MCSubtargetInfo(StringRef TT,
                                                           StringRef CPU,
                                                           StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitAArch64MCSubtargetInfo(X, TT, CPU, "");
+  InitAArch64MCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

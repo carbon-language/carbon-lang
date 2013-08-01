@@ -164,9 +164,14 @@ public:
     return RegNo == AArch64::XSP || RegNo == AArch64::WSP;
   }
 
-
+  template <A64SE::ShiftExtSpecifiers Ext, bool IsHalf>
+  void printNeonMovImmShiftOperand(const MCInst *MI, unsigned OpNum,
+                                   raw_ostream &O);
+  void printNeonUImm0Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printNeonUImm8Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printNeonUImm64MaskOperand(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O);
 };
-
 }
 
 #endif

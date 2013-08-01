@@ -959,3 +959,96 @@ class A64I_Breg<bits<4> opc, bits<5> op2, bits<6> op3, bits<5> op4,
   let Inst{4-0}   = op4;
 }
 
+
+//===----------------------------------------------------------------------===//
+//
+// Neon Instruction Format Definitions.
+//
+
+let Predicates = [HasNEON] in {
+
+class NeonInstAlias<string Asm, dag Result, bit Emit = 0b1>
+  : InstAlias<Asm, Result, Emit> {
+}
+
+// Format AdvSIMD 3 vector registers with same vector type
+class NeonI_3VSame<bit q, bit u, bits<2> size, bits<5> opcode,
+                   dag outs, dag ins, string asmstr,
+                   list<dag> patterns, InstrItinClass itin>
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b01110;
+  let Inst{23-22} = size;
+  let Inst{21} = 0b1;
+   // Inherit Rm in 20-16
+  let Inst{15-11} = opcode;
+  let Inst{10} = 0b1;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
+// Format AdvSIMD 1 vector register with modified immediate
+class NeonI_1VModImm<bit q, bit op,
+                     dag outs, dag ins, string asmstr,
+                     list<dag> patterns, InstrItinClass itin>
+  : A64InstRd<outs,ins, asmstr, patterns, itin>
+{
+  bits<8> Imm;
+  bits<4> cmode;
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = op;
+  let Inst{28-19} = 0b0111100000;
+  let Inst{15-12} = cmode;
+  let Inst{11} = 0b0; // o2
+  let Inst{10} = 1;
+  // Inherit Rd in 4-0
+  let Inst{18-16} = Imm{7-5}; // imm a:b:c
+  let Inst{9-5} = Imm{4-0};   // imm d:e:f:g:h
+}
+
+// Format AdvSIMD 3 scalar registers with same type
+
+class NeonI_Scalar3Same<bit u, bits<2> size, bits<5> opcode,
+                          dag outs, dag ins, string asmstr,
+                          list<dag> patterns, InstrItinClass itin>
+  : A64InstRdnm<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = 0b1;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b11110;
+  let Inst{23-22} = size;
+  let Inst{21} = 0b1;
+   // Inherit Rm in 20-16
+  let Inst{15-11} = opcode;
+  let Inst{10} = 0b1;
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
+
+// Format AdvSIMD 2 vector registers miscellaneous
+class NeonI_2VMisc<bit q, bit u, bits<2> size, bits<5> opcode,
+                   dag outs, dag ins, string asmstr,
+                   list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin>
+{
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = u;
+  let Inst{28-24} = 0b01110;
+  let Inst{23-22} = size;
+  let Inst{21-17} = 0b10000;
+  let Inst{16-12} = opcode;
+  let Inst{11-10} = 0b10;
+
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
+}
+

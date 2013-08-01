@@ -26,10 +26,8 @@
 using namespace llvm;
 
 AArch64Subtarget::AArch64Subtarget(StringRef TT, StringRef CPU, StringRef FS)
-  : AArch64GenSubtargetInfo(TT, CPU, FS)
-  , HasNEON(true)
-  , HasCrypto(true)
-  , TargetTriple(TT) {
+    : AArch64GenSubtargetInfo(TT, CPU, FS), HasNEON(false), HasCrypto(false),
+      TargetTriple(TT) {
 
   ParseSubtargetFeatures(CPU, FS);
 }

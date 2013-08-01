@@ -185,7 +185,7 @@ foreach Index = 0-31 in {
 // These two classes contain the same registers, which should be reasonably
 // sensible for MC and allocation purposes, but allows them to be treated
 // separately for things like stack spilling.
-def VPR64 : RegisterClass<"AArch64", [v2f32, v2i32, v4i16, v8i8], 64,
+def VPR64 : RegisterClass<"AArch64", [v2f32, v2i32, v4i16, v8i8, v1i64], 64,
                           (sequence "V%u", 0, 31)>;
 
 def VPR128 : RegisterClass<"AArch64",

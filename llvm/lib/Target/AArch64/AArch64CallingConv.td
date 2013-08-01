@@ -61,7 +61,7 @@ def CC_A64_APCS : CallingConv<[
   // Vectors and Floating-point types.
   CCIfType<[v2i8], CCBitConvertToType<f16>>,
   CCIfType<[v4i8, v2i16], CCBitConvertToType<f32>>,
-  CCIfType<[v8i8, v4i16, v2i32, v2f32], CCBitConvertToType<f64>>,
+  CCIfType<[v8i8, v4i16, v2i32, v2f32, v1i64], CCBitConvertToType<f64>>,
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
            CCBitConvertToType<f128>>,
 

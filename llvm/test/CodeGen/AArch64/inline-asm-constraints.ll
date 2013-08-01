@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
+;RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
 
 define i64 @test_inline_constraint_r(i64 %base, i32 %offset) {
 ; CHECK-LABEL: test_inline_constraint_r:
@@ -43,6 +43,26 @@ define i32 @test_inline_constraint_Q(i32 *%ptr) {
 }
 
 @dump = global fp128 zeroinitializer
+
+define void @test_inline_constraint_w(<8 x i8> %vec64, <4 x float> %vec128, half %hlf, float %flt, double %dbl, fp128 %quad) {
+; CHECK: test_inline_constraint_w:
+  call <8 x i8> asm sideeffect "add $0.8b, $1.8b, $1.8b", "=w,w"(<8 x i8> %vec64)
+  call <8 x i8> asm sideeffect "fadd $0.4s, $1.4s, $1.4s", "=w,w"(<4 x float> %vec128)
+; CHECK: add {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+; CHECK: fadd {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, {{v[0-9]+}}.4s
+
+  ; Arguably semantically dodgy to output "vN", but it's what GCC does
+  ; so purely for compatibility we want vector registers to be output.
+  call float asm sideeffect "fcvt ${0:s}, ${1:h}", "=w,w"(half undef)
+  call float asm sideeffect "fadd $0.2s, $0.2s, $0.2s", "=w,w"(float %flt)
+  call double asm sideeffect "fadd $0.2d, $0.2d, $0.2d", "=w,w"(double %dbl)
+  call fp128 asm sideeffect "fadd $0.2d, $0.2d, $0.2d", "=w,w"(fp128 %quad)
+; CHECK: fcvt {{s[0-9]+}}, {{h[0-9]+}}
+; CHECK: fadd {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
+; CHECK: fadd {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
+; CHECK: fadd {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
+  ret void
+}
 
 define void @test_inline_constraint_I() {
 ; CHECK-LABEL: test_inline_constraint_I:

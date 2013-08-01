@@ -289,6 +289,7 @@ namespace A64SE {
     enum ShiftExtSpecifiers {
         Invalid = -1,
         LSL,
+        MSL,
         LSR,
         ASR,
         ROR,
@@ -1068,7 +1069,10 @@ namespace A64Imms {
   // MOVN but *not* with a MOVZ (because that would take priority).
   bool isOnlyMOVNImm(int RegWidth, uint64_t Value, int &UImm16, int &Shift);
 
-}
+  uint64_t decodeNeonModImm(unsigned Val, unsigned OpCmode, unsigned &EltBits);
+  bool decodeNeonModShiftImm(unsigned OpCmode, unsigned &ShiftImm,
+                             unsigned &ShiftOnesIn);
+  }
 
 } // end namespace llvm;
 

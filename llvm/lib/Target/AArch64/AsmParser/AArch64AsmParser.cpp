@@ -664,8 +664,42 @@ public:
     return !ShiftExtend.ImplicitAmount && ShiftExtend.Amount <= 4;
   }
 
-  template<int MemSize>  bool isSImm7Scaled() const {
-    if (!isImm()) return false;
+  bool isNeonMovImmShiftLSL() const {
+    if (!isShiftOrExtend())
+      return false;
+
+    if (ShiftExtend.ShiftType != A64SE::LSL)
+      return false;
+
+    // Valid shift amount is 0, 8, 16 and 24.
+    return ShiftExtend.Amount % 8 == 0 && ShiftExtend.Amount <= 24;
+  }
+
+  bool isNeonMovImmShiftLSLH() const {
+    if (!isShiftOrExtend())
+      return false;
+
+    if (ShiftExtend.ShiftType != A64SE::LSL)
+      return false;
+
+    // Valid shift amount is 0 and 8.
+    return ShiftExtend.Amount == 0 || ShiftExtend.Amount == 8;
+  }
+
+  bool isNeonMovImmShiftMSL() const {
+    if (!isShiftOrExtend())
+      return false;
+
+    if (ShiftExtend.ShiftType != A64SE::MSL)
+      return false;
+
+    // Valid shift amount is 8 and 16.
+    return ShiftExtend.Amount == 8 || ShiftExtend.Amount == 16;
+  }
+
+  template <int MemSize> bool isSImm7Scaled() const {
+    if (!isImm())
+      return false;
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -705,10 +739,27 @@ public:
     return isa<MCConstantExpr>(getImm());
   }
 
+  bool isNeonUImm64Mask() const {
+    if (!isImm())
+      return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE)
+      return false;
+
+    uint64_t Value = CE->getValue();
+
+    // i64 value with each byte being either 0x00 or 0xff.
+    for (unsigned i = 0; i < 8; ++i, Value >>= 8)
+      if ((Value & 0xff) != 0 && (Value & 0xff) != 0xff)
+        return false;
+    return true;
+  }
+
   static AArch64Operand *CreateImmWithLSL(const MCExpr *Val,
                                           unsigned ShiftAmount,
                                           bool ImplicitAmount,
-                                          SMLoc S, SMLoc E) {
+										  SMLoc S,SMLoc E) {
     AArch64Operand *Op = new AArch64Operand(k_ImmWithLSL, S, E);
     Op->ImmWithLSL.Val = Val;
     Op->ImmWithLSL.ShiftAmount = ShiftAmount;
@@ -1026,6 +1077,40 @@ public:
     Inst.addOperand(MCOperand::CreateImm(ShiftExtend.Amount));
   }
 
+  // For Vector Immediates shifted imm operands.
+  void addNeonMovImmShiftLSLOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    if (ShiftExtend.Amount % 8 != 0 || ShiftExtend.Amount > 24)
+      llvm_unreachable("Invalid shift amount for vector immediate inst.");
+
+    // Encode LSL shift amount 0, 8, 16, 24 as 0, 1, 2, 3.
+    int64_t Imm = ShiftExtend.Amount / 8;
+    Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
+  void addNeonMovImmShiftLSLHOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    if (ShiftExtend.Amount != 0 && ShiftExtend.Amount != 8)
+      llvm_unreachable("Invalid shift amount for vector immediate inst.");
+
+    // Encode LSLH shift amount 0, 8  as 0, 1.
+    int64_t Imm = ShiftExtend.Amount / 8;
+    Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
+  void addNeonMovImmShiftMSLOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    if (ShiftExtend.Amount != 8 && ShiftExtend.Amount != 16)
+      llvm_unreachable("Invalid shift amount for vector immediate inst.");
+
+    // Encode MSL shift amount 8, 16  as 0, 1.
+    int64_t Imm = ShiftExtend.Amount / 8 - 1;
+    Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
   // For the extend in load-store (register offset) instructions.
   template<unsigned MemSize>
   void addAddrRegExtendOperands(MCInst &Inst, unsigned N) const {
@@ -1064,6 +1149,20 @@ public:
     assert(N == 1 && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::CreateImm(ShiftExtend.Amount));
+  }
+
+  void addNeonUImm64MaskOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    // A bit from each byte in the constant forms the encoded immediate
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    uint64_t Value = CE->getValue();
+
+    unsigned Imm = 0;
+    for (unsigned i = 0; i < 8; ++i, Value >>= 8) {
+      Imm |= (Value & 1) << i;
+    }
+    Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 };
 
@@ -1660,20 +1759,21 @@ AArch64AsmParser::ParseShiftExtend(
   std::string LowerID = IDVal.lower();
 
   A64SE::ShiftExtSpecifiers Spec =
-    StringSwitch<A64SE::ShiftExtSpecifiers>(LowerID)
-      .Case("lsl", A64SE::LSL)
-      .Case("lsr", A64SE::LSR)
-      .Case("asr", A64SE::ASR)
-      .Case("ror", A64SE::ROR)
-      .Case("uxtb", A64SE::UXTB)
-      .Case("uxth", A64SE::UXTH)
-      .Case("uxtw", A64SE::UXTW)
-      .Case("uxtx", A64SE::UXTX)
-      .Case("sxtb", A64SE::SXTB)
-      .Case("sxth", A64SE::SXTH)
-      .Case("sxtw", A64SE::SXTW)
-      .Case("sxtx", A64SE::SXTX)
-      .Default(A64SE::Invalid);
+      StringSwitch<A64SE::ShiftExtSpecifiers>(LowerID)
+        .Case("lsl", A64SE::LSL)
+	.Case("msl", A64SE::MSL)
+	.Case("lsr", A64SE::LSR)
+	.Case("asr", A64SE::ASR)
+	.Case("ror", A64SE::ROR)
+	.Case("uxtb", A64SE::UXTB)
+	.Case("uxth", A64SE::UXTH)
+	.Case("uxtw", A64SE::UXTW)
+	.Case("uxtx", A64SE::UXTX)
+	.Case("sxtb", A64SE::SXTB)
+	.Case("sxth", A64SE::SXTH)
+	.Case("sxtw", A64SE::SXTW)
+	.Case("sxtx", A64SE::SXTX)
+	.Default(A64SE::Invalid);
 
   if (Spec == A64SE::Invalid)
     return MatchOperand_NoMatch;
@@ -1683,8 +1783,8 @@ AArch64AsmParser::ParseShiftExtend(
   S = Parser.getTok().getLoc();
   Parser.Lex();
 
-  if (Spec != A64SE::LSL && Spec != A64SE::LSR &&
-      Spec != A64SE::ASR && Spec != A64SE::ROR) {
+  if (Spec != A64SE::LSL && Spec != A64SE::LSR && Spec != A64SE::ASR &&
+      Spec != A64SE::ROR && Spec != A64SE::MSL) {
     // The shift amount can be omitted for the extending versions, but not real
     // shifts:
     //     add x0, x0, x0, uxtb
@@ -2019,7 +2119,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                  "expected compatible register or floating-point constant");
   case Match_FPZero:
     return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
-                 "expected floating-point constant #0.0");
+                 "expected floating-point constant #0.0 or invalid register type");
   case Match_Label:
     return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
                  "expected label or encodable integer pc offset");

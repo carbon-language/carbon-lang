@@ -1105,3 +1105,69 @@ bool A64Imms::isOnlyMOVNImm(int RegWidth, uint64_t Value,
 
   return isMOVNImm(RegWidth, Value, UImm16, Shift);
 }
+
+// decodeNeonModShiftImm - Decode a Neon OpCmode value into the
+// the shift amount and the shift type (shift zeros or ones in) and
+// returns whether the OpCmode value implies a shift operation.
+bool A64Imms::decodeNeonModShiftImm(unsigned OpCmode, unsigned &ShiftImm,
+                                    unsigned &ShiftOnesIn) {
+  ShiftImm = 0;
+  ShiftOnesIn = false;
+  bool HasShift = true;
+
+  if (OpCmode == 0xe) {
+    // movi byte
+    HasShift = false;
+  } else if (OpCmode == 0x1e) {
+    // movi 64-bit bytemask
+    HasShift = false;
+  } else if ((OpCmode & 0xc) == 0x8) {
+    // shift zeros, per halfword
+    ShiftImm = ((OpCmode & 0x2) >> 1);
+  } else if ((OpCmode & 0x8) == 0) {
+    // shift zeros, per word
+    ShiftImm = ((OpCmode & 0x6) >> 1);
+  } else if ((OpCmode & 0xe) == 0xc) {
+    // shift ones, per word
+    ShiftOnesIn = true;
+    ShiftImm = (OpCmode & 0x1);
+  } else {
+    // per byte, per bytemask
+    llvm_unreachable("Unsupported Neon modified immediate");
+  }
+
+  return HasShift;
+}
+
+// decodeNeonModImm - Decode a NEON modified immediate and OpCmode values
+// into the element value and the element size in bits.
+uint64_t A64Imms::decodeNeonModImm(unsigned Val, unsigned OpCmode,
+                                   unsigned &EltBits) {
+  uint64_t DecodedVal = Val;
+  EltBits = 0;
+
+  if (OpCmode == 0xe) {
+    // movi byte
+    EltBits = 8;
+  } else if (OpCmode == 0x1e) {
+    // movi 64-bit bytemask
+    DecodedVal = 0;
+    for (unsigned ByteNum = 0; ByteNum < 8; ++ByteNum) {
+      if ((Val >> ByteNum) & 1)
+        DecodedVal |= (uint64_t)0xff << (8 * ByteNum);
+    }
+    EltBits = 64;
+  } else if ((OpCmode & 0xc) == 0x8) {
+    // shift zeros, per halfword
+    EltBits = 16;
+  } else if ((OpCmode & 0x8) == 0) {
+    // shift zeros, per word
+    EltBits = 32;
+  } else if ((OpCmode & 0xe) == 0xc) {
+    // shift ones, per word
+    EltBits = 32;
+  } else {
+    llvm_unreachable("Unsupported Neon modified immediate");
+  }
+  return DecodedVal;
+}

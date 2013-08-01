@@ -85,6 +85,9 @@ static DecodeStatus DecodeFPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
 static DecodeStatus DecodeFPR128RegisterClass(llvm::MCInst &Inst,
                                               unsigned RegNo, uint64_t Address,
                                               const void *Decoder);
+static DecodeStatus DecodeVPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                                             uint64_t Address,
+                                             const void *Decoder);
 static DecodeStatus DecodeVPR128RegisterClass(llvm::MCInst &Inst,
                                               unsigned RegNo, uint64_t Address,
                                               const void *Decoder);
@@ -126,6 +129,10 @@ static DecodeStatus DecodeRegExtendOperand(llvm::MCInst &Inst,
                                            unsigned ShiftAmount,
                                            uint64_t Address,
                                            const void *Decoder);
+template <A64SE::ShiftExtSpecifiers Ext, bool IsHalf>
+static DecodeStatus
+DecodeNeonMovImmShiftOperand(llvm::MCInst &Inst, unsigned ShiftAmount,
+                             uint64_t Address, const void *Decoder);
 
 static DecodeStatus Decode32BitShiftOperand(llvm::MCInst &Inst,
                                             unsigned ShiftAmount,
@@ -336,9 +343,20 @@ DecodeFPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeVPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                                             uint64_t Address,
+                                             const void *Decoder) {
+  if (RegNo > 31)
+    return MCDisassembler::Fail;
+
+  uint16_t Register = getReg(Decoder, AArch64::VPR64RegClassID, RegNo);
+  Inst.addOperand(MCOperand::CreateReg(Register));
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus
 DecodeVPR128RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
-                         uint64_t Address, const void *Decoder) {
+						  uint64_t Address, const void *Decoder) {
   if (RegNo > 31)
     return MCDisassembler::Fail;
 
@@ -799,4 +817,24 @@ extern "C" void LLVMInitializeAArch64Disassembler() {
                                          createAArch64Disassembler);
 }
 
+template <A64SE::ShiftExtSpecifiers Ext, bool IsHalf>
+static DecodeStatus
+DecodeNeonMovImmShiftOperand(llvm::MCInst &Inst, unsigned ShiftAmount,
+                             uint64_t Address, const void *Decoder) {
+  bool IsLSL = false;
+  if (Ext == A64SE::LSL)
+    IsLSL = true;
+  else if (Ext != A64SE::MSL)
+    return MCDisassembler::Fail;
 
+  // MSL and LSLH accepts encoded shift amount 0 or 1.
+  if ((!IsLSL || (IsLSL && IsHalf)) && ShiftAmount != 0 && ShiftAmount != 1)
+    return MCDisassembler::Fail;
+
+  // LSL  accepts encoded shift amount 0, 1, 2 or 3.
+  if (IsLSL && ShiftAmount > 3)
+    return MCDisassembler::Fail;
+
+  Inst.addOperand(MCOperand::CreateImm(ShiftAmount));
+  return MCDisassembler::Success;
+}
