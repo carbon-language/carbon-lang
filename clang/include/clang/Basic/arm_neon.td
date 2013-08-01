@@ -69,6 +69,7 @@ def OP_REINT : Op;
 def OP_ABDL  : Op;
 def OP_ABA   : Op;
 def OP_ABAL  : Op;
+def OP_DIV  : Op;
 
 class Inst <string n, string p, string t, Op o> {
   string Name = n;
@@ -77,6 +78,7 @@ class Inst <string n, string p, string t, Op o> {
   Op Operand = o;
   bit isShift = 0;
   bit isVCVT_N = 0;
+  bit isA64 = 0;
 
   // Certain intrinsics have different names than their representative
   // instructions. This field allows us to handle this correctly when we
@@ -145,6 +147,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // l: long
 // f: float
 // h: half-float
+// d: double
 
 // size modifiers:
 // U: unsigned
@@ -452,3 +455,110 @@ def VREINTERPRET
 // Vector fused multiply-add operations
 
 def VFMA : SInst<"vfma", "dddd", "fQf">;
+
+////////////////////////////////////////////////////////////////////////////////
+// AArch64 Intrinsics
+
+let isA64 = 1 in {
+
+////////////////////////////////////////////////////////////////////////////////
+// Addition
+// With additional Qd type.
+def ADD : IOpInst<"vadd", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd", OP_ADD>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Subtraction
+// With additional Qd type.
+def SUB : IOpInst<"vsub", "ddd", "csilfUcUsUiUlQcQsQiQlQfQUcQUsQUiQUlQd", OP_SUB>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Multiplication
+// With additional Qd type.
+def MUL     : IOpInst<"vmul", "ddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MUL>;
+def MLA     : IOpInst<"vmla", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLA>;
+def MLS     : IOpInst<"vmls", "dddd", "csifUcUsUiQcQsQiQfQUcQUsQUiQd", OP_MLS>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Multiplication Extended
+def MULX : SInst<"vmulx", "ddd", "fQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Division
+def FDIV : IOpInst<"vdiv", "ddd",  "fQfQd", OP_DIV>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Vector fused multiply-add operations
+// With additional Qd type.
+def FMLA : SInst<"vfma", "dddd", "fQfQd">;
+def FMLS : SInst<"vfms", "dddd", "fQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Logical operations
+// With additional Qd type.
+def BSL : SInst<"vbsl", "dudd", "csilUcUsUiUlfPcPsQcQsQiQlQUcQUsQUiQUlQfQPcQPsQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Absolute Difference
+// With additional Qd type.
+def ABD  : SInst<"vabd", "ddd",  "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Reciprocal/Sqrt
+// With additional Qd type.
+def FRECPS  : IInst<"vrecps", "ddd", "fQfQd">;
+def FRSQRTS : IInst<"vrsqrts", "ddd", "fQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Comparison
+// With additional Qd type.
+def FCAGE : IInst<"vcage", "udd", "fQfQd">;
+def FCAGT : IInst<"vcagt", "udd", "fQfQd">;
+def FCALE : IInst<"vcale", "udd", "fQfQd">;
+def FCALT : IInst<"vcalt", "udd", "fQfQd">;
+// With additional Ql, QUl, Qd types.
+def CMTST  : WInst<"vtst", "udd", "csiUcUsUiPcQcQsQiQlQUcQUsQUiQUlQPc">;
+def CFMEQ  : SOpInst<"vceq", "udd",
+                  "csifUcUsUiPcQcQsQiQlQfQUcQUsQUiQUlQPcQd", OP_EQ>;
+def CFMGE  : SOpInst<"vcge", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GE>;
+def CFMLE  : SOpInst<"vcle", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_LE>;
+def CFMGT  : SOpInst<"vcgt", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_GT>;
+def CFMLT  : SOpInst<"vclt", "udd", "csifUcUsUiQcQsQiQlQfQUcQUsQUiQUlQd", OP_LT>;
+
+////////////////////////////////////////////////////////////////////////////////
+// Max/Min Integer
+// With additional Qd type.
+def MAX : SInst<"vmax", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+def MIN : SInst<"vmin", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// MaxNum/MinNum Floating Point
+def FMAXNM : SInst<"vmaxnm", "ddd", "fQfQd">;
+def FMINNM : SInst<"vminnm", "ddd", "fQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Pairwise Max/Min
+// With additional Qc Qs Qi QUc QUs QUi Qf Qd types.
+def MAXP : SInst<"vpmax", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+def MINP : SInst<"vpmin", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Pairwise MaxNum/MinNum Floating Point
+def FMAXNMP : SInst<"vpmaxnm", "ddd", "fQfQd">;
+def FMINNMP : SInst<"vpminnm", "ddd", "fQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Pairwise Addition
+// With additional Qc Qs Qi QUc QUs QUi Qf Qd types.
+def ADDP  : IInst<"vpadd", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Scalar Arithmetic
+
+// Scalar Addition
+
+def SCALAR_ADD : Inst<"vaddd", "ddd", "lUl", OP_ADD>;
+
+// Scalar Subtraction
+def SCALAR_SUB : Inst<"vsubd", "ddd", "lUl", OP_SUB>;
+
+}

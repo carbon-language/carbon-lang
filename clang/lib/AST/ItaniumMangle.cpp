@@ -360,6 +360,7 @@ private:
   void mangleBareFunctionType(const FunctionType *T,
                               bool MangleReturnType);
   void mangleNeonVectorType(const VectorType *T);
+  void mangleAArch64NeonVectorType(const VectorType *T);
 
   void mangleIntegerLiteral(QualType T, const llvm::APSInt &Value);
   void mangleMemberExpr(const Expr *base, bool isArrow,
@@ -2174,7 +2175,9 @@ void CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
     case BuiltinType::LongLong:  EltName = "int64_t"; break;
     case BuiltinType::ULongLong: EltName = "uint64_t"; break;
     case BuiltinType::Float:     EltName = "float32_t"; break;
-    default: llvm_unreachable("unexpected Neon vector element type");
+    case BuiltinType::Half:      EltName = "float16_t";break;
+    default:
+      llvm_unreachable("unexpected Neon vector element type");
     }
   }
   const char *BaseName = 0;
@@ -2190,6 +2193,70 @@ void CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
   Out << BaseName << EltName;
 }
 
+static StringRef mangleAArch64VectorBase(const BuiltinType *EltType) {
+  switch (EltType->getKind()) {
+  case BuiltinType::SChar:
+    return "Int8";
+  case BuiltinType::Short:
+    return "Int16";
+  case BuiltinType::Int:
+    return "Int32";
+  case BuiltinType::LongLong:
+    return "Int64";
+  case BuiltinType::UChar:
+    return "Uint8";
+  case BuiltinType::UShort:
+    return "Uint16";
+  case BuiltinType::UInt:
+    return "Uint32";
+  case BuiltinType::ULongLong:
+    return "Uint64";
+  case BuiltinType::Half:
+    return "Float16";
+  case BuiltinType::Float:
+    return "Float32";
+  case BuiltinType::Double:
+    return "Float64";
+  default:
+    llvm_unreachable("Unexpected vector element base type");
+  }
+}
+
+// AArch64's ABI for Neon vector types specifies that they should be mangled as
+// the equivalent internal name. The vector type must be one of the special
+// types predefined by ARM.
+void CXXNameMangler::mangleAArch64NeonVectorType(const VectorType *T) {
+  QualType EltType = T->getElementType();
+  assert(EltType->isBuiltinType() && "Neon vector element not a BuiltinType");
+  unsigned BitSize =
+      (T->getNumElements() * getASTContext().getTypeSize(EltType));
+
+  assert((BitSize == 64 || BitSize == 128) &&
+         "Neon vector type not 64 or 128 bits");
+
+  assert(getASTContext().getTypeSize(EltType) != BitSize &&
+         "Vector of 1 element not permitted");
+
+  StringRef EltName;
+  if (T->getVectorKind() == VectorType::NeonPolyVector) {
+    switch (cast<BuiltinType>(EltType)->getKind()) {
+    case BuiltinType::UChar:
+      EltName = "Poly8";
+      break;
+    case BuiltinType::UShort:
+      EltName = "Poly16";
+      break;
+    default:
+      llvm_unreachable("unexpected Neon polynomial vector element type");
+    }
+  } else
+    EltName = mangleAArch64VectorBase(cast<BuiltinType>(EltType));
+
+  std::string TypeName =
+      ("__" + EltName + "x" + llvm::utostr(T->getNumElements()) + "_t").str();
+  Out << TypeName.length() << TypeName;
+}
+
 // GNU extension: vector types
 // <type>                  ::= <vector-type>
 // <vector-type>           ::= Dv <positive dimension number> _
@@ -2201,7 +2268,11 @@ void CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
 void CXXNameMangler::mangleType(const VectorType *T) {
   if ((T->getVectorKind() == VectorType::NeonVector ||
        T->getVectorKind() == VectorType::NeonPolyVector)) {
-    mangleNeonVectorType(T);
+    if (getASTContext().getTargetInfo().getTriple().getArch() ==
+        llvm::Triple::aarch64)
+      mangleAArch64NeonVectorType(T);
+    else
+      mangleNeonVectorType(T);
     return;
   }
   Out << "Dv" << T->getNumElements() << '_';

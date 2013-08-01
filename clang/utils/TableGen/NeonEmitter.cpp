@@ -90,7 +90,8 @@ enum OpKind {
   OpReinterpret,
   OpAbdl,
   OpAba,
-  OpAbal
+  OpAbal,
+  OpDiv
 };
 
 enum ClassKind {
@@ -127,7 +128,8 @@ public:
     Poly8,
     Poly16,
     Float16,
-    Float32
+    Float32,
+    Float64
   };
 
   NeonTypeFlags(unsigned F) : Flags(F) {}
@@ -205,6 +207,7 @@ public:
     OpMap["OP_ABDL"]  = OpAbdl;
     OpMap["OP_ABA"]   = OpAba;
     OpMap["OP_ABAL"]  = OpAbal;
+    OpMap["OP_DIV"] = OpDiv;
 
     Record *SI = R.getClass("SInst");
     Record *II = R.getClass("IInst");
@@ -235,7 +238,18 @@ public:
   void runTests(raw_ostream &o);
 
 private:
-  void emitIntrinsic(raw_ostream &OS, Record *R);
+  void emitIntrinsic(raw_ostream &OS, Record *R,
+                     StringMap<ClassKind> &EmittedMap);
+  void genBuiltinsDef(raw_ostream &OS, StringMap<ClassKind> &A64IntrinsicMap,
+                      bool isA64GenBuiltinDef);
+  void genOverloadTypeCheckCode(raw_ostream &OS,
+                                StringMap<ClassKind> &A64IntrinsicMap,
+                                bool isA64TypeCheck);
+  void genIntrinsicRangeCheckCode(raw_ostream &OS,
+                                  StringMap<ClassKind> &A64IntrinsicMap,
+                                  bool isA64RangeCheck);
+  void genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
+                     bool isA64TestGen);
 };
 } // end anonymous namespace
 
@@ -259,6 +273,7 @@ static void ParseTypes(Record *r, std::string &s,
       case 'l':
       case 'h':
       case 'f':
+      case 'd':
         break;
       default:
         PrintFatalError(r->getLoc(),
@@ -347,6 +362,8 @@ static char ModType(const char mod, char type, bool &quad, bool &poly,
       poly = false;
       if (type == 'f')
         type = 'i';
+      if (type == 'd')
+        type = 'l';
       break;
     case 'x':
       usgn = false;
@@ -470,6 +487,13 @@ static std::string TypeString(const char mod, StringRef typestr) {
         break;
       s += quad ? "x4" : "x2";
       break;
+    case 'd':
+      s += "float64";
+      if (scal)
+        break;
+      s += quad ? "x2" : "x1";
+      break;
+
     default:
       PrintFatalError("unhandled type!");
   }
@@ -645,6 +669,18 @@ static void InstructionTypeCode(const StringRef &typeStr,
     case ClassI: typeCode = "f32"; break;
     case ClassW: typeCode = "32"; break;
     default: break;
+    }
+    break;
+  case 'd':
+    switch (ck) {
+    case ClassS:
+    case ClassI:
+      typeCode += "f64";
+      break;
+    case ClassW:
+      PrintFatalError("unhandled type!");
+    default:
+      break;
     }
     break;
   default:
@@ -1252,6 +1288,9 @@ static unsigned GetNumElements(StringRef typestr, bool &quad) {
   case 'l': nElts = 1; break;
   case 'h': nElts = 4; break;
   case 'f': nElts = 2; break;
+  case 'd':
+    nElts = 1;
+    break;
   default:
     PrintFatalError("unhandled type!");
   }
@@ -1488,6 +1527,9 @@ static std::string GenOpString(OpKind op, const std::string &proto,
     }
     break;
   }
+  case OpDiv:
+    s += "__a / __b;";
+    break;
   default:
     PrintFatalError("unknown OpKind!");
   }
@@ -1532,6 +1574,9 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
       break;
     case 'f':
       ET = NeonTypeFlags::Float32;
+      break;
+    case 'd':
+      ET = NeonTypeFlags::Float64;
       break;
     default:
       PrintFatalError("unhandled type!");
@@ -1776,7 +1821,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   OS << "#ifndef __ARM_NEON_H\n";
   OS << "#define __ARM_NEON_H\n\n";
 
-  OS << "#ifndef __ARM_NEON__\n";
+  OS << "#if !defined(__ARM_NEON__) && !defined(__AARCH_FEATURE_ADVSIMD)\n";
   OS << "#error \"NEON support not enabled\"\n";
   OS << "#endif\n\n";
 
@@ -1784,19 +1829,39 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   // Emit NEON-specific scalar typedefs.
   OS << "typedef float float32_t;\n";
+  OS << "typedef __fp16 float16_t;\n";
+
+  OS << "#ifdef __aarch64__\n";
+  OS << "typedef double float64_t;\n";
+  OS << "#endif\n\n";
+
+  // For now, signedness of polynomial types depends on target
+  OS << "#ifdef __aarch64__\n";
+  OS << "typedef uint8_t poly8_t;\n";
+  OS << "typedef uint16_t poly16_t;\n";
+  OS << "#else\n";
   OS << "typedef int8_t poly8_t;\n";
   OS << "typedef int16_t poly16_t;\n";
-  OS << "typedef uint16_t float16_t;\n";
+  OS << "#endif\n";
 
   // Emit Neon vector typedefs.
-  std::string TypedefTypes("cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfPcQPcPsQPs");
+  std::string TypedefTypes(
+      "cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfQdPcQPcPsQPs");
   SmallVector<StringRef, 24> TDTypeVec;
   ParseTypes(0, TypedefTypes, TDTypeVec);
 
   // Emit vector typedefs.
   for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
     bool dummy, quad = false, poly = false;
-    (void) ClassifyType(TDTypeVec[i], quad, poly, dummy);
+    char type = ClassifyType(TDTypeVec[i], quad, poly, dummy);
+    bool isA64 = false;
+
+    if (type == 'd' && quad)
+      isA64 = true;
+
+    if (isA64)
+      OS << "#ifdef __aarch64__\n";
+
     if (poly)
       OS << "typedef __attribute__((neon_polyvector_type(";
     else
@@ -1809,19 +1874,37 @@ void NeonEmitter::run(raw_ostream &OS) {
 
     OS << TypeString('s', TDTypeVec[i]);
     OS << " " << TypeString('d', TDTypeVec[i]) << ";\n";
+
+    if (isA64)
+      OS << "#endif\n";
   }
   OS << "\n";
 
   // Emit struct typedefs.
   for (unsigned vi = 2; vi != 5; ++vi) {
     for (unsigned i = 0, e = TDTypeVec.size(); i != e; ++i) {
+      bool dummy, quad = false, poly = false;
+      char type = ClassifyType(TDTypeVec[i], quad, poly, dummy);
+      bool isA64 = false;
+
+      if (type == 'd' && quad)
+        isA64 = true;
+
+      if (isA64)
+        OS << "#ifdef __aarch64__\n";
+
       std::string ts = TypeString('d', TDTypeVec[i]);
       std::string vs = TypeString('0' + vi, TDTypeVec[i]);
       OS << "typedef struct " << vs << " {\n";
       OS << "  " << ts << " val";
       OS << "[" << utostr(vi) << "]";
       OS << ";\n} ";
-      OS << vs << ";\n\n";
+      OS << vs << ";\n";
+
+      if (isA64)
+        OS << "#endif\n";
+
+      OS << "\n";
     }
   }
 
@@ -1829,30 +1912,58 @@ void NeonEmitter::run(raw_ostream &OS) {
 
   std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
 
+  StringMap<ClassKind> EmittedMap;
+
   // Emit vmovl, vmull and vabd intrinsics first so they can be used by other
   // intrinsics.  (Some of the saturating multiply instructions are also
   // used to implement the corresponding "_lane" variants, but tablegen
   // sorts the records into alphabetical order so that the "_lane" variants
   // come after the intrinsics they use.)
-  emitIntrinsic(OS, Records.getDef("VMOVL"));
-  emitIntrinsic(OS, Records.getDef("VMULL"));
-  emitIntrinsic(OS, Records.getDef("VABD"));
+  emitIntrinsic(OS, Records.getDef("VMOVL"), EmittedMap);
+  emitIntrinsic(OS, Records.getDef("VMULL"), EmittedMap);
+  emitIntrinsic(OS, Records.getDef("VABD"), EmittedMap);
+
+  // ARM intrinsics must be emitted before AArch64 intrinsics to ensure
+  // common intrinsics appear only once in the output stream.
+  // The check for uniquiness is done in emitIntrinsic.
+  // Emit ARM intrinsics.
+  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
+    Record *R = RV[i];
+
+    // Skip AArch64 intrinsics; they will be emitted at the end.
+    bool isA64 = R->getValueAsBit("isA64");
+    if (isA64)
+      continue;
+
+    if (R->getName() != "VMOVL" && R->getName() != "VMULL" &&
+        R->getName() != "VABD")
+      emitIntrinsic(OS, R, EmittedMap);
+  }
+
+  // Emit AArch64-specific intrinsics.
+  OS << "#ifdef __aarch64__\n";
 
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-    if (R->getName() != "VMOVL" &&
-        R->getName() != "VMULL" &&
-        R->getName() != "VABD")
-      emitIntrinsic(OS, R);
+
+    // Skip ARM intrinsics already included above.
+    bool isA64 = R->getValueAsBit("isA64");
+    if (!isA64)
+      continue;
+
+    emitIntrinsic(OS, R, EmittedMap);
   }
+
+  OS << "#endif\n\n";
 
   OS << "#undef __ai\n\n";
   OS << "#endif /* __ARM_NEON_H */\n";
 }
 
 /// emitIntrinsic - Write out the arm_neon.h header file definitions for the
-/// intrinsics specified by record R.
-void NeonEmitter::emitIntrinsic(raw_ostream &OS, Record *R) {
+/// intrinsics specified by record R checking for intrinsic uniqueness.
+void NeonEmitter::emitIntrinsic(raw_ostream &OS, Record *R,
+                                StringMap<ClassKind> &EmittedMap) {
   std::string name = R->getValueAsString("Name");
   std::string Proto = R->getValueAsString("Prototype");
   std::string Types = R->getValueAsString("Types");
@@ -1879,12 +1990,20 @@ void NeonEmitter::emitIntrinsic(raw_ostream &OS, Record *R) {
         (void)ClassifyType(TypeVec[srcti], inQuad, dummy, dummy);
         if (srcti == ti || inQuad != outQuad)
           continue;
-        OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[srcti],
-                           OpCast, ClassS);
+        std::string s = GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[srcti],
+                                     OpCast, ClassS);
+        if (EmittedMap.count(s))
+          continue;
+        EmittedMap[s] = ClassS;
+        OS << s;
       }
     } else {
-      OS << GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[ti],
-                         kind, classKind);
+      std::string s =
+          GenIntrinsic(name, Proto, TypeVec[ti], TypeVec[ti], kind, classKind);
+      if (EmittedMap.count(s))
+        continue;
+      EmittedMap[s] = classKind;
+      OS << s;
     }
   }
   OS << "\n";
@@ -1912,56 +2031,151 @@ static unsigned RangeFromType(const char mod, StringRef typestr) {
   }
 }
 
-/// runHeader - Emit a file with sections defining:
-/// 1. the NEON section of BuiltinsARM.def.
-/// 2. the SemaChecking code for the type overload checking.
-/// 3. the SemaChecking code for validation of intrinsic immediate arguments.
-void NeonEmitter::runHeader(raw_ostream &OS) {
-  std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
-
+/// Generate the ARM and AArch64 intrinsic range checking code for
+/// shift/lane immediates, checking for unique declarations.
+void
+NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
+                                        StringMap<ClassKind> &A64IntrinsicMap,
+                                        bool isA64RangeCheck) {
+  std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
   StringMap<OpKind> EmittedMap;
 
-  // Generate BuiltinsARM.def for NEON
-  OS << "#ifdef GET_NEON_BUILTINS\n";
+  // Generate the intrinsic range checking code for shift/lane immediates.
+  if (isA64RangeCheck)
+    OS << "#ifdef GET_NEON_AARCH64_IMMEDIATE_CHECK\n";
+  else
+    OS << "#ifdef GET_NEON_IMMEDIATE_CHECK\n";
+
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
+
     OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
     if (k != OpNone)
       continue;
 
+    std::string name = R->getValueAsString("Name");
     std::string Proto = R->getValueAsString("Prototype");
+    std::string Types = R->getValueAsString("Types");
 
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
     if (Proto.find('a') != std::string::npos)
       continue;
 
-    std::string Types = R->getValueAsString("Types");
+    // Functions which do not have an immediate do not need to have range
+    // checking code emitted.
+    size_t immPos = Proto.find('i');
+    if (immPos == std::string::npos)
+      continue;
+
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
 
     if (R->getSuperClasses().size() < 2)
       PrintFatalError(R->getLoc(), "Builtin has no class kind");
 
-    std::string name = R->getValueAsString("Name");
     ClassKind ck = ClassMap[R->getSuperClasses()[1]];
 
-    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
-      // Generate the BuiltinsARM.def declaration for this builtin, ensuring
-      // that each unique BUILTIN() macro appears only once in the output
-      // stream.
-      std::string bd = GenBuiltinDef(name, Proto, TypeVec[ti], ck);
-      if (EmittedMap.count(bd))
-        continue;
+    // Do not include AArch64 range checks if not generating code for AArch64.
+    bool isA64 = R->getValueAsBit("isA64");
+    if (!isA64RangeCheck && isA64)
+      continue;
 
-      EmittedMap[bd] = OpNone;
-      OS << bd << "\n";
+    // Include ARM range checks in AArch64 but only if ARM intrinsics are not
+    // redefined by AArch64 to handle new types.
+    if (isA64RangeCheck && !isA64 && A64IntrinsicMap.count(name)) {
+      ClassKind &A64CK = A64IntrinsicMap[name];
+      if (A64CK == ck && ck != ClassNone)
+        continue;
+    }
+
+    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
+      std::string namestr, shiftstr, rangestr;
+
+      if (R->getValueAsBit("isVCVT_N")) {
+        // VCVT between floating- and fixed-point values takes an immediate
+        // in the range 1 to 32.
+        ck = ClassB;
+        rangestr = "l = 1; u = 31"; // upper bound = l + u
+      } else if (Proto.find('s') == std::string::npos) {
+        // Builtins which are overloaded by type will need to have their upper
+        // bound computed at Sema time based on the type constant.
+        ck = ClassB;
+        if (R->getValueAsBit("isShift")) {
+          shiftstr = ", true";
+
+          // Right shifts have an 'r' in the name, left shifts do not.
+          if (name.find('r') != std::string::npos)
+            rangestr = "l = 1; ";
+        }
+        rangestr += "u = RFT(TV" + shiftstr + ")";
+      } else {
+        // The immediate generally refers to a lane in the preceding argument.
+        assert(immPos > 0 && "unexpected immediate operand");
+        rangestr =
+            "u = " + utostr(RangeFromType(Proto[immPos - 1], TypeVec[ti]));
+      }
+      // Make sure cases appear only once by uniquing them in a string map.
+      namestr = MangleName(name, TypeVec[ti], ck);
+      if (EmittedMap.count(namestr))
+        continue;
+      EmittedMap[namestr] = OpNone;
+
+      // Calculate the index of the immediate that should be range checked.
+      unsigned immidx = 0;
+
+      // Builtins that return a struct of multiple vectors have an extra
+      // leading arg for the struct return.
+      if (Proto[0] >= '2' && Proto[0] <= '4')
+        ++immidx;
+
+      // Add one to the index for each argument until we reach the immediate
+      // to be checked.  Structs of vectors are passed as multiple arguments.
+      for (unsigned ii = 1, ie = Proto.size(); ii != ie; ++ii) {
+        switch (Proto[ii]) {
+        default:
+          immidx += 1;
+          break;
+        case '2':
+          immidx += 2;
+          break;
+        case '3':
+          immidx += 3;
+          break;
+        case '4':
+          immidx += 4;
+          break;
+        case 'i':
+          ie = ii + 1;
+          break;
+        }
+      }
+      if (isA64RangeCheck)
+        OS << "case AArch64::BI__builtin_neon_";
+      else
+        OS << "case ARM::BI__builtin_neon_";
+      OS << MangleName(name, TypeVec[ti], ck) << ": i = " << immidx << "; "
+         << rangestr << "; break;\n";
     }
   }
   OS << "#endif\n\n";
+}
+
+/// Generate the ARM and AArch64 overloaded type checking code for
+/// SemaChecking.cpp, checking for unique builtin declarations.
+void
+NeonEmitter::genOverloadTypeCheckCode(raw_ostream &OS,
+                                      StringMap<ClassKind> &A64IntrinsicMap,
+                                      bool isA64TypeCheck) {
+  std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
+  StringMap<OpKind> EmittedMap;
 
   // Generate the overloaded type checking code for SemaChecking.cpp
-  OS << "#ifdef GET_NEON_OVERLOAD_CHECK\n";
+  if (isA64TypeCheck)
+    OS << "#ifdef GET_NEON_AARCH64_OVERLOAD_CHECK\n";
+  else
+    OS << "#ifdef GET_NEON_OVERLOAD_CHECK\n";
+
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
     OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
@@ -1987,6 +2201,21 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
 
     if (R->getSuperClasses().size() < 2)
       PrintFatalError(R->getLoc(), "Builtin has no class kind");
+
+    // Do not include AArch64 type checks if not generating code for AArch64.
+    bool isA64 = R->getValueAsBit("isA64");
+    if (!isA64TypeCheck && isA64)
+      continue;
+
+    // Include ARM  type check in AArch64 but only if ARM intrinsics
+    // are not redefined in AArch64 to handle new types, e.g. "vabd" is a SIntr
+    // redefined in AArch64 to handle an additional 2 x f64 type.
+    ClassKind ck = ClassMap[R->getSuperClasses()[1]];
+    if (isA64TypeCheck && !isA64 && A64IntrinsicMap.count(name)) {
+      ClassKind &A64CK = A64IntrinsicMap[name];
+      if (A64CK == ck && ck != ClassNone)
+        continue;
+    }
 
     int si = -1, qi = -1;
     uint64_t mask = 0, qmask = 0;
@@ -2035,9 +2264,12 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     }
 
     if (mask) {
-      OS << "case ARM::BI__builtin_neon_"
-         << MangleName(name, TypeVec[si], ClassB)
-         << ": mask = " << "0x" << utohexstr(mask) << "ULL";
+      if (isA64TypeCheck)
+        OS << "case AArch64::BI__builtin_neon_";
+      else
+        OS << "case ARM::BI__builtin_neon_";
+      OS << MangleName(name, TypeVec[si], ClassB) << ": mask = "
+         << "0x" << utohexstr(mask) << "ULL";
       if (PtrArgNum >= 0)
         OS << "; PtrArgNum = " << PtrArgNum;
       if (HasConstPtr)
@@ -2045,9 +2277,12 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       OS << "; break;\n";
     }
     if (qmask) {
-      OS << "case ARM::BI__builtin_neon_"
-         << MangleName(name, TypeVec[qi], ClassB)
-         << ": mask = " << "0x" << utohexstr(qmask) << "ULL";
+      if (isA64TypeCheck)
+        OS << "case AArch64::BI__builtin_neon_";
+      else
+        OS << "case ARM::BI__builtin_neon_";
+      OS << MangleName(name, TypeVec[qi], ClassB) << ": mask = "
+         << "0x" << utohexstr(qmask) << "ULL";
       if (PtrArgNum >= 0)
         OS << "; PtrArgNum = " << PtrArgNum;
       if (HasConstPtr)
@@ -2056,31 +2291,37 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     }
   }
   OS << "#endif\n\n";
+}
 
-  // Generate the intrinsic range checking code for shift/lane immediates.
-  OS << "#ifdef GET_NEON_IMMEDIATE_CHECK\n";
+/// genBuiltinsDef: Generate the BuiltinsARM.def and  BuiltinsAArch64.def
+/// declaration of builtins, checking for unique builtin declarations.
+void NeonEmitter::genBuiltinsDef(raw_ostream &OS,
+                                 StringMap<ClassKind> &A64IntrinsicMap,
+                                 bool isA64GenBuiltinDef) {
+  std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
+  StringMap<OpKind> EmittedMap;
+
+  // Generate BuiltinsARM.def and BuiltinsAArch64.def
+  if (isA64GenBuiltinDef)
+    OS << "#ifdef GET_NEON_AARCH64_BUILTINS\n";
+  else
+    OS << "#ifdef GET_NEON_BUILTINS\n";
+
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
-
     OpKind k = OpMap[R->getValueAsDef("Operand")->getName()];
     if (k != OpNone)
       continue;
 
-    std::string name = R->getValueAsString("Name");
     std::string Proto = R->getValueAsString("Prototype");
-    std::string Types = R->getValueAsString("Types");
+    std::string name = R->getValueAsString("Name");
 
     // Functions with 'a' (the splat code) in the type prototype should not get
     // their own builtin as they use the non-splat variant.
     if (Proto.find('a') != std::string::npos)
       continue;
 
-    // Functions which do not have an immediate do not need to have range
-    // checking code emitted.
-    size_t immPos = Proto.find('i');
-    if (immPos == std::string::npos)
-      continue;
-
+    std::string Types = R->getValueAsString("Types");
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
 
@@ -2089,61 +2330,79 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
 
     ClassKind ck = ClassMap[R->getSuperClasses()[1]];
 
-    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
-      std::string namestr, shiftstr, rangestr;
+    // Do not include AArch64 BUILTIN() macros if not generating
+    // code for AArch64
+    bool isA64 = R->getValueAsBit("isA64");
+    if (!isA64GenBuiltinDef && isA64)
+      continue;
 
-      if (R->getValueAsBit("isVCVT_N")) {
-        // VCVT between floating- and fixed-point values takes an immediate
-        // in the range 1 to 32.
-        ck = ClassB;
-        rangestr = "l = 1; u = 31"; // upper bound = l + u
-      } else if (Proto.find('s') == std::string::npos) {
-        // Builtins which are overloaded by type will need to have their upper
-        // bound computed at Sema time based on the type constant.
-        ck = ClassB;
-        if (R->getValueAsBit("isShift")) {
-          shiftstr = ", true";
-
-          // Right shifts have an 'r' in the name, left shifts do not.
-          if (name.find('r') != std::string::npos)
-            rangestr = "l = 1; ";
-        }
-        rangestr += "u = RFT(TV" + shiftstr + ")";
-      } else {
-        // The immediate generally refers to a lane in the preceding argument.
-        assert(immPos > 0 && "unexpected immediate operand");
-        rangestr = "u = " + utostr(RangeFromType(Proto[immPos-1], TypeVec[ti]));
-      }
-      // Make sure cases appear only once by uniquing them in a string map.
-      namestr = MangleName(name, TypeVec[ti], ck);
-      if (EmittedMap.count(namestr))
+    // Include ARM  BUILTIN() macros  in AArch64 but only if ARM intrinsics
+    // are not redefined in AArch64 to handle new types, e.g. "vabd" is a SIntr
+    // redefined in AArch64 to handle an additional 2 x f64 type.
+    if (isA64GenBuiltinDef && !isA64 && A64IntrinsicMap.count(name)) {
+      ClassKind &A64CK = A64IntrinsicMap[name];
+      if (A64CK == ck && ck != ClassNone)
         continue;
-      EmittedMap[namestr] = OpNone;
+    }
 
-      // Calculate the index of the immediate that should be range checked.
-      unsigned immidx = 0;
+    for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
+      // Generate the declaration for this builtin, ensuring
+      // that each unique BUILTIN() macro appears only once in the output
+      // stream.
+      std::string bd = GenBuiltinDef(name, Proto, TypeVec[ti], ck);
+      if (EmittedMap.count(bd))
+        continue;
 
-      // Builtins that return a struct of multiple vectors have an extra
-      // leading arg for the struct return.
-      if (Proto[0] >= '2' && Proto[0] <= '4')
-        ++immidx;
-
-      // Add one to the index for each argument until we reach the immediate
-      // to be checked.  Structs of vectors are passed as multiple arguments.
-      for (unsigned ii = 1, ie = Proto.size(); ii != ie; ++ii) {
-        switch (Proto[ii]) {
-          default:  immidx += 1; break;
-          case '2': immidx += 2; break;
-          case '3': immidx += 3; break;
-          case '4': immidx += 4; break;
-          case 'i': ie = ii + 1; break;
-        }
-      }
-      OS << "case ARM::BI__builtin_neon_" << MangleName(name, TypeVec[ti], ck)
-         << ": i = " << immidx << "; " << rangestr << "; break;\n";
+      EmittedMap[bd] = OpNone;
+      OS << bd << "\n";
     }
   }
   OS << "#endif\n\n";
+}
+
+/// runHeader - Emit a file with sections defining:
+/// 1. the NEON section of BuiltinsARM.def and BuiltinsAArch64.def.
+/// 2. the SemaChecking code for the type overload checking.
+/// 3. the SemaChecking code for validation of intrinsic immediate arguments.
+void NeonEmitter::runHeader(raw_ostream &OS) {
+  std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
+
+  // build a map of AArch64 intriniscs to be used in uniqueness checks.
+  StringMap<ClassKind> A64IntrinsicMap;
+  for (unsigned i = 0, e = RV.size(); i != e; ++i) {
+    Record *R = RV[i];
+
+    bool isA64 = R->getValueAsBit("isA64");
+    if (!isA64)
+      continue;
+
+    ClassKind CK = ClassNone;
+    if (R->getSuperClasses().size() >= 2)
+      CK = ClassMap[R->getSuperClasses()[1]];
+
+    std::string Name = R->getValueAsString("Name");
+    if (A64IntrinsicMap.count(Name))
+      continue;
+    A64IntrinsicMap[Name] = CK;
+  }
+
+  // Generate BuiltinsARM.def for ARM
+  genBuiltinsDef(OS, A64IntrinsicMap, false);
+
+  // Generate BuiltinsAArch64.def for AArch64
+  genBuiltinsDef(OS, A64IntrinsicMap, true);
+
+  // Generate ARM overloaded type checking code for SemaChecking.cpp
+  genOverloadTypeCheckCode(OS, A64IntrinsicMap, false);
+
+  // Generate AArch64 overloaded type checking code for SemaChecking.cpp
+  genOverloadTypeCheckCode(OS, A64IntrinsicMap, true);
+
+  // Generate ARM range checking code for shift/lane immediates.
+  genIntrinsicRangeCheckCode(OS, A64IntrinsicMap, false);
+
+  // Generate the AArch64 range checking code for shift/lane immediates.
+  genIntrinsicRangeCheckCode(OS, A64IntrinsicMap, true);
 }
 
 /// GenTest - Write out a test for the intrinsic specified by the name and
@@ -2152,7 +2411,9 @@ static std::string GenTest(const std::string &name,
                            const std::string &proto,
                            StringRef outTypeStr, StringRef inTypeStr,
                            bool isShift, bool isHiddenLOp,
-                           ClassKind ck, const std::string &InstName) {
+                           ClassKind ck, const std::string &InstName,
+						   bool isA64,
+						   std::string & testFuncProto) {
   assert(!proto.empty() && "");
   std::string s;
 
@@ -2167,12 +2428,17 @@ static std::string GenTest(const std::string &name,
     mangledName = MangleName(mangledName, inTypeNoQuad, ClassS);
   }
 
+  // todo: GenerateChecksForIntrinsic does not generate CHECK
+  // for aarch64 instructions yet
   std::vector<std::string> FileCheckPatterns;
-  GenerateChecksForIntrinsic(name, proto, outTypeStr, inTypeStr, ck, InstName,
-                             isHiddenLOp, FileCheckPatterns);
+  if (!isA64) {
+	GenerateChecksForIntrinsic(name, proto, outTypeStr, inTypeStr, ck, InstName,
+							   isHiddenLOp, FileCheckPatterns);
+	s+= "// CHECK_ARM: test_" + mangledName + "\n";
+  }
+  s += "// CHECK_AARCH64: test_" + mangledName + "\n";
 
   // Emit the FileCheck patterns.
-  s += "// CHECK: test_" + mangledName + "\n";
   // If for any reason we do not want to emit a check, mangledInst
   // will be the empty string.
   if (FileCheckPatterns.size()) {
@@ -2180,23 +2446,27 @@ static std::string GenTest(const std::string &name,
                                                   e = FileCheckPatterns.end();
          i != e;
          ++i) {
-      s += "// CHECK: " + *i + "\n";
+      s += "// CHECK_ARM: " + *i + "\n";
     }
   }
 
   // Emit the start of the test function.
-  s += TypeString(proto[0], outTypeStr) + " test_" + mangledName + "(";
+
+  testFuncProto = TypeString(proto[0], outTypeStr) + " test_" + mangledName + "(";
   char arg = 'a';
   std::string comma;
   for (unsigned i = 1, e = proto.size(); i != e; ++i, ++arg) {
     // Do not create arguments for values that must be immediate constants.
     if (proto[i] == 'i')
       continue;
-    s += comma + TypeString(proto[i], inTypeStr) + " ";
-    s.push_back(arg);
+    testFuncProto += comma + TypeString(proto[i], inTypeStr) + " ";
+    testFuncProto.push_back(arg);
     comma = ", ";
   }
-  s += ") {\n  ";
+  testFuncProto += ")";
+
+  s+= testFuncProto;
+  s+= " {\n  ";
 
   if (proto[0] != 'v')
     s += "return ";
@@ -2220,20 +2490,14 @@ static std::string GenTest(const std::string &name,
   return s;
 }
 
-/// runTests - Write out a complete set of tests for all of the Neon
-/// intrinsics.
-void NeonEmitter::runTests(raw_ostream &OS) {
-  OS <<
-    "// RUN: %clang_cc1 -triple thumbv7s-apple-darwin -target-abi apcs-gnu\\\n"
-    "// RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\\\n"
-    "// RUN:  | FileCheck %s\n"
-    "\n"
-    "// REQUIRES: long_tests\n"
-    "\n"
-    "#include <arm_neon.h>\n"
-    "\n";
+/// Write out all intrinsic tests for the specified target, checking
+/// for intrinsic test uniqueness.
+void NeonEmitter::genTargetTest(raw_ostream &OS, StringMap<OpKind> &EmittedMap,
+                                bool isA64GenTest) {
+  if (isA64GenTest)
+	OS << "#ifdef __aarch64__\n";
 
-  std::vector<Record*> RV = Records.getAllDerivedDefinitions("Inst");
+  std::vector<Record *> RV = Records.getAllDerivedDefinitions("Inst");
   for (unsigned i = 0, e = RV.size(); i != e; ++i) {
     Record *R = RV[i];
     std::string name = R->getValueAsString("Name");
@@ -2242,6 +2506,12 @@ void NeonEmitter::runTests(raw_ostream &OS) {
     bool isShift = R->getValueAsBit("isShift");
     std::string InstName = R->getValueAsString("InstName");
     bool isHiddenLOp = R->getValueAsBit("isHiddenLInst");
+    bool isA64 = R->getValueAsBit("isA64");
+
+    // do not include AArch64 intrinsic test if not generating
+    // code for AArch64
+    if (!isA64GenTest && isA64)
+      continue;
 
     SmallVector<StringRef, 16> TypeVec;
     ParseTypes(R, Types, TypeVec);
@@ -2261,16 +2531,56 @@ void NeonEmitter::runTests(raw_ostream &OS) {
           (void)ClassifyType(TypeVec[srcti], inQuad, dummy, dummy);
           if (srcti == ti || inQuad != outQuad)
             continue;
-          OS << GenTest(name, Proto, TypeVec[ti], TypeVec[srcti],
-                        isShift, isHiddenLOp, ck, InstName);
+		  std::string testFuncProto;
+          std::string s = GenTest(name, Proto, TypeVec[ti], TypeVec[srcti],
+                                  isShift, isHiddenLOp, ck, InstName, isA64,
+								  testFuncProto);
+          if (EmittedMap.count(testFuncProto))
+            continue;
+          EmittedMap[testFuncProto] = kind;
+          OS << s << "\n";
         }
       } else {
-        OS << GenTest(name, Proto, TypeVec[ti], TypeVec[ti],
-                      isShift, isHiddenLOp, ck, InstName);
+		std::string testFuncProto;
+        std::string s = GenTest(name, Proto, TypeVec[ti], TypeVec[ti], isShift,
+                                isHiddenLOp, ck, InstName, isA64, testFuncProto);
+        if (EmittedMap.count(testFuncProto))
+          continue;
+        EmittedMap[testFuncProto] = kind;
+        OS << s << "\n";
       }
     }
-    OS << "\n";
   }
+
+  if (isA64GenTest)
+	OS << "#endif\n";
+}
+/// runTests - Write out a complete set of tests for all of the Neon
+/// intrinsics.
+void NeonEmitter::runTests(raw_ostream &OS) {
+  OS << "// RUN: %clang_cc1 -triple thumbv7s-apple-darwin -target-abi "
+        "apcs-gnu\\\n"
+        "// RUN:  -target-cpu swift -ffreestanding -Os -S -o - %s\\\n"
+        "// RUN:  | FileCheck %s -check-prefix=CHECK_ARM\n"
+		"\n"
+	    "// RUN: %clang_cc1 -triple aarch64-none-linux-gnu \\\n"
+	    "// RUN -target-feature +neon  -ffreestanding -S -o - %s \\\n"
+	    "// RUN:  | FileCheck %s -check-prefix=CHECK_AARCH64\n"
+        "\n"
+        "// REQUIRES: long_tests\n"
+        "\n"
+        "#include <arm_neon.h>\n"
+        "\n";
+
+  // ARM tests must be emitted before AArch64 tests to ensure
+  // tests for intrinsics that are common to ARM and AArch64
+  // appear only once in the output stream.
+  // The check for uniqueness is done in genTargetTest.
+  StringMap<OpKind> EmittedMap;
+
+  genTargetTest(OS, EmittedMap, false);
+
+  genTargetTest(OS, EmittedMap, true);
 }
 
 namespace clang {

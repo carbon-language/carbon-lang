@@ -1,6 +1,7 @@
-// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple arm-none-linux-gnueabi %s -emit-llvm -o - | FileCheck %s
 
 typedef float float32_t;
+typedef __fp16 float16_t;
 typedef signed char poly8_t;
 typedef short poly16_t;
 typedef unsigned long long uint64_t;
@@ -11,8 +12,10 @@ typedef __attribute__((neon_vector_type(1))) uint64_t uint64x1_t;
 typedef __attribute__((neon_vector_type(2))) uint64_t uint64x2_t;
 typedef __attribute__((neon_vector_type(2))) float32_t float32x2_t;
 typedef __attribute__((neon_vector_type(4))) float32_t float32x4_t;
-typedef __attribute__((neon_polyvector_type(16))) poly8_t  poly8x16_t;
-typedef __attribute__((neon_polyvector_type(8)))  poly16_t poly16x8_t;
+typedef __attribute__((neon_vector_type(4))) float16_t float16x4_t;
+typedef __attribute__((neon_vector_type(8))) float16_t float16x8_t;
+typedef __attribute__((neon_polyvector_type(16))) poly8_t poly8x16_t;
+typedef __attribute__((neon_polyvector_type(8))) poly16_t poly16x8_t;
 
 // CHECK: 16__simd64_int32_t
 void f1(int32x2_t v) { }
@@ -26,7 +29,11 @@ void f4(uint64x2_t v) { }
 void f5(float32x2_t v) { }
 // CHECK: 19__simd128_float32_t
 void f6(float32x4_t v) { }
+// CHECK: 18__simd64_float16_t
+void f7(float16x4_t v) {}
+// CHECK: 19__simd128_float16_t
+void f8(float16x8_t v) {}
 // CHECK: 17__simd128_poly8_t
-void f7(poly8x16_t v) { }
+void f9(poly8x16_t v) {}
 // CHECK: 18__simd128_poly16_t
-void f8(poly16x8_t v) { }
+void f10(poly16x8_t v) {}

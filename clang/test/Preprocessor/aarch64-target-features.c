@@ -30,3 +30,6 @@
 // RUN: %clang -target aarch64-none-linux-gnu -fshort-enums -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-SHORTENUMS %s
 // CHECK-SHORTENUMS: __ARM_SIZEOF_MINIMAL_ENUM 1
 
+// RUN: %clang -target aarch64-none-linux-gnu -mfpu=neon -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-NEON %s
+// CHECK-NEON: __AARCH_ADVSIMD_FP
+// CHECK-NEON: __AARCH_FEATURE_ADVSIMD

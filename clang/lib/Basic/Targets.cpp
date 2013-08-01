@@ -3177,7 +3177,14 @@ class AArch64TargetInfo : public TargetInfo {
   static const char * const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
 
+  enum FPUModeEnum {
+    FPUMode,
+    NeonMode
+  };
+
+  unsigned FPU;
   static const Builtin::Info BuiltinInfo[];
+
 public:
   AArch64TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
     BigEndian = false;
@@ -3242,7 +3249,14 @@ public:
                         Opts.ShortEnums ? "1" : "4");
 
     if (BigEndian)
-      Builder.defineMacro("__ARM_BIG_ENDIAN");
+      Builder.defineMacro("__AARCH_BIG_ENDIAN");
+
+    if (FPU == NeonMode) {
+      Builder.defineMacro("__AARCH_FEATURE_ADVSIMD");
+
+      // 64-bit NEON supports half, single and double precision operations.
+      Builder.defineMacro("__AARCH_ADVSIMD_FP", "0xe");
+    }
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
@@ -3250,9 +3264,28 @@ public:
     NumRecords = clang::AArch64::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   virtual bool hasFeature(StringRef Feature) const {
-    return Feature == "aarch64";
+    return Feature == "aarch64" || (Feature == "neon" && FPU == NeonMode);
   }
-  virtual void getGCCRegNames(const char * const *&Names,
+
+  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+                                 StringRef Name, bool Enabled) const {
+    if (Name == "neon") {
+      Features[Name] = Enabled;
+      return true;
+    }
+
+    return false;
+  }
+
+  virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
+    FPU = FPUMode;
+    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
+      if (Features[i] == "+neon")
+        FPU = NeonMode;
+    }
+  }
+
+  virtual void getGCCRegNames(const char *const *&Names,
                               unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const;
