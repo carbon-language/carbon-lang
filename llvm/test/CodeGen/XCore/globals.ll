@@ -90,3 +90,7 @@ entry:
 @G8 = internal global i32 9312
 ; CHECK: .section .dp.data,"awd",@progbits
 ; CHECK: G8:
+
+@array = global [10 x i16] zeroinitializer, align 2
+; CHECK: .globl  array.globound
+; CHECK: .set  array.globound,10
