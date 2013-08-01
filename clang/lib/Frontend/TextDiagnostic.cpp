@@ -778,11 +778,8 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
       const FileEntry* FE = SM.getFileEntryForID(FID);
       if (FE && FE->getName()) {
         OS << FE->getName();
-        if (FE->getDevice() == 0 && FE->getInode() == 0
-            && FE->getFileMode() == 0) {
-          // in PCH is a guess, but a good one:
+        if (FE->isInPCH())
           OS << " (in PCH)";
-        }
         OS << ": ";
       }
     }

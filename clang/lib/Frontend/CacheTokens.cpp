@@ -58,16 +58,16 @@ public:
 class PTHEntryKeyVariant {
   union { const FileEntry* FE; const char* Path; };
   enum { IsFE = 0x1, IsDE = 0x2, IsNoExist = 0x0 } Kind;
-  struct stat *StatBuf;
+  FileData *Data;
+
 public:
-  PTHEntryKeyVariant(const FileEntry *fe)
-    : FE(fe), Kind(IsFE), StatBuf(0) {}
+  PTHEntryKeyVariant(const FileEntry *fe) : FE(fe), Kind(IsFE), Data(0) {}
 
-  PTHEntryKeyVariant(struct stat* statbuf, const char* path)
-    : Path(path), Kind(IsDE), StatBuf(new struct stat(*statbuf)) {}
+  PTHEntryKeyVariant(FileData *Data, const char *path)
+      : Path(path), Kind(IsDE), Data(new FileData(*Data)) {}
 
-  explicit PTHEntryKeyVariant(const char* path)
-    : Path(path), Kind(IsNoExist), StatBuf(0) {}
+  explicit PTHEntryKeyVariant(const char *path)
+      : Path(path), Kind(IsNoExist), Data(0) {}
 
   bool isFile() const { return Kind == IsFE; }
 
@@ -79,22 +79,21 @@ public:
 
   void EmitData(raw_ostream& Out) {
     switch (Kind) {
-    case IsFE:
+    case IsFE: {
       // Emit stat information.
-      ::Emit32(Out, FE->getInode());
-      ::Emit32(Out, FE->getDevice());
-      ::Emit16(Out, FE->getFileMode());
+      llvm::sys::fs::UniqueID UID = FE->getUniqueID();
+      ::Emit64(Out, UID.getFile());
+      ::Emit64(Out, UID.getDevice());
       ::Emit64(Out, FE->getModificationTime());
       ::Emit64(Out, FE->getSize());
-      break;
+    } break;
     case IsDE:
       // Emit stat information.
-      ::Emit32(Out, (uint32_t) StatBuf->st_ino);
-      ::Emit32(Out, (uint32_t) StatBuf->st_dev);
-      ::Emit16(Out, (uint16_t) StatBuf->st_mode);
-      ::Emit64(Out, (uint64_t) StatBuf->st_mtime);
-      ::Emit64(Out, (uint64_t) StatBuf->st_size);
-      delete StatBuf;
+      ::Emit64(Out, Data->UniqueID.getFile());
+      ::Emit64(Out, Data->UniqueID.getDevice());
+      ::Emit64(Out, Data->ModTime);
+      ::Emit64(Out, Data->Size);
+      delete Data;
       break;
     default:
       break;
@@ -516,18 +515,18 @@ public:
   StatListener(PTHMap &pm) : PM(pm) {}
   ~StatListener() {}
 
-  LookupResult getStat(const char *Path, struct stat &StatBuf,
-                       bool isFile, int *FileDescriptor) {
-    LookupResult Result = statChained(Path, StatBuf, isFile, FileDescriptor);
+  LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                       int *FileDescriptor) {
+    LookupResult Result = statChained(Path, Data, isFile, FileDescriptor);
 
     if (Result == CacheMissing) // Failed 'stat'.
       PM.insert(PTHEntryKeyVariant(Path), PTHEntry());
-    else if (S_ISDIR(StatBuf.st_mode)) {
+    else if (Data.IsDirectory) {
       // Only cache directories with absolute paths.
       if (llvm::sys::path::is_relative(Path))
         return Result;
 
-      PM.insert(PTHEntryKeyVariant(&StatBuf, Path), PTHEntry());
+      PM.insert(PTHEntryKeyVariant(&Data, Path), PTHEntry());
     }
 
     return Result;

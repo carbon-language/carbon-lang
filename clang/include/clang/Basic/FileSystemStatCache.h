@@ -18,10 +18,20 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/FileSystem.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 
 namespace clang {
+
+struct FileData {
+  uint64_t Size;
+  time_t ModTime;
+  llvm::sys::fs::UniqueID UniqueID;
+  bool IsDirectory;
+  bool IsNamedPipe;
+  bool InPCH;
+};
 
 /// \brief Abstract interface for introducing a FileManager cache for 'stat'
 /// system calls, which is used by precompiled and pretokenized headers to
@@ -49,10 +59,9 @@ public:
   /// success for directories (not files).  On a successful file lookup, the
   /// implementation can optionally fill in FileDescriptor with a valid
   /// descriptor and the client guarantees that it will close it.
-  static bool get(const char *Path, struct stat &StatBuf,
-                  bool isFile, int *FileDescriptor, FileSystemStatCache *Cache);
-  
-  
+  static bool get(const char *Path, FileData &Data, bool isFile,
+                  int *FileDescriptor, FileSystemStatCache *Cache);
+
   /// \brief Sets the next stat call cache in the chain of stat caches.
   /// Takes ownership of the given stat cache.
   void setNextStatCache(FileSystemStatCache *Cache) {
@@ -68,18 +77,18 @@ public:
   FileSystemStatCache *takeNextStatCache() { return NextStatCache.take(); }
   
 protected:
-  virtual LookupResult getStat(const char *Path, struct stat &StatBuf,
-                               bool isFile, int *FileDescriptor) = 0;
+  virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                               int *FileDescriptor) = 0;
 
-  LookupResult statChained(const char *Path, struct stat &StatBuf,
-                           bool isFile, int *FileDescriptor) {
+  LookupResult statChained(const char *Path, FileData &Data, bool isFile,
+                           int *FileDescriptor) {
     if (FileSystemStatCache *Next = getNextStatCache())
-      return Next->getStat(Path, StatBuf, isFile, FileDescriptor);
-    
+      return Next->getStat(Path, Data, isFile, FileDescriptor);
+
     // If we hit the end of the list of stat caches to try, just compute and
     // return it without a cache.
-    return get(Path, StatBuf,
-               isFile, FileDescriptor, 0) ? CacheMissing : CacheExists;
+    return get(Path, Data, isFile, FileDescriptor, 0) ? CacheMissing
+                                                      : CacheExists;
   }
 };
 
@@ -89,16 +98,16 @@ protected:
 class MemorizeStatCalls : public FileSystemStatCache {
 public:
   /// \brief The set of stat() calls that have been seen.
-  llvm::StringMap<struct stat, llvm::BumpPtrAllocator> StatCalls;
-  
-  typedef llvm::StringMap<struct stat, llvm::BumpPtrAllocator>::const_iterator
+  llvm::StringMap<FileData, llvm::BumpPtrAllocator> StatCalls;
+
+  typedef llvm::StringMap<FileData, llvm::BumpPtrAllocator>::const_iterator
   iterator;
-  
+
   iterator begin() const { return StatCalls.begin(); }
   iterator end() const { return StatCalls.end(); }
-  
-  virtual LookupResult getStat(const char *Path, struct stat &StatBuf,
-                               bool isFile, int *FileDescriptor);
+
+  virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                               int *FileDescriptor);
 };
 
 } // end namespace clang

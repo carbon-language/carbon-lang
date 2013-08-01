@@ -619,18 +619,18 @@ PTHLexer *PTHManager::CreateLexer(FileID FID) {
 namespace {
 class PTHStatData {
 public:
-  const bool hasStat;
-  const ino_t ino;
-  const dev_t dev;
-  const mode_t mode;
-  const time_t mtime;
-  const off_t size;
+  const bool HasData;
+  uint64_t Size;
+  time_t ModTime;
+  llvm::sys::fs::UniqueID UniqueID;
+  bool IsDirectory;
 
-  PTHStatData(ino_t i, dev_t d, mode_t mo, time_t m, off_t s)
-  : hasStat(true), ino(i), dev(d), mode(mo), mtime(m), size(s) {}
+  PTHStatData(uint64_t Size, time_t ModTime, llvm::sys::fs::UniqueID UniqueID,
+              bool IsDirectory)
+      : HasData(true), Size(Size), ModTime(ModTime), UniqueID(UniqueID),
+        IsDirectory(IsDirectory) {}
 
-  PTHStatData()
-    : hasStat(false), ino(0), dev(0), mode(0), mtime(0), size(0) {}
+  PTHStatData() : HasData(false) {}
 };
 
 class PTHStatLookupTrait : public PTHFileLookupCommonTrait {
@@ -653,12 +653,18 @@ public:
                             unsigned) {
 
     if (k.first /* File or Directory */) {
-      if (k.first == 0x1 /* File */) d += 4 * 2; // Skip the first 2 words.
-      ino_t ino = (ino_t) ReadUnalignedLE32(d);
-      dev_t dev = (dev_t) ReadUnalignedLE32(d);
-      mode_t mode = (mode_t) ReadUnalignedLE16(d);
-      time_t mtime = (time_t) ReadUnalignedLE64(d);
-      return data_type(ino, dev, mode, mtime, (off_t) ReadUnalignedLE64(d));
+      bool IsDirectory = true;
+      if (k.first == 0x1 /* File */) {
+        IsDirectory = false;
+        d += 4 * 2; // Skip the first 2 words.
+      }
+
+      uint64_t File = ReadUnalignedLE64(d);
+      uint64_t Device = ReadUnalignedLE64(d);
+      llvm::sys::fs::UniqueID UniqueID(File, Device);
+      time_t ModTime = ReadUnalignedLE64(d);
+      uint64_t Size = ReadUnalignedLE64(d);
+      return data_type(Size, ModTime, UniqueID, IsDirectory);
     }
 
     // Negative stat.  Don't read anything.
@@ -677,25 +683,27 @@ public:
 
   ~PTHStatCache() {}
 
-  LookupResult getStat(const char *Path, struct stat &StatBuf,
-                       bool isFile, int *FileDescriptor) {
+  LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                       int *FileDescriptor) {
     // Do the lookup for the file's data in the PTH file.
     CacheTy::iterator I = Cache.find(Path);
 
     // If we don't get a hit in the PTH file just forward to 'stat'.
     if (I == Cache.end())
-      return statChained(Path, StatBuf, isFile, FileDescriptor);
+      return statChained(Path, Data, isFile, FileDescriptor);
 
-    const PTHStatData &Data = *I;
+    const PTHStatData &D = *I;
 
-    if (!Data.hasStat)
+    if (!D.HasData)
       return CacheMissing;
 
-    StatBuf.st_ino = Data.ino;
-    StatBuf.st_dev = Data.dev;
-    StatBuf.st_mtime = Data.mtime;
-    StatBuf.st_mode = Data.mode;
-    StatBuf.st_size = Data.size;
+    Data.Size = D.Size;
+    Data.ModTime = D.ModTime;
+    Data.UniqueID = D.UniqueID;
+    Data.IsDirectory = D.IsDirectory;
+    Data.IsNamedPipe = false;
+    Data.InPCH = true;
+
     return CacheExists;
   }
 };
