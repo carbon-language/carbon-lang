@@ -791,10 +791,7 @@ class Atomic2Ops<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
 
 multiclass Atomic2Ops32<PatFrag Op> {
   def NAME : Atomic2Ops<Op, CPURegs, CPURegs>, Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Atomic2Ops<Op, CPURegs, CPU64Regs>,
-             Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-  }
+  def _P8  : Atomic2Ops<Op, CPURegs, CPU64Regs>, Requires<[IsN64, HasStdEnc]>;
 }
 
 // Atomic Compare & Swap.
@@ -806,9 +803,7 @@ multiclass AtomicCmpSwap32<PatFrag Op>  {
   def NAME : AtomicCmpSwap<Op, CPURegs, CPURegs>,
              Requires<[NotN64, HasStdEnc]>;
   def _P8  : AtomicCmpSwap<Op, CPURegs, CPU64Regs>,
-             Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-  }
+             Requires<[IsN64, HasStdEnc]>;
 }
 
 class LLBase<string opstr, RegisterOperand RO, Operand Mem> :
@@ -879,9 +874,9 @@ let usesCustomInserter = 1 in {
 }
 
 /// Pseudo instructions for loading and storing accumulator registers.
-let isPseudo = 1 in {
-  defm LOAD_AC64  : LoadM<"load_ac64", ACRegs>;
-  defm STORE_AC64 : StoreM<"store_ac64", ACRegs>;
+let isPseudo = 1, isCodeGenOnly = 1 in {
+  defm LOAD_AC64  : LoadM<"", ACRegs>;
+  defm STORE_AC64 : StoreM<"", ACRegs>;
 }
 
 //===----------------------------------------------------------------------===//

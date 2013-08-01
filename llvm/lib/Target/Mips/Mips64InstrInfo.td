@@ -37,21 +37,15 @@ def immZExt6 : ImmLeaf<i32, [{return Imm == (Imm & 0x3f);}]>;
 let DecoderNamespace = "Mips64" in {
 
 multiclass Atomic2Ops64<PatFrag Op> {
-  def NAME : Atomic2Ops<Op, CPU64Regs, CPURegs>,
-             Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Atomic2Ops<Op, CPU64Regs, CPU64Regs>,
-             Requires<[IsN64, HasStdEnc]> {
-    let isCodeGenOnly = 1;
-  }
+  def NAME : Atomic2Ops<Op, CPU64Regs, CPURegs>, Requires<[NotN64, HasStdEnc]>;
+  def _P8  : Atomic2Ops<Op, CPU64Regs, CPU64Regs>, Requires<[IsN64, HasStdEnc]>;
 }
 
 multiclass AtomicCmpSwap64<PatFrag Op>  {
   def NAME : AtomicCmpSwap<Op, CPU64Regs, CPURegs>,
              Requires<[NotN64, HasStdEnc]>;
   def _P8  : AtomicCmpSwap<Op, CPU64Regs, CPU64Regs>,
-             Requires<[IsN64, HasStdEnc]> {
-    let isCodeGenOnly = 1;
-  }
+             Requires<[IsN64, HasStdEnc]>;
 }
 }
 let usesCustomInserter = 1, Predicates = [HasStdEnc],
@@ -67,9 +61,9 @@ let usesCustomInserter = 1, Predicates = [HasStdEnc],
 }
 
 /// Pseudo instructions for loading and storing accumulator registers.
-let isPseudo = 1 in {
-  defm LOAD_AC128  : LoadM<"load_ac128", ACRegs128>;
-  defm STORE_AC128 : StoreM<"store_ac128", ACRegs128>;
+let isPseudo = 1, isCodeGenOnly = 1 in {
+  defm LOAD_AC128  : LoadM<"", ACRegs128>;
+  defm STORE_AC128 : StoreM<"", ACRegs128>;
 }
 
 //===----------------------------------------------------------------------===//
