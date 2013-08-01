@@ -928,12 +928,13 @@ static unsigned enforceKnownAlignment(Value *V, unsigned Align,
 /// and it is more than the alignment of the ultimate object, see if we can
 /// increase the alignment of the ultimate object, making this check succeed.
 unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
-                                          const DataLayout *TD) {
+                                          const DataLayout *DL) {
   assert(V->getType()->isPointerTy() &&
          "getOrEnforceKnownAlignment expects a pointer!");
-  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 64;
+  unsigned BitWidth = DL ? DL->getPointerTypeSizeInBits(V->getType()) : 64;
+
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  ComputeMaskedBits(V, KnownZero, KnownOne, TD);
+  ComputeMaskedBits(V, KnownZero, KnownOne, DL);
   unsigned TrailZ = KnownZero.countTrailingOnes();
 
   // Avoid trouble with ridiculously large TrailZ values, such as
@@ -946,7 +947,7 @@ unsigned llvm::getOrEnforceKnownAlignment(Value *V, unsigned PrefAlign,
   Align = std::min(Align, +Value::MaximumAlignment);
 
   if (PrefAlign > Align)
-    Align = enforceKnownAlignment(V, Align, PrefAlign, TD);
+    Align = enforceKnownAlignment(V, Align, PrefAlign, DL);
 
   // We don't need to make any adjustment.
   return Align;
