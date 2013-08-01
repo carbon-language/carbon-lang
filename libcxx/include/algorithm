@@ -2012,6 +2012,7 @@ fill_n(_OutputIterator __first, _Size __n, const _Tp& __value_)
    return _VSTD::__fill_n(__first, __n, __value_, integral_constant<bool,
                                               is_pointer<_OutputIterator>::value &&
                                               is_trivially_assignable<typename remove_pointer<_OutputIterator>::type, _Tp>::value &&
+                                              is_convertible<_Tp, unsigned char>::value &&
                                               sizeof(typename remove_pointer<_OutputIterator>::type) == 1>());
 }
 

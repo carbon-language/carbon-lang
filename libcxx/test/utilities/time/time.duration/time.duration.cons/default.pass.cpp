@@ -27,7 +27,7 @@ test()
     D d;
     assert(d.count() == typename D::rep());
 #ifndef _LIBCPP_HAS_NO_CONSTEXPR
-    constexpr D d2;
+    constexpr D d2 = D();
     static_assert(d2.count() == typename D::rep(), "");
 #endif
 }
