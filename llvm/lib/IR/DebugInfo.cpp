@@ -908,26 +908,12 @@ void DebugInfoFinder::processModule(const Module &M) {
       return;
     }
   }
-  if (NamedMDNode *SP_Nodes = M.getNamedMetadata("llvm.dbg.sp")) {
-    for (unsigned i = 0, e = SP_Nodes->getNumOperands(); i != e; ++i)
-      processSubprogram(DISubprogram(SP_Nodes->getOperand(i)));
-  }
 }
 
 /// processLocation - Process DILocation.
 void DebugInfoFinder::processLocation(DILocation Loc) {
-  if (!Loc.Verify()) return;
-  DIDescriptor S(Loc.getScope());
-  if (S.isCompileUnit())
-    addCompileUnit(DICompileUnit(S));
-  else if (S.isSubprogram())
-    processSubprogram(DISubprogram(S));
-  else if (S.isLexicalBlock())
-    processLexicalBlock(DILexicalBlock(S));
-  else if (S.isLexicalBlockFile()) {
-    DILexicalBlockFile DBF = DILexicalBlockFile(S);
-    processLexicalBlock(DILexicalBlock(DBF.getScope()));
-  }
+  if (!Loc) return;
+  processScope(Loc.getScope());
   processLocation(Loc.getOrigLocation());
 }
 

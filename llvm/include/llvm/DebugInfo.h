@@ -717,10 +717,12 @@ namespace llvm {
   /// cleanseInlinedVariable - Remove inlined scope from the variable.
   DIVariable cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext);
 
-  /// DebugInfoFinder tries to list all debug info MDNodes in a module. To
+  /// DebugInfoFinder tries to list all debug info MDNodes used in a module. To
   /// list debug info MDNodes used by an instruction, DebugInfoFinder uses
-  /// processDeclare and processValue. processModule will go through
-  /// all DICompileUnits and list debug info MDNodes used by the CUs.
+  /// processDeclare, processValue and processLocation to handle DbgDeclareInst,
+  /// DbgValueInst and DbgLoc attached to instructions. processModule will go
+  /// through all DICompileUnits in llvm.dbg.cu and list debug info MDNodes
+  /// used by the CUs.
   class DebugInfoFinder {
   public:
     /// processModule - Process entire module and collect debug info
@@ -731,6 +733,8 @@ namespace llvm {
     void processDeclare(const DbgDeclareInst *DDI);
     /// Process DbgValueInst.
     void processValue(const DbgValueInst *DVI);
+    /// processLocation - Process DILocation.
+    void processLocation(DILocation Loc);
 
     /// Clear all lists.
     void reset();
@@ -743,9 +747,6 @@ namespace llvm {
 
     /// processSubprogram - Process DISubprogram.
     void processSubprogram(DISubprogram SP);
-
-    /// processLocation - Process DILocation.
-    void processLocation(DILocation Loc);
 
     void processScope(DIScope Scope);
 

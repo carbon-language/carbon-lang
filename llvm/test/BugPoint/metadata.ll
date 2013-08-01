@@ -5,10 +5,12 @@
 
 ; Bugpoint should keep the call's metadata attached to the call.
 
-; CHECK: call void @foo(), !dbg !0, !attach !2
+; CHECK: call void @foo(), !dbg !0, !attach !4
 ; CHECK: !0 = metadata !{i32 104, i32 105, metadata !1, metadata !1}
-; CHECK: !1 = metadata !{i32 0, i32 0, i32 0, metadata !"source.c", metadata !"/dir", metadata !"me", i1 true, i1 false, metadata !"", i32 0}
-; CHECK: !2 = metadata !{metadata !"the call to foo"}
+; CHECK: !1 = metadata !{i32 458769, metadata !2, i32 0, metadata !"me", i1 true, metadata !"", i32 0, metadata !3, metadata !3, null, null, null, metadata !""}
+; CHECK: !2 = metadata !{metadata !"source.c", metadata !"/dir"}
+; CHECK: !3 = metadata !{i32 0}
+; CHECK: !4 = metadata !{metadata !"the call to foo"}
 
 %rust_task = type {}
 define void @test(i32* %a, i8* %b) {
@@ -28,9 +30,11 @@ declare void @foo()
 !3 = metadata !{metadata !"noise"}
 !4 = metadata !{metadata !"filler"}
 
-!9 = metadata !{i32 0, i32 0, i32 0, metadata !"source.c", metadata !"/dir", metadata !"me", i1 true, i1 false, metadata !"", i32 0}
+!9 = metadata !{i32 458769, metadata !15, i32 0, metadata !"me", i1 true, metadata !"", i32 0, metadata !16, metadata !16, null, null, null, metadata !""}
 !10 = metadata !{i32 100, i32 101, metadata !9, metadata !9}
 !11 = metadata !{i32 102, i32 103, metadata !9, metadata !9}
 !12 = metadata !{i32 104, i32 105, metadata !9, metadata !9}
 !13 = metadata !{i32 106, i32 107, metadata !9, metadata !9}
 !14 = metadata !{i32 108, i32 109, metadata !9, metadata !9}
+!15 = metadata !{metadata !"source.c", metadata !"/dir"}
+!16 = metadata !{i32 0}
