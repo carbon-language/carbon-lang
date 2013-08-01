@@ -1158,7 +1158,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::colon))
     return Left.Type != TT_ObjCMethodExpr;
   if (Right.is(tok::colon))
-    return Right.Type != TT_ObjCMethodExpr;
+    return Right.Type != TT_ObjCMethodExpr && !Left.is(tok::question);
   if (Left.is(tok::l_paren))
     return false;
   if (Right.is(tok::l_paren)) {
@@ -1220,7 +1220,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return false;
   if (Tok.is(tok::colon))
     return !Line.First->isOneOf(tok::kw_case, tok::kw_default) &&
-           Tok.getNextNonComment() != NULL && Tok.Type != TT_ObjCMethodExpr;
+           Tok.getNextNonComment() != NULL && Tok.Type != TT_ObjCMethodExpr &&
+           !Tok.Previous->is(tok::question);
   if (Tok.Previous->Type == TT_UnaryOperator ||
       Tok.Previous->Type == TT_CastRParen)
     return false;
@@ -1260,7 +1261,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Left.ClosesTemplateDeclaration)
     return true;
-  if (Right.Type == TT_ConditionalExpr || Right.is(tok::question))
+  if ((Right.Type == TT_ConditionalExpr &&
+       !(Right.is(tok::colon) && Left.is(tok::question))) ||
+      Right.is(tok::question))
     return true;
   if (Right.Type == TT_RangeBasedForLoopColon ||
       Right.Type == TT_OverloadedOperatorLParen)

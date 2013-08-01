@@ -1237,7 +1237,8 @@ private:
         return true;
     }
     if ((Previous.isOneOf(tok::comma, tok::semi) || Current.is(tok::question) ||
-         Current.Type == TT_ConditionalExpr) &&
+         (Current.Type == TT_ConditionalExpr &&
+          !(Current.is(tok::colon) && Previous.is(tok::question)))) &&
         State.Stack.back().BreakBeforeParameter &&
         !Current.isTrailingComment() &&
         !Current.isOneOf(tok::r_paren, tok::r_brace))
