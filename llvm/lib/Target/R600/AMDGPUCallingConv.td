@@ -39,7 +39,7 @@ def CC_SI : CallingConv<[
 // Calling convention for compute kernels
 def CC_AMDGPU_Kernel : CallingConv<[
   CCIfType<[v4i32, v4f32], CCAssignToStack <16, 16>>,
-  CCIfType<[i64, f64],     CCAssignToStack < 8, 4>>,
+  CCIfType<[i64, f64],     CCAssignToStack < 8, 8>>,
   CCIfType<[i32, f32],     CCAssignToStack < 4, 4>>,
   CCIfType<[i16],          CCAssignToStack < 2, 4>>,
   CCIfType<[i8],           CCAssignToStack < 1, 4>>
