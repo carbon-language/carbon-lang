@@ -1290,6 +1290,13 @@ def RAT_WRITE_CACHELESS_32_eg : RAT_WRITE_CACHELESS_eg <
   [(global_store i32:$rw_gpr, i32:$index_gpr)]
 >;
 
+// 64-bit store
+def RAT_WRITE_CACHELESS_64_eg : RAT_WRITE_CACHELESS_eg <
+  (ins R600_Reg64:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
+  0x3, "RAT_WRITE_CACHELESS_64_eg $rw_gpr.XY, $index_gpr, $eop",
+  [(global_store v2i32:$rw_gpr, i32:$index_gpr)]
+>;
+
 //128-bit store
 def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
   (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr, InstFlag:$eop),
@@ -1358,6 +1365,18 @@ class VTX_READ_32_eg <bits<8> buffer_id, list<dag> pattern>
   let Constraints = "$src_gpr.ptr = $dst_gpr";
 }
 
+class VTX_READ_64_eg <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_eg <"VTX_READ_64 $dst_gpr.XY, $src_gpr", buffer_id,
+                   (outs R600_Reg64:$dst_gpr), pattern> {
+
+  let MEGA_FETCH_COUNT = 8;
+  let DST_SEL_X        = 0;
+  let DST_SEL_Y        = 1;
+  let DST_SEL_Z        = 7;
+  let DST_SEL_W        = 7;
+  let DATA_FORMAT      = 0x1D; // COLOR_32_32
+}
+
 class VTX_READ_128_eg <bits<8> buffer_id, list<dag> pattern>
     : VTX_READ_eg <"VTX_READ_128 $dst_gpr.XYZW, $src_gpr", buffer_id,
                    (outs R600_Reg128:$dst_gpr), pattern> {
@@ -1391,6 +1410,10 @@ def VTX_READ_PARAM_32_eg : VTX_READ_32_eg <0,
   [(set i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
 >;
 
+def VTX_READ_PARAM_64_eg : VTX_READ_64_eg <0,
+  [(set v2i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
+>;
+
 def VTX_READ_PARAM_128_eg : VTX_READ_128_eg <0,
   [(set v4i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
 >;
@@ -1411,6 +1434,11 @@ def VTX_READ_GLOBAL_16_eg : VTX_READ_16_eg <1,
 // 32-bit reads
 def VTX_READ_GLOBAL_32_eg : VTX_READ_32_eg <1,
   [(set i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
+>;
+
+// 64-bit reads
+def VTX_READ_GLOBAL_64_eg : VTX_READ_64_eg <1,
+  [(set v2i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
 >;
 
 // 128-bit reads
@@ -1744,14 +1772,22 @@ def : Pat <
 def : Pat<(fsqrt f32:$src), (MUL R600_Reg32:$src, (RECIPSQRT_CLAMPED_cm $src))>;
 
 
-def RAT_STORE_DWORD_cm : EG_CF_RAT <
-  0x57, 0x14, 0x1, (outs),
-  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
-  "EXPORT_RAT_INST_STORE_DWORD $rw_gpr, $index_gpr",
-  [(global_store i32:$rw_gpr, i32:$index_gpr)]
+class  RAT_STORE_DWORD_cm <bits<4> mask, dag ins, list<dag> pat> : EG_CF_RAT <
+  0x57, 0x14, mask, (outs), ins,
+  "EXPORT_RAT_INST_STORE_DWORD $rw_gpr, $index_gpr", pat
 > {
   let eop = 0; // This bit is not used on Cayman.
 }
+
+def RAT_STORE_DWORD32_cm : RAT_STORE_DWORD_cm <0x1,
+  (ins R600_TReg32_X:$rw_gpr, R600_TReg32_X:$index_gpr),
+  [(global_store i32:$rw_gpr, i32:$index_gpr)]
+>;
+
+def RAT_STORE_DWORD64_cm : RAT_STORE_DWORD_cm <0x3,
+  (ins R600_Reg64:$rw_gpr, R600_TReg32_X:$index_gpr),
+  [(global_store v2i32:$rw_gpr, i32:$index_gpr)]
+>;
 
 class VTX_READ_cm <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
     : VTX_WORD0_cm, VTX_READ<name, buffer_id, outs, pattern> {
@@ -1815,6 +1851,17 @@ class VTX_READ_32_cm <bits<8> buffer_id, list<dag> pattern>
   let Constraints = "$src_gpr.ptr = $dst_gpr";
 }
 
+class VTX_READ_64_cm <bits<8> buffer_id, list<dag> pattern>
+    : VTX_READ_cm <"VTX_READ_64 $dst_gpr, $src_gpr", buffer_id,
+                   (outs R600_Reg64:$dst_gpr), pattern> {
+
+  let DST_SEL_X        = 0;
+  let DST_SEL_Y        = 1;
+  let DST_SEL_Z        = 7;
+  let DST_SEL_W        = 7;
+  let DATA_FORMAT      = 0x1D; // COLOR_32_32
+}
+
 class VTX_READ_128_cm <bits<8> buffer_id, list<dag> pattern>
     : VTX_READ_cm <"VTX_READ_128 $dst_gpr.XYZW, $src_gpr", buffer_id,
                    (outs R600_Reg128:$dst_gpr), pattern> {
@@ -1846,6 +1893,10 @@ def VTX_READ_PARAM_32_cm : VTX_READ_32_cm <0,
   [(set i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
 >;
 
+def VTX_READ_PARAM_64_cm : VTX_READ_64_cm <0,
+  [(set v2i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
+>;
+
 def VTX_READ_PARAM_128_cm : VTX_READ_128_cm <0,
   [(set v4i32:$dst_gpr, (load_param ADDRVTX_READ:$src_gpr))]
 >;
@@ -1866,6 +1917,11 @@ def VTX_READ_GLOBAL_16_cm : VTX_READ_16_cm <1,
 // 32-bit reads
 def VTX_READ_GLOBAL_32_cm : VTX_READ_32_cm <1,
   [(set i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
+>;
+
+// 64-bit reads
+def VTX_READ_GLOBAL_64_cm : VTX_READ_64_cm <1,
+  [(set v2i32:$dst_gpr, (global_load ADDRVTX_READ:$src_gpr))]
 >;
 
 // 128-bit reads
@@ -2297,10 +2353,24 @@ def : Insert_Element <i32, v4i32, 3, sub3>;
 def : Vector4_Build <v4f32, f32>;
 def : Vector4_Build <v4i32, i32>;
 
+def : Extract_Element <f32, v2f32, 0, sub0>;
+def : Extract_Element <f32, v2f32, 1, sub1>;
+
+def : Insert_Element <f32, v2f32, 0, sub0>;
+def : Insert_Element <f32, v2f32, 1, sub1>;
+
+def : Extract_Element <i32, v2i32, 0, sub0>;
+def : Extract_Element <i32, v2i32, 1, sub1>;
+
+def : Insert_Element <i32, v2i32, 0, sub0>;
+def : Insert_Element <i32, v2i32, 1, sub1>;
+
 // bitconvert patterns
 
 def : BitConvert <i32, f32, R600_Reg32>;
 def : BitConvert <f32, i32, R600_Reg32>;
+def : BitConvert <v2f32, v2i32, R600_Reg64>;
+def : BitConvert <v2i32, v2f32, R600_Reg64>;
 def : BitConvert <v4f32, v4i32, R600_Reg128>;
 def : BitConvert <v4i32, v4f32, R600_Reg128>;
 

@@ -51,9 +51,17 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const {
-  if (AMDGPU::R600_Reg128RegClass.contains(DestReg)
-      && AMDGPU::R600_Reg128RegClass.contains(SrcReg)) {
-    for (unsigned I = 0; I < 4; I++) {
+  unsigned VectorComponents = 0;
+  if (AMDGPU::R600_Reg128RegClass.contains(DestReg) &&
+      AMDGPU::R600_Reg128RegClass.contains(SrcReg)) {
+    VectorComponents = 4;
+  } else if(AMDGPU::R600_Reg64RegClass.contains(DestReg) &&
+            AMDGPU::R600_Reg64RegClass.contains(SrcReg)) {
+    VectorComponents = 2;
+  }
+
+  if (VectorComponents > 0) {
+    for (unsigned I = 0; I < VectorComponents; I++) {
       unsigned SubRegIndex = RI.getSubRegFromChannel(I);
       buildDefaultInstruction(MBB, MI, AMDGPU::MOV,
                               RI.getSubReg(DestReg, SubRegIndex),
@@ -62,11 +70,6 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                       RegState::Define | RegState::Implicit);
     }
   } else {
-
-    // We can't copy vec4 registers
-    assert(!AMDGPU::R600_Reg128RegClass.contains(DestReg)
-           && !AMDGPU::R600_Reg128RegClass.contains(SrcReg));
-
     MachineInstr *NewMI = buildDefaultInstruction(MBB, MI, AMDGPU::MOV,
                                                   DestReg, SrcReg);
     NewMI->getOperand(getOperandIdx(*NewMI, AMDGPU::OpName::src0))

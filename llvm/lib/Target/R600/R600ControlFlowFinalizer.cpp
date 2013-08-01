@@ -378,8 +378,10 @@ public:
         case AMDGPU::R600_ExportBuf:
         case AMDGPU::R600_ExportSwz:
         case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
+        case AMDGPU::RAT_WRITE_CACHELESS_64_eg:
         case AMDGPU::RAT_WRITE_CACHELESS_128_eg:
-        case AMDGPU::RAT_STORE_DWORD_cm:
+        case AMDGPU::RAT_STORE_DWORD32_cm:
+        case AMDGPU::RAT_STORE_DWORD64_cm:
           DEBUG(dbgs() << CfCount << ":"; MI->dump(););
           CfCount++;
           break;

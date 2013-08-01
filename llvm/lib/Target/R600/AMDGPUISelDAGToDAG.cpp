@@ -260,12 +260,19 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
       break;
     }
+
+    unsigned RegClassID;
+    switch(N->getValueType(0).getVectorNumElements()) {
+    case 2: RegClassID = AMDGPU::R600_Reg64RegClassID; break;
+    case 4: RegClassID = AMDGPU::R600_Reg128RegClassID; break;
+    default: llvm_unreachable("Do not know how to lower this BUILD_VECTOR");
+    }
     // BUILD_VECTOR is usually lowered into an IMPLICIT_DEF + 4 INSERT_SUBREG
     // that adds a 128 bits reg copy when going through TwoAddressInstructions
     // pass. We want to avoid 128 bits copies as much as possible because they
     // can't be bundled by our scheduler.
     SDValue RegSeqArgs[9] = {
-      CurDAG->getTargetConstant(AMDGPU::R600_Reg128RegClassID, MVT::i32),
+      CurDAG->getTargetConstant(RegClassID, MVT::i32),
       SDValue(), CurDAG->getTargetConstant(AMDGPU::sub0, MVT::i32),
       SDValue(), CurDAG->getTargetConstant(AMDGPU::sub1, MVT::i32),
       SDValue(), CurDAG->getTargetConstant(AMDGPU::sub2, MVT::i32),

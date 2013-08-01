@@ -3,7 +3,7 @@
 
 ;EG-CHECK: @test2
 ;EG-CHECK: SUB_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
-;EG-CHECK: SUB_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+;EG-CHECK: SUB_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 ;SI-CHECK: @test2
 ;SI-CHECK: V_SUB_I32_e32 VGPR{{[0-9]+, VGPR[0-9]+, VGPR[0-9]+}}

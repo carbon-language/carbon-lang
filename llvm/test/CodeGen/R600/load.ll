@@ -92,8 +92,7 @@ entry:
 
 ; load a v2f32 value from the global address space
 ; R600-CHECK: @load_v2f32
-; R600-CHECK: VTX_READ_32
-; R600-CHECK: VTX_READ_32
+; R600-CHECK: VTX_READ_64
 
 ; SI-CHECK: @load_v2f32
 ; SI-CHECK: BUFFER_LOAD_DWORDX2

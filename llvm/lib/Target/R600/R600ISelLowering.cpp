@@ -33,17 +33,25 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::f32, &AMDGPU::R600_Reg32RegClass);
   addRegisterClass(MVT::v4i32, &AMDGPU::R600_Reg128RegClass);
   addRegisterClass(MVT::i32, &AMDGPU::R600_Reg32RegClass);
+  addRegisterClass(MVT::v2f32, &AMDGPU::R600_Reg64RegClass);
+  addRegisterClass(MVT::v2i32, &AMDGPU::R600_Reg64RegClass);
+
   computeRegisterProperties();
 
   setOperationAction(ISD::FADD, MVT::v4f32, Expand);
+  setOperationAction(ISD::FADD, MVT::v2f32, Expand);
   setOperationAction(ISD::FMUL, MVT::v4f32, Expand);
+  setOperationAction(ISD::FMUL, MVT::v2f32, Expand);
   setOperationAction(ISD::FDIV, MVT::v4f32, Expand);
+  setOperationAction(ISD::FDIV, MVT::v2f32, Expand);
   setOperationAction(ISD::FSUB, MVT::v4f32, Expand);
+  setOperationAction(ISD::FSUB, MVT::v2f32, Expand);
 
   setOperationAction(ISD::FCOS, MVT::f32, Custom);
   setOperationAction(ISD::FSIN, MVT::f32, Custom);
 
   setOperationAction(ISD::SETCC, MVT::v4i32, Expand);
+  setOperationAction(ISD::SETCC, MVT::v2i32, Expand);
 
   setOperationAction(ISD::BR_CC, MVT::i32, Expand);
   setOperationAction(ISD::BR_CC, MVT::f32, Expand);
@@ -66,7 +74,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   // Legalize loads and stores to the private address space.
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
-  setOperationAction(ISD::LOAD, MVT::v2i32, Expand);
+  setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
@@ -74,7 +82,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
   setOperationAction(ISD::STORE, MVT::i8, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
-  setOperationAction(ISD::STORE, MVT::v2i32, Expand);
+  setOperationAction(ISD::STORE, MVT::v2i32, Custom);
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
 
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
@@ -170,6 +178,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   }
 
   case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
+  case AMDGPU::RAT_WRITE_CACHELESS_64_eg:
   case AMDGPU::RAT_WRITE_CACHELESS_128_eg: {
     unsigned EOP = (llvm::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
 
@@ -1129,7 +1138,13 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
             DAG.getConstant(4 * i + ConstantBlock * 16, MVT::i32));
         Slots[i] = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::i32, NewPtr);
       }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v4i32, Slots, 4);
+      EVT NewVT = MVT::v4i32;
+      unsigned NumElements = 4;
+      if (VT.isVector()) {
+        NewVT = VT;
+        NumElements = VT.getVectorNumElements();
+      }
+      Result = DAG.getNode(ISD::BUILD_VECTOR, DL, NewVT, Slots, NumElements);
     } else {
       // non constant ptr cant be folded, keeps it as a v4f32 load
       Result = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::v4i32,

@@ -15,6 +15,16 @@ declare float @llvm.R600.load.input(i32) readnone
 
 declare void @llvm.AMDGPU.store.output(float, i32)
 
+; CHECK: @fmul_v2f32
+; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW]}}
+; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW]}}
+define void @fmul_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x float> %b) {
+entry:
+  %0 = fmul <2 x float> %a, %b
+  store <2 x float> %0, <2 x float> addrspace(1)* %out
+  ret void
+}
+
 ; CHECK: @fmul_v4f32
 ; CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}

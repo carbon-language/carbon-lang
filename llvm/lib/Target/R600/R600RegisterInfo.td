@@ -23,6 +23,14 @@ class R600Reg_128<string n, list<Register> subregs, bits<16> encoding> :
   let HWEncoding = encoding;
 }
 
+class R600Reg_64<string n, list<Register> subregs, bits<16> encoding> :
+    RegisterWithSubRegs<n, subregs> {
+  let Namespace = "AMDGPU";
+  let SubRegIndices = [sub0, sub1];
+  let HWEncoding = encoding;
+}
+
+
 foreach Index = 0-127 in {
   foreach Chan = [ "X", "Y", "Z", "W" ] in {
     // 32-bit Temporary Registers
@@ -40,6 +48,11 @@ foreach Index = 0-127 in {
                                     !cast<Register>("T"#Index#"_Y"),
                                     !cast<Register>("T"#Index#"_Z"),
                                     !cast<Register>("T"#Index#"_W")],
+                                   Index>;
+
+  def T#Index#_XY : R600Reg_64 <"T"#Index#"",
+                                   [!cast<Register>("T"#Index#"_X"),
+                                    !cast<Register>("T"#Index#"_Y")],
                                    Index>;
 }
 
@@ -185,6 +198,9 @@ def R600_Reg128 : RegisterClass<"AMDGPU", [v4f32, v4i32], 128,
                                 (add (sequence "T%u_XYZW", 0, 127))> {
   let CopyCost = -1;
 }
+
+def R600_Reg64 : RegisterClass<"AMDGPU", [v2f32, v2i32], 64,
+                                (add (sequence "T%u_XY", 0, 63))>;
 
 //===----------------------------------------------------------------------===//
 // Register classes for indirect addressing
