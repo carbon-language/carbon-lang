@@ -2164,11 +2164,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         ParseCXXInlineMethodDef(AS, AccessAttrs, DeclaratorInfo, TemplateInfo,
                                 VS, DefinitionKind, Init);
 
-      for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {
-        CommonLateParsedAttrs[i]->addDecl(FunDecl);
-      }
-      for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
-        LateParsedAttrs[i]->addDecl(FunDecl);
+      if (FunDecl) {
+        for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {
+          CommonLateParsedAttrs[i]->addDecl(FunDecl);
+        }
+        for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
+          LateParsedAttrs[i]->addDecl(FunDecl);
+        }
       }
       LateParsedAttrs.clear();
 
@@ -2262,28 +2264,19 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   TemplateParams,
                                                   BitfieldSize.release(),
                                                   VS, HasInClassInit);
-      if (AccessAttrs)
+      if (ThisDecl && AccessAttrs)
         Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs,
                                          false, true);
     }
-    
-    // Set the Decl for any late parsed attributes
-    for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {
-      CommonLateParsedAttrs[i]->addDecl(ThisDecl);
-    }
-    for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
-      LateParsedAttrs[i]->addDecl(ThisDecl);
-    }
-    LateParsedAttrs.clear();
 
     // Handle the initializer.
     if (HasInClassInit != ICIS_NoInit &&
         DeclaratorInfo.getDeclSpec().getStorageClassSpec() !=
         DeclSpec::SCS_static) {
       // The initializer was deferred; parse it and cache the tokens.
-      Diag(Tok, getLangOpts().CPlusPlus11 ?
-           diag::warn_cxx98_compat_nonstatic_member_init :
-           diag::ext_nonstatic_member_init);
+      Diag(Tok, getLangOpts().CPlusPlus11
+                    ? diag::warn_cxx98_compat_nonstatic_member_init
+                    : diag::ext_nonstatic_member_init);
 
       if (DeclaratorInfo.isArrayOfUnknownBound()) {
         // C++11 [dcl.array]p3: An array bound may also be omitted when the
@@ -2293,37 +2286,45 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         // initializer in the grammar, so this is ill-formed.
         Diag(Tok, diag::err_incomplete_array_member_init);
         SkipUntil(tok::comma, true, true);
+
+        // Avoid later warnings about a class member of incomplete type.
         if (ThisDecl)
-          // Avoid later warnings about a class member of incomplete type.
           ThisDecl->setInvalidDecl();
       } else
         ParseCXXNonStaticMemberInitializer(ThisDecl);
     } else if (HasInitializer) {
       // Normal initializer.
       if (!Init.isUsable())
-        Init = ParseCXXMemberInitializer(ThisDecl,
-                 DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
-      
+        Init = ParseCXXMemberInitializer(
+            ThisDecl, DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
+
       if (Init.isInvalid())
         SkipUntil(tok::comma, true, true);
       else if (ThisDecl)
         Actions.AddInitializerToDecl(ThisDecl, Init.get(), EqualLoc.isInvalid(),
                                      DS.containsPlaceholderType());
-    } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static) {
+    } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static)
       // No initializer.
       Actions.ActOnUninitializedDecl(ThisDecl, DS.containsPlaceholderType());
-    }
-    
+
     if (ThisDecl) {
+      if (!ThisDecl->isInvalidDecl()) {
+        // Set the Decl for any late parsed attributes
+        for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i)
+          CommonLateParsedAttrs[i]->addDecl(ThisDecl);
+
+        for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i)
+          LateParsedAttrs[i]->addDecl(ThisDecl);
+      }
       Actions.FinalizeDeclaration(ThisDecl);
       DeclsInGroup.push_back(ThisDecl);
+
+      if (DeclaratorInfo.isFunctionDeclarator() &&
+          DeclaratorInfo.getDeclSpec().getStorageClassSpec() !=
+              DeclSpec::SCS_typedef)
+        HandleMemberFunctionDeclDelays(DeclaratorInfo, ThisDecl);
     }
-    
-    if (ThisDecl && DeclaratorInfo.isFunctionDeclarator() &&
-        DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-          != DeclSpec::SCS_typedef) {
-      HandleMemberFunctionDeclDelays(DeclaratorInfo, ThisDecl);
-    }
+    LateParsedAttrs.clear();
 
     DeclaratorInfo.complete(ThisDecl);
 
