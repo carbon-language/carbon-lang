@@ -944,14 +944,6 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
       Value *Indx = Builder.CreateExtractElement(Mask, IIndx, "shuf_idx");
       Indx = Builder.CreateZExt(Indx, CGF.Int32Ty, "idx_zext");
 
-      // Handle vec3 special since the index will be off by one for the RHS.
-      if ((LHSElts == 6) && (E->getNumSubExprs() == 3)) {
-        Value *cmpIndx, *newIndx;
-        cmpIndx = Builder.CreateICmpUGT(Indx, Builder.getInt32(3),
-                                        "cmp_shuf_idx");
-        newIndx = Builder.CreateSub(Indx, Builder.getInt32(1), "shuf_idx_adj");
-        Indx = Builder.CreateSelect(cmpIndx, newIndx, Indx, "sel_shuf_idx");
-      }
       Value *VExt = Builder.CreateExtractElement(LHS, Indx, "shuf_elt");
       NewV = Builder.CreateInsertElement(NewV, VExt, IIndx, "shuf_ins");
     }
