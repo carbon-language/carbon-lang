@@ -1330,7 +1330,7 @@ public:
   FormatTokenLexer(Lexer &Lex, SourceManager &SourceMgr,
                    encoding::Encoding Encoding)
       : FormatTok(NULL), GreaterStashed(false), TrailingWhitespace(0), Lex(Lex),
-        SourceMgr(SourceMgr), IdentTable(Lex.getLangOpts()),
+        SourceMgr(SourceMgr), IdentTable(getFormattingLangOpts()),
         Encoding(Encoding) {
     Lex.SetKeepWhitespaceMode(true);
   }

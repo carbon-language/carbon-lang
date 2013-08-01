@@ -3687,6 +3687,11 @@ TEST_F(FormatTest, UnderstandsRvalueReferences) {
   verifyIndependentOfContext("A<int &&, int &&> a;");
   verifyGoogleFormat("A<int&&> a;");
   verifyGoogleFormat("A<int&&, int&&> a;");
+
+  // Not rvalue references:
+  verifyFormat("template <bool B, bool C> class A {\n"
+               "  static_assert(B && C, \"Something is wrong\");\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsBinaryOperatorsPrecedingEquals) {

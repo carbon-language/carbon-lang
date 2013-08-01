@@ -93,6 +93,9 @@ private:
       }
     }
 
+    if (Left->Previous && Left->Previous->is(tok::kw_static_assert))
+      Contexts.back().IsExpression = true;
+
     if (StartsObjCMethodExpr) {
       Contexts.back().ColonIsObjCMethodExpr = true;
       Left->Type = TT_ObjCMethodExpr;
