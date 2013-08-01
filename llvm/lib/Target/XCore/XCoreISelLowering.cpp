@@ -1031,6 +1031,10 @@ XCoreTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 //             Formal Arguments Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
+namespace {
+  struct ArgDataPair { SDValue SDV; ISD::ArgFlagsTy Flags; };
+}
+
 /// XCore formal arguments implementation
 SDValue
 XCoreTargetLowering::LowerFormalArguments(SDValue Chain,
@@ -1080,11 +1084,22 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
   unsigned LRSaveSize = StackSlotSize;
 
-  // TODO: need to make copies of any byVal arguments
+  // All getCopyFromReg ops must precede any getMemcpys to prevent the
+  // scheduler clobbering a register before it has been copied.
+  // The stages are:
+  // 1. CopyFromReg (and load) arg & vararg registers.
+  // 2. Chain CopyFromReg nodes into a TokenFactor.
+  // 3. Memcpy 'byVal' args & push final InVals.
+  // 4. Chain mem ops nodes into a TokenFactor.
+  SmallVector<SDValue, 4> CFRegNode;
+  SmallVector<ArgDataPair, 4> ArgData;
+  SmallVector<SDValue, 4> MemOps;
 
+  // 1a. CopyFromReg (and load) arg registers.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
 
     CCValAssign &VA = ArgLocs[i];
+    SDValue ArgIn;
 
     if (VA.isRegLoc()) {
       // Arguments passed in registers
@@ -1101,7 +1116,8 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       case MVT::i32:
         unsigned VReg = RegInfo.createVirtualRegister(&XCore::GRRegsRegClass);
         RegInfo.addLiveIn(VA.getLocReg(), VReg);
-        InVals.push_back(DAG.getCopyFromReg(Chain, dl, VReg, RegVT));
+        ArgIn = DAG.getCopyFromReg(Chain, dl, VReg, RegVT);
+        CFRegNode.push_back(ArgIn.getValue(ArgIn->getNumValues() - 1));
       }
     } else {
       // sanity check
@@ -1121,14 +1137,17 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-      InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
-                                   MachinePointerInfo::getFixedStack(FI),
-                                   false, false, false, 0));
+      ArgIn = DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
+                          MachinePointerInfo::getFixedStack(FI),
+                          false, false, false, 0);
     }
+    const ArgDataPair ADP = { ArgIn, Ins[i].Flags };
+    ArgData.push_back(ADP);
   }
 
+  // 1b. CopyFromReg vararg registers.
   if (isVarArg) {
-    /* Argument registers */
+    // Argument registers
     static const uint16_t ArgRegs[] = {
       XCore::R0, XCore::R1, XCore::R2, XCore::R3
     };
@@ -1136,7 +1155,6 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
     unsigned FirstVAReg = CCInfo.getFirstUnallocated(ArgRegs,
                                                      array_lengthof(ArgRegs));
     if (FirstVAReg < array_lengthof(ArgRegs)) {
-      SmallVector<SDValue, 4> MemOps;
       int offset = 0;
       // Save remaining registers, storing higher register numbers at a higher
       // address
@@ -1152,20 +1170,54 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
         unsigned VReg = RegInfo.createVirtualRegister(&XCore::GRRegsRegClass);
         RegInfo.addLiveIn(ArgRegs[i], VReg);
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+        CFRegNode.push_back(Val.getValue(Val->getNumValues() - 1));
         // Move argument from virt reg -> stack
         SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
                                      MachinePointerInfo(), false, false, 0);
         MemOps.push_back(Store);
       }
-      if (!MemOps.empty())
-        Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                            &MemOps[0], MemOps.size());
     } else {
       // This will point to the next argument passed via stack.
       XFI->setVarArgsFrameIndex(
         MFI->CreateFixedObject(4, LRSaveSize + CCInfo.getNextStackOffset(),
                                true));
     }
+  }
+
+  // 2. chain CopyFromReg nodes into a TokenFactor.
+  if (!CFRegNode.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &CFRegNode[0],
+                        CFRegNode.size());
+
+  // 3. Memcpy 'byVal' args & push final InVals.
+  // Aggregates passed "byVal" need to be copied by the callee.
+  // The callee will use a pointer to this copy, rather than the original
+  // pointer.
+  for (SmallVectorImpl<ArgDataPair>::const_iterator ArgDI = ArgData.begin(),
+                                                    ArgDE = ArgData.end();
+       ArgDI != ArgDE; ++ArgDI) {
+    if (ArgDI->Flags.isByVal() && ArgDI->Flags.getByValSize()) {
+      unsigned Size = ArgDI->Flags.getByValSize();
+      unsigned Align = ArgDI->Flags.getByValAlign();
+      // Create a new object on the stack and copy the pointee into it.
+      int FI = MFI->CreateStackObject(Size, Align, false, false);
+      SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
+      InVals.push_back(FIN);
+      MemOps.push_back(DAG.getMemcpy(Chain, dl, FIN, ArgDI->SDV,
+                                     DAG.getConstant(Size, MVT::i32),
+                                     Align, false, false,
+                                     MachinePointerInfo(),
+                                     MachinePointerInfo()));
+    } else {
+      InVals.push_back(ArgDI->SDV);
+    }
+  }
+
+  // 4, chain mem ops nodes into a TokenFactor.
+  if (!MemOps.empty()) {
+    MemOps.push_back(Chain);
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &MemOps[0],
+                        MemOps.size());
   }
 
   return Chain;
