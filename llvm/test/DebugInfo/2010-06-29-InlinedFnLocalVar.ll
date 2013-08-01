@@ -2,7 +2,7 @@
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK:	DW_TAG_structure_type
-; CHECK-NEXT:	Linfo_string
+; CHECK-NEXT:	info_string
  
 
 @i = common global i32 0                          ; <i32*> [#uses=2]
