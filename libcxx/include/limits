@@ -111,9 +111,9 @@ template<> class numeric_limits<cv long double>;
 
 #include <__undef_min_max>
 
-#if defined(_MSC_VER)
+#if defined(_LIBCPP_MSVCRT)
 #include "support/win32/limits_win32.h"
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVCRT
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 

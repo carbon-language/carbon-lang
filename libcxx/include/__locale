@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <cctype>
 #include <locale.h>
-#ifdef _WIN32
+#ifdef _LIBCPP_MSVCRT
 # include <support/win32/locale_win32.h>
 #elif (defined(__GLIBC__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__sun__)) || defined(EMSCRIPTEN)
 # include <xlocale.h>

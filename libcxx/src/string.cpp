@@ -13,9 +13,9 @@
 #include "cerrno"
 #include "limits"
 #include "stdexcept"
-#ifdef _WIN32
+#ifdef _LIBCPP_MSVCRT
 #include "support/win32/support.h"
-#endif // _WIN32
+#endif // _LIBCPP_MSVCRT
 #include <stdio.h>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
@@ -427,7 +427,7 @@ inline
 wide_printf
 get_swprintf()
 {
-#ifndef _WIN32
+#ifndef _LIBCPP_MSVCRT
     return swprintf;
 #else
     return static_cast<int (__cdecl*)(wchar_t* __restrict, size_t, const wchar_t*__restrict, ...)>(swprintf);

@@ -11,7 +11,7 @@
 #ifndef _LIBCPP_CONFIG
 #define _LIBCPP_CONFIG
 
-#ifndef _MSC_VER // explicit macro necessary because it is only defined below in this file
+#if !defined(_MSC_VER) || defined(__clang__)
 #pragma GCC system_header
 #endif
 
@@ -72,15 +72,20 @@
 #  define _LIBCPP_LITTLE_ENDIAN 1
 #  define _LIBCPP_BIG_ENDIAN    0
 // Compiler intrinsics (GCC or MSVC)
-#  if (defined(_MSC_VER) && _MSC_VER >= 1400) \
+#  if defined(__clang__) \
+   || (defined(_MSC_VER) && _MSC_VER >= 1400) \
    || (defined(__GNUC__) && _GNUC_VER > 403)
-#    define _LIBCP_HAS_IS_BASE_OF
+#    define _LIBCPP_HAS_IS_BASE_OF
 #  endif
+#  if defined(_MSC_VER) && !defined(__clang__)
+#    define _LIBCPP_MSVC // Using Microsoft Visual C++ compiler
+#  endif
+#  define _LIBCPP_MSVCRT // Using Microsoft's C Runtime library
 #endif  // _WIN32
 
 #ifdef __linux__
 #  if defined(__GNUC__) && _GNUC_VER >= 403
-#    define _LIBCP_HAS_IS_BASE_OF
+#    define _LIBCPP_HAS_IS_BASE_OF
 #  endif
 #endif
 
@@ -128,7 +133,7 @@
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY
-# ifdef _MSC_VER
+# ifdef _LIBCPP_MSVC
 #  define _LIBCPP_INLINE_VISIBILITY __forceinline
 # else // MinGW GCC and Clang
 #  define _LIBCPP_INLINE_VISIBILITY __attribute__ ((__always_inline__))
@@ -140,7 +145,7 @@
 #endif
 
 #ifndef _LIBCPP_ALWAYS_INLINE
-# ifdef _MSC_VER
+# ifdef _LIBCPP_MSVC
 #  define _LIBCPP_ALWAYS_INLINE __forceinline
 # endif
 #endif
@@ -273,7 +278,7 @@ typedef __char32_t char32_t;
 #endif
 
 #if __has_feature(is_base_of)
-#  define _LIBCP_HAS_IS_BASE_OF
+#  define _LIBCPP_HAS_IS_BASE_OF
 #endif
 
 // Objective-C++ features (opt-in)
@@ -396,7 +401,7 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
-#elif defined(_MSC_VER)
+#elif defined(_LIBCPP_MSVC)
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
@@ -418,7 +423,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 namespace std {
 }
 
-#endif // __clang__ || __GNUC___ || _MSC_VER
+#endif // __clang__ || __GNUC__ || _LIBCPP_MSVC
 
 #ifdef _LIBCPP_HAS_NO_UNICODE_CHARS
 typedef unsigned short char16_t;

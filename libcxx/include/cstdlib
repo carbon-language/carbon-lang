@@ -84,9 +84,9 @@ void *aligned_alloc(size_t alignment, size_t size);                       // C11
 
 #include <__config>
 #include <stdlib.h>
-#ifdef _MSC_VER
+#ifdef _LIBCPP_MSVCRT
 #include "support/win32/locale_win32.h"
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVCRT
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -154,8 +154,8 @@ using ::quick_exit;
 using ::aligned_alloc;
 #endif
 
-// MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
-#if !defined(_MSC_VER) && !defined(__sun__)
+// MSVCRT already has the correct prototype in <stdlib.h> #ifdef __cplusplus
+#if !defined(_LIBCPP_MSVCRT) && !defined(__sun__)
 inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) _NOEXCEPT {return  labs(__x);}
 #ifndef _LIBCPP_HAS_NO_LONG_LONG
 inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) _NOEXCEPT {return llabs(__x);}
@@ -165,7 +165,7 @@ inline _LIBCPP_INLINE_VISIBILITY  ldiv_t div(     long __x,      long __y) _NOEX
 #ifndef _LIBCPP_HAS_NO_LONG_LONG
 inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x, long long __y) _NOEXCEPT {return lldiv(__x, __y);}
 #endif // _LIBCPP_HAS_NO_LONG_LONG
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVCRT
 
 _LIBCPP_END_NAMESPACE_STD
 

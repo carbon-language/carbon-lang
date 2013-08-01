@@ -730,7 +730,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS is_abstract : public __libcpp_abstr
 
 // is_base_of
 
-#ifdef _LIBCP_HAS_IS_BASE_OF
+#ifdef _LIBCPP_HAS_IS_BASE_OF
 
 template <class _Bp, class _Dp>
 struct _LIBCPP_TYPE_VIS is_base_of
@@ -1078,9 +1078,9 @@ _CREATE_ALIGNED_STORAGE_SPECIALIZATION(0x800);
 _CREATE_ALIGNED_STORAGE_SPECIALIZATION(0x1000);
 _CREATE_ALIGNED_STORAGE_SPECIALIZATION(0x2000);
 // MSDN says that MSVC does not support alignment beyond 8192 (=0x2000)
-#if !defined(_MSC_VER)
+#if !defined(_LIBCPP_MSVC)
 _CREATE_ALIGNED_STORAGE_SPECIALIZATION(0x4000);
-#endif // !_MSC_VER
+#endif // !_LIBCPP_MSVC
 
 #undef _CREATE_ALIGNED_STORAGE_SPECIALIZATION
 

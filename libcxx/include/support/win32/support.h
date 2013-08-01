@@ -30,7 +30,7 @@ size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
                    size_t nwc, size_t len, mbstate_t *__restrict ps );
 }
 
-#if defined(_MSC_VER)
+#if defined(_LIBCPP_MSVCRT)
 #define snprintf _snprintf
 #include <xlocinfo.h>
 #define atoll _atoi64
@@ -109,6 +109,6 @@ _LIBCPP_ALWAYS_INLINE int __builtin_clzll( unsigned long long x )
     return static_cast<int>(r);
 }
 #endif // !__clang__
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVCRT
 
 #endif // _LIBCPP_SUPPORT_WIN32_SUPPORT_H

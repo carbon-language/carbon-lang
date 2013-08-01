@@ -47,7 +47,7 @@ inline
 std::string
 get_temp_file_name()
 {
-#ifdef _WIN32
+#ifdef _LIBCPP_MSVCRT
    char* p = _tempnam( NULL, NULL );
    if (p == nullptr)
        abort();

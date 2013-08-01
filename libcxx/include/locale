@@ -186,11 +186,11 @@ template <class charT> class messages_byname;
 #endif
 #include <cstdlib>
 #include <ctime>
-#ifdef _WIN32
+#ifdef _LIBCPP_MSVCRT
 #include <support/win32/locale_win32.h>
-#else // _WIN32
+#else // _LIBCPP_MSVCRT
 #include <nl_types.h>
-#endif  // !_WIN32
+#endif  // !_LIBCPP_MSVCRT
 
 #ifdef __APPLE__
 #include <Availability.h>

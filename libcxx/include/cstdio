@@ -138,12 +138,12 @@ using ::scanf;
 using ::snprintf;
 using ::sprintf;
 using ::sscanf;
-#ifndef _MSC_VER
+#ifndef _LIBCPP_MSVCRT
 using ::vfprintf;
 using ::vfscanf;
 using ::vscanf;
 using ::vsscanf;
-#endif // _MSC_VER
+#endif // _LIBCPP_MSVCRT
 using ::vprintf;
 using ::vsnprintf;
 using ::vsprintf;
