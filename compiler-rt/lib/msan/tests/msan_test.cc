@@ -986,6 +986,25 @@ TEST(MemorySanitizer, canonicalize_file_name) {
   free(res);
 }
 
+extern char **environ;
+
+TEST(MemorySanitizer, setenv) {
+  setenv("AAA", "BBB", 1);
+  for (char **envp = environ; *envp; ++envp) {
+    EXPECT_NOT_POISONED(*envp);
+    EXPECT_NOT_POISONED(*envp[0]);
+  }
+}
+
+TEST(MemorySanitizer, putenv) {
+  char s[] = "AAA=BBB";
+  putenv(s);
+  for (char **envp = environ; *envp; ++envp) {
+    EXPECT_NOT_POISONED(*envp);
+    EXPECT_NOT_POISONED(*envp[0]);
+  }
+}
+
 TEST(MemorySanitizer, memcpy) {
   char* x = new char[2];
   char* y = new char[2];

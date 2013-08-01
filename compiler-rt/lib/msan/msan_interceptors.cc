@@ -529,6 +529,32 @@ INTERCEPTOR(char *, getenv, char *name) {
   return res;
 }
 
+extern char **environ;
+
+static void UnpoisonEnviron() {
+  char **envp = environ;
+  for (; *envp; ++envp) {
+    __msan_unpoison(envp, sizeof(*envp));
+    __msan_unpoison(*envp, REAL(strlen)(*envp) + 1);
+  }
+  // Trailing NULL pointer.
+  __msan_unpoison(envp, sizeof(*envp));
+}
+
+INTERCEPTOR(int, setenv, const char *name, const char *value, int overwrite) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(setenv)(name, value, overwrite);
+  if (!res) UnpoisonEnviron();
+  return res;
+}
+
+INTERCEPTOR(int, putenv, char *string) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(putenv)(string);
+  if (!res) UnpoisonEnviron();
+  return res;
+}
+
 INTERCEPTOR(int, __fxstat, int magic, int fd, void *buf) {
   ENSURE_MSAN_INITED();
   int res = REAL(__fxstat)(magic, fd, buf);
@@ -1198,6 +1224,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(wcscmp);
   INTERCEPT_FUNCTION(wcstod);
   INTERCEPT_FUNCTION(getenv);
+  INTERCEPT_FUNCTION(setenv);
+  INTERCEPT_FUNCTION(putenv);
   INTERCEPT_FUNCTION(gettimeofday);
   INTERCEPT_FUNCTION(fcvt);
   INTERCEPT_FUNCTION(__fxstat);
