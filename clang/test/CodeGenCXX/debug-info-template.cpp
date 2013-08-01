@@ -4,8 +4,9 @@
 
 
 // CHECK: [[INT:![0-9]*]] = {{.*}} ; [ DW_TAG_base_type ] [int]
-// CHECK: metadata [[TCI:![0-9]*]], i32 0, i32 1, %class.TC* @tci, null} ; [ DW_TAG_variable ] [tci]
-// CHECK: [[TC:![0-9]*]] = {{.*}}, metadata [[TCARGS:![0-9]*]]} ; [ DW_TAG_class_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>]
+// CHECK: metadata [[TCNESTED:![0-9]*]], i32 0, i32 1, %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
+// CHECK: [[TCNESTED]] = metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata [[TC:![0-9]*]], {{.*}} ; [ DW_TAG_structure_type ] [nested]
+// CHECK: [[TC]] = {{.*}}, metadata [[TCARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>]
 // CHECK: [[TCARGS]] = metadata !{metadata [[TCARG1:![0-9]*]], metadata [[TCARG2:![0-9]*]], metadata [[TCARG3:![0-9]*]], metadata [[TCARG4:![0-9]*]], metadata [[TCARG5:![0-9]*]], metadata [[TCARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCARG8:![0-9]*]]}
 //
 // We seem to be missing file/line/col info on template value parameters -
@@ -47,8 +48,8 @@
 // CHECK: [[TCARG8_3]] = {{.*}}metadata !"", metadata [[INT]], i32 3, {{.*}} ; [ DW_TAG_template_value_parameter ]
 
 
-// CHECK: metadata [[TCNT:![0-9]*]], i32 0, i32 1, %class.TC.0* @tcn, null} ; [ DW_TAG_variable ] [tcn]
-// CHECK: [[TCNT:![0-9]*]] = {{.*}}, metadata [[TCNARGS:![0-9]*]]} ; [ DW_TAG_class_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
+// CHECK: metadata [[TCNT:![0-9]*]], i32 0, i32 1, %struct.TC* @tcn, null} ; [ DW_TAG_variable ] [tcn]
+// CHECK: [[TCNT:![0-9]*]] = {{.*}}, metadata [[TCNARGS:![0-9]*]]} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
 // CHECK: [[TCNARGS]] = metadata !{metadata [[TCNARG1:![0-9]*]], metadata [[TCNARG2:![0-9]*]], metadata [[TCNARG3:![0-9]*]], metadata [[TCNARG4:![0-9]*]], metadata [[TCNARG5:![0-9]*]], metadata [[TCNARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCNARG8:![0-9]*]]}
 // CHECK: [[TCNARG1]] = {{.*}}metadata !"T", metadata [[INT]], {{.*}} ; [ DW_TAG_template_type_parameter ]
 // CHECK: [[TCNARG2]] = {{.*}}metadata !"", metadata [[INT]], i32 -3, {{.*}} ; [ DW_TAG_template_value_parameter ]
@@ -75,7 +76,9 @@ struct foo {
 };
 
 template<typename T, T, int *x, int foo::*a, void (foo::*b)(), void (*f)(), template<typename> class tmpl, int ...Is>
-class TC {
+struct TC {
+  struct nested {
+  };
 };
 
 int glb;
@@ -85,5 +88,5 @@ template<typename>
 struct tmpl_impl {
 };
 
-TC<unsigned, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3> tci;
+TC<unsigned, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested tci;
 TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl> tcn;
