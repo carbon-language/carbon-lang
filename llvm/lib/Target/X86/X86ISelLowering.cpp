@@ -1396,6 +1396,7 @@ void X86TargetLowering::resetOperationActions() {
              i <= MVT::LAST_VECTOR_VALUETYPE; ++i) {
       MVT VT = (MVT::SimpleValueType)i;
 
+      unsigned EltSize = VT.getVectorElementType().getSizeInBits();
       // Extract subvector is special because the value type
       // (result) is 256/128-bit but the source is 512-bit wide.
       if (VT.is128BitVector() || VT.is256BitVector())
@@ -1416,13 +1417,15 @@ void X86TargetLowering::resetOperationActions() {
         setOperationAction(ISD::AND,   VT, Promote);
         AddPromotedToType (ISD::AND,   VT, MVT::v8i64);
       }
-      setOperationAction(ISD::VECTOR_SHUFFLE,      VT, Custom);
-      setOperationAction(ISD::INSERT_VECTOR_ELT,   VT, Custom);
-      setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
-      setOperationAction(ISD::VSELECT,             VT, Legal);
-      setOperationAction(ISD::EXTRACT_VECTOR_ELT,  VT, Custom);
-      setOperationAction(ISD::SCALAR_TO_VECTOR,    VT, Custom);
-      setOperationAction(ISD::INSERT_SUBVECTOR,    VT, Custom);
+      if ( EltSize >= 32) {
+        setOperationAction(ISD::VECTOR_SHUFFLE,      VT, Custom);
+        setOperationAction(ISD::INSERT_VECTOR_ELT,   VT, Custom);
+        setOperationAction(ISD::BUILD_VECTOR,        VT, Custom);
+        setOperationAction(ISD::VSELECT,             VT, Legal);
+        setOperationAction(ISD::EXTRACT_VECTOR_ELT,  VT, Custom);
+        setOperationAction(ISD::SCALAR_TO_VECTOR,    VT, Custom);
+        setOperationAction(ISD::INSERT_SUBVECTOR,    VT, Custom);
+      }
     }
     for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
       MVT VT = (MVT::SimpleValueType)i;
