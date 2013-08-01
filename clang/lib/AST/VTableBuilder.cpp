@@ -3125,8 +3125,8 @@ static void EnumerateVFPtrs(
   }
 }
 
-void EnumerateVFPtrs(ASTContext &Context, const CXXRecordDecl *ForClass,
-                     MicrosoftVFTableContext::VFPtrListTy &Result) {
+static void EnumerateVFPtrs(ASTContext &Context, const CXXRecordDecl *ForClass,
+                            MicrosoftVFTableContext::VFPtrListTy &Result) {
   Result.clear();
   const ASTRecordLayout &ClassLayout = Context.getASTRecordLayout(ForClass);
   BasesSetVectorTy VisitedVBases;
