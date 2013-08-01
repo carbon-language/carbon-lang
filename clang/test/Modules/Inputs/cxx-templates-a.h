@@ -20,3 +20,5 @@ template<typename T> void PerformDelayedLookup(T &t) {
   typename T::Inner inner;
   FoundByADL(t);
 }
+
+template<typename T> void PerformDelayedLookupInDefaultArgument(T &t, int a = (FoundByADL(T()), 0)) {}

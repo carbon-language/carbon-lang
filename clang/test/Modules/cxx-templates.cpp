@@ -51,6 +51,9 @@ void g() {
   // 'common'. That type is not visible here.
   PerformDelayedLookup(defined_in_common);
 
+  // Likewise, but via a default argument.
+  PerformDelayedLookupInDefaultArgument(defined_in_common);
+
   // Trigger the instantiation of a template in 'b' that uses a type defined in
   // 'b_impl'. That type is not visible here.
   UseDefinedInBImpl<int>();

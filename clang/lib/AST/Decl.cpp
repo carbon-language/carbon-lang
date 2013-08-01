@@ -1959,7 +1959,10 @@ TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() const {
 }
 
 MemberSpecializationInfo *VarDecl::getMemberSpecializationInfo() const {
-  return getASTContext().getInstantiatedFromStaticDataMember(this);
+  if (isStaticDataMember())
+    return getASTContext().getInstantiatedFromStaticDataMember(this);
+
+  return 0;
 }
 
 void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
