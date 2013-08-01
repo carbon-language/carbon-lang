@@ -28,16 +28,26 @@ class SystemZTargetMachine;
 namespace SystemZII {
   enum {
     // See comments in SystemZInstrFormats.td.
-    SimpleBDXLoad  = (1 << 0),
-    SimpleBDXStore = (1 << 1),
-    Has20BitOffset = (1 << 2),
-    HasIndex       = (1 << 3),
-    Is128Bit       = (1 << 4),
-    AccessSizeMask = (31 << 5),
-    AccessSizeShift = 5
+    SimpleBDXLoad   = (1 << 0),
+    SimpleBDXStore  = (1 << 1),
+    Has20BitOffset  = (1 << 2),
+    HasIndex        = (1 << 3),
+    Is128Bit        = (1 << 4),
+    AccessSizeMask  = (31 << 5),
+    AccessSizeShift = 5,
+    CCValuesMask    = (15 << 10),
+    CCValuesShift   = 10,
+    CCHasZero       = (1 << 14),
+    CCHasOrder      = (1 << 15),
+    CCMaskFirst     = (1 << 16),
+    CCMaskLast      = (1 << 17),
+    IsLogical       = (1 << 18)
   };
   static inline unsigned getAccessSize(unsigned int Flags) {
     return (Flags & AccessSizeMask) >> AccessSizeShift;
+  }
+  static inline unsigned getCCValues(unsigned int Flags) {
+    return (Flags & CCValuesMask) >> CCValuesShift;
   }
 
   // SystemZ MachineOperand target flags.

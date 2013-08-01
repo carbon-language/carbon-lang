@@ -1813,7 +1813,8 @@ SystemZTargetLowering::emitCondStore(MachineInstr *MI,
     if (Invert)
       CCMask ^= CCValid;
     BuildMI(*MBB, MI, DL, TII->get(STOCOpcode))
-      .addReg(SrcReg).addOperand(Base).addImm(Disp).addImm(CCMask);
+      .addReg(SrcReg).addOperand(Base).addImm(Disp)
+      .addImm(CCValid).addImm(CCMask);
     MI->eraseFromParent();
     return MBB;
   }

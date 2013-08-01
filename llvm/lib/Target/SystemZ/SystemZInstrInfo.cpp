@@ -341,7 +341,8 @@ PredicateInstruction(MachineInstr *MI,
     if (unsigned CondOpcode = getConditionalMove(Opcode)) {
       MI->setDesc(get(CondOpcode));
       MachineInstrBuilder(*MI->getParent()->getParent(), MI)
-        .addImm(CCValid).addImm(CCMask);
+        .addImm(CCValid).addImm(CCMask)
+        .addReg(SystemZ::CC, RegState::Implicit);;
       return true;
     }
   }

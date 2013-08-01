@@ -7,18 +7,36 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass does two things:
-// (1) fuse compares and branches into COMPARE AND BRANCH instructions
-// (2) make sure that all branches are in range.
+// This pass does three things:
+// (1) try to remove compares if CC already contains the required information
+// (2) fuse compares and branches into COMPARE AND BRANCH instructions
+// (3) make sure that all branches are in range.
 //
-// We do (1) here rather than earlier because the fused form prevents
-// predication.
+// We do (1) here rather than earlier because some transformations can
+// change the set of available CC values and we generally want those
+// transformations to have priority over (1).  This is especially true in
+// the commonest case where the CC value is used by a single in-range branch
+// instruction, since (2) will then be able to fuse the compare and the
+// branch instead.
 //
-// Doing it so late makes it more likely that a register will be reused
+// For example, two-address NILF can sometimes be converted into
+// three-address RISBLG.  NILF produces a CC value that indicates whether
+// the low word is zero, but RISBLG does not modify CC at all.  On the
+// other hand, 64-bit ANDs like NILL can sometimes be converted to RISBG.
+// The CC value produced by NILL isn't useful for our purposes, but the
+// value produced by RISBG can be used for any comparison with zero
+// (not just equality).  So there are some transformations that lose
+// CC values (while still being worthwhile) and others that happen to make
+// the CC result more useful than it was originally.
+//
+// We do (2) here rather than earlier because the fused form prevents
+// predication.  It also has to happen after (1).
+//
+// Doing (2) so late makes it more likely that a register will be reused
 // between the compare and the branch, but it isn't clear whether preventing
 // that would be a win or not.
 //
-// There are several ways in which (2) could be done.  One aggressive
+// There are several ways in which (3) could be done.  One aggressive
 // approach is to assume that all branches are in range and successively
 // replace those that turn out not to be in range with a longer form
 // (branch relaxation).  A simple implementation is to continually walk
@@ -156,6 +174,7 @@ namespace {
     void skipTerminator(BlockPosition &Position, TerminatorInfo &Terminator,
                         bool AssumeRelaxed);
     TerminatorInfo describeTerminator(MachineInstr *MI);
+    bool optimizeCompareZero(MachineInstr *PrevCCSetter, MachineInstr *Compare);
     bool fuseCompareAndBranch(MachineInstr *Compare);
     uint64_t initMBBInfo();
     bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
@@ -254,6 +273,15 @@ TerminatorInfo SystemZLongBranch::describeTerminator(MachineInstr *MI) {
   return Terminator;
 }
 
+// Return true if CC is live out of MBB.
+static bool isCCLiveOut(MachineBasicBlock *MBB) {
+  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+         SE = MBB->succ_end(); SI != SE; ++SI)
+    if ((*SI)->isLiveIn(SystemZ::CC))
+      return true;
+  return false;
+}
+
 // Return true if CC is live after MBBI.
 static bool isCCLiveAfter(MachineBasicBlock::iterator MBBI,
                           const TargetRegisterInfo *TRI) {
@@ -269,12 +297,130 @@ static bool isCCLiveAfter(MachineBasicBlock::iterator MBBI,
       return false;
   }
 
-  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-         SE = MBB->succ_end(); SI != SE; ++SI)
-    if ((*SI)->isLiveIn(SystemZ::CC))
-      return true;
+  return isCCLiveOut(MBB);
+}
 
-  return false;
+// Return true if all uses of the CC value produced by MBBI could make do
+// with the CC values in ReusableCCMask.  When returning true, point AlterMasks
+// to the "CC valid" and "CC mask" operands for each condition.
+static bool canRestrictCCMask(MachineBasicBlock::iterator MBBI,
+                              unsigned ReusableCCMask,
+                              SmallVectorImpl<MachineOperand *> &AlterMasks,
+                              const TargetRegisterInfo *TRI) {
+  MachineBasicBlock *MBB = MBBI->getParent();
+  MachineBasicBlock::iterator MBBE = MBB->end();
+  for (++MBBI; MBBI != MBBE; ++MBBI) {
+    if (MBBI->readsRegister(SystemZ::CC, TRI)) {
+      // Fail if this isn't a use of CC that we understand.
+      unsigned MBBIFlags = MBBI->getDesc().TSFlags;
+      unsigned FirstOpNum;
+      if (MBBIFlags & SystemZII::CCMaskFirst)
+        FirstOpNum = 0;
+      else if (MBBIFlags & SystemZII::CCMaskLast)
+        FirstOpNum = MBBI->getNumExplicitOperands() - 2;
+      else
+        return false;
+
+      // Check whether the instruction predicate treats all CC values
+      // outside of ReusableCCMask in the same way.  In that case it
+      // doesn't matter what those CC values mean.
+      unsigned CCValid = MBBI->getOperand(FirstOpNum).getImm();
+      unsigned CCMask = MBBI->getOperand(FirstOpNum + 1).getImm();
+      unsigned OutValid = ~ReusableCCMask & CCValid;
+      unsigned OutMask = ~ReusableCCMask & CCMask;
+      if (OutMask != 0 && OutMask != OutValid)
+        return false;
+
+      AlterMasks.push_back(&MBBI->getOperand(FirstOpNum));
+      AlterMasks.push_back(&MBBI->getOperand(FirstOpNum + 1));
+
+      // Succeed if this was the final use of the CC value.
+      if (MBBI->killsRegister(SystemZ::CC, TRI))
+        return true;
+    }
+    // Succeed if the instruction redefines CC.
+    if (MBBI->definesRegister(SystemZ::CC, TRI))
+      return true;
+  }
+  // Fail if there are other uses of CC that we didn't see.
+  return !isCCLiveOut(MBB);
+}
+
+// Try to make Compare redundant with PrevCCSetter, the previous setter of CC,
+// by looking for cases where Compare compares the result of PrevCCSetter
+// against zero.  Return true on success and if Compare can therefore
+// be deleted.
+bool SystemZLongBranch::optimizeCompareZero(MachineInstr *PrevCCSetter,
+                                            MachineInstr *Compare) {
+  if (MF->getTarget().getOptLevel() == CodeGenOpt::None)
+    return false;
+
+  // Check whether this is a comparison against zero.
+  if (Compare->getNumExplicitOperands() != 2 ||
+      !Compare->getOperand(1).isImm() ||
+      Compare->getOperand(1).getImm() != 0)
+    return false;
+
+  // See which compare-style condition codes are available after PrevCCSetter.
+  unsigned PrevFlags = PrevCCSetter->getDesc().TSFlags;
+  unsigned ReusableCCMask = 0;
+  if (PrevFlags & SystemZII::CCHasZero)
+    ReusableCCMask |= SystemZ::CCMASK_CMP_EQ;
+
+  // For unsigned comparisons with zero, only equality makes sense.
+  unsigned CompareFlags = Compare->getDesc().TSFlags;
+  if (!(CompareFlags & SystemZII::IsLogical) &&
+      (PrevFlags & SystemZII::CCHasOrder))
+    ReusableCCMask |= SystemZ::CCMASK_CMP_LT | SystemZ::CCMASK_CMP_GT;
+
+  if (ReusableCCMask == 0)
+    return false;
+
+  // Make sure that PrevCCSetter sets the value being compared.
+  unsigned SrcReg = Compare->getOperand(0).getReg();
+  unsigned SrcSubReg = Compare->getOperand(0).getSubReg();
+  if (!PrevCCSetter->getOperand(0).isReg() ||
+      !PrevCCSetter->getOperand(0).isDef() ||
+      PrevCCSetter->getOperand(0).getReg() != SrcReg ||
+      PrevCCSetter->getOperand(0).getSubReg() != SrcSubReg)
+    return false;
+
+  // Make sure that SrcReg survives until Compare.
+  MachineBasicBlock::iterator MBBI = PrevCCSetter, MBBE = Compare;
+  const TargetRegisterInfo *TRI = &TII->getRegisterInfo();
+  for (++MBBI; MBBI != MBBE; ++MBBI)
+    if (MBBI->modifiesRegister(SrcReg, TRI))
+      return false;
+
+  // See whether all uses of Compare's CC value could make do with
+  // the values produced by PrevCCSetter.
+  SmallVector<MachineOperand *, 4> AlterMasks;
+  if (!canRestrictCCMask(Compare, ReusableCCMask, AlterMasks, TRI))
+    return false;
+
+  // Alter the CC masks that canRestrictCCMask says need to be altered.
+  unsigned CCValues = SystemZII::getCCValues(PrevFlags);
+  assert((ReusableCCMask & ~CCValues) == 0 && "Invalid CCValues");
+  for (unsigned I = 0, E = AlterMasks.size(); I != E; I += 2) {
+    AlterMasks[I]->setImm(CCValues);
+    unsigned CCMask = AlterMasks[I + 1]->getImm();
+    if (CCMask & ~ReusableCCMask)
+      AlterMasks[I + 1]->setImm((CCMask & ReusableCCMask) |
+                                (CCValues & ~ReusableCCMask));
+  }
+
+  // CC is now live after PrevCCSetter.
+  int CCDef = PrevCCSetter->findRegisterDefOperandIdx(SystemZ::CC, false,
+                                                      true, TRI);
+  assert(CCDef >= 0 && "Couldn't find CC set");
+  PrevCCSetter->getOperand(CCDef).setIsDead(false);
+
+  // Clear any intervening kills of CC.
+  MBBI = PrevCCSetter;
+  for (++MBBI; MBBI != MBBE; ++MBBI)
+    MBBI->clearRegisterKills(SystemZ::CC, TRI);
+
+  return true;
 }
 
 // Try to fuse compare instruction Compare into a later branch.  Return
@@ -345,6 +491,8 @@ bool SystemZLongBranch::fuseCompareAndBranch(MachineInstr *Compare) {
 // that no branches need relaxation.  Return the size of the function under
 // this assumption.
 uint64_t SystemZLongBranch::initMBBInfo() {
+  const TargetRegisterInfo *TRI = &TII->getRegisterInfo();
+
   MF->RenumberBlocks();
   unsigned NumBlocks = MF->size();
 
@@ -365,13 +513,20 @@ uint64_t SystemZLongBranch::initMBBInfo() {
     // Calculate the size of the fixed part of the block.
     MachineBasicBlock::iterator MI = MBB->begin();
     MachineBasicBlock::iterator End = MBB->end();
+    MachineInstr *PrevCCSetter = 0;
     while (MI != End && !MI->isTerminator()) {
       MachineInstr *Current = MI;
       ++MI;
-      if (Current->isCompare() && fuseCompareAndBranch(Current))
-        Current->removeFromParent();
-      else
-        Block.Size += TII->getInstSizeInBytes(Current);
+      if (Current->isCompare()) {
+        if ((PrevCCSetter && optimizeCompareZero(PrevCCSetter, Current)) ||
+            fuseCompareAndBranch(Current)) {
+          Current->removeFromParent();
+          continue;
+        }
+      }
+      if (Current->modifiesRegister(SystemZ::CC, TRI))
+        PrevCCSetter = Current;
+      Block.Size += TII->getInstSizeInBytes(Current);
     }
     skipNonTerminators(Position, Block);
 
