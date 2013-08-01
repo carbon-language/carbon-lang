@@ -659,6 +659,7 @@ namespace dr61 { // dr61: yes
   // function name.
   void (*p)() = &x.f;
   void (*q)() = &y.f; // expected-error {{cannot create a non-constant pointer to member function}}
+  void (*r)() = y.f; // expected-error {{cannot create a non-constant pointer to member function}}
 }
 
 namespace dr62 { // dr62: yes

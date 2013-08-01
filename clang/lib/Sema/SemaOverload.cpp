@@ -9282,6 +9282,7 @@ class AddressOfFunctionResolver
 
   bool TargetTypeIsNonStaticMemberFunction;
   bool FoundNonTemplateFunction;
+  bool StaticMemberFunctionFromBoundPointer;
 
   OverloadExpr::FindResult OvlExprInfo; 
   OverloadExpr *OvlExpr;
@@ -9297,33 +9298,35 @@ public:
         TargetTypeIsNonStaticMemberFunction(
             !!TargetType->getAs<MemberPointerType>()),
         FoundNonTemplateFunction(false),
+        StaticMemberFunctionFromBoundPointer(false),
         OvlExprInfo(OverloadExpr::find(SourceExpr)),
         OvlExpr(OvlExprInfo.Expression),
         FailedCandidates(OvlExpr->getNameLoc()) {
     ExtractUnqualifiedFunctionTypeFromTargetType();
-    
-    if (!TargetFunctionType->isFunctionType()) {        
-      if (OvlExpr->hasExplicitTemplateArgs()) {
-        DeclAccessPair dap;
-        if (FunctionDecl* Fn = S.ResolveSingleFunctionTemplateSpecialization(
-                                            OvlExpr, false, &dap) ) {
 
-          if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn)) {
-            if (!Method->isStatic()) {
-              // If the target type is a non-function type and the function
-              // found is a non-static member function, pretend as if that was
-              // the target, it's the only possible type to end up with.
-              TargetTypeIsNonStaticMemberFunction = true;
+    if (TargetFunctionType->isFunctionType()) {
+      if (UnresolvedMemberExpr *UME = dyn_cast<UnresolvedMemberExpr>(OvlExpr))
+        if (!UME->isImplicitAccess() &&
+            !S.ResolveSingleFunctionTemplateSpecialization(UME))
+          StaticMemberFunctionFromBoundPointer = true;
+    } else if (OvlExpr->hasExplicitTemplateArgs()) {
+      DeclAccessPair dap;
+      if (FunctionDecl *Fn = S.ResolveSingleFunctionTemplateSpecialization(
+              OvlExpr, false, &dap)) {
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Fn))
+          if (!Method->isStatic()) {
+            // If the target type is a non-function type and the function found
+            // is a non-static member function, pretend as if that was the
+            // target, it's the only possible type to end up with.
+            TargetTypeIsNonStaticMemberFunction = true;
 
-              // And skip adding the function if its not in the proper form.
-              // We'll diagnose this due to an empty set of functions.
-              if (!OvlExprInfo.HasFormOfMemberPointer)
-                return;
-            }
+            // And skip adding the function if its not in the proper form.
+            // We'll diagnose this due to an empty set of functions.
+            if (!OvlExprInfo.HasFormOfMemberPointer)
+              return;
           }
 
-          Matches.push_back(std::make_pair(dap,Fn));
-        }
+        Matches.push_back(std::make_pair(dap, Fn));
       }
       return;
     }
@@ -9536,7 +9539,7 @@ public:
     return TargetTypeIsNonStaticMemberFunction &&
       !OvlExprInfo.HasFormOfMemberPointer;
   }
-  
+
   void ComplainIsInvalidFormOfPointerToMemberFunction() const {
       // TODO: Should we condition this on whether any functions might
       // have matched, or is it more appropriate to do that in callers?
@@ -9544,7 +9547,17 @@ public:
       S.Diag(OvlExpr->getNameLoc(), diag::err_addr_ovl_no_qualifier)
         << TargetType << OvlExpr->getSourceRange();
   }
-  
+
+  bool IsStaticMemberFunctionFromBoundPointer() const {
+    return StaticMemberFunctionFromBoundPointer;
+  }
+
+  void ComplainIsStaticMemberFunctionFromBoundPointer() const {
+    S.Diag(OvlExpr->getLocStart(),
+           diag::err_invalid_form_pointer_member_function)
+      << OvlExpr->getSourceRange();
+  }
+
   void ComplainOfInvalidConversion() const {
     S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_not_func_ptrref)
       << OvlExpr->getName() << TargetType;
@@ -9612,8 +9625,12 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr,
     Fn = Resolver.getMatchingFunctionDecl();
     assert(Fn);
     FoundResult = *Resolver.getMatchingFunctionAccessPair();
-    if (Complain)
-      CheckAddressOfMemberAccess(AddressOfExpr, FoundResult);
+    if (Complain) {
+      if (Resolver.IsStaticMemberFunctionFromBoundPointer())
+        Resolver.ComplainIsStaticMemberFunctionFromBoundPointer();
+      else
+        CheckAddressOfMemberAccess(AddressOfExpr, FoundResult);
+    }
   }
 
   if (pHadMultipleCandidates)
