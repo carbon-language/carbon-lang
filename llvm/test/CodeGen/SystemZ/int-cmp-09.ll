@@ -13,13 +13,13 @@ define double @f1(double %a, double %b, i32 %i1) {
   ret double %res
 }
 
-; Check comparisons with 1.
+; Check comparisons with 2.
 define double @f2(double %a, double %b, i32 %i1) {
 ; CHECK-LABEL: f2:
-; CHECK: cijl %r2, 1
+; CHECK: cijl %r2, 2
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %cond = icmp slt i32 %i1, 1
+  %cond = icmp slt i32 %i1, 2
   %res = select i1 %cond, double %a, double %b
   ret double %res
 }
@@ -173,6 +173,50 @@ define double @f15(double %a, double %b, i32 %i1) {
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp eq i32 %i1, -2147483649
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; Check that < 1 becomes <= 0.
+define double @f16(double %a, double %b, i32 %i1) {
+; CHECK-LABEL: f16:
+; CHECK: cijle %r2, 0
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %cond = icmp slt i32 %i1, 1
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; Check that >= 1 becomes > 0.
+define double @f17(double %a, double %b, i32 %i1) {
+; CHECK-LABEL: f17:
+; CHECK: cijh %r2, 0
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %cond = icmp sge i32 %i1, 1
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; Check that > -1 becomes >= 0.
+define double @f18(double %a, double %b, i32 %i1) {
+; CHECK-LABEL: f18:
+; CHECK: cijhe %r2, 0
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %cond = icmp sgt i32 %i1, -1
+  %res = select i1 %cond, double %a, double %b
+  ret double %res
+}
+
+; Check that <= -1 becomes < 0.
+define double @f19(double %a, double %b, i32 %i1) {
+; CHECK-LABEL: f19:
+; CHECK: cijl %r2, 0
+; CHECK: ldr %f0, %f2
+; CHECK: br %r14
+  %cond = icmp sle i32 %i1, -1
   %res = select i1 %cond, double %a, double %b
   ret double %res
 }

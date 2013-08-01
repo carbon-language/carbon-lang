@@ -18,8 +18,8 @@ define double @f1(double %a, double %b, i16 *%ptr) {
 ; Check comparisons with 1.
 define double @f2(double %a, double %b, i16 *%ptr) {
 ; CHECK-LABEL: f2:
-; CHECK: chhsi 0(%r2), 1
-; CHECK-NEXT: jl
+; CHECK: chhsi 0(%r2), 0
+; CHECK-NEXT: jle
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %val = load i16 *%ptr

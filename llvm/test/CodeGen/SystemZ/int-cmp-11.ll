@@ -16,7 +16,7 @@ define double @f1(double %a, double %b, i64 %i1) {
 ; Check comparisons with 1.
 define double @f2(double %a, double %b, i64 %i1) {
 ; CHECK-LABEL: f2:
-; CHECK: cgijl %r2, 1
+; CHECK: cgijle %r2, 0
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
   %cond = icmp slt i64 %i1, 1

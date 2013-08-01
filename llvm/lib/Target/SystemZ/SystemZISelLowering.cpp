@@ -911,6 +911,29 @@ static unsigned CCMaskForCondCode(ISD::CondCode CC) {
 }
 
 // If a comparison described by IsUnsigned, CCMask, CmpOp0 and CmpOp1
+// can be converted to a comparison against zero, adjust the operands
+// as necessary.
+static void adjustZeroCmp(SelectionDAG &DAG, bool &IsUnsigned,
+                          SDValue &CmpOp0, SDValue &CmpOp1,
+                          unsigned &CCMask) {
+  if (IsUnsigned)
+    return;
+
+  ConstantSDNode *ConstOp1 = dyn_cast<ConstantSDNode>(CmpOp1.getNode());
+  if (!ConstOp1)
+    return;
+
+  int64_t Value = ConstOp1->getSExtValue();
+  if ((Value == -1 && CCMask == SystemZ::CCMASK_CMP_GT) ||
+      (Value == -1 && CCMask == SystemZ::CCMASK_CMP_LE) ||
+      (Value == 1 && CCMask == SystemZ::CCMASK_CMP_LT) ||
+      (Value == 1 && CCMask == SystemZ::CCMASK_CMP_GE)) {
+    CCMask ^= SystemZ::CCMASK_CMP_EQ;
+    CmpOp1 = DAG.getConstant(0, CmpOp1.getValueType());
+  }
+}
+
+// If a comparison described by IsUnsigned, CCMask, CmpOp0 and CmpOp1
 // is suitable for CLI(Y), CHHSI or CLHHSI, adjust the operands as necessary.
 static void adjustSubwordCmp(SelectionDAG &DAG, bool &IsUnsigned,
                              SDValue &CmpOp0, SDValue &CmpOp1,
@@ -954,7 +977,7 @@ static void adjustSubwordCmp(SelectionDAG &DAG, bool &IsUnsigned,
       if (Value == 0 && CCMask == SystemZ::CCMASK_CMP_LT)
         // Test whether the high bit of the byte is set.
         Value = 127, CCMask = SystemZ::CCMASK_CMP_GT, IsUnsigned = true;
-      else if (SignedValue == -1 && CCMask == SystemZ::CCMASK_CMP_GT)
+      else if (Value == 0 && CCMask == SystemZ::CCMASK_CMP_GE)
         // Test whether the high bit of the byte is clear.
         Value = 128, CCMask = SystemZ::CCMASK_CMP_LT, IsUnsigned = true;
       else
@@ -1045,6 +1068,7 @@ static SDValue emitCmp(SelectionDAG &DAG, SDValue CmpOp0, SDValue CmpOp1,
     IsUnsigned = CCMask & SystemZ::CCMASK_CMP_UO;
     CCValid = SystemZ::CCMASK_ICMP;
     CCMask &= CCValid;
+    adjustZeroCmp(DAG, IsUnsigned, CmpOp0, CmpOp1, CCMask);
     adjustSubwordCmp(DAG, IsUnsigned, CmpOp0, CmpOp1, CCMask);
     if (preferUnsignedComparison(DAG, CmpOp0, CmpOp1, CCMask))
       IsUnsigned = true;
