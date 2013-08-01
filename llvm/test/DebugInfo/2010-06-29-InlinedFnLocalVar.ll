@@ -1,4 +1,4 @@
-; RUN: llc -O2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu -O2 %s -o - | FileCheck %s
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK:	DW_TAG_structure_type
