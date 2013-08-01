@@ -1060,7 +1060,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   }
 
   // Breaking before a trailing 'const' or not-function-like annotation is bad.
-  if (Left.is(tok::r_paren) &&
+  if (Left.is(tok::r_paren) && Line.Type != LT_ObjCProperty &&
       (Right.is(tok::kw_const) || (Right.is(tok::identifier) && Right.Next &&
                                    Right.Next->isNot(tok::l_paren))))
     return 150;
@@ -1252,6 +1252,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       (Left.Type == TT_ObjCDictLiteral || Left.Type == TT_ObjCMethodExpr))
     return true;
   if (Right.Type == TT_ObjCSelectorName)
+    return true;
+  if (Left.is(tok::r_paren) && Line.Type == LT_ObjCProperty)
     return true;
   if (Left.ClosesTemplateDeclaration)
     return true;

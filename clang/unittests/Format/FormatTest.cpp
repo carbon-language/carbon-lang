@@ -4663,6 +4663,11 @@ TEST_F(FormatTest, FormatObjCProtocol) {
                "@optional\n"
                "@property(assign) int madProp;\n"
                "@end\n");
+
+  verifyFormat("@property(nonatomic, assign, readonly)\n"
+               "    int *looooooooooooooooooooooooooooongNumber;\n"
+               "@property(nonatomic, assign, readonly)\n"
+               "    NSString *looooooooooooooooooooooooooooongName;");
 }
 
 TEST_F(FormatTest, FormatObjCMethodDeclarations) {
