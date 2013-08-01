@@ -1084,6 +1084,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     FuncAttrs.addAttribute("no-frame-pointer-elim-non-leaf",
                            llvm::toStringRef(NoFramePointerElimNonLeaf));
+
+    if (!CodeGenOpts.StackRealignment)
+      FuncAttrs.addAttribute("no-realign-stack");
   }
 
   QualType RetTy = FI.getReturnType();
