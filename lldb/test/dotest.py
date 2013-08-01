@@ -132,6 +132,8 @@ blacklistConfig = {}
 categoriesList = None
 # set to true if we are going to use categories for cherry-picking test cases
 useCategories = False
+# Categories we want to skip
+skipCategories = []
 # use this to track per-category failures
 failuresPerCategory = {}
 
@@ -347,6 +349,26 @@ def unique_string_match(yourentry,list):
 class ArgParseNamespace(object):
     pass
 
+def validate_categories(categories):
+    """For each category in categories, ensure that it's a valid category (or a prefix thereof).
+       If a category is invalid, print a message and quit.
+       If all categories are valid, return the list of categories. Prefixes are expanded in the
+       returned list.
+    """
+    global validCategories
+    result = []
+    for category in categories:
+        origCategory = category
+        if category not in validCategories:
+            category = unique_string_match(category, validCategories)
+        if (category not in validCategories) or category == None:
+            print "fatal error: category '" + origCategory + "' is not a valid category"
+            print "if you have added a new category, please edit dotest.py, adding your new category to validCategories"
+            print "else, please specify one or more of the following: " + str(validCategories.keys())
+            sys.exit(1)
+        result.append(category)
+    return result
+
 def parseOptionsAndInitTestdirs():
     """Initialize the list of directories containing our unittest scripts.
 
@@ -363,6 +385,7 @@ def parseOptionsAndInitTestdirs():
     global categoriesList
     global validCategories
     global useCategories
+    global skipCategories
     global lldbFrameworkPath
     global lldbExecutablePath
     global configFile
@@ -424,6 +447,7 @@ def parseOptionsAndInitTestdirs():
     group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
     group.add_argument('-X', metavar='directory', help="Exclude a directory from consideration for test discovery. -X types => if 'types' appear in the pathname components of a potential testfile, it will be ignored")
     group.add_argument('-G', '--category', metavar='category', action='append', dest='categoriesList', help=textwrap.dedent('''Specify categories of test cases of interest. Can be specified more than once.'''))
+    group.add_argument('--skip-category', metavar='category', action='append', dest='skipCategories', help=textwrap.dedent('''Specify categories of test cases to skip. Takes precedence over -G. Can be specified more than once.'''))
 
     # Configuration options
     group = parser.add_argument_group('Configuration options')
@@ -488,21 +512,13 @@ def parseOptionsAndInitTestdirs():
             archs = [platform_machine]
 
     if args.categoriesList:
-        finalCategoriesList = []
-        for category in args.categoriesList:
-            origCategory = category
-            if not(category in validCategories):
-                category = unique_string_match(category,validCategories)
-            if not(category in validCategories) or category == None:
-                print "fatal error: category '" + origCategory + "' is not a valid category"
-                print "if you have added a new category, please edit dotest.py, adding your new category to validCategories"
-                print "else, please specify one or more of the following: " + str(validCategories.keys())
-                sys.exit(1)
-            finalCategoriesList.append(category)
-        categoriesList = set(finalCategoriesList)
+        categoriesList = set(validate_categories(args.categoriesList))
         useCategories = True
     else:
         categoriesList = []
+
+    if args.skipCategories:
+        skipCategories = validate_categories(args.skipCategories)
 
     if args.compilers:
         compilers = args.compilers
@@ -1467,6 +1483,12 @@ for ia in range(len(archs) if iterArchs else 1):
                     test_categories = self.getCategoriesForTest(test)
                     if len(test_categories) == 0 or len(categoriesList & set(test_categories)) == 0:
                         return True
+
+                global skipCategories
+                for category in skipCategories:
+                    if category in self.getCategoriesForTest(test):
+                        return True
+
                 return False
 
             def hardMarkAsSkipped(self,test):
