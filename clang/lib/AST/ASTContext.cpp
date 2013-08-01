@@ -7807,8 +7807,9 @@ GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) {
 
   if (!FD->isInlined())
     return External;
-    
-  if (!getLangOpts().CPlusPlus || FD->hasAttr<GNUInlineAttr>()) {
+
+  if ((!getLangOpts().CPlusPlus && !getLangOpts().MicrosoftMode) ||
+      FD->hasAttr<GNUInlineAttr>()) {
     // GNU or C99 inline semantics. Determine whether this symbol should be
     // externally visible.
     if (FD->isInlineDefinitionExternallyVisible())

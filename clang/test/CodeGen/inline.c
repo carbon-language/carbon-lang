@@ -51,6 +51,15 @@
 // CHECK3: define available_externally void @_Z13gnu_ei_inlinev()
 // CHECK3: define linkonce_odr i32 @_Z2eiv()
 
+// RUN: echo "MS C Mode tests:"
+// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o - -std=c99 -fms-compatibility | FileCheck %s --check-prefix=CHECK4
+// CHECK4: define i32 @bar()
+// CHECK4: define void @gnu_inline()
+// CHECK4: define available_externally void @gnu_ei_inline()
+// CHECK4: define linkonce_odr i32 @foo()
+// CHECK4-NOT: unreferenced
+// CHECK4: define linkonce_odr i32 @ei()
+
 extern __inline int ei() { return 123; }
 
 __inline int foo() {
