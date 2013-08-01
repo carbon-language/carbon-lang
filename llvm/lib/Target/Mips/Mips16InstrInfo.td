@@ -671,6 +671,7 @@ def Jal16 : FJAL16_ins<0b0, "jal", IIAlu> {
   let hasDelaySlot = 0;  // not true, but we add the nop for now
   let isTerminator=1;
   let isBarrier=1;
+  let isCall=1;
 }
 
 //
