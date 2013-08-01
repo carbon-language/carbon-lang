@@ -126,16 +126,22 @@ inline perms operator~(perms x) {
 }
 
 class UniqueID {
-  uint64_t A;
-  uint64_t B;
+  uint64_t Device;
+  uint64_t File;
 
 public:
   UniqueID() {}
-  UniqueID(uint64_t A, uint64_t B) : A(A), B(B) {}
+  UniqueID(uint64_t Device, uint64_t File) : Device(Device), File(File) {}
   bool operator==(const UniqueID &Other) const {
-    return A == Other.A && B == Other.B;
+    return Device == Other.Device && File == Other.File;
   }
   bool operator!=(const UniqueID &Other) const { return !(*this == Other); }
+  bool operator<(const UniqueID &Other) const {
+    return Device < Other.Device ||
+           (Device == Other.Device && File < Other.File);
+  }
+  uint64_t getDevice() const { return Device; }
+  uint64_t getFile() const { return File; }
 };
 
 /// file_status - Represents the result of a call to stat and friends. It has
