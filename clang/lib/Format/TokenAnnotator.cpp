@@ -863,6 +863,11 @@ public:
           CurrentPrecedence = 1;
         else if (Current->Type == TT_BinaryOperator || Current->is(tok::comma))
           CurrentPrecedence = 1 + (int)Current->getPrecedence();
+        else if (Current->Type == TT_ObjCSelectorName) {
+          CurrentPrecedence = 1 + (int)prec::Assignment;
+          if (Precedence == CurrentPrecedence)
+            Start = Current;
+        }
       }
 
       // At the end of the line or when an operator with higher precedence is
