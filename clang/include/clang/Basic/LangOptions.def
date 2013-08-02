@@ -1,4 +1,4 @@
-//===--- LangOptions.def - Language option database --------------- C++ -*-===//
+//===--- LangOptions.def - Language option database -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the language options. Users of this file must
-// define the LANGOPT macro to make use of this information. 
+// define the LANGOPT macro to make use of this information.
 // Optionally, the user may also define BENIGN_LANGOPT
 // (for options that don't affect the construction of the AST in an
 // incompatible way), ENUM_LANGOPT (for options that have enumeration,
@@ -52,11 +52,11 @@ LANGOPT(CPlusPlus11       , 1, 0, "C++0x")
 LANGOPT(CPlusPlus1y       , 1, 0, "C++1y")
 LANGOPT(ObjC1             , 1, 0, "Objective-C 1")
 LANGOPT(ObjC2             , 1, 0, "Objective-C 2")
-BENIGN_LANGOPT(ObjCDefaultSynthProperties , 1, 0, 
+BENIGN_LANGOPT(ObjCDefaultSynthProperties , 1, 0,
                "Objective-C auto-synthesized properties")
-BENIGN_LANGOPT(EncodeExtendedBlockSig , 1, 0, 
+BENIGN_LANGOPT(EncodeExtendedBlockSig , 1, 0,
                "Encoding extended block type signature")
-BENIGN_LANGOPT(ObjCInferRelatedResultType , 1, 1, 
+BENIGN_LANGOPT(ObjCInferRelatedResultType , 1, 1,
                "Objective-C related result type inference")
 LANGOPT(Trigraphs         , 1, 0,"trigraphs")
 LANGOPT(LineComment       , 1, 0, "'//' comments")
@@ -97,7 +97,7 @@ LANGOPT(Modules           , 1, 0, "modules extension to C")
 LANGOPT(Optimize          , 1, 0, "__OPTIMIZE__ predefined macro")
 LANGOPT(OptimizeSize      , 1, 0, "__OPTIMIZE_SIZE__ predefined macro")
 LANGOPT(Static            , 1, 0, "__STATIC__ predefined macro (as opposed to __DYNAMIC__)")
-VALUE_LANGOPT(PackStruct  , 32, 0, 
+VALUE_LANGOPT(PackStruct  , 32, 0,
               "default struct packing maximum alignment")
 VALUE_LANGOPT(PICLevel    , 2, 0, "__PIC__ level")
 VALUE_LANGOPT(PIELevel    , 2, 0, "__PIE__ level")
@@ -148,16 +148,16 @@ BENIGN_LANGOPT(DelayedTemplateParsing , 1, 0, "delayed template parsing")
 LANGOPT(BlocksRuntimeOptional , 1, 0, "optional blocks runtime")
 
 ENUM_LANGOPT(GC, GCMode, 2, NonGC, "Objective-C Garbage Collection mode")
-ENUM_LANGOPT(ValueVisibilityMode, Visibility, 3, DefaultVisibility, 
+ENUM_LANGOPT(ValueVisibilityMode, Visibility, 3, DefaultVisibility,
              "value symbol visibility")
-ENUM_LANGOPT(TypeVisibilityMode, Visibility, 3, DefaultVisibility, 
+ENUM_LANGOPT(TypeVisibilityMode, Visibility, 3, DefaultVisibility,
              "type symbol visibility")
-ENUM_LANGOPT(StackProtector, StackProtectorMode, 2, SSPOff, 
+ENUM_LANGOPT(StackProtector, StackProtectorMode, 2, SSPOff,
              "stack protector mode")
 ENUM_LANGOPT(SignedOverflowBehavior, SignedOverflowBehaviorTy, 2, SOB_Undefined,
              "signed integer overflow handling")
 
-BENIGN_LANGOPT(InstantiationDepth, 32, 256, 
+BENIGN_LANGOPT(InstantiationDepth, 32, 256,
                "maximum template instantiation depth")
 BENIGN_LANGOPT(ConstexprCallDepth, 32, 512,
                "maximum constexpr call depth")
@@ -165,9 +165,9 @@ BENIGN_LANGOPT(ConstexprStepLimit, 32, 1048576,
                "maximum constexpr evaluation steps")
 BENIGN_LANGOPT(BracketDepth, 32, 256,
                "maximum bracket nesting depth")
-BENIGN_LANGOPT(NumLargeByValueCopy, 32, 0, 
+BENIGN_LANGOPT(NumLargeByValueCopy, 32, 0,
         "if non-zero, warn about parameter or return Warn if parameter/return value is larger in bytes than this setting. 0 is no check.")
-VALUE_LANGOPT(MSCVersion, 32, 0, 
+VALUE_LANGOPT(MSCVersion, 32, 0,
               "version of Microsoft Visual C/C++")
 
 LANGOPT(ApplePragmaPack, 1, 0, "Apple gcc-compatible #pragma pack handling")
