@@ -7989,8 +7989,8 @@ _ACEOF
   fi
 
 
-{ echo "$as_me:$LINENO: checking for compiler -Wl,-export-dynamic option" >&5
-echo $ECHO_N "checking for compiler -Wl,-export-dynamic option... $ECHO_C" >&6; }
+{ echo "$as_me:$LINENO: checking for compiler -rdynamic option" >&5
+echo $ECHO_N "checking for compiler -rdynamic option... $ECHO_C" >&6; }
 if test "${llvm_cv_link_use_export_dynamic+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -8001,7 +8001,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
   oldcflags="$CFLAGS"
-  CFLAGS="$CFLAGS -Wl,-export-dynamic"
+  CFLAGS="$CFLAGS -rdynamic"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -22031,7 +22031,7 @@ fi
 
 
 if test "$llvm_cv_link_use_export_dynamic" = "yes" ; then
-  RDYNAMIC="-Wl,-export-dynamic"
+  RDYNAMIC="-rdynamic"
 else
   RDYNAMIC=""
 fi
