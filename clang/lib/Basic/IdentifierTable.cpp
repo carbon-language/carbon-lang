@@ -467,6 +467,7 @@ ObjCInstanceTypeFamily Selector::getInstTypeMethodFamily(Selector sel) {
       break;
     case 'd':
       if (startsWithWord(name, "dictionary")) return OIT_Dictionary;
+      if (startsWithWord(name, "default")) return OIT_Singleton;
       break;
     case 'i':
       if (startsWithWord(name, "init")) return OIT_MemManage;
@@ -474,6 +475,10 @@ ObjCInstanceTypeFamily Selector::getInstTypeMethodFamily(Selector sel) {
     case 'r':
       if (startsWithWord(name, "retain")) return OIT_MemManage;
       break;
+    case 's':
+      if (startsWithWord(name, "shared") ||
+          startsWithWord(name, "standard"))
+        return OIT_Singleton;
     default:
       break;
   }

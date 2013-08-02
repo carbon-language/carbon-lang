@@ -74,3 +74,14 @@ typedef enum NSURLBookmarkResolutionOptions {
 + (id)dateWithYear:(NSInteger)year month:(NSUInteger)month day:(NSUInteger)day hour:(NSUInteger)hour minute:(NSUInteger)minute second:(NSUInteger)second timeZone:(NSTimeZone *)aTimeZone __attribute__((availability(macosx,introduced=10.4)));
 @end
 
+@interface NSUserDefaults
++ (id) standardUserDefaults;
+@end
+
+@interface NSNotificationCenter
++ (id) defaultCenter;
+@end
+
+@interface UIApplication
++ (id)sharedApplication;
+@end

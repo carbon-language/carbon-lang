@@ -42,7 +42,8 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateMethodInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl,
                                  ObjCMethodDecl *OM);
   void migrateFactoryMethod(ASTContext &Ctx, ObjCContainerDecl *CDecl,
-                            ObjCMethodDecl *OM);
+                            ObjCMethodDecl *OM,
+                            ObjCInstanceTypeFamily OIT_Family = OIT_None);
 
 public:
   std::string MigrateDir;
@@ -575,12 +576,12 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
                                                        ObjCMethodDecl *OM) {
   ObjCInstanceTypeFamily OIT_Family =
     Selector::getInstTypeMethodFamily(OM->getSelector());
-  if (OIT_Family == OIT_None) {
-    migrateFactoryMethod(Ctx, CDecl, OM);
-    return;
-  }
+  
   std::string ClassName;
   switch (OIT_Family) {
+    case OIT_None:
+      migrateFactoryMethod(Ctx, CDecl, OM);
+      return;
     case OIT_Array:
       ClassName = "NSArray";
       break;
@@ -590,7 +591,8 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
     case OIT_MemManage:
       ClassName = "NSObject";
       break;
-    default:
+    case OIT_Singleton:
+      migrateFactoryMethod(Ctx, CDecl, OM, OIT_Singleton);
       return;
   }
   if (!OM->getResultType()->isObjCIdType())
@@ -624,7 +626,8 @@ void ObjCMigrateASTConsumer::migrateInstanceType(ASTContext &Ctx,
 
 void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
                                                   ObjCContainerDecl *CDecl,
-                                                  ObjCMethodDecl *OM) {
+                                                  ObjCMethodDecl *OM,
+                                                  ObjCInstanceTypeFamily OIT_Family) {
   if (OM->isInstanceMethod() || !OM->getResultType()->isObjCIdType())
     return;
   
@@ -647,6 +650,19 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
   
   IdentifierInfo *MethodIdName = OM->getSelector().getIdentifierInfoForSlot(0);
   std::string MethodName = MethodIdName->getName();
+  if (OIT_Family == OIT_Singleton) {
+    StringRef STRefMethodName(MethodName);
+    size_t len = 0;
+    if (STRefMethodName.startswith("standard"))
+      len = strlen("standard");
+    else if (STRefMethodName.startswith("shared"))
+      len = strlen("shared");
+    else if (STRefMethodName.startswith("default"))
+      len = strlen("default");
+    else
+      return;
+    MethodName = STRefMethodName.substr(len);
+  }
   std::string MethodNameSubStr = MethodName.substr(0, 3);
   StringRef MethodNamePrefix(MethodNameSubStr);
   std::string StringLoweredMethodNamePrefix = MethodNamePrefix.lower();
