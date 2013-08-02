@@ -508,6 +508,10 @@ uint64_t AttributeSetImpl::Raw(unsigned Index) const {
   return 0;
 }
 
+void AttributeSetImpl::dump() const {
+  AttributeSet(const_cast<AttributeSetImpl *>(this)).dump();
+}
+
 //===----------------------------------------------------------------------===//
 // AttributeSet Construction and Mutation Methods
 //===----------------------------------------------------------------------===//

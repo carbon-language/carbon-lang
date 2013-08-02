@@ -258,6 +258,8 @@ public:
 
   // FIXME: This atrocity is temporary.
   uint64_t Raw(unsigned Index) const;
+
+  void dump() const;
 };
 
 } // end llvm namespace
