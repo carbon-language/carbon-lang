@@ -53,6 +53,20 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
       setOperationAction(ISD::BITCAST, VecTys[i], Legal);
     }
 
+    // Expand all truncating stores and extending loads.
+    unsigned FirstVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+    unsigned LastVT = (unsigned)MVT::LAST_VECTOR_VALUETYPE;
+
+    for (unsigned VT0 = FirstVT; VT0 <= LastVT; ++VT0) {
+      for (unsigned VT1 = FirstVT; VT1 <= LastVT; ++VT1)
+        setTruncStoreAction((MVT::SimpleValueType)VT0,
+                            (MVT::SimpleValueType)VT1, Expand);
+
+      setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT0, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT0, Expand);
+      setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT0, Expand);
+    }
+
     setTargetDAGCombine(ISD::SHL);
     setTargetDAGCombine(ISD::SRA);
     setTargetDAGCombine(ISD::SRL);
