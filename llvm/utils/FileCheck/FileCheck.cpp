@@ -1013,8 +1013,7 @@ size_t CheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
       // CHECK-DAG, verify that there's no 'not' strings occurred in that
       // region.
       StringRef SkippedRegion = Buffer.substr(LastPos, MatchPos);
-      size_t Pos = CheckNot(SM, SkippedRegion, NotStrings, VariableTable);
-      if (Pos != StringRef::npos)
+      if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable))
         return StringRef::npos;
       // Clear "not strings".
       NotStrings.clear();

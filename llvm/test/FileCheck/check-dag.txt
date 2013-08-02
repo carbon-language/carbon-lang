@@ -22,4 +22,5 @@ mul r5, r10, r11
 
 ; CHECK-DAG: add [[REG1:r[0-9]+]], r1, r2
 ; CHECK-DAG: add [[REG2:r[0-9]+]], r3, r4
+; CHECK-NOT: xor
 ; CHECK-DAG: mul r5, [[REG1]], [[REG2]]
