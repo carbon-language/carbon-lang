@@ -4668,29 +4668,15 @@ static void HandleNeonVectorTypeAttr(QualType& CurType,
     return;
   }
   // Only certain element types are supported for Neon vectors.
-  const BuiltinType* BTy = CurType->getAs<BuiltinType>();
-  if (!BTy ||
-      (VecKind == VectorType::NeonPolyVector &&
-       BTy->getKind() != BuiltinType::SChar &&
-       BTy->getKind() != BuiltinType::Short) ||
-      (BTy->getKind() != BuiltinType::SChar &&
-       BTy->getKind() != BuiltinType::UChar &&
-       BTy->getKind() != BuiltinType::Short &&
-       BTy->getKind() != BuiltinType::UShort &&
-       BTy->getKind() != BuiltinType::Int &&
-       BTy->getKind() != BuiltinType::UInt &&
-       BTy->getKind() != BuiltinType::LongLong &&
-       BTy->getKind() != BuiltinType::ULongLong &&
-       BTy->getKind() != BuiltinType::Float)) {
-    llvm::Triple::ArchType Arch =
+  llvm::Triple::ArchType Arch =
         S.Context.getTargetInfo().getTriple().getArch();
-    if (!isPermittedNeonBaseType(CurType, VecKind,
-                                 Arch == llvm::Triple::aarch64)) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
-      Attr.setInvalid();
-      return;
-    }
+  if (!isPermittedNeonBaseType(CurType, VecKind,
+                               Arch == llvm::Triple::aarch64)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
+    Attr.setInvalid();
+    return;
   }
+
   // The total size of the vector must be 64 or 128 bits.
   unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
   unsigned numElts = static_cast<unsigned>(numEltsInt.getZExtValue());
