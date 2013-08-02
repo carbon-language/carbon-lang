@@ -311,6 +311,12 @@ TEST(DeclarationMatcher, ClassIsDerived) {
   EXPECT_TRUE(matches(
       "class X {}; class Y : public X {};",
       recordDecl(isDerivedFrom(recordDecl(hasName("X")).bind("test")))));
+
+  EXPECT_TRUE(matches(
+      "template<typename T> class X {};"
+      "template<typename T> using Z = X<T>;"
+      "template <typename T> class Y : Z<T> {};",
+      recordDecl(isDerivedFrom(namedDecl(hasName("X"))))));
 }
 
 TEST(DeclarationMatcher, hasMethod) {

@@ -326,7 +326,7 @@ public:
   // The following Visit*() and Traverse*() functions "override"
   // methods in RecursiveASTVisitor.
 
-  bool VisitTypedefDecl(TypedefDecl *DeclNode) {
+  bool VisitTypedefNameDecl(TypedefNameDecl *DeclNode) {
     // When we see 'typedef A B', we add name 'B' to the set of names
     // A's canonical type maps to.  This is necessary for implementing
     // isDerivedFrom(x) properly, where x can be the name of the base
@@ -589,8 +589,9 @@ private:
                             BoundNodesTreeBuilder *Builder) {
     const Type *const CanonicalType =
       ActiveASTContext->getCanonicalType(TypeNode);
-    const std::set<const TypedefDecl*> &Aliases = TypeAliases[CanonicalType];
-    for (std::set<const TypedefDecl*>::const_iterator
+    const std::set<const TypedefNameDecl *> &Aliases =
+        TypeAliases[CanonicalType];
+    for (std::set<const TypedefNameDecl*>::const_iterator
            It = Aliases.begin(), End = Aliases.end();
          It != End; ++It) {
       BoundNodesTreeBuilder Result(*Builder);
@@ -607,12 +608,54 @@ private:
   ASTContext *ActiveASTContext;
 
   // Maps a canonical type to its TypedefDecls.
-  llvm::DenseMap<const Type*, std::set<const TypedefDecl*> > TypeAliases;
+  llvm::DenseMap<const Type*, std::set<const TypedefNameDecl*> > TypeAliases;
 
   // Maps (matcher, node) -> the match result for memoization.
   typedef std::map<MatchKey, MemoizedMatchResult> MemoizationMap;
   MemoizationMap ResultCache;
 };
+
+static CXXRecordDecl *getAsCXXRecordDecl(const Type *TypeNode) {
+  // Type::getAs<...>() drills through typedefs.
+  if (TypeNode->getAs<DependentNameType>() != NULL ||
+      TypeNode->getAs<DependentTemplateSpecializationType>() != NULL ||
+      TypeNode->getAs<TemplateTypeParmType>() != NULL)
+    // Dependent names and template TypeNode parameters will be matched when
+    // the template is instantiated.
+    return NULL;
+  TemplateSpecializationType const *TemplateType =
+      TypeNode->getAs<TemplateSpecializationType>();
+  if (TemplateType == NULL) {
+    return TypeNode->getAsCXXRecordDecl();
+  }
+  if (TemplateType->getTemplateName().isDependent())
+    // Dependent template specializations will be matched when the
+    // template is instantiated.
+    return NULL;
+
+  // For template specialization types which are specializing a template
+  // declaration which is an explicit or partial specialization of another
+  // template declaration, getAsCXXRecordDecl() returns the corresponding
+  // ClassTemplateSpecializationDecl.
+  //
+  // For template specialization types which are specializing a template
+  // declaration which is neither an explicit nor partial specialization of
+  // another template declaration, getAsCXXRecordDecl() returns NULL and
+  // we get the CXXRecordDecl of the templated declaration.
+  CXXRecordDecl *SpecializationDecl = TemplateType->getAsCXXRecordDecl();
+  if (SpecializationDecl != NULL) {
+    return SpecializationDecl;
+  }
+  NamedDecl *Templated =
+      TemplateType->getTemplateName().getAsTemplateDecl()->getTemplatedDecl();
+  if (CXXRecordDecl *TemplatedRecord = dyn_cast<CXXRecordDecl>(Templated)) {
+    return TemplatedRecord;
+  }
+  // Now it can still be that we have an alias template.
+  TypeAliasDecl *AliasDecl = dyn_cast<TypeAliasDecl>(Templated);
+  assert(AliasDecl);
+  return getAsCXXRecordDecl(AliasDecl->getUnderlyingType().getTypePtr());
+}
 
 // Returns true if the given class is directly or indirectly derived
 // from a base type with the given name.  A class is not considered to be
@@ -624,54 +667,19 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
     return false;
   typedef CXXRecordDecl::base_class_const_iterator BaseIterator;
   for (BaseIterator It = Declaration->bases_begin(),
-                    End = Declaration->bases_end(); It != End; ++It) {
+                    End = Declaration->bases_end();
+       It != End; ++It) {
     const Type *TypeNode = It->getType().getTypePtr();
 
     if (typeHasMatchingAlias(TypeNode, Base, Builder))
       return true;
 
-    // Type::getAs<...>() drills through typedefs.
-    if (TypeNode->getAs<DependentNameType>() != NULL ||
-        TypeNode->getAs<DependentTemplateSpecializationType>() != NULL ||
-        TypeNode->getAs<TemplateTypeParmType>() != NULL)
-      // Dependent names and template TypeNode parameters will be matched when
-      // the template is instantiated.
+    CXXRecordDecl *ClassDecl = getAsCXXRecordDecl(TypeNode);
+    if (ClassDecl == NULL)
       continue;
-    CXXRecordDecl *ClassDecl = NULL;
-    TemplateSpecializationType const *TemplateType =
-      TypeNode->getAs<TemplateSpecializationType>();
-    if (TemplateType != NULL) {
-      if (TemplateType->getTemplateName().isDependent())
-        // Dependent template specializations will be matched when the
-        // template is instantiated.
-        continue;
-
-      // For template specialization types which are specializing a template
-      // declaration which is an explicit or partial specialization of another
-      // template declaration, getAsCXXRecordDecl() returns the corresponding
-      // ClassTemplateSpecializationDecl.
-      //
-      // For template specialization types which are specializing a template
-      // declaration which is neither an explicit nor partial specialization of
-      // another template declaration, getAsCXXRecordDecl() returns NULL and
-      // we get the CXXRecordDecl of the templated declaration.
-      CXXRecordDecl *SpecializationDecl =
-        TemplateType->getAsCXXRecordDecl();
-      if (SpecializationDecl != NULL) {
-        ClassDecl = SpecializationDecl;
-      } else {
-        ClassDecl = dyn_cast<CXXRecordDecl>(
-            TemplateType->getTemplateName()
-                .getAsTemplateDecl()->getTemplatedDecl());
-      }
-    } else {
-      ClassDecl = TypeNode->getAsCXXRecordDecl();
-    }
-    assert(ClassDecl != NULL);
     if (ClassDecl == Declaration) {
       // This can happen for recursive template definitions; if the
       // current declaration did not match, we can safely return false.
-      assert(TemplateType);
       return false;
     }
     BoundNodesTreeBuilder Result(*Builder);
