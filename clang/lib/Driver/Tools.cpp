@@ -4517,6 +4517,9 @@ void darwin::Link::AddLinkArgs(Compilation &C,
       CmdArgs.push_back("-demangle");
   }
 
+  if (Args.hasArg(options::OPT_rdynamic) && Version[0] >= 137)
+    CmdArgs.push_back("-export_dynamic");
+
   // If we are using LTO, then automatically create a temporary file path for
   // the linker to use, so that it's lifetime will extend past a possible
   // dsymutil step.
@@ -4723,9 +4726,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // categories.
   if (Args.hasArg(options::OPT_ObjC) || Args.hasArg(options::OPT_ObjCXX))
     CmdArgs.push_back("-ObjC");
-
-  if (Args.hasArg(options::OPT_rdynamic))
-    CmdArgs.push_back("-export_dynamic");
 
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());

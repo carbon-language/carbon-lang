@@ -130,3 +130,17 @@
 // RUN: FileCheck -check-prefix=LINK_PG %s < %t.log
 // LINK_PG: -lgcrt1.o
 // LINK_PG: -no_new_main
+
+// RUN: %clang -target x86_64-apple-darwin12 -rdynamic -### %t.o \
+// RUN:   -mlinker-version=100 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_NO_EXPORT_DYNAMIC %s < %t.log
+// LINK_NO_EXPORT_DYNAMIC: {{ld(.exe)?"}}
+// LINK_NO_EXPORT_DYNAMIC-NOT: "-export_dynamic"
+
+// RUN: %clang -target x86_64-apple-darwin12 -rdynamic -### %t.o \
+// RUN:   -mlinker-version=137 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_EXPORT_DYNAMIC %s < %t.log
+// LINK_EXPORT_DYNAMIC: {{ld(.exe)?"}}
+// LINK_EXPORT_DYNAMIC: "-export_dynamic"
+
+
