@@ -320,7 +320,7 @@ private:
     for (COFFDefinedFileAtom *atom : atoms)
       if (targetOffset < atom->originalOffset() + atom->size())
         return atom;
-    llvm_unreachable("Relocation target out of range");
+    llvm::report_fatal_error("Relocation target out of range");
   }
 
   /// Find the atom for the symbol that was at the \p index in the symbol
