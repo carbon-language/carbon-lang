@@ -1554,9 +1554,11 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
 
   // Parse the arguments.
   OwningPtr<OptTable> Opts(createDriverOptTable());
+  const unsigned IncludedFlagsBitmask = options::CC1Option;
   unsigned MissingArgIndex, MissingArgCount;
   OwningPtr<InputArgList> Args(
-    Opts->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
+    Opts->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
+                    IncludedFlagsBitmask));
 
   // Check for missing argument error.
   if (MissingArgCount) {
@@ -1570,17 +1572,6 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
          ie = Args->filtered_end(); it != ie; ++it) {
     Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
     Success = false;
-  }
-
-  // Issue errors on arguments that are not valid for CC1.
-  for (ArgList::iterator I = Args->begin(), E = Args->end();
-       I != E; ++I) {
-    if ((*I)->getOption().matches(options::OPT_INPUT))
-      continue;
-    if (!(*I)->getOption().hasFlag(options::CC1Option)) {
-      Diags.Report(diag::err_drv_unknown_argument) << (*I)->getAsString(*Args);
-      Success = false;
-    }
   }
 
   Success = ParseAnalyzerArgs(*Res.getAnalyzerOpts(), *Args, Diags) && Success;
