@@ -1714,6 +1714,11 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(
         const_iterator __p, __node_pointer __cp)
 {
+#if _LIBCPP_DEBUG_LEVEL >= 2
+    _LIBCPP_ASSERT(__get_const_db()->__find_c_from_i(&__p) == this,
+        "unordered container::emplace_hint(const_iterator, args...) called with an iterator not"
+        " referring to this unordered container");
+#endif
     if (__p != end() && key_eq()(*__p, __cp->__value_))
     {
         __node_pointer __np = __p.__node_;

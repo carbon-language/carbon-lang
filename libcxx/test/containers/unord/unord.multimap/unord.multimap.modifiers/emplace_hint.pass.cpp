@@ -16,6 +16,10 @@
 // template <class... Args>
 //     iterator emplace_hint(const_iterator p, Args&&... args);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_map>
 #include <cassert>
 
@@ -86,6 +90,19 @@ int main()
         r = next(r, 2);
         assert(r->first == 3);
         assert(r->second == Emplaceable(5, 6));
+    }
+#endif
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        typedef std::unordered_multimap<int, Emplaceable> C;
+        typedef C::iterator R;
+        typedef C::value_type P;
+        C c;
+        C c2;
+        R r = c.emplace_hint(c2.end(), std::piecewise_construct,
+                                       std::forward_as_tuple(3),
+                                       std::forward_as_tuple());
+        assert(false);
     }
 #endif
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

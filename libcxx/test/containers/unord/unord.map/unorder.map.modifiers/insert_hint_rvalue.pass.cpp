@@ -17,6 +17,10 @@
 //           class = typename enable_if<is_convertible<P, value_type>::value>::type>
 //     iterator insert(const_iterator p, P&& x);
 
+#if _LIBCPP_DEBUG2 >= 1
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_map>
 #include <cassert>
 
@@ -136,5 +140,17 @@ int main()
         assert(r->second == 4);
     }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if _LIBCPP_DEBUG2 >= 1
+    {
+        typedef std::unordered_map<double, int> C;
+        typedef C::iterator R;
+        typedef C::value_type P;
+        C c;
+        C c2;
+        C::const_iterator e = c2.end();
+        R r = c.insert(e, P(3.5, 3));
+        assert(false);
+    }
+#endif
 #endif
 }

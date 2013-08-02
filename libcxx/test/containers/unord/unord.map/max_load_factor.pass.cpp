@@ -16,6 +16,10 @@
 // float max_load_factor() const;
 // void max_load_factor(float mlf);
 
+#ifdef _LIBCPP_DEBUG2
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <unordered_map>
 #include <string>
 #include <cassert>
@@ -54,6 +58,14 @@ int main()
         assert(c.max_load_factor() == 1);
         c.max_load_factor(2.5);
         assert(c.max_load_factor() == 2.5);
+    }
+#endif
+#if _LIBCPP_DEBUG_LEVEL >= 1
+    {
+        typedef std::unordered_map<int, std::string> C;
+        C c;
+        c.max_load_factor(0);
+        assert(false);
     }
 #endif
 }
