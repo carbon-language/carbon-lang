@@ -220,8 +220,7 @@ private:
             ? section->SizeOfRawData - sym->Value
             : si[1]->Value - sym->Value;
         auto *atom = new (_alloc) COFFBSSAtom(
-            *this, _symbolName[sym], sym, section, size, sectionName,
-            ++ordinal);
+            *this, _symbolName[sym], sym, size, ++ordinal);
         atoms.push_back(atom);
         _symbolAtom[sym] = atom;
       }

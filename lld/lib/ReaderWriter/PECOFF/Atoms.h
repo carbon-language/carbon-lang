@@ -235,11 +235,13 @@ private:
 class COFFBSSAtom : public COFFDefinedFileAtom {
 public:
   COFFBSSAtom(const File &file, StringRef name, const coff_symbol *symbol,
-              const coff_section *section, uint32_t size,
-              StringRef sectionName, uint64_t ordinal)
-      : COFFDefinedFileAtom(file, name, symbol, section, sectionName, ordinal),
+              uint32_t size, uint64_t ordinal)
+      : COFFDefinedFileAtom(file, name, symbol, nullptr, "", ordinal),
         _size(size) {}
 
+  virtual ContentPermissions permissions() const { return permRW_; }
+  virtual ContentType contentType() const { return typeZeroFill; }
+  virtual Merge merge() const { return mergeNo; }
   virtual uint64_t size() const { return _size; }
   virtual ArrayRef<uint8_t> rawContent() const { return _contents; }
 
