@@ -253,9 +253,24 @@ InputArgList *OptTable::ParseArgs(const char *const *ArgBegin,
   unsigned Index = 0, End = ArgEnd - ArgBegin;
   while (Index < End) {
     // Ignore empty arguments (other things may still take them as arguments).
-    if (Args->getArgString(Index)[0] == '\0') {
+    StringRef Str = Args->getArgString(Index);
+    if (Str == "") {
       ++Index;
       continue;
+    }
+
+    if (Str == "--") {
+      // Everything after -- is a filename.
+      ++Index;
+
+      assert(TheInputOptionID != 0 && "Invalid input option ID.");
+      while (Index < End) {
+        Args->append(new Arg(getOption(TheInputOptionID),
+                             Args->getArgString(Index), Index,
+                             Args->getArgString(Index)));
+        ++Index;
+      }
+      break;
     }
 
     unsigned Prev = Index;
