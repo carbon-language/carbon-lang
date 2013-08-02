@@ -61,14 +61,17 @@ static void *MsanAllocate(StackTrace *stack, uptr size,
     CHECK_EQ((stack_id >> 31), 0);  // Higher bit is occupied by stack origins.
     __msan_set_origin(res, size, stack_id);
   }
+  MSAN_MALLOC_HOOK(res, size);
   return res;
 }
 
 void MsanDeallocate(void *p) {
   CHECK(p);
   Init();
+  MSAN_FREE_HOOK(p);
   Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(p));
   uptr size = meta->requested_size;
+  meta->requested_size = 0;
   // This memory will not be reused by anyone else, so we are free to keep it
   // poisoned.
   __msan_poison(p, size);
@@ -104,4 +107,52 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
   return new_p;
 }
 
+static uptr AllocationSize(const void *p) {
+  if (p == 0)
+    return 0;
+  const void *beg = allocator.GetBlockBegin(p);
+  if (beg != p)
+    return 0;
+  Metadata *b = (Metadata*)allocator.GetMetaData(p);
+  return b->requested_size;
+}
+
 }  // namespace __msan
+
+using namespace __msan;
+
+uptr __msan_get_current_allocated_bytes() {
+  u64 stats[AllocatorStatCount];
+  allocator.GetStats(stats);
+  u64 m = stats[AllocatorStatMalloced];
+  u64 f = stats[AllocatorStatFreed];
+  return m >= f ? m - f : 1;
+}
+
+uptr __msan_get_heap_size() {
+  u64 stats[AllocatorStatCount];
+  allocator.GetStats(stats);
+  u64 m = stats[AllocatorStatMmapped];
+  u64 f = stats[AllocatorStatUnmapped];
+  return m >= f ? m - f : 1;
+}
+
+uptr __msan_get_free_bytes() {
+  return 1;
+}
+
+uptr __msan_get_unmapped_bytes() {
+  return 1;
+}
+
+uptr __msan_get_estimated_allocated_size(uptr size) {
+  return size;
+}
+
+bool __msan_get_ownership(const void *p) {
+  return AllocationSize(p) != 0;
+}
+
+uptr __msan_get_allocated_size(const void *p) {
+  return AllocationSize(p);
+}

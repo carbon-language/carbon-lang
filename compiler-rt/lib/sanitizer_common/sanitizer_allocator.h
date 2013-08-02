@@ -377,7 +377,7 @@ class SizeClassAllocator64 {
 
   uptr ClassID(uptr size) { return SizeClassMap::ClassID(size); }
 
-  void *GetMetaData(void *p) {
+  void *GetMetaData(const void *p) {
     uptr class_id = GetSizeClass(p);
     uptr size = SizeClassMap::Size(class_id);
     uptr chunk_idx = GetChunkIdx(reinterpret_cast<uptr>(p), size);
@@ -640,7 +640,7 @@ class SizeClassAllocator32 {
       alignment <= SizeClassMap::kMaxSize;
   }
 
-  void *GetMetaData(void *p) {
+  void *GetMetaData(const void *p) {
     CHECK(PointerIsMine(p));
     uptr mem = reinterpret_cast<uptr>(p);
     uptr beg = ComputeRegionBeg(mem);
@@ -1014,7 +1014,7 @@ class LargeMmapAllocator {
   }
 
   // At least page_size_/2 metadata bytes is available.
-  void *GetMetaData(void *p) {
+  void *GetMetaData(const void *p) {
     // Too slow: CHECK_EQ(p, GetBlockBegin(p));
     CHECK(IsAligned(reinterpret_cast<uptr>(p), page_size_));
     return GetHeader(p) + 1;
@@ -1127,7 +1127,7 @@ class LargeMmapAllocator {
     CHECK(IsAligned(p, page_size_));
     return reinterpret_cast<Header*>(p - page_size_);
   }
-  Header *GetHeader(void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
+  Header *GetHeader(const void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
 
   void *GetUser(Header *h) {
     CHECK(IsAligned((uptr)h, page_size_));
@@ -1222,7 +1222,7 @@ class CombinedAllocator {
     return primary_.PointerIsMine(p);
   }
 
-  void *GetMetaData(void *p) {
+  void *GetMetaData(const void *p) {
     if (primary_.PointerIsMine(p))
       return primary_.GetMetaData(p);
     return secondary_.GetMetaData(p);

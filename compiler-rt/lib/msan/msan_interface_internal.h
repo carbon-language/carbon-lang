@@ -141,6 +141,33 @@ void __sanitizer_unaligned_store32(uu32 *p, u32 x);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_unaligned_store64(uu64 *p, u64 x);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __msan_get_estimated_allocated_size(uptr size);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+bool __msan_get_ownership(const void *p);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __msan_get_allocated_size(const void *p);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __msan_get_current_allocated_bytes();
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __msan_get_heap_size();
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __msan_get_free_bytes();
+
+SANITIZER_INTERFACE_ATTRIBUTE
+uptr __msan_get_unmapped_bytes();
+
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+/* OPTIONAL */ void __msan_malloc_hook(void *ptr, uptr size);
+
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+/* OPTIONAL */ void __msan_free_hook(void *ptr);
 }  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H
