@@ -628,7 +628,9 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
                                                   ObjCContainerDecl *CDecl,
                                                   ObjCMethodDecl *OM,
                                                   ObjCInstanceTypeFamily OIT_Family) {
-  if (OM->isInstanceMethod() || !OM->getResultType()->isObjCIdType())
+  if (OM->isInstanceMethod() ||
+      OM->getResultType() == Ctx.getObjCInstanceType() ||
+      !OM->getResultType()->isObjCIdType())
     return;
   
   // Candidate factory methods are + (id) NaMeXXX : ... which belong to a class
