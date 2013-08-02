@@ -44,7 +44,40 @@ using llvm::object::coff_symbol;
 
 using namespace lld;
 
-namespace { // anonymous
+namespace {
+
+Atom::Scope getScope(const coff_symbol *symbol) {
+  switch (symbol->StorageClass) {
+    case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
+      return Atom::scopeGlobal;
+    case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
+    case llvm::COFF::IMAGE_SYM_CLASS_LABEL:
+      return Atom::scopeTranslationUnit;
+  }
+  llvm_unreachable("Unknown scope");
+}
+
+DefinedAtom::ContentType getContentType(const coff_section *section) {
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_CODE)
+    return DefinedAtom::typeCode;
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
+    return DefinedAtom::typeData;
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+    return DefinedAtom::typeZeroFill;
+  return DefinedAtom::typeUnknown;
+}
+
+DefinedAtom::ContentPermissions getPermissions(const coff_section *section) {
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ &&
+      section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_WRITE)
+    return DefinedAtom::permRW_;
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ &&
+      section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_EXECUTE)
+    return DefinedAtom::permR_X;
+  if (section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ)
+    return DefinedAtom::permR__;
+  return DefinedAtom::perm___;
+}
 
 class FileCOFF : public File {
 private:
@@ -143,7 +176,9 @@ private:
     for (const coff_symbol *sym : symbols) {
       if (sym->SectionNumber != llvm::COFF::IMAGE_SYM_ABSOLUTE)
         continue;
-      auto *atom = new (_alloc) COFFAbsoluteAtom(*this, _symbolName[sym], sym);
+      auto *atom = new (_alloc) COFFAbsoluteAtom(
+          *this, _symbolName[sym], getScope(sym), sym->Value);
+
       result.push_back(atom);
       _symbolAtom[sym] = atom;
     }
@@ -177,7 +212,8 @@ private:
           sym->Value > 0) {
         StringRef name = _symbolName[sym];
         uint32_t size = sym->Value;
-        auto *atom = new (_alloc) COFFBSSAtom(*this, name, sym, size, 0);
+        auto *atom = new (_alloc) COFFBSSAtom(
+            *this, name, getScope(sym), DefinedAtom::permRW_, size, 0);
         result.push_back(atom);
         continue;
       }
@@ -242,7 +278,8 @@ private:
             ? section->SizeOfRawData - sym->Value
             : si[1]->Value - sym->Value;
         auto *atom = new (_alloc) COFFBSSAtom(
-            *this, _symbolName[sym], sym, size, ++ordinal);
+            *this, _symbolName[sym], getScope(sym), getPermissions(section),
+            size, ++ordinal);
         atoms.push_back(atom);
         _symbolAtom[sym] = atom;
       }
@@ -265,11 +302,15 @@ private:
     if (section->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
       return error_code::success();
 
+    DefinedAtom::ContentType type = getContentType(section);
+    DefinedAtom::ContentPermissions perms = getPermissions(section);
+
     // Create an atom for the entire section.
     if (symbols.empty()) {
-      ArrayRef<uint8_t> Data(secData.data(), secData.size());
-      auto *atom = new (_alloc) COFFDefinedAtom(*this, "", nullptr, section,
-                                                Data, sectionName, 0);
+      ArrayRef<uint8_t> data(secData.data(), secData.size());
+      auto *atom = new (_alloc) COFFDefinedAtom(
+          *this, "", sectionName, Atom::scopeTranslationUnit, type, perms,
+          data, 0);
       atoms.push_back(atom);
       _definedAtomLocations[section][0] = atom;
       return error_code::success();
@@ -281,7 +322,8 @@ private:
       uint64_t size = symbols[0]->Value;
       ArrayRef<uint8_t> data(secData.data(), size);
       auto *atom = new (_alloc) COFFDefinedAtom(
-          *this, "", nullptr, section, data, sectionName, ++ordinal);
+          *this, "", sectionName, Atom::scopeTranslationUnit, type, perms,
+          data, ++ordinal);
       atoms.push_back(atom);
       _definedAtomLocations[section][0] = atom;
     }
@@ -294,7 +336,8 @@ private:
           : secData.data() + (*(si + 1))->Value;
       ArrayRef<uint8_t> data(start, end);
       auto *atom = new (_alloc) COFFDefinedAtom(
-          *this, _symbolName[*si], *si, section, data, sectionName, ++ordinal);
+          *this, _symbolName[*si], sectionName, getScope(*si), type, perms,
+          data, ++ordinal);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
       _definedAtomLocations[section][(*si)->Value] = atom;

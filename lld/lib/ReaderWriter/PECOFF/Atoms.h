@@ -58,25 +58,19 @@ private:
 
 class COFFAbsoluteAtom : public AbsoluteAtom {
 public:
-  COFFAbsoluteAtom(const File &f, StringRef n, const coff_symbol *s)
-      : _owningFile(f), _name(n), _symbol(s) {}
+  COFFAbsoluteAtom(const File &f, StringRef name, Scope scope, uint64_t value)
+      : _owningFile(f), _name(name), _scope(scope), _value(value) {}
 
   virtual const File &file() const { return _owningFile; }
-
-  virtual Scope scope() const {
-    if (_symbol->StorageClass == llvm::COFF::IMAGE_SYM_CLASS_STATIC)
-      return scopeTranslationUnit;
-    return scopeGlobal;
-  }
-
+  virtual Scope scope() const { return _scope; }
   virtual StringRef name() const { return _name; }
-
-  virtual uint64_t value() const { return _symbol->Value; }
+  virtual uint64_t value() const { return _value; }
 
 private:
   const File &_owningFile;
   StringRef _name;
-  const coff_symbol *_symbol;
+  Scope _scope;
+  uint64_t _value;
 };
 
 class COFFUndefinedAtom : public UndefinedAtom {
@@ -85,9 +79,7 @@ public:
       : _owningFile(f), _name(n) {}
 
   virtual const File &file() const { return _owningFile; }
-
   virtual StringRef name() const { return _name; }
-
   virtual CanBeNull canBeNull() const { return CanBeNull::canBeNullNever; }
 
 private:
@@ -156,71 +148,40 @@ private:
 /// subclasses; one for the regular atom and another for the BSS atom.
 class COFFDefinedFileAtom : public COFFBaseDefinedAtom {
 public:
-  COFFDefinedFileAtom(const File &file, StringRef name,
-                      const coff_symbol *symbol, const coff_section *section,
-                      StringRef sectionName, uint64_t ordinal)
-      : COFFBaseDefinedAtom(file, name, Kind::File), _symbol(symbol),
-        _section(section), _sectionName(sectionName),
+  COFFDefinedFileAtom(const File &file, StringRef name, StringRef sectionName,
+                      Scope scope, ContentType contentType,
+                      ContentPermissions perms, uint64_t ordinal)
+      : COFFBaseDefinedAtom(file, name, Kind::File), _sectionName(sectionName),
+        _scope(scope), _contentType(contentType), _permissions(perms),
         _ordinal(ordinal) {}
-
-  virtual uint64_t ordinal() const { return _ordinal; }
-  virtual StringRef getSectionName() const { return _sectionName; }
 
   static bool classof(const COFFBaseDefinedAtom *atom) {
     return atom->getKind() == Kind::File;
   }
 
-  virtual Scope scope() const {
-    if (!_symbol)
-      return scopeTranslationUnit;
-    switch (_symbol->StorageClass) {
-    case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
-      return scopeGlobal;
-    case llvm::COFF::IMAGE_SYM_CLASS_STATIC:
-    case llvm::COFF::IMAGE_SYM_CLASS_LABEL:
-      return scopeTranslationUnit;
-    }
-    llvm_unreachable("Unknown scope!");
-  }
-
-  virtual ContentType contentType() const {
-    if (_section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_CODE)
-      return typeCode;
-    if (_section->Characteristics & llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA)
-      return typeData;
-    if (_section->Characteristics &
-        llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-      return typeZeroFill;
-    return typeUnknown;
-  }
-
-  virtual ContentPermissions permissions() const {
-    if (_section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ &&
-        _section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_WRITE)
-      return permRW_;
-    if (_section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ &&
-        _section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_EXECUTE)
-      return permR_X;
-    if (_section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ)
-      return permR__;
-    return perm___;
-  }
+  virtual StringRef getSectionName() const { return _sectionName; }
+  virtual Scope scope() const { return _scope; }
+  virtual ContentType contentType() const { return _contentType; }
+  virtual ContentPermissions permissions() const { return _permissions; }
+  virtual uint64_t ordinal() const { return _ordinal; }
 
 private:
-  const coff_symbol *_symbol;
-  const coff_section *_section;
   StringRef _sectionName;
-  std::vector<std::unique_ptr<COFFReference>> _references;
+  Scope _scope;
+  ContentType _contentType;
+  ContentPermissions _permissions;
   uint64_t _ordinal;
+  std::vector<std::unique_ptr<COFFReference>> _references;
 };
 
 // A COFFDefinedAtom represents an atom read from a file and has contents.
 class COFFDefinedAtom : public COFFDefinedFileAtom {
 public:
-  COFFDefinedAtom(const File &file, StringRef name, const coff_symbol *symbol,
-                  const coff_section *section, ArrayRef<uint8_t> data,
-                  StringRef sectionName, uint64_t ordinal)
-      : COFFDefinedFileAtom(file, name, symbol, section, sectionName, ordinal),
+  COFFDefinedAtom(const File &file, StringRef name, StringRef sectionName,
+                  Scope scope, ContentType type, ContentPermissions perms,
+                  ArrayRef<uint8_t> data, uint64_t ordinal)
+      : COFFDefinedFileAtom(file, name, sectionName, scope, type, perms,
+                            ordinal),
         _dataref(data) {}
 
   virtual uint64_t size() const { return _dataref.size(); }
@@ -233,13 +194,12 @@ private:
 // A COFFDefinedAtom represents an atom for BSS section.
 class COFFBSSAtom : public COFFDefinedFileAtom {
 public:
-  COFFBSSAtom(const File &file, StringRef name, const coff_symbol *symbol,
-              uint32_t size, uint64_t ordinal)
-      : COFFDefinedFileAtom(file, name, symbol, nullptr, "", ordinal),
+  COFFBSSAtom(const File &file, StringRef name, Scope scope,
+              ContentPermissions perms, uint32_t size, uint64_t ordinal)
+      : COFFDefinedFileAtom(file, name, "", scope, typeZeroFill, perms,
+                            ordinal),
         _size(size) {}
 
-  virtual ContentPermissions permissions() const { return permRW_; }
-  virtual ContentType contentType() const { return typeZeroFill; }
   virtual Merge merge() const { return mergeNo; }
   virtual uint64_t size() const { return _size; }
   virtual ArrayRef<uint8_t> rawContent() const { return _contents; }
