@@ -586,7 +586,10 @@ enum ObjCInstanceTypeFamily {
   OIT_None,
   OIT_Array,
   OIT_Dictionary,
-  OIT_MemManage
+  OIT_MemManage,
+  OIT_NSString,
+  OIT_NSSet,
+  OIT_NSURL
 };
 
 /// \brief Smart pointer class that efficiently represents Objective-C method
