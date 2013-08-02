@@ -4882,6 +4882,7 @@ bool ARMAsmParser::isDeprecated(MCInst &Inst, StringRef &Info) {
     Info = "armv8";
     return true;
   }
+  return false;
 }
 
 static bool isDataTypeToken(StringRef Tok) {
