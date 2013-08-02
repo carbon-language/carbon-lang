@@ -290,6 +290,8 @@ public:
         auto relocSite = reinterpret_cast<ulittle32_t *>(
             fileBuffer + layout->_fileOffset + ref->offsetInAtom());
         uint64_t targetAddr = atomRva[ref->target()];
+        // Also account for whatever offset is already stored at the relocation site.
+        targetAddr += *relocSite;
 
         // Skip if this reference is not for relocation.
         if (ref->kind() < lld::Reference::kindTargetLow)
