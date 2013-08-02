@@ -220,7 +220,7 @@
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 
-/* Define if you can use -Wl,-export-dynamic. */
+/* Define if you can use -rdynamic. */
 #undef HAVE_LINK_EXPORT_DYNAMIC
 
 /* Define to 1 if you have the <link.h> header file. */

@@ -40,23 +40,24 @@ if test "$llvm_cv_link_use_r" = yes ; then
 ])
 
 #
-# Determine if the system can handle the -R option being passed to the linker.
+# Determine if the system can handle the -rdynamic option being passed
+# to the compiler.
 #
 # This macro is specific to LLVM.
 #
 AC_DEFUN([AC_LINK_EXPORT_DYNAMIC],
-[AC_CACHE_CHECK([for compiler -Wl,-export-dynamic option],
+[AC_CACHE_CHECK([for compiler -rdynamic option],
                 [llvm_cv_link_use_export_dynamic],
 [ AC_LANG_PUSH([C])
   oldcflags="$CFLAGS"
-  CFLAGS="$CFLAGS -Wl,-export-dynamic"
+  CFLAGS="$CFLAGS -rdynamic"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[]])],
     [llvm_cv_link_use_export_dynamic=yes],[llvm_cv_link_use_export_dynamic=no])
   CFLAGS="$oldcflags"
   AC_LANG_POP([C])
 ])
 if test "$llvm_cv_link_use_export_dynamic" = yes ; then
-  AC_DEFINE([HAVE_LINK_EXPORT_DYNAMIC],[1],[Define if you can use -Wl,-export-dynamic.])
+  AC_DEFINE([HAVE_LINK_EXPORT_DYNAMIC],[1],[Define if you can use -rdynamic.])
   fi
 ])
 
