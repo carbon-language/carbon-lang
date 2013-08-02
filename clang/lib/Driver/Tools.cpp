@@ -1901,17 +1901,15 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
 /// If the PWD environment variable is set, add a CC1 option to specify the
 /// debug compilation directory.
 static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
-  struct stat StatPWDBuf, StatDotBuf;
-
   const char *pwd = ::getenv("PWD");
   if (!pwd)
     return;
 
+  llvm::sys::fs::file_status PWDStatus, DotStatus;
   if (llvm::sys::path::is_absolute(pwd) &&
-      stat(pwd, &StatPWDBuf) == 0 &&
-      stat(".", &StatDotBuf) == 0 &&
-      StatPWDBuf.st_ino == StatDotBuf.st_ino &&
-      StatPWDBuf.st_dev == StatDotBuf.st_dev) {
+      !llvm::sys::fs::status(pwd, PWDStatus) &&
+      !llvm::sys::fs::status(".", DotStatus) &&
+      PWDStatus.getUniqueID() == DotStatus.getUniqueID()) {
     CmdArgs.push_back("-fdebug-compilation-dir");
     CmdArgs.push_back(Args.MakeArgString(pwd));
     return;
