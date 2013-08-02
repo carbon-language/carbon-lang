@@ -936,7 +936,7 @@ private:
     State.NextToken = State.NextToken->Next;
 
     if (!Newline && Style.AlwaysBreakBeforeMultilineStrings &&
-        Current.is(tok::string_literal))
+        Current.is(tok::string_literal) && Current.CanBreakBefore)
       return 0;
 
     return breakProtrudingToken(Current, State, DryRun);
