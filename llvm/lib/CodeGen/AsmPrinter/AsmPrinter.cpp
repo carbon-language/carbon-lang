@@ -1416,6 +1416,10 @@ void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
 void AsmPrinter::EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
                                       unsigned Size)
   const {
+  if (MAI->needsDwarfSectionOffsetDirective() && Size == 4) { // secrel32 ONLY works for 32bits.
+    OutStreamer.EmitCOFFSecRel32(Label);
+    return;
+  }
 
   // Emit Label+Offset (or just Label if Offset is zero)
   const MCExpr *Expr = MCSymbolRefExpr::Create(Label, OutContext);
