@@ -62,14 +62,6 @@ public:
   WinLinkOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
-// Returns the index of "--" or -1 if not found.
-int findDoubleDash(int argc, const char *argv[]) {
-  for (int i = 0; i < argc; ++i)
-    if (std::strcmp(argv[i], "--") == 0)
-      return i;
-  return -1;
-}
-
 // Displays error message if the given version does not match with
 // /^\d+$/.
 bool checkNumber(StringRef version, const char *errorMessage,
@@ -318,15 +310,9 @@ bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
 
 bool WinLinkDriver::parse(int argc, const char *argv[],
                           PECOFFTargetInfo &info, raw_ostream &diagnostics) {
-  // Arguments after "--" are interpreted as filenames even if they start with
-  // a hyphen or a slash. This is not compatible with link.exe but useful for
-  // us to test lld on Unix.
-  int doubleDashPosition = findDoubleDash(argc, argv);
-  int argEnd = (doubleDashPosition > 0) ? doubleDashPosition : argc;
-
   // Parse the options.
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
-      argEnd, argv, diagnostics);
+      argc, argv, diagnostics);
   if (!parsedArgs)
     return true;
 
@@ -438,11 +424,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
        it != ie; ++it) {
     inputPaths.push_back((*it)->getValue());
   }
-
-  // Arguments after "--" are also input files
-  if (doubleDashPosition > 0)
-    for (int i = doubleDashPosition + 1; i < argc; ++i)
-      inputPaths.push_back(argv[i]);
 
   // Add input files specified via the command line.
   for (const StringRef path : inputPaths)
