@@ -314,13 +314,17 @@ private:
 
   /// Find the atom that is at \p targetOffset in \p section. It is assumed
   /// that \p atoms are sorted by position in the section.
-  COFFDefinedFileAtom *
-  findAtomAt(uint32_t targetOffset,
-             const vector<COFFDefinedFileAtom *> &atoms) const {
-    for (COFFDefinedFileAtom *atom : atoms)
-      if (targetOffset < atom->originalOffset() + atom->size())
-        return atom;
-    llvm::report_fatal_error("Relocation target out of range");
+  error_code findAtomAt(uint32_t targetOffset,
+                        const vector<COFFDefinedFileAtom *> &atoms,
+                        COFFDefinedFileAtom *&result) const {
+    for (COFFDefinedFileAtom *atom : atoms) {
+      if (targetOffset < atom->originalOffset() + atom->size()) {
+        result = atom;
+        return error_code::success();
+      }
+    }
+    // Relocation target is out of range
+    return llvm::object::object_error::parse_failed;
   }
 
   /// Find the atom for the symbol that was at the \p index in the symbol
@@ -351,7 +355,9 @@ private:
     if (error_code ec = getAtomBySymbolIndex(rel->SymbolTableIndex, targetAtom))
       return ec;
 
-    COFFDefinedFileAtom *atom = findAtomAt(rel->VirtualAddress, atoms);
+    COFFDefinedFileAtom *atom;
+    if (error_code ec = findAtomAt(rel->VirtualAddress, atoms, atom))
+      return ec;
     uint32_t offsetInAtom = itemAddress - atom->originalOffset();
     assert(offsetInAtom < atom->size());
     atom->addReference(std::unique_ptr<COFFReference>(
