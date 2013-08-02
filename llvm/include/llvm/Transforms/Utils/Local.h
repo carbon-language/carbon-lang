@@ -42,7 +42,7 @@ class DIBuilder;
 class AliasAnalysis;
 
 template<typename T> class SmallVectorImpl;
-  
+
 //===----------------------------------------------------------------------===//
 //  Local constant propagation.
 //
@@ -80,7 +80,7 @@ bool RecursivelyDeleteTriviallyDeadInstructions(Value *V,
 /// too, recursively.  Return true if a change was made.
 bool RecursivelyDeleteDeadPHINode(PHINode *PN, const TargetLibraryInfo *TLI=0);
 
-  
+
 /// SimplifyInstructionsInBlock - Scan the specified basic block and try to
 /// simplify any instructions in it and recursively delete dead instructions.
 ///
@@ -88,7 +88,7 @@ bool RecursivelyDeleteDeadPHINode(PHINode *PN, const TargetLibraryInfo *TLI=0);
 /// instructions in other blocks as well in this block.
 bool SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD = 0,
                                  const TargetLibraryInfo *TLI = 0);
-    
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring.
 //
@@ -106,15 +106,15 @@ bool SimplifyInstructionsInBlock(BasicBlock *BB, const DataLayout *TD = 0,
 /// recursively fold the 'and' to 0.
 void RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred,
                                   DataLayout *TD = 0);
-    
-  
+
+
 /// MergeBasicBlockIntoOnlyPred - BB is a block with one predecessor and its
 /// predecessor is known to have one successor (BB!).  Eliminate the edge
 /// between them, moving the instructions in the predecessor into BB.  This
 /// deletes the predecessor block.
 ///
 void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, Pass *P = 0);
-    
+
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
 /// unconditional branch, and contains no instructions other than PHI nodes,
@@ -157,7 +157,7 @@ AllocaInst *DemoteRegToStack(Instruction &X,
 
 /// DemotePHIToStack - This function takes a virtual register computed by a phi
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
-/// The phi node is deleted and it returns the pointer to the alloca inserted. 
+/// The phi node is deleted and it returns the pointer to the alloca inserted.
 AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
 
 /// getOrEnforceKnownAlignment - If the specified pointer has an alignment that
@@ -180,18 +180,20 @@ static inline unsigned getKnownAlignment(Value *V, const DataLayout *TD = 0) {
 template<typename IRBuilderTy>
 Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
                      bool NoAssumptions = false) {
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext());
+  GEPOperator *GEPOp = cast<GEPOperator>(GEP);
+  unsigned AS = GEPOp->getPointerAddressSpace();
+  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext(), AS);
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // If the GEP is inbounds, we know that none of the addressing operations will
   // overflow in an unsigned sense.
-  bool isInBounds = cast<GEPOperator>(GEP)->isInBounds() && !NoAssumptions;
+  bool isInBounds = GEPOp->isInBounds() && !NoAssumptions;
 
   // Build a mask for high order bits.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
-  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
+  unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+  uint64_t PtrSizeMask = ~0ULL >> (64 - IntPtrWidth);
 
+  gep_type_iterator GTI = gep_type_begin(GEP);
   for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
        ++i, ++GTI) {
     Value *Op = *i;
