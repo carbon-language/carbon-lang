@@ -41,6 +41,8 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl);
   void migrateMethodInstanceType(ASTContext &Ctx, ObjCContainerDecl *CDecl,
                                  ObjCMethodDecl *OM);
+  void migrateFactoryMethod(ASTContext &Ctx, ObjCContainerDecl *CDecl,
+                            ObjCMethodDecl *OM);
 
 public:
   std::string MigrateDir;
@@ -549,13 +551,34 @@ void ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   Editor->commit(commit);
 }
 
+static void ReplaceWithInstancetype(const ObjCMigrateASTConsumer &ASTC,
+                                    ObjCMethodDecl *OM) {
+  SourceRange R;
+  std::string ClassString;
+  if (TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo()) {
+    TypeLoc TL = TSInfo->getTypeLoc();
+    R = SourceRange(TL.getBeginLoc(), TL.getEndLoc());
+    ClassString = "instancetype";
+  }
+  else {
+    R = SourceRange(OM->getLocStart(), OM->getLocStart());
+    ClassString = OM->isInstanceMethod() ? '-' : '+';
+    ClassString += " (instancetype)";
+  }
+  edit::Commit commit(*ASTC.Editor);
+  commit.replace(R, ClassString);
+  ASTC.Editor->commit(commit);
+}
+
 void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
                                                        ObjCContainerDecl *CDecl,
                                                        ObjCMethodDecl *OM) {
   ObjCInstanceTypeFamily OIT_Family =
     Selector::getInstTypeMethodFamily(OM->getSelector());
-  if (OIT_Family == OIT_None)
+  if (OIT_Family == OIT_None) {
+    migrateFactoryMethod(Ctx, CDecl, OM);
     return;
+  }
   std::string ClassName;
   switch (OIT_Family) {
     case OIT_Array:
@@ -581,24 +604,11 @@ void ObjCMigrateASTConsumer::migrateMethodInstanceType(ASTContext &Ctx,
       IDecl = ImpDecl->getClassInterface();
   }
   if (!IDecl ||
-      !IDecl->lookupInheritedClass(&Ctx.Idents.get(ClassName)))
+      !IDecl->lookupInheritedClass(&Ctx.Idents.get(ClassName))) {
+    migrateFactoryMethod(Ctx, CDecl, OM);
     return;
-  
-  SourceRange R;
-  std::string ClassString;
-  if (TypeSourceInfo *TSInfo =  OM->getResultTypeSourceInfo()) {
-    TypeLoc TL = TSInfo->getTypeLoc();
-    R = SourceRange(TL.getBeginLoc(), TL.getEndLoc());
-    ClassString = "instancetype";
   }
-  else {
-    R = SourceRange(OM->getLocStart(), OM->getLocStart());
-    ClassString = OM->isInstanceMethod() ? '-' : '+';
-    ClassString += " (instancetype)";
-  }
-  edit::Commit commit(*Editor);
-  commit.replace(R, ClassString);
-  Editor->commit(commit);
+  ReplaceWithInstancetype(*this, OM);
 }
 
 void ObjCMigrateASTConsumer::migrateInstanceType(ASTContext &Ctx,
@@ -610,6 +620,43 @@ void ObjCMigrateASTConsumer::migrateInstanceType(ASTContext &Ctx,
     ObjCMethodDecl *Method = (*M);
     migrateMethodInstanceType(Ctx, CDecl, Method);
   }
+}
+
+void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
+                                                  ObjCContainerDecl *CDecl,
+                                                  ObjCMethodDecl *OM) {
+  if (OM->isInstanceMethod() || !OM->getResultType()->isObjCIdType())
+    return;
+  
+  // Candidate factory methods are + (id) NaMeXXX : ... which belong to a class
+  // NSYYYNamE with matching names be at least 3 characters long.
+  ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl);
+  if (!IDecl) {
+    if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(CDecl))
+      IDecl = CatDecl->getClassInterface();
+    else if (ObjCImplDecl *ImpDecl = dyn_cast<ObjCImplDecl>(CDecl))
+      IDecl = ImpDecl->getClassInterface();
+  }
+  if (!IDecl)
+    return;
+  
+  std::string StringClassName = IDecl->getName();
+  StringRef LoweredClassName(StringClassName);
+  LoweredClassName = LoweredClassName.lower();
+  IdentifierInfo *MethodIdName = OM->getSelector().getIdentifierInfoForSlot(0);
+  std::string MethodName = MethodIdName->getName();
+  std::string MethodNameSubStr = MethodName.substr(0, 3);
+  StringRef MethodNamePrefix(MethodNameSubStr);
+  MethodNamePrefix = MethodNamePrefix.lower();
+  size_t Ix = LoweredClassName.rfind(MethodNamePrefix);
+  if (Ix == StringRef::npos)
+    return;
+  std::string ClassNamePostfix = LoweredClassName.substr(Ix);
+  StringRef LoweredMethodName(MethodName);
+  LoweredMethodName = LoweredMethodName.lower();
+  if (!LoweredMethodName.startswith(ClassNamePostfix))
+    return;
+  ReplaceWithInstancetype(*this, OM);
 }
 
 namespace {

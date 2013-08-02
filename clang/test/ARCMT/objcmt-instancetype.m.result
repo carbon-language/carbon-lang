@@ -11,7 +11,7 @@ typedef signed char BOOL;
 @end
 
 @interface NSString : NSObject
-+ (id)stringWithString:(NSString *)string;
++ (instancetype)stringWithString:(NSString *)string;
 - (instancetype)initWithString:(NSString *)aString;
 @end
 
