@@ -2003,6 +2003,17 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->RedeclLink.setNext(cast<RedeclarableTemplateDecl>(previous));
   }
+
+  // If the declaration was visible in one module, a redeclaration of it in
+  // another module remains visible even if it wouldn't be visible by itself.
+  //
+  // FIXME: In this case, the declaration should only be visible if a module
+  //        that makes it visible has been imported.
+  // FIXME: This is not correct in the case where previous is a local extern
+  //        declaration and D is a friend declaraton.
+  D->IdentifierNamespace |=
+      previous->IdentifierNamespace &
+      (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);
 }
 
 void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
@@ -2061,11 +2072,6 @@ ASTReader::combineStoredMergedDecls(Decl *Canon, GlobalDeclID CanonID) {
   Pos->second.erase(std::unique(Pos->second.begin(), Pos->second.end()),
                     Pos->second.end());
   return Pos;
-}
-
-void ASTReader::loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID) {
-  Decl *previous = GetDecl(ID);
-  ASTDeclReader::attachPreviousDecl(D, previous);
 }
 
 /// \brief Read the declaration at the given offset from the AST file.
@@ -2499,7 +2505,7 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     if (Chain[I] == CanonDecl)
       continue;
-    
+
     ASTDeclReader::attachPreviousDecl(Chain[I], MostRecent);
     MostRecent = Chain[I];
   }

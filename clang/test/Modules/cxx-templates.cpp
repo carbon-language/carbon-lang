@@ -71,6 +71,10 @@ void g() {
   PerformDelayedLookup(defined_in_b_impl); // expected-note {{in instantiation of}}
 }
 
+RedeclaredAsFriend<int> raf1;
+RedeclareTemplateAsFriend<double> rtaf;
+RedeclaredAsFriend<double> raf2;
+
 @import cxx_templates_common;
 
 typedef SomeTemplate<int*> SomeTemplateIntPtr;

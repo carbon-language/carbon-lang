@@ -29,6 +29,12 @@ template<typename T> void UseDefinedInBImpl() {
 
 extern DefinedInBImpl &defined_in_b_impl;
 
+template<typename T>
+struct RedeclareTemplateAsFriend {
+  template<typename U>
+  friend struct RedeclaredAsFriend;
+};
+
 @import cxx_templates_a;
 template<typename T> void UseDefinedInBImplIndirectly(T &v) {
   PerformDelayedLookup(v);

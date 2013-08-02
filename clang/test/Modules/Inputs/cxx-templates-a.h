@@ -22,3 +22,5 @@ template<typename T> void PerformDelayedLookup(T &t) {
 }
 
 template<typename T> void PerformDelayedLookupInDefaultArgument(T &t, int a = (FoundByADL(T()), 0)) {}
+
+template<typename T> struct RedeclaredAsFriend {};

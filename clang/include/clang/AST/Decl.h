@@ -3424,6 +3424,8 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
 
     // If the declaration was previously visible, a redeclaration of it remains
     // visible even if it wouldn't be visible by itself.
+    // FIXME: Once we handle local extern decls properly, this should inherit
+    // the visibility from MostRecent, not from PrevDecl.
     static_cast<decl_type*>(this)->IdentifierNamespace |=
       PrevDecl->getIdentifierNamespace() &
       (Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Type);
