@@ -1,0 +1,22 @@
+# RUN: yaml2obj %p/Inputs/bss-undef.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t /subsystem:console /force -- %t.obj \
+# RUN:    && llvm-readobj -sections %t | FileCheck %s
+
+CHECK:       Section {
+CHECK:         Number: 2
+CHECK-NEXT:    Name: .bss
+CHECK-NEXT:    VirtualSize: 0x0
+CHECK-NEXT:    VirtualAddress: 0x2000
+CHECK-NEXT:    RawDataSize: 512
+CHECK-NEXT:    PointerToRawData: 0x0
+CHECK-NEXT:    PointerToRelocations: 0x0
+CHECK-NEXT:    PointerToLineNumbers: 0x0
+CHECK-NEXT:    RelocationCount: 0
+CHECK-NEXT:    LineNumberCount: 0
+CHECK-NEXT:    Characteristics [
+CHECK-NEXT:      IMAGE_SCN_CNT_UNINITIALIZED_DATA
+CHECK-NEXT:      IMAGE_SCN_MEM_READ
+CHECK-NEXT:      IMAGE_SCN_MEM_WRITE
+CHECK-NEXT:    ]
+CHECK-NEXT:  }

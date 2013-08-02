@@ -161,6 +161,20 @@ private:
     // Filter non-defined atoms, and group defined atoms by its section.
     SectionToSymbolsT definedSymbols;
     for (const coff_symbol *sym : symbols) {
+      // A symbol with section number 0 and non-zero value represents an
+      // uninitialized data. I don't understand why there are two ways to define
+      // an uninitialized data symbol (.bss and this way), but that's how COFF
+      // works.
+      if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED &&
+          sym->Value > 0) {
+        StringRef name = _symbolName[sym];
+        uint32_t size = sym->Value;
+        auto *atom = new (_alloc) COFFBSSAtom(*this, name, sym, size, 0);
+        result.push_back(atom);
+        continue;
+      }
+
+      // Skip if it's not for defined atom.
       if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
           sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
         continue;
