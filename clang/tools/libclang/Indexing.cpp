@@ -92,7 +92,7 @@ class PPRegion {
   time_t ModTime;
   unsigned Offset;
 public:
-  PPRegion() : ModTime(), Offset() {}
+  PPRegion() : UniqueID(0, 0), ModTime(), Offset() {}
   PPRegion(llvm::sys::fs::UniqueID UniqueID, unsigned offset, time_t modTime)
       : UniqueID(UniqueID), ModTime(modTime), Offset(offset) {}
 
