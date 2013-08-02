@@ -229,6 +229,7 @@ class ARMAsmParser : public MCTargetAsmParser {
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands);
   bool shouldOmitPredicateOperand(StringRef Mnemonic,
                               SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  bool isDeprecated(MCInst &Inst, StringRef &Info);
 
 public:
   enum ARMMatchResultTy {
@@ -4876,6 +4877,13 @@ bool ARMAsmParser::shouldOmitPredicateOperand(
   return false;
 }
 
+bool ARMAsmParser::isDeprecated(MCInst &Inst, StringRef &Info) {
+  if (hasV8Ops() && Inst.getOpcode() == ARM::SETEND) {
+    Info = "armv8";
+    return true;
+  }
+}
+
 static bool isDataTypeToken(StringRef Tok) {
   return Tok == ".8" || Tok == ".16" || Tok == ".32" || Tok == ".64" ||
     Tok == ".i8" || Tok == ".i16" || Tok == ".i32" || Tok == ".i64" ||
@@ -5375,6 +5383,10 @@ validateInstruction(MCInst &Inst,
     break;
   }
   }
+
+  StringRef DepInfo;
+  if (isDeprecated(Inst, DepInfo))
+    Warning(Loc, "deprecated on " + DepInfo);
 
   return false;
 }
