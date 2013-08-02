@@ -4290,7 +4290,8 @@ bool SimplifyCFGOpt::SimplifyParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
   // Do the transformation.
   BasicBlock *CB;
   bool Iteration = true;
-  BasicBlock::iterator ItOld = Builder.GetInsertPoint();
+  BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
+  BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
   BranchInst *PBI = dyn_cast<BranchInst>(FirstCondBlock->getTerminator());
   Value *PC = PBI->getCondition();
   do {
@@ -4319,8 +4320,8 @@ bool SimplifyCFGOpt::SimplifyParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
     // make CB unreachable and let downstream to delete the block.
     new UnreachableInst(CB->getContext(), CB);
   } while (Iteration);
-    
-  Builder.SetInsertPoint(ItOld);
+  if (SaveInsertBB)
+    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
   DEBUG(dbgs() << "Use parallel and/or in:\n" << *FirstCondBlock);
   return true;
 }
@@ -4454,11 +4455,13 @@ bool SimplifyCFGOpt::MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder,
   FirstEntryBlock->getInstList().splice(FirstEntryBlock->end(), SecondEntryBlock->getInstList());
   BranchInst *PBI = dyn_cast<BranchInst>(FirstEntryBlock->getTerminator());
   Value *CC = PBI->getCondition();
-  BasicBlock::iterator ItOld = Builder.GetInsertPoint();
+  BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
+  BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
   Builder.SetInsertPoint(PBI);
   Value *NC = Builder.CreateOr(CInst1, CC);
   PBI->replaceUsesOfWith(CC, NC);
-  Builder.SetInsertPoint(ItOld);
+  if (SaveInsertBB)
+    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
 
   // Remove IfTrue1
   if (IfTrue1 != FirstEntryBlock) {
