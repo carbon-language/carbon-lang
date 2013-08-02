@@ -89,6 +89,7 @@ format_object1<int64_t> MCInstPrinter::formatHex(const int64_t Value) const {
         return format("%" PRIx64 "h", Value);
     }
   }
+  llvm_unreachable("unsupported print style");
 }
 
 format_object1<uint64_t> MCInstPrinter::formatHex(const uint64_t Value) const {
@@ -101,4 +102,5 @@ format_object1<uint64_t> MCInstPrinter::formatHex(const uint64_t Value) const {
     else
       return format("%" PRIx64 "h", Value);
   }
+  llvm_unreachable("unsupported print style");
 }
