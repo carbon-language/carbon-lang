@@ -317,12 +317,6 @@ private:
   COFFDefinedFileAtom *
   findAtomAt(uint32_t targetOffset,
              const vector<COFFDefinedFileAtom *> &atoms) const {
-    assert(std::is_sorted(atoms.begin(), atoms.end(),
-                          [](const COFFDefinedFileAtom * a,
-                             const COFFDefinedFileAtom * b) -> bool {
-                            return a->originalOffset() < b->originalOffset();
-                          }));
-
     for (COFFDefinedFileAtom *atom : atoms)
       if (targetOffset < atom->originalOffset() + atom->size())
         return atom;
