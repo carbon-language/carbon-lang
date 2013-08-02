@@ -11,7 +11,7 @@ entry:
 !llvm.dbg.cu = !{!3}
 
 !0 = metadata !{i32 571, i32 3, metadata !1, null}
-!1 = metadata !{i32 458763, metadata !11, metadata !2, i32 1, i32 1, i32 0}; [DW_TAG_lexical_block ]
+!1 = metadata !{i32 458763, metadata !2, i32 1, i32 1}; [DW_TAG_lexical_block ]
 !2 = metadata !{i32 458798, i32 0, metadata !3, metadata !"foo", metadata !"foo", metadata !"foo", i32 561, metadata !4, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0}; [DW_TAG_subprogram ]
 !3 = metadata !{i32 458769, metadata !11, i32 12, metadata !"clang 1.1", i1 true, metadata !"", i32 0, metadata !12, metadata !12, metadata !13, null, null, metadata !""}; [DW_TAG_compile_unit ]
 !4 = metadata !{i32 458773, null, metadata !3, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !5, i32 0}; [DW_TAG_subroutine_type ]

@@ -58,7 +58,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !11 = metadata !{i32 524545, metadata !1, metadata !"hash", metadata !2, i32 10, metadata !9} ; [ DW_TAG_arg_variable ]
 !12 = metadata !{i32 524545, metadata !1, metadata !"flags", metadata !2, i32 11, metadata !9} ; [ DW_TAG_arg_variable ]
 !13 = metadata !{i32 13, i32 0, metadata !14, null}
-!14 = metadata !{i32 524299, metadata !28, metadata !1, i32 12, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 524299, metadata !1, i32 12, i32 0} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 524545, metadata !16, metadata !"name", metadata !2, i32 17, metadata !6} ; [ DW_TAG_arg_variable ]
 !16 = metadata !{i32 524334, metadata !28, metadata !2, metadata !"add_name_internal", metadata !"add_name_internal", metadata !"add_name_internal", i32 22, metadata !17, i1 true, i1 true, i32 0, i32 0, null, i1 false, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !17 = metadata !{i32 524309, metadata !28, metadata !2, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !18, i32 0, null} ; [ DW_TAG_subroutine_type ]
@@ -69,7 +69,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !22 = metadata !{i32 524545, metadata !16, metadata !"extra", metadata !2, i32 20, metadata !19} ; [ DW_TAG_arg_variable ]
 !23 = metadata !{i32 524545, metadata !16, metadata !"flags", metadata !2, i32 21, metadata !9} ; [ DW_TAG_arg_variable ]
 !24 = metadata !{i32 23, i32 0, metadata !25, null}
-!25 = metadata !{i32 524299, metadata !28, metadata !16, i32 22, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!25 = metadata !{i32 524299, metadata !16, i32 22, i32 0} ; [ DW_TAG_lexical_block ]
 !26 = metadata !{i32 24, i32 0, metadata !25, null}
 !27 = metadata !{i32 26, i32 0, metadata !25, null}
 !28 = metadata !{metadata !"tail.c", metadata !"/Users/echeng/LLVM/radars/r7927803/"}

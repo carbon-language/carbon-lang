@@ -2096,11 +2096,6 @@ void Verifier::visitInstruction(Instruction &I) {
   MDNode *MD = I.getMetadata(LLVMContext::MD_range);
   Assert1(!MD || isa<LoadInst>(I), "Ranges are only for loads!", &I);
 
-  if (!DisableDebugInfoVerifier) {
-    MD = I.getMetadata(LLVMContext::MD_dbg);
-    Finder.processLocation(DILocation(MD));
-  }
-
   InstsInThisBlock.insert(&I);
 }
 
