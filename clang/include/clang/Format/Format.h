@@ -163,7 +163,9 @@ struct FormatStyle {
     /// class definitions.
     BS_Linux,
     /// Like \c Attach, but break before function definitions.
-    BS_Stroustrup
+    BS_Stroustrup,
+    /// Always break before braces
+    BS_Allman
   };
 
   /// \brief The brace breaking style to use.

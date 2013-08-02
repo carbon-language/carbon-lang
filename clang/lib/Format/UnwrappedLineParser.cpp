@@ -594,7 +594,8 @@ void UnwrappedLineParser::parseStructuralElement() {
         // FIXME: Figure out cases where this is not true, and add projections
         // for them (the one we know is missing are lambdas).
         if (Style.BreakBeforeBraces == FormatStyle::BS_Linux ||
-            Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup)
+            Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup ||
+            Style.BreakBeforeBraces == FormatStyle::BS_Allman)
           addUnwrappedLine();
         parseBlock(/*MustBeDeclaration=*/false);
         addUnwrappedLine();
@@ -759,8 +760,13 @@ void UnwrappedLineParser::parseIfThenElse() {
     parseParens();
   bool NeedsUnwrappedLine = false;
   if (FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
     parseBlock(/*MustBeDeclaration=*/false);
-    NeedsUnwrappedLine = true;
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
+    else
+      NeedsUnwrappedLine = true;
   } else {
     addUnwrappedLine();
     ++Line->Level;
@@ -770,6 +776,8 @@ void UnwrappedLineParser::parseIfThenElse() {
   if (FormatTok->Tok.is(tok::kw_else)) {
     nextToken();
     if (FormatTok->Tok.is(tok::l_brace)) {
+      if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+        addUnwrappedLine();
       parseBlock(/*MustBeDeclaration=*/false);
       addUnwrappedLine();
     } else if (FormatTok->Tok.is(tok::kw_if)) {
@@ -791,7 +799,8 @@ void UnwrappedLineParser::parseNamespace() {
   if (FormatTok->Tok.is(tok::identifier))
     nextToken();
   if (FormatTok->Tok.is(tok::l_brace)) {
-    if (Style.BreakBeforeBraces == FormatStyle::BS_Linux)
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Linux ||
+        Style.BreakBeforeBraces == FormatStyle::BS_Allman)
       addUnwrappedLine();
 
     bool AddLevel = Style.NamespaceIndentation == FormatStyle::NI_All ||
@@ -814,6 +823,8 @@ void UnwrappedLineParser::parseForOrWhileLoop() {
   if (FormatTok->Tok.is(tok::l_paren))
     parseParens();
   if (FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
     parseBlock(/*MustBeDeclaration=*/false);
     addUnwrappedLine();
   } else {
@@ -828,6 +839,8 @@ void UnwrappedLineParser::parseDoWhile() {
   assert(FormatTok->Tok.is(tok::kw_do) && "'do' expected");
   nextToken();
   if (FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
     parseBlock(/*MustBeDeclaration=*/false);
   } else {
     addUnwrappedLine();
@@ -854,9 +867,15 @@ void UnwrappedLineParser::parseLabel() {
   if (Line->Level > 1 || (!Line->InPPDirective && Line->Level > 0))
     --Line->Level;
   if (CommentsBeforeNextToken.empty() && FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
     parseBlock(/*MustBeDeclaration=*/false);
-    if (FormatTok->Tok.is(tok::kw_break))
-      parseStructuralElement(); // "break;" after "}" goes on the same line.
+    if (FormatTok->Tok.is(tok::kw_break)) {
+      // "break;" after "}" on its own line only for BS_Allman
+      if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+        addUnwrappedLine();
+      parseStructuralElement();
+    }
   }
   addUnwrappedLine();
   Line->Level = OldLineLevel;
@@ -877,6 +896,8 @@ void UnwrappedLineParser::parseSwitch() {
   if (FormatTok->Tok.is(tok::l_paren))
     parseParens();
   if (FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
     parseBlock(/*MustBeDeclaration=*/false);
     addUnwrappedLine();
   } else {
@@ -973,7 +994,8 @@ void UnwrappedLineParser::parseRecord() {
     }
   }
   if (FormatTok->Tok.is(tok::l_brace)) {
-    if (Style.BreakBeforeBraces == FormatStyle::BS_Linux)
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Linux ||
+        Style.BreakBeforeBraces == FormatStyle::BS_Allman)
       addUnwrappedLine();
 
     parseBlock(/*MustBeDeclaration=*/true);

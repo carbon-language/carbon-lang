@@ -50,6 +50,7 @@ struct ScalarEnumerationTraits<clang::format::FormatStyle::BraceBreakingStyle> {
     IO.enumCase(Value, "Attach", clang::format::FormatStyle::BS_Attach);
     IO.enumCase(Value, "Linux", clang::format::FormatStyle::BS_Linux);
     IO.enumCase(Value, "Stroustrup", clang::format::FormatStyle::BS_Stroustrup);
+    IO.enumCase(Value, "Allman", clang::format::FormatStyle::BS_Allman);
   }
 };
 
