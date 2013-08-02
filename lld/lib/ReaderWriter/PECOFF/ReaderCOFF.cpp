@@ -13,12 +13,14 @@
 #include "ReaderImportHeader.h"
 
 #include "lld/Core/File.h"
+#include "lld/Driver/Driver.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Memory.h"
@@ -80,7 +82,11 @@ public:
     if ((ec = createDefinedSymbols(symbols, _definedAtoms._atoms)))
       return;
 
-    ec = addRelocationReferenceToAtoms();
+    if ((ec = addRelocationReferenceToAtoms()))
+      return;
+
+    // Read .drectve section if exists.
+    ec = maybeReadLinkerDirectives();
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {
@@ -100,6 +106,8 @@ public:
   }
 
   virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+
+  StringRef getLinkerDirectives() const { return _directives; }
 
 private:
   /// Iterate over the symbol table to retrieve all symbols.
@@ -389,11 +397,68 @@ private:
     return error_code::success();
   }
 
+  /// Find a section by name.
+  error_code findSection(StringRef name, const coff_section *&result) {
+    error_code ec;
+    for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
+         si.increment(ec)) {
+      const coff_section *section = _obj->getCOFFSection(si);
+      StringRef sectionName;
+      if ((ec = _obj->getSectionName(section, sectionName)))
+        return ec;
+      if (sectionName == name) {
+        result = section;
+        return error_code::success();
+      }
+    }
+    // Section was not found, but it's not an error. This method returns an error
+    // only when there's a read error.
+    return error_code::success();
+  }
+
+  // Convert ArrayRef<uint8_t> to std::string. The array contains a string which
+  // may not be terminated by NUL.
+  std::string ArrayRefToString(ArrayRef<uint8_t> array) {
+    // Skip the UTF-8 byte marker if exists. The contents of .drectve section
+    // is, according to the Microsoft PE/COFF spec, encoded as ANSI or UTF-8
+    // with the BOM marker.
+    //
+    // FIXME: I think "ANSI" in the spec means Windows-1252 encoding, which is a
+    // superset of ASCII. We need to convert it to UTF-8.
+    if (array.size() >= 3 && array[0] == 0xEF && array[1] == 0xBB &&
+        array[2] == 0xBF) {
+      array = array.slice(3);
+    }
+
+    size_t len = 0;
+    size_t e = array.size();
+    while (len < e && array[len] != '\0')
+      ++len;
+    return std::string(reinterpret_cast<const char *>(&array[0]), len);
+  }
+
+  // Read .drectve section contents if exists, and store it to _directives.
+  error_code maybeReadLinkerDirectives() {
+    const coff_section *section = nullptr;
+    if (error_code ec = findSection(".drectve", section))
+      return ec;
+    if (section != nullptr) {
+      ArrayRef<uint8_t> contents;
+      if (error_code ec = _obj->getSectionContents(section, contents))
+        return ec;
+      _directives = std::move(ArrayRefToString(contents));
+    }
+    return error_code::success();
+  }
+
   std::unique_ptr<const llvm::object::COFFObjectFile> _obj;
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+
+  // The contents of .drectve section.
+  std::string _directives;
 
   // A map from symbol to its name. All symbols should be in this map except
   // unnamed ones.
@@ -407,6 +472,19 @@ private:
 
   mutable llvm::BumpPtrAllocator _alloc;
   const TargetInfo &_targetInfo;
+};
+
+class BumpPtrStringSaver : public llvm::cl::StringSaver {
+public:
+  virtual const char *SaveString(const char *str) {
+    size_t len = strlen(str);
+    char *copy = _alloc.Allocate<char>(len + 1);
+    memcpy(copy, str, len + 1);
+    return copy;
+  }
+
+private:
+  llvm::BumpPtrAllocator _alloc;
 };
 
 class ReaderCOFF : public Reader {
@@ -426,10 +504,54 @@ public:
   }
 
 private:
+  // Interpret the contents of .drectve section. If exists, the section contains
+  // a string containing command line options. The linker is expected to
+  // interpret the options as if they were given via the command line.
+  //
+  // The section mainly contains /defaultlib (-l in Unix), but can contain any
+  // options as long as they are valid.
+  void handleDirectiveSection(StringRef directives) const {
+    DEBUG({
+      llvm::dbgs() << ".drectve: " << directives << "\n";
+    });
+
+    // Remove const from _targetInfo.
+    // FIXME: Rename TargetInfo -> LinkingContext and treat it a mutable object
+    // in the core linker.
+    PECOFFTargetInfo *targetInfo = (PECOFFTargetInfo *)&_targetInfo;
+
+    // Split the string into tokens, as the shell would do for argv.
+    SmallVector<const char *, 16> tokens;
+    tokens.push_back("link");  // argv[0] is the command name. Will be ignored.
+    llvm::cl::TokenizeWindowsCommandLine(directives, _stringSaver, tokens);
+    tokens.push_back(nullptr);
+
+    // Calls the command line parser to interpret the token string as if they
+    // were given via the command line.
+    int argc = tokens.size() - 1;
+    const char **argv = &tokens[0];
+    std::string errorMessage;
+    llvm::raw_string_ostream stream(errorMessage);
+    bool parseFailed = WinLinkDriver::parse(argc, argv, *targetInfo, stream);
+    stream.flush();
+
+    // Print error message if error.
+    if (parseFailed) {
+      auto msg = Twine("Failed to parse '") + directives + "': "
+          + errorMessage + "\n";
+      llvm::report_fatal_error(msg);
+    }
+    if (!errorMessage.empty()) {
+      llvm::errs() << "lld warning: " << errorMessage << "\n";
+    }
+  }
+
   error_code parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
                            std::vector<std::unique_ptr<File> > &result) const {
+    // Parse the memory buffer as PECOFF file.
     error_code ec;
-    std::unique_ptr<File> file(new FileCOFF(_targetInfo, std::move(mb), ec));
+    std::unique_ptr<FileCOFF> file(
+        new FileCOFF(_targetInfo, std::move(mb), ec));
     if (ec)
       return ec;
 
@@ -443,11 +565,17 @@ private:
       }
     });
 
+    // Interpret .drectve section if the section has contents.
+    StringRef directives = file->getLinkerDirectives();
+    if (!directives.empty())
+      handleDirectiveSection(directives);
+
     result.push_back(std::move(file));
     return error_code::success();
   }
 
   ReaderArchive _readerArchive;
+  mutable BumpPtrStringSaver _stringSaver;
 };
 
 } // end namespace anonymous

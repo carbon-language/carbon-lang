@@ -1,0 +1,11 @@
+# Test if the linker can properly parse the .drectve section contents.
+# "drectve.obj" contains "/subsystem:console,42.195" in its .drectve
+# section.
+
+# RUN: yaml2obj %p/Inputs/drectve.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t1 /entry:start -- %t.obj \
+# RUN:   && llvm-readobj -file-headers %t1 | FileCheck %s
+
+CHECK: MajorOperatingSystemVersion: 42
+CHECK: MinorOperatingSystemVersion: 195

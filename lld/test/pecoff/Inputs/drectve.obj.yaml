@@ -1,0 +1,49 @@
+---
+header:
+  Machine:         IMAGE_FILE_MACHINE_I386
+  Characteristics: [  ]
+sections:
+  - Name:            .text
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
+    Alignment:       4
+    SectionData:     B82A000000C3
+  - Name:            .data
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
+    Alignment:       4
+    SectionData:     ""
+  - Name:            .drectve
+    Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
+    Alignment:       2147483648
+    SectionData:     2f73756273797374656d3a636f6e736f6c652c34322e31393500
+symbols:
+  - Name:            .text
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   060000000000000000000000000000000000
+  - Name:            .data
+    Value:           0
+    SectionNumber:   2
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   000000000000000000000000000000000000
+  - Name:            _start
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            .drectve
+    Value:           0
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   0D0000000000000000000000000000000000
+...
