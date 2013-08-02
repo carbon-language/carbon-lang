@@ -354,7 +354,7 @@ __libcpp_db::__subscriptable(const void* __i, ptrdiff_t __n) const
 }
 
 bool
-__libcpp_db::__comparable(const void* __i, const void* __j) const
+__libcpp_db::__less_than_comparable(const void* __i, const void* __j) const
 {
     RLock _(mut());
     __i_node* i = __find_iterator(__i);

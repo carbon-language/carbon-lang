@@ -20,6 +20,12 @@
 
 #include <__undef_min_max>
 
+#ifdef _LIBCPP_DEBUG2
+#   include <__debug>
+#else
+#   define _LIBCPP_ASSERT(x, m) ((void)0)
+#endif
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
@@ -181,10 +187,6 @@ public:
     friend _LIBCPP_INLINE_VISIBILITY
     bool operator==(const __hash_iterator& __x, const __hash_iterator& __y)
     {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-        _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                       "Attempted to compare non-comparable unordered container iterator");
-#endif
         return __x.__node_ == __y.__node_;
     }
     friend _LIBCPP_INLINE_VISIBILITY
@@ -329,10 +331,6 @@ public:
     friend _LIBCPP_INLINE_VISIBILITY
     bool operator==(const __hash_const_iterator& __x, const __hash_const_iterator& __y)
     {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-        _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                       "Attempted to compare non-comparable unordered container const_iterator");
-#endif
         return __x.__node_ == __y.__node_;
     }
     friend _LIBCPP_INLINE_VISIBILITY
@@ -467,10 +465,6 @@ public:
     friend _LIBCPP_INLINE_VISIBILITY
     bool operator==(const __hash_local_iterator& __x, const __hash_local_iterator& __y)
     {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-        _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                       "Attempted to compare non-comparable unordered container local_iterator");
-#endif
         return __x.__node_ == __y.__node_;
     }
     friend _LIBCPP_INLINE_VISIBILITY
@@ -636,10 +630,6 @@ public:
     friend _LIBCPP_INLINE_VISIBILITY
     bool operator==(const __hash_const_local_iterator& __x, const __hash_const_local_iterator& __y)
     {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-        _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                       "Attempted to compare non-comparable unordered container local_const_iterator");
-#endif
         return __x.__node_ == __y.__node_;
     }
     friend _LIBCPP_INLINE_VISIBILITY

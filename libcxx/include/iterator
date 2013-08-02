@@ -321,8 +321,10 @@ template <class T, size_t N> T* end(T (&array)[N]);
 #include <Availability.h>
 #endif
 
-#ifdef _LIBCPP_DEBUG
-#include <cassert>
+#ifdef _LIBCPP_DEBUG2
+#   include <__debug>
+#else
+#   define _LIBCPP_ASSERT(x, m) ((void)0)
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
@@ -1264,10 +1266,6 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEXCEPT
 {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-    _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                   "Attempted to compare incomparable iterators");
-#endif
     return __x.base() == __y.base();
 }
 
@@ -1277,7 +1275,7 @@ bool
 operator<(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEXCEPT
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
-    _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
+    _LIBCPP_ASSERT(__get_const_db()->__less_than_comparable(&__x, &__y),
                    "Attempted to compare incomparable iterators");
 #endif
     return __x.base() < __y.base();
@@ -1353,7 +1351,7 @@ typename __wrap_iter<_Iter1>::difference_type
 operator-(const __wrap_iter<_Iter1>& __x, const __wrap_iter<_Iter2>& __y) _NOEXCEPT
 {
 #if _LIBCPP_DEBUG_LEVEL >= 2
-    _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
+    _LIBCPP_ASSERT(__get_const_db()->__less_than_comparable(&__x, &__y),
                    "Attempted to subtract incompatible iterators");
 #endif
     return __x.base() - __y.base();

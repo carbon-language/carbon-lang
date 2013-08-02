@@ -171,7 +171,7 @@ public:
     bool __decrementable(const void* __i) const;
     bool __addable(const void* __i, ptrdiff_t __n) const;
     bool __subscriptable(const void* __i, ptrdiff_t __n) const;
-    bool __comparable(const void* __i, const void* __j) const;
+    bool __less_than_comparable(const void* __i, const void* __j) const;
 private:
     _LIBCPP_HIDDEN
     __i_node* __insert_iterator(void* __i);

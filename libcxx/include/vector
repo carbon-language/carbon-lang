@@ -272,6 +272,12 @@ void swap(vector<T,Allocator>& x, vector<T,Allocator>& y)
 
 #include <__undef_min_max>
 
+#ifdef _LIBCPP_DEBUG2
+#   include <__debug>
+#else
+#   define _LIBCPP_ASSERT(x, m) ((void)0)
+#endif
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif

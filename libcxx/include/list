@@ -178,6 +178,12 @@ template <class T, class Alloc>
 
 #include <__undef_min_max>
 
+#ifdef _LIBCPP_DEBUG2
+#   include <__debug>
+#else
+#   define _LIBCPP_ASSERT(x, m) ((void)0)
+#endif
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
@@ -350,10 +356,6 @@ public:
     friend _LIBCPP_INLINE_VISIBILITY
     bool operator==(const __list_iterator& __x, const __list_iterator& __y)
     {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-        _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                       "Attempted to compare non-comparable list::iterator");
-#endif
         return __x.__ptr_ == __y.__ptr_;
     }
     friend _LIBCPP_INLINE_VISIBILITY
@@ -491,10 +493,6 @@ public:
     friend _LIBCPP_INLINE_VISIBILITY
     bool operator==(const __list_const_iterator& __x, const __list_const_iterator& __y)
     {
-#if _LIBCPP_DEBUG_LEVEL >= 2
-        _LIBCPP_ASSERT(__get_const_db()->__comparable(&__x, &__y),
-                       "Attempted to compare non-comparable list::const_iterator");
-#endif
         return __x.__ptr_ == __y.__ptr_;
     }
     friend _LIBCPP_INLINE_VISIBILITY

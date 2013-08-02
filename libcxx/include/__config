@@ -529,11 +529,4 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_CONSTEXPR_AFTER_CXX11 constexpr
 #endif
 
-
-#ifdef _LIBCPP_DEBUG2
-#   include <__debug>
-#else
-#   define _LIBCPP_ASSERT(x, m) ((void)0)
-#endif
-
 #endif  // _LIBCPP_CONFIG
