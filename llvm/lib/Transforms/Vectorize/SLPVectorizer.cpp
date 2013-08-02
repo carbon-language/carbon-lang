@@ -1401,30 +1401,33 @@ void BoUpSLP::vectorizeTree() {
     Value *Vec = E->VectorizedValue;
     assert(Vec && "Can't find vectorizable value");
 
+    Value *Lane = Builder.getInt32(it->Lane);
     // Generate extracts for out-of-tree users.
     // Find the insertion point for the extractelement lane.
-    Instruction *Loc = 0;
     if (PHINode *PN = dyn_cast<PHINode>(Vec)) {
-      Loc = PN->getParent()->getFirstInsertionPt();
+      Builder.SetInsertPoint(PN->getParent()->getFirstInsertionPt());
+      Value *Ex = Builder.CreateExtractElement(Vec, Lane);
+      User->replaceUsesOfWith(Scalar, Ex);
     } else if (isa<Instruction>(Vec)){
       if (PHINode *PH = dyn_cast<PHINode>(User)) {
         for (int i = 0, e = PH->getNumIncomingValues(); i != e; ++i) {
           if (PH->getIncomingValue(i) == Scalar) {
-            Loc = PH->getIncomingBlock(i)->getTerminator();
-            break;
+            Builder.SetInsertPoint(PH->getIncomingBlock(i)->getTerminator());
+            Value *Ex = Builder.CreateExtractElement(Vec, Lane);
+            PH->setOperand(i, Ex);
           }
         }
-        assert(Loc && "Unable to find incoming value for the PHI");
       } else {
-        Loc = cast<Instruction>(User);
+        Builder.SetInsertPoint(cast<Instruction>(User));
+        Value *Ex = Builder.CreateExtractElement(Vec, Lane);
+        User->replaceUsesOfWith(Scalar, Ex);
      }
     } else {
-      Loc = F->getEntryBlock().begin();
+      Builder.SetInsertPoint(F->getEntryBlock().begin());
+      Value *Ex = Builder.CreateExtractElement(Vec, Lane);
+      User->replaceUsesOfWith(Scalar, Ex);
     }
 
-    Builder.SetInsertPoint(Loc);
-    Value *Ex = Builder.CreateExtractElement(Vec, Builder.getInt32(it->Lane));
-    User->replaceUsesOfWith(Scalar, Ex);
     DEBUG(dbgs() << "SLP: Replaced:" << *User << ".\n");
   }
 
