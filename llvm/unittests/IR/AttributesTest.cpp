@@ -31,4 +31,17 @@ TEST(Attributes, Uniquing) {
   EXPECT_EQ(SetA, SetB);
 }
 
+TEST(Attributes, Ordering) {
+  LLVMContext C;
+
+  AttributeSet ASs[] = {
+    AttributeSet::get(C, 2, Attribute::ZExt),
+    AttributeSet::get(C, 1, Attribute::SExt)
+  };
+
+  AttributeSet SetA = AttributeSet::get(C, ASs);
+  AttributeSet SetB = SetA.removeAttributes(C, 1, ASs[1]);
+  EXPECT_NE(SetA, SetB);
+}
+
 } // end anonymous namespace

@@ -200,6 +200,15 @@ public:
   AttributeSetImpl(LLVMContext &C,
                    ArrayRef<std::pair<unsigned, AttributeSetNode *> > Attrs)
       : Context(C), NumAttrs(Attrs.size()) {
+#ifndef NDEBUG
+    if (Attrs.size() >= 2) {
+      for (const std::pair<unsigned, AttributeSetNode *> *i = Attrs.begin() + 1,
+                                                         *e = Attrs.end();
+           i != e; ++i) {
+        assert((i-1)->first <= i->first && "Attribute set not ordered!");
+      }
+    }
+#endif
     // There's memory after the node where we can store the entries in.
     std::copy(Attrs.begin(), Attrs.end(),
               reinterpret_cast<IndexAttrPair *>(this + 1));
