@@ -63,5 +63,13 @@ define void @casts() {
   ; CHECK: cost of 1 {{.*}} select
   %v19 = select <2 x i1>  undef, <2 x double> undef, <2 x double> undef
 
+  ; odd vectors get legalized and should have similar costs
+  ; CHECK: cost of 1 {{.*}} select
+  %v20 = select <1 x i1>  undef, <1 x i32> undef, <1 x i32> undef
+  ; CHECK: cost of 1 {{.*}} select
+  %v21 = select <3 x i1>  undef, <3 x float> undef, <3 x float> undef
+  ; CHECK: cost of 4 {{.*}} select
+  %v22 = select <5 x i1>  undef, <5 x double> undef, <5 x double> undef
+
   ret void
 }

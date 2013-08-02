@@ -411,12 +411,14 @@ unsigned ARMTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
 
     EVT SelCondTy = TLI->getValueType(CondTy);
     EVT SelValTy = TLI->getValueType(ValTy);
-    int Idx = ConvertCostTableLookup<MVT>(NEONVectorSelectTbl,
-                                          array_lengthof(NEONVectorSelectTbl),
-                                          ISD, SelCondTy.getSimpleVT(),
-                                          SelValTy.getSimpleVT());
-    if (Idx != -1)
-      return NEONVectorSelectTbl[Idx].Cost;
+    if (SelCondTy.isSimple() && SelValTy.isSimple()) {
+      int Idx = ConvertCostTableLookup<MVT>(NEONVectorSelectTbl,
+                                            array_lengthof(NEONVectorSelectTbl),
+                                            ISD, SelCondTy.getSimpleVT(),
+                                            SelValTy.getSimpleVT());
+      if (Idx != -1)
+        return NEONVectorSelectTbl[Idx].Cost;
+    }
 
     std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(ValTy);
     return LT.first;
