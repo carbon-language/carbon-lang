@@ -164,7 +164,6 @@ public:
         _ordinal(ordinal) {}
 
   virtual uint64_t ordinal() const { return _ordinal; }
-  uint64_t originalOffset() const { return _symbol->Value; }
   virtual StringRef getSectionName() const { return _sectionName; }
 
   static bool classof(const COFFBaseDefinedAtom *atom) {

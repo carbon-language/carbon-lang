@@ -268,8 +268,10 @@ private:
     // Create an atom for the entire section.
     if (symbols.empty()) {
       ArrayRef<uint8_t> Data(secData.data(), secData.size());
-      atoms.push_back(new (_alloc) COFFDefinedAtom(
-          *this, "", nullptr, section, Data, sectionName, 0));
+      auto *atom = new (_alloc) COFFDefinedAtom(*this, "", nullptr, section,
+                                                Data, sectionName, 0);
+      atoms.push_back(atom);
+      _definedAtomLocations[section][0] = atom;
       return error_code::success();
     }
 
@@ -278,8 +280,10 @@ private:
     if (symbols[0]->Value != 0) {
       uint64_t size = symbols[0]->Value;
       ArrayRef<uint8_t> data(secData.data(), size);
-      atoms.push_back(new (_alloc) COFFDefinedAtom(
-          *this, "", nullptr, section, data, sectionName, ++ordinal));
+      auto *atom = new (_alloc) COFFDefinedAtom(
+          *this, "", nullptr, section, data, sectionName, ++ordinal);
+      atoms.push_back(atom);
+      _definedAtomLocations[section][0] = atom;
     }
 
     for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
@@ -293,6 +297,7 @@ private:
           *this, _symbolName[*si], *si, section, data, sectionName, ++ordinal);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
+      _definedAtomLocations[section][(*si)->Value] = atom;
     }
     return error_code::success();
   }
@@ -320,14 +325,16 @@ private:
     return error_code::success();
   }
 
-  /// Find the atom that is at \p targetOffset in \p section. It is assumed
-  /// that \p atoms are sorted by position in the section.
-  error_code findAtomAt(uint32_t targetOffset,
-                        const vector<COFFDefinedFileAtom *> &atoms,
-                        COFFDefinedFileAtom *&result) const {
-    for (COFFDefinedFileAtom *atom : atoms) {
-      if (targetOffset < atom->originalOffset() + atom->size()) {
+  /// Find the atom that is at \p targetAddress in \p section.
+  error_code findAtomAt(const coff_section *section, uint32_t targetAddress,
+                        COFFDefinedFileAtom *&result, uint32_t &offsetInAtom) {
+    for (auto i : _definedAtomLocations[section]) {
+      uint32_t atomAddress = i.first;
+      COFFDefinedAtom *atom = i.second;
+      if (atomAddress <= targetAddress &&
+          targetAddress < atomAddress + atom->size()) {
         result = atom;
+        offsetInAtom = targetAddress - atomAddress;
         return error_code::success();
       }
     }
@@ -364,10 +371,9 @@ private:
       return ec;
 
     COFFDefinedFileAtom *atom;
-    if (error_code ec = findAtomAt(rel->VirtualAddress, atoms, atom))
+    uint32_t offsetInAtom;
+    if (error_code ec = findAtomAt(section, itemAddress, atom, offsetInAtom))
       return ec;
-    uint32_t offsetInAtom = itemAddress - atom->originalOffset();
-    assert(offsetInAtom < atom->size());
     atom->addReference(std::unique_ptr<COFFReference>(
         new COFFReference(targetAtom, offsetInAtom, rel->Type)));
     return error_code::success();
@@ -469,6 +475,11 @@ private:
 
   // A map from section to its atoms.
   std::map<const coff_section *, vector<COFFDefinedFileAtom *>> _sectionAtoms;
+
+  // A sorted map to find an atom from a section and an offset within
+  // the section.
+  std::map<const coff_section *,
+           std::map<uint32_t, COFFDefinedAtom *>> _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
   const TargetInfo &_targetInfo;
