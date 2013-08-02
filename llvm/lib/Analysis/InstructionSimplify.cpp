@@ -676,7 +676,8 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
   if (!TD)
     return ConstantInt::get(IntegerType::get(V->getContext(), 64), 0);
 
-  unsigned IntPtrWidth = TD->getPointerSizeInBits();
+  unsigned AS = V->getType()->getPointerAddressSpace();
+  unsigned IntPtrWidth = TD->getPointerSizeInBits(AS);
   APInt Offset = APInt::getNullValue(IntPtrWidth);
 
   // Even though we don't look through PHI nodes, we could be called on an
@@ -689,7 +690,11 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
-      V = cast<Operator>(V)->getOperand(0);
+      Value *Op0 = cast<Operator>(V)->getOperand(0);
+      assert(TD->getPointerTypeSizeInBits(V->getType()) ==
+             TD->getPointerTypeSizeInBits(Op0->getType()) &&
+             "Bitcasting between pointers from different size address spaces");
+      V = Op0;
     } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
       if (GA->mayBeOverridden())
         break;
@@ -701,7 +706,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
            "Unexpected operand type!");
   } while (Visited.insert(V));
 
-  Type *IntPtrTy = TD->getIntPtrType(V->getContext());
+  Type *IntPtrTy = TD->getIntPtrType(V->getContext(), AS);
   Constant *OffsetIntPtr = ConstantInt::get(IntPtrTy, Offset);
   if (V->getType()->isVectorTy())
     return ConstantVector::getSplat(V->getType()->getVectorNumElements(),
@@ -2034,7 +2039,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     // Turn icmp (ptrtoint x), (ptrtoint/constant) into a compare of the input
     // if the integer type is the same size as the pointer type.
     if (MaxRecurse && Q.TD && isa<PtrToIntInst>(LI) &&
-        Q.TD->getPointerSizeInBits() == DstTy->getPrimitiveSizeInBits()) {
+        Q.TD->getTypeSizeInBits(SrcTy) == DstTy->getPrimitiveSizeInBits()) {
       if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
         // Transfer the cast to the constant.
         if (Value *V = SimplifyICmpInst(Pred, SrcOp,
