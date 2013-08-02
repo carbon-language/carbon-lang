@@ -1970,6 +1970,8 @@ TEST(MemorySanitizer, dladdr) {
   EXPECT_NOT_POISONED((unsigned long)info.dli_saddr);
 }
 
+#ifndef MSAN_TEST_DISABLE_DLOPEN
+
 static int dl_phdr_callback(struct dl_phdr_info *info, size_t size, void *data) {
   (*(int *)data)++;
   EXPECT_NOT_POISONED(info->dlpi_addr);
@@ -1979,8 +1981,6 @@ static int dl_phdr_callback(struct dl_phdr_info *info, size_t size, void *data) 
     EXPECT_NOT_POISONED(info->dlpi_phdr[i]);
   return 0;
 }
-
-#ifndef MSAN_TEST_DISABLE_DLOPEN
 
 // Compute the path to our loadable DSO.  We assume it's in the same
 // directory.  Only use string routines that we intercept so far to do this.
