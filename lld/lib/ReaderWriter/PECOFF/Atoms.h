@@ -20,10 +20,6 @@ namespace lld {
 namespace coff {
 class COFFDefinedAtom;
 
-using llvm::object::COFFObjectFile;
-using llvm::object::coff_section;
-using llvm::object::coff_symbol;
-
 /// A COFFReference represents relocation information for an atom. For
 /// example, if atom X has a reference to atom Y with offsetInAtom=8, that
 /// means that the address starting at 8th byte of the content of atom X needs
