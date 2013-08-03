@@ -7632,7 +7632,24 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     }
   }
 
-  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+  std::pair<unsigned, const TargetRegisterClass*> R =
+    TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+
+  // r[0-9]+ are used, on PPC64, to refer to the corresponding 64-bit registers
+  // (which we call X[0-9]+). If a 64-bit value has been requested, and a
+  // 32-bit GPR has been selected, then 'upgrade' it to the 64-bit parent
+  // register.
+  // FIXME: If TargetLowering::getRegForInlineAsmConstraint could somehow use
+  // the AsmName field from *RegisterInfo.td, then this would not be necessary.
+  if (R.first && VT == MVT::i64 && PPCSubTarget.isPPC64() &&
+      PPC::GPRCRegClass.contains(R.first)) {
+    const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+    return std::make_pair(TRI->getMatchingSuperReg(R.first,
+                            PPC::sub_32, &PPC::GPRCRegClass),
+                          &PPC::G8RCRegClass);
+  }
+
+  return R;
 }
 
 
