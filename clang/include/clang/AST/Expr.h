@@ -3451,9 +3451,9 @@ public:
 
   void setExprs(ASTContext &C, ArrayRef<Expr *> Exprs);
 
-  unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) const {
+  llvm::APSInt getShuffleMaskIdx(ASTContext &Ctx, unsigned N) const {
     assert((N < NumExprs - 2) && "Shuffle idx out of range!");
-    return getExpr(N+2)->EvaluateKnownConstInt(Ctx).getZExtValue();
+    return getExpr(N+2)->EvaluateKnownConstInt(Ctx);
   }
 
   // Iterators

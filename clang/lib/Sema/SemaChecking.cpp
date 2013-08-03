@@ -1786,6 +1786,10 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
                             diag::err_shufflevector_nonconstant_argument)
                        << TheCall->getArg(i)->getSourceRange());
 
+    // Allow -1 which will be translated to undef in the IR.
+    if (Result.isSigned() && Result.isAllOnesValue())
+      continue;
+
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2)
       return ExprError(Diag(TheCall->getLocStart(),
                             diag::err_shufflevector_argument_too_large)

@@ -955,8 +955,12 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
 
   SmallVector<llvm::Constant*, 32> indices;
   for (unsigned i = 2; i < E->getNumSubExprs(); ++i) {
-    unsigned Idx = E->getShuffleMaskIdx(CGF.getContext(), i-2);
-    indices.push_back(Builder.getInt32(Idx));
+    llvm::APSInt Idx = E->getShuffleMaskIdx(CGF.getContext(), i-2);
+    // Check for -1 and output it as undef in the IR.
+    if (Idx.isSigned() && Idx.isAllOnesValue())
+      indices.push_back(llvm::UndefValue::get(CGF.Int32Ty));
+    else
+      indices.push_back(Builder.getInt32(Idx.getZExtValue()));
   }
 
   Value *SV = llvm::ConstantVector::get(indices);

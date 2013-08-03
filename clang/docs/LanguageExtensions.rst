@@ -1455,8 +1455,8 @@ for the implementation of various target-specific header files like
 
 .. code-block:: c++
 
-  // Identity operation - return 4-element vector V1.
-  __builtin_shufflevector(V1, V1, 0, 1, 2, 3)
+  // identity operation - return 4-element vector v1.
+  __builtin_shufflevector(v1, v1, 0, 1, 2, 3)
 
   // "Splat" element 0 of V1 into a 4-element result.
   __builtin_shufflevector(V1, V1, 0, 0, 0, 0)
@@ -1470,6 +1470,9 @@ for the implementation of various target-specific header files like
   // Concatenate every other element of 8-element vectors V1 and V2.
   __builtin_shufflevector(V1, V2, 0, 2, 4, 6, 8, 10, 12, 14)
 
+  // Shuffle v1 with some elements being undefined
+  __builtin_shufflevector(v1, v1, 3, -1, 1, -1)
+
 **Description**:
 
 The first two arguments to ``__builtin_shufflevector`` are vectors that have
@@ -1478,7 +1481,8 @@ specify the elements indices of the first two vectors that should be extracted
 and returned in a new vector.  These element indices are numbered sequentially
 starting with the first vector, continuing into the second vector.  Thus, if
 ``vec1`` is a 4-element vector, index 5 would refer to the second element of
-``vec2``.
+``vec2``. An index of -1 can be used to indicate that the corresponding element
+in the returned vector is a don't care and can be optimized by the backend.
 
 The result of ``__builtin_shufflevector`` is a vector with the same element
 type as ``vec1``/``vec2`` but that has an element count equal to the number of
