@@ -1599,21 +1599,23 @@ void MachOObjectFile::ReadULEB128s(uint64_t Index,
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
   StringRef Magic = Buffer->getBuffer().slice(0, 4);
   error_code ec;
-  ObjectFile *Ret;
+  OwningPtr<ObjectFile> Ret;
   if (Magic == "\xFE\xED\xFA\xCE")
-    Ret = new MachOObjectFile(Buffer, false, false, ec);
+    Ret.reset(new MachOObjectFile(Buffer, false, false, ec));
   else if (Magic == "\xCE\xFA\xED\xFE")
-    Ret = new MachOObjectFile(Buffer, true, false, ec);
+    Ret.reset(new MachOObjectFile(Buffer, true, false, ec));
   else if (Magic == "\xFE\xED\xFA\xCF")
-    Ret = new MachOObjectFile(Buffer, false, true, ec);
+    Ret.reset(new MachOObjectFile(Buffer, false, true, ec));
   else if (Magic == "\xCF\xFA\xED\xFE")
-    Ret = new MachOObjectFile(Buffer, true, true, ec);
-  else
+    Ret.reset(new MachOObjectFile(Buffer, true, true, ec));
+  else {
+    delete Buffer;
     return NULL;
+  }
 
   if (ec)
     return NULL;
-  return Ret;
+  return Ret.take();
 }
 
 } // end namespace object
