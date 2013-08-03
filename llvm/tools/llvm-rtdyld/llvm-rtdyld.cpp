@@ -204,7 +204,7 @@ static int executeInput() {
   // Resolve all the relocations we can.
   Dyld.resolveRelocations();
   // Clear instruction cache before code will be executed.
-  MemMgr->invalidateInstructionCache();
+  MemMgr.invalidateInstructionCache();
 
   // FIXME: Error out if there are unresolved relocations.
 
@@ -214,8 +214,8 @@ static int executeInput() {
     return Error("no definition for '" + EntryPoint + "'");
 
   // Invalidate the instruction cache for each loaded function.
-  for (unsigned i = 0, e = MemMgr->FunctionMemory.size(); i != e; ++i) {
-    sys::MemoryBlock &Data = MemMgr->FunctionMemory[i];
+  for (unsigned i = 0, e = MemMgr.FunctionMemory.size(); i != e; ++i) {
+    sys::MemoryBlock &Data = MemMgr.FunctionMemory[i];
     // Make sure the memory is executable.
     std::string ErrorStr;
     sys::Memory::InvalidateInstructionCache(Data.base(), Data.size());
