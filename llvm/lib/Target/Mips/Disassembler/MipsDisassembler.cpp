@@ -39,10 +39,10 @@ public:
 
   virtual ~MipsDisassemblerBase() {}
 
-  const MCRegisterInfo *getRegInfo() const { return RegInfo; }
+  const MCRegisterInfo *getRegInfo() const { return RegInfo.get(); }
 
 private:
-  const MCRegisterInfo *RegInfo;
+  OwningPtr<const MCRegisterInfo> RegInfo;
 protected:
   bool isBigEndian;
 };

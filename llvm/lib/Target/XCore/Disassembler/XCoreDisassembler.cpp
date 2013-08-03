@@ -29,7 +29,7 @@ namespace {
 
 /// \brief A disassembler class for XCore.
 class XCoreDisassembler : public MCDisassembler {
-  const MCRegisterInfo *RegInfo;
+  OwningPtr<const MCRegisterInfo> RegInfo;
 public:
   XCoreDisassembler(const MCSubtargetInfo &STI, const MCRegisterInfo *Info) :
     MCDisassembler(STI), RegInfo(Info) {}
@@ -42,7 +42,7 @@ public:
                                       raw_ostream &vStream,
                                       raw_ostream &cStream) const;
 
-  const MCRegisterInfo *getRegInfo() const { return RegInfo; }
+  const MCRegisterInfo *getRegInfo() const { return RegInfo.get(); }
 };
 }
 
