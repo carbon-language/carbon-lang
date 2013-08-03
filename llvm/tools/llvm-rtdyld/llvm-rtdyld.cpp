@@ -124,8 +124,8 @@ static int printLineInfoForInput() {
     InputFileList.push_back("-");
   for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
     // Instantiate a dynamic linker.
-    TrivialMemoryManager *MemMgr = new TrivialMemoryManager;
-    RuntimeDyld Dyld(MemMgr);
+    TrivialMemoryManager MemMgr;
+    RuntimeDyld Dyld(&MemMgr);
 
     // Load the input memory buffer.
     OwningPtr<MemoryBuffer> InputBuffer;
@@ -180,8 +180,8 @@ static int printLineInfoForInput() {
 
 static int executeInput() {
   // Instantiate a dynamic linker.
-  TrivialMemoryManager *MemMgr = new TrivialMemoryManager;
-  RuntimeDyld Dyld(MemMgr);
+  TrivialMemoryManager MemMgr;
+  RuntimeDyld Dyld(&MemMgr);
 
   // If we don't have any input files, read from stdin.
   if (!InputFileList.size())
