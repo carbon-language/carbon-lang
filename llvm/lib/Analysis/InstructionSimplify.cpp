@@ -676,9 +676,8 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
   if (!TD)
     return ConstantInt::get(IntegerType::get(V->getContext(), 64), 0);
 
-  unsigned AS = V->getType()->getPointerAddressSpace();
-  unsigned IntPtrWidth = TD->getPointerSizeInBits(AS);
-  APInt Offset = APInt::getNullValue(IntPtrWidth);
+  Type *IntPtrTy = TD->getIntPtrType(V->getType())->getScalarType();
+  APInt Offset = APInt::getNullValue(IntPtrTy->getIntegerBitWidth());
 
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
@@ -690,11 +689,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
-      Value *Op0 = cast<Operator>(V)->getOperand(0);
-      assert(TD->getPointerTypeSizeInBits(V->getType()) ==
-             TD->getPointerTypeSizeInBits(Op0->getType()) &&
-             "Bitcasting between pointers from different size address spaces");
-      V = Op0;
+      V = cast<Operator>(V)->getOperand(0);
     } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
       if (GA->mayBeOverridden())
         break;
@@ -706,7 +701,6 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout *TD,
            "Unexpected operand type!");
   } while (Visited.insert(V));
 
-  Type *IntPtrTy = TD->getIntPtrType(V->getContext(), AS);
   Constant *OffsetIntPtr = ConstantInt::get(IntPtrTy, Offset);
   if (V->getType()->isVectorTy())
     return ConstantVector::getSplat(V->getType()->getVectorNumElements(),

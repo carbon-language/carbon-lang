@@ -181,8 +181,7 @@ template<typename IRBuilderTy>
 Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
                      bool NoAssumptions = false) {
   GEPOperator *GEPOp = cast<GEPOperator>(GEP);
-  unsigned AS = GEPOp->getPointerAddressSpace();
-  Type *IntPtrTy = TD.getIntPtrType(GEP->getContext(), AS);
+  Type *IntPtrTy = TD.getIntPtrType(GEP->getType());
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // If the GEP is inbounds, we know that none of the addressing operations will
@@ -190,7 +189,7 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
   bool isInBounds = GEPOp->isInBounds() && !NoAssumptions;
 
   // Build a mask for high order bits.
-  unsigned IntPtrWidth = TD.getPointerSizeInBits(AS);
+  unsigned IntPtrWidth = IntPtrTy->getScalarType()->getIntegerBitWidth();
   uint64_t PtrSizeMask = ~0ULL >> (64 - IntPtrWidth);
 
   gep_type_iterator GTI = gep_type_begin(GEP);
