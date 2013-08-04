@@ -1,4 +1,4 @@
-; RUN: llc -march=x86 -tailcallopt < %s | FileCheck %s
+; RUN: llc -march=x86 -tailcallopt -mcpu=core < %s | FileCheck %s
 
 target triple = "i686-apple-darwin"
 
