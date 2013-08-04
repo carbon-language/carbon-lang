@@ -25,7 +25,7 @@ entry:
 ; SR32:  .set noreorder
 ; SR32:  .set nomacro
 ; SR32:  .set noat
-; SR:	save 	$ra, $s0, $s1, [[FS:[0-9]+]]
+; SR:	save 	$ra, $s0, $s1, $s2, [[FS:[0-9]+]]
 ; PE:	li	$[[T1:[0-9]+]], %hi(_gp_disp)
 ; PE: 	addiu	$[[T2:[0-9]+]], $pc, %lo(_gp_disp)
 ; PE:	sll	$[[T3:[0-9]+]], $[[T1]], 16
@@ -35,7 +35,7 @@ entry:
 ; C2:	move	$25, ${{[0-9]+}}
 ; C1:	move 	$gp, ${{[0-9]+}}
 ; C1:	jalrc 	${{[0-9]+}}
-; SR:	restore 	$ra, $s0, $s1, [[FS]]
+; SR:	restore 	$ra, $s0, $s1, $s2, [[FS]]
 ; PE:	li	$2, 0
 ; PE:	jrc 	$ra
 

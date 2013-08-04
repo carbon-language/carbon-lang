@@ -884,9 +884,9 @@ def OrRxRxRy16: FRxRxRy16_ins<0b01101, "or", IIAlu>, ArithLogic16Defs<1>;
 let ra=1, s=0,s0=1,s1=1 in
 def RestoreRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "restore\t$$ra,  $$s0, $$s1, $frame_size", [], IILoad >, MayLoad {
+             "restore\t$$ra,  $$s0, $$s1, $$s2, $frame_size", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
-  let Defs = [S0, S1, RA, SP];
+  let Defs = [S0, S1, S2, RA, SP];
   let Uses = [SP];
 }
 
@@ -912,9 +912,9 @@ def RestoreIncSpF16:
 let ra=1, s=1,s0=1,s1=1 in
 def SaveRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
-             "save\t$$ra, $$s0, $$s1, $frame_size", [], IIStore >, MayStore {
+             "save\t$$ra, $$s0, $$s1, $$s2, $frame_size", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
-  let Uses = [RA, SP, S0, S1];
+  let Uses = [RA, SP, S0, S1, S2];
   let Defs = [SP];
 }
 

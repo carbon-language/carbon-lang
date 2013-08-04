@@ -56,11 +56,14 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
   BuildMI(MBB, MBBI, dl,
           TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
+  unsigned S2 = MRI->getDwarfRegNum(Mips::S2, true);
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S2, -8));
+
   unsigned S1 = MRI->getDwarfRegNum(Mips::S1, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, -8));
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S1, -12));
 
   unsigned S0 = MRI->getDwarfRegNum(Mips::S0, true);
-  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, -12));
+  MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, S0, -16));
 
   unsigned RA = MRI->getDwarfRegNum(Mips::RA, true);
   MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel, RA, -4));
@@ -168,6 +171,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   MF.getRegInfo().setPhysRegUsed(Mips::RA);
   MF.getRegInfo().setPhysRegUsed(Mips::S0);
   MF.getRegInfo().setPhysRegUsed(Mips::S1);
+  MF.getRegInfo().setPhysRegUsed(Mips::S2);
 }
 
 const MipsFrameLowering *
