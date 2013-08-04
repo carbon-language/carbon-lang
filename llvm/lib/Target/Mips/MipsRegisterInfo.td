@@ -261,6 +261,13 @@ def CPU16Regs : RegisterClass<"Mips", [i32], 32, (add
   // Callee save
   S0, S1)>;
 
+def CPU16RegsPlusSP : RegisterClass<"Mips", [i32], 32, (add
+  // Return Values and Arguments
+  V0, V1, A0, A1, A2, A3,
+  // Callee save
+  S0, S1,
+  SP)>;
+
 def CPURAReg : RegisterClass<"Mips", [i32], 32, (add RA)>, Unallocatable;
 
 def CPUSPReg : RegisterClass<"Mips", [i32], 32, (add SP)>, Unallocatable;

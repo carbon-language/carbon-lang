@@ -159,6 +159,8 @@ getReservedRegs(const MachineFunction &MF) const {
   if (Subtarget.inMips16Mode()) {
     Reserved.set(Mips::RA);
     Reserved.set(Mips::RA_64);
+    Reserved.set(Mips::T0);
+    Reserved.set(Mips::T1);
   }
 
   // Reserve GP if small section is used.

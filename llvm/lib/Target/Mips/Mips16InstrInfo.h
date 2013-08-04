@@ -68,7 +68,7 @@ public:
 
   // Adjust SP by FrameSize bytes. Save RA, S0, S1
   void makeFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
-                      MachineBasicBlock::iterator I) const;
+                 MachineBasicBlock::iterator I) const;
 
   // Adjust SP by FrameSize bytes. Restore RA, S0, S1
   void restoreFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
@@ -87,6 +87,13 @@ public:
                          int64_t Imm, MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator II, DebugLoc DL,
                          unsigned &NewImm) const;
+
+  unsigned basicLoadImmediate(unsigned FrameReg,
+                              int64_t Imm, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator II, DebugLoc DL,
+                              unsigned &NewImm) const;
+
+  static bool validImmediate(unsigned Opcode, unsigned Reg, int64_t Amount);
 
   static bool validSpImm8(int offset) {
     return ((offset & 7) == 0) && isInt<11>(offset);

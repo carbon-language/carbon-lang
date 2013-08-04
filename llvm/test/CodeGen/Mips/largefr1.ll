@@ -1,5 +1,6 @@
 ; RUN: llc -march=mipsel -mcpu=mips16 -mips16-hard-float -soft-float -relocation-model=static < %s | FileCheck %s -check-prefix=1
 
+
 @i = common global i32 0, align 4
 @j = common global i32 0, align 4
 @.str = private unnamed_addr constant [8 x i8] c"%i %i \0A\00", align 1
@@ -24,20 +25,32 @@ define i32 @main() nounwind {
 entry:
 ; 1-LABEL: main:
 ; 1: 1: 	.word	-797992
-; 1:            li ${{[0-9]+}}, 12
-; 1:            sll ${{[0-9]+}}, ${{[0-9]+}}, 16
+; 1:            lw ${{[0-9]+}}, 1f
+; 1:            b 2f
+; 1:            .align 2
+; 1:            .word	800016
+
+; 1:            b 2f
+; 1:            .align 2
+; 1:            .word	400016
+
+; 1:            move ${{[0-9]+}}, $sp
 ; 1:            addu ${{[0-9]+}}, ${{[0-9]+}}, ${{[0-9]+}}
-; 2:            move $sp, ${{[0-9]+}}
-; 2:            addu ${{[0-9]+}}, ${{[0-9]+}}, ${{[0-9]+}}
-; 1:            li ${{[0-9]+}}, 6
-; 1:            sll ${{[0-9]+}}, ${{[0-9]+}}, 16
+; 1:            addiu ${{[0-9]+}}, ${{[0-9]+}}, 0
+
+
+
+; 1:            b 2f
+; 1:            .align 2
+; 1:            .word	400216
+
+; 1:            move ${{[0-9]+}}, $sp
 ; 1:            addu ${{[0-9]+}}, ${{[0-9]+}}, ${{[0-9]+}}
-; 2:            move $sp, ${{[0-9]+}}
-; 2:            addu ${{[0-9]+}}, ${{[0-9]+}}, ${{[0-9]+}}
-; 1:          	addiu	${{[0-9]+}}, ${{[0-9]+}}, 6800
-; 1: 	        li	${{[0-9]+}}, 1
-; 1:	        sll	${{[0-9]+}}, ${{[0-9]+}}, 16
-; 2: 	        li	${{[0-9]+}}, 34463
+; 1:           	lw	${{[0-9]+}}, 0(${{[0-9]+}})
+
+
+
+
   %retval = alloca i32, align 4
   %one = alloca [100000 x i32], align 4
   %two = alloca [100000 x i32], align 4

@@ -134,8 +134,8 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
 
   DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
-  if (!MI.isDebugValue() && ( ((FrameReg != Mips::SP) && !isInt<16>(Offset)) ||
-      ((FrameReg == Mips::SP) && !isInt<15>(Offset)) )) {
+  if (!MI.isDebugValue() &&
+      !Mips16InstrInfo::validImmediate(MI.getOpcode(), FrameReg, Offset)) {
     MachineBasicBlock &MBB = *MI.getParent();
     DebugLoc DL = II->getDebugLoc();
     unsigned NewImm;

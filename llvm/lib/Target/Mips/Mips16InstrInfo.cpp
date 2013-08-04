@@ -10,7 +10,7 @@
 // This file contains the Mips16 implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
-
+#include <stdio.h>
 #include "Mips16InstrInfo.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MipsMachineFunction.h"
@@ -109,8 +109,9 @@ storeRegToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (Mips::CPU16RegsRegClass.hasSubClassEq(RC))
     Opc = Mips::SwRxSpImmX16;
   assert(Opc && "Register class not handled!");
-  BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
-    .addFrameIndex(FI).addImm(Offset).addMemOperand(MMO);
+  BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill)).
+      addFrameIndex(FI).addImm(Offset)
+      .addMemOperand(MMO);
 }
 
 void Mips16InstrInfo::
@@ -323,12 +324,49 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
   //
   RegScavenger rs;
   int32_t lo = Imm & 0xFFFF;
-  int32_t hi = ((Imm >> 16) + (lo >> 15)) & 0xFFFF;
   NewImm = lo;
-  unsigned Reg =0;
-  unsigned SpReg = 0;
+  int Reg =0;
+  int SpReg = 0;
+
   rs.enterBasicBlock(&MBB);
   rs.forward(II);
+  //
+  // We need to know which registers can be used, in the case where there
+  // are not enough free registers. We exclude all registers that
+  // are used in the instruction that we are helping.
+  //  // Consider all allocatable registers in the register class initially
+  BitVector Candidates =
+      RI.getAllocatableSet
+      (*II->getParent()->getParent(), &Mips::CPU16RegsRegClass);
+  // Exclude all the registers being used by the instruction.
+  for (unsigned i = 0, e = II->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = II->getOperand(i);
+    if (MO.isReg() && MO.getReg() != 0 && !MO.isDef() &&
+        !TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+      Candidates.reset(MO.getReg());
+  }
+  //
+  // If the same register was used and defined in an instruction, then
+  // it will not be in the list of candidates.
+  //
+  // we need to analyze the instruction that we are helping.
+  // we need to know if it defines register x but register x is not
+  // present as an operand of the instruction. this tells
+  // whether the register is live before the instruction. if it's not
+  // then we don't need to save it in case there are no free registers.
+  //
+  int DefReg = 0;
+  for (unsigned i = 0, e = II->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = II->getOperand(i);
+    if (MO.isReg() && MO.isDef()) {
+      DefReg = MO.getReg();
+      break;
+    }
+  }
+  //
+  BitVector Available = rs.getRegsAvailable(&Mips::CPU16RegsRegClass);
+
+  Available &= Candidates;
   //
   // we use T0 for the first register, if we need to save something away.
   // we use T1 for the second register, if we need to save something away.
@@ -336,35 +374,38 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
   unsigned FirstRegSaved =0, SecondRegSaved=0;
   unsigned FirstRegSavedTo = 0, SecondRegSavedTo = 0;
 
-  Reg = rs.FindUnusedReg(&Mips::CPU16RegsRegClass);
-  if (Reg == 0) {
-    FirstRegSaved = Reg = Mips::V0;
-    FirstRegSavedTo = Mips::T0;
-    copyPhysReg(MBB, II, DL, FirstRegSavedTo, FirstRegSaved, true);
+
+  Reg = Available.find_first();
+
+  if (Reg == -1) {
+    Reg = Candidates.find_first();
+    Candidates.reset(Reg);
+    if (DefReg != Reg) {
+      FirstRegSaved = Reg;
+      FirstRegSavedTo = Mips::T0;
+      copyPhysReg(MBB, II, DL, FirstRegSavedTo, FirstRegSaved, true);
+    }
   }
   else
-    rs.setUsed(Reg);
-  BuildMI(MBB, II, DL, get(Mips::LiRxImmX16), Reg).addImm(hi);
-  BuildMI(MBB, II, DL, get(Mips::SllX16), Reg).addReg(Reg).
-    addImm(16);
+    Available.reset(Reg);
+  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm);
+  NewImm = 0;
   if (FrameReg == Mips::SP) {
-    SpReg = rs.FindUnusedReg(&Mips::CPU16RegsRegClass);
-    if (SpReg == 0) {
-      if (Reg != Mips::V1) {
-        SecondRegSaved = SpReg = Mips::V1;
+    SpReg = Available.find_first();
+    if (SpReg == -1) {
+      SpReg = Candidates.find_first();
+      // Candidates.reset(SpReg); // not really needed
+      if (DefReg!= SpReg) {
+        SecondRegSaved = SpReg;
         SecondRegSavedTo = Mips::T1;
       }
-      else {
-        SecondRegSaved = SpReg = Mips::V0;
-        SecondRegSavedTo = Mips::T0;
-      }
-      copyPhysReg(MBB, II, DL, SecondRegSavedTo, SecondRegSaved, true);
+      if (SecondRegSaved)
+        copyPhysReg(MBB, II, DL, SecondRegSavedTo, SecondRegSaved, true);
     }
-    else
-      rs.setUsed(SpReg);
-
+   else
+     Available.reset(SpReg);
     copyPhysReg(MBB, II, DL, SpReg, Mips::SP, false);
-    BuildMI(MBB, II, DL, get(Mips::  AdduRxRyRz16), Reg).addReg(SpReg)
+    BuildMI(MBB, II, DL, get(Mips::  AdduRxRyRz16), Reg).addReg(SpReg, RegState::Kill)
       .addReg(Reg);
   }
   else
@@ -377,6 +418,22 @@ Mips16InstrInfo::loadImmediate(unsigned FrameReg,
     if (SecondRegSaved)
       copyPhysReg(MBB, II, DL, SecondRegSaved, SecondRegSavedTo, true);
   }
+  return Reg;
+}
+
+/// This function generates the sequence of instructions needed to get the
+/// result of adding register REG and immediate IMM.
+unsigned
+Mips16InstrInfo::basicLoadImmediate(
+  unsigned FrameReg,
+  int64_t Imm, MachineBasicBlock &MBB,
+  MachineBasicBlock::iterator II, DebugLoc DL,
+  unsigned &NewImm) const {
+  const TargetRegisterClass *RC = &Mips::CPU16RegsRegClass;
+  MachineRegisterInfo &RegInfo = MBB.getParent()->getRegInfo();
+  unsigned Reg = RegInfo.createVirtualRegister(RC);
+  BuildMI(MBB, II, DL, get(Mips::LwConstant32), Reg).addImm(Imm);
+  NewImm = 0;
   return Reg;
 }
 
@@ -414,4 +471,28 @@ void Mips16InstrInfo::BuildAddiuSpImm
 
 const MipsInstrInfo *llvm::createMips16InstrInfo(MipsTargetMachine &TM) {
   return new Mips16InstrInfo(TM);
+}
+
+#include <stdio.h>
+bool Mips16InstrInfo::validImmediate(unsigned Opcode, unsigned Reg,
+                                     int64_t Amount) {
+  switch (Opcode) {
+  case Mips::LbRxRyOffMemX16:
+  case Mips::LbuRxRyOffMemX16:
+  case Mips::LhRxRyOffMemX16:
+  case Mips::LhuRxRyOffMemX16:
+  case Mips::SbRxRyOffMemX16:
+  case Mips::ShRxRyOffMemX16:
+  case Mips::LwRxRyOffMemX16:
+  case Mips::SwRxRyOffMemX16:
+  case Mips::SwRxSpImmX16:
+  case Mips::LwRxSpImmX16:
+    return isInt<16>(Amount);
+  case Mips::AddiuRxRyOffMemX16:
+    if ((Reg == Mips::PC) || (Reg == Mips::SP))
+      return isInt<16>(Amount);
+    return isInt<15>(Amount);
+  }
+  printf("Unexpected opcode %i \n", Opcode);
+  llvm_unreachable("unexpected Opcode in validImmediate");
 }
