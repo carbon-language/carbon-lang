@@ -11,6 +11,8 @@ add_clang_executable(clang-tidy
   )
 target_link_libraries(clang-tidy
   clangTidy
+  clangTidyLLVMModule
+  clangTidyGoogleModule
   )
 
 install(TARGETS clang-tidy

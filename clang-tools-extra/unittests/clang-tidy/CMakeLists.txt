@@ -14,6 +14,8 @@ target_link_libraries(ClangTidyTests
   gtest
   gtest_main
   clangTidy
+  clangTidyLLVMModule
+  clangTidyGoogleModule
   clangTooling
   clangBasic
   clangASTMatchers

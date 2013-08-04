@@ -14,8 +14,6 @@ target_link_libraries(clangTidy
   clangTooling
   clangBasic
   clangRewriteFrontend
-  clangTidyLLVMModule
-  clangTidyGoogleModule
   )
 
 add_subdirectory(tool)

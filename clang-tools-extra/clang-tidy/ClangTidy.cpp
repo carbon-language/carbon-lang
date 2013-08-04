@@ -172,13 +172,5 @@ void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
     Rewrite.overwriteChangedFiles();
 }
 
-// This anchor is used to force the linker to link the LLVMModule.
-extern volatile int LLVMModuleAnchorSource;
-static int LLVMModuleAnchorDestination = LLVMModuleAnchorSource;
-
-// This anchor is used to force the linker to link the GoogleModule.
-extern volatile int GoogleModuleAnchorSource;
-static int GoogleModuleAnchorDestination = GoogleModuleAnchorSource;
-
 } // namespace tidy
 } // namespace clang

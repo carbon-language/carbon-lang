@@ -1,4 +1,4 @@
-##===- tools/extra/clang-tidy/Makefile ----sssss------------*- Makefile -*-===##
+##===- tools/extra/clang-tidy/Makefile ---------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
