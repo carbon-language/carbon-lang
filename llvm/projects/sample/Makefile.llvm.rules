@@ -534,21 +534,18 @@ ifndef KEEP_SYMBOLS
   Install.StripFlag += -s
 endif
 
-ifdef TOOL_NO_EXPORTS
-  DynamicFlags :=
-else
-  DynamicFlag := $(RDYNAMIC)
-endif
-
 # Adjust linker flags for building an executable
 ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
+  ifndef TOOL_NO_EXPORTS
+    LD.Flags += $(RDYNAMIC)
+  endif
 ifneq ($(HOST_OS), Darwin)
 ifdef TOOLNAME
   LD.Flags += $(RPATH) -Wl,'$$ORIGIN/../lib'
   ifdef EXAMPLE_TOOL
-    LD.Flags += $(RPATH) -Wl,$(ExmplDir) $(DynamicFlag)
+    LD.Flags += $(RPATH) -Wl,$(ExmplDir)
   else
-    LD.Flags += $(RPATH) -Wl,$(ToolDir) $(DynamicFlag)
+    LD.Flags += $(RPATH) -Wl,$(ToolDir)
   endif
 endif
 else
