@@ -2878,7 +2878,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
         cast<FunctionDecl>(D)->isLateTemplateParsed())
       return;
       
-    EmitCXXConstructors(cast<CXXConstructorDecl>(D));
+    getCXXABI().EmitCXXConstructors(cast<CXXConstructorDecl>(D));
     break;
   case Decl::CXXDestructor:
     if (cast<FunctionDecl>(D)->isLateTemplateParsed())

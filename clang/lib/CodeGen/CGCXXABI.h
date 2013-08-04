@@ -234,6 +234,9 @@ public:
   virtual llvm::BasicBlock *EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
                                                           const CXXRecordDecl *RD);
 
+  /// Emit constructor variants required by this ABI.
+  virtual void EmitCXXConstructors(const CXXConstructorDecl *D) = 0;
+
   /// Build the signature of the given destructor variant by adding
   /// any required parameters.  For convenience, ArgTys has been initialized
   /// with the type of 'this' and ResTy has been initialized with the type of

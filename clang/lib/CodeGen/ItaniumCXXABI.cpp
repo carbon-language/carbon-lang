@@ -112,6 +112,8 @@ public:
                                  CanQualType &ResTy,
                                  SmallVectorImpl<CanQualType> &ArgTys);
 
+  void EmitCXXConstructors(const CXXConstructorDecl *D);
+
   void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                 CXXDtorType T,
                                 CanQualType &ResTy,
@@ -770,6 +772,22 @@ void ItaniumCXXABI::BuildConstructorSignature(const CXXConstructorDecl *Ctor,
   // Check if we need to add a VTT parameter (which has type void **).
   if (Type == Ctor_Base && Ctor->getParent()->getNumVBases() != 0)
     ArgTys.push_back(Context.getPointerType(Context.VoidPtrTy));
+}
+
+void ItaniumCXXABI::EmitCXXConstructors(const CXXConstructorDecl *D) {
+  // Just make sure we're in sync with TargetCXXABI.
+  assert(CGM.getTarget().getCXXABI().hasConstructorVariants());
+
+  // The constructor used for constructing this as a complete class;
+  // constucts the virtual bases, then calls the base constructor.
+  if (!D->getParent()->isAbstract()) {
+    // We don't need to emit the complete ctor if the class is abstract.
+    CGM.EmitGlobal(GlobalDecl(D, Ctor_Complete));
+  }
+
+  // The constructor used for constructing this as a base class;
+  // ignores virtual bases.
+  CGM.EmitGlobal(GlobalDecl(D, Ctor_Base));
 }
 
 /// The generic ABI passes 'this', plus a VTT if it's destroying a

@@ -172,20 +172,6 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   return false;
 }
 
-void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
-  // The constructor used for constructing this as a complete class;
-  // constucts the virtual bases, then calls the base constructor.
-  if (!D->getParent()->isAbstract()) {
-    // We don't need to emit the complete ctor if the class is abstract.
-    EmitGlobal(GlobalDecl(D, Ctor_Complete));
-  }
-
-  // The constructor used for constructing this as a base class;
-  // ignores virtual bases.
-  if (getTarget().getCXXABI().hasConstructorVariants())
-    EmitGlobal(GlobalDecl(D, Ctor_Base));
-}
-
 void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
                                        CXXCtorType ctorType) {
   // The complete constructor is equivalent to the base constructor

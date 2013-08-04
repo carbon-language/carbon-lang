@@ -221,6 +221,15 @@ E::E() {
   // CHECK: ret
 }
 
+// PR16735 - even abstract classes should have a constructor emitted.
+struct F {
+  F();
+  virtual void f() = 0;
+};
+
+F::F() {}
+// CHECK: define x86_thiscallcc %"struct.constructors::F"* @"\01??0F@constructors@@QAE@XZ"
+
 } // end namespace constructors
 
 namespace dtors {

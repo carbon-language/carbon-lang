@@ -1033,10 +1033,6 @@ private:
   void EmitLinkageSpec(const LinkageSpecDecl *D);
   void CompleteDIClassType(const CXXMethodDecl* D);
 
-  /// EmitCXXConstructors - Emit constructors (base, complete) from a
-  /// C++ constructor Decl.
-  void EmitCXXConstructors(const CXXConstructorDecl *D);
-
   /// EmitCXXConstructor - Emit a single constructor with the given type from
   /// a C++ constructor Decl.
   void EmitCXXConstructor(const CXXConstructorDecl *D, CXXCtorType Type);

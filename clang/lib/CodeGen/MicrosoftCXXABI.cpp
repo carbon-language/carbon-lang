@@ -66,6 +66,8 @@ public:
   llvm::BasicBlock *EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
                                                   const CXXRecordDecl *RD);
 
+  void EmitCXXConstructors(const CXXConstructorDecl *D);
+
   // Background on MSVC destructors
   // ==============================
   //
@@ -374,6 +376,11 @@ MicrosoftCXXABI::EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
   // CGF will put the base ctor calls in this basic block for us later.
 
   return SkipVbaseCtorsBB;
+}
+
+void MicrosoftCXXABI::EmitCXXConstructors(const CXXConstructorDecl *D) {
+  // There's only one constructor type in this ABI.
+  CGM.EmitGlobal(GlobalDecl(D, Ctor_Complete));
 }
 
 void MicrosoftCXXABI::EmitVBPtrStores(CodeGenFunction &CGF,
