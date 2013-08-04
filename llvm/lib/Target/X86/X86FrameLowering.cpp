@@ -1323,7 +1323,7 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   unsigned SlotSize = RegInfo->getSlotSize();
 
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
+  int64_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
 
   if (TailCallReturnAddrDelta < 0) {
     // create RETURNADDR area
@@ -1336,7 +1336,7 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     //   }
     //   [EBP]
     MFI->CreateFixedObject(-TailCallReturnAddrDelta,
-                           (-1U*SlotSize)+TailCallReturnAddrDelta, true);
+                           TailCallReturnAddrDelta - SlotSize, true);
   }
 
   if (hasFP(MF)) {
