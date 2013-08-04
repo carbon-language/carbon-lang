@@ -42,3 +42,22 @@ define <8 x i64> @test4(<8 x i64> %x) nounwind {
   %rrr2 = insertelement <8 x i64> %x, i64 %eee, i32 1
   ret <8 x i64> %rrr2
 }
+
+;CHECK: test5
+;CHECK: vextractpsz
+;CHECK: ret
+define i32 @test5(<4 x float> %x) nounwind {
+  %ef = extractelement <4 x float> %x, i32 3
+  %ei = bitcast float %ef to i32
+  ret i32 %ei
+}
+
+;CHECK: test6
+;CHECK: vextractpsz {{.*}}, (%rdi)
+;CHECK: ret
+define void @test6(<4 x float> %x, float* %out) nounwind {
+  %ef = extractelement <4 x float> %x, i32 3
+  store float %ef, float* %out, align 4
+  ret void
+}
+

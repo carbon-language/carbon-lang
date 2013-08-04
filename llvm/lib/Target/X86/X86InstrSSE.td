@@ -6139,7 +6139,7 @@ multiclass SS41I_extractf32<bits<8> opc, string OpcodeStr> {
 }
 
 let ExeDomain = SSEPackedSingle in {
-  let Predicates = [HasAVX] in {
+  let Predicates = [UseAVX] in {
     defm VEXTRACTPS : SS41I_extractf32<0x17, "vextractps">, VEX;
     def VEXTRACTPSrr64 : SS4AIi8<0x17, MRMDestReg, (outs GR64:$dst),
                     (ins VR128:$src1, i32i8imm:$src2),

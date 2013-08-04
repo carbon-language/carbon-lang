@@ -192,18 +192,15 @@ def : Pat<(vinsert256_insert:$ins (v16i32 VR512:$src1),
 // vinsertps - insert f32 to XMM
 def VINSERTPSzrr : AVX512AIi8<0x21, MRMSrcReg, (outs VR128X:$dst),
       (ins VR128X:$src1, VR128X:$src2, u32u8imm:$src3),
-      !strconcat("vinsertps{z}",
-                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+      "vinsertps{z}\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
       [(set VR128X:$dst, (X86insrtps VR128X:$src1, VR128X:$src2, imm:$src3))]>,
       EVEX_4V;
 def VINSERTPSzrm: AVX512AIi8<0x21, MRMSrcMem, (outs VR128X:$dst),
       (ins VR128X:$src1, f32mem:$src2, u32u8imm:$src3),
-      !strconcat("vinsertps{z}",
-                 "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+      "vinsertps{z}\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
       [(set VR128X:$dst, (X86insrtps VR128X:$src1,
                           (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
                           imm:$src3))]>, EVEX_4V, EVEX_CD8<32, CD8VT1>;
-
 
 //===----------------------------------------------------------------------===//
 // AVX-512 VECTOR EXTRACT
@@ -337,3 +334,15 @@ def : Pat<(insert_subvector undef, (v8i32 VR256X:$src), (iPTR 0)),
 def : Pat<(insert_subvector undef, (v8f32 VR256X:$src), (iPTR 0)),
           (INSERT_SUBREG (v16f32 (IMPLICIT_DEF)), VR256X:$src, sub_ymm)>;
 
+// vextractps - extract 32 bits from XMM
+def VEXTRACTPSzrr : AVX512AIi8<0x17, MRMDestReg, (outs GR32:$dst),
+      (ins VR128X:$src1, u32u8imm:$src2),
+      "vextractps{z}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+      [(set GR32:$dst, (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2))]>,
+      EVEX;
+
+def VEXTRACTPSzmr : AVX512AIi8<0x17, MRMDestMem, (outs),
+      (ins f32mem:$dst, VR128X:$src1, u32u8imm:$src2),
+      "vextractps{z}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+      [(store (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2),
+                          addr:$dst)]>, EVEX;
