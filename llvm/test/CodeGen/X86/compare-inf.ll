@@ -3,74 +3,124 @@
 ; Convert oeq and une to ole/oge/ule/uge when comparing with infinity
 ; and negative infinity, because those are more efficient on x86.
 
+declare void @f() nounwind
+
 ; CHECK-LABEL: oeq_inff:
 ; CHECK: ucomiss
 ; CHECK: jb
-define float @oeq_inff(float %x, float %y) nounwind readonly {
+define void @oeq_inff(float %x) nounwind {
   %t0 = fcmp oeq float %x, 0x7FF0000000000000
-  %t1 = select i1 %t0, float 1.0, float %y
-  ret float %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: oeq_inf:
 ; CHECK: ucomisd
 ; CHECK: jb
-define double @oeq_inf(double %x, double %y) nounwind readonly {
+define void @oeq_inf(double %x) nounwind {
   %t0 = fcmp oeq double %x, 0x7FF0000000000000
-  %t1 = select i1 %t0, double 1.0, double %y
-  ret double %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: une_inff:
 ; CHECK: ucomiss
 ; CHECK: jae
-define float @une_inff(float %x, float %y) nounwind readonly {
+define void @une_inff(float %x) nounwind {
   %t0 = fcmp une float %x, 0x7FF0000000000000
-  %t1 = select i1 %t0, float 1.0, float %y
-  ret float %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: une_inf:
 ; CHECK: ucomisd
 ; CHECK: jae
-define double @une_inf(double %x, double %y) nounwind readonly {
+define void @une_inf(double %x) nounwind {
   %t0 = fcmp une double %x, 0x7FF0000000000000
-  %t1 = select i1 %t0, double 1.0, double %y
-  ret double %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: oeq_neg_inff:
 ; CHECK: ucomiss
 ; CHECK: jb
-define float @oeq_neg_inff(float %x, float %y) nounwind readonly {
+define void @oeq_neg_inff(float %x) nounwind {
   %t0 = fcmp oeq float %x, 0xFFF0000000000000
-  %t1 = select i1 %t0, float 1.0, float %y
-  ret float %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: oeq_neg_inf:
 ; CHECK: ucomisd
 ; CHECK: jb
-define double @oeq_neg_inf(double %x, double %y) nounwind readonly {
+define void @oeq_neg_inf(double %x) nounwind {
   %t0 = fcmp oeq double %x, 0xFFF0000000000000
-  %t1 = select i1 %t0, double 1.0, double %y
-  ret double %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: une_neg_inff:
 ; CHECK: ucomiss
 ; CHECK: jae
-define float @une_neg_inff(float %x, float %y) nounwind readonly {
+define void @une_neg_inff(float %x) nounwind {
   %t0 = fcmp une float %x, 0xFFF0000000000000
-  %t1 = select i1 %t0, float 1.0, float %y
-  ret float %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }
 
 ; CHECK-LABEL: une_neg_inf:
 ; CHECK: ucomisd
 ; CHECK: jae
-define double @une_neg_inf(double %x, double %y) nounwind readonly {
+define void @une_neg_inf(double %x) nounwind {
   %t0 = fcmp une double %x, 0xFFF0000000000000
-  %t1 = select i1 %t0, double 1.0, double %y
-  ret double %t1
+  br i1 %t0, label %true, label %false
+
+true:
+  call void @f() nounwind
+  br label %false
+
+false:
+  ret void
 }

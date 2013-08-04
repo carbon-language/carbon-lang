@@ -9488,6 +9488,51 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
   return SDValue();
 }
 
+/// \brief - Turns an ISD::CondCode into a value suitable for SSE floating point
+/// mask CMPs.
+static int translateX86FSETCC(ISD::CondCode SetCCOpcode, SDValue &Op0,
+                              SDValue &Op1) {
+  unsigned SSECC;
+  bool Swap = false;
+
+  // SSE Condition code mapping:
+  //  0 - EQ
+  //  1 - LT
+  //  2 - LE
+  //  3 - UNORD
+  //  4 - NEQ
+  //  5 - NLT
+  //  6 - NLE
+  //  7 - ORD
+  switch (SetCCOpcode) {
+  default: llvm_unreachable("Unexpected SETCC condition");
+  case ISD::SETOEQ:
+  case ISD::SETEQ:  SSECC = 0; break;
+  case ISD::SETOGT:
+  case ISD::SETGT:  Swap = true; // Fallthrough
+  case ISD::SETLT:
+  case ISD::SETOLT: SSECC = 1; break;
+  case ISD::SETOGE:
+  case ISD::SETGE:  Swap = true; // Fallthrough
+  case ISD::SETLE:
+  case ISD::SETOLE: SSECC = 2; break;
+  case ISD::SETUO:  SSECC = 3; break;
+  case ISD::SETUNE:
+  case ISD::SETNE:  SSECC = 4; break;
+  case ISD::SETULE: Swap = true; // Fallthrough
+  case ISD::SETUGE: SSECC = 5; break;
+  case ISD::SETULT: Swap = true; // Fallthrough
+  case ISD::SETUGT: SSECC = 6; break;
+  case ISD::SETO:   SSECC = 7; break;
+  case ISD::SETUEQ:
+  case ISD::SETONE: SSECC = 8; break;
+  }
+  if (Swap)
+    std::swap(Op0, Op1);
+
+  return SSECC;
+}
+
 // Lower256IntVSETCC - Break a VSETCC 256-bit integer VSETCC into two new 128
 // ones, and then concatenate the result back.
 static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
@@ -9535,43 +9580,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
     assert(EltVT == MVT::f32 || EltVT == MVT::f64);
 #endif
 
-    unsigned SSECC;
-    bool Swap = false;
-
-    // SSE Condition code mapping:
-    //  0 - EQ
-    //  1 - LT
-    //  2 - LE
-    //  3 - UNORD
-    //  4 - NEQ
-    //  5 - NLT
-    //  6 - NLE
-    //  7 - ORD
-    switch (SetCCOpcode) {
-    default: llvm_unreachable("Unexpected SETCC condition");
-    case ISD::SETOEQ:
-    case ISD::SETEQ:  SSECC = 0; break;
-    case ISD::SETOGT:
-    case ISD::SETGT: Swap = true; // Fallthrough
-    case ISD::SETLT:
-    case ISD::SETOLT: SSECC = 1; break;
-    case ISD::SETOGE:
-    case ISD::SETGE: Swap = true; // Fallthrough
-    case ISD::SETLE:
-    case ISD::SETOLE: SSECC = 2; break;
-    case ISD::SETUO:  SSECC = 3; break;
-    case ISD::SETUNE:
-    case ISD::SETNE:  SSECC = 4; break;
-    case ISD::SETULE: Swap = true; // Fallthrough
-    case ISD::SETUGE: SSECC = 5; break;
-    case ISD::SETULT: Swap = true; // Fallthrough
-    case ISD::SETUGT: SSECC = 6; break;
-    case ISD::SETO:   SSECC = 7; break;
-    case ISD::SETUEQ:
-    case ISD::SETONE: SSECC = 8; break;
-    }
-    if (Swap)
-      std::swap(Op0, Op1);
+    unsigned SSECC = translateX86FSETCC(SetCCOpcode, Op0, Op1);
 
     // In the two special cases we can't handle, emit two comparisons.
     if (SSECC == 8) {
@@ -9832,7 +9841,29 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Op1 = Op.getOperand(1);
   SDValue Op2 = Op.getOperand(2);
   SDLoc DL(Op);
+  EVT VT = Op1.getValueType();
   SDValue CC;
+
+  // Lower fp selects into a CMP/AND/ANDN/OR sequence when the necessary SSE ops
+  // are available. Otherwise fp cmovs get lowered into a less efficient branch
+  // sequence later on.
+  if (Cond.getOpcode() == ISD::SETCC &&
+      ((Subtarget->hasSSE2() && (VT == MVT::f32 || VT == MVT::f64)) ||
+       (Subtarget->hasSSE1() && VT == MVT::f32)) &&
+      VT == Cond.getOperand(0).getValueType() && Cond->hasOneUse()) {
+    SDValue CondOp0 = Cond.getOperand(0), CondOp1 = Cond.getOperand(1);
+    int SSECC = translateX86FSETCC(
+        cast<CondCodeSDNode>(Cond.getOperand(2))->get(), CondOp0, CondOp1);
+
+    if (SSECC != 8) {
+      unsigned Opcode = VT == MVT::f32 ? X86ISD::FSETCCss : X86ISD::FSETCCsd;
+      SDValue Cmp = DAG.getNode(Opcode, DL, VT, CondOp0, CondOp1,
+                                DAG.getConstant(SSECC, MVT::i8));
+      SDValue AndN = DAG.getNode(X86ISD::FANDN, DL, VT, Cmp, Op2);
+      SDValue And = DAG.getNode(X86ISD::FAND, DL, VT, Cmp, Op1);
+      return DAG.getNode(X86ISD::FOR, DL, VT, AndN, And);
+    }
+  }
 
   if (Cond.getOpcode() == ISD::SETCC) {
     SDValue NewCond = LowerSETCC(Cond, DAG);
@@ -12980,6 +13011,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
   case X86ISD::FAND:               return "X86ISD::FAND";
+  case X86ISD::FANDN:              return "X86ISD::FANDN";
   case X86ISD::FOR:                return "X86ISD::FOR";
   case X86ISD::FXOR:               return "X86ISD::FXOR";
   case X86ISD::FSRL:               return "X86ISD::FSRL";
@@ -17760,6 +17792,19 @@ static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// PerformFANDNCombine - Do target-specific dag combines on X86ISD::FANDN nodes
+static SDValue PerformFANDNCombine(SDNode *N, SelectionDAG &DAG) {
+  // FANDN(x, 0.0) -> 0.0
+  // FANDN(0.0, x) -> x
+  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N->getOperand(0)))
+    if (C->getValueAPF().isPosZero())
+      return N->getOperand(1);
+  if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(N->getOperand(1)))
+    if (C->getValueAPF().isPosZero())
+      return N->getOperand(1);
+  return SDValue();
+}
+
 static SDValue PerformBTCombine(SDNode *N,
                                 SelectionDAG &DAG,
                                 TargetLowering::DAGCombinerInfo &DCI) {
@@ -18214,6 +18259,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FMIN:
   case X86ISD::FMAX:        return PerformFMinFMaxCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
+  case X86ISD::FANDN:       return PerformFANDNCombine(N, DAG);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ANY_EXTEND:
