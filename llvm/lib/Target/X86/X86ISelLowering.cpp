@@ -5606,6 +5606,108 @@ X86TargetLowering::buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) const {
   return NV;
 }
 
+// Lower BUILD_VECTOR operation for v8i1 and v16i1 types.
+SDValue
+X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
+
+  EVT VT = Op.getValueType();
+  assert((VT.getVectorElementType() == MVT::i1) && (VT.getSizeInBits() <= 16) &&
+         "Unexpected type in LowerBUILD_VECTORvXi1!");
+
+  SDLoc dl(Op);
+  if (ISD::isBuildVectorAllZeros(Op.getNode())) {
+    SDValue Cst = DAG.getTargetConstant(0, MVT::i1);
+    SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst,
+                      Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT,
+                       Ops, VT.getVectorNumElements());
+  }
+
+  if (ISD::isBuildVectorAllOnes(Op.getNode())) {
+    SDValue Cst = DAG.getTargetConstant(1, MVT::i1);
+    SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst,
+                      Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, VT,
+                       Ops, VT.getVectorNumElements());
+  }
+
+  bool AllContants = true;
+  uint64_t Immediate = 0;
+  for (unsigned idx = 0, e = Op.getNumOperands(); idx < e; ++idx) {
+    SDValue In = Op.getOperand(idx);
+    if (In.getOpcode() == ISD::UNDEF)
+      continue;
+    if (!isa<ConstantSDNode>(In)) {
+      AllContants = false;
+      break;
+    }
+    if (cast<ConstantSDNode>(In)->getZExtValue())
+      Immediate |= (1 << idx);
+  }
+
+  if (AllContants) {
+    SDValue FullMask = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1,
+      DAG.getConstant(Immediate, MVT::i16));
+    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, FullMask,
+		       DAG.getIntPtrConstant(0));
+  }
+
+  if (!isSplatVector(Op.getNode()))
+    llvm_unreachable("Unsupported predicate operation");
+
+  SDValue In = Op.getOperand(0);
+  SDValue EFLAGS, X86CC;
+  if (In.getOpcode() == ISD::SETCC) {
+    SDValue Op0 = In.getOperand(0);
+    SDValue Op1 = In.getOperand(1);
+    ISD::CondCode CC = cast<CondCodeSDNode>(In.getOperand(2))->get();
+    bool isFP = Op1.getValueType().isFloatingPoint();
+    unsigned X86CCVal = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
+
+    assert(X86CCVal != X86::COND_INVALID && "Unsupported predicate operation");
+
+    X86CC = DAG.getConstant(X86CCVal, MVT::i8);
+    EFLAGS = EmitCmp(Op0, Op1, X86CCVal, DAG);
+    EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
+  } else if (In.getOpcode() == X86ISD::SETCC) {
+    X86CC = In.getOperand(0);
+    EFLAGS = In.getOperand(1);
+  } else {
+    // The algorithm:
+    //   Bit1 = In & 0x1
+    //   if (Bit1 != 0)
+    //     ZF = 0
+    //   else
+    //     ZF = 1
+    //   if (ZF == 0)
+    //     res = allOnes ### CMOVNE -1, %res
+    //   else
+    //     res = allZero
+    MVT InVT = In.getValueType().getSimpleVT();
+    SDValue Bit1 = DAG.getNode(ISD::AND, dl, InVT, In, DAG.getConstant(1, InVT));
+    EFLAGS = EmitTest(Bit1, X86::COND_NE, DAG);
+    X86CC = DAG.getConstant(X86::COND_NE, MVT::i8);
+  }
+
+  if (VT == MVT::v16i1) {
+    SDValue Cst1 = DAG.getConstant(-1, MVT::i16);
+    SDValue Cst0 = DAG.getConstant(0, MVT::i16);
+    SDValue CmovOp = DAG.getNode(X86ISD::CMOV, dl, MVT::i16,
+          Cst0, Cst1, X86CC, EFLAGS);
+    return DAG.getNode(ISD::BITCAST, dl, VT, CmovOp);
+  }
+
+  if (VT == MVT::v8i1) {
+    SDValue Cst1 = DAG.getConstant(-1, MVT::i32);
+    SDValue Cst0 = DAG.getConstant(0, MVT::i32);
+    SDValue CmovOp = DAG.getNode(X86ISD::CMOV, dl, MVT::i32,
+          Cst0, Cst1, X86CC, EFLAGS);
+    CmovOp = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, CmovOp);
+    return DAG.getNode(ISD::BITCAST, dl, VT, CmovOp);
+  }
+  llvm_unreachable("Unsupported predicate operation");
+}
+
 SDValue
 X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -5613,6 +5715,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   MVT VT = Op.getValueType().getSimpleVT();
   MVT ExtVT = VT.getVectorElementType();
   unsigned NumElems = Op.getNumOperands();
+
+  // Generate vectors for predicate vectors.
+  if (VT.getScalarType() == MVT::i1 && Subtarget->hasAVX512())
+    return LowerBUILD_VECTORvXi1(Op, DAG);
 
   // Vectors containing all zeros can be matched by pxor and xorps later
   if (ISD::isBuildVectorAllZeros(Op.getNode())) {

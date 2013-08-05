@@ -294,6 +294,10 @@ namespace llvm {
       // TESTP - Vector packed fp sign bitwise comparisons
       TESTP,
 
+      // OR/AND test for masks
+      KORTEST,
+      KTEST,
+
       // Several flavors of instructions with vector shuffle behaviors.
       PALIGNR,
       PSHUFD,
@@ -826,6 +830,7 @@ namespace llvm {
     SDValue LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, SDLoc dl,
                                    SelectionDAG &DAG) const;
     SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
