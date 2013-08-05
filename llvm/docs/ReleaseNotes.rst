@@ -62,6 +62,11 @@ Non-comprehensive list of changes in this release
   or later instead. For more information, see the `Getting Started using Visual
   Studio <GettingStartedVS.html>`_ page.
 
+* The Loop Vectorizer that was previously enabled for -O3 is now enabled for
+  -Os and -O2.
+
+* The new SLP Vectorizer is now enabled by default.
+
 * ... next change ...
 
 .. NOTE
