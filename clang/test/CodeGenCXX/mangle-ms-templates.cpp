@@ -157,6 +157,35 @@ void variadic_class_instantiate() {
 // CHECK: call {{.*}} @"\01??0?$VariadicClass@HD_N@@QAE@XZ"
 // CHECK: call {{.*}} @"\01??0?$VariadicClass@_NDH@@QAE@XZ"
 
+template <typename T>
+struct Second {};
+
+template <typename T, template <class> class>
+struct Type {};
+
+template <template <class> class T>
+struct Type2 {};
+
+template <template <class> class T, bool B>
+struct Thing;
+
+template <template <class> class T>
+struct Thing<T, false> { };
+
+template <template <class> class T>
+struct Thing<T, true> { };
+
+void template_template_fun(Type<Thing<Second, true>, Second>) { }
+// CHECK: "\01?template_template_fun@@YAXU?$Type@U?$Thing@USecond@@$00@@USecond@@@@@Z"
+
+template <typename T>
+void template_template_specialization();
+
+template <>
+void template_template_specialization<void (Type<Thing<Second, true>, Second>)>() {
+}
+// CHECK: "\01??$template_template_specialization@$$A6AXU?$Type@U?$Thing@USecond@@$00@@USecond@@@@@Z@@YAXXZ"
+
 // PR16788
 template <decltype(nullptr)> struct S1 {};
 void f(S1<nullptr>) {}

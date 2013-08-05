@@ -123,7 +123,7 @@ private:
 #undef NON_CANONICAL_TYPE
 #undef TYPE
   
-  void mangleType(const TagType*);
+  void mangleType(const TagDecl *TD);
   void mangleDecayedArrayType(const ArrayType *T, bool IsGlobal);
   void mangleArrayType(const ArrayType *T);
   void mangleFunctionClass(const FunctionDecl *FD);
@@ -904,6 +904,9 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
       mangleTemplateArg(TD, *I, ArgIndex);
     break;
   case TemplateArgument::Template:
+    mangleType(cast<TagDecl>(
+        TA.getAsTemplate().getAsTemplateDecl()->getTemplatedDecl()));
+    break;
   case TemplateArgument::TemplateExpansion: {
     // Issue a diagnostic.
     DiagnosticsEngine &Diags = Context.getDiags();
@@ -1407,13 +1410,13 @@ void MicrosoftCXXNameMangler::mangleType(const UnresolvedUsingType *T,
 // <class-type>  ::= V <name>
 // <enum-type>   ::= W <size> <name>
 void MicrosoftCXXNameMangler::mangleType(const EnumType *T, SourceRange) {
-  mangleType(cast<TagType>(T));
+  mangleType(cast<TagType>(T)->getDecl());
 }
 void MicrosoftCXXNameMangler::mangleType(const RecordType *T, SourceRange) {
-  mangleType(cast<TagType>(T));
+  mangleType(cast<TagType>(T)->getDecl());
 }
-void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
-  switch (T->getDecl()->getTagKind()) {
+void MicrosoftCXXNameMangler::mangleType(const TagDecl *TD) {
+  switch (TD->getTagKind()) {
     case TTK_Union:
       Out << 'T';
       break;
@@ -1427,10 +1430,10 @@ void MicrosoftCXXNameMangler::mangleType(const TagType *T) {
     case TTK_Enum:
       Out << 'W';
       Out << getASTContext().getTypeSizeInChars(
-                cast<EnumDecl>(T->getDecl())->getIntegerType()).getQuantity();
+                cast<EnumDecl>(TD)->getIntegerType()).getQuantity();
       break;
   }
-  mangleName(T->getDecl());
+  mangleName(TD);
 }
 
 // <type>       ::= <array-type>
