@@ -329,7 +329,11 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
       mangleQualifiers(Ty.getQualifiers(), false);
   } else {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
-    mangleQualifiers(Ty.getLocalQualifiers(), false);
+    mangleQualifiers(Ty.getLocalQualifiers(), Ty->isMemberPointerType());
+    // Member pointers are suffixed with a back reference to the member
+    // pointer's class name.
+    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
+      mangleName(MPT->getClass()->getAsCXXRecordDecl());
   }
 }
 
@@ -978,6 +982,7 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
   //         ::= 5 # not really based
   bool HasConst = Quals.hasConst(),
        HasVolatile = Quals.hasVolatile();
+
   if (!IsMember) {
     if (HasConst && HasVolatile) {
       Out << 'D';
@@ -989,6 +994,9 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
       Out << 'A';
     }
   } else {
+    if (PointersAre64Bit)
+      Out << 'E';
+
     if (HasConst && HasVolatile) {
       Out << 'T';
     } else if (HasVolatile) {
