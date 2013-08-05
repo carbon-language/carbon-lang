@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -31,6 +32,22 @@
 #include <utility>
 
 namespace llvm {
+
+/// Represents a set of regular expressions.  Regular expressions which are
+/// "literal" (i.e. no regex metacharacters) are stored in Strings, while all
+/// others are represented as a single pipe-separated regex in RegEx.  The
+/// reason for doing so is efficiency; StringSet is much faster at matching
+/// literal strings than Regex.
+struct SpecialCaseList::Entry {
+  StringSet<> Strings;
+  Regex *RegEx;
+
+  Entry() : RegEx(0) {}
+
+  bool match(StringRef Query) const {
+    return Strings.count(Query) || (RegEx && RegEx->match(Query));
+  }
+};
 
 SpecialCaseList::SpecialCaseList(const StringRef Path) {
   // Validate and open blacklist file.
@@ -82,6 +99,12 @@ void SpecialCaseList::init(const MemoryBuffer *MB) {
       Category = "init";
     }
 
+    // See if we can store Regexp in Strings.
+    if (Regex::isLiteralERE(Regexp)) {
+      Entries[Prefix][Category].Strings.insert(Regexp);
+      continue;
+    }
+
     // Replace * with .*
     for (size_t pos = 0; (pos = Regexp.find("*", pos)) != std::string::npos;
          pos += strlen(".*")) {
@@ -109,16 +132,20 @@ void SpecialCaseList::init(const MemoryBuffer *MB) {
     for (StringMap<std::string>::const_iterator II = I->second.begin(),
                                                 IE = I->second.end();
          II != IE; ++II) {
-      Entries[I->getKey()][II->getKey()] = new Regex(II->getValue());
+      Entries[I->getKey()][II->getKey()].RegEx = new Regex(II->getValue());
     }
   }
 }
 
 SpecialCaseList::~SpecialCaseList() {
-  for (StringMap<StringMap<Regex*> >::iterator I = Entries.begin(),
-                                               E = Entries.end();
+  for (StringMap<StringMap<Entry> >::iterator I = Entries.begin(),
+                                              E = Entries.end();
        I != E; ++I) {
-    DeleteContainerSeconds(I->second);
+    for (StringMap<Entry>::const_iterator II = I->second.begin(),
+                                          IE = I->second.end();
+         II != IE; ++II) {
+      delete II->second.RegEx;
+    }
   }
 }
 
@@ -169,14 +196,13 @@ bool SpecialCaseList::isIn(const Module &M, const StringRef Category) const {
 bool SpecialCaseList::findCategory(const StringRef Section,
                                    const StringRef Query,
                                    StringRef &Category) const {
-  StringMap<StringMap<Regex *> >::const_iterator I = Entries.find(Section);
+  StringMap<StringMap<Entry> >::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
 
-  for (StringMap<Regex *>::const_iterator II = I->second.begin(),
-                                          IE = I->second.end();
+  for (StringMap<Entry>::const_iterator II = I->second.begin(),
+                                        IE = I->second.end();
        II != IE; ++II) {
-    Regex *FunctionRegex = II->getValue();
-    if (FunctionRegex->match(Query)) {
+    if (II->getValue().match(Query)) {
       Category = II->first();
       return true;
     }
@@ -188,13 +214,12 @@ bool SpecialCaseList::findCategory(const StringRef Section,
 bool SpecialCaseList::inSectionCategory(const StringRef Section,
                                         const StringRef Query,
                                         const StringRef Category) const {
-  StringMap<StringMap<Regex *> >::const_iterator I = Entries.find(Section);
+  StringMap<StringMap<Entry> >::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
-  StringMap<Regex *>::const_iterator II = I->second.find(Category);
+  StringMap<Entry>::const_iterator II = I->second.find(Category);
   if (II == I->second.end()) return false;
 
-  Regex *FunctionRegex = II->getValue();
-  return FunctionRegex->match(Query);
+  return II->getValue().match(Query);
 }
 
 }  // namespace llvm

@@ -89,7 +89,8 @@ class SpecialCaseList {
   bool findCategory(const Module &M, StringRef &Category) const;
 
  private:
-  StringMap<StringMap<Regex*> > Entries;
+  struct Entry;
+  StringMap<StringMap<Entry> > Entries;
 
   void init(const MemoryBuffer *MB);
   bool findCategory(const StringRef Section, const StringRef Query,
