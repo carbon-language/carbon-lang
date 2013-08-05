@@ -175,3 +175,29 @@ namespace pr15112
 
   auto c1 = mkcoords<cpu>(0ul, 0ul, 0ul);
 }
+
+
+namespace pr12699 {
+
+template<bool B>
+struct bool_constant
+{
+  static const bool value = B;
+};
+
+template<typename... A>
+struct F
+{
+  template<typename... B>
+    using SameSize = bool_constant<sizeof...(A) == sizeof...(B)>;
+
+  template<typename... B, typename = SameSize<B...>>
+  F(B...) { }
+};
+
+void func()
+{
+  F<int> f1(3);
+}
+
+}
