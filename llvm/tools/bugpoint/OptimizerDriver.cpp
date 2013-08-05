@@ -44,6 +44,9 @@ namespace {
   // ChildOutput - This option captures the name of the child output file that
   // is set up by the parent bugpoint process
   cl::opt<std::string> ChildOutput("child-output", cl::ReallyHidden);
+  cl::opt<std::string> OptCmd("opt-command", cl::init(""),
+                              cl::desc("Path to opt. (default: search path "
+                                       "for 'opt'.)"));
 }
 
 /// writeProgramToFile - This writes the current "Program" to the named bitcode
@@ -154,7 +157,7 @@ bool BugDriver::runPasses(Module *Program,
     return 1;
   }
 
-  std::string tool = sys::FindProgramByName("opt");
+  std::string tool = OptCmd.empty()? sys::FindProgramByName("opt") : OptCmd;
   if (tool.empty()) {
     errs() << "Cannot find `opt' in PATH!\n";
     return 1;
