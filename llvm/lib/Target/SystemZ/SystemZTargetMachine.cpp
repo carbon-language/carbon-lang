@@ -65,6 +65,28 @@ bool SystemZPassConfig::addPreSched2() {
 }
 
 bool SystemZPassConfig::addPreEmitPass() {
+  // We eliminate comparisons here rather than earlier because some
+  // transformations can change the set of available CC values and we
+  // generally want those transformations to have priority.  This is
+  // especially true in the commonest case where the result of the comparison
+  // is used by a single in-range branch instruction, since we will then
+  // be able to fuse the compare and the branch instead.
+  //
+  // For example, two-address NILF can sometimes be converted into
+  // three-address RISBLG.  NILF produces a CC value that indicates whether
+  // the low word is zero, but RISBLG does not modify CC at all.  On the
+  // other hand, 64-bit ANDs like NILL can sometimes be converted to RISBG.
+  // The CC value produced by NILL isn't useful for our purposes, but the
+  // value produced by RISBG can be used for any comparison with zero
+  // (not just equality).  So there are some transformations that lose
+  // CC values (while still being worthwhile) and others that happen to make
+  // the CC result more useful than it was originally.
+  //
+  // Doing it so late makes it more likely that a register will be reused
+  // between the comparison and the branch, but it isn't clear whether
+  // preventing that would be a win or not.
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createSystemZElimComparePass(getSystemZTargetMachine()));
   addPass(createSystemZLongBranchPass(getSystemZTargetMachine()));
   return true;
 }
