@@ -28,10 +28,38 @@
 
 using namespace llvm;
 
+STATISTIC(BranchOnCounts, "Number of branch-on-count instructions");
 STATISTIC(EliminatedComparisons, "Number of eliminated comparisons");
 STATISTIC(FusedComparisons, "Number of fused compare-and-branch instructions");
 
 namespace {
+  // Represents the references to a particular register in one or more
+  // instructions.
+  struct Reference {
+    Reference()
+      : Def(false), Use(false), IndirectDef(false), IndirectUse(false) {}
+
+    Reference &operator|=(const Reference &Other) {
+      Def |= Other.Def;
+      IndirectDef |= Other.IndirectDef;
+      Use |= Other.Use;
+      IndirectUse |= Other.IndirectUse;
+      return *this;
+    }
+
+    operator bool() const { return Def || Use; }
+
+    // True if the register is defined or used in some form, either directly or
+    // via a sub- or super-register.
+    bool Def;
+    bool Use;
+
+    // True if the register is defined or used indirectly, by a sub- or
+    // super-register.
+    bool IndirectDef;
+    bool IndirectUse;
+  };
+
   class SystemZElimCompare : public MachineFunctionPass {
   public:
     static char ID;
@@ -46,6 +74,9 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
 
   private:
+    Reference getRegReferences(MachineInstr *MI, unsigned Reg);
+    bool convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
+                       SmallVectorImpl<MachineInstr *> &CCUsers);
     bool convertToLoadAndTest(MachineInstr *MI);
     bool adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
                                SmallVectorImpl<MachineInstr *> &CCUsers);
@@ -97,6 +128,80 @@ static bool resultTests(MachineInstr *MI, unsigned Reg, unsigned SubReg) {
   }
 
   return false;
+}
+
+// Describe the references to Reg in MI, including sub- and super-registers.
+Reference SystemZElimCompare::getRegReferences(MachineInstr *MI, unsigned Reg) {
+  Reference Ref;
+  for (unsigned I = 0, E = MI->getNumOperands(); I != E; ++I) {
+    const MachineOperand &MO = MI->getOperand(I);
+    if (MO.isReg()) {
+      if (unsigned MOReg = MO.getReg()) {
+        if (MOReg == Reg || TRI->regsOverlap(MOReg, Reg)) {
+          if (MO.isUse()) {
+            Ref.Use = true;
+            Ref.IndirectUse |= (MOReg != Reg);
+          }
+          if (MO.isDef()) {
+            Ref.Def = true;
+            Ref.IndirectDef |= (MOReg != Reg);
+          }
+        }
+      }
+    }
+  }
+  return Ref;
+}
+
+// Compare compares the result of MI against zero.  If MI is an addition
+// of -1 and if CCUsers is a single branch on nonzero, eliminate the addition
+// and convert the branch to a BRCT(G).  Return true on success.
+bool
+SystemZElimCompare::convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
+                                  SmallVectorImpl<MachineInstr *> &CCUsers) {
+  // Check whether we have an addition of -1.
+  unsigned Opcode = MI->getOpcode();
+  unsigned BRCT;
+  if (Opcode == SystemZ::AHI)
+    BRCT = SystemZ::BRCT;
+  else if (Opcode == SystemZ::AGHI)
+    BRCT = SystemZ::BRCTG;
+  else
+    return false;
+  if (MI->getOperand(2).getImm() != -1)
+    return false;
+
+  // Check whether we have a single JLH.
+  if (CCUsers.size() != 1)
+    return false;
+  MachineInstr *Branch = CCUsers[0];
+  if (Branch->getOpcode() != SystemZ::BRC ||
+      Branch->getOperand(0).getImm() != SystemZ::CCMASK_ICMP ||
+      Branch->getOperand(1).getImm() != SystemZ::CCMASK_CMP_NE)
+    return false;
+
+  // We already know that there are no references to the register between
+  // MI and Compare.  Make sure that there are also no references between
+  // Compare and Branch.
+  unsigned SrcReg = Compare->getOperand(0).getReg();
+  MachineBasicBlock::iterator MBBI = Compare, MBBE = Branch;
+  for (++MBBI; MBBI != MBBE; ++MBBI)
+    if (getRegReferences(MBBI, SrcReg))
+      return false;
+
+  // The transformation is OK.  Rebuild Branch as a BRCT(G).
+  MachineOperand Target(Branch->getOperand(2));
+  Branch->RemoveOperand(2);
+  Branch->RemoveOperand(1);
+  Branch->RemoveOperand(0);
+  Branch->setDesc(TII->get(BRCT));
+  MachineInstrBuilder(*Branch->getParent()->getParent(), Branch)
+    .addOperand(MI->getOperand(0))
+    .addOperand(MI->getOperand(1))
+    .addOperand(Target)
+    .addReg(SystemZ::CC, RegState::ImplicitDefine);
+  MI->removeFromParent();
+  return true;
 }
 
 // If MI is a load instruction, try to convert it into a LOAD AND TEST.
@@ -210,21 +315,32 @@ optimizeCompareZero(MachineInstr *Compare,
   unsigned SrcSubReg = Compare->getOperand(0).getSubReg();
   MachineBasicBlock *MBB = Compare->getParent();
   MachineBasicBlock::iterator MBBI = Compare, MBBE = MBB->begin();
-  bool SeenUseOfCC = false;
+  Reference CCRefs;
+  Reference SrcRefs;
   while (MBBI != MBBE) {
     --MBBI;
     MachineInstr *MI = MBBI;
-    if (resultTests(MI, SrcReg, SrcSubReg) &&
-        ((!SeenUseOfCC && convertToLoadAndTest(MI)) ||
-         adjustCCMasksForInstr(MI, Compare, CCUsers))) {
-      EliminatedComparisons += 1;
-      return true;
+    if (resultTests(MI, SrcReg, SrcSubReg)) {
+      // Try to remove both MI and Compare by converting a branch to BRCT(G).
+      // We don't care in this case whether CC is modified between MI and
+      // Compare.
+      if (!CCRefs.Use && !SrcRefs && convertToBRCT(MI, Compare, CCUsers)) {
+        BranchOnCounts += 1;
+        return true;
+      }
+      // Try to eliminate Compare by reusing a CC result from MI.
+      if ((!CCRefs && convertToLoadAndTest(MI)) ||
+          (!CCRefs.Def && adjustCCMasksForInstr(MI, Compare, CCUsers))) {
+        EliminatedComparisons += 1;
+        return true;
+      }
     }
-    if (MI->modifiesRegister(SrcReg, TRI) ||
-        MI->modifiesRegister(SystemZ::CC, TRI))
+    SrcRefs |= getRegReferences(MI, SrcReg);
+    if (SrcRefs.Def)
       return false;
-    if (MI->readsRegister(SystemZ::CC, TRI))
-      SeenUseOfCC = true;
+    CCRefs |= getRegReferences(MI, SystemZ::CC);
+    if (CCRefs.Use && CCRefs.Def)
+      return false;
   }
   return false;
 }
@@ -316,13 +432,12 @@ bool SystemZElimCompare::processBlock(MachineBasicBlock *MBB) {
       continue;
     }
 
-    if (MI->definesRegister(SystemZ::CC, TRI)) {
+    Reference CCRefs(getRegReferences(MI, SystemZ::CC));
+    if (CCRefs.Def) {
       CCUsers.clear();
-      CompleteCCUsers = true;
-    } else if (MI->modifiesRegister(SystemZ::CC, TRI))
-      CompleteCCUsers = false;
-
-    if (CompleteCCUsers && MI->readsRegister(SystemZ::CC, TRI))
+      CompleteCCUsers = !CCRefs.IndirectDef;
+    }
+    if (CompleteCCUsers && CCRefs.Use)
       CCUsers.push_back(MI);
   }
   return Changed;

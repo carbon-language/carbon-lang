@@ -148,6 +148,7 @@ namespace {
     bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
     bool mustRelaxABranch();
     void setWorstCaseAddresses();
+    void splitBranchOnCount(MachineInstr *MI, unsigned AddOpcode);
     void splitCompareBranch(MachineInstr *MI, unsigned CompareOpcode);
     void relaxBranch(TerminatorInfo &Terminator);
     void relaxBranches();
@@ -217,6 +218,11 @@ TerminatorInfo SystemZLongBranch::describeTerminator(MachineInstr *MI) {
     case SystemZ::BRC:
       // Relaxes to BRCL, which is 2 bytes longer.
       Terminator.ExtraRelaxSize = 2;
+      break;
+    case SystemZ::BRCT:
+    case SystemZ::BRCTG:
+      // Relaxes to A(G)HI and BRCL, which is 6 bytes longer.
+      Terminator.ExtraRelaxSize = 6;
       break;
     case SystemZ::CRJ:
       // Relaxes to a CR/BRCL sequence, which is 2 bytes longer.
@@ -330,6 +336,25 @@ void SystemZLongBranch::setWorstCaseAddresses() {
   }
 }
 
+// Split BRANCH ON COUNT MI into the addition given by AddOpcode followed
+// by a BRCL on the result.
+void SystemZLongBranch::splitBranchOnCount(MachineInstr *MI,
+                                           unsigned AddOpcode) {
+  MachineBasicBlock *MBB = MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
+  BuildMI(*MBB, MI, DL, TII->get(AddOpcode))
+    .addOperand(MI->getOperand(0))
+    .addOperand(MI->getOperand(1))
+    .addImm(-1);
+  MachineInstr *BRCL = BuildMI(*MBB, MI, DL, TII->get(SystemZ::BRCL))
+    .addImm(SystemZ::CCMASK_ICMP)
+    .addImm(SystemZ::CCMASK_CMP_NE)
+    .addOperand(MI->getOperand(2));
+  // The implicit use of CC is a killing use.
+  BRCL->addRegisterKilled(SystemZ::CC, &TII->getRegisterInfo());
+  MI->eraseFromParent();
+}
+
 // Split MI into the comparison given by CompareOpcode followed
 // a BRCL on the result.
 void SystemZLongBranch::splitCompareBranch(MachineInstr *MI,
@@ -357,6 +382,12 @@ void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
     break;
   case SystemZ::BRC:
     Branch->setDesc(TII->get(SystemZ::BRCL));
+    break;
+  case SystemZ::BRCT:
+    splitBranchOnCount(Branch, SystemZ::AHI);
+    break;
+  case SystemZ::BRCTG:
+    splitBranchOnCount(Branch, SystemZ::AGHI);
     break;
   case SystemZ::CRJ:
     splitCompareBranch(Branch, SystemZ::CR);

@@ -82,6 +82,9 @@ bool SystemZPassConfig::addPreEmitPass() {
   // CC values (while still being worthwhile) and others that happen to make
   // the CC result more useful than it was originally.
   //
+  // Another reason is that we only want to use BRANCH ON COUNT in cases
+  // where we know that the count register is not going to be spilled.
+  //
   // Doing it so late makes it more likely that a register will be reused
   // between the comparison and the branch, but it isn't clear whether
   // preventing that would be a win or not.

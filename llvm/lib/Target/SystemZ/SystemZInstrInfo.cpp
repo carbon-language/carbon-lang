@@ -684,6 +684,14 @@ SystemZInstrInfo::getBranchInfo(const MachineInstr *MI) const {
                              MI->getOperand(0).getImm(),
                              MI->getOperand(1).getImm(), &MI->getOperand(2));
 
+  case SystemZ::BRCT:
+    return SystemZII::Branch(SystemZII::BranchCT, SystemZ::CCMASK_ICMP,
+                             SystemZ::CCMASK_CMP_NE, &MI->getOperand(2));
+
+  case SystemZ::BRCTG:
+    return SystemZII::Branch(SystemZII::BranchCTG, SystemZ::CCMASK_ICMP,
+                             SystemZ::CCMASK_CMP_NE, &MI->getOperand(2));
+
   case SystemZ::CIJ:
   case SystemZ::CRJ:
     return SystemZII::Branch(SystemZII::BranchC, SystemZ::CCMASK_ICMP,

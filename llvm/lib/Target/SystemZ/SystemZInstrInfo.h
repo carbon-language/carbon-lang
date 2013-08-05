@@ -69,7 +69,15 @@ namespace SystemZII {
 
     // An instruction that peforms a 64-bit signed comparison and branches
     // on the result.
-    BranchCG
+    BranchCG,
+
+    // An instruction that decrements a 32-bit register and branches if
+    // the result is nonzero.
+    BranchCT,
+
+    // An instruction that decrements a 64-bit register and branches if
+    // the result is nonzero.
+    BranchCTG
   };
   // Information about a branch instruction.
   struct Branch {
