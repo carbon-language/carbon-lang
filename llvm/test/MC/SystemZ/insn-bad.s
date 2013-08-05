@@ -329,6 +329,34 @@
 	brcl	-1, bar
 	brcl	16, bar
 
+#CHECK: error: offset out of range
+#CHECK: brct	%r0, -0x100002
+#CHECK: error: offset out of range
+#CHECK: brct	%r0, -1
+#CHECK: error: offset out of range
+#CHECK: brct	%r0, 1
+#CHECK: error: offset out of range
+#CHECK: brct	%r0, 0x10000
+
+	brct	%r0, -0x100002
+	brct	%r0, -1
+	brct	%r0, 1
+	brct	%r0, 0x10000
+
+#CHECK: error: offset out of range
+#CHECK: brctg	%r0, -0x100002
+#CHECK: error: offset out of range
+#CHECK: brctg	%r0, -1
+#CHECK: error: offset out of range
+#CHECK: brctg	%r0, 1
+#CHECK: error: offset out of range
+#CHECK: brctg	%r0, 0x10000
+
+	brctg	%r0, -0x100002
+	brctg	%r0, -1
+	brctg	%r0, 1
+	brctg	%r0, 0x10000
+
 #CHECK: error: invalid operand
 #CHECK: c	%r0, -1
 #CHECK: error: invalid operand

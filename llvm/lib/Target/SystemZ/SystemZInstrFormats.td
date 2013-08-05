@@ -489,6 +489,12 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 //   Inherent:
 //     One register output operand and no input operands.
 //
+//   BranchUnary:
+//     One register output operand, one register input operand and
+//     one branch displacement.  The instructions stores a modified
+//     form of the source register in the destination register and
+//     branches on the result.
+//
 //   Store:
 //     One register or immediate input operand and one address input operand.
 //     The instruction stores the first operand to the address.
@@ -553,6 +559,15 @@ class InherentRRE<string mnemonic, bits<16> opcode, RegisterOperand cls,
             mnemonic#"r\t$R1",
             [(set cls:$R1, src)]> {
   let R2 = 0;
+}
+
+class BranchUnaryRI<string mnemonic, bits<12> opcode, RegisterOperand cls>
+  : InstRI<opcode, (outs cls:$R1), (ins cls:$R1src, brtarget16:$I2),
+           mnemonic##"\t$R1, $I2", []> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
 }
 
 class LoadMultipleRSY<string mnemonic, bits<16> opcode, RegisterOperand cls>

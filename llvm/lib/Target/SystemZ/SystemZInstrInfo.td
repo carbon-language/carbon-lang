@@ -166,6 +166,13 @@ defm AsmJE   : IntCondExtendedMnemonic<8,  "e",  "nlh">;
 defm AsmJHE  : IntCondExtendedMnemonic<10, "he", "nl">;
 defm AsmJLE  : IntCondExtendedMnemonic<12, "le", "nh">;
 
+// Decrement a register and branch if it is nonzero.  These don't clobber CC,
+// but we might need to split long branches into sequences that do.
+let Defs = [CC] in {
+  def BRCT  : BranchUnaryRI<"brct",  0xA76, GR32>;
+  def BRCTG : BranchUnaryRI<"brctg", 0xA77, GR64>;
+}
+
 //===----------------------------------------------------------------------===//
 // Select instructions
 //===----------------------------------------------------------------------===//
