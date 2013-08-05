@@ -1137,22 +1137,19 @@ _mm256_castsi256_si128(__m256i __a)
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_castpd128_pd256(__m128d __a)
 {
-  __m128d __zero = _mm_setzero_pd();
-  return __builtin_shufflevector(__a, __zero, 0, 1, 2, 2);
+  return __builtin_shufflevector(__a, __a, 0, 1, -1, -1);
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_castps128_ps256(__m128 __a)
 {
-  __m128 __zero = _mm_setzero_ps();
-  return __builtin_shufflevector(__a, __zero, 0, 1, 2, 3, 4, 4, 4, 4);
+  return __builtin_shufflevector(__a, __a, 0, 1, 2, 3, -1, -1, -1, -1);
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_castsi128_si256(__m128i __a)
 {
-  __m128i __zero = _mm_setzero_si128();
-  return __builtin_shufflevector(__a, __zero, 0, 1, 2, 2);
+  return __builtin_shufflevector(__a, __a, 0, 1, -1, -1);
 }
 
 /* SIMD load ops (unaligned) */
