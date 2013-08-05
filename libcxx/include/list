@@ -273,7 +273,7 @@ public:
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
-    __list_iterator() _NOEXCEPT
+    __list_iterator() _NOEXCEPT : __ptr_(nullptr)
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
         __get_db()->__insert_i(this);
@@ -403,7 +403,7 @@ public:
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
-    __list_const_iterator() _NOEXCEPT
+    __list_const_iterator() _NOEXCEPT : __ptr_(nullptr)
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
         __get_db()->__insert_i(this);

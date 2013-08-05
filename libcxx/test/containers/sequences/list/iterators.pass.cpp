@@ -135,4 +135,22 @@ int main()
         assert(j->first == 3);
     }
 #endif
+#if _LIBCPP_STD_VER > 11
+    {
+        std::list<int> c;
+        std::list<int>::iterator ii1{}, ii2{};
+        std::list<int>::iterator ii4 = ii1;
+        std::list<int>::const_iterator cii{};
+        assert ( ii1 == ii2 );
+        assert ( ii1 == ii4 );
+        assert ( ii1 == cii );
+
+        assert ( !(ii1 != ii2 ));
+        assert ( !(ii1 != cii ));
+
+        assert ( ii1 != c.cbegin());
+        assert ( cii != c.begin());
+    }
+#endif
+
 }
