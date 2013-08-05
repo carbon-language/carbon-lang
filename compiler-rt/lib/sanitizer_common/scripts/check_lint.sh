@@ -40,8 +40,8 @@ cd ${LLVM_CHECKOUT}
 # LLVM Instrumentation
 LLVM_INSTRUMENTATION=lib/Transforms/Instrumentation
 LLVM_LINT_FILTER=-,+whitespace
-${CPPLINT} --filter=${LLVM_LINT_FILTER} ${LLVM_INSTRUMENTATION}/*Sanitizer.cpp \
-                                        ${LLVM_INSTRUMENTATION}/BlackList.*
+${CPPLINT} --filter=${LLVM_LINT_FILTER} lib/Transforms/Instrumentation/*Sanitizer.cpp \
+                                        lib/Transforms/Utils/SpecialCaseList.cpp
 
 COMPILER_RT=projects/compiler-rt
 

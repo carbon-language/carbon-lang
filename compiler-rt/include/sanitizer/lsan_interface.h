@@ -35,7 +35,7 @@ extern "C" {
   // you have intentional memory leaks in your shutdown code). Calling this
   // function overrides end-of-process leak checking; it must be called at
   // most once per process. This function will terminate the process if there
-  // are memory leaks and the exit_code flag is non-zero. 
+  // are memory leaks and the exit_code flag is non-zero.
   void __lsan_do_leak_check();
 #ifdef __cplusplus
 }  // extern "C"

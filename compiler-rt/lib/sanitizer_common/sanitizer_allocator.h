@@ -1127,7 +1127,9 @@ class LargeMmapAllocator {
     CHECK(IsAligned(p, page_size_));
     return reinterpret_cast<Header*>(p - page_size_);
   }
-  Header *GetHeader(const void *p) { return GetHeader(reinterpret_cast<uptr>(p)); }
+  Header *GetHeader(const void *p) {
+    return GetHeader(reinterpret_cast<uptr>(p));
+  }
 
   void *GetUser(Header *h) {
     CHECK(IsAligned((uptr)h, page_size_));

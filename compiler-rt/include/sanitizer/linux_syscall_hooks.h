@@ -47,7 +47,8 @@ void __sanitizer_syscall_post_waitpid(long res, int pid, int *status,
                                       int options);
 void __sanitizer_syscall_post_clock_gettime(long res, int clk_id, void *tp);
 void __sanitizer_syscall_post_clock_getres(long res, int clk_id, void *tp);
-void __sanitizer_syscall_post_read(long res, unsigned int fd, void *buf, size_t count);
+void __sanitizer_syscall_post_read(long res, unsigned int fd, void *buf,
+                                   size_t count);
 
 // And now a few syscalls we don't handle yet.
 

@@ -169,7 +169,6 @@ PRE_SYSCALL(read)(unsigned int fd, void *buf, uptr count) {
 POST_SYSCALL(read)(long res, unsigned int fd, void *buf, uptr count) {
   if (res > 0 && buf) POST_WRITE(buf, res);
 }
-
 }  // extern "C"
 
 #undef PRE_SYSCALL
