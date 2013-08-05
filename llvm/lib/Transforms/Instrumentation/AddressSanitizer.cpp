@@ -70,7 +70,8 @@ static const char *const kAsanReportErrorTemplate = "__asan_report_";
 static const char *const kAsanReportLoadN = "__asan_report_load_n";
 static const char *const kAsanReportStoreN = "__asan_report_store_n";
 static const char *const kAsanRegisterGlobalsName = "__asan_register_globals";
-static const char *const kAsanUnregisterGlobalsName = "__asan_unregister_globals";
+static const char *const kAsanUnregisterGlobalsName =
+    "__asan_unregister_globals";
 static const char *const kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
 static const char *const kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
 static const char *const kAsanInitName = "__asan_init_v3";
