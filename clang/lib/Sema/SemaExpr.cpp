@@ -742,6 +742,17 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
 /// when we're in an unevaluated context.
 Sema::VarArgKind Sema::isValidVarArgType(const QualType &Ty) {
   if (Ty->isIncompleteType()) {
+    // C++11 [expr.call]p7:
+    //   After these conversions, if the argument does not have arithmetic,
+    //   enumeration, pointer, pointer to member, or class type, the program
+    //   is ill-formed.
+    //
+    // Since we've already performed array-to-pointer and function-to-pointer
+    // decay, the only such type in C++ is cv void. This also handles
+    // initializer lists as variadic arguments.
+    if (Ty->isVoidType())
+      return VAK_Invalid;
+
     if (Ty->isObjCObjectType())
       return VAK_Invalid;
     return VAK_Valid;
@@ -764,35 +775,50 @@ Sema::VarArgKind Sema::isValidVarArgType(const QualType &Ty) {
 
   if (getLangOpts().ObjCAutoRefCount && Ty->isObjCLifetimeType())
     return VAK_Valid;
-  return VAK_Invalid;
+
+  if (Ty->isObjCObjectType())
+    return VAK_Invalid;
+
+  // FIXME: In C++11, these cases are conditionally-supported, meaning we're
+  // permitted to reject them. We should consider doing so.
+  return VAK_Undefined;
 }
 
-bool Sema::variadicArgumentPODCheck(const Expr *E, VariadicCallType CT) {
+void Sema::checkVariadicArgument(const Expr *E, VariadicCallType CT) {
   // Don't allow one to pass an Objective-C interface to a vararg.
-  const QualType & Ty = E->getType();
+  const QualType &Ty = E->getType();
+  VarArgKind VAK = isValidVarArgType(Ty);
 
   // Complain about passing non-POD types through varargs.
-  switch (isValidVarArgType(Ty)) {
+  switch (VAK) {
   case VAK_Valid:
     break;
-  case VAK_ValidInCXX11:
-    DiagRuntimeBehavior(E->getLocStart(), 0,
-        PDiag(diag::warn_cxx98_compat_pass_non_pod_arg_to_vararg)
-        << E->getType() << CT);
-    break;
-  case VAK_Invalid: {
-    if (Ty->isObjCObjectType())
-      return DiagRuntimeBehavior(E->getLocStart(), 0,
-                          PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
-                            << Ty << CT);
 
-    return DiagRuntimeBehavior(E->getLocStart(), 0,
-                   PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
-                   << getLangOpts().CPlusPlus11 << Ty << CT);
+  case VAK_ValidInCXX11:
+    DiagRuntimeBehavior(
+        E->getLocStart(), 0,
+        PDiag(diag::warn_cxx98_compat_pass_non_pod_arg_to_vararg)
+          << E->getType() << CT);
+    break;
+
+  case VAK_Undefined:
+    DiagRuntimeBehavior(
+        E->getLocStart(), 0,
+        PDiag(diag::warn_cannot_pass_non_pod_arg_to_vararg)
+          << getLangOpts().CPlusPlus11 << Ty << CT);
+    break;
+
+  case VAK_Invalid:
+    if (Ty->isObjCObjectType())
+      DiagRuntimeBehavior(
+          E->getLocStart(), 0,
+          PDiag(diag::err_cannot_pass_objc_interface_to_vararg)
+            << Ty << CT);
+    else
+      Diag(E->getLocStart(), diag::err_cannot_pass_to_vararg)
+        << isa<InitListExpr>(E) << Ty << CT;
+    break;
   }
-  }
-  // c++ rules are enforced elsewhere.
-  return false;
 }
 
 /// DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
@@ -822,7 +848,7 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
 
   // Diagnostics regarding non-POD argument types are
   // emitted along with format string checking in Sema::CheckFunctionCall().
-  if (isValidVarArgType(E->getType()) == VAK_Invalid) {
+  if (isValidVarArgType(E->getType()) == VAK_Undefined) {
     // Turn this into a trap.
     CXXScopeSpec SS;
     SourceLocation TemplateKWLoc;

@@ -232,6 +232,8 @@ void testInvalidFormatArgument(NSDictionary *dict) {
 // <rdar://problem/11825593>
 void testByValueObjectInFormat(Foo *obj) {
   printf("%d %d %d", 1L, *obj, 1L); // expected-error {{cannot pass object with interface type 'Foo' by value to variadic function; expected type from format string was 'int'}} expected-warning 2 {{format specifies type 'int' but the argument has type 'long'}}
+  printf("%!", *obj); // expected-error {{cannot pass object with interface type 'Foo' by value through variadic function}} expected-warning {{invalid conversion specifier}}
+  printf(0, *obj); // expected-error {{cannot pass object with interface type 'Foo' by value through variadic function}}
 
   [Bar log2:@"%d", *obj]; // expected-error {{cannot pass object with interface type 'Foo' by value to variadic method; expected type from format string was 'int'}}
 }

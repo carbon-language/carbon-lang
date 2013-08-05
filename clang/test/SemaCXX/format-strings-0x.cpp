@@ -24,4 +24,8 @@ void f(char **sp, float *fp) {
       \u1234\U0010fffe
       %d)foo" // expected-warning {{more '%' conversions than data arguments}}
   );
+
+  printf("init list: %d", { 0 }); // expected-error {{cannot pass initializer list to variadic function; expected type from format string was 'int'}}
+  printf("void: %d", f(sp, fp)); // expected-error {{cannot pass expression of type 'void' to variadic function; expected type from format string was 'int'}}
+  printf(0, { 0 }); // expected-error {{cannot pass initializer list to variadic function}}
 }

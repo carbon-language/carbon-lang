@@ -20,11 +20,16 @@ struct X4 {
 
 void vararg(...);
 
+void g();
+
 void f(X1 x1, X2 x2, X3 x3, X4 x4) {
   vararg(x1); // OK
   vararg(x2); // expected-error{{cannot pass object of non-trivial type 'X2' through variadic function; call will abort at runtime}}
   vararg(x3); // OK
   vararg(x4); // expected-error{{cannot pass object of non-trivial type 'X4' through variadic function; call will abort at runtime}}
+
+  vararg(g()); // expected-error{{cannot pass expression of type 'void' to variadic function}}
+  vararg({1, 2, 3}); // expected-error{{cannot pass initializer list to variadic function}}
 }
 
 

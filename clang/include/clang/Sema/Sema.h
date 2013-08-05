@@ -6907,11 +6907,16 @@ public:
   enum VarArgKind {
     VAK_Valid,
     VAK_ValidInCXX11,
+    VAK_Undefined,
     VAK_Invalid
   };
 
   // Determines which VarArgKind fits an expression.
   VarArgKind isValidVarArgType(const QualType &Ty);
+
+  /// Check to see if the given expression is a valid argument to a variadic
+  /// function, issuing a diagnostic if not.
+  void checkVariadicArgument(const Expr *E, VariadicCallType CT);
 
   /// GatherArgumentsForCall - Collector argument expressions for various
   /// form of call prototypes.
@@ -6929,10 +6934,6 @@ public:
   // will create a runtime trap if the resulting type is not a POD type.
   ExprResult DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                               FunctionDecl *FDecl);
-
-  /// Checks to see if the given expression is a valid argument to a variadic
-  /// function, issuing a diagnostic and returning NULL if not.
-  bool variadicArgumentPODCheck(const Expr *E, VariadicCallType CT);
 
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
@@ -7578,6 +7579,7 @@ private:
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
                               llvm::APSInt &Result);
 
+public:
   enum FormatStringType {
     FST_Scanf,
     FST_Printf,
@@ -7589,37 +7591,26 @@ private:
   };
   static FormatStringType GetFormatStringType(const FormatAttr *Format);
 
-  enum StringLiteralCheckType {
-    SLCT_NotALiteral,
-    SLCT_UncheckedLiteral,
-    SLCT_CheckedLiteral
-  };
-
-  StringLiteralCheckType checkFormatStringExpr(const Expr *E,
-                                               ArrayRef<const Expr *> Args,
-                                               bool HasVAListArg,
-                                               unsigned format_idx,
-                                               unsigned firstDataArg,
-                                               FormatStringType Type,
-                                               VariadicCallType CallType,
-                                               bool inFunctionCall = true);
-
   void CheckFormatString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          ArrayRef<const Expr *> Args, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg,
                          FormatStringType Type, bool inFunctionCall,
-                         VariadicCallType CallType);
+                         VariadicCallType CallType,
+                         llvm::SmallBitVector &CheckedVarArgs);
 
+private:
   bool CheckFormatArguments(const FormatAttr *Format,
                             ArrayRef<const Expr *> Args,
                             bool IsCXXMember,
                             VariadicCallType CallType,
-                            SourceLocation Loc, SourceRange Range);
+                            SourceLocation Loc, SourceRange Range,
+                            llvm::SmallBitVector &CheckedVarArgs);
   bool CheckFormatArguments(ArrayRef<const Expr *> Args,
                             bool HasVAListArg, unsigned format_idx,
                             unsigned firstDataArg, FormatStringType Type,
                             VariadicCallType CallType,
-                            SourceLocation Loc, SourceRange range);
+                            SourceLocation Loc, SourceRange range,
+                            llvm::SmallBitVector &CheckedVarArgs);
 
   void CheckNonNullArguments(const NonNullAttr *NonNull,
                              const Expr * const *ExprArgs,
