@@ -168,3 +168,10 @@ std::string Regex::sub(StringRef Repl, StringRef String,
 
   return Res;
 }
+
+bool Regex::isLiteralERE(StringRef Str) {
+  // Check for regex metacharacters.  This list was derived from our regex
+  // implementation in regcomp.c and double checked against the POSIX extended
+  // regular expression specification.
+  return Str.find_first_of("()^$|*+?.[]\\{}") == StringRef::npos;
+}

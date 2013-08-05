@@ -112,4 +112,19 @@ TEST_F(RegexTest, Substitution) {
   EXPECT_EQ(Error, "invalid backreference string '100'");
 }
 
+TEST_F(RegexTest, IsLiteralERE) {
+  EXPECT_TRUE(Regex::isLiteralERE("abc"));
+  EXPECT_FALSE(Regex::isLiteralERE("a(bc)"));
+  EXPECT_FALSE(Regex::isLiteralERE("^abc"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc$"));
+  EXPECT_FALSE(Regex::isLiteralERE("a|bc"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc*"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc+"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc?"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc."));
+  EXPECT_FALSE(Regex::isLiteralERE("a[bc]"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc\\1"));
+  EXPECT_FALSE(Regex::isLiteralERE("abc{1,2}"));
+}
+
 }

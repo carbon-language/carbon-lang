@@ -77,6 +77,10 @@ namespace llvm {
     /// string.
     std::string sub(StringRef Repl, StringRef String, std::string *Error = 0);
 
+    /// \brief If this function returns true, ^Str$ is an extended regular
+    /// expression that matches Str and only Str.
+    static bool isLiteralERE(StringRef Str);
+
   private:
     struct llvm_regex *preg;
     int error;
