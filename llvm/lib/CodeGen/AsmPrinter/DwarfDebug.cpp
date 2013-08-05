@@ -962,7 +962,7 @@ void DwarfDebug::collectDeadVariables() {
   DeleteContainerSeconds(DeadFnScopeMap);
 }
 
-// Type Signature computation code.
+// Type Signature [7.27] computation code.
 typedef ArrayRef<uint8_t> HashValue;
 
 /// \brief Grabs the string in whichever attribute is passed in and returns
@@ -1012,36 +1012,48 @@ static void addULEB128ToHash(MD5 &Hash, uint64_t Value) {
 
 /// \brief Including \p Parent adds the context of Parent to \p Hash.
 static void addParentContextToHash(MD5 &Hash, DIE *Parent) {
-  unsigned Tag = Parent->getTag();
 
   DEBUG(dbgs() << "Adding parent context to hash...\n");
-  
-  // For each surrounding type or namespace...
-  if (Tag != dwarf::DW_TAG_namespace && Tag != dwarf::DW_TAG_class_type &&
-      Tag != dwarf::DW_TAG_structure_type)
-    return;
 
-  // ... beginning with the outermost such construct...
-  if (Parent->getParent() != NULL)
-    addParentContextToHash(Hash, Parent->getParent());
+  // [7.27.2] For each surrounding type or namespace beginning with the
+  // outermost such construct...
+  SmallVector<DIE *, 1> Parents;
+  while (Parent->getTag() != dwarf::DW_TAG_compile_unit) {
+    Parents.push_back(Parent);
+    Parent = Parent->getParent();
+  }
 
-  // Append the letter "C" to the sequence.
-  addULEB128ToHash(Hash, 'C');
+  // Reverse iterate over our list to go from the outermost construct to the
+  // innermost.
+  for (SmallVectorImpl<DIE *>::reverse_iterator I = Parents.rbegin(),
+                                                E = Parents.rend();
+       I != E; ++I) {
+    DIE *Die = *I;
 
-  // Followed by the DWARF tag of the construct.
-  addULEB128ToHash(Hash, Parent->getTag());
+    // ... Append the letter "C" to the sequence...
+    addULEB128ToHash(Hash, 'C');
 
-  // Then the name, taken from the DW_AT_name attribute.
-  StringRef Name = getDIEStringAttr(Parent, dwarf::DW_AT_name);
-  if (!Name.empty())
-    addStringToHash(Hash, Name);
+    // ... Followed by the DWARF tag of the construct...
+    addULEB128ToHash(Hash, Die->getTag());
+
+    // ... Then the name, taken from the DW_AT_name attribute.
+    StringRef Name = getDIEStringAttr(Die, dwarf::DW_AT_name);
+    DEBUG(dbgs() << "... adding context: " << Name << "\n");
+    if (!Name.empty())
+      addStringToHash(Hash, Name);
+  }
 }
 
 /// This is based on the type signature computation given in section 7.27 of the
-/// DWARF4 standard. It is the md5 hash of a flattened description of the DIE.
+/// DWARF4 standard. It is the md5 hash of a flattened description of the DIE with
+/// the exception that we are hashing only the context and the name of the type.
 static void addDIEODRSignature(MD5 &Hash, CompileUnit *CU, DIE *Die) {
 
-  // Add the contexts to the hash.
+  // Add the contexts to the hash. We won't be computing the ODR hash for
+  // function local types so it's safe to use the generic context hashing
+  // algorithm here.
+  // FIXME: If we figure out how to account for linkage in some way we could
+  // actually do this with a slight modification to the parent hash algorithm.
   DIE *Parent = Die->getParent();
   if (Parent)
     addParentContextToHash(Hash, Parent);
