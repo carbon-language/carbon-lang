@@ -988,11 +988,8 @@ static StringRef getDIEStringAttr(DIE *Die, unsigned Attr) {
 /// a trailing NULL with the string.
 static void addStringToHash(MD5 &Hash, StringRef Str) {
   DEBUG(dbgs() << "Adding string " << Str << " to hash.\n");
-  HashValue SVal((const uint8_t *)Str.data(), Str.size());
-  const uint8_t NB = '\0';
-  HashValue NBVal((const uint8_t *)&NB, 1);
-  Hash.update(SVal);
-  Hash.update(NBVal);
+  Hash.update(Str);
+  Hash.update(makeArrayRef((uint8_t)'\0'));
 }
 
 // FIXME: These are copied and only slightly modified out of LEB128.h.
