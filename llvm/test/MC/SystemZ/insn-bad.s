@@ -1592,6 +1592,30 @@
 	lrvg	%r0, -524289
 	lrvg	%r0, 524288
 
+#CHECK: error: invalid operand
+#CHECK: lt	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lt	%r0, 524288
+
+	lt	%r0, -524289
+	lt	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: ltg	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: ltg	%r0, 524288
+
+	ltg	%r0, -524289
+	ltg	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: ltgf	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: ltgf	%r0, 524288
+
+	ltgf	%r0, -524289
+	ltgf	%r0, 524288
+
 #CHECK: error: invalid register pair
 #CHECK: lxr	%f0, %f2
 #CHECK: error: invalid register pair

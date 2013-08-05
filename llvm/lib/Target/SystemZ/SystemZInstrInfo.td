@@ -223,6 +223,10 @@ let neverHasSideEffects = 1 in {
   def LR  : UnaryRR <"l",  0x18,   null_frag, GR32, GR32>;
   def LGR : UnaryRRE<"lg", 0xB904, null_frag, GR64, GR64>;
 }
+let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in {
+  def LTR  : UnaryRR <"lt",  0x12,   null_frag, GR32, GR32>;
+  def LTGR : UnaryRRE<"ltg", 0xB902, null_frag, GR64, GR64>;
+}
 
 // Move on condition.
 let isCodeGenOnly = 1, Uses = [CC] in {
@@ -265,6 +269,11 @@ let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
                       [(set GR128:$dst, (load bdxaddr20only128:$src))]>;
   }
 }
+let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in {
+  def LT  : UnaryRXY<"lt",  0xE312, load, GR32, 4>;
+  def LTG : UnaryRXY<"ltg", 0xE302, load, GR64, 8>;
+}
+
 let canFoldAsLoad = 1 in {
   def LRL  : UnaryRILPC<"lrl",  0xC4D, aligned_load, GR32>;
   def LGRL : UnaryRILPC<"lgrl", 0xC48, aligned_load, GR64>;
@@ -358,6 +367,8 @@ let neverHasSideEffects = 1 in {
   def LGHR : UnaryRRE<"lgh", 0xB907, sext16, GR64, GR64>;
   def LGFR : UnaryRRE<"lgf", 0xB914, sext32, GR64, GR32>;
 }
+let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in
+  def LTGFR : UnaryRRE<"ltgf", 0xB912, null_frag, GR64, GR64>;
 
 // Match 32-to-64-bit sign extensions in which the source is already
 // in a 64-bit register.
@@ -375,6 +386,8 @@ def LGH   : UnaryRXY<"lgh", 0xE315, sextloadi16, GR64, 2>;
 def LGF   : UnaryRXY<"lgf", 0xE314, sextloadi32, GR64, 4>;
 def LGHRL : UnaryRILPC<"lghrl", 0xC44, aligned_sextloadi16, GR64>;
 def LGFRL : UnaryRILPC<"lgfrl", 0xC4C, aligned_sextloadi32, GR64>;
+let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in
+  def LTGF : UnaryRXY<"ltgf", 0xE332, sextloadi32, GR64, 4>;
 
 // If the sign of a load-extend operation doesn't matter, use the signed ones.
 // There's not really much to choose between the sign and zero extensions,
