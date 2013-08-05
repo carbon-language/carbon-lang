@@ -1,7 +1,9 @@
-; RUN: opt < %s -analyze -scalar-evolution | grep smax | count 2
-; RUN: opt < %s -analyze -scalar-evolution | grep \
-; RUN:     "%. smax %. smax %."
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 ; PR1614
+
+; CHECK: -->  (%a smax %b)
+; CHECK: -->  (%a smax %b smax %c)
+; CHECK-NOT: smax
 
 define i32 @x(i32 %a, i32 %b, i32 %c) {
   %A = icmp sgt i32 %a, %b

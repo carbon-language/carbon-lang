@@ -1,7 +1,8 @@
-; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:   | grep "sext.*trunc.*Exits: 11"
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 
 ; ScalarEvolution should be able to compute a loop exit value for %indvar.i8.
+
+; CHECK: sext{{.*}}trunc{{.*}}Exits: 11
 
 define void @another_count_down_signed(double* %d, i64 %n) nounwind {
 entry:

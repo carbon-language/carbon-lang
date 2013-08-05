@@ -1,7 +1,8 @@
-; RUN: opt < %s -analyze -scalar-evolution \
-; RUN:  | grep "max backedge-taken count is 1$"
+; RUN: opt < %s -analyze -scalar-evolution | FileCheck %s
 
 @mode_table = global [4 x i32] zeroinitializer          ; <[4 x i32]*> [#uses=1]
+
+; CHECK: max backedge-taken count is 1{{$}}
 
 define i8 @f() {
 entry:

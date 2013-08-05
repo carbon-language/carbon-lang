@@ -1,7 +1,9 @@
-; RUN: opt < %s -tbaa -basicaa -argpromotion -mem2reg -S | not grep alloca
+; RUN: opt < %s -tbaa -basicaa -argpromotion -mem2reg -S | FileCheck %s
 
 target datalayout = "E-p:64:64:64"
 
+; CHECK: test
+; CHECK-NOT: alloca
 define internal i32 @test(i32* %X, i32* %Y, i32* %Q) {
   store i32 77, i32* %Q, !tbaa !2
   %A = load i32* %X, !tbaa !1
@@ -10,6 +12,8 @@ define internal i32 @test(i32* %X, i32* %Y, i32* %Q) {
   ret i32 %C
 }
 
+; CHECK: caller
+; CHECK-NOT: alloca
 define internal i32 @caller(i32* %B, i32* %Q) {
   %A = alloca i32
   store i32 78, i32* %Q, !tbaa !2
@@ -18,6 +22,8 @@ define internal i32 @caller(i32* %B, i32* %Q) {
   ret i32 %C
 }
 
+; CHECK: callercaller
+; CHECK-NOT: alloca
 define i32 @callercaller(i32* %Q) {
   %B = alloca i32
   store i32 2, i32* %B, !tbaa !1
