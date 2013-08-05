@@ -150,11 +150,11 @@ Tuning/Configuration Options
 
  *fast*
 
-  Fast register allocator. It is default for unoptimized code.
+  Fast register allocator. It is the default for unoptimized code.
 
  *greedy*
 
-  Greedy register allocator. It is default for optimized code.
+  Greedy register allocator. It is the default for optimized code.
 
  *pbqp*
 
