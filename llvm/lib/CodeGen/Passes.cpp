@@ -300,6 +300,8 @@ void TargetPassConfig::addPass(Pass *P) {
 
   if (Started && !Stopped)
     PM->add(P);
+  else
+    delete P;
   if (StopAfter == PassID)
     Stopped = true;
   if (StartAfter == PassID)

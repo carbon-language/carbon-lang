@@ -308,7 +308,8 @@ protected:
   AnalysisID addPass(AnalysisID PassID);
 
   /// Add a pass to the PassManager if that pass is supposed to be run, as
-  /// determined by the StartAfter and StopAfter options.
+  /// determined by the StartAfter and StopAfter options. Takes ownership of the
+  /// pass.
   void addPass(Pass *P);
 
   /// addMachinePasses helper to create the target-selected or overriden
