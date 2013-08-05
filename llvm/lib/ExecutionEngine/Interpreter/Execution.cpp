@@ -1138,16 +1138,42 @@ void Interpreter::visitCallSite(CallSite CS) {
   callFunction((Function*)GVTOP(SRC), ArgVals);
 }
 
+// auxilary function for shift operations
+static unsigned getShiftAmount(uint64_t orgShiftAmount,
+                               llvm::APInt valueToShift) {
+  unsigned valueWidth = valueToShift.getBitWidth();
+  if (orgShiftAmount < (uint64_t)valueWidth)
+    return orgShiftAmount;
+  // according to the llvm documentation, if orgShiftAmount > valueWidth,
+  // the result is undfeined. but we do shift by this rule:
+  return (NextPowerOf2(valueWidth-1) - 1) & orgShiftAmount;
+}
+
+
 void Interpreter::visitShl(BinaryOperator &I) {
   ExecutionContext &SF = ECStack.back();
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
-  if (Src2.IntVal.getZExtValue() < Src1.IntVal.getBitWidth())
-    Dest.IntVal = Src1.IntVal.shl(Src2.IntVal.getZExtValue());
-  else
-    Dest.IntVal = Src1.IntVal;
-  
+  const Type *Ty = I.getType();
+
+  if (Ty->isVectorTy()) {
+    uint32_t src1Size = uint32_t(Src1.AggregateVal.size());
+    assert(src1Size == Src2.AggregateVal.size());
+    for (unsigned i = 0; i < src1Size; i++) {
+      GenericValue Result;
+      uint64_t shiftAmount = Src2.AggregateVal[i].IntVal.getZExtValue();
+      llvm::APInt valueToShift = Src1.AggregateVal[i].IntVal;
+      Result.IntVal = valueToShift.shl(getShiftAmount(shiftAmount, valueToShift));
+      Dest.AggregateVal.push_back(Result);
+    }
+  } else {
+    // scalar
+    uint64_t shiftAmount = Src2.IntVal.getZExtValue();
+    llvm::APInt valueToShift = Src1.IntVal;
+    Dest.IntVal = valueToShift.shl(getShiftAmount(shiftAmount, valueToShift));
+  }
+
   SetValue(&I, Dest, SF);
 }
 
@@ -1156,11 +1182,25 @@ void Interpreter::visitLShr(BinaryOperator &I) {
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
-  if (Src2.IntVal.getZExtValue() < Src1.IntVal.getBitWidth())
-    Dest.IntVal = Src1.IntVal.lshr(Src2.IntVal.getZExtValue());
-  else
-    Dest.IntVal = Src1.IntVal;
-  
+  const Type *Ty = I.getType();
+
+  if (Ty->isVectorTy()) {
+    uint32_t src1Size = uint32_t(Src1.AggregateVal.size());
+    assert(src1Size == Src2.AggregateVal.size());
+    for (unsigned i = 0; i < src1Size; i++) {
+      GenericValue Result;
+      uint64_t shiftAmount = Src2.AggregateVal[i].IntVal.getZExtValue();
+      llvm::APInt valueToShift = Src1.AggregateVal[i].IntVal;
+      Result.IntVal = valueToShift.lshr(getShiftAmount(shiftAmount, valueToShift));
+      Dest.AggregateVal.push_back(Result);
+    }
+  } else {
+    // scalar
+    uint64_t shiftAmount = Src2.IntVal.getZExtValue();
+    llvm::APInt valueToShift = Src1.IntVal;
+    Dest.IntVal = valueToShift.lshr(getShiftAmount(shiftAmount, valueToShift));
+  }
+
   SetValue(&I, Dest, SF);
 }
 
@@ -1169,110 +1209,273 @@ void Interpreter::visitAShr(BinaryOperator &I) {
   GenericValue Src1 = getOperandValue(I.getOperand(0), SF);
   GenericValue Src2 = getOperandValue(I.getOperand(1), SF);
   GenericValue Dest;
-  if (Src2.IntVal.getZExtValue() < Src1.IntVal.getBitWidth())
-    Dest.IntVal = Src1.IntVal.ashr(Src2.IntVal.getZExtValue());
-  else
-    Dest.IntVal = Src1.IntVal;
-  
+  const Type *Ty = I.getType();
+
+  if (Ty->isVectorTy()) {
+    size_t src1Size = Src1.AggregateVal.size();
+    assert(src1Size == Src2.AggregateVal.size());
+    for (unsigned i = 0; i < src1Size; i++) {
+      GenericValue Result;
+      uint64_t shiftAmount = Src2.AggregateVal[i].IntVal.getZExtValue();
+      llvm::APInt valueToShift = Src1.AggregateVal[i].IntVal;
+      Result.IntVal = valueToShift.ashr(getShiftAmount(shiftAmount, valueToShift));
+      Dest.AggregateVal.push_back(Result);
+    }
+  } else {
+    // scalar
+    uint64_t shiftAmount = Src2.IntVal.getZExtValue();
+    llvm::APInt valueToShift = Src1.IntVal;
+    Dest.IntVal = valueToShift.ashr(getShiftAmount(shiftAmount, valueToShift));
+  }
+
   SetValue(&I, Dest, SF);
 }
 
 GenericValue Interpreter::executeTruncInst(Value *SrcVal, Type *DstTy,
                                            ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  IntegerType *DITy = cast<IntegerType>(DstTy);
-  unsigned DBitWidth = DITy->getBitWidth();
-  Dest.IntVal = Src.IntVal.trunc(DBitWidth);
+  Type *SrcTy = SrcVal->getType();
+  if (SrcTy->isVectorTy()) {
+    Type *DstVecTy = DstTy->getScalarType();
+    unsigned DBitWidth = cast<IntegerType>(DstVecTy)->getBitWidth();
+    unsigned NumElts = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal
+    Dest.AggregateVal.resize(NumElts);
+    for (unsigned i = 0; i < NumElts; i++)
+      Dest.AggregateVal[i].IntVal = Src.AggregateVal[i].IntVal.trunc(DBitWidth);
+  } else {
+    IntegerType *DITy = cast<IntegerType>(DstTy);
+    unsigned DBitWidth = DITy->getBitWidth();
+    Dest.IntVal = Src.IntVal.trunc(DBitWidth);
+  }
   return Dest;
 }
 
 GenericValue Interpreter::executeSExtInst(Value *SrcVal, Type *DstTy,
                                           ExecutionContext &SF) {
+  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  IntegerType *DITy = cast<IntegerType>(DstTy);
-  unsigned DBitWidth = DITy->getBitWidth();
-  Dest.IntVal = Src.IntVal.sext(DBitWidth);
+  if (SrcTy->isVectorTy()) {
+    const Type *DstVecTy = DstTy->getScalarType();
+    unsigned DBitWidth = cast<IntegerType>(DstVecTy)->getBitWidth();
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal.
+    Dest.AggregateVal.resize(size);
+    for (unsigned i = 0; i < size; i++)
+      Dest.AggregateVal[i].IntVal = Src.AggregateVal[i].IntVal.sext(DBitWidth);
+  } else {
+    const IntegerType *DITy = cast<IntegerType>(DstTy);
+    unsigned DBitWidth = DITy->getBitWidth();
+    Dest.IntVal = Src.IntVal.sext(DBitWidth);
+  }
   return Dest;
 }
 
 GenericValue Interpreter::executeZExtInst(Value *SrcVal, Type *DstTy,
                                           ExecutionContext &SF) {
+  const Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  IntegerType *DITy = cast<IntegerType>(DstTy);
-  unsigned DBitWidth = DITy->getBitWidth();
-  Dest.IntVal = Src.IntVal.zext(DBitWidth);
+  if (SrcTy->isVectorTy()) {
+    const Type *DstVecTy = DstTy->getScalarType();
+    unsigned DBitWidth = cast<IntegerType>(DstVecTy)->getBitWidth();
+
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal.
+    Dest.AggregateVal.resize(size);
+    for (unsigned i = 0; i < size; i++)
+      Dest.AggregateVal[i].IntVal = Src.AggregateVal[i].IntVal.zext(DBitWidth);
+  } else {
+    const IntegerType *DITy = cast<IntegerType>(DstTy);
+    unsigned DBitWidth = DITy->getBitWidth();
+    Dest.IntVal = Src.IntVal.zext(DBitWidth);
+  }
   return Dest;
 }
 
 GenericValue Interpreter::executeFPTruncInst(Value *SrcVal, Type *DstTy,
                                              ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcVal->getType()->isDoubleTy() && DstTy->isFloatTy() &&
-         "Invalid FPTrunc instruction");
-  Dest.FloatVal = (float) Src.DoubleVal;
+
+  if (SrcVal->getType()->getTypeID() == Type::VectorTyID) {
+    assert(SrcVal->getType()->getScalarType()->isDoubleTy() &&
+           DstTy->getScalarType()->isFloatTy() &&
+           "Invalid FPTrunc instruction");
+
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal.
+    Dest.AggregateVal.resize(size);
+    for (unsigned i = 0; i < size; i++)
+      Dest.AggregateVal[i].FloatVal = (float)Src.AggregateVal[i].DoubleVal;
+  } else {
+    assert(SrcVal->getType()->isDoubleTy() && DstTy->isFloatTy() &&
+           "Invalid FPTrunc instruction");
+    Dest.FloatVal = (float)Src.DoubleVal;
+  }
+
   return Dest;
 }
 
 GenericValue Interpreter::executeFPExtInst(Value *SrcVal, Type *DstTy,
                                            ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcVal->getType()->isFloatTy() && DstTy->isDoubleTy() &&
-         "Invalid FPTrunc instruction");
-  Dest.DoubleVal = (double) Src.FloatVal;
+
+  if (SrcVal->getType()->getTypeID() == Type::VectorTyID) {
+    assert(SrcVal->getType()->getScalarType()->isFloatTy() &&
+           DstTy->getScalarType()->isDoubleTy() && "Invalid FPExt instruction");
+
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal.
+    Dest.AggregateVal.resize(size);
+    for (unsigned i = 0; i < size; i++)
+      Dest.AggregateVal[i].DoubleVal = (double)Src.AggregateVal[i].FloatVal;
+  } else {
+    assert(SrcVal->getType()->isFloatTy() && DstTy->isDoubleTy() &&
+           "Invalid FPExt instruction");
+    Dest.DoubleVal = (double)Src.FloatVal;
+  }
+
   return Dest;
 }
 
 GenericValue Interpreter::executeFPToUIInst(Value *SrcVal, Type *DstTy,
                                             ExecutionContext &SF) {
   Type *SrcTy = SrcVal->getType();
-  uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcTy->isFloatingPointTy() && "Invalid FPToUI instruction");
 
-  if (SrcTy->getTypeID() == Type::FloatTyID)
-    Dest.IntVal = APIntOps::RoundFloatToAPInt(Src.FloatVal, DBitWidth);
-  else
-    Dest.IntVal = APIntOps::RoundDoubleToAPInt(Src.DoubleVal, DBitWidth);
+  if (SrcTy->getTypeID() == Type::VectorTyID) {
+    const Type *DstVecTy = DstTy->getScalarType();
+    const Type *SrcVecTy = SrcTy->getScalarType();
+    uint32_t DBitWidth = cast<IntegerType>(DstVecTy)->getBitWidth();
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal.
+    Dest.AggregateVal.resize(size);
+
+    if (SrcVecTy->getTypeID() == Type::FloatTyID) {
+      assert(SrcVecTy->isFloatingPointTy() && "Invalid FPToUI instruction");
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].IntVal = APIntOps::RoundFloatToAPInt(
+            Src.AggregateVal[i].FloatVal, DBitWidth);
+    } else {
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].IntVal = APIntOps::RoundDoubleToAPInt(
+            Src.AggregateVal[i].DoubleVal, DBitWidth);
+    }
+  } else {
+    // scalar
+    uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
+    assert(SrcTy->isFloatingPointTy() && "Invalid FPToUI instruction");
+
+    if (SrcTy->getTypeID() == Type::FloatTyID)
+      Dest.IntVal = APIntOps::RoundFloatToAPInt(Src.FloatVal, DBitWidth);
+    else {
+      Dest.IntVal = APIntOps::RoundDoubleToAPInt(Src.DoubleVal, DBitWidth);
+    }
+  }
+
   return Dest;
 }
 
 GenericValue Interpreter::executeFPToSIInst(Value *SrcVal, Type *DstTy,
                                             ExecutionContext &SF) {
   Type *SrcTy = SrcVal->getType();
-  uint32_t DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcTy->isFloatingPointTy() && "Invalid FPToSI instruction");
 
-  if (SrcTy->getTypeID() == Type::FloatTyID)
-    Dest.IntVal = APIntOps::RoundFloatToAPInt(Src.FloatVal, DBitWidth);
-  else
-    Dest.IntVal = APIntOps::RoundDoubleToAPInt(Src.DoubleVal, DBitWidth);
+  if (SrcTy->getTypeID() == Type::VectorTyID) {
+    const Type *DstVecTy = DstTy->getScalarType();
+    const Type *SrcVecTy = SrcTy->getScalarType();
+    uint32_t DBitWidth = cast<IntegerType>(DstVecTy)->getBitWidth();
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal
+    Dest.AggregateVal.resize(size);
+
+    if (SrcVecTy->getTypeID() == Type::FloatTyID) {
+      assert(SrcVecTy->isFloatingPointTy() && "Invalid FPToSI instruction");
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].IntVal = APIntOps::RoundFloatToAPInt(
+            Src.AggregateVal[i].FloatVal, DBitWidth);
+    } else {
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].IntVal = APIntOps::RoundDoubleToAPInt(
+            Src.AggregateVal[i].DoubleVal, DBitWidth);
+    }
+  } else {
+    // scalar
+    unsigned DBitWidth = cast<IntegerType>(DstTy)->getBitWidth();
+    assert(SrcTy->isFloatingPointTy() && "Invalid FPToSI instruction");
+
+    if (SrcTy->getTypeID() == Type::FloatTyID)
+      Dest.IntVal = APIntOps::RoundFloatToAPInt(Src.FloatVal, DBitWidth);
+    else {
+      Dest.IntVal = APIntOps::RoundDoubleToAPInt(Src.DoubleVal, DBitWidth);
+    }
+  }
   return Dest;
 }
 
 GenericValue Interpreter::executeUIToFPInst(Value *SrcVal, Type *DstTy,
                                             ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(DstTy->isFloatingPointTy() && "Invalid UIToFP instruction");
 
-  if (DstTy->getTypeID() == Type::FloatTyID)
-    Dest.FloatVal = APIntOps::RoundAPIntToFloat(Src.IntVal);
-  else
-    Dest.DoubleVal = APIntOps::RoundAPIntToDouble(Src.IntVal);
+  if (SrcVal->getType()->getTypeID() == Type::VectorTyID) {
+    const Type *DstVecTy = DstTy->getScalarType();
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal
+    Dest.AggregateVal.resize(size);
+
+    if (DstVecTy->getTypeID() == Type::FloatTyID) {
+      assert(DstVecTy->isFloatingPointTy() && "Invalid UIToFP instruction");
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].FloatVal =
+            APIntOps::RoundAPIntToFloat(Src.AggregateVal[i].IntVal);
+    } else {
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].DoubleVal =
+            APIntOps::RoundAPIntToDouble(Src.AggregateVal[i].IntVal);
+    }
+  } else {
+    // scalar
+    assert(DstTy->isFloatingPointTy() && "Invalid UIToFP instruction");
+    if (DstTy->getTypeID() == Type::FloatTyID)
+      Dest.FloatVal = APIntOps::RoundAPIntToFloat(Src.IntVal);
+    else {
+      Dest.DoubleVal = APIntOps::RoundAPIntToDouble(Src.IntVal);
+    }
+  }
   return Dest;
 }
 
 GenericValue Interpreter::executeSIToFPInst(Value *SrcVal, Type *DstTy,
                                             ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(DstTy->isFloatingPointTy() && "Invalid SIToFP instruction");
 
-  if (DstTy->getTypeID() == Type::FloatTyID)
-    Dest.FloatVal = APIntOps::RoundSignedAPIntToFloat(Src.IntVal);
-  else
-    Dest.DoubleVal = APIntOps::RoundSignedAPIntToDouble(Src.IntVal);
+  if (SrcVal->getType()->getTypeID() == Type::VectorTyID) {
+    const Type *DstVecTy = DstTy->getScalarType();
+    unsigned size = Src.AggregateVal.size();
+    // the sizes of src and dst vectors must be equal
+    Dest.AggregateVal.resize(size);
+
+    if (DstVecTy->getTypeID() == Type::FloatTyID) {
+      assert(DstVecTy->isFloatingPointTy() && "Invalid SIToFP instruction");
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].FloatVal =
+            APIntOps::RoundSignedAPIntToFloat(Src.AggregateVal[i].IntVal);
+    } else {
+      for (unsigned i = 0; i < size; i++)
+        Dest.AggregateVal[i].DoubleVal =
+            APIntOps::RoundSignedAPIntToDouble(Src.AggregateVal[i].IntVal);
+    }
+  } else {
+    // scalar
+    assert(DstTy->isFloatingPointTy() && "Invalid SIToFP instruction");
+
+    if (DstTy->getTypeID() == Type::FloatTyID)
+      Dest.FloatVal = APIntOps::RoundSignedAPIntToFloat(Src.IntVal);
+    else {
+      Dest.DoubleVal = APIntOps::RoundSignedAPIntToDouble(Src.IntVal);
+    }
+  }
+
   return Dest;
-
 }
 
 GenericValue Interpreter::executePtrToIntInst(Value *SrcVal, Type *DstTy,
@@ -1300,33 +1503,167 @@ GenericValue Interpreter::executeIntToPtrInst(Value *SrcVal, Type *DstTy,
 
 GenericValue Interpreter::executeBitCastInst(Value *SrcVal, Type *DstTy,
                                              ExecutionContext &SF) {
-  
+
+  // This instruction supports bitwise conversion of vectors to integers and
+  // to vectors of other types (as long as they have the same size)
   Type *SrcTy = SrcVal->getType();
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  if (DstTy->isPointerTy()) {
-    assert(SrcTy->isPointerTy() && "Invalid BitCast");
-    Dest.PointerVal = Src.PointerVal;
-  } else if (DstTy->isIntegerTy()) {
-    if (SrcTy->isFloatTy()) {
-      Dest.IntVal = APInt::floatToBits(Src.FloatVal);
-    } else if (SrcTy->isDoubleTy()) {
-      Dest.IntVal = APInt::doubleToBits(Src.DoubleVal);
-    } else if (SrcTy->isIntegerTy()) {
-      Dest.IntVal = Src.IntVal;
-    } else 
+
+  if ((SrcTy->getTypeID() == Type::VectorTyID) ||
+      (DstTy->getTypeID() == Type::VectorTyID)) {
+    // vector src bitcast to vector dst or vector src bitcast to scalar dst or
+    // scalar src bitcast to vector dst
+    bool isLittleEndian = TD.isLittleEndian();
+    GenericValue TempDst, TempSrc, SrcVec;
+    const Type *SrcElemTy;
+    const Type *DstElemTy;
+    unsigned SrcBitSize;
+    unsigned DstBitSize;
+    unsigned SrcNum;
+    unsigned DstNum;
+
+    if (SrcTy->getTypeID() == Type::VectorTyID) {
+      SrcElemTy = SrcTy->getScalarType();
+      SrcBitSize = SrcTy->getScalarSizeInBits();
+      SrcNum = Src.AggregateVal.size();
+      SrcVec = Src;
+    } else {
+      // if src is scalar value, make it vector <1 x type>
+      SrcElemTy = SrcTy;
+      SrcBitSize = SrcTy->getPrimitiveSizeInBits();
+      SrcNum = 1;
+      SrcVec.AggregateVal.push_back(Src);
+    }
+
+    if (DstTy->getTypeID() == Type::VectorTyID) {
+      DstElemTy = DstTy->getScalarType();
+      DstBitSize = DstTy->getScalarSizeInBits();
+      DstNum = (SrcNum * SrcBitSize) / DstBitSize;
+    } else {
+      DstElemTy = DstTy;
+      DstBitSize = DstTy->getPrimitiveSizeInBits();
+      DstNum = 1;
+    }
+
+    if (SrcNum * SrcBitSize != DstNum * DstBitSize)
       llvm_unreachable("Invalid BitCast");
-  } else if (DstTy->isFloatTy()) {
-    if (SrcTy->isIntegerTy())
-      Dest.FloatVal = Src.IntVal.bitsToFloat();
-    else
-      Dest.FloatVal = Src.FloatVal;
-  } else if (DstTy->isDoubleTy()) {
-    if (SrcTy->isIntegerTy())
-      Dest.DoubleVal = Src.IntVal.bitsToDouble();
-    else
-      Dest.DoubleVal = Src.DoubleVal;
-  } else
-    llvm_unreachable("Invalid Bitcast");
+
+    // If src is floating point, cast to integer first.
+    TempSrc.AggregateVal.resize(SrcNum);
+    if (SrcElemTy->isFloatTy()) {
+      for (unsigned i = 0; i < SrcNum; i++)
+        TempSrc.AggregateVal[i].IntVal =
+            APInt::floatToBits(SrcVec.AggregateVal[i].FloatVal);
+
+    } else if (SrcElemTy->isDoubleTy()) {
+      for (unsigned i = 0; i < SrcNum; i++)
+        TempSrc.AggregateVal[i].IntVal =
+            APInt::doubleToBits(SrcVec.AggregateVal[i].DoubleVal);
+    } else if (SrcElemTy->isIntegerTy()) {
+      for (unsigned i = 0; i < SrcNum; i++)
+        TempSrc.AggregateVal[i].IntVal = SrcVec.AggregateVal[i].IntVal;
+    } else {
+      // Pointers are not allowed as the element type of vector.
+      llvm_unreachable("Invalid Bitcast");
+    }
+
+    // now TempSrc is integer type vector
+    if (DstNum < SrcNum) {
+      // Example: bitcast <4 x i32> <i32 0, i32 1, i32 2, i32 3> to <2 x i64>
+      unsigned Ratio = SrcNum / DstNum;
+      unsigned SrcElt = 0;
+      for (unsigned i = 0; i < DstNum; i++) {
+        GenericValue Elt;
+        Elt.IntVal = 0;
+        Elt.IntVal = Elt.IntVal.zext(DstBitSize);
+        unsigned ShiftAmt = isLittleEndian ? 0 : SrcBitSize * (Ratio - 1);
+        for (unsigned j = 0; j < Ratio; j++) {
+          APInt Tmp;
+          Tmp = Tmp.zext(SrcBitSize);
+          Tmp = TempSrc.AggregateVal[SrcElt++].IntVal;
+          Tmp = Tmp.zext(DstBitSize);
+          Tmp = Tmp.shl(ShiftAmt);
+          ShiftAmt += isLittleEndian ? SrcBitSize : -SrcBitSize;
+          Elt.IntVal |= Tmp;
+        }
+        TempDst.AggregateVal.push_back(Elt);
+      }
+    } else {
+      // Example: bitcast <2 x i64> <i64 0, i64 1> to <4 x i32>
+      unsigned Ratio = DstNum / SrcNum;
+      for (unsigned i = 0; i < SrcNum; i++) {
+        unsigned ShiftAmt = isLittleEndian ? 0 : DstBitSize * (Ratio - 1);
+        for (unsigned j = 0; j < Ratio; j++) {
+          GenericValue Elt;
+          Elt.IntVal = Elt.IntVal.zext(SrcBitSize);
+          Elt.IntVal = TempSrc.AggregateVal[i].IntVal;
+          Elt.IntVal = Elt.IntVal.lshr(ShiftAmt);
+          // it could be DstBitSize == SrcBitSize, so check it
+          if (DstBitSize < SrcBitSize)
+            Elt.IntVal = Elt.IntVal.trunc(DstBitSize);
+          ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
+          TempDst.AggregateVal.push_back(Elt);
+        }
+      }
+    }
+
+    // convert result from integer to specified type
+    if (DstTy->getTypeID() == Type::VectorTyID) {
+      if (DstElemTy->isDoubleTy()) {
+        Dest.AggregateVal.resize(DstNum);
+        for (unsigned i = 0; i < DstNum; i++)
+          Dest.AggregateVal[i].DoubleVal =
+              TempDst.AggregateVal[i].IntVal.bitsToDouble();
+      } else if (DstElemTy->isFloatTy()) {
+        Dest.AggregateVal.resize(DstNum);
+        for (unsigned i = 0; i < DstNum; i++)
+          Dest.AggregateVal[i].FloatVal =
+              TempDst.AggregateVal[i].IntVal.bitsToFloat();
+      } else {
+        Dest = TempDst;
+      }
+    } else {
+      if (DstElemTy->isDoubleTy())
+        Dest.DoubleVal = TempDst.AggregateVal[0].IntVal.bitsToDouble();
+      else if (DstElemTy->isFloatTy()) {
+        Dest.FloatVal = TempDst.AggregateVal[0].IntVal.bitsToFloat();
+      } else {
+        Dest.IntVal = TempDst.AggregateVal[0].IntVal;
+      }
+    }
+  } else { //  if ((SrcTy->getTypeID() == Type::VectorTyID) ||
+           //     (DstTy->getTypeID() == Type::VectorTyID))
+
+    // scalar src bitcast to scalar dst
+    if (DstTy->isPointerTy()) {
+      assert(SrcTy->isPointerTy() && "Invalid BitCast");
+      Dest.PointerVal = Src.PointerVal;
+    } else if (DstTy->isIntegerTy()) {
+      if (SrcTy->isFloatTy())
+        Dest.IntVal = APInt::floatToBits(Src.FloatVal);
+      else if (SrcTy->isDoubleTy()) {
+        Dest.IntVal = APInt::doubleToBits(Src.DoubleVal);
+      } else if (SrcTy->isIntegerTy()) {
+        Dest.IntVal = Src.IntVal;
+      } else {
+        llvm_unreachable("Invalid BitCast");
+      }
+    } else if (DstTy->isFloatTy()) {
+      if (SrcTy->isIntegerTy())
+        Dest.FloatVal = Src.IntVal.bitsToFloat();
+      else {
+        Dest.FloatVal = Src.FloatVal;
+      }
+    } else if (DstTy->isDoubleTy()) {
+      if (SrcTy->isIntegerTy())
+        Dest.DoubleVal = Src.IntVal.bitsToDouble();
+      else {
+        Dest.DoubleVal = Src.DoubleVal;
+      }
+    } else {
+      llvm_unreachable("Invalid Bitcast");
+    }
+  }
 
   return Dest;
 }
