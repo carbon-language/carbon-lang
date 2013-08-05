@@ -15,3 +15,15 @@ namespace gatekeeper_v1 {
   // FIXME: Typo correction should remove the 'gatekeeper_v1::' name specifier
   gatekeeper_v1::closure_t *x; // expected-error-re {{no type named 'closure_t' in namespace 'gatekeeper_v1'$}}
 }
+
+namespace Foo {
+struct Base {
+  void Bar() {} // expected-note{{'Bar' declared here}}
+};
+}
+
+struct Derived : public Foo::Base {
+  void test() {
+    Foo::Bar(); // expected-error{{no member named 'Bar' in namespace 'Foo'; did you mean simply 'Bar'?}}
+  }
+};

@@ -2311,9 +2311,8 @@ Sema::PerformObjectMemberConversion(Expr *From,
   //     x = 17; // error: ambiguous base subobjects
   //     Derived1::x = 17; // okay, pick the Base subobject of Derived1
   //   }
-  if (Qualifier) {
+  if (Qualifier && Qualifier->getAsType()) {
     QualType QType = QualType(Qualifier->getAsType(), 0);
-    assert(!QType.isNull() && "lookup done with dependent qualifier?");
     assert(QType->isRecordType() && "lookup done with non-record type");
 
     QualType QRecordType = QualType(QType->getAs<RecordType>(), 0);
