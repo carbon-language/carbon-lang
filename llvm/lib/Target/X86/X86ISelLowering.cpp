@@ -5642,7 +5642,7 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
       break;
     }
     if (cast<ConstantSDNode>(In)->getZExtValue())
-      Immediate |= (1 << idx);
+      Immediate |= (1ULL << idx);
   }
 
   if (AllContants) {
