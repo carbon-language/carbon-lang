@@ -51,6 +51,9 @@ for.end7:                                         ; preds = %for.cond
   ret i32 0
 }
 
+; CHECK: Context:
+; CHECK: p0: {0,+,1}<%for.cond>
+
 ; CHECK: Domain :=
-; CHECK: [p_0] -> { Stmt_if_then[i0] : i0 >= 0 and i0 <= 1022 and i0 >= 1001 - p_0 };
+; CHECK: [p_0] -> { Stmt_if_then[i0] : i0 >= 0 and i0 <= 1022 and i0 >= 999 - p_0 };
 

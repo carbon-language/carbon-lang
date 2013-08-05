@@ -278,7 +278,22 @@ public:
 
     assert(Start.isConstant() && Recurrence.isConstant() &&
            "Expected 'Start' and 'Recurrence' to be constant");
-    return ValidatorResult(SCEVType::PARAM, Expr);
+
+    // Directly generate ValidatorResult for Expr if 'start' is zero.
+    if (Expr->getStart()->isZero())
+      return ValidatorResult(SCEVType::PARAM, Expr);
+
+    // Translate AddRecExpr from '{start, +, inc}' into 'start + {0, +, inc}'
+    // if 'start' is not zero.
+    const SCEV *ZeroStartExpr = SE.getAddRecExpr(
+        SE.getConstant(Expr->getStart()->getType(), 0),
+        Expr->getStepRecurrence(SE), Expr->getLoop(), SCEV::FlagAnyWrap);
+
+    ValidatorResult ZeroStartResult =
+        ValidatorResult(SCEVType::PARAM, ZeroStartExpr);
+    ZeroStartResult.addParamsFrom(Start);
+
+    return ZeroStartResult;
   }
 
   class ValidatorResult visitSMaxExpr(const SCEVSMaxExpr *Expr) {
