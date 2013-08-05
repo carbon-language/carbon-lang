@@ -3205,6 +3205,9 @@ void BugReporter::emitReport(BugReport* R) {
   // Defensive checking: throw the bug away if it comes from a BodyFarm-
   // generated body. We do this very early because report processing relies
   // on the report's location being valid.
+  // FIXME: Valid bugs can occur in BodyFarm-generated bodies, so really we
+  // need to just find a reasonable location like we do later on with the path
+  // pieces.
   if (const ExplodedNode *E = R->getErrorNode()) {
     const LocationContext *LCtx = E->getLocationContext();
     if (LCtx->getAnalysisDeclContext()->isBodyAutosynthesized())
