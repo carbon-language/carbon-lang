@@ -818,8 +818,12 @@ public:
     if (HeaderPath.startswith("<"))
       return;
     HeaderHandle H = addHeader(HeaderPath);
-    if (H != getCurrentHeaderHandle())
+    if (H != getCurrentHeaderHandle()) {
+      // Check for nested header.
+      if (!InNestedHeader)
+        InNestedHeader = isHeaderHandleInStack(H);
       pushHeaderHandle(H);
+    }
   }
   // Handle exiting a header source file.
   void handleHeaderExit(llvm::StringRef HeaderPath) {
@@ -831,6 +835,7 @@ public:
       while ((H != getCurrentHeaderHandle()) && (HeaderStack.size() != 0))
         popHeaderHandle();
     }
+    InNestedHeader = false;
   }
 
   // Lookup/add string.
@@ -839,11 +844,13 @@ public:
   // Get the handle of a header file entry.
   // Return HeaderHandleInvalid if not found.
   HeaderHandle findHeaderHandle(llvm::StringRef HeaderPath) const {
+    std::string CanonicalPath(HeaderPath);
+    std::replace(CanonicalPath.begin(), CanonicalPath.end(), '\\', '/');
     HeaderHandle H = 0;
     for (std::vector<StringHandle>::const_iterator I = HeaderPaths.begin(),
                                                    E = HeaderPaths.end();
          I != E; ++I, ++H) {
-      if (**I == HeaderPath)
+      if (**I == CanonicalPath)
         return H;
     }
     return HeaderHandleInvalid;
@@ -852,12 +859,12 @@ public:
   // Add a new header file entry, or return existing handle.
   // Return the header handle.
   HeaderHandle addHeader(llvm::StringRef HeaderPath) {
-    std::string canonicalPath(HeaderPath);
-    std::replace(canonicalPath.begin(), canonicalPath.end(), '\\', '/');
-    HeaderHandle H = findHeaderHandle(canonicalPath);
+    std::string CanonicalPath(HeaderPath);
+    std::replace(CanonicalPath.begin(), CanonicalPath.end(), '\\', '/');
+    HeaderHandle H = findHeaderHandle(CanonicalPath);
     if (H == HeaderHandleInvalid) {
       H = HeaderPaths.size();
-      HeaderPaths.push_back(addString(canonicalPath));
+      HeaderPaths.push_back(addString(CanonicalPath));
     }
     return H;
   }
@@ -993,6 +1000,9 @@ public:
                                   bool ConditionValue,
                                   llvm::StringRef ConditionUnexpanded,
                                   InclusionPathHandle InclusionPathHandle) {
+    // Ignore header guards, assuming the header guard is the only conditional.
+    if (InNestedHeader)
+      return;
     StringHandle ConditionUnexpandedHandle(addString(ConditionUnexpanded));
     PPItemKey InstanceKey(PP, ConditionUnexpandedHandle, H, InstanceLoc);
     ConditionalExpansionMapIter I = ConditionalExpansions.find(InstanceKey);
@@ -1002,7 +1012,8 @@ public:
           getSourceLocationString(PP, InstanceLoc) + ":\n" +
           getSourceLine(PP, InstanceLoc) + "\n";
       ConditionalExpansions[InstanceKey] =
-          ConditionalTracker(DirectiveKind, ConditionValue, ConditionUnexpandedHandle,
+          ConditionalTracker(DirectiveKind, ConditionValue,
+                             ConditionUnexpandedHandle,
                              InclusionPathHandle);
     } else {
       // We've seen the conditional before.  Get its tracker.
@@ -1157,6 +1168,7 @@ private:
   InclusionPathHandle CurrentInclusionPathHandle;
   MacroExpansionMap MacroExpansions;
   ConditionalExpansionMap ConditionalExpansions;
+  bool InNestedHeader;
 };
 
 // PreprocessorTracker functions.
@@ -1180,10 +1192,12 @@ void PreprocessorCallbacks::FileChanged(
     PPTracker.handleHeaderEntry(PP, getSourceLocationFile(PP, Loc));
     break;
   case ExitFile:
-    if (PrevFID.isInvalid())
-      PPTracker.handleHeaderExit(RootHeaderFile);
-    else
-      PPTracker.handleHeaderExit(getSourceLocationFile(PP, Loc));
+    {
+      const clang::FileEntry *F =
+        PP.getSourceManager().getFileEntryForID(PrevFID);
+      if (F != NULL)
+        PPTracker.handleHeaderExit(F->getName());
+    }
     break;
   case SystemHeaderPragma:
   case RenameFile:
