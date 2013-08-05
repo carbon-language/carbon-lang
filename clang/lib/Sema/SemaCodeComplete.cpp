@@ -3188,7 +3188,7 @@ void Sema::CodeCompleteModuleImport(SourceLocation ImportLoc,
                                  ? CXAvailability_Available
                                   : CXAvailability_NotAvailable));
     }
-  } else {
+  } else if (getLangOpts().Modules) {
     // Load the named module.
     Module *Mod = PP.getModuleLoader().loadModule(ImportLoc, Path,
                                                   Module::AllVisible,

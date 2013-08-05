@@ -148,6 +148,8 @@ Module maps are specified as separate files (each named ``module.map``) alongsid
 .. note::
 
   To actually see any benefits from modules, one first has to introduce module maps for the underlying C standard library and the libraries and headers on which it depends. The section `Modularizing a Platform`_ describes the steps one must take to write these module maps.
+  
+One can use module maps without modules to check the integrity of the use of header files. To do this, use the ``-fmodule-maps`` option instead of the ``-fmodules`` option.
 
 Compilation model
 -----------------
@@ -164,6 +166,9 @@ Command-line parameters
 
 ``-fcxx-modules``
   Enable the modules feature for C++ (EXPERIMENTAL and VERY BROKEN).
+
+``-fmodule-maps``
+  Enable interpretation of module maps (EXPERIMENTAL). This option is implied by ``-fmodules``.
 
 ``-fmodules-cache-path=<directory>``
   Specify the path to the modules cache. If not provided, Clang will select a system-appropriate default.

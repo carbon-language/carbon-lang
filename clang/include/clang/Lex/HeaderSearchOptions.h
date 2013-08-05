@@ -95,6 +95,9 @@ public:
   /// Note: Only used for testing!
   unsigned DisableModuleHash : 1;
 
+  /// \brief Interpret module maps.  This option is implied by full modules.
+  unsigned ModuleMaps : 1;
+
   /// \brief The interval (in seconds) between pruning operations.
   ///
   /// This operation is expensive, because it requires Clang to walk through
@@ -134,7 +137,7 @@ public:
 
 public:
   HeaderSearchOptions(StringRef _Sysroot = "/")
-    : Sysroot(_Sysroot), DisableModuleHash(0),
+    : Sysroot(_Sysroot), DisableModuleHash(0), ModuleMaps(0),
       ModuleCachePruneInterval(7*24*60*60),
       ModuleCachePruneAfter(31*24*60*60),
       UseBuiltinIncludes(true),

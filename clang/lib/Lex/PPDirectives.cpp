@@ -17,6 +17,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/MacroInfo.h"
@@ -1421,7 +1422,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   const FileEntry *File = LookupFile(
       FilenameLoc, Filename, isAngled, LookupFrom, CurDir,
       Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL,
-      getLangOpts().Modules? &SuggestedModule : 0);
+      HeaderInfo.getHeaderSearchOpts().ModuleMaps ? &SuggestedModule : 0);
 
   if (Callbacks) {
     if (!File) {
@@ -1435,13 +1436,15 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
           
           // Try the lookup again, skipping the cache.
           File = LookupFile(FilenameLoc, Filename, isAngled, LookupFrom, CurDir,
-                            0, 0, getLangOpts().Modules? &SuggestedModule : 0,
-                            /*SkipCache*/true);
+                            0, 0, HeaderInfo.getHeaderSearchOpts().ModuleMaps
+                                      ? &SuggestedModule
+                                      : 0,
+                            /*SkipCache*/ true);
         }
       }
     }
     
-    if (!SuggestedModule) {
+    if (!SuggestedModule || !getLangOpts().Modules) {
       // Notify the callback object that we've seen an inclusion directive.
       Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled,
                                     FilenameRange, File,
@@ -1456,10 +1459,10 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       // brackets, we can attempt a lookup as though it were a quoted path to
       // provide the user with a possible fixit.
       if (isAngled) {
-        File = LookupFile(FilenameLoc, Filename, false, LookupFrom, CurDir, 
-                          Callbacks ? &SearchPath : 0, 
-                          Callbacks ? &RelativePath : 0, 
-                          getLangOpts().Modules ? &SuggestedModule : 0);
+        File = LookupFile(
+            FilenameLoc, Filename, false, LookupFrom, CurDir,
+            Callbacks ? &SearchPath : 0, Callbacks ? &RelativePath : 0,
+            HeaderInfo.getHeaderSearchOpts().ModuleMaps ? &SuggestedModule : 0);
         if (File) {
           SourceRange Range(FilenameTok.getLocation(), CharEnd);
           Diag(FilenameTok, diag::err_pp_file_not_found_not_fatal) << 
@@ -1477,7 +1480,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // If we are supposed to import a module rather than including the header,
   // do so now.
-  if (SuggestedModule) {
+  if (SuggestedModule && getLangOpts().Modules) {
     // Compute the module access path corresponding to this module.
     // FIXME: Should we have a second loadModule() overload to avoid this
     // extra lookup step?

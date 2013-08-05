@@ -734,7 +734,7 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
   }
 
   // If we have a non-empty module path, load the named module.
-  if (!ModuleImportPath.empty()) {
+  if (!ModuleImportPath.empty() && getLangOpts().Modules) {
     Module *Imported = TheModuleLoader.loadModule(ModuleImportLoc,
                                                   ModuleImportPath,
                                                   Module::MacrosVisible,
