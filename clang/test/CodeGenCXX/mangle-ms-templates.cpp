@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
 
 template<typename T>
 class Class {
@@ -156,3 +156,8 @@ void variadic_class_instantiate() {
 }
 // CHECK: call {{.*}} @"\01??0?$VariadicClass@HD_N@@QAE@XZ"
 // CHECK: call {{.*}} @"\01??0?$VariadicClass@_NDH@@QAE@XZ"
+
+// PR16788
+template <decltype(nullptr)> struct S1 {};
+void f(S1<nullptr>) {}
+// CHECK: "\01?f@@YAXU?$S1@$0A@@@@Z"

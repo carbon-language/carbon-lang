@@ -889,6 +889,9 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     mangleIntegerLiteral(TA.getAsIntegral(),
                          TA.getIntegralType()->isBooleanType());
     break;
+  case TemplateArgument::NullPtr:
+    Out << "$0A@";
+    break;
   case TemplateArgument::Expression:
     mangleExpression(TA.getAsExpr());
     break;
@@ -901,8 +904,7 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
       mangleTemplateArg(TD, *I, ArgIndex);
     break;
   case TemplateArgument::Template:
-  case TemplateArgument::TemplateExpansion:
-  case TemplateArgument::NullPtr: {
+  case TemplateArgument::TemplateExpansion: {
     // Issue a diagnostic.
     DiagnosticsEngine &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
