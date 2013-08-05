@@ -13,6 +13,8 @@ The SLP vectorizer merges multiple scalars that are found in the code into
 vectors while the Loop Vectorizer widens instructions in loops
 to operate on multiple consecutive iterations.
 
+Both the Loop Vectorizer and the SLP Vectorizer are enabled by default.
+
 .. _loop-vectorizer:
 
 The Loop Vectorizer
@@ -21,9 +23,8 @@ The Loop Vectorizer
 Usage
 -----
 
-LLVM's Loop Vectorizer is now enabled by default for -O3.
-We plan to enable parts of the Loop Vectorizer on -O2 and -Os in future releases.
-The vectorizer can be disabled using the command line:
+The Loop Vectorizer is enabled by default, but it can be disabled
+through clang using the command line flag:
 
 .. code-block:: console
 
@@ -322,12 +323,12 @@ The SLP-vectorizer processes the code bottom-up, across basic blocks, in search 
 Usage
 ------
 
-The SLP Vectorizer is not enabled by default, but it can be enabled
+The SLP Vectorizer is enabled by default, but it can be disabled
 through clang using the command line flag:
 
 .. code-block:: console
 
-   $ clang -fslp-vectorize file.c
+   $ clang -fno-slp-vectorize file.c
 
 LLVM has a second basic block vectorization phase
 which is more compile-time intensive (The BB vectorizer). This optimization
@@ -336,25 +337,4 @@ can be enabled through clang using the command line flag:
 .. code-block:: console
 
    $ clang -fslp-vectorize-aggressive file.c
-
-
-The SLP vectorizer is in early development stages but can already vectorize
-and accelerate many programs in the LLVM test suite.
-
-=======================   ============
-Benchmark Name              Gain
-=======================   ============
-Misc/flops-7               -32.70%
-Misc/matmul_f64_4x4        -23.23%
-Olden/power                -21.45%
-Misc/flops-4               -14.90%
-ASC_Sequoia/AMGmk          -13.85%
-TSVC/LoopRerolling-flt     -11.76%
-Misc/flops-6               -9.70%
-Misc/flops-5               -8.54%
-Misc/flops                 -8.12%
-TSVC/NodeSplitting-dbl     -6.96%
-Misc-C++/sphereflake       -6.74%
-Ptrdist/yacr2              -6.31%
-=======================   ============
 
