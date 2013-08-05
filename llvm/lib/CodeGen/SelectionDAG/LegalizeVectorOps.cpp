@@ -551,7 +551,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
   SmallVector<SDValue, 8> Stores;
   for (unsigned Idx = 0; Idx < NumElem; Idx++) {
     SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-               RegSclVT, Value, DAG.getIntPtrConstant(Idx));
+               RegSclVT, Value, DAG.getConstant(Idx, TLI.getVectorIdxTy()));
 
     // This scalar TruncStore may be illegal, but we legalize it later.
     SDValue Store = DAG.getTruncStore(Chain, dl, Ex, BasePTR,
@@ -755,9 +755,9 @@ SDValue VectorLegalizer::UnrollVSETCC(SDValue Op) {
   SmallVector<SDValue, 8> Ops(NumElems);
   for (unsigned i = 0; i < NumElems; ++i) {
     SDValue LHSElem = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, TmpEltVT, LHS,
-                                  DAG.getIntPtrConstant(i));
+                                  DAG.getConstant(i, TLI.getVectorIdxTy()));
     SDValue RHSElem = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, TmpEltVT, RHS,
-                                  DAG.getIntPtrConstant(i));
+                                  DAG.getConstant(i, TLI.getVectorIdxTy()));
     Ops[i] = DAG.getNode(ISD::SETCC, dl,
                          TLI.getSetCCResultType(*DAG.getContext(), TmpEltVT),
                          LHSElem, RHSElem, CC);

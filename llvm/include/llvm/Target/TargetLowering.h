@@ -156,6 +156,13 @@ public:
 
   EVT getShiftAmountTy(EVT LHSTy) const;
 
+  /// Returns the type to be used for the index operand of:
+  /// ISD::INSERT_VECTOR_ELT, ISD::EXTRACT_VECTOR_ELT,
+  /// ISD::INSERT_SUBVECTOR, and ISD::EXTRACT_SUBVECTOR
+  virtual MVT getVectorIdxTy() const {
+    return getPointerTy();
+  }
+
   /// Return true if the select operation is expensive for this target.
   bool isSelectExpensive() const { return SelectIsExpensive; }
 

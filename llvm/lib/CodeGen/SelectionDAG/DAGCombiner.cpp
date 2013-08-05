@@ -5448,7 +5448,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     SDValue EltNo = N0->getOperand(1);
     if (isa<ConstantSDNode>(EltNo) && isTypeLegal(NVT)) {
       int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
-      EVT IndexTy = N0->getOperand(1).getValueType();
+      EVT IndexTy = TLI.getVectorIdxTy();
       int Index = isLE ? (Elt*SizeRatio) : (Elt*SizeRatio + (SizeRatio-1));
 
       SDValue V = DAG.getNode(ISD::BITCAST, SDLoc(N),
@@ -8687,7 +8687,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       OrigElt -= NumElem;
     }
 
-    EVT IndexTy = N->getOperand(1).getValueType();
+    EVT IndexTy = TLI.getVectorIdxTy();
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N), NVT,
                        InVec, DAG.getConstant(OrigElt, IndexTy));
   }

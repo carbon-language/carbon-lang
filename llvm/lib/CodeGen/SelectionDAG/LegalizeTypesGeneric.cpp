@@ -80,9 +80,10 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
       EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),
                                    InVT.getVectorNumElements()/2);
       Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                       DAG.getIntPtrConstant(0));
+                       DAG.getConstant(0, TLI.getVectorIdxTy()));
       Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
-                       DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+                       DAG.getConstant(InNVT.getVectorNumElements(),
+                                       TLI.getVectorIdxTy()));
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
       Lo = DAG.getNode(ISD::BITCAST, dl, NOutVT, Lo);
@@ -115,7 +116,8 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
       SmallVector<SDValue, 8> Vals;
       for (unsigned i = 0; i < NumElems; ++i)
         Vals.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, ElemVT,
-                                   CastInOp, DAG.getIntPtrConstant(i)));
+                                   CastInOp, DAG.getConstant(i,
+                                             TLI.getVectorIdxTy())));
 
       // Build Lo, Hi pair by pairing extracted elements if needed.
       unsigned Slot = 0;
@@ -226,10 +228,6 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
 
   // Extract the elements at 2 * Idx and 2 * Idx + 1 from the new vector.
   SDValue Idx = N->getOperand(1);
-
-  // Make sure the type of Idx is big enough to hold the new values.
-  if (Idx.getValueType().bitsLT(TLI.getPointerTy()))
-    Idx = DAG.getNode(ISD::ZERO_EXTEND, dl, TLI.getPointerTy(), Idx);
 
   Idx = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, Idx);
   Lo = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewVT, NewVec, Idx);
@@ -406,7 +404,8 @@ SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
   Idx = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, Idx);
   NewVec = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, NewVecVT, NewVec, Lo, Idx);
   Idx = DAG.getNode(ISD::ADD, dl,
-                    Idx.getValueType(), Idx, DAG.getIntPtrConstant(1));
+                    Idx.getValueType(), Idx,
+                    DAG.getConstant(1, Idx.getValueType()));
   NewVec =  DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, NewVecVT, NewVec, Hi, Idx);
 
   // Convert the new vector to the old vector type.
@@ -495,9 +494,9 @@ void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo,
     unsigned NumElements = Cond.getValueType().getVectorNumElements();
     EVT VCondTy = EVT::getVectorVT(*DAG.getContext(), MVT::i1, NumElements / 2);
     CL = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
-                     DAG.getIntPtrConstant(0));
+                     DAG.getConstant(0, TLI.getVectorIdxTy()));
     CH = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VCondTy, Cond,
-                     DAG.getIntPtrConstant(NumElements / 2));
+                     DAG.getConstant(NumElements / 2, TLI.getVectorIdxTy()));
   }
 
   Lo = DAG.getNode(N->getOpcode(), dl, LL.getValueType(), CL, LL, RL);
