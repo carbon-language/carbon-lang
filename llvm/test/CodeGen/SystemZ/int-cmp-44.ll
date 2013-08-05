@@ -574,3 +574,226 @@ store:
 exit:
   ret void
 }
+
+; Test that L gets converted to LT where useful.
+define i32 @f29(i64 %base, i64 %index, i32 *%dest) {
+; CHECK-LABEL: f29:
+; CHECK: lt %r2, 0({{%r2,%r3|%r3,%r2}})
+; CHECK-NEXT: jle .L{{.*}}
+; CHECK: br %r14
+entry:
+  %add = add i64 %base, %index
+  %ptr = inttoptr i64 %add to i32 *
+  %res = load i32 *%ptr
+  %cmp = icmp sle i32 %res, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 %res, i32 *%dest
+  br label %exit
+
+exit:
+  ret i32 %res
+}
+
+; Test that LY gets converted to LT where useful.
+define i32 @f30(i64 %base, i64 %index, i32 *%dest) {
+; CHECK-LABEL: f30:
+; CHECK: lt %r2, 100000({{%r2,%r3|%r3,%r2}})
+; CHECK-NEXT: jle .L{{.*}}
+; CHECK: br %r14
+entry:
+  %add1 = add i64 %base, %index
+  %add2 = add i64 %add1, 100000
+  %ptr = inttoptr i64 %add2 to i32 *
+  %res = load i32 *%ptr
+  %cmp = icmp sle i32 %res, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 %res, i32 *%dest
+  br label %exit
+
+exit:
+  ret i32 %res
+}
+
+; Test that LG gets converted to LTG where useful.
+define i64 @f31(i64 %base, i64 %index, i64 *%dest) {
+; CHECK-LABEL: f31:
+; CHECK: ltg %r2, 0({{%r2,%r3|%r3,%r2}})
+; CHECK-NEXT: jhe .L{{.*}}
+; CHECK: br %r14
+entry:
+  %add = add i64 %base, %index
+  %ptr = inttoptr i64 %add to i64 *
+  %res = load i64 *%ptr
+  %cmp = icmp sge i64 %res, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %res, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %res
+}
+
+; Test that LGF gets converted to LTGF where useful.
+define i64 @f32(i64 %base, i64 %index, i64 *%dest) {
+; CHECK-LABEL: f32:
+; CHECK: ltgf %r2, 0({{%r2,%r3|%r3,%r2}})
+; CHECK-NEXT: jh .L{{.*}}
+; CHECK: br %r14
+entry:
+  %add = add i64 %base, %index
+  %ptr = inttoptr i64 %add to i32 *
+  %val = load i32 *%ptr
+  %res = sext i32 %val to i64
+  %cmp = icmp sgt i64 %res, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %res, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %res
+}
+
+; Test that LR gets converted to LTR where useful.
+define i32 @f33(i32 %dummy, i32 %val, i32 *%dest) {
+; CHECK-LABEL: f33:
+; CHECK: ltr %r2, %r3
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r2
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jl .L{{.*}}
+; CHECK: br %r14
+entry:
+  call void asm sideeffect "blah $0", "{r2}"(i32 %val)
+  %cmp = icmp slt i32 %val, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 %val, i32 *%dest
+  br label %exit
+
+exit:
+  ret i32 %val
+}
+
+; Test that LGR gets converted to LTGR where useful.
+define i64 @f34(i64 %dummy, i64 %val, i64 *%dest) {
+; CHECK-LABEL: f34:
+; CHECK: ltgr %r2, %r3
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r2
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jh .L{{.*}}
+; CHECK: br %r14
+entry:
+  call void asm sideeffect "blah $0", "{r2}"(i64 %val)
+  %cmp = icmp sgt i64 %val, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %val, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %val
+}
+
+; Test that LGFR gets converted to LTGFR where useful.
+define i64 @f35(i64 %dummy, i32 %val, i64 *%dest) {
+; CHECK-LABEL: f35:
+; CHECK: ltgfr %r2, %r3
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r2
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jh .L{{.*}}
+; CHECK: br %r14
+entry:
+  %ext = sext i32 %val to i64
+  call void asm sideeffect "blah $0", "{r2}"(i64 %ext)
+  %cmp = icmp sgt i64 %ext, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %ext, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %ext
+}
+
+; Test a case where it is the source rather than destination of LR that
+; we need.
+define i32 @f36(i32 %val, i32 %dummy, i32 *%dest) {
+; CHECK-LABEL: f36:
+; CHECK: ltr %r3, %r2
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r3
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jl .L{{.*}}
+; CHECK: br %r14
+entry:
+  call void asm sideeffect "blah $0", "{r3}"(i32 %val)
+  %cmp = icmp slt i32 %val, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 %val, i32 *%dest
+  br label %exit
+
+exit:
+  ret i32 %val
+}
+
+; Test a case where it is the source rather than destination of LGR that
+; we need.
+define i64 @f37(i64 %val, i64 %dummy, i64 *%dest) {
+; CHECK-LABEL: f37:
+; CHECK: ltgr %r3, %r2
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r3
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jl .L{{.*}}
+; CHECK: br %r14
+entry:
+  call void asm sideeffect "blah $0", "{r3}"(i64 %val)
+  %cmp = icmp slt i64 %val, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i64 %val, i64 *%dest
+  br label %exit
+
+exit:
+  ret i64 %val
+}
+
+; Test a case where it is the source rather than destination of LGFR that
+; we need.
+define i32 @f38(i32 %val, i64 %dummy, i32 *%dest) {
+; CHECK-LABEL: f38:
+; CHECK: ltgfr %r3, %r2
+; CHECK-NEXT: #APP
+; CHECK-NEXT: blah %r3
+; CHECK-NEXT: #NO_APP
+; CHECK-NEXT: jl .L{{.*}}
+; CHECK: br %r14
+entry:
+  %ext = sext i32 %val to i64
+  call void asm sideeffect "blah $0", "{r3}"(i64 %ext)
+  %cmp = icmp slt i32 %val, 0
+  br i1 %cmp, label %exit, label %store
+
+store:
+  store i32 %val, i32 *%dest
+  br label %exit
+
+exit:
+  ret i32 %val
+}

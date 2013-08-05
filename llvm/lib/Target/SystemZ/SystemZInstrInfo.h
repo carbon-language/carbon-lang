@@ -193,6 +193,10 @@ public:
   // exists.
   unsigned getOpcodeForOffset(unsigned Opcode, int64_t Offset) const;
 
+  // If Opcode is a load instruction that has a LOAD AND TEST form,
+  // return the opcode for the testing form, otherwise return 0.
+  unsigned getLoadAndTest(unsigned Opcode) const;
+
   // Return true if ROTATE AND ... SELECTED BITS can be used to select bits
   // Mask of the R2 operand, given that only the low BitSize bits of Mask are
   // significant.  Set Start and End to the I3 and I4 operands if so.

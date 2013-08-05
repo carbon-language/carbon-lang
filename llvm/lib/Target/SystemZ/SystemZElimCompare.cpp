@@ -46,6 +46,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
 
   private:
+    bool convertToLoadAndTest(MachineInstr *MI);
     bool adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
                                SmallVectorImpl<MachineInstr *> &CCUsers);
     bool optimizeCompareZero(MachineInstr *Compare,
@@ -83,7 +84,32 @@ static bool resultTests(MachineInstr *MI, unsigned Reg, unsigned SubReg) {
       MI->getOperand(0).getSubReg() == SubReg)
     return true;
 
+  switch (MI->getOpcode()) {
+  case SystemZ::LR:
+  case SystemZ::LGR:
+  case SystemZ::LGFR:
+  case SystemZ::LTR:
+  case SystemZ::LTGR:
+  case SystemZ::LTGFR:
+    if (MI->getOperand(1).getReg() == Reg &&
+        MI->getOperand(1).getSubReg() == SubReg)
+      return true;
+  }
+
   return false;
+}
+
+// If MI is a load instruction, try to convert it into a LOAD AND TEST.
+// Return true on success.
+bool SystemZElimCompare::convertToLoadAndTest(MachineInstr *MI) {
+  unsigned Opcode = TII->getLoadAndTest(MI->getOpcode());
+  if (!Opcode)
+    return false;
+
+  MI->setDesc(TII->get(Opcode));
+  MachineInstrBuilder(*MI->getParent()->getParent(), MI)
+    .addReg(SystemZ::CC, RegState::ImplicitDefine);
+  return true;
 }
 
 // The CC users in CCUsers are testing the result of a comparison of some
@@ -184,17 +210,21 @@ optimizeCompareZero(MachineInstr *Compare,
   unsigned SrcSubReg = Compare->getOperand(0).getSubReg();
   MachineBasicBlock *MBB = Compare->getParent();
   MachineBasicBlock::iterator MBBI = Compare, MBBE = MBB->begin();
+  bool SeenUseOfCC = false;
   while (MBBI != MBBE) {
     --MBBI;
     MachineInstr *MI = MBBI;
     if (resultTests(MI, SrcReg, SrcSubReg) &&
-        adjustCCMasksForInstr(MI, Compare, CCUsers)) {
+        ((!SeenUseOfCC && convertToLoadAndTest(MI)) ||
+         adjustCCMasksForInstr(MI, Compare, CCUsers))) {
       EliminatedComparisons += 1;
       return true;
     }
     if (MI->modifiesRegister(SrcReg, TRI) ||
         MI->modifiesRegister(SystemZ::CC, TRI))
       return false;
+    if (MI->readsRegister(SystemZ::CC, TRI))
+      SeenUseOfCC = true;
   }
   return false;
 }

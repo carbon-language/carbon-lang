@@ -753,6 +753,19 @@ unsigned SystemZInstrInfo::getOpcodeForOffset(unsigned Opcode,
   return 0;
 }
 
+unsigned SystemZInstrInfo::getLoadAndTest(unsigned Opcode) const {
+  switch (Opcode) {
+  case SystemZ::L:    return SystemZ::LT;
+  case SystemZ::LY:   return SystemZ::LT;
+  case SystemZ::LG:   return SystemZ::LTG;
+  case SystemZ::LGF:  return SystemZ::LTGF;
+  case SystemZ::LR:   return SystemZ::LTR;
+  case SystemZ::LGFR: return SystemZ::LTGFR;
+  case SystemZ::LGR:  return SystemZ::LTGR;
+  default:            return 0;
+  }
+}
+
 // Return true if Mask matches the regexp 0*1+0*, given that zero masks
 // have already been filtered out.  Store the first set bit in LSB and
 // the number of set bits in Length if so.
