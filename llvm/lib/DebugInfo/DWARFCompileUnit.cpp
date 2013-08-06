@@ -258,7 +258,7 @@ DWARFCompileUnit::buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
     clearDIEs(true);
 }
 
-DWARFDebugInfoEntryMinimal::InlinedChain
+DWARFDebugInfoEntryInlinedChain
 DWARFCompileUnit::getInlinedChainForAddress(uint64_t Address) {
   // First, find a subprogram that contains the given address (the root
   // of inlined chain).
@@ -273,6 +273,6 @@ DWARFCompileUnit::getInlinedChainForAddress(uint64_t Address) {
   }
   // Get inlined chain rooted at this subprogram DIE.
   if (!SubprogramDIE)
-    return DWARFDebugInfoEntryMinimal::InlinedChain();
+    return DWARFDebugInfoEntryInlinedChain();
   return SubprogramDIE->getInlinedChainForAddress(this, Address);
 }

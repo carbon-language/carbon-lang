@@ -112,9 +112,9 @@ public:
                               bool clear_dies_if_already_not_parsed);
 
   /// getInlinedChainForAddress - fetches inlined chain for a given address.
-  /// Returns empty chain if there is no subprogram containing address.
-  DWARFDebugInfoEntryMinimal::InlinedChain getInlinedChainForAddress(
-      uint64_t Address);
+  /// Returns empty chain if there is no subprogram containing address. The
+  /// chain is valid as long as parsed compile unit DIEs are not cleared.
+  DWARFDebugInfoEntryInlinedChain getInlinedChainForAddress(uint64_t Address);
 
 private:
   /// extractDIEsToVector - Appends all parsed DIEs to a vector.
