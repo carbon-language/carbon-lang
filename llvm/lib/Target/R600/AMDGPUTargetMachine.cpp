@@ -146,6 +146,8 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
 
   if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createR600VectorRegMerger(*TM));
+  } else {
+    addPass(createSIFixSGPRCopiesPass(*TM));
   }
   return false;
 }

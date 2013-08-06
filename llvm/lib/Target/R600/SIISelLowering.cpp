@@ -32,7 +32,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM) {
 
   addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
-  addRegisterClass(MVT::i64, &AMDGPU::SReg_64RegClass);
+  addRegisterClass(MVT::i64, &AMDGPU::VSrc_64RegClass);
 
   addRegisterClass(MVT::v2i1, &AMDGPU::VReg_64RegClass);
   addRegisterClass(MVT::v4i1, &AMDGPU::VReg_128RegClass);
@@ -41,14 +41,14 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v64i8, &AMDGPU::SReg_512RegClass);
 
-  addRegisterClass(MVT::i32, &AMDGPU::VReg_32RegClass);
-  addRegisterClass(MVT::f32, &AMDGPU::VReg_32RegClass);
+  addRegisterClass(MVT::i32, &AMDGPU::VSrc_32RegClass);
+  addRegisterClass(MVT::f32, &AMDGPU::VSrc_32RegClass);
 
-  addRegisterClass(MVT::v1i32, &AMDGPU::VReg_32RegClass);
+  addRegisterClass(MVT::v1i32, &AMDGPU::VSrc_32RegClass);
 
-  addRegisterClass(MVT::v2i32, &AMDGPU::VReg_64RegClass);
-  addRegisterClass(MVT::v2f32, &AMDGPU::VReg_64RegClass);
-  addRegisterClass(MVT::f64, &AMDGPU::VReg_64RegClass);
+  addRegisterClass(MVT::f64, &AMDGPU::VSrc_64RegClass);
+  addRegisterClass(MVT::v2i32, &AMDGPU::VSrc_64RegClass);
+  addRegisterClass(MVT::v2f32, &AMDGPU::VSrc_64RegClass);
 
   addRegisterClass(MVT::v4i32, &AMDGPU::VReg_128RegClass);
   addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
@@ -1042,20 +1042,6 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
 
   switch (N->getMachineOpcode()) {
   default: return N;
-  case AMDGPU::REG_SEQUENCE: {
-    // MVT::i128 only use SGPRs, so i128 REG_SEQUENCEs don't need to be
-    // rewritten.
-    if (N->getValueType(0) == MVT::i128) {
-      return N;
-    }
-    const SDValue Ops[] = {
-      DAG.getTargetConstant(AMDGPU::VReg_64RegClassID, MVT::i32),
-      N->getOperand(1) , N->getOperand(2),
-      N->getOperand(3), N->getOperand(4)
-    };
-    return DAG.getMachineNode(AMDGPU::REG_SEQUENCE, DL, MVT::i64, Ops);
-  }
-
   case AMDGPU::S_LOAD_DWORD_IMM:
     NewOpcode = AMDGPU::BUFFER_LOAD_DWORD_ADDR64;
     // Fall-through

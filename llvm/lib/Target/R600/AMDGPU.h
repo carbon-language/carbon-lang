@@ -36,6 +36,7 @@ FunctionPass *createAMDGPUCFGStructurizerPass(TargetMachine &tm);
 // SI Passes
 FunctionPass *createSIAnnotateControlFlowPass();
 FunctionPass *createSILowerControlFlowPass(TargetMachine &tm);
+FunctionPass *createSIFixSGPRCopiesPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 FunctionPass *createSIInsertWaits(TargetMachine &tm);
 

@@ -302,7 +302,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
       SubReg0 = CurDAG->getTargetConstant(AMDGPU::sub0_sub1, MVT::i32);
       SubReg1 = CurDAG->getTargetConstant(AMDGPU::sub2_sub3, MVT::i32);
     } else if (N->getValueType(0) == MVT::i64) {
-      RC = CurDAG->getTargetConstant(AMDGPU::SReg_64RegClassID, MVT::i32);
+      RC = CurDAG->getTargetConstant(AMDGPU::VSrc_64RegClassID, MVT::i32);
       SubReg0 = CurDAG->getTargetConstant(AMDGPU::sub0, MVT::i32);
       SubReg1 = CurDAG->getTargetConstant(AMDGPU::sub1, MVT::i32);
     } else {
@@ -816,28 +816,6 @@ void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
        E = CurDAG->allnodes_end(); I != E; ++I) {
 
     SDNode *Node = I;
-    switch (Node->getOpcode()) {
-    // Fix the register class in copy to CopyToReg nodes - ISel will always
-    // use SReg classes for 64-bit copies, but this is not always what we want.
-    case ISD::CopyToReg: {
-      unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      SDValue Val = Node->getOperand(2);
-      const TargetRegisterClass *RC = RegInfo->getRegClass(Reg);
-      if (RC != &AMDGPU::SReg_64RegClass) {
-        continue;
-      }
-
-      if (!Val.getNode()->isMachineOpcode() ||
-          Val.getNode()->getMachineOpcode() == AMDGPU::IMPLICIT_DEF) {
-        continue;
-      }
-
-      const MCInstrDesc Desc = TM.getInstrInfo()->get(Val.getNode()->getMachineOpcode());
-      const TargetRegisterInfo *TRI = TM.getRegisterInfo();
-      RegInfo->setRegClass(Reg, TRI->getRegClass(Desc.OpInfo[0].RegClass));
-      continue;
-    }
-    }
 
     MachineSDNode *MachineNode = dyn_cast<MachineSDNode>(I);
     if (!MachineNode)
