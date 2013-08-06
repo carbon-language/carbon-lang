@@ -2584,9 +2584,17 @@ bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
   for (FunctionProtoType::arg_type_iterator O = OldType->arg_type_begin(),
        N = NewType->arg_type_begin(),
        E = OldType->arg_type_end(); O && (O != E); ++O, ++N) {
-    if (!Context.hasSameType(*O, *N)) {
-      if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
-      return false;
+    if (!(*O)->isReferenceType() && !(*N)->isReferenceType()) {
+      if (!Context.hasSameType(O->getUnqualifiedType(),
+                               N->getUnqualifiedType())) {
+        if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
+        return false;
+      }
+    } else {
+      if (!Context.hasSameType(*O, *N)) {
+        if (ArgPos) *ArgPos = O - OldType->arg_type_begin();
+        return false;
+      }
     }
   }
   return true;
