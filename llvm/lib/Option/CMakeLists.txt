@@ -4,5 +4,3 @@ add_llvm_library(LLVMOption
   Option.cpp
   OptTable.cpp
   )
-
-target_link_libraries(LLVMOption LLVMSupport)
