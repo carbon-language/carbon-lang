@@ -2208,6 +2208,17 @@ defm STV_f64 : ST_VEC<Float64Regs>;
 
 //---- Conversion ----
 
+class F_BITCONVERT<string SzStr, NVPTXRegClass regclassIn,
+  NVPTXRegClass regclassOut> :
+           NVPTXInst<(outs regclassOut:$d), (ins regclassIn:$a),
+           !strconcat("mov.b", !strconcat(SzStr, " \t $d, $a;")),
+     [(set regclassOut:$d, (bitconvert regclassIn:$a))]>;
+
+def BITCONVERT_32_I2F : F_BITCONVERT<"32", Int32Regs, Float32Regs>;
+def BITCONVERT_32_F2I : F_BITCONVERT<"32", Float32Regs, Int32Regs>;
+def BITCONVERT_64_I2F : F_BITCONVERT<"64", Int64Regs, Float64Regs>;
+def BITCONVERT_64_F2I : F_BITCONVERT<"64", Float64Regs, Int64Regs>;
+
 // NOTE: pred->fp are currently sub-optimal due to an issue in TableGen where
 // we cannot specify floating-point literals in isel patterns.  Therefore, we
 // use an integer selp to select either 1 or 0 and then cvt to floating-point.
@@ -2254,6 +2265,8 @@ def : Pat<(f64 (uint_to_fp Int64Regs:$a)),
 
 
 // f32 -> sint
+def : Pat<(i1 (fp_to_sint Float32Regs:$a)),
+          (SETP_b32ri (BITCONVERT_32_F2I Float32Regs:$a), 0, CmpEQ)>;
 def : Pat<(i16 (fp_to_sint Float32Regs:$a)),
           (CVT_s16_f32 Float32Regs:$a, CvtRZI_FTZ)>, Requires<[doF32FTZ]>;
 def : Pat<(i16 (fp_to_sint Float32Regs:$a)),
@@ -2268,6 +2281,8 @@ def : Pat<(i64 (fp_to_sint Float32Regs:$a)),
           (CVT_s64_f32 Float32Regs:$a, CvtRZI)>;
 
 // f32 -> uint
+def : Pat<(i1 (fp_to_uint Float32Regs:$a)),
+          (SETP_b32ri (BITCONVERT_32_F2I Float32Regs:$a), 0, CmpEQ)>;
 def : Pat<(i16 (fp_to_uint Float32Regs:$a)),
           (CVT_u16_f32 Float32Regs:$a, CvtRZI_FTZ)>, Requires<[doF32FTZ]>;
 def : Pat<(i16 (fp_to_uint Float32Regs:$a)),
@@ -2282,6 +2297,8 @@ def : Pat<(i64 (fp_to_uint Float32Regs:$a)),
           (CVT_u64_f32 Float32Regs:$a, CvtRZI)>;
 
 // f64 -> sint
+def : Pat<(i1 (fp_to_sint Float64Regs:$a)),
+          (SETP_b64ri (BITCONVERT_64_F2I Float64Regs:$a), 0, CmpEQ)>;
 def : Pat<(i16 (fp_to_sint Float64Regs:$a)),
           (CVT_s16_f64 Float64Regs:$a, CvtRZI)>;
 def : Pat<(i32 (fp_to_sint Float64Regs:$a)),
@@ -2290,6 +2307,8 @@ def : Pat<(i64 (fp_to_sint Float64Regs:$a)),
           (CVT_s64_f64 Float64Regs:$a, CvtRZI)>;
 
 // f64 -> uint
+def : Pat<(i1 (fp_to_uint Float64Regs:$a)),
+          (SETP_b64ri (BITCONVERT_64_F2I Float64Regs:$a), 0, CmpEQ)>;
 def : Pat<(i16 (fp_to_uint Float64Regs:$a)),
           (CVT_u16_f64 Float64Regs:$a, CvtRZI)>;
 def : Pat<(i32 (fp_to_uint Float64Regs:$a)),
@@ -2396,17 +2415,6 @@ def : Pat<(select Int32Regs:$pred, Float64Regs:$a, Float64Regs:$b),
           (SELP_f64rr Float64Regs:$a, Float64Regs:$b,
           (SETP_b32ri (ANDb32ri Int32Regs:$pred, 1), 1, CmpEQ))>;
 
-
-class F_BITCONVERT<string SzStr, NVPTXRegClass regclassIn,
-  NVPTXRegClass regclassOut> :
-           NVPTXInst<(outs regclassOut:$d), (ins regclassIn:$a),
-           !strconcat("mov.b", !strconcat(SzStr, " \t $d, $a;")),
-     [(set regclassOut:$d, (bitconvert regclassIn:$a))]>;
-
-def BITCONVERT_32_I2F : F_BITCONVERT<"32", Int32Regs, Float32Regs>;
-def BITCONVERT_32_F2I : F_BITCONVERT<"32", Float32Regs, Int32Regs>;
-def BITCONVERT_64_I2F : F_BITCONVERT<"64", Int64Regs, Float64Regs>;
-def BITCONVERT_64_F2I : F_BITCONVERT<"64", Float64Regs, Int64Regs>;
 
 // pack a set of smaller int registers to a larger int register
 def V4I16toI64 : NVPTXInst<(outs Int64Regs:$d),
