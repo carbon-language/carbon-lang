@@ -542,6 +542,9 @@ defm DIVDU : XOForm_1r<31, 457, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
 defm MULLD : XOForm_1r<31, 233, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulld", "$rT, $rA, $rB", IntMulHD,
                        [(set i64:$rT, (mul i64:$rA, i64:$rB))]>, isPPC64;
+def MULLI8 : DForm_2<7, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
+                       "mulli $rD, $rA, $imm", IntMulLI,
+                       [(set i64:$rD, (mul i64:$rA, imm64SExt16:$imm))]>;
 }
 
 let neverHasSideEffects = 1 in {
