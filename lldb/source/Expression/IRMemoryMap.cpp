@@ -205,15 +205,15 @@ IRMemoryMap::Allocation::Allocation (lldb::addr_t process_alloc,
                                      size_t size,
                                      uint32_t permissions,
                                      uint8_t alignment,
-                                     AllocationPolicy policy)
+                                     AllocationPolicy policy) :
+    m_process_alloc (process_alloc),
+    m_process_start (process_start),
+    m_size (size),
+    m_permissions (permissions),
+    m_alignment (alignment),
+    m_policy (policy),
+    m_leak (false)
 {
-    m_process_alloc = process_alloc;
-    m_process_start = process_start;
-    m_size = size;
-    m_permissions = permissions;
-    m_alignment = alignment;
-    m_policy = policy;
-    
     switch (policy)
     {
         default:
