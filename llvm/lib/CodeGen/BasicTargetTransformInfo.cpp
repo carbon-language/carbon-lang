@@ -452,6 +452,9 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   case Intrinsic::pow:     ISD = ISD::FPOW;   break;
   case Intrinsic::fma:     ISD = ISD::FMA;    break;
   case Intrinsic::fmuladd: ISD = ISD::FMA;    break; // FIXME: mul + add?
+  case Intrinsic::lifetime_start:
+  case Intrinsic::lifetime_end:
+    return 0;
   }
 
   const TargetLoweringBase *TLI = getTLI();
