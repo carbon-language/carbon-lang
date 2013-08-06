@@ -29,6 +29,7 @@ class CppVirtualMadness(TestBase):
         self.virtual_madness_test()
 
     @expectedFailureFreeBSD('llvm.org/pr16697') # Expression fails with 'there is no JIT compiled function'
+    @expectedFailureIcc('llvm.org/pr16808') # lldb does not call the correct virtual function with icc
     def test_virtual_madness_dwarf(self):
         """Test that expression works correctly with virtual inheritance as well as virtual function."""
         self.buildDwarf()
