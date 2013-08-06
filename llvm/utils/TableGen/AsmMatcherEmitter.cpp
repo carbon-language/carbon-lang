@@ -2069,7 +2069,8 @@ static void emitIsSubclass(CodeGenTarget &Target,
   OS << "  if (A == B)\n";
   OS << "    return true;\n\n";
 
-  std::stringstream SS;
+  std::string OStr;
+  raw_string_ostream SS(OStr);
   unsigned Count = 0;
   SS << "  switch (A) {\n";
   SS << "  default:\n";

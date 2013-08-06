@@ -41,10 +41,10 @@ bool llvm::sys::hasDisassembler()
 
 std::string llvm::sys::disassembleBuffer(uint8_t* start, size_t length,
                                          uint64_t pc) {
-  std::stringstream res;
-
 #if (defined (__i386__) || defined (__amd64__) || defined (__x86_64__)) \
   && USE_UDIS86
+  std::stringstream res;
+
   unsigned bits;
 # if defined(__i386__)
   bits = 32;
@@ -66,9 +66,9 @@ std::string llvm::sys::disassembleBuffer(uint8_t* start, size_t length,
   while (ud_disassemble(&ud_obj)) {
     res << ud_insn_off(&ud_obj) << ":\t" << ud_insn_asm(&ud_obj) << "\n";
   }
-#else
-  res << "No disassembler available. See configure help for options.\n";
-#endif
 
   return res.str();
+#else
+  return "No disassembler available. See configure help for options.\n";
+#endif
 }
