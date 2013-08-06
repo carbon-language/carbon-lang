@@ -67,6 +67,9 @@ Non-comprehensive list of changes in this release
 
 * The new SLP Vectorizer is now enabled by default.
 
+* llvm-ar now uses the new Object library and produces archives and
+  symbol tables in the gnu format.
+
 * ... next change ...
 
 .. NOTE
