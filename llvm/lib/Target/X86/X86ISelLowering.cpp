@@ -11298,8 +11298,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
       X86CC = X86::COND_E;
       break;
     }
-    SmallVector<SDValue, 5> NewOps;
-    NewOps.append(Op->op_begin()+1, Op->op_end());
+    SmallVector<SDValue, 5> NewOps(Op->op_begin()+1, Op->op_end());
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
     SDValue PCMP = DAG.getNode(Opcode, dl, VTs, NewOps.data(), NewOps.size());
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
@@ -11316,8 +11315,7 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     else
       Opcode = X86ISD::PCMPESTRI;
 
-    SmallVector<SDValue, 5> NewOps;
-    NewOps.append(Op->op_begin()+1, Op->op_end());
+    SmallVector<SDValue, 5> NewOps(Op->op_begin()+1, Op->op_end());
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
     return DAG.getNode(Opcode, dl, VTs, NewOps.data(), NewOps.size());
   }
