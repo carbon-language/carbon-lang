@@ -145,29 +145,41 @@ POST_SYSCALL(waitpid)(long res, int pid, int *status, int options) {
 }
 
 PRE_SYSCALL(clock_gettime)(int clk_id, struct sanitizer_kernel_timespec *tp) {
-  if (tp) PRE_WRITE(tp, sizeof(*tp));
+  if (tp) {
+    PRE_WRITE(tp, sizeof(*tp));
+  }
 }
 
 POST_SYSCALL(clock_gettime)(long res, int clk_id,
                             struct sanitizer_kernel_timespec *tp) {
-  if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
+  if (res == 0 && tp) {
+    POST_WRITE(tp, sizeof(*tp));
+  }
 }
 
 PRE_SYSCALL(clock_getres)(int clk_id, struct sanitizer_kernel_timespec *tp) {
-  if (tp) PRE_WRITE(tp, sizeof(*tp));
+  if (tp) {
+    PRE_WRITE(tp, sizeof(*tp));
+  }
 }
 
 POST_SYSCALL(clock_getres)(long res, int clk_id,
                            struct sanitizer_kernel_timespec *tp) {
-  if (res == 0 && tp) POST_WRITE(tp, sizeof(*tp));
+  if (res == 0 && tp) {
+    POST_WRITE(tp, sizeof(*tp));
+  }
 }
 
 PRE_SYSCALL(read)(unsigned int fd, void *buf, uptr count) {
-  if (buf) PRE_WRITE(buf, count);
+  if (buf) {
+    PRE_WRITE(buf, count);
+  }
 }
 
 POST_SYSCALL(read)(long res, unsigned int fd, void *buf, uptr count) {
-  if (res > 0 && buf) POST_WRITE(buf, res);
+  if (res > 0 && buf) {
+    POST_WRITE(buf, res);
+  }
 }
 }  // extern "C"
 
