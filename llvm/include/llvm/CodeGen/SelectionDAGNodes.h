@@ -1181,7 +1181,8 @@ class ShuffleVectorSDNode : public SDNode {
   const int *Mask;
 protected:
   friend class SelectionDAG;
-  ShuffleVectorSDNode(EVT VT, unsigned Order, DebugLoc dl, SDValue N1, SDValue N2, const int *M)
+  ShuffleVectorSDNode(EVT VT, unsigned Order, DebugLoc dl, SDValue N1,
+                      SDValue N2, const int *M)
     : SDNode(ISD::VECTOR_SHUFFLE, Order, dl, getSDVTList(VT)), Mask(M) {
     InitOperands(Ops, N1, N2);
   }
@@ -1195,9 +1196,9 @@ public:
     assert(Idx < getValueType(0).getVectorNumElements() && "Idx out of range!");
     return Mask[Idx];
   }
-  
+
   bool isSplat() const { return isSplatMask(Mask, getValueType(0)); }
-  int  getSplatIndex() const { 
+  int  getSplatIndex() const {
     assert(isSplat() && "Cannot get splat index for non-splat!");
     EVT VT = getValueType(0);
     for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
@@ -1212,7 +1213,7 @@ public:
     return N->getOpcode() == ISD::VECTOR_SHUFFLE;
   }
 };
-  
+
 class ConstantSDNode : public SDNode {
   const ConstantInt *Value;
   friend class SelectionDAG;
