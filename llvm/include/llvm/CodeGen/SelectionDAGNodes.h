@@ -1205,7 +1205,7 @@ public:
       if (Mask[i] >= 0)
         return Mask[i];
     }
-    return -1;
+    llvm_unreachable("Splat with all undef indices?");
   }
   static bool isSplatMask(const int *Mask, EVT VT);
 
