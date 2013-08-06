@@ -156,3 +156,8 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: yield
 @ CHECK-ERRORS: ^
 
+@------------------------------------------------------------------------------
+@ PLDW required mp-extensions
+@------------------------------------------------------------------------------
+        pldw [r0, #4]
+@ CHECK-ERRORS: error: instruction requires: mp-extensions
