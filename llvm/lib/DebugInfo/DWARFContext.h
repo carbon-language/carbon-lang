@@ -48,7 +48,12 @@ class DWARFContext : public DIContext {
   void parseDWOCompileUnits();
 
 public:
-  DWARFContext() {}
+  DWARFContext() : DIContext(CK_DWARF) {}
+
+  static bool classof(const DIContext *DICtx) {
+    return DICtx->getKind() == CK_DWARF;
+  }
+
   virtual void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All);
 
   /// Get the number of compile units in this context.
