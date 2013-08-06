@@ -1386,6 +1386,27 @@ static bool HandleIntToFloatCast(EvalInfo &Info, const Expr *E,
   return true;
 }
 
+static bool truncateBitfieldValue(EvalInfo &Info, const Expr *E,
+                                  APValue &Value, const FieldDecl *FD) {
+  assert(FD->isBitField() && "truncateBitfieldValue on non-bitfield");
+
+  if (!Value.isInt()) {
+    // Trying to store a pointer-cast-to-integer into a bitfield.
+    // FIXME: In this case, we should provide the diagnostic for casting
+    // a pointer to an integer.
+    assert(Value.isLValue() && "integral value neither int nor lvalue?");
+    Info.Diag(E);
+    return false;
+  }
+
+  APSInt &Int = Value.getInt();
+  unsigned OldBitWidth = Int.getBitWidth();
+  unsigned NewBitWidth = FD->getBitWidthValue(Info.Ctx);
+  if (NewBitWidth < OldBitWidth)
+    Int = Int.trunc(NewBitWidth).extend(OldBitWidth);
+  return true;
+}
+
 static bool EvalAndBitcastToAPInt(EvalInfo &Info, const Expr *E,
                                   llvm::APInt &Res) {
   APValue SVal;
@@ -1953,6 +1974,8 @@ findSubobject(EvalInfo &Info, const Expr *E, const CompleteObject &Obj,
 
   APValue *O = Obj.Value;
   QualType ObjType = Obj.Type;
+  const FieldDecl *LastField = 0;
+
   // Walk the designator's path to find the subobject.
   for (unsigned I = 0, N = Sub.Entries.size(); /**/; ++I) {
     if (O->isUninit()) {
@@ -1961,9 +1984,20 @@ findSubobject(EvalInfo &Info, const Expr *E, const CompleteObject &Obj,
       return handler.failed();
     }
 
-    if (I == N)
-      return handler.found(*O, ObjType);
+    if (I == N) {
+      if (!handler.found(*O, ObjType))
+        return false;
 
+      // If we modified a bit-field, truncate it to the right width.
+      if (handler.AccessKind != AK_Read &&
+          LastField && LastField->isBitField() &&
+          !truncateBitfieldValue(Info, E, *O, LastField))
+        return false;
+
+      return true;
+    }
+
+    LastField = 0;
     if (ObjType->isArrayType()) {
       // Next subobject is an array element.
       const ConstantArrayType *CAT = Info.Ctx.getAsConstantArrayType(ObjType);
@@ -2065,6 +2099,8 @@ findSubobject(EvalInfo &Info, const Expr *E, const CompleteObject &Obj,
         }
         return handler.failed();
       }
+
+      LastField = Field;
     } else {
       // Next subobject is a base class.
       const CXXRecordDecl *Derived = ObjType->getAsCXXRecordDecl();
@@ -3522,6 +3558,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
     APValue *Value = &Result;
 
     // Determine the subobject to initialize.
+    FieldDecl *FD = 0;
     if ((*I)->isBaseInitializer()) {
       QualType BaseType((*I)->getBaseClass(), 0);
 #ifndef NDEBUG
@@ -3536,7 +3573,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
                                   BaseType->getAsCXXRecordDecl(), &Layout))
         return false;
       Value = &Result.getStructBase(BasesSeen++);
-    } else if (FieldDecl *FD = (*I)->getMember()) {
+    } else if ((FD = (*I)->getMember())) {
       if (!HandleLValueMember(Info, (*I)->getInit(), Subobject, FD, &Layout))
         return false;
       if (RD->isUnion()) {
@@ -3551,7 +3588,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
       for (IndirectFieldDecl::chain_iterator C = IFD->chain_begin(),
                                              CE = IFD->chain_end();
            C != CE; ++C) {
-        FieldDecl *FD = cast<FieldDecl>(*C);
+        FD = cast<FieldDecl>(*C);
         CXXRecordDecl *CD = cast<CXXRecordDecl>(FD->getParent());
         // Switch the union field if it differs. This happens if we had
         // preceding zero-initialization, and we're now initializing a union
@@ -3578,7 +3615,9 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
     }
 
     FullExpressionRAII InitScope(Info);
-    if (!EvaluateInPlace(*Value, Info, Subobject, (*I)->getInit())) {
+    if (!EvaluateInPlace(*Value, Info, Subobject, (*I)->getInit()) ||
+        (FD && FD->isBitField() && !truncateBitfieldValue(Info, (*I)->getInit(),
+                                                          *Value, FD))) {
       // If we're checking for a potential constant expression, evaluate all
       // initializers even if some of them fail.
       if (!Info.keepEvaluatingAfterFailure())
@@ -4918,8 +4957,10 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     ThisOverrideRAII ThisOverride(*Info.CurrentCall, &This,
                                   isa<CXXDefaultInitExpr>(Init));
 
-    if (!EvaluateInPlace(Result.getStructField(Field->getFieldIndex()), Info,
-                         Subobject, Init)) {
+    APValue &FieldVal = Result.getStructField(Field->getFieldIndex());
+    if (!EvaluateInPlace(FieldVal, Info, Subobject, Init) ||
+        (Field->isBitField() && !truncateBitfieldValue(Info, Init,
+                                                       FieldVal, *Field))) {
       if (!Info.keepEvaluatingAfterFailure())
         return false;
       Success = false;

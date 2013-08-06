@@ -870,3 +870,20 @@ namespace Lifetime {
   }
   static_assert((lifetime_versus_loops(), true), "");
 }
+
+namespace Bitfields {
+  struct A {
+    bool b : 3;
+    int n : 4;
+    unsigned u : 5;
+  };
+  constexpr bool test() {
+    A a {};
+    a.b += 2;
+    --a.n;
+    --a.u;
+    a.n = -a.n * 3;
+    return a.b == false && a.n == 3 && a.u == 31;
+  }
+  static_assert(test(), "");
+}
