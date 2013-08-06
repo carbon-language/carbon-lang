@@ -105,49 +105,41 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 // Instantiation of instructions.
 def MOVZ_I_I : CMov_I_I_FT<"movz", CPURegsOpnd, CPURegsOpnd, NoItinerary>,
                ADD_FM<0, 0xa>;
-let Predicates = [HasStdEnc],
-                  DecoderNamespace = "Mips64" in {
+
+let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
   def MOVZ_I_I64   : CMov_I_I_FT<"movz", CPURegsOpnd, CPU64RegsOpnd,
                                   NoItinerary>, ADD_FM<0, 0xa>;
   def MOVZ_I64_I   : CMov_I_I_FT<"movz", CPU64RegsOpnd, CPURegsOpnd,
-                                  NoItinerary>, ADD_FM<0, 0xa> {
-    let isCodeGenOnly = 1;
-  }
+                                  NoItinerary>, ADD_FM<0, 0xa>;
   def MOVZ_I64_I64 : CMov_I_I_FT<"movz", CPU64RegsOpnd, CPU64RegsOpnd,
-                                  NoItinerary>, ADD_FM<0, 0xa> {
-    let isCodeGenOnly = 1;
-  }
+                                  NoItinerary>, ADD_FM<0, 0xa>;
 }
 
 def MOVN_I_I       : CMov_I_I_FT<"movn", CPURegsOpnd, CPURegsOpnd,
                                   NoItinerary>, ADD_FM<0, 0xb>;
-let Predicates = [HasStdEnc],
-                  DecoderNamespace = "Mips64" in {
+
+let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
   def MOVN_I_I64   : CMov_I_I_FT<"movn", CPURegsOpnd, CPU64RegsOpnd,
                                   NoItinerary>, ADD_FM<0, 0xb>;
   def MOVN_I64_I   : CMov_I_I_FT<"movn", CPU64RegsOpnd, CPURegsOpnd,
-                                  NoItinerary>, ADD_FM<0, 0xb> {
-    let isCodeGenOnly = 1;
-  }
+                                  NoItinerary>, ADD_FM<0, 0xb>;
   def MOVN_I64_I64 : CMov_I_I_FT<"movn", CPU64RegsOpnd, CPU64RegsOpnd,
-                                  NoItinerary>, ADD_FM<0, 0xb> {
-    let isCodeGenOnly = 1;
-  }
+                                  NoItinerary>, ADD_FM<0, 0xb>;
 }
 
 def MOVZ_I_S : CMov_I_F_FT<"movz.s", CPURegsOpnd, FGR32RegsOpnd, IIFmove>,
                CMov_I_F_FM<18, 16>;
+
+let isCodeGenOnly = 1 in
 def MOVZ_I64_S : CMov_I_F_FT<"movz.s", CPU64RegsOpnd, FGR32RegsOpnd, IIFmove>,
-                 CMov_I_F_FM<18, 16>, Requires<[HasMips64, HasStdEnc]> {
-  let DecoderNamespace = "Mips64";
-}
+                 CMov_I_F_FM<18, 16>, Requires<[HasMips64, HasStdEnc]>;
 
 def MOVN_I_S : CMov_I_F_FT<"movn.s", CPURegsOpnd, FGR32RegsOpnd, IIFmove>,
                CMov_I_F_FM<19, 16>;
+
+let isCodeGenOnly = 1 in
 def MOVN_I64_S : CMov_I_F_FT<"movn.s", CPU64RegsOpnd, FGR32RegsOpnd, IIFmove>,
-                 CMov_I_F_FM<19, 16>, Requires<[HasMips64, HasStdEnc]> {
-  let DecoderNamespace = "Mips64";
-}
+                 CMov_I_F_FM<19, 16>, Requires<[HasMips64, HasStdEnc]>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
   def MOVZ_I_D32 : CMov_I_F_FT<"movz.d", CPURegsOpnd, AFGR64RegsOpnd, IIFmove>,
@@ -155,35 +147,31 @@ let Predicates = [NotFP64bit, HasStdEnc] in {
   def MOVN_I_D32 : CMov_I_F_FT<"movn.d", CPURegsOpnd, AFGR64RegsOpnd, IIFmove>,
                    CMov_I_F_FM<19, 17>;
 }
-let Predicates = [IsFP64bit, HasStdEnc],
-                  DecoderNamespace = "Mips64" in {
+
+let Predicates = [IsFP64bit, HasStdEnc], isCodeGenOnly = 1 in {
   def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", CPURegsOpnd, FGR64RegsOpnd, IIFmove>,
                    CMov_I_F_FM<18, 17>;
   def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", CPU64RegsOpnd, FGR64RegsOpnd,
-                                  IIFmove>, CMov_I_F_FM<18, 17> {
-    let isCodeGenOnly = 1;
-  }
+                                  IIFmove>, CMov_I_F_FM<18, 17>;
   def MOVN_I_D64 : CMov_I_F_FT<"movn.d", CPURegsOpnd, FGR64RegsOpnd, IIFmove>,
                    CMov_I_F_FM<19, 17>;
   def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", CPU64RegsOpnd, FGR64RegsOpnd,
-                                  IIFmove>, CMov_I_F_FM<19, 17> {
-    let isCodeGenOnly = 1;
-  }
+                                  IIFmove>, CMov_I_F_FM<19, 17>;
 }
 
 def MOVT_I : CMov_F_I_FT<"movt", CPURegsOpnd, IIArith, MipsCMovFP_T>,
              CMov_F_I_FM<1>;
+
+let isCodeGenOnly = 1 in
 def MOVT_I64 : CMov_F_I_FT<"movt", CPU64RegsOpnd, IIArith, MipsCMovFP_T>,
-               CMov_F_I_FM<1>, Requires<[HasMips64, HasStdEnc]> {
-  let DecoderNamespace = "Mips64";
-}
+               CMov_F_I_FM<1>, Requires<[HasMips64, HasStdEnc]>;
 
 def MOVF_I : CMov_F_I_FT<"movf", CPURegsOpnd, IIArith, MipsCMovFP_F>,
              CMov_F_I_FM<0>;
+
+let isCodeGenOnly = 1 in
 def MOVF_I64 : CMov_F_I_FT<"movf", CPU64RegsOpnd, IIArith, MipsCMovFP_F>,
-               CMov_F_I_FM<0>, Requires<[HasMips64, HasStdEnc]> {
-  let DecoderNamespace = "Mips64";
-}
+               CMov_F_I_FM<0>, Requires<[HasMips64, HasStdEnc]>;
 
 def MOVT_S : CMov_F_F_FT<"movt.s", FGR32RegsOpnd, IIFmove, MipsCMovFP_T>,
              CMov_F_F_FM<16, 1>;
@@ -196,8 +184,7 @@ let Predicates = [NotFP64bit, HasStdEnc] in {
   def MOVF_D32 : CMov_F_F_FT<"movf.d", AFGR64RegsOpnd, IIFmove, MipsCMovFP_F>,
                  CMov_F_F_FM<17, 0>;
 }
-let Predicates = [IsFP64bit, HasStdEnc],
-    DecoderNamespace = "Mips64" in {
+let Predicates = [IsFP64bit, HasStdEnc], isCodeGenOnly = 1 in {
   def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64RegsOpnd, IIFmove, MipsCMovFP_T>,
                  CMov_F_F_FM<17, 1>;
   def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64RegsOpnd, IIFmove, MipsCMovFP_F>,

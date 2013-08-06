@@ -1473,9 +1473,6 @@ bool MipsAsmParser::searchSymbolAlias(
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
-  if (isMips64())
-    return MatchOperand_NoMatch;
-
   // If the first token is not '$' we have error.
   if (Parser.getTok().isNot(AsmToken::Dollar))
     return MatchOperand_NoMatch;
