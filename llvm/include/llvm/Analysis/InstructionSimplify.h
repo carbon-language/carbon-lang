@@ -1,4 +1,4 @@
-//===-- InstructionSimplify.h - Fold instructions into simpler forms ------===//
+//===-- InstructionSimplify.h - Fold instrs into simpler forms --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

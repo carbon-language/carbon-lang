@@ -1,4 +1,4 @@
-//===- InstCombineWorklist.h - Worklist for the InstCombine pass ----------===//
+//===- InstCombineWorklist.h - Worklist for InstCombine pass ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
