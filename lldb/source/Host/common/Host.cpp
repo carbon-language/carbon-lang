@@ -53,9 +53,10 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
-#include "llvm/ADT/Twine.h"
+#include "llvm/Support/raw_ostream.h"
 
 
 
@@ -1031,17 +1032,15 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                         ::strncpy (framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
                     }
 #else
-                    llvm::Twine python_version_dir;
-                    python_version_dir = "/python"
-                                       + llvm::Twine(PY_MAJOR_VERSION)
-                                       + "."
-                                       + llvm::Twine(PY_MINOR_VERSION)
-                                       + "/site-packages";
+                    llvm::SmallString<256> python_version_dir;
+                    llvm::raw_svector_ostream os(python_version_dir);
+                    os << "/python" << PY_MAJOR_VERSION << '.' << PY_MINOR_VERSION << "/site-packages";
+                    os.flush();
 
                     // We may get our string truncated. Should we protect
                     // this with an assert?
 
-                    ::strncat(raw_path, python_version_dir.str().c_str(),
+                    ::strncat(raw_path, python_version_dir.c_str(),
                               sizeof(raw_path) - strlen(raw_path) - 1);
 
 #endif
