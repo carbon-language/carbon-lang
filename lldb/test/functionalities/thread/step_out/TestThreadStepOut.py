@@ -56,7 +56,7 @@ class ThreadStepOutTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number for our breakpoint.
         self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
-        if any([x in self.getCompiler() for x in ["gcc", "icc", "icpc", "icl"]]):
+        if "gcc" in self.getCompiler() or self.isIntelCompiler(): 
             self.step_out_destination = line_number('main.cpp', '// Expect to stop here after step-out (icc and gcc)')
         else:
             self.step_out_destination = line_number('main.cpp', '// Expect to stop here after step-out (clang)')

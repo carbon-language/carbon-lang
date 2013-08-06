@@ -1255,6 +1255,10 @@ class Base(unittest2.TestCase):
                 version = m.group(1)
         return version
 
+    def isIntelCompiler(self):
+        """ Returns true if using an Intel (ICC) compiler, false otherwise. """
+        return any([x in self.getCompiler() for x in ["icc", "icpc", "icl"]])
+
     def expectedCompilerVersion(self, compiler_version):
         """Returns True iff compiler_version[1] matches the current compiler version.
            Use compiler_version[0] to specify the operator used to determine if a match has occurred.
