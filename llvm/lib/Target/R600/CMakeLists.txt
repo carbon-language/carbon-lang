@@ -40,6 +40,7 @@ add_llvm_target(R600CodeGen
   R600RegisterInfo.cpp
   R600TextureIntrinsicsReplacer.cpp
   SIAnnotateControlFlow.cpp
+  SIFixSGPRCopies.cpp
   SIInsertWaits.cpp
   SIInstrInfo.cpp
   SIISelLowering.cpp
