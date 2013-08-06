@@ -19,15 +19,15 @@ class error_code;
 }
 
 namespace lld {
-class TargetInfo;
+class LinkingContext;
 class File;
 
 namespace coff {
 
 llvm::error_code
-    parseCOFFImportLibrary(const TargetInfo &targetInfo,
-                           std::unique_ptr<llvm::MemoryBuffer> &mb,
-                           std::vector<std::unique_ptr<File> > &result);
+parseCOFFImportLibrary(const LinkingContext &context,
+                       std::unique_ptr<llvm::MemoryBuffer> &mb,
+                       std::vector<std::unique_ptr<File> > &result);
 }
 }
 

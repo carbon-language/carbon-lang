@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/ReaderWriter/CoreTargetInfo.h"
+#include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -69,16 +69,15 @@ public:
 namespace lld {
 
 bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
-  CoreTargetInfo info;
+  CoreLinkingContext info;
   if (parse(argc, argv, info))
     return true;
   
   return Driver::link(info);
 }
 
-
-bool CoreDriver::parse(int argc, const char *argv[],  
-                          CoreTargetInfo &info, raw_ostream &diagnostics) {
+bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &info,
+                       raw_ostream &diagnostics) {
   // Parse command line options using CoreOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   CoreOptTable table;

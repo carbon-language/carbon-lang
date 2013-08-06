@@ -17,7 +17,7 @@ namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 4, false> HexagonELFType;
 
-class HexagonTargetInfo;
+class HexagonLinkingContext;
 class HexagonTargetHandler;
 template <class HexagonELFType> class HexagonTargetLayout;
 
@@ -25,15 +25,15 @@ class HexagonTargetRelocationHandler LLVM_FINAL :
     public TargetRelocationHandler<HexagonELFType> {
 public:
   HexagonTargetRelocationHandler(
-      const HexagonTargetInfo &ti, const HexagonTargetHandler &tH,
+      const HexagonLinkingContext &context, const HexagonTargetHandler &tH,
       const HexagonTargetLayout<HexagonELFType> &layout)
-      : _targetInfo(ti), _targetHandler(tH), _targetLayout(layout) {}
+      : _context(context), _targetHandler(tH), _targetLayout(layout) {}
 
   virtual ErrorOr<void>
   applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                   const lld::AtomLayout &, const Reference &) const;
 private:
-  const HexagonTargetInfo &_targetInfo;
+  const HexagonLinkingContext &_context;
   const HexagonTargetHandler &_targetHandler;
   const HexagonTargetLayout<HexagonELFType> &_targetLayout;
 };

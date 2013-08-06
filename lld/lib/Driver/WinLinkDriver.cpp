@@ -24,7 +24,7 @@
 #include "llvm/Support/Path.h"
 
 #include "lld/Driver/Driver.h"
-#include "lld/ReaderWriter/PECOFFTargetInfo.h"
+#include "lld/ReaderWriter/PECOFFLinkingContext.h"
 
 namespace lld {
 
@@ -93,8 +93,8 @@ bool parseMemoryOption(const StringRef &arg, raw_ostream &diagnostics,
 
 // Parse /base command line option. The argument for the parameter is in the
 // form of "<address>[:<size>]".
-bool parseBaseOption(PECOFFTargetInfo &info, const StringRef &arg,
-                      raw_ostream &diagnostics) {
+bool parseBaseOption(PECOFFLinkingContext &context, const StringRef &arg,
+                     raw_ostream &diagnostics) {
   // Size should be set to SizeOfImage field in the COFF header, and if it's
   // smaller than the actual size, the linker should warn about that. Currently
   // we just ignore the value of size parameter.
@@ -107,31 +107,31 @@ bool parseBaseOption(PECOFFTargetInfo &info, const StringRef &arg,
                 << addr << "\n";
     return false;
   }
-  info.setBaseAddress(addr);
+  context.setBaseAddress(addr);
   return true;
 }
 
 // Parse /stack command line option
-bool parseStackOption(PECOFFTargetInfo &info, const StringRef &arg,
+bool parseStackOption(PECOFFLinkingContext &context, const StringRef &arg,
                       raw_ostream &diagnostics) {
   uint64_t reserve;
-  uint64_t commit = info.getStackCommit();
+  uint64_t commit = context.getStackCommit();
   if (!parseMemoryOption(arg, diagnostics, reserve, commit))
     return false;
-  info.setStackReserve(reserve);
-  info.setStackCommit(commit);
+  context.setStackReserve(reserve);
+  context.setStackCommit(commit);
   return true;
 }
 
 // Parse /heap command line option.
-bool parseHeapOption(PECOFFTargetInfo &info, const StringRef &arg,
+bool parseHeapOption(PECOFFLinkingContext &context, const StringRef &arg,
                      raw_ostream &diagnostics) {
   uint64_t reserve;
-  uint64_t commit = info.getHeapCommit();
+  uint64_t commit = context.getHeapCommit();
   if (!parseMemoryOption(arg, diagnostics, reserve, commit))
     return false;
-  info.setHeapReserve(reserve);
-  info.setHeapCommit(commit);
+  context.setHeapReserve(reserve);
+  context.setHeapCommit(commit);
   return true;
 }
 
@@ -144,8 +144,8 @@ llvm::COFF::WindowsSubsystem stringToWinSubsystem(StringRef str) {
       .Default(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN);
 }
 
-bool parseMinOSVersion(PECOFFTargetInfo &info, const StringRef &osVersion,
-                       raw_ostream &diagnostics) {
+bool parseMinOSVersion(PECOFFLinkingContext &context,
+                       const StringRef &osVersion, raw_ostream &diagnostics) {
   StringRef majorVersion, minorVersion;
   llvm::tie(majorVersion, minorVersion) = osVersion.split('.');
   if (minorVersion.empty())
@@ -154,22 +154,22 @@ bool parseMinOSVersion(PECOFFTargetInfo &info, const StringRef &osVersion,
     return false;
   if (!checkNumber(minorVersion, "invalid OS minor version: ", diagnostics))
     return false;
-  PECOFFTargetInfo::OSVersion minOSVersion(atoi(majorVersion.str().c_str()),
-                                           atoi(minorVersion.str().c_str()));
-  info.setMinOSVersion(minOSVersion);
+  PECOFFLinkingContext::OSVersion minOSVersion(
+      atoi(majorVersion.str().c_str()), atoi(minorVersion.str().c_str()));
+  context.setMinOSVersion(minOSVersion);
   return true;
 }
 
 // Parse /subsystem command line option. The form of /subsystem is
 // "subsystem_name[,majorOSVersion[.minorOSVersion]]".
-bool parseSubsystemOption(PECOFFTargetInfo &info, std::string arg,
+bool parseSubsystemOption(PECOFFLinkingContext &context, std::string arg,
                           raw_ostream &diagnostics) {
   StringRef subsystemStr, osVersionStr;
   llvm::tie(subsystemStr, osVersionStr) = StringRef(arg).split(',');
 
   // Parse optional OS version if exists.
   if (!osVersionStr.empty())
-    if (!parseMinOSVersion(info, osVersionStr, diagnostics))
+    if (!parseMinOSVersion(context, osVersionStr, diagnostics))
       return false;
 
   // Parse subsystem name.
@@ -178,16 +178,17 @@ bool parseSubsystemOption(PECOFFTargetInfo &info, std::string arg,
     diagnostics << "error: unknown subsystem name: " << subsystemStr << "\n";
     return false;
   }
-  info.setSubsystem(subsystem);
+  context.setSubsystem(subsystem);
   return true;
 }
 
 // Replace a file extension with ".exe". If the given file has no
 // extension, just add ".exe".
-StringRef getDefaultOutputFileName(PECOFFTargetInfo &info, StringRef path) {
+StringRef getDefaultOutputFileName(PECOFFLinkingContext &context,
+                                   StringRef path) {
   SmallString<128> smallStr = path;
   llvm::sys::path::replace_extension(smallStr, ".exe");
-  return info.allocateString(smallStr.str());
+  return context.allocateString(smallStr.str());
 }
 
 // Split the given string with spaces.
@@ -231,16 +232,17 @@ bool handleFailIfMismatchOption(StringRef option,
 
 // Add ".lib" extension if the path does not already have the extension to mimic
 // link.exe behavior.
-StringRef canonicalizeImportLibraryPath(PECOFFTargetInfo &info, StringRef path) {
+StringRef canonicalizeImportLibraryPath(PECOFFLinkingContext &context,
+                                        StringRef path) {
   std::string s(path.lower());
   if (StringRef(s).endswith(".lib"))
     return path;
-  return info.allocateString(std::string(path).append(".lib"));
+  return context.allocateString(std::string(path).append(".lib"));
 }
 
 // Process "LINK" environment variable. If defined, the value of the variable
 // should be processed as command line arguments.
-std::vector<const char *> processLinkEnv(PECOFFTargetInfo &info,
+std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
                                          int argc, const char **argv) {
   std::vector<const char *> ret;
   // The first argument is the name of the command. This should stay at the head
@@ -251,7 +253,7 @@ std::vector<const char *> processLinkEnv(PECOFFTargetInfo &info,
   // Add arguments specified by the LINK environment variable.
   if (char *envp = ::getenv("LINK"))
     for (std::string &arg : splitArgList(envp))
-      ret.push_back(info.allocateString(arg).data());
+      ret.push_back(context.allocateString(arg).data());
 
   // Add the rest of arguments passed via the command line.
   for (int i = 1; i < argc; ++i)
@@ -262,10 +264,10 @@ std::vector<const char *> processLinkEnv(PECOFFTargetInfo &info,
 
 // Process "LIB" environment variable. The variable contains a list of search
 // paths separated by semicolons.
-void processLibEnv(PECOFFTargetInfo &info) {
+void processLibEnv(PECOFFLinkingContext &context) {
   if (char *envp = ::getenv("LIB"))
     for (StringRef path : splitPathList(envp))
-      info.appendInputSearchPath(info.allocateString(path));
+      context.appendInputSearchPath(context.allocateString(path));
 }
 
 // Parses the given command line options and returns the result. Returns NULL if
@@ -300,16 +302,17 @@ std::unique_ptr<llvm::opt::InputArgList> parseArgs(int argc, const char *argv[],
 
 bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
                                raw_ostream &diagnostics) {
-  PECOFFTargetInfo info;
-  std::vector<const char *> newargv = processLinkEnv(info, argc, argv);
-  processLibEnv(info);
-  if (parse(newargv.size() - 1, &newargv[0], info, diagnostics))
+  PECOFFLinkingContext context;
+  std::vector<const char *> newargv = processLinkEnv(context, argc, argv);
+  processLibEnv(context);
+  if (parse(newargv.size() - 1, &newargv[0], context, diagnostics))
     return true;
-  return link(info, diagnostics);
+  return link(context, diagnostics);
 }
 
 bool WinLinkDriver::parse(int argc, const char *argv[],
-                          PECOFFTargetInfo &info, raw_ostream &diagnostics) {
+                          PECOFFLinkingContext &context,
+                          raw_ostream &diagnostics) {
   // Parse the options.
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
       argc, argv, diagnostics);
@@ -327,70 +330,70 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    info.appendLLVMOption((*it)->getValue());
+    context.appendLLVMOption((*it)->getValue());
   }
 
   // handle /base
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_base))
-    if (!parseBaseOption(info, arg->getValue(), diagnostics))
+    if (!parseBaseOption(context, arg->getValue(), diagnostics))
       return true;
 
   // handle /stack
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_stack))
-    if (!parseStackOption(info, arg->getValue(), diagnostics))
+    if (!parseStackOption(context, arg->getValue(), diagnostics))
       return true;
 
   // handle /heap
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_heap))
-    if (!parseHeapOption(info, arg->getValue(), diagnostics))
+    if (!parseHeapOption(context, arg->getValue(), diagnostics))
       return true;
 
   // handle /subsystem
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_subsystem))
-    if (!parseSubsystemOption(info, arg->getValue(), diagnostics))
+    if (!parseSubsystemOption(context, arg->getValue(), diagnostics))
       return true;
 
   // handle /entry
   if (llvm::opt::Arg *arg = parsedArgs->getLastArg(OPT_entry))
-    info.setEntrySymbolName(arg->getValue());
+    context.setEntrySymbolName(arg->getValue());
 
   // handle /libpath
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_libpath),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    info.appendInputSearchPath((*it)->getValue());
+    context.appendInputSearchPath((*it)->getValue());
   }
 
   // handle /force
   if (parsedArgs->getLastArg(OPT_force))
-    info.setAllowRemainingUndefines(true);
+    context.setAllowRemainingUndefines(true);
 
   // handle /nxcompat:no
   if (parsedArgs->getLastArg(OPT_no_nxcompat))
-    info.setNxCompat(false);
+    context.setNxCompat(false);
 
   // handle /largeaddressaware
   if (parsedArgs->getLastArg(OPT_largeaddressaware))
-    info.setLargeAddressAware(true);
+    context.setLargeAddressAware(true);
 
   // handle /fixed
   if (parsedArgs->getLastArg(OPT_fixed))
-    info.setBaseRelocationEnabled(false);
+    context.setBaseRelocationEnabled(false);
 
   // handle /tsaware:no
   if (parsedArgs->getLastArg(OPT_no_tsaware))
-    info.setTerminalServerAware(false);
+    context.setTerminalServerAware(false);
 
   // handle /include
   for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_incl),
                                ie = parsedArgs->filtered_end();
        it != ie; ++it) {
-    info.addInitialUndefinedSymbol((*it)->getValue());
+    context.addInitialUndefinedSymbol((*it)->getValue());
   }
 
   // handle /out
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_out))
-    info.setOutputPath(outpath->getValue());
+    context.setOutputPath(outpath->getValue());
 
   // handle /defaultlib
   std::vector<StringRef> defaultLibs;
@@ -427,22 +430,22 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Add input files specified via the command line.
   for (const StringRef path : inputPaths)
-    info.appendInputFileOrLibrary(path);
+    context.appendInputFileOrLibrary(path);
 
   // Add the library files specified by /defaultlib option. The files
   // specified by the option should have lower precedence than the other files
   // added above, which is important for link.exe compatibility.
   for (const StringRef path : defaultLibs)
-    info.appendLibraryFile(canonicalizeImportLibraryPath(info, path));
+    context.appendLibraryFile(canonicalizeImportLibraryPath(context, path));
 
   // If /out option was not specified, the default output file name is
   // constructed by replacing an extension of the first input file
   // with ".exe".
-  if (info.outputPath().empty() && !inputPaths.empty())
-    info.setOutputPath(getDefaultOutputFileName(info, inputPaths[0]));
+  if (context.outputPath().empty() && !inputPaths.empty())
+    context.setOutputPath(getDefaultOutputFileName(context, inputPaths[0]));
 
   // Validate the combination of options used.
-  return info.validate(diagnostics);
+  return context.validate(diagnostics);
 }
 
 } // namespace lld

@@ -15,7 +15,7 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Simple.h"
 
 namespace lld {
@@ -28,10 +28,11 @@ namespace mach_o {
 //
 class CRuntimeFile : public SimpleFile {
 public:
-    CRuntimeFile(const MachOTargetInfo &ti) 
-      : SimpleFile(ti, "C runtime"), _undefMain(*this, ti.entrySymbolName()) {
+    CRuntimeFile(const MachOLinkingContext &context)
+      : SimpleFile(context, "C runtime"),
+        _undefMain(*this, context.entrySymbolName()) {
       // only main executables need _main
-      if (ti.outputFileType() == MH_EXECUTE) {
+      if (context.outputFileType() == MH_EXECUTE) {
         this->addAtom(_undefMain);
       }
    }
@@ -40,10 +41,7 @@ private:
   SimpleUndefinedAtom   _undefMain;
 };
 
-
-
-} // namespace mach_o 
-} // namespace lld 
-
+} // namespace mach_o
+} // namespace lld
 
 #endif // LLD_READER_WRITER_MACHO_EXECUTABLE_ATOM_H_

@@ -29,8 +29,8 @@ namespace elf {
 template <class ELFT> class CRuntimeFile : public ELFFile<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFile(const ELFTargetInfo &ti, StringRef name = "C runtime")
-      : ELFFile<ELFT>(ti, name) {}
+  CRuntimeFile(const ELFLinkingContext &context, StringRef name = "C runtime")
+      : ELFFile<ELFT>(context, name) {}
 
   /// \brief add a global absolute atom
   virtual void addAbsoluteAtom(StringRef symbolName) {

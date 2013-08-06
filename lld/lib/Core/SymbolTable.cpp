@@ -16,7 +16,7 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SharedLibraryAtom.h"
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -31,7 +31,7 @@
 #include <vector>
 
 namespace lld {
-SymbolTable::SymbolTable(const TargetInfo &ti) : _targetInfo(ti) {}
+SymbolTable::SymbolTable(const LinkingContext &context) : _context(context) {}
 
 void SymbolTable::add(const UndefinedAtom &atom) {
   this->addByName(atom);
@@ -183,7 +183,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
             useNew = false;
           }
           else {
-            if (_targetInfo.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+            if (_context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
               // FIXME: need diagonstics interface for writing warning messages
               llvm::errs() << "lld warning: undefined symbol "
                            << existingUndef->name()
@@ -208,7 +208,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
           bool sameName = curShLib->loadName().equals(newShLib->loadName());
           if ( !sameName ) {
             useNew = false;
-            if (_targetInfo.warnIfCoalesableAtomsHaveDifferentLoadName()) {
+            if (_context.warnIfCoalesableAtomsHaveDifferentLoadName()) {
               // FIXME: need diagonstics interface for writing warning messages
               llvm::errs() << "lld warning: shared library symbol "
                            << curShLib->name()
@@ -220,7 +220,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
           }
           else if ( ! sameNullness ) {
             useNew = false;
-            if (_targetInfo.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+            if (_context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
               // FIXME: need diagonstics interface for writing warning messages
               llvm::errs() << "lld warning: shared library symbol "
                            << curShLib->name()

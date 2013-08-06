@@ -13,7 +13,7 @@
 #include "Atoms.h"
 
 #include "lld/Core/SharedLibraryFile.h"
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Path.h"
@@ -24,8 +24,8 @@ namespace lld {
 namespace elf {
 template <class ELFT> class DynamicFile LLVM_FINAL : public SharedLibraryFile {
 public:
-  static ErrorOr<std::unique_ptr<DynamicFile> > create(
-      const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> mb) {
+  static ErrorOr<std::unique_ptr<DynamicFile> >
+  create(const ELFLinkingContext &ti, std::unique_ptr<llvm::MemoryBuffer> mb) {
     std::unique_ptr<DynamicFile> file(
         new DynamicFile(ti, mb->getBufferIdentifier()));
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
@@ -110,15 +110,17 @@ public:
         *this, name, _soname, sym->second._symbol);
   }
 
-  virtual const ELFTargetInfo &getTargetInfo() const { return _targetInfo; }
+  virtual const ELFLinkingContext &getLinkingContext() const {
+    return _context;
+  }
 
 private:
-  DynamicFile(const ELFTargetInfo &ti, StringRef name)
-      : SharedLibraryFile(name), _targetInfo(ti) {}
+  DynamicFile(const ELFLinkingContext &context, StringRef name)
+      : SharedLibraryFile(name), _context(context) {}
 
   mutable llvm::BumpPtrAllocator _alloc;
-  const ELFTargetInfo &_targetInfo;
-  std::unique_ptr<llvm::object::ELFObjectFile<ELFT>> _objFile;
+  const ELFLinkingContext &_context;
+  std::unique_ptr<llvm::object::ELFObjectFile<ELFT> > _objFile;
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;

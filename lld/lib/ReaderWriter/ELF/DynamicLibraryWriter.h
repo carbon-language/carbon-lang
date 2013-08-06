@@ -25,8 +25,8 @@ class DynamicLibraryWriter;
 template<class ELFT>
 class DynamicLibraryWriter : public OutputELFWriter<ELFT> {
 public:
-  DynamicLibraryWriter(const ELFTargetInfo &ti):OutputELFWriter<ELFT>(ti)
-  {}
+  DynamicLibraryWriter(const ELFLinkingContext &context)
+      : OutputELFWriter<ELFT>(context) {}
 
 private:
   void buildDynamicSymbolTable(const File &file);

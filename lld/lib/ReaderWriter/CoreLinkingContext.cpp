@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/CoreTargetInfo.cpp --------------------------------===//
+//===- lib/ReaderWriter/CoreLinkingContext.cpp ----------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,14 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/CoreTargetInfo.h"
+#include "lld/ReaderWriter/CoreLinkingContext.h"
 
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
 
 #include "llvm/ADT/ArrayRef.h"
-
 
 using namespace lld;
 
@@ -23,74 +22,48 @@ namespace {
 /// \brief Simple atom created by the stubs pass.
 class TestingStubAtom : public DefinedAtom {
 public:
-  TestingStubAtom(const File &F, const Atom&) : _file(F) {
+  TestingStubAtom(const File &F, const Atom &) : _file(F) {
     static uint32_t lastOrdinal = 0;
     _ordinal = lastOrdinal++;
   }
 
-  virtual const File &file() const {
-    return _file;
-  }
+  virtual const File &file() const { return _file; }
 
-  virtual StringRef name() const {
-    return StringRef();
-  }
+  virtual StringRef name() const { return StringRef(); }
 
-  virtual uint64_t ordinal() const {
-    return _ordinal;
-  }
+  virtual uint64_t ordinal() const { return _ordinal; }
 
-  virtual uint64_t size() const {
-    return 0;
-  }
+  virtual uint64_t size() const { return 0; }
 
-  virtual Scope scope() const {
-    return DefinedAtom::scopeLinkageUnit;
-  }
+  virtual Scope scope() const { return DefinedAtom::scopeLinkageUnit; }
 
-  virtual Interposable interposable() const {
-    return DefinedAtom::interposeNo;
-  }
+  virtual Interposable interposable() const { return DefinedAtom::interposeNo; }
 
-  virtual Merge merge() const {
-    return DefinedAtom::mergeNo;
-  }
+  virtual Merge merge() const { return DefinedAtom::mergeNo; }
 
-  virtual ContentType contentType() const  {
-    return DefinedAtom::typeStub;
-  }
+  virtual ContentType contentType() const { return DefinedAtom::typeStub; }
 
-  virtual Alignment alignment() const {
-    return Alignment(0, 0);
-  }
+  virtual Alignment alignment() const { return Alignment(0, 0); }
 
   virtual SectionChoice sectionChoice() const {
     return DefinedAtom::sectionBasedOnContent;
   }
 
-  virtual StringRef customSectionName() const {
-    return StringRef();
-  }
-  
-  virtual SectionPosition sectionPosition() const {
-    return sectionPositionAny;
-  }
-  
+  virtual StringRef customSectionName() const { return StringRef(); }
+
+  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
+
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
   }
 
-  virtual ContentPermissions permissions() const  {
+  virtual ContentPermissions permissions() const {
     return DefinedAtom::permR_X;
   }
 
-  virtual bool isAlias() const {
-    return false;
-  }
+  virtual bool isAlias() const { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
+  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
 
   virtual reference_iterator begin() const {
     return reference_iterator(*this, nullptr);
@@ -104,8 +77,7 @@ public:
     return nullptr;
   }
 
-  virtual void incrementIterator(const void *&iter) const {
-  }
+  virtual void incrementIterator(const void *&iter) const {}
 
 private:
   const File &_file;
@@ -115,74 +87,48 @@ private:
 /// \brief Simple atom created by the GOT pass.
 class TestingGOTAtom : public DefinedAtom {
 public:
-  TestingGOTAtom(const File &F, const Atom&) : _file(F) {
+  TestingGOTAtom(const File &F, const Atom &) : _file(F) {
     static uint32_t lastOrdinal = 0;
     _ordinal = lastOrdinal++;
   }
 
-  virtual const File &file() const {
-    return _file;
-  }
+  virtual const File &file() const { return _file; }
 
-  virtual StringRef name() const {
-    return StringRef();
-  }
+  virtual StringRef name() const { return StringRef(); }
 
-  virtual uint64_t ordinal() const {
-    return _ordinal;
-  }
+  virtual uint64_t ordinal() const { return _ordinal; }
 
-  virtual uint64_t size() const {
-    return 0;
-  }
+  virtual uint64_t size() const { return 0; }
 
-  virtual Scope scope() const {
-    return DefinedAtom::scopeLinkageUnit;
-  }
+  virtual Scope scope() const { return DefinedAtom::scopeLinkageUnit; }
 
-  virtual Interposable interposable() const {
-    return DefinedAtom::interposeNo;
-  }
+  virtual Interposable interposable() const { return DefinedAtom::interposeNo; }
 
-  virtual Merge merge() const {
-    return DefinedAtom::mergeNo;
-  }
+  virtual Merge merge() const { return DefinedAtom::mergeNo; }
 
-  virtual ContentType contentType() const  {
-    return DefinedAtom::typeGOT;
-  }
+  virtual ContentType contentType() const { return DefinedAtom::typeGOT; }
 
-  virtual Alignment alignment() const {
-    return Alignment(3, 0);
-  }
+  virtual Alignment alignment() const { return Alignment(3, 0); }
 
   virtual SectionChoice sectionChoice() const {
     return DefinedAtom::sectionBasedOnContent;
   }
 
-  virtual StringRef customSectionName() const {
-    return StringRef();
-  }
+  virtual StringRef customSectionName() const { return StringRef(); }
 
-  virtual SectionPosition sectionPosition() const {
-    return sectionPositionAny;
-  }
+  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
 
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
   }
 
-  virtual ContentPermissions permissions() const  {
+  virtual ContentPermissions permissions() const {
     return DefinedAtom::permRW_;
   }
 
-  virtual bool isAlias() const {
-    return false;
-  }
+  virtual bool isAlias() const { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
+  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
 
   virtual reference_iterator begin() const {
     return reference_iterator(*this, nullptr);
@@ -196,8 +142,7 @@ public:
     return nullptr;
   }
 
-  virtual void incrementIterator(const void *&iter) const {
-  }
+  virtual void incrementIterator(const void *&iter) const {}
 
 private:
   const File &_file;
@@ -206,7 +151,7 @@ private:
 
 class TestingPassFile : public MutableFile {
 public:
-  TestingPassFile(const TargetInfo &ti) : MutableFile(ti, "Testing pass") {}
+  TestingPassFile(const LinkingContext &ti) : MutableFile(ti, "Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
@@ -216,10 +161,10 @@ public:
   }
 
   virtual DefinedAtomRange definedAtoms() {
-    return range<std::vector<const DefinedAtom*>::iterator>(
-                  _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
+    return range<std::vector<const DefinedAtom *>::iterator>(
+        _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
   }
-    
+
   virtual const atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
   }
@@ -234,43 +179,37 @@ public:
   }
 
 private:
-  atom_collection_vector<DefinedAtom>       _definedAtoms;
-  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
+  atom_collection_vector<DefinedAtom> _definedAtoms;
+  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
+  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
 struct TestingKindMapping {
-  const char     *string;
-  int32_t         value;
-  bool            isBranch;
-  bool            isGotLoad;
-  bool            isGotUse;
+  const char *string;
+  int32_t value;
+  bool isBranch;
+  bool isGotLoad;
+  bool isGotUse;
 };
 
 //
 // Table of fixup kinds in YAML documents used for testing
 //
 const TestingKindMapping sKinds[] = {
-    {"in-group",      -3, false,  false, false},
-    {"layout-after",  -2, false,  false, false},
-    {"layout-before", -1, false,  false, false},
-    {"call32",         2, true,  false, false},
-    {"pcrel32",        3, false, false, false},
-    {"gotLoad32",      7, false, true,  true},
-    {"gotUse32",       9, false, false, true},
-    {"lea32wasGot",    8, false, false, false},
-    {nullptr,          0, false, false, false}
-  };
+  { "in-group", -3, false, false, false },
+  { "layout-after", -2, false, false, false },
+  { "layout-before", -1, false, false, false },
+  { "call32", 2, true, false, false }, { "pcrel32", 3, false, false, false },
+  { "gotLoad32", 7, false, true, true }, { "gotUse32", 9, false, false, true },
+  { "lea32wasGot", 8, false, false, false }, { nullptr, 0, false, false, false }
+};
 
 class TestingStubsPass : public StubsPass {
 public:
-  TestingStubsPass(const TargetInfo &ti) : _file(TestingPassFile(ti))
-  {}
+  TestingStubsPass(const LinkingContext &ti) : _file(TestingPassFile(ti)) {}
 
-  virtual bool noTextRelocs() {
-    return true;
-  }
+  virtual bool noTextRelocs() { return true; }
 
   virtual bool isCallSite(int32_t kind) {
     for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
@@ -287,7 +226,7 @@ public:
   }
 
   virtual void addStubAtoms(MutableFile &mergedFile) {
-    for (const DefinedAtom *stub : _file.defined() ) {
+    for (const DefinedAtom *stub : _file.defined()) {
       mergedFile.addAtom(*stub);
     }
   }
@@ -298,12 +237,9 @@ private:
 
 class TestingGOTPass : public GOTPass {
 public:
-  TestingGOTPass(const TargetInfo &ti) : _file(TestingPassFile(ti))
-  {}
+  TestingGOTPass(const LinkingContext &ti) : _file(TestingPassFile(ti)) {}
 
-  virtual bool noTextRelocs() {
-    return true;
-  }
+  virtual bool noTextRelocs() { return true; }
 
   virtual bool isGOTAccess(int32_t kind, bool &canBypassGOT) {
     for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
@@ -317,9 +253,9 @@ public:
 
   virtual void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) {
     if (targetIsNowGOT)
-      const_cast<Reference*>(ref)->setKind(3); // pcrel32
+      const_cast<Reference *>(ref)->setKind(3); // pcrel32
     else
-      const_cast<Reference*>(ref)->setKind(8); // lea32wasGot
+      const_cast<Reference *>(ref)->setKind(8); // lea32wasGot
   }
 
   virtual const DefinedAtom *makeGOTEntry(const Atom &target) {
@@ -332,43 +268,41 @@ private:
 
 } // anonymous namespace
 
+CoreLinkingContext::CoreLinkingContext() {}
 
-CoreTargetInfo::CoreTargetInfo() {
-}
-
-bool CoreTargetInfo::validateImpl(raw_ostream &diagnostics) {
+bool CoreLinkingContext::validateImpl(raw_ostream &diagnostics) {
   return false;
 }
 
-void CoreTargetInfo::addPasses(PassManager &pm) const {
+void CoreLinkingContext::addPasses(PassManager &pm) const {
   for (StringRef name : _passNames) {
-    if ( name.equals("layout") )
+    if (name.equals("layout"))
       pm.add(std::unique_ptr<Pass>((new LayoutPass())));
-    else if ( name.equals("GOT") )
+    else if (name.equals("GOT"))
       pm.add(std::unique_ptr<Pass>(new TestingGOTPass(*this)));
-    else if ( name.equals("stubs") )
+    else if (name.equals("stubs"))
       pm.add(std::unique_ptr<Pass>(new TestingStubsPass(*this)));
     else
       llvm_unreachable("bad pass name");
   }
 }
 
-error_code CoreTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                            std::vector<std::unique_ptr<File>> &result) const {
+error_code CoreLinkingContext::parseFile(
+    std::unique_ptr<MemoryBuffer> &mb,
+    std::vector<std::unique_ptr<File>> &result) const {
   if (!_reader)
     _reader = createReaderYAML(*this);
-  return _reader->parseFile(mb,result);
+  return _reader->parseFile(mb, result);
 }
 
-Writer &CoreTargetInfo::writer() const {
+Writer &CoreLinkingContext::writer() const {
   if (!_writer)
     _writer = createWriterYAML(*this);
   return *_writer;
 }
 
-
-ErrorOr<Reference::Kind> 
-CoreTargetInfo::relocKindFromString(StringRef str) const {
+ErrorOr<Reference::Kind>
+CoreLinkingContext::relocKindFromString(StringRef str) const {
   for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
     if (str.equals(p->string))
       return p->value;
@@ -376,14 +310,11 @@ CoreTargetInfo::relocKindFromString(StringRef str) const {
   return make_error_code(yaml_reader_error::illegal_value);
 }
 
-ErrorOr<std::string> 
-CoreTargetInfo::stringFromRelocKind(Reference::Kind kind) const {
+ErrorOr<std::string>
+CoreLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
   for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
     if (kind == p->value)
       return std::string(p->string);
   }
   return make_error_code(yaml_reader_error::illegal_value);
 }
-
-
-

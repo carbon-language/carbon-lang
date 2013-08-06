@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -75,7 +75,7 @@ public:
 
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
                                                   raw_ostream &diagnostics) {
-  std::unique_ptr<ELFTargetInfo> options;
+  std::unique_ptr<ELFLinkingContext> options;
   bool error = parse(argc, argv, options, diagnostics);
   if (error)
     return true;
@@ -86,7 +86,7 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
 }
 
 bool GnuLdDriver::parse(int argc, const char *argv[],
-                        std::unique_ptr<ELFTargetInfo> &targetInfo,
+                        std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diagnostics) {
   // Parse command line options using LDOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
@@ -115,13 +115,13 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     return false;
   }
 
-  // Use -target or use default target triple to instantiate TargetInfo
+  // Use -target or use default target triple to instantiate LinkingContext
   llvm::Triple triple;
   if (llvm::opt::Arg *trip = parsedArgs->getLastArg(OPT_target))
     triple = llvm::Triple(trip->getValue());
   else
     triple = getDefaultTarget(argv[0]);
-  std::unique_ptr<ELFTargetInfo> options(ELFTargetInfo::create(triple));
+  std::unique_ptr<ELFLinkingContext> options(ELFLinkingContext::create(triple));
 
   if (!options) {
     diagnostics << "unknown target triple\n";
@@ -205,15 +205,15 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   // Handle NMAGIC
   if (parsedArgs->getLastArg(OPT_nmagic))
-    options->setOutputMagic(ELFTargetInfo::OutputMagic::NMAGIC);
+    options->setOutputMagic(ELFLinkingContext::OutputMagic::NMAGIC);
 
   // Handle OMAGIC
   if (parsedArgs->getLastArg(OPT_omagic))
-    options->setOutputMagic(ELFTargetInfo::OutputMagic::OMAGIC);
+    options->setOutputMagic(ELFLinkingContext::OutputMagic::OMAGIC);
 
   // Handle --no-omagic
   if (parsedArgs->getLastArg(OPT_no_omagic)) {
-    options->setOutputMagic(ELFTargetInfo::OutputMagic::DEFAULT);
+    options->setOutputMagic(ELFLinkingContext::OutputMagic::DEFAULT);
     options->setNoAllowDynamicLibraries();
   }
 
@@ -268,7 +268,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (options->validate(diagnostics))
     return true;
 
-  targetInfo.swap(options);
+  context.swap(options);
   return false;
 }
 

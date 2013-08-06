@@ -108,7 +108,7 @@ TEST(Range, passing) {
   // MSVC Can't compile make_ptr_range.
 #ifndef _MSC_VER
   static_assert(
-      std::is_same<decltype(make_ptr_range(v)), lld::range<int *> >::value,
+      std::is_same<decltype(make_ptr_range(v)), lld::range<int *>>::value,
       "make_ptr_range should return a range of pointers");
   takes_range(make_ptr_range(v));
   takes_range(make_ptr_range(implicit_cast<const std::vector<int> &>(v)));
@@ -185,12 +185,12 @@ TEST(Range, slice) {
   // -fsanitize=undefined complains about this, but only if optimizations are
   // enabled.
 #if 0
-  test_slice<std::forward_list<int> >();
+  test_slice<std::forward_list<int>>();
 #endif
-  test_slice<std::list<int> >();
-  // This doesn't build with libstdc++ 4.7
+  test_slice<std::list<int>>();
+// This doesn't build with libstdc++ 4.7
 #if 0
-  test_slice<std::deque<int> >();
+  test_slice<std::deque<int>>();
 #endif
 }
 
@@ -204,7 +204,7 @@ TEST(Range, istream_range) {
   // MSVC interprets input as a function declaration if you don't declare start
   // and instead directly pass std::istream_iterator<int>(stream).
   auto start = std::istream_iterator<int>(stream);
-  lld::range<std::istream_iterator<int> > input(
+  lld::range<std::istream_iterator<int>> input(
       start, std::istream_iterator<int>());
   EXPECT_TRUE(input.front() == 1);
   input.pop_front();

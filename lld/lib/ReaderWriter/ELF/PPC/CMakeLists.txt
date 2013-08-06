@@ -1,6 +1,6 @@
 add_lld_library(lldPPCELFTarget
+  PPCLinkingContext.cpp
   PPCTargetHandler.cpp
-  PPCTargetInfo.cpp
   )
 
 target_link_libraries(lldPPCELFTarget

@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ELFTargetInfo.cpp -----------------------------===//
+//===- lib/ReaderWriter/ELF/ELFLinkingContext.cpp -------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "TargetHandler.h"
 #include "Targets.h"
@@ -22,34 +22,28 @@
 #include "llvm/Support/Path.h"
 
 namespace lld {
-ELFTargetInfo::ELFTargetInfo(llvm::Triple triple,
-                             std::unique_ptr<TargetHandlerBase> targetHandler)
-    : _outputFileType(elf::ET_EXEC),
-      _triple(triple),
-      _targetHandler(std::move(targetHandler)),
-      _baseAddress(0),
-      _isStaticExecutable(false),
-      _outputYAML(false),
-      _noInhibitExec(false),
-      _mergeCommonStrings(false),
-      _runLayoutPass(true),
-      _useShlibUndefines(false),
-      _dynamicLinkerArg(false),
+ELFLinkingContext::ELFLinkingContext(
+    llvm::Triple triple, std::unique_ptr<TargetHandlerBase> targetHandler)
+    : _outputFileType(elf::ET_EXEC), _triple(triple),
+      _targetHandler(std::move(targetHandler)), _baseAddress(0),
+      _isStaticExecutable(false), _outputYAML(false), _noInhibitExec(false),
+      _mergeCommonStrings(false), _runLayoutPass(true),
+      _useShlibUndefines(false), _dynamicLinkerArg(false),
       _outputMagic(OutputMagic::DEFAULT) {}
 
-bool ELFTargetInfo::is64Bits() const { return getTriple().isArch64Bit(); }
+bool ELFLinkingContext::is64Bits() const { return getTriple().isArch64Bit(); }
 
-bool ELFTargetInfo::isLittleEndian() const {
+bool ELFLinkingContext::isLittleEndian() const {
   // TODO: Do this properly. It is not defined purely by arch.
   return true;
 }
 
-void ELFTargetInfo::addPasses(PassManager &pm) const {
+void ELFLinkingContext::addPasses(PassManager &pm) const {
   if (_runLayoutPass)
     pm.add(std::unique_ptr<Pass>(new LayoutPass()));
 }
 
-uint16_t ELFTargetInfo::getOutputMachine() const {
+uint16_t ELFLinkingContext::getOutputMachine() const {
   switch (getTriple().getArch()) {
   case llvm::Triple::x86:
     return llvm::ELF::EM_386;
@@ -64,9 +58,8 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
   }
 }
 
-bool ELFTargetInfo::validateImpl(raw_ostream &diagnostics) {
-  if (_outputFileType == elf::ET_EXEC &&
-      _entrySymbolName.empty()) {
+bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
+  if (_outputFileType == elf::ET_EXEC && _entrySymbolName.empty()) {
     _entrySymbolName = "_start";
   }
 
@@ -81,7 +74,7 @@ bool ELFTargetInfo::validateImpl(raw_ostream &diagnostics) {
   return false;
 }
 
-bool ELFTargetInfo::isDynamic() const {
+bool ELFLinkingContext::isDynamic() const {
   switch (_outputFileType) {
   case llvm::ELF::ET_EXEC:
     return !_isStaticExecutable;
@@ -91,11 +84,13 @@ bool ELFTargetInfo::isDynamic() const {
   return false;
 }
 
-bool ELFTargetInfo::isRelativeReloc(const Reference &) const { return false; }
+bool ELFLinkingContext::isRelativeReloc(const Reference &) const {
+  return false;
+}
 
-error_code
-ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                         std::vector<std::unique_ptr<File> > &result) const {
+error_code ELFLinkingContext::parseFile(
+    std::unique_ptr<MemoryBuffer> &mb,
+    std::vector<std::unique_ptr<File>> &result) const {
   ScopedTask task(getDefaultDomain(), "parseFile");
   error_code ec = _elfReader->parseFile(mb, result);
   if (!ec)
@@ -113,29 +108,29 @@ ELFTargetInfo::parseFile(std::unique_ptr<MemoryBuffer> &mb,
   return _linkerScriptReader->parseFile(mb, result);
 }
 
-Writer &ELFTargetInfo::writer() const {
-  return *_writer;
-}
+Writer &ELFLinkingContext::writer() const { return *_writer; }
 
-
-std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(llvm::Triple triple) {
+std::unique_ptr<ELFLinkingContext>
+ELFLinkingContext::create(llvm::Triple triple) {
   switch (triple.getArch()) {
   case llvm::Triple::x86:
-    return std::unique_ptr<ELFTargetInfo>(new lld::elf::X86TargetInfo(triple));
+    return std::unique_ptr<ELFLinkingContext>(
+        new lld::elf::X86LinkingContext(triple));
   case llvm::Triple::x86_64:
-    return std::unique_ptr<
-        ELFTargetInfo>(new lld::elf::X86_64TargetInfo(triple));
+    return std::unique_ptr<ELFLinkingContext>(
+        new lld::elf::X86_64LinkingContext(triple));
   case llvm::Triple::hexagon:
-    return std::unique_ptr<
-        ELFTargetInfo>(new lld::elf::HexagonTargetInfo(triple));
+    return std::unique_ptr<ELFLinkingContext>(
+        new lld::elf::HexagonLinkingContext(triple));
   case llvm::Triple::ppc:
-    return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCTargetInfo(triple));
+    return std::unique_ptr<ELFLinkingContext>(
+        new lld::elf::PPCLinkingContext(triple));
   default:
     return nullptr;
   }
 }
 
-bool ELFTargetInfo::appendLibrary(StringRef libName) {
+bool ELFLinkingContext::appendLibrary(StringRef libName) {
   bool foundFile = false;
   StringRef pathref;
   for (StringRef dir : _inputSearchPaths) {

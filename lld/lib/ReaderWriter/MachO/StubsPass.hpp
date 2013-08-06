@@ -28,10 +28,10 @@ namespace mach_o {
 
 class StubsPass : public lld::StubsPass {
 public:
-  StubsPass(const MachOTargetInfo &ti) 
-    : _targetInfo(ti)
-    , _kindHandler(_targetInfo.kindHandler())
-    , _file(ti)
+  StubsPass(const MachOLinkingContext &context)
+    : _context(context)
+    , _kindHandler(_context.kindHandler())
+    , _file(context)
     , _helperCommonAtom(nullptr)
     , _helperCacheAtom(nullptr)
     , _helperBinderAtom(nullptr) {
@@ -59,14 +59,14 @@ public:
   }
 
   const DefinedAtom* makeStub(const Atom& target) {
-    switch (_targetInfo.arch()) {
-      case MachOTargetInfo::arch_x86_64:
+    switch (_context.arch()) {
+      case MachOLinkingContext::arch_x86_64:
         return makeStub_x86_64(target);
-      case MachOTargetInfo::arch_x86:
+      case MachOLinkingContext::arch_x86:
         return makeStub_x86(target);
-      case MachOTargetInfo::arch_armv6:
-      case MachOTargetInfo::arch_armv7:
-      case MachOTargetInfo::arch_armv7s:
+      case MachOLinkingContext::arch_armv6:
+      case MachOLinkingContext::arch_armv7:
+      case MachOLinkingContext::arch_armv7s:
         return makeStub_arm(target);
       default:
         llvm_unreachable("Unknown mach-o arch");
@@ -149,11 +149,11 @@ private:
 
   class File : public SimpleFile {
   public:
-    File(const MachOTargetInfo &ti) : SimpleFile(ti, "MachO Stubs pass") {
-    }
+    File(const MachOLinkingContext &context)
+        : SimpleFile(context, "MachO Stubs pass") {}
   };
 
-  const MachOTargetInfo                          &_targetInfo;
+  const MachOLinkingContext                       &_context;
   mach_o::KindHandler                            &_kindHandler;
   File                                            _file;
   llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;

@@ -14,7 +14,6 @@
 
 namespace lld {
 
-
 ///
 /// The ArchiveLibraryFile subclass of File is used to represent unix
 /// static library archives.  These libraries provide no atoms to the
@@ -34,15 +33,14 @@ public:
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const = 0;
 
-  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+  virtual const LinkingContext &getLinkingContext() const { return _context; }
 
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated
-  ArchiveLibraryFile(const TargetInfo &ti, StringRef path)
-      : File(path, kindArchiveLibrary), _targetInfo(ti) {
-  }
+  ArchiveLibraryFile(const LinkingContext &context, StringRef path)
+      : File(path, kindArchiveLibrary), _context(context) {}
 
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
 };
 
 } // namespace lld

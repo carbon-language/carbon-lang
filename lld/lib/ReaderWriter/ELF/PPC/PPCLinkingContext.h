@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/PPCTargetInfo.h -----------------------===//
+//===- lib/ReaderWriter/ELF/PPC/PPCLinkingContext.h -----------------------===//
 //
 //                             The LLVM Linker
 //
@@ -12,17 +12,18 @@
 
 #include "PPCTargetHandler.h"
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
 namespace lld {
 namespace elf {
-class PPCTargetInfo LLVM_FINAL : public ELFTargetInfo {
+class PPCLinkingContext LLVM_FINAL : public ELFLinkingContext {
 public:
-  PPCTargetInfo(llvm::Triple triple)
-    : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(new PPCTargetHandler(*this))) {}
+  PPCLinkingContext(llvm::Triple triple)
+      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+                                      new PPCTargetHandler(*this))) {}
 
   virtual bool isLittleEndian() const { return false; }
 

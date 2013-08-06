@@ -1,4 +1,4 @@
-//===- lld/ReaderWriter/PECOFFTargetInfo.h ---------------------------------===//
+//===- lld/ReaderWriter/PECOFFLinkingContext.h ----------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_PECOFF_TARGET_INFO_H
-#define LLD_READER_WRITER_PECOFF_TARGET_INFO_H
+#ifndef LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
+#define LLD_READER_WRITER_PECOFF_LINKER_CONTEXT_H
 
 #include <vector>
 
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -22,14 +22,14 @@
 
 namespace lld {
 
-class PECOFFTargetInfo : public TargetInfo {
+class PECOFFLinkingContext : public LinkingContext {
 public:
-  PECOFFTargetInfo()
+  PECOFFLinkingContext()
       : _baseAddress(0x400000), _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096),
         _subsystem(llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN), _minOSVersion(6, 0),
-        _nxCompat(true), _largeAddressAware(false), _baseRelocationEnabled(true),
-        _terminalServerAware(true) {}
+        _nxCompat(true), _largeAddressAware(false),
+        _baseRelocationEnabled(true), _terminalServerAware(true) {}
 
   struct OSVersion {
     OSVersion(int v1, int v2) : majorVersion(v1), minorVersion(v2) {}
@@ -37,9 +37,9 @@ public:
     int minorVersion;
   };
 
-  virtual error_code parseFile(
-      std::unique_ptr<MemoryBuffer> &mb,
-      std::vector<std::unique_ptr<File>> &result) const;
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+            std::vector<std::unique_ptr<File> > &result) const;
 
   virtual Writer &writer() const;
   virtual bool validateImpl(raw_ostream &diagnostics);

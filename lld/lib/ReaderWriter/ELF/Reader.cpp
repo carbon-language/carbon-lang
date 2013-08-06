@@ -21,7 +21,7 @@
 #include "File.h"
 
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -53,7 +53,7 @@ struct DynamicFileCreateELFTraits {
   typedef llvm::ErrorOr<std::unique_ptr<lld::SharedLibraryFile>> result_type;
 
   template <class ELFT>
-  static result_type create(const lld::ELFTargetInfo &ti,
+  static result_type create(const lld::ELFLinkingContext &ti,
                             std::unique_ptr<llvm::MemoryBuffer> mb) {
     return lld::elf::DynamicFile<ELFT>::create(ti, std::move(mb));
   }
@@ -63,7 +63,7 @@ struct ELFFileCreateELFTraits {
   typedef std::unique_ptr<lld::File> result_type;
 
   template <class ELFT>
-  static result_type create(const lld::ELFTargetInfo &ti,
+  static result_type create(const lld::ELFLinkingContext &ti,
                             std::unique_ptr<llvm::MemoryBuffer> mb,
                             lld::error_code &ec) {
     return std::unique_ptr<lld::File>(
@@ -78,12 +78,11 @@ namespace elf {
 /// memory buffer for ELF class and bit width
 class ELFReader : public Reader {
 public:
-  ELFReader(const ELFTargetInfo &ti)
-      : lld::Reader(ti), _elfTargetInfo(ti), _readerArchive(ti, *this) {
-  }
+  ELFReader(const ELFLinkingContext &ti)
+      : lld::Reader(ti), _elfLinkingContext(ti), _readerArchive(ti, *this) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                       std::vector<std::unique_ptr<File> > &result) const {
+                       std::vector<std::unique_ptr<File>> &result) const {
     using llvm::object::ELFType;
     llvm::sys::fs::file_magic FileType =
         llvm::sys::fs::identify_magic(mb->getBuffer());
@@ -95,7 +94,7 @@ public:
     switch (FileType) {
     case llvm::sys::fs::file_magic::elf_relocatable: {
       std::unique_ptr<File> f(createELF<ELFFileCreateELFTraits>(
-          getElfArchType(&*mb), MaxAlignment, _elfTargetInfo, std::move(mb),
+          getElfArchType(&*mb), MaxAlignment, _elfLinkingContext, std::move(mb),
           ec));
       if (ec)
         return ec;
@@ -105,10 +104,11 @@ public:
     case llvm::sys::fs::file_magic::elf_shared_object: {
       // If the link doesnot allow dynamic libraries to be present during the
       // link, lets not parse the file and just return
-      if (!_elfTargetInfo.allowLinkWithDynamicLibraries())
+      if (!_elfLinkingContext.allowLinkWithDynamicLibraries())
         return llvm::make_error_code(llvm::errc::executable_format_error);
       auto f = createELF<DynamicFileCreateELFTraits>(
-          getElfArchType(&*mb), MaxAlignment, _elfTargetInfo, std::move(mb));
+          getElfArchType(&*mb), MaxAlignment, _elfLinkingContext,
+          std::move(mb));
       if (!f)
         return f;
       result.push_back(std::move(*f));
@@ -129,12 +129,12 @@ public:
   }
 
 private:
-  const ELFTargetInfo &_elfTargetInfo;
+  const ELFLinkingContext &_elfLinkingContext;
   ReaderArchive _readerArchive;
 };
 } // end namespace elf
 
-std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &targetinfo) {
-  return std::unique_ptr<Reader>(new elf::ELFReader(targetinfo));
+std::unique_ptr<Reader> createReaderELF(const ELFLinkingContext &context) {
+  return std::unique_ptr<Reader>(new elf::ELFReader(context));
 }
 } // end namespace lld

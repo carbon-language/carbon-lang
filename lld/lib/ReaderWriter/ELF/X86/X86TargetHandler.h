@@ -16,25 +16,26 @@
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 4, false> X86ELFType;
-class X86TargetInfo;
+class X86LinkingContext;
 
 class X86TargetRelocationHandler LLVM_FINAL
     : public TargetRelocationHandler<X86ELFType> {
 public:
-  X86TargetRelocationHandler(const X86TargetInfo &ti) : _targetInfo(ti) {}
+  X86TargetRelocationHandler(const X86LinkingContext &context)
+      : _context(context) {}
 
   virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                         const lld::AtomLayout &,
                                         const Reference &)const;
 
 private:
-  const X86TargetInfo &_targetInfo;
+  const X86LinkingContext &_context;
 };
 
 class X86TargetHandler LLVM_FINAL
     : public DefaultTargetHandler<X86ELFType> {
 public:
-  X86TargetHandler(X86TargetInfo &targetInfo);
+  X86TargetHandler(X86LinkingContext &context);
 
   virtual TargetLayout<X86ELFType> &targetLayout() {
     return _targetLayout;

@@ -1,4 +1,4 @@
-//===- lld/ReaderWriter/ELFTargetInfo.h -----------------------------------===//
+//===- lld/ReaderWriter/ELFLinkingContext.h -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_TARGET_INFO_H
-#define LLD_READER_WRITER_ELF_TARGET_INFO_H
+#ifndef LLD_READER_WRITER_ELF_LINKER_CONTEXT_H
+#define LLD_READER_WRITER_ELF_LINKER_CONTEXT_H
 
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Pass.h"
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -26,21 +26,23 @@ namespace lld {
 class DefinedAtom;
 class Reference;
 
-namespace elf { template <typename ELFT> class TargetHandler; }
+namespace elf {
+template <typename ELFT> class TargetHandler;
+}
 
 class TargetHandlerBase {
 public:
   virtual ~TargetHandlerBase() {}
 };
 
-class ELFTargetInfo : public TargetInfo {
+class ELFLinkingContext : public LinkingContext {
 public:
   enum class OutputMagic : uint8_t {
-    DEFAULT, // The default mode, no specific magic set
-    NMAGIC,  // Disallow shared libraries and dont align sections
-             // PageAlign Data, Mark Text Segment/Data segment RW
-    OMAGIC   // Disallow shared libraries and dont align sections,
-             // Mark Text Segment/Data segment RW
+    DEFAULT,    // The default mode, no specific magic set
+        NMAGIC, // Disallow shared libraries and dont align sections
+                // PageAlign Data, Mark Text Segment/Data segment RW
+        OMAGIC  // Disallow shared libraries and dont align sections,
+                // Mark Text Segment/Data segment RW
   };
   llvm::Triple getTriple() const { return _triple; }
   virtual bool is64Bits() const;
@@ -77,16 +79,16 @@ public:
   /// having NMAGIC/OMAGIC
   virtual bool allowLinkWithDynamicLibraries() const {
     if (_outputMagic == OutputMagic::NMAGIC ||
-        _outputMagic == OutputMagic::OMAGIC ||
-        _noAllowDynamicLibraries)
+        _outputMagic == OutputMagic::OMAGIC || _noAllowDynamicLibraries)
       return false;
     return true;
   }
 
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                        std::vector<std::unique_ptr<File>> &result) const;
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+            std::vector<std::unique_ptr<File> > &result) const;
 
-  static std::unique_ptr<ELFTargetInfo> create(llvm::Triple);
+  static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
 
   /// \brief Does this relocation belong in the dynamic plt relocation table?
   ///
@@ -155,31 +157,32 @@ public:
   bool appendLibrary(StringRef libName);
 
 private:
-  ELFTargetInfo() LLVM_DELETED_FUNCTION;
+  ELFLinkingContext() LLVM_DELETED_FUNCTION;
+
 protected:
-  ELFTargetInfo(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
+  ELFLinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
 
   virtual Writer &writer() const;
 
-  uint16_t                           _outputFileType; // e.g ET_EXEC
-  llvm::Triple                       _triple;
+  uint16_t _outputFileType; // e.g ET_EXEC
+  llvm::Triple _triple;
   std::unique_ptr<TargetHandlerBase> _targetHandler;
-  uint64_t                           _baseAddress;
-  bool                               _isStaticExecutable;
-  bool                               _outputYAML;
-  bool                               _noInhibitExec;
-  bool                               _mergeCommonStrings;
-  bool                               _runLayoutPass;
-  bool                               _useShlibUndefines;
-  bool                               _dynamicLinkerArg;
-  bool                               _noAllowDynamicLibraries;
-  OutputMagic                        _outputMagic;
-  StringRefVector                    _inputSearchPaths;
-  llvm::BumpPtrAllocator             _extraStrings;
-  std::unique_ptr<Reader>            _elfReader;
-  std::unique_ptr<Writer>            _writer;
-  std::unique_ptr<Reader>            _linkerScriptReader;
-  StringRef                          _dynamicLinkerPath;
+  uint64_t _baseAddress;
+  bool _isStaticExecutable;
+  bool _outputYAML;
+  bool _noInhibitExec;
+  bool _mergeCommonStrings;
+  bool _runLayoutPass;
+  bool _useShlibUndefines;
+  bool _dynamicLinkerArg;
+  bool _noAllowDynamicLibraries;
+  OutputMagic _outputMagic;
+  StringRefVector _inputSearchPaths;
+  llvm::BumpPtrAllocator _extraStrings;
+  std::unique_ptr<Reader> _elfReader;
+  std::unique_ptr<Writer> _writer;
+  std::unique_ptr<Reader> _linkerScriptReader;
+  StringRef _dynamicLinkerPath;
 };
 } // end namespace lld
 

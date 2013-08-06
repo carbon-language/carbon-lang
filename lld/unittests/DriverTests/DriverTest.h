@@ -25,18 +25,16 @@ template<typename D, typename T>
 class ParserTest : public testing::Test {
 protected:
 
-  virtual const TargetInfo *targetInfo() = 0;
+  virtual const LinkingContext *linkingContext() = 0;
 
   std::string &errorMessage() { return  _errorMessage; }
 
   // Convenience method for getting number of input files.
-  int inputFileCount() {
-    return targetInfo()->inputFiles().size();
-  }
+  int inputFileCount() { return linkingContext()->inputFiles().size(); }
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(unsigned index) {
-    return targetInfo()->inputFiles()[index].getPath().str();
+    return linkingContext()->inputFiles()[index].getPath().str();
   }
 
   // For unit tests to call driver with various command lines.
@@ -52,10 +50,10 @@ protected:
 
     // Call the parser.
     raw_string_ostream os(_errorMessage);
-    return D::parse(vec.size(), &vec[0], _info, os);
+    return D::parse(vec.size(), &vec[0], _context, os);
   }
 
-  T           _info;
+  T _context;
   std::string _errorMessage;
 };
 

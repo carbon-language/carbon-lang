@@ -16,25 +16,26 @@
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::big, 4, false> PPCELFType;
-class PPCTargetInfo;
+class PPCLinkingContext;
 
 class PPCTargetRelocationHandler LLVM_FINAL
     : public TargetRelocationHandler<PPCELFType> {
 public:
-  PPCTargetRelocationHandler(const PPCTargetInfo &ti) : _targetInfo(ti) {}
+  PPCTargetRelocationHandler(const PPCLinkingContext &context)
+      : _context(context) {}
 
   virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                         const lld::AtomLayout &,
                                         const Reference &)const;
 
 private:
-  const PPCTargetInfo &_targetInfo;
+  const PPCLinkingContext &_context;
 };
 
 class PPCTargetHandler LLVM_FINAL
     : public DefaultTargetHandler<PPCELFType> {
 public:
-  PPCTargetHandler(PPCTargetInfo &targetInfo);
+  PPCTargetHandler(PPCLinkingContext &targetInfo);
 
   virtual TargetLayout<PPCELFType> &targetLayout() {
     return _targetLayout;

@@ -10,7 +10,7 @@
 /// \file
 ///
 /// Interface for Drivers which convert command line arguments into
-/// TargetInfo objects, then perform the link.
+/// LinkingContext objects, then perform the link.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -26,19 +26,20 @@
 #include <vector>
 
 namespace lld {
-class TargetInfo;
-class CoreTargetInfo;
-class MachOTargetInfo;
-class PECOFFTargetInfo;
-class ELFTargetInfo;
+class LinkingContext;
+class CoreLinkingContext;
+class MachOLinkingContext;
+class PECOFFLinkingContext;
+class ELFLinkingContext;
 
 /// Base class for all Drivers.
 class Driver {
 protected:
 
   /// Performs link using specified options.
-  static bool link(const TargetInfo &targetInfo,
+  static bool link(const LinkingContext &context,
                    raw_ostream &diagnostics = llvm::errs());
+
 private:
   Driver() LLVM_DELETED_FUNCTION;
 };
@@ -68,7 +69,7 @@ public:
   /// Uses gnu/binutils style ld command line options to fill in options struct.
   /// Returns true iff there was an error.
   static bool parse(int argc, const char *argv[],
-                    std::unique_ptr<ELFTargetInfo> &targetInfo,
+                    std::unique_ptr<ELFLinkingContext> &context,
                     raw_ostream &diagnostics = llvm::errs());
 
 private:
@@ -86,10 +87,11 @@ public:
   static bool linkMachO(int argc, const char *argv[],
                         raw_ostream &diagnostics = llvm::errs());
 
-  /// Uses darwin style ld command line options to update targetInfo object.
+  /// Uses darwin style ld command line options to update LinkingContext object.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], MachOTargetInfo &info,
+  static bool parse(int argc, const char *argv[], MachOLinkingContext &info,
                     raw_ostream &diagnostics = llvm::errs());
+
 private:
   DarwinLdDriver() LLVM_DELETED_FUNCTION;
 };
@@ -105,7 +107,7 @@ public:
 
   /// Uses Windows style link command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], PECOFFTargetInfo &info,
+  static bool parse(int argc, const char *argv[], PECOFFLinkingContext &info,
                     raw_ostream &diagnostics = llvm::errs());
 
 private:
@@ -124,7 +126,7 @@ public:
 
   /// Uses lld-core command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], CoreTargetInfo &info,
+  static bool parse(int argc, const char *argv[], CoreLinkingContext &info,
                     raw_ostream &diagnostics = llvm::errs());
 
 private:

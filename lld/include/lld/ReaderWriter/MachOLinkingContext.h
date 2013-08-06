@@ -1,4 +1,4 @@
-//===- lld/ReaderWriter/MachOTargetInfo.h ---------------------------------===//
+//===- lld/ReaderWriter/MachOLinkingContext.h -----------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_MACHO_TARGET_INFO_H
-#define LLD_READER_WRITER_MACHO_TARGET_INFO_H
+#ifndef LLD_READER_WRITER_MACHO_LINKER_CONTEXT_H
+#define LLD_READER_WRITER_MACHO_LINKER_CONTEXT_H
 
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
@@ -19,21 +19,22 @@
 namespace lld {
 
 namespace mach_o {
-  class KindHandler;  // defined in lib. this header is in include.
+class KindHandler; // defined in lib. this header is in include.
 }
 
-class MachOTargetInfo : public TargetInfo {
+class MachOLinkingContext : public LinkingContext {
 public:
-  MachOTargetInfo();
-  ~MachOTargetInfo();
+  MachOLinkingContext();
+  ~MachOLinkingContext();
 
   virtual void addPasses(PassManager &pm) const;
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
   virtual bool validateImpl(raw_ostream &diagnostics);
 
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                        std::vector<std::unique_ptr<File>> &result) const;
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+            std::vector<std::unique_ptr<File> > &result) const;
 
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;
@@ -42,14 +43,12 @@ public:
   bool addUnixThreadLoadCommand() const;
   bool outputTypeHasEntry() const;
 
-  virtual uint64_t pageZeroSize() const {
-    return _pageZeroSize;
-  }
-  
+  virtual uint64_t pageZeroSize() const { return _pageZeroSize; }
+
   mach_o::KindHandler &kindHandler() const;
-  
+
   uint32_t outputFileType() const { return _outputFileType; }
-  
+
   enum Arch {
     arch_unknown,
     arch_x86,
@@ -58,11 +57,9 @@ public:
     arch_armv7,
     arch_armv7s,
   };
-  
+
   enum class OS {
-    macOSX,
-    iOS,
-    iOS_simulator
+    macOSX, iOS, iOS_simulator
   };
 
   Arch arch() const { return _arch; }
@@ -74,38 +71,39 @@ public:
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
-  
+
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
   static Arch archFromName(StringRef archName);
   static uint32_t cpuTypeFromArch(Arch arch);
   static uint32_t cpuSubtypeFromArch(Arch arch);
-  
+
 private:
   virtual Writer &writer() const;
 
-  /// 32-bit packed encoding of "X.Y.Z" where nibbles are xxxx.yy.zz.  
+  /// 32-bit packed encoding of "X.Y.Z" where nibbles are xxxx.yy.zz.
   struct PackedVersion {
     PackedVersion(StringRef);
-    static bool parse(StringRef, PackedVersion&);
-    bool operator<(const PackedVersion&) const;
-    bool operator>=(const PackedVersion&) const;
-    bool operator==(const PackedVersion&) const;
-  private:
-    PackedVersion(uint32_t v) : _value(v) { }
+    static bool parse(StringRef, PackedVersion &);
+    bool operator<(const PackedVersion &) const;
+    bool operator>=(const PackedVersion &) const;
+    bool operator==(const PackedVersion &) const;
 
-    uint32_t    _value;
+  private:
+    PackedVersion(uint32_t v) : _value(v) {}
+
+    uint32_t _value;
   };
 
-  uint32_t        _outputFileType; // e.g MH_EXECUTE
-  bool            _outputFileTypeStatic; // Disambiguate static vs dynamic prog
-  bool            _doNothing;   // for -help and -v which just print info
-  Arch            _arch;
-  OS              _os;
-  PackedVersion   _osMinVersion;
-  uint64_t        _pageZeroSize;
-  mutable std::unique_ptr<mach_o::KindHandler>  _kindHandler;
-  mutable std::unique_ptr<Reader>               _machoReader;
-  mutable std::unique_ptr<Writer>               _writer;
+  uint32_t _outputFileType;   // e.g MH_EXECUTE
+  bool _outputFileTypeStatic; // Disambiguate static vs dynamic prog
+  bool _doNothing;            // for -help and -v which just print info
+  Arch _arch;
+  OS _os;
+  PackedVersion _osMinVersion;
+  uint64_t _pageZeroSize;
+  mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
+  mutable std::unique_ptr<Reader> _machoReader;
+  mutable std::unique_ptr<Writer> _writer;
 };
 
 } // end namespace lld

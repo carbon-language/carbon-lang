@@ -181,10 +181,10 @@ std::vector<uint8_t> FuncAtom::rawContent(
 
 class FileImportLibrary : public File {
 public:
-  FileImportLibrary(const TargetInfo &ti,
+  FileImportLibrary(const LinkingContext &context,
                     std::unique_ptr<llvm::MemoryBuffer> mb,
                     llvm::error_code &ec)
-      : File(mb->getBufferIdentifier(), kindSharedLibrary), _targetInfo(ti) {
+      : File(mb->getBufferIdentifier(), kindSharedLibrary), _context(context) {
     const char *buf = mb->getBufferStart();
     const char *end = mb->getBufferEnd();
 
@@ -239,7 +239,7 @@ public:
     return _noAbsoluteAtoms;
   }
 
-  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+  virtual const LinkingContext &getLinkingContext() const { return _context; }
 
 private:
   const COFFSharedLibraryAtom *
@@ -263,7 +263,7 @@ private:
 
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
   mutable llvm::BumpPtrAllocator _alloc;
 
   // Convert the given symbol name to the import symbol name exported by the
@@ -295,9 +295,9 @@ private:
 
 } // end anonymous namespace
 
-error_code parseCOFFImportLibrary(const TargetInfo &targetInfo,
+error_code parseCOFFImportLibrary(const LinkingContext &targetInfo,
                                   std::unique_ptr<MemoryBuffer> &mb,
-                                  std::vector<std::unique_ptr<File> > &result) {
+                                  std::vector<std::unique_ptr<File>> &result) {
   // Check the file magic.
   const char *buf = mb->getBufferStart();
   const char *end = mb->getBufferEnd();

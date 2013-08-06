@@ -45,10 +45,10 @@ public:
     OwningPtr<MemoryBuffer> buff;
     if (ci->getMemoryBuffer(buff, true))
       return nullptr;
-    if (_targetInfo.logInputFiles())
+    if (_context.logInputFiles())
       llvm::outs() << buff->getBufferIdentifier() << "\n";
     std::unique_ptr<MemoryBuffer> mb(buff.take());
-    if (_targetInfo.parseFile(mb, result))
+    if (_context.parseFile(mb, result))
       return nullptr;
 
     assert(result.size() == 1);
@@ -131,9 +131,9 @@ private:
 
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated
-  FileArchive(const TargetInfo &ti,
+  FileArchive(const LinkingContext &context,
               std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
-      : ArchiveLibraryFile(ti, mb->getBufferIdentifier()) {
+      : ArchiveLibraryFile(context, mb->getBufferIdentifier()) {
     std::unique_ptr<llvm::object::Archive> archive_obj(
         new llvm::object::Archive(mb.release(), ec));
     if (ec)
@@ -163,7 +163,7 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
                             std::vector<std::unique_ptr<File>> &result) const {
   error_code ec;
 
-  if (_targetInfo.forceLoadAllArchives()) {
+  if (_context.forceLoadAllArchives()) {
     _archive.reset(new llvm::object::Archive(mb.release(), ec));
     if (ec)
       return ec;
@@ -174,14 +174,14 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> &mb,
       if ((ec = mf->getMemoryBuffer(buff, true)))
         return ec;
       std::unique_ptr<MemoryBuffer> mbc(buff.take());
-      if (_targetInfo.logInputFiles())
+      if (_context.logInputFiles())
         llvm::outs() << buff->getBufferIdentifier() << "\n";
-      if ((ec = _targetInfo.parseFile(mbc, result)))
+      if ((ec = _context.parseFile(mbc, result)))
         return ec;
     }
   } else {
     std::unique_ptr<File> f;
-    f.reset(new FileArchive(_targetInfo, std::move(mb), ec));
+    f.reset(new FileArchive(_context, std::move(mb), ec));
     if (ec)
       return ec;
 

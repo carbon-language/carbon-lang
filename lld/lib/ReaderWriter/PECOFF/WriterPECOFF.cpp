@@ -32,7 +32,7 @@
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/ReaderWriter/AtomLayout.h"
-#include "lld/ReaderWriter/PECOFFTargetInfo.h"
+#include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -137,7 +137,7 @@ private:
 /// A PEHeaderChunk represents PE header including COFF header.
 class PEHeaderChunk : public HeaderChunk {
 public:
-  explicit PEHeaderChunk(const PECOFFTargetInfo &targetInfo) : HeaderChunk() {
+  explicit PEHeaderChunk(const PECOFFLinkingContext &context) : HeaderChunk() {
     // Set the size of the chunk and initialize the header with null bytes.
     _size = sizeof(llvm::COFF::PEMagic) + sizeof(_coffHeader)
         + sizeof(_peHeader);
@@ -153,7 +153,7 @@ public:
     // Attributes of the executable.
     uint16_t characteristics = llvm::COFF::IMAGE_FILE_32BIT_MACHINE |
                                llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
-    if (targetInfo.getLargeAddressAware())
+    if (context.getLargeAddressAware())
       characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
     _coffHeader.Characteristics = characteristics;
 
@@ -166,7 +166,7 @@ public:
 
     // The address of the executable when loaded into memory. The default for
     // DLLs is 0x10000000. The default for executables is 0x400000.
-    _peHeader.ImageBase = targetInfo.getBaseAddress();
+    _peHeader.ImageBase = context.getBaseAddress();
 
     // Sections should be page-aligned when loaded into memory, which is 4KB on
     // x86.
@@ -178,7 +178,7 @@ public:
     // The required Windows version number. This is the internal version and
     // shouldn't be confused with product name. Windows 7 is version 6.1 and
     // Windows 8 is 6.2, for example.
-    PECOFFTargetInfo::OSVersion minOSVersion = targetInfo.getMinOSVersion();
+    PECOFFLinkingContext::OSVersion minOSVersion = context.getMinOSVersion();
     _peHeader.MajorOperatingSystemVersion = minOSVersion.majorVersion;
     _peHeader.MinorOperatingSystemVersion = minOSVersion.minorVersion;
     _peHeader.MajorSubsystemVersion = minOSVersion.majorVersion;
@@ -188,7 +188,7 @@ public:
     // between the end of the header and the beginning of the first section.
     // Must be multiple of FileAlignment.
     _peHeader.SizeOfHeaders = 512;
-    _peHeader.Subsystem = targetInfo.getSubsystem();
+    _peHeader.Subsystem = context.getSubsystem();
 
     // Despite its name, DLL characteristics field has meaning both for
     // executables and DLLs. We are not very sure if the following bits must
@@ -196,19 +196,19 @@ public:
     // them.
     uint16_t dllCharacteristics =
         llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH;
-    if (targetInfo.isTerminalServerAware())
+    if (context.isTerminalServerAware())
       dllCharacteristics |=
           llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
-    if (targetInfo.isNxCompat())
+    if (context.isNxCompat())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
-    if (targetInfo.getBaseRelocationEnabled())
+    if (context.getBaseRelocationEnabled())
       dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
     _peHeader.DLLCharacteristics = dllCharacteristics;
 
-    _peHeader.SizeOfStackReserve = targetInfo.getStackReserve();
-    _peHeader.SizeOfStackCommit = targetInfo.getStackCommit();
-    _peHeader.SizeOfHeapReserve = targetInfo.getHeapReserve();
-    _peHeader.SizeOfHeapCommit = targetInfo.getHeapCommit();
+    _peHeader.SizeOfStackReserve = context.getStackReserve();
+    _peHeader.SizeOfStackCommit = context.getStackCommit();
+    _peHeader.SizeOfHeapReserve = context.getHeapReserve();
+    _peHeader.SizeOfHeapCommit = context.getHeapCommit();
 
     // The number of data directory entries. We always have 16 entries.
     _peHeader.NumberOfRvaAndSize = 16;
@@ -727,15 +727,15 @@ private:
 
 class ExecutableWriter : public Writer {
 public:
-  explicit ExecutableWriter(const PECOFFTargetInfo &targetInfo)
-    : _PECOFFTargetInfo(targetInfo), _numSections(0),
-      _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
+  explicit ExecutableWriter(const PECOFFLinkingContext &context)
+      : _PECOFFLinkingContext(context), _numSections(0),
+        _imageSizeInMemory(PAGE_SIZE), _imageSizeOnDisk(0) {}
 
   // Create all chunks that consist of the output file.
   void build(const File &linkedFile) {
     // Create file chunks and add them to the list.
     auto *dosStub = new DOSStubChunk();
-    auto *peHeader = new PEHeaderChunk(_PECOFFTargetInfo);
+    auto *peHeader = new PEHeaderChunk(_PECOFFLinkingContext);
     auto *dataDirectory = new DataDirectoryChunk(linkedFile);
     auto *sectionTable = new SectionHeaderTableChunk();
     auto *text = new TextSectionChunk(linkedFile);
@@ -743,7 +743,7 @@ public:
     auto *data = new DataSectionChunk(linkedFile);
     auto *bss = new BssSectionChunk(linkedFile);
     BaseRelocChunk *baseReloc = nullptr;
-    if (_PECOFFTargetInfo.getBaseRelocationEnabled())
+    if (_PECOFFLinkingContext.getBaseRelocationEnabled())
       baseReloc = new BaseRelocChunk(linkedFile);
 
     addChunk(dosStub);
@@ -818,7 +818,7 @@ private:
     for (auto &cp : _chunks)
       if (AtomChunk *chunk = dyn_cast<AtomChunk>(&*cp))
         chunk->applyRelocations(bufferStart, atomRva,
-                                _PECOFFTargetInfo.getBaseAddress());
+                                _PECOFFLinkingContext.getBaseAddress());
   }
 
   void addChunk(Chunk *chunk) {
@@ -851,7 +851,7 @@ private:
   }
 
   std::vector<std::unique_ptr<Chunk>> _chunks;
-  const PECOFFTargetInfo &_PECOFFTargetInfo;
+  const PECOFFLinkingContext &_PECOFFLinkingContext;
   uint32_t _numSections;
 
   // The size of the image in memory. This is initialized with PAGE_SIZE, as the
@@ -870,7 +870,7 @@ private:
 
 } // end namespace pecoff
 
-std::unique_ptr<Writer> createWriterPECOFF(const PECOFFTargetInfo &info) {
+std::unique_ptr<Writer> createWriterPECOFF(const PECOFFLinkingContext &info) {
   return std::unique_ptr<Writer>(new pecoff::ExecutableWriter(info));
 }
 

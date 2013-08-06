@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86_64TargetHandler.h"
-#include "X86_64TargetInfo.h"
+#include "X86_64LinkingContext.h"
 
 using namespace lld;
 using namespace elf;
@@ -85,8 +85,8 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_TPOFF64:
   case R_X86_64_DTPOFF32:
   case R_X86_64_TPOFF32: {
-    _tlsSize = _targetInfo.getTargetHandler<X86_64ELFType>().targetLayout()
-        .getTLSSize();
+    _tlsSize =
+        _context.getTargetHandler<X86_64ELFType>().targetLayout().getTLSSize();
     if (ref.kind() == R_X86_64_TPOFF32 || ref.kind() == R_X86_64_DTPOFF32) {
       int32_t result = (int32_t)(targetVAddress - _tlsSize);
       *reinterpret_cast<llvm::support::little32_t *>(location) = result;
@@ -109,7 +109,7 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
     for (const Reference *r : *target) {
       if (r->kind() == R_X86_64_JUMP_SLOT) {
         uint32_t index;
-        if (!_targetInfo.getTargetHandler<X86_64ELFType>().targetLayout()
+        if (!_context.getTargetHandler<X86_64ELFType>().targetLayout()
                 .getPLTRelocationTable()->getRelocationIndex(*r, index))
           llvm_unreachable("Relocation doesn't exist");
         reloc32(location, 0, index, 0);
@@ -133,7 +133,7 @@ ErrorOr<void> X86_64TargetRelocationHandler::applyRelocation(
   default: {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _targetInfo.stringFromRelocKind(ref.kind());
+    auto name = _context.stringFromRelocKind(ref.kind());
     s << "Unhandled relocation: " << atom._atom->file().path() << ":"
       << atom._atom->name() << "@" << ref.offsetInAtom() << " "
       << (name ? *name : "<unknown>") << " (" << ref.kind() << ")";

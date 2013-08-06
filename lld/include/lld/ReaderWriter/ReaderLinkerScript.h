@@ -16,13 +16,13 @@
 namespace lld {
 class File;
 class LinkerInput;
-class TargetInfo;
+class LinkingContext;
 
 /// \brief ReaderLinkerScript is a class for reading linker scripts
 class ReaderLinkerScript : public Reader {
 public:
-  explicit ReaderLinkerScript(const TargetInfo &ti)
-      : Reader(ti) {}
+  explicit ReaderLinkerScript(const LinkingContext &context)
+      : Reader(context) {}
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer

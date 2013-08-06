@@ -23,17 +23,16 @@
 namespace lld {
 
 class Atom;
-class TargetInfo;
+class LinkingContext;
 
 /// \brief The Resolver is responsible for merging all input object files
 /// and producing a merged graph.
 class Resolver : public InputFiles::Handler {
 public:
-  Resolver(const TargetInfo &ti, const InputFiles &inputs)
-      : _targetInfo(ti), _inputFiles(inputs), _symbolTable(ti), _result(ti),
-        _haveLLVMObjs(false), _addToFinalSection(false),
-        _completedInitialObjectFiles(false) {
-  }
+  Resolver(const LinkingContext &context, const InputFiles &inputs)
+      : _context(context), _inputFiles(inputs), _symbolTable(context),
+        _result(context), _haveLLVMObjs(false), _addToFinalSection(false),
+        _completedInitialObjectFiles(false) {}
 
   // InputFiles::Handler methods
   virtual void doDefinedAtom(const DefinedAtom&);
@@ -66,7 +65,8 @@ private:
 
   class MergedFile : public MutableFile {
   public:
-    MergedFile(const TargetInfo &ti) : MutableFile(ti, "<linker-internal>") {}
+    MergedFile(const LinkingContext &context)
+        : MutableFile(context, "<linker-internal>") {}
 
     virtual const atom_collection<DefinedAtom> &defined() const {
       return _definedAtoms;
@@ -93,10 +93,9 @@ private:
     atom_collection_vector<AbsoluteAtom>        _absoluteAtoms;
   };
 
-
-  const TargetInfo             &_targetInfo;
-  const InputFiles             &_inputFiles;
-  SymbolTable                   _symbolTable;
+  const LinkingContext &_context;
+  const InputFiles &_inputFiles;
+  SymbolTable _symbolTable;
   std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;
   std::vector<const Atom *>     _atomsWithUnresolvedReferences;

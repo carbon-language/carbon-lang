@@ -30,16 +30,16 @@ KindHandler::KindHandler() {
 KindHandler::~KindHandler() {
 }
 
-std::unique_ptr<mach_o::KindHandler> KindHandler::create(
-                                                MachOTargetInfo::Arch arch) {
-  switch( arch ) {
-    case MachOTargetInfo::arch_x86_64:
-      return std::unique_ptr<mach_o::KindHandler>(new KindHandler_x86_64());
-    case MachOTargetInfo::arch_x86:
-      return std::unique_ptr<mach_o::KindHandler>(new KindHandler_x86());
-    case MachOTargetInfo::arch_armv6:
-    case MachOTargetInfo::arch_armv7:
-    case MachOTargetInfo::arch_armv7s:
+std::unique_ptr<mach_o::KindHandler>
+KindHandler::create(MachOLinkingContext::Arch arch) {
+  switch (arch) {
+  case MachOLinkingContext::arch_x86_64:
+    return std::unique_ptr<mach_o::KindHandler>(new KindHandler_x86_64());
+  case MachOLinkingContext::arch_x86:
+    return std::unique_ptr<mach_o::KindHandler>(new KindHandler_x86());
+    case MachOLinkingContext::arch_armv6:
+    case MachOLinkingContext::arch_armv7:
+    case MachOLinkingContext::arch_armv7s:
       return std::unique_ptr<mach_o::KindHandler>(new KindHandler_arm());
     default:
       llvm_unreachable("Unknown arch");

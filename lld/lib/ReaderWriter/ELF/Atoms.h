@@ -211,7 +211,7 @@ public:
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
       if (!_targetAtomHandler) {
-        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        const ELFLinkingContext &eti = (_owningFile.getLinkingContext());
         TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
         _targetAtomHandler = &TargetHandler.targetAtomHandler();
       }
@@ -250,7 +250,7 @@ public:
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
       if (!_targetAtomHandler) {
-        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        const ELFLinkingContext &eti = (_owningFile.getLinkingContext());
         TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
         _targetAtomHandler = &TargetHandler.targetAtomHandler();
       }
@@ -277,7 +277,7 @@ public:
         ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
           _symbol->st_shndx < llvm::ELF::SHN_HIPROC))) {
       if (!_targetAtomHandler) {
-        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        const ELFLinkingContext &eti = (_owningFile.getLinkingContext());
         TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
         _targetAtomHandler = &TargetHandler.targetAtomHandler();
       }
@@ -341,7 +341,7 @@ public:
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
       if (!_targetAtomHandler) {
-        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        const ELFLinkingContext &eti = (_owningFile.getLinkingContext());
         TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
         _targetAtomHandler = &TargetHandler.targetAtomHandler();
       }
@@ -391,7 +391,7 @@ public:
     if ((_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
          _symbol->st_shndx < llvm::ELF::SHN_HIPROC)) {
       if (!_targetAtomHandler) {
-        const ELFTargetInfo &eti = (_owningFile.getTargetInfo());
+        const ELFLinkingContext &eti = (_owningFile.getLinkingContext());
         TargetHandler<ELFT> &TargetHandler = eti.getTargetHandler<ELFT>();
         _targetAtomHandler = &TargetHandler.targetAtomHandler();
       }

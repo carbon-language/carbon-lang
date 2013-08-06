@@ -23,7 +23,8 @@
 namespace lld {
 class SimpleFile : public MutableFile {
 public:
-  SimpleFile(const TargetInfo &ti, StringRef path) : MutableFile(ti, path) {
+  SimpleFile(const LinkingContext &context, StringRef path)
+      : MutableFile(context, path) {
     static uint32_t lastOrdinal = 0;
     _ordinal = lastOrdinal++;
   }
@@ -169,9 +170,7 @@ private:
 
 class SimpleUndefinedAtom : public UndefinedAtom {
 public:
-  SimpleUndefinedAtom(const File &f, StringRef name) 
-    : _file(f)
-    , _name(name) {
+  SimpleUndefinedAtom(const File &f, StringRef name) : _file(f), _name(name) {
     assert(!name.empty() && "UndefinedAtoms must have a name");
   }
 

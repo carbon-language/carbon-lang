@@ -28,7 +28,7 @@ namespace native {
 ///
 class Writer : public lld::Writer {
 public:
-  Writer(const TargetInfo &ti) {}
+  Writer(const LinkingContext &context) {}
 
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // reserve first byte for unnamed atoms
@@ -552,7 +552,7 @@ private:
     out.write((char*)&addends[0], maxAddendIndex*sizeof(Reference::Addend));
   }
 
-  typedef std::vector<std::pair<StringRef, uint32_t> > NameToOffsetVector;
+  typedef std::vector<std::pair<StringRef, uint32_t>> NameToOffsetVector;
 
   typedef llvm::DenseMap<const Atom*, uint32_t> TargetToIndex;
   typedef llvm::DenseMap<Reference::Addend, uint32_t> AddendToIndex;
@@ -579,7 +579,7 @@ private:
 };
 } // end namespace native
 
-std::unique_ptr<Writer> createWriterNative(const TargetInfo &ti) {
-  return std::unique_ptr<Writer>(new native::Writer(ti));
+std::unique_ptr<Writer> createWriterNative(const LinkingContext &context) {
+  return std::unique_ptr<Writer>(new native::Writer(context));
 }
 } // end namespace lld

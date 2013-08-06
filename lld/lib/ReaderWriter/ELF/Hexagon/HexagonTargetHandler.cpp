@@ -8,17 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "HexagonTargetHandler.h"
-#include "HexagonTargetInfo.h"
+#include "HexagonLinkingContext.h"
 
 using namespace lld;
 using namespace elf;
 
 using namespace llvm::ELF;
 
-HexagonTargetHandler::HexagonTargetHandler(HexagonTargetInfo &targetInfo)
-    : DefaultTargetHandler(targetInfo), _targetLayout(targetInfo),
-      _relocationHandler(targetInfo, *this, _targetLayout),
-      _hexagonRuntimeFile(targetInfo) {}
+HexagonTargetHandler::HexagonTargetHandler(HexagonLinkingContext &context)
+    : DefaultTargetHandler(context), _targetLayout(context),
+      _relocationHandler(context, *this, _targetLayout),
+      _hexagonRuntimeFile(context) {}
 
 namespace {
 
@@ -107,7 +107,7 @@ public:
 
 class ELFPassFile : public SimpleFile {
 public:
-  ELFPassFile(const ELFTargetInfo &eti) : SimpleFile(eti, "ELFPassFile") {}
+  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {}
 
   llvm::BumpPtrAllocator _alloc;
 };
@@ -144,7 +144,7 @@ protected:
   }
 
 public:
-  GOTPLTPass(const ELFTargetInfo &ti)
+  GOTPLTPass(const ELFLinkingContext &ti)
       : _file(ti), _null(nullptr), _PLT0(nullptr), _got0(nullptr) {}
 
   /// \brief Do the pass.
@@ -212,7 +212,7 @@ protected:
 
 class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
-  DynamicGOTPLTPass(const elf::HexagonTargetInfo &ti) : GOTPLTPass(ti) {
+  DynamicGOTPLTPass(const elf::HexagonLinkingContext &ti) : GOTPLTPass(ti) {
     _got0 = new (_file._alloc) HexagonGOTPLT0Atom(_file);
 #ifndef NDEBUG
     _got0->_name = "__got0";
@@ -291,8 +291,8 @@ public:
 };
 } // end anonymous namespace
 
-void elf::HexagonTargetInfo::addPasses(PassManager &pm) const {
+void elf::HexagonLinkingContext::addPasses(PassManager &pm) const {
   if (isDynamic())
     pm.add(std::unique_ptr<Pass>(new DynamicGOTPLTPass(*this)));
-  ELFTargetInfo::addPasses(pm);
+  ELFLinkingContext::addPasses(pm);
 }

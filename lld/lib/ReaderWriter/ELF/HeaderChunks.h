@@ -29,7 +29,7 @@ class Header : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
-  Header(const ELFTargetInfo &);
+  Header(const ELFLinkingContext &);
 
   void e_ident(int I, unsigned char C) { _eh.e_ident[I] = C; }
   void e_type(uint16_t type)           { _eh.e_type = type; }
@@ -66,8 +66,8 @@ private:
 };
 
 template <class ELFT>
-Header<ELFT>::Header(const ELFTargetInfo &ti)
-    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_Header, ti) {
+Header<ELFT>::Header(const ELFLinkingContext &context)
+    : Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_Header, context) {
   this->_align2 = ELFT::Is64Bits ? 8 : 4;
   this->_fsize = sizeof(Elf_Ehdr);
   this->_msize = sizeof(Elf_Ehdr);
@@ -117,8 +117,8 @@ public:
     uint64_t _flagsClear;
   };
 
-  ProgramHeader(const ELFTargetInfo &ti)
-      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ProgramHeader, ti) {
+  ProgramHeader(const ELFLinkingContext &context)
+      : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ProgramHeader, context) {
     this->_align2 = ELFT::Is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
@@ -193,7 +193,7 @@ private:
 template <class ELFT>
 bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
   bool allocatedNew = false;
-  ELFTargetInfo::OutputMagic outputMagic = this->_targetInfo.getOutputMagic();
+  ELFLinkingContext::OutputMagic outputMagic = this->_context.getOutputMagic();
   // For segments that are not a loadable segment, we
   // just pick the values directly from the segment as there
   // wouldnt be any slices within that
@@ -222,8 +222,8 @@ bool ProgramHeader<ELFT>::addSegment(Segment<ELFT> *segment) {
     phdr->p_filesz = slice->fileSize();
     phdr->p_memsz = slice->memSize();
     phdr->p_flags = segment->flags();
-    if (outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
-        outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
+    if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+        outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
       phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ? segment->pageSize()
                                                            : slice->align2();
     else
@@ -253,7 +253,7 @@ class SectionHeader : public Chunk<ELFT> {
 public:
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
-  SectionHeader(const ELFTargetInfo &, int32_t order);
+  SectionHeader(const ELFLinkingContext &, int32_t order);
 
   void appendSection(MergedSections<ELFT> *section);
 
@@ -294,8 +294,9 @@ private:
 };
 
 template <class ELFT>
-SectionHeader<ELFT>::SectionHeader(const ELFTargetInfo &ti, int32_t order)
-    : Chunk<ELFT>("shdr", Chunk<ELFT>::K_SectionHeader, ti) {
+SectionHeader<ELFT>::SectionHeader(const ELFLinkingContext &context,
+                                   int32_t order)
+    : Chunk<ELFT>("shdr", Chunk<ELFT>::K_SectionHeader, context) {
   this->_fsize = 0;
   this->_align2 = 8;
   this->setOrder(order);

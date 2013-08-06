@@ -14,7 +14,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -117,13 +117,13 @@ template <class ELFT> class ELFFile : public File {
   typedef typename MergedSectionMapT::iterator MergedSectionMapIterT;
 
 public:
-  ELFFile(const ELFTargetInfo &ti, StringRef name)
-      : File(name, kindObject), _elfTargetInfo(ti) {}
+  ELFFile(const ELFLinkingContext &context, StringRef name)
+      : File(name, kindObject), _elfLinkingContext(context) {}
 
-  ELFFile(const ELFTargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
-          llvm::error_code &EC)
-      : File(MB->getBufferIdentifier(), kindObject), _elfTargetInfo(ti),
-        _ordinal(0), _doStringsMerge(false) {
+  ELFFile(const ELFLinkingContext &context,
+          std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC)
+      : File(MB->getBufferIdentifier(), kindObject),
+        _elfLinkingContext(context), _ordinal(0), _doStringsMerge(false) {
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     EC = createBinary(MB.release(), binaryFile);
     if (EC)
@@ -140,7 +140,7 @@ public:
 
     binaryFile.take();
 
-    _doStringsMerge = _elfTargetInfo.mergeCommonStrings();
+    _doStringsMerge = _elfLinkingContext.mergeCommonStrings();
 
     // Read input sections from the input file that need to be converted to
     // atoms
@@ -487,7 +487,9 @@ public:
     return _absoluteAtoms;
   }
 
-  virtual const ELFTargetInfo &getTargetInfo() const { return _elfTargetInfo; }
+  virtual const ELFLinkingContext &getLinkingContext() const {
+    return _elfLinkingContext;
+  }
 
   Atom *findAtom(const Elf_Sym *symbol) {
     return _symbolToAtomMapping.lookup(symbol);
@@ -552,7 +554,8 @@ private:
   void updateReferences() {
     /// cached value of target relocation handler
     const TargetRelocationHandler<ELFT> &_targetRelocationHandler =
-        _elfTargetInfo.template getTargetHandler<ELFT>().getRelocationHandler();
+        _elfLinkingContext.template getTargetHandler<ELFT>()
+            .getRelocationHandler();
 
     for (auto &ri : _references) {
       if (ri->kind() >= lld::Reference::kindTargetLow) {
@@ -667,7 +670,7 @@ private:
     // not. Let the TargetHandler to make a decision if that's the case.
     if (isTargetSpecificAtom(section, symbol)) {
       TargetHandler<ELFT> &targetHandler =
-          _elfTargetInfo.template getTargetHandler<ELFT>();
+          _elfLinkingContext.template getTargetHandler<ELFT>();
       TargetAtomHandler<ELFT> &targetAtomHandler =
           targetHandler.targetAtomHandler();
       return targetAtomHandler.getType(symbol) == llvm::ELF::STT_COMMON;
@@ -716,7 +719,7 @@ private:
   _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
-  const ELFTargetInfo &_elfTargetInfo;
+  const ELFLinkingContext &_elfLinkingContext;
 
   /// \brief Atoms that are created for a section that has the merge property
   /// set

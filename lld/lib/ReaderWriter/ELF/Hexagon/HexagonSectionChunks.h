@@ -15,15 +15,15 @@ namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 4, false> HexagonELFType;
 template <typename ELFT> class HexagonTargetLayout;
-class HexagonTargetInfo;
+class HexagonLinkingContext;
 
 /// \brief Handle Hexagon SData section
 template <class HexagonELFType>
 class SDataSection : public AtomSection<HexagonELFType> {
 public:
-  SDataSection(const HexagonTargetInfo &hti)
+  SDataSection(const HexagonLinkingContext &context)
       : AtomSection<HexagonELFType>(
-            hti, ".sdata", DefinedAtom::typeDataFast, 0,
+            context, ".sdata", DefinedAtom::typeDataFast, 0,
             HexagonTargetLayout<HexagonELFType>::ORDER_SDATA) {
     this->_type = SHT_PROGBITS;
     this->_flags = SHF_ALLOC | SHF_WRITE;

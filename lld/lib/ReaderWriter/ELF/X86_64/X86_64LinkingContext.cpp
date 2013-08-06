@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/X86_64/X86_64TargetInfo.cpp -------------------===//
+//===- lib/ReaderWriter/ELF/X86_64/X86_64LinkingContext.cpp ---------------===//
 //
 //                             The LLVM Linker
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Atoms.h"
-#include "X86_64TargetInfo.h"
+#include "X86_64LinkingContext.h"
 
 #include "lld/Core/File.h"
 #include "lld/Core/Instrumentation.h"
@@ -77,7 +77,7 @@ public:
 
 class ELFPassFile : public SimpleFile {
 public:
-  ELFPassFile(const ELFTargetInfo &eti) : SimpleFile(eti, "ELFPassFile") {}
+  ELFPassFile(const ELFLinkingContext &eti) : SimpleFile(eti, "ELFPassFile") {}
 
   llvm::BumpPtrAllocator _alloc;
 };
@@ -201,7 +201,7 @@ protected:
   }
 
 public:
-  GOTPLTPass(const ELFTargetInfo &ti)
+  GOTPLTPass(const ELFLinkingContext &ti)
       : _file(ti), _null(nullptr), _PLT0(nullptr), _got0(nullptr),
         _got1(nullptr) {}
 
@@ -280,7 +280,7 @@ protected:
 /// TLS always assumes module 1 and attempts to remove indirection.
 class StaticGOTPLTPass LLVM_FINAL : public GOTPLTPass<StaticGOTPLTPass> {
 public:
-  StaticGOTPLTPass(const elf::X86_64TargetInfo &ti) : GOTPLTPass(ti) {}
+  StaticGOTPLTPass(const elf::X86_64LinkingContext &ti) : GOTPLTPass(ti) {}
 
   ErrorOr<void> handlePLT32(const Reference &ref) {
     // __tls_get_addr is handled elsewhere.
@@ -291,7 +291,8 @@ public:
       // Static code doesn't need PLTs.
       const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
     // Handle IFUNC.
-    if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
+    if (const DefinedAtom *da =
+            dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
         return handleIFUNC(ref);
     return error_code::success();
@@ -302,7 +303,7 @@ public:
 
 class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
-  DynamicGOTPLTPass(const elf::X86_64TargetInfo &ti) : GOTPLTPass(ti) {}
+  DynamicGOTPLTPass(const elf::X86_64LinkingContext &ti) : GOTPLTPass(ti) {}
 
   const PLT0Atom *getPLT0() {
     if (_PLT0)
@@ -351,7 +352,8 @@ public:
     // Turn this into a PC32 to the PLT entry.
     const_cast<Reference &>(ref).setKind(R_X86_64_PC32);
     // Handle IFUNC.
-    if (const DefinedAtom *da = dyn_cast_or_null<const DefinedAtom>(ref.target()))
+    if (const DefinedAtom *da =
+            dyn_cast_or_null<const DefinedAtom>(ref.target()))
       if (da->contentType() == DefinedAtom::typeResolver)
         return handleIFUNC(ref);
     if (isa<const SharedLibraryAtom>(ref.target()))
@@ -393,7 +395,7 @@ public:
 };
 } // end anon namespace
 
-void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
+void elf::X86_64LinkingContext::addPasses(PassManager &pm) const {
   switch (_outputFileType) {
   case llvm::ELF::ET_EXEC:
     if (_isStaticExecutable)
@@ -409,15 +411,48 @@ void elf::X86_64TargetInfo::addPasses(PassManager &pm) const {
   default:
     llvm_unreachable("Unhandled output file type");
   }
-  ELFTargetInfo::addPasses(pm);
+  ELFLinkingContext::addPasses(pm);
 }
-
 
 #define LLD_CASE(name) .Case(#name, llvm::ELF::name)
 
 ErrorOr<Reference::Kind>
-elf::X86_64TargetInfo::relocKindFromString(StringRef str) const {
-  int32_t ret = llvm::StringSwitch<int32_t>(str)
+elf::X86_64LinkingContext::relocKindFromString(StringRef str) const {
+  int32_t ret = llvm::StringSwitch<int32_t>(str) LLD_CASE(R_X86_64_NONE)
+      LLD_CASE(R_X86_64_64) LLD_CASE(R_X86_64_PC32) LLD_CASE(R_X86_64_GOT32)
+      LLD_CASE(R_X86_64_PLT32) LLD_CASE(R_X86_64_COPY)
+      LLD_CASE(R_X86_64_GLOB_DAT) LLD_CASE(R_X86_64_JUMP_SLOT)
+      LLD_CASE(R_X86_64_RELATIVE) LLD_CASE(R_X86_64_GOTPCREL)
+      LLD_CASE(R_X86_64_32) LLD_CASE(R_X86_64_32S) LLD_CASE(R_X86_64_16)
+      LLD_CASE(R_X86_64_PC16) LLD_CASE(R_X86_64_8) LLD_CASE(R_X86_64_PC8)
+      LLD_CASE(R_X86_64_DTPMOD64) LLD_CASE(R_X86_64_DTPOFF64)
+      LLD_CASE(R_X86_64_TPOFF64) LLD_CASE(R_X86_64_TLSGD)
+      LLD_CASE(R_X86_64_TLSLD) LLD_CASE(R_X86_64_DTPOFF32)
+      LLD_CASE(R_X86_64_GOTTPOFF) LLD_CASE(R_X86_64_TPOFF32)
+      LLD_CASE(R_X86_64_PC64) LLD_CASE(R_X86_64_GOTOFF64)
+      LLD_CASE(R_X86_64_GOTPC32) LLD_CASE(R_X86_64_GOT64)
+      LLD_CASE(R_X86_64_GOTPCREL64) LLD_CASE(R_X86_64_GOTPC64)
+      LLD_CASE(R_X86_64_GOTPLT64) LLD_CASE(R_X86_64_PLTOFF64)
+      LLD_CASE(R_X86_64_SIZE32) LLD_CASE(R_X86_64_SIZE64)
+      LLD_CASE(R_X86_64_GOTPC32_TLSDESC) LLD_CASE(R_X86_64_TLSDESC_CALL)
+      LLD_CASE(R_X86_64_TLSDESC) LLD_CASE(R_X86_64_IRELATIVE)
+          .Case("LLD_R_X86_64_GOTRELINDEX", LLD_R_X86_64_GOTRELINDEX)
+          .Default(-1);
+
+  if (ret == -1)
+    return make_error_code(yaml_reader_error::illegal_value);
+  return ret;
+}
+
+#undef LLD_CASE
+
+#define LLD_CASE(name)                                                         \
+  case llvm::ELF::name:                                                        \
+  return std::string(#name);
+
+ErrorOr<std::string>
+elf::X86_64LinkingContext::stringFromRelocKind(Reference::Kind kind) const {
+  switch (kind) {
     LLD_CASE(R_X86_64_NONE)
     LLD_CASE(R_X86_64_64)
     LLD_CASE(R_X86_64_PC32)
@@ -456,59 +491,6 @@ elf::X86_64TargetInfo::relocKindFromString(StringRef str) const {
     LLD_CASE(R_X86_64_TLSDESC_CALL)
     LLD_CASE(R_X86_64_TLSDESC)
     LLD_CASE(R_X86_64_IRELATIVE)
-    .Case("LLD_R_X86_64_GOTRELINDEX", LLD_R_X86_64_GOTRELINDEX)
-    .Default(-1);
-
-  if (ret == -1)
-    return make_error_code(yaml_reader_error::illegal_value);
-  return ret;
-}
-
-#undef LLD_CASE
-
-#define LLD_CASE(name) case llvm::ELF::name: return std::string(#name);
-
-ErrorOr<std::string>
-elf::X86_64TargetInfo::stringFromRelocKind(Reference::Kind kind) const {
-  switch (kind) {
-  LLD_CASE(R_X86_64_NONE)
-  LLD_CASE(R_X86_64_64)
-  LLD_CASE(R_X86_64_PC32)
-  LLD_CASE(R_X86_64_GOT32)
-  LLD_CASE(R_X86_64_PLT32)
-  LLD_CASE(R_X86_64_COPY)
-  LLD_CASE(R_X86_64_GLOB_DAT)
-  LLD_CASE(R_X86_64_JUMP_SLOT)
-  LLD_CASE(R_X86_64_RELATIVE)
-  LLD_CASE(R_X86_64_GOTPCREL)
-  LLD_CASE(R_X86_64_32)
-  LLD_CASE(R_X86_64_32S)
-  LLD_CASE(R_X86_64_16)
-  LLD_CASE(R_X86_64_PC16)
-  LLD_CASE(R_X86_64_8)
-  LLD_CASE(R_X86_64_PC8)
-  LLD_CASE(R_X86_64_DTPMOD64)
-  LLD_CASE(R_X86_64_DTPOFF64)
-  LLD_CASE(R_X86_64_TPOFF64)
-  LLD_CASE(R_X86_64_TLSGD)
-  LLD_CASE(R_X86_64_TLSLD)
-  LLD_CASE(R_X86_64_DTPOFF32)
-  LLD_CASE(R_X86_64_GOTTPOFF)
-  LLD_CASE(R_X86_64_TPOFF32)
-  LLD_CASE(R_X86_64_PC64)
-  LLD_CASE(R_X86_64_GOTOFF64)
-  LLD_CASE(R_X86_64_GOTPC32)
-  LLD_CASE(R_X86_64_GOT64)
-  LLD_CASE(R_X86_64_GOTPCREL64)
-  LLD_CASE(R_X86_64_GOTPC64)
-  LLD_CASE(R_X86_64_GOTPLT64)
-  LLD_CASE(R_X86_64_PLTOFF64)
-  LLD_CASE(R_X86_64_SIZE32)
-  LLD_CASE(R_X86_64_SIZE64)
-  LLD_CASE(R_X86_64_GOTPC32_TLSDESC)
-  LLD_CASE(R_X86_64_TLSDESC_CALL)
-  LLD_CASE(R_X86_64_TLSDESC)
-  LLD_CASE(R_X86_64_IRELATIVE)
   case LLD_R_X86_64_GOTRELINDEX:
     return std::string("LLD_R_X86_64_GOTRELINDEX");
   }

@@ -23,15 +23,14 @@
 
 namespace lld {
 class File;
+class LinkingContext;
 class LinkerInput;
-class TargetInfo;
 
 /// \brief ReaderArchive is a class for reading archive libraries
 class ReaderArchive : public Reader {
 public:
-  ReaderArchive(const TargetInfo &ti, const Reader &memberReader)
-      : Reader(ti) {
-  }
+  ReaderArchive(const LinkingContext &context, const Reader &memberReader)
+      : Reader(context) {}
 
   /// \brief Returns a vector of Files that are contained in the archive file
   ///        pointed to by the Memorybuffer

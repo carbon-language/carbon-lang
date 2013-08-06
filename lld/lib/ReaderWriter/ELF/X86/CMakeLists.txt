@@ -1,5 +1,5 @@
 add_lld_library(lldX86ELFTarget
-  X86TargetInfo.cpp
+  X86LinkingContext.cpp
   X86TargetHandler.cpp
   )
 

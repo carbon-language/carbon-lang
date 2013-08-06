@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Driver/Driver.h"
-#include "lld/ReaderWriter/MachOTargetInfo.h"
+#include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "../ReaderWriter/MachO/MachOFormat.hpp"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -73,7 +73,7 @@ namespace lld {
 
 bool DarwinLdDriver::linkMachO(int argc, const char *argv[], 
                                                     raw_ostream &diagnostics) {
-  MachOTargetInfo info;
+  MachOLinkingContext info;
   if (parse(argc, argv, info, diagnostics))
     return true;
   if ( info.doNothing() )
@@ -82,10 +82,9 @@ bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
   return link(info, diagnostics);
 }
 
-
-
-bool DarwinLdDriver::parse(int argc, const char *argv[],  
-                          MachOTargetInfo &info, raw_ostream &diagnostics) {
+bool DarwinLdDriver::parse(int argc, const char *argv[],
+                           MachOLinkingContext &info,
+                           raw_ostream &diagnostics) {
   // Parse command line options using DarwinOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   DarwinLdOptTable table;
@@ -149,10 +148,9 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   
   // Handle -arch xxx
   if (llvm::opt::Arg *archStr = parsedArgs->getLastArg(OPT_arch)) {
-    info.setArch(MachOTargetInfo::archFromName(archStr->getValue()));
-    if (info.arch() == MachOTargetInfo::arch_unknown) {
-      diagnostics << "error: unknown arch named '" 
-                  << archStr->getValue()
+    info.setArch(MachOLinkingContext::archFromName(archStr->getValue()));
+    if (info.arch() == MachOLinkingContext::arch_unknown) {
+      diagnostics << "error: unknown arch named '" << archStr->getValue()
                   << "'\n";
       return true;
     }
@@ -165,19 +163,20 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
                                                OPT_ios_simulator_version_min)) {
     switch (minOS->getOption().getID()) {
     case OPT_macosx_version_min:
-      if (info.setOS(MachOTargetInfo::OS::macOSX, minOS->getValue())) {
+      if (info.setOS(MachOLinkingContext::OS::macOSX, minOS->getValue())) {
         diagnostics << "error: malformed macosx_version_min value\n";
         return true;
       }
       break;
     case OPT_ios_version_min:
-      if (info.setOS(MachOTargetInfo::OS::iOS, minOS->getValue())) {
+      if (info.setOS(MachOLinkingContext::OS::iOS, minOS->getValue())) {
         diagnostics << "error: malformed ios_version_min value\n";
         return true;
       }
       break;
     case OPT_ios_simulator_version_min:
-      if (info.setOS(MachOTargetInfo::OS::iOS_simulator, minOS->getValue())) {
+      if (info.setOS(MachOLinkingContext::OS::iOS_simulator,
+                     minOS->getValue())) {
         diagnostics << "error: malformed ios_simulator_version_min value\n";
         return true;
       }

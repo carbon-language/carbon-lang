@@ -10,7 +10,7 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/MachOTargetInfo.h"
+#include "lld/ReaderWriter/MachOLinkingContext.h"
 
 #include "llvm/ADT/Triple.h"
 
@@ -30,9 +30,9 @@ class KindHandler {
 public:
   typedef Reference::Kind Kind;
 
-  static std::unique_ptr<mach_o::KindHandler> create(MachOTargetInfo::Arch);
-  virtual             ~KindHandler();
-  virtual Kind        stringToKind(StringRef str) = 0;
+  static std::unique_ptr<mach_o::KindHandler> create(MachOLinkingContext::Arch);
+  virtual ~KindHandler();
+  virtual Kind stringToKind(StringRef str) = 0;
   virtual StringRef   kindToString(Kind) = 0;
   virtual bool        isCallSite(Kind) = 0;
   virtual bool        isPointer(Kind) = 0;

@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/Hexagon/HexagonTargetInfo.h -------------------===//
+//===- lib/ReaderWriter/ELF/Hexagon/HexagonLinkingContext.h ---------------===//
 //
 //                             The LLVM Linker
 //
@@ -12,7 +12,7 @@
 
 #include "HexagonTargetHandler.h"
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -20,11 +20,11 @@
 namespace lld {
 namespace elf {
 
-class HexagonTargetInfo LLVM_FINAL : public ELFTargetInfo {
+class HexagonLinkingContext LLVM_FINAL : public ELFLinkingContext {
 public:
-  HexagonTargetInfo(llvm::Triple triple)
-      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(
-                                  new HexagonTargetHandler(*this))) {}
+  HexagonLinkingContext(llvm::Triple triple)
+      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+                                      new HexagonTargetHandler(*this))) {}
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
@@ -33,7 +33,7 @@ public:
 
   virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &r) const {
-    switch (r.kind()){
+    switch (r.kind()) {
     case llvm::ELF::R_HEX_RELATIVE:
     case llvm::ELF::R_HEX_GLOB_DAT:
       return true;
@@ -42,9 +42,8 @@ public:
     }
   }
 
-  virtual bool isPLTRelocation(const DefinedAtom &,
-                               const Reference &r) const {
-    switch (r.kind()){
+  virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const {
+    switch (r.kind()) {
     case llvm::ELF::R_HEX_JMP_SLOT:
       return true;
     default:

@@ -13,7 +13,7 @@
 #include "DefaultLayout.h"
 #include "TargetHandler.h"
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
@@ -23,9 +23,8 @@ namespace elf {
 template <class ELFT>
 class DefaultTargetHandler : public TargetHandler<ELFT> {
 public:
-  DefaultTargetHandler(ELFTargetInfo &targetInfo)
-      : TargetHandler<ELFT>(targetInfo) {
-  }
+  DefaultTargetHandler(ELFLinkingContext &context)
+      : TargetHandler<ELFT>(context) {}
 
   bool doesOverrideHeader() { return false; }
 

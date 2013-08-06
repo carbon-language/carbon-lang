@@ -20,8 +20,8 @@
 
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Core/TargetInfo.h"
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/Core/LinkingContext.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/ADT/Hashing.h"
 #include "llvm/Support/FileOutputBuffer.h"
@@ -84,7 +84,7 @@ public:
 template <class ELFT> class TargetHandler : public TargetHandlerBase {
 
 public:
-  TargetHandler(ELFTargetInfo &targetInfo) : _targetInfo(targetInfo) {}
+  TargetHandler(ELFLinkingContext &targetInfo) : _context(targetInfo) {}
 
   /// If the target overrides ELF header information, this API would
   /// return true, so that the target can set all fields specific to
@@ -119,7 +119,7 @@ public:
   virtual void allocateCommons() = 0;
 
 protected:
-  const ELFTargetInfo &_targetInfo;
+  const ELFLinkingContext &_context;
 };
 } // end namespace elf
 } // end namespace lld

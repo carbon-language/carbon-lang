@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/X86_64/X86_64TargetInfo.h ---------------------===//
+//===- lib/ReaderWriter/ELF/X86_64/X86_64LinkingContext.h -----------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
-#define LLD_READER_WRITER_ELF_X86_64_TARGETINFO_H
+#ifndef LLD_READER_WRITER_ELF_X86_64_LINKER_CONTEXT_H
+#define LLD_READER_WRITER_ELF_X86_64_LINKER_CONTEXT_H
 
 #include "X86_64TargetHandler.h"
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
@@ -26,11 +26,11 @@ enum {
   LLD_R_X86_64_GOTRELINDEX = 1024,
 };
 
-class X86_64TargetInfo LLVM_FINAL : public ELFTargetInfo {
+class X86_64LinkingContext LLVM_FINAL : public ELFLinkingContext {
 public:
-  X86_64TargetInfo(llvm::Triple triple)
-      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(
-                                  new X86_64TargetHandler(*this))) {}
+  X86_64LinkingContext(llvm::Triple triple)
+      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+                                      new X86_64TargetHandler(*this))) {}
 
   virtual void addPasses(PassManager &) const;
 
@@ -42,7 +42,7 @@ public:
 
   virtual bool isDynamicRelocation(const DefinedAtom &,
                                    const Reference &r) const {
-    switch (r.kind()){
+    switch (r.kind()) {
     case llvm::ELF::R_X86_64_RELATIVE:
     case llvm::ELF::R_X86_64_GLOB_DAT:
       return true;
@@ -51,9 +51,8 @@ public:
     }
   }
 
-  virtual bool isPLTRelocation(const DefinedAtom &,
-                               const Reference &r) const {
-    switch (r.kind()){
+  virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const {
+    switch (r.kind()) {
     case llvm::ELF::R_X86_64_JUMP_SLOT:
     case llvm::ELF::R_X86_64_IRELATIVE:
       return true;
@@ -77,7 +76,6 @@ public:
 
   virtual ErrorOr<Reference::Kind> relocKindFromString(StringRef str) const;
   virtual ErrorOr<std::string> stringFromRelocKind(Reference::Kind kind) const;
-
 };
 } // end namespace elf
 } // end namespace lld

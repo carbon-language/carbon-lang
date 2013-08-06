@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/PECOFF/PECOFFTargetInfo.cpp -----------------------===//
+//===- lib/ReaderWriter/PECOFF/PECOFFLinkingContext.cpp -------------------===//
 //
 //                             The LLVM Linker
 //
@@ -17,7 +17,7 @@
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Passes/LayoutPass.h"
-#include "lld/ReaderWriter/PECOFFTargetInfo.h"
+#include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
@@ -37,26 +37,26 @@ bool containDirectoryName(StringRef path) {
 /// symbols.
 class UndefinedSymbolFile : public SimpleFile {
 public:
-  UndefinedSymbolFile(const TargetInfo &ti)
+  UndefinedSymbolFile(const LinkingContext &ti)
       : SimpleFile(ti, "Linker Internal File") {
     for (StringRef symbol : ti.initialUndefinedSymbols()) {
       UndefinedAtom *atom = new (_alloc) coff::COFFUndefinedAtom(*this, symbol);
       addAtom(*atom);
     }
-  };
+  }
 
 private:
   llvm::BumpPtrAllocator _alloc;
 };
 } // anonymous namespace
 
-error_code PECOFFTargetInfo::parseFile(
+error_code PECOFFLinkingContext::parseFile(
     std::unique_ptr<MemoryBuffer> &mb,
     std::vector<std::unique_ptr<File>> &result) const {
   return _reader->parseFile(mb, result);
 }
 
-bool PECOFFTargetInfo::validateImpl(raw_ostream &diagnostics) {
+bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
   if (_inputFiles.empty()) {
     diagnostics << "No input files\n";
     return true;
@@ -64,15 +64,15 @@ bool PECOFFTargetInfo::validateImpl(raw_ostream &diagnostics) {
 
   if (_stackReserve < _stackCommit) {
     diagnostics << "Invalid stack size: reserve size must be equal to or "
-                << "greater than commit size, but got "
-                << _stackCommit << " and " << _stackReserve << ".\n";
+                << "greater than commit size, but got " << _stackCommit
+                << " and " << _stackReserve << ".\n";
     return true;
   }
 
   if (_heapReserve < _heapCommit) {
     diagnostics << "Invalid heap size: reserve size must be equal to or "
-                << "greater than commit size, but got "
-                << _heapCommit << " and " << _heapReserve << ".\n";
+                << "greater than commit size, but got " << _heapCommit
+                << " and " << _heapReserve << ".\n";
     return true;
   }
 
@@ -81,7 +81,7 @@ bool PECOFFTargetInfo::validateImpl(raw_ostream &diagnostics) {
   return false;
 }
 
-void PECOFFTargetInfo::addImplicitFiles(InputFiles &files) const {
+void PECOFFLinkingContext::addImplicitFiles(InputFiles &files) const {
   // Add a pseudo file for "/include" linker option.
   auto *file = new (_alloc) UndefinedSymbolFile(*this);
   files.prependFile(*file);
@@ -89,7 +89,7 @@ void PECOFFTargetInfo::addImplicitFiles(InputFiles &files) const {
 
 /// Append the given file to the input file list. The file must be an object
 /// file or an import library file.
-void PECOFFTargetInfo::appendInputFileOrLibrary(std::string path) {
+void PECOFFLinkingContext::appendInputFileOrLibrary(std::string path) {
   StringRef ext = llvm::sys::path::extension(path);
   // This is an import library file. Look for the library file in the search
   // paths, unless the path contains a directory name.
@@ -110,7 +110,7 @@ void PECOFFTargetInfo::appendInputFileOrLibrary(std::string path) {
 
 /// Try to find the input library file from the search paths and append it to
 /// the input file list. Returns true if the library file is found.
-void PECOFFTargetInfo::appendLibraryFile(StringRef filename) {
+void PECOFFLinkingContext::appendLibraryFile(StringRef filename) {
   // Current directory always takes precedence over the search paths.
   if (llvm::sys::fs::exists(filename)) {
     appendInputFile(filename);
@@ -128,21 +128,19 @@ void PECOFFTargetInfo::appendLibraryFile(StringRef filename) {
   appendInputFile(filename);
 }
 
-Writer &PECOFFTargetInfo::writer() const {
-  return *_writer;
-}
+Writer &PECOFFLinkingContext::writer() const { return *_writer; }
 
 ErrorOr<Reference::Kind>
-PECOFFTargetInfo::relocKindFromString(StringRef str) const {
+PECOFFLinkingContext::relocKindFromString(StringRef str) const {
   return make_error_code(yaml_reader_error::illegal_value);
 }
 
 ErrorOr<std::string>
-PECOFFTargetInfo::stringFromRelocKind(Reference::Kind kind) const {
+PECOFFLinkingContext::stringFromRelocKind(Reference::Kind kind) const {
   return make_error_code(yaml_reader_error::illegal_value);
 }
 
-void PECOFFTargetInfo::addPasses(PassManager &pm) const {
+void PECOFFLinkingContext::addPasses(PassManager &pm) const {
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass()));
   pm.add(std::unique_ptr<Pass>(new LayoutPass()));

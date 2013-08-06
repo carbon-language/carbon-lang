@@ -111,7 +111,7 @@ public:
   typedef typename std::vector<SegmentSlice<ELFT> *>::iterator SliceIter;
   typedef typename std::vector<Chunk<ELFT> *>::iterator SectionIter;
 
-  Segment(const ELFTargetInfo &ti, StringRef name,
+  Segment(const ELFLinkingContext &context, StringRef name,
           const Layout::SegmentType type);
 
   /// \brief the Order of segments that appear in the output file
@@ -225,7 +225,7 @@ public:
     }
   }
 
-  inline int pageSize() const { return this->_targetInfo.getPageSize(); }
+  inline int pageSize() const { return this->_context.getPageSize(); }
 
   inline int rawflags() const { return _atomflags; }
 
@@ -275,13 +275,13 @@ private:
   /// \brief Check if the chunk needs to be aligned
   bool needAlign(Chunk<ELFT> *chunk) const {
     if (chunk->getContentType() == Chunk<ELFT>::CT_Data &&
-        _outputMagic == ELFTargetInfo::OutputMagic::NMAGIC)
+        _outputMagic == ELFLinkingContext::OutputMagic::NMAGIC)
       return true;
     return false;
   }
 
   // Cached value of outputMagic
-  ELFTargetInfo::OutputMagic _outputMagic;
+  ELFLinkingContext::OutputMagic _outputMagic;
 
 protected:
   /// \brief Section or some other chunk type.
@@ -297,8 +297,8 @@ protected:
 /// The segment doesnot contain any slice
 template <class ELFT> class ProgramHeaderSegment : public Segment<ELFT> {
 public:
-  ProgramHeaderSegment(const ELFTargetInfo &ti)
-      : Segment<ELFT>(ti, "PHDR", llvm::ELF::PT_PHDR) {
+  ProgramHeaderSegment(const ELFLinkingContext &context)
+      : Segment<ELFT>(context, "PHDR", llvm::ELF::PT_PHDR) {
     this->_align2 = 8;
     this->_flags = (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR);
   }
@@ -325,13 +325,13 @@ protected:
 };
 
 template <class ELFT>
-Segment<ELFT>::Segment(const ELFTargetInfo &ti, StringRef name,
+Segment<ELFT>::Segment(const ELFLinkingContext &context, StringRef name,
                        const Layout::SegmentType type)
-    : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment, ti), _segmentType(type),
+    : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment, context), _segmentType(type),
       _flags(0), _atomflags(0) {
   this->_align2 = 0;
   this->_fsize = 0;
-  _outputMagic = ti.getOutputMagic();
+  _outputMagic = context.getOutputMagic();
 }
 
 // This function actually is used, but not in all instantiations of Segment.
@@ -429,8 +429,8 @@ template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
       // to a page boundary
       if (!isDataPageAlignedForNMagic && needAlign(*si)) {
-        startOffset = llvm::RoundUpToAlignment(startOffset,
-                                               this->_targetInfo.getPageSize());
+        startOffset =
+            llvm::RoundUpToAlignment(startOffset, this->_context.getPageSize());
         isDataPageAlignedForNMagic = true;
       }
       // align the startOffset to the section alignment
@@ -447,17 +447,17 @@ template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
       // to a page boundary
       if (!isDataPageAlignedForNMagic && needAlign(*si)) {
-        curOffset = llvm::RoundUpToAlignment(curOffset,
-                                             this->_targetInfo.getPageSize());
+        curOffset =
+            llvm::RoundUpToAlignment(curOffset, this->_context.getPageSize());
         isDataPageAlignedForNMagic = true;
       }
       uint64_t newOffset = llvm::RoundUpToAlignment(curOffset, (*si)->align2());
       SegmentSlice<ELFT> *slice = nullptr;
       // If the newOffset computed is more than a page away, lets create
       // a seperate segment, so that memory is not used up while running
-      if (((newOffset - curOffset) > this->_targetInfo.getPageSize()) &&
-          (_outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
-           _outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)) {
+      if (((newOffset - curOffset) > this->_context.getPageSize()) &&
+          (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+           _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)) {
 
         // TODO: use std::find here
         for (auto s : slices()) {
@@ -475,8 +475,8 @@ template <class ELFT> void Segment<ELFT>::assignOffsets(uint64_t startOffset) {
         slice->setSections(make_range(startSectionIter, endSectionIter));
         slice->setSize(curSliceSize);
         slice->setAlign(sliceAlign);
-        uint64_t newPageOffset = llvm::RoundUpToAlignment(
-            curOffset, this->_targetInfo.getPageSize());
+        uint64_t newPageOffset =
+            llvm::RoundUpToAlignment(curOffset, this->_context.getPageSize());
         newOffset = llvm::RoundUpToAlignment(newPageOffset, (*si)->align2());
         curSliceFileOffset = newOffset;
         startSectionIter = endSectionIter;
@@ -525,9 +525,9 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
   for (auto slice : slices()) {
     // Align to a page only if the output is not
     // OutputMagic::NMAGIC/OutputMagic::OMAGIC
-    if (_outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
-        _outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
-      addr = llvm::RoundUpToAlignment(addr, this->_targetInfo.getPageSize());
+    if (_outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+        _outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
+      addr = llvm::RoundUpToAlignment(addr, this->_context.getPageSize());
 
     // Align to the slice alignment
     addr = llvm::RoundUpToAlignment(addr, slice->align2());
@@ -537,7 +537,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
       // If the linker outputmagic is set to OutputMagic::NMAGIC, align the Data
       // to a page boundary
       if (!isDataPageAlignedForNMagic && needAlign(section)) {
-        addr = llvm::RoundUpToAlignment(addr, this->_targetInfo.getPageSize());
+        addr = llvm::RoundUpToAlignment(addr, this->_context.getPageSize());
         isDataPageAlignedForNMagic = true;
       }
       // Align the section address

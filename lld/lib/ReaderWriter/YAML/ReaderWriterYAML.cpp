@@ -53,10 +53,11 @@ namespace {
 /// supplies contextual information.
 class ContextInfo {
 public:
-  ContextInfo(const TargetInfo &ti) : _currentFile(nullptr), _targetInfo(ti) {}
+  ContextInfo(const LinkingContext &context)
+      : _currentFile(nullptr), _context(context) {}
 
   lld::File       *_currentFile;
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
 };
 
 /// Used when writing yaml files.
@@ -300,7 +301,7 @@ struct ScalarTraits<RefKind> {
       out << "in-group";
       break;
     default:
-      if (auto relocStr = info->_targetInfo.stringFromRelocKind(value))
+      if (auto relocStr = info->_context.stringFromRelocKind(value))
         out << *relocStr;
       else
         out << "<unknown>";
@@ -311,7 +312,7 @@ struct ScalarTraits<RefKind> {
   static StringRef input(StringRef scalar, void *ctxt, RefKind &value) {
     assert(ctxt != nullptr);
     ContextInfo *info = reinterpret_cast<ContextInfo*>(ctxt);
-    auto relocKind = info->_targetInfo.relocKindFromString(scalar);
+    auto relocKind = info->_context.relocKindFromString(scalar);
     if (!relocKind) {
       if (scalar.equals("layout-after")) {
         value = lld::Reference::kindLayoutAfter;
@@ -615,9 +616,8 @@ struct ScalarTraits<ImplicitHex8> {
 
 
 // YAML conversion for std::vector<const lld::File*>
-template<>
-struct DocumentListTraits< std::vector<const lld::File*> > {
-  static size_t size(IO &io, std::vector<const lld::File*> &seq) {
+template <> struct DocumentListTraits<std::vector<const lld::File *>> {
+  static size_t size(IO &io, std::vector<const lld::File *> &seq) {
     return seq.size();
   }
   static const lld::File *&element(IO &io, std::vector<const lld::File*> &seq,
@@ -636,12 +636,10 @@ struct MappingTraits<const lld::File*> {
     class NormArchiveFile : public lld::ArchiveLibraryFile {
     public:
       NormArchiveFile(IO &io)
-          : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_targetInfo,
-                               ""),
-            _path() {
-      }
+          : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_context, ""),
+            _path() {}
       NormArchiveFile(IO &io, const lld::File *file)
-          : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_targetInfo,
+          : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_context,
                                file->path()),
             _path(file->path()) {
         // If we want to support writing archives, this constructor would
@@ -725,8 +723,8 @@ struct MappingTraits<const lld::File*> {
         return _absoluteAtoms;
       }
 
-      virtual const TargetInfo &getTargetInfo() const {
-        return ((ContextInfo *)_IO.getContext())->_targetInfo;
+      virtual const LinkingContext &getLinkingContext() const {
+        return ((ContextInfo *)_IO.getContext())->_context;
       }
 
       // Allocate a new copy of this string and keep track of allocations
@@ -1314,7 +1312,7 @@ namespace yaml {
 
 class Writer : public lld::Writer {
 public:
-  Writer(const TargetInfo &ti) : _targetInfo(ti) {}
+  Writer(const LinkingContext &context) : _context(context) {}
 
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // Create stream to path.
@@ -1324,7 +1322,7 @@ public:
       return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create yaml Output writer, using yaml options for context.
-    ContextInfo context(_targetInfo);
+    ContextInfo context(_context);
     llvm::yaml::Output yout(out, &context);
 
     // Write yaml output.
@@ -1335,12 +1333,12 @@ public:
   }
 
 private:
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
 };
 
 class ReaderYAML : public Reader {
 public:
-  ReaderYAML(const TargetInfo &ti) : Reader(ti) {}
+  ReaderYAML(const LinkingContext &context) : Reader(context) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
                        std::vector<std::unique_ptr<File>> &result) const {
@@ -1352,7 +1350,7 @@ public:
     // is deallocated.
 
     // Create YAML Input parser.
-    ContextInfo context(_targetInfo);
+    ContextInfo context(_context);
     llvm::yaml::Input yin(mb->getBuffer(), &context);
 
     // Fill vector with File objects created by parsing yaml.
@@ -1373,11 +1371,11 @@ public:
 };
 } // end namespace yaml
 
-std::unique_ptr<Writer> createWriterYAML(const TargetInfo &ti) {
-  return std::unique_ptr<Writer>(new lld::yaml::Writer(ti));
+std::unique_ptr<Writer> createWriterYAML(const LinkingContext &context) {
+  return std::unique_ptr<Writer>(new lld::yaml::Writer(context));
 }
 
-std::unique_ptr<Reader> createReaderYAML(const TargetInfo &ti) {
-  return std::unique_ptr<Reader>(new lld::yaml::ReaderYAML(ti));
+std::unique_ptr<Reader> createReaderYAML(const LinkingContext &context) {
+  return std::unique_ptr<Reader>(new lld::yaml::ReaderYAML(context));
 }
 } // end namespace lld

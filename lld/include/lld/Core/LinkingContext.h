@@ -1,4 +1,4 @@
-//===- lld/Core/TargetInfo.h - Linker Target Info Interface ---------------===//
+//===- lld/Core/LinkingContext.h - Linker Target Info Interface -----------===//
 //
 //                             The LLVM Linker
 //
@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace llvm {
-  class Triple;
+class Triple;
 }
 
 namespace lld {
@@ -34,33 +34,29 @@ class File;
 class Writer;
 class InputFiles;
 
-/// \brief The TargetInfo class encapsulates "what and how" to link.
+/// \brief The LinkingContext class encapsulates "what and how" to link.
 ///
-/// The base class TargetInfo contains the options needed by core linking.
-/// Subclasses of TargetInfo have additional options needed by specific Readers
-/// and Writers. For example, ELFTargetInfo has methods that supplies options
+/// The base class LinkingContext contains the options needed by core linking.
+/// Subclasses of LinkingContext have additional options needed by specific
+/// Readers
+/// and Writers. For example, ELFLinkingContext has methods that supplies
+/// options
 /// to the ELF Reader and Writer.
-///
-/// \todo Consider renaming to something like "LinkingOptions".
-class TargetInfo : public Reader {
+class LinkingContext : public Reader {
 public:
-  virtual ~TargetInfo();
+  virtual ~LinkingContext();
 
   /// \name Methods needed by core linking
   /// @{
 
   /// Name of symbol linker should use as "entry point" to program,
   /// usually "main" or "start".
-  StringRef entrySymbolName() const {
-    return _entrySymbolName;
-  }
+  StringRef entrySymbolName() const { return _entrySymbolName; }
 
   /// Whether core linking should remove Atoms not reachable by following
   /// References from the entry point Atom or from all global scope Atoms
   /// if globalsAreDeadStripRoots() is true.
-  bool deadStrip() const {
-    return _deadStrip;
-  }
+  bool deadStrip() const { return _deadStrip; }
 
   /// Only used if deadStrip() returns true.  Means all global scope Atoms
   /// should be marked live (along with all Atoms they reference).  Usually
@@ -84,9 +80,7 @@ public:
   /// object file contains a DefinedAtom which will replace an existing
   /// UndefinedAtom.  If this method returns true, core linking will actively
   /// load every member object file from every archive.
-  bool forceLoadAllArchives() const {
-    return _forceLoadAllArchives;
-  }
+  bool forceLoadAllArchives() const { return _forceLoadAllArchives; }
 
   /// Archive files (aka static libraries) are normally lazily loaded.  That is,
   /// object files within an archive are only loaded and linked in, if the
@@ -117,16 +111,12 @@ public:
   /// \todo This should be a method core linking calls with a list of the
   /// UndefinedAtoms so that different drivers can format the error message
   /// as needed.
-  bool printRemainingUndefines() const {
-    return _printRemainingUndefines;
-  }
+  bool printRemainingUndefines() const { return _printRemainingUndefines; }
 
   /// Normally, every UndefinedAtom must be replaced by a DefinedAtom or a
   /// SharedLibraryAtom for the link to be successful.  This method controls
   /// whether core linking considers remaining undefines to be an error.
-  bool allowRemainingUndefines() const {
-    return _allowRemainingUndefines;
-  }
+  bool allowRemainingUndefines() const { return _allowRemainingUndefines; }
 
   /// In the lld model, a SharedLibraryAtom is a proxy atom for something
   /// that will be found in a dynamic shared library when the program runs.
@@ -161,9 +151,7 @@ public:
   /// SharedLibraryAtom for the link to be successful.  This method controls
   /// whether core linking considers remaining undefines from the shared library
   /// to be an error.
-  bool allowShlibUndefines() const {
-    return _allowShlibUndefines;
-  }
+  bool allowShlibUndefines() const { return _allowShlibUndefines; }
 
   /// If true, core linking will write the path to each input file to stdout
   /// (i.e. llvm::outs()) as it is used.  This is used to implement the -t
@@ -171,31 +159,21 @@ public:
   ///
   /// \todo This should be a method core linking calls so that drivers can
   /// format the line as needed.
-  bool logInputFiles() const {
-    return _logInputFiles;
-  }
+  bool logInputFiles() const { return _logInputFiles; }
 
   /// Parts of LLVM use global variables which are bound to command line
   /// options (see llvm::cl::Options). This method returns "command line"
   /// options which are used to configure LLVM's command line settings.
   /// For instance the -debug-only XXX option can be used to dynamically
   /// trace different parts of LLVM and lld.
-  const std::vector<const char*> &llvmOptions() const {
-    return _llvmOptions;
-  }
+  const std::vector<const char *> &llvmOptions() const { return _llvmOptions; }
 
   /// This method returns the sequence of input files for core linking to
   /// process.
-  ///
-  /// \todo Consider moving this out of TargetInfo so that the same TargetInfo
-  /// object can be reused for different links.
-  const std::vector<LinkerInput> &inputFiles() const {
-    return _inputFiles;
-  }
+  const std::vector<LinkerInput> &inputFiles() const { return _inputFiles; }
   /// @}
 
-
-  /// \name Methods used by Drivers to configure TargetInfo
+  /// \name Methods used by Drivers to configure LinkingContext
   /// @{
   void setOutputPath(StringRef str) { _outputPath = str; }
   void setEntrySymbolName(StringRef name) { _entrySymbolName = name; }
@@ -213,30 +191,22 @@ public:
   void setWarnIfCoalesableAtomsHaveDifferentLoadName(bool warn) {
     _warnIfCoalesableAtomsHaveDifferentLoadName = warn;
   }
-  void setForceLoadAllArchives(bool force) {
-    _forceLoadAllArchives = force;
-  }
+  void setForceLoadAllArchives(bool force) { _forceLoadAllArchives = force; }
   void setPrintRemainingUndefines(bool print) {
     _printRemainingUndefines = print;
   }
   void setAllowRemainingUndefines(bool allow) {
     _allowRemainingUndefines = allow;
   }
-  void setAllowShlibUndefines(bool allow) {
-    _allowShlibUndefines = allow;
-  }
-  void setLogInputFiles(bool log) {
-    _logInputFiles = log;
-  }
+  void setAllowShlibUndefines(bool allow) { _allowShlibUndefines = allow; }
+  void setLogInputFiles(bool log) { _logInputFiles = log; }
   void appendInputFile(StringRef path) {
     _inputFiles.emplace_back(LinkerInput(path));
   }
   void appendInputFile(std::unique_ptr<llvm::MemoryBuffer> buffer) {
     _inputFiles.emplace_back(LinkerInput(std::move(buffer)));
   }
-  void appendLLVMOption(const char *opt) {
-    _llvmOptions.push_back(opt);
-  }
+  void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
 
   /// This method adds undefined symbols specified by the -u option to the
   /// to the list of undefined symbols known to the linker. This option
@@ -264,7 +234,6 @@ public:
   /// \returns true if there is an error with the current settings.
   bool validate(raw_ostream &diagnostics);
 
-
   /// @}
   /// \name Methods used by Driver::link()
   /// @{
@@ -273,12 +242,10 @@ public:
   ///
   /// \todo To support in-memory linking, we need an abstraction that allows
   /// the linker to write to an in-memory buffer.
-  StringRef outputPath() const {
-    return _outputPath;
-  }
+  StringRef outputPath() const { return _outputPath; }
 
   /// Abstract method to parse a supplied input file buffer into one or
-  /// more lld::File objects. Subclasses of TargetInfo must implement this
+  /// more lld::File objects. Subclasses of LinkingContext must implement this
   /// method.
   ///
   /// \param inputBuff This is an in-memory read-only copy of the input file.
@@ -290,8 +257,9 @@ public:
   /// \param [out] result The instantiated lld::File object is returned here.
   /// The \p result is a vector because some input files parse into more than
   /// one lld::File (e.g. YAML).
-  virtual error_code parseFile(std::unique_ptr<MemoryBuffer> &inputBuff,
-                        std::vector<std::unique_ptr<File>> &result) const = 0;
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &inputBuff,
+            std::vector<std::unique_ptr<File> > &result) const = 0;
 
   /// This is a wrapper around parseFile() where the input file is specified
   /// by file system path.  The default implementation reads the input file
@@ -299,13 +267,13 @@ public:
   ///
   /// \param path This is the file system path to the input file.
   /// \param [out] result The instantiated lld::File object is returned here.
-  virtual error_code readFile(StringRef path,
-                        std::vector<std::unique_ptr<File>> &result) const;
+  virtual error_code
+  readFile(StringRef path, std::vector<std::unique_ptr<File> > &result) const;
 
   /// This method is called by core linking to give the Writer a chance
   /// to add file format specific "files" to set of files to be linked. This is
   /// how file format specific atoms can be added to the link.
-  virtual void addImplicitFiles(InputFiles&) const;
+  virtual void addImplicitFiles(InputFiles &) const;
 
   /// This method is called by core linking to build the list of Passes to be
   /// run on the merged/linked graph of all input files.
@@ -317,7 +285,6 @@ public:
   virtual error_code writeFile(const File &linkedFile) const;
 
   /// @}
-
 
   /// \name Methods needed by YAML I/O and error messages to convert Kind values
   /// to and from strings.
@@ -333,35 +300,32 @@ public:
 
   /// @}
 
-
-
 protected:
-  TargetInfo(); // Must be subclassed
+  LinkingContext(); // Must be subclassed
 
   /// Abstract method to lazily instantiate the Writer.
   virtual Writer &writer() const = 0;
 
-
-  StringRef                _outputPath;
-  StringRef                _entrySymbolName;
-  bool                     _deadStrip;
-  bool                     _globalsAreDeadStripRoots;
-  bool                     _searchArchivesToOverrideTentativeDefinitions;
-  bool                     _searchSharedLibrariesToOverrideTentativeDefinitions;
-  bool                     _warnIfCoalesableAtomsHaveDifferentCanBeNull;
-  bool                     _warnIfCoalesableAtomsHaveDifferentLoadName;
-  bool                     _forceLoadAllArchives;
-  bool                     _printRemainingUndefines;
-  bool                     _allowRemainingUndefines;
-  bool                     _logInputFiles;
-  bool                     _allowShlibUndefines;
-  std::vector<StringRef>   _deadStripRoots;
+  StringRef _outputPath;
+  StringRef _entrySymbolName;
+  bool _deadStrip;
+  bool _globalsAreDeadStripRoots;
+  bool _searchArchivesToOverrideTentativeDefinitions;
+  bool _searchSharedLibrariesToOverrideTentativeDefinitions;
+  bool _warnIfCoalesableAtomsHaveDifferentCanBeNull;
+  bool _warnIfCoalesableAtomsHaveDifferentLoadName;
+  bool _forceLoadAllArchives;
+  bool _printRemainingUndefines;
+  bool _allowRemainingUndefines;
+  bool _logInputFiles;
+  bool _allowShlibUndefines;
+  std::vector<StringRef> _deadStripRoots;
   std::vector<LinkerInput> _inputFiles;
-  std::vector<const char*> _llvmOptions;
-  std::unique_ptr<Reader>  _yamlReader;
-  StringRefVector          _initialUndefinedSymbols;
+  std::vector<const char *> _llvmOptions;
+  std::unique_ptr<Reader> _yamlReader;
+  StringRefVector _initialUndefinedSymbols;
 
- private:
+private:
   /// Validate the subclass bits. Only called by validate.
   virtual bool validateImpl(raw_ostream &diagnostics) = 0;
 };

@@ -49,7 +49,7 @@ Adding an Option to an existing Flavor
 
 #. Add the option to the desired :file:`lib/Driver/{flavor}Options.td`.
 
-#. Add to :cpp:class:`lld::FlavorTargetInfo` a getter and setter method  
+#. Add to :cpp:class:`lld::FlavorLinkingContext` a getter and setter method
    for the option.
    
 #. Modify :cpp:func:`lld::FlavorDriver::parse` in :file:

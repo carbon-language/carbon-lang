@@ -14,7 +14,7 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SymbolTable.h"
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/Support/Debug.h"
@@ -134,7 +134,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // tell symbol table
   _symbolTable.add(atom);
 
-  if (_targetInfo.deadStrip()) {
+  if (_context.deadStrip()) {
     // add to set of dead-strip-roots, all symbols that
     // the compiler marks as don't strip
     if (atom.deadStrip() == DefinedAtom::deadStripNever)
@@ -188,9 +188,9 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 void Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
   const bool searchArchives =
-      _targetInfo.searchArchivesToOverrideTentativeDefinitions();
+      _context.searchArchivesToOverrideTentativeDefinitions();
   const bool searchSharedLibs =
-      _targetInfo.searchSharedLibrariesToOverrideTentativeDefinitions();
+      _context.searchSharedLibrariesToOverrideTentativeDefinitions();
 
   // keep looping until no more undefines were added in last loop
   unsigned int undefineGenCount = 0xFFFFFFFF;
@@ -273,15 +273,15 @@ void Resolver::markLive(const Atom &atom) {
 void Resolver::deadStripOptimize() {
   ScopedTask task(getDefaultDomain(), "deadStripOptimize");
   // only do this optimization with -dead_strip
-  if (!_targetInfo.deadStrip())
+  if (!_context.deadStrip())
     return;
 
   // clear liveness on all atoms
   _liveAtoms.clear();
 
   // By default, shared libraries are built with all globals as dead strip roots
-  if (_targetInfo.globalsAreDeadStripRoots()) {
-    for ( const Atom *atom : _atoms ) {
+  if (_context.globalsAreDeadStripRoots()) {
+    for (const Atom *atom : _atoms) {
       const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom);
       if (defAtom == nullptr)
         continue;
@@ -291,7 +291,7 @@ void Resolver::deadStripOptimize() {
   }
 
   // Or, use list of names that are dead stip roots.
-  for (const StringRef &name : _targetInfo.deadStripRoots()) {
+  for (const StringRef &name : _context.deadStripRoots()) {
     const Atom *symAtom = _symbolTable.findByName(name);
     assert(symAtom->definition() != Atom::definitionUndefined);
     _deadStripRoots.insert(symAtom);
@@ -317,7 +317,7 @@ bool Resolver::checkUndefines(bool final) {
   // build vector of remaining undefined symbols
   std::vector<const UndefinedAtom *> undefinedAtoms;
   _symbolTable.undefines(undefinedAtoms);
-  if (_targetInfo.deadStrip()) {
+  if (_context.deadStrip()) {
     // When dead code stripping, we don't care if dead atoms are undefined.
     undefinedAtoms.erase(std::remove_if(
                            undefinedAtoms.begin(), undefinedAtoms.end(),
@@ -337,18 +337,18 @@ bool Resolver::checkUndefines(bool final) {
 
       // If this is a library and undefined symbols are allowed on the
       // target platform, skip over it.
-      if (isa<SharedLibraryFile>(f) && _targetInfo.allowShlibUndefines())
+      if (isa<SharedLibraryFile>(f) && _context.allowShlibUndefines())
         continue;
 
       // Seems like this symbol is undefined. Warn that.
       foundUndefines = true;
-      if (_targetInfo.printRemainingUndefines()) {
+      if (_context.printRemainingUndefines()) {
         llvm::errs() << "Undefined Symbol: " << undefAtom->file().path()
                      << " : " << undefAtom->name() << "\n";
       }
     }
     if (foundUndefines) {
-      if (_targetInfo.printRemainingUndefines())
+      if (_context.printRemainingUndefines())
         llvm::errs() << "symbol(s) not found\n";
       return true;
     }
@@ -393,7 +393,7 @@ bool Resolver::resolve() {
   this->updateReferences();
   this->deadStripOptimize();
   if (this->checkUndefines(false)) {
-    if (!_targetInfo.allowRemainingUndefines())
+    if (!_context.allowRemainingUndefines())
       return true;
   }
   this->removeCoalescedAwayAtoms();

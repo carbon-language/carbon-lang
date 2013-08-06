@@ -15,12 +15,12 @@
 #include <memory>
 
 namespace lld {
-class ELFTargetInfo;
+class ELFLinkingContext;
 class File;
 class InputFiles;
-class MachOTargetInfo;
-class PECOFFTargetInfo;
-class TargetInfo;
+class MachOLinkingContext;
+class PECOFFLinkingContext;
+class LinkingContext;
 
 /// \brief The Writer is an abstract class for writing object files, shared
 /// library files, and executable files.  Each file format (e.g. ELF, mach-o,
@@ -42,11 +42,11 @@ protected:
   Writer();
 };
 
-std::unique_ptr<Writer> createWriterELF(const ELFTargetInfo &);
-std::unique_ptr<Writer> createWriterMachO(const MachOTargetInfo &);
-std::unique_ptr<Writer> createWriterNative(const TargetInfo &);
-std::unique_ptr<Writer> createWriterPECOFF(const PECOFFTargetInfo &);
-std::unique_ptr<Writer> createWriterYAML(const TargetInfo &);
+std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &);
+std::unique_ptr<Writer> createWriterMachO(const MachOLinkingContext &);
+std::unique_ptr<Writer> createWriterNative(const LinkingContext &);
+std::unique_ptr<Writer> createWriterPECOFF(const PECOFFLinkingContext &);
+std::unique_ptr<Writer> createWriterYAML(const LinkingContext &);
 } // end namespace lld
 
 #endif

@@ -22,7 +22,7 @@
 #include "llvm/Support/FileOutputBuffer.h"
 
 namespace lld {
-class ELFTargetInfo;
+class ELFLinkingContext;
 
 namespace elf {
 class ELFWriter;
@@ -51,9 +51,9 @@ public:
     CT_Tls,
   };
 
-  Chunk(StringRef name, Kind kind, const ELFTargetInfo &ti)
+  Chunk(StringRef name, Kind kind, const ELFLinkingContext &context)
       : _name(name), _kind(kind), _fsize(0), _msize(0), _align2(0), _order(0),
-        _ordinal(1), _start(0), _fileoffset(0), _targetInfo(ti) {}
+        _ordinal(1), _start(0), _fileoffset(0), _context(context) {}
   virtual ~Chunk() {}
   // Does the chunk occupy disk space
   virtual bool occupiesNoDiskSpace() const { return false; }
@@ -98,7 +98,7 @@ protected:
   uint64_t _ordinal;
   uint64_t _start;
   uint64_t _fileoffset;
-  const ELFTargetInfo &_targetInfo;
+  const ELFLinkingContext &_context;
 };
 
 } // end namespace elf

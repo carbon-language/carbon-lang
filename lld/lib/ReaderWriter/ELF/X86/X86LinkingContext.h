@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/X86/X86TargetInfo.h ---------------------------===//
+//===- lib/ReaderWriter/ELF/X86/X86LinkingContext.h -----------------------===//
 //
 //                             The LLVM Linker
 //
@@ -12,18 +12,18 @@
 
 #include "X86TargetHandler.h"
 
-#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ELF.h"
 
 namespace lld {
 namespace elf {
-class X86TargetInfo LLVM_FINAL : public ELFTargetInfo {
+class X86LinkingContext LLVM_FINAL : public ELFLinkingContext {
 public:
-  X86TargetInfo(llvm::Triple triple)
-      : ELFTargetInfo(triple, std::unique_ptr<TargetHandlerBase>(
-                                  new X86TargetHandler(*this))) {}
+  X86LinkingContext(llvm::Triple triple)
+      : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
+                                      new X86TargetHandler(*this))) {}
 
   /// \brief X86 has only two relative relocation
   /// a) for supporting IFUNC relocs - R_386_IRELATIVE

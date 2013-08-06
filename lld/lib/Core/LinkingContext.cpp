@@ -1,4 +1,4 @@
-//===- lib/Core/TargetInfo.cpp - Linker Target Info Interface -------------===//
+//===- lib/Core/LinkingContext.cpp - Linker Context Object Interface ------===//
 //
 //                             The LLVM Linker
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/Core/TargetInfo.h"
+#include "lld/Core/LinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/Triple.h"
 
 namespace lld {
 
-TargetInfo::TargetInfo()
+LinkingContext::LinkingContext()
     : Reader(*this), _deadStrip(false), _globalsAreDeadStripRoots(false),
       _searchArchivesToOverrideTentativeDefinitions(false),
       _searchSharedLibrariesToOverrideTentativeDefinitions(false),
@@ -24,15 +24,16 @@ TargetInfo::TargetInfo()
       _allowRemainingUndefines(false), _logInputFiles(false),
       _allowShlibUndefines(false) {}
 
-TargetInfo::~TargetInfo() {}
+LinkingContext::~LinkingContext() {}
 
-bool TargetInfo::validate(raw_ostream &diagnostics) {
+bool LinkingContext::validate(raw_ostream &diagnostics) {
   _yamlReader = createReaderYAML(*this);
   return validateImpl(diagnostics);
 }
 
-error_code TargetInfo::readFile(StringRef path,
-                        std::vector<std::unique_ptr<File>> &result) const {
+error_code
+LinkingContext::readFile(StringRef path,
+                         std::vector<std::unique_ptr<File>> &result) const {
   OwningPtr<llvm::MemoryBuffer> opmb;
   if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
     return ec;
@@ -41,16 +42,14 @@ error_code TargetInfo::readFile(StringRef path,
   return this->parseFile(mb, result);
 }
 
-error_code TargetInfo::writeFile(const File &linkedFile) const {
-   return this->writer().writeFile(linkedFile, _outputPath);
+error_code LinkingContext::writeFile(const File &linkedFile) const {
+  return this->writer().writeFile(linkedFile, _outputPath);
 }
 
-void TargetInfo::addImplicitFiles(InputFiles& inputs) const {
-   this->writer().addFiles(inputs);
+void LinkingContext::addImplicitFiles(InputFiles &inputs) const {
+  this->writer().addFiles(inputs);
 }
 
-void TargetInfo::addPasses(PassManager &pm) const {
-}
-
+void LinkingContext::addPasses(PassManager &pm) const {}
 
 } // end namespace lld

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCTargetHandler.h"
-#include "PPCTargetInfo.h"
+#include "PPCLinkingContext.h"
 
 using namespace lld;
 using namespace elf;
@@ -56,9 +56,9 @@ ErrorOr<void> PPCTargetRelocationHandler::applyRelocation(
   default : {
     std::string str;
     llvm::raw_string_ostream s(str);
-    auto name = _targetInfo.stringFromRelocKind(ref.kind());
-    s << "Unhandled relocation: "
-      << (name ? *name : "<unknown>" ) << " (" << ref.kind() << ")";
+    auto name = _context.stringFromRelocKind(ref.kind());
+    s << "Unhandled relocation: " << (name ? *name : "<unknown>") << " ("
+      << ref.kind() << ")";
     s.flush();
     llvm_unreachable(str.c_str());
   }
@@ -67,7 +67,6 @@ ErrorOr<void> PPCTargetRelocationHandler::applyRelocation(
   return error_code::success();
 }
 
-PPCTargetHandler::PPCTargetHandler(PPCTargetInfo &targetInfo)
+PPCTargetHandler::PPCTargetHandler(PPCLinkingContext &targetInfo)
     : DefaultTargetHandler(targetInfo), _relocationHandler(targetInfo),
-      _targetLayout(targetInfo) {
-}
+      _targetLayout(targetInfo) {}

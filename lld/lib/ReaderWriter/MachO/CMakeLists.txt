@@ -1,7 +1,7 @@
 add_lld_library(lldMachO
-  MachOTargetInfo.cpp
-  WriterMachO.cpp
+  MachOLinkingContext.cpp
   ReferenceKinds.cpp
+  WriterMachO.cpp
   )
 
 target_link_libraries(lldMachO

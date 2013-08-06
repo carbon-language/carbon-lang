@@ -19,8 +19,7 @@
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 4, false> HexagonELFType;
-class HexagonTargetInfo;
-
+class HexagonLinkingContext;
 
 /// \brief Handle Hexagon specific Atoms
 template <class HexagonELFType>
@@ -85,7 +84,7 @@ public:
     ORDER_SDATA = 205
   };
 
-  HexagonTargetLayout(const HexagonTargetInfo &hti)
+  HexagonTargetLayout(const HexagonLinkingContext &hti)
       : TargetLayout<HexagonELFType>(hti), _sdataSection(nullptr) {
     _sdataSection = new (_alloc) SDataSection<HexagonELFType>(hti);
   }
@@ -145,7 +144,7 @@ private:
 class HexagonTargetHandler LLVM_FINAL :
     public DefaultTargetHandler<HexagonELFType> {
 public:
-  HexagonTargetHandler(HexagonTargetInfo &targetInfo);
+  HexagonTargetHandler(HexagonLinkingContext &targetInfo);
 
   bool doesOverrideHeader() { return true; }
 
@@ -170,7 +169,7 @@ public:
 
   void addDefaultAtoms() {
     _hexagonRuntimeFile.addAbsoluteAtom("_SDA_BASE_");
-    if (_targetInfo.isDynamic()) {
+    if (_context.isDynamic()) {
       _hexagonRuntimeFile.addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       _hexagonRuntimeFile.addAbsoluteAtom("_DYNAMIC");
     }
@@ -185,7 +184,7 @@ public:
     auto sdabaseAtomIter = _targetLayout.findAbsoluteAtom("_SDA_BASE_");
     (*sdabaseAtomIter)->_virtualAddr =
         _targetLayout.getSDataSection()->virtualAddr();
-    if (_targetInfo.isDynamic()) {
+    if (_context.isDynamic()) {
       auto gotAtomIter =
           _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       _gotSymAtom = (*gotAtomIter);

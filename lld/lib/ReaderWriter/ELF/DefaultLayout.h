@@ -154,7 +154,7 @@ public:
 
   typedef typename std::vector<lld::AtomLayout *>::iterator AbsoluteAtomIterT;
 
-  DefaultLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
+  DefaultLayout(const ELFLinkingContext &context) : _context(context) {}
 
   /// \brief Return the section order for a input section
   virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
@@ -261,7 +261,7 @@ public:
   RelocationTable<ELFT> *getDynamicRelocationTable() {
     if (!_dynamicRelocationTable) {
       _dynamicRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _targetInfo, ".rela.dyn", ORDER_DYNAMIC_RELOCS));
+          _context, ".rela.dyn", ORDER_DYNAMIC_RELOCS));
       addSection(_dynamicRelocationTable.get());
     }
     return _dynamicRelocationTable.get();
@@ -271,7 +271,7 @@ public:
   RelocationTable<ELFT> *getPLTRelocationTable() {
     if (!_pltRelocationTable) {
       _pltRelocationTable.reset(new (_allocator) RelocationTable<ELFT>(
-          _targetInfo, ".rela.plt", ORDER_DYNAMIC_PLT_RELOCS));
+          _context, ".rela.plt", ORDER_DYNAMIC_PLT_RELOCS));
       addSection(_pltRelocationTable.get());
     }
     return _pltRelocationTable.get();
@@ -305,7 +305,7 @@ private:
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _dynamicRelocationTable;
   LLD_UNIQUE_BUMP_PTR(RelocationTable<ELFT>) _pltRelocationTable;
   std::vector<lld::AtomLayout *> _absoluteAtoms;
-  const ELFTargetInfo &_targetInfo;
+  const ELFLinkingContext &_context;
 };
 
 template <class ELFT>
@@ -473,8 +473,8 @@ template <class ELFT>
 AtomSection<ELFT> *DefaultLayout<ELFT>::createSection(
     StringRef sectionName, int32_t contentType,
     DefinedAtom::ContentPermissions permissions, SectionOrder sectionOrder) {
-  return new (_allocator) AtomSection<ELFT>(
-      _targetInfo, sectionName, contentType, permissions, sectionOrder);
+  return new (_allocator) AtomSection<ELFT>(_context, sectionName, contentType,
+                                            permissions, sectionOrder);
 }
 
 template <class ELFT>
@@ -513,9 +513,9 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
         getSection(sectionName, contentType, permissions);
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom)
-      if (_targetInfo.isDynamicRelocation(*definedAtom, *reloc))
+      if (_context.isDynamicRelocation(*definedAtom, *reloc))
         getDynamicRelocationTable()->addRelocation(*definedAtom, *reloc);
-      else if (_targetInfo.isPLTRelocation(*definedAtom, *reloc))
+      else if (_context.isPLTRelocation(*definedAtom, *reloc))
         getPLTRelocationTable()->addRelocation(*definedAtom, *reloc);
     return section->appendAtom(atom);
   } else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
@@ -555,7 +555,7 @@ DefaultLayout<ELFT>::mergeSimiliarSections() {
 
 template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
-  ELFTargetInfo::OutputMagic outputMagic = _targetInfo.getOutputMagic();
+  ELFLinkingContext::OutputMagic outputMagic = _context.getOutputMagic();
     // TODO: Do we want to give a chance for the targetHandlers
     // to sort segments in an arbitrary order ?
   // sort the sections by their order as defined by the layout
@@ -609,8 +609,8 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
           if (!additionalSegmentInsert.second) {
             segment = additionalSegmentInsert.first->second;
           } else {
-            segment = new (_allocator)
-                Segment<ELFT>(_targetInfo, segmentName, segmentType);
+            segment = new (_allocator) Segment<ELFT>(_context, segmentName,
+                                                     segmentType);
             additionalSegmentInsert.first->second = segment;
             _segments.push_back(segment);
           }
@@ -620,8 +620,8 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         // If the output magic is set to OutputMagic::NMAGIC or
         // OutputMagic::OMAGIC, Place the data alongside text in one single
         // segment
-        if (outputMagic == ELFTargetInfo::OutputMagic::NMAGIC ||
-            outputMagic == ELFTargetInfo::OutputMagic::OMAGIC)
+        if (outputMagic == ELFLinkingContext::OutputMagic::NMAGIC ||
+            outputMagic == ELFLinkingContext::OutputMagic::OMAGIC)
           lookupSectionFlag = llvm::ELF::SHF_EXECINSTR | llvm::ELF::SHF_ALLOC |
                               llvm::ELF::SHF_WRITE;
 
@@ -634,8 +634,8 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
         if (!segmentInsert.second) {
           segment = segmentInsert.first->second;
         } else {
-          segment = new (_allocator)
-              Segment<ELFT>(_targetInfo, "PT_LOAD", llvm::ELF::PT_LOAD);
+          segment = new (_allocator) Segment<ELFT>(_context, "PT_LOAD",
+                                                   llvm::ELF::PT_LOAD);
           segmentInsert.first->second = segment;
           _segments.push_back(segment);
         }
@@ -643,9 +643,9 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
       }
     }
   }
-  if (_targetInfo.isDynamic()) {
+  if (_context.isDynamic()) {
     Segment<ELFT> *segment =
-        new (_allocator) ProgramHeaderSegment<ELFT>(_targetInfo);
+        new (_allocator) ProgramHeaderSegment<ELFT>(_context);
     _segments.push_back(segment);
     segment->append(_header);
     segment->append(_programHeader);
@@ -676,8 +676,8 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
 
-  uint64_t virtualAddress = _targetInfo.getBaseAddress();
-  ELFTargetInfo::OutputMagic outputMagic = _targetInfo.getOutputMagic();
+  uint64_t virtualAddress = _context.getBaseAddress();
+  ELFLinkingContext::OutputMagic outputMagic = _context.getOutputMagic();
 
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
@@ -710,10 +710,10 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
         continue;
       // Align the segment to a page boundary only if the output mode is
       // not OutputMagic::NMAGIC/OutputMagic::OMAGIC
-      if (outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
-          outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
+      if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+          outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
         fileoffset =
-            llvm::RoundUpToAlignment(fileoffset, _targetInfo.getPageSize());
+            llvm::RoundUpToAlignment(fileoffset, _context.getPageSize());
       si->assignOffsets(fileoffset);
       fileoffset = si->fileOffset() + si->fileSize();
     }
@@ -728,10 +728,10 @@ DefaultLayout<ELFT>::assignVirtualAddress() {
       // first segment to the pagesize
       (*si)->assignVirtualAddress(address);
       (*si)->setMemSize(address - virtualAddress);
-      if (outputMagic != ELFTargetInfo::OutputMagic::NMAGIC &&
-          outputMagic != ELFTargetInfo::OutputMagic::OMAGIC)
+      if (outputMagic != ELFLinkingContext::OutputMagic::NMAGIC &&
+          outputMagic != ELFLinkingContext::OutputMagic::OMAGIC)
         virtualAddress =
-            llvm::RoundUpToAlignment(address, _targetInfo.getPageSize());
+            llvm::RoundUpToAlignment(address, _context.getPageSize());
     }
     _programHeader->resetProgramHeaders();
   }

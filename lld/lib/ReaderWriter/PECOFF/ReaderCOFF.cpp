@@ -84,13 +84,13 @@ private:
   typedef vector<const coff_symbol *> SymbolVectorT;
   typedef std::map<const coff_section *, SymbolVectorT> SectionToSymbolsT;
   typedef std::map<const StringRef, Atom *> SymbolNameToAtomT;
-  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *> >
-      SectionToAtomsT;
+  typedef std::map<const coff_section *, vector<COFFDefinedFileAtom *>>
+  SectionToAtomsT;
 
 public:
-  FileCOFF(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> mb,
-           error_code &ec)
-      : File(mb->getBufferIdentifier(), kindObject), _targetInfo(ti) {
+  FileCOFF(const LinkingContext &context,
+           std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
+      : File(mb->getBufferIdentifier(), kindObject), _context(context) {
     llvm::OwningPtr<llvm::object::Binary> bin;
     ec = llvm::object::createBinary(mb.release(), bin);
     if (ec)
@@ -138,7 +138,7 @@ public:
     return _absoluteAtoms;
   }
 
-  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+  virtual const LinkingContext &getLinkingContext() const { return _context; }
 
   StringRef getLinkerDirectives() const { return _directives; }
 
@@ -525,7 +525,7 @@ private:
            std::map<uint32_t, COFFDefinedAtom *>> _definedAtomLocations;
 
   mutable llvm::BumpPtrAllocator _alloc;
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
 };
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
@@ -543,18 +543,18 @@ private:
 
 class ReaderCOFF : public Reader {
 public:
-  explicit ReaderCOFF(const TargetInfo &ti)
-      : Reader(ti), _readerArchive(ti, *this) {}
+  explicit ReaderCOFF(const LinkingContext &context)
+      : Reader(context), _readerArchive(context, *this) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> &mb,
-                       std::vector<std::unique_ptr<File> > &result) const {
+                       std::vector<std::unique_ptr<File>> &result) const {
     StringRef magic(mb->getBufferStart(), mb->getBufferSize());
     llvm::sys::fs::file_magic fileType = llvm::sys::fs::identify_magic(magic);
     if (fileType == llvm::sys::fs::file_magic::coff_object)
       return parseCOFFFile(mb, result);
     if (fileType == llvm::sys::fs::file_magic::archive)
       return _readerArchive.parseFile(mb, result);
-    return lld::coff::parseCOFFImportLibrary(_targetInfo, mb, result);
+    return lld::coff::parseCOFFImportLibrary(_context, mb, result);
   }
 
 private:
@@ -569,10 +569,11 @@ private:
       llvm::dbgs() << ".drectve: " << directives << "\n";
     });
 
-    // Remove const from _targetInfo.
-    // FIXME: Rename TargetInfo -> LinkingContext and treat it a mutable object
+    // Remove const from _context.
+    // FIXME: Rename LinkingContext -> LinkingContext and treat it a mutable
+    // object
     // in the core linker.
-    PECOFFTargetInfo *targetInfo = (PECOFFTargetInfo *)&_targetInfo;
+    PECOFFLinkingContext *targetInfo = (PECOFFLinkingContext *)&_context;
 
     // Split the string into tokens, as the shell would do for argv.
     SmallVector<const char *, 16> tokens;
@@ -601,11 +602,10 @@ private:
   }
 
   error_code parseCOFFFile(std::unique_ptr<MemoryBuffer> &mb,
-                           std::vector<std::unique_ptr<File> > &result) const {
+                           std::vector<std::unique_ptr<File>> &result) const {
     // Parse the memory buffer as PECOFF file.
     error_code ec;
-    std::unique_ptr<FileCOFF> file(
-        new FileCOFF(_targetInfo, std::move(mb), ec));
+    std::unique_ptr<FileCOFF> file(new FileCOFF(_context, std::move(mb), ec));
     if (ec)
       return ec;
 
@@ -635,8 +635,7 @@ private:
 } // end namespace anonymous
 
 namespace lld {
-std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo & ti) {
-  return std::unique_ptr<Reader>(new ReaderCOFF(ti));
+std::unique_ptr<Reader> createReaderPECOFF(const LinkingContext &context) {
+  return std::unique_ptr<Reader>(new ReaderCOFF(context));
 }
-
 }

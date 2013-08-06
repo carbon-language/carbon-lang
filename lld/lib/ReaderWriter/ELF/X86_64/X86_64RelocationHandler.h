@@ -16,13 +16,13 @@
 namespace lld {
 namespace elf {
 typedef llvm::object::ELFType<llvm::support::little, 8, true> X86_64ELFType;
-class X86_64TargetInfo;
+class X86_64LinkingContext;
 
 class X86_64TargetRelocationHandler LLVM_FINAL
     : public TargetRelocationHandler<X86_64ELFType> {
 public:
-  X86_64TargetRelocationHandler(const X86_64TargetInfo &ti)
-      : _tlsSize(0), _targetInfo(ti) {}
+  X86_64TargetRelocationHandler(const X86_64LinkingContext &context)
+      : _tlsSize(0), _context(context) {}
 
   virtual ErrorOr<void> applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                         const lld::AtomLayout &,
@@ -33,7 +33,7 @@ public:
 private:
   // Cached size of the TLS segment.
   mutable uint64_t _tlsSize;
-  const X86_64TargetInfo &_targetInfo;
+  const X86_64LinkingContext &_context;
 };
 
 } // end namespace elf

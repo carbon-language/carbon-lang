@@ -25,9 +25,8 @@ class ExecutableWriter;
 template<class ELFT>
 class ExecutableWriter : public OutputELFWriter<ELFT> {
 public:
-  ExecutableWriter(const ELFTargetInfo &ti)
-    : OutputELFWriter<ELFT>(ti), _runtimeFile(ti)
-  {}
+  ExecutableWriter(const ELFLinkingContext &context)
+      : OutputELFWriter<ELFT>(context), _runtimeFile(context) {}
 
 private:
   virtual void addDefaultAtoms();
@@ -46,7 +45,7 @@ private:
 /// absolute symbols
 template<class ELFT>
 void ExecutableWriter<ELFT>::addDefaultAtoms() {
-  _runtimeFile.addUndefinedAtom(this->_targetInfo.entrySymbolName());
+  _runtimeFile.addUndefinedAtom(this->_context.entrySymbolName());
   _runtimeFile.addAbsoluteAtom("__bss_start");
   _runtimeFile.addAbsoluteAtom("__bss_end");
   _runtimeFile.addAbsoluteAtom("_end");
@@ -75,10 +74,10 @@ void ExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
 
 template <class ELFT> void ExecutableWriter<ELFT>::createDefaultSections() {
   OutputELFWriter<ELFT>::createDefaultSections();
-  if (this->_targetInfo.isDynamic()) {
+  if (this->_context.isDynamic()) {
     _interpSection.reset(new (this->_alloc) InterpSection<ELFT>(
-        this->_targetInfo, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
-        this->_targetInfo.getInterpreter()));
+        this->_context, ".interp", DefaultLayout<ELFT>::ORDER_INTERP,
+        this->_context.getInterpreter()));
     this->_layout->addSection(_interpSection.get());
   }
 }

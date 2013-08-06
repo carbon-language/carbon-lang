@@ -17,7 +17,7 @@ using namespace llvm;
 using namespace llvm::object;
 namespace lld {
 
-std::unique_ptr<Writer> createWriterELF(const ELFTargetInfo &info) {
+std::unique_ptr<Writer> createWriterELF(const ELFLinkingContext &info) {
   using llvm::object::ELFType;
   // Set the default layout to be the static executable layout
   // We would set the layout to a dynamic executable layout

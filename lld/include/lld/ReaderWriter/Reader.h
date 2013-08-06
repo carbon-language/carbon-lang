@@ -17,10 +17,10 @@
 #include <vector>
 
 namespace lld {
-class ELFTargetInfo;
+class ELFLinkingContext;
 class File;
 class LinkerInput;
-class TargetInfo;
+class LinkingContext;
 
 /// \brief An abstract class for reading object files, library files, and
 /// executable files.
@@ -44,19 +44,18 @@ public:
 
 protected:
   // only concrete subclasses can be instantiated
-  Reader(const TargetInfo &ti)
-      : _targetInfo(ti) {}
+  Reader(const LinkingContext &context) : _context(context) {}
 
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
 };
 
 typedef ErrorOr<Reader &> ReaderFunc(const LinkerInput &);
 
-std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &);
-std::unique_ptr<Reader> createReaderMachO(const TargetInfo &);
-std::unique_ptr<Reader> createReaderNative(const TargetInfo &);
-std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo &);
-std::unique_ptr<Reader> createReaderYAML(const TargetInfo &);
+std::unique_ptr<Reader> createReaderELF(const ELFLinkingContext &);
+std::unique_ptr<Reader> createReaderMachO(const LinkingContext &);
+std::unique_ptr<Reader> createReaderNative(const LinkingContext &);
+std::unique_ptr<Reader> createReaderPECOFF(const LinkingContext &);
+std::unique_ptr<Reader> createReaderYAML(const LinkingContext &);
 } // end namespace lld
 
 #endif

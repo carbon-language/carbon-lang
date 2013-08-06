@@ -238,9 +238,10 @@ public:
 
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transfered to the resulting File object.
-  static error_code make(
-      const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> &mb,
-      StringRef path, std::vector<std::unique_ptr<lld::File> > &result) {
+  static error_code make(const LinkingContext &context,
+                         std::unique_ptr<llvm::MemoryBuffer> &mb,
+                         StringRef path,
+                         std::vector<std::unique_ptr<lld::File>> &result) {
     const uint8_t *const base =
         reinterpret_cast<const uint8_t *>(mb->getBufferStart());
     const NativeFileHeader* const header =
@@ -262,7 +263,7 @@ public:
                                  << header->chunkCount << "\n");
 
     // instantiate NativeFile object and add values to it as found
-    std::unique_ptr<File> file(new File(ti, std::move(mb), path));
+    std::unique_ptr<File> file(new File(context, std::move(mb), path));
 
     // process each chunk
     for (uint32_t i = 0; i < header->chunkCount; ++i) {
@@ -367,7 +368,7 @@ public:
   virtual const atom_collection<AbsoluteAtom> &absolute() const {
     return _absoluteAtoms;
   }
-  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+  virtual const LinkingContext &getLinkingContext() const { return _context; }
 
 private:
   friend NativeDefinedAtomV1;
@@ -722,14 +723,14 @@ private:
   }
 
   // private constructor, only called by make()
-  File(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> mb,
+  File(const LinkingContext &context, std::unique_ptr<llvm::MemoryBuffer> mb,
        StringRef path)
       : lld::File(path, kindObject),
         _buffer(std::move(mb)), // Reader now takes ownership of buffer
         _header(nullptr), _targetsTable(nullptr), _targetsTableCount(0),
         _strings(nullptr), _stringsMaxOffset(0), _addends(nullptr),
         _addendsMaxIndex(0), _contentStart(nullptr), _contentEnd(nullptr),
-        _targetInfo(ti) {
+        _context(context) {
     _header =
         reinterpret_cast<const NativeFileHeader *>(_buffer->getBufferStart());
   }
@@ -794,7 +795,7 @@ private:
   uint32_t _addendsMaxIndex;
   const uint8_t *_contentStart;
   const uint8_t *_contentEnd;
-  const TargetInfo &_targetInfo;
+  const LinkingContext &_context;
 };
 
 inline const lld::File &NativeDefinedAtomV1::file() const {
@@ -909,18 +910,17 @@ inline void NativeReferenceV1::setAddend(Addend a) {
 
 class Reader : public lld::Reader {
 public:
-  Reader(const TargetInfo &ti)
-   : lld::Reader(ti) {}
+  Reader(const LinkingContext &context) : lld::Reader(context) {}
 
-  virtual error_code parseFile(
-      std::unique_ptr<MemoryBuffer> &mb,
-      std::vector<std::unique_ptr<lld::File> > &result) const {
-    return File::make(_targetInfo, mb, mb->getBufferIdentifier(), result);
+  virtual error_code
+  parseFile(std::unique_ptr<MemoryBuffer> &mb,
+            std::vector<std::unique_ptr<lld::File>> &result) const {
+    return File::make(_context, mb, mb->getBufferIdentifier(), result);
   }
 };
 } // end namespace native
 
-std::unique_ptr<Reader> createReaderNative(const TargetInfo &ti) {
-  return std::unique_ptr<Reader>(new lld::native::Reader(ti));
+std::unique_ptr<Reader> createReaderNative(const LinkingContext &context) {
+  return std::unique_ptr<Reader>(new lld::native::Reader(context));
 }
 } // end namespace lld
