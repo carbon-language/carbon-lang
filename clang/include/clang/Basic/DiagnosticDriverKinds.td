@@ -33,6 +33,8 @@ def err_drv_use_of_Z_option : Error<
   "unsupported use of internal gcc -Z option '%0'">;
 def err_drv_output_argument_with_multiple_files : Error<
   "cannot specify -o when generating multiple output files">;
+def err_drv_obj_file_argument_with_multiple_sources : Error<
+  "cannot specify '%0%1' when compiling multiple source files">;
 def err_no_external_windows_assembler : Error<
   "there is no external assembler we can use on windows">;
 def err_drv_unable_to_remove_file : Error<
@@ -133,6 +135,9 @@ def warn_drv_assuming_mfloat_abi_is : Warning<
   "unknown platform, assuming -mfloat-abi=%0">;
 def warn_ignoring_ftabstop_value : Warning<
   "ignoring invalid -ftabstop value '%0', using default value %1">;
+def warn_drv_overriding_fo_option : Warning<
+  "overriding '%0%1' option with '%2%3'">,
+  InGroup<DiagGroup<"overriding-fo-option">>;
 def warn_drv_overriding_t_option : Warning<
   "overriding '%0' option with '%1'">,
   InGroup<DiagGroup<"overriding-t-option">>;

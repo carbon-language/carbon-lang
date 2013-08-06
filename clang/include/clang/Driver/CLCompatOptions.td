@@ -83,6 +83,9 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 // Non-aliases:
 
+def _SLASH_Fo : CLJoined<"Fo">,
+  HelpText<"Set output object file, or directory (ends in / or \\)">,
+  MetaVarName<"<file or directory>">;
 def _SLASH_Tc : CLJoinedOrSeparate<"Tc">, HelpText<"Specify a C source file">,
   MetaVarName<"<filename>">;
 def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;
@@ -106,7 +109,6 @@ def _SLASH_Zc_wchar_t : CLIgnoredFlag<"Zc:wchar_t">;
 
 def _SLASH_EH : CLJoined<"EH">;
 def _SLASH_Fd : CLJoined<"Fd">;
-def _SLASH_Fo : CLJoined<"Fo">;
 def _SLASH_fp : CLJoined<"fp">;
 def _SLASH_Gd : CLFlag<"Gd">;
 def _SLASH_GL : CLFlag<"GL">;

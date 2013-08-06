@@ -88,7 +88,7 @@
 
 // Unsupported but parsed options. Check that we don't error on them.
 // (/Zs is for syntax-only)
-// RUN: %clang_cl /Zs /EHsc /Fdfoo /Fobar /fp:precise /Gd /GL /GL- -- %s 2>&1
+// RUN: %clang_cl /Zs /EHsc /Fdfoo /fp:precise /Gd /GL /GL- -- %s 2>&1
 // RUN: %clang_cl /Zs /Gm /Gm- /GS /Gy /Gy- /GZ /MD /MT /MDd /MTd /Oi -- %s 2>&1
 // RUN: %clang_cl /Zs /RTC1 /wfoo /Zc:wchar_t- -- %s 2>&1
 // RUN: %clang_cl /Zs /ZI /Zi /showIncludes -- %s 2>&1

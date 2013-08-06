@@ -357,6 +357,30 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   InputList Inputs;
   BuildInputs(C->getDefaultToolChain(), C->getArgs(), Inputs);
 
+  if (Arg *A = C->getArgs().getLastArg(options::OPT__SLASH_Fo)) {
+    // Check for multiple /Fo arguments.
+    for (arg_iterator it = C->getArgs().filtered_begin(options::OPT__SLASH_Fo),
+        ie = C->getArgs().filtered_end(); it != ie; ++it) {
+      if (*it != A) {
+        Diag(clang::diag::warn_drv_overriding_fo_option)
+          << (*it)->getSpelling() << (*it)->getValue()
+          << A->getSpelling() << A->getValue();
+      }
+    }
+
+    StringRef V = A->getValue();
+    if (V == "") {
+      // It has to have a value.
+      Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
+      C->getArgs().eraseArg(options::OPT__SLASH_Fo);
+    } else if (Inputs.size() > 1 && !llvm::sys::path::is_separator(V.back())) {
+      // Check whether /Fo tries to name an output file for multiple inputs.
+      Diag(clang::diag::err_drv_obj_file_argument_with_multiple_sources)
+        << A->getSpelling() << V;
+      C->getArgs().eraseArg(options::OPT__SLASH_Fo);
+    }
+  }
+
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin target OSes this uses the driver-driver and universal actions.
   if (TC.getTriple().isOSDarwin())
@@ -1559,7 +1583,8 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     return "-";
 
   // Output to a temporary file?
-  if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps)) ||
+  if ((!AtTopLevel && !C.getArgs().hasArg(options::OPT_save_temps) &&
+        !C.getArgs().hasArg(options::OPT__SLASH_Fo)) ||
       CCGenDiagnostics) {
     StringRef Name = llvm::sys::path::filename(BaseInput);
     std::pair<StringRef, StringRef> Split = Name.split('.');
@@ -1579,7 +1604,28 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 
   // Determine what the derived output name should be.
   const char *NamedOutput;
-  if (JA.getType() == types::TY_Image) {    
+
+  if (JA.getType() == types::TY_Object &&
+      C.getArgs().hasArg(options::OPT__SLASH_Fo)) {
+    // The /Fo flag decides the object filename.
+    StringRef Val = C.getArgs().getLastArg(options::OPT__SLASH_Fo)->getValue();
+    SmallString<128> Filename = Val;
+
+    if (llvm::sys::path::is_separator(Val.back())) {
+      // If /Fo names a dir, output to BaseName in that dir.
+      llvm::sys::path::append(Filename, BaseName);
+    }
+    if (!llvm::sys::path::has_extension(Val)) {
+      // If /Fo doesn't provide a filename with an extension, we set it.
+      if (llvm::sys::path::has_extension(Filename.str()))
+        Filename = Filename.substr(0, Filename.rfind("."));
+      Filename.append(".");
+      // FIXME: For clang-cl, we want .obj rather than .o for object files.
+      Filename.append(types::getTypeTempSuffix(types::TY_Object));
+    }
+
+    NamedOutput = C.getArgs().MakeArgString(Filename.c_str());
+  } else if (JA.getType() == types::TY_Image) {    
     if (MultipleArchs && BoundArch) {
       SmallString<128> Output(DefaultImageName.c_str());
       Output += "-";
