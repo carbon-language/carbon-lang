@@ -1,0 +1,4 @@
+# RUN: modularize %s -x c++
+
+Inputs/HeaderGuardSub1.h
+Inputs/HeaderGuardSub2.h
