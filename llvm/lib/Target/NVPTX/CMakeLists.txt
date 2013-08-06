@@ -25,6 +25,7 @@ set(NVPTXCodeGen_sources
   NVVMReflect.cpp
   NVPTXGenericToNVVM.cpp
   NVPTXPrologEpilogPass.cpp
+  NVPTXMCExpr.cpp
   )
 
 add_llvm_target(NVPTXCodeGen ${NVPTXCodeGen_sources})

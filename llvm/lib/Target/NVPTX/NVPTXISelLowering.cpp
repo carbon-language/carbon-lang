@@ -1316,7 +1316,15 @@ SDValue NVPTXTargetLowering::getExtSymb(SelectionDAG &DAG, const char *inname,
 
 SDValue
 NVPTXTargetLowering::getParamSymbol(SelectionDAG &DAG, int idx, EVT v) const {
-  return getExtSymb(DAG, ".PARAM", idx, v);
+  std::string ParamSym;
+  raw_string_ostream ParamStr(ParamSym);
+
+  ParamStr << DAG.getMachineFunction().getName() << "_param_" << idx;
+  ParamStr.flush();
+
+  std::string *SavedStr =
+    nvTM->getManagedStrPool()->getManagedString(ParamSym.c_str());
+  return DAG.getTargetExternalSymbol(SavedStr->c_str(), v);
 }
 
 SDValue NVPTXTargetLowering::getParamHelpSymbol(SelectionDAG &DAG, int idx) {

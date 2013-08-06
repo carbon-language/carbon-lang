@@ -13,6 +13,7 @@
 
 #include "NVPTXMCTargetDesc.h"
 #include "NVPTXMCAsmInfo.h"
+#include "InstPrinter/NVPTXInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -57,6 +58,17 @@ static MCCodeGenInfo *createNVPTXMCCodeGenInfo(
   return X;
 }
 
+static MCInstPrinter *createNVPTXMCInstPrinter(const Target &T,
+                                               unsigned SyntaxVariant,
+                                               const MCAsmInfo &MAI,
+                                               const MCInstrInfo &MII,
+                                               const MCRegisterInfo &MRI,
+                                               const MCSubtargetInfo &STI) {
+  if (SyntaxVariant == 0)
+    return new NVPTXInstPrinter(MAI, MII, MRI, STI);
+  return 0;
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeNVPTXTargetMC() {
   // Register the MC asm info.
@@ -85,4 +97,9 @@ extern "C" void LLVMInitializeNVPTXTargetMC() {
   TargetRegistry::RegisterMCSubtargetInfo(TheNVPTXTarget64,
                                           createNVPTXMCSubtargetInfo);
 
+  // Register the MCInstPrinter.
+  TargetRegistry::RegisterMCInstPrinter(TheNVPTXTarget32,
+                                        createNVPTXMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheNVPTXTarget64,
+                                        createNVPTXMCInstPrinter);
 }

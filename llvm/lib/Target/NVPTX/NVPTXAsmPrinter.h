@@ -190,18 +190,14 @@ private:
   void EmitFunctionBodyEnd();
 
   void EmitInstruction(const MachineInstr *);
+  void lowerToMCInst(const MachineInstr *MI, MCInst &OutMI);
+  bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
+  MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol);
+  unsigned encodeVirtualRegister(unsigned Reg);
 
   void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const {}
 
   void printGlobalVariable(const GlobalVariable *GVar);
-  void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                    const char *Modifier = 0);
-  void printLdStCode(const MachineInstr *MI, int opNum, raw_ostream &O,
-                     const char *Modifier = 0);
-  void printCvtMode(const MachineInstr *MI, int OpNum, raw_ostream &O,
-                    const char *Modifier = 0);
-  void printCmpMode(const MachineInstr *MI, int OpNum, raw_ostream &O,
-                    const char *Modifier = 0);
   void printVecModifiedImmediate(const MachineOperand &MO, const char *Modifier,
                                  raw_ostream &O);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
@@ -224,12 +220,6 @@ private:
   void setAndEmitFunctionVirtualRegisters(const MachineFunction &MF);
   void emitFunctionTempData(const MachineFunction &MF, unsigned &FrameSize);
   bool isImageType(const Type *Ty);
-  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                       unsigned AsmVariant, const char *ExtraCode,
-                       raw_ostream &);
-  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                             unsigned AsmVariant, const char *ExtraCode,
-                             raw_ostream &);
   void printReturnValStr(const Function *, raw_ostream &O);
   void printReturnValStr(const MachineFunction &MF, raw_ostream &O);
 
