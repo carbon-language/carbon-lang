@@ -3461,6 +3461,7 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
                VarSpec->getTemplateArgsInfo(), InstantiationDependent) &&
            "Only instantiate variable template specializations that are "
            "not type-dependent");
+    (void)InstantiationDependent;
 
     // Find the variable initialization that we'll be substituting.
     assert(VarSpec->getSpecializedTemplate() &&
