@@ -96,12 +96,15 @@ def DADDu  : ArithLogicR<"daddu", CPU64RegsOpnd, 1, IIArith, add>,
                               ADD_FM<0, 0x2d>;
 def DSUBu  : ArithLogicR<"dsubu", CPU64RegsOpnd, 0, IIArith, sub>,
                               ADD_FM<0, 0x2f>;
+
+let isCodeGenOnly = 1 in {
 def SLT64  : SetCC_R<"slt", setlt, CPU64RegsOpnd>, ADD_FM<0, 0x2a>;
 def SLTu64 : SetCC_R<"sltu", setult, CPU64RegsOpnd>, ADD_FM<0, 0x2b>;
 def AND64  : ArithLogicR<"and", CPU64RegsOpnd, 1, IIArith, and>, ADD_FM<0, 0x24>;
 def OR64   : ArithLogicR<"or", CPU64RegsOpnd, 1, IIArith, or>, ADD_FM<0, 0x25>;
 def XOR64  : ArithLogicR<"xor", CPU64RegsOpnd, 1, IIArith, xor>, ADD_FM<0, 0x26>;
 def NOR64  : LogicNOR<"nor", CPU64RegsOpnd>, ADD_FM<0, 0x27>;
+}
 
 /// Shift Instructions
 def DSLL   : shift_rotate_imm<"dsll", shamt, CPU64RegsOpnd, shl, immZExt6>,
@@ -334,36 +337,12 @@ def : MipsPat<(i64 (ExtractLOHI ACRegs128:$ac, imm:$lohi_idx)),
 def : InstAlias<"move $dst, $src",
                 (DADDu CPU64RegsOpnd:$dst,  CPU64RegsOpnd:$src, ZERO_64), 1>,
       Requires<[HasMips64]>;
-def : InstAlias<"and $rs, $rt, $imm",
-                (ANDi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
-                1>,
-      Requires<[HasMips64]>;
-def : InstAlias<"slt $rs, $rt, $imm",
-                (SLTi64 CPURegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm), 1>,
-      Requires<[HasMips64]>;
-def : InstAlias<"xor $rs, $rt, $imm",
-                (XORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
-                1>,
-      Requires<[HasMips64]>;
-def : InstAlias<"not $rt, $rs",
-                (NOR64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rs, ZERO_64), 1>,
-      Requires<[HasMips64]>;
-def : InstAlias<"j $rs", (JR64 CPU64RegsOpnd:$rs), 0>, Requires<[HasMips64]>;
 def : InstAlias<"daddu $rs, $rt, $imm",
                 (DADDiu CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
-                1>;
+                0>;
 def : InstAlias<"dadd $rs, $rt, $imm",
                 (DADDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm),
-                1>;
-def : InstAlias<"or $rs, $rt, $imm",
-                (ORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm),
-                1>, Requires<[HasMips64]>;
-def : InstAlias<"bnez $rs,$offset",
-                 (BNE64 CPU64RegsOpnd:$rs, ZERO_64, brtarget:$offset), 1>,
-                 Requires<[HasMips64]>;
-def : InstAlias<"beqz $rs,$offset",
-                 (BEQ64 CPU64RegsOpnd:$rs, ZERO_64, brtarget:$offset), 1>,
-                 Requires<[HasMips64]>;
+                0>;
 
 /// Move between CPU and coprocessor registers
 let DecoderNamespace = "Mips64" in {

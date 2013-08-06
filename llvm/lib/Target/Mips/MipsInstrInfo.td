@@ -1105,20 +1105,19 @@ def MTC2_3OP : MFC3OP<(outs CPURegsOpnd:$rd, uimm16:$sel),
 def : InstAlias<"move $dst, $src",
                 (ADDu CPURegsOpnd:$dst, CPURegsOpnd:$src,ZERO), 1>,
       Requires<[NotMips64]>;
-def : InstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 1>;
+def : InstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
 def : InstAlias<"addu $rs, $rt, $imm",
                 (ADDiu CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"add $rs, $rt, $imm",
                 (ADDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"and $rs, $rt, $imm",
                 (ANDi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
-def : InstAlias<"j $rs", (JR CPURegsOpnd:$rs), 0>,
-      Requires<[NotMips64]>;
+def : InstAlias<"j $rs", (JR CPURegsOpnd:$rs), 0>;
 def : InstAlias<"jalr $rs", (JALR RA, CPURegsOpnd:$rs), 0>;
 def : InstAlias<"jal $rs", (JALR RA, CPURegsOpnd:$rs), 0>;
 def : InstAlias<"jal $rd,$rs", (JALR CPURegsOpnd:$rd, CPURegsOpnd:$rs), 0>;
 def : InstAlias<"not $rt, $rs",
-                (NOR CPURegsOpnd:$rt, CPURegsOpnd:$rs, ZERO), 1>;
+                (NOR CPURegsOpnd:$rt, CPURegsOpnd:$rs, ZERO), 0>;
 def : InstAlias<"neg $rt, $rs",
                 (SUB CPURegsOpnd:$rt, ZERO, CPURegsOpnd:$rs), 1>;
 def : InstAlias<"negu $rt, $rs",
@@ -1126,11 +1125,9 @@ def : InstAlias<"negu $rt, $rs",
 def : InstAlias<"slt $rs, $rt, $imm",
                 (SLTi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"xor $rs, $rt, $imm",
-                (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, uimm16:$imm), 1>,
-      Requires<[NotMips64]>;
+                (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, uimm16:$imm), 0>;
 def : InstAlias<"or $rs, $rt, $imm",
-                (ORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, uimm16:$imm), 1>,
-                 Requires<[NotMips64]>;
+                (ORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, uimm16:$imm), 0>;
 def : InstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
 def : InstAlias<"mfc0 $rt, $rd",
                 (MFC0_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0), 0>;
@@ -1141,11 +1138,9 @@ def : InstAlias<"mfc2 $rt, $rd",
 def : InstAlias<"mtc2 $rt, $rd",
                 (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt), 0>;
 def : InstAlias<"bnez $rs,$offset",
-                 (BNE CPURegsOpnd:$rs, ZERO, brtarget:$offset), 1>,
-                 Requires<[NotMips64]>;
+                (BNE CPURegsOpnd:$rs, ZERO, brtarget:$offset), 0>;
 def : InstAlias<"beqz $rs,$offset",
-                 (BEQ CPURegsOpnd:$rs, ZERO, brtarget:$offset), 1>,
-                 Requires<[NotMips64]>;
+                (BEQ CPURegsOpnd:$rs, ZERO, brtarget:$offset), 0>;
 def : InstAlias<"syscall", (SYSCALL 0), 1>;
 
 def : InstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
