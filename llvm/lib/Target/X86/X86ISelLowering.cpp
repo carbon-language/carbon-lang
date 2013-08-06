@@ -17721,7 +17721,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
       RHS.getOpcode() != ISD::VECTOR_SHUFFLE)
     return false;
 
-  EVT VT = LHS.getValueType();
+  MVT VT = LHS.getValueType().getSimpleVT();
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for horizontal add/sub");
