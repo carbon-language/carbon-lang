@@ -118,7 +118,7 @@ void LTOCodeGenerator::initializeLTOPasses() {
   initializeGVNPass(R);
   initializeMemCpyOptPass(R);
   initializeDCEPass(R);
-  initializeCFGCanonicalizePass(R);
+  initializeCFGSimplifyPassPass(R);
 }
 
 bool LTOCodeGenerator::addModule(LTOModule* mod, std::string& errMsg) {

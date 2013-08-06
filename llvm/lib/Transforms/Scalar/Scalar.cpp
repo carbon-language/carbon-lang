@@ -57,8 +57,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeSROAPass(Registry);
   initializeSROA_DTPass(Registry);
   initializeSROA_SSAUpPass(Registry);
-  initializeCFGCanonicalizePass(Registry);
-  initializeCFGOptimizePass(Registry);
+  initializeCFGSimplifyPassPass(Registry);
   initializeStructurizeCFGPass(Registry);
   initializeSinkingPass(Registry);
   initializeTailCallElimPass(Registry);

@@ -137,7 +137,13 @@ bool EliminateDuplicatePHINodes(BasicBlock *BB);
 /// the basic block that was pointed to.
 ///
 bool SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
-                 const DataLayout *TD = 0, AliasAnalysis *AA = 0);
+                 const DataLayout *TD = 0);
+
+/// FlatternCFG - This function is used to flatten a CFG.  For
+/// example, it uses parallel-and and parallel-or mode to collapse
+//  if-conditions and merge if-regions with identical statements.
+///
+bool FlattenCFG(BasicBlock *BB, AliasAnalysis *AA = 0);
 
 /// FoldBranchToCommonDest - If this basic block is ONLY a setcc and a branch,
 /// and if a predecessor branches to us and one of our successors, fold the

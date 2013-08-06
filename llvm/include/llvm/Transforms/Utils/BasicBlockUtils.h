@@ -205,6 +205,15 @@ ReturnInst *FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
 TerminatorInst *SplitBlockAndInsertIfThen(Instruction *Cmp,
     bool Unreachable, MDNode *BranchWeights = 0);
 
+///
+/// GetIfCondition - Check whether BB is the merge point of a if-region.
+/// If so, return the boolean condition that determines which entry into
+/// BB will be taken.  Also, return by references the block that will be
+/// entered from if the condition is true, and the block that will be
+/// entered if the condition is false.
+
+Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
+		      BasicBlock *&IfFalse);
 } // End llvm namespace
 
 #endif

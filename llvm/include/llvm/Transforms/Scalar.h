@@ -196,7 +196,14 @@ FunctionPass *createJumpThreadingPass();
 // CFGSimplification - Merge basic blocks, eliminate unreachable blocks,
 // simplify terminator instructions, etc...
 //
-FunctionPass *createCFGSimplificationPass(bool IsTargetAware = false);
+FunctionPass *createCFGSimplificationPass();
+
+//===----------------------------------------------------------------------===//
+//
+// FlattenCFG - flatten CFG, reduce number of conditional branches by using
+// parallel-and and parallel-or mode, etc...
+//
+FunctionPass *createFlattenCFGPass();
 
 //===----------------------------------------------------------------------===//
 //

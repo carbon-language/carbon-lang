@@ -19,7 +19,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -66,10 +65,6 @@ static cl::opt<bool>
 HoistCondStores("simplifycfg-hoist-cond-stores", cl::Hidden, cl::init(true),
        cl::desc("Hoist conditional stores if an unconditional store preceeds"));
 
-static cl::opt<bool>
-ParallelAndOr("simplifycfg-parallel-and-or", cl::Hidden, cl::init(true),
-              cl::desc("Use parallel-and-or mode for branch conditions"));
-
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
 STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
@@ -95,8 +90,6 @@ namespace {
 class SimplifyCFGOpt {
   const TargetTransformInfo &TTI;
   const DataLayout *const TD;
-  AliasAnalysis *AA;
-
   Value *isValueEqualityComparison(TerminatorInst *TI);
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
                                std::vector<ValueEqualityComparisonCase> &Cases);
@@ -113,25 +106,10 @@ class SimplifyCFGOpt {
   bool SimplifyIndirectBr(IndirectBrInst *IBI);
   bool SimplifyUncondBranch(BranchInst *BI, IRBuilder <> &Builder);
   bool SimplifyCondBranch(BranchInst *BI, IRBuilder <>&Builder);
-  /// \brief Use parallel-and or parallel-or to generate conditions for
-  /// conditional branches.
-  bool SimplifyParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder, Pass *P = 0);
-  /// \brief If \param BB is the merge block of an if-region, attempt to merge
-  /// the if-region with an adjacent if-region upstream if two if-regions
-  /// contain identical instructions.
-  bool MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder, Pass *P = 0);
-  /// \brief Compare a pair of blocks: \p Block1 and \p Block2, which
-  /// are from two if-regions whose entry blocks are \p Head1 and \p
-  /// Head2.  \returns true if \p Block1 and \p Block2 contain identical
-  /// instructions, and have no memory reference alias with \p Head2.
-  /// This is used as a legality check for merging if-regions.
-  bool CompareIfRegionBlock(BasicBlock *Head1, BasicBlock *Head2,
-                            BasicBlock *Block1, BasicBlock *Block2);
 
 public:
-  SimplifyCFGOpt(const TargetTransformInfo &TTI, const DataLayout *TD,
-                 AliasAnalysis *AA)
-      : TTI(TTI), TD(TD), AA(AA) {}
+  SimplifyCFGOpt(const TargetTransformInfo &TTI, const DataLayout *TD)
+      : TTI(TTI), TD(TD) {}
   bool run(BasicBlock *BB);
 };
 }
@@ -215,108 +193,6 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
   for (BasicBlock::iterator I = Succ->begin();
        (PN = dyn_cast<PHINode>(I)); ++I)
     PN->addIncoming(PN->getIncomingValueForBlock(ExistPred), NewPred);
-}
-
-
-/// GetIfCondition - Given a basic block (BB) with two predecessors,
-/// check to see if the merge at this block is due
-/// to an "if condition".  If so, return the boolean condition that determines
-/// which entry into BB will be taken.  Also, return by references the block
-/// that will be entered from if the condition is true, and the block that will
-/// be entered if the condition is false.
-///
-/// This does no checking to see if the true/false blocks have large or unsavory
-/// instructions in them.
-static Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
-                             BasicBlock *&IfFalse) {
-  PHINode *SomePHI = dyn_cast<PHINode>(BB->begin());
-  BasicBlock *Pred1 = NULL;
-  BasicBlock *Pred2 = NULL;
-
-  if (SomePHI) {
-    if (SomePHI->getNumIncomingValues() != 2)
-      return NULL;
-    Pred1 = SomePHI->getIncomingBlock(0);
-    Pred2 = SomePHI->getIncomingBlock(1);
-  } else {
-    pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
-    if (PI == PE) // No predecessor
-      return NULL;
-    Pred1 = *PI++;
-    if (PI == PE) // Only one predecessor
-      return NULL;
-    Pred2 = *PI++;
-    if (PI != PE) // More than two predecessors
-      return NULL;
-  }
-
-  // We can only handle branches.  Other control flow will be lowered to
-  // branches if possible anyway.
-  BranchInst *Pred1Br = dyn_cast<BranchInst>(Pred1->getTerminator());
-  BranchInst *Pred2Br = dyn_cast<BranchInst>(Pred2->getTerminator());
-  if (Pred1Br == 0 || Pred2Br == 0)
-    return 0;
-
-  // Eliminate code duplication by ensuring that Pred1Br is conditional if
-  // either are.
-  if (Pred2Br->isConditional()) {
-    // If both branches are conditional, we don't have an "if statement".  In
-    // reality, we could transform this case, but since the condition will be
-    // required anyway, we stand no chance of eliminating it, so the xform is
-    // probably not profitable.
-    if (Pred1Br->isConditional())
-      return 0;
-
-    std::swap(Pred1, Pred2);
-    std::swap(Pred1Br, Pred2Br);
-  }
-
-  if (Pred1Br->isConditional()) {
-    // The only thing we have to watch out for here is to make sure that Pred2
-    // doesn't have incoming edges from other blocks.  If it does, the condition
-    // doesn't dominate BB.
-    if (Pred2->getSinglePredecessor() == 0)
-      return 0;
-
-    // If we found a conditional branch predecessor, make sure that it branches
-    // to BB and Pred2Br.  If it doesn't, this isn't an "if statement".
-    if (Pred1Br->getSuccessor(0) == BB &&
-        Pred1Br->getSuccessor(1) == Pred2) {
-      IfTrue = Pred1;
-      IfFalse = Pred2;
-    } else if (Pred1Br->getSuccessor(0) == Pred2 &&
-               Pred1Br->getSuccessor(1) == BB) {
-      IfTrue = Pred2;
-      IfFalse = Pred1;
-    } else {
-      // We know that one arm of the conditional goes to BB, so the other must
-      // go somewhere unrelated, and this must not be an "if statement".
-      return 0;
-    }
-
-    return Pred1Br->getCondition();
-  }
-
-  // Ok, if we got here, both predecessors end with an unconditional branch to
-  // BB.  Don't panic!  If both blocks only have a single (identical)
-  // predecessor, and THAT is a conditional branch, then we're all ok!
-  BasicBlock *CommonPred = Pred1->getSinglePredecessor();
-  if (CommonPred == 0 || CommonPred != Pred2->getSinglePredecessor())
-    return 0;
-
-  // Otherwise, if this is a conditional branch, then we can use it!
-  BranchInst *BI = dyn_cast<BranchInst>(CommonPred->getTerminator());
-  if (BI == 0) return 0;
-
-  assert(BI->isConditional() && "Two successors but not conditional?");
-  if (BI->getSuccessor(0) == Pred1) {
-    IfTrue = Pred1;
-    IfFalse = Pred2;
-  } else {
-    IfTrue = Pred2;
-    IfFalse = Pred1;
-  }
-  return BI->getCondition();
 }
 
 /// ComputeSpeculationCost - Compute an abstract "cost" of speculating the
@@ -4102,386 +3978,6 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   return false;
 }
 
-/// If \param [in] BB has more than one predecessor that is a conditional
-/// branch, attempt to use parallel and/or for the branch condition. \returns
-/// true on success.
-///
-/// Before:
-///   ......
-///   %cmp10 = fcmp une float %tmp1, %tmp2
-///   br i1 %cmp1, label %if.then, label %lor.rhs
-///
-/// lor.rhs:
-///   ......
-///   %cmp11 = fcmp une float %tmp3, %tmp4
-///   br i1 %cmp11, label %if.then, label %ifend
-///
-/// if.end:  // the merge block
-///   ......
-///
-/// if.then: // has two predecessors, both of them contains conditional branch.
-///   ......
-///   br label %if.end;
-///
-/// After:
-///  ......
-///  %cmp10 = fcmp une float %tmp1, %tmp2
-///  ......
-///  %cmp11 = fcmp une float %tmp3, %tmp4
-///  %cmp12 = or i1 %cmp10, %cmp11    // parallel-or mode.
-///  br i1 %cmp12, label %if.then, label %ifend
-///
-///  if.end:
-///    ......
-/// 
-///  if.then:
-///    ......
-///    br label %if.end;
-///
-///  Current implementation handles two cases.
-///  Case 1: \param BB is on the else-path.
-///
-///          BB1
-///        /     |
-///       BB2    |
-///      /   \   |
-///     BB3   \  |     where, BB1, BB2 contain conditional branches.
-///      \    |  /     BB3 contains unconditional branch.
-///       \   | /      BB4 corresponds to \param BB which is also the merge.
-///  BB => BB4
-///
-///
-///  Corresponding source code:
-///  
-///  if (a == b && c == d)
-///    statement; // BB3
-///
-///  Case 2: \param BB BB is on the then-path.
-///
-///             BB1
-///          /      |
-///         |      BB2
-///         \    /    |  where BB1, BB2 contain conditional branches.
-///  BB =>   BB3      |  BB3 contains unconditiona branch and corresponds
-///           \     /    to \param BB.  BB4 is the merge.
-///             BB4
-///
-///  Corresponding source code:
-///
-///  if (a == b || c == d)
-///    statement;  // BB3
-///
-///  In both cases,  \param BB is the common successor of conditional branches.
-///  In Case 1, \param BB (BB4) has an unconditional branch (BB3) as
-///  its predecessor.  In Case 2, \param BB (BB3) only has conditional branches
-///  as its predecessors.
-///
-bool SimplifyCFGOpt::SimplifyParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
-                                           Pass *P) {
-  PHINode *PHI = dyn_cast<PHINode>(BB->begin());
-  if (PHI)
-    return false; // For simplicity, avoid cases containing PHI nodes.
-  
-  BasicBlock *LastCondBlock = NULL;
-  BasicBlock *FirstCondBlock = NULL;
-  BasicBlock *UnCondBlock = NULL;
-  int Idx = -1;
-
-  // Check predecessors of \param BB.
-  SmallPtrSet<BasicBlock*, 16> Preds(pred_begin(BB), pred_end(BB));
-  for (SmallPtrSetIterator<BasicBlock*> PI = Preds.begin(), PE = Preds.end();
-       PI != PE; ++PI) {
-    BasicBlock *Pred = *PI;
-      BranchInst *PBI = dyn_cast<BranchInst>(Pred->getTerminator());
-
-    // All predecessors should terminate with a branch.
-    if (!PBI)
-      return false;
-        
-    BasicBlock *PP = Pred->getSinglePredecessor();
-       
-    if (PBI->isUnconditional()) {
-      // Case 1: Pred (BB3) is an unconditional block, it should
-      // have a single predecessor (BB2) that is also a predecessor
-      // of \param BB (BB4) and should not have address-taken.
-      // There should exist only one such unconditional
-      // branch among the predecessors.
-      if (UnCondBlock || !PP || (Preds.count(PP) == 0) ||
-          Pred->hasAddressTaken())
-        return false;
- 
-      UnCondBlock = Pred;
-      continue;
-    }
-
-    // Only conditional branches are allowed beyond this point.
-    assert(PBI->isConditional());
-
-    // Condition's unique use should be the branch instruction.
-    Value *PC = PBI->getCondition();
-    if (!PC || !PC->hasOneUse())
-      return false;
-
-    if (PP && Preds.count(PP)) {
-      // These are internal condition blocks to be merged from, e.g.,
-      // BB2 in both cases.
-      // Should not be address-taken.
-      if (Pred->hasAddressTaken())
-        return false;
-
-      // Instructions in the internal condition blocks should be safe
-      // to hoist up.
-      for (BasicBlock::iterator BI = Pred->begin(), BE = PBI; BI != BE;) {
-        Instruction *CI = BI++;
-        if (isa<PHINode>(CI) ||
-            !isSafeToSpeculativelyExecute(CI))
-          return false;
-      }
-    } else {
-      // This is the condition block to be merged into, e.g. BB1 in
-      // both cases.
-      if (FirstCondBlock)
-        return false;
-      FirstCondBlock = Pred;
-    }
-
-    // Find whether BB is uniformly on the true (or false) path
-    // for all of its predecessors.
-    BasicBlock *PS1 = PBI->getSuccessor(0);
-    BasicBlock *PS2 = PBI->getSuccessor(1);
-    BasicBlock *PS = (PS1 == BB) ? PS2 : PS1;
-    int CIdx = (PS1 == BB) ? 0 : 1;
-
-    if (Idx == -1)
-      Idx = CIdx;
-    else if (CIdx != Idx)
-      return false;
-
-    // PS is the successor which is not BB. Check successors to identify
-    // the last conditional branch.
-    if (Preds.count(PS) == 0) {
-      // Case 2.
-      // BB must have an unique successor.
-      TerminatorInst *TBB = BB->getTerminator();
-      if (TBB->getNumSuccessors() != 1)
-        return false;
-
-      BasicBlock *SBB = TBB->getSuccessor(0);
-      PHI = dyn_cast<PHINode>(SBB->begin());
-      if (PHI)
-        return false;
-
-      // PS (BB4) should be BB's successor.
-      if (SBB != PS)
-        return false;
-      LastCondBlock = Pred;
-    } else {
-      BranchInst *BPS = dyn_cast<BranchInst>(PS->getTerminator());
-      if (BPS && BPS->isUnconditional()) {
-        // Case 1: PS(BB3) should be an unconditional branch.
-        LastCondBlock = Pred;
-      }
-    }
-  }
-
-  if (!FirstCondBlock || !LastCondBlock || (FirstCondBlock == LastCondBlock))
-    return false;
-
-  // Do the transformation.
-  BasicBlock *CB;
-  bool Iteration = true;
-  BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
-  BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
-  BranchInst *PBI = dyn_cast<BranchInst>(FirstCondBlock->getTerminator());
-  Value *PC = PBI->getCondition();
-  do {
-    CB = PBI->getSuccessor(1 - Idx);
-    // Delete the conditional branch.
-    FirstCondBlock->getInstList().pop_back();
-    FirstCondBlock->getInstList().splice(FirstCondBlock->end(), CB->getInstList());
-    PBI = cast<BranchInst>(FirstCondBlock->getTerminator());
-    Value *CC = PBI->getCondition();
-    // Merge conditions.
-    Builder.SetInsertPoint(PBI);
-    Value *NC;
-    if (Idx == 0)
-      // Case 2, use parallel or.
-      NC = Builder.CreateOr(PC, CC);
-    else
-      // Case 1, use parallel and.
-      NC = Builder.CreateAnd(PC, CC);
-    
-    PBI->replaceUsesOfWith(CC, NC);
-    PC = NC;
-    if (CB == LastCondBlock)
-      Iteration = false;
-    // Remove internal conditional branches.
-    CB->dropAllReferences();
-    // make CB unreachable and let downstream to delete the block.
-    new UnreachableInst(CB->getContext(), CB);
-  } while (Iteration);
-  if (SaveInsertBB)
-    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
-  DEBUG(dbgs() << "Use parallel and/or in:\n" << *FirstCondBlock);
-  return true;
-}
-
-/// Compare blocks from two if-regions, where \param Head1 is the entry of the
-/// 1st if-region. \param Head2 is the entry of the 2nd if-region. \param
-/// Block1 is a block in the 1st if-region to compare. \param Block2 is a block
-//  in the 2nd if-region to compare.  \returns true if \param Block1 and \param
-/// Block2 have identical instructions and do not have memory reference alias 
-/// with \param Head2.
-///
-bool SimplifyCFGOpt::CompareIfRegionBlock(BasicBlock *Head1, BasicBlock *Head2,
-                                          BasicBlock *Block1, BasicBlock *Block2) {
-  TerminatorInst *PTI2 = Head2->getTerminator();
-  Instruction *PBI2 = Head2->begin();
-
-  bool eq1 = (Block1 == Head1);
-  bool eq2 = (Block2 == Head2);
-  if (eq1 || eq2) {
-    // An empty then-path or else-path.
-    return (eq1 == eq2);
-  }
-
-  // Check whether instructions in Block1 and Block2 are identical
-  // and do not alias with instructions in Head2.
-  BasicBlock::iterator iter1 = Block1->begin();
-  BasicBlock::iterator end1 = Block1->getTerminator();
-  BasicBlock::iterator iter2 = Block2->begin();
-  BasicBlock::iterator end2 = Block2->getTerminator();
-
-  while (1) {
-    if (iter1 == end1) {
-      if (iter2 != end2)
-        return false;
-      break;
-    }
-
-    if (!iter1->isIdenticalTo(iter2))
-      return false;
-     
-    // Illegal to remove instructions with side effects except
-    // non-volatile stores.
-    if (iter1->mayHaveSideEffects()) {
-      Instruction *CurI = &*iter1;
-      StoreInst *SI = dyn_cast<StoreInst>(CurI);
-      if (!SI || SI->isVolatile())
-        return false;
-    }
-
-    // For simplicity and speed, data dependency check can be
-    // avoided if read from memory doesn't exist.
-    if (iter1->mayReadFromMemory())
-      return false;
-      
-    if (iter1->mayWriteToMemory()) {
-      for (BasicBlock::iterator BI = PBI2, BE = PTI2; BI != BE; ++BI) {
-        if (BI->mayReadFromMemory() || BI->mayWriteToMemory()) {
-          // Check alias with Head2.
-          if (!AA || AA->alias(iter1, BI))
-            return false;
-        }
-      }
-    }
-    ++iter1;
-    ++iter2;
-  }
-
-  return true;
-}
-
-/// Check whether \param BB is the merge block of a if-region.  If yes, check
-/// whether there exists an adjacent if-region upstream, the two if-regions
-/// contain identical instuctions and can be legally merged.  \returns true if
-/// the two if-regions are merged.
-///
-/// From:
-/// if (a)
-///   statement;
-/// if (b)
-///   statement;
-///
-/// To:
-/// if (a || b)
-///   statement;
-///
-bool SimplifyCFGOpt::MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder,
-                                   Pass *P) {
-  BasicBlock *IfTrue2, *IfFalse2;
-  Value *IfCond2 = GetIfCondition(BB, IfTrue2, IfFalse2);
-  Instruction *CInst2 = dyn_cast_or_null<Instruction>(IfCond2);
-  if (!CInst2)
-    return false;
-
-  BasicBlock *SecondEntryBlock = CInst2->getParent();
-  if (SecondEntryBlock->hasAddressTaken())
-    return false;
-
-  BasicBlock *IfTrue1, *IfFalse1;
-  Value *IfCond1 = GetIfCondition(SecondEntryBlock, IfTrue1, IfFalse1);
-  Instruction *CInst1 = dyn_cast_or_null<Instruction>(IfCond1);
-  if (!CInst1)
-    return false;
-
-  BasicBlock *FirstEntryBlock = CInst1->getParent();
-
-  // Either then-path or else-path should be empty.
-  if ((IfTrue1 != FirstEntryBlock) && (IfFalse1 != FirstEntryBlock))
-    return false;
-  if ((IfTrue2 != SecondEntryBlock) && (IfFalse2 != SecondEntryBlock))
-    return false;
-
-  TerminatorInst *PTI2 = SecondEntryBlock->getTerminator();
-  Instruction *PBI2 = SecondEntryBlock->begin();
-
-  if (!CompareIfRegionBlock(FirstEntryBlock, SecondEntryBlock, IfTrue1, IfTrue2))
-    return false;
-
-  if (!CompareIfRegionBlock(FirstEntryBlock, SecondEntryBlock, IfFalse1, IfFalse2))
-    return false;
-
-  // Check whether \param SecondEntryBlock has side-effect and is safe to speculate.
-  for (BasicBlock::iterator BI = PBI2, BE = PTI2; BI != BE; ++BI) {
-    Instruction *CI = BI;
-    if (isa<PHINode>(CI) || CI->mayHaveSideEffects() ||
-        !isSafeToSpeculativelyExecute(CI))
-      return false;
-  }
-
-  // Merge \param SecondEntryBlock into \param FirstEntryBlock.
-  FirstEntryBlock->getInstList().pop_back();
-  FirstEntryBlock->getInstList().splice(FirstEntryBlock->end(), SecondEntryBlock->getInstList());
-  BranchInst *PBI = dyn_cast<BranchInst>(FirstEntryBlock->getTerminator());
-  Value *CC = PBI->getCondition();
-  BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
-  BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
-  Builder.SetInsertPoint(PBI);
-  Value *NC = Builder.CreateOr(CInst1, CC);
-  PBI->replaceUsesOfWith(CC, NC);
-  if (SaveInsertBB)
-    Builder.SetInsertPoint(SaveInsertBB, SaveInsertPt);
-
-  // Remove IfTrue1
-  if (IfTrue1 != FirstEntryBlock) {
-    IfTrue1->dropAllReferences();
-    IfTrue1->eraseFromParent();
-  }
-
-  // Remove IfFalse1
-  if (IfFalse1 != FirstEntryBlock) {
-    IfFalse1->dropAllReferences();
-    IfFalse1->eraseFromParent();
-  }
-  
-  // Remove \param SecondEntryBlock
-  SecondEntryBlock->dropAllReferences();
-  SecondEntryBlock->eraseFromParent();
-  DEBUG(dbgs() << "If conditions merged into:\n" << *FirstEntryBlock);
-  return true;
-}
-
 /// Check if passing a value to an instruction will cause undefined behavior.
 static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
   Constant *C = dyn_cast<Constant>(V);
@@ -4584,11 +4080,6 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     return true;
 
   IRBuilder<> Builder(BB);
-  // Whether to optimize conditional branches.
-  bool OptCB = (ParallelAndOr && AA && TTI.hasBranchDivergence());
-
-  if (OptCB && SimplifyParallelAndOr(BB, Builder))
-    return true;
 
   // If there is a trivial two-entry PHI node in this basic block, and we can
   // eliminate it, do so now.
@@ -4617,9 +4108,6 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     if (SimplifyIndirectBr(IBI)) return true;
   }
 
-  if (OptCB && MergeIfRegion(BB, Builder))
-    return true;
-
   return Changed;
 }
 
@@ -4629,6 +4117,6 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
 /// of the CFG.  It returns true if a modification was made.
 ///
 bool llvm::SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
-                       const DataLayout *TD, AliasAnalysis *AA) {
-  return SimplifyCFGOpt(TTI, TD, AA).run(BB);
+                       const DataLayout *TD) {
+  return SimplifyCFGOpt(TTI, TD).run(BB);
 }

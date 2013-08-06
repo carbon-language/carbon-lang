@@ -665,3 +665,104 @@ TerminatorInst *llvm::SplitBlockAndInsertIfThen(Instruction *Cmp,
   ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
   return CheckTerm;
 }
+
+/// GetIfCondition - Given a basic block (BB) with two predecessors,
+/// check to see if the merge at this block is due
+/// to an "if condition".  If so, return the boolean condition that determines
+/// which entry into BB will be taken.  Also, return by references the block
+/// that will be entered from if the condition is true, and the block that will
+/// be entered if the condition is false.
+///
+/// This does no checking to see if the true/false blocks have large or unsavory
+/// instructions in them.
+Value *llvm::GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
+                             BasicBlock *&IfFalse) {
+  PHINode *SomePHI = dyn_cast<PHINode>(BB->begin());
+  BasicBlock *Pred1 = NULL;
+  BasicBlock *Pred2 = NULL;
+
+  if (SomePHI) {
+    if (SomePHI->getNumIncomingValues() != 2)
+      return NULL;
+    Pred1 = SomePHI->getIncomingBlock(0);
+    Pred2 = SomePHI->getIncomingBlock(1);
+  } else {
+    pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    if (PI == PE) // No predecessor
+      return NULL;
+    Pred1 = *PI++;
+    if (PI == PE) // Only one predecessor
+      return NULL;
+    Pred2 = *PI++;
+    if (PI != PE) // More than two predecessors
+      return NULL;
+  }
+
+  // We can only handle branches.  Other control flow will be lowered to
+  // branches if possible anyway.
+  BranchInst *Pred1Br = dyn_cast<BranchInst>(Pred1->getTerminator());
+  BranchInst *Pred2Br = dyn_cast<BranchInst>(Pred2->getTerminator());
+  if (Pred1Br == 0 || Pred2Br == 0)
+    return 0;
+
+  // Eliminate code duplication by ensuring that Pred1Br is conditional if
+  // either are.
+  if (Pred2Br->isConditional()) {
+    // If both branches are conditional, we don't have an "if statement".  In
+    // reality, we could transform this case, but since the condition will be
+    // required anyway, we stand no chance of eliminating it, so the xform is
+    // probably not profitable.
+    if (Pred1Br->isConditional())
+      return 0;
+
+    std::swap(Pred1, Pred2);
+    std::swap(Pred1Br, Pred2Br);
+  }
+
+  if (Pred1Br->isConditional()) {
+    // The only thing we have to watch out for here is to make sure that Pred2
+    // doesn't have incoming edges from other blocks.  If it does, the condition
+    // doesn't dominate BB.
+    if (Pred2->getSinglePredecessor() == 0)
+      return 0;
+
+    // If we found a conditional branch predecessor, make sure that it branches
+    // to BB and Pred2Br.  If it doesn't, this isn't an "if statement".
+    if (Pred1Br->getSuccessor(0) == BB &&
+        Pred1Br->getSuccessor(1) == Pred2) {
+      IfTrue = Pred1;
+      IfFalse = Pred2;
+    } else if (Pred1Br->getSuccessor(0) == Pred2 &&
+               Pred1Br->getSuccessor(1) == BB) {
+      IfTrue = Pred2;
+      IfFalse = Pred1;
+    } else {
+      // We know that one arm of the conditional goes to BB, so the other must
+      // go somewhere unrelated, and this must not be an "if statement".
+      return 0;
+    }
+
+    return Pred1Br->getCondition();
+  }
+
+  // Ok, if we got here, both predecessors end with an unconditional branch to
+  // BB.  Don't panic!  If both blocks only have a single (identical)
+  // predecessor, and THAT is a conditional branch, then we're all ok!
+  BasicBlock *CommonPred = Pred1->getSinglePredecessor();
+  if (CommonPred == 0 || CommonPred != Pred2->getSinglePredecessor())
+    return 0;
+
+  // Otherwise, if this is a conditional branch, then we can use it!
+  BranchInst *BI = dyn_cast<BranchInst>(CommonPred->getTerminator());
+  if (BI == 0) return 0;
+
+  assert(BI->isConditional() && "Two successors but not conditional?");
+  if (BI->getSuccessor(0) == Pred1) {
+    IfTrue = Pred1;
+    IfFalse = Pred2;
+  } else {
+    IfTrue = Pred2;
+    IfFalse = Pred1;
+  }
+  return BI->getCondition();
+}

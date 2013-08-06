@@ -27,7 +27,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -43,61 +42,28 @@ STATISTIC(NumSimpl, "Number of blocks simplified");
 
 namespace {
 struct CFGSimplifyPass : public FunctionPass {
-  CFGSimplifyPass(char &ID, bool isTargetAware)
-      : FunctionPass(ID), IsTargetAware(isTargetAware) {}
+  static char ID; // Pass identification, replacement for typeid
+  CFGSimplifyPass() : FunctionPass(ID) {
+    initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
+  }
   virtual bool runOnFunction(Function &F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<TargetTransformInfo>();
   }
-private:
-  AliasAnalysis *AA;
-  bool IsTargetAware; // Should the pass be target-aware?
-};
-
-// CFGSimplifyPass that does optimizations.
-struct CFGOptimize : public CFGSimplifyPass {
-  static char ID; // Pass identification, replacement for typeid
-public:
-  CFGOptimize() : CFGSimplifyPass(ID, true) {
-    initializeCFGOptimizePass(*PassRegistry::getPassRegistry());
-  }
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<TargetTransformInfo>();
-    AU.addRequired<AliasAnalysis>();
-  }
-};
-
-// CFGSimplifyPass that does canonicalizations.
-struct CFGCanonicalize : public CFGSimplifyPass {
-  static char ID; // Pass identification, replacement for typeid
-public:
-  CFGCanonicalize() : CFGSimplifyPass(ID, false) {
-    initializeCFGCanonicalizePass(*PassRegistry::getPassRegistry());
-  }
 };
 }
 
-char CFGCanonicalize::ID = 0;
-char CFGOptimize::ID = 0;
-INITIALIZE_PASS_BEGIN(CFGCanonicalize, "simplifycfg", "Simplify the CFG", false,
+char CFGSimplifyPass::ID = 0;
+INITIALIZE_PASS_BEGIN(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                       false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_PASS_END(CFGCanonicalize, "simplifycfg", "Simplify the CFG", false,
-                    false)
-INITIALIZE_PASS_BEGIN(CFGOptimize, "optimizecfg", "optimize the CFG", false,
-                      false)
-INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_PASS_END(CFGOptimize, "optimizecfg", "Optimize the CFG", false,
+INITIALIZE_PASS_END(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                     false)
 
 // Public interface to the CFGSimplification pass
-FunctionPass *llvm::createCFGSimplificationPass(bool IsTargetAware) {
-  if (IsTargetAware)
-    return new CFGOptimize();
-  else
-    return new CFGCanonicalize();
+FunctionPass *llvm::createCFGSimplificationPass() {
+  return new CFGSimplifyPass();
 }
 
 /// changeToUnreachable - Insert an unreachable instruction before the specified
@@ -334,7 +300,7 @@ static bool mergeEmptyReturnBlocks(Function &F) {
 /// iterativelySimplifyCFG - Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
 static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
-                                   const DataLayout *TD, AliasAnalysis *AA) {
+                                   const DataLayout *TD) {
   bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
@@ -343,7 +309,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
     // Loop over all of the basic blocks and remove them if they are unneeded...
     //
     for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
-      if (SimplifyCFG(BBIt++, TTI, TD, AA)) {
+      if (SimplifyCFG(BBIt++, TTI, TD)) {
         LocalChange = true;
         ++NumSimpl;
       }
@@ -357,15 +323,11 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
 // simplify the CFG.
 //
 bool CFGSimplifyPass::runOnFunction(Function &F) {
-  if (IsTargetAware) 
-    AA = &getAnalysis<AliasAnalysis>();
-  else
-    AA = NULL;
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
   const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
   bool EverChanged = removeUnreachableBlocksFromFn(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
-  EverChanged |= iterativelySimplifyCFG(F, TTI, TD, AA);
+  EverChanged |= iterativelySimplifyCFG(F, TTI, TD);
 
   // If neither pass changed anything, we're done.
   if (!EverChanged) return false;
@@ -379,7 +341,7 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
     return true;
 
   do {
-    EverChanged = iterativelySimplifyCFG(F, TTI, TD, AA);
+    EverChanged = iterativelySimplifyCFG(F, TTI, TD);
     EverChanged |= removeUnreachableBlocksFromFn(F);
   } while (EverChanged);
 
