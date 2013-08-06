@@ -120,4 +120,23 @@ int main()
         C::const_iterator j;
     }
 #endif
+#if _LIBCPP_STD_VER > 11
+    { // N3664 testing
+        std::forward_list<int>::iterator ii1{}, ii2{};
+        std::forward_list<int>::iterator ii4 = ii1;
+        std::forward_list<int>::const_iterator cii{};
+        assert ( ii1 == ii2 );
+        assert ( ii1 == ii4 );
+        assert ( ii1 == cii );
+
+        assert ( !(ii1 != ii2 ));
+        assert ( !(ii1 != cii ));
+
+//         std::forward_list<int> c;
+//         assert ( ii1 != c.cbegin());
+//         assert ( cii != c.begin());
+//         assert ( cii != c.cend());
+//         assert ( ii1 != c.end());
+    }
+#endif
 }

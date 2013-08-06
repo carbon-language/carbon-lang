@@ -278,7 +278,11 @@ public:
     typedef random_access_iterator_tag  iterator_category;
     typedef _Reference                  reference;
 
-    _LIBCPP_INLINE_VISIBILITY __deque_iterator() _NOEXCEPT {}
+    _LIBCPP_INLINE_VISIBILITY __deque_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+     : __m_iter_(nullptr), __ptr_(nullptr)
+#endif
+     {}
 
     template <class _Pp, class _Rp, class _MP>
     _LIBCPP_INLINE_VISIBILITY
