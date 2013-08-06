@@ -4,9 +4,9 @@ let isCodeGenOnly = 1 in {
                  ADDI_FM_MM<0xc>;
   def ADDi_MM  : MMRel, ArithLogicI<"addi", simm16, CPURegsOpnd>,
                  ADDI_FM_MM<0x4>;
-  def SLTi_MM  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, CPURegs>,
+  def SLTi_MM  : MMRel, SetCC_I<"slti", setlt, simm16, immSExt16, CPURegsOpnd>,
                  SLTI_FM_MM<0x24>;
-  def SLTiu_MM : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegs>,
+  def SLTiu_MM : MMRel, SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegsOpnd>,
                  SLTI_FM_MM<0x2c>;
   def ANDi_MM  : MMRel, ArithLogicI<"andi", uimm16, CPURegsOpnd>,
                  ADDI_FM_MM<0x34>;
@@ -14,7 +14,7 @@ let isCodeGenOnly = 1 in {
                  ADDI_FM_MM<0x14>;
   def XORi_MM  : MMRel, ArithLogicI<"xori", uimm16, CPURegsOpnd>,
                  ADDI_FM_MM<0x1c>;
-  def LUi_MM   : MMRel, LoadUpper<"lui", CPURegs, uimm16>, LUI_FM_MM;
+  def LUi_MM   : MMRel, LoadUpper<"lui", CPURegsOpnd, uimm16>, LUI_FM_MM;
 
   /// Arithmetic Instructions (3-Operand, R-Type)
   def ADDu_MM  : MMRel, ArithLogicR<"addu", CPURegsOpnd>, ADD_FM_MM<0, 0x150>;
@@ -22,8 +22,8 @@ let isCodeGenOnly = 1 in {
   def MUL_MM   : MMRel, ArithLogicR<"mul", CPURegsOpnd>, ADD_FM_MM<0, 0x210>;
   def ADD_MM   : MMRel, ArithLogicR<"add", CPURegsOpnd>, ADD_FM_MM<0, 0x110>;
   def SUB_MM   : MMRel, ArithLogicR<"sub", CPURegsOpnd>, ADD_FM_MM<0, 0x190>;
-  def SLT_MM   : MMRel, SetCC_R<"slt", setlt, CPURegs>, ADD_FM_MM<0, 0x350>;
-  def SLTu_MM  : MMRel, SetCC_R<"sltu", setult, CPURegs>,
+  def SLT_MM   : MMRel, SetCC_R<"slt", setlt, CPURegsOpnd>, ADD_FM_MM<0, 0x350>;
+  def SLTu_MM  : MMRel, SetCC_R<"sltu", setult, CPURegsOpnd>,
                  ADD_FM_MM<0, 0x390>;
   def AND_MM   : MMRel, ArithLogicR<"and", CPURegsOpnd, 1, IIAlu, and>,
                  ADD_FM_MM<0, 0x250>;
@@ -56,12 +56,12 @@ let isCodeGenOnly = 1 in {
                  SRLV_FM_MM<0xd0, 0>;
 
   /// Load and Store Instructions - aligned
-  defm LB_MM  : LoadM<"lb", CPURegs, sextloadi8>, MMRel, LW_FM_MM<0x7>;
-  defm LBu_MM : LoadM<"lbu", CPURegs, zextloadi8>, MMRel, LW_FM_MM<0x5>;
-  defm LH_MM  : LoadM<"lh", CPURegs, sextloadi16>, MMRel, LW_FM_MM<0xf>;
-  defm LHu_MM : LoadM<"lhu", CPURegs, zextloadi16>, MMRel, LW_FM_MM<0xd>;
-  defm LW_MM  : LoadM<"lw", CPURegs>, MMRel, LW_FM_MM<0x3f>;
-  defm SB_MM  : StoreM<"sb", CPURegs, truncstorei8>, MMRel, LW_FM_MM<0x6>;
-  defm SH_MM  : StoreM<"sh", CPURegs, truncstorei16>, MMRel, LW_FM_MM<0xe>;
-  defm SW_MM  : StoreM<"sw", CPURegs>, MMRel, LW_FM_MM<0x3e>;
+  defm LB_MM  : LoadM<"lb", CPURegsOpnd, sextloadi8>, MMRel, LW_FM_MM<0x7>;
+  defm LBu_MM : LoadM<"lbu", CPURegsOpnd, zextloadi8>, MMRel, LW_FM_MM<0x5>;
+  defm LH_MM  : LoadM<"lh", CPURegsOpnd, sextloadi16>, MMRel, LW_FM_MM<0xf>;
+  defm LHu_MM : LoadM<"lhu", CPURegsOpnd, zextloadi16>, MMRel, LW_FM_MM<0xd>;
+  defm LW_MM  : LoadM<"lw", CPURegsOpnd>, MMRel, LW_FM_MM<0x3f>;
+  defm SB_MM  : StoreM<"sb", CPURegsOpnd, truncstorei8>, MMRel, LW_FM_MM<0x6>;
+  defm SH_MM  : StoreM<"sh", CPURegsOpnd, truncstorei16>, MMRel, LW_FM_MM<0xe>;
+  defm SW_MM  : StoreM<"sw", CPURegsOpnd>, MMRel, LW_FM_MM<0x3e>;
 }
