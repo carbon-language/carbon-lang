@@ -508,7 +508,7 @@ bool DependenceAnalysis::intersectConstraints(Constraint *X,
       APInt Xr = Xtop; // though they're just going to be overwritten
       APInt::sdivrem(Xtop, Xbot, Xq, Xr);
       APInt Yq = Ytop;
-      APInt Yr = Ytop;;
+      APInt Yr = Ytop;
       APInt::sdivrem(Ytop, Ybot, Yq, Yr);
       if (Xr != 0 || Yr != 0) {
         X->setEmpty();
