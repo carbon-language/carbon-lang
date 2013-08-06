@@ -18,7 +18,7 @@
 
 @property(weak) NSString * WeakProp;
 
-@property NSString * StrongProp;
+@property(retain) NSString * StrongProp;
 
 
 - (NSString *) UnavailProp  __attribute__((unavailable));
@@ -50,8 +50,31 @@
 
 
 
-@property NSArray * names2;
-@property NSArray * names3;
-@property NSArray * names4;
-@property NSArray * names1;
+@property(retain) NSArray * names2;
+@property(retain) NSArray * names3;
+@property(retain) NSArray * names4;
+@property(retain) NSArray * names1;
+@end
+
+// Properties that contain the name "delegate" or "dataSource",
+// or have exact name "target" have unsafe_unretained attribute.
+@interface NSInvocation 
+@property(unsafe_unretained) id target;
+
+
+@property(unsafe_unretained) id dataSource;
+
+@property(unsafe_unretained) id xxxdelegateYYY;
+
+
+
+
+@property(retain) id MYtarget;
+
+
+@property(retain) id targetX;
+
+ 
+@property int value;
+
 @end

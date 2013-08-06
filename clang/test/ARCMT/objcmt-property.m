@@ -55,3 +55,26 @@
 - (__strong NSArray *)names4;
 - (NSArray *) names1;
 @end
+
+// Properties that contain the name "delegate" or "dataSource",
+// or have exact name "target" have unsafe_unretained attribute.
+@interface NSInvocation 
+- (id)target;
+- (void)setTarget:(id)target;
+
+- (id) dataSource;
+
+- (id)xxxdelegateYYY;
+- (void)setXxxdelegateYYY:(id)delegate;
+
+- (void)setDataSource:(id)source;
+
+- (id)MYtarget;
+- (void)setMYtarget: (id)target;
+
+- (id)targetX;
+- (void)setTargetX: (id)t;
+ 
+- (int)value;
+- (void)setValue: (int)val;
+@end

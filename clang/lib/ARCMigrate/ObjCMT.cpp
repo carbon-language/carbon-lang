@@ -211,26 +211,37 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const NSAPI &NS, edit::Commit &commit) {
   ASTContext &Context = NS.getASTContext();
   std::string PropertyString = "@property";
-  const ParmVarDecl *argDecl = *Setter->param_begin();
-  QualType ArgType = Context.getCanonicalType(argDecl->getType());
-  Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
   
-  if (ArgType->isObjCRetainableType() &&
-      propertyLifetime == Qualifiers::OCL_Strong) {
-    if (const ObjCObjectPointerType *ObjPtrTy =
-        ArgType->getAs<ObjCObjectPointerType>()) {
-      ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
-      if (IDecl &&
-          IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
-        PropertyString += "(copy)";
-    }
-  }
-  else if (propertyLifetime == Qualifiers::OCL_Weak)
-    // TODO. More precise determination of 'weak' attribute requires
-    // looking into setter's implementation for backing weak ivar.
-    PropertyString += "(weak)";
-  else
+  std::string PropertyNameString = Getter->getNameAsString();
+  StringRef PropertyName(PropertyNameString);
+  // Short circuit properties that contain the name "delegate" or "dataSource",
+  // or have exact name "target" to have unsafe_unretained attribute.
+  if (PropertyName.equals("target") ||
+      (PropertyName.find("delegate") != StringRef::npos) ||
+      (PropertyName.find("dataSource") != StringRef::npos))
     PropertyString += "(unsafe_unretained)";
+  else {
+    const ParmVarDecl *argDecl = *Setter->param_begin();
+    QualType ArgType = Context.getCanonicalType(argDecl->getType());
+    Qualifiers::ObjCLifetime propertyLifetime = ArgType.getObjCLifetime();
+    bool RetainableObject = ArgType->isObjCRetainableType();
+    if (RetainableObject && propertyLifetime == Qualifiers::OCL_Strong) {
+      if (const ObjCObjectPointerType *ObjPtrTy =
+          ArgType->getAs<ObjCObjectPointerType>()) {
+        ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
+        if (IDecl &&
+            IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
+          PropertyString += "(copy)";
+        else
+          PropertyString += "(retain)";
+      }
+    } else if (propertyLifetime == Qualifiers::OCL_Weak)
+      // TODO. More precise determination of 'weak' attribute requires
+      // looking into setter's implementation for backing weak ivar.
+      PropertyString += "(weak)";
+    else if (RetainableObject)
+      PropertyString += "(retain)";
+  }
   
   // strip off any ARC lifetime qualifier.
   QualType CanResultTy = Context.getCanonicalType(Getter->getResultType());
@@ -242,7 +253,7 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
   PropertyString += " ";
   PropertyString += CanResultTy.getAsString(Context.getPrintingPolicy());
   PropertyString += " ";
-  PropertyString += Getter->getNameAsString();
+  PropertyString += PropertyNameString;
   commit.replace(CharSourceRange::getCharRange(Getter->getLocStart(),
                                                Getter->getDeclaratorEndLoc()),
                  PropertyString);
