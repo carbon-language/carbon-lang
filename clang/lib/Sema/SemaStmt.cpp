@@ -1418,6 +1418,104 @@ namespace {
     S.Diag(Ranges.begin()->getBegin(), PDiag);
   }
 
+  // If Statement is an incemement or decrement, return true and sets the
+  // variables Increment and DRE.
+  bool ProcessIterationStmt(Sema &S, Stmt* Statement, bool &Increment,
+                            DeclRefExpr *&DRE) {
+    if (UnaryOperator *UO = dyn_cast<UnaryOperator>(Statement)) {
+      switch (UO->getOpcode()) {
+        default: return false;
+        case UO_PostInc:
+        case UO_PreInc:
+          Increment = true;
+          break;
+        case UO_PostDec:
+        case UO_PreDec:
+          Increment = false;
+          break;
+      }
+      DRE = dyn_cast<DeclRefExpr>(UO->getSubExpr());
+      return DRE;
+    }
+
+    if (CXXOperatorCallExpr *Call = dyn_cast<CXXOperatorCallExpr>(Statement)) {
+      FunctionDecl *FD = Call->getDirectCallee();
+      if (!FD || !FD->isOverloadedOperator()) return false;
+      switch (FD->getOverloadedOperator()) {
+        default: return false;
+        case OO_PlusPlus:
+          Increment = true;
+          break;
+        case OO_MinusMinus:
+          Increment = false;
+          break;
+      }
+      DRE = dyn_cast<DeclRefExpr>(Call->getArg(0));
+      return DRE;
+    }
+
+    return false;
+  }
+
+  // A visitor to determine if a continue statement is a subexpression.
+  class ContinueFinder : public EvaluatedExprVisitor<ContinueFinder> {
+    bool Found;
+  public:
+    ContinueFinder(Sema &S, Stmt* Body) :
+        Inherited(S.Context),
+        Found(false) {
+      Visit(Body);
+    }
+
+    typedef EvaluatedExprVisitor<ContinueFinder> Inherited;
+
+    void VisitContinueStmt(ContinueStmt* E) {
+      Found = true;
+    }
+
+    bool ContinueFound() { return Found; }
+
+  };  // end class ContinueFinder
+
+  // Emit a warning when a loop increment/decrement appears twice per loop
+  // iteration.  The conditions which trigger this warning are:
+  // 1) The last statement in the loop body and the third expression in the
+  //    for loop are both increment or both decrement of the same variable
+  // 2) No continue statements in the loop body.
+  void CheckForRedundantIteration(Sema &S, Expr *Third, Stmt *Body) {
+    // Return when there is nothing to check.
+    if (!Body || !Third) return;
+
+    if (S.Diags.getDiagnosticLevel(diag::warn_redundant_loop_iteration,
+                                   Third->getLocStart())
+        == DiagnosticsEngine::Ignored)
+      return;
+
+    // Get the last statement from the loop body.
+    CompoundStmt *CS = dyn_cast<CompoundStmt>(Body);
+    if (!CS || CS->body_empty()) return;
+    Stmt *LastStmt = CS->body_back();
+    if (!LastStmt) return;
+
+    bool LoopIncrement, LastIncrement;
+    DeclRefExpr *LoopDRE, *LastDRE;
+
+    if (!ProcessIterationStmt(S, Third, LoopIncrement, LoopDRE)) return;
+    if (!ProcessIterationStmt(S, LastStmt, LastIncrement, LastDRE)) return;
+
+    // Check that the two statements are both increments or both decrements
+    // on the same varaible.
+    if (LoopIncrement != LastIncrement ||
+        LoopDRE->getDecl() != LastDRE->getDecl()) return;
+
+    if (ContinueFinder(S, Body).ContinueFound()) return;
+
+    S.Diag(LastDRE->getLocation(), diag::warn_redundant_loop_iteration)
+         << LastDRE->getDecl() << LastIncrement;
+    S.Diag(LoopDRE->getLocation(), diag::note_loop_iteration_here)
+         << LoopIncrement;
+  }
+
 } // end namespace
 
 StmtResult
@@ -1444,6 +1542,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   }
 
   CheckForLoopConditionalStatement(*this, second.get(), third.get(), Body);
+  CheckForRedundantIteration(*this, third.get(), Body);
 
   ExprResult SecondResult(second.release());
   VarDecl *ConditionVar = 0;

@@ -152,3 +152,111 @@ void test6() {
   for (;x6;);
   for (;y;);
 }
+
+void test7() {
+  int i;
+  for (;;i++) {  // expected-note{{incremented here}}
+    if (true) test7();
+    i++;  // expected-warning{{incremented both}}
+  }
+  for (;;i++) {  // expected-note{{incremented here}}
+    if (true) break;
+    ++i;  // expected-warning{{incremented both}}
+  }
+  for (;;++i) {  // expected-note{{incremented here}}
+    while (true) return;
+    i++;  // expected-warning{{incremented both}}
+  }
+  for (;;++i) {  // expected-note{{incremented here}}
+    ++i;  // expected-warning{{incremented both}}
+  }
+
+  for (;;i--) {  // expected-note{{decremented here}}
+    if (true) test7();
+    i--;  // expected-warning{{decremented both}}
+  }
+  for (;;i--) {  // expected-note{{decremented here}}
+    if (true) break;
+    --i;  // expected-warning{{decremented both}}
+  }
+  for (;;--i) {  // expected-note{{decremented here}}
+    while (true) return;
+    i--;  // expected-warning{{decremented both}}
+  }
+  for (;;--i) {  // expected-note{{decremented here}}
+    --i;  // expected-warning{{decremented both}}
+  }
+
+  // Don't warn when loop is only one statement.
+  for (;;++i)
+    i++;
+  for (;;--i)
+    --i;
+
+  // Don't warn when loop has continue statement.
+  for (;;i++) {
+    if (true) continue;
+    i++;
+  }
+  for (;;i--) {
+    if (true) continue;
+    i--;
+  }
+}
+
+struct iterator {
+  iterator operator++() { return *this; }
+  iterator operator++(int) { return *this; }
+  iterator operator--() { return *this; }
+  iterator operator--(int) { return *this; }
+};
+void test8() {
+  iterator i;
+  for (;;i++) {  // expected-note{{incremented here}}
+    if (true) test7();
+    i++;  // expected-warning{{incremented both}}
+  }
+  for (;;i++) {  // expected-note{{incremented here}}
+    if (true) break;
+    ++i;  // expected-warning{{incremented both}}
+  }
+  for (;;++i) {  // expected-note{{incremented here}}
+    while (true) return;
+    i++;  // expected-warning{{incremented both}}
+  }
+  for (;;++i) {  // expected-note{{incremented here}}
+    ++i;  // expected-warning{{incremented both}}
+  }
+
+  for (;;i--) {  // expected-note{{decremented here}}
+    if (true) test7();
+    i--;  // expected-warning{{decremented both}}
+  }
+  for (;;i--) {  // expected-note{{decremented here}}
+    if (true) break;
+    --i;  // expected-warning{{decremented both}}
+  }
+  for (;;--i) {  // expected-note{{decremented here}}
+    while (true) return;
+    i--;  // expected-warning{{decremented both}}
+  }
+  for (;;--i) {  // expected-note{{decremented here}}
+    --i;  // expected-warning{{decremented both}}
+  }
+
+  // Don't warn when loop is only one statement.
+  for (;;++i)
+    i++;
+  for (;;--i)
+    --i;
+
+  // Don't warn when loop has continue statement.
+  for (;;i++) {
+    if (true) continue;
+    i++;
+  }
+  for (;;i--) {
+    if (true) continue;
+    i--;
+  }
+}
