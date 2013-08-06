@@ -1347,16 +1347,19 @@ _func:
 @ MRC/MRC2
 @------------------------------------------------------------------------------
         mrc  p14, #0, r1, c1, c2, #4
-        mrc2  p14, #0, r1, c1, c2, #4
-        mrc p11, #1, r1, c2, c2
+        mrc  p15, #7, apsr_nzcv, c15, c6, #6
+        mrc  p11, #1, r1, c2, c2
         mrc2 p12, #3, r3, c3, c4
-
-@ CHECK: mrc	p14, #0, r1, c1, c2, #4 @ encoding: [0x11,0xee,0x92,0x1e]
-@ CHECK: mrc2	p14, #0, r1, c1, c2, #4 @ encoding: [0x11,0xfe,0x92,0x1e]
-@ CHECK: mrc	p11, #1, r1, c2, c2, #0 @ encoding: [0x32,0xee,0x12,0x1b]
-@ CHECK: mrc2	p12, #3, r3, c3, c4, #0 @ encoding: [0x73,0xfe,0x14,0x3c]
-
-
+        mrc2 p14, #0, r1, c1, c2, #4
+        mrc2 p10, #7, apsr_nzcv, c15, c0, #1
+ 
+@ CHECK: mrc  p14, #0, r1, c1, c2, #4            @ encoding: [0x11,0xee,0x92,0x1e]
+@ CHECK: mrc  p15, #7, apsr_nzcv, c15, c6, #6    @ encoding: [0xff,0xee,0xd6,0xff]
+@ CHECK: mrc  p11, #1, r1, c2, c2, #0            @ encoding: [0x32,0xee,0x12,0x1b]
+@ CHECK: mrc2 p12, #3, r3, c3, c4, #0            @ encoding: [0x73,0xfe,0x14,0x3c]
+@ CHECK: mrc2 p14, #0, r1, c1, c2, #4            @ encoding: [0x11,0xfe,0x92,0x1e]
+@ CHECK: mrc2 p10, #7, apsr_nzcv, c15, c0, #1    @ encoding: [0xff,0xfe,0x30,0xfa]
+ 
 @------------------------------------------------------------------------------
 @ MRRC/MRRC2
 @------------------------------------------------------------------------------

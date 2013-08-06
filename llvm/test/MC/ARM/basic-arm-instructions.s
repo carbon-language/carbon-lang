@@ -1076,20 +1076,16 @@ Lforward:
 @------------------------------------------------------------------------------
         mrc  p14, #0, r1, c1, c2, #4
         mrc  p15, #7, apsr_nzcv, c15, c6, #6
-        mrc  p15, #7, pc, c15, c6, #6
         mrc2  p14, #0, r1, c1, c2, #4
         mrc2  p10, #7, apsr_nzcv, c15, c0, #1
-        mrc2  p10, #7, pc, c15, c0, #1
 
 @ CHECK: mrc  p14, #0, r1, c1, c2, #4             @ encoding: [0x92,0x1e,0x11,0xee]
 @ CHECK: mrc  p15, #7, apsr_nzcv, c15, c6, #6     @ encoding: [0xd6,0xff,0xff,0xee]
-@ CHECK: mrc  p15, #7, pc, c15, c6, #6            @ encoding: [0xd6,0xff,0xff,0xee]
 @ CHECK: mrc2  p14, #0, r1, c1, c2, #4            @ encoding: [0x92,0x1e,0x11,0xfe]
 @ CHECK: mrc2  p10, #7, apsr_nzcv, c15, c0, #1    @ encoding: [0x30,0xfa,0xff,0xfe]
-@ CHECK: mrc2  p10, #7, pc, c15, c0, #1           @ encoding: [0x30,0xfa,0xff,0xfe]
 
-        mrceq  p15, #7, pc, c15, c6, #6
-@ CHECK: mrceq  p15, #7, pc, c15, c6, #6            @ encoding: [0xd6,0xff,0xff,0x0e]
+         mrceq  p15, #7, apsr_nzcv, c15, c6, #6
+@ CHECK: mrceq  p15, #7, apsr_nzcv, c15, c6, #6   @ encoding: [0xd6,0xff,0xff,0x0e]
 
 @------------------------------------------------------------------------------
 @ MRRC/MRRC2
