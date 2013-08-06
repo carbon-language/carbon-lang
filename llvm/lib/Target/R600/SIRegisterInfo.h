@@ -41,6 +41,10 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   /// \brief get the register class of the specified type to use in the
   /// CFGStructurizer
   virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const;
+
+  /// \brief Return the 'base' register class for this register.
+  /// e.g. SGPR0 => SReg_32, VGPR => VReg_32 SGPR0_SGPR1 -> SReg_32, etc.
+  const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;
 };
 
 } // End namespace llvm

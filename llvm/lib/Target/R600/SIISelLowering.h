@@ -30,6 +30,8 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
   bool foldImm(SDValue &Operand, int32_t &Immediate,
                bool &ScalarSlotUsed) const;
+  const TargetRegisterClass *getRegClassForNode(SelectionDAG &DAG,
+                                                const SDValue &Op) const;
   bool fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
                     unsigned RegClass) const;
   void ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,

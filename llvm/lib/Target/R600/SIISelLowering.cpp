@@ -673,43 +673,67 @@ bool SITargetLowering::foldImm(SDValue &Operand, int32_t &Immediate,
   return false;
 }
 
+const TargetRegisterClass *SITargetLowering::getRegClassForNode(
+                                   SelectionDAG &DAG, const SDValue &Op) const {
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+  const SIRegisterInfo &TRI = TII->getRegisterInfo();
+
+  if (!Op->isMachineOpcode()) {
+    switch(Op->getOpcode()) {
+    case ISD::CopyFromReg: {
+      MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+      unsigned Reg = cast<RegisterSDNode>(Op->getOperand(1))->getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+        return MRI.getRegClass(Reg);
+      }
+      return TRI.getPhysRegClass(Reg);
+    }
+    default:  return NULL;
+    }
+  }
+  const MCInstrDesc &Desc = TII->get(Op->getMachineOpcode());
+  int OpClassID = Desc.OpInfo[Op.getResNo()].RegClass;
+  if (OpClassID != -1) {
+    return TRI.getRegClass(OpClassID);
+  }
+  switch(Op.getMachineOpcode()) {
+  case AMDGPU::COPY_TO_REGCLASS:
+    // Operand 1 is the register class id for COPY_TO_REGCLASS instructions.
+    OpClassID = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
+
+    // If the COPY_TO_REGCLASS instruction is copying to a VSrc register
+    // class, then the register class for the value could be either a
+    // VReg or and SReg.  In order to get a more accurate
+    if (OpClassID == AMDGPU::VSrc_32RegClassID ||
+        OpClassID == AMDGPU::VSrc_64RegClassID) {
+      return getRegClassForNode(DAG, Op.getOperand(0));
+    }
+    return TRI.getRegClass(OpClassID);
+  case AMDGPU::EXTRACT_SUBREG: {
+    int SubIdx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+    const TargetRegisterClass *SuperClass =
+      getRegClassForNode(DAG, Op.getOperand(0));
+    return TRI.getSubClassWithSubReg(SuperClass, SubIdx);
+  }
+  case AMDGPU::REG_SEQUENCE:
+    // Operand 0 is the register class id for REG_SEQUENCE instructions.
+    return TRI.getRegClass(
+      cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue());
+  default:
+    return getRegClassFor(Op.getSimpleValueType());
+  }
+}
+
 /// \brief Does "Op" fit into register class "RegClass" ?
 bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
                                     unsigned RegClass) const {
-
-  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
-  SDNode *Node = Op.getNode();
-
-  const TargetRegisterClass *OpClass;
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  if (MachineSDNode *MN = dyn_cast<MachineSDNode>(Node)) {
-    const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
-    const MCInstrDesc &Desc = TII->get(MN->getMachineOpcode());
-    int OpClassID = Desc.OpInfo[Op.getResNo()].RegClass;
-    if (OpClassID == -1) {
-      switch (MN->getMachineOpcode()) {
-      case AMDGPU::REG_SEQUENCE:
-        // Operand 0 is the register class id for REG_SEQUENCE instructions.
-        OpClass = TRI->getRegClass(
-                       cast<ConstantSDNode>(MN->getOperand(0))->getZExtValue());
-        break;
-      default:
-        OpClass = getRegClassFor(Op.getSimpleValueType());
-        break;
-      }
-    } else {
-      OpClass = TRI->getRegClass(OpClassID);
-    }
-
-  } else if (Node->getOpcode() == ISD::CopyFromReg) {
-    RegisterSDNode *Reg = cast<RegisterSDNode>(Node->getOperand(1).getNode());
-    OpClass = MRI.getRegClass(Reg->getReg());
-
-  } else
+  const TargetRegisterClass *RC = getRegClassForNode(DAG, Op);
+  if (!RC) {
     return false;
-
-  return TRI->getRegClass(RegClass)->hasSubClassEq(OpClass);
+  }
+  return TRI->getRegClass(RegClass)->hasSubClassEq(RC);
 }
 
 /// \brief Make sure that we don't exeed the number of allowed scalars

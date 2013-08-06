@@ -1,15 +1,15 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15, 0, 0, -1
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 3, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 2, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 1, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 4, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 8, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 5, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 12, 0, 0, -1
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 7, 0, 0, 0
-;CHECK: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 8, 0, 0, -1
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 15, 0, 0, -1
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 3, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 2, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 1, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 4, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 8, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 5, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+}}, 12, 0, 0, -1
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+_VGPR[0-9]+_VGPR[0-9]+}}, 7, 0, 0, 0
+;CHECK-DAG: IMAGE_LOAD_MIP {{VGPR[0-9]+}}, 8, 0, 0, -1
 
 define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    %v1 = insertelement <4 x i32> undef, i32 %a1, i32 0

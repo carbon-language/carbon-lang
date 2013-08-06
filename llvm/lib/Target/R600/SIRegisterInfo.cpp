@@ -49,3 +49,24 @@ const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
     case MVT::i32: return &AMDGPU::VReg_32RegClass;
   }
 }
+
+const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
+  assert(!TargetRegisterInfo::isVirtualRegister(Reg));
+
+  const TargetRegisterClass *BaseClasses[] = {
+    &AMDGPU::VReg_32RegClass,
+    &AMDGPU::SReg_32RegClass,
+    &AMDGPU::VReg_64RegClass,
+    &AMDGPU::SReg_64RegClass,
+    &AMDGPU::SReg_128RegClass,
+    &AMDGPU::SReg_256RegClass
+  };
+
+  for (unsigned i = 0, e = sizeof(BaseClasses) /
+                           sizeof(const TargetRegisterClass*); i != e; ++i) {
+    if (BaseClasses[i]->contains(Reg)) {
+      return BaseClasses[i];
+    }
+  }
+  return NULL;
+}
