@@ -821,6 +821,11 @@ class Base(unittest2.TestCase):
         #import traceback
         #traceback.print_stack()
 
+        if "LIBCXX_PATH" in os.environ:
+            self.libcxxPath = os.environ["LIBCXX_PATH"]
+        else:
+            self.libcxxPath = None
+
         if "LLDB_EXEC" in os.environ:
             self.lldbExec = os.environ["LLDB_EXEC"]
         else:
@@ -1360,11 +1365,24 @@ class Base(unittest2.TestCase):
         if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
-    def getBuildFlags(self, use_cpp11=True, use_pthreads=True):
+    def getBuildFlags(self, use_cpp11=True, use_libcxx=False, use_libstdcxx=False, use_pthreads=True):
         """ Returns a dictionary (which can be provided to build* functions above) which
             contains OS-specific build flags.
         """
         cflags = ""
+
+        # On Mac OS X, unless specifically requested to use libstdc++, use libc++
+        if not use_libstdcxx and sys.platform.startswith('darwin'):
+            use_libcxx = True
+
+        if use_libcxx and self.libcxxPath:
+            cflags += "-stdlib=libc++ "
+            if self.libcxxPath:
+                libcxxInclude = os.path.join(self.libcxxPath, "include")
+                libcxxLib = os.path.join(self.libcxxPath, "lib")
+                if os.path.isdir(libcxxInclude) and os.path.isdir(libcxxLib):
+                    cflags += "-nostdinc++ -I%s -L%s -Wl,-rpath,%s " % (libcxxInclude, libcxxLib, libcxxLib)
+
         if use_cpp11:
             cflags += "-std="
             if "gcc" in self.getCompiler() and "4.6" in self.getCompilerVersion():
