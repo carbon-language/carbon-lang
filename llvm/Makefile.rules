@@ -1185,7 +1185,7 @@ $(DestSharedLib): $(LibName.SO) $(DestSharedLibDir)
 
 uninstall-local::
 	$(Echo) Uninstalling $(BuildMode) Shared Library $(DestSharedLib)
-	-$(Verb) $(RM) -f $(DestSharedLibDir)/$(SharedPrefix)$(LIBRARYNAME).*
+	-$(Verb) $(RM) -f $(DestSharedLib)
 endif
 endif
 
