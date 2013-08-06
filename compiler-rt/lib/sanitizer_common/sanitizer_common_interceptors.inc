@@ -758,7 +758,7 @@ INTERCEPTOR(int, getitimer, int which, void *curr_value) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getitimer, which, curr_value);
   int res = REAL(getitimer)(which, curr_value);
-  if (!res) {
+  if (!res && curr_value) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, curr_value, struct_itimerval_sz);
   }
   return res;
@@ -766,7 +766,8 @@ INTERCEPTOR(int, getitimer, int which, void *curr_value) {
 INTERCEPTOR(int, setitimer, int which, const void *new_value, void *old_value) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, setitimer, which, new_value, old_value);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, new_value, struct_itimerval_sz);
+  if (new_value)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, new_value, struct_itimerval_sz);
   int res = REAL(setitimer)(which, new_value, old_value);
   if (!res && old_value) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, old_value, struct_itimerval_sz);

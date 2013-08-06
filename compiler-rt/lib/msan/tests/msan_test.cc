@@ -1397,6 +1397,13 @@ TEST(MemorySanitizer, getitimer) {
   assert(!res);
 }
 
+TEST(MemorySanitizer, setitimer_null) {
+  setitimer(ITIMER_VIRTUAL, 0, 0);
+  // Not testing the return value, since it the behaviour seems to differ
+  // between libc implementations and POSIX.
+  // Should never crash, though.
+}
+
 TEST(MemorySanitizer, time) {
   time_t t;
   EXPECT_POISONED(t);
