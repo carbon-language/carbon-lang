@@ -17792,23 +17792,24 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
   //   LHS = VECTOR_SHUFFLE A, B, LMask
   //   RHS = VECTOR_SHUFFLE A, B, RMask
   // Check that the masks correspond to performing a horizontal operation.
-  for (unsigned i = 0; i != NumElts; ++i) {
-    int LIdx = LMask[i], RIdx = RMask[i];
+  for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
+    for (unsigned i = 0; i != NumLaneElts; ++i) {
+      int LIdx = LMask[i+l], RIdx = RMask[i+l];
 
-    // Ignore any UNDEF components.
-    if (LIdx < 0 || RIdx < 0 ||
-        (!A.getNode() && (LIdx < (int)NumElts || RIdx < (int)NumElts)) ||
-        (!B.getNode() && (LIdx >= (int)NumElts || RIdx >= (int)NumElts)))
-      continue;
+      // Ignore any UNDEF components.
+      if (LIdx < 0 || RIdx < 0 ||
+          (!A.getNode() && (LIdx < (int)NumElts || RIdx < (int)NumElts)) ||
+          (!B.getNode() && (LIdx >= (int)NumElts || RIdx >= (int)NumElts)))
+        continue;
 
-    // Check that successive elements are being operated on.  If not, this is
-    // not a horizontal operation.
-    unsigned Src = (i/HalfLaneElts) % 2; // each lane is split between srcs
-    unsigned LaneStart = (i/NumLaneElts) * NumLaneElts;
-    int Index = 2*(i%HalfLaneElts) + NumElts*Src + LaneStart;
-    if (!(LIdx == Index && RIdx == Index + 1) &&
-        !(IsCommutative && LIdx == Index + 1 && RIdx == Index))
-      return false;
+      // Check that successive elements are being operated on.  If not, this is
+      // not a horizontal operation.
+      unsigned Src = (i/HalfLaneElts); // each lane is split between srcs
+      int Index = 2*(i%HalfLaneElts) + NumElts*Src + l;
+      if (!(LIdx == Index && RIdx == Index + 1) &&
+          !(IsCommutative && LIdx == Index + 1 && RIdx == Index))
+        return false;
+    }
   }
 
   LHS = A.getNode() ? A : B; // If A is 'UNDEF', use B for it.
