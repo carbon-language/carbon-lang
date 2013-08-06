@@ -56,10 +56,10 @@ requiresFrameIndexScavenging(const MachineFunction &MF) const {
 const TargetRegisterClass *
 MipsSERegisterInfo::intRegClass(unsigned Size) const {
   if (Size == 4)
-    return &Mips::CPURegsRegClass;
+    return &Mips::GPR32RegClass;
 
   assert(Size == 8);
-  return &Mips::CPU64RegsRegClass;
+  return &Mips::GPR64RegClass;
 }
 
 void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,

@@ -253,7 +253,7 @@ class FEXT_T8I8I16_ins<string asmstr, string asmstr2>:
 // I8_MOVR32 instruction format (used only by the MOVR32 instructio
 //
 class FI8_MOVR3216_ins<string asmstr, InstrItinClass itin>:
-       FI8_MOVR3216<(outs CPU16Regs:$rz), (ins CPURegs:$r32),
+       FI8_MOVR3216<(outs CPU16Regs:$rz), (ins GPR32:$r32),
        !strconcat(asmstr,  "\t$rz, $r32"), [], itin>;
 
 //
@@ -261,7 +261,7 @@ class FI8_MOVR3216_ins<string asmstr, InstrItinClass itin>:
 //
 
 class FI8_MOV32R16_ins<string asmstr, InstrItinClass itin>:
-  FI8_MOV32R16<(outs CPURegs:$r32), (ins CPU16Regs:$rz),
+  FI8_MOV32R16<(outs GPR32:$r32), (ins CPU16Regs:$rz),
                !strconcat(asmstr,  "\t$r32, $rz"), [], itin>;
 
 //

@@ -141,7 +141,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   const MachineFrameInfo *MFI = MF->getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   // size of stack area to which FP callee-saved regs are saved.
-  unsigned CPURegSize = Mips::CPURegsRegClass.getSize();
+  unsigned CPURegSize = Mips::GPR32RegClass.getSize();
   unsigned FGR32RegSize = Mips::FGR32RegClass.getSize();
   unsigned AFGR64RegSize = Mips::AFGR64RegClass.getSize();
   bool HasAFGR64Reg = false;
@@ -151,7 +151,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   // Set FPU Bitmask.
   for (i = 0; i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    if (Mips::CPURegsRegClass.contains(Reg))
+    if (Mips::GPR32RegClass.contains(Reg))
       break;
 
     unsigned RegNum = TM.getRegisterInfo()->getEncodingValue(Reg);

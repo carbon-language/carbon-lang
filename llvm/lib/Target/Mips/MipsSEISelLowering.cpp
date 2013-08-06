@@ -31,10 +31,10 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 
   clearRegisterClasses();
 
-  addRegisterClass(MVT::i32, &Mips::CPURegsRegClass);
+  addRegisterClass(MVT::i32, &Mips::GPR32RegClass);
 
   if (HasMips64)
-    addRegisterClass(MVT::i64, &Mips::CPU64RegsRegClass);
+    addRegisterClass(MVT::i64, &Mips::GPR64RegClass);
 
   if (Subtarget->hasDSP()) {
     MVT::SimpleValueType VecTys[2] = {MVT::v2i16, MVT::v4i8};
@@ -769,7 +769,7 @@ emitBPOSGE32(MachineInstr *MI, MachineBasicBlock *BB) const{
 
   MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  const TargetRegisterClass *RC = &Mips::CPURegsRegClass;
+  const TargetRegisterClass *RC = &Mips::GPR32RegClass;
   DebugLoc DL = MI->getDebugLoc();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction::iterator It = llvm::next(MachineFunction::iterator(BB));

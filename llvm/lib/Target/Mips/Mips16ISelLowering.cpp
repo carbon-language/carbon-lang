@@ -119,7 +119,7 @@ Mips16TargetLowering::Mips16TargetLowering(MipsTargetMachine &TM)
   //
   // set up as if mips32 and then revert so we can test the mechanism
   // for switching
-  addRegisterClass(MVT::i32, &Mips::CPURegsRegClass);
+  addRegisterClass(MVT::i32, &Mips::GPR32RegClass);
   addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
   computeRegisterProperties();
   clearRegisterClasses();

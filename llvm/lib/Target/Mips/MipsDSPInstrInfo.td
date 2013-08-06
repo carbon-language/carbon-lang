@@ -328,9 +328,9 @@ class REPL_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class SHLL_QB_R3_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                            InstrItinClass itin, RegisterClass RC> {
   dag OutOperandList = (outs RC:$rd);
-  dag InOperandList =  (ins RC:$rt, CPURegs:$rs_sa);
+  dag InOperandList =  (ins RC:$rt, GPR32:$rs_sa);
   string AsmString = !strconcat(instr_asm, "\t$rd, $rt, $rs_sa");
-  list<dag> Pattern = [(set RC:$rd, (OpNode RC:$rt, CPURegs:$rs_sa))];
+  list<dag> Pattern = [(set RC:$rd, (OpNode RC:$rt, GPR32:$rs_sa))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -347,11 +347,11 @@ class SHLL_QB_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 
 class LX_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rd);
-  dag InOperandList = (ins CPURegs:$base, CPURegs:$index);
+  dag OutOperandList = (outs GPR32:$rd);
+  dag InOperandList = (ins GPR32:$base, GPR32:$index);
   string AsmString = !strconcat(instr_asm, "\t$rd, ${index}(${base})");
-  list<dag> Pattern = [(set CPURegs:$rd,
-                       (OpNode CPURegs:$base, CPURegs:$index))];
+  list<dag> Pattern = [(set GPR32:$rd,
+                       (OpNode GPR32:$base, GPR32:$index))];
   InstrItinClass Itinerary = itin;
   bit mayLoad = 1;
 }
@@ -368,26 +368,26 @@ class ADDUH_QB_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 
 class APPEND_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                        SDPatternOperator ImmOp, InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rt);
-  dag InOperandList = (ins CPURegs:$rs, shamt:$sa, CPURegs:$src);
+  dag OutOperandList = (outs GPR32:$rt);
+  dag InOperandList = (ins GPR32:$rs, shamt:$sa, GPR32:$src);
   string AsmString = !strconcat(instr_asm, "\t$rt, $rs, $sa");
-  list<dag> Pattern =  [(set CPURegs:$rt,
-                        (OpNode CPURegs:$src, CPURegs:$rs, ImmOp:$sa))];
+  list<dag> Pattern =  [(set GPR32:$rt,
+                        (OpNode GPR32:$src, GPR32:$rs, ImmOp:$sa))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$src = $rt";
 }
 
 class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                               InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rt);
-  dag InOperandList = (ins ACRegsDSP:$ac, CPURegs:$shift_rs);
+  dag OutOperandList = (outs GPR32:$rt);
+  dag InOperandList = (ins ACRegsDSP:$ac, GPR32:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
 }
 
 class EXTR_W_TY1_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                               InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rt);
+  dag OutOperandList = (outs GPR32:$rt);
   dag InOperandList = (ins ACRegsDSP:$ac, uimm16:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
@@ -404,55 +404,55 @@ class SHILO_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
 
 class SHILO_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
   dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins CPURegs:$rs, ACRegsDSP:$acin);
+  dag InOperandList = (ins GPR32:$rs, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs");
   list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode CPURegs:$rs, ACRegsDSP:$acin))];
+                        (OpNode GPR32:$rs, ACRegsDSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
 class MTHLIP_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
   dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins CPURegs:$rs, ACRegsDSP:$acin);
+  dag InOperandList = (ins GPR32:$rs, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$rs, $ac");
   list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode CPURegs:$rs, ACRegsDSP:$acin))];
+                        (OpNode GPR32:$rs, ACRegsDSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
 class RDDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                       InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rd);
+  dag OutOperandList = (outs GPR32:$rd);
   dag InOperandList = (ins uimm16:$mask);
   string AsmString = !strconcat(instr_asm, "\t$rd, $mask");
-  list<dag> Pattern = [(set CPURegs:$rd, (OpNode immZExt10:$mask))];
+  list<dag> Pattern = [(set GPR32:$rd, (OpNode immZExt10:$mask))];
   InstrItinClass Itinerary = itin;
 }
 
 class WRDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                       InstrItinClass itin> {
   dag OutOperandList = (outs);
-  dag InOperandList = (ins CPURegs:$rs, uimm16:$mask);
+  dag InOperandList = (ins GPR32:$rs, uimm16:$mask);
   string AsmString = !strconcat(instr_asm, "\t$rs, $mask");
-  list<dag> Pattern = [(OpNode CPURegs:$rs, immZExt10:$mask)];
+  list<dag> Pattern = [(OpNode GPR32:$rs, immZExt10:$mask)];
   InstrItinClass Itinerary = itin;
 }
 
 class DPA_W_PH_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
   dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin);
+  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
   list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin))];
+                        (OpNode GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
 class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                      InstrItinClass itin> {
   dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt);
+  dag InOperandList = (ins GPR32:$rs, GPR32:$rt);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
-  list<dag> Pattern = [(set ACRegsDSP:$ac, (OpNode CPURegs:$rs, CPURegs:$rt))];
+  list<dag> Pattern = [(set ACRegsDSP:$ac, (OpNode GPR32:$rs, GPR32:$rt))];
   InstrItinClass Itinerary = itin;
   int AddedComplexity = 20;
   bit isCommutable = 1;
@@ -461,17 +461,17 @@ class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class MADD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                      InstrItinClass itin> {
   dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin);
+  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
   list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode CPURegs:$rs, CPURegs:$rt, ACRegsDSP:$acin))];
+                        (OpNode GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin))];
   InstrItinClass Itinerary = itin;
   int AddedComplexity = 20;
   string Constraints = "$acin = $ac";
 }
 
 class MFHI_DESC_BASE<string instr_asm, RegisterClass RC, InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rd);
+  dag OutOperandList = (outs GPR32:$rd);
   dag InOperandList = (ins RC:$ac);
   string AsmString = !strconcat(instr_asm, "\t$rd, $ac");
   InstrItinClass Itinerary = itin;
@@ -479,13 +479,13 @@ class MFHI_DESC_BASE<string instr_asm, RegisterClass RC, InstrItinClass itin> {
 
 class MTHI_DESC_BASE<string instr_asm, RegisterClass RC, InstrItinClass itin> {
   dag OutOperandList = (outs RC:$ac);
-  dag InOperandList = (ins CPURegs:$rs);
+  dag InOperandList = (ins GPR32:$rs);
   string AsmString = !strconcat(instr_asm, "\t$rs, $ac");
   InstrItinClass Itinerary = itin;
 }
 
 class BPOSGE32_PSEUDO_DESC_BASE<SDPatternOperator OpNode, InstrItinClass itin> :
-  MipsPseudo<(outs CPURegs:$dst), (ins), [(set CPURegs:$dst, (OpNode))]> {
+  MipsPseudo<(outs GPR32:$dst), (ins), [(set GPR32:$dst, (OpNode))]> {
   bit usesCustomInserter = 1;
 }
 
@@ -501,10 +501,10 @@ class BPOSGE32_DESC_BASE<string instr_asm, InstrItinClass itin> {
 
 class INSV_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                      InstrItinClass itin> {
-  dag OutOperandList = (outs CPURegs:$rt);
-  dag InOperandList = (ins CPURegs:$src, CPURegs:$rs);
+  dag OutOperandList = (outs GPR32:$rt);
+  dag InOperandList = (ins GPR32:$src, GPR32:$rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $rs");
-  list<dag> Pattern = [(set CPURegs:$rt, (OpNode CPURegs:$src, CPURegs:$rs))];
+  list<dag> Pattern = [(set GPR32:$rt, (OpNode GPR32:$src, GPR32:$rs))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$src = $rt";
 }
@@ -547,26 +547,26 @@ class SUBQ_S_PH_DESC : ADDU_QB_DESC_BASE<"subq_s.ph", int_mips_subq_s_ph,
                        Defs<[DSPOutFlag20]>;
 
 class ADDQ_S_W_DESC : ADDU_QB_DESC_BASE<"addq_s.w", int_mips_addq_s_w,
-                                        NoItinerary, CPURegs, CPURegs>,
+                                        NoItinerary, GPR32, GPR32>,
                       IsCommutable, Defs<[DSPOutFlag20]>;
 
 class SUBQ_S_W_DESC : ADDU_QB_DESC_BASE<"subq_s.w", int_mips_subq_s_w,
-                                        NoItinerary, CPURegs, CPURegs>,
+                                        NoItinerary, GPR32, GPR32>,
                       Defs<[DSPOutFlag20]>;
 
 class ADDSC_DESC : ADDU_QB_DESC_BASE<"addsc", null_frag, NoItinerary,
-                                     CPURegs, CPURegs>, IsCommutable,
+                                     GPR32, GPR32>, IsCommutable,
                    Defs<[DSPCarry]>;
 
 class ADDWC_DESC : ADDU_QB_DESC_BASE<"addwc", null_frag, NoItinerary,
-                                     CPURegs, CPURegs>,
+                                     GPR32, GPR32>,
                    IsCommutable, Uses<[DSPCarry]>, Defs<[DSPOutFlag20]>;
 
 class MODSUB_DESC : ADDU_QB_DESC_BASE<"modsub", int_mips_modsub, NoItinerary,
-                                      CPURegs, CPURegs>;
+                                      GPR32, GPR32>;
 
 class RADDU_W_QB_DESC : RADDU_W_QB_DESC_BASE<"raddu.w.qb", int_mips_raddu_w_qb,
-                                             NoItinerary, CPURegs, DSPRegs>;
+                                             NoItinerary, GPR32, DSPRegs>;
 
 // Absolute value
 class ABSQ_S_PH_DESC : ABSQ_S_PH_R2_DESC_BASE<"absq_s.ph", int_mips_absq_s_ph,
@@ -574,7 +574,7 @@ class ABSQ_S_PH_DESC : ABSQ_S_PH_R2_DESC_BASE<"absq_s.ph", int_mips_absq_s_ph,
                        Defs<[DSPOutFlag20]>;
 
 class ABSQ_S_W_DESC : ABSQ_S_PH_R2_DESC_BASE<"absq_s.w", int_mips_absq_s_w,
-                                             NoItinerary, CPURegs>,
+                                             NoItinerary, GPR32>,
                       Defs<[DSPOutFlag20]>;
 
 // Precision reduce/expand
@@ -584,12 +584,12 @@ class PRECRQ_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrq.qb.ph",
 
 class PRECRQ_PH_W_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrq.ph.w",
                                                 int_mips_precrq_ph_w,
-                                                NoItinerary, DSPRegs, CPURegs>;
+                                                NoItinerary, DSPRegs, GPR32>;
 
 class PRECRQ_RS_PH_W_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrq_rs.ph.w",
                                                    int_mips_precrq_rs_ph_w,
                                                    NoItinerary, DSPRegs,
-                                                   CPURegs>,
+                                                   GPR32>,
                             Defs<[DSPOutFlag22]>;
 
 class PRECRQU_S_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrqu_s.qb.ph",
@@ -600,11 +600,11 @@ class PRECRQU_S_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precrqu_s.qb.ph",
 
 class PRECEQ_W_PHL_DESC : ABSQ_S_PH_R2_DESC_BASE<"preceq.w.phl",
                                                  int_mips_preceq_w_phl,
-                                                 NoItinerary, CPURegs, DSPRegs>;
+                                                 NoItinerary, GPR32, DSPRegs>;
 
 class PRECEQ_W_PHR_DESC : ABSQ_S_PH_R2_DESC_BASE<"preceq.w.phr",
                                                  int_mips_preceq_w_phr,
-                                                 NoItinerary, CPURegs, DSPRegs>;
+                                                 NoItinerary, GPR32, DSPRegs>;
 
 class PRECEQU_PH_QBL_DESC : ABSQ_S_PH_R2_DESC_BASE<"precequ.ph.qbl",
                                                    int_mips_precequ_ph_qbl,
@@ -682,18 +682,18 @@ class SHRAV_R_PH_DESC : SHLL_QB_R3_DESC_BASE<"shrav_r.ph", int_mips_shra_r_ph,
                                              NoItinerary, DSPRegs>;
 
 class SHLL_S_W_DESC : SHLL_QB_R2_DESC_BASE<"shll_s.w", int_mips_shll_s_w,
-                                           immZExt5, NoItinerary, CPURegs>,
+                                           immZExt5, NoItinerary, GPR32>,
                       Defs<[DSPOutFlag22]>;
 
 class SHLLV_S_W_DESC : SHLL_QB_R3_DESC_BASE<"shllv_s.w", int_mips_shll_s_w,
-                                            NoItinerary, CPURegs>,
+                                            NoItinerary, GPR32>,
                        Defs<[DSPOutFlag22]>;
 
 class SHRA_R_W_DESC : SHLL_QB_R2_DESC_BASE<"shra_r.w", int_mips_shra_r_w,
-                                           immZExt5, NoItinerary, CPURegs>;
+                                           immZExt5, NoItinerary, GPR32>;
 
 class SHRAV_R_W_DESC : SHLL_QB_R3_DESC_BASE<"shrav_r.w", int_mips_shra_r_w,
-                                            NoItinerary, CPURegs>;
+                                            NoItinerary, GPR32>;
 
 // Multiplication
 class MULEU_S_PH_QBL_DESC : ADDU_QB_DESC_BASE<"muleu_s.ph.qbl",
@@ -708,12 +708,12 @@ class MULEU_S_PH_QBR_DESC : ADDU_QB_DESC_BASE<"muleu_s.ph.qbr",
 
 class MULEQ_S_W_PHL_DESC : ADDU_QB_DESC_BASE<"muleq_s.w.phl",
                                              int_mips_muleq_s_w_phl,
-                                             NoItinerary, CPURegs, DSPRegs>,
+                                             NoItinerary, GPR32, DSPRegs>,
                            IsCommutable, Defs<[DSPOutFlag21]>;
 
 class MULEQ_S_W_PHR_DESC : ADDU_QB_DESC_BASE<"muleq_s.w.phr",
                                              int_mips_muleq_s_w_phr,
-                                             NoItinerary, CPURegs, DSPRegs>,
+                                             NoItinerary, GPR32, DSPRegs>,
                            IsCommutable, Defs<[DSPOutFlag21]>;
 
 class MULQ_RS_PH_DESC : ADDU_QB_DESC_BASE<"mulq_rs.ph", int_mips_mulq_rs_ph,
@@ -786,16 +786,16 @@ class CMPU_LE_QB_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmpu.le.qb",
 
 class CMPGU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.eq.qb",
                                                 int_mips_cmpgu_eq_qb,
-                                                NoItinerary, CPURegs, DSPRegs>,
+                                                NoItinerary, GPR32, DSPRegs>,
                          IsCommutable;
 
 class CMPGU_LT_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.lt.qb",
                                                 int_mips_cmpgu_lt_qb,
-                                                NoItinerary, CPURegs, DSPRegs>;
+                                                NoItinerary, GPR32, DSPRegs>;
 
 class CMPGU_LE_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgu.le.qb",
                                                 int_mips_cmpgu_le_qb,
-                                                NoItinerary, CPURegs, DSPRegs>;
+                                                NoItinerary, GPR32, DSPRegs>;
 
 class CMP_EQ_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.eq.ph", int_mips_cmp_eq_ph,
                                               NoItinerary, DSPRegs>,
@@ -811,7 +811,7 @@ class CMP_LE_PH_DESC : CMP_EQ_QB_R2_DESC_BASE<"cmp.le.ph", int_mips_cmp_le_ph,
 
 // Misc
 class BITREV_DESC : ABSQ_S_PH_R2_DESC_BASE<"bitrev", int_mips_bitrev,
-                                           NoItinerary, CPURegs>;
+                                           NoItinerary, GPR32>;
 
 class PACKRL_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"packrl.ph", int_mips_packrl_ph,
                                               NoItinerary, DSPRegs, DSPRegs>;
@@ -823,10 +823,10 @@ class REPL_PH_DESC : REPL_DESC_BASE<"repl.ph", int_mips_repl_ph, immZExt10,
                                     NoItinerary, DSPRegs>;
 
 class REPLV_QB_DESC : ABSQ_S_PH_R2_DESC_BASE<"replv.qb", int_mips_repl_qb,
-                                             NoItinerary, DSPRegs, CPURegs>;
+                                             NoItinerary, DSPRegs, GPR32>;
 
 class REPLV_PH_DESC : ABSQ_S_PH_R2_DESC_BASE<"replv.ph", int_mips_repl_ph,
-                                             NoItinerary, DSPRegs, CPURegs>;
+                                             NoItinerary, DSPRegs, GPR32>;
 
 class PICK_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"pick.qb", int_mips_pick_qb,
                                             NoItinerary, DSPRegs, DSPRegs>,
@@ -945,31 +945,31 @@ class SUBQH_R_PH_DESC : ADDUH_QB_DESC_BASE<"subqh_r.ph", int_mips_subqh_r_ph,
                                            NoItinerary, DSPRegs>;
 
 class ADDQH_W_DESC : ADDUH_QB_DESC_BASE<"addqh.w", int_mips_addqh_w,
-                                        NoItinerary, CPURegs>, IsCommutable;
+                                        NoItinerary, GPR32>, IsCommutable;
 
 class ADDQH_R_W_DESC : ADDUH_QB_DESC_BASE<"addqh_r.w", int_mips_addqh_r_w,
-                                          NoItinerary, CPURegs>, IsCommutable;
+                                          NoItinerary, GPR32>, IsCommutable;
 
 class SUBQH_W_DESC : ADDUH_QB_DESC_BASE<"subqh.w", int_mips_subqh_w,
-                                        NoItinerary, CPURegs>;
+                                        NoItinerary, GPR32>;
 
 class SUBQH_R_W_DESC : ADDUH_QB_DESC_BASE<"subqh_r.w", int_mips_subqh_r_w,
-                                          NoItinerary, CPURegs>;
+                                          NoItinerary, GPR32>;
 
 // Comparison
 class CMPGDU_EQ_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.eq.qb",
                                                  int_mips_cmpgdu_eq_qb,
-                                                 NoItinerary, CPURegs, DSPRegs>,
+                                                 NoItinerary, GPR32, DSPRegs>,
                           IsCommutable, Defs<[DSPCCond]>;
 
 class CMPGDU_LT_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.lt.qb",
                                                  int_mips_cmpgdu_lt_qb,
-                                                 NoItinerary, CPURegs, DSPRegs>,
+                                                 NoItinerary, GPR32, DSPRegs>,
                           Defs<[DSPCCond]>;
 
 class CMPGDU_LE_QB_DESC : CMP_EQ_QB_R3_DESC_BASE<"cmpgdu.le.qb",
                                                  int_mips_cmpgdu_le_qb,
-                                                 NoItinerary, CPURegs, DSPRegs>,
+                                                 NoItinerary, GPR32, DSPRegs>,
                           Defs<[DSPCCond]>;
 
 // Absolute
@@ -987,11 +987,11 @@ class MUL_S_PH_DESC : ADDUH_QB_DESC_BASE<"mul_s.ph", int_mips_mul_s_ph,
                       Defs<[DSPOutFlag21]>;
 
 class MULQ_S_W_DESC : ADDUH_QB_DESC_BASE<"mulq_s.w", int_mips_mulq_s_w,
-                                         NoItinerary, CPURegs>, IsCommutable,
+                                         NoItinerary, GPR32>, IsCommutable,
                       Defs<[DSPOutFlag21]>;
 
 class MULQ_RS_W_DESC : ADDUH_QB_DESC_BASE<"mulq_rs.w", int_mips_mulq_rs_w,
-                                          NoItinerary, CPURegs>, IsCommutable,
+                                          NoItinerary, GPR32>, IsCommutable,
                        Defs<[DSPOutFlag21]>;
 
 class MULQ_S_PH_DESC : ADDU_QB_DESC_BASE<"mulq_s.ph", int_mips_mulq_s_ph,
@@ -1031,12 +1031,12 @@ class PRECR_QB_PH_DESC : CMP_EQ_QB_R3_DESC_BASE<"precr.qb.ph",
 class PRECR_SRA_PH_W_DESC : PRECR_SRA_PH_W_DESC_BASE<"precr_sra.ph.w",
                                                      int_mips_precr_sra_ph_w,
                                                      NoItinerary, DSPRegs,
-                                                     CPURegs>;
+                                                     GPR32>;
 
 class PRECR_SRA_R_PH_W_DESC : PRECR_SRA_PH_W_DESC_BASE<"precr_sra_r.ph.w",
                                                       int_mips_precr_sra_r_ph_w,
                                                        NoItinerary, DSPRegs,
-                                                       CPURegs>;
+                                                       GPR32>;
 
 // Shift
 class SHRA_QB_DESC : SHLL_QB_R2_DESC_BASE<"shra.qb", null_frag, immZExt3,
@@ -1279,19 +1279,19 @@ class BitconvertPat<ValueType DstVT, ValueType SrcVT, RegisterClass DstRC,
    DSPPat<(DstVT (bitconvert (SrcVT SrcRC:$src))),
           (COPY_TO_REGCLASS SrcRC:$src, DstRC)>;
 
-def : BitconvertPat<i32, v2i16, CPURegs, DSPRegs>;
-def : BitconvertPat<i32, v4i8, CPURegs, DSPRegs>;
-def : BitconvertPat<v2i16, i32, DSPRegs, CPURegs>;
-def : BitconvertPat<v4i8, i32, DSPRegs, CPURegs>;
+def : BitconvertPat<i32, v2i16, GPR32, DSPRegs>;
+def : BitconvertPat<i32, v4i8, GPR32, DSPRegs>;
+def : BitconvertPat<v2i16, i32, DSPRegs, GPR32>;
+def : BitconvertPat<v4i8, i32, DSPRegs, GPR32>;
 
 def : DSPPat<(v2i16 (load addr:$a)),
              (v2i16 (COPY_TO_REGCLASS (LW addr:$a), DSPRegs))>;
 def : DSPPat<(v4i8 (load addr:$a)),
              (v4i8 (COPY_TO_REGCLASS (LW addr:$a), DSPRegs))>;
 def : DSPPat<(store (v2i16 DSPRegs:$val), addr:$a),
-             (SW (COPY_TO_REGCLASS DSPRegs:$val, CPURegs), addr:$a)>;
+             (SW (COPY_TO_REGCLASS DSPRegs:$val, GPR32), addr:$a)>;
 def : DSPPat<(store (v4i8 DSPRegs:$val), addr:$a),
-             (SW (COPY_TO_REGCLASS DSPRegs:$val, CPURegs), addr:$a)>;
+             (SW (COPY_TO_REGCLASS DSPRegs:$val, GPR32), addr:$a)>;
 
 // Binary operations.
 class DSPBinPat<Instruction Inst, ValueType ValTy, SDPatternOperator Node,
@@ -1384,8 +1384,8 @@ def : DSPSelectCCPatInv<PseudoCMPU_LE_QB, PseudoPICK_QB, v4i8, SETUGT>;
 
 // Extr patterns.
 class EXTR_W_TY1_R2_Pat<SDPatternOperator OpNode, Instruction Instr> :
-  DSPPat<(i32 (OpNode CPURegs:$rs, ACRegsDSP:$ac)),
-         (Instr ACRegsDSP:$ac, CPURegs:$rs)>;
+  DSPPat<(i32 (OpNode GPR32:$rs, ACRegsDSP:$ac)),
+         (Instr ACRegsDSP:$ac, GPR32:$rs)>;
 
 class EXTR_W_TY1_R1_Pat<SDPatternOperator OpNode, Instruction Instr> :
   DSPPat<(i32 (OpNode immZExt5:$shift, ACRegsDSP:$ac)),

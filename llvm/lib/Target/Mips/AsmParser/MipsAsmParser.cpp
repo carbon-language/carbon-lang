@@ -88,10 +88,10 @@ class MipsAsmParser : public MCTargetAsmParser {
   parseMemOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
-  parseCPURegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  parseGPR32(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
-  parseCPU64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  parseGPR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
   parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -218,8 +218,8 @@ class MipsOperand : public MCParsedAsmOperand {
 public:
   enum RegisterKind {
     Kind_None,
-    Kind_CPURegs,
-    Kind_CPU64Regs,
+    Kind_GPR32,
+    Kind_GPR64,
     Kind_HWRegs,
     Kind_HW64Regs,
     Kind_FGR32Regs,
@@ -372,15 +372,15 @@ public:
     return Op;
   }
 
-  bool isCPURegsAsm() const {
-    return Kind == k_Register && Reg.Kind == Kind_CPURegs;
+  bool isGPR32Asm() const {
+    return Kind == k_Register && Reg.Kind == Kind_GPR32;
   }
   void addRegAsmOperands(MCInst &Inst, unsigned N) const {
     Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
   }
 
-  bool isCPU64RegsAsm() const {
-    return Kind == k_Register && Reg.Kind == Kind_CPU64Regs;
+  bool isGPR64Asm() const {
+    return Kind == k_Register && Reg.Kind == Kind_GPR64;
   }
 
   bool isHWRegsAsm() const {
@@ -649,8 +649,8 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   unsigned ImmOffset, HiOffset, LoOffset;
   const MCExpr *ExprOffset;
   unsigned TmpRegNum;
-  unsigned AtRegNum = getReg((isMips64()) ? Mips::CPU64RegsRegClassID
-                             : Mips::CPURegsRegClassID, getATReg());
+  unsigned AtRegNum = getReg((isMips64()) ? Mips::GPR64RegClassID
+                             : Mips::GPR32RegClassID, getATReg());
   // 1st operand is either the source or destination register.
   assert(Inst.getOperand(0).isReg() && "expected register operand kind");
   unsigned RegOpNum = Inst.getOperand(0).getReg();
@@ -858,8 +858,8 @@ int MipsAsmParser::matchRegisterName(StringRef Name, bool is64BitReg) {
   int CC;
   CC = matchCPURegisterName(Name);
   if (CC != -1)
-    return matchRegisterByNumber(CC, is64BitReg ? Mips::CPU64RegsRegClassID
-                                                : Mips::CPURegsRegClassID);
+    return matchRegisterByNumber(CC, is64BitReg ? Mips::GPR64RegClassID
+                                                : Mips::GPR32RegClassID);
   return matchFPURegisterName(Name, getFpFormat());
 }
 
@@ -914,7 +914,7 @@ int MipsAsmParser::tryParseRegister(bool is64BitReg) {
     RegNum = matchRegisterName(lowerCase, is64BitReg);
   } else if (Tok.is(AsmToken::Integer))
     RegNum = matchRegisterByNumber(static_cast<unsigned>(Tok.getIntVal()),
-        is64BitReg ? Mips::CPU64RegsRegClassID : Mips::CPURegsRegClassID);
+        is64BitReg ? Mips::GPR64RegClassID : Mips::GPR32RegClassID);
   return RegNum;
 }
 
@@ -1281,11 +1281,11 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 
   Parser.Lex(); // Eat $
   if (!tryParseRegisterOperand(Operands,
-                               RegKind == MipsOperand::Kind_CPU64Regs)) {
+                               RegKind == MipsOperand::Kind_GPR64)) {
     // Set the proper register kind.
     MipsOperand* op = static_cast<MipsOperand*>(Operands.back());
     op->setRegKind(Kind);
-    if ((Kind == MipsOperand::Kind_CPURegs)
+    if ((Kind == MipsOperand::Kind_GPR32)
       && (getLexer().is(AsmToken::LParen))) {
       // Check if it is indexed addressing operand.
       Operands.push_back(MipsOperand::CreateToken("(", getLexer().getLoc()));
@@ -1303,16 +1303,16 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::parseCPU64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+MipsAsmParser::parseGPR64(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (!isMips64())
     return MatchOperand_NoMatch;
-  return parseRegs(Operands, (int) MipsOperand::Kind_CPU64Regs);
+  return parseRegs(Operands, (int) MipsOperand::Kind_GPR64);
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::parseCPURegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
- return parseRegs(Operands, (int) MipsOperand::Kind_CPURegs);
+MipsAsmParser::parseGPR32(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+ return parseRegs(Operands, (int) MipsOperand::Kind_GPR32);
 }
 
 MipsAsmParser::OperandMatchResultTy
@@ -1430,8 +1430,8 @@ bool MipsAsmParser::searchSymbolAlias(
         if (!DefSymbol.substr(1).getAsInteger(10, IntVal))
           RegNum = matchRegisterByNumber(IntVal.getZExtValue(),
                                      isMips64()
-                                       ? Mips::CPU64RegsRegClassID
-                                       : Mips::CPURegsRegClassID);
+                                       ? Mips::GPR64RegClassID
+                                       : Mips::GPR32RegClassID);
         else {
           // Lookup for the register with the corresponding name.
           switch (Kind) {
@@ -1442,8 +1442,8 @@ bool MipsAsmParser::searchSymbolAlias(
           case MipsOperand::Kind_FGR32Regs:
             RegNum = matchFPURegisterName(DefSymbol.substr(1), FP_FORMAT_S);
             break;
-          case MipsOperand::Kind_CPU64Regs:
-          case MipsOperand::Kind_CPURegs:
+          case MipsOperand::Kind_GPR64:
+          case MipsOperand::Kind_GPR32:
           default:
             RegNum = matchRegisterName(DefSymbol.substr(1), isMips64());
             break;

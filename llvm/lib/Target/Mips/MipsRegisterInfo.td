@@ -223,7 +223,7 @@ let Namespace = "Mips" in {
 // Register Classes
 //===----------------------------------------------------------------------===//
 
-class CPURegsClass<list<ValueType> regTypes> :
+class GPR32Class<list<ValueType> regTypes> :
   RegisterClass<"Mips", regTypes, 32, (add
   // Reserved
   ZERO, AT,
@@ -238,10 +238,10 @@ class CPURegsClass<list<ValueType> regTypes> :
   // Reserved
   K0, K1, GP, SP, FP, RA)>;
 
-def CPURegs : CPURegsClass<[i32]>;
-def DSPRegs : CPURegsClass<[v4i8, v2i16]>;
+def GPR32 : GPR32Class<[i32]>;
+def DSPRegs : GPR32Class<[v4i8, v2i16]>;
 
-def CPU64Regs : RegisterClass<"Mips", [i64], 64, (add
+def GPR64 : RegisterClass<"Mips", [i64], 64, (add
 // Reserved
   ZERO_64, AT_64,
   // Return Values and Arguments
@@ -335,14 +335,14 @@ def DSPCC : RegisterClass<"Mips", [v4i8, v2i16], 32, (add DSPCCond)>;
 class MipsAsmRegOperand : AsmOperandClass {
   let RenderMethod = "addRegAsmOperands";
 }
-def CPURegsAsmOperand : MipsAsmRegOperand {
-  let Name = "CPURegsAsm";
-  let ParserMethod = "parseCPURegs";
+def GPR32AsmOperand : MipsAsmRegOperand {
+  let Name = "GPR32Asm";
+  let ParserMethod = "parseGPR32";
 }
 
-def CPU64RegsAsmOperand : MipsAsmRegOperand {
-  let Name = "CPU64RegsAsm";
-  let ParserMethod = "parseCPU64Regs";
+def GPR64AsmOperand : MipsAsmRegOperand {
+  let Name = "GPR64Asm";
+  let ParserMethod = "parseGPR64";
 }
 
 def ACRegsDSPAsmOperand : MipsAsmRegOperand {
@@ -375,12 +375,12 @@ def FCCRegsAsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseFCCRegs";
 }
 
-def CPURegsOpnd : RegisterOperand<CPURegs> {
-  let ParserMatchClass = CPURegsAsmOperand;
+def GPR32Opnd : RegisterOperand<GPR32> {
+  let ParserMatchClass = GPR32AsmOperand;
 }
 
-def CPU64RegsOpnd : RegisterOperand<CPU64Regs> {
-  let ParserMatchClass = CPU64RegsAsmOperand;
+def GPR64Opnd : RegisterOperand<GPR64> {
+  let ParserMatchClass = GPR64AsmOperand;
 }
 
 def CCROpnd : RegisterOperand<CCR> {

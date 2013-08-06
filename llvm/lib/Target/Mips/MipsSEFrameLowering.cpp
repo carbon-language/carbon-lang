@@ -333,7 +333,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
         MMI.addFrameInst(
             MCCFIInstruction::createOffset(CSLabel, Reg1, Offset + 4));
       } else {
-        // Reg is either in CPURegs or FGR32.
+        // Reg is either in GPR32 or FGR32.
         MMI.addFrameInst(MCCFIInstruction::createOffset(
             CSLabel, MRI->getDwarfRegNum(Reg, 1), Offset));
       }
@@ -342,7 +342,7 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (MipsFI->callsEhReturn()) {
     const TargetRegisterClass *RC = STI.isABI_N64() ?
-        &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+        &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 
     // Insert instructions that spill eh data registers.
     for (int I = 0; I < 4; ++I) {
@@ -408,7 +408,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
 
   if (MipsFI->callsEhReturn()) {
     const TargetRegisterClass *RC = STI.isABI_N64() ?
-        &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+        &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 
     // Find first instruction that restores a callee-saved register.
     MachineBasicBlock::iterator I = MBBI;
@@ -516,7 +516,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // The spill slot should be half the size of the accumulator. If target is
     // mips64, it should be 64-bit, otherwise it should be 32-bt.
     const TargetRegisterClass *RC = STI.hasMips64() ?
-      &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+      &Mips::GPR64RegClass : &Mips::GPR32RegClass;
     int FI = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
                                                   RC->getAlignment(), false);
     RS->addScavengingFrameIndex(FI);
@@ -530,7 +530,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     return;
 
   const TargetRegisterClass *RC = STI.isABI_N64() ?
-    &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+    &Mips::GPR64RegClass : &Mips::GPR32RegClass;
   int FI = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
                                                 RC->getAlignment(), false);
   RS->addScavengingFrameIndex(FI);

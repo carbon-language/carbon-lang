@@ -104,7 +104,7 @@ MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
   Mode = TargetSubtargetInfo::ANTIDEP_NONE;
   CriticalPathRCs.clear();
   CriticalPathRCs.push_back(hasMips64() ?
-                            &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass);
+                            &Mips::GPR64RegClass : &Mips::GPR32RegClass);
   return OptLevel >= CodeGenOpt::Aggressive;
 }
 

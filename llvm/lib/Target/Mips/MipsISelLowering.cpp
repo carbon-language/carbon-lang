@@ -2619,9 +2619,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       if (RegVT == MVT::i32)
         RC = Subtarget->inMips16Mode()? &Mips::CPU16RegsRegClass :
-                                        &Mips::CPURegsRegClass;
+                                        &Mips::GPR32RegClass;
       else if (RegVT == MVT::i64)
-        RC = &Mips::CPU64RegsRegClass;
+        RC = &Mips::GPR64RegClass;
       else if (RegVT == MVT::f32)
         RC = &Mips::FGR32RegClass;
       else if (RegVT == MVT::f64)
@@ -2894,12 +2894,12 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
       if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8) {
         if (Subtarget->inMips16Mode())
           return std::make_pair(0U, &Mips::CPU16RegsRegClass);
-        return std::make_pair(0U, &Mips::CPURegsRegClass);
+        return std::make_pair(0U, &Mips::GPR32RegClass);
       }
       if (VT == MVT::i64 && !HasMips64)
-        return std::make_pair(0U, &Mips::CPURegsRegClass);
+        return std::make_pair(0U, &Mips::GPR32RegClass);
       if (VT == MVT::i64 && HasMips64)
-        return std::make_pair(0U, &Mips::CPU64RegsRegClass);
+        return std::make_pair(0U, &Mips::GPR64RegClass);
       // This will generate an error message
       return std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
     case 'f':
@@ -2913,9 +2913,9 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
       break;
     case 'c': // register suitable for indirect jump
       if (VT == MVT::i32)
-        return std::make_pair((unsigned)Mips::T9, &Mips::CPURegsRegClass);
+        return std::make_pair((unsigned)Mips::T9, &Mips::GPR32RegClass);
       assert(VT == MVT::i64 && "Unexpected type.");
-      return std::make_pair((unsigned)Mips::T9_64, &Mips::CPU64RegsRegClass);
+      return std::make_pair((unsigned)Mips::T9_64, &Mips::GPR64RegClass);
     case 'l': // register suitable for indirect jump
       if (VT == MVT::i32)
         return std::make_pair((unsigned)Mips::LO, &Mips::LORegsRegClass);

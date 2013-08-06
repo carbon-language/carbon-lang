@@ -38,8 +38,8 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
     RC=(const TargetRegisterClass*)&Mips::CPU16RegsRegClass;
   else
     RC = ST.isABI_N64() ?
-      (const TargetRegisterClass*)&Mips::CPU64RegsRegClass :
-      (const TargetRegisterClass*)&Mips::CPURegsRegClass;
+      (const TargetRegisterClass*)&Mips::GPR64RegClass :
+      (const TargetRegisterClass*)&Mips::GPR32RegClass;
   return GlobalBaseReg = MF.getRegInfo().createVirtualRegister(RC);
 }
 
@@ -60,7 +60,7 @@ void MipsFunctionInfo::createEhDataRegsFI() {
   for (int I = 0; I < 4; ++I) {
     const MipsSubtarget &ST = MF.getTarget().getSubtarget<MipsSubtarget>();
     const TargetRegisterClass *RC = ST.isABI_N64() ?
-        &Mips::CPU64RegsRegClass : &Mips::CPURegsRegClass;
+        &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 
     EhDataRegFI[I] = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
         RC->getAlignment(), false);

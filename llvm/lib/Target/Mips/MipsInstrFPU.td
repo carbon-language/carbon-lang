@@ -306,11 +306,11 @@ let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
 }
 
 let isPseudo = 1, isCodeGenOnly = 1 in {
-  def PseudoCVT_S_W : ABSS_FT<"", FGR32RegsOpnd, CPURegsOpnd, IIFcvt>;
-  def PseudoCVT_D32_W : ABSS_FT<"", AFGR64RegsOpnd, CPURegsOpnd, IIFcvt>;
-  def PseudoCVT_S_L : ABSS_FT<"", FGR64RegsOpnd, CPU64RegsOpnd, IIFcvt>;
-  def PseudoCVT_D64_W : ABSS_FT<"", FGR64RegsOpnd, CPURegsOpnd, IIFcvt>;
-  def PseudoCVT_D64_L : ABSS_FT<"", FGR64RegsOpnd, CPU64RegsOpnd, IIFcvt>;
+  def PseudoCVT_S_W : ABSS_FT<"", FGR32RegsOpnd, GPR32Opnd, IIFcvt>;
+  def PseudoCVT_D32_W : ABSS_FT<"", AFGR64RegsOpnd, GPR32Opnd, IIFcvt>;
+  def PseudoCVT_S_L : ABSS_FT<"", FGR64RegsOpnd, GPR64Opnd, IIFcvt>;
+  def PseudoCVT_D64_W : ABSS_FT<"", FGR64RegsOpnd, GPR32Opnd, IIFcvt>;
+  def PseudoCVT_D64_L : ABSS_FT<"", FGR64RegsOpnd, GPR64Opnd, IIFcvt>;
 }
 
 let Predicates = [NoNaNsFPMath, HasStdEnc] in {
@@ -332,15 +332,15 @@ defm FSQRT : ABSS_M<"sqrt.d", IIFsqrtDouble, fsqrt>, ABSS_FM<0x4, 17>;
 // regardless of register aliasing.
 
 /// Move Control Registers From/To CPU Registers
-def CFC1 : MFC1_FT<"cfc1", CPURegsOpnd, CCROpnd, IIFmove>, MFC1_FM<2>;
-def CTC1 : MTC1_FT<"ctc1", CCROpnd, CPURegsOpnd, IIFmove>, MFC1_FM<6>;
-def MFC1 : MFC1_FT<"mfc1", CPURegsOpnd, FGR32RegsOpnd, IIFmoveC1, bitconvert>,
+def CFC1 : MFC1_FT<"cfc1", GPR32Opnd, CCROpnd, IIFmove>, MFC1_FM<2>;
+def CTC1 : MTC1_FT<"ctc1", CCROpnd, GPR32Opnd, IIFmove>, MFC1_FM<6>;
+def MFC1 : MFC1_FT<"mfc1", GPR32Opnd, FGR32RegsOpnd, IIFmoveC1, bitconvert>,
            MFC1_FM<0>;
-def MTC1 : MTC1_FT<"mtc1", FGR32RegsOpnd, CPURegsOpnd, IIFmoveC1, bitconvert>,
+def MTC1 : MTC1_FT<"mtc1", FGR32RegsOpnd, GPR32Opnd, IIFmoveC1, bitconvert>,
            MFC1_FM<4>;
-def DMFC1 : MFC1_FT<"dmfc1", CPU64RegsOpnd, FGR64RegsOpnd, IIFmoveC1,
+def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64RegsOpnd, IIFmoveC1,
             bitconvert>, MFC1_FM<1>;
-def DMTC1 : MTC1_FT<"dmtc1", FGR64RegsOpnd, CPU64RegsOpnd, IIFmoveC1,
+def DMTC1 : MTC1_FT<"dmtc1", FGR64RegsOpnd, GPR64Opnd, IIFmoveC1,
             bitconvert>, MFC1_FM<5>;
 
 def FMOV_S   : ABSS_FT<"mov.s", FGR32RegsOpnd, FGR32RegsOpnd, IIFmove>,
@@ -390,51 +390,51 @@ let Predicates = [NotN64, NotMips64, HasStdEnc] in {
 
 // Indexed loads and stores.
 let Predicates = [HasFPIdx, HasStdEnc] in {
-  def LWXC1 : LWXC1_FT<"lwxc1", FGR32RegsOpnd, CPURegsOpnd, IIFLoad, load>,
+  def LWXC1 : LWXC1_FT<"lwxc1", FGR32RegsOpnd, GPR32Opnd, IIFLoad, load>,
               LWXC1_FM<0>;
-  def SWXC1 : SWXC1_FT<"swxc1", FGR32RegsOpnd, CPURegsOpnd, IIFStore, store>,
+  def SWXC1 : SWXC1_FT<"swxc1", FGR32RegsOpnd, GPR32Opnd, IIFStore, store>,
               SWXC1_FM<8>;
 }
 
 let Predicates = [HasMips32r2, NotMips64, HasStdEnc] in {
-  def LDXC1 : LWXC1_FT<"ldxc1", AFGR64RegsOpnd, CPURegsOpnd, IIFLoad, load>,
+  def LDXC1 : LWXC1_FT<"ldxc1", AFGR64RegsOpnd, GPR32Opnd, IIFLoad, load>,
               LWXC1_FM<1>;
-  def SDXC1 : SWXC1_FT<"sdxc1", AFGR64RegsOpnd, CPURegsOpnd, IIFStore, store>,
+  def SDXC1 : SWXC1_FT<"sdxc1", AFGR64RegsOpnd, GPR32Opnd, IIFStore, store>,
               SWXC1_FM<9>;
 }
 
 let Predicates = [HasMips64, NotN64, HasStdEnc], DecoderNamespace="Mips64" in {
-  def LDXC164 : LWXC1_FT<"ldxc1", FGR64RegsOpnd, CPURegsOpnd, IIFLoad, load>,
+  def LDXC164 : LWXC1_FT<"ldxc1", FGR64RegsOpnd, GPR32Opnd, IIFLoad, load>,
                 LWXC1_FM<1>;
-  def SDXC164 : SWXC1_FT<"sdxc1", FGR64RegsOpnd, CPURegsOpnd, IIFStore, store>,
+  def SDXC164 : SWXC1_FT<"sdxc1", FGR64RegsOpnd, GPR32Opnd, IIFStore, store>,
                 SWXC1_FM<9>;
 }
 
 // n64
 let Predicates = [IsN64, HasStdEnc], isCodeGenOnly=1 in {
-  def LWXC1_P8 : LWXC1_FT<"lwxc1", FGR32RegsOpnd, CPU64RegsOpnd, IIFLoad, load>,
+  def LWXC1_P8 : LWXC1_FT<"lwxc1", FGR32RegsOpnd, GPR64Opnd, IIFLoad, load>,
                  LWXC1_FM<0>;
-  def LDXC164_P8 : LWXC1_FT<"ldxc1", FGR64RegsOpnd, CPU64RegsOpnd, IIFLoad,
+  def LDXC164_P8 : LWXC1_FT<"ldxc1", FGR64RegsOpnd, GPR64Opnd, IIFLoad,
                              load>, LWXC1_FM<1>;
-  def SWXC1_P8 : SWXC1_FT<"swxc1", FGR32RegsOpnd, CPU64RegsOpnd, IIFStore,
+  def SWXC1_P8 : SWXC1_FT<"swxc1", FGR32RegsOpnd, GPR64Opnd, IIFStore,
                           store>, SWXC1_FM<8>;
-  def SDXC164_P8 : SWXC1_FT<"sdxc1", FGR64RegsOpnd, CPU64RegsOpnd, IIFStore,
+  def SDXC164_P8 : SWXC1_FT<"sdxc1", FGR64RegsOpnd, GPR64Opnd, IIFStore,
                             store>, SWXC1_FM<9>;
 }
 
 // Load/store doubleword indexed unaligned.
 let Predicates = [NotMips64, HasStdEnc] in {
-  def LUXC1 : LWXC1_FT<"luxc1", AFGR64RegsOpnd, CPURegsOpnd, IIFLoad>,
+  def LUXC1 : LWXC1_FT<"luxc1", AFGR64RegsOpnd, GPR32Opnd, IIFLoad>,
               LWXC1_FM<0x5>;
-  def SUXC1 : SWXC1_FT<"suxc1", AFGR64RegsOpnd, CPURegsOpnd, IIFStore>,
+  def SUXC1 : SWXC1_FT<"suxc1", AFGR64RegsOpnd, GPR32Opnd, IIFStore>,
               SWXC1_FM<0xd>;
 }
 
 let Predicates = [HasMips64, HasStdEnc],
   DecoderNamespace="Mips64" in {
-  def LUXC164 : LWXC1_FT<"luxc1", FGR64RegsOpnd, CPURegsOpnd, IIFLoad>,
+  def LUXC164 : LWXC1_FT<"luxc1", FGR64RegsOpnd, GPR32Opnd, IIFLoad>,
                 LWXC1_FM<0x5>;
-  def SUXC164 : SWXC1_FT<"suxc1", FGR64RegsOpnd, CPURegsOpnd, IIFStore>,
+  def SUXC164 : SWXC1_FT<"suxc1", FGR64RegsOpnd, GPR32Opnd, IIFStore>,
                 SWXC1_FM<0xd>;
 }
 
@@ -544,17 +544,17 @@ def FCMP_D64 : CEQS_FT<"d", FGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
 // allocation.
 def BuildPairF64 :
   PseudoSE<(outs AFGR64RegsOpnd:$dst),
-           (ins CPURegsOpnd:$lo, CPURegsOpnd:$hi),
+           (ins GPR32Opnd:$lo, GPR32Opnd:$hi),
            [(set AFGR64RegsOpnd:$dst,
-            (MipsBuildPairF64 CPURegsOpnd:$lo, CPURegsOpnd:$hi))]>;
+            (MipsBuildPairF64 GPR32Opnd:$lo, GPR32Opnd:$hi))]>;
 
 // This pseudo instr gets expanded into 2 mfc1 instrs after register
 // allocation.
 // if n is 0, lower part of src is extracted.
 // if n is 1, higher part of src is extracted.
 def ExtractElementF64 :
-  PseudoSE<(outs CPURegsOpnd:$dst), (ins AFGR64RegsOpnd:$src, i32imm:$n),
-           [(set CPURegsOpnd:$dst,
+  PseudoSE<(outs GPR32Opnd:$dst), (ins AFGR64RegsOpnd:$src, i32imm:$n),
+           [(set GPR32Opnd:$dst,
             (MipsExtractElementF64 AFGR64RegsOpnd:$src, imm:$n))]>;
 
 //===----------------------------------------------------------------------===//
@@ -569,14 +569,14 @@ def : InstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>;
 def : MipsPat<(f32 fpimm0), (MTC1 ZERO)>;
 def : MipsPat<(f32 fpimm0neg), (FNEG_S (MTC1 ZERO))>;
 
-def : MipsPat<(f32 (sint_to_fp CPURegsOpnd:$src)),
-              (PseudoCVT_S_W CPURegsOpnd:$src)>;
+def : MipsPat<(f32 (sint_to_fp GPR32Opnd:$src)),
+              (PseudoCVT_S_W GPR32Opnd:$src)>;
 def : MipsPat<(MipsTruncIntFP FGR32RegsOpnd:$src),
               (TRUNC_W_S FGR32RegsOpnd:$src)>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
-  def : MipsPat<(f64 (sint_to_fp CPURegsOpnd:$src)),
-                (PseudoCVT_D32_W CPURegsOpnd:$src)>;
+  def : MipsPat<(f64 (sint_to_fp GPR32Opnd:$src)),
+                (PseudoCVT_D32_W GPR32Opnd:$src)>;
   def : MipsPat<(MipsTruncIntFP AFGR64RegsOpnd:$src),
                 (TRUNC_W_D32 AFGR64RegsOpnd:$src)>;
   def : MipsPat<(f32 (fround AFGR64RegsOpnd:$src)),
@@ -589,12 +589,12 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 fpimm0), (DMTC1 ZERO_64)>;
   def : MipsPat<(f64 fpimm0neg), (FNEG_D64 (DMTC1 ZERO_64))>;
 
-  def : MipsPat<(f64 (sint_to_fp CPURegsOpnd:$src)),
-                (PseudoCVT_D64_W CPURegsOpnd:$src)>;
-  def : MipsPat<(f32 (sint_to_fp CPU64RegsOpnd:$src)),
-                (EXTRACT_SUBREG (PseudoCVT_S_L CPU64RegsOpnd:$src), sub_32)>;
-  def : MipsPat<(f64 (sint_to_fp CPU64RegsOpnd:$src)),
-                (PseudoCVT_D64_L CPU64RegsOpnd:$src)>;
+  def : MipsPat<(f64 (sint_to_fp GPR32Opnd:$src)),
+                (PseudoCVT_D64_W GPR32Opnd:$src)>;
+  def : MipsPat<(f32 (sint_to_fp GPR64Opnd:$src)),
+                (EXTRACT_SUBREG (PseudoCVT_S_L GPR64Opnd:$src), sub_32)>;
+  def : MipsPat<(f64 (sint_to_fp GPR64Opnd:$src)),
+                (PseudoCVT_D64_L GPR64Opnd:$src)>;
 
   def : MipsPat<(MipsTruncIntFP FGR64RegsOpnd:$src),
                 (TRUNC_W_D64 FGR64RegsOpnd:$src)>;
