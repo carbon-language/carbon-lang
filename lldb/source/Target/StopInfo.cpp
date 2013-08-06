@@ -324,7 +324,10 @@ protected:
             if (!thread_sp->IsValid())
             {
                 // This shouldn't ever happen, but just in case, don't do more harm.
-                log->Printf ("PerformAction got called with an invalid thread.");
+                if (log)
+                {
+                    log->Printf ("PerformAction got called with an invalid thread.");
+                }
                 m_should_stop = true;
                 m_should_stop_is_valid = true;
                 return;
