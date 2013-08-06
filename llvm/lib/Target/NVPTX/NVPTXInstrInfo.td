@@ -1321,6 +1321,15 @@ def MOV_ADDR64 : NVPTXInst<(outs Int64Regs:$dst), (ins imem:$a),
                      "mov.u64 \t$dst, $a;",
                      [(set Int64Regs:$dst, (Wrapper tglobaladdr:$a))]>;
 
+// Get pointer to local stack
+def MOV_DEPOT_ADDR
+  : NVPTXInst<(outs Int32Regs:$d), (ins i32imm:$num),
+              "mov.u32 \t$d, __local_depot$num;", []>;
+def MOV_DEPOT_ADDR_64
+  : NVPTXInst<(outs Int64Regs:$d), (ins i32imm:$num),
+              "mov.u64 \t$d, __local_depot$num;", []>;
+
+
 // copyPhysreg is hard-coded in NVPTXInstrInfo.cpp
 let IsSimpleMove=1 in {
 def IMOV1rr: NVPTXInst<(outs Int1Regs:$dst), (ins Int1Regs:$sss),
