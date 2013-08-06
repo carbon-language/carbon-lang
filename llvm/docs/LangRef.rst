@@ -828,10 +828,6 @@ example:
     computing edge weights, basic blocks post-dominated by a cold
     function call are also considered to be cold; and, thus, given low
     weight.
-``nonlazybind``
-    This attribute suppresses lazy symbol binding for the function. This
-    may make calls to the function faster, at the cost of extra program
-    startup time if the function is not called during program startup.
 ``inlinehint``
     This attribute indicates that the source code contained a hint that
     inlining this function is desirable (such as the "inline" keyword in
@@ -863,6 +859,10 @@ example:
     This attribute indicates that the inliner should never inline this
     function in any situation. This attribute may not be used together
     with the ``alwaysinline`` attribute.
+``nonlazybind``
+    This attribute suppresses lazy symbol binding for the function. This
+    may make calls to the function faster, at the cost of extra program
+    startup time if the function is not called during program startup.
 ``noredzone``
     This attribute indicates that the code generator should not use a
     red zone, even if the target-specific ABI normally permits it.
