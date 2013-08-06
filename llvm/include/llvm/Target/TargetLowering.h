@@ -1152,6 +1152,15 @@ public:
     return false;
   }
 
+  /// Return true if a truncation from Ty1 to Ty2 is permitted when deciding
+  /// whether a call is in tail position. Typically this means that both results
+  /// would be assigned to the same register or stack slot, but it could mean
+  /// the target performs adequate checks of its own before proceeding with the
+  /// tail call.
+  virtual bool allowTruncateForTailCall(Type * /*Ty1*/, Type * /*Ty2*/) const {
+    return false;
+  }
+
   virtual bool isTruncateFree(EVT /*VT1*/, EVT /*VT2*/) const {
     return false;
   }

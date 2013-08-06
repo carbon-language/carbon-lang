@@ -1504,6 +1504,19 @@ bool HexagonTargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   return ((VT1.getSimpleVT() == MVT::i64) && (VT2.getSimpleVT() == MVT::i32));
 }
 
+bool
+HexagonTargetLowering::allowTruncateForTailCall(Type *Ty1, Type *Ty2) const {
+  // Assuming the caller does not have either a signext or zeroext modifier, and
+  // only one value is accepted, any reasonable truncation is allowed.
+  if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
+    return false;
+
+  // FIXME: in principle up to 64-bit could be made safe, but it would be very
+  // fragile at the moment: any support for multiple value returns would be
+  // liable to disallow tail calls involving i64 -> iN truncation in many cases.
+  return Ty1->getPrimitiveSizeInBits() <= 32;
+}
+
 SDValue
 HexagonTargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
   SDValue Chain     = Op.getOperand(0);

@@ -208,154 +208,264 @@ static bool isNoopBitcast(Type *T1, Type *T2,
           TLI.isTypeLegal(EVT::getEVT(T1)) && TLI.isTypeLegal(EVT::getEVT(T2)));
 }
 
-/// sameNoopInput - Return true if V1 == V2, else if either V1 or V2 is a noop
-/// (i.e., lowers to no machine code), look through it (and any transitive noop
-/// operands to it) and check if it has the same noop input value.  This is
-/// used to determine if a tail call can be formed.
-static bool sameNoopInput(const Value *V1, const Value *V2,
-                          SmallVectorImpl<unsigned> &Els1,
-                          SmallVectorImpl<unsigned> &Els2,
-                          const TargetLoweringBase &TLI) {
-  using std::swap;
-  bool swapParity = false;
-  bool equalEls = Els1 == Els2;
+/// Look through operations that will be free to find the earliest source of
+/// this value.
+///
+/// @param ValLoc If V has aggegate type, we will be interested in a particular
+/// scalar component. This records its address; the reverse of this list gives a
+/// sequence of indices appropriate for an extractvalue to locate the important
+/// value. This value is updated during the function and on exit will indicate
+/// similar information for the Value returned.
+///
+/// @param DataBits If this function looks through truncate instructions, this
+/// will record the smallest size attained.
+static const Value *getNoopInput(const Value *V,
+                                 SmallVectorImpl<unsigned> &ValLoc,
+                                 unsigned &DataBits,
+                                 const TargetLoweringBase &TLI) {
   while (true) {
-    if ((equalEls && V1 == V2) || isa<UndefValue>(V1) || isa<UndefValue>(V2)) {
-      if (swapParity)
-        // Revert to original Els1 and Els2 to avoid confusing recursive calls
-        swap(Els1, Els2);
-      return true;
-    }
-
     // Try to look through V1; if V1 is not an instruction, it can't be looked
     // through.
-    const Instruction *I = dyn_cast<Instruction>(V1);
+    const Instruction *I = dyn_cast<Instruction>(V);
+    if (!I || I->getNumOperands() == 0) return V;
     const Value *NoopInput = 0;
-    if (I != 0 && I->getNumOperands() > 0) {
-     Value *Op = I->getOperand(0);
-      if (isa<TruncInst>(I)) {
-        // Look through truly no-op truncates.
-        if (TLI.isTruncateFree(Op->getType(), I->getType()))
-          NoopInput = Op;
-      } else if (isa<BitCastInst>(I)) {
-        // Look through truly no-op bitcasts.
-        if (isNoopBitcast(Op->getType(), I->getType(), TLI))
-          NoopInput = Op;
-      } else if (isa<GetElementPtrInst>(I)) {
-        // Look through getelementptr
-        if (cast<GetElementPtrInst>(I)->hasAllZeroIndices())
-          NoopInput = Op;
-      } else if (isa<IntToPtrInst>(I)) {
-        // Look through inttoptr.
-        // Make sure this isn't a truncating or extending cast.  We could
-        // support this eventually, but don't bother for now.
-        if (!isa<VectorType>(I->getType()) &&
-            TLI.getPointerTy().getSizeInBits() == 
-              cast<IntegerType>(Op->getType())->getBitWidth())
-          NoopInput = Op;
-      } else if (isa<PtrToIntInst>(I)) {
-        // Look through ptrtoint.
-        // Make sure this isn't a truncating or extending cast.  We could
-        // support this eventually, but don't bother for now.
-        if (!isa<VectorType>(I->getType()) &&
-            TLI.getPointerTy().getSizeInBits() == 
-              cast<IntegerType>(I->getType())->getBitWidth())
-          NoopInput = Op;
-      } else if (isa<CallInst>(I)) {
-        // Look through call
-        for (User::const_op_iterator i = I->op_begin(),
-                                     // Skip Callee
-                                     e = I->op_end() - 1;
-             i != e; ++i) {
-          unsigned attrInd = i - I->op_begin() + 1;
-          if (cast<CallInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
-              isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
-            NoopInput = *i;
-            break;
-          }
-        }
-      } else if (isa<InvokeInst>(I)) {
-        // Look through invoke
-        for (User::const_op_iterator i = I->op_begin(),
-                                     // Skip BB, BB, Callee
-                                     e = I->op_end() - 3;
-             i != e; ++i) {
-          unsigned attrInd = i - I->op_begin() + 1;
-          if (cast<InvokeInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
-              isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
-            NoopInput = *i;
-            break;
-          }
+
+    Value *Op = I->getOperand(0);
+    if (isa<BitCastInst>(I)) {
+      // Look through truly no-op bitcasts.
+      if (isNoopBitcast(Op->getType(), I->getType(), TLI))
+        NoopInput = Op;
+    } else if (isa<GetElementPtrInst>(I)) {
+      // Look through getelementptr
+      if (cast<GetElementPtrInst>(I)->hasAllZeroIndices())
+        NoopInput = Op;
+    } else if (isa<IntToPtrInst>(I)) {
+      // Look through inttoptr.
+      // Make sure this isn't a truncating or extending cast.  We could
+      // support this eventually, but don't bother for now.
+      if (!isa<VectorType>(I->getType()) &&
+          TLI.getPointerTy().getSizeInBits() ==
+          cast<IntegerType>(Op->getType())->getBitWidth())
+        NoopInput = Op;
+    } else if (isa<PtrToIntInst>(I)) {
+      // Look through ptrtoint.
+      // Make sure this isn't a truncating or extending cast.  We could
+      // support this eventually, but don't bother for now.
+      if (!isa<VectorType>(I->getType()) &&
+          TLI.getPointerTy().getSizeInBits() ==
+          cast<IntegerType>(I->getType())->getBitWidth())
+        NoopInput = Op;
+    } else if (isa<TruncInst>(I) &&
+               TLI.allowTruncateForTailCall(Op->getType(), I->getType())) {
+      DataBits = std::min(DataBits, I->getType()->getPrimitiveSizeInBits());
+      NoopInput = Op;
+    } else if (isa<CallInst>(I)) {
+      // Look through call (skipping callee)
+      for (User::const_op_iterator i = I->op_begin(), e = I->op_end() - 1;
+           i != e; ++i) {
+        unsigned attrInd = i - I->op_begin() + 1;
+        if (cast<CallInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
+            isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
+          NoopInput = *i;
+          break;
         }
       }
+    } else if (isa<InvokeInst>(I)) {
+      // Look through invoke (skipping BB, BB, Callee)
+      for (User::const_op_iterator i = I->op_begin(), e = I->op_end() - 3;
+           i != e; ++i) {
+        unsigned attrInd = i - I->op_begin() + 1;
+        if (cast<InvokeInst>(I)->paramHasAttr(attrInd, Attribute::Returned) &&
+            isNoopBitcast((*i)->getType(), I->getType(), TLI)) {
+          NoopInput = *i;
+          break;
+        }
+      }
+    } else if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(V)) {
+      // Value may come from either the aggregate or the scalar
+      ArrayRef<unsigned> InsertLoc = IVI->getIndices();
+      if (std::equal(InsertLoc.rbegin(), InsertLoc.rend(),
+                     ValLoc.rbegin())) {
+        // The type being inserted is a nested sub-type of the aggregate; we
+        // have to remove those initial indices to get the location we're
+        // interested in for the operand.
+        ValLoc.resize(ValLoc.size() - InsertLoc.size());
+        NoopInput = IVI->getInsertedValueOperand();
+      } else {
+        // The struct we're inserting into has the value we're interested in, no
+        // change of address.
+        NoopInput = Op;
+      }
+    } else if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(V)) {
+      // The part we're interested in will inevitably be some sub-section of the
+      // previous aggregate. Combine the two paths to obtain the true address of
+      // our element.
+      ArrayRef<unsigned> ExtractLoc = EVI->getIndices();
+      std::copy(ExtractLoc.rbegin(), ExtractLoc.rend(),
+                std::back_inserter(ValLoc));
+      NoopInput = Op;
     }
+    // Terminate if we couldn't find anything to look through.
+    if (!NoopInput)
+      return V;
 
-    if (NoopInput) {
-      V1 = NoopInput;
-      continue;
-    }
-
-    // If we already swapped, avoid infinite loop
-    if (swapParity)
-      break;
-
-    // Otherwise, swap V1<->V2, Els1<->Els2
-    swap(V1, V2);
-    swap(Els1, Els2);
-    swapParity = !swapParity;
+    V = NoopInput;
   }
-
-  for (unsigned n = 0; n < 2; ++n) {
-    if (isa<InsertValueInst>(V1)) {
-      if (isa<StructType>(V1->getType())) {
-        // Look through insertvalue
-        unsigned i, e;
-        for (i = 0, e = cast<StructType>(V1->getType())->getNumElements();
-             i != e; ++i) {
-          const Value *InScalar = FindInsertedValue(const_cast<Value*>(V1), i);
-          if (InScalar == 0)
-            break;
-          Els1.push_back(i);
-          if (!sameNoopInput(InScalar, V2, Els1, Els2, TLI)) {
-            Els1.pop_back();
-            break;
-          }
-          Els1.pop_back();
-        }
-        if (i == e) {
-          if (swapParity)
-            swap(Els1, Els2);
-          return true;
-        }
-      }
-    } else if (!Els1.empty() && isa<ExtractValueInst>(V1)) {
-      const ExtractValueInst *EVI = cast<ExtractValueInst>(V1);
-      unsigned i = Els1.back();
-      // If the scalar value being inserted is an extractvalue of the right
-      // index from the call, then everything is good.
-      if (isa<StructType>(EVI->getOperand(0)->getType()) &&
-          EVI->getNumIndices() == 1 && EVI->getIndices()[0] == i) {
-        // Look through extractvalue
-        Els1.pop_back();
-        if (sameNoopInput(EVI->getOperand(0), V2, Els1, Els2, TLI)) {
-          Els1.push_back(i);
-          if (swapParity)
-            swap(Els1, Els2);
-          return true;
-        }
-        Els1.push_back(i);
-      }
-    }
-
-    swap(V1, V2);
-    swap(Els1, Els2);
-    swapParity = !swapParity;
-  }
-
-  if (swapParity)
-    swap(Els1, Els2);
-  return false;
 }
+
+/// Return true if this scalar return value only has bits discarded on its path
+/// from the "tail call" to the "ret". This includes the obvious noop
+/// instructions handled by getNoopInput above as well as free truncations (or
+/// extensions prior to the call).
+static bool slotOnlyDiscardsData(const Value *RetVal, const Value *CallVal,
+                                 SmallVectorImpl<unsigned> &RetIndices,
+                                 SmallVectorImpl<unsigned> &CallIndices,
+                                 const TargetLoweringBase &TLI) {
+
+  // Trace the sub-value needed by the return value as far back up the graph as
+  // possible, in the hope that it will intersect with the value produced by the
+  // call. In the simple case with no "returned" attribute, the hope is actually
+  // that we end up back at the tail call instruction itself.
+  unsigned BitsRequired = UINT_MAX;
+  RetVal = getNoopInput(RetVal, RetIndices, BitsRequired, TLI);
+
+  // If this slot in the value returned is undef, it doesn't matter what the
+  // call puts there, it'll be fine.
+  if (isa<UndefValue>(RetVal))
+    return true;
+
+  // Now do a similar search up through the graph to find where the value
+  // actually returned by the "tail call" comes from. In the simple case without
+  // a "returned" attribute, the search will be blocked immediately and the loop
+  // a Noop.
+  unsigned BitsProvided = UINT_MAX;
+  CallVal = getNoopInput(CallVal, CallIndices, BitsProvided, TLI);
+
+  // There's no hope if we can't actually trace them to (the same part of!) the
+  // same value.
+  if (CallVal != RetVal || CallIndices != RetIndices)
+    return false;
+
+  // However, intervening truncates may have made the call non-tail. Make sure
+  // all the bits that are needed by the "ret" have been provided by the "tail
+  // call". FIXME: with sufficiently cunning bit-tracking, we could look through
+  // extensions too.
+  if (BitsProvided < BitsRequired)
+    return false;
+
+  return true;
+}
+
+/// For an aggregate type, determine whether a given index is within bounds or
+/// not.
+static bool indexReallyValid(CompositeType *T, unsigned Idx) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(T))
+    return Idx < AT->getNumElements();
+
+  return Idx < cast<StructType>(T)->getNumElements();
+}
+
+/// Move the given iterators to the next leaf type in depth first traversal.
+///
+/// Performs a depth-first traversal of the type as specified by its arguments,
+/// stopping at the next leaf node (which may be a legitimate scalar type or an
+/// empty struct or array).
+///
+/// @param SubTypes List of the partial components making up the type from
+/// outermost to innermost non-empty aggregate. The element currently
+/// represented is SubTypes.back()->getTypeAtIndex(Path.back() - 1).
+///
+/// @param Path Set of extractvalue indices leading from the outermost type
+/// (SubTypes[0]) to the leaf node currently represented.
+///
+/// @returns true if a new type was found, false otherwise. Calling this
+/// function again on a finished iterator will repeatedly return
+/// false. SubTypes.back()->getTypeAtIndex(Path.back()) is either an empty
+/// aggregate or a non-aggregate
+static bool
+advanceToNextLeafType(SmallVectorImpl<CompositeType *> &SubTypes,
+                     SmallVectorImpl<unsigned> &Path) {
+  // First march back up the tree until we can successfully increment one of the
+  // coordinates in Path.
+  while (!Path.empty() && !indexReallyValid(SubTypes.back(), Path.back() + 1)) {
+    Path.pop_back();
+    SubTypes.pop_back();
+  }
+
+  // If we reached the top, then the iterator is done.
+  if (Path.empty())
+    return false;
+
+  // We know there's *some* valid leaf now, so march back down the tree picking
+  // out the left-most element at each node.
+  ++Path.back();
+  Type *DeeperType = SubTypes.back()->getTypeAtIndex(Path.back());
+  while (DeeperType->isAggregateType()) {
+    CompositeType *CT = cast<CompositeType>(DeeperType);
+    if (!indexReallyValid(CT, 0))
+      return true;
+
+    SubTypes.push_back(CT);
+    Path.push_back(0);
+
+    DeeperType = CT->getTypeAtIndex(0U);
+  }
+
+  return true;
+}
+
+/// Find the first non-empty, scalar-like type in Next and setup the iterator
+/// components.
+///
+/// Assuming Next is an aggregate of some kind, this function will traverse the
+/// tree from left to right (i.e. depth-first) looking for the first
+/// non-aggregate type which will play a role in function return.
+///
+/// For example, if Next was {[0 x i64], {{}, i32, {}}, i32} then we would setup
+/// Path as [1, 1] and SubTypes as [Next, {{}, i32, {}}] to represent the first
+/// i32 in that type.
+static bool firstRealType(Type *Next,
+                          SmallVectorImpl<CompositeType *> &SubTypes,
+                          SmallVectorImpl<unsigned> &Path) {
+  // First initialise the iterator components to the first "leaf" node
+  // (i.e. node with no valid sub-type at any index, so {} does count as a leaf
+  // despite nominally being an aggregate).
+  while (Next->isAggregateType() &&
+         indexReallyValid(cast<CompositeType>(Next), 0)) {
+    SubTypes.push_back(cast<CompositeType>(Next));
+    Path.push_back(0);
+    Next = cast<CompositeType>(Next)->getTypeAtIndex(0U);
+  }
+
+  // If there's no Path now, Next was originally scalar already (or empty
+  // leaf). We're done.
+  if (Path.empty())
+    return true;
+
+  // Otherwise, use normal iteration to keep looking through the tree until we
+  // find a non-aggregate type.
+  while (SubTypes.back()->getTypeAtIndex(Path.back())->isAggregateType()) {
+    if (!advanceToNextLeafType(SubTypes, Path))
+      return false;
+  }
+
+  return true;
+}
+
+/// Set the iterator data-structures to the next non-empty, non-aggregate
+/// subtype.
+bool nextRealType(SmallVectorImpl<CompositeType *> &SubTypes,
+                  SmallVectorImpl<unsigned> &Path) {
+  do {
+    if (!advanceToNextLeafType(SubTypes, Path))
+      return false;
+
+    assert(!Path.empty() && "found a leaf but didn't set the path?");
+  } while (SubTypes.back()->getTypeAtIndex(Path.back())->isAggregateType());
+
+  return true;
+}
+
 
 /// Test if the given instruction is in a position to be optimized
 /// with a tail-call. This roughly means that it's in a block with
@@ -422,7 +532,50 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
       CallerAttrs.hasAttribute(AttributeSet::ReturnIndex, Attribute::SExt))
     return false;
 
-  // Otherwise, make sure the return value and I have the same value
-  SmallVector<unsigned, 4> Els1, Els2;
-  return sameNoopInput(Ret->getOperand(0), I, Els1, Els2, TLI);
+  const Value *RetVal = Ret->getOperand(0), *CallVal = I;
+  SmallVector<unsigned, 4> RetPath, CallPath;
+  SmallVector<CompositeType *, 4> RetSubTypes, CallSubTypes;
+
+  bool RetEmpty = !firstRealType(RetVal->getType(), RetSubTypes, RetPath);
+  bool CallEmpty = !firstRealType(CallVal->getType(), CallSubTypes, CallPath);
+
+  // Nothing's actually returned, it doesn't matter what the callee put there
+  // it's a valid tail call.
+  if (RetEmpty)
+    return true;
+
+  // Iterate pairwise through each of the value types making up the tail call
+  // and the corresponding return. For each one we want to know whether it's
+  // essentially going directly from the tail call to the ret, via operations
+  // that end up not generating any code.
+  //
+  // We allow a certain amount of covariance here. For example it's permitted
+  // for the tail call to define more bits than the ret actually cares about
+  // (e.g. via a truncate).
+  do {
+    if (CallEmpty) {
+      // We've exhausted the values produced by the tail call instruction, the
+      // rest are essentially undef. The type doesn't really matter, but we need
+      // *something*.
+      Type *SlotType = RetSubTypes.back()->getTypeAtIndex(RetPath.back());
+      CallVal = UndefValue::get(SlotType);
+    }
+
+    // The manipulations performed when we're looking through an insertvalue or
+    // an extractvalue would happen at the front of the RetPath list, so since
+    // we have to copy it anyway it's more efficient to create a reversed copy.
+    using std::copy;
+    SmallVector<unsigned, 4> TmpRetPath, TmpCallPath;
+    copy(RetPath.rbegin(), RetPath.rend(), std::back_inserter(TmpRetPath));
+    copy(CallPath.rbegin(), CallPath.rend(), std::back_inserter(TmpCallPath));
+
+    // Finally, we can check whether the value produced by the tail call at this
+    // index is compatible with the value we return.
+    if (!slotOnlyDiscardsData(RetVal, CallVal, TmpRetPath, TmpCallPath, TLI))
+      return false;
+
+    CallEmpty  = !nextRealType(CallSubTypes, CallPath);
+  } while(nextRealType(RetSubTypes, RetPath));
+
+  return true;
 }
