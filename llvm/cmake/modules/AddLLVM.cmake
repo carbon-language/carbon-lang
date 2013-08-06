@@ -191,7 +191,7 @@ function(add_unittest test_suite test_name)
   if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
     set(target_compile_flags "${target_compile_flags} -fno-rtti")
   elseif (MSVC)
-    set(target_compile_flags "${target_compile_flags} /GR-")
+    llvm_replace_compiler_option(target_compile_flags "/GR" "/GR-")
   endif ()
 
   if (SUPPORTS_NO_VARIADIC_MACROS_FLAG)
