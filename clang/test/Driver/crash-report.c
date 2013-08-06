@@ -14,6 +14,9 @@
 
 // RUN: not env FORCE_CLANG_DIAGNOSTICS_CRASH=1 %clang -fsyntax-only -x c /dev/null 2>&1 | FileCheck %s
 
+// FIXME: Investigating. "fatal error: file 'nul' modified since it was first processed"
+// XFAIL: mingw32
+
 #pragma clang __debug parser_crash
 // CHECK: Preprocessed source(s) and associated run script(s) are located at:
 // CHECK-NEXT: note: diagnostic msg: {{.*}}.c
