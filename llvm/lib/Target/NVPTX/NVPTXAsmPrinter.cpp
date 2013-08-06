@@ -406,13 +406,8 @@ unsigned NVPTXAsmPrinter::encodeVirtualRegister(unsigned Reg) {
 MCOperand NVPTXAsmPrinter::GetSymbolRef(const MachineOperand &MO,
                                         const MCSymbol *Symbol) {
   const MCExpr *Expr;
-  switch (MO.getTargetFlags()) {
-  default: {
-    Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None,
-                                   OutContext);
-    break;
-  }
-  }
+  Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None,
+                                 OutContext);
   return MCOperand::CreateExpr(Expr);
 }
 
