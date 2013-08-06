@@ -28,7 +28,7 @@ add_llvm_target(SystemZCodeGen
   SystemZTargetMachine.cpp
   )
 
-add_dependencies(LLVMSystemZCodeGen intrinsics_gen)
+add_dependencies(LLVMSystemZCodeGen SystemZCommonTableGen intrinsics_gen)
 
 add_subdirectory(AsmParser)
 add_subdirectory(Disassembler)

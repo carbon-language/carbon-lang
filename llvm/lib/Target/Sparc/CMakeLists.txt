@@ -22,7 +22,7 @@ add_llvm_target(SparcCodeGen
   SparcSelectionDAGInfo.cpp
   )
 
-add_dependencies(LLVMSparcCodeGen intrinsics_gen)
+add_dependencies(LLVMSparcCodeGen SparcCommonTableGen intrinsics_gen)
 
 add_subdirectory(TargetInfo)
 add_subdirectory(MCTargetDesc)

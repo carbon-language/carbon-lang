@@ -48,7 +48,7 @@ add_llvm_target(R600CodeGen
   SIRegisterInfo.cpp
   )
 
-add_dependencies(LLVMR600CodeGen intrinsics_gen)
+add_dependencies(LLVMR600CodeGen AMDGPUCommonTableGen intrinsics_gen)
 
 add_subdirectory(InstPrinter)
 add_subdirectory(TargetInfo)
