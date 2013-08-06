@@ -108,3 +108,27 @@ struct Test {int filler;};
 // CHECK:       (CXComment_BlockCommand CommandName=[par]
 // CHECK-NEXT:     (CXComment_Paragraph
 // CHECK-NEXT:     (CXComment_Text Text=[ And this is the second paragraph.])))
+
+// rdar://14258334
+@class NSString;
+
+@interface MyClass {
+}
+
+/// This is the first property and it always worked.
+@property (nonatomic, copy,   readwrite) NSString *     property1;
+@property (nonatomic, copy,   readwrite) NSString *     property2;        ///< This is the second property and it does not work.
+@property (nonatomic, copy,   readwrite) NSString *     property3;        /**< This is the third property and it does not work. */
+@end
+// CHECK:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ This is the first property and it always worked.])))]
+// CHECK:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ This is the second property and it does not work.])))] 
+// CHECK:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ This is the third property and it does not work. ])))]
