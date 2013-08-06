@@ -30,6 +30,8 @@ namespace clang {
   class QualType;
   class TagDecl;
   class VarDecl;
+  class VarTemplateDecl;
+  class VarTemplateSpecializationDecl;
 
 /// \brief An abstract interface that should be implemented by listeners
 /// that want to be notified when an AST entity gets modified after its
@@ -51,6 +53,12 @@ public:
   /// template declaration.
   virtual void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
                                     const ClassTemplateSpecializationDecl *D) {}
+
+  /// \brief A template specialization (or partial one) was added to the
+  /// template declaration.
+  virtual void
+  AddedCXXTemplateSpecialization(const VarTemplateDecl *TD,
+                                 const VarTemplateSpecializationDecl *D) {}
 
   /// \brief A template specialization (or partial one) was added to the
   /// template declaration.

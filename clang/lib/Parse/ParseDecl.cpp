@@ -1797,24 +1797,69 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     break;
 
   case ParsedTemplateInfo::Template:
-  case ParsedTemplateInfo::ExplicitSpecialization:
+  case ParsedTemplateInfo::ExplicitSpecialization: {
     ThisDecl = Actions.ActOnTemplateDeclarator(getCurScope(),
                                                *TemplateInfo.TemplateParams,
                                                D);
-    break;
 
-  case ParsedTemplateInfo::ExplicitInstantiation: {
-    DeclResult ThisRes
-      = Actions.ActOnExplicitInstantiation(getCurScope(),
-                                           TemplateInfo.ExternLoc,
-                                           TemplateInfo.TemplateLoc,
-                                           D);
-    if (ThisRes.isInvalid()) {
+    // If this is a forward declaration of a variable template or variable
+    // template partial specialization with nested name specifier, complain.
+    // FIXME: Move to Sema.
+    CXXScopeSpec &SS = D.getCXXScopeSpec();
+    if (Tok.is(tok::semi) && ThisDecl && SS.isNotEmpty() &&
+        (isa<VarTemplateDecl>(ThisDecl) ||
+         isa<VarTemplatePartialSpecializationDecl>(ThisDecl))) {
+      Diag(SS.getBeginLoc(), diag::err_forward_var_nested_name_specifier)
+          << isa<VarTemplatePartialSpecializationDecl>(ThisDecl)
+          << SS.getRange();
       SkipUntil(tok::semi, true, true);
       return 0;
     }
 
-    ThisDecl = ThisRes.get();
+    if (VarTemplateDecl *VT =
+            ThisDecl ? dyn_cast<VarTemplateDecl>(ThisDecl) : 0)
+      // Re-direct this decl to refer to the templated decl so that we can
+      // initialize it.
+      ThisDecl = VT->getTemplatedDecl();
+    break;
+  }
+  case ParsedTemplateInfo::ExplicitInstantiation: {
+    if (Tok.is(tok::semi)) {
+      DeclResult ThisRes = Actions.ActOnExplicitInstantiation(
+          getCurScope(), TemplateInfo.ExternLoc, TemplateInfo.TemplateLoc, D);
+      if (ThisRes.isInvalid()) {
+        SkipUntil(tok::semi, true, true);
+        return 0;
+      }
+      ThisDecl = ThisRes.get();
+    } else {
+      // FIXME: This check should be for a variable template instantiation only.
+
+      // Check that this is a valid instantiation
+      if (D.getName().getKind() != UnqualifiedId::IK_TemplateId) {
+        // If the declarator-id is not a template-id, issue a diagnostic and
+        // recover by ignoring the 'template' keyword.
+        Diag(Tok, diag::err_template_defn_explicit_instantiation)
+            << 2 << FixItHint::CreateRemoval(TemplateInfo.TemplateLoc);
+        ThisDecl = Actions.ActOnDeclarator(getCurScope(), D);
+      } else {
+        SourceLocation LAngleLoc =
+            PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
+        Diag(D.getIdentifierLoc(),
+             diag::err_explicit_instantiation_with_definition)
+            << SourceRange(TemplateInfo.TemplateLoc)
+            << FixItHint::CreateInsertion(LAngleLoc, "<>");
+
+        // Recover as if it were an explicit specialization.
+        TemplateParameterLists FakedParamLists;
+        FakedParamLists.push_back(Actions.ActOnTemplateParameterList(
+            0, SourceLocation(), TemplateInfo.TemplateLoc, LAngleLoc, 0, 0,
+            LAngleLoc));
+
+        ThisDecl =
+            Actions.ActOnTemplateDeclarator(getCurScope(), FakedParamLists, D);
+      }
+    }
     break;
     }
   }
@@ -1825,6 +1870,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
   // If a '==' or '+=' is found, suggest a fixit to '='.
   if (isTokenEqualOrEqualTypo()) {
     ConsumeToken();
+
     if (Tok.is(tok::kw_delete)) {
       if (D.isFunctionDeclarator())
         Diag(ConsumeToken(), diag::err_default_delete_in_multiple_declaration)

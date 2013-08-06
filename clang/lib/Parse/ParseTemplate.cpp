@@ -242,32 +242,31 @@ Parser::ParseSingleDeclarationAfterTemplate(
         // If the declarator-id is not a template-id, issue a diagnostic and
         // recover by ignoring the 'template' keyword.
         Diag(Tok, diag::err_template_defn_explicit_instantiation) << 0;
-	return ParseFunctionDefinition(DeclaratorInfo, ParsedTemplateInfo(),
-				       &LateParsedAttrs);
+        return ParseFunctionDefinition(DeclaratorInfo, ParsedTemplateInfo(),
+                                       &LateParsedAttrs);
       } else {
         SourceLocation LAngleLoc
           = PP.getLocForEndOfToken(TemplateInfo.TemplateLoc);
-        Diag(DeclaratorInfo.getIdentifierLoc(), 
+        Diag(DeclaratorInfo.getIdentifierLoc(),
              diag::err_explicit_instantiation_with_definition)
-          << SourceRange(TemplateInfo.TemplateLoc)
-          << FixItHint::CreateInsertion(LAngleLoc, "<>");
+            << SourceRange(TemplateInfo.TemplateLoc)
+            << FixItHint::CreateInsertion(LAngleLoc, "<>");
 
-        // Recover as if it were an explicit specialization. 
+        // Recover as if it were an explicit specialization.
         TemplateParameterLists FakedParamLists;
-        FakedParamLists.push_back(
-	     Actions.ActOnTemplateParameterList(0, SourceLocation(),
-					        TemplateInfo.TemplateLoc, 
-						LAngleLoc, 0, 0, LAngleLoc));
+        FakedParamLists.push_back(Actions.ActOnTemplateParameterList(
+            0, SourceLocation(), TemplateInfo.TemplateLoc, LAngleLoc, 0, 0,
+            LAngleLoc));
 
-        return ParseFunctionDefinition(DeclaratorInfo, 
-                                       ParsedTemplateInfo(&FakedParamLists,
-                                           /*isSpecialization=*/true,
-                                           /*LastParamListWasEmpty=*/true),
-                                       &LateParsedAttrs);
+        return ParseFunctionDefinition(
+            DeclaratorInfo, ParsedTemplateInfo(&FakedParamLists,
+                                               /*isSpecialization=*/true,
+                                               /*LastParamListWasEmpty=*/true),
+            &LateParsedAttrs);
       }
     }
     return ParseFunctionDefinition(DeclaratorInfo, TemplateInfo,
-				   &LateParsedAttrs);
+                                   &LateParsedAttrs);
   }
 
   // Parse this declaration.

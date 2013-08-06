@@ -106,6 +106,8 @@ namespace clang {
 
     bool ImportDefinition(RecordDecl *From, RecordDecl *To, 
                           ImportDefinitionKind Kind = IDK_Default);
+    bool ImportDefinition(VarDecl *From, VarDecl *To,
+                          ImportDefinitionKind Kind = IDK_Default);
     bool ImportDefinition(EnumDecl *From, EnumDecl *To,
                           ImportDefinitionKind Kind = IDK_Default);
     bool ImportDefinition(ObjCInterfaceDecl *From, ObjCInterfaceDecl *To,
@@ -120,9 +122,12 @@ namespace clang {
                                SmallVectorImpl<TemplateArgument> &ToArgs);
     bool IsStructuralMatch(RecordDecl *FromRecord, RecordDecl *ToRecord,
                            bool Complain = true);
+    bool IsStructuralMatch(VarDecl *FromVar, VarDecl *ToVar,
+                           bool Complain = true);
     bool IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToRecord);
     bool IsStructuralMatch(EnumConstantDecl *FromEC, EnumConstantDecl *ToEC);
     bool IsStructuralMatch(ClassTemplateDecl *From, ClassTemplateDecl *To);
+    bool IsStructuralMatch(VarTemplateDecl *From, VarTemplateDecl *To);
     Decl *VisitDecl(Decl *D);
     Decl *VisitTranslationUnitDecl(TranslationUnitDecl *D);
     Decl *VisitNamespaceDecl(NamespaceDecl *D);
@@ -157,7 +162,9 @@ namespace clang {
     Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
     Decl *VisitClassTemplateSpecializationDecl(
                                             ClassTemplateSpecializationDecl *D);
-                            
+    Decl *VisitVarTemplateDecl(VarTemplateDecl *D);
+    Decl *VisitVarTemplateSpecializationDecl(VarTemplateSpecializationDecl *D);
+
     // Importing statements
     Stmt *VisitStmt(Stmt *S);
 
@@ -2017,6 +2024,21 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
   return false;
 }
 
+bool ASTNodeImporter::ImportDefinition(VarDecl *From, VarDecl *To,
+                                       ImportDefinitionKind Kind) {
+  if (To->getDefinition())
+    return false;
+
+  // FIXME: Can we really import any initializer? Alternatively, we could force
+  // ourselves to import every declaration of a variable and then only use
+  // getInit() here.
+  To->setInit(Importer.Import(const_cast<Expr *>(From->getAnyInitializer())));
+
+  // FIXME: Other bits to merge?
+
+  return false;
+}
+
 bool ASTNodeImporter::ImportDefinition(EnumDecl *From, EnumDecl *To, 
                                        ImportDefinitionKind Kind) {
   if (To->getDefinition() || To->isBeingDefined()) {
@@ -2162,6 +2184,14 @@ bool ASTNodeImporter::IsStructuralMatch(RecordDecl *FromRecord,
   return Ctx.IsStructurallyEquivalent(FromRecord, ToRecord);
 }
 
+bool ASTNodeImporter::IsStructuralMatch(VarDecl *FromVar, VarDecl *ToVar,
+                                        bool Complain) {
+  StructuralEquivalenceContext Ctx(
+      Importer.getFromContext(), Importer.getToContext(),
+      Importer.getNonEquivalentDecls(), false, Complain);
+  return Ctx.IsStructurallyEquivalent(FromVar, ToVar);
+}
+
 bool ASTNodeImporter::IsStructuralMatch(EnumDecl *FromEnum, EnumDecl *ToEnum) {
   StructuralEquivalenceContext Ctx(Importer.getFromContext(),
                                    Importer.getToContext(),
@@ -2186,6 +2216,14 @@ bool ASTNodeImporter::IsStructuralMatch(ClassTemplateDecl *From,
                                    Importer.getToContext(),
                                    Importer.getNonEquivalentDecls());
   return Ctx.IsStructurallyEquivalent(From, To);  
+}
+
+bool ASTNodeImporter::IsStructuralMatch(VarTemplateDecl *From,
+                                        VarTemplateDecl *To) {
+  StructuralEquivalenceContext Ctx(Importer.getFromContext(),
+                                   Importer.getToContext(),
+                                   Importer.getNonEquivalentDecls());
+  return Ctx.IsStructurallyEquivalent(From, To);
 }
 
 Decl *ASTNodeImporter::VisitDecl(Decl *D) {
@@ -3092,13 +3130,9 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
   LexicalDC->addDeclInternal(ToVar);
 
   // Merge the initializer.
-  // FIXME: Can we really import any initializer? Alternatively, we could force
-  // ourselves to import every declaration of a variable and then only use
-  // getInit() here.
-  ToVar->setInit(Importer.Import(const_cast<Expr *>(D->getAnyInitializer())));
+  if (ImportDefinition(D, ToVar))
+    return 0;
 
-  // FIXME: Other bits to merge?
-  
   return ToVar;
 }
 
@@ -4109,6 +4143,205 @@ Decl *ASTNodeImporter::VisitClassTemplateSpecializationDecl(
   if (D->isCompleteDefinition() && ImportDefinition(D, D2))
     return 0;
   
+  return D2;
+}
+
+Decl *ASTNodeImporter::VisitVarTemplateDecl(VarTemplateDecl *D) {
+  // If this variable has a definition in the translation unit we're coming
+  // from,
+  // but this particular declaration is not that definition, import the
+  // definition and map to that.
+  VarDecl *Definition =
+      cast_or_null<VarDecl>(D->getTemplatedDecl()->getDefinition());
+  if (Definition && Definition != D->getTemplatedDecl()) {
+    Decl *ImportedDef = Importer.Import(Definition->getDescribedVarTemplate());
+    if (!ImportedDef)
+      return 0;
+
+    return Importer.Imported(D, ImportedDef);
+  }
+
+  // Import the major distinguishing characteristics of this variable template.
+  DeclContext *DC, *LexicalDC;
+  DeclarationName Name;
+  SourceLocation Loc;
+  if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
+    return 0;
+
+  // We may already have a template of the same name; try to find and match it.
+  assert(!DC->isFunctionOrMethod() &&
+         "Variable templates cannot be declared at function scope");
+  SmallVector<NamedDecl *, 4> ConflictingDecls;
+  SmallVector<NamedDecl *, 2> FoundDecls;
+  DC->localUncachedLookup(Name, FoundDecls);
+  for (unsigned I = 0, N = FoundDecls.size(); I != N; ++I) {
+    if (!FoundDecls[I]->isInIdentifierNamespace(Decl::IDNS_Ordinary))
+      continue;
+
+    Decl *Found = FoundDecls[I];
+    if (VarTemplateDecl *FoundTemplate = dyn_cast<VarTemplateDecl>(Found)) {
+      if (IsStructuralMatch(D, FoundTemplate)) {
+        // The variable templates structurally match; call it the same template.
+        Importer.Imported(D->getTemplatedDecl(),
+                          FoundTemplate->getTemplatedDecl());
+        return Importer.Imported(D, FoundTemplate);
+      }
+    }
+
+    ConflictingDecls.push_back(FoundDecls[I]);
+  }
+
+  if (!ConflictingDecls.empty()) {
+    Name = Importer.HandleNameConflict(Name, DC, Decl::IDNS_Ordinary,
+                                       ConflictingDecls.data(),
+                                       ConflictingDecls.size());
+  }
+
+  if (!Name)
+    return 0;
+
+  VarDecl *DTemplated = D->getTemplatedDecl();
+
+  // Import the type.
+  QualType T = Importer.Import(DTemplated->getType());
+  if (T.isNull())
+    return 0;
+
+  // Create the declaration that is being templated.
+  SourceLocation StartLoc = Importer.Import(DTemplated->getLocStart());
+  SourceLocation IdLoc = Importer.Import(DTemplated->getLocation());
+  TypeSourceInfo *TInfo = Importer.Import(DTemplated->getTypeSourceInfo());
+  VarDecl *D2Templated = VarDecl::Create(Importer.getToContext(), DC, StartLoc,
+                                         IdLoc, Name.getAsIdentifierInfo(), T,
+                                         TInfo, DTemplated->getStorageClass());
+  D2Templated->setAccess(DTemplated->getAccess());
+  D2Templated->setQualifierInfo(Importer.Import(DTemplated->getQualifierLoc()));
+  D2Templated->setLexicalDeclContext(LexicalDC);
+
+  // Importer.Imported(DTemplated, D2Templated);
+  // LexicalDC->addDeclInternal(D2Templated);
+
+  // Merge the initializer.
+  if (ImportDefinition(DTemplated, D2Templated))
+    return 0;
+
+  // Create the variable template declaration itself.
+  TemplateParameterList *TemplateParams =
+      ImportTemplateParameterList(D->getTemplateParameters());
+  if (!TemplateParams)
+    return 0;
+
+  VarTemplateDecl *D2 = VarTemplateDecl::Create(
+      Importer.getToContext(), DC, Loc, Name, TemplateParams, D2Templated,
+      /*PrevDecl=*/0);
+  D2Templated->setDescribedVarTemplate(D2);
+
+  D2->setAccess(D->getAccess());
+  D2->setLexicalDeclContext(LexicalDC);
+  LexicalDC->addDeclInternal(D2);
+
+  // Note the relationship between the variable templates.
+  Importer.Imported(D, D2);
+  Importer.Imported(DTemplated, D2Templated);
+
+  if (DTemplated->isThisDeclarationADefinition() &&
+      !D2Templated->isThisDeclarationADefinition()) {
+    // FIXME: Import definition!
+  }
+
+  return D2;
+}
+
+Decl *ASTNodeImporter::VisitVarTemplateSpecializationDecl(
+    VarTemplateSpecializationDecl *D) {
+  // If this record has a definition in the translation unit we're coming from,
+  // but this particular declaration is not that definition, import the
+  // definition and map to that.
+  VarDecl *Definition = D->getDefinition();
+  if (Definition && Definition != D) {
+    Decl *ImportedDef = Importer.Import(Definition);
+    if (!ImportedDef)
+      return 0;
+
+    return Importer.Imported(D, ImportedDef);
+  }
+
+  VarTemplateDecl *VarTemplate = cast_or_null<VarTemplateDecl>(
+      Importer.Import(D->getSpecializedTemplate()));
+  if (!VarTemplate)
+    return 0;
+
+  // Import the context of this declaration.
+  DeclContext *DC = VarTemplate->getDeclContext();
+  if (!DC)
+    return 0;
+
+  DeclContext *LexicalDC = DC;
+  if (D->getDeclContext() != D->getLexicalDeclContext()) {
+    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
+    if (!LexicalDC)
+      return 0;
+  }
+
+  // Import the location of this declaration.
+  SourceLocation StartLoc = Importer.Import(D->getLocStart());
+  SourceLocation IdLoc = Importer.Import(D->getLocation());
+
+  // Import template arguments.
+  SmallVector<TemplateArgument, 2> TemplateArgs;
+  if (ImportTemplateArguments(D->getTemplateArgs().data(),
+                              D->getTemplateArgs().size(), TemplateArgs))
+    return 0;
+
+  // Try to find an existing specialization with these template arguments.
+  void *InsertPos = 0;
+  VarTemplateSpecializationDecl *D2 = VarTemplate->findSpecialization(
+      TemplateArgs.data(), TemplateArgs.size(), InsertPos);
+  if (D2) {
+    // We already have a variable template specialization with these template
+    // arguments.
+
+    // FIXME: Check for specialization vs. instantiation errors.
+
+    if (VarDecl *FoundDef = D2->getDefinition()) {
+      if (!D->isThisDeclarationADefinition() ||
+          IsStructuralMatch(D, FoundDef)) {
+        // The record types structurally match, or the "from" translation
+        // unit only had a forward declaration anyway; call it the same
+        // variable.
+        return Importer.Imported(D, FoundDef);
+      }
+    }
+  } else {
+
+    // Import the type.
+    QualType T = Importer.Import(D->getType());
+    if (T.isNull())
+      return 0;
+    TypeSourceInfo *TInfo = Importer.Import(D->getTypeSourceInfo());
+
+    // Create a new specialization.
+    D2 = VarTemplateSpecializationDecl::Create(
+        Importer.getToContext(), DC, StartLoc, IdLoc, VarTemplate, T, TInfo,
+        D->getStorageClass(), TemplateArgs.data(), TemplateArgs.size());
+    D2->setSpecializationKind(D->getSpecializationKind());
+    D2->setTemplateArgsInfo(D->getTemplateArgsInfo());
+
+    // Add this specialization to the class template.
+    VarTemplate->AddSpecialization(D2, InsertPos);
+
+    // Import the qualifier, if any.
+    D2->setQualifierInfo(Importer.Import(D->getQualifierLoc()));
+
+    // Add the specialization to this context.
+    D2->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDeclInternal(D2);
+  }
+  Importer.Imported(D, D2);
+
+  if (D->isThisDeclarationADefinition() && ImportDefinition(D, D2))
+    return 0;
+
   return D2;
 }
 

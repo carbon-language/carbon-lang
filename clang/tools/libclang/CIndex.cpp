@@ -4582,7 +4582,9 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     return clang_getNullCursor();
   }
 
-  case Decl::Var: {
+  case Decl::Var:
+  case Decl::VarTemplateSpecialization:
+  case Decl::VarTemplatePartialSpecialization: {
     // Ask the variable if it has a definition.
     if (const VarDecl *Def = cast<VarDecl>(D)->getDefinition())
       return MakeCXCursor(Def, TU);
@@ -4601,6 +4603,13 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
                                                             ->getDefinition())
       return MakeCXCursor(cast<CXXRecordDecl>(Def)->getDescribedClassTemplate(),
                           TU);
+    return clang_getNullCursor();
+  }
+
+  case Decl::VarTemplate: {
+    if (VarDecl *Def =
+            cast<VarTemplateDecl>(D)->getTemplatedDecl()->getDefinition())
+      return MakeCXCursor(cast<VarDecl>(Def)->getDescribedVarTemplate(), TU);
     return clang_getNullCursor();
   }
 

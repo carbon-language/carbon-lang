@@ -34,6 +34,8 @@ class TemplateTypeParmDecl;
 class NonTypeTemplateParmDecl;
 class TemplateTemplateParmDecl;
 class TypeAliasTemplateDecl;
+class VarTemplateDecl;
+class VarTemplatePartialSpecializationDecl;
 
 /// \brief Stores a template parameter of any kind.
 typedef llvm::PointerUnion3<TemplateTypeParmDecl*, NonTypeTemplateParmDecl*,
@@ -2249,6 +2251,595 @@ public:
 /// Implementation of inline functions that require the template declarations
 inline AnyFunctionDecl::AnyFunctionDecl(FunctionTemplateDecl *FTD)
   : Function(FTD) { }
+
+/// \brief Represents a variable template specialization, which refers to
+/// a variable template with a given set of template arguments.
+///
+/// Variable template specializations represent both explicit
+/// specializations of variable templates, as in the example below, and
+/// implicit instantiations of variable templates.
+///
+/// \code
+/// template<typename T> constexpr T pi = T(3.1415926535897932385);
+///
+/// template<>
+/// constexpr float pi<float>; // variable template specialization pi<float>
+/// \endcode
+class VarTemplateSpecializationDecl : public VarDecl,
+                                      public llvm::FoldingSetNode {
+
+  /// \brief Structure that stores information about a variable template
+  /// specialization that was instantiated from a variable template partial
+  /// specialization.
+  struct SpecializedPartialSpecialization {
+    /// \brief The variable template partial specialization from which this
+    /// variable template specialization was instantiated.
+    VarTemplatePartialSpecializationDecl *PartialSpecialization;
+
+    /// \brief The template argument list deduced for the variable template
+    /// partial specialization itself.
+    TemplateArgumentList *TemplateArgs;
+  };
+
+  /// \brief The template that this specialization specializes.
+  llvm::PointerUnion<VarTemplateDecl *, SpecializedPartialSpecialization *>
+  SpecializedTemplate;
+
+  /// \brief Further info for explicit template specialization/instantiation.
+  struct ExplicitSpecializationInfo {
+    /// \brief The type-as-written.
+    TypeSourceInfo *TypeAsWritten;
+    /// \brief The location of the extern keyword.
+    SourceLocation ExternLoc;
+    /// \brief The location of the template keyword.
+    SourceLocation TemplateKeywordLoc;
+
+    ExplicitSpecializationInfo()
+        : TypeAsWritten(0), ExternLoc(), TemplateKeywordLoc() {}
+  };
+
+  /// \brief Further info for explicit template specialization/instantiation.
+  /// Does not apply to implicit specializations.
+  ExplicitSpecializationInfo *ExplicitInfo;
+
+  /// \brief The template arguments used to describe this specialization.
+  TemplateArgumentList *TemplateArgs;
+  TemplateArgumentListInfo TemplateArgsInfo;
+
+  /// \brief The point where this template was instantiated (if any).
+  SourceLocation PointOfInstantiation;
+
+  /// \brief The kind of specialization this declaration refers to.
+  /// Really a value of type TemplateSpecializationKind.
+  unsigned SpecializationKind : 3;
+
+protected:
+  VarTemplateSpecializationDecl(ASTContext &Context, Kind DK, DeclContext *DC,
+                                SourceLocation StartLoc, SourceLocation IdLoc,
+                                VarTemplateDecl *SpecializedTemplate,
+                                QualType T, TypeSourceInfo *TInfo,
+                                StorageClass S, const TemplateArgument *Args,
+                                unsigned NumArgs);
+
+  explicit VarTemplateSpecializationDecl(Kind DK);
+
+public:
+  static VarTemplateSpecializationDecl *
+  Create(ASTContext &Context, DeclContext *DC, SourceLocation StartLoc,
+         SourceLocation IdLoc, VarTemplateDecl *SpecializedTemplate, QualType T,
+         TypeSourceInfo *TInfo, StorageClass S, const TemplateArgument *Args,
+         unsigned NumArgs);
+  static VarTemplateSpecializationDecl *CreateDeserialized(ASTContext &C,
+                                                           unsigned ID);
+
+  virtual void getNameForDiagnostic(raw_ostream &OS,
+                                    const PrintingPolicy &Policy,
+                                    bool Qualified) const;
+
+  VarTemplateSpecializationDecl *getMostRecentDecl() {
+    VarDecl *Recent = cast<VarDecl>(VarDecl::getMostRecentDecl());
+    return cast<VarTemplateSpecializationDecl>(Recent);
+  }
+
+  /// \brief Retrieve the template that this specialization specializes.
+  VarTemplateDecl *getSpecializedTemplate() const;
+
+  /// \brief Retrieve the template arguments of the variable template
+  /// specialization.
+  const TemplateArgumentList &getTemplateArgs() const { return *TemplateArgs; }
+
+  // TODO: Always set this when creating the new specialization?
+  void setTemplateArgsInfo(const TemplateArgumentListInfo &ArgsInfo);
+
+  const TemplateArgumentListInfo &getTemplateArgsInfo() const {
+    return TemplateArgsInfo;
+  }
+
+  /// \brief Determine the kind of specialization that this
+  /// declaration represents.
+  TemplateSpecializationKind getSpecializationKind() const {
+    return static_cast<TemplateSpecializationKind>(SpecializationKind);
+  }
+
+  bool isExplicitSpecialization() const {
+    return getSpecializationKind() == TSK_ExplicitSpecialization;
+  }
+
+  /// \brief True if this declaration is an explicit specialization,
+  /// explicit instantiation declaration, or explicit instantiation
+  /// definition.
+  bool isExplicitInstantiationOrSpecialization() const {
+    switch (getTemplateSpecializationKind()) {
+    case TSK_ExplicitSpecialization:
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      return true;
+
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      return false;
+    }
+    llvm_unreachable("bad template specialization kind");
+  }
+
+  void setSpecializationKind(TemplateSpecializationKind TSK) {
+    SpecializationKind = TSK;
+  }
+
+  /// \brief Get the point of instantiation (if any), or null if none.
+  SourceLocation getPointOfInstantiation() const {
+    return PointOfInstantiation;
+  }
+
+  void setPointOfInstantiation(SourceLocation Loc) {
+    assert(Loc.isValid() && "point of instantiation must be valid!");
+    PointOfInstantiation = Loc;
+  }
+
+  /// \brief If this variable template specialization is an instantiation of
+  /// a template (rather than an explicit specialization), return the
+  /// variable template or variable template partial specialization from which
+  /// it was instantiated.
+  llvm::PointerUnion<VarTemplateDecl *, VarTemplatePartialSpecializationDecl *>
+  getInstantiatedFrom() const {
+    if (getSpecializationKind() != TSK_ImplicitInstantiation &&
+        getSpecializationKind() != TSK_ExplicitInstantiationDefinition &&
+        getSpecializationKind() != TSK_ExplicitInstantiationDeclaration)
+      return llvm::PointerUnion<VarTemplateDecl *,
+                                VarTemplatePartialSpecializationDecl *>();
+
+    if (SpecializedPartialSpecialization *PartialSpec =
+            SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization *>())
+      return PartialSpec->PartialSpecialization;
+
+    return SpecializedTemplate.get<VarTemplateDecl *>();
+  }
+
+  /// \brief Retrieve the variable template or variable template partial
+  /// specialization which was specialized by this.
+  llvm::PointerUnion<VarTemplateDecl *, VarTemplatePartialSpecializationDecl *>
+  getSpecializedTemplateOrPartial() const {
+    if (SpecializedPartialSpecialization *PartialSpec =
+            SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization *>())
+      return PartialSpec->PartialSpecialization;
+
+    return SpecializedTemplate.get<VarTemplateDecl *>();
+  }
+
+  /// \brief Retrieve the set of template arguments that should be used
+  /// to instantiate the initializer of the variable template or variable
+  /// template partial specialization from which this variable template
+  /// specialization was instantiated.
+  ///
+  /// \returns For a variable template specialization instantiated from the
+  /// primary template, this function will return the same template arguments
+  /// as getTemplateArgs(). For a variable template specialization instantiated
+  /// from a variable template partial specialization, this function will the
+  /// return deduced template arguments for the variable template partial
+  /// specialization itself.
+  const TemplateArgumentList &getTemplateInstantiationArgs() const {
+    if (SpecializedPartialSpecialization *PartialSpec =
+            SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization *>())
+      return *PartialSpec->TemplateArgs;
+
+    return getTemplateArgs();
+  }
+
+  /// \brief Note that this variable template specialization is actually an
+  /// instantiation of the given variable template partial specialization whose
+  /// template arguments have been deduced.
+  void setInstantiationOf(VarTemplatePartialSpecializationDecl *PartialSpec,
+                          TemplateArgumentList *TemplateArgs) {
+    assert(!SpecializedTemplate.is<SpecializedPartialSpecialization *>() &&
+           "Already set to a variable template partial specialization!");
+    SpecializedPartialSpecialization *PS =
+        new (getASTContext()) SpecializedPartialSpecialization();
+    PS->PartialSpecialization = PartialSpec;
+    PS->TemplateArgs = TemplateArgs;
+    SpecializedTemplate = PS;
+  }
+
+  /// \brief Note that this variable template specialization is an instantiation
+  /// of the given variable template.
+  void setInstantiationOf(VarTemplateDecl *TemplDecl) {
+    assert(!SpecializedTemplate.is<SpecializedPartialSpecialization *>() &&
+           "Previously set to a variable template partial specialization!");
+    SpecializedTemplate = TemplDecl;
+  }
+
+  /// \brief Sets the type of this specialization as it was written by
+  /// the user.
+  void setTypeAsWritten(TypeSourceInfo *T) {
+    if (!ExplicitInfo)
+      ExplicitInfo = new (getASTContext()) ExplicitSpecializationInfo;
+    ExplicitInfo->TypeAsWritten = T;
+  }
+  /// \brief Gets the type of this specialization as it was written by
+  /// the user, if it was so written.
+  TypeSourceInfo *getTypeAsWritten() const {
+    return ExplicitInfo ? ExplicitInfo->TypeAsWritten : 0;
+  }
+
+  /// \brief Gets the location of the extern keyword, if present.
+  SourceLocation getExternLoc() const {
+    return ExplicitInfo ? ExplicitInfo->ExternLoc : SourceLocation();
+  }
+  /// \brief Sets the location of the extern keyword.
+  void setExternLoc(SourceLocation Loc) {
+    if (!ExplicitInfo)
+      ExplicitInfo = new (getASTContext()) ExplicitSpecializationInfo;
+    ExplicitInfo->ExternLoc = Loc;
+  }
+
+  /// \brief Sets the location of the template keyword.
+  void setTemplateKeywordLoc(SourceLocation Loc) {
+    if (!ExplicitInfo)
+      ExplicitInfo = new (getASTContext()) ExplicitSpecializationInfo;
+    ExplicitInfo->TemplateKeywordLoc = Loc;
+  }
+  /// \brief Gets the location of the template keyword, if present.
+  SourceLocation getTemplateKeywordLoc() const {
+    return ExplicitInfo ? ExplicitInfo->TemplateKeywordLoc : SourceLocation();
+  }
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    Profile(ID, TemplateArgs->data(), TemplateArgs->size(), getASTContext());
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      const TemplateArgument *TemplateArgs,
+                      unsigned NumTemplateArgs, ASTContext &Context) {
+    ID.AddInteger(NumTemplateArgs);
+    for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
+      TemplateArgs[Arg].Profile(ID, Context);
+  }
+
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) {
+    return K >= firstVarTemplateSpecialization &&
+           K <= lastVarTemplateSpecialization;
+  }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+};
+
+class VarTemplatePartialSpecializationDecl
+    : public VarTemplateSpecializationDecl {
+  virtual void anchor();
+
+  /// \brief The list of template parameters
+  TemplateParameterList *TemplateParams;
+
+  /// \brief The source info for the template arguments as written.
+  /// FIXME: redundant with TypeAsWritten?
+  TemplateArgumentLoc *ArgsAsWritten;
+  unsigned NumArgsAsWritten;
+
+  /// \brief Sequence number indicating when this variable template partial
+  /// specialization was added to the set of partial specializations for
+  /// its owning variable template.
+  unsigned SequenceNumber;
+
+  /// \brief The variable template partial specialization from which this
+  /// variable template partial specialization was instantiated.
+  ///
+  /// The boolean value will be true to indicate that this variable template
+  /// partial specialization was specialized at this level.
+  llvm::PointerIntPair<VarTemplatePartialSpecializationDecl *, 1, bool>
+  InstantiatedFromMember;
+
+  VarTemplatePartialSpecializationDecl(
+      ASTContext &Context, DeclContext *DC, SourceLocation StartLoc,
+      SourceLocation IdLoc, TemplateParameterList *Params,
+      VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
+      StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
+      TemplateArgumentLoc *ArgInfos, unsigned NumArgInfos,
+      unsigned SequenceNumber);
+
+  VarTemplatePartialSpecializationDecl()
+      : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
+        TemplateParams(0), ArgsAsWritten(0), NumArgsAsWritten(0),
+        SequenceNumber(SequenceNumber), InstantiatedFromMember(0, false) {}
+
+public:
+  static VarTemplatePartialSpecializationDecl *
+  Create(ASTContext &Context, DeclContext *DC, SourceLocation StartLoc,
+         SourceLocation IdLoc, TemplateParameterList *Params,
+         VarTemplateDecl *SpecializedTemplate, QualType T,
+         TypeSourceInfo *TInfo, StorageClass S, const TemplateArgument *Args,
+         unsigned NumArgs, const TemplateArgumentListInfo &ArgInfos,
+         unsigned SequenceNumber);
+
+  static VarTemplatePartialSpecializationDecl *CreateDeserialized(ASTContext &C,
+                                                                  unsigned ID);
+
+  VarTemplatePartialSpecializationDecl *getMostRecentDecl() {
+    return cast<VarTemplatePartialSpecializationDecl>(
+        VarTemplateSpecializationDecl::getMostRecentDecl());
+  }
+
+  /// Get the list of template parameters
+  TemplateParameterList *getTemplateParameters() const {
+    return TemplateParams;
+  }
+
+  /// Get the template arguments as written.
+  TemplateArgumentLoc *getTemplateArgsAsWritten() const {
+    return ArgsAsWritten;
+  }
+
+  /// Get the number of template arguments as written.
+  unsigned getNumTemplateArgsAsWritten() const { return NumArgsAsWritten; }
+
+  /// \brief Get the sequence number for this variable template partial
+  /// specialization.
+  unsigned getSequenceNumber() const { return SequenceNumber; }
+
+  /// \brief Retrieve the member variable template partial specialization from
+  /// which this particular variable template partial specialization was
+  /// instantiated.
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct Outer {
+  ///   template<typename U> U Inner;
+  ///   template<typename U> U* Inner<U*> = (U*)(0); // #1
+  /// };
+  ///
+  /// template int* Outer<float>::Inner<int*>;
+  /// \endcode
+  ///
+  /// In this example, the instantiation of \c Outer<float>::Inner<int*> will
+  /// end up instantiating the partial specialization
+  /// \c Outer<float>::Inner<U*>, which itself was instantiated from the
+  /// variable template partial specialization \c Outer<T>::Inner<U*>. Given
+  /// \c Outer<float>::Inner<U*>, this function would return
+  /// \c Outer<T>::Inner<U*>.
+  VarTemplatePartialSpecializationDecl *getInstantiatedFromMember() {
+    VarTemplatePartialSpecializationDecl *First =
+        cast<VarTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    return First->InstantiatedFromMember.getPointer();
+  }
+
+  void
+  setInstantiatedFromMember(VarTemplatePartialSpecializationDecl *PartialSpec) {
+    VarTemplatePartialSpecializationDecl *First =
+        cast<VarTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    First->InstantiatedFromMember.setPointer(PartialSpec);
+  }
+
+  /// \brief Determines whether this variable template partial specialization
+  /// was a specialization of a member partial specialization.
+  ///
+  /// In the following example, the member template partial specialization
+  /// \c X<int>::Inner<T*> is a member specialization.
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   template<typename U> U Inner;
+  ///   template<typename U> U* Inner<U*> = (U*)(0);
+  /// };
+  ///
+  /// template<> template<typename T>
+  /// U* X<int>::Inner<T*> = (T*)(0) + 1;
+  /// \endcode
+  bool isMemberSpecialization() {
+    VarTemplatePartialSpecializationDecl *First =
+        cast<VarTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    return First->InstantiatedFromMember.getInt();
+  }
+
+  /// \brief Note that this member template is a specialization.
+  void setMemberSpecialization() {
+    VarTemplatePartialSpecializationDecl *First =
+        cast<VarTemplatePartialSpecializationDecl>(getFirstDeclaration());
+    assert(First->InstantiatedFromMember.getPointer() &&
+           "Only member templates can be member template specializations");
+    return First->InstantiatedFromMember.setInt(true);
+  }
+
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) {
+    return K == VarTemplatePartialSpecialization;
+  }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+};
+
+/// Declaration of a variable template.
+class VarTemplateDecl : public RedeclarableTemplateDecl {
+  static void DeallocateCommon(void *Ptr);
+
+protected:
+  /// \brief Data that is common to all of the declarations of a given
+  /// variable template.
+  struct Common : CommonBase {
+    Common() : LazySpecializations() {}
+
+    /// \brief The variable template specializations for this variable
+    /// template, including explicit specializations and instantiations.
+    llvm::FoldingSetVector<VarTemplateSpecializationDecl> Specializations;
+
+    /// \brief The variable template partial specializations for this variable
+    /// template.
+    llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl>
+    PartialSpecializations;
+
+    /// \brief If non-null, points to an array of specializations (including
+    /// partial specializations) known ownly by their external declaration IDs.
+    ///
+    /// The first value in the array is the number of of specializations/
+    /// partial specializations that follow.
+    uint32_t *LazySpecializations;
+  };
+
+  /// \brief Load any lazily-loaded specializations from the external source.
+  void LoadLazySpecializations() const;
+
+  /// \brief Retrieve the set of specializations of this variable template.
+  llvm::FoldingSetVector<VarTemplateSpecializationDecl> &
+  getSpecializations() const;
+
+  /// \brief Retrieve the set of partial specializations of this class
+  /// template.
+  llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl> &
+  getPartialSpecializations();
+
+  VarTemplateDecl(DeclContext *DC, SourceLocation L, DeclarationName Name,
+                  TemplateParameterList *Params, NamedDecl *Decl)
+      : RedeclarableTemplateDecl(VarTemplate, DC, L, Name, Params, Decl) {}
+
+  VarTemplateDecl(EmptyShell Empty)
+      : RedeclarableTemplateDecl(VarTemplate, 0, SourceLocation(),
+                                 DeclarationName(), 0, 0) {}
+
+  CommonBase *newCommon(ASTContext &C) const;
+
+  Common *getCommonPtr() const {
+    return static_cast<Common *>(RedeclarableTemplateDecl::getCommonPtr());
+  }
+
+public:
+  /// \brief Get the underlying variable declarations of the template.
+  VarDecl *getTemplatedDecl() const {
+    return static_cast<VarDecl *>(TemplatedDecl);
+  }
+
+  /// \brief Returns whether this template declaration defines the primary
+  /// variable pattern.
+  bool isThisDeclarationADefinition() const {
+    return getTemplatedDecl()->isThisDeclarationADefinition();
+  }
+
+  /// \brief Create a variable template node.
+  static VarTemplateDecl *Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation L, DeclarationName Name,
+                                 TemplateParameterList *Params, NamedDecl *Decl,
+                                 VarTemplateDecl *PrevDecl);
+
+  /// \brief Create an empty variable template node.
+  static VarTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+
+  /// \brief Return the specialization with the provided arguments if it exists,
+  /// otherwise return the insertion point.
+  VarTemplateSpecializationDecl *
+  findSpecialization(const TemplateArgument *Args, unsigned NumArgs,
+                     void *&InsertPos);
+
+  /// \brief Insert the specified specialization knowing that it is not already
+  /// in. InsertPos must be obtained from findSpecialization.
+  void AddSpecialization(VarTemplateSpecializationDecl *D, void *InsertPos);
+
+  VarTemplateDecl *getCanonicalDecl() {
+    return cast<VarTemplateDecl>(RedeclarableTemplateDecl::getCanonicalDecl());
+  }
+  const VarTemplateDecl *getCanonicalDecl() const {
+    return cast<VarTemplateDecl>(RedeclarableTemplateDecl::getCanonicalDecl());
+  }
+
+  /// \brief Retrieve the previous declaration of this variable template, or
+  /// NULL if no such declaration exists.
+  VarTemplateDecl *getPreviousDecl() {
+    return cast_or_null<VarTemplateDecl>(
+        RedeclarableTemplateDecl::getPreviousDecl());
+  }
+
+  /// \brief Retrieve the previous declaration of this variable template, or
+  /// NULL if no such declaration exists.
+  const VarTemplateDecl *getPreviousDecl() const {
+    return cast_or_null<VarTemplateDecl>(
+        RedeclarableTemplateDecl::getPreviousDecl());
+  }
+
+  VarTemplateDecl *getInstantiatedFromMemberTemplate() {
+    return cast_or_null<VarTemplateDecl>(
+        RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
+  }
+
+  /// \brief Return the partial specialization with the provided arguments if it
+  /// exists, otherwise return the insertion point.
+  VarTemplatePartialSpecializationDecl *
+  findPartialSpecialization(const TemplateArgument *Args, unsigned NumArgs,
+                            void *&InsertPos);
+
+  /// \brief Insert the specified partial specialization knowing that it is not
+  /// already in. InsertPos must be obtained from findPartialSpecialization.
+  void AddPartialSpecialization(VarTemplatePartialSpecializationDecl *D,
+                                void *InsertPos);
+
+  /// \brief Return the next partial specialization sequence number.
+  unsigned getNextPartialSpecSequenceNumber() {
+    return getPartialSpecializations().size();
+  }
+
+  /// \brief Retrieve the partial specializations as an ordered list.
+  void getPartialSpecializations(
+      SmallVectorImpl<VarTemplatePartialSpecializationDecl *> &PS);
+
+  /// \brief Find a variable template partial specialization which was
+  /// instantiated
+  /// from the given member partial specialization.
+  ///
+  /// \param D a member variable template partial specialization.
+  ///
+  /// \returns the variable template partial specialization which was
+  /// instantiated
+  /// from the given member partial specialization, or NULL if no such partial
+  /// specialization exists.
+  VarTemplatePartialSpecializationDecl *findPartialSpecInstantiatedFromMember(
+      VarTemplatePartialSpecializationDecl *D);
+
+  typedef SpecIterator<VarTemplateSpecializationDecl> spec_iterator;
+
+  spec_iterator spec_begin() const {
+    return makeSpecIterator(getSpecializations(), false);
+  }
+
+  spec_iterator spec_end() const {
+    return makeSpecIterator(getSpecializations(), true);
+  }
+
+  typedef SpecIterator<VarTemplatePartialSpecializationDecl>
+  partial_spec_iterator;
+
+  partial_spec_iterator partial_spec_begin() {
+    return makeSpecIterator(getPartialSpecializations(), false);
+  }
+
+  partial_spec_iterator partial_spec_end() {
+    return makeSpecIterator(getPartialSpecializations(), true);
+  }
+
+  // Implement isa/cast/dyncast support
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == VarTemplate; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+};
 
 } /* end of namespace clang */
 

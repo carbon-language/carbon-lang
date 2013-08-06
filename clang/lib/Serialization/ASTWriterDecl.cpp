@@ -68,6 +68,9 @@ namespace clang {
                                             ClassTemplateSpecializationDecl *D);
     void VisitClassTemplatePartialSpecializationDecl(
                                      ClassTemplatePartialSpecializationDecl *D);
+    void VisitVarTemplateSpecializationDecl(VarTemplateSpecializationDecl *D);
+    void VisitVarTemplatePartialSpecializationDecl(
+        VarTemplatePartialSpecializationDecl *D);
     void VisitClassScopeFunctionSpecializationDecl(
                                        ClassScopeFunctionSpecializationDecl *D);
     void VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
@@ -90,6 +93,7 @@ namespace clang {
     void VisitTemplateDecl(TemplateDecl *D);
     void VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
+    void VisitVarTemplateDecl(VarTemplateDecl *D);
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     void VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D);
@@ -1182,6 +1186,87 @@ void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
   }
 
   Code = serialization::DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION;
+}
+
+void ASTDeclWriter::VisitVarTemplateDecl(VarTemplateDecl *D) {
+  VisitRedeclarableTemplateDecl(D);
+
+  if (D->isFirstDeclaration()) {
+    typedef llvm::FoldingSetVector<VarTemplateSpecializationDecl> VTSDSetTy;
+    VTSDSetTy &VTSDSet = D->getSpecializations();
+    Record.push_back(VTSDSet.size());
+    for (VTSDSetTy::iterator I = VTSDSet.begin(), E = VTSDSet.end(); I != E;
+         ++I) {
+      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
+      Writer.AddDeclRef(&*I, Record);
+    }
+
+    typedef llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl>
+    VTPSDSetTy;
+    VTPSDSetTy &VTPSDSet = D->getPartialSpecializations();
+    Record.push_back(VTPSDSet.size());
+    for (VTPSDSetTy::iterator I = VTPSDSet.begin(), E = VTPSDSet.end(); I != E;
+         ++I) {
+      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
+      Writer.AddDeclRef(&*I, Record);
+    }
+  }
+  Code = serialization::DECL_VAR_TEMPLATE;
+}
+
+void ASTDeclWriter::VisitVarTemplateSpecializationDecl(
+    VarTemplateSpecializationDecl *D) {
+  VisitVarDecl(D);
+
+  llvm::PointerUnion<VarTemplateDecl *, VarTemplatePartialSpecializationDecl *>
+  InstFrom = D->getSpecializedTemplateOrPartial();
+  if (Decl *InstFromD = InstFrom.dyn_cast<VarTemplateDecl *>()) {
+    Writer.AddDeclRef(InstFromD, Record);
+  } else {
+    Writer.AddDeclRef(InstFrom.get<VarTemplatePartialSpecializationDecl *>(),
+                      Record);
+    Writer.AddTemplateArgumentList(&D->getTemplateInstantiationArgs(), Record);
+  }
+
+  // Explicit info.
+  Writer.AddTypeSourceInfo(D->getTypeAsWritten(), Record);
+  if (D->getTypeAsWritten()) {
+    Writer.AddSourceLocation(D->getExternLoc(), Record);
+    Writer.AddSourceLocation(D->getTemplateKeywordLoc(), Record);
+  }
+
+  Writer.AddTemplateArgumentList(&D->getTemplateArgs(), Record);
+  Writer.AddSourceLocation(D->getPointOfInstantiation(), Record);
+  Record.push_back(D->getSpecializationKind());
+  Record.push_back(D->isCanonicalDecl());
+
+  if (D->isCanonicalDecl()) {
+    // When reading, we'll add it to the folding set of the following template.
+    Writer.AddDeclRef(D->getSpecializedTemplate()->getCanonicalDecl(), Record);
+  }
+
+  Code = serialization::DECL_VAR_TEMPLATE_SPECIALIZATION;
+}
+
+void ASTDeclWriter::VisitVarTemplatePartialSpecializationDecl(
+    VarTemplatePartialSpecializationDecl *D) {
+  VisitVarTemplateSpecializationDecl(D);
+
+  Writer.AddTemplateParameterList(D->getTemplateParameters(), Record);
+
+  Record.push_back(D->getNumTemplateArgsAsWritten());
+  for (int i = 0, e = D->getNumTemplateArgsAsWritten(); i != e; ++i)
+    Writer.AddTemplateArgumentLoc(D->getTemplateArgsAsWritten()[i], Record);
+
+  Record.push_back(D->getSequenceNumber());
+
+  // These are read/set from/to the first declaration.
+  if (D->getPreviousDecl() == 0) {
+    Writer.AddDeclRef(D->getInstantiatedFromMember(), Record);
+    Record.push_back(D->isMemberSpecialization());
+  }
+
+  Code = serialization::DECL_VAR_TEMPLATE_PARTIAL_SPECIALIZATION;
 }
 
 void ASTDeclWriter::VisitClassScopeFunctionSpecializationDecl(

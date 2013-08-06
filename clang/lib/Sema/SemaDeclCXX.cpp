@@ -2001,10 +2001,12 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
 
     Member->setAccess(AS);
 
-    // If we have declared a member function template, set the access of the
-    // templated declaration as well.
+    // If we have declared a member function template or static data member
+    // template, set the access of the templated declaration as well.
     if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(Member))
       FunTmpl->getTemplatedDecl()->setAccess(AS);
+    else if (VarTemplateDecl *VarTmpl = dyn_cast<VarTemplateDecl>(Member))
+      VarTmpl->getTemplatedDecl()->setAccess(AS);
   }
 
   if (VS.isOverrideSpecified())

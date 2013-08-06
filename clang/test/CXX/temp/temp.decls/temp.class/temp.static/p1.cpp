@@ -23,4 +23,4 @@ X2& get_X2() {
   return X0<X2>::value; // expected-note{{instantiation}}
 }
   
-template<typename T> T x; // expected-error{{variable 'x' declared as a template}}
+template<typename T> T x; // expected-warning{{variable templates are a C++1y extension}}

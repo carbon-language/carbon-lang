@@ -538,6 +538,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
       return IDNS_Namespace;
 
     case FunctionTemplate:
+    case VarTemplate:
       return IDNS_Ordinary;
 
     case ClassTemplate:
@@ -560,6 +561,8 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ClassTemplateSpecialization:
     case ClassTemplatePartialSpecialization:
     case ClassScopeFunctionSpecialization:
+    case VarTemplateSpecialization:
+    case VarTemplatePartialSpecialization:
     case ObjCImplementation:
     case ObjCCategory:
     case ObjCCategoryImpl:

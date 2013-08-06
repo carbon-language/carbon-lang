@@ -1461,6 +1461,8 @@ def err_auto_not_allowed : Error<
   "|in exception declaration|in template parameter|in block literal"
   "|in template argument|in typedef|in type alias|in function return type"
   "|in conversion function type|here}0">;
+def err_auto_not_allowed_var_inst : Error<
+  "'auto' variable template instantiation is not allowed">;
 def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
 def err_auto_new_requires_ctor_arg : Error<
@@ -2779,6 +2781,8 @@ def err_template_linkage : Error<"templates must have C++ linkage">;
 def err_template_typedef : Error<"a typedef cannot be a template">;
 def err_template_unnamed_class : Error<
   "cannot declare a class template with no name">;
+def err_var_template_unnamed_class : Error<
+  "cannot declare a variable template with no name">;
 def err_template_param_list_different_arity : Error<
   "%select{too few|too many}0 template parameters in template "
   "%select{|template parameter }1redeclaration">;
@@ -2823,7 +2827,11 @@ def err_template_parameter_default_friend_template : Error<
 def err_template_template_parm_no_parms : Error<
   "template template parameter must have its own template parameters">;
 
-def err_template_variable : Error<"variable %0 declared as a template">;
+def ext_variable_template : ExtWarn<"variable templates are a C++1y extension">,
+  InGroup<CXX1y>;
+def warn_cxx11_compat_variable_template : Warning<
+  "variable templates are incompatible with C++ standards before C++1y">,
+  InGroup<CXXPre1yCompat>, DefaultIgnore;
 def err_template_variable_noparams : Error<
   "extraneous 'template<>' in declaration of variable %0">;
 def err_template_member : Error<"member %0 declared as a template">;
@@ -2832,7 +2840,7 @@ def err_template_member_noparams : Error<
 def err_template_tag_noparams : Error<
   "extraneous 'template<>' in declaration of %0 %1">;
 def err_template_decl_ref : Error<
-  "cannot refer to class template %0 without a template argument list">;
+  "cannot refer to %select{class|variable}0 template %1 without a template argument list">;
 
 // C++ Template Argument Lists
 def err_template_missing_args : Error<
@@ -2964,7 +2972,7 @@ def err_pointer_to_member_oper_value_classify: Error<
 // C++ template specialization
 def err_template_spec_unknown_kind : Error<
   "can only provide an explicit specialization for a class template, function "
-  "template, or a member function, static data member, "
+  "template, variable template, or a member function, static data member, "
   "%select{or member class|member class, or member enumeration}0 of a "
   "class template">;
 def note_specialized_entity : Note<
@@ -2976,29 +2984,35 @@ def err_template_spec_decl_class_scope : Error<
 def err_template_spec_decl_friend : Error<
   "cannot declare an explicit specialization in a friend">;
 def err_template_spec_decl_out_of_scope_global : Error<
-  "%select{class template|class template partial|function template|member "
-  "function|static data member|member class|member enumeration}0 "
+  "%select{class template|class template partial|variable template|"
+  "variable template partial|function template|member function|"
+  "static data member|member class|member enumeration}0 "
   "specialization of %1 must originally be declared in the global scope">;
 def err_template_spec_decl_out_of_scope : Error<
-  "%select{class template|class template partial|function template|member "
+  "%select{class template|class template partial|variable template|"
+  "variable template partial|function template|member "
   "function|static data member|member class|member enumeration}0 "
   "specialization of %1 must originally be declared in namespace %2">;
 def ext_template_spec_decl_out_of_scope : ExtWarn<
   "first declaration of %select{class template|class template partial|"
+  "variable template|variable template partial|"
   "function template|member function|static data member|member class|"
   "member enumeration}0 specialization of %1 outside namespace %2 is a "
   "C++11 extension">, InGroup<CXX11>;
 def warn_cxx98_compat_template_spec_decl_out_of_scope : Warning<
-  "%select{class template|class template partial|function template|member "
+  "%select{class template|class template partial|variable template|"
+  "variable template partial|function template|member "
   "function|static data member|member class|member enumeration}0 "
   "specialization of %1 outside namespace %2 is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_template_spec_redecl_out_of_scope : Error<
-  "%select{class template|class template partial|function template|member "
+  "%select{class template|class template partial|variable template|"
+  "variable template partial|function template|member "
   "function|static data member|member class|member enumeration}0 "
   "specialization of %1 not in a namespace enclosing %2">;
 def err_template_spec_redecl_global_scope : Error<
-  "%select{class template|class template partial|function template|member "
+  "%select{class template|class template partial|variable template|"
+  "variable template partial|function template|member "
   "function|static data member|member class|member enumeration}0 "
   "specialization of %1 must occur at global scope">;
 def err_spec_member_not_instantiated : Error<
@@ -3081,6 +3095,16 @@ def note_prev_partial_spec_here : Note<
   "previous declaration of class template partial specialization %0 is here">;
 def err_partial_spec_fully_specialized : Error<
   "partial specialization of %0 does not use any of its template parameters">;
+
+// C++ Variable Template Partial Specialization
+def err_var_default_arg_in_partial_spec : Error<
+  "default template argument in a variable template partial specialization">;
+def err_var_partial_spec_redeclared : Error<
+  "variable template partial specialization %0 cannot be redefined">;
+def note_var_prev_partial_spec_here : Note<
+  "previous declaration of variable template partial specialization is here">;
+def err_var_spec_no_template : Error<
+  "no variable template matches%select{| partial}0 specialization">;
   
 // C++ Function template specializations
 def err_function_template_spec_no_match : Error<
@@ -3194,8 +3218,8 @@ def err_explicit_instantiation_of_typedef : Error<
 def err_explicit_instantiation_storage_class : Error<
   "explicit instantiation cannot have a storage class">;
 def err_explicit_instantiation_not_known : Error<
-  "explicit instantiation of %0 does not refer to a function template, member "
-  "function, member class, or static data member">;
+  "explicit instantiation of %0 does not refer to a function template, "
+  "variable template, member function, member class, or static data member">;
 def note_explicit_instantiation_here : Note<
   "explicit instantiation refers here">;
 def err_explicit_instantiation_data_member_not_instantiated : Error<
@@ -3225,14 +3249,20 @@ def warn_explicit_instantiation_unqualified_wrong_namespace_0x : Warning<
   InGroup<CXX11Compat>, DefaultIgnore;
 def err_explicit_instantiation_undefined_member : Error<
   "explicit instantiation of undefined %select{member class|member function|"
-  "static data member}0 %1 of class template %2">;
+  "static data member|static data member template}0 %1 of class template %2">;
 def err_explicit_instantiation_undefined_func_template : Error<
   "explicit instantiation of undefined function template %0">;
+def err_explicit_instantiation_undefined_var_template : Error<
+  "explicit instantiation of undefined variable template %0">;
 def err_explicit_instantiation_declaration_after_definition : Error<
   "explicit instantiation declaration (with 'extern') follows explicit "
   "instantiation definition (without 'extern')">;
 def note_explicit_instantiation_definition_here : Note<
   "explicit instantiation definition is here">;
+def err_invalid_var_template_spec_type : Error<"type %2 "
+  "of %select{explicit instantiation|explicit specialization|"
+  "partial specialization|redeclaration}0 of %1 does not match"
+  " expected type %3">;
   
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;
@@ -3278,7 +3308,8 @@ def err_non_type_template_in_nested_name_specifier : Error<
 def err_template_id_not_a_type : Error<
   "template name refers to non-type template %0">;
 def note_template_declared_here : Note<
-  "%select{function template|class template|type alias template|template template parameter}0 "
+  "%select{function template|class template|variable template"
+  "|type alias template|template template parameter}0 "
   "%1 declared here">;
 def note_parameter_type : Note<
   "parameter of type %0 is declared here">;
@@ -5033,6 +5064,8 @@ def err_invalid_declarator_in_function : Error<
   "definition or redeclaration of %0 not allowed inside a function">;
 def err_not_tag_in_scope : Error<
   "no %select{struct|interface|union|class|enum}0 named %1 in %2">;
+def err_not_var_in_scope : Error<
+  "no variable template named %0 in %1">;
 
 def err_no_typeid_with_fno_rtti : Error<
   "cannot use typeid with -fno-rtti">;

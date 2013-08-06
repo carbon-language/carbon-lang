@@ -465,8 +465,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
                                     TemplateName, false))
           return true;
         continue;
-      } 
-      
+      }
+
       if (MemberOfUnknownSpecialization && (ObjectType || SS.isSet()) && 
           (IsTypename || IsTemplateArgumentList(1))) {
         // We have something like t::getAs<T>, where getAs is a 
@@ -561,6 +561,12 @@ ExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   //   '::' unqualified-id
   //
   CXXScopeSpec SS;
+  if (Tok.getKind() == tok::annot_template_id) {
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
+    // FIXME: This is a hack for now. It may need to be done from within
+    // ParseUnqualifiedId(), or most likely ParseOptionalCXXScopeSpecifier();
+    SS = TemplateId->SS;
+  }
   ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
 
   SourceLocation TemplateKWLoc;

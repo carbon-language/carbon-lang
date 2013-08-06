@@ -378,6 +378,14 @@ namespace clang {
                                 ClassTemplatePartialSpecializationDecl *>, 4>
       OutOfLinePartialSpecs;
 
+    /// \brief A list of out-of-line variable template partial
+    /// specializations that will need to be instantiated after the
+    /// enclosing variable's instantiation is complete.
+    /// FIXME: Verify that this is needed.
+    SmallVector<
+        std::pair<VarTemplateDecl *, VarTemplatePartialSpecializationDecl *>, 4>
+    OutOfLineVarPartialSpecs;
+
   public:
     TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
                              const MultiLevelTemplateArgumentList &TemplateArgs)
@@ -417,6 +425,7 @@ namespace clang {
     Decl *VisitFunctionDecl(FunctionDecl *D,
                             TemplateParameterList *TemplateParams);
     Decl *VisitDecl(Decl *D);
+    Decl *VisitVarDecl(VarDecl *D, bool ForVarTemplate);
 
     // Enable late instantiation of attributes.  Late instantiated attributes
     // will be stored in LA.
@@ -439,6 +448,10 @@ namespace clang {
         ::iterator
       delayed_partial_spec_iterator;
 
+    typedef SmallVectorImpl<std::pair<
+        VarTemplateDecl *, VarTemplatePartialSpecializationDecl *> >::iterator
+    delayed_var_partial_spec_iterator;
+
     /// \brief Return an iterator to the beginning of the set of
     /// "delayed" partial specializations, which must be passed to
     /// InstantiateClassTemplatePartialSpecialization once the class
@@ -447,12 +460,20 @@ namespace clang {
       return OutOfLinePartialSpecs.begin();
     }
 
+    delayed_var_partial_spec_iterator delayed_var_partial_spec_begin() {
+      return OutOfLineVarPartialSpecs.begin();
+    }
+
     /// \brief Return an iterator to the end of the set of
     /// "delayed" partial specializations, which must be passed to
     /// InstantiateClassTemplatePartialSpecialization once the class
     /// definition has been completed.
     delayed_partial_spec_iterator delayed_partial_spec_end() {
       return OutOfLinePartialSpecs.end();
+    }
+
+    delayed_var_partial_spec_iterator delayed_var_partial_spec_end() {
+      return OutOfLineVarPartialSpecs.end();
     }
 
     // Helper functions for instantiating methods.
@@ -468,12 +489,21 @@ namespace clang {
                         DeclaratorDecl *NewDecl);
     bool SubstQualifier(const TagDecl *OldDecl,
                         TagDecl *NewDecl);
-      
+
+    Decl *VisitVarTemplateSpecializationDecl(
+        VarTemplateDecl *VarTemplate, VarDecl *FromVar, void *InsertPos,
+        const TemplateArgumentListInfo &TemplateArgsInfo,
+        SmallVectorImpl<TemplateArgument> &Converted);
+
     Decl *InstantiateTypedefNameDecl(TypedefNameDecl *D, bool IsTypeAlias);
     ClassTemplatePartialSpecializationDecl *
     InstantiateClassTemplatePartialSpecialization(
                                               ClassTemplateDecl *ClassTemplate,
                            ClassTemplatePartialSpecializationDecl *PartialSpec);
+    VarTemplatePartialSpecializationDecl *
+    InstantiateVarTemplatePartialSpecialization(
+        VarTemplateDecl *VarTemplate,
+        VarTemplatePartialSpecializationDecl *PartialSpec);
     void InstantiateEnumDefinition(EnumDecl *Enum, EnumDecl *Pattern);
   };  
 }

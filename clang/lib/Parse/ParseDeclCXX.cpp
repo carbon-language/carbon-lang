@@ -15,6 +15,7 @@
 #include "RAIIObjectsForParser.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/OperatorKinds.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ParsedTemplate.h"
@@ -2264,6 +2265,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   TemplateParams,
                                                   BitfieldSize.release(),
                                                   VS, HasInClassInit);
+
+      if (VarTemplateDecl *VT =
+              ThisDecl ? dyn_cast<VarTemplateDecl>(ThisDecl) : 0)
+        // Re-direct this decl to refer to the templated decl so that we can
+        // initialize it.
+        ThisDecl = VT->getTemplatedDecl();
+
       if (ThisDecl && AccessAttrs)
         Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs,
                                          false, true);

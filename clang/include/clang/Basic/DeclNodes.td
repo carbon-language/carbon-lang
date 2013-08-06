@@ -44,6 +44,9 @@ def Named : Decl<1>;
           def CXXDestructor : DDecl<CXXMethod>;
           def CXXConversion : DDecl<CXXMethod>;
       def Var : DDecl<Declarator>;
+        def VarTemplateSpecialization : DDecl<Var>;
+          def VarTemplatePartialSpecialization
+            : DDecl<VarTemplateSpecialization>;
         def ImplicitParam : DDecl<Var>;
         def ParmVar : DDecl<Var>;
       def NonTypeTemplateParm : DDecl<Declarator>;
@@ -51,6 +54,7 @@ def Named : Decl<1>;
     def RedeclarableTemplate : DDecl<Template, 1>;
       def FunctionTemplate : DDecl<RedeclarableTemplate>;
       def ClassTemplate : DDecl<RedeclarableTemplate>;
+      def VarTemplate : DDecl<RedeclarableTemplate>;
       def TypeAliasTemplate : DDecl<RedeclarableTemplate>;
     def TemplateTemplateParm : DDecl<Template>;
   def Using : DDecl<Named>;

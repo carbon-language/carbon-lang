@@ -158,6 +158,8 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::CXXRecord:
   case Decl::ClassTemplateSpecialization:
   case Decl::ClassTemplatePartialSpecialization:
+  case Decl::VarTemplateSpecialization:
+  case Decl::VarTemplatePartialSpecialization:
   case Decl::Function:
   case Decl::CXXMethod:
   case Decl::CXXConstructor:
@@ -166,6 +168,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   case Decl::Var:
   case Decl::FunctionTemplate:
   case Decl::ClassTemplate:
+  case Decl::VarTemplate:
   case Decl::TypeAliasTemplate:
   case Decl::ObjCProtocol:
   case Decl::ObjCInterface:

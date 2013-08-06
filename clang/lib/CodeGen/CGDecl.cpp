@@ -37,6 +37,8 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::UnresolvedUsingTypename:
   case Decl::ClassTemplateSpecialization:
   case Decl::ClassTemplatePartialSpecialization:
+  case Decl::VarTemplateSpecialization:
+  case Decl::VarTemplatePartialSpecialization:
   case Decl::TemplateTypeParm:
   case Decl::UnresolvedUsingValue:
   case Decl::NonTypeTemplateParm:
@@ -52,6 +54,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::ParmVar:
   case Decl::ImplicitParam:
   case Decl::ClassTemplate:
+  case Decl::VarTemplate:
   case Decl::FunctionTemplate:
   case Decl::TypeAliasTemplate:
   case Decl::TemplateTemplateParm:
