@@ -52,7 +52,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !27 = metadata !{i32 786443, metadata !31, metadata !18, i32 19, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !28 = metadata !{i32 786688, metadata !26, metadata !"b", metadata !3, i32 21, metadata !7, i32 0, null} ; [ DW_TAG_auto_variable ]
 !29 = metadata !{i32 16, i32 0, metadata !30, null}
-!30 = metadata !{i32 786443, metadata !8, i32 15, i32 0} ; [ DW_TAG_lexical_block ]
+!30 = metadata !{i32 786443, metadata !31, metadata !8, i32 15, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !31 = metadata !{metadata !"foo.cp", metadata !"/tmp/"}
 !32 = metadata !{i32 0}
-!33 = metadata !{metadata !18}
+!33 = metadata !{metadata !1, metadata !8, metadata !18}

@@ -63,13 +63,13 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !5 = metadata !{i32 458773, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !6, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !6 = metadata !{metadata !2, metadata !2}
 !7 = metadata !{i32 5, i32 0, metadata !8, null}
-!8 = metadata !{i32 458763, metadata !4, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!8 = metadata !{i32 458763, metadata !20, metadata !4, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !9 = metadata !{i32 6, i32 0, metadata !8, null}
 !10 = metadata !{i32 7, i32 0, metadata !8, null}
 !11 = metadata !{i32 9, i32 0, metadata !8, null}
 !12 = metadata !{i32 11, i32 0, metadata !8, null}
 !13 = metadata !{i32 14, i32 0, metadata !14, null}
-!14 = metadata !{i32 458763, metadata !15, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
+!14 = metadata !{i32 458763, metadata !20, metadata !15, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ]
 !15 = metadata !{i32 458798, i32 0, metadata !1, metadata !"bar", metadata !"bar", metadata !"bar", i32 13, metadata !16, i1 false, i1 true, i32 0, i32 0, null, i32 0, i32 0, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !16 = metadata !{i32 458773, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !17, i32 0, null} ; [ DW_TAG_subroutine_type ]
 !17 = metadata !{metadata !2}
