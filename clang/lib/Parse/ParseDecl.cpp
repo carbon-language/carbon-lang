@@ -1801,21 +1801,11 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     ThisDecl = Actions.ActOnTemplateDeclarator(getCurScope(),
                                                *TemplateInfo.TemplateParams,
                                                D);
-
-    // If this is a forward declaration of a variable template or variable
-    // template partial specialization with nested name specifier, complain.
-    // FIXME: Move to Sema.
-    CXXScopeSpec &SS = D.getCXXScopeSpec();
-    if (Tok.is(tok::semi) && ThisDecl && SS.isNotEmpty() &&
-        (isa<VarTemplateDecl>(ThisDecl) ||
-         isa<VarTemplatePartialSpecializationDecl>(ThisDecl))) {
-      Diag(SS.getBeginLoc(), diag::err_forward_var_nested_name_specifier)
-          << isa<VarTemplatePartialSpecializationDecl>(ThisDecl)
-          << SS.getRange();
+    if (Tok.is(tok::semi) &&
+	Actions.HandleVariableRedeclaration(ThisDecl, D.getCXXScopeSpec())) {
       SkipUntil(tok::semi, true, true);
       return 0;
     }
-
     if (VarTemplateDecl *VT =
             ThisDecl ? dyn_cast<VarTemplateDecl>(ThisDecl) : 0)
       // Re-direct this decl to refer to the templated decl so that we can

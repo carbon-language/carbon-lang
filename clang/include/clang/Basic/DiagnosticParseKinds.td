@@ -606,10 +606,6 @@ def err_explicit_instantiation_enum : Error<
     "enumerations cannot be explicitly instantiated">;
 def err_expected_template_parameter : Error<"expected template parameter">;
 
-def err_forward_var_nested_name_specifier : Error<
-  "forward declaration of variable template%select{| partial specialization}0 cannot "
-  "have a nested name specifier">;
-
 def err_missing_dependent_template_keyword : Error<
   "use 'template' keyword to treat '%0' as a dependent template name">;
 def warn_missing_dependent_template_keyword : ExtWarn<

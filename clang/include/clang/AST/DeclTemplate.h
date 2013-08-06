@@ -2560,7 +2560,7 @@ class VarTemplatePartialSpecializationDecl
   VarTemplatePartialSpecializationDecl()
       : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
         TemplateParams(0), ArgsAsWritten(0), NumArgsAsWritten(0),
-        SequenceNumber(0), InstantiatedFromMember(0, false) {}
+        SequenceNumber(SequenceNumber), InstantiatedFromMember(0, false) {}
 
 public:
   static VarTemplatePartialSpecializationDecl *

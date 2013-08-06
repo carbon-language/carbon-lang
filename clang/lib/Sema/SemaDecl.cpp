@@ -4770,6 +4770,21 @@ static bool shouldConsiderLinkage(const FunctionDecl *FD) {
   llvm_unreachable("Unexpected context");
 }
 
+bool Sema::HandleVariableRedeclaration(Decl *D, CXXScopeSpec &SS) {
+  // If this is a redeclaration of a variable template or a forward
+  // declaration of a variable template partial specialization 
+  // with nested name specifier, complain.
+
+  if (D && SS.isNotEmpty() &&
+      (isa<VarTemplateDecl>(D) ||
+       isa<VarTemplatePartialSpecializationDecl>(D))) {
+    Diag(SS.getBeginLoc(), diag::err_forward_var_nested_name_specifier)
+      << isa<VarTemplatePartialSpecializationDecl>(D) << SS.getRange();
+    return true;
+  }
+  return false;
+}
+
 NamedDecl *
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,
@@ -4907,7 +4922,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       case SC_OpenCLWorkGroupLocal:
         llvm_unreachable("OpenCL storage class in c++!");
       }
-    }
+    }    
+
     if (SC == SC_Static && CurContext->isRecord()) {
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC)) {
         if (RD->isLocalClass())
@@ -4966,7 +4982,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           IsPartialSpecialization = TemplateParams->size() > 0;
 
         } else { // if (TemplateParams->size() > 0)
-                 // This is a template declaration.
+          // This is a template declaration.
 
           // Check that we can declare a template here.
           if (CheckTemplateDeclScope(S, TemplateParams))

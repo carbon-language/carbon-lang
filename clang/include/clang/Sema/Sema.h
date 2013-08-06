@@ -1461,6 +1461,7 @@ public:
                                     LookupResult &Previous);
   NamedDecl* ActOnTypedefNameDecl(Scope* S, DeclContext* DC, TypedefNameDecl *D,
                                   LookupResult &Previous, bool &Redeclaration);
+  bool HandleVariableRedeclaration(Decl *D, CXXScopeSpec &SS);
   NamedDecl *ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                      TypeSourceInfo *TInfo,
                                      LookupResult &Previous,
