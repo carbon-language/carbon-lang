@@ -1202,7 +1202,7 @@ public:
     assert(isSplat() && "Cannot get splat index for non-splat!");
     EVT VT = getValueType(0);
     for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
-      if (Mask[i] != -1)
+      if (Mask[i] >= 0)
         return Mask[i];
     }
     return -1;
