@@ -195,6 +195,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     return false;
   }
 
+  if (Tok.is(tok::annot_template_id)) {
+    // If the current token is an annotated template id, it may already have
+    // a scope specifier. Restore it.
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
+    SS = TemplateId->SS;
+  }
+
   if (LastII)
     *LastII = 0;
 
@@ -561,12 +568,6 @@ ExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   //   '::' unqualified-id
   //
   CXXScopeSpec SS;
-  if (Tok.getKind() == tok::annot_template_id) {
-    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
-    // FIXME: This is a hack for now. It may need to be done from within
-    // ParseUnqualifiedId(), or most likely ParseOptionalCXXScopeSpecifier();
-    SS = TemplateId->SS;
-  }
   ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
 
   SourceLocation TemplateKWLoc;
