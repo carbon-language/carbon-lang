@@ -81,6 +81,16 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
   Alias<fsyntax_only>;
 
 
+// Non-aliases:
+
+def _SLASH_Tc : CLJoinedOrSeparate<"Tc">, HelpText<"Specify a C source file">,
+  MetaVarName<"<filename>">;
+def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;
+def _SLASH_Tp : CLJoinedOrSeparate<"Tp">, HelpText<"Specify a C++ source file">,
+  MetaVarName<"<filename>">;
+def _SLASH_TP : CLFlag<"TP">, HelpText<"Treat all source files as C++">;
+
+
 // Ignored:
 
 def _SLASH_analyze_ : CLIgnoredFlag<"analyze-">;
@@ -114,10 +124,6 @@ def _SLASH_MTd : CLFlag<"MTd">;
 def _SLASH_Oi : CLFlag<"Oi">;
 def _SLASH_RTC : CLJoined<"RTC">;
 def _SLASH_showIncludes : CLJoined<"showIncludes">;
-def _SLASH_Tc : CLJoined<"Tc">;
-def _SLASH_TC : CLFlag<"TC">;
-def _SLASH_Tp : CLJoined<"Tp">;
-def _SLASH_TP : CLFlag<"TP">;
 def _SLASH_w : CLJoined<"w">;
 def _SLASH_Zc : CLJoined<"Zc:">;
 def _SLASH_ZI : CLFlag<"ZI">;
