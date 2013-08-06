@@ -508,7 +508,7 @@ class ConcurrentEventsTestCase(TestBase):
 
             expected_signal_threads = num_delay_signal_threads + num_signal_threads
             self.assertEqual(expected_signal_threads, self.signal_count,
-                "Expected %d stops due to signal delivery, but got %d" % (expected_breakpoint_threads, self.signal_count))
+                "Expected %d stops due to signal delivery, but got %d" % (expected_signal_threads, self.signal_count))
 
             expected_watchpoint_threads = num_delay_watchpoint_threads + num_watchpoint_threads
             watchpoint_hit_count = self.thread_watchpoint.GetHitCount() if expected_watchpoint_threads > 0 else 0

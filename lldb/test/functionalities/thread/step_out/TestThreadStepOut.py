@@ -56,10 +56,10 @@ class ThreadStepOutTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number for our breakpoint.
         self.breakpoint = line_number('main.cpp', '// Set breakpoint here')
-        if "clang" in self.getCompiler():
-            self.step_out_destination = line_number('main.cpp', '// Expect to stop here after step-out (clang)')
+        if any([x in self.getCompiler() for x in ["gcc", "icpc", "icl"]]):
+            self.step_out_destination = line_number('main.cpp', '// Expect to stop here after step-out (icc and gcc)')
         else:
-            self.step_out_destination = line_number('main.cpp', '// Expect to stop here after step-out (gcc)')
+            self.step_out_destination = line_number('main.cpp', '// Expect to stop here after step-out (clang)')
 
     def step_out_single_thread_with_cmd(self):
         self.step_out_with_cmd("this-thread")

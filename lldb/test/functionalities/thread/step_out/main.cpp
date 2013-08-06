@@ -43,7 +43,7 @@ thread_func (void *input)
     step_out_of_here(); // Expect to stop here after step-out (clang)
 
     // Return
-    return NULL;  // Expect to stop here after step-out (gcc)
+    return NULL;  // Expect to stop here after step-out (icc and gcc)
 }
 
 int main ()
