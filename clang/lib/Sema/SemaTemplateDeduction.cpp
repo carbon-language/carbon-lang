@@ -2246,7 +2246,7 @@ FinishTemplateArgumentDeduction(Sema &S,
 }
 
 /// \brief Perform template argument deduction to determine whether
-/// the given template arguments match the given variable template
+/// the given template arguments match the given class template
 /// partial specialization per C++ [temp.class.spec.match].
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,

@@ -1806,8 +1806,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       SkipUntil(tok::semi, true, true);
       return 0;
     }
-    if (VarTemplateDecl *VT =
-            ThisDecl ? dyn_cast<VarTemplateDecl>(ThisDecl) : 0)
+    if (VarTemplateDecl *VT = dyn_cast_or_null<VarTemplateDecl>(ThisDecl))
       // Re-direct this decl to refer to the templated decl so that we can
       // initialize it.
       ThisDecl = VT->getTemplatedDecl();

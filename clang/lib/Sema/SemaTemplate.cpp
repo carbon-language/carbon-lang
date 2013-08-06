@@ -2281,11 +2281,11 @@ static bool CheckTemplateSpecializationScope(Sema &S, NamedDecl *Specialized,
 
 static TemplateSpecializationKind getTemplateSpecializationKind(Decl *D);
 /*
-/// \brief Check the new variable specialization against the parsed input.
-///
-/// FIXME: Model this against function specializations where
-/// a new function declaration is checked against the specialization
-/// as candidate for redefinition... (?)
+// Check the new variable specialization against the parsed input.
+//
+// FIXME: Model this against function specializations where
+// a new function declaration is checked against the specialization
+// as candidate for redefinition... (?)
 static bool CheckVariableTemplateSpecializationType() {
 
   if (ExpectedType is undeduced &&  ParsedType is not undeduced)
