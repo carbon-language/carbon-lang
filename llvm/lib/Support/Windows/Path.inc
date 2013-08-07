@@ -31,6 +31,10 @@
 typedef int errno_t;
 #endif
 
+#ifdef _MSC_VER
+# pragma comment(lib, "advapi32.lib")  // This provides CryptAcquireContextW.
+#endif
+
 using namespace llvm;
 
 namespace {
