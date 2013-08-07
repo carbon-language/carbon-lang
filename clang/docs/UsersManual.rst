@@ -895,6 +895,8 @@ are listed below.
       used in conjunction with the ``-fsanitize-undefined-trap-on-error``
       flag. This includes all of the checks listed below other than
       ``unsigned-integer-overflow`` and ``vptr``.
+   -  ``-fsanitize=dataflow``: :doc:`DataFlowSanitizer`, a general data
+      flow analysis.
 
    The following more fine-grained checks are also available:
 

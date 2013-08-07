@@ -37,10 +37,11 @@ class SanitizerArgs {
     NeedsAsanRt = Address,
     NeedsTsanRt = Thread,
     NeedsMsanRt = Memory,
+    NeedsDfsanRt = DataFlow,
     NeedsLeakDetection = Leak,
     NeedsUbsanRt = Undefined | Integer,
     NotAllowedWithTrap = Vptr,
-    HasZeroBaseShadow = Thread | Memory
+    HasZeroBaseShadow = Thread | Memory | DataFlow
   };
   unsigned Kind;
   std::string BlacklistFile;
@@ -66,6 +67,7 @@ class SanitizerArgs {
       return false;
     return Kind & NeedsUbsanRt;
   }
+  bool needsDfsanRt() const { return Kind & NeedsDfsanRt; }
 
   bool sanitizesVptr() const { return Kind & Vptr; }
   bool notAllowedWithTrap() const { return Kind & NotAllowedWithTrap; }

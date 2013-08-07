@@ -908,6 +908,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("enumerator_attributes", true)
            .Case("memory_sanitizer", LangOpts.Sanitize.Memory)
            .Case("thread_sanitizer", LangOpts.Sanitize.Thread)
+           .Case("dataflow_sanitizer", LangOpts.Sanitize.DataFlow)
            // Objective-C features
            .Case("objc_arr", LangOpts.ObjCAutoRefCount) // FIXME: REMOVE?
            .Case("objc_arc", LangOpts.ObjCAutoRefCount)
