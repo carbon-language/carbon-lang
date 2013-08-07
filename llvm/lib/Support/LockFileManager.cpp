@@ -38,14 +38,16 @@ LockFileManager::readLockFile(StringRef LockFileName) {
   // Read the owning host and PID out of the lock file. If it appears that the
   // owning process is dead, the lock file is invalid.
   OwningPtr<MemoryBuffer> MB;
-  if (MemoryBuffer::getFile(LockFileName, MB)) {
-    StringRef Hostname;
-    StringRef PIDStr;
-    tie(Hostname, PIDStr) = getToken(MB->getBuffer(), " ");
-    int PID;
-    if (PIDStr.getAsInteger(10, PID))
-      return std::make_pair(std::string(Hostname), PID);
-  }
+  if (MemoryBuffer::getFile(LockFileName, MB))
+    return None;
+
+  StringRef Hostname;
+  StringRef PIDStr;
+  tie(Hostname, PIDStr) = getToken(MB->getBuffer(), " ");
+  PIDStr = PIDStr.substr(PIDStr.find_first_not_of(" "));
+  int PID;
+  if (!PIDStr.getAsInteger(10, PID))
+    return std::make_pair(std::string(Hostname), PID);
 
   // Delete the lock file. It's invalid anyway.
   sys::fs::remove(LockFileName);
