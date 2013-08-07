@@ -135,4 +135,17 @@ int main()
         assert(j->first == 3);
     }
 #endif
+#if _LIBCPP_STD_VER > 11
+    { // N3664 testing
+        typedef std::vector<int> C;
+        C::iterator ii1{}, ii2{};
+        C::iterator ii4 = ii1;
+        C::const_iterator cii{};
+        assert ( ii1 == ii2 );
+        assert ( ii1 == ii4 );
+        assert ( ii1 == cii );
+        assert ( !(ii1 != ii2 ));
+        assert ( !(ii1 != cii ));
+    }
+#endif
 }

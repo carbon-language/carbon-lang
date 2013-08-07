@@ -1093,6 +1093,9 @@ private:
     iterator_type __i;
 public:
     _LIBCPP_INLINE_VISIBILITY __wrap_iter() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+                : __i{}
+#endif
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
         __get_db()->__insert_i(this);
