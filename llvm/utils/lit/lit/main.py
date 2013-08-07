@@ -407,7 +407,7 @@ def main(builtinParameters = {}):
         print('%s (%d):' % (title, len(elts)))
         for t in elts:
             print('    %s' % t.getFullName())
-        print
+        sys.stdout.write('\n')
 
     if opts.timeTests:
         # Collate, in case we repeated tests.
@@ -435,12 +435,12 @@ def main(builtinParameters = {}):
 
     # If we encountered any additional errors, exit abnormally.
     if litConfig.numErrors:
-        print >>sys.stderr, '\n%d error(s), exiting.' % litConfig.numErrors
+        sys.stderr.write('\n%d error(s), exiting.\n' % litConfig.numErrors)
         sys.exit(2)
 
     # Warn about warnings.
     if litConfig.numWarnings:
-        print >>sys.stderr, '\n%d warning(s) in tests.' % litConfig.numWarnings
+        sys.stderr.write('\n%d warning(s) in tests.\n' % litConfig.numWarnings)
 
     if hasFailures:
         sys.exit(1)

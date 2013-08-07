@@ -112,8 +112,8 @@ class LitConfig:
         file,line,_,_,_ = inspect.getframeinfo(f)
         location = '%s:%d' % (os.path.basename(file), line)
 
-        print >>sys.stderr, '%s: %s: %s: %s' % (self.progname, location,
-                                                kind, message)
+        sys.stderr.write('%s: %s: %s: %s\n' % (self.progname, location,
+                                               kind, message))
 
     def note(self, message):
         self._write_message('note', message)

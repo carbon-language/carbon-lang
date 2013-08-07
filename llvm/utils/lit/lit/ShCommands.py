@@ -21,7 +21,7 @@ class Command:
                 quoted = '"%s"' % arg
             else:
                 raise NotImplementedError('Unable to quote %r' % arg)
-            print >>file, quoted,
+            file.write(quoted)
 
             # For debugging / validation.
             import ShUtil
@@ -31,9 +31,9 @@ class Command:
 
         for r in self.redirects:
             if len(r[0]) == 1:
-                print >>file, "%s '%s'" % (r[0][0], r[1]),
+                file.write("%s '%s'" % (r[0][0], r[1]))
             else:
-                print >>file, "%s%s '%s'" % (r[0][1], r[0][0], r[1]),
+                file.write("%s%s '%s'" % (r[0][1], r[0][0], r[1]))
 
 class Pipeline:
     def __init__(self, commands, negate=False, pipe_err=False):
@@ -56,11 +56,11 @@ class Pipeline:
         if pipefail != self.pipe_err:
             raise ValueError('Inconsistent "pipefail" attribute!')
         if self.negate:
-            print >>file, '!',
+            file.write('! ')
         for cmd in self.commands:
             cmd.toShell(file)
             if cmd is not self.commands[-1]:
-                print >>file, '|\n ',
+                file.write('|\n  ')
 
 class Seq:
     def __init__(self, lhs, op, rhs):
@@ -81,5 +81,5 @@ class Seq:
 
     def toShell(self, file, pipefail=False):
         self.lhs.toShell(file, pipefail)
-        print >>file, ' %s\n' % self.op
+        file.write(' %s\n' % self.op)
         self.rhs.toShell(file, pipefail)

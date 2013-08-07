@@ -215,7 +215,7 @@ def find_tests_for_inputs(lit_config, inputs):
 
     # If there were any errors during test discovery, exit now.
     if lit_config.numErrors:
-        print >>sys.stderr, '%d errors, exiting.' % lit_config.numErrors
+        sys.stderr.write('%d errors, exiting.\n' % lit_config.numErrors)
         sys.exit(2)
 
     return tests

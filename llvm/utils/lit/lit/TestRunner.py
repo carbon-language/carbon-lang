@@ -437,22 +437,21 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
 
 def formatTestOutput(status, out, err, exitCode, script):
     output = StringIO.StringIO()
-    print >>output, "Script:"
-    print >>output, "--"
-    print >>output, '\n'.join(script)
-    print >>output, "--"
-    print >>output, "Exit Code: %r" % exitCode,
-    print >>output
+    output.write("Script:\n")
+    output.write("--\n")
+    output.write('\n'.join(script))
+    output.write("\n--\n")
+    output.write("Exit Code: %r\n\n" % exitCode)
     if out:
-        print >>output, "Command Output (stdout):"
-        print >>output, "--"
+        output.write("Command Output (stdout):\n")
+        output.write("--\n")
         output.write(out)
-        print >>output, "--"
+        output.write("--\n")
     if err:
-        print >>output, "Command Output (stderr):"
-        print >>output, "--"
+        output.write("Command Output (stderr):\n")
+        output.write("--\n")
         output.write(err)
-        print >>output, "--"
+        output.write("--\n")
     return (status, output.getvalue())
 
 def executeShTest(test, litConfig, useExternalSh,
