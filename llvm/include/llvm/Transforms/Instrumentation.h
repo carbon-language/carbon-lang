@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(__linux__)
 inline void *getDFSanArgTLSPtrForJIT() {
   extern __thread __attribute__((tls_model("initial-exec")))
     void *__dfsan_arg_tls;
