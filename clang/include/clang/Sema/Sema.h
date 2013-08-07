@@ -6785,7 +6785,8 @@ public:
   /// ActOnPragmaMSStruct - Called on well formed \#pragma ms_struct [on|off].
   void ActOnPragmaMSStruct(PragmaMSStructKind Kind);
 
-  /// ActOnPragmaMSStruct - Called on well formed \#pragma comment(kind, "arg").
+  /// ActOnPragmaMSComment - Called on well formed
+  /// \#pragma comment(kind, "arg").
   void ActOnPragmaMSComment(PragmaMSCommentKind Kind, StringRef Arg);
 
   /// ActOnPragmaDetectMismatch - Call on well-formed \#pragma detect_mismatch
