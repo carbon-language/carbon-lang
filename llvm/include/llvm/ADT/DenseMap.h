@@ -606,9 +606,6 @@ public:
   }
 
   void init(unsigned InitBuckets) {
-    assert(!KeyInfoT::isEqual(this->getEmptyKey(), this->getTombstoneKey()) &&
-           "Bad implementation of KeyInfoT: empty key and tombstone key "
-           "should be different");
     if (allocateBuckets(InitBuckets)) {
       this->BaseT::initEmpty();
     } else {
