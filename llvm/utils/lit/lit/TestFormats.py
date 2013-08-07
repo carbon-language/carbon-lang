@@ -30,6 +30,7 @@ class GoogleTest(object):
         try:
             lines = lit.Util.capture([path, '--gtest_list_tests'],
                                      env=localConfig.environment)
+            lines = lines.decode('ascii')
             if kIsWindows:
               lines = lines.replace('\r', '')
             lines = lines.split('\n')
