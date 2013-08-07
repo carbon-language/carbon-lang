@@ -400,9 +400,10 @@ def main(builtinParameters = {}):
         if t.result.isFailure:
             hasFailures = True
 
-    # FIXME: Show unresolved and (optionally) unsupported tests.
+    # Print each test in any of the failing groups.
     for title,code in (('Unexpected Passing Tests', lit.Test.XPASS),
-                       ('Failing Tests', lit.Test.FAIL)):
+                       ('Failing Tests', lit.Test.FAIL),
+                       ('Unresolved Tests', lit.Test.UNRESOLVED)):
         elts = byCode.get(code)
         if not elts:
             continue
