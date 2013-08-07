@@ -127,8 +127,8 @@ void Input::endMapping() {
     return;
   for (MapHNode::NameToNode::iterator i = MN->Mapping.begin(),
        End = MN->Mapping.end(); i != End; ++i) {
-    if (!MN->isValidKey(i->first)) {
-      setError(i->second, Twine("unknown key '") + i->first + "'");
+    if (!MN->isValidKey(i->first())) {
+      setError(i->second, Twine("unknown key '") + i->first() + "'");
       break;
     }
   }

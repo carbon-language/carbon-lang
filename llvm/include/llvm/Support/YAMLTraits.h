@@ -14,7 +14,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
@@ -760,15 +760,7 @@ private:
     }
     static inline bool classof(const MapHNode *) { return true; }
 
-    struct StrMappingInfo {
-      static StringRef getEmptyKey() { return StringRef(); }
-      static StringRef getTombstoneKey() { return StringRef(" ", 0); }
-      static unsigned getHashValue(StringRef const val) {
-                                                return llvm::HashString(val); }
-      static bool isEqual(StringRef const lhs,
-                          StringRef const rhs) { return lhs.equals(rhs); }
-    };
-    typedef llvm::DenseMap<StringRef, HNode*, StrMappingInfo> NameToNode;
+    typedef llvm::StringMap<HNode*> NameToNode;
 
     bool isValidKey(StringRef key);
 
