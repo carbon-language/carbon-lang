@@ -32,7 +32,7 @@ class LitConfig:
         # The name of the test runner.
         self.progname = progname
         # The items to add to the PATH environment variable.
-        self.path = list([str(p) for p in path])
+        self.path = [str(p) for p in path]
         self.quiet = bool(quiet)
         self.useValgrind = bool(useValgrind)
         self.valgrindLeakCheck = bool(valgrindLeakCheck)
