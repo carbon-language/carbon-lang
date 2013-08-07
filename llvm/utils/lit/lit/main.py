@@ -297,7 +297,7 @@ def main(builtinParameters = {}):
             if t.suite not in suitesAndTests:
                 suitesAndTests[t.suite] = []
             suitesAndTests[t.suite].append(t)
-        suitesAndTests = suitesAndTests.items()
+        suitesAndTests = list(suitesAndTests.items())
         suitesAndTests.sort(key = lambda item: item[0].name)
 
         # Show the suites, if requested.
