@@ -1,5 +1,4 @@
 ; RUN: %lli -force-interpreter=true %s | FileCheck %s
-; XFAIL: mips
 ; CHECK: int test passed
 ; CHECK: double test passed
 ; CHECK: float test passed
