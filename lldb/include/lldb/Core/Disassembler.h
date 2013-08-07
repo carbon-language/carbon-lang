@@ -248,6 +248,12 @@ public:
         eOptionMarkPCAddress    = (1u << 3)  // Mark the disassembly line the contains the PC
     };
 
+    enum HexImmediateStyle
+    {
+        eHexStyleC,
+        eHexStyleAsm,
+    };
+
     // FindPlugin should be lax about the flavor string (it is too annoying to have various internal uses of the
     // disassembler fail because the global flavor string gets set wrong.  Instead, if you get a flavor string you
     // don't understand, use the default.  Folks who care to check can use the FlavorValidForArchSpec method on the

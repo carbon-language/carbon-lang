@@ -22,6 +22,7 @@
 #include "lldb/Breakpoint/WatchpointList.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
@@ -46,14 +47,14 @@ typedef enum InlineStrategy
     eInlineBreakpointsHeaders,
     eInlineBreakpointsAlways
 } InlineStrategy;
-    
+
 typedef enum LoadScriptFromSymFile
 {
     eLoadScriptFromSymFileTrue,
     eLoadScriptFromSymFileFalse,
     eLoadScriptFromSymFileWarn
 } LoadScriptFromSymFile;
-    
+
 //----------------------------------------------------------------------
 // TargetProperties
 //----------------------------------------------------------------------
@@ -157,13 +158,19 @@ public:
     
     const char *
     GetExpressionPrefixContentsAsCString ();
-    
+
+    bool
+    GetUseHexImmediates() const;
+
     bool
     GetUseFastStepping() const;
-    
+
     LoadScriptFromSymFile
     GetLoadScriptFromSymbolFile() const;
-    
+
+    Disassembler::HexImmediateStyle
+    GetHexImmediateStyle() const;
+
 };
 
 typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;

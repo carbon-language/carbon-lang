@@ -158,6 +158,40 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show auto-confirm", SETTING_MSG("auto-confirm"),
             startstr = "auto-confirm (boolean) = false")
 
+    @unittest2.skipUnless(os.uname()[4] in ['i386', 'x86_64'], "requires x86 or x86_64")
+    def test_disassembler_settings(self):
+        """Test that user options for the disassembler take effect."""
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # AT&T syntax
+        self.runCmd("settings set target.x86-disassembly-flavor att")
+        self.runCmd("settings set target.use-hex-immediates false")
+        self.expect("disassemble -n numberfn",
+            substrs = ["$90"])
+        self.runCmd("settings set target.use-hex-immediates true")
+        self.runCmd("settings set target.hex-immediate-style c")
+        self.expect("disassemble -n numberfn",
+            substrs = ["$0x5a"])
+        self.runCmd("settings set target.hex-immediate-style asm")
+        self.expect("disassemble -n numberfn",
+            substrs = ["$5ah"])
+
+        # Intel syntax
+        self.runCmd("settings set target.x86-disassembly-flavor intel")
+        self.runCmd("settings set target.use-hex-immediates false")
+        self.expect("disassemble -n numberfn",
+            substrs = ["90"])
+        self.runCmd("settings set target.use-hex-immediates true")
+        self.runCmd("settings set target.hex-immediate-style c")
+        self.expect("disassemble -n numberfn",
+            substrs = ["0x5a"])
+        self.runCmd("settings set target.hex-immediate-style asm")
+        self.expect("disassemble -n numberfn",
+            substrs = ["5ah"])
+
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_run_args_and_env_vars_with_dsym(self):
@@ -390,6 +424,9 @@ class SettingsCommandTestCase(TestBase):
                                  "target.error-path",
                                  "target.disable-aslr",
                                  "target.disable-stdio",
+                                 "target.x86-disassembly-flavor",
+                                 "target.use-hex-immediates",
+                                 "target.hex-immediate-style",
                                  "target.process.disable-memory-cache",
                                  "target.process.extra-startup-command",
                                  "target.process.thread.step-avoid-regexp",

@@ -12,6 +12,11 @@
 #include <fstream>
 #include <iostream>
 
+int numberfn()
+{
+    return 0x5a;
+}
+
 int
 main(int argc, char const *argv[])
 {
@@ -66,5 +71,5 @@ main(int argc, char const *argv[])
     std::cout << "This message should go to standard out.\n";
 
     outfile.close();
-    return 0;
+    return numberfn();
 }

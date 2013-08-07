@@ -2297,6 +2297,14 @@ g_x86_dis_flavor_value_types[] =
 };
 
 static OptionEnumValueElement
+g_hex_immediate_style_values[] =
+{
+    { Disassembler::eHexStyleC,        "c",      "C-style (0xffff)."},
+    { Disassembler::eHexStyleAsm,      "asm",    "Asm-style (0ffffh)."},
+    { 0, NULL, NULL }
+};
+
+static OptionEnumValueElement
 g_load_script_from_sym_file_values[] =
 {
     { eLoadScriptFromSymFileTrue,    "true",    "Load debug scripts inside symbol files"},
@@ -2342,6 +2350,8 @@ g_properties[] =
         "file and line breakpoints." },
     // FIXME: This is the wrong way to do per-architecture settings, but we don't have a general per architecture settings system in place yet.
     { "x86-disassembly-flavor"             , OptionValue::eTypeEnum      , false, eX86DisFlavorDefault,       NULL, g_x86_dis_flavor_value_types, "The default disassembly flavor to use for x86 or x86-64 targets." },
+    { "use-hex-immediates"                 , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Show immediates in disassembly as hexadecimal." },
+    { "hex-immediate-style"                , OptionValue::eTypeEnum   ,    false, Disassembler::eHexStyleC,   NULL, g_hex_immediate_style_values, "Which style to use for printing hexadecimal disassembly values." },
     { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
     { "load-script-from-symbol-file"       , OptionValue::eTypeEnum   ,    false, eLoadScriptFromSymFileWarn, NULL, g_load_script_from_sym_file_values, "Allow LLDB to load scripting resources embedded in symbol files when available." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
@@ -2371,6 +2381,8 @@ enum
     ePropertyDisableSTDIO,
     ePropertyInlineStrategy,
     ePropertyDisassemblyFlavor,
+    ePropertyUseHexImmediates,
+    ePropertyHexImmediateStyle,
     ePropertyUseFastStepping,
     ePropertyLoadScriptFromSymbolFile,
 };
@@ -2735,6 +2747,13 @@ TargetProperties::GetBreakpointsConsultPlatformAvoidList ()
 }
 
 bool
+TargetProperties::GetUseHexImmediates () const
+{
+    const uint32_t idx = ePropertyUseHexImmediates;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+
+bool
 TargetProperties::GetUseFastStepping () const
 {
     const uint32_t idx = ePropertyUseFastStepping;
@@ -2746,6 +2765,13 @@ TargetProperties::GetLoadScriptFromSymbolFile () const
 {
     const uint32_t idx = ePropertyLoadScriptFromSymbolFile;
     return (LoadScriptFromSymFile)m_collection_sp->GetPropertyAtIndexAsEnumeration(NULL, idx, g_properties[idx].default_uint_value);
+}
+
+Disassembler::HexImmediateStyle
+TargetProperties::GetHexImmediateStyle () const
+{
+    const uint32_t idx = ePropertyHexImmediateStyle;
+    return (Disassembler::HexImmediateStyle)m_collection_sp->GetPropertyAtIndexAsEnumeration(NULL, idx, g_properties[idx].default_uint_value);
 }
 
 const TargetPropertiesSP &
