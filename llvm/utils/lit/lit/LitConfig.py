@@ -102,7 +102,7 @@ class LitConfig:
             dir = lit.Util.whichTools(tools, paths)
 
         # bash
-        self.bashPath = Util.which('bash', dir)
+        self.bashPath = lit.Util.which('bash', dir)
         if self.bashPath is None:
             self.note("Unable to find 'bash.exe'.")
             self.bashPath = ''
