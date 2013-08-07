@@ -368,9 +368,10 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     MCSymbol *MangSym =
       OutContext.GetOrCreateSymbol(GVSym->getName() + Twine("$tlv$init"));
 
-    if (GVKind.isThreadBSS())
+    if (GVKind.isThreadBSS()) {
+      TheSection = getObjFileLowering().getTLSBSSSection();
       OutStreamer.EmitTBSSSymbol(TheSection, MangSym, Size, 1 << AlignLog);
-    else if (GVKind.isThreadData()) {
+    } else if (GVKind.isThreadData()) {
       OutStreamer.SwitchSection(TheSection);
 
       EmitAlignment(AlignLog, GV);
