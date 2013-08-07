@@ -92,7 +92,7 @@ FunctionPass *createThreadSanitizerPass(StringRef BlacklistFile = StringRef());
 ModulePass *createDataFlowSanitizerPass(void *(*getArgTLS)() = 0,
                                         void *(*getRetValTLS)() = 0);
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(__linux__)
 inline ModulePass *createDataFlowSanitizerPassForJIT() {
   return createDataFlowSanitizerPass(getDFSanArgTLSPtrForJIT,
                                      getDFSanRetValTLSPtrForJIT);
