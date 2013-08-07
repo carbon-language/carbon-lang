@@ -353,7 +353,6 @@ void StatOutput(u64 *stat) {
   name[StatInt_realpath]                 = "  realpath                        ";
   name[StatInt_canonicalize_file_name]   = "  canonicalize_file_name          ";
   name[StatInt_confstr]                  = "  confstr                         ";
-  name[StatInt_sched_getaffinity]        = "  sched_getaffinity               ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

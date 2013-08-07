@@ -348,7 +348,6 @@ enum StatType {
   StatInt_realpath,
   StatInt_canonicalize_file_name,
   StatInt_confstr,
-  StatInt_sched_getaffinity,
 
   // Dynamic annotations.
   StatAnnotation,

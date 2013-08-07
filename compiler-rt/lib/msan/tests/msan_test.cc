@@ -2054,13 +2054,6 @@ TEST(MemorySanitizer, dlopenFailed) {
 
 #endif // MSAN_TEST_DISABLE_DLOPEN
 
-TEST(MemorySanitizer, sched_getaffinity) {
-  cpu_set_t mask;
-  int res = sched_getaffinity(getpid(), sizeof(mask), &mask);
-  ASSERT_EQ(0, res);
-  ASSERT_TRUE(CPU_ISSET(0, &mask));
-}
-
 TEST(MemorySanitizer, scanf) {
   const char *input = "42 hello";
   int* d = new int;
