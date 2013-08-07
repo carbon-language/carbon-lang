@@ -140,20 +140,22 @@ void lto_codegen_dispose(lto_code_gen_t cg) {
 /// which code will be generated. Returns true on error (check
 /// lto_get_error_message() for details).
 bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
-  return cg->addModule(mod, sLastErrorString);
+  return !cg->addModule(mod, sLastErrorString);
 }
 
 /// lto_codegen_set_debug_model - Sets what if any format of debug info should
 /// be generated. Returns true on error (check lto_get_error_message() for
 /// details).
 bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
-  return cg->setDebugInfo(debug, sLastErrorString);
+  cg->setDebugInfo(debug);
+  return false;
 }
 
 /// lto_codegen_set_pic_model - Sets what code model to generated. Returns true
 /// on error (check lto_get_error_message() for details).
 bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model) {
-  return cg->setCodePICModel(model, sLastErrorString);
+  cg->setCodePICModel(model);
+  return false;
 }
 
 /// lto_codegen_set_cpu - Sets the cpu to generate code for.
@@ -185,7 +187,7 @@ void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
 /// that contains the merged contents of all modules added so far. Returns true
 /// on error (check lto_get_error_message() for details).
 bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
-  return cg->writeMergedModules(path, sLastErrorString);
+  return !cg->writeMergedModules(path, sLastErrorString);
 }
 
 /// lto_codegen_compile - Generates code for all added modules into one native
@@ -202,7 +204,7 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
 /// native object file. The name of the file is written to name. Returns true on
 /// error.
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
-  return cg->compile_to_file(name, sLastErrorString);
+  return !cg->compile_to_file(name, sLastErrorString);
 }
 
 /// lto_codegen_debug_options - Used to pass extra options to the code

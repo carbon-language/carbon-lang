@@ -61,9 +61,11 @@ struct LTOCodeGenerator {
   LTOCodeGenerator();
   ~LTOCodeGenerator();
 
+  // Merge given module, return true on success.
   bool addModule(struct LTOModule*, std::string &errMsg);
-  bool setDebugInfo(lto_debug_model, std::string &errMsg);
-  bool setCodePICModel(lto_codegen_model, std::string &errMsg);
+
+  void setDebugInfo(lto_debug_model);
+  void setCodePICModel(lto_codegen_model);
 
   void setCpu(const char* mCpu) { _mCpu = mCpu; }
 
@@ -78,11 +80,13 @@ struct LTOCodeGenerator {
   //
   void setCodeGenDebugOptions(const char *opts);
 
+  // Write the merged module to the file specified by the given path.
+  // Return true on success.
   bool writeMergedModules(const char *path, std::string &errMsg);
 
   // Compile the merged module into a *single* object file; the path to object
-  // file is returned to the caller via argument "name". Return *FALSE* on
-  // *SUCCESS*, true otherwise. 
+  // file is returned to the caller via argument "name". Return true on
+  // success.
   //
   // NOTE that it is up to the linker to remove the intermediate object file.
   //  Do not try to remove the object file in LTOCodeGenerator's destructor
