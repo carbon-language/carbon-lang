@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 import os, signal, subprocess, sys
-import StringIO
-
+import re
 import platform
 import tempfile
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 
-import re
 import lit.ShUtil as ShUtil
 import lit.Test as Test
 import lit.Util as Util
@@ -436,22 +438,22 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     return script,isXFail,tmpBase,execdir
 
 def formatTestOutput(status, out, err, exitCode, script):
-    output = StringIO.StringIO()
-    output.write("Script:\n")
-    output.write("--\n")
-    output.write('\n'.join(script))
-    output.write("\n--\n")
-    output.write("Exit Code: %r\n\n" % exitCode)
+    output = StringIO()
+    output.write(u"Script:\n")
+    output.write(u"--\n")
+    output.write(u'\n'.join(script))
+    output.write(u"\n--\n")
+    output.write(u"Exit Code: %r\n\n" % exitCode)
     if out:
-        output.write("Command Output (stdout):\n")
-        output.write("--\n")
-        output.write(out)
-        output.write("--\n")
+        output.write(u"Command Output (stdout):\n")
+        output.write(u"--\n")
+        output.write(unicode(out))
+        output.write(u"--\n")
     if err:
-        output.write("Command Output (stderr):\n")
-        output.write("--\n")
-        output.write(err)
-        output.write("--\n")
+        output.write(u"Command Output (stderr):\n")
+        output.write(u"--\n")
+        output.write(unicode(err))
+        output.write(u"--\n")
     return (status, output.getvalue())
 
 def executeShTest(test, litConfig, useExternalSh,
