@@ -1,4 +1,7 @@
-// RUN: %clang_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clang_tsan -O1 %s -o %t || exit 1
+// RUN: not %t 2>&1 | FileCheck %s --check-prefix=NOZUPP
+// RUN: TSAN_OPTIONS="suppressions=%s.supp print_suppressions=1" not %t 2>&1 | FileCheck %s --check-prefix=SUPP
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,11 +37,14 @@ int main() {
   return 0;
 }
 
-// CHECK: WARNING: ThreadSanitizer: heap-use-after-free
-// CHECK:   Write of size 4 at {{.*}} by main thread{{.*}}:
-// CHECK:     #0 Thread2
-// CHECK:     #1 main
-// CHECK:   Previous write of size 8 at {{.*}} by thread T1{{.*}}:
-// CHECK:     #0 free
-// CHECK:     #{{(1|2)}} Thread1
-// CHECK: SUMMARY: ThreadSanitizer: heap-use-after-free{{.*}}Thread2
+// CHECK-NOZUPP: WARNING: ThreadSanitizer: heap-use-after-free
+// CHECK-NOZUPP:   Write of size 4 at {{.*}} by main thread{{.*}}:
+// CHECK-NOZUPP:     #0 Thread2
+// CHECK-NOZUPP:     #1 main
+// CHECK-NOZUPP:   Previous write of size 8 at {{.*}} by thread T1{{.*}}:
+// CHECK-NOZUPP:     #0 free
+// CHECK-NOZUPP:     #{{(1|2)}} Thread1
+// CHECK-NOZUPP: SUMMARY: ThreadSanitizer: heap-use-after-free{{.*}}Thread2
+// CHECK-SUPP:   ThreadSanitizer: Matched 1 suppressions
+// CHECK-SUPP:    1 race:^Thread2$
+
