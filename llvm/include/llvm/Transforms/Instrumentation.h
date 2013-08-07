@@ -16,6 +16,20 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#ifdef __GNUC__
+inline void *getDFSanArgTLSPtrForJIT() {
+  extern __thread __attribute__((tls_model("initial-exec")))
+    void *__dfsan_arg_tls;
+  return (void *)&__dfsan_arg_tls;
+}
+
+inline void *getDFSanRetValTLSPtrForJIT() {
+  extern __thread __attribute__((tls_model("initial-exec")))
+    void *__dfsan_retval_tls;
+  return (void *)&__dfsan_retval_tls;
+}
+#endif
+
 namespace llvm {
 
 class ModulePass;
@@ -73,6 +87,17 @@ FunctionPass *createMemorySanitizerPass(bool TrackOrigins = false,
 
 // Insert ThreadSanitizer (race detection) instrumentation
 FunctionPass *createThreadSanitizerPass(StringRef BlacklistFile = StringRef());
+
+// Insert DataFlowSanitizer (dynamic data flow analysis) instrumentation
+ModulePass *createDataFlowSanitizerPass(void *(*getArgTLS)() = 0,
+                                        void *(*getRetValTLS)() = 0);
+
+#ifdef __GNUC__
+inline ModulePass *createDataFlowSanitizerPassForJIT() {
+  return createDataFlowSanitizerPass(getDFSanArgTLSPtrForJIT,
+                                     getDFSanRetValTLSPtrForJIT);
+}
+#endif
 
 // BoundsChecking - This pass instruments the code to perform run-time bounds
 // checking on loads, stores, and other memory intrinsics.

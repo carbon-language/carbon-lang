@@ -30,6 +30,7 @@ void llvm::initializeInstrumentation(PassRegistry &Registry) {
   initializePathProfilerPass(Registry);
   initializeMemorySanitizerPass(Registry);
   initializeThreadSanitizerPass(Registry);
+  initializeDataFlowSanitizerPass(Registry);
 }
 
 /// LLVMInitializeInstrumentation - C binding for
