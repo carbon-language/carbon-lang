@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/FileSystem.h"
 #include <cstdio>
 #include <fcntl.h>
@@ -46,10 +47,11 @@ std::string sys::FindProgramByName(const std::string &progName) {
 
   // At this point, the file name is valid and does not contain slashes.
   // Let Windows search for it.
-  char buffer[MAX_PATH];
+  std::string buffer;
+  buffer.resize(MAX_PATH);
   char *dummy = NULL;
   DWORD len = SearchPath(NULL, progName.c_str(), ".exe", MAX_PATH,
-                         buffer, &dummy);
+                         &buffer[0], &dummy);
 
   // See if it wasn't found.
   if (len == 0)
@@ -57,19 +59,19 @@ std::string sys::FindProgramByName(const std::string &progName) {
 
   // See if we got the entire path.
   if (len < MAX_PATH)
-    return std::string(buffer);
+    return buffer;
 
   // Buffer was too small; grow and retry.
   while (true) {
-    char *b = reinterpret_cast<char *>(_alloca(len+1));
-    DWORD len2 = SearchPath(NULL, progName.c_str(), ".exe", len+1, b, &dummy);
+    buffer.resize(len+1);
+    DWORD len2 = SearchPath(NULL, progName.c_str(), ".exe", len+1, &buffer[0], &dummy);
 
     // It is unlikely the search failed, but it's always possible some file
     // was added or removed since the last search, so be paranoid...
     if (len2 == 0)
       return "";
     else if (len2 <= len)
-      return std::string(b);
+      return buffer;
 
     len = len2;
   }
@@ -193,8 +195,8 @@ static bool Execute(void **Data,
   }
 
   // Now build the command line.
-  char *command = reinterpret_cast<char *>(_alloca(len+1));
-  char *p = command;
+  OwningArrayPtr<char> command(new char[len+1]);
+  char *p = command.get();
 
   for (unsigned i = 0; args[i]; i++) {
     const char *arg = args[i];
@@ -225,7 +227,7 @@ static bool Execute(void **Data,
   *p = 0;
 
   // The pointer to the environment block for the new process.
-  char *envblock = 0;
+  OwningArrayPtr<char> envblock;
 
   if (envp) {
     // An environment block consists of a null-terminated block of
@@ -238,8 +240,8 @@ static bool Execute(void **Data,
       len += strlen(envp[i]) + 1;
 
     // Now build the environment block.
-    envblock = reinterpret_cast<char *>(_alloca(len+1));
-    p = envblock;
+    envblock.reset(new char[len+1]);
+    p = envblock.get();
 
     for (unsigned i = 0; envp[i]; i++) {
       const char *ev = envp[i];
@@ -297,8 +299,8 @@ static bool Execute(void **Data,
   fflush(stdout);
   fflush(stderr);
   std::string ProgramStr = Program;
-  BOOL rc = CreateProcess(ProgramStr.c_str(), command, NULL, NULL, TRUE, 0,
-                          envblock, NULL, &si, &pi);
+  BOOL rc = CreateProcess(ProgramStr.c_str(), command.get(), NULL, NULL, TRUE,
+                          0, envblock.get(), NULL, &si, &pi);
   DWORD err = GetLastError();
 
   // Regardless of whether the process got created or not, we are done with
