@@ -72,9 +72,9 @@ int main()
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #if _LIBCPP_STD_VER > 11
-	constexpr int i1 = std::move(23);
-	static_assert(i1 == 23, "" );
-	constexpr int i2 = std::forward<int>(42);
-	static_assert(i2 == 42, "" );
+    constexpr int i1 = std::move(23);
+    static_assert(i1 == 23, "" );
+    constexpr int i2 = std::forward<int>(42);
+    static_assert(i2 == 42, "" );
 #endif
 }

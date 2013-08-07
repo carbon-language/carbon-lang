@@ -50,8 +50,8 @@ test()
     assert(!(lhs != rhs));
     }
 
-	test_constexpr<T> ();
-	}
+    test_constexpr<T> ();
+    }
 
 int main()
 {

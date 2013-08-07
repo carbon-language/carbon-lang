@@ -15,6 +15,6 @@ int main()
 #if _LIBCPP_STD_VER > 11 
     using namespace std::literals;
 
-	std::string foo  =   ""s;
+    std::string foo  =   ""s;
 #endif
 }

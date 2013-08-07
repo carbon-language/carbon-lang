@@ -61,9 +61,9 @@ int main()
     static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy&>::value), "");
 
 #if _LIBCPP_STD_VER > 11
-	constexpr int i1 = 23;
-	constexpr int i2 = std::move_if_noexcept(i1);
-	static_assert(i2 == 23, "" );
+    constexpr int i1 = 23;
+    constexpr int i2 = std::move_if_noexcept(i1);
+    static_assert(i2 == 23, "" );
 #endif
 
 }

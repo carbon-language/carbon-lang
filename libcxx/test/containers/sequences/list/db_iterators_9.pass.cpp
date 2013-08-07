@@ -27,7 +27,7 @@ int main()
 {
 #if _LIBCPP_STD_VER > 11
     {
-	unsigned lib_asserts;
+    unsigned lib_asserts;
 
     typedef S T;
     typedef std::list<T> C;

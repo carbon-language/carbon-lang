@@ -28,8 +28,8 @@ test(typename std::enable_if<std::is_integral<T>::value>::type* = 0)
 #if _LIBCPP_STD_VER > 11
     constexpr T val {x};
     static_assert(std::imag(val) == 0, "");
-	constexpr std::complex<T> t{val, val};
-	static_assert(t.imag() == x, "" );
+    constexpr std::complex<T> t{val, val};
+    static_assert(t.imag() == x, "" );
 #endif    
 }
 
@@ -42,8 +42,8 @@ test(typename std::enable_if<!std::is_integral<T>::value>::type* = 0)
 #if _LIBCPP_STD_VER > 11
     constexpr T val {x};
     static_assert(std::imag(val) == 0, "");
-	constexpr std::complex<T> t{val, val};
-	static_assert(t.imag() == x, "" );
+    constexpr std::complex<T> t{val, val};
+    static_assert(t.imag() == x, "" );
 #endif    
 }
 

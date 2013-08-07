@@ -13,7 +13,7 @@
 int main()
 {
 #if _LIBCPP_STD_VER > 11 
-	std::string foo  =   ""s;  // should fail w/conversion operator not found
+    std::string foo  =   ""s;  // should fail w/conversion operator not found
 #else
 #error
 #endif
