@@ -1,7 +1,7 @@
 // Test that stacks of non-main threads are included in the root set.
 // RUN: LSAN_BASE="report_objects=1:use_registers=0"
 // RUN: %clangxx_lsan -pthread %s -o %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE:"use_stacks=0" %t 2>&1 | FileCheck %s
+// RUN: LSAN_OPTIONS=$LSAN_BASE:"use_stacks=0" not %t 2>&1 | FileCheck %s
 // RUN: LSAN_OPTIONS=$LSAN_BASE:"use_stacks=1" %t 2>&1
 // RUN: LSAN_OPTIONS="" %t 2>&1
 
