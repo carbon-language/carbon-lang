@@ -1087,10 +1087,10 @@ static bool isContainedInAnonNamespace(DIE *Die) {
 /// Test if the current CU language is C++ and that we have
 /// a named type that is not contained in an anonymous namespace.
 static bool shouldAddODRHash(CompileUnit *CU, DIE *Die) {
-  return (CU->getLanguage() == dwarf::DW_LANG_C_plus_plus &&
-          getDIEStringAttr(Die, dwarf::DW_AT_name) != "" &&
-          !isContainedInAnonNamespace(Die));
-}
+  return CU->getLanguage() == dwarf::DW_LANG_C_plus_plus &&
+         getDIEStringAttr(Die, dwarf::DW_AT_name) != "" &&
+         !isContainedInAnonNamespace(Die);
+ }
 
 void DwarfDebug::finalizeModuleInfo() {
   // Collect info for variables that were optimized out.
