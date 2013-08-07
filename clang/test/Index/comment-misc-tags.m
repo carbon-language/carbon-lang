@@ -119,6 +119,7 @@ struct Test {int filler;};
 @property (nonatomic, copy,   readwrite) NSString *     property1;
 @property (nonatomic, copy,   readwrite) NSString *     property2;        ///< This is the second property and it does not work.
 @property (nonatomic, copy,   readwrite) NSString *     property3;        /**< This is the third property and it does not work. */
+- (void)test; /*!< documentation for test method */
 @end
 // CHECK:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
@@ -132,3 +133,7 @@ struct Test {int filler;};
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
 // CHECK-NEXT:         (CXComment_Text Text=[ This is the third property and it does not work. ])))]
+// CHECK:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ documentation for test method ])))]
