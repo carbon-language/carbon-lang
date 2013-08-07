@@ -223,6 +223,7 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/StringPool.h"
+#include "llvm/ADT/SmallSet.h"
 #include "PreprocessorTracker.h"
 
 namespace Modularize {
@@ -806,6 +807,7 @@ public:
   // Handle entering a preprocessing session.
   void handlePreprocessorEntry(clang::Preprocessor &PP,
                                llvm::StringRef rootHeaderFile) {
+    HeadersInThisCompile.clear();
     assert((HeaderStack.size() == 0) && "Header stack should be empty.");
     pushHeaderHandle(addHeader(rootHeaderFile));
     PP.addPPCallbacks(new PreprocessorCallbacks(*this, PP, rootHeaderFile));
@@ -819,12 +821,11 @@ public:
     if (HeaderPath.startswith("<"))
       return;
     HeaderHandle H = addHeader(HeaderPath);
-    if (H != getCurrentHeaderHandle()) {
-      // Check for nested header.
-      if (!InNestedHeader)
-        InNestedHeader = isHeaderHandleInStack(H);
+    if (H != getCurrentHeaderHandle())
       pushHeaderHandle(H);
-    }
+    // Check for nested header.
+    if (!InNestedHeader)
+      InNestedHeader = !HeadersInThisCompile.insert(H);
   }
   // Handle exiting a header source file.
   void handleHeaderExit(llvm::StringRef HeaderPath) {
@@ -1167,6 +1168,7 @@ private:
   std::vector<HeaderHandle> HeaderStack;
   std::vector<HeaderInclusionPath> InclusionPaths;
   InclusionPathHandle CurrentInclusionPathHandle;
+  llvm::SmallSet<HeaderHandle, 128> HeadersInThisCompile;
   MacroExpansionMap MacroExpansions;
   ConditionalExpansionMap ConditionalExpansions;
   bool InNestedHeader;
