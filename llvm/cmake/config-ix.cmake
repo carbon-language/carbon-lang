@@ -214,7 +214,6 @@ endif()
 check_type_exists(int64_t "${headers}" HAVE_INT64_T)
 check_type_exists(uint64_t "${headers}" HAVE_UINT64_T)
 check_type_exists(u_int64_t "${headers}" HAVE_U_INT64_T)
-check_type_exists(error_t errno.h HAVE_ERROR_T)
 
 # available programs checks
 function(llvm_find_program name)
@@ -392,20 +391,20 @@ if( MINGW )
   #   CHECK_LIBRARY_EXISTS(imagehlp ??? . HAVE_LIBIMAGEHLP)
 endif( MINGW )
 
+if (NOT HAVE_STRTOLL)
+  # Use _strtoi64 if strtoll is not available.
+  check_symbol_exists(_strtoi64 stdlib.h have_strtoi64)
+  if (have_strtoi64)
+    set(HAVE_STRTOLL 1)
+    set(strtoll "_strtoi64")
+    set(strtoull "_strtoui64")
+  endif ()
+endif ()
+
 if( MSVC )
-  set(error_t int)
-  set(LTDL_SYSSEARCHPATH "")
-  set(LTDL_DLOPEN_DEPLIBS 1)
   set(SHLIBEXT ".lib")
-  set(LTDL_OBJDIR "_libs")
-  set(HAVE_STRTOLL 1)
-  set(strtoll "_strtoi64")
-  set(strtoull "_strtoui64")
   set(stricmp "_stricmp")
   set(strdup "_strdup")
-else( MSVC )
-  set(LTDL_SYSSEARCHPATH "") # TODO
-  set(LTDL_DLOPEN_DEPLIBS 0)  # TODO
 endif( MSVC )
 
 if( PURE_WINDOWS )

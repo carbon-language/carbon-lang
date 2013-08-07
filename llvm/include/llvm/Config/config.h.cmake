@@ -653,9 +653,6 @@
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
-/* Define to a type to use for `error_t' if it is not otherwise available. */
-#cmakedefine error_t ${error_t}
-
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
 
