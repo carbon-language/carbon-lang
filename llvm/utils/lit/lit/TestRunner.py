@@ -465,9 +465,6 @@ def executeShTest(test, litConfig, useExternalSh,
 
     script, isXFail, tmpBase, execdir = res
 
-    if litConfig.noExecute:
-        return (Test.PASS, '')
-
     # Create the output directory if it does not already exist.
     Util.mkdir_p(os.path.dirname(tmpBase))
 

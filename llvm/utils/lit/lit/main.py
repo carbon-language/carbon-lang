@@ -214,9 +214,6 @@ def main(builtinParameters = {}):
     group.add_option("", "--time-tests", dest="timeTests",
                      help="Track elapsed wall time for each test",
                      action="store_true", default=False)
-    group.add_option("", "--no-execute", dest="noExecute",
-                     help="Don't execute any tests (assume PASS)",
-                     action="store_true", default=False)
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Test Selection")
@@ -283,7 +280,6 @@ def main(builtinParameters = {}):
                                     useValgrind = opts.useValgrind,
                                     valgrindLeakCheck = opts.valgrindLeakCheck,
                                     valgrindArgs = opts.valgrindArgs,
-                                    noExecute = opts.noExecute,
                                     debug = opts.debug,
                                     isWindows = (platform.system()=='Windows'),
                                     params = userParams,

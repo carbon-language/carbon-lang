@@ -232,7 +232,6 @@ def load_test_suite(inputs):
                                     useValgrind = False,
                                     valgrindLeakCheck = False,
                                     valgrindArgs = [],
-                                    noExecute = False,
                                     debug = False,
                                     isWindows = (platform.system()=='Windows'),
                                     params = {})
