@@ -126,6 +126,36 @@ globals defined in another translation unit. To enable this check at runtime,
 you should set environment variable
 ``ASAN_OPTIONS=check_initialization_order=1``.
 
+Blacklist
+---------
+
+AddressSanitizer supports ``src`` and ``fun`` entity types in
+:doc:`SanitizerSpecialCaseList`, that can be used to suppress error reports
+in the specified source files or functions. Additionally, AddressSanitizer
+introduces ``global`` and ``type`` entity types that can be used to
+suppress error reports for out-of-bound access to globals with certain
+names and types (you may only specify class or struct types).
+
+You may use an ``init`` category to suppress reports about initialization-order
+problems happening in certain source files or with certain global variables.
+
+.. code-block:: bash
+
+    # Suppress error reports for code in a file or in a function:
+    src:bad_file.cpp
+    # Ignore all functions with names containing MyFooBar:
+    fun:*MyFooBar*
+    # Disable out-of-bound checks for global:
+    global:bad_array
+    # Disable out-of-bound checks for global instances of a given class ...
+    type:class.Namespace::BadClassName
+    # ... or a given struct. Use wildcard to deal with anonymous namespace.
+    type:struct.Namespace2::*::BadStructName
+    # Disable initialization-order checks for globals:
+    global:bad_init_global=init
+    type:*BadInitClassSubstring*=init
+    src:bad/init/files/*=init
+
 Supported Platforms
 ===================
 

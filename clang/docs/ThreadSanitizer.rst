@@ -97,6 +97,13 @@ supported by other compilers, so we suggest to use it together with
 ``__has_feature(thread_sanitizer)``. Note: currently, this attribute will be
 lost if the function is inlined.
 
+Blacklist
+---------
+
+ThreadSanitizer supports ``src`` and ``fun`` entity types in
+:doc:`SanitizerSpecialCaseList`, that can be used to suppress data race reports in
+the specified source files or functions.
+
 Limitations
 -----------
 
