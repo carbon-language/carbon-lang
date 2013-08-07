@@ -930,6 +930,8 @@ void UnwrappedLineParser::parseEnum() {
       nextToken();
   }
   if (FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman)
+      addUnwrappedLine();
     nextToken();
     addUnwrappedLine();
     ++Line->Level;

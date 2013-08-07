@@ -1710,6 +1710,9 @@ private:
                                       unsigned Limit) {
     if (Limit == 0)
       return;
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman &&
+        (I + 1)->First->is(tok::l_brace))
+      return;
     if ((I + 1)->InPPDirective != I->InPPDirective ||
         ((I + 1)->InPPDirective && (I + 1)->First->HasUnescapedNewline))
       return;

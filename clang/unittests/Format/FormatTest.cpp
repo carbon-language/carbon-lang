@@ -5530,6 +5530,37 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "  }\n"
                "}\n",
                BreakBeforeBrace);
+
+  verifyFormat("enum X\n"
+               "{\n"
+               "  Y = 0,\n"
+               "}\n",
+               BreakBeforeBrace);
+
+  FormatStyle BreakBeforeBraceShortIfs = BreakBeforeBrace;
+  BreakBeforeBraceShortIfs.AllowShortIfStatementsOnASingleLine = true;
+  BreakBeforeBraceShortIfs.AllowShortLoopsOnASingleLine = true;
+  verifyFormat("void f(bool b)\n"
+               "{\n"
+               "  if (b)\n"
+               "  {\n"
+               "    return;\n"
+               "  }\n"
+               "}\n",
+               BreakBeforeBraceShortIfs);
+  verifyFormat("void f(bool b)\n"
+               "{\n"
+               "  if (b) return;\n"
+               "}\n",
+               BreakBeforeBraceShortIfs);
+  verifyFormat("void f(bool b)\n"
+               "{\n"
+               "  while (b)\n"
+               "  {\n"
+               "    return;\n"
+               "  }\n"
+               "}\n",
+               BreakBeforeBraceShortIfs);
 }
 
 TEST_F(FormatTest, UnderstandsPragmas) {
