@@ -346,7 +346,8 @@ void MCMachOStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   if (!Symbol)
     return;
 
-  // FIXME: Assert that this section has the zerofill type.
+  // On darwin all virtual sections have zerofill type.
+  assert(Section->isVirtualSection() && "Section does not have zerofill type!");
 
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
