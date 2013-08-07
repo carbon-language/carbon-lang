@@ -966,21 +966,13 @@ void DwarfDebug::collectDeadVariables() {
 typedef ArrayRef<uint8_t> HashValue;
 
 /// \brief Grabs the string in whichever attribute is passed in and returns
-/// a reference to it.
+/// a reference to it. Returns "" if the attribute doesn't exist.
 static StringRef getDIEStringAttr(DIE *Die, unsigned Attr) {
-  const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
-  const DIEAbbrev &Abbrevs = Die->getAbbrev();
+  DIEValue *V = Die->findAttribute(Attr);
 
-  // Iterate through all the attributes until we find the one we're
-  // looking for, if we can't find it return an empty string.
-  for (size_t i = 0; i < Values.size(); ++i) {
-    if (Abbrevs.getData()[i].getAttribute() == Attr) {
-      DIEValue *V = Values[i];
-      assert(isa<DIEString>(V) && "String requested. Not a string.");
-      DIEString *S = cast<DIEString>(V);
-      return S->getString();
-    }
-  }
+  if (DIEString *S = dyn_cast_or_null<DIEString>(V))
+    return S->getString();
+
   return StringRef("");
 }
 

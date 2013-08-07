@@ -175,6 +175,10 @@ namespace llvm {
       Child->Parent = this;
     }
 
+    /// findAttribute - Find a value in the DIE with the attribute given, returns NULL
+    /// if no such attribute exists.
+    DIEValue *findAttribute(unsigned Attribute);
+
 #ifndef NDEBUG
     void print(raw_ostream &O, unsigned IndentCount = 0) const;
     void dump();

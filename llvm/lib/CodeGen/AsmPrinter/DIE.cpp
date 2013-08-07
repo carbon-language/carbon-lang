@@ -122,6 +122,18 @@ DIE *DIE::getCompileUnit() {
   llvm_unreachable("We should not have orphaned DIEs.");
 }
 
+DIEValue *DIE::findAttribute(unsigned Attribute) {
+  const SmallVectorImpl<DIEValue *> &Values = getValues();
+  const DIEAbbrev &Abbrevs = getAbbrev();
+
+  // Iterate through all the attributes until we find the one we're
+  // looking for, if we can't find it return NULL.
+  for (size_t i = 0; i < Values.size(); ++i)
+    if (Abbrevs.getData()[i].getAttribute() == Attribute)
+      return Values[i];
+  return NULL;
+}
+
 #ifndef NDEBUG
 void DIE::print(raw_ostream &O, unsigned IndentCount) const {
   const std::string Indent(IndentCount, ' ');
