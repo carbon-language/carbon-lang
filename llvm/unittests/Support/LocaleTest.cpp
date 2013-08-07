@@ -40,7 +40,7 @@ TEST(Locale, columnWidth) {
 
   // FIXME: MacOS implementation of columnWidth seems to not handle incorrect
   // UTF-8 sequences.
-#ifndef __MACOSX__
+#ifndef __APPLE__
   // Invalid UTF-8 strings, columnWidth should error out.
   EXPECT_EQ(-2, columnWidth("\344"));
   EXPECT_EQ(-2, columnWidth("\344\270"));
@@ -58,7 +58,7 @@ TEST(Locale, columnWidth) {
   // characters.
   EXPECT_EQ(-2, columnWidth("\370\200\200\200\200"));     // U+200000
   EXPECT_EQ(-2, columnWidth("\374\200\200\200\200\200")); // U+4000000
-#endif // __MACOSX__
+#endif // __APPLE__
 }
 
 TEST(Locale, isPrint) {
@@ -74,15 +74,15 @@ TEST(Locale, isPrint) {
 
   EXPECT_EQ(true, isPrint(0xAC));
   // FIXME: Figure out if we want to treat SOFT HYPHEN as printable character.
-#ifndef __MACOSX__
+#ifndef __APPLE__
   EXPECT_EQ(false, isPrint(0xAD)); // SOFT HYPHEN
-#endif // __MACOSX__
+#endif // __APPLE__
   EXPECT_EQ(true, isPrint(0xAE));
 
   // MacOS implementation doesn't think it's printable.
-#ifndef __MACOSX__
+#ifndef __APPLE__
   EXPECT_EQ(true, isPrint(0x0377)); // GREEK SMALL LETTER PAMPHYLIAN DIGAMMA
-#endif // __MACOSX__
+#endif // __APPLE__
   EXPECT_EQ(false, isPrint(0x0378)); // <reserved-0378>..<reserved-0379>
 
   EXPECT_EQ(false, isPrint(0x0600)); // ARABIC NUMBER SIGN
