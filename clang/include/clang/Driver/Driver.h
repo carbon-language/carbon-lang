@@ -129,6 +129,9 @@ public:
   /// Whether the driver is just the preprocessor.
   bool CCCIsCPP() const { return Mode == CPPMode; }
 
+  /// Whether the driver should follow cl.exe like behavior.
+  bool IsCLMode() const { return Mode == CLMode; }
+
   /// Only print tool bindings, don't build any jobs.
   unsigned CCCPrintBindings : 1;
 

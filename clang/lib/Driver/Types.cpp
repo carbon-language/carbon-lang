@@ -44,7 +44,9 @@ types::ID types::getPreprocessedType(ID Id) {
   return getInfo(Id).PreprocessedType;
 }
 
-const char *types::getTypeTempSuffix(ID Id) {
+const char *types::getTypeTempSuffix(ID Id, bool CLMode) {
+  if (Id == TY_Object && CLMode)
+    return "obj";
   return getInfo(Id).TempSuffix;
 }
 
@@ -135,6 +137,7 @@ types::ID types::lookupTypeForExtension(const char *Ext) {
            .Case("s", TY_PP_Asm)
            .Case("S", TY_Asm)
            .Case("o", TY_Object)
+           .Case("obj", TY_Object)
            .Case("ii", TY_PP_CXX)
            .Case("mi", TY_PP_ObjC)
            .Case("mm", TY_ObjCXX)

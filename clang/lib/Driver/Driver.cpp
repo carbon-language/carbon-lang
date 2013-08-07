@@ -1589,7 +1589,8 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     StringRef Name = llvm::sys::path::filename(BaseInput);
     std::pair<StringRef, StringRef> Split = Name.split('.');
     std::string TmpName =
-      GetTemporaryPath(Split.first, types::getTypeTempSuffix(JA.getType()));
+      GetTemporaryPath(Split.first,
+          types::getTypeTempSuffix(JA.getType(), IsCLMode()));
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
 
@@ -1620,8 +1621,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
       if (llvm::sys::path::has_extension(Filename.str()))
         Filename = Filename.substr(0, Filename.rfind("."));
       Filename.append(".");
-      // FIXME: For clang-cl, we want .obj rather than .o for object files.
-      Filename.append(types::getTypeTempSuffix(types::TY_Object));
+      Filename.append(types::getTypeTempSuffix(types::TY_Object, IsCLMode()));
     }
 
     NamedOutput = C.getArgs().MakeArgString(Filename.c_str());
@@ -1665,7 +1665,8 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
       StringRef Name = llvm::sys::path::filename(BaseInput);
       std::pair<StringRef, StringRef> Split = Name.split('.');
       std::string TmpName =
-        GetTemporaryPath(Split.first, types::getTypeTempSuffix(JA.getType()));
+        GetTemporaryPath(Split.first,
+            types::getTypeTempSuffix(JA.getType(), IsCLMode()));
       return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
     }
   }
