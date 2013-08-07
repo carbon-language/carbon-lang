@@ -490,10 +490,9 @@ class ConcurrentEventsTestCase(TestBase):
             # There should be a single active thread (the main one) which hit the breakpoint after joining
             self.assertEqual(1, self.finish_breakpoint.GetHitCount(), "Expected main thread (finish) breakpoint to be hit once")
 
-            # llvm.org/pr16603 -- LLDB on Linux sometimes reports exited threads as still 'running'
-            #num_threads = self.inferior_process.GetNumThreads()
-            #self.assertEqual(1, num_threads, "Expecting 1 thread but seeing %d. Details:%s" % (num_threads,
-            #                                                                                 "\n\t".join(self.describe_threads())))
+            num_threads = self.inferior_process.GetNumThreads()
+            self.assertEqual(1, num_threads, "Expecting 1 thread but seeing %d. Details:%s" % (num_threads,
+                                                                                             "\n\t".join(self.describe_threads())))
             self.runCmd("continue")
 
             # The inferior process should have exited without crashing
