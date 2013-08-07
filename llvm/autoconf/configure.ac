@@ -1072,6 +1072,17 @@ AC_ARG_WITH(bug-report-url,
 AC_DEFINE_UNQUOTED(BUG_REPORT_URL,"$withval",
                    [Bug report URL.])
 
+dnl --enable-curses: check whether the user wants to control use of curses:
+AC_ARG_ENABLE(curses,AS_HELP_STRING(
+  [--enable-curses],
+  [Use curses for querying terminal infomation if available (default is YES)]),
+  [case "$enableval" in
+    yes) llvm_cv_enable_curses="yes" ;;
+    no)  llvm_cv_enable_curses="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-curses. Use "yes" or "no"]) ;;
+  esac],
+  llvm_cv_enable_curses="yes")
+
 dnl --enable-libffi : check whether the user wants to turn off libffi:
 AC_ARG_ENABLE(libffi,AS_HELP_STRING(
   --enable-libffi,[Check for the presence of libffi (default is NO)]),
@@ -1378,6 +1389,14 @@ dnl macros to detect whether clock_gettime is available, this just finds the
 dnl right libraries to link with.
 AC_SEARCH_LIBS(clock_gettime,rt)
 
+dnl The curses library is optional; used for querying terminal info
+if test "$llvm_cv_enable_curses" = "yes" ; then
+  dnl We need the has_color functionality in curses for it to be useful.
+  AC_SEARCH_LIBS(has_colors,curses ncurses ncursesw,
+                 AC_DEFINE([HAVE_CURSES],[1],
+                           [Define if curses provides the has_color() function on this platform.]))
+fi
+
 dnl libffi is optional; used to call external functions from the interpreter
 if test "$llvm_cv_enable_libffi" = "yes" ; then
   AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],
@@ -1552,6 +1571,11 @@ if test "$LLVM_ENABLE_ZLIB" -eq 1 ; then
                    AC_SUBST(HAVE_LIBZ, 0))
 else
   AC_SUBST(HAVE_LIBZ, 0)
+fi
+
+dnl Try to find a suitable curses header.
+if test "$llvm_cv_enable_curses" = "yes" ; then
+  AC_CHECK_HEADERS([curses.h ncurses.h ncursesw.h ncurses/curses.h ncursesw/curses.h])
 fi
 
 dnl Try to find ffi.h.

@@ -48,6 +48,12 @@
 /* Define to 1 if you have the `closedir' function. */
 #cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
 
+/* Define if curses provides the has_color() function on this platform. */
+#cmakedefine HAVE_CURSES
+
+/* Define to 1 if you have the <curses.h> header file. */
+#cmakedefine HAVE_CURSES_H
+
 /* Define to 1 if you have the <cxxabi.h> header file. */
 #cmakedefine HAVE_CXXABI_H ${HAVE_CXXABI_H}
 
@@ -255,6 +261,18 @@
 
 /* Define if mmap() can map files into memory */
 #undef HAVE_MMAP_FILE
+
+/* Define to 1 if you have the <ncursesw/curses.h> header file. */
+#cmakedefine HAVE_NCURSESW_CURSES_H
+
+/* Define to 1 if you have the <ncursesw.h> header file. */
+#cmakedefine HAVE_NCURSESW_H
+
+/* Define to 1 if you have the <ncurses/curses.h> header file. */
+#cmakedefine HAVE_NCURSES_CURSES_H
+
+/* Define to 1 if you have the <ncurses.h> header file. */
+#cmakedefine HAVE_NCURSES_H
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #cmakedefine HAVE_NDIR_H ${HAVE_NDIR_H}

@@ -13,6 +13,8 @@
 
 #include "Unix.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/TimeValue.h"
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -34,6 +36,25 @@
 #endif
 #ifdef HAVE_TERMIOS_H
 #  include <termios.h>
+#endif
+
+// See if we can use curses to detect information about a terminal when
+// connected to one.
+#ifdef HAVE_CURSES
+# if defined(HAVE_CURSES_H)
+#  include <curses.h>
+# elif defined(HAVE_NCURSES_H)
+#  include <ncurses.h>
+# elif defined(HAVE_NCURSESW_H)
+#  include <ncursesw.h>
+# elif defined(HAVE_NCURSES_CURSES_H)
+#  include <ncurses/curses.h>
+# elif defined(HAVE_NCURSESW_CURSES_H)
+#  include <ncursesw/curses.h>
+# else
+#  error Have a curses library but unable to find a curses header!
+# endif
+# include <term.h>
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -245,22 +266,32 @@ unsigned Process::StandardErrColumns() {
   return getColumns(2);
 }
 
-static bool terminalHasColors() {
-  if (const char *term = std::getenv("TERM")) {
-    // Most modern terminals support ANSI escape sequences for colors.
-    // We could check terminfo, or have a list of known terms that support
-    // colors, but that would be overkill.
-    // The user can always ask for no colors by setting TERM to dumb, or
-    // using a commandline flag.
-    return strcmp(term, "dumb") != 0;
-  }
+static bool terminalHasColors(int fd) {
+#ifdef HAVE_CURSES
+  // First, acquire a global lock because the curses C routines are thread
+  // hostile.
+  static sys::Mutex M;
+  MutexGuard G(M);
+
+  int errret = 0;
+  if (setupterm((char *)0, fd, &errret) != OK)
+    // Regardless of why, if we can't get terminfo, we shouldn't try to print
+    // colors.
+    return false;
+
+  // Test whether the terminal as set up supports color output.
+  if (has_colors() == TRUE)
+    return true;
+#endif
+
+  // Otherwise, be conservative.
   return false;
 }
 
 bool Process::FileDescriptorHasColors(int fd) {
   // A file descriptor has colors if it is displayed and the terminal has
   // colors.
-  return FileDescriptorIsDisplayed(fd) && terminalHasColors();
+  return FileDescriptorIsDisplayed(fd) && terminalHasColors(fd);
 }
 
 bool Process::StandardOutHasColors() {
