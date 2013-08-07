@@ -100,6 +100,9 @@ class GoogleTest(object):
         if litConfig.useValgrind:
             cmd = litConfig.valgrindArgs + cmd
 
+        if litConfig.noExecute:
+            return Test.PASS, ''
+
         out, err, exitCode = lit.TestRunner.executeCommand(
             cmd, env=test.config.environment)
 
