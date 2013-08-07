@@ -5288,10 +5288,7 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, SDLoc dl,
                              LD->getPointerInfo().getWithOffset(StartOffset),
                              false, false, false, 0);
 
-    SmallVector<int, 8> Mask;
-    for (unsigned i = 0; i != NumElems; ++i)
-      Mask.push_back(EltNo);
-
+    SmallVector<int, 8> Mask(NumElems, EltNo);
     return DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), &Mask[0]);
   }
 
