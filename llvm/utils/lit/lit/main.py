@@ -59,14 +59,14 @@ class TestingProgressDisplay:
         if self.progressBar:
             self.progressBar.clear()
 
-        print '%s: %s (%d of %d)' % (test.result.name, test.getFullName(),
-                                     self.completed, self.numTests)
+        print('%s: %s (%d of %d)' % (test.result.name, test.getFullName(),
+                                     self.completed, self.numTests))
 
         if test.result.isFailure and self.opts.showOutput:
-            print "%s TEST '%s' FAILED %s" % ('*'*20, test.getFullName(),
-                                              '*'*20)
-            print test.output
-            print "*" * 20
+            print("%s TEST '%s' FAILED %s" % ('*'*20, test.getFullName(),
+                                              '*'*20))
+            print(test.output)
+            print("*" * 20)
 
         sys.stdout.flush()
 
@@ -125,7 +125,7 @@ class Tester(threading.Thread):
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
             # bonkers with ctrl-c and we start forking merrily.
-            print '\nCtrl-C detected, goodbye.'
+            print('\nCtrl-C detected, goodbye.')
             os.kill(0,9)
         except:
             if self.litConfig.debug:
@@ -299,19 +299,19 @@ def main(builtinParameters = {}):
 
         # Show the suites, if requested.
         if opts.showSuites:
-            print '-- Test Suites --'
+            print('-- Test Suites --')
             for ts,ts_tests in suitesAndTests:
-                print '  %s - %d tests' %(ts.name, len(ts_tests))
-                print '    Source Root: %s' % ts.source_root
-                print '    Exec Root  : %s' % ts.exec_root
+                print('  %s - %d tests' %(ts.name, len(ts_tests)))
+                print('    Source Root: %s' % ts.source_root)
+                print('    Exec Root  : %s' % ts.exec_root)
 
         # Show the tests, if requested.
         if opts.showTests:
-            print '-- Available Tests --'
+            print('-- Available Tests --')
             for ts,ts_tests in suitesAndTests:
                 ts_tests.sort(key = lambda test: test.path_in_suite)
                 for test in ts_tests:
-                    print '  %s' % (test.getFullName(),)
+                    print('  %s' % (test.getFullName(),))
         
     # Select and order the tests.
     numTotalTests = len(tests)
@@ -357,10 +357,10 @@ def main(builtinParameters = {}):
                 tc = ProgressBar.TerminalController()
                 progressBar = ProgressBar.ProgressBar(tc, header)
             except ValueError:
-                print header
+                print(header)
                 progressBar = ProgressBar.SimpleProgressBar('Testing: ')
         else:
-            print header
+            print(header)
 
     startTime = time.time()
     display = TestingProgressDisplay(opts, len(tests), progressBar)
@@ -380,7 +380,7 @@ def main(builtinParameters = {}):
     display.finish()
 
     if not opts.quiet:
-        print 'Testing Time: %.2fs'%(time.time() - startTime)
+        print('Testing Time: %.2fs'%(time.time() - startTime))
 
     # Update results for any tests which weren't run.
     for t in tests:
@@ -403,10 +403,10 @@ def main(builtinParameters = {}):
         elts = byCode.get(code)
         if not elts:
             continue
-        print '*'*20
-        print '%s (%d):' % (title, len(elts))
+        print('*'*20)
+        print('%s (%d):' % (title, len(elts)))
         for t in elts:
-            print '    %s' % t.getFullName()
+            print('    %s' % t.getFullName())
         print
 
     if opts.timeTests:
@@ -431,7 +431,7 @@ def main(builtinParameters = {}):
             continue
         N = len(byCode.get(code,[]))
         if N:
-            print '  %s: %d' % (name,N)
+            print('  %s: %d' % (name,N))
 
     # If we encountered any additional errors, exit abnormally.
     if litConfig.numErrors:
