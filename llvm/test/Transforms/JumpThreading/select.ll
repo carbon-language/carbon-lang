@@ -157,3 +157,66 @@ L3:
 L4:
   ret void
 }
+
+define void @unfold1(double %x, double %y) nounwind {
+entry:
+  %sub = fsub double %x, %y
+  %cmp = fcmp ogt double %sub, 1.000000e+01
+  br i1 %cmp, label %cond.end4, label %cond.false
+
+cond.false:                                       ; preds = %entry
+  %add = fadd double %x, %y
+  %cmp1 = fcmp ogt double %add, 1.000000e+01
+  %add. = select i1 %cmp1, double %add, double 0.000000e+00
+  br label %cond.end4
+
+cond.end4:                                        ; preds = %entry, %cond.false
+  %cond5 = phi double [ %add., %cond.false ], [ %sub, %entry ]
+  %cmp6 = fcmp oeq double %cond5, 0.000000e+00
+  br i1 %cmp6, label %if.then, label %if.end
+
+if.then:                                          ; preds = %cond.end4
+  call void @foo()
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %cond.end4
+  ret void
+
+; CHECK-LABEL: @unfold1
+; CHECK: br i1 %cmp, label %cond.end4, label %cond.false
+; CHECK: br i1 %cmp1, label %cond.end4, label %if.then
+; CHECK: br i1 %cmp6, label %if.then, label %if.end
+; CHECK: br label %if.end
+}
+
+
+define void @unfold2(i32 %x, i32 %y) nounwind {
+entry:
+  %sub = sub nsw i32 %x, %y
+  %cmp = icmp sgt i32 %sub, 10
+  br i1 %cmp, label %cond.end4, label %cond.false
+
+cond.false:                                       ; preds = %entry
+  %add = add nsw i32 %x, %y
+  %cmp1 = icmp sgt i32 %add, 10
+  %add. = select i1 %cmp1, i32 0, i32 %add
+  br label %cond.end4
+
+cond.end4:                                        ; preds = %entry, %cond.false
+  %cond5 = phi i32 [ %add., %cond.false ], [ %sub, %entry ]
+  %cmp6 = icmp eq i32 %cond5, 0
+  br i1 %cmp6, label %if.then, label %if.end
+
+if.then:                                          ; preds = %cond.end4
+  call void @foo()
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %cond.end4
+  ret void
+
+; CHECK-LABEL: @unfold2
+; CHECK: br i1 %cmp, label %if.end, label %cond.false
+; CHECK: br i1 %cmp1, label %if.then, label %cond.end4
+; CHECK: br i1 %cmp6, label %if.then, label %if.end
+; CHECK: br label %if.end
+}

@@ -130,6 +130,7 @@ namespace {
     bool ProcessBranchOnXOR(BinaryOperator *BO);
 
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
+    bool TryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
   };
 }
 
@@ -776,7 +777,11 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
           return true;
         }
       }
+
     }
+
+    if (CondBr && CondConst && TryToUnfoldSelect(CondCmp, BB))
+      return true;
   }
 
   // Check for some cases that are worth simplifying.  Right now we want to look
@@ -1614,4 +1619,82 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
 
   ++NumDupes;
   return true;
+}
+
+/// TryToUnfoldSelect - Look for blocks of the form
+/// bb1:
+///   %a = select
+///   br bb
+///
+/// bb2:
+///   %p = phi [%a, %bb] ...
+///   %c = icmp %p
+///   br i1 %c
+///
+/// And expand the select into a branch structure if one of its arms allows %c
+/// to be folded. This later enables threading from bb1 over bb2.
+bool JumpThreading::TryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB) {
+  BranchInst *CondBr = dyn_cast<BranchInst>(BB->getTerminator());
+  PHINode *CondLHS = dyn_cast<PHINode>(CondCmp->getOperand(0));
+  Constant *CondRHS = cast<Constant>(CondCmp->getOperand(1));
+
+  if (!CondBr || !CondBr->isConditional() || !CondLHS ||
+      CondLHS->getParent() != BB)
+    return false;
+
+  for (unsigned I = 0, E = CondLHS->getNumIncomingValues(); I != E; ++I) {
+    BasicBlock *Pred = CondLHS->getIncomingBlock(I);
+    SelectInst *SI = dyn_cast<SelectInst>(CondLHS->getIncomingValue(I));
+
+    // Look if one of the incoming values is a select in the corresponding
+    // predecessor.
+    if (!SI || SI->getParent() != Pred || !SI->hasOneUse())
+      continue;
+
+    BranchInst *PredTerm = dyn_cast<BranchInst>(Pred->getTerminator());
+    if (!PredTerm || !PredTerm->isUnconditional())
+      continue;
+
+    // Now check if one of the select values would allow us to constant fold the
+    // terminator in BB. We don't do the transform if both sides fold, those
+    // cases will be threaded in any case.
+    LazyValueInfo::Tristate LHSFolds =
+        LVI->getPredicateOnEdge(CondCmp->getPredicate(), SI->getOperand(1),
+                                CondRHS, Pred, BB);
+    LazyValueInfo::Tristate RHSFolds =
+        LVI->getPredicateOnEdge(CondCmp->getPredicate(), SI->getOperand(2),
+                                CondRHS, Pred, BB);
+    if ((LHSFolds != LazyValueInfo::Unknown ||
+         RHSFolds != LazyValueInfo::Unknown) &&
+        LHSFolds != RHSFolds) {
+      // Expand the select.
+      //
+      // Pred --
+      //  |    v
+      //  |  NewBB
+      //  |    |
+      //  |-----
+      //  v
+      // BB
+      BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), "select.unfold",
+                                             BB->getParent(), BB);
+      // Move the unconditional branch to NewBB.
+      PredTerm->removeFromParent();
+      NewBB->getInstList().insert(NewBB->end(), PredTerm);
+      // Create a conditional branch and update PHI nodes.
+      BranchInst::Create(NewBB, BB, SI->getCondition(), Pred);
+      CondLHS->setIncomingValue(I, SI->getFalseValue());
+      CondLHS->addIncoming(SI->getTrueValue(), NewBB);
+      // The select is now dead.
+      SI->eraseFromParent();
+
+      // Update any other PHI nodes in BB.
+      for (BasicBlock::iterator BI = BB->begin();
+           PHINode *Phi = dyn_cast<PHINode>(BI); ++BI)
+        if (Phi != CondLHS)
+          Phi->addIncoming(Phi->getIncomingValueForBlock(Pred), NewBB);
+      return true;
+    }
+  }
+  return false;
 }
