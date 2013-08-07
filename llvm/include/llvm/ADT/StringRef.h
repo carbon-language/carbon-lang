@@ -19,7 +19,7 @@
 #include <utility>
 
 namespace llvm {
-  template<typename T>
+  template <typename T>
   class SmallVectorImpl;
   class APInt;
   class hash_code;
