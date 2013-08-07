@@ -6,12 +6,12 @@ class Command:
     def __repr__(self):
         return 'Command(%r, %r)' % (self.args, self.redirects)
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         if not isinstance(other, Command):
-            return -1
+            return False
 
-        return cmp((self.args, self.redirects),
-                   (other.args, other.redirects))
+        return ((self.args, self.redirects) ==
+                (other.args, other.redirects))
 
     def toShell(self, file):
         for arg in self.args:
@@ -45,12 +45,12 @@ class Pipeline:
         return 'Pipeline(%r, %r, %r)' % (self.commands, self.negate,
                                          self.pipe_err)
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         if not isinstance(other, Pipeline):
-            return -1
+            return False
 
-        return cmp((self.commands, self.negate, self.pipe_err),
-                   (other.commands, other.negate, self.pipe_err))
+        return ((self.commands, self.negate, self.pipe_err) ==
+                (other.commands, other.negate, self.pipe_err))
 
     def toShell(self, file, pipefail=False):
         if pipefail != self.pipe_err:
@@ -72,12 +72,12 @@ class Seq:
     def __repr__(self):
         return 'Seq(%r, %r, %r)' % (self.lhs, self.op, self.rhs)
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         if not isinstance(other, Seq):
-            return -1
+            return False
 
-        return cmp((self.lhs, self.op, self.rhs),
-                   (other.lhs, other.op, other.rhs))
+        return ((self.lhs, self.op, self.rhs) ==
+                (other.lhs, other.op, other.rhs))
 
     def toShell(self, file, pipefail=False):
         self.lhs.toShell(file, pipefail)
