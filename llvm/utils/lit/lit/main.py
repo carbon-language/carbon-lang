@@ -94,10 +94,9 @@ class TestProvider:
         if self.canceled:
           self.lock.release()
           return None
-
-        try:
-            item = self.iter.next()
-        except StopIteration:
+        for item in self.iter:
+            break
+        else:
             item = None
         self.lock.release()
         return item

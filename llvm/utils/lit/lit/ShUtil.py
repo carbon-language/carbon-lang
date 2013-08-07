@@ -174,16 +174,15 @@ class ShParser:
         self.tokens = ShLexer(data, win32Escapes = win32Escapes).lex()
     
     def lex(self):
-        try:
-            return self.tokens.next()
-        except StopIteration:
-            return None
+        for item in self.tokens:
+            return item
+        return None
     
     def look(self):
-        next = self.lex()
-        if next is not None:
-            self.tokens = itertools.chain([next], self.tokens)
-        return next
+        token = self.lex()
+        if token is not None:
+            self.tokens = itertools.chain([token], self.tokens)
+        return token
     
     def parse_command(self):
         tok = self.lex()
