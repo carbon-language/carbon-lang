@@ -580,9 +580,9 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   case MCFragment::FT_Align: {
     ++stats::EmittedAlignFragments;
     const MCAlignFragment &AF = cast<MCAlignFragment>(F);
-    uint64_t Count = FragmentSize / AF.getValueSize();
-
     assert(AF.getValueSize() && "Invalid virtual align in concrete fragment!");
+
+    uint64_t Count = FragmentSize / AF.getValueSize();
 
     // FIXME: This error shouldn't actually occur (the front end should emit
     // multiple .align directives to enforce the semantics it wants), but is
