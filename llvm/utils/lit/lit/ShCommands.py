@@ -20,14 +20,14 @@ class Command:
             elif '"' not in arg and '$' not in arg:
                 quoted = '"%s"' % arg
             else:
-                raise NotImplementedError,'Unable to quote %r' % arg
+                raise NotImplementedError('Unable to quote %r' % arg)
             print >>file, quoted,
 
             # For debugging / validation.
             import ShUtil
             dequoted = list(ShUtil.ShLexer(quoted).lex())
             if dequoted != [arg]:
-                raise NotImplementedError,'Unable to quote %r' % arg
+                raise NotImplementedError('Unable to quote %r' % arg)
 
         for r in self.redirects:
             if len(r[0]) == 1:
@@ -54,7 +54,7 @@ class Pipeline:
 
     def toShell(self, file, pipefail=False):
         if pipefail != self.pipe_err:
-            raise ValueError,'Inconsistent "pipefail" attribute!'
+            raise ValueError('Inconsistent "pipefail" attribute!')
         if self.negate:
             print >>file, '!',
         for cmd in self.commands:

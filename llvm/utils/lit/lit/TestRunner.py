@@ -66,7 +66,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                 res = executeShCmd(cmd.rhs, cfg, cwd, results)
             return res
 
-        raise ValueError,'Unknown shell command: %r' % cmd.op
+        raise ValueError('Unknown shell command: %r' % cmd.op)
 
     assert isinstance(cmd, ShUtil.Pipeline)
     procs = []

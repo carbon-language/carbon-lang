@@ -116,9 +116,11 @@ class ShLexer:
         reference = self.lex_arg_slow(c)
         if res is not None:
             if res != reference:
-                raise ValueError,"Fast path failure: %r != %r" % (res, reference)
+                raise ValueError("Fast path failure: %r != %r" % (
+                        res, reference))
             if self.pos != end:
-                raise ValueError,"Fast path failure: %r != %r" % (self.pos, end)
+                raise ValueError("Fast path failure: %r != %r" % (
+                        self.pos, end))
         return reference
         
     def lex_arg(self, c):
@@ -186,9 +188,9 @@ class ShParser:
     def parse_command(self):
         tok = self.lex()
         if not tok:
-            raise ValueError,"empty command!"
+            raise ValueError("empty command!")
         if isinstance(tok, tuple):
-            raise ValueError,"syntax error near unexpected token %r" % tok[0]
+            raise ValueError("syntax error near unexpected token %r" % tok[0])
         
         args = [tok]
         redirects = []
@@ -213,7 +215,7 @@ class ShParser:
             op = self.lex()
             arg = self.lex()
             if not arg:
-                raise ValueError,"syntax error near token %r" % op[0]
+                raise ValueError("syntax error near token %r" % op[0])
             redirects.append((op, arg))
 
         return Command(args, redirects)
@@ -235,7 +237,8 @@ class ShParser:
             assert isinstance(operator, tuple) and len(operator) == 1
 
             if not self.look():
-                raise ValueError, "missing argument to operator %r" % operator[0]
+                raise ValueError(
+                    "missing argument to operator %r" % operator[0])
             
             # FIXME: Operator precedence!!
             lhs = Seq(lhs, operator[0], self.parse_pipeline())
