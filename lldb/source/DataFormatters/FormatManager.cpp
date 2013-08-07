@@ -351,7 +351,7 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
             {
                 log->Printf("[FormatManager::GetSummaryFormat] Cache search success. Returning.");
                 if (log->GetDebug())
-                    log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+                    log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
             }
             return retval;
         }
@@ -366,7 +366,7 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
         m_format_cache.SetSummary(valobj_type,retval);
     }
     if (log && log->GetDebug())
-        log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+        log->Printf("[FormatManager::GetSummaryFormat] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
     return retval;
 }
 
@@ -388,7 +388,7 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
             {
                 log->Printf("[FormatManager::GetSyntheticChildren] Cache search success. Returning.");
                 if (log->GetDebug())
-                    log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+                    log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
             }
             return retval;
         }
@@ -403,7 +403,7 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
         m_format_cache.SetSynthetic(valobj_type,retval);
     }
     if (log && log->GetDebug())
-        log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %llu - Cache Misses: %llu", m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
+        log->Printf("[FormatManager::GetSyntheticChildren] Cache hits: %" PRIu64 " - Cache Misses: %" PRIu64, m_format_cache.GetCacheHits(), m_format_cache.GetCacheMisses());
     return retval;
 }
 #endif

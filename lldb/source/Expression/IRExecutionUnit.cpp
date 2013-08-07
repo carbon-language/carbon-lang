@@ -582,8 +582,8 @@ IRExecutionUnit::GetRemoteAddressForLocal (lldb::addr_t local_address)
             {
                 log->Printf("IRExecutionUnit::GetRemoteAddressForLocal() found 0x%" PRIx64 " in [0x%" PRIx64 "..0x%" PRIx64 "], and returned 0x%" PRIx64 " from [0x%" PRIx64 "..0x%" PRIx64 "].",
                             local_address,
-                            (unsigned long long)record.m_host_address,
-                            (unsigned long long)record.m_host_address + (unsigned long long)record.m_size,
+                            (uint64_t)record.m_host_address,
+                            (uint64_t)record.m_host_address + (uint64_t)record.m_size,
                             ret,
                             record.m_process_address,
                             record.m_process_address + record.m_size);

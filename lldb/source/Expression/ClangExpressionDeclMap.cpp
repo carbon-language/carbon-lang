@@ -1482,7 +1482,7 @@ ClangExpressionDeclMap::GetVariableValue (VariableSP &var,
         var->CalculateSymbolContext(&var_sc);
         
         if (!var_sc.module_sp)
-            return NULL;
+            return false;
 
         Address so_addr(var_location.GetScalar().ULongLong(), var_sc.module_sp->GetSectionList());
         
