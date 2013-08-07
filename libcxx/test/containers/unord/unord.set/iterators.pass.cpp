@@ -107,4 +107,18 @@ int main()
         C::const_iterator i;
     }
 #endif
+#if _LIBCPP_STD_VER > 11
+    { // N3664 testing
+        typedef std::unordered_set<int> C;
+        C::iterator ii1{}, ii2{};
+        C::iterator ii4 = ii1;
+        C::const_iterator cii{};
+        assert ( ii1 == ii2 );
+        assert ( ii1 == ii4 );
+        assert ( ii1 == cii );
+
+        assert ( !(ii1 != ii2 ));
+        assert ( !(ii1 != cii ));
+    }
+#endif
 }

@@ -112,6 +112,9 @@ public:
                                                          pointer;
 
     _LIBCPP_INLINE_VISIBILITY __hash_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+    : __node_(nullptr)
+#endif
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
         __get_db()->__insert_i(this);
@@ -248,6 +251,9 @@ public:
     typedef __hash_iterator<__non_const_node_pointer> __non_const_iterator;
 
     _LIBCPP_INLINE_VISIBILITY __hash_const_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+    : __node_(nullptr)
+#endif
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
         __get_db()->__insert_i(this);
