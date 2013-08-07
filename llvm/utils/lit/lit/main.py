@@ -242,6 +242,9 @@ def main(builtinParameters = {}):
     group.add_option("", "--show-suites", dest="showSuites",
                       help="Show discovered test suites",
                       action="store_true", default=False)
+    group.add_option("", "--show-tests", dest="showTests",
+                      help="Show all discovered tests",
+                      action="store_true", default=False)
     group.add_option("", "--repeat", dest="repeatTests", metavar="N",
                       help="Repeat tests N times (for timing)",
                       action="store", default=None, type=int)
@@ -288,21 +291,32 @@ def main(builtinParameters = {}):
 
     tests = lit.discovery.find_tests_for_inputs(litConfig, inputs)
 
-    if opts.showSuites:
+    if opts.showSuites or opts.showTests:
+        # Aggregate the tests by suite.
         suitesAndTests = {}
         for t in tests:
             if t.suite not in suitesAndTests:
                 suitesAndTests[t.suite] = []
             suitesAndTests[t.suite].append(t)
-
-        print '-- Test Suites --'
         suitesAndTests = suitesAndTests.items()
         suitesAndTests.sort(key = lambda (ts,_): ts.name)
-        for ts,ts_tests in suitesAndTests:
-            print '  %s - %d tests' %(ts.name, len(ts_tests))
-            print '    Source Root: %s' % ts.source_root
-            print '    Exec Root  : %s' % ts.exec_root
 
+        # Show the suites, if requested.
+        if opts.showSuites:
+            print '-- Test Suites --'
+            for ts,ts_tests in suitesAndTests:
+                print '  %s - %d tests' %(ts.name, len(ts_tests))
+                print '    Source Root: %s' % ts.source_root
+                print '    Exec Root  : %s' % ts.exec_root
+
+        # Show the tests, if requested.
+        if opts.showTests:
+            print '-- Available Tests --'
+            for ts,ts_tests in suitesAndTests:
+                ts_tests.sort(key = lambda test: test.path_in_suite)
+                for test in ts_tests:
+                    print '  %s' % (test.getFullName(),)
+        
     # Select and order the tests.
     numTotalTests = len(tests)
 
