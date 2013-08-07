@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-linux-gnu -emit-llvm %s -o - | FileCheck %s
 
 __attribute((aligned(16))) float a[128];
 union {int a[4]; __attribute((aligned(16))) float b[4];} b;
@@ -6,7 +6,8 @@ union {int a[4]; __attribute((aligned(16))) float b[4];} b;
 // CHECK: @a = {{.*}}zeroinitializer, align 16
 // CHECK: @b = {{.*}}zeroinitializer, align 16
 
-
+long long int test5[1024];
+// CHECK-DAG: @test5 = common global [1024 x i64] zeroinitializer, align 8
 
 // PR5279 - Reduced alignment on typedef.
 typedef int myint __attribute__((aligned(1)));
