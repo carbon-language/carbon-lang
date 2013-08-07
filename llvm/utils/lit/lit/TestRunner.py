@@ -224,7 +224,9 @@ def executeShCmd(cmd, cfg, cwd, results):
         results.append((cmd.commands[i], out, err, res))
         if cmd.pipe_err:
             # Python treats the exit code as a signed char.
-            if res < 0:
+            if exitCode is None:
+                exitCode = res
+            elif res < 0:
                 exitCode = min(exitCode, res)
             else:
                 exitCode = max(exitCode, res)
