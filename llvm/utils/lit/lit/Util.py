@@ -95,7 +95,7 @@ def whichTools(tools, paths):
 def printHistogram(items, title = 'Items'):
     import itertools, math
 
-    items.sort(key = lambda (_,v): v)
+    items.sort(key = lambda item: item[1])
 
     maxValue = max([v for _,v in items])
 

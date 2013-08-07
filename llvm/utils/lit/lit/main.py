@@ -295,7 +295,7 @@ def main(builtinParameters = {}):
                 suitesAndTests[t.suite] = []
             suitesAndTests[t.suite].append(t)
         suitesAndTests = suitesAndTests.items()
-        suitesAndTests.sort(key = lambda (ts,_): ts.name)
+        suitesAndTests.sort(key = lambda item: item[0].name)
 
         # Show the suites, if requested.
         if opts.showSuites:
@@ -417,7 +417,7 @@ def main(builtinParameters = {}):
             times[key] = times.get(key, 0.) + t.elapsed
 
         byTime = list(times.items())
-        byTime.sort(key = lambda (name,elapsed): elapsed)
+        byTime.sort(key = lambda item: item[1])
         if byTime:
             Util.printHistogram(byTime, title='Tests')
 
