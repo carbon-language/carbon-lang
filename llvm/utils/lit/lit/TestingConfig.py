@@ -74,6 +74,11 @@ class TestingConfig:
                 # return control without error.
                 if e.args:
                     raise
+            except:
+                import traceback
+                litConfig.fatal(
+                    'unable to parse config file %r, traceback: %s' % (
+                        path, traceback.format_exc()))
             f.close()
         else:
             if mustExist:
