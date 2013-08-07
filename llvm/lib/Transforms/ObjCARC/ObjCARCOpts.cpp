@@ -756,10 +756,10 @@ namespace {
 
     // Specialized CFG utilities.
     typedef SmallVectorImpl<BasicBlock *>::const_iterator edge_iterator;
-    edge_iterator pred_begin() { return Preds.begin(); }
-    edge_iterator pred_end() { return Preds.end(); }
-    edge_iterator succ_begin() { return Succs.begin(); }
-    edge_iterator succ_end() { return Succs.end(); }
+    edge_iterator pred_begin() const { return Preds.begin(); }
+    edge_iterator pred_end() const { return Preds.end(); }
+    edge_iterator succ_begin() const { return Succs.begin(); }
+    edge_iterator succ_end() const { return Succs.end(); }
 
     void addSucc(BasicBlock *Succ) { Succs.push_back(Succ); }
     void addPred(BasicBlock *Pred) { Preds.push_back(Pred); }
