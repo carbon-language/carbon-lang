@@ -173,6 +173,8 @@ __find_bool_true(__bit_iterator<_Cp, _IsConst> __first, typename _Cp::size_type 
         __storage_type __b = *__first.__seg_ & __m;
         if (__b)
             return _It(__first.__seg_, static_cast<unsigned>(_VSTD::__ctz(__b)));
+        if (__n == __dn)
+            return _It(__first.__seg_, __first.__ctz_ + __n);
         __n -= __dn;
         ++__first.__seg_;
     }
@@ -207,6 +209,8 @@ __find_bool_false(__bit_iterator<_Cp, _IsConst> __first, typename _Cp::size_type
         __storage_type __b = ~*__first.__seg_ & __m;
         if (__b)
             return _It(__first.__seg_, static_cast<unsigned>(_VSTD::__ctz(__b)));
+        if (__n == __dn)
+            return _It(__first.__seg_, __first.__ctz_ + __n);
         __n -= __dn;
         ++__first.__seg_;
     }
