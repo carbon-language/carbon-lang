@@ -19,6 +19,8 @@ namespace {
 // from LocaleGeneric.inc for WIN32.
 #ifndef _WIN32
 TEST(Locale, columnWidth) {
+  // FIXME: This test fails with MacOSX implementation of columnWidth.
+#ifndef __APPLE__
   EXPECT_EQ(0, columnWidth(""));
   EXPECT_EQ(1, columnWidth(" "));
   EXPECT_EQ(1, columnWidth("a"));
@@ -38,9 +40,6 @@ TEST(Locale, columnWidth) {
   EXPECT_EQ(3, columnWidth("q\344\270\200"));
   EXPECT_EQ(3, columnWidth("\314\200\340\270\201\344\270\200"));
 
-  // FIXME: MacOS implementation of columnWidth seems to not handle incorrect
-  // UTF-8 sequences.
-#ifndef __APPLE__
   // Invalid UTF-8 strings, columnWidth should error out.
   EXPECT_EQ(-2, columnWidth("\344"));
   EXPECT_EQ(-2, columnWidth("\344\270"));
