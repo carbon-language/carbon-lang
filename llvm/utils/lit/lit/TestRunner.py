@@ -1,14 +1,14 @@
+from __future__ import absolute_import
 import os, signal, subprocess, sys
 import StringIO
-
-import ShUtil
-import Test
-import Util
 
 import platform
 import tempfile
 
 import re
+import lit.ShUtil as ShUtil
+import lit.Test as Test
+import lit.Util as Util
 
 class InternalShellError(Exception):
     def __init__(self, command, message):

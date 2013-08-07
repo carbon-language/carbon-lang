@@ -6,14 +6,13 @@ lit - LLVM Integrated Tester.
 See lit.pod for more information.
 """
 
+from __future__ import absolute_import
 import math, os, platform, random, re, sys, time, threading, traceback
 
-import ProgressBar
-import TestRunner
-import Util
-
-import LitConfig
-import Test
+import lit.ProgressBar
+import lit.LitConfig
+import lit.Test
+import lit.Util
 
 import lit.discovery
 
@@ -129,7 +128,7 @@ class Tester(threading.Thread):
         except:
             if self.litConfig.debug:
                 raise
-            result = Test.UNRESOLVED
+            result = lit.Test.UNRESOLVED
             output = 'Exception during script execution:\n'
             output += traceback.format_exc()
             output += '\n'
@@ -257,7 +256,7 @@ def main(builtinParameters = {}):
 # I haven't seen this bug occur with 2.5.2 and later, so only enable multiple
 # threads by default there.
        if sys.hexversion >= 0x2050200:
-               opts.numThreads = Util.detectCPUs()
+               opts.numThreads = lit.Util.detectCPUs()
        else:
                opts.numThreads = 1
 
@@ -273,16 +272,17 @@ def main(builtinParameters = {}):
         userParams[name] = val
 
     # Create the global config object.
-    litConfig = LitConfig.LitConfig(progname = os.path.basename(sys.argv[0]),
-                                    path = opts.path,
-                                    quiet = opts.quiet,
-                                    useValgrind = opts.useValgrind,
-                                    valgrindLeakCheck = opts.valgrindLeakCheck,
-                                    valgrindArgs = opts.valgrindArgs,
-                                    debug = opts.debug,
-                                    isWindows = (platform.system()=='Windows'),
-                                    params = userParams,
-                                    config_prefix = opts.configPrefix)
+    litConfig = lit.LitConfig.LitConfig(
+        progname = os.path.basename(sys.argv[0]),
+        path = opts.path,
+        quiet = opts.quiet,
+        useValgrind = opts.useValgrind,
+        valgrindLeakCheck = opts.valgrindLeakCheck,
+        valgrindArgs = opts.valgrindArgs,
+        debug = opts.debug,
+        isWindows = (platform.system()=='Windows'),
+        params = userParams,
+        config_prefix = opts.configPrefix)
 
     tests = lit.discovery.find_tests_for_inputs(litConfig, inputs)
 
@@ -353,11 +353,11 @@ def main(builtinParameters = {}):
     if not opts.quiet:
         if opts.succinct and opts.useProgressBar:
             try:
-                tc = ProgressBar.TerminalController()
-                progressBar = ProgressBar.ProgressBar(tc, header)
+                tc = lit.ProgressBar.TerminalController()
+                progressBar = lit.ProgressBar.ProgressBar(tc, header)
             except ValueError:
                 print(header)
-                progressBar = ProgressBar.SimpleProgressBar('Testing: ')
+                progressBar = lit.ProgressBar.SimpleProgressBar('Testing: ')
         else:
             print(header)
 
@@ -384,7 +384,7 @@ def main(builtinParameters = {}):
     # Update results for any tests which weren't run.
     for t in tests:
         if t.result is None:
-            t.setResult(Test.UNRESOLVED, '', 0.0)
+            t.setResult(lit.Test.UNRESOLVED, '', 0.0)
 
     # List test results organized by kind.
     hasFailures = False
@@ -397,8 +397,8 @@ def main(builtinParameters = {}):
             hasFailures = True
 
     # FIXME: Show unresolved and (optionally) unsupported tests.
-    for title,code in (('Unexpected Passing Tests', Test.XPASS),
-                       ('Failing Tests', Test.FAIL)):
+    for title,code in (('Unexpected Passing Tests', lit.Test.XPASS),
+                       ('Failing Tests', lit.Test.FAIL)):
         elts = byCode.get(code)
         if not elts:
             continue
@@ -418,14 +418,14 @@ def main(builtinParameters = {}):
         byTime = list(times.items())
         byTime.sort(key = lambda item: item[1])
         if byTime:
-            Util.printHistogram(byTime, title='Tests')
+            lit.Util.printHistogram(byTime, title='Tests')
 
-    for name,code in (('Expected Passes    ', Test.PASS),
-                      ('Expected Failures  ', Test.XFAIL),
-                      ('Unsupported Tests  ', Test.UNSUPPORTED),
-                      ('Unresolved Tests   ', Test.UNRESOLVED),
-                      ('Unexpected Passes  ', Test.XPASS),
-                      ('Unexpected Failures', Test.FAIL),):
+    for name,code in (('Expected Passes    ', lit.Test.PASS),
+                      ('Expected Failures  ', lit.Test.XFAIL),
+                      ('Unsupported Tests  ', lit.Test.UNSUPPORTED),
+                      ('Unresolved Tests   ', lit.Test.UNRESOLVED),
+                      ('Unexpected Passes  ', lit.Test.XPASS),
+                      ('Unexpected Failures', lit.Test.FAIL),):
         if opts.quiet and not code.isFailure:
             continue
         N = len(byCode.get(code,[]))

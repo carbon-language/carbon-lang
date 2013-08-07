@@ -1,6 +1,7 @@
 """'lit' Testing Tool"""
 
-from main import main
+from __future__ import absolute_import
+from .main import main
 
 __author__ = 'Daniel Dunbar'
 __email__ = 'daniel@zuster.org'

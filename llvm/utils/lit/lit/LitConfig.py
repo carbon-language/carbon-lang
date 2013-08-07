@@ -1,3 +1,11 @@
+from __future__ import absolute_import
+import os
+
+import lit.Test
+import lit.TestFormats
+import lit.TestingConfig
+import lit.Util
+
 class LitConfig:
     """LitConfig - Configuration data for a 'lit' test runner instance, shared
     across all tests.
@@ -9,13 +17,13 @@ class LitConfig:
     """
 
     # Provide access to Test module.
-    import Test
+    Test = lit.Test
 
     # Provide access to built-in formats.
-    import TestFormats as formats
+    formats = lit.TestFormats
 
     # Provide access to built-in utility functions.
-    import Util as util
+    util = lit.Util
 
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
@@ -58,21 +66,19 @@ class LitConfig:
     def load_config(self, config, path):
         """load_config(config, path) - Load a config object from an alternate
         path."""
-        from TestingConfig import TestingConfig
         if self.debug:
             self.note('load_config from %r' % path)
-        return TestingConfig.frompath(path, config.parent, self,
-                                      mustExist = True,
-                                      config = config)
+        return lit.TestingConfig.TestingConfig.frompath(
+            path, config.parent, self, mustExist = True, config = config)
 
     def getBashPath(self):
         """getBashPath - Get the path to 'bash'"""
-        import os, Util
+        import os
 
         if self.bashPath is not None:
             return self.bashPath
 
-        self.bashPath = Util.which('bash', os.pathsep.join(self.path))
+        self.bashPath = lit.Util.which('bash', os.pathsep.join(self.path))
         if self.bashPath is None:
             # Check some known paths.
             for path in ('/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash'):
@@ -87,12 +93,11 @@ class LitConfig:
         return self.bashPath
 
     def getToolsPath(self, dir, paths, tools):
-        import os, Util
         if dir is not None and os.path.isabs(dir) and os.path.isdir(dir):
-            if not Util.checkToolsPath(dir, tools):
+            if not lit.Util.checkToolsPath(dir, tools):
                 return None
         else:
-            dir = Util.whichTools(tools, paths)
+            dir = lit.Util.whichTools(tools, paths)
 
         # bash
         self.bashPath = Util.which('bash', dir)

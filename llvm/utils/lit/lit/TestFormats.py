@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import os
 import sys
 
-import Test
-import TestRunner
-import Util
+import lit.Test
+import lit.TestRunner
+import lit.Util
 
 kIsWindows = sys.platform in ['win32', 'cygwin']
 
@@ -27,8 +28,8 @@ class GoogleTest(object):
           localConfig: TestingConfig instance"""
 
         try:
-            lines = Util.capture([path, '--gtest_list_tests'],
-                                 env=localConfig.environment)
+            lines = lit.Util.capture([path, '--gtest_list_tests'],
+                                     env=localConfig.environment)
             if kIsWindows:
               lines = lines.replace('\r', '')
             lines = lines.split('\n')
@@ -63,7 +64,7 @@ class GoogleTest(object):
         # Discover the tests in this executable.
         for testname in self.getGTestTests(execpath, litConfig, localConfig):
             testPath = path_in_suite + (basename, testname)
-            yield Test.Test(testSuite, testPath, localConfig)
+            yield lit.Test.Test(testSuite, testPath, localConfig)
 
     def getTestsInDirectory(self, testSuite, path_in_suite,
                             litConfig, localConfig):
@@ -99,13 +100,13 @@ class GoogleTest(object):
         if litConfig.useValgrind:
             cmd = litConfig.valgrindArgs + cmd
 
-        out, err, exitCode = TestRunner.executeCommand(
+        out, err, exitCode = lit.TestRunner.executeCommand(
             cmd, env=test.config.environment)
 
         if not exitCode:
-            return Test.PASS,''
+            return lit.Test.PASS,''
 
-        return Test.FAIL, out + err
+        return lit.Test.FAIL, out + err
 
 ###
 
@@ -123,16 +124,16 @@ class FileBasedTest(object):
             if not os.path.isdir(filepath):
                 base,ext = os.path.splitext(filename)
                 if ext in localConfig.suffixes:
-                    yield Test.Test(testSuite, path_in_suite + (filename,),
-                                    localConfig)
+                    yield lit.Test.Test(testSuite, path_in_suite + (filename,),
+                                        localConfig)
 
 class ShTest(FileBasedTest):
     def __init__(self, execute_external = False):
         self.execute_external = execute_external
 
     def execute(self, test, litConfig):
-        return TestRunner.executeShTest(test, litConfig,
-                                        self.execute_external)
+        return lit.TestRunner.executeShTest(test, litConfig,
+                                            self.execute_external)
 
 ###
 
@@ -180,9 +181,9 @@ class OneCommandPerFileTest:
                 suffix = path[len(dir):]
                 if suffix.startswith(os.sep):
                     suffix = suffix[1:]
-                test = Test.Test(testSuite,
-                                 path_in_suite + tuple(suffix.split(os.sep)),
-                                 localConfig)
+                test = lit.Test.Test(
+                    testSuite, path_in_suite + tuple(suffix.split(os.sep)),
+                    localConfig)
                 # FIXME: Hack?
                 test.source_path = path
                 yield test
@@ -192,7 +193,7 @@ class OneCommandPerFileTest:
 
     def execute(self, test, litConfig):
         if test.config.unsupported:
-            return (Test.UNSUPPORTED, 'Test is unsupported')
+            return (lit.Test.UNSUPPORTED, 'Test is unsupported')
 
         cmd = list(self.command)
 
@@ -208,11 +209,11 @@ class OneCommandPerFileTest:
         else:
             cmd.append(test.getSourcePath())
 
-        out, err, exitCode = TestRunner.executeCommand(cmd)
+        out, err, exitCode = lit.TestRunner.executeCommand(cmd)
 
         diags = out + err
         if not exitCode and not diags.strip():
-            return Test.PASS,''
+            return lit.Test.PASS,''
 
         # Try to include some useful information.
         report = """Command: %s\n""" % ' '.join(["'%s'" % a
@@ -222,4 +223,4 @@ class OneCommandPerFileTest:
             report += "--\n%s--\n""" % open(tmp.name).read()
         report += """Output:\n--\n%s--""" % diags
 
-        return Test.FAIL, report
+        return lit.Test.FAIL, report

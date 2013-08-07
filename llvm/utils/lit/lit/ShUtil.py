@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import itertools
 
-import Util
-from ShCommands import Command, Pipeline, Seq
+import lit.Util
+from lit.ShCommands import Command, Pipeline, Seq
 
 class ShLexer:
     def __init__(self, data, win32Escapes = False):
@@ -74,8 +75,8 @@ class ShLexer:
                 # Outside of a string, '\\' escapes everything.
                 self.eat()
                 if self.pos == self.end:
-                    Util.warning("escape at end of quoted argument in: %r" % 
-                                 self.data)
+                    lit.Util.warning(
+                        "escape at end of quoted argument in: %r" % self.data)
                     return str
                 str += self.eat()
             else:
@@ -92,8 +93,8 @@ class ShLexer:
                 # Inside a '"' quoted string, '\\' only escapes the quote
                 # character and backslash, otherwise it is preserved.
                 if self.pos == self.end:
-                    Util.warning("escape at end of quoted argument in: %r" % 
-                                 self.data)
+                    lit.Util.warning(
+                        "escape at end of quoted argument in: %r" % self.data)
                     return str
                 c = self.eat()
                 if c == '"': # 
@@ -104,7 +105,7 @@ class ShLexer:
                     str += '\\' + c
             else:
                 str += c
-        Util.warning("missing quote character in %r" % self.data)
+        lit.Util.warning("missing quote character in %r" % self.data)
         return str
     
     def lex_arg_checked(self, c):
