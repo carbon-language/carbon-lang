@@ -257,7 +257,8 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
     results = []
     try:
         exitCode = executeShCmd(cmd, test.config, cwd, results)
-    except InternalShellError,e:
+    except InternalShellError:
+        e = sys.exc_info()[1]
         exitCode = 127
         results.append((e.command, '', e.message, exitCode))
 

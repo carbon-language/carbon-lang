@@ -62,10 +62,11 @@ class TestingConfig:
                 exec f in cfg_globals
                 if litConfig.debug:
                     litConfig.note('... loaded config %r' % path)
-            except SystemExit,status:
+            except SystemExit:
+                e = sys.exc_info()[1]
                 # We allow normal system exit inside a config file to just
                 # return control without error.
-                if status.args:
+                if e.args:
                     raise
             f.close()
         else:

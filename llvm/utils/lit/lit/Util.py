@@ -34,7 +34,8 @@ def mkdir_p(path):
 
     try:
         os.mkdir(path)
-    except OSError,e:
+    except OSError:
+        e = sys.exc_info()[1]
         # Ignore EEXIST, which may occur during a race condition.
         if e.errno != errno.EEXIST:
             raise
