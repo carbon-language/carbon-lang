@@ -5406,7 +5406,7 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
   MVT VT = Op.getValueType().getSimpleVT();
   SDLoc dl(Op);
 
-  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+  assert((VT.is128BitVector() || VT.is256BitVector() || VT.is512BitVector()) &&
          "Unsupported vector type for broadcast.");
 
   SDValue Ld;
@@ -5462,13 +5462,18 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
       // The scalar_to_vector node and the suspected
       // load node must have exactly one user.
       // Constants may have multiple users.
-      if (!ConstSplatVal && (!Sc.hasOneUse() || !Ld.hasOneUse()))
+
+      // AVX-512 has register version of the broadcast
+      bool hasRegVer = Subtarget->hasAVX512() && VT.is512BitVector() &&
+        Ld.getValueType().getSizeInBits() >= 32;
+      if (!ConstSplatVal && ((!Sc.hasOneUse() || !Ld.hasOneUse()) &&
+          !hasRegVer))
         return SDValue();
       break;
     }
   }
 
-  bool Is256 = VT.is256BitVector();
+  bool IsGE256 = (VT.getSizeInBits() >= 256);
 
   // Handle the broadcasting a single constant scalar from the constant pool
   // into a vector. On Sandybridge it is still better to load a constant vector
@@ -5478,7 +5483,7 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
     assert(!CVT.isVector() && "Must not broadcast a vector type");
     unsigned ScalarSize = CVT.getSizeInBits();
 
-    if (ScalarSize == 32 || (Is256 && ScalarSize == 64)) {
+    if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64)) {
       const Constant *C = 0;
       if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Ld))
         C = CI->getConstantIntValue();
@@ -5502,14 +5507,14 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
 
   // Handle AVX2 in-register broadcasts.
   if (!IsLoad && Subtarget->hasInt256() &&
-      (ScalarSize == 32 || (Is256 && ScalarSize == 64)))
+      (ScalarSize == 32 || (IsGE256 && ScalarSize == 64)))
     return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
   // The scalar source must be a normal load.
   if (!IsLoad)
     return SDValue();
 
-  if (ScalarSize == 32 || (Is256 && ScalarSize == 64))
+  if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64))
     return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Ld);
 
   // The integer check is needed for the 64-bit into 128-bit so it doesn't match
@@ -13230,6 +13235,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UNPCKL:             return "X86ISD::UNPCKL";
   case X86ISD::UNPCKH:             return "X86ISD::UNPCKH";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
+  case X86ISD::VBROADCASTM:        return "X86ISD::VBROADCASTM";
   case X86ISD::VPERMILP:           return "X86ISD::VPERMILP";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
   case X86ISD::VPERMV:             return "X86ISD::VPERMV";

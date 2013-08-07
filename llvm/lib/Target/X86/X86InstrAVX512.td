@@ -347,6 +347,132 @@ def VEXTRACTPSzmr : AVX512AIi8<0x17, MRMDestMem, (outs),
       [(store (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2),
                           addr:$dst)]>, EVEX;
 
+//===---------------------------------------------------------------------===//
+// AVX-512 BROADCAST
+//---
+multiclass avx512_fp_broadcast<bits<8> opc, string OpcodeStr, 
+                         RegisterClass DestRC,
+                         RegisterClass SrcRC, X86MemOperand x86memop> {
+  def rr : AVX5128I<opc, MRMSrcReg, (outs DestRC:$dst), (ins SrcRC:$src),
+         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+         []>, EVEX;
+  def rm : AVX5128I<opc, MRMSrcMem, (outs DestRC:$dst), (ins x86memop:$src),
+        !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),[]>, EVEX;
+}
+let ExeDomain = SSEPackedSingle in {
+  defm VBROADCASTSSZ  : avx512_fp_broadcast<0x18, "vbroadcastss{z}", VR512, 
+                                       VR128X, f32mem>,
+                                       EVEX_V512, EVEX_CD8<32, CD8VT1>;
+}
+
+let ExeDomain = SSEPackedDouble in {
+  defm VBROADCASTSDZ  : avx512_fp_broadcast<0x19, "vbroadcastsd{z}", VR512,
+                                       VR128X, f64mem>,
+                                       EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+}
+
+def : Pat<(v16f32 (X86VBroadcast (loadf32 addr:$src))),
+          (VBROADCASTSSZrm addr:$src)>;
+def : Pat<(v8f64 (X86VBroadcast (loadf64 addr:$src))),
+          (VBROADCASTSDZrm addr:$src)>;
+
+multiclass avx512_int_broadcast_reg<bits<8> opc, string OpcodeStr,
+                          RegisterClass SrcRC, RegisterClass KRC> {
+  def Zrr : AVX5128I<opc, MRMSrcReg, (outs VR512:$dst), (ins SrcRC:$src),
+                   !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                   []>, EVEX, EVEX_V512;
+  def Zkrr : AVX5128I<opc, MRMSrcReg, (outs VR512:$dst), 
+                   (ins KRC:$mask, SrcRC:$src),
+                   !strconcat(OpcodeStr, 
+                        "\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}"),
+                   []>, EVEX, EVEX_V512, EVEX_KZ;
+}
+
+defm VPBROADCASTDr  : avx512_int_broadcast_reg<0x7C, "vpbroadcastd", GR32, VK16WM>;
+defm VPBROADCASTQr  : avx512_int_broadcast_reg<0x7C, "vpbroadcastq", GR64, VK8WM>,
+                                            VEX_W;
+                                            
+def : Pat <(v16i32 (X86vzext VK16WM:$mask)),
+           (VPBROADCASTDrZkrr VK16WM:$mask, (i32 (MOV32ri 0x1)))>;
+
+def : Pat <(v8i64 (X86vzext VK8WM:$mask)),
+           (VPBROADCASTQrZkrr VK8WM:$mask, (i64 (MOV64ri 0x1)))>;
+
+def : Pat<(v16i32 (X86VBroadcast (i32 GR32:$src))),
+        (VPBROADCASTDrZrr GR32:$src)>;
+def : Pat<(v8i64 (X86VBroadcast (i64 GR64:$src))),
+        (VPBROADCASTQrZrr GR64:$src)>;
+
+multiclass avx512_int_broadcast_rm<bits<8> opc, string OpcodeStr,
+                          X86MemOperand x86memop, PatFrag ld_frag,
+                          RegisterClass DstRC, ValueType OpVT, ValueType SrcVT,
+                          RegisterClass KRC> {
+  def rr : AVX5128I<opc, MRMSrcReg, (outs DstRC:$dst), (ins VR128X:$src),
+                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                  [(set DstRC:$dst,
+                    (OpVT (X86VBroadcast (SrcVT VR128X:$src))))]>, EVEX;
+  def krr : AVX5128I<opc, MRMSrcReg, (outs DstRC:$dst), (ins KRC:$mask,
+                                                         VR128X:$src),
+                    !strconcat(OpcodeStr, 
+                    "\t{$src, ${dst}{${mask}}{z}|${dst}{${mask}}{z}, $src}"),
+                    [(set DstRC:$dst,
+                      (OpVT (X86VBroadcastm KRC:$mask, (SrcVT VR128X:$src))))]>,
+                    EVEX, EVEX_KZ;
+  def rm : AVX5128I<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src),
+                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                  [(set DstRC:$dst, 
+                    (OpVT (X86VBroadcast (ld_frag addr:$src))))]>, EVEX;
+  def krm : AVX5128I<opc, MRMSrcMem, (outs DstRC:$dst), (ins KRC:$mask,
+                                                         x86memop:$src),
+                  !strconcat(OpcodeStr, 
+                      "\t{$src, ${dst}{${mask}}{z}|${dst}{${mask}}{z}, $src}"),
+                  [(set DstRC:$dst, (OpVT (X86VBroadcastm KRC:$mask, 
+                                     (ld_frag addr:$src))))]>, EVEX, EVEX_KZ;
+}
+
+defm VPBROADCASTDZ  : avx512_int_broadcast_rm<0x58, "vpbroadcastd", i32mem,
+                      loadi32, VR512, v16i32, v4i32, VK16WM>,
+                      EVEX_V512, EVEX_CD8<32, CD8VT1>;
+defm VPBROADCASTQZ  : avx512_int_broadcast_rm<0x59, "vpbroadcastq", i64mem,
+                      loadi64, VR512, v8i64, v2i64, VK8WM>,  EVEX_V512, VEX_W,
+                      EVEX_CD8<64, CD8VT1>;
+
+def : Pat<(v16f32 (X86VBroadcast (v4f32 VR128X:$src))),
+          (VBROADCASTSSZrr VR128X:$src)>;
+def : Pat<(v8f64 (X86VBroadcast (v2f64 VR128X:$src))),
+          (VBROADCASTSDZrr VR128X:$src)>;
+    
+// Provide fallback in case the load node that is used in the patterns above
+// is used by additional users, which prevents the pattern selection.
+def : Pat<(v16f32 (X86VBroadcast FR32X:$src)),
+          (VBROADCASTSSZrr (COPY_TO_REGCLASS FR32X:$src, VR128X))>;
+def : Pat<(v8f64 (X86VBroadcast FR64X:$src)),
+          (VBROADCASTSDZrr (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
+
+
+let Predicates = [HasAVX512] in {
+def : Pat<(v8i32 (X86VBroadcastm (v8i1 VK8WM:$mask), (loadi32 addr:$src))),
+           (EXTRACT_SUBREG 
+              (v16i32 (VPBROADCASTDZkrm (COPY_TO_REGCLASS VK8WM:$mask, VK16WM),
+                       addr:$src)), sub_ymm)>;
+}
+//===----------------------------------------------------------------------===//
+// AVX-512 BROADCAST MASK TO VECTOR REGISTER
+//---
+
+multiclass avx512_mask_broadcast<bits<8> opc, string OpcodeStr,
+                       RegisterClass DstRC, RegisterClass KRC,
+                       ValueType OpVT, ValueType SrcVT> {
+def rr : AVX512XS8I<opc, MRMDestReg, (outs DstRC:$dst), (ins KRC:$src),
+                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                  []>, EVEX;
+}
+
+defm VPBROADCASTMW2D : avx512_mask_broadcast<0x3A, "vpbroadcastmw2d", VR512,
+                                             VK16, v16i32, v16i1>, EVEX_V512;
+defm VPBROADCASTMB2Q : avx512_mask_broadcast<0x2A, "vpbroadcastmb2q", VR512,
+                                            VK8, v8i64, v8i1>, EVEX_V512, VEX_W;
+
 // Mask register copy, including
 // - copy between mask registers
 // - load/store mask registers

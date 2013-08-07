@@ -321,6 +321,8 @@ namespace llvm {
       VPERMI,
       VPERM2X128,
       VBROADCAST,
+      // masked broadcast
+      VBROADCASTM,
 
       // PMULUDQ - Vector multiply packed unsigned doubleword integers
       PMULUDQ,
@@ -852,7 +854,9 @@ namespace llvm {
     SDValue lowerUINT_TO_FP_vec(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerZERO_EXTEND(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerZERO_EXTEND_AVX512(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerSIGN_EXTEND_AVX512(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerANY_EXTEND(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG) const;
