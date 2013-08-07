@@ -105,6 +105,10 @@ N: Zhang Xiongpang
 E: zhangxiongpang@gmail.com
 D: Minor patches and bug fixes.
 
+N: Zhihao Yuan
+E: lichray@gmail.com
+D: Standard compatibility fixes.
+
 N: Jeffrey Yasskin
 E: jyasskin@gmail.com
 E: jyasskin@google.com
