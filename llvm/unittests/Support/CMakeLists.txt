@@ -19,6 +19,7 @@ add_llvm_unittest(SupportTests
   FileOutputBufferTest.cpp
   IntegersSubsetTest.cpp
   LeakDetectorTest.cpp
+  LocaleTest.cpp
   ManagedStatic.cpp
   MathExtrasTest.cpp
   MD5Test.cpp
