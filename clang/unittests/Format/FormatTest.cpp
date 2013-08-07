@@ -5532,6 +5532,11 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                BreakBeforeBrace);
 }
 
+TEST_F(FormatTest, UnderstandsPragmas) {
+  verifyFormat("#pragma omp reduction(| : var)");
+  verifyFormat("#pragma omp reduction(+ : var)");
+}
+
 bool allStylesEqual(ArrayRef<FormatStyle> Styles) {
   for (size_t i = 1; i < Styles.size(); ++i)
     if (!(Styles[0] == Styles[i]))

@@ -1236,7 +1236,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if (Tok.isOneOf(tok::arrowstar, tok::periodstar) ||
       Tok.Previous->isOneOf(tok::arrowstar, tok::periodstar))
     return false;
-  if (Tok.Type == TT_BinaryOperator || Tok.Previous->Type == TT_BinaryOperator)
+  if ((Tok.Type == TT_BinaryOperator && !Tok.Previous->is(tok::l_paren)) ||
+      Tok.Previous->Type == TT_BinaryOperator)
     return true;
   if (Tok.Previous->Type == TT_TemplateCloser && Tok.is(tok::l_paren))
     return false;
