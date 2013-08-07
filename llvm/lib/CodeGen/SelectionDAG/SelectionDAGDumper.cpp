@@ -142,6 +142,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FCEIL:                      return "fceil";
   case ISD::FRINT:                      return "frint";
   case ISD::FNEARBYINT:                 return "fnearbyint";
+  case ISD::FROUND:                     return "fround";
   case ISD::FEXP:                       return "fexp";
   case ISD::FEXP2:                      return "fexp2";
   case ISD::FLOG:                       return "flog";

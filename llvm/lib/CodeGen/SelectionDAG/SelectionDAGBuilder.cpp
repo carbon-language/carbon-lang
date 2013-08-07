@@ -4902,7 +4902,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::ceil:
   case Intrinsic::trunc:
   case Intrinsic::rint:
-  case Intrinsic::nearbyint: {
+  case Intrinsic::nearbyint:
+  case Intrinsic::round: {
     unsigned Opcode;
     switch (Intrinsic) {
     default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
@@ -4915,6 +4916,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     case Intrinsic::trunc:     Opcode = ISD::FTRUNC;     break;
     case Intrinsic::rint:      Opcode = ISD::FRINT;      break;
     case Intrinsic::nearbyint: Opcode = ISD::FNEARBYINT; break;
+    case Intrinsic::round:     Opcode = ISD::FROUND;     break;
     }
 
     setValue(&I, DAG.getNode(Opcode, sdl,
@@ -5642,6 +5644,12 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
       case LibFunc::rintf:
       case LibFunc::rintl:
         if (visitUnaryFloatCall(I, ISD::FRINT))
+          return;
+        break;
+      case LibFunc::round:
+      case LibFunc::roundf:
+      case LibFunc::roundl:
+        if (visitUnaryFloatCall(I, ISD::FROUND))
           return;
         break;
       case LibFunc::trunc:

@@ -1772,6 +1772,7 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
     case Intrinsic::trunc:
     case Intrinsic::rint:
     case Intrinsic::nearbyint:
+    case Intrinsic::round:
     case Intrinsic::pow:
     case Intrinsic::fma:
     case Intrinsic::fmuladd:
@@ -1850,6 +1851,10 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   case LibFunc::nearbyintf:
   case LibFunc::nearbyintl:
     return Intrinsic::nearbyint;
+  case LibFunc::round:
+  case LibFunc::roundf:
+  case LibFunc::roundl:
+    return Intrinsic::round;
   case LibFunc::pow:
   case LibFunc::powf:
   case LibFunc::powl:

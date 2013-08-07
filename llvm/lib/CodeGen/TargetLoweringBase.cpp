@@ -191,6 +191,11 @@ static void InitLibcallNames(const char **Names, const TargetMachine &TM) {
   Names[RTLIB::NEARBYINT_F80] = "nearbyintl";
   Names[RTLIB::NEARBYINT_F128] = "nearbyintl";
   Names[RTLIB::NEARBYINT_PPCF128] = "nearbyintl";
+  Names[RTLIB::ROUND_F32] = "roundf";
+  Names[RTLIB::ROUND_F64] = "round";
+  Names[RTLIB::ROUND_F80] = "roundl";
+  Names[RTLIB::ROUND_F128] = "roundl";
+  Names[RTLIB::ROUND_PPCF128] = "roundl";
   Names[RTLIB::FLOOR_F32] = "floorf";
   Names[RTLIB::FLOOR_F64] = "floor";
   Names[RTLIB::FLOOR_F80] = "floorl";
@@ -706,6 +711,7 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f16, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f16, Expand);
   setOperationAction(ISD::FRINT,  MVT::f16, Expand);
+  setOperationAction(ISD::FROUND, MVT::f16, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f16, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f32, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f32, Expand);
@@ -716,6 +722,7 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f32, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f32, Expand);
   setOperationAction(ISD::FRINT,  MVT::f32, Expand);
+  setOperationAction(ISD::FROUND, MVT::f32, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f32, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f64, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f64, Expand);
@@ -726,6 +733,7 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f64, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f64, Expand);
   setOperationAction(ISD::FRINT,  MVT::f64, Expand);
+  setOperationAction(ISD::FROUND, MVT::f64, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f128, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f128, Expand);
@@ -736,6 +744,7 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f128, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f128, Expand);
   setOperationAction(ISD::FRINT,  MVT::f128, Expand);
+  setOperationAction(ISD::FROUND, MVT::f128, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f128, Expand);
 
   // Default ISD::TRAP to expand (which turns it into abort).

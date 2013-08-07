@@ -7526,6 +7526,42 @@ Semantics:
 This function returns the same values as the libm ``nearbyint``
 functions would, and handles error conditions in the same way.
 
+'``llvm.round.*``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+This is an overloaded intrinsic. You can use ``llvm.round`` on any
+floating point or vector of floating point type. Not all targets support
+all types however.
+
+::
+
+      declare float     @llvm.round.f32(float  %Val)
+      declare double    @llvm.round.f64(double %Val)
+      declare x86_fp80  @llvm.round.f80(x86_fp80  %Val)
+      declare fp128     @llvm.round.f128(fp128 %Val)
+      declare ppc_fp128 @llvm.round.ppcf128(ppc_fp128  %Val)
+
+Overview:
+"""""""""
+
+The '``llvm.round.*``' intrinsics returns the operand rounded to the
+nearest integer.
+
+Arguments:
+""""""""""
+
+The argument and return value are floating point numbers of the same
+type.
+
+Semantics:
+""""""""""
+
+This function returns the same values as the libm ``round``
+functions would, and handles error conditions in the same way.
+
 Bit Manipulation Intrinsics
 ---------------------------
 

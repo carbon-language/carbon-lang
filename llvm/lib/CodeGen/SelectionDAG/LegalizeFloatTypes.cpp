@@ -88,6 +88,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::FPOWI:       R = SoftenFloatRes_FPOWI(N); break;
     case ISD::FREM:        R = SoftenFloatRes_FREM(N); break;
     case ISD::FRINT:       R = SoftenFloatRes_FRINT(N); break;
+    case ISD::FROUND:      R = SoftenFloatRes_FROUND(N); break;
     case ISD::FSIN:        R = SoftenFloatRes_FSIN(N); break;
     case ISD::FSQRT:       R = SoftenFloatRes_FSQRT(N); break;
     case ISD::FSUB:        R = SoftenFloatRes_FSUB(N); break;
@@ -441,6 +442,18 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FRINT(SDNode *N) {
                                            RTLIB::RINT_F80,
                                            RTLIB::RINT_F128,
                                            RTLIB::RINT_PPCF128),
+                         NVT, &Op, 1, false, SDLoc(N));
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_FROUND(SDNode *N) {
+  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDValue Op = GetSoftenedFloat(N->getOperand(0));
+  return TLI.makeLibCall(DAG, GetFPLibCall(N->getValueType(0),
+                                           RTLIB::ROUND_F32,
+                                           RTLIB::ROUND_F64,
+                                           RTLIB::ROUND_F80,
+                                           RTLIB::ROUND_F128,
+                                           RTLIB::ROUND_PPCF128),
                          NVT, &Op, 1, false, SDLoc(N));
 }
 
@@ -817,6 +830,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::FPOW:       ExpandFloatRes_FPOW(N, Lo, Hi); break;
   case ISD::FPOWI:      ExpandFloatRes_FPOWI(N, Lo, Hi); break;
   case ISD::FRINT:      ExpandFloatRes_FRINT(N, Lo, Hi); break;
+  case ISD::FROUND:     ExpandFloatRes_FROUND(N, Lo, Hi); break;
   case ISD::FSIN:       ExpandFloatRes_FSIN(N, Lo, Hi); break;
   case ISD::FSQRT:      ExpandFloatRes_FSQRT(N, Lo, Hi); break;
   case ISD::FSUB:       ExpandFloatRes_FSUB(N, Lo, Hi); break;
@@ -1068,6 +1082,18 @@ void DAGTypeLegalizer::ExpandFloatRes_FRINT(SDNode *N,
                                          RTLIB::RINT_F32, RTLIB::RINT_F64,
                                          RTLIB::RINT_F80, RTLIB::RINT_F128,
                                          RTLIB::RINT_PPCF128),
+                            N, false);
+  GetPairElements(Call, Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FROUND(SDNode *N,
+                                             SDValue &Lo, SDValue &Hi) {
+  SDValue Call = LibCallify(GetFPLibCall(N->getValueType(0),
+                                         RTLIB::ROUND_F32,
+                                         RTLIB::ROUND_F64,
+                                         RTLIB::ROUND_F80,
+                                         RTLIB::ROUND_F128,
+                                         RTLIB::ROUND_PPCF128),
                             N, false);
   GetPairElements(Call, Lo, Hi);
 }

@@ -2946,6 +2946,7 @@ static bool IsIdempotent(Intrinsic::ID ID) {
   case Intrinsic::trunc:
   case Intrinsic::rint:
   case Intrinsic::nearbyint:
+  case Intrinsic::round:
     return true;
   }
 }

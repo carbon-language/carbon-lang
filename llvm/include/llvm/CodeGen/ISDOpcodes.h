@@ -440,11 +440,11 @@ namespace ISD {
 
     /// FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     /// FLOG, FLOG2, FLOG10, FEXP, FEXP2,
-    /// FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR - Perform various unary
+    /// FCEIL, FTRUNC, FRINT, FNEARBYINT, FROUND, FFLOOR - Perform various unary
     /// floating point operations. These are inspired by libm.
     FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     FLOG, FLOG2, FLOG10, FEXP, FEXP2,
-    FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR,
+    FCEIL, FTRUNC, FRINT, FNEARBYINT, FROUND, FFLOOR,
     
     /// FSINCOS - Compute both fsin and fcos as a single operation.
     FSINCOS,

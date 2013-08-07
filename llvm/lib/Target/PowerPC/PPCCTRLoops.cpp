@@ -259,6 +259,7 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
           case Intrinsic::trunc:     Opcode = ISD::FTRUNC;     break;
           case Intrinsic::rint:      Opcode = ISD::FRINT;      break;
           case Intrinsic::nearbyint: Opcode = ISD::FNEARBYINT; break;
+          case Intrinsic::round:     Opcode = ISD::FROUND;     break;
           }
         }
 
@@ -309,6 +310,10 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
           case LibFunc::rintf:
           case LibFunc::rintl:
             Opcode = ISD::FRINT; break;
+          case LibFunc::round:
+          case LibFunc::roundf:
+          case LibFunc::roundl:
+            Opcode = ISD::FROUND; break;
           case LibFunc::trunc:
           case LibFunc::truncf:
           case LibFunc::truncl:
