@@ -292,6 +292,11 @@ class FRR16_ins<bits<5> f, string asmstr, InstrItinClass itin> :
         !strconcat(asmstr, "\t$rx, $ry"), [], itin> {
 }
 
+class FRRBreakNull16_ins<string asmstr, InstrItinClass itin> :
+  FRRBreak16<(outs), (ins), asmstr, [], itin> {
+  let Code=0;
+}
+
 class FRR16R_ins<bits<5> f, string asmstr, InstrItinClass itin> :
   FRR16<f, (outs), (ins  CPU16Regs:$rx, CPU16Regs:$ry),
         !strconcat(asmstr, "\t$rx, $ry"), [], itin> {
@@ -574,6 +579,13 @@ def BnezRxImm16: FRI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
 //
 def BnezRxImmX16: FEXT_RI16_B_ins<0b00101, "bnez", IIAlu>, cbranch16;
 
+
+//
+//Format: BREAK immediate
+// Purpose: Breakpoint
+// To cause a Breakpoint exception.
+
+def Break16: FRRBreakNull16_ins<"break 0", NoItinerary>; 
 //
 // Format: BTEQZ offset MIPS16e
 // Purpose: Branch on T Equal to Zero (Extended)
@@ -1796,3 +1808,6 @@ def : Mips16Pat<(i32 (extloadi8   addr16:$src)),
                 (LbuRxRyOffMemX16  addr16:$src)>;
 def : Mips16Pat<(i32 (extloadi16  addr16:$src)),
                 (LhuRxRyOffMemX16  addr16:$src)>;
+
+def: Mips16Pat<(trap), (Break16)>;
+

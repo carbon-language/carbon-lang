@@ -148,6 +148,20 @@ class FRR16<bits<5> _funct, dag outs, dag ins, string asmstr,
   let Inst{4-0}   = funct;
 }
 
+class FRRBreak16<dag outs, dag ins, string asmstr,
+                 list<dag> pattern, InstrItinClass itin>:
+  MipsInst16<outs, ins, asmstr, pattern, itin>
+{
+  bits<6>  Code;
+  bits<5>  funct;
+
+  let Opcode = 0b11101;
+  let funct  = 0b00101;
+
+  let Inst{10-5} = Code;
+  let Inst{4-0}   = funct;
+}
+
 //
 // For conversion functions.
 //
