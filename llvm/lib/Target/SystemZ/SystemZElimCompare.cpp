@@ -122,6 +122,12 @@ static bool resultTests(MachineInstr *MI, unsigned Reg, unsigned SubReg) {
   case SystemZ::LTR:
   case SystemZ::LTGR:
   case SystemZ::LTGFR:
+  case SystemZ::LER:
+  case SystemZ::LDR:
+  case SystemZ::LXR:
+  case SystemZ::LTEBR:
+  case SystemZ::LTDBR:
+  case SystemZ::LTXBR:
     if (MI->getOperand(1).getReg() == Reg &&
         MI->getOperand(1).getSubReg() == SubReg)
       return true;
@@ -230,15 +236,12 @@ adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
   unsigned MIFlags = Desc.TSFlags;
 
   // See which compare-style condition codes are available.
-  unsigned ReusableCCMask = 0;
-  if (MIFlags & SystemZII::CCHasZero)
-    ReusableCCMask |= SystemZ::CCMASK_CMP_EQ;
+  unsigned ReusableCCMask = SystemZII::getCompareZeroCCMask(MIFlags);
 
   // For unsigned comparisons with zero, only equality makes sense.
   unsigned CompareFlags = Compare->getDesc().TSFlags;
-  if (!(CompareFlags & SystemZII::IsLogical) &&
-      (MIFlags & SystemZII::CCHasOrder))
-    ReusableCCMask |= SystemZ::CCMASK_CMP_LT | SystemZ::CCMASK_CMP_GT;
+  if (CompareFlags & SystemZII::IsLogical)
+    ReusableCCMask &= SystemZ::CCMASK_CMP_EQ;
 
   if (ReusableCCMask == 0)
     return false;
@@ -297,6 +300,21 @@ adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
   return true;
 }
 
+// Return true if Compare is a comparison against zero.
+static bool isCompareZero(MachineInstr *Compare) {
+  switch (Compare->getOpcode()) {
+  case SystemZ::LTEBRCompare:
+  case SystemZ::LTDBRCompare:
+  case SystemZ::LTXBRCompare:
+    return true;
+
+  default:
+    return (Compare->getNumExplicitOperands() == 2 &&
+            Compare->getOperand(1).isImm() &&
+            Compare->getOperand(1).getImm() == 0);
+  }
+}
+
 // Try to optimize cases where comparison instruction Compare is testing
 // a value against zero.  Return true on success and if Compare should be
 // deleted as dead.  CCUsers is the list of instructions that use the CC
@@ -304,10 +322,7 @@ adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
 bool SystemZElimCompare::
 optimizeCompareZero(MachineInstr *Compare,
                     SmallVectorImpl<MachineInstr *> &CCUsers) {
-  // Check whether this is a comparison against zero.
-  if (Compare->getNumExplicitOperands() != 2 ||
-      !Compare->getOperand(1).isImm() ||
-      Compare->getOperand(1).getImm() != 0)
+  if (!isCompareZero(Compare))
     return false;
 
   // Search back for CC results that are based on the first operand.

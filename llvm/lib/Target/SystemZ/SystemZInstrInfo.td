@@ -230,7 +230,7 @@ let neverHasSideEffects = 1 in {
   def LR  : UnaryRR <"l",  0x18,   null_frag, GR32, GR32>;
   def LGR : UnaryRRE<"lg", 0xB904, null_frag, GR64, GR64>;
 }
-let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in {
+let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
   def LTR  : UnaryRR <"lt",  0x12,   null_frag, GR32, GR32>;
   def LTGR : UnaryRRE<"ltg", 0xB902, null_frag, GR64, GR64>;
 }
@@ -276,7 +276,7 @@ let canFoldAsLoad = 1, SimpleBDXLoad = 1 in {
                       [(set GR128:$dst, (load bdxaddr20only128:$src))]>;
   }
 }
-let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in {
+let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
   def LT  : UnaryRXY<"lt",  0xE312, load, GR32, 4>;
   def LTG : UnaryRXY<"ltg", 0xE302, load, GR64, 8>;
 }
@@ -374,7 +374,7 @@ let neverHasSideEffects = 1 in {
   def LGHR : UnaryRRE<"lgh", 0xB907, sext16, GR64, GR64>;
   def LGFR : UnaryRRE<"lgf", 0xB914, sext32, GR64, GR32>;
 }
-let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in
+let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
   def LTGFR : UnaryRRE<"ltgf", 0xB912, null_frag, GR64, GR64>;
 
 // Match 32-to-64-bit sign extensions in which the source is already
@@ -393,7 +393,7 @@ def LGH   : UnaryRXY<"lgh", 0xE315, sextloadi16, GR64, 2>;
 def LGF   : UnaryRXY<"lgf", 0xE314, sextloadi32, GR64, 4>;
 def LGHRL : UnaryRILPC<"lghrl", 0xC44, aligned_sextloadi16, GR64>;
 def LGFRL : UnaryRILPC<"lgfrl", 0xC4C, aligned_sextloadi32, GR64>;
-let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in
+let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in
   def LTGF : UnaryRXY<"ltgf", 0xE332, sextloadi32, GR64, 4>;
 
 // If the sign of a load-extend operation doesn't matter, use the signed ones.
@@ -532,11 +532,11 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
 //===----------------------------------------------------------------------===//
 
 let Defs = [CC] in {
-  let CCValues = 0xF, CCHasZero = 1 in {
+  let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
     def LCR  : UnaryRR <"lc",  0x13,   ineg, GR32, GR32>;
     def LCGR : UnaryRRE<"lcg", 0xB903, ineg, GR64, GR64>;
   }
-  let CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in
+  let CCValues = 0xE, CompareZeroCCMask = 0xE in
     def LCGFR : UnaryRRE<"lcgf", 0xB913, null_frag, GR64, GR32>;
 }
 defm : SXU<ineg, LCGFR>;
@@ -589,7 +589,7 @@ def : Pat<(or (zext32 GR32:$src), imm64hf32:$imm),
 //===----------------------------------------------------------------------===//
 
 // Plain addition.
-let Defs = [CC], CCValues = 0xF, CCHasZero = 1 in {
+let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   // Addition of a register.
   let isCommutable = 1 in {
     defm AR : BinaryRRAndK<"a", 0x1A, 0xB9F8, add, GR32, GR32>;
@@ -660,7 +660,7 @@ let Defs = [CC], Uses = [CC] in {
 
 // Plain substraction.  Although immediate forms exist, we use the
 // add-immediate instruction instead.
-let Defs = [CC], CCValues = 0xF, CCHasZero = 1 in {
+let Defs = [CC], CCValues = 0xF, CompareZeroCCMask = 0x8 in {
   // Subtraction of a register.
   defm SR : BinaryRRAndK<"s", 0x1B, 0xB9F9, sub, GR32, GR32>;
   def SGFR : BinaryRRE<"sgf", 0xB919, null_frag, GR64, GR32>;
@@ -710,7 +710,7 @@ let Defs = [CC], Uses = [CC] in {
 
 let Defs = [CC] in {
   // ANDs of a register.
-  let isCommutable = 1, CCValues = 0xC, CCHasZero = 1 in {
+  let isCommutable = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in {
     defm NR : BinaryRRAndK<"n", 0x14, 0xB9F4, and, GR32, GR32>;
     defm NGR : BinaryRREAndK<"ng", 0xB980, 0xB9E4, and, GR64, GR64>;
   }
@@ -730,14 +730,14 @@ let Defs = [CC] in {
     // ANDs of a 32-bit immediate, leaving other bits unaffected.
     // The CC result only reflects the 32-bit field, which means we can
     // use it as a zero indicator for i32 operations but not otherwise.
-    let isCodeGenOnly = 1, CCValues = 0xC, CCHasZero = 1 in
+    let isCodeGenOnly = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in
       def NILF32 : BinaryRIL<"nilf", 0xC0B, and, GR32, uimm32>;
     def NILF : BinaryRIL<"nilf", 0xC0B, and, GR64, imm64lf32c>;
     def NIHF : BinaryRIL<"nihf", 0xC0A, and, GR64, imm64hf32c>;
   }
 
   // ANDs of memory.
-  let CCValues = 0xC, CCHasZero = 1 in {
+  let CCValues = 0xC, CompareZeroCCMask = 0x8 in {
     defm N  : BinaryRXPair<"n", 0x54, 0xE354, and, GR32, load, 4>;
     def  NG : BinaryRXY<"ng", 0xE380, and, GR64, load, 8>; 
   }
@@ -754,7 +754,7 @@ defm : RMWIByte<and, bdaddr20pair, NIY>;
 
 let Defs = [CC] in {
   // ORs of a register.
-  let isCommutable = 1, CCValues = 0xC, CCHasZero = 1 in {
+  let isCommutable = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in {
     defm OR : BinaryRRAndK<"o", 0x16, 0xB9F6, or, GR32, GR32>;
     defm OGR : BinaryRREAndK<"og", 0xB981, 0xB9E6, or, GR64, GR64>;
   }
@@ -773,13 +773,13 @@ let Defs = [CC] in {
   // ORs of a 32-bit immediate, leaving other bits unaffected.
   // The CC result only reflects the 32-bit field, which means we can
   // use it as a zero indicator for i32 operations but not otherwise.
-  let isCodeGenOnly = 1, CCValues = 0xC, CCHasZero = 1 in
+  let isCodeGenOnly = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in
     def OILF32 : BinaryRIL<"oilf", 0xC0D, or, GR32, uimm32>;
   def OILF : BinaryRIL<"oilf", 0xC0D, or, GR64, imm64lf32>;
   def OIHF : BinaryRIL<"oihf", 0xC0C, or, GR64, imm64hf32>;
 
   // ORs of memory.
-  let CCValues = 0xC, CCHasZero = 1 in {
+  let CCValues = 0xC, CompareZeroCCMask = 0x8 in {
     defm O  : BinaryRXPair<"o", 0x56, 0xE356, or, GR32, load, 4>;
     def  OG : BinaryRXY<"og", 0xE381, or, GR64, load, 8>;
   }
@@ -796,7 +796,7 @@ defm : RMWIByte<or, bdaddr20pair, OIY>;
 
 let Defs = [CC] in {
   // XORs of a register.
-  let isCommutable = 1, CCValues = 0xC, CCHasZero = 1 in {
+  let isCommutable = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in {
     defm XR : BinaryRRAndK<"x", 0x17, 0xB9F7, xor, GR32, GR32>;
     defm XGR : BinaryRREAndK<"xg", 0xB982, 0xB9E7, xor, GR64, GR64>;
   }
@@ -804,13 +804,13 @@ let Defs = [CC] in {
   // XORs of a 32-bit immediate, leaving other bits unaffected.
   // The CC result only reflects the 32-bit field, which means we can
   // use it as a zero indicator for i32 operations but not otherwise.
-  let isCodeGenOnly = 1, CCValues = 0xC, CCHasZero = 1 in
+  let isCodeGenOnly = 1, CCValues = 0xC, CompareZeroCCMask = 0x8 in
     def XILF32 : BinaryRIL<"xilf", 0xC07, xor, GR32, uimm32>;
   def XILF : BinaryRIL<"xilf", 0xC07, xor, GR64, imm64lf32>;
   def XIHF : BinaryRIL<"xihf", 0xC06, xor, GR64, imm64hf32>;
 
   // XORs of memory.
-  let CCValues = 0xC, CCHasZero = 1 in {
+  let CCValues = 0xC, CompareZeroCCMask = 0x8 in {
     defm X  : BinaryRXPair<"x",0x57, 0xE357, xor, GR32, load, 4>;
     def  XG : BinaryRXY<"xg", 0xE382, xor, GR64, load, 8>;
   }
@@ -886,7 +886,7 @@ let neverHasSideEffects = 1 in {
 }
 
 // Arithmetic shift right.
-let Defs = [CC], CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in {
+let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
   defm SRA : ShiftRSAndK<"sra", 0x8A, 0xEBDC, sra, GR32>;
   def SRAG : ShiftRSY<"srag", 0xEB0A, sra, GR64>;
 }
@@ -903,7 +903,7 @@ let neverHasSideEffects = 1 in {
 let Defs = [CC] in {
   let isCodeGenOnly = 1 in
     def RISBG32 : RotateSelectRIEf<"risbg", 0xEC55, GR32, GR32>;
-  let CCValues = 0xE, CCHasZero = 1, CCHasOrder = 1 in
+  let CCValues = 0xE, CompareZeroCCMask = 0xE in
     def RISBG : RotateSelectRIEf<"risbg", 0xEC55, GR64, GR64>;
 }
 
