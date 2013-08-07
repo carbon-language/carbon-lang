@@ -563,7 +563,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   // in the AST, we could generalize it more easily.
   const ConstantArrayType *Array
     = CGF.getContext().getAsConstantArrayType(FieldType);
-  if (Array && Constructor->isImplicitlyDefined() &&
+  if (Array && Constructor->isDefaulted() &&
       Constructor->isCopyOrMoveConstructor()) {
     QualType BaseElementTy = CGF.getContext().getBaseElementType(Array);
     CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(MemberInit->getInit());
@@ -885,7 +885,7 @@ namespace {
     /// constructor. 
     static const VarDecl* getTrivialCopySource(const CXXConstructorDecl *CD,
                                                FunctionArgList &Args) {
-      if (CD->isCopyOrMoveConstructor() && CD->isImplicitlyDefined())
+      if (CD->isCopyOrMoveConstructor() && CD->isDefaulted())
         return Args[Args.size() - 1];
       return 0; 
     }
@@ -919,7 +919,7 @@ namespace {
                           FunctionArgList &Args)
       : FieldMemcpyizer(CGF, CD->getParent(), getTrivialCopySource(CD, Args)),
         ConstructorDecl(CD),
-        MemcpyableCtor(CD->isImplicitlyDefined() &&
+        MemcpyableCtor(CD->isDefaulted() &&
                        CD->isCopyOrMoveConstructor() &&
                        CGF.getLangOpts().getGC() == LangOptions::NonGC),
         Args(Args) { }

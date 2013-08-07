@@ -1288,7 +1288,6 @@ void ASTDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   VisitCXXMethodDecl(D);
   
   D->IsExplicitSpecified = Record[Idx++];
-  D->ImplicitlyDefined = Record[Idx++];
   llvm::tie(D->CtorInitializers, D->NumCtorInitializers)
       = Reader.ReadCXXCtorInitializers(F, Record, Idx);
 }
@@ -1296,7 +1295,6 @@ void ASTDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
 void ASTDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   VisitCXXMethodDecl(D);
 
-  D->ImplicitlyDefined = Record[Idx++];
   D->OperatorDelete = ReadDeclAs<FunctionDecl>(Record, Idx);
 }
 

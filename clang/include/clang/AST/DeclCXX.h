@@ -2025,14 +2025,6 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// specified.
   bool IsExplicitSpecified : 1;
 
-  /// \brief Whether this constructor was implicitly defined by the compiler.
-  ///
-  /// When false, the constructor was defined by the user. In C++03, this flag
-  /// will have the same value as Implicit. In C++11, however, a constructor
-  /// that is explicitly defaulted (i.e., defined with " = default") will have
-  /// \c !Implicit && ImplicitlyDefined.
-  bool ImplicitlyDefined : 1;
-
   /// \name Support for base and member initializers.
   /// \{
   /// \brief The arguments used to initialize the base or member.
@@ -2047,8 +2039,8 @@ class CXXConstructorDecl : public CXXMethodDecl {
                      bool isImplicitlyDeclared, bool isConstexpr)
     : CXXMethodDecl(CXXConstructor, RD, StartLoc, NameInfo, T, TInfo,
                     SC_None, isInline, isConstexpr, SourceLocation()),
-      IsExplicitSpecified(isExplicitSpecified), ImplicitlyDefined(false),
-      CtorInitializers(0), NumCtorInitializers(0) {
+      IsExplicitSpecified(isExplicitSpecified), CtorInitializers(0),
+      NumCtorInitializers(0) {
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -2070,25 +2062,6 @@ public:
   bool isExplicit() const {
     return cast<CXXConstructorDecl>(getFirstDeclaration())
       ->isExplicitSpecified();
-  }
-
-  /// \brief Whether this constructor was implicitly defined. 
-  ///
-  /// If false, then this constructor was defined by the user. This operation
-  /// must only be invoked if the constructor has already been defined.
-  bool isImplicitlyDefined() const {
-    assert(isThisDeclarationADefinition() &&
-           "Can only get the implicit-definition flag once the "
-           "constructor has been defined");
-    return ImplicitlyDefined;
-  }
-
-  /// \brief Set whether this constructor was implicitly defined or not.
-  void setImplicitlyDefined(bool ID) {
-    assert(isThisDeclarationADefinition() &&
-           "Can only set the implicit-definition flag once the constructor "
-           "has been defined");
-    ImplicitlyDefined = ID;
   }
 
   /// \brief Iterates through the member/base initializer list.
@@ -2249,13 +2222,6 @@ public:
 /// \endcode
 class CXXDestructorDecl : public CXXMethodDecl {
   virtual void anchor();
-  /// \brief Whether this destructor was implicitly defined by the compiler.
-  ///
-  /// When false, the destructor was defined by the user. In C++03, this
-  /// flag will have the same value as Implicit. In C++11, however, a
-  /// destructor that is explicitly defaulted (i.e., defined with " = default")
-  /// will have \c !Implicit && ImplicitlyDefined.
-  bool ImplicitlyDefined : 1;
 
   FunctionDecl *OperatorDelete;
 
@@ -2265,7 +2231,7 @@ class CXXDestructorDecl : public CXXMethodDecl {
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, StartLoc, NameInfo, T, TInfo,
                     SC_None, isInline, /*isConstexpr=*/false, SourceLocation()),
-      ImplicitlyDefined(false), OperatorDelete(0) {
+      OperatorDelete(0) {
     setImplicit(isImplicitlyDeclared);
   }
 
@@ -2277,25 +2243,6 @@ public:
                                    bool isInline,
                                    bool isImplicitlyDeclared);
   static CXXDestructorDecl *CreateDeserialized(ASTContext & C, unsigned ID);
-
-  /// \brief Whether this destructor was implicitly defined.
-  ///
-  /// If false, then this destructor was defined by the user. This operation
-  /// can only be invoked if the destructor has already been defined.
-  bool isImplicitlyDefined() const {
-    assert(isThisDeclarationADefinition() &&
-           "Can only get the implicit-definition flag once the destructor has "
-           "been defined");
-    return ImplicitlyDefined;
-  }
-
-  /// \brief Set whether this destructor was implicitly defined or not.
-  void setImplicitlyDefined(bool ID) {
-    assert(isThisDeclarationADefinition() &&
-           "Can only set the implicit-definition flag once the destructor has "
-           "been defined");
-    ImplicitlyDefined = ID;
-  }
 
   void setOperatorDelete(FunctionDecl *OD) { OperatorDelete = OD; }
   const FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
