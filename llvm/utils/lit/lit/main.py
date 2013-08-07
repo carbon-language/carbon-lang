@@ -281,7 +281,6 @@ def main(builtinParameters = {}):
                                     valgrindLeakCheck = opts.valgrindLeakCheck,
                                     valgrindArgs = opts.valgrindArgs,
                                     noExecute = opts.noExecute,
-                                    ignoreStdErr = False,
                                     debug = opts.debug,
                                     isWindows = (platform.system()=='Windows'),
                                     params = userParams,

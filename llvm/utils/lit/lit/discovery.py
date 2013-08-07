@@ -233,7 +233,6 @@ def load_test_suite(inputs):
                                     valgrindLeakCheck = False,
                                     valgrindArgs = [],
                                     noExecute = False,
-                                    ignoreStdErr = False,
                                     debug = False,
                                     isWindows = (platform.system()=='Windows'),
                                     params = {})
@@ -242,4 +241,3 @@ def load_test_suite(inputs):
 
     # Return a unittest test suite which just runs the tests in order.
     return unittest.TestSuite([LitTestCase(test, litConfig) for test in tests])
-

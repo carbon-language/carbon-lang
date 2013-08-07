@@ -19,7 +19,7 @@ class LitConfig:
 
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
-                 noExecute, ignoreStdErr, debug, isWindows,
+                 noExecute, debug, isWindows,
                  params, config_prefix = None):
         # The name of the test runner.
         self.progname = progname
@@ -30,7 +30,6 @@ class LitConfig:
         self.valgrindLeakCheck = bool(valgrindLeakCheck)
         self.valgrindUserArgs = list(valgrindArgs)
         self.noExecute = noExecute
-        self.ignoreStdErr = ignoreStdErr
         self.debug = debug
         self.isWindows = bool(isWindows)
         self.params = dict(params)
