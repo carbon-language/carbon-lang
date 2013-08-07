@@ -1289,6 +1289,15 @@ class RotateSelectRIEf<string mnemonic, bits<16> opcode, RegisterOperand cls1,
   let DisableEncoding = "$R1src";
 }
 
+// A floating-point load-and test operation.  Create both a normal unary
+// operation and one that acts as a comparison against zero.
+multiclass LoadAndTestRRE<string mnemonic, bits<16> opcode,
+                          RegisterOperand cls> {
+  def "" : UnaryRRE<mnemonic, opcode, null_frag, cls, cls>;
+  let isCodeGenOnly = 1 in
+    def Compare : CompareRRE<mnemonic, opcode, null_frag, cls, cls>;
+}
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//

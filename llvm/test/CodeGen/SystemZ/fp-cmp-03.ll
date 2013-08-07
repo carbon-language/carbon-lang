@@ -18,3 +18,18 @@ define i64 @f1(i64 %a, i64 %b, fp128 *%ptr, float %f2) {
   %res = select i1 %cond, i64 %a, i64 %b
   ret i64 %res
 }
+
+; Check comparison with zero.
+define i64 @f2(i64 %a, i64 %b, fp128 *%ptr) {
+; CHECK-LABEL: f2:
+; CHECK: ld %f0, 0(%r4)
+; CHECK: ld %f2, 8(%r4)
+; CHECK: ltxbr %f0, %f0
+; CHECK-NEXT: je
+; CHECK: lgr %r2, %r3
+; CHECK: br %r14
+  %f = load fp128 *%ptr
+  %cond = fcmp oeq fp128 %f, 0xL00000000000000000000000000000000
+  %res = select i1 %cond, i64 %a, i64 %b
+  ret i64 %res
+}

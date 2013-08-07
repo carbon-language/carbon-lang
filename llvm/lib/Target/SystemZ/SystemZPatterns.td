@@ -79,3 +79,9 @@ multiclass MVCLoadStore<SDPatternOperator load, SDPatternOperator store,
                                                    bdaddr12only:$src),
             (insn bdaddr12only:$dest, bdaddr12only:$src, length)>;
 }
+
+// Record that INSN is a LOAD AND TEST that can be used to compare
+// registers in CLS against zero.  The instruction has separate R1 and R2
+// operands, but they must be the same when the instruction is used like this.
+class CompareZeroFP<Instruction insn, RegisterOperand cls>
+  : Pat<(z_cmp cls:$reg, (fpimm0)), (insn cls:$reg, cls:$reg)>;

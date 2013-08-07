@@ -1645,6 +1645,14 @@
 	ltgf	%r0, 524288
 
 #CHECK: error: invalid register pair
+#CHECK: ltxbr	%f0, %f14
+#CHECK: error: invalid register pair
+#CHECK: ltxbr	%f14, %f0
+
+	ltxbr	%f0, %f14
+	ltxbr	%f14, %f0
+
+#CHECK: error: invalid register pair
 #CHECK: lxr	%f0, %f2
 #CHECK: error: invalid register pair
 #CHECK: lxr	%f2, %f0

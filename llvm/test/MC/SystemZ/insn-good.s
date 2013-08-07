@@ -4904,6 +4904,26 @@
 	ltgf	%r0, 524287(%r15,%r1)
 	ltgf	%r15, 0
 
+#CHECK: ltdbr	%f0, %f9                # encoding: [0xb3,0x12,0x00,0x09]
+#CHECK: ltdbr	%f0, %f15               # encoding: [0xb3,0x12,0x00,0x0f]
+#CHECK: ltdbr	%f15, %f0               # encoding: [0xb3,0x12,0x00,0xf0]
+#CHECK: ltdbr	%f15, %f9               # encoding: [0xb3,0x12,0x00,0xf9]
+
+	ltdbr	%f0,%f9
+	ltdbr	%f0,%f15
+	ltdbr	%f15,%f0
+	ltdbr	%f15,%f9
+
+#CHECK: ltebr	%f0, %f9                # encoding: [0xb3,0x02,0x00,0x09]
+#CHECK: ltebr	%f0, %f15               # encoding: [0xb3,0x02,0x00,0x0f]
+#CHECK: ltebr	%f15, %f0               # encoding: [0xb3,0x02,0x00,0xf0]
+#CHECK: ltebr	%f15, %f9               # encoding: [0xb3,0x02,0x00,0xf9]
+
+	ltebr	%f0,%f9
+	ltebr	%f0,%f15
+	ltebr	%f15,%f0
+	ltebr	%f15,%f9
+
 #CHECK: ltgfr	%r0, %r9                # encoding: [0xb9,0x12,0x00,0x09]
 #CHECK: ltgfr	%r0, %r15               # encoding: [0xb9,0x12,0x00,0x0f]
 #CHECK: ltgfr	%r15, %r0               # encoding: [0xb9,0x12,0x00,0xf0]
@@ -4933,6 +4953,16 @@
 	ltr	%r0,%r15
 	ltr	%r15,%r0
 	ltr	%r15,%r9
+
+#CHECK: ltxbr	%f0, %f9                # encoding: [0xb3,0x42,0x00,0x09]
+#CHECK: ltxbr	%f0, %f13               # encoding: [0xb3,0x42,0x00,0x0d]
+#CHECK: ltxbr	%f13, %f0               # encoding: [0xb3,0x42,0x00,0xd0]
+#CHECK: ltxbr	%f13, %f9               # encoding: [0xb3,0x42,0x00,0xd9]
+
+	ltxbr	%f0,%f9
+	ltxbr	%f0,%f13
+	ltxbr	%f13,%f0
+	ltxbr	%f13,%f9
 
 #CHECK: lxr	%f0, %f8                # encoding: [0xb3,0x65,0x00,0x08]
 #CHECK: lxr	%f0, %f13               # encoding: [0xb3,0x65,0x00,0x0d]

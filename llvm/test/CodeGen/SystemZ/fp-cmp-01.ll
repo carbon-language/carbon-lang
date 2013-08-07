@@ -147,3 +147,15 @@ define float @f7(float *%ptr0) {
 
   ret float %sel10
 }
+
+; Check comparison with zero.
+define i64 @f8(i64 %a, i64 %b, float %f) {
+; CHECK-LABEL: f8:
+; CHECK: ltebr %f0, %f0
+; CHECK-NEXT: je
+; CHECK: lgr %r2, %r3
+; CHECK: br %r14
+  %cond = fcmp oeq float %f, 0.0
+  %res = select i1 %cond, i64 %a, i64 %b
+  ret i64 %res
+}

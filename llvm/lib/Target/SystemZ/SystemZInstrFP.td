@@ -39,6 +39,17 @@ let neverHasSideEffects = 1 in {
   def LXR : UnaryRRE<"lx", 0xB365, null_frag, FP128, FP128>;
 }
 
+// Moves between two floating-point registers that also set the condition
+// codes.
+let Defs = [CC] in {
+  defm LTEBR : LoadAndTestRRE<"lteb", 0xB302, FP32>;
+  defm LTDBR : LoadAndTestRRE<"ltdb", 0xB312, FP64>;
+  defm LTXBR : LoadAndTestRRE<"ltxb", 0xB342, FP128>;
+}
+def : CompareZeroFP<LTEBRCompare, FP32>;
+def : CompareZeroFP<LTDBRCompare, FP64>;
+def : CompareZeroFP<LTXBRCompare, FP128>;
+
 // Moves between 64-bit integer and floating-point registers.
 def LGDR : UnaryRRE<"lgd", 0xB3CD, bitconvert, GR64, FP64>;
 def LDGR : UnaryRRE<"ldg", 0xB3C1, bitconvert, FP64, GR64>;
