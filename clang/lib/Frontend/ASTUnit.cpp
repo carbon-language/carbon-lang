@@ -1030,9 +1030,13 @@ public:
       // parsing into declaration IDs in the precompiled
       // preamble. This will allow us to deserialize those top-level
       // declarations when requested.
-      for (unsigned I = 0, N = TopLevelDecls.size(); I != N; ++I)
-        Unit.addTopLevelDeclFromPreamble(
-                                      getWriter().getDeclID(TopLevelDecls[I]));
+      for (unsigned I = 0, N = TopLevelDecls.size(); I != N; ++I) {
+        Decl *D = TopLevelDecls[I];
+        // Invalid top-level decls may not have been serialized.
+        if (D->isInvalidDecl())
+          continue;
+        Unit.addTopLevelDeclFromPreamble(getWriter().getDeclID(D));
+      }
 
       Action->setHasEmittedPreamblePCH();
     }

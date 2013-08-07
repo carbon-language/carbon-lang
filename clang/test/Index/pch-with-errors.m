@@ -9,6 +9,12 @@
 -(void)meth;
 @end
 
+struct FFF1
+extern I2 *somevar1;
+
+enum FFF2
+extern I2 *somevar2;
+
 #else
 
 void foo(I2 *i) {
