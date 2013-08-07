@@ -416,7 +416,8 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
 
         # Strip the trailing newline and any extra whitespace.
         return ln.strip()
-    script = map(processLine, script)
+    script = [processLine(ln)
+              for ln in script]
 
     # Verify the script contains a run line.
     if not script:
