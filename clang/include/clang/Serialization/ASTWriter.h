@@ -457,7 +457,8 @@ private:
   void WriteObjCCategories();
   void WriteRedeclarations();
   void WriteMergedDecls();
-                        
+  void WriteLateParsedTemplates(Sema &SemaRef);
+
   unsigned DeclParmVarAbbrev;
   unsigned DeclContextLexicalAbbrev;
   unsigned DeclContextVisibleLookupAbbrev;

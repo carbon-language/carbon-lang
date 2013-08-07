@@ -322,6 +322,15 @@ public:
   virtual void ReadPendingInstantiations(
               SmallVectorImpl<std::pair<ValueDecl*, SourceLocation> >& Pending);
 
+  /// \brief Read the set of late parsed template functions for this source.
+  ///
+  /// The external source should insert its own late parsed template functions
+  /// into the map. Note that this routine may be invoked multiple times; the
+  /// external source should take care not to introduce the same map entries
+  /// repeatedly.
+  virtual void ReadLateParsedTemplates(
+      llvm::DenseMap<const FunctionDecl *, LateParsedTemplate *> &LPTMap);
+
   // isa/cast/dyn_cast support
   static bool classof(const MultiplexExternalSemaSource*) { return true; }
   //static bool classof(const ExternalSemaSource*) { return true; }

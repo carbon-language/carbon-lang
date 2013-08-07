@@ -120,18 +120,13 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
         TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) && 
         !Actions.IsInsideALocalClassWithinATemplateFunction())) {
 
-    if (FnD) {
-      LateParsedTemplatedFunction *LPT = new LateParsedTemplatedFunction(FnD);
+    CachedTokens Toks;
+    LexTemplateFunctionForLateParsing(Toks);
 
+    if (FnD) {
       FunctionDecl *FD = getFunctionDecl(FnD);
       Actions.CheckForFunctionRedefinition(FD);
-
-      LateParsedTemplateMap[FD] = LPT;
-      Actions.MarkAsLateParsedTemplate(FD);
-      LexTemplateFunctionForLateParsing(LPT->Toks);
-    } else {
-      CachedTokens Toks;
-      LexTemplateFunctionForLateParsing(Toks);
+      Actions.MarkAsLateParsedTemplate(FD, FnD, Toks);
     }
 
     return FnD;

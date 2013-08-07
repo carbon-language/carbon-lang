@@ -7902,11 +7902,26 @@ Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
   return Out.str();
 }
 
-void Sema::MarkAsLateParsedTemplate(FunctionDecl *FD, bool Flag) {
+void Sema::MarkAsLateParsedTemplate(FunctionDecl *FD, Decl *FnD,
+                                    CachedTokens &Toks) {
   if (!FD)
     return;
-  FD->setLateTemplateParsed(Flag);
-} 
+
+  LateParsedTemplate *LPT = new LateParsedTemplate;
+
+  // Take tokens to avoid allocations
+  LPT->Toks.swap(Toks);
+  LPT->D = FnD;
+  LateParsedTemplateMap[FD] = LPT;
+
+  FD->setLateTemplateParsed(true);
+}
+
+void Sema::UnmarkAsLateParsedTemplate(FunctionDecl *FD) {
+  if (!FD)
+    return;
+  FD->setLateTemplateParsed(false);
+}
 
 bool Sema::IsInsideALocalClassWithinATemplateFunction() {
   DeclContext *DC = CurContext;

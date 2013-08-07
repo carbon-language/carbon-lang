@@ -3112,7 +3112,13 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // a templated function definition.
   if (!Pattern && PatternDecl->isLateTemplateParsed() &&
       LateTemplateParser) {
-    LateTemplateParser(OpaqueParser, PatternDecl);
+    // FIXME: Optimize to allow individual templates to be deserialized.
+    if (PatternDecl->isFromASTFile())
+      ExternalSource->ReadLateParsedTemplates(LateParsedTemplateMap);
+
+    LateParsedTemplate *LPT = LateParsedTemplateMap.lookup(PatternDecl);
+    assert(LPT && "missing LateParsedTemplate");
+    LateTemplateParser(OpaqueParser, *LPT);
     Pattern = PatternDecl->getBody(PatternDecl);
   }
 
