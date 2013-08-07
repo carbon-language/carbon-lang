@@ -94,4 +94,16 @@ int main()
         C::const_iterator j;
     }
 #endif
+#if _LIBCPP_STD_VER > 11
+    { // N3664 testing
+        std::vector<bool>::iterator ii1{}, ii2{};
+        std::vector<bool>::iterator ii4 = ii1;
+        std::vector<bool>::const_iterator cii{};
+        assert ( ii1 == ii2 );
+        assert ( ii1 == ii4 );
+        assert ( ii1 == cii );
+        assert ( !(ii1 != ii2 ));
+        assert ( !(ii1 != cii ));
+    }
+#endif
 }
