@@ -1256,7 +1256,7 @@ public:
     unsigned ExpectedLatency;
 
     // The latency of dependence chains leading into this zone.
-    // For each node scheduled top-down: DLat = max DLat, N.Depth.
+    // For each node scheduled bottom-up: DLat = max DLat, N.Depth.
     // For each cycle scheduled: DLat -= 1.
     unsigned DependentLatency;
 
