@@ -98,7 +98,8 @@ public:
   SIInsertWaits(TargetMachine &tm) :
     MachineFunctionPass(ID),
     TII(0),
-    TRI(0) { }
+    TRI(0),
+    ExpInstrTypesSeen(0) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 
