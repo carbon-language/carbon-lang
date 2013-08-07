@@ -1108,7 +1108,11 @@ private:
     unsigned          __ctz_;
 
 public:
-    _LIBCPP_INLINE_VISIBILITY __bit_iterator() _NOEXCEPT {}
+    _LIBCPP_INLINE_VISIBILITY __bit_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+    : __seg_(nullptr), __ctz_(0)
+#endif
+    {}
 
     _LIBCPP_INLINE_VISIBILITY
     __bit_iterator(const __bit_iterator<_Cp, false>& __it) _NOEXCEPT
