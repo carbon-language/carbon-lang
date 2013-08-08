@@ -273,7 +273,6 @@ class ProgressBar:
             self.cleared = 1
 
 def test():
-    import time
     tc = TerminalController()
     p = ProgressBar(tc, 'Tests')
     for i in range(101):

@@ -161,7 +161,6 @@ def main(builtinParameters = {}):
     # blocking operation (hopefully exec) than to try and unblock other threads.
     #
     # FIXME: This is a hack.
-    import sys
     sys.setcheckinterval(1000)
 
     global options

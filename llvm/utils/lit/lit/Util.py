@@ -1,4 +1,9 @@
-import os, sys
+import errno
+import itertools
+import math
+import os
+import subprocess
+import sys
 
 def detectCPUs():
     """
@@ -23,8 +28,6 @@ def detectCPUs():
 def mkdir_p(path):
     """mkdir_p(path) - Make the "path" directory, if it does not exist; this
     will also make directories for any missing parent directories."""
-    import errno
-
     if not path or os.path.exists(path):
         return
 
@@ -41,7 +44,6 @@ def mkdir_p(path):
             raise
 
 def capture(args, env=None):
-    import subprocess
     """capture(command) - Run the given command (or argv list) in a shell and
     return the standard output."""
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -93,8 +95,6 @@ def whichTools(tools, paths):
     return None
 
 def printHistogram(items, title = 'Items'):
-    import itertools, math
-
     items.sort(key = lambda item: item[1])
 
     maxValue = max([v for _,v in items])

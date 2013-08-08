@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+import inspect
 import os
+import sys
 
 import lit.Test
 import lit.TestFormats
@@ -75,8 +77,6 @@ class LitConfig:
 
     def getBashPath(self):
         """getBashPath - Get the path to 'bash'"""
-        import os
-
         if self.bashPath is not None:
             return self.bashPath
 
@@ -110,8 +110,6 @@ class LitConfig:
         return dir
 
     def _write_message(self, kind, message):
-        import inspect, os, sys
-
         # Get the file/line where this message was generated.
         f = inspect.currentframe()
         # Step out of _write_message, and then out of wrapper.
@@ -134,6 +132,5 @@ class LitConfig:
         self.numErrors += 1
 
     def fatal(self, message):
-        import sys
         self._write_message('fatal', message)
         sys.exit(2)
