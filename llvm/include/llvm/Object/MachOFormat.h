@@ -425,6 +425,25 @@ namespace macho {
 
   };
 
+  /// PPC relocation types from <mach-o/ppc/reloc.h>
+  enum RelocationInfoTypePPC {
+    RIT_PPC_BR14 = RIT_Pair +1,
+    RIT_PPC_BR24,
+    RIT_PPC_HI16,
+    RIT_PPC_LO16,
+    RIT_PPC_HA16,
+    RIT_PPC_LO14,
+    RIT_PPC_SECTDIFF,
+    RIT_PPC_PB_LA_PTR,
+    RIT_PPC_HI16_SECTDIFF,
+    RIT_PPC_LO16_SECTDIFF,
+    RIT_PPC_HA16_SECTDIFF,
+    RIT_PPC_JBSR,
+    RIT_PPC_LO14_SECTDIFF,
+    RIT_PPC_LOCAL_SECTDIFF,
+    RIT_PPC_TLV
+  };
+
 } // end namespace macho
 
 } // end namespace object

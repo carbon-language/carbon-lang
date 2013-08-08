@@ -69,19 +69,6 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
 }
 
 namespace {
-class PPCMachObjectWriter : public MCMachObjectTargetWriter {
-public:
-  PPCMachObjectWriter(bool Is64Bit, uint32_t CPUType,
-                      uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
-
-  void RecordRelocation(MachObjectWriter *Writer,
-                        const MCAssembler &Asm, const MCAsmLayout &Layout,
-                        const MCFragment *Fragment, const MCFixup &Fixup,
-                        MCValue Target, uint64_t &FixedValue) {
-    llvm_unreachable("Relocation emission for MachO/PPC unimplemented!");
-  }
-};
 
 class PPCAsmBackend : public MCAsmBackend {
 const Target &TheTarget;
@@ -174,12 +161,11 @@ namespace {
 
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
-      return createMachObjectWriter(new PPCMachObjectWriter(
-                                      /*Is64Bit=*/is64,
-                                      (is64 ? object::mach::CTM_PowerPC64 :
-                                       object::mach::CTM_PowerPC),
-                                      object::mach::CSPPC_ALL),
-                                    OS, /*IsLittleEndian=*/false);
+      return createPPCMachObjectWriter(
+          OS,
+          /*Is64Bit=*/is64,
+          (is64 ? object::mach::CTM_PowerPC64 : object::mach::CTM_PowerPC),
+          object::mach::CSPPC_ALL);
     }
 
     virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
