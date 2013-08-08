@@ -30,6 +30,8 @@ my $os_release = 11;
 
 my $original_env_path = $ENV{PATH};
 
+my $common_configure_options = "--disable-curses";
+
 our %llvm_config_info = (
     'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
     'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
@@ -239,7 +241,7 @@ sub build_llvm
         {
             # Build llvm and clang
             print "Configuring clang ($arch) in '$llvm_dstroot_arch'...\n";
-            my $lldb_configuration_options = "--enable-targets=x86_64,arm $llvm_config_href->{configure_options}";
+            my $lldb_configuration_options = "--enable-targets=x86_64,arm $common_configure_options $llvm_config_href->{configure_options}";
 
             if ($is_arm)
             {
