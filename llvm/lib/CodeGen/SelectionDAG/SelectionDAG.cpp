@@ -1351,17 +1351,13 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
     commuteShuffle(N1, N2, MaskVec);
   }
 
-  // If Identity shuffle, or all shuffle in to undef, return that node.
-  bool AllUndef = true;
+  // If Identity shuffle return that node.
   bool Identity = true;
   for (unsigned i = 0; i != NElts; ++i) {
     if (MaskVec[i] >= 0 && MaskVec[i] != (int)i) Identity = false;
-    if (MaskVec[i] >= 0) AllUndef = false;
   }
   if (Identity && NElts == N1.getValueType().getVectorNumElements())
     return N1;
-  if (AllUndef)
-    return getUNDEF(VT);
 
   FoldingSetNodeID ID;
   SDValue Ops[2] = { N1, N2 };
