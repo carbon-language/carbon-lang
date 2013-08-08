@@ -349,6 +349,8 @@ enum StatType {
   StatInt_canonicalize_file_name,
   StatInt_confstr,
   StatInt_sched_getaffinity,
+  StatInt_strerror,
+  StatInt_strerror_r,
 
   // Dynamic annotations.
   StatAnnotation,

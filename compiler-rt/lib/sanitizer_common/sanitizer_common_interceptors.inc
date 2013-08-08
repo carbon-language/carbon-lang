@@ -1776,6 +1776,46 @@ INTERCEPTOR(int, sched_getaffinity, int pid, SIZE_T cpusetsize, void *mask) {
 #define INIT_SCHED_GETAFFINITY
 #endif
 
+#if SANITIZER_INTERCEPT_STRERROR
+INTERCEPTOR(char *, strerror, int errnum) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strerror, errnum);
+  char *res = REAL(strerror)(errnum);
+  if (res)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  return res;
+}
+#define INIT_STRERROR INTERCEPT_FUNCTION(strerror);
+#else
+#define INIT_STRERROR
+#endif
+
+#if SANITIZER_INTERCEPT_STRERROR_R
+INTERCEPTOR(char *, strerror_r, int errnum, char *buf, SIZE_T buflen) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, strerror_r, errnum, buf, buflen);
+  char *res = REAL(strerror_r)(errnum, buf, buflen);
+  // There are 2 versions of strerror_r:
+  //  * POSIX version returns 0 on success, negative error code on failure,
+  //    writes message to buf.
+  //  * GNU version returns message pointer, which points to either buf or some
+  //    static storage.
+  if (!res) {
+    // POSIX version. Spec is not clear on whether buf is NULL-terminated.
+    SIZE_T sz = internal_strnlen(buf, buflen);
+    if (sz < buflen) ++sz;
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, sz);
+  } else if ((SIZE_T)res < (SIZE_T) - 1024) {
+    // GNU version.
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, REAL(strlen)(res) + 1);
+  }
+  return res;
+}
+#define INIT_STRERROR_R INTERCEPT_FUNCTION(strerror_r);
+#else
+#define INIT_STRERROR_R
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -1836,4 +1876,6 @@ INTERCEPTOR(int, sched_getaffinity, int pid, SIZE_T cpusetsize, void *mask) {
   INIT_REALPATH;                           \
   INIT_CANONICALIZE_FILE_NAME;             \
   INIT_CONFSTR;                            \
-  INIT_SCHED_GETAFFINITY;
+  INIT_SCHED_GETAFFINITY;                  \
+  INIT_STRERROR;                           \
+  INIT_STRERROR_R;

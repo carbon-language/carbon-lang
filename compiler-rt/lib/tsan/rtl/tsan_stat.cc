@@ -354,6 +354,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_canonicalize_file_name]   = "  canonicalize_file_name          ";
   name[StatInt_confstr]                  = "  confstr                         ";
   name[StatInt_sched_getaffinity]        = "  sched_getaffinity               ";
+  name[StatInt_strerror]                 = "  strerror                        ";
+  name[StatInt_strerror_r]               = "  strerror_r                      ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";
