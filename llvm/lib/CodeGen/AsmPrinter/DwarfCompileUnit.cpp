@@ -776,8 +776,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
 /// addType - Add a new type attribute to the specified entity.
 void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
-  if (!Ty.isType())
-    return;
+  assert(Ty && "Trying to add a type that doesn't exist?");
 
   // Check for pre-existence.
   DIEEntry *Entry = getDIEEntry(Ty);
@@ -863,7 +862,8 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
   // Map to main type, void will not have a type.
   DIType FromTy = DTy.getTypeDerivedFrom();
-  addType(&Buffer, FromTy);
+  if (FromTy)
+    addType(&Buffer, FromTy);
 
   // Add name if not anonymous or intermediate type.
   if (!Name.empty())
@@ -947,10 +947,11 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   }
     break;
   case dwarf::DW_TAG_subroutine_type: {
-    // Add return type.
+    // Add return type. A void return won't have a type.
     DIArray Elements = CTy.getTypeArray();
     DIDescriptor RTy = Elements.getElement(0);
-    addType(&Buffer, DIType(RTy));
+    if (RTy)
+      addType(&Buffer, DIType(RTy));
 
     bool isPrototyped = true;
     // Add arguments.
@@ -1137,7 +1138,11 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP) {
     return ParamDIE;
 
   ParamDIE = new DIE(VP.getTag());
-  addType(ParamDIE, VP.getType());
+
+  // Add the type if there is one, template template and template parameter
+  // packs will not have a type.
+  if (VP.getType())
+    addType(ParamDIE, VP.getType());
   if (!VP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
   if (Value *Val = VP.getValue()) {
@@ -1246,13 +1251,14 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
        Language == dwarf::DW_LANG_ObjC))
     addFlag(SPDie, dwarf::DW_AT_prototyped);
 
-  // Add Return Type.
+  // Add Return Type. A void return type will not have a type.
   DICompositeType SPTy = SP.getType();
   assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
   DIArray Args = SPTy.getTypeArray();
-  addType(SPDie, DIType(Args.getElement(0)));
+  if (Args.getElement(0))
+    addType(SPDie, DIType(Args.getElement(0)));
 
   unsigned VK = SP.getVirtuality();
   if (VK) {
@@ -1502,9 +1508,8 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
   if (CTy->isVector())
     addFlag(&Buffer, dwarf::DW_AT_GNU_vector);
 
-  // Emit derived type.
+  // Emit the element type.
   addType(&Buffer, CTy->getTypeDerivedFrom());
-  DIArray Elements = CTy->getTypeArray();
 
   // Get an anonymous type for index type.
   // FIXME: This type should be passed down from the front end
@@ -1522,6 +1527,7 @@ void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
   }
 
   // Add subranges to array type.
+  DIArray Elements = CTy->getTypeArray();
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Elements.getElement(i);
     if (Element.getTag() == dwarf::DW_TAG_subrange_type)

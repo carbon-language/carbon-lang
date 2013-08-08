@@ -483,6 +483,12 @@ bool DICompositeType::Verify() const {
   if (!fieldIsMDNode(DbgNode, 12))
     return false;
 
+  // If this is an array type verify that we have a DIType in the derived type
+  // field as that's the type of our element.
+  if (getTag() == dwarf::DW_TAG_array_type)
+    if (!DIType(getTypeDerivedFrom()))
+      return false;
+
   return DbgNode->getNumOperands() >= 10 && DbgNode->getNumOperands() <= 14;
 }
 

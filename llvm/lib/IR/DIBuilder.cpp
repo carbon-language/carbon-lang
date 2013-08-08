@@ -759,7 +759,6 @@ DICompositeType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
 /// createVectorType - Create debugging information entry for a vector.
 DICompositeType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
                                             DIType Ty, DIArray Subscripts) {
-
   // A vector is an array type with the FlagVector flag applied.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_array_type),
