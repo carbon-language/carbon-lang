@@ -127,4 +127,12 @@ TEST_F(RegexTest, IsLiteralERE) {
   EXPECT_FALSE(Regex::isLiteralERE("abc{1,2}"));
 }
 
+TEST_F(RegexTest, IsValid) {
+  std::string Error;
+  EXPECT_FALSE(Regex("(foo").isValid(Error));
+  EXPECT_EQ("parentheses not balanced", Error);
+  EXPECT_FALSE(Regex("a[b-").isValid(Error));
+  EXPECT_EQ("invalid character range", Error);
+}
+
 }

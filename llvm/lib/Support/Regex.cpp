@@ -43,7 +43,7 @@ bool Regex::isValid(std::string &Error) {
   
   size_t len = llvm_regerror(error, preg, NULL, 0);
   
-  Error.resize(len);
+  Error.resize(len - 1);
   llvm_regerror(error, preg, &Error[0], len);
   return false;
 }
