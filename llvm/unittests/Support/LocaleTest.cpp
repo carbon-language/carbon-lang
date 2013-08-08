@@ -67,33 +67,33 @@ TEST(Locale, columnWidth) {
 }
 
 TEST(Locale, isPrint) {
-  EXPECT_EQ(false, isPrint(0)); // <control-0000>-<control-001F>
-  EXPECT_EQ(false, isPrint(0x01));
-  EXPECT_EQ(false, isPrint(0x1F));
-  EXPECT_EQ(true, isPrint(' '));
-  EXPECT_EQ(true, isPrint('A'));
-  EXPECT_EQ(true, isPrint('~'));
-  EXPECT_EQ(false, isPrint(0x7F)); // <control-007F>..<control-009F>
-  EXPECT_EQ(false, isPrint(0x90));
-  EXPECT_EQ(false, isPrint(0x9F));
+  EXPECT_FALSE(isPrint(0)); // <control-0000>-<control-001F>
+  EXPECT_FALSE(isPrint(0x01));
+  EXPECT_FALSE(isPrint(0x1F));
+  EXPECT_TRUE(isPrint(' '));
+  EXPECT_TRUE(isPrint('A'));
+  EXPECT_TRUE(isPrint('~'));
+  EXPECT_FALSE(isPrint(0x7F)); // <control-007F>..<control-009F>
+  EXPECT_FALSE(isPrint(0x90));
+  EXPECT_FALSE(isPrint(0x9F));
 
-  EXPECT_EQ(true, isPrint(0xAC));
-  EXPECT_EQ(true, isPrint(0xAD)); // SOFT HYPHEN is displayed on most terminals
-                                  // as either a space or a dash.
-  EXPECT_EQ(true, isPrint(0xAE));
+  EXPECT_TRUE(isPrint(0xAC));
+  EXPECT_TRUE(isPrint(0xAD)); // SOFT HYPHEN is displayed on most terminals
+                              // as either a space or a dash.
+  EXPECT_TRUE(isPrint(0xAE));
 
   // MacOS implementation doesn't think it's printable.
 #ifndef __APPLE__
-  EXPECT_EQ(true, isPrint(0x0377)); // GREEK SMALL LETTER PAMPHYLIAN DIGAMMA
+  EXPECT_TRUE(isPrint(0x0377)); // GREEK SMALL LETTER PAMPHYLIAN DIGAMMA
 #endif // __APPLE__
-  EXPECT_EQ(false, isPrint(0x0378)); // <reserved-0378>..<reserved-0379>
+  EXPECT_FALSE(isPrint(0x0378)); // <reserved-0378>..<reserved-0379>
 
-  EXPECT_EQ(false, isPrint(0x0600)); // ARABIC NUMBER SIGN
+  EXPECT_FALSE(isPrint(0x0600)); // ARABIC NUMBER SIGN
 
-  EXPECT_EQ(false, isPrint(0x1FFFF)); // <reserved-1F774>..<noncharacter-1FFFF>
-  EXPECT_EQ(true, isPrint(0x20000)); // CJK UNIFIED IDEOGRAPH-20000
+  EXPECT_FALSE(isPrint(0x1FFFF)); // <reserved-1F774>..<noncharacter-1FFFF>
+  EXPECT_TRUE(isPrint(0x20000)); // CJK UNIFIED IDEOGRAPH-20000
 
-  EXPECT_EQ(false, isPrint(0x10FFFF)); // noncharacter
+  EXPECT_FALSE(isPrint(0x10FFFF)); // noncharacter
 }
 
 #endif // _WIN32
