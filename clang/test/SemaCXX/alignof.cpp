@@ -58,3 +58,7 @@ struct S5 {
   int x;
 };
 const int test8 = __alignof__(S5::x);
+
+long long int test14[2];
+
+static_assert(alignof(test14) == 8, "foo"); // expected-warning {{'alignof' applied to an expression is a GNU extension}}

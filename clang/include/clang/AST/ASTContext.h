@@ -1622,9 +1622,11 @@ public:
   /// \pre \p D must not be a bitfield type, as bitfields do not have a valid
   /// alignment.
   ///
-  /// If \p RefAsPointee, references are treated like their underlying type
-  /// (for alignof), else they're treated like pointers (for CodeGen).
-  CharUnits getDeclAlign(const Decl *D, bool RefAsPointee = false) const;
+  /// If \p ForAlignof, references are treated like their underlying type
+  /// and  large arrays don't get any special treatment. If not \p ForAlignof
+  /// it computes the value expected by CodeGen: references are treated like
+  /// pointers and large arrays get extra alignment.
+  CharUnits getDeclAlign(const Decl *D, bool ForAlignof = false) const;
 
   /// \brief Get or compute information about the layout of the specified
   /// record (struct/union/class) \p D, which indicates its size and field

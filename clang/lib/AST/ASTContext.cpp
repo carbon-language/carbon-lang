@@ -1239,12 +1239,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
   }
 }
 
-/// getDeclAlign - Return a conservative estimate of the alignment of the
-/// specified decl.  Note that bitfields do not have a valid alignment, so
-/// this method will assert on them.
-/// If @p RefAsPointee, references are treated like their underlying type
-/// (for alignof), else they're treated like pointers (for CodeGen).
-CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
+CharUnits ASTContext::getDeclAlign(const Decl *D, bool ForAlignof) const {
   unsigned Align = Target->getCharWidth();
 
   bool UseAlignAttrOnly = false;
@@ -1277,7 +1272,7 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
   } else if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
     if (const ReferenceType* RT = T->getAs<ReferenceType>()) {
-      if (RefAsPointee)
+      if (ForAlignof)
         T = RT->getPointeeType();
       else
         T = getPointerType(RT->getPointeeType());
@@ -1285,9 +1280,9 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool RefAsPointee) const {
     if (!T->isIncompleteType() && !T->isFunctionType()) {
       // Adjust alignments of declarations with array type by the
       // large-array alignment on the target.
-      unsigned MinWidth = Target->getLargeArrayMinWidth();
       if (const ArrayType *arrayType = getAsArrayType(T)) {
-        if (MinWidth) {
+        unsigned MinWidth = Target->getLargeArrayMinWidth();
+        if (!ForAlignof && MinWidth) {
           if (isa<VariableArrayType>(arrayType))
             Align = std::max(Align, Target->getLargeArrayAlign());
           else if (isa<ConstantArrayType>(arrayType) &&
