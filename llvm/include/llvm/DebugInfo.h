@@ -110,7 +110,7 @@ namespace llvm {
       return !operator==(Other);
     }
 
-    unsigned getTag() const {
+    uint16_t getTag() const {
       return getUnsignedField(0) & ~LLVMDebugVersionMask;
     }
 

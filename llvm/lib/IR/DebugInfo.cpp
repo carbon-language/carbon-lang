@@ -428,7 +428,7 @@ bool DIType::Verify() const {
     return false;
 
   // FIXME: Sink this into the various subclass verifies.
-  unsigned Tag = getTag();
+  uint16_t Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
       Tag != dwarf::DW_TAG_volatile_type && Tag != dwarf::DW_TAG_pointer_type &&
       Tag != dwarf::DW_TAG_ptr_to_member_type &&
@@ -598,7 +598,7 @@ bool DIImportedEntity::Verify() const {
 /// getOriginalTypeSize - If this type is derived from a base type then
 /// return base type size.
 uint64_t DIDerivedType::getOriginalTypeSize() const {
-  unsigned Tag = getTag();
+  uint16_t Tag = getTag();
 
   if (Tag != dwarf::DW_TAG_member && Tag != dwarf::DW_TAG_typedef &&
       Tag != dwarf::DW_TAG_const_type && Tag != dwarf::DW_TAG_volatile_type &&

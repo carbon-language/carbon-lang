@@ -169,7 +169,7 @@ public:
   int getFrameIndex()                const { return FrameIndex; }
   void setFrameIndex(int FI)               { FrameIndex = FI; }
   // Translate tag to proper Dwarf tag.
-  unsigned getTag()                  const {
+  uint16_t getTag()                  const {
     if (Var.getTag() == dwarf::DW_TAG_arg_variable)
       return dwarf::DW_TAG_formal_parameter;
 

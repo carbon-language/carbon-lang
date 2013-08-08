@@ -99,7 +99,7 @@ int64_t CompileUnit::getDefaultLowerBound() const {
 }
 
 /// addFlag - Add a flag that is true.
-void CompileUnit::addFlag(DIE *Die, unsigned Attribute) {
+void CompileUnit::addFlag(DIE *Die, uint16_t Attribute) {
   if (!DD->useDarwinGDBCompat())
     Die->addValue(Attribute, dwarf::DW_FORM_flag_present,
                   DIEIntegerOne);
@@ -109,8 +109,8 @@ void CompileUnit::addFlag(DIE *Die, unsigned Attribute) {
 
 /// addUInt - Add an unsigned integer attribute data and value.
 ///
-void CompileUnit::addUInt(DIE *Die, unsigned Attribute,
-                          unsigned Form, uint64_t Integer) {
+void CompileUnit::addUInt(DIE *Die, uint16_t Attribute,
+                          uint16_t Form, uint64_t Integer) {
   if (!Form) Form = DIEInteger::BestForm(false, Integer);
   DIEValue *Value = Integer == 1 ?
     DIEIntegerOne : new (DIEValueAllocator) DIEInteger(Integer);
@@ -119,8 +119,8 @@ void CompileUnit::addUInt(DIE *Die, unsigned Attribute,
 
 /// addSInt - Add an signed integer attribute data and value.
 ///
-void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
-                          unsigned Form, int64_t Integer) {
+void CompileUnit::addSInt(DIE *Die, uint16_t Attribute,
+                          uint16_t Form, int64_t Integer) {
   if (!Form) Form = DIEInteger::BestForm(true, Integer);
   DIEValue *Value = new (DIEValueAllocator) DIEInteger(Integer);
   Die->addValue(Attribute, Form, Value);
@@ -131,9 +131,9 @@ void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
 /// more predictable sizes. In the case of split dwarf we emit an index
 /// into another table which gets us the static offset into the string
 /// table.
-void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
+void CompileUnit::addString(DIE *Die, uint16_t Attribute, StringRef String) {
   DIEValue *Value;
-  unsigned Form;
+  uint16_t Form;
   if (!DD->useSplitDwarf()) {
     MCSymbol *Symb = DU->getStringPoolEntry(String);
     if (Asm->needsRelocationsForDwarfStringPool())
@@ -154,7 +154,7 @@ void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
 
 /// addLocalString - Add a string attribute data and value. This is guaranteed
 /// to be in the local string pool instead of indirected.
-void CompileUnit::addLocalString(DIE *Die, unsigned Attribute,
+void CompileUnit::addLocalString(DIE *Die, uint16_t Attribute,
                                  StringRef String) {
   MCSymbol *Symb = DU->getStringPoolEntry(String);
   DIEValue *Value;
@@ -169,7 +169,7 @@ void CompileUnit::addLocalString(DIE *Die, unsigned Attribute,
 
 /// addExpr - Add a Dwarf expression attribute data and value.
 ///
-void CompileUnit::addExpr(DIE *Die, unsigned Attribute, unsigned Form,
+void CompileUnit::addExpr(DIE *Die, uint16_t Attribute, uint16_t Form,
                           const MCExpr *Expr) {
   DIEValue *Value = new (DIEValueAllocator) DIEExpr(Expr);
   Die->addValue(Attribute, Form, Value);
@@ -177,7 +177,7 @@ void CompileUnit::addExpr(DIE *Die, unsigned Attribute, unsigned Form,
 
 /// addLabel - Add a Dwarf label attribute data and value.
 ///
-void CompileUnit::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
+void CompileUnit::addLabel(DIE *Die, uint16_t Attribute, uint16_t Form,
                            const MCSymbol *Label) {
   DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
   Die->addValue(Attribute, Form, Value);
@@ -186,7 +186,7 @@ void CompileUnit::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
 /// addLabelAddress - Add a dwarf label attribute data and value using
 /// DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
-void CompileUnit::addLabelAddress(DIE *Die, unsigned Attribute,
+void CompileUnit::addLabelAddress(DIE *Die, uint16_t Attribute,
                                   MCSymbol *Label) {
   if (!DD->useSplitDwarf()) {
     if (Label != NULL) {
@@ -218,7 +218,7 @@ void CompileUnit::addOpAddress(DIE *Die, const MCSymbol *Sym) {
 
 /// addDelta - Add a label delta attribute data and value.
 ///
-void CompileUnit::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
+void CompileUnit::addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
                            const MCSymbol *Hi, const MCSymbol *Lo) {
   DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
   Die->addValue(Attribute, Form, Value);
@@ -226,14 +226,14 @@ void CompileUnit::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
 
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
-void CompileUnit::addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form,
+void CompileUnit::addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form,
                               DIE *Entry) {
   Die->addValue(Attribute, Form, createDIEEntry(Entry));
 }
 
 /// addBlock - Add block data.
 ///
-void CompileUnit::addBlock(DIE *Die, unsigned Attribute, unsigned Form,
+void CompileUnit::addBlock(DIE *Die, uint16_t Attribute, uint16_t Form,
                            DIEBlock *Block) {
   Block->ComputeSize(Asm);
   DIEBlocks.push_back(Block); // Memoize so we can call the destructor later on.
@@ -393,7 +393,7 @@ void CompileUnit::addRegisterOffset(DIE *TheDie, unsigned Reg,
 
 /// addAddress - Add an address attribute to a die based on the location
 /// provided.
-void CompileUnit::addAddress(DIE *Die, unsigned Attribute,
+void CompileUnit::addAddress(DIE *Die, uint16_t Attribute,
                              const MachineLocation &Location, bool Indirect) {
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
@@ -416,7 +416,7 @@ void CompileUnit::addAddress(DIE *Die, unsigned Attribute,
 /// the starting location.  Add the DWARF information to the die.
 ///
 void CompileUnit::addComplexAddress(const DbgVariable &DV, DIE *Die,
-                                    unsigned Attribute,
+                                    uint16_t Attribute,
                                     const MachineLocation &Location) {
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   unsigned N = DV.getNumAddrElements();
@@ -509,11 +509,11 @@ void CompileUnit::addComplexAddress(const DbgVariable &DV, DIE *Die,
 /// more information, read large comment just above here.
 ///
 void CompileUnit::addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
-                                       unsigned Attribute,
+                                       uint16_t Attribute,
                                        const MachineLocation &Location) {
   DIType Ty = DV.getType();
   DIType TmpTy = Ty;
-  unsigned Tag = Ty.getTag();
+  uint16_t Tag = Ty.getTag();
   bool isPointer = false;
 
   StringRef varName = DV.getName();
@@ -609,7 +609,7 @@ void CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   int SizeInBits = -1;
   bool SignedConstant = isTypeSigned(Ty, &SizeInBits);
-  unsigned Form = SignedConstant ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata;
+  uint16_t Form = SignedConstant ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata;
   switch (SizeInBits) {
     case 8:  Form = dwarf::DW_FORM_data1; break;
     case 16: Form = dwarf::DW_FORM_data2; break;
@@ -775,7 +775,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 }
 
 /// addType - Add a new type attribute to the specified entity.
-void CompileUnit::addType(DIE *Entity, DIType Ty, unsigned Attribute) {
+void CompileUnit::addType(DIE *Entity, DIType Ty, uint16_t Attribute) {
   if (!Ty.isType())
     return;
 
@@ -814,7 +814,7 @@ void CompileUnit::addGlobalType(DIType Ty) {
 /// addPubTypes - Add type for pubtypes section.
 void CompileUnit::addPubTypes(DISubprogram SP) {
   DICompositeType SPTy = SP.getType();
-  unsigned SPTag = SPTy.getTag();
+  uint16_t SPTag = SPTy.getTag();
   if (SPTag != dwarf::DW_TAG_subroutine_type)
     return;
 
@@ -854,7 +854,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   // Get core information.
   StringRef Name = DTy.getName();
   uint64_t Size = DTy.getSizeInBits() >> 3;
-  unsigned Tag = DTy.getTag();
+  uint16_t Tag = DTy.getTag();
 
   // FIXME - Workaround for templates.
   if (Tag == dwarf::DW_TAG_inheritance) Tag = dwarf::DW_TAG_reference_type;
@@ -896,7 +896,7 @@ static bool isTypeUnitScoped(DIType Ty) {
 
 /// Return true if the type should be split out into a type unit.
 static bool shouldCreateTypeUnit(DICompositeType CTy) {
-  unsigned Tag = CTy.getTag();
+  uint16_t Tag = CTy.getTag();
 
   switch (Tag) {
   case dwarf::DW_TAG_structure_type:
@@ -920,7 +920,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   StringRef Name = CTy.getName();
 
   uint64_t Size = CTy.getSizeInBits() >> 3;
-  unsigned Tag = CTy.getTag();
+  uint16_t Tag = CTy.getTag();
   Buffer.setTag(Tag);
 
   switch (Tag) {
@@ -1559,7 +1559,7 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
   StringRef Name = DV->getName();
 
   // Translate tag to proper Dwarf tag.
-  unsigned Tag = DV->getTag();
+  uint16_t Tag = DV->getTag();
 
   // Define variable debug information entry.
   DIE *VariableDie = new DIE(Tag);

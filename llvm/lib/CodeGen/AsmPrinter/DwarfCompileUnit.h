@@ -196,38 +196,38 @@ public:
   }
 
   /// addFlag - Add a flag that is true to the DIE.
-  void addFlag(DIE *Die, unsigned Attribute);
+  void addFlag(DIE *Die, uint16_t Attribute);
 
   /// addUInt - Add an unsigned integer attribute data and value.
   ///
-  void addUInt(DIE *Die, unsigned Attribute, unsigned Form, uint64_t Integer);
+  void addUInt(DIE *Die, uint16_t Attribute, uint16_t Form, uint64_t Integer);
 
   /// addSInt - Add an signed integer attribute data and value.
   ///
-  void addSInt(DIE *Die, unsigned Attribute, unsigned Form, int64_t Integer);
+  void addSInt(DIE *Die, uint16_t Attribute, uint16_t Form, int64_t Integer);
 
   /// addString - Add a string attribute data and value.
   ///
-  void addString(DIE *Die, unsigned Attribute, const StringRef Str);
+  void addString(DIE *Die, uint16_t Attribute, const StringRef Str);
 
   /// addLocalString - Add a string attribute data and value.
   ///
-  void addLocalString(DIE *Die, unsigned Attribute, const StringRef Str);
+  void addLocalString(DIE *Die, uint16_t Attribute, const StringRef Str);
 
   /// addExpr - Add a Dwarf expression attribute data and value.
   ///
-  void addExpr(DIE *Die, unsigned Attribute, unsigned Form,
+  void addExpr(DIE *Die, uint16_t Attribute, uint16_t Form,
                const MCExpr *Expr);
 
   /// addLabel - Add a Dwarf label attribute data and value.
   ///
-  void addLabel(DIE *Die, unsigned Attribute, unsigned Form,
+  void addLabel(DIE *Die, uint16_t Attribute, uint16_t Form,
                 const MCSymbol *Label);
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   ///
-  void addLabelAddress(DIE *Die, unsigned Attribute, MCSymbol *Label);
+  void addLabelAddress(DIE *Die, uint16_t Attribute, MCSymbol *Label);
 
   /// addOpAddress - Add a dwarf op address data and value using the
   /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
@@ -237,16 +237,16 @@ public:
 
   /// addDelta - Add a label delta attribute data and value.
   ///
-  void addDelta(DIE *Die, unsigned Attribute, unsigned Form,
+  void addDelta(DIE *Die, uint16_t Attribute, uint16_t Form,
                 const MCSymbol *Hi, const MCSymbol *Lo);
 
   /// addDIEEntry - Add a DIE attribute data and value.
   ///
-  void addDIEEntry(DIE *Die, unsigned Attribute, unsigned Form, DIE *Entry);
+  void addDIEEntry(DIE *Die, uint16_t Attribute, uint16_t Form, DIE *Entry);
 
   /// addBlock - Add block data.
   ///
-  void addBlock(DIE *Die, unsigned Attribute, unsigned Form, DIEBlock *Block);
+  void addBlock(DIE *Die, uint16_t Attribute, uint16_t Form, DIEBlock *Block);
 
   /// addSourceLine - Add location information to specified debug information
   /// entry.
@@ -259,7 +259,7 @@ public:
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
-  void addAddress(DIE *Die, unsigned Attribute,
+  void addAddress(DIE *Die, uint16_t Attribute,
                   const MachineLocation &Location, bool Indirect = false);
 
   /// addConstantValue - Add constant value entry in variable DIE.
@@ -285,7 +285,7 @@ public:
   /// (navigating the extra location information encoded in the type) based on
   /// the starting location.  Add the DWARF information to the die.
   ///
-  void addComplexAddress(const DbgVariable &DV, DIE *Die, unsigned Attribute,
+  void addComplexAddress(const DbgVariable &DV, DIE *Die, uint16_t Attribute,
                          const MachineLocation &Location);
 
   // FIXME: Should be reformulated in terms of addComplexAddress.
@@ -295,7 +295,7 @@ public:
   /// starting location.  Add the DWARF information to the die.  Obsolete,
   /// please use addComplexAddress instead.
   ///
-  void addBlockByrefAddress(const DbgVariable &DV, DIE *Die, unsigned Attribute,
+  void addBlockByrefAddress(const DbgVariable &DV, DIE *Die, uint16_t Attribute,
                             const MachineLocation &Location);
 
   /// addVariableAddress - Add DW_AT_location attribute for a
@@ -309,7 +309,7 @@ public:
   /// addType - Add a new type attribute to the specified entity. This takes
   /// and attribute parameter because DW_AT_friend attributes are also
   /// type references.
-  void addType(DIE *Entity, DIType Ty, unsigned Attribute = dwarf::DW_AT_type);
+  void addType(DIE *Entity, DIType Ty, uint16_t Attribute = dwarf::DW_AT_type);
 
   /// getOrCreateNameSpace - Create a DIE for DINameSpace.
   DIE *getOrCreateNameSpace(DINameSpace NS);
