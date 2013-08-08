@@ -714,17 +714,15 @@ void Sema::checkCall(NamedDecl *FDecl,
     return;
 
   // Printf and scanf checking.
-  bool HandledFormatString = false;
   llvm::SmallBitVector CheckedVarArgs;
   if (FDecl) {
+    CheckedVarArgs.resize(Args.size());
     for (specific_attr_iterator<FormatAttr>
-           I = FDecl->specific_attr_begin<FormatAttr>(),
-           E = FDecl->specific_attr_end<FormatAttr>(); I != E ; ++I) {
-      CheckedVarArgs.resize(Args.size());
-      if (CheckFormatArguments(*I, Args, IsMemberFunction, CallType, Loc,
-                               Range, CheckedVarArgs))
-        HandledFormatString = true;
-    }
+             I = FDecl->specific_attr_begin<FormatAttr>(),
+             E = FDecl->specific_attr_end<FormatAttr>();
+         I != E; ++I)
+      CheckFormatArguments(*I, Args, IsMemberFunction, CallType, Loc, Range,
+                           CheckedVarArgs);
   }
 
   // Refuse POD arguments that weren't caught by the format string
