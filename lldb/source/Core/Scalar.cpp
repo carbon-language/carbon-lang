@@ -1690,22 +1690,16 @@ lldb_private::operator% (const Scalar& lhs, const Scalar& rhs)
     {
         switch (result.m_type)
         {
-        case Scalar::e_sint:        result.m_data.sint      = a->m_data.sint        % b->m_data.sint;       break;
-        case Scalar::e_uint:        result.m_data.uint      = a->m_data.uint        % b->m_data.uint;       break;
-        case Scalar::e_slong:       result.m_data.slong     = a->m_data.slong       % b->m_data.slong;      break;
-        case Scalar::e_ulong:       result.m_data.ulong     = a->m_data.ulong       % b->m_data.ulong;      break;
-        case Scalar::e_slonglong:   result.m_data.slonglong = a->m_data.slonglong   % b->m_data.slonglong;  break;
-        case Scalar::e_ulonglong:   result.m_data.ulonglong = a->m_data.ulonglong   % b->m_data.ulonglong;  break;
-
-        case Scalar::e_void:
-        case Scalar::e_float:
-        case Scalar::e_double:
-        case Scalar::e_long_double:
-            // No bitwise AND on floats, doubles of long doubles
-            result.m_type = Scalar::e_void;
-            break;
+        default:                    break;
+        case Scalar::e_sint:        if (b->m_data.sint != 0)        {   result.m_data.sint      = a->m_data.sint        % b->m_data.sint;       return result;  }   break;
+        case Scalar::e_uint:        if (b->m_data.uint != 0)        {   result.m_data.uint      = a->m_data.uint        % b->m_data.uint;       return result;  }   break;
+        case Scalar::e_slong:       if (b->m_data.slong != 0)       {   result.m_data.slong     = a->m_data.slong       % b->m_data.slong;      return result;  }   break;
+        case Scalar::e_ulong:       if (b->m_data.ulong != 0)       {   result.m_data.ulong     = a->m_data.ulong       % b->m_data.ulong;      return result;  }   break;
+        case Scalar::e_slonglong:   if (b->m_data.slonglong != 0)   {   result.m_data.slonglong = a->m_data.slonglong   % b->m_data.slonglong;  return result;  }   break;
+        case Scalar::e_ulonglong:   if (b->m_data.ulonglong != 0)   {   result.m_data.ulonglong = a->m_data.ulonglong   % b->m_data.ulonglong;  return result;  }   break;
         }
     }
+    result.m_type = Scalar::e_void;
     return result;
 }
 
