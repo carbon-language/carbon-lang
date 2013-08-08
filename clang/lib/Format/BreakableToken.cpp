@@ -20,7 +20,6 @@
 #include "clang/Format/Format.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Locale.h"
 #include <algorithm>
 
 namespace clang {
@@ -39,15 +38,6 @@ static bool IsBlank(char C) {
   }
 }
 
-static unsigned columnWidth(StringRef Text, encoding::Encoding Encoding) {
-  if (Encoding == encoding::Encoding_UTF8) {
-    int ContentWidth = llvm::sys::locale::columnWidth(Text);
-    if (ContentWidth >= 0)
-      return ContentWidth;
-  }
-  return encoding::getCodePointCount(Text, Encoding);
-}
-
 static BreakableToken::Split getCommentSplit(StringRef Text,
                                              unsigned ContentStartColumn,
                                              unsigned ColumnLimit,
@@ -59,12 +49,9 @@ static BreakableToken::Split getCommentSplit(StringRef Text,
   unsigned MaxSplitBytes = 0;
 
   for (unsigned NumChars = 0;
-       NumChars < MaxSplit && MaxSplitBytes < Text.size();) {
-    unsigned NumBytes =
+       NumChars < MaxSplit && MaxSplitBytes < Text.size(); ++NumChars)
+    MaxSplitBytes +=
         encoding::getCodePointNumBytes(Text[MaxSplitBytes], Encoding);
-    NumChars += columnWidth(Text.substr(MaxSplitBytes, NumBytes), Encoding);
-    MaxSplitBytes += NumBytes;
-  }
 
   StringRef::size_type SpaceOffset = Text.find_last_of(Blanks, MaxSplitBytes);
   if (SpaceOffset == StringRef::npos ||
@@ -97,8 +84,9 @@ static BreakableToken::Split getStringSplit(StringRef Text,
     return BreakableToken::Split(StringRef::npos, 0);
   if (ColumnLimit <= ContentStartColumn)
     return BreakableToken::Split(StringRef::npos, 0);
-  unsigned MaxSplit = std::min<unsigned>(ColumnLimit - ContentStartColumn,
-                                         columnWidth(Text, Encoding) - 1);
+  unsigned MaxSplit =
+      std::min<unsigned>(ColumnLimit - ContentStartColumn,
+                         encoding::getCodePointCount(Text, Encoding) - 1);
   StringRef::size_type SpaceOffset = 0;
   StringRef::size_type SlashOffset = 0;
   StringRef::size_type WordStartOffset = 0;
@@ -110,7 +98,7 @@ static BreakableToken::Split getStringSplit(StringRef Text,
       Chars += Advance;
     } else {
       Advance = encoding::getCodePointNumBytes(Text[0], Encoding);
-      Chars += columnWidth(Text.substr(0, Advance), Encoding);
+      Chars += 1;
     }
 
     if (Chars > MaxSplit)
@@ -143,7 +131,7 @@ unsigned BreakableSingleLineToken::getLineCount() const { return 1; }
 unsigned BreakableSingleLineToken::getLineLengthAfterSplit(
     unsigned LineIndex, unsigned Offset, StringRef::size_type Length) const {
   return StartColumn + Prefix.size() + Postfix.size() +
-         columnWidth(Line.substr(Offset, Length), Encoding);
+         encoding::getCodePointCount(Line.substr(Offset, Length), Encoding);
 }
 
 BreakableSingleLineToken::BreakableSingleLineToken(
@@ -341,7 +329,8 @@ unsigned BreakableBlockComment::getLineCount() const { return Lines.size(); }
 unsigned BreakableBlockComment::getLineLengthAfterSplit(
     unsigned LineIndex, unsigned Offset, StringRef::size_type Length) const {
   return getContentStartColumn(LineIndex, Offset) +
-         columnWidth(Lines[LineIndex].substr(Offset, Length), Encoding) +
+         encoding::getCodePointCount(Lines[LineIndex].substr(Offset, Length),
+                                     Encoding) +
          // The last line gets a "*/" postfix.
          (LineIndex + 1 == Lines.size() ? 2 : 0);
 }
