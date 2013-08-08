@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+sse2 -mcpu=corei7 | FileCheck %s
 
-; SSE2 Logical Shift Left
+; SSE2 Logical Shift Left 
 
 define <8 x i16> @test_sllw_1(<8 x i16> %InVec) {
 entry:
