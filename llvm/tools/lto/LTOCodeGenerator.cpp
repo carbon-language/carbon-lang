@@ -160,10 +160,8 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   if (!determineTarget(errMsg))
     return false;
 
-  // Run the verifier on the merged modules.
-  PassManager passes;
-  passes.add(createVerifierPass());
-  passes.run(*_linker.getModule());
+  // mark which symbols can not be internalized
+  applyScopeRestrictions();
 
   // create output file
   std::string ErrInfo;
