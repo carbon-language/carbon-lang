@@ -347,14 +347,14 @@ void downcast_pointer(B *b) {
   // CHECK: [[SUB:%[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
   // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
   // null check goes here
-  // CHECK: [[FROM_PHI:%[0-9]*]] = phi %class.C* [ [[C]], %cast.notnull ], {{.*}}
+  // CHECK: [[FROM_PHI:%[0-9]*]] = phi %class.C* [ [[C]], {{.*}} ], {{.*}}
   // Objectsize check goes here
   // CHECK: [[C_INT:%[0-9]*]] = ptrtoint %class.C* [[FROM_PHI]] to i64
   // CHECK-NEXT: [[MASKED:%[0-9]*]] = and i64 [[C_INT]], 15
   // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
   // AND the alignment test with the objectsize test.
   // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
-  // CHECK-NEXT: br i1 [[AND]], label %cont, label %handler.type_mismatch
+  // CHECK-NEXT: br i1 [[AND]]
 }
 
 // CHECK-LABEL: define void @_Z18downcast_referenceR1B(%class.B* %b)
@@ -369,7 +369,7 @@ void downcast_reference(B &b) {
   // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
   // AND the alignment test with the objectsize test.
   // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
-  // CHECK-NEXT: br i1 [[AND]], label %cont, label %handler.type_mismatch
+  // CHECK-NEXT: br i1 [[AND]]
 }
 
 // CHECK: attributes [[NR_NUW]] = { noreturn nounwind }
