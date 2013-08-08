@@ -3719,10 +3719,11 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
       llvm_unreachable("Unexpected option ID.");
   }
 
-  // This provides POSIX compatibility (maps 'open' to '_open'), which most users
-  // want.  MSVC has a switch to turn off this autolinking, but it's not
-  // implemented in clang yet.
-  CmdArgs.push_back("--dependent-lib=oldnames");
+  if (!Args.hasArg(options::OPT__SLASH_Za)) {
+    // This provides POSIX compatibility (maps 'open' to '_open'),
+    // which most users want.
+    CmdArgs.push_back("--dependent-lib=oldnames");
+  }
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,

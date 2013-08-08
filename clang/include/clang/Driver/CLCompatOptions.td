@@ -98,6 +98,7 @@ def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;
 def _SLASH_Tp : CLJoinedOrSeparate<"Tp">, HelpText<"Specify a C++ source file">,
   MetaVarName<"<filename>">;
 def _SLASH_TP : CLFlag<"TP">, HelpText<"Treat all source files as C++">;
+def _SLASH_Za : CLFlag<"Za">;
 
 
 // Ignored:
