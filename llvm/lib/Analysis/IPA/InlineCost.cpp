@@ -1171,6 +1171,22 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, int Threshold) {
   return getInlineCost(CS, CS.getCalledFunction(), Threshold);
 }
 
+/// \brief Test that two functions either have or have not the given attribute
+///        at the same time.
+static bool attributeMatches(Function *F1, Function *F2,
+                             Attribute::AttrKind Attr) {
+  return F1->hasFnAttribute(Attr) == F2->hasFnAttribute(Attr);
+}
+
+/// \brief Test that there are no attribute conflicts between Caller and Callee
+///        that prevent inlining.
+static bool functionsHaveCompatibleAttributes(Function *Caller,
+                                              Function *Callee) {
+  return attributeMatches(Caller, Callee, Attribute::SanitizeAddress) &&
+         attributeMatches(Caller, Callee, Attribute::SanitizeMemory) &&
+         attributeMatches(Caller, Callee, Attribute::SanitizeThread);
+}
+
 InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
                                              int Threshold) {
   // Cannot inline indirect calls.
@@ -1179,20 +1195,22 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
 
   // Calls to functions with always-inline attributes should be inlined
   // whenever possible.
-  if (Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                           Attribute::AlwaysInline)) {
+  if (Callee->hasFnAttribute(Attribute::AlwaysInline)) {
     if (isInlineViable(*Callee))
       return llvm::InlineCost::getAlways();
     return llvm::InlineCost::getNever();
   }
 
+  // Never inline functions with conflicting attributes (unless callee has
+  // always-inline attribute).
+  if (!functionsHaveCompatibleAttributes(CS.getCaller(), Callee))
+    return llvm::InlineCost::getNever();
+
   // Don't inline functions which can be redefined at link-time to mean
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.
   if (Callee->mayBeOverridden() ||
-      Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                           Attribute::NoInline) ||
-      CS.isNoInline())
+      Callee->hasFnAttribute(Attribute::NoInline) || CS.isNoInline())
     return llvm::InlineCost::getNever();
 
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
