@@ -5,6 +5,9 @@
 // expand the ? into a one-letter filename in the root directory, and make
 // the test fail is such a file or directory exists.
 
+// Note: %s must be preceded by --, otherwise it may be interpreted as a
+// command-line option, e.g. on Mac where %s is commonly under /Users.
+
 // Check that clang-cl options are not available by default.
 // RUN: %clang -help | FileCheck %s -check-prefix=DEFAULT
 // DEFAULT-NOT: CL.EXE COMPATIBILITY OPTIONS
@@ -26,3 +29,6 @@
 // are not available in clang-cl.
 // DEFAULT: -fapple-kext
 // CL-NOT: -fapple-kext
+
+// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=ABI %s
+// ABI: "-cxx-abi" "microsoft"

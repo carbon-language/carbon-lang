@@ -3723,6 +3723,10 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   // users want.  The /Za flag to cl.exe turns this off, but it's not
   // implemented in clang.
   CmdArgs.push_back("--dependent-lib=oldnames");
+
+  // FIXME: Make this default for the win32 triple.
+  CmdArgs.push_back("-cxx-abi");
+  CmdArgs.push_back("microsoft");
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
