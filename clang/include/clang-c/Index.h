@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 19
+#define CINDEX_VERSION_MINOR 20
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -412,6 +412,12 @@ CINDEX_LINKAGE CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
  * \brief Returns non-zero if the given source location is in a system header.
  */
 CINDEX_LINKAGE int clang_Location_isInSystemHeader(CXSourceLocation location);
+
+/**
+ * \brief Returns non-zero if the given source location is in the main file of
+ * the corresponding translation unit.
+ */
+CINDEX_LINKAGE int clang_Location_isFromMainFile(CXSourceLocation location);
 
 /**
  * \brief Retrieve a NULL (invalid) source range.
