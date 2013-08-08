@@ -128,6 +128,9 @@ public:
   /// A list of command-line options to forward to the LLVM backend.
   std::vector<std::string> BackendOptions;
 
+  /// A list of dependent libraries.
+  std::vector<std::string> DependentLibraries;
+
 public:
   // Define accessors/mutators for code generation options of enumeration type.
 #define CODEGENOPT(Name, Bits, Default)

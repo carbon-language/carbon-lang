@@ -86,6 +86,12 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 def _SLASH_Fo : CLJoined<"Fo">,
   HelpText<"Set output object file, or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
+def _SLASH_MD : CLFlag<"MD">,
+  HelpText<"Use DLL run-time">;
+def _SLASH_MDd : CLFlag<"MDd">,
+  HelpText<"Use DLL debug run-time">;
+def _SLASH_MT : CLFlag<"MT">, HelpText<"Use static run-time">;
+def _SLASH_MTd : CLFlag<"MTd">, HelpText<"Use static debug run-time">;
 def _SLASH_Tc : CLJoinedOrSeparate<"Tc">, HelpText<"Specify a C source file">,
   MetaVarName<"<filename>">;
 def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;
@@ -119,10 +125,6 @@ def _SLASH_GS : CLFlag<"GS">;
 def _SLASH_Gy : CLFlag<"Gy">;
 def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_GZ : CLFlag<"GZ">;
-def _SLASH_MD : CLFlag<"MD">;
-def _SLASH_MT : CLFlag<"MT">;
-def _SLASH_MDd : CLFlag<"MDd">;
-def _SLASH_MTd : CLFlag<"MTd">;
 def _SLASH_Oi : CLFlag<"Oi">;
 def _SLASH_RTC : CLJoined<"RTC">;
 def _SLASH_showIncludes : CLJoined<"showIncludes">;

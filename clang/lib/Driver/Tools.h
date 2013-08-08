@@ -74,6 +74,9 @@ using llvm::opt::ArgStringList;
                                    llvm::opt::ArgStringList &cmdArgs,
                                    RewriteKind rewrite) const;
 
+    void AddClangCLArgs(const llvm::opt::ArgList &Args,
+                        llvm::opt::ArgStringList &CmdArgs) const;
+
   public:
     Clang(const ToolChain &TC) : Tool("clang", "clang frontend", TC) {}
 

@@ -60,6 +60,9 @@ namespace {
       TD.reset(new llvm::DataLayout(Ctx->getTargetInfo().getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts, *M, *TD,
                                                Diags));
+
+      for (size_t i = 0, e = CodeGenOpts.DependentLibraries.size(); i < e; ++i)
+        HandleDependentLibrary(CodeGenOpts.DependentLibraries[i]);
     }
 
     virtual void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
