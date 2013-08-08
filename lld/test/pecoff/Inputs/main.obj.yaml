@@ -25,7 +25,7 @@ sections:
   - Name:            .drectve
     Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
     Alignment:       2147483648
-    SectionData:     2F454E5452593A6D61696E20
+    SectionData:     2F656E7472793A6D61696E20
 symbols:
   - Name:            "@comp.id"
     Value:           10394907

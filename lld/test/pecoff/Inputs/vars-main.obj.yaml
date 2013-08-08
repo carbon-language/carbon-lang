@@ -6,7 +6,7 @@ sections:
   - Name:            .drectve
     Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
     Alignment:       1
-    SectionData:     2020202F44454641554C544C49423A224C4942434D5422202F44454641554C544C49423A224F4C444E414D45532220
+    SectionData:     00000000
   - Name:            ".debug$S"
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
     Alignment:       1
