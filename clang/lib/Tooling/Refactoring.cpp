@@ -90,6 +90,12 @@ bool Replacement::Less::operator()(const Replacement &R1,
   return R1.ReplacementText < R2.ReplacementText;
 }
 
+bool Replacement::operator==(const Replacement &Other) const {
+  return ReplacementRange.getOffset() == Other.ReplacementRange.getOffset() &&
+         ReplacementRange.getLength() == Other.ReplacementRange.getLength() &&
+         FilePath == Other.FilePath && ReplacementText == Other.ReplacementText;
+}
+
 void Replacement::setFromSourceLocation(SourceManager &Sources,
                                         SourceLocation Start, unsigned Length,
                                         StringRef ReplacementText) {
@@ -178,6 +184,44 @@ unsigned shiftedCodePosition(const Replacements &Replaces, unsigned Position) {
   }
   return NewPosition;
 }
+
+void deduplicate(std::vector<Replacement> &Replaces,
+                 std::vector<Range> &Conflicts) {
+  if (Replaces.empty())
+    return;
+
+  // Deduplicate
+  std::sort(Replaces.begin(), Replaces.end(), Replacement::Less());
+  std::vector<Replacement>::iterator End =
+      std::unique(Replaces.begin(), Replaces.end());
+  Replaces.erase(End, Replaces.end());
+
+  // Detect conflicts
+  Range ConflictRange(Replaces.front().getOffset(),
+                      Replaces.front().getLength());
+  unsigned ConflictStart = 0;
+  unsigned ConflictLength = 1;
+  for (unsigned i = 1; i < Replaces.size(); ++i) {
+    Range Current(Replaces[i].getOffset(), Replaces[i].getLength());
+    if (ConflictRange.overlapsWith(Current)) {
+      // Extend conflicted range
+      ConflictRange = Range(ConflictRange.getOffset(),
+                            Current.getOffset() + Current.getLength() -
+                                ConflictRange.getOffset());
+      ++ConflictLength;
+    } else {
+      if (ConflictLength > 1)
+        Conflicts.push_back(Range(ConflictStart, ConflictLength));
+      ConflictRange = Current;
+      ConflictStart = i;
+      ConflictLength = 1;
+    }
+  }
+
+  if (ConflictLength > 1)
+    Conflicts.push_back(Range(ConflictStart, ConflictLength));
+}
+
 
 RefactoringTool::RefactoringTool(const CompilationDatabase &Compilations,
                                  ArrayRef<std::string> SourcePaths)

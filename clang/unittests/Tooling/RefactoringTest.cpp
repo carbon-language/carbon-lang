@@ -347,5 +347,76 @@ TEST(Range, contains) {
   EXPECT_FALSE(Range(0, 10).contains(Range(0, 11)));
 }
 
+TEST(DeduplicateTest, removesDuplicates) {
+  std::vector<Replacement> Input;
+  Input.push_back(Replacement("fileA", 50, 0, " foo "));
+  Input.push_back(Replacement("fileA", 10, 3, " bar "));
+  Input.push_back(Replacement("fileA", 10, 2, " bar ")); // Length differs
+  Input.push_back(Replacement("fileA", 9,  3, " bar ")); // Offset differs
+  Input.push_back(Replacement("fileA", 50, 0, " foo ")); // Duplicate
+  Input.push_back(Replacement("fileA", 51, 3, " bar "));
+  Input.push_back(Replacement("fileB", 51, 3, " bar ")); // Filename differs!
+  Input.push_back(Replacement("fileA", 51, 3, " moo ")); // Replacement text
+                                                         // differs!
+
+  std::vector<Replacement> Expected;
+  Expected.push_back(Replacement("fileA", 9,  3, " bar "));
+  Expected.push_back(Replacement("fileA", 10, 2, " bar "));
+  Expected.push_back(Replacement("fileA", 10, 3, " bar "));
+  Expected.push_back(Replacement("fileA", 50, 0, " foo "));
+  Expected.push_back(Replacement("fileA", 51, 3, " bar "));
+  Expected.push_back(Replacement("fileA", 51, 3, " moo "));
+  Expected.push_back(Replacement("fileB", 51, 3, " bar "));
+
+  std::vector<Range> Conflicts; // Ignored for this test
+  deduplicate(Input, Conflicts);
+
+  ASSERT_TRUE(Expected == Input);
+}
+
+TEST(DeduplicateTest, detectsConflicts) {
+  {
+    std::vector<Replacement> Input;
+    Input.push_back(Replacement("fileA", 0, 5, " foo "));
+    Input.push_back(Replacement("fileA", 0, 5, " foo ")); // Duplicate not a
+                                                          // conflict.
+    Input.push_back(Replacement("fileA", 2, 6, " bar "));
+    Input.push_back(Replacement("fileA", 7, 3, " moo "));
+
+    std::vector<Range> Conflicts;
+    deduplicate(Input, Conflicts);
+
+    // One duplicate is removed and the remaining three items form one
+    // conflicted range.
+    ASSERT_EQ(3u, Input.size());
+    ASSERT_EQ(1u, Conflicts.size());
+    ASSERT_EQ(0u, Conflicts.front().getOffset());
+    ASSERT_EQ(3u, Conflicts.front().getLength());
+  }
+  {
+    std::vector<Replacement> Input;
+
+    // Expected sorted order is shown. It is the sorted order to which the
+    // returned conflict info refers to.
+    Input.push_back(Replacement("fileA", 0,  5, " foo "));  // 0
+    Input.push_back(Replacement("fileA", 5,  5, " bar "));  // 1
+    Input.push_back(Replacement("fileA", 5,  5, " moo "));  // 2
+    Input.push_back(Replacement("fileA", 15, 5, " golf ")); // 4
+    Input.push_back(Replacement("fileA", 16, 5, " bag "));  // 5
+    Input.push_back(Replacement("fileA", 10, 3, " club ")); // 6
+
+    std::vector<Range> Conflicts;
+    deduplicate(Input, Conflicts);
+
+    // No duplicates
+    ASSERT_EQ(6u, Input.size());
+    ASSERT_EQ(2u, Conflicts.size());
+    ASSERT_EQ(1u, Conflicts[0].getOffset());
+    ASSERT_EQ(2u, Conflicts[0].getLength());
+    ASSERT_EQ(4u, Conflicts[1].getOffset());
+    ASSERT_EQ(2u, Conflicts[1].getLength());
+  }
+}
+
 } // end namespace tooling
 } // end namespace clang

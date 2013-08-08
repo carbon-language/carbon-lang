@@ -122,6 +122,8 @@ public:
     bool operator()(const Replacement &R1, const Replacement &R2) const;
   };
 
+  bool operator==(const Replacement &Other) const;
+
  private:
   void setFromSourceLocation(SourceManager &Sources, SourceLocation Start,
                              unsigned Length, StringRef ReplacementText);
@@ -154,6 +156,14 @@ std::string applyAllReplacements(StringRef Code, const Replacements &Replaces);
 /// \brief Calculates how a code \p Position is shifted when \p Replaces are
 /// applied.
 unsigned shiftedCodePosition(const Replacements& Replaces, unsigned Position);
+
+/// \brief Removes duplicate Replacements and reports if Replacements conflict
+/// with one another.
+///
+/// This function will sort \p Replaces so that conflicts can be reported simply
+/// by offset into \p Replaces and number of elements in the conflict.
+void deduplicate(std::vector<Replacement> &Replaces,
+                 std::vector<Range> &Conflicts);
 
 /// \brief A tool to run refactorings.
 ///
