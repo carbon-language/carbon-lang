@@ -175,15 +175,17 @@ class COFFDefinedAtom : public COFFDefinedFileAtom {
 public:
   COFFDefinedAtom(const File &file, StringRef name, StringRef sectionName,
                   Scope scope, ContentType type, ContentPermissions perms,
-                  ArrayRef<uint8_t> data, uint64_t ordinal)
+                  Merge merge, ArrayRef<uint8_t> data, uint64_t ordinal)
       : COFFDefinedFileAtom(file, name, sectionName, scope, type, perms,
                             ordinal),
-        _dataref(data) {}
+        _merge(merge), _dataref(data) {}
 
+  virtual Merge merge() const { return _merge; }
   virtual uint64_t size() const { return _dataref.size(); }
   virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
 
 private:
+  Merge _merge;
   ArrayRef<uint8_t> _dataref;
 };
 

@@ -38,6 +38,7 @@ using lld::coff::COFFDefinedAtom;
 using lld::coff::COFFDefinedFileAtom;
 using lld::coff::COFFReference;
 using lld::coff::COFFUndefinedAtom;
+using llvm::object::coff_aux_section_definition;
 using llvm::object::coff_relocation;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
@@ -46,6 +47,7 @@ using namespace lld;
 
 namespace {
 
+// Converts the COFF symbol attribute to the LLD's atom attribute.
 Atom::Scope getScope(const coff_symbol *symbol) {
   switch (symbol->StorageClass) {
     case llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL:
@@ -77,6 +79,16 @@ DefinedAtom::ContentPermissions getPermissions(const coff_section *section) {
   if (section->Characteristics & llvm::COFF::IMAGE_SCN_MEM_READ)
     return DefinedAtom::permR__;
   return DefinedAtom::perm___;
+}
+
+DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
+  switch (auxsym->Selection) {
+    case llvm::COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:
+      return DefinedAtom::mergeNo;
+    default:
+      // FIXME: COFF supports more mergable symbol attributes.
+      return DefinedAtom::mergeAsWeakAndAddressUsed;
+  }
 }
 
 class FileCOFF : public File {
@@ -201,6 +213,13 @@ private:
   /// we need to know the adjacent symbols.
   error_code createDefinedSymbols(const SymbolVectorT &symbols,
                                   vector<const DefinedAtom *> &result) {
+    // A defined atom can be merged if its section attribute allows its contents
+    // to be merged. In COFF, it's not very easy to get the section attribute
+    // for the symbol, so scan all sections in advance and cache the attributes
+    // for later use.
+    if (error_code ec = cacheSectionAttributes())
+      return ec;
+
     // Filter non-defined atoms, and group defined atoms by its section.
     SectionToSymbolsT definedSymbols;
     for (const coff_symbol *sym : symbols) {
@@ -223,6 +242,22 @@ private:
           sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
         continue;
 
+      const coff_section *sec;
+      if (error_code ec = _obj->getSection(sym->SectionNumber, sec))
+        return ec;
+      assert(sec && "SectionIndex > 0, Sec must be non-null!");
+
+      // SKip if it's a section symbol for a COMDAT section. A section symbol
+      // has the name of the section and value 0. A translation unit may contain
+      // multiple COMDAT sections whose section name are the same. We don't want
+      // to make atoms for them as they would become duplicate symbols.
+      StringRef sectionName;
+      if (error_code ec = _obj->getSectionName(sec, sectionName))
+        return ec;
+      if (_symbolName[sym] == sectionName && sym->Value == 0 &&
+          _merge[sec] != DefinedAtom::mergeNo)
+        continue;
+
       uint8_t sc = sym->StorageClass;
       if (sc != llvm::COFF::IMAGE_SYM_CLASS_EXTERNAL &&
           sc != llvm::COFF::IMAGE_SYM_CLASS_STATIC &&
@@ -233,10 +268,6 @@ private:
         return llvm::object::object_error::parse_failed;
       }
 
-      const coff_section *sec;
-      if (error_code ec = _obj->getSection(sym->SectionNumber, sec))
-        return ec;
-      assert(sec && "SectionIndex > 0, Sec must be non-null!");
       definedSymbols[sec].push_back(sym);
     }
 
@@ -244,6 +275,55 @@ private:
     if (error_code ec = AtomizeDefinedSymbols(definedSymbols, result))
       return ec;
 
+    return error_code::success();
+  }
+
+  // Cache the COMDAT attributes, which indicate whether the symbols in the
+  // section can be merged or not.
+  error_code cacheSectionAttributes() {
+    const llvm::object::coff_file_header *header = nullptr;
+    if (error_code ec = _obj->getHeader(header))
+      return ec;
+
+    // The COMDAT section attribute is not an attribute of coff_section, but is
+    // stored in the auxiliary symbol for the first symbol referring a COMDAT
+    // section. It feels to me that it's unnecessarily complicated, but this is
+    // how COFF works.
+    for (uint32_t i = 0, e = header->NumberOfSymbols; i != e; ++i) {
+      const coff_symbol *sym;
+      if (error_code ec = _obj->getSymbol(i, sym))
+        return ec;
+      if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
+          sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
+        continue;
+
+      const coff_section *sec;
+      if (error_code ec = _obj->getSection(sym->SectionNumber, sec))
+        return ec;
+
+      if (_merge.count(sec))
+        continue;
+      if (!(sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_COMDAT))
+        continue;
+
+      if (sym->NumberOfAuxSymbols == 0)
+        return llvm::object::object_error::parse_failed;
+      const coff_aux_section_definition *aux = nullptr;
+      if (error_code ec = _obj->getAuxSymbol(i + 1, aux))
+        return ec;
+
+      _merge[sec] = getMerge(aux);
+    }
+
+    // The sections that does not have auxiliary symbol are regular sections, in
+    // which symbols are not allowed to be merged.
+    error_code ec;
+    for (auto si = _obj->begin_sections(), se = _obj->end_sections(); si != se;
+         si.increment(ec)) {
+      const coff_section *sec = _obj->getCOFFSection(si);
+      if (!_merge.count(sec))
+        _merge[sec] = DefinedAtom::mergeNo;
+    }
     return error_code::success();
   }
 
@@ -310,7 +390,7 @@ private:
       ArrayRef<uint8_t> data(secData.data(), secData.size());
       auto *atom = new (_alloc) COFFDefinedAtom(
           *this, "", sectionName, Atom::scopeTranslationUnit, type, perms,
-          data, 0);
+          _merge[section], data, 0);
       atoms.push_back(atom);
       _definedAtomLocations[section][0] = atom;
       return error_code::success();
@@ -323,7 +403,7 @@ private:
       ArrayRef<uint8_t> data(secData.data(), size);
       auto *atom = new (_alloc) COFFDefinedAtom(
           *this, "", sectionName, Atom::scopeTranslationUnit, type, perms,
-          data, ++ordinal);
+          _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _definedAtomLocations[section][0] = atom;
     }
@@ -337,7 +417,7 @@ private:
       ArrayRef<uint8_t> data(start, end);
       auto *atom = new (_alloc) COFFDefinedAtom(
           *this, _symbolName[*si], sectionName, getScope(*si), type, perms,
-          data, ++ordinal);
+          _merge[section], data, ++ordinal);
       atoms.push_back(atom);
       _symbolAtom[*si] = atom;
       _definedAtomLocations[section][(*si)->Value] = atom;
@@ -518,6 +598,9 @@ private:
 
   // A map from section to its atoms.
   std::map<const coff_section *, vector<COFFDefinedFileAtom *>> _sectionAtoms;
+
+  // A map to get whether the section allows its contents to be merged or not.
+  std::map<const coff_section *, DefinedAtom::Merge> _merge;
 
   // A sorted map to find an atom from a section and an offset within
   // the section.
