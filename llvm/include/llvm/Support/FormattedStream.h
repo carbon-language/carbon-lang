@@ -129,6 +129,27 @@ public:
 
   /// getLine - Return the line number
   unsigned getLine() { return Position.second; }
+  
+  raw_ostream &resetColor() {
+    TheStream->resetColor();
+    return *this;
+  }
+  
+  raw_ostream &reverseColor() {
+    TheStream->reverseColor();
+    return *this;
+  }
+  
+  raw_ostream &changeColor(enum Colors Color,
+                           bool Bold,
+                           bool BG) {
+    TheStream->changeColor(Color, Bold, BG);
+    return *this;
+  }
+  
+  bool is_displayed() const {
+    return TheStream->is_displayed();
+  }
 
 private:
   void releaseStream() {
