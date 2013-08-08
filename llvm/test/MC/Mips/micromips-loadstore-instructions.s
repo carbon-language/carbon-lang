@@ -1,17 +1,31 @@
-# RUN: llvm-mc %s -triple=mipsel -show-encoding -mattr=micromips | FileCheck %s
+# RUN: llvm-mc %s -triple=mipsel -show-encoding -mattr=micromips | FileCheck -check-prefix=CHECK-EL %s
+# RUN: llvm-mc %s -triple=mips -show-encoding -mattr=micromips | FileCheck -check-prefix=CHECK-EB %s
 # Check that the assembler can handle the documented syntax
 # for load and store instructions.
 #------------------------------------------------------------------------------
 # Load and Store Instructions
 #------------------------------------------------------------------------------
-# CHECK: lb     $5, 8($4)      # encoding: [0x08,0x00,0xa4,0x1c]
-# CHECK: lbu    $6, 8($4)      # encoding: [0x08,0x00,0xc4,0x14]
-# CHECK: lh     $2, 8($4)      # encoding: [0x08,0x00,0x44,0x3c]
-# CHECK: lhu    $4, 8($2)      # encoding: [0x08,0x00,0x82,0x34]
-# CHECK: lw     $6, 4($5)      # encoding: [0x04,0x00,0xc5,0xfc]
-# CHECK: sb     $5, 8($4)      # encoding: [0x08,0x00,0xa4,0x18]
-# CHECK: sh     $2, 8($4)      # encoding: [0x08,0x00,0x44,0x38]
-# CHECK: sw     $5, 4($6)      # encoding: [0x04,0x00,0xa6,0xf8]
+# Little endian
+#------------------------------------------------------------------------------
+# CHECK-EL: lb     $5, 8($4)      # encoding: [0xa4,0x1c,0x08,0x00]
+# CHECK-EL: lbu    $6, 8($4)      # encoding: [0xc4,0x14,0x08,0x00]
+# CHECK-EL: lh     $2, 8($4)      # encoding: [0x44,0x3c,0x08,0x00]
+# CHECK-EL: lhu    $4, 8($2)      # encoding: [0x82,0x34,0x08,0x00]
+# CHECK-EL: lw     $6, 4($5)      # encoding: [0xc5,0xfc,0x04,0x00]
+# CHECK-EL: sb     $5, 8($4)      # encoding: [0xa4,0x18,0x08,0x00]
+# CHECK-EL: sh     $2, 8($4)      # encoding: [0x44,0x38,0x08,0x00]
+# CHECK-EL: sw     $5, 4($6)      # encoding: [0xa6,0xf8,0x04,0x00]
+#------------------------------------------------------------------------------
+# Big endian
+#------------------------------------------------------------------------------
+# CHECK-EB: lb     $5, 8($4)      # encoding: [0x1c,0xa4,0x00,0x08]
+# CHECK-EB: lbu    $6, 8($4)      # encoding: [0x14,0xc4,0x00,0x08]
+# CHECK-EB: lh     $2, 8($4)      # encoding: [0x3c,0x44,0x00,0x08]
+# CHECK-EB: lhu    $4, 8($2)      # encoding: [0x34,0x82,0x00,0x08]
+# CHECK-EB: lw     $6, 4($5)      # encoding: [0xfc,0xc5,0x00,0x04]
+# CHECK-EB: sb     $5, 8($4)      # encoding: [0x18,0xa4,0x00,0x08]
+# CHECK-EB: sh     $2, 8($4)      # encoding: [0x38,0x44,0x00,0x08]
+# CHECK-EB: sw     $5, 4($6)      # encoding: [0xf8,0xa6,0x00,0x04]
      lb     $5, 8($4)
      lbu    $6, 8($4)
      lh     $2, 8($4)

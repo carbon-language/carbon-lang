@@ -39,11 +39,14 @@ class MipsMCCodeEmitter : public MCCodeEmitter {
   MCContext &Ctx;
   const MCSubtargetInfo &STI;
   bool IsLittleEndian;
+  bool IsMicroMips;
 
 public:
   MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_,
                     const MCSubtargetInfo &sti, bool IsLittle) :
-    MCII(mcii), Ctx(Ctx_), STI (sti), IsLittleEndian(IsLittle) {}
+    MCII(mcii), Ctx(Ctx_), STI (sti), IsLittleEndian(IsLittle) {
+      IsMicroMips = STI.getFeatureBits() & Mips::FeatureMicroMips;
+    }
 
   ~MipsMCCodeEmitter() {}
 
@@ -53,9 +56,17 @@ public:
 
   void EmitInstruction(uint64_t Val, unsigned Size, raw_ostream &OS) const {
     // Output the instruction encoding in little endian byte order.
-    for (unsigned i = 0; i < Size; ++i) {
-      unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
-      EmitByte((Val >> Shift) & 0xff, OS);
+    // Little-endian byte ordering:
+    //   mips32r2:   4 | 3 | 2 | 1
+    //   microMIPS:  2 | 1 | 4 | 3
+    if (IsLittleEndian && Size == 4 && IsMicroMips) {
+      EmitInstruction(Val>>16, 2, OS);
+      EmitInstruction(Val, 2, OS);
+    } else {
+      for (unsigned i = 0; i < Size; ++i) {
+        unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
+        EmitByte((Val >> Shift) & 0xff, OS);
+      }
     }
   }
 
