@@ -329,11 +329,11 @@ int main(int argc_, const char **argv_) {
 
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
   {
-    // Note that ParseDiagnosticArgs() uses the cc1 option table.
-    OwningPtr<OptTable> CC1Opts(createDriverOptTable());
+    OwningPtr<OptTable> Opts(createDriverOptTable());
     unsigned MissingArgIndex, MissingArgCount;
-    OwningPtr<InputArgList> Args(CC1Opts->ParseArgs(argv.begin()+1, argv.end(),
-                                            MissingArgIndex, MissingArgCount));
+    OwningPtr<InputArgList> Args(Opts->ParseArgs(argv.begin()+1, argv.end(),
+                                                 MissingArgIndex,
+                                                 MissingArgCount));
     // We ignore MissingArgCount and the return value of ParseDiagnosticArgs.
     // Any errors that would be diagnosed here will also be diagnosed later,
     // when the DiagnosticsEngine actually exists.
