@@ -53,7 +53,7 @@ namespace llvm {
       /// to X86::XORPS or X86::XORPD.
       FXOR,
 
-      /// FAND - Bitwise logical ANDNOT of floating point values. This
+      /// FANDN - Bitwise logical ANDNOT of floating point values. This
       /// corresponds to X86::ANDNPS or X86::ANDNPD.
       FANDN,
 
