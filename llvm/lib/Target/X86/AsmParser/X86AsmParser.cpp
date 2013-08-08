@@ -80,7 +80,7 @@ private:
       PostfixStack.push_back(std::make_pair(Op, Val));
     }
     
-    void popOperator() { InfixOperatorStack.pop_back_val(); }
+    void popOperator() { InfixOperatorStack.pop_back(); }
     void pushOperator(InfixCalculatorTok Op) {
       // Push the new operator if the stack is empty.
       if (InfixOperatorStack.empty()) {
@@ -118,12 +118,12 @@ private:
         
         if (StackOp == IC_RPAREN) {
           ++ParenCount;
-          InfixOperatorStack.pop_back_val();
+          InfixOperatorStack.pop_back();
         } else if (StackOp == IC_LPAREN) {
           --ParenCount;
-          InfixOperatorStack.pop_back_val();
+          InfixOperatorStack.pop_back();
         } else {
-          InfixOperatorStack.pop_back_val();
+          InfixOperatorStack.pop_back();
           PostfixStack.push_back(std::make_pair(StackOp, 0));
         }
       }
