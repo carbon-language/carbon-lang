@@ -249,7 +249,7 @@ private:
 
   /// \brief Represents a region described by entries in the .dynamic table.
   struct DynRegionInfo {
-    DynRegionInfo() : Addr(nullptr), Size(0), EntSize(0) {}
+    DynRegionInfo() : Addr(0), Size(0), EntSize(0) {}
     /// \brief Address in current address space.
     const void *Addr;
     /// \brief Size in bytes of the region.
