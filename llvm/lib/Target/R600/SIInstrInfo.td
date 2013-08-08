@@ -184,6 +184,12 @@ multiclass VOP1_32 <bits<8> op, string opName, list<dag> pattern>
 multiclass VOP1_64 <bits<8> op, string opName, list<dag> pattern>
   : VOP1_Helper <op, VReg_64, VSrc_64, opName, pattern>;
 
+multiclass VOP1_32_64 <bits<8> op, string opName, list<dag> pattern>
+  : VOP1_Helper <op, VReg_32, VSrc_64, opName, pattern>;
+
+multiclass VOP1_64_32 <bits<8> op, string opName, list<dag> pattern>
+  : VOP1_Helper <op, VReg_64, VSrc_32, opName, pattern>;
+
 multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
                         string opName, list<dag> pattern, string revOp> {
   def _e32 : VOP2 <
