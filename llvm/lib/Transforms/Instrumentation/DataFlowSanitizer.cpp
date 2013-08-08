@@ -236,7 +236,7 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   ShadowPtrTy = PointerType::getUnqual(ShadowTy);
   IntptrTy = DL->getIntPtrType(*Ctx);
   ZeroShadow = ConstantInt::getSigned(ShadowTy, 0);
-  ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x700000000000);
+  ShadowPtrMask = ConstantInt::getSigned(IntptrTy, ~0x700000000000LL);
   ShadowPtrMul = ConstantInt::getSigned(IntptrTy, ShadowWidth / 8);
 
   Type *DFSanUnionArgs[2] = { ShadowTy, ShadowTy };
