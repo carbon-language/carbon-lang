@@ -9358,10 +9358,10 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     for (unsigned i = 0; i != NumElts; ++i) {
       int Idx = SVN->getMaskElt(i);
       if (Idx >= 0) {
-        if (Idx < (int)NumElts)
-          Idx += NumElts;
-        else
+        if (Idx >= (int)NumElts)
           Idx -= NumElts;
+        else
+          Idx = -1; // remove reference to lhs
       }
       NewMask.push_back(Idx);
     }
