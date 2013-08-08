@@ -72,6 +72,21 @@
 //
 // See PreprocessorTracker.cpp for additional details.
 //
+// Current problems:
+//
+// Modularize has problems with C++:
+//
+// 1. Modularize doesn't distinguish class of the same name in
+// different namespaces.  The result is erroneous duplicate definition errors.
+//
+// 2. Modularize doesn't distinguish between a regular class and a template
+// class of the same name.
+//
+// Other problems:
+//
+// 3. There seem to be a lot of spurious "not always provided" messages,
+// and many duplicates of these.
+//
 // Future directions:
 //
 // Basically, we want to add new checks for whatever we can check with respect
@@ -79,13 +94,18 @@
 //
 // Some ideas:
 //
-// 1. Try to figure out the preprocessor conditional directives that
+// 1. Fix the C++ and other problems.
+//
+// 2. Add options to disable any of the checks, in case
+// there is some problem with them, or the messages get too verbose.
+//
+// 3. Try to figure out the preprocessor conditional directives that
 // contribute to problems and tie them to the inconsistent definitions.
 //
-// 2. Check for correct and consistent usage of extern "C" {} and other
+// 4. Check for correct and consistent usage of extern "C" {} and other
 // directives. Warn about #include inside extern "C" {}.
 //
-// 3. What else?
+// 5. What else?
 //
 // General clean-up and refactoring:
 //
