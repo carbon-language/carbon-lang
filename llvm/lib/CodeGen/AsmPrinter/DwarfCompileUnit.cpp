@@ -1131,18 +1131,18 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
 /// getOrCreateTemplateValueParameterDIE - Find existing DIE or create new DIE
 /// for the given DITemplateValueParameter.
 DIE *
-CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV){
-  DIE *ParamDIE = getDIE(TPV);
+CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter VP) {
+  DIE *ParamDIE = getDIE(VP);
   if (ParamDIE)
     return ParamDIE;
 
-  ParamDIE = new DIE(TPV.getTag());
-  addType(ParamDIE, TPV.getType());
-  if (!TPV.getName().empty())
-    addString(ParamDIE, dwarf::DW_AT_name, TPV.getName());
-  if (Value *Val = TPV.getValue()) {
+  ParamDIE = new DIE(VP.getTag());
+  addType(ParamDIE, VP.getType());
+  if (!VP.getName().empty())
+    addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
+  if (Value *Val = VP.getValue()) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Val))
-      addConstantValue(ParamDIE, CI, TPV.getType().isUnsignedDIType());
+      addConstantValue(ParamDIE, CI, VP.getType().isUnsignedDIType());
     else if (GlobalValue *GV = dyn_cast<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
@@ -1152,11 +1152,11 @@ CompileUnit::getOrCreateTemplateValueParameterDIE(DITemplateValueParameter TPV){
       // parameter, rather than a pointer to it.
       addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_stack_value);
       addBlock(ParamDIE, dwarf::DW_AT_location, 0, Block);
-    } else if (TPV.getTag() == dwarf::DW_TAG_GNU_template_template_param) {
+    } else if (VP.getTag() == dwarf::DW_TAG_GNU_template_template_param) {
       assert(isa<MDString>(Val));
       addString(ParamDIE, dwarf::DW_AT_GNU_template_name,
                 cast<MDString>(Val)->getString());
-    } else if (TPV.getTag() == dwarf::DW_TAG_GNU_template_parameter_pack) {
+    } else if (VP.getTag() == dwarf::DW_TAG_GNU_template_parameter_pack) {
       assert(isa<MDNode>(Val));
       DIArray A(cast<MDNode>(Val));
       addTemplateParams(*ParamDIE, A);
