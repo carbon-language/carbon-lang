@@ -45,7 +45,6 @@ class TestingConfig:
                                    environment = environment,
                                    substitutions = [],
                                    unsupported = False,
-                                   on_clone = None,
                                    test_exec_root = None,
                                    test_source_root = None,
                                    excludes = [],
@@ -90,7 +89,7 @@ class TestingConfig:
         return config
 
     def __init__(self, parent, name, suffixes, test_format,
-                 environment, substitutions, unsupported, on_clone,
+                 environment, substitutions, unsupported,
                  test_exec_root, test_source_root, excludes,
                  available_features, pipefail):
         self.parent = parent
@@ -100,7 +99,6 @@ class TestingConfig:
         self.environment = dict(environment)
         self.substitutions = list(substitutions)
         self.unsupported = unsupported
-        self.on_clone = on_clone
         self.test_exec_root = test_exec_root
         self.test_source_root = test_source_root
         self.excludes = set(excludes)
@@ -111,15 +109,12 @@ class TestingConfig:
         # FIXME: Chain implementations?
         #
         # FIXME: Allow extra parameters?
-        cfg = TestingConfig(self, self.name, self.suffixes, self.test_format,
-                            self.environment, self.substitutions,
-                            self.unsupported, self.on_clone,
-                            self.test_exec_root, self.test_source_root,
-                            self.excludes, self.available_features,
-                            self.pipefail)
-        if cfg.on_clone:
-            cfg.on_clone(self, cfg, path)
-        return cfg
+        return TestingConfig(self, self.name, self.suffixes, self.test_format,
+                             self.environment, self.substitutions,
+                             self.unsupported,
+                             self.test_exec_root, self.test_source_root,
+                             self.excludes, self.available_features,
+                             self.pipefail)
 
     def finish(self, litConfig):
         """finish() - Finish this config object, after loading is complete."""
