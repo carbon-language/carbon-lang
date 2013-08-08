@@ -98,7 +98,6 @@ def _SLASH_TC : CLFlag<"TC">, HelpText<"Treat all source files as C">;
 def _SLASH_Tp : CLJoinedOrSeparate<"Tp">, HelpText<"Specify a C++ source file">,
   MetaVarName<"<filename>">;
 def _SLASH_TP : CLFlag<"TP">, HelpText<"Treat all source files as C++">;
-def _SLASH_Za : CLFlag<"Za">;
 
 
 // Ignored:
@@ -130,6 +129,7 @@ def _SLASH_Oi : CLFlag<"Oi">;
 def _SLASH_RTC : CLJoined<"RTC">;
 def _SLASH_showIncludes : CLJoined<"showIncludes">;
 def _SLASH_w : CLJoined<"w">;
+def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
 def _SLASH_ZI : CLFlag<"ZI">;
 def _SLASH_Zi : CLFlag<"Zi">;

@@ -3719,11 +3719,10 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
       llvm_unreachable("Unexpected option ID.");
   }
 
-  if (!Args.hasArg(options::OPT__SLASH_Za)) {
-    // This provides POSIX compatibility (maps 'open' to '_open'),
-    // which most users want.
-    CmdArgs.push_back("--dependent-lib=oldnames");
-  }
+  // This provides POSIX compatibility (maps 'open' to '_open'), which most
+  // users want.  The /Za flag to cl.exe turns this off, but it's not
+  // implemented in clang.
+  CmdArgs.push_back("--dependent-lib=oldnames");
 }
 
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
