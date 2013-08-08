@@ -95,6 +95,10 @@ void Dependences::calculateDependences(Scop &S) {
 
   collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
 
+  Read = isl_union_map_coalesce(Read);
+  Write = isl_union_map_coalesce(Write);
+  MayWrite = isl_union_map_coalesce(MayWrite);
+
   DEBUG(dbgs() << "Read: " << Read << "\n";
         dbgs() << "Write: " << Write << "\n";
         dbgs() << "MayWrite: " << MayWrite << "\n";
