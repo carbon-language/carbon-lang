@@ -425,8 +425,8 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   }
 
   case MipsISD::InsertLOHI: {
-    unsigned RCID = Subtarget.hasDSP() ? Mips::ACRegsDSPRegClassID :
-                                         Mips::ACRegsRegClassID;
+    unsigned RCID = Subtarget.hasDSP() ? Mips::ACC64DSPRegClassID :
+                                         Mips::ACC64RegClassID;
     SDValue RegClass = CurDAG->getTargetConstant(RCID, MVT::i32);
     SDValue LoIdx = CurDAG->getTargetConstant(Mips::sub_lo, MVT::i32);
     SDValue HiIdx = CurDAG->getTargetConstant(Mips::sub_hi, MVT::i32);

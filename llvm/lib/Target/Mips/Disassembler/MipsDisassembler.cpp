@@ -138,10 +138,10 @@ static DecodeStatus DecodeAFGR64RegisterClass(MCInst &Inst,
                                               uint64_t Address,
                                               const void *Decoder);
 
-static DecodeStatus DecodeACRegsDSPRegisterClass(MCInst &Inst,
-                                                 unsigned RegNo,
-                                                 uint64_t Address,
-                                                 const void *Decoder);
+static DecodeStatus DecodeACC64DSPRegisterClass(MCInst &Inst,
+                                                unsigned RegNo,
+                                                uint64_t Address,
+                                                const void *Decoder);
 
 static DecodeStatus DecodeHIRegsDSPRegisterClass(MCInst &Inst,
                                                  unsigned RegNo,
@@ -477,14 +477,14 @@ static DecodeStatus DecodeAFGR64RegisterClass(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeACRegsDSPRegisterClass(MCInst &Inst,
-                                                 unsigned RegNo,
-                                                 uint64_t Address,
-                                                 const void *Decoder) {
+static DecodeStatus DecodeACC64DSPRegisterClass(MCInst &Inst,
+                                                unsigned RegNo,
+                                                uint64_t Address,
+                                                const void *Decoder) {
   if (RegNo >= 4)
     return MCDisassembler::Fail;
 
-  unsigned Reg = getReg(Decoder, Mips::ACRegsDSPRegClassID, RegNo);
+  unsigned Reg = getReg(Decoder, Mips::ACC64DSPRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }

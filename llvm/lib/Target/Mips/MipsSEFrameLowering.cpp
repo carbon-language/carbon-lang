@@ -77,24 +77,24 @@ bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   case Mips::STORE_CCOND_DSP_P8:
     expandStoreCCond(MBB, I);
     break;
-  case Mips::LOAD_AC64:
-  case Mips::LOAD_AC64_P8:
-  case Mips::LOAD_AC_DSP:
-  case Mips::LOAD_AC_DSP_P8:
+  case Mips::LOAD_ACC64:
+  case Mips::LOAD_ACC64_P8:
+  case Mips::LOAD_ACC64DSP:
+  case Mips::LOAD_ACC64DSP_P8:
     expandLoadACC(MBB, I, 4);
     break;
-  case Mips::LOAD_AC128:
-  case Mips::LOAD_AC128_P8:
+  case Mips::LOAD_ACC128:
+  case Mips::LOAD_ACC128_P8:
     expandLoadACC(MBB, I, 8);
     break;
-  case Mips::STORE_AC64:
-  case Mips::STORE_AC64_P8:
-  case Mips::STORE_AC_DSP:
-  case Mips::STORE_AC_DSP_P8:
+  case Mips::STORE_ACC64:
+  case Mips::STORE_ACC64_P8:
+  case Mips::STORE_ACC64DSP:
+  case Mips::STORE_ACC64DSP_P8:
     expandStoreACC(MBB, I, 4);
     break;
-  case Mips::STORE_AC128:
-  case Mips::STORE_AC128_P8:
+  case Mips::STORE_ACC128:
+  case Mips::STORE_ACC128_P8:
     expandStoreACC(MBB, I, 8);
     break;
   case TargetOpcode::COPY:
@@ -210,10 +210,10 @@ void ExpandPseudo::expandStoreACC(MachineBasicBlock &MBB, Iter I,
 bool ExpandPseudo::expandCopy(MachineBasicBlock &MBB, Iter I) {
   unsigned Dst = I->getOperand(0).getReg(), Src = I->getOperand(1).getReg();
 
-  if (Mips::ACRegsDSPRegClass.contains(Dst, Src))
+  if (Mips::ACC64DSPRegClass.contains(Dst, Src))
     return expandCopyACC(MBB, I, Dst, Src, 4);
 
-  if (Mips::ACRegs128RegClass.contains(Dst, Src))
+  if (Mips::ACC128RegClass.contains(Dst, Src))
     return expandCopyACC(MBB, I, Dst, Src, 8);
 
   return false;

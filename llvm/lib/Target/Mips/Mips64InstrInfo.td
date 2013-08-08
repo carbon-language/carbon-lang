@@ -62,8 +62,8 @@ let usesCustomInserter = 1, Predicates = [HasStdEnc],
 
 /// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1, isCodeGenOnly = 1 in {
-  defm LOAD_AC128  : LoadM<"", ACRegs128>;
-  defm STORE_AC128 : StoreM<"", ACRegs128>;
+  defm LOAD_ACC128  : LoadM<"", ACC128>;
+  defm STORE_ACC128 : StoreM<"", ACC128>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -191,15 +191,15 @@ def DMULT  : Mult<"dmult", IIImult, GPR64Opnd, [HI64, LO64]>,
              MULT_FM<0, 0x1c>;
 def DMULTu : Mult<"dmultu", IIImult, GPR64Opnd, [HI64, LO64]>,
              MULT_FM<0, 0x1d>;
-def PseudoDMULT  : MultDivPseudo<DMULT, ACRegs128, GPR64Opnd, MipsMult,
+def PseudoDMULT  : MultDivPseudo<DMULT, ACC128, GPR64Opnd, MipsMult,
                                  IIImult>;
-def PseudoDMULTu : MultDivPseudo<DMULTu, ACRegs128, GPR64Opnd, MipsMultu,
+def PseudoDMULTu : MultDivPseudo<DMULTu, ACC128, GPR64Opnd, MipsMultu,
                                  IIImult>;
 def DSDIV : Div<"ddiv", IIIdiv, GPR64Opnd, [HI64, LO64]>, MULT_FM<0, 0x1e>;
 def DUDIV : Div<"ddivu", IIIdiv, GPR64Opnd, [HI64, LO64]>, MULT_FM<0, 0x1f>;
-def PseudoDSDIV : MultDivPseudo<DSDIV, ACRegs128, GPR64Opnd, MipsDivRem,
+def PseudoDSDIV : MultDivPseudo<DSDIV, ACC128, GPR64Opnd, MipsDivRem,
                                 IIIdiv, 0, 1, 1>;
-def PseudoDUDIV : MultDivPseudo<DUDIV, ACRegs128, GPR64Opnd, MipsDivRemU,
+def PseudoDUDIV : MultDivPseudo<DUDIV, ACC128, GPR64Opnd, MipsDivRemU,
                                 IIIdiv, 0, 1, 1>;
 
 let isCodeGenOnly = 1 in {
@@ -331,8 +331,8 @@ def : MipsPat<(i64 (sext_inreg GPR64:$src, i32)),
 def : MipsPat<(bswap GPR64:$rt), (DSHD (DSBH GPR64:$rt))>;
 
 // mflo/hi patterns.
-def : MipsPat<(i64 (ExtractLOHI ACRegs128:$ac, imm:$lohi_idx)),
-              (EXTRACT_SUBREG ACRegs128:$ac, imm:$lohi_idx)>;
+def : MipsPat<(i64 (ExtractLOHI ACC128:$ac, imm:$lohi_idx)),
+              (EXTRACT_SUBREG ACC128:$ac, imm:$lohi_idx)>;
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases

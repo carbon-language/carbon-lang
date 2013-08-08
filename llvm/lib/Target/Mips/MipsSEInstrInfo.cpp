@@ -189,12 +189,12 @@ storeRegToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = IsN64 ? Mips::SW_P8 : Mips::SW;
   else if (Mips::GPR64RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::SD_P8 : Mips::SD;
-  else if (Mips::ACRegsRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_AC64_P8 : Mips::STORE_AC64;
-  else if (Mips::ACRegsDSPRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_AC_DSP_P8 : Mips::STORE_AC_DSP;
-  else if (Mips::ACRegs128RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_AC128_P8 : Mips::STORE_AC128;
+  else if (Mips::ACC64RegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::STORE_ACC64_P8 : Mips::STORE_ACC64;
+  else if (Mips::ACC64DSPRegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::STORE_ACC64DSP_P8 : Mips::STORE_ACC64DSP;
+  else if (Mips::ACC128RegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::STORE_ACC128_P8 : Mips::STORE_ACC128;
   else if (Mips::DSPCCRegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::STORE_CCOND_DSP_P8 : Mips::STORE_CCOND_DSP;
   else if (Mips::FGR32RegClass.hasSubClassEq(RC))
@@ -222,12 +222,12 @@ loadRegFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = IsN64 ? Mips::LW_P8 : Mips::LW;
   else if (Mips::GPR64RegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LD_P8 : Mips::LD;
-  else if (Mips::ACRegsRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_AC64_P8 : Mips::LOAD_AC64;
-  else if (Mips::ACRegsDSPRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_AC_DSP_P8 : Mips::LOAD_AC_DSP;
-  else if (Mips::ACRegs128RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_AC128_P8 : Mips::LOAD_AC128;
+  else if (Mips::ACC64RegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::LOAD_ACC64_P8 : Mips::LOAD_ACC64;
+  else if (Mips::ACC64DSPRegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::LOAD_ACC64DSP_P8 : Mips::LOAD_ACC64DSP;
+  else if (Mips::ACC128RegClass.hasSubClassEq(RC))
+    Opc = IsN64 ? Mips::LOAD_ACC128_P8 : Mips::LOAD_ACC128;
   else if (Mips::DSPCCRegClass.hasSubClassEq(RC))
     Opc = IsN64 ? Mips::LOAD_CCOND_DSP_P8 : Mips::LOAD_CCOND_DSP;
   else if (Mips::FGR32RegClass.hasSubClassEq(RC))

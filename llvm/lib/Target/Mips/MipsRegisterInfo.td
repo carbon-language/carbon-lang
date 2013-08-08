@@ -64,7 +64,7 @@ class AFPR64<bits<16> Enc, string n, list<Register> subregs>
 }
 
 // Accumulator Registers
-class ACC<bits<16> Enc, string n, list<Register> subregs>
+class ACCReg<bits<16> Enc, string n, list<Register> subregs>
   : MipsRegWithSubRegs<Enc, n, subregs> {
   let SubRegIndices = [sub_lo, sub_hi];
   let CoveredBySubRegs = 1;
@@ -192,12 +192,12 @@ let Namespace = "Mips" in {
   def HWR29 : MipsReg<29, "29">;
 
   // Accum registers
-  def AC0 : ACC<0, "ac0", [LO, HI]>;
-  def AC1 : ACC<1, "ac1", [LO1, HI1]>;
-  def AC2 : ACC<2, "ac2", [LO2, HI2]>;
-  def AC3 : ACC<3, "ac3", [LO3, HI3]>;
+  def AC0 : ACCReg<0, "ac0", [LO, HI]>;
+  def AC1 : ACCReg<1, "ac1", [LO1, HI1]>;
+  def AC2 : ACCReg<2, "ac2", [LO2, HI2]>;
+  def AC3 : ACCReg<3, "ac3", [LO3, HI3]>;
 
-  def AC0_64 : ACC<0, "ac0", [LO64, HI64]>;
+  def AC0_64 : ACCReg<0, "ac0", [LO64, HI64]>;
 
   // DSP-ASE control register fields.
   def DSPPos : Register<"">;
@@ -314,15 +314,15 @@ def HIRegs64 : RegisterClass<"Mips", [i64], 64, (add HI64)>;
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;
 
 // Accumulator Registers
-def ACRegs : RegisterClass<"Mips", [untyped], 64, (add AC0)> {
+def ACC64 : RegisterClass<"Mips", [untyped], 64, (add AC0)> {
   let Size = 64;
 }
 
-def ACRegs128 : RegisterClass<"Mips", [untyped], 128, (add AC0_64)> {
+def ACC128 : RegisterClass<"Mips", [untyped], 128, (add AC0_64)> {
   let Size = 128;
 }
 
-def ACRegsDSP : RegisterClass<"Mips", [untyped], 64, (sequence "AC%u", 0, 3)> {
+def ACC64DSP : RegisterClass<"Mips", [untyped], 64, (sequence "AC%u", 0, 3)> {
   let Size = 64;
 }
 
@@ -343,9 +343,9 @@ def GPR64AsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseGPR64";
 }
 
-def ACRegsDSPAsmOperand : MipsAsmRegOperand {
-  let Name = "ACRegsDSPAsm";
-  let ParserMethod = "parseACRegsDSP";
+def ACC64DSPAsmOperand : MipsAsmRegOperand {
+  let Name = "ACC64DSPAsm";
+  let ParserMethod = "parseACC64DSP";
 }
 
 def CCRAsmOperand : MipsAsmRegOperand {
@@ -394,15 +394,15 @@ def HWRegsOpnd : RegisterOperand<HWRegs> {
   let ParserMatchClass = HWRegsAsmOperand;
 }
 
-def AFGR64RegsOpnd : RegisterOperand<AFGR64> {
+def AFGR64Opnd : RegisterOperand<AFGR64> {
   let ParserMatchClass = AFGR64AsmOperand;
 }
 
-def FGR64RegsOpnd : RegisterOperand<FGR64> {
+def FGR64Opnd : RegisterOperand<FGR64> {
   let ParserMatchClass = FGR64AsmOperand;
 }
 
-def FGR32RegsOpnd : RegisterOperand<FGR32> {
+def FGR32Opnd : RegisterOperand<FGR32> {
   let ParserMatchClass = FGR32AsmOperand;
 }
 
@@ -410,6 +410,6 @@ def FCCRegsOpnd : RegisterOperand<FCC> {
   let ParserMatchClass = FCCRegsAsmOperand;
 }
 
-def ACRegsDSPOpnd : RegisterOperand<ACRegsDSP> {
-  let ParserMatchClass = ACRegsDSPAsmOperand;
+def ACC64DSPOpnd : RegisterOperand<ACC64DSP> {
+  let ParserMatchClass = ACC64DSPAsmOperand;
 }

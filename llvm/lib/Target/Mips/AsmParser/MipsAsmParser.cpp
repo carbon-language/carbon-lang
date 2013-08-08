@@ -112,7 +112,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   parseFCCRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
-  parseACRegsDSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  parseACC64DSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   bool searchSymbolAlias(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          unsigned RegKind);
@@ -223,7 +223,7 @@ public:
     Kind_AFGR64Regs,
     Kind_CCRRegs,
     Kind_FCCRegs,
-    Kind_ACRegsDSP
+    Kind_ACC64DSP
   };
 
 private:
@@ -405,8 +405,8 @@ public:
     return (Kind == k_Register) && Reg.Kind == Kind_FCCRegs;
   }
 
-  bool isACRegsDSPAsm() const {
-    return Kind == k_Register && Reg.Kind == Kind_ACRegsDSP;
+  bool isACC64DSPAsm() const {
+    return Kind == k_Register && Reg.Kind == Kind_ACC64DSP;
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
@@ -1368,7 +1368,7 @@ MipsAsmParser::parseFCCRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::parseACRegsDSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+MipsAsmParser::parseACC64DSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // If the first token is not '$' we have an error.
   if (Parser.getTok().isNot(AsmToken::Dollar))
     return MatchOperand_NoMatch;
@@ -1390,10 +1390,10 @@ MipsAsmParser::parseACRegsDSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   if (NumString.getAsInteger(10, IntVal))
     return MatchOperand_NoMatch;
 
-  unsigned Reg = matchRegisterByNumber(IntVal, Mips::ACRegsDSPRegClassID);
+  unsigned Reg = matchRegisterByNumber(IntVal, Mips::ACC64DSPRegClassID);
 
   MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
-  Op->setRegKind(MipsOperand::Kind_ACRegsDSP);
+  Op->setRegKind(MipsOperand::Kind_ACC64DSP);
   Operands.push_back(Op);
 
   Parser.Lex(); // Eat the register number.

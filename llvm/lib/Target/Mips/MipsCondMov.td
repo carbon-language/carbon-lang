@@ -127,35 +127,35 @@ let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
                                   NoItinerary>, ADD_FM<0, 0xb>;
 }
 
-def MOVZ_I_S : CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32RegsOpnd, IIFmove>,
+def MOVZ_I_S : CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd, IIFmove>,
                CMov_I_F_FM<18, 16>;
 
 let isCodeGenOnly = 1 in
-def MOVZ_I64_S : CMov_I_F_FT<"movz.s", GPR64Opnd, FGR32RegsOpnd, IIFmove>,
+def MOVZ_I64_S : CMov_I_F_FT<"movz.s", GPR64Opnd, FGR32Opnd, IIFmove>,
                  CMov_I_F_FM<18, 16>, Requires<[HasMips64, HasStdEnc]>;
 
-def MOVN_I_S : CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32RegsOpnd, IIFmove>,
+def MOVN_I_S : CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32Opnd, IIFmove>,
                CMov_I_F_FM<19, 16>;
 
 let isCodeGenOnly = 1 in
-def MOVN_I64_S : CMov_I_F_FT<"movn.s", GPR64Opnd, FGR32RegsOpnd, IIFmove>,
+def MOVN_I64_S : CMov_I_F_FT<"movn.s", GPR64Opnd, FGR32Opnd, IIFmove>,
                  CMov_I_F_FM<19, 16>, Requires<[HasMips64, HasStdEnc]>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
-  def MOVZ_I_D32 : CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64RegsOpnd, IIFmove>,
+  def MOVZ_I_D32 : CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd, IIFmove>,
                    CMov_I_F_FM<18, 17>;
-  def MOVN_I_D32 : CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64RegsOpnd, IIFmove>,
+  def MOVN_I_D32 : CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64Opnd, IIFmove>,
                    CMov_I_F_FM<19, 17>;
 }
 
 let Predicates = [IsFP64bit, HasStdEnc], isCodeGenOnly = 1 in {
-  def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", GPR32Opnd, FGR64RegsOpnd, IIFmove>,
+  def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", GPR32Opnd, FGR64Opnd, IIFmove>,
                    CMov_I_F_FM<18, 17>;
-  def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", GPR64Opnd, FGR64RegsOpnd,
+  def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", GPR64Opnd, FGR64Opnd,
                                   IIFmove>, CMov_I_F_FM<18, 17>;
-  def MOVN_I_D64 : CMov_I_F_FT<"movn.d", GPR32Opnd, FGR64RegsOpnd, IIFmove>,
+  def MOVN_I_D64 : CMov_I_F_FT<"movn.d", GPR32Opnd, FGR64Opnd, IIFmove>,
                    CMov_I_F_FM<19, 17>;
-  def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", GPR64Opnd, FGR64RegsOpnd,
+  def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", GPR64Opnd, FGR64Opnd,
                                   IIFmove>, CMov_I_F_FM<19, 17>;
 }
 
@@ -173,21 +173,21 @@ let isCodeGenOnly = 1 in
 def MOVF_I64 : CMov_F_I_FT<"movf", GPR64Opnd, IIArith, MipsCMovFP_F>,
                CMov_F_I_FM<0>, Requires<[HasMips64, HasStdEnc]>;
 
-def MOVT_S : CMov_F_F_FT<"movt.s", FGR32RegsOpnd, IIFmove, MipsCMovFP_T>,
+def MOVT_S : CMov_F_F_FT<"movt.s", FGR32Opnd, IIFmove, MipsCMovFP_T>,
              CMov_F_F_FM<16, 1>;
-def MOVF_S : CMov_F_F_FT<"movf.s", FGR32RegsOpnd, IIFmove, MipsCMovFP_F>,
+def MOVF_S : CMov_F_F_FT<"movf.s", FGR32Opnd, IIFmove, MipsCMovFP_F>,
              CMov_F_F_FM<16, 0>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
-  def MOVT_D32 : CMov_F_F_FT<"movt.d", AFGR64RegsOpnd, IIFmove, MipsCMovFP_T>,
+  def MOVT_D32 : CMov_F_F_FT<"movt.d", AFGR64Opnd, IIFmove, MipsCMovFP_T>,
                  CMov_F_F_FM<17, 1>;
-  def MOVF_D32 : CMov_F_F_FT<"movf.d", AFGR64RegsOpnd, IIFmove, MipsCMovFP_F>,
+  def MOVF_D32 : CMov_F_F_FT<"movf.d", AFGR64Opnd, IIFmove, MipsCMovFP_F>,
                  CMov_F_F_FM<17, 0>;
 }
 let Predicates = [IsFP64bit, HasStdEnc], isCodeGenOnly = 1 in {
-  def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64RegsOpnd, IIFmove, MipsCMovFP_T>,
+  def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64Opnd, IIFmove, MipsCMovFP_T>,
                  CMov_F_F_FM<17, 1>;
-  def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64RegsOpnd, IIFmove, MipsCMovFP_F>,
+  def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64Opnd, IIFmove, MipsCMovFP_F>,
                  CMov_F_F_FM<17, 0>;
 }
 

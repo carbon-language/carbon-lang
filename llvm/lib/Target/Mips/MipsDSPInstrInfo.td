@@ -380,7 +380,7 @@ class APPEND_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                               InstrItinClass itin> {
   dag OutOperandList = (outs GPR32:$rt);
-  dag InOperandList = (ins ACRegsDSP:$ac, GPR32:$shift_rs);
+  dag InOperandList = (ins ACC64DSP:$ac, GPR32:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
 }
@@ -388,35 +388,35 @@ class EXTR_W_TY1_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 class EXTR_W_TY1_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                               InstrItinClass itin> {
   dag OutOperandList = (outs GPR32:$rt);
-  dag InOperandList = (ins ACRegsDSP:$ac, uimm16:$shift_rs);
+  dag InOperandList = (ins ACC64DSP:$ac, uimm16:$shift_rs);
   string AsmString = !strconcat(instr_asm, "\t$rt, $ac, $shift_rs");
   InstrItinClass Itinerary = itin;
 }
 
 class SHILO_R1_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
-  dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins simm16:$shift, ACRegsDSP:$acin);
+  dag OutOperandList = (outs ACC64DSP:$ac);
+  dag InOperandList = (ins simm16:$shift, ACC64DSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $shift");
-  list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode immSExt6:$shift, ACRegsDSP:$acin))];
+  list<dag> Pattern = [(set ACC64DSP:$ac,
+                        (OpNode immSExt6:$shift, ACC64DSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
 class SHILO_R2_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
-  dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins GPR32:$rs, ACRegsDSP:$acin);
+  dag OutOperandList = (outs ACC64DSP:$ac);
+  dag InOperandList = (ins GPR32:$rs, ACC64DSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs");
-  list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode GPR32:$rs, ACRegsDSP:$acin))];
+  list<dag> Pattern = [(set ACC64DSP:$ac,
+                        (OpNode GPR32:$rs, ACC64DSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
 class MTHLIP_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
-  dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins GPR32:$rs, ACRegsDSP:$acin);
+  dag OutOperandList = (outs ACC64DSP:$ac);
+  dag InOperandList = (ins GPR32:$rs, ACC64DSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$rs, $ac");
-  list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode GPR32:$rs, ACRegsDSP:$acin))];
+  list<dag> Pattern = [(set ACC64DSP:$ac,
+                        (OpNode GPR32:$rs, ACC64DSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
@@ -439,20 +439,20 @@ class WRDSP_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 }
 
 class DPA_W_PH_DESC_BASE<string instr_asm, SDPatternOperator OpNode> {
-  dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin);
+  dag OutOperandList = (outs ACC64DSP:$ac);
+  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, ACC64DSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
-  list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin))];
+  list<dag> Pattern = [(set ACC64DSP:$ac,
+                        (OpNode GPR32:$rs, GPR32:$rt, ACC64DSP:$acin))];
   string Constraints = "$acin = $ac";
 }
 
 class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                      InstrItinClass itin> {
-  dag OutOperandList = (outs ACRegsDSP:$ac);
+  dag OutOperandList = (outs ACC64DSP:$ac);
   dag InOperandList = (ins GPR32:$rs, GPR32:$rt);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
-  list<dag> Pattern = [(set ACRegsDSP:$ac, (OpNode GPR32:$rs, GPR32:$rt))];
+  list<dag> Pattern = [(set ACC64DSP:$ac, (OpNode GPR32:$rs, GPR32:$rt))];
   InstrItinClass Itinerary = itin;
   int AddedComplexity = 20;
   bit isCommutable = 1;
@@ -460,11 +460,11 @@ class MULT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
 
 class MADD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                      InstrItinClass itin> {
-  dag OutOperandList = (outs ACRegsDSP:$ac);
-  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin);
+  dag OutOperandList = (outs ACC64DSP:$ac);
+  dag InOperandList = (ins GPR32:$rs, GPR32:$rt, ACC64DSP:$acin);
   string AsmString = !strconcat(instr_asm, "\t$ac, $rs, $rt");
-  list<dag> Pattern = [(set ACRegsDSP:$ac,
-                        (OpNode GPR32:$rs, GPR32:$rt, ACRegsDSP:$acin))];
+  list<dag> Pattern = [(set ACC64DSP:$ac,
+                        (OpNode GPR32:$rs, GPR32:$rt, ACC64DSP:$acin))];
   InstrItinClass Itinerary = itin;
   int AddedComplexity = 20;
   string Constraints = "$acin = $ac";
@@ -1242,12 +1242,12 @@ def PREPEND : PREPEND_ENC, PREPEND_DESC;
 // Pseudos.
 let isPseudo = 1, isCodeGenOnly = 1 in {
   // Pseudo instructions for loading and storing accumulator registers.
-  defm LOAD_AC_DSP  : LoadM<"", ACRegsDSPOpnd>;
-  defm STORE_AC_DSP : StoreM<"", ACRegsDSPOpnd>;
+  defm LOAD_ACC64DSP  : LoadM<"", ACC64DSPOpnd>;
+  defm STORE_ACC64DSP : StoreM<"", ACC64DSPOpnd>;
 
   // Pseudos for loading and storing ccond field of DSP control register.
-  defm LOAD_CCOND_DSP  : LoadM<"", DSPCC>;
-  defm STORE_CCOND_DSP : StoreM<"", DSPCC>;
+  defm LOAD_CCOND_DSP  : LoadM<"load_ccond_dsp", DSPCC>;
+  defm STORE_CCOND_DSP : StoreM<"store_ccond_dsp", DSPCC>;
 }
 
 // Pseudo CMP and PICK instructions.
@@ -1384,12 +1384,12 @@ def : DSPSelectCCPatInv<PseudoCMPU_LE_QB, PseudoPICK_QB, v4i8, SETUGT>;
 
 // Extr patterns.
 class EXTR_W_TY1_R2_Pat<SDPatternOperator OpNode, Instruction Instr> :
-  DSPPat<(i32 (OpNode GPR32:$rs, ACRegsDSP:$ac)),
-         (Instr ACRegsDSP:$ac, GPR32:$rs)>;
+  DSPPat<(i32 (OpNode GPR32:$rs, ACC64DSP:$ac)),
+         (Instr ACC64DSP:$ac, GPR32:$rs)>;
 
 class EXTR_W_TY1_R1_Pat<SDPatternOperator OpNode, Instruction Instr> :
-  DSPPat<(i32 (OpNode immZExt5:$shift, ACRegsDSP:$ac)),
-         (Instr ACRegsDSP:$ac, immZExt5:$shift)>;
+  DSPPat<(i32 (OpNode immZExt5:$shift, ACC64DSP:$ac)),
+         (Instr ACC64DSP:$ac, immZExt5:$shift)>;
 
 def : EXTR_W_TY1_R1_Pat<MipsEXTP, EXTP>;
 def : EXTR_W_TY1_R2_Pat<MipsEXTP, EXTPV>;
@@ -1406,8 +1406,8 @@ def : EXTR_W_TY1_R2_Pat<MipsEXTR_S_H, EXTRV_S_H>;
 
 // mflo/hi patterns.
 let AddedComplexity = 20 in
-def : DSPPat<(i32 (ExtractLOHI ACRegsDSP:$ac, imm:$lohi_idx)),
-             (EXTRACT_SUBREG ACRegsDSP:$ac, imm:$lohi_idx)>;
+def : DSPPat<(i32 (ExtractLOHI ACC64DSP:$ac, imm:$lohi_idx)),
+             (EXTRACT_SUBREG ACC64DSP:$ac, imm:$lohi_idx)>;
 
 // Indexed load patterns.
 class IndexedLoadPat<SDPatternOperator LoadNode, Instruction Instr> :

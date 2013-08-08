@@ -698,10 +698,10 @@ class MultDivPseudo<Instruction RealInst, RegisterClass R0, RegisterOperand R1,
 // Pseudo multiply add/sub instruction with explicit accumulator register
 // operands.
 class MAddSubPseudo<Instruction RealInst, SDPatternOperator OpNode>
-  : PseudoSE<(outs ACRegs:$ac),
-             (ins GPR32Opnd:$rs, GPR32Opnd:$rt, ACRegs:$acin),
-             [(set ACRegs:$ac,
-              (OpNode GPR32Opnd:$rs, GPR32Opnd:$rt, ACRegs:$acin))],
+  : PseudoSE<(outs ACC64:$ac),
+             (ins GPR32Opnd:$rs, GPR32Opnd:$rt, ACC64:$acin),
+             [(set ACC64:$ac,
+              (OpNode GPR32Opnd:$rs, GPR32Opnd:$rt, ACC64:$acin))],
              IIImult>,
     PseudoInstExpansion<(RealInst GPR32Opnd:$rs, GPR32Opnd:$rt)> {
   string Constraints = "$acin = $ac";
@@ -875,8 +875,8 @@ let usesCustomInserter = 1 in {
 
 /// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1, isCodeGenOnly = 1 in {
-  defm LOAD_AC64  : LoadM<"", ACRegs>;
-  defm STORE_AC64 : StoreM<"", ACRegs>;
+  defm LOAD_ACC64  : LoadM<"", ACC64>;
+  defm STORE_ACC64 : StoreM<"", ACC64>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1033,13 +1033,13 @@ def MULT  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI, LO]>,
             MULT_FM<0, 0x18>;
 def MULTu : MMRel, Mult<"multu", IIImult, GPR32Opnd, [HI, LO]>,
             MULT_FM<0, 0x19>;
-def PseudoMULT  : MultDivPseudo<MULT, ACRegs, GPR32Opnd, MipsMult, IIImult>;
-def PseudoMULTu : MultDivPseudo<MULTu, ACRegs, GPR32Opnd, MipsMultu, IIImult>;
+def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, IIImult>;
+def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, IIImult>;
 def SDIV  : Div<"div", IIIdiv, GPR32Opnd, [HI, LO]>, MULT_FM<0, 0x1a>;
 def UDIV  : Div<"divu", IIIdiv, GPR32Opnd, [HI, LO]>, MULT_FM<0, 0x1b>;
-def PseudoSDIV : MultDivPseudo<SDIV, ACRegs, GPR32Opnd, MipsDivRem, IIIdiv,
+def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, IIIdiv,
                                0, 1, 1>;
-def PseudoUDIV : MultDivPseudo<UDIV, ACRegs, GPR32Opnd, MipsDivRemU, IIIdiv,
+def PseudoUDIV : MultDivPseudo<UDIV, ACC64, GPR32Opnd, MipsDivRemU, IIIdiv,
                                0, 1, 1>;
 
 def MTHI : MoveToLOHI<"mthi", GPR32Opnd, [HI]>, MTLO_FM<0x11>;
@@ -1370,8 +1370,8 @@ defm : SetgeImmPats<GPR32, SLTi, SLTiu>;
 def : MipsPat<(bswap GPR32:$rt), (ROTR (WSBH GPR32:$rt), 16)>;
 
 // mflo/hi patterns.
-def : MipsPat<(i32 (ExtractLOHI ACRegs:$ac, imm:$lohi_idx)),
-              (EXTRACT_SUBREG ACRegs:$ac, imm:$lohi_idx)>;
+def : MipsPat<(i32 (ExtractLOHI ACC64:$ac, imm:$lohi_idx)),
+              (EXTRACT_SUBREG ACC64:$ac, imm:$lohi_idx)>;
 
 // Load halfword/word patterns.
 let AddedComplexity = 40 in {
