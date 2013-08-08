@@ -224,7 +224,7 @@ def DSHD : SubwordSwap<"dshd", GPR64Opnd>, SEB_FM<5, 0x24>;
 def LEA_ADDiu64 : EffectiveAddress<"daddiu", GPR64Opnd, mem_ea_64>, LW_FM<0x19>;
 
 let isCodeGenOnly = 1 in
-def RDHWR64 : ReadHardware<GPR64Opnd, HW64RegsOpnd>, RDHWR_FM;
+def RDHWR64 : ReadHardware<GPR64Opnd, HWRegsOpnd>, RDHWR_FM;
 
 def DEXT : ExtBase<"dext", GPR64Opnd>, EXT_FM<3>;
 let Pattern = []<dag> in {

@@ -97,9 +97,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
-  parseHW64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
-
-  MipsAsmParser::OperandMatchResultTy
   parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
@@ -221,7 +218,6 @@ public:
     Kind_GPR32,
     Kind_GPR64,
     Kind_HWRegs,
-    Kind_HW64Regs,
     Kind_FGR32Regs,
     Kind_FGR64Regs,
     Kind_AFGR64Regs,
@@ -386,11 +382,6 @@ public:
   bool isHWRegsAsm() const {
     assert((Kind == k_Register) && "Invalid access!");
     return Reg.Kind == Kind_HWRegs;
-  }
-
-  bool isHW64RegsAsm() const {
-    assert((Kind == k_Register) && "Invalid access!");
-    return Reg.Kind == Kind_HW64Regs;
   }
 
   bool isCCRAsm() const {
@@ -1491,36 +1482,6 @@ MipsAsmParser::parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   MipsOperand *op = MipsOperand::CreateReg(Mips::HWR29, S,
       Parser.getTok().getLoc());
   op->setRegKind(MipsOperand::Kind_HWRegs);
-  Operands.push_back(op);
-
-  Parser.Lex(); // Eat the register number.
-  return MatchOperand_Success;
-}
-
-MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::parseHW64Regs(
-    SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-
-  if (!isMips64())
-    return MatchOperand_NoMatch;
-  // If the first token is not '$' we have an error.
-  if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_NoMatch;
-  SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat $
-
-  const AsmToken &Tok = Parser.getTok(); // Get the next token.
-  if (Tok.isNot(AsmToken::Integer))
-    return MatchOperand_NoMatch;
-
-  unsigned RegNum = Tok.getIntVal();
-  // At the moment only hwreg29 is supported.
-  if (RegNum != 29)
-    return MatchOperand_ParseFail;
-
-  MipsOperand *op = MipsOperand::CreateReg(Mips::HWR29_64, S,
-                                           Parser.getTok().getLoc());
-  op->setRegKind(MipsOperand::Kind_HW64Regs);
   Operands.push_back(op);
 
   Parser.Lex(); // Eat the register number.

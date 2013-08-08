@@ -190,7 +190,6 @@ let Namespace = "Mips" in {
 
   // Hardware register $29
   def HWR29 : MipsReg<29, "29">;
-  def HWR29_64 : MipsReg<29, "29">;
 
   // Accum registers
   def AC0 : ACC<0, "ac0", [LO, HI]>;
@@ -313,7 +312,6 @@ def HIRegs64 : RegisterClass<"Mips", [i64], 64, (add HI64)>;
 
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;
-def HWRegs64 : RegisterClass<"Mips", [i64], 64, (add HWR29_64)>, Unallocatable;
 
 // Accumulator Registers
 def ACRegs : RegisterClass<"Mips", [untyped], 64, (add AC0)> {
@@ -392,17 +390,8 @@ def HWRegsAsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseHWRegs";
 }
 
-def HW64RegsAsmOperand : MipsAsmRegOperand {
-  let Name = "HW64RegsAsm";
-  let ParserMethod = "parseHW64Regs";
-}
-
 def HWRegsOpnd : RegisterOperand<HWRegs> {
   let ParserMatchClass = HWRegsAsmOperand;
-}
-
-def HW64RegsOpnd : RegisterOperand<HWRegs64> {
-  let ParserMatchClass = HW64RegsAsmOperand;
 }
 
 def AFGR64RegsOpnd : RegisterOperand<AFGR64> {

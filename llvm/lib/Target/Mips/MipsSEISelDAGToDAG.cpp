@@ -403,22 +403,20 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
 
   case MipsISD::ThreadPointer: {
     EVT PtrVT = getTargetLowering()->getPointerTy();
-    unsigned RdhwrOpc, SrcReg, DestReg;
+    unsigned RdhwrOpc, DestReg;
 
     if (PtrVT == MVT::i32) {
       RdhwrOpc = Mips::RDHWR;
-      SrcReg = Mips::HWR29;
       DestReg = Mips::V1;
     } else {
       RdhwrOpc = Mips::RDHWR64;
-      SrcReg = Mips::HWR29_64;
       DestReg = Mips::V1_64;
     }
 
     SDNode *Rdhwr =
       CurDAG->getMachineNode(RdhwrOpc, SDLoc(Node),
                              Node->getValueType(0),
-                             CurDAG->getRegister(SrcReg, PtrVT));
+                             CurDAG->getRegister(Mips::HWR29, MVT::i32));
     SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), DL, DestReg,
                                          SDValue(Rdhwr, 0));
     SDValue ResNode = CurDAG->getCopyFromReg(Chain, DL, DestReg, PtrVT);

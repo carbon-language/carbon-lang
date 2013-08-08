@@ -146,7 +146,6 @@ getReservedRegs(const MachineFunction &MF) const {
 
   // Reserve hardware registers.
   Reserved.set(Mips::HWR29);
-  Reserved.set(Mips::HWR29_64);
 
   // Reserve DSP control register.
   Reserved.set(Mips::DSPPos);
