@@ -311,7 +311,10 @@ def main(builtinParameters = {}):
                 ts_tests.sort(key = lambda test: test.path_in_suite)
                 for test in ts_tests:
                     print('  %s' % (test.getFullName(),))
-        
+
+        # Exit.
+        sys.exit(0)
+
     # Select and order the tests.
     numTotalTests = len(tests)
 

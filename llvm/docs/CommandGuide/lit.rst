@@ -149,7 +149,11 @@ ADDITIONAL OPTIONS
 
 .. option:: --show-suites
 
- List the discovered test suites as part of the standard output.
+ List the discovered test suites and exit.
+
+.. option:: --show-tests
+
+ List all of the the discovered tests and exit.
 
 EXIT STATUS
 -----------
