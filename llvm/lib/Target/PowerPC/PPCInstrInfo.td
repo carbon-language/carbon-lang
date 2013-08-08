@@ -1686,23 +1686,13 @@ let Uses = [RM] in {
                           "frsp", "$frD, $frB", FPGeneral,
                           [(set f32:$frD, (fround f64:$frB))]>;
 
-  // The frin -> nearbyint mapping is valid only in fast-math mode.
   let Interpretation64Bit = 1 in
   defm FRIND  : XForm_26r<63, 392, (outs f8rc:$frD), (ins f8rc:$frB),
                           "frin", "$frD, $frB", FPGeneral,
-                          [(set f64:$frD, (fnearbyint f64:$frB))]>;
+                          [(set f64:$frD, (frnd f64:$frB))]>;
   defm FRINS  : XForm_26r<63, 392, (outs f4rc:$frD), (ins f4rc:$frB),
                           "frin", "$frD, $frB", FPGeneral,
-                          [(set f32:$frD, (fnearbyint f32:$frB))]>;
-  }
-
-  // These pseudos expand to rint but also set FE_INEXACT when the result does
-  // not equal the argument.
-  let usesCustomInserter = 1, Defs = [RM] in { // FIXME: Model FPSCR!
-    def FRINDrint : Pseudo<(outs f8rc:$frD), (ins f8rc:$frB),
-                            "#FRINDrint", [(set f64:$frD, (frint f64:$frB))]>;
-    def FRINSrint : Pseudo<(outs f4rc:$frD), (ins f4rc:$frB),
-                            "#FRINSrint", [(set f32:$frD, (frint f32:$frB))]>;
+                          [(set f32:$frD, (frnd f32:$frB))]>;
   }
 
   let neverHasSideEffects = 1 in {

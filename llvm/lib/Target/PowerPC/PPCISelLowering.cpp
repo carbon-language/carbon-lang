@@ -156,21 +156,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
     setOperationAction(ISD::FCEIL,  MVT::f64, Legal);
     setOperationAction(ISD::FTRUNC, MVT::f64, Legal);
+    setOperationAction(ISD::FROUND, MVT::f64, Legal);
 
     setOperationAction(ISD::FFLOOR, MVT::f32, Legal);
     setOperationAction(ISD::FCEIL,  MVT::f32, Legal);
     setOperationAction(ISD::FTRUNC, MVT::f32, Legal);
-
-    // frin does not implement "ties to even." Thus, this is safe only in
-    // fast-math mode.
-    if (TM.Options.UnsafeFPMath) {
-      setOperationAction(ISD::FNEARBYINT, MVT::f64, Legal);
-      setOperationAction(ISD::FNEARBYINT, MVT::f32, Legal);
-
-      // These need to set FE_INEXACT, and use a custom inserter.
-      setOperationAction(ISD::FRINT, MVT::f64, Legal);
-      setOperationAction(ISD::FRINT, MVT::f32, Legal);
-    }
+    setOperationAction(ISD::FROUND, MVT::f32, Legal);
   }
 
   // PowerPC does not have BSWAP, CTPOP or CTTZ
@@ -6676,51 +6667,6 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
     // Restore FPSCR value.
     BuildMI(*BB, MI, dl, TII->get(PPC::MTFSF)).addImm(1).addReg(MFFSReg);
-  } else if (MI->getOpcode() == PPC::FRINDrint ||
-             MI->getOpcode() == PPC::FRINSrint) {
-    bool isf32 = MI->getOpcode() == PPC::FRINSrint;
-    unsigned Dest = MI->getOperand(0).getReg();
-    unsigned Src = MI->getOperand(1).getReg();
-    DebugLoc dl   = MI->getDebugLoc();
-
-    MachineRegisterInfo &RegInfo = F->getRegInfo();
-    unsigned CRReg = RegInfo.createVirtualRegister(&PPC::CRRCRegClass);
-
-    // Perform the rounding.
-    BuildMI(*BB, MI, dl, TII->get(isf32 ? PPC::FRINS : PPC::FRIND), Dest)
-      .addReg(Src);
-
-    // Compare the results.
-    BuildMI(*BB, MI, dl, TII->get(isf32 ? PPC::FCMPUS : PPC::FCMPUD), CRReg)
-      .addReg(Dest).addReg(Src);
-
-    // If the results were not equal, then set the FPSCR XX bit.
-    MachineBasicBlock *midMBB = F->CreateMachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
-    F->insert(It, midMBB);
-    F->insert(It, exitMBB);
-    exitMBB->splice(exitMBB->begin(), BB,
-                    llvm::next(MachineBasicBlock::iterator(MI)),
-                    BB->end());
-    exitMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-    BuildMI(*BB, MI, dl, TII->get(PPC::BCC))
-      .addImm(PPC::PRED_EQ).addReg(CRReg).addMBB(exitMBB);
-
-    BB->addSuccessor(midMBB);
-    BB->addSuccessor(exitMBB);
-
-    BB = midMBB;
-
-    // Set the FPSCR XX bit (FE_INEXACT). Note that we cannot just set
-    // the FI bit here because that will not automatically set XX also,
-    // and XX is what libm interprets as the FE_INEXACT flag.
-    BuildMI(BB, dl, TII->get(PPC::MTFSB1)).addImm(/* 38 - 32 = */ 6);
-    BuildMI(BB, dl, TII->get(PPC::B)).addMBB(exitMBB);
-
-    BB->addSuccessor(exitMBB);
-
-    BB = exitMBB;
   } else {
     llvm_unreachable("Unexpected instr type to insert");
   }
