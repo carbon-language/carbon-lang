@@ -641,7 +641,11 @@ public:
 #endif
                                        pointer;
 
-    _LIBCPP_INLINE_VISIBILITY __tree_iterator() _NOEXCEPT {}
+    _LIBCPP_INLINE_VISIBILITY __tree_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+    : __ptr_(nullptr)
+#endif
+    {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
     _LIBCPP_INLINE_VISIBILITY pointer operator->() const
@@ -712,7 +716,12 @@ public:
 #endif
                                        pointer;
 
-    _LIBCPP_INLINE_VISIBILITY __tree_const_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __tree_const_iterator() _NOEXCEPT
+#if _LIBCPP_STD_VER > 11
+    : __ptr_(nullptr)
+#endif
+    {}
+
 private:
     typedef typename remove_const<__node>::type  __non_const_node;
     typedef typename pointer_traits<__node_pointer>::template

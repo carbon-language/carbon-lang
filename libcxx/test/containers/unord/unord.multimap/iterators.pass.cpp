@@ -115,7 +115,7 @@ int main()
     }
 #endif
 #if _LIBCPP_STD_VER > 11
-    { // N3664 testing
+    { // N3644 testing
         typedef std::unordered_multimap<int,double> C;
         C::iterator ii1{}, ii2{};
         C::iterator ii4 = ii1;

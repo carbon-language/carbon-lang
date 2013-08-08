@@ -22,7 +22,7 @@
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    { // N3664 testing
+    { // N3644 testing
         typedef std::string C;
         C::iterator ii1{}, ii2{};
         C::iterator ii4 = ii1;
@@ -34,7 +34,7 @@ int main()
         assert ( !(ii1 != cii ));
     }
 
-    { // N3664 testing
+    { // N3644 testing
         typedef std::wstring C;
         C::iterator ii1{}, ii2{};
         C::iterator ii4 = ii1;
@@ -46,7 +46,7 @@ int main()
         assert ( !(ii1 != cii ));
     }
 
-    { // N3664 testing
+    { // N3644 testing
         typedef std::u16string C;
         C::iterator ii1{}, ii2{};
         C::iterator ii4 = ii1;
@@ -58,7 +58,7 @@ int main()
         assert ( !(ii1 != cii ));
     }
 
-    { // N3664 testing
+    { // N3644 testing
         typedef std::u32string C;
         C::iterator ii1{}, ii2{};
         C::iterator ii4 = ii1;

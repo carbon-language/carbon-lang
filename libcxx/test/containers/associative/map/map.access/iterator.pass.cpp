@@ -207,4 +207,18 @@ int main()
         }
     }
 #endif
+#if _LIBCPP_STD_VER > 11
+    { // N3644 testing
+        typedef std::map<int, double> C;
+        C::iterator ii1{}, ii2{};
+        C::iterator ii4 = ii1;
+        C::const_iterator cii{};
+        assert ( ii1 == ii2 );
+        assert ( ii1 == ii4 );
+        assert ( ii1 == cii );
+
+        assert ( !(ii1 != ii2 ));
+        assert ( !(ii1 != cii ));
+    }
+#endif
 }

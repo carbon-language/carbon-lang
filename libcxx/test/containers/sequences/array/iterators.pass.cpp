@@ -37,7 +37,7 @@ int main()
     }
 
 #if _LIBCPP_STD_VER > 11
-    { // N3664 testing
+    { // N3644 testing
         {
         typedef std::array<int, 5> C;
         C::iterator ii1{}, ii2{};

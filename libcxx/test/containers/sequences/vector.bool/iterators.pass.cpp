@@ -95,7 +95,7 @@ int main()
     }
 #endif
 #if _LIBCPP_STD_VER > 11
-    { // N3664 testing
+    { // N3644 testing
         std::vector<bool>::iterator ii1{}, ii2{};
         std::vector<bool>::iterator ii4 = ii1;
         std::vector<bool>::const_iterator cii{};

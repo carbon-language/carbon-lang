@@ -45,7 +45,7 @@ int main()
     }
 #endif
 #if _LIBCPP_STD_VER > 11
-    { // N3664 testing
+    { // N3644 testing
         std::deque<int>::iterator ii1{}, ii2{};
         std::deque<int>::iterator ii4 = ii1;
         std::deque<int>::const_iterator cii{};
