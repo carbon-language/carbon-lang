@@ -344,7 +344,7 @@ class C : public A, public B // align=16
 void downcast_pointer(B *b) {
   (void) static_cast<C*>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastPointer, ...)
-  // CHECK: [[SUB:%sub[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
+  // CHECK: [[SUB:%[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
   // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
   // null check goes here
   // CHECK: [[FROM_PHI:%[0-9]*]] = phi %class.C* [ [[C]], %cast.notnull ], {{.*}}
@@ -361,7 +361,7 @@ void downcast_pointer(B *b) {
 void downcast_reference(B &b) {
   (void) static_cast<C&>(b);
   // Alignment check from EmitTypeCheck(TCK_DowncastReference, ...)
-  // CHECK:      [[SUB:%sub[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
+  // CHECK:      [[SUB:%[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
   // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
   // Objectsize check goes here
   // CHECK:      [[C_INT:%[0-9]*]] = ptrtoint %class.C* [[C]] to i64
