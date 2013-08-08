@@ -584,6 +584,122 @@ private:
   uint64_t _offset;
 };
 
+template <class ELFT>
+class ELFCommonAtom LLVM_FINAL : public DefinedAtom {
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+public:
+  ELFCommonAtom(const ELFFile<ELFT> &file,
+                StringRef symbolName,
+                const Elf_Sym *symbol)
+      : _owningFile(file),
+        _symbolName(symbolName),
+        _symbol(symbol) {}
+
+  virtual const ELFFile<ELFT> &file() const {
+    return _owningFile;
+  }
+
+  virtual StringRef name() const {
+    return _symbolName;
+  }
+
+  virtual uint64_t ordinal() const {
+    return _ordinal;
+  }
+
+  void setOrdinal(uint64_t ord) {
+    _ordinal = ord;
+  }
+
+  virtual uint64_t size() const {
+    return _symbol->st_size;
+  }
+
+  virtual Scope scope() const {
+    if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
+      return scopeLinkageUnit;
+    else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
+      return scopeGlobal;
+    else
+      return scopeTranslationUnit;
+  }
+
+  virtual Interposable interposable() const {
+    return interposeNo;
+  }
+
+  virtual Merge merge() const {
+    return mergeAsTentative;
+  }
+
+  virtual ContentType contentType() const {
+    if (_symbol->st_shndx >= llvm::ELF::SHN_LORESERVE &&
+        _symbol->st_shndx <= llvm::ELF::SHN_HIOS)
+      return _owningFile.getLinkingContext().template getTargetHandler<ELFT>().
+                 targetAtomHandler().contentType(nullptr, _symbol);
+    return typeZeroFill;
+  }
+
+  virtual Alignment alignment() const {
+    return Alignment(llvm::Log2_64(_symbol->st_value));
+  }
+
+  virtual SectionChoice sectionChoice() const {
+    return sectionBasedOnContent;
+  }
+
+  virtual StringRef customSectionName() const {
+    return ".bss";
+  }
+
+  virtual SectionPosition sectionPosition() const {
+    return sectionPositionAny;
+  }
+
+  virtual DeadStripKind deadStrip() const {
+    return deadStripNormal;
+  }
+
+  virtual ContentPermissions permissions() const {
+    return permRW_;
+  }
+
+  virtual bool isAlias() const {
+    return false;
+  }
+
+  virtual ArrayRef<uint8_t> rawContent() const {
+    return ArrayRef<uint8_t>();
+  }
+
+  virtual DefinedAtom::reference_iterator begin() const {
+    uintptr_t index = 0;
+    const void *it = reinterpret_cast<const void *>(index);
+    return reference_iterator(*this, it);
+  }
+
+  virtual DefinedAtom::reference_iterator end() const {
+    uintptr_t index = 0;
+    const void *it = reinterpret_cast<const void *>(index);
+    return reference_iterator(*this, it);
+  }
+protected:
+
+  virtual ~ELFCommonAtom() {}
+
+  virtual const Reference *derefIterator(const void *iter) const {
+    return nullptr;
+  }
+
+  virtual void incrementIterator(const void *&iter) const {}
+
+private:
+  const ELFFile<ELFT> &_owningFile;
+  StringRef _symbolName;
+  const Elf_Sym *_symbol;
+  uint64_t _ordinal;
+};
+
 /// \brief An atom from a shared library.
 template <class ELFT>
 class ELFDynamicAtom LLVM_FINAL : public SharedLibraryAtom {
