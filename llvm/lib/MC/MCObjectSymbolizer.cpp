@@ -15,7 +15,7 @@
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/MachO.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
@@ -96,7 +96,7 @@ MCObjectSymbolizer::MCObjectSymbolizer(MCContext &Ctx,
         const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj);
         if (ELFObj == 0)
           break;
-        if (ELFObj->getElfHeader()->e_type == ELF::ET_REL) {
+        if (ELFObj->getELFFile()->getHeader()->e_type == ELF::ET_REL) {
           RI->getOffset(Offset);
           Offset += StartAddr;
         } else {

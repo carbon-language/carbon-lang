@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "yaml2obj.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ELFYAML.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -157,7 +157,7 @@ class ELFState {
   unsigned DotStrtabSecNo;
   /// \brief The accumulated contents of all sections so far.
   ContiguousBlobAccumulator &SectionContentAccum;
-  typedef typename object::ELFObjectFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   /// \brief The ELF file header.
   Elf_Ehdr &Header;
 
@@ -185,9 +185,9 @@ public:
 template <class ELFT>
 static void
 addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
-           std::vector<typename object::ELFObjectFile<ELFT>::Elf_Sym> &Syms,
+           std::vector<typename object::ELFFile<ELFT>::Elf_Sym> &Syms,
            unsigned SymbolBinding) {
-  typedef typename object::ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   for (unsigned i = 0, e = Symbols.size(); i != e; ++i) {
     const ELFYAML::Symbol &Sym = Symbols[i];
     Elf_Sym Symbol;
@@ -211,11 +211,12 @@ addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
 }
 
 template <class ELFT>
-static void handleSymtabSectionHeader(
-    const ELFYAML::LocalGlobalWeakSymbols &Symbols, ELFState<ELFT> &State,
-    typename object::ELFObjectFile<ELFT>::Elf_Shdr &SHeader) {
+static void
+handleSymtabSectionHeader(const ELFYAML::LocalGlobalWeakSymbols &Symbols,
+                          ELFState<ELFT> &State,
+                          typename object::ELFFile<ELFT>::Elf_Shdr &SHeader) {
 
-  typedef typename object::ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   SHeader.sh_type = ELF::SHT_SYMTAB;
   SHeader.sh_link = State.getDotStrTabSecNo();
   // One greater than symbol table index of the last local symbol.
@@ -241,8 +242,8 @@ static void handleSymtabSectionHeader(
 template <class ELFT>
 static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   using namespace llvm::ELF;
-  typedef typename object::ELFObjectFile<ELFT>::Elf_Ehdr Elf_Ehdr;
-  typedef typename object::ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  typedef typename object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
   const ELFYAML::FileHeader &Hdr = Doc.Header;
 

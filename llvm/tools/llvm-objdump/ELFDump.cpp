@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -21,10 +21,8 @@
 using namespace llvm;
 using namespace llvm::object;
 
-template<class ELFT>
-void printProgramHeaders(
-    const ELFObjectFile<ELFT> *o) {
-  typedef ELFObjectFile<ELFT> ELFO;
+template <class ELFT> void printProgramHeaders(const ELFFile<ELFT> *o) {
+  typedef ELFFile<ELFT> ELFO;
   outs() << "Program Header:\n";
   for (typename ELFO::Elf_Phdr_Iter pi = o->begin_program_headers(),
                                     pe = o->end_program_headers();
@@ -80,17 +78,17 @@ void printProgramHeaders(
 void llvm::printELFFileHeader(const object::ObjectFile *Obj) {
   // Little-endian 32-bit
   if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
-    printProgramHeaders(ELFObj);
+    printProgramHeaders(ELFObj->getELFFile());
 
   // Big-endian 32-bit
   if (const ELF32BEObjectFile *ELFObj = dyn_cast<ELF32BEObjectFile>(Obj))
-    printProgramHeaders(ELFObj);
+    printProgramHeaders(ELFObj->getELFFile());
 
   // Little-endian 64-bit
   if (const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj))
-    printProgramHeaders(ELFObj);
+    printProgramHeaders(ELFObj->getELFFile());
 
   // Big-endian 64-bit
   if (const ELF64BEObjectFile *ELFObj = dyn_cast<ELF64BEObjectFile>(Obj))
-    printProgramHeaders(ELFObj);
+    printProgramHeaders(ELFObj->getELFFile());
 }

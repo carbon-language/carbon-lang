@@ -22,7 +22,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ELF.h"
 using namespace llvm;
@@ -304,7 +304,7 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
   case ELF::R_AARCH64_PREL32: {
     uint64_t Result = Value + Addend - FinalAddress;
-    assert(static_cast<int64_t>(Result) >= INT32_MIN && 
+    assert(static_cast<int64_t>(Result) >= INT32_MIN &&
            static_cast<int64_t>(Result) <= UINT32_MAX);
     *TargetPtr = static_cast<uint32_t>(Result & 0xffffffffU);
     break;
@@ -316,7 +316,7 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
     uint64_t BranchImm = Value + Addend - FinalAddress;
 
     // "Check that -2^27 <= result < 2^27".
-    assert(-(1LL << 27) <= static_cast<int64_t>(BranchImm) && 
+    assert(-(1LL << 27) <= static_cast<int64_t>(BranchImm) &&
            static_cast<int64_t>(BranchImm) < (1LL << 27));
 
     // AArch64 code is emitted with .rela relocations. The data already in any
@@ -340,7 +340,6 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
   }
   case ELF::R_AARCH64_MOVW_UABS_G2_NC: {
     uint64_t Result = Value + Addend;
-
 
     // AArch64 code is emitted with .rela relocations. The data already in any
     // bits affected by the relocation on entry is garbage.

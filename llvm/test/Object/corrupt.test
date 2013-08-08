@@ -1,0 +1,24 @@
+// Section name offset overflows section name string table.
+RUN: not llvm-readobj %p/Inputs/corrupt.elf-x86-64 -sections \
+RUN:     2>&1 | FileCheck --check-prefix=SECNAME %s
+
+// Section data offset past end of file.
+RUN: not llvm-readobj %p/Inputs/corrupt.elf-x86-64 -sections -section-data \
+RUN:     2>&1 | FileCheck --check-prefix=SECDATA %s
+
+// Symbol name offset overflows string table.
+RUN: not llvm-readobj %p/Inputs/corrupt.elf-x86-64 -symbols \
+RUN:     2>&1 | FileCheck --check-prefix=SYMNAME %s
+
+// Version index in .gnu.version overflows the version map.
+RUN: not llvm-readobj %p/Inputs/corrupt-version.elf-x86_64 -dt \
+RUN:     2>&1 | FileCheck --check-prefix=VER %s
+
+SECNAME: Error reading file: Invalid data was encountered while parsing the file.
+
+SECDATA: Error reading file: Invalid data was encountered while parsing the file.
+SECDATA: Error reading file: Invalid data was encountered while parsing the file.
+
+SYMNAME: Error reading file: Invalid data was encountered while parsing the file.
+
+VER: Error reading file: Invalid data was encountered while parsing the file.
