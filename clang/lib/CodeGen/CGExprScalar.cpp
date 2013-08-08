@@ -1234,15 +1234,18 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
 
     llvm::Value *V = Visit(E);
 
+    llvm::Value *Derived =
+      CGF.GetAddressOfDerivedClass(V, DerivedClassDecl,
+                                   CE->path_begin(), CE->path_end(),
+                                   ShouldNullCheckClassCastValue(CE));
+
     // C++11 [expr.static.cast]p11: Behavior is undefined if a downcast is
     // performed and the object is not of the derived type.
     if (CGF.SanitizePerformTypeCheck)
       CGF.EmitTypeCheck(CodeGenFunction::TCK_DowncastPointer, CE->getExprLoc(),
-                        V, DestTy->getPointeeType());
+                        Derived, DestTy->getPointeeType());
 
-    return CGF.GetAddressOfDerivedClass(V, DerivedClassDecl,
-                                        CE->path_begin(), CE->path_end(),
-                                        ShouldNullCheckClassCastValue(CE));
+    return Derived;
   }
   case CK_UncheckedDerivedToBase:
   case CK_DerivedToBase: {

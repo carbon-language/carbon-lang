@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,bounds -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,bounds -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
 
 struct S {
   double d;
@@ -319,6 +319,57 @@ char string_index(int n) {
   // CHECK: br i1 %[[IDX_OK]]
   // CHECK: call void @__ubsan_handle_out_of_bounds(
   return "Hello"[n];
+}
+
+class A // align=4
+{
+  int a1, a2, a3;
+};
+
+class B // align=8
+{
+  long b1, b2;
+};
+
+class C : public A, public B // align=16
+{
+  alignas(16) int c1;
+};
+
+// Make sure we check the alignment of the pointer after subtracting any
+// offset. The pointer before subtraction doesn't need to be aligned for
+// the destination type.
+
+// CHECK-LABEL: define void @_Z16downcast_pointerP1B(%class.B* %b)
+void downcast_pointer(B *b) {
+  (void) static_cast<C*>(b);
+  // Alignment check from EmitTypeCheck(TCK_DowncastPointer, ...)
+  // CHECK: [[SUB:%sub[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
+  // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
+  // null check goes here
+  // CHECK: [[FROM_PHI:%[0-9]*]] = phi %class.C* [ [[C]], %cast.notnull ], {{.*}}
+  // Objectsize check goes here
+  // CHECK: [[C_INT:%[0-9]*]] = ptrtoint %class.C* [[FROM_PHI]] to i64
+  // CHECK-NEXT: [[MASKED:%[0-9]*]] = and i64 [[C_INT]], 15
+  // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
+  // AND the alignment test with the objectsize test.
+  // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
+  // CHECK-NEXT: br i1 [[AND]], label %cont, label %handler.type_mismatch
+}
+
+// CHECK-LABEL: define void @_Z18downcast_referenceR1B(%class.B* %b)
+void downcast_reference(B &b) {
+  (void) static_cast<C&>(b);
+  // Alignment check from EmitTypeCheck(TCK_DowncastReference, ...)
+  // CHECK:      [[SUB:%sub[.a-z0-9]*]] = getelementptr i8* {{.*}}, i64 -16
+  // CHECK-NEXT: [[C:%[0-9]*]] = bitcast i8* [[SUB]] to %class.C*
+  // Objectsize check goes here
+  // CHECK:      [[C_INT:%[0-9]*]] = ptrtoint %class.C* [[C]] to i64
+  // CHECK-NEXT: [[MASKED:%[0-9]*]] = and i64 [[C_INT]], 15
+  // CHECK-NEXT: [[TEST:%[0-9]*]] = icmp eq i64 [[MASKED]], 0
+  // AND the alignment test with the objectsize test.
+  // CHECK-NEXT: [[AND:%[0-9]*]] = and i1 {{.*}}, [[TEST]]
+  // CHECK-NEXT: br i1 [[AND]], label %cont, label %handler.type_mismatch
 }
 
 // CHECK: attributes [[NR_NUW]] = { noreturn nounwind }

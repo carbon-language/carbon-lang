@@ -2764,17 +2764,17 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 
     LValue LV = EmitLValue(E->getSubExpr());
 
-    // C++11 [expr.static.cast]p2: Behavior is undefined if a downcast is
-    // performed and the object is not of the derived type.
-    if (SanitizePerformTypeCheck)
-      EmitTypeCheck(TCK_DowncastReference, E->getExprLoc(),
-                    LV.getAddress(), E->getType());
-
     // Perform the base-to-derived conversion
     llvm::Value *Derived =
       GetAddressOfDerivedClass(LV.getAddress(), DerivedClassDecl,
                                E->path_begin(), E->path_end(),
                                /*NullCheckValue=*/false);
+
+    // C++11 [expr.static.cast]p2: Behavior is undefined if a downcast is
+    // performed and the object is not of the derived type.
+    if (SanitizePerformTypeCheck)
+      EmitTypeCheck(TCK_DowncastReference, E->getExprLoc(),
+                    Derived, E->getType());
 
     return MakeAddrLValue(Derived, E->getType());
   }
