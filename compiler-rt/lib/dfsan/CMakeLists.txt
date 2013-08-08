@@ -2,8 +2,8 @@ include_directories(..)
 
 # Runtime library sources and build flags.
 set(DFSAN_RTL_SOURCES
-  dfsan.cc
-  )
+  dfsan.cc)
+
 set(DFSAN_RTL_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}
   # Prevent clang from generating libc calls.
