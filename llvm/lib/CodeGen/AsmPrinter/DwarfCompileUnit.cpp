@@ -1123,7 +1123,9 @@ CompileUnit::getOrCreateTemplateTypeParameterDIE(DITemplateTypeParameter TP) {
     return ParamDIE;
 
   ParamDIE = new DIE(dwarf::DW_TAG_template_type_parameter);
-  addType(ParamDIE, TP.getType());
+  // Add the type if it exists, it could be void and therefore no type.
+  if (TP.getType())
+    addType(ParamDIE, TP.getType());
   if (!TP.getName().empty())
     addString(ParamDIE, dwarf::DW_AT_name, TP.getName());
   return ParamDIE;
