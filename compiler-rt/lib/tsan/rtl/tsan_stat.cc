@@ -356,6 +356,8 @@ void StatOutput(u64 *stat) {
   name[StatInt_sched_getaffinity]        = "  sched_getaffinity               ";
   name[StatInt_strerror]                 = "  strerror                        ";
   name[StatInt_strerror_r]               = "  strerror_r                      ";
+  name[StatInt_scandir]                  = "  scandir                         ";
+  name[StatInt_scandir64]                = "  scandir64                       ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

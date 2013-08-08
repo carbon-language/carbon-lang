@@ -1816,6 +1816,113 @@ INTERCEPTOR(char *, strerror_r, int errnum, char *buf, SIZE_T buflen) {
 #define INIT_STRERROR_R
 #endif
 
+#if SANITIZER_INTERCEPT_SCANDIR
+typedef int (*scandir_filter_f)(const struct __sanitizer_dirent *);
+typedef int (*scandir_compar_f)(const struct __sanitizer_dirent **,
+                                const struct __sanitizer_dirent **);
+
+static THREADLOCAL void *scandir_ctx;
+static THREADLOCAL scandir_filter_f scandir_filter;
+static THREADLOCAL scandir_compar_f scandir_compar;
+
+static int wrapped_scandir_filter(const struct __sanitizer_dirent *dir) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(scandir_ctx, 1);
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir_ctx, dir, dir->d_reclen);
+  return scandir_filter(dir);
+}
+
+static int wrapped_scandir_compar(const struct __sanitizer_dirent **a,
+                                  const struct __sanitizer_dirent **b) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(scandir_ctx, 2);
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir_ctx, a, sizeof(*a));
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir_ctx, *a, (*a)->d_reclen);
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir_ctx, b, sizeof(*b));
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir_ctx, *b, (*b)->d_reclen);
+  return scandir_compar(a, b);
+}
+
+INTERCEPTOR(int, scandir, char *dirp, __sanitizer_dirent ***namelist,
+            scandir_filter_f filter, scandir_compar_f compar) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, scandir, dirp, namelist, filter, compar);
+  if (dirp) COMMON_INTERCEPTOR_READ_RANGE(ctx, dirp, REAL(strlen)(dirp) + 1);
+  CHECK(scandir_ctx == 0);
+  scandir_ctx = ctx;
+  scandir_filter = filter;
+  scandir_compar = compar;
+  int res = REAL(scandir)(dirp, namelist, filter ? wrapped_scandir_filter : 0,
+                          compar ? wrapped_scandir_compar : 0);
+  scandir_ctx = 0;
+  scandir_filter = 0;
+  scandir_compar = 0;
+  if (namelist && res > 0) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, namelist, sizeof(*namelist));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *namelist, sizeof(**namelist) * res);
+    for (int i = 0; i < res; ++i)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, (*namelist)[i],
+                                     (*namelist)[i]->d_reclen);
+  }
+  return res;
+}
+#define INIT_SCANDIR INTERCEPT_FUNCTION(scandir);
+#else
+#define INIT_SCANDIR
+#endif
+
+#if SANITIZER_INTERCEPT_SCANDIR64
+typedef int (*scandir64_filter_f)(const struct __sanitizer_dirent64 *);
+typedef int (*scandir64_compar_f)(const struct __sanitizer_dirent64 **,
+                                  const struct __sanitizer_dirent64 **);
+
+static THREADLOCAL void *scandir64_ctx;
+static THREADLOCAL scandir64_filter_f scandir64_filter;
+static THREADLOCAL scandir64_compar_f scandir64_compar;
+
+static int wrapped_scandir64_filter(const struct __sanitizer_dirent64 *dir) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(scandir64_ctx, 1);
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir64_ctx, dir, dir->d_reclen);
+  return scandir64_filter(dir);
+}
+
+static int wrapped_scandir64_compar(const struct __sanitizer_dirent64 **a,
+                                    const struct __sanitizer_dirent64 **b) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(scandir64_ctx, 2);
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir64_ctx, a, sizeof(*a));
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir64_ctx, *a, (*a)->d_reclen);
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir64_ctx, b, sizeof(*b));
+  COMMON_INTERCEPTOR_WRITE_RANGE(scandir64_ctx, *b, (*b)->d_reclen);
+  return scandir64_compar(a, b);
+}
+
+INTERCEPTOR(int, scandir64, char *dirp, __sanitizer_dirent64 ***namelist,
+            scandir64_filter_f filter, scandir64_compar_f compar) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, scandir64, dirp, namelist, filter, compar);
+  if (dirp) COMMON_INTERCEPTOR_READ_RANGE(ctx, dirp, REAL(strlen)(dirp) + 1);
+  CHECK(scandir64_ctx == 0);
+  scandir64_ctx = ctx;
+  scandir64_filter = filter;
+  scandir64_compar = compar;
+  int res =
+      REAL(scandir64)(dirp, namelist, filter ? wrapped_scandir64_filter : 0,
+                      compar ? wrapped_scandir64_compar : 0);
+  scandir64_ctx = 0;
+  scandir64_filter = 0;
+  scandir64_compar = 0;
+  if (namelist && res > 0) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, namelist, sizeof(*namelist));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *namelist, sizeof(**namelist) * res);
+    for (int i = 0; i < res; ++i)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, (*namelist)[i],
+                                     (*namelist)[i]->d_reclen);
+  }
+  return res;
+}
+#define INIT_SCANDIR64 INTERCEPT_FUNCTION(scandir64);
+#else
+#define INIT_SCANDIR64
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -1878,4 +1985,6 @@ INTERCEPTOR(char *, strerror_r, int errnum, char *buf, SIZE_T buflen) {
   INIT_CONFSTR;                            \
   INIT_SCHED_GETAFFINITY;                  \
   INIT_STRERROR;                           \
-  INIT_STRERROR_R;
+  INIT_STRERROR_R;                         \
+  INIT_SCANDIR;                            \
+  INIT_SCANDIR64;
