@@ -648,8 +648,6 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
 namespace {
   /// \brief Per-BasicBlock state.
   class BBState {
-    static const unsigned OverflowOccurredValue;
-
     /// The number of unique control paths from the entry which can reach this
     /// block.
     unsigned TopDownPathCount;
@@ -676,7 +674,7 @@ namespace {
     SmallVector<BasicBlock *, 2> Succs;
 
   public:
-    BBState() : TopDownPathCount(0), BottomUpPathCount(0) { }
+    BBState() : TopDownPathCount(0), BottomUpPathCount(0) {}
 
     typedef MapTy::iterator ptr_iterator;
     typedef MapTy::const_iterator ptr_const_iterator;
@@ -747,9 +745,8 @@ namespace {
     /// Returns true if overflow occured. Returns false if overflow did not
     /// occur.
     bool GetAllPathCountWithOverflow(unsigned &PathCount) const {
-      if (TopDownPathCount == OverflowOccurredValue ||
-          BottomUpPathCount == OverflowOccurredValue)
-        return false;
+      assert(TopDownPathCount != 0);
+      assert(BottomUpPathCount != 0);
       unsigned long long Product =
         (unsigned long long)TopDownPathCount*BottomUpPathCount;
       PathCount = Product;
@@ -769,8 +766,6 @@ namespace {
 
     bool isExit() const { return Succs.empty(); }
   };
-
-  const unsigned BBState::OverflowOccurredValue = -1;
 }
 
 void BBState::InitFromPred(const BBState &Other) {
@@ -786,25 +781,13 @@ void BBState::InitFromSucc(const BBState &Other) {
 /// The top-down traversal uses this to merge information about predecessors to
 /// form the initial state for a new block.
 void BBState::MergePred(const BBState &Other) {
-  if (TopDownPathCount == OverflowOccurredValue)
-    return;
-
   // Other.TopDownPathCount can be 0, in which case it is either dead or a
   // loop backedge. Loop backedges are special.
   TopDownPathCount += Other.TopDownPathCount;
 
-  // In order to be consistent, we clear the top down pointers when by adding
-  // TopDownPathCount becomes OverflowOccurredValue even though "true" overflow
-  // has not occured.
-  if (TopDownPathCount == OverflowOccurredValue) {
-    clearTopDownPointers();
-    return;
-  }
-
   // Check for overflow. If we have overflow, fall back to conservative
   // behavior.
   if (TopDownPathCount < Other.TopDownPathCount) {
-    TopDownPathCount = OverflowOccurredValue;
     clearTopDownPointers();
     return;
   }
@@ -830,25 +813,13 @@ void BBState::MergePred(const BBState &Other) {
 /// The bottom-up traversal uses this to merge information about successors to
 /// form the initial state for a new block.
 void BBState::MergeSucc(const BBState &Other) {
-  if (BottomUpPathCount == OverflowOccurredValue)
-    return;
-
   // Other.BottomUpPathCount can be 0, in which case it is either dead or a
   // loop backedge. Loop backedges are special.
   BottomUpPathCount += Other.BottomUpPathCount;
 
-  // In order to be consistent, we clear the top down pointers when by adding
-  // BottomUpPathCount becomes OverflowOccurredValue even though "true" overflow
-  // has not occured.
-  if (BottomUpPathCount == OverflowOccurredValue) {
-    clearBottomUpPointers();
-    return;
-  }
-
   // Check for overflow. If we have overflow, fall back to conservative
   // behavior.
   if (BottomUpPathCount < Other.BottomUpPathCount) {
-    BottomUpPathCount = OverflowOccurredValue;
     clearBottomUpPointers();
     return;
   }
