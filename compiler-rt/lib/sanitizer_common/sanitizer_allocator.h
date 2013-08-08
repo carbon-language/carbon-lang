@@ -1016,7 +1016,10 @@ class LargeMmapAllocator {
   // At least page_size_/2 metadata bytes is available.
   void *GetMetaData(const void *p) {
     // Too slow: CHECK_EQ(p, GetBlockBegin(p));
-    CHECK(IsAligned(reinterpret_cast<uptr>(p), page_size_));
+    if (!IsAligned(reinterpret_cast<uptr>(p), page_size_)) {
+      Printf("%s: bad pointer %p\n", SanitizerToolName, p);
+      CHECK(IsAligned(reinterpret_cast<uptr>(p), page_size_));
+    }
     return GetHeader(p) + 1;
   }
 
