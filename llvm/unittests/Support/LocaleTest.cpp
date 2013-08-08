@@ -32,6 +32,12 @@ TEST(Locale, columnWidth) {
   EXPECT_EQ(-1, columnWidth("aaaaaaaaaa\x01"));
   EXPECT_EQ(-1, columnWidth("\342\200\213")); // 200B ZERO WIDTH SPACE
 
+  // 00AD SOFT HYPHEN is displayed on most terminals as a space or a dash. Some
+  // text editors display it only when a line is broken at it, some use it as a
+  // line-break hint, but don't display. We choose terminal-oriented
+  // interpretation.
+  EXPECT_EQ(1, columnWidth("\302\255"));
+
   EXPECT_EQ(0, columnWidth("\314\200")); // 0300 COMBINING GRAVE ACCENT
   EXPECT_EQ(1, columnWidth("\340\270\201")); // 0E01 THAI CHARACTER KO KAI
   EXPECT_EQ(2, columnWidth("\344\270\200")); // CJK UNIFIED IDEOGRAPH-4E00
@@ -72,10 +78,8 @@ TEST(Locale, isPrint) {
   EXPECT_EQ(false, isPrint(0x9F));
 
   EXPECT_EQ(true, isPrint(0xAC));
-  // FIXME: Figure out if we want to treat SOFT HYPHEN as printable character.
-#ifndef __APPLE__
-  EXPECT_EQ(false, isPrint(0xAD)); // SOFT HYPHEN
-#endif // __APPLE__
+  EXPECT_EQ(true, isPrint(0xAD)); // SOFT HYPHEN is displayed on most terminals
+                                  // as either a space or a dash.
   EXPECT_EQ(true, isPrint(0xAE));
 
   // MacOS implementation doesn't think it's printable.
