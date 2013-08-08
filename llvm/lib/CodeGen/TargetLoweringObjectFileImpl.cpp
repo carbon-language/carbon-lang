@@ -776,6 +776,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isThreadLocal())
     return getTLSDataSection();
 
+  if (Kind.isReadOnly() && ReadOnlySection != 0)
+    return ReadOnlySection;
+
   return getDataSection();
 }
 
