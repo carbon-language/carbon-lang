@@ -51,6 +51,10 @@ def _SLASH_O : CLJoined<"O">, HelpText<"Optimization level">,
 def _SLASH_Ob0 : CLFlag<"Ob0">, HelpText<"Disable inlining">,
   Alias<fno_inline>;
 def _SLASH_Od : CLFlag<"Od">, HelpText<"Disable optimization">, Alias<O0>;
+def _SLASH_Oi : CLFlag<"Oi">, HelpText<"Enable use of builtin functions">,
+  Alias<fbuiltin>;
+def _SLASH_Oi_ : CLFlag<"Oi-">, HelpText<"Disable use of builtin functions">,
+  Alias<fno_builtin>;
 def _SLASH_Os : CLFlag<"Os">, HelpText<"Optimize for size">, Alias<O>,
   AliasArgs<["s"]>;
 def _SLASH_Ot : CLFlag<"Ot">, HelpText<"Optimize for speed">, Alias<O>,
@@ -125,7 +129,6 @@ def _SLASH_GS : CLFlag<"GS">;
 def _SLASH_Gy : CLFlag<"Gy">;
 def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_GZ : CLFlag<"GZ">;
-def _SLASH_Oi : CLFlag<"Oi">;
 def _SLASH_RTC : CLJoined<"RTC">;
 def _SLASH_showIncludes : CLJoined<"showIncludes">;
 def _SLASH_w : CLJoined<"w">;

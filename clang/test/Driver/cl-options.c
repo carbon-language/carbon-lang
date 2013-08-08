@@ -36,6 +36,12 @@
 // RUN: %clang_cl /Od -### -- %s 2>&1 | FileCheck -check-prefix=Od %s
 // Od: -O0
 
+// RUN: %clang_cl /Oi- /Oi -### -- %s 2>&1 | FileCheck -check-prefix=Oi %s
+// Oi-NOT: -fno-builtin
+
+// RUN: %clang_cl /Oi- -### -- %s 2>&1 | FileCheck -check-prefix=Oi_ %s
+// Oi_: -fno-builtin
+
 // RUN: %clang_cl /Os -### -- %s 2>&1 | FileCheck -check-prefix=Os %s
 // Os: -Os
 
@@ -89,6 +95,6 @@
 // Unsupported but parsed options. Check that we don't error on them.
 // (/Zs is for syntax-only)
 // RUN: %clang_cl /Zs /EHsc /Fdfoo /fp:precise /Gd /GL /GL- -- %s 2>&1
-// RUN: %clang_cl /Zs /Gm /Gm- /GS /Gy /Gy- /GZ /Oi -- %s 2>&1
+// RUN: %clang_cl /Zs /Gm /Gm- /GS /Gy /Gy- /GZ -- %s 2>&1
 // RUN: %clang_cl /Zs /RTC1 /wfoo /Zc:wchar_t- -- %s 2>&1
 // RUN: %clang_cl /Zs /ZI /Zi /showIncludes -- %s 2>&1
