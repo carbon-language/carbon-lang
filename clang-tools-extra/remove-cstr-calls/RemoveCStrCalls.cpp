@@ -64,21 +64,21 @@ using clang::tooling::CompilationDatabase;
 // Returns an empty string if the text cannot be found.
 template <typename T>
 static std::string getText(const SourceManager &SourceManager, const T &Node) {
-  SourceLocation StartSpellingLocatino =
+  SourceLocation StartSpellingLocation =
       SourceManager.getSpellingLoc(Node.getLocStart());
   SourceLocation EndSpellingLocation =
       SourceManager.getSpellingLoc(Node.getLocEnd());
-  if (!StartSpellingLocatino.isValid() || !EndSpellingLocation.isValid()) {
+  if (!StartSpellingLocation.isValid() || !EndSpellingLocation.isValid()) {
     return std::string();
   }
   bool Invalid = true;
   const char *Text =
-      SourceManager.getCharacterData(StartSpellingLocatino, &Invalid);
+      SourceManager.getCharacterData(StartSpellingLocation, &Invalid);
   if (Invalid) {
     return std::string();
   }
   std::pair<FileID, unsigned> Start =
-      SourceManager.getDecomposedLoc(StartSpellingLocatino);
+      SourceManager.getDecomposedLoc(StartSpellingLocation);
   std::pair<FileID, unsigned> End =
       SourceManager.getDecomposedLoc(Lexer::getLocForEndOfToken(
           EndSpellingLocation, 0, SourceManager, LangOptions()));
