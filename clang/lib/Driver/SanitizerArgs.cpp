@@ -19,14 +19,26 @@
 using namespace clang::driver;
 using namespace llvm::opt;
 
-SanitizerArgs::SanitizerArgs()
-    : Kind(0), BlacklistFile(""), MsanTrackOrigins(false),
-      AsanZeroBaseShadow(false), UbsanTrapOnError(false) {}
+void SanitizerArgs::clear() {
+  Kind = 0;
+  BlacklistFile = "";
+  MsanTrackOrigins = false;
+  AsanZeroBaseShadow = false;
+  UbsanTrapOnError = false;
+}
+
+SanitizerArgs::SanitizerArgs() {
+  clear();
+}
 
 SanitizerArgs::SanitizerArgs(const ToolChain &TC,
-                             const llvm::opt::ArgList &Args)
-    : Kind(0), BlacklistFile(""), MsanTrackOrigins(false),
-      AsanZeroBaseShadow(false) {
+                             const llvm::opt::ArgList &Args) {
+  clear();
+  parse(TC, Args);
+}
+
+void SanitizerArgs::parse(const ToolChain &TC,
+                          const llvm::opt::ArgList &Args) {
   unsigned AllKinds = 0;  // All kinds of sanitizers that were turned on
                           // at least once (possibly, disabled further).
   const Driver &D = TC.getDriver();

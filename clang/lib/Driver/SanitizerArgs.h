@@ -54,6 +54,8 @@ class SanitizerArgs {
   /// Parses the sanitizer arguments from an argument list.
   SanitizerArgs(const ToolChain &TC, const llvm::opt::ArgList &Args);
 
+  void parse(const ToolChain &TC, const llvm::opt::ArgList &Args);
+
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
   bool needsMsanRt() const { return Kind & NeedsMsanRt; }
@@ -76,6 +78,8 @@ class SanitizerArgs {
                llvm::opt::ArgStringList &CmdArgs) const;
 
  private:
+  void clear();
+
   /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
   /// Returns OR of members of the \c SanitizeKind enumeration, or \c 0
   /// if \p Value is not known.
