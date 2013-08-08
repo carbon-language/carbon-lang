@@ -85,6 +85,6 @@ typedef char BOOL;
 - (id) isAnObject;
 - (void)setAnObject : (id) object;
 
-- (id)isxdelegateYYY;
-- (void)setXdelegateYYY:(id)delegate;
+- (BOOL) isinValid;
+- (void) setInValid : (BOOL) arg;
 @end

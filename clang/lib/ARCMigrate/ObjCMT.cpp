@@ -318,10 +318,10 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
     if (!SetterMethod) {
       // try a different naming convention for getter: isXxxxx
       StringRef getterNameString = getterName->getName();
-      if (getterNameString.startswith("is")) {
+      if (getterNameString.startswith("is") && !GRT->isObjCRetainableType()) {
         GetterHasIsPrefix = true;
         const char *CGetterName = getterNameString.data() + 2;
-        if (CGetterName[0]) {
+        if (CGetterName[0] && isUppercase(CGetterName[0])) {
           getterName = &Ctx.Idents.get(CGetterName);
           SetterSelector =
             SelectorTable::constructSetterSelector(PP.getIdentifierTable(),

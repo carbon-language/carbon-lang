@@ -82,9 +82,9 @@ typedef char BOOL;
 @property(getter=isContinuous) BOOL continuous;
 
 
-@property(getter=isAnObject, retain) id anObject;
+- (id) isAnObject;
+- (void)setAnObject : (id) object;
 
-
-@property(getter=isxdelegateYYY, unsafe_unretained) id xdelegateYYY;
-
+- (BOOL) isinValid;
+- (void) setInValid : (BOOL) arg;
 @end
