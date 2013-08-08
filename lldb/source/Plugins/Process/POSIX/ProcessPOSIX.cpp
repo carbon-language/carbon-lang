@@ -432,12 +432,6 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
             SetPrivateState(eStateStopped);
         break;
 
-        assert(thread);
-        thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
-        SetPrivateState(eStateStopped);
-        break;
-
     case ProcessMessage::eSignalMessage:
     case ProcessMessage::eSignalDeliveredMessage:
         if (message.GetSignal() == SIGSTOP &&
