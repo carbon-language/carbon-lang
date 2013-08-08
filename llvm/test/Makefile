@@ -31,14 +31,8 @@ endif
 
 ifdef TESTSUITE
 LIT_TESTSUITE := $(TESTSUITE)
-CLEANED_TESTSUITE := $(patsubst %/,%,$(TESTSUITE))
-CLEANED_TESTSUITE := $(patsubst test/%,%,$(CLEANED_TESTSUITE))
 else
 LIT_TESTSUITE := .
-endif
-
-ifdef VG
-VALGRIND := valgrind --tool=memcheck --quiet --trace-children=yes --error-exitcode=3 --leak-check=full $(VALGRIND_EXTRA_ARGS)
 endif
 
 # Check what to run for -all.
