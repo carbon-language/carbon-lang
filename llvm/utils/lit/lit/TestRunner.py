@@ -344,8 +344,6 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     execdir,execbase = os.path.split(execpath)
     tmpDir = os.path.join(execdir, 'Output')
     tmpBase = os.path.join(tmpDir, execbase)
-    if test.index is not None:
-        tmpBase += '_%d' % test.index
 
     # Normalize slashes, if requested.
     if normalize_slashes:

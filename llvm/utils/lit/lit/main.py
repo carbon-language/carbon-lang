@@ -242,9 +242,6 @@ def main(builtinParameters = {}):
     group.add_option("", "--show-tests", dest="showTests",
                       help="Show all discovered tests",
                       action="store_true", default=False)
-    group.add_option("", "--repeat", dest="repeatTests", metavar="N",
-                      help="Repeat tests N times (for timing)",
-                      action="store", default=None, type=int)
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
@@ -346,11 +343,6 @@ def main(builtinParameters = {}):
         extra = ' of %d' % numTotalTests
     header = '-- Testing: %d%s tests, %d threads --'%(len(tests),extra,
                                                       opts.numThreads)
-
-    if opts.repeatTests:
-        tests = [t.copyWithIndex(i)
-                 for t in tests
-                 for i in range(opts.repeatTests)]
 
     progressBar = None
     if not opts.quiet:

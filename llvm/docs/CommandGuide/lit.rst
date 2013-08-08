@@ -151,11 +151,6 @@ ADDITIONAL OPTIONS
 
  List the discovered test suites as part of the standard output.
 
-.. option:: --repeat=N
-
- Run each test ``N`` times.  Currently this is primarily useful for timing
- tests, other results are not collated in any reasonable fashion.
-
 EXIT STATUS
 -----------
 
