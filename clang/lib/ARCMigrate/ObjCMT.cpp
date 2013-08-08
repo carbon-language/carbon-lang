@@ -206,20 +206,31 @@ void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
   BodyMigrator(*this).TraverseDecl(D);
 }
 
+static void append_attr(std::string &PropertyString, const char *attr,
+                        bool GetterHasIsPrefix) {
+  PropertyString += (GetterHasIsPrefix ? ", " : "(");
+  PropertyString += attr;
+  PropertyString += ')';
+}
+
 static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
                                   const ObjCMethodDecl *Setter,
-                                  const NSAPI &NS, edit::Commit &commit) {
+                                  const NSAPI &NS, edit::Commit &commit,
+                                  bool GetterHasIsPrefix) {
   ASTContext &Context = NS.getASTContext();
   std::string PropertyString = "@property";
-  
   std::string PropertyNameString = Getter->getNameAsString();
   StringRef PropertyName(PropertyNameString);
+  if (GetterHasIsPrefix) {
+    PropertyString += "(getter=";
+    PropertyString += PropertyNameString;
+  }
   // Short circuit properties that contain the name "delegate" or "dataSource",
   // or have exact name "target" to have unsafe_unretained attribute.
   if (PropertyName.equals("target") ||
       (PropertyName.find("delegate") != StringRef::npos) ||
       (PropertyName.find("dataSource") != StringRef::npos))
-    PropertyString += "(unsafe_unretained)";
+    append_attr(PropertyString, "unsafe_unretained", GetterHasIsPrefix);
   else {
     const ParmVarDecl *argDecl = *Setter->param_begin();
     QualType ArgType = Context.getCanonicalType(argDecl->getType());
@@ -231,29 +242,46 @@ static bool rewriteToObjCProperty(const ObjCMethodDecl *Getter,
         ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
         if (IDecl &&
             IDecl->lookupNestedProtocol(&Context.Idents.get("NSCopying")))
-          PropertyString += "(copy)";
+          append_attr(PropertyString, "copy", GetterHasIsPrefix);
         else
-          PropertyString += "(retain)";
-      }
+          append_attr(PropertyString, "retain", GetterHasIsPrefix);
+      } else if (GetterHasIsPrefix)
+          PropertyString += ')';
     } else if (propertyLifetime == Qualifiers::OCL_Weak)
       // TODO. More precise determination of 'weak' attribute requires
       // looking into setter's implementation for backing weak ivar.
-      PropertyString += "(weak)";
+      append_attr(PropertyString, "weak", GetterHasIsPrefix);
     else if (RetainableObject)
-      PropertyString += "(retain)";
+      append_attr(PropertyString, "retain", GetterHasIsPrefix);
+    else if (GetterHasIsPrefix)
+      PropertyString += ')';
   }
   
-  // strip off any ARC lifetime qualifier.
-  QualType CanResultTy = Context.getCanonicalType(Getter->getResultType());
-  if (CanResultTy.getQualifiers().hasObjCLifetime()) {
-    Qualifiers Qs = CanResultTy.getQualifiers();
-    Qs.removeObjCLifetime();
-    CanResultTy = Context.getQualifiedType(CanResultTy.getUnqualifiedType(), Qs);
+  QualType RT = Getter->getResultType();
+  if (!isa<TypedefType>(RT)) {
+    // strip off any ARC lifetime qualifier.
+    QualType CanResultTy = Context.getCanonicalType(RT);
+    if (CanResultTy.getQualifiers().hasObjCLifetime()) {
+      Qualifiers Qs = CanResultTy.getQualifiers();
+      Qs.removeObjCLifetime();
+      RT = Context.getQualifiedType(CanResultTy.getUnqualifiedType(), Qs);
+    }
   }
   PropertyString += " ";
-  PropertyString += CanResultTy.getAsString(Context.getPrintingPolicy());
+  PropertyString += RT.getAsString(Context.getPrintingPolicy());
   PropertyString += " ";
-  PropertyString += PropertyNameString;
+  if (GetterHasIsPrefix) {
+    // property name must strip off "is" and lower case the first character
+    // after that; e.g. isContinuous will become continuous.
+    StringRef PropertyNameStringRef(PropertyNameString);
+    PropertyNameStringRef = PropertyNameStringRef.drop_front(2);
+    PropertyNameString = PropertyNameStringRef;
+    std::string NewPropertyNameString = PropertyNameString;
+    NewPropertyNameString[0] = std::tolower(NewPropertyNameString[0]);
+    PropertyString += NewPropertyNameString;
+  }
+  else
+    PropertyString += PropertyNameString;
   commit.replace(CharSourceRange::getCharRange(Getter->getLocStart(),
                                                Getter->getDeclaratorEndLoc()),
                  PropertyString);
@@ -285,7 +313,25 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
       SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
                                              PP.getSelectorTable(),
                                              getterName);
-    if (ObjCMethodDecl *SetterMethod = D->lookupMethod(SetterSelector, true)) {
+    ObjCMethodDecl *SetterMethod = D->lookupMethod(SetterSelector, true);
+    bool GetterHasIsPrefix = false;
+    if (!SetterMethod) {
+      // try a different naming convention for getter: isXxxxx
+      StringRef getterNameString = getterName->getName();
+      if (getterNameString.startswith("is")) {
+        GetterHasIsPrefix = true;
+        const char *CGetterName = getterNameString.data() + 2;
+        if (CGetterName[0]) {
+          getterName = &Ctx.Idents.get(CGetterName);
+          SetterSelector =
+            SelectorTable::constructSetterSelector(PP.getIdentifierTable(),
+                                                   PP.getSelectorTable(),
+                                                   getterName);
+          SetterMethod = D->lookupMethod(SetterSelector, true);
+        }
+      }
+    }
+    if (SetterMethod) {
       // Is this a valid setter, matching the target getter?
       QualType SRT = SetterMethod->getResultType();
       if (!SRT->isVoidType())
@@ -296,7 +342,8 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
           SetterMethod->hasAttrs())
           continue;
         edit::Commit commit(*Editor);
-        rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit);
+        rewriteToObjCProperty(Method, SetterMethod, *NSAPIObj, commit,
+                              GetterHasIsPrefix);
         Editor->commit(commit);
       }
   }
