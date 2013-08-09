@@ -596,8 +596,6 @@ void ExprEngine::VisitInitListExpr(const InitListExpr *IE,
     for (InitListExpr::const_reverse_iterator it = IE->rbegin(),
          ei = IE->rend(); it != ei; ++it) {
       SVal V = state->getSVal(cast<Expr>(*it), LCtx);
-      if (dyn_cast_or_null<CXXTempObjectRegion>(V.getAsRegion()))
-        V = UnknownVal();
       vals = getBasicVals().consVals(V, vals);
     }
     

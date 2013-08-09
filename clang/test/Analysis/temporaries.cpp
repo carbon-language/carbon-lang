@@ -157,3 +157,39 @@ void testStaticMaterializeTemporaryExpr() {
   clang_analyzer_eval(threadDirectRef.value == 42); // expected-warning{{TRUE}}
 #endif
 }
+
+namespace PR16629 {
+  struct A {
+    explicit A(int* p_) : p(p_) {}
+    int* p;
+  };
+
+  extern void escape(const A*[]);
+  extern void check(int);
+
+  void callEscape(const A& a) {
+    const A* args[] = { &a };
+    escape(args);
+  }
+
+  void testNoWarning() {
+    int x;
+    callEscape(A(&x));
+    check(x); // Analyzer used to give a "x is uninitialized warning" here
+  }
+
+  void set(const A*a[]) {
+    *a[0]->p = 47;
+  }
+
+  void callSet(const A& a) {
+    const A* args[] = { &a };
+    set(args);
+  }
+
+  void testConsistency() {
+    int x;
+    callSet(A(&x));
+    clang_analyzer_eval(x == 47); // expected-warning{{TRUE}}
+  }
+}
