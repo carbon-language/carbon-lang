@@ -175,45 +175,45 @@ cl::opt<std::string> HeaderPrefix(
         " the files are considered to be relative to the header list file."));
 
 // Read the header list file and collect the header file names.
-error_code getHeaderFileNames(SmallVectorImpl<std::string> &headerFileNames,
-                              StringRef listFileName, StringRef headerPrefix) {
+error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
+                              StringRef ListFileName, StringRef HeaderPrefix) {
 
   // By default, use the path component of the list file name.
-  SmallString<256> headerDirectory(listFileName);
-  sys::path::remove_filename(headerDirectory);
+  SmallString<256> HeaderDirectory(ListFileName);
+  sys::path::remove_filename(HeaderDirectory);
 
   // Get the prefix if we have one.
-  if (headerPrefix.size() != 0)
-    headerDirectory = headerPrefix;
+  if (HeaderPrefix.size() != 0)
+    HeaderDirectory = HeaderPrefix;
 
   // Read the header list file into a buffer.
   OwningPtr<MemoryBuffer> listBuffer;
-  if (error_code ec = MemoryBuffer::getFile(listFileName, listBuffer)) {
+  if (error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
     return ec;
   }
 
   // Parse the header list into strings.
-  SmallVector<StringRef, 32> strings;
-  listBuffer->getBuffer().split(strings, "\n", -1, false);
+  SmallVector<StringRef, 32> Strings;
+  listBuffer->getBuffer().split(Strings, "\n", -1, false);
 
   // Collect the header file names from the string list.
-  for (SmallVectorImpl<StringRef>::iterator I = strings.begin(),
-                                            E = strings.end();
+  for (SmallVectorImpl<StringRef>::iterator I = Strings.begin(),
+                                            E = Strings.end();
        I != E; ++I) {
-    StringRef line = (*I).trim();
+    StringRef Line = (*I).trim();
     // Ignore comments and empty lines.
-    if (line.empty() || (line[0] == '#'))
+    if (Line.empty() || (Line[0] == '#'))
       continue;
-    SmallString<256> headerFileName;
+    SmallString<256> HeaderFileName;
     // Prepend header file name prefix if it's not absolute.
-    if (sys::path::is_absolute(line))
-      headerFileName = line;
+    if (sys::path::is_absolute(Line))
+      HeaderFileName = Line;
     else {
-      headerFileName = headerDirectory;
-      sys::path::append(headerFileName, line);
+      HeaderFileName = HeaderDirectory;
+      sys::path::append(HeaderFileName, Line);
     }
     // Save the resulting header file path.
-    headerFileNames.push_back(headerFileName.str());
+    HeaderFileNames.push_back(HeaderFileName.str());
   }
 
   return error_code::success();
@@ -513,10 +513,10 @@ private:
   PreprocessorTracker &PPTracker;
 };
 
-int main(int argc, const char **argv) {
+int main(int Argc, const char **Argv) {
 
   // This causes options to be parsed.
-  cl::ParseCommandLineOptions(argc, argv, "modularize.\n");
+  cl::ParseCommandLineOptions(Argc, Argv, "modularize.\n");
 
   // No go if we have no header list file.
   if (ListFileName.size() == 0) {
@@ -526,9 +526,9 @@ int main(int argc, const char **argv) {
 
   // Get header file names.
   SmallVector<std::string, 32> Headers;
-  if (error_code ec = getHeaderFileNames(Headers, ListFileName, HeaderPrefix)) {
-    errs() << argv[0] << ": error: Unable to get header list '" << ListFileName
-           << "': " << ec.message() << '\n';
+  if (error_code EC = getHeaderFileNames(Headers, ListFileName, HeaderPrefix)) {
+    errs() << Argv[0] << ": error: Unable to get header list '" << ListFileName
+           << "': " << EC.message() << '\n';
     return 1;
   }
 
@@ -552,10 +552,10 @@ int main(int argc, const char **argv) {
   typedef SmallVector<Location, 8> LocationArray;
   typedef SmallVector<LocationArray, Entry::EK_NumberOfKinds> EntryBinArray;
   EntryBinArray EntryBins;
-  int kindIndex;
-  for (kindIndex = 0; kindIndex < Entry::EK_NumberOfKinds; ++kindIndex) {
-    LocationArray array;
-    EntryBins.push_back(array);
+  int KindIndex;
+  for (KindIndex = 0; KindIndex < Entry::EK_NumberOfKinds; ++KindIndex) {
+    LocationArray Array;
+    EntryBins.push_back(Array);
   }
 
   // Check for the same entity being defined in multiple places.
@@ -575,15 +575,15 @@ int main(int argc, const char **argv) {
       EntryBins[E->second[I].Kind].push_back(E->second[I].Loc);
     }
     // Report any duplicate entity definition errors.
-    int kindIndex = 0;
+    int KindIndex = 0;
     for (EntryBinArray::iterator DI = EntryBins.begin(), DE = EntryBins.end();
-         DI != DE; ++DI, ++kindIndex) {
-      int eCount = DI->size();
+         DI != DE; ++DI, ++KindIndex) {
+      int ECount = DI->size();
       // If only 1 occurance, skip;
-      if (eCount <= 1)
+      if (ECount <= 1)
         continue;
       LocationArray::iterator FI = DI->begin();
-      StringRef kindName = Entry::getKindName((Entry::EntryKind)kindIndex);
+      StringRef kindName = Entry::getKindName((Entry::EntryKind)KindIndex);
       errs() << "error: " << kindName << " '" << E->first()
              << "' defined at multiple locations:\n";
       for (LocationArray::iterator FE = DI->end(); FI != FE; ++FI) {
