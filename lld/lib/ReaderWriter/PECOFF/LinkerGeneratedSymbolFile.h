@@ -28,10 +28,15 @@ namespace coff {
 
 namespace {
 
-// The symbol ___ImageBase is a linker generated symbol. No standard library
+// The symbol __ImageBase is a linker generated symbol. No standard library
 // files define it, but the linker is expected to prepare it as if it was read
 // from a file. The content of the atom is a 4-byte integer equal to the image
 // base address.
+//
+// Note that because the name is prefixed by an underscore on x86 Win32, the
+// actual symbol name becomes ___ImageBase (with three underscores). On other
+// architectures names are not mangled with an underscore. We need to handle
+// name mangling correctly when porting LLD Windows code to them.
 class ImageBaseAtom : public COFFLinkerInternalAtom {
 public:
   ImageBaseAtom(const File &file, uint32_t imageBase)
