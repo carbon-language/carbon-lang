@@ -10,6 +10,7 @@
 #include "Atoms.h"
 #include "GroupedSectionsPass.h"
 #include "IdataPass.h"
+#include "LinkerGeneratedSymbolFile.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Allocator.h"
@@ -30,24 +31,6 @@ bool containDirectoryName(StringRef path) {
   llvm::sys::path::remove_filename(smallStr);
   return !smallStr.str().empty();
 }
-
-/// An instance of UndefinedSymbolFile has a list of undefined symbols
-/// specified by "/include" command line option. This will be added to the
-/// input file list to force the core linker to try to resolve the undefined
-/// symbols.
-class UndefinedSymbolFile : public SimpleFile {
-public:
-  UndefinedSymbolFile(const LinkingContext &ti)
-      : SimpleFile(ti, "Linker Internal File") {
-    for (StringRef symbol : ti.initialUndefinedSymbols()) {
-      UndefinedAtom *atom = new (_alloc) coff::COFFUndefinedAtom(*this, symbol);
-      addAtom(*atom);
-    }
-  }
-
-private:
-  llvm::BumpPtrAllocator _alloc;
-};
 } // anonymous namespace
 
 error_code PECOFFLinkingContext::parseFile(
@@ -83,8 +66,11 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
 
 void PECOFFLinkingContext::addImplicitFiles(InputFiles &files) const {
   // Add a pseudo file for "/include" linker option.
-  auto *file = new (_alloc) UndefinedSymbolFile(*this);
-  files.prependFile(*file);
+  auto *undefFile = new (_alloc) coff::UndefinedSymbolFile(*this);
+  files.prependFile(*undefFile);
+
+  auto *linkerFile = new (_alloc) coff::LinkerGeneratedSymbolFile(*this);
+  files.appendFile(*linkerFile);
 }
 
 /// Append the given file to the input file list. The file must be an object
