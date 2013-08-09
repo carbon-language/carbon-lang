@@ -317,10 +317,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
   // mangled as 'QAHA' instead of 'PAHB', for example.
   TypeLoc TL = VD->getTypeSourceInfo()->getTypeLoc();
   QualType Ty = TL.getType();
-  if (Ty->isPointerType() || Ty->isReferenceType()) {
-    mangleType(Ty, TL.getSourceRange(), QMM_Drop);
-    mangleQualifiers(Ty->getPointeeType().getQualifiers(), false);
-  } else if (const ArrayType *AT = getASTContext().getAsArrayType(Ty)) {
+  if (const ArrayType *AT = getASTContext().getAsArrayType(Ty)) {
     // Global arrays are funny, too.
     mangleDecayedArrayType(AT, true);
     if (AT->getElementType()->isArrayType())
