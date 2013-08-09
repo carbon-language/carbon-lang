@@ -334,6 +334,12 @@ std::string getMacroUnexpandedString(clang::SourceRange Range,
 
 // Get the expansion for a macro instance, given the information
 // provided by PPCallbacks.
+// FIXME: This doesn't support function-style macro instances
+// passed as arguments to another function-style macro. However,
+// since it still expands the inner arguments, it still
+// allows modularize to effectively work with respect to macro
+// consistency checking, although it displays the incorrect
+// expansion in error messages.
 std::string getMacroExpandedString(clang::Preprocessor &PP,
                                    llvm::StringRef MacroName,
                                    const clang::MacroInfo *MI,
@@ -1214,6 +1220,9 @@ void PreprocessorCallbacks::MacroExpands(const clang::Token &MacroNameTok,
                                          clang::SourceRange Range,
                                          const clang::MacroArgs *Args) {
   clang::SourceLocation Loc = Range.getBegin();
+  // Ignore macro argument expansions.
+  if (!Loc.isFileID())
+    return;
   clang::IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
   const clang::MacroInfo *MI = PP.getMacroInfo(II);
   std::string MacroName = II->getName().str();
