@@ -1129,16 +1129,11 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
   for(DeclContext::decl_iterator I = RD->decls_begin(),
         E = RD->decls_end(); I != E; ++I) {
     Decl *D = *I;
-    if (D->isImplicit() && !D->isUsed())
+    if (D->isImplicit())
       continue;
 
     if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
       EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
-    else if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
-      for (FunctionTemplateDecl::spec_iterator SI = FTD->spec_begin(),
-             SE = FTD->spec_end(); SI != SE; ++SI)
-        EltTys.push_back(CreateCXXMemberFunction(cast<CXXMethodDecl>(*SI), Unit,
-                                                 RecordTy));
   }
 }
 
@@ -2321,10 +2316,18 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
   if (!FD) return llvm::DISubprogram();
 
   // Setup context.
-  getContextDescriptor(cast<Decl>(D->getDeclContext()));
+  llvm::DIScope S = getContextDescriptor(cast<Decl>(D->getDeclContext()));
 
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
     MI = SPCache.find(FD->getCanonicalDecl());
+  if (MI == SPCache.end()) {
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      llvm::DICompositeType T(S);
+      llvm::DISubprogram SP = CreateCXXMemberFunction(MD, getOrCreateFile(MD->getLocation()), T);
+      T.addMember(SP);
+      return SP;
+    }
+  }
   if (MI != SPCache.end()) {
     llvm::Value *V = MI->second;
     llvm::DISubprogram SP(dyn_cast_or_null<llvm::MDNode>(V));

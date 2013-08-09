@@ -113,7 +113,7 @@ void func() {
 }
 
 // CHECK: metadata [[A_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [a]
-// CHECK: [[A_MEM]] = metadata !{metadata [[A_I:![0-9]*]], metadata !{{[0-9]*}}}
+// CHECK: [[A_MEM]] = metadata !{metadata [[A_I:![0-9]*]]}
 // CHECK: [[A_I]] = {{.*}} ; [ DW_TAG_member ] [i] {{.*}} [from int]
 // CHECK: ; [ DW_TAG_structure_type ] [b] {{.*}}[decl]
 }
