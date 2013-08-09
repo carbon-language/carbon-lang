@@ -382,9 +382,8 @@ static bool indexReallyValid(CompositeType *T, unsigned Idx) {
 /// function again on a finished iterator will repeatedly return
 /// false. SubTypes.back()->getTypeAtIndex(Path.back()) is either an empty
 /// aggregate or a non-aggregate
-static bool
-advanceToNextLeafType(SmallVectorImpl<CompositeType *> &SubTypes,
-                     SmallVectorImpl<unsigned> &Path) {
+static bool advanceToNextLeafType(SmallVectorImpl<CompositeType *> &SubTypes,
+                                  SmallVectorImpl<unsigned> &Path) {
   // First march back up the tree until we can successfully increment one of the
   // coordinates in Path.
   while (!Path.empty() && !indexReallyValid(SubTypes.back(), Path.back() + 1)) {
@@ -454,8 +453,8 @@ static bool firstRealType(Type *Next,
 
 /// Set the iterator data-structures to the next non-empty, non-aggregate
 /// subtype.
-bool nextRealType(SmallVectorImpl<CompositeType *> &SubTypes,
-                  SmallVectorImpl<unsigned> &Path) {
+static bool nextRealType(SmallVectorImpl<CompositeType *> &SubTypes,
+                         SmallVectorImpl<unsigned> &Path) {
   do {
     if (!advanceToNextLeafType(SubTypes, Path))
       return false;
