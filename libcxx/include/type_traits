@@ -1461,6 +1461,10 @@ template <class _Tp>
 struct is_destructible
     : public __destructible_imp<_Tp> {};
 
+template <class _Tp>
+struct is_destructible<_Tp[]>
+    : public false_type {};
+
 // move
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES

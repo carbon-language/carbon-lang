@@ -69,7 +69,9 @@ int main()
     test_is_destructible<const int*>();
     test_is_destructible<char[3]>();
     test_is_destructible<bit_zero>();
+    test_is_destructible<int[3]>();
 
+    test_is_not_destructible<int[]>();
     test_is_not_destructible<void>();
     test_is_not_destructible<Abstract>();
 #if __has_feature(cxx_access_control_sfinae) 
