@@ -47,7 +47,7 @@ There is no scheduling support.
 
 --
 
-We don't use the BRANCH ON COUNT or BRANCH ON INDEX families of instruction.
+We don't use the BRANCH ON INDEX instructions.
 
 --
 
@@ -56,18 +56,7 @@ and conditional returns.
 
 --
 
-We don't use the condition code results of anything except comparisons.
-
-Implementing this may need something more finely grained than the z_cmp
-and z_ucmp that we have now.  It might (or might not) also be useful to
-have a mask of "don't care" values in conditional branches.  For example,
-integer comparisons never set CC to 3, so the bottom bit of the CC mask
-isn't particularly relevant.  JNLH and JE are equally good for testing
-equality after an integer comparison, etc.
-
---
-
-We don't use the LOAD AND TEST or TEST DATA CLASS instructions.
+We don't use the TEST DATA CLASS instructions.
 
 --
 
@@ -77,9 +66,10 @@ condition codes.  For example, we could use LCDFR instead of LCDBR.
 
 --
 
-We don't optimize block memory operations.
+We don't optimize block memory operations, except using single MVCs
+for memcpy.
 
-It's definitely worth using things like MVC, CLC, NC, XC and OC with
+It's definitely worth using things like CLC, NC, XC and OC with
 constant lengths.  MVCIN may be worthwhile too.
 
 We should probably implement things like memcpy using MVC with EXECUTE.
