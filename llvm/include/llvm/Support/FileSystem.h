@@ -869,7 +869,7 @@ public:
   }
 
   /// Construct end iterator.
-  directory_iterator() : State(new detail::DirIterState) {}
+  directory_iterator() : State(0) {}
 
   // No operator++ because we need error_code.
   directory_iterator &increment(error_code &ec) {
@@ -881,6 +881,12 @@ public:
   const directory_entry *operator->() const { return &State->CurrentEntry; }
 
   bool operator==(const directory_iterator &RHS) const {
+    if (State == RHS.State)
+      return true;
+    if (RHS.State == 0)
+      return State->CurrentEntry == directory_entry();
+    if (State == 0)
+      return RHS.State->CurrentEntry == directory_entry();
     return State->CurrentEntry == RHS.State->CurrentEntry;
   }
 
@@ -920,7 +926,7 @@ public:
   }
   // No operator++ because we need error_code.
   recursive_directory_iterator &increment(error_code &ec) {
-    static const directory_iterator end_itr;
+    const directory_iterator end_itr;
 
     if (State->HasNoPushRequest)
       State->HasNoPushRequest = false;
@@ -967,7 +973,7 @@ public:
     assert(State && "Cannot pop and end itertor!");
     assert(State->Level > 0 && "Cannot pop an iterator with level < 1");
 
-    static const directory_iterator end_itr;
+    const directory_iterator end_itr;
     error_code ec;
     do {
       if (ec)
