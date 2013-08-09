@@ -215,7 +215,7 @@ protected:
 
   static atom_collection_empty<DefinedAtom>       _noDefinedAtoms;
   static atom_collection_empty<UndefinedAtom>     _noUndefinedAtoms;
-  static atom_collection_empty<SharedLibraryAtom> _noSharedLibaryAtoms;
+  static atom_collection_empty<SharedLibraryAtom> _noSharedLibraryAtoms;
   static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
 
   StringRef         _path;

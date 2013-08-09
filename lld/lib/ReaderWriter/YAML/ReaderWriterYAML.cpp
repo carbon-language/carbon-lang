@@ -665,7 +665,7 @@ struct MappingTraits<const lld::File*> {
       return _noUndefinedAtoms;
     }
     virtual const atom_collection<lld::SharedLibraryAtom> &sharedLibrary()const{
-      return _noSharedLibaryAtoms;
+      return _noSharedLibraryAtoms;
     }
     virtual const atom_collection<lld::AbsoluteAtom> &absolute() const {
       return _noAbsoluteAtoms;

@@ -21,7 +21,7 @@ StringRef File::translationUnitSource() const {
 
 File::atom_collection_empty<DefinedAtom>       File::_noDefinedAtoms;
 File::atom_collection_empty<UndefinedAtom>     File::_noUndefinedAtoms;
-File::atom_collection_empty<SharedLibraryAtom> File::_noSharedLibaryAtoms;
+File::atom_collection_empty<SharedLibraryAtom> File::_noSharedLibraryAtoms;
 File::atom_collection_empty<AbsoluteAtom>      File::_noAbsoluteAtoms;
 
 
