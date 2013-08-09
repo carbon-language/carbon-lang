@@ -1,0 +1,1 @@
+RUN: llvm-rtdyld -printline %p/Inputs/arm_secdiff_reloc.o

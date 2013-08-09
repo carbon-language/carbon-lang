@@ -287,6 +287,16 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   macho::RelocationEntry RE = MachO->getRelocation(RelI.getRawDataRefImpl());
 
   uint32_t RelType = MachO->getAnyRelocationType(RE);
+
+  // FIXME: Properly handle scattered relocations.
+  //        For now, optimistically skip these: they can often be ignored, as
+  //        the static linker will already have applied the relocation, and it
+  //        only needs to be reapplied if symbols move relative to one another.
+  //        Note: This will fail horribly where the relocations *do* need to be
+  //        applied, but that was already the case.
+  if (MachO->isRelocationScattered(RE))
+    return;
+
   RelocationValueRef Value;
   SectionEntry &Section = Sections[SectionID];
 
