@@ -87,6 +87,14 @@
 // 3. There seem to be a lot of spurious "not always provided" messages,
 // and many duplicates of these.
 //
+// 4. There are some legitimate uses of preprocessor macros that
+// modularize will flag as errors, such as repeatedly #include'ing
+// a file and using interleaving defined/undefined macros
+// to change declarations in the included file.  Is there a way
+// to address this?  Maybe have modularize accept a list of macros
+// to ignore.  Otherwise you can just exclude the file, after checking
+// for legitimate errors.
+//
 // Future directions:
 //
 // Basically, we want to add new checks for whatever we can check with respect
@@ -105,7 +113,12 @@
 // 4. Check for correct and consistent usage of extern "C" {} and other
 // directives. Warn about #include inside extern "C" {}.
 //
-// 5. What else?
+// 5. To support headers that depend on other headers to be included first
+// add support for a dependency list to the header list input.
+// I.e.: header.h: dependent1.h dependent2.h
+// (Implement using clang's "-include" option"?)
+//
+// 6. What else?
 //
 // General clean-up and refactoring:
 //
