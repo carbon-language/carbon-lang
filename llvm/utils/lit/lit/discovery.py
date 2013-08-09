@@ -83,9 +83,8 @@ def getLocalConfig(ts, path_in_suite, litConfig, cache):
         cfgpath = os.path.join(source_path, litConfig.local_config_name)
         if litConfig.debug:
             litConfig.note('loading local config %r' % cfgpath)
-        return TestingConfig.frompath(cfgpath, parent, litConfig,
-                                    mustExist = False,
-                                    config = parent.clone(cfgpath))
+        return TestingConfig.frompath(cfgpath, parent.clone(cfgpath), litConfig,
+                                      mustExist = False)
 
     def search(path_in_suite):
         key = (ts, path_in_suite)

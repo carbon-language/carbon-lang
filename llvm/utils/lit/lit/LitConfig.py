@@ -73,7 +73,7 @@ class LitConfig:
         if self.debug:
             self.note('load_config from %r' % path)
         return lit.TestingConfig.TestingConfig.frompath(
-            path, config.parent, self, mustExist = True, config = config)
+            path, config, self, mustExist = True)
 
     def getBashPath(self):
         """getBashPath - Get the path to 'bash'"""

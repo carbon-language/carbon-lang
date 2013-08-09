@@ -9,7 +9,14 @@ class TestingConfig:
     """
 
     @staticmethod
-    def frompath(path, parent, litConfig, mustExist, config = None):
+    def frompath(path, config, litConfig, mustExist):
+        """
+        frompath(path, config, litConfig, mustExist) -> TestingConfig
+
+        Load the configuration module at the provided path into the given config
+        object (or create a new one if None is provided) and return the config.
+        """
+
         if config is None:
             # Set the environment based on the command line arguments.
             environment = {
@@ -38,7 +45,7 @@ class TestingConfig:
                 if litConfig.valgrindLeakCheck:
                     available_features.append('vg_leak')
 
-            config = TestingConfig(parent,
+            config = TestingConfig(None,
                                    name = '<unnamed>',
                                    suffixes = set(),
                                    test_format = None,
