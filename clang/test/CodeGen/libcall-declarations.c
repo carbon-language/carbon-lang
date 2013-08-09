@@ -50,6 +50,9 @@ float logf(float);
 double log2(double);
 long double log2l(long double);
 float log2f(float);
+long lrint(double);
+long lrintl(long double);
+long lrintf(float);
 double nearbyint(double);
 long double nearbyintl(long double);
 float nearbyintf(float);
@@ -76,15 +79,15 @@ long double truncl(long double);
 float truncf(float);
 
 // Force emission of the declare statements.
-void *use[] = {
-  acos, acosl, acosf, asin, asinl, asinf, atan, atanl, atanf, atan2, atan2l,
-  atan2f, ceil, ceill, ceilf, copysign, copysignl, copysignf, cos, cosl, cosf,
-  exp, expl, expf, exp2, exp2l, exp2f, fabs, fabsl, fabsf, floor, floorl,
-  floorf, fma, fmal, fmaf, fmax, fmaxl, fmaxf, fmin, fminl, fminf, log, logl,
-  logf, log2, log2l, log2f, nearbyint, nearbyintl, nearbyintf, pow, powl, powf,
-  rint, rintl, rintf, round, roundl, roundf, sin, sinl, sinf, sqrt, sqrtl,
-  sqrtf, tan, tanl, tanf, trunc, truncl, truncf
-};
+void *use[] = { acos, acosl, acosf, asin, asinl, asinf, atan, atanl, atanf,
+                atan2, atan2l, atan2f, ceil, ceill, ceilf, copysign, copysignl,
+                copysignf, cos, cosl, cosf, exp, expl, expf, exp2, exp2l, exp2f,
+                fabs, fabsl, fabsf, floor, floorl, floorf, fma, fmal, fmaf,
+                fmax, fmaxl, fmaxf, fmin, fminl, fminf, log, logl, logf, log2,
+                log2l, log2f, lrint, lrintl, lrintf, nearbyint, nearbyintl,
+                nearbyintf, pow, powl, powf, rint, rintl, rintf, round, roundl,
+                roundf, sin, sinl, sinf, sqrt, sqrtl, sqrtf, tan, tanl, tanf,
+                trunc, truncl, truncf };
 
 // CHECK-NOERRNO: declare double @acos(double) [[NUW:#[0-9]+]]
 // CHECK-NOERRNO: declare x86_fp80 @acosl(x86_fp80) [[NUW]]
@@ -134,6 +137,9 @@ void *use[] = {
 // CHECK-NOERRNO: declare double @log2(double) [[NUW]]
 // CHECK-NOERRNO: declare x86_fp80 @log2l(x86_fp80) [[NUW]]
 // CHECK-NOERRNO: declare float @log2f(float) [[NUW]]
+// CHECK-NOERRNO: declare {{i..}} @lrint(double) [[NUW]]
+// CHECK-NOERRNO: declare {{i..}} @lrintl(x86_fp80) [[NUW]]
+// CHECK-NOERRNO: declare {{i..}} @lrintf(float) [[NUW]]
 // CHECK-NOERRNO: declare double @nearbyint(double) [[NUW]]
 // CHECK-NOERRNO: declare x86_fp80 @nearbyintl(x86_fp80) [[NUW]]
 // CHECK-NOERRNO: declare float @nearbyintf(float) [[NUW]]
@@ -177,6 +183,9 @@ void *use[] = {
 // CHECK-ERRNO: declare double @fmin(double, double) [[NUW]]
 // CHECK-ERRNO: declare x86_fp80 @fminl(x86_fp80, x86_fp80) [[NUW]]
 // CHECK-ERRNO: declare float @fminf(float, float) [[NUW]]
+// CHECK-ERRNO: declare {{i..}} @lrint(double) [[NUW]]
+// CHECK-ERRNO: declare {{i..}} @lrintl(x86_fp80) [[NUW]]
+// CHECK-ERRNO: declare {{i..}} @lrintf(float) [[NUW]]
 // CHECK-ERRNO: declare double @nearbyint(double) [[NUW]]
 // CHECK-ERRNO: declare x86_fp80 @nearbyintl(x86_fp80) [[NUW]]
 // CHECK-ERRNO: declare float @nearbyintf(float) [[NUW]]
