@@ -3504,12 +3504,16 @@ class t2CPS<dag iops, string asm_op> : T2XI<(outs), iops, NoItinerary,
 
 let M = 1 in
   def t2CPS3p : t2CPS<(ins imod_op:$imod, iflags_op:$iflags, i32imm:$mode),
-                      "$imod.w\t$iflags, $mode">;
+                      "$imod\t$iflags, $mode">;
 let mode = 0, M = 0 in
   def t2CPS2p : t2CPS<(ins imod_op:$imod, iflags_op:$iflags),
                       "$imod.w\t$iflags">;
 let imod = 0, iflags = 0, M = 1 in
   def t2CPS1p : t2CPS<(ins imm0_31:$mode), "\t$mode">;
+
+def : t2InstAlias<"cps$imod.w $iflags, $mode",
+                   (t2CPS3p imod_op:$imod, iflags_op:$iflags, i32imm:$mode), 0>;
+def : t2InstAlias<"cps.w $mode", (t2CPS1p imm0_31:$mode), 0>;
 
 // A6.3.4 Branches and miscellaneous control
 // Table A6-14 Change Processor State, and hint instructions
