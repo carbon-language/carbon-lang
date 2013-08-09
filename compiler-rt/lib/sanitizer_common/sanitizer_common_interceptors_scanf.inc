@@ -278,7 +278,7 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
   CHECK_GT(n_inputs, 0);
   const char *p = format;
 
-  while (*p && n_inputs) {
+  while (*p) {
     ScanfDirective dir;
     p = scanf_parse_next(p, allowGnuMalloc, &dir);
     if (!p)
@@ -301,6 +301,8 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
     void *argp = va_arg(aq, void *);
     if (dir.convSpecifier != 'n')
       --n_inputs;
+    if (n_inputs < 0)
+      break;
     if (size == SSS_STRLEN) {
       size = internal_strlen((const char *)argp) + 1;
     }

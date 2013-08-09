@@ -169,7 +169,7 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanfPartial("%d%d%d%d //3\n", 3, 3, I, I, I);
   testScanfPartial("%d%d%d%d //4\n", 4, 4, I, I, I, I);
 
-  testScanfPartial("%d%n%n%d //1\n", 1, 1, I);
+  testScanfPartial("%d%n%n%d //1\n", 1, 3, I, I, I);
   testScanfPartial("%d%n%n%d //2\n", 2, 4, I, I, I, I);
 
   testScanfPartial("%d%n%n%d %s %s", 3, 5, I, I, I, I, scanf_buf_size);
