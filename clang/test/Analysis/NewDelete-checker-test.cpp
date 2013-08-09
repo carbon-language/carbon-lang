@@ -4,6 +4,7 @@
 
 typedef __typeof__(sizeof(int)) size_t;
 extern "C" void *malloc(size_t);
+extern "C" void free (void* ptr);
 int *global;
 
 //------------------
@@ -207,6 +208,37 @@ void testConstEscapePlacementNew() {
   escapeVoidPtr(y);
 } // no-warning
 
+//============== Test Uninitialized delete delete[]========================
+void testUninitDelete() {
+  int *x;
+  int * y = new int;
+  delete y;
+  delete x; // expected-warning{{Argument to 'delete' is uninitialized}}
+}
+
+void testUninitDeleteArray() {
+  int *x;
+  int * y = new int[5];
+  delete[] y;
+  delete[] x; // expected-warning{{Argument to 'delete[]' is uninitialized}}
+}
+
+void testUninitFree() {
+  int *x;
+  free(x); // expected-warning{{Function call argument is an uninitialized value}}
+}
+
+void testUninitDeleteSink() {
+  int *x;
+  delete x; // expected-warning{{Argument to 'delete' is uninitialized}}
+  (*(volatile int *)0 = 1); // no warn
+}
+
+void testUninitDeleteArraySink() {
+  int *x;
+  delete[] x; // expected-warning{{Argument to 'delete[]' is uninitialized}}
+  (*(volatile int *)0 = 1); // no warn
+}
 
 namespace reference_count {
   class control_block {

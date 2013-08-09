@@ -28,13 +28,16 @@ using namespace ento;
 
 namespace {
 class CallAndMessageChecker
-  : public Checker< check::PreStmt<CallExpr>, check::PreObjCMessage,
+  : public Checker< check::PreStmt<CallExpr>,
+                    check::PreStmt<CXXDeleteExpr>,
+                    check::PreObjCMessage,
                     check::PreCall > {
   mutable OwningPtr<BugType> BT_call_null;
   mutable OwningPtr<BugType> BT_call_undef;
   mutable OwningPtr<BugType> BT_cxx_call_null;
   mutable OwningPtr<BugType> BT_cxx_call_undef;
   mutable OwningPtr<BugType> BT_call_arg;
+  mutable OwningPtr<BugType> BT_cxx_delete_undef;
   mutable OwningPtr<BugType> BT_msg_undef;
   mutable OwningPtr<BugType> BT_objc_prop_undef;
   mutable OwningPtr<BugType> BT_objc_subscript_undef;
@@ -44,6 +47,7 @@ class CallAndMessageChecker
 public:
 
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPreStmt(const CXXDeleteExpr *DE, CheckerContext &C) const;
   void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
 
@@ -249,6 +253,30 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
 
   C.addTransition(StNonNull);
 }
+
+void CallAndMessageChecker::checkPreStmt(const CXXDeleteExpr *DE,
+                                         CheckerContext &C) const {
+
+  SVal Arg = C.getSVal(DE->getArgument());
+  if (Arg.isUndef()) {
+    StringRef Desc;
+    ExplodedNode *N = C.generateSink();
+    if (!N)
+      return;
+    if (!BT_cxx_delete_undef)
+      BT_cxx_delete_undef.reset(new BuiltinBug("Uninitialized argument value"));
+    if (DE->isArrayFormAsWritten())
+      Desc = "Argument to 'delete[]' is uninitialized";
+    else
+      Desc = "Argument to 'delete' is uninitialized";
+    BugType *BT = BT_cxx_delete_undef.get();
+    BugReport *R = new BugReport(*BT, Desc, N);
+    bugreporter::trackNullOrUndefValue(N, DE, *R);
+    C.emitReport(R);
+    return;
+  }
+}
+
 
 void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
                                          CheckerContext &C) const {
