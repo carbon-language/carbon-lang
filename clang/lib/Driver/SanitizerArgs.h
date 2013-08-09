@@ -44,17 +44,22 @@ class SanitizerArgs {
     HasZeroBaseShadow = Thread | Memory | DataFlow
   };
   unsigned Kind;
+
   std::string BlacklistFile;
   bool MsanTrackOrigins;
-  bool AsanZeroBaseShadow;
+  enum AsanZeroBaseShadowKind {
+    AZBSK_Default,  // Default value is toolchain-specific.
+    AZBSK_On,
+    AZBSK_Off
+  } AsanZeroBaseShadow;
   bool UbsanTrapOnError;
 
  public:
   SanitizerArgs();
   /// Parses the sanitizer arguments from an argument list.
-  SanitizerArgs(const ToolChain &TC, const llvm::opt::ArgList &Args);
+  SanitizerArgs(const Driver &D, const llvm::opt::ArgList &Args);
 
-  void parse(const ToolChain &TC, const llvm::opt::ArgList &Args);
+  void parse(const Driver &D, const llvm::opt::ArgList &Args);
 
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
@@ -70,15 +75,16 @@ class SanitizerArgs {
 
   bool sanitizesVptr() const { return Kind & Vptr; }
   bool notAllowedWithTrap() const { return Kind & NotAllowedWithTrap; }
-  bool hasZeroBaseShadow() const {
-    return (Kind & HasZeroBaseShadow) || AsanZeroBaseShadow;
+  bool hasZeroBaseShadow(const ToolChain &TC) const {
+    return (Kind & HasZeroBaseShadow) || hasAsanZeroBaseShadow(TC);
   }
-
-  void addArgs(const llvm::opt::ArgList &Args,
+  void addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
                llvm::opt::ArgStringList &CmdArgs) const;
 
  private:
   void clear();
+
+  bool hasAsanZeroBaseShadow(const ToolChain &TC) const;
 
   /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
   /// Returns OR of members of the \c SanitizeKind enumeration, or \c 0

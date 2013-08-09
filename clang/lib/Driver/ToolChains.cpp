@@ -290,7 +290,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     }
   }
 
-  SanitizerArgs Sanitize(*this, Args);
+  SanitizerArgs Sanitize(getDriver(), Args);
 
   // Add Ubsan runtime library, if required.
   if (Sanitize.needsUbsanRt()) {
@@ -2354,7 +2354,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   addPathIfExists(SysRoot + "/lib", Paths);
   addPathIfExists(SysRoot + "/usr/lib", Paths);
 
-  IsPIEDefault = SanitizerArgs(*this, Args).hasZeroBaseShadow();
+  IsPIEDefault = SanitizerArgs(getDriver(), Args).hasZeroBaseShadow(*this);
 }
 
 bool Linux::HasNativeLLVMSupport() const {

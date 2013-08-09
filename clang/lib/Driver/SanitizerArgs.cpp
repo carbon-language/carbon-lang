@@ -23,7 +23,7 @@ void SanitizerArgs::clear() {
   Kind = 0;
   BlacklistFile = "";
   MsanTrackOrigins = false;
-  AsanZeroBaseShadow = false;
+  AsanZeroBaseShadow = AZBSK_Default;
   UbsanTrapOnError = false;
 }
 
@@ -31,17 +31,16 @@ SanitizerArgs::SanitizerArgs() {
   clear();
 }
 
-SanitizerArgs::SanitizerArgs(const ToolChain &TC,
+SanitizerArgs::SanitizerArgs(const Driver &D,
                              const llvm::opt::ArgList &Args) {
   clear();
-  parse(TC, Args);
+  parse(D, Args);
 }
 
-void SanitizerArgs::parse(const ToolChain &TC,
+void SanitizerArgs::parse(const Driver &D,
                           const llvm::opt::ArgList &Args) {
   unsigned AllKinds = 0;  // All kinds of sanitizers that were turned on
                           // at least once (possibly, disabled further).
-  const Driver &D = TC.getDriver();
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add, Remove;
     if (!parse(D, Args, *I, Add, Remove, true))
@@ -145,25 +144,21 @@ void SanitizerArgs::parse(const ToolChain &TC,
 
   // Parse -f(no-)sanitize-address-zero-base-shadow options.
   if (NeedsAsan) {
-    bool IsAndroid = (TC.getTriple().getEnvironment() == llvm::Triple::Android);
-    bool ZeroBaseShadowDefault = IsAndroid;
-    AsanZeroBaseShadow =
-        Args.hasFlag(options::OPT_fsanitize_address_zero_base_shadow,
-                     options::OPT_fno_sanitize_address_zero_base_shadow,
-                     ZeroBaseShadowDefault);
-    // Zero-base shadow is a requirement on Android.
-    if (IsAndroid && !AsanZeroBaseShadow) {
-      D.Diag(diag::err_drv_argument_not_allowed_with)
-          << "-fno-sanitize-address-zero-base-shadow"
-          << lastArgumentForKind(D, Args, Address);
-    }
+    if (Arg *A = Args.getLastArg(
+        options::OPT_fsanitize_address_zero_base_shadow,
+        options::OPT_fno_sanitize_address_zero_base_shadow))
+      AsanZeroBaseShadow = A->getOption().matches(
+                               options::OPT_fsanitize_address_zero_base_shadow)
+                               ? AZBSK_On
+                               : AZBSK_Off;
   }
 }
 
-void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
+void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
                             llvm::opt::ArgStringList &CmdArgs) const {
   if (!Kind)
     return;
+  const Driver &D = TC.getDriver();
   SmallString<256> SanitizeOpt("-fsanitize=");
 #define SANITIZER(NAME, ID) \
   if (Kind & ID) \
@@ -180,13 +175,28 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (MsanTrackOrigins)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins"));
 
-  if (AsanZeroBaseShadow)
-    CmdArgs.push_back(
-        Args.MakeArgString("-fsanitize-address-zero-base-shadow"));
+  if (needsAsanRt()) {
+    if (hasAsanZeroBaseShadow(TC)) {
+      CmdArgs.push_back(
+          Args.MakeArgString("-fsanitize-address-zero-base-shadow"));
+    } else if (TC.getTriple().getEnvironment() == llvm::Triple::Android) {
+      // Zero-base shadow is a requirement on Android.
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+          << "-fno-sanitize-address-zero-base-shadow"
+          << lastArgumentForKind(D, Args, Address);
+    }
+  }
 
   // Workaround for PR16386.
   if (needsMsanRt())
     CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
+}
+
+bool SanitizerArgs::hasAsanZeroBaseShadow(const ToolChain &TC) const {
+  if (AsanZeroBaseShadow != AZBSK_Default)
+    return AsanZeroBaseShadow == AZBSK_On;
+  // Zero-base shadow is used by default only on Android.
+  return TC.getTriple().getEnvironment() == llvm::Triple::Android;
 }
 
 unsigned SanitizerArgs::parse(const char *Value) {
