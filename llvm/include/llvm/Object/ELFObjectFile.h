@@ -128,7 +128,8 @@ protected: // ELF specific protected members.
 
   DataRefImpl toDRI(Elf_Sym_Iter Symb) const {
     DataRefImpl DRI;
-    DRI.p = reinterpret_cast<uintptr_t>(Symb.get()) | Symb.isDynamic();
+    DRI.p = reinterpret_cast<uintptr_t>(Symb.get()) |
+      static_cast<uintptr_t>(Symb.isDynamic());
     return DRI;
   }
 
