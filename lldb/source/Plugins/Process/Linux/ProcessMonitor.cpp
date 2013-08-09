@@ -1788,6 +1788,12 @@ ProcessMonitor::GetCrashReasonForSIGSEGV(const siginfo_t *info)
     default:
         assert(false && "unexpected si_code for SIGSEGV");
         break;
+    case SI_KERNEL:
+        // Linux will occasionally send spurious SI_KERNEL codes.
+        // (this is poorly documented in sigaction)
+        // One way to get this is via unaligned SIMD loads.
+        reason = ProcessMessage::eInvalidAddress; // for lack of anything better
+        break;
     case SEGV_MAPERR:
         reason = ProcessMessage::eInvalidAddress;
         break;
