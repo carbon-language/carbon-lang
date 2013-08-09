@@ -1050,8 +1050,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // template out-of-line.
     if (!SS.isInvalid() && !Invalid && !PrevClassTemplate) {
       Diag(NameLoc, TUK == TUK_Friend ? diag::err_friend_decl_does_not_match
-                                      : diag::err_member_def_does_not_match)
-        << Name << SemanticContext << SS.getRange();
+                                      : diag::err_member_decl_does_not_match)
+        << Name << SemanticContext << /*IsDefinition*/true << SS.getRange();
       Invalid = true;
     }
   }

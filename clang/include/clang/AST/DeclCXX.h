@@ -1323,6 +1323,11 @@ public:
     return dyn_cast<FunctionDecl>(getDeclContext());
   }
 
+  FunctionDecl *isLocalClass() {
+    return const_cast<FunctionDecl*>(
+        const_cast<const CXXRecordDecl*>(this)->isLocalClass());
+  }
+
   /// \brief Determine whether this dependent class is a current instantiation,
   /// when viewed from within the given context.
   bool isCurrentInstantiation(const DeclContext *CurContext) const;

@@ -26,5 +26,5 @@ namespace PR12297 {
   using namespace A::B;
 
   // FIXME: Adding '::PR12297::' is not needed as removing 'A::' is sufficient
-  T A::global(); // expected-error {{out-of-line definition of 'global' does not match any declaration in namespace 'PR12297::A'; did you mean '::PR12297::global'?}}
+  T A::global(); // expected-error {{out-of-line declaration of 'global' does not match any declaration in namespace 'PR12297::A'; did you mean '::PR12297::global'?}}
 }

@@ -209,29 +209,29 @@ namespace DR1402 {
   struct NoMove11 : NonTrivialMoveAssignVBase {}; // expected-note {{'const DR1402::NoMove11 &'}}
 
   struct Test {
-    friend NoMove1::NoMove1(NoMove1 &&); // expected-error {{no matching function}}
-    friend NoMove2::NoMove2(NoMove2 &&); // expected-error {{no matching function}}
-    friend NoMove3::NoMove3(NoMove3 &&); // expected-error {{no matching function}}
-    friend NoMove4::NoMove4(NoMove4 &&); // expected-error {{no matching function}}
-    friend NoMove5::NoMove5(NoMove5 &&); // expected-error {{no matching function}}
-    friend NoMove6::NoMove6(NoMove6 &&); // expected-error {{no matching function}}
-    friend NoMove7::NoMove7(NoMove7 &&); // expected-error {{no matching function}}
-    friend NoMove8::NoMove8(NoMove8 &&); // expected-error {{no matching function}}
+    friend NoMove1::NoMove1(NoMove1 &&); // expected-error {{does not match}}
+    friend NoMove2::NoMove2(NoMove2 &&); // expected-error {{does not match}}
+    friend NoMove3::NoMove3(NoMove3 &&); // expected-error {{does not match}}
+    friend NoMove4::NoMove4(NoMove4 &&); // expected-error {{does not match}}
+    friend NoMove5::NoMove5(NoMove5 &&); // expected-error {{does not match}}
+    friend NoMove6::NoMove6(NoMove6 &&); // expected-error {{does not match}}
+    friend NoMove7::NoMove7(NoMove7 &&); // expected-error {{does not match}}
+    friend NoMove8::NoMove8(NoMove8 &&); // expected-error {{does not match}}
     friend NoMove9::NoMove9(NoMove9 &&);
     friend NoMove10::NoMove10(NoMove10 &&);
     friend NoMove11::NoMove11(NoMove11 &&);
 
-    friend NoMove1 &NoMove1::operator=(NoMove1 &&); // expected-error {{no matching function}}
-    friend NoMove2 &NoMove2::operator=(NoMove2 &&); // expected-error {{no matching function}}
-    friend NoMove3 &NoMove3::operator=(NoMove3 &&); // expected-error {{no matching function}}
-    friend NoMove4 &NoMove4::operator=(NoMove4 &&); // expected-error {{no matching function}}
-    friend NoMove5 &NoMove5::operator=(NoMove5 &&); // expected-error {{no matching function}}
-    friend NoMove6 &NoMove6::operator=(NoMove6 &&); // expected-error {{no matching function}}
-    friend NoMove7 &NoMove7::operator=(NoMove7 &&); // expected-error {{no matching function}}
-    friend NoMove8 &NoMove8::operator=(NoMove8 &&); // expected-error {{no matching function}}
+    friend NoMove1 &NoMove1::operator=(NoMove1 &&); // expected-error {{does not match}}
+    friend NoMove2 &NoMove2::operator=(NoMove2 &&); // expected-error {{does not match}}
+    friend NoMove3 &NoMove3::operator=(NoMove3 &&); // expected-error {{does not match}}
+    friend NoMove4 &NoMove4::operator=(NoMove4 &&); // expected-error {{does not match}}
+    friend NoMove5 &NoMove5::operator=(NoMove5 &&); // expected-error {{does not match}}
+    friend NoMove6 &NoMove6::operator=(NoMove6 &&); // expected-error {{does not match}}
+    friend NoMove7 &NoMove7::operator=(NoMove7 &&); // expected-error {{does not match}}
+    friend NoMove8 &NoMove8::operator=(NoMove8 &&); // expected-error {{does not match}}
     friend NoMove9 &NoMove9::operator=(NoMove9 &&);
-    friend NoMove10 &NoMove10::operator=(NoMove10 &&); // expected-error {{no matching function}}
-    friend NoMove11 &NoMove11::operator=(NoMove11 &&); // expected-error {{no matching function}}
+    friend NoMove10 &NoMove10::operator=(NoMove10 &&); // expected-error {{does not match}}
+    friend NoMove11 &NoMove11::operator=(NoMove11 &&); // expected-error {{does not match}}
   };
 }
 

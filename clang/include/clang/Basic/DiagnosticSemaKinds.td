@@ -4304,17 +4304,18 @@ def err_member_redeclared_in_instantiation : Error<
 def err_member_name_of_class : Error<"member %0 has the same name as its class">;
 def err_member_def_undefined_record : Error<
   "out-of-line definition of %0 from class %1 without definition">;
-def err_member_def_does_not_match : Error<
-  "out-of-line definition of %0 does not match any declaration in %1">;
+def err_member_decl_does_not_match : Error<
+  "out-of-line %select{declaration|definition}2 of %0 "
+  "does not match any declaration in %1">;
 def err_friend_decl_with_def_arg_must_be_def : Error<
   "friend declaration specifying a default argument must be a definition">;
 def err_friend_decl_with_def_arg_redeclared : Error<
   "friend declaration specifying a default argument must be the only declaration">;
 def err_friend_decl_does_not_match : Error<
   "friend declaration of %0 does not match any declaration in %1">;
-def err_member_def_does_not_match_suggest : Error<
-  "out-of-line definition of %0 does not match any declaration in %1; "
-  "did you mean %2?">;
+def err_member_decl_does_not_match_suggest : Error<
+  "out-of-line %select{declaration|definition}3 of %0 "
+  "does not match any declaration in %1; did you mean %2?">;
 def err_member_def_does_not_match_ret_type : Error<
   "out-of-line definition of %q0 differs from the declaration in the return type">;
 def err_nonstatic_member_out_of_line : Error<
@@ -4338,6 +4339,10 @@ def note_member_def_close_const_match : Note<
   "it %select{is|is not}0 const qualified">;
 def note_member_def_close_param_match : Note<
   "type of %ordinal0 parameter of member declaration does not match definition"
+  "%diff{ ($ vs $)|}1,2">;
+def note_local_decl_close_match : Note<"local declaration nearly matches">;
+def note_local_decl_close_param_match : Note<
+  "type of %ordinal0 parameter of local declaration does not match definition"
   "%diff{ ($ vs $)|}1,2">;
 def err_typecheck_ivar_variable_size : Error<
   "instance variables must have a constant size">;

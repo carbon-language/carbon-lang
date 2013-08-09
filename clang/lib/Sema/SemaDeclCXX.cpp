@@ -11274,28 +11274,60 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
   LookupResult Previous(*this, NameInfo, LookupOrdinaryName,
                         ForRedeclaration);
 
-  // FIXME: there are different rules in local classes
-
-  // There are four cases here.
-  //   - There's no scope specifier, in which case we just go to the
-  //     appropriate scope and look for a function or function template
-  //     there as appropriate.
-  // Recover from invalid scope qualifiers as if they just weren't there.
-  if (SS.isInvalid() || !SS.isSet()) {
-    // C++0x [namespace.memdef]p3:
-    //   If the name in a friend declaration is neither qualified nor
-    //   a template-id and the declaration is a function or an
-    //   elaborated-type-specifier, the lookup to determine whether
-    //   the entity has been previously declared shall not consider
-    //   any scopes outside the innermost enclosing namespace.
-    // C++0x [class.friend]p11:
+  // There are five cases here.
+  //   - There's no scope specifier and we're in a local class. Only look
+  //     for functions declared in the immediately-enclosing block scope.
+  // We recover from invalid scope qualifiers as if they just weren't there.
+  FunctionDecl *FunctionContainingLocalClass = 0;
+  if ((SS.isInvalid() || !SS.isSet()) &&
+      (FunctionContainingLocalClass =
+           cast<CXXRecordDecl>(CurContext)->isLocalClass())) {
+    // C++11 [class.friend]p11:
     //   If a friend declaration appears in a local class and the name
     //   specified is an unqualified name, a prior declaration is
     //   looked up without considering scopes that are outside the
     //   innermost enclosing non-class scope. For a friend function
     //   declaration, if there is no prior declaration, the program is
     //   ill-formed.
-    bool isLocal = cast<CXXRecordDecl>(CurContext)->isLocalClass();
+
+    // Find the innermost enclosing non-class scope. This is the block
+    // scope containing the local class definition (or for a nested class,
+    // the outer local class).
+    DCScope = S->getFnParent();
+
+    // Look up the function name in the scope.
+    Previous.clear(LookupLocalFriendName);
+    LookupName(Previous, S, /*AllowBuiltinCreation*/false);
+
+    if (!Previous.empty()) {
+      // All possible previous declarations must have the same context:
+      // either they were declared at block scope or they are members of
+      // one of the enclosing local classes.
+      DC = Previous.getRepresentativeDecl()->getDeclContext();
+    } else {
+      // This is ill-formed, but provide the context that we would have
+      // declared the function in, if we were permitted to, for error recovery.
+      DC = FunctionContainingLocalClass;
+    }
+
+    // C++ [class.friend]p6:
+    //   A function can be defined in a friend declaration of a class if and
+    //   only if the class is a non-local class (9.8), the function name is
+    //   unqualified, and the function has namespace scope.
+    if (D.isFunctionDefinition()) {
+      Diag(NameInfo.getBeginLoc(), diag::err_friend_def_in_local_class);
+    }
+
+  //   - There's no scope specifier, in which case we just go to the
+  //     appropriate scope and look for a function or function template
+  //     there as appropriate.
+  } else if (SS.isInvalid() || !SS.isSet()) {
+    // C++11 [namespace.memdef]p3:
+    //   If the name in a friend declaration is neither qualified nor
+    //   a template-id and the declaration is a function or an
+    //   elaborated-type-specifier, the lookup to determine whether
+    //   the entity has been previously declared shall not consider
+    //   any scopes outside the innermost enclosing namespace.
     bool isTemplateId = D.getName().getKind() == UnqualifiedId::IK_TemplateId;
 
     // Find the appropriate context according to the above.
@@ -11318,10 +11350,6 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     while (true) {
       LookupQualifiedName(Previous, LookupDC);
 
-      // TODO: decide what we think about using declarations.
-      if (isLocal)
-        break;
-
       if (!Previous.empty()) {
         DC = LookupDC;
         break;
@@ -11336,15 +11364,7 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     }
 
     DCScope = getScopeForDeclContext(S, DC);
-    
-    // C++ [class.friend]p6:
-    //   A function can be defined in a friend declaration of a class if and 
-    //   only if the class is a non-local class (9.8), the function name is
-    //   unqualified, and the function has namespace scope.
-    if (isLocal && D.isFunctionDefinition()) {
-      Diag(NameInfo.getBeginLoc(), diag::err_friend_def_in_local_class);
-    }
-    
+
   //   - There's a non-dependent scope specifier, in which case we
   //     compute it and do a previous lookup there for a function
   //     or function template.
@@ -11436,14 +11456,17 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     FakeDCScope.setEntity(DC);
     DCScope = &FakeDCScope;
   }
-  
+
   bool AddToScope = true;
   NamedDecl *ND = ActOnFunctionDeclarator(DCScope, D, DC, TInfo, Previous,
                                           TemplateParams, AddToScope);
   if (!ND) return 0;
 
-  assert(ND->getDeclContext() == DC);
   assert(ND->getLexicalDeclContext() == CurContext);
+
+  // If we performed typo correction, we might have added a scope specifier
+  // and changed the decl context.
+  DC = ND->getDeclContext();
 
   // Add the function declaration to the appropriate lookup tables,
   // adjusting the redeclarations list as necessary.  We don't
