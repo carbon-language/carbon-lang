@@ -154,7 +154,7 @@ public:
   virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
                                          const MCSymbol *Label);
 
-  virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
+  virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
 
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol);
@@ -436,7 +436,7 @@ void MCAsmStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
 }
 
 
-void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
+bool MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         MCSymbolAttr Attribute) {
   switch (Attribute) {
   case MCSA_Invalid: llvm_unreachable("Invalid symbol attribute");
@@ -447,11 +447,12 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_ELF_TypeCommon:      /// .type _foo, STT_COMMON  # aka @common
   case MCSA_ELF_TypeNoType:      /// .type _foo, STT_NOTYPE  # aka @notype
   case MCSA_ELF_TypeGnuUniqueObject:  /// .type _foo, @gnu_unique_object
-    assert(MAI->hasDotTypeDotSizeDirective() && "Symbol Attr not supported");
+    if (!MAI->hasDotTypeDotSizeDirective())
+      return false; // Symbol attribute not supported
     OS << "\t.type\t" << *Symbol << ','
        << ((MAI->getCommentString()[0] != '@') ? '@' : '%');
     switch (Attribute) {
-    default: llvm_unreachable("Unknown ELF .type");
+    default: return false;
     case MCSA_ELF_TypeFunction:    OS << "function"; break;
     case MCSA_ELF_TypeIndFunction: OS << "gnu_indirect_function"; break;
     case MCSA_ELF_TypeObject:      OS << "object"; break;
@@ -461,7 +462,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     case MCSA_ELF_TypeGnuUniqueObject: OS << "gnu_unique_object"; break;
     }
     EmitEOL();
-    return;
+    return true;
   case MCSA_Global: // .globl/.global
     OS << MAI->getGlobalDirective();
     FlagMap[Symbol] |= EHGlobal;
@@ -491,6 +492,8 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
   OS << *Symbol;
   EmitEOL();
+
+  return true;
 }
 
 void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {

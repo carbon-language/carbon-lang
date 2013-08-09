@@ -3375,7 +3375,8 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCSymbolAttr Attr) {
       if (Sym->isTemporary())
         return Error(Loc, "non-local symbol required in directive");
 
-      getStreamer().EmitSymbolAttribute(Sym, Attr);
+      if (!getStreamer().EmitSymbolAttribute(Sym, Attr))
+        return Error(Loc, "unable to emit symbol attribute");
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;

@@ -51,7 +51,7 @@ public:
   virtual void EmitLinkerOptions(ArrayRef<std::string> Options);
   virtual void EmitDataRegion(MCDataRegionType Kind);
   virtual void EmitThumbFunc(MCSymbol *Func);
-  virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
+  virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
@@ -217,7 +217,7 @@ void MCMachOStreamer::EmitThumbFunc(MCSymbol *Symbol) {
   SD.setFlags(SD.getFlags() | SF_ThumbFunc);
 }
 
-void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
+bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           MCSymbolAttr Attribute) {
   // Indirect symbols are handled differently, to match how 'as' handles
   // them. This makes writing matching .o files easier.
@@ -228,7 +228,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     ISD.Symbol = Symbol;
     ISD.SectionData = getCurrentSectionData();
     getAssembler().getIndirectSymbols().push_back(ISD);
-    return;
+    return true;
   }
 
   // Adding a symbol attribute always introduces the symbol, note that an
@@ -257,7 +257,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_Protected:
   case MCSA_Weak:
   case MCSA_Local:
-    llvm_unreachable("Invalid symbol attribute for Mach-O!");
+    return false;
 
   case MCSA_Global:
     SD.setExternal(true);
@@ -309,6 +309,8 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     SD.setFlags(SD.getFlags() | SF_WeakDefinition | SF_WeakReference);
     break;
   }
+
+  return true;
 }
 
 void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {

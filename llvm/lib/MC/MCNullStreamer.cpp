@@ -52,7 +52,9 @@ namespace {
                                           const MCSymbol *Label,
                                           unsigned PointerSize) {}
 
-    virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){}
+    virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute){
+      return true;
+    }
 
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
 

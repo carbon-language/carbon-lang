@@ -738,9 +738,10 @@ namespace {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);
     }
-    virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
+    virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
       if (Attribute == MCSA_Global)
         markGlobal(*Symbol);
+      return true;
     }
     virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size , unsigned ByteAlignment) {

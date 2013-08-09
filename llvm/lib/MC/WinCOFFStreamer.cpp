@@ -55,7 +55,7 @@ public:
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
-  virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
+  virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void BeginCOFFSymbolDef(MCSymbol const *Symbol);
   virtual void EmitCOFFSymbolStorageClass(int StorageClass);
@@ -201,7 +201,7 @@ void WinCOFFStreamer::EmitThumbFunc(MCSymbol *Func) {
   llvm_unreachable("not implemented");
 }
 
-void WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
+bool WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                           MCSymbolAttr Attribute) {
   assert(Symbol && "Symbol must be non-null!");
   assert((Symbol->isInSection()
@@ -221,8 +221,10 @@ void WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   default:
-    llvm_unreachable("unsupported attribute");
+    return false;
   }
+
+  return true;
 }
 
 void WinCOFFStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {

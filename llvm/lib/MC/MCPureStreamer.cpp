@@ -51,8 +51,9 @@ public:
   virtual void FinishImpl();
 
 
-  virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
+  virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
     report_fatal_error("unsupported directive in pure streamer");
+    return false;
   }
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {
     report_fatal_error("unsupported directive in pure streamer");

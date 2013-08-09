@@ -323,7 +323,7 @@ namespace llvm {
     virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) = 0;
 
     /// EmitSymbolAttribute - Add the given @p Attribute to @p Symbol.
-    virtual void EmitSymbolAttribute(MCSymbol *Symbol,
+    virtual bool EmitSymbolAttribute(MCSymbol *Symbol,
                                      MCSymbolAttr Attribute) = 0;
 
     /// EmitSymbolDesc - Set the @p DescValue for the @p Symbol.
