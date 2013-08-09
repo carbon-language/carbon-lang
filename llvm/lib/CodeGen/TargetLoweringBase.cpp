@@ -687,6 +687,9 @@ void TargetLoweringBase::initActions() {
     // These operations default to expand.
     setOperationAction(ISD::FGETSIGN, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::CONCAT_VECTORS, (MVT::SimpleValueType)VT, Expand);
+
+    // These library functions default to expand.
+    setOperationAction(ISD::FROUND, (MVT::SimpleValueType)VT, Expand);
   }
 
   // Most targets ignore the @llvm.prefetch intrinsic.
@@ -711,7 +714,6 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f16, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f16, Expand);
   setOperationAction(ISD::FRINT,  MVT::f16, Expand);
-  setOperationAction(ISD::FROUND, MVT::f16, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f16, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f32, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f32, Expand);
@@ -722,7 +724,6 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f32, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f32, Expand);
   setOperationAction(ISD::FRINT,  MVT::f32, Expand);
-  setOperationAction(ISD::FROUND, MVT::f32, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f32, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f64, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f64, Expand);
@@ -733,7 +734,6 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f64, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f64, Expand);
   setOperationAction(ISD::FRINT,  MVT::f64, Expand);
-  setOperationAction(ISD::FROUND, MVT::f64, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
   setOperationAction(ISD::FLOG ,  MVT::f128, Expand);
   setOperationAction(ISD::FLOG2,  MVT::f128, Expand);
@@ -744,7 +744,6 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::FNEARBYINT, MVT::f128, Expand);
   setOperationAction(ISD::FCEIL,  MVT::f128, Expand);
   setOperationAction(ISD::FRINT,  MVT::f128, Expand);
-  setOperationAction(ISD::FROUND, MVT::f128, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f128, Expand);
 
   // Default ISD::TRAP to expand (which turns it into abort).
