@@ -40,21 +40,15 @@ namespace {
 ///
 /// Checks for the init, dealloc, and any other functions that might be allowed
 /// to perform direct instance variable assignment based on their name.
-struct MethodFilter {
-  virtual ~MethodFilter() {}
-  virtual bool operator()(ObjCMethodDecl *M) {
-    if (M->getMethodFamily() == OMF_init ||
-        M->getMethodFamily() == OMF_dealloc ||
-        M->getMethodFamily() == OMF_copy ||
-        M->getMethodFamily() == OMF_mutableCopy ||
-        M->getSelector().getNameForSlot(0).find("init") != StringRef::npos ||
-        M->getSelector().getNameForSlot(0).find("Init") != StringRef::npos)
-      return true;
-    return false;
-  }
-};
-
-static MethodFilter DefaultMethodFilter;
+static bool DefaultMethodFilter(const ObjCMethodDecl *M) {
+  if (M->getMethodFamily() == OMF_init || M->getMethodFamily() == OMF_dealloc ||
+      M->getMethodFamily() == OMF_copy ||
+      M->getMethodFamily() == OMF_mutableCopy ||
+      M->getSelector().getNameForSlot(0).find("init") != StringRef::npos ||
+      M->getSelector().getNameForSlot(0).find("Init") != StringRef::npos)
+    return true;
+  return false;
+}
 
 class DirectIvarAssignment :
   public Checker<check::ASTDecl<ObjCImplementationDecl> > {
@@ -89,7 +83,7 @@ class DirectIvarAssignment :
   };
 
 public:
-  MethodFilter *ShouldSkipMethod;
+  bool (*ShouldSkipMethod)(const ObjCMethodDecl *);
 
   DirectIvarAssignment() : ShouldSkipMethod(&DefaultMethodFilter) {}
 
@@ -230,22 +224,16 @@ void ento::registerDirectIvarAssignment(CheckerManager &mgr) {
 
 // Register the checker that checks for direct accesses in functions annotated
 // with __attribute__((annotate("objc_no_direct_instance_variable_assignment"))).
-namespace {
-struct InvalidatorMethodFilter : MethodFilter {
-  virtual ~InvalidatorMethodFilter() {}
-  virtual bool operator()(ObjCMethodDecl *M) {
-    for (specific_attr_iterator<AnnotateAttr>
-         AI = M->specific_attr_begin<AnnotateAttr>(),
-         AE = M->specific_attr_end<AnnotateAttr>(); AI != AE; ++AI) {
-      const AnnotateAttr *Ann = *AI;
-      if (Ann->getAnnotation() == "objc_no_direct_instance_variable_assignment")
-        return false;
-    }
-    return true;
+static bool AttrFilter(const ObjCMethodDecl *M) {
+  for (specific_attr_iterator<AnnotateAttr>
+           AI = M->specific_attr_begin<AnnotateAttr>(),
+           AE = M->specific_attr_end<AnnotateAttr>();
+       AI != AE; ++AI) {
+    const AnnotateAttr *Ann = *AI;
+    if (Ann->getAnnotation() == "objc_no_direct_instance_variable_assignment")
+      return false;
   }
-};
-
-InvalidatorMethodFilter AttrFilter;
+  return true;
 }
 
 void ento::registerDirectIvarAssignmentForAnnotatedFunctions(
