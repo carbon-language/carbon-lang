@@ -51,7 +51,7 @@ define <16 x i16> @test7(<16 x i16> %A, <16 x i16> %B) nounwind {
 
 define <32 x i8> @test8(<32 x i8> %A, <32 x i8> %B) nounwind {
 ; CHECK-LABEL: test8:
-; CHECK: palignr $5
+; CHECK: vpalignr $5
   %C = shufflevector <32 x i8> %A, <32 x i8> %B, <32 x i32> <i32 5, i32 6, i32 7, i32 undef, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 34, i32 35, i32 36, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 48, i32 49, i32 50, i32 51, i32 52>
   ret <32 x i8> %C
 }
