@@ -1059,7 +1059,8 @@ llvm::Constant *CodeGenModule::GetAddrOfUuidDescriptor(
     else
       Uuid = "00000000-0000-0000-0000-000000000000";
   }
-  std::string Name = "__uuid_" + Uuid.str();
+  std::string Name = "_GUID_" + Uuid.lower();
+  std::replace(Name.begin(), Name.end(), '-', '_');
 
   // Look for an existing global.
   if (llvm::GlobalVariable *GV = getModule().getNamedGlobal(Name))
@@ -1082,7 +1083,7 @@ llvm::Constant *CodeGenModule::GetAddrOfUuidDescriptor(
   }
 
   llvm::GlobalVariable *GV = new llvm::GlobalVariable(getModule(), GuidType,
-      /*isConstant=*/true, llvm::GlobalValue::PrivateLinkage, Init, Name);
+      /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage, Init, Name);
   GV->setUnnamedAddr(true);
   return GV;
 }
