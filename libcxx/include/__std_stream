@@ -233,6 +233,7 @@ public:
 
 protected:
     virtual int_type overflow (int_type __c = traits_type::eof());
+    virtual streamsize xsputn(const char_type* __s, streamsize __n);
     virtual int sync();
     virtual void imbue(const locale& __loc);
 
@@ -306,6 +307,19 @@ __stdoutbuf<_CharT>::overflow(int_type __c)
         }
     }
     return traits_type::not_eof(__c);
+}
+
+template <class _CharT>
+streamsize
+__stdoutbuf<_CharT>::xsputn(const char_type* __s, streamsize __n)
+{
+    if (__always_noconv_)
+        return fwrite(__s, sizeof(char_type), __n, __file_);
+    streamsize __i = 0;
+    for (; __i < __n; ++__i, ++__s)
+        if (overflow(traits_type::to_int_type(*__s)) == traits_type::eof())
+            break;
+    return __i;
 }
 
 template <class _CharT>
