@@ -638,8 +638,14 @@ getARMBLXTargetOpValue(const MCInst &MI, unsigned OpIdx,
 uint32_t ARMMCCodeEmitter::
 getUnconditionalBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
                        SmallVectorImpl<MCFixup> &Fixups) const {
-  unsigned Val =
-    ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_uncondbranch, Fixups);
+  unsigned Val = 0;
+  const MCOperand MO = MI.getOperand(OpIdx);
+    
+  if(MO.isExpr())
+    Val = ::getBranchTargetOpValue(MI, OpIdx, ARM::fixup_t2_uncondbranch, Fixups);
+  else 
+    Val = MO.getImm() >> 1;
+
   bool I  = (Val & 0x800000);
   bool J1 = (Val & 0x400000);
   bool J2 = (Val & 0x200000);

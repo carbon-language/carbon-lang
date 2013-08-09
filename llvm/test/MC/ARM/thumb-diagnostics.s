@@ -138,7 +138,26 @@ error: invalid operand for instruction
 @ CHECK-ERRORS: error: source register must be the same as destination
 @ CHECK-ERRORS:         add r2, sp, ip
 @ CHECK-ERRORS:                     ^
- 
+
+
+@------------------------------------------------------------------------------
+@ WFE/WFI/YIELD - out of range immediates for Thumb1 branches
+@------------------------------------------------------------------------------
+
+        beq    #-258
+        bne    #256
+        bgt    #13
+        b      #-1048578
+        b      #1048576
+        b      #10323
+
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+
 @------------------------------------------------------------------------------
 @ WFE/WFI/YIELD - are not supported pre v6T2
 @------------------------------------------------------------------------------

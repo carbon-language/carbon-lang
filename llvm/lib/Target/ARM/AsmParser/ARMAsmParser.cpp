@@ -221,6 +221,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   // Asm Match Converter Methods
   void cvtThumbMultiply(MCInst &Inst,
                         const SmallVectorImpl<MCParsedAsmOperand*> &);
+  void cvtThumbBranches(MCInst &Inst,
+                        const SmallVectorImpl<MCParsedAsmOperand*> &);
+                        
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
   bool processInstruction(MCInst &Inst,
@@ -601,7 +604,7 @@ public:
   template<unsigned width, unsigned scale>
   bool isUnsignedOffset() const {
     if (!isImm()) return false;
-    if (dyn_cast<MCSymbolRefExpr>(Imm.Val)) return true;
+    if (isa<MCSymbolRefExpr>(Imm.Val)) return true;
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
       int64_t Val = CE->getValue();
       int64_t Align = 1LL << scale;
@@ -610,6 +613,22 @@ public:
     }
     return false;
   }
+  // checks whether this operand is an signed offset which fits is a field
+  // of specified width and scaled by a specific number of bits
+  template<unsigned width, unsigned scale>
+  bool isSignedOffset() const {
+    if (!isImm()) return false;
+    if (isa<MCSymbolRefExpr>(Imm.Val)) return true;
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
+      int64_t Val = CE->getValue();
+      int64_t Align = 1LL << scale;
+      int64_t Max = Align * ((1LL << (width-1)) - 1);
+      int64_t Min = -Align * (1LL << (width-1));
+      return ((Val % Align) == 0) && (Val >= Min) && (Val <= Max);
+    }
+    return false;
+  }
+
   // checks whether this operand is a memory operand computed as an offset
   // applied to PC. the offset may have 8 bits of magnitude and is represented
   // with two bits of shift. textually it may be either [pc, #imm], #imm or 
@@ -4102,6 +4121,65 @@ cvtThumbMultiply(MCInst &Inst,
   ((ARMOperand*)Operands[2])->addCondCodeOperands(Inst, 2);
 }
 
+void ARMAsmParser::
+cvtThumbBranches(MCInst &Inst,
+           const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  int CondOp = -1, ImmOp = -1;
+  switch(Inst.getOpcode()) {
+    case ARM::tB:
+    case ARM::tBcc:  CondOp = 1; ImmOp = 2; break;
+
+    case ARM::t2B:
+    case ARM::t2Bcc: CondOp = 1; ImmOp = 3; break;
+
+    default: llvm_unreachable("Unexpected instruction in cvtThumbBranches");
+  }
+  // first decide whether or not the branch should be conditional
+  // by looking at it's location relative to an IT block
+  if(inITBlock()) {
+    // inside an IT block we cannot have any conditional branches. any 
+    // such instructions needs to be converted to unconditional form
+    switch(Inst.getOpcode()) {
+      case ARM::tBcc: Inst.setOpcode(ARM::tB); break;
+      case ARM::t2Bcc: Inst.setOpcode(ARM::t2B); break;
+    }
+  } else {
+    // outside IT blocks we can only have unconditional branches with AL
+    // condition code or conditional branches with non-AL condition code
+    unsigned Cond = static_cast<ARMOperand*>(Operands[CondOp])->getCondCode();
+    switch(Inst.getOpcode()) {
+      case ARM::tB:
+      case ARM::tBcc: 
+        Inst.setOpcode(Cond == ARMCC::AL ? ARM::tB : ARM::tBcc); 
+        break;
+      case ARM::t2B:
+      case ARM::t2Bcc: 
+        Inst.setOpcode(Cond == ARMCC::AL ? ARM::t2B : ARM::t2Bcc);
+        break;
+    }
+  }
+  
+  // now decide on encoding size based on branch target range
+  switch(Inst.getOpcode()) {
+    // classify tB as either t2B or t1B based on range of immediate operand
+    case ARM::tB: {
+      ARMOperand* op = static_cast<ARMOperand*>(Operands[ImmOp]);
+      if(!op->isSignedOffset<11, 1>() && isThumbTwo()) 
+        Inst.setOpcode(ARM::t2B);
+      break;
+    }
+    // classify tBcc as either t2Bcc or t1Bcc based on range of immediate operand
+    case ARM::tBcc: {
+      ARMOperand* op = static_cast<ARMOperand*>(Operands[ImmOp]);
+      if(!op->isSignedOffset<8, 1>() && isThumbTwo())
+        Inst.setOpcode(ARM::t2Bcc);
+      break;
+    }
+  }
+  ((ARMOperand*)Operands[ImmOp])->addImmOperands(Inst, 1);
+  ((ARMOperand*)Operands[CondOp])->addCondCodeOperands(Inst, 2);
+}
+
 /// Parse an ARM memory expression, return false if successful else return true
 /// or an error.  The first token must be a '[' when called.
 bool ARMAsmParser::
@@ -5216,6 +5294,7 @@ validateInstruction(MCInst &Inst,
                     const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
   SMLoc Loc = Operands[0]->getStartLoc();
+
   // Check the IT block state first.
   // NOTE: BKPT instruction has the interesting property of being
   // allowed in IT blocks, but not being predicable.  It just always
@@ -5247,8 +5326,8 @@ validateInstruction(MCInst &Inst,
   // Check for non-'al' condition codes outside of the IT block.
   } else if (isThumbTwo() && MCID.isPredicable() &&
              Inst.getOperand(MCID.findFirstPredOperandIdx()).getImm() !=
-             ARMCC::AL && Inst.getOpcode() != ARM::tB &&
-             Inst.getOpcode() != ARM::t2B)
+             ARMCC::AL && Inst.getOpcode() != ARM::tBcc &&
+             Inst.getOpcode() != ARM::t2Bcc)
     return Error(Loc, "predicated instructions must be in IT block");
 
   switch (Inst.getOpcode()) {
@@ -5381,6 +5460,28 @@ validateInstruction(MCInst &Inst,
       return Error(Operands[4]->getStartLoc(),
                    "source register must be the same as destination");
     }
+    break;
+  }
+  // final range checking for Thumb unconditional branch instructions
+  case ARM::tB:
+    if(!(static_cast<ARMOperand*>(Operands[2]))->isSignedOffset<11, 1>())
+      return Error(Operands[2]->getStartLoc(), "Branch target out of range");
+    break;
+  case ARM::t2B: {
+    int op = (Operands[2]->isImm()) ? 2 : 3;
+    if(!(static_cast<ARMOperand*>(Operands[op]))->isSignedOffset<24, 1>())
+      return Error(Operands[op]->getStartLoc(), "Branch target out of range");
+    break;
+  }
+  // final range checking for Thumb conditional branch instructions
+  case ARM::tBcc:
+    if(!(static_cast<ARMOperand*>(Operands[2]))->isSignedOffset<8, 1>())
+      return Error(Operands[2]->getStartLoc(), "Branch target out of range");
+    break;
+  case ARM::t2Bcc: {
+    int op = (Operands[2]->isImm()) ? 2 : 3;
+    if(!(static_cast<ARMOperand*>(Operands[op]))->isSignedOffset<20, 1>())
+      return Error(Operands[op]->getStartLoc(), "Branch target out of range");
     break;
   }
   }

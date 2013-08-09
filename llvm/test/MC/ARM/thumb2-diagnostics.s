@@ -51,3 +51,22 @@
         itt eq
         bkpteq #1
 @ CHECK-ERRORS: error: instruction 'bkpt' is not predicable, but condition code specified
+
+        nopeq
+        nopeq
+
+@ out of range operands for Thumb2 targets
+
+        beq.w  #-1048578
+        bne.w  #1048576
+        blt.w  #1013411
+        b.w    #-16777218
+        b.w    #16777216
+        b.w    #1592313
+
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range
+@ CHECK-ERRORS: error: Branch target out of range

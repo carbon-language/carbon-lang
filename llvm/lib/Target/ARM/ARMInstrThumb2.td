@@ -3336,13 +3336,14 @@ def t2B   : T2I<(outs), (ins uncondbrtarget:$target), IIC_Br,
   let Inst{12} = 1;
 
   bits<24> target;
-  let Inst{26} = target{19};
-  let Inst{11} = target{18};
-  let Inst{13} = target{17};
+  let Inst{26} = target{23};
+  let Inst{13} = target{22};
+  let Inst{11} = target{21};
   let Inst{25-16} = target{20-11};
   let Inst{10-0} = target{10-0};
   let DecoderMethod = "DecodeT2BInstruction";
-}
+  let AsmMatchConverter = "cvtThumbBranches"; 
+} 
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT : t2PseudoInst<(outs),
@@ -3410,6 +3411,7 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{10-0} = target{11-1};
 
   let DecoderMethod = "DecodeThumb2BCCInstruction";
+  let AsmMatchConverter = "cvtThumbBranches";
 }
 
 // Tail calls. The IOS version of thumb tail calls uses a t2 branch, so

@@ -491,7 +491,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
              T1Encoding<{1,1,1,0,0,?}>, Sched<[WriteBr]> {
     bits<11> target;
     let Inst{10-0} = target;
-  }
+    let AsmMatchConverter = "cvtThumbBranches";
+ }
 
   // Far jump
   // Just a pseudo for a tBL instruction. Needed to let regalloc know about
@@ -521,6 +522,7 @@ let isBranch = 1, isTerminator = 1 in
   bits<8> target;
   let Inst{11-8} = p;
   let Inst{7-0} = target;
+  let AsmMatchConverter = "cvtThumbBranches";
 }
 
 
