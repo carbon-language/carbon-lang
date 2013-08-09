@@ -422,7 +422,7 @@ output format of the diagnostics that it generates.
            map<
              [...],
              map<
-               [float != float],
+               [float != double],
                [...]>>>
 
 .. _cl_diag_warning_groups:
