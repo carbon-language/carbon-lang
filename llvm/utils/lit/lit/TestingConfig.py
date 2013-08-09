@@ -9,7 +9,7 @@ class TestingConfig:
     """
 
     @staticmethod
-    def frompath(path, config, litConfig, mustExist):
+    def frompath(path, config, litConfig, mustExist=True):
         """
         frompath(path, config, litConfig, mustExist) -> TestingConfig
 
@@ -112,7 +112,7 @@ class TestingConfig:
         self.available_features = set(available_features)
         self.pipefail = pipefail
 
-    def clone(self, path):
+    def clone(self):
         # FIXME: Chain implementations?
         #
         # FIXME: Allow extra parameters?

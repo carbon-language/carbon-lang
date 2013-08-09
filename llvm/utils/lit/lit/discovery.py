@@ -78,13 +78,20 @@ def getLocalConfig(ts, path_in_suite, litConfig, cache):
         else:
             parent = search(path_in_suite[:-1])
 
-        # Load the local configuration.
+        # Check if there is a local configuration file.
         source_path = ts.getSourcePath(path_in_suite)
         cfgpath = os.path.join(source_path, litConfig.local_config_name)
+
+        # If not, just reuse the parent config.
+        if not os.path.exists(cfgpath):
+            return parent
+
+        # Otherwise, copy the current config and load the local configuration
+        # file into it.
+        config = parent.clone()
         if litConfig.debug:
             litConfig.note('loading local config %r' % cfgpath)
-        return TestingConfig.frompath(cfgpath, parent.clone(cfgpath), litConfig,
-                                      mustExist = False)
+        return TestingConfig.frompath(cfgpath, config, litConfig)
 
     def search(path_in_suite):
         key = (ts, path_in_suite)
