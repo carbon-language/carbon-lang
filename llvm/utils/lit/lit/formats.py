@@ -4,7 +4,7 @@ import sys
 
 import lit.Test
 import lit.TestRunner
-import lit.Util
+import lit.util
 
 kIsWindows = sys.platform in ['win32', 'cygwin']
 
@@ -28,7 +28,7 @@ class GoogleTest(object):
           localConfig: TestingConfig instance"""
 
         try:
-            lines = lit.Util.capture([path, '--gtest_list_tests'],
+            lines = lit.util.capture([path, '--gtest_list_tests'],
                                      env=localConfig.environment)
             lines = lines.decode('ascii')
             if kIsWindows:

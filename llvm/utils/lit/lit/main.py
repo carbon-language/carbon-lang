@@ -12,7 +12,7 @@ import math, os, platform, random, re, sys, time, threading, traceback
 import lit.ProgressBar
 import lit.LitConfig
 import lit.Test
-import lit.Util
+import lit.util
 
 import lit.discovery
 
@@ -255,7 +255,7 @@ def main(builtinParameters = {}):
 # I haven't seen this bug occur with 2.5.2 and later, so only enable multiple
 # threads by default there.
        if sys.hexversion >= 0x2050200:
-               opts.numThreads = lit.Util.detectCPUs()
+               opts.numThreads = lit.util.detectCPUs()
        else:
                opts.numThreads = 1
 
@@ -417,7 +417,7 @@ def main(builtinParameters = {}):
         byTime = list(times.items())
         byTime.sort(key = lambda item: item[1])
         if byTime:
-            lit.Util.printHistogram(byTime, title='Tests')
+            lit.util.printHistogram(byTime, title='Tests')
 
     for name,code in (('Expected Passes    ', lit.Test.PASS),
                       ('Expected Failures  ', lit.Test.XFAIL),

@@ -4,9 +4,9 @@ import os
 import sys
 
 import lit.Test
-import lit.TestFormats
+import lit.formats
 import lit.TestingConfig
-import lit.Util
+import lit.util
 
 class LitConfig:
     """LitConfig - Configuration data for a 'lit' test runner instance, shared
@@ -22,10 +22,10 @@ class LitConfig:
     Test = lit.Test
 
     # Provide access to built-in formats.
-    formats = lit.TestFormats
+    formats = lit.formats
 
     # Provide access to built-in utility functions.
-    util = lit.Util
+    util = lit.util
 
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
@@ -80,7 +80,7 @@ class LitConfig:
         if self.bashPath is not None:
             return self.bashPath
 
-        self.bashPath = lit.Util.which('bash', os.pathsep.join(self.path))
+        self.bashPath = lit.util.which('bash', os.pathsep.join(self.path))
         if self.bashPath is None:
             # Check some known paths.
             for path in ('/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash'):
@@ -96,13 +96,13 @@ class LitConfig:
 
     def getToolsPath(self, dir, paths, tools):
         if dir is not None and os.path.isabs(dir) and os.path.isdir(dir):
-            if not lit.Util.checkToolsPath(dir, tools):
+            if not lit.util.checkToolsPath(dir, tools):
                 return None
         else:
-            dir = lit.Util.whichTools(tools, paths)
+            dir = lit.util.whichTools(tools, paths)
 
         # bash
-        self.bashPath = lit.Util.which('bash', dir)
+        self.bashPath = lit.util.which('bash', dir)
         if self.bashPath is None:
             self.note("Unable to find 'bash.exe'.")
             self.bashPath = ''

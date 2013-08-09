@@ -10,7 +10,7 @@ except ImportError:
 
 import lit.ShUtil as ShUtil
 import lit.Test as Test
-import lit.Util as Util
+import lit.util
 
 class InternalShellError(Exception):
     def __init__(self, command, message):
@@ -154,7 +154,7 @@ def executeShCmd(cmd, cfg, cwd, results):
 
         # Resolve the executable path ourselves.
         args = list(j.args)
-        args[0] = Util.which(args[0], cfg.environment['PATH'])
+        args[0] = lit.util.which(args[0], cfg.environment['PATH'])
         if not args[0]:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
@@ -472,7 +472,7 @@ def executeShTest(test, litConfig, useExternalSh,
         return (Test.PASS, '')
 
     # Create the output directory if it does not already exist.
-    Util.mkdir_p(os.path.dirname(tmpBase))
+    lit.util.mkdir_p(os.path.dirname(tmpBase))
 
     if useExternalSh:
         res = executeScript(test, litConfig, tmpBase, script, execdir)
