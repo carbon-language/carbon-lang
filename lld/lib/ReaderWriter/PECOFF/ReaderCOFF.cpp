@@ -85,9 +85,20 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
   switch (auxsym->Selection) {
     case llvm::COFF::IMAGE_COMDAT_SELECT_NODUPLICATES:
       return DefinedAtom::mergeNo;
-    default:
-      // FIXME: COFF supports more mergable symbol attributes.
+    case llvm::COFF::IMAGE_COMDAT_SELECT_ANY:
       return DefinedAtom::mergeAsWeakAndAddressUsed;
+    case llvm::COFF::IMAGE_COMDAT_SELECT_SAME_SIZE:
+    case llvm::COFF::IMAGE_COMDAT_SELECT_EXACT_MATCH:
+    case llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE:
+    case llvm::COFF::IMAGE_COMDAT_SELECT_LARGEST:
+    case llvm::COFF::IMAGE_COMDAT_SELECT_NEWEST:
+      // FIXME: These attributes has more complicated semantics than the regular
+      // weak symbol. These are mapped to mergeAsWeakAndAddressUsed for now
+      // because the core linker does not support them yet. We eventually have
+      // to implement them for full COFF support.
+      return DefinedAtom::mergeAsWeakAndAddressUsed;
+    default:
+      llvm_unreachable("Unknown merge type");
   }
 }
 
