@@ -25,16 +25,23 @@ struct CostTblEntry {
   unsigned Cost;
 };
 
-/// Find in cost table, TypeTy must be comparable by ==
-template <class TypeTy>
-int CostTableLookup(const CostTblEntry<TypeTy> *Tbl,
-                    unsigned len, int ISD, TypeTy Ty) {
+/// Find in cost table, TypeTy must be comparable to CompareTy by ==
+template <class TypeTy, class CompareTy>
+int CostTableLookup(const CostTblEntry<TypeTy> *Tbl, unsigned len, int ISD,
+                    CompareTy Ty) {
   for (unsigned int i = 0; i < len; ++i)
-    if (Tbl[i].ISD == ISD && Tbl[i].Type == Ty)
+    if (ISD == Tbl[i].ISD && Ty == Tbl[i].Type)
       return i;
 
   // Could not find an entry.
   return -1;
+}
+
+/// Find in cost table, TypeTy must be comparable to CompareTy by ==
+template <class TypeTy, class CompareTy, unsigned N>
+int CostTableLookup(const CostTblEntry<TypeTy>(&Tbl)[N], int ISD,
+                    CompareTy Ty) {
+  return CostTableLookup(Tbl, N, ISD, Ty);
 }
 
 /// Type Conversion Cost Table
@@ -46,16 +53,26 @@ struct TypeConversionCostTblEntry {
   unsigned Cost;
 };
 
-/// Find in type conversion cost table, TypeTy must be comparable by ==
-template <class TypeTy>
+/// Find in type conversion cost table, TypeTy must be comparable to CompareTy
+/// by ==
+template <class TypeTy, class CompareTy>
 int ConvertCostTableLookup(const TypeConversionCostTblEntry<TypeTy> *Tbl,
-                           unsigned len, int ISD, TypeTy Dst, TypeTy Src) {
+                           unsigned len, int ISD, CompareTy Dst,
+                           CompareTy Src) {
   for (unsigned int i = 0; i < len; ++i)
-    if (Tbl[i].ISD == ISD && Tbl[i].Src == Src && Tbl[i].Dst == Dst)
+    if (ISD == Tbl[i].ISD && Src == Tbl[i].Src && Dst == Tbl[i].Dst)
       return i;
 
   // Could not find an entry.
   return -1;
+}
+
+/// Find in type conversion cost table, TypeTy must be comparable to CompareTy
+/// by ==
+template <class TypeTy, class CompareTy, unsigned N>
+int ConvertCostTableLookup(const TypeConversionCostTblEntry<TypeTy>(&Tbl)[N],
+                           int ISD, CompareTy Dst, CompareTy Src) {
+  return ConvertCostTableLookup(Tbl, N, ISD, Dst, Src);
 }
 
 } // namespace llvm

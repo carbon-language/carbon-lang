@@ -174,7 +174,7 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  static const CostTblEntry<MVT> AVX2CostTable[] = {
+  static const CostTblEntry<MVT::SimpleValueType> AVX2CostTable[] = {
     // Shifts on v4i64/v8i32 on AVX2 is legal even though we declare to
     // customize them to detect the cases where shift amount is a scalar one.
     { ISD::SHL,     MVT::v4i32,    1 },
@@ -211,13 +211,13 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
 
   // Look for AVX2 lowering tricks.
   if (ST->hasAVX2()) {
-    int Idx = CostTableLookup<MVT>(AVX2CostTable, array_lengthof(AVX2CostTable),
-                                   ISD, LT.second);
+    int Idx = CostTableLookup(AVX2CostTable, ISD, LT.second);
     if (Idx != -1)
       return LT.first * AVX2CostTable[Idx].Cost;
   }
 
-  static const CostTblEntry<MVT> SSE2UniformConstCostTable[] = {
+  static const CostTblEntry<MVT::SimpleValueType>
+  SSE2UniformConstCostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
     // custom.
     // Constant splats are cheaper for the following instructions.
@@ -238,15 +238,13 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
 
   if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
       ST->hasSSE2()) {
-    int Idx = CostTableLookup<MVT>(SSE2UniformConstCostTable,
-                                   array_lengthof(SSE2UniformConstCostTable),
-                                   ISD, LT.second);
+    int Idx = CostTableLookup(SSE2UniformConstCostTable, ISD, LT.second);
     if (Idx != -1)
       return LT.first * SSE2UniformConstCostTable[Idx].Cost;
   }
 
 
-  static const CostTblEntry<MVT> SSE2CostTable[] = {
+  static const CostTblEntry<MVT::SimpleValueType> SSE2CostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
     // custom.
     // For some cases, where the shift amount is a scalar we would be able
@@ -287,13 +285,12 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   };
 
   if (ST->hasSSE2()) {
-    int Idx = CostTableLookup<MVT>(SSE2CostTable, array_lengthof(SSE2CostTable),
-                                   ISD, LT.second);
+    int Idx = CostTableLookup(SSE2CostTable, ISD, LT.second);
     if (Idx != -1)
       return LT.first * SSE2CostTable[Idx].Cost;
   }
 
-  static const CostTblEntry<MVT> AVX1CostTable[] = {
+  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTable[] = {
     // We don't have to scalarize unsupported ops. We can issue two half-sized
     // operations and we only need to extract the upper YMM half.
     // Two ops + 1 extract + 1 insert = 4.
@@ -312,21 +309,19 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
 
   // Look for AVX1 lowering tricks.
   if (ST->hasAVX() && !ST->hasAVX2()) {
-    int Idx = CostTableLookup<MVT>(AVX1CostTable, array_lengthof(AVX1CostTable),
-                                   ISD, LT.second);
+    int Idx = CostTableLookup(AVX1CostTable, ISD, LT.second);
     if (Idx != -1)
       return LT.first * AVX1CostTable[Idx].Cost;
   }
 
   // Custom lowering of vectors.
-  static const CostTblEntry<MVT> CustomLowered[] = {
+  static const CostTblEntry<MVT::SimpleValueType> CustomLowered[] = {
     // A v2i64/v4i64 and multiply is custom lowered as a series of long
     // multiplies(3), shifts(4) and adds(2).
     { ISD::MUL,     MVT::v2i64,    9 },
     { ISD::MUL,     MVT::v4i64,    9 },
   };
-  int Idx = CostTableLookup<MVT>(CustomLowered, array_lengthof(CustomLowered),
-                                 ISD, LT.second);
+  int Idx = CostTableLookup(CustomLowered, ISD, LT.second);
   if (Idx != -1)
     return LT.first * CustomLowered[Idx].Cost;
 
@@ -363,7 +358,8 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   std::pair<unsigned, MVT> LTSrc = TLI->getTypeLegalizationCost(Src);
   std::pair<unsigned, MVT> LTDest = TLI->getTypeLegalizationCost(Dst);
 
-  static const TypeConversionCostTblEntry<MVT> SSE2ConvTbl[] = {
+  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  SSE2ConvTbl[] = {
     // These are somewhat magic numbers justified by looking at the output of
     // Intel's IACA, running some kernels and making sure when we take
     // legalization into account the throughput will be overestimated.
@@ -387,9 +383,8 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   };
 
   if (ST->hasSSE2() && !ST->hasAVX()) {
-    int Idx = ConvertCostTableLookup<MVT>(SSE2ConvTbl,
-                                          array_lengthof(SSE2ConvTbl),
-                                          ISD, LTDest.second, LTSrc.second);
+    int Idx =
+        ConvertCostTableLookup(SSE2ConvTbl, ISD, LTDest.second, LTSrc.second);
     if (Idx != -1)
       return LTSrc.first * SSE2ConvTbl[Idx].Cost;
   }
@@ -401,7 +396,8 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   if (!SrcTy.isSimple() || !DstTy.isSimple())
     return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 
-  static const TypeConversionCostTblEntry<MVT> AVXConversionTbl[] = {
+  static const TypeConversionCostTblEntry<MVT::SimpleValueType>
+  AVXConversionTbl[] = {
     { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
     { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
     { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
@@ -446,9 +442,8 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   };
 
   if (ST->hasAVX()) {
-    int Idx = ConvertCostTableLookup<MVT>(AVXConversionTbl,
-                                 array_lengthof(AVXConversionTbl),
-                                 ISD, DstTy.getSimpleVT(), SrcTy.getSimpleVT());
+    int Idx = ConvertCostTableLookup(AVXConversionTbl, ISD, DstTy.getSimpleVT(),
+                                     SrcTy.getSimpleVT());
     if (Idx != -1)
       return AVXConversionTbl[Idx].Cost;
   }
@@ -466,7 +461,7 @@ unsigned X86TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  static const CostTblEntry<MVT> SSE42CostTbl[] = {
+  static const CostTblEntry<MVT::SimpleValueType> SSE42CostTbl[] = {
     { ISD::SETCC,   MVT::v2f64,   1 },
     { ISD::SETCC,   MVT::v4f32,   1 },
     { ISD::SETCC,   MVT::v2i64,   1 },
@@ -475,7 +470,7 @@ unsigned X86TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
     { ISD::SETCC,   MVT::v16i8,   1 },
   };
 
-  static const CostTblEntry<MVT> AVX1CostTbl[] = {
+  static const CostTblEntry<MVT::SimpleValueType> AVX1CostTbl[] = {
     { ISD::SETCC,   MVT::v4f64,   1 },
     { ISD::SETCC,   MVT::v8f32,   1 },
     // AVX1 does not support 8-wide integer compare.
@@ -485,7 +480,7 @@ unsigned X86TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
     { ISD::SETCC,   MVT::v32i8,   4 },
   };
 
-  static const CostTblEntry<MVT> AVX2CostTbl[] = {
+  static const CostTblEntry<MVT::SimpleValueType> AVX2CostTbl[] = {
     { ISD::SETCC,   MVT::v4i64,   1 },
     { ISD::SETCC,   MVT::v8i32,   1 },
     { ISD::SETCC,   MVT::v16i16,  1 },
@@ -493,22 +488,19 @@ unsigned X86TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   };
 
   if (ST->hasAVX2()) {
-    int Idx = CostTableLookup<MVT>(AVX2CostTbl, array_lengthof(AVX2CostTbl),
-                                   ISD, MTy);
+    int Idx = CostTableLookup(AVX2CostTbl, ISD, MTy);
     if (Idx != -1)
       return LT.first * AVX2CostTbl[Idx].Cost;
   }
 
   if (ST->hasAVX()) {
-    int Idx = CostTableLookup<MVT>(AVX1CostTbl, array_lengthof(AVX1CostTbl),
-                                   ISD, MTy);
+    int Idx = CostTableLookup(AVX1CostTbl, ISD, MTy);
     if (Idx != -1)
       return LT.first * AVX1CostTbl[Idx].Cost;
   }
 
   if (ST->hasSSE42()) {
-    int Idx = CostTableLookup<MVT>(SSE42CostTbl, array_lengthof(SSE42CostTbl),
-                                   ISD, MTy);
+    int Idx = CostTableLookup(SSE42CostTbl, ISD, MTy);
     if (Idx != -1)
       return LT.first * SSE42CostTbl[Idx].Cost;
   }
