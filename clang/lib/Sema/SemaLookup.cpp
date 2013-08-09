@@ -2215,11 +2215,10 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
 /// This routine computes the sets of associated classes and associated
 /// namespaces searched by argument-dependent lookup
 /// (C++ [basic.lookup.argdep]) for a given set of arguments.
-void
-Sema::FindAssociatedClassesAndNamespaces(SourceLocation InstantiationLoc,
-                                         llvm::ArrayRef<Expr *> Args,
-                                 AssociatedNamespaceSet &AssociatedNamespaces,
-                                 AssociatedClassSet &AssociatedClasses) {
+void Sema::FindAssociatedClassesAndNamespaces(
+    SourceLocation InstantiationLoc, ArrayRef<Expr *> Args,
+    AssociatedNamespaceSet &AssociatedNamespaces,
+    AssociatedClassSet &AssociatedClasses) {
   AssociatedNamespaces.clear();
   AssociatedClasses.clear();
 
@@ -2794,8 +2793,7 @@ void ADLResult::insert(NamedDecl *New) {
 }
 
 void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
-                                   SourceLocation Loc,
-                                   llvm::ArrayRef<Expr *> Args,
+                                   SourceLocation Loc, ArrayRef<Expr *> Args,
                                    ADLResult &Result) {
   // Find all of the associated namespaces and classes based on the
   // arguments we have.
@@ -3626,8 +3624,8 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
     SmallVector<const IdentifierInfo*, 4> NewNameSpecifierIdentifiers;
     getNestedNameSpecifierIdentifiers(NNS, NewNameSpecifierIdentifiers);
     NumSpecifiers = llvm::ComputeEditDistance(
-      llvm::ArrayRef<const IdentifierInfo*>(CurNameSpecifierIdentifiers),
-      llvm::ArrayRef<const IdentifierInfo*>(NewNameSpecifierIdentifiers));
+        ArrayRef<const IdentifierInfo *>(CurNameSpecifierIdentifiers),
+        ArrayRef<const IdentifierInfo *>(NewNameSpecifierIdentifiers));
   }
 
   isSorted = false;

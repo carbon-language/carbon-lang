@@ -3846,7 +3846,7 @@ namespace {
   };
 }
 
-static bool anyNullArguments(llvm::ArrayRef<Expr*> Args) {
+static bool anyNullArguments(ArrayRef<Expr *> Args) {
   if (Args.size() && !Args.data())
     return true;
 
@@ -3857,8 +3857,7 @@ static bool anyNullArguments(llvm::ArrayRef<Expr*> Args) {
   return false;
 }
 
-void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
-                            llvm::ArrayRef<Expr *> Args) {
+void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
   if (!CodeCompleter)
     return;
 

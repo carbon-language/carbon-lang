@@ -7658,11 +7658,10 @@ public:
 /// on the operator @p Op and the arguments given. For example, if the
 /// operator is a binary '+', this routine might add "int
 /// operator+(int, int)" to cover integer addition.
-void
-Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
-                                   SourceLocation OpLoc,
-                                   llvm::ArrayRef<Expr *> Args,
-                                   OverloadCandidateSet& CandidateSet) {
+void Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
+                                        SourceLocation OpLoc,
+                                        ArrayRef<Expr *> Args,
+                                        OverloadCandidateSet &CandidateSet) {
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
   // that make use of these types. Also record whether we encounter non-record
