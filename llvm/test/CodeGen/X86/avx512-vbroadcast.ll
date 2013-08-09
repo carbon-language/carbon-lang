@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
-;CHECK: _inreg16xi32
+;CHECK-LABEL: _inreg16xi32:
 ;CHECK: vpbroadcastd {{.*}}, %zmm
 ;CHECK: ret
 define   <16 x i32> @_inreg16xi32(i32 %a) {
@@ -9,7 +9,7 @@ define   <16 x i32> @_inreg16xi32(i32 %a) {
   ret <16 x i32> %c
 }
 
-;CHECK: _inreg8xi64
+;CHECK-LABEL: _inreg8xi64:
 ;CHECK: vpbroadcastq {{.*}}, %zmm
 ;CHECK: ret
 define   <8 x i64> @_inreg8xi64(i64 %a) {
@@ -18,7 +18,7 @@ define   <8 x i64> @_inreg8xi64(i64 %a) {
   ret <8 x i64> %c
 }
 
-;CHECK: _inreg16xfloat
+;CHECK-LABEL: _inreg16xfloat:
 ;CHECK: vbroadcastssz {{.*}}, %zmm
 ;CHECK: ret
 define   <16 x float> @_inreg16xfloat(float %a) {
@@ -27,7 +27,7 @@ define   <16 x float> @_inreg16xfloat(float %a) {
   ret <16 x float> %c
 }
 
-;CHECK: _inreg8xdouble
+;CHECK-LABEL: _inreg8xdouble:
 ;CHECK: vbroadcastsdz {{.*}}, %zmm
 ;CHECK: ret
 define   <8 x double> @_inreg8xdouble(double %a) {
