@@ -90,6 +90,7 @@ static const Mips16Libcall HardFloatLibCalls[] = {
 };
 
 static const Mips16IntrinsicHelperType Mips16IntrinsicHelper[] = {
+  {"__fixunsdfsi", "__mips16_call_stub_2" },
   {"ceil",  "__mips16_call_stub_df_2"},
   {"ceilf", "__mips16_call_stub_sf_1"},
   {"copysign",  "__mips16_call_stub_df_10"},
