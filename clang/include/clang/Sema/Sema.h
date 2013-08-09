@@ -4409,6 +4409,7 @@ public:
   sema::LambdaScopeInfo *enterLambdaScope(CXXMethodDecl *CallOperator,
                                           SourceRange IntroducerRange,
                                           LambdaCaptureDefault CaptureDefault,
+                                          SourceLocation CaptureDefaultLoc,
                                           bool ExplicitParams,
                                           bool ExplicitResultType,
                                           bool Mutable);

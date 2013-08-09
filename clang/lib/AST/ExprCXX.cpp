@@ -854,10 +854,11 @@ LambdaCaptureKind LambdaExpr::Capture::getCaptureKind() const {
   return (DeclAndBits.getInt() & Capture_ByCopy) ? LCK_ByCopy : LCK_ByRef;
 }
 
-LambdaExpr::LambdaExpr(QualType T, 
+LambdaExpr::LambdaExpr(QualType T,
                        SourceRange IntroducerRange,
                        LambdaCaptureDefault CaptureDefault,
-                       ArrayRef<Capture> Captures, 
+                       SourceLocation CaptureDefaultLoc,
+                       ArrayRef<Capture> Captures,
                        bool ExplicitParams,
                        bool ExplicitResultType,
                        ArrayRef<Expr *> CaptureInits,
@@ -869,6 +870,7 @@ LambdaExpr::LambdaExpr(QualType T,
          T->isDependentType(), T->isDependentType(), T->isDependentType(),
          ContainsUnexpandedParameterPack),
     IntroducerRange(IntroducerRange),
+    CaptureDefaultLoc(CaptureDefaultLoc),
     NumCaptures(Captures.size()),
     CaptureDefault(CaptureDefault),
     ExplicitParams(ExplicitParams),
@@ -914,11 +916,12 @@ LambdaExpr::LambdaExpr(QualType T,
   }
 }
 
-LambdaExpr *LambdaExpr::Create(ASTContext &Context, 
+LambdaExpr *LambdaExpr::Create(ASTContext &Context,
                                CXXRecordDecl *Class,
                                SourceRange IntroducerRange,
                                LambdaCaptureDefault CaptureDefault,
-                               ArrayRef<Capture> Captures, 
+                               SourceLocation CaptureDefaultLoc,
+                               ArrayRef<Capture> Captures,
                                bool ExplicitParams,
                                bool ExplicitResultType,
                                ArrayRef<Expr *> CaptureInits,
@@ -938,8 +941,9 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
     Size += sizeof(VarDecl *) * ArrayIndexVars.size();
   }
   void *Mem = Context.Allocate(Size);
-  return new (Mem) LambdaExpr(T, IntroducerRange, CaptureDefault, 
-                              Captures, ExplicitParams, ExplicitResultType,
+  return new (Mem) LambdaExpr(T, IntroducerRange,
+                              CaptureDefault, CaptureDefaultLoc, Captures,
+                              ExplicitParams, ExplicitResultType,
                               CaptureInits, ArrayIndexVars, ArrayIndexStarts,
                               ClosingBrace, ContainsUnexpandedParameterPack);
 }

@@ -8254,6 +8254,7 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
   sema::LambdaScopeInfo *LSI
     = getSema().enterLambdaScope(CallOperator, E->getIntroducerRange(),
                                  E->getCaptureDefault(),
+                                 E->getCaptureDefaultLoc(),
                                  E->hasExplicitParameters(),
                                  E->hasExplicitResultType(),
                                  E->isMutable());

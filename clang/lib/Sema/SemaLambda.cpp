@@ -180,6 +180,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
 LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
                                         SourceRange IntroducerRange,
                                         LambdaCaptureDefault CaptureDefault,
+                                        SourceLocation CaptureDefaultLoc,
                                         bool ExplicitParams,
                                         bool ExplicitResultType,
                                         bool Mutable) {
@@ -189,6 +190,7 @@ LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
   else if (CaptureDefault == LCD_ByRef)
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
+  LSI->CaptureDefaultLoc = CaptureDefaultLoc;
   LSI->IntroducerRange = IntroducerRange;
   LSI->ExplicitParams = ExplicitParams;
   LSI->Mutable = Mutable;
@@ -598,7 +600,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     
   // Introduce the lambda scope.
   LambdaScopeInfo *LSI
-    = enterLambdaScope(Method, Intro.Range, Intro.Default, ExplicitParams,
+    = enterLambdaScope(Method,
+                       Intro.Range,
+                       Intro.Default, Intro.DefaultLoc,
+                       ExplicitParams,
                        ExplicitResultType,
                        !Method->isConst());
 
@@ -919,6 +924,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   SmallVector<LambdaExpr::Capture, 4> Captures;
   SmallVector<Expr *, 4> CaptureInits;
   LambdaCaptureDefault CaptureDefault;
+  SourceLocation CaptureDefaultLoc;
   CXXRecordDecl *Class;
   CXXMethodDecl *CallOperator;
   SourceRange IntroducerRange;
@@ -988,6 +994,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       llvm_unreachable("block capture in lambda");
       break;
     }
+    CaptureDefaultLoc = LSI->CaptureDefaultLoc;
 
     // C++11 [expr.prim.lambda]p4:
     //   If a lambda-expression does not include a
@@ -1052,7 +1059,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     ExprNeedsCleanups = true;
   
   LambdaExpr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
-                                          CaptureDefault, Captures, 
+                                          CaptureDefault, CaptureDefaultLoc,
+                                          Captures, 
                                           ExplicitParams, ExplicitResultType,
                                           CaptureInits, ArrayIndexVars, 
                                           ArrayIndexStarts, Body->getLocEnd(),

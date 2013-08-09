@@ -102,7 +102,19 @@ public:
     return PendingBodies.empty();
   }
 private:
-  std::stack<LambdaExpr *> PendingBodies; 
+  std::stack<LambdaExpr *> PendingBodies;
+};
+
+// Matches the (optional) capture-default of a lambda-introducer.
+class LambdaDefaultCaptureVisitor
+  : public ExpectedLocationVisitor<LambdaDefaultCaptureVisitor> {
+public:
+  bool VisitLambdaExpr(LambdaExpr *Lambda) {
+    if (Lambda->getCaptureDefault() != LCD_None) {
+      Match("", Lambda->getCaptureDefaultLoc());
+    }
+    return true;
+  }
 };
 
 class TemplateArgumentLocTraverser
@@ -501,6 +513,13 @@ TEST(RecursiveASTVisitor, TraverseLambdaBodyCanBeOverridden) {
   EXPECT_TRUE(Visitor.runOver("void f() { []{ return; }(); }",
 			      LambdaExprVisitor::Lang_CXX11));
   EXPECT_TRUE(Visitor.allBodiesHaveBeenTraversed());
+}
+
+TEST(RecursiveASTVisitor, HasCaptureDefaultLoc) {
+  LambdaDefaultCaptureVisitor Visitor;
+  Visitor.ExpectMatch("", 1, 20);
+  EXPECT_TRUE(Visitor.runOver("void f() { int a; [=]{a;}; }",
+                              LambdaDefaultCaptureVisitor::Lang_CXX11));
 }
 
 } // end namespace clang

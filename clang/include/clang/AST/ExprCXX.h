@@ -1323,6 +1323,9 @@ class LambdaExpr : public Expr {
   /// \brief The source range that covers the lambda introducer ([...]).
   SourceRange IntroducerRange;
 
+  /// \brief The source location of this lambda's capture-default ('=' or '&').
+  SourceLocation CaptureDefaultLoc;
+
   /// \brief The number of captures.
   unsigned NumCaptures : 16;
   
@@ -1456,6 +1459,7 @@ private:
   /// \brief Construct a lambda expression.
   LambdaExpr(QualType T, SourceRange IntroducerRange,
              LambdaCaptureDefault CaptureDefault,
+             SourceLocation CaptureDefaultLoc,
              ArrayRef<Capture> Captures,
              bool ExplicitParams,
              bool ExplicitResultType,
@@ -1494,10 +1498,11 @@ private:
 
 public:
   /// \brief Construct a new lambda expression.
-  static LambdaExpr *Create(ASTContext &C, 
+  static LambdaExpr *Create(ASTContext &C,
                             CXXRecordDecl *Class,
                             SourceRange IntroducerRange,
                             LambdaCaptureDefault CaptureDefault,
+                            SourceLocation CaptureDefaultLoc,
                             ArrayRef<Capture> Captures,
                             bool ExplicitParams,
                             bool ExplicitResultType,
@@ -1511,10 +1516,15 @@ public:
   /// an external source.
   static LambdaExpr *CreateDeserialized(ASTContext &C, unsigned NumCaptures,
                                         unsigned NumArrayIndexVars);
-  
+
   /// \brief Determine the default capture kind for this lambda.
   LambdaCaptureDefault getCaptureDefault() const {
     return static_cast<LambdaCaptureDefault>(CaptureDefault);
+  }
+
+  /// \brief Retrieve the location of this lambda's capture-default, if any.
+  SourceLocation getCaptureDefaultLoc() const {
+    return CaptureDefaultLoc;
   }
 
   /// \brief An iterator that walks over the captures of the lambda,

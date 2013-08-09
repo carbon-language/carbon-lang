@@ -1207,6 +1207,7 @@ void ASTStmtReader::VisitLambdaExpr(LambdaExpr *E) {
   unsigned NumArrayIndexVars = Record[Idx++];
   E->IntroducerRange = ReadSourceRange(Record, Idx);
   E->CaptureDefault = static_cast<LambdaCaptureDefault>(Record[Idx++]);
+  E->CaptureDefaultLoc = ReadSourceLocation(Record, Idx);
   E->ExplicitParams = Record[Idx++];
   E->ExplicitResultType = Record[Idx++];
   E->ClosingBrace = ReadSourceLocation(Record, Idx);

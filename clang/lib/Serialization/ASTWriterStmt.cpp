@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file implements serialization for Statements and Expressions.
-//
+///
+/// \file
+/// \brief Implements serialization for Statements and Expressions.
+///
 //===----------------------------------------------------------------------===//
 
 #include "clang/Serialization/ASTWriter.h"
@@ -1166,6 +1167,7 @@ void ASTStmtWriter::VisitLambdaExpr(LambdaExpr *E) {
   Record.push_back(NumArrayIndexVars);
   Writer.AddSourceRange(E->IntroducerRange, Record);
   Record.push_back(E->CaptureDefault); // FIXME: stable encoding
+  Writer.AddSourceLocation(E->CaptureDefaultLoc, Record);
   Record.push_back(E->ExplicitParams);
   Record.push_back(E->ExplicitResultType);
   Writer.AddSourceLocation(E->ClosingBrace, Record);
