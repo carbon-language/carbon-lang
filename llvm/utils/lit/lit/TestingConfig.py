@@ -11,7 +11,7 @@ class TestingConfig:
     @staticmethod
     def fromdefaults(litConfig):
         """
-        fromdefaults(litConfig -> TestingConfig
+        fromdefaults(litConfig) -> TestingConfig
 
         Create a TestingConfig object with default values.
         """
