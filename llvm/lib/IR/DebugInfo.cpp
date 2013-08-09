@@ -647,6 +647,19 @@ void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
   DbgNode = N;
 }
 
+void DICompositeType::addMember(DISubprogram S) {
+  SmallVector<llvm::Value *, 16> M;
+  DIArray OrigM = getTypeArray();
+  unsigned Elements = OrigM.getNumElements();
+  if (Elements == 1 && !OrigM.getElement(0))
+    Elements = 0;
+  M.reserve(Elements + 1);
+  for (unsigned i = 0; i != Elements; ++i)
+    M.push_back(OrigM.getElement(i));
+  M.push_back(S);
+  setTypeArray(DIArray(MDNode::get(DbgNode->getContext(), M)));
+}
+
 /// \brief Set the containing type.
 void DICompositeType::setContainingType(DICompositeType ContainingType) {
   TrackingVH<MDNode> N(*this);
