@@ -17,11 +17,17 @@
 #include "DNBDefs.h"
 #include <memory>
 
-extern "C" const unsigned char debugserverVersionString[];
-extern "C" const double debugserverVersionNumber;
 #define DEBUGSERVER_PROGRAM_NAME "debugserver"
-#define DEBUGSERVER_VERSION_STR debugserverVersionString
+
+#ifndef DEBUGSERVER_VERSION_NUM
+extern "C" const unsigned char debugserverVersionString[];
 #define DEBUGSERVER_VERSION_NUM debugserverVersionNumber
+#endif
+
+#ifndef DEBUGSERVER_VERSION_STR
+extern "C" const double debugserverVersionNumber;
+#define DEBUGSERVER_VERSION_STR debugserverVersionString
+#endif
 
 #if defined (__i386__)
 

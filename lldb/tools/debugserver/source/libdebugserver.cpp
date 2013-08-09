@@ -305,7 +305,7 @@ RNBRunLoopInferiorExecuting (RNBRemoteSP &remote)
                     // in its current state and listen for another connection...
                     if (ctx.ProcessStateRunning())
                     {
-                        DNBProcessKill (ctx.ProcessID(), SIGINT);
+                        DNBProcessKill (ctx.ProcessID());
                     }
                 }
                 mode = eRNBRunLoopModeExit;
