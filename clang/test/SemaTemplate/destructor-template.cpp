@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 template<typename A> class s0 {
 
@@ -75,4 +75,10 @@ namespace rdar13140795 {
   void test() {
     Marshal<int>::gc();
   }
+}
+
+namespace PR16852 {
+  template<typename T> struct S { int a; T x; };
+  template<typename T> decltype(S<T>().~S()) f(); // expected-note {{candidate template ignored: couldn't infer template argument 'T'}}
+  void g() { f(); } // expected-error {{no matching function for call to 'f'}}
 }

@@ -910,7 +910,14 @@ StmtProfiler::VisitCXXPseudoDestructorExpr(const CXXPseudoDestructorExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isArrow());
   VisitNestedNameSpecifier(S->getQualifier());
-  VisitType(S->getDestroyedType());
+  ID.AddBoolean(S->getScopeTypeInfo() != 0);
+  if (S->getScopeTypeInfo())
+    VisitType(S->getScopeTypeInfo()->getType());
+  ID.AddBoolean(S->getDestroyedTypeInfo() != 0);
+  if (S->getDestroyedTypeInfo())
+    VisitType(S->getDestroyedType());
+  else
+    ID.AddPointer(S->getDestroyedTypeIdentifier());
 }
 
 void StmtProfiler::VisitOverloadExpr(const OverloadExpr *S) {
