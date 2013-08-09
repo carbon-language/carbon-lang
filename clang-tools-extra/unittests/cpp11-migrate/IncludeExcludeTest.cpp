@@ -28,7 +28,7 @@
 TEST(IncludeExcludeTest, ParseString) {
   IncludeExcludeInfo IEManager;
   llvm::error_code Err = IEManager.readListFromString(
-      /*include=*/ "a,b/b2,c/c2",
+      /*include=*/ "a,b/b2,c/c2,d/../d2/../d3",
       /*exclude=*/ "a/af.cpp,a/a2,b/b2/b2f.cpp,c/c2");
 
   ASSERT_EQ(Err, llvm::error_code::success());
@@ -37,11 +37,14 @@ TEST(IncludeExcludeTest, ParseString) {
   // transform. Files are not safe to transform by default.
   EXPECT_FALSE(IEManager.isFileIncluded("f.cpp"));
   EXPECT_FALSE(IEManager.isFileIncluded("b/dir/f.cpp"));
+  EXPECT_FALSE(IEManager.isFileIncluded("d/f.cpp"));
+  EXPECT_FALSE(IEManager.isFileIncluded("d2/f.cpp"));
 
   // If the file appears on only the include list then it is safe to transform.
   EXPECT_TRUE(IEManager.isFileIncluded("a/f.cpp"));
   EXPECT_TRUE(IEManager.isFileIncluded("a/dir/f.cpp"));
   EXPECT_TRUE(IEManager.isFileIncluded("b/b2/f.cpp"));
+  EXPECT_TRUE(IEManager.isFileIncluded("d3/f.cpp"));
 
   // If the file appears on both the include or exclude list then it is not
   // safe to transform.
@@ -50,6 +53,21 @@ TEST(IncludeExcludeTest, ParseString) {
   EXPECT_FALSE(IEManager.isFileIncluded("a/a2/dir/f.cpp"));
   EXPECT_FALSE(IEManager.isFileIncluded("b/b2/b2f.cpp"));
   EXPECT_FALSE(IEManager.isFileIncluded("c/c2/c3/f.cpp"));
+
+#ifdef LLVM_ON_WIN32
+  // Check for cases when the path separators are different between the path
+  // that was read and the path that we are checking for. This can happen on
+  // windows where lit provides "\" and the test has "/".
+  ASSERT_NO_ERROR(IEManager.readListFromString(
+        /*include=*/ "C:\\foo,a\\b/c,a/../b\\c/..\\d",
+        /*exclude=*/ "C:\\bar"
+        ));
+  EXPECT_TRUE(IEManager.isFileIncluded("C:/foo/code.h"));
+  EXPECT_FALSE(IEManager.isFileIncluded("C:/bar/code.h"));
+  EXPECT_TRUE(IEManager.isFileIncluded("a/b\\c/code.h"));
+  EXPECT_FALSE(IEManager.isFileIncluded("b\\c/code.h"));
+  EXPECT_TRUE(IEManager.isFileIncluded("b/d\\code.h"));
+#endif
 }
 
 TEST(IncludeExcludeTest, ParseStringCases) {

@@ -42,6 +42,10 @@ public:
 
   /// \brief Determine if the given path is in the list of include paths but
   /// not in the list of exclude paths.
+  ///
+  /// \a FilePath shouldn't contain relative operators i.e. ".." or "." since
+  /// Path comes from the include/exclude list of paths in which relative
+  /// operators were removed.
   bool isFileIncluded(llvm::StringRef FilePath) const;
 
 private:
