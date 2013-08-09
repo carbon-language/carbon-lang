@@ -10,4 +10,4 @@ def on_clone(parent, clone, path):
   clone.extra_tools_src_dir = parent.extra_tools_src_dir
 
 config.on_clone = on_clone
-lit.load_config(config, "@CLANG_TOOLS_SOURCE_DIR@/test/Unit/lit.cfg")
+lit_config.load_config(config, "@CLANG_TOOLS_SOURCE_DIR@/test/Unit/lit.cfg")
