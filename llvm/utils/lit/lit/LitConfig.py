@@ -18,15 +18,6 @@ class LitConfig:
     easily.
     """
 
-    # Provide access to Test module.
-    Test = lit.Test
-
-    # Provide access to built-in formats.
-    formats = lit.formats
-
-    # Provide access to built-in utility functions.
-    util = lit.util
-
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
                  noExecute, debug, isWindows,
