@@ -716,13 +716,16 @@ void Sema::checkCall(NamedDecl *FDecl,
   // Printf and scanf checking.
   llvm::SmallBitVector CheckedVarArgs;
   if (FDecl) {
-    CheckedVarArgs.resize(Args.size());
     for (specific_attr_iterator<FormatAttr>
              I = FDecl->specific_attr_begin<FormatAttr>(),
              E = FDecl->specific_attr_end<FormatAttr>();
-         I != E; ++I)
+         I != E; ++I) {
+      // Only create vector if there are format attributes.
+      CheckedVarArgs.resize(Args.size());
+
       CheckFormatArguments(*I, Args, IsMemberFunction, CallType, Loc, Range,
                            CheckedVarArgs);
+    }
   }
 
   // Refuse POD arguments that weren't caught by the format string
