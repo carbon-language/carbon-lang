@@ -9,54 +9,59 @@ class TestingConfig:
     """
 
     @staticmethod
-    def frompath(path, config, litConfig):
+    def fromdefaults(litConfig):
         """
-        frompath(path, config, litConfig, mustExist) -> TestingConfig
+        fromdefaults(litConfig -> TestingConfig
+
+        Create a TestingConfig object with default values.
+        """
+        # Set the environment based on the command line arguments.
+        environment = {
+            'LIBRARY_PATH' : os.environ.get('LIBRARY_PATH',''),
+            'LD_LIBRARY_PATH' : os.environ.get('LD_LIBRARY_PATH',''),
+            'PATH' : os.pathsep.join(litConfig.path +
+                                     [os.environ.get('PATH','')]),
+            'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
+            'TERM' : os.environ.get('TERM',''),
+            'LLVM_DISABLE_CRASH_REPORT' : '1',
+            }
+
+        if sys.platform == 'win32':
+            environment.update({
+                    'INCLUDE' : os.environ.get('INCLUDE',''),
+                    'PATHEXT' : os.environ.get('PATHEXT',''),
+                    'PYTHONUNBUFFERED' : '1',
+                    'TEMP' : os.environ.get('TEMP',''),
+                    'TMP' : os.environ.get('TMP',''),
+                    })
+
+        # Set the default available features based on the LitConfig.
+        available_features = []
+        if litConfig.useValgrind:
+            available_features.append('valgrind')
+            if litConfig.valgrindLeakCheck:
+                available_features.append('vg_leak')
+
+        return TestingConfig(None,
+                             name = '<unnamed>',
+                             suffixes = set(),
+                             test_format = None,
+                             environment = environment,
+                             substitutions = [],
+                             unsupported = False,
+                             test_exec_root = None,
+                             test_source_root = None,
+                             excludes = [],
+                             available_features = available_features,
+                             pipefail = True)
+
+    def load_from_path(self, path, litConfig):
+        """
+        load_from_path(path, litConfig)
 
         Load the configuration module at the provided path into the given config
-        object (or create a new one if None is provided) and return the config.
+        object.
         """
-
-        if config is None:
-            # Set the environment based on the command line arguments.
-            environment = {
-                'LIBRARY_PATH' : os.environ.get('LIBRARY_PATH',''),
-                'LD_LIBRARY_PATH' : os.environ.get('LD_LIBRARY_PATH',''),
-                'PATH' : os.pathsep.join(litConfig.path +
-                                         [os.environ.get('PATH','')]),
-                'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
-                'TERM' : os.environ.get('TERM',''),
-                'LLVM_DISABLE_CRASH_REPORT' : '1',
-                }
-
-            if sys.platform == 'win32':
-                environment.update({
-                        'INCLUDE' : os.environ.get('INCLUDE',''),
-                        'PATHEXT' : os.environ.get('PATHEXT',''),
-                        'PYTHONUNBUFFERED' : '1',
-                        'TEMP' : os.environ.get('TEMP',''),
-                        'TMP' : os.environ.get('TMP',''),
-                        })
-
-            # Set the default available features based on the LitConfig.
-            available_features = []
-            if litConfig.useValgrind:
-                available_features.append('valgrind')
-                if litConfig.valgrindLeakCheck:
-                    available_features.append('vg_leak')
-
-            config = TestingConfig(None,
-                                   name = '<unnamed>',
-                                   suffixes = set(),
-                                   test_format = None,
-                                   environment = environment,
-                                   substitutions = [],
-                                   unsupported = False,
-                                   test_exec_root = None,
-                                   test_source_root = None,
-                                   excludes = [],
-                                   available_features = available_features,
-                                   pipefail = True)
 
         # Load the config script data.
         f = open(path)
@@ -68,7 +73,7 @@ class TestingConfig:
 
         # Execute the config script to initialize the object.
         cfg_globals = dict(globals())
-        cfg_globals['config'] = config
+        cfg_globals['config'] = self
         cfg_globals['lit'] = litConfig
         cfg_globals['__file__'] = path
         try:
@@ -90,8 +95,7 @@ class TestingConfig:
                 'unable to parse config file %r, traceback: %s' % (
                     path, traceback.format_exc()))
 
-        config.finish(litConfig)
-        return config
+        self.finish(litConfig)
 
     def __init__(self, parent, name, suffixes, test_format,
                  environment, substitutions, unsupported,

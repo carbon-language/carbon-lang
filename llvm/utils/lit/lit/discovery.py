@@ -38,11 +38,12 @@ def getTestSuite(item, litConfig, cache):
             ts, relative = search(parent)
             return (ts, relative + (base,))
 
-        # We found a config file, load it.
+        # We found a test suite, create a new config for it and load it.
         if litConfig.debug:
             litConfig.note('loading suite config %r' % cfgpath)
 
-        cfg = TestingConfig.frompath(cfgpath, None, litConfig)
+        cfg = TestingConfig.fromdefaults(litConfig)
+        cfg.load_from_path(cfgpath, litConfig)
         source_root = os.path.realpath(cfg.test_source_root or path)
         exec_root = os.path.realpath(cfg.test_exec_root or path)
         return Test.TestSuite(cfg.name, source_root, exec_root, cfg), ()
@@ -91,7 +92,8 @@ def getLocalConfig(ts, path_in_suite, litConfig, cache):
         config = parent.clone()
         if litConfig.debug:
             litConfig.note('loading local config %r' % cfgpath)
-        return TestingConfig.frompath(cfgpath, config, litConfig)
+        config.load_from_path(cfgpath, litConfig)
+        return config
 
     def search(path_in_suite):
         key = (ts, path_in_suite)
