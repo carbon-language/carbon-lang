@@ -59,6 +59,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
 #include <iterator>
 
@@ -401,6 +402,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
        i != e; ++i) {
     if ((*i)->isDeclaration())
       continue;
+
+    removeUnreachableBlocks(**i);
 
     DFSanFunction DFSF(*this, *i);
 
