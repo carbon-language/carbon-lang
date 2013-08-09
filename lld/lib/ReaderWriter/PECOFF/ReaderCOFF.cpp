@@ -247,7 +247,7 @@ private:
         return ec;
       assert(sec && "SectionIndex > 0, Sec must be non-null!");
 
-      // SKip if it's a section symbol for a COMDAT section. A section symbol
+      // Skip if it's a section symbol for a COMDAT section. A section symbol
       // has the name of the section and value 0. A translation unit may contain
       // multiple COMDAT sections whose section name are the same. We don't want
       // to make atoms for them as they would become duplicate symbols.
