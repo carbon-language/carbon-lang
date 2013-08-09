@@ -91,9 +91,11 @@ void AttachDependencyFileGen(Preprocessor &PP,
 /// the default behavior used by -H.
 /// \param OutputPath - If non-empty, a path to write the header include
 /// information to, instead of writing to stderr.
+/// \param ShowDepth - Whether to indent to show the nesting of the includes.
+/// \param MSStyle - Whether to print in cl.exe /showIncludes style.
 void AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders = false,
                             StringRef OutputPath = "",
-                            bool ShowDepth = true);
+                            bool ShowDepth = true, bool MSStyle = false);
 
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.

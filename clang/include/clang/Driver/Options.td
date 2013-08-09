@@ -1333,6 +1333,6 @@ def Z_reserved_lib_stdcxx : Flag<["-"], "Z-reserved-lib-stdc++">,
 def Z_reserved_lib_cckext : Flag<["-"], "Z-reserved-lib-cckext">,
     Flags<[LinkerInput, NoArgumentUnused, Unsupported]>, Group<reserved_lib_Group>;
 
-include "CLCompatOptions.td"
-
 include "CC1Options.td"
+
+include "CLCompatOptions.td"

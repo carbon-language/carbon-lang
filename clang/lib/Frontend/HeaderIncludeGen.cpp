@@ -24,15 +24,16 @@ class HeaderIncludesCallback : public PPCallbacks {
   bool OwnsOutputFile;
   bool ShowAllHeaders;
   bool ShowDepth;
+  bool MSStyle;
 
 public:
   HeaderIncludesCallback(const Preprocessor *PP, bool ShowAllHeaders_,
                          raw_ostream *OutputFile_, bool OwnsOutputFile_,
-                         bool ShowDepth_)
+                         bool ShowDepth_, bool MSStyle_)
     : SM(PP->getSourceManager()), OutputFile(OutputFile_),
       CurrentIncludeDepth(0), HasProcessedPredefines(false),
       OwnsOutputFile(OwnsOutputFile_), ShowAllHeaders(ShowAllHeaders_),
-      ShowDepth(ShowDepth_) {}
+      ShowDepth(ShowDepth_), MSStyle(MSStyle_) {}
 
   ~HeaderIncludesCallback() {
     if (OwnsOutputFile)
@@ -46,7 +47,8 @@ public:
 }
 
 void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
-                                   StringRef OutputPath, bool ShowDepth) {
+                                   StringRef OutputPath, bool ShowDepth,
+                                   bool MSStyle) {
   raw_ostream *OutputFile = &llvm::errs();
   bool OwnsOutputFile = false;
 
@@ -69,7 +71,7 @@ void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
 
   PP.addPPCallbacks(new HeaderIncludesCallback(&PP, ShowAllHeaders,
                                                OutputFile, OwnsOutputFile,
-                                               ShowDepth));
+                                               ShowDepth, MSStyle));
 }
 
 void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
@@ -109,14 +111,20 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
   if (ShowHeader && Reason == PPCallbacks::EnterFile) {
     // Write to a temporary string to avoid unnecessary flushing on errs().
     SmallString<512> Filename(UserLoc.getFilename());
-    Lexer::Stringify(Filename);
+    if (!MSStyle)
+      Lexer::Stringify(Filename);
 
     SmallString<256> Msg;
+    if (MSStyle)
+      Msg += "Note: including file:";
+
     if (ShowDepth) {
       // The main source file is at depth 1, so skip one dot.
       for (unsigned i = 1; i != CurrentIncludeDepth; ++i)
-        Msg += '.';
-      Msg += ' ';
+        Msg += MSStyle ? ' ' : '.';
+
+      if (!MSStyle)
+        Msg += ' ';
     }
     Msg += Filename;
     Msg += '\n';

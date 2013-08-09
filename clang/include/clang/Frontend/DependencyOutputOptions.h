@@ -25,6 +25,7 @@ public:
                                      /// dependency, which can avoid some 'make'
                                      /// problems.
   unsigned AddMissingHeaderDeps : 1; ///< Add missing headers to dependency list
+  unsigned PrintShowIncludes : 1; ///< Print cl.exe style /showIncludes info.
   
   /// The file to write dependency output to.
   std::string OutputFile;
@@ -48,6 +49,7 @@ public:
     ShowHeaderIncludes = 0;
     UsePhonyTargets = 0;
     AddMissingHeaderDeps = 0;
+    PrintShowIncludes = 0;
   }
 };
 

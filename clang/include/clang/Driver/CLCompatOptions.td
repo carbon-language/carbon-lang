@@ -68,6 +68,9 @@ def _SLASH_Oy_ : CLFlag<"Oy-">, HelpText<"Disable frame pointer omission">,
 def _SLASH_P : CLFlag<"P">, HelpText<"Only run the preprocessor">, Alias<E>;
 def _SLASH_QUESTION : CLFlag<"?">, Alias<help>,
   HelpText<"Display available options">;
+def _SLASH_showIncludes : CLFlag<"showIncludes">,
+  HelpText<"Print info about included files to stderr">,
+  Alias<show_includes>;
 def _SLASH_U : CLJoinedOrSeparate<"U">, HelpText<"Undefine macro">,
   MetaVarName<"<macro>">, Alias<U>;
 def _SLASH_W0 : CLFlag<"W0">, HelpText<"Disable all warnings">, Alias<w>;
@@ -130,7 +133,6 @@ def _SLASH_Gy : CLFlag<"Gy">;
 def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_GZ : CLFlag<"GZ">;
 def _SLASH_RTC : CLJoined<"RTC">;
-def _SLASH_showIncludes : CLJoined<"showIncludes">;
 def _SLASH_w : CLJoined<"w">;
 def _SLASH_Za : CLFlag<"Za">;
 def _SLASH_Zc : CLJoined<"Zc:">;
