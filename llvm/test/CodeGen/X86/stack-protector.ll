@@ -2313,18 +2313,22 @@ entry:
 ; LINUX-I386-LABEL: test19d:
 ; LINUX-I386: mov{{l|q}} %gs:
 ; LINUX-I386: calll __stack_chk_fail
+; LINUX-I386-NOT: calll __stack_chk_fail
 
 ; LINUX-X64-LABEL: test19d:
 ; LINUX-X64: mov{{l|q}} %fs:
 ; LINUX-X64: callq __stack_chk_fail
+; LINUX-X64-NOT: callq __stack_chk_fail
 
 ; LINUX-KERNEL-X64-LABEL: test19d:
 ; LINUX-KERNEL-X64: mov{{l|q}} %gs:
 ; LINUX-KERNEL-X64: callq __stack_chk_fail
+; LINUX-KERNEL-X64-NOT: callq ___stack_chk_fail
 
 ; DARWIN-X64-LABEL: test19d:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
+; DARWIN-X64-NOT: callq ___stack_chk_fail
   %c = alloca %struct.pair, align 4
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32

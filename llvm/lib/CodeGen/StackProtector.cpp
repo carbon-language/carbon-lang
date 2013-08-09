@@ -312,8 +312,7 @@ static void CreatePrologue(Function *F, Module *M, ReturnInst *RI,
 ///  - The epilogue checks the value stored in the prologue against the original
 ///    value. It calls __stack_chk_fail if they differ.
 bool StackProtector::InsertStackProtectors() {
-  BasicBlock *FailBB = 0;       // The basic block to jump to if check fails.
-  BasicBlock *FailBBDom = 0;    // FailBB's dominator.
+  bool HasPrologue = false;
   AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
   Value *StackGuardVar = 0;  // The stack guard variable.
 
@@ -322,10 +321,9 @@ bool StackProtector::InsertStackProtectors() {
     ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
     if (!RI) continue;
 
-    if (!FailBB) {
+    if (!HasPrologue) {
+      HasPrologue = true;
       CreatePrologue(F, M, RI, TLI, Trip, AI, StackGuardVar);
-      // Create the basic block to jump to when the guard check fails.
-      FailBB = CreateFailBB();
     }
 
     // For each block with a return instruction, convert this:
@@ -350,12 +348,16 @@ bool StackProtector::InsertStackProtectors() {
     //     call void @__stack_chk_fail()
     //     unreachable
 
+    // Create the fail basic block.
+    BasicBlock *FailBB = CreateFailBB();
+
     // Split the basic block before the return instruction.
     BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
 
+    // Update the dominator tree if we need to.
     if (DT && DT->isReachableFromEntry(BB)) {
       DT->addNewBlock(NewBB, BB);
-      FailBBDom = FailBBDom ? DT->findNearestCommonDominator(FailBBDom, BB) :BB;
+      DT->addNewBlock(FailBB, BB);
     }
 
     // Remove default branch instruction to the new BB.
@@ -374,10 +376,8 @@ bool StackProtector::InsertStackProtectors() {
 
   // Return if we didn't modify any basic blocks. I.e., there are no return
   // statements in the function.
-  if (!FailBB) return false;
-
-  if (DT && FailBBDom)
-    DT->addNewBlock(FailBB, FailBBDom);
+  if (!HasPrologue)
+    return false;
 
   return true;
 }
