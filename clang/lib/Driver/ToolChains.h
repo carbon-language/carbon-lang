@@ -54,7 +54,11 @@ protected:
     std::string PatchSuffix;
 
     static GCCVersion Parse(StringRef VersionText);
-    bool operator<(const GCCVersion &RHS) const;
+    bool isOlderThan(int RHSMajor, int RHSMinor, int RHSPatch,
+                     StringRef RHSPatchSuffix = StringRef()) const;
+    bool operator<(const GCCVersion &RHS) const {
+      return isOlderThan(RHS.Major, RHS.Minor, RHS.Patch, RHS.PatchSuffix);
+    }
     bool operator>(const GCCVersion &RHS) const { return RHS < *this; }
     bool operator<=(const GCCVersion &RHS) const { return !(*this > RHS); }
     bool operator>=(const GCCVersion &RHS) const { return !(*this < RHS); }
