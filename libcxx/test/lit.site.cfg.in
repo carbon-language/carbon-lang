@@ -7,4 +7,4 @@ config.python_executable     = "@PYTHON_EXECUTABLE@"
 config.enable_shared         = @LIBCXX_ENABLE_SHARED@
 
 # Let the main config do the real work.
-lit.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")
+lit_config.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")
