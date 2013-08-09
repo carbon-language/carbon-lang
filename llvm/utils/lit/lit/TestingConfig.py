@@ -9,7 +9,7 @@ class TestingConfig:
     """
 
     @staticmethod
-    def frompath(path, config, litConfig, mustExist=True):
+    def frompath(path, config, litConfig):
         """
         frompath(path, config, litConfig, mustExist) -> TestingConfig
 
@@ -58,39 +58,37 @@ class TestingConfig:
                                    available_features = available_features,
                                    pipefail = True)
 
-        if os.path.exists(path):
-            # FIXME: Improve detection and error reporting of errors in the
-            # config file.
-            f = open(path)
-            cfg_globals = dict(globals())
-            cfg_globals['config'] = config
-            cfg_globals['lit'] = litConfig
-            cfg_globals['__file__'] = path
-            try:
-                data = f.read()
-                if PY2:
-                    exec("exec data in cfg_globals")
-                else:
-                    exec(data, cfg_globals)
-                if litConfig.debug:
-                    litConfig.note('... loaded config %r' % path)
-            except SystemExit:
-                e = sys.exc_info()[1]
-                # We allow normal system exit inside a config file to just
-                # return control without error.
-                if e.args:
-                    raise
-            except:
-                import traceback
-                litConfig.fatal(
-                    'unable to parse config file %r, traceback: %s' % (
-                        path, traceback.format_exc()))
-            f.close()
-        else:
-            if mustExist:
-                litConfig.fatal('unable to load config from %r ' % path)
-            elif litConfig.debug:
-                litConfig.note('... config not found  - %r' %path)
+        # Load the config script data.
+        f = open(path)
+        try:
+            data = f.read()
+        except:
+            litConfig.fatal('unable to load config file: %r' % (path,))
+        f.close()
+
+        # Execute the config script to initialize the object.
+        cfg_globals = dict(globals())
+        cfg_globals['config'] = config
+        cfg_globals['lit'] = litConfig
+        cfg_globals['__file__'] = path
+        try:
+            if PY2:
+                exec("exec data in cfg_globals")
+            else:
+                exec(data, cfg_globals)
+            if litConfig.debug:
+                litConfig.note('... loaded config %r' % path)
+        except SystemExit:
+            e = sys.exc_info()[1]
+            # We allow normal system exit inside a config file to just
+            # return control without error.
+            if e.args:
+                raise
+        except:
+            import traceback
+            litConfig.fatal(
+                'unable to parse config file %r, traceback: %s' % (
+                    path, traceback.format_exc()))
 
         config.finish(litConfig)
         return config

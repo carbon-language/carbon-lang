@@ -42,7 +42,7 @@ def getTestSuite(item, litConfig, cache):
         if litConfig.debug:
             litConfig.note('loading suite config %r' % cfgpath)
 
-        cfg = TestingConfig.frompath(cfgpath, None, litConfig, mustExist = True)
+        cfg = TestingConfig.frompath(cfgpath, None, litConfig)
         source_root = os.path.realpath(cfg.test_source_root or path)
         exec_root = os.path.realpath(cfg.test_exec_root or path)
         return Test.TestSuite(cfg.name, source_root, exec_root, cfg), ()
