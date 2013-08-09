@@ -10,6 +10,11 @@ typedef struct _GUID
 
 struct __declspec(uuid("12345678-1234-1234-1234-1234567890aB")) S1 { } s1;
 struct __declspec(uuid("87654321-4321-4321-4321-ba0987654321")) S2 { };
+struct __declspec(uuid("{12345678-1234-1234-1234-1234567890ac}")) Curly;
+
+// Make sure we can properly generate code when the UUID has curly braces on it.
+GUID thing = __uuidof(Curly);
+// CHECK: @thing = global %struct._GUID zeroinitializer, align 4
 
 // This gets initialized in a static initializer.
 // CHECK: @g = global %struct._GUID zeroinitializer, align 4
@@ -22,6 +27,9 @@ const GUID& gr = __uuidof(S1);
 
 // CHECK: @gp = global %struct._GUID* @_GUID_12345678_1234_1234_1234_1234567890ab, align 4
 const GUID* gp = &__uuidof(S1);
+
+// CHECK: @cp = global %struct._GUID* @_GUID_12345678_1234_1234_1234_1234567890ac, align 4
+const GUID* cp = &__uuidof(Curly);
 
 // Special case: _uuidof(0)
 // CHECK: @zeroiid = constant %struct._GUID* @_GUID_00000000_0000_0000_0000_000000000000, align 4

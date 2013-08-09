@@ -4567,43 +4567,32 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
+  // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or
+  // "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}", normalize to the former.
   StringRef StrRef = Str->getString();
-
-  bool IsCurly = StrRef.size() > 1 && StrRef.front() == '{' &&
-                 StrRef.back() == '}';
+  if (StrRef.size() == 38 && StrRef.front() == '{' && StrRef.back() == '}')
+    StrRef = StrRef.drop_front().drop_back();
 
   // Validate GUID length.
-  if (IsCurly && StrRef.size() != 38) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
-    return;
-  }
-  if (!IsCurly && StrRef.size() != 36) {
+  if (StrRef.size() != 36) {
     S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
     return;
   }
 
-  // GUID format is "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or
-  // "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
-  StringRef::iterator I = StrRef.begin();
-  if (IsCurly) // Skip the optional '{'
-     ++I;
-
-  for (int i = 0; i < 36; ++i) {
+  for (unsigned i = 0; i < 36; ++i) {
     if (i == 8 || i == 13 || i == 18 || i == 23) {
-      if (*I != '-') {
+      if (StrRef[i] != '-') {
         S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
         return;
       }
-    } else if (!isHexDigit(*I)) {
+    } else if (!isHexDigit(StrRef[i])) {
       S.Diag(Attr.getLoc(), diag::err_attribute_uuid_malformed_guid);
       return;
     }
-    I++;
   }
 
-  D->addAttr(::new (S.Context)
-             UuidAttr(Attr.getRange(), S.Context, Str->getString(),
-                      Attr.getAttributeSpellingListIndex()));
+  D->addAttr(::new (S.Context) UuidAttr(Attr.getRange(), S.Context, StrRef,
+                                        Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr) {
