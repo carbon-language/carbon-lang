@@ -1,4 +1,4 @@
-﻿//===- llvm-readobj.cpp - Dump contents of an Object File -----------------===//
+//===- llvm-readobj.cpp - Dump contents of an Object File -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
