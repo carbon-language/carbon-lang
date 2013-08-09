@@ -193,6 +193,8 @@ void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
 }
 
 bool SanitizerArgs::hasAsanZeroBaseShadow(const ToolChain &TC) const {
+  if (!needsAsanRt())
+    return false;
   if (AsanZeroBaseShadow != AZBSK_Default)
     return AsanZeroBaseShadow == AZBSK_On;
   // Zero-base shadow is used by default only on Android.
