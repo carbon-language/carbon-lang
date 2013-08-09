@@ -77,6 +77,13 @@ public:
     TraverseStmt(body);
   }
 
+  bool TraverseBlockDecl(BlockDecl *D) {
+    // ParentMap does not enter into a BlockDecl to record its stmts, so use a
+    // new UnbridgedCastRewriter to handle the block.
+    UnbridgedCastRewriter(Pass).transformBody(D->getBody(), D);
+    return true;
+  }
+
   bool VisitCastExpr(CastExpr *E) {
     if (E->getCastKind() != CK_CPointerToObjCPointerCast &&
         E->getCastKind() != CK_BitCast &&
