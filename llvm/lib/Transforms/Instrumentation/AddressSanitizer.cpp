@@ -488,7 +488,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   void initializeCallbacks(Module &M);
 
   // Check if we want (and can) handle this alloca.
-  bool isInterestingAlloca(AllocaInst &AI) {
+  bool isInterestingAlloca(AllocaInst &AI) const {
     return (!AI.isArrayAllocation() &&
             AI.isStaticAlloca() &&
             AI.getAlignment() <= RedzoneSize() &&
@@ -498,24 +498,24 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   size_t RedzoneSize() const {
     return RedzoneSizeForScale(Mapping.Scale);
   }
-  uint64_t getAllocaSizeInBytes(AllocaInst *AI) {
+  uint64_t getAllocaSizeInBytes(AllocaInst *AI) const {
     Type *Ty = AI->getAllocatedType();
     uint64_t SizeInBytes = ASan.TD->getTypeAllocSize(Ty);
     return SizeInBytes;
   }
-  uint64_t getAlignedSize(uint64_t SizeInBytes) {
+  uint64_t getAlignedSize(uint64_t SizeInBytes) const {
     size_t RZ = RedzoneSize();
     return ((SizeInBytes + RZ - 1) / RZ) * RZ;
   }
-  uint64_t getAlignedAllocaSize(AllocaInst *AI) {
+  uint64_t getAlignedAllocaSize(AllocaInst *AI) const {
     uint64_t SizeInBytes = getAllocaSizeInBytes(AI);
     return getAlignedSize(SizeInBytes);
   }
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
-  void poisonRedZones(const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> IRB,
+  void poisonRedZones(const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> &IRB,
                       Value *ShadowBase, bool DoPoison);
-  void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> IRB, bool DoPoison);
+  void poisonAlloca(Value *V, uint64_t Size, IRBuilder<> &IRB, bool DoPoison);
 };
 
 }  // namespace
@@ -1283,7 +1283,7 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
 }
 
 void FunctionStackPoisoner::poisonRedZones(
-  const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> IRB, Value *ShadowBase,
+  const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> &IRB, Value *ShadowBase,
   bool DoPoison) {
   size_t ShadowRZSize = RedzoneSize() >> Mapping.Scale;
   assert(ShadowRZSize >= 1 && ShadowRZSize <= 4);
@@ -1460,7 +1460,7 @@ void FunctionStackPoisoner::poisonStack() {
 }
 
 void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
-                                         IRBuilder<> IRB, bool DoPoison) {
+                                         IRBuilder<> &IRB, bool DoPoison) {
   // For now just insert the call to ASan runtime.
   Value *AddrArg = IRB.CreatePointerCast(V, IntptrTy);
   Value *SizeArg = ConstantInt::get(IntptrTy, Size);
