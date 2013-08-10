@@ -264,7 +264,7 @@ void Sema::ActOnPragmaMSStruct(PragmaMSStructKind Kind) {
   MSStructPragmaOn = (Kind == PMSST_ON);
 }
 
-void Sema::ActOnPragmaMSComment(PragmaMSCommentKind Kind, llvm::StringRef Arg) {
+void Sema::ActOnPragmaMSComment(PragmaMSCommentKind Kind, StringRef Arg) {
   // FIXME: Serialize this.
   switch (Kind) {
   case PCK_Unknown:
@@ -283,8 +283,7 @@ void Sema::ActOnPragmaMSComment(PragmaMSCommentKind Kind, llvm::StringRef Arg) {
   llvm_unreachable("invalid pragma comment kind");
 }
 
-void Sema::ActOnPragmaDetectMismatch(llvm::StringRef Name,
-                                     llvm::StringRef Value) {
+void Sema::ActOnPragmaDetectMismatch(StringRef Name, StringRef Value) {
   // FIXME: Serialize this.
   Consumer.HandleDetectMismatch(Name, Value);
 }

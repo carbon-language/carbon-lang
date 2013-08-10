@@ -1952,7 +1952,7 @@ static void diagnoseIgnoredQualifiers(
     { DeclSpec::TQ_atomic, "_Atomic", AtomicQualLoc }
   };
 
-  llvm::SmallString<32> QualStr;
+  SmallString<32> QualStr;
   unsigned NumQuals = 0;
   SourceLocation Loc;
   FixItHint FixIts[4];
