@@ -4063,6 +4063,9 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
         isa<TemplateTemplateParmDecl>(D))
       return D;
 
+    if (D->isInvalidDecl())
+      return 0;
+
     // If we didn't find the decl, then we must have a label decl that hasn't
     // been found yet.  Lazily instantiate it and return it now.
     assert(isa<LabelDecl>(D));
