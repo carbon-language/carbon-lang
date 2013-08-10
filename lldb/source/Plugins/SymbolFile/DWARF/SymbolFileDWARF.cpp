@@ -6193,6 +6193,30 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     GetUniqueDWARFASTTypeMap().Insert (type_name_const_str, 
                                                        unique_ast_entry);
                     
+                    if (is_forward_declaration && die->HasChildren())
+                    {
+                        // Check to see if the DIE actually has a definition, some version of GCC will
+                        // emit DIEs with DW_AT_declaration set to true, but yet still have subprogram,
+                        // members, or inheritance, so we can't trust it
+                        const DWARFDebugInfoEntry *child_die = die->GetFirstChild();
+                        while (child_die)
+                        {
+                            switch (child_die->Tag())
+                            {
+                                case DW_TAG_inheritance:
+                                case DW_TAG_subprogram:
+                                case DW_TAG_member:
+                                case DW_TAG_APPLE_property:
+                                    child_die = NULL;
+                                    is_forward_declaration = false;
+                                    break;
+                                default:
+                                    child_die = child_die->GetSibling();
+                                    break;
+                            }
+                        }
+                    }
+
                     if (!is_forward_declaration)
                     {
                         // Always start the definition for a class type so that
