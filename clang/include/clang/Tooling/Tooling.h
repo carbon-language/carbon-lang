@@ -305,10 +305,8 @@ inline FrontendActionFactory *newFrontendActionFactory(
 /// Otherwise, the returned path will contain the literal path-concatenation of
 /// the current directory and \c File.
 ///
-/// The difference to llvm::sys::fs::make_absolute is that we prefer
-/// ::getenv("PWD") if available.
-/// FIXME: Make this functionality available from llvm::sys::fs and delete
-///        this function.
+/// The difference to llvm::sys::fs::make_absolute is the canonicalization this
+/// does by removing "./" and computing native paths.
 ///
 /// \param File Either an absolute or relative path.
 std::string getAbsolutePath(StringRef File);

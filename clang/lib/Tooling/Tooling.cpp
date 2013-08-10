@@ -124,23 +124,16 @@ bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
 }
 
 std::string getAbsolutePath(StringRef File) {
-  SmallString<1024> BaseDirectory;
-  if (const char *PWD = ::getenv("PWD"))
-    BaseDirectory = PWD;
-  else
-    llvm::sys::fs::current_path(BaseDirectory);
-  SmallString<1024> PathStorage;
-  if (llvm::sys::path::is_absolute(File)) {
-    llvm::sys::path::native(File, PathStorage);
-    return PathStorage.str();
-  }
   StringRef RelativePath(File);
   // FIXME: Should '.\\' be accepted on Win32?
   if (RelativePath.startswith("./")) {
     RelativePath = RelativePath.substr(strlen("./"));
   }
-  SmallString<1024> AbsolutePath(BaseDirectory);
-  llvm::sys::path::append(AbsolutePath, RelativePath);
+
+  SmallString<1024> AbsolutePath = RelativePath;
+  llvm::error_code EC = llvm::sys::fs::make_absolute(AbsolutePath);
+  assert(!EC);
+  SmallString<1024> PathStorage;
   llvm::sys::path::native(Twine(AbsolutePath), PathStorage);
   return PathStorage.str();
 }

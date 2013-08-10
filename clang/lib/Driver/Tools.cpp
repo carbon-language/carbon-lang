@@ -1780,24 +1780,8 @@ static bool shouldUseLeafFramePointer(const ArgList &Args,
   return true;
 }
 
-/// If the PWD environment variable is set, add a CC1 option to specify the
-/// debug compilation directory.
+/// Add a CC1 option to specify the debug compilation directory.
 static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
-  const char *pwd = ::getenv("PWD");
-  if (!pwd)
-    return;
-
-  llvm::sys::fs::file_status PWDStatus, DotStatus;
-  if (llvm::sys::path::is_absolute(pwd) &&
-      !llvm::sys::fs::status(pwd, PWDStatus) &&
-      !llvm::sys::fs::status(".", DotStatus) &&
-      PWDStatus.getUniqueID() == DotStatus.getUniqueID()) {
-    CmdArgs.push_back("-fdebug-compilation-dir");
-    CmdArgs.push_back(Args.MakeArgString(pwd));
-    return;
-  }
-
-  // Fall back to using getcwd.
   SmallString<128> cwd;
   if (!llvm::sys::fs::current_path(cwd)) {
     CmdArgs.push_back("-fdebug-compilation-dir");
@@ -2494,12 +2478,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-coverage-file");
       SmallString<128> CoverageFilename(Output.getFilename());
       if (llvm::sys::path::is_relative(CoverageFilename.str())) {
-        if (const char *pwd = ::getenv("PWD")) {
-          if (llvm::sys::path::is_absolute(pwd)) {
-            SmallString<128> Pwd(pwd);
-            llvm::sys::path::append(Pwd, CoverageFilename.str());
-            CoverageFilename.swap(Pwd);
-          }
+        SmallString<128> Pwd;
+        if (!llvm::sys::fs::current_path(Pwd)) {
+          llvm::sys::path::append(Pwd, CoverageFilename.str());
+          CoverageFilename.swap(Pwd);
         }
       }
       CmdArgs.push_back(Args.MakeArgString(CoverageFilename));

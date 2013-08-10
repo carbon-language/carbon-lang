@@ -2,12 +2,16 @@
 // RUN: mkdir %t
 // RUN: echo "[{\"directory\":\".\",\"command\":\"clang++ -c %t/test.cpp\",\"file\":\"%t/test.cpp\"}]" | sed -e 's/\\/\\\\/g' > %t/compile_commands.json
 // RUN: cp "%s" "%t/test.cpp"
-// RUN: not env PWD="%t" clang-check -p "%t" "test.cpp" 2>&1|FileCheck %s
+// RUN: ln -sf %t %t.foobar
+// RUN: cd %t
+// RUN: not env PWD="%t.foobar" clang-check -p "%t" "test.cpp" 2>&1|FileCheck %s
 // FIXME: Make the above easier.
 
 // CHECK: C++ requires
+// CHECK: .foobar/test.cpp
 invalid;
 
 // REQUIRES: shell
 // PR15590
 // XFAIL: win64
+// XFAIL: mingw
