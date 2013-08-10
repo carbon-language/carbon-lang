@@ -298,6 +298,18 @@ UniqueID file_status::getUniqueID() const {
 }
 
 error_code current_path(SmallVectorImpl<char> &result) {
+  result.clear();
+
+  const char *pwd = ::getenv("PWD");
+  llvm::sys::fs::file_status PWDStatus, DotStatus;
+  if (pwd && llvm::sys::path::is_absolute(pwd) &&
+      !llvm::sys::fs::status(pwd, PWDStatus) &&
+      !llvm::sys::fs::status(".", DotStatus) &&
+      PWDStatus.getUniqueID() == DotStatus.getUniqueID()) {
+    result.append(pwd, pwd + strlen(pwd));
+    return error_code::success();
+  }
+
 #ifdef MAXPATHLEN
   result.reserve(MAXPATHLEN);
 #else
