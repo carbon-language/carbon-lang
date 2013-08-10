@@ -1,37 +1,8 @@
 #define _CLC_CONVERT_DECL(FROM_TYPE, TO_TYPE, SUFFIX) \
   _CLC_OVERLOAD _CLC_DECL TO_TYPE convert_##TO_TYPE##SUFFIX(FROM_TYPE x);
 
-_CLC_CONVERT_DECL(long, char, )
-_CLC_CONVERT_DECL(ulong, uchar, )
-_CLC_CONVERT_DECL(long, short, )
-_CLC_CONVERT_DECL(ulong, ushort, )
-_CLC_CONVERT_DECL(long, int, )
-_CLC_CONVERT_DECL(ulong, uint, )
-_CLC_CONVERT_DECL(long, long, )
-_CLC_CONVERT_DECL(ulong, ulong, )
-#ifdef cl_khr_fp64
-_CLC_CONVERT_DECL(double, float, )
-_CLC_CONVERT_DECL(double, double, )
-#else
-_CLC_CONVERT_DECL(float, float, )
-#endif
-
-_CLC_CONVERT_DECL(long, char, _sat)
-_CLC_CONVERT_DECL(ulong, uchar, _sat)
-_CLC_CONVERT_DECL(long, short, _sat)
-_CLC_CONVERT_DECL(ulong, ushort, _sat)
-_CLC_CONVERT_DECL(long, int, _sat)
-_CLC_CONVERT_DECL(ulong, uint, _sat)
-_CLC_CONVERT_DECL(long, long, _sat)
-_CLC_CONVERT_DECL(ulong, ulong, _sat)
-#ifdef cl_khr_fp64
-_CLC_CONVERT_DECL(double, float, _sat)
-_CLC_CONVERT_DECL(double, double, _sat)
-#else
-_CLC_CONVERT_DECL(float, float, _sat)
-#endif
-
 #define _CLC_VECTOR_CONVERT_DECL(FROM_TYPE, TO_TYPE, SUFFIX) \
+  _CLC_CONVERT_DECL(FROM_TYPE, TO_TYPE, SUFFIX) \
   _CLC_CONVERT_DECL(FROM_TYPE##2, TO_TYPE##2, SUFFIX) \
   _CLC_CONVERT_DECL(FROM_TYPE##3, TO_TYPE##3, SUFFIX) \
   _CLC_CONVERT_DECL(FROM_TYPE##4, TO_TYPE##4, SUFFIX) \

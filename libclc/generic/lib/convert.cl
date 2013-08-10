@@ -30,20 +30,47 @@
     return (TO_TYPE##16)(convert_##TO_TYPE##8##SUFFIX(x.lo), convert_##TO_TYPE##8##SUFFIX(x.hi)); \
   }
 
-CONVERT_ID(long, char, )
-CONVERT_ID(ulong, uchar, )
-CONVERT_ID(long, short, )
-CONVERT_ID(ulong, ushort, )
-CONVERT_ID(long, int, )
-CONVERT_ID(ulong, uint, )
-CONVERT_ID(long, long, )
-CONVERT_ID(ulong, ulong, )
+#define CONVERT_ID_FROM1(FROM_TYPE) \
+  CONVERT_ID(FROM_TYPE, char, ) \
+  CONVERT_ID(FROM_TYPE, uchar, ) \
+  CONVERT_ID(FROM_TYPE, int, ) \
+  CONVERT_ID(FROM_TYPE, uint, ) \
+  CONVERT_ID(FROM_TYPE, short, ) \
+  CONVERT_ID(FROM_TYPE, ushort, ) \
+  CONVERT_ID(FROM_TYPE, long, ) \
+  CONVERT_ID(FROM_TYPE, ulong, ) \
+  CONVERT_ID(FROM_TYPE, float, )
+
 #ifdef cl_khr_fp64
-CONVERT_ID(double, float, )
-CONVERT_ID(double, double, )
+#define CONVERT_ID_FROM(FROM_TYPE) \
+  CONVERT_ID_FROM1(FROM_TYPE) \
+  CONVERT_ID(FROM_TYPE, double, )
 #else
-CONVERT_ID(float, float, )
+#define CONVERT_ID_FROM(FROM_TYPE) \
+  CONVERT_ID_FROM1(FROM_TYPE)
 #endif
+
+#define CONVERT_ID_TO1()
+  CONVERT_ID_FROM(char)
+  CONVERT_ID_FROM(uchar)
+  CONVERT_ID_FROM(int)
+  CONVERT_ID_FROM(uint)
+  CONVERT_ID_FROM(short)
+  CONVERT_ID_FROM(ushort)
+  CONVERT_ID_FROM(long)
+  CONVERT_ID_FROM(ulong)
+  CONVERT_ID_FROM(float)
+
+#ifdef cl_khr_fp64
+#define CONVERT_ID_TO() \
+  CONVERT_ID_TO1() \
+  CONVERT_ID_FROM(double)
+#else
+#define CONVERT_ID_TO() \
+  CONVERT_ID_TO1()
+#endif
+
+CONVERT_ID_TO()
 
 _CLC_OVERLOAD _CLC_DEF char convert_char_sat(long l) {
   return l > 127 ? 127 : l < -128 ? -128 : l;
