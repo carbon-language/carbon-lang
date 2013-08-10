@@ -21,18 +21,21 @@ void SparcELFMCAsmInfo::anchor() { }
 SparcELFMCAsmInfo::SparcELFMCAsmInfo(StringRef TT) {
   IsLittleEndian = false;
   Triple TheTriple(TT);
-  if (TheTriple.getArch() == Triple::sparcv9) {
+  bool isV9 = (TheTriple.getArch() == Triple::sparcv9);
+
+  if (isV9) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
 
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
-  Data64bitsDirective = 0;  // .xword is only supported by V9.
+  // .xword is only supported by V9.
+  Data64bitsDirective = (isV9) ? "\t.xword\t" : 0;
   ZeroDirective = "\t.skip\t";
   CommentString = "!";
   HasLEB128 = true;
   SupportsDebugInformation = true;
-  
+
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
 
