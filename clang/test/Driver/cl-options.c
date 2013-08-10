@@ -1,5 +1,7 @@
 // Don't attempt slash switches on msys bash.
 // REQUIRES: shell-preserves-root
+// Exclude gcc-driven clang.
+// REQUIRES: clang-driver
 
 // Note: %s must be preceded by --, otherwise it may be interpreted as a
 // command-line option, e.g. on Mac where %s is commonly under /Users.
