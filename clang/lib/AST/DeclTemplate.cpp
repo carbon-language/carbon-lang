@@ -829,8 +829,7 @@ ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
                                        ClassTemplateDecl *SpecializedTemplate,
                                        const TemplateArgument *Args,
                                        unsigned NumArgs,
-                                       TemplateArgumentLoc *ArgInfos,
-                                       unsigned NumArgInfos,
+                               const ASTTemplateArgumentListInfo *ArgInfos,
                                ClassTemplatePartialSpecializationDecl *PrevDecl,
                                        unsigned SequenceNumber)
   : ClassTemplateSpecializationDecl(Context,
@@ -839,9 +838,8 @@ ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
                                     SpecializedTemplate,
                                     Args, NumArgs, PrevDecl),
     TemplateParams(Params), ArgsAsWritten(ArgInfos),
-    NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
-    InstantiatedFromMember(0, false)
-{ 
+    SequenceNumber(SequenceNumber), InstantiatedFromMember(0, false)
+{
   AdoptTemplateParameterList(Params, this);
 }
 
@@ -857,10 +855,8 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC,
        QualType CanonInjectedType,
        ClassTemplatePartialSpecializationDecl *PrevDecl,
        unsigned SequenceNumber) {
-  unsigned N = ArgInfos.size();
-  TemplateArgumentLoc *ClonedArgs = new (Context) TemplateArgumentLoc[N];
-  for (unsigned I = 0; I != N; ++I)
-    ClonedArgs[I] = ArgInfos[I];
+  const ASTTemplateArgumentListInfo *ASTArgInfos =
+    ASTTemplateArgumentListInfo::Create(Context, ArgInfos);
 
   ClassTemplatePartialSpecializationDecl *Result
     = new (Context)ClassTemplatePartialSpecializationDecl(Context, TK, DC,
@@ -868,7 +864,7 @@ Create(ASTContext &Context, TagKind TK,DeclContext *DC,
                                                           Params,
                                                           SpecializedTemplate,
                                                           Args, NumArgs,
-                                                          ClonedArgs, N,
+                                                          ASTArgInfos,
                                                           PrevDecl,
                                                           SequenceNumber);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
@@ -1162,14 +1158,12 @@ VarTemplatePartialSpecializationDecl::VarTemplatePartialSpecializationDecl(
     SourceLocation IdLoc, TemplateParameterList *Params,
     VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
     StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
-    TemplateArgumentLoc *ArgInfos, unsigned NumArgInfos,
-    unsigned SequenceNumber)
+    const ASTTemplateArgumentListInfo *ArgInfos, unsigned SequenceNumber)
     : VarTemplateSpecializationDecl(Context, VarTemplatePartialSpecialization,
                                     DC, StartLoc, IdLoc, SpecializedTemplate, T,
                                     TInfo, S, Args, NumArgs),
       TemplateParams(Params), ArgsAsWritten(ArgInfos),
-      NumArgsAsWritten(NumArgInfos), SequenceNumber(SequenceNumber),
-      InstantiatedFromMember(0, false) {
+      SequenceNumber(SequenceNumber), InstantiatedFromMember(0, false) {
   // TODO: The template parameters should be in DC by now. Verify.
   // AdoptTemplateParameterList(Params, DC);
 }
@@ -1181,15 +1175,13 @@ VarTemplatePartialSpecializationDecl::Create(
     VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
     StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
     const TemplateArgumentListInfo &ArgInfos, unsigned SequenceNumber) {
-  unsigned N = ArgInfos.size();
-  TemplateArgumentLoc *ClonedArgs = new (Context) TemplateArgumentLoc[N];
-  for (unsigned I = 0; I != N; ++I)
-    ClonedArgs[I] = ArgInfos[I];
+  const ASTTemplateArgumentListInfo *ASTArgInfos
+    = ASTTemplateArgumentListInfo::Create(Context, ArgInfos);
 
   VarTemplatePartialSpecializationDecl *Result =
       new (Context) VarTemplatePartialSpecializationDecl(
           Context, DC, StartLoc, IdLoc, Params, SpecializedTemplate, T, TInfo,
-          S, Args, NumArgs, ClonedArgs, N, SequenceNumber);
+          S, Args, NumArgs, ASTArgInfos, SequenceNumber);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
   return Result;
 }

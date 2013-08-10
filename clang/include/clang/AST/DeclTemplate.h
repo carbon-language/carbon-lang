@@ -1649,8 +1649,7 @@ class ClassTemplatePartialSpecializationDecl
 
   /// \brief The source info for the template arguments as written.
   /// FIXME: redundant with TypeAsWritten?
-  TemplateArgumentLoc *ArgsAsWritten;
-  unsigned NumArgsAsWritten;
+  const ASTTemplateArgumentListInfo *ArgsAsWritten;
 
   /// \brief Sequence number indicating when this class template partial
   /// specialization was added to the set of partial specializations for
@@ -1673,15 +1672,13 @@ class ClassTemplatePartialSpecializationDecl
                                          ClassTemplateDecl *SpecializedTemplate,
                                          const TemplateArgument *Args,
                                          unsigned NumArgs,
-                                         TemplateArgumentLoc *ArgInfos,
-                                         unsigned NumArgInfos,
+                               const ASTTemplateArgumentListInfo *ArgsAsWritten,
                                ClassTemplatePartialSpecializationDecl *PrevDecl,
                                          unsigned SequenceNumber);
 
   ClassTemplatePartialSpecializationDecl()
     : ClassTemplateSpecializationDecl(ClassTemplatePartialSpecialization),
-      TemplateParams(0), ArgsAsWritten(0),
-      NumArgsAsWritten(0), SequenceNumber(0),
+      TemplateParams(0), ArgsAsWritten(0), SequenceNumber(0),
       InstantiatedFromMember(0, false) { }
 
 public:
@@ -1711,13 +1708,8 @@ public:
   }
 
   /// Get the template arguments as written.
-  TemplateArgumentLoc *getTemplateArgsAsWritten() const {
+  const ASTTemplateArgumentListInfo *getTemplateArgsAsWritten() const {
     return ArgsAsWritten;
-  }
-
-  /// Get the number of template arguments as written.
-  unsigned getNumTemplateArgsAsWritten() const {
-    return NumArgsAsWritten;
   }
 
   /// \brief Get the sequence number for this class template partial
@@ -2533,8 +2525,7 @@ class VarTemplatePartialSpecializationDecl
 
   /// \brief The source info for the template arguments as written.
   /// FIXME: redundant with TypeAsWritten?
-  TemplateArgumentLoc *ArgsAsWritten;
-  unsigned NumArgsAsWritten;
+  const ASTTemplateArgumentListInfo *ArgsAsWritten;
 
   /// \brief Sequence number indicating when this variable template partial
   /// specialization was added to the set of partial specializations for
@@ -2554,12 +2545,12 @@ class VarTemplatePartialSpecializationDecl
       SourceLocation IdLoc, TemplateParameterList *Params,
       VarTemplateDecl *SpecializedTemplate, QualType T, TypeSourceInfo *TInfo,
       StorageClass S, const TemplateArgument *Args, unsigned NumArgs,
-      TemplateArgumentLoc *ArgInfos, unsigned NumArgInfos,
+      const ASTTemplateArgumentListInfo *ArgInfos,
       unsigned SequenceNumber);
 
   VarTemplatePartialSpecializationDecl()
       : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
-        TemplateParams(0), ArgsAsWritten(0), NumArgsAsWritten(0),
+        TemplateParams(0), ArgsAsWritten(0),
         SequenceNumber(0), InstantiatedFromMember(0, false) {}
 
 public:
@@ -2585,12 +2576,9 @@ public:
   }
 
   /// Get the template arguments as written.
-  TemplateArgumentLoc *getTemplateArgsAsWritten() const {
+  const ASTTemplateArgumentListInfo *getTemplateArgsAsWritten() const {
     return ArgsAsWritten;
   }
-
-  /// Get the number of template arguments as written.
-  unsigned getNumTemplateArgsAsWritten() const { return NumArgsAsWritten; }
 
   /// \brief Get the sequence number for this variable template partial
   /// specialization.

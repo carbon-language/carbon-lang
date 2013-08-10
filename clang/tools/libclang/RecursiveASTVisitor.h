@@ -1647,7 +1647,8 @@ DEF_TRAVERSE_DECL(ClassTemplatePartialSpecializationDecl, {
     }
     // The args that remains unspecialized.
     TRY_TO(TraverseTemplateArgumentLocsHelper(
-        D->getTemplateArgsAsWritten(), D->getNumTemplateArgsAsWritten()));
+                       D->getTemplateArgsAsWritten()->getTemplateArgs(),
+                       D->getTemplateArgsAsWritten()->NumTemplateArgs));
 
     // Don't need the ClassTemplatePartialSpecializationHelper, even
     // though that's our parent class -- we already visit all the
@@ -1821,8 +1822,9 @@ DEF_TRAVERSE_DECL(VarTemplatePartialSpecializationDecl,
     }
   }
   // The args that remains unspecialized.
-  TRY_TO(TraverseTemplateArgumentLocsHelper(D->getTemplateArgsAsWritten(),
-                                            D->getNumTemplateArgsAsWritten()));
+  TRY_TO(TraverseTemplateArgumentLocsHelper(
+                         D->getTemplateArgsAsWritten()->getTemplateArgs(),
+                         D->getTemplateArgsAsWritten()->NumTemplateArgs));
 
   // Don't need the VarTemplatePartialSpecializationHelper, even
   // though that's our parent class -- we already visit all the

@@ -577,6 +577,11 @@ public:
   void AddTemplateArgumentLoc(const TemplateArgumentLoc &Arg,
                               RecordDataImpl &Record);
 
+  /// \brief Emits an AST template argument list info.
+  void AddASTTemplateArgumentListInfo(
+                          const ASTTemplateArgumentListInfo *ASTTemplArgList,
+                          RecordDataImpl &Record);
+
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordDataImpl &Record);
 
