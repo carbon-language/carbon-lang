@@ -1007,8 +1007,12 @@ def V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32", []>;
 def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32", []>;
 def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32", []>;
 defm : BFIPatterns <V_BFI_B32>;
-def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32", []>;
-def V_FMA_F64 : VOP3_64 <0x0000014c, "V_FMA_F64", []>;
+def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32",
+  [(set f32:$dst, (fma f32:$src0, f32:$src1, f32:$src2))]
+>;
+def V_FMA_F64 : VOP3_64 <0x0000014c, "V_FMA_F64",
+  [(set f64:$dst, (fma f64:$src0, f64:$src1, f64:$src2))]
+>;
 //def V_LERP_U8 : VOP3_U8 <0x0000014d, "V_LERP_U8", []>;
 def V_ALIGNBIT_B32 : VOP3_32 <0x0000014e, "V_ALIGNBIT_B32", []>;
 def : ROTRPattern <V_ALIGNBIT_B32>;
