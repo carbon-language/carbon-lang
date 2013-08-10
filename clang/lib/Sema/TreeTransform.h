@@ -6251,7 +6251,7 @@ template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
   // Transform the clauses
-  llvm::SmallVector<OMPClause *, 5> TClauses;
+  SmallVector<OMPClause *, 5> TClauses;
   ArrayRef<OMPClause *> Clauses = D->clauses();
   TClauses.reserve(Clauses.size());
   for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
@@ -6292,7 +6292,7 @@ TreeTransform<Derived>::TransformOMPDefaultClause(OMPDefaultClause *C) {
 template<typename Derived>
 OMPClause *
 TreeTransform<Derived>::TransformOMPPrivateClause(OMPPrivateClause *C) {
-  llvm::SmallVector<Expr *, 5> Vars;
+  SmallVector<Expr *, 5> Vars;
   Vars.reserve(C->varlist_size());
   for (OMPVarList<OMPPrivateClause>::varlist_iterator I = C->varlist_begin(),
                                                       E = C->varlist_end();
@@ -8235,7 +8235,7 @@ TreeTransform<Derived>::TransformLambdaScope(LambdaExpr *E,
 
   // Transform any init-capture expressions before entering the scope of the
   // lambda.
-  llvm::SmallVector<ExprResult, 8> InitCaptureExprs;
+  SmallVector<ExprResult, 8> InitCaptureExprs;
   InitCaptureExprs.resize(E->explicit_capture_end() -
                           E->explicit_capture_begin());
   for (LambdaExpr::capture_iterator C = E->capture_begin(),

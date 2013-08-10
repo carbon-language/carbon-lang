@@ -951,7 +951,7 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
 /// definition.
 static bool
 CheckConstexprFunctionStmt(Sema &SemaRef, const FunctionDecl *Dcl, Stmt *S,
-                           llvm::SmallVectorImpl<SourceLocation> &ReturnStmts,
+                           SmallVectorImpl<SourceLocation> &ReturnStmts,
                            SourceLocation &Cxx1yLoc) {
   // - its function-body shall be [...] a compound-statement that contains only
   switch (S->getStmtClass()) {
@@ -8006,8 +8006,8 @@ private:
   /// constructors.
   struct InheritingConstructorsForType {
     InheritingConstructor NonTemplate;
-    llvm::SmallVector<
-      std::pair<TemplateParameterList*, InheritingConstructor>, 4> Templates;
+    SmallVector<std::pair<TemplateParameterList *, InheritingConstructor>, 4>
+        Templates;
 
     InheritingConstructor &getEntry(Sema &S, const CXXConstructorDecl *Ctor) {
       if (FunctionTemplateDecl *FTD = Ctor->getDescribedFunctionTemplate()) {

@@ -2228,7 +2228,7 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
 
   // Gather the non-hidden methods.
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
-  llvm::SmallVector<ObjCMethodDecl *, 4> Methods;
+  SmallVector<ObjCMethodDecl *, 4> Methods;
   for (ObjCMethodList *M = &MethList; M; M = M->getNext()) {
     if (M->Method && !M->Method->isHidden()) {
       // If we're not supposed to warn about mismatches, we're done.
