@@ -31,7 +31,17 @@ mailing list</a> to notify other members of the community.</p>
     not available during analysis. Modeling more of the widely used functions 
     (such as the members of <tt>std::string</tt>) will improve precision of the
     analysis. 
-    <i>(Difficulty: Easy)</i><p>
+    <i>(Difficulty: Easy, ongoing)</i><p>
+    </li>
+
+    <li>Handle floating-point values.
+    <p>Currently, the analyzer treats all floating-point values as unknown.
+    However, we already have most of the infrastructure we need to handle
+    floats: RangeConstraintManager. This would involve adding a new SVal kind
+    for constant floats, generalizing the constraint manager to handle floats
+    and integers equally, and auditing existing code to make sure it doesn't
+    make untoward assumptions.
+    <i> (Difficulty: Medium)</i></p>
     </li>
     
     <li>Implement generalized loop execution modeling.
@@ -156,6 +166,16 @@ mailing list</a> to notify other members of the community.</p>
     <p>This would require extending the MallocPessimistic checker to reason 
     about annotated functions. It is strongly desired that one would rely on 
     the <tt>analyzer_annotate</tt> attribute, as described above. 
+    <i>(Difficulty: Easy)</i></p>
+    </li>
+
+    <li>Implement a BitwiseMaskingChecker to handle <a href="http://llvm.org/bugs/show_bug.cgi?id=16615">PR16615</a>.
+    <p>Symbolic expressions of the form <code>$sym &amp; CONSTANT</code> can range from 0 to <code>CONSTANT-</code>1 if CONSTANT is <code>2^n-1</code>, e.g. 0xFF (0b11111111), 0x7F (0b01111111), 0x3 (0b0011), 0xFFFF, etc. Even without handling general bitwise operations on symbols, we can at least bound the value of the resulting expression. Bonus points for handling masks followed by shifts, e.g. <code>($sym &amp; 0b1100) >> 2</code>.
+    <i>(Difficulty: Easy)</i></p>
+    </li>
+
+    <li>Teach CStringChecker that strings are never longer than, say, <code>SIZE_MAX/4</code> characters.</li>
+    <p>Though most of CStringChecker's functionality is disabled (due to poor diagnostics for error edge cases), it's still used to model certain operations like <code>strlen</code>, which should give the same result each time it's called on a string. However, assuming that the string length is an arbitrary symbolic value can give strange results -- for example, <code>strlen(str)+1</code> could wrap around to 0. (This is the root cause of <a href="http://llvm.org/bugs/show_bug.cgi?id=16558">PR16558</a>.) In practice, strings are never that long, so picking some large upper bound and recording that in the state would make plenty of sense, and would fix these false positives.
     <i>(Difficulty: Easy)</i></p>
     </li>
 
