@@ -338,6 +338,24 @@ MVT SITargetLowering::getScalarShiftAmountTy(EVT VT) const {
   return MVT::i32;
 }
 
+bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
+  VT = VT.getScalarType();
+
+  if (!VT.isSimple())
+    return false;
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::f32:
+    return false; /* There is V_MAD_F32 for f32 */
+  case MVT::f64:
+    return true;
+  default:
+    break;
+  }
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Custom DAG Lowering Operations
 //===----------------------------------------------------------------------===//

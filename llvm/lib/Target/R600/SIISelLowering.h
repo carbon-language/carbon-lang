@@ -55,6 +55,7 @@ public:
                                               MachineBasicBlock * BB) const;
   virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
   virtual MVT getScalarShiftAmountTy(EVT VT) const;
+  virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const;
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const;
