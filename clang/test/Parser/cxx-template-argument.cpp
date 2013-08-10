@@ -42,3 +42,66 @@ namespace PR13210 {
     new C(); // expected-error {{requires template arguments}}
   }
 }
+
+// Don't emit spurious messages
+namespace pr16225add {
+
+  template<class T1, typename T2> struct Known { }; // expected-note 3 {{template is declared here}}
+  template<class T1, typename T2> struct X;
+  template<class T1, typename T2> struct ABC; // expected-note {{template is declared here}}
+  template<int N1, int N2> struct ABC2 {};
+
+  template<class T1, typename T2> struct foo :
+    UnknownBase<T1,T2> // expected-error {{unknown template name 'UnknownBase'}}
+  { };
+
+  template<class T1, typename T2> struct foo2 :
+    UnknownBase<T1,T2>, // expected-error {{unknown template name 'UnknownBase'}}
+    Known<T1>  // expected-error {{too few template arguments for class template 'Known'}}
+  { };
+
+  template<class T1, typename T2> struct foo3 :
+    UnknownBase<T1,T2,ABC<T2,T1> > // expected-error {{unknown template name 'UnknownBase'}}
+  { };
+
+  template<class T1, typename T2> struct foo4 :
+    UnknownBase<T1,ABC<T2> >, // expected-error {{unknown template name 'UnknownBase'}} \
+                              // expected-error {{too few template arguments for class template 'ABC'}}
+    Known<T1>  // expected-error {{too few template arguments for class template 'Known'}}
+  { };
+
+  template<class T1, typename T2> struct foo5 :
+    UnknownBase<T1,T2,ABC<T2,T1>> // expected-error {{unknown template name 'UnknownBase'}} \
+                                  // expected-error {{use '> >'}}
+  { };
+
+  template<class T1, typename T2> struct foo6 :
+    UnknownBase<T1,ABC<T2,T1>>, // expected-error {{unknown template name 'UnknownBase'}} \
+                                // expected-error {{use '> >'}}
+    Known<T1>  // expected-error {{too few template arguments for class template 'Known'}}
+  { };
+
+  template<class T1, typename T2, int N> struct foo7 :
+    UnknownBase<T1,T2,(N>1)> // expected-error {{unknown template name 'UnknownBase'}}
+  { };
+
+  template<class T1, typename T2> struct foo8 :
+    UnknownBase<X<int,int>,X<int,int>> // expected-error {{unknown template name 'UnknownBase'}} \
+                                       // expected-error {{use '> >'}}
+  { };
+
+  template<class T1, typename T2> struct foo9 :
+    UnknownBase<Known<int,int>,X<int,int>> // expected-error {{unknown template name 'UnknownBase'}} \
+                                           // expected-error {{use '> >'}}
+  { };
+
+  template<class T1, typename T2> struct foo10 :
+    UnknownBase<Known<int,int>,X<int,X<int,int>>> // expected-error {{unknown template name 'UnknownBase'}} \
+                                                  // expected-error {{use '> >'}}
+  { };
+
+  template<int N1, int N2> struct foo11 :
+    UnknownBase<2<N1,N2<4> // expected-error {{unknown template name 'UnknownBase'}}
+  { };
+
+}

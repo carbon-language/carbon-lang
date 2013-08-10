@@ -679,6 +679,8 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
 /// \param RAngleLoc the location of the consumed '>'.
 ///
 /// \param ConsumeLastToken if true, the '>' is not consumed.
+///
+/// \returns true, if current token does not start with '>', false otherwise.
 bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
                                             bool ConsumeLastToken) {
   // What will be left once we've consumed the '>'.

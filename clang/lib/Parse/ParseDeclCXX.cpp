@@ -920,8 +920,13 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
         << Id;
     }
 
-    if (!Template)
+    if (!Template) {
+      TemplateArgList TemplateArgs;
+      SourceLocation LAngleLoc, RAngleLoc;
+      ParseTemplateIdAfterTemplateName(TemplateTy(), IdLoc, SS,
+          true, LAngleLoc, TemplateArgs, RAngleLoc);
       return true;
+    }
 
     // Form the template name
     UnqualifiedId TemplateName;
