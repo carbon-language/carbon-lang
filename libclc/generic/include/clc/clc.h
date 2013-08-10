@@ -46,6 +46,7 @@
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
 #include <clc/math/pow.h>
+#include <clc/math/rint.h>
 #include <clc/math/sin.h>
 #include <clc/math/sqrt.h>
 #include <clc/math/native_cos.h>
