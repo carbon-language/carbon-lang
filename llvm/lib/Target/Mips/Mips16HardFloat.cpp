@@ -16,6 +16,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <string>
 
 static void inlineAsmOut
@@ -321,6 +322,17 @@ static void assureFPCallStub(Function &F, Module *M,
 }
 
 //
+// Functions that are inline intrinsics don't need helpers.
+//
+std::string IntrinsicInline[] =
+  {"fabs"};
+
+bool isIntrinsicInline(Function *F) {
+  return std::binary_search(
+    IntrinsicInline, array_endof(IntrinsicInline),
+    F->getName());
+}
+//
 // Returns of float, double and complex need to be handled with a helper
 // function.
 //
@@ -372,7 +384,7 @@ static bool fixupFPReturnAndCall
           // helper functions
           if (Subtarget.getRelocationModel() != Reloc::PIC_ ) {
             Function *F_ =  CI->getCalledFunction();
-            if (F_ && needsFPHelperFromSig(*F_)) {
+            if (F_ && !isIntrinsicInline(F_) && needsFPHelperFromSig(*F_)) {
               assureFPCallStub(*F_, M, Subtarget);
               Modified=true;
             }
