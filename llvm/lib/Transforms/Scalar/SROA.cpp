@@ -762,9 +762,30 @@ public:
 
   virtual bool isInstInList(Instruction *I,
                             const SmallVectorImpl<Instruction*> &Insts) const {
+    Value *Ptr;
     if (LoadInst *LI = dyn_cast<LoadInst>(I))
-      return LI->getOperand(0) == &AI;
-    return cast<StoreInst>(I)->getPointerOperand() == &AI;
+      Ptr = LI->getOperand(0);
+    else
+      Ptr = cast<StoreInst>(I)->getPointerOperand();
+
+    // Only used to detect cycles, which will be rare and quickly found as
+    // we're walking up a chain of defs rather than down through uses.
+    SmallPtrSet<Value *, 4> Visited;
+
+    do {
+      if (Ptr == &AI)
+        return true;
+
+      if (BitCastInst *BCI = dyn_cast<BitCastInst>(Ptr))
+        Ptr = BCI->getOperand(0);
+      else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Ptr))
+        Ptr = GEPI->getPointerOperand();
+      else
+        return false;
+
+    } while (Visited.insert(Ptr));
+
+    return false;
   }
 
   virtual void updateDebugInfo(Instruction *Inst) const {
