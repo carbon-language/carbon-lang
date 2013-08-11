@@ -3872,11 +3872,13 @@ SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
 static bool isUNPCKLMask(ArrayRef<int> Mask, EVT VT,
                          bool HasInt256, bool V2IsSplat = false) {
-  unsigned NumElts = VT.getVectorNumElements();
 
+  if (VT.is512BitVector())
+    return false;
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
 
+  unsigned NumElts = VT.getVectorNumElements();
   if (VT.is256BitVector() && NumElts != 4 && NumElts != 8 &&
       (!HasInt256 || (NumElts != 16 && NumElts != 32)))
     return false;
@@ -3911,6 +3913,8 @@ static bool isUNPCKHMask(ArrayRef<int> Mask, EVT VT,
                          bool HasInt256, bool V2IsSplat = false) {
   unsigned NumElts = VT.getVectorNumElements();
 
+  if (VT.is512BitVector())
+    return false;
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
 
@@ -3948,6 +3952,8 @@ static bool isUNPCKL_v_undef_Mask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
   unsigned NumElts = VT.getVectorNumElements();
   bool Is256BitVec = VT.is256BitVector();
 
+  if (VT.is512BitVector())
+    return false;
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
 
@@ -3987,6 +3993,9 @@ static bool isUNPCKL_v_undef_Mask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
 /// <2, 2, 3, 3>
 static bool isUNPCKH_v_undef_Mask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
   unsigned NumElts = VT.getVectorNumElements();
+
+  if (VT.is512BitVector())
+    return false;
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
@@ -4093,6 +4102,44 @@ static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
   return (FstHalf | (SndHalf << 4));
 }
 
+// Symetric in-lane mask. Each lane has 4 elements (for imm8)
+static bool isPermImmMask(ArrayRef<int> Mask, EVT VT, unsigned& Imm8) {
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (EltSize < 32)
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
+  Imm8 = 0;
+  if (VT.is128BitVector() || (VT.is256BitVector() && EltSize == 64)) {
+    for (unsigned i = 0; i != NumElts; ++i) {
+      if (Mask[i] < 0)
+        continue;
+      Imm8 |= Mask[i] << (i*2);
+    }
+    return true;
+  }
+
+  unsigned LaneSize = 4;
+  SmallVector<int, 4> MaskVal(LaneSize, -1);
+
+  for (unsigned l = 0; l != NumElts; l += LaneSize) {
+    for (unsigned i = 0; i != LaneSize; ++i) {
+      if (!isUndefOrInRange(Mask[i+l], l, l+LaneSize))
+        return false;
+      if (Mask[i+l] < 0)
+        continue;
+      if (MaskVal[i] < 0) {
+        MaskVal[i] = Mask[i+l] - l;
+        Imm8 |= MaskVal[i] << (i*2);
+        continue;
+      }
+      if (Mask[i+l] != (signed)(MaskVal[i]+l))
+        return false;
+    }
+  }
+  return true;
+}
+
 /// isVPERMILPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to VPERMILPD*.
 /// Note that VPERMIL mask matching is different depending whether theunderlying
@@ -4163,7 +4210,8 @@ static bool isMOVSHDUPMask(ArrayRef<int> Mask, EVT VT,
   unsigned NumElems = VT.getVectorNumElements();
 
   if ((VT.is128BitVector() && NumElems != 4) ||
-      (VT.is256BitVector() && NumElems != 8))
+      (VT.is256BitVector() && NumElems != 8) ||
+      (VT.is512BitVector() && NumElems != 16))
     return false;
 
   // "i+1" is the value the indexed mask element must have
@@ -4186,7 +4234,8 @@ static bool isMOVSLDUPMask(ArrayRef<int> Mask, EVT VT,
   unsigned NumElems = VT.getVectorNumElements();
 
   if ((VT.is128BitVector() && NumElems != 4) ||
-      (VT.is256BitVector() && NumElems != 8))
+      (VT.is256BitVector() && NumElems != 8) ||
+      (VT.is512BitVector() && NumElems != 16))
     return false;
 
   // "i" is the value the indexed mask element must have
@@ -4449,27 +4498,6 @@ unsigned X86::getInsertVINSERT256Immediate(SDNode *N) {
   return getInsertVINSERTImmediate(N, 256);
 }
 
-/// getShuffleCLImmediate - Return the appropriate immediate to shuffle
-/// the specified VECTOR_SHUFFLE mask with VPERMQ and VPERMPD instructions.
-/// Handles 256-bit.
-static unsigned getShuffleCLImmediate(ShuffleVectorSDNode *N) {
-  MVT VT = N->getValueType(0).getSimpleVT();
-
-  unsigned NumElts = VT.getVectorNumElements();
-
-  assert((VT.is256BitVector() && NumElts == 4) &&
-         "Unsupported vector type for VPERMQ/VPERMPD");
-
-  unsigned Mask = 0;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    int Elt = N->getMaskElt(i);
-    if (Elt < 0)
-      continue;
-    Mask |= Elt << (i*2);
-  }
-
-  return Mask;
-}
 /// isZeroNode - Returns true if Elt is a constant zero or a floating point
 /// constant +0.0.
 bool X86::isZeroNode(SDValue Elt) {
@@ -5288,7 +5316,10 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, SDLoc dl,
                              LD->getPointerInfo().getWithOffset(StartOffset),
                              false, false, false, 0);
 
-    SmallVector<int, 8> Mask(NumElems, EltNo);
+    SmallVector<int, 8> Mask;
+    for (unsigned i = 0; i != NumElems; ++i)
+      Mask.push_back(EltNo);
+
     return DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), &Mask[0]);
   }
 
@@ -5720,7 +5751,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   if (ISD::isBuildVectorAllZeros(Op.getNode())) {
     // Canonicalize this to <4 x i32> to 1) ensure the zero vectors are CSE'd
     // and 2) ensure that i64 scalars are eliminated on x86-32 hosts.
-    if (VT == MVT::v4i32 || VT == MVT::v8i32)
+    if (VT == MVT::v4i32 || VT == MVT::v8i32 || VT == MVT::v16i32)
       return Op;
 
     return getZeroVector(VT, Subtarget, DAG, dl);
@@ -7413,21 +7444,30 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (BlendOp.getNode())
     return BlendOp;
 
-  if (V2IsUndef && HasInt256 && (VT == MVT::v8i32 || VT == MVT::v8f32)) {
-    SmallVector<SDValue, 8> permclMask;
-    for (unsigned i = 0; i != 8; ++i) {
-      permclMask.push_back(DAG.getConstant((M[i]>=0) ? M[i] : 0, MVT::i32));
-    }
-    SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32,
-                               &permclMask[0], 8);
-    // Bitcast is for VPERMPS since mask is v8i32 but node takes v8f32
-    return DAG.getNode(X86ISD::VPERMV, dl, VT,
-                       DAG.getNode(ISD::BITCAST, dl, VT, Mask), V1);
-  }
+  unsigned Imm8;
+  if (V2IsUndef && HasInt256 && isPermImmMask(M, VT, Imm8))
+    return getTargetShuffleNode(X86ISD::VPERMI, dl, VT, V1, Imm8, DAG);
 
-  if (V2IsUndef && HasInt256 && (VT == MVT::v4i64 || VT == MVT::v4f64))
-    return getTargetShuffleNode(X86ISD::VPERMI, dl, VT, V1,
-                                getShuffleCLImmediate(SVOp), DAG);
+  if ((V2IsUndef && HasInt256 && VT.is256BitVector() && NumElems == 8) ||
+      VT.is512BitVector()) {
+    EVT MaskEltVT = EVT::getIntegerVT(*DAG.getContext(),
+      VT.getVectorElementType().getSizeInBits());
+    EVT MaskVectorVT =
+        EVT::getVectorVT(*DAG.getContext(),MaskEltVT, NumElems);
+    SmallVector<SDValue, 16> permclMask;
+    for (unsigned i = 0; i != NumElems; ++i) {
+      permclMask.push_back(DAG.getConstant((M[i]>=0) ? M[i] : 0, MaskEltVT));
+    }
+
+    SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, MaskVectorVT,
+                                &permclMask[0], NumElems);
+    if (V2IsUndef)
+      // Bitcast is for VPERMPS since mask is v8i32 but node takes v8f32
+      return DAG.getNode(X86ISD::VPERMV, dl, VT,
+                          DAG.getNode(ISD::BITCAST, dl, VT, Mask), V1);
+    return DAG.getNode(X86ISD::VPERMV3, dl, VT,
+                       DAG.getNode(ISD::BITCAST, dl, VT, Mask), V1, V2);
+  }
 
   //===--------------------------------------------------------------------===//
   // Since no target specific shuffle was selected for this generic one,
@@ -10149,12 +10189,45 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::CMOV, DL, VTs, Ops, array_lengthof(Ops));
 }
 
+SDValue X86TargetLowering::LowerSIGN_EXTEND_AVX512(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  EVT VT = Op->getValueType(0);
+  SDValue In = Op->getOperand(0);
+  EVT InVT = In.getValueType();
+  SDLoc dl(Op);
+
+  if (InVT.getVectorElementType().getSizeInBits() >=8 &&
+      VT.getVectorElementType().getSizeInBits() >= 32)
+    return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
+
+  if (InVT.getVectorElementType() == MVT::i1) {
+    unsigned int NumElts = InVT.getVectorNumElements();
+    assert ((NumElts == 8 || NumElts == 16) &&
+      "Unsupported SIGN_EXTEND operation");
+    if (VT.getVectorElementType().getSizeInBits() >= 32) {
+      Constant *C =
+       ConstantInt::get(*DAG.getContext(),
+                        (NumElts == 8)? APInt(64, ~0ULL): APInt(32, ~0U));
+      SDValue CP = DAG.getConstantPool(C, getPointerTy());
+      unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
+      SDValue Ld = DAG.getLoad(VT.getScalarType(), dl, DAG.getEntryNode(), CP,
+                             MachinePointerInfo::getConstantPool(),
+                             false, false, false, Alignment);
+      return DAG.getNode(X86ISD::VBROADCASTM, dl, VT, In, Ld);
+    }
+  }
+  return SDValue();
+}
+
 SDValue X86TargetLowering::LowerSIGN_EXTEND(SDValue Op,
                                             SelectionDAG &DAG) const {
   MVT VT = Op->getValueType(0).getSimpleVT();
   SDValue In = Op->getOperand(0);
   MVT InVT = In.getValueType().getSimpleVT();
   SDLoc dl(Op);
+
+  if (VT.is512BitVector() || InVT.getVectorElementType() == MVT::i1)
+    return LowerSIGN_EXTEND_AVX512(Op, DAG);
 
   if ((VT != MVT::v4i64 || InVT != MVT::v4i32) &&
       (VT != MVT::v8i32 || InVT != MVT::v8i16))
@@ -13239,6 +13312,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VPERMILP:           return "X86ISD::VPERMILP";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
   case X86ISD::VPERMV:             return "X86ISD::VPERMV";
+  case X86ISD::VPERMV3:            return "X86ISD::VPERMV3";
   case X86ISD::VPERMI:             return "X86ISD::VPERMI";
   case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
