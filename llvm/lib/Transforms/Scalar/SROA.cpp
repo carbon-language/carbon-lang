@@ -733,9 +733,9 @@ class AllocaPromoter : public LoadAndStorePromoter {
   SmallVector<DbgValueInst *, 4> DVIs;
 
 public:
-  AllocaPromoter(const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
+  AllocaPromoter(const SmallVectorImpl<Instruction *> &Insts, SSAUpdater &S,
                  AllocaInst &AI, DIBuilder &DIB)
-    : LoadAndStorePromoter(Insts, S), AI(AI), DIB(DIB) {}
+      : LoadAndStorePromoter(Insts, S), AI(AI), DIB(DIB) {}
 
   void run(const SmallVectorImpl<Instruction*> &Insts) {
     // Retain the debug information attached to the alloca for use when
@@ -3364,12 +3364,12 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
 }
 
 static void enqueueUsersInWorklist(Instruction &I,
-                                   SmallVectorImpl<Use *> &UseWorklist,
-                                   SmallPtrSet<Use *, 8> &VisitedUses) {
+                                   SmallVectorImpl<Instruction *> &Worklist,
+                                   SmallPtrSet<Instruction *, 8> &Visited) {
   for (Value::use_iterator UI = I.use_begin(), UE = I.use_end(); UI != UE;
        ++UI)
-    if (VisitedUses.insert(&UI.getUse()))
-      UseWorklist.push_back(&UI.getUse());
+    if (Visited.insert(cast<Instruction>(*UI)))
+      Worklist.push_back(cast<Instruction>(*UI));
 }
 
 /// \brief Promote the allocas, using the best available technique.
@@ -3396,29 +3396,29 @@ bool SROA::promoteAllocas(Function &F) {
   DEBUG(dbgs() << "Promoting allocas with SSAUpdater...\n");
   SSAUpdater SSA;
   DIBuilder DIB(*F.getParent());
-  SmallVector<Instruction*, 64> Insts;
+  SmallVector<Instruction *, 64> Insts;
 
   // We need a worklist to walk the uses of each alloca.
-  SmallVector<Use *, 8> UseWorklist;
-  SmallPtrSet<Use *, 8> VisitedUses;
+  SmallVector<Instruction *, 8> Worklist;
+  SmallPtrSet<Instruction *, 8> Visited;
   SmallVector<Instruction *, 32> DeadInsts;
 
   for (unsigned Idx = 0, Size = PromotableAllocas.size(); Idx != Size; ++Idx) {
     AllocaInst *AI = PromotableAllocas[Idx];
-    UseWorklist.clear();
-    VisitedUses.clear();
+    Insts.clear();
+    Worklist.clear();
+    Visited.clear();
 
-    enqueueUsersInWorklist(*AI, UseWorklist, VisitedUses);
+    enqueueUsersInWorklist(*AI, Worklist, Visited);
 
-    while (!UseWorklist.empty()) {
-      Use *U = UseWorklist.pop_back_val();
-      Instruction &I = *cast<Instruction>(U->getUser());
+    while (!Worklist.empty()) {
+      Instruction *I = Worklist.pop_back_val();
 
       // FIXME: Currently the SSAUpdater infrastructure doesn't reason about
       // lifetime intrinsics and so we strip them (and the bitcasts+GEPs
       // leading to them) here. Eventually it should use them to optimize the
       // scalar values produced.
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I)) {
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
         assert(II->getIntrinsicID() == Intrinsic::lifetime_start ||
                II->getIntrinsicID() == Intrinsic::lifetime_end);
         II->eraseFromParent();
@@ -3428,12 +3428,12 @@ bool SROA::promoteAllocas(Function &F) {
       // Push the loads and stores we find onto the list. SROA will already
       // have validated that all loads and stores are viable candidates for
       // promotion.
-      if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
+      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         assert(LI->getType() == AI->getAllocatedType());
         Insts.push_back(LI);
         continue;
       }
-      if (StoreInst *SI = dyn_cast<StoreInst>(&I)) {
+      if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         assert(SI->getValueOperand()->getType() == AI->getAllocatedType());
         Insts.push_back(SI);
         continue;
@@ -3442,11 +3442,10 @@ bool SROA::promoteAllocas(Function &F) {
       // For everything else, we know that only no-op bitcasts and GEPs will
       // make it this far, just recurse through them and recall them for later
       // removal.
-      DeadInsts.push_back(&I);
-      enqueueUsersInWorklist(I, UseWorklist, VisitedUses);
+      DeadInsts.push_back(I);
+      enqueueUsersInWorklist(*I, Worklist, Visited);
     }
     AllocaPromoter(Insts, SSA, *AI, DIB).run(Insts);
-    Insts.clear();
     while (!DeadInsts.empty())
       DeadInsts.pop_back_val()->eraseFromParent();
     AI->eraseFromParent();
