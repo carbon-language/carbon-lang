@@ -5481,7 +5481,7 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
           return SDValue();
 
         // Use the register form of the broadcast instruction available on AVX2.
-        if (VT.is256BitVector())
+        if (VT.getSizeInBits() >= 256)
           Sc = Extract128BitVector(Sc, 0, DAG, dl);
         return DAG.getNode(X86ISD::VBROADCAST, dl, VT, Sc);
       }

@@ -35,3 +35,19 @@ define   <8 x double> @_inreg8xdouble(double %a) {
   %c = shufflevector <8 x double> %b, <8 x double> undef, <8 x i32> zeroinitializer
   ret <8 x double> %c
 }
+
+;CHECK-LABEL: _xmm16xi32
+;CHECK: vpbroadcastd
+;CHECK: ret
+define   <16 x i32> @_xmm16xi32(<16 x i32> %a) {
+  %b = shufflevector <16 x i32> %a, <16 x i32> undef, <16 x i32> zeroinitializer
+  ret <16 x i32> %b
+}
+
+;CHECK-LABEL: _xmm16xfloat
+;CHECK: vbroadcastssz
+;CHECK: ret
+define   <16 x float> @_xmm16xfloat(<16 x float> %a) {
+  %b = shufflevector <16 x float> %a, <16 x float> undef, <16 x i32> zeroinitializer
+  ret <16 x float> %b
+}
