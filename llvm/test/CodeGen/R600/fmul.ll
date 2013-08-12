@@ -26,7 +26,7 @@ entry:
 }
 
 ; CHECK: @fmul_v4f32
-; CHECK: MUL_IEEE T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
+; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 ; CHECK: MUL_IEEE * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}

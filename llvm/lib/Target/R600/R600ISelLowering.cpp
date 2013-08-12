@@ -99,7 +99,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   setBooleanContents(ZeroOrNegativeOneBooleanContent);
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
-  setSchedulingPreference(Sched::VLIW);
+  setSchedulingPreference(Sched::Source);
 }
 
 MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
