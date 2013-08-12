@@ -24,6 +24,7 @@
 #include "clang/Lex/PPConditionalDirectiveRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/AST/Attr.h"
 #include "llvm/ADT/SmallString.h"
 
 using namespace clang;
@@ -44,7 +45,10 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateFactoryMethod(ASTContext &Ctx, ObjCContainerDecl *CDecl,
                             ObjCMethodDecl *OM,
                             ObjCInstanceTypeFamily OIT_Family = OIT_None);
-
+  
+  void migrateFunctionDeclAnnotation(ASTContext &Ctx, FunctionDecl *FuncDecl);
+  
+  void migrateObjCMethodDeclAnnotation(ASTContext &Ctx, ObjCMethodDecl *MethodDecl);
 public:
   std::string MigrateDir;
   bool MigrateLiterals;
@@ -737,6 +741,24 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
   if (!LoweredMethodName.startswith(ClassNamePostfix))
     return;
   ReplaceWithInstancetype(*this, OM);
+}
+
+void ObjCMigrateASTConsumer::migrateFunctionDeclAnnotation(
+                                                ASTContext &Ctx,
+                                                FunctionDecl *FuncDecl) {
+  if (FuncDecl->hasAttr<CFAuditedTransferAttr>() ||
+      FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
+      FuncDecl->getAttr<CFReturnsNotRetainedAttr>())
+    return;
+}
+
+void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(
+                                            ASTContext &Ctx,
+                                            ObjCMethodDecl *MethodDecl) {
+  if (MethodDecl->hasAttr<CFAuditedTransferAttr>() ||
+      MethodDecl->getAttr<CFReturnsRetainedAttr>() ||
+      MethodDecl->getAttr<CFReturnsNotRetainedAttr>())
+    return;
 }
 
 namespace {
