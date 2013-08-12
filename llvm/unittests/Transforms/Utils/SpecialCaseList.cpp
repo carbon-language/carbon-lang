@@ -176,7 +176,7 @@ TEST_F(SpecialCaseListTest, InvalidSpecialCaseList) {
   EXPECT_EQ("Malformed regex in line 2: 'fun(a': parentheses not balanced",
             Error);
   EXPECT_EQ(0, SpecialCaseList::create("unexisting", Error));
-  EXPECT_EQ("Can't open file 'unexisting': No such file or directory", Error);
+  EXPECT_EQ(0U, Error.find("Can't open file 'unexisting':"));
 }
 
 TEST_F(SpecialCaseListTest, EmptySpecialCaseList) {
