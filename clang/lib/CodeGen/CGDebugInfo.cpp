@@ -650,15 +650,6 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
   return TheCU;
 }
 
-/// getOrCreateTypeDeclaration - Create Pointee type. If Pointee is a record
-/// then emit record's fwd if debug info size reduction is enabled.
-llvm::DIType CGDebugInfo::getOrCreateTypeDeclaration(QualType PointeeTy,
-                                                     llvm::DIFile Unit) {
-  if (DebugKind > CodeGenOptions::LimitedDebugInfo)
-    return getOrCreateType(PointeeTy, Unit);
-  return getOrCreateType(PointeeTy, Unit, true);
-}
-
 llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
                                                 const Type *Ty,
                                                 QualType PointeeTy,
@@ -666,7 +657,7 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
   if (Tag == llvm::dwarf::DW_TAG_reference_type ||
       Tag == llvm::dwarf::DW_TAG_rvalue_reference_type)
     return DBuilder.createReferenceType(
-        Tag, getOrCreateTypeDeclaration(PointeeTy, Unit));
+        Tag, getOrCreateType(PointeeTy, Unit, true));
 
   // Bit size, align and offset of the type.
   // Size is always the size of a pointer. We can't use getTypeSize here
@@ -675,7 +666,7 @@ llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
   uint64_t Size = CGM.getTarget().getPointerWidth(AS);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
-  return DBuilder.createPointerType(getOrCreateTypeDeclaration(PointeeTy, Unit),
+  return DBuilder.createPointerType(getOrCreateType(PointeeTy, Unit, true),
                                     Size, Align);
 }
 
@@ -1779,7 +1770,7 @@ llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty,
   llvm::DIType ClassType = getOrCreateType(QualType(Ty->getClass(), 0), U);
   if (!Ty->getPointeeType()->isFunctionType())
     return DBuilder.createMemberPointerType(
-        getOrCreateTypeDeclaration(Ty->getPointeeType(), U), ClassType);
+        getOrCreateType(Ty->getPointeeType(), U, true), ClassType);
   return DBuilder.createMemberPointerType(getOrCreateInstanceMethodType(
       CGM.getContext().getPointerType(
           QualType(Ty->getClass(), Ty->getPointeeType().getCVRQualifiers())),
@@ -2260,11 +2251,9 @@ llvm::DIDescriptor CGDebugInfo::getDeclarationOrDefinition(const Decl *D) {
   // we would otherwise do to get a type for a pointee. (forward declarations in
   // limited debug info, full definitions (if the type definition is available)
   // in unlimited debug info)
-  if (const TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
-    llvm::DIFile DefUnit = getOrCreateFile(TD->getLocation());
-    return getOrCreateTypeDeclaration(CGM.getContext().getTypeDeclType(TD),
-                                      DefUnit);
-  }
+  if (const TypeDecl *TD = dyn_cast<TypeDecl>(D))
+    return getOrCreateType(CGM.getContext().getTypeDeclType(TD),
+                           getOrCreateFile(TD->getLocation()), true);
   // Otherwise fall back to a fairly rudimentary cache of existing declarations.
   // This doesn't handle providing declarations (for functions or variables) for
   // entities without definitions in this TU, nor when the definition proceeds
