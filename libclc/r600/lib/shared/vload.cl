@@ -51,22 +51,10 @@ VLOAD_VECTORIZE(int, __local)
 VLOAD_VECTORIZE(uint, __private)
 VLOAD_VECTORIZE(uint, __local)
 
-_CLC_OVERLOAD _CLC_DEF int3 vload3(size_t offset, const global int *x) {
-  return (int3)(vload2(0, &x[3*offset]), x[3*offset+2]);
-}
-_CLC_OVERLOAD _CLC_DEF uint3 vload3(size_t offset, const global uint *x) {
-  return (uint3)(vload2(0, &x[3*offset]), x[3*offset+2]);
-}
-_CLC_OVERLOAD _CLC_DEF int3 vload3(size_t offset, const constant int *x) {
-  return (int3)(vload2(0, &x[3*offset]), x[3*offset+2]);
-}
-_CLC_OVERLOAD _CLC_DEF uint3 vload3(size_t offset, const constant uint *x) {
-  return (uint3)(vload2(0, &x[3*offset]), x[3*offset+2]);
-}
-
 //We only define functions for typeN vloadN(), and then just bitcast the result for unsigned types
 #define _CLC_VLOAD_ASM_DECL(PRIM_TYPE,LLVM_SCALAR_TYPE,ADDR_SPACE,ADDR_SPACE_ID) \
 _CLC_DECL PRIM_TYPE##2 __clc_vload2_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID (const ADDR_SPACE PRIM_TYPE *); \
+_CLC_DECL PRIM_TYPE##3 __clc_vload3_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID (const ADDR_SPACE PRIM_TYPE *); \
 _CLC_DECL PRIM_TYPE##4 __clc_vload4_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID (const ADDR_SPACE PRIM_TYPE *); \
 _CLC_DECL PRIM_TYPE##8 __clc_vload8_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID (const ADDR_SPACE PRIM_TYPE *); \
 _CLC_DECL PRIM_TYPE##16 __clc_vload16_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID (const ADDR_SPACE PRIM_TYPE *); \
@@ -76,11 +64,9 @@ _CLC_DECL PRIM_TYPE##16 __clc_vload16_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID 
     return __builtin_astype(__clc_vload##VEC_WIDTH##_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID ((const ADDR_SPACE S_PRIM_TYPE *)&x[VEC_WIDTH * offset]), PRIM_TYPE##VEC_WIDTH); \
   } \
 
-/*Note: R600 back-end doesn't support load <3 x ?>... so
- * those functions aren't actually overridden here
- */
 #define _CLC_VLOAD_ASM_OVERLOAD_SIZES(PRIM_TYPE,S_PRIM_TYPE,LLVM_TYPE,ADDR_SPACE,ADDR_SPACE_ID) \
   _CLC_VLOAD_ASM_DEFINE(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, 2, ADDR_SPACE, ADDR_SPACE_ID) \
+  _CLC_VLOAD_ASM_DEFINE(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, 3, ADDR_SPACE, ADDR_SPACE_ID) \
   _CLC_VLOAD_ASM_DEFINE(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, 4, ADDR_SPACE, ADDR_SPACE_ID) \
   _CLC_VLOAD_ASM_DEFINE(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, 8, ADDR_SPACE, ADDR_SPACE_ID) \
   _CLC_VLOAD_ASM_DEFINE(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, 16, ADDR_SPACE, ADDR_SPACE_ID) \
