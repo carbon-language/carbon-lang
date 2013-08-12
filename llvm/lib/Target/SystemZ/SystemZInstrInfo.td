@@ -1117,7 +1117,7 @@ let Defs = [CC] in {
 
 // Extract CC into bits 29 and 28 of a register.
 let Uses = [CC] in
-  def IPM : InherentRRE<"ipm", 0xB222, GR32, (null_frag)>;
+  def IPM : InherentRRE<"ipm", 0xB222, GR32, (z_ipm)>;
 
 // Read a 32-bit access register into a GR32.  As with all GR32 operations,
 // the upper 32 bits of the enclosing GR64 remain unchanged, which is useful

@@ -67,12 +67,12 @@ condition codes.  For example, we could use LCDFR instead of LCDBR.
 --
 
 We don't optimize block memory operations, except using single MVCs
-for memcpy.
+for memcpy and single CLCs for memcmp.
 
-It's definitely worth using things like CLC, NC, XC and OC with
+It's definitely worth using things like NC, XC and OC with
 constant lengths.  MVCIN may be worthwhile too.
 
-We should probably implement things like memcpy using MVC with EXECUTE.
+We should probably implement general memcpy using MVC with EXECUTE.
 Likewise memcmp and CLC.  MVCLE and CLCLE could be useful too.
 
 --

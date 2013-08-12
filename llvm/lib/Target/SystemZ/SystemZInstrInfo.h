@@ -129,6 +129,12 @@ public:
                                 MachineBasicBlock *FBB,
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const LLVM_OVERRIDE;
+  bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
+                      unsigned &SrcReg2, int &Mask, int &Value) const
+    LLVM_OVERRIDE;
+  bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
+                            unsigned SrcReg2, int Mask, int Value,
+                            const MachineRegisterInfo *MRI) const LLVM_OVERRIDE;
   virtual bool isPredicable(MachineInstr *MI) const LLVM_OVERRIDE;
   virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                                    unsigned ExtraPredCycles,

@@ -125,3 +125,30 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
   }
   return SDValue();
 }
+
+std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
+EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                        SDValue Src1, SDValue Src2, SDValue Size,
+                        MachinePointerInfo Op1PtrInfo,
+                        MachinePointerInfo Op2PtrInfo) const {
+  if (ConstantSDNode *CSize = dyn_cast<ConstantSDNode>(Size)) {
+    uint64_t Bytes = CSize->getZExtValue();
+    if (Bytes >= 1 && Bytes <= 0x100) {
+      // A single CLC.
+      SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
+      Chain = DAG.getNode(SystemZISD::CLC, DL, VTs, Chain,
+                          Src1, Src2, Size);
+      SDValue Glue = Chain.getValue(1);
+      // IPM inserts the CC value into bits 29 and 28, with 0 meaning "equal",
+      // 1 meaning "greater" and 2 meaning "less".  Convert them into an
+      // integer that is respectively equal, greater or less than 0.
+      SDValue IPM = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
+      SDValue SHL = DAG.getNode(ISD::SHL, DL, MVT::i32, IPM,
+                                DAG.getConstant(2, MVT::i32));
+      SDValue SRA = DAG.getNode(ISD::SRA, DL, MVT::i32, SHL,
+                                DAG.getConstant(30, MVT::i32));
+      return std::make_pair(SRA, Chain);
+    }
+  }
+  return std::make_pair(SDValue(), SDValue());
+}

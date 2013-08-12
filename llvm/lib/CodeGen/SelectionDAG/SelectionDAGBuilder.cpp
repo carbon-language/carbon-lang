@@ -58,6 +58,7 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetSelectionDAGInfo.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -5463,6 +5464,26 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
     return false;
 
   const ConstantInt *Size = dyn_cast<ConstantInt>(I.getArgOperand(2));
+  if (Size && Size->getZExtValue() == 0) {
+    EVT CallVT = TM.getTargetLowering()->getValueType(I.getType(), true);
+    setValue(&I, DAG.getConstant(0, CallVT));
+    return true;
+  }
+
+  const Value *Arg0 = I.getArgOperand(0);
+  const Value *Arg1 = I.getArgOperand(1);
+  const Value *Arg2 = I.getArgOperand(2);
+  const TargetSelectionDAGInfo &TSI = DAG.getSelectionDAGInfo();
+  std::pair<SDValue, SDValue> Res =
+    TSI.EmitTargetCodeForMemcmp(DAG, getCurSDLoc(), DAG.getRoot(),
+                                getValue(Arg0), getValue(Arg1), getValue(Arg2),
+                                MachinePointerInfo(Arg0),
+                                MachinePointerInfo(Arg1));
+  if (Res.first.getNode()) {
+    setValue(&I, Res.first);
+    DAG.setRoot(Res.second);
+    return true;
+  }
 
   // memcmp(S1,S2,2) != 0 -> (*(short*)LHS != *(short*)RHS)  != 0
   // memcmp(S1,S2,4) != 0 -> (*(int*)LHS != *(int*)RHS)  != 0

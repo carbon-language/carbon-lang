@@ -38,7 +38,13 @@ public:
   EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL,
                           SDValue Chain, SDValue Dst, SDValue Byte,
                           SDValue Size, unsigned Align, bool IsVolatile,
-                          MachinePointerInfo DstPtrInfo) const;
+                          MachinePointerInfo DstPtrInfo) const LLVM_OVERRIDE;
+
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                          SDValue Src1, SDValue Src2, SDValue Size,
+                          MachinePointerInfo Op1PtrInfo,
+                          MachinePointerInfo Op2PtrInfo) const LLVM_OVERRIDE;
 };
 
 }

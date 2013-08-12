@@ -1702,6 +1702,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(UDIVREM64);
     OPCODE(MVC);
     OPCODE(CLC);
+    OPCODE(IPM);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);
@@ -2240,8 +2241,9 @@ SystemZTargetLowering::emitExt128(MachineInstr *MI,
 }
 
 MachineBasicBlock *
-SystemZTargetLowering::emitMVCWrapper(MachineInstr *MI,
-                                      MachineBasicBlock *MBB) const {
+SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
+                                         MachineBasicBlock *MBB,
+                                         unsigned Opcode) const {
   const SystemZInstrInfo *TII = TM.getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
@@ -2251,7 +2253,7 @@ SystemZTargetLowering::emitMVCWrapper(MachineInstr *MI,
   uint64_t       SrcDisp  = MI->getOperand(3).getImm();
   uint64_t       Length   = MI->getOperand(4).getImm();
 
-  BuildMI(*MBB, MI, DL, TII->get(SystemZ::MVC))
+  BuildMI(*MBB, MI, DL, TII->get(Opcode))
     .addOperand(DestBase).addImm(DestDisp).addImm(Length)
     .addOperand(SrcBase).addImm(SrcDisp);
 
@@ -2483,7 +2485,9 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   case SystemZ::ATOMIC_CMP_SWAPW:
     return emitAtomicCmpSwapW(MI, MBB);
   case SystemZ::MVCWrapper:
-    return emitMVCWrapper(MI, MBB);
+    return emitMemMemWrapper(MI, MBB, SystemZ::MVC);
+  case SystemZ::CLCWrapper:
+    return emitMemMemWrapper(MI, MBB, SystemZ::CLC);
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }
