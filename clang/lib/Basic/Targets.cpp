@@ -4530,6 +4530,7 @@ class MipsTargetInfoBase : public TargetInfo {
   enum DspRevEnum {
     NoDSP, DSP1, DSP2
   } DspRev;
+  bool HasMSA;
 
 protected:
   std::string ABI;
@@ -4538,7 +4539,8 @@ public:
   MipsTargetInfoBase(const llvm::Triple &Triple, const std::string &ABIStr,
                      const std::string &CPUStr)
       : TargetInfo(Triple), CPU(CPUStr), IsMips16(false), IsMicromips(false),
-        IsSingleFloat(false), FloatABI(HardFloat), DspRev(NoDSP), ABI(ABIStr) {}
+        IsSingleFloat(false), FloatABI(HardFloat), DspRev(NoDSP),
+        HasMSA(false), ABI(ABIStr) {}
 
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) = 0;
@@ -4588,6 +4590,9 @@ public:
       Builder.defineMacro("__mips_dsp", Twine(1));
       break;
     }
+
+    if (HasMSA)
+      Builder.defineMacro("__mips_msa", Twine(1));
 
     Builder.defineMacro("_MIPS_SZPTR", Twine(getPointerWidth(0)));
     Builder.defineMacro("_MIPS_SZINT", Twine(getIntWidth()));
@@ -4665,7 +4670,8 @@ public:
         Name == "mips32" || Name == "mips32r2" ||
         Name == "mips64" || Name == "mips64r2" ||
         Name == "mips16" || Name == "micromips" ||
-        Name == "dsp" || Name == "dspr2") {
+        Name == "dsp" || Name == "dspr2" ||
+        Name == "msa") {
       Features[Name] = Enabled;
       return true;
     } else if (Name == "32") {
@@ -4699,6 +4705,8 @@ public:
         DspRev = std::max(DspRev, DSP1);
       else if (*it == "+dspr2")
         DspRev = std::max(DspRev, DSP2);
+      else if (*it == "+msa")
+        HasMSA = true;
     }
 
     // Remove front-end specific option.

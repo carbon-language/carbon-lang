@@ -1023,6 +1023,9 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   AddTargetFeature(Args, CmdArgs,
                    options::OPT_mdspr2, options::OPT_mno_dspr2,
                    "dspr2");
+  AddTargetFeature(Args, CmdArgs,
+                   options::OPT_mmsa, options::OPT_mno_msa,
+                   "msa");
 
   if (Arg *A = Args.getLastArg(options::OPT_mxgot, options::OPT_mno_xgot)) {
     if (A->getOption().matches(options::OPT_mxgot)) {
