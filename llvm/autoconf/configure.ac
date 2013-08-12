@@ -1573,11 +1573,6 @@ else
   AC_SUBST(HAVE_LIBZ, 0)
 fi
 
-dnl Try to find a suitable curses header.
-if test "$llvm_cv_enable_terminfo" = "yes" ; then
-  AC_CHECK_HEADERS([term.h curses.h ncurses.h ncursesw.h ncurses/curses.h ncursesw/curses.h])
-fi
-
 dnl Try to find ffi.h.
 if test "$llvm_cv_enable_libffi" = "yes" ; then
   AC_CHECK_HEADERS([ffi.h ffi/ffi.h])

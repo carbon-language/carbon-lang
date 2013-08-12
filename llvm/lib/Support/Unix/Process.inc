@@ -38,28 +38,6 @@
 #  include <termios.h>
 #endif
 
-// Pull in the headers we found to go with the terminfo reading library (tinfo,
-// curses, whatever it may be). We have to pull in the 'curses.h' header as the
-// SysV spec only provides certain values and defines from that header even
-// though we work hard to not link against all of the curses implementation
-// when avoidable.
-#ifdef HAVE_TERMINFO
-# if defined(HAVE_CURSES_H)
-#  include <curses.h>
-# elif defined(HAVE_NCURSES_H)
-#  include <ncurses.h>
-# elif defined(HAVE_NCURSESW_H)
-#  include <ncursesw.h>
-# elif defined(HAVE_NCURSES_CURSES_H)
-#  include <ncurses/curses.h>
-# elif defined(HAVE_NCURSESW_CURSES_H)
-#  include <ncursesw/curses.h>
-# endif
-# if defined(HAVE_TERM_H)
-#  include <term.h>
-# endif
-#endif
-
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only generic UNIX code that
 //===          is guaranteed to work on *all* UNIX variants.
@@ -269,6 +247,14 @@ unsigned Process::StandardErrColumns() {
   return getColumns(2);
 }
 
+#ifdef HAVE_TERMINFO
+// We manually declare these two extern functions because finding the correct
+// headers from various terminfo, curses, or other sources is harder than
+// writing their specs down.
+extern "C" int setupterm(char *term, int filedes, int *errret);
+extern "C" int tigetnum(char *capname);
+#endif
+
 static bool terminalHasColors(int fd) {
 #ifdef HAVE_TERMINFO
   // First, acquire a global lock because these C routines are thread hostile.
@@ -276,7 +262,7 @@ static bool terminalHasColors(int fd) {
   MutexGuard G(M);
 
   int errret = 0;
-  if (setupterm((char *)0, fd, &errret) != OK)
+  if (setupterm((char *)0, fd, &errret) != 0)
     // Regardless of why, if we can't get terminfo, we shouldn't try to print
     // colors.
     return false;
@@ -294,7 +280,7 @@ static bool terminalHasColors(int fd) {
   //
   // The 'tigetnum' routine returns -2 or -1 on errors, and might return 0 if
   // the terminfo says that no colors are supported.
-  if (tigetnum("colors") > 0)
+  if (tigetnum((char *)"colors") > 0)
     return true;
 #endif
 

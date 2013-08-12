@@ -74,13 +74,6 @@ check_symbol_exists(FE_INEXACT "fenv.h" HAVE_DECL_FE_INEXACT)
 check_include_file(mach/mach.h HAVE_MACH_MACH_H)
 check_include_file(mach-o/dyld.h HAVE_MACH_O_DYLD_H)
 
-check_include_file(term.h HAVE_TERM_H)
-check_include_file(curses.h HAVE_CURSES_H)
-check_include_file(ncurses.h HAVE_NCURSES_H)
-check_include_file(ncursesw.h HAVE_NCURSESW_H)
-check_include_file(ncurses/curses.h HAVE_NCURSES_CURSES_H)
-check_include_file(ncursesw/curses.h HAVE_NCURSESW_CURSES_H)
-
 # library checks
 if( NOT PURE_WINDOWS )
   check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
@@ -104,9 +97,7 @@ if( NOT PURE_WINDOWS )
   else()
     set(HAVE_LIBZ 0)
   endif()
-  if(LLVM_ENABLE_TERMINFO AND
-     (HAVE_TERM_H OR HAVE_CURSES_H OR HAVE_NCURSES_H OR HAVE_NCURSESW_H OR
-      HAVE_NCURSES_CURSES_H OR HAVE_NCURSESW_CURSES_H))
+  if(LLVM_ENABLE_TERMINFO)
     set(HAVE_TERMINFO 0)
     foreach(library tinfo curses ncurses ncursesw)
       string(TOUPPER ${library} library_suffix)
