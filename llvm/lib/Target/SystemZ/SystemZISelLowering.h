@@ -80,6 +80,10 @@ namespace SystemZISD {
     // MachineMemOperands rather than one.
     MVC,
 
+    // Use CLC to compare two blocks of memory, with the same comments
+    // as for MVC.
+    CLC,
+
     // Wrappers around the inner loop of an 8- or 16-bit ATOMIC_SWAP or
     // ATOMIC_LOAD_<op>.
     //

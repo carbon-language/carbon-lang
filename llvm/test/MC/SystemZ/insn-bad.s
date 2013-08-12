@@ -712,6 +712,50 @@
 	cl	%r0, -1
 	cl	%r0, 4096
 
+#CHECK: error: missing length in address
+#CHECK: clc	0, 0
+#CHECK: error: missing length in address
+#CHECK: clc	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: clc	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: clc	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: clc	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: clc	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: clc	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: clc	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: clc	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: clc	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: clc	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: clc	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: clc	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: clc	0(-), 0
+
+	clc	0, 0
+	clc	0(%r1), 0(%r1)
+	clc	0(1,%r1), 0(2,%r1)
+	clc	0(0,%r1), 0(%r1)
+	clc	0(257,%r1), 0(%r1)
+	clc	-1(1,%r1), 0(%r1)
+	clc	4096(1,%r1), 0(%r1)
+	clc	0(1,%r1), -1(%r1)
+	clc	0(1,%r1), 4096(%r1)
+	clc	0(1,%r0), 0(%r1)
+	clc	0(1,%r1), 0(%r0)
+	clc	0(%r1,%r2), 0(%r1)
+	clc	0(1,%r2), 0(%r1,%r2)
+	clc	0(-), 0
+
 #CHECK: error: invalid operand
 #CHECK: clfhsi	-1, 0
 #CHECK: error: invalid operand

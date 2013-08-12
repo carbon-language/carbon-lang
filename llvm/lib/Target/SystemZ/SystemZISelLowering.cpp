@@ -1701,6 +1701,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(UDIVREM32);
     OPCODE(UDIVREM64);
     OPCODE(MVC);
+    OPCODE(CLC);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
     OPCODE(ATOMIC_LOADW_SUB);
