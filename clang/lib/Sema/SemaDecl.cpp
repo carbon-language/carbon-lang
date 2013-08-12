@@ -3998,7 +3998,7 @@ bool Sema::diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
                                         DeclarationName Name,
                                       SourceLocation Loc) {
   DeclContext *Cur = CurContext;
-  while (isa<LinkageSpecDecl>(Cur))
+  while (isa<LinkageSpecDecl>(Cur) || isa<CapturedDecl>(Cur))
     Cur = Cur->getParent();
   
   // C++ [dcl.meaning]p1:
@@ -4035,6 +4035,9 @@ bool Sema::diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
         << Name << SS.getRange();
     else if (isa<FunctionDecl>(Cur))
       Diag(Loc, diag::err_invalid_declarator_in_function) 
+        << Name << SS.getRange();
+    else if (isa<BlockDecl>(Cur))
+      Diag(Loc, diag::err_invalid_declarator_in_block) 
         << Name << SS.getRange();
     else
       Diag(Loc, diag::err_invalid_declarator_scope)
