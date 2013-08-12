@@ -331,6 +331,15 @@ public:
   virtual void ReadLateParsedTemplates(
       llvm::DenseMap<const FunctionDecl *, LateParsedTemplate *> &LPTMap);
 
+  /// \copydoc ExternalSemaSource::CorrectTypo
+  /// \note Returns the first nonempty correction.
+  virtual TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
+                                     int LookupKind, Scope *S, CXXScopeSpec *SS,
+                                     CorrectionCandidateCallback &CCC,
+                                     DeclContext *MemberContext,
+                                     bool EnteringContext,
+                                     const ObjCObjectPointerType *OPT);
+
   // isa/cast/dyn_cast support
   static bool classof(const MultiplexExternalSemaSource*) { return true; }
   //static bool classof(const ExternalSemaSource*) { return true; }

@@ -3872,6 +3872,14 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
                                  DeclContext *MemberContext,
                                  bool EnteringContext,
                                  const ObjCObjectPointerType *OPT) {
+  // Always let the ExternalSource have the first chance at correction, even
+  // if we would otherwise have given up.
+  if (ExternalSource) {
+    if (TypoCorrection Correction = ExternalSource->CorrectTypo(
+        TypoName, LookupKind, S, SS, CCC, MemberContext, EnteringContext, OPT))
+      return Correction;
+  }
+
   if (Diags.hasFatalErrorOccurred() || !getLangOpts().SpellChecking)
     return TypoCorrection();
 

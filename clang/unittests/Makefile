@@ -23,7 +23,7 @@ PARALLEL_DIRS += Format
 endif
 
 ifeq ($(ENABLE_CLANG_REWRITER),1)
-PARALLEL_DIRS += ASTMatchers AST Tooling
+PARALLEL_DIRS += ASTMatchers AST Tooling Sema
 endif
 
 ifeq ($(ENABLE_CLANG_STATIC_ANALYZER),1)

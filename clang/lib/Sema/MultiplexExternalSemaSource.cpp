@@ -273,3 +273,19 @@ void MultiplexExternalSemaSource::ReadLateParsedTemplates(
   for (size_t i = 0; i < Sources.size(); ++i)
     Sources[i]->ReadLateParsedTemplates(LPTMap);
 }
+
+TypoCorrection MultiplexExternalSemaSource::CorrectTypo(
+                                     const DeclarationNameInfo &Typo,
+                                     int LookupKind, Scope *S, CXXScopeSpec *SS,
+                                     CorrectionCandidateCallback &CCC,
+                                     DeclContext *MemberContext,
+                                     bool EnteringContext,
+                                     const ObjCObjectPointerType *OPT) {
+  for (size_t I = 0, E = Sources.size(); I < E; ++I) {
+    if (TypoCorrection C = Sources[I]->CorrectTypo(Typo, LookupKind, S, SS, CCC,
+                                                   MemberContext,
+                                                   EnteringContext, OPT))
+      return C;
+  }
+  return TypoCorrection();
+}

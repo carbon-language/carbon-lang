@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
 
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/Sema/TypoCorrection.h"
 #include "clang/Sema/Weak.h"
 #include "llvm/ADT/MapVector.h"
 #include <utility>
@@ -186,6 +187,22 @@ public:
   /// repeatedly.
   virtual void ReadLateParsedTemplates(
       llvm::DenseMap<const FunctionDecl *, LateParsedTemplate *> &LPTMap) {}
+
+  /// \copydoc Sema::CorrectTypo
+  /// \note LookupKind must correspond to a valid Sema::LookupNameKind
+  ///
+  /// ExternalSemaSource::CorrectTypo is always given the first chance to
+  /// correct a typo (really, to offer suggestions to repair a failed lookup).
+  /// It will even be called when SpellChecking is turned off or after a
+  /// fatal error has already been detected.
+  virtual TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
+                                     int LookupKind, Scope *S, CXXScopeSpec *SS,
+                                     CorrectionCandidateCallback &CCC,
+                                     DeclContext *MemberContext,
+                                     bool EnteringContext,
+                                     const ObjCObjectPointerType *OPT) {
+    return TypoCorrection();
+  }
 
   // isa/cast/dyn_cast support
   static bool classof(const ExternalASTSource *Source) {
