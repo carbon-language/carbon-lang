@@ -123,6 +123,10 @@ private:
         }
       }
 
+      if (CurrentToken->Previous->Type == TT_PointerOrReference &&
+          CurrentToken->Previous->Previous->isOneOf(tok::l_paren,
+                                                    tok::coloncolon))
+        MightBeFunctionType = true;
       if (CurrentToken->is(tok::r_paren)) {
         if (MightBeFunctionType && CurrentToken->Next &&
             (CurrentToken->Next->is(tok::l_paren) ||
@@ -152,10 +156,6 @@ private:
       }
       if (CurrentToken->isOneOf(tok::r_square, tok::r_brace))
         return false;
-      if (CurrentToken->Previous->Type == TT_PointerOrReference &&
-          CurrentToken->Previous->Previous->isOneOf(tok::l_paren,
-                                                    tok::coloncolon))
-        MightBeFunctionType = true;
       updateParameterCount(Left, CurrentToken);
       if (CurrentToken->is(tok::comma) && CurrentToken->Next &&
           !CurrentToken->Next->HasUnescapedNewline &&
@@ -577,6 +577,7 @@ private:
 
   void determineTokenType(FormatToken &Current) {
     if (Current.getPrecedence() == prec::Assignment &&
+        !Line.First->isOneOf(tok::kw_template, tok::kw_using) &&
         (!Current.Previous || Current.Previous->isNot(tok::kw_operator))) {
       Contexts.back().IsExpression = true;
       for (FormatToken *Previous = Current.Previous;
@@ -593,7 +594,7 @@ private:
                (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
                 !Line.InPPDirective &&
                 (!Current.Previous ||
-                  !Current.Previous->isOneOf(tok::kw_for, tok::kw_catch)))) {
+                 !Current.Previous->isOneOf(tok::kw_for, tok::kw_catch)))) {
       Contexts.back().IsExpression = true;
     } else if (Current.isOneOf(tok::r_paren, tok::greater, tok::comma)) {
       for (FormatToken *Previous = Current.Previous;

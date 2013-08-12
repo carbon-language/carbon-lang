@@ -973,7 +973,7 @@ private:
       // Exempts unterminated string literals from line breaking. The user will
       // likely want to terminate the string before any line breaking is done.
       if (Current.IsUnterminatedLiteral)
-         return 0;
+        return 0;
 
       Token.reset(new BreakableStringLiteral(Current, StartColumn,
                                              Line.InPPDirective, Encoding));
@@ -1228,7 +1228,7 @@ private:
       return true;
     if (!Style.Cpp11BracedListStyle && Current.is(tok::r_brace) &&
         State.Stack.back().BreakBeforeClosingBrace)
-       return true;
+      return true;
     if (Previous.is(tok::semi) && State.LineContainsContinuedForLoopSection)
       return true;
     if (Style.BreakConstructorInitializersBeforeComma) {

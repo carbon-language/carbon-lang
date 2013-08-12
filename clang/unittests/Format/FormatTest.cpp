@@ -3797,9 +3797,14 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("void *(*a)(int *, SomeType *);");
   verifyFormat("int (*func)(void *);");
   verifyFormat("void f() { int (*func)(void *); }");
+  verifyFormat("template <class CallbackClass>\n"
+               "using MyCallback = void (CallbackClass::*)(SomeObject *Data);");
 
   verifyGoogleFormat("A<void*(int*, SomeType*)>;");
   verifyGoogleFormat("void* (*a)(int);");
+  verifyGoogleFormat(
+      "template <class CallbackClass>\n"
+      "using MyCallback = void (CallbackClass::*)(SomeObject* Data);");
 
   // Other constructs can look somewhat like function types:
   verifyFormat("A<sizeof(*x)> a;");
