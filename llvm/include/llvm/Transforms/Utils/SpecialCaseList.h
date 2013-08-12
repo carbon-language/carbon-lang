@@ -57,10 +57,6 @@ class StringRef;
 
 class SpecialCaseList {
  public:
-  // FIXME: Switch all users to factories and remove these constructors.
-  SpecialCaseList(const StringRef Path);
-  SpecialCaseList(const MemoryBuffer *MB);
-
   /// Parses the special case list from a file. If Path is empty, returns
   /// an empty special case list. On failure, returns 0 and writes an error
   /// message to string.

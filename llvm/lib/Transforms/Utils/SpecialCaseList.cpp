@@ -51,26 +51,6 @@ struct SpecialCaseList::Entry {
 
 SpecialCaseList::SpecialCaseList() : Entries() {}
 
-SpecialCaseList::SpecialCaseList(const StringRef Path) {
-  // Validate and open blacklist file.
-  if (Path.empty()) return;
-  OwningPtr<MemoryBuffer> File;
-  if (error_code EC = MemoryBuffer::getFile(Path, File)) {
-    report_fatal_error("Can't open file '" + Path + "': " +
-                       EC.message());
-  }
-
-  std::string Error;
-  if (!parse(File.get(), Error))
-    report_fatal_error(Error);
-}
-
-SpecialCaseList::SpecialCaseList(const MemoryBuffer *MB) {
-  std::string Error;
-  if (!parse(MB, Error))
-    report_fatal_error(Error);
-}
-
 SpecialCaseList *SpecialCaseList::create(
     const StringRef Path, std::string &Error) {
   if (Path.empty())
