@@ -1,0 +1,7 @@
+// RUN: not FileCheck -check-prefix=A! -input-file %s %s 2>&1 | FileCheck -check-prefix=BAD_PREFIX %s
+// RUN: FileCheck -check-prefix=A1a-B_c -input-file %s %s
+
+foobar
+; A1a-B_c: foobar
+
+; BAD_PREFIX: Supplied check-prefix is invalid! Prefixes must start with a letter and contain only alphanumeric characters, hyphens and underscores

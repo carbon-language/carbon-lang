@@ -704,14 +704,25 @@ static bool ReadCheckFile(SourceMgr &SM,
 
     LineNumber += Buffer.substr(0, PrefixLoc).count('\n');
 
-    Buffer = Buffer.substr(PrefixLoc);
+    // Keep the charcter before our prefix so we can validate that we have
+    // found our prefix, and account for cases when PrefixLoc is 0.
+    Buffer = Buffer.substr(std::min(PrefixLoc-1, PrefixLoc));
 
-    const char *CheckPrefixStart = Buffer.data();
+    const char *CheckPrefixStart = Buffer.data() + (PrefixLoc == 0 ? 0 : 1);
 
     // When we find a check prefix, keep track of whether we find CHECK: or
     // CHECK-NEXT:
     bool IsCheckNext = false, IsCheckNot = false, IsCheckDag = false,
          IsCheckLabel = false;
+
+    // Make sure we have actually found our prefix, and not a word containing
+    // our prefix.
+    if (PrefixLoc != 0 && (isalnum(Buffer[0]) ||
+                           Buffer[0] == '-'   ||
+                           Buffer[0] == '_')) {
+      Buffer = Buffer.substr(CheckPrefix.size());
+      continue;
+    }
 
     // Verify that the : is present after the prefix.
     if (Buffer[CheckPrefix.size()] == ':') {
@@ -1026,10 +1037,23 @@ size_t CheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
   return LastPos;
 }
 
+bool ValidateCheckPrefix() {
+  // The check prefix must contain only alphanumeric, hyphens and underscores.
+  Regex prefixValidator("^[a-zA-Z0-9_-]*$");
+  return prefixValidator.match(CheckPrefix);
+}
+
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
+
+  if (!ValidateCheckPrefix()) {
+    errs() << "Supplied check-prefix is invalid! Prefixes must start with a "
+              "letter and contain only alphanumeric characters, hyphens and "
+              "underscores\n";
+    return 2;
+  }
 
   SourceMgr SM;
 
