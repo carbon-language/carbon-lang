@@ -888,15 +888,6 @@ void DwarfDebug::beginModule() {
     // available.
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
       constructImportedEntityDIE(CU, ImportedEntities.getElement(i));
-    // If we're splitting the dwarf out now that we've got the entire
-    // CU then construct a skeleton CU based upon it.
-    if (useSplitDwarf()) {
-      // This should be a unique identifier when we want to build .dwp files.
-      CU->addUInt(CU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
-                  dwarf::DW_FORM_data8, 0);
-      // Now construct the skeleton CU associated.
-      constructSkeletonCU(CUNode);
-    }
   }
 
   // Tell MMI that we have debug info.
@@ -1005,14 +996,6 @@ void DwarfDebug::finalizeModuleInfo() {
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   computeInlinedDIEs();
 
-  // Emit DW_AT_containing_type attribute to connect types with their
-  // vtable holding type.
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
-         CUE = CUMap.end(); CUI != CUE; ++CUI) {
-    CompileUnit *TheCU = CUI->second;
-    TheCU->constructContainingTypeDIEs();
-  }
-
   // Split out type units and conditionally add an ODR tag to the split
   // out type.
   // FIXME: Do type splitting.
@@ -1029,7 +1012,30 @@ void DwarfDebug::finalizeModuleInfo() {
                                      Hash.computeDIEODRSignature(Die));
   }
 
-   // Compute DIE offsets and sizes.
+  // Handle anything that needs to be done on a per-cu basis.
+  for (DenseMap<const MDNode *, CompileUnit *>::iterator CUI = CUMap.begin(),
+                                                         CUE = CUMap.end();
+       CUI != CUE; ++CUI) {
+    CompileUnit *TheCU = CUI->second;
+    // Emit DW_AT_containing_type attribute to connect types with their
+    // vtable holding type.
+    TheCU->constructContainingTypeDIEs();
+
+    // If we're splitting the dwarf out now that we've got the entire
+    // CU then construct a skeleton CU based upon it.
+    if (useSplitDwarf()) {
+      // This should be a unique identifier when we want to build .dwp files.
+      TheCU->addUInt(TheCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
+                     dwarf::DW_FORM_data8, 0);
+      // Now construct the skeleton CU associated.
+      CompileUnit *SkCU = constructSkeletonCU(CUI->first);
+      // This should be a unique identifier when we want to build .dwp files.
+      SkCU->addUInt(SkCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
+                    dwarf::DW_FORM_data8, 0);
+    }
+  }
+
+  // Compute DIE offsets and sizes.
   InfoHolder.computeSizeAndOffsets();
   if (useSplitDwarf())
     SkeletonHolder.computeSizeAndOffsets();
@@ -2685,9 +2691,6 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
 
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
                         DIUnit.getSplitDebugFilename());
-
-  // This should be a unique identifier when we want to build .dwp files.
-  NewCU->addUInt(Die, dwarf::DW_AT_GNU_dwo_id, dwarf::DW_FORM_data8, 0);
 
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.
