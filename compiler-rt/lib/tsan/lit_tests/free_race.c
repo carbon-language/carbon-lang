@@ -1,6 +1,6 @@
 // RUN: %clang_tsan -O1 %s -o %t
-// RUN: not %t 2>&1 | FileCheck %s --check-prefix=NOZUPP
-// RUN: TSAN_OPTIONS="suppressions=%s.supp print_suppressions=1" %t 2>&1 | FileCheck %s --check-prefix=SUPP
+// RUN: not %t 2>&1 | FileCheck %s --check-prefix=CHECK-NOZUPP
+// RUN: TSAN_OPTIONS="suppressions=%s.supp print_suppressions=1" %t 2>&1 | FileCheck %s --check-prefix=CHECK-SUPP
 
 #include <pthread.h>
 #include <stdlib.h>
