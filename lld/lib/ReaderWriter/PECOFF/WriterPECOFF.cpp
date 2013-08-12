@@ -155,6 +155,9 @@ public:
                                llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
     if (context.getLargeAddressAware())
       characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
+    if (!context.getBaseRelocationEnabled())
+      characteristics |= llvm::COFF::IMAGE_FILE_RELOCS_STRIPPED;
+
     _coffHeader.Characteristics = characteristics;
 
     // 0x10b indicates a normal PE32 executable. For PE32+ it should be 0x20b.
