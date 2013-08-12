@@ -24,6 +24,10 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
+#include "dfsan/dfsan.h"
+
+using namespace __dfsan;
+
 typedef atomic_uint16_t atomic_dfsan_label;
 static const dfsan_label kInitializingLabel = -1;
 
@@ -66,10 +70,6 @@ static const uptr kAppAddr = 0x700000008000;
 
 static atomic_dfsan_label *union_table(dfsan_label l1, dfsan_label l2) {
   return &(*(dfsan_union_table_t *) kUnionTableAddr)[l1][l2];
-}
-
-static dfsan_label *shadow_for(void *ptr) {
-  return (dfsan_label *) ((((uintptr_t) ptr) & ~0x700000000000) << 1);
 }
 
 // Resolves the union of two unequal labels.  Nonequality is a precondition for
