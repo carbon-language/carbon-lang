@@ -1011,24 +1011,26 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
   types::ID InputType = types::TY_Nothing;
   Arg *InputTypeArg = 0;
 
-  // The /TC and /TP options set the input type to C or C++ globally.
+  // The last /TC or /TP option sets the input type to C or C++ globally.
   if (Arg *TCTP = Args.getLastArg(options::OPT__SLASH_TC,
                                   options::OPT__SLASH_TP)) {
     InputTypeArg = TCTP;
-    unsigned opposite;
+    InputType = TCTP->getOption().matches(options::OPT__SLASH_TC)
+        ? types::TY_C : types::TY_CXX;
 
-    if (TCTP->getOption().matches(options::OPT__SLASH_TC)) {
-      InputType = types::TY_C;
-      opposite = options::OPT__SLASH_TP;
-    } else {
-      InputType = types::TY_CXX;
-      opposite = options::OPT__SLASH_TC;
+    arg_iterator it = Args.filtered_begin(options::OPT__SLASH_TC,
+                                          options::OPT__SLASH_TP);
+    const arg_iterator ie = Args.filtered_end();
+    Arg *Previous = *it++;
+    bool ShowNote = false;
+    while (it != ie) {
+      Diag(clang::diag::warn_drv_overriding_t_option) << Previous->getSpelling()
+          << (*it)->getSpelling();
+      Previous = *it++;
+      ShowNote = true;
     }
-
-    if (Arg *OppositeArg = Args.getLastArg(opposite)) {
-      Diag(clang::diag::warn_drv_overriding_t_option)
-        << OppositeArg->getSpelling() << InputTypeArg->getSpelling();
-    }
+    if (ShowNote)
+      Diag(clang::diag::note_drv_t_option_is_global);
 
     // No driver mode exposes -x and /TC or /TP; we don't support mixing them.
     assert(!Args.hasArg(options::OPT_x) && "-x and /TC or /TP is not allowed");

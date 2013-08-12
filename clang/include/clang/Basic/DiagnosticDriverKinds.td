@@ -153,6 +153,8 @@ def warn_missing_sysroot : Warning<"no such sysroot directory: '%0'">,
 
 def note_drv_command_failed_diag_msg : Note<
   "diagnostic msg: %0">;
+def note_drv_t_option_is_global :
+  Note<"The last /TC or /TP option takes precedence over earlier instances">;
   
 def err_analyzer_config_no_value : Error<
   "analyzer-config option '%0' has a key but no value">;
