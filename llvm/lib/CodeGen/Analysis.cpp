@@ -320,6 +320,7 @@ static const Value *getNoopInput(const Value *V,
 static bool slotOnlyDiscardsData(const Value *RetVal, const Value *CallVal,
                                  SmallVectorImpl<unsigned> &RetIndices,
                                  SmallVectorImpl<unsigned> &CallIndices,
+                                 bool AllowDifferingSizes,
                                  const TargetLoweringBase &TLI) {
 
   // Trace the sub-value needed by the return value as far back up the graph as
@@ -350,7 +351,8 @@ static bool slotOnlyDiscardsData(const Value *RetVal, const Value *CallVal,
   // all the bits that are needed by the "ret" have been provided by the "tail
   // call". FIXME: with sufficiently cunning bit-tracking, we could look through
   // extensions too.
-  if (BitsProvided < BitsRequired)
+  if (BitsProvided < BitsRequired ||
+      (!AllowDifferingSizes && BitsProvided != BitsRequired))
     return false;
 
   return true;
@@ -516,19 +518,38 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
   // return type is.
   if (isa<UndefValue>(Ret->getOperand(0))) return true;
 
-  // Conservatively require the attributes of the call to match those of
-  // the return. Ignore noalias because it doesn't affect the call sequence.
-  const Function *F = ExitBB->getParent();
-  AttributeSet CallerAttrs = F->getAttributes();
-  if (AttrBuilder(CallerAttrs, AttributeSet::ReturnIndex).
-        removeAttribute(Attribute::NoAlias) !=
-      AttrBuilder(CallerAttrs, AttributeSet::ReturnIndex).
-        removeAttribute(Attribute::NoAlias))
-    return false;
+  // Make sure the attributes attached to each return are compatible.
+  AttrBuilder CallerAttrs(ExitBB->getParent()->getAttributes(),
+                          AttributeSet::ReturnIndex);
+  AttrBuilder CalleeAttrs(cast<CallInst>(I)->getAttributes(),
+                          AttributeSet::ReturnIndex);
 
-  // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerAttrs.hasAttribute(AttributeSet::ReturnIndex, Attribute::ZExt) ||
-      CallerAttrs.hasAttribute(AttributeSet::ReturnIndex, Attribute::SExt))
+  // Noalias is completely benign as far as calling convention goes, it
+  // shouldn't affect whether the call is a tail call.
+  CallerAttrs = CallerAttrs.removeAttribute(Attribute::NoAlias);
+  CalleeAttrs = CalleeAttrs.removeAttribute(Attribute::NoAlias);
+
+  bool AllowDifferingSizes = true;
+  if (CallerAttrs.contains(Attribute::ZExt)) {
+    if (!CalleeAttrs.contains(Attribute::ZExt))
+      return false;
+
+    AllowDifferingSizes = false;
+    CallerAttrs.removeAttribute(Attribute::ZExt);
+    CalleeAttrs.removeAttribute(Attribute::ZExt);
+  } else if (CallerAttrs.contains(Attribute::SExt)) {
+    if (!CalleeAttrs.contains(Attribute::SExt))
+      return false;
+
+    AllowDifferingSizes = false;
+    CallerAttrs.removeAttribute(Attribute::SExt);
+    CalleeAttrs.removeAttribute(Attribute::SExt);
+  }
+
+  // If they're still different, there's some facet we don't understand
+  // (currently only "inreg", but in future who knows). It may be OK but the
+  // only safe option is to reject the tail call.
+  if (CallerAttrs != CalleeAttrs)
     return false;
 
   const Value *RetVal = Ret->getOperand(0), *CallVal = I;
@@ -570,7 +591,8 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
 
     // Finally, we can check whether the value produced by the tail call at this
     // index is compatible with the value we return.
-    if (!slotOnlyDiscardsData(RetVal, CallVal, TmpRetPath, TmpCallPath, TLI))
+    if (!slotOnlyDiscardsData(RetVal, CallVal, TmpRetPath, TmpCallPath,
+                              AllowDifferingSizes, TLI))
       return false;
 
     CallEmpty  = !nextRealType(CallSubTypes, CallPath);
