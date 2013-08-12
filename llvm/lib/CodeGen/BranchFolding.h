@@ -1,4 +1,4 @@
-//===-- BranchFolding.h - Fold machine code branch instructions --*- C++ -*===//
+//===-- BranchFolding.h - Fold machine code branch instructions -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
