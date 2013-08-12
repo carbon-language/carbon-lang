@@ -125,6 +125,8 @@ namespace {
 class AsmMatcherInfo;
 struct SubtargetFeatureInfo;
 
+typedef std::set<Record *, LessRecordByID> RegisterSet;
+
 class AsmMatcherEmitter {
   RecordKeeper &Records;
 public:
@@ -185,7 +187,7 @@ struct ClassInfo {
   std::string ParserMethod;
 
   /// For register classes, the records for all the registers in this class.
-  std::set<Record*> Registers;
+  RegisterSet Registers;
 
   /// For custom match classes, he diagnostic kind for when the predicate fails.
   std::string DiagnosticType;
@@ -213,8 +215,8 @@ public:
       if (!isRegisterClass() || !RHS.isRegisterClass())
         return false;
 
-      std::set<Record*> Tmp;
-      std::insert_iterator< std::set<Record*> > II(Tmp, Tmp.begin());
+      RegisterSet Tmp;
+      std::insert_iterator<RegisterSet> II(Tmp, Tmp.begin());
       std::set_intersection(Registers.begin(), Registers.end(),
                             RHS.Registers.begin(), RHS.Registers.end(),
                             II);
@@ -1055,32 +1057,32 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
     Target.getRegBank().getRegClasses();
 
   // The register sets used for matching.
-  std::set< std::set<Record*> > RegisterSets;
+  std::set<RegisterSet> RegisterSets;
 
   // Gather the defined sets.
   for (ArrayRef<CodeGenRegisterClass*>::const_iterator it =
        RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it)
-    RegisterSets.insert(std::set<Record*>(
+    RegisterSets.insert(RegisterSet(
         (*it)->getOrder().begin(), (*it)->getOrder().end()));
 
   // Add any required singleton sets.
   for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
        ie = SingletonRegisters.end(); it != ie; ++it) {
     Record *Rec = *it;
-    RegisterSets.insert(std::set<Record*>(&Rec, &Rec + 1));
+    RegisterSets.insert(RegisterSet(&Rec, &Rec + 1));
   }
 
   // Introduce derived sets where necessary (when a register does not determine
   // a unique register set class), and build the mapping of registers to the set
   // they should classify to.
-  std::map<Record*, std::set<Record*> > RegisterMap;
+  std::map<Record*, RegisterSet> RegisterMap;
   for (std::vector<CodeGenRegister*>::const_iterator it = Registers.begin(),
          ie = Registers.end(); it != ie; ++it) {
     const CodeGenRegister &CGR = **it;
     // Compute the intersection of all sets containing this register.
-    std::set<Record*> ContainingSet;
+    RegisterSet ContainingSet;
 
-    for (std::set< std::set<Record*> >::iterator it = RegisterSets.begin(),
+    for (std::set<RegisterSet>::iterator it = RegisterSets.begin(),
            ie = RegisterSets.end(); it != ie; ++it) {
       if (!it->count(CGR.TheDef))
         continue;
@@ -1090,10 +1092,10 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
         continue;
       }
 
-      std::set<Record*> Tmp;
+      RegisterSet Tmp;
       std::swap(Tmp, ContainingSet);
-      std::insert_iterator< std::set<Record*> > II(ContainingSet,
-                                                   ContainingSet.begin());
+      std::insert_iterator<RegisterSet> II(ContainingSet,
+                                           ContainingSet.begin());
       std::set_intersection(Tmp.begin(), Tmp.end(), it->begin(), it->end(), II);
     }
 
@@ -1104,9 +1106,9 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   }
 
   // Construct the register classes.
-  std::map<std::set<Record*>, ClassInfo*> RegisterSetClasses;
+  std::map<RegisterSet, ClassInfo*> RegisterSetClasses;
   unsigned Index = 0;
-  for (std::set< std::set<Record*> >::iterator it = RegisterSets.begin(),
+  for (std::set<RegisterSet>::iterator it = RegisterSets.begin(),
          ie = RegisterSets.end(); it != ie; ++it, ++Index) {
     ClassInfo *CI = new ClassInfo();
     CI->Kind = ClassInfo::RegisterClass0 + Index;
@@ -1124,10 +1126,10 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
 
   // Find the superclasses; we could compute only the subgroup lattice edges,
   // but there isn't really a point.
-  for (std::set< std::set<Record*> >::iterator it = RegisterSets.begin(),
+  for (std::set<RegisterSet>::iterator it = RegisterSets.begin(),
          ie = RegisterSets.end(); it != ie; ++it) {
     ClassInfo *CI = RegisterSetClasses[*it];
-    for (std::set< std::set<Record*> >::iterator it2 = RegisterSets.begin(),
+    for (std::set<RegisterSet>::iterator it2 = RegisterSets.begin(),
            ie2 = RegisterSets.end(); it2 != ie2; ++it2)
       if (*it != *it2 &&
           std::includes(it2->begin(), it2->end(), it->begin(), it->end()))
@@ -1142,8 +1144,8 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
     Record *Def = RC.getDef();
     if (!Def)
       continue;
-    ClassInfo *CI = RegisterSetClasses[std::set<Record*>(RC.getOrder().begin(),
-                                                         RC.getOrder().end())];
+    ClassInfo *CI = RegisterSetClasses[RegisterSet(RC.getOrder().begin(),
+                                                   RC.getOrder().end())];
     if (CI->ValueName.empty()) {
       CI->ClassName = RC.getName();
       CI->Name = "MCK_" + RC.getName();
@@ -1155,7 +1157,7 @@ buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   }
 
   // Populate the map for individual registers.
-  for (std::map<Record*, std::set<Record*> >::iterator it = RegisterMap.begin(),
+  for (std::map<Record*, RegisterSet>::iterator it = RegisterMap.begin(),
          ie = RegisterMap.end(); it != ie; ++it)
     RegisterClasses[it->first] = RegisterSetClasses[it->second];
 
