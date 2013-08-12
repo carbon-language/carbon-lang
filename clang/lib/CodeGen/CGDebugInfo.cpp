@@ -642,9 +642,8 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
 
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context)) {
     if (!RD->isDependentType()) {
-      llvm::DIType Ty =
-        getOrCreateLimitedType(CGM.getContext().getTypeDeclType(RD),
-                               getOrCreateMainFile());
+      llvm::DIType Ty = getOrCreateLimitedType(
+          CGM.getContext().getRecordType(RD)->castAs<RecordType>(), getOrCreateMainFile());
       return llvm::DIDescriptor(Ty);
     }
   }
@@ -1438,8 +1437,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
 
-  llvm::DICompositeType FwdDecl(
-      getOrCreateLimitedType(QualType(Ty, 0), DefUnit));
+  llvm::DICompositeType FwdDecl(getOrCreateLimitedType(Ty, DefUnit));
   assert(FwdDecl.isCompositeType() &&
          "The debug type of a RecordType should be a llvm::DICompositeType");
 
@@ -2150,15 +2148,11 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit,
 
 /// getOrCreateLimitedType - Get the type from the cache or create a new
 /// limited type if necessary.
-llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
+llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
                                                  llvm::DIFile Unit) {
-  if (Ty.isNull())
-    return llvm::DIType();
+  QualType QTy(Ty, 0);
 
-  // Unwrap the type as needed for debug information.
-  Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
-
-  llvm::DIType T = getTypeOrNull(Ty);
+  llvm::DIType T = getTypeOrNull(QTy);
 
   // We may have cached a forward decl when we could have created
   // a non-forward decl. Go ahead and create a non-forward decl
@@ -2166,14 +2160,14 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
   if (T && !T.isForwardDecl()) return T;
 
   // Otherwise create the type.
-  llvm::DIType Res = CreateLimitedTypeNode(Ty, Unit);
+  llvm::DIType Res = CreateLimitedType(Ty);
 
   if (T && T.isForwardDecl())
-    ReplaceMap.push_back(std::make_pair(Ty.getAsOpaquePtr(),
-                                        static_cast<llvm::Value*>(T)));
+    ReplaceMap.push_back(
+        std::make_pair(QTy.getAsOpaquePtr(), static_cast<llvm::Value *>(T)));
 
   // And update the type cache.
-  TypeCache[Ty.getAsOpaquePtr()] = Res;
+  TypeCache[QTy.getAsOpaquePtr()] = Res;
   return Res;
 }
 
@@ -2245,26 +2239,6 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
                             CollectCXXTemplateParams(TSpecial, DefUnit));
   }
   return llvm::DIType(RealDecl);
-}
-
-/// CreateLimitedTypeNode - Create a new debug type node, but only forward
-/// declare composite types that haven't been processed yet.
-llvm::DIType CGDebugInfo::CreateLimitedTypeNode(QualType Ty,llvm::DIFile Unit) {
-
-  // Work out details of type.
-  switch (Ty->getTypeClass()) {
-#define TYPE(Class, Base)
-#define ABSTRACT_TYPE(Class, Base)
-#define NON_CANONICAL_TYPE(Class, Base)
-#define DEPENDENT_TYPE(Class, Base) case Type::Class:
-        #include "clang/AST/TypeNodes.def"
-    llvm_unreachable("Dependent types cannot show up in debug information");
-
-  case Type::Record:
-    return CreateLimitedType(cast<RecordType>(Ty));
-  default:
-    return CreateTypeNode(Ty, Unit, false);
-  }
 }
 
 /// CreateMemberType - Create new member and increase Offset by FType's size.

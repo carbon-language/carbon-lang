@@ -331,7 +331,7 @@ private:
 
   /// getOrCreateLimitedType - Get the type from the cache or create a new
   /// partial type if necessary.
-  llvm::DIType getOrCreateLimitedType(QualType Ty, llvm::DIFile F);
+  llvm::DIType getOrCreateLimitedType(const RecordType *Ty, llvm::DIFile F);
 
   /// CreateTypeNode - Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F, bool Declaration);
@@ -339,10 +339,6 @@ private:
   /// getObjCInterfaceDecl - return the underlying ObjCInterfaceDecl
   /// if Ty is an ObjCInterface or a pointer to one.
   ObjCInterfaceDecl* getObjCInterfaceDecl(QualType Ty);
-
-  /// CreateLimitedTypeNode - Create type metadata for a source language
-  /// type, but only partial types for records.
-  llvm::DIType CreateLimitedTypeNode(QualType Ty, llvm::DIFile F);
 
   /// CreateMemberType - Create new member and increase Offset by FType's size.
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
