@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -E %s -o %t.mm
 // RUN: %clang_cc1 -fms-extensions -rewrite-objc -g %t.mm -o %t-rw.cpp
-// RUN: FileCheck  -check-prefix LINE --input-file=%t-rw.cpp %s
+// RUN: FileCheck  -check-prefix CHECK-LINE --input-file=%t-rw.cpp %s
 // RUN: %clang_cc1 -fms-extensions -rewrite-objc %t.mm -o %t-rwnog.cpp
-// RUN: FileCheck  -check-prefix NOLINE --input-file=%t-rwnog.cpp %s
+// RUN: FileCheck  -check-prefix CHECK-NOLINE --input-file=%t-rwnog.cpp %s
 // rdar://13138170
 
 __attribute__((objc_root_class)) @interface MyObject {

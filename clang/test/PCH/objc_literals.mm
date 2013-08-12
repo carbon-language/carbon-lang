@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-pch -x objective-c++ -std=c++0x -o %t %s
 // RUN: %clang_cc1 -include-pch %t -x objective-c++ -std=c++0x  -verify %s
-// RUN: %clang_cc1 -include-pch %t -x objective-c++ -std=c++0x  -ast-print %s | FileCheck -check-prefix=PRINT %s
-// RUN: %clang_cc1 -include-pch %t -x objective-c++ -std=c++0x  -emit-llvm -o - %s | FileCheck -check-prefix=IR %s
+// RUN: %clang_cc1 -include-pch %t -x objective-c++ -std=c++0x  -ast-print %s | FileCheck -check-prefix=CHECK-PRINT %s
+// RUN: %clang_cc1 -include-pch %t -x objective-c++ -std=c++0x  -emit-llvm -o - %s | FileCheck -check-prefix=CHECK-IR %s
 
 // expected-no-diagnostics
 

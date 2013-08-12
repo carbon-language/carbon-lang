@@ -4,7 +4,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch i386 -mmacosx-version-min=10.5 2> %t
-// RUN: FileCheck --check-prefix CHECK-I386_OSX10_5 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-I386_OSX10_5 < %t %s
 
 // CHECK-CHECK-I386_OSX10_5: "-cc1"
 // CHECK-CHECK-I386_OSX10_5: -fobjc-runtime=macosx-fragile-10.5
@@ -13,7 +13,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch i386 -mmacosx-version-min=10.6 2> %t
-// RUN: FileCheck --check-prefix CHECK-I386_OSX10_6 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-I386_OSX10_6 < %t %s
 
 // CHECK-CHECK-I386_OSX10_6: "-cc1"
 // CHECK-CHECK-I386_OSX10_6: -fobjc-runtime=macosx-fragile-10.6
@@ -22,7 +22,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch i386 -miphoneos-version-min=3.0 2> %t
-// RUN: FileCheck --check-prefix CHECK-I386_IPHONE3_0 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-I386_IPHONE3_0 < %t %s
 
 // CHECK-CHECK-I386_IPHONE3_0: "-cc1"
 // CHECK-CHECK-I386_IPHONE3_0: -fobjc-runtime=ios-3.0
@@ -33,7 +33,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch x86_64 -mmacosx-version-min=10.5 2> %t
-// RUN: FileCheck --check-prefix CHECK-X86_64_OSX10_5 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-X86_64_OSX10_5 < %t %s
 
 // CHECK-CHECK-X86_64_OSX10_5: "-cc1"
 // CHECK-CHECK-X86_64_OSX10_5: -fobjc-runtime=macosx-10.5
@@ -42,7 +42,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch x86_64 -mmacosx-version-min=10.6 2> %t
-// RUN: FileCheck --check-prefix CHECK-X86_64_OSX10_6 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-X86_64_OSX10_6 < %t %s
 
 // CHECK-CHECK-X86_64_OSX10_6: "-cc1"
 // CHECK-CHECK-X86_64_OSX10_6: -fobjc-runtime=macosx-10.6
@@ -51,7 +51,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch x86_64 -miphoneos-version-min=3.0 2> %t
-// RUN: FileCheck --check-prefix CHECK-X86_64_IPHONE3_0 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-X86_64_IPHONE3_0 < %t %s
 
 // CHECK-CHECK-X86_64_IPHONE3_0: "-cc1"
 // CHECK-CHECK-X86_64_IPHONE3_0: -fobjc-runtime=ios-3.0
@@ -62,7 +62,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch armv7 -mmacosx-version-min=10.5 2> %t
-// RUN: FileCheck --check-prefix CHECK-ARMV7_OSX10_5 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-ARMV7_OSX10_5 < %t %s
 
 // CHECK-CHECK-ARMV7_OSX10_5: "-cc1"
 // CHECK-CHECK-ARMV7_OSX10_5: -fobjc-runtime=macosx-10.5
@@ -71,7 +71,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s	\
 // RUN:   -arch armv7 -mmacosx-version-min=10.6 2> %t
-// RUN: FileCheck --check-prefix CHECK-ARMV7_OSX10_6 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-ARMV7_OSX10_6 < %t %s
 
 // CHECK-CHECK-ARMV7_OSX10_6: "-cc1"
 // CHECK-CHECK-ARMV7_OSX10_6: -fobjc-runtime=macosx-10.6
@@ -80,7 +80,7 @@
 
 // RUN: %clang -target x86_64-apple-darwin10 -S -### %s \
 // RUN:   -arch armv7 -miphoneos-version-min=3.0 2> %t
-// RUN: FileCheck --check-prefix CHECK-ARMV7_IPHONE3_0 < %t %s
+// RUN: FileCheck --check-prefix CHECK-CHECK-ARMV7_IPHONE3_0 < %t %s
 
 // CHECK-CHECK-ARMV7_IPHONE3_0: "-cc1"
 // CHECK-CHECK-ARMV7_IPHONE3_0: -fobjc-runtime=ios-3.0

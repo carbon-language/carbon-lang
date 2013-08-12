@@ -1,12 +1,12 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o - %s | FileCheck %s --check-prefix=REG
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -fpcc-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=PCC
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -freg-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=REG
-// RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=PCC
-// RUN: %clang_cc1 -triple i386-pc-linux-gnu -fpcc-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=PCC
-// RUN: %clang_cc1 -triple i386-pc-linux-gnu -freg-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=REG
-// RUN: %clang_cc1 -triple i386-pc-win32 -emit-llvm -o - %s | FileCheck %s --check-prefix=REG
-// RUN: %clang_cc1 -triple i386-pc-win32 -fpcc-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=PCC
-// RUN: %clang_cc1 -triple i386-pc-win32 -freg-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=REG
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-REG
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -fpcc-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-PCC
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -freg-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-REG
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-PCC
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -fpcc-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-PCC
+// RUN: %clang_cc1 -triple i386-pc-linux-gnu -freg-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-REG
+// RUN: %clang_cc1 -triple i386-pc-win32 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-REG
+// RUN: %clang_cc1 -triple i386-pc-win32 -fpcc-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-PCC
+// RUN: %clang_cc1 -triple i386-pc-win32 -freg-struct-return -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-REG
 
 typedef struct { int a,b,c,d; } Big;
 typedef struct { int i; } Small;

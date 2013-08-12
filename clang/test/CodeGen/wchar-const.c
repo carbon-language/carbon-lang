@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple i386-pc-win32 | FileCheck %s --check-prefix=WIN
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple x86_64-apple-darwin | FileCheck %s --check-prefix=DAR
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple i386-pc-win32 | FileCheck %s --check-prefix=CHECK-WIN
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple x86_64-apple-darwin | FileCheck %s --check-prefix=CHECK-DAR
 // This should pass for any endianness combination of host and target.
 
 // This bit is taken from Sema/wchar.c so we can avoid the wchar.h include.

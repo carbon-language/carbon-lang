@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fblocks -fobjc-gc -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -O0 -print-ivar-layout -emit-llvm -o /dev/null %s > %t-64.layout
-// RUN: FileCheck -check-prefix LP64 --input-file=%t-64.layout %s
+// RUN: FileCheck -check-prefix CHECK-LP64 --input-file=%t-64.layout %s
 // rdar://12752901
 
 struct S {

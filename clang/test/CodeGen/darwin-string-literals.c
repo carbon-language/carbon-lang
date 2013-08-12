@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix LSB %s
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix CHECK-LSB %s
 
 // CHECK-LSB: @.str = private unnamed_addr constant [8 x i8] c"string0\00"
 // CHECK-LSB: @.str1 = linker_private unnamed_addr constant [8 x i8] c"string1\00"
@@ -6,7 +6,7 @@
 // CHECK-LSB: @.str4 = internal unnamed_addr constant [6 x i16] [i16 116, i16 101, i16 115, i16 116, i16 8482, i16 0], align 2
 
 
-// RUN: %clang_cc1 -triple powerpc-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix MSB %s
+// RUN: %clang_cc1 -triple powerpc-apple-darwin9 -emit-llvm %s -o - | FileCheck -check-prefix CHECK-MSB %s
 
 // CHECK-MSB: @.str = private unnamed_addr constant [8 x i8] c"string0\00"
 // CHECK-MSB: @.str1 = linker_private unnamed_addr constant [8 x i8] c"string1\00"

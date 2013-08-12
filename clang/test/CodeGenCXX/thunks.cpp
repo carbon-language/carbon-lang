@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=HIDDEN %s
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -fhidden-weak-vtables -emit-llvm -o - | FileCheck -check-prefix=CHECK-HIDDEN %s
 
 namespace Test1 {
 

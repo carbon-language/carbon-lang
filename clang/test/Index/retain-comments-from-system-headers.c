@@ -9,7 +9,7 @@
 int user_function(int a);
 
 // RUN: c-index-test -test-load-source all %s -I %S/Inputs | FileCheck %s
-// RUN: c-index-test -test-load-source all %s -fretain-comments-from-system-headers -I %S/Inputs | FileCheck %s -check-prefix=RETAIN
+// RUN: c-index-test -test-load-source all %s -fretain-comments-from-system-headers -I %S/Inputs | FileCheck %s -check-prefix=CHECK-RETAIN
 
 // CHECK: retain-comments-from-system-headers.h:7:5: FunctionDecl=system_function:7:5 Extent=[7:1 - 7:27]
 // CHECK: retain-comments-from-system-headers.c:9:5: FunctionDecl=user_function:9:5 RawComment=[/**\n * user_function\n * \param a Aaa.\n */] RawCommentRange=[5:1 - 8:4] BriefComment=[user_function]

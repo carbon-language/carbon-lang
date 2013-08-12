@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fblocks -emit-pch -x objective-c %s -o %t.ast
-// RUN: c-index-test -test-file-scan %t.ast %s | FileCheck -check-prefix=scan %s
-// RUN: c-index-test -test-load-tu %t.ast local | FileCheck -check-prefix=load %s
+// RUN: c-index-test -test-file-scan %t.ast %s | FileCheck -check-prefix=CHECK-scan %s
+// RUN: c-index-test -test-load-tu %t.ast local | FileCheck -check-prefix=CHECK-load %s
 
 // This test checks how the @class resolves as a cursor when the @interface is implicitly defined.
 // See TestClassDecl.m for the corresponding test case. (<rdar://problem/7383421>)

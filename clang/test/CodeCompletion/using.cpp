@@ -14,7 +14,7 @@ namespace N2 {
     int N3;
     
     using
-    // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:16:10 %s -o - | FileCheck -check-prefix=CC1 %s
+    // RUN: %clang_cc1 -fsyntax-only -code-completion-at=%s:16:10 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s
     // CHECK-CC1: I1
     // CHECK-CC1: I4
     // CHECK-CC1: I5

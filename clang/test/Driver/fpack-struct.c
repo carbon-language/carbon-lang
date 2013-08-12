@@ -1,7 +1,7 @@
 // RUN: %clang -fpack-struct -### %s 2> %t
 // RUN: FileCheck < %t %s
 // RUN: %clang -fpack-struct=8 -### %s 2> %t
-// RUN: FileCheck < %t %s --check-prefix=EQ
+// RUN: FileCheck < %t %s --check-prefix=CHECK-EQ
 
 // CHECK: "-cc1"
 // CHECK: "-fpack-struct=1"

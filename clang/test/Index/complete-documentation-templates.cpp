@@ -105,20 +105,20 @@ void test_CC5_CC6_CC7() {
   T100<int, long>::T105 t105;
 }
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:17:1 %s | FileCheck -check-prefix=CC1 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:17:1 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: FunctionTemplate:{ResultType void}{TypedText T1}{{.*}}(brief comment: This is T1.)
 // CHECK-CC1: FunctionTemplate:{ResultType void}{TypedText T2}{{.*}}(brief comment: This is T2.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:56:12 %s | FileCheck -check-prefix=CC2 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:56:12 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: CXXMethod:{ResultType void}{TypedText T4}{{.*}}(brief comment: This is T4.)
 // CHECK-CC2: VarDecl:{ResultType int}{TypedText T5}{{.*}}(brief comment: This is T5.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:58:6 %s | FileCheck -check-prefix=CC3 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:58:6 %s | FileCheck -check-prefix=CHECK-CC3 %s
 // CHECK-CC3: FunctionTemplate:{ResultType void}{TypedText T11}{{.*}}(brief comment: This is T11.)
 // CHECK-CC3: CXXMethod:{ResultType void}{TypedText T6}{{.*}}(brief comment: This is T6.)
 // CHECK-CC3: FieldDecl:{ResultType int}{TypedText T7}{{.*}}(brief comment: This is T7.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:59:12 %s | FileCheck -check-prefix=CC4 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:59:12 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: EnumConstantDecl:{ResultType T3<int>::T9}{TypedText T10}{{.*}}(brief comment: This is T10.)
 // FIXME: after we implement propagating comments through typedefs, this
 // typedef for implicit instantiation should pick up the documentation
@@ -128,16 +128,16 @@ void test_CC5_CC6_CC7() {
 // CHECK-CC4: ClassDecl:{TypedText T8}{{.*}}(brief comment: This is T8.)
 // CHECK-CC4: EnumDecl:{TypedText T9}{{.*}}(brief comment: This is T9.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:102:20 %s | FileCheck -check-prefix=CC5 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:102:20 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: CXXMethod:{ResultType void}{TypedText T101}{{.*}}(brief comment: This is T101.)
 // CHECK-CC5: VarDecl:{ResultType int}{TypedText T102}{{.*}}(brief comment: This is T102.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:104:8 %s | FileCheck -check-prefix=CC6 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:104:8 %s | FileCheck -check-prefix=CHECK-CC6 %s
 // CHECK-CC6: CXXMethod:{ResultType void}{TypedText T103}{{.*}}(brief comment: This is T103.)
 // CHECK-CC6: FieldDecl:{ResultType int}{TypedText T104}{{.*}}(brief comment: This is T104.)
 // CHECK-CC6: FunctionTemplate:{ResultType void}{TypedText T108}{{.*}}(brief comment: This is T108.)
 
-// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:105:20 %s | FileCheck -check-prefix=CC7 %s
+// RUN: env CINDEXTEST_COMPLETION_BRIEF_COMMENTS=1 c-index-test -code-completion-at=%s:105:20 %s | FileCheck -check-prefix=CHECK-CC7 %s
 // CHECK-CC7: ClassDecl:{TypedText T105}{{.*}}(brief comment: This is T105.)
 // CHECK-CC7: EnumDecl:{TypedText T106}{{.*}}(brief comment: This is T106.)
 // CHECK-CC7: EnumConstantDecl:{ResultType T100<int, long>::T106}{TypedText T107}{{.*}}(brief comment: This is T107.)

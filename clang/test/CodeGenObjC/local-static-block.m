@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin -fobjc-runtime=macosx-fragile-10.5 -emit-llvm %s -o %t-64.ll
-// RUN: FileCheck -check-prefix LP64 --input-file=%t-64.ll %s
+// RUN: FileCheck -check-prefix CHECK-LP64 --input-file=%t-64.ll %s
 // rdar: // 8390455
 
 @class NSArray;
