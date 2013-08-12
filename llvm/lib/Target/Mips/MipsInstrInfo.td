@@ -660,6 +660,11 @@ class ER_FT<string opstr> :
   InstSE<(outs), (ins),
          opstr, [], NoItinerary, FrmOther>;
 
+// Interrupts
+class DEI_FT<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins),
+         !strconcat(opstr, "\t$rt"), [], NoItinerary, FrmOther>;
+
 // Sync
 let hasSideEffects = 1 in
 class SYNC_FT :
@@ -953,7 +958,8 @@ defm LBu : LoadM<"lbu", GPR32Opnd, zextloadi8, IILoad, addrDefault>, MMRel,
 defm LH  : LoadM<"lh", GPR32Opnd, sextloadi16, IILoad, addrDefault>, MMRel,
            LW_FM<0x21>;
 defm LHu : LoadM<"lhu", GPR32Opnd, zextloadi16, IILoad>, MMRel, LW_FM<0x25>;
-defm LW  : LoadM<"lw", GPR32Opnd, load, IILoad, addrDefault>, MMRel, LW_FM<0x23>;
+defm LW  : LoadM<"lw", GPR32Opnd, load, IILoad, addrDefault>, MMRel,
+           LW_FM<0x23>;
 defm SB  : StoreM<"sb", GPR32Opnd, truncstorei8, IIStore>, MMRel, LW_FM<0x28>;
 defm SH  : StoreM<"sh", GPR32Opnd, truncstorei16, IIStore>, MMRel, LW_FM<0x29>;
 defm SW  : StoreM<"sw", GPR32Opnd, store, IIStore>, MMRel, LW_FM<0x2b>;
@@ -972,6 +978,9 @@ def SYSCALL : SYS_FT<"syscall">, SYS_FM<0xc>;
 
 def ERET : ER_FT<"eret">, ER_FM<0x18>;
 def DERET : ER_FT<"deret">, ER_FM<0x1f>;
+
+def EI : DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
+def DI : DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
 
 /// Load-linked, Store-conditional
 let Predicates = [NotN64, HasStdEnc] in {
@@ -1145,6 +1154,8 @@ def : InstAlias<"syscall", (SYSCALL 0), 1>;
 
 def : InstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
 def : InstAlias<"break", (BREAK 0, 0), 1>;
+def : InstAlias<"ei", (EI ZERO), 1>;
+def : InstAlias<"di", (DI ZERO), 1>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//

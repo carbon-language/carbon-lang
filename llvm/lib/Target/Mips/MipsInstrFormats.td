@@ -520,6 +520,24 @@ class ER_FM<bits<6> funct>
   let Inst{5-0}   = funct;
 }
 
+
+//===----------------------------------------------------------------------===//
+//  Enable/disable interrupt instruction format <Cop0|MFMC0|rt|12|0|sc|0|0>
+//===----------------------------------------------------------------------===//
+
+class EI_FM<bits<1> sc>
+{
+  bits<32> Inst;
+  bits<5> rt;
+  let Inst{31-26} = 0x10;
+  let Inst{25-21} = 0xb;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = 0xc;
+  let Inst{10-6}  = 0;
+  let Inst{5}     = sc;
+  let Inst{4-0}   = 0;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS
