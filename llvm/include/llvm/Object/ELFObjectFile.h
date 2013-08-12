@@ -577,14 +577,14 @@ ELFObjectFile<ELFT>::isSectionRequiredForExecution(DataRefImpl Sec,
 template <class ELFT>
 error_code ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec,
                                                  bool &Result) const {
-  Result = toELFShdrIter(Sec)->sh_type & ELF::SHT_NOBITS;
+  Result = toELFShdrIter(Sec)->sh_type == ELF::SHT_NOBITS;
   return object_error::success;
 }
 
 template <class ELFT>
 error_code ELFObjectFile<ELFT>::isSectionZeroInit(DataRefImpl Sec,
                                                   bool &Result) const {
-  Result = toELFShdrIter(Sec)->sh_type & ELF::SHT_NOBITS;
+  Result = toELFShdrIter(Sec)->sh_type == ELF::SHT_NOBITS;
   return object_error::success;
 }
 
