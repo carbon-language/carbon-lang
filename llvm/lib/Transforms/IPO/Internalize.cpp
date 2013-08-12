@@ -114,11 +114,6 @@ bool InternalizePass::runOnModule(Module &M) {
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
   bool Changed = false;
 
-  // Never internalize functions which code-gen might insert.
-  // FIXME: We should probably add this (and the __stack_chk_guard) via some
-  // type of call-back in CodeGen.
-  ExternalNames.insert("__stack_chk_fail");
-
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(M, Used, false);
 
@@ -166,6 +161,9 @@ bool InternalizePass::runOnModule(Module &M) {
   ExternalNames.insert("llvm.global.annotations");
 
   // Never internalize symbols code-gen inserts.
+  // FIXME: We should probably add this (and the __stack_chk_guard) via some
+  // type of call-back in CodeGen.
+  ExternalNames.insert("__stack_chk_fail");
   ExternalNames.insert("__stack_chk_guard");
 
   // Mark all global variables with initializers that are not in the api as
