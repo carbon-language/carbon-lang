@@ -5052,6 +5052,11 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
   if (IFace && !IFace->getDecl()->isInvalidDecl())
     Diag(IFace->getDecl()->getLocation(), diag::note_forward_class);
 
+  // If we have external information that we can use to suggest a fix,
+  // produce a note.
+  if (ExternalSource)
+    ExternalSource->MaybeDiagnoseMissingCompleteType(Loc, T);
+
   return true;
 }
 

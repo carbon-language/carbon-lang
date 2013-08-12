@@ -340,6 +340,18 @@ public:
                                      bool EnteringContext,
                                      const ObjCObjectPointerType *OPT);
 
+  /// \brief Produces a diagnostic note if one of the attached sources
+  /// contains a complete definition for \p T. Queries the sources in list
+  /// order until the first one claims that a diagnostic was produced.
+  ///
+  /// \param Loc the location at which a complete type was required but not
+  /// provided
+  ///
+  /// \param T the \c QualType that should have been complete at \p Loc
+  ///
+  /// \return true if a diagnostic was produced, false otherwise.
+  virtual bool MaybeDiagnoseMissingCompleteType(SourceLocation Loc, QualType T);
+
   // isa/cast/dyn_cast support
   static bool classof(const MultiplexExternalSemaSource*) { return true; }
   //static bool classof(const ExternalSemaSource*) { return true; }

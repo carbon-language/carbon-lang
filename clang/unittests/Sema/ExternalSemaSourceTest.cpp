@@ -24,6 +24,21 @@ using namespace clang::tooling;
 
 namespace {
 
+// \brief Counts the number of times MaybeDiagnoseMissingCompleteType
+// is called. Returns the result it was provided on creation.
+class CompleteTypeDiagnoser : public clang::ExternalSemaSource {
+public:
+  CompleteTypeDiagnoser(bool MockResult) : CallCount(0), Result(MockResult) {}
+
+  virtual bool MaybeDiagnoseMissingCompleteType(SourceLocation L, QualType T) {
+    ++CallCount;
+    return Result;
+  }
+
+  int CallCount;
+  bool Result;
+};
+
 // \brief Counts the number of err_using_directive_member_suggest diagnostics
 // correcting from one namespace to another while still passing all diagnostics
 // along a chain of consumers.
@@ -209,6 +224,43 @@ TEST(ExternalSemaSource, ExternalTypoCorrectionOrdering) {
   ASSERT_LE(1, Second.CallCount);
   ASSERT_EQ(0, Third.CallCount);
   ASSERT_EQ(1, Watcher.SeenCount);
+}
+
+// We should only try MaybeDiagnoseMissingCompleteType if we can't otherwise
+// solve the problem.
+TEST(ExternalSemaSource, TryOtherTacticsBeforeDiagnosing) {
+  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+      new ExternalSemaSourceInstaller);
+  CompleteTypeDiagnoser Diagnoser(false);
+  Installer->PushSource(&Diagnoser);
+  std::vector<std::string> Args(1, "-std=c++11");
+  // This code hits the class template specialization/class member of a class
+  // template specialization checks in Sema::RequireCompleteTypeImpl.
+  ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
+      Installer.take(),
+      "template <typename T> struct S { class C { }; }; S<char>::C SCInst;",
+      Args));
+  ASSERT_EQ(0, Diagnoser.CallCount);
+}
+
+// The first ExternalSemaSource where MaybeDiagnoseMissingCompleteType returns
+// true should be the last one called.
+TEST(ExternalSemaSource, FirstDiagnoserTaken) {
+  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+      new ExternalSemaSourceInstaller);
+  CompleteTypeDiagnoser First(false);
+  CompleteTypeDiagnoser Second(true);
+  CompleteTypeDiagnoser Third(true);
+  Installer->PushSource(&First);
+  Installer->PushSource(&Second);
+  Installer->PushSource(&Third);
+  std::vector<std::string> Args(1, "-std=c++11");
+  ASSERT_FALSE(clang::tooling::runToolOnCodeWithArgs(
+      Installer.take(), "class Incomplete; Incomplete IncompleteInstance;",
+      Args));
+  ASSERT_EQ(1, First.CallCount);
+  ASSERT_EQ(1, Second.CallCount);
+  ASSERT_EQ(0, Third.CallCount);
 }
 
 } // anonymous namespace

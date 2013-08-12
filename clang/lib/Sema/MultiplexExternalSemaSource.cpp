@@ -289,3 +289,12 @@ TypoCorrection MultiplexExternalSemaSource::CorrectTypo(
   }
   return TypoCorrection();
 }
+
+bool MultiplexExternalSemaSource::MaybeDiagnoseMissingCompleteType(
+    SourceLocation Loc, QualType T) {
+  for (size_t I = 0, E = Sources.size(); I < E; ++I) {
+    if (Sources[I]->MaybeDiagnoseMissingCompleteType(Loc, T))
+      return true;
+  }
+  return false;
+}

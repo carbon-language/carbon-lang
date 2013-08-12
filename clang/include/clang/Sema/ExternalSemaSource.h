@@ -14,6 +14,7 @@
 #define LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
 
 #include "clang/AST/ExternalASTSource.h"
+#include "clang/AST/Type.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "clang/Sema/Weak.h"
 #include "llvm/ADT/MapVector.h"
@@ -202,6 +203,20 @@ public:
                                      bool EnteringContext,
                                      const ObjCObjectPointerType *OPT) {
     return TypoCorrection();
+  }
+
+  /// \brief Produces a diagnostic note if the external source contains a
+  /// complete definition for \p T.
+  ///
+  /// \param Loc the location at which a complete type was required but not
+  /// provided
+  ///
+  /// \param T the \c QualType that should have been complete at \p Loc
+  ///
+  /// \return true if a diagnostic was produced, false otherwise.
+  virtual bool MaybeDiagnoseMissingCompleteType(SourceLocation Loc,
+                                                QualType T) {
+    return false;
   }
 
   // isa/cast/dyn_cast support
