@@ -1,4 +1,4 @@
-//=- PHIEliminationUtils.h - Helper functions for PHI elimination *- C++ -*--=//
+//=- PHIEliminationUtils.h - Helper functions for PHI elimination -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
