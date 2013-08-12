@@ -422,9 +422,12 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         // instruction's next pointer and moving the next instruction to the
         // tail block from which we should continue.
         Instruction *Next = Inst->getNextNode();
+        // DFSanVisitor may delete Inst, so keep track of whether it was a
+        // terminator.
+        bool IsTerminator = isa<TerminatorInst>(Inst);
         if (!DFSF.SkipInsts.count(Inst))
           DFSanVisitor(DFSF).visit(Inst);
-        if (isa<TerminatorInst>(Inst))
+        if (IsTerminator)
           break;
         Inst = Next;
       }
