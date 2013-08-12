@@ -9,8 +9,6 @@ set(SOURCES
   LTODisassembler.cpp
   lto.cpp
   LTOModule.cpp
-  LTOPartition.cpp
-  LTOPostIPODriver.cpp
   )
 
 set(LLVM_COMMON_DEPENDS intrinsics_gen)

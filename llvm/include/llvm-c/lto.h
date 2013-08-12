@@ -284,18 +284,6 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length);
 extern bool
 lto_codegen_compile_to_file(lto_code_gen_t cg, const char** name);
 
-/**
- * Get intermediate files that need to be removed before linker exit. Upon
- * return, the paths of the files need to be removed is written to "paths". The
- * paths are separated by a single '\0', and the last path is ended by double
- * '\0's. A file could be a directory; in this case, the entire directory needs
- * to be removed recursively.
- *
- * It is only necessary to call this function after \p lto_codegen_compile was
- * successfully called.
- */
-extern void
-lto_codegen_get_files_need_remove(lto_code_gen_t cg, const char **paths);
 
 /**
  * Sets options to help debug codegen bugs.

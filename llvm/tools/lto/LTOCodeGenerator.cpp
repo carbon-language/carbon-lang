@@ -14,8 +14,6 @@
 
 #include "LTOCodeGenerator.h"
 #include "LTOModule.h"
-#include "LTOPartition.h"
-#include "LTOPostIPODriver.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
@@ -37,13 +35,11 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -51,16 +47,8 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/ObjCARC.h"
-
 using namespace llvm;
-using namespace lto;
 
-// /////////////////////////////////////////////////////////////////////////////
-//
-//   Internal options. To avoid collision, most options start with "lto-".
-// 
-// /////////////////////////////////////////////////////////////////////////////
-//
 static cl::opt<bool>
 DisableOpt("disable-opt", cl::init(false),
   cl::desc("Do not run any optimization passes"));
@@ -73,28 +61,6 @@ static cl::opt<bool>
 DisableGVNLoadPRE("disable-gvn-loadpre", cl::init(false),
   cl::desc("Do not run the GVN load PRE pass"));
 
-// To break merged module into partitions, and compile them independently.
-static cl::opt<bool>
-EnablePartition("lto-partition", cl::init(false),
-  cl::desc("Partition program and compile each piece in parallel"));
-
-// Specify the work-directory for the LTO compilation. All intermeidate
-// files will be created immediately under this dir. If it is not
-// specified, compiler will create an unique directory under current-dir.
-//
-static cl::opt<std::string>
-TmpWorkDir("lto-workdir", cl::init(""), cl::desc("Specify working directory"));
-
-static cl::opt<bool>
-KeepWorkDir("lto-keep", cl::init(false), cl::desc("Keep working directory"));
-
-
-// /////////////////////////////////////////////////////////////////////////////
-//
-//                    Implementation of LTOCodeGenerator
-//
-// /////////////////////////////////////////////////////////////////////////////
-//
 const char* LTOCodeGenerator::getVersionString() {
 #ifdef LLVM_VERSION_INFO
   return PACKAGE_NAME " version " PACKAGE_VERSION ", " LLVM_VERSION_INFO;
@@ -108,8 +74,7 @@ LTOCodeGenerator::LTOCodeGenerator()
     _linker(new Module("ld-temp.o", _context)), _target(NULL),
     _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
     _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
-    _nativeObjectFile(NULL), PartitionMgr(FileMgr),
-    OptionsParsed(false) {
+    _nativeObjectFile(NULL) {
   InitializeAllTargets();
   InitializeAllTargetMCs();
   InitializeAllAsmPrinters();
@@ -222,41 +187,35 @@ bool LTOCodeGenerator::writeMergedModules(const char *path,
   return true;
 }
 
-// This function is to ensure cl::ParseCommandLineOptions() is called no more
-// than once. It would otherwise complain and exit the compilation prematurely.
-// 
-void LTOCodeGenerator::parseOptions() {
-  if (OptionsParsed)
-    return;
-
-  if (!_codegenOptions.empty())
-    cl::ParseCommandLineOptions(_codegenOptions.size(),
-                                const_cast<char **>(&_codegenOptions[0]));
-
-  OptionsParsed = true;
-}
-
-// Do some prepartion right before compilation starts.
-bool LTOCodeGenerator::prepareBeforeCompile(std::string &ErrMsg) {
-  parseOptions();
-
-  if (!determineTarget(ErrMsg))
+bool LTOCodeGenerator::compile_to_file(const char** name, std::string& errMsg) {
+  // make unique temp .o file to put generated object file
+  SmallString<128> Filename;
+  int FD;
+  error_code EC = sys::fs::createTemporaryFile("lto-llvm", "o", FD, Filename);
+  if (EC) {
+    errMsg = EC.message();
     return false;
+  }
 
-  FileMgr.setWorkDir(TmpWorkDir.c_str());
-  FileMgr.setKeepWorkDir(KeepWorkDir);
-  return FileMgr.createWorkDir(ErrMsg);
-}
+  // generate object file
+  tool_output_file objFile(Filename.c_str(), FD);
 
-bool LTOCodeGenerator::compile_to_file(const char** Name, std::string& ErrMsg) {
-  if (!prepareBeforeCompile(ErrMsg))
+  bool genResult = generateObjectFile(objFile.os(), errMsg);
+  objFile.os().close();
+  if (objFile.os().has_error()) {
+    objFile.os().clear_error();
+    sys::fs::remove(Twine(Filename));
     return false;
+  }
 
-  performIPO(EnablePartition, ErrMsg);
-  if (!performPostIPO(ErrMsg))
+  objFile.keep();
+  if (!genResult) {
+    sys::fs::remove(Twine(Filename));
     return false;
+  }
 
-  *Name = PartitionMgr.getSinglePartition()->getObjFilePath().c_str();
+  _nativeObjectPath = Filename.c_str();
+  *name = _nativeObjectPath.c_str();
   return true;
 }
 
@@ -270,41 +229,21 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg) {
 
   // read .o file into memory buffer
   OwningPtr<MemoryBuffer> BuffPtr;
-  const char *BufStart = 0;
-
   if (error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
     errMsg = ec.message();
-    _nativeObjectFile = 0;
-  } else {
-    if ((_nativeObjectFile = BuffPtr.take())) {
-      *length = _nativeObjectFile->getBufferSize();
-      BufStart = _nativeObjectFile->getBufferStart();
-    }
+    sys::fs::remove(_nativeObjectPath);
+    return NULL;
   }
+  _nativeObjectFile = BuffPtr.take();
 
-  // Now that the resulting single object file is handed to linker via memory 
-  // buffer, it is safe to remove all intermediate files now. 
-  //
-  FileMgr.removeAllUnneededFiles();
+  // remove temp files
+  sys::fs::remove(_nativeObjectPath);
 
-  return BufStart;
-}
-
-const char *LTOCodeGenerator::getFilesNeedToRemove() {
-  IPOFileMgr::FileNameVect ToRm;
-  FileMgr.getFilesNeedToRemove(ToRm);
-
-  ConcatStrings.clear();
-  for (IPOFileMgr::FileNameVect::iterator I = ToRm.begin(), E = ToRm.end();
-       I != E; I++) {
-    StringRef S(*I);
-    ConcatStrings.append(S.begin(), S.end());
-    ConcatStrings.push_back('\0');
-  }
-  ConcatStrings.push_back('\0');
-  ConcatStrings.push_back('\0');
-
-  return ConcatStrings.data();
+  // return buffer, unless error
+  if (_nativeObjectFile == NULL)
+    return NULL;
+  *length = _nativeObjectFile->getBufferSize();
+  return _nativeObjectFile->getBufferStart();
 }
 
 bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
@@ -312,7 +251,9 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
     return true;
 
   // if options were requested, set them
-  parseOptions();
+  if (!_codegenOptions.empty())
+    cl::ParseCommandLineOptions(_codegenOptions.size(),
+                                const_cast<char **>(&_codegenOptions[0]));
 
   std::string TripleStr = _linker.getModule()->getTargetTriple();
   if (TripleStr.empty())
@@ -441,70 +382,6 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.run(*mergedModule);
 
   _scopeRestrictionsDone = true;
-}
-
-void LTOCodeGenerator::performIPO(bool ToPartition, std::string &errMsg) {
-  // Mark which symbols can not be internalized
-  applyScopeRestrictions();
-
-  // Instantiate the pass manager to organize the passes.
-  PassManager Passes;
-
-  // Start off with a verification pass.
-  Passes.add(createVerifierPass());
-
-  // Add an appropriate DataLayout instance for this module...
-  Passes.add(new DataLayout(*_target->getDataLayout()));
-  _target->addAnalysisPasses(Passes);
-
-  // Enabling internalize here would use its AllButMain variant. It
-  // keeps only main if it exists and does nothing for libraries. Instead
-  // we create the pass ourselves with the symbol list provided by the linker.
-  if (!DisableOpt)
-    PassManagerBuilder().populateLTOPassManager(Passes,
-                                                /*Internalize=*/false,
-                                                !DisableInline,
-                                                DisableGVNLoadPRE);
-  // Make sure everything is still good.
-  Passes.add(createVerifierPass());
-
-  Module* M = _linker.getModule();
-  if (ToPartition)
-    assert(false && "TBD");
-  else {
-    Passes.run(*M);
-
-    // Create a partition for the merged module.
-    PartitionMgr.createIPOPart(M);
-  }
-}
-
-// Perform Post-IPO compilation. If the partition is enabled, there may
-// be multiple partitions, and therefore there may be multiple objects.
-// In this case, "MergeObjs" indicates to merge all object together (via ld -r)
-// and return the path to the merged object via "MergObjPath".
-// 
-bool LTOCodeGenerator::performPostIPO(std::string &ErrMsg,
-                                      bool MergeObjs,
-                                      const char **MergObjPath) {
-  // Determine the variant of post-ipo driver
-  PostIPODriver::VariantTy DrvTy;
-  if (!EnablePartition) {
-    assert(!MergeObjs && !MergObjPath && "Invalid parameter");
-    DrvTy = PostIPODriver::PIDV_SERIAL;
-  } else {
-    DrvTy = PostIPODriver::PIDV_Invalid;
-    assert(false && "TBD");
-  }
-
-  PostIPODriver D(DrvTy, _target, PartitionMgr, FileMgr, MergeObjs);
-  if (D.Compile(ErrMsg)) {
-    if (MergeObjs)
-      *MergObjPath = D.getSingleObjFile()->getPath().c_str();
-    return true;
-  }
-
-  return false;
 }
 
 /// Optimize merged modules using various IPO passes

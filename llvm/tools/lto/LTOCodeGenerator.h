@@ -41,7 +41,6 @@
 #include "llvm/Linker.h"
 #include <string>
 #include <vector>
-#include "LTOPartition.h"
 
 namespace llvm {
   class LLVMContext;
@@ -103,34 +102,16 @@ struct LTOCodeGenerator {
   //
   const void *compile(size_t *length, std::string &errMsg);
 
-  // Return the paths of the intermediate files that linker needs to delete
-  // before it exits. The paths are delimited by a single '\0', and the last
-  // path is ended by double '\0's. The file could be a directory. In that
-  // case, the entire directory should be erased recusively. This function
-  // must be called after the compilexxx() is successfuly called, because
-  // only after that moment, compiler is aware which files need to be removed.
-  // If calling compilexxx() is not successful, it is up to compiler to clean
-  // up all the intermediate files generated during the compilation process.
-  //
-  const char *getFilesNeedToRemove();
-
 private:
   void initializeLTOPasses();
-  bool determineTarget(std::string &errMsg);
-  void parseOptions();
-  bool prepareBeforeCompile(std::string &ErrMsg);
 
-  void performIPO(bool PerformPartition, std::string &ErrMsg);
-  bool performPostIPO(std::string &ErrMsg, bool MergeObjs = false,
-                      const char **MergObjPath = 0);
   bool generateObjectFile(llvm::raw_ostream &out, std::string &errMsg);
-
   void applyScopeRestrictions();
   void applyRestriction(llvm::GlobalValue &GV,
                         std::vector<const char*> &mustPreserveList,
                         llvm::SmallPtrSet<llvm::GlobalValue*, 8> &asmUsed,
                         llvm::Mangler &mangler);
-  
+  bool determineTarget(std::string &errMsg);
 
   typedef llvm::StringMap<uint8_t> StringSet;
 
@@ -146,24 +127,6 @@ private:
   std::vector<char*>          _codegenOptions;
   std::string                 _mCpu;
   std::string                 _nativeObjectPath;
-
-  // To manage the partitions. If partition is not enabled, the whole merged
-  // module is considered as a single degenerated partition, and the "manager"
-  // is still active.
-  lto::IPOPartMgr PartitionMgr;
-
-  // To manage the intermediate files during the compilations.
-  lto::IPOFileMgr FileMgr;
-
-  // Sometimes we need to return a vector of strings in a "C" way (to work with
-  // the C-APIs). We encode such C-thinking string vector by concatenating all
-  // strings tegother with a single '\0' as the delimitor, the last string ended
-  // by double '\0's.
-  SmallVector<char, 4> ConcatStrings;
-
-  // Make sure command line is parsed only once. It would otherwise complain
-  // and quite prematurely.
-  bool OptionsParsed;
 };
 
 #endif // LTO_CODE_GENERATOR_H
