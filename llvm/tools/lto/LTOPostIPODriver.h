@@ -45,7 +45,6 @@ namespace lto {
 
   private:
     void *DrvImpl;
-    VariantTy DrvStyle;
   };
 }
 
