@@ -22,6 +22,6 @@ entry:
 ; Also check that with -enable-unsafe-fp-math we do not get that extra
 ; code sequence.  Simply verify that there is no "isel" present.
 
-; RUN: llc -mcpu=pwr7 -mattr=-fpcvt -enable-unsafe-fp-math < %s | FileCheck %s -check-prefix=UNSAFE
+; RUN: llc -mcpu=pwr7 -mattr=-fpcvt -enable-unsafe-fp-math < %s | FileCheck %s -check-prefix=CHECK-UNSAFE
 ; CHECK-UNSAFE-NOT: isel
 

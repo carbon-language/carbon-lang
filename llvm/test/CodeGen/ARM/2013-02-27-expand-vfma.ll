@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
-; RUN: llc < %s -mtriple=armv7s-apple-darwin | FileCheck %s -check-prefix=VFP4
+; RUN: llc < %s -mtriple=armv7s-apple-darwin | FileCheck %s -check-prefix=CHECK-VFP4
 
 define <4 x float> @muladd(<4 x float> %a, <4 x float> %b, <4 x float> %c) nounwind {
 ; CHECK-LABEL: muladd:

@@ -1,5 +1,5 @@
-; RUN: llc -O1 -mcpu=cortex-a15 -mtriple=armv7-linux-gnueabi -disable-a15-sd-optimization -verify-machineinstrs < %s  | FileCheck -check-prefix=DISABLED %s
-; RUN: llc -O1 -mcpu=cortex-a15 -mtriple=armv7-linux-gnueabi -verify-machineinstrs < %s | FileCheck -check-prefix=ENABLED %s
+; RUN: llc -O1 -mcpu=cortex-a15 -mtriple=armv7-linux-gnueabi -disable-a15-sd-optimization -verify-machineinstrs < %s  | FileCheck -check-prefix=CHECK-DISABLED %s
+; RUN: llc -O1 -mcpu=cortex-a15 -mtriple=armv7-linux-gnueabi -verify-machineinstrs < %s | FileCheck -check-prefix=CHECK-ENABLED %s
 
 ; CHECK-ENABLED-LABEL: t1:
 ; CHECK-DISABLED-LABEL: t1:

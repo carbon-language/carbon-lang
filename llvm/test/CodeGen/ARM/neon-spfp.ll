@@ -1,20 +1,20 @@
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a5 | FileCheck %s -check-prefix=LINUXA5
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a8 | FileCheck %s -check-prefix=LINUXA8
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a9 | FileCheck %s -check-prefix=LINUXA9
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a15 | FileCheck %s -check-prefix=LINUXA15
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=swift | FileCheck %s -check-prefix=LINUXSWIFT
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a5 | FileCheck %s -check-prefix=CHECK-LINUXA5
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a8 | FileCheck %s -check-prefix=CHECK-LINUXA8
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a9 | FileCheck %s -check-prefix=CHECK-LINUXA9
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a15 | FileCheck %s -check-prefix=CHECK-LINUXA15
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=swift | FileCheck %s -check-prefix=CHECK-LINUXSWIFT
 
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a5 --enable-unsafe-fp-math | FileCheck %s -check-prefix=UNSAFEA5
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=UNSAFEA8
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a9 --enable-unsafe-fp-math | FileCheck %s -check-prefix=UNSAFEA9
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a15 --enable-unsafe-fp-math | FileCheck %s -check-prefix=UNSAFEA15
-; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=swift --enable-unsafe-fp-math | FileCheck %s -check-prefix=UNSAFESWIFT
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a5 --enable-unsafe-fp-math | FileCheck %s -check-prefix=CHECK-UNSAFEA5
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=CHECK-UNSAFEA8
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a9 --enable-unsafe-fp-math | FileCheck %s -check-prefix=CHECK-UNSAFEA9
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=cortex-a15 --enable-unsafe-fp-math | FileCheck %s -check-prefix=CHECK-UNSAFEA15
+; RUN: llc < %s -mtriple armv7a-none-linux-gnueabihf -mcpu=swift --enable-unsafe-fp-math | FileCheck %s -check-prefix=CHECK-UNSAFESWIFT
 
-; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a5 | FileCheck %s -check-prefix=DARWINA5
-; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=DARWINA8
-; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a9 | FileCheck %s -check-prefix=DARWINA9
-; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a15 | FileCheck %s -check-prefix=DARWINA15
-; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=swift | FileCheck %s -check-prefix=DARWINSWIFT
+; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a5 | FileCheck %s -check-prefix=CHECK-DARWINA5
+; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=CHECK-DARWINA8
+; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a9 | FileCheck %s -check-prefix=CHECK-DARWINA9
+; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=cortex-a15 | FileCheck %s -check-prefix=CHECK-DARWINA15
+; RUN: llc < %s -mtriple armv7a-none-darwin -mcpu=swift | FileCheck %s -check-prefix=CHECK-DARWINSWIFT
 
 ; This test makes sure we're not lowering VMUL.f32 D* (aka. NEON) for single-prec. FP ops, since
 ; NEON is not fully IEEE 754 compliant, unless unsafe-math is selected.

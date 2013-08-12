@@ -2,7 +2,7 @@
 # RUN: llvm-mc -triple powerpc64-unknown-unknown --show-encoding %s | FileCheck %s
 
 # RUN: llvm-mc -triple powerpc64-unknown-unknown -filetype=obj %s | \
-# RUN: llvm-readobj -r | FileCheck %s -check-prefix=REL
+# RUN: llvm-readobj -r | FileCheck %s -check-prefix=CHECK-REL
 
 # CHECK: b target                        # encoding: [0b010010AA,A,A,0bAAAAAA00]
 # CHECK-NEXT:                            #   fixup A - offset: 0, value: target, kind: fixup_ppc_br24

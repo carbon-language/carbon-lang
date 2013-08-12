@@ -8,7 +8,7 @@
 ; RUN: llvm-dis | \
 ; RUN: llvm-as -disable-verify | \
 ; RUN: llvm-dis | \
-; RUN: FileCheck -check-prefix=ASSEMBLES %s
+; RUN: FileCheck -check-prefix=CHECK-ASSEMBLES %s
 
 ; CHECK-ASSEMBLES: declare i8* @foo(i8*) [[NOBUILTIN:#[0-9]+]]
 ; CHECK-ASSEMBLES: call i8* @foo(i8* %x) [[BUILTIN:#[0-9]+]]
@@ -26,7 +26,7 @@ define i8* @bar(i8* %x) {
 ; which do not have nobuiltin on them.
 ; rdar://13727199
 
-; RUN: not llvm-as <%s 2>&1  | FileCheck -check-prefix=BAD %s
+; RUN: not llvm-as <%s 2>&1  | FileCheck -check-prefix=CHECK-BAD %s
 
 ; CHECK-BAD: Attribute 'builtin' can only be used in a call to a function with the 'nobuiltin' attribute.
 ; CHECK-BAD-NEXT: %y = call i8* @lar(i8* %x) #1
