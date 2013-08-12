@@ -358,6 +358,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_strerror_r]               = "  strerror_r                      ";
   name[StatInt_scandir]                  = "  scandir                         ";
   name[StatInt_scandir64]                = "  scandir64                       ";
+  name[StatInt_getgroups]                = "  getgroups                       ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

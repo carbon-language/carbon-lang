@@ -353,6 +353,7 @@ enum StatType {
   StatInt_strerror_r,
   StatInt_scandir,
   StatInt_scandir64,
+  StatInt_getgroups,
 
   // Dynamic annotations.
   StatAnnotation,

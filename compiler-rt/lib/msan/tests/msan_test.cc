@@ -2275,6 +2275,15 @@ TEST(MemorySanitizer, getgrnam_r) {
   EXPECT_NOT_POISONED(grp.gr_gid);
 }
 
+TEST(MemorySanitizer, getgroups) {
+  int n = getgroups(0, 0);
+  gid_t *gids = new gid_t[n];
+  int res = getgroups(n, gids);
+  ASSERT_EQ(n, res);
+  for (int i = 0; i < n; ++i)
+    EXPECT_NOT_POISONED(gids[i]);
+}
+
 template<class T>
 static bool applySlt(T value, T shadow) {
   __msan_partial_poison(&value, &shadow, sizeof(T));

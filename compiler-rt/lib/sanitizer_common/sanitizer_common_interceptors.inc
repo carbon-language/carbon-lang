@@ -1923,6 +1923,20 @@ INTERCEPTOR(int, scandir64, char *dirp, __sanitizer_dirent64 ***namelist,
 #define INIT_SCANDIR64
 #endif
 
+#if SANITIZER_INTERCEPT_GETGROUPS
+INTERCEPTOR(int, getgroups, int size, u32 *lst) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getgroups, size, lst);
+  int res = REAL(getgroups)(size, lst);
+  if (res && lst)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, lst, res * sizeof(*lst));
+  return res;
+}
+#define INIT_GETGROUPS INTERCEPT_FUNCTION(getgroups);
+#else
+#define INIT_GETGROUPS
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -1987,4 +2001,5 @@ INTERCEPTOR(int, scandir64, char *dirp, __sanitizer_dirent64 ***namelist,
   INIT_STRERROR;                           \
   INIT_STRERROR_R;                         \
   INIT_SCANDIR;                            \
-  INIT_SCANDIR64;
+  INIT_SCANDIR64;                          \
+  INIT_GETGROUPS;
