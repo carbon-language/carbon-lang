@@ -21,9 +21,6 @@ class CompileUnit;
 /// attributes onto a DIE.
 class DIEHash {
 public:
-  /// \brief Initializes. The hash is default initialized.
-  DIEHash() {}
-
   /// \brief Computes the ODR signature
   uint64_t computeDIEODRSignature(DIE *Die);
 
