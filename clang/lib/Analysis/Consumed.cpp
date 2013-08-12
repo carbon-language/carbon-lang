@@ -163,7 +163,7 @@ void ConsumedStmtVisitor::VisitBinaryOperator(const BinaryOperator *BinOp) {
 }
 
 void ConsumedStmtVisitor::Visit(const Stmt *StmtNode) {
-  ConstStmtVisitor::Visit(StmtNode);
+  ConstStmtVisitor<ConsumedStmtVisitor>::Visit(StmtNode);
   
   for (Stmt::const_child_iterator CI = StmtNode->child_begin(),
        CE = StmtNode->child_end(); CI != CE; ++CI) {
