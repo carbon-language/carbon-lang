@@ -104,8 +104,8 @@ void DIEHash::addParentContext(DIE *Parent) {
 
 /// This is based on the type signature computation given in section 7.27 of the
 /// DWARF4 standard. It is the md5 hash of a flattened description of the DIE
-/// with
-/// the exception that we are hashing only the context and the name of the type.
+/// with the exception that we are hashing only the context and the name of the
+/// type.
 uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
 
   // Add the contexts to the hash. We won't be computing the ODR hash for
