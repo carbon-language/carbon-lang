@@ -3593,6 +3593,14 @@
 	iill	%r0, 0xffff
 	iill	%r15, 0
 
+#CHECK: ipm	%r0                     # encoding: [0xb2,0x22,0x00,0x00]
+#CHECK: ipm	%r1                     # encoding: [0xb2,0x22,0x00,0x10]
+#CHECK: ipm	%r15                    # encoding: [0xb2,0x22,0x00,0xf0]
+
+	ipm	%r0
+	ipm	%r1
+	ipm	%r15
+
 #CHECK: l	%r0, 0                  # encoding: [0x58,0x00,0x00,0x00]
 #CHECK: l	%r0, 4095               # encoding: [0x58,0x00,0x0f,0xff]
 #CHECK: l	%r0, 0(%r1)             # encoding: [0x58,0x00,0x10,0x00]

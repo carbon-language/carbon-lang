@@ -552,7 +552,7 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 class InherentRRE<string mnemonic, bits<16> opcode, RegisterOperand cls,
                   dag src>
   : InstRRE<opcode, (outs cls:$R1), (ins),
-            mnemonic#"r\t$R1",
+            mnemonic#"\t$R1",
             [(set cls:$R1, src)]> {
   let R2 = 0;
 }
