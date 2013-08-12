@@ -90,6 +90,9 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 // Non-aliases:
 
+def _SLASH_Fe : CLJoined<"Fe">,
+  HelpText<"Set output executable file or directory (ends in / or \\)">,
+  MetaVarName<"<file or directory>">;
 def _SLASH_Fo : CLJoined<"Fo">,
   HelpText<"Set output object file, or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;

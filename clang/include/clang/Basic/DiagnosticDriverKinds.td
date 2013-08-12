@@ -135,7 +135,7 @@ def warn_drv_assuming_mfloat_abi_is : Warning<
   "unknown platform, assuming -mfloat-abi=%0">;
 def warn_ignoring_ftabstop_value : Warning<
   "ignoring invalid -ftabstop value '%0', using default value %1">;
-def warn_drv_overriding_fo_option : Warning<
+def warn_drv_overriding_joined_option : Warning<
   "overriding '%0%1' option with '%2%3'">,
   InGroup<DiagGroup<"overriding-fo-option">>;
 def warn_drv_overriding_t_option : Warning<

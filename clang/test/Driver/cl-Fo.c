@@ -21,7 +21,7 @@
 // CHECK-DIRNAMEEXT:  "-o" "foo.dir{{[/\\]+}}a.ext"
 
 // RUN: %clang_cl /Fo.. -### -- %s 2>&1 | FileCheck -check-prefix=CHECK-CRAZY %s
-// CHECK-CRAZY:  "-o" "...obj"
+// CHECK-CRAZY:  "-o" "..obj"
 
 
 // RUN: %clang_cl /Fo -### 2>&1 | FileCheck -check-prefix=CHECK-MISSINGARG %s

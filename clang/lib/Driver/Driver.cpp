@@ -267,6 +267,26 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   return DAL;
 }
 
+/// \brief Check whether there are multiple instances of OptionID in Args, and
+/// if so, issue a diagnostics about it.
+static void DiagnoseOptionOverride(const Driver &D, const DerivedArgList &Args,
+                                   unsigned OptionID) {
+  assert(Args.hasArg(OptionID));
+
+  arg_iterator it = Args.filtered_begin(OptionID);
+  arg_iterator ie = Args.filtered_end();
+  Arg *Previous = *it;
+  ++it;
+
+  while (it != ie) {
+    D.Diag(clang::diag::warn_drv_overriding_joined_option)
+        << Previous->getSpelling() << Previous->getValue()
+        << (*it)->getSpelling() << (*it)->getValue();
+    Previous = *it;
+    ++it;
+  }
+}
+
 Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
@@ -358,18 +378,9 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   BuildInputs(C->getDefaultToolChain(), C->getArgs(), Inputs);
 
   if (Arg *A = C->getArgs().getLastArg(options::OPT__SLASH_Fo)) {
-    // Check for multiple /Fo arguments.
-    for (arg_iterator it = C->getArgs().filtered_begin(options::OPT__SLASH_Fo),
-        ie = C->getArgs().filtered_end(); it != ie; ++it) {
-      if (*it != A) {
-        Diag(clang::diag::warn_drv_overriding_fo_option)
-          << (*it)->getSpelling() << (*it)->getValue()
-          << A->getSpelling() << A->getValue();
-      }
-    }
-
+    DiagnoseOptionOverride(*this, C->getArgs(), options::OPT__SLASH_Fo);
     StringRef V = A->getValue();
-    if (V == "") {
+    if (V.empty()) {
       // It has to have a value.
       Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
       C->getArgs().eraseArg(options::OPT__SLASH_Fo);
@@ -378,6 +389,16 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
       Diag(clang::diag::err_drv_obj_file_argument_with_multiple_sources)
         << A->getSpelling() << V;
       C->getArgs().eraseArg(options::OPT__SLASH_Fo);
+    }
+  }
+
+  if (Arg *A = C->getArgs().getLastArg(options::OPT__SLASH_Fe)) {
+    DiagnoseOptionOverride(*this, C->getArgs(), options::OPT__SLASH_Fe);
+
+    if (A->getValue()[0] == '\0') {
+      // It has to have a value.
+      Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
+      C->getArgs().eraseArg(options::OPT__SLASH_Fe);
     }
   }
 
@@ -1565,6 +1586,27 @@ void Driver::BuildJobsForAction(Compilation &C,
   }
 }
 
+/// \brief Create output filename based on ArgValue, which could either be a 
+/// full filename, filename without extension, or a directory.
+static const char *MakeCLOutputFilename(const ArgList &Args, StringRef ArgValue,
+                                        StringRef BaseName, types::ID FileType) {
+  SmallString<128> Filename = ArgValue;
+  assert(!ArgValue.empty() && "Output filename argument must not be empty.");
+  
+  if (llvm::sys::path::is_separator(Filename.back())) {
+    // If the argument is a directory, output to BaseName in that dir.
+    llvm::sys::path::append(Filename, BaseName);
+  }
+
+  if (!llvm::sys::path::has_extension(ArgValue)) {
+    // If the argument didn't provide an extension, then set it.
+    const char *Extension = types::getTypeTempSuffix(FileType, true);
+    llvm::sys::path::replace_extension(Filename, Extension);
+  }
+
+  return Args.MakeArgString(Filename.c_str());
+}
+
 const char *Driver::GetNamedOutputPath(Compilation &C,
                                        const JobAction &JA,
                                        const char *BaseInput,
@@ -1612,23 +1654,21 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
       C.getArgs().hasArg(options::OPT__SLASH_Fo)) {
     // The /Fo flag decides the object filename.
     StringRef Val = C.getArgs().getLastArg(options::OPT__SLASH_Fo)->getValue();
-    SmallString<128> Filename = Val;
-
-    if (llvm::sys::path::is_separator(Val.back())) {
-      // If /Fo names a dir, output to BaseName in that dir.
-      llvm::sys::path::append(Filename, BaseName);
-    }
-    if (!llvm::sys::path::has_extension(Val)) {
-      // If /Fo doesn't provide a filename with an extension, we set it.
-      if (llvm::sys::path::has_extension(Filename.str()))
-        Filename = Filename.substr(0, Filename.rfind("."));
-      Filename.append(".");
-      Filename.append(types::getTypeTempSuffix(types::TY_Object, IsCLMode()));
-    }
-
-    NamedOutput = C.getArgs().MakeArgString(Filename.c_str());
+    NamedOutput = MakeCLOutputFilename(C.getArgs(), Val, BaseName,
+                                       types::TY_Object);
+  } else if (JA.getType() == types::TY_Image &&
+             C.getArgs().hasArg(options::OPT__SLASH_Fe)) {
+    // The /Fe flag names the linked file.
+    StringRef Val = C.getArgs().getLastArg(options::OPT__SLASH_Fe)->getValue();
+    NamedOutput = MakeCLOutputFilename(C.getArgs(), Val, BaseName,
+                                       types::TY_Image);
   } else if (JA.getType() == types::TY_Image) {    
-    if (MultipleArchs && BoundArch) {
+    if (IsCLMode()) {
+      // clang-cl uses BaseName for the executable name.
+      SmallString<128> Filename = BaseName;
+      llvm::sys::path::replace_extension(Filename, "exe");
+      NamedOutput = C.getArgs().MakeArgString(Filename.c_str());
+    } else if (MultipleArchs && BoundArch) {
       SmallString<128> Output(DefaultImageName.c_str());
       Output += "-";
       Output.append(BoundArch);
