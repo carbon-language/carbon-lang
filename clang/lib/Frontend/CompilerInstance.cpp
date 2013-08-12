@@ -618,7 +618,7 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
 
   // Figure out where to get and map in the main file.
   if (InputFile != "-") {
-    const FileEntry *File = FileMgr.getFile(InputFile);
+    const FileEntry *File = FileMgr.getFile(InputFile, /*OpenFile=*/true);
     if (!File) {
       Diags.Report(diag::err_fe_error_reading) << InputFile;
       return false;
@@ -626,26 +626,27 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
 
     // The natural SourceManager infrastructure can't currently handle named
     // pipes, but we would at least like to accept them for the main
-    // file. Detect them here, read them with the more generic MemoryBuffer
-    // function, and simply override their contents as we do for STDIN.
+    // file. Detect them here, read them with the volatile flag so FileMgr will
+    // pick up the correct size, and simply override their contents as we do for
+    // STDIN.
     if (File->isNamedPipe()) {
-      OwningPtr<llvm::MemoryBuffer> MB;
-      if (llvm::error_code ec = llvm::MemoryBuffer::getFile(InputFile, MB)) {
-        Diags.Report(diag::err_cannot_open_file) << InputFile << ec.message();
+      std::string ErrorStr;
+      if (llvm::MemoryBuffer *MB =
+              FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true)) {
+        // Create a new virtual file that will have the correct size.
+        File = FileMgr.getVirtualFile(InputFile, MB->getBufferSize(), 0);
+        SourceMgr.overrideFileContents(File, MB);
+      } else {
+        Diags.Report(diag::err_cannot_open_file) << InputFile << ErrorStr;
         return false;
       }
-
-      // Create a new virtual file that will have the correct size.
-      File = FileMgr.getVirtualFile(InputFile, MB->getBufferSize(), 0);
-      SourceMgr.overrideFileContents(File, MB.take());
     }
 
     SourceMgr.createMainFileID(File, Kind);
   } else {
     OwningPtr<llvm::MemoryBuffer> SB;
-    if (llvm::MemoryBuffer::getSTDIN(SB)) {
-      // FIXME: Give ec.message() in this diag.
-      Diags.Report(diag::err_fe_error_reading_stdin);
+    if (llvm::error_code ec = llvm::MemoryBuffer::getSTDIN(SB)) {
+      Diags.Report(diag::err_fe_error_reading_stdin) << ec.message();
       return false;
     }
     const FileEntry *File = FileMgr.getVirtualFile(SB->getBufferIdentifier(),
