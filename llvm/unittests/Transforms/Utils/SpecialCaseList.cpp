@@ -34,9 +34,17 @@ protected:
         M, ST, false, GlobalValue::ExternalLinkage, 0, Name);
   }
 
-  SpecialCaseList *makeSpecialCaseList(StringRef List) {
+  SpecialCaseList *makeSpecialCaseList(StringRef List, std::string &Error) {
     OwningPtr<MemoryBuffer> MB(MemoryBuffer::getMemBuffer(List));
-    return new SpecialCaseList(MB.get());
+    return SpecialCaseList::create(MB.get(), Error);
+  }
+
+  SpecialCaseList *makeSpecialCaseList(StringRef List) {
+    std::string Error;
+    SpecialCaseList *SCL = makeSpecialCaseList(List, Error);
+    assert(SCL);
+    assert(Error == "");
+    return SCL;
   }
 
   LLVMContext Ctx;
@@ -153,6 +161,28 @@ TEST_F(SpecialCaseListTest, Substring) {
 
   SCL.reset(makeSpecialCaseList("fun:*foo*\n"));
   EXPECT_TRUE(SCL->isIn(*F));
+}
+
+TEST_F(SpecialCaseListTest, InvalidSpecialCaseList) {
+  std::string Error;
+  EXPECT_EQ(0, makeSpecialCaseList("badline", Error));
+  EXPECT_EQ("Malformed line 1: 'badline'", Error);
+  EXPECT_EQ(0, makeSpecialCaseList("src:bad[a-", Error));
+  EXPECT_EQ("Malformed regex in line 1: 'bad[a-': invalid character range",
+            Error);
+  EXPECT_EQ(0, makeSpecialCaseList("src:a.c\n"
+                                   "fun:fun(a\n",
+                                   Error));
+  EXPECT_EQ("Malformed regex in line 2: 'fun(a': parentheses not balanced",
+            Error);
+  EXPECT_EQ(0, SpecialCaseList::create("unexisting", Error));
+  EXPECT_EQ("Can't open file 'unexisting': No such file or directory", Error);
+}
+
+TEST_F(SpecialCaseListTest, EmptySpecialCaseList) {
+  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList(""));
+  Module M("foo", Ctx);
+  EXPECT_FALSE(SCL->isIn(M));
 }
 
 }

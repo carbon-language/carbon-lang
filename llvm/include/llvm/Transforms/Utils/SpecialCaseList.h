@@ -57,8 +57,18 @@ class StringRef;
 
 class SpecialCaseList {
  public:
+  // FIXME: Switch all users to factories and remove these constructors.
   SpecialCaseList(const StringRef Path);
   SpecialCaseList(const MemoryBuffer *MB);
+
+  /// Parses the special case list from a file. If Path is empty, returns
+  /// an empty special case list. On failure, returns 0 and writes an error
+  /// message to string.
+  static SpecialCaseList *create(const StringRef Path, std::string &Error);
+  /// Parses the special case list from a memory buffer. On failure, returns
+  /// 0 and writes an error message to string.
+  static SpecialCaseList *create(const MemoryBuffer *MB, std::string &Error);
+
   ~SpecialCaseList();
 
   /// Returns whether either this function or its source file are listed in the
@@ -89,10 +99,16 @@ class SpecialCaseList {
   bool findCategory(const Module &M, StringRef &Category) const;
 
  private:
+  SpecialCaseList(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
+  SpecialCaseList &operator=(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
+
   struct Entry;
   StringMap<StringMap<Entry> > Entries;
 
-  void init(const MemoryBuffer *MB);
+  SpecialCaseList();
+  /// Parses just-constructed SpecialCaseList entries from a memory buffer.
+  bool parse(const MemoryBuffer *MB, std::string &Error);
+
   bool findCategory(const StringRef Section, const StringRef Query,
                     StringRef &Category) const;
   bool inSectionCategory(const StringRef Section, const StringRef Query,
