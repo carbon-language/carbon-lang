@@ -266,6 +266,14 @@ private:
   const LinkingContext &_context;
   mutable llvm::BumpPtrAllocator _alloc;
 
+  // Does the same thing as StringRef::ltrim() but removes at most one
+  // character.
+  StringRef ltrim1(StringRef str, const char *chars) const {
+    if (!str.empty() && strchr(chars, str[0]))
+      return str.substr(1);
+    return str;
+  }
+
   // Convert the given symbol name to the import symbol name exported by the
   // DLL.
   StringRef symbolNameToImportName(StringRef symbolName, int nameType) const {
@@ -280,11 +288,11 @@ private:
       return symbolName;
     case llvm::COFF::IMPORT_NAME_NOPREFIX:
       // The import name is the symbol name without leading ?, @ or _.
-      ret = symbolName.ltrim("?@_");
+      ret = ltrim1(symbolName, "?@_");
       break;
     case llvm::COFF::IMPORT_NAME_UNDECORATE:
       // Similar to NOPREFIX, but we also need to truncate at the first @.
-      ret = symbolName.ltrim("?@_");
+      ret = ltrim1(symbolName, "?@_");
       ret = ret.substr(0, ret.find('@'));
       break;
     }
