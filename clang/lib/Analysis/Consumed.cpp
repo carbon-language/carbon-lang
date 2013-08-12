@@ -26,8 +26,6 @@
 #include "clang/Analysis/Analyses/Consumed.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Sema/ConsumedWarningsHandler.h"
-#include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
@@ -100,7 +98,8 @@ class ConsumedStmtVisitor : public ConstStmtVisitor<ConsumedStmtVisitor> {
   typedef llvm::DenseMap<const Stmt *, PropagationInfo> MapType;
   typedef std::pair<const Stmt *, PropagationInfo> PairType;
   typedef MapType::iterator InfoEntry;
-  
+
+  AnalysisDeclContext &AC;
   ConsumedAnalyzer &Analyzer;
   ConsumedStateMap *StateMap;
   MapType PropagationMap;
@@ -124,10 +123,11 @@ public:
   void VisitMemberExpr(const MemberExpr *MExpr);
   void VisitUnaryOperator(const UnaryOperator *UOp);
   void VisitVarDecl(const VarDecl *Var);
-  
-  ConsumedStmtVisitor(ConsumedAnalyzer &Analyzer, ConsumedStateMap *StateMap) :
-    Analyzer(Analyzer), StateMap(StateMap) {}
-  
+
+  ConsumedStmtVisitor(AnalysisDeclContext &AC, ConsumedAnalyzer &Analyzer,
+                      ConsumedStateMap *StateMap)
+      : AC(AC), Analyzer(Analyzer), StateMap(StateMap) {}
+
   void reset() {
     PropagationMap.clear();
   }
@@ -227,8 +227,8 @@ void ConsumedStmtVisitor::VisitCastExpr(const CastExpr *Cast) {
 
 void ConsumedStmtVisitor::VisitCXXConstructExpr(const CXXConstructExpr *Call) {
   CXXConstructorDecl *Constructor = Call->getConstructor();
-  
-  ASTContext &CurrContext = Analyzer.getSema().getASTContext();
+
+  ASTContext &CurrContext = AC.getASTContext();
   QualType ThisType = Constructor->getThisType(CurrContext)->getPointeeType();
   
   if (Analyzer.isConsumableType(ThisType)) {
@@ -636,10 +636,6 @@ void ConsumedStateMap::setState(const VarDecl *Var, ConsumedState State) {
   Map[Var] = State;
 }
 
-const Sema & ConsumedAnalyzer::getSema() {
-  return S;
-}
-
 
 bool ConsumedAnalyzer::isConsumableType(QualType Type) {
   const CXXRecordDecl *RD =
@@ -737,9 +733,9 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
     
     if (CurrStates == NULL)
       CurrStates = BlockInfo.getInfo(CurrBlock);
-    
-    ConsumedStmtVisitor Visitor(*this, CurrStates);
-    
+
+    ConsumedStmtVisitor Visitor(AC, *this, CurrStates);
+
     // Visit all of the basic block's statements.
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
@@ -787,12 +783,6 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   delete CurrStates;
   
   WarningsHandler.emitDiagnostics();
-}
-
-unsigned checkEnabled(DiagnosticsEngine &D) {
-  return (unsigned)
-    (D.getDiagnosticLevel(diag::warn_use_while_consumed, SourceLocation()) !=
-     DiagnosticsEngine::Ignored);
 }
 
 bool isTestingFunction(const CXXMethodDecl *Method) {
