@@ -1187,9 +1187,20 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       PHINode *NewPhi = Builder.CreatePHI(VecTy, PH->getNumIncomingValues());
       E->VectorizedValue = NewPhi;
 
+      // PHINodes may have multiple entries from the same block. We want to
+      // visit every block once.
+      SmallSet<BasicBlock*, 4> VisitedBBs;
+
       for (unsigned i = 0, e = PH->getNumIncomingValues(); i < e; ++i) {
         ValueList Operands;
         BasicBlock *IBB = PH->getIncomingBlock(i);
+
+        if (VisitedBBs.count(IBB)) {
+          NewPhi->addIncoming(NewPhi->getIncomingValueForBlock(IBB), IBB);
+          continue;
+        }
+
+        VisitedBBs.insert(IBB);
 
         // Prepare the operand vector.
         for (unsigned j = 0; j < E->Scalars.size(); ++j)
