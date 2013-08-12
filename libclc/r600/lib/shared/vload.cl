@@ -48,15 +48,19 @@ VLOAD_TYPES()
 
 VLOAD_VECTORIZE(int, __private)
 VLOAD_VECTORIZE(int, __local)
-VLOAD_VECTORIZE(int, __constant)
 VLOAD_VECTORIZE(uint, __private)
 VLOAD_VECTORIZE(uint, __local)
-VLOAD_VECTORIZE(uint, __constant)
 
 _CLC_OVERLOAD _CLC_DEF int3 vload3(size_t offset, const global int *x) {
   return (int3)(vload2(0, &x[3*offset]), x[3*offset+2]);
 }
 _CLC_OVERLOAD _CLC_DEF uint3 vload3(size_t offset, const global uint *x) {
+  return (uint3)(vload2(0, &x[3*offset]), x[3*offset+2]);
+}
+_CLC_OVERLOAD _CLC_DEF int3 vload3(size_t offset, const constant int *x) {
+  return (int3)(vload2(0, &x[3*offset]), x[3*offset+2]);
+}
+_CLC_OVERLOAD _CLC_DEF uint3 vload3(size_t offset, const constant uint *x) {
   return (uint3)(vload2(0, &x[3*offset]), x[3*offset+2]);
 }
 
@@ -83,9 +87,11 @@ _CLC_DECL PRIM_TYPE##16 __clc_vload16_##LLVM_SCALAR_TYPE##__addr##ADDR_SPACE_ID 
 
 #define _CLC_VLOAD_ASM_OVERLOAD_ADDR_SPACES(PRIM_TYPE,S_PRIM_TYPE,LLVM_TYPE) \
   _CLC_VLOAD_ASM_OVERLOAD_SIZES(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, global, 1) \
+  _CLC_VLOAD_ASM_OVERLOAD_SIZES(PRIM_TYPE, S_PRIM_TYPE, LLVM_TYPE, constant, 2) \
 
 #define _CLC_VLOAD_ASM_OVERLOADS() \
   _CLC_VLOAD_ASM_DECL(int,i32,__global,1) \
+  _CLC_VLOAD_ASM_DECL(int,i32,__constant,2) \
   _CLC_VLOAD_ASM_OVERLOAD_ADDR_SPACES(int,int,i32) \
   _CLC_VLOAD_ASM_OVERLOAD_ADDR_SPACES(uint,int,i32) \
 

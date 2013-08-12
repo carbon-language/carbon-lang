@@ -1,4 +1,5 @@
-; This provides optimized implementations of vstore4/8/16 for 32-bit int/uint
+; This provides optimized implementations of vstore2/3/4/8/16 for 32-bit int/uint
+; The address spaces get mapped to data types in target-specific usages
 
 define void @__clc_vstore2_i32__addr1(<2 x i32> %vec, i32 addrspace(1)* nocapture %addr) nounwind alwaysinline {
   %1 = bitcast i32 addrspace(1)* %addr to <2 x i32> addrspace(1)*
