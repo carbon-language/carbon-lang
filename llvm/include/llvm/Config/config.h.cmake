@@ -48,9 +48,6 @@
 /* Define to 1 if you have the `closedir' function. */
 #cmakedefine HAVE_CLOSEDIR ${HAVE_CLOSEDIR}
 
-/* Define if curses provides the has_color() function on this platform. */
-#cmakedefine HAVE_CURSES
-
 /* Define to 1 if you have the <curses.h> header file. */
 #cmakedefine HAVE_CURSES_H
 
@@ -420,8 +417,14 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #cmakedefine HAVE_SYS_WAIT_H ${HAVE_SYS_WAIT_H}
 
+/* Define if the setupterm() function is supported this platform. */
+#cmakedefine HAVE_TERMINFO ${HAVE_TERMINFO}
+
 /* Define to 1 if you have the <termios.h> header file. */
 #cmakedefine HAVE_TERMIOS_H ${HAVE_TERMIOS_H}
+
+/* Define to 1 if you have the <term.h> header file. */
+#cmakedefine HAVE_TERM_H
 
 /* Define if the neat program is available */
 #cmakedefine HAVE_TWOPI ${HAVE_TWOPI}

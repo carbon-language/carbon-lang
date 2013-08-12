@@ -69,9 +69,6 @@
 /* can use __crashreporter_info__ */
 #undef HAVE_CRASHREPORTER_INFO
 
-/* Define if curses provides the has_color() function on this platform. */
-#undef HAVE_CURSES
-
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
@@ -455,8 +452,14 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define if the setupterm() function is supported this platform. */
+#undef HAVE_TERMINFO
+
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
+
+/* Define to 1 if you have the <term.h> header file. */
+#undef HAVE_TERM_H
 
 /* Define if the neat program is available */
 #undef HAVE_TWOPI

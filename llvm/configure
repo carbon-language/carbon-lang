@@ -1453,8 +1453,8 @@ Optional Features:
                           target1,target2,... (default=disable)
   --enable-bindings       Build specific language bindings:
                           all,auto,none,{binding-name} (default=auto)
-  --enable-curses         Use curses for querying terminal infomation if
-                          available (default is YES)
+  --enable-terminfo       Query the terminfo database if available (default is
+                          YES)
   --enable-libffi         Check for the presence of libffi (default is NO)
   --enable-ltdl-install   install libltdl
 
@@ -6006,17 +6006,17 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# Check whether --enable-curses was given.
-if test "${enable_curses+set}" = set; then
-  enableval=$enable_curses; case "$enableval" in
-    yes) llvm_cv_enable_curses="yes" ;;
-    no)  llvm_cv_enable_curses="no"  ;;
-    *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-curses. Use \"yes\" or \"no\"" >&5
-echo "$as_me: error: Invalid setting for --enable-curses. Use \"yes\" or \"no\"" >&2;}
+# Check whether --enable-terminfo was given.
+if test "${enable_terminfo+set}" = set; then
+  enableval=$enable_terminfo; case "$enableval" in
+    yes) llvm_cv_enable_terminfo="yes" ;;
+    no)  llvm_cv_enable_terminfo="no"  ;;
+    *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-terminfo. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-terminfo. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
   esac
 else
-  llvm_cv_enable_curses="yes"
+  llvm_cv_enable_terminfo="yes"
 fi
 
 
@@ -12268,10 +12268,10 @@ if test "$ac_res" != no; then
 fi
 
 
-if test "$llvm_cv_enable_curses" = "yes" ; then
-    { echo "$as_me:$LINENO: checking for library containing has_colors" >&5
-echo $ECHO_N "checking for library containing has_colors... $ECHO_C" >&6; }
-if test "${ac_cv_search_has_colors+set}" = set; then
+if test "$llvm_cv_enable_terminfo" = "yes" ; then
+    { echo "$as_me:$LINENO: checking for library containing setupterm" >&5
+echo $ECHO_N "checking for library containing setupterm... $ECHO_C" >&6; }
+if test "${ac_cv_search_setupterm+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_func_search_save_LIBS=$LIBS
@@ -12288,16 +12288,16 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char has_colors ();
+char setupterm ();
 int
 main ()
 {
-return has_colors ();
+return setupterm ();
   ;
   return 0;
 }
 _ACEOF
-for ac_lib in '' curses ncurses ncursesw; do
+for ac_lib in '' tinfo curses ncurses ncursesw; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
@@ -12338,7 +12338,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_has_colors=$ac_res
+  ac_cv_search_setupterm=$ac_res
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
@@ -12348,26 +12348,26 @@ fi
 
 rm -f core conftest.err conftest.$ac_objext \
       conftest$ac_exeext
-  if test "${ac_cv_search_has_colors+set}" = set; then
+  if test "${ac_cv_search_setupterm+set}" = set; then
   break
 fi
 done
-if test "${ac_cv_search_has_colors+set}" = set; then
+if test "${ac_cv_search_setupterm+set}" = set; then
   :
 else
-  ac_cv_search_has_colors=no
+  ac_cv_search_setupterm=no
 fi
 rm conftest.$ac_ext
 LIBS=$ac_func_search_save_LIBS
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_search_has_colors" >&5
-echo "${ECHO_T}$ac_cv_search_has_colors" >&6; }
-ac_res=$ac_cv_search_has_colors
+{ echo "$as_me:$LINENO: result: $ac_cv_search_setupterm" >&5
+echo "${ECHO_T}$ac_cv_search_setupterm" >&6; }
+ac_res=$ac_cv_search_setupterm
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 cat >>confdefs.h <<\_ACEOF
-#define HAVE_CURSES 1
+#define HAVE_TERMINFO 1
 _ACEOF
 
 fi
@@ -16543,13 +16543,14 @@ else
 
 fi
 
-if test "$llvm_cv_enable_curses" = "yes" ; then
+if test "$llvm_cv_enable_terminfo" = "yes" ; then
 
 
 
 
 
-for ac_header in curses.h ncurses.h ncursesw.h ncurses/curses.h ncursesw/curses.h
+
+for ac_header in term.h curses.h ncurses.h ncursesw.h ncurses/curses.h ncursesw/curses.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then

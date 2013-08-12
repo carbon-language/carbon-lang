@@ -38,9 +38,12 @@
 #  include <termios.h>
 #endif
 
-// See if we can use curses to detect information about a terminal when
-// connected to one.
-#ifdef HAVE_CURSES
+// Pull in the headers we found to go with the terminfo reading library (tinfo,
+// curses, whatever it may be). We have to pull in the 'curses.h' header as the
+// SysV spec only provides certain values and defines from that header even
+// though we work hard to not link against all of the curses implementation
+// when avoidable.
+#ifdef HAVE_TERMINFO
 # if defined(HAVE_CURSES_H)
 #  include <curses.h>
 # elif defined(HAVE_NCURSES_H)
@@ -51,10 +54,10 @@
 #  include <ncurses/curses.h>
 # elif defined(HAVE_NCURSESW_CURSES_H)
 #  include <ncursesw/curses.h>
-# else
-#  error Have a curses library but unable to find a curses header!
 # endif
-# include <term.h>
+# if defined(HAVE_TERM_H)
+#  include <term.h>
+# endif
 #endif
 
 //===----------------------------------------------------------------------===//
@@ -267,9 +270,8 @@ unsigned Process::StandardErrColumns() {
 }
 
 static bool terminalHasColors(int fd) {
-#ifdef HAVE_CURSES
-  // First, acquire a global lock because the curses C routines are thread
-  // hostile.
+#ifdef HAVE_TERMINFO
+  // First, acquire a global lock because these C routines are thread hostile.
   static sys::Mutex M;
   MutexGuard G(M);
 
@@ -279,8 +281,20 @@ static bool terminalHasColors(int fd) {
     // colors.
     return false;
 
-  // Test whether the terminal as set up supports color output.
-  if (has_colors() == TRUE)
+  // Test whether the terminal as set up supports color output. How to do this
+  // isn't entirely obvious. We can use the curses routine 'has_colors' but it
+  // would be nice to avoid a dependency on curses proper when we can make do
+  // with a minimal terminfo parsing library. Also, we don't really care whether
+  // the terminal supports the curses-specific color changing routines, merely
+  // if it will interpret ANSI color escape codes in a reasonable way. Thus, the
+  // strategy here is just to query the baseline colors capability and if it
+  // supports colors at all to assume it will translate the escape codes into
+  // whatever range of colors it does support. We can add more detailed tests
+  // here if users report them as necessary.
+  //
+  // The 'tigetnum' routine returns -2 or -1 on errors, and might return 0 if
+  // the terminfo says that no colors are supported.
+  if (tigetnum("colors") > 0)
     return true;
 #endif
 

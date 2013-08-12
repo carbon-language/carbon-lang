@@ -1072,16 +1072,16 @@ AC_ARG_WITH(bug-report-url,
 AC_DEFINE_UNQUOTED(BUG_REPORT_URL,"$withval",
                    [Bug report URL.])
 
-dnl --enable-curses: check whether the user wants to control use of curses:
-AC_ARG_ENABLE(curses,AS_HELP_STRING(
-  [--enable-curses],
-  [Use curses for querying terminal infomation if available (default is YES)]),
+dnl --enable-terminfo: check whether the user wants to control use of terminfo:
+AC_ARG_ENABLE(terminfo,AS_HELP_STRING(
+  [--enable-terminfo],
+  [Query the terminfo database if available (default is YES)]),
   [case "$enableval" in
-    yes) llvm_cv_enable_curses="yes" ;;
-    no)  llvm_cv_enable_curses="no"  ;;
-    *) AC_MSG_ERROR([Invalid setting for --enable-curses. Use "yes" or "no"]) ;;
+    yes) llvm_cv_enable_terminfo="yes" ;;
+    no)  llvm_cv_enable_terminfo="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-terminfo. Use "yes" or "no"]) ;;
   esac],
-  llvm_cv_enable_curses="yes")
+  llvm_cv_enable_terminfo="yes")
 
 dnl --enable-libffi : check whether the user wants to turn off libffi:
 AC_ARG_ENABLE(libffi,AS_HELP_STRING(
@@ -1390,11 +1390,11 @@ dnl right libraries to link with.
 AC_SEARCH_LIBS(clock_gettime,rt)
 
 dnl The curses library is optional; used for querying terminal info
-if test "$llvm_cv_enable_curses" = "yes" ; then
+if test "$llvm_cv_enable_terminfo" = "yes" ; then
   dnl We need the has_color functionality in curses for it to be useful.
-  AC_SEARCH_LIBS(has_colors,curses ncurses ncursesw,
-                 AC_DEFINE([HAVE_CURSES],[1],
-                           [Define if curses provides the has_color() function on this platform.]))
+  AC_SEARCH_LIBS(setupterm,tinfo curses ncurses ncursesw,
+                 AC_DEFINE([HAVE_TERMINFO],[1],
+                           [Define if the setupterm() function is supported this platform.]))
 fi
 
 dnl libffi is optional; used to call external functions from the interpreter
@@ -1574,8 +1574,8 @@ else
 fi
 
 dnl Try to find a suitable curses header.
-if test "$llvm_cv_enable_curses" = "yes" ; then
-  AC_CHECK_HEADERS([curses.h ncurses.h ncursesw.h ncurses/curses.h ncursesw/curses.h])
+if test "$llvm_cv_enable_terminfo" = "yes" ; then
+  AC_CHECK_HEADERS([term.h curses.h ncurses.h ncursesw.h ncurses/curses.h ncursesw/curses.h])
 fi
 
 dnl Try to find ffi.h.
