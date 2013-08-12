@@ -67,25 +67,23 @@ static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
   llvm_unreachable("invalid C++ ABI kind");
 }
 
-
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
                              llvm::Module &M, const llvm::DataLayout &TD,
                              DiagnosticsEngine &diags)
-  : Context(C), LangOpts(C.getLangOpts()), CodeGenOpts(CGO), TheModule(M),
-    Diags(diags), TheDataLayout(TD), Target(C.getTargetInfo()),
-    ABI(createCXXABI(*this)), VMContext(M.getContext()), TBAA(0),
-    TheTargetCodeGenInfo(0), Types(*this), VTables(*this),
-    ObjCRuntime(0), OpenCLRuntime(0), CUDARuntime(0),
-    DebugInfo(0), ARCData(0), NoObjCARCExceptionsMetadata(0),
-    RRData(0), CFConstantStringClassRef(0),
-    ConstantStringClassRef(0), NSConstantStringType(0),
-    NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
-    BlockObjectAssign(0), BlockObjectDispose(0),
-    BlockDescriptorType(0), GenericBlockLiteralType(0),
-    LifetimeStartFn(0), LifetimeEndFn(0),
-    SanitizerBlacklist(CGO.SanitizerBlacklistFile),
-    SanOpts(SanitizerBlacklist.isIn(M) ?
-            SanitizerOptions::Disabled : LangOpts.Sanitize) {
+    : Context(C), LangOpts(C.getLangOpts()), CodeGenOpts(CGO), TheModule(M),
+      Diags(diags), TheDataLayout(TD), Target(C.getTargetInfo()),
+      ABI(createCXXABI(*this)), VMContext(M.getContext()), TBAA(0),
+      TheTargetCodeGenInfo(0), Types(*this), VTables(*this), ObjCRuntime(0),
+      OpenCLRuntime(0), CUDARuntime(0), DebugInfo(0), ARCData(0),
+      NoObjCARCExceptionsMetadata(0), RRData(0), CFConstantStringClassRef(0),
+      ConstantStringClassRef(0), NSConstantStringType(0),
+      NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockObjectAssign(0),
+      BlockObjectDispose(0), BlockDescriptorType(0), GenericBlockLiteralType(0),
+      LifetimeStartFn(0), LifetimeEndFn(0),
+      SanitizerBlacklist(
+          llvm::SpecialCaseList::createOrDie(CGO.SanitizerBlacklistFile)),
+      SanOpts(SanitizerBlacklist->isIn(M) ? SanitizerOptions::Disabled
+                                          : LangOpts.Sanitize) {
 
   // Initialize the type cache.
   llvm::LLVMContext &LLVMContext = M.getContext();
@@ -643,7 +641,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     B.addAttribute(llvm::Attribute::StackProtectReq);
 
   // Add sanitizer attributes if function is not blacklisted.
-  if (!SanitizerBlacklist.isIn(*F)) {
+  if (!SanitizerBlacklist->isIn(*F)) {
     // When AddressSanitizer is enabled, set SanitizeAddress attribute
     // unless __attribute__((no_sanitize_address)) is used.
     if (SanOpts.Address && !D->hasAttr<NoSanitizeAddressAttr>())
