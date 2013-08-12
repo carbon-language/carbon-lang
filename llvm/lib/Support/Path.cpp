@@ -77,7 +77,7 @@ namespace {
       return path.substr(0, 1);
 
     // * {file,directory}name
-    size_t end = path.find_first_of(separators, 2);
+    size_t end = path.find_first_of(separators);
     return path.substr(0, end);
   }
 
