@@ -324,12 +324,12 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
       // If we read all of the bytes we needed from this element we're done.
       uint64_t NextEltOffset = SL->getElementOffset(Index);
 
-      if (BytesLeft <= NextEltOffset-CurEltOffset-ByteOffset)
+      if (BytesLeft <= NextEltOffset - CurEltOffset - ByteOffset)
         return true;
 
       // Move to the next element of the struct.
-      CurPtr += NextEltOffset-CurEltOffset-ByteOffset;
-      BytesLeft -= NextEltOffset-CurEltOffset-ByteOffset;
+      CurPtr += NextEltOffset - CurEltOffset - ByteOffset;
+      BytesLeft -= NextEltOffset - CurEltOffset - ByteOffset;
       ByteOffset = 0;
       CurEltOffset = NextEltOffset;
     }
@@ -338,7 +338,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
 
   if (isa<ConstantArray>(C) || isa<ConstantVector>(C) ||
       isa<ConstantDataSequential>(C)) {
-    Type *EltTy = cast<SequentialType>(C->getType())->getElementType();
+    Type *EltTy = C->getType()->getSequentialElementType();
     uint64_t EltSize = TD.getTypeAllocSize(EltTy);
     uint64_t Index = ByteOffset / EltSize;
     uint64_t Offset = ByteOffset - Index * EltSize;
@@ -346,7 +346,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     if (ArrayType *AT = dyn_cast<ArrayType>(C->getType()))
       NumElts = AT->getNumElements();
     else
-      NumElts = cast<VectorType>(C->getType())->getNumElements();
+      NumElts = C->getType()->getVectorNumElements();
 
     for (; Index != NumElts; ++Index) {
       if (!ReadDataFromGlobal(C->getAggregateElement(Index), Offset, CurPtr,
@@ -409,7 +409,8 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
   }
 
   unsigned BytesLoaded = (IntType->getBitWidth() + 7) / 8;
-  if (BytesLoaded > 32 || BytesLoaded == 0) return 0;
+  if (BytesLoaded > 32 || BytesLoaded == 0)
+    return 0;
 
   GlobalValue *GVal;
   APInt Offset(TD.getPointerSizeInBits(), 0);
@@ -423,7 +424,8 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
 
   // If we're loading off the beginning of the global, some bytes may be valid,
   // but we don't try to handle this.
-  if (Offset.isNegative()) return 0;
+  if (Offset.isNegative())
+    return 0;
 
   // If we're not accessing anything in this constant, the result is undefined.
   if (Offset.getZExtValue() >=
@@ -659,11 +661,12 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
                                          Type *ResultTy, const DataLayout *TD,
                                          const TargetLibraryInfo *TLI) {
   Constant *Ptr = Ops[0];
-  if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized() ||
+  if (!TD || !Ptr->getType()->getPointerElementType()->isSized() ||
       !Ptr->getType()->isPointerTy())
     return 0;
 
   Type *IntPtrTy = TD->getIntPtrType(Ptr->getContext());
+  Type *ResultElementTy = ResultTy->getPointerElementType();
 
   // If this is a constant expr gep that is effectively computing an
   // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
@@ -672,8 +675,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
 
       // If this is "gep i8* Ptr, (sub 0, V)", fold this as:
       // "inttoptr (sub (ptrtoint Ptr), V)"
-      if (Ops.size() == 2 &&
-          cast<PointerType>(ResultTy)->getElementType()->isIntegerTy(8)) {
+      if (Ops.size() == 2 && ResultElementTy->isIntegerTy(8)) {
         ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[1]);
         assert((CE == 0 || CE->getType() == IntPtrTy) &&
                "CastGEPIndices didn't canonicalize index types!");
@@ -789,7 +791,7 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
       // We've reached some non-indexable type.
       break;
     }
-  } while (Ty != cast<PointerType>(ResultTy)->getElementType());
+  } while (Ty != ResultElementTy);
 
   // If we haven't used up the entire offset by descending the static
   // type, then the offset is pointing into the middle of an indivisible
@@ -799,12 +801,12 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
 
   // Create a GEP.
   Constant *C = ConstantExpr::getGetElementPtr(Ptr, NewIdxs);
-  assert(cast<PointerType>(C->getType())->getElementType() == Ty &&
+  assert(C->getType()->getPointerElementType() == Ty &&
          "Computed GetElementPtr has unexpected type!");
 
   // If we ended up indexing a member with a type that doesn't match
   // the type of what the original indices indexed, add a cast.
-  if (Ty != cast<PointerType>(ResultTy)->getElementType())
+  if (Ty != ResultElementTy)
     C = FoldBitCast(C, ResultTy, *TD);
 
   return C;
@@ -1265,7 +1267,7 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
 static Constant *ConstantFoldConvertToInt(const APFloat &Val,
                                           bool roundTowardZero, Type *Ty) {
   // All of these conversion intrinsics form an integer of at most 64bits.
-  unsigned ResultWidth = cast<IntegerType>(Ty)->getBitWidth();
+  unsigned ResultWidth = Ty->getIntegerBitWidth();
   assert(ResultWidth <= 64 &&
          "Can only constant fold conversions to 64 and 32 bit ints");
 
