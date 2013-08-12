@@ -137,6 +137,15 @@ void *__dfsan_memcpy(void *dest, const void *src, size_t n) {
   return internal_memcpy(dest, src, n);
 }
 
+// Like __dfsan_union, but for use from the client or custom functions.  Hence
+// the equality comparison is done here before calling __dfsan_union.
+SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
+dfsan_union(dfsan_label l1, dfsan_label l2) {
+  if (l1 == l2)
+    return l1;
+  return __dfsan_union(l1, l2);
+}
+
 SANITIZER_INTERFACE_ATTRIBUTE
 dfsan_label dfsan_create_label(const char *desc, void *userdata) {
   dfsan_label label =

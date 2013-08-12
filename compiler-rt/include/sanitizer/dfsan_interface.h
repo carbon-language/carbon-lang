@@ -39,6 +39,10 @@ struct dfsan_label_info {
   void *userdata;
 };
 
+/// Computes the union of \c l1 and \c l2, possibly creating a union label in
+/// the process.
+dfsan_label dfsan_union(dfsan_label l1, dfsan_label l2);
+
 /// Creates and returns a base label with the given description and user data.
 dfsan_label dfsan_create_label(const char *desc, void *userdata);
 
