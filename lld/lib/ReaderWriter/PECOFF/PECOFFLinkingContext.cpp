@@ -59,11 +59,6 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return true;
   }
 
-  if (_subsystem == llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN) {
-    diagnostics << "Error: Subsystem is not specified\n";
-    return true;
-  }
-
   _reader = createReaderPECOFF(*this);
   _writer = createWriterPECOFF(*this);
   return false;
