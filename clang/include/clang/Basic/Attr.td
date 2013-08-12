@@ -918,6 +918,28 @@ def SharedLocksRequired : InheritableAttr {
   let TemplateDependent = 1;
 }
 
+// C/C++ consumed attributes.
+
+def CallableWhenUnconsumed : InheritableAttr {
+  let Spellings = [GNU<"callable_when_unconsumed">];
+  let Subjects = [CXXMethod];
+}
+
+def TestsUnconsumed : InheritableAttr {
+  let Spellings = [GNU<"tests_unconsumed">];
+  let Subjects = [CXXMethod];
+}
+
+def Consumes : InheritableAttr {
+  let Spellings = [GNU<"consumes">];
+  let Subjects = [CXXMethod];
+}
+
+def TestsConsumed : InheritableAttr {
+  let Spellings = [GNU<"tests_consumed">];
+  let Subjects = [CXXMethod];
+}
+
 // Type safety attributes for `void *' pointers and type tags.
 
 def ArgumentWithTypeTag : InheritableAttr {

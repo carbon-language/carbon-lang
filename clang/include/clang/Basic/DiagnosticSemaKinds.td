@@ -2178,6 +2178,28 @@ def note_found_mutex_near_match : Note<"found near match '%0'">;
 def warn_thread_safety_beta : Warning<
   "Thread safety beta warning.">, InGroup<ThreadSafetyBeta>, DefaultIgnore;
 
+// Consumed warnings
+def warn_use_while_consumed : Warning<
+  "invocation of method '%0' on object '%1' while it is in the 'consumed' "
+  "state">, InGroup<Consumed>, DefaultIgnore;
+def warn_use_of_temp_while_consumed : Warning<
+  "invocation of method '%0' on a temporary object while it is in the "
+  "'consumed' state">, InGroup<Consumed>, DefaultIgnore;
+def warn_uniqueness_attribute_wrong_decl_type : Warning<
+  "%0 attribute only applies to methods">,
+  InGroup<Consumed>, DefaultIgnore;
+
+// ConsumedStrict warnings
+def warn_use_in_unknown_state : Warning<
+  "invocation of method '%0' on object '%1' while it is in an unknown state">,
+  InGroup<ConsumedStrict>, DefaultIgnore;
+def warn_use_of_temp_in_unknown_state : Warning<
+  "invocation of method '%0' on a temporary object while it is in an unknown "
+  "state">, InGroup<ConsumedStrict>, DefaultIgnore;
+def warn_unnecessary_test : Warning<
+  "unnecessary test. Variable '%0' is known to be in the '%1' state">,
+  InGroup<ConsumedStrict>, DefaultIgnore;
+
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
   InGroup<Conversion>, DefaultIgnore;

@@ -997,6 +997,69 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
                                Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleConsumesAttr(Sema &S, Decl *D,
+                               const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  if (!checkAttributeNumArgs(S, Attr, 0)) return;
+
+  if (!(isa<CXXMethodDecl>(D) || isa<CXXConstructorDecl>(D))) {
+    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
+      Attr.getName();
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             ConsumesAttr(Attr.getRange(), S.Context,
+              Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleCallableWhenUnconsumedAttr(Sema &S, Decl *D,
+                                             const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  if (!checkAttributeNumArgs(S, Attr, 0)) return;
+
+  if (!isa<CXXMethodDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
+      Attr.getName();
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             CallableWhenUnconsumedAttr(Attr.getRange(), S.Context,
+              Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleTestsConsumedAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  if (!checkAttributeNumArgs(S, Attr, 0)) return;
+
+  if (!isa<CXXMethodDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
+      Attr.getName();
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             TestsConsumedAttr(Attr.getRange(), S.Context,
+              Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleTestsUnconsumedAttr(Sema &S, Decl *D,
+                                      const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+  if (!checkAttributeNumArgs(S, Attr, 0)) return;
+
+  if (!isa<CXXMethodDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_uniqueness_attribute_wrong_decl_type) <<
+      Attr.getName();
+    return;
+  }
+  
+  D->addAttr(::new (S.Context)
+             TestsUnconsumedAttr(Attr.getRange(), S.Context,
+              Attr.getAttributeSpellingListIndex()));
+}
 
 static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
                                     const AttributeList &Attr) {
@@ -4950,6 +5013,20 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_AcquiredAfter:
     handleAcquiredAfterAttr(S, D, Attr);
+    break;
+
+  // Uniqueness analysis attributes.
+  case AttributeList::AT_Consumes:
+    handleConsumesAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_CallableWhenUnconsumed:
+    handleCallableWhenUnconsumedAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_TestsConsumed:
+    handleTestsConsumedAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_TestsUnconsumed:
+    handleTestsUnconsumedAttr(S, D, Attr);
     break;
 
   // Type safety attributes.
