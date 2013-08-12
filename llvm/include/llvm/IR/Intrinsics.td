@@ -258,6 +258,8 @@ def int_readcyclecounter : Intrinsic<[llvm_i64_ty]>;
 // Stack Protector Intrinsic - The stackprotector intrinsic writes the stack
 // guard to the correct place on the stack frame.
 def int_stackprotector : Intrinsic<[], [llvm_ptr_ty, llvm_ptrptr_ty], []>;
+def int_stackprotectorcheck : Intrinsic<[], [llvm_ptrptr_ty],
+                                        [IntrReadWriteArgMem]>;
 
 //===------------------- Standard C Library Intrinsics --------------------===//
 //
