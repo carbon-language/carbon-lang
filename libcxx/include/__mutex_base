@@ -77,7 +77,7 @@ constexpr adopt_lock_t  adopt_lock  = adopt_lock_t();
 #endif
 
 template <class _Mutex>
-class _LIBCPP_TYPE_VIS lock_guard
+class _LIBCPP_TYPE_VIS_ONLY lock_guard
 {
 public:
     typedef _Mutex mutex_type;
@@ -101,7 +101,7 @@ private:
 };
 
 template <class _Mutex>
-class _LIBCPP_TYPE_VIS unique_lock
+class _LIBCPP_TYPE_VIS_ONLY unique_lock
 {
 public:
     typedef _Mutex mutex_type;

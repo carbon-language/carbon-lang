@@ -25,17 +25,17 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Tp, class _Compare, class _Allocator> class __tree;
 template <class _Tp, class _NodePtr, class _DiffType>
-    class _LIBCPP_TYPE_VIS __tree_iterator;
+    class _LIBCPP_TYPE_VIS_ONLY __tree_iterator;
 template <class _Tp, class _ConstNodePtr, class _DiffType>
-    class _LIBCPP_TYPE_VIS __tree_const_iterator;
+    class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator;
 template <class _Key, class _Tp, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS map;
+    class _LIBCPP_TYPE_VIS_ONLY map;
 template <class _Key, class _Tp, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS multimap;
+    class _LIBCPP_TYPE_VIS_ONLY multimap;
 template <class _Key, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS set;
+    class _LIBCPP_TYPE_VIS_ONLY set;
 template <class _Key, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS multiset;
+    class _LIBCPP_TYPE_VIS_ONLY multiset;
 
 /*
 
@@ -614,11 +614,11 @@ public:
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 };
 
-template <class _TreeIterator> class _LIBCPP_TYPE_VIS __map_iterator;
-template <class _TreeIterator> class _LIBCPP_TYPE_VIS __map_const_iterator;
+template <class _TreeIterator> class _LIBCPP_TYPE_VIS_ONLY __map_iterator;
+template <class _TreeIterator> class _LIBCPP_TYPE_VIS_ONLY __map_const_iterator;
 
 template <class _Tp, class _NodePtr, class _DiffType>
-class _LIBCPP_TYPE_VIS __tree_iterator
+class _LIBCPP_TYPE_VIS_ONLY __tree_iterator
 {
     typedef _NodePtr                                              __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
@@ -678,16 +678,16 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     explicit __tree_iterator(__node_pointer __p) _NOEXCEPT : __ptr_(__p) {}
     template <class, class, class> friend class __tree;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS __tree_const_iterator;
-    template <class> friend class _LIBCPP_TYPE_VIS __map_iterator;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS multimap;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS set;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS multiset;
+    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator;
+    template <class> friend class _LIBCPP_TYPE_VIS_ONLY __map_iterator;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
+    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY set;
+    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multiset;
 };
 
 template <class _Tp, class _ConstNodePtr, class _DiffType>
-class _LIBCPP_TYPE_VIS __tree_const_iterator
+class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator
 {
     typedef _ConstNodePtr                                         __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
@@ -770,11 +770,11 @@ private:
     explicit __tree_const_iterator(__node_pointer __p) _NOEXCEPT
         : __ptr_(__p) {}
     template <class, class, class> friend class __tree;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS multimap;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS set;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS multiset;
-    template <class> friend class _LIBCPP_TYPE_VIS __map_const_iterator;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
+    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY set;
+    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multiset;
+    template <class> friend class _LIBCPP_TYPE_VIS_ONLY __map_const_iterator;
 };
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -1116,8 +1116,8 @@ private:
     __node_pointer __detach();
     static __node_pointer __detach(__node_pointer);
 
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS multimap;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
 };
 
 template <class _Tp, class _Compare, class _Allocator>

@@ -22,14 +22,14 @@ _ALIGNAS_TYPE (__stdinbuf<wchar_t> ) static char __wcin [sizeof(__stdinbuf <wcha
 _ALIGNAS_TYPE (__stdoutbuf<wchar_t>) static char __wcout[sizeof(__stdoutbuf<wchar_t>)];
 _ALIGNAS_TYPE (__stdoutbuf<wchar_t>) static char __wcerr[sizeof(__stdoutbuf<wchar_t>)];
 
-_ALIGNAS_TYPE (istream) char cin [sizeof(istream)];
-_ALIGNAS_TYPE (ostream) char cout[sizeof(ostream)];
-_ALIGNAS_TYPE (ostream) char cerr[sizeof(ostream)];
-_ALIGNAS_TYPE (ostream) char clog[sizeof(ostream)];
-_ALIGNAS_TYPE (wistream) char wcin [sizeof(wistream)];
-_ALIGNAS_TYPE (wostream) char wcout[sizeof(wostream)];
-_ALIGNAS_TYPE (wostream) char wcerr[sizeof(wostream)];
-_ALIGNAS_TYPE (wostream) char wclog[sizeof(wostream)];
+_ALIGNAS_TYPE (istream)  _LIBCPP_FUNC_VIS char cin [sizeof(istream)];
+_ALIGNAS_TYPE (ostream)  _LIBCPP_FUNC_VIS char cout[sizeof(ostream)];
+_ALIGNAS_TYPE (ostream)  _LIBCPP_FUNC_VIS char cerr[sizeof(ostream)];
+_ALIGNAS_TYPE (ostream)  _LIBCPP_FUNC_VIS char clog[sizeof(ostream)];
+_ALIGNAS_TYPE (wistream) _LIBCPP_FUNC_VIS char wcin [sizeof(wistream)];
+_ALIGNAS_TYPE (wostream) _LIBCPP_FUNC_VIS char wcout[sizeof(wostream)];
+_ALIGNAS_TYPE (wostream) _LIBCPP_FUNC_VIS char wcerr[sizeof(wostream)];
+_ALIGNAS_TYPE (wostream) _LIBCPP_FUNC_VIS char wclog[sizeof(wostream)];
 
 ios_base::Init __start_std_streams;
 

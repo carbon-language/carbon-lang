@@ -232,13 +232,13 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 // is_error_code_enum
 
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS is_error_code_enum
+struct _LIBCPP_TYPE_VIS_ONLY is_error_code_enum
     : public false_type {};
 
 // is_error_condition_enum
 
 template <class _Tp>
-struct _LIBCPP_TYPE_VIS is_error_condition_enum
+struct _LIBCPP_TYPE_VIS_ONLY is_error_condition_enum
     : public false_type {};
 
 // Some error codes are not present on all platforms, so we provide equivalents
@@ -345,12 +345,12 @@ _LIBCPP_DECLARE_STRONG_ENUM(errc)
 _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(errc)
 
 template <>
-struct _LIBCPP_TYPE_VIS is_error_condition_enum<errc>
+struct _LIBCPP_TYPE_VIS_ONLY is_error_condition_enum<errc>
     : true_type { };
 
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
-struct _LIBCPP_TYPE_VIS is_error_condition_enum<errc::__lx>
+struct _LIBCPP_TYPE_VIS_ONLY is_error_condition_enum<errc::__lx>
     : true_type { };
 #endif
 
@@ -397,8 +397,8 @@ public:
     virtual string message(int ev) const;
 };
 
-const error_category& generic_category() _NOEXCEPT;
-const error_category& system_category() _NOEXCEPT;
+_LIBCPP_FUNC_VIS const error_category& generic_category() _NOEXCEPT;
+_LIBCPP_FUNC_VIS const error_category& system_category() _NOEXCEPT;
 
 class _LIBCPP_TYPE_VIS error_condition
 {
@@ -597,7 +597,7 @@ operator!=(const error_condition& __x, const error_condition& __y) _NOEXCEPT
 {return !(__x == __y);}
 
 template <>
-struct _LIBCPP_TYPE_VIS hash<error_code>
+struct _LIBCPP_TYPE_VIS_ONLY hash<error_code>
     : public unary_function<error_code, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
@@ -629,7 +629,7 @@ private:
     static string __init(const error_code&, string);
 };
 
-void __throw_system_error(int ev, const char* what_arg);
+_LIBCPP_FUNC_VIS void __throw_system_error(int ev, const char* what_arg);
 
 _LIBCPP_END_NAMESPACE_STD
 

@@ -132,6 +132,9 @@
 # define _LIBCPP_TYPE_VIS
 #endif
 
+#define _LIBCPP_TYPE_VIS_ONLY
+#define _LIBCPP_FUNC_VIS_ONLY
+
 #ifndef _LIBCPP_INLINE_VISIBILITY
 # ifdef _LIBCPP_MSVC
 #  define _LIBCPP_INLINE_VISIBILITY __forceinline
@@ -170,6 +173,14 @@
 #  else
 #    define _LIBCPP_TYPE_VIS __attribute__ ((__visibility__("default")))
 #  endif
+#endif
+
+#ifndef _LIBCPP_TYPE_VIS_ONLY
+# define _LIBCPP_TYPE_VIS_ONLY _LIBCPP_TYPE_VIS
+#endif
+
+#ifndef _LIBCPP_FUNC_VIS_ONLY
+# define _LIBCPP_FUNC_VIS_ONLY _LIBCPP_FUNC_VIS
 #endif
 
 #ifndef _LIBCPP_INLINE_VISIBILITY

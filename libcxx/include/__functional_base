@@ -23,21 +23,21 @@
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Arg, class _Result>
-struct _LIBCPP_TYPE_VIS unary_function
+struct _LIBCPP_TYPE_VIS_ONLY unary_function
 {
     typedef _Arg    argument_type;
     typedef _Result result_type;
 };
 
 template <class _Arg1, class _Arg2, class _Result>
-struct _LIBCPP_TYPE_VIS binary_function
+struct _LIBCPP_TYPE_VIS_ONLY binary_function
 {
     typedef _Arg1   first_argument_type;
     typedef _Arg2   second_argument_type;
     typedef _Result result_type;
 };
 
-template <class _Tp> struct _LIBCPP_TYPE_VIS hash;
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY hash;
 
 template <class _Tp>
 struct __has_result_type
@@ -55,7 +55,7 @@ template <class _Tp = void>
 #else
 template <class _Tp>
 #endif
-struct _LIBCPP_TYPE_VIS less : binary_function<_Tp, _Tp, bool>
+struct _LIBCPP_TYPE_VIS_ONLY less : binary_function<_Tp, _Tp, bool>
 {
     _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
         {return __x < __y;}
@@ -63,7 +63,7 @@ struct _LIBCPP_TYPE_VIS less : binary_function<_Tp, _Tp, bool>
 
 #if _LIBCPP_STD_VER > 11
 template <>
-struct _LIBCPP_TYPE_VIS less<void>
+struct _LIBCPP_TYPE_VIS_ONLY less<void>
 {
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
@@ -416,7 +416,7 @@ struct __invoke_return
 };
 
 template <class _Tp>
-class _LIBCPP_TYPE_VIS reference_wrapper
+class _LIBCPP_TYPE_VIS_ONLY reference_wrapper
     : public __weak_result_type<_Tp>
 {
 public:

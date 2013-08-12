@@ -81,7 +81,7 @@ public:
     virtual const char* what() const _NOEXCEPT;
 };
 
-void __throw_bad_alloc();  // not in C++ spec
+_LIBCPP_FUNC_VIS void __throw_bad_alloc();  // not in C++ spec
 
 struct _LIBCPP_TYPE_VIS nothrow_t {};
 extern _LIBCPP_FUNC_VIS const nothrow_t nothrow;
@@ -91,23 +91,31 @@ _LIBCPP_FUNC_VIS new_handler get_new_handler() _NOEXCEPT;
 
 }  // std
 
-_LIBCPP_FUNC_VIS void* operator new(std::size_t __sz)
-#if !__has_feature(cxx_noexcept)
-    throw(std::bad_alloc)
+#if defined(_WIN32) && !defined(cxx_EXPORTS)
+# define _LIBCPP_NEW_DELETE_VIS _LIBCPP_FUNC_VIS_ONLY
+#else
+# define _LIBCPP_NEW_DELETE_VIS _LIBCPP_FUNC_VIS
 #endif
-;
-_LIBCPP_FUNC_VIS void* operator new(std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
-_LIBCPP_FUNC_VIS void  operator delete(void* __p) _NOEXCEPT;
-_LIBCPP_FUNC_VIS void  operator delete(void* __p, const std::nothrow_t&) _NOEXCEPT;
 
-_LIBCPP_FUNC_VIS void* operator new[](std::size_t __sz)
+_LIBCPP_NEW_DELETE_VIS void* operator new(std::size_t __sz)
 #if !__has_feature(cxx_noexcept)
     throw(std::bad_alloc)
 #endif
 ;
-_LIBCPP_FUNC_VIS void* operator new[](std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
-_LIBCPP_FUNC_VIS void  operator delete[](void* __p) _NOEXCEPT;
-_LIBCPP_FUNC_VIS void  operator delete[](void* __p, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_NEW_DELETE_VIS void* operator new(std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
+_LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p) _NOEXCEPT;
+_LIBCPP_NEW_DELETE_VIS void  operator delete(void* __p, const std::nothrow_t&) _NOEXCEPT;
+
+_LIBCPP_NEW_DELETE_VIS void* operator new[](std::size_t __sz)
+#if !__has_feature(cxx_noexcept)
+    throw(std::bad_alloc)
+#endif
+;
+_LIBCPP_NEW_DELETE_VIS void* operator new[](std::size_t __sz, const std::nothrow_t&) _NOEXCEPT _NOALIAS;
+_LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p) _NOEXCEPT;
+_LIBCPP_NEW_DELETE_VIS void  operator delete[](void* __p, const std::nothrow_t&) _NOEXCEPT;
+
+#undef _LIBCPP_NEW_DELETE_VIS
 
 _LIBCPP_INLINE_VISIBILITY inline void* operator new  (std::size_t, void* __p) _NOEXCEPT {return __p;}
 _LIBCPP_INLINE_VISIBILITY inline void* operator new[](std::size_t, void* __p) _NOEXCEPT {return __p;}

@@ -496,7 +496,7 @@ template <class _Key, class _Tp, class _Compare, class _Allocator>
 template <class _TreeIterator> class __map_const_iterator;
 
 template <class _TreeIterator>
-class _LIBCPP_TYPE_VIS __map_iterator
+class _LIBCPP_TYPE_VIS_ONLY __map_iterator
 {
     _TreeIterator __i_;
 
@@ -555,13 +555,13 @@ public:
     bool operator!=(const __map_iterator& __x, const __map_iterator& __y)
         {return __x.__i_ != __y.__i_;}
 
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS multimap;
-    template <class> friend class _LIBCPP_TYPE_VIS __map_const_iterator;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
+    template <class> friend class _LIBCPP_TYPE_VIS_ONLY __map_const_iterator;
 };
 
 template <class _TreeIterator>
-class _LIBCPP_TYPE_VIS __map_const_iterator
+class _LIBCPP_TYPE_VIS_ONLY __map_const_iterator
 {
     _TreeIterator __i_;
 
@@ -624,14 +624,14 @@ public:
     bool operator!=(const __map_const_iterator& __x, const __map_const_iterator& __y)
         {return __x.__i_ != __y.__i_;}
 
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS multimap;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS __tree_const_iterator;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
+    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
+    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator;
 };
 
 template <class _Key, class _Tp, class _Compare = less<_Key>,
           class _Allocator = allocator<pair<const _Key, _Tp> > >
-class _LIBCPP_TYPE_VIS map
+class _LIBCPP_TYPE_VIS_ONLY map
 {
 public:
     // types:
@@ -644,7 +644,7 @@ public:
     typedef value_type&                              reference;
     typedef const value_type&                        const_reference;
 
-    class _LIBCPP_TYPE_VIS value_compare
+    class _LIBCPP_TYPE_VIS_ONLY value_compare
         : public binary_function<value_type, value_type, bool>
     {
         friend class map;
@@ -1346,7 +1346,7 @@ swap(map<_Key, _Tp, _Compare, _Allocator>& __x,
 
 template <class _Key, class _Tp, class _Compare = less<_Key>,
           class _Allocator = allocator<pair<const _Key, _Tp> > >
-class _LIBCPP_TYPE_VIS multimap
+class _LIBCPP_TYPE_VIS_ONLY multimap
 {
 public:
     // types:
@@ -1359,7 +1359,7 @@ public:
     typedef value_type&                              reference;
     typedef const value_type&                        const_reference;
 
-    class _LIBCPP_TYPE_VIS value_compare
+    class _LIBCPP_TYPE_VIS_ONLY value_compare
         : public binary_function<value_type, value_type, bool>
     {
         friend class multimap;

@@ -925,7 +925,7 @@ public:
 };
 
 template <class _CharT>
-struct _LIBCPP_TYPE_VIS regex_traits
+struct _LIBCPP_TYPE_VIS_ONLY regex_traits
 {
 public:
     typedef _CharT                  char_type;
@@ -1100,7 +1100,7 @@ regex_traits<_CharT>::__transform_primary(_ForwardIterator __f,
 
 // lookup_collatename is very FreeBSD-specific
 
-string __get_collation_name(const char* __s);
+_LIBCPP_FUNC_VIS string __get_collation_name(const char* __s);
 
 template <class _CharT>
 template <class _ForwardIterator>
@@ -1161,7 +1161,7 @@ regex_traits<_CharT>::__lookup_collatename(_ForwardIterator __f,
 
 // lookup_classname
 
-ctype_base::mask __get_classname(const char* __s, bool __icase);
+ctype_base::mask _LIBCPP_FUNC_VIS __get_classname(const char* __s, bool __icase);
 
 template <class _CharT>
 template <class _ForwardIterator>
@@ -1235,11 +1235,11 @@ regex_traits<_CharT>::__value(wchar_t __ch, int __radix) const
 
 template <class _CharT> class __node;
 
-template <class _BidirectionalIterator> class _LIBCPP_TYPE_VIS sub_match;
+template <class _BidirectionalIterator> class _LIBCPP_TYPE_VIS_ONLY sub_match;
 
 template <class _BidirectionalIterator,
           class _Allocator = allocator<sub_match<_BidirectionalIterator> > >
-class _LIBCPP_TYPE_VIS match_results;
+class _LIBCPP_TYPE_VIS_ONLY match_results;
 
 template <class _CharT>
 struct __state
@@ -2014,6 +2014,9 @@ public:
     virtual void __exec(__state&) const;
 };
 
+template <> _LIBCPP_FUNC_VIS void __match_any_but_newline<char>::__exec(__state&) const;
+template <> _LIBCPP_FUNC_VIS void __match_any_but_newline<wchar_t>::__exec(__state&) const;
+
 // __match_char
 
 template <class _CharT>
@@ -2415,7 +2418,7 @@ __exit:
 template <class _CharT, class _Traits> class __lookahead;
 
 template <class _CharT, class _Traits = regex_traits<_CharT> >
-class _LIBCPP_TYPE_VIS basic_regex
+class _LIBCPP_TYPE_VIS_ONLY basic_regex
 {
 public:
     // types:
@@ -4781,7 +4784,7 @@ typedef basic_regex<wchar_t> wregex;
 // sub_match
 
 template <class _BidirectionalIterator>
-class _LIBCPP_TYPE_VIS sub_match
+class _LIBCPP_TYPE_VIS_ONLY sub_match
     : public pair<_BidirectionalIterator, _BidirectionalIterator>
 {
 public:
@@ -5204,7 +5207,7 @@ operator<<(basic_ostream<_CharT, _ST>& __os, const sub_match<_BiIter>& __m)
 }
 
 template <class _BidirectionalIterator, class _Allocator>
-class _LIBCPP_TYPE_VIS match_results
+class _LIBCPP_TYPE_VIS_ONLY match_results
 {
 public:
     typedef _Allocator                                        allocator_type;
@@ -6007,7 +6010,7 @@ regex_match(const basic_string<_CharT, _ST, _SA>& __s,
 template <class _BidirectionalIterator,
           class _CharT = typename iterator_traits<_BidirectionalIterator>::value_type,
           class _Traits = regex_traits<_CharT> >
-class _LIBCPP_TYPE_VIS regex_iterator
+class _LIBCPP_TYPE_VIS_ONLY regex_iterator
 {
 public:
     typedef basic_regex<_CharT, _Traits>          regex_type;
@@ -6119,7 +6122,7 @@ typedef regex_iterator<wstring::const_iterator> wsregex_iterator;
 template <class _BidirectionalIterator,
           class _CharT = typename iterator_traits<_BidirectionalIterator>::value_type,
           class _Traits = regex_traits<_CharT> >
-class _LIBCPP_TYPE_VIS regex_token_iterator
+class _LIBCPP_TYPE_VIS_ONLY regex_token_iterator
 {
 public:
     typedef basic_regex<_CharT, _Traits>      regex_type;

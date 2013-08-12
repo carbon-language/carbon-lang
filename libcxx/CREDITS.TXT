@@ -76,6 +76,10 @@ N: Bjorn Reese
 E: breese@users.sourceforge.net
 D: Initial regex prototype
 
+N: Nico Rieck
+E: nico.rieck@gmail.com
+D: Windows fixes
+
 N: Jonathan Sauer
 D: Minor patches, mostly related to constexpr
 

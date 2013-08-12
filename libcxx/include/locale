@@ -211,7 +211,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 #else
 #  define _LIBCPP_GET_C_LOCALE __cloc()
    // Get the C locale object
-   locale_t __cloc();
+   _LIBCPP_FUNC_VIS locale_t __cloc();
 #define __cloc_defined
 #endif
 
@@ -528,7 +528,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
     return __kb;
 }
 
-struct __num_get_base
+struct _LIBCPP_TYPE_VIS __num_get_base
 {
     static const int __num_get_buf_sz = 40;
 
@@ -536,6 +536,7 @@ struct __num_get_base
     static const char __src[33];
 };
 
+_LIBCPP_FUNC_VIS
 void __check_grouping(const string& __grouping, unsigned* __g, unsigned* __g_end,
                       ios_base::iostate& __err);
 
@@ -686,11 +687,11 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
     return 0;
 }
 
-_LIBCPP_EXTERN_TEMPLATE(struct __num_get<char>)
-_LIBCPP_EXTERN_TEMPLATE(struct __num_get<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(struct _LIBCPP_TYPE_VIS __num_get<char>)
+_LIBCPP_EXTERN_TEMPLATE(struct _LIBCPP_TYPE_VIS __num_get<wchar_t>)
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS num_get
+class _LIBCPP_TYPE_VIS_ONLY num_get
     : public locale::facet,
       private __num_get<_CharT>
 {
@@ -1435,10 +1436,10 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     return __b;
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class num_get<char>)
-_LIBCPP_EXTERN_TEMPLATE(class num_get<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS num_get<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS num_get<wchar_t>)
 
-struct __num_put_base
+struct _LIBCPP_TYPE_VIS __num_put_base
 {
 protected:
     static void __format_int(char* __fmt, const char* __len, bool __signd,
@@ -1585,11 +1586,11 @@ __num_put<_CharT>::__widen_and_group_float(char* __nb, char* __np, char* __ne,
         __op = __ob + (__np - __nb);
 }
 
-_LIBCPP_EXTERN_TEMPLATE(struct __num_put<char>)
-_LIBCPP_EXTERN_TEMPLATE(struct __num_put<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(struct _LIBCPP_TYPE_VIS __num_put<char>)
+_LIBCPP_EXTERN_TEMPLATE(struct _LIBCPP_TYPE_VIS __num_put<wchar_t>)
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS num_put
+class _LIBCPP_TYPE_VIS_ONLY num_put
     : public locale::facet,
       private __num_put<_CharT>
 {
@@ -2065,8 +2066,8 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     return __pad_and_output(__s, __o, __op, __oe, __iob, __fl);
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class num_put<char>)
-_LIBCPP_EXTERN_TEMPLATE(class num_put<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS num_put<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS num_put<wchar_t>)
 
 template <class _CharT, class _InputIterator>
 _LIBCPP_HIDDEN
@@ -2108,7 +2109,7 @@ public:
 };
 
 template <class _CharT>
-class __time_get_c_storage  // purposefully not decorated
+class _LIBCPP_TYPE_VIS __time_get_c_storage
 {
 protected:
     typedef basic_string<_CharT> string_type;
@@ -2123,7 +2124,7 @@ protected:
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS time_get
+class _LIBCPP_TYPE_VIS_ONLY time_get
     : public locale::facet,
       public time_base,
       private __time_get_c_storage<_CharT>
@@ -2732,10 +2733,10 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     return __b;
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class time_get<char>)
-_LIBCPP_EXTERN_TEMPLATE(class time_get<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_get<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_get<wchar_t>)
 
-class __time_get
+class _LIBCPP_TYPE_VIS __time_get
 {
 protected:
     locale_t __loc_;
@@ -2746,7 +2747,7 @@ protected:
 };
 
 template <class _CharT>
-class __time_get_storage
+class _LIBCPP_TYPE_VIS __time_get_storage
     : public __time_get
 {
 protected:
@@ -2773,7 +2774,7 @@ private:
 };
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS time_get_byname
+class _LIBCPP_TYPE_VIS_ONLY time_get_byname
     : public time_get<_CharT, _InputIterator>,
       private __time_get_storage<_CharT>
 {
@@ -2815,10 +2816,10 @@ private:
     virtual const string_type& __X() const      {return this->__X_;}
 };
 
-_LIBCPP_EXTERN_TEMPLATE(class time_get_byname<char>)
-_LIBCPP_EXTERN_TEMPLATE(class time_get_byname<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_get_byname<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_get_byname<wchar_t>)
 
-class __time_put
+class _LIBCPP_TYPE_VIS __time_put
 {
     locale_t __loc_;
 protected:
@@ -2833,7 +2834,7 @@ protected:
 };
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS time_put
+class _LIBCPP_TYPE_VIS_ONLY time_put
     : public locale::facet,
       private __time_put
 {
@@ -2928,11 +2929,11 @@ time_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base&,
     return _VSTD::copy(__nb, __ne, __s);
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class time_put<char>)
-_LIBCPP_EXTERN_TEMPLATE(class time_put<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_put<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_put<wchar_t>)
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS time_put_byname
+class _LIBCPP_TYPE_VIS_ONLY time_put_byname
     : public time_put<_CharT, _OutputIterator>
 {
 public:
@@ -2949,8 +2950,8 @@ protected:
     ~time_put_byname() {}
 };
 
-_LIBCPP_EXTERN_TEMPLATE(class time_put_byname<char>)
-_LIBCPP_EXTERN_TEMPLATE(class time_put_byname<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_put_byname<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS time_put_byname<wchar_t>)
 
 // money_base
 
@@ -2966,7 +2967,7 @@ public:
 // moneypunct
 
 template <class _CharT, bool _International = false>
-class _LIBCPP_TYPE_VIS moneypunct
+class _LIBCPP_TYPE_VIS_ONLY moneypunct
     : public locale::facet,
       public money_base
 {
@@ -3016,15 +3017,15 @@ template <class _CharT, bool _International>
 const bool
 moneypunct<_CharT, _International>::intl;
 
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct<char, false>)
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct<char, true>)
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct<wchar_t, false>)
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct<wchar_t, true>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct<char, false>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct<char, true>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct<wchar_t, false>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct<wchar_t, true>)
 
 // moneypunct_byname
 
 template <class _CharT, bool _International = false>
-class _LIBCPP_TYPE_VIS moneypunct_byname
+class _LIBCPP_TYPE_VIS_ONLY moneypunct_byname
     : public moneypunct<_CharT, _International>
 {
 public:
@@ -3073,10 +3074,10 @@ template<> void moneypunct_byname<char, true>::init(const char*);
 template<> void moneypunct_byname<wchar_t, false>::init(const char*);
 template<> void moneypunct_byname<wchar_t, true>::init(const char*);
 
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct_byname<char, false>)
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct_byname<char, true>)
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct_byname<wchar_t, false>)
-_LIBCPP_EXTERN_TEMPLATE(class moneypunct_byname<wchar_t, true>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct_byname<char, false>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct_byname<char, true>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct_byname<wchar_t, false>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS moneypunct_byname<wchar_t, true>)
 
 // money_get
 
@@ -3132,11 +3133,11 @@ __money_get<_CharT>::__gather_info(bool __intl, const locale& __loc,
     }
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class __money_get<char>)
-_LIBCPP_EXTERN_TEMPLATE(class __money_get<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __money_get<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __money_get<wchar_t>)
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS money_get
+class _LIBCPP_TYPE_VIS_ONLY money_get
     : public locale::facet,
       private __money_get<_CharT>
 {
@@ -3190,7 +3191,7 @@ template <class _CharT, class _InputIterator>
 locale::id
 money_get<_CharT, _InputIterator>::id;
 
-void __do_nothing(void*);
+_LIBCPP_FUNC_VIS void __do_nothing(void*);
 
 template <class _Tp>
 _LIBCPP_HIDDEN
@@ -3513,8 +3514,8 @@ money_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     return __b;
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class money_get<char>)
-_LIBCPP_EXTERN_TEMPLATE(class money_get<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS money_get<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS money_get<wchar_t>)
 
 // money_put
 
@@ -3688,11 +3689,11 @@ __money_put<_CharT>::__format(char_type* __mb, char_type*& __mi, char_type*& __m
         __mi = __mb;
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class __money_put<char>)
-_LIBCPP_EXTERN_TEMPLATE(class __money_put<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __money_put<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __money_put<wchar_t>)
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
-class _LIBCPP_TYPE_VIS money_put
+class _LIBCPP_TYPE_VIS_ONLY money_put
     : public locale::facet,
       private __money_put<_CharT>
 {
@@ -3845,8 +3846,8 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     return __pad_and_output(__s, __mb, __mi, __me, __iob, __fl);
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class money_put<char>)
-_LIBCPP_EXTERN_TEMPLATE(class money_put<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS money_put<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS money_put<wchar_t>)
 
 // messages
 
@@ -3859,7 +3860,7 @@ public:
 };
 
 template <class _CharT>
-class _LIBCPP_TYPE_VIS messages
+class _LIBCPP_TYPE_VIS_ONLY messages
     : public locale::facet,
       public messages_base
 {
@@ -3955,11 +3956,11 @@ messages<_CharT>::do_close(catalog __c) const
 #endif // !_WIN32
 }
 
-_LIBCPP_EXTERN_TEMPLATE(class messages<char>)
-_LIBCPP_EXTERN_TEMPLATE(class messages<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS messages<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS messages<wchar_t>)
 
 template <class _CharT>
-class _LIBCPP_TYPE_VIS messages_byname
+class _LIBCPP_TYPE_VIS_ONLY messages_byname
     : public messages<_CharT>
 {
 public:
@@ -3979,13 +3980,13 @@ protected:
     ~messages_byname() {}
 };
 
-_LIBCPP_EXTERN_TEMPLATE(class messages_byname<char>)
-_LIBCPP_EXTERN_TEMPLATE(class messages_byname<wchar_t>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS messages_byname<char>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS messages_byname<wchar_t>)
 
 template<class _Codecvt, class _Elem = wchar_t,
          class _Wide_alloc = allocator<_Elem>,
          class _Byte_alloc = allocator<char> >
-class _LIBCPP_TYPE_VIS wstring_convert
+class _LIBCPP_TYPE_VIS_ONLY wstring_convert
 {
 public:
     typedef basic_string<char, char_traits<char>, _Byte_alloc>   byte_string;
@@ -4238,7 +4239,7 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
 }
 
 template <class _Codecvt, class _Elem = wchar_t, class _Tr = char_traits<_Elem> >
-class _LIBCPP_TYPE_VIS wbuffer_convert
+class _LIBCPP_TYPE_VIS_ONLY wbuffer_convert
     : public basic_streambuf<_Elem, _Tr>
 {
 public:

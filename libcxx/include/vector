@@ -319,7 +319,7 @@ __vector_base_common<__b>::__throw_out_of_range() const
 #pragma warning( push )
 #pragma warning( disable: 4231 )
 #endif // _LIBCPP_MSVC
-_LIBCPP_EXTERN_TEMPLATE(class __vector_base_common<true>)
+_LIBCPP_EXTERN_TEMPLATE(class _LIBCPP_TYPE_VIS __vector_base_common<true>)
 #ifdef _LIBCPP_MSVC
 #pragma warning( pop )
 #endif // _LIBCPP_MSVC
@@ -474,7 +474,7 @@ __vector_base<_Tp, _Allocator>::~__vector_base()
 }
 
 template <class _Tp, class _Allocator = allocator<_Tp> >
-class _LIBCPP_TYPE_VIS vector
+class _LIBCPP_TYPE_VIS_ONLY vector
     : private __vector_base<_Tp, _Allocator>
 {
 private:
@@ -2011,7 +2011,7 @@ struct __has_storage_type<vector<bool, _Allocator> >
 };
 
 template <class _Allocator>
-class _LIBCPP_TYPE_VIS vector<bool, _Allocator>
+class _LIBCPP_TYPE_VIS_ONLY vector<bool, _Allocator>
     : private __vector_base_common<true>
 {
 public:
@@ -2369,7 +2369,7 @@ private:
     friend class __bit_iterator<vector, false>;
     friend class __bit_iterator<vector, true>;
     friend struct __bit_array<vector>;
-    friend struct _LIBCPP_TYPE_VIS hash<vector>;
+    friend struct _LIBCPP_TYPE_VIS_ONLY hash<vector>;
 };
 
 template <class _Allocator>
@@ -3152,7 +3152,7 @@ vector<bool, _Allocator>::__hash_code() const _NOEXCEPT
 }
 
 template <class _Allocator>
-struct _LIBCPP_TYPE_VIS hash<vector<bool, _Allocator> >
+struct _LIBCPP_TYPE_VIS_ONLY hash<vector<bool, _Allocator> >
     : public unary_function<vector<bool, _Allocator>, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY

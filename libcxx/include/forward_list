@@ -212,11 +212,11 @@ struct __forward_list_node
     value_type __value_;
 };
 
-template<class _Tp, class _Alloc> class _LIBCPP_TYPE_VIS forward_list;
-template<class _NodeConstPtr> class _LIBCPP_TYPE_VIS __forward_list_const_iterator;
+template<class _Tp, class _Alloc> class _LIBCPP_TYPE_VIS_ONLY forward_list;
+template<class _NodeConstPtr> class _LIBCPP_TYPE_VIS_ONLY __forward_list_const_iterator;
 
 template <class _NodePtr>
-class _LIBCPP_TYPE_VIS __forward_list_iterator
+class _LIBCPP_TYPE_VIS_ONLY __forward_list_iterator
 {
     typedef _NodePtr __node_pointer;
 
@@ -225,8 +225,8 @@ class _LIBCPP_TYPE_VIS __forward_list_iterator
     _LIBCPP_INLINE_VISIBILITY
     explicit __forward_list_iterator(__node_pointer __p) _NOEXCEPT : __ptr_(__p) {}
 
-    template<class, class> friend class _LIBCPP_TYPE_VIS forward_list;
-    template<class> friend class _LIBCPP_TYPE_VIS __forward_list_const_iterator;
+    template<class, class> friend class _LIBCPP_TYPE_VIS_ONLY forward_list;
+    template<class> friend class _LIBCPP_TYPE_VIS_ONLY __forward_list_const_iterator;
 
 public:
     typedef forward_iterator_tag                              iterator_category;
@@ -276,7 +276,7 @@ public:
 };
 
 template <class _NodeConstPtr>
-class _LIBCPP_TYPE_VIS __forward_list_const_iterator
+class _LIBCPP_TYPE_VIS_ONLY __forward_list_const_iterator
 {
     typedef _NodeConstPtr __node_const_pointer;
 
@@ -542,7 +542,7 @@ __forward_list_base<_Tp, _Alloc>::clear() _NOEXCEPT
 }
 
 template <class _Tp, class _Alloc = allocator<_Tp> >
-class _LIBCPP_TYPE_VIS forward_list
+class _LIBCPP_TYPE_VIS_ONLY forward_list
     : private __forward_list_base<_Tp, _Alloc>
 {
     typedef __forward_list_base<_Tp, _Alloc> base;
