@@ -1,4 +1,4 @@
-//===-- SelectionDAGBuilder.h - Selection-DAG building --------*- c++ -*---===//
+//===-- SelectionDAGBuilder.h - Selection-DAG building --------*- C++ -*---===//
 //
 //                     The LLVM Compiler Infrastructure
 //
