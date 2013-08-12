@@ -260,6 +260,8 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     QualType CurDeclType = getDeclType(*D);
     if (!Decls.empty() && !CurDeclType.isNull()) {
       QualType BaseType = GetBaseType(CurDeclType);
+      if (!BaseType.isNull() && isa<ElaboratedType>(BaseType))
+        BaseType = cast<ElaboratedType>(BaseType)->getNamedType();
       if (!BaseType.isNull() && isa<TagType>(BaseType) &&
           cast<TagType>(BaseType)->getDecl() == Decls[0]) {
         Decls.push_back(*D);

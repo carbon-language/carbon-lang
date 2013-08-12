@@ -153,3 +153,14 @@ void test13() {
   __c11_atomic_load(&i, 0);
 }
 
+
+// CHECK: void test14() {
+// CHECK:     struct X {
+// CHECK:         union {
+// CHECK:             int x;
+// CHECK:         } x;
+// CHECK:     };
+// CHECK: }
+void test14() {
+  struct X { union { int x; } x; };
+}
