@@ -5563,6 +5563,16 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                BreakBeforeBraceShortIfs);
 }
 
+TEST_F(FormatTest, CatchExceptionReferenceBinding) {
+  verifyFormat("void f() {\n"
+               "  try {\n"
+               "  }\n"
+               "  catch (const Exception &e) {\n"
+               "  }\n"
+               "}\n",
+               getLLVMStyle());
+}
+
 TEST_F(FormatTest, UnderstandsPragmas) {
   verifyFormat("#pragma omp reduction(| : var)");
   verifyFormat("#pragma omp reduction(+ : var)");

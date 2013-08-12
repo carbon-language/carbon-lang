@@ -592,7 +592,8 @@ private:
     } else if (Current.isOneOf(tok::kw_return, tok::kw_throw) ||
                (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
                 !Line.InPPDirective &&
-                (!Current.Previous || Current.Previous->isNot(tok::kw_for)))) {
+                (!Current.Previous ||
+                  !Current.Previous->isOneOf(tok::kw_for, tok::kw_catch)))) {
       Contexts.back().IsExpression = true;
     } else if (Current.isOneOf(tok::r_paren, tok::greater, tok::comma)) {
       for (FormatToken *Previous = Current.Previous;
