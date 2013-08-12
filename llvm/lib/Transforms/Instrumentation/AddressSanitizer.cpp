@@ -883,7 +883,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   TD = getAnalysisIfAvailable<DataLayout>();
   if (!TD)
     return false;
-  BL.reset(new SpecialCaseList(BlacklistFile));
+  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   if (BL->isIn(M)) return false;
   C = &(M.getContext());
   int LongSize = TD->getPointerSizeInBits();
@@ -1076,7 +1076,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
 
   if (!TD)
     return false;
-  BL.reset(new SpecialCaseList(BlacklistFile));
+  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   DynamicallyInitializedGlobals.Init(M);
 
   C = &(M.getContext());

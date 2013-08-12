@@ -338,7 +338,7 @@ bool MemorySanitizer::doInitialization(Module &M) {
   TD = getAnalysisIfAvailable<DataLayout>();
   if (!TD)
     return false;
-  BL.reset(new SpecialCaseList(BlacklistFile));
+  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   C = &(M.getContext());
   unsigned PtrSize = TD->getPointerSizeInBits(/* AddressSpace */0);
   switch (PtrSize) {

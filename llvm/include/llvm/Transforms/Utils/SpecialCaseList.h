@@ -68,6 +68,9 @@ class SpecialCaseList {
   /// Parses the special case list from a memory buffer. On failure, returns
   /// 0 and writes an error message to string.
   static SpecialCaseList *create(const MemoryBuffer *MB, std::string &Error);
+  /// Parses the special case list from a file. On failure, reports a fatal
+  /// error.
+  static SpecialCaseList *createOrDie(const StringRef Path);
 
   ~SpecialCaseList();
 

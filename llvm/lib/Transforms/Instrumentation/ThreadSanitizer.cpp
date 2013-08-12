@@ -227,7 +227,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
   TD = getAnalysisIfAvailable<DataLayout>();
   if (!TD)
     return false;
-  BL.reset(new SpecialCaseList(BlacklistFile));
+  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
 
   // Always insert a call to __tsan_init into the module's CTORs.
   IRBuilder<> IRB(M.getContext());

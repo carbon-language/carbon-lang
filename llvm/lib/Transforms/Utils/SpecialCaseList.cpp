@@ -91,6 +91,13 @@ SpecialCaseList *SpecialCaseList::create(
   return SCL.take();
 }
 
+SpecialCaseList *SpecialCaseList::createOrDie(const StringRef Path) {
+  std::string Error;
+  if (SpecialCaseList *SCL = create(Path, Error))
+    return SCL;
+  report_fatal_error(Error);
+}
+
 bool SpecialCaseList::parse(const MemoryBuffer *MB, std::string &Error) {
   // Iterate through each line in the blacklist file.
   SmallVector<StringRef, 16> Lines;

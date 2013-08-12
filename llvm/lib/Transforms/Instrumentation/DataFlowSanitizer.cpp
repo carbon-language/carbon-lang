@@ -129,7 +129,7 @@ class DataFlowSanitizer : public ModulePass {
   Constant *DFSanUnionFn;
   Constant *DFSanUnionLoadFn;
   MDNode *ColdCallWeights;
-  SpecialCaseList Greylist;
+  OwningPtr<SpecialCaseList> Greylist;
   DenseMap<Value *, Function *> UnwrappedFnMap;
 
   Value *getShadowAddress(Value *Addr, Instruction *Pos);
@@ -211,7 +211,7 @@ ModulePass *llvm::createDataFlowSanitizerPass(void *(*getArgTLS)(),
 DataFlowSanitizer::DataFlowSanitizer(void *(*getArgTLS)(),
                                      void *(*getRetValTLS)())
     : ModulePass(ID), GetArgTLSPtr(getArgTLS), GetRetvalTLSPtr(getRetValTLS),
-      Greylist(ClGreylistFile) {}
+      Greylist(SpecialCaseList::createOrDie(ClGreylistFile)) {}
 
 FunctionType *DataFlowSanitizer::getInstrumentedFunctionType(FunctionType *T) {
   llvm::SmallVector<Type *, 4> ArgTypes;
@@ -269,7 +269,7 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
 
 DataFlowSanitizer::InstrumentedABI
 DataFlowSanitizer::getInstrumentedABI(Function *F) {
-  if (Greylist.isIn(*F))
+  if (Greylist->isIn(*F))
     return IA_MemOnly;
   else
     return getDefaultInstrumentedABI();
