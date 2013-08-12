@@ -1488,12 +1488,17 @@ static unsigned getTypeSizeIndex(unsigned Value, Type *Ty) {
 /// insertions into the vector.  See the example in the comment for
 /// OptimizeIntegerToVectorInsertions for the pattern this handles.
 /// The type of V is always a non-zero multiple of VecEltTy's size.
+/// Shift is the number of bits between the lsb of V and the lsb of
+/// the vector.
 ///
 /// This returns false if the pattern can't be matched or true if it can,
 /// filling in Elements with the elements found here.
-static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
+static bool CollectInsertionElements(Value *V, unsigned Shift,
                                      SmallVectorImpl<Value*> &Elements,
-                                     Type *VecEltTy) {
+                                     Type *VecEltTy, InstCombiner &IC) {
+  assert(isMultipleOfTypeSize(Shift, VecEltTy) &&
+         "Shift should be a multiple of the element type size");
+
   // Undef values never contribute useful bits to the result.
   if (isa<UndefValue>(V)) return true;
 
@@ -1505,8 +1510,12 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
       if (C->isNullValue())
         return true;
 
+    unsigned ElementIndex = getTypeSizeIndex(Shift, VecEltTy);
+    if (IC.getDataLayout()->isBigEndian())
+      ElementIndex = Elements.size() - ElementIndex - 1;
+
     // Fail if multiple elements are inserted into this slot.
-    if (ElementIndex >= Elements.size() || Elements[ElementIndex] != 0)
+    if (Elements[ElementIndex] != 0)
       return false;
 
     Elements[ElementIndex] = V;
@@ -1522,7 +1531,7 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     // it to the right type so it gets properly inserted.
     if (NumElts == 1)
       return CollectInsertionElements(ConstantExpr::getBitCast(C, VecEltTy),
-                                      ElementIndex, Elements, VecEltTy);
+                                      Shift, Elements, VecEltTy, IC);
 
     // Okay, this is a constant that covers multiple elements.  Slice it up into
     // pieces and insert each element-sized piece into the vector.
@@ -1533,10 +1542,11 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
     Type *ElementIntTy = IntegerType::get(C->getContext(), ElementSize);
 
     for (unsigned i = 0; i != NumElts; ++i) {
+      unsigned ShiftI = Shift+i*ElementSize;
       Constant *Piece = ConstantExpr::getLShr(C, ConstantInt::get(C->getType(),
-                                                               i*ElementSize));
+                                                                  ShiftI));
       Piece = ConstantExpr::getTrunc(Piece, ElementIntTy);
-      if (!CollectInsertionElements(Piece, ElementIndex+i, Elements, VecEltTy))
+      if (!CollectInsertionElements(Piece, ShiftI, Elements, VecEltTy, IC))
         return false;
     }
     return true;
@@ -1549,29 +1559,28 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
   switch (I->getOpcode()) {
   default: return false; // Unhandled case.
   case Instruction::BitCast:
-    return CollectInsertionElements(I->getOperand(0), ElementIndex,
-                                    Elements, VecEltTy);
+    return CollectInsertionElements(I->getOperand(0), Shift,
+                                    Elements, VecEltTy, IC);
   case Instruction::ZExt:
     if (!isMultipleOfTypeSize(
                           I->getOperand(0)->getType()->getPrimitiveSizeInBits(),
                               VecEltTy))
       return false;
-    return CollectInsertionElements(I->getOperand(0), ElementIndex,
-                                    Elements, VecEltTy);
+    return CollectInsertionElements(I->getOperand(0), Shift,
+                                    Elements, VecEltTy, IC);
   case Instruction::Or:
-    return CollectInsertionElements(I->getOperand(0), ElementIndex,
-                                    Elements, VecEltTy) &&
-           CollectInsertionElements(I->getOperand(1), ElementIndex,
-                                    Elements, VecEltTy);
+    return CollectInsertionElements(I->getOperand(0), Shift,
+                                    Elements, VecEltTy, IC) &&
+           CollectInsertionElements(I->getOperand(1), Shift,
+                                    Elements, VecEltTy, IC);
   case Instruction::Shl: {
     // Must be shifting by a constant that is a multiple of the element size.
     ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1));
     if (CI == 0) return false;
-    if (!isMultipleOfTypeSize(CI->getZExtValue(), VecEltTy)) return false;
-    unsigned IndexShift = getTypeSizeIndex(CI->getZExtValue(), VecEltTy);
-
-    return CollectInsertionElements(I->getOperand(0), ElementIndex+IndexShift,
-                                    Elements, VecEltTy);
+    Shift += CI->getZExtValue();
+    if (!isMultipleOfTypeSize(Shift, VecEltTy)) return false;
+    return CollectInsertionElements(I->getOperand(0), Shift,
+                                    Elements, VecEltTy, IC);
   }
 
   }
@@ -1594,12 +1603,15 @@ static bool CollectInsertionElements(Value *V, unsigned ElementIndex,
 /// Into two insertelements that do "buildvector{%inc, %inc5}".
 static Value *OptimizeIntegerToVectorInsertions(BitCastInst &CI,
                                                 InstCombiner &IC) {
+  // We need to know the target byte order to perform this optimization.
+  if (!IC.getDataLayout()) return 0;
+
   VectorType *DestVecTy = cast<VectorType>(CI.getType());
   Value *IntInput = CI.getOperand(0);
 
   SmallVector<Value*, 8> Elements(DestVecTy->getNumElements());
   if (!CollectInsertionElements(IntInput, 0, Elements,
-                                DestVecTy->getElementType()))
+                                DestVecTy->getElementType(), IC))
     return 0;
 
   // If we succeeded, we know that all of the element are specified by Elements
