@@ -8663,7 +8663,7 @@ Overview:
 """""""""
 
 The ``llvm.stackprotectorcheck`` intrinsic compares ``guard`` against an already
-created stack protector and if they do not equal calls the
+created stack protector and if they are not equal calls the
 ``__stack_chk_fail()`` function.
 
 Arguments:
