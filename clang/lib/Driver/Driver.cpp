@@ -377,31 +377,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   InputList Inputs;
   BuildInputs(C->getDefaultToolChain(), C->getArgs(), Inputs);
 
-  if (Arg *A = C->getArgs().getLastArg(options::OPT__SLASH_Fo)) {
-    DiagnoseOptionOverride(*this, C->getArgs(), options::OPT__SLASH_Fo);
-    StringRef V = A->getValue();
-    if (V.empty()) {
-      // It has to have a value.
-      Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
-      C->getArgs().eraseArg(options::OPT__SLASH_Fo);
-    } else if (Inputs.size() > 1 && !llvm::sys::path::is_separator(V.back())) {
-      // Check whether /Fo tries to name an output file for multiple inputs.
-      Diag(clang::diag::err_drv_obj_file_argument_with_multiple_sources)
-        << A->getSpelling() << V;
-      C->getArgs().eraseArg(options::OPT__SLASH_Fo);
-    }
-  }
-
-  if (Arg *A = C->getArgs().getLastArg(options::OPT__SLASH_Fe)) {
-    DiagnoseOptionOverride(*this, C->getArgs(), options::OPT__SLASH_Fe);
-
-    if (A->getValue()[0] == '\0') {
-      // It has to have a value.
-      Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
-      C->getArgs().eraseArg(options::OPT__SLASH_Fe);
-    }
-  }
-
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin target OSes this uses the driver-driver and universal actions.
   if (TC.getTriple().isOSDarwin())
@@ -893,7 +868,7 @@ static bool ContainsCompileOrAssembleAction(const Action *A) {
 }
 
 void Driver::BuildUniversalActions(const ToolChain &TC,
-                                   const DerivedArgList &Args,
+                                   DerivedArgList &Args,
                                    const InputList &BAInputs,
                                    ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building universal build actions");
@@ -1169,7 +1144,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
   }
 }
 
-void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
+void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
                           const InputList &Inputs, ActionList &Actions) const {
   llvm::PrettyStackTraceString CrashInfo("Building compilation actions");
 
@@ -1185,6 +1160,32 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
   // by gcc.
   if (Arg *A = Args.getLastArg(options::OPT_Z_Joined))
     Diag(clang::diag::err_drv_use_of_Z_option) << A->getAsString(Args);
+
+  // Diagnose misuse of /Fo.
+  if (Arg *A = Args.getLastArg(options::OPT__SLASH_Fo)) {
+    DiagnoseOptionOverride(*this, Args, options::OPT__SLASH_Fo);
+    StringRef V = A->getValue();
+    if (V.empty()) {
+      // It has to have a value.
+      Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
+      Args.eraseArg(options::OPT__SLASH_Fo);
+    } else if (Inputs.size() > 1 && !llvm::sys::path::is_separator(V.back())) {
+      // Check whether /Fo tries to name an output file for multiple inputs.
+      Diag(clang::diag::err_drv_obj_file_argument_with_multiple_sources)
+        << A->getSpelling() << V;
+      Args.eraseArg(options::OPT__SLASH_Fo);
+    }
+  }
+
+  // Diagnose misuse of /Fe.
+  if (Arg *A = Args.getLastArg(options::OPT__SLASH_Fe)) {
+    DiagnoseOptionOverride(*this, Args, options::OPT__SLASH_Fe);
+    if (A->getValue()[0] == '\0') {
+      // It has to have a value.
+      Diag(clang::diag::err_drv_missing_argument) << A->getSpelling() << 1;
+      Args.eraseArg(options::OPT__SLASH_Fe);
+    }
+  }
 
   // Construct the actions to perform.
   ActionList LinkerInputs;
