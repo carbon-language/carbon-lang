@@ -125,6 +125,7 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
   do {                                                      \
   } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) SetThreadName(name)
+#define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) ASAN_READ_RANGE(p, s)

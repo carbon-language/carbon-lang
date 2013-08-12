@@ -1937,6 +1937,54 @@ INTERCEPTOR(int, getgroups, int size, u32 *lst) {
 #define INIT_GETGROUPS
 #endif
 
+#if SANITIZER_INTERCEPT_POLL
+static void read_pollfd(void *ctx, __sanitizer_pollfd *fds,
+                        __sanitizer_nfds_t nfds) {
+  for (unsigned i = 0; i < nfds; ++i) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, &fds[i].fd, sizeof(fds[i].fd));
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, &fds[i].events, sizeof(fds[i].events));
+  }
+}
+
+static void write_pollfd(void *ctx, __sanitizer_pollfd *fds,
+                         __sanitizer_nfds_t nfds) {
+  for (unsigned i = 0; i < nfds; ++i)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, &fds[i].revents, sizeof(fds[i].revents));
+}
+
+INTERCEPTOR(int, poll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
+            int timeout) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, poll, fds, nfds, timeout);
+  if (fds && nfds) read_pollfd(ctx, fds, nfds);
+  int res = COMMON_INTERCEPTOR_BLOCK_REAL(poll)(fds, nfds, timeout);
+  if (fds && nfds) write_pollfd(ctx, fds, nfds);
+  return res;
+}
+#define INIT_POLL INTERCEPT_FUNCTION(poll);
+#else
+#define INIT_POLL
+#endif
+
+#if SANITIZER_INTERCEPT_PPOLL
+INTERCEPTOR(int, ppoll, __sanitizer_pollfd *fds, __sanitizer_nfds_t nfds,
+            void *timeout_ts, void *sigmask) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ppoll, fds, nfds, timeout_ts, sigmask);
+  if (fds && nfds) read_pollfd(ctx, fds, nfds);
+  if (timeout_ts)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, timeout_ts, struct_timespec_sz);
+  if (sigmask) COMMON_INTERCEPTOR_READ_RANGE(ctx, timeout_ts, sigset_t_sz);
+  int res =
+      COMMON_INTERCEPTOR_BLOCK_REAL(ppoll)(fds, nfds, timeout_ts, sigmask);
+  if (fds && nfds) write_pollfd(ctx, fds, nfds);
+  return res;
+}
+#define INIT_PPOLL INTERCEPT_FUNCTION(ppoll);
+#else
+#define INIT_PPOLL
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_STRCMP;                             \
   INIT_STRNCMP;                            \
@@ -2002,4 +2050,6 @@ INTERCEPTOR(int, getgroups, int size, u32 *lst) {
   INIT_STRERROR_R;                         \
   INIT_SCANDIR;                            \
   INIT_SCANDIR64;                          \
-  INIT_GETGROUPS;
+  INIT_GETGROUPS;                          \
+  INIT_POLL;                               \
+  INIT_PPOLL;

@@ -27,6 +27,7 @@
 #include <net/if_arp.h>
 #include <net/route.h>
 #include <netdb.h>
+#include <poll.h>
 #include <pthread.h>
 #include <pwd.h>
 #include <signal.h>
@@ -114,6 +115,7 @@ namespace __sanitizer {
   unsigned timeval_sz = sizeof(timeval);
   unsigned uid_t_sz = sizeof(uid_t);
   unsigned mbstate_t_sz = sizeof(mbstate_t);
+  unsigned sigset_t_sz = sizeof(sigset_t);
 
 #if !SANITIZER_ANDROID
   unsigned ucontext_t_sz = sizeof(ucontext_t);
@@ -814,6 +816,12 @@ CHECK_SIZE_AND_OFFSET(dirent64, d_reclen);
 CHECK_TYPE_SIZE(ifconf);
 CHECK_SIZE_AND_OFFSET(ifconf, ifc_len);
 CHECK_SIZE_AND_OFFSET(ifconf, ifc_ifcu);
+
+CHECK_TYPE_SIZE(pollfd);
+CHECK_SIZE_AND_OFFSET(pollfd, fd);
+CHECK_SIZE_AND_OFFSET(pollfd, events);
+CHECK_SIZE_AND_OFFSET(pollfd, revents);
+CHECK_TYPE_SIZE(nfds_t);
 
 #endif  // SANITIZER_LINUX || SANITIZER_MAC
 

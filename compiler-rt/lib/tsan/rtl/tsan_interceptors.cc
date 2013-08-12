@@ -1597,12 +1597,6 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, poll, void *fds, long_t nfds, int timeout) {
-  SCOPED_TSAN_INTERCEPTOR(poll, fds, nfds, timeout);
-  int res = BLOCK_REAL(poll)(fds, nfds, timeout);
-  return res;
-}
-
 void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
@@ -1822,6 +1816,7 @@ struct TsanInterceptorContext {
   FdSocketAccept(((TsanInterceptorContext *) ctx)->thr, pc, fd, newfd)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   ThreadSetName(((TsanInterceptorContext *) ctx)->thr, name)
+#define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 // FIXME: Implement these with MemoryAccessRange().
@@ -2048,7 +2043,6 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(epoll_ctl);
   TSAN_INTERCEPT(epoll_wait);
-  TSAN_INTERCEPT(poll);
 
   TSAN_INTERCEPT(sigaction);
   TSAN_INTERCEPT(signal);

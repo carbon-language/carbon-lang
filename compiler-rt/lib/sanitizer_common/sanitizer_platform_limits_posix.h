@@ -33,6 +33,7 @@ namespace __sanitizer {
   extern unsigned timeval_sz;
   extern unsigned uid_t_sz;
   extern unsigned mbstate_t_sz;
+  extern unsigned sigset_t_sz;
 
 #if !SANITIZER_ANDROID
   extern unsigned ucontext_t_sz;
@@ -187,6 +188,18 @@ namespace __sanitizer {
     int h_length;
     char **h_addr_list;
   };
+
+  struct __sanitizer_pollfd {
+    int fd;
+    short events;
+    short revents;
+  };
+
+#if SANITIZER_ANDROID || SANITIZER_MAC
+  typedef unsigned __sanitizer_nfds_t;
+#else
+  typedef unsigned long __sanitizer_nfds_t;
+#endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   struct __sanitizer_glob_t {

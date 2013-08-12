@@ -255,6 +255,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_epoll_ctl]                = "  epoll_ctl                       ";
   name[StatInt_epoll_wait]               = "  epoll_wait                      ";
   name[StatInt_poll]                     = "  poll                            ";
+  name[StatInt_ppoll]                    = "  ppoll                           ";
   name[StatInt_sigaction]                = "  sigaction                       ";
   name[StatInt_signal]                   = "  signal                          ";
   name[StatInt_sigsuspend]               = "  sigsuspend                      ";

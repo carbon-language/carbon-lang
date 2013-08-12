@@ -1050,6 +1050,7 @@ struct MSanInterceptorContext {
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
   do {                                                \
   } while (false)  // FIXME
+#define COMMON_INTERCEPTOR_BLOCK_REAL(name) REAL(name)
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) CHECK_UNPOISONED(p, s)
