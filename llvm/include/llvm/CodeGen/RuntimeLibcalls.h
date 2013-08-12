@@ -354,6 +354,9 @@ namespace RTLIB {
     SYNC_FETCH_AND_NAND_4,
     SYNC_FETCH_AND_NAND_8,
 
+    // Stack Protector Fail.
+    STACKPROTECTOR_CHECK_FAIL,
+
     UNKNOWN_LIBCALL
   };
 

@@ -361,6 +361,13 @@ static void InitLibcallNames(const char **Names, const TargetMachine &TM) {
     Names[RTLIB::SINCOS_F128] = 0;
     Names[RTLIB::SINCOS_PPCF128] = 0;
   }
+
+  if (Triple(TM.getTargetTriple()).getOS() != Triple::OpenBSD) {
+    Names[RTLIB::STACKPROTECTOR_CHECK_FAIL] = "__stack_chk_fail";
+  } else {
+    // These are generally not available.
+    Names[RTLIB::STACKPROTECTOR_CHECK_FAIL] = 0;
+  }
 }
 
 /// InitLibcallCallingConvs - Set default libcall CallingConvs.
