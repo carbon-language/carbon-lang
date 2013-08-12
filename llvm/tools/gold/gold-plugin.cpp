@@ -74,7 +74,6 @@ namespace options {
   static bool generate_api_file = false;
   static generate_bc generate_bc_file = BC_NO;
   static std::string bc_path;
-  static std::string obj_path;
   static std::string extra_library_path;
   static std::string triple;
   static std::string mcpu;
@@ -99,8 +98,6 @@ namespace options {
       extra_library_path = opt.substr(strlen("extra_library_path="));
     } else if (opt.startswith("mtriple=")) {
       triple = opt.substr(strlen("mtriple="));
-    } else if (opt.startswith("obj-path=")) {
-      obj_path = opt.substr(strlen("obj-path="));
     } else if (opt == "emit-llvm") {
       generate_bc_file = BC_ONLY;
     } else if (opt == "also-emit-llvm") {
@@ -425,6 +422,14 @@ static ld_plugin_status all_symbols_read_hook(void) {
     (*message)(LDPL_ERROR, "Could not produce a combined object file\n");
   }
 
+  // Get files that need to be removed in cleanup_hook.
+  const char *ToRm;
+  lto_codegen_get_files_need_remove(code_gen, &ToRm);
+  while (*ToRm) {
+    Cleanup.push_back(std::string(ToRm));
+    ToRm += strlen(ToRm) + 1; 
+  }
+
   lto_codegen_dispose(code_gen);
   for (std::list<claimed_file>::iterator I = Modules.begin(),
          E = Modules.end(); I != E; ++I) {
@@ -446,17 +451,28 @@ static ld_plugin_status all_symbols_read_hook(void) {
     return LDPS_ERR;
   }
 
-  if (options::obj_path.empty())
-    Cleanup.push_back(objPath);
-
   return LDPS_OK;
 }
 
 static ld_plugin_status cleanup_hook(void) {
   for (int i = 0, e = Cleanup.size(); i != e; ++i) {
-    error_code EC = sys::fs::remove(Cleanup[i]);
+    const char *FN = Cleanup[i].c_str();
+    sys::fs::file_status Stat;
+    error_code EC = sys::fs::status(Twine(FN), Stat);
+    if (EC) {
+      (*message)(LDPL_ERROR, "Failed to stat '%s': %s", FN,
+                 EC.message().c_str());
+      continue;
+    }
+
+    uint32_t Dummy;
+    if (sys::fs::is_directory(FN))
+      EC = sys::fs::remove_all(Twine(FN), Dummy);
+    else
+      EC = sys::fs::remove(Twine(FN));
+
     if (EC)
-      (*message)(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
+      (*message)(LDPL_ERROR, "Failed to remove '%s': %s", FN,
                  EC.message().c_str());
   }
 
