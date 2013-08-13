@@ -63,6 +63,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
   MipsAssemblerOptions Options;
+  bool hasConsumedDollar;
 
 #define GET_ASSEMBLER_HEADER
 #include "MipsGenAsmMatcher.inc"
@@ -175,15 +176,13 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   int matchRegisterByNumber(unsigned RegNum, unsigned RegClass);
 
-  int matchFPURegisterName(StringRef Name, FpFormatTy Format);
+  int matchFPURegisterName(StringRef Name);
 
-  void setFpFormat(FpFormatTy Format) {
-    FpFormat = Format;
-  }
+  int matchFCCRegisterName(StringRef Name);
 
-  void setDefaultFpFormat();
+  int matchACRegisterName(StringRef Name);
 
-  void setFpFormat(StringRef Format);
+  int regKindToRegClass(int RegKind);
 
   FpFormatTy getFpFormat() {return FpFormat;}
 
@@ -195,7 +194,7 @@ class MipsAsmParser : public MCTargetAsmParser {
                         SmallVectorImpl<MCInst> &Instructions);
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
-    : MCTargetAsmParser(), STI(sti), Parser(parser) {
+    : MCTargetAsmParser(), STI(sti), Parser(parser), hasConsumedDollar(false) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
@@ -816,60 +815,76 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
   return CC;
 }
 
-int MipsAsmParser::matchFPURegisterName(StringRef Name, FpFormatTy Format) {
+int MipsAsmParser::matchFPURegisterName(StringRef Name) {
 
   if (Name[0] == 'f') {
     StringRef NumString = Name.substr(1);
     unsigned IntVal;
     if (NumString.getAsInteger(10, IntVal))
       return -1; // This is not an integer.
-    if (IntVal > 31)
+    if (IntVal > 31) // Maximum index for fpu register.
       return -1;
+    return IntVal;
+  }
+  return -1;
+}
 
-    if (Format == FP_FORMAT_S || Format == FP_FORMAT_W)
-      return getReg(Mips::FGR32RegClassID, IntVal);
-    if (Format == FP_FORMAT_D) {
-      if (isFP64()) {
-        return getReg(Mips::FGR64RegClassID, IntVal);
-      }
-      // Only even numbers available as register pairs.
-      if ((IntVal > 31) || (IntVal % 2 != 0))
-        return -1;
-      return getReg(Mips::AFGR64RegClassID, IntVal / 2);
-    }
+int MipsAsmParser::matchFCCRegisterName(StringRef Name) {
+
+  if (Name.startswith("fcc")) {
+    StringRef NumString = Name.substr(3);
+    unsigned IntVal;
+    if (NumString.getAsInteger(10, IntVal))
+      return -1; // This is not an integer.
+    if (IntVal > 7) // There are only 8 fcc registers.
+      return -1;
+    return IntVal;
+  }
+  return -1;
+}
+
+int MipsAsmParser::matchACRegisterName(StringRef Name) {
+
+  if (Name.startswith("acc")) {
+    StringRef NumString = Name.substr(3);
+    unsigned IntVal;
+    if (NumString.getAsInteger(10, IntVal))
+      return -1; // This is not an integer.
+    if (IntVal > 3) // There are only 3 acc registers.
+      return -1;
+    return IntVal;
   }
   return -1;
 }
 
 int MipsAsmParser::matchRegisterName(StringRef Name, bool is64BitReg) {
 
-  if (Name.equals("fcc0"))
-    return Mips::FCC0;
-
   int CC;
   CC = matchCPURegisterName(Name);
   if (CC != -1)
     return matchRegisterByNumber(CC, is64BitReg ? Mips::GPR64RegClassID
                                                 : Mips::GPR32RegClassID);
-  return matchFPURegisterName(Name, getFpFormat());
+  CC= matchFPURegisterName(Name);
+  //TODO: decide about fpu register class
+  return matchRegisterByNumber(CC, isFP64() ? Mips::FGR64RegClassID
+                                                : Mips::FGR32RegClassID);
 }
 
-void MipsAsmParser::setDefaultFpFormat() {
+int MipsAsmParser::regKindToRegClass(int RegKind) {
 
-  if (isMips64() || isFP64())
-    FpFormat = FP_FORMAT_D;
-  else
-    FpFormat = FP_FORMAT_S;
-}
+  switch (RegKind) {
+  case MipsOperand::Kind_GPR32: return Mips::GPR32RegClassID;
+  case MipsOperand::Kind_GPR64: return Mips::GPR64RegClassID;
+  case MipsOperand::Kind_HWRegs: return Mips::HWRegsRegClassID;
+  case MipsOperand::Kind_FGR32Regs: return Mips::FGR32RegClassID;
+  case MipsOperand::Kind_FGR64Regs: return Mips::FGR64RegClassID;
+  case MipsOperand::Kind_AFGR64Regs: return Mips::AFGR64RegClassID;
+  case MipsOperand::Kind_CCRRegs: return Mips::CCRRegClassID;
+  case MipsOperand::Kind_ACC64DSP: return Mips::ACC64DSPRegClassID;
+  case MipsOperand::Kind_FCCRegs: return Mips::FCCRegClassID;
+  default :return -1;
+  }
 
-void MipsAsmParser::setFpFormat(StringRef Format) {
-
-  FpFormat = StringSwitch<FpFormatTy>(Format.lower())
-    .Case(".s",  FP_FORMAT_S)
-    .Case(".d",  FP_FORMAT_D)
-    .Case(".l",  FP_FORMAT_L)
-    .Case(".w",  FP_FORMAT_W)
-    .Default(FP_FORMAT_NONE);
 }
 
 bool MipsAssemblerOptions::setATReg(unsigned Reg) {
@@ -889,8 +904,8 @@ unsigned MipsAsmParser::getReg(int RC, int RegNo) {
 }
 
 int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {
-
-  if (RegNum > 31)
+  if (RegNum >
+       getContext().getRegisterInfo()->getRegClass(RegClass).getNumRegs())
     return -1;
 
   return getReg(RegClass, RegNum);
@@ -1173,6 +1188,7 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
   const MCExpr *IdVal = 0;
   SMLoc S;
   bool isParenExpr = false;
+  MipsAsmParser::OperandMatchResultTy Res = MatchOperand_NoMatch;
   // First operand is the offset.
   S = Parser.getTok().getLoc();
 
@@ -1211,21 +1227,12 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
     Parser.Lex(); // Eat the '(' token.
   }
 
-  const AsmToken &Tok1 = Parser.getTok(); // Get next token
-  if (Tok1.is(AsmToken::Dollar)) {
-    Parser.Lex(); // Eat the '$' token.
-    if (tryParseRegisterOperand(Operands, isMips64())) {
-      Error(Parser.getTok().getLoc(), "unexpected token in operand");
-      return MatchOperand_ParseFail;
-    }
+  Res = parseRegs(Operands, isMips64()? (int) MipsOperand::Kind_GPR64:
+                                        (int) MipsOperand::Kind_GPR32);
+  if (Res != MatchOperand_Success)
+    return Res;
 
-  } else {
-    Error(Parser.getTok().getLoc(), "unexpected token in operand");
-    return MatchOperand_ParseFail;
-  }
-
-  const AsmToken &Tok2 = Parser.getTok(); // Get next token.
-  if (Tok2.isNot(AsmToken::RParen)) {
+  if (Parser.getTok().isNot(AsmToken::RParen)) {
     Error(Parser.getTok().getLoc(), "')' expected");
     return MatchOperand_ParseFail;
   }
@@ -1261,22 +1268,88 @@ MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                          int RegKind) {
   MipsOperand::RegisterKind Kind = (MipsOperand::RegisterKind)RegKind;
-  if (getLexer().getKind() == AsmToken::Identifier) {
+  if (getLexer().getKind() == AsmToken::Identifier
+       && !hasConsumedDollar) {
     if (searchSymbolAlias(Operands, Kind))
       return MatchOperand_Success;
     return MatchOperand_NoMatch;
   }
+  SMLoc S = Parser.getTok().getLoc();
   // If the first token is not '$', we have an error.
-  if (Parser.getTok().isNot(AsmToken::Dollar))
+  if (Parser.getTok().isNot(AsmToken::Dollar) && !hasConsumedDollar)
     return MatchOperand_NoMatch;
+  if (!hasConsumedDollar) {
+    Parser.Lex(); // Eat the '$'
+    hasConsumedDollar = true;
+  }
+  if (getLexer().getKind() == AsmToken::Identifier) {
+    int RegNum = -1;
+    std::string RegName = Parser.getTok().getString().lower();
+  // Match register by name
+    switch (RegKind) {
+    case MipsOperand::Kind_GPR32:
+    case MipsOperand::Kind_GPR64:
+      RegNum = matchCPURegisterName(RegName);
+      break;
+    case MipsOperand::Kind_AFGR64Regs:
+    case MipsOperand::Kind_FGR64Regs:
+    case MipsOperand::Kind_FGR32Regs:
+      RegNum = matchFPURegisterName(RegName);
+      if (RegKind == MipsOperand::Kind_AFGR64Regs)
+        RegNum /= 2;
+      break;
+    case MipsOperand::Kind_FCCRegs:
+      RegNum = matchFCCRegisterName(RegName);
+      break;
+    case MipsOperand::Kind_ACC64DSP:
+      RegNum = matchACRegisterName(RegName);
+      break;
+    default: break; // No match, value is set to -1.
+    }
+    // No match found, return _NoMatch to give a chance to other round.
+    if (RegNum < 0)
+      return MatchOperand_NoMatch;
 
-  Parser.Lex(); // Eat $
-  if (!tryParseRegisterOperand(Operands,
-                               RegKind == MipsOperand::Kind_GPR64)) {
-    // Set the proper register kind.
-    MipsOperand* op = static_cast<MipsOperand*>(Operands.back());
-    op->setRegKind(Kind);
-    if ((Kind == MipsOperand::Kind_GPR32)
+    int RegVal = getReg(regKindToRegClass(Kind), RegNum);
+    if (RegVal == -1)
+      return MatchOperand_NoMatch;
+
+    MipsOperand *Op = MipsOperand::CreateReg(RegVal, S,
+                                             Parser.getTok().getLoc());
+    Op->setRegKind(Kind);
+    Operands.push_back(Op);
+    hasConsumedDollar = false;
+    Parser.Lex(); // Eat the register name.
+    if ((RegKind == MipsOperand::Kind_GPR32)
+      && (getLexer().is(AsmToken::LParen))) {
+      // Check if it is indexed addressing operand.
+      Operands.push_back(MipsOperand::CreateToken("(", getLexer().getLoc()));
+      Parser.Lex(); // Eat the parenthesis.
+      if (parseRegs(Operands,RegKind) != MatchOperand_Success)
+        return MatchOperand_NoMatch;
+      if (getLexer().isNot(AsmToken::RParen))
+        return MatchOperand_NoMatch;
+      Operands.push_back(MipsOperand::CreateToken(")", getLexer().getLoc()));
+      Parser.Lex();
+    }
+    return MatchOperand_Success;
+  } else if (getLexer().getKind() == AsmToken::Integer) {
+    unsigned RegNum = Parser.getTok().getIntVal();
+    if (Kind == MipsOperand::Kind_HWRegs) {
+      if (RegNum != 29)
+        return MatchOperand_NoMatch;
+      // Only hwreg 29 is supported, found at index 0.
+      RegNum = 0;
+    }
+    int Reg = matchRegisterByNumber(RegNum, regKindToRegClass(Kind));
+    if (Reg == -1)
+      return MatchOperand_NoMatch;
+    MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
+    Op->setRegKind(Kind);
+    Operands.push_back(Op);
+    hasConsumedDollar = false;
+    Parser.Lex(); // Eat the register number.
+        if ((RegKind == MipsOperand::Kind_GPR32)
       && (getLexer().is(AsmToken::LParen))) {
       // Check if it is indexed addressing operand.
       Operands.push_back(MipsOperand::CreateToken("(", getLexer().getLoc()));
@@ -1311,9 +1384,6 @@ MipsAsmParser::parseAFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   if (isFP64())
     return MatchOperand_NoMatch;
-  // Double operand is expected, set appropriate format
-  setFpFormat(FP_FORMAT_D);
-
   return parseRegs(Operands, (int) MipsOperand::Kind_AFGR64Regs);
 }
 
@@ -1321,83 +1391,22 @@ MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   if (!isFP64())
     return MatchOperand_NoMatch;
-  // Double operand is expected, set appropriate format
-  setFpFormat(FP_FORMAT_D);
-
  return parseRegs(Operands, (int) MipsOperand::Kind_FGR64Regs);
 }
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
- // Single operand is expected, set appropriate format
-  setFpFormat(FP_FORMAT_S);
   return parseRegs(Operands, (int) MipsOperand::Kind_FGR32Regs);
 }
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseFCCRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // If the first token is not '$' we have an error.
-  if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_NoMatch;
-
-  SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat the '$'
-
-  const AsmToken &Tok = Parser.getTok(); // Get next token.
-
-  if (Tok.isNot(AsmToken::Identifier))
-    return MatchOperand_NoMatch;
-
-  if (!Tok.getIdentifier().startswith("fcc"))
-    return MatchOperand_NoMatch;
-
-  StringRef NumString = Tok.getIdentifier().substr(3);
-
-  unsigned IntVal;
-  if (NumString.getAsInteger(10, IntVal))
-    return MatchOperand_NoMatch;
-
-  unsigned Reg = matchRegisterByNumber(IntVal, Mips::FCCRegClassID);
-
-  MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
-  Op->setRegKind(MipsOperand::Kind_FCCRegs);
-  Operands.push_back(Op);
-
-  Parser.Lex(); // Eat the register number.
-  return MatchOperand_Success;
+  return parseRegs(Operands, (int) MipsOperand::Kind_FCCRegs);
 }
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseACC64DSP(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // If the first token is not '$' we have an error.
-  if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_NoMatch;
-
-  SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat the '$'
-
-  const AsmToken &Tok = Parser.getTok(); // Get next token.
-
-  if (Tok.isNot(AsmToken::Identifier))
-    return MatchOperand_NoMatch;
-
-  if (!Tok.getIdentifier().startswith("acc"))
-    return MatchOperand_NoMatch;
-
-  StringRef NumString = Tok.getIdentifier().substr(3);
-
-  unsigned IntVal;
-  if (NumString.getAsInteger(10, IntVal))
-    return MatchOperand_NoMatch;
-
-  unsigned Reg = matchRegisterByNumber(IntVal, Mips::ACC64DSPRegClassID);
-
-  MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
-  Op->setRegKind(MipsOperand::Kind_ACC64DSP);
-  Operands.push_back(Op);
-
-  Parser.Lex(); // Eat the register number.
-  return MatchOperand_Success;
+  return parseRegs(Operands, (int) MipsOperand::Kind_ACC64DSP);
 }
 
 bool MipsAsmParser::searchSymbolAlias(
@@ -1428,17 +1437,19 @@ bool MipsAsmParser::searchSymbolAlias(
           switch (Kind) {
           case MipsOperand::Kind_AFGR64Regs:
           case MipsOperand::Kind_FGR64Regs:
-            RegNum = matchFPURegisterName(DefSymbol.substr(1), FP_FORMAT_D);
+            RegNum = matchFPURegisterName(DefSymbol.substr(1));
             break;
           case MipsOperand::Kind_FGR32Regs:
-            RegNum = matchFPURegisterName(DefSymbol.substr(1), FP_FORMAT_S);
+            RegNum = matchFPURegisterName(DefSymbol.substr(1));
             break;
           case MipsOperand::Kind_GPR64:
           case MipsOperand::Kind_GPR32:
           default:
-            RegNum = matchRegisterName(DefSymbol.substr(1), isMips64());
+            RegNum = matchCPURegisterName(DefSymbol.substr(1));
             break;
           }
+          if (RegNum > -1)
+            RegNum = getReg(regKindToRegClass(Kind), RegNum);
         }
         if (RegNum > -1) {
           Parser.Lex();
@@ -1463,53 +1474,12 @@ bool MipsAsmParser::searchSymbolAlias(
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-
-  // If the first token is not '$' we have error.
-  if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_NoMatch;
-  SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat the '$'.
-
-  const AsmToken &Tok = Parser.getTok(); // Get the next token.
-  if (Tok.isNot(AsmToken::Integer))
-    return MatchOperand_NoMatch;
-
-  unsigned RegNum = Tok.getIntVal();
-  // At the moment only hwreg29 is supported.
-  if (RegNum != 29)
-    return MatchOperand_ParseFail;
-
-  MipsOperand *op = MipsOperand::CreateReg(Mips::HWR29, S,
-      Parser.getTok().getLoc());
-  op->setRegKind(MipsOperand::Kind_HWRegs);
-  Operands.push_back(op);
-
-  Parser.Lex(); // Eat the register number.
-  return MatchOperand_Success;
+  return parseRegs(Operands, (int) MipsOperand::Kind_HWRegs);
 }
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseCCRRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // If the first token is not '$' we have an error.
-  if (Parser.getTok().isNot(AsmToken::Dollar))
-    return MatchOperand_NoMatch;
-
-  SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat the '$'
-
-  const AsmToken &Tok = Parser.getTok(); // Get next token.
-
-  if (Tok.isNot(AsmToken::Integer))
-    return MatchOperand_NoMatch;
-
-  unsigned Reg = matchRegisterByNumber(Tok.getIntVal(), Mips::CCRRegClassID);
-
-  MipsOperand *Op = MipsOperand::CreateReg(Reg, S, Parser.getTok().getLoc());
-  Op->setRegKind(MipsOperand::Kind_CCRRegs);
-  Operands.push_back(Op);
-
-  Parser.Lex(); // Eat the register number.
-  return MatchOperand_Success;
+  return parseRegs(Operands, (int) MipsOperand::Kind_CCRRegs);
 }
 
 MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
