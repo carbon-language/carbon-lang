@@ -1555,11 +1555,13 @@ ObjectFileMachO::ParseSymtab ()
         ProcessSP process_sp (m_process_wp.lock());
         Process *process = process_sp.get();
         
+        uint32_t memory_module_load_level = eMemoryModuleLoadLevelComplete;
+
         if (process)
         {
             Target &target = process->GetTarget();
             
-            const uint32_t memory_module_load_level = target.GetMemoryModuleLoadLevel();
+            memory_module_load_level = target.GetMemoryModuleLoadLevel();
 
             SectionSP linkedit_section_sp(section_list->FindSectionByName(GetSegmentNameLINKEDIT()));
             // Reading mach file from memory in a process or core file...
@@ -1673,6 +1675,14 @@ ObjectFileMachO::ParseSymtab ()
                                               function_starts_load_command.datasize);
             }
         }
+
+        if (nlist_data.GetByteSize() == 0 && memory_module_load_level == eMemoryModuleLoadLevelComplete)
+        {
+            if (log)
+                module_sp->LogMessage(log, "failed to read nlist data");
+            return 0;
+        }
+
 
         const bool have_strtab_data = strtab_data.GetByteSize() > 0;
         if (!have_strtab_data)

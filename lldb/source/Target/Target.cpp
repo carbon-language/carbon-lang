@@ -2317,7 +2317,7 @@ g_load_script_from_sym_file_values[] =
 static OptionEnumValueElement
 g_memory_module_load_level_values[] =
 {
-    { eMemoryModuleLoadLevelMinimal,  "minimal" , "Load minimal information when loading modules from memory which currently loads sections only, no symbols."},
+    { eMemoryModuleLoadLevelMinimal,  "minimal" , "Load minimal information when loading modules from memory. Currently this setting loads sections only."},
     { eMemoryModuleLoadLevelPartial,  "partial" , "Load partial information when loading modules from memory. Currently this setting loads sections and function bounds."},
     { eMemoryModuleLoadLevelComplete, "complete", "Load complete information when loading modules from memory. Currently this setting loads sections and all symbols."},
     { 0, NULL, NULL }
@@ -2364,7 +2364,12 @@ g_properties[] =
     { "hex-immediate-style"                , OptionValue::eTypeEnum   ,    false, Disassembler::eHexStyleC,   NULL, g_hex_immediate_style_values, "Which style to use for printing hexadecimal disassembly values." },
     { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
     { "load-script-from-symbol-file"       , OptionValue::eTypeEnum   ,    false, eLoadScriptFromSymFileWarn, NULL, g_load_script_from_sym_file_values, "Allow LLDB to load scripting resources embedded in symbol files when available." },
-    { "memory-module-load-level"           , OptionValue::eTypeEnum   ,    false, eMemoryModuleLoadLevelComplete, NULL, g_memory_module_load_level_values, "Control how much information gets loaded when loading modules from memory. The less information that is gathered, the faster memory modules will be loaded." },
+    { "memory-module-load-level"           , OptionValue::eTypeEnum   ,    false, eMemoryModuleLoadLevelComplete, NULL, g_memory_module_load_level_values,
+        "Loading modules from memory can be slow as reading the symbol tables and other data can take a long time depending on your connection to the debug target. "
+        "This setting helps users control how much information gets loaded when loading modules from memory."
+        "'complete' is the default value for this setting which will load all sections and symbols by reading them from memory (slowest, most accurate). "
+        "'partial' will load sections and attempt to find function bounds without downloading the symbol table (faster, still accurate, missing symbol names). "
+        "'minimal' is the fastest setting and will load section data with no symbols, but should rarely be used as stack frames in these memory regions will be inaccurate and not provide any context (fastest). " },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
