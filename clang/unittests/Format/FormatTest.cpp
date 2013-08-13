@@ -4186,7 +4186,7 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
                "  f();\n");
 
   // This is simply incomplete. Formatting is not important, but must not crash.
-  verifyFormat("class A:"); 
+  verifyFormat("class A:");
 }
 
 TEST_F(FormatTest, DoNotInterfereWithErrorAndWarning) {
@@ -5660,6 +5660,8 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(IndentFunctionDeclarationAfterType);
 
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
+  CHECK_PARSE("ConstructorInitializerIndentWidth: 1234",
+              ConstructorInitializerIndentWidth, 1234u);
   CHECK_PARSE("ColumnLimit: 1234", ColumnLimit, 1234u);
   CHECK_PARSE("MaxEmptyLinesToKeep: 1234", MaxEmptyLinesToKeep, 1234u);
   CHECK_PARSE("PenaltyExcessCharacter: 1234", PenaltyExcessCharacter, 1234u);
@@ -5787,6 +5789,53 @@ TEST_F(FormatTest, SplitsUTF8BlockComments) {
             " * 𝕓𝕪𝕥𝕖\n"
             " * 𝖀𝕿𝕱-𝟠 */",
             format("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯 𝕓𝕪𝕥𝕖 𝖀𝕿𝕱-𝟠 */", getLLVMStyleWithColumns(12)));
+}
+
+TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
+  FormatStyle Style = getLLVMStyle();
+
+  Style.ConstructorInitializerIndentWidth = 4;
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}",
+      Style);
+
+  Style.ConstructorInitializerIndentWidth = 2;
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      "  : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "    aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}",
+      Style);
+
+  Style.ConstructorInitializerIndentWidth = 0;
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      ": aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "  aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}",
+      Style);
+
+  Style.BreakConstructorInitializersBeforeComma = true;
+  Style.ConstructorInitializerIndentWidth = 4;
+  verifyFormat("SomeClass::Constructor()\n"
+               "    : a(a)\n"
+               "    , b(b)\n"
+               "    , c(c) {}",
+               Style);
+
+  Style.ConstructorInitializerIndentWidth = 2;
+  verifyFormat("SomeClass::Constructor()\n"
+               "  : a(a)\n"
+               "  , b(b)\n"
+               "  , c(c) {}",
+               Style);
+
+  Style.ConstructorInitializerIndentWidth = 0;
+  verifyFormat("SomeClass::Constructor()\n"
+               ": a(a)\n"
+               ", b(b)\n"
+               ", c(c) {}",
+               Style);
 }
 
 #endif

@@ -141,6 +141,10 @@ struct FormatStyle {
   /// \brief The number of characters to use for indentation.
   unsigned IndentWidth;
 
+  /// \brief The number of characters to use for indentation of constructor
+  /// initializer lists.
+  unsigned ConstructorInitializerIndentWidth;
+
   /// \brief If \c true, always break after the \c template<...> of a template
   /// declaration.
   bool AlwaysBreakTemplateDeclarations;
@@ -192,6 +196,8 @@ struct FormatStyle {
 
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
+           ConstructorInitializerIndentWidth ==
+               R.ConstructorInitializerIndentWidth &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
            AlignTrailingComments == R.AlignTrailingComments &&
            AllowAllParametersOfDeclarationOnNextLine ==

@@ -91,6 +91,8 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     }
 
     IO.mapOptional("AccessModifierOffset", Style.AccessModifierOffset);
+    IO.mapOptional("ConstructorInitializerIndentWidth",
+                   Style.ConstructorInitializerIndentWidth);
     IO.mapOptional("AlignEscapedNewlinesLeft", Style.AlignEscapedNewlinesLeft);
     IO.mapOptional("AlignTrailingComments", Style.AlignTrailingComments);
     IO.mapOptional("AllowAllParametersOfDeclarationOnNextLine",
@@ -167,6 +169,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.BreakConstructorInitializersBeforeComma = false;
   LLVMStyle.ColumnLimit = 80;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
+  LLVMStyle.ConstructorInitializerIndentWidth = 4;
   LLVMStyle.Cpp11BracedListStyle = false;
   LLVMStyle.DerivePointerBinding = false;
   LLVMStyle.ExperimentalAutoDetectBinPacking = false;
@@ -203,6 +206,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.BreakConstructorInitializersBeforeComma = false;
   GoogleStyle.ColumnLimit = 80;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  GoogleStyle.ConstructorInitializerIndentWidth = 4;
   GoogleStyle.Cpp11BracedListStyle = true;
   GoogleStyle.DerivePointerBinding = true;
   GoogleStyle.ExperimentalAutoDetectBinPacking = false;
@@ -651,6 +655,10 @@ private:
                  Previous.isOneOf(tok::coloncolon, tok::equal) ||
                  Previous.Type == TT_ObjCMethodExpr) {
         State.Column = ContinuationIndent;
+      } else if (Current.Type == TT_CtorInitializerColon) {
+        State.Column = FirstIndent + Style.ConstructorInitializerIndentWidth;
+      } else if (Current.Type == TT_CtorInitializerComma) {
+        State.Column = State.Stack.back().Indent;
       } else {
         State.Column = State.Stack.back().Indent;
         // Ensure that we fall back to indenting 4 spaces instead of just
@@ -821,8 +829,9 @@ private:
       //     : First(...), ...
       //       Next(...)
       //       ^ line up here.
-      if (!Style.BreakConstructorInitializersBeforeComma)
-        State.Stack.back().Indent = State.Column + 2;
+      State.Stack.back().Indent =
+          State.Column +
+          (Style.BreakConstructorInitializersBeforeComma ? 0 : 2);
       if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine)
         State.Stack.back().AvoidBinPacking = true;
       State.Stack.back().BreakBeforeParameter = false;
