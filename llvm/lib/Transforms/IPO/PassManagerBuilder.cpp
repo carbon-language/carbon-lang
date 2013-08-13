@@ -195,7 +195,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createLoopIdiomPass());             // Recognize idioms like memset.
   MPM.add(createLoopDeletionPass());          // Delete dead loops
 
-  if (!LateVectorize && LoopVectorize && OptLevel > 1 && SizeLevel < 2)
+  if (!LateVectorize && LoopVectorize)
       MPM.add(createLoopVectorizePass());
 
   if (!DisableUnrollLoops)
