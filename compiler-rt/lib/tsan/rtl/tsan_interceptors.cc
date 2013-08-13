@@ -362,35 +362,37 @@ static void LongJmp(ThreadState *thr, uptr *env) {
   CHECK(0);
 }
 
+// FIXME: put everything below into a common extern "C" block?
 extern "C" void __tsan_setjmp(uptr sp, uptr mangled_sp) {
   ScopedInRtl in_rtl;
   SetJmp(cur_thread(), sp, mangled_sp);
 }
 
 // Not called.  Merely to satisfy TSAN_INTERCEPT().
-SANITIZER_INTERFACE_ATTRIBUTE
-extern "C" int __interceptor_setjmp(void *env);
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+int __interceptor_setjmp(void *env);
 extern "C" int __interceptor_setjmp(void *env) {
   CHECK(0);
   return 0;
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
-extern "C" int __interceptor__setjmp(void *env);
+// FIXME: any reason to have a separate declaration?
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+int __interceptor__setjmp(void *env);
 extern "C" int __interceptor__setjmp(void *env) {
   CHECK(0);
   return 0;
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
-extern "C" int __interceptor_sigsetjmp(void *env);
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+int __interceptor_sigsetjmp(void *env);
 extern "C" int __interceptor_sigsetjmp(void *env) {
   CHECK(0);
   return 0;
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
-extern "C" int __interceptor___sigsetjmp(void *env);
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+int __interceptor___sigsetjmp(void *env);
 extern "C" int __interceptor___sigsetjmp(void *env) {
   CHECK(0);
   return 0;
