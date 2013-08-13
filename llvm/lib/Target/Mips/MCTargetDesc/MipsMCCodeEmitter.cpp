@@ -97,6 +97,8 @@ public:
 
   unsigned getMemEncoding(const MCInst &MI, unsigned OpNo,
                           SmallVectorImpl<MCFixup> &Fixups) const;
+  unsigned getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
+                                 SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getSizeExtEncoding(const MCInst &MI, unsigned OpNo,
                               SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getSizeInsEncoding(const MCInst &MI, unsigned OpNo,
@@ -212,6 +214,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     LowerDextDins(TmpInst);
   }
 
+  unsigned long N = Fixups.size();
   uint32_t Binary = getBinaryCodeForInstr(TmpInst, Fixups);
 
   // Check for unimplemented opcodes.
@@ -224,6 +227,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   if (STI.getFeatureBits() & Mips::FeatureMicroMips) {
     int NewOpcode = Mips::Std2MicroMips (Opcode, Mips::Arch_micromips);
     if (NewOpcode != -1) {
+      if (Fixups.size() > N)
+        Fixups.pop_back();
       Opcode = NewOpcode;
       TmpInst.setOpcode (NewOpcode);
       Binary = getBinaryCodeForInstr(TmpInst, Fixups);
@@ -415,6 +420,17 @@ MipsMCCodeEmitter::getMemEncoding(const MCInst &MI, unsigned OpNo,
   unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups);
 
   return (OffBits & 0xFFFF) | RegBits;
+}
+
+unsigned MipsMCCodeEmitter::
+getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
+                      SmallVectorImpl<MCFixup> &Fixups) const {
+  // Base register is encoded in bits 20-16, offset is encoded in bits 11-0.
+  assert(MI.getOperand(OpNo).isReg());
+  unsigned RegBits = getMachineOpValue(MI, MI.getOperand(OpNo), Fixups) << 16;
+  unsigned OffBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups);
+
+  return (OffBits & 0x0FFF) | RegBits;
 }
 
 unsigned

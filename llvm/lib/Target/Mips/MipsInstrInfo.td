@@ -182,6 +182,10 @@ def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
 def HasStdEnc :       Predicate<"Subtarget.hasStandardEncoding()">,
                       AssemblerPredicate<"!FeatureMips16">;
 def NotDSP :          Predicate<"!Subtarget.hasDSP()">;
+def InMicroMips    :  Predicate<"Subtarget.inMicroMipsMode()">,
+                      AssemblerPredicate<"FeatureMicroMips">;
+def NotInMicroMips :  Predicate<"!Subtarget.inMicroMipsMode()">,
+                      AssemblerPredicate<"!FeatureMicroMips">;
 
 class MipsPat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [HasStdEnc];
@@ -516,7 +520,7 @@ class StoreLeftRight<string opstr, SDNode OpNode, RegisterOperand RO,
 
 multiclass LoadLeftRightM<string opstr, SDNode OpNode, RegisterOperand RO> {
   def NAME : LoadLeftRight<opstr, OpNode, RO, mem>,
-             Requires<[NotN64, HasStdEnc]>;
+             Requires<[NotN64, HasStdEnc, NotInMicroMips]>;
   def _P8  : LoadLeftRight<opstr, OpNode, RO, mem64>,
              Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
@@ -526,7 +530,7 @@ multiclass LoadLeftRightM<string opstr, SDNode OpNode, RegisterOperand RO> {
 
 multiclass StoreLeftRightM<string opstr, SDNode OpNode, RegisterOperand RO> {
   def NAME : StoreLeftRight<opstr, OpNode, RO, mem>,
-             Requires<[NotN64, HasStdEnc]>;
+             Requires<[NotN64, HasStdEnc, NotInMicroMips]>;
   def _P8  : StoreLeftRight<opstr, OpNode, RO, mem64>,
              Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";

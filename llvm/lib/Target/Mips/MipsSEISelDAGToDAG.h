@@ -47,6 +47,12 @@ private:
   virtual bool selectIntAddr(SDValue Addr, SDValue &Base,
                              SDValue &Offset) const;
 
+  virtual bool selectAddrRegImm12(SDValue Addr, SDValue &Base,
+                                  SDValue &Offset) const;
+
+  virtual bool selectIntAddrMM(SDValue Addr, SDValue &Base,
+                               SDValue &Offset) const;
+
   virtual std::pair<bool, SDNode*> selectNode(SDNode *Node);
 
   virtual void processFunctionAfterISel(MachineFunction &MF);

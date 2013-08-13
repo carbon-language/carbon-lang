@@ -65,6 +65,9 @@ private:
   virtual bool selectIntAddr(SDValue Addr, SDValue &Base,
                              SDValue &Offset) const;
 
+  virtual bool selectIntAddrMM(SDValue Addr, SDValue &Base,
+                               SDValue &Offset) const;
+
   virtual bool selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
                             SDValue &Offset, SDValue &Alias);
 

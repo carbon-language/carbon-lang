@@ -314,6 +314,37 @@ bool MipsSEDAGToDAGISel::selectIntAddr(SDValue Addr, SDValue &Base,
     selectAddrDefault(Addr, Base, Offset);
 }
 
+/// Used on microMIPS Load/Store unaligned instructions (12-bit offset)
+bool MipsSEDAGToDAGISel::selectAddrRegImm12(SDValue Addr, SDValue &Base,
+                                            SDValue &Offset) const {
+  EVT ValTy = Addr.getValueType();
+
+  // Addresses of the form FI+const or FI|const
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+    if (isInt<12>(CN->getSExtValue())) {
+
+      // If the first operand is a FI, get the TargetFI Node
+      if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
+                                  (Addr.getOperand(0)))
+        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
+      else
+        Base = Addr.getOperand(0);
+
+      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool MipsSEDAGToDAGISel::selectIntAddrMM(SDValue Addr, SDValue &Base,
+                                         SDValue &Offset) const {
+  return selectAddrRegImm12(Addr, Base, Offset) ||
+    selectAddrDefault(Addr, Base, Offset);
+}
+
 std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   unsigned Opcode = Node->getOpcode();
   SDLoc DL(Node);

@@ -1,4 +1,34 @@
-let isCodeGenOnly = 1 in {
+def addrimm12 : ComplexPattern<iPTR, 2, "selectIntAddrMM", [frameindex]>;
+
+def simm12 : Operand<i32> {
+  let DecoderMethod = "DecodeSimm12";
+}
+
+def mem_mm_12 : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops GPR32, simm12);
+  let EncoderMethod = "getMemEncodingMMImm12";
+  let ParserMatchClass = MipsMemAsmOperand;
+  let OperandType = "OPERAND_MEMORY";
+}
+
+let canFoldAsLoad = 1 in
+class LoadLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
+                      Operand MemOpnd> :
+  InstSE<(outs RO:$rt), (ins MemOpnd:$addr, RO:$src),
+         !strconcat(opstr, "\t$rt, $addr"),
+         [(set RO:$rt, (OpNode addrimm12:$addr, RO:$src))],
+         NoItinerary, FrmI> {
+  string Constraints = "$src = $rt";
+}
+
+class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
+                       Operand MemOpnd>:
+  InstSE<(outs), (ins RO:$rt, MemOpnd:$addr),
+         !strconcat(opstr, "\t$rt, $addr"),
+         [(OpNode RO:$rt, addrimm12:$addr)], NoItinerary, FrmI>;
+
+let DecoderNamespace = "MicroMips" in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
                  ADDI_FM_MM<0xc>;
@@ -64,4 +94,16 @@ let isCodeGenOnly = 1 in {
   defm SB_MM  : StoreM<"sb", GPR32Opnd, truncstorei8>, MMRel, LW_FM_MM<0x6>;
   defm SH_MM  : StoreM<"sh", GPR32Opnd, truncstorei16>, MMRel, LW_FM_MM<0xe>;
   defm SW_MM  : StoreM<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
+
+  /// Load and Store Instructions - unaligned
+  let Predicates = [InMicroMips] in {
+    def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,
+                 LWL_FM_MM<0x0>;
+    def LWR_MM : LoadLeftRightMM<"lwr", MipsLWR, GPR32Opnd, mem_mm_12>,
+                 LWL_FM_MM<0x1>;
+    def SWL_MM : StoreLeftRightMM<"swl", MipsSWL, GPR32Opnd, mem_mm_12>,
+                 LWL_FM_MM<0x8>;
+    def SWR_MM : StoreLeftRightMM<"swr", MipsSWR, GPR32Opnd, mem_mm_12>,
+                 LWL_FM_MM<0x9>;
+  }
 }
