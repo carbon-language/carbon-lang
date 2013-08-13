@@ -1702,9 +1702,12 @@ public:
                            SDValue &NewLHS, SDValue &NewRHS,
                            ISD::CondCode &CCCode, SDLoc DL) const;
 
-  SDValue makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC, EVT RetVT,
-                      const SDValue *Ops, unsigned NumOps,
-                      bool isSigned, SDLoc dl) const;
+  /// Returns a pair of (return value, chain).
+  std::pair<SDValue, SDValue> makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC,
+                                          EVT RetVT, const SDValue *Ops,
+                                          unsigned NumOps, bool isSigned,
+                                          SDLoc dl, bool doesNotReturn = false,
+                                          bool isReturnValueUsed = true) const;
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods

@@ -67,10 +67,13 @@ bool TargetLowering::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
 
 /// Generate a libcall taking the given operands as arguments and returning a
 /// result of type RetVT.
-SDValue TargetLowering::makeLibCall(SelectionDAG &DAG,
-                                    RTLIB::Libcall LC, EVT RetVT,
-                                    const SDValue *Ops, unsigned NumOps,
-                                    bool isSigned, SDLoc dl) const {
+std::pair<SDValue, SDValue>
+TargetLowering::makeLibCall(SelectionDAG &DAG,
+                            RTLIB::Libcall LC, EVT RetVT,
+                            const SDValue *Ops, unsigned NumOps,
+                            bool isSigned, SDLoc dl,
+                            bool doesNotReturn,
+                            bool isReturnValueUsed) const {
   TargetLowering::ArgListTy Args;
   Args.reserve(NumOps);
 
@@ -89,11 +92,9 @@ SDValue TargetLowering::makeLibCall(SelectionDAG &DAG,
   CallLoweringInfo CLI(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     false, 0, getLibcallCallingConv(LC),
                     /*isTailCall=*/false,
-                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
-                    Callee, Args, DAG, dl);
-  std::pair<SDValue,SDValue> CallInfo = LowerCallTo(CLI);
-
-  return CallInfo.first;
+                    doesNotReturn, isReturnValueUsed, Callee, Args,
+                    DAG, dl);
+  return LowerCallTo(CLI);
 }
 
 
@@ -183,14 +184,16 @@ void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
   // Use the target specific return value for comparions lib calls.
   EVT RetVT = getCmpLibcallReturnType();
   SDValue Ops[2] = { NewLHS, NewRHS };
-  NewLHS = makeLibCall(DAG, LC1, RetVT, Ops, 2, false/*sign irrelevant*/, dl);
+  NewLHS = makeLibCall(DAG, LC1, RetVT, Ops, 2, false/*sign irrelevant*/,
+                       dl).first;
   NewRHS = DAG.getConstant(0, RetVT);
   CCCode = getCmpLibcallCC(LC1);
   if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
     SDValue Tmp = DAG.getNode(ISD::SETCC, dl,
                               getSetCCResultType(*DAG.getContext(), RetVT),
                               NewLHS, NewRHS, DAG.getCondCode(CCCode));
-    NewLHS = makeLibCall(DAG, LC2, RetVT, Ops, 2, false/*sign irrelevant*/, dl);
+    NewLHS = makeLibCall(DAG, LC2, RetVT, Ops, 2, false/*sign irrelevant*/,
+                         dl).first;
     NewLHS = DAG.getNode(ISD::SETCC, dl,
                          getSetCCResultType(*DAG.getContext(), RetVT), NewLHS,
                          NewRHS, DAG.getCondCode(getCmpLibcallCC(LC2)));
