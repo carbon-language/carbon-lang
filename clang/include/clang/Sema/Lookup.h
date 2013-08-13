@@ -139,7 +139,8 @@ public:
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
       Diagnose(Redecl == Sema::NotForRedeclaration),
-      AllowHidden(Redecl == Sema::ForRedeclaration)
+      AllowHidden(Redecl == Sema::ForRedeclaration),
+      Shadowed(false)
   {
     configure();
   }
@@ -160,7 +161,8 @@ public:
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
       Diagnose(Redecl == Sema::NotForRedeclaration),
-      AllowHidden(Redecl == Sema::ForRedeclaration)
+      AllowHidden(Redecl == Sema::ForRedeclaration),
+      Shadowed(false)
   {
     configure();
   }
@@ -179,7 +181,8 @@ public:
       Redecl(Other.Redecl),
       HideTags(Other.HideTags),
       Diagnose(false),
-      AllowHidden(Other.AllowHidden)
+      AllowHidden(Other.AllowHidden),
+      Shadowed(false)
   {}
 
   ~LookupResult() {
@@ -393,7 +396,15 @@ public:
     assert(ResultKind == NotFound && Decls.empty());
     ResultKind = NotFoundInCurrentInstantiation;
   }
-  
+
+  /// \brief Determine whether the lookup result was shadowed by some other
+  /// declaration that lookup ignored.
+  bool isShadowed() const { return Shadowed; }
+
+  /// \brief Note that we found and ignored a declaration while performing
+  /// lookup.
+  void setShadowed() { Shadowed = true; }
+
   /// \brief Resolves the result kind of the lookup, possibly hiding
   /// decls.
   ///
@@ -482,6 +493,7 @@ public:
     if (Paths) deletePaths(Paths);
     Paths = NULL;
     NamingClass = 0;
+    Shadowed = false;
   }
 
   /// \brief Clears out any current state and re-initializes for a
@@ -660,6 +672,11 @@ private:
 
   /// \brief True if we should allow hidden declarations to be 'visible'.
   bool AllowHidden;
+
+  /// \brief True if the found declarations were shadowed by some other
+  /// declaration that we skipped. This only happens when \c LookupKind
+  /// is \c LookupRedeclarationWithLinkage.
+  bool Shadowed;
 };
 
   /// \brief Consumes visible declarations found when searching for

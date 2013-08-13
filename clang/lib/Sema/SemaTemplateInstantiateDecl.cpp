@@ -973,7 +973,8 @@ Decl *TemplateDeclInstantiator::VisitVarTemplateDecl(VarTemplateDecl *D) {
 
   // FIXME: This, and ForVarTemplate, is a hack that is probably unnecessary.
   // We should use a simplified version of VisitVarDecl.
-  VarDecl *VarInst = cast_or_null<VarDecl>(VisitVarDecl(Pattern, /*ForVarTemplate=*/true));
+  VarDecl *VarInst =
+      cast_or_null<VarDecl>(VisitVarDecl(Pattern, /*ForVarTemplate=*/ true));
 
   DeclContext *DC = Owner;
 
@@ -3336,6 +3337,8 @@ void Sema::BuildVariableInstantiation(
   NewVar->setInitStyle(OldVar->getInitStyle());
   NewVar->setCXXForRangeDecl(OldVar->isCXXForRangeDecl());
   NewVar->setConstexpr(OldVar->isConstexpr());
+  NewVar->setPreviousDeclInSameBlockScope(
+      OldVar->isPreviousDeclInSameBlockScope());
   NewVar->setAccess(OldVar->getAccess());
 
   if (!OldVar->isStaticDataMember()) {
@@ -3348,13 +3351,18 @@ void Sema::BuildVariableInstantiation(
   if (NewVar->hasAttrs())
     CheckAlignasUnderalignment(NewVar);
 
-  // FIXME: In theory, we could have a previous declaration for variables that
-  // are not static data members.
-  // FIXME: having to fake up a LookupResult is dumb.
   LookupResult Previous(*this, NewVar->getDeclName(), NewVar->getLocation(),
                         Sema::LookupOrdinaryName, Sema::ForRedeclaration);
 
-  if (!isa<VarTemplateSpecializationDecl>(NewVar))
+  if (NewVar->getLexicalDeclContext()->isFunctionOrMethod() &&
+      OldVar->getPreviousDecl()) {
+    // We have a previous declaration. Use that one, so we merge with the
+    // right type.
+    if (NamedDecl *NewPrev = FindInstantiatedDecl(
+            NewVar->getLocation(), OldVar->getPreviousDecl(), TemplateArgs))
+      Previous.addDecl(NewPrev);
+  } else if (!isa<VarTemplateSpecializationDecl>(NewVar) &&
+             OldVar->hasLinkage())
     LookupQualifiedName(Previous, NewVar->getDeclContext(), false);
 
   CheckVariableDeclaration(NewVar, Previous);

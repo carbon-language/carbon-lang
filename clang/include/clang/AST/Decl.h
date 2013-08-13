@@ -706,8 +706,13 @@ private:
 
     /// \brief Whether this variable is (C++0x) constexpr.
     unsigned IsConstexpr : 1;
+
+    /// \brief Whether this local extern variable's previous declaration was
+    /// declared in the same block scope. This controls whether we should merge
+    /// the type of this declaration with its previous declaration.
+    unsigned PreviousDeclInSameBlockScope : 1;
   };
-  enum { NumVarDeclBits = 12 };
+  enum { NumVarDeclBits = 13 };
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -1126,6 +1131,15 @@ public:
   /// Whether this variable is (C++11) constexpr.
   bool isConstexpr() const { return VarDeclBits.IsConstexpr; }
   void setConstexpr(bool IC) { VarDeclBits.IsConstexpr = IC; }
+
+  /// Whether this local extern variable declaration's previous declaration
+  /// was declared in the same block scope. Only correct in C++.
+  bool isPreviousDeclInSameBlockScope() const {
+    return VarDeclBits.PreviousDeclInSameBlockScope;
+  }
+  void setPreviousDeclInSameBlockScope(bool Same) {
+    VarDeclBits.PreviousDeclInSameBlockScope = Same;
+  }
 
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member

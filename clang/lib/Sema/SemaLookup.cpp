@@ -852,6 +852,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   assert(getLangOpts().CPlusPlus && "Can perform only C++ lookup");
 
   DeclarationName Name = R.getLookupName();
+  Sema::LookupNameKind NameKind = R.getLookupKind();
 
   // If this is the name of an implicitly-declared special member function,
   // go through the scope stack to implicitly declare
@@ -889,6 +890,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   //
   UnqualUsingDirectiveSet UDirs;
   bool VisitedUsingDirectives = false;
+  bool LeftStartingScope = false;
   DeclContext *OutsideOfTemplateParamDC = 0;
   for (; S && !isNamespaceOrTranslationUnitScope(S); S = S->getParent()) {
     DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity());
@@ -897,6 +899,20 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     bool Found = false;
     for (; I != IEnd && S->isDeclScope(*I); ++I) {
       if (NamedDecl *ND = R.getAcceptableDecl(*I)) {
+        if (NameKind == LookupRedeclarationWithLinkage) {
+          // Determine whether this (or a previous) declaration is
+          // out-of-scope.
+          if (!LeftStartingScope && !Initial->isDeclScope(*I))
+            LeftStartingScope = true;
+
+          // If we found something outside of our starting scope that
+          // does not have linkage, skip it.
+          if (LeftStartingScope && !((*I)->hasLinkage())) {
+            R.setShadowed();
+            continue;
+          }
+        }
+
         Found = true;
         R.addDecl(ND);
       }
@@ -909,7 +925,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
       return true;
     }
 
-    if (R.getLookupKind() == LookupLocalFriendName && !S->isClassScope()) {
+    if (NameKind == LookupLocalFriendName && !S->isClassScope()) {
       // C++11 [class.friend]p11:
       //   If a friend declaration appears in a local class and the name
       //   specified is an unqualified name, a prior declaration is
@@ -1019,7 +1035,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   if (!S) return false;
 
   // If we are looking for members, no need to look into global/namespace scope.
-  if (R.getLookupKind() == LookupMemberName)
+  if (NameKind == LookupMemberName)
     return false;
 
   // Collect UsingDirectiveDecls in all scopes, and recursively all
@@ -1291,8 +1307,10 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 
           // If we found something outside of our starting scope that
           // does not have linkage, skip it.
-          if (LeftStartingScope && !((*I)->hasLinkage()))
+          if (LeftStartingScope && !((*I)->hasLinkage())) {
+            R.setShadowed();
             continue;
+          }
         }
         else if (NameKind == LookupObjCImplicitSelfParam &&
                  !isa<ImplicitParamDecl>(*I))

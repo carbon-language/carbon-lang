@@ -1808,7 +1808,7 @@ public:
   /// \param ExplicitInstantiationOrSpecialization When true, we are checking
   /// whether the declaration is in scope for the purposes of explicit template
   /// instantiation or specialization. The default is false.
-  bool isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S = 0,
+  bool isDeclInScope(NamedDecl *D, DeclContext *Ctx, Scope *S = 0,
                      bool ExplicitInstantiationOrSpecialization = false);
 
   /// Finds the scope corresponding to the given decl context, if it
@@ -1862,13 +1862,15 @@ public:
   void mergeDeclAttributes(NamedDecl *New, Decl *Old,
                            AvailabilityMergeKind AMK = AMK_Redeclaration);
   void MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls);
-  bool MergeFunctionDecl(FunctionDecl *New, Decl *Old, Scope *S);
+  bool MergeFunctionDecl(FunctionDecl *New, Decl *Old, Scope *S,
+                         bool MergeTypeWithOld);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
-                                    Scope *S);
+                                    Scope *S, bool MergeTypeWithOld);
   void mergeObjCMethodDecls(ObjCMethodDecl *New, ObjCMethodDecl *Old);
-  void MergeVarDecl(VarDecl *New, LookupResult &OldDecls,
-                    bool OldDeclsWereHidden);
-  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old, bool OldIsHidden);
+  void MergeVarDecl(VarDecl *New, LookupResult &Previous,
+                    bool MergeTypeWithPrevious);
+  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old,
+                         bool MergeTypeWithOld);
   void MergeVarDeclExceptionSpecs(VarDecl *New, VarDecl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old, Scope *S);
 

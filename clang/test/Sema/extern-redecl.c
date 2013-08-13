@@ -62,3 +62,27 @@ void test5c() {
   void *(*_malloc)() = &malloc;
   float *(*_calloc)() = &calloc;
 }
+
+void test6() {
+  extern int test6_array1[100];
+  extern int test6_array2[100];
+  void test6_fn1(int*);
+  void test6_fn2(int*);
+  {
+    // Types are only merged from visible declarations.
+    char test6_array2;
+    char test6_fn2;
+    {
+      extern int test6_array1[];
+      extern int test6_array2[];
+      (void)sizeof(test6_array1); // ok
+      (void)sizeof(test6_array2); // expected-error {{incomplete type}}
+
+      void test6_fn1();
+      void test6_fn2();
+      test6_fn1(1.2); // expected-error {{passing 'double' to parameter of incompatible type 'int *'}}
+      // FIXME: This is valid, but we should warn on it.
+      test6_fn2(1.2);
+    }
+  }
+}

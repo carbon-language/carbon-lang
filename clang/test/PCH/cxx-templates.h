@@ -296,3 +296,18 @@ namespace cyclic_module_load {
     };
   }
 }
+
+namespace local_extern {
+  template<typename T> int f() {
+    extern int arr[3];
+    {
+      extern T arr;
+      return sizeof(arr);
+    }
+  }
+  template<typename T> int g() {
+    extern int arr[3];
+    extern T arr;
+    return sizeof(arr);
+  }
+}
