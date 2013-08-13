@@ -428,6 +428,14 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     inputPaths.push_back((*it)->getValue());
   }
 
+  // Arguments after "--" are interpreted as filenames even if they
+  // start with a hypen or a slash. This is not compatible with link.exe
+  // but useful for us to test lld on Unix.
+  if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
+    for (const StringRef value : dashdash->getValues())
+      inputPaths.push_back(value);
+  }
+
   // Add input files specified via the command line.
   for (const StringRef path : inputPaths)
     context.appendInputFileOrLibrary(path);

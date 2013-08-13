@@ -51,3 +51,5 @@ def nologo : F<"nologo">;
 
 def help : F<"help">;
 def help_q : F<"?">, Alias<help>;
+
+def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;

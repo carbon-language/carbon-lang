@@ -221,4 +221,15 @@ TEST_F(WinLinkParserTest, Nologo) {
   EXPECT_EQ("a.obj", inputFile(0));
 }
 
+TEST_F(WinLinkParserTest, DashDash) {
+  EXPECT_FALSE(parse("link.exe", "/subsystem:console", "/out:a.exe",
+        "a.obj", "--", "b.obj", "-c.obj", nullptr));
+  EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
+  EXPECT_EQ("a.exe", _context.outputPath());
+  EXPECT_EQ(3, inputFileCount());
+  EXPECT_EQ("a.obj", inputFile(0));
+  EXPECT_EQ("b.obj", inputFile(1));
+  EXPECT_EQ("-c.obj", inputFile(2));
+}
+
 } // end anonymous namespace
