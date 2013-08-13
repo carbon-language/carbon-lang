@@ -496,6 +496,12 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 
 void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   // COFF
+  BSSSection =
+    Ctx->getCOFFSection(".bss",
+                        COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
+                        COFF::IMAGE_SCN_MEM_READ |
+                        COFF::IMAGE_SCN_MEM_WRITE,
+                        SectionKind::getBSS());
   TextSection =
     Ctx->getCOFFSection(".text",
                         COFF::IMAGE_SCN_CNT_CODE |
