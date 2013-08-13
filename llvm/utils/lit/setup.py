@@ -1,7 +1,14 @@
 import lit
+import os
 
-# FIXME: Support distutils?
 from setuptools import setup, find_packages
+
+# setuptools expects to be invoked from within the directory of setup.py, but it
+# is nice to allow:
+#   python path/to/setup.py install
+# to work (for scripts, etc.)
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 setup(
     name = "lit",
     version = lit.__version__,
