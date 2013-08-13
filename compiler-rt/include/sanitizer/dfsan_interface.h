@@ -75,7 +75,7 @@ dfsan_label dfsan_has_label_with_desc(dfsan_label label, const char *desc);
 }  // extern "C"
 
 template <typename T>
-void dfsan_set_label(dfsan_label label, T &data) {
+void dfsan_set_label(dfsan_label label, T &data) {  // NOLINT
   dfsan_set_label(label, (void *)&data, sizeof(T));
 }
 
