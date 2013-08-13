@@ -83,6 +83,7 @@ public:
 
   void mangle(const NamedDecl *D, StringRef Prefix = "\01?");
   void mangleName(const NamedDecl *ND);
+  void mangleDeclaration(const NamedDecl *ND);
   void mangleFunctionEncoding(const FunctionDecl *FD);
   void mangleVariableEncoding(const VarDecl *VD);
   void mangleNumber(int64_t Number);
@@ -852,6 +853,33 @@ MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
   llvm::APSInt Value;
   if (E->isIntegerConstantExpr(Value, Context.getASTContext())) {
     mangleIntegerLiteral(Value, E->getType()->isBooleanType());
+    return;
+  }
+
+  const CXXUuidofExpr *UE = 0;
+  if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
+    if (UO->getOpcode() == UO_AddrOf)
+      UE = dyn_cast<CXXUuidofExpr>(UO->getSubExpr());
+  } else
+    UE = dyn_cast<CXXUuidofExpr>(E);
+
+  if (UE) {
+    // This CXXUuidofExpr is mangled as-if it were actually a VarDecl from
+    // const __s_GUID _GUID_{lower case UUID with underscores}
+    StringRef Uuid = UE->getUuidAsStringRef(Context.getASTContext());
+    std::string Name = "_GUID_" + Uuid.lower();
+    std::replace(Name.begin(), Name.end(), '-', '_');
+
+    // If we had to peak through an address-of operator, treat this like we are
+    // dealing with a pointer type.  Otherwise, treat it like a const reference.
+    //
+    // N.B. This matches up with the handling of TemplateArgument::Declaration
+    // in mangleTemplateArg
+    if (UE == E)
+      Out << "$E?";
+    else
+      Out << "$1?";
+    Out << Name << "@@3U__s_GUID@@B";
     return;
   }
 

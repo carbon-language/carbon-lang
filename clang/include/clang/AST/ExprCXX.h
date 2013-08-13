@@ -724,6 +724,8 @@ public:
     Operand = E;
   }
 
+  StringRef getUuidAsStringRef(ASTContext &Context) const;
+
   SourceLocation getLocStart() const LLVM_READONLY { return Range.getBegin(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
   SourceRange getSourceRange() const LLVM_READONLY { return Range; }

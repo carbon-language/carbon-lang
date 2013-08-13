@@ -1046,17 +1046,7 @@ llvm::Constant *CodeGenModule::GetAddrOfUuidDescriptor(
     const CXXUuidofExpr* E) {
   // Sema has verified that IIDSource has a __declspec(uuid()), and that its
   // well-formed.
-  StringRef Uuid;
-  if (E->isTypeOperand())
-    Uuid = CXXUuidofExpr::GetUuidAttrOfType(E->getTypeOperand())->getGuid();
-  else {
-    // Special case: __uuidof(0) means an all-zero GUID.
-    Expr *Op = E->getExprOperand();
-    if (!Op->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
-      Uuid = CXXUuidofExpr::GetUuidAttrOfType(Op->getType())->getGuid();
-    else
-      Uuid = "00000000-0000-0000-0000-000000000000";
-  }
+  StringRef Uuid = E->getUuidAsStringRef(Context);
   std::string Name = "_GUID_" + Uuid.lower();
   std::replace(Name.begin(), Name.end(), '-', '_');
 

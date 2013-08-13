@@ -72,6 +72,21 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT) {
   return 0;
 }
 
+StringRef CXXUuidofExpr::getUuidAsStringRef(ASTContext &Context) const {
+  StringRef Uuid;
+  if (isTypeOperand())
+    Uuid = CXXUuidofExpr::GetUuidAttrOfType(getTypeOperand())->getGuid();
+  else {
+    // Special case: __uuidof(0) means an all-zero GUID.
+    Expr *Op = getExprOperand();
+    if (!Op->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
+      Uuid = CXXUuidofExpr::GetUuidAttrOfType(Op->getType())->getGuid();
+    else
+      Uuid = "00000000-0000-0000-0000-000000000000";
+  }
+  return Uuid;
+}
+
 // CXXScalarValueInitExpr
 SourceLocation CXXScalarValueInitExpr::getLocStart() const {
   return TypeInfo ? TypeInfo->getTypeLoc().getBeginLoc() : RParenLoc;
