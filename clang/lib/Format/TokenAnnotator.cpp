@@ -93,7 +93,8 @@ private:
       }
     }
 
-    if (Left->Previous && Left->Previous->is(tok::kw_static_assert))
+    if (Left->Previous && Left->Previous->isOneOf(tok::kw_static_assert,
+                                                  tok::kw_if, tok::kw_while))
       Contexts.back().IsExpression = true;
 
     if (StartsObjCMethodExpr) {
