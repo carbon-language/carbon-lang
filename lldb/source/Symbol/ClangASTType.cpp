@@ -4444,6 +4444,8 @@ ClangASTType::BuildIndirectFields ()
                                                                                   chain,
                                                                                   2);
                     
+                    indirect_field->setImplicit();
+                    
                     indirect_field->setAccess(ClangASTContext::UnifyAccessSpecifiers(field_pos->getAccess(),
                                                                                      nested_field_decl->getAccess()));
                     
@@ -4472,6 +4474,8 @@ ClangASTType::BuildIndirectFields ()
                                                                                   nested_indirect_field_decl->getType(),
                                                                                   chain,
                                                                                   nested_chain_size + 1);
+                    
+                    indirect_field->setImplicit();
                     
                     indirect_field->setAccess(ClangASTContext::UnifyAccessSpecifiers(field_pos->getAccess(),
                                                                                      nested_indirect_field_decl->getAccess()));
