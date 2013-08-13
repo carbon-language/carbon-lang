@@ -1,6 +1,6 @@
-# RUN: yaml2obj %p/Inputs/bss-undef.obj.yaml > %t.obj
+# RUN: yaml2obj %p/Inputs/common-symbol.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t /subsystem:console /force -- %t.obj \
+# RUN: lld -flavor link /out:%t /subsystem:console /force -- %t.obj %t.obj \
 # RUN:    && llvm-readobj -sections %t | FileCheck %s
 
 CHECK:       Section {

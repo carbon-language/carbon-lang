@@ -234,16 +234,28 @@ private:
     // Filter non-defined atoms, and group defined atoms by its section.
     SectionToSymbolsT definedSymbols;
     for (const coff_symbol *sym : symbols) {
-      // A symbol with section number 0 and non-zero value represents an
-      // uninitialized data. I don't understand why there are two ways to define
-      // an uninitialized data symbol (.bss and this way), but that's how COFF
-      // works.
+      // A symbol with section number 0 and non-zero value represents a common
+      // symbol. The MS COFF spec did not give a definition of what the common
+      // symbol is. We should probably follow ELF's definition shown below.
+      //
+      // - If one object file has a common symbol and another has a definition,
+      //   the common symbol is treated as an undefined reference.
+      // - If there is no definition for a common symbol, the program linker
+      //   acts as though it saw a definition initialized to zero of the
+      //   appropriate size.
+      // - Two object files may have common symbols of
+      //   different sizes, in which case the program linker will use the
+      //   largest size.
+      //
+      // FIXME: We are currently treating the common symbol as a normal
+      // mergeable atom. Implement the above semantcis.
       if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED &&
           sym->Value > 0) {
         StringRef name = _symbolName[sym];
         uint32_t size = sym->Value;
         auto *atom = new (_alloc) COFFBSSAtom(
-            *this, name, getScope(sym), DefinedAtom::permRW_, size, 0);
+            *this, name, getScope(sym), DefinedAtom::permRW_,
+            DefinedAtom::mergeAsWeakAndAddressUsed, size, 0);
         result.push_back(atom);
         continue;
       }
@@ -370,7 +382,7 @@ private:
             : si[1]->Value - sym->Value;
         auto *atom = new (_alloc) COFFBSSAtom(
             *this, _symbolName[sym], getScope(sym), getPermissions(section),
-            size, ++ordinal);
+            DefinedAtom::mergeAsWeakAndAddressUsed, size, ++ordinal);
         atoms.push_back(atom);
         _symbolAtom[sym] = atom;
       }
