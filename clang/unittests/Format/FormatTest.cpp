@@ -3248,6 +3248,8 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
   verifyFormat("aaaaa(aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa).aaaaa(aaaaa),\n"
                "      aaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    aaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaa)->aaaaaaaaa());");
   verifyFormat(
       "aaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
