@@ -311,9 +311,9 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
                            NameToken.Text, NameToken.Range);
   SourceRange MatcherRange = NameToken.Range;
   MatcherRange.End = EndToken.Range.End;
-  MatcherList Result = S->actOnMatcherExpression(
+  VariantMatcher Result = S->actOnMatcherExpression(
       NameToken.Text, MatcherRange, BindID, Args, Error);
-  if (Result.empty()) return false;
+  if (Result.isNull()) return false;
 
   *Value = Result;
   return true;
@@ -358,11 +358,11 @@ Parser::Parser(CodeTokenizer *Tokenizer, Sema *S,
 class RegistrySema : public Parser::Sema {
 public:
   virtual ~RegistrySema() {}
-  MatcherList actOnMatcherExpression(StringRef MatcherName,
-                                     const SourceRange &NameRange,
-                                     StringRef BindID,
-                                     ArrayRef<ParserValue> Args,
-                                     Diagnostics *Error) {
+  VariantMatcher actOnMatcherExpression(StringRef MatcherName,
+                                        const SourceRange &NameRange,
+                                        StringRef BindID,
+                                        ArrayRef<ParserValue> Args,
+                                        Diagnostics *Error) {
     if (BindID.empty()) {
       return Registry::constructMatcher(MatcherName, NameRange, Args, Error);
     } else {
@@ -402,16 +402,17 @@ DynTypedMatcher *Parser::parseMatcherExpression(StringRef Code,
   VariantValue Value;
   if (!parseExpression(Code, S, &Value, Error))
     return NULL;
-  if (!Value.isMatchers()) {
+  if (!Value.isMatcher()) {
     Error->addError(SourceRange(), Error->ET_ParserNotAMatcher);
     return NULL;
   }
-  if (Value.getMatchers().matchers().size() != 1) {
+  const DynTypedMatcher *Result;
+  if (!Value.getMatcher().getSingleMatcher(Result)) {
     Error->addError(SourceRange(), Error->ET_ParserOverloadedType)
         << Value.getTypeAsString();
     return NULL;
   }
-  return Value.getMatchers().matchers()[0]->clone();
+  return Result->clone();
 }
 
 }  // namespace dynamic

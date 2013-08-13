@@ -76,16 +76,16 @@ public:
     Errors.push_back(Error.toStringFull());
   }
 
-  MatcherList actOnMatcherExpression(StringRef MatcherName,
-                                     const SourceRange &NameRange,
-                                     StringRef BindID,
-                                     ArrayRef<ParserValue> Args,
-                                     Diagnostics *Error) {
+  VariantMatcher actOnMatcherExpression(StringRef MatcherName,
+                                        const SourceRange &NameRange,
+                                        StringRef BindID,
+                                        ArrayRef<ParserValue> Args,
+                                        Diagnostics *Error) {
     MatcherInfo ToStore = { MatcherName, NameRange, Args, BindID };
     Matchers.push_back(ToStore);
     DummyDynTypedMatcher Matcher(ExpectedMatchers[MatcherName]);
     OwningPtr<DynTypedMatcher> Out(Matcher.tryBind(BindID));
-    return *Out;
+    return VariantMatcher::SingleMatcher(*Out);
   }
 
   struct MatcherInfo {
@@ -137,6 +137,12 @@ bool matchesRange(const SourceRange &Range, unsigned StartLine,
          Range.Start.Column == StartColumn && Range.End.Column == EndColumn;
 }
 
+const DynTypedMatcher *getSingleMatcher(const VariantValue &value) {
+  const DynTypedMatcher *Out;
+  EXPECT_TRUE(value.getMatcher().getSingleMatcher(Out));
+  return Out;
+}
+
 TEST(ParserTest, ParseMatcher) {
   MockSema Sema;
   const uint64_t ExpectedFoo = Sema.expectMatcher("Foo");
@@ -148,9 +154,9 @@ TEST(ParserTest, ParseMatcher) {
   }
 
   EXPECT_EQ(1ULL, Sema.Values.size());
-  EXPECT_EQ(ExpectedFoo, Sema.Values[0].getMatchers().matchers()[0]->getID());
+  EXPECT_EQ(ExpectedFoo, getSingleMatcher(Sema.Values[0])->getID());
   EXPECT_EQ("Yo!", static_cast<const DummyDynTypedMatcher *>(
-                       Sema.Values[0].getMatchers().matchers()[0])->boundID());
+                       getSingleMatcher(Sema.Values[0]))->boundID());
 
   EXPECT_EQ(3ULL, Sema.Matchers.size());
   const MockSema::MatcherInfo Bar = Sema.Matchers[0];
@@ -169,10 +175,8 @@ TEST(ParserTest, ParseMatcher) {
   EXPECT_EQ("Foo", Foo.MatcherName);
   EXPECT_TRUE(matchesRange(Foo.NameRange, 1, 2, 2, 12));
   EXPECT_EQ(2ULL, Foo.Args.size());
-  EXPECT_EQ(ExpectedBar,
-            Foo.Args[0].Value.getMatchers().matchers()[0]->getID());
-  EXPECT_EQ(ExpectedBaz,
-            Foo.Args[1].Value.getMatchers().matchers()[0]->getID());
+  EXPECT_EQ(ExpectedBar, getSingleMatcher(Foo.Args[0].Value)->getID());
+  EXPECT_EQ(ExpectedBaz, getSingleMatcher(Foo.Args[1].Value)->getID());
   EXPECT_EQ("Yo!", Foo.BoundID);
 }
 

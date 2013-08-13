@@ -63,25 +63,25 @@ class OverloadedMatcherCreateCallback : public MatcherCreateCallback {
       delete Overloads[i];
   }
 
-  virtual MatcherList run(const SourceRange &NameRange,
-                          ArrayRef<ParserValue> Args,
-                          Diagnostics *Error) const {
-    std::vector<MatcherList> Constructed;
+  virtual VariantMatcher run(const SourceRange &NameRange,
+                             ArrayRef<ParserValue> Args,
+                             Diagnostics *Error) const {
+    std::vector<VariantMatcher> Constructed;
     Diagnostics::OverloadContext Ctx(Error);
     for (size_t i = 0, e = Overloads.size(); i != e; ++i) {
-      MatcherList SubMatcher = Overloads[i]->run(NameRange, Args, Error);
-      if (!SubMatcher.empty()) {
+      VariantMatcher SubMatcher = Overloads[i]->run(NameRange, Args, Error);
+      if (!SubMatcher.isNull()) {
         Constructed.push_back(SubMatcher);
       }
     }
 
-    if (Constructed.empty()) return MatcherList();  // No overload matched.
+    if (Constructed.empty()) return VariantMatcher();  // No overload matched.
     // We ignore the errors if any matcher succeeded.
     Ctx.revertErrors();
     if (Constructed.size() > 1) {
       // More than one constructed. It is ambiguous.
       Error->addError(NameRange, Error->ET_RegistryAmbiguousOverload);
-      return MatcherList();
+      return VariantMatcher();
     }
     return Constructed[0];
   }
@@ -405,38 +405,38 @@ static llvm::ManagedStatic<RegistryMaps> RegistryData;
 } // anonymous namespace
 
 // static
-MatcherList Registry::constructMatcher(StringRef MatcherName,
-                                       const SourceRange &NameRange,
-                                       ArrayRef<ParserValue> Args,
-                                       Diagnostics *Error) {
+VariantMatcher Registry::constructMatcher(StringRef MatcherName,
+                                          const SourceRange &NameRange,
+                                          ArrayRef<ParserValue> Args,
+                                          Diagnostics *Error) {
   ConstructorMap::const_iterator it =
       RegistryData->constructors().find(MatcherName);
   if (it == RegistryData->constructors().end()) {
     Error->addError(NameRange, Error->ET_RegistryNotFound) << MatcherName;
-    return MatcherList();
+    return VariantMatcher();
   }
 
   return it->second->run(NameRange, Args, Error);
 }
 
 // static
-MatcherList Registry::constructBoundMatcher(StringRef MatcherName,
-                                            const SourceRange &NameRange,
-                                            StringRef BindID,
-                                            ArrayRef<ParserValue> Args,
-                                            Diagnostics *Error) {
-  MatcherList Out = constructMatcher(MatcherName, NameRange, Args, Error);
-  if (Out.empty()) return Out;
+VariantMatcher Registry::constructBoundMatcher(StringRef MatcherName,
+                                               const SourceRange &NameRange,
+                                               StringRef BindID,
+                                               ArrayRef<ParserValue> Args,
+                                               Diagnostics *Error) {
+  VariantMatcher Out = constructMatcher(MatcherName, NameRange, Args, Error);
+  if (Out.isNull()) return Out;
 
-  ArrayRef<const DynTypedMatcher*> Matchers = Out.matchers();
-  if (Matchers.size() == 1) {
-    OwningPtr<DynTypedMatcher> Bound(Matchers[0]->tryBind(BindID));
+  const DynTypedMatcher *Result;
+  if (Out.getSingleMatcher(Result)) {
+    OwningPtr<DynTypedMatcher> Bound(Result->tryBind(BindID));
     if (Bound) {
-      return *Bound;
+      return VariantMatcher::SingleMatcher(*Bound);
     }
   }
   Error->addError(NameRange, Error->ET_RegistryNotBindable);
-  return MatcherList();
+  return VariantMatcher();
 }
 
 }  // namespace dynamic

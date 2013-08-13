@@ -30,32 +30,53 @@ namespace dynamic {
 
 using ast_matchers::internal::DynTypedMatcher;
 
-/// \brief A list of \c DynTypedMatcher objects.
+/// \brief A variant matcher object.
 ///
-/// The purpose of this list is to wrap multiple different matchers and
-/// provide the right one when calling \c hasTypedMatcher/getTypedMatcher.
-class MatcherList {
+/// The purpose of this object is to abstract simple and polymorphic matchers
+/// into a single object type.
+/// Polymorphic matchers might be implemented as a list of all the possible
+/// overloads of the matcher. \c VariantMatcher knows how to select the
+/// appropriate overload when needed.
+/// To get a real matcher object out of a \c VariantMatcher you can do:
+///  - getSingleMatcher() which returns a matcher, only if it is not ambiguous
+///    to decide which matcher to return. Eg. it contains only a single
+///    matcher, or a polymorphic one with only one overload.
+///  - hasTypedMatcher<T>()/getTypedMatcher<T>(): These calls will determine if
+///    the underlying matcher(s) can unambiguously return a Matcher<T>.
+class VariantMatcher {
 public:
-  /// \brief An empty list.
-  MatcherList();
+  /// \brief A null matcher.
+  VariantMatcher();
+
   /// \brief Clones the matcher objects.
-  MatcherList(const MatcherList &Other);
+  VariantMatcher(const VariantMatcher &Other);
+
   /// \brief Clones the provided matcher.
-  MatcherList(const DynTypedMatcher &Matcher);
-  ~MatcherList();
+  static VariantMatcher SingleMatcher(const DynTypedMatcher &Matcher);
 
-  MatcherList &operator=(const MatcherList &Other);
+  /// \brief Clones the provided matchers.
+  ///
+  /// They should be the result of a polymorphic matcher.
+  static VariantMatcher
+  PolymorphicMatcher(ArrayRef<const DynTypedMatcher *> Matchers);
 
-  /// \brief Add a matcher to this list. The matcher is cloned.
-  void add(const DynTypedMatcher &Matcher);
+  ~VariantMatcher();
 
-  /// \brief Empties the list.
+  /// \brief Copy the \c VariantMatcher, by making a copy of its representation.
+  VariantMatcher &operator=(const VariantMatcher &Other);
+
+  /// \brief Makes the matcher the "null" matcher.
   void reset();
 
-  /// \brief Whether the list is empty.
-  bool empty() const { return List.empty(); }
+  /// \brief Whether the matcher is null.
+  bool isNull() const { return List.empty(); }
 
-  ArrayRef<const DynTypedMatcher *> matchers() const { return List; }
+  /// \brief Return a single matcher, if there is no ambiguity.
+  ///
+  /// \returns True, and set Out to the matcher, if there is only one matcher.
+  /// False, if the underlying matcher is a polymorphic matcher with
+  /// more than one representation.
+  bool getSingleMatcher(const DynTypedMatcher *&Out) const;
 
   /// \brief Determines if any of the contained matchers can be converted
   ///   to \c Matcher<T>.
@@ -65,35 +86,35 @@ public:
   /// result would be ambigous and false is returned.
   template <class T>
   bool hasTypedMatcher() const {
-    size_t Matches = 0;
-    for (size_t I = 0, E = List.size(); I != E; ++I) {
-      Matches += ast_matchers::internal::Matcher<T>::canConstructFrom(*List[I]);
-    }
-    return Matches == 1;
+    return getTypedMatcher(
+        &ast_matchers::internal::Matcher<T>::canConstructFrom) != NULL;
   }
 
   /// \brief Wrap the correct matcher as a \c Matcher<T>.
   ///
-  /// Selects the appropriate matcher from the list and returns it as a
-  /// \c Matcher<T>.
+  /// Selects the appropriate matcher from the wrapped matchers and returns it
+  /// as a \c Matcher<T>.
   /// Asserts that \c hasTypedMatcher<T>() is true.
   template <class T>
   ast_matchers::internal::Matcher<T> getTypedMatcher() const {
     assert(hasTypedMatcher<T>());
-    for (size_t I = 0, E = List.size(); I != E; ++I) {
-      if (ast_matchers::internal::Matcher<T>::canConstructFrom(*List[I]))
-        return ast_matchers::internal::Matcher<T>::constructFrom(*List[I]);
-    }
-    llvm_unreachable("!hasTypedMatcher<T>()");
+    return ast_matchers::internal::Matcher<T>::constructFrom(*getTypedMatcher(
+        &ast_matchers::internal::Matcher<T>::canConstructFrom));
   }
 
   /// \brief String representation of the type of the value.
   ///
-  /// If there are more than one matcher on the list, the string will show all
+  /// If the underlying matcher is a polymorphic one, the string will show all
   /// the types.
   std::string getTypeAsString() const;
 
 private:
+  /// \brief Returns the matcher that passes the callback.
+  ///
+  /// Returns NULL if no matcher passes the test, or if more than one do.
+  const DynTypedMatcher *
+  getTypedMatcher(bool (*CanConstructCallback)(const DynTypedMatcher &)) const;
+
   std::vector<const DynTypedMatcher *> List;
 };
 
@@ -108,7 +129,7 @@ private:
 /// Supported types:
 ///  - \c unsigned
 ///  - \c std::string
-///  - \c MatcherList (\c DynTypedMatcher / \c Matcher<T>)
+///  - \c VariantMatcher (\c DynTypedMatcher / \c Matcher<T>)
 class VariantValue {
 public:
   VariantValue() : Type(VT_Nothing) {}
@@ -120,8 +141,7 @@ public:
   /// \brief Specific constructors for each supported type.
   VariantValue(unsigned Unsigned);
   VariantValue(const std::string &String);
-  VariantValue(const DynTypedMatcher &Matcher);
-  VariantValue(const MatcherList &Matchers);
+  VariantValue(const VariantMatcher &Matchers);
 
   /// \brief Unsigned value functions.
   bool isUnsigned() const;
@@ -134,19 +154,19 @@ public:
   void setString(const std::string &String);
 
   /// \brief Matcher value functions.
-  bool isMatchers() const;
-  const MatcherList &getMatchers() const;
-  void setMatchers(const MatcherList &Matchers);
+  bool isMatcher() const;
+  const VariantMatcher &getMatcher() const;
+  void setMatcher(const VariantMatcher &Matcher);
 
   /// \brief Shortcut functions.
   template <class T>
   bool hasTypedMatcher() const {
-    return isMatchers() && getMatchers().hasTypedMatcher<T>();
+    return isMatcher() && getMatcher().hasTypedMatcher<T>();
   }
 
   template <class T>
   ast_matchers::internal::Matcher<T> getTypedMatcher() const {
-    return getMatchers().getTypedMatcher<T>();
+    return getMatcher().getTypedMatcher<T>();
   }
 
   /// \brief String representation of the type of the value.
@@ -160,14 +180,14 @@ private:
     VT_Nothing,
     VT_Unsigned,
     VT_String,
-    VT_Matchers
+    VT_Matcher
   };
 
   /// \brief All supported value types.
   union AllValues {
     unsigned Unsigned;
     std::string *String;
-    MatcherList *Matchers;
+    VariantMatcher *Matcher;
   };
 
   ValueType Type;

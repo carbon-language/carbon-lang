@@ -74,14 +74,14 @@ public:
     ///
     /// \param Args The argument list for the matcher.
     ///
-    /// \return The matcher objects constructed by the processor, or an empty
-    ///   list if an error occurred. In that case, \c Error will contain a
+    /// \return The matcher objects constructed by the processor, or a null
+    ///   matcher if an error occurred. In that case, \c Error will contain a
     ///   description of the error.
-    virtual MatcherList actOnMatcherExpression(StringRef MatcherName,
-                                               const SourceRange &NameRange,
-                                               StringRef BindID,
-                                               ArrayRef<ParserValue> Args,
-                                               Diagnostics *Error) = 0;
+    virtual VariantMatcher actOnMatcherExpression(StringRef MatcherName,
+                                                  const SourceRange &NameRange,
+                                                  StringRef BindID,
+                                                  ArrayRef<ParserValue> Args,
+                                                  Diagnostics *Error) = 0;
   };
 
   /// \brief Parse a matcher expression, creating matchers from the registry.
