@@ -259,22 +259,6 @@ InputArgList *OptTable::ParseArgs(const char *const *ArgBegin,
       continue;
     }
 
-    // FIXME: Remove once clients are updated to use a KIND_REMAINING_ARGS
-    // option to handle this explicitly instead.
-    if (Str == "--") {
-      // Everything after -- is a filename.
-      ++Index;
-
-      assert(TheInputOptionID != 0 && "Invalid input option ID.");
-      while (Index < End) {
-        Args->append(new Arg(getOption(TheInputOptionID),
-                             Args->getArgString(Index), Index,
-                             Args->getArgString(Index)));
-        ++Index;
-      }
-      break;
-    }
-
     unsigned Prev = Index;
     Arg *A = ParseOneArg(*Args, Index, FlagsToInclude, FlagsToExclude);
     assert(Index > Prev && "Parser failed to consume argument.");

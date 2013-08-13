@@ -157,19 +157,6 @@ TEST(Option, AliasArgs) {
   EXPECT_EQ(AL->getAllArgValues(OPT_B)[1], "bar");
 }
 
-TEST(Option, DashDash) {
-  TestOptTable T;
-  unsigned MAI, MAC;
-
-  const char *MyArgs[] = { "-A", "--", "-B", "--" };
-  OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_FALSE(AL->hasArg(OPT_B));
-  EXPECT_EQ(AL->getAllArgValues(OPT_INPUT).size(), 2U);
-  EXPECT_EQ(AL->getAllArgValues(OPT_INPUT)[0], "-B");
-  EXPECT_EQ(AL->getAllArgValues(OPT_INPUT)[1], "--");
-}
-
 TEST(Option, SlurpEmpty) {
   TestOptTable T;
   unsigned MAI, MAC;
@@ -178,7 +165,7 @@ TEST(Option, SlurpEmpty) {
   OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
   EXPECT_TRUE(AL->hasArg(OPT_A));
   EXPECT_TRUE(AL->hasArg(OPT_Slurp));
-  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp).size(), 0);
+  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp).size(), 0U);
 }
 
 TEST(Option, Slurp) {
