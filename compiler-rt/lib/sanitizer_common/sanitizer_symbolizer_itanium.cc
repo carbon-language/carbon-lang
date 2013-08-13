@@ -22,8 +22,8 @@
 // because we do not require a C++ ABI library to be linked to a program
 // using sanitizers; if it's not present, we'll just use the mangled name.
 namespace __cxxabiv1 {
-  SANITIZER_WEAK_ATTRIBUTE
-  extern "C" char *__cxa_demangle(const char *mangled, char *buffer,
+  extern "C" SANITIZER_WEAK_ATTRIBUTE
+  char *__cxa_demangle(const char *mangled, char *buffer,
                                   size_t *length, int *status);
 }
 
