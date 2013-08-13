@@ -169,3 +169,30 @@ TEST(Option, DashDash) {
   EXPECT_EQ(AL->getAllArgValues(OPT_INPUT)[0], "-B");
   EXPECT_EQ(AL->getAllArgValues(OPT_INPUT)[1], "--");
 }
+
+TEST(Option, SlurpEmpty) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-A", "-slurp" };
+  OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
+  EXPECT_TRUE(AL->hasArg(OPT_A));
+  EXPECT_TRUE(AL->hasArg(OPT_Slurp));
+  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp).size(), 0);
+}
+
+TEST(Option, Slurp) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+
+  const char *MyArgs[] = { "-A", "-slurp", "-B", "--", "foo" };
+  OwningPtr<InputArgList> AL(T.ParseArgs(MyArgs, array_endof(MyArgs), MAI, MAC));
+  EXPECT_EQ(AL->size(), 2U);
+  EXPECT_TRUE(AL->hasArg(OPT_A));
+  EXPECT_FALSE(AL->hasArg(OPT_B));
+  EXPECT_TRUE(AL->hasArg(OPT_Slurp));
+  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp).size(), 3U);
+  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[0], "-B");
+  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[1], "--");
+  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[2], "foo");
+}

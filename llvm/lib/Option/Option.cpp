@@ -52,6 +52,7 @@ void Option::dump() const {
     P(MultiArgClass);
     P(JoinedOrSeparateClass);
     P(JoinedAndSeparateClass);
+    P(RemainingArgsClass);
 #undef P
   }
 
@@ -214,6 +215,16 @@ Arg *Option::accept(const ArgList &Args,
     return new Arg(UnaliasedOption, Spelling, Index - 2,
                    Args.getArgString(Index - 2) + ArgSize,
                    Args.getArgString(Index - 1));
+  case RemainingArgsClass: {
+    // Matches iff this is an exact match.
+    // FIXME: Avoid strlen.
+    if (ArgSize != strlen(Args.getArgString(Index)))
+      return 0;
+    Arg *A = new Arg(UnaliasedOption, Spelling, Index++);
+    while (Index < Args.getNumInputArgStrings())
+      A->getValues().push_back(Args.getArgString(Index++));
+    return A;
+  }
   default:
     llvm_unreachable("Invalid option kind!");
   }

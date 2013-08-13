@@ -259,6 +259,8 @@ InputArgList *OptTable::ParseArgs(const char *const *ArgBegin,
       continue;
     }
 
+    // FIXME: Remove once clients are updated to use a KIND_REMAINING_ARGS
+    // option to handle this explicitly instead.
     if (Str == "--") {
       // Everything after -- is a filename.
       ++Index;
@@ -308,6 +310,7 @@ static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
     break;
 
   case Option::SeparateClass: case Option::JoinedOrSeparateClass:
+  case Option::RemainingArgsClass:
     Name += ' ';
     // FALLTHROUGH
   case Option::JoinedClass: case Option::CommaJoinedClass:
