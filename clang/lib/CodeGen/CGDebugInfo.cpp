@@ -1926,10 +1926,7 @@ llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
   }
 
   // Verify that any cached debug info still exists.
-  if (V != 0)
-    return llvm::DIType(cast<llvm::MDNode>(V));
-
-  return llvm::DIType();
+  return llvm::DIType(cast_or_null<llvm::MDNode>(V));
 }
 
 void CGDebugInfo::completeFwdDecl(const RecordDecl &RD) {
@@ -1972,9 +1969,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit,
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
 
-  llvm::DIType T = getCompletedTypeOrNull(Ty);
-
-  if (T) {
+  if (llvm::DIType T = getCompletedTypeOrNull(Ty)) {
     // If we're looking for a definition, make sure we have definitions of any
     // underlying types.
     if (const TypedefType* TTy = dyn_cast<TypedefType>(Ty))
