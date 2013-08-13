@@ -10,8 +10,8 @@ void test() {
   static_assert(sizeof(char&) == 1, "bad size");
 }
 
-void f();  // expected-note{{possible target for call}}
-void f(int);  // expected-note{{possible target for call}}
+int f();  // expected-note{{possible target for call}}
+int f(int);  // expected-note{{possible target for call}}
 void g() { 
   sizeof(&f); // expected-error{{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}} \
   // expected-warning{{expression result unused}}

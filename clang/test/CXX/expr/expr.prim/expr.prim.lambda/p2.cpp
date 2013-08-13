@@ -15,7 +15,7 @@ struct P {
 };
 
 void unevaluated_operand(P &p, int i) {
-  int i2 = sizeof([]()->void{}()); // expected-error{{lambda expression in an unevaluated operand}}
+  int i2 = sizeof([] ()->int { return 0; }()); // expected-error{{lambda expression in an unevaluated operand}}
   const std::type_info &ti1 = typeid([&]() -> P& { return p; }());
   const std::type_info &ti2 = typeid([&]() -> int { return i; }());  // expected-error{{lambda expression in an unevaluated operand}}
 }

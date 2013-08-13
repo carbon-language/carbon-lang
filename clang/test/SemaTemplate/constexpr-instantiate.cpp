@@ -201,8 +201,8 @@ namespace NoInstantiationWhenSelectingOverload {
     int n;
   };
 
-  void f(S);
-  void f(int);
+  int f(S);
+  int f(int);
 
   void g() { f(0); }
   void h() { (void)sizeof(f(0)); }

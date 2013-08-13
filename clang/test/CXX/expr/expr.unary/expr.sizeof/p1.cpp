@@ -18,3 +18,11 @@ void test(A *a) {
   x = sizeof(a->bitX = 3); // expected-error {{invalid application of 'sizeof' to bit-field}}
   x = sizeof(a->bitY += 3); // expected-error {{invalid application of 'sizeof' to bit-field}}
 }
+
+void test2() {
+  int x;
+  x = sizeof(void); // expected-error {{invalid application of 'sizeof' to an incomplete type 'void'}}
+  x = sizeof(int()); // expected-error {{invalid application of 'sizeof' to a function type}}
+  x = sizeof(test2()); // expected-error {{invalid application of 'sizeof' to an incomplete type 'void'}}
+  x = sizeof(test2); // expected-error {{invalid application of 'sizeof' to a function type}}
+}

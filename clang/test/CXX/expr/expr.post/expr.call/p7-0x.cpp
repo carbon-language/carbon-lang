@@ -38,7 +38,7 @@ namespace PR11131 {
 
   S &getS();
 
-  void f(...);
+  int f(...);
 
   void g() {
     (void)sizeof(f(getS()));
