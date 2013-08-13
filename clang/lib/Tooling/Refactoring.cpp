@@ -206,8 +206,9 @@ void deduplicate(std::vector<Replacement> &Replaces,
     if (ConflictRange.overlapsWith(Current)) {
       // Extend conflicted range
       ConflictRange = Range(ConflictRange.getOffset(),
-                            Current.getOffset() + Current.getLength() -
-                                ConflictRange.getOffset());
+                            std::max(ConflictRange.getLength(),
+                                     Current.getOffset() + Current.getLength() -
+                                         ConflictRange.getOffset()));
       ++ConflictLength;
     } else {
       if (ConflictLength > 1)

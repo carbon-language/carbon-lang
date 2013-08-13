@@ -400,20 +400,25 @@ TEST(DeduplicateTest, detectsConflicts) {
     // returned conflict info refers to.
     Input.push_back(Replacement("fileA", 0,  5, " foo "));  // 0
     Input.push_back(Replacement("fileA", 5,  5, " bar "));  // 1
+    Input.push_back(Replacement("fileA", 6,  0, " bar "));  // 3
     Input.push_back(Replacement("fileA", 5,  5, " moo "));  // 2
-    Input.push_back(Replacement("fileA", 15, 5, " golf ")); // 4
-    Input.push_back(Replacement("fileA", 16, 5, " bag "));  // 5
-    Input.push_back(Replacement("fileA", 10, 3, " club ")); // 6
+    Input.push_back(Replacement("fileA", 7,  2, " bar "));  // 4
+    Input.push_back(Replacement("fileA", 15, 5, " golf ")); // 5
+    Input.push_back(Replacement("fileA", 16, 5, " bag "));  // 6
+    Input.push_back(Replacement("fileA", 10, 3, " club ")); // 7
+
+    // #3 is special in that it is completely contained by another conflicting
+    // Replacement. #4 ensures #3 hasn't messed up the conflicting range size.
 
     std::vector<Range> Conflicts;
     deduplicate(Input, Conflicts);
 
     // No duplicates
-    ASSERT_EQ(6u, Input.size());
+    ASSERT_EQ(8u, Input.size());
     ASSERT_EQ(2u, Conflicts.size());
     ASSERT_EQ(1u, Conflicts[0].getOffset());
-    ASSERT_EQ(2u, Conflicts[0].getLength());
-    ASSERT_EQ(4u, Conflicts[1].getOffset());
+    ASSERT_EQ(4u, Conflicts[0].getLength());
+    ASSERT_EQ(6u, Conflicts[1].getOffset());
     ASSERT_EQ(2u, Conflicts[1].getLength());
   }
 }
