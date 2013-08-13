@@ -886,9 +886,11 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     mangleType(T, SourceRange(), QMM_Escape);
     break;
   }
-  case TemplateArgument::Declaration:
-    mangle(cast<NamedDecl>(TA.getAsDecl()), "$1?");
+  case TemplateArgument::Declaration: {
+    const NamedDecl *ND = cast<NamedDecl>(TA.getAsDecl());
+    mangle(ND, TA.isDeclForReferenceParam() ? "$E?" : "$1?");
     break;
+  }
   case TemplateArgument::Integral:
     mangleIntegerLiteral(TA.getAsIntegral(),
                          TA.getIntegralType()->isBooleanType());

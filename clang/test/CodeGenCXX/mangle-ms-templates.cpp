@@ -190,3 +190,14 @@ void template_template_specialization<void (Type<Thing<Second, true>, Second>)>(
 template <decltype(nullptr)> struct S1 {};
 void f(S1<nullptr>) {}
 // CHECK: "\01?f@@YAXU?$S1@$0A@@@@Z"
+
+struct record {
+  int first;
+  int second;
+};
+template <const record &>
+struct type1 {
+};
+extern const record inst;
+void recref(type1<inst>) {}
+// CHECK: "\01?recref@@YAXU?$type1@$E?inst@@3Urecord@@B@@@Z"
