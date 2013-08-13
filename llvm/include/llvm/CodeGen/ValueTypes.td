@@ -63,19 +63,20 @@ def v8i64  : ValueType<512, 39>;   //  8 x i64 vector value
 def v16i64 : ValueType<1024,40>;   // 16 x i64 vector value
 
 def v2f16  : ValueType<32 , 41>;   //  2 x f16 vector value
-def v2f32  : ValueType<64 , 42>;   //  2 x f32 vector value
-def v4f32  : ValueType<128, 43>;   //  4 x f32 vector value
-def v8f32  : ValueType<256, 44>;   //  8 x f32 vector value
-def v16f32 : ValueType<512, 45>;   // 16 x f32 vector value
-def v2f64  : ValueType<128, 46>;   //  2 x f64 vector value
-def v4f64  : ValueType<256, 47>;   //  4 x f64 vector value
-def v8f64  : ValueType<512, 48>;   //  8 x f64 vector value
+def v8f16  : ValueType<128, 42>;   //  8 x f16 vector value
+def v2f32  : ValueType<64 , 43>;   //  2 x f32 vector value
+def v4f32  : ValueType<128, 44>;   //  4 x f32 vector value
+def v8f32  : ValueType<256, 45>;   //  8 x f32 vector value
+def v16f32 : ValueType<512, 46>;   // 16 x f32 vector value
+def v2f64  : ValueType<128, 47>;   //  2 x f64 vector value
+def v4f64  : ValueType<256, 48>;   //  4 x f64 vector value
+def v8f64  : ValueType<512, 49>;   //  8 x f64 vector value
 
 
-def x86mmx : ValueType<64 , 49>;   // X86 MMX value
-def FlagVT : ValueType<0  , 50>;   // Pre-RA sched glue
-def isVoid : ValueType<0  , 51>;   // Produces no value
-def untyped: ValueType<8  , 52>;   // Produces an untyped value
+def x86mmx : ValueType<64 , 50>;   // X86 MMX value
+def FlagVT : ValueType<0  , 51>;   // Pre-RA sched glue
+def isVoid : ValueType<0  , 52>;   // Produces no value
+def untyped: ValueType<8  , 53>;   // Produces an untyped value
 def MetadataVT: ValueType<0, 250>; // Metadata
 
 // Pseudo valuetype mapped to the current pointer size to any address space.
