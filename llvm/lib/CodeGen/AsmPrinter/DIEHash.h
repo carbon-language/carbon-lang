@@ -59,7 +59,7 @@ private:
 
   /// \brief Collects the attributes of DIE \param Die into the \param Attrs
   /// structure.
-  void collectAttributes(DIE *Die, DIEAttrs Attrs);
+  void collectAttributes(DIE *Die, DIEAttrs *Attrs);
 
   /// \brief Hashes the attributes in \param Attrs in order.
   void hashAttributes(DIEAttrs Attrs);
