@@ -962,6 +962,8 @@ public:
                                  llvm::StringRef MacroUnexpanded,
                                  llvm::StringRef MacroExpanded,
                                  InclusionPathHandle InclusionPathHandle) {
+    if (InNestedHeader)
+      return;
     StringHandle MacroName = addString(II->getName());
     PPItemKey InstanceKey(PP, MacroName, H, InstanceLoc);
     PPItemKey DefinitionKey(PP, MacroName, H, DefinitionLoc);
