@@ -62,6 +62,7 @@ static StringRef stateToString(ConsumedState State) {
   case consumed::CS_Consumed:
     return "consumed";
   }
+  llvm_unreachable("invalid enum");
 }
 
 namespace {
