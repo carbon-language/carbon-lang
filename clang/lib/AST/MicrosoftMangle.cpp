@@ -870,7 +870,7 @@ MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
     std::string Name = "_GUID_" + Uuid.lower();
     std::replace(Name.begin(), Name.end(), '-', '_');
 
-    // If we had to peak through an address-of operator, treat this like we are
+    // If we had to peek through an address-of operator, treat this like we are
     // dealing with a pointer type.  Otherwise, treat it like a const reference.
     //
     // N.B. This matches up with the handling of TemplateArgument::Declaration
