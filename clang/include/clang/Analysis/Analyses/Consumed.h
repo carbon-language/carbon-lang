@@ -51,9 +51,6 @@ namespace consumed {
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
     ///
-    /// \param VariableName -- The name of the variable that holds the unique
-    /// value.
-    ///
     /// \param Loc -- The SourceLocation of the method invocation.
     virtual void warnUseOfTempWhileConsumed(StringRef MethodName,
                                             SourceLocation Loc) {}
@@ -61,9 +58,6 @@ namespace consumed {
     /// Warn about use-in-unknown-state errors.
     /// \param MethodName -- The name of the method that was incorrectly
     /// invoked.
-    ///
-    /// \param VariableName -- The name of the variable that holds the unique
-    /// value.
     ///
     /// \param Loc -- The SourceLocation of the method invocation.
     virtual void warnUseOfTempInUnknownState(StringRef MethodName,
