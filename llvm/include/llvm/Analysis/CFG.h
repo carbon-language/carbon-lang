@@ -49,6 +49,9 @@ unsigned GetSuccessorNumber(BasicBlock *BB, BasicBlock *Succ);
 bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
                     bool AllowIdenticalEdges = false);
 
+/// \brief Determine whether instruction 'To' is reachable from 'From',
+/// returning true if uncertain.
+///
 /// Determine whether there is a path from From to To within a single function.
 /// Returns false only if we can prove that once 'From' has been executed then
 /// 'To' can not be executed. Conservatively returns true.
@@ -62,6 +65,15 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// on branchy code but not loops, and LI is most useful on code with loops but
 /// does not help on branchy code outside loops.
 bool isPotentiallyReachable(const Instruction *From, const Instruction *To,
+                            DominatorTree *DT = 0, LoopInfo *LI = 0);
+
+/// \brief Determine whether block 'To' is reachable from 'From', returning
+/// true if uncertain.
+///
+/// Determine whether there is a path from From to To within a single function.
+/// Returns false only if we can prove that once 'From' has been reached then
+/// 'To' can not be executed. Conservatively returns true.
+bool isPotentiallyReachable(const BasicBlock *From, const BasicBlock *To,
                             DominatorTree *DT = 0, LoopInfo *LI = 0);
 
 } // End llvm namespace

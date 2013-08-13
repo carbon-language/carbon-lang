@@ -147,6 +147,23 @@ TEST_F(IsPotentiallyReachableTest, SameBlockPath) {
   ExpectPath(true);
 }
 
+TEST_F(IsPotentiallyReachableTest, SameBlockNoLoop) {
+  ParseAssembly(
+      "define void @test() {\n"
+      "entry:\n"
+      "  br label %middle\n"
+      "middle:\n"
+      "  %B = bitcast i8 undef to i8\n"
+      "  bitcast i8 undef to i8\n"
+      "  bitcast i8 undef to i8\n"
+      "  %A = bitcast i8 undef to i8\n"
+      "  br label %nextblock\n"
+      "nextblock:\n"
+      "  ret void\n"
+      "}\n");
+  ExpectPath(false);
+}
+
 TEST_F(IsPotentiallyReachableTest, StraightNoPath) {
   ParseAssembly(
       "define void @test() {\n"
