@@ -120,6 +120,21 @@ TEST_F(ReplacementTest, CanApplyReplacements) {
   EXPECT_EQ("line1\nreplaced\nother\nline4", Context.getRewrittenText(ID));
 }
 
+// FIXME: Remove this test case when Replacements is implemented as std::vector
+// instead of std::set. The other ReplacementTest tests will need to be updated
+// at that point as well.
+TEST_F(ReplacementTest, VectorCanApplyReplacements) {
+  FileID ID = Context.createInMemoryFile("input.cpp",
+                                         "line1\nline2\nline3\nline4");
+  std::vector<Replacement> Replaces;
+  Replaces.push_back(Replacement(Context.Sources, Context.getLocation(ID, 2, 1),
+                                 5, "replaced"));
+  Replaces.push_back(
+      Replacement(Context.Sources, Context.getLocation(ID, 3, 1), 5, "other"));
+  EXPECT_TRUE(applyAllReplacements(Replaces, Context.Rewrite));
+  EXPECT_EQ("line1\nreplaced\nother\nline4", Context.getRewrittenText(ID));
+}
+
 TEST_F(ReplacementTest, SkipsDuplicateReplacements) {
   FileID ID = Context.createInMemoryFile("input.cpp",
                                          "line1\nline2\nline3\nline4");

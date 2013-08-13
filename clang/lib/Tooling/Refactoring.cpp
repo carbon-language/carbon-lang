@@ -143,6 +143,23 @@ bool applyAllReplacements(const Replacements &Replaces, Rewriter &Rewrite) {
   return Result;
 }
 
+// FIXME: Remove this function when Replacements is implemented as std::vector
+// instead of std::set.
+bool applyAllReplacements(const std::vector<Replacement> &Replaces,
+                          Rewriter &Rewrite) {
+  bool Result = true;
+  for (std::vector<Replacement>::const_iterator I = Replaces.begin(),
+                                                E = Replaces.end();
+       I != E; ++I) {
+    if (I->isApplicable()) {
+      Result = I->apply(Rewrite) && Result;
+    } else {
+      Result = false;
+    }
+  }
+  return Result;
+}
+
 std::string applyAllReplacements(StringRef Code, const Replacements &Replaces) {
   FileManager Files((FileSystemOptions()));
   DiagnosticsEngine Diagnostics(

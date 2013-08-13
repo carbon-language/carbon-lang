@@ -147,6 +147,15 @@ typedef std::set<Replacement, Replacement::Less> Replacements;
 /// \returns true if all replacements apply. false otherwise.
 bool applyAllReplacements(const Replacements &Replaces, Rewriter &Rewrite);
 
+/// \brief Apply all replacements in \p Replaces to the Rewriter \p Rewrite.
+///
+/// Replacement applications happen independently of the success of
+/// other applications.
+///
+/// \returns true if all replacements apply. false otherwise.
+bool applyAllReplacements(const std::vector<Replacement> &Replaces,
+                          Rewriter &Rewrite);
+
 /// \brief Applies all replacements in \p Replaces to \p Code.
 ///
 /// This completely ignores the path stored in each replacement. If one or more
