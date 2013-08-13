@@ -130,13 +130,6 @@ dfsan_label __dfsan_union_load(dfsan_label *ls, size_t n) {
   return label;
 }
 
-extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-void *__dfsan_memcpy(void *dest, const void *src, size_t n) {
-  dfsan_label *sdest = shadow_for(dest), *ssrc = shadow_for((void *)src);
-  internal_memcpy((void *)sdest, (void *)ssrc, n * sizeof(dfsan_label));
-  return internal_memcpy(dest, src, n);
-}
-
 // Like __dfsan_union, but for use from the client or custom functions.  Hence
 // the equality comparison is done here before calling __dfsan_union.
 SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
