@@ -1033,7 +1033,9 @@ compare_callback_t compare_callback = [](const void *a, const void *b) -> int {
      if (a_ptr > b_ptr) return +1;
      return 0;
 };
+typedef Class (*class_getSuperclass_type)(void *isa);
 range_callback_t range_callback = [](task_t task, void *baton, unsigned type, uintptr_t ptr_addr, uintptr_t ptr_size) -> void {
+    class_getSuperclass_type class_getSuperclass_impl = (class_getSuperclass_type)class_getSuperclass;
     callback_baton_t *info = (callback_baton_t *)baton;
     if (sizeof(Class) <= ptr_size) {
         Class *curr_class_ptr = (Class *)ptr_addr;
@@ -1049,13 +1051,13 @@ range_callback_t range_callback = [](task_t task, void *baton, unsigned type, ui
                 if (info->isa == isa)
                     match = true;
                 else { // if (info->objc.match_superclasses) {
-                    Class super = (Class)class_getSuperclass(isa);
+                    Class super = class_getSuperclass_impl(isa);
                     while (super) {
                         if (super == info->isa) {
                             match = true;
                             break;
                         }
-                        super = (Class)class_getSuperclass(super);
+                        super = class_getSuperclass_impl(super);
                     }
                 }
             }
