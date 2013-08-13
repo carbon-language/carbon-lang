@@ -9712,10 +9712,9 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
   SDValue CC = Op.getOperand(2);
   MVT VT = Op.getValueType().getSimpleVT();
 
-  EVT OpVT = Op0.getValueType();
-  assert(OpVT.getVectorElementType().getSizeInBits() >= 32 &&
+  assert(Op0.getValueType().getVectorElementType().getSizeInBits() >= 32 &&
          Op.getValueType().getScalarType() == MVT::i1 &&
-        "Cannot set masked compare for this operation");
+         "Cannot set masked compare for this operation");
 
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
   SDLoc dl(Op);
@@ -9759,10 +9758,9 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
 #endif
 
     unsigned SSECC = translateX86FSETCC(SetCCOpcode, Op0, Op1);
-    unsigned  Opc = X86ISD::CMPP;
-    unsigned NumElems = VT.getVectorNumElements();
+    unsigned Opc = X86ISD::CMPP;
     if (Subtarget->hasAVX512() && VT.getVectorElementType() == MVT::i1) {
-      assert(NumElems <=16);
+      assert(VT.getVectorNumElements() <= 16);
       Opc = X86ISD::CMPM;
     }
     // In the two special cases we can't handle, emit two comparisons.
