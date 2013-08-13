@@ -515,6 +515,7 @@ struct _LIBCPP_TYPE_VIS_ONLY plus<void>
     template <class _T1, class _T2>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) + _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -537,6 +538,7 @@ struct _LIBCPP_TYPE_VIS_ONLY minus<void>
     template <class _T1, class _T2>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) - _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -559,6 +561,7 @@ struct _LIBCPP_TYPE_VIS_ONLY multiplies<void>
     template <class _T1, class _T2>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) * _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -581,6 +584,7 @@ struct _LIBCPP_TYPE_VIS_ONLY divides<void>
     template <class _T1, class _T2>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) / _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -603,6 +607,7 @@ struct _LIBCPP_TYPE_VIS_ONLY modulus<void>
     template <class _T1, class _T2>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) % _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -625,6 +630,7 @@ struct _LIBCPP_TYPE_VIS_ONLY negate<void>
     template <class _Tp>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_Tp&& __x) const
         { return -_VSTD::forward<_Tp>(__x); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -647,6 +653,7 @@ struct _LIBCPP_TYPE_VIS_ONLY equal_to<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) == _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -669,6 +676,7 @@ struct _LIBCPP_TYPE_VIS_ONLY not_equal_to<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) != _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -691,6 +699,7 @@ struct _LIBCPP_TYPE_VIS_ONLY greater<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) > _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -715,6 +724,7 @@ struct _LIBCPP_TYPE_VIS_ONLY greater_equal<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) >= _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -737,6 +747,7 @@ struct _LIBCPP_TYPE_VIS_ONLY less_equal<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) <= _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -759,6 +770,7 @@ struct _LIBCPP_TYPE_VIS_ONLY logical_and<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) && _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -781,6 +793,7 @@ struct _LIBCPP_TYPE_VIS_ONLY logical_or<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) || _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -803,6 +816,7 @@ struct _LIBCPP_TYPE_VIS_ONLY logical_not<void>
     template <class _Tp>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_Tp&& __x) const
         { return !_VSTD::forward<_Tp>(__x); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -825,6 +839,7 @@ struct _LIBCPP_TYPE_VIS_ONLY bit_and<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) & _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -847,6 +862,7 @@ struct _LIBCPP_TYPE_VIS_ONLY bit_or<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) | _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -869,6 +885,7 @@ struct _LIBCPP_TYPE_VIS_ONLY bit_xor<void>
     template <class _T1, class _T2> _LIBCPP_INLINE_VISIBILITY
     auto operator()(_T1&& __t, _T2&& __u) const
         { return _VSTD::forward<_T1>(__t) ^ _VSTD::forward<_T2>(__u); }
+    typedef void is_transparent;
 };
 #endif
 
@@ -887,6 +904,7 @@ struct _LIBCPP_TYPE_VIS_ONLY bit_not<void>
     template <class _Tp>
     _LIBCPP_INLINE_VISIBILITY auto operator()(_Tp&& __x) const
         { return ~_VSTD::forward<_Tp>(__x); }
+    typedef void is_transparent;
 };
 #endif
 
