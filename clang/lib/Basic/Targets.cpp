@@ -5138,6 +5138,64 @@ namespace {
   };
 }
 
+namespace {
+class XCoreTargetInfo : public TargetInfo {
+  static const Builtin::Info BuiltinInfo[];
+public:
+  XCoreTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    BigEndian = false;
+    NoAsmVariants = true;
+    LongLongAlign = 32;
+    SuitableAlign = 32;
+    DoubleAlign = LongDoubleAlign = 32;
+    UseZeroLengthBitfieldAlignment = true;
+    DescriptionString = "e-p:32:32:32-a0:0:32-n32"
+                        "-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32"
+                        "-f16:16:32-f32:32:32-f64:32:32";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    Builder.defineMacro("__XS1B__");
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    Records = BuiltinInfo;
+    NumRecords = clang::XCore::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  }
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::VoidPtrBuiltinVaList;
+  }
+  virtual const char *getClobbers() const {
+    return "";
+  }
+  virtual void getGCCRegNames(const char * const *&Names,
+                              unsigned &NumNames) const {
+    static const char * const GCCRegNames[] = {
+      "r0",   "r1",   "r2",   "r3",   "r4",   "r5",   "r6",   "r7",
+      "r8",   "r9",   "r10",  "r11",  "cp",   "dp",   "sp",   "lr"
+    };
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const {
+    Aliases = NULL;
+    NumAliases = 0;
+  }
+  virtual bool validateAsmConstraint(const char *&Name,
+                                     TargetInfo::ConstraintInfo &Info) const {
+    return false;
+  }
+};
+
+const Builtin::Info XCoreTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
+                                              ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsXCore.def"
+};
+} // end anonymous namespace.
+
 
 //===----------------------------------------------------------------------===//
 // Driver code
@@ -5149,6 +5207,9 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   switch (Triple.getArch()) {
   default:
     return NULL;
+
+  case llvm::Triple::xcore:
+    return new XCoreTargetInfo(Triple);
 
   case llvm::Triple::hexagon:
     return new HexagonTargetInfo(Triple);

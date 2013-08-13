@@ -131,6 +131,16 @@ namespace clang {
         LastTSBuiltin
     };
   }
+
+  /// \brief XCore builtins
+  namespace XCore {
+    enum {
+        LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsXCore.def"
+        LastTSBuiltin
+    };
+  }
 } // end namespace clang.
 
 #endif

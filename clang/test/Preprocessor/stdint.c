@@ -963,6 +963,114 @@
 // I386_MINGW32:WCHAR_MIN_ 0U
 //
 //
+// RUN: %clang_cc1 -E -ffreestanding -triple=xcore-none-none %s | FileCheck -check-prefix XCORE %s
+//
+// XCORE:typedef signed long long int int64_t;
+// XCORE:typedef unsigned long long int uint64_t;
+// XCORE:typedef int64_t int_least64_t;
+// XCORE:typedef uint64_t uint_least64_t;
+// XCORE:typedef int64_t int_fast64_t;
+// XCORE:typedef uint64_t uint_fast64_t;
+//
+// XCORE:typedef signed int int32_t;
+// XCORE:typedef unsigned int uint32_t;
+// XCORE:typedef int32_t int_least32_t;
+// XCORE:typedef uint32_t uint_least32_t;
+// XCORE:typedef int32_t int_fast32_t;
+// XCORE:typedef uint32_t uint_fast32_t;
+//
+// XCORE:typedef signed short int16_t;
+// XCORE:typedef unsigned short uint16_t;
+// XCORE:typedef int16_t int_least16_t;
+// XCORE:typedef uint16_t uint_least16_t;
+// XCORE:typedef int16_t int_fast16_t;
+// XCORE:typedef uint16_t uint_fast16_t;
+//
+// XCORE:typedef signed char int8_t;
+// XCORE:typedef unsigned char uint8_t;
+// XCORE:typedef int8_t int_least8_t;
+// XCORE:typedef uint8_t uint_least8_t;
+// XCORE:typedef int8_t int_fast8_t;
+// XCORE:typedef uint8_t uint_fast8_t;
+//
+// XCORE:typedef int32_t intptr_t;
+// XCORE:typedef uint32_t uintptr_t;
+//
+// XCORE:typedef long long int intmax_t;
+// XCORE:typedef long long unsigned int uintmax_t;
+//
+// XCORE:INT8_MAX_ 127
+// XCORE:INT8_MIN_ (-127 -1)
+// XCORE:UINT8_MAX_ 255
+// XCORE:INT_LEAST8_MIN_ (-127 -1)
+// XCORE:INT_LEAST8_MAX_ 127
+// XCORE:UINT_LEAST8_MAX_ 255
+// XCORE:INT_FAST8_MIN_ (-127 -1)
+// XCORE:INT_FAST8_MAX_ 127
+// XCORE:UINT_FAST8_MAX_ 255
+//
+// XCORE:INT16_MAX_ 32767
+// XCORE:INT16_MIN_ (-32767 -1)
+// XCORE:UINT16_MAX_ 65535
+// XCORE:INT_LEAST16_MIN_ (-32767 -1)
+// XCORE:INT_LEAST16_MAX_ 32767
+// XCORE:UINT_LEAST16_MAX_ 65535
+// XCORE:INT_FAST16_MIN_ (-32767 -1)
+// XCORE:INT_FAST16_MAX_ 32767
+// XCORE:UINT_FAST16_MAX_ 65535
+//
+// XCORE:INT32_MAX_ 2147483647
+// XCORE:INT32_MIN_ (-2147483647 -1)
+// XCORE:UINT32_MAX_ 4294967295U
+// XCORE:INT_LEAST32_MIN_ (-2147483647 -1)
+// XCORE:INT_LEAST32_MAX_ 2147483647
+// XCORE:UINT_LEAST32_MAX_ 4294967295U
+// XCORE:INT_FAST32_MIN_ (-2147483647 -1)
+// XCORE:INT_FAST32_MAX_ 2147483647
+// XCORE:UINT_FAST32_MAX_ 4294967295U
+//
+// XCORE:INT64_MAX_ 9223372036854775807LL
+// XCORE:INT64_MIN_ (-9223372036854775807LL -1)
+// XCORE:UINT64_MAX_ 18446744073709551615ULL
+// XCORE:INT_LEAST64_MIN_ (-9223372036854775807LL -1)
+// XCORE:INT_LEAST64_MAX_ 9223372036854775807LL
+// XCORE:UINT_LEAST64_MAX_ 18446744073709551615ULL
+// XCORE:INT_FAST64_MIN_ (-9223372036854775807LL -1)
+// XCORE:INT_FAST64_MAX_ 9223372036854775807LL
+// XCORE:UINT_FAST64_MAX_ 18446744073709551615ULL
+//
+// XCORE:INTPTR_MIN_ (-2147483647 -1)
+// XCORE:INTPTR_MAX_ 2147483647
+// XCORE:UINTPTR_MAX_ 4294967295U
+// XCORE:PTRDIFF_MIN_ (-2147483647 -1)
+// XCORE:PTRDIFF_MAX_ 2147483647
+// XCORE:SIZE_MAX_ 4294967295U
+//
+// XCORE:INTMAX_MIN_ (-9223372036854775807LL -1)
+// XCORE:INTMAX_MAX_ 9223372036854775807LL
+// XCORE:UINTMAX_MAX_ 18446744073709551615ULL
+//
+// XCORE:SIG_ATOMIC_MIN_ (-2147483647 -1)
+// XCORE:SIG_ATOMIC_MAX_ 2147483647
+// XCORE:WINT_MIN_ (-2147483647 -1)
+// XCORE:WINT_MAX_ 2147483647
+//
+// XCORE:WCHAR_MAX_ 2147483647
+// XCORE:WCHAR_MIN_ (-2147483647 -1)
+//
+// XCORE:INT8_C_(0) 0
+// XCORE:UINT8_C_(0) 0U
+// XCORE:INT16_C_(0) 0
+// XCORE:UINT16_C_(0) 0U
+// XCORE:INT32_C_(0) 0
+// XCORE:UINT32_C_(0) 0U
+// XCORE:INT64_C_(0) 0LL
+// XCORE:UINT64_C_(0) 0ULL
+//
+// XCORE:INTMAX_C_(0) 0LL
+// XCORE:UINTMAX_C_(0) 0ULL
+//
+//
 // stdint.h forms several macro definitions by pasting together identifiers
 // to form names (eg. int32_t is formed from int ## 32 ## _t). The following 
 // case tests that these joining operations are performed correctly even if

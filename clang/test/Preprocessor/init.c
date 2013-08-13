@@ -2946,3 +2946,6 @@
 // ANDROID: __ANDROID__ 1
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-freebsd < /dev/null | FileCheck -check-prefix PPC64-FREEBSD %s
 // PPC64-FREEBSD-NOT: #define __LONG_DOUBLE_128__ 1
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=xcore-none-none < /dev/null | FileCheck -check-prefix XCORE %s
+// XCORE:#define __XS1B__ 1
