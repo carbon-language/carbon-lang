@@ -39,3 +39,9 @@ int main() {
   const char *blah;
   NSArray *array2 = @[blah]; // expected-error{{collection element of type 'const char *' is not an Objective-C object}}
 }
+
+// rdar://14303083
+id Test14303083() {
+  id obj = @[ @"A", (@"B" @"C")];
+  return @[ @"A", @"B" @"C"]; // expected-warning {{concatenated nsstring literal for an nsarray expression}}
+}

@@ -324,7 +324,8 @@ ExprResult Sema::ActOnObjCBoolLiteral(SourceLocation AtLoc,
 /// \brief Check that the given expression is a valid element of an Objective-C
 /// collection literal.
 static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element, 
-                                                    QualType T) {  
+                                                    QualType T,
+                                                    bool ArrayLiteral = false) {
   // If the expression is type-dependent, there's nothing for us to do.
   if (Element->isTypeDependent())
     return Element;
@@ -401,14 +402,20 @@ static ExprResult CheckObjCCollectionLiteralElement(Sema &S, Expr *Element,
         Recovered = true;
       }
     }
-    
+  
     if (!Recovered) {
       S.Diag(Element->getLocStart(), diag::err_invalid_collection_element)
         << Element->getType();
       return ExprError();
     }
   }
-  
+  if (ArrayLiteral)
+    if (ObjCStringLiteral *getString = dyn_cast<ObjCStringLiteral>(OrigElement)) {
+      if (getString->getString() && getString->getString()->getNumConcatenated() > 1)
+        S.Diag(Element->getLocStart(), diag::warn_concatenated_nsarray_literal)
+        << Element->getType();
+    }
+
   // Make sure that the element has the type that the container factory 
   // function expects. 
   return S.PerformCopyInitialization(
@@ -710,7 +717,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
   for (unsigned I = 0, N = Elements.size(); I != N; ++I) {
     ExprResult Converted = CheckObjCCollectionLiteralElement(*this,
                                                              ElementsBuffer[I],
-                                                             RequiredType);
+                                                             RequiredType, true);
     if (Converted.isInvalid())
       return ExprError();
     

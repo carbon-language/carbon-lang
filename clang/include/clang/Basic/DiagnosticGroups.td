@@ -552,6 +552,7 @@ def ObjCCocoaAPI : DiagGroup<"objc-cocoa-api", [
   ]>;
 
 def ObjCStringComparison : DiagGroup<"objc-string-compare">;
+def ObjCStringConcatenation : DiagGroup<"objc-string-concatenation">;
 def ObjCLiteralComparison : DiagGroup<"objc-literal-compare", [
     ObjCStringComparison
   ]>;

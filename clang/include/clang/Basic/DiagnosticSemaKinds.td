@@ -1898,6 +1898,9 @@ def warn_missing_atsign_prefix : Warning<
 def warn_objc_string_literal_comparison : Warning<
   "direct comparison of a string literal has undefined behavior">, 
   InGroup<ObjCStringComparison>;
+def warn_concatenated_nsarray_literal : Warning<
+  "concatenated nsstring literal for an nsarray expression">,
+  InGroup<ObjCStringConcatenation>;
 def note_objc_literal_comparison_isequal : Note<
   "use 'isEqual:' instead">;
 
