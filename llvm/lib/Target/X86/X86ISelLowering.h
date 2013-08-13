@@ -274,6 +274,13 @@ namespace llvm {
 
       // PCMP* - Vector integer comparisons.
       PCMPEQ, PCMPGT,
+      // PCMP*M - Vector integer comparisons, the result is in a mask vector
+      PCMPEQM, PCMPGTM,
+
+      /// CMPM, CMPMU - Vector comparison generating mask bits for fp and
+      /// integer signed and unsigned data types.
+      CMPM,
+      CMPMU,
 
       // ADD, SUB, SMUL, etc. - Arithmetic operations with FLAGS results.
       ADD, SUB, ADC, SBB, SMUL,

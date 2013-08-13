@@ -118,6 +118,15 @@ def X86cmpp    : SDNode<"X86ISD::CMPP",      SDTX86VFCMP>;
 def X86pcmpeq  : SDNode<"X86ISD::PCMPEQ", SDTIntBinOp, [SDNPCommutative]>;
 def X86pcmpgt  : SDNode<"X86ISD::PCMPGT", SDTIntBinOp>;
 
+def X86IntCmpMask : SDTypeProfile<1, 2,
+    [SDTCisVec<0>, SDTCisSameAs<1, 2>, SDTCisInt<1>]>;
+def X86pcmpeqm  : SDNode<"X86ISD::PCMPEQM", X86IntCmpMask, [SDNPCommutative]>;
+def X86pcmpgtm  : SDNode<"X86ISD::PCMPGTM", X86IntCmpMask>;
+
+def X86CmpMaskCC : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, i8>]>;
+def X86cmpm   : SDNode<"X86ISD::CMPM",    X86CmpMaskCC>;
+def X86cmpmu  : SDNode<"X86ISD::CMPMU",   X86CmpMaskCC>;
+
 def X86vshl    : SDNode<"X86ISD::VSHL",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                                       SDTCisVec<2>]>>;

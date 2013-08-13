@@ -9705,6 +9705,42 @@ static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
                      DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, RHS2, CC));
 }
 
+static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG) {
+  SDValue Cond;
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  SDValue CC = Op.getOperand(2);
+  MVT VT = Op.getValueType().getSimpleVT();
+
+  EVT OpVT = Op0.getValueType();
+  assert(OpVT.getVectorElementType().getSizeInBits() >= 32 &&
+         Op.getValueType().getScalarType() == MVT::i1 &&
+        "Cannot set masked compare for this operation");
+
+  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+  SDLoc dl(Op);
+
+  bool Unsigned = false;
+  unsigned SSECC;
+  switch (SetCCOpcode) {
+  default: llvm_unreachable("Unexpected SETCC condition");
+  case ISD::SETNE:  SSECC = 4; break;
+  case ISD::SETEQ:  SSECC = 0; break;
+  case ISD::SETUGT: Unsigned = true;
+  case ISD::SETGT:  SSECC = 6; break; // NLE
+  case ISD::SETULT: Unsigned = true;
+  case ISD::SETLT:  SSECC = 1; break;
+  case ISD::SETUGE: Unsigned = true;
+  case ISD::SETGE:  SSECC = 5; break; // NLT
+  case ISD::SETULE: Unsigned = true;
+  case ISD::SETLE:  SSECC = 2; break;
+  }
+  unsigned  Opc = Unsigned ? X86ISD::CMPMU: X86ISD::CMPM;
+  return DAG.getNode(Opc, dl, VT, Op0, Op1,
+                     DAG.getConstant(SSECC, MVT::i8));
+
+}
+
 static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
                            SelectionDAG &DAG) {
   SDValue Cond;
@@ -9723,7 +9759,12 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
 #endif
 
     unsigned SSECC = translateX86FSETCC(SetCCOpcode, Op0, Op1);
-
+    unsigned  Opc = X86ISD::CMPP;
+    unsigned NumElems = VT.getVectorNumElements();
+    if (Subtarget->hasAVX512() && VT.getVectorElementType() == MVT::i1) {
+      assert(NumElems <=16);
+      Opc = X86ISD::CMPM;
+    }
     // In the two special cases we can't handle, emit two comparisons.
     if (SSECC == 8) {
       unsigned CC0, CC1;
@@ -9735,20 +9776,38 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
         CC0 = 7; CC1 = 4; CombineOpc = ISD::AND;
       }
 
-      SDValue Cmp0 = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+      SDValue Cmp0 = DAG.getNode(Opc, dl, VT, Op0, Op1,
                                  DAG.getConstant(CC0, MVT::i8));
-      SDValue Cmp1 = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+      SDValue Cmp1 = DAG.getNode(Opc, dl, VT, Op0, Op1,
                                  DAG.getConstant(CC1, MVT::i8));
       return DAG.getNode(CombineOpc, dl, VT, Cmp0, Cmp1);
     }
     // Handle all other FP comparisons here.
-    return DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+    return DAG.getNode(Opc, dl, VT, Op0, Op1,
                        DAG.getConstant(SSECC, MVT::i8));
   }
 
   // Break 256-bit integer vector compare into smaller ones.
   if (VT.is256BitVector() && !Subtarget->hasInt256())
     return Lower256IntVSETCC(Op, DAG);
+
+  bool MaskResult = (VT.getVectorElementType() == MVT::i1);
+  EVT OpVT = Op1.getValueType();
+  if (Subtarget->hasAVX512()) {
+    if (Op1.getValueType().is512BitVector() ||
+        (MaskResult && OpVT.getVectorElementType().getSizeInBits() >= 32))
+      return LowerIntVSETCC_AVX512(Op, DAG);
+
+    // In AVX-512 architecture setcc returns mask with i1 elements,
+    // But there is no compare instruction for i8 and i16 elements.
+    // We are not talking about 512-bit operands in this case, these
+    // types are illegal.
+    if (MaskResult &&
+        (OpVT.getVectorElementType().getSizeInBits() < 32 &&
+         OpVT.getVectorElementType().getSizeInBits() >= 8))
+      return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                         DAG.getNode(ISD::SETCC, dl, OpVT, Op0, Op1, CC));
+  }
 
   // We are handling one of the integer comparisons here.  Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple
@@ -9759,15 +9818,18 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   switch (SetCCOpcode) {
   default: llvm_unreachable("Unexpected SETCC condition");
   case ISD::SETNE:  Invert = true;
-  case ISD::SETEQ:  Opc = X86ISD::PCMPEQ; break;
+  case ISD::SETEQ:  Opc = MaskResult? X86ISD::PCMPEQM: X86ISD::PCMPEQ; break;
   case ISD::SETLT:  Swap = true;
-  case ISD::SETGT:  Opc = X86ISD::PCMPGT; break;
+  case ISD::SETGT:  Opc = MaskResult? X86ISD::PCMPGTM: X86ISD::PCMPGT; break;
   case ISD::SETGE:  Swap = true;
-  case ISD::SETLE:  Opc = X86ISD::PCMPGT; Invert = true; break;
+  case ISD::SETLE:  Opc = MaskResult? X86ISD::PCMPGTM: X86ISD::PCMPGT;
+                    Invert = true; break;
   case ISD::SETULT: Swap = true;
-  case ISD::SETUGT: Opc = X86ISD::PCMPGT; FlipSigns = true; break;
+  case ISD::SETUGT: Opc = MaskResult? X86ISD::PCMPGTM: X86ISD::PCMPGT;
+                    FlipSigns = true; break;
   case ISD::SETUGE: Swap = true;
-  case ISD::SETULE: Opc = X86ISD::PCMPGT; FlipSigns = true; Invert = true; break;
+  case ISD::SETULE: Opc = MaskResult? X86ISD::PCMPGTM: X86ISD::PCMPGT;
+                    FlipSigns = true; Invert = true; break;
   }
   
   // Special case: Use min/max operations for SETULE/SETUGE
@@ -13201,6 +13263,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CMP:                return "X86ISD::CMP";
   case X86ISD::COMI:               return "X86ISD::COMI";
   case X86ISD::UCOMI:              return "X86ISD::UCOMI";
+  case X86ISD::CMPM:               return "X86ISD::CMPM";
+  case X86ISD::CMPMU:              return "X86ISD::CMPMU";
   case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::SETCC_CARRY:        return "X86ISD::SETCC_CARRY";
   case X86ISD::FSETCCsd:           return "X86ISD::FSETCCsd";
@@ -13273,6 +13337,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CMPP:               return "X86ISD::CMPP";
   case X86ISD::PCMPEQ:             return "X86ISD::PCMPEQ";
   case X86ISD::PCMPGT:             return "X86ISD::PCMPGT";
+  case X86ISD::PCMPEQM:            return "X86ISD::PCMPEQM";
+  case X86ISD::PCMPGTM:            return "X86ISD::PCMPGTM";
   case X86ISD::ADD:                return "X86ISD::ADD";
   case X86ISD::SUB:                return "X86ISD::SUB";
   case X86ISD::ADC:                return "X86ISD::ADC";
