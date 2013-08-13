@@ -166,10 +166,11 @@ class LsanMetadata {
 }  // namespace __lsan
 
 extern "C" {
-int __lsan_is_turned_off() SANITIZER_WEAK_ATTRIBUTE
-    SANITIZER_INTERFACE_ATTRIBUTE;
-const char *__lsan_default_suppressions() SANITIZER_WEAK_ATTRIBUTE
-    SANITIZER_INTERFACE_ATTRIBUTE;
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+int __lsan_is_turned_off();
+
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+const char *__lsan_default_suppressions();
 }  // extern "C"
 
 #endif  // LSAN_COMMON_H

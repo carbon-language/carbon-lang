@@ -395,7 +395,7 @@ using namespace __asan;  // NOLINT
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char* __asan_default_options() { return ""; }
 }  // extern "C"
 #endif

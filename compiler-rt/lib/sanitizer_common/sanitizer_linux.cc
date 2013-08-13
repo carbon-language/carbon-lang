@@ -250,7 +250,7 @@ const char *GetEnv(const char *name) {
 }
 
 extern "C" {
-  extern void *__libc_stack_end SANITIZER_WEAK_ATTRIBUTE;
+  SANITIZER_WEAK_ATTRIBUTE extern void *__libc_stack_end;
 }
 
 #if !SANITIZER_GO

@@ -153,7 +153,7 @@ void SortArray(uptr *array, uptr size);
 // Exit
 void NORETURN Abort();
 void NORETURN Die();
-void NORETURN SANITIZER_INTERFACE_ATTRIBUTE
+void NORETURN
 CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
 
 // Set the name of the current thread to 'name', return true on succees.

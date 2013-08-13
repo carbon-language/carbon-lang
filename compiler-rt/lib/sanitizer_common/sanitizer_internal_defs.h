@@ -15,9 +15,10 @@
 
 #include "sanitizer_platform.h"
 
+// Only use SANITIZER_*ATTRIBUTE* before the function return type!
 #if SANITIZER_WINDOWS
-// FIXME find out what we need on Windows. __declspec(dllexport) ?
-# define SANITIZER_INTERFACE_ATTRIBUTE
+# define SANITIZER_INTERFACE_ATTRIBUTE __declspec(dllexport)
+// FIXME find out what we need on Windows, if anything.
 # define SANITIZER_WEAK_ATTRIBUTE
 #elif defined(SANITIZER_GO)
 # define SANITIZER_INTERFACE_ATTRIBUTE
@@ -82,25 +83,25 @@ typedef u64  OFF64_T;
 
 extern "C" {
   // Tell the tools to write their reports to "path.<pid>" instead of stderr.
-  void __sanitizer_set_report_path(const char *path)
-      SANITIZER_INTERFACE_ATTRIBUTE;
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __sanitizer_set_report_path(const char *path);
 
   // Tell the tools to write their reports to given file descriptor instead of
   // stderr.
-  void __sanitizer_set_report_fd(int fd)
-      SANITIZER_INTERFACE_ATTRIBUTE;
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __sanitizer_set_report_fd(int fd);
 
   // Notify the tools that the sandbox is going to be turned on. The reserved
   // parameter will be used in the future to hold a structure with functions
   // that the tools may call to bypass the sandbox.
-  void __sanitizer_sandbox_on_notify(void *reserved)
-      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
+  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+  void __sanitizer_sandbox_on_notify(void *reserved);
 
   // This function is called by the tool when it has just finished reporting
   // an error. 'error_summary' is a one-line string that summarizes
   // the error message. This function can be overridden by the client.
-  void __sanitizer_report_error_summary(const char *error_summary)
-      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
+  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+  void __sanitizer_report_error_summary(const char *error_summary);
 }  // extern "C"
 
 

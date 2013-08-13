@@ -182,15 +182,15 @@ static LowLevelAllocator symbolizer_allocator;  // Linker initialized.
 
 #if SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 bool __sanitizer_symbolize_code(const char *ModuleName, u64 ModuleOffset,
                                 char *Buffer, int MaxLength);
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 bool __sanitizer_symbolize_data(const char *ModuleName, u64 ModuleOffset,
                                 char *Buffer, int MaxLength);
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 void __sanitizer_symbolize_flush();
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 int __sanitizer_symbolize_demangle(const char *Name, char *Buffer,
                                    int MaxLength);
 }  // extern "C"

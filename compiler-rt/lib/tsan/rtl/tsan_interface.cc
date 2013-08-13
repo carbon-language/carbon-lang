@@ -69,18 +69,24 @@ void __tsan_unaligned_write8(uu64 *addr, u64 v) {
 }
 
 extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
 uint16_t __sanitizer_unaligned_load16(void *addr)
-    ALIAS("__tsan_unaligned_read2") SANITIZER_INTERFACE_ATTRIBUTE;
+    ALIAS("__tsan_unaligned_read2");
+SANITIZER_INTERFACE_ATTRIBUTE
 uint32_t __sanitizer_unaligned_load32(void *addr)
-    ALIAS("__tsan_unaligned_read4") SANITIZER_INTERFACE_ATTRIBUTE;
+    ALIAS("__tsan_unaligned_read4");
+SANITIZER_INTERFACE_ATTRIBUTE
 uint64_t __sanitizer_unaligned_load64(void *addr)
-    ALIAS("__tsan_unaligned_read8") SANITIZER_INTERFACE_ATTRIBUTE;
+    ALIAS("__tsan_unaligned_read8");
+SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_unaligned_store16(void *addr, uint16_t v)
-    ALIAS("__tsan_unaligned_write2") SANITIZER_INTERFACE_ATTRIBUTE;
+    ALIAS("__tsan_unaligned_write2");
+SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_unaligned_store32(void *addr, uint32_t v)
-    ALIAS("__tsan_unaligned_write4") SANITIZER_INTERFACE_ATTRIBUTE;
+    ALIAS("__tsan_unaligned_write4");
+SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_unaligned_store64(void *addr, uint64_t v)
-    ALIAS("__tsan_unaligned_write8") SANITIZER_INTERFACE_ATTRIBUTE;
+    ALIAS("__tsan_unaligned_write8");
 }
 
 void __tsan_acquire(void *addr) {

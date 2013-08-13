@@ -501,7 +501,7 @@ void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char* __msan_default_options() { return ""; }
 }  // extern "C"
 #endif

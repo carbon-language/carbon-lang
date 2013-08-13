@@ -102,10 +102,13 @@ struct AsanThreadLocalMallocStorage {
   void CommitBack();
 };
 
+SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
                     AllocType alloc_type);
+SANITIZER_INTERFACE_ATTRIBUTE
 void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type);
 
+SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_malloc(uptr size, StackTrace *stack);
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack);
 void *asan_realloc(void *p, uptr size, StackTrace *stack);
@@ -114,6 +117,7 @@ void *asan_pvalloc(uptr size, StackTrace *stack);
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
                           StackTrace *stack);
+SANITIZER_INTERFACE_ATTRIBUTE
 uptr asan_malloc_usable_size(void *ptr, StackTrace *stack);
 
 uptr asan_mz_size(const void *ptr);

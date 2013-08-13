@@ -759,6 +759,6 @@ void __asan_describe_address(uptr addr) {
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 // Provide default implementation of __asan_on_error that does nothing
 // and may be overriden by user.
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE NOINLINE
 void __asan_on_error() {}
 #endif

@@ -43,7 +43,7 @@ struct AddressInfo {
     internal_memset(this, 0, sizeof(AddressInfo));
   }
   // Deletes all strings and sets all fields to zero.
-  void Clear() SANITIZER_WEAK_ATTRIBUTE;
+  SANITIZER_WEAK_ATTRIBUTE void Clear();
 
   void FillAddressAndModuleInfo(uptr addr, const char *mod_name,
                                 uptr mod_offset) {
@@ -66,8 +66,8 @@ struct DataInfo {
 // for a given address (in all inlined functions). Returns the number
 // of descriptions actually filled.
 // This function should NOT be called from two threads simultaneously.
-uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames)
-    SANITIZER_WEAK_ATTRIBUTE;
+SANITIZER_WEAK_ATTRIBUTE
+uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
 bool SymbolizeData(uptr address, DataInfo *info);
 
 bool IsSymbolizerAvailable();

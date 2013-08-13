@@ -60,8 +60,10 @@ struct StackTrace {
   static uptr GetCurrentPc();
   static uptr GetPreviousInstructionPc(uptr pc);
 
+  SANITIZER_INTERFACE_ATTRIBUTE
   static uptr CompressStack(StackTrace *stack,
                             u32 *compressed, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
   static void UncompressStack(StackTrace *stack,
                               u32 *compressed, uptr size);
 };

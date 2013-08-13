@@ -23,8 +23,8 @@
 extern "C" {
 #endif
 
-void __tsan_acquire(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
-void __tsan_release(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_acquire(void *addr);
+SANITIZER_INTERFACE_ATTRIBUTE void __tsan_release(void *addr);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -812,12 +812,12 @@ uptr __asan_get_allocated_size(const void *p) {
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 // Provide default (no-op) implementation of malloc hooks.
 extern "C" {
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 void __asan_malloc_hook(void *ptr, uptr size) {
   (void)ptr;
   (void)size;
 }
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 void __asan_free_hook(void *ptr) {
   (void)ptr;
 }

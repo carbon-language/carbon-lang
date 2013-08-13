@@ -37,7 +37,7 @@ void PrintStack(StackTrace *stack) {
 // and may be overriden by user if he wants to use his own symbolization.
 // ASan on Windows has its own implementation of this.
 #if !SANITIZER_WINDOWS && !SANITIZER_SUPPORTS_WEAK_HOOKS
-SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE NOINLINE
 bool __asan_symbolize(const void *pc, char *out_buffer, int out_size) {
   return false;
 }
