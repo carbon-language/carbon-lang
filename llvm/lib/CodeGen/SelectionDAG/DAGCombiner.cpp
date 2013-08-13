@@ -2675,6 +2675,19 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
         return DAG.getSetCC(SDLoc(N), VT, ORNode, LR, Op1);
       }
     }
+    // Simplify (and (setne X, 0), (setne X, -1)) -> (setuge (add X, 1), 2)
+    if (LL == RL && isa<ConstantSDNode>(LR) && isa<ConstantSDNode>(RR) &&
+        Op0 == Op1 && LL.getValueType().isInteger() &&
+      Op0 == ISD::SETNE && ((cast<ConstantSDNode>(LR)->isNullValue() &&
+                                 cast<ConstantSDNode>(RR)->isAllOnesValue()) ||
+                                (cast<ConstantSDNode>(LR)->isAllOnesValue() &&
+                                 cast<ConstantSDNode>(RR)->isNullValue()))) {
+      SDValue ADDNode = DAG.getNode(ISD::ADD, SDLoc(N0), LL.getValueType(),
+                                    LL, DAG.getConstant(1, LL.getValueType()));
+      AddToWorkList(ADDNode.getNode());
+      return DAG.getSetCC(SDLoc(N), VT, ADDNode,
+                          DAG.getConstant(2, LL.getValueType()), ISD::SETUGE);
+    }
     // canonicalize equivalent to ll == rl
     if (LL == RR && LR == RL) {
       Op1 = ISD::getSetCCSwappedOperands(Op1);
