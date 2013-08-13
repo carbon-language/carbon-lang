@@ -22,7 +22,7 @@ o dotest.py
 
 o lldbtest.py
 
-  Provides an abstract base class of lldb test case named 'TestVase', which in
+  Provides an abstract base class of lldb test case named 'TestBase', which in
   turn inherits from Python's unittest.TestCase.  The concrete subclass can
   override lldbtest.TestBase in order to inherit the common behavior for
   unittest.TestCase.setUp/tearDown implemented in this file.
