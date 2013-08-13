@@ -1267,6 +1267,12 @@ private:
                                                    ArrayRef<Expr *> Args) = 0,
                            Expr *Data = 0);
 
+  /// ParseSimpleExpressionList - A simple comma-separated list of expressions,
+  /// used for misc language extensions.
+  bool ParseSimpleExpressionList(SmallVectorImpl<Expr*> &Exprs,
+                                 SmallVectorImpl<SourceLocation> &CommaLocs);
+
+
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {
     SimpleExpr,      // Only parse '(' expression ')'

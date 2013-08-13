@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple=powerpc-apple-darwin8 -faltivec -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple=powerpc-apple-darwin8 -faltivec -fsyntax-only -verify -std=c++11 %s
 
 __vector char vv_c;
 __vector signed char vv_sc;
@@ -168,3 +168,7 @@ public:
 	__vector float xyzw;
 	__vector float abcd;
 } __attribute__((vecreturn));     // expected-error {{the vecreturn attribute can only be used on a class or structure with one member, which must be a vector}}
+
+template<typename... Args> void PR16874() {
+	(void) (Args::foo()...); // expected-error {{expression contains unexpanded parameter pack 'Args'}} expected-error {{expected ')'}} expected-note {{to match this '('}}
+}
