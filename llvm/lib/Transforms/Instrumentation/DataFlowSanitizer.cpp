@@ -138,7 +138,7 @@ class DataFlowSanitizer : public ModulePass {
   InstrumentedABI getInstrumentedABI(Function *F);
   InstrumentedABI getDefaultInstrumentedABI();
 
-public:
+ public:
   DataFlowSanitizer(void *(*getArgTLS)() = 0, void *(*getRetValTLS)() = 0);
   static char ID;
   bool doInitialization(Module &M);
@@ -172,7 +172,7 @@ struct DFSanFunction {
 };
 
 class DFSanVisitor : public InstVisitor<DFSanVisitor> {
-public:
+ public:
   DFSanFunction &DFSF;
   DFSanVisitor(DFSanFunction &DFSF) : DFSF(DFSF) {}
 
