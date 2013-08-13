@@ -196,6 +196,8 @@ def HasV7            : Predicate<"Subtarget->hasV7Ops()">,
                                  AssemblerPredicate<"HasV7Ops", "armv7">;
 def HasV8            : Predicate<"Subtarget->hasV8Ops()">,
                                  AssemblerPredicate<"HasV8Ops", "armv8">;
+def PreV8            : Predicate<"!Subtarget->hasV8Ops()">,
+                                 AssemblerPredicate<"!HasV8Ops", "armv7 or earlier">;
 def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
 def HasVFP2          : Predicate<"Subtarget->hasVFP2()">,
                                  AssemblerPredicate<"FeatureVFP2", "VFP2">;
@@ -4455,9 +4457,11 @@ def : ARMPat<(strex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),
 // SWP/SWPB are deprecated in V6/V7.
 let mayLoad = 1, mayStore = 1 in {
 def SWP : AIswp<0, (outs GPRnopc:$Rt),
-                (ins GPRnopc:$Rt2, addr_offset_none:$addr), "swp", []>;
+                (ins GPRnopc:$Rt2, addr_offset_none:$addr), "swp", []>,
+                Requires<[PreV8]>;
 def SWPB: AIswp<1, (outs GPRnopc:$Rt),
-                (ins GPRnopc:$Rt2, addr_offset_none:$addr), "swpb", []>;
+                (ins GPRnopc:$Rt2, addr_offset_none:$addr), "swpb", []>,
+                Requires<[PreV8]>;
 }
 
 //===----------------------------------------------------------------------===//
