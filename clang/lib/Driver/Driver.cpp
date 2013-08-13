@@ -186,6 +186,14 @@ const {
   return FinalPhase;
 }
 
+static Arg* MakeInputArg(const DerivedArgList &Args, OptTable *Opts,
+                         StringRef Value) {
+  Arg *A = new Arg(Opts->getOption(options::OPT_INPUT), Value,
+                   Args.getBaseArgs().MakeIndex(Value), Value.data());
+  A->claim();
+  return A;
+}
+
 DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   DerivedArgList *DAL = new DerivedArgList(Args);
 
@@ -249,6 +257,14 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
                               options::OPT_Z_reserved_lib_cckext));
         continue;
       }
+    }
+
+    // Pick up inputs via the -- option.
+    if (A->getOption().matches(options::OPT__DASH_DASH)) {
+      A->claim();
+      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
+        DAL->append(MakeInputArg(*DAL, Opts, A->getValue(i)));
+      continue;
     }
 
     DAL->append(*it);
@@ -375,7 +391,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 
   // Construct the list of inputs.
   InputList Inputs;
-  BuildInputs(C->getDefaultToolChain(), C->getArgs(), Inputs);
+  BuildInputs(C->getDefaultToolChain(), *TranslatedArgs, Inputs);
 
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin target OSes this uses the driver-driver and universal actions.
@@ -988,14 +1004,6 @@ static bool DiagnoseInputExistance(const Driver &D, const DerivedArgList &Args,
 
   D.Diag(clang::diag::err_drv_no_such_file) << Path.str();
   return false;
-}
-
-static Arg* MakeInputArg(const DerivedArgList &Args, OptTable *Opts,
-                         StringRef Value) {
-  unsigned Index = Args.getBaseArgs().MakeIndex(Value);
-  Arg *A = Opts->ParseOneArg(Args, Index);
-  A->claim();
-  return A;
 }
 
 // Construct a the list of inputs and their types.
