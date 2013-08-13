@@ -67,6 +67,11 @@ GenerateODRHash("generate-odr-hash", cl::Hidden,
                 cl::desc("Add an ODR hash to external type DIEs."),
                 cl::init(false));
 
+static cl::opt<bool>
+GenerateCUHash("generate-cu-hash", cl::Hidden,
+               cl::desc("Add the CU hash as the dwo_id."),
+               cl::init(false));
+
 namespace {
 enum DefaultOnOff {
   Default,
@@ -1024,14 +1029,19 @@ void DwarfDebug::finalizeModuleInfo() {
     // If we're splitting the dwarf out now that we've got the entire
     // CU then construct a skeleton CU based upon it.
     if (useSplitDwarf()) {
+      uint64_t ID = 0;
+      if (GenerateCUHash) {
+        DIEHash CUHash;
+        ID = CUHash.computeCUSignature(TheCU->getCUDie());
+      }
       // This should be a unique identifier when we want to build .dwp files.
       TheCU->addUInt(TheCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
-                     dwarf::DW_FORM_data8, 0);
+                     dwarf::DW_FORM_data8, ID);
       // Now construct the skeleton CU associated.
       CompileUnit *SkCU = constructSkeletonCU(CUI->first);
       // This should be a unique identifier when we want to build .dwp files.
       SkCU->addUInt(SkCU->getCUDie(), dwarf::DW_AT_GNU_dwo_id,
-                    dwarf::DW_FORM_data8, 0);
+                    dwarf::DW_FORM_data8, ID);
     }
   }
 

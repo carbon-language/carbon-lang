@@ -102,6 +102,92 @@ void DIEHash::addParentContext(DIE *Parent) {
   }
 }
 
+// Collect all of the attributes for a particular DIE in single structure.
+void DIEHash::collectAttributes(DIE *Die, DIEAttrs Attrs) {
+  const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
+  const DIEAbbrev &Abbrevs = Die->getAbbrev();
+
+#define COLLECT_ATTR(NAME)                                                     \
+  Attrs.NAME.Val = Values[i];                                                  \
+  Attrs.NAME.Desc = &Abbrevs.getData()[i];
+
+  for (size_t i = 0, e = Values.size(); i != e; ++i) {
+    DEBUG(dbgs() << "Attribute: "
+                 << dwarf::AttributeString(Abbrevs.getData()[i].getAttribute())
+                 << " added.\n");
+    switch (Abbrevs.getData()[i].getAttribute()) {
+    case dwarf::DW_AT_name:
+      COLLECT_ATTR(DW_AT_name);
+      break;
+    default:
+      break;
+    }
+  }
+}
+
+// Hash an individual attribute \param Attr based on the type of attribute and
+// the form.
+void DIEHash::hashAttribute(AttrEntry Attr) {
+  const DIEValue *Value = Attr.Val;
+  const DIEAbbrevData *Desc = Attr.Desc;
+
+  // TODO: Add support for types.
+
+  // Add the letter A to the hash.
+  addULEB128('A');
+
+  // Then the attribute code and form.
+  addULEB128(Desc->getAttribute());
+  addULEB128(Desc->getForm());
+
+  // TODO: Add support for additional forms.
+  switch (Desc->getForm()) {
+  case dwarf::DW_FORM_strp:
+    addString(cast<DIEString>(Value)->getString());
+    break;
+  }
+}
+
+// Go through the attributes from \param Attrs in the order specified in 7.27.4
+// and hash them.
+void DIEHash::hashAttributes(DIEAttrs Attrs) {
+#define ADD_ATTR(ATTR)                                                         \
+  {                                                                            \
+    if (ATTR.Val != 0)                                                         \
+      hashAttribute(ATTR);                                                     \
+  }
+
+  // FIXME: Add the rest.
+  ADD_ATTR(Attrs.DW_AT_name);
+}
+
+// Add all of the attributes for \param Die to the hash.
+void DIEHash::addAttributes(DIE *Die) {
+  DIEAttrs Attrs;
+  memset(&Attrs, 0, sizeof(Attrs));
+  collectAttributes(Die, Attrs);
+  hashAttributes(Attrs);
+}
+
+// Compute the hash of a DIE. This is based on the type signature computation
+// given in section 7.27 of the DWARF4 standard. It is the md5 hash of a
+// flattened description of the DIE.
+void DIEHash::computeHash(DIE *Die) {
+
+  // Append the letter 'D', followed by the DWARF tag of the DIE.
+  addULEB128('D');
+  addULEB128(Die->getTag());
+
+  // Add each of the attributes of the DIE.
+  addAttributes(Die);
+
+  // Then hash each of the children of the DIE.
+  for (std::vector<DIE *>::const_iterator I = Die->getChildren().begin(),
+                                          E = Die->getChildren().end();
+       I != E; ++I)
+    computeHash(*I);
+}
+
 /// This is based on the type signature computation given in section 7.27 of the
 /// DWARF4 standard. It is the md5 hash of a flattened description of the DIE
 /// with the exception that we are hashing only the context and the name of the
@@ -126,6 +212,24 @@ uint64_t DIEHash::computeDIEODRSignature(DIE *Die) {
   addString(getDIEStringAttr(Die, dwarf::DW_AT_name));
 
   // Now get the result.
+  MD5::MD5Result Result;
+  Hash.final(Result);
+
+  // ... take the least significant 8 bytes and return those. Our MD5
+  // implementation always returns its results in little endian, swap bytes
+  // appropriately.
+  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+}
+
+/// This is based on the type signature computation given in section 7.27 of the
+/// DWARF4 standard. It is an md5 hash of the flattened description of the DIE
+/// with the inclusion of the full CU and all top level CU entities.
+uint64_t DIEHash::computeCUSignature(DIE *Die) {
+
+  // Hash the DIE.
+  computeHash(Die);
+
+  // Now return the result.
   MD5::MD5Result Result;
   Hash.final(Result);
 
