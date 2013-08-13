@@ -77,6 +77,23 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   if (Subtarget->hasDSPR2())
     setOperationAction(ISD::MUL, MVT::v2i16, Legal);
 
+  if (Subtarget->hasMSA()) {
+    MVT::SimpleValueType VecTys[4] = {MVT::v16i8, MVT::v8i16,
+                                      MVT::v4i32, MVT::v2i64};
+
+    for (unsigned i = 0; i < array_lengthof(VecTys); ++i) {
+      addRegisterClass(VecTys[i], &Mips::MSA128RegClass);
+
+      // Expand all builtin opcodes.
+      for (unsigned Opc = 0; Opc < ISD::BUILTIN_OP_END; ++Opc)
+        setOperationAction(Opc, VecTys[i], Expand);
+
+      setOperationAction(ISD::LOAD, VecTys[i], Legal);
+      setOperationAction(ISD::STORE, VecTys[i], Legal);
+      setOperationAction(ISD::BITCAST, VecTys[i], Legal);
+    }
+  }
+
   if (!TM.Options.UseSoftFloat) {
     addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
 

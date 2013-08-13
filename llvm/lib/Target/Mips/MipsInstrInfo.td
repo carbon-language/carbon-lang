@@ -1420,6 +1420,10 @@ include "Mips16InstrInfo.td"
 include "MipsDSPInstrFormats.td"
 include "MipsDSPInstrInfo.td"
 
+// MSA
+include "MipsMSAInstrFormats.td"
+include "MipsMSAInstrInfo.td"
+
 // Micromips
 include "MicroMipsInstrFormats.td"
 include "MicroMipsInstrInfo.td"

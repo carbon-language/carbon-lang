@@ -113,6 +113,9 @@ protected:
   // compiled as Mips32
   bool Os16;
 
+  // HasMSA -- supports MSA ASE.
+  bool HasMSA;
+
   InstrItineraryData InstrItins;
 
   // The instance to the register info section object
@@ -182,6 +185,7 @@ public:
   bool inMicroMipsMode() const { return InMicroMipsMode; }
   bool hasDSP() const { return HasDSP; }
   bool hasDSPR2() const { return HasDSPR2; }
+  bool hasMSA() const { return HasMSA; }
   bool isLinux() const { return IsLinux; }
   bool useSmallSection() const { return UseSmallSection; }
 
