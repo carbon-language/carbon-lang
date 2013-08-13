@@ -1262,7 +1262,9 @@ Module::SetSymbolFileFileSpec (const FileSpec &file)
         if (section_list && symbol_file)
         {
             ObjectFile *obj_file = symbol_file->GetObjectFile();
-            if (obj_file)
+            // Make sure we have an object file and that the symbol vendor's objfile isn't
+            // the same as the module's objfile before we remove any sections for it...
+            if (obj_file && obj_file != m_objfile_sp.get())
             {
                 size_t num_sections = section_list->GetNumSections (0);
                 for (size_t idx = num_sections; idx > 0; --idx)
