@@ -152,7 +152,7 @@
 // RUN:     -shared \
 // RUN:   | FileCheck --check-prefix=CHECK-UBSAN-LINUX-SHARED %s
 // CHECK-UBSAN-LINUX-SHARED: "{{.*}}ld{{(.exe)?}}"
-// CHECK-UBSAN-LINUX-SHARED-NOT: libclang_rt.ubsan-i386.a"
+// CHECK-UBSAN-LINUX-SHARED: libclang_rt.ubsan-i386.a"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target x86_64-unknown-linux -fsanitize=leak \
