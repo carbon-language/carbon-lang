@@ -8,13 +8,13 @@
 // Check that only 1 file is generated per translation unit and header file.
 // RUN: ls -1 %t/Test | grep -c "main.cpp_common.h_.*.yaml" | grep "^1$"
 // RUN: ls -1 %t/Test | grep -c "common.cpp_common.h_.*.yaml" | grep "^1$"
-// We need to remove the path from FileNames in the generated YAML file because it will have a path in the temp directory
-// RUN: sed -i -e 's/^\(HeaderFileName:\|SourceFileName:\).*[\/\\]\(.*\)"$/\1 "\2"/g' %t/Test/main.cpp_common.h_*.yaml
 // RUN: cp %S/common.h.yaml %t/Test/main.cpp_common.h.yaml
+// We need to put the build path to the expected YAML file to diff against the generated one.
+// RUN: sed -e 's#$(path)#%t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
+// RUN: sed -i -e 's#\\#/#g' %t/Test/main.cpp_common.h_*.yaml
 // RUN: diff -b %t/Test/main.cpp_common.h.yaml %t/Test/main.cpp_common.h_*.yaml
-// RUN: sed -i -e 's/^\(HeaderFileName:\|SourceFileName:\).*[\/\\]\(.*\)"$/\1 "\2"/g' %t/Test/common.cpp_common.h_*.yaml
-// RUN: cp %S/common.h.yaml %t/Test/common.cpp_common.h.yaml
-// RUN: sed -i -e 's/^SourceFileName: "main.cpp"$/SourceFileName: "common.cpp"/g' %t/Test/common.cpp_common.h.yaml
+// RUN: sed -e 's#$(path)#%t/Test#g' -e 's#main.cpp"#common.cpp"#g' %S/common.h.yaml > %t/Test/common.cpp_common.h.yaml
+// RUN: sed -i -e 's#\\#/#g' %t/Test/common.cpp_common.h_*.yaml
 // RUN: diff -b %t/Test/common.cpp_common.h.yaml %t/Test/common.cpp_common.h_*.yaml
 //
 // The following block tests the following:
@@ -27,9 +27,10 @@
 // Check that only one YAML file is generated from main.cpp and common.h and not from common.cpp and common.h since -header is not specified
 // RUN: ls -1 %t/Test | grep -c "main.cpp_common.h_.*.yaml" | grep "^1$"
 // RUN: ls -1 %t/Test | not grep "common.cpp_common.h_.*.yaml"
-// We need to remove the path from FileName in the generated YAML file because it will have a path in the temp directory
-// RUN: sed -i -e 's/^\(HeaderFileName:\|SourceFileName:\).*[\/\\]\(.*\)"$/\1 "\2"/g' %t/Test/main.cpp_common.h_*.yaml
-// RUN: diff -b %S/common.h.yaml %t/Test/main.cpp_common.h_*.yaml
+// We need to put the build path to the expected YAML file to diff against the generated one.
+// RUN: sed -e 's#$(path)#%t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
+// RUN: sed -i -e 's#\\#/#g' %t/Test/main.cpp_common.h_*.yaml
+// RUN: diff -b %t/Test/main.cpp_common.h.yaml %t/Test/main.cpp_common.h_*.yaml
 
 #include "common.h"
 

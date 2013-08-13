@@ -7,6 +7,6 @@ Replacements:
   - Offset:          506
     Length:          2
     ReplacementText: "elem"
-HeaderFileName: "common.h"
-SourceFileName: "main.cpp"
+HeaderFileName: "$(path)/common.h"
+SourceFileName: "$(path)/main.cpp"
 ...
