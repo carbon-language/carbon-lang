@@ -37,6 +37,9 @@ SANITIZER_INCLUDES_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
 
 cd ${LLVM_CHECKOUT}
 
+# FIXME: We should use some bash magic to continue cpplint invocations, but
+# still mark the whole run as failed if any invocation fails.
+
 # LLVM Instrumentation
 LLVM_INSTRUMENTATION=lib/Transforms/Instrumentation
 LLVM_LINT_FILTER=-,+whitespace
