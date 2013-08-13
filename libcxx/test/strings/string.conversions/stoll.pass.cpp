@@ -98,4 +98,13 @@ int main()
     {
         assert(idx == 0);
     }
+    try
+    {
+        std::stoll(L"99999999999999999999999999", &idx);
+        assert(false);
+    }
+    catch (const std::out_of_range&)
+    {
+        assert(idx == 0);
+    }
 }

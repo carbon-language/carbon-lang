@@ -85,4 +85,23 @@ int main()
     {
         assert(idx == 0);
     }
+//	LWG issue #2009
+    try
+    {
+        std::stoull("9999999999999999999999999999999999999999999999999", &idx);
+        assert(false);
+    }
+    catch (const std::out_of_range&)
+    {
+        assert(idx == 0);
+    }
+    try
+    {
+        std::stoull(L"9999999999999999999999999999999999999999999999999", &idx);
+        assert(false);
+    }
+    catch (const std::out_of_range&)
+    {
+        assert(idx == 0);
+    }
 }
