@@ -46,9 +46,11 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
                             ObjCMethodDecl *OM,
                             ObjCInstanceTypeFamily OIT_Family = OIT_None);
   
-  void migrateFunctionDeclAnnotation(ASTContext &Ctx, FunctionDecl *FuncDecl);
+  void migrateFunctionDeclAnnotation(ASTContext &Ctx,
+                                     const FunctionDecl *FuncDecl);
   
-  void migrateObjCMethodDeclAnnotation(ASTContext &Ctx, ObjCMethodDecl *MethodDecl);
+  void migrateObjCMethodDeclAnnotation(ASTContext &Ctx,
+                                       const ObjCMethodDecl *MethodDecl);
 public:
   std::string MigrateDir;
   bool MigrateLiterals;
@@ -713,6 +715,10 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
   LoweredClassName = StringLoweredClassName;
   
   IdentifierInfo *MethodIdName = OM->getSelector().getIdentifierInfoForSlot(0);
+  // Handle method with no name at its first selector slot; e.g. + (id):(int)x.
+  if (!MethodIdName)
+    return;
+  
   std::string MethodName = MethodIdName->getName();
   if (OIT_Family == OIT_Singleton) {
     StringRef STRefMethodName(MethodName);
@@ -745,19 +751,21 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
 
 void ObjCMigrateASTConsumer::migrateFunctionDeclAnnotation(
                                                 ASTContext &Ctx,
-                                                FunctionDecl *FuncDecl) {
+                                                const FunctionDecl *FuncDecl) {
   if (FuncDecl->hasAttr<CFAuditedTransferAttr>() ||
       FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
-      FuncDecl->getAttr<CFReturnsNotRetainedAttr>())
+      FuncDecl->getAttr<CFReturnsNotRetainedAttr>() ||
+      FuncDecl->hasBody())
     return;
 }
 
 void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(
                                             ASTContext &Ctx,
-                                            ObjCMethodDecl *MethodDecl) {
+                                            const ObjCMethodDecl *MethodDecl) {
   if (MethodDecl->hasAttr<CFAuditedTransferAttr>() ||
       MethodDecl->getAttr<CFReturnsRetainedAttr>() ||
-      MethodDecl->getAttr<CFReturnsNotRetainedAttr>())
+      MethodDecl->getAttr<CFReturnsNotRetainedAttr>() ||
+      MethodDecl->hasBody())
     return;
 }
 
@@ -799,6 +807,11 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
           if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*N))
             migrateNSEnumDecl(Ctx, ED, TD);
       }
+      else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*D))
+        migrateFunctionDeclAnnotation(Ctx, FD);
+      else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*D))
+        migrateObjCMethodDeclAnnotation(Ctx, MD);
+      
       // migrate methods which can have instancetype as their result type.
       if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(*D))
         migrateInstanceType(Ctx, CDecl);

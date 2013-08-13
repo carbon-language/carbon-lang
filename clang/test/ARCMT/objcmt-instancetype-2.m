@@ -85,3 +85,17 @@ typedef enum NSURLBookmarkResolutionOptions {
 @interface UIApplication
 + (id)sharedApplication;
 @end
+
+//===----------------------------------------------------------------------===//
+// Method name that has a null IdentifierInfo* for its first selector slot.
+// This test just makes sure that we handle it.
+//===----------------------------------------------------------------------===//
+@interface TestNullIdentifier
+@end
+
+@implementation TestNullIdentifier
++ (id):(int)x, ... {
+  return 0;
+}
+@end
+
