@@ -34,5 +34,8 @@ int main(void) {
   assert(dfsan_has_label(ijk_label, j_label));
   assert(dfsan_has_label(ijk_label, k_label));
 
+  struct { int i, j; } s = { i, j };
+  assert(dfsan_read_label(&s, sizeof(s)) == ij_label);
+
   return 0;
 }

@@ -120,7 +120,7 @@ dfsan_label __dfsan_union(dfsan_label l1, dfsan_label l2) {
 }
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
-dfsan_label __dfsan_union_load(dfsan_label *ls, size_t n) {
+dfsan_label __dfsan_union_load(const dfsan_label *ls, size_t n) {
   dfsan_label label = ls[0];
   for (size_t i = 1; i != n; ++i) {
     dfsan_label next_label = ls[i];
@@ -169,6 +169,13 @@ SANITIZER_INTERFACE_ATTRIBUTE dfsan_label dfsan_get_label(long data) {
   // the first element of __dfsan_arg_tls.  So we can just return it.
   __dfsan_retval_tls = 0;  // Ensures return value is unlabelled in the caller.
   return __dfsan_arg_tls[0];
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
+dfsan_read_label(const void *addr, size_t size) {
+  if (size == 0)
+    return 0;
+  return __dfsan_union_load(shadow_for(addr), size);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE

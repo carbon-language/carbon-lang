@@ -13,5 +13,8 @@ int main(void) {
   dfsan_label new_label = dfsan_get_label(i);
   assert(i_label == new_label);
 
+  dfsan_label read_label = dfsan_read_label(&i, sizeof(i));
+  assert(i_label == read_label);
+
   return 0;
 }

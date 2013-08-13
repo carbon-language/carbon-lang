@@ -61,6 +61,9 @@ void dfsan_add_label(dfsan_label label, void *addr, size_t size);
 /// value.
 dfsan_label dfsan_get_label(long data);
 
+/// Retrieves the label associated with the data at the given address.
+dfsan_label dfsan_read_label(const void *addr, size_t size);
+
 /// Retrieves a pointer to the dfsan_label_info struct for the given label.
 const struct dfsan_label_info *dfsan_get_label_info(dfsan_label label);
 
