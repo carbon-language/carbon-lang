@@ -32,6 +32,9 @@ class CLIgnoredJoined<string name> : Option<["/", "-"], name, KIND_JOINED>,
 class CLJoinedOrSeparate<string name> : Option<["/", "-"], name,
   KIND_JOINED_OR_SEPARATE>, Group<cl_Group>, Flags<[CLOption, DriverOption]>;
 
+class CLRemainingArgs<string name> : Option<["/", "-"], name,
+  KIND_REMAINING_ARGS>, Group<cl_Group>, Flags<[CLOption, DriverOption]>;
+
 // Aliases:
 
 def _SLASH_c : CLFlag<"c">, HelpText<"Compile only">, Alias<c>;
@@ -96,6 +99,8 @@ def _SLASH_Fe : CLJoined<"Fe">,
 def _SLASH_Fo : CLJoined<"Fo">,
   HelpText<"Set output object file, or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
+def _SLASH_link : CLRemainingArgs<"link">,
+  HelpText<"Forward options to the linker">, MetaVarName<"<options>">;
 def _SLASH_MD : CLFlag<"MD">,
   HelpText<"Use DLL run-time">;
 def _SLASH_MDd : CLFlag<"MDd">,
