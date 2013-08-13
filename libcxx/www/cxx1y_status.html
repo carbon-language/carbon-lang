@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
+<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
+<html>
+<head>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>libc++ C++1Y Status</title>
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+</head>
+
+<body>
+<div id="menu">
+  <div>
+    <a href="http://llvm.org/">LLVM Home</a>
+  </div>
+
+  <div class="submenu">
+    <label>libc++ Info</label>
+    <a href="/index.html">About</a>
+  </div>
+
+  <div class="submenu">
+    <label>Quick Links</label>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
+    <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>
+    <a href="http://llvm.org/bugs/">Bug Reports</a>
+    <a href="http://llvm.org/svn/llvm-project/libcxx/trunk/">Browse SVN</a>
+    <a href="http://llvm.org/viewvc/llvm-project/libcxx/trunk/">Browse ViewVC</a>
+  </div>
+</div>
+
+<div id="content">
+  <!--*********************************************************************-->
+  <h1>libc++ C++1Y Status</h1>
+  <!--*********************************************************************-->
+
+  <p>In April 2013, the C++ standard committee approved the draft for the next version of the C++ standard, known as "C++1Y" (probably to be C++14)</p>
+
+  <p>The draft standard includes papers and issues that were voted on at the previous three meetings (Kona, Portland, and Bristol)</p>
+  
+  <h3>Paper Status</h3>
+  <table id="papers" border="1">
+	<tr><th>Paper #</th><th>Paper Name</th><th>Meeting</th><th>Status</th></tr>
+	<tr><td>3346</td><td>Terminology for Container Element Requirements - Rev 1</td><td>Kona</td><td>Complete</td></tr>
+
+	<tr><td>3421</td><td>Making Operator Functors greater<></td><td>Portland</td><td>Complete</td></tr>
+	<tr><td>3462</td><td>std::result_of and SFINAE</td><td>Portland</td><td>Complete</td></tr>
+
+	<tr><td>3469</td><td>Constexpr Library Additions: chrono, v3</td><td>Portland</td><td>Complete</td></tr>
+	<tr><td>3470</td><td>Constexpr Library Additions: containers, v2</td><td>Portland</td><td>Complete</td></tr>
+	<tr><td>3471</td><td>Constexpr Library Additions: utilities, v3</td><td>Portland</td><td>Complete</td></tr>
+	<tr><td>3302</td><td>Constexpr Library Additions: complex, v2</td><td>Portland</td><td>Complete</td></tr>
+
+	<tr><td>3545</td><td>An Incremental Improvement to integral_constant</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3644</td><td>Null Forward Iterators</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3668</td><td>std::exchange(),</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3658</td><td>Compile-time integer sequences,</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3670</td><td>Addressing Tuples by Type,</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3671</td><td>Making non-modifying sequence operations more robust</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3656</td><td>make_unique</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3654</td><td>Quoted Strings</td><td>Bristol</td><td>Implemented, but not checked in</td></tr>
+	<tr><td>3642</td><td>User-defined Literals</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3655</td><td>TransformationTraits Redux (excluding part 4)</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3657</td><td>Adding heterogeneous comparison lookup to associative containers</td><td>Bristol</td><td>Partial</td></tr>
+	<tr><td>3672</td><td>A proposal to add a utility class to represent optional objects</td><td>Bristol</td><td></td></tr>
+	<tr><td>3669</td><td>Fixing constexpr member functions without const</td><td>Bristol</td><td>Complete</td></tr>
+	<tr><td>3662</td><td>C++ Dynamic Arrays (dynarray)</td><td>Bristol</td><td></td></tr>
+  </table>
+
+  <h3>Issue Status</h3>
+  <I>Note: "NAD" means that the issue was deemed "Not a defect"</I>
+  <table id="issues" border="1">
+	<tr><th>Issue #</th><th>Issue Name</th><th>Meeting</th><th>Status</th></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#1214">1214</a></td><td>Insufficient/inconsistent key immutability requirements for associative containers</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2009">2009</a></td><td>Reporting out-of-bound values on numeric string conversions</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2010">2010</a></td><td>is_* traits for binding operations can't be meaningfully specialized</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2015">2015</a></td><td>Incorrect pre-conditions for some type traits</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2021">2021</a></td><td>Further incorrect usages of result_of</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2028">2028</a></td><td>messages_base::catalog overspecified</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2033">2033</a></td><td>Preconditions of reserve, shrink_to_fit, and resize functions</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2039">2039</a></td><td>Issues with std::reverse and std::copy_if</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2044">2044</a></td><td>No definition of "Stable" for copy algorithms</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2045">2045</a></td><td>forward_list::merge and forward_list::splice_after with unequal allocators</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2047">2047</a></td><td>Incorrect "mixed" move-assignment semantics of unique_ptr</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2050">2050</a></td><td>Unordered associative containers do not use allocator_traits to define member types</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2053">2053</a></td><td>Errors in regex bitmask types</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2061">2061</a></td><td>make_move_iterator and arrays</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2064">2064</a></td><td>More noexcept issues in basic_string</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2065">2065</a></td><td>Minimal allocator interface</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2067">2067</a></td><td>packaged_task should have deleted copy c'tor with const parameter</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2069">2069</a></td><td>Inconsistent exception spec for basic_string move constructor</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2096">2096</a></td><td>Incorrect constraints of future::get in regard to</td><td>Kona</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2102">2102</a></td><td>Why is std::launch an implementation-defined type?</td><td>Kona</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2071">2071</a></td><td>std::valarray move-assignment</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2074">2074</a></td><td>Off by one error in std::reverse_copy</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2081">2081</a></td><td>Allocator requirements should include CopyConstructible 2083 const-qualification on weak_ptr::owner_before</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2086">2086</a></td><td>Overly generic type support for math functions</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2099">2099</a></td><td>Unnecessary constraints of va_start() usage</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2103">2103</a></td><td>std::allocator_traits<std::allocator<T>>::propagate_on_container_move_assignment</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2105">2105</a></td><td>Inconsistent requirements on const_iterator's value_type</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2110">2110</a></td><td>remove can't swap but note says it might</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2123">2123</a></td><td>merge() allocator requirements for lists versus forward lists</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2005">2005</a></td><td>unordered_map::insert(T&&) protection should apply to map too</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2011">2011</a></td><td>Unexpected output required of strings</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2048">2048</a></td><td>Unnecessary mem_fn overloads</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2049">2049</a></td><td>is_destructible is underspecified</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2056">2056</a></td><td>future_errc enums start with value 0 (invalid value for broken_promise)</td><td>Portland</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2058">2058</a></td><td>valarray and begin/end</td><td>Portland</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2091">2091</a></td><td>Misplaced effect in m.try_lock_for()</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2092">2092</a></td><td>Vague Wording for condition_variable_any</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2093">2093</a></td><td>Throws clause of condition_variable::wait with predicate</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2145">2145</a></td><td>error_category default constructor</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2147">2147</a></td><td>Unclear hint type in Allocator's allocate function</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2163">2163</a></td><td>nth_element requires inconsistent post-conditions</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2169">2169</a></td><td>Missing reset() requirements in unique_ptr specialization</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2172">2172</a></td><td>Does atomic_compare_exchange_* accept v == nullptr arguments?</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2080">2080</a></td><td>Specify when once_flag becomes invalid</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2109">2109</a></td><td>Incorrect requirements for hash specializations</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2144">2144</a></td><td>Missing noexcept specification in type_index</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2174">2174</a></td><td>wstring_convert::converted() should be noexcept</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2175">2175</a></td><td>string_convert and wbuffer_convert validity</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2177">2177</a></td><td>Requirements on Copy/MoveInsertable</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2187">2187</a></td><td>vector<bool> is missing emplace and emplace_back member functions</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2197">2197</a></td><td>Specification of is_[un]signed unclear for non-arithmetic types</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2200">2200</a></td><td>Data race avoidance for all containers, not only for sequences</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2209">2209</a></td><td>assign() overspecified for sequence containers</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2211">2211</a></td><td>Replace ambiguous use of "Allocator" in container requirements</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2222">2222</a></td><td>Inconsistency in description of forward_list::splice_after single-element overload</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2225">2225</a></td><td>Unrealistic header inclusion checks required</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2231">2231</a></td><td>DR 704 removes complexity guarantee for clear()</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2094">2094</a></td><td>duration conversion overflow shouldn't participate in overload resolution</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2122">2122</a></td><td>merge() stability for lists versus forward lists</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2128">2128</a></td><td>Absence of global functions cbegin/cend</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2148">2148</a></td><td>Hashing enums should be supported directly by std::hash</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2149">2149</a></td><td>Concerns about 20.8/5</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2162">2162</a></td><td>allocator_traits::max_size missing noexcept</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2176">2176</a></td><td>Special members for wstring_convert and wbuffer_convert</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2196">2196</a></td><td>Specification of is_*[copy/move]_[constructible/assignable] unclear for non-referencable types</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2203">2203</a></td><td>scoped_allocator_adaptor uses wrong argument types for piecewise construction</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2207">2207</a></td><td>basic_string::at should not have a Requires clause</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2210">2210</a></td><td>Missing allocator-extended constructor for allocator-aware containers</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2229">2229</a></td><td>Standard code conversion facets underspecified</td><td>Bristol</td><td></td></tr>
+	<tr><td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2235">2235</a></td><td>Undefined behavior without proper requirements on basic_string constructors</td><td>Bristol</td><td></td></tr>  </table>
+  </table>
+
+Last Updated: 13-Aug-2013
+</div>
+</body>
+</html>
