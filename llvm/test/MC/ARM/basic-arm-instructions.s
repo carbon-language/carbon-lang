@@ -153,7 +153,6 @@ Lforward:
 @ CHECK: adr	r1, #301989888          @ encoding: [0x12,0x14,0x8f,0xe2]
 @ CHECK: adr	r1, #-2147483647        @ encoding: [0x06,0x11,0x8f,0xe2]
 
-
 @------------------------------------------------------------------------------
 @ ADD
 @------------------------------------------------------------------------------
@@ -187,6 +186,7 @@ Lforward:
 
 	add r0, #-4
 	add r4, r5, #-21
+        add r0, pc, #0xc0000000
 
 @ CHECK: add	r4, r5, #61440          @ encoding: [0x0f,0x4a,0x85,0xe2]
 @ CHECK: add	r4, r5, r6              @ encoding: [0x06,0x40,0x85,0xe0]
@@ -217,6 +217,7 @@ Lforward:
 
 @ CHECK: sub	r0, r0, #4              @ encoding: [0x04,0x00,0x40,0xe2]
 @ CHECK: sub	r4, r5, #21             @ encoding: [0x15,0x40,0x45,0xe2]
+@ CHECK: adr    r0, #-1073741824        @ encoding: [0x03,0x01,0x8f,0xe2]
 
     @ Test right shift by 32, which is encoded as 0
     add r3, r1, r2, lsr #32
