@@ -2722,6 +2722,8 @@ public:
     return getTemplatedDecl()->isThisDeclarationADefinition();
   }
 
+  VarTemplateDecl *getDefinition();
+
   /// \brief Create a variable template node.
   static VarTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, DeclarationName Name,

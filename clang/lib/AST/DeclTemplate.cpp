@@ -963,6 +963,16 @@ void VarTemplateDecl::DeallocateCommon(void *Ptr) {
   static_cast<Common *>(Ptr)->~Common();
 }
 
+VarTemplateDecl *VarTemplateDecl::getDefinition() {
+  VarTemplateDecl *CurD = this;
+  while (CurD) {
+    if (CurD->isThisDeclarationADefinition())
+      return CurD;
+    CurD = CurD->getPreviousDecl();
+  }
+  return 0;
+}
+
 VarTemplateDecl *VarTemplateDecl::Create(ASTContext &C, DeclContext *DC,
                                          SourceLocation L, DeclarationName Name,
                                          TemplateParameterList *Params,

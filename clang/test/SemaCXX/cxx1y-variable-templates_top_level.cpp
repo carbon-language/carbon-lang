@@ -14,6 +14,11 @@ T pi = T(3.1415926535897932385); // expected-note {{template is declared here}}
 template<typename T> 
 CONST T cpi = T(3.1415926535897932385); // expected-note {{template is declared here}}
 
+template<typename T> extern CONST T vc;
+#ifdef CXX11
+// expected-error@-2 {{constexpr variable declaration must be a definition}}
+#endif
+
 namespace use_in_top_level_funcs {
 
   void good() {

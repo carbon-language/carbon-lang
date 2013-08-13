@@ -3481,11 +3481,22 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
     llvm::PointerUnion<VarTemplateDecl *,
                        VarTemplatePartialSpecializationDecl *> PatternPtr =
         VarSpec->getSpecializedTemplateOrPartial();
-    if (PatternPtr.is<VarTemplatePartialSpecializationDecl *>())
+    if (PatternPtr.is<VarTemplatePartialSpecializationDecl *>()) {
       PatternDecl = cast<VarDecl>(
           PatternPtr.get<VarTemplatePartialSpecializationDecl *>());
-    else
-      PatternDecl = (PatternPtr.get<VarTemplateDecl *>())->getTemplatedDecl();
+
+      // Find actual definition
+      if (VarDecl *Def = PatternDecl->getDefinition(getASTContext()))
+        PatternDecl = Def;
+    } else {
+      VarTemplateDecl *PatternTemplate = PatternPtr.get<VarTemplateDecl *>();
+
+      // Find actual definition
+      if (VarTemplateDecl *Def = PatternTemplate->getDefinition())
+        PatternTemplate = Def;
+
+      PatternDecl = PatternTemplate->getTemplatedDecl();
+    }
     assert(PatternDecl && "instantiating a non-template");
   }
 

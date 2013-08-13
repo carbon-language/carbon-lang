@@ -735,6 +735,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       D->getInitStyle() == VarDecl::CInit &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
+      !isa<VarTemplateSpecializationDecl>(D) &&
       !D->isConstexpr() &&
       !SpecInfo)
     AbbrevToUse = Writer.getDeclVarAbbrev();
