@@ -86,7 +86,7 @@ int main()
     {
         assert(idx == 0);
     }
-//	LWG issue #2009
+//  LWG issue #2009
     try
     {
         std::stol("9999999999999999999999999999999999999999999999999", &idx);
