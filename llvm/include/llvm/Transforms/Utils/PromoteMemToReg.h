@@ -20,7 +20,6 @@
 namespace llvm {
 
 class AllocaInst;
-class DataLayout;
 class DominatorTree;
 class AliasSetTracker;
 
@@ -30,7 +29,7 @@ class AliasSetTracker;
 /// (transitively) using this alloca. This also enforces that there is only
 /// ever one layer of bitcasts or GEPs between the alloca and the lifetime
 /// markers.
-bool isAllocaPromotable(const AllocaInst *AI, const DataLayout *DL);
+bool isAllocaPromotable(const AllocaInst *AI);
 
 /// \brief Promote the specified list of alloca instructions into scalar
 /// registers, inserting PHI nodes as appropriate.
@@ -42,7 +41,7 @@ bool isAllocaPromotable(const AllocaInst *AI, const DataLayout *DL);
 /// If AST is specified, the specified tracker is updated to reflect changes
 /// made to the IR.
 void PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
-                     const DataLayout *DL, AliasSetTracker *AST = 0);
+                     AliasSetTracker *AST = 0);
 
 } // End llvm namespace
 
