@@ -353,6 +353,7 @@ TEST(Range, overlaps) {
   EXPECT_FALSE(Range(10, 10).overlapsWith(Range(0, 10)));
   EXPECT_FALSE(Range(0, 10).overlapsWith(Range(10, 10)));
   EXPECT_TRUE(Range(0, 10).overlapsWith(Range(2, 6)));
+  EXPECT_TRUE(Range(2, 6).overlapsWith(Range(0, 10)));
 }
 
 TEST(Range, contains) {

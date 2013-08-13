@@ -48,9 +48,7 @@ public:
   /// @{
   /// \brief Whether this range overlaps with \p RHS or not.
   bool overlapsWith(Range RHS) const {
-    if ((Offset + Length) <= RHS.Offset || Offset >= (RHS.Offset + RHS.Length))
-      return false;
-    return true;
+    return Offset + Length > RHS.Offset && Offset < RHS.Offset + RHS.Length;
   }
 
   /// \brief Whether this range contains \p RHS or not.
