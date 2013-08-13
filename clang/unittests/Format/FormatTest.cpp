@@ -5787,6 +5787,8 @@ TEST_F(FormatTest, SplitsUTF8BlockComments) {
             format("/* 𝓣𝓮𝓼𝓽 𝔣𝔬𝔲𝔯 𝕓𝕪𝕥𝕖 𝖀𝕿𝕱-𝟠 */", getLLVMStyleWithColumns(12)));
 }
 
+#endif
+
 TEST_F(FormatTest, FormatsWithWebKitStyle) {
   FormatStyle Style = getWebKitStyle();
 
@@ -5865,8 +5867,6 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
             "}",
             format("if (aaaaaaaaaaaaaaa || bbbbbbbbbbbbbbb) { i++; }", Style));
 }
-
-#endif
 
 } // end namespace tooling
 } // end namespace clang
