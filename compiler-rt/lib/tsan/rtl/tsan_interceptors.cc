@@ -1735,6 +1735,20 @@ TSAN_INTERCEPTOR(int, gettimeofday, void *tv, void *tz) {
   return REAL(gettimeofday)(tv, tz);
 }
 
+TSAN_INTERCEPTOR(int, getaddrinfo, void *node, void *service,
+    void *hints, void *rv) {
+  SCOPED_TSAN_INTERCEPTOR(getaddrinfo, node, service, hints, rv);
+  // We miss atomic synchronization in getaddrinfo,
+  // and can report false race between malloc and free
+  // inside of getaddrinfo. So ignore memory accesses.
+  IgnoreCtl(thr, true, true);
+  IgnoreCtl(thr, false, true);
+  int res = REAL(getaddrinfo)(node, service, hints, rv);
+  IgnoreCtl(thr, true, false);
+  IgnoreCtl(thr, false, false);
+  return res;
+}
+
 // Linux kernel has a bug that leads to kernel deadlock if a process
 // maps TBs of memory and then calls mlock().
 static void MlockIsUnsupported() {
@@ -2056,6 +2070,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(usleep);
   TSAN_INTERCEPT(nanosleep);
   TSAN_INTERCEPT(gettimeofday);
+  TSAN_INTERCEPT(getaddrinfo);
 
   TSAN_INTERCEPT(mlock);
   TSAN_INTERCEPT(munlock);
