@@ -30,7 +30,7 @@ my $os_release = 11;
 
 my $original_env_path = $ENV{PATH};
 
-my $common_configure_options = "--disable-curses";
+my $common_configure_options = "--disable-terminfo";
 
 our %llvm_config_info = (
     'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
