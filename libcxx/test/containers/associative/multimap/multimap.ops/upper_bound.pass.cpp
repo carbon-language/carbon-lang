@@ -18,6 +18,7 @@
 #include <cassert>
 
 #include "../../../min_allocator.h"
+#include "private_constructor.hpp"
 
 int main()
 {
@@ -149,5 +150,72 @@ int main()
         assert(r == m.end());
     }
     }
+#endif
+#if _LIBCPP_STD_VER > 11
+    {
+    typedef std::pair<const int, double> V;
+    typedef std::multimap<int, double, std::less<>> M;
+    typedef M::iterator R;
+    V ar[] =
+    {
+        V(5, 1),
+        V(5, 2),
+        V(5, 3),
+        V(7, 1),
+        V(7, 2),
+        V(7, 3),
+        V(9, 1),
+        V(9, 2),
+        V(9, 3)
+    };
+    M m(ar, ar+sizeof(ar)/sizeof(ar[0]));
+    R r = m.upper_bound(4);
+    assert(r == m.begin());
+    r = m.upper_bound(5);
+    assert(r == next(m.begin(), 3));
+    r = m.upper_bound(6);
+    assert(r == next(m.begin(), 3));
+    r = m.upper_bound(7);
+    assert(r == next(m.begin(), 6));
+    r = m.upper_bound(8);
+    assert(r == next(m.begin(), 6));
+    r = m.upper_bound(9);
+    assert(r == next(m.begin(), 9));
+    r = m.upper_bound(10);
+    assert(r == m.end());
+    }
+
+    {
+    typedef PrivateConstructor PC;
+    typedef std::multimap<PC, double, std::less<>> M;
+    typedef M::iterator R;
+
+    M m;
+    m.insert ( std::make_pair<PC, double> ( PC::make(5), 1 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(5), 2 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(5), 3 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(7), 1 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(7), 2 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(7), 3 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(9), 1 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(9), 2 ));
+    m.insert ( std::make_pair<PC, double> ( PC::make(9), 3 ));
+
+    R r = m.upper_bound(4);
+    assert(r == m.begin());
+    r = m.upper_bound(5);
+    assert(r == next(m.begin(), 3));
+    r = m.upper_bound(6);
+    assert(r == next(m.begin(), 3));
+    r = m.upper_bound(7);
+    assert(r == next(m.begin(), 6));
+    r = m.upper_bound(8);
+    assert(r == next(m.begin(), 6));
+    r = m.upper_bound(9);
+    assert(r == next(m.begin(), 9));
+    r = m.upper_bound(10);
+    assert(r == m.end());
+    }
+
 #endif
 }
