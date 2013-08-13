@@ -359,13 +359,15 @@ namespace llvm {
     /// where the size in bytes of the directive is specified by Size and Label
     /// specifies the label.  This implicitly uses .set if it is available.
     void EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
-                                   unsigned Size) const;
+                                   unsigned Size, 
+                                   bool IsSectionRelative = false) const;
 
     /// EmitLabelReference - Emit something like ".long Label"
     /// where the size in bytes of the directive is specified by Size and Label
     /// specifies the label.
-    void EmitLabelReference(const MCSymbol *Label, unsigned Size) const {
-      EmitLabelPlusOffset(Label, 0, Size);
+    void EmitLabelReference(const MCSymbol *Label, unsigned Size, 
+        bool IsSectionRelative = false) const {
+      EmitLabelPlusOffset(Label, 0, Size, IsSectionRelative);
     }
 
     //===------------------------------------------------------------------===//

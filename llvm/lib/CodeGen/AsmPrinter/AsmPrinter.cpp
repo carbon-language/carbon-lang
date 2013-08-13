@@ -1415,9 +1415,9 @@ void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
 /// where the size in bytes of the directive is specified by Size and Label
 /// specifies the label.  This implicitly uses .set if it is available.
 void AsmPrinter::EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
-                                      unsigned Size)
+                                      unsigned Size, bool IsSectionRelative)
   const {
-  if (MAI->needsDwarfSectionOffsetDirective() && Size == 4) { // secrel32 ONLY works for 32bits.
+  if (MAI->needsDwarfSectionOffsetDirective() && IsSectionRelative) { 
     OutStreamer.EmitCOFFSecRel32(Label);
     return;
   }

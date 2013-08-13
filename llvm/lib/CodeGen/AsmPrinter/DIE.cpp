@@ -293,7 +293,9 @@ void DIEExpr::print(raw_ostream &O) const {
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(AsmPrinter *AP, uint16_t Form) const {
-  AP->EmitLabelReference(Label, SizeOf(AP, Form));
+  AP->EmitLabelReference(Label, SizeOf(AP, Form), Form == dwarf::DW_FORM_strp 
+    || Form == dwarf::DW_FORM_sec_offset || Form == dwarf::DW_OP_call_ref
+    || Form == dwarf::DW_FORM_ref_addr);
 }
 
 /// SizeOf - Determine size of label value in bytes.
