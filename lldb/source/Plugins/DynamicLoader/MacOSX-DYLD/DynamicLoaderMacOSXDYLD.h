@@ -364,6 +364,7 @@ protected:
 
 
     DYLDImageInfo m_dyld;               // Info about the current dyld being used
+    lldb::ModuleWP m_dyld_module_wp;
     lldb::addr_t m_dyld_all_image_infos_addr;
     DYLDAllImageInfos m_dyld_all_image_infos;
     uint32_t m_dyld_all_image_infos_stop_id;

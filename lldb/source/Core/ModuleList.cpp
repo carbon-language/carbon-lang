@@ -151,7 +151,10 @@ ModuleList::AppendIfNeeded (const ModuleList& module_list)
 {
     bool any_in = false;
     for (auto pos : module_list.m_modules)
-        any_in = AppendIfNeeded(pos) | any_in;
+    {
+        if (AppendIfNeeded(pos))
+            any_in = true;
+    }
     return any_in;
 }
 

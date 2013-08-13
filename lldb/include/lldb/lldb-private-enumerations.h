@@ -227,7 +227,18 @@ typedef enum ScriptedCommandSynchronicity
     eScriptedCommandSynchronicityAsynchronous,
     eScriptedCommandSynchronicityCurrentValue // use whatever the current synchronicity is
 } ScriptedCommandSynchronicity;
-        
+
+
+//----------------------------------------------------------------------
+// Loading modules from memory
+//----------------------------------------------------------------------
+typedef enum MemoryModuleLoadLevel {
+    eMemoryModuleLoadLevelMinimal,  // Load sections only
+    eMemoryModuleLoadLevelPartial,  // Load function bounds but no symbols
+    eMemoryModuleLoadLevelComplete, // Load sections and all symbols
+} MemoryModuleLoadLevel;
+    
+
 } // namespace lldb_private
 
 

@@ -137,6 +137,7 @@ DynamicLoaderMacOSXDYLD::CreateInstance (Process* process, bool force)
 DynamicLoaderMacOSXDYLD::DynamicLoaderMacOSXDYLD (Process* process) :
     DynamicLoader(process),
     m_dyld(),
+    m_dyld_module_wp(),
     m_dyld_all_image_infos_addr(LLDB_INVALID_ADDRESS),
     m_dyld_all_image_infos(),
     m_dyld_all_image_infos_stop_id (UINT32_MAX),
@@ -425,6 +426,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
                 ModuleList modules;
                 modules.Append(dyld_module_sp);
                 target.ModulesDidLoad(modules);
+                m_dyld_module_wp = dyld_module_sp;
             }
             return true;
         }
@@ -1342,10 +1344,21 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
             if (exe_module_sp.get() != target.GetExecutableModulePointer())
             {
                 // Don't load dependent images since we are in dyld where we will know
-                // and find out about all images that are loaded
+                // and find out about all images that are loaded. Also when setting the
+                // executable module, it will clear the targets module list, and if we
+                // have an in memory dyld module, it will get removed from the list
+                // so we will need to add it back after setting the executable module,
+                // so we first try and see if we already have a weak pointer to the
+                // dyld module, make it into a shared pointer, then add the executable,
+                // then re-add it back to make sure it is always in the list.
+                ModuleSP dyld_module_sp(m_dyld_module_wp.lock());
+                
                 const bool get_dependent_images = false;
                 m_process->GetTarget().SetExecutableModule (exe_module_sp, 
                                                             get_dependent_images);
+
+                if (dyld_module_sp)
+                    target.GetImages().AppendIfNeeded (dyld_module_sp);
             }
         }
     }

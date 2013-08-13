@@ -2313,6 +2313,16 @@ g_load_script_from_sym_file_values[] =
     { 0, NULL, NULL }
 };
 
+
+static OptionEnumValueElement
+g_memory_module_load_level_values[] =
+{
+    { eMemoryModuleLoadLevelMinimal,  "minimal" , "Load minimal information when loading modules from memory which currently loads sections only, no symbols."},
+    { eMemoryModuleLoadLevelPartial,  "partial" , "Load partial information when loading modules from memory. Currently this setting loads sections and function bounds."},
+    { eMemoryModuleLoadLevelComplete, "complete", "Load complete information when loading modules from memory. Currently this setting loads sections and all symbols."},
+    { 0, NULL, NULL }
+};
+
 static PropertyDefinition
 g_properties[] =
 {
@@ -2354,6 +2364,7 @@ g_properties[] =
     { "hex-immediate-style"                , OptionValue::eTypeEnum   ,    false, Disassembler::eHexStyleC,   NULL, g_hex_immediate_style_values, "Which style to use for printing hexadecimal disassembly values." },
     { "use-fast-stepping"                  , OptionValue::eTypeBoolean   , false, true,                       NULL, NULL, "Use a fast stepping algorithm based on running from branch to branch rather than instruction single-stepping." },
     { "load-script-from-symbol-file"       , OptionValue::eTypeEnum   ,    false, eLoadScriptFromSymFileWarn, NULL, g_load_script_from_sym_file_values, "Allow LLDB to load scripting resources embedded in symbol files when available." },
+    { "memory-module-load-level"           , OptionValue::eTypeEnum   ,    false, eMemoryModuleLoadLevelComplete, NULL, g_memory_module_load_level_values, "Control how much information gets loaded when loading modules from memory. The less information that is gathered, the faster memory modules will be loaded." },
     { NULL                                 , OptionValue::eTypeInvalid   , false, 0                         , NULL, NULL, NULL }
 };
 enum
@@ -2385,6 +2396,7 @@ enum
     ePropertyHexImmediateStyle,
     ePropertyUseFastStepping,
     ePropertyLoadScriptFromSymbolFile,
+    ePropertyMemoryModuleLoadLevel
 };
 
 
@@ -2773,6 +2785,14 @@ TargetProperties::GetHexImmediateStyle () const
     const uint32_t idx = ePropertyHexImmediateStyle;
     return (Disassembler::HexImmediateStyle)m_collection_sp->GetPropertyAtIndexAsEnumeration(NULL, idx, g_properties[idx].default_uint_value);
 }
+
+MemoryModuleLoadLevel
+TargetProperties::GetMemoryModuleLoadLevel() const
+{
+    const uint32_t idx = ePropertyMemoryModuleLoadLevel;
+    return (MemoryModuleLoadLevel)m_collection_sp->GetPropertyAtIndexAsEnumeration(NULL, idx, g_properties[idx].default_uint_value);
+}
+
 
 const TargetPropertiesSP &
 Target::GetGlobalProperties()

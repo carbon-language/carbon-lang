@@ -170,6 +170,9 @@ public:
 
     Disassembler::HexImmediateStyle
     GetHexImmediateStyle() const;
+    
+    MemoryModuleLoadLevel
+    GetMemoryModuleLoadLevel() const;
 
 };
 
