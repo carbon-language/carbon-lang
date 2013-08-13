@@ -124,13 +124,18 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->exit_code, "exit_code");
   if (f->exit_code < 0 || f->exit_code > 127) {
     Printf("Exit code not in [0, 128) range: %d\n", f->exit_code);
-    f->exit_code = 1;
     Die();
   }
   ParseFlag(str, &f->report_umrs, "report_umrs");
   ParseFlag(str, &f->verbosity, "verbosity");
   ParseFlag(str, &f->wrap_signals, "wrap_signals");
-  ParseFlag(str, &f->keep_going, "keep_going");
+
+  // keep_going is an old name for halt_on_error,
+  // and it has inverse meaning.
+  f->halt_on_error = !f->halt_on_error;
+  ParseFlag(str, &f->halt_on_error, "keep_going");
+  f->halt_on_error = !f->halt_on_error;
+  ParseFlag(str, &f->halt_on_error, "halt_on_error");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -151,7 +156,7 @@ static void InitializeFlags(Flags *f, const char *options) {
   f->report_umrs = true;
   f->verbosity = 0;
   f->wrap_signals = true;
-  f->keep_going = !!&__msan_keep_going;
+  f->halt_on_error = !&__msan_keep_going;
 
   // Override from user-specified string.
   if (__msan_default_options)
@@ -235,7 +240,7 @@ void __msan_warning() {
   GET_CALLER_PC_BP_SP;
   (void)sp;
   PrintWarning(pc, bp);
-  if (!__msan::flags()->keep_going) {
+  if (__msan::flags()->halt_on_error) {
     Printf("Exiting\n");
     Die();
   }
@@ -311,7 +316,7 @@ void __msan_set_exit_code(int exit_code) {
 }
 
 void __msan_set_keep_going(int keep_going) {
-  flags()->keep_going = keep_going;
+  flags()->halt_on_error = !keep_going;
 }
 
 void __msan_set_expect_umr(int expect_umr) {

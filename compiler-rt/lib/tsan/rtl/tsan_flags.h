@@ -58,6 +58,8 @@ struct Flags {
   bool print_benign;
   // Override exit status if something was reported.
   int exitcode;
+  // Exit after first reported error.
+  bool halt_on_error;
   // Write logs to "log_path.pid".
   // The special values are "stdout" and "stderr".
   // The default is "stderr".

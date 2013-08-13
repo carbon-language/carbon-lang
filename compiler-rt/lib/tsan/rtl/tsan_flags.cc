@@ -52,6 +52,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->print_suppressions = false;
   f->print_benign = false;
   f->exitcode = 66;
+  f->halt_on_error = false;
   f->log_path = "stderr";
   f->atexit_sleep_ms = 1000;
   f->verbosity = 0;
@@ -83,6 +84,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->print_suppressions, "print_suppressions");
   ParseFlag(env, &f->print_benign, "print_benign");
   ParseFlag(env, &f->exitcode, "exitcode");
+  ParseFlag(env, &f->halt_on_error, "halt_on_error");
   ParseFlag(env, &f->log_path, "log_path");
   ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
   ParseFlag(env, &f->verbosity, "verbosity");

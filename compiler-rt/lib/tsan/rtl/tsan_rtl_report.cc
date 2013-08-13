@@ -527,7 +527,9 @@ bool OutputReport(Context *ctx,
   if (OnReport(rep, suppress_pc != 0))
     return false;
   PrintReport(rep);
-  CTX()->nreported++;
+  ctx->nreported++;
+  if (flags()->halt_on_error)
+    internal__exit(flags()->exitcode);
   return true;
 }
 

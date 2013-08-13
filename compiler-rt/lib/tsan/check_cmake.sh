@@ -10,3 +10,4 @@ make -j64
 make check-sanitizer -j64
 make check-tsan -j64
 make check-asan -j64
+make check-msan -j64

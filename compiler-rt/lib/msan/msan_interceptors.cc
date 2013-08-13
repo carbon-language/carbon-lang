@@ -61,7 +61,7 @@ bool IsInInterceptorScope() {
              offset, x, n);                                                  \
       __msan::PrintWarningWithOrigin(pc, bp,                                 \
                                      __msan_get_origin((char *)x + offset)); \
-      if (!__msan::flags()->keep_going) {                                    \
+      if (__msan::flags()->halt_on_error) {                                  \
         Printf("Exiting\n");                                                 \
         Die();                                                               \
       }                                                                      \
