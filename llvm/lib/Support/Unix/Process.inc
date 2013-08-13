@@ -280,7 +280,7 @@ static bool terminalHasColors(int fd) {
   //
   // The 'tigetnum' routine returns -2 or -1 on errors, and might return 0 if
   // the terminfo says that no colors are supported.
-  if (tigetnum((char *)"colors") > 0)
+  if (tigetnum(const_cast<char *>("colors")) > 0)
     return true;
 #endif
 
