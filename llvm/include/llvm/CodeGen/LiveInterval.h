@@ -144,17 +144,6 @@ namespace llvm {
     Ranges ranges;       // the ranges in which this register is live
     VNInfoList valnos;   // value#'s
 
-    struct InstrSlots {
-      enum {
-        LOAD  = 0,
-        USE   = 1,
-        DEF   = 2,
-        STORE = 3,
-        NUM   = 4
-      };
-
-    };
-
     LiveInterval(unsigned Reg, float Weight)
       : reg(Reg), weight(Weight) {}
 
