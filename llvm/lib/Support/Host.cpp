@@ -52,10 +52,19 @@ using namespace llvm;
 
 /// GetX86CpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
 /// specified arguments.  If we can't run cpuid on the host, return true.
-static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
-                            unsigned *rEBX, unsigned *rECX, unsigned *rEDX) {
-#if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
-  #if defined(__GNUC__)
+static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
+                               unsigned *rECX, unsigned *rEDX) {
+#if defined(_MSC_VER)
+  // The MSVC intrinsic is portable across x86 and x64.
+  int registers[4];
+  __cpuid(registers, value);
+  *rEAX = registers[0];
+  *rEBX = registers[1];
+  *rECX = registers[2];
+  *rEDX = registers[3];
+  return false;
+#elif defined(__GNUC__)
+  #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
     asm ("movq\t%%rbx, %%rsi\n\t"
          "cpuid\n\t"
@@ -66,19 +75,7 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
            "=d" (*rEDX)
          :  "a" (value));
     return false;
-  #elif defined(_MSC_VER)
-    int registers[4];
-    __cpuid(registers, value);
-    *rEAX = registers[0];
-    *rEBX = registers[1];
-    *rECX = registers[2];
-    *rEDX = registers[3];
-    return false;
-  #else
-    return true;
-  #endif
-#elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
-  #if defined(__GNUC__)
+  #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
     asm ("movl\t%%ebx, %%esi\n\t"
          "cpuid\n\t"
          "xchgl\t%%ebx, %%esi\n\t"
@@ -87,20 +84,6 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
            "=c" (*rECX),
            "=d" (*rEDX)
          :  "a" (value));
-    return false;
-  #elif defined(_MSC_VER)
-    __asm {
-      mov   eax,value
-      cpuid
-      mov   esi,rEAX
-      mov   dword ptr [esi],eax
-      mov   esi,rEBX
-      mov   dword ptr [esi],ebx
-      mov   esi,rECX
-      mov   dword ptr [esi],ecx
-      mov   esi,rEDX
-      mov   dword ptr [esi],edx
-    }
     return false;
 // pedantic #else returns to appease -Wunreachable-code (so we don't generate
 // postprocessed code that looks like "return true; return false;")
