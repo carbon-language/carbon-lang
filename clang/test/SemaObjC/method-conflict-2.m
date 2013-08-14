@@ -64,3 +64,52 @@ typedef long long int64_t;
   return 0;
 }
 @end
+
+// rdar://14650159
+// Tests that property inherited indirectly from a nested protocol
+// is seen by the method implementation type matching logic before
+// method in super class is seen. This fixes the warning coming
+// out of that method mismatch.
+@interface NSObject (NSDict)
+- (void)setValue:(id)value;
+- (id)value;
+@end
+
+@protocol ProtocolWithValue
+@property (nonatomic) unsigned value;
+@end
+
+@protocol InterveningProtocol <ProtocolWithValue>
+@end
+
+@interface UsesProtocolWithValue : NSObject <ProtocolWithValue>
+@end
+
+@implementation UsesProtocolWithValue
+@synthesize value=_value;
+- (unsigned) value
+{
+	return _value;
+}
+- (void) setValue:(unsigned)value
+{
+	_value = value;
+}
+@end
+
+
+@interface UsesInterveningProtocol : NSObject <InterveningProtocol>
+@end
+
+@implementation UsesInterveningProtocol
+
+@synthesize value=_value;
+- (unsigned) value
+{
+	return _value;
+}
+- (void) setValue:(unsigned)value
+{
+	_value = value;
+}
+@end

@@ -1773,6 +1773,16 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
     }
   }
   
+  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl> (CDecl)) {
+    // Also, check for methods declared in protocols inherited by
+    // this protocol.
+    for (ObjCProtocolDecl::protocol_iterator
+          PI = PD->protocol_begin(), E = PD->protocol_end(); PI != E; ++PI)
+      MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
+                                 IMPDecl, (*PI), IncompleteImpl, false,
+                                 WarnCategoryMethodImpl);
+  }
+  
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
     // when checking that methods in implementation match their declaration,
     // i.e. when WarnCategoryMethodImpl is false, check declarations in class
