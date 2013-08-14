@@ -733,6 +733,31 @@ template <> struct GraphTraits<Inverse<const MachineBasicBlock*> > {
   }
 };
 
+
+
+/// MachineInstrSpan provides an interface to get an iteration range
+/// containing the instruction it was initialized with, along with all
+/// those instructions inserted prior to or following that instruction
+/// at some point after the MachineInstrSpan is constructed.
+class MachineInstrSpan {
+  MachineBasicBlock &MBB;
+  MachineBasicBlock::iterator I, B, E;
+public:
+  MachineInstrSpan(MachineBasicBlock::iterator I)
+    : MBB(*I->getParent()),
+      I(I),
+      B(I == MBB.begin() ? MBB.end() : llvm::prior(I)),
+      E(llvm::next(I)) {}
+
+  MachineBasicBlock::iterator begin() {
+    return B == MBB.end() ? MBB.begin() : llvm::next(B);
+  }
+  MachineBasicBlock::iterator end() { return E; }
+  bool empty() { return begin() == end(); }
+
+  MachineBasicBlock::iterator getInitial() { return I; }
+};
+
 } // End llvm namespace
 
 #endif
