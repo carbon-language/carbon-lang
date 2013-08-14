@@ -35,37 +35,37 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    %v15 = insertelement <4 x i32> undef, i32 %a4, i32 2
    %v16 = insertelement <4 x i32> undef, i32 %a4, i32 3
    %res1 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v1,
-      <8 x i32> undef, <4 x i32> undef, i32 1)
+      <32 x i8> undef, <4 x i32> undef, i32 1)
    %res2 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v2,
-      <8 x i32> undef, <4 x i32> undef, i32 2)
+      <32 x i8> undef, <4 x i32> undef, i32 2)
    %res3 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v3,
-      <8 x i32> undef, <4 x i32> undef, i32 3)
+      <32 x i8> undef, <4 x i32> undef, i32 3)
    %res4 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v4,
-      <8 x i32> undef, <4 x i32> undef, i32 4)
+      <32 x i8> undef, <4 x i32> undef, i32 4)
    %res5 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v5,
-      <8 x i32> undef, <4 x i32> undef, i32 5)
+      <32 x i8> undef, <4 x i32> undef, i32 5)
    %res6 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v6,
-      <8 x i32> undef, <4 x i32> undef, i32 6)
+      <32 x i8> undef, <4 x i32> undef, i32 6)
    %res7 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v7,
-      <8 x i32> undef, <4 x i32> undef, i32 7)
+      <32 x i8> undef, <4 x i32> undef, i32 7)
    %res8 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v8,
-      <8 x i32> undef, <4 x i32> undef, i32 8)
+      <32 x i8> undef, <4 x i32> undef, i32 8)
    %res9 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v9,
-      <8 x i32> undef, <4 x i32> undef, i32 9)
+      <32 x i8> undef, <4 x i32> undef, i32 9)
    %res10 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v10,
-      <8 x i32> undef, <4 x i32> undef, i32 10)
+      <32 x i8> undef, <4 x i32> undef, i32 10)
    %res11 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v11,
-      <8 x i32> undef, <4 x i32> undef, i32 11)
+      <32 x i8> undef, <4 x i32> undef, i32 11)
    %res12 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v12,
-      <8 x i32> undef, <4 x i32> undef, i32 12)
+      <32 x i8> undef, <4 x i32> undef, i32 12)
    %res13 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v13,
-      <8 x i32> undef, <4 x i32> undef, i32 13)
+      <32 x i8> undef, <4 x i32> undef, i32 13)
    %res14 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v14,
-      <8 x i32> undef, <4 x i32> undef, i32 14)
+      <32 x i8> undef, <4 x i32> undef, i32 14)
    %res15 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v15,
-      <8 x i32> undef, <4 x i32> undef, i32 15)
+      <32 x i8> undef, <4 x i32> undef, i32 15)
    %res16 = call <4 x float> @llvm.SI.sampled.(<4 x i32> %v16,
-      <8 x i32> undef, <4 x i32> undef, i32 16)
+      <32 x i8> undef, <4 x i32> undef, i32 16)
    %e1 = extractelement <4 x float> %res1, i32 0
    %e2 = extractelement <4 x float> %res2, i32 1
    %e3 = extractelement <4 x float> %res3, i32 2
@@ -135,6 +135,6 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    ret void
 }
 
-declare <4 x float> @llvm.SI.sampled.(<4 x i32>, <8 x i32>, <4 x i32>, i32) readnone
+declare <4 x float> @llvm.SI.sampled.(<4 x i32>, <32 x i8>, <4 x i32>, i32) readnone
 
 declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
