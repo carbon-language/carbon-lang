@@ -264,7 +264,8 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  if (std::distance(TransformManager.begin(), TransformManager.end()) > 1) {
+  if (std::distance(TransformManager.begin(), TransformManager.end()) > 1 &&
+      YAMLOnly) {
     llvm::errs() << "Header change description files requested for multiple "
                     "transforms.\nChanges from only one transform can be "
                     "recorded in a change description file.\n";
