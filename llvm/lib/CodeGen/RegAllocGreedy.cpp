@@ -147,7 +147,7 @@ class RAGreedy : public MachineFunctionPass,
   void setStage(Iterator Begin, Iterator End, LiveRangeStage NewStage) {
     ExtraRegInfo.resize(MRI->getNumVirtRegs());
     for (;Begin != End; ++Begin) {
-      unsigned Reg = (*Begin)->reg;
+      unsigned Reg = *Begin;
       if (ExtraRegInfo[Reg].Stage == RS_New)
         ExtraRegInfo[Reg].Stage = NewStage;
     }
@@ -241,7 +241,7 @@ public:
   virtual void enqueue(LiveInterval *LI);
   virtual LiveInterval *dequeue();
   virtual unsigned selectOrSplit(LiveInterval&,
-                                 SmallVectorImpl<LiveInterval*>&);
+                                 SmallVectorImpl<unsigned>&);
 
   /// Perform register allocation.
   virtual bool runOnMachineFunction(MachineFunction &mf);
@@ -265,22 +265,22 @@ private:
   bool shouldEvict(LiveInterval &A, bool, LiveInterval &B, bool);
   bool canEvictInterference(LiveInterval&, unsigned, bool, EvictionCost&);
   void evictInterference(LiveInterval&, unsigned,
-                         SmallVectorImpl<LiveInterval*>&);
+                         SmallVectorImpl<unsigned>&);
 
   unsigned tryAssign(LiveInterval&, AllocationOrder&,
-                     SmallVectorImpl<LiveInterval*>&);
+                     SmallVectorImpl<unsigned>&);
   unsigned tryEvict(LiveInterval&, AllocationOrder&,
-                    SmallVectorImpl<LiveInterval*>&, unsigned = ~0u);
+                    SmallVectorImpl<unsigned>&, unsigned = ~0u);
   unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
-                          SmallVectorImpl<LiveInterval*>&);
+                          SmallVectorImpl<unsigned>&);
   unsigned tryBlockSplit(LiveInterval&, AllocationOrder&,
-                         SmallVectorImpl<LiveInterval*>&);
+                         SmallVectorImpl<unsigned>&);
   unsigned tryInstructionSplit(LiveInterval&, AllocationOrder&,
-                               SmallVectorImpl<LiveInterval*>&);
+                               SmallVectorImpl<unsigned>&);
   unsigned tryLocalSplit(LiveInterval&, AllocationOrder&,
-    SmallVectorImpl<LiveInterval*>&);
+    SmallVectorImpl<unsigned>&);
   unsigned trySplit(LiveInterval&, AllocationOrder&,
-                    SmallVectorImpl<LiveInterval*>&);
+                    SmallVectorImpl<unsigned>&);
 };
 } // end anonymous namespace
 
@@ -455,7 +455,7 @@ LiveInterval *RAGreedy::dequeue() {
 /// tryAssign - Try to assign VirtReg to an available register.
 unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
                              AllocationOrder &Order,
-                             SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                             SmallVectorImpl<unsigned> &NewVRegs) {
   Order.rewind();
   unsigned PhysReg;
   while ((PhysReg = Order.next()))
@@ -638,7 +638,7 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
 /// from being assigned to Physreg. This assumes that canEvictInterference
 /// returned true.
 void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
-                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                                 SmallVectorImpl<unsigned> &NewVRegs) {
   // Make sure that VirtReg has a cascade number, and assign that cascade
   // number to every evicted register. These live ranges than then only be
   // evicted by a newer cascade, preventing infinite loops.
@@ -670,7 +670,7 @@ void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
            "Cannot decrease cascade number, illegal eviction");
     ExtraRegInfo[Intf->reg].Cascade = Cascade;
     ++NumEvicted;
-    NewVRegs.push_back(Intf);
+    NewVRegs.push_back(Intf->reg);
   }
 }
 
@@ -680,7 +680,7 @@ void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
 /// @return         Physreg to assign VirtReg, or 0.
 unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
                             AllocationOrder &Order,
-                            SmallVectorImpl<LiveInterval*> &NewVRegs,
+                            SmallVectorImpl<unsigned> &NewVRegs,
                             unsigned CostPerUseLimit) {
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
@@ -1125,7 +1125,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
 
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
-  DebugVars->splitRegister(Reg, LREdit.regs());
+  DebugVars->splitRegister(Reg, LREdit.regs(), *LIS);
 
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   unsigned OrigBlocks = SA->getNumLiveBlocks();
@@ -1136,7 +1136,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
   // - Block-local splits are candidates for local splitting.
   // - DCE leftovers should go back on the queue.
   for (unsigned i = 0, e = LREdit.size(); i != e; ++i) {
-    LiveInterval &Reg = *LREdit.get(i);
+    LiveInterval &Reg = LIS->getInterval(LREdit.get(i));
 
     // Ignore old intervals from DCE.
     if (getStage(Reg) != RS_New)
@@ -1170,7 +1170,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
 }
 
 unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
-                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                                  SmallVectorImpl<unsigned> &NewVRegs) {
   unsigned NumCands = 0;
   unsigned BestCand = NoCand;
   BlockFrequency BestCost;
@@ -1305,7 +1305,7 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 /// creates a lot of local live ranges, that will be split by tryLocalSplit if
 /// they don't allocate.
 unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
-                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                                 SmallVectorImpl<unsigned> &NewVRegs) {
   assert(&SA->getParent() == &VirtReg && "Live range wasn't analyzed");
   unsigned Reg = VirtReg.reg;
   bool SingleInstrs = RegClassInfo.isProperSubClass(MRI->getRegClass(Reg));
@@ -1326,14 +1326,14 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SE->finish(&IntvMap);
 
   // Tell LiveDebugVariables about the new ranges.
-  DebugVars->splitRegister(Reg, LREdit.regs());
+  DebugVars->splitRegister(Reg, LREdit.regs(), *LIS);
 
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
 
   // Sort out the new intervals created by splitting. The remainder interval
   // goes straight to spilling, the new local ranges get to stay RS_New.
   for (unsigned i = 0, e = LREdit.size(); i != e; ++i) {
-    LiveInterval &LI = *LREdit.get(i);
+    LiveInterval &LI = LIS->getInterval(LREdit.get(i));
     if (getStage(LI) == RS_New && IntvMap[i] == 0)
       setStage(LI, RS_Spill);
   }
@@ -1357,7 +1357,7 @@ unsigned RAGreedy::tryBlockSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 /// This is similar to spilling to a larger register class.
 unsigned
 RAGreedy::tryInstructionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
-                              SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                              SmallVectorImpl<unsigned> &NewVRegs) {
   // There is no point to this if there are no larger sub-classes.
   if (!RegClassInfo.isProperSubClass(MRI->getRegClass(VirtReg.reg)))
     return 0;
@@ -1393,7 +1393,7 @@ RAGreedy::tryInstructionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
-  DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
+  DebugVars->splitRegister(VirtReg.reg, LREdit.regs(), *LIS);
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
 
   // Assign all new registers to RS_Spill. This was the last chance.
@@ -1491,7 +1491,7 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
 /// basic block.
 ///
 unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
-                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                                 SmallVectorImpl<unsigned> &NewVRegs) {
   assert(SA->getUseBlocks().size() == 1 && "Not a local interval");
   const SplitAnalysis::BlockInfo &BI = SA->getUseBlocks().front();
 
@@ -1685,7 +1685,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SE->useIntv(SegStart, SegStop);
   SmallVector<unsigned, 8> IntvMap;
   SE->finish(&IntvMap);
-  DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
+  DebugVars->splitRegister(VirtReg.reg, LREdit.regs(), *LIS);
 
   // If the new range has the same number of instructions as before, mark it as
   // RS_Split2 so the next split will be forced to make progress. Otherwise,
@@ -1698,8 +1698,8 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     assert(!ProgressRequired && "Didn't make progress when it was required.");
     for (unsigned i = 0, e = IntvMap.size(); i != e; ++i)
       if (IntvMap[i] == 1) {
-        setStage(*LREdit.get(i), RS_Split2);
-        DEBUG(dbgs() << PrintReg(LREdit.get(i)->reg));
+        setStage(LIS->getInterval(LREdit.get(i)), RS_Split2);
+        DEBUG(dbgs() << PrintReg(LREdit.get(i)));
       }
     DEBUG(dbgs() << '\n');
   }
@@ -1716,7 +1716,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 /// assignable.
 /// @return Physreg when VirtReg may be assigned and/or new NewVRegs.
 unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
-                            SmallVectorImpl<LiveInterval*>&NewVRegs) {
+                            SmallVectorImpl<unsigned>&NewVRegs) {
   // Ranges must be Split2 or less.
   if (getStage(VirtReg) >= RS_Spill)
     return 0;
@@ -1765,7 +1765,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 //===----------------------------------------------------------------------===//
 
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
-                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+                                 SmallVectorImpl<unsigned> &NewVRegs) {
   // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
@@ -1790,7 +1790,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   if (Stage < RS_Split) {
     setStage(VirtReg, RS_Split);
     DEBUG(dbgs() << "wait for second round\n");
-    NewVRegs.push_back(&VirtReg);
+    NewVRegs.push_back(VirtReg.reg);
     return 0;
   }
 

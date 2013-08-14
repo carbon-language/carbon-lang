@@ -37,7 +37,7 @@ LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg) {
     VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
   }
   LiveInterval &LI = LIS.getOrCreateInterval(VReg);
-  NewRegs.push_back(&LI);
+  NewRegs.push_back(VReg);
   return LI;
 }
 
@@ -392,8 +392,8 @@ LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,
                                         const MachineLoopInfo &Loops,
                                         const MachineBlockFrequencyInfo &MBFI) {
   VirtRegAuxInfo VRAI(MF, LIS, Loops, MBFI);
-  for (iterator I = begin(), E = end(); I != E; ++I) {
-    LiveInterval &LI = **I;
+  for (unsigned I = 0, Size = size(); I < Size; ++I) {
+    LiveInterval &LI = LIS.getInterval(get(I));
     if (MRI.recomputeRegClass(LI.reg, MF.getTarget()))
       DEBUG(dbgs() << "Inflated " << PrintReg(LI.reg) << " to "
                    << MRI.getRegClass(LI.reg)->getName() << '\n');

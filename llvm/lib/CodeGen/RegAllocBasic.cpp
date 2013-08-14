@@ -102,7 +102,7 @@ public:
   }
 
   virtual unsigned selectOrSplit(LiveInterval &VirtReg,
-                                 SmallVectorImpl<LiveInterval*> &SplitVRegs);
+                                 SmallVectorImpl<unsigned> &SplitVRegs);
 
   /// Perform register allocation.
   virtual bool runOnMachineFunction(MachineFunction &mf);
@@ -111,7 +111,7 @@ public:
   // that interfere with the most recently queried lvr.  Return true if spilling
   // was successful, and append any new spilled/split intervals to splitLVRs.
   bool spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
-                          SmallVectorImpl<LiveInterval*> &SplitVRegs);
+                          SmallVectorImpl<unsigned> &SplitVRegs);
 
   static char ID;
 };
@@ -168,7 +168,7 @@ void RABasic::releaseMemory() {
 // that interfere with VirtReg. The newly spilled or split live intervals are
 // returned by appending them to SplitVRegs.
 bool RABasic::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
-                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
+                                 SmallVectorImpl<unsigned> &SplitVRegs) {
   // Record each interference and determine if all are spillable before mutating
   // either the union or live intervals.
   SmallVector<LiveInterval*, 8> Intfs;
@@ -222,7 +222,7 @@ bool RABasic::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
 // minimal, there is no value in caching them outside the scope of
 // selectOrSplit().
 unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
-                                SmallVectorImpl<LiveInterval*> &SplitVRegs) {
+                                SmallVectorImpl<unsigned> &SplitVRegs) {
   // Populate a list of physical register spill candidates.
   SmallVector<unsigned, 8> PhysRegSpillCands;
 

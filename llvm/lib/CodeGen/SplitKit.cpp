@@ -377,7 +377,7 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
   assert(ParentVNI && "Mapping  NULL value");
   assert(Idx.isValid() && "Invalid SlotIndex");
   assert(Edit->getParent().getVNInfoAt(Idx) == ParentVNI && "Bad Parent VNI");
-  LiveInterval *LI = Edit->get(RegIdx);
+  LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
 
   // Create a new value.
   VNInfo *VNI = LI->getNextValue(Idx, LIS.getVNInfoAllocator());
@@ -422,7 +422,8 @@ void SplitEditor::forceRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
   // This was previously a single mapping. Make sure the old def is represented
   // by a trivial live range.
   SlotIndex Def = VNI->def;
-  Edit->get(RegIdx)->addRange(LiveRange(Def, Def.getDeadSlot(), VNI));
+  LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
+  LI->addRange(LiveRange(Def, Def.getDeadSlot(), VNI));
   // Mark as complex mapped, forced.
   VFP = ValueForcePair(0, true);
 }
@@ -434,7 +435,7 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
                                    MachineBasicBlock::iterator I) {
   MachineInstr *CopyMI = 0;
   SlotIndex Def;
-  LiveInterval *LI = Edit->get(RegIdx);
+  LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
 
   // We may be trying to avoid interference that ends at a deleted instruction,
   // so always begin RegIdx 0 early and all others late.
@@ -631,7 +632,7 @@ void SplitEditor::overlapIntv(SlotIndex Start, SlotIndex End) {
 //===----------------------------------------------------------------------===//
 
 void SplitEditor::removeBackCopies(SmallVectorImpl<VNInfo*> &Copies) {
-  LiveInterval *LI = Edit->get(0);
+  LiveInterval *LI = &LIS.getInterval(Edit->get(0));
   DEBUG(dbgs() << "Removing " << Copies.size() << " back-copies.\n");
   RegAssignMap::iterator AssignI;
   AssignI.setMap(RegAssign);
@@ -730,7 +731,7 @@ SplitEditor::findShallowDominator(MachineBasicBlock *MBB,
 
 void SplitEditor::hoistCopiesForSize() {
   // Get the complement interval, always RegIdx 0.
-  LiveInterval *LI = Edit->get(0);
+  LiveInterval *LI = &LIS.getInterval(Edit->get(0));
   LiveInterval *Parent = &Edit->getParent();
 
   // Track the nearest common dominator for all back-copies for each ParentVNI,
@@ -861,7 +862,7 @@ bool SplitEditor::transferValues() {
 
       // The interval [Start;End) is continuously mapped to RegIdx, ParentVNI.
       DEBUG(dbgs() << " [" << Start << ';' << End << ")=" << RegIdx);
-      LiveInterval *LI = Edit->get(RegIdx);
+      LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
 
       // Check for a simply defined value that can be blitted directly.
       ValueForcePair VFP = Values.lookup(std::make_pair(RegIdx, ParentVNI->id));
@@ -949,7 +950,7 @@ void SplitEditor::extendPHIKillRanges() {
     if (PHIVNI->isUnused() || !PHIVNI->isPHIDef())
       continue;
     unsigned RegIdx = RegAssign.lookup(PHIVNI->def);
-    LiveInterval *LI = Edit->get(RegIdx);
+    LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
     LiveRangeCalc &LRC = getLRCalc(RegIdx);
     MachineBasicBlock *MBB = LIS.getMBBFromIndex(PHIVNI->def);
     for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
@@ -990,7 +991,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
 
     // Rewrite to the mapped register at Idx.
     unsigned RegIdx = RegAssign.lookup(Idx);
-    LiveInterval *LI = Edit->get(RegIdx);
+    LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
     MO.setReg(LI->reg);
     DEBUG(dbgs() << "  rewr BB#" << MI->getParent()->getNumber() << '\t'
                  << Idx << ':' << RegIdx << '\t' << *MI);
@@ -1018,7 +1019,7 @@ void SplitEditor::rewriteAssigned(bool ExtendRanges) {
 void SplitEditor::deleteRematVictims() {
   SmallVector<MachineInstr*, 8> Dead;
   for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I){
-    LiveInterval *LI = *I;
+    LiveInterval *LI = &LIS.getInterval(*I);
     for (LiveInterval::const_iterator LII = LI->begin(), LIE = LI->end();
            LII != LIE; ++LII) {
       // Dead defs end at the dead slot.
@@ -1091,8 +1092,10 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     deleteRematVictims();
 
   // Get rid of unused values and set phi-kill flags.
-  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
-    (*I)->RenumberValues();
+  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I) {
+    LiveInterval &LI = LIS.getInterval(*I);
+    LI.RenumberValues();
+  }
 
   // Provide a reverse mapping from original indices to Edit ranges.
   if (LRMap) {
@@ -1105,7 +1108,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
   ConnectedVNInfoEqClasses ConEQ(LIS);
   for (unsigned i = 0, e = Edit->size(); i != e; ++i) {
     // Don't use iterators, they are invalidated by create() below.
-    LiveInterval *li = Edit->get(i);
+    LiveInterval *li = &LIS.getInterval(Edit->get(i));
     unsigned NumComp = ConEQ.Classify(li);
     if (NumComp <= 1)
       continue;

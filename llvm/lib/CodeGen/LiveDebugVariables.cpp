@@ -131,7 +131,8 @@ class UserValue {
 
   /// splitLocation - Replace OldLocNo ranges with NewRegs ranges where NewRegs
   /// is live. Returns true if any changes were made.
-  bool splitLocation(unsigned OldLocNo, ArrayRef<LiveInterval*> NewRegs);
+  bool splitLocation(unsigned OldLocNo, ArrayRef<unsigned> NewRegs,
+                     LiveIntervals &LIS);
 
 public:
   /// UserValue - Create a new UserValue.
@@ -251,7 +252,8 @@ public:
 
   /// splitRegister - Replace OldReg ranges with NewRegs ranges where NewRegs is
   /// live. Returns true if any changes were made.
-  bool splitRegister(unsigned OldLocNo, ArrayRef<LiveInterval*> NewRegs);
+  bool splitRegister(unsigned OldLocNo, ArrayRef<unsigned> NewRegs,
+                     LiveIntervals &LIS);
 
   /// rewriteLocations - Rewrite virtual register locations according to the
   /// provided virtual register map.
@@ -345,7 +347,7 @@ public:
   void mapVirtReg(unsigned VirtReg, UserValue *EC);
 
   /// splitRegister -  Replace all references to OldReg with NewRegs.
-  void splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs);
+  void splitRegister(unsigned OldReg, ArrayRef<unsigned> NewRegs);
 
   /// emitDebugValues - Recreate DBG_VALUE instruction from data structures.
   void emitDebugValues(VirtRegMap *VRM);
@@ -729,7 +731,8 @@ LiveDebugVariables::~LiveDebugVariables() {
 //===----------------------------------------------------------------------===//
 
 bool
-UserValue::splitLocation(unsigned OldLocNo, ArrayRef<LiveInterval*> NewRegs) {
+UserValue::splitLocation(unsigned OldLocNo, ArrayRef<unsigned> NewRegs,
+                         LiveIntervals& LIS) {
   DEBUG({
     dbgs() << "Splitting Loc" << OldLocNo << '\t';
     print(dbgs(), 0);
@@ -738,7 +741,7 @@ UserValue::splitLocation(unsigned OldLocNo, ArrayRef<LiveInterval*> NewRegs) {
   LocMap::iterator LocMapI;
   LocMapI.setMap(locInts);
   for (unsigned i = 0; i != NewRegs.size(); ++i) {
-    LiveInterval *LI = NewRegs[i];
+    LiveInterval *LI = &LIS.getInterval(NewRegs[i]);
     if (LI->empty())
       continue;
 
@@ -827,7 +830,8 @@ UserValue::splitLocation(unsigned OldLocNo, ArrayRef<LiveInterval*> NewRegs) {
 }
 
 bool
-UserValue::splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs) {
+UserValue::splitRegister(unsigned OldReg, ArrayRef<unsigned> NewRegs,
+                         LiveIntervals &LIS) {
   bool DidChange = false;
   // Split locations referring to OldReg. Iterate backwards so splitLocation can
   // safely erase unused locations.
@@ -836,15 +840,15 @@ UserValue::splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs) {
     const MachineOperand *Loc = &locations[LocNo];
     if (!Loc->isReg() || Loc->getReg() != OldReg)
       continue;
-    DidChange |= splitLocation(LocNo, NewRegs);
+    DidChange |= splitLocation(LocNo, NewRegs, LIS);
   }
   return DidChange;
 }
 
-void LDVImpl::splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs) {
+void LDVImpl::splitRegister(unsigned OldReg, ArrayRef<unsigned> NewRegs) {
   bool DidChange = false;
   for (UserValue *UV = lookupVirtReg(OldReg); UV; UV = UV->getNext())
-    DidChange |= UV->splitRegister(OldReg, NewRegs);
+    DidChange |= UV->splitRegister(OldReg, NewRegs, *LIS);
 
   if (!DidChange)
     return;
@@ -852,11 +856,11 @@ void LDVImpl::splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs) {
   // Map all of the new virtual registers.
   UserValue *UV = lookupVirtReg(OldReg);
   for (unsigned i = 0; i != NewRegs.size(); ++i)
-    mapVirtReg(NewRegs[i]->reg, UV);
+    mapVirtReg(NewRegs[i], UV);
 }
 
 void LiveDebugVariables::
-splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs) {
+splitRegister(unsigned OldReg, ArrayRef<unsigned> NewRegs, LiveIntervals &LIS) {
   if (pImpl)
     static_cast<LDVImpl*>(pImpl)->splitRegister(OldReg, NewRegs);
 }

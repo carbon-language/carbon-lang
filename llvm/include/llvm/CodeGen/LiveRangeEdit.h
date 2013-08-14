@@ -30,7 +30,6 @@ class AliasAnalysis;
 class LiveIntervals;
 class MachineBlockFrequencyInfo;
 class MachineLoopInfo;
-class MachineRegisterInfo;
 class VirtRegMap;
 
 class LiveRangeEdit {
@@ -58,7 +57,7 @@ public:
 
 private:
   LiveInterval *Parent;
-  SmallVectorImpl<LiveInterval*> &NewRegs;
+  SmallVectorImpl<unsigned> &NewRegs;
   MachineRegisterInfo &MRI;
   LiveIntervals &LIS;
   VirtRegMap *VRM;
@@ -108,7 +107,7 @@ public:
   ///            function.  If NULL, no virtual register map updates will
   ///            be done.  This could be the case if called before Regalloc.
   LiveRangeEdit(LiveInterval *parent,
-                SmallVectorImpl<LiveInterval*> &newRegs,
+                SmallVectorImpl<unsigned> &newRegs,
                 MachineFunction &MF,
                 LiveIntervals &lis,
                 VirtRegMap *vrm,
@@ -127,14 +126,14 @@ public:
   unsigned getReg() const { return getParent().reg; }
 
   /// Iterator for accessing the new registers added by this edit.
-  typedef SmallVectorImpl<LiveInterval*>::const_iterator iterator;
+  typedef SmallVectorImpl<unsigned>::const_iterator iterator;
   iterator begin() const { return NewRegs.begin()+FirstNew; }
   iterator end() const { return NewRegs.end(); }
   unsigned size() const { return NewRegs.size()-FirstNew; }
   bool empty() const { return size() == 0; }
-  LiveInterval *get(unsigned idx) const { return NewRegs[idx+FirstNew]; }
+  unsigned get(unsigned idx) const { return NewRegs[idx+FirstNew]; }
 
-  ArrayRef<LiveInterval*> regs() const {
+  ArrayRef<unsigned> regs() const {
     return makeArrayRef(NewRegs).slice(FirstNew);
   }
 

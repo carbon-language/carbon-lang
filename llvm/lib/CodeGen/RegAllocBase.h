@@ -90,7 +90,7 @@ protected:
   // or new set of split live virtual registers. It is up to the splitter to
   // converge quickly toward fully spilled live ranges.
   virtual unsigned selectOrSplit(LiveInterval &VirtReg,
-                                 SmallVectorImpl<LiveInterval*> &splitLVRs) = 0;
+                                 SmallVectorImpl<unsigned> &splitLVRs) = 0;
 
   // Use this group name for NamedRegionTimer.
   static const char TimerGroupName[];

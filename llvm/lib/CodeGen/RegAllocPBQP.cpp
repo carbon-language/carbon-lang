@@ -491,7 +491,7 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
       vrm->assignVirt2Phys(vreg, preg);
     } else if (problem.isSpillOption(vreg, alloc)) {
       vregsToAlloc.erase(vreg);
-      SmallVector<LiveInterval*, 8> newSpills;
+      SmallVector<unsigned, 8> newSpills;
       LiveRangeEdit LRE(&lis->getInterval(vreg), newSpills, *mf, *lis, vrm);
       spiller->spill(LRE);
 
@@ -502,9 +502,10 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
       // allocate.
       for (LiveRangeEdit::iterator itr = LRE.begin(), end = LRE.end();
            itr != end; ++itr) {
-        assert(!(*itr)->empty() && "Empty spill range.");
-        DEBUG(dbgs() << PrintReg((*itr)->reg, tri) << " ");
-        vregsToAlloc.insert((*itr)->reg);
+        LiveInterval &li = lis->getInterval(*itr);
+        assert(!li.empty() && "Empty spill range.");
+        DEBUG(dbgs() << PrintReg(li.reg, tri) << " ");
+        vregsToAlloc.insert(li.reg);
       }
 
       DEBUG(dbgs() << ")\n");

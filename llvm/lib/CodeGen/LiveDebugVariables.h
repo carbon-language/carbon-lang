@@ -27,6 +27,7 @@
 namespace llvm {
 
 class LiveInterval;
+class LiveIntervals;
 class VirtRegMap;
 
 class LiveDebugVariables : public MachineFunctionPass {
@@ -47,7 +48,8 @@ public:
   /// splitRegister - Move any user variables in OldReg to the live ranges in
   /// NewRegs where they are live. Mark the values as unavailable where no new
   /// register is live.
-  void splitRegister(unsigned OldReg, ArrayRef<LiveInterval*> NewRegs);
+  void splitRegister(unsigned OldReg, ArrayRef<unsigned> NewRegs,
+                     LiveIntervals &LIS);
 
   /// emitDebugValues - Emit new DBG_VALUE instructions reflecting the changes
   /// that happened during register allocation.

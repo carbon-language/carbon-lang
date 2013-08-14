@@ -398,7 +398,7 @@ void RegisterCoalescer::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void RegisterCoalescer::eliminateDeadDefs() {
-  SmallVector<LiveInterval*, 8> NewRegs;
+  SmallVector<unsigned, 8> NewRegs;
   LiveRangeEdit(0, NewRegs, *MF, *LIS, 0, this).eliminateDeadDefs(DeadDefs);
 }
 
