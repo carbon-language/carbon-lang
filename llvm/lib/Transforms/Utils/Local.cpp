@@ -536,7 +536,7 @@ static bool CanMergeValues(Value *First, Value *Second) {
 }
 
 /// CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
-/// almost-empty BB ending in an unconditional branch to Succ, into succ.
+/// almost-empty BB ending in an unconditional branch to Succ, into Succ.
 ///
 /// Assumption: Succ is the single successor for BB.
 ///
