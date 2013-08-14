@@ -20,7 +20,7 @@ template<typename T>
 T pi0 = T(3.1415926535897932385); // expected-note {{previous definition is here}}
 
 template int pi0 = 10; // expected-error {{variable cannot be defined in an explicit instantiation; if this declaration is meant to be a variable definition, remove the 'template' keyword}} \
-                          expected-error{{redefinition of 'pi0' with a different type: 'int' vs 'T'}}
+                          expected-error{{redefinition of 'pi0' as different kind of symbol}}
 #endif
 
 template<typename T> 

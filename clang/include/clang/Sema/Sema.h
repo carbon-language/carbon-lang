@@ -1472,7 +1472,8 @@ public:
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool &AddToScope);
   // Returns true if the variable declaration is a redeclaration
-  bool CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous);
+  bool CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous,
+                                bool IsVariableTemplate = false);
   void CheckVariableDeclarationType(VarDecl *NewVD);
   void CheckCompleteVariableDeclaration(VarDecl *var);
   void MaybeSuggestAddingStaticToDecl(const FunctionDecl *D);
@@ -1868,9 +1869,8 @@ public:
                                     Scope *S, bool MergeTypeWithOld);
   void mergeObjCMethodDecls(ObjCMethodDecl *New, ObjCMethodDecl *Old);
   void MergeVarDecl(VarDecl *New, LookupResult &Previous,
-                    bool MergeTypeWithPrevious);
-  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old,
-                         bool MergeTypeWithOld);
+                    bool IsVariableTemplate, bool MergeTypeWithPrevious);
+  void MergeVarDeclTypes(VarDecl *New, VarDecl *Old, bool MergeTypeWithOld);
   void MergeVarDeclExceptionSpecs(VarDecl *New, VarDecl *Old);
   bool MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old, Scope *S);
 

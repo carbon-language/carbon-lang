@@ -3365,7 +3365,7 @@ void Sema::BuildVariableInstantiation(
              OldVar->hasLinkage())
     LookupQualifiedName(Previous, NewVar->getDeclContext(), false);
 
-  CheckVariableDeclaration(NewVar, Previous);
+  CheckVariableDeclaration(NewVar, Previous, ForVarTemplate);
 
   if (OldVar->isOutOfLine()) {
     OldVar->getLexicalDeclContext()->addDecl(NewVar);

@@ -712,14 +712,21 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
   } else {
     Record.push_back(0);
   }
-
-  MemberSpecializationInfo *SpecInfo
-    = D->isStaticDataMember() ? D->getMemberSpecializationInfo() : 0;
-  Record.push_back(SpecInfo != 0);
-  if (SpecInfo) {
+  
+  enum {
+    VarNotTemplate = 0, VarTemplate, StaticDataMemberSpecialization
+  };
+  if (VarTemplateDecl *TemplD = D->getDescribedVarTemplate()) {
+    Record.push_back(VarTemplate);
+    Writer.AddDeclRef(TemplD, Record);
+  } else if (MemberSpecializationInfo *SpecInfo
+               = D->getMemberSpecializationInfo()) {
+    Record.push_back(StaticDataMemberSpecialization);
     Writer.AddDeclRef(SpecInfo->getInstantiatedFrom(), Record);
     Record.push_back(SpecInfo->getTemplateSpecializationKind());
     Writer.AddSourceLocation(SpecInfo->getPointOfInstantiation(), Record);
+  } else {
+    Record.push_back(VarNotTemplate);
   }
 
   if (!D->hasAttrs() &&
@@ -739,7 +746,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !isa<VarTemplateSpecializationDecl>(D) &&
       !D->isConstexpr() &&
       !D->isPreviousDeclInSameBlockScope() &&
-      !SpecInfo)
+      !D->getMemberSpecializationInfo())
     AbbrevToUse = Writer.getDeclVarAbbrev();
 
   Code = serialization::DECL_VAR;

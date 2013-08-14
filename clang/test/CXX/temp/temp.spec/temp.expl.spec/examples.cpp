@@ -163,8 +163,7 @@ namespace PR9877 {
   template<> struct X<1>::Y { static const int Z = 1; };
 
   const int X<0>::Y::Z;
-  template<> const int X<1>::Y::Z;  // expected-error{{extraneous 'template<>' in declaration of variable 'Z'}} \
-                                    // expected-error{{forward declaration of variable template cannot have a nested name specifier}}
+  template<> const int X<1>::Y::Z;  // expected-error{{extraneous 'template<>' in declaration of variable 'Z'}}
 }
 
 namespace PR9913 {

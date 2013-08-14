@@ -2280,32 +2280,6 @@ static bool CheckTemplateSpecializationScope(Sema &S, NamedDecl *Specialized,
                                              bool IsPartialSpecialization);
 
 static TemplateSpecializationKind getTemplateSpecializationKind(Decl *D);
-/*
-// Check the new variable specialization against the parsed input.
-//
-// FIXME: Model this against function specializations where
-// a new function declaration is checked against the specialization
-// as candidate for redefinition... (?)
-static bool CheckVariableTemplateSpecializationType() {
-
-  if (ExpectedType is undeduced &&  ParsedType is not undeduced)
-    ExpectedType = dedudeType();
-
-  if (both types are undeduced)
-    ???;
-
-  bool CheckType = !ExpectedType()->
-
-  if (!Context.hasSameType(DI->getType(), ExpectedDI->getType())) {
-    unsigned ErrStr = IsPartialSpecialization ? 2 : 1;
-    Diag(D.getIdentifierLoc(), diag::err_invalid_var_template_spec_type)
-        << ErrStr << VarTemplate << DI->getType() << ExpectedDI->getType();
-    Diag(VarTemplate->getLocation(), diag::note_template_declared_here)
-        << 2 << VarTemplate->getDeclName();
-    return true;
-  }
-}
-*/
 
 DeclResult Sema::ActOnVarTemplateSpecialization(
     Scope *S, VarTemplateDecl *VarTemplate, Declarator &D, TypeSourceInfo *DI,
@@ -2358,13 +2332,6 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
   }
   if (!ExpectedDI)
     return true;
-
-  /*
-  // Check the new variable specialization against the parsed input.
-  // (Attributes are merged later below.)
-  if (CheckVariableTemplateSpecializationType())
-    return true;
-  */
 
   // Find the variable template (partial) specialization declaration that
   // corresponds to these arguments.

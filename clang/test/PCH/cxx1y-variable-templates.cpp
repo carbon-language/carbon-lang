@@ -168,5 +168,4 @@ namespace spec_join1 {
   int* intpb = vd<int>;
 }
 
-
 #endif

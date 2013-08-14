@@ -943,7 +943,7 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   VD->setCachedLinkage(Linkage(Record[Idx++]));
 
   // Only true variables (not parameters or implicit parameters) can be merged.
-  if (VD->getKind() == Decl::Var)
+  if (VD->getKind() != Decl::ParmVar && VD->getKind() != Decl::ImplicitParam)
     mergeRedeclarable(VD, Redecl);
   
   if (uint64_t Val = Record[Idx++]) {
@@ -955,11 +955,22 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
     }
   }
 
-  if (Record[Idx++]) { // HasMemberSpecializationInfo.
+  enum VarKind {
+    VarNotTemplate = 0, VarTemplate, StaticDataMemberSpecialization
+  };
+  switch ((VarKind)Record[Idx++]) {
+  case VarNotTemplate:
+    break;
+  case VarTemplate:
+    VD->setDescribedVarTemplate(ReadDeclAs<VarTemplateDecl>(Record, Idx));
+    break;
+  case StaticDataMemberSpecialization: { // HasMemberSpecializationInfo.
     VarDecl *Tmpl = ReadDeclAs<VarDecl>(Record, Idx);
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
     SourceLocation POI = ReadSourceLocation(Record, Idx);
     Reader.getContext().setInstantiatedFromStaticDataMember(VD, Tmpl, TSK,POI);
+    break;
+  }
   }
 
   return Redecl;
@@ -1433,7 +1444,7 @@ void ASTDeclReader::VisitVarTemplateDecl(VarTemplateDecl *D) {
   RedeclarableResult Redecl = VisitRedeclarableTemplateDecl(D);
 
   if (ThisDeclID == Redecl.getFirstID()) {
-    // This ClassTemplateDecl owns a CommonPtr; read it to keep track of all of
+    // This VarTemplateDecl owns a CommonPtr; read it to keep track of all of
     // the specializations.
     SmallVector<serialization::DeclID, 2> SpecIDs;
     SpecIDs.push_back(0);

@@ -72,7 +72,7 @@ namespace odr_tmpl {
   }
   namespace pvt_cv {
     template<typename T> T v; // expected-note {{previous definition is here}}
-    int v;   // expected-error {{redefinition of 'v' with a different type: 'int' vs 'T'}}
+    int v;   // expected-error {{redefinition of 'v' as different kind of symbol}}
   }
   namespace pvt_cvt {
     template<typename T> T v0; // expected-note {{previous definition is here}}
@@ -107,6 +107,9 @@ namespace odr_tmpl {
 #ifdef CXX11
     template<typename T> extern auto v;   // expected-error {{declaration of variable 'v' with type 'auto' requires an initializer}}
 #endif
+
+    template<typename T> T var = T();     // expected-note {{previous definition is here}}
+    extern int var;                       // expected-error {{redefinition of 'var' as different kind of symbol}}
   }
 
 #ifdef CXX11
