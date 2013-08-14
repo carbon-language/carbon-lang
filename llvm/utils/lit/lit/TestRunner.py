@@ -309,6 +309,25 @@ def isExpectedFail(test, xfails):
 
     return False
 
+def parseIntegratedTestScriptCommands(sourcepath):
+    """
+    parseIntegratedTestScriptCommands(source_path) -> commands
+
+    Parse the commands in an integrated test script file into a list of
+    (line_number, command_type, line).
+    """
+    line_number = 0
+    for ln in open(sourcepath):
+        line_number += 1
+        if 'RUN:' in ln:
+            yield (line_number, 'RUN', ln[ln.index('RUN:')+4:])
+        elif 'XFAIL:' in ln:
+            yield (line_number, 'XFAIL', ln[ln.index('XFAIL:') + 6:])
+        elif 'REQUIRES:' in ln:
+            yield (line_number, 'REQUIRES', ln[ln.index('REQUIRES:') + 9:])
+        elif 'END.' in ln:
+            yield (line_number, 'END', ln[ln.index('END.') + 4:])
+
 def parseIntegratedTestScript(test, normalize_slashes=False,
                               extra_substitutions=[]):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
@@ -359,14 +378,9 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     script = []
     xfails = []
     requires = []
-    line_number = 0
-    for ln in open(sourcepath):
-        line_number += 1
-        if 'RUN:' in ln:
-            # Isolate the command to run.
-            index = ln.index('RUN:')
-            ln = ln[index+4:]
-
+    for line_number, command_type, ln in \
+            parseIntegratedTestScriptCommands(sourcepath):
+        if command_type == 'RUN':
             # Trim trailing whitespace.
             ln = ln.rstrip()
 
@@ -384,16 +398,17 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
                 script[-1] = script[-1][:-1] + ln
             else:
                 script.append(ln)
-        elif 'XFAIL:' in ln:
-            items = ln[ln.index('XFAIL:') + 6:].split(',')
-            xfails.extend([s.strip() for s in items])
-        elif 'REQUIRES:' in ln:
-            items = ln[ln.index('REQUIRES:') + 9:].split(',')
-            requires.extend([s.strip() for s in items])
-        elif 'END.' in ln:
-            # Check for END. lines.
-            if ln[ln.index('END.'):].strip() == 'END.':
+        elif command_type == 'XFAIL':
+            xfails.extend([s.strip() for s in ln.split(',')])
+        elif command_type == 'REQUIRES':
+            requires.extend([s.strip() for s in ln.split(',')])
+        elif command_type == 'END':
+            # END commands are only honored if the rest of the line is empty.
+            if not ln.strip():
                 break
+        else:
+            raise ValueError("unknown script command type: %r" % (
+                    command_type,))
 
     # Apply substitutions to the script.  Allow full regular
     # expression syntax.  Replace each matching occurrence of regular
