@@ -9390,7 +9390,6 @@ private:
       FailedCandidates.addCandidate()
           .set(FunctionTemplate->getTemplatedDecl(),
                MakeDeductionFailureInfo(Context, Result, Info));
-      (void)Result;
       return false;
     } 
     
@@ -9531,10 +9530,22 @@ public:
     S.Diag(OvlExpr->getLocStart(), diag::err_addr_ovl_no_viable)
         << OvlExpr->getName() << TargetFunctionType
         << OvlExpr->getSourceRange();
-    FailedCandidates.NoteCandidates(S, OvlExpr->getLocStart());
-    S.NoteAllOverloadCandidates(OvlExpr, TargetFunctionType);
-  } 
-  
+    if (FailedCandidates.empty())
+      S.NoteAllOverloadCandidates(OvlExpr, TargetFunctionType);
+    else {
+      // We have some deduction failure messages. Use them to diagnose
+      // the function templates, and diagnose the non-template candidates
+      // normally.
+      for (UnresolvedSetIterator I = OvlExpr->decls_begin(),
+                                 IEnd = OvlExpr->decls_end();
+           I != IEnd; ++I)
+        if (FunctionDecl *Fun =
+                dyn_cast<FunctionDecl>((*I)->getUnderlyingDecl()))
+          S.NoteOverloadCandidate(Fun, TargetFunctionType);
+      FailedCandidates.NoteCandidates(S, OvlExpr->getLocStart());
+    }
+  }
+
   bool IsInvalidFormOfPointerToMemberFunction() const {
     return TargetTypeIsNonStaticMemberFunction &&
       !OvlExprInfo.HasFormOfMemberPointer;
@@ -9695,7 +9706,6 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
       FailedCandidates.addCandidate()
           .set(FunctionTemplate->getTemplatedDecl(),
                MakeDeductionFailureInfo(Context, Result, Info));
-      (void)Result;
       continue;
     }
 

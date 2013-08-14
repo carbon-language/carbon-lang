@@ -159,8 +159,7 @@ namespace Templates {
   double &mem_check4 = take_fn<double>(Outer<double>::arg_multi);
 
   namespace Deduce1 {
-  template <typename T> auto f() { return 0; } // expected-note {{candidate}} \
-                                               // expected-note {{candidate function has different return type ('int' expected but has 'auto')}}
+  template <typename T> auto f() { return 0; } // expected-note {{couldn't infer template argument 'T'}}
     template<typename T> void g(T(*)()); // expected-note 2{{candidate}}
     void h() {
       auto p = f<int>;
@@ -173,8 +172,7 @@ namespace Templates {
   }
 
   namespace Deduce2 {
-  template <typename T> auto f(int) { return 0; } // expected-note {{candidate}} \
-    // expected-note {{candidate function has different return type ('int' expected but has 'auto')}}
+  template <typename T> auto f(int) { return 0; } // expected-note {{couldn't infer template argument 'T'}}
     template<typename T> void g(T(*)(int)); // expected-note 2{{candidate}}
     void h() {
       auto p = f<int>;
