@@ -156,10 +156,15 @@ dfsan_label dfsan_create_label(const char *desc, void *userdata) {
   return label;
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
-void dfsan_set_label(dfsan_label label, void *addr, size_t size) {
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __dfsan_set_label(dfsan_label label, void *addr, size_t size) {
   for (dfsan_label *labelp = shadow_for(addr); size != 0; --size, ++labelp)
     *labelp = label;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void dfsan_set_label(dfsan_label label, void *addr, size_t size) {
+  __dfsan_set_label(label, addr, size);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
