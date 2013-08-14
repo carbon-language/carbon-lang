@@ -126,7 +126,7 @@ namespace odr_tmpl {
   }
 #endif
   
-}  
+}
 
 namespace explicit_instantiation {
   template<typename T> 
@@ -319,6 +319,15 @@ namespace explicit_specialization {
     template<typename T> T var<T*> = T();     // expected-error {{redefinition of 'var' with a different type: 'T' vs 'auto'}}
 #endif
   }
+}
+
+namespace narrowing {
+  template<typename T> T v = {1234};  // expected-warning {{implicit conversion from 'int' to 'char' changes value from 1234 to}}
+#ifdef CXX11
+  // expected-error@-2 {{constant expression evaluates to 1234 which cannot be narrowed to type 'char'}}\
+  // expected-note@-2 {{override this message by inserting an explicit cast}}
+#endif
+  int k = v<char>;        // expected-note {{in instantiation of variable template specialization 'narrowing::v<char>' requested here}}
 }
 
 namespace use_in_structs {
