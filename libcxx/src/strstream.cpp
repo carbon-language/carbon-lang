@@ -156,13 +156,13 @@ strstreambuf::overflow(int_type __c)
     {
         if ((__strmode_ & __dynamic) == 0 || (__strmode_ & __frozen) != 0)
             return int_type(EOF);
-        streamsize old_size = (epptr() ? epptr() : egptr()) - eback();
-        streamsize new_size = max<streamsize>(__alsize_, 2*old_size);
+        size_t old_size = static_cast<size_t> ((epptr() ? epptr() : egptr()) - eback());
+        size_t new_size = max<size_t>(static_cast<size_t>(__alsize_), 2*old_size);
         if (new_size == 0)
             new_size = __default_alsize;
         char* buf = nullptr;
         if (__palloc_)
-            buf = static_cast<char*>(__palloc_(static_cast<size_t>(new_size)));
+            buf = static_cast<char*>(__palloc_(new_size));
         else
             buf = new char[new_size];
         if (buf == nullptr)
