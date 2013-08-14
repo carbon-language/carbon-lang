@@ -1,6 +1,6 @@
 # Check the lit adaption to run under unittest.
 #
-# RUN: python %s %{inputs}/unittest-adaptor 2> %t.err
+# RUN: %{python} %s %{inputs}/unittest-adaptor 2> %t.err
 # RUN: FileCheck < %t.err %s
 #
 # CHECK: unittest-adaptor :: test-one.txt ... ok
