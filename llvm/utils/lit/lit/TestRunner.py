@@ -3,10 +3,6 @@ import os, signal, subprocess, sys
 import re
 import platform
 import tempfile
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
 
 import lit.ShUtil as ShUtil
 import lit.Test as Test
@@ -445,23 +441,33 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
     return script,isXFail,tmpBase,execdir
 
 def formatTestOutput(status, out, err, exitCode, script):
-    output = StringIO()
-    output.write(u"Script:\n")
-    output.write(u"--\n")
-    output.write(u'\n'.join(script))
-    output.write(u"\n--\n")
-    output.write(u"Exit Code: %r\n\n" % exitCode)
+    output = """\
+Script:
+--
+%s
+--
+Exit Code: %d
+
+""" % ('\n'.join(script), exitCode)
+
+    # Append the stdout, if present.
     if out:
-        output.write(u"Command Output (stdout):\n")
-        output.write(u"--\n")
-        output.write(unicode(out))
-        output.write(u"--\n")
+        output += """\
+Command Output (stdout):
+--
+%s
+--
+""" % (out,)
+
+    # Append the stderr, if present.
     if err:
-        output.write(u"Command Output (stderr):\n")
-        output.write(u"--\n")
-        output.write(unicode(err))
-        output.write(u"--\n")
-    return (status, output.getvalue())
+        output += """\
+Command Output (stderr):
+--
+%s
+--
+""" % (err,)
+    return (status, output)
 
 def executeShTest(test, litConfig, useExternalSh,
                   extra_substitutions=[]):
