@@ -146,10 +146,6 @@ public:
              MachineDominatorTree*,
              VNInfo::Allocator*);
 
-  /// calculate - Calculate the live range of a virtual register from its defs
-  /// and uses.  LI must be empty with no values.
-  void calculate(LiveInterval *LI);
-
   //===--------------------------------------------------------------------===//
   // Mid-level interface.
   //===--------------------------------------------------------------------===//
