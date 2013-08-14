@@ -141,6 +141,7 @@ public:
   ///
   /// \param Replaces The replacements to apply.
   /// \param SM A user provided SourceManager to be used when applying rewrites.
+  /// \param TransformName The name of the transform the replacements come from.
   void applyReplacements(clang::tooling::Replacements &Replaces,
                          clang::SourceManager &SM,
                          llvm::StringRef TransformName);
