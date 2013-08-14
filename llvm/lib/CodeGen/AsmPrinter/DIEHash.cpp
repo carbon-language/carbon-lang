@@ -103,13 +103,13 @@ void DIEHash::addParentContext(DIE *Parent) {
 }
 
 // Collect all of the attributes for a particular DIE in single structure.
-void DIEHash::collectAttributes(DIE *Die, DIEAttrs *Attrs) {
+void DIEHash::collectAttributes(DIE *Die, DIEAttrs &Attrs) {
   const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
   const DIEAbbrev &Abbrevs = Die->getAbbrev();
 
 #define COLLECT_ATTR(NAME)                                                     \
-  Attrs->NAME.Val = Values[i];                                                  \
-  Attrs->NAME.Desc = &Abbrevs.getData()[i];
+  Attrs.NAME.Val = Values[i];                                                  \
+  Attrs.NAME.Desc = &Abbrevs.getData()[i];
 
   for (size_t i = 0, e = Values.size(); i != e; ++i) {
     DEBUG(dbgs() << "Attribute: "
@@ -150,7 +150,7 @@ void DIEHash::hashAttribute(AttrEntry Attr) {
 
 // Go through the attributes from \param Attrs in the order specified in 7.27.4
 // and hash them.
-void DIEHash::hashAttributes(DIEAttrs Attrs) {
+void DIEHash::hashAttributes(const DIEAttrs &Attrs) {
 #define ADD_ATTR(ATTR)                                                         \
   {                                                                            \
     if (ATTR.Val != 0)                                                         \
@@ -165,7 +165,7 @@ void DIEHash::hashAttributes(DIEAttrs Attrs) {
 void DIEHash::addAttributes(DIE *Die) {
   DIEAttrs Attrs;
   memset(&Attrs, 0, sizeof(Attrs));
-  collectAttributes(Die, &Attrs);
+  collectAttributes(Die, Attrs);
   hashAttributes(Attrs);
 }
 
