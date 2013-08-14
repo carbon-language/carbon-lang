@@ -51,3 +51,21 @@ entry:
   ret void
 }
 
+; Check that RA doesn't allocate registers in the clobber list.
+; CHECK-LABEL: foo4:
+; CHECK: #APP
+; CHECK-NOT: ulh $2
+; CHECK: #NO_APP
+; CHECK: #APP
+; CHECK-NOT: $f0
+; CHECK: #NO_APP
+
+define void @foo4() {
+entry:
+  %0 = tail call i32 asm sideeffect "ulh $0,16($$sp)\0A\09", "=r,~{$2}"()
+  store i32 %0, i32* @gi2, align 4
+  %1 = load float* @gf0, align 4
+  %2 = tail call double asm sideeffect "cvt.d.s $0, $1\0A\09", "=f,f,~{$f0}"(float %1)
+  store double %2, double* @gd0, align 8
+  ret void
+}

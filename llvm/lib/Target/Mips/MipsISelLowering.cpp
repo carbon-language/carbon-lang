@@ -34,6 +34,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cctype>
 
 using namespace llvm;
 
@@ -2880,6 +2881,79 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
   return weight;
 }
 
+/// This is a helper function to parse a physical register string and split it
+/// into non-numeric and numeric parts (Prefix and Reg). The first boolean flag
+/// that is returned indicates whether parsing was successful. The second flag
+/// is true if the numeric part exists.
+static std::pair<bool, bool>
+parsePhysicalReg(const StringRef &C, std::string &Prefix,
+                 unsigned long long &Reg) {
+  if (C.front() != '{' || C.back() != '}')
+    return std::make_pair(false, false);
+
+  // Search for the first numeric character.
+  StringRef::const_iterator I, B = C.begin() + 1, E = C.end() - 1;
+  I = std::find_if(B, E, std::ptr_fun(isdigit));
+
+  Prefix.assign(B, I - B);
+
+  // The second flag is set to false if no numeric characters were found.
+  if (I == E)
+    return std::make_pair(true, false);
+
+  // Parse the numeric characters.
+  return std::make_pair(!getAsUnsignedInteger(StringRef(I, E - I), 10, Reg),
+                        true);
+}
+
+std::pair<unsigned, const TargetRegisterClass *> MipsTargetLowering::
+parseRegForInlineAsmConstraint(const StringRef &C, MVT VT) const {
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const TargetRegisterClass *RC;
+  std::string Prefix;
+  unsigned long long Reg;
+
+  std::pair<bool, bool> R = parsePhysicalReg(C, Prefix, Reg);
+
+  if (!R.first)
+    return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
+
+  if ((Prefix == "hi" || Prefix == "lo")) { // Parse hi/lo.
+    // No numeric characters follow "hi" or "lo".
+    if (R.second)
+      return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
+
+    RC = TRI->getRegClass(Prefix == "hi" ?
+                          Mips::HIRegsRegClassID : Mips::LORegsRegClassID);
+    return std::make_pair(*(RC->begin()), RC);
+  }
+
+  if (!R.second)
+    return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
+
+  if (Prefix == "$f") { // Parse $f0-$f31.
+    // If the size of FP registers is 64-bit or Reg is an even number, select
+    // the 64-bit register class. Otherwise, select the 32-bit register class.
+    if (VT == MVT::Other)
+      VT = (Subtarget->isFP64bit() || !(Reg % 2)) ? MVT::f64 : MVT::f32;
+
+    RC= getRegClassFor(VT);
+
+    if (RC == &Mips::AFGR64RegClass) {
+      assert(Reg % 2 == 0);
+      Reg >>= 1;
+    }
+  } else if (Prefix == "$fcc") { // Parse $fcc0-$fcc7.
+    RC = TRI->getRegClass(Mips::FCCRegClassID);
+  } else { // Parse $0-$31.
+    assert(Prefix == "$");
+    RC = getRegClassFor((VT == MVT::Other) ? MVT::i32 : VT);
+  }
+
+  assert(Reg < RC->getNumRegs());
+  return std::make_pair(*(RC->begin() + Reg), RC);
+}
+
 /// Given a register class constraint, like 'r', if this corresponds directly
 /// to an LLVM register class, return a register of 0 and the register class
 /// pointer.
@@ -2926,6 +3000,13 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
       return std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
     }
   }
+
+  std::pair<unsigned, const TargetRegisterClass *> R;
+  R = parseRegForInlineAsmConstraint(Constraint, VT);
+
+  if (R.second)
+    return R;
+
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
 
