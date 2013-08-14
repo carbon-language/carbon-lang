@@ -32,8 +32,7 @@ TEST(SourceOverridesTest, Interface) {
       strlen("std::vector<such_a_long_name_for_a_type>::const_iterator");
   Replaces.insert(
       Replacement(FileName, 0, ReplacementLength, "auto"));
-  Overrides.applyReplacements(Replaces, VFHelper.getNewSourceManager(),
-                              "use-auto");
+  Overrides.applyReplacements(Replaces, VFHelper.getNewSourceManager());
   EXPECT_TRUE(Overrides.isSourceOverriden());
 
   std::string ExpectedContent = "auto long_type =\n"

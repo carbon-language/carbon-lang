@@ -29,19 +29,18 @@ using namespace clang;
 using namespace clang::tooling;
 
 void HeaderOverride::recordReplacements(
-    llvm::StringRef TransformID, const clang::tooling::Replacements &Replaces) {
-  HeaderChangeDoc.TransformID = TransformID;
-  HeaderChangeDoc.Replacements.resize(Replaces.size());
+    const clang::tooling::Replacements &Replaces) {
+  MigratorDoc.Replacements.resize(Replaces.size());
   std::copy(Replaces.begin(), Replaces.end(),
-            HeaderChangeDoc.Replacements.begin());
+            MigratorDoc.Replacements.begin());
 }
 
 SourceOverrides::SourceOverrides(llvm::StringRef MainFileName,
                                  bool TrackChanges)
     : MainFileName(MainFileName), TrackChanges(TrackChanges) {}
 
-void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
-                                        llvm::StringRef TransformName) {
+void
+SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces) {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts(
       new DiagnosticOptions());
   DiagnosticsEngine Diagnostics(
@@ -49,12 +48,11 @@ void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
       DiagOpts.getPtr());
   FileManager Files((FileSystemOptions()));
   SourceManager SM(Diagnostics, Files);
-  applyReplacements(Replaces, SM, TransformName);
+  applyReplacements(Replaces, SM);
 }
 
 void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
-                                        clang::SourceManager &SM,
-                                        llvm::StringRef TransformName) {
+                                        clang::SourceManager &SM) {
   applyOverrides(SM);
 
   Rewriter Rewrites(SM, LangOptions());
@@ -121,7 +119,7 @@ void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
                                        E = HeadersReplaces.end();
        I != E; ++I) {
     HeaderOverride &HeaderOv = Headers[I->getKey()];
-    HeaderOv.recordReplacements(TransformName, I->getValue());
+    HeaderOv.recordReplacements(I->getValue());
   }
 
   if (TrackChanges)

@@ -50,7 +50,7 @@ void Reformatter::reformatChanges(SourceOverrides &Overrides,
         reformatSingleFile(Header.getFileName(), Header.getChanges(), SM);
     Replaces.insert(HeaderReplaces.begin(), HeaderReplaces.end());
   }
-  Overrides.applyReplacements(Replaces, SM, "reformatter");
+  Overrides.applyReplacements(Replaces, SM);
 }
 
 tooling::Replacements Reformatter::reformatSingleFile(

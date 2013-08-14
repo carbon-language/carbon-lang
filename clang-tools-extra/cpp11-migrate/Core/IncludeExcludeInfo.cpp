@@ -151,6 +151,7 @@ bool IncludeExcludeInfo::isFileIncluded(StringRef FilePath) const {
        I != E; ++I)
     if ((InIncludeList = fileHasPathPrefix(FilePath, *I)))
       break;
+
   // If file is not in the list of included paths then it is not necessary
   // to check the excluded path list.
   if (!InIncludeList)

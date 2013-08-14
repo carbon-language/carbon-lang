@@ -64,16 +64,16 @@ public:
   /// \brief Constructors.
   /// @{
   HeaderOverride() {}
-  HeaderOverride(llvm::StringRef HeaderFileName,
-                 llvm::StringRef SourceFileName) {
-    HeaderChangeDoc.HeaderFileName = HeaderFileName;
-    HeaderChangeDoc.SourceFileName = SourceFileName;
+  HeaderOverride(llvm::StringRef TargetFile,
+                 llvm::StringRef MainSourceFile) {
+    MigratorDoc.TargetFile = TargetFile;
+    MigratorDoc.MainSourceFile= MainSourceFile;
   }
   /// @}
 
   /// \brief Getter for FileName.
   llvm::StringRef getFileName() const {
-    return HeaderChangeDoc.HeaderFileName;
+    return MigratorDoc.TargetFile;
   }
 
   /// \brief Accessor for ContentOverride.
@@ -88,15 +88,14 @@ public:
   /// \brief Swaps the content of ContentOverride with \p S.
   void swapContentOverride(std::string &S) { ContentOverride.swap(S); }
 
-  /// \brief Getter for HeaderChangeDoc.
-  const HeaderChangeDocument &getHeaderChangeDoc() const {
-    return HeaderChangeDoc;
+  /// \brief Getter for MigratorDoc.
+  const MigratorDocument &getMigratorDoc() const {
+    return MigratorDoc;
   }
 
   /// \brief Stores the replacements made by a transform to the header this
   /// object represents.
-  void recordReplacements(llvm::StringRef TransformID,
-                          const clang::tooling::Replacements &Replaces);
+  void recordReplacements(const clang::tooling::Replacements &Replaces);
 
   /// \brief Helper function to adjust the changed ranges.
   void adjustChangedRanges(const clang::tooling::Replacements &Replaces) {
@@ -106,7 +105,7 @@ public:
 private:
   std::string ContentOverride;
   ChangedRanges Changes;
-  HeaderChangeDocument HeaderChangeDoc;
+  MigratorDocument MigratorDoc;
 };
 
 /// \brief Container mapping header file names to override information.
@@ -141,12 +140,9 @@ public:
   ///
   /// \param Replaces The replacements to apply.
   /// \param SM A user provided SourceManager to be used when applying rewrites.
-  /// \param TransformName The name of the transform the replacements come from.
   void applyReplacements(clang::tooling::Replacements &Replaces,
-                         clang::SourceManager &SM,
-                         llvm::StringRef TransformName);
-  void applyReplacements(clang::tooling::Replacements &Replaces,
-                         llvm::StringRef TransformName);
+                         clang::SourceManager &SM);
+  void applyReplacements(clang::tooling::Replacements &Replaces);
 
   /// \brief Convenience function for applying this source's overrides to
   /// the given SourceManager.

@@ -357,8 +357,8 @@ int main(int argc, const char **argv) {
           continue;
         }
         llvm::yaml::Output YAML(ReplacementsFile);
-        YAML << const_cast<HeaderChangeDocument &>(
-                    HeaderI->getValue().getHeaderChangeDoc());
+        YAML << const_cast<MigratorDocument &>(
+                    HeaderI->getValue().getMigratorDoc());
       } else {
         // If -yaml-only was not specified, then change headers on disk.
         // FIXME: This is transitional behaviour. Remove this functionality

@@ -8,8 +8,10 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file provides structs to store the migrator specific header
-/// replacements and the YAML traits for Replacements.
+/// \brief This file provides functionality to serialize replacements for a
+/// single file. It is used by the C++11 Migrator to store all the changes made
+/// by a single transform to a particular file resulting from migrating a
+/// translation unit of a particular main source file.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -23,12 +25,14 @@
 
 /// \brief The top-level YAML document that contains the details for the
 /// replacement.
-struct HeaderChangeDocument {
-  std::string TransformID;
+struct MigratorDocument {
   std::vector<clang::tooling::Replacement> Replacements;
-  std::string HeaderFileName;
-  std::string SourceFileName;
+  std::string TargetFile;
+  std::string MainSourceFile;
 };
+
+// FIXME: Put the YAML support for Replacement into clang::tooling. NOTE: The
+// implementation below doesn't serialize the filename for Replacements.
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(clang::tooling::Replacement)
 
@@ -85,15 +89,14 @@ struct MappingTraits<clang::tooling::Replacement> {
   }
 };
 
-/// \brief Specialized MappingTraits for HeaderChangeDocument to be converted
+/// \brief Specialized MappingTraits for MigratorDocument to be converted
 /// to/from a YAML File.
 template <>
-struct MappingTraits<HeaderChangeDocument> {
-  static void mapping(IO &Io, HeaderChangeDocument &TD) {
-    Io.mapRequired("TransformID", TD.TransformID);
+struct MappingTraits<MigratorDocument> {
+  static void mapping(IO &Io, MigratorDocument &TD) {
     Io.mapRequired("Replacements", TD.Replacements);
-    Io.mapRequired("HeaderFileName", TD.HeaderFileName);
-    Io.mapRequired("SourceFileName", TD.SourceFileName);
+    Io.mapRequired("TargetFile", TD.TargetFile);
+    Io.mapRequired("MainSourceFile", TD.MainSourceFile);
   }
 };
 } // end namespace yaml

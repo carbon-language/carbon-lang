@@ -1,5 +1,4 @@
 ---
-TransformID:     "LoopConvert"
 Replacements:
   - Offset:          432
     Length:          61
@@ -7,6 +6,6 @@ Replacements:
   - Offset:          506
     Length:          2
     ReplacementText: "elem"
-HeaderFileName: "$(path)/common.h"
-SourceFileName: "$(path)/main.cpp"
+TargetFile:      "$(path)/common.h"
+MainSourceFile:  "$(path)/main.cpp"
 ...
