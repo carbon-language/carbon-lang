@@ -59,6 +59,49 @@ entry:
   ret i32 %conv
 }
 
+declare void @mtrace()
+
+define signext i32 @main(i32 signext %argc, i8** %argv) {
+entry:
+  %argc.addr = alloca i32, align 4
+  store i32 %argc, i32* %argc.addr, align 4
+  %0 = call { i64, i64 } asm sideeffect "sc", "={r0},={r3},{r0},~{r4},~{r5},~{r6},~{r7},~{r8},~{r9},~{r10},~{r11},~{r12},~{cr0},~{memory}"(i64 1076)
+  %asmresult1.i = extractvalue { i64, i64 } %0, 1
+  %conv.i = trunc i64 %asmresult1.i to i32
+  %cmp = icmp eq i32 %conv.i, 0
+  br i1 %cmp, label %if.then, label %if.end
+
+; CHECK-LABEL: @main
+
+; CHECK-DAG: mr [[REG:[0-9]+]], 3
+; CHECK-DAG: li 0, 1076
+; CHECK:     stw [[REG]],
+
+; CHECK:     #APP
+; CHECK:     sc
+; CHECK:     #NO_APP
+                                      
+; CHECK:     cmpwi {{[0-9]+}}, [[REG]], 1
+
+; CHECK: blr
+
+if.then:                                          ; preds = %entry
+  call void @mtrace()
+  %.pre = load i32* %argc.addr, align 4
+  br label %if.end
+
+if.end:                                           ; preds = %if.then, %entry
+  %1 = phi i32 [ %.pre, %if.then ], [ %argc, %entry ]
+  %cmp1 = icmp slt i32 %1, 2
+  br i1 %cmp1, label %usage, label %if.end40
+
+usage:    
+  ret i32 8
+
+if.end40:
+  ret i32 0
+}
+
 attributes #0 = { alwaysinline inlinehint nounwind }
 attributes #1 = { nounwind }
 

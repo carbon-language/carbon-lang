@@ -7591,7 +7591,7 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       PPC::GPRCRegClass.contains(R.first)) {
     const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
     return std::make_pair(TRI->getMatchingSuperReg(R.first,
-                            PPC::sub_32, &PPC::GPRCRegClass),
+                            PPC::sub_32, &PPC::G8RCRegClass),
                           &PPC::G8RCRegClass);
   }
 
