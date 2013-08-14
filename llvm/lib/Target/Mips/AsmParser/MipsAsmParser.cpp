@@ -861,8 +861,8 @@ int MipsAsmParser::matchFCCRegisterName(StringRef Name) {
 
 int MipsAsmParser::matchACRegisterName(StringRef Name) {
 
-  if (Name.startswith("acc")) {
-    StringRef NumString = Name.substr(3);
+  if (Name.startswith("ac")) {
+    StringRef NumString = Name.substr(2);
     unsigned IntVal;
     if (NumString.getAsInteger(10, IntVal))
       return -1; // This is not an integer.

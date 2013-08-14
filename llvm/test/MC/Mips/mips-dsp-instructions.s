@@ -22,6 +22,13 @@
 # CHECK:   precr_sra_r.ph.w  $25, $26, 0     # encoding: [0x7f,0x59,0x07,0xd1]
 # CHECK:   precr_sra_r.ph.w  $25, $26, 31    # encoding: [0x7f,0x59,0xff,0xd1]
 
+# CHECK:    mult $ac3, $2, $3               # encoding: [0x00,0x43,0x18,0x18]
+# CHECK:    multu $ac2, $4, $5              # encoding: [0x00,0x85,0x10,0x19]
+# CHECK:    madd $ac1, $6, $7               # encoding: [0x70,0xc7,0x08,0x00]
+# CHECK:    maddu $ac0, $8, $9              # encoding: [0x71,0x09,0x00,0x01]
+# CHECK:    msub $ac3, $10, $11             # encoding: [0x71,0x4b,0x18,0x04]
+# CHECK:    msubu $ac2, $12, $13            # encoding: [0x71,0x8d,0x10,0x05]
+
   precrq.qb.ph    $16,$17,$18
   precrq.ph.w     $17,$18,$19
   precrq_rs.ph.w  $18,$19,$20
@@ -42,3 +49,10 @@
   precr_sra.ph.w  $24,$25,31
   precr_sra_r.ph.w  $25,$26,0
   precr_sra_r.ph.w  $25,$26,31
+
+  mult $ac3, $2, $3
+  multu $ac2, $4, $5
+  madd $ac1, $6, $7
+  maddu $ac0, $8, $9
+  msub $ac3, $10, $11
+  msubu $ac2, $12, $13
