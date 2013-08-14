@@ -25,25 +25,6 @@ kUseCloseFDs = not kIsWindows
 # Use temporary files to replace /dev/null on Windows.
 kAvoidDevNull = kIsWindows
 
-def executeCommand(command, cwd=None, env=None):
-    # Close extra file handles on UNIX (on Windows this cannot be done while
-    # also redirecting input).
-    close_fds = not kIsWindows
-
-    p = subprocess.Popen(command, cwd=cwd,
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE,
-                         env=env, close_fds=close_fds)
-    out,err = p.communicate()
-    exitCode = p.wait()
-
-    # Detect Ctrl-C in subprocess.
-    if exitCode == -signal.SIGINT:
-        raise KeyboardInterrupt
-
-    return out, err, exitCode
-
 def executeShCmd(cmd, cfg, cwd, results):
     if isinstance(cmd, ShUtil.Seq):
         if cmd.op == ';':
@@ -308,7 +289,8 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
             # run on clang with no real loss.
             command = litConfig.valgrindArgs + command
 
-    return executeCommand(command, cwd=cwd, env=test.config.environment)
+    return lit.util.executeCommand(command, cwd=cwd,
+                                   env=test.config.environment)
 
 def isExpectedFail(test, xfails):
     # Check if any of the xfails match an available feature or the target.

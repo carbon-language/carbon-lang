@@ -104,7 +104,7 @@ class GoogleTest(object):
         if litConfig.noExecute:
             return lit.Test.PASS, ''
 
-        out, err, exitCode = lit.TestRunner.executeCommand(
+        out, err, exitCode = lit.util.executeCommand(
             cmd, env=test.config.environment)
 
         if not exitCode:

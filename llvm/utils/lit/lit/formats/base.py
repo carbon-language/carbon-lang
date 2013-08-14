@@ -3,7 +3,6 @@ import os
 import sys
 
 import lit.Test
-import lit.TestRunner
 import lit.util
 
 class FileBasedTest(object):
@@ -97,7 +96,7 @@ class OneCommandPerFileTest:
         else:
             cmd.append(test.getSourcePath())
 
-        out, err, exitCode = lit.TestRunner.executeCommand(cmd)
+        out, err, exitCode = lit.util.executeCommand(cmd)
 
         diags = out + err
         if not exitCode and not diags.strip():
