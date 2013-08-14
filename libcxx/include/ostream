@@ -32,6 +32,7 @@ public:
     virtual ~basic_ostream();
 
     // 27.7.2.3 Assign/swap
+    basic_ostream& operator=(const basic_ostream& rhs) = delete; // C++14
     basic_ostream& operator=(basic_ostream&& rhs);
     void swap(basic_ostream& rhs);
 
@@ -161,6 +162,9 @@ protected:
 #endif
 
     // 27.7.2.3 Assign/swap
+#if _LIBCPP_STD_VER > 11
+    basic_ostream& operator=(const basic_ostream&) = delete;
+#endif
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_ostream& operator=(basic_ostream&& __rhs);
