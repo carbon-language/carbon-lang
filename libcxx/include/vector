@@ -2281,7 +2281,7 @@ private:
     void allocate(size_type __n);
     void deallocate() _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY
-    static size_type __align(size_type __new_size) _NOEXCEPT
+    static size_type __align_it(size_type __new_size) _NOEXCEPT
         {return __new_size + (__bits_per_word-1) & ~(__bits_per_word-1);};
     _LIBCPP_INLINE_VISIBILITY  size_type __recommend(size_type __new_size) const;
     _LIBCPP_INLINE_VISIBILITY void __construct_at_end(size_type __n, bool __x);
@@ -2454,7 +2454,7 @@ vector<bool, _Allocator>::__recommend(size_type __new_size) const
     const size_type __cap = capacity();
     if (__cap >= __ms / 2)
         return __ms;
-    return _VSTD::max(2*__cap, __align(__new_size));
+    return _VSTD::max(2*__cap, __align_it(__new_size));
 }
 
 //  Default constructs __n objects starting at __end_

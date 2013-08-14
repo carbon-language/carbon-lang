@@ -5901,8 +5901,8 @@ public:
         discrete_distribution(size_t __nw, double __xmin, double __xmax,
                               _UnaryOperation __fw)
         : __p_(__nw, __xmin, __xmax, __fw) {}
-    explicit discrete_distribution(const param_type& __p)
     _LIBCPP_INLINE_VISIBILITY
+    explicit discrete_distribution(const param_type& __p)
         : __p_(__p) {}
     _LIBCPP_INLINE_VISIBILITY
     void reset() {}

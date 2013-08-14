@@ -115,6 +115,10 @@ template<> class numeric_limits<cv long double>;
 #include "support/win32/limits_win32.h"
 #endif // _LIBCPP_MSVCRT
 
+#if defined(__IBMCPP__)
+#include "support/ibm/limits.h"
+#endif // __IBMCPP__
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 enum float_round_style

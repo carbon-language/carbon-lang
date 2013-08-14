@@ -109,6 +109,10 @@ N: Zhang Xiongpang
 E: zhangxiongpang@gmail.com
 D: Minor patches and bug fixes.
 
+N: Xing Xue
+E: xingxue@ca.ibm.com
+D: AIX port
+
 N: Zhihao Yuan
 E: lichray@gmail.com
 D: Standard compatibility fixes.

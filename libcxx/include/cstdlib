@@ -155,7 +155,7 @@ using ::aligned_alloc;
 #endif
 
 // MSVCRT already has the correct prototype in <stdlib.h> #ifdef __cplusplus
-#if !defined(_LIBCPP_MSVCRT) && !defined(__sun__)
+#if !defined(_LIBCPP_MSVCRT) && !defined(__sun__) && !defined(_AIX)
 inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) _NOEXCEPT {return  labs(__x);}
 #ifndef _LIBCPP_HAS_NO_LONG_LONG
 inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) _NOEXCEPT {return llabs(__x);}

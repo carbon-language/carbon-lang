@@ -22,20 +22,20 @@ then
     CC=clang
 fi
 
-if [ -z $MACOSX_DEPLOYMENT_TARGET ]
+if [ -z "$MACOSX_DEPLOYMENT_TARGET" ]
 then
-    if [ -z $IPHONEOS_DEPLOYMENT_TARGET ]
+    if [ -z "$IPHONEOS_DEPLOYMENT_TARGET" ]
     then
         MACOSX_DEPLOYMENT_TARGET=10.7
     fi
 fi
 
-if [ -z $RC_ProjectSourceVersion ]
+if [ -z "$RC_ProjectSourceVersion" ]
 then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++11 -fstrict-aliasing -Wall -Wextra -Wshadow -Wconversion \
+EXTRA_FLAGS="-nostdinc++ -std=c++11 -fstrict-aliasing -Wall -Wextra -Wshadow -Wconversion \
              -Wnewline-eof -Wpadded -Wmissing-prototypes -Wstrict-aliasing=2 \
              -Wstrict-overflow=4 "
 
@@ -48,7 +48,7 @@ case $TRIPLE in
     SOEXT=dylib
     if [ "$MACOSX_DEPLOYMENT_TARGET" == "10.6" ]
     then
-        EXTRA_FLAGS="-std=c++11 -U__STRICT_ANSI__"
+        EXTRA_FLAGS="-nostdinc++ -std=c++11 -U__STRICT_ANSI__"
         LDSHARED_FLAGS="-o libc++.1.dylib \
             -dynamiclib -nodefaultlibs -current_version 1 \
             -compatibility_version 1 \
@@ -59,7 +59,7 @@ case $TRIPLE in
     else
         if [ -n "$SDKROOT" ]
         then
-            EXTRA_FLAGS+="-isysroot ${SDKROOT}"
+            EXTRA_FLAGS+="-nostdinc++ -isysroot ${SDKROOT}"
             if echo "${RC_ARCHS}" | grep -q "armv7"  
             then
                 RE_EXPORT_LINE="${SDKROOT}/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,libc++sjlj-abi.exp"
@@ -97,6 +97,23 @@ case $TRIPLE in
         -shared -nodefaultlibs -Wl,--export-all-symbols -Wl,--allow-multiple-definition -Wl,--out-implib,libc++.dll.a \
         -lsupc++ -lpthread -lmingw32 -lgcc_s -lgcc -lmoldname -lmingwex -lmsvcr100 -ladvapi32 -lshell32 -luser32 -lkernel32 -lmingw32 -lgcc_s -lgcc -lmoldname -lmingwex -lmsvcrt"
     ;;
+  *-ibm-*)
+    hostOS=`uname`
+    hostOS=`echo $hostOS | sed -e "s/\s+$//"`
+    hostOS=`echo $hostOS | tr '[A-Z]' '[a-z]'`
+
+    if [ $hostOS == "linux" ]
+    then
+      LDSHARED_FLAGS="-o libc++.so.1 \
+        -qmkshrobj -Wl,-soname,libc++.so.1 \
+        -lpthread -lrt -lc -lstdc++"
+      EXTRA_FLAGS="-qlanglvl=extended0x -D__GLIBCXX__=1"
+    else
+      LDSHARED_FLAGS="-o shr.o -qmkshrobj -lpthread -bnoquiet"
+      EXTRA_FLAGS="-qlanglvl=extended0x"
+    fi
+    RC_CFLAGS="-qpic=large"
+    ;;
   *)
     RC_CFLAGS="-fPIC"
     SOEXT=so
@@ -106,7 +123,7 @@ case $TRIPLE in
     ;;
 esac
 
-if [ -z $RC_XBS ]
+if [ -z "$RC_XBS" ]
 then
     rm -f libc++.1.$SOEXT*
 fi
@@ -114,12 +131,12 @@ fi
 set -x
 
 for FILE in ../src/*.cpp; do
-    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -nostdinc++ -I../include $FILE
+    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
 done
 case $TRIPLE in
   *-*-mingw*)
   for FILE in ../src/support/win32/*.cpp; do
-    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -nostdinc++ -I../include $FILE
+    $CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
   done
   ;;
 esac
@@ -136,13 +153,23 @@ case $TRIPLE in
         ;;
     *-*-mingw*)
         ;;
+    *-ibm-*)
+        if [ $hostOS == "linux" ]
+        then
+           rm -f libc++.so
+           ln -s libc++.so.1 libc++.so
+        else #AIX
+           rm -f libc++.a
+           ar r libc++.a shr.o
+        fi
+        ;;
     *)
         rm -f libc++.so
         ln -s libc++.so.1 libc++.so
         ;;
 esac
 
-if [ -z $RC_XBS ]
+if [ -z "$RC_XBS" ]
 then
     rm *.o
 fi

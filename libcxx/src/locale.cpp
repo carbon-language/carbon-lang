@@ -1015,6 +1015,8 @@ ctype<char>::classic_table()  _NOEXCEPT
 // going to end up dereferencing it later...
 #elif defined(EMSCRIPTEN)
     return *__ctype_b_loc();
+#elif defined(_AIX)
+    return (const unsigned long *)__lc_ctype_ptr->obj->mask;
 #else
     // Platform not supported: abort so the person doing the port knows what to
     // fix

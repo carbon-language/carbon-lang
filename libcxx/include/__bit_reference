@@ -40,7 +40,7 @@ class __bit_reference
     __storage_pointer __seg_;
     __storage_type    __mask_;
 
-#if defined(__clang__)
+#if defined(__clang__) || defined(__IBMCPP__)
     friend typename _Cp::__self;
 #else
     friend class _Cp::__self;
@@ -130,7 +130,7 @@ class __bit_const_reference
     __storage_pointer        __seg_;
     __storage_type __mask_;
 
-#if defined(__clang__)
+#if defined(__clang__) || defined(__IBMCPP__)
     friend typename _Cp::__self;
 #else
     friend class _Cp::__self;
@@ -1222,7 +1222,7 @@ private:
     __bit_iterator(__storage_pointer __s, unsigned __ctz) _NOEXCEPT
         : __seg_(__s), __ctz_(__ctz) {}
 
-#if defined(__clang__)
+#if defined(__clang__) || defined(__IBMCPP__)
     friend typename _Cp::__self;
 #else
     friend class _Cp::__self;

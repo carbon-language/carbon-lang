@@ -1615,13 +1615,13 @@ private:
 
     template <size_type __a> static
         _LIBCPP_INLINE_VISIBILITY
-        size_type __align(size_type __s) _NOEXCEPT
+        size_type __align_it(size_type __s) _NOEXCEPT
             {return __s + (__a-1) & ~(__a-1);}
     enum {__alignment = 16};
     static _LIBCPP_INLINE_VISIBILITY
     size_type __recommend(size_type __s) _NOEXCEPT
         {return (__s < __min_cap ? __min_cap :
-                 __align<sizeof(value_type) < __alignment ?
+                 __align_it<sizeof(value_type) < __alignment ?
                             __alignment/sizeof(value_type) : 1 > (__s+1)) - 1;}
 
     void __init(const value_type* __s, size_type __sz, size_type __reserve);
