@@ -8,6 +8,7 @@ set(SANITIZER_SOURCES
   sanitizer_libc.cc
   sanitizer_linux.cc
   sanitizer_mac.cc
+  sanitizer_platform_limits_linux.cc
   sanitizer_platform_limits_posix.cc
   sanitizer_posix.cc
   sanitizer_printf.cc
@@ -53,6 +54,7 @@ set(SANITIZER_HEADERS
   sanitizer_mutex.h
   sanitizer_placement_new.h
   sanitizer_platform_interceptors.h
+  sanitizer_platform_limits_posix.h
   sanitizer_procmaps.h
   sanitizer_quarantine.h
   sanitizer_report_decorator.h

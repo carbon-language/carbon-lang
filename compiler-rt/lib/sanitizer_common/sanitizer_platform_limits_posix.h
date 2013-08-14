@@ -704,8 +704,6 @@ namespace __sanitizer {
   extern unsigned IOCTL_LPSETIRQ;
   extern unsigned IOCTL_LPTIME;
   extern unsigned IOCTL_LPWAIT;
-  extern unsigned IOCTL_MTIOCGETCONFIG;
-  extern unsigned IOCTL_MTIOCSETCONFIG;
   extern unsigned IOCTL_PIO_CMAP;
   extern unsigned IOCTL_PIO_FONT;
   extern unsigned IOCTL_PIO_SCRNMAP;
@@ -718,18 +716,8 @@ namespace __sanitizer {
   extern unsigned IOCTL_SCSI_IOCTL_TAGGED_ENABLE;
   extern unsigned IOCTL_SIOCAIPXITFCRT;
   extern unsigned IOCTL_SIOCAIPXPRISLT;
-  extern unsigned IOCTL_SIOCAX25ADDUID;
-  extern unsigned IOCTL_SIOCAX25DELUID;
-  extern unsigned IOCTL_SIOCAX25GETPARMS;
-  extern unsigned IOCTL_SIOCAX25GETUID;
-  extern unsigned IOCTL_SIOCAX25NOUID;
-  extern unsigned IOCTL_SIOCAX25SETPARMS;
   extern unsigned IOCTL_SIOCDEVPLIP;
   extern unsigned IOCTL_SIOCIPXCFGDATA;
-  extern unsigned IOCTL_SIOCNRDECOBS;
-  extern unsigned IOCTL_SIOCNRGETPARMS;
-  extern unsigned IOCTL_SIOCNRRTCTL;
-  extern unsigned IOCTL_SIOCNRSETPARMS;
   extern unsigned IOCTL_SNDCTL_DSP_GETISPACE;
   extern unsigned IOCTL_SNDCTL_DSP_GETOSPACE;
   extern unsigned IOCTL_TIOCGSERIAL;
