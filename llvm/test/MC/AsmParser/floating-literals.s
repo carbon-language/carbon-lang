@@ -77,3 +77,6 @@
 # CHECK-ERROR: unexpected token in directive
 .float 0x.p5
 
+# CHECK-ERROR: error: invalid hexadecimal floating-point constant: expected exponent part 'p'
+# CHECK-ERROR: unexpected token in directive
+.float 0x1.2
