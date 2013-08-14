@@ -33,11 +33,9 @@ void LiveRangeEdit::Delegate::anchor() { }
 LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg) {
   unsigned VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
   if (VRM) {
-    VRM->grow();
     VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
   }
   LiveInterval &LI = LIS.getOrCreateInterval(VReg);
-  NewRegs.push_back(VReg);
   return LI;
 }
 
@@ -385,6 +383,17 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
         dbgs() << '\t' << *Dups[i] << '\n';
     });
   }
+}
+
+// Keep track of new virtual registers created via
+// MachineRegisterInfo::createVirtualRegister.
+void
+LiveRangeEdit::MRI_NoteNewVirtualRegister(unsigned VReg)
+{
+  if (VRM)
+    VRM->grow();
+
+  NewRegs.push_back(VReg);
 }
 
 void

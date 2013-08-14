@@ -20,7 +20,7 @@
 using namespace llvm;
 
 MachineRegisterInfo::MachineRegisterInfo(const TargetMachine &TM)
-  : TM(TM), IsSSA(true), TracksLiveness(true) {
+  : TM(TM), TheDelegate(0), IsSSA(true), TracksLiveness(true) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
   UsedRegUnits.resize(getTargetRegisterInfo()->getNumRegUnits());
@@ -108,6 +108,8 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   VRegInfo.grow(Reg);
   VRegInfo[Reg].first = RegClass;
   RegAllocHints.grow(Reg);
+  if (TheDelegate)
+    TheDelegate->MRI_NoteNewVirtualRegister(Reg);
   return Reg;
 }
 

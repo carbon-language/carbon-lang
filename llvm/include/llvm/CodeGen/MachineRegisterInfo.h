@@ -27,7 +27,17 @@ namespace llvm {
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
 class MachineRegisterInfo {
+public:
+  class Delegate {
+  public:
+    virtual void MRI_NoteNewVirtualRegister(unsigned Reg) {}
+
+    virtual ~Delegate() {}
+  };
+
+private:
   const TargetMachine &TM;
+  Delegate *TheDelegate;
 
   /// IsSSA - True when the machine function is in SSA form and virtual
   /// registers have a single def.
@@ -114,6 +124,23 @@ public:
 
   const TargetRegisterInfo *getTargetRegisterInfo() const {
     return TM.getRegisterInfo();
+  }
+
+  void resetDelegate(Delegate *delegate) {
+    // Ensure another delegate does not take over unless the current
+    // delegate first unattaches itself. If we ever need to multicast
+    // notifications, we will need to change to using a list.
+    assert(TheDelegate == delegate &&
+           "Only the current delegate can perform reset!");
+    TheDelegate = 0;
+  }
+
+  void setDelegate(Delegate *delegate) {
+    assert(delegate && !TheDelegate &&
+           "Attempted to set delegate to null, or to change it without "
+           "first resetting it!");
+
+    TheDelegate = delegate;
   }
 
   //===--------------------------------------------------------------------===//

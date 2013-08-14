@@ -22,6 +22,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -32,7 +33,7 @@ class MachineBlockFrequencyInfo;
 class MachineLoopInfo;
 class VirtRegMap;
 
-class LiveRangeEdit {
+class LiveRangeEdit : private MachineRegisterInfo::Delegate {
 public:
   /// Callback methods for LiveRangeEdit owners.
   class Delegate {
@@ -96,6 +97,10 @@ private:
   /// Helper for eliminateDeadDefs.
   void eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink);
 
+  /// MachineRegisterInfo callback to notify when new virtual
+  /// registers are created.
+  void MRI_NoteNewVirtualRegister(unsigned VReg);
+
 public:
   /// Create a LiveRangeEdit for breaking down parent into smaller pieces.
   /// @param parent The register being spilled or split.
@@ -117,7 +122,9 @@ public:
       TII(*MF.getTarget().getInstrInfo()),
       TheDelegate(delegate),
       FirstNew(newRegs.size()),
-      ScannedRemattable(false) {}
+      ScannedRemattable(false) { MRI.setDelegate(this); }
+
+  ~LiveRangeEdit() { MRI.resetDelegate(this); }
 
   LiveInterval &getParent() const {
    assert(Parent && "No parent LiveInterval");
