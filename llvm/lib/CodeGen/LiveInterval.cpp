@@ -202,7 +202,7 @@ void LiveInterval::markValNoForDeletion(VNInfo *ValNo) {
 
 /// RenumberValues - Renumber all values in order of appearance and delete the
 /// remaining unused values.
-void LiveInterval::RenumberValues(LiveIntervals &lis) {
+void LiveInterval::RenumberValues() {
   SmallPtrSet<VNInfo*, 8> Seen;
   valnos.clear();
   for (const_iterator I = begin(), E = end(); I != E; ++I) {

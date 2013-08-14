@@ -360,7 +360,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     if (BeingSpilled) continue;
 
     // LI may have been separated, create new intervals.
-    LI->RenumberValues(LIS);
+    LI->RenumberValues();
     ConnectedVNInfoEqClasses ConEQ(LIS);
     unsigned NumComp = ConEQ.Classify(LI);
     if (NumComp <= 1)

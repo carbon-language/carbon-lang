@@ -1092,7 +1092,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
 
   // Get rid of unused values and set phi-kill flags.
   for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
-    (*I)->RenumberValues(LIS);
+    (*I)->RenumberValues();
 
   // Provide a reverse mapping from original indices to Edit ranges.
   if (LRMap) {
