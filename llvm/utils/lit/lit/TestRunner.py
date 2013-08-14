@@ -364,6 +364,15 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
                           ('%T', tmpDir),
                           ('#_MARKER_#', '%')])
 
+    # "%/[STpst]" should be normalized.
+    substitutions.extend([
+            ('%/s', sourcepath.replace('\\', '/')),
+            ('%/S', sourcedir.replace('\\', '/')),
+            ('%/p', sourcedir.replace('\\', '/')),
+            ('%/t', tmpBase.replace('\\', '/') + '.tmp'),
+            ('%/T', tmpDir.replace('\\', '/')),
+            ])
+
     # Collect the test lines from the script.
     script = []
     xfails = []
