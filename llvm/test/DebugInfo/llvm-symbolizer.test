@@ -1,4 +1,5 @@
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x400559" > %t.input
+RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64.debuglink 0x400559" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test.elf-x86-64 0x400436" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-test4.elf-x86-64 0x62c" >> %t.input
 RUN: echo "%p/Inputs/dwarfdump-inl-test.elf-x86-64 0x710" >> %t.input
@@ -9,6 +10,9 @@ RUN: echo "%p/Inputs/macho-universal:x86_64 0x100000f05" >> %t.input
 
 RUN: llvm-symbolizer --functions --inlining --demangle=false \
 RUN:    --default-arch=i386 < %t.input | FileCheck %s
+
+CHECK:       main
+CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16
 
 CHECK:       main
 CHECK-NEXT: /tmp/dbginfo{{[/\\]}}dwarfdump-test.cc:16

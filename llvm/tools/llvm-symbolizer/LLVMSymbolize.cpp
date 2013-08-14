@@ -15,7 +15,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Compression.h"
+#include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 
 #include <sstream>
@@ -215,6 +218,74 @@ static std::string getDarwinDWARFResourceForPath(const std::string &Path) {
   return ResourceName.str();
 }
 
+static bool checkFileCRC(StringRef Path, uint32_t CRCHash) {
+  OwningPtr<MemoryBuffer> MB;
+  if (MemoryBuffer::getFileOrSTDIN(Path, MB))
+    return false;
+  return !zlib::isAvailable() || CRCHash == zlib::crc32(MB->getBuffer());
+}
+
+static bool findDebugBinary(const std::string &OrigPath,
+                            const std::string &DebuglinkName, uint32_t CRCHash,
+                            std::string &Result) {
+  SmallString<16> OrigDir(OrigPath);
+  llvm::sys::path::remove_filename(OrigDir);
+  SmallString<16> DebugPath = OrigDir;
+  // Try /path/to/original_binary/debuglink_name
+  llvm::sys::path::append(DebugPath, DebuglinkName);
+  if (checkFileCRC(DebugPath, CRCHash)) {
+    Result = DebugPath.str();
+    return true;
+  }
+  // Try /path/to/original_binary/.debug/debuglink_name
+  DebugPath = OrigPath;
+  llvm::sys::path::append(DebugPath, ".debug", DebuglinkName);
+  if (checkFileCRC(DebugPath, CRCHash)) {
+    Result = DebugPath.str();
+    return true;
+  }
+  // Try /usr/lib/debug/path/to/original_binary/debuglink_name
+  DebugPath = "/usr/lib/debug";
+  llvm::sys::path::append(DebugPath, llvm::sys::path::relative_path(OrigDir),
+                          DebuglinkName);
+  if (checkFileCRC(DebugPath, CRCHash)) {
+    Result = DebugPath.str();
+    return true;
+  }
+  return false;
+}
+
+static bool getGNUDebuglinkContents(const Binary *Bin, std::string &DebugName,
+                                    uint32_t &CRCHash) {
+  const ObjectFile *Obj = dyn_cast<ObjectFile>(Bin);
+  if (!Obj)
+    return false;
+  error_code EC;
+  for (section_iterator I = Obj->begin_sections(), E = Obj->end_sections();
+       I != E; I.increment(EC)) {
+    StringRef Name;
+    I->getName(Name);
+    Name = Name.substr(Name.find_first_not_of("._"));
+    if (Name == "gnu_debuglink") {
+      StringRef Data;
+      I->getContents(Data);
+      DataExtractor DE(Data, Obj->isLittleEndian(), 0);
+      uint32_t Offset = 0;
+      if (const char *DebugNameStr = DE.getCStr(&Offset)) {
+        // 4-byte align the offset.
+        Offset = (Offset + 3) & ~0x3;
+        if (DE.isValidOffsetForDataOfSize(Offset, 4)) {
+          DebugName = DebugNameStr;
+          CRCHash = DE.getU32(&Offset);
+          return true;
+        }
+      }
+      break;
+    }
+  }
+  return false;
+}
+
 LLVMSymbolizer::BinaryPair
 LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
   BinaryMapTy::iterator I = BinaryForPath.find(Path);
@@ -237,6 +308,18 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
       if (!sys::fs::exists(ResourcePath, ResourceFileExists) &&
           ResourceFileExists &&
           !error(createBinary(ResourcePath, ParsedDbgBinary))) {
+        DbgBin = ParsedDbgBinary.take();
+        ParsedBinariesAndObjects.push_back(DbgBin);
+      }
+    }
+    // Try to locate the debug binary using .gnu_debuglink section.
+    if (DbgBin == 0) {
+      std::string DebuglinkName;
+      uint32_t CRCHash;
+      std::string DebugBinaryPath;
+      if (getGNUDebuglinkContents(Bin, DebuglinkName, CRCHash) &&
+          findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath) &&
+          !error(createBinary(DebugBinaryPath, ParsedDbgBinary))) {
         DbgBin = ParsedDbgBinary.take();
         ParsedBinariesAndObjects.push_back(DbgBin);
       }
