@@ -2459,7 +2459,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
     //        cannot be overloaded.
 
     // Go back to the type source info to compare the declared return types,
-    // per C++1y [dcl.type.auto]p??:
+    // per C++1y [dcl.type.auto]p13:
     //   Redeclarations or specializations of a function or function template
     //   with a declared return type that uses a placeholder type shall also
     //   use that placeholder, not a deduced type.
@@ -2494,9 +2494,14 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S,
       // defined, copy the deduced value from the old declaration.
       AutoType *OldAT = Old->getResultType()->getContainedAutoType();
       if (OldAT && OldAT->isDeduced()) {
-        New->setType(SubstAutoType(New->getType(), OldAT->getDeducedType()));
+        New->setType(
+            SubstAutoType(New->getType(),
+                          OldAT->isDependentType() ? Context.DependentTy
+                                                   : OldAT->getDeducedType()));
         NewQType = Context.getCanonicalType(
-            SubstAutoType(NewQType, OldAT->getDeducedType()));
+            SubstAutoType(NewQType,
+                          OldAT->isDependentType() ? Context.DependentTy
+                                                   : OldAT->getDeducedType()));
       }
     }
 
@@ -6686,6 +6691,20 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       if (getLangOpts().CPlusPlus1y &&
           NewFD->getResultType()->isUndeducedType())
         Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_auto_fn_virtual);
+    }
+
+    if (getLangOpts().CPlusPlus1y && NewFD->isDependentContext() &&
+        NewFD->getResultType()->isUndeducedType()) {
+      // If the function template is referenced directly (for instance, as a
+      // member of the current instantiation), pretend it has a dependent type.
+      // This is not really justified by the standard, but is the only sane
+      // thing to do.
+      const FunctionProtoType *FPT =
+          NewFD->getType()->castAs<FunctionProtoType>();
+      QualType Result = SubstAutoType(FPT->getResultType(),
+                                       Context.DependentTy);
+      NewFD->setType(Context.getFunctionType(Result, FPT->getArgTypes(),
+                                             FPT->getExtProtoInfo()));
     }
 
     // C++ [dcl.fct.spec]p3:

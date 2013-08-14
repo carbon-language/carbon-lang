@@ -3161,7 +3161,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (Function->getTemplateSpecializationKind()
         == TSK_ExplicitInstantiationDeclaration &&
       !PatternDecl->isInlined() &&
-      !PatternDecl->getResultType()->isUndeducedType())
+      !PatternDecl->getResultType()->getContainedAutoType())
     return;
 
   if (PatternDecl->isInlined())

@@ -2581,7 +2581,6 @@ Sema::SubstituteExplicitTemplateArguments(
   }
   
   // Instantiate the return type.
-  // FIXME: exception-specifications?
   QualType ResultType;
   {
     // C++11 [expr.prim.general]p3:
@@ -3555,11 +3554,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
   // If the function has a deduced return type, substitute it for a dependent
   // type so that we treat it as a non-deduced context in what follows.
-  bool HasUndeducedReturnType = false;
+  bool HasDeducedReturnType = false;
   if (getLangOpts().CPlusPlus1y && InOverloadResolution &&
-      Function->getResultType()->isUndeducedType()) {
+      Function->getResultType()->getContainedAutoType()) {
     FunctionType = SubstAutoType(FunctionType, Context.DependentTy);
-    HasUndeducedReturnType = true;
+    HasDeducedReturnType = true;
   }
 
   if (!ArgFunctionType.isNull()) {
@@ -3581,7 +3580,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
   // If the function has a deduced return type, deduce it now, so we can check
   // that the deduced function type matches the requested type.
-  if (HasUndeducedReturnType &&
+  if (HasDeducedReturnType &&
       Specialization->getResultType()->isUndeducedType() &&
       DeduceReturnType(Specialization, Info.getLocation(), false))
     return TDK_MiscellaneousDeductionFailure;

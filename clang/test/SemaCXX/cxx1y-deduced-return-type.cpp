@@ -376,3 +376,26 @@ namespace MemberTemplatesWithDeduction {
   
 }
 }
+
+namespace CurrentInstantiation {
+  // PR16875
+  template<typename T> struct S {
+    auto f() { return T(); }
+    int g() { return f(); }
+    auto h(bool b) {
+      if (b)
+        return T();
+      return h(true);
+    }
+  };
+  int k1 = S<int>().g();
+  int k2 = S<int>().h(false);
+
+  template<typename T> struct U {
+    auto f(); // expected-note {{here}}
+    int g() { return f(); } // expected-error {{cannot be used before it is defined}}
+  };
+  template int U<int>::g(); // expected-note {{in instantiation of}}
+  template<typename T> auto U<T>::f() { return T(); }
+  template int U<short>::g(); // ok
+}
