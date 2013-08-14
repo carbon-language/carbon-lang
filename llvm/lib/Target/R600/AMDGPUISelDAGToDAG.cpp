@@ -77,6 +77,7 @@ private:
   bool isLocalLoad(const LoadSDNode *N) const;
   bool isRegionLoad(const LoadSDNode *N) const;
 
+  const TargetRegisterClass *getOperandRegClass(SDNode *N, unsigned OpNo) const;
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
   bool SelectGlobalValueVariableOffset(SDValue Addr,
       SDValue &BaseReg, SDValue& Offset);
@@ -100,6 +101,34 @@ AMDGPUDAGToDAGISel::AMDGPUDAGToDAGISel(TargetMachine &TM)
 }
 
 AMDGPUDAGToDAGISel::~AMDGPUDAGToDAGISel() {
+}
+
+/// \brief Determine the register class for \p OpNo
+/// \returns The register class of the virtual register that will be used for
+/// the given operand number \OpNo or NULL if the register class cannot be
+/// determined.
+const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
+                                                          unsigned OpNo) const {
+  if (!N->isMachineOpcode()) {
+    return NULL;
+  }
+  switch (N->getMachineOpcode()) {
+  default: {
+    const MCInstrDesc &Desc = TM.getInstrInfo()->get(N->getMachineOpcode());
+    int RegClass = Desc.OpInfo[Desc.getNumDefs() + OpNo].RegClass;
+    if (RegClass == -1) {
+      return NULL;
+    }
+    return TM.getRegisterInfo()->getRegClass(RegClass);
+  }
+  case AMDGPU::REG_SEQUENCE: {
+    const TargetRegisterClass *SuperRC = TM.getRegisterInfo()->getRegClass(
+                      cast<ConstantSDNode>(N->getOperand(0))->getZExtValue());
+    unsigned SubRegIdx =
+            dyn_cast<ConstantSDNode>(N->getOperand(OpNo + 1))->getZExtValue();
+    return TM.getRegisterInfo()->getSubClassWithSubReg(SuperRC, SubRegIdx);
+  }
+  }
 }
 
 SDValue AMDGPUDAGToDAGISel::getSmallIPtrImm(unsigned int Imm) {

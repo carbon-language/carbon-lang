@@ -58,6 +58,22 @@ class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
     (*(const SITargetLowering *)getTargetLowering()).analyzeImmediate(N) == 0;
 }]>;
 
+class SGPRImm <dag frag> : PatLeaf<frag, [{
+  if (TM.getSubtarget<AMDGPUSubtarget>().getGeneration() <
+      AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+    return false;
+  }
+  const SIRegisterInfo *SIRI =
+                       static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
+  for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
+                                                U != E; ++U) {
+    if (SIRI->isSGPRClass(getOperandRegClass(*U, U.getOperandNo()))) {
+      return true;
+    }
+  }
+  return false;
+}]>;
+
 //===----------------------------------------------------------------------===//
 // SI assembler operands
 //===----------------------------------------------------------------------===//

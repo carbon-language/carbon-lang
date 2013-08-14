@@ -1583,6 +1583,16 @@ def : Pat <
 /********** ================== **********/
 
 def : Pat <
+  (SGPRImm<(i32 imm)>:$imm),
+  (S_MOV_B32 imm:$imm)
+>;
+
+def : Pat <
+  (SGPRImm<(f32 fpimm)>:$imm),
+  (S_MOV_B32 fpimm:$imm)
+>;
+
+def : Pat <
   (i32 imm:$imm),
   (V_MOV_B32_e32 imm:$imm)
 >;

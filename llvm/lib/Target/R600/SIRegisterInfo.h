@@ -45,6 +45,9 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   /// \brief Return the 'base' register class for this register.
   /// e.g. SGPR0 => SReg_32, VGPR => VReg_32 SGPR0_SGPR1 -> SReg_32, etc.
   const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;
+
+  /// \returns true if this class contains only SGPR registers
+  bool isSGPRClass(const TargetRegisterClass *RC) const;
 };
 
 } // End namespace llvm

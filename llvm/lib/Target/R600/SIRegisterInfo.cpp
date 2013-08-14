@@ -70,3 +70,14 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
   }
   return NULL;
 }
+
+bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) const {
+  if (!RC) {
+    return false;
+  }
+  return RC == &AMDGPU::SReg_32RegClass ||
+         RC == &AMDGPU::SReg_64RegClass ||
+         RC == &AMDGPU::SReg_128RegClass ||
+         RC == &AMDGPU::SReg_256RegClass ||
+         RC == &AMDGPU::SReg_512RegClass;
+}
