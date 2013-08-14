@@ -1,11 +1,11 @@
-import StringIO
+from __future__ import absolute_import
 import os
 import sys
 
-import componentinfo
-import configutil
+import llvmbuild.componentinfo as componentinfo
+import llvmbuild.configutil as configutil
 
-from util import *
+from llvmbuild.util import *
 
 ###
 
@@ -186,7 +186,7 @@ class LLVMProjectInfo(object):
             set(self.component_infos),
             key = lambda c: c.name)
         while components_to_visit:
-            visit_component_info(iter(components_to_visit).next(), [], set())
+            visit_component_info(components_to_visit[0], [], set())
 
         # Canonicalize children lists.
         for c in self.ordered_component_infos:
@@ -194,7 +194,7 @@ class LLVMProjectInfo(object):
 
     def print_tree(self):
         def visit(node, depth = 0):
-            print '%s%-40s (%s)' % ('  '*depth, node.name, node.type_name)
+            print('%s%-40s (%s)' % ('  '*depth, node.name, node.type_name))
             for c in node.children:
                 visit(c, depth + 1)
         visit(self.component_info_map['$ROOT'])
@@ -283,7 +283,7 @@ subdirectories = %s
             header_name = '.' + os.path.join(subpath, 'LLVMBuild.txt')
             header_pad = '-' * (80 - len(header_fmt % (header_name, '')))
             header_string = header_fmt % (header_name, header_pad)
-            print >>f, """\
+            f.write("""\
 %s
 ;
 ;                     The LLVM Compiler Infrastructure
@@ -300,17 +300,18 @@ subdirectories = %s
 ;   http://llvm.org/docs/LLVMBuild.html
 ;
 ;===------------------------------------------------------------------------===;
-""" % header_string
+
+""" % header_string)
 
             # Write out each fragment.each component fragment.
             for name,fragment in fragments:
                 comment = comments_map.get(name)
                 if comment is not None:
                     f.write(comment)
-                print >>f, "[%s]" % name
+                f.write("[%s]\n" % name)
                 f.write(fragment)
                 if fragment is not fragments[-1][1]:
-                    print >>f
+                    f.write('\n')
 
             f.close()
 
@@ -363,7 +364,7 @@ subdirectories = %s
                                is_installed)
 
         # Convert to a list of entries and sort by name.
-        entries = entries.values()
+        entries = list(entries.values())
 
         # Create an 'all' pseudo component. We keep the dependency list small by
         # only listing entries that have no other dependents.
@@ -382,7 +383,7 @@ subdirectories = %s
         # Write out the library table.
         make_install_dir(os.path.dirname(output_path))
         f = open(output_path, 'w')
-        print >>f, """\
+        f.write("""\
 //===- llvm-build generated file --------------------------------*- C++ -*-===//
 //
 // Component Library Depenedency Table
@@ -390,32 +391,33 @@ subdirectories = %s
 // Automatically generated file, do not edit!
 //
 //===----------------------------------------------------------------------===//
-"""
-        print >>f, 'struct AvailableComponent {'
-        print >>f, '  /// The name of the component.'
-        print >>f, '  const char *Name;'
-        print >>f, ''
-        print >>f, '  /// The name of the library for this component (or NULL).'
-        print >>f, '  const char *Library;'
-        print >>f, ''
-        print >>f, '  /// Whether the component is installed.'
-        print >>f, '  bool IsInstalled;'
-        print >>f, ''
-        print >>f, '\
-  /// The list of libraries required when linking this component.'
-        print >>f, '  const char *RequiredLibraries[%d];' % (
-            max_required_libraries)
-        print >>f, '} AvailableComponents[%d] = {' % len(entries)
+
+""")
+        f.write('struct AvailableComponent {\n')
+        f.write('  /// The name of the component.\n')
+        f.write('  const char *Name;\n')
+        f.write('\n')
+        f.write('  /// The name of the library for this component (or NULL).\n')
+        f.write('  const char *Library;\n')
+        f.write('\n')
+        f.write('  /// Whether the component is installed.\n')
+        f.write('  bool IsInstalled;\n')
+        f.write('\n')
+        f.write('\
+  /// The list of libraries required when linking this component.\n')
+        f.write('  const char *RequiredLibraries[%d];\n' % (
+            max_required_libraries))
+        f.write('} AvailableComponents[%d] = {\n' % len(entries))
         for name,library_name,required_names,is_installed in entries:
             if library_name is None:
                 library_name_as_cstr = '0'
             else:
                 library_name_as_cstr = '"lib%s.a"' % library_name
-            print >>f, '  { "%s", %s, %d, { %s } },' % (
+            f.write('  { "%s", %s, %d, { %s } },\n' % (
                 name, library_name_as_cstr, is_installed,
                 ', '.join('"%s"' % dep
-                          for dep in required_names))
-        print >>f, '};'
+                          for dep in required_names)))
+        f.write('};\n')
         f.close()
 
     def get_required_libraries_for_component(self, ci, traverse_groups = False):
@@ -512,7 +514,7 @@ subdirectories = %s
         header_name = os.path.basename(output_path)
         header_pad = '-' * (80 - len(header_fmt % (header_name, '')))
         header_string = header_fmt % (header_name, header_pad)
-        print >>f, """\
+        f.write("""\
 %s
 #
 #                     The LLVM Compiler Infrastructure
@@ -528,10 +530,11 @@ subdirectories = %s
 # This file is autogenerated by llvm-build, do not edit!
 #
 #===------------------------------------------------------------------------===#
-""" % header_string
+
+""" % header_string)
 
         # Write the dependency information in the best way we can.
-        print >>f, """
+        f.write("""
 # LLVMBuild CMake fragment dependencies.
 #
 # CMake has no builtin way to declare that the configuration depends on
@@ -541,30 +544,32 @@ subdirectories = %s
 # CMake.
 #
 # FIXME: File a CMake RFE to get a properly supported version of this
-# feature."""
+# feature.
+""")
         for dep in dependencies:
-            print >>f, """\
+            f.write("""\
 configure_file(\"%s\"
-               ${CMAKE_CURRENT_BINARY_DIR}/DummyConfigureOutput)""" % (
-                cmake_quote_path(dep),)
+               ${CMAKE_CURRENT_BINARY_DIR}/DummyConfigureOutput)\n""" % (
+                cmake_quote_path(dep),))
 
         # Write the properties we use to encode the required library dependency
         # information in a form CMake can easily use directly.
-        print >>f, """
+        f.write("""
 # Explicit library dependency information.
 #
 # The following property assignments effectively create a map from component
-# names to required libraries, in a way that is easily accessed from CMake."""
+# names to required libraries, in a way that is easily accessed from CMake.
+""")
         for ci in self.ordered_component_infos:
             # We only write the information for libraries currently.
             if ci.type_name != 'Library':
                 continue
 
-            print >>f, """\
-set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)""" % (
+            f.write("""\
+set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)\n""" % (
                 ci.get_prefixed_library_name(), " ".join(sorted(
                      dep.get_prefixed_library_name()
-                     for dep in self.get_required_libraries_for_component(ci))))
+                     for dep in self.get_required_libraries_for_component(ci)))))
 
         f.close()
 
@@ -590,7 +595,7 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)""" % (
         header_name = os.path.basename(output_path)
         header_pad = '-' * (80 - len(header_fmt % (header_name, '')))
         header_string = header_fmt % (header_name, header_pad)
-        print >>f, """\
+        f.write("""\
 %s
 #
 #                     The LLVM Compiler Infrastructure
@@ -606,30 +611,33 @@ set_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_%s %s)""" % (
 # This file is autogenerated by llvm-build, do not edit!
 #
 #===------------------------------------------------------------------------===#
-""" % header_string
+
+""" % header_string)
 
         # Write the dependencies for the fragment.
         #
         # FIXME: Technically, we need to properly quote for Make here.
-        print >>f, """\
+        f.write("""\
 # Clients must explicitly enable LLVMBUILD_INCLUDE_DEPENDENCIES to get
 # these dependencies. This is a compromise to help improve the
-# performance of recursive Make systems.""" 
-        print >>f, 'ifeq ($(LLVMBUILD_INCLUDE_DEPENDENCIES),1)'
-        print >>f, "# The dependencies for this Makefile fragment itself."
-        print >>f, "%s: \\" % (mk_quote_string_for_target(output_path),)
+# performance of recursive Make systems.
+""")
+        f.write('ifeq ($(LLVMBUILD_INCLUDE_DEPENDENCIES),1)\n')
+        f.write("# The dependencies for this Makefile fragment itself.\n")
+        f.write("%s: \\\n" % (mk_quote_string_for_target(output_path),))
         for dep in dependencies:
-            print >>f, "\t%s \\" % (dep,)
-        print >>f
+            f.write("\t%s \\\n" % (dep,))
+        f.write('\n')
 
         # Generate dummy rules for each of the dependencies, so that things
         # continue to work correctly if any of those files are moved or removed.
-        print >>f, """\
+        f.write("""\
 # The dummy targets to allow proper regeneration even when files are moved or
-# removed."""
+# removed.
+""")
         for dep in dependencies:
-            print >>f, "%s:" % (mk_quote_string_for_target(dep),)
-        print >>f, 'endif'
+            f.write("%s:\n" % (mk_quote_string_for_target(dep),))
+        f.write('endif\n')
 
         f.close()
 
@@ -801,7 +809,7 @@ given by --build-root) at the same SUBPATH""",
                       dest="optional_components", metavar="NAMES",
                       help=("Enable the given space or semi-colon separated "
                             "list of optional components"),
-                      action="store", default=None)
+                      action="store", default="")
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()

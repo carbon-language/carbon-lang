@@ -1,1 +1,1 @@
-from main import main
+from llvmbuild.main import main
