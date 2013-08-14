@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 import unittest
-import Test
+
+import lit.Test
 
 """
 TestCase adaptor for providing a 'unittest' compatible interface to 'lit' tests.
@@ -24,7 +26,7 @@ class LitTestCase(unittest.TestCase):
         tr, output = self._test.config.test_format.execute(
             self._test, self._lit_config)
 
-        if tr is Test.UNRESOLVED:
+        if tr is lit.Test.UNRESOLVED:
             raise UnresolvedError(output)
         elif tr.isFailure:
             self.fail(output)
