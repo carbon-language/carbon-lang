@@ -12,6 +12,11 @@ macro(add_llvm_library name)
 
   if( BUILD_SHARED_LIBS )
     llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
+    if (MSVC)
+      set_target_properties(${name}
+        PROPERTIES
+        IMPORT_SUFFIX ".imp")
+    endif ()
   endif()
 
   # Ensure that the system libraries always comes last on the
