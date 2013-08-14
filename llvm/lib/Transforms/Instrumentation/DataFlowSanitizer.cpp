@@ -159,9 +159,11 @@ class DataFlowSanitizer : public ModulePass {
   FunctionType *DFSanUnionFnTy;
   FunctionType *DFSanUnionLoadFnTy;
   FunctionType *DFSanUnimplementedFnTy;
+  FunctionType *DFSanSetLabelFnTy;
   Constant *DFSanUnionFn;
   Constant *DFSanUnionLoadFn;
   Constant *DFSanUnimplementedFn;
+  Constant *DFSanSetLabelFn;
   MDNode *ColdCallWeights;
   OwningPtr<SpecialCaseList> ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
@@ -235,6 +237,7 @@ class DFSanVisitor : public InstVisitor<DFSanVisitor> {
   void visitInsertValueInst(InsertValueInst &I);
   void visitAllocaInst(AllocaInst &I);
   void visitSelectInst(SelectInst &I);
+  void visitMemSetInst(MemSetInst &I);
   void visitMemTransferInst(MemTransferInst &I);
 };
 
@@ -305,6 +308,9 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
       FunctionType::get(ShadowTy, DFSanUnionLoadArgs, /*isVarArg=*/ false);
   DFSanUnimplementedFnTy = FunctionType::get(
       Type::getVoidTy(*Ctx), Type::getInt8PtrTy(*Ctx), /*isVarArg=*/false);
+  Type *DFSanSetLabelArgs[3] = { ShadowTy, Type::getInt8PtrTy(*Ctx), IntptrTy };
+  DFSanSetLabelFnTy = FunctionType::get(Type::getVoidTy(*Ctx),
+                                        DFSanSetLabelArgs, /*isVarArg=*/false);
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);
@@ -378,6 +384,11 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   }
   DFSanUnimplementedFn =
       Mod->getOrInsertFunction("__dfsan_unimplemented", DFSanUnimplementedFnTy);
+  DFSanSetLabelFn =
+      Mod->getOrInsertFunction("__dfsan_set_label", DFSanSetLabelFnTy);
+  if (Function *F = dyn_cast<Function>(DFSanSetLabelFn)) {
+    F->addAttribute(1, Attribute::ZExt);
+  }
 
   std::vector<Function *> FnsToInstrument;
   llvm::SmallPtrSet<Function *, 2> FnsWithNativeABI;
@@ -385,7 +396,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
     if (!i->isIntrinsic() &&
         i != DFSanUnionFn &&
         i != DFSanUnionLoadFn &&
-        i != DFSanUnimplementedFn)
+        i != DFSanUnimplementedFn &&
+        i != DFSanSetLabelFn)
       FnsToInstrument.push_back(&*i);
   }
 
@@ -945,6 +957,15 @@ void DFSanVisitor::visitSelectInst(SelectInst &I) {
     }
     DFSF.setShadow(&I, DFSF.DFS.combineShadows(CondShadow, ShadowSel, &I));
   }
+}
+
+void DFSanVisitor::visitMemSetInst(MemSetInst &I) {
+  IRBuilder<> IRB(&I);
+  Value *ValShadow = DFSF.getShadow(I.getValue());
+  IRB.CreateCall3(
+      DFSF.DFS.DFSanSetLabelFn, ValShadow,
+      IRB.CreateBitCast(I.getDest(), Type::getInt8PtrTy(*DFSF.DFS.Ctx)),
+      IRB.CreateZExtOrTrunc(I.getLength(), DFSF.DFS.IntptrTy));
 }
 
 void DFSanVisitor::visitMemTransferInst(MemTransferInst &I) {
