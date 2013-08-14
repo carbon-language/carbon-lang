@@ -4789,7 +4789,7 @@ static SDValue PromoteSplati8i16(SDValue V, SelectionDAG &DAG, int &EltNo) {
 
 /// getLegalSplat - Generate a legal splat with supported x86 shuffles
 static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
-  EVT VT = V.getValueType();
+  MVT VT = V.getValueType().getSimpleVT();
   SDLoc dl(V);
 
   if (VT.is128BitVector()) {
@@ -4815,7 +4815,7 @@ static SDValue getLegalSplat(SelectionDAG &DAG, SDValue V, int EltNo) {
 
 /// PromoteSplat - Splat is promoted to target supported vector shuffles.
 static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
-  EVT SrcVT = SV->getValueType(0);
+  MVT SrcVT = SV->getValueType(0).getSimpleVT();
   SDValue V1 = SV->getOperand(0);
   SDLoc dl(SV);
 
@@ -4838,7 +4838,7 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   // instruction because the target has no such instruction. Generate shuffles
   // which repeat i16 and i8 several times until they fit in i32, and then can
   // be manipulated by target suported shuffles.
-  EVT EltVT = SrcVT.getVectorElementType();
+  MVT EltVT = SrcVT.getVectorElementType();
   if (EltVT == MVT::i8 || EltVT == MVT::i16)
     V1 = PromoteSplati8i16(V1, DAG, EltNo);
 
@@ -4860,7 +4860,7 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
                                            bool IsZero,
                                            const X86Subtarget *Subtarget,
                                            SelectionDAG &DAG) {
-  EVT VT = V2.getValueType();
+  MVT VT = V2.getValueType().getSimpleVT();
   SDValue V1 = IsZero
     ? getZeroVector(VT, Subtarget, DAG, SDLoc(V2)) : DAG.getUNDEF(VT);
   unsigned NumElems = VT.getVectorNumElements();
@@ -5563,7 +5563,7 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 X86TargetLowering::buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) const {
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
 
   // Skip if insert_vec_elt is not supported.
   if (!isOperationLegalOrCustom(ISD::INSERT_VECTOR_ELT, VT))
@@ -5639,7 +5639,7 @@ X86TargetLowering::buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
 
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   assert((VT.getVectorElementType() == MVT::i1) && (VT.getSizeInBits() <= 16) &&
          "Unexpected type in LowerBUILD_VECTORvXi1!");
 
