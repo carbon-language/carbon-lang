@@ -1525,16 +1525,6 @@ foreach Index = 0-15 in {
   >;
 }
 
-def : Vector1_Build <v1i32, i32, VReg_32>;
-def : Vector2_Build <v2i32, i32>;
-def : Vector2_Build <v2f32, f32>;
-def : Vector4_Build <v4i32, i32>;
-def : Vector4_Build <v4f32, f32>;
-def : Vector8_Build <v8i32, i32>;
-def : Vector8_Build <v8f32, f32>;
-def : Vector16_Build <v16i32, i32>;
-def : Vector16_Build <v16f32, f32>;
-
 def : BitConvert <i32, f32, SReg_32>;
 def : BitConvert <i32, f32, VReg_32>;
 

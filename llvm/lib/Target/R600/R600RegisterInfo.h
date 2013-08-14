@@ -43,10 +43,6 @@ struct R600RegisterInfo : public AMDGPURegisterInfo {
   /// CFGStructurizer
   virtual const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const;
 
-  /// \returns the sub reg enum value for the given \p Channel
-  /// (e.g. getSubRegFromChannel(0) -> AMDGPU::sel_x)
-  unsigned getSubRegFromChannel(unsigned Channel) const;
-
   virtual const RegClassWeight &getRegClassWeight(const TargetRegisterClass *RC) const;
 
 };

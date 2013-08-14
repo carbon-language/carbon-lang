@@ -46,27 +46,21 @@ unsigned AMDGPURegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return 0;
 }
 
+unsigned AMDGPURegisterInfo::getSubRegFromChannel(unsigned Channel) const {
+  static const unsigned SubRegs[] = {
+    AMDGPU::sub0, AMDGPU::sub1, AMDGPU::sub2, AMDGPU::sub3, AMDGPU::sub4,
+    AMDGPU::sub5, AMDGPU::sub6, AMDGPU::sub7, AMDGPU::sub8, AMDGPU::sub9,
+    AMDGPU::sub10, AMDGPU::sub11, AMDGPU::sub12, AMDGPU::sub13, AMDGPU::sub14,
+    AMDGPU::sub15
+  };
+
+  assert (Channel < array_lengthof(SubRegs));
+  return SubRegs[Channel];
+}
+
 unsigned AMDGPURegisterInfo::getIndirectSubReg(unsigned IndirectIndex) const {
 
-  switch(IndirectIndex) {
-  case 0: return AMDGPU::sub0;
-  case 1: return AMDGPU::sub1;
-  case 2: return AMDGPU::sub2;
-  case 3: return AMDGPU::sub3;
-  case 4: return AMDGPU::sub4;
-  case 5: return AMDGPU::sub5;
-  case 6: return AMDGPU::sub6;
-  case 7: return AMDGPU::sub7;
-  case 8: return AMDGPU::sub8;
-  case 9: return AMDGPU::sub9;
-  case 10: return AMDGPU::sub10;
-  case 11: return AMDGPU::sub11;
-  case 12: return AMDGPU::sub12;
-  case 13: return AMDGPU::sub13;
-  case 14: return AMDGPU::sub14;
-  case 15: return AMDGPU::sub15;
-  default: llvm_unreachable("indirect index out of range");
-  }
+  return getSubRegFromChannel(IndirectIndex);
 }
 
 #define GET_REGINFO_TARGET_DESC

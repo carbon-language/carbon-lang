@@ -26,7 +26,7 @@ define void @store_f32(float addrspace(1)* %out, float %in) {
 define void @store_v2f32(<2 x float> addrspace(1)* %out, float %a, float %b) {
 entry:
   %0 = insertelement <2 x float> <float 0.0, float 0.0>, float %a, i32 0
-  %1 = insertelement <2 x float> %0, float %b, i32 0
+  %1 = insertelement <2 x float> %0, float %b, i32 1
   store <2 x float> %1, <2 x float> addrspace(1)* %out
   ret void
 }

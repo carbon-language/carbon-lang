@@ -254,59 +254,10 @@ class Insert_Element <ValueType elem_type, ValueType vec_type,
   (INSERT_SUBREG $vec, $elem, sub_reg)
 >;
 
-// Vector Build pattern
-class Vector1_Build <ValueType vecType, ValueType elemType,
-                     RegisterClass rc> : Pat <
-  (vecType (build_vector elemType:$src)),
-  (vecType (COPY_TO_REGCLASS $src, rc))
->;
-
-class Vector2_Build <ValueType vecType, ValueType elemType> : Pat <
-  (vecType (build_vector elemType:$sub0, elemType:$sub1)),
-  (INSERT_SUBREG (INSERT_SUBREG
-    (vecType (IMPLICIT_DEF)), $sub0, sub0), $sub1, sub1)
->;
-
 class Vector4_Build <ValueType vecType, ValueType elemType> : Pat <
   (vecType (build_vector elemType:$x, elemType:$y, elemType:$z, elemType:$w)),
   (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
     (vecType (IMPLICIT_DEF)), $x, sub0), $y, sub1), $z, sub2), $w, sub3)
->;
-
-class Vector8_Build <ValueType vecType, ValueType elemType> : Pat <
-  (vecType (build_vector elemType:$sub0, elemType:$sub1,
-                         elemType:$sub2, elemType:$sub3,
-                         elemType:$sub4, elemType:$sub5,
-                         elemType:$sub6, elemType:$sub7)),
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-    (vecType (IMPLICIT_DEF)), $sub0, sub0), $sub1, sub1),
-                              $sub2, sub2), $sub3, sub3),
-                              $sub4, sub4), $sub5, sub5),
-                              $sub6, sub6), $sub7, sub7)
->;
-
-class Vector16_Build <ValueType vecType, ValueType elemType> : Pat <
-  (vecType (build_vector elemType:$sub0, elemType:$sub1,
-                         elemType:$sub2, elemType:$sub3,
-                         elemType:$sub4, elemType:$sub5,
-                         elemType:$sub6, elemType:$sub7,
-                         elemType:$sub8, elemType:$sub9,
-                         elemType:$sub10, elemType:$sub11,
-                         elemType:$sub12, elemType:$sub13,
-                         elemType:$sub14, elemType:$sub15)),
-  (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-    (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG (INSERT_SUBREG
-    (vecType (IMPLICIT_DEF)), $sub0, sub0), $sub1, sub1),
-                            $sub2, sub2), $sub3, sub3),
-                            $sub4, sub4), $sub5, sub5),
-                            $sub6, sub6), $sub7, sub7),
-                            $sub8, sub8), $sub9, sub9),
-                            $sub10, sub10), $sub11, sub11),
-                            $sub12, sub12), $sub13, sub13),
-                            $sub14, sub14), $sub15, sub15)
 >;
 
 // XXX: Convert to new syntax and use COPY_TO_REG, once the DFAPacketizer

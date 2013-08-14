@@ -86,16 +86,6 @@ const TargetRegisterClass * R600RegisterInfo::getCFGStructurizerRegClass(
   }
 }
 
-unsigned R600RegisterInfo::getSubRegFromChannel(unsigned Channel) const {
-  switch (Channel) {
-    default: assert(!"Invalid channel index"); return 0;
-    case 0: return AMDGPU::sub0;
-    case 1: return AMDGPU::sub1;
-    case 2: return AMDGPU::sub2;
-    case 3: return AMDGPU::sub3;
-  }
-}
-
 const RegClassWeight &R600RegisterInfo::getRegClassWeight(
   const TargetRegisterClass *RC) const {
   return RCW;
