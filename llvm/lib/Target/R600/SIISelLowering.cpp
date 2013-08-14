@@ -34,9 +34,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::VSrc_64RegClass);
 
-  addRegisterClass(MVT::v2i1, &AMDGPU::VReg_64RegClass);
-  addRegisterClass(MVT::v4i1, &AMDGPU::VReg_128RegClass);
-
   addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v64i8, &AMDGPU::SReg_512RegClass);
 
@@ -110,6 +107,9 @@ bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
   return VT.bitsGT(MVT::i32);
 }
 
+bool SITargetLowering::shouldSplitVectorElementType(EVT VT) const {
+  return VT.bitsLE(MVT::i8);
+}
 
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT,
                                          SDLoc DL, SDValue Chain,

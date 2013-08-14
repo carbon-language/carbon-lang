@@ -25,6 +25,11 @@ class MachineRegisterInfo;
 
 class AMDGPUTargetLowering : public TargetLowering {
 private:
+  void ExtractVectorElements(SDValue Op, SelectionDAG &DAG,
+                             SmallVectorImpl<SDValue> &Args,
+                             unsigned Start, unsigned Count) const;
+  SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
 

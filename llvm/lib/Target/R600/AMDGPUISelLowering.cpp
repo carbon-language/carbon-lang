@@ -79,8 +79,10 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::LOAD, MVT::f64, Promote);
   AddPromotedToType(ISD::LOAD, MVT::f64, MVT::i64);
 
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32, Expand);
-  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f32, Expand);
+  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4i32, Custom);
+  setOperationAction(ISD::CONCAT_VECTORS, MVT::v4f32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32, Custom);
+  setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f32, Custom);
 
   setOperationAction(ISD::FNEG, MVT::v2f32, Expand);
   setOperationAction(ISD::FNEG, MVT::v4f32, Expand);
@@ -182,6 +184,8 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   case ISD::SIGN_EXTEND_INREG: return LowerSIGN_EXTEND_INREG(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   // AMDGPU DAG lowering
+  case ISD::CONCAT_VECTORS: return LowerCONCAT_VECTORS(Op, DAG);
+  case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   }
@@ -207,6 +211,47 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
 
   return DAG.getConstant(Offset, TD->getPointerSize() == 8 ? MVT::i64 : MVT::i32);
 }
+
+void AMDGPUTargetLowering::ExtractVectorElements(SDValue Op, SelectionDAG &DAG,
+                                         SmallVectorImpl<SDValue> &Args,
+                                         unsigned Start,
+                                         unsigned Count) const {
+  EVT VT = Op.getValueType();
+  for (unsigned i = Start, e = Start + Count; i != e; ++i) {
+    Args.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(Op),
+                               VT.getVectorElementType(),
+                               Op, DAG.getConstant(i, MVT::i32)));
+  }
+}
+
+SDValue AMDGPUTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  SmallVector<SDValue, 8> Args;
+  SDValue A = Op.getOperand(0);
+  SDValue B = Op.getOperand(1);
+
+  ExtractVectorElements(A, DAG, Args, 0,
+                        A.getValueType().getVectorNumElements());
+  ExtractVectorElements(B, DAG, Args, 0,
+                        B.getValueType().getVectorNumElements());
+
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(),
+                     &Args[0], Args.size());
+}
+
+SDValue AMDGPUTargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
+                                                     SelectionDAG &DAG) const {
+
+  SmallVector<SDValue, 8> Args;
+  EVT VT = Op.getValueType();
+  unsigned Start = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+  ExtractVectorElements(Op.getOperand(0), DAG, Args, Start,
+                        VT.getVectorNumElements());
+
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(),
+                     &Args[0], Args.size());
+}
+
 
 SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     SelectionDAG &DAG) const {
