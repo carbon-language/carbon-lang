@@ -305,54 +305,24 @@ def isExpectedFail(test, xfails):
 
     return False
 
-def parseIntegratedTestScriptCommands(source_path):
+def parseIntegratedTestScriptCommands(sourcepath):
     """
     parseIntegratedTestScriptCommands(source_path) -> commands
 
     Parse the commands in an integrated test script file into a list of
     (line_number, command_type, line).
     """
-
-    # This code is carefully written to be dual compatible with Python 2.5+ and
-    # Python 3 without requiring input files to always have valid codings. The
-    # trick we use is to open the file in binary mode and use the regular
-    # expression library to find the commands, with it scanning strings in
-    # Python2 and bytes in Python3.
-    #
-    # Once we find a match, we do require each script line to be decodable to
-    # ascii, so we convert the outputs to ascii before returning. This way the
-    # remaining code can work with "strings" agnostic of the executing Python
-    # version.
-    
-    def to_bytes(str):
-        # Encode to Latin1 to get binary data.
-        return str.encode('ISO-8859-1')
-    keywords = ('RUN:', 'XFAIL:', 'REQUIRES:', 'END.')
-    keywords_re = re.compile(
-        to_bytes("(%s)(.*)\n" % ("|".join(k for k in keywords),)))
-
-    f = open(source_path, 'rb')
-    try:
-        # Read the entire file contents.
-        data = f.read()
-
-        # Iterate over the matches.
-        line_number = 1
-        last_match_position = 0
-        for match in keywords_re.finditer(data):
-            # Compute the updated line number by counting the intervening
-            # newlines.
-            match_position = match.start()
-            line_number += data.count(to_bytes('\n'), last_match_position,
-                                      match_position)
-            last_match_position = match_position
-
-            # Convert the keyword and line to ascii and yield the command.
-            keyword,ln = match.groups()
-            yield (line_number, keyword[:-1].decode('ascii'),
-                   ln.decode('ascii'))
-    finally:
-        f.close()
+    line_number = 0
+    for ln in open(sourcepath):
+        line_number += 1
+        if 'RUN:' in ln:
+            yield (line_number, 'RUN', ln[ln.index('RUN:')+4:])
+        elif 'XFAIL:' in ln:
+            yield (line_number, 'XFAIL', ln[ln.index('XFAIL:') + 6:])
+        elif 'REQUIRES:' in ln:
+            yield (line_number, 'REQUIRES', ln[ln.index('REQUIRES:') + 9:])
+        elif 'END.' in ln:
+            yield (line_number, 'END', ln[ln.index('END.') + 4:])
 
 def parseIntegratedTestScript(test, normalize_slashes=False,
                               extra_substitutions=[]):
