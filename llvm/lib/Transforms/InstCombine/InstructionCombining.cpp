@@ -1231,9 +1231,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // %t = getelementptr i32* bitcast ([2 x i32]* %str to i32*), i32 %V
       // into:  %t1 = getelementptr [2 x i32]* %str, i32 0, i32 %V; bitcast
       Type *SrcElTy = StrippedPtrTy->getElementType();
-      Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
+      Type *ResElTy = PtrOp->getType()->getPointerElementType();
       if (TD && SrcElTy->isArrayTy() &&
-          TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
+          TD->getTypeAllocSize(SrcElTy->getArrayElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
         Value *Idx[2];
         Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
@@ -1287,8 +1287,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         // Check that changing to the array element type amounts to dividing the
         // index by a scale factor.
         uint64_t ResSize = TD->getTypeAllocSize(ResElTy);
-        uint64_t ArrayEltSize =
-          TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
+        uint64_t ArrayEltSize
+          = TD->getTypeAllocSize(SrcElTy->getArrayElementType());
         if (ResSize && ArrayEltSize % ResSize == 0) {
           Value *Idx = GEP.getOperand(1);
           unsigned BitWidth = Idx->getType()->getPrimitiveSizeInBits();
@@ -1354,8 +1354,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // field at Offset in 'A's type.  If so, we can pull the cast through the
       // GEP.
       SmallVector<Value*, 8> NewIndices;
-      Type *InTy =
-        cast<PointerType>(BCI->getOperand(0)->getType())->getElementType();
+      Type *InTy = BCI->getOperand(0)->getType()->getPointerElementType();
       if (FindElementAtOffset(InTy, Offset.getSExtValue(), NewIndices)) {
         Value *NGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices) :

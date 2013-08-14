@@ -1379,8 +1379,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         GEP->accumulateConstantOffset(*TD, Offset)) {
       // Get the base pointer input of the bitcast, and the type it points to.
       Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
-      Type *GEPIdxTy =
-      cast<PointerType>(OrigBase->getType())->getElementType();
+      Type *GEPIdxTy = OrigBase->getType()->getPointerElementType();
       SmallVector<Value*, 8> NewIndices;
       if (FindElementAtOffset(GEPIdxTy, Offset.getSExtValue(), NewIndices)) {
         // If we were able to index down into an element, create the GEP
@@ -1797,10 +1796,9 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // Okay, we have (bitcast (shuffle ..)).  Check to see if this is
     // a bitcast to a vector with the same # elts.
     if (SVI->hasOneUse() && DestTy->isVectorTy() &&
-        cast<VectorType>(DestTy)->getNumElements() ==
-              SVI->getType()->getNumElements() &&
+        DestTy->getVectorNumElements() == SVI->getType()->getNumElements() &&
         SVI->getType()->getNumElements() ==
-          cast<VectorType>(SVI->getOperand(0)->getType())->getNumElements()) {
+        SVI->getOperand(0)->getType()->getVectorNumElements()) {
       BitCastInst *Tmp;
       // If either of the operands is a cast from CI.getType(), then
       // evaluating the shuffle in the casted destination's type will allow
