@@ -76,17 +76,20 @@ static cl::opt<bool> ClPreserveAlignment(
     cl::desc("respect alignment requirements provided by input IR"), cl::Hidden,
     cl::init(false));
 
-// The greylist file controls how shadow parameters are passed.
-// The program acts as though every function in the greylist is passed
-// parameters with zero shadow and that its return value also has zero shadow.
-// This avoids the use of TLS or extra function parameters to pass shadow state
-// and essentially makes the function conform to the "native" (i.e. unsanitized)
-// ABI.
-static cl::opt<std::string> ClGreylistFile(
-    "dfsan-greylist",
-    cl::desc("File containing the list of functions with a native ABI"),
+// The ABI list file controls how shadow parameters are passed.  The pass treats
+// every function labelled "uninstrumented" in the ABI list file as conforming
+// to the "native" (i.e. unsanitized) ABI.  Unless the ABI list contains
+// additional annotations for those functions, a call to one of those functions
+// will produce a warning message, as the labelling behaviour of the function is
+// unknown.  The other supported annotations are "functional" and "discard",
+// which are described below under DataFlowSanitizer::WrapperKind.
+static cl::opt<std::string> ClABIListFile(
+    "dfsan-abilist",
+    cl::desc("File listing native ABI functions and how the pass treats them"),
     cl::Hidden);
 
+// Controls whether the pass uses IA_Args or IA_TLS as the ABI for instrumented
+// functions (see DataFlowSanitizer::InstrumentedABI below).
 static cl::opt<bool> ClArgsABI(
     "dfsan-args-abi",
     cl::desc("Use the argument ABI rather than the TLS ABI"),
@@ -102,11 +105,40 @@ class DataFlowSanitizer : public ModulePass {
     ShadowWidth = 16
   };
 
+  /// Which ABI should be used for instrumented functions?
   enum InstrumentedABI {
-    IA_None,
-    IA_MemOnly,
+    /// Argument and return value labels are passed through additional
+    /// arguments and by modifying the return type.
     IA_Args,
+
+    /// Argument and return value labels are passed through TLS variables
+    /// __dfsan_arg_tls and __dfsan_retval_tls.
     IA_TLS
+  };
+
+  /// How should calls to uninstrumented functions be handled?
+  enum WrapperKind {
+    /// This function is present in an uninstrumented form but we don't know
+    /// how it should be handled.  Print a warning and call the function anyway.
+    /// Don't label the return value.
+    WK_Warning,
+
+    /// This function does not write to (user-accessible) memory, and its return
+    /// value is unlabelled.
+    WK_Discard,
+
+    /// This function does not write to (user-accessible) memory, and the label
+    /// of its return value is the union of the label of its arguments.
+    WK_Functional,
+
+    /// Instead of calling the function, a custom wrapper __dfsw_F is called,
+    /// where F is the name of the function.  This function may wrap the
+    /// original function or provide its own implementation.  This is similar to
+    /// the IA_Args ABI, except that IA_Args uses a struct return type to
+    /// pass the return value shadow in a register, while WK_Custom uses an
+    /// extra pointer argument to return the shadow.  This allows the wrapped
+    /// form of the function type to be expressed in C.
+    WK_Custom
   };
 
   DataLayout *DL;
@@ -126,20 +158,26 @@ class DataFlowSanitizer : public ModulePass {
   Constant *GetRetvalTLS;
   FunctionType *DFSanUnionFnTy;
   FunctionType *DFSanUnionLoadFnTy;
+  FunctionType *DFSanUnimplementedFnTy;
   Constant *DFSanUnionFn;
   Constant *DFSanUnionLoadFn;
+  Constant *DFSanUnimplementedFn;
   MDNode *ColdCallWeights;
-  OwningPtr<SpecialCaseList> Greylist;
+  OwningPtr<SpecialCaseList> ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
+  AttributeSet ReadOnlyNoneAttrs;
 
   Value *getShadowAddress(Value *Addr, Instruction *Pos);
   Value *combineShadows(Value *V1, Value *V2, Instruction *Pos);
-  FunctionType *getInstrumentedFunctionType(FunctionType *T);
-  InstrumentedABI getInstrumentedABI(Function *F);
-  InstrumentedABI getDefaultInstrumentedABI();
+  bool isInstrumented(Function *F);
+  FunctionType *getArgsFunctionType(FunctionType *T);
+  FunctionType *getCustomFunctionType(FunctionType *T);
+  InstrumentedABI getInstrumentedABI();
+  WrapperKind getWrapperKind(Function *F);
 
  public:
-  DataFlowSanitizer(void *(*getArgTLS)() = 0, void *(*getRetValTLS)() = 0);
+  DataFlowSanitizer(StringRef ABIListFile = StringRef(),
+                    void *(*getArgTLS)() = 0, void *(*getRetValTLS)() = 0);
   static char ID;
   bool doInitialization(Module &M);
   bool runOnModule(Module &M);
@@ -149,16 +187,19 @@ struct DFSanFunction {
   DataFlowSanitizer &DFS;
   Function *F;
   DataFlowSanitizer::InstrumentedABI IA;
+  bool IsNativeABI;
   Value *ArgTLSPtr;
   Value *RetvalTLSPtr;
+  AllocaInst *LabelReturnAlloca;
   DenseMap<Value *, Value *> ValShadowMap;
   DenseMap<AllocaInst *, AllocaInst *> AllocaShadowMap;
   std::vector<std::pair<PHINode *, PHINode *> > PHIFixups;
   DenseSet<Instruction *> SkipInsts;
 
-  DFSanFunction(DataFlowSanitizer &DFS, Function *F)
-      : DFS(DFS), F(F), IA(DFS.getInstrumentedABI(F)), ArgTLSPtr(0),
-        RetvalTLSPtr(0) {}
+  DFSanFunction(DataFlowSanitizer &DFS, Function *F, bool IsNativeABI)
+      : DFS(DFS), F(F), IA(DFS.getInstrumentedABI()),
+        IsNativeABI(IsNativeABI), ArgTLSPtr(0), RetvalTLSPtr(0),
+        LabelReturnAlloca(0) {}
   Value *getArgTLSPtr();
   Value *getArgTLS(unsigned Index, Instruction *Pos);
   Value *getRetvalTLS();
@@ -203,17 +244,21 @@ char DataFlowSanitizer::ID;
 INITIALIZE_PASS(DataFlowSanitizer, "dfsan",
                 "DataFlowSanitizer: dynamic data flow analysis.", false, false)
 
-ModulePass *llvm::createDataFlowSanitizerPass(void *(*getArgTLS)(),
+ModulePass *llvm::createDataFlowSanitizerPass(StringRef ABIListFile,
+                                              void *(*getArgTLS)(),
                                               void *(*getRetValTLS)()) {
-  return new DataFlowSanitizer(getArgTLS, getRetValTLS);
+  return new DataFlowSanitizer(ABIListFile, getArgTLS, getRetValTLS);
 }
 
-DataFlowSanitizer::DataFlowSanitizer(void *(*getArgTLS)(),
+DataFlowSanitizer::DataFlowSanitizer(StringRef ABIListFile,
+                                     void *(*getArgTLS)(),
                                      void *(*getRetValTLS)())
     : ModulePass(ID), GetArgTLSPtr(getArgTLS), GetRetvalTLSPtr(getRetValTLS),
-      Greylist(SpecialCaseList::createOrDie(ClGreylistFile)) {}
+      ABIList(SpecialCaseList::createOrDie(ABIListFile.empty() ? ClABIListFile
+                                                               : ABIListFile)) {
+}
 
-FunctionType *DataFlowSanitizer::getInstrumentedFunctionType(FunctionType *T) {
+FunctionType *DataFlowSanitizer::getArgsFunctionType(FunctionType *T) {
   llvm::SmallVector<Type *, 4> ArgTypes;
   std::copy(T->param_begin(), T->param_end(), std::back_inserter(ArgTypes));
   for (unsigned i = 0, e = T->getNumParams(); i != e; ++i)
@@ -224,6 +269,18 @@ FunctionType *DataFlowSanitizer::getInstrumentedFunctionType(FunctionType *T) {
   if (!RetType->isVoidTy())
     RetType = StructType::get(RetType, ShadowTy, (Type *)0);
   return FunctionType::get(RetType, ArgTypes, T->isVarArg());
+}
+
+FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
+  assert(!T->isVarArg());
+  llvm::SmallVector<Type *, 4> ArgTypes;
+  std::copy(T->param_begin(), T->param_end(), std::back_inserter(ArgTypes));
+  for (unsigned i = 0, e = T->getNumParams(); i != e; ++i)
+    ArgTypes.push_back(ShadowTy);
+  Type *RetType = T->getReturnType();
+  if (!RetType->isVoidTy())
+    ArgTypes.push_back(ShadowPtrTy);
+  return FunctionType::get(T->getReturnType(), ArgTypes, false);
 }
 
 bool DataFlowSanitizer::doInitialization(Module &M) {
@@ -246,6 +303,8 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   Type *DFSanUnionLoadArgs[2] = { ShadowPtrTy, IntptrTy };
   DFSanUnionLoadFnTy =
       FunctionType::get(ShadowTy, DFSanUnionLoadArgs, /*isVarArg=*/ false);
+  DFSanUnimplementedFnTy = FunctionType::get(
+      Type::getVoidTy(*Ctx), Type::getInt8PtrTy(*Ctx), /*isVarArg=*/false);
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);
@@ -267,21 +326,30 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   return true;
 }
 
-DataFlowSanitizer::InstrumentedABI
-DataFlowSanitizer::getInstrumentedABI(Function *F) {
-  if (Greylist->isIn(*F))
-    return IA_MemOnly;
-  else
-    return getDefaultInstrumentedABI();
+bool DataFlowSanitizer::isInstrumented(Function *F) {
+  return !ABIList->isIn(*F, "uninstrumented");
 }
 
-DataFlowSanitizer::InstrumentedABI
-DataFlowSanitizer::getDefaultInstrumentedABI() {
+DataFlowSanitizer::InstrumentedABI DataFlowSanitizer::getInstrumentedABI() {
   return ClArgsABI ? IA_Args : IA_TLS;
+}
+
+DataFlowSanitizer::WrapperKind DataFlowSanitizer::getWrapperKind(Function *F) {
+  if (ABIList->isIn(*F, "functional"))
+    return WK_Functional;
+  if (ABIList->isIn(*F, "discard"))
+    return WK_Discard;
+  if (ABIList->isIn(*F, "custom"))
+    return WK_Custom;
+
+  return WK_Warning;
 }
 
 bool DataFlowSanitizer::runOnModule(Module &M) {
   if (!DL)
+    return false;
+
+  if (ABIList->isIn(M, "skip"))
     return false;
 
   if (!GetArgTLSPtr) {
@@ -308,33 +376,44 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   if (Function *F = dyn_cast<Function>(DFSanUnionLoadFn)) {
     F->addAttribute(AttributeSet::ReturnIndex, Attribute::ZExt);
   }
+  DFSanUnimplementedFn =
+      Mod->getOrInsertFunction("__dfsan_unimplemented", DFSanUnimplementedFnTy);
 
   std::vector<Function *> FnsToInstrument;
+  llvm::SmallPtrSet<Function *, 2> FnsWithNativeABI;
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (!i->isIntrinsic() && i != DFSanUnionFn && i != DFSanUnionLoadFn)
+    if (!i->isIntrinsic() &&
+        i != DFSanUnionFn &&
+        i != DFSanUnionLoadFn &&
+        i != DFSanUnimplementedFn)
       FnsToInstrument.push_back(&*i);
   }
 
-  // First, change the ABI of every function in the module.  Greylisted
+  AttrBuilder B;
+  B.addAttribute(Attribute::ReadOnly).addAttribute(Attribute::ReadNone);
+  ReadOnlyNoneAttrs = AttributeSet::get(*Ctx, AttributeSet::FunctionIndex, B);
+
+  // First, change the ABI of every function in the module.  ABI-listed
   // functions keep their original ABI and get a wrapper function.
   for (std::vector<Function *>::iterator i = FnsToInstrument.begin(),
                                          e = FnsToInstrument.end();
        i != e; ++i) {
     Function &F = **i;
-
     FunctionType *FT = F.getFunctionType();
-    FunctionType *NewFT = getInstrumentedFunctionType(FT);
-    // If the function types are the same (i.e. void()), we don't need to do
-    // anything here.
-    if (FT != NewFT) {
-      switch (getInstrumentedABI(&F)) {
-      case IA_Args: {
+
+    if (FT->getNumParams() == 0 && !FT->isVarArg() &&
+        FT->getReturnType()->isVoidTy())
+      continue;
+
+    if (isInstrumented(&F)) {
+      if (getInstrumentedABI() == IA_Args) {
+        FunctionType *NewFT = getArgsFunctionType(FT);
         Function *NewF = Function::Create(NewFT, F.getLinkage(), "", &M);
-        NewF->setCallingConv(F.getCallingConv());
-        NewF->setAttributes(F.getAttributes().removeAttributes(
-            *Ctx, AttributeSet::ReturnIndex,
+        NewF->copyAttributesFrom(&F);
+        NewF->removeAttributes(
+            AttributeSet::ReturnIndex,
             AttributeFuncs::typeIncompatible(NewFT->getReturnType(),
-                                             AttributeSet::ReturnIndex)));
+                                             AttributeSet::ReturnIndex));
         for (Function::arg_iterator FArg = F.arg_begin(),
                                     NewFArg = NewF->arg_begin(),
                                     FArgEnd = F.arg_end();
@@ -358,41 +437,63 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         NewF->takeName(&F);
         F.eraseFromParent();
         *i = NewF;
-        break;
       }
-      case IA_MemOnly: {
-        assert(!FT->isVarArg() && "varargs not handled here yet");
-        assert(getDefaultInstrumentedABI() == IA_Args);
-        Function *NewF =
-            Function::Create(NewFT, GlobalValue::LinkOnceODRLinkage,
-                             std::string("dfsw$") + F.getName(), &M);
-        NewF->setCallingConv(F.getCallingConv());
-        NewF->setAttributes(F.getAttributes());
+               // Hopefully, nobody will try to indirectly call a vararg
+               // function... yet.
+    } else if (FT->isVarArg()) {
+      UnwrappedFnMap[&F] = &F;
+      *i = 0;
+    } else {
+      // Build a wrapper function for F.  The wrapper simply calls F, and is
+      // added to FnsToInstrument so that any instrumentation according to its
+      // WrapperKind is done in the second pass below.
+      FunctionType *NewFT = getInstrumentedABI() == IA_Args
+                                ? getArgsFunctionType(FT)
+                                : FT;
+      Function *NewF =
+          Function::Create(NewFT, GlobalValue::LinkOnceODRLinkage,
+                           std::string("dfsw$") + F.getName(), &M);
+      NewF->copyAttributesFrom(&F);
+      NewF->removeAttributes(
+              AttributeSet::ReturnIndex,
+              AttributeFuncs::typeIncompatible(NewFT->getReturnType(),
+                                               AttributeSet::ReturnIndex));
+      if (getInstrumentedABI() == IA_TLS)
+        NewF->removeAttributes(AttributeSet::FunctionIndex,
+                               ReadOnlyNoneAttrs);
 
-        BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", NewF);
-        std::vector<Value *> Args;
-        unsigned n = FT->getNumParams();
-        for (Function::arg_iterator i = NewF->arg_begin(); n != 0; ++i, --n)
-          Args.push_back(&*i);
-        CallInst *CI = CallInst::Create(&F, Args, "", BB);
-        if (FT->getReturnType()->isVoidTy())
-          ReturnInst::Create(*Ctx, BB);
-        else {
-          Value *InsVal = InsertValueInst::Create(
-              UndefValue::get(NewFT->getReturnType()), CI, 0, "", BB);
-          Value *InsShadow =
-              InsertValueInst::Create(InsVal, ZeroShadow, 1, "", BB);
-          ReturnInst::Create(*Ctx, InsShadow, BB);
-        }
+      BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", NewF);
+      std::vector<Value *> Args;
+      unsigned n = FT->getNumParams();
+      for (Function::arg_iterator ai = NewF->arg_begin(); n != 0; ++ai, --n)
+        Args.push_back(&*ai);
+      CallInst *CI = CallInst::Create(&F, Args, "", BB);
+      if (FT->getReturnType()->isVoidTy())
+        ReturnInst::Create(*Ctx, BB);
+      else
+        ReturnInst::Create(*Ctx, CI, BB);
 
-        Value *WrappedFnCst =
-            ConstantExpr::getBitCast(NewF, PointerType::getUnqual(FT));
-        F.replaceAllUsesWith(WrappedFnCst);
-        UnwrappedFnMap[WrappedFnCst] = &F;
-        break;
-      }
-      default:
-        break;
+      Value *WrappedFnCst =
+          ConstantExpr::getBitCast(NewF, PointerType::getUnqual(FT));
+      F.replaceAllUsesWith(WrappedFnCst);
+      UnwrappedFnMap[WrappedFnCst] = &F;
+      *i = NewF;
+
+      if (!F.isDeclaration()) {
+        // This function is probably defining an interposition of an
+        // uninstrumented function and hence needs to keep the original ABI.
+        // But any functions it may call need to use the instrumented ABI, so
+        // we instrument it in a mode which preserves the original ABI.
+        FnsWithNativeABI.insert(&F);
+
+        // This code needs to rebuild the iterators, as they may be invalidated
+        // by the push_back, taking care that the new range does not include
+        // any functions added by this code.
+        size_t N = i - FnsToInstrument.begin(),
+               Count = e - FnsToInstrument.begin();
+        FnsToInstrument.push_back(&F);
+        i = FnsToInstrument.begin() + N;
+        e = FnsToInstrument.begin() + Count;
       }
     }
   }
@@ -400,12 +501,12 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   for (std::vector<Function *>::iterator i = FnsToInstrument.begin(),
                                          e = FnsToInstrument.end();
        i != e; ++i) {
-    if ((*i)->isDeclaration())
+    if (!*i || (*i)->isDeclaration())
       continue;
 
     removeUnreachableBlocks(**i);
 
-    DFSanFunction DFSF(*this, *i);
+    DFSanFunction DFSF(*this, *i, FnsWithNativeABI.count(*i));
 
     // DFSanVisitor may create new basic blocks, which confuses df_iterator.
     // Build a copy of the list before iterating over it.
@@ -433,6 +534,10 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
       }
     }
 
+    // We will not necessarily be able to compute the shadow for every phi node
+    // until we have visited every block.  Therefore, the code that handles phi
+    // nodes adds them to the PHIFixups list so that they can be properly
+    // handled here.
     for (std::vector<std::pair<PHINode *, PHINode *> >::iterator
              i = DFSF.PHIFixups.begin(),
              e = DFSF.PHIFixups.end();
@@ -479,6 +584,8 @@ Value *DFSanFunction::getShadow(Value *V) {
   Value *&Shadow = ValShadowMap[V];
   if (!Shadow) {
     if (Argument *A = dyn_cast<Argument>(V)) {
+      if (IsNativeABI)
+        return DFS.ZeroShadow;
       switch (IA) {
       case DataFlowSanitizer::IA_TLS: {
         Value *ArgTLSPtr = getArgTLSPtr();
@@ -495,11 +602,9 @@ Value *DFSanFunction::getShadow(Value *V) {
         while (ArgIdx--)
           ++i;
         Shadow = i;
+        assert(Shadow->getType() == DFS.ShadowTy);
         break;
       }
-      default:
-        Shadow = DFS.ZeroShadow;
-        break;
       }
     } else {
       Shadow = DFS.ZeroShadow;
@@ -866,7 +971,7 @@ void DFSanVisitor::visitMemTransferInst(MemTransferInst &I) {
 }
 
 void DFSanVisitor::visitReturnInst(ReturnInst &RI) {
-  if (RI.getReturnValue()) {
+  if (!DFSF.IsNativeABI && RI.getReturnValue()) {
     switch (DFSF.IA) {
     case DataFlowSanitizer::IA_TLS: {
       Value *S = DFSF.getShadow(RI.getReturnValue());
@@ -884,8 +989,6 @@ void DFSanVisitor::visitReturnInst(ReturnInst &RI) {
       RI.setOperand(0, InsShadow);
       break;
     }
-    default:
-      break;
     }
   }
 }
@@ -897,19 +1000,91 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
     return;
   }
 
+  IRBuilder<> IRB(CS.getInstruction());
+
   DenseMap<Value *, Function *>::iterator i =
       DFSF.DFS.UnwrappedFnMap.find(CS.getCalledValue());
   if (i != DFSF.DFS.UnwrappedFnMap.end()) {
-    CS.setCalledFunction(i->second);
-    DFSF.setShadow(CS.getInstruction(), DFSF.DFS.ZeroShadow);
-    return;
-  }
+    Function *F = i->second;
+    switch (DFSF.DFS.getWrapperKind(F)) {
+    case DataFlowSanitizer::WK_Warning: {
+      CS.setCalledFunction(F);
+      IRB.CreateCall(DFSF.DFS.DFSanUnimplementedFn,
+                     IRB.CreateGlobalStringPtr(F->getName()));
+      DFSF.setShadow(CS.getInstruction(), DFSF.DFS.ZeroShadow);
+      return;
+    }
+    case DataFlowSanitizer::WK_Discard: {
+      CS.setCalledFunction(F);
+      DFSF.setShadow(CS.getInstruction(), DFSF.DFS.ZeroShadow);
+      return;
+    }
+    case DataFlowSanitizer::WK_Functional: {
+      CS.setCalledFunction(F);
+      visitOperandShadowInst(*CS.getInstruction());
+      return;
+    }
+    case DataFlowSanitizer::WK_Custom: {
+      // Don't try to handle invokes of custom functions, it's too complicated.
+      // Instead, invoke the dfsw$ wrapper, which will in turn call the __dfsw_
+      // wrapper.
+      if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction())) {
+        FunctionType *FT = F->getFunctionType();
+        FunctionType *CustomFT = DFSF.DFS.getCustomFunctionType(FT);
+        std::string CustomFName = "__dfsw_";
+        CustomFName += F->getName();
+        Constant *CustomF =
+            DFSF.DFS.Mod->getOrInsertFunction(CustomFName, CustomFT);
+        if (Function *CustomFn = dyn_cast<Function>(CustomF)) {
+          CustomFn->copyAttributesFrom(F);
 
-  IRBuilder<> IRB(CS.getInstruction());
+          // Custom functions returning non-void will write to the return label.
+          if (!FT->getReturnType()->isVoidTy()) {
+            CustomFn->removeAttributes(AttributeSet::FunctionIndex,
+                                       DFSF.DFS.ReadOnlyNoneAttrs);
+          }
+        }
+
+        std::vector<Value *> Args;
+
+        CallSite::arg_iterator i = CS.arg_begin();
+        for (unsigned n = FT->getNumParams(); n != 0; ++i, --n)
+          Args.push_back(*i);
+
+        i = CS.arg_begin();
+        for (unsigned n = FT->getNumParams(); n != 0; ++i, --n)
+          Args.push_back(DFSF.getShadow(*i));
+
+        if (!FT->getReturnType()->isVoidTy()) {
+          if (!DFSF.LabelReturnAlloca) {
+            DFSF.LabelReturnAlloca =
+                new AllocaInst(DFSF.DFS.ShadowTy, "labelreturn",
+                               DFSF.F->getEntryBlock().begin());
+          }
+          Args.push_back(DFSF.LabelReturnAlloca);
+        }
+
+        CallInst *CustomCI = IRB.CreateCall(CustomF, Args);
+        CustomCI->setCallingConv(CI->getCallingConv());
+        CustomCI->setAttributes(CI->getAttributes());
+
+        if (!FT->getReturnType()->isVoidTy()) {
+          LoadInst *LabelLoad = IRB.CreateLoad(DFSF.LabelReturnAlloca);
+          DFSF.setShadow(CustomCI, LabelLoad);
+        }
+
+        CI->replaceAllUsesWith(CustomCI);
+        CI->eraseFromParent();
+        return;
+      }
+      break;
+    }
+    }
+  }
 
   FunctionType *FT = cast<FunctionType>(
       CS.getCalledValue()->getType()->getPointerElementType());
-  if (DFSF.DFS.getDefaultInstrumentedABI() == DataFlowSanitizer::IA_TLS) {
+  if (DFSF.DFS.getInstrumentedABI() == DataFlowSanitizer::IA_TLS) {
     for (unsigned i = 0, n = FT->getNumParams(); i != n; ++i) {
       IRB.CreateStore(DFSF.getShadow(CS.getArgument(i)),
                       DFSF.getArgTLS(i, CS.getInstruction()));
@@ -930,7 +1105,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
       Next = CS->getNextNode();
     }
 
-    if (DFSF.DFS.getDefaultInstrumentedABI() == DataFlowSanitizer::IA_TLS) {
+    if (DFSF.DFS.getInstrumentedABI() == DataFlowSanitizer::IA_TLS) {
       IRBuilder<> NextIRB(Next);
       LoadInst *LI = NextIRB.CreateLoad(DFSF.getRetvalTLS());
       DFSF.SkipInsts.insert(LI);
@@ -940,8 +1115,8 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
 
   // Do all instrumentation for IA_Args down here to defer tampering with the
   // CFG in a way that SplitEdge may be able to detect.
-  if (DFSF.DFS.getDefaultInstrumentedABI() == DataFlowSanitizer::IA_Args) {
-    FunctionType *NewFT = DFSF.DFS.getInstrumentedFunctionType(FT);
+  if (DFSF.DFS.getInstrumentedABI() == DataFlowSanitizer::IA_Args) {
+    FunctionType *NewFT = DFSF.DFS.getArgsFunctionType(FT);
     Value *Func =
         IRB.CreateBitCast(CS.getCalledValue(), PointerType::getUnqual(NewFT));
     std::vector<Value *> Args;

@@ -89,12 +89,14 @@ FunctionPass *createMemorySanitizerPass(bool TrackOrigins = false,
 FunctionPass *createThreadSanitizerPass(StringRef BlacklistFile = StringRef());
 
 // Insert DataFlowSanitizer (dynamic data flow analysis) instrumentation
-ModulePass *createDataFlowSanitizerPass(void *(*getArgTLS)() = 0,
+ModulePass *createDataFlowSanitizerPass(StringRef ABIListFile = StringRef(),
+                                        void *(*getArgTLS)() = 0,
                                         void *(*getRetValTLS)() = 0);
 
 #if defined(__GNUC__) && defined(__linux__)
-inline ModulePass *createDataFlowSanitizerPassForJIT() {
-  return createDataFlowSanitizerPass(getDFSanArgTLSPtrForJIT,
+inline ModulePass *createDataFlowSanitizerPassForJIT(StringRef ABIListFile =
+                                                         StringRef()) {
+  return createDataFlowSanitizerPass(ABIListFile, getDFSanArgTLSPtrForJIT,
                                      getDFSanRetValTLSPtrForJIT);
 }
 #endif
