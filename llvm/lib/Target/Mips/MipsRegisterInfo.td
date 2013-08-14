@@ -279,7 +279,7 @@ class GPR32Class<list<ValueType> regTypes> :
   K0, K1, GP, SP, FP, RA)>;
 
 def GPR32 : GPR32Class<[i32]>;
-def DSPRegs : GPR32Class<[v4i8, v2i16]>;
+def DSPR  : GPR32Class<[v4i8, v2i16]>;
 
 def GPR64 : RegisterClass<"Mips", [i64], 64, (add
 // Reserved
@@ -423,6 +423,10 @@ def GPR32Opnd : RegisterOperand<GPR32> {
 
 def GPR64Opnd : RegisterOperand<GPR64> {
   let ParserMatchClass = GPR64AsmOperand;
+}
+
+def DSPROpnd : RegisterOperand<DSPR> {
+  let ParserMatchClass = GPR32AsmOperand;
 }
 
 def CCROpnd : RegisterOperand<CCR> {

@@ -103,10 +103,10 @@ static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst,
                                              uint64_t Address,
                                              const void *Decoder);
 
-static DecodeStatus DecodeDSPRegsRegisterClass(MCInst &Inst,
-                                               unsigned RegNo,
-                                               uint64_t Address,
-                                               const void *Decoder);
+static DecodeStatus DecodeDSPRRegisterClass(MCInst &Inst,
+                                            unsigned RegNo,
+                                            uint64_t Address,
+                                            const void *Decoder);
 
 static DecodeStatus DecodeFGR64RegisterClass(MCInst &Inst,
                                              unsigned RegNo,
@@ -359,10 +359,10 @@ static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeDSPRegsRegisterClass(MCInst &Inst,
-                                               unsigned RegNo,
-                                               uint64_t Address,
-                                               const void *Decoder) {
+static DecodeStatus DecodeDSPRRegisterClass(MCInst &Inst,
+                                            unsigned RegNo,
+                                            uint64_t Address,
+                                            const void *Decoder) {
   return DecodeGPR32RegisterClass(Inst, RegNo, Address, Decoder);
 }
 

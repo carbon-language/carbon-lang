@@ -40,7 +40,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     MVT::SimpleValueType VecTys[2] = {MVT::v2i16, MVT::v4i8};
 
     for (unsigned i = 0; i < array_lengthof(VecTys); ++i) {
-      addRegisterClass(VecTys[i], &Mips::DSPRegsRegClass);
+      addRegisterClass(VecTys[i], &Mips::DSPRRegClass);
 
       // Expand all builtin opcodes.
       for (unsigned Opc = 0; Opc < ISD::BUILTIN_OP_END; ++Opc)
