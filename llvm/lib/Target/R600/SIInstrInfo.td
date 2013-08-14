@@ -397,11 +397,12 @@ class MTBUF_Load_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF
   let mayStore = 0;
 }
 
-class MIMG_NoSampler_Helper <bits<7> op, string asm> : MIMG <
+class MIMG_NoSampler_Helper <bits<7> op, string asm,
+                             RegisterClass src_rc> : MIMG <
   op,
   (outs VReg_128:$vdata),
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
-       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, unknown:$vaddr,
+       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, src_rc:$vaddr,
        SReg_256:$srsrc),
   asm#" $vdata, $dmask, $unorm, $glc, $da, $r128,"
      #" $tfe, $lwe, $slc, $vaddr, $srsrc",
@@ -412,11 +413,18 @@ class MIMG_NoSampler_Helper <bits<7> op, string asm> : MIMG <
   let hasPostISelHook = 1;
 }
 
-class MIMG_Sampler_Helper <bits<7> op, string asm> : MIMG <
+multiclass MIMG_NoSampler <bits<7> op, string asm> {
+  def _V1 : MIMG_NoSampler_Helper <op, asm, VReg_32>;
+  def _V2 : MIMG_NoSampler_Helper <op, asm, VReg_64>;
+  def _V4 : MIMG_NoSampler_Helper <op, asm, VReg_128>;
+}
+
+class MIMG_Sampler_Helper <bits<7> op, string asm,
+                           RegisterClass src_rc> : MIMG <
   op,
   (outs VReg_128:$vdata),
   (ins i32imm:$dmask, i1imm:$unorm, i1imm:$glc, i1imm:$da, i1imm:$r128,
-       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, unknown:$vaddr,
+       i1imm:$tfe, i1imm:$lwe, i1imm:$slc, src_rc:$vaddr,
        SReg_256:$srsrc, SReg_128:$ssamp),
   asm#" $vdata, $dmask, $unorm, $glc, $da, $r128,"
      #" $tfe, $lwe, $slc, $vaddr, $srsrc, $ssamp",
@@ -424,6 +432,14 @@ class MIMG_Sampler_Helper <bits<7> op, string asm> : MIMG <
   let mayLoad = 1;
   let mayStore = 0;
   let hasPostISelHook = 1;
+}
+
+multiclass MIMG_Sampler <bits<7> op, string asm> {
+  def _V1 : MIMG_Sampler_Helper <op, asm, VReg_32>;
+  def _V2 : MIMG_Sampler_Helper <op, asm, VReg_64>;
+  def _V4 : MIMG_Sampler_Helper <op, asm, VReg_128>;
+  def _V8 : MIMG_Sampler_Helper <op, asm, VReg_256>;
+  def _V16 : MIMG_Sampler_Helper <op, asm, VReg_512>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -455,15 +471,6 @@ def getCommuteOrig : InstrMapping {
   let ColFields = ["IsOrig"];
   let KeyCol = ["0"];
   let ValueCols = [["1"]];
-}
-
-// Test if the supplied opcode is an MIMG instruction
-def isMIMG : InstrMapping {
-  let FilterClass = "MIMG";
-  let RowFields = ["Inst"];
-  let ColFields = ["Size"];
-  let KeyCol = ["8"];
-  let ValueCols = [["8"]];
 }
 
 include "SIInstructions.td"

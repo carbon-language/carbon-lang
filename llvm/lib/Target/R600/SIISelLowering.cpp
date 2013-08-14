@@ -1022,9 +1022,11 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
 /// \brief Fold the instructions after slecting them
 SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
                                           SelectionDAG &DAG) const {
+  const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
   Node = AdjustRegClass(Node, DAG);
 
-  if (AMDGPU::isMIMG(Node->getMachineOpcode()) != -1)
+  if (TII->isMIMG(Node->getMachineOpcode()))
     adjustWritemask(Node, DAG);
 
   return foldOperands(Node, DAG);
@@ -1034,7 +1036,9 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
 /// bits set in the writemask
 void SITargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                      SDNode *Node) const {
-  if (AMDGPU::isMIMG(MI->getOpcode()) == -1)
+  const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+  if (!TII->isMIMG(MI->getOpcode()))
     return;
 
   unsigned VReg = MI->getOperand(0).getReg();

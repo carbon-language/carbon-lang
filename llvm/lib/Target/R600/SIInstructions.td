@@ -500,8 +500,8 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
 
 //def S_MEMTIME : SMRD_ <0x0000001e, "S_MEMTIME", []>;
 //def S_DCACHE_INV : SMRD_ <0x0000001f, "S_DCACHE_INV", []>;
-def IMAGE_LOAD : MIMG_NoSampler_Helper <0x00000000, "IMAGE_LOAD">;
-def IMAGE_LOAD_MIP : MIMG_NoSampler_Helper <0x00000001, "IMAGE_LOAD_MIP">;
+defm IMAGE_LOAD : MIMG_NoSampler <0x00000000, "IMAGE_LOAD">;
+defm IMAGE_LOAD_MIP : MIMG_NoSampler <0x00000001, "IMAGE_LOAD_MIP">;
 //def IMAGE_LOAD_PCK : MIMG_NoPattern_ <"IMAGE_LOAD_PCK", 0x00000002>;
 //def IMAGE_LOAD_PCK_SGN : MIMG_NoPattern_ <"IMAGE_LOAD_PCK_SGN", 0x00000003>;
 //def IMAGE_LOAD_MIP_PCK : MIMG_NoPattern_ <"IMAGE_LOAD_MIP_PCK", 0x00000004>;
@@ -510,7 +510,7 @@ def IMAGE_LOAD_MIP : MIMG_NoSampler_Helper <0x00000001, "IMAGE_LOAD_MIP">;
 //def IMAGE_STORE_MIP : MIMG_NoPattern_ <"IMAGE_STORE_MIP", 0x00000009>;
 //def IMAGE_STORE_PCK : MIMG_NoPattern_ <"IMAGE_STORE_PCK", 0x0000000a>;
 //def IMAGE_STORE_MIP_PCK : MIMG_NoPattern_ <"IMAGE_STORE_MIP_PCK", 0x0000000b>;
-def IMAGE_GET_RESINFO : MIMG_NoSampler_Helper <0x0000000e, "IMAGE_GET_RESINFO">;
+def IMAGE_GET_RESINFO : MIMG_NoSampler_Helper <0x0000000e, "IMAGE_GET_RESINFO", VReg_32>;
 //def IMAGE_ATOMIC_SWAP : MIMG_NoPattern_ <"IMAGE_ATOMIC_SWAP", 0x0000000f>;
 //def IMAGE_ATOMIC_CMPSWAP : MIMG_NoPattern_ <"IMAGE_ATOMIC_CMPSWAP", 0x00000010>;
 //def IMAGE_ATOMIC_ADD : MIMG_NoPattern_ <"IMAGE_ATOMIC_ADD", 0x00000011>;
@@ -528,20 +528,20 @@ def IMAGE_GET_RESINFO : MIMG_NoSampler_Helper <0x0000000e, "IMAGE_GET_RESINFO">;
 //def IMAGE_ATOMIC_FCMPSWAP : MIMG_NoPattern_ <"IMAGE_ATOMIC_FCMPSWAP", 0x0000001d>;
 //def IMAGE_ATOMIC_FMIN : MIMG_NoPattern_ <"IMAGE_ATOMIC_FMIN", 0x0000001e>;
 //def IMAGE_ATOMIC_FMAX : MIMG_NoPattern_ <"IMAGE_ATOMIC_FMAX", 0x0000001f>;
-def IMAGE_SAMPLE : MIMG_Sampler_Helper <0x00000020, "IMAGE_SAMPLE">; 
+defm IMAGE_SAMPLE : MIMG_Sampler <0x00000020, "IMAGE_SAMPLE">;
 //def IMAGE_SAMPLE_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_CL", 0x00000021>;
-def IMAGE_SAMPLE_D : MIMG_Sampler_Helper <0x00000022, "IMAGE_SAMPLE_D">;
+defm IMAGE_SAMPLE_D : MIMG_Sampler <0x00000022, "IMAGE_SAMPLE_D">;
 //def IMAGE_SAMPLE_D_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_D_CL", 0x00000023>;
-def IMAGE_SAMPLE_L : MIMG_Sampler_Helper <0x00000024, "IMAGE_SAMPLE_L">;
-def IMAGE_SAMPLE_B : MIMG_Sampler_Helper <0x00000025, "IMAGE_SAMPLE_B">;
+defm IMAGE_SAMPLE_L : MIMG_Sampler <0x00000024, "IMAGE_SAMPLE_L">;
+defm IMAGE_SAMPLE_B : MIMG_Sampler <0x00000025, "IMAGE_SAMPLE_B">;
 //def IMAGE_SAMPLE_B_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_B_CL", 0x00000026>;
 //def IMAGE_SAMPLE_LZ : MIMG_NoPattern_ <"IMAGE_SAMPLE_LZ", 0x00000027>;
-def IMAGE_SAMPLE_C : MIMG_Sampler_Helper <0x00000028, "IMAGE_SAMPLE_C">;
+defm IMAGE_SAMPLE_C : MIMG_Sampler <0x00000028, "IMAGE_SAMPLE_C">;
 //def IMAGE_SAMPLE_C_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CL", 0x00000029>;
-def IMAGE_SAMPLE_C_D : MIMG_Sampler_Helper <0x0000002a, "IMAGE_SAMPLE_C_D">;
+defm IMAGE_SAMPLE_C_D : MIMG_Sampler <0x0000002a, "IMAGE_SAMPLE_C_D">;
 //def IMAGE_SAMPLE_C_D_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_D_CL", 0x0000002b>;
-def IMAGE_SAMPLE_C_L : MIMG_Sampler_Helper <0x0000002c, "IMAGE_SAMPLE_C_L">;
-def IMAGE_SAMPLE_C_B : MIMG_Sampler_Helper <0x0000002d, "IMAGE_SAMPLE_C_B">;
+defm IMAGE_SAMPLE_C_L : MIMG_Sampler <0x0000002c, "IMAGE_SAMPLE_C_L">;
+defm IMAGE_SAMPLE_C_B : MIMG_Sampler <0x0000002d, "IMAGE_SAMPLE_C_B">;
 //def IMAGE_SAMPLE_C_B_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_CL", 0x0000002e>;
 //def IMAGE_SAMPLE_C_LZ : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_LZ", 0x0000002f>;
 //def IMAGE_SAMPLE_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_O", 0x00000030>;
@@ -1327,7 +1327,7 @@ def : Pat <
 /* int_SI_sample for simple 1D texture lookup */
 def : Pat <
   (int_SI_sample v1i32:$addr, v32i8:$rsrc, v16i8:$sampler, imm),
-  (IMAGE_SAMPLE 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
+  (IMAGE_SAMPLE_V1 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SamplePattern<Intrinsic name, MIMG opcode, ValueType vt> : Pat <
@@ -1358,33 +1358,51 @@ class SampleShadowArrayPattern<Intrinsic name, MIMG opcode,
 >;
 
 /* int_SI_sample* for texture lookups consuming more address parameters */
-multiclass SamplePatterns<ValueType addr_type> {
-  def : SamplePattern <int_SI_sample, IMAGE_SAMPLE, addr_type>;
-  def : SampleRectPattern <int_SI_sample, IMAGE_SAMPLE, addr_type>;
-  def : SampleArrayPattern <int_SI_sample, IMAGE_SAMPLE, addr_type>;
-  def : SampleShadowPattern <int_SI_sample, IMAGE_SAMPLE_C, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_sample, IMAGE_SAMPLE_C, addr_type>;
+multiclass SamplePatterns<MIMG sample, MIMG sample_c, MIMG sample_l,
+                          MIMG sample_c_l, MIMG sample_b, MIMG sample_c_b,
+MIMG sample_d, MIMG sample_c_d, ValueType addr_type> {
+  def : SamplePattern <int_SI_sample, sample, addr_type>;
+  def : SampleRectPattern <int_SI_sample, sample, addr_type>;
+  def : SampleArrayPattern <int_SI_sample, sample, addr_type>;
+  def : SampleShadowPattern <int_SI_sample, sample_c, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_sample, sample_c, addr_type>;
 
-  def : SamplePattern <int_SI_samplel, IMAGE_SAMPLE_L, addr_type>;
-  def : SampleArrayPattern <int_SI_samplel, IMAGE_SAMPLE_L, addr_type>;
-  def : SampleShadowPattern <int_SI_samplel, IMAGE_SAMPLE_C_L, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_samplel, IMAGE_SAMPLE_C_L, addr_type>;
+  def : SamplePattern <int_SI_samplel, sample_l, addr_type>;
+  def : SampleArrayPattern <int_SI_samplel, sample_l, addr_type>;
+  def : SampleShadowPattern <int_SI_samplel, sample_c_l, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_samplel, sample_c_l, addr_type>;
 
-  def : SamplePattern <int_SI_sampleb, IMAGE_SAMPLE_B, addr_type>;
-  def : SampleArrayPattern <int_SI_sampleb, IMAGE_SAMPLE_B, addr_type>;
-  def : SampleShadowPattern <int_SI_sampleb, IMAGE_SAMPLE_C_B, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_sampleb, IMAGE_SAMPLE_C_B, addr_type>;
+  def : SamplePattern <int_SI_sampleb, sample_b, addr_type>;
+  def : SampleArrayPattern <int_SI_sampleb, sample_b, addr_type>;
+  def : SampleShadowPattern <int_SI_sampleb, sample_c_b, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_sampleb, sample_c_b, addr_type>;
 
-  def : SamplePattern <int_SI_sampled, IMAGE_SAMPLE_D, addr_type>;
-  def : SampleArrayPattern <int_SI_sampled, IMAGE_SAMPLE_D, addr_type>;
-  def : SampleShadowPattern <int_SI_sampled, IMAGE_SAMPLE_C_D, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_sampled, IMAGE_SAMPLE_C_D, addr_type>;
+  def : SamplePattern <int_SI_sampled, sample_d, addr_type>;
+  def : SampleArrayPattern <int_SI_sampled, sample_d, addr_type>;
+  def : SampleShadowPattern <int_SI_sampled, sample_c_d, addr_type>;
+  def : SampleShadowArrayPattern <int_SI_sampled, sample_c_d, addr_type>;
 }
 
-defm : SamplePatterns<v2i32>;
-defm : SamplePatterns<v4i32>;
-defm : SamplePatterns<v8i32>;
-defm : SamplePatterns<v16i32>;
+defm : SamplePatterns<IMAGE_SAMPLE_V2, IMAGE_SAMPLE_C_V2,
+                      IMAGE_SAMPLE_L_V2, IMAGE_SAMPLE_C_L_V2,
+                      IMAGE_SAMPLE_B_V2, IMAGE_SAMPLE_C_B_V2,
+                      IMAGE_SAMPLE_D_V2, IMAGE_SAMPLE_C_D_V2,
+                      v2i32>;
+defm : SamplePatterns<IMAGE_SAMPLE_V4, IMAGE_SAMPLE_C_V4,
+                      IMAGE_SAMPLE_L_V4, IMAGE_SAMPLE_C_L_V4,
+                      IMAGE_SAMPLE_B_V4, IMAGE_SAMPLE_C_B_V4,
+                      IMAGE_SAMPLE_D_V4, IMAGE_SAMPLE_C_D_V4,
+                      v4i32>;
+defm : SamplePatterns<IMAGE_SAMPLE_V8, IMAGE_SAMPLE_C_V8,
+                      IMAGE_SAMPLE_L_V8, IMAGE_SAMPLE_C_L_V8,
+                      IMAGE_SAMPLE_B_V8, IMAGE_SAMPLE_C_B_V8,
+                      IMAGE_SAMPLE_D_V8, IMAGE_SAMPLE_C_D_V8,
+                      v8i32>;
+defm : SamplePatterns<IMAGE_SAMPLE_V16, IMAGE_SAMPLE_C_V16,
+                      IMAGE_SAMPLE_L_V16, IMAGE_SAMPLE_C_L_V16,
+                      IMAGE_SAMPLE_B_V16, IMAGE_SAMPLE_C_B_V16,
+                      IMAGE_SAMPLE_D_V16, IMAGE_SAMPLE_C_D_V16,
+                      v16i32>;
 
 /* int_SI_imageload for texture fetches consuming varying address parameters */
 class ImageLoadPattern<Intrinsic name, MIMG opcode, ValueType addr_type> : Pat <
@@ -1407,15 +1425,21 @@ class ImageLoadArrayMSAAPattern<Intrinsic name, MIMG opcode, ValueType addr_type
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc)
 >;
 
-multiclass ImageLoadPatterns<ValueType addr_type> {
-  def : ImageLoadPattern <int_SI_imageload, IMAGE_LOAD_MIP, addr_type>;
-  def : ImageLoadArrayPattern <int_SI_imageload, IMAGE_LOAD_MIP, addr_type>;
-  def : ImageLoadMSAAPattern <int_SI_imageload, IMAGE_LOAD, addr_type>;
-  def : ImageLoadArrayMSAAPattern <int_SI_imageload, IMAGE_LOAD, addr_type>;
+multiclass ImageLoadPatterns<MIMG opcode, ValueType addr_type> {
+  def : ImageLoadPattern <int_SI_imageload, opcode, addr_type>;
+  def : ImageLoadArrayPattern <int_SI_imageload, opcode, addr_type>;
 }
 
-defm : ImageLoadPatterns<v2i32>;
-defm : ImageLoadPatterns<v4i32>;
+multiclass ImageLoadMSAAPatterns<MIMG opcode, ValueType addr_type> {
+  def : ImageLoadMSAAPattern <int_SI_imageload, opcode, addr_type>;
+  def : ImageLoadArrayMSAAPattern <int_SI_imageload, opcode, addr_type>;
+}
+
+defm : ImageLoadPatterns<IMAGE_LOAD_MIP_V2, v2i32>;
+defm : ImageLoadPatterns<IMAGE_LOAD_MIP_V4, v4i32>;
+
+defm : ImageLoadMSAAPatterns<IMAGE_LOAD_V2, v2i32>;
+defm : ImageLoadMSAAPatterns<IMAGE_LOAD_V4, v4i32>;
 
 /* Image resource information */
 def : Pat <

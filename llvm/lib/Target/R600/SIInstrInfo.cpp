@@ -15,6 +15,7 @@
 
 #include "SIInstrInfo.h"
 #include "AMDGPUTargetMachine.h"
+#include "SIDefines.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -222,6 +223,10 @@ bool SIInstrInfo::isMov(unsigned Opcode) const {
 bool
 SIInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   return RC != &AMDGPU::EXECRegRegClass;
+}
+
+int SIInstrInfo::isMIMG(uint16_t Opcode) const {
+  return get(Opcode).TSFlags & SIInstrFlags::MIMG;
 }
 
 //===----------------------------------------------------------------------===//

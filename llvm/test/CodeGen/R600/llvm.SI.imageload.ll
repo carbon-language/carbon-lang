@@ -82,6 +82,50 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
    ret void
 }
 
+; Test that ccordinates are stored in vgprs and not sgprs
+; CHECK: vgpr_coords
+; CHECK: IMAGE_LOAD_MIP VGPR{{[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}, 15, 0, 0, 0, 0, 0, 0, 0, VGPR{{[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}_VGPR{{[0-9]}}
+define void @vgpr_coords(float addrspace(2)* addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
+main_body:
+  %20 = getelementptr float addrspace(2)* addrspace(2)* %0, i32 0
+  %21 = load float addrspace(2)* addrspace(2)* %20, !tbaa !0
+  %22 = getelementptr float addrspace(2)* %21, i32 0
+  %23 = load float addrspace(2)* %22, !tbaa !0, !invariant.load !1
+  %24 = getelementptr float addrspace(2)* %21, i32 1
+  %25 = load float addrspace(2)* %24, !tbaa !0, !invariant.load !1
+  %26 = getelementptr float addrspace(2)* %21, i32 4
+  %27 = load float addrspace(2)* %26, !tbaa !0, !invariant.load !1
+  %28 = getelementptr <32 x i8> addrspace(2)* %2, i32 0
+  %29 = load <32 x i8> addrspace(2)* %28, !tbaa !0
+  %30 = bitcast float %27 to i32
+  %31 = bitcast float %23 to i32
+  %32 = bitcast float %25 to i32
+  %33 = insertelement <4 x i32> undef, i32 %31, i32 0
+  %34 = insertelement <4 x i32> %33, i32 %32, i32 1
+  %35 = insertelement <4 x i32> %34, i32 %30, i32 2
+  %36 = insertelement <4 x i32> %35, i32 undef, i32 3
+  %37 = call <4 x i32> @llvm.SI.imageload.v4i32(<4 x i32> %36, <32 x i8> %29, i32 2)
+  %38 = extractelement <4 x i32> %37, i32 0
+  %39 = extractelement <4 x i32> %37, i32 1
+  %40 = extractelement <4 x i32> %37, i32 2
+  %41 = extractelement <4 x i32> %37, i32 3
+  %42 = bitcast i32 %38 to float
+  %43 = bitcast i32 %39 to float
+  %44 = bitcast i32 %40 to float
+  %45 = bitcast i32 %41 to float
+  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %42, float %43, float %44, float %45)
+  ret void
+}
+
 declare <4 x i32> @llvm.SI.imageload.(<4 x i32>, <8 x i32>, i32) readnone
+; Function Attrs: nounwind readnone
+declare <4 x i32> @llvm.SI.imageload.v4i32(<4 x i32>, <32 x i8>, i32) #1
 
 declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
+
+attributes #0 = { "ShaderType"="0" }
+attributes #1 = { nounwind readnone }
+
+!0 = metadata !{metadata !"const", null, i32 1}
+!1 = metadata !{}
+

@@ -47,6 +47,7 @@ public:
   virtual bool isMov(unsigned Opcode) const;
 
   virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
+  int isMIMG(uint16_t Opcode) const;
 
   virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
 
@@ -80,7 +81,6 @@ namespace AMDGPU {
   int getVOPe64(uint16_t Opcode);
   int getCommuteRev(uint16_t Opcode);
   int getCommuteOrig(uint16_t Opcode);
-  int isMIMG(uint16_t Opcode);
 
 } // End namespace AMDGPU
 
