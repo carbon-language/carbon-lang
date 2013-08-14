@@ -1326,7 +1326,7 @@ def : Pat <
 
 /* SIsample for simple 1D texture lookup */
 def : Pat <
-  (SIsample v1i32:$addr, v32i8:$rsrc, i128:$sampler, imm),
+  (SIsample i32:$addr, v32i8:$rsrc, i128:$sampler, imm),
   (IMAGE_SAMPLE_V1 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 

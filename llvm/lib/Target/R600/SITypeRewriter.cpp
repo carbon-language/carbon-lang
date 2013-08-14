@@ -16,6 +16,9 @@
 ///      legal for some compute APIs, and we don't want to declare it as legal
 ///      in the backend, because we want the legalizer to expand all v16i8
 ///      operations.
+/// v1* => *
+///   - Having v1* types complicates the legalizer and we can easily replace
+///   - them with the element type.
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
@@ -109,6 +112,19 @@ void SITypeRewriter::visitCallInst(CallInst &I) {
       Types.push_back(i128);
       NeedToReplace = true;
       Name = Name + ".i128";
+    } else if (Arg->getType()->isVectorTy() &&
+               Arg->getType()->getVectorNumElements() == 1 &&
+               Arg->getType()->getVectorElementType() ==
+                                              Type::getInt32Ty(I.getContext())){
+      Type *ElementTy = Arg->getType()->getVectorElementType();
+      std::string TypeName = "i32";
+      InsertElementInst *Def = dyn_cast<InsertElementInst>(Arg);
+      assert(Def);
+      Args.push_back(Def->getOperand(1));
+      Types.push_back(ElementTy);
+      std::string VecTypeName = "v1" + TypeName;
+      Name = Name.replace(Name.find(VecTypeName), VecTypeName.length(), TypeName);
+      NeedToReplace = true;
     } else {
       Args.push_back(Arg);
       Types.push_back(Arg->getType());

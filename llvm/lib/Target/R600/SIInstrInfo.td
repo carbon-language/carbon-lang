@@ -27,7 +27,7 @@ def SIload_input : SDNode<"AMDGPUISD::LOAD_INPUT",
 >;
 
 class SDSample<string opcode> : SDNode <opcode,
-  SDTypeProfile<1, 4, [SDTCisVT<0, v4f32>, SDTCisVec<1>, SDTCisVT<2, v32i8>,
+  SDTypeProfile<1, 4, [SDTCisVT<0, v4f32>, SDTCisVT<2, v32i8>,
                        SDTCisVT<3, i128>, SDTCisVT<4, i32>]>
 >;
 
