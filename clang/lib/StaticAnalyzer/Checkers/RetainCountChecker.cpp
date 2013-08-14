@@ -317,6 +317,16 @@ public:
 
     return DefaultArgEffect;
   }
+
+  /// Return the number of argument effects.  This is O(n) in the number
+  /// of arguments.
+  unsigned getNumArgs() const {
+    unsigned N = 0;
+    for (ArgEffects::iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
+      ++N;
+    };
+    return N;
+  }
   
   void addArg(ArgEffects::Factory &af, unsigned idx, ArgEffect e) {
     Args = af.add(Args, idx, e);
@@ -3675,3 +3685,37 @@ void ento::registerRetainCountChecker(CheckerManager &Mgr) {
   Mgr.registerChecker<RetainCountChecker>(Mgr.getAnalyzerOptions());
 }
 
+//===----------------------------------------------------------------------===//
+// Implementation of the CallEffects API.
+//===----------------------------------------------------------------------===//
+
+namespace clang { namespace ento { namespace objc_retain {
+
+// This is a bit gross, but it allows us to populate CallEffects without
+// creating a bunch of accessors.  This kind is very localized, so the
+// damage of this macro is limited.
+#define createCallEffect(D, KIND)\
+  ASTContext &Ctx = D->getASTContext();\
+  LangOptions L = Ctx.getLangOpts();\
+  RetainSummaryManager M(Ctx, L.GCOnly, L.ObjCAutoRefCount);\
+  const RetainSummary *S = M.get ## KIND ## Summary(D);\
+  CallEffects CE(S->getRetEffect());\
+  CE.Receiver = S->getReceiverEffect();\
+  unsigned N = S->getNumArgs();\
+  for (unsigned i = 0; i < N; ++i) {\
+    CE.Args.push_back(S->getArg(i));\
+  }
+
+CallEffects CallEffects::getEffect(const ObjCMethodDecl *MD) {
+  createCallEffect(MD, Method);
+  return CE;
+}
+
+CallEffects CallEffects::getEffect(const FunctionDecl *FD) {
+  createCallEffect(FD, Function);
+  return CE;
+}
+
+#undef createCallEffect
+
+}}}

@@ -180,7 +180,39 @@ public:
     return RetEffect(NoRetHard);
   }
 };
-  
+
+/// Encapsulates the retain count semantics on the arguments, return value,
+/// and receiver (if any) of a function/method call.
+///
+/// Note that construction of these objects is not highly efficient.  That
+/// is okay for clients where creating these objects isn't really a bottleneck.
+/// The purpose of the API is to provide something simple.  The actual
+/// static analyzer checker that implements retain/release typestate
+/// tracking uses something more efficient.
+class CallEffects {
+  llvm::SmallVector<ArgEffect, 10> Args;
+  RetEffect Ret;
+  ArgEffect Receiver;
+
+  CallEffects(const RetEffect &R) : Ret(R) {}
+
+public:
+  /// Returns the argument effects for a call.
+  llvm::ArrayRef<ArgEffect> getArgs() const { return Args; }
+
+  /// Returns the effects on the receiver.
+  ArgEffect getReceiver() const { return Receiver; }
+
+  /// Returns the effect on the return value.
+  RetEffect getReturnValue() const { return Ret; }
+
+  /// Return the CallEfect for a given Objective-C method.
+  static CallEffects getEffect(const ObjCMethodDecl *MD);
+
+  /// Return the CallEfect for a given C/C++ function.
+  static CallEffects getEffect(const FunctionDecl *FD);
+};
+
 }}}
 
 #endif
