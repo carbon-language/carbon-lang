@@ -3532,7 +3532,7 @@ static bool isSequentialOrUndefInRange(ArrayRef<int> Mask,
 /// isPSHUFDMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PSHUFD or PSHUFW.  That is, it doesn't reference
 /// the second operand.
-static bool isPSHUFDMask(ArrayRef<int> Mask, EVT VT) {
+static bool isPSHUFDMask(ArrayRef<int> Mask, MVT VT) {
   if (VT == MVT::v4f32 || VT == MVT::v4i32 )
     return (Mask[0] < 4 && Mask[1] < 4 && Mask[2] < 4 && Mask[3] < 4);
   if (VT == MVT::v2f64 || VT == MVT::v2i64)
@@ -3542,7 +3542,7 @@ static bool isPSHUFDMask(ArrayRef<int> Mask, EVT VT) {
 
 /// isPSHUFHWMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PSHUFHW.
-static bool isPSHUFHWMask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
+static bool isPSHUFHWMask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   if (VT != MVT::v8i16 && (!HasInt256 || VT != MVT::v16i16))
     return false;
 
@@ -3571,7 +3571,7 @@ static bool isPSHUFHWMask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
 
 /// isPSHUFLWMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PSHUFLW.
-static bool isPSHUFLWMask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
+static bool isPSHUFLWMask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   if (VT != MVT::v8i16 && (!HasInt256 || VT != MVT::v16i16))
     return false;
 
@@ -3600,7 +3600,7 @@ static bool isPSHUFLWMask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
 
 /// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PALIGNR.
-static bool isPALIGNRMask(ArrayRef<int> Mask, EVT VT,
+static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
                           const X86Subtarget *Subtarget) {
   if ((VT.is128BitVector() && !Subtarget->hasSSSE3()) ||
       (VT.is256BitVector() && !Subtarget->hasInt256()))
@@ -3690,7 +3690,7 @@ static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask,
 /// specifies a shuffle of elements that is suitable for input to 128/256-bit
 /// SHUFPS and SHUFPD. If Commuted is true, then it checks for sources to be
 /// reverse of what x86 shuffles want.
-static bool isSHUFPMask(ArrayRef<int> Mask, EVT VT, bool HasFp256,
+static bool isSHUFPMask(ArrayRef<int> Mask, MVT VT, bool HasFp256,
                         bool Commuted = false) {
   if (!HasFp256 && VT.is256BitVector())
     return false;
@@ -3743,7 +3743,7 @@ static bool isSHUFPMask(ArrayRef<int> Mask, EVT VT, bool HasFp256,
 
 /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
-static bool isMOVHLPSMask(ArrayRef<int> Mask, EVT VT) {
+static bool isMOVHLPSMask(ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
 
@@ -3762,7 +3762,7 @@ static bool isMOVHLPSMask(ArrayRef<int> Mask, EVT VT) {
 /// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
 /// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
 /// <2, 3, 2, 3>
-static bool isMOVHLPS_v_undef_Mask(ArrayRef<int> Mask, EVT VT) {
+static bool isMOVHLPS_v_undef_Mask(ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
 
@@ -3779,7 +3779,7 @@ static bool isMOVHLPS_v_undef_Mask(ArrayRef<int> Mask, EVT VT) {
 
 /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
-static bool isMOVLPMask(ArrayRef<int> Mask, EVT VT) {
+static bool isMOVLPMask(ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
 
@@ -3801,7 +3801,7 @@ static bool isMOVLPMask(ArrayRef<int> Mask, EVT VT) {
 
 /// isMOVLHPSMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVLHPS.
-static bool isMOVLHPSMask(ArrayRef<int> Mask, EVT VT) {
+static bool isMOVLHPSMask(ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
 
@@ -3870,7 +3870,7 @@ SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
 
 /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-static bool isUNPCKLMask(ArrayRef<int> Mask, EVT VT,
+static bool isUNPCKLMask(ArrayRef<int> Mask, MVT VT,
                          bool HasInt256, bool V2IsSplat = false) {
 
   if (VT.is512BitVector())
@@ -3909,7 +3909,7 @@ static bool isUNPCKLMask(ArrayRef<int> Mask, EVT VT,
 
 /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-static bool isUNPCKHMask(ArrayRef<int> Mask, EVT VT,
+static bool isUNPCKHMask(ArrayRef<int> Mask, MVT VT,
                          bool HasInt256, bool V2IsSplat = false) {
   unsigned NumElts = VT.getVectorNumElements();
 
@@ -3948,7 +3948,7 @@ static bool isUNPCKHMask(ArrayRef<int> Mask, EVT VT,
 /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
 /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
 /// <0, 0, 1, 1>
-static bool isUNPCKL_v_undef_Mask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
+static bool isUNPCKL_v_undef_Mask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   unsigned NumElts = VT.getVectorNumElements();
   bool Is256BitVec = VT.is256BitVector();
 
@@ -3991,7 +3991,7 @@ static bool isUNPCKL_v_undef_Mask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
 /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
 /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
 /// <2, 2, 3, 3>
-static bool isUNPCKH_v_undef_Mask(ArrayRef<int> Mask, EVT VT, bool HasInt256) {
+static bool isUNPCKH_v_undef_Mask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   unsigned NumElts = VT.getVectorNumElements();
 
   if (VT.is512BitVector())
@@ -4178,7 +4178,7 @@ static bool isVPERMILPMask(ArrayRef<int> Mask, EVT VT, bool HasFp256) {
 /// isCommutedMOVLMask - Returns true if the shuffle mask is except the reverse
 /// of what x86 movss want. X86 movs requires the lowest  element to be lowest
 /// element of vector 2 and the other elements to come from vector 1 in order.
-static bool isCommutedMOVLMask(ArrayRef<int> Mask, EVT VT,
+static bool isCommutedMOVLMask(ArrayRef<int> Mask, MVT VT,
                                bool V2IsSplat = false, bool V2IsUndef = false) {
   if (!VT.is128BitVector())
     return false;
@@ -4202,7 +4202,7 @@ static bool isCommutedMOVLMask(ArrayRef<int> Mask, EVT VT,
 /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
 /// Masks to match: <1, 1, 3, 3> or <1, 1, 3, 3, 5, 5, 7, 7>
-static bool isMOVSHDUPMask(ArrayRef<int> Mask, EVT VT,
+static bool isMOVSHDUPMask(ArrayRef<int> Mask, MVT VT,
                            const X86Subtarget *Subtarget) {
   if (!Subtarget->hasSSE3())
     return false;
@@ -4226,7 +4226,7 @@ static bool isMOVSHDUPMask(ArrayRef<int> Mask, EVT VT,
 /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
 /// Masks to match: <0, 0, 2, 2> or <0, 0, 2, 2, 4, 4, 6, 6>
-static bool isMOVSLDUPMask(ArrayRef<int> Mask, EVT VT,
+static bool isMOVSLDUPMask(ArrayRef<int> Mask, MVT VT,
                            const X86Subtarget *Subtarget) {
   if (!Subtarget->hasSSE3())
     return false;
@@ -4250,7 +4250,7 @@ static bool isMOVSLDUPMask(ArrayRef<int> Mask, EVT VT,
 /// isMOVDDUPYMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to 256-bit
 /// version of MOVDDUP.
-static bool isMOVDDUPYMask(ArrayRef<int> Mask, EVT VT, bool HasFp256) {
+static bool isMOVDDUPYMask(ArrayRef<int> Mask, MVT VT, bool HasFp256) {
   if (!HasFp256 || !VT.is256BitVector())
     return false;
 
@@ -4270,7 +4270,7 @@ static bool isMOVDDUPYMask(ArrayRef<int> Mask, EVT VT, bool HasFp256) {
 /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to 128-bit
 /// version of MOVDDUP.
-static bool isMOVDDUPMask(ArrayRef<int> Mask, EVT VT) {
+static bool isMOVDDUPMask(ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
 
@@ -4534,7 +4534,7 @@ static SDValue CommuteVectorShuffle(ShuffleVectorSDNode *SVOp,
 /// match movhlps. The lower half elements should come from upper half of
 /// V1 (and in order), and the upper half elements should come from the upper
 /// half of V2 (and in order).
-static bool ShouldXformToMOVHLPS(ArrayRef<int> Mask, EVT VT) {
+static bool ShouldXformToMOVHLPS(ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
   if (VT.getVectorNumElements() != 4)
@@ -4591,7 +4591,7 @@ static bool WillBeConstantPoolLoad(SDNode *N) {
 /// half of V2 (and in order). And since V1 will become the source of the
 /// MOVLP, it must be either a vector load or a scalar load to vector.
 static bool ShouldXformToMOVLP(SDNode *V1, SDNode *V2,
-                               ArrayRef<int> Mask, EVT VT) {
+                               ArrayRef<int> Mask, MVT VT) {
   if (!VT.is128BitVector())
     return false;
 
@@ -13560,37 +13560,46 @@ bool X86TargetLowering::isNarrowingProfitable(EVT VT1, EVT VT2) const {
 bool
 X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
                                       EVT VT) const {
+  if (!VT.isSimple())
+    return false;
+
+  MVT SVT = VT.getSimpleVT();
+
   // Very little shuffling can be done for 64-bit vectors right now.
   if (VT.getSizeInBits() == 64)
     return false;
 
   // FIXME: pshufb, blends, shifts.
-  return (VT.getVectorNumElements() == 2 ||
+  return (SVT.getVectorNumElements() == 2 ||
           ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
-          isMOVLMask(M, VT) ||
-          isSHUFPMask(M, VT, Subtarget->hasFp256()) ||
-          isPSHUFDMask(M, VT) ||
-          isPSHUFHWMask(M, VT, Subtarget->hasInt256()) ||
-          isPSHUFLWMask(M, VT, Subtarget->hasInt256()) ||
-          isPALIGNRMask(M, VT, Subtarget) ||
-          isUNPCKLMask(M, VT, Subtarget->hasInt256()) ||
-          isUNPCKHMask(M, VT, Subtarget->hasInt256()) ||
-          isUNPCKL_v_undef_Mask(M, VT, Subtarget->hasInt256()) ||
-          isUNPCKH_v_undef_Mask(M, VT, Subtarget->hasInt256()));
+          isMOVLMask(M, SVT) ||
+          isSHUFPMask(M, SVT, Subtarget->hasFp256()) ||
+          isPSHUFDMask(M, SVT) ||
+          isPSHUFHWMask(M, SVT, Subtarget->hasInt256()) ||
+          isPSHUFLWMask(M, SVT, Subtarget->hasInt256()) ||
+          isPALIGNRMask(M, SVT, Subtarget) ||
+          isUNPCKLMask(M, SVT, Subtarget->hasInt256()) ||
+          isUNPCKHMask(M, SVT, Subtarget->hasInt256()) ||
+          isUNPCKL_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
+          isUNPCKH_v_undef_Mask(M, SVT, Subtarget->hasInt256()));
 }
 
 bool
 X86TargetLowering::isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
                                           EVT VT) const {
-  unsigned NumElts = VT.getVectorNumElements();
+  if (!VT.isSimple())
+    return false;
+
+  MVT SVT = VT.getSimpleVT();
+  unsigned NumElts = SVT.getVectorNumElements();
   // FIXME: This collection of masks seems suspect.
   if (NumElts == 2)
     return true;
-  if (NumElts == 4 && VT.is128BitVector()) {
-    return (isMOVLMask(Mask, VT)  ||
-            isCommutedMOVLMask(Mask, VT, true) ||
-            isSHUFPMask(Mask, VT, Subtarget->hasFp256()) ||
-            isSHUFPMask(Mask, VT, Subtarget->hasFp256(), /* Commuted */ true));
+  if (NumElts == 4 && SVT.is128BitVector()) {
+    return (isMOVLMask(Mask, SVT)  ||
+            isCommutedMOVLMask(Mask, SVT, true) ||
+            isSHUFPMask(Mask, SVT, Subtarget->hasFp256()) ||
+            isSHUFPMask(Mask, SVT, Subtarget->hasFp256(), /* Commuted */ true));
   }
   return false;
 }
