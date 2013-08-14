@@ -159,7 +159,7 @@ def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, i1], 64,
 
 def SReg_128 : RegisterClass<"AMDGPU", [v16i8, i128], 128, (add SGPR_128)>;
 
-def SReg_256 : RegisterClass<"AMDGPU", [v32i8], 256, (add SGPR_256)>;
+def SReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add SGPR_256)>;
 
 def SReg_512 : RegisterClass<"AMDGPU", [v64i8], 512, (add SGPR_512)>;
 
@@ -174,7 +174,7 @@ def VReg_96 : RegisterClass<"AMDGPU", [untyped], 96, (add VGPR_96)> {
 
 def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128, (add VGPR_128)>;
 
-def VReg_256 : RegisterClass<"AMDGPU", [v8i32, v8f32], 256, (add VGPR_256)>;
+def VReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add VGPR_256)>;
 
 def VReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 512, (add VGPR_512)>;
 

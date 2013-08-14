@@ -1510,6 +1510,11 @@ def : BitConvert <v2i32, v2f32, VReg_64>;
 def : BitConvert <v4f32, v4i32, VReg_128>;
 def : BitConvert <v4i32, v4f32, VReg_128>;
 
+def : BitConvert <v8i32, v32i8, SReg_256>;
+def : BitConvert <v32i8, v8i32, SReg_256>;
+def : BitConvert <v8i32, v32i8, VReg_256>;
+def : BitConvert <v32i8, v8i32, VReg_256>;
+
 /********** =================== **********/
 /********** Src & Dst modifiers **********/
 /********** =================== **********/
