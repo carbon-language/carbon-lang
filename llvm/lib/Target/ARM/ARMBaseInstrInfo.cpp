@@ -1404,9 +1404,11 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case ARM::VLDRD:
   case ARM::VLDRS:
   case ARM::t2LDRi8:
+  case ARM::t2LDRBi8:
   case ARM::t2LDRDi8:
   case ARM::t2LDRSHi8:
   case ARM::t2LDRi12:
+  case ARM::t2LDRBi12:
   case ARM::t2LDRSHi12:
     break;
   }
@@ -1423,8 +1425,10 @@ bool ARMBaseInstrInfo::areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
   case ARM::VLDRD:
   case ARM::VLDRS:
   case ARM::t2LDRi8:
+  case ARM::t2LDRBi8:
   case ARM::t2LDRSHi8:
   case ARM::t2LDRi12:
+  case ARM::t2LDRBi12:
   case ARM::t2LDRSHi12:
     break;
   }
@@ -1471,7 +1475,16 @@ bool ARMBaseInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
   if ((Offset2 - Offset1) / 8 > 64)
     return false;
 
-  if (Load1->getMachineOpcode() != Load2->getMachineOpcode())
+  // Check if the machine opcodes are different. If they are different
+  // then we consider them to not be of the same base address,
+  // EXCEPT in the case of Thumb2 byte loads where one is LDRBi8 and the other LDRBi12.
+  // In this case, they are considered to be the same because they are different
+  // encoding forms of the same basic instruction.
+  if ((Load1->getMachineOpcode() != Load2->getMachineOpcode()) &&
+      !((Load1->getMachineOpcode() == ARM::t2LDRBi8 &&
+         Load2->getMachineOpcode() == ARM::t2LDRBi12) ||
+        (Load1->getMachineOpcode() == ARM::t2LDRBi12 &&
+         Load2->getMachineOpcode() == ARM::t2LDRBi8)))
     return false;  // FIXME: overly conservative?
 
   // Four loads in a row should be sufficient.
