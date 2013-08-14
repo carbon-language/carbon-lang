@@ -381,13 +381,6 @@ namespace llvm {
               SmallVectorImpl<VNInfo *> &NewVNInfo,
               MachineRegisterInfo *MRI);
 
-    /// isInOneLiveRange - Return true if the range specified is entirely in the
-    /// a single LiveRange of the live interval.
-    bool isInOneLiveRange(SlotIndex Start, SlotIndex End) const {
-      const_iterator r = find(Start);
-      return r != end() && r->containsRange(Start, End);
-    }
-
     /// True iff this live range is a single segment that lies between the
     /// specified boundaries, exclusively. Vregs live across a backedge are not
     /// considered local. The boundaries are expected to lie within an extended
