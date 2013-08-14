@@ -38,3 +38,6 @@ void test_header_replacement() {
   dostuff();
   func2();
 }
+
+// FIXME: Investigating on lit-win32.
+// REQUIRES: shell
