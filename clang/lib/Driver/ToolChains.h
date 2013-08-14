@@ -16,8 +16,8 @@
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Compiler.h"
-
 #include <vector>
+#include <set>
 
 namespace clang {
 namespace driver {
@@ -84,7 +84,7 @@ protected:
 
     // We retain the list of install paths that were considered and rejected in
     // order to print out detailed information in verbose mode.
-    SmallVector<std::string, 4> CandidateGCCInstallPaths;
+    std::set<std::string> CandidateGCCInstallPaths;
 
   public:
     GCCInstallationDetector(const Driver &D, const llvm::Triple &TargetTriple,

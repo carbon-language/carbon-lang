@@ -1052,7 +1052,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
 }
 
 void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
-  for (SmallVectorImpl<std::string>::const_iterator
+  for (std::set<std::string>::const_iterator
            I = CandidateGCCInstallPaths.begin(),
            E = CandidateGCCInstallPaths.end();
        I != E; ++I)
@@ -1395,9 +1395,11 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
     llvm::error_code EC;
     for (llvm::sys::fs::directory_iterator LI(LibDir + LibSuffix, EC), LE;
          !EC && LI != LE; LI = LI.increment(EC)) {
-      CandidateGCCInstallPaths.push_back(LI->path());
       StringRef VersionText = llvm::sys::path::filename(LI->path());
       GCCVersion CandidateVersion = GCCVersion::Parse(VersionText);
+      if (CandidateVersion.Major != -1) // Filter obviously bad entries.
+        if (!CandidateGCCInstallPaths.insert(LI->path()).second)
+          continue; // Saw this path before; no need to look at it again.
       if (CandidateVersion.isOlderThan(4, 1, 1))
         continue;
       if (CandidateVersion <= Version)
