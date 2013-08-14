@@ -118,6 +118,13 @@ static cl::opt<bool, /*ExternalStorage=*/true> EnableHeaderModifications(
     cl::location(GlobalOptions.EnableHeaderModifications),
     cl::init(false));
 
+static cl::opt<bool> YAMLOnly("yaml-only",
+                              cl::Hidden, // Associated with -headers
+                              cl::desc("Don't change headers on disk. Write "
+                                       "changes to change description files "
+                                       "only."),
+                              cl::init(false));
+
 cl::opt<std::string> SupportedCompilers(
     "for-compilers", cl::value_desc("string"),
     cl::desc("Select transforms targeting the intersection of\n"
@@ -257,6 +264,13 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
+  if (std::distance(TransformManager.begin(), TransformManager.end()) > 1) {
+    llvm::errs() << "Header change description files requested for multiple "
+                    "transforms.\nChanges from only one transform can be "
+                    "recorded in a change description file.\n";
+    return 1;
+  }
+
   // if reformatting is enabled we wants to track file changes so that it's
   // possible to reformat them.
   bool TrackReplacements = static_cast<bool>(ChangesReformatter);
@@ -317,48 +331,48 @@ int main(int argc, const char **argv) {
       FileStream << Overrides.getMainFileContent();
     }
 
-    // FIXME: The Migrator shouldn't be responsible for writing headers to disk.
-    // Instead, it should write replacement info and another tool should take
-    // all replacement info for a header from possibly many other migration
-    // processes and merge it into a final form. For now, the updated header is
-    // written to disk for testing purposes.
     for (HeaderOverrides::const_iterator HeaderI = Overrides.headers_begin(),
                                          HeaderE = Overrides.headers_end();
          HeaderI != HeaderE; ++HeaderI) {
-      assert(!HeaderI->second.getContentOverride().empty() &&
-             "A header override should not be empty");
       std::string ErrorInfo;
-      std::string HeaderFileName = HeaderI->getKey();
-      llvm::raw_fd_ostream HeaderStream(HeaderFileName.c_str(), ErrorInfo,
-                                        llvm::sys::fs::F_Binary);
-      if (!ErrorInfo.empty()) {
-        llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
-        continue;
-      }
-      HeaderStream << HeaderI->second.getContentOverride();
+      if (YAMLOnly) {
+        // Replacements for header files need to be written in a YAML file for
+        // every transform and will be merged together with an external tool.
+        llvm::SmallString<128> ReplacementsHeaderName;
+        llvm::SmallString<64> Error;
+        bool Result =
+            generateReplacementsFileName(I->getKey(), HeaderI->getKey().data(),
+                                         ReplacementsHeaderName, Error);
+        if (!Result) {
+          llvm::errs() << "Failed to generate replacements filename:" << Error
+                       << "\n";
+          continue;
+        }
 
-      // Replacements for header files need to be written in a YAML file for
-      // every transform and will be merged together with an external tool.
-      llvm::SmallString<128> ReplacementsHeaderName;
-      llvm::SmallString<64> Error;
-      bool Result = generateReplacementsFileName(I->getKey(), HeaderFileName,
-                                                 ReplacementsHeaderName, Error);
-      if (!Result) {
-        llvm::errs() << "Failed to generate replacements filename:" << Error
-                     << "\n";
-        continue;
+        llvm::raw_fd_ostream ReplacementsFile(
+            ReplacementsHeaderName.c_str(), ErrorInfo, llvm::sys::fs::F_Binary);
+        if (!ErrorInfo.empty()) {
+          llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
+          continue;
+        }
+        llvm::yaml::Output YAML(ReplacementsFile);
+        YAML << const_cast<HeaderChangeDocument &>(
+                    HeaderI->getValue().getHeaderChangeDoc());
+      } else {
+        // If -yaml-only was not specified, then change headers on disk.
+        // FIXME: This is transitional behaviour. Remove this functionality
+        // when header change description tool is ready.
+        assert(!HeaderI->second.getContentOverride().empty() &&
+               "A header override should not be empty");
+        std::string HeaderFileName = HeaderI->getKey();
+        llvm::raw_fd_ostream HeaderStream(HeaderFileName.c_str(), ErrorInfo,
+                                          llvm::sys::fs::F_Binary);
+        if (!ErrorInfo.empty()) {
+          llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
+          continue;
+        }
+        HeaderStream << HeaderI->second.getContentOverride();
       }
-
-      llvm::raw_fd_ostream ReplacementsFile(ReplacementsHeaderName.c_str(),
-                                            ErrorInfo,
-                                            llvm::sys::fs::F_Binary);
-      if (!ErrorInfo.empty()) {
-        llvm::errs() << "Error opening file: " << ErrorInfo << "\n";
-        continue;
-      }
-      llvm::yaml::Output YAML(ReplacementsFile);
-      YAML << const_cast<HeaderChangeDocument &>(
-                  HeaderI->getValue().getHeaderChangeDoc());
     }
   }
 

@@ -4,7 +4,7 @@
 // RUN: rm -rf %t/Test
 // RUN: mkdir -p %t/Test
 // RUN: cp %S/main.cpp %S/common.cpp %S/common.h %t/Test
-// RUN: cpp11-migrate -loop-convert -headers -include=%t/Test %t/Test/main.cpp %t/Test/common.cpp --
+// RUN: cpp11-migrate -loop-convert -headers -yaml-only -include=%t/Test %t/Test/main.cpp %t/Test/common.cpp --
 // Check that only 1 file is generated per translation unit and header file.
 // RUN: ls -1 %t/Test | FileCheck %s --check-prefix=MAIN_CPP
 // RUN: ls -1 %t/Test | FileCheck %s --check-prefix=COMMON_CPP
@@ -22,7 +22,7 @@
 // RUN: rm -rf %t/Test
 // RUN: mkdir -p %t/Test
 // RUN: cp %S/main.cpp %S/common.cpp %S/common.h %t/Test
-// RUN: cpp11-migrate -loop-convert -headers -include=%t/Test %t/Test/main.cpp --
+// RUN: cpp11-migrate -loop-convert -headers -yaml-only -include=%t/Test %t/Test/main.cpp --
 // RUN: cpp11-migrate -loop-convert %t/Test/common.cpp --
 // Check that only one YAML file is generated from main.cpp and common.h and not from common.cpp and common.h since -header is not specified
 // RUN: ls -1 %t/Test | FileCheck %s --check-prefix=MAIN_CPP
