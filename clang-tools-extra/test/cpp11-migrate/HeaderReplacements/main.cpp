@@ -10,10 +10,10 @@
 // RUN: ls -1 %t/Test | FileCheck %s --check-prefix=COMMON_CPP
 // RUN: cp %S/common.h.yaml %t/Test/main.cpp_common.h.yaml
 // We need to put the build path to the expected YAML file to diff against the generated one.
-// RUN: sed -e 's#$(path)#%t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
+// RUN: sed -e 's#$(path)#%/t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
 // RUN: sed -i -e 's#\\#/#g' %t/Test/main.cpp_common.h_*.yaml
 // RUN: diff -b %t/Test/main.cpp_common.h.yaml %t/Test/main.cpp_common.h_*.yaml
-// RUN: sed -e 's#$(path)#%t/Test#g' -e 's#main.cpp"#common.cpp"#g' %S/common.h.yaml > %t/Test/common.cpp_common.h.yaml
+// RUN: sed -e 's#$(path)#%/t/Test#g' -e 's#main.cpp"#common.cpp"#g' %S/common.h.yaml > %t/Test/common.cpp_common.h.yaml
 // RUN: sed -i -e 's#\\#/#g' %t/Test/common.cpp_common.h_*.yaml
 // RUN: diff -b %t/Test/common.cpp_common.h.yaml %t/Test/common.cpp_common.h_*.yaml
 //
@@ -28,7 +28,7 @@
 // RUN: ls -1 %t/Test | FileCheck %s --check-prefix=MAIN_CPP
 // RUN: ls -1 %t/Test | FileCheck %s --check-prefix=NO_COMMON
 // We need to put the build path to the expected YAML file to diff against the generated one.
-// RUN: sed -e 's#$(path)#%t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
+// RUN: sed -e 's#$(path)#%/t/Test#g' %S/common.h.yaml > %t/Test/main.cpp_common.h.yaml
 // RUN: sed -i -e 's#\\#/#g' %t/Test/main.cpp_common.h_*.yaml
 // RUN: diff -b %t/Test/main.cpp_common.h.yaml %t/Test/main.cpp_common.h_*.yaml
 //
@@ -46,6 +46,3 @@ void test_header_replacement() {
   dostuff();
   func2();
 }
-
-// FIXME: Investigating on lit-win32.
-// REQUIRES: shell
