@@ -180,12 +180,10 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      Value *NullIdx =Constant::getNullValue(Type::getInt32Ty(AI.getContext()));
-      Value *Idx[2];
-      Idx[0] = NullIdx;
-      Idx[1] = NullIdx;
+      Value *NullIdx = Constant::getNullValue(Type::getInt32Ty(AI.getContext()));
+      Value *Idx[2] = { NullIdx, NullIdx };
       Instruction *GEP =
-           GetElementPtrInst::CreateInBounds(New, Idx, New->getName()+".sub");
+        GetElementPtrInst::CreateInBounds(New, Idx, New->getName() + ".sub");
       InsertNewInstBefore(GEP, *It);
 
       // Now make everything use the getelementptr instead of the original
