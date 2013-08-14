@@ -103,7 +103,7 @@ void LiveIntervals::releaseMemory() {
   VNInfoAllocator.Reset();
 }
 
-/// runOnMachineFunction - Register allocate the whole function
+/// runOnMachineFunction - calculates LiveIntervals
 ///
 bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   MF = &fn;
