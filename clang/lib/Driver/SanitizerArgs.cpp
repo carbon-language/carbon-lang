@@ -307,6 +307,9 @@ bool SanitizerArgs::getDefaultBlacklistForKind(const Driver &D, unsigned Kind,
     BlacklistFile = "msan_blacklist.txt";
   else if (Kind & NeedsTsanRt)
     BlacklistFile = "tsan_blacklist.txt";
+  else if (Kind & NeedsDfsanRt)
+    BlacklistFile = "dfsan_abilist.txt";
+
   if (BlacklistFile) {
     SmallString<64> Path(D.ResourceDir);
     llvm::sys::path::append(Path, BlacklistFile);

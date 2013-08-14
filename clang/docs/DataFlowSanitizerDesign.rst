@@ -140,3 +140,68 @@ associated directly with registers.  Loads will result in a union of
 all shadow labels corresponding to bytes loaded (which most of the
 time will be short circuited by the initial comparison) and stores will
 result in a copy of the label to the shadow of all bytes stored to.
+
+Propagating labels through arguments
+------------------------------------
+
+In order to propagate labels through function arguments and return values,
+DataFlowSanitizer changes the ABI of each function in the translation unit.
+There are currently two supported ABIs:
+
+* Args -- Argument and return value labels are passed through additional
+  arguments and by modifying the return type.
+
+* TLS -- Argument and return value labels are passed through TLS variables
+  ``__dfsan_arg_tls`` and ``__dfsan_retval_tls``.
+
+The main advantage of the TLS ABI is that it is more tolerant of ABI mismatches
+(TLS storage is not shared with any other form of storage, whereas extra
+arguments may be stored in registers which under the native ABI are not used
+for parameter passing and thus could contain arbitrary values).  On the other
+hand the args ABI is more efficient and allows ABI mismatches to be more easily
+identified by checking for nonzero labels in nominally unlabelled programs.
+
+Implementing the ABI list
+-------------------------
+
+The `ABI list <DataFlowSanitizer.html#abi-list>`_ provides a list of functions
+which conform to the native ABI, each of which is callable from an instrumented
+program.  This is implemented by replacing each reference to a native ABI
+function with a reference to a function which uses the instrumented ABI.
+Such functions are automatically-generated wrappers for the native functions.
+For example, given the ABI list example provided in the user manual, the
+following wrappers will be generated under the args ABI:
+
+.. code-block:: llvm
+
+    define linkonce_odr { i8*, i16 } @"dfsw$malloc"(i64 %0, i16 %1) {
+    entry:
+      %2 = call i8* @malloc(i64 %0)
+      %3 = insertvalue { i8*, i16 } undef, i8* %2, 0
+      %4 = insertvalue { i8*, i16 } %3, i16 0, 1
+      ret { i8*, i16 } %4
+    }
+
+    define linkonce_odr { i32, i16 } @"dfsw$tolower"(i32 %0, i16 %1) {
+    entry:
+      %2 = call i32 @tolower(i32 %0)
+      %3 = insertvalue { i32, i16 } undef, i32 %2, 0
+      %4 = insertvalue { i32, i16 } %3, i16 %1, 1
+      ret { i32, i16 } %4
+    }
+
+    define linkonce_odr { i8*, i16 } @"dfsw$memcpy"(i8* %0, i8* %1, i64 %2, i16 %3, i16 %4, i16 %5) {
+    entry:
+      %labelreturn = alloca i16
+      %6 = call i8* @__dfsw_memcpy(i8* %0, i8* %1, i64 %2, i16 %3, i16 %4, i16 %5, i16* %labelreturn)
+      %7 = load i16* %labelreturn
+      %8 = insertvalue { i8*, i16 } undef, i8* %6, 0
+      %9 = insertvalue { i8*, i16 } %8, i16 %7, 1
+      ret { i8*, i16 } %9
+    }
+
+As an optimization, direct calls to native ABI functions will call the
+native ABI function directly and the pass will compute the appropriate label
+internally.  This has the advantage of reducing the number of union operations
+required when the return value label is known to be zero (i.e. ``discard``
+functions, or ``functional`` functions with known unlabelled arguments).

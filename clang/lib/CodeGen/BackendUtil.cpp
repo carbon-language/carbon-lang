@@ -208,7 +208,10 @@ static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
 
 static void addDataFlowSanitizerPass(const PassManagerBuilder &Builder,
                                      PassManagerBase &PM) {
-  PM.add(createDataFlowSanitizerPass());
+  const PassManagerBuilderWrapper &BuilderWrapper =
+      static_cast<const PassManagerBuilderWrapper&>(Builder);
+  const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
+  PM.add(createDataFlowSanitizerPass(CGOpts.SanitizerBlacklistFile));
 }
 
 void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {

@@ -21,6 +21,7 @@ Using Clang as a Compiler
    AddressSanitizer
    ThreadSanitizer
    MemorySanitizer
+   DataFlowSanitizer
    SanitizerSpecialCaseList
    Modules
    FAQ
