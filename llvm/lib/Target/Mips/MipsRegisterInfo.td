@@ -392,6 +392,16 @@ def ACC64DSPAsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseACC64DSP";
 }
 
+def LO32DSPAsmOperand : MipsAsmRegOperand {
+  let Name = "LO32DSPAsm";
+  let ParserMethod = "parseLO32DSP";
+}
+
+def HI32DSPAsmOperand : MipsAsmRegOperand {
+  let Name = "HI32DSPAsm";
+  let ParserMethod = "parseHI32DSP";
+}
+
 def CCRAsmOperand : MipsAsmRegOperand {
   let Name = "CCRAsm";
   let ParserMethod = "parseCCRRegs";
@@ -456,6 +466,14 @@ def FGR32Opnd : RegisterOperand<FGR32> {
 
 def FCCRegsOpnd : RegisterOperand<FCC> {
   let ParserMatchClass = FCCRegsAsmOperand;
+}
+
+def LO32DSPOpnd : RegisterOperand<LO32DSP> {
+  let ParserMatchClass = LO32DSPAsmOperand;
+}
+
+def HI32DSPOpnd : RegisterOperand<HI32DSP> {
+  let ParserMatchClass = HI32DSPAsmOperand;
 }
 
 def ACC64DSPOpnd : RegisterOperand<ACC64DSP> {
