@@ -772,7 +772,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
 
   // Add the region from the beginning of MBB to the copy instruction to
   // CopyReg's live interval, and give the VNInfo the phidef flag.
-  LiveInterval &CopyLI = LI->getOrCreateInterval(CopyReg);
+  LiveInterval &CopyLI = LI->createEmptyInterval(CopyReg);
   SlotIndex MBBStartIndex = LI->getMBBStartIdx(MBB);
   SlotIndex DestCopyIndex = LI->getInstructionIndex(CopyInstr);
   VNInfo *CopyVNI = CopyLI.getNextValue(MBBStartIndex,
@@ -783,7 +783,7 @@ void StrongPHIElimination::InsertCopiesForPHI(MachineInstr *PHI,
 
   // Adjust DestReg's live interval to adjust for its new definition at
   // CopyInstr.
-  LiveInterval &DestLI = LI->getOrCreateInterval(DestReg);
+  LiveInterval &DestLI = LI->createEmptyInterval(DestReg);
   SlotIndex PHIIndex = LI->getInstructionIndex(PHI);
   DestLI.removeRange(PHIIndex.getRegSlot(), DestCopyIndex.getRegSlot());
 

@@ -144,12 +144,19 @@ public:
     return makeArrayRef(NewRegs).slice(FirstNew);
   }
 
+  /// createEmptyIntervalFrom - Create a new empty interval based on OldReg.
+  LiveInterval &createEmptyIntervalFrom(unsigned OldReg);
+
   /// createFrom - Create a new virtual register based on OldReg.
-  LiveInterval &createFrom(unsigned OldReg);
+  unsigned createFrom(unsigned OldReg);
 
   /// create - Create a new register with the same class and original slot as
   /// parent.
-  LiveInterval &create() {
+  LiveInterval &createEmptyInterval() {
+    return createEmptyIntervalFrom(getReg());
+  }
+
+  unsigned create() {
     return createFrom(getReg());
   }
 

@@ -30,13 +30,21 @@ STATISTIC(NumFracRanges,     "Number of live ranges fractured by DCE");
 
 void LiveRangeEdit::Delegate::anchor() { }
 
-LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg) {
+LiveInterval &LiveRangeEdit::createEmptyIntervalFrom(unsigned OldReg) {
   unsigned VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
   if (VRM) {
     VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
   }
-  LiveInterval &LI = LIS.getOrCreateInterval(VReg);
+  LiveInterval &LI = LIS.createEmptyInterval(VReg);
   return LI;
+}
+
+unsigned LiveRangeEdit::createFrom(unsigned OldReg) {
+  unsigned VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
+  if (VRM) {
+    VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
+  }
+  return VReg;
 }
 
 bool LiveRangeEdit::checkRematerializable(VNInfo *VNI,
@@ -368,7 +376,7 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
     DEBUG(dbgs() << NumComp << " components: " << *LI << '\n');
     SmallVector<LiveInterval*, 8> Dups(1, LI);
     for (unsigned i = 1; i != NumComp; ++i) {
-      Dups.push_back(&createFrom(LI->reg));
+      Dups.push_back(&createEmptyIntervalFrom(LI->reg));
       // If LI is an original interval that hasn't been split yet, make the new
       // intervals their own originals instead of referring to LI. The original
       // interval must contain all the split products, and LI doesn't.

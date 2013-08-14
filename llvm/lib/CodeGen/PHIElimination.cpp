@@ -313,7 +313,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
     if (IncomingReg) {
       // Add the region from the beginning of MBB to the copy instruction to
       // IncomingReg's live interval.
-      LiveInterval &IncomingLI = LIS->getOrCreateInterval(IncomingReg);
+      LiveInterval &IncomingLI = LIS->createEmptyInterval(IncomingReg);
       VNInfo *IncomingVNI = IncomingLI.getVNInfoAt(MBBStartIndex);
       if (!IncomingVNI)
         IncomingVNI = IncomingLI.getNextValue(MBBStartIndex,

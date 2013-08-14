@@ -463,11 +463,11 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
 unsigned SplitEditor::openIntv() {
   // Create the complement as index 0.
   if (Edit->empty())
-    Edit->create();
+    Edit->createEmptyInterval();
 
   // Create the open interval.
   OpenIdx = Edit->size();
-  Edit->create();
+  Edit->createEmptyInterval();
   return OpenIdx;
 }
 
@@ -1116,7 +1116,7 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     SmallVector<LiveInterval*, 8> dups;
     dups.push_back(li);
     for (unsigned j = 1; j != NumComp; ++j)
-      dups.push_back(&Edit->create());
+      dups.push_back(&Edit->createEmptyInterval());
     ConEQ.Distribute(&dups[0], MRI);
     // The new intervals all map back to i.
     if (LRMap)

@@ -190,9 +190,7 @@ void LiveIntervals::computeVirtRegs() {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     if (MRI->reg_nodbg_empty(Reg))
       continue;
-    LiveInterval *LI = createInterval(Reg);
-    VirtRegIntervals[Reg] = LI;
-    computeVirtRegInterval(LI);
+    createAndComputeVirtRegInterval(Reg);
   }
 }
 
@@ -627,7 +625,7 @@ LiveIntervals::getSpillWeight(bool isDef, bool isUse, BlockFrequency freq) {
 
 LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
                                                   MachineInstr* startInst) {
-  LiveInterval& Interval = getOrCreateInterval(reg);
+  LiveInterval& Interval = createEmptyInterval(reg);
   VNInfo* VN = Interval.getNextValue(
     SlotIndex(getInstructionIndex(startInst).getRegSlot()),
     getVNInfoAllocator());
@@ -1074,8 +1072,7 @@ LiveIntervals::repairIntervalsInRange(MachineBasicBlock *MBB,
       if (MOI->isReg() &&
           TargetRegisterInfo::isVirtualRegister(MOI->getReg()) &&
           !hasInterval(MOI->getReg())) {
-        LiveInterval &LI = getOrCreateInterval(MOI->getReg());
-        computeVirtRegInterval(&LI);
+        createAndComputeVirtRegInterval(MOI->getReg());
       }
     }
   }

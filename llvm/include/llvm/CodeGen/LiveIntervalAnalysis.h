@@ -103,9 +103,10 @@ namespace llvm {
     static float getSpillWeight(bool isDef, bool isUse, BlockFrequency freq);
 
     LiveInterval &getInterval(unsigned Reg) {
-      LiveInterval *LI = VirtRegIntervals[Reg];
-      assert(LI && "Interval does not exist for virtual register");
-      return *LI;
+      if (hasInterval(Reg))
+        return *VirtRegIntervals[Reg];
+      else
+        return createAndComputeVirtRegInterval(Reg);
     }
 
     const LiveInterval &getInterval(unsigned Reg) const {
@@ -117,12 +118,17 @@ namespace llvm {
     }
 
     // Interval creation.
-    LiveInterval &getOrCreateInterval(unsigned Reg) {
-      if (!hasInterval(Reg)) {
-        VirtRegIntervals.grow(Reg);
-        VirtRegIntervals[Reg] = createInterval(Reg);
-      }
-      return getInterval(Reg);
+    LiveInterval &createEmptyInterval(unsigned Reg) {
+      assert(!hasInterval(Reg) && "Interval already exists!");
+      VirtRegIntervals.grow(Reg);
+      VirtRegIntervals[Reg] = createInterval(Reg);
+      return *VirtRegIntervals[Reg];
+    }
+
+    LiveInterval &createAndComputeVirtRegInterval(unsigned Reg) {
+      LiveInterval &LI = createEmptyInterval(Reg);
+      computeVirtRegInterval(&LI);
+      return LI;
     }
 
     // Interval removal.
@@ -223,6 +229,12 @@ namespace llvm {
 
     SlotIndex InsertMachineInstrInMaps(MachineInstr *MI) {
       return Indexes->insertMachineInstrInMaps(MI);
+    }
+
+    void InsertMachineInstrRangeInMaps(MachineBasicBlock::iterator B,
+                                       MachineBasicBlock::iterator E) {
+      for (MachineBasicBlock::iterator I = B; I != E; ++I)
+        Indexes->insertMachineInstrInMaps(I);
     }
 
     void RemoveMachineInstrFromMaps(MachineInstr *MI) {
