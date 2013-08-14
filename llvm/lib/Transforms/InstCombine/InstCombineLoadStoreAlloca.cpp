@@ -180,7 +180,10 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      Value *NullIdx = Constant::getNullValue(Type::getInt32Ty(AI.getContext()));
+      Type *IdxTy = TD
+                  ? TD->getIntPtrType(AI.getContext())
+                  : Type::getInt64Ty(AI.getContext());
+      Value *NullIdx = Constant::getNullValue(IdxTy);
       Value *Idx[2] = { NullIdx, NullIdx };
       Instruction *GEP =
         GetElementPtrInst::CreateInBounds(New, Idx, New->getName() + ".sub");
@@ -300,9 +303,11 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
       if (ArrayType *ASrcTy = dyn_cast<ArrayType>(SrcPTy))
         if (Constant *CSrc = dyn_cast<Constant>(CastOp))
           if (ASrcTy->getNumElements() != 0) {
-            Value *Idxs[2];
-            Idxs[0] = Constant::getNullValue(Type::getInt32Ty(LI.getContext()));
-            Idxs[1] = Idxs[0];
+            Type *IdxTy = TD
+                        ? TD->getIntPtrType(LI.getContext())
+                        : Type::getInt64Ty(LI.getContext());
+            Value *Idx = Constant::getNullValue(IdxTy);
+            Value *Idxs[2] = { Idx, Idx };
             CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();

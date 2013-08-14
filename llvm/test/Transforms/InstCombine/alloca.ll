@@ -1,7 +1,7 @@
-target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
+; RUN: opt < %s -instcombine -S -default-data-layout="E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128" | FileCheck %s
+; RUN: opt < %s -instcombine -S -default-data-layout="E-p:32:32:32-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128" | FileCheck %s -check-prefix=P32
+; RUN: opt < %s -instcombine -S | FileCheck %s -check-prefix=NODL
 
-; RUN: opt < %s -instcombine -S | FileCheck %s
-; END.
 
 declare void @use(...)
 
@@ -110,3 +110,22 @@ entry:
 }
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+
+
+; Check that the GEP indices use the pointer size, or 64 if unknown
+define void @test8() {
+; CHECK-LABEL: @test8(
+; CHECK: alloca [100 x i32]
+; CHECK: getelementptr inbounds [100 x i32]* %x1, i64 0, i64 0
+
+; P32-LABEL: @test8(
+; P32: alloca [100 x i32]
+; P32: getelementptr inbounds [100 x i32]* %x1, i32 0, i32 0
+
+; NODL-LABEL: @test8(
+; NODL: alloca [100 x i32]
+; NODL: getelementptr inbounds [100 x i32]* %x1, i64 0, i64 0
+  %x = alloca i32, i32 100
+  call void (...)* @use(i32* %x)
+  ret void
+}

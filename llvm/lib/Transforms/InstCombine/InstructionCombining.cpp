@@ -1235,9 +1235,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (TD && SrcElTy->isArrayTy() &&
           TD->getTypeAllocSize(SrcElTy->getArrayElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
-        Value *Idx[2];
-        Idx[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
-        Idx[1] = GEP.getOperand(1);
+        Type *IdxType = TD->getIntPtrType(GEP.getContext());
+        Value *Idx[2] = { Constant::getNullValue(IdxType), GEP.getOperand(1) };
         Value *NewGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()) :
           Builder->CreateGEP(StrippedPtr, Idx, GEP.getName());
@@ -1304,9 +1303,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // Successfully decomposed Idx as NewIdx * Scale, form a new GEP.
             // If the multiplication NewIdx * Scale may overflow then the new
             // GEP may not be "inbounds".
-            Value *Off[2];
-            Off[0] = Constant::getNullValue(Type::getInt32Ty(GEP.getContext()));
-            Off[1] = NewIdx;
+            Value *Off[2] = {
+              Constant::getNullValue(TD->getIntPtrType(GEP.getContext())),
+              NewIdx
+            };
+
             Value *NewGEP = GEP.isInBounds() && NSW ?
               Builder->CreateInBoundsGEP(StrippedPtr, Off, GEP.getName()) :
               Builder->CreateGEP(StrippedPtr, Off, GEP.getName());
