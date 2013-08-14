@@ -14,6 +14,19 @@ Introduction
 This document describes extensions to tools and formats LLVM seeks compatibility
 with.
 
+General Assembly Syntax
+===========================
+
+C99-style Hexadecimal Floating-point Constants
+----------------------------------------------
+
+LLVM's assemblers allow floating-point constants to be written in C99's
+hexadecimal format instead of decimal if desired.
+
+.. code-block:: gas
+  .section .data
+  .float 0x1c2.2ap3
+
 Machine-specific Assembly Syntax
 ================================
 
