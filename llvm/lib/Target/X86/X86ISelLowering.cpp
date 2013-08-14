@@ -5431,8 +5431,8 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 /// a scalar load, or a constant.
 /// The VBROADCAST node is returned when a pattern is found,
 /// or SDValue() otherwise.
-SDValue
-X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
+                                    SelectionDAG &DAG) {
   if (!Subtarget->hasFp256())
     return SDValue();
 
@@ -5525,7 +5525,8 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
 
       assert(C && "Invalid constant type");
 
-      SDValue CP = DAG.getConstantPool(C, getPointerTy());
+      const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+      SDValue CP = DAG.getConstantPool(C, TLI.getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CP)->getAlignment();
       Ld = DAG.getLoad(CVT, dl, DAG.getEntryNode(), CP,
                        MachinePointerInfo::getConstantPool(),
@@ -5561,12 +5562,12 @@ X86TargetLowering::LowerVectorBroadcast(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
-SDValue
-X86TargetLowering::buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) const {
+static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getValueType().getSimpleVT();
 
   // Skip if insert_vec_elt is not supported.
-  if (!isOperationLegalOrCustom(ISD::INSERT_VECTOR_ELT, VT))
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!TLI.isOperationLegalOrCustom(ISD::INSERT_VECTOR_ELT, VT))
     return SDValue();
 
   SDLoc DL(Op);
@@ -5769,7 +5770,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return getOnesVector(VT, Subtarget->hasInt256(), DAG, dl);
   }
 
-  SDValue Broadcast = LowerVectorBroadcast(Op, DAG);
+  SDValue Broadcast = LowerVectorBroadcast(Op, Subtarget, DAG);
   if (Broadcast.getNode())
     return Broadcast;
 
@@ -6415,10 +6416,10 @@ LowerVECTOR_SHUFFLEv8i16(SDValue Op, const X86Subtarget *Subtarget,
 // 1. [ssse3] 1 x pshufb
 // 2. [ssse3] 2 x pshufb + 1 x por
 // 3. [all]   v8i16 shuffle + N x pextrw + rotate + pinsrw
-static
-SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
-                                 SelectionDAG &DAG,
-                                 const X86TargetLowering &TLI) {
+static SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
+                                        const X86Subtarget* Subtarget,
+                                        SelectionDAG &DAG) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   SDLoc dl(SVOp);
@@ -6434,7 +6435,7 @@ SDValue LowerVECTOR_SHUFFLEv16i8(ShuffleVectorSDNode *SVOp,
   // present, fall back to case 3.
 
   // If SSSE3, use 1 pshufb instruction per vector with elements in the result.
-  if (TLI.getSubtarget()->hasSSSE3()) {
+  if (Subtarget->hasSSSE3()) {
     SmallVector<SDValue,16> pshufbMask;
 
     // If all result elements are from one input vector, then only translate
@@ -7039,8 +7040,8 @@ SDValue getMOVLP(SDValue &Op, SDLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
 }
 
 // Reduce a vector shuffle to zext.
-SDValue
-X86TargetLowering::LowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerVectorIntExtend(SDValue Op, const X86Subtarget *Subtarget,
+                                    SelectionDAG &DAG) {
   // PMOVZX is only available from SSE41.
   if (!Subtarget->hasSSE41())
     return SDValue();
@@ -7089,7 +7090,7 @@ X86TargetLowering::LowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
   EVT NeVT = EVT::getIntegerVT(*Context, NBits);
   EVT NVT = EVT::getVectorVT(*Context, NeVT, NumElems >> Shift);
 
-  if (!isTypeLegal(NVT))
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(NVT))
     return SDValue();
 
   // Simplify the operand as it's prepared to be fed into shuffle.
@@ -7127,8 +7128,9 @@ X86TargetLowering::LowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getNode(X86ISD::VZEXT, DL, NVT, V1));
 }
 
-SDValue
-X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
+static SDValue
+NormalizeVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
+                       SelectionDAG &DAG) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   MVT VT = Op.getValueType().getSimpleVT();
   SDLoc dl(Op);
@@ -7141,13 +7143,13 @@ X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
   // Handle splat operations
   if (SVOp->isSplat()) {
     // Use vbroadcast whenever the splat comes from a foldable load
-    SDValue Broadcast = LowerVectorBroadcast(Op, DAG);
+    SDValue Broadcast = LowerVectorBroadcast(Op, Subtarget, DAG);
     if (Broadcast.getNode())
       return Broadcast;
   }
 
   // Check integer expanding shuffles.
-  SDValue NewOp = LowerVectorIntExtend(Op, DAG);
+  SDValue NewOp = LowerVectorIntExtend(Op, Subtarget, DAG);
   if (NewOp.getNode())
     return NewOp;
 
@@ -7227,7 +7229,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Normalize the input vectors. Here splats, zeroed vectors, profitable
   // narrowing and commutation of operands should be handled. The actual code
   // doesn't include all of those, work in progress...
-  SDValue NewOp = NormalizeVectorShuffle(Op, DAG);
+  SDValue NewOp = NormalizeVectorShuffle(Op, Subtarget, DAG);
   if (NewOp.getNode())
     return NewOp;
 
@@ -7485,7 +7487,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (VT == MVT::v16i8) {
-    SDValue NewOp = LowerVECTOR_SHUFFLEv16i8(SVOp, DAG, *this);
+    SDValue NewOp = LowerVECTOR_SHUFFLEv16i8(SVOp, Subtarget, DAG);
     if (NewOp.getNode())
       return NewOp;
   }
@@ -9210,8 +9212,8 @@ static SDValue LowerFGETSIGN(SDValue Op, SelectionDAG &DAG) {
 
 // LowerVectorAllZeroTest - Check whether an OR'd tree is PTEST-able.
 //
-SDValue X86TargetLowering::LowerVectorAllZeroTest(SDValue Op,
-                                                  SelectionDAG &DAG) const {
+static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
+                                      SelectionDAG &DAG) {
   assert(Op.getOpcode() == ISD::OR && "Only check OR'd tree.");
 
   if (!Subtarget->hasSSE41())
@@ -9444,7 +9446,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
     case ISD::AND: Opcode = X86ISD::AND; break;
     case ISD::OR: {
       if (!NeedTruncation && (X86CC == X86::COND_E || X86CC == X86::COND_NE)) {
-        SDValue EFLAGS = LowerVectorAllZeroTest(Op, DAG);
+        SDValue EFLAGS = LowerVectorAllZeroTest(Op, Subtarget, DAG);
         if (EFLAGS.getNode())
           return EFLAGS;
       }
@@ -12688,7 +12690,7 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
       // Hopefully, this VECTOR_SHUFFLE is just a VZEXT.
       if (Op0.getOpcode() == ISD::BITCAST &&
           Op00.getOpcode() == ISD::VECTOR_SHUFFLE)
-        Tmp1 = LowerVectorIntExtend(Op00, DAG);
+        Tmp1 = LowerVectorIntExtend(Op00, Subtarget, DAG);
       if (Tmp1.getNode()) {
         SDValue Tmp1Op0 = Tmp1.getOperand(0);
         assert(Tmp1Op0.getOpcode() == X86ISD::VZEXT &&
