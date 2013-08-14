@@ -16,6 +16,26 @@ def SIadd64bit32bit : SDNode<"ISD::ADD",
   SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisVT<0, i64>, SDTCisVT<2, i32>]>
 >;
 
+def SIload_constant : SDNode<"AMDGPUISD::LOAD_CONSTANT",
+  SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisVT<1, i128>, SDTCisVT<2, i32>]>,
+                      [SDNPMayLoad, SDNPMemOperand]
+>;
+
+def SIload_input : SDNode<"AMDGPUISD::LOAD_INPUT",
+  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisVT<1, i128>, SDTCisVT<2, i16>,
+                       SDTCisVT<3, i32>]>
+>;
+
+class SDSample<string opcode> : SDNode <opcode,
+  SDTypeProfile<1, 4, [SDTCisVT<0, v4f32>, SDTCisVec<1>, SDTCisVT<2, v32i8>,
+                       SDTCisVT<3, i128>, SDTCisVT<4, i32>]>
+>;
+
+def SIsample : SDSample<"AMDGPUISD::SAMPLE">;
+def SIsampleb : SDSample<"AMDGPUISD::SAMPLEB">;
+def SIsampled : SDSample<"AMDGPUISD::SAMPLED">;
+def SIsamplel : SDSample<"AMDGPUISD::SAMPLEL">;
+
 // Transformation function, extract the lower 32bit of a 64bit immediate
 def LO32 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue() & 0xffffffff, MVT::i32);

@@ -37,7 +37,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::v2i1, &AMDGPU::VReg_64RegClass);
   addRegisterClass(MVT::v4i1, &AMDGPU::VReg_128RegClass);
 
-  addRegisterClass(MVT::v16i8, &AMDGPU::SReg_128RegClass);
   addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);
   addRegisterClass(MVT::v64i8, &AMDGPU::SReg_512RegClass);
 
@@ -70,6 +69,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 
+  setOperationAction(ISD::BITCAST, MVT::i128, Legal);
+
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
@@ -82,6 +83,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::f32, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v16i8, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v4f32, Custom);
 
   setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Expand);
 
@@ -415,7 +419,31 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     case Intrinsic::r600_read_tidig_z:
       return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
                                   AMDGPU::VGPR2, VT);
+    case AMDGPUIntrinsic::SI_load_const: {
+      SDValue Ops [] = {
+        ResourceDescriptorToi128(Op.getOperand(1), DAG),
+        Op.getOperand(2)
+      };
 
+      MachineMemOperand *MMO = new MachineMemOperand(MachinePointerInfo(),
+                    MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant,
+                    VT.getSizeInBits() / 8, 4);
+      return DAG.getMemIntrinsicNode(AMDGPUISD::LOAD_CONSTANT, DL,
+                                     Op->getVTList(), Ops, 2, VT, MMO);
+    }
+    case AMDGPUIntrinsic::SI_sample:
+      return LowerSampleIntrinsic(AMDGPUISD::SAMPLE, Op, DAG);
+    case AMDGPUIntrinsic::SI_sampleb:
+      return LowerSampleIntrinsic(AMDGPUISD::SAMPLEB, Op, DAG);
+    case AMDGPUIntrinsic::SI_sampled:
+      return LowerSampleIntrinsic(AMDGPUISD::SAMPLED, Op, DAG);
+    case AMDGPUIntrinsic::SI_samplel:
+      return LowerSampleIntrinsic(AMDGPUISD::SAMPLEL, Op, DAG);
+    case AMDGPUIntrinsic::SI_vs_load_input:
+      return DAG.getNode(AMDGPUISD::LOAD_INPUT, DL, VT,
+                         ResourceDescriptorToi128(Op.getOperand(1), DAG),
+                         Op.getOperand(2),
+                         Op.getOperand(3));
     }
   }
   }
@@ -514,6 +542,29 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
     Intr->getOperand(0));
 
   return Chain;
+}
+
+SDValue SITargetLowering::ResourceDescriptorToi128(SDValue Op,
+                                             SelectionDAG &DAG) const {
+
+  if (Op.getValueType() == MVT::i128) {
+    return Op;
+  }
+
+  assert(Op.getOpcode() == ISD::UNDEF);
+
+  return DAG.getNode(ISD::BUILD_PAIR, SDLoc(Op), MVT::i128,
+                     DAG.getConstant(0, MVT::i64),
+                     DAG.getConstant(0, MVT::i64));
+}
+
+SDValue SITargetLowering::LowerSampleIntrinsic(unsigned Opcode,
+                                               const SDValue &Op,
+                                               SelectionDAG &DAG) const {
+  return DAG.getNode(Opcode, SDLoc(Op), Op.getValueType(), Op.getOperand(1),
+                     Op.getOperand(2),
+                     ResourceDescriptorToi128(Op.getOperand(3), DAG),
+                     Op.getOperand(4));
 }
 
 SDValue SITargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {

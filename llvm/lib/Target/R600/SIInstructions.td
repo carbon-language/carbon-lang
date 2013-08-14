@@ -1303,7 +1303,7 @@ def : Pat <
 
 /* int_SI_vs_load_input */
 def : Pat<
-  (int_SI_vs_load_input v16i8:$tlst, IMM12bit:$attr_offset, i32:$buf_idx_vgpr),
+  (SIload_input i128:$tlst, IMM12bit:$attr_offset, i32:$buf_idx_vgpr),
   (BUFFER_LOAD_FORMAT_XYZW_IDXEN $tlst, $buf_idx_vgpr, imm:$attr_offset)
 >;
 
@@ -1324,63 +1324,63 @@ def : Pat <
 /********** Image sampling patterns **********/
 /********** ======================= **********/
 
-/* int_SI_sample for simple 1D texture lookup */
+/* SIsample for simple 1D texture lookup */
 def : Pat <
-  (int_SI_sample v1i32:$addr, v32i8:$rsrc, v16i8:$sampler, imm),
+  (SIsample v1i32:$addr, v32i8:$rsrc, i128:$sampler, imm),
   (IMAGE_SAMPLE_V1 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
-class SamplePattern<Intrinsic name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, imm),
+class SamplePattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
+    (name vt:$addr, v32i8:$rsrc, i128:$sampler, imm),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
-class SampleRectPattern<Intrinsic name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, TEX_RECT),
+class SampleRectPattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
+    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_RECT),
     (opcode 0xf, 1, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
-class SampleArrayPattern<Intrinsic name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, TEX_ARRAY),
+class SampleArrayPattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
+    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
-class SampleShadowPattern<Intrinsic name, MIMG opcode,
+class SampleShadowPattern<SDNode name, MIMG opcode,
                           ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, TEX_SHADOW),
+    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_SHADOW),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
-class SampleShadowArrayPattern<Intrinsic name, MIMG opcode,
+class SampleShadowArrayPattern<SDNode name, MIMG opcode,
                                ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, TEX_SHADOW_ARRAY),
+    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_SHADOW_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
-/* int_SI_sample* for texture lookups consuming more address parameters */
+/* SIsample* for texture lookups consuming more address parameters */
 multiclass SamplePatterns<MIMG sample, MIMG sample_c, MIMG sample_l,
                           MIMG sample_c_l, MIMG sample_b, MIMG sample_c_b,
 MIMG sample_d, MIMG sample_c_d, ValueType addr_type> {
-  def : SamplePattern <int_SI_sample, sample, addr_type>;
-  def : SampleRectPattern <int_SI_sample, sample, addr_type>;
-  def : SampleArrayPattern <int_SI_sample, sample, addr_type>;
-  def : SampleShadowPattern <int_SI_sample, sample_c, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_sample, sample_c, addr_type>;
+  def : SamplePattern <SIsample, sample, addr_type>;
+  def : SampleRectPattern <SIsample, sample, addr_type>;
+  def : SampleArrayPattern <SIsample, sample, addr_type>;
+  def : SampleShadowPattern <SIsample, sample_c, addr_type>;
+  def : SampleShadowArrayPattern <SIsample, sample_c, addr_type>;
 
-  def : SamplePattern <int_SI_samplel, sample_l, addr_type>;
-  def : SampleArrayPattern <int_SI_samplel, sample_l, addr_type>;
-  def : SampleShadowPattern <int_SI_samplel, sample_c_l, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_samplel, sample_c_l, addr_type>;
+  def : SamplePattern <SIsamplel, sample_l, addr_type>;
+  def : SampleArrayPattern <SIsamplel, sample_l, addr_type>;
+  def : SampleShadowPattern <SIsamplel, sample_c_l, addr_type>;
+  def : SampleShadowArrayPattern <SIsamplel, sample_c_l, addr_type>;
 
-  def : SamplePattern <int_SI_sampleb, sample_b, addr_type>;
-  def : SampleArrayPattern <int_SI_sampleb, sample_b, addr_type>;
-  def : SampleShadowPattern <int_SI_sampleb, sample_c_b, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_sampleb, sample_c_b, addr_type>;
+  def : SamplePattern <SIsampleb, sample_b, addr_type>;
+  def : SampleArrayPattern <SIsampleb, sample_b, addr_type>;
+  def : SampleShadowPattern <SIsampleb, sample_c_b, addr_type>;
+  def : SampleShadowArrayPattern <SIsampleb, sample_c_b, addr_type>;
 
-  def : SamplePattern <int_SI_sampled, sample_d, addr_type>;
-  def : SampleArrayPattern <int_SI_sampled, sample_d, addr_type>;
-  def : SampleShadowPattern <int_SI_sampled, sample_c_d, addr_type>;
-  def : SampleShadowArrayPattern <int_SI_sampled, sample_c_d, addr_type>;
+  def : SamplePattern <SIsampled, sample_d, addr_type>;
+  def : SampleArrayPattern <SIsampled, sample_d, addr_type>;
+  def : SampleShadowPattern <SIsampled, sample_c_d, addr_type>;
+  def : SampleShadowArrayPattern <SIsampled, sample_c_d, addr_type>;
 }
 
 defm : SamplePatterns<IMAGE_SAMPLE_V2, IMAGE_SAMPLE_C_V2,
@@ -1694,19 +1694,19 @@ def : Pat <
 
 // 1. Offset as 8bit DWORD immediate
 def : Pat <
-  (int_SI_load_const v16i8:$sbase, IMM8bitDWORD:$offset),
+  (SIload_constant i128:$sbase, IMM8bitDWORD:$offset),
   (S_BUFFER_LOAD_DWORD_IMM $sbase, IMM8bitDWORD:$offset)
 >;
 
 // 2. Offset loaded in an 32bit SGPR
 def : Pat <
-  (int_SI_load_const v16i8:$sbase, imm:$offset),
+  (SIload_constant i128:$sbase, imm:$offset),
   (S_BUFFER_LOAD_DWORD_SGPR $sbase, (S_MOV_B32 imm:$offset))
 >;
 
 // 3. Offset in an 32Bit VGPR
 def : Pat <
-  (int_SI_load_const v16i8:$sbase, i32:$voff),
+  (SIload_constant i128:$sbase, i32:$voff),
   (BUFFER_LOAD_DWORD_OFFEN $sbase, $voff)
 >;
 
@@ -1777,7 +1777,7 @@ defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, i64>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, v2i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v16i8>;
+defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, i128>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
 
 //===----------------------------------------------------------------------===//
