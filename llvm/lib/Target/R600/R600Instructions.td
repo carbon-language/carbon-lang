@@ -230,7 +230,7 @@ def TEX_RECT : PatLeaf<
 def TEX_ARRAY : PatLeaf<
   (imm),
   [{uint32_t TType = (uint32_t)N->getZExtValue();
-    return TType == 9 || TType == 10 || TType == 15 || TType == 16;
+    return TType == 9 || TType == 10 || TType == 16;
   }]
 >;
 
@@ -238,6 +238,20 @@ def TEX_SHADOW_ARRAY : PatLeaf<
   (imm),
   [{uint32_t TType = (uint32_t)N->getZExtValue();
     return TType == 11 || TType == 12 || TType == 17;
+  }]
+>;
+
+def TEX_MSAA : PatLeaf<
+  (imm),
+  [{uint32_t TType = (uint32_t)N->getZExtValue();
+    return TType == 14;
+  }]
+>;
+
+def TEX_ARRAY_MSAA : PatLeaf<
+  (imm),
+  [{uint32_t TType = (uint32_t)N->getZExtValue();
+    return TType == 15;
   }]
 >;
 
