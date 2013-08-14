@@ -2928,9 +2928,19 @@ struct __check_complete<_Rp (*)(_Param...)>
 {
 };
 
+template <class ..._Param>
+struct __check_complete<void (*)(_Param...)>
+{
+};
+
 template <class _Rp, class ..._Param>
 struct __check_complete<_Rp (_Param...)>
     : private __check_complete<_Rp>
+{
+};
+
+template <class ..._Param>
+struct __check_complete<void (_Param...)>
 {
 };
 
