@@ -24,7 +24,7 @@ def CC_SI : CallingConv<[
 
   CCIfInReg<CCIfType<[i64] , CCAssignToRegWithShadow<
     [ SGPR0, SGPR2, SGPR4, SGPR6, SGPR8, SGPR10, SGPR12, SGPR14 ],
-    [ SGPR1, SGPR3, SGPR5, SGPR7, SGPR9, SGPR11, SGPR12, SGPR15 ]
+    [ SGPR1, SGPR3, SGPR5, SGPR7, SGPR9, SGPR11, SGPR13, SGPR15 ]
   >>>,
 
   CCIfNotInReg<CCIfType<[f32, i32] , CCAssignToReg<[
