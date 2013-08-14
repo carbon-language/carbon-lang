@@ -198,6 +198,16 @@ def executeShCmd(cmd, cfg, cwd, results):
         if res == -signal.SIGINT:
             raise KeyboardInterrupt
 
+        # Ensure the resulting output is always of string type.
+        try:
+            out = str(out.decode('ascii'))
+        except:
+            out = str(out)
+        try:
+            err = str(err.decode('ascii'))
+        except:
+            err = str(err)
+
         results.append((cmd.commands[i], out, err, res))
         if cmd.pipe_err:
             # Python treats the exit code as a signed char.

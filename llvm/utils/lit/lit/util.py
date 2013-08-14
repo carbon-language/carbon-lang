@@ -156,4 +156,14 @@ def executeCommand(command, cwd=None, env=None):
     if exitCode == -signal.SIGINT:
         raise KeyboardInterrupt
 
+    # Ensure the resulting output is always of string type.
+    try:
+        out = str(out.decode('ascii'))
+    except:
+        out = str(out)
+    try:
+        err = str(err.decode('ascii'))
+    except:
+        err = str(err)
+
     return out, err, exitCode
