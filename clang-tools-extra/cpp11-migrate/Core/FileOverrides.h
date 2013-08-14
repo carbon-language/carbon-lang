@@ -85,7 +85,7 @@ public:
   /// \brief Getter for Changes.
   const ChangedRanges &getChanges() const { return Changes; }
 
-  /// \brief Swaps the content of ContentOverride with \param S
+  /// \brief Swaps the content of ContentOverride with \p S.
   void swapContentOverride(std::string &S) { ContentOverride.swap(S); }
 
   /// \brief Getter for HeaderChangeDoc.
