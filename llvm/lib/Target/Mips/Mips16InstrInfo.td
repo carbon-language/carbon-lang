@@ -665,7 +665,7 @@ def CmpiRxImmX16: FEXT_RI16R_ins<0b01110, "cmpi", IIAlu> {
 // To divide 32-bit signed integers.
 //
 def DivRxRy16: FRR16_div_ins<0b11010, "div", IIAlu> {
-  let Defs = [HI, LO];
+  let Defs = [HI0, LO0];
 }
 
 //
@@ -674,7 +674,7 @@ def DivRxRy16: FRR16_div_ins<0b11010, "div", IIAlu> {
 // To divide 32-bit unsigned integers.
 //
 def DivuRxRy16: FRR16_div_ins<0b11011, "divu", IIAlu> {
-  let Defs = [HI, LO];
+  let Defs = [HI0, LO0];
 }
 //
 // Format: JAL target MIPS16e
@@ -805,7 +805,7 @@ def MoveR3216: FI8_MOVR3216_ins<"move", IIAlu>;
 // To copy the special purpose HI register to a GPR.
 //
 def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
-  let Uses = [HI];
+  let Uses = [HI0];
   let neverHasSideEffects = 1;
 }
 
@@ -815,7 +815,7 @@ def Mfhi16: FRR16_M_ins<0b10000, "mfhi", IIAlu> {
 // To copy the special purpose LO register to a GPR.
 //
 def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
-  let Uses = [LO];
+  let Uses = [LO0];
   let neverHasSideEffects = 1;
 }
 
@@ -825,13 +825,13 @@ def Mflo16: FRR16_M_ins<0b10010, "mflo", IIAlu> {
 def MultRxRy16:  FMULT16_ins<"mult",  IIAlu> {
   let isCommutable = 1;
   let neverHasSideEffects = 1;
-  let Defs = [HI, LO];
+  let Defs = [HI0, LO0];
 }
 
 def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
   let isCommutable = 1;
   let neverHasSideEffects = 1;
-  let Defs = [HI, LO];
+  let Defs = [HI0, LO0];
 }
 
 //
@@ -842,7 +842,7 @@ def MultuRxRy16: FMULT16_ins<"multu", IIAlu> {
 def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
   let isCommutable = 1;
   let neverHasSideEffects = 1;
-  let Defs = [HI, LO];
+  let Defs = [HI0, LO0];
 }
 
 //
@@ -853,7 +853,7 @@ def MultRxRyRz16: FMULT16_LO_ins<"mult", IIAlu> {
 def MultuRxRyRz16: FMULT16_LO_ins<"multu", IIAlu> {
   let isCommutable = 1;
   let neverHasSideEffects = 1;
-  let Defs = [HI, LO];
+  let Defs = [HI0, LO0];
 }
 
 //

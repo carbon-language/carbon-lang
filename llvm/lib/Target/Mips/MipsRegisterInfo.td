@@ -205,18 +205,18 @@ let Namespace = "Mips" in {
   def W31 : AFPR128<31, "w31", [D31_64]>, DwarfRegNum<[63]>;
 
   // Hi/Lo registers
-  def HI  : Register<"ac0">, DwarfRegNum<[64]>;
+  def HI0 : Register<"ac0">, DwarfRegNum<[64]>;
   def HI1 : Register<"ac1">, DwarfRegNum<[176]>;
   def HI2 : Register<"ac2">, DwarfRegNum<[178]>;
   def HI3 : Register<"ac3">, DwarfRegNum<[180]>;
-  def LO  : Register<"ac0">, DwarfRegNum<[65]>;
+  def LO0 : Register<"ac0">, DwarfRegNum<[65]>;
   def LO1 : Register<"ac1">, DwarfRegNum<[177]>;
   def LO2 : Register<"ac2">, DwarfRegNum<[179]>;
   def LO3 : Register<"ac3">, DwarfRegNum<[181]>;
 
   let SubRegIndices = [sub_32] in {
-  def HI64  : RegisterWithSubRegs<"hi", [HI]>;
-  def LO64  : RegisterWithSubRegs<"lo", [LO]>;
+  def HI0_64  : RegisterWithSubRegs<"hi", [HI0]>;
+  def LO0_64  : RegisterWithSubRegs<"lo", [LO0]>;
   }
 
   // FP control registers.
@@ -234,12 +234,11 @@ let Namespace = "Mips" in {
   def HWR29 : MipsReg<29, "29">;
 
   // Accum registers
-  def AC0 : ACCReg<0, "ac0", [LO, HI]>;
-  def AC1 : ACCReg<1, "ac1", [LO1, HI1]>;
-  def AC2 : ACCReg<2, "ac2", [LO2, HI2]>;
-  def AC3 : ACCReg<3, "ac3", [LO3, HI3]>;
+  foreach I = 0-3 in
+  def AC#I : ACCReg<#I, "ac"#I,
+                    [!cast<Register>("LO"#I), !cast<Register>("HI"#I)]>;
 
-  def AC0_64 : ACCReg<0, "ac0", [LO64, HI64]>;
+  def AC0_64 : ACCReg<0, "ac0", [LO0_64, HI0_64]>;
 
   // DSP-ASE control register fields.
   def DSPPos : Register<"">;
@@ -348,12 +347,12 @@ def MSA128: RegisterClass<"Mips", [v16i8, v8i16, v4i32, v2i64], 128,
                           (sequence "W%u", 0, 31)>;
 
 // Hi/Lo Registers
-def LORegs : RegisterClass<"Mips", [i32], 32, (add LO)>;
-def HIRegs : RegisterClass<"Mips", [i32], 32, (add HI)>;
-def LORegsDSP : RegisterClass<"Mips", [i32], 32, (add LO, LO1, LO2, LO3)>;
-def HIRegsDSP : RegisterClass<"Mips", [i32], 32, (add HI, HI1, HI2, HI3)>;
-def LORegs64 : RegisterClass<"Mips", [i64], 64, (add LO64)>;
-def HIRegs64 : RegisterClass<"Mips", [i64], 64, (add HI64)>;
+def LO32 : RegisterClass<"Mips", [i32], 32, (add LO0)>;
+def HI32 : RegisterClass<"Mips", [i32], 32, (add HI0)>;
+def LO32DSP : RegisterClass<"Mips", [i32], 32, (sequence "LO%u", 0, 3)>;
+def HI32DSP : RegisterClass<"Mips", [i32], 32, (sequence "HI%u", 0, 3)>;
+def LO64 : RegisterClass<"Mips", [i64], 64, (add LO0_64)>;
+def HI64 : RegisterClass<"Mips", [i64], 64, (add HI0_64)>;
 
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;

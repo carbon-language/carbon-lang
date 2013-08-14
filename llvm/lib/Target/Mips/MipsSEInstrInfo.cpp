@@ -101,13 +101,13 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       Opc = Mips::CFC1;
     else if (Mips::FGR32RegClass.contains(SrcReg))
       Opc = Mips::MFC1;
-    else if (Mips::HIRegsRegClass.contains(SrcReg))
+    else if (Mips::HI32RegClass.contains(SrcReg))
       Opc = Mips::MFHI, SrcReg = 0;
-    else if (Mips::LORegsRegClass.contains(SrcReg))
+    else if (Mips::LO32RegClass.contains(SrcReg))
       Opc = Mips::MFLO, SrcReg = 0;
-    else if (Mips::HIRegsDSPRegClass.contains(SrcReg))
+    else if (Mips::HI32DSPRegClass.contains(SrcReg))
       Opc = Mips::MFHI_DSP;
-    else if (Mips::LORegsDSPRegClass.contains(SrcReg))
+    else if (Mips::LO32DSPRegClass.contains(SrcReg))
       Opc = Mips::MFLO_DSP;
     else if (Mips::DSPCCRegClass.contains(SrcReg)) {
       BuildMI(MBB, I, DL, get(Mips::RDDSP), DestReg).addImm(1 << 4)
@@ -120,13 +120,13 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       Opc = Mips::CTC1;
     else if (Mips::FGR32RegClass.contains(DestReg))
       Opc = Mips::MTC1;
-    else if (Mips::HIRegsRegClass.contains(DestReg))
+    else if (Mips::HI32RegClass.contains(DestReg))
       Opc = Mips::MTHI, DestReg = 0;
-    else if (Mips::LORegsRegClass.contains(DestReg))
+    else if (Mips::LO32RegClass.contains(DestReg))
       Opc = Mips::MTLO, DestReg = 0;
-    else if (Mips::HIRegsDSPRegClass.contains(DestReg))
+    else if (Mips::HI32DSPRegClass.contains(DestReg))
       Opc = Mips::MTHI_DSP;
-    else if (Mips::LORegsDSPRegClass.contains(DestReg))
+    else if (Mips::LO32DSPRegClass.contains(DestReg))
       Opc = Mips::MTLO_DSP;
     else if (Mips::DSPCCRegClass.contains(DestReg)) {
       BuildMI(MBB, I, DL, get(Mips::WRDSP))
@@ -144,17 +144,17 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (Mips::GPR64RegClass.contains(DestReg)) { // Copy to CPU64 Reg.
     if (Mips::GPR64RegClass.contains(SrcReg))
       Opc = Mips::DADDu, ZeroReg = Mips::ZERO_64;
-    else if (Mips::HIRegs64RegClass.contains(SrcReg))
+    else if (Mips::HI64RegClass.contains(SrcReg))
       Opc = Mips::MFHI64, SrcReg = 0;
-    else if (Mips::LORegs64RegClass.contains(SrcReg))
+    else if (Mips::LO64RegClass.contains(SrcReg))
       Opc = Mips::MFLO64, SrcReg = 0;
     else if (Mips::FGR64RegClass.contains(SrcReg))
       Opc = Mips::DMFC1;
   }
   else if (Mips::GPR64RegClass.contains(SrcReg)) { // Copy from CPU64 Reg.
-    if (Mips::HIRegs64RegClass.contains(DestReg))
+    if (Mips::HI64RegClass.contains(DestReg))
       Opc = Mips::MTHI64, DestReg = 0;
-    else if (Mips::LORegs64RegClass.contains(DestReg))
+    else if (Mips::LO64RegClass.contains(DestReg))
       Opc = Mips::MTLO64, DestReg = 0;
     else if (Mips::FGR64RegClass.contains(DestReg))
       Opc = Mips::DMTC1;

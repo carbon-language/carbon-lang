@@ -425,8 +425,8 @@ static SDValue performDivRemCombine(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   EVT Ty = N->getValueType(0);
-  unsigned LO = (Ty == MVT::i32) ? Mips::LO : Mips::LO64;
-  unsigned HI = (Ty == MVT::i32) ? Mips::HI : Mips::HI64;
+  unsigned LO = (Ty == MVT::i32) ? Mips::LO0 : Mips::LO0_64;
+  unsigned HI = (Ty == MVT::i32) ? Mips::HI0 : Mips::HI0_64;
   unsigned Opc = N->getOpcode() == ISD::SDIVREM ? MipsISD::DivRem16 :
                                                   MipsISD::DivRemU16;
   SDLoc DL(N);
@@ -2924,7 +2924,7 @@ parseRegForInlineAsmConstraint(const StringRef &C, MVT VT) const {
       return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
 
     RC = TRI->getRegClass(Prefix == "hi" ?
-                          Mips::HIRegsRegClassID : Mips::LORegsRegClassID);
+                          Mips::HI32RegClassID : Mips::LO32RegClassID);
     return std::make_pair(*(RC->begin()), RC);
   }
 
@@ -2992,8 +2992,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
       return std::make_pair((unsigned)Mips::T9_64, &Mips::GPR64RegClass);
     case 'l': // register suitable for indirect jump
       if (VT == MVT::i32)
-        return std::make_pair((unsigned)Mips::LO, &Mips::LORegsRegClass);
-      return std::make_pair((unsigned)Mips::LO64, &Mips::LORegs64RegClass);
+        return std::make_pair((unsigned)Mips::LO0, &Mips::LO32RegClass);
+      return std::make_pair((unsigned)Mips::LO0_64, &Mips::LO64RegClass);
     case 'x': // register suitable for indirect jump
       // Fixme: Not triggering the use of both hi and low
       // This will generate an error message

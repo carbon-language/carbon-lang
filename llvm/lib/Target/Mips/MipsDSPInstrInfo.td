@@ -737,10 +737,10 @@ class MAQ_SA_W_PHR_DESC : DPA_W_PH_DESC_BASE<"maq_sa.w.phr", MipsMAQ_SA_W_PHR>,
                           Defs<[DSPOutFlag16_19]>;
 
 // Move from/to hi/lo.
-class MFHI_DESC : MFHI_DESC_BASE<"mfhi", HIRegsDSP, NoItinerary>;
-class MFLO_DESC : MFHI_DESC_BASE<"mflo", LORegsDSP, NoItinerary>;
-class MTHI_DESC : MTHI_DESC_BASE<"mthi", HIRegsDSP, NoItinerary>;
-class MTLO_DESC : MTHI_DESC_BASE<"mtlo", LORegsDSP, NoItinerary>;
+class MFHI_DESC : MFHI_DESC_BASE<"mfhi", HI32DSP, NoItinerary>;
+class MFLO_DESC : MFHI_DESC_BASE<"mflo", LO32DSP, NoItinerary>;
+class MTHI_DESC : MTHI_DESC_BASE<"mthi", HI32DSP, NoItinerary>;
+class MTLO_DESC : MTHI_DESC_BASE<"mtlo", LO32DSP, NoItinerary>;
 
 // Dot product with accumulate/subtract
 class DPAU_H_QBL_DESC : DPA_W_PH_DESC_BASE<"dpau.h.qbl", MipsDPAU_H_QBL>;

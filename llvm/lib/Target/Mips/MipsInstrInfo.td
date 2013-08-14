@@ -409,8 +409,8 @@ class ArithLogicI<string opstr, Operand Od, RegisterOperand RO,
 class MArithR<string opstr, bit isComm = 0> :
   InstSE<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
          !strconcat(opstr, "\t$rs, $rt"), [], IIImult, FrmR> {
-  let Defs = [HI, LO];
-  let Uses = [HI, LO];
+  let Defs = [HI0, LO0];
+  let Uses = [HI0, LO0];
   let isCommutable = isComm;
 }
 
@@ -1042,23 +1042,23 @@ let Uses = [V0, V1], isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 }
 
 /// Multiply and Divide Instructions.
-def MULT  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI, LO]>,
+def MULT  : MMRel, Mult<"mult", IIImult, GPR32Opnd, [HI0, LO0]>,
             MULT_FM<0, 0x18>;
-def MULTu : MMRel, Mult<"multu", IIImult, GPR32Opnd, [HI, LO]>,
+def MULTu : MMRel, Mult<"multu", IIImult, GPR32Opnd, [HI0, LO0]>,
             MULT_FM<0, 0x19>;
 def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, IIImult>;
 def PseudoMULTu : MultDivPseudo<MULTu, ACC64, GPR32Opnd, MipsMultu, IIImult>;
-def SDIV  : Div<"div", IIIdiv, GPR32Opnd, [HI, LO]>, MULT_FM<0, 0x1a>;
-def UDIV  : Div<"divu", IIIdiv, GPR32Opnd, [HI, LO]>, MULT_FM<0, 0x1b>;
+def SDIV  : Div<"div", IIIdiv, GPR32Opnd, [HI0, LO0]>, MULT_FM<0, 0x1a>;
+def UDIV  : Div<"divu", IIIdiv, GPR32Opnd, [HI0, LO0]>, MULT_FM<0, 0x1b>;
 def PseudoSDIV : MultDivPseudo<SDIV, ACC64, GPR32Opnd, MipsDivRem, IIIdiv,
                                0, 1, 1>;
 def PseudoUDIV : MultDivPseudo<UDIV, ACC64, GPR32Opnd, MipsDivRemU, IIIdiv,
                                0, 1, 1>;
 
-def MTHI : MoveToLOHI<"mthi", GPR32Opnd, [HI]>, MTLO_FM<0x11>;
-def MTLO : MoveToLOHI<"mtlo", GPR32Opnd, [LO]>, MTLO_FM<0x13>;
-def MFHI : MoveFromLOHI<"mfhi", GPR32Opnd, [HI]>, MFLO_FM<0x10>;
-def MFLO : MoveFromLOHI<"mflo", GPR32Opnd, [LO]>, MFLO_FM<0x12>;
+def MTHI : MoveToLOHI<"mthi", GPR32Opnd, [HI0]>, MTLO_FM<0x11>;
+def MTLO : MoveToLOHI<"mtlo", GPR32Opnd, [LO0]>, MTLO_FM<0x13>;
+def MFHI : MoveFromLOHI<"mfhi", GPR32Opnd, [HI0]>, MFLO_FM<0x10>;
+def MFLO : MoveFromLOHI<"mflo", GPR32Opnd, [LO0]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
 def SEB : SignExtInReg<"seb", i8, GPR32Opnd>, SEB_FM<0x10, 0x20>;

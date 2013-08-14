@@ -77,11 +77,11 @@ void Mips16InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (Mips::GPR32RegClass.contains(DestReg) &&
            Mips::CPU16RegsRegClass.contains(SrcReg))
     Opc = Mips::Move32R16;
-  else if ((SrcReg == Mips::HI) &&
+  else if ((SrcReg == Mips::HI0) &&
            (Mips::CPU16RegsRegClass.contains(DestReg)))
     Opc = Mips::Mfhi16, SrcReg = 0;
 
-  else if ((SrcReg == Mips::LO) &&
+  else if ((SrcReg == Mips::LO0) &&
            (Mips::CPU16RegsRegClass.contains(DestReg)))
     Opc = Mips::Mflo16, SrcReg = 0;
 
