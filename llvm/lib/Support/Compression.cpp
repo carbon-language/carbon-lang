@@ -81,6 +81,10 @@ zlib::Status zlib::uncompress(StringRef InputBuffer,
   return Res;
 }
 
+uint32_t zlib::crc32(StringRef Buffer) {
+  return ::crc32(0, (const Bytef *)Buffer.data(), Buffer.size());
+}
+
 #else
 bool zlib::isAvailable() { return false; }
 zlib::Status zlib::compress(StringRef InputBuffer,
@@ -92,6 +96,9 @@ zlib::Status zlib::uncompress(StringRef InputBuffer,
                               OwningPtr<MemoryBuffer> &UncompressedBuffer,
                               size_t UncompressedSize) {
   return zlib::StatusUnsupported;
+}
+uint32_t zlib::crc32(StringRef Buffer) {
+  llvm_unreachable("zlib::crc32 is unavailable");
 }
 #endif
 

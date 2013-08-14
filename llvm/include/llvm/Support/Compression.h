@@ -50,6 +50,8 @@ Status uncompress(StringRef InputBuffer,
                   OwningPtr<MemoryBuffer> &UncompressedBuffer,
                   size_t UncompressedSize);
 
+uint32_t crc32(StringRef Buffer);
+
 }  // End of namespace zlib
 
 } // End of namespace llvm

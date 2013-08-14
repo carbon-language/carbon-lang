@@ -63,6 +63,12 @@ TEST(CompressionTest, Zlib) {
   TestZlibCompression(BinaryDataStr, zlib::DefaultCompression);
 }
 
+TEST(CompressionTest, ZlibCRC32) {
+  EXPECT_EQ(
+      0x414FA339U,
+      zlib::crc32(StringRef("The quick brown fox jumps over the lazy dog")));
+}
+
 #endif
 
 }
