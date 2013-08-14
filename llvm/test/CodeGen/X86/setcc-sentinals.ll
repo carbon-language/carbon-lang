@@ -2,8 +2,8 @@
 
 define zeroext i1 @test0(i64 %x) nounwind {
 ; CHECK-LABEL: test0:
-; CHECK-NEXT: incq %rdi
-; CHECK-NEXT: cmpq $1, %rdi
+; CHECK-NEXT: incq %[[X:rdi|rcx]]
+; CHECK-NEXT: cmpq $1, %[[X]]
 ; CHECK-NEXT: seta %al
 ; CHECK-NEXT: ret
   %cmp1 = icmp ne i64 %x, -1
