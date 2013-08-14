@@ -14,3 +14,11 @@
 // DARWIN-NOT: --no-demangle
 // DARWIN: "one" "two" "three" "four"
 // LINUX: "--no-demangle" "one" "two" "three" "four"
+
+// Check that we forward '-Xlinker' and '-Wl,' on Windows.
+// RUN: %clang -target i686-pc-win32 -### \
+// RUN:   -Xlinker one -Wl,two %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=WIN %s
+// WIN: link.exe
+// WIN: "one"
+// WIN: "two"

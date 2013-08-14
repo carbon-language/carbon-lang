@@ -6597,7 +6597,8 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
        it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     if (it->isFilename())
       CmdArgs.push_back(it->getFilename());
-    // FIXME: Forward -Wl, etc.
+    else
+      it->getInputArg().renderAsInput(Args, CmdArgs);
   }
 
   const char *Exec =
