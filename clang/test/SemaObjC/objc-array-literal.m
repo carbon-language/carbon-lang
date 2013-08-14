@@ -43,5 +43,5 @@ int main() {
 // rdar://14303083
 id Test14303083() {
   id obj = @[ @"A", (@"B" @"C")];
-  return @[ @"A", @"B" @"C"]; // expected-warning {{concatenated nsstring literal for an nsarray expression}}
+  return @[ @"A", @"B" @"C"]; // expected-warning {{concatenated NSString literal for an NSArray expression - possibly missing a comma}}
 }
