@@ -130,6 +130,12 @@ dfsan_label __dfsan_union_load(const dfsan_label *ls, size_t n) {
   return label;
 }
 
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+void __dfsan_unimplemented(char *fname) {
+  Report("WARNING: DataFlowSanitizer: call to uninstrumented function %s\n",
+         fname);
+}
+
 // Like __dfsan_union, but for use from the client or custom functions.  Hence
 // the equality comparison is done here before calling __dfsan_union.
 SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
@@ -147,7 +153,6 @@ dfsan_label dfsan_create_label(const char *desc, void *userdata) {
   __dfsan_label_info[label].l1 = __dfsan_label_info[label].l2 = 0;
   __dfsan_label_info[label].desc = desc;
   __dfsan_label_info[label].userdata = userdata;
-  __dfsan_retval_tls = 0;  // Ensures return value is unlabelled in the caller.
   return label;
 }
 
@@ -164,11 +169,14 @@ void dfsan_add_label(dfsan_label label, void *addr, size_t size) {
       *labelp = __dfsan_union(*labelp, label);
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE dfsan_label dfsan_get_label(long data) {
-  // The label for 'data' is implicitly passed by the instrumentation pass in
-  // the first element of __dfsan_arg_tls.  So we can just return it.
-  __dfsan_retval_tls = 0;  // Ensures return value is unlabelled in the caller.
-  return __dfsan_arg_tls[0];
+// Unlike the other dfsan interface functions the behavior of this function
+// depends on the label of one of its arguments.  Hence it is implemented as a
+// custom function.
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
+__dfsw_dfsan_get_label(long data, dfsan_label data_label,
+                       dfsan_label *ret_label) {
+  *ret_label = 0;
+  return data_label;
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
@@ -180,12 +188,10 @@ dfsan_read_label(const void *addr, size_t size) {
 
 SANITIZER_INTERFACE_ATTRIBUTE
 const struct dfsan_label_info *dfsan_get_label_info(dfsan_label label) {
-  __dfsan_retval_tls = 0;  // Ensures return value is unlabelled in the caller.
   return &__dfsan_label_info[label];
 }
 
 int dfsan_has_label(dfsan_label label, dfsan_label elem) {
-  __dfsan_retval_tls = 0;  // Ensures return value is unlabelled in the caller.
   if (label == elem)
     return true;
   const dfsan_label_info *info = dfsan_get_label_info(label);
@@ -197,7 +203,6 @@ int dfsan_has_label(dfsan_label label, dfsan_label elem) {
 }
 
 dfsan_label dfsan_has_label_with_desc(dfsan_label label, const char *desc) {
-  __dfsan_retval_tls = 0;  // Ensures return value is unlabelled in the caller.
   const dfsan_label_info *info = dfsan_get_label_info(label);
   if (info->l1 != 0) {
     return dfsan_has_label_with_desc(info->l1, desc) ||

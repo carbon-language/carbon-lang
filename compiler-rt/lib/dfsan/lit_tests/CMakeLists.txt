@@ -9,7 +9,8 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
   # Run DFSan tests only if we're sure we may produce working binaries.
   set(DFSAN_TEST_DEPS
     ${SANITIZER_COMMON_LIT_TEST_DEPS}
-    ${DFSAN_RUNTIME_LIBRARIES})
+    ${DFSAN_RUNTIME_LIBRARIES}
+    dfsan_abilist)
   set(DFSAN_TEST_PARAMS
     dfsan_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
   add_lit_testsuite(check-dfsan "Running the DataFlowSanitizer tests"
