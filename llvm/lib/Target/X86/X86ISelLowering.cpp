@@ -5679,7 +5679,7 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
     SDValue FullMask = DAG.getNode(ISD::BITCAST, dl, MVT::v16i1,
       DAG.getConstant(Immediate, MVT::i16));
     return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, FullMask,
-		       DAG.getIntPtrConstant(0));
+                       DAG.getIntPtrConstant(0));
   }
 
   if (!isSplatVector(Op.getNode()))
