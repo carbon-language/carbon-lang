@@ -405,10 +405,233 @@ class LDI_H_ENC   : MSA_I10_FMT<0b010, 0b01, 0b001100>;
 class LDI_W_ENC   : MSA_I10_FMT<0b010, 0b10, 0b001100>;
 class LDI_D_ENC   : MSA_I10_FMT<0b010, 0b11, 0b001100>;
 
+class MADD_Q_H_ENC : MSA_3RF_FMT<0b0010, 0b0, 0b011100>;
+class MADD_Q_W_ENC : MSA_3RF_FMT<0b0010, 0b1, 0b011100>;
+
+class MADDR_Q_H_ENC : MSA_3RF_FMT<0b0011, 0b0, 0b011100>;
+class MADDR_Q_W_ENC : MSA_3RF_FMT<0b0011, 0b1, 0b011100>;
+
+class MADDV_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b010010>;
+class MADDV_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b010010>;
+class MADDV_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b010010>;
+class MADDV_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b010010>;
+
+class MAX_A_B_ENC : MSA_3R_FMT<0b110, 0b00, 0b001110>;
+class MAX_A_H_ENC : MSA_3R_FMT<0b110, 0b01, 0b001110>;
+class MAX_A_W_ENC : MSA_3R_FMT<0b110, 0b10, 0b001110>;
+class MAX_A_D_ENC : MSA_3R_FMT<0b110, 0b11, 0b001110>;
+
+class MAX_S_B_ENC : MSA_3R_FMT<0b010, 0b00, 0b001110>;
+class MAX_S_H_ENC : MSA_3R_FMT<0b010, 0b01, 0b001110>;
+class MAX_S_W_ENC : MSA_3R_FMT<0b010, 0b10, 0b001110>;
+class MAX_S_D_ENC : MSA_3R_FMT<0b010, 0b11, 0b001110>;
+
+class MAX_U_B_ENC : MSA_3R_FMT<0b011, 0b00, 0b001110>;
+class MAX_U_H_ENC : MSA_3R_FMT<0b011, 0b01, 0b001110>;
+class MAX_U_W_ENC : MSA_3R_FMT<0b011, 0b10, 0b001110>;
+class MAX_U_D_ENC : MSA_3R_FMT<0b011, 0b11, 0b001110>;
+
+class MAXI_S_B_ENC : MSA_I5_FMT<0b010, 0b00, 0b000110>;
+class MAXI_S_H_ENC : MSA_I5_FMT<0b010, 0b01, 0b000110>;
+class MAXI_S_W_ENC : MSA_I5_FMT<0b010, 0b10, 0b000110>;
+class MAXI_S_D_ENC : MSA_I5_FMT<0b010, 0b11, 0b000110>;
+
+class MAXI_U_B_ENC : MSA_I5_FMT<0b011, 0b00, 0b000110>;
+class MAXI_U_H_ENC : MSA_I5_FMT<0b011, 0b01, 0b000110>;
+class MAXI_U_W_ENC : MSA_I5_FMT<0b011, 0b10, 0b000110>;
+class MAXI_U_D_ENC : MSA_I5_FMT<0b011, 0b11, 0b000110>;
+
+class MIN_A_B_ENC : MSA_3R_FMT<0b111, 0b00, 0b001110>;
+class MIN_A_H_ENC : MSA_3R_FMT<0b111, 0b01, 0b001110>;
+class MIN_A_W_ENC : MSA_3R_FMT<0b111, 0b10, 0b001110>;
+class MIN_A_D_ENC : MSA_3R_FMT<0b111, 0b11, 0b001110>;
+
+class MIN_S_B_ENC : MSA_3R_FMT<0b100, 0b00, 0b001110>;
+class MIN_S_H_ENC : MSA_3R_FMT<0b100, 0b01, 0b001110>;
+class MIN_S_W_ENC : MSA_3R_FMT<0b100, 0b10, 0b001110>;
+class MIN_S_D_ENC : MSA_3R_FMT<0b100, 0b11, 0b001110>;
+
+class MIN_U_B_ENC : MSA_3R_FMT<0b101, 0b00, 0b001110>;
+class MIN_U_H_ENC : MSA_3R_FMT<0b101, 0b01, 0b001110>;
+class MIN_U_W_ENC : MSA_3R_FMT<0b101, 0b10, 0b001110>;
+class MIN_U_D_ENC : MSA_3R_FMT<0b101, 0b11, 0b001110>;
+
+class MINI_S_B_ENC : MSA_I5_FMT<0b100, 0b00, 0b000110>;
+class MINI_S_H_ENC : MSA_I5_FMT<0b100, 0b01, 0b000110>;
+class MINI_S_W_ENC : MSA_I5_FMT<0b100, 0b10, 0b000110>;
+class MINI_S_D_ENC : MSA_I5_FMT<0b100, 0b11, 0b000110>;
+
+class MINI_U_B_ENC : MSA_I5_FMT<0b101, 0b00, 0b000110>;
+class MINI_U_H_ENC : MSA_I5_FMT<0b101, 0b01, 0b000110>;
+class MINI_U_W_ENC : MSA_I5_FMT<0b101, 0b10, 0b000110>;
+class MINI_U_D_ENC : MSA_I5_FMT<0b101, 0b11, 0b000110>;
+
+class MOD_S_B_ENC : MSA_3R_FMT<0b110, 0b00, 0b010010>;
+class MOD_S_H_ENC : MSA_3R_FMT<0b110, 0b01, 0b010010>;
+class MOD_S_W_ENC : MSA_3R_FMT<0b110, 0b10, 0b010010>;
+class MOD_S_D_ENC : MSA_3R_FMT<0b110, 0b11, 0b010010>;
+
+class MOD_U_B_ENC : MSA_3R_FMT<0b111, 0b00, 0b010010>;
+class MOD_U_H_ENC : MSA_3R_FMT<0b111, 0b01, 0b010010>;
+class MOD_U_W_ENC : MSA_3R_FMT<0b111, 0b10, 0b010010>;
+class MOD_U_D_ENC : MSA_3R_FMT<0b111, 0b11, 0b010010>;
+
+class MSUB_Q_H_ENC : MSA_3RF_FMT<0b0100, 0b0, 0b011100>;
+class MSUB_Q_W_ENC : MSA_3RF_FMT<0b0100, 0b1, 0b011100>;
+
+class MSUBR_Q_H_ENC : MSA_3RF_FMT<0b0101, 0b0, 0b011100>;
+class MSUBR_Q_W_ENC : MSA_3RF_FMT<0b0101, 0b1, 0b011100>;
+
+class MSUBV_B_ENC : MSA_3R_FMT<0b010, 0b00, 0b010010>;
+class MSUBV_H_ENC : MSA_3R_FMT<0b010, 0b01, 0b010010>;
+class MSUBV_W_ENC : MSA_3R_FMT<0b010, 0b10, 0b010010>;
+class MSUBV_D_ENC : MSA_3R_FMT<0b010, 0b11, 0b010010>;
+
+class MUL_Q_H_ENC : MSA_3RF_FMT<0b0000, 0b0, 0b011100>;
+class MUL_Q_W_ENC : MSA_3RF_FMT<0b0000, 0b1, 0b011100>;
+
+class MULR_Q_H_ENC : MSA_3RF_FMT<0b0001, 0b0, 0b011100>;
+class MULR_Q_W_ENC : MSA_3RF_FMT<0b0001, 0b1, 0b011100>;
+
+class MULV_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010010>;
+class MULV_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010010>;
+class MULV_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010010>;
+class MULV_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010010>;
+
+class NLOC_B_ENC : MSA_2R_FMT<0b11000010, 0b00, 0b011110>;
+class NLOC_H_ENC : MSA_2R_FMT<0b11000010, 0b01, 0b011110>;
+class NLOC_W_ENC : MSA_2R_FMT<0b11000010, 0b10, 0b011110>;
+class NLOC_D_ENC : MSA_2R_FMT<0b11000010, 0b11, 0b011110>;
+
+class NLZC_B_ENC : MSA_2R_FMT<0b11000011, 0b00, 0b011110>;
+class NLZC_H_ENC : MSA_2R_FMT<0b11000011, 0b01, 0b011110>;
+class NLZC_W_ENC : MSA_2R_FMT<0b11000011, 0b10, 0b011110>;
+class NLZC_D_ENC : MSA_2R_FMT<0b11000011, 0b11, 0b011110>;
+
+class NORI_B_ENC : MSA_I8_FMT<0b10, 0b000000>;
+
+class ORI_B_ENC  : MSA_I8_FMT<0b01, 0b000000>;
+
+class PCKEV_B_ENC : MSA_3R_FMT<0b010, 0b00, 0b010100>;
+class PCKEV_H_ENC : MSA_3R_FMT<0b010, 0b01, 0b010100>;
+class PCKEV_W_ENC : MSA_3R_FMT<0b010, 0b10, 0b010100>;
+class PCKEV_D_ENC : MSA_3R_FMT<0b010, 0b11, 0b010100>;
+
+class PCKOD_B_ENC : MSA_3R_FMT<0b011, 0b00, 0b010100>;
+class PCKOD_H_ENC : MSA_3R_FMT<0b011, 0b01, 0b010100>;
+class PCKOD_W_ENC : MSA_3R_FMT<0b011, 0b10, 0b010100>;
+class PCKOD_D_ENC : MSA_3R_FMT<0b011, 0b11, 0b010100>;
+
+class PCNT_B_ENC : MSA_2R_FMT<0b11000001, 0b00, 0b011110>;
+class PCNT_H_ENC : MSA_2R_FMT<0b11000001, 0b01, 0b011110>;
+class PCNT_W_ENC : MSA_2R_FMT<0b11000001, 0b10, 0b011110>;
+class PCNT_D_ENC : MSA_2R_FMT<0b11000001, 0b11, 0b011110>;
+
+class SAT_S_B_ENC : MSA_BIT_B_FMT<0b000, 0b001010>;
+class SAT_S_H_ENC : MSA_BIT_H_FMT<0b000, 0b001010>;
+class SAT_S_W_ENC : MSA_BIT_W_FMT<0b000, 0b001010>;
+class SAT_S_D_ENC : MSA_BIT_D_FMT<0b000, 0b001010>;
+
+class SAT_U_B_ENC : MSA_BIT_B_FMT<0b001, 0b001010>;
+class SAT_U_H_ENC : MSA_BIT_H_FMT<0b001, 0b001010>;
+class SAT_U_W_ENC : MSA_BIT_W_FMT<0b001, 0b001010>;
+class SAT_U_D_ENC : MSA_BIT_D_FMT<0b001, 0b001010>;
+
+class SHF_B_ENC  : MSA_I8_FMT<0b00, 0b000010>;
+class SHF_H_ENC  : MSA_I8_FMT<0b01, 0b000010>;
+class SHF_W_ENC  : MSA_I8_FMT<0b10, 0b000010>;
+
+class SLD_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010100>;
+class SLD_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010100>;
+class SLD_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010100>;
+class SLD_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010100>;
+
+class SLDI_B_ENC : MSA_ELM_B_FMT<0b0000, 0b011001>;
+class SLDI_H_ENC : MSA_ELM_H_FMT<0b0000, 0b011001>;
+class SLDI_W_ENC : MSA_ELM_W_FMT<0b0000, 0b011001>;
+class SLDI_D_ENC : MSA_ELM_D_FMT<0b0000, 0b011001>;
+
+class SLL_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b001101>;
+class SLL_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b001101>;
+class SLL_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b001101>;
+class SLL_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b001101>;
+
+class SLLI_B_ENC : MSA_BIT_B_FMT<0b000, 0b001001>;
+class SLLI_H_ENC : MSA_BIT_H_FMT<0b000, 0b001001>;
+class SLLI_W_ENC : MSA_BIT_W_FMT<0b000, 0b001001>;
+class SLLI_D_ENC : MSA_BIT_D_FMT<0b000, 0b001001>;
+
+class SPLAT_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b010100>;
+class SPLAT_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b010100>;
+class SPLAT_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b010100>;
+class SPLAT_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b010100>;
+
+class SPLATI_B_ENC : MSA_ELM_B_FMT<0b0001, 0b011001>;
+class SPLATI_H_ENC : MSA_ELM_H_FMT<0b0001, 0b011001>;
+class SPLATI_W_ENC : MSA_ELM_W_FMT<0b0001, 0b011001>;
+class SPLATI_D_ENC : MSA_ELM_D_FMT<0b0001, 0b011001>;
+
+class SRA_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b001101>;
+class SRA_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b001101>;
+class SRA_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b001101>;
+class SRA_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b001101>;
+
+class SRAI_B_ENC : MSA_BIT_B_FMT<0b001, 0b001001>;
+class SRAI_H_ENC : MSA_BIT_H_FMT<0b001, 0b001001>;
+class SRAI_W_ENC : MSA_BIT_W_FMT<0b001, 0b001001>;
+class SRAI_D_ENC : MSA_BIT_D_FMT<0b001, 0b001001>;
+
+class SRL_B_ENC : MSA_3R_FMT<0b010, 0b00, 0b001101>;
+class SRL_H_ENC : MSA_3R_FMT<0b010, 0b01, 0b001101>;
+class SRL_W_ENC : MSA_3R_FMT<0b010, 0b10, 0b001101>;
+class SRL_D_ENC : MSA_3R_FMT<0b010, 0b11, 0b001101>;
+
+class SRLI_B_ENC : MSA_BIT_B_FMT<0b010, 0b001001>;
+class SRLI_H_ENC : MSA_BIT_H_FMT<0b010, 0b001001>;
+class SRLI_W_ENC : MSA_BIT_W_FMT<0b010, 0b001001>;
+class SRLI_D_ENC : MSA_BIT_D_FMT<0b010, 0b001001>;
+
 class ST_B_ENC   : MSA_I5_FMT<0b111, 0b00, 0b000111>;
 class ST_H_ENC   : MSA_I5_FMT<0b111, 0b01, 0b000111>;
 class ST_W_ENC   : MSA_I5_FMT<0b111, 0b10, 0b000111>;
 class ST_D_ENC   : MSA_I5_FMT<0b111, 0b11, 0b000111>;
+
+class SUBS_S_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010001>;
+class SUBS_S_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010001>;
+class SUBS_S_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010001>;
+class SUBS_S_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010001>;
+
+class SUBS_U_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b010001>;
+class SUBS_U_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b010001>;
+class SUBS_U_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b010001>;
+class SUBS_U_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b010001>;
+
+class SUBSUS_U_B_ENC : MSA_3R_FMT<0b011, 0b00, 0b010001>;
+class SUBSUS_U_H_ENC : MSA_3R_FMT<0b011, 0b01, 0b010001>;
+class SUBSUS_U_W_ENC : MSA_3R_FMT<0b011, 0b10, 0b010001>;
+class SUBSUS_U_D_ENC : MSA_3R_FMT<0b011, 0b11, 0b010001>;
+
+class SUBSUU_S_B_ENC : MSA_3R_FMT<0b010, 0b00, 0b010001>;
+class SUBSUU_S_H_ENC : MSA_3R_FMT<0b010, 0b01, 0b010001>;
+class SUBSUU_S_W_ENC : MSA_3R_FMT<0b010, 0b10, 0b010001>;
+class SUBSUU_S_D_ENC : MSA_3R_FMT<0b010, 0b11, 0b010001>;
+
+class SUBV_B_ENC : MSA_3R_FMT<0b001, 0b00, 0b001110>;
+class SUBV_H_ENC : MSA_3R_FMT<0b001, 0b01, 0b001110>;
+class SUBV_W_ENC : MSA_3R_FMT<0b001, 0b10, 0b001110>;
+class SUBV_D_ENC : MSA_3R_FMT<0b001, 0b11, 0b001110>;
+
+class SUBVI_B_ENC : MSA_I5_FMT<0b001, 0b00, 0b000110>;
+class SUBVI_H_ENC : MSA_I5_FMT<0b001, 0b01, 0b000110>;
+class SUBVI_W_ENC : MSA_I5_FMT<0b001, 0b10, 0b000110>;
+class SUBVI_D_ENC : MSA_I5_FMT<0b001, 0b11, 0b000110>;
+
+class VSHF_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010101>;
+class VSHF_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010101>;
+class VSHF_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010101>;
+class VSHF_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010101>;
+
+class XORI_B_ENC : MSA_I8_FMT<0b11, 0b000000>;
 
 // Instruction desc.
 class MSA_BIT_D_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -1255,6 +1478,337 @@ class LDI_W_DESC : MSA_I10_DESC_BASE<"ldi.w", int_mips_ldi_w,
 class LDI_D_DESC : MSA_I10_DESC_BASE<"ldi.d", int_mips_ldi_d,
                                      NoItinerary, MSA128>;
 
+class MADD_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.h", int_mips_madd_q_h,
+                                            NoItinerary, MSA128, MSA128>;
+class MADD_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"madd_q.w", int_mips_madd_q_w,
+                                            NoItinerary, MSA128, MSA128>;
+
+class MADDR_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"maddr_q.h", int_mips_maddr_q_h,
+                                             NoItinerary, MSA128, MSA128>;
+class MADDR_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"maddr_q.w", int_mips_maddr_q_w,
+                                             NoItinerary, MSA128, MSA128>;
+
+class MADDV_B_DESC : MSA_3R_4R_DESC_BASE<"maddv.b", int_mips_maddv_b,
+                                         NoItinerary, MSA128, MSA128>;
+class MADDV_H_DESC : MSA_3R_4R_DESC_BASE<"maddv.h", int_mips_maddv_h,
+                                         NoItinerary, MSA128, MSA128>;
+class MADDV_W_DESC : MSA_3R_4R_DESC_BASE<"maddv.w", int_mips_maddv_w,
+                                         NoItinerary, MSA128, MSA128>;
+class MADDV_D_DESC : MSA_3R_4R_DESC_BASE<"maddv.d", int_mips_maddv_d,
+                                         NoItinerary, MSA128, MSA128>;
+
+class MAX_A_B_DESC : MSA_3R_DESC_BASE<"max_a.b", int_mips_max_a_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_A_H_DESC : MSA_3R_DESC_BASE<"max_a.h", int_mips_max_a_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_A_W_DESC : MSA_3R_DESC_BASE<"max_a.w", int_mips_max_a_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_A_D_DESC : MSA_3R_DESC_BASE<"max_a.d", int_mips_max_a_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MAX_S_B_DESC : MSA_3R_DESC_BASE<"max_s.b", int_mips_max_s_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_S_H_DESC : MSA_3R_DESC_BASE<"max_s.h", int_mips_max_s_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_S_W_DESC : MSA_3R_DESC_BASE<"max_s.w", int_mips_max_s_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_S_D_DESC : MSA_3R_DESC_BASE<"max_s.d", int_mips_max_s_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MAX_U_B_DESC : MSA_3R_DESC_BASE<"max_u.b", int_mips_max_u_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_U_H_DESC : MSA_3R_DESC_BASE<"max_u.h", int_mips_max_u_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_U_W_DESC : MSA_3R_DESC_BASE<"max_u.w", int_mips_max_u_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MAX_U_D_DESC : MSA_3R_DESC_BASE<"max_u.d", int_mips_max_u_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MAXI_S_B_DESC : MSA_I5_DESC_BASE<"maxi_s.b", int_mips_maxi_s_b,
+                                       NoItinerary, MSA128, MSA128>;
+class MAXI_S_H_DESC : MSA_I5_DESC_BASE<"maxi_s.h", int_mips_maxi_s_h,
+                                       NoItinerary, MSA128, MSA128>;
+class MAXI_S_W_DESC : MSA_I5_DESC_BASE<"maxi_s.w", int_mips_maxi_s_w,
+                                       NoItinerary, MSA128, MSA128>;
+class MAXI_S_D_DESC : MSA_I5_DESC_BASE<"maxi_s.d", int_mips_maxi_s_d,
+                                       NoItinerary, MSA128, MSA128>;
+
+class MAXI_U_B_DESC : MSA_I5_DESC_BASE<"maxi_u.b", int_mips_maxi_u_b,
+                                       NoItinerary, MSA128, MSA128>;
+class MAXI_U_H_DESC : MSA_I5_DESC_BASE<"maxi_u.h", int_mips_maxi_u_h,
+                                       NoItinerary, MSA128, MSA128>;
+class MAXI_U_W_DESC : MSA_I5_DESC_BASE<"maxi_u.w", int_mips_maxi_u_w,
+                                       NoItinerary, MSA128, MSA128>;
+class MAXI_U_D_DESC : MSA_I5_DESC_BASE<"maxi_u.d", int_mips_maxi_u_d,
+                                       NoItinerary, MSA128, MSA128>;
+
+class MIN_A_B_DESC : MSA_3R_DESC_BASE<"min_a.b", int_mips_min_a_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_A_H_DESC : MSA_3R_DESC_BASE<"min_a.h", int_mips_min_a_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_A_W_DESC : MSA_3R_DESC_BASE<"min_a.w", int_mips_min_a_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_A_D_DESC : MSA_3R_DESC_BASE<"min_a.d", int_mips_min_a_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MIN_S_B_DESC : MSA_3R_DESC_BASE<"min_s.b", int_mips_min_s_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_S_H_DESC : MSA_3R_DESC_BASE<"min_s.h", int_mips_min_s_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_S_W_DESC : MSA_3R_DESC_BASE<"min_s.w", int_mips_min_s_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_S_D_DESC : MSA_3R_DESC_BASE<"min_s.d", int_mips_min_s_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MIN_U_B_DESC : MSA_3R_DESC_BASE<"min_u.b", int_mips_min_u_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_U_H_DESC : MSA_3R_DESC_BASE<"min_u.h", int_mips_min_u_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_U_W_DESC : MSA_3R_DESC_BASE<"min_u.w", int_mips_min_u_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MIN_U_D_DESC : MSA_3R_DESC_BASE<"min_u.d", int_mips_min_u_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MINI_S_B_DESC : MSA_I5_DESC_BASE<"mini_s.b", int_mips_mini_s_b,
+                                       NoItinerary, MSA128, MSA128>;
+class MINI_S_H_DESC : MSA_I5_DESC_BASE<"mini_s.h", int_mips_mini_s_h,
+                                       NoItinerary, MSA128, MSA128>;
+class MINI_S_W_DESC : MSA_I5_DESC_BASE<"mini_s.w", int_mips_mini_s_w,
+                                       NoItinerary, MSA128, MSA128>;
+class MINI_S_D_DESC : MSA_I5_DESC_BASE<"mini_s.d", int_mips_mini_s_d,
+                                       NoItinerary, MSA128, MSA128>;
+
+class MINI_U_B_DESC : MSA_I5_DESC_BASE<"mini_u.b", int_mips_mini_u_b,
+                                       NoItinerary, MSA128, MSA128>;
+class MINI_U_H_DESC : MSA_I5_DESC_BASE<"mini_u.h", int_mips_mini_u_h,
+                                       NoItinerary, MSA128, MSA128>;
+class MINI_U_W_DESC : MSA_I5_DESC_BASE<"mini_u.w", int_mips_mini_u_w,
+                                       NoItinerary, MSA128, MSA128>;
+class MINI_U_D_DESC : MSA_I5_DESC_BASE<"mini_u.d", int_mips_mini_u_d,
+                                       NoItinerary, MSA128, MSA128>;
+
+class MOD_S_B_DESC : MSA_3R_DESC_BASE<"mod_s.b", int_mips_mod_s_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MOD_S_H_DESC : MSA_3R_DESC_BASE<"mod_s.h", int_mips_mod_s_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MOD_S_W_DESC : MSA_3R_DESC_BASE<"mod_s.w", int_mips_mod_s_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MOD_S_D_DESC : MSA_3R_DESC_BASE<"mod_s.d", int_mips_mod_s_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MOD_U_B_DESC : MSA_3R_DESC_BASE<"mod_u.b", int_mips_mod_u_b, NoItinerary,
+                                      MSA128, MSA128>;
+class MOD_U_H_DESC : MSA_3R_DESC_BASE<"mod_u.h", int_mips_mod_u_h, NoItinerary,
+                                      MSA128, MSA128>;
+class MOD_U_W_DESC : MSA_3R_DESC_BASE<"mod_u.w", int_mips_mod_u_w, NoItinerary,
+                                      MSA128, MSA128>;
+class MOD_U_D_DESC : MSA_3R_DESC_BASE<"mod_u.d", int_mips_mod_u_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class MSUB_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"msub_q.h", int_mips_msub_q_h,
+                                            NoItinerary, MSA128, MSA128>;
+class MSUB_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"msub_q.w", int_mips_msub_q_w,
+                                            NoItinerary, MSA128, MSA128>;
+
+class MSUBR_Q_H_DESC : MSA_3RF_4RF_DESC_BASE<"msubr_q.h", int_mips_msubr_q_h,
+                                             NoItinerary, MSA128, MSA128>;
+class MSUBR_Q_W_DESC : MSA_3RF_4RF_DESC_BASE<"msubr_q.w", int_mips_msubr_q_w,
+                                             NoItinerary, MSA128, MSA128>;
+
+class MSUBV_B_DESC : MSA_3R_4R_DESC_BASE<"msubv.b", int_mips_msubv_b,
+                                         NoItinerary, MSA128, MSA128>;
+class MSUBV_H_DESC : MSA_3R_4R_DESC_BASE<"msubv.h", int_mips_msubv_h,
+                                         NoItinerary, MSA128, MSA128>;
+class MSUBV_W_DESC : MSA_3R_4R_DESC_BASE<"msubv.w", int_mips_msubv_w,
+                                         NoItinerary, MSA128, MSA128>;
+class MSUBV_D_DESC : MSA_3R_4R_DESC_BASE<"msubv.d", int_mips_msubv_d,
+                                         NoItinerary, MSA128, MSA128>;
+
+class MUL_Q_H_DESC : MSA_3RF_DESC_BASE<"mul_q.h", int_mips_mul_q_h,
+                                       NoItinerary, MSA128, MSA128>;
+class MUL_Q_W_DESC : MSA_3RF_DESC_BASE<"mul_q.w", int_mips_mul_q_w,
+                                       NoItinerary, MSA128, MSA128>;
+
+class MULR_Q_H_DESC : MSA_3RF_DESC_BASE<"mulr_q.h", int_mips_mulr_q_h,
+                                        NoItinerary, MSA128, MSA128>;
+class MULR_Q_W_DESC : MSA_3RF_DESC_BASE<"mulr_q.w", int_mips_mulr_q_w,
+                                        NoItinerary, MSA128, MSA128>;
+
+class MULV_B_DESC : MSA_3R_DESC_BASE<"mulv.b", int_mips_mulv_b,
+                                     NoItinerary, MSA128, MSA128>;
+class MULV_H_DESC : MSA_3R_DESC_BASE<"mulv.h", int_mips_mulv_h,
+                                     NoItinerary, MSA128, MSA128>;
+class MULV_W_DESC : MSA_3R_DESC_BASE<"mulv.w", int_mips_mulv_w,
+                                     NoItinerary, MSA128, MSA128>;
+class MULV_D_DESC : MSA_3R_DESC_BASE<"mulv.d", int_mips_mulv_d,
+                                     NoItinerary, MSA128, MSA128>;
+
+class NLOC_B_DESC : MSA_2R_DESC_BASE<"nloc.b", int_mips_nloc_b,
+                                     NoItinerary, MSA128, MSA128>;
+class NLOC_H_DESC : MSA_2R_DESC_BASE<"nloc.h", int_mips_nloc_h,
+                                     NoItinerary, MSA128, MSA128>;
+class NLOC_W_DESC : MSA_2R_DESC_BASE<"nloc.w", int_mips_nloc_w,
+                                     NoItinerary, MSA128, MSA128>;
+class NLOC_D_DESC : MSA_2R_DESC_BASE<"nloc.d", int_mips_nloc_d,
+                                     NoItinerary, MSA128, MSA128>;
+
+class NLZC_B_DESC : MSA_2R_DESC_BASE<"nlzc.b", int_mips_nlzc_b,
+                                     NoItinerary, MSA128, MSA128>;
+class NLZC_H_DESC : MSA_2R_DESC_BASE<"nlzc.h", int_mips_nlzc_h,
+                                     NoItinerary, MSA128, MSA128>;
+class NLZC_W_DESC : MSA_2R_DESC_BASE<"nlzc.w", int_mips_nlzc_w,
+                                     NoItinerary, MSA128, MSA128>;
+class NLZC_D_DESC : MSA_2R_DESC_BASE<"nlzc.d", int_mips_nlzc_d,
+                                     NoItinerary, MSA128, MSA128>;
+
+class NORI_B_DESC : MSA_I8_DESC_BASE<"nori.b", int_mips_nori_b, NoItinerary,
+                                     MSA128, MSA128>;
+
+class ORI_B_DESC : MSA_I8_DESC_BASE<"ori.b", int_mips_ori_b, NoItinerary,
+                                    MSA128, MSA128>;
+
+class PCKEV_B_DESC : MSA_3R_DESC_BASE<"pckev.b", int_mips_pckev_b, NoItinerary,
+                                      MSA128, MSA128>;
+class PCKEV_H_DESC : MSA_3R_DESC_BASE<"pckev.h", int_mips_pckev_h, NoItinerary,
+                                      MSA128, MSA128>;
+class PCKEV_W_DESC : MSA_3R_DESC_BASE<"pckev.w", int_mips_pckev_w, NoItinerary,
+                                      MSA128, MSA128>;
+class PCKEV_D_DESC : MSA_3R_DESC_BASE<"pckev.d", int_mips_pckev_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class PCKOD_B_DESC : MSA_3R_DESC_BASE<"pckod.b", int_mips_pckod_b, NoItinerary,
+                                      MSA128, MSA128>;
+class PCKOD_H_DESC : MSA_3R_DESC_BASE<"pckod.h", int_mips_pckod_h, NoItinerary,
+                                      MSA128, MSA128>;
+class PCKOD_W_DESC : MSA_3R_DESC_BASE<"pckod.w", int_mips_pckod_w, NoItinerary,
+                                      MSA128, MSA128>;
+class PCKOD_D_DESC : MSA_3R_DESC_BASE<"pckod.d", int_mips_pckod_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class PCNT_B_DESC : MSA_2R_DESC_BASE<"pcnt.b", int_mips_pcnt_b,
+                                     NoItinerary, MSA128, MSA128>;
+class PCNT_H_DESC : MSA_2R_DESC_BASE<"pcnt.h", int_mips_pcnt_h,
+                                     NoItinerary, MSA128, MSA128>;
+class PCNT_W_DESC : MSA_2R_DESC_BASE<"pcnt.w", int_mips_pcnt_w,
+                                     NoItinerary, MSA128, MSA128>;
+class PCNT_D_DESC : MSA_2R_DESC_BASE<"pcnt.d", int_mips_pcnt_d,
+                                     NoItinerary, MSA128, MSA128>;
+
+class SAT_S_B_DESC : MSA_BIT_B_DESC_BASE<"sat_s.b", int_mips_sat_s_b,
+                                         NoItinerary, MSA128, MSA128>;
+class SAT_S_H_DESC : MSA_BIT_H_DESC_BASE<"sat_s.h", int_mips_sat_s_h,
+                                         NoItinerary, MSA128, MSA128>;
+class SAT_S_W_DESC : MSA_BIT_W_DESC_BASE<"sat_s.w", int_mips_sat_s_w,
+                                         NoItinerary, MSA128, MSA128>;
+class SAT_S_D_DESC : MSA_BIT_D_DESC_BASE<"sat_s.d", int_mips_sat_s_d,
+                                         NoItinerary, MSA128, MSA128>;
+
+class SAT_U_B_DESC : MSA_BIT_B_DESC_BASE<"sat_u.b", int_mips_sat_u_b,
+                                         NoItinerary, MSA128, MSA128>;
+class SAT_U_H_DESC : MSA_BIT_H_DESC_BASE<"sat_u.h", int_mips_sat_u_h,
+                                         NoItinerary, MSA128, MSA128>;
+class SAT_U_W_DESC : MSA_BIT_W_DESC_BASE<"sat_u.w", int_mips_sat_u_w,
+                                         NoItinerary, MSA128, MSA128>;
+class SAT_U_D_DESC : MSA_BIT_D_DESC_BASE<"sat_u.d", int_mips_sat_u_d,
+                                         NoItinerary, MSA128, MSA128>;
+
+class SHF_B_DESC : MSA_I8_DESC_BASE<"shf.b", int_mips_shf_b, NoItinerary,
+                                    MSA128, MSA128>;
+class SHF_H_DESC : MSA_I8_DESC_BASE<"shf.h", int_mips_shf_h, NoItinerary,
+                                    MSA128, MSA128>;
+class SHF_W_DESC : MSA_I8_DESC_BASE<"shf.w", int_mips_shf_w, NoItinerary,
+                                    MSA128, MSA128>;
+
+class SLD_B_DESC : MSA_3R_DESC_BASE<"sld.b", int_mips_sld_b, NoItinerary,
+                                    MSA128, MSA128>;
+class SLD_H_DESC : MSA_3R_DESC_BASE<"sld.h", int_mips_sld_h, NoItinerary,
+                                    MSA128, MSA128>;
+class SLD_W_DESC : MSA_3R_DESC_BASE<"sld.w", int_mips_sld_w, NoItinerary,
+                                    MSA128, MSA128>;
+class SLD_D_DESC : MSA_3R_DESC_BASE<"sld.d", int_mips_sld_d, NoItinerary,
+                                    MSA128, MSA128>;
+
+class SLDI_B_DESC : MSA_BIT_B_DESC_BASE<"sldi.b", int_mips_sldi_b,
+                                        NoItinerary, MSA128, MSA128>;
+class SLDI_H_DESC : MSA_BIT_H_DESC_BASE<"sldi.h", int_mips_sldi_h,
+                                        NoItinerary, MSA128, MSA128>;
+class SLDI_W_DESC : MSA_BIT_W_DESC_BASE<"sldi.w", int_mips_sldi_w,
+                                        NoItinerary, MSA128, MSA128>;
+class SLDI_D_DESC : MSA_BIT_D_DESC_BASE<"sldi.d", int_mips_sldi_d,
+                                        NoItinerary, MSA128, MSA128>;
+
+class SLL_B_DESC : MSA_3R_DESC_BASE<"sll.b", int_mips_sll_b, NoItinerary,
+                                    MSA128, MSA128>;
+class SLL_H_DESC : MSA_3R_DESC_BASE<"sll.h", int_mips_sll_h, NoItinerary,
+                                    MSA128, MSA128>;
+class SLL_W_DESC : MSA_3R_DESC_BASE<"sll.w", int_mips_sll_w, NoItinerary,
+                                    MSA128, MSA128>;
+class SLL_D_DESC : MSA_3R_DESC_BASE<"sll.d", int_mips_sll_d, NoItinerary,
+                                    MSA128, MSA128>;
+
+class SLLI_B_DESC : MSA_BIT_B_DESC_BASE<"slli.b", int_mips_slli_b,
+                                        NoItinerary, MSA128, MSA128>;
+class SLLI_H_DESC : MSA_BIT_H_DESC_BASE<"slli.h", int_mips_slli_h,
+                                        NoItinerary, MSA128, MSA128>;
+class SLLI_W_DESC : MSA_BIT_W_DESC_BASE<"slli.w", int_mips_slli_w,
+                                        NoItinerary, MSA128, MSA128>;
+class SLLI_D_DESC : MSA_BIT_D_DESC_BASE<"slli.d", int_mips_slli_d,
+                                        NoItinerary, MSA128, MSA128>;
+
+class SPLAT_B_DESC : MSA_3R_DESC_BASE<"splat.b", int_mips_splat_b, NoItinerary,
+                                      MSA128, MSA128, GPR32>;
+class SPLAT_H_DESC : MSA_3R_DESC_BASE<"splat.h", int_mips_splat_h, NoItinerary,
+                                      MSA128, MSA128, GPR32>;
+class SPLAT_W_DESC : MSA_3R_DESC_BASE<"splat.w", int_mips_splat_w, NoItinerary,
+                                      MSA128, MSA128, GPR32>;
+class SPLAT_D_DESC : MSA_3R_DESC_BASE<"splat.d", int_mips_splat_d, NoItinerary,
+                                      MSA128, MSA128, GPR32>;
+
+class SPLATI_B_DESC : MSA_BIT_B_DESC_BASE<"splati.b", int_mips_splati_b,
+                                          NoItinerary, MSA128, MSA128>;
+class SPLATI_H_DESC : MSA_BIT_H_DESC_BASE<"splati.h", int_mips_splati_h,
+                                          NoItinerary, MSA128, MSA128>;
+class SPLATI_W_DESC : MSA_BIT_W_DESC_BASE<"splati.w", int_mips_splati_w,
+                                          NoItinerary, MSA128, MSA128>;
+class SPLATI_D_DESC : MSA_BIT_D_DESC_BASE<"splati.d", int_mips_splati_d,
+                                          NoItinerary, MSA128, MSA128>;
+
+class SRA_B_DESC : MSA_3R_DESC_BASE<"sra.b", int_mips_sra_b, NoItinerary,
+                                    MSA128, MSA128>;
+class SRA_H_DESC : MSA_3R_DESC_BASE<"sra.h", int_mips_sra_h, NoItinerary,
+                                    MSA128, MSA128>;
+class SRA_W_DESC : MSA_3R_DESC_BASE<"sra.w", int_mips_sra_w, NoItinerary,
+                                    MSA128, MSA128>;
+class SRA_D_DESC : MSA_3R_DESC_BASE<"sra.d", int_mips_sra_d, NoItinerary,
+                                    MSA128, MSA128>;
+
+class SRAI_B_DESC : MSA_BIT_B_DESC_BASE<"srai.b", int_mips_srai_b,
+                                        NoItinerary, MSA128, MSA128>;
+class SRAI_H_DESC : MSA_BIT_H_DESC_BASE<"srai.h", int_mips_srai_h,
+                                        NoItinerary, MSA128, MSA128>;
+class SRAI_W_DESC : MSA_BIT_W_DESC_BASE<"srai.w", int_mips_srai_w,
+                                        NoItinerary, MSA128, MSA128>;
+class SRAI_D_DESC : MSA_BIT_D_DESC_BASE<"srai.d", int_mips_srai_d,
+                                        NoItinerary, MSA128, MSA128>;
+
+class SRL_B_DESC : MSA_3R_DESC_BASE<"srl.b", int_mips_srl_b, NoItinerary,
+                                    MSA128, MSA128>;
+class SRL_H_DESC : MSA_3R_DESC_BASE<"srl.h", int_mips_srl_h, NoItinerary,
+                                    MSA128, MSA128>;
+class SRL_W_DESC : MSA_3R_DESC_BASE<"srl.w", int_mips_srl_w, NoItinerary,
+                                    MSA128, MSA128>;
+class SRL_D_DESC : MSA_3R_DESC_BASE<"srl.d", int_mips_srl_d, NoItinerary,
+                                    MSA128, MSA128>;
+
+class SRLI_B_DESC : MSA_BIT_B_DESC_BASE<"srli.b", int_mips_srli_b,
+                                        NoItinerary, MSA128, MSA128>;
+class SRLI_H_DESC : MSA_BIT_H_DESC_BASE<"srli.h", int_mips_srli_h,
+                                        NoItinerary, MSA128, MSA128>;
+class SRLI_W_DESC : MSA_BIT_W_DESC_BASE<"srli.w", int_mips_srli_w,
+                                        NoItinerary, MSA128, MSA128>;
+class SRLI_D_DESC : MSA_BIT_D_DESC_BASE<"srli.d", int_mips_srli_d,
+                                        NoItinerary, MSA128, MSA128>;
+
 class ST_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, InstrItinClass itin, RegisterClass RCWD,
                    Operand MemOpnd = mem, ComplexPattern Addr = addr> {
@@ -1271,6 +1825,71 @@ class ST_H_DESC : ST_DESC_BASE<"st.h", store, v8i16, NoItinerary, MSA128>;
 class ST_W_DESC : ST_DESC_BASE<"st.w", store, v4i32, NoItinerary, MSA128>;
 class ST_D_DESC : ST_DESC_BASE<"st.d", store, v2i64, NoItinerary, MSA128>;
 
+class SUBS_S_B_DESC : MSA_3R_DESC_BASE<"subs_s.b", int_mips_subs_s_b,
+                                       NoItinerary, MSA128, MSA128>;
+class SUBS_S_H_DESC : MSA_3R_DESC_BASE<"subs_s.h", int_mips_subs_s_h,
+                                       NoItinerary, MSA128, MSA128>;
+class SUBS_S_W_DESC : MSA_3R_DESC_BASE<"subs_s.w", int_mips_subs_s_w,
+                                       NoItinerary, MSA128, MSA128>;
+class SUBS_S_D_DESC : MSA_3R_DESC_BASE<"subs_s.d", int_mips_subs_s_d,
+                                       NoItinerary, MSA128, MSA128>;
+
+class SUBS_U_B_DESC : MSA_3R_DESC_BASE<"subs_u.b", int_mips_subs_u_b,
+                                       NoItinerary, MSA128, MSA128>;
+class SUBS_U_H_DESC : MSA_3R_DESC_BASE<"subs_u.h", int_mips_subs_u_h,
+                                       NoItinerary, MSA128, MSA128>;
+class SUBS_U_W_DESC : MSA_3R_DESC_BASE<"subs_u.w", int_mips_subs_u_w,
+                                       NoItinerary, MSA128, MSA128>;
+class SUBS_U_D_DESC : MSA_3R_DESC_BASE<"subs_u.d", int_mips_subs_u_d,
+                                       NoItinerary, MSA128, MSA128>;
+
+class SUBSUS_U_B_DESC : MSA_3R_DESC_BASE<"subsus_u.b", int_mips_subsus_u_b,
+                                         NoItinerary, MSA128, MSA128>;
+class SUBSUS_U_H_DESC : MSA_3R_DESC_BASE<"subsus_u.h", int_mips_subsus_u_h,
+                                         NoItinerary, MSA128, MSA128>;
+class SUBSUS_U_W_DESC : MSA_3R_DESC_BASE<"subsus_u.w", int_mips_subsus_u_w,
+                                         NoItinerary, MSA128, MSA128>;
+class SUBSUS_U_D_DESC : MSA_3R_DESC_BASE<"subsus_u.d", int_mips_subsus_u_d,
+                                         NoItinerary, MSA128, MSA128>;
+
+class SUBSUU_S_B_DESC : MSA_3R_DESC_BASE<"subsuu_s.b", int_mips_subsuu_s_b,
+                                         NoItinerary, MSA128, MSA128>;
+class SUBSUU_S_H_DESC : MSA_3R_DESC_BASE<"subsuu_s.h", int_mips_subsuu_s_h,
+                                         NoItinerary, MSA128, MSA128>;
+class SUBSUU_S_W_DESC : MSA_3R_DESC_BASE<"subsuu_s.w", int_mips_subsuu_s_w,
+                                         NoItinerary, MSA128, MSA128>;
+class SUBSUU_S_D_DESC : MSA_3R_DESC_BASE<"subsuu_s.d", int_mips_subsuu_s_d,
+                                         NoItinerary, MSA128, MSA128>;
+
+class SUBV_B_DESC : MSA_3R_DESC_BASE<"subv.b", int_mips_subv_b,
+                                     NoItinerary, MSA128, MSA128>;
+class SUBV_H_DESC : MSA_3R_DESC_BASE<"subv.h", int_mips_subv_h,
+                                     NoItinerary, MSA128, MSA128>;
+class SUBV_W_DESC : MSA_3R_DESC_BASE<"subv.w", int_mips_subv_w,
+                                     NoItinerary, MSA128, MSA128>;
+class SUBV_D_DESC : MSA_3R_DESC_BASE<"subv.d", int_mips_subv_d,
+                                     NoItinerary, MSA128, MSA128>;
+
+class SUBVI_B_DESC : MSA_I5_DESC_BASE<"subvi.b", int_mips_subvi_b, NoItinerary,
+                                      MSA128, MSA128>;
+class SUBVI_H_DESC : MSA_I5_DESC_BASE<"subvi.h", int_mips_subvi_h, NoItinerary,
+                                      MSA128, MSA128>;
+class SUBVI_W_DESC : MSA_I5_DESC_BASE<"subvi.w", int_mips_subvi_w, NoItinerary,
+                                      MSA128, MSA128>;
+class SUBVI_D_DESC : MSA_I5_DESC_BASE<"subvi.d", int_mips_subvi_d, NoItinerary,
+                                      MSA128, MSA128>;
+
+class VSHF_B_DESC : MSA_3R_DESC_BASE<"vshf.b", int_mips_vshf_b,
+                                     NoItinerary, MSA128, MSA128>;
+class VSHF_H_DESC : MSA_3R_DESC_BASE<"vshf.h", int_mips_vshf_h,
+                                     NoItinerary, MSA128, MSA128>;
+class VSHF_W_DESC : MSA_3R_DESC_BASE<"vshf.w", int_mips_vshf_w,
+                                     NoItinerary, MSA128, MSA128>;
+class VSHF_D_DESC : MSA_3R_DESC_BASE<"vshf.d", int_mips_vshf_d,
+                                     NoItinerary, MSA128, MSA128>;
+
+class XORI_B_DESC : MSA_I8_DESC_BASE<"xori.b", int_mips_xori_b, NoItinerary,
+                                     MSA128, MSA128>;
 // Instruction defs.
 def ADD_A_B : ADD_A_B_ENC, ADD_A_B_DESC, Requires<[HasMSA]>;
 def ADD_A_H : ADD_A_H_ENC, ADD_A_H_DESC, Requires<[HasMSA]>;
@@ -1641,10 +2260,233 @@ def LDI_B : LDI_B_ENC, LDI_B_DESC, Requires<[HasMSA]>;
 def LDI_H : LDI_H_ENC, LDI_H_DESC, Requires<[HasMSA]>;
 def LDI_W : LDI_W_ENC, LDI_W_DESC, Requires<[HasMSA]>;
 
+def MADD_Q_H : MADD_Q_H_ENC, MADD_Q_H_DESC, Requires<[HasMSA]>;
+def MADD_Q_W : MADD_Q_W_ENC, MADD_Q_W_DESC, Requires<[HasMSA]>;
+
+def MADDR_Q_H : MADDR_Q_H_ENC, MADDR_Q_H_DESC, Requires<[HasMSA]>;
+def MADDR_Q_W : MADDR_Q_W_ENC, MADDR_Q_W_DESC, Requires<[HasMSA]>;
+
+def MADDV_B : MADDV_B_ENC, MADDV_B_DESC, Requires<[HasMSA]>;
+def MADDV_H : MADDV_H_ENC, MADDV_H_DESC, Requires<[HasMSA]>;
+def MADDV_W : MADDV_W_ENC, MADDV_W_DESC, Requires<[HasMSA]>;
+def MADDV_D : MADDV_D_ENC, MADDV_D_DESC, Requires<[HasMSA]>;
+
+def MAX_A_B : MAX_A_B_ENC, MAX_A_B_DESC, Requires<[HasMSA]>;
+def MAX_A_H : MAX_A_H_ENC, MAX_A_H_DESC, Requires<[HasMSA]>;
+def MAX_A_W : MAX_A_W_ENC, MAX_A_W_DESC, Requires<[HasMSA]>;
+def MAX_A_D : MAX_A_D_ENC, MAX_A_D_DESC, Requires<[HasMSA]>;
+
+def MAX_S_B : MAX_S_B_ENC, MAX_S_B_DESC, Requires<[HasMSA]>;
+def MAX_S_H : MAX_S_H_ENC, MAX_S_H_DESC, Requires<[HasMSA]>;
+def MAX_S_W : MAX_S_W_ENC, MAX_S_W_DESC, Requires<[HasMSA]>;
+def MAX_S_D : MAX_S_D_ENC, MAX_S_D_DESC, Requires<[HasMSA]>;
+
+def MAX_U_B : MAX_U_B_ENC, MAX_U_B_DESC, Requires<[HasMSA]>;
+def MAX_U_H : MAX_U_H_ENC, MAX_U_H_DESC, Requires<[HasMSA]>;
+def MAX_U_W : MAX_U_W_ENC, MAX_U_W_DESC, Requires<[HasMSA]>;
+def MAX_U_D : MAX_U_D_ENC, MAX_U_D_DESC, Requires<[HasMSA]>;
+
+def MAXI_S_B : MAXI_S_B_ENC, MAXI_S_B_DESC, Requires<[HasMSA]>;
+def MAXI_S_H : MAXI_S_H_ENC, MAXI_S_H_DESC, Requires<[HasMSA]>;
+def MAXI_S_W : MAXI_S_W_ENC, MAXI_S_W_DESC, Requires<[HasMSA]>;
+def MAXI_S_D : MAXI_S_D_ENC, MAXI_S_D_DESC, Requires<[HasMSA]>;
+
+def MAXI_U_B : MAXI_U_B_ENC, MAXI_U_B_DESC, Requires<[HasMSA]>;
+def MAXI_U_H : MAXI_U_H_ENC, MAXI_U_H_DESC, Requires<[HasMSA]>;
+def MAXI_U_W : MAXI_U_W_ENC, MAXI_U_W_DESC, Requires<[HasMSA]>;
+def MAXI_U_D : MAXI_U_D_ENC, MAXI_U_D_DESC, Requires<[HasMSA]>;
+
+def MIN_A_B : MIN_A_B_ENC, MIN_A_B_DESC, Requires<[HasMSA]>;
+def MIN_A_H : MIN_A_H_ENC, MIN_A_H_DESC, Requires<[HasMSA]>;
+def MIN_A_W : MIN_A_W_ENC, MIN_A_W_DESC, Requires<[HasMSA]>;
+def MIN_A_D : MIN_A_D_ENC, MIN_A_D_DESC, Requires<[HasMSA]>;
+
+def MIN_S_B : MIN_S_B_ENC, MIN_S_B_DESC, Requires<[HasMSA]>;
+def MIN_S_H : MIN_S_H_ENC, MIN_S_H_DESC, Requires<[HasMSA]>;
+def MIN_S_W : MIN_S_W_ENC, MIN_S_W_DESC, Requires<[HasMSA]>;
+def MIN_S_D : MIN_S_D_ENC, MIN_S_D_DESC, Requires<[HasMSA]>;
+
+def MIN_U_B : MIN_U_B_ENC, MIN_U_B_DESC, Requires<[HasMSA]>;
+def MIN_U_H : MIN_U_H_ENC, MIN_U_H_DESC, Requires<[HasMSA]>;
+def MIN_U_W : MIN_U_W_ENC, MIN_U_W_DESC, Requires<[HasMSA]>;
+def MIN_U_D : MIN_U_D_ENC, MIN_U_D_DESC, Requires<[HasMSA]>;
+
+def MINI_S_B : MINI_S_B_ENC, MINI_S_B_DESC, Requires<[HasMSA]>;
+def MINI_S_H : MINI_S_H_ENC, MINI_S_H_DESC, Requires<[HasMSA]>;
+def MINI_S_W : MINI_S_W_ENC, MINI_S_W_DESC, Requires<[HasMSA]>;
+def MINI_S_D : MINI_S_D_ENC, MINI_S_D_DESC, Requires<[HasMSA]>;
+
+def MINI_U_B : MINI_U_B_ENC, MINI_U_B_DESC, Requires<[HasMSA]>;
+def MINI_U_H : MINI_U_H_ENC, MINI_U_H_DESC, Requires<[HasMSA]>;
+def MINI_U_W : MINI_U_W_ENC, MINI_U_W_DESC, Requires<[HasMSA]>;
+def MINI_U_D : MINI_U_D_ENC, MINI_U_D_DESC, Requires<[HasMSA]>;
+
+def MOD_S_B : MOD_S_B_ENC, MOD_S_B_DESC, Requires<[HasMSA]>;
+def MOD_S_H : MOD_S_H_ENC, MOD_S_H_DESC, Requires<[HasMSA]>;
+def MOD_S_W : MOD_S_W_ENC, MOD_S_W_DESC, Requires<[HasMSA]>;
+def MOD_S_D : MOD_S_D_ENC, MOD_S_D_DESC, Requires<[HasMSA]>;
+
+def MOD_U_B : MOD_U_B_ENC, MOD_U_B_DESC, Requires<[HasMSA]>;
+def MOD_U_H : MOD_U_H_ENC, MOD_U_H_DESC, Requires<[HasMSA]>;
+def MOD_U_W : MOD_U_W_ENC, MOD_U_W_DESC, Requires<[HasMSA]>;
+def MOD_U_D : MOD_U_D_ENC, MOD_U_D_DESC, Requires<[HasMSA]>;
+
+def MSUB_Q_H : MSUB_Q_H_ENC, MSUB_Q_H_DESC, Requires<[HasMSA]>;
+def MSUB_Q_W : MSUB_Q_W_ENC, MSUB_Q_W_DESC, Requires<[HasMSA]>;
+
+def MSUBR_Q_H : MSUBR_Q_H_ENC, MSUBR_Q_H_DESC, Requires<[HasMSA]>;
+def MSUBR_Q_W : MSUBR_Q_W_ENC, MSUBR_Q_W_DESC, Requires<[HasMSA]>;
+
+def MSUBV_B : MSUBV_B_ENC, MSUBV_B_DESC, Requires<[HasMSA]>;
+def MSUBV_H : MSUBV_H_ENC, MSUBV_H_DESC, Requires<[HasMSA]>;
+def MSUBV_W : MSUBV_W_ENC, MSUBV_W_DESC, Requires<[HasMSA]>;
+def MSUBV_D : MSUBV_D_ENC, MSUBV_D_DESC, Requires<[HasMSA]>;
+
+def MUL_Q_H : MUL_Q_H_ENC, MUL_Q_H_DESC, Requires<[HasMSA]>;
+def MUL_Q_W : MUL_Q_W_ENC, MUL_Q_W_DESC, Requires<[HasMSA]>;
+
+def MULR_Q_H : MULR_Q_H_ENC, MULR_Q_H_DESC, Requires<[HasMSA]>;
+def MULR_Q_W : MULR_Q_W_ENC, MULR_Q_W_DESC, Requires<[HasMSA]>;
+
+def MULV_B : MULV_B_ENC, MULV_B_DESC, Requires<[HasMSA]>;
+def MULV_H : MULV_H_ENC, MULV_H_DESC, Requires<[HasMSA]>;
+def MULV_W : MULV_W_ENC, MULV_W_DESC, Requires<[HasMSA]>;
+def MULV_D : MULV_D_ENC, MULV_D_DESC, Requires<[HasMSA]>;
+
+def NLOC_B : NLOC_B_ENC, NLOC_B_DESC, Requires<[HasMSA]>;
+def NLOC_H : NLOC_H_ENC, NLOC_H_DESC, Requires<[HasMSA]>;
+def NLOC_W : NLOC_W_ENC, NLOC_W_DESC, Requires<[HasMSA]>;
+def NLOC_D : NLOC_D_ENC, NLOC_D_DESC, Requires<[HasMSA]>;
+
+def NLZC_B : NLZC_B_ENC, NLZC_B_DESC, Requires<[HasMSA]>;
+def NLZC_H : NLZC_H_ENC, NLZC_H_DESC, Requires<[HasMSA]>;
+def NLZC_W : NLZC_W_ENC, NLZC_W_DESC, Requires<[HasMSA]>;
+def NLZC_D : NLZC_D_ENC, NLZC_D_DESC, Requires<[HasMSA]>;
+
+def NORI_B : NORI_B_ENC, NORI_B_DESC, Requires<[HasMSA]>;
+
+def ORI_B : ORI_B_ENC, ORI_B_DESC, Requires<[HasMSA]>;
+
+def PCKEV_B : PCKEV_B_ENC, PCKEV_B_DESC, Requires<[HasMSA]>;
+def PCKEV_H : PCKEV_H_ENC, PCKEV_H_DESC, Requires<[HasMSA]>;
+def PCKEV_W : PCKEV_W_ENC, PCKEV_W_DESC, Requires<[HasMSA]>;
+def PCKEV_D : PCKEV_D_ENC, PCKEV_D_DESC, Requires<[HasMSA]>;
+
+def PCKOD_B : PCKOD_B_ENC, PCKOD_B_DESC, Requires<[HasMSA]>;
+def PCKOD_H : PCKOD_H_ENC, PCKOD_H_DESC, Requires<[HasMSA]>;
+def PCKOD_W : PCKOD_W_ENC, PCKOD_W_DESC, Requires<[HasMSA]>;
+def PCKOD_D : PCKOD_D_ENC, PCKOD_D_DESC, Requires<[HasMSA]>;
+
+def PCNT_B : PCNT_B_ENC, PCNT_B_DESC, Requires<[HasMSA]>;
+def PCNT_H : PCNT_H_ENC, PCNT_H_DESC, Requires<[HasMSA]>;
+def PCNT_W : PCNT_W_ENC, PCNT_W_DESC, Requires<[HasMSA]>;
+def PCNT_D : PCNT_D_ENC, PCNT_D_DESC, Requires<[HasMSA]>;
+
+def SAT_S_B : SAT_S_B_ENC, SAT_S_B_DESC, Requires<[HasMSA]>;
+def SAT_S_H : SAT_S_H_ENC, SAT_S_H_DESC, Requires<[HasMSA]>;
+def SAT_S_W : SAT_S_W_ENC, SAT_S_W_DESC, Requires<[HasMSA]>;
+def SAT_S_D : SAT_S_D_ENC, SAT_S_D_DESC, Requires<[HasMSA]>;
+
+def SAT_U_B : SAT_U_B_ENC, SAT_U_B_DESC, Requires<[HasMSA]>;
+def SAT_U_H : SAT_U_H_ENC, SAT_U_H_DESC, Requires<[HasMSA]>;
+def SAT_U_W : SAT_U_W_ENC, SAT_U_W_DESC, Requires<[HasMSA]>;
+def SAT_U_D : SAT_U_D_ENC, SAT_U_D_DESC, Requires<[HasMSA]>;
+
+def SHF_B : SHF_B_ENC, SHF_B_DESC, Requires<[HasMSA]>;
+def SHF_H : SHF_H_ENC, SHF_H_DESC, Requires<[HasMSA]>;
+def SHF_W : SHF_W_ENC, SHF_W_DESC, Requires<[HasMSA]>;
+
+def SLD_B : SLD_B_ENC, SLD_B_DESC, Requires<[HasMSA]>;
+def SLD_H : SLD_H_ENC, SLD_H_DESC, Requires<[HasMSA]>;
+def SLD_W : SLD_W_ENC, SLD_W_DESC, Requires<[HasMSA]>;
+def SLD_D : SLD_D_ENC, SLD_D_DESC, Requires<[HasMSA]>;
+
+def SLDI_B : SLDI_B_ENC, SLDI_B_DESC, Requires<[HasMSA]>;
+def SLDI_H : SLDI_H_ENC, SLDI_H_DESC, Requires<[HasMSA]>;
+def SLDI_W : SLDI_W_ENC, SLDI_W_DESC, Requires<[HasMSA]>;
+def SLDI_D : SLDI_D_ENC, SLDI_D_DESC, Requires<[HasMSA]>;
+
+def SLL_B : SLL_B_ENC, SLL_B_DESC, Requires<[HasMSA]>;
+def SLL_H : SLL_H_ENC, SLL_H_DESC, Requires<[HasMSA]>;
+def SLL_W : SLL_W_ENC, SLL_W_DESC, Requires<[HasMSA]>;
+def SLL_D : SLL_D_ENC, SLL_D_DESC, Requires<[HasMSA]>;
+
+def SLLI_B : SLLI_B_ENC, SLLI_B_DESC, Requires<[HasMSA]>;
+def SLLI_H : SLLI_H_ENC, SLLI_H_DESC, Requires<[HasMSA]>;
+def SLLI_W : SLLI_W_ENC, SLLI_W_DESC, Requires<[HasMSA]>;
+def SLLI_D : SLLI_D_ENC, SLLI_D_DESC, Requires<[HasMSA]>;
+
+def SPLAT_B : SPLAT_B_ENC, SPLAT_B_DESC, Requires<[HasMSA]>;
+def SPLAT_H : SPLAT_H_ENC, SPLAT_H_DESC, Requires<[HasMSA]>;
+def SPLAT_W : SPLAT_W_ENC, SPLAT_W_DESC, Requires<[HasMSA]>;
+def SPLAT_D : SPLAT_D_ENC, SPLAT_D_DESC, Requires<[HasMSA]>;
+
+def SPLATI_B : SPLATI_B_ENC, SPLATI_B_DESC, Requires<[HasMSA]>;
+def SPLATI_H : SPLATI_H_ENC, SPLATI_H_DESC, Requires<[HasMSA]>;
+def SPLATI_W : SPLATI_W_ENC, SPLATI_W_DESC, Requires<[HasMSA]>;
+def SPLATI_D : SPLATI_D_ENC, SPLATI_D_DESC, Requires<[HasMSA]>;
+
+def SRA_B : SRA_B_ENC, SRA_B_DESC, Requires<[HasMSA]>;
+def SRA_H : SRA_H_ENC, SRA_H_DESC, Requires<[HasMSA]>;
+def SRA_W : SRA_W_ENC, SRA_W_DESC, Requires<[HasMSA]>;
+def SRA_D : SRA_D_ENC, SRA_D_DESC, Requires<[HasMSA]>;
+
+def SRAI_B : SRAI_B_ENC, SRAI_B_DESC, Requires<[HasMSA]>;
+def SRAI_H : SRAI_H_ENC, SRAI_H_DESC, Requires<[HasMSA]>;
+def SRAI_W : SRAI_W_ENC, SRAI_W_DESC, Requires<[HasMSA]>;
+def SRAI_D : SRAI_D_ENC, SRAI_D_DESC, Requires<[HasMSA]>;
+
+def SRL_B : SRL_B_ENC, SRL_B_DESC, Requires<[HasMSA]>;
+def SRL_H : SRL_H_ENC, SRL_H_DESC, Requires<[HasMSA]>;
+def SRL_W : SRL_W_ENC, SRL_W_DESC, Requires<[HasMSA]>;
+def SRL_D : SRL_D_ENC, SRL_D_DESC, Requires<[HasMSA]>;
+
+def SRLI_B : SRLI_B_ENC, SRLI_B_DESC, Requires<[HasMSA]>;
+def SRLI_H : SRLI_H_ENC, SRLI_H_DESC, Requires<[HasMSA]>;
+def SRLI_W : SRLI_W_ENC, SRLI_W_DESC, Requires<[HasMSA]>;
+def SRLI_D : SRLI_D_ENC, SRLI_D_DESC, Requires<[HasMSA]>;
+
 def ST_B: ST_B_ENC, ST_B_DESC, Requires<[HasMSA]>;
 def ST_H: ST_H_ENC, ST_H_DESC, Requires<[HasMSA]>;
 def ST_W: ST_W_ENC, ST_W_DESC, Requires<[HasMSA]>;
 def ST_D: ST_D_ENC, ST_D_DESC, Requires<[HasMSA]>;
+
+def SUBS_S_B : SUBS_S_B_ENC, SUBS_S_B_DESC, Requires<[HasMSA]>;
+def SUBS_S_H : SUBS_S_H_ENC, SUBS_S_H_DESC, Requires<[HasMSA]>;
+def SUBS_S_W : SUBS_S_W_ENC, SUBS_S_W_DESC, Requires<[HasMSA]>;
+def SUBS_S_D : SUBS_S_D_ENC, SUBS_S_D_DESC, Requires<[HasMSA]>;
+
+def SUBS_U_B : SUBS_U_B_ENC, SUBS_U_B_DESC, Requires<[HasMSA]>;
+def SUBS_U_H : SUBS_U_H_ENC, SUBS_U_H_DESC, Requires<[HasMSA]>;
+def SUBS_U_W : SUBS_U_W_ENC, SUBS_U_W_DESC, Requires<[HasMSA]>;
+def SUBS_U_D : SUBS_U_D_ENC, SUBS_U_D_DESC, Requires<[HasMSA]>;
+
+def SUBSUS_U_B : SUBSUS_U_B_ENC, SUBSUS_U_B_DESC, Requires<[HasMSA]>;
+def SUBSUS_U_H : SUBSUS_U_H_ENC, SUBSUS_U_H_DESC, Requires<[HasMSA]>;
+def SUBSUS_U_W : SUBSUS_U_W_ENC, SUBSUS_U_W_DESC, Requires<[HasMSA]>;
+def SUBSUS_U_D : SUBSUS_U_D_ENC, SUBSUS_U_D_DESC, Requires<[HasMSA]>;
+
+def SUBSUU_S_B : SUBSUU_S_B_ENC, SUBSUU_S_B_DESC, Requires<[HasMSA]>;
+def SUBSUU_S_H : SUBSUU_S_H_ENC, SUBSUU_S_H_DESC, Requires<[HasMSA]>;
+def SUBSUU_S_W : SUBSUU_S_W_ENC, SUBSUU_S_W_DESC, Requires<[HasMSA]>;
+def SUBSUU_S_D : SUBSUU_S_D_ENC, SUBSUU_S_D_DESC, Requires<[HasMSA]>;
+
+def SUBV_B : SUBV_B_ENC, SUBV_B_DESC, Requires<[HasMSA]>;
+def SUBV_H : SUBV_H_ENC, SUBV_H_DESC, Requires<[HasMSA]>;
+def SUBV_W : SUBV_W_ENC, SUBV_W_DESC, Requires<[HasMSA]>;
+def SUBV_D : SUBV_D_ENC, SUBV_D_DESC, Requires<[HasMSA]>;
+
+def SUBVI_B : SUBVI_B_ENC, SUBVI_B_DESC, Requires<[HasMSA]>;
+def SUBVI_H : SUBVI_H_ENC, SUBVI_H_DESC, Requires<[HasMSA]>;
+def SUBVI_W : SUBVI_W_ENC, SUBVI_W_DESC, Requires<[HasMSA]>;
+def SUBVI_D : SUBVI_D_ENC, SUBVI_D_DESC, Requires<[HasMSA]>;
+
+def VSHF_B : VSHF_B_ENC, VSHF_B_DESC, Requires<[HasMSA]>;
+def VSHF_H : VSHF_H_ENC, VSHF_H_DESC, Requires<[HasMSA]>;
+def VSHF_W : VSHF_W_ENC, VSHF_W_DESC, Requires<[HasMSA]>;
+def VSHF_D : VSHF_D_ENC, VSHF_D_DESC, Requires<[HasMSA]>;
+
+def XORI_B : XORI_B_ENC, XORI_B_DESC, Requires<[HasMSA]>;
 
 // Patterns.
 class MSAPat<dag pattern, dag result, Predicate pred = HasMSA> :
