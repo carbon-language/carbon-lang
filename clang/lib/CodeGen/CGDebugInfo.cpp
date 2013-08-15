@@ -2237,7 +2237,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
       RealDecl.setTypeArray(llvm::DIArray(),
                             CollectCXXTemplateParams(TSpecial, DefUnit));
   }
-  return llvm::DIType(RealDecl);
+  return RealDecl;
 }
 
 /// CreateMemberType - Create new member and increase Offset by FType's size.
