@@ -11,7 +11,7 @@ target datalayout = "e-p:64:64"
 
 ; Test noop elimination
 define i32* @test1(i32* %I) {
-        %A = getelementptr i32* %I, i64 0 
+        %A = getelementptr i32* %I, i64 0
         ret i32* %A
 ; CHECK-LABEL: @test1(
 ; CHECK: ret i32* %I
@@ -36,7 +36,7 @@ define i32* @test3(i32* %I) {
 
 ; Test that two getelementptr insts fold
 define i32* @test4({ i32 }* %I) {
-        %A = getelementptr { i32 }* %I, i64 1 
+        %A = getelementptr { i32 }* %I, i64 1
         %B = getelementptr { i32 }* %A, i64 0, i32 0
         ret i32* %B
 ; CHECK-LABEL: @test4(
@@ -45,7 +45,7 @@ define i32* @test4({ i32 }* %I) {
 
 define void @test5(i8 %B) {
         ; This should be turned into a constexpr instead of being an instruction
-        %A = getelementptr [10 x i8]* @Global, i64 0, i64 4 
+        %A = getelementptr [10 x i8]* @Global, i64 0, i64 4
         store i8 %B, i8* %A
         ret void
 ; CHECK-LABEL: @test5(
@@ -54,8 +54,8 @@ define void @test5(i8 %B) {
 
 
 define i32* @test7(i32* %I, i64 %C, i64 %D) {
-        %A = getelementptr i32* %I, i64 %C 
-        %B = getelementptr i32* %A, i64 %D 
+        %A = getelementptr i32* %I, i64 %C
+        %B = getelementptr i32* %A, i64 %D
         ret i32* %B
 ; CHECK-LABEL: @test7(
 ; CHECK: %A.sum = add i64 %C, %D
@@ -64,8 +64,8 @@ define i32* @test7(i32* %I, i64 %C, i64 %D) {
 
 define i8* @test8([10 x i32]* %X) {
         ;; Fold into the cast.
-        %A = getelementptr [10 x i32]* %X, i64 0, i64 0 
-        %B = bitcast i32* %A to i8*     
+        %A = getelementptr [10 x i32]* %X, i64 0, i64 0
+        %B = bitcast i32* %A to i8*
         ret i8* %B
 ; CHECK-LABEL: @test8(
 ; CHECK: bitcast [10 x i32]* %X to i8*
@@ -73,7 +73,7 @@ define i8* @test8([10 x i32]* %X) {
 
 define i32 @test9() {
         %A = getelementptr { i32, double }* null, i32 0, i32 1
-        %B = ptrtoint double* %A to i32        
+        %B = ptrtoint double* %A to i32
         ret i32 %B
 ; CHECK-LABEL: @test9(
 ; CHECK: ret i32 8
@@ -83,15 +83,15 @@ define i1 @test10({ i32, i32 }* %x, { i32, i32 }* %y) {
         %tmp.1 = getelementptr { i32, i32 }* %x, i32 0, i32 1
         %tmp.3 = getelementptr { i32, i32 }* %y, i32 0, i32 1
         ;; seteq x, y
-        %tmp.4 = icmp eq i32* %tmp.1, %tmp.3       
+        %tmp.4 = icmp eq i32* %tmp.1, %tmp.3
         ret i1 %tmp.4
 ; CHECK-LABEL: @test10(
 ; CHECK: icmp eq { i32, i32 }* %x, %y
 }
 
 define i1 @test11({ i32, i32 }* %X) {
-        %P = getelementptr { i32, i32 }* %X, i32 0, i32 0 
-        %Q = icmp eq i32* %P, null             
+        %P = getelementptr { i32, i32 }* %X, i32 0, i32 0
+        %Q = icmp eq i32* %P, null
         ret i1 %Q
 ; CHECK-LABEL: @test11(
 ; CHECK: icmp eq { i32, i32 }* %X, null
@@ -105,11 +105,11 @@ entry:
   store i32 10, i32* %g3, align 4
 
   %g4 = getelementptr %struct.A* %a, i32 0, i32 0
-  
+
   %new_a = bitcast %struct.B* %g4 to %struct.A*
 
-  %g5 = getelementptr %struct.A* %new_a, i32 0, i32 1	
-  %a_a = load i32* %g5, align 4	
+  %g5 = getelementptr %struct.A* %new_a, i32 0, i32 1
+  %a_a = load i32* %g5, align 4
   ret i32 %a_a
 ; CHECK-LABEL:      @test12(
 ; CHECK:      getelementptr %struct.A* %a, i64 0, i32 1
@@ -129,8 +129,35 @@ define i1 @test13(i64 %X, %S* %P) {
 ; CHECK:    %C = icmp eq i64 %X, -1
 }
 
+define i1 @test13_i32(i32 %X, %S* %P) {
+; CHECK-LABEL: @test13_i32(
+; CHECK: %C = icmp eq i32 %X, -1
+  %A = getelementptr inbounds %S* %P, i32 0, i32 1, i32 %X
+  %B = getelementptr inbounds %S* %P, i32 0, i32 0
+  %C = icmp eq i32* %A, %B
+  ret i1 %C
+}
 
-@G = external global [3 x i8]      
+define i1 @test13_i16(i16 %X, %S* %P) {
+; CHECK-LABEL: @test13_i16(
+; CHECK: %C = icmp eq i16 %X, -1
+  %A = getelementptr inbounds %S* %P, i16 0, i32 1, i16 %X
+  %B = getelementptr inbounds %S* %P, i16 0, i32 0
+  %C = icmp eq i32* %A, %B
+  ret i1 %C
+}
+
+define i1 @test13_i128(i128 %X, %S* %P) {
+; CHECK-LABEL: @test13_i128(
+; CHECK: %C = icmp eq i64 %1, -1
+  %A = getelementptr inbounds %S* %P, i128 0, i32 1, i128 %X
+  %B = getelementptr inbounds %S* %P, i128 0, i32 0
+  %C = icmp eq i32* %A, %B
+  ret i1 %C
+}
+
+
+@G = external global [3 x i8]
 define i8* @test14(i32 %Idx) {
         %idx = zext i32 %Idx to i64
         %tmp = getelementptr i8* getelementptr ([3 x i8]* @G, i32 0, i32 0), i64 %idx
@@ -151,7 +178,7 @@ define i32 *@test15(i64 %X) {
 
 
 define i32* @test16(i32* %X, i32 %Idx) {
-        %R = getelementptr i32* %X, i32 %Idx       
+        %R = getelementptr i32* %X, i32 %Idx
         ret i32* %R
 ; CHECK-LABEL: @test16(
 ; CHECK: sext i32 %Idx to i64
@@ -164,7 +191,7 @@ define i1 @test17(i16* %P, i32 %I, i32 %J) {
         %C = icmp ult i16* %X, %Y
         ret i1 %C
 ; CHECK-LABEL: @test17(
-; CHECK: %C = icmp slt i32 %I, %J 
+; CHECK: %C = icmp slt i32 %I, %J
 }
 
 define i1 @test18(i16* %P, i32 %I) {
@@ -173,6 +200,33 @@ define i1 @test18(i16* %P, i32 %I) {
         ret i1 %C
 ; CHECK-LABEL: @test18(
 ; CHECK: %C = icmp slt i32 %I, 0
+}
+
+; Smaller than pointer size
+define i1 @test18_i16(i16* %P, i16 %I) {
+; CHECK-LABEL: @test18_i16(
+; CHECK: %C = icmp slt i16 %I, 0
+  %X = getelementptr inbounds i16* %P, i16 %I
+  %C = icmp ult i16* %X, %P
+  ret i1 %C
+}
+
+; Same as pointer size
+define i1 @test18_i64(i16* %P, i64 %I) {
+; CHECK-LABEL: @test18_i64(
+; CHECK: %C = icmp slt i64 %I, 0
+  %X = getelementptr inbounds i16* %P, i64 %I
+  %C = icmp ult i16* %X, %P
+  ret i1 %C
+}
+
+; Larger than the pointer size
+define i1 @test18_i128(i16* %P, i128 %I) {
+; CHECK-LABEL: @test18_i128(
+; CHECK: %C = icmp slt i64 %1, 0
+  %X = getelementptr inbounds i16* %P, i128 %I
+  %C = icmp ult i16* %X, %P
+  ret i1 %C
 }
 
 define i32 @test19(i32* %P, i32 %A, i32 %B) {
@@ -210,8 +264,8 @@ define i32 @test21() {
 @B = global i32 2               ; <i32*> [#uses=1]
 
 define i1 @test22() {
-        %C = icmp ult i32* getelementptr (i32* @A, i64 1), 
-                           getelementptr (i32* @B, i64 2) 
+        %C = icmp ult i32* getelementptr (i32* @A, i64 1),
+                           getelementptr (i32* @B, i64 2)
         ret i1 %C
 ; CHECK-LABEL: @test22(
 ; CHECK: icmp ult (i32* getelementptr inbounds (i32* @A, i64 1), i32* getelementptr (i32* @B, i64 2))
@@ -262,15 +316,15 @@ define i1 @test26(i8* %arr) {
 
 define i32 @test27(%struct.compat_siginfo* %to, %struct.siginfo_t* %from) {
 entry:
-	%from_addr = alloca %struct.siginfo_t*	
-	%tmp344 = load %struct.siginfo_t** %from_addr, align 8	
+	%from_addr = alloca %struct.siginfo_t*
+	%tmp344 = load %struct.siginfo_t** %from_addr, align 8
 	%tmp345 = getelementptr %struct.siginfo_t* %tmp344, i32 0, i32 3
 	%tmp346 = getelementptr { { i32, i32, [0 x i8], %struct.sigval_t, i32 }, [88 x i8] }* %tmp345, i32 0, i32 0
-	%tmp346347 = bitcast { i32, i32, [0 x i8], %struct.sigval_t, i32 }* %tmp346 to { i32, i32, %struct.sigval_t }*	
+	%tmp346347 = bitcast { i32, i32, [0 x i8], %struct.sigval_t, i32 }* %tmp346 to { i32, i32, %struct.sigval_t }*
 	%tmp348 = getelementptr { i32, i32, %struct.sigval_t }* %tmp346347, i32 0, i32 2
 	%tmp349 = getelementptr %struct.sigval_t* %tmp348, i32 0, i32 0
 	%tmp349350 = bitcast i8** %tmp349 to i32*
-	%tmp351 = load i32* %tmp349350, align 8	
+	%tmp351 = load i32* %tmp349350, align 8
 	%tmp360 = call i32 asm sideeffect "...",
         "=r,ir,*m,i,0,~{dirflag},~{fpsr},~{flags}"( i32 %tmp351,
          %struct.__large_struct* null, i32 -14, i32 0 )
@@ -280,28 +334,28 @@ entry:
 
 ; PR1978
 	%struct.x = type <{ i8 }>
-@.str = internal constant [6 x i8] c"Main!\00"	
-@.str1 = internal constant [12 x i8] c"destroy %p\0A\00"	
+@.str = internal constant [6 x i8] c"Main!\00"
+@.str1 = internal constant [12 x i8] c"destroy %p\0A\00"
 
 define i32 @test28() nounwind  {
 entry:
 	%orientations = alloca [1 x [1 x %struct.x]]
-	%tmp3 = call i32 @puts( i8* getelementptr ([6 x i8]* @.str, i32 0, i32 0) ) nounwind 
+	%tmp3 = call i32 @puts( i8* getelementptr ([6 x i8]* @.str, i32 0, i32 0) ) nounwind
 	%tmp45 = getelementptr inbounds [1 x [1 x %struct.x]]* %orientations, i32 1, i32 0, i32 0
 	%orientations62 = getelementptr [1 x [1 x %struct.x]]* %orientations, i32 0, i32 0, i32 0
 	br label %bb10
 
 bb10:
 	%indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb10 ]
-	%tmp.0.reg2mem.0.rec = mul i32 %indvar, -1	
-	%tmp12.rec = add i32 %tmp.0.reg2mem.0.rec, -1	
+	%tmp.0.reg2mem.0.rec = mul i32 %indvar, -1
+	%tmp12.rec = add i32 %tmp.0.reg2mem.0.rec, -1
 	%tmp12 = getelementptr inbounds %struct.x* %tmp45, i32 %tmp12.rec
 	%tmp16 = call i32 (i8*, ...)* @printf( i8* getelementptr ([12 x i8]* @.str1, i32 0, i32 0), %struct.x* %tmp12 ) nounwind
 	%tmp84 = icmp eq %struct.x* %tmp12, %orientations62
 	%indvar.next = add i32 %indvar, 1
 	br i1 %tmp84, label %bb17, label %bb10
 
-bb17:	
+bb17:
 	ret i32 0
 ; CHECK-LABEL: @test28(
 ; CHECK: icmp eq i32 %indvar, 0
@@ -318,7 +372,7 @@ declare i32 @printf(i8*, ...)
 	%T = type <{ i64, i64, i64 }>
 define i32 @test29(i8* %start, i32 %X) nounwind {
 entry:
-	%tmp3 = load i64* null		
+	%tmp3 = load i64* null
 	%add.ptr = getelementptr i8* %start, i64 %tmp3
 	%tmp158 = load i32* null
 	%add.ptr159 = getelementptr %T* null, i32 %tmp158
@@ -356,7 +410,7 @@ declare void @test30f(i32*)
 define i1 @test31(i32* %A) {
         %B = getelementptr i32* %A, i32 1
         %C = getelementptr i32* %A, i64 1
-        %V = icmp eq i32* %B, %C 
+        %V = icmp eq i32* %B, %C
         ret i1 %V
 ; CHECK-LABEL: @test31(
 ; CHECK: ret i1 true
@@ -372,7 +426,7 @@ define i8* @test32(i8* %v) {
 	%D = getelementptr { [16 x i8] }* %C, i32 0, i32 0, i32 8
 	%E = bitcast i8* %D to i8**
 	store i8* %v, i8** %E
-	%F = getelementptr [4 x i8*]* %A, i32 0, i32 2	
+	%F = getelementptr [4 x i8*]* %A, i32 0, i32 2
 	%G = load i8** %F
 	ret i8* %G
 ; CHECK-LABEL: @test32(
@@ -386,7 +440,7 @@ define i8* @test32(i8* %v) {
 
 define i32 *@test33(%struct.Key *%A) {
 	%B = bitcast %struct.Key* %A to %struct.anon*
-        %C = getelementptr %struct.anon* %B, i32 0, i32 2 
+        %C = getelementptr %struct.anon* %B, i32 0, i32 2
 	ret i32 *%C
 ; CHECK-LABEL: @test33(
 ; CHECK: getelementptr %struct.Key* %A, i64 0, i32 0, i32 1
@@ -397,10 +451,10 @@ define i32 *@test33(%struct.Key *%A) {
 	%T2 = type { i8*, i8 }
 define i8* @test34(i8* %Val, i64 %V) nounwind {
 entry:
-	%A = alloca %T2, align 8	
+	%A = alloca %T2, align 8
 	%mrv_gep = bitcast %T2* %A to i64*
 	%B = getelementptr %T2* %A, i64 0, i32 0
-        
+
       	store i64 %V, i64* %mrv_gep
 	%C = load i8** %B, align 8
 	ret i8* %C
