@@ -832,7 +832,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
     // The kext linker doesn't know how to deal with movw/movt.
     CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-arm-darwin-use-movt=0");
+    CmdArgs.push_back("-arm-use-movt=0");
   }
 
   // Setting -mno-global-merge disables the codegen global merge pass. Setting 
