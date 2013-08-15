@@ -90,6 +90,13 @@ if( CLANG_VENDOR )
   add_definitions( -DCLANG_VENDOR="${CLANG_VENDOR} " )
 endif()
 
+set(CLANG_REPOSITORY_STRING "" CACHE STRING
+  "Vendor-specific text for showing the repository the source is taken from.")
+
+if(CLANG_REPOSITORY_STRING)
+  add_definitions(-DCLANG_REPOSITORY_STRING="${CLANG_REPOSITORY_STRING}")
+endif()
+
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
