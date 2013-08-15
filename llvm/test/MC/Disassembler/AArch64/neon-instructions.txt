@@ -671,3 +671,26 @@
 0xf5 0xdd 0x23 0x4e
 0xab 0xdc 0x77 0x4e
 
+#----------------------------------------------------------------------
+# Vector Shift Left by Immediate
+#----------------------------------------------------------------------
+# CHECK: shl v0.4h, v1.4h, #3
+# CHECK: shl v0.16b, v1.16b, #3
+# CHECK: shl v0.4s, v1.4s, #3
+# CHECK: shl v0.2d, v1.2d, #3
+0x20,0x54,0x13,0x0f
+0x20,0x54,0x0b,0x4f
+0x20,0x54,0x23,0x4f
+0x20,0x54,0x43,0x4f
+
+#----------------------------------------------------------------------
+# Vector Shift Left Long (Signed, Unsigned) by Immediate
+#----------------------------------------------------------------------
+# CHECK: sshll v0.2d, v1.2s, #3
+# CHECK: sshll2 v0.4s, v1.8h, #3
+# CHECK: ushll v0.4s, v1.4h, #3
+# CHECK: ushll2 v0.8h, v1.16b, #3
+0x20 0xa4 0x23 0x0f
+0x20 0xa4 0x13 0x4f
+0x20 0xa4 0x13 0x2f
+0x20 0xa4 0x0b 0x6f

@@ -1205,3 +1205,86 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR:         fmulx v1.4h, v25.4h, v3.4h
 // CHECK-ERROR:                  ^
+
+//------------------------------------------------------------------------------
+// Vector Shift Left by Immediate
+//------------------------------------------------------------------------------
+         // Mismatched vector types and out of range
+         shl v0.4s, v15,2s, #3
+         shl v0.2d, v17.4s, #3
+         shl v0.8b, v31.8b, #-1
+         shl v0.8b, v31.8b, #8
+         shl v0.4s, v21.4s, #32
+         shl v0.2d, v1.2d, #64
+
+// CHECK-ERROR: error: expected comma before next operand
+// CHECK-ERROR:         shl v0.4s, v15,2s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:         shl v0.2d, v17.4s, #3
+// CHECK-ERROR:                        ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:         shl v0.8b, v31.8b, #-1
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:         shl v0.8b, v31.8b, #8
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:         shl v0.4s, v21.4s, #32
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 63]
+// CHECK-ERROR:         shl v0.2d, v1.2d, #64
+// CHECK-ERROR:                           ^
+
+//----------------------------------------------------------------------
+// Vector Shift Left Long by Immediate
+//----------------------------------------------------------------------
+        // Mismatched vector types
+        sshll v0.4s, v15.2s, #3
+        ushll v1.16b, v25.16b, #6
+        sshll2 v0.2d, v3.8s, #15
+        ushll2 v1.4s, v25.4s, #7
+
+        // Out of range 
+        sshll v0.8h, v1.8b, #-1
+        sshll v0.8h, v1.8b, #9
+        ushll v0.4s, v1.4h, #17
+        ushll v0.2d, v1.2s, #33
+        sshll2 v0.8h, v1.16b, #9
+        sshll2 v0.4s, v1.8h, #17
+        ushll2 v0.2d, v1.4s, #33
+
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sshll v0.4s, v15.2s, #3
+// CHECK-ERROR:                         ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ushll v1.16b, v25.16b, #6
+// CHECK-ERROR:                 ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        sshll2 v0.2d, v3.8s, #15
+// CHECK-ERROR:                      ^
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR:        ushll2 v1.4s, v25.4s, #7
+// CHECK-ERROR:                          ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:        sshll v0.8h, v1.8b, #-1
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:        sshll v0.8h, v1.8b, #9
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:        ushll v0.4s, v1.4h, #17
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:        ushll v0.2d, v1.2s, #33
+// CHECK-ERROR:                            ^
+// CHECK-ERROR: error: expected integer in range [0, 7]
+// CHECK-ERROR:        sshll2 v0.8h, v1.16b, #9
+// CHECK-ERROR:                              ^
+// CHECK-ERROR: error: expected integer in range [0, 15]
+// CHECK-ERROR:        sshll2 v0.4s, v1.8h, #17
+// CHECK-ERROR:                             ^
+// CHECK-ERROR: error: expected integer in range [0, 31]
+// CHECK-ERROR:        ushll2 v0.2d, v1.4s, #33
+// CHECK-ERROR:                             ^
+

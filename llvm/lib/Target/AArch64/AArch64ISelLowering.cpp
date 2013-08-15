@@ -77,6 +77,7 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
 
   setTargetDAGCombine(ISD::AND);
   setTargetDAGCombine(ISD::SRA);
+  setTargetDAGCombine(ISD::SHL);
 
   // AArch64 does not have i1 loads, or much of anything for i1 really.
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
@@ -3235,6 +3236,56 @@ static SDValue PerformSRACombine(SDNode *N,
                      DAG.getConstant(LSB + Width - 1, MVT::i64));
 }
 
+/// Check if this is a valid build_vector for the immediate operand of
+/// a vector shift operation, where all the elements of the build_vector
+/// must have the same constant integer value.
+static bool getVShiftImm(SDValue Op, unsigned ElementBits, int64_t &Cnt) {
+  // Ignore bit_converts.
+  while (Op.getOpcode() == ISD::BITCAST)
+    Op = Op.getOperand(0);
+  BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
+  APInt SplatBits, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+  if (!BVN || !BVN->isConstantSplat(SplatBits, SplatUndef, SplatBitSize,
+                                      HasAnyUndefs, ElementBits) ||
+      SplatBitSize > ElementBits)
+    return false;
+  Cnt = SplatBits.getSExtValue();
+  return true;
+}
+
+/// Check if this is a valid build_vector for the immediate operand of
+/// a vector shift left operation.  That value must be in the range:
+/// 0 <= Value < ElementBits for a left shift
+static bool isVShiftLImm(SDValue Op, EVT VT, int64_t &Cnt) {
+  assert(VT.isVector() && "vector shift count is not a vector type");
+  unsigned ElementBits = VT.getVectorElementType().getSizeInBits();
+  if (!getVShiftImm(Op, ElementBits, Cnt))
+    return false;
+  return (Cnt >= 0 && Cnt < ElementBits);
+}
+
+static SDValue PerformSHLCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
+                                   const AArch64Subtarget *ST) {
+  SelectionDAG &DAG = DCI.DAG;
+  EVT VT = N->getValueType(0);
+
+  // Nothing to be done for scalar shifts.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!VT.isVector() || !TLI.isTypeLegal(VT))
+    return SDValue();
+
+  assert(ST->hasNEON() && "unexpected vector shift");
+  int64_t Cnt;
+  if (isVShiftLImm(N->getOperand(1), VT, Cnt)) {
+    SDValue RHS = DAG.getNode(AArch64ISD::NEON_DUPIMM, SDLoc(N->getOperand(0)),
+                              VT, DAG.getConstant(Cnt, MVT::i32));
+    return DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0), RHS);
+  }
+
+  return SDValue();
+}
 
 SDValue
 AArch64TargetLowering::PerformDAGCombine(SDNode *N,
@@ -3244,6 +3295,7 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::AND: return PerformANDCombine(N, DCI);
   case ISD::OR: return PerformORCombine(N, DCI, getSubtarget());
   case ISD::SRA: return PerformSRACombine(N, DCI);
+  case ISD::SHL: return PerformSHLCombine(N, DCI, getSubtarget());
   }
   return SDValue();
 }

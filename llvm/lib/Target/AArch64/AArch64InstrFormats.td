@@ -1050,5 +1050,24 @@ class NeonI_2VMisc<bit q, bit u, bits<2> size, bits<5> opcode,
   // Inherit Rd in 4-0
 }
 
+// Format AdvSIMD 2 vector 1 immediate shift
+class NeonI_2VShiftImm<bit q, bit u, bits<5> opcode,
+                       dag outs, dag ins, string asmstr,
+                       list<dag> patterns, InstrItinClass itin>
+  : A64InstRdn<outs, ins, asmstr, patterns, itin>
+{
+  bits<7> Imm;
+  let Inst{31} = 0b0;
+  let Inst{30} = q;
+  let Inst{29} = u;
+  let Inst{28-23} = 0b011110;
+  let Inst{22-16} = Imm;
+  let Inst{15-11} = opcode;
+  let Inst{10} = 0b1;
+  
+  // Inherit Rn in 9-5
+  // Inherit Rd in 4-0
+}
+
 }
 

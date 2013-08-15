@@ -137,4 +137,52 @@ define <2 x i64> @test_sshl_v2i64(<2 x i64> %lhs, <2 x i64> %rhs) {
 }
 
 
+define <8 x i8> @test_shl_v8i8(<8 x i8> %a) {
+; CHECK: test_shl_v8i8:
+; CHECK: shl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #3
+  %tmp = shl <8 x i8> %a, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <8 x i8> %tmp
+}
+
+define <4 x i16> @test_shl_v4i16(<4 x i16> %a) {
+; CHECK: test_shl_v4i16:
+; CHECK: shl {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #3
+  %tmp = shl <4 x i16> %a, <i16 3, i16 3, i16 3, i16 3>
+  ret <4 x i16> %tmp
+}
+
+define <2 x i32> @test_shl_v2i32(<2 x i32> %a) {
+; CHECK: test_shl_v2i32:
+; CHECK: shl {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #3
+  %tmp = shl <2 x i32> %a, <i32 3, i32 3>
+  ret <2 x i32> %tmp
+}
+
+define <16 x i8> @test_shl_v16i8(<16 x i8> %a) {
+; CHECK: test_shl_v16i8:
+; CHECK: shl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #3
+  %tmp = shl <16 x i8> %a, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
+  ret <16 x i8> %tmp
+}
+
+define <8 x i16> @test_shl_v8i16(<8 x i16> %a) {
+; CHECK: test_shl_v8i16:
+; CHECK: shl {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #3
+  %tmp = shl <8 x i16> %a, <i16 3, i16 3, i16 3, i16 3, i16 3, i16 3, i16 3, i16 3>
+  ret <8 x i16> %tmp
+}
+
+define <4 x i32> @test_shl_v4i32(<4 x i32> %a) {
+; CHECK: test_shl_v4i32:
+; CHECK: shl {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #3
+  %tmp = shl <4 x i32> %a, <i32 3, i32 3, i32 3, i32 3>
+  ret <4 x i32> %tmp
+}
+
+define <2 x i64> @test_shl_v2i64(<2 x i64> %a) {
+; CHECK: test_shl_v2i64:
+; CHECK: shl {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #3
+  %tmp = shl <2 x i64> %a, <i64 3, i64 3>
+  ret <2 x i64> %tmp
+}
 

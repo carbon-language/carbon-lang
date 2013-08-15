@@ -132,7 +132,10 @@ namespace AArch64ISD {
     NEON_CMPZ,
 
     // Vector compare bitwise test
-    NEON_TST
+    NEON_TST,
+
+    // Operation for the immediate in vector shift
+    NEON_DUPIMM
   };
 }
 

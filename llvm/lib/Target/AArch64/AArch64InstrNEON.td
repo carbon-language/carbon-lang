@@ -41,6 +41,9 @@ def Neon_cmpz : SDNode<"AArch64ISD::NEON_CMPZ", SDTypeProfile<1, 3,
 def Neon_tst : SDNode<"AArch64ISD::NEON_TST", SDTypeProfile<1, 2,
                  [SDTCisVec<0>,  SDTCisSameAs<1, 2>]>>;
 
+def Neon_dupImm : SDNode<"AArch64ISD::NEON_DUPIMM", SDTypeProfile<1, 1, 
+                    [SDTCisVec<0>, SDTCisVT<1, i32>]>>;
+
 //===----------------------------------------------------------------------===//
 // Multiclasses
 //===----------------------------------------------------------------------===//
@@ -1408,6 +1411,148 @@ def FMOVvi_2S : NeonI_FMOV_impl<".2s", VPR64,  v2f32, fmov32_operand, 0b0, 0b0>;
 def FMOVvi_4S : NeonI_FMOV_impl<".4s", VPR128, v4f32, fmov32_operand, 0b1, 0b0>;
 def FMOVvi_2D : NeonI_FMOV_impl<".2d", VPR128, v2f64, fmov64_operand, 0b1, 0b1>;
 }
+
+// Vector Shift (Immediate) 
+
+def imm0_63 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 63; }]> {
+  let ParserMatchClass = uimm6_asmoperand;
+}
+
+class N2VShiftLeft<bit q, bit u, bits<5> opcode, string asmop, string T,
+                   RegisterClass VPRC, ValueType Ty, Operand ImmTy>
+  : NeonI_2VShiftImm<q, u, opcode,
+                     (outs VPRC:$Rd), (ins VPRC:$Rn, ImmTy:$Imm),
+                     asmop # "\t$Rd." # T # ", $Rn." # T # ", $Imm",
+                     [(set (Ty VPRC:$Rd),
+                        (Ty (shl (Ty VPRC:$Rn), 
+                          (Ty (Neon_dupImm (i32 imm:$Imm))))))],
+                     NoItinerary>;
+
+multiclass NeonI_N2VShL<bit u, bits<5> opcode, string asmop> {
+  // 64-bit vector types.
+  def _8B  : N2VShiftLeft<0b0, u, opcode, asmop, "8b", VPR64, v8i8, uimm3> {
+    let Inst{22-19} = 0b0001;  // immh:immb = 0001xxx
+  }
+
+  def _4H  : N2VShiftLeft<0b0, u, opcode, asmop, "4h", VPR64, v4i16, uimm4> {
+    let Inst{22-20} = 0b001;   // immh:immb = 001xxxx
+  }
+
+  def _2S  : N2VShiftLeft<0b0, u, opcode, asmop, "2s", VPR64, v2i32, uimm5> {
+    let Inst{22-21} = 0b01;    // immh:immb = 01xxxxx
+  }
+
+  // 128-bit vector types.
+  def _16B : N2VShiftLeft<0b1, u, opcode, asmop, "16b", VPR128, v16i8, uimm3> {
+    let Inst{22-19} = 0b0001;  // immh:immb = 0001xxx
+  }
+
+  def _8H : N2VShiftLeft<0b1, u, opcode, asmop, "8h", VPR128, v8i16, uimm4> {
+    let Inst{22-20} = 0b001;   // immh:immb = 001xxxx
+  }
+
+  def _4S : N2VShiftLeft<0b1, u, opcode, asmop, "4s", VPR128, v4i32, uimm5> {
+    let Inst{22-21} = 0b01;    // immh:immb = 01xxxxx
+  }
+
+  def _2D : N2VShiftLeft<0b1, u, opcode, asmop, "2d", VPR128, v2i64, imm0_63> {
+    let Inst{22} = 0b1;        // immh:immb = 1xxxxxx
+  }
+}
+
+def Neon_top16B : PatFrag<(ops node:$in), 
+                          (extract_subvector (v16i8 node:$in), (iPTR 8))>;
+def Neon_top8H : PatFrag<(ops node:$in), 
+                         (extract_subvector (v8i16 node:$in), (iPTR 4))>;
+def Neon_top4S : PatFrag<(ops node:$in), 
+                         (extract_subvector (v4i32 node:$in), (iPTR 2))>;
+
+class N2VShiftLong<bit q, bit u, bits<5> opcode, string asmop, string DestT,
+                   string SrcT, ValueType DestTy, ValueType SrcTy,
+                   Operand ImmTy, SDPatternOperator ExtOp>
+  : NeonI_2VShiftImm<q, u, opcode, (outs VPR128:$Rd),
+                     (ins VPR64:$Rn, ImmTy:$Imm),
+                     asmop # "\t$Rd." # DestT # ", $Rn." # SrcT # ", $Imm",
+                     [(set (DestTy VPR128:$Rd),
+                        (DestTy (shl 
+                          (DestTy (ExtOp (SrcTy VPR64:$Rn))),
+                            (DestTy (Neon_dupImm (i32 imm:$Imm))))))],
+                     NoItinerary>;
+
+class N2VShiftLongHigh<bit q, bit u, bits<5> opcode, string asmop, string DestT,
+                       string SrcT, ValueType DestTy, ValueType SrcTy, 
+                       int StartIndex, Operand ImmTy,
+                       SDPatternOperator ExtOp, PatFrag getTop>
+  : NeonI_2VShiftImm<q, u, opcode, (outs VPR128:$Rd),
+                     (ins VPR128:$Rn, ImmTy:$Imm),
+                     asmop # "2\t$Rd." # DestT # ", $Rn." # SrcT # ", $Imm",
+                     [(set (DestTy VPR128:$Rd), 
+                        (DestTy (shl
+                          (DestTy (ExtOp 
+                            (SrcTy (getTop VPR128:$Rn)))),
+                              (DestTy (Neon_dupImm (i32 imm:$Imm))))))],
+                     NoItinerary>;
+
+multiclass NeonI_N2VShLL<string prefix, bit u, bits<5> opcode, string asmop,
+                         SDNode ExtOp> {
+  // 64-bit vector types.
+  def _8B : N2VShiftLong<0b0, u, opcode, asmop, "8h", "8b", v8i16, v8i8,
+                         uimm3, ExtOp>{
+    let Inst{22-19} = 0b0001;  // immh:immb = 0001xxx
+  }
+
+  def _4H : N2VShiftLong<0b0, u, opcode, asmop, "4s", "4h", v4i32, v4i16,
+                         uimm4, ExtOp>{
+    let Inst{22-20} = 0b001;   // immh:immb = 001xxxx
+  }
+
+  def _2S : N2VShiftLong<0b0, u, opcode, asmop, "2d", "2s", v2i64, v2i32,
+                         uimm5, ExtOp>{
+    let Inst{22-21} = 0b01;    // immh:immb = 01xxxxx
+  }
+
+  // 128-bit vector types
+  def _16B : N2VShiftLongHigh<0b1, u, opcode, asmop, "8h", "16b",
+                              v8i16, v8i8, 8, uimm3, ExtOp, Neon_top16B>{
+    let Inst{22-19} = 0b0001;  // immh:immb = 0001xxx
+  }
+
+  def _8H : N2VShiftLongHigh<0b1, u, opcode, asmop, "4s", "8h",
+                             v4i32, v4i16, 4, uimm4, ExtOp, Neon_top8H>{
+    let Inst{22-20} = 0b001;   // immh:immb = 001xxxx
+  }
+
+  def _4S : N2VShiftLongHigh<0b1, u, opcode, asmop, "2d", "4s",
+                             v2i64, v2i32, 2, uimm5, ExtOp, Neon_top4S>{
+    let Inst{22-21} = 0b01;    // immh:immb = 01xxxxx
+  }
+
+  // Use other patterns to match when the immediate is 0.
+  def : Pat<(v8i16 (ExtOp (v8i8 VPR64:$Rn))),
+            (!cast<Instruction>(prefix # "_8B") VPR64:$Rn, 0)>;
+
+  def : Pat<(v4i32 (ExtOp (v4i16 VPR64:$Rn))),
+            (!cast<Instruction>(prefix # "_4H") VPR64:$Rn, 0)>;
+
+  def : Pat<(v2i64 (ExtOp (v2i32 VPR64:$Rn))),
+            (!cast<Instruction>(prefix # "_2S") VPR64:$Rn, 0)>;
+
+  def : Pat<(v8i16 (ExtOp (v8i8 (Neon_top16B VPR128:$Rn)))),
+            (!cast<Instruction>(prefix # "_16B") VPR128:$Rn, 0)>;
+
+  def : Pat<(v4i32 (ExtOp (v4i16 (Neon_top8H VPR128:$Rn)))),
+            (!cast<Instruction>(prefix # "_8H") VPR128:$Rn, 0)>;
+
+  def : Pat<(v2i64 (ExtOp (v2i32 (Neon_top4S VPR128:$Rn)))),
+            (!cast<Instruction>(prefix # "_4S") VPR128:$Rn, 0)>;
+}
+
+// Shift left immediate
+defm SHLvvi : NeonI_N2VShL<0b0, 0b01010, "shl">;
+
+// Shift left long immediate
+defm SSHLLvvi : NeonI_N2VShLL<"SSHLLvvi", 0b0, 0b10100, "sshll", sext>;
+defm USHLLvvi : NeonI_N2VShLL<"USHLLvvi", 0b1, 0b10100, "ushll", zext>;
 
 // Scalar Arithmetic
 
