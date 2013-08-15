@@ -1660,15 +1660,22 @@ const CallExpr* ThreadSafetyAnalyzer::getTrylockCallExpr(const Stmt *Cond,
         if (!TCond) Negate = !Negate;
         return getTrylockCallExpr(BOP->getLHS(), C, Negate);
       }
-      else if (getStaticBooleanValue(BOP->getLHS(), TCond)) {
+      TCond = false;
+      if (getStaticBooleanValue(BOP->getLHS(), TCond)) {
         if (!TCond) Negate = !Negate;
         return getTrylockCallExpr(BOP->getRHS(), C, Negate);
       }
       return 0;
     }
+    if (BOP->getOpcode() == BO_LAnd) {
+      // LHS must have been evaluated in a different block.
+      return getTrylockCallExpr(BOP->getRHS(), C, Negate);
+    }
+    if (BOP->getOpcode() == BO_LOr) {
+      return getTrylockCallExpr(BOP->getRHS(), C, Negate);
+    }
     return 0;
   }
-  // FIXME -- handle && and || as well.
   return 0;
 }
 
@@ -1682,11 +1689,11 @@ void ThreadSafetyAnalyzer::getEdgeLockset(FactSet& Result,
                                           const CFGBlock *CurrBlock) {
   Result = ExitSet;
 
-  if (!PredBlock->getTerminatorCondition())
+  const Stmt *Cond = PredBlock->getTerminatorCondition();
+  if (!Cond)
     return;
 
   bool Negate = false;
-  const Stmt *Cond = PredBlock->getTerminatorCondition();
   const CFGBlockInfo *PredBlockInfo = &BlockInfo[PredBlock->getBlockID()];
   const LocalVarContext &LVarCtx = PredBlockInfo->ExitContext;
 
@@ -1698,7 +1705,6 @@ void ThreadSafetyAnalyzer::getEdgeLockset(FactSet& Result,
   NamedDecl *FunDecl = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
   if(!FunDecl || !FunDecl->hasAttrs())
     return;
-
 
   MutexIDList ExclusiveLocksToAdd;
   MutexIDList SharedLocksToAdd;

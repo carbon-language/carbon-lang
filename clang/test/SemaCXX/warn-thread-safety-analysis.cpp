@@ -107,14 +107,14 @@ class MutexWrapper {
 public:
    Mutex mu;
    int x __attribute__((guarded_by(mu)));
-   void MyLock() __attribute__((exclusive_lock_function(mu))); 
+   void MyLock() __attribute__((exclusive_lock_function(mu)));
 };
 
 MutexWrapper sls_mw;
 
 void sls_fun_0() {
   sls_mw.mu.Lock();
-  sls_mw.x = 5; 
+  sls_mw.x = 5;
   sls_mw.mu.Unlock();
 }
 
@@ -3074,44 +3074,6 @@ void Foo::test1() {
 #endif
 }
 
-
-void Foo::test2() {
-/* FIXME: these tests depend on changes to the CFG.
- *
-  if (mu_.TryLock() && c) {
-    a = 0;
-    unlock();
-  }
-  else return;
-
-  if (c && mu_.TryLock()) {
-    a = 0;
-    unlock();
-  }
-  else return;
-
-  if (!(mu_.TryLock() && c))
-    return;
-  a = 0;
-  unlock();
-
-  if (!(c && mu_.TryLock()))
-    return;
-  a = 0;
-  unlock();
-
-  if (!(mu_.TryLock() == 0) && c) {
-    a = 0;
-    unlock();
-  }
-
-  if (!mu_.TryLock() || c)
-    return;
-  a = 0;
-  unlock();
-*/
-}
-
 } // end namespace TryLockEqTest
 
 
@@ -4091,4 +4053,85 @@ public:
 
 }  // end namespace AssertHeldTest
 
+
+namespace LogicalConditionalTryLock {
+
+class Foo {
+public:
+  Mutex mu;
+  int a GUARDED_BY(mu);
+  bool c;
+
+  bool newc();
+
+  void test1() {
+    if (c && mu.TryLock()) {
+      a = 0;
+      mu.Unlock();
+    }
+  }
+
+  void test2() {
+    bool b = mu.TryLock();
+    if (c && b) {
+      a = 0;
+      mu.Unlock();
+    }
+  }
+
+  void test3() {
+    if (c || !mu.TryLock())
+      return;
+    a = 0;
+    mu.Unlock();
+  }
+
+  void test4() {
+    while (c && mu.TryLock()) {
+      a = 0;
+      c = newc();
+      mu.Unlock();
+    }
+  }
+
+  void test5() {
+    while (c) {
+      if (newc() || !mu.TryLock())
+        break;
+      a = 0;
+      mu.Unlock();
+    }
+  }
+
+  void test6() {
+    mu.Lock();
+    do {
+      a = 0;
+      mu.Unlock();
+    } while (newc() && mu.TryLock());
+  }
+
+  void test7() {
+    for (bool b = mu.TryLock(); c && b;) {
+      a = 0;
+      mu.Unlock();
+    }
+  }
+
+  void test8() {
+    if (c && newc() && mu.TryLock()) {
+      a = 0;
+      mu.Unlock();
+    }
+  }
+
+  void test9() {
+    if (!(c && newc() && mu.TryLock()))
+      return;
+    a = 0;
+    mu.Unlock();
+  }
+};
+
+}  // end namespace LogicalConditionalTryLock
 
