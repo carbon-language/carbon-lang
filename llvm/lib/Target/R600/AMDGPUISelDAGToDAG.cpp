@@ -115,7 +115,10 @@ const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
   switch (N->getMachineOpcode()) {
   default: {
     const MCInstrDesc &Desc = TM.getInstrInfo()->get(N->getMachineOpcode());
-    int RegClass = Desc.OpInfo[Desc.getNumDefs() + OpNo].RegClass;
+    unsigned OpIdx = Desc.getNumDefs() + OpNo;
+    if (OpIdx >= Desc.getNumOperands())
+      return NULL;
+    int RegClass = Desc.OpInfo[OpIdx].RegClass;
     if (RegClass == -1) {
       return NULL;
     }
