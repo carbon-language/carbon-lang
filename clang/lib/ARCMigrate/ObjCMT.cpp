@@ -24,11 +24,13 @@
 #include "clang/Lex/PPConditionalDirectiveRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/StaticAnalyzer/Checkers/ObjCRetainCount.h"
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace arcmt;
+using namespace ento::objc_retain;
 
 namespace {
 
@@ -762,6 +764,27 @@ void ObjCMigrateASTConsumer::migrateFunctionDeclAnnotation(
       FuncDecl->getAttr<CFReturnsNotRetainedAttr>() ||
       FuncDecl->hasBody())
     return;
+  
+  
+  CallEffects CE  = CallEffects::getEffect(FuncDecl);
+  RetEffect Ret = CE.getReturnValue();
+  const char *AnnotationString = 0;
+  if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
+    if (!Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
+      return;
+    AnnotationString = " CF_RETURNS_RETAINED";
+  }
+  else if (Ret.getObjKind() == RetEffect::CF && !Ret.isOwned()) {
+    if (!Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
+      return;
+    AnnotationString = " CF_RETURNS_NOT_RETAINED";
+  }
+  else
+    return;
+
+  edit::Commit commit(*Editor);
+  commit.insertAfterToken(FuncDecl->getLocEnd(), AnnotationString);
+  Editor->commit(commit);
 }
 
 void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(
