@@ -64,3 +64,9 @@ enum {
   UNTwo
 };
 
+// Should use NS_ENUM even though it is all power of 2.
+typedef NS_ENUM(NSInteger, UIK) {
+  UIKOne = 0x1,
+  UIKTwo = 0x2,
+};
+

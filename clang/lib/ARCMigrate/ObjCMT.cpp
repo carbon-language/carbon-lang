@@ -493,6 +493,7 @@ static bool rewriteToNSMacroDecl(const EnumDecl *EnumDcl,
 static bool UseNSOptionsMacro(ASTContext &Ctx,
                               const EnumDecl *EnumDcl) {
   bool PowerOfTwo = true;
+  uint64_t MaxPowerOfTwoVal = 0;
   for (EnumDecl::enumerator_iterator EI = EnumDcl->enumerator_begin(),
        EE = EnumDcl->enumerator_end(); EI != EE; ++EI) {
     EnumConstantDecl *Enumerator = (*EI);
@@ -507,10 +508,14 @@ static bool UseNSOptionsMacro(ASTContext &Ctx,
         return true;
     
     uint64_t EnumVal = Enumerator->getInitVal().getZExtValue();
-    if (PowerOfTwo && EnumVal && !llvm::isPowerOf2_64(EnumVal))
-      PowerOfTwo = false;
+    if (PowerOfTwo && EnumVal) {
+      if (!llvm::isPowerOf2_64(EnumVal))
+        PowerOfTwo = false;
+      else if (EnumVal > MaxPowerOfTwoVal)
+        MaxPowerOfTwoVal = EnumVal;
+    }
   }
-  return PowerOfTwo;
+  return PowerOfTwo ? ((MaxPowerOfTwoVal > 2) ? true : false) : false;
 }
 
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,   
