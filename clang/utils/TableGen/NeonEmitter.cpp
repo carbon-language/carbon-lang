@@ -263,7 +263,8 @@ static void ParseTypes(Record *r, std::string &s,
   int len = 0;
 
   for (unsigned i = 0, e = s.size(); i != e; ++i, ++len) {
-    if (data[len] == 'P' || data[len] == 'Q' || data[len] == 'U')
+    if (data[len] == 'P' || data[len] == 'Q' || data[len] == 'U'
+                         || data[len] == 'H')
       continue;
 
     switch (data[len]) {
@@ -325,7 +326,7 @@ static char ClassifyType(StringRef ty, bool &quad, bool &poly, bool &usgn) {
   unsigned off = 0;
 
   // remember quad.
-  if (ty[off] == 'Q') {
+  if (ty[off] == 'Q' || ty[off] == 'H') {
     quad = true;
     ++off;
   }
@@ -689,8 +690,8 @@ static void InstructionTypeCode(const StringRef &typeStr,
 }
 
 /// MangleName - Append a type or width suffix to a base neon function name,
-/// and insert a 'q' in the appropriate location if the operation works on
-/// 128b rather than 64b.   E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
+/// and insert a 'q' in the appropriate location if type string starts with 'Q'.
+/// E.g. turn "vst2_lane" into "vst2q_lane_f32", etc.
 static std::string MangleName(const std::string &name, StringRef typestr,
                               ClassKind ck) {
   if (name == "vcvt_f32_f16")
@@ -712,9 +713,9 @@ static std::string MangleName(const std::string &name, StringRef typestr,
 
   // Insert a 'q' before the first '_' character so that it ends up before
   // _lane or _n on vector-scalar operations.
-  if (quad) {
-    size_t pos = s.find('_');
-    s = s.insert(pos, "q");
+  if (typestr.startswith("Q")) {
+      size_t pos = s.find('_');
+      s = s.insert(pos, "q");
   }
 
   return s;

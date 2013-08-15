@@ -3021,3 +3021,231 @@ float64x2_t test_vmulxq_f64(float64x2_t a, float64x2_t b) {
 // CHECK: fmulx {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
 }
 
+int8x8_t test_vshl_n_s8(int8x8_t a) {
+// CHECK: test_vshl_n_s8
+  return vshl_n_s8(a, 3);
+// CHECK: shl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #3
+}
+
+int16x4_t test_vshl_n_s16(int16x4_t a) {
+// CHECK: test_vshl_n_s16
+  return vshl_n_s16(a, 3);
+// CHECK: shl {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #3
+}
+
+int32x2_t test_vshl_n_s32(int32x2_t a) {
+// CHECK: test_vshl_n_s32
+  return vshl_n_s32(a, 3);
+// CHECK: shl {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #3
+}
+
+int8x16_t test_vshlq_n_s8(int8x16_t a) {
+// CHECK: test_vshlq_n_s8
+  return vshlq_n_s8(a, 3);
+// CHECK: shl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #3
+}
+
+int16x8_t test_vshlq_n_s16(int16x8_t a) {
+// CHECK: test_vshlq_n_s16
+  return vshlq_n_s16(a, 3);
+// CHECK: shl {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #3
+}
+
+int32x4_t test_vshlq_n_s32(int32x4_t a) {
+// CHECK: test_vshlq_n_s32
+  return vshlq_n_s32(a, 3);
+// CHECK: shl {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #3
+}
+
+int64x2_t test_vshlq_n_s64(int64x2_t a) {
+// CHECK: test_vshlq_n_s64
+  return vshlq_n_s64(a, 3);
+// CHECK: shl {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #3
+}
+
+int8x8_t test_vshl_n_u8(int8x8_t a) {
+// CHECK: test_vshl_n_u8
+  return vshl_n_u8(a, 3);
+// CHECK: shl {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, #3
+}
+
+int16x4_t test_vshl_n_u16(int16x4_t a) {
+// CHECK: test_vshl_n_u16
+  return vshl_n_u16(a, 3);
+// CHECK: shl {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, #3
+}
+
+int32x2_t test_vshl_n_u32(int32x2_t a) {
+// CHECK: test_vshl_n_u32
+  return vshl_n_u32(a, 3);
+// CHECK: shl {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, #3
+}
+
+int8x16_t test_vshlq_n_u8(int8x16_t a) {
+// CHECK: test_vshlq_n_u8
+  return vshlq_n_u8(a, 3);
+// CHECK: shl {{v[0-9]+}}.16b, {{v[0-9]+}}.16b, #3
+}
+
+int16x8_t test_vshlq_n_u16(int16x8_t a) {
+// CHECK: test_vshlq_n_u16
+  return vshlq_n_u16(a, 3);
+// CHECK: shl {{v[0-9]+}}.8h, {{v[0-9]+}}.8h, #3
+}
+
+int32x4_t test_vshlq_n_u32(int32x4_t a) {
+// CHECK: test_vshlq_n_u32
+  return vshlq_n_u32(a, 3);
+// CHECK: shl {{v[0-9]+}}.4s, {{v[0-9]+}}.4s, #3
+}
+
+int64x2_t test_vshlq_n_u64(int64x2_t a) {
+// CHECK: test_vshlq_n_u64
+  return vshlq_n_u64(a, 3);
+// CHECK: shl {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, #3
+}
+
+int16x8_t test_vshll_n_s8(int8x8_t a) {
+// CHECK: test_vshll_n_s8
+  return vshll_n_s8(a, 3);
+// CHECK: sshll {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, #3
+}
+
+int32x4_t test_vshll_n_s16(int16x4_t a) {
+// CHECK: test_vshll_n_s16
+  return vshll_n_s16(a, 9);
+// CHECK: sshll {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, #9
+}
+
+int64x2_t test_vshll_n_s32(int32x2_t a) {
+// CHECK: test_vshll_n_s32
+  return vshll_n_s32(a, 19);
+// CHECK: sshll {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, #19
+}
+
+uint16x8_t test_vshll_n_u8(uint8x8_t a) {
+// CHECK: test_vshll_n_u8
+  return vshll_n_u8(a, 3);
+// CHECK: ushll {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, #3
+}
+
+uint32x4_t test_vshll_n_u16(uint16x4_t a) {
+// CHECK: test_vshll_n_u16
+  return vshll_n_u16(a, 9);
+// CHECK: ushll {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, #9
+}
+
+uint64x2_t test_vshll_n_u32(uint32x2_t a) {
+// CHECK: test_vshll_n_u32
+  return vshll_n_u32(a, 19);
+// CHECK: ushll {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, #19
+}
+
+int16x8_t test_vshll_high_n_s8(int8x16_t a) {
+// CHECK: test_vshll_high_n_s8
+  return vshll_high_n_s8(a, 3);
+// CHECK: sshll2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, #3
+}
+
+int32x4_t test_vshll_high_n_s16(int16x8_t a) {
+// CHECK: test_vshll_high_n_s16
+  return vshll_high_n_s16(a, 9);
+// CHECK: sshll2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, #9
+}
+
+int64x2_t test_vshll_high_n_s32(int32x4_t a) {
+// CHECK: test_vshll_high_n_s32
+  return vshll_high_n_s32(a, 19);
+// CHECK: sshll2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, #19
+}
+
+uint16x8_t test_vshll_high_n_u8(uint8x16_t a) {
+// CHECK: test_vshll_high_n_u8
+  return vshll_high_n_u8(a, 3);
+// CHECK: ushll2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, #3
+}
+
+uint32x4_t test_vshll_high_n_u16(uint16x8_t a) {
+// CHECK: test_vshll_high_n_u16
+  return vshll_high_n_u16(a, 9);
+// CHECK: ushll2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, #9
+}
+
+uint64x2_t test_vshll_high_n_u32(uint32x4_t a) {
+// CHECK: test_vshll_high_n_u32
+  return vshll_high_n_u32(a, 19);
+// CHECK: ushll2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, #19
+}
+
+int16x8_t test_vmovl_s8(int8x8_t a) {
+// CHECK: test_vmovl_s8
+  return vmovl_s8(a);
+// CHECK: sshll {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, #0
+}
+
+int32x4_t test_vmovl_s16(int16x4_t a) {
+// CHECK: test_vmovl_s16
+  return vmovl_s16(a);
+// CHECK: sshll {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, #0
+}
+
+int64x2_t test_vmovl_s32(int32x2_t a) {
+// CHECK: test_vmovl_s32
+  return vmovl_s32(a);
+// CHECK: sshll {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, #0
+}
+
+uint16x8_t test_vmovl_u8(uint8x8_t a) {
+// CHECK: test_vmovl_u8
+  return vmovl_u8(a);
+// CHECK: ushll {{v[0-9]+}}.8h, {{v[0-9]+}}.8b, #0
+}
+
+uint32x4_t test_vmovl_u16(uint16x4_t a) {
+// CHECK: test_vmovl_u16
+  return vmovl_u16(a);
+// CHECK: ushll {{v[0-9]+}}.4s, {{v[0-9]+}}.4h, #0
+}
+
+uint64x2_t test_vmovl_u32(uint32x2_t a) {
+// CHECK: test_vmovl_u32
+  return vmovl_u32(a);
+// CHECK: ushll {{v[0-9]+}}.2d, {{v[0-9]+}}.2s, #0
+}
+
+int16x8_t test_vmovl_high_s8(int8x16_t a) {
+// CHECK: test_vmovl_high_s8
+  return vmovl_high_s8(a);
+// CHECK: sshll2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, #0
+}
+
+int32x4_t test_vmovl_high_s16(int16x8_t a) {
+// CHECK: test_vmovl_high_s16
+  return vmovl_high_s16(a);
+// CHECK: sshll2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, #0
+}
+
+int64x2_t test_vmovl_high_s32(int32x4_t a) {
+// CHECK: test_vmovl_high_s32
+  return vmovl_high_s32(a);
+// CHECK: sshll2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, #0
+}
+
+uint16x8_t test_vmovl_high_u8(uint8x16_t a) {
+// CHECK: test_vmovl_high_u8
+  return vmovl_high_u8(a);
+// CHECK: ushll2 {{v[0-9]+}}.8h, {{v[0-9]+}}.16b, #0
+}
+
+uint32x4_t test_vmovl_high_u16(uint16x8_t a) {
+// CHECK: test_vmovl_high_u16
+  return vmovl_high_u16(a);
+// CHECK: ushll2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, #0
+}
+
+uint64x2_t test_vmovl_high_u32(uint32x4_t a) {
+// CHECK: test_vmovl_high_u32
+  return vmovl_high_u32(a);
+// CHECK: ushll2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, #0
+}
+

@@ -152,6 +152,7 @@ class NoTestOpInst<string n, string p, string t, Op o> : Inst<n, p, t, o> {}
 // size modifiers:
 // U: unsigned
 // Q: 128b
+// H: 128b without mangling 'q'
 // P: polynomial
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -550,6 +551,18 @@ def FMINNMP : SInst<"vpminnm", "ddd", "fQfQd">;
 // Pairwise Addition
 // With additional Qc Qs Qi QUc QUs QUi Qf Qd types.
 def ADDP  : IInst<"vpadd", "ddd", "csiUcUsUifQcQsQiQUcQUsQUiQfQd">;
+
+////////////////////////////////////////////////////////////////////////////////
+// Shifts by constant
+let isShift = 1 in {
+// Left shift long high
+def SHLL_HIGH_N    : SInst<"vshll_high_n", "ndi", "HcHsHiHUcHUsHUi">;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Converting vectors
+def VMOVL_HIGH   : SInst<"vmovl_high", "nd", "HcHsHiHUcHUsHUi">;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Scalar Arithmetic

@@ -1620,6 +1620,37 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
   llvm_unreachable("Invalid NeonTypeFlags element type!");
 }
 
+static Value *EmitExtendedSHL(CodeGenFunction &CGF,
+                              SmallVectorImpl<Value*> &Ops,
+                              llvm::VectorType *VTy, bool usgn, bool isHigh) {
+  IRBuilder<> Builder = CGF.Builder;
+  if (isHigh){
+    unsigned NumElts = VTy->getNumElements();
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    llvm::Type *EltTy =
+      llvm::IntegerType::get(VTy->getContext(), EltBits / 2);
+    // The source operand type has twice as many elements of half the size.
+    llvm::Type *SrcTy = llvm::VectorType::get(EltTy, NumElts * 2);
+    SmallVector<Constant*, 8> Indices;
+    for (unsigned i = 0; i != NumElts; i++)
+      Indices.push_back(Builder.getInt32(i + NumElts));
+    Value *SV = llvm::ConstantVector::get(Indices);
+    Value *Undef = llvm::UndefValue::get(SrcTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], SrcTy);
+    Ops[0] = Builder.CreateShuffleVector(Ops[0], Undef, SV);
+  } else {
+    llvm::Type *SrcTy = llvm::VectorType::getTruncatedElementVectorType(VTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], SrcTy);
+  }
+
+  if (usgn)
+    Ops[0] = Builder.CreateZExt(Ops[0], VTy);
+  else
+    Ops[0] = Builder.CreateSExt(Ops[0], VTy);
+  Ops[1] = CGF.EmitNeonShiftVector(Ops[1], VTy, false);
+  return Builder.CreateShl(Ops[0], Ops[1], "vshl_n");
+}
+
 Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C) {
   unsigned nElts = cast<llvm::VectorType>(V->getType())->getNumElements();
   Value* SV = llvm::ConstantVector::getSplat(nElts, C);
@@ -1862,6 +1893,18 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqrdmulh_v, E);
   case AArch64::BI__builtin_neon_vqrdmulhq_v:
     return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vqrdmulhq_v, E);
+  case AArch64::BI__builtin_neon_vshl_n_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vshl_n_v, E);
+  case AArch64::BI__builtin_neon_vshlq_n_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vshlq_n_v, E);
+  case AArch64::BI__builtin_neon_vmovl_v:
+    return EmitARMBuiltinExpr(ARM::BI__builtin_neon_vmovl_v, E);
+  case AArch64::BI__builtin_neon_vshll_n_v:
+    return EmitExtendedSHL(*this, Ops, VTy, usgn, false);
+  case AArch64::BI__builtin_neon_vmovl_high_v:
+    Ops.push_back(ConstantInt::get(Int32Ty, 0));
+  case AArch64::BI__builtin_neon_vshll_high_n_v:
+    return EmitExtendedSHL(*this, Ops, VTy, usgn, true);
 
   // AArch64-only builtins
   case AArch64::BI__builtin_neon_vfms_v:
