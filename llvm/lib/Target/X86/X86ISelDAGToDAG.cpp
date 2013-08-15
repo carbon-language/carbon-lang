@@ -2609,7 +2609,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         // On x86-32, only the ABCD registers have 8-bit subregisters.
         if (!Subtarget->is64Bit()) {
           const TargetRegisterClass *TRC;
-          switch (N0.getValueType().getSimpleVT().SimpleTy) {
+          switch (N0.getSimpleValueType().SimpleTy) {
           case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;
           case MVT::i16: TRC = &X86::GR16_ABCDRegClass; break;
           default: llvm_unreachable("Unsupported TEST operand type!");
@@ -2644,7 +2644,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
         // Put the value in an ABCD register.
         const TargetRegisterClass *TRC;
-        switch (N0.getValueType().getSimpleVT().SimpleTy) {
+        switch (N0.getSimpleValueType().SimpleTy) {
         case MVT::i64: TRC = &X86::GR64_ABCDRegClass; break;
         case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;
         case MVT::i16: TRC = &X86::GR16_ABCDRegClass; break;

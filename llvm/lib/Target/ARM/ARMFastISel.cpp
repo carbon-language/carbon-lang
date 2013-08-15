@@ -1933,7 +1933,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
           !VA.isRegLoc() || !ArgLocs[++i].isRegLoc())
         return false;
     } else {
-      switch (static_cast<EVT>(ArgVT).getSimpleVT().SimpleTy) {
+      switch (ArgVT.SimpleTy) {
       default:
         return false;
       case MVT::i1:

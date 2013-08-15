@@ -3947,7 +3947,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       continue;
     }
 
-    switch (Arg.getValueType().getSimpleVT().SimpleTy) {
+    switch (Arg.getSimpleValueType().SimpleTy) {
     default: llvm_unreachable("Unexpected ValueType for argument!");
     case MVT::i32:
     case MVT::i64:
@@ -3970,7 +3970,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
           // must be passed right-justified in the stack doubleword, and
           // in the GPR, if one is available.
           SDValue StoreOff;
-          if (Arg.getValueType().getSimpleVT().SimpleTy == MVT::f32) {
+          if (Arg.getSimpleValueType().SimpleTy == MVT::f32) {
             SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
             StoreOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
           } else
@@ -4278,7 +4278,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
       continue;
     }
 
-    switch (Arg.getValueType().getSimpleVT().SimpleTy) {
+    switch (Arg.getSimpleValueType().SimpleTy) {
     default: llvm_unreachable("Unexpected ValueType for argument!");
     case MVT::i32:
     case MVT::i64:
@@ -4743,7 +4743,7 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
     Src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, Src);
 
   SDValue Tmp;
-  switch (Op.getValueType().getSimpleVT().SimpleTy) {
+  switch (Op.getSimpleValueType().SimpleTy) {
   default: llvm_unreachable("Unhandled FP_TO_INT type in custom expander!");
   case MVT::i32:
     Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIWZ :

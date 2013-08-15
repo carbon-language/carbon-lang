@@ -1026,7 +1026,7 @@ bool X86FastISel::X86SelectZExt(const Instruction *I) {
     return false;
 
   // Handle zero-extension from i1 to i8, which is common.
-  MVT SrcVT = TLI.getValueType(I->getOperand(0)->getType()).getSimpleVT();
+  MVT SrcVT = TLI.getSimpleValueType(I->getOperand(0)->getType());
   if (SrcVT.SimpleTy == MVT::i1) {
     // Set the high bits to zero.
     ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
