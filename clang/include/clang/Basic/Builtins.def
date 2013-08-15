@@ -25,6 +25,7 @@
 //  c -> char
 //  s -> short
 //  i -> int
+//  h -> half
 //  f -> float
 //  d -> double
 //  z -> size_t
