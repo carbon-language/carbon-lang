@@ -13,6 +13,7 @@
 // CHECK: @"\01?h2@@3QBHB"
 // CHECK: @"\01?i@@3PAY0BE@HA"
 // CHECK: @"\01?j@@3P6GHCE@ZA"
+// CHECK: @"\01?k@@3PTfoo@@DT1@"
 // X64: @"\01?k@@3PETfoo@@DET1@"
 // CHECK: @"\01?l@@3P8foo@@AEHH@ZQ1@"
 // CHECK: @"\01?color1@@3PANA"
