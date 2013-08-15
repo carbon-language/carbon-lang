@@ -136,6 +136,11 @@ void __dfsan_unimplemented(char *fname) {
          fname);
 }
 
+// Use '-mllvm -dfsan-debug-nonzero-labels' and break on this function
+// to try to figure out where labels are being introduced in a nominally
+// label-free program.
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE void __dfsan_nonzero_label() {}
+
 // Like __dfsan_union, but for use from the client or custom functions.  Hence
 // the equality comparison is done here before calling __dfsan_union.
 SANITIZER_INTERFACE_ATTRIBUTE dfsan_label
