@@ -662,9 +662,6 @@ def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
   let Inst{7-0}  = addr;
 }
 
-def : tInstAlias<"ldr${p}.n $Rt, $addr", 
-                 (tLDRpci tGPR:$Rt, t_addrmode_pc:$addr, pred:$p), 0>;
-
 // A8.6.194 & A8.6.192
 defm tSTR  : thumb_st_rr_ri_enc<0b000, 0b0110, t_addrmode_rrs4,
                                 t_addrmode_is4, AddrModeT1_4,

@@ -52,7 +52,6 @@ error: invalid operand for instruction
 @ CHECK-ERRORS:         ldm r2!, {r2, r3, r4}
 @ CHECK-ERRORS:               ^
 
-
 @ Invalid writeback and register lists for PUSH/POP
         pop {r1, r2, r10}
         push {r8, r9}
@@ -141,7 +140,7 @@ error: invalid operand for instruction
 
 
 @------------------------------------------------------------------------------
-@ WFE/WFI/YIELD - out of range immediates for Thumb1 branches
+@ B/Bcc - out of range immediates for Thumb1 branches
 @------------------------------------------------------------------------------
 
         beq    #-258
@@ -180,3 +179,11 @@ error: invalid operand for instruction
 @------------------------------------------------------------------------------
         pldw [r0, #4]
 @ CHECK-ERRORS: error: instruction requires: mp-extensions
+
+@------------------------------------------------------------------------------
+@ LDR(lit) - invalid offsets
+@------------------------------------------------------------------------------
+
+        ldr r4, [pc, #-12]
+@ CHECK-ERRORS: error: instruction requires: thumb2
+

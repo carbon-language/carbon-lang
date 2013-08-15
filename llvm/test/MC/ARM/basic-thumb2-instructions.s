@@ -797,23 +797,31 @@ _func:
 @ CHECK: ldr.w	lr, _strcmp-4           @ encoding: [0x5f'A',0xf8'A',A,0xe0'A']
 @ CHECK: @   fixup A - offset: 0, value: _strcmp-4, kind: fixup_t2_ldst_pcrel_12
 
+        ldr r7, [pc, #8]
+        ldr.n r7, [pc, #8]
+        ldr.w r7, [pc, #8]
         ldr r4, [pc, #1020]
         ldr r3, [pc, #-1020]
         ldr r6, [pc, #1024]
         ldr r0, [pc, #-1024]
         ldr r2, [pc, #4095]
         ldr r1, [pc, #-4095]
-        ldr.n r8, [pc, #132]
-        ldr.w r8, [pc, #132]
+        ldr r8, [pc, #132]
+        ldr pc, [pc, #256]
+        ldr pc, [pc, #-400]
 
+@ CHECK: ldr	r7, [pc, #8]            @ encoding: [0x02,0x4f]
+@ CHECK: ldr	r7, [pc, #8]            @ encoding: [0x02,0x4f]
+@ CHECK: ldr.w	r7, [pc, #8]            @ encoding: [0xdf,0xf8,0x08,0x70]
 @ CHECK: ldr	r4, [pc, #1020]       @ encoding: [0xff,0x4c]
-@ CHECK: ldr	r3, [pc, #-1020]      @ encoding: [0x01,0x4b]
+@ CHECK: ldr.w	r3, [pc, #-1020]        @ encoding: [0x5f,0xf8,0xfc,0x33]
 @ CHECK: ldr.w	r6, [pc, #1024]       @ encoding: [0xdf,0xf8,0x00,0x64]
 @ CHECK: ldr.w	r0, [pc, #-1024]      @ encoding: [0x5f,0xf8,0x00,0x04]
 @ CHECK: ldr.w	r2, [pc, #4095]       @ encoding: [0xdf,0xf8,0xff,0x2f]
 @ CHECK: ldr.w	r1, [pc, #-4095]      @ encoding: [0x5f,0xf8,0xff,0x1f]
-@ CHECK: ldr	r8, [pc, #132]        @ encoding: [0x21,0x48]
 @ CHECK: ldr.w	r8, [pc, #132]        @ encoding: [0xdf,0xf8,0x84,0x80]
+@ CHECK: ldr.w	pc, [pc, #256]          @ encoding: [0xdf,0xf8,0x00,0xf1]
+@ CHECK: ldr.w	pc, [pc, #-400]         @ encoding: [0x5f,0xf8,0x90,0xf1]
 
 @------------------------------------------------------------------------------
 @ LDR(register)

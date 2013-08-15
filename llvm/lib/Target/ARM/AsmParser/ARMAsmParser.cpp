@@ -647,7 +647,7 @@ public:
       Val = Memory.OffsetImm->getValue();
     }
     else return false;
-    return ((Val % 4) == 0) && (Val >= -1020) && (Val <= 1020);
+    return ((Val % 4) == 0) && (Val >= 0) && (Val <= 1020);
   }
   bool isFPImm() const {
     if (!isImm()) return false;

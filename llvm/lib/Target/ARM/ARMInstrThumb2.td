@@ -4191,7 +4191,7 @@ def : t2InstAlias<"ldrsh${p} $Rt, $addr",
                   (t2LDRSHs rGPR:$Rt, t2addrmode_so_reg:$addr, pred:$p)>;
 
 def : t2InstAlias<"ldr${p} $Rt, $addr",
-                  (t2LDRpci GPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
+                  (t2LDRpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
 def : t2InstAlias<"ldrb${p} $Rt, $addr",
                   (t2LDRBpci rGPR:$Rt, t2ldrlabel:$addr, pred:$p)>;
 def : t2InstAlias<"ldrh${p} $Rt, $addr",
@@ -4404,7 +4404,7 @@ def : t2InstAlias<"adr${p} $Rd, $addr",
 
 // LDR(literal) w/ alternate [pc, #imm] syntax.
 def t2LDRpcrel   : t2AsmPseudo<"ldr${p} $Rt, $addr",
-                         (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+                         (ins GPR:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
 def t2LDRBpcrel  : t2AsmPseudo<"ldrb${p} $Rt, $addr",
                          (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
 def t2LDRHpcrel  : t2AsmPseudo<"ldrh${p} $Rt, $addr",
@@ -4415,7 +4415,7 @@ def t2LDRSHpcrel  : t2AsmPseudo<"ldrsh${p} $Rt, $addr",
                          (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
     // Version w/ the .w suffix.
 def : t2InstAlias<"ldr${p}.w $Rt, $addr",
-                  (t2LDRpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p), 0>;
+                  (t2LDRpcrel GPR:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p), 0>;
 def : t2InstAlias<"ldrb${p}.w $Rt, $addr",
                   (t2LDRBpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
 def : t2InstAlias<"ldrh${p}.w $Rt, $addr",
