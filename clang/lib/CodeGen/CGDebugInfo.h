@@ -305,9 +305,9 @@ private:
 
   llvm::DIScope getCurrentContextDescriptor(const Decl *Decl);
 
-  /// createRecordFwdDecl - Create a forward decl for a RecordType in a given
-  /// context.
-  llvm::DIType createRecordFwdDecl(const RecordDecl *, llvm::DIDescriptor);
+  /// \brief Create a forward decl for a RecordType in a given context.
+  llvm::DICompositeType getOrCreateRecordFwdDecl(const RecordDecl *,
+                                                 llvm::DIDescriptor);
 
   /// createContextChain - Create a set of decls for the context chain.
   llvm::DIDescriptor createContextChain(const Decl *Decl);

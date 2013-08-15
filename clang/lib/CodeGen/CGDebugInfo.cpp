@@ -602,8 +602,12 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
 }
 
 // Creates a forward declaration for a RecordDecl in the given context.
-llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
-                                              llvm::DIDescriptor Ctx) {
+llvm::DICompositeType
+CGDebugInfo::getOrCreateRecordFwdDecl(const RecordDecl *RD,
+                                      llvm::DIDescriptor Ctx) {
+  llvm::DICompositeType T(getTypeOrNull(CGM.getContext().getRecordType(RD)));
+  if (T)
+    return T;
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
@@ -1413,7 +1417,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
     // test/CodeGen/debug-info-records.c .
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
+    llvm::DIType RetTy = getOrCreateRecordFwdDecl(RD, FDContext);
     TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RetTy;
     return RetTy;
   }
@@ -2175,7 +2179,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
   if (!RD->getDefinition())
-    return createRecordFwdDecl(RD, RDContext);
+    return getOrCreateRecordFwdDecl(RD, RDContext);
 
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
