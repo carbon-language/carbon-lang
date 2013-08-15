@@ -397,8 +397,8 @@ public:
     return isBranch(Type) & isBarrier(Type) & !isIndirectBranch(Type);
   }
 
-  // isPredicable - Return true if this instruction has a predicate operand that
-  // controls execution.  It may be set to 'always', or may be set to other
+  /// Return true if this instruction has a predicate operand that
+  /// controls execution.  It may be set to 'always', or may be set to other
   /// values.   There are various methods in TargetInstrInfo that can be used to
   /// control and modify the predicate in this instruction.
   bool isPredicable(QueryType Type = AllInBundle) const {
