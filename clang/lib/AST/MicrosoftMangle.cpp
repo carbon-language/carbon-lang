@@ -318,9 +318,18 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
   // mangled as 'QAHA' instead of 'PAHB', for example.
   TypeLoc TL = VD->getTypeSourceInfo()->getTypeLoc();
   QualType Ty = TL.getType();
-  if (Ty->isPointerType() || Ty->isReferenceType()) {
+  if (Ty->isPointerType() || Ty->isReferenceType() ||
+      Ty->isMemberPointerType()) {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
-    mangleQualifiers(Ty->getPointeeType().getQualifiers(), false);
+    if (PointersAre64Bit)
+      Out << 'E';
+    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>()) {
+      mangleQualifiers(MPT->getPointeeType().getQualifiers(), true);
+      // Member pointers are suffixed with a back reference to the member
+      // pointer's class name.
+      mangleName(MPT->getClass()->getAsCXXRecordDecl());
+    } else
+      mangleQualifiers(Ty->getPointeeType().getQualifiers(), false);
   } else if (const ArrayType *AT = getASTContext().getAsArrayType(Ty)) {
     // Global arrays are funny, too.
     mangleDecayedArrayType(AT, true);
@@ -330,11 +339,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
       mangleQualifiers(Ty.getQualifiers(), false);
   } else {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
-    mangleQualifiers(Ty.getLocalQualifiers(), Ty->isMemberPointerType());
-    // Member pointers are suffixed with a back reference to the member
-    // pointer's class name.
-    if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
-      mangleName(MPT->getClass()->getAsCXXRecordDecl());
+    mangleQualifiers(Ty.getLocalQualifiers(), false);
   }
 }
 
@@ -1024,9 +1029,6 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
       Out << 'A';
     }
   } else {
-    if (PointersAre64Bit)
-      Out << 'E';
-
     if (HasConst && HasVolatile) {
       Out << 'T';
     } else if (HasVolatile) {
@@ -1275,8 +1277,11 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
 
   // If this is a C++ instance method, mangle the CVR qualifiers for the
   // this pointer.
-  if (IsInstMethod)
+  if (IsInstMethod) {
+    if (PointersAre64Bit)
+      Out << 'E';
     mangleQualifiers(Qualifiers::fromCVRMask(Proto->getTypeQuals()), false);
+  }
 
   mangleCallingConvention(T, IsInstMethod);
 
@@ -1294,7 +1299,10 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     }
     Out << '@';
   } else {
-    mangleType(Proto->getResultType(), Range, QMM_Result);
+    QualType ResultType = Proto->getResultType();
+    if (ResultType->isVoidType())
+      ResultType = ResultType.getUnqualifiedType();
+    mangleType(ResultType, Range, QMM_Result);
   }
 
   // <argument-list> ::= X # void
@@ -1376,8 +1384,6 @@ void MicrosoftCXXNameMangler::mangleFunctionClass(const FunctionDecl *FD) {
         else
           Out << 'Q';
     }
-    if (PointersAre64Bit && !MD->isStatic())
-      Out << 'E';
   } else
     Out << 'Y';
 }
@@ -1565,6 +1571,8 @@ void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T,
     mangleName(T->getClass()->castAs<RecordType>()->getDecl());
     mangleFunctionType(FPT, NULL, false, true);
   } else {
+    if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
+      Out << 'E';
     mangleQualifiers(PointeeType.getQualifiers(), true);
     mangleName(T->getClass()->castAs<RecordType>()->getDecl());
     mangleType(PointeeType, Range, QMM_Drop);
@@ -1604,6 +1612,8 @@ void MicrosoftCXXNameMangler::mangleType(const ObjCObjectPointerType *T,
                                          SourceRange Range) {
   // Object pointers never have qualifiers.
   Out << 'A';
+  if (PointersAre64Bit && !T->getPointeeType()->isFunctionType())
+    Out << 'E';
   mangleType(T->getPointeeType(), Range);
 }
 

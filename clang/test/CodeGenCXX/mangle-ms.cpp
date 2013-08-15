@@ -13,12 +13,27 @@
 // CHECK: @"\01?h2@@3QBHB"
 // CHECK: @"\01?i@@3PAY0BE@HA"
 // CHECK: @"\01?j@@3P6GHCE@ZA"
-// CHECK: @"\01?k@@3PTfoo@@DQ1@"
+// X64: @"\01?k@@3PETfoo@@DET1@"
 // CHECK: @"\01?l@@3P8foo@@AEHH@ZQ1@"
 // CHECK: @"\01?color1@@3PANA"
 // CHECK: @"\01?color2@@3QBNB"
 // CHECK: @"\01?color3@@3QAY02$$CBNA"
 // CHECK: @"\01?color4@@3QAY02$$CBNA"
+// X64: @"\01?memptr1@@3RESB@@HES1@"
+// X64: @"\01?memptr2@@3PESB@@HES1@"
+// X64: @"\01?memptr3@@3REQB@@HEQ1@"
+// X64: @"\01?funmemptr1@@3RESB@@R6AHXZES1@"
+// X64: @"\01?funmemptr2@@3PESB@@R6AHXZES1@"
+// X64: @"\01?funmemptr3@@3REQB@@P6AHXZEQ1@"
+// X64: @"\01?memptrtofun1@@3R8B@@EAAXXZEQ1@"
+// X64: @"\01?memptrtofun2@@3P8B@@EAAXXZEQ1@"
+// X64: @"\01?memptrtofun3@@3P8B@@EAAXXZEQ1@"
+// X64: @"\01?memptrtofun4@@3R8B@@EAAHXZEQ1@"
+// X64: @"\01?memptrtofun5@@3P8B@@EAA?CHXZEQ1@"
+// X64: @"\01?memptrtofun6@@3P8B@@EAA?BHXZEQ1@"
+// X64: @"\01?memptrtofun7@@3R8B@@EAAP6AHXZXZEQ1@"
+// X64: @"\01?memptrtofun8@@3P8B@@EAAR6AHXZXZEQ1@"
+// X64: @"\01?memptrtofun9@@3P8B@@EAAQ6AHXZXZEQ1@"
 
 int a;
 
@@ -179,6 +194,24 @@ RGB color1;
 extern const RGB color2 = {};
 extern RGB const color3[5] = {};
 extern RGB const ((color4)[5]) = {};
+
+struct B;
+volatile int B::* volatile memptr1;
+volatile int B::* memptr2;
+int B::* volatile memptr3;
+typedef int (*fun)();
+volatile fun B::* volatile funmemptr1;
+volatile fun B::* funmemptr2;
+fun B::* volatile funmemptr3;
+void (B::* volatile memptrtofun1)();
+const void (B::* memptrtofun2)();
+volatile void (B::* memptrtofun3)();
+int (B::* volatile memptrtofun4)();
+volatile int (B::* memptrtofun5)();
+const int (B::* memptrtofun6)();
+fun (B::* volatile memptrtofun7)();
+volatile fun (B::* memptrtofun8)();
+const fun (B::* memptrtofun9)();
 
 // PR12603
 enum E {};
