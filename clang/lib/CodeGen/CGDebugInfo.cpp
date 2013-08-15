@@ -866,10 +866,9 @@ CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
 }
 
 /// CollectRecordStaticField - Helper for CollectRecordFields.
-void CGDebugInfo::
-CollectRecordStaticField(const VarDecl *Var,
-                         SmallVectorImpl<llvm::Value *> &elements,
-                         llvm::DIType RecordTy) {
+llvm::DIDerivedType
+CGDebugInfo::CreateRecordStaticField(const VarDecl *Var,
+                                     llvm::DIType RecordTy) {
   // Create the descriptor for the static variable, with or without
   // constant initializers.
   llvm::DIFile VUnit = getOrCreateFile(Var->getLocation());
@@ -898,10 +897,10 @@ CollectRecordStaticField(const VarDecl *Var,
   else if (Access == clang::AS_protected)
     Flags |= llvm::DIDescriptor::FlagProtected;
 
-  llvm::DIType GV = DBuilder.createStaticMemberType(RecordTy, VName, VUnit,
-                                                    LineNumber, VTy, Flags, C);
-  elements.push_back(GV);
+  llvm::DIDerivedType GV = DBuilder.createStaticMemberType(
+      RecordTy, VName, VUnit, LineNumber, VTy, Flags, C);
   StaticDataMemberCache[Var->getCanonicalDecl()] = llvm::WeakVH(GV);
+  return GV;
 }
 
 /// CollectRecordNormalField - Helper for CollectRecordFields.
@@ -952,7 +951,7 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
     for (RecordDecl::decl_iterator I = record->decls_begin(),
            E = record->decls_end(); I != E; ++I)
       if (const VarDecl *V = dyn_cast<VarDecl>(*I))
-        CollectRecordStaticField(V, elements, RecordTy);
+        elements.push_back(CreateRecordStaticField(V, RecordTy));
       else if (FieldDecl *field = dyn_cast<FieldDecl>(*I)) {
         CollectRecordNormalField(field, layout.getFieldOffset(fieldNo),
                                  tunit, elements, RecordTy);

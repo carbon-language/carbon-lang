@@ -184,9 +184,8 @@ class CGDebugInfo {
   void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
                                  SmallVectorImpl<llvm::Value *> &E,
                                  llvm::DIType RecordTy);
-  void CollectRecordStaticField(const VarDecl *Var,
-                                SmallVectorImpl<llvm::Value *> &E,
-                                llvm::DIType RecordTy);
+  llvm::DIDerivedType CreateRecordStaticField(const VarDecl *Var,
+                                              llvm::DIType RecordTy);
   void CollectRecordNormalField(const FieldDecl *Field, uint64_t OffsetInBits,
                                 llvm::DIFile F,
                                 SmallVectorImpl<llvm::Value *> &E,
