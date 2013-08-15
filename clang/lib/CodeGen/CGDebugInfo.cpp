@@ -3002,8 +3002,8 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 /// getStaticDataMemberDeclaration - If D is an out-of-class definition of
 /// a static data member of a class, find its corresponding in-class
 /// declaration.
-llvm::DIDerivedType CGDebugInfo::getStaticDataMemberDeclaration(const Decl *D) {
-  if (cast<VarDecl>(D)->isStaticDataMember()) {
+llvm::DIDerivedType CGDebugInfo::getStaticDataMemberDeclaration(const VarDecl *D) {
+  if (D->isStaticDataMember()) {
     llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
       MI = StaticDataMemberCache.find(D->getCanonicalDecl());
     if (MI != StaticDataMemberCache.end())
@@ -3093,10 +3093,9 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   // Do not use DIGlobalVariable for enums.
   if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
     return;
-  llvm::DIGlobalVariable GV =
-      DBuilder.createStaticVariable(Unit, Name, Name, Unit,
-                                    getLineNumber(VD->getLocation()), Ty, true,
-                                    Init, getStaticDataMemberDeclaration(VD));
+  llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
+      Unit, Name, Name, Unit, getLineNumber(VD->getLocation()), Ty, true, Init,
+      getStaticDataMemberDeclaration(cast<VarDecl>(VD)));
   DeclCache.insert(std::make_pair(VD->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
 
