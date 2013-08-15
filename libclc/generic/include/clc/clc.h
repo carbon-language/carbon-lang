@@ -68,6 +68,7 @@
 #include <clc/integer/hadd.h>
 #include <clc/integer/mad24.h>
 #include <clc/integer/mul24.h>
+#include <clc/integer/rhadd.h>
 #include <clc/integer/rotate.h>
 #include <clc/integer/sub_sat.h>
 #include <clc/integer/upsample.h>
