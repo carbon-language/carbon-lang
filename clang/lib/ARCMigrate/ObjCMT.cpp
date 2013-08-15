@@ -515,7 +515,7 @@ static bool UseNSOptionsMacro(ASTContext &Ctx,
         MaxPowerOfTwoVal = EnumVal;
     }
   }
-  return PowerOfTwo ? ((MaxPowerOfTwoVal > 2) ? true : false) : false;
+  return PowerOfTwo && (MaxPowerOfTwoVal > 2);
 }
 
 void ObjCMigrateASTConsumer::migrateProtocolConformance(ASTContext &Ctx,   
