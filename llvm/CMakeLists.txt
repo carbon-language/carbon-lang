@@ -288,7 +288,7 @@ execute_process(
             --enable-optional-components "${LLVMOPTIONALCOMPONENTS}"
             --write-library-table ${LLVMCONFIGLIBRARYDEPENDENCIESINC}
             --write-cmake-fragment ${LLVMBUILDCMAKEFRAG}
-            ERROR_VARIABLE LLVMBUILDOUTPUT
+            OUTPUT_VARIABLE LLVMBUILDOUTPUT
             ERROR_VARIABLE LLVMBUILDERRORS
             OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_STRIP_TRAILING_WHITESPACE
