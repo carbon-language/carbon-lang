@@ -11,6 +11,7 @@ integer/add_sat_impl.ll
 integer/clz.cl
 integer/clz_if.ll
 integer/clz_impl.ll
+integer/hadd.cl
 integer/mad24.cl
 integer/mul24.cl
 integer/rotate.cl
