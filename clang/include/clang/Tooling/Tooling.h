@@ -54,6 +54,9 @@ class FrontendAction;
 namespace tooling {
 
 /// \brief Interface to generate clang::FrontendActions.
+///
+/// Having a factory interface allows, for example, a new FrontendAction to be
+/// created for each translation unit processed by ClangTool.
 class FrontendActionFactory {
 public:
   virtual ~FrontendActionFactory();
@@ -66,7 +69,7 @@ public:
 
 /// \brief Returns a new FrontendActionFactory for a given type.
 ///
-/// T must extend clang::FrontendAction.
+/// T must derive from clang::FrontendAction.
 ///
 /// Example:
 /// FrontendActionFactory *Factory =
