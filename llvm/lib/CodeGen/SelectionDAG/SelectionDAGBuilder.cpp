@@ -3452,7 +3452,7 @@ void SelectionDAGBuilder::visitAtomicCmpXchg(const AtomicCmpXchgInst &I) {
 
   SDValue L =
     DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, dl,
-                  getValue(I.getCompareOperand()).getValueType().getSimpleVT(),
+                  getValue(I.getCompareOperand()).getSimpleValueType(),
                   InChain,
                   getValue(I.getPointerOperand()),
                   getValue(I.getCompareOperand()),
@@ -3500,7 +3500,7 @@ void SelectionDAGBuilder::visitAtomicRMW(const AtomicRMWInst &I) {
 
   SDValue L =
     DAG.getAtomic(NT, dl,
-                  getValue(I.getValOperand()).getValueType().getSimpleVT(),
+                  getValue(I.getValOperand()).getSimpleValueType(),
                   InChain,
                   getValue(I.getPointerOperand()),
                   getValue(I.getValOperand()),

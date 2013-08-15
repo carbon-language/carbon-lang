@@ -249,7 +249,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoad(SDNode *N) {
   SDValue Addr;
   SDValue Offset, Base;
   unsigned Opcode;
-  MVT::SimpleValueType TargetVT = LD->getValueType(0).getSimpleVT().SimpleTy;
+  MVT::SimpleValueType TargetVT = LD->getSimpleValueType(0).SimpleTy;
 
   if (SelectDirectAddr(N1, Addr)) {
     switch (TargetVT) {
@@ -1347,8 +1347,7 @@ SDNode *NVPTXDAGToDAGISel::SelectStore(SDNode *N) {
   SDValue Addr;
   SDValue Offset, Base;
   unsigned Opcode;
-  MVT::SimpleValueType SourceVT =
-      N1.getNode()->getValueType(0).getSimpleVT().SimpleTy;
+  MVT::SimpleValueType SourceVT = N1.getNode()->getSimpleValueType(0).SimpleTy;
 
   if (SelectDirectAddr(N2, Addr)) {
     switch (SourceVT) {

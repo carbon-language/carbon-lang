@@ -1969,7 +1969,7 @@ SDValue SelectionDAGLegalize::ExpandFPLibCall(SDNode* Node,
                                               RTLIB::Libcall Call_F128,
                                               RTLIB::Libcall Call_PPCF128) {
   RTLIB::Libcall LC;
-  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  switch (Node->getSimpleValueType(0).SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
   case MVT::f32: LC = Call_F32; break;
   case MVT::f64: LC = Call_F64; break;
@@ -1987,7 +1987,7 @@ SDValue SelectionDAGLegalize::ExpandIntLibCall(SDNode* Node, bool isSigned,
                                                RTLIB::Libcall Call_I64,
                                                RTLIB::Libcall Call_I128) {
   RTLIB::Libcall LC;
-  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  switch (Node->getSimpleValueType(0).SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
   case MVT::i8:   LC = Call_I8; break;
   case MVT::i16:  LC = Call_I16; break;
@@ -2002,7 +2002,7 @@ SDValue SelectionDAGLegalize::ExpandIntLibCall(SDNode* Node, bool isSigned,
 static bool isDivRemLibcallAvailable(SDNode *Node, bool isSigned,
                                      const TargetLowering &TLI) {
   RTLIB::Libcall LC;
-  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  switch (Node->getSimpleValueType(0).SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
   case MVT::i8:   LC= isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
   case MVT::i16:  LC= isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
@@ -2049,7 +2049,7 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
   bool isSigned = Opcode == ISD::SDIVREM;
 
   RTLIB::Libcall LC;
-  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  switch (Node->getSimpleValueType(0).SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
   case MVT::i8:   LC= isSigned ? RTLIB::SDIVREM_I8  : RTLIB::UDIVREM_I8;  break;
   case MVT::i16:  LC= isSigned ? RTLIB::SDIVREM_I16 : RTLIB::UDIVREM_I16; break;
@@ -2106,7 +2106,7 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
 /// isSinCosLibcallAvailable - Return true if sincos libcall is available.
 static bool isSinCosLibcallAvailable(SDNode *Node, const TargetLowering &TLI) {
   RTLIB::Libcall LC;
-  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  switch (Node->getSimpleValueType(0).SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
   case MVT::f32:     LC = RTLIB::SINCOS_F32; break;
   case MVT::f64:     LC = RTLIB::SINCOS_F64; break;
@@ -2156,7 +2156,7 @@ void
 SelectionDAGLegalize::ExpandSinCosLibCall(SDNode *Node,
                                           SmallVectorImpl<SDValue> &Results) {
   RTLIB::Libcall LC;
-  switch (Node->getValueType(0).getSimpleVT().SimpleTy) {
+  switch (Node->getSimpleValueType(0).SimpleTy) {
   default: llvm_unreachable("Unexpected request for libcall!");
   case MVT::f32:     LC = RTLIB::SINCOS_F32; break;
   case MVT::f64:     LC = RTLIB::SINCOS_F64; break;
@@ -2382,7 +2382,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   // as a negative number.  To counteract this, the dynamic code adds an
   // offset depending on the data type.
   uint64_t FF;
-  switch (Op0.getValueType().getSimpleVT().SimpleTy) {
+  switch (Op0.getSimpleValueType().SimpleTy) {
   default: llvm_unreachable("Unsupported integer type!");
   case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
   case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)

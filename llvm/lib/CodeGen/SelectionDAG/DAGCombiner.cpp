@@ -8412,7 +8412,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     // transform should not be done in this case.
     if (Value.getOpcode() != ISD::TargetConstantFP) {
       SDValue Tmp;
-      switch (CFP->getValueType(0).getSimpleVT().SimpleTy) {
+      switch (CFP->getSimpleValueType(0).SimpleTy) {
       default: llvm_unreachable("Unknown FP type");
       case MVT::f16:    // We don't do this for these yet.
       case MVT::f80:
