@@ -1403,6 +1403,26 @@ llvm::DIType CGDebugInfo::getOrCreateInterfaceType(QualType D,
   return T;
 }
 
+void CGDebugInfo::completeType(const RecordDecl *RD) {
+  if (DebugKind > CodeGenOptions::LimitedDebugInfo ||
+      !CGM.getLangOpts().CPlusPlus)
+    completeRequiredType(RD);
+}
+
+void CGDebugInfo::completeRequiredType(const RecordDecl *RD) {
+  QualType Ty = CGM.getContext().getRecordType(RD);
+  llvm::DIType T = getTypeOrNull(Ty);
+  if (!T || !T.isForwardDecl())
+    return;
+  void* TyPtr = Ty.getAsOpaquePtr();
+  if (CompletedTypeCache.count(TyPtr))
+    return;
+  llvm::DIType Res = CreateTypeDefinition(Ty->castAs<RecordType>());
+  assert(!Res.isForwardDecl());
+  CompletedTypeCache[TyPtr] = Res;
+  TypeCache[TyPtr] = Res;
+}
+
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   RecordDecl *RD = Ty->getDecl();
@@ -1418,6 +1438,12 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
     llvm::DIType RetTy = getOrCreateRecordFwdDecl(RD, FDContext);
     return RetTy;
   }
+
+  return CreateTypeDefinition(Ty);
+}
+
+llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
+  RecordDecl *RD = Ty->getDecl();
 
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
@@ -1928,20 +1954,6 @@ llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
 
   // Verify that any cached debug info still exists.
   return llvm::DIType(cast_or_null<llvm::MDNode>(V));
-}
-
-void CGDebugInfo::completeFwdDecl(const RecordDecl &RD) {
-  // In limited debug info we only want to do this if the complete type was
-  // required.
-  if (DebugKind <= CodeGenOptions::LimitedDebugInfo &&
-      CGM.getLangOpts().CPlusPlus)
-    return;
-
-  QualType QTy = CGM.getContext().getRecordType(&RD);
-  llvm::DIType T = getTypeOrNull(QTy);
-
-  if (T && T.isForwardDecl())
-    getOrCreateType(QTy, getOrCreateFile(RD.getLocation()));
 }
 
 /// getCachedInterfaceTypeOrNull - Get the type from the interface

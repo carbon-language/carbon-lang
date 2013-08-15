@@ -100,7 +100,7 @@ namespace {
     virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) LLVM_OVERRIDE {
       if (CodeGen::CGDebugInfo *DI = Builder->getModuleDebugInfo())
         if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
-          DI->completeFwdDecl(*RD);
+          DI->completeRequiredType(RD);
     }
 
     virtual void HandleTranslationUnit(ASTContext &Ctx) {

@@ -115,6 +115,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const BlockPointerType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const RecordType *Ty, bool Declaration);
+  llvm::DIType CreateTypeDefinition(const RecordType *Ty);
   llvm::DIType CreateLimitedType(const RecordType *Ty);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
@@ -288,7 +289,9 @@ public:
   llvm::DIType getOrCreateInterfaceType(QualType Ty,
                                         SourceLocation Loc);
 
-  void completeFwdDecl(const RecordDecl &TD);
+  void completeType(const RecordDecl *RD);
+  void completeRequiredType(const RecordDecl *RD);
+
 
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
