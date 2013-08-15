@@ -1060,7 +1060,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
     }
   }
 
-  ReleasedAllocated = (RsBase != 0);
+  ReleasedAllocated = (RsBase != 0) && RsBase->isAllocated();
 
   // Clean out the info on previous call to free return info.
   State = State->remove<FreeReturnValue>(SymBase);

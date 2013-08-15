@@ -1207,6 +1207,16 @@ void freeMemory() {
   }
 }
 
+// PR16730
+void testReallocEscaped(void **memory) {
+  *memory = malloc(47);
+  char *new_memory = realloc(*memory, 47);
+  if (new_memory != 0) {
+    *memory = new_memory;
+  }
+}
+
+
 // ----------------------------------------------------------------------------
 // False negatives.
 
