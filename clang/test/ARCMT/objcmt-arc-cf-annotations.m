@@ -4,16 +4,16 @@
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c %s.result
 
 #if __has_feature(attribute_ns_returns_retained)
-#define NS_RETURNS_RETAINED
+#define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
 #endif
 #if __has_feature(attribute_cf_returns_retained)
-#define CF_RETURNS_RETAINED 
+#define CF_RETURNS_RETAINED __attribute__((cf_returns_retained))
 #endif
 #if __has_feature(attribute_ns_returns_not_retained)
-#define NS_RETURNS_NOT_RETAINED
+#define NS_RETURNS_NOT_RETAINED __attribute__((ns_returns_not_retained))
 #endif
 #if __has_feature(attribute_cf_returns_not_retained)
-#define CF_RETURNS_NOT_RETAINED
+#define CF_RETURNS_NOT_RETAINED __attribute__((cf_returns_not_retained))
 #endif
 #if __has_feature(attribute_ns_consumes_self)
 #define NS_CONSUMES_SELF __attribute__((ns_consumes_self))
