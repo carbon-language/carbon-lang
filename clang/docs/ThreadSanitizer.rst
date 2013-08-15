@@ -94,8 +94,7 @@ to disable instrumentation of plain (non-atomic) loads/stores in a particular fu
 ThreadSanitizer may still instrument such functions to avoid false positives.
 This attribute may not be
 supported by other compilers, so we suggest to use it together with
-``__has_feature(thread_sanitizer)``. Note: currently, this attribute will be
-lost if the function is inlined.
+``__has_feature(thread_sanitizer)``.
 
 Blacklist
 ---------
