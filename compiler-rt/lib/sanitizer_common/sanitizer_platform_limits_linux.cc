@@ -18,6 +18,9 @@
 #include "sanitizer_platform.h"
 #if SANITIZER_LINUX
 
+#include "sanitizer_internal_defs.h"
+#include "sanitizer_platform_limits_posix.h"
+
 #include <linux/socket.h>
 
 #if !SANITIZER_ANDROID
