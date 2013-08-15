@@ -339,7 +339,8 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     Value.Addend = Addend - Addr;
   }
 
-  if (Arch == Triple::x86_64 && RelType == macho::RIT_X86_64_GOT) {
+  if (Arch == Triple::x86_64 && (RelType == macho::RIT_X86_64_GOT ||
+                                 RelType == macho::RIT_X86_64_GOTLoad)) {
     assert(IsPCRel);
     assert(Size == 2);
     StubMap::const_iterator i = Stubs.find(Value);
@@ -350,8 +351,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
       Stubs[Value] = Section.StubOffset;
       uint8_t *GOTEntry = Section.Address + Section.StubOffset;
       RelocationEntry RE(SectionID, Section.StubOffset,
-                         macho::RIT_X86_64_Unsigned, Value.Addend - 4, false,
-                         3);
+                         macho::RIT_X86_64_Unsigned, 0, false, 3);
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
@@ -360,7 +360,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
       Addr = GOTEntry;
     }
     resolveRelocation(Section, Offset, (uint64_t)Addr,
-                      macho::RIT_X86_64_Unsigned, 4, true, 2);
+                      macho::RIT_X86_64_Unsigned, Value.Addend, true, 2);
   } else if (Arch == Triple::arm &&
              (RelType & 0xf) == macho::RIT_ARM_Branch24Bit) {
     // This is an ARM branch relocation, need to use a stub function.
