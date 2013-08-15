@@ -1623,7 +1623,7 @@ static llvm::VectorType *GetNeonType(CodeGenFunction *CGF,
 static Value *EmitExtendedSHL(CodeGenFunction &CGF,
                               SmallVectorImpl<Value*> &Ops,
                               llvm::VectorType *VTy, bool usgn, bool isHigh) {
-  IRBuilder<> Builder = CGF.Builder;
+  CGBuilderTy Builder = CGF.Builder;
   if (isHigh){
     unsigned NumElts = VTy->getNumElements();
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
