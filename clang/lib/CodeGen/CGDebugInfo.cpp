@@ -875,7 +875,7 @@ CollectRecordStaticField(const VarDecl *Var,
   llvm::DIFile VUnit = getOrCreateFile(Var->getLocation());
   llvm::DIType VTy = getOrCreateType(Var->getType(), VUnit);
 
-  assert(VTy.getTag() == llvm::dwarf::DW_TAG_enumeration_type &&
+  assert(VTy.getTag() != llvm::dwarf::DW_TAG_enumeration_type &&
          "Do not describe enums as static members");
 
   unsigned LineNumber = getLineNumber(Var->getLocation());
