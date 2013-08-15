@@ -3,5 +3,5 @@
 long double x = 0;
 int checksize[sizeof(x) == 8 ? 1 : -1];
 
-// CHECK: define void @s1(double %a)
+// CHECK-LABEL: define void @s1(double %a)
 void s1(long double a) {}

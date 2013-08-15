@@ -27,7 +27,7 @@ extern A &a;
 // CHECK: @_ZN5Test14a_tiE = global
 const std::type_info &a_ti = typeid(a);
 
-// CHECK: define i8* @_ZN5Test11fEv
+// CHECK-LABEL: define i8* @_ZN5Test11fEv
 const char *f() {
   try {
     // CHECK: br i1

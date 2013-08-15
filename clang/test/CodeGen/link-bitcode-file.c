@@ -13,12 +13,12 @@ int f(void) {
 
 #else
 
-// CHECK-NO-BC: define i32 @g
+// CHECK-NO-BC-LABEL: define i32 @g
 // CHECK-NO-BC: ret i32 42
 int g(void) {
   return f();
 }
 
-// CHECK-NO-BC: define i32 @f
+// CHECK-NO-BC-LABEL: define i32 @f
 
 #endif

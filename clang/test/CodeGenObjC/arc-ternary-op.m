@@ -3,7 +3,7 @@
 void test0(_Bool cond) {
   id test0_helper(void) __attribute__((ns_returns_retained));
 
-  // CHECK:      define void @test0(
+  // CHECK-LABEL:      define void @test0(
   // CHECK:      [[COND:%.*]] = alloca i8,
   // CHECK-NEXT: [[X:%.*]] = alloca i8*,
   // CHECK-NEXT: [[RELVAL:%.*]] = alloca i8*
@@ -40,7 +40,7 @@ void test1(int cond) {
   test1_sink(cond ? &strong : 0);
   test1_sink(cond ? &weak : 0);
 
-  // CHECK:    define void @test1(
+  // CHECK-LABEL:    define void @test1(
   // CHECK:      [[COND:%.*]] = alloca i32
   // CHECK-NEXT: [[STRONG:%.*]] = alloca i8*
   // CHECK-NEXT: [[WEAK:%.*]] = alloca i8*
@@ -106,7 +106,7 @@ void test2(int cond) {
   for (id obj in cond ? test2_producer() : (void*) 0) {
   }
 
-  // CHECK:    define void @test2(
+  // CHECK-LABEL:    define void @test2(
   // CHECK:      [[COND:%.*]] = alloca i32,
   // CHECK:      alloca i8*
   // CHECK:      [[CLEANUP_SAVE:%.*]] = alloca i8*

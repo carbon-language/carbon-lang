@@ -9,7 +9,7 @@ void test() {
 
 // TODO: We should probably emit this specific pattern without the reclaim.
 
-// CHECK:    define void @test()
+// CHECK-LABEL:    define void @test()
 // CHECK:      [[T0:%.*]] = call i8* @make()
 // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
 // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_autorelease(i8* [[T1]])

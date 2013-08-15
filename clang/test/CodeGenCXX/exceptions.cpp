@@ -269,7 +269,7 @@ namespace test5 {
 
   void foo();
 
-  // CHECK:    define void @_ZN5test54testEv()
+  // CHECK-LABEL:    define void @_ZN5test54testEv()
   // CHECK:      [[EXNSLOT:%.*]] = alloca i8*
   // CHECK-NEXT: [[SELECTORSLOT:%.*]] = alloca i32
   // CHECK-NEXT: [[A:%.*]] = alloca [[A_T:%.*]], align 1
@@ -403,7 +403,7 @@ namespace test8 {
   void test() {
     throw makeA();
   }
-  // CHECK: define void @_ZN5test84testEv
+  // CHECK-LABEL: define void @_ZN5test84testEv
 }
 
 // Make sure we generate the correct code for the delete[] call which
@@ -432,14 +432,14 @@ namespace test10 {
 
   struct A { ~A(); };
   A::~A() try { cleanup(); } catch (...) { return; }
-  // CHECK:    define void @_ZN6test101AD1Ev(
+  // CHECK-LABEL:    define void @_ZN6test101AD1Ev(
   // CHECK:      invoke void @_ZN6test107cleanupEv()
   // CHECK-NOT:  rethrow
   // CHECK:      ret void
 
   struct B { ~B(); };
   B::~B() try { cleanup(); } catch (...) {}
-  // CHECK:    define void @_ZN6test101BD1Ev(
+  // CHECK-LABEL:    define void @_ZN6test101BD1Ev(
   // CHECK:      invoke void @_ZN6test107cleanupEv()
   // CHECK:      call i8* @__cxa_begin_catch
   // CHECK-NEXT: invoke void @__cxa_rethrow()
@@ -447,7 +447,7 @@ namespace test10 {
 
   struct C { ~C(); };
   C::~C() try { cleanup(); } catch (...) { if (suppress) return; }
-  // CHECK:    define void @_ZN6test101CD1Ev(
+  // CHECK-LABEL:    define void @_ZN6test101CD1Ev(
   // CHECK:      invoke void @_ZN6test107cleanupEv()
   // CHECK:      call i8* @__cxa_begin_catch
   // CHECK-NEXT: load i8* @_ZN6test108suppressE, align 1
@@ -477,7 +477,7 @@ namespace test11 {
   C::C() {
     throw 0;
   }
-  // CHECK:    define void @_ZN6test111CC2Ev(
+  // CHECK-LABEL:    define void @_ZN6test111CC2Ev(
   // CHECK:      [[THIS:%.*]] = load [[C:%.*]]** {{%.*}}
   //   Construct single.
   // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[C]]* [[THIS]], i32 0, i32 0

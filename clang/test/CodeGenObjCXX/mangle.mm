@@ -81,20 +81,20 @@ void test2(Test2 *t) {
 
 @protocol P;
 void overload1(A<P>*) {}
-// CHECK: define void @_Z9overload1PU11objcproto1P1A
+// CHECK-LABEL: define void @_Z9overload1PU11objcproto1P1A
 void overload1(const A<P>*) {}
-// CHECK: define void @_Z9overload1PKU11objcproto1P1A
+// CHECK-LABEL: define void @_Z9overload1PKU11objcproto1P1A
 void overload1(A<P>**) {}
-// CHECK: define void @_Z9overload1PPU11objcproto1P1A
+// CHECK-LABEL: define void @_Z9overload1PPU11objcproto1P1A
 void overload1(A<P>*const*) {}
-// CHECK: define void @_Z9overload1PKPU11objcproto1P1A
+// CHECK-LABEL: define void @_Z9overload1PKPU11objcproto1P1A
 void overload1(A<P>***) {}
-// CHECK: define void @_Z9overload1PPPU11objcproto1P1A
+// CHECK-LABEL: define void @_Z9overload1PPPU11objcproto1P1A
 void overload1(void (f)(A<P>*)) {}
-// CHECK: define void @_Z9overload1PFvPU11objcproto1P1AE
+// CHECK-LABEL: define void @_Z9overload1PFvPU11objcproto1P1AE
 
 template<typename T> struct X { void f(); };
 template<> void X<A*>::f() {}
-// CHECK: define void @_ZN1XIP1AE1fEv
+// CHECK-LABEL: define void @_ZN1XIP1AE1fEv
 template<> void X<A<P>*>::f() {}
-// CHECK: define void @_ZN1XIPU11objcproto1P1AE1fEv
+// CHECK-LABEL: define void @_ZN1XIPU11objcproto1P1AE1fEv

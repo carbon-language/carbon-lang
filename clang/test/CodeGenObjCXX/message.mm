@@ -15,7 +15,7 @@ namespace test0 {
     [a foo];
   }
   template void foo<int>();
-  // CHECK:    define weak_odr void @_ZN5test03fooIiEEvv()
+  // CHECK-LABEL:    define weak_odr void @_ZN5test03fooIiEEvv()
   // CHECK:      [[T0:%.*]] = call [[TEST0:%.*]]* @_ZN5test01AcvP5Test0Ev(
   // CHECK-NEXT: [[T1:%.*]] = load i8**
   // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST0]]* [[T0]] to i8*

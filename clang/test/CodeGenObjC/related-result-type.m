@@ -9,7 +9,7 @@
 @interface NSString : NSObject
 @end
 
-// CHECK: define void @test1()
+// CHECK-LABEL: define void @test1()
 void test1() {
   // CHECK: {{call.*@objc_msgSend}}
   // CHECK: {{call.*@objc_msgSend}}
@@ -18,7 +18,7 @@ void test1() {
   NSString *str1 = [[[NSString alloc] init] retain];
 }
 
-// CHECK: define void @test2()
+// CHECK-LABEL: define void @test2()
 void test2() {
   // CHECK: {{call.*@objc_msgSend}}
   // CHECK: {{call.*@objc_msgSend}}

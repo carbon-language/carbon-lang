@@ -51,10 +51,10 @@ int align2_x0 = __alignof(((struct s2*) 0)->x[0]);
 // CHECK: @align3_x0 = global i32 4
 int align3_x0 = __alignof(((struct s3*) 0)->x[0]);
 
-// CHECK: define i32 @f0_a
+// CHECK-LABEL: define i32 @f0_a
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
-// CHECK: define i32 @f0_b
+// CHECK-LABEL: define i32 @f0_b
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
 int f0_a(struct s0 *a) {
@@ -66,19 +66,19 @@ int f0_b(struct s0 *a) {
 
 // Note that we are incompatible with GCC on this example.
 // 
-// CHECK: define i32 @f1_a
+// CHECK-LABEL: define i32 @f1_a
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
-// CHECK: define i32 @f1_b
+// CHECK-LABEL: define i32 @f1_b
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
 
 // Note that we are incompatible with GCC on this example.
 //
-// CHECK: define i32 @f1_c
+// CHECK-LABEL: define i32 @f1_c
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
-// CHECK: define i32 @f1_d
+// CHECK-LABEL: define i32 @f1_d
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
 int f1_a(struct s1 *a) {
@@ -94,16 +94,16 @@ int f1_d(struct s1 *a) {
   return a->z;
 }
 
-// CHECK: define i32 @f2_a
+// CHECK-LABEL: define i32 @f2_a
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
-// CHECK: define i32 @f2_b
+// CHECK-LABEL: define i32 @f2_b
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
-// CHECK: define i32 @f2_c
+// CHECK-LABEL: define i32 @f2_c
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
-// CHECK: define i32 @f2_d
+// CHECK-LABEL: define i32 @f2_d
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
 int f2_a(struct s2 *a) {
@@ -119,16 +119,16 @@ int f2_d(struct s2 *a) {
   return a->z;
 }
 
-// CHECK: define i32 @f3_a
+// CHECK-LABEL: define i32 @f3_a
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
-// CHECK: define i32 @f3_b
+// CHECK-LABEL: define i32 @f3_b
 // CHECK:   load i32* %{{.*}}, align 4
 // CHECK: }
-// CHECK: define i32 @f3_c
+// CHECK-LABEL: define i32 @f3_c
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
-// CHECK: define i32 @f3_d
+// CHECK-LABEL: define i32 @f3_d
 // CHECK:   load i32* %{{.*}}, align 1
 // CHECK: }
 int f3_a(struct s3 *a) {
@@ -146,7 +146,7 @@ int f3_d(struct s3 *a) {
 
 // Verify we don't claim things are overaligned.
 //
-// CHECK: define double @f4
+// CHECK-LABEL: define double @f4
 // CHECK:   load double* {{.*}}, align 8
 // CHECK: }
 extern double g4[5] __attribute__((aligned(16)));

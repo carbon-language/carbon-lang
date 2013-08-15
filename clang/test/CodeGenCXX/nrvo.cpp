@@ -9,8 +9,8 @@ public:
   ~X();
 };
 
-// CHECK: define void @_Z5test0v
-// CHECK-EH: define void @_Z5test0v
+// CHECK-LABEL: define void @_Z5test0v
+// CHECK-EH-LABEL: define void @_Z5test0v
 X test0() {
   X x;
   // CHECK:          call {{.*}} @_ZN1XC1Ev
@@ -21,8 +21,8 @@ X test0() {
   return x;
 }
 
-// CHECK: define void @_Z5test1b(
-// CHECK-EH: define void @_Z5test1b(
+// CHECK-LABEL: define void @_Z5test1b(
+// CHECK-EH-LABEL: define void @_Z5test1b(
 X test1(bool B) {
   // CHECK:      tail call {{.*}} @_ZN1XC1Ev
   // CHECK-NEXT: ret void
@@ -34,8 +34,8 @@ X test1(bool B) {
   // CHECK-EH-NEXT: ret void
 }
 
-// CHECK: define void @_Z5test2b
-// CHECK-EH: define void @_Z5test2b
+// CHECK-LABEL: define void @_Z5test2b
+// CHECK-EH-LABEL: define void @_Z5test2b
 X test2(bool B) {
   // No NRVO.
 
@@ -120,7 +120,7 @@ X test3(bool B) {
 
 extern "C" void exit(int) throw();
 
-// CHECK: define void @_Z5test4b
+// CHECK-LABEL: define void @_Z5test4b
 X test4(bool B) {
   {
     // CHECK: tail call {{.*}} @_ZN1XC1Ev
@@ -135,7 +135,7 @@ X test4(bool B) {
 }
 
 #ifdef __EXCEPTIONS
-// CHECK-EH: define void @_Z5test5
+// CHECK-EH-LABEL: define void @_Z5test5
 void may_throw();
 X test5() {
   try {
@@ -150,7 +150,7 @@ X test5() {
 #endif
 
 // rdar://problem/10430868
-// CHECK: define void @_Z5test6v
+// CHECK-LABEL: define void @_Z5test6v
 X test6() {
   X a __attribute__((aligned(8)));
   return a;

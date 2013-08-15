@@ -34,7 +34,7 @@ static inline void _inlineFunction() {
 // CHECK: @__CFConstantStringClassReference = common global [24 x i32] zeroinitializer, align 16
 // CHECK: @_unnamed_cfstring_{{.*}} = private constant %struct.NSConstantString { i32* getelementptr inbounds ([24 x i32]* @__CFConstantStringClassReference, i32 0, i32 0)
 
-// CHECK: define internal void @_inlineFunction()
+// CHECK-LABEL: define internal void @_inlineFunction()
 // CHECK:  [[ZERO:%.*]] = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_
 // CHECK-NEXT:   [[ONE:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_"
 // CHECK-NEXT:   [[TWO:%.*]] = bitcast %struct._class_t* [[ZERO]] to i8*

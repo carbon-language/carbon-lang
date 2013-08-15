@@ -22,7 +22,7 @@ namespace test0 {
   };
 
   void A::foo() { bar(); }
-  // CHECK: define hidden void @_ZN5test01A3fooEv()
+  // CHECK-LABEL: define hidden void @_ZN5test01A3fooEv()
   // CHECK: declare void @_ZN5test01A3barEv()
 
   const std::type_info &ti = typeid(A);
@@ -38,7 +38,7 @@ namespace test1 {
   };
 
   void A::foo() { bar(); }
-  // CHECK: define hidden void @_ZN5test11A3fooEv()
+  // CHECK-LABEL: define hidden void @_ZN5test11A3fooEv()
   // CHECK: declare hidden void @_ZN5test11A3barEv()
 
   const std::type_info &ti = typeid(A);
@@ -54,7 +54,7 @@ namespace test2 {
   };
 
   void A::foo() { bar(); }
-  // CHECK: define void @_ZN5test21A3fooEv()
+  // CHECK-LABEL: define void @_ZN5test21A3fooEv()
   // CHECK: declare void @_ZN5test21A3barEv()
 
   const std::type_info &ti = typeid(A);
@@ -71,7 +71,7 @@ namespace test3 {
   };
 
   template void B<A>::foo();
-  // CHECK: define weak_odr hidden void @_ZN5test31BINS_1AEE3fooEv()
+  // CHECK-LABEL: define weak_odr hidden void @_ZN5test31BINS_1AEE3fooEv()
   // CHECK: declare void @_ZN5test31BINS_1AEE3barEv()
 
   const std::type_info &ti = typeid(B<A>);
@@ -87,7 +87,7 @@ namespace test4 {
   };
 
   template void B<A>::foo();
-  // CHECK: define weak_odr void @_ZN5test41BINS_1AEE3fooEv()
+  // CHECK-LABEL: define weak_odr void @_ZN5test41BINS_1AEE3fooEv()
   // CHECK: declare void @_ZN5test41BINS_1AEE3barEv()
 
   const std::type_info &ti = typeid(B<A>);
@@ -103,7 +103,7 @@ namespace test5 {
   };
 
   template void B<A>::foo();
-  // CHECK: define weak_odr hidden void @_ZN5test51BINS_1AEE3fooEv()
+  // CHECK-LABEL: define weak_odr hidden void @_ZN5test51BINS_1AEE3fooEv()
   // CHECK: declare hidden void @_ZN5test51BINS_1AEE3barEv()
 
   const std::type_info &ti = typeid(B<A>);

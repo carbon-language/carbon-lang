@@ -19,7 +19,7 @@ extern void f1(void) __attribute((alias("f0")));
 // Make sure that aliases cause referenced values to be emitted.
 // PR3200
 static inline int foo1() { return 0; }
-// CHECKBASIC: define internal i32 @foo1()
+// CHECKBASIC-LABEL: define internal i32 @foo1()
 int foo() __attribute__((alias("foo1")));
 int bar() __attribute__((alias("bar1")));
 

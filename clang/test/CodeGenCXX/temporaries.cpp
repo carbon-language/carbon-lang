@@ -254,7 +254,7 @@ namespace PR5867 {
   };
 
   void f(S, int);
-  // CHECK: define void @_ZN6PR58671gEv
+  // CHECK-LABEL: define void @_ZN6PR58671gEv
   void g() {
     // CHECK: call void @_ZN6PR58671SC1Ev
     // CHECK-NEXT: call void @_ZN6PR58671fENS_1SEi
@@ -263,7 +263,7 @@ namespace PR5867 {
     (f)(S(), 0);
   }
 
-  // CHECK: define linkonce_odr void @_ZN6PR58672g2IiEEvT_
+  // CHECK-LABEL: define linkonce_odr void @_ZN6PR58672g2IiEEvT_
   template<typename T>
   void g2(T) {
     // CHECK: call void @_ZN6PR58671SC1Ev
@@ -284,7 +284,7 @@ namespace PR6199 {
 
   struct B { operator A(); };
 
-  // CHECK: define weak_odr void @_ZN6PR61992f2IiEENS_1AET_
+  // CHECK-LABEL: define weak_odr void @_ZN6PR61992f2IiEENS_1AET_
   template<typename T> A f2(T) {
     B b;
     // CHECK: call void @_ZN6PR61991BcvNS_1AEEv
@@ -306,7 +306,7 @@ struct A {
 
 int& f(int);
 
-// CHECK: define void @_ZN3T121gEv
+// CHECK-LABEL: define void @_ZN3T121gEv
 void g() {
   // CHECK: call void @_ZN3T121AC1Ev
   // CHECK-NEXT: call i32 @_ZN3T121A1fEv(
@@ -353,7 +353,7 @@ namespace PR7556 {
   struct A { ~A(); }; 
   struct B { int i; ~B(); }; 
   struct C { int C::*pm; ~C(); }; 
-  // CHECK: define void @_ZN6PR75563fooEv()
+  // CHECK-LABEL: define void @_ZN6PR75563fooEv()
   void foo() { 
     // CHECK: call void @_ZN6PR75561AD1Ev
     A(); 
@@ -378,7 +378,7 @@ namespace Elision {
   A fooA();
   void takeA(A a);
 
-  // CHECK: define void @_ZN7Elision5test0Ev()
+  // CHECK-LABEL: define void @_ZN7Elision5test0Ev()
   void test0() {
     // CHECK:      [[I:%.*]] = alloca [[A:%.*]], align 8
     // CHECK-NEXT: [[J:%.*]] = alloca [[A]], align 8
@@ -406,7 +406,7 @@ namespace Elision {
   }
 
 
-  // CHECK: define void @_ZN7Elision5test1EbNS_1AE(
+  // CHECK-LABEL: define void @_ZN7Elision5test1EbNS_1AE(
   void test1(bool c, A x) {
     // CHECK:      [[I:%.*]] = alloca [[A]], align 8
     // CHECK-NEXT: [[J:%.*]] = alloca [[A]], align 8
@@ -445,7 +445,7 @@ namespace Elision {
     // CHECK:      ret void
   }
 
-  // CHECK: define void @_ZN7Elision5test4Ev()
+  // CHECK-LABEL: define void @_ZN7Elision5test4Ev()
   void test4() {
     // CHECK:      [[X:%.*]] = alloca [[A]], align 8
     // CHECK-NEXT: [[XS:%.*]] = alloca [2 x [[A]]], align 16
@@ -521,7 +521,7 @@ namespace Elision {
 namespace PR8623 {
   struct A { A(int); ~A(); };
 
-  // CHECK: define void @_ZN6PR86233fooEb(
+  // CHECK-LABEL: define void @_ZN6PR86233fooEb(
   void foo(bool b) {
     // CHECK:      [[TMP:%.*]] = alloca [[A:%.*]], align 1
     // CHECK-NEXT: [[LCONS:%.*]] = alloca i1
@@ -551,7 +551,7 @@ namespace PR8623 {
 namespace PR11365 {
   struct A { A(); ~A(); };
 
-  // CHECK: define void @_ZN7PR113653fooEv(
+  // CHECK-LABEL: define void @_ZN7PR113653fooEv(
   void foo() {
     // CHECK: [[BEGIN:%.*]] = getelementptr inbounds [3 x [[A:%.*]]]* {{.*}}, i32 0, i32 0
     // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 3
@@ -570,7 +570,7 @@ namespace AssignmentOp {
   struct A { ~A(); };
   struct B { A operator=(const B&); };
   struct C : B { B b1, b2; };
-  // CHECK: define void @_ZN12AssignmentOp1fE
+  // CHECK-LABEL: define void @_ZN12AssignmentOp1fE
   void f(C &c1, const C &c2) {
     // CHECK: call {{.*}} @_ZN12AssignmentOp1CaSERKS0_(
     c1 = c2;
@@ -669,7 +669,7 @@ namespace ImplicitTemporaryCleanup {
   struct A { A(int); ~A(); };
   void g();
 
-  // CHECK: define void @_ZN24ImplicitTemporaryCleanup1fEv(
+  // CHECK-LABEL: define void @_ZN24ImplicitTemporaryCleanup1fEv(
   void f() {
     // CHECK: call {{.*}} @_ZN24ImplicitTemporaryCleanup1AC1Ei(
     A &&a = 0;

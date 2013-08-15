@@ -9,8 +9,8 @@ void test() {
   // CHECK: @_Z1fIiEvv
   void (*p2)() = f<int>;
 }
-// CHECK: define linkonce_odr void @_Z1fIiEvT_
-// CHECK: define linkonce_odr void @_Z1fIiEvv
+// CHECK-LABEL: define linkonce_odr void @_Z1fIiEvT_
+// CHECK-LABEL: define linkonce_odr void @_Z1fIiEvv
 
 namespace PR6973 {
   template<typename T>

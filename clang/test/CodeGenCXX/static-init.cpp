@@ -54,7 +54,7 @@ namespace test0 {
 }
 
 namespace test1 {
-  // CHECK: define internal i32 @_ZN5test1L6getvarEi(
+  // CHECK-LABEL: define internal i32 @_ZN5test1L6getvarEi(
   static inline int getvar(int index) {
     static const int var[] = { 1, 0, 2, 4 };
     return var[index];
@@ -68,7 +68,7 @@ char base_req[] = { "foo" };
 unsigned char base_req_uchar[] = { "bar" };
 
 namespace union_static_local {
-  // CHECK: define internal void @_ZZN18union_static_local4testEvEN1c4mainEv
+  // CHECK-LABEL: define internal void @_ZZN18union_static_local4testEvEN1c4mainEv
   // CHECK: call void @_ZN18union_static_local1fEPNS_1xE(%"union.union_static_local::x"* bitcast ({ [2 x i8*] }* @_ZZN18union_static_local4testEvE3foo to %"union.union_static_local::x"*))
   union x { long double y; const char *x[2]; };
   void f(union x*);
@@ -103,14 +103,14 @@ namespace test2 {
   B::B() {
     static int x = foo();
   }
-  // CHECK: define void @_ZN5test21BC1Ev
+  // CHECK-LABEL: define void @_ZN5test21BC1Ev
   // CHECK:   load atomic i8* bitcast (i64* @_ZGVZN5test21BC1EvE1x to i8*) acquire,
   // CHECK:   call i32 @__cxa_guard_acquire(i64* @_ZGVZN5test21BC1EvE1x)
   // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
   // CHECK:   store i32 [[T0]], i32* @_ZZN5test21BC1EvE1x,
   // CHECK:   call void @__cxa_guard_release(i64* @_ZGVZN5test21BC1EvE1x)
 
-  // CHECK: define void @_ZN5test21BC2Ev
+  // CHECK-LABEL: define void @_ZN5test21BC2Ev
   // CHECK:   load atomic i8* bitcast (i64* @_ZGVZN5test21BC1EvE1x to i8*) acquire,
   // CHECK:   call i32 @__cxa_guard_acquire(i64* @_ZGVZN5test21BC1EvE1x)
   // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
@@ -122,10 +122,10 @@ namespace test2 {
   B::~B() {
     static int y = foo();
   }
-  // CHECK: define void @_ZN5test21BD1Ev(
+  // CHECK-LABEL: define void @_ZN5test21BD1Ev(
   // CHECK:   call void @_ZN5test21BD2Ev(
 
-  // CHECK: define void @_ZN5test21BD2Ev(
+  // CHECK-LABEL: define void @_ZN5test21BD2Ev(
   // CHECK:   load atomic i8* bitcast (i64* @_ZGVZN5test21BD1EvE1y to i8*) acquire,
   // CHECK:   call i32 @__cxa_guard_acquire(i64* @_ZGVZN5test21BD1EvE1y)
   // CHECK:   [[T0:%.*]] = call i32 @_ZN5test23fooEv()
@@ -149,6 +149,6 @@ namespace test3 {
     union U { char x; int i; };
     static U u = { 'a' };
   }
-  // CHECK: define void @_ZN5test31BC1Ev(
-  // CHECK: define void @_ZN5test31BC2Ev(
+  // CHECK-LABEL: define void @_ZN5test31BC1Ev(
+  // CHECK-LABEL: define void @_ZN5test31BC2Ev(
 }

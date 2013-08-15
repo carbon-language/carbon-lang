@@ -3,7 +3,7 @@
 // Sign extension is performed by the callee on AArch64, which means
 // that we *shouldn't* tag arguments and returns with their extension.
 
-// PCS: define i8 @f0(i16 %a)
+// PCS-LABEL: define i8 @f0(i16 %a)
 char f0(short a) {
   return a;
 }
@@ -32,11 +32,11 @@ struct s5 f5(void) {}
 struct s6 { int f0[1]; };
 struct s6 f6(void) {}
 
-// PCS: define void @f7()
+// PCS-LABEL: define void @f7()
 struct s7 { struct { int : 0; } f0; };
 struct s7 f7(void) {}
 
-// PCS: define  void @f8()
+// PCS-LABEL: define  void @f8()
 struct s8 { struct { int : 0; } f0[1]; };
 struct s8 f8(void) {}
 
@@ -56,18 +56,18 @@ struct s11 f11(void) {}
 union u12 { char f0; short f1; int f2; long f3; };
 union u12 f12(void) {}
 
-// PCS: define %struct.s13 @f13()
+// PCS-LABEL: define %struct.s13 @f13()
 struct s13 { float f0; };
 struct s13 f13(void) {}
 
-// PCS: define %union.u14 @f14()
+// PCS-LABEL: define %union.u14 @f14()
 union u14 { float f0; };
 union u14 f14(void) {}
 
-// PCS: define void @f15()
+// PCS-LABEL: define void @f15()
 void f15(struct s7 a0) {}
 
-// PCS: define void @f16()
+// PCS-LABEL: define void @f16()
 void f16(struct s8 a0) {}
 
 // PCS: define [1 x i64] @f17()
@@ -111,14 +111,14 @@ struct s26 f26() {}
 struct s27 { _Complex long f0; };
 struct s27 f27() {}
 
-// PCS: define void @f28(i8 %a, i16 %b, i32 %c, i64 %d, float %e, double %f)
+// PCS-LABEL: define void @f28(i8 %a, i16 %b, i32 %c, i64 %d, float %e, double %f)
 void f28(char a, short b, int c, long d, float e, double f) {}
 
 // PCS: define void @f29([2 x i64] %a
 struct s29 { int arr[4]; };
 void f29(struct s29 a) {}
 
-// PCS: define void @f30(%struct.s30* %a)
+// PCS-LABEL: define void @f30(%struct.s30* %a)
 struct s30 { int arr[4]; char c;};
 void f30(struct s30 a) {}
 
@@ -126,7 +126,7 @@ void f30(struct s30 a) {}
 struct s31 { double arr[4]; };
 void f31(struct s31 a) {}
 
-// PCS: define void @f32(%struct.s32* %a)
+// PCS-LABEL: define void @f32(%struct.s32* %a)
 struct s32 { float arr[5]; };
 void f32(struct s32 a) {}
 
@@ -135,11 +135,11 @@ void f32(struct s32 a) {}
 struct s33 { float arr[3]; float a; };
 void f33(struct s33 a) {}
 
-// PCS: define void @f34(%struct.s34* noalias sret
+// PCS-LABEL: define void @f34(%struct.s34* noalias sret
 struct s34 { int a[4]; char b };
 struct s34 f34(void) {}
 
-// PCS: define void @f35()
+// PCS-LABEL: define void @f35()
 struct s35 {};
 void f35(struct s35 a) {}
 

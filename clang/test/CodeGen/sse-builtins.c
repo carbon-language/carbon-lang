@@ -63,7 +63,7 @@ __m128 test_load1_ps(void* y) {
 }
 
 void test_store_ss(__m128 x, void* y) {
-  // CHECK: define void @test_store_ss
+  // CHECK-LABEL: define void @test_store_ss
   // CHECK: store {{.*}} float* {{.*}}, align 1,
   _mm_store_ss(y, x);
 }
@@ -99,32 +99,32 @@ __m128d test_loadl_pd(__m128d x, void* y) {
 }
 
 void test_store_sd(__m128d x, void* y) {
-  // CHECK: define void @test_store_sd
+  // CHECK-LABEL: define void @test_store_sd
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
   _mm_store_sd(y, x);
 }
 
 void test_store1_pd(__m128d x, void* y) {
-  // CHECK: define void @test_store1_pd
+  // CHECK-LABEL: define void @test_store1_pd
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
   _mm_store1_pd(y, x);
 }
 
 void test_storer_pd(__m128d x, void* y) {
-  // CHECK: define void @test_storer_pd
+  // CHECK-LABEL: define void @test_storer_pd
   // CHECK: store {{.*}} <2 x double>* {{.*}}, align 16{{$}}
   _mm_storer_pd(y, x);
 }
 
 void test_storeh_pd(__m128d x, void* y) {
-  // CHECK: define void @test_storeh_pd
+  // CHECK-LABEL: define void @test_storeh_pd
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
   _mm_storeh_pd(y, x);
 }
 
 void test_storel_pd(__m128d x, void* y) {
-  // CHECK: define void @test_storel_pd
+  // CHECK-LABEL: define void @test_storel_pd
   // CHECK: store {{.*}} double* {{.*}}, align 1{{$}}
   _mm_storel_pd(y, x);
 }
@@ -184,7 +184,7 @@ __m128d test_mm_round_sd(__m128d x, __m128d y) {
 }
 
 void test_storel_epi64(__m128i x, void* y) {
-  // CHECK: define void @test_storel_epi64
+  // CHECK-LABEL: define void @test_storel_epi64
   // CHECK: store {{.*}} i64* {{.*}}, align 1{{$}}
   _mm_storel_epi64(y, x);
 }

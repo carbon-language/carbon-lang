@@ -5,13 +5,13 @@
 // RUN: %clang_cc1 -triple arm-none-linux-gnueabi -target-abi aapcs  -emit-llvm -w -o - %s | FileCheck -check-prefix=LINUX-AAPCS %s
 
 
-// DARWIN-APCS: define void @f()
+// DARWIN-APCS-LABEL: define void @f()
 // DARWIN-APCS: call void @g
-// DARWIN-AAPCS: define arm_aapcscc void @f()
+// DARWIN-AAPCS-LABEL: define arm_aapcscc void @f()
 // DARWIN-AAPCS: call arm_aapcscc void @g
-// LINUX-APCS: define arm_apcscc void @f()
+// LINUX-APCS-LABEL: define arm_apcscc void @f()
 // LINUX-APCS: call arm_apcscc void @g
-// LINUX-AAPCS: define void @f()
+// LINUX-AAPCS-LABEL: define void @f()
 // LINUX-AAPCS: call void @g
 void g(void);
 void f(void) {

@@ -11,7 +11,7 @@ unsigned int ui;
 signed long long sll;
 unsigned long long ull;
 
-void test_op_ignore (void) // CHECK: define void @test_op_ignore
+void test_op_ignore (void) // CHECK-LABEL: define void @test_op_ignore
 {
   (void) __sync_fetch_and_add (&sc, 1); // CHECK: atomicrmw add i8
   (void) __sync_fetch_and_add (&uc, 1); // CHECK: atomicrmw add i8
@@ -60,7 +60,7 @@ void test_op_ignore (void) // CHECK: define void @test_op_ignore
 
 }
 
-void test_fetch_and_op (void) // CHECK: define void @test_fetch_and_op
+void test_fetch_and_op (void) // CHECK-LABEL: define void @test_fetch_and_op
 {
   sc = __sync_fetch_and_add (&sc, 11); // CHECK: atomicrmw add
   uc = __sync_fetch_and_add (&uc, 11); // CHECK: atomicrmw add

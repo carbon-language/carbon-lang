@@ -42,7 +42,7 @@ namespace test2 {
     template struct A<int>;
   }
 
-  // CHECK: define internal void @__cxx_global_var_init()
+  // CHECK-LABEL: define internal void @__cxx_global_var_init()
   // CHECK:      [[TMP:%.*]] = call i32 @_ZN5test23fooEv()
   // CHECK-NEXT: store i32 [[TMP]], i32* @_ZN5test212_GLOBAL__N_11AIiE1xE, align 4
   // CHECK-NEXT: ret void
@@ -60,7 +60,7 @@ namespace test3 {
   template <class T> int A<T>::x = foo();
   template struct A<int>;
 
-  // CHECK: define internal void @__cxx_global_var_init1()
+  // CHECK-LABEL: define internal void @__cxx_global_var_init1()
   // CHECK:      [[GUARDBYTE:%.*]] = load i8* bitcast (i64* @_ZGVN5test31AIiE1xE to i8*)
   // CHECK-NEXT: [[UNINITIALIZED:%.*]] = icmp eq i8 [[GUARDBYTE]], 0
   // CHECK-NEXT: br i1 [[UNINITIALIZED]]
@@ -79,7 +79,7 @@ namespace test4 {
   };
 
   int f(A *a) {
-    // CHECK: define i32 @_ZN5test41fEPNS_1AE
+    // CHECK-LABEL: define i32 @_ZN5test41fEPNS_1AE
     // CHECK: ret i32 76
     return a->n;
   }

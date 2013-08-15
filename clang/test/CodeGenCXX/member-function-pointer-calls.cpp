@@ -8,14 +8,14 @@ int f(A* a, int (A::*fp)()) {
   return (a->*fp)();
 }
 
-// CHECK: define i32 @_Z2g1v()
+// CHECK-LABEL: define i32 @_Z2g1v()
 // CHECK: ret i32 1
 int g1() {
   A a;
   return f(&a, &A::vf1);
 }
 
-// CHECK: define i32 @_Z2g2v()
+// CHECK-LABEL: define i32 @_Z2g2v()
 // CHECK: ret i32 2
 int g2() {
   A a;

@@ -39,7 +39,7 @@ void t2() {
 // CHECK: call void asm sideeffect inteldialect "mov eax, $0", "r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3Bar3ptrE)
 }
 
-// CHECK: define void @_Z2t3v()
+// CHECK-LABEL: define void @_Z2t3v()
 void t3() {
   __asm mov eax, LENGTH Foo::ptr
 // CHECK: call void asm sideeffect inteldialect "mov eax, $$1", "~{eax},~{dirflag},~{fpsr},~{flags}"()
@@ -76,7 +76,7 @@ struct T4 {
   void test();
 };
 
-// CHECK: define void @_ZN2T44testEv(
+// CHECK-LABEL: define void @_ZN2T44testEv(
 void T4::test() {
 // CHECK: [[T0:%.*]] = alloca [[T4:%.*]]*,
 // CHECK: [[THIS:%.*]] = load [[T4]]** [[T0]]
@@ -91,7 +91,7 @@ template <class T> struct T5 {
   template <class U> static T create(U);
   void run();
 };
-// CHECK: define void @_Z5test5v()
+// CHECK-LABEL: define void @_Z5test5v()
 void test5() {
   // CHECK: [[X:%.*]] = alloca i32
   // CHECK: [[Y:%.*]] = alloca i32

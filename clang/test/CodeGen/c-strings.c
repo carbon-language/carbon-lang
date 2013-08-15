@@ -19,13 +19,13 @@ unsigned char align = 1;
 
 void bar(const char *);
 
-// CHECK: define void @f0()
+// CHECK-LABEL: define void @f0()
 void f0() {
   bar("hello");
   // CHECK: call void @bar({{.*}} @.str
 }
 
-// CHECK: define void @f1()
+// CHECK-LABEL: define void @f1()
 void f1() {
   static char *x = "hello";
   bar(x);
@@ -33,14 +33,14 @@ void f1() {
   // CHECK: call void @bar(i8* [[T1:%.*]])
 }
 
-// CHECK: define void @f2()
+// CHECK-LABEL: define void @f2()
 void f2() {
   static char x[] = "hello";
   bar(x);
   // CHECK: call void @bar({{.*}} @f2.x
 }
 
-// CHECK: define void @f3()
+// CHECK-LABEL: define void @f3()
 void f3() {
   static char x[8] = "hello";
   bar(x);
@@ -49,7 +49,7 @@ void f3() {
 
 void gaz(void *);
 
-// CHECK: define void @f4()
+// CHECK-LABEL: define void @f4()
 void f4() {
   static struct s {
     char *name;

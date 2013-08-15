@@ -29,7 +29,7 @@ void test0() {
 @end
 extern Test1 *test1_helper(void);
 
-// CHECK: define void @test1a()
+// CHECK-LABEL: define void @test1a()
 void test1a(void) {
   // CHECK:      [[T0:%.*]] = call [[TEST1:%.*]]* @test1_helper()
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
@@ -52,7 +52,7 @@ void test1a(void) {
   char *c = [(ptr) interior];
 }
 
-// CHECK: define void @test1b()
+// CHECK-LABEL: define void @test1b()
 void test1b(void) {
   // CHECK:      [[T0:%.*]] = call [[TEST1:%.*]]* @test1_helper()
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
@@ -78,7 +78,7 @@ void test1b(void) {
   id ivar;
 }
 @end
-// CHECK:      define void @test2(
+// CHECK-LABEL:      define void @test2(
 void test2(Test2 *x) {
   x->ivar = 0;
   // CHECK:      [[X:%.*]] = alloca [[TEST2:%.*]]*
@@ -104,7 +104,7 @@ void test2(Test2 *x) {
   // CHECK-NEXT: ret void
 }
 
-// CHECK:      define void @test3(i8*
+// CHECK-LABEL:      define void @test3(i8*
 void test3(PRECISE_LIFETIME id x) {
   // CHECK:      [[X:%.*]] = alloca i8*,
   // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retain(i8* {{%.*}}) [[NUW]]

@@ -12,7 +12,7 @@ struct s {int a, b, c;} * b = &(struct s) {1, 2, 3};
 _Complex double * x = &(_Complex double){1.0f};
 }
 
-// CHECK: define void @f()
+// CHECK-LABEL: define void @f()
 void f() {
   typedef struct S { int x,y; } S;
   // CHECK: [[S:%[a-zA-Z0-9.]+]] = alloca [[STRUCT:%[a-zA-Z0-9.]+]],
@@ -33,7 +33,7 @@ void f() {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define i48 @g(
+// CHECK-LABEL: define i48 @g(
 struct G { short x, y, z; };
 struct G g(int x, int y, int z) {
   // CHECK:      [[RESULT:%.*]] = alloca [[G:%.*]], align 2

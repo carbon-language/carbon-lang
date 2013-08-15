@@ -12,7 +12,7 @@ struct B : A {
   int i;
 };
 
-// CHECK: define i32 @_Z1fv() #0
+// CHECK-LABEL: define i32 @_Z1fv() #0
 int f() {
   B b;
   

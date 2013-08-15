@@ -16,7 +16,7 @@ namespace test0 {
     foo();
   }
 }
-// CHECK:    define void @_ZN5test04testEv()
+// CHECK-LABEL:    define void @_ZN5test04testEv()
 // CHECK:      [[EXN:%.*]] = alloca i8*
 //   This goes to the terminate lpad.
 // CHECK:      invoke void @_ZN5test01AC1Ev(
@@ -43,7 +43,7 @@ namespace test0 {
 // CHECK-NEXT: call void @__clang_call_terminate(i8* [[T0]])
 // CHECK-NEXT: unreachable
 
-// CHECK:  define linkonce_odr hidden void @__clang_call_terminate(
+// CHECK-LABEL:  define linkonce_odr hidden void @__clang_call_terminate(
 // CHECK:      call i8* @__cxa_begin_catch(
 // CHECK-NEXT: call void @_ZSt9terminatev()
 // CHECK-NEXT: unreachable

@@ -55,7 +55,7 @@ int e = V<int>::m;
 // CHECK: call i32 @_Z1fv()
 // CHECK-NEXT: store i32 {{.*}}, i32* @a, align 4
 
-// CHECK: define i32 @_Z1fv()
+// CHECK-LABEL: define i32 @_Z1fv()
 int f() {
   // CHECK: %[[GUARD:.*]] = load i8* @_ZGVZ1fvE1n, align 1
   // CHECK: %[[NEED_INIT:.*]] = icmp eq i8 %[[GUARD]], 0
@@ -76,7 +76,7 @@ int f() {
 // CHECK-NEXT: load i32* %{{.*}}, align 4
 // CHECK-NEXT: store i32 %{{.*}}, i32* @c, align 4
 
-// CHECK: define weak_odr hidden i32* @_ZTW1b()
+// CHECK-LABEL: define weak_odr hidden i32* @_ZTW1b()
 // CHECK: br i1 icmp ne (void ()* @_ZTH1b, void ()* null),
 // not null:
 // CHECK: call void @_ZTH1b()
@@ -97,7 +97,7 @@ int f() {
 // CHECK-NEXT: load i32* %{{.*}}, align 4
 // CHECK-NEXT: store i32 %{{.*}}, i32* @e, align 4
 
-// CHECK: define weak_odr hidden i32* @_ZTWN1VIiE1mE()
+// CHECK-LABEL: define weak_odr hidden i32* @_ZTWN1VIiE1mE()
 // CHECK: call void @_ZTHN1VIiE1mE()
 // CHECK: ret i32* @_ZN1VIiE1mE
 
@@ -105,7 +105,7 @@ int f() {
 struct S { S(); ~S(); };
 struct T { ~T(); };
 
-// CHECK: define void @_Z8tls_dtorv()
+// CHECK-LABEL: define void @_Z8tls_dtorv()
 void tls_dtor() {
   // CHECK: load i8* @_ZGVZ8tls_dtorvE1s
   // CHECK: call void @_ZN1SC1Ev(%struct.S* @_ZZ8tls_dtorvE1s)
@@ -171,10 +171,10 @@ int PR15991() {
 // CHECK: declare extern_weak void @_ZTH1b()
 
 
-// CHECK: define internal hidden i32* @_ZTWL1d()
+// CHECK-LABEL: define internal hidden i32* @_ZTWL1d()
 // CHECK: call void @_ZTHL1d()
 // CHECK: ret i32* @_ZL1d
 
-// CHECK: define weak_odr hidden i32* @_ZTWN1U1mE()
+// CHECK-LABEL: define weak_odr hidden i32* @_ZTWN1U1mE()
 // CHECK: call void @_ZTHN1U1mE()
 // CHECK: ret i32* @_ZN1U1mE

@@ -5,21 +5,21 @@
 // autorelease pool.
 id getObject();
 
-// CHECK: define internal void @__cxx_global_var_init
+// CHECK-LABEL: define internal void @__cxx_global_var_init
 // CHECK: call i8* @_Z9getObjectv
 // CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue
 // CHECK-NEXT: {{store i8*.*@global_obj}}
 // CHECK-NEXT: ret void
 id global_obj = getObject();
 
-// CHECK: define internal void @__cxx_global_var_init
+// CHECK-LABEL: define internal void @__cxx_global_var_init
 // CHECK: call i8* @_Z9getObjectv
 // CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue
 // CHECK-NEXT: {{store i8*.*@global_obj2}}
 // CHECK-NEXT: ret void
 id global_obj2 = getObject();
 
-// CHECK: define internal void @_GLOBAL__I_a
+// CHECK-LABEL: define internal void @_GLOBAL__I_a
 // CHECK: call i8* @objc_autoreleasePoolPush()
 // CHECK-NEXT: call void @__cxx_global_var_init
 // CHECK-NEXT: call void @__cxx_global_var_init1

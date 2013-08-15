@@ -6,7 +6,7 @@ __kernel void foo(void) {
   ++i;
 }
 
-// CHECK: define void @_Z3barPU3AS2i
+// CHECK-LABEL: define void @_Z3barPU3AS2i
 __kernel void __attribute__((__overloadable__)) bar(local int *x) {
   *x = 5;
 }

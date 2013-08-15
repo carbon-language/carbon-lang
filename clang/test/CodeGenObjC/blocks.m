@@ -43,7 +43,7 @@ void foo(T *P) {
 @interface Test2 -(void) destroy; @end
 void test2(Test2 *x) {
   extern void test2_helper(void (^)(void));
-  // CHECK:    define void @test2(
+  // CHECK-LABEL:    define void @test2(
   // CHECK:      [[X:%.*]] = alloca [[TEST2:%.*]]*,
   // CHECK-NEXT: [[WEAKX:%.*]] = alloca [[WEAK_T:%.*]],
   // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
@@ -91,7 +91,7 @@ void test2(Test2 *x) {
 // rdar://problem/9124263
 // In the test above, check that the use in the invocation function
 // doesn't require a read barrier.
-// CHECK:    define internal void @__test2_block_invoke
+// CHECK-LABEL:    define internal void @__test2_block_invoke
 // CHECK:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
 // CHECK-NOT:  bitcast
 // CHECK:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
@@ -107,7 +107,7 @@ void test2(Test2 *x) {
 void test3(void (^block)(int, ...)) {
   block(0, 1, 2, 3);
 }
-// CHECK:    define void @test3(
+// CHECK-LABEL:    define void @test3(
 // CHECK:      [[BLOCK:%.*]] = alloca void (i32, ...)*, align 4
 // CHECK-NEXT: store void (i32, ...)*
 // CHECK-NEXT: [[T0:%.*]] = load void (i32, ...)** [[BLOCK]], align 4
@@ -122,7 +122,7 @@ void test3(void (^block)(int, ...)) {
 void test4(void (^block)()) {
   block(0, 1, 2, 3);
 }
-// CHECK:    define void @test4(
+// CHECK-LABEL:    define void @test4(
 // CHECK:      [[BLOCK:%.*]] = alloca void (...)*, align 4
 // CHECK-NEXT: store void (...)*
 // CHECK-NEXT: [[T0:%.*]] = load void (...)** [[BLOCK]], align 4

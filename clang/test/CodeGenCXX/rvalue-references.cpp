@@ -7,7 +7,7 @@ struct B : Spacer, A { };
 
 B &getB();
 
-// CHECK: define %struct.A* @_Z4getAv()
+// CHECK-LABEL: define %struct.A* @_Z4getAv()
 // CHECK: call %struct.B* @_Z4getBv()
 // CHECK-NEXT: bitcast %struct.B*
 // CHECK-NEXT: getelementptr inbounds i8*
@@ -19,17 +19,17 @@ int &getIntLValue();
 int &&getIntXValue();
 int getIntPRValue();
 
-// CHECK: define i32* @_Z2f0v()
+// CHECK-LABEL: define i32* @_Z2f0v()
 // CHECK: call i32* @_Z12getIntLValuev()
 // CHECK-NEXT: ret i32*
 int &&f0() { return static_cast<int&&>(getIntLValue()); }
 
-// CHECK: define i32* @_Z2f1v()
+// CHECK-LABEL: define i32* @_Z2f1v()
 // CHECK: call i32* @_Z12getIntXValuev()
 // CHECK-NEXT: ret i32*
 int &&f1() { return static_cast<int&&>(getIntXValue()); }
 
-// CHECK: define i32* @_Z2f2v
+// CHECK-LABEL: define i32* @_Z2f2v
 // CHECK: call i32 @_Z13getIntPRValuev()
 // CHECK-NEXT: store i32 {{.*}}, i32*
 // CHECK-NEXT: ret i32*
@@ -59,7 +59,7 @@ public:
 
 C test();
 
-// CHECK: define void @_Z15elide_copy_initv
+// CHECK-LABEL: define void @_Z15elide_copy_initv
 void elide_copy_init() {
   ok = false;
   // CHECK: call void @_Z4testv
@@ -68,7 +68,7 @@ void elide_copy_init() {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define void @_Z16test_move_returnv
+// CHECK-LABEL: define void @_Z16test_move_returnv
 C test_move_return() {
   // CHECK: call void @_ZN1CC1Ei
   C a1(3);
@@ -94,7 +94,7 @@ namespace test1 {
     B(int i);
   };
 
-  // CHECK:    define void @_ZN5test11BC2Ei(
+  // CHECK-LABEL:    define void @_ZN5test11BC2Ei(
   // CHECK:      [[T0:%.*]] = call i32* @_ZN5test14moveERi(
   // CHECK-NEXT: [[T1:%.*]] = load i32* [[T0]]
   // CHECK-NEXT: call void @_ZN5test11AC1Ei({{.*}}, i32 [[T1]])

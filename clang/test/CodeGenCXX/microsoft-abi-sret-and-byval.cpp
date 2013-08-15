@@ -49,55 +49,55 @@ struct Big {
 
 // Returning structs that fit into a register.
 Small small_return() { return Small(); }
-// LINUX: define void @_Z12small_returnv(%struct.Small* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z12small_returnv(%struct.Small* noalias sret %agg.result)
 // WIN32: define i32 @"\01?small_return@@YA?AUSmall@@XZ"()
 // WIN64: define i32 @"\01?small_return@@YA?AUSmall@@XZ"()
 
 Medium medium_return() { return Medium(); }
-// LINUX: define void @_Z13medium_returnv(%struct.Medium* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z13medium_returnv(%struct.Medium* noalias sret %agg.result)
 // WIN32: define i64 @"\01?medium_return@@YA?AUMedium@@XZ"()
 // WIN64: define i64 @"\01?medium_return@@YA?AUMedium@@XZ"()
 
 // Returning structs that fit into a register but are not POD.
 SmallCpp11NotCpp03Pod small_non_pod_return() { return SmallCpp11NotCpp03Pod(); }
-// LINUX: define void @_Z20small_non_pod_returnv(%struct.SmallCpp11NotCpp03Pod* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z20small_non_pod_returnv(%struct.SmallCpp11NotCpp03Pod* noalias sret %agg.result)
 // WIN32: define void @"\01?small_non_pod_return@@YA?AUSmallCpp11NotCpp03Pod@@XZ"(%struct.SmallCpp11NotCpp03Pod* noalias sret %agg.result)
 // WIN64: define void @"\01?small_non_pod_return@@YA?AUSmallCpp11NotCpp03Pod@@XZ"(%struct.SmallCpp11NotCpp03Pod* noalias sret %agg.result)
 
 SmallWithCtor small_with_ctor_return() { return SmallWithCtor(); }
-// LINUX: define void @_Z22small_with_ctor_returnv(%struct.SmallWithCtor* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z22small_with_ctor_returnv(%struct.SmallWithCtor* noalias sret %agg.result)
 // WIN32: define void @"\01?small_with_ctor_return@@YA?AUSmallWithCtor@@XZ"(%struct.SmallWithCtor* noalias sret %agg.result)
 // WIN64: define void @"\01?small_with_ctor_return@@YA?AUSmallWithCtor@@XZ"(%struct.SmallWithCtor* noalias sret %agg.result)
 
 SmallWithVftable small_with_vftable_return() { return SmallWithVftable(); }
-// LINUX: define void @_Z25small_with_vftable_returnv(%struct.SmallWithVftable* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z25small_with_vftable_returnv(%struct.SmallWithVftable* noalias sret %agg.result)
 // WIN32: define void @"\01?small_with_vftable_return@@YA?AUSmallWithVftable@@XZ"(%struct.SmallWithVftable* noalias sret %agg.result)
 // WIN64: define void @"\01?small_with_vftable_return@@YA?AUSmallWithVftable@@XZ"(%struct.SmallWithVftable* noalias sret %agg.result)
 
 MediumWithCopyCtor medium_with_copy_ctor_return() { return MediumWithCopyCtor(); }
-// LINUX: define void @_Z28medium_with_copy_ctor_returnv(%struct.MediumWithCopyCtor* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z28medium_with_copy_ctor_returnv(%struct.MediumWithCopyCtor* noalias sret %agg.result)
 // WIN32: define void @"\01?medium_with_copy_ctor_return@@YA?AUMediumWithCopyCtor@@XZ"(%struct.MediumWithCopyCtor* noalias sret %agg.result)
 // WIN64: define void @"\01?medium_with_copy_ctor_return@@YA?AUMediumWithCopyCtor@@XZ"(%struct.MediumWithCopyCtor* noalias sret %agg.result)
 
 // Returning a large struct that doesn't fit into a register.
 Big big_return() { return Big(); }
-// LINUX: define void @_Z10big_returnv(%struct.Big* noalias sret %agg.result)
+// LINUX-LABEL: define void @_Z10big_returnv(%struct.Big* noalias sret %agg.result)
 // WIN32: define void @"\01?big_return@@YA?AUBig@@XZ"(%struct.Big* noalias sret %agg.result)
 // WIN64: define void @"\01?big_return@@YA?AUBig@@XZ"(%struct.Big* noalias sret %agg.result)
 
 
 void small_arg(Small s) {}
-// LINUX: define void @_Z9small_arg5Small(%struct.Small* byval align 4 %s)
+// LINUX-LABEL: define void @_Z9small_arg5Small(%struct.Small* byval align 4 %s)
 // WIN32: define void @"\01?small_arg@@YAXUSmall@@@Z"(%struct.Small* byval align 4 %s)
 // WIN64: define void @"\01?small_arg@@YAXUSmall@@@Z"(i32 %s.coerce)
 
 void medium_arg(Medium s) {}
-// LINUX: define void @_Z10medium_arg6Medium(%struct.Medium* byval align 4 %s)
+// LINUX-LABEL: define void @_Z10medium_arg6Medium(%struct.Medium* byval align 4 %s)
 // WIN32: define void @"\01?medium_arg@@YAXUMedium@@@Z"(%struct.Medium* byval align 4 %s)
 // WIN64: define void @"\01?medium_arg@@YAXUMedium@@@Z"(i64 %s.coerce)
 
 void small_arg_with_ctor(SmallWithCtor s) {}
-// LINUX: define void @_Z19small_arg_with_ctor13SmallWithCtor(%struct.SmallWithCtor* byval align 4 %s)
+// LINUX-LABEL: define void @_Z19small_arg_with_ctor13SmallWithCtor(%struct.SmallWithCtor* byval align 4 %s)
 // WIN32: define void @"\01?small_arg_with_ctor@@YAXUSmallWithCtor@@@Z"(%struct.SmallWithCtor* byval align 4 %s)
 // WIN64: define void @"\01?small_arg_with_ctor@@YAXUSmallWithCtor@@@Z"(i32 %s.coerce)
 
@@ -140,17 +140,17 @@ void eh_cleanup_arg_with_dtor() {
 // WIN32: }
 
 void small_arg_with_vftable(SmallWithVftable s) {}
-// LINUX: define void @_Z22small_arg_with_vftable16SmallWithVftable(%struct.SmallWithVftable* %s)
+// LINUX-LABEL: define void @_Z22small_arg_with_vftable16SmallWithVftable(%struct.SmallWithVftable* %s)
 // WIN32: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(%struct.SmallWithVftable* byval align 4 %s)
 // WIN64: define void @"\01?small_arg_with_vftable@@YAXUSmallWithVftable@@@Z"(%struct.SmallWithVftable* byval %s)
 
 void medium_arg_with_copy_ctor(MediumWithCopyCtor s) {}
-// LINUX: define void @_Z25medium_arg_with_copy_ctor18MediumWithCopyCtor(%struct.MediumWithCopyCtor* %s)
+// LINUX-LABEL: define void @_Z25medium_arg_with_copy_ctor18MediumWithCopyCtor(%struct.MediumWithCopyCtor* %s)
 // WIN32: define void @"\01?medium_arg_with_copy_ctor@@YAXUMediumWithCopyCtor@@@Z"(%struct.MediumWithCopyCtor* byval align 4 %s)
 // WIN64: define void @"\01?medium_arg_with_copy_ctor@@YAXUMediumWithCopyCtor@@@Z"(%struct.MediumWithCopyCtor* byval %s)
 
 void big_arg(Big s) {}
-// LINUX: define void @_Z7big_arg3Big(%struct.Big* byval align 4 %s)
+// LINUX-LABEL: define void @_Z7big_arg3Big(%struct.Big* byval align 4 %s)
 // WIN32: define void @"\01?big_arg@@YAXUBig@@@Z"(%struct.Big* byval align 4 %s)
 // WIN64: define void @"\01?big_arg@@YAXUBig@@@Z"(%struct.Big* %s)
 

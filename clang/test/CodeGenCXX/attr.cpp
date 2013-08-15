@@ -26,7 +26,7 @@ void C::bar3() { }
 void C::bar4() { }
 
 // PR6635
-// CHECK: define i32 @_Z5test1v()
+// CHECK-LABEL: define i32 @_Z5test1v()
 int test1() { return 10; }
 // CHECK at top of file
 extern "C" int test2() __attribute__((alias("_Z5test1v")));

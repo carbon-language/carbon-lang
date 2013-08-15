@@ -28,8 +28,8 @@ template<> int x4<int>::y = 10;
 template<int x> int f() { return x; }
 extern "C" int g() { return f<3>(); }
 #pragma GCC visibility pop
-// CHECK: define hidden i32 @g()
-// CHECK: define linkonce_odr hidden i32 @_Z1fILi3EEiv()
+// CHECK-LABEL: define hidden i32 @g()
+// CHECK-LABEL: define linkonce_odr hidden i32 @_Z1fILi3EEiv()
 
 #pragma GCC visibility push(hidden)
 template<class T> struct x5 {
@@ -37,19 +37,19 @@ template<class T> struct x5 {
 };
 #pragma GCC visibility pop
 template<> void x5<int>::y() {}
-// CHECK: define hidden void @_ZN2x5IiE1yEv
+// CHECK-LABEL: define hidden void @_ZN2x5IiE1yEv
 
 #pragma GCC visibility push(hidden)
 namespace n __attribute((visibility("default"))) {
   void f() {}
-  // CHECK: define void @_ZN1n1fEv
+  // CHECK-LABEL: define void @_ZN1n1fEv
 }
 #pragma GCC visibility pop
 
 namespace n __attribute((visibility("default")))  {
 #pragma GCC visibility push(hidden)
   void g() {}
-  // CHECK: define hidden void @_ZN1n1gEv
+  // CHECK-LABEL: define hidden void @_ZN1n1gEv
 #pragma GCC visibility pop
 }
 
@@ -69,6 +69,6 @@ namespace test2 {
     bar<foo>::f();
     bar<int>::f();
   }
-  // CHECK: define linkonce_odr hidden void @_ZN5test23barINS_3fooEE1fEv
-  // CHECK: define linkonce_odr void @_ZN5test23barIiE1fEv
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5test23barINS_3fooEE1fEv
+  // CHECK-LABEL: define linkonce_odr void @_ZN5test23barIiE1fEv
 }

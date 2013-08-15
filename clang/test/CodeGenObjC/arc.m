@@ -32,7 +32,7 @@
 // ARC-NATIVE: declare i8* @objc_autorelease(i8*)
 // ARC-NATIVE: declare i8* @objc_retainAutorelease(i8*)
 
-// CHECK: define void @test0
+// CHECK-LABEL: define void @test0
 void test0(id x) {
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: [[PARM:%.*]] = call i8* @objc_retain(i8* {{.*}})
@@ -42,7 +42,7 @@ void test0(id x) {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define i8* @test1(i8*
+// CHECK-LABEL: define i8* @test1(i8*
 id test1(id x) {
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: [[Y:%.*]] = alloca i8*
@@ -94,7 +94,7 @@ id test1(id x) {
 - (id) copy;
 @end
 
-// CHECK: define void @test3_unelided()
+// CHECK-LABEL: define void @test3_unelided()
 void test3_unelided() {
   extern void test3_helper(void);
 
@@ -125,7 +125,7 @@ void test3_unelided() {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define void @test3()
+// CHECK-LABEL: define void @test3()
 void test3() {
   // CHECK:      [[X:%.*]] = alloca i8*
 
@@ -166,7 +166,7 @@ void test3() {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define i8* @test4()
+// CHECK-LABEL: define i8* @test4()
 id test4() {
   // Call to +alloc.
   // CHECK:      load {{.*}}* @"\01L_OBJC_CLASSLIST_REFERENCES_
@@ -197,7 +197,7 @@ id test4() {
 }
 @end
 
-// CHECK: define void @test5
+// CHECK-LABEL: define void @test5
 void test5(Test5 *x, id y) {
   // Prologue.
   // CHECK:      [[X:%.*]] = alloca [[TEST5:%.*]]*,
@@ -241,7 +241,7 @@ void test5(Test5 *x, id y) {
 }
 
 id test6_helper(void) __attribute__((ns_returns_retained));
-// CHECK: define void @test6()
+// CHECK-LABEL: define void @test6()
 void test6() {
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: [[CALL:%.*]] = call i8* @test6_helper()
@@ -253,7 +253,7 @@ void test6() {
 }
 
 void test7_helper(id __attribute__((ns_consumed)));
-// CHECK: define void @test7()
+// CHECK-LABEL: define void @test7()
 void test7() {
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: store i8* null, i8** [[X]]
@@ -284,7 +284,7 @@ void test10() {
   Test10 *x;
   id y = x.me.me;
 
-  // CHECK:      define void @test10()
+  // CHECK-LABEL:      define void @test10()
   // CHECK:      [[X:%.*]] = alloca [[TEST10:%.*]]*, align
   // CHECK-NEXT: [[Y:%.*]] = alloca i8*, align
   // CHECK-NEXT: store [[TEST10]]* null, [[TEST10]]** [[X]]
@@ -314,7 +314,7 @@ void test10() {
 }
 
 void test11(id (*f)(void) __attribute__((ns_returns_retained))) {
-  // CHECK:      define void @test11(
+  // CHECK-LABEL:      define void @test11(
   // CHECK:      [[F:%.*]] = alloca i8* ()*, align
   // CHECK-NEXT: [[X:%.*]] = alloca i8*, align
   // CHECK-NEXT: store i8* ()* {{%.*}}, i8* ()** [[F]], align
@@ -330,7 +330,7 @@ void test11(id (*f)(void) __attribute__((ns_returns_retained))) {
 void test12(void) {
   extern id test12_helper(void);
 
-  // CHECK:      define void @test12()
+  // CHECK-LABEL:      define void @test12()
   // CHECK:      [[X:%.*]] = alloca i8*, align
   // CHECK-NEXT: [[Y:%.*]] = alloca i8*, align
 
@@ -358,7 +358,7 @@ void test12(void) {
 
 // Indirect consuming calls.
 void test13(void) {
-  // CHECK:      define void @test13()
+  // CHECK-LABEL:      define void @test13()
   // CHECK:      [[X:%.*]] = alloca i8*, align
   // CHECK-NEXT: store i8* null, i8** [[X]], align
   id x;
@@ -458,7 +458,7 @@ void test13(void) {
 @end
 
 void test19() {
-  // CHECK: define void @test19()
+  // CHECK-LABEL: define void @test19()
   // CHECK:      [[X:%.*]] = alloca [5 x i8*], align 16
   // CHECK: call void @llvm.lifetime.start
   // CHECK-NEXT: [[T0:%.*]] = bitcast [5 x i8*]* [[X]] to i8*
@@ -490,7 +490,7 @@ void test19() {
 }
 
 void test20(unsigned n) {
-  // CHECK: define void @test20
+  // CHECK-LABEL: define void @test20
   // CHECK:      [[N:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[SAVED_STACK:%.*]] = alloca i8*
   // CHECK-NEXT: store i32 {{%.*}}, i32* [[N]], align 4
@@ -531,7 +531,7 @@ void test20(unsigned n) {
 }
 
 void test21(unsigned n) {
-  // CHECK: define void @test21
+  // CHECK-LABEL: define void @test21
   // CHECK:      [[N:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[SAVED_STACK:%.*]] = alloca i8*
   // CHECK-NEXT: store i32 {{%.*}}, i32* [[N]], align 4
@@ -829,7 +829,7 @@ char *helper;
 @end
 
 __attribute__((ns_returns_retained)) id test32(void) {
-// CHECK:    define i8* @test32()
+// CHECK-LABEL:    define i8* @test32()
 // CHECK:      [[CALL:%.*]] = call i8* @test32_helper()
 // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[CALL]])
 // CHECK-NEXT: ret i8* [[T0]]
@@ -932,7 +932,7 @@ void test33(Test33 *ptr) {
 }
 
 
-// CHECK: define void @test36
+// CHECK-LABEL: define void @test36
 void test36(id x) {
   // CHECK: [[X:%.*]] = alloca i8*
 
@@ -960,7 +960,7 @@ void test37(void) {
   Test37 *var;
   test37_helper(&var);
 
-  // CHECK:    define void @test37()
+  // CHECK-LABEL:    define void @test37()
   // CHECK:      [[VAR:%.*]] = alloca [[TEST37:%.*]]*,
   // CHECK-NEXT: [[TEMP:%.*]] = alloca i8*
   // CHECK-NEXT: store [[TEST37]]* null, [[TEST37]]** [[VAR]]
@@ -1037,7 +1037,7 @@ void test47(void) {
   extern id test47_helper(void);
   id x = x = test47_helper();
 
-  // CHECK:    define void @test47()
+  // CHECK-LABEL:    define void @test47()
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: store i8* null, i8** [[X]]
   // CHECK-NEXT: [[CALL:%.*]] = call i8* @test47_helper()
@@ -1057,7 +1057,7 @@ void test47(void) {
 void test48(void) {
   extern id test48_helper(void);
   __weak id x = x = test48_helper();
-  // CHECK:    define void @test48()
+  // CHECK-LABEL:    define void @test48()
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_initWeak(i8** [[X]], i8* null)
   // CHECK-NEXT: [[T1:%.*]] = call i8* @test48_helper()
@@ -1072,7 +1072,7 @@ void test48(void) {
 void test49(void) {
   extern id test49_helper(void);
   __autoreleasing id x = x = test49_helper();
-  // CHECK:    define void @test49()
+  // CHECK-LABEL:    define void @test49()
   // CHECK:      [[X:%.*]] = alloca i8*
   // CHECK-NEXT: store i8* null, i8** [[X]]
   // CHECK-NEXT: [[CALL:%.*]] = call i8* @test49_helper()
@@ -1113,7 +1113,7 @@ id test52(void) {
   id test52_helper(int) __attribute__((ns_returns_retained));
   return ({ int x = 5; test52_helper(x); });
 
-// CHECK:    define i8* @test52()
+// CHECK-LABEL:    define i8* @test52()
 // CHECK:      [[X:%.*]] = alloca i32
 // CHECK-NEXT: [[TMPALLOCA:%.*]] = alloca i8*
 // CHECK-NEXT: store i32 5, i32* [[X]],
@@ -1130,7 +1130,7 @@ void test53(void) {
   id test53_helper(void);
   id x = ({ id y = test53_helper(); y; });
   (void) x;
-// CHECK:    define void @test53()
+// CHECK-LABEL:    define void @test53()
 // CHECK:      [[X:%.*]] = alloca i8*,
 // CHECK-NEXT: [[Y:%.*]] = alloca i8*,
 // CHECK-NEXT: [[TMPALLOCA:%.*]] = alloca i8*,
@@ -1151,7 +1151,7 @@ void test53(void) {
 }
 
 // <rdar://problem/9758798>
-// CHECK: define void @test54(i32 %first, ...)
+// CHECK-LABEL: define void @test54(i32 %first, ...)
 void test54(int first, ...) {
   __builtin_va_list arglist;
   // CHECK: call void @llvm.va_start
@@ -1191,7 +1191,7 @@ void test54(int first, ...) {
 @end
 void test56_test(void) {
   id x = [Test56 make];
-  // CHECK: define void @test56_test()
+  // CHECK-LABEL: define void @test56_test()
   // CHECK:      [[X:%.*]] = alloca i8*, align 8
   // CHECK:      [[T0:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(
   // CHECK-NEXT: store i8* [[T0]], i8** [[X]]
@@ -1245,7 +1245,7 @@ void test59(void) {
     test59_body();
   }
 
-  // CHECK:    define void @test59()
+  // CHECK-LABEL:    define void @test59()
   // CHECK:      [[T0:%.*]] = call i8* @test59_getlock()
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
   // CHECK-NEXT: call i32 @objc_sync_enter(i8* [[T1]])
@@ -1263,7 +1263,7 @@ void test59(void) {
 - (id) test61_id;
 @end
 void test61(void) {
-  // CHECK:    define void @test61()
+  // CHECK-LABEL:    define void @test61()
   // CHECK:      [[Y:%.*]] = alloca i8*, align 8
 
   extern id test61_make(void);
@@ -1293,7 +1293,7 @@ void test61(void) {
 
 // rdar://problem/9891815
 void test62(void) {
-  // CHECK:    define void @test62()
+  // CHECK-LABEL:    define void @test62()
   // CHECK:      [[I:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[CLEANUP_VALUE:%.*]] = alloca i8*
   // CHECK-NEXT: [[CLEANUP_REQUIRED:%.*]] = alloca i1
@@ -1365,7 +1365,7 @@ void test66(void) {
   extern id test66_arg(void);
   [test66_receiver() consume: test66_arg()];
 }
-// CHECK:    define void @test66()
+// CHECK-LABEL:    define void @test66()
 // CHECK:      [[T0:%.*]] = call [[TEST66:%.*]]* @test66_receiver()
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST66]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
@@ -1389,7 +1389,7 @@ Class test67_helper(void);
 void test67(void) {
   Class cl = test67_helper();
 }
-// CHECK:    define void @test67()
+// CHECK-LABEL:    define void @test67()
 // CHECK:      [[CL:%.*]] = alloca i8*, align 8
 // CHECK-NEXT: [[T0:%.*]] = call i8* @test67_helper()
 // CHECK-NEXT: store i8* [[T0]], i8** [[CL]], align 8
@@ -1399,7 +1399,7 @@ Class test68_helper(void);
 void test68(void) {
   __strong Class cl = test67_helper();
 }
-// CHECK:    define void @test68()
+// CHECK-LABEL:    define void @test68()
 // CHECK:      [[CL:%.*]] = alloca i8*, align 8
 // CHECK-NEXT: [[T0:%.*]] = call i8* @test67_helper()
 // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
@@ -1421,7 +1421,7 @@ void test68(void) {
 
 // rdar://problem/10907547
 void test70(id i) {
-  // CHECK: define void @test70
+  // CHECK-LABEL: define void @test70
   // CHECK: store i8* null, i8**
   // CHECK: store i8* null, i8**
   // CHECK: [[ID:%.*]] = call i8* @objc_retain(i8*

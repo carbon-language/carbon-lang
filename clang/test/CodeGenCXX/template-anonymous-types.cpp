@@ -19,19 +19,19 @@ template <typename T> int f(T t) {
 void test() {
   // Look for two instantiations, one for FOO's
   // type and one for BAR's.
-  // CHECK: define linkonce_odr i32 @_Z1fIN1SUt_EEiT_(i32 %t)
+  // CHECK-LABEL: define linkonce_odr i32 @_Z1fIN1SUt_EEiT_(i32 %t)
   (void)f(S::FOO);
-  // CHECK: define linkonce_odr i32 @_Z1fIN1SUt0_EEiT_(i32 %t)
+  // CHECK-LABEL: define linkonce_odr i32 @_Z1fIN1SUt0_EEiT_(i32 %t)
   (void)f(S::BAR);
 
   // Now check for the class template instantiations. Annoyingly, they are in
   // reverse order.
   //
   // BAR's instantiation of X:
-  // CHECK: define linkonce_odr i32 @_ZN1XIN1SUt0_EE1fEv(%struct.X* %this)
-  // CHECK: define linkonce_odr void @_ZN1XIN1SUt0_EEC2ES1_(%struct.X* %this, i32 %t) unnamed_addr
+  // CHECK-LABEL: define linkonce_odr i32 @_ZN1XIN1SUt0_EE1fEv(%struct.X* %this)
+  // CHECK-LABEL: define linkonce_odr void @_ZN1XIN1SUt0_EEC2ES1_(%struct.X* %this, i32 %t) unnamed_addr
   //
   // FOO's instantiation of X:
-  // CHECK: define linkonce_odr i32 @_ZN1XIN1SUt_EE1fEv(%struct.X.0* %this)
-  // CHECK: define linkonce_odr void @_ZN1XIN1SUt_EEC2ES1_(%struct.X.0* %this, i32 %t) unnamed_addr
+  // CHECK-LABEL: define linkonce_odr i32 @_ZN1XIN1SUt_EE1fEv(%struct.X.0* %this)
+  // CHECK-LABEL: define linkonce_odr void @_ZN1XIN1SUt_EEC2ES1_(%struct.X.0* %this, i32 %t) unnamed_addr
 }

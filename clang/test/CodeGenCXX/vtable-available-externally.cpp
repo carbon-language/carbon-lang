@@ -28,7 +28,7 @@ void f(A* a) {
   a->f();
 };
 
-// CHECK: define void @_ZN5Test11gEv
+// CHECK-LABEL: define void @_ZN5Test11gEv
 // CHECK: call void @_ZN5Test11A1fEv
 void g() {
   A a;
@@ -106,7 +106,7 @@ void f() {
 }
 
 // PR9130, test that we emit a definition of A::f.
-// CHECK-TEST5: define linkonce_odr void @_ZN5Test51A1fEv
+// CHECK-TEST5-LABEL: define linkonce_odr void @_ZN5Test51A1fEv
 namespace Test5 {
 
 struct A {
@@ -160,7 +160,7 @@ struct c28 : virtual c11{
   void f6 ();
 };
 
-// CHECK-TEST7: define void @_ZN5Test79check_c28Ev
+// CHECK-TEST7-LABEL: define void @_ZN5Test79check_c28Ev
 // CHECK-TEST7: call void @_ZN5Test73c282f6Ev
 // CHECK-TEST7: ret void
 void check_c28 () {

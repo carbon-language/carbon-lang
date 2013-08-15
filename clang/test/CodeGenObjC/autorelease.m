@@ -39,7 +39,7 @@ int tryTo(int (*f)(void)) {
     return 0;
   }
 }
-// CHECK:    define i32 @tryTo(i32 ()*
+// CHECK-LABEL:    define i32 @tryTo(i32 ()*
 // CHECK:      [[RET:%.*]] = alloca i32,
 // CHECK:      [[T0:%.*]] = call i8* @objc_autoreleasePoolPush()
 // CHECK-NEXT: [[T1:%.*]] = load i32 ()** {{%.*}},

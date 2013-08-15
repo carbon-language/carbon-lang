@@ -8,7 +8,7 @@ typedef struct s5 { Sd ds; } SSd;
 
 void bar(Sf a, Sd b, SSf d, SSd e) {}
 
-// CHECK: define void @bar
+// CHECK-LABEL: define void @bar
 // CHECK:  %a = alloca %struct.s1, align 4
 // CHECK:  %b = alloca %struct.s2, align 8
 // CHECK:  %d = alloca %struct.s4, align 4
@@ -34,7 +34,7 @@ void foo(void)
   bar(p1, p2, p4, p5);
 }
 
-// CHECK: define void @foo
+// CHECK-LABEL: define void @foo
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s1* %p1, i32 0, i32 0
 // CHECK:  %{{[0-9]+}} = load float* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s2* %p2, i32 0, i32 0

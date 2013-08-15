@@ -124,7 +124,7 @@ struct A {
   A();
 };
 
-// CHECK: define void @_ZN9ValueInit1AC2Ev(%"struct.ValueInit::A"* %this) unnamed_addr
+// CHECK-LABEL: define void @_ZN9ValueInit1AC2Ev(%"struct.ValueInit::A"* %this) unnamed_addr
 // CHECK: store i64 -1, i64*
 // CHECK: ret void
 A::A() : a() {}
@@ -202,7 +202,7 @@ namespace BoolPtrToMember {
     bool member;
   };
 
-  // CHECK: define i8* @_ZN15BoolPtrToMember1fERNS_1XEMS0_b
+  // CHECK-LABEL: define i8* @_ZN15BoolPtrToMember1fERNS_1XEMS0_b
   bool &f(X &x, bool X::*member) {
     // CHECK: {{bitcast.* to i8\*}}
     // CHECK-NEXT: getelementptr inbounds i8*
@@ -249,7 +249,7 @@ namespace PR13097 {
   };
   A f();
   X g() { return f().*&A::x; }
-  // CHECK: define void @_ZN7PR130971gEv
+  // CHECK-LABEL: define void @_ZN7PR130971gEv
   // CHECK: call void @_ZN7PR130971fEv
   // CHECK-NOT: memcpy
   // CHECK: call void @_ZN7PR130971XC1ERKS0_

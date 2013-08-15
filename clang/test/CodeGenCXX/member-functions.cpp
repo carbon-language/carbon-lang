@@ -5,11 +5,11 @@ struct C {
   void g(int, ...);
 };
 
-// CHECK: define void @_ZN1C1fEv
+// CHECK-LABEL: define void @_ZN1C1fEv
 void C::f() {
 }
 
-// CHECK: define void @_Z5test1v
+// CHECK-LABEL: define void @_Z5test1v
 void test1() {
   C c;
 
@@ -34,7 +34,7 @@ struct S {
   virtual void v() {}
 };
 
-// CHECK: define void @_ZN1S1fEv
+// CHECK-LABEL: define void @_ZN1S1fEv
 void S::f() {
 }
 
@@ -51,13 +51,13 @@ void test2() {
 // CHECK: define linkonce_odr void @_ZN1SC1Ev{{.*}} unnamed_addr
 
 // S::f_inline1()
-// CHECK: define linkonce_odr void @_ZN1S9f_inline1Ev
+// CHECK-LABEL: define linkonce_odr void @_ZN1S9f_inline1Ev
 
 // S::f_inline2()
-// CHECK: define linkonce_odr void @_ZN1S9f_inline2Ev
+// CHECK-LABEL: define linkonce_odr void @_ZN1S9f_inline2Ev
 
 // S::g()
-// CHECK: define linkonce_odr void @_ZN1S1gEv
+// CHECK-LABEL: define linkonce_odr void @_ZN1S1gEv
 
 // S::~S()
 // CHECK: define linkonce_odr void @_ZN1SD1Ev{{.*}} unnamed_addr
@@ -66,7 +66,7 @@ struct T {
   T operator+(const T&);
 };
 
-// CHECK: define void @_Z5test3v
+// CHECK-LABEL: define void @_Z5test3v
 void test3() {
   T t1, t2;
 

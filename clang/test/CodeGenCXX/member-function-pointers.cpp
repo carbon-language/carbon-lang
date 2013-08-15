@@ -229,7 +229,7 @@ namespace test9 {
     fooptr p;
   };
 
-  // CODE-LP64:    define void @_ZN5test94testEv(
+  // CODE-LP64-LABEL:    define void @_ZN5test94testEv(
   // CODE-LP64:      alloca i32
   // CODE-LP64-NEXT: ret void
   void test() {

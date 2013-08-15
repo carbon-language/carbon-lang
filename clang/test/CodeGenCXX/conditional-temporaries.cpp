@@ -36,19 +36,19 @@ Checker c;
 
 }
 
-// CHECK: define i32 @_Z12getCtorCallsv()
+// CHECK-LABEL: define i32 @_Z12getCtorCallsv()
 int getCtorCalls() {
   // CHECK: ret i32 5
   return ctorcalls;
 }
 
-// CHECK: define i32 @_Z12getDtorCallsv()
+// CHECK-LABEL: define i32 @_Z12getDtorCallsv()
 int getDtorCalls() {
   // CHECK: ret i32 5
   return dtorcalls;
 }
 
-// CHECK: define zeroext i1 @_Z7successv()
+// CHECK-LABEL: define zeroext i1 @_Z7successv()
 bool success() {
   // CHECK: ret i1 true
   return ctorcalls == dtorcalls;

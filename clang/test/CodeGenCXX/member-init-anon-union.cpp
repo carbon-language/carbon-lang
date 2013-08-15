@@ -11,7 +11,7 @@ static union {
 
 int f() { return a; }
 
-// CHECK: define internal void @__cxx_global_var_init
+// CHECK-LABEL: define internal void @__cxx_global_var_init
 // CHECK-NOT: }
 // CHECK: call {{.*}}@"[[CONSTRUCT_GLOBAL:.*]]C1Ev"
 

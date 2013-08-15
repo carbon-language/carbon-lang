@@ -23,7 +23,7 @@ int test4() {
 int test5(bool x, bool y, int z) {
   return (x ? throw 1 : y) ? z : throw 2;
 }
-// CHECK: define i32 @_Z5test5bbi(
+// CHECK-LABEL: define i32 @_Z5test5bbi(
 // CHECK: br i1
 //
 // x.true:
@@ -47,7 +47,7 @@ int test5(bool x, bool y, int z) {
 int test6(bool x, bool y, int z) {
   return (x ? throw 1 : y) ? z : (throw 2);
 }
-// CHECK: define i32 @_Z5test6bbi(
+// CHECK-LABEL: define i32 @_Z5test6bbi(
 // CHECK: br i1
 //
 // x.true:

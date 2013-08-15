@@ -13,22 +13,22 @@ typedef struct { int i; } Small;
 typedef struct { short s; } Short;
 typedef struct { } ZeroSized;
 
-// CHECK: define void @returnBig
+// CHECK-LABEL: define void @returnBig
 // CHECK: ret void
 Big returnBig(Big x) { return x; }
 
-// CHECK-PCC: define void @returnSmall
+// CHECK-PCC-LABEL: define void @returnSmall
 // CHECK-PCC: ret void
-// CHECK-REG: define i32 @returnSmall
+// CHECK-REG-LABEL: define i32 @returnSmall
 // CHECK-REG: ret i32
 Small returnSmall(Small x) { return x; }
 
-// CHECK-PCC: define void @returnShort
+// CHECK-PCC-LABEL: define void @returnShort
 // CHECK-PCC: ret void
-// CHECK-REG: define i16 @returnShort
+// CHECK-REG-LABEL: define i16 @returnShort
 // CHECK-REG: ret i16
 Short returnShort(Short x) { return x; }
 
-// CHECK: define void @returnZero()
+// CHECK-LABEL: define void @returnZero()
 // CHECK: ret void
 ZeroSized returnZero(ZeroSized x) { return x; }

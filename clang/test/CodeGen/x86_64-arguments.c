@@ -2,49 +2,49 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s -target-feature +avx | FileCheck %s -check-prefix=AVX
 #include <stdarg.h>
 
-// CHECK: define signext i8 @f0()
+// CHECK-LABEL: define signext i8 @f0()
 char f0(void) {
   return 0;
 }
 
-// CHECK: define signext i16 @f1()
+// CHECK-LABEL: define signext i16 @f1()
 short f1(void) {
   return 0;
 }
 
-// CHECK: define i32 @f2()
+// CHECK-LABEL: define i32 @f2()
 int f2(void) {
   return 0;
 }
 
-// CHECK: define float @f3()
+// CHECK-LABEL: define float @f3()
 float f3(void) {
   return 0;
 }
 
-// CHECK: define double @f4()
+// CHECK-LABEL: define double @f4()
 double f4(void) {
   return 0;
 }
 
-// CHECK: define x86_fp80 @f5()
+// CHECK-LABEL: define x86_fp80 @f5()
 long double f5(void) {
   return 0;
 }
 
-// CHECK: define void @f6(i8 signext %a0, i16 signext %a1, i32 %a2, i64 %a3, i8* %a4)
+// CHECK-LABEL: define void @f6(i8 signext %a0, i16 signext %a1, i32 %a2, i64 %a3, i8* %a4)
 void f6(char a0, short a1, int a2, long long a3, void *a4) {
 }
 
-// CHECK: define void @f7(i32 %a0)
+// CHECK-LABEL: define void @f7(i32 %a0)
 typedef enum { A, B, C } e7;
 void f7(e7 a0) {
 }
 
 // Test merging/passing of upper eightbyte with X87 class.
 //
-// CHECK: define void @f8_1(%union.u8* noalias sret %agg.result)
-// CHECK: define void @f8_2(%union.u8* byval align 16 %a0)
+// CHECK-LABEL: define void @f8_1(%union.u8* noalias sret %agg.result)
+// CHECK-LABEL: define void @f8_2(%union.u8* byval align 16 %a0)
 union u8 {
   long double a;
   int b;
@@ -52,18 +52,18 @@ union u8 {
 union u8 f8_1() { while (1) {} }
 void f8_2(union u8 a0) {}
 
-// CHECK: define i64 @f9()
+// CHECK-LABEL: define i64 @f9()
 struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 
-// CHECK: define void @f10(i64 %a0.coerce)
+// CHECK-LABEL: define void @f10(i64 %a0.coerce)
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
-// CHECK: define void @f11(%union.anon* noalias sret %agg.result)
+// CHECK-LABEL: define void @f11(%union.anon* noalias sret %agg.result)
 union { long double a; float b; } f11() { while (1) {} }
 
-// CHECK: define i32 @f12_0()
-// CHECK: define void @f12_1(i32 %a0.coerce)
+// CHECK-LABEL: define i32 @f12_0()
+// CHECK-LABEL: define void @f12_1(i32 %a0.coerce)
 struct s12 { int a __attribute__((aligned(16))); };
 struct s12 f12_0(void) { while (1) {} }
 void f12_1(struct s12 a0) {}
@@ -94,19 +94,19 @@ void f17(float a, float b, float c, float d, float e, float f, float g, float h,
 // Check for valid coercion.  The struct should be passed/returned as i32, not
 // as i64 for better code quality.
 // rdar://8135035
-// CHECK: define void @f18(i32 %a, i32 %f18_arg1.coerce) 
+// CHECK-LABEL: define void @f18(i32 %a, i32 %f18_arg1.coerce) 
 struct f18_s0 { int f0; };
 void f18(int a, struct f18_s0 f18_arg1) { while (1) {} }
 
 // Check byval alignment.
 
-// CHECK: define void @f19(%struct.s19* byval align 16 %x)
+// CHECK-LABEL: define void @f19(%struct.s19* byval align 16 %x)
 struct s19 {
   long double a;
 };
 void f19(struct s19 x) {}
 
-// CHECK: define void @f20(%struct.s20* byval align 32 %x)
+// CHECK-LABEL: define void @f20(%struct.s20* byval align 32 %x)
 struct __attribute__((aligned(32))) s20 {
   int x;
   int y;
@@ -119,7 +119,7 @@ struct StringRef {
 };
 
 // rdar://7375902
-// CHECK: define i8* @f21(i64 %S.coerce0, i8* %S.coerce1) 
+// CHECK-LABEL: define i8* @f21(i64 %S.coerce0, i8* %S.coerce1) 
 const char *f21(struct StringRef S) { return S.x+S.Ptr; }
 
 // PR7567
@@ -140,7 +140,7 @@ struct f23S {
 
 
 void f23(int A, struct f23S B) {
-  // CHECK: define void @f23(i32 %A, i64 %B.coerce0, i32 %B.coerce1)
+  // CHECK-LABEL: define void @f23(i32 %A, i64 %B.coerce0, i32 %B.coerce1)
 }
 
 struct f24s { long a; int b; };
@@ -154,7 +154,7 @@ struct f23S f24(struct f23S *X, struct f24s *P2) {
 // rdar://8248065
 typedef float v4f32 __attribute__((__vector_size__(16)));
 v4f32 f25(v4f32 X) {
-  // CHECK: define <4 x float> @f25(<4 x float> %X)
+  // CHECK-LABEL: define <4 x float> @f25(<4 x float> %X)
   // CHECK-NOT: alloca
   // CHECK: alloca <4 x float>
   // CHECK-NOT: alloca
@@ -180,7 +180,7 @@ struct v4f32wrapper {
 };
 
 struct v4f32wrapper f27(struct v4f32wrapper X) {
-  // CHECK: define <4 x float> @f27(<4 x float> %X.coerce)
+  // CHECK-LABEL: define <4 x float> @f27(<4 x float> %X.coerce)
   return X;
 }
 
@@ -190,7 +190,7 @@ struct f28c {
   int y;
 };
 void f28(struct f28c C) {
-  // CHECK: define void @f28(double %C.coerce0, i32 %C.coerce1)
+  // CHECK-LABEL: define void @f28(double %C.coerce0, i32 %C.coerce1)
 }
 
 struct f29a {
@@ -201,26 +201,26 @@ struct f29a {
 };
 
 void f29a(struct f29a A) {
-  // CHECK: define void @f29a(double %A.coerce0, i32 %A.coerce1)
+  // CHECK-LABEL: define void @f29a(double %A.coerce0, i32 %A.coerce1)
 }
 
 // rdar://8249586
 struct S0 { char f0[8]; char f2; char f3; char f4; };
 void f30(struct S0 p_4) {
-  // CHECK: define void @f30(i64 %p_4.coerce0, i24 %p_4.coerce1)
+  // CHECK-LABEL: define void @f30(i64 %p_4.coerce0, i24 %p_4.coerce1)
 }
 
 // Pass the third element as a float when followed by tail padding.
 // rdar://8251384
 struct f31foo { float a, b, c; };
 float f31(struct f31foo X) {
-  // CHECK: define float @f31(<2 x float> %X.coerce0, float %X.coerce1)
+  // CHECK-LABEL: define float @f31(<2 x float> %X.coerce0, float %X.coerce1)
   return X.c;
 }
 
 _Complex float f32(_Complex float A, _Complex float B) {
   // rdar://6379669
-  // CHECK: define <2 x float> @f32(<2 x float> %A.coerce, <2 x float> %B.coerce)
+  // CHECK-LABEL: define <2 x float> @f32(<2 x float> %A.coerce, <2 x float> %B.coerce)
   return A+B;
 }
 
@@ -235,12 +235,12 @@ void f33(va_list X) {
 typedef unsigned long long v1i64 __attribute__((__vector_size__(8)));
 
 // rdar://8359248
-// CHECK: define i64 @f34(i64 %arg.coerce)
+// CHECK-LABEL: define i64 @f34(i64 %arg.coerce)
 v1i64 f34(v1i64 arg) { return arg; }
 
 
 // rdar://8358475
-// CHECK: define i64 @f35(i64 %arg.coerce)
+// CHECK-LABEL: define i64 @f35(i64 %arg.coerce)
 typedef unsigned long v1i64_2 __attribute__((__vector_size__(8)));
 v1i64_2 f35(v1i64_2 arg) { return arg+arg; }
 
@@ -260,7 +260,7 @@ void f9122143()
   func(ss);
 }
 
-// CHECK: define double @f36(double %arg.coerce)
+// CHECK-LABEL: define double @f36(double %arg.coerce)
 typedef unsigned v2i32 __attribute((__vector_size__(8)));
 v2i32 f36(v2i32 arg) { return arg; }
 
@@ -308,7 +308,7 @@ void func43(SA s) {
   func42(s);
 }
 
-// CHECK: define i32 @f44
+// CHECK-LABEL: define i32 @f44
 // CHECK: ptrtoint
 // CHECK-NEXT: and {{.*}}, -32
 // CHECK-NEXT: inttoptr
@@ -323,7 +323,7 @@ int f44(int i, ...) {
 }
 
 // Text that vec3 returns the correct LLVM IR type.
-// AVX: define i32 @foo(<3 x i64> %X)
+// AVX-LABEL: define i32 @foo(<3 x i64> %X)
 typedef long long3 __attribute((ext_vector_type(3)));
 int foo(long3 X)
 {
@@ -379,7 +379,7 @@ void test49_helper(double, ...);
 void test49(double d, double e) {
   test49_helper(d, e);
 }
-// CHECK:    define void @test49(
+// CHECK-LABEL:    define void @test49(
 // CHECK:      [[T0:%.*]] = load double*
 // CHECK-NEXT: [[T1:%.*]] = load double*
 // CHECK-NEXT: call void (double, ...)* @test49_helper(double [[T0]], double [[T1]])
@@ -388,7 +388,7 @@ void test50_helper();
 void test50(double d, double e) {
   test50_helper(d, e);
 }
-// CHECK:    define void @test50(
+// CHECK-LABEL:    define void @test50(
 // CHECK:      [[T0:%.*]] = load double*
 // CHECK-NEXT: [[T1:%.*]] = load double*
 // CHECK-NEXT: call void (double, double, ...)* bitcast (void (...)* @test50_helper to void (double, double, ...)*)(double [[T0]], double [[T1]])
@@ -398,7 +398,7 @@ void test51(struct test51_s *s, __builtin_va_list argList) {
     *s = __builtin_va_arg(argList, struct test51_s);
 }
 
-// CHECK: define void @test51
+// CHECK-LABEL: define void @test51
 // CHECK: [[TMP_ADDR:%.*]] = alloca [[STRUCT_TEST51:%.*]], align 16
 // CHECK: br i1
 // CHECK: [[REG_SAVE_AREA_PTR:%.*]] = getelementptr inbounds {{.*}}, i32 0, i32 3
@@ -422,7 +422,7 @@ void test52() {
 void test53(__m256 *m, __builtin_va_list argList) {
   *m = __builtin_va_arg(argList, __m256);
 }
-// AVX: define void @test53
+// AVX-LABEL: define void @test53
 // AVX-NOT: br i1
 // AVX: ret void
 

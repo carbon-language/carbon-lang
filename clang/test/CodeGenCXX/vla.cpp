@@ -16,7 +16,7 @@ int f() {
 
 // rdar://problem/9506377
 void test0(void *array, int n) {
-  // CHECK: define void @_Z5test0Pvi(
+  // CHECK-LABEL: define void @_Z5test0Pvi(
   // CHECK:      [[ARRAY:%.*]] = alloca i8*, align 8
   // CHECK-NEXT: [[N:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[REF:%.*]] = alloca i16*, align 8

@@ -12,7 +12,7 @@ int main ()
     b();
 }
 
-// CHECK: define internal void @__main_block_invoke
+// CHECK-LABEL: define internal void @__main_block_invoke
 // CHECK:  [[C1:%.*]] = alloca { double, double }, align 8
 // CHECK:  [[RP:%.*]] = getelementptr inbounds { double, double }* [[C1]], i32 0, i32 0
 // CHECK-NEXT:  [[R:%.*]] = load double* [[RP]]

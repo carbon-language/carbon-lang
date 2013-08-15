@@ -14,7 +14,7 @@ CFStringRef CFGetString(void);
 id CreateSomething(void);
 NSString *CreateNSString(void);
 
-// CHECK: define void @bridge_transfer_from_cf
+// CHECK-LABEL: define void @bridge_transfer_from_cf
 void bridge_transfer_from_cf(int *i) {
   // CHECK: store i32 7
   *i = 7;
@@ -34,7 +34,7 @@ void bridge_transfer_from_cf(int *i) {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define void @bridge_from_cf
+// CHECK-LABEL: define void @bridge_from_cf
 void bridge_from_cf(int *i) {
   // CHECK: store i32 7
   *i = 7;
@@ -53,7 +53,7 @@ void bridge_from_cf(int *i) {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define void @bridge_retained_of_cf
+// CHECK-LABEL: define void @bridge_retained_of_cf
 void bridge_retained_of_cf(int *i) {
   *i = 7;
   // CHECK: call i8* @CreateSomething()
@@ -70,7 +70,7 @@ void bridge_retained_of_cf(int *i) {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define void @bridge_of_cf
+// CHECK-LABEL: define void @bridge_of_cf
 void bridge_of_cf(int *i) {
   // CHECK: store i32 7
   *i = 7;

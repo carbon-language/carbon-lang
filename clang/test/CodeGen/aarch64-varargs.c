@@ -7,7 +7,7 @@
 va_list the_list;
 
 int simple_int(void) {
-// CHECK: define i32 @simple_int
+// CHECK-LABEL: define i32 @simple_int
   return va_arg(the_list, int);
 // CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
@@ -39,7 +39,7 @@ int simple_int(void) {
 }
 
 __int128 aligned_int(void) {
-// CHECK: define i128 @aligned_int
+// CHECK-LABEL: define i128 @aligned_int
   return va_arg(the_list, __int128);
 // CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
@@ -81,7 +81,7 @@ struct bigstruct {
 };
 
 struct bigstruct simple_indirect(void) {
-// CHECK: define void @simple_indirect
+// CHECK-LABEL: define void @simple_indirect
   return va_arg(the_list, struct bigstruct);
 // CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
@@ -119,7 +119,7 @@ struct aligned_bigstruct {
 };
 
 struct aligned_bigstruct simple_aligned_indirect(void) {
-// CHECK: define void @simple_aligned_indirect
+// CHECK-LABEL: define void @simple_aligned_indirect
   return va_arg(the_list, struct aligned_bigstruct);
 // CHECK: [[GR_OFFS:%[a-z_0-9]+]] = load i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 3)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[GR_OFFS]], 0
@@ -150,7 +150,7 @@ struct aligned_bigstruct simple_aligned_indirect(void) {
 }
 
 double simple_double(void) {
-// CHECK: define double @simple_double
+// CHECK-LABEL: define double @simple_double
   return va_arg(the_list, double);
 // CHECK: [[VR_OFFS:%[a-z_0-9]+]] = load i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 4)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[VR_OFFS]], 0
@@ -186,7 +186,7 @@ struct hfa {
 };
 
 struct hfa simple_hfa(void) {
-// CHECK: define %struct.hfa @simple_hfa
+// CHECK-LABEL: define %struct.hfa @simple_hfa
   return va_arg(the_list, struct hfa);
 // CHECK: [[VR_OFFS:%[a-z_0-9]+]] = load i32* getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 4)
 // CHECK: [[EARLY_ONSTACK:%[a-z_0-9]+]] = icmp sge i32 [[VR_OFFS]], 0
@@ -226,7 +226,7 @@ struct hfa simple_hfa(void) {
 }
 
 void check_start(int n, ...) {
-// CHECK: define void @check_start(i32 %n, ...)
+// CHECK-LABEL: define void @check_start(i32 %n, ...)
 
   va_list the_list;
   va_start(the_list, n);

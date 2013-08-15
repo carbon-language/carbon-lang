@@ -31,15 +31,15 @@ B::B(int *i) : i_(i) { }
 B::~B() { }
 #endif
 
-// CHECKGEN: define void @_ZN1BC1EPi(%class.B* %this, i32* %i)
-// CHECKGEN: define void @_ZN1BC2EPi(%class.B* %this, i32* %i)
-// CHECKGEN: define void @_ZN1BD1Ev(%class.B* %this)
-// CHECKGEN: define void @_ZN1BD2Ev(%class.B* %this)
+// CHECKGEN-LABEL: define void @_ZN1BC1EPi(%class.B* %this, i32* %i)
+// CHECKGEN-LABEL: define void @_ZN1BC2EPi(%class.B* %this, i32* %i)
+// CHECKGEN-LABEL: define void @_ZN1BD1Ev(%class.B* %this)
+// CHECKGEN-LABEL: define void @_ZN1BD2Ev(%class.B* %this)
 
-// CHECKARM: define %class.B* @_ZN1BC1EPi(%class.B* returned %this, i32* %i)
-// CHECKARM: define %class.B* @_ZN1BC2EPi(%class.B* returned %this, i32* %i)
-// CHECKARM: define %class.B* @_ZN1BD1Ev(%class.B* returned %this)
-// CHECKARM: define %class.B* @_ZN1BD2Ev(%class.B* returned %this)
+// CHECKARM-LABEL: define %class.B* @_ZN1BC1EPi(%class.B* returned %this, i32* %i)
+// CHECKARM-LABEL: define %class.B* @_ZN1BC2EPi(%class.B* returned %this, i32* %i)
+// CHECKARM-LABEL: define %class.B* @_ZN1BD1Ev(%class.B* returned %this)
+// CHECKARM-LABEL: define %class.B* @_ZN1BD2Ev(%class.B* returned %this)
 
 // CHECKMS: define %class.B* @"\01??0B@@QEAA@PEAH@Z"(%class.B* returned %this, i32* %i)
 
@@ -56,17 +56,17 @@ C::C(int *i, char *c) : B(i), c_(c) { }
 C::~C() { }
 #endif
 
-// CHECKGEN: define void @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
-// CHECKGEN: define void @_ZN1CC2EPiPc(%class.C* %this, i32* %i, i8* %c)
-// CHECKGEN: define void @_ZN1CD0Ev(%class.C* %this)
-// CHECKGEN: define void @_ZN1CD1Ev(%class.C* %this)
-// CHECKGEN: define void @_ZN1CD2Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZN1CC1EPiPc(%class.C* %this, i32* %i, i8* %c)
+// CHECKGEN-LABEL: define void @_ZN1CC2EPiPc(%class.C* %this, i32* %i, i8* %c)
+// CHECKGEN-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZN1CD1Ev(%class.C* %this)
+// CHECKGEN-LABEL: define void @_ZN1CD2Ev(%class.C* %this)
 
-// CHECKARM: define %class.C* @_ZN1CC1EPiPc(%class.C* returned %this, i32* %i, i8* %c)
-// CHECKARM: define %class.C* @_ZN1CC2EPiPc(%class.C* returned %this, i32* %i, i8* %c)
-// CHECKARM: define void @_ZN1CD0Ev(%class.C* %this)
-// CHECKARM: define %class.C* @_ZN1CD1Ev(%class.C* returned %this)
-// CHECKARM: define %class.C* @_ZN1CD2Ev(%class.C* returned %this)
+// CHECKARM-LABEL: define %class.C* @_ZN1CC1EPiPc(%class.C* returned %this, i32* %i, i8* %c)
+// CHECKARM-LABEL: define %class.C* @_ZN1CC2EPiPc(%class.C* returned %this, i32* %i, i8* %c)
+// CHECKARM-LABEL: define void @_ZN1CD0Ev(%class.C* %this)
+// CHECKARM-LABEL: define %class.C* @_ZN1CD1Ev(%class.C* returned %this)
+// CHECKARM-LABEL: define %class.C* @_ZN1CD2Ev(%class.C* returned %this)
 
 // CHECKMS: define %class.C* @"\01??0C@@QEAA@PEAHPEAD@Z"(%class.C* returned %this, i32* %i, i8* %c)
 
@@ -81,15 +81,15 @@ D::D() { }
 D::~D() { }
 #endif
 
-// CHECKGEN: define void @_ZN1DC1Ev(%class.D* %this)
-// CHECKGEN: define void @_ZN1DC2Ev(%class.D* %this, i8** %vtt)
-// CHECKGEN: define void @_ZN1DD1Ev(%class.D* %this)
-// CHECKGEN: define void @_ZN1DD2Ev(%class.D* %this, i8** %vtt)
+// CHECKGEN-LABEL: define void @_ZN1DC1Ev(%class.D* %this)
+// CHECKGEN-LABEL: define void @_ZN1DC2Ev(%class.D* %this, i8** %vtt)
+// CHECKGEN-LABEL: define void @_ZN1DD1Ev(%class.D* %this)
+// CHECKGEN-LABEL: define void @_ZN1DD2Ev(%class.D* %this, i8** %vtt)
 
-// CHECKARM: define %class.D* @_ZN1DC1Ev(%class.D* returned %this)
-// CHECKARM: define %class.D* @_ZN1DC2Ev(%class.D* returned %this, i8** %vtt)
-// CHECKARM: define %class.D* @_ZN1DD1Ev(%class.D* returned %this)
-// CHECKARM: define %class.D* @_ZN1DD2Ev(%class.D* returned %this, i8** %vtt)
+// CHECKARM-LABEL: define %class.D* @_ZN1DC1Ev(%class.D* returned %this)
+// CHECKARM-LABEL: define %class.D* @_ZN1DC2Ev(%class.D* returned %this, i8** %vtt)
+// CHECKARM-LABEL: define %class.D* @_ZN1DD1Ev(%class.D* returned %this)
+// CHECKARM-LABEL: define %class.D* @_ZN1DD2Ev(%class.D* returned %this, i8** %vtt)
 
 class E {
 public:
@@ -105,7 +105,7 @@ void test_destructor() {
   e2->~E();
 }
 
-// CHECKARM: define void @_Z15test_destructorv()
+// CHECKARM-LABEL: define void @_Z15test_destructorv()
 
 // Verify that virtual calls to destructors are not marked with a 'returned'
 // this parameter at the call site...

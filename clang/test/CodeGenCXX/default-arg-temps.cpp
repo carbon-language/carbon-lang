@@ -13,7 +13,7 @@ public:
         X(const X&, const T& t = T());
 };
 
-// CHECK: define void @_Z1gv()
+// CHECK-LABEL: define void @_Z1gv()
 void g() {
   // CHECK:      call void @_ZN1TC1Ev([[T:%.*]]* [[AGG1:%.*]])
   // CHECK-NEXT: call void @_Z1fRK1T([[T]]* [[AGG1]])
@@ -41,7 +41,7 @@ void g() {
 
 
 class obj{ int a; float b; double d; };
-// CHECK: define void @_Z1hv()
+// CHECK-LABEL: define void @_Z1hv()
 void h() {
   // CHECK: call void @llvm.memset.p0i8.i64(
   obj o = obj();
@@ -61,7 +61,7 @@ namespace test1 {
     C c;
     A a;
 
-    // CHECK: define linkonce_odr void @_ZN5test11DC2Ev(%"struct.test1::D"* %this) unnamed_addr
+    // CHECK-LABEL: define linkonce_odr void @_ZN5test11DC2Ev(%"struct.test1::D"* %this) unnamed_addr
     // CHECK:      call void @_ZN5test11BC1Ev(
     // CHECK-NEXT: call void @_ZN5test11CC1ERKNS_1BE(
     // CHECK-NEXT: call void @_ZN5test11BD1Ev(

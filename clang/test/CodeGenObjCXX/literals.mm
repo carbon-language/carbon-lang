@@ -14,7 +14,7 @@ struct Y {
   operator id() const;
 };
 
-// CHECK: define void @_Z10test_arrayv
+// CHECK-LABEL: define void @_Z10test_arrayv
 void test_array() {
   // CHECK: [[OBJECTS:%[a-zA-Z0-9.]+]] = alloca [2 x i8*]
 
@@ -60,7 +60,7 @@ void test_array() {
   // CHECK: unreachable
 }
 
-// CHECK: define weak_odr void @_Z24test_array_instantiationIiEvv
+// CHECK-LABEL: define weak_odr void @_Z24test_array_instantiationIiEvv
 template<typename T>
 void test_array_instantiation() {
   // CHECK: [[OBJECTS:%[a-zA-Z0-9.]+]] = alloca [2 x i8*]

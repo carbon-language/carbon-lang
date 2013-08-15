@@ -11,7 +11,7 @@ namespace test0 {
 
   volatile A *array;
 
-  // CHECK: define void @_ZN5test04testENS_1AE(
+  // CHECK-LABEL: define void @_ZN5test04testENS_1AE(
   void test(A t) {
     // CHECK:      [[ARR:%.*]] = load [[A:%.*]]** @_ZN5test05arrayE, align 8
     // CHECK-NEXT: [[IDX:%.*]] = getelementptr inbounds [[A]]* [[ARR]], i64 0
@@ -24,7 +24,7 @@ namespace test0 {
 namespace test1 {
   volatile int *x;
 
-  // CHECK: define void @_ZN5test14testEv()
+  // CHECK-LABEL: define void @_ZN5test14testEv()
   void test() {
     // CHECK:      [[TMP:%.*]] = load i32** @_ZN5test11xE, align 8
     // CHECK-NEXT: ret void

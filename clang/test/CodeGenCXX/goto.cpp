@@ -5,7 +5,7 @@ namespace test0 {
   struct A { A(); ~A(); };
   struct V { V(const A &a = A()); ~V(); };
 
-  // CHECK: define linkonce_odr i32 @_ZN5test04testILi0EEEii
+  // CHECK-LABEL: define linkonce_odr i32 @_ZN5test04testILi0EEEii
   template<int X> int test(int x) {
     // CHECK:      [[RET:%.*]] = alloca i32
     // CHECK-NEXT: [[X:%.*]] = alloca i32

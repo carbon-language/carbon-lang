@@ -37,31 +37,31 @@ struct __attribute__((visibility("default"))) X2 {
 extern template struct X1<float>;
 
 void use(X0 *x0, X1<int> *x1, X2 *x2, X1<float> *x3) {
-  // CHECK: define linkonce_odr void @_ZN2X02f1Ev
+  // CHECK-LABEL: define linkonce_odr void @_ZN2X02f1Ev
   x0->f1();
-  // CHECK: define linkonce_odr hidden void @_ZN2X02f2Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X02f2Ev
   x0->f2();
-  // CHECK: define linkonce_odr hidden void @_ZN2X02f3Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X02f3Ev
   x0->f3();
-  // CHECK: define linkonce_odr hidden void @_ZN2X02f5Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X02f5Ev
   X0::f5();
-  // CHECK: define linkonce_odr hidden void @_ZN2X02f6Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X02f6Ev
   x0->X0::f6();
-  // CHECK: define linkonce_odr void @_ZN2X1IiE2f1Ev
+  // CHECK-LABEL: define linkonce_odr void @_ZN2X1IiE2f1Ev
   x1->f1();
-  // CHECK: define linkonce_odr hidden void @_ZN2X1IiE2f2Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X1IiE2f2Ev
   x1->f2();
-  // CHECK: define linkonce_odr hidden void @_ZN2X1IiE2f3Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X1IiE2f3Ev
   x1->f3();
-  // CHECK: define linkonce_odr hidden void @_ZN2X1IiE2f4Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X1IiE2f4Ev
   x1->f4();
-  // CHECK: define linkonce_odr hidden void @_ZN2X1IiE2f5Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X1IiE2f5Ev
   X1<int>::f5();
-  // CHECK: define linkonce_odr hidden void @_ZN2X1IiE2f6Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X1IiE2f6Ev
   x1->X1::f6();
-  // CHECK: define linkonce_odr hidden void @_ZN2X22f2Ev
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN2X22f2Ev
   x2->f2();
-  // CHECK: define available_externally void @_ZN2X1IfE2f2Ev
+  // CHECK-LABEL: define available_externally void @_ZN2X1IfE2f2Ev
   x3->f2();
 }
 
@@ -95,7 +95,7 @@ namespace test2 {
     ns::foo<arg>();
   }
 
-  // CHECK: define available_externally void @_ZN5test22ns3fooINS_1BINS_1AEEEEEvv()
+  // CHECK-LABEL: define available_externally void @_ZN5test22ns3fooINS_1BINS_1AEEEEEvv()
 }
 
 namespace PR11642 {
@@ -106,7 +106,7 @@ namespace PR11642 {
   };
   extern template class Foo<int>;
   template class Foo<int>;
-  // CHECK: define weak_odr i32 @_ZN7PR116423FooIiE3fooEi
+  // CHECK-LABEL: define weak_odr i32 @_ZN7PR116423FooIiE3fooEi
 }
 
 // Test that clang implements the new gcc behaviour for inline functions.
@@ -122,9 +122,9 @@ namespace test3 {
     foo();
     zed<int>();
   }
-  // CHECK: define weak_odr void @_ZN5test33zedIfEEvv
-  // CHECK: define linkonce_odr hidden void @_ZN5test33fooEv
-  // CHECK: define linkonce_odr hidden void @_ZN5test33zedIiEEvv
+  // CHECK-LABEL: define weak_odr void @_ZN5test33zedIfEEvv
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5test33fooEv
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5test33zedIiEEvv
 }
 
 namespace test4 {
@@ -133,7 +133,7 @@ namespace test4 {
   void bar() {
     foo();
   }
-  // CHECK: define available_externally void @_ZN5test43fooE
+  // CHECK-LABEL: define available_externally void @_ZN5test43fooE
 }
 
 namespace test5 {

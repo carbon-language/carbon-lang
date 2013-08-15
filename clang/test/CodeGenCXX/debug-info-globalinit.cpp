@@ -15,13 +15,13 @@ __attribute__((nodebug)) static int j = test();
 
 int main(void) {}
 
-// CHECK: define internal void @__cxx_global_var_init()
+// CHECK-LABEL: define internal void @__cxx_global_var_init()
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: %[[C0:.+]] = call i32 @_Z4testv(), !dbg ![[LINE:.*]]
 // CHECK-NOT: __cxx_global_var_init
 // CHECK: store i32 %[[C0]], i32* @_ZL1i, align 4, !dbg
 // 
-// CHECK: define internal void @__cxx_global_var_init1()
+// CHECK-LABEL: define internal void @__cxx_global_var_init1()
 // CHECK-NOT: dbg
 // CHECK: %[[C1:.+]] = call i32 @_Z4testv()
 // CHECK-NOT: dbg

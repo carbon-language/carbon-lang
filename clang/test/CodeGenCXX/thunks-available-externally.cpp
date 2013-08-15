@@ -58,10 +58,10 @@ static void f(B* b) {
   b->f();
 }
 
-// CHECK: define void @_ZN5Test21fEv()
+// CHECK-LABEL: define void @_ZN5Test21fEv()
 // CHECK: call void @_ZN5Test21C1fEv
 // CHECK: ret void
-// CHECK: define available_externally void @_ZThn16_N5Test21C1fEv
+// CHECK-LABEL: define available_externally void @_ZThn16_N5Test21C1fEv
 void f() {
   C c;
   f(&c);

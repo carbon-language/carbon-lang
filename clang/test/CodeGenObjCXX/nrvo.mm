@@ -22,7 +22,7 @@ struct X {
 
 X blocksNRVO() {
   return ^{
-    // CHECK: define internal void @___Z10blocksNRVOv_block_invoke
+    // CHECK-LABEL: define internal void @___Z10blocksNRVOv_block_invoke
     X x;
     // CHECK: tail call void @_ZN1XC1Ev
     // CHECK-NEXT: ret void

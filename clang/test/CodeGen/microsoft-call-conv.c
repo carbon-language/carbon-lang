@@ -4,17 +4,17 @@ void __fastcall f1(void);
 void __stdcall f2(void);
 void __thiscall f3(void);
 void __fastcall f4(void) {
-// CHECK: define x86_fastcallcc void @f4()
+// CHECK-LABEL: define x86_fastcallcc void @f4()
   f1();
 // CHECK: call x86_fastcallcc void @f1()
 }
 void __stdcall f5(void) {
-// CHECK: define x86_stdcallcc void @f5()
+// CHECK-LABEL: define x86_stdcallcc void @f5()
   f2();
 // CHECK: call x86_stdcallcc void @f2()
 }
 void __thiscall f6(void) {
-// CHECK: define x86_thiscallcc void @f6()
+// CHECK-LABEL: define x86_thiscallcc void @f6()
   f3();
 // CHECK: call x86_thiscallcc void @f3()
 }

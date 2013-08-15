@@ -8,10 +8,10 @@
 void thrower(void);
 void not(void) __attribute__((nothrow));
 
-// CHECK: define void @test0(
+// CHECK-LABEL: define void @test0(
 // CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !
 // CHECK: call void @not() [[NUW:#[0-9]+]], !clang.arc.no_objc_arc_exceptions !
-// NO-METADATA: define void @test0(
+// NO-METADATA-LABEL: define void @test0(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
 void test0(void) {
@@ -19,10 +19,10 @@ void test0(void) {
   not();
 }
 
-// CHECK: define void @test1(
+// CHECK-LABEL: define void @test1(
 // CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !
 // CHECK: call void @not() [[NUW]], !clang.arc.no_objc_arc_exceptions !
-// NO-METADATA: define void @test1(
+// NO-METADATA-LABEL: define void @test1(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
 void test1(id x) {
@@ -33,10 +33,10 @@ void test1(id x) {
 
 void NSLog(id, ...);
 
-// CHECK: define void @test2(
+// CHECK-LABEL: define void @test2(
 // CHECK: invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring_ to i8*), i32* %{{.*}})
 // CHECK:   to label %{{.*}} unwind label %{{.*}}, !clang.arc.no_objc_arc_exceptions !
-// NO-METADATA: define void @test2(
+// NO-METADATA-LABEL: define void @test2(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
 void test2(void) {
@@ -46,10 +46,10 @@ void test2(void) {
     }
 }
 
-// CHECK: define void @test3(
+// CHECK-LABEL: define void @test3(
 // CHECK: invoke void %{{.*}}(i8* %{{.*}})
 // CHECK:   to label %{{.*}} unwind label %{{.*}}, !clang.arc.no_objc_arc_exceptions !
-// NO-METADATA: define void @test3(
+// NO-METADATA-LABEL: define void @test3(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
 void test3(void) {
@@ -61,10 +61,10 @@ void test3(void) {
     }
 }
 
-// CHECK: define void @test4(
+// CHECK-LABEL: define void @test4(
 // CHECK: invoke void %{{.*}}(i8* %{{.*}})
 // CHECK:   to label %{{.*}} unwind label %{{.*}}, !clang.arc.no_objc_arc_exceptions !
-// NO-METADATA: define void @test4(
+// NO-METADATA-LABEL: define void @test4(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
 void test4(void) {

@@ -70,22 +70,22 @@ namespace Casts {
 
   template <int N> T<N> f() { return T<N>(); }
   
-  // CHECK: define weak_odr void @_ZN5Casts8implicitILj4EEEvPN9enable_ifIXleT_Li4EEvE4typeE
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts8implicitILj4EEEvPN9enable_ifIXleT_Li4EEvE4typeE
   template void implicit<4>(void*);
-  // CHECK: define weak_odr void @_ZN5Casts6cstyleILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts6cstyleILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void cstyle<4>(void*);
-  // CHECK: define weak_odr void @_ZN5Casts10functionalILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts10functionalILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void functional<4>(void*);
-  // CHECK: define weak_odr void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts7static_ILj4EEEvPN9enable_ifIXleT_cvjLi4EEvE4typeE
   template void static_<4>(void*);
 
-  // CHECK: define weak_odr void @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts1fILi6EEENS_1TIXT_EEEv
   template T<6> f<6>();
 
-  // CHECK: define weak_odr void @_ZN5Casts5auto_IiEEvDTnw_DapicvT__EEE(
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts5auto_IiEEvDTnw_DapicvT__EEE(
   template void auto_<int>(int*);
 
-  // CHECK: define weak_odr void @_ZN5Casts7scalar_IiEEvDTcmcvT__Ecvi_EE(
+  // CHECK-LABEL: define weak_odr void @_ZN5Casts7scalar_IiEEvDTcmcvT__Ecvi_EE(
   template void scalar_<int>(int);
 }
 
@@ -93,10 +93,10 @@ namespace test1 {
   short foo(short);
   int foo(int);
 
-  // CHECK: define linkonce_odr signext i16 @_ZN5test11aIsEEDTcl3foocvT__EEES1_(
+  // CHECK-LABEL: define linkonce_odr signext i16 @_ZN5test11aIsEEDTcl3foocvT__EEES1_(
   template <class T> auto a(T t) -> decltype(foo(T())) { return foo(t); }
 
-  // CHECK: define linkonce_odr signext i16 @_ZN5test11bIsEEDTcp3foocvT__EEES1_(
+  // CHECK-LABEL: define linkonce_odr signext i16 @_ZN5test11bIsEEDTcp3foocvT__EEES1_(
   template <class T> auto b(T t) -> decltype((foo)(T())) { return (foo)(t); }
 
   void test(short s) {
@@ -124,7 +124,7 @@ namespace test2 {
   float baz(float(*)());
   void fred(float(*)(), float);
 
-  // CHECK: define void @_ZN5test211instantiateEv
+  // CHECK-LABEL: define void @_ZN5test211instantiateEv
   void instantiate() {
     // CHECK: call void @_ZN5test21aIPFfvEEEvT_DTclfL0p_EE(
     a(foo, 0.0f);
@@ -156,7 +156,7 @@ namespace test3 {
     int *member;
   };
 
-  // CHECK: define void @_ZN5test311instantiateEv
+  // CHECK-LABEL: define void @_ZN5test311instantiateEv
   void instantiate() {
     X x;
     int *ip;

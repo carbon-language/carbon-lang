@@ -34,7 +34,7 @@ template <class T> void test2(NSMutableArray *a) {
   a[10] = 0;
 }
 template void test2<int>(NSMutableArray*);
-// CHECK: define weak_odr void @_Z5test2IiEvP14NSMutableArray
+// CHECK-LABEL: define weak_odr void @_Z5test2IiEvP14NSMutableArray
 // CHECK: @objc_msgSend 
 // CHECK: ret void
 
@@ -44,7 +44,7 @@ template <class T> void test3(NSMutableArray *a) {
 }
 
 template void test3<int>(NSMutableArray*);
-// CHECK: define weak_odr void @_Z5test3IiEvP14NSMutableArray
+// CHECK-LABEL: define weak_odr void @_Z5test3IiEvP14NSMutableArray
 // CHECK: @objc_msgSend
 // CHECK: ret void
 

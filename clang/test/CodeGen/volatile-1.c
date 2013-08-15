@@ -22,7 +22,7 @@ int printf(const char *, ...);
 // that do implicit lvalue-to-rvalue conversion are substantially
 // reduced.
 
-// CHECK: define void @test()
+// CHECK-LABEL: define void @test()
 void test() {
   // CHECK: load volatile [[INT]]* @i
   i;
@@ -303,7 +303,7 @@ void test() {
 }
 
 extern volatile enum X x;
-// CHECK: define void @test1()
+// CHECK-LABEL: define void @test1()
 void test1() {
   extern void test1_helper(void);
   test1_helper();

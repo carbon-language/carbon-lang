@@ -13,7 +13,7 @@ struct B : public A {
 // does not use runtime support.
 A *upcast(B *b) {
   return dynamic_cast<A *>(b);
-// CHECK: define %struct.A* @_Z6upcastP1B
+// CHECK-LABEL: define %struct.A* @_Z6upcastP1B
 // CHECK-NOT: call i8* @__dynamic_cast
 }
 
@@ -21,6 +21,6 @@ A *upcast(B *b) {
 // runtime support.
 B *samecast(B *b) {
   return dynamic_cast<B *>(b);
-// CHECK: define %struct.B* @_Z8samecastP1B
+// CHECK-LABEL: define %struct.B* @_Z8samecastP1B
 // CHECK-NOT: call i8* @__dynamic_cast
 }

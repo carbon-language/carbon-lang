@@ -23,15 +23,15 @@ static char g_deferred[] = "hello";
 // CHECK-PROTECTED: @test4 = hidden global i32 10
 // CHECK-HIDDEN: @test4 = hidden global i32 10
 
-// CHECK-DEFAULT: define i32 @f_def()
+// CHECK-DEFAULT-LABEL: define i32 @f_def()
 // CHECK-DEFAULT: declare void @f_ext()
-// CHECK-DEFAULT: define internal void @f_deferred()
-// CHECK-PROTECTED: define protected i32 @f_def()
+// CHECK-DEFAULT-LABEL: define internal void @f_deferred()
+// CHECK-PROTECTED-LABEL: define protected i32 @f_def()
 // CHECK-PROTECTED: declare void @f_ext()
-// CHECK-PROTECTED: define internal void @f_deferred()
-// CHECK-HIDDEN: define hidden i32 @f_def()
+// CHECK-PROTECTED-LABEL: define internal void @f_deferred()
+// CHECK-HIDDEN-LABEL: define hidden i32 @f_def()
 // CHECK-HIDDEN: declare void @f_ext()
-// CHECK-HIDDEN: define internal void @f_deferred()
+// CHECK-HIDDEN-LABEL: define internal void @f_deferred()
 
 extern void f_ext(void);
 
@@ -45,22 +45,22 @@ int f_def(void) {
 }
 
 // PR8457
-// CHECK-DEFAULT: define void @test1(
-// CHECK-PROTECTED: define void @test1(
-// CHECK-HIDDEN: define void @test1(
+// CHECK-DEFAULT-LABEL: define void @test1(
+// CHECK-PROTECTED-LABEL: define void @test1(
+// CHECK-HIDDEN-LABEL: define void @test1(
 struct Test1 { int field; };
 void  __attribute__((visibility("default"))) test1(struct Test1 *v) { }
 
 // rdar://problem/8595231
-// CHECK-DEFAULT: define void @test2()
-// CHECK-PROTECTED: define void @test2()
-// CHECK-HIDDEN: define void @test2()
+// CHECK-DEFAULT-LABEL: define void @test2()
+// CHECK-PROTECTED-LABEL: define void @test2()
+// CHECK-HIDDEN-LABEL: define void @test2()
 void test2(void);
 void __attribute__((visibility("default"))) test2(void) {}
 
-// CHECK-DEFAULT: define hidden void @test3()
-// CHECK-PROTECTED: define hidden void @test3()
-// CHECK-HIDDEN: define hidden void @test3()
+// CHECK-DEFAULT-LABEL: define hidden void @test3()
+// CHECK-PROTECTED-LABEL: define hidden void @test3()
+// CHECK-HIDDEN-LABEL: define hidden void @test3()
 extern void test3(void);
 __private_extern__ void test3(void) {}
 
@@ -69,8 +69,8 @@ extern int test4;
 __private_extern__ int test4 = 10;
 
 // rdar://12399248
-// CHECK-DEFAULT: define hidden void @test5()
-// CHECK-PROTECTED: define hidden void @test5()
-// CHECK-HIDDEN: define hidden void @test5()
+// CHECK-DEFAULT-LABEL: define hidden void @test5()
+// CHECK-PROTECTED-LABEL: define hidden void @test5()
+// CHECK-HIDDEN-LABEL: define hidden void @test5()
 __attribute__((availability(macosx,introduced=10.5,deprecated=10.6)))
 __private_extern__ void test5(void) {}

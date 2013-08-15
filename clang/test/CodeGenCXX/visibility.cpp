@@ -148,7 +148,7 @@ namespace test27 {
 // CHECK: @_ZTVN5Test63fooE = linkonce_odr hidden unnamed_addr constant 
 
 namespace Test1 {
-  // CHECK: define hidden void @_ZN5Test11fEv
+  // CHECK-LABEL: define hidden void @_ZN5Test11fEv
   void HIDDEN f() { }
   
 }
@@ -159,7 +159,7 @@ namespace Test2 {
   };
 
   // A::f is a member function of a hidden class.
-  // CHECK: define hidden void @_ZN5Test21A1fEv
+  // CHECK-LABEL: define hidden void @_ZN5Test21A1fEv
   void A::f() { }
 }
  
@@ -171,7 +171,7 @@ namespace Test3 {
   };
 
   // B is a nested class where its parent class is hidden.
-  // CHECK: define hidden void @_ZN5Test31A1B1fEv
+  // CHECK-LABEL: define hidden void @_ZN5Test31A1B1fEv
   void A::B::f() { }  
 }
 
@@ -179,7 +179,7 @@ namespace Test4 HIDDEN {
   int VariableInHiddenNamespace = 10;
 
   // Test4::g is in a hidden namespace.
-  // CHECK: define hidden void @_ZN5Test41gEv
+  // CHECK-LABEL: define hidden void @_ZN5Test41gEv
   void g() { } 
   
   struct DEFAULT A {
@@ -187,7 +187,7 @@ namespace Test4 HIDDEN {
   };
   
   // A has default visibility.
-  // CHECK: define void @_ZN5Test41A1fEv
+  // CHECK-LABEL: define void @_ZN5Test41A1fEv
   void A::f() { } 
 }
 
@@ -195,13 +195,13 @@ namespace Test5 {
 
   namespace NS HIDDEN {
     // f is in NS which is hidden.
-    // CHECK: define hidden void @_ZN5Test52NS1fEv()
+    // CHECK-LABEL: define hidden void @_ZN5Test52NS1fEv()
     void f() { }
   }
   
   namespace NS {
     // g is in NS, but this NS decl is not hidden.
-    // CHECK: define void @_ZN5Test52NS1gEv
+    // CHECK-LABEL: define void @_ZN5Test52NS1gEv
     void g() { }
   }
 }
@@ -235,7 +235,7 @@ namespace Test7 {
   class B : public A {};
   B b; // top of file
 
-  // CHECK: define linkonce_odr hidden void @_ZN5Test74ArefILZNS_1aEEE3fooEv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5Test74ArefILZNS_1aEEE3fooEv()
   void test() {
     Aref<a>::foo();
   }
@@ -244,7 +244,7 @@ namespace Test7 {
 namespace Test8 {
   void foo();
   void bar() {}
-  // CHECK-HIDDEN: define hidden void @_ZN5Test83barEv()
+  // CHECK-HIDDEN-LABEL: define hidden void @_ZN5Test83barEv()
   // CHECK-HIDDEN: declare void @_ZN5Test83fooEv()
 
   void test() {
@@ -260,8 +260,8 @@ namespace Test9 {
     void DEFAULT test9_fun(struct A *a) { }
     struct A DEFAULT test9_var; // above
   }
-  // CHECK: define void @test9_fun(
-  // CHECK-HIDDEN: define void @test9_fun(
+  // CHECK-LABEL: define void @test9_fun(
+  // CHECK-HIDDEN-LABEL: define void @test9_fun(
 
   void test() {
     A a = test9_var;
@@ -277,8 +277,8 @@ namespace Test10 {
     void foo(A*);
   };
 
-  // CHECK: define void @_ZN6Test101B3fooEPNS_1AE(
-  // CHECK-HIDDEN: define void @_ZN6Test101B3fooEPNS_1AE(
+  // CHECK-LABEL: define void @_ZN6Test101B3fooEPNS_1AE(
+  // CHECK-HIDDEN-LABEL: define void @_ZN6Test101B3fooEPNS_1AE(
   void B::foo(A*) {}
 }
 
@@ -295,10 +295,10 @@ namespace Test11 {
     a.bar();
   }
 
-  // CHECK: define linkonce_odr void @_ZN6Test111A3fooEv(
-  // CHECK: define linkonce_odr void @_ZN6Test111A3barEv(
-  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6Test111A3fooEv(
-  // CHECK-HIDDEN: define linkonce_odr void @_ZN6Test111A3barEv(
+  // CHECK-LABEL: define linkonce_odr void @_ZN6Test111A3fooEv(
+  // CHECK-LABEL: define linkonce_odr void @_ZN6Test111A3barEv(
+  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6Test111A3fooEv(
+  // CHECK-HIDDEN-LABEL: define linkonce_odr void @_ZN6Test111A3barEv(
 }
 
 // Tested at top of file.
@@ -485,7 +485,7 @@ namespace Test20 {
     static void test1();
   };
 
-  // CHECK: define hidden void @_ZN6Test201AILj0EE5test0Ev()
+  // CHECK-LABEL: define hidden void @_ZN6Test201AILj0EE5test0Ev()
   void A<0>::test0() {}
 
   // CHECK: declare hidden void @_ZN6Test201AILj0EE5test1Ev()
@@ -499,7 +499,7 @@ namespace Test20 {
     static void test3();
   };
 
-  // CHECK: define void @_ZN6Test201AILj1EE5test2Ev()
+  // CHECK-LABEL: define void @_ZN6Test201AILj1EE5test2Ev()
   void A<1>::test2() {}
 
   // CHECK: declare void @_ZN6Test201AILj1EE5test3Ev()
@@ -515,7 +515,7 @@ namespace Test20 {
     static void test5();
   };
 
-  // CHECK: define linkonce_odr hidden void @_ZN6Test201BINS_1AILj2EEEE5test4Ev()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN6Test201BINS_1AILj2EEEE5test4Ev()
   void test4() {
     B<A<2> >::test4();
   }
@@ -533,7 +533,7 @@ namespace test21 {
     DEFAULT void foo() {}
   };
 
-  // CHECK: define weak_odr void @_ZN6test211AILNS_2EnE0EE3fooEv(
+  // CHECK-LABEL: define weak_odr void @_ZN6test211AILNS_2EnE0EE3fooEv(
   template void A<en>::foo();
 }
 
@@ -560,13 +560,13 @@ namespace test22 {
     B<A2>::bar();
   }
   // CHECK: declare void @_ZN6test221BINS_2A1EE3fooEv()
-  // CHECK: define linkonce_odr void @_ZN6test221BINS_2A1EE3barEv()
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test221BINS_2A1EE3barEv()
   // CHECK: declare void @_ZN6test221BINS_2A2EE3fooEv()
-  // CHECK: define linkonce_odr void @_ZN6test221BINS_2A2EE3barEv()
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test221BINS_2A2EE3barEv()
   // CHECK-HIDDEN: declare void @_ZN6test221BINS_2A1EE3fooEv()
-  // CHECK-HIDDEN: define linkonce_odr void @_ZN6test221BINS_2A1EE3barEv()
+  // CHECK-HIDDEN-LABEL: define linkonce_odr void @_ZN6test221BINS_2A1EE3barEv()
   // CHECK-HIDDEN: declare void @_ZN6test221BINS_2A2EE3fooEv()
-  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test221BINS_2A2EE3barEv()
+  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test221BINS_2A2EE3barEv()
 }
 
 namespace PR10113 {
@@ -577,14 +577,14 @@ namespace PR10113 {
     };
   }
   template class foo::bar<char>;
-  // CHECK: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
+  // CHECK-LABEL: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
 
   struct zed {
   };
   template class foo::bar<zed>;
-  // CHECK: define weak_odr void @_ZN7PR101133foo3barINS_3zedEE3zedEv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN7PR101133foo3barINS_3zedEE3zedEv
+  // CHECK-LABEL: define weak_odr void @_ZN7PR101133foo3barINS_3zedEE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN7PR101133foo3barINS_3zedEE3zedEv
 }
 
 namespace PR11690 {
@@ -593,13 +593,13 @@ namespace PR11690 {
     }
   };
   template class DEFAULT Class<char>;
-  // CHECK: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
-  // CHECK-HIDDEN: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
+  // CHECK-LABEL: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
 
   template<class T> void Method() {}
   template  DEFAULT void Method<char>();
-  // CHECK: define weak_odr void @_ZN7PR116906MethodIcEEvv
-  // CHECK-HIDDEN: define weak_odr void @_ZN7PR116906MethodIcEEvv
+  // CHECK-LABEL: define weak_odr void @_ZN7PR116906MethodIcEEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN7PR116906MethodIcEEvv
 }
 
 namespace PR11690_2 {
@@ -614,8 +614,8 @@ namespace PR11690_2 {
   struct baz {
   };
   template class foo::zed<baz>;
-  // CHECK: define weak_odr void @_ZN9PR11690_23foo3zedINS_3bazENS0_3barEE3barEv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN9PR11690_23foo3zedINS_3bazENS0_3barEE3barEv
+  // CHECK-LABEL: define weak_odr void @_ZN9PR11690_23foo3zedINS_3bazENS0_3barEE3barEv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN9PR11690_23foo3zedINS_3bazENS0_3barEE3barEv
 }
 
 namespace test23 {
@@ -633,8 +633,8 @@ namespace test23 {
     X<A> y;
     y.f();
   }
-  // CHECK: define linkonce_odr void @_ZN6test231XINS_1AEE1fEv
-  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test231XINS_1AEE1fEv
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test231XINS_1AEE1fEv
+  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test231XINS_1AEE1fEv
 }
 
 namespace PR12001 {
@@ -647,8 +647,8 @@ namespace PR12001 {
   void f() {
     Bind(Version());
   }
-  // CHECK: define linkonce_odr void @_ZN7PR120014BindINS_7VersionEEEvRKT_
-  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN7PR120014BindINS_7VersionEEEvRKT_
+  // CHECK-LABEL: define linkonce_odr void @_ZN7PR120014BindINS_7VersionEEEvRKT_
+  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN7PR120014BindINS_7VersionEEEvRKT_
 }
 
 namespace test24 {
@@ -663,8 +663,8 @@ namespace test24 {
     S s;
     s.mem<A>();
   }
-  // CHECK: define linkonce_odr void @_ZN6test241S3memINS_1AEEEvv
-  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test241S3memINS_1AEEEvv
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test241S3memINS_1AEEEvv
+  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test241S3memINS_1AEEEvv
 }
 
 namespace test26 {
@@ -676,8 +676,8 @@ namespace test26 {
   template<>
   void C<int>::f() { }
 
-  // CHECK: define void @_ZN6test261CIiE1fEv
-  // CHECK-HIDDEN: define void @_ZN6test261CIiE1fEv
+  // CHECK-LABEL: define void @_ZN6test261CIiE1fEv
+  // CHECK-HIDDEN-LABEL: define void @_ZN6test261CIiE1fEv
 }
 
 namespace test31 {
@@ -701,8 +701,8 @@ namespace test32 {
   };
   void A::B::baz() {
   }
-  // CHECK: define void @_ZN6test321A1B3bazEv
-  // CHECK-HIDDEN: define void @_ZN6test321A1B3bazEv
+  // CHECK-LABEL: define void @_ZN6test321A1B3bazEv
+  // CHECK-HIDDEN-LABEL: define void @_ZN6test321A1B3bazEv
 }
 
 namespace test33 {
@@ -713,8 +713,8 @@ namespace test33 {
   struct HIDDEN zed {
   };
   template class DEFAULT foo<zed>;
-  // CHECK: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test333fooINS_3zedEE3barEv
 }
 
 namespace test34 {
@@ -723,8 +723,8 @@ namespace test34 {
   template<class T>
   void bar() {}
   template DEFAULT void bar<foo>();
-  // CHECK: define weak_odr void @_ZN6test343barINS_3fooEEEvv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test343barINS_3fooEEEvv
+  // CHECK-LABEL: define weak_odr void @_ZN6test343barINS_3fooEEEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test343barINS_3fooEEEvv
 }
 
 namespace test35 {
@@ -741,8 +741,8 @@ namespace test35 {
   template class foo<zed>;
   class DEFAULT zed {
   };
-  // CHECK: define weak_odr void @_ZN6test353fooINS_3zedEE3barEv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test353fooINS_3zedEE3barEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test353fooINS_3zedEE3barEv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test353fooINS_3zedEE3barEv
 }
 
 namespace test36 {
@@ -753,8 +753,8 @@ namespace test36 {
   class DEFAULT S1 {};
   struct HIDDEN S2 {};
   template class foo<S1, S2>;
-  // CHECK: define weak_odr hidden void @_ZN6test363fooINS_2S1ENS_2S2EE3barEv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test363fooINS_2S1ENS_2S2EE3barEv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test363fooINS_2S1ENS_2S2EE3barEv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test363fooINS_2S1ENS_2S2EE3barEv
 }
 
 namespace test37 {
@@ -763,8 +763,8 @@ namespace test37 {
   template<class T>
   DEFAULT void bar() {}
   template DEFAULT void bar<foo>();
-  // CHECK: define weak_odr void @_ZN6test373barINS_3fooEEEvv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test373barINS_3fooEEEvv
+  // CHECK-LABEL: define weak_odr void @_ZN6test373barINS_3fooEEEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test373barINS_3fooEEEvv
 }
 
 namespace test38 {
@@ -775,8 +775,8 @@ namespace test38 {
   struct HIDDEN zed {
   };
   template class foo<zed>;
-  // CHECK: define weak_odr hidden void @_ZN6test383fooINS_3zedEE3barEv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test383fooINS_3zedEE3barEv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test383fooINS_3zedEE3barEv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test383fooINS_3zedEE3barEv
 }
 
 namespace test39 {
@@ -794,19 +794,19 @@ namespace test39 {
   template void A<hidden_t>::B<hidden_t>::temp<default_t>();
   template void A<hidden_t>::B<hidden_t>::temp<hidden_t>();
 
-  // CHECK: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E6hiddenEv
-  // CHECK: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E6noattrEv
-  // CHECK: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempINS_9default_tEEEvv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E6hiddenEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E6noattrEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempINS_9default_tEEEvv
 
   // GCC produces a default for this one. Why?
-  // CHECK: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempIS1_EEvv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempIS1_EEvv
 
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E6hiddenEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E6noattrEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempINS_9default_tEEEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E6hiddenEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E6noattrEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempINS_9default_tEEEvv
 
   // GCC produces a default for this one. Why?
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempIS1_EEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test391AINS_8hidden_tEE1BIS1_E4tempIS1_EEvv
 }
 
 namespace test42 {
@@ -821,8 +821,8 @@ namespace test42 {
   };
   void bar<foo>::zed() {
   }
-  // CHECK: define void @_ZN6test423barINS_3fooEE3zedEv
-  // CHECK-HIDDEN: define void @_ZN6test423barINS_3fooEE3zedEv
+  // CHECK-LABEL: define void @_ZN6test423barINS_3fooEE3zedEv
+  // CHECK-HIDDEN-LABEL: define void @_ZN6test423barINS_3fooEE3zedEv
 }
 
 namespace test43 {
@@ -834,8 +834,8 @@ namespace test43 {
   template <>
   DEFAULT void bar<foo>() {
   }
-  // CHECK: define void @_ZN6test433barINS_3fooEEEvv
-  // CHECK-HIDDEN: define void @_ZN6test433barINS_3fooEEEvv
+  // CHECK-LABEL: define void @_ZN6test433barINS_3fooEEEvv
+  // CHECK-HIDDEN-LABEL: define void @_ZN6test433barINS_3fooEEEvv
 }
 
 namespace test44 {
@@ -848,8 +848,8 @@ namespace test44 {
   }
   template struct DEFAULT foo<bar>;
   foo<bar> x;
-  // CHECK: define internal void @_ZN6test443fooINS_12_GLOBAL__N_13barEEC1Ev
-  // CHECK-HIDDEN: define internal void @_ZN6test443fooINS_12_GLOBAL__N_13barEEC1Ev
+  // CHECK-LABEL: define internal void @_ZN6test443fooINS_12_GLOBAL__N_13barEEC1Ev
+  // CHECK-HIDDEN-LABEL: define internal void @_ZN6test443fooINS_12_GLOBAL__N_13barEEC1Ev
 }
 
 namespace test45 {
@@ -865,8 +865,8 @@ namespace test45 {
   }
   template struct DEFAULT foo<int>::bar<zed>;
   foo<int>::bar<zed> x;
-  // CHECK: define internal void @_ZN6test453fooIiE3barINS_12_GLOBAL__N_13zedEEC1Ev
-  // CHECK-HIDDEN: define internal void @_ZN6test453fooIiE3barINS_12_GLOBAL__N_13zedEEC1Ev
+  // CHECK-LABEL: define internal void @_ZN6test453fooIiE3barINS_12_GLOBAL__N_13zedEEC1Ev
+  // CHECK-HIDDEN-LABEL: define internal void @_ZN6test453fooIiE3barINS_12_GLOBAL__N_13zedEEC1Ev
 }
 
 namespace test46 {
@@ -880,8 +880,8 @@ namespace test46 {
   void zed() {
     foo<bar>();
   }
-  // CHECK: define internal void @_ZN6test463fooINS_12_GLOBAL__N_13barEEEvv
-  // CHECK-HIDDEN: define internal void @_ZN6test463fooINS_12_GLOBAL__N_13barEEEvv
+  // CHECK-LABEL: define internal void @_ZN6test463fooINS_12_GLOBAL__N_13barEEEvv
+  // CHECK-HIDDEN-LABEL: define internal void @_ZN6test463fooINS_12_GLOBAL__N_13barEEEvv
 }
 
 namespace test47 {
@@ -897,8 +897,8 @@ namespace test47 {
   void baz() {
     foo::bar<zed>();
   }
-  // CHECK: define internal void @_ZN6test473foo3barINS_12_GLOBAL__N_13zedEEEvv
-  // CHECK-HIDDEN: define internal void @_ZN6test473foo3barINS_12_GLOBAL__N_13zedEEEvv
+  // CHECK-LABEL: define internal void @_ZN6test473foo3barINS_12_GLOBAL__N_13zedEEEvv
+  // CHECK-HIDDEN-LABEL: define internal void @_ZN6test473foo3barINS_12_GLOBAL__N_13zedEEEvv
 }
 
 namespace test49 {
@@ -918,8 +918,8 @@ namespace test49 {
   };
 
   template void bar::zed<&x>();
-  // CHECK: define weak_odr hidden void @_ZN6test493bar3zedIXadL_ZNS_1xEEEEEvv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test493bar3zedIXadL_ZNS_1xEEEEEvv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test493bar3zedIXadL_ZNS_1xEEEEEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test493bar3zedIXadL_ZNS_1xEEEEEvv
 }
 
 namespace test50 {
@@ -936,8 +936,8 @@ namespace test50 {
     }
   };
   template void bar<&x>::zed();
-  // CHECK: define weak_odr hidden void @_ZN6test503barIXadL_ZNS_1xEEEE3zedEv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test503barIXadL_ZNS_1xEEEE3zedEv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test503barIXadL_ZNS_1xEEEE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test503barIXadL_ZNS_1xEEEE3zedEv
 }
 
 namespace test51 {
@@ -952,8 +952,8 @@ namespace test51 {
   void DEFAULT zed() {
   }
   template void zed<&x>();
-  // CHECK: define weak_odr hidden void @_ZN6test513zedIXadL_ZNS_1xEEEEEvv
-  // CHECK-HIDDEN: define weak_odr hidden void @_ZN6test513zedIXadL_ZNS_1xEEEEEvv
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test513zedIXadL_ZNS_1xEEEEEvv
+  // CHECK-HIDDEN-LABEL: define weak_odr hidden void @_ZN6test513zedIXadL_ZNS_1xEEEEEvv
 }
 
 namespace test52 {
@@ -971,8 +971,8 @@ namespace test52 {
   void f() {
     zed<nullptr>();
   }
-  // CHECK: define internal void @_ZN6test523zedILPNS_12_GLOBAL__N_13fooE0EEEvv
-  // CHECK-HIDDEN: define internal void @_ZN6test523zedILPNS_12_GLOBAL__N_13fooE0EEEvv
+  // CHECK-LABEL: define internal void @_ZN6test523zedILPNS_12_GLOBAL__N_13fooE0EEEvv
+  // CHECK-HIDDEN-LABEL: define internal void @_ZN6test523zedILPNS_12_GLOBAL__N_13fooE0EEEvv
 }
 
 namespace test53 {
@@ -1074,8 +1074,8 @@ namespace test58 {
     bar<foo>::zed();
   }
 #pragma GCC visibility pop
-  // CHECK: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
-  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
+  // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test583barINS_3fooEE3zedEv
 }
 
 namespace test59 {
@@ -1086,12 +1086,12 @@ namespace test59 {
   void test() {}
   void use() {
     test<&g, &f>();
-    // CHECK: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1gEvEEXadL_ZNS_1fEvEEEEvv
-    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1gEvEEXadL_ZNS_1fEvEEEEvv
+    // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1gEvEEXadL_ZNS_1fEvEEEEvv
+    // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1gEvEEXadL_ZNS_1fEvEEEEvv
 
     test<&f, &g>();
-    // CHECK: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
-    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
+    // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
+    // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test594testIXadL_ZNS_1fEvEEXadL_ZNS_1gEvEEEEvv
   }
 }
 
@@ -1104,12 +1104,12 @@ namespace test60 {
   void test() {}
   void use() {
     test<a, b>();
-    // CHECK: define linkonce_odr hidden void @_ZN6test604testINS_1aENS_1bEEEvv
-    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test604testINS_1aENS_1bEEEvv
+    // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test604testINS_1aENS_1bEEEvv
+    // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test604testINS_1aENS_1bEEEvv
 
     test<b, a>();
-    // CHECK: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
-    // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
+    // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
+    // CHECK-HIDDEN-LABEL: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
   }
 }
 
@@ -1171,8 +1171,8 @@ namespace test63 {
     A::foo<E0>();
     A::B<E0>::foo();
   }
-  // CHECK: define linkonce_odr hidden void @_ZN6test631A3fooILNS_1EE0EEEvv()
-  // CHECK: define linkonce_odr hidden void @_ZN6test631A1BILNS_1EE0EE3fooEv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test631A3fooILNS_1EE0EEEvv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test631A1BILNS_1EE0EE3fooEv()
 }
 
 // Don't ignore the visibility of template arguments just because we
@@ -1184,7 +1184,7 @@ namespace test64 {
   };
 
   template class B<A>;
-  // CHECK: define weak_odr hidden void @_ZN6test641BINS_1AEE3fooEv()
+  // CHECK-LABEL: define weak_odr hidden void @_ZN6test641BINS_1AEE3fooEv()
 }
 
 namespace test65 {
@@ -1200,23 +1200,23 @@ namespace test65 {
     static void foo() {}
   };
 
-  // CHECK: define void @_ZN6test651BINS_1AEE4funcEv()
+  // CHECK-LABEL: define void @_ZN6test651BINS_1AEE4funcEv()
   template <> DEFAULT void B<A>::func() {}
 
-  // CHECK: define void @_ZN6test651BINS_1AEE6funcT2IS1_EEvv()
+  // CHECK-LABEL: define void @_ZN6test651BINS_1AEE6funcT2IS1_EEvv()
   template <> template <> DEFAULT void B<A>::funcT2<A>() {}
 
-  // CHECK: define linkonce_odr void @_ZN6test651BINS_1AEE6funcT1IiEEvv()
-  // CHECK: define linkonce_odr hidden void @_ZN6test651BINS_1AEE6funcT1IS1_EEvv()
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test651BINS_1AEE6funcT1IiEEvv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test651BINS_1AEE6funcT1IS1_EEvv()
   template <> template <class T> DEFAULT void B<A>::funcT1() {}
 
-  // CHECK: define linkonce_odr void @_ZN6test651BINS_1AEE5Inner3fooEv()
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test651BINS_1AEE5Inner3fooEv()
   template <> struct DEFAULT B<A>::Inner {
     static void foo() {}
   };
 
-  // CHECK: define linkonce_odr void @_ZN6test651BINS_1AEE6InnerTIiE3fooEv()
-  // CHECK: define linkonce_odr hidden void @_ZN6test651BINS_1AEE6InnerTIS1_E3fooEv()
+  // CHECK-LABEL: define linkonce_odr void @_ZN6test651BINS_1AEE6InnerTIiE3fooEv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN6test651BINS_1AEE6InnerTIS1_E3fooEv()
   template <> template <class U> struct DEFAULT B<A>::InnerT {
     static void foo() {}
   };
@@ -1240,8 +1240,8 @@ namespace test66 {
   class foo;
   class DEFAULT foo;
   template struct barT<foo>;
-  // CHECK: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test664barTINS_3fooEE3zedEv
 
   template <int* I>
   struct DEFAULT barI {
@@ -1250,8 +1250,8 @@ namespace test66 {
   extern int I;
   extern int I DEFAULT;
   template struct barI<&I>;
-  // CHECK: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test664barIIXadL_ZNS_1IEEEE3zedEv
 
   typedef void (*fType)(void);
   template<fType F>
@@ -1261,8 +1261,8 @@ namespace test66 {
   void F();
   void F() DEFAULT;
   template struct barF<F>;
-  // CHECK: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test664barFIXadL_ZNS_1FEvEEE3zedEv
 }
 
 namespace test67 {
@@ -1278,8 +1278,8 @@ namespace test67 {
   class DEFAULT foo;
 
   template struct bar<foo>;
-  // CHECK: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
-  // CHECK-HIDDEN: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
+  // CHECK-LABEL: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
+  // CHECK-HIDDEN-LABEL: define weak_odr void @_ZN6test673barINS_3fooEE3zedEv
 }
 
 namespace test68 {

@@ -12,8 +12,8 @@ unsigned char ci, cj, ck;
 extern void opaqueshort(unsigned short);
 extern void opaquechar(unsigned char);
 
-// CHECKS:   define void @testshortadd()
-// CHECKU: define void @testshortadd()
+// CHECKS-LABEL:   define void @testshortadd()
+// CHECKU-LABEL: define void @testshortadd()
 void testshortadd() {
   // CHECKS:        load i16* @sj
   // CHECKS:        load i16* @sk
@@ -33,8 +33,8 @@ void testshortadd() {
   si = sj + sk;
 }
 
-// CHECKS:   define void @testshortsub()
-// CHECKU: define void @testshortsub()
+// CHECKS-LABEL:   define void @testshortsub()
+// CHECKU-LABEL: define void @testshortsub()
 void testshortsub() {
 
   // CHECKS:        load i16* @sj
@@ -55,8 +55,8 @@ void testshortsub() {
   si = sj - sk;
 }
 
-// CHECKS:   define void @testshortmul()
-// CHECKU: define void @testshortmul()
+// CHECKS-LABEL:   define void @testshortmul()
+// CHECKU-LABEL: define void @testshortmul()
 void testshortmul() {
 
   // CHECKS:        load i16* @sj
@@ -76,8 +76,8 @@ void testshortmul() {
   si = sj * sk;
 }
 
-// CHECKS:   define void @testcharadd()
-// CHECKU: define void @testcharadd()
+// CHECKS-LABEL:   define void @testcharadd()
+// CHECKU-LABEL: define void @testcharadd()
 void testcharadd() {
 
   // CHECKS:        load i8* @cj
@@ -98,8 +98,8 @@ void testcharadd() {
   ci = cj + ck;
 }
 
-// CHECKS:   define void @testcharsub()
-// CHECKU: define void @testcharsub()
+// CHECKS-LABEL:   define void @testcharsub()
+// CHECKU-LABEL: define void @testcharsub()
 void testcharsub() {
 
   // CHECKS:        load i8* @cj
@@ -120,8 +120,8 @@ void testcharsub() {
   ci = cj - ck;
 }
 
-// CHECKS:   define void @testcharmul()
-// CHECKU: define void @testcharmul()
+// CHECKS-LABEL:   define void @testcharmul()
+// CHECKU-LABEL: define void @testcharmul()
 void testcharmul() {
 
   // CHECKS:        load i8* @cj

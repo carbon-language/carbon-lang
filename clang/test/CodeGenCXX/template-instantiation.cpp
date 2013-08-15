@@ -13,16 +13,16 @@
 // CHECK-NOT: _ZTVN5test31SIiEE
 // CHECK-NOT: _ZTSN5test31SIiEE
 
-// CHECK: define linkonce_odr void @_ZN5test21CIiEC1Ev(%"class.test2::C"* %this) unnamed_addr
-// CHECK: define linkonce_odr void @_ZN5test21CIiE6foobarIdEEvT_(
-// CHECK: define available_externally void @_ZN5test21CIiE6zedbarEd(
+// CHECK-LABEL: define linkonce_odr void @_ZN5test21CIiEC1Ev(%"class.test2::C"* %this) unnamed_addr
+// CHECK-LABEL: define linkonce_odr void @_ZN5test21CIiE6foobarIdEEvT_(
+// CHECK-LABEL: define available_externally void @_ZN5test21CIiE6zedbarEd(
 
-// CHECK: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi1EEE()
-// CHECK: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi2EEE()
-// CHECK: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi3EEE()
-// CHECK: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi1EEE()
-// CHECK: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi2EEE()
-// CHECK: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi3EEE()
+// CHECK-LABEL: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi1EEE()
+// CHECK-LABEL: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi2EEE()
+// CHECK-LABEL: define linkonce_odr void @_ZN7PR106662g1ENS_1SILi3EEE()
+// CHECK-LABEL: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi1EEE()
+// CHECK-LABEL: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi2EEE()
+// CHECK-LABEL: define linkonce_odr void @_ZN7PR106662g2ENS_1SILi3EEE()
 // CHECK: declare void @_ZN7PR106662h1ENS_1SILi1EEE()
 // CHECK: declare void @_ZN7PR106662h1ENS_1SILi2EEE()
 // CHECK: declare void @_ZN7PR106662h1ENS_1SILi3EEE()

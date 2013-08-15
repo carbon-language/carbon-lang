@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s -o %t
 
-// Note: define CLANG_GENERATE_KNOWN_GOOD and compile to generate code
+// Note-LABEL: define CLANG_GENERATE_KNOWN_GOOD and compile to generate code
 // that makes all of the defaulted arguments explicit. The resulting
 // byte code should be identical to the compilation without
 // CLANG_GENERATE_KNOWN_GOOD.

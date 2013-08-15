@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -fmath-errno -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-YES %s
 // RUN: %clang_cc1 -emit-llvm -o - %s -triple i386-unknown-unknown | FileCheck -check-prefix CHECK-NO %s
 
-// CHECK-YES: define void @test_sqrt
-// CHECK-NO: define void @test_sqrt
+// CHECK-YES-LABEL: define void @test_sqrt
+// CHECK-NO-LABEL: define void @test_sqrt
 void test_sqrt(float a0, double a1, long double a2) {
   // Following llvm-gcc's lead, we never emit these as intrinsics;
   // no-math-errno isn't good enough.  We could probably use intrinsics
@@ -28,8 +28,8 @@ void test_sqrt(float a0, double a1, long double a2) {
 // CHECK-NO: declare double @sqrt(double) [[NUW_RN]]
 // CHECK-NO: declare x86_fp80 @sqrtl(x86_fp80) [[NUW_RN]]
 
-// CHECK-YES: define void @test_pow
-// CHECK-NO: define void @test_pow
+// CHECK-YES-LABEL: define void @test_pow
+// CHECK-NO-LABEL: define void @test_pow
 void test_pow(float a0, double a1, long double a2) {
   // CHECK-YES: call float @powf
   // CHECK-NO: call float @llvm.pow.f32
@@ -51,8 +51,8 @@ void test_pow(float a0, double a1, long double a2) {
 // CHECK-NO: declare double @llvm.pow.f64(double, double) [[NUW_RO]]
 // CHECK-NO: declare x86_fp80 @llvm.pow.f80(x86_fp80, x86_fp80) [[NUW_RO]]
 
-// CHECK-YES: define void @test_fma
-// CHECK-NO: define void @test_fma
+// CHECK-YES-LABEL: define void @test_fma
+// CHECK-NO-LABEL: define void @test_fma
 void test_fma(float a0, double a1, long double a2) {
     // CHECK-YES: call float @llvm.fma.f32
     // CHECK-NO: call float @llvm.fma.f32

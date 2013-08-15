@@ -5,7 +5,7 @@ struct A {
     inline void f();
 };
 
-// CHECK-NOT: define void @_ZN1A1fEv
+// CHECK-NOT-LABEL: define void @_ZN1A1fEv
 void A::f() { }
 
 template<typename> struct B { };
@@ -19,13 +19,13 @@ void B<char>::f() { }
 
 // We need a final CHECK line here.
 
-// CHECK: define void @_Z1fv
+// CHECK-LABEL: define void @_Z1fv
 void f() { }
 
 // <rdar://problem/8740363>
 inline void f1(int);
 
-// CHECK: define linkonce_odr void @_Z2f1i
+// CHECK-LABEL: define linkonce_odr void @_Z2f1i
 void f1(int) { }
 
 void test_f1() { f1(17); }
@@ -38,7 +38,7 @@ namespace test1 {
     void g() {}
   };
 
-  // CHECK: define linkonce_odr void @_ZN5test11C4funcEv(
+  // CHECK-LABEL: define linkonce_odr void @_ZN5test11C4funcEv(
 
   class C {
   public:
@@ -65,5 +65,5 @@ namespace test2 {
     A a;
     f(a);
   }
-  // CHECK: define linkonce_odr void @_ZN5test21fERKNS_1AE
+  // CHECK-LABEL: define linkonce_odr void @_ZN5test21fERKNS_1AE
 }

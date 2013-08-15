@@ -40,7 +40,7 @@ void * variant_load_1(int i) {
     return ptr;
 }
 
-// CHECK: define i8* @variant_load_1(i32 %i)
+// CHECK-LABEL: define i8* @variant_load_1(i32 %i)
 // CHECK: [[IVAR:%.*]] = load i64* @"OBJC_IVAR_$_Derived.member"{{$}}
 
 @interface Container : Derived @end
@@ -61,7 +61,7 @@ void * variant_load_1(int i) {
 }
 @end
 
-// CHECK: define internal i8* @block_block_invoke
+// CHECK-LABEL: define internal i8* @block_block_invoke
 // CHECK: load i64* @"OBJC_IVAR_$_ForBlock.foo"
 id (^block)(ForBlock*) = ^(ForBlock* a) {
   return a->foo;

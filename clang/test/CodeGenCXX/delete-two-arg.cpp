@@ -5,7 +5,7 @@ typedef __typeof(sizeof(int)) size_t;
 namespace test1 {
   struct A { void operator delete(void*,size_t); int x; };
 
-  // CHECK: define void @_ZN5test11aEPNS_1AE(
+  // CHECK-LABEL: define void @_ZN5test11aEPNS_1AE(
   void a(A *x) {
     // CHECK:      load
     // CHECK-NEXT: icmp eq {{.*}}, null
@@ -35,7 +35,7 @@ namespace test2 {
     return ::new A[10];
   }
 
-  // CHECK: define void @_ZN5test24testEPNS_1AE(
+  // CHECK-LABEL: define void @_ZN5test24testEPNS_1AE(
   void test(A *p) {
     // CHECK:      [[P:%.*]] = alloca [[A]]*, align 4
     // CHECK-NEXT: store [[A]]* {{%.*}}, [[A]]** [[P]], align 4
@@ -60,7 +60,7 @@ namespace test3 {
   };  
   struct B : A {};
 
-  // CHECK: define void @_ZN5test34testEv()
+  // CHECK-LABEL: define void @_ZN5test34testEv()
   void test() {
     // CHECK:      call noalias i8* @_Znaj(i32 24)
     // CHECK-NEXT: bitcast

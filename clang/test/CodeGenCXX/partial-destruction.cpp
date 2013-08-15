@@ -11,7 +11,7 @@ namespace test0 {
     A as[10] = { 5, 7 };
     opaque();
   }
-  // CHECK:    define void @_ZN5test04testEv()
+  // CHECK-LABEL:    define void @_ZN5test04testEv()
   // CHECK:      [[AS:%.*]] = alloca [10 x [[A:%.*]]], align
   // CHECK-NEXT: [[ENDVAR:%.*]] = alloca [[A]]*
   // CHECK-NEXT: [[EXN:%.*]] = alloca i8*
@@ -98,7 +98,7 @@ namespace test1 {
   void test() {
     B v = { 5, 6, 7, 8 };
   }
-  // CHECK:    define void @_ZN5test14testEv()
+  // CHECK-LABEL:    define void @_ZN5test14testEv()
   // CHECK:      [[V:%.*]] = alloca [[B:%.*]], align 4
   // CHECK-NEXT: alloca i8*
   // CHECK-NEXT: alloca i32
@@ -128,7 +128,7 @@ namespace test2 {
   void test() {
     A v[4][7];
 
-    // CHECK:    define void @_ZN5test24testEv()
+    // CHECK-LABEL:    define void @_ZN5test24testEv()
     // CHECK:      [[V:%.*]] = alloca [4 x [7 x [[A:%.*]]]], align 1
     // CHECK-NEXT: alloca i8*
     // CHECK-NEXT: alloca i32

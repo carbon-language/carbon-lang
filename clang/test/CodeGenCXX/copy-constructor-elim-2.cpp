@@ -2,7 +2,7 @@
 
 struct A { int x; A(int); ~A(); };
 A f() { return A(0); }
-// CHECK: define void @_Z1fv
+// CHECK-LABEL: define void @_Z1fv
 // CHECK: call {{.*}} @_ZN1AC1Ei
 // CHECK-NEXT: ret void
 
@@ -63,7 +63,7 @@ namespace PR12139 {
     static A makeA() { A a; a.value = 2; return a; }
   };
 
-  // CHECK: define i32 @_ZN7PR121394testEv
+  // CHECK-LABEL: define i32 @_ZN7PR121394testEv
   int test() {
     // CHECK: call void @_ZN7PR121391A5makeAEv
     // CHECK-NEXT: call %"struct.PR12139::A"* @_ZN7PR121391AC1ERKS0_i

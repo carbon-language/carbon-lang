@@ -6,7 +6,7 @@
 
 // This work was done in pursuit of <rdar://13338582>.
 
-// CHECK: define arm_aapcscc void @testFloat(float*
+// CHECK-LABEL: define arm_aapcscc void @testFloat(float*
 void testFloat(_Atomic(float) *fp) {
 // CHECK:      [[FP:%.*]] = alloca float*
 // CHECK-NEXT: [[X:%.*]] = alloca float

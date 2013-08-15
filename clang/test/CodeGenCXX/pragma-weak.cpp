@@ -10,22 +10,22 @@ int zex;
 #pragma weak foo
 struct S {  void foo(); };
 void S::foo() {}
-// CHECK: define void @_ZN1S3fooEv(
+// CHECK-LABEL: define void @_ZN1S3fooEv(
 
 #pragma weak zed
 namespace bar {  void zed() {} }
-// CHECK: define void @_ZN3bar3zedEv(
+// CHECK-LABEL: define void @_ZN3bar3zedEv(
 
 #pragma weak bah
 void bah() {}
-// CHECK: define void @_Z3bahv(
+// CHECK-LABEL: define void @_Z3bahv(
 
 #pragma weak baz
 extern "C" void baz() {}
-// CHECK: define weak void @baz(
+// CHECK-LABEL: define weak void @baz(
 
 #pragma weak _Z3baxv
 void bax() {}
 // GCC produces a weak symbol for this one, but it doesn't look like a good
 // idea to expose the mangling to the pragma unless we really have to.
-// CHECK: define void @_Z3baxv(
+// CHECK-LABEL: define void @_Z3baxv(

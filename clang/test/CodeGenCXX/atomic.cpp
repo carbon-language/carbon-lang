@@ -5,7 +5,7 @@ namespace PR11411 {
     void f();
   };
 
-  // CHECK: define linkonce_odr void @_ZN7PR114113PtrIiE1fEv
+  // CHECK-LABEL: define linkonce_odr void @_ZN7PR114113PtrIiE1fEv
   // CHECK-NOT: ret
   template<typename _Tp> inline void Ptr<_Tp>::f() {
     int* _refcount;

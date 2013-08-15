@@ -13,7 +13,7 @@ Result plus<T, U, Result>::operator()(const T& t, const U& u) const {
   return t + u;
 }
 
-// CHECK: define weak_odr i32 @_ZNK4plusIillEclERKiRKl
+// CHECK-LABEL: define weak_odr i32 @_ZNK4plusIillEclERKiRKl
 template struct plus<int, long, long>;
 
 // Check that we emit definitions from explicit instantiations even when they
@@ -27,16 +27,16 @@ template <typename T> struct S {
   };
 };
 
-// CHECK: define weak_odr void @_ZN1SIiE1fEv
+// CHECK-LABEL: define weak_odr void @_ZN1SIiE1fEv
 template void S<int>::f();
 
-// CHECK: define weak_odr void @_ZN1SIiE1gEv
+// CHECK-LABEL: define weak_odr void @_ZN1SIiE1gEv
 template void S<int>::g();
 
 // See the check line at the top of the file.
 template int S<int>::i;
 
-// CHECK: define weak_odr void @_ZN1SIiE2S21hEv
+// CHECK-LABEL: define weak_odr void @_ZN1SIiE2S21hEv
 template void S<int>::S2::h();
 
 template <typename T> void S<T>::f() {}

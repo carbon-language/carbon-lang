@@ -21,21 +21,21 @@ struct PP_Var f0() {
   return result;
 }
 
-// CHECK: define void @f1(i64 %p1.coerce0, i64 %p1.coerce1)
+// CHECK-LABEL: define void @f1(i64 %p1.coerce0, i64 %p1.coerce1)
 void f1(struct PP_Var p1) { while(1) {} }
 
 // long doubles are 64 bits on NaCl
-// CHECK: define double @f5()
+// CHECK-LABEL: define double @f5()
 long double f5(void) {
   return 0;
 }
 
-// CHECK: define void @f6(i8 signext %a0, i16 signext %a1, i32 %a2, i64 %a3, i8* %a4)
+// CHECK-LABEL: define void @f6(i8 signext %a0, i16 signext %a1, i32 %a2, i64 %a3, i8* %a4)
 void f6(char a0, short a1, int a2, long long a3, void *a4) {
 }
 
-// CHECK: define i64 @f8_1()
-// CHECK: define void @f8_2(i64 %a0.coerce)
+// CHECK-LABEL: define i64 @f8_1()
+// CHECK-LABEL: define void @f8_2(i64 %a0.coerce)
 union u8 {
   long double a;
   int b;
@@ -43,18 +43,18 @@ union u8 {
 union u8 f8_1() { while (1) {} }
 void f8_2(union u8 a0) {}
 
-// CHECK: define i64 @f9()
+// CHECK-LABEL: define i64 @f9()
 struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 
-// CHECK: define void @f10(i64 %a0.coerce)
+// CHECK-LABEL: define void @f10(i64 %a0.coerce)
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
-// CHECK: define double @f11()
+// CHECK-LABEL: define double @f11()
 union { long double a; float b; } f11() { while (1) {} }
 
-// CHECK: define i32 @f12_0()
-// CHECK: define void @f12_1(i32 %a0.coerce)
+// CHECK-LABEL: define i32 @f12_0()
+// CHECK-LABEL: define void @f12_1(i32 %a0.coerce)
 struct s12 { int a __attribute__((aligned(16))); };
 struct s12 f12_0(void) { while (1) {} }
 void f12_1(struct s12 a0) {}
@@ -68,7 +68,7 @@ struct s13_1 { long long f0[2]; };
 struct s13_0 f13(int a, int b, int c, int d,
                  struct s13_1 e, int f) { while (1) {} }
 
-// CHECK: define void @f20(%struct.s20* byval align 32 %x)
+// CHECK-LABEL: define void @f20(%struct.s20* byval align 32 %x)
 struct __attribute__((aligned(32))) s20 {
   int x;
   int y;
@@ -96,10 +96,10 @@ typedef struct {
   int a;
   int b;
 } s1;
-// CHECK: define i32 @f48(%struct.s1* byval %s)
+// CHECK-LABEL: define i32 @f48(%struct.s1* byval %s)
 int __attribute__((pnaclcall)) f48(s1 s) { return s.a; }
 
-// CHECK: define void @f49(%struct.s1* noalias sret %agg.result)
+// CHECK-LABEL: define void @f49(%struct.s1* noalias sret %agg.result)
 s1 __attribute__((pnaclcall)) f49() { s1 s; s.a = s.b = 1; return s; }
 
 union simple_union {
@@ -107,7 +107,7 @@ union simple_union {
   char b;
 };
 // Unions should be passed as byval structs
-// CHECK: define void @f50(%union.simple_union* byval %s)
+// CHECK-LABEL: define void @f50(%union.simple_union* byval %s)
 void __attribute__((pnaclcall)) f50(union simple_union s) {}
 
 typedef struct {
@@ -116,5 +116,5 @@ typedef struct {
   int b8 : 8;
 } bitfield1;
 // Bitfields should be passed as byval structs
-// CHECK: define void @f51(%struct.bitfield1* byval %bf1)
+// CHECK-LABEL: define void @f51(%struct.bitfield1* byval %bf1)
 void __attribute__((pnaclcall)) f51(bitfield1 bf1) {}

@@ -17,8 +17,8 @@ int z = 0;
 
 #pragma GCC visibility push(hidden)
 void f() {}
-// CHECK: define hidden void @f
+// CHECK-LABEL: define hidden void @f
 
 __attribute((visibility("default"))) void g();
 void g() {}
-// CHECK: define void @g
+// CHECK-LABEL: define void @g

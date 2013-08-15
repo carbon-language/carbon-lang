@@ -14,7 +14,7 @@ void foo (void) {
   gs = gs;
   ls = gs;
 }
-// CHECK: define void @_Z3foov()
+// CHECK-LABEL: define void @_Z3foov()
 // CHECK: %[[LS:.*]] = alloca %struct.s, align 4
 // CHECK-NEXT: %[[ZERO:.*]] = bitcast %struct.s* %[[LS]] to i8*
 // CHECK-NEXT:  %[[ONE:.*]] = bitcast %struct.s* %[[LS]] to i8*
@@ -34,7 +34,7 @@ void fee (void) {
   s = s;
   s.y = gs;
 }
-// CHECK: define void @_Z3feev()
+// CHECK-LABEL: define void @_Z3feev()
 // CHECK: call void @llvm.memcpy.{{.*}}(i8* getelementptr inbounds (%struct.s1* @s, i32 0, i32 0, i32 0, i32 0), i8* getelementptr inbounds (%struct.s1* @s, i32 0, i32 0, i32 0, i32 0), i64 132, i32 4, i1 true)
 // CHECK-NEXT: call void @llvm.memcpy.{{.*}}(i8* getelementptr inbounds (%struct.s1* @s, i32 0, i32 0, i32 0, i32 0), i8* getelementptr inbounds (%struct.s* @gs, i32 0, i32 0, i32 0), i64 132, i32 4, i1 true)
 
@@ -46,5 +46,5 @@ d gd;
 void gorf(void) {
   gd = gd;
 }
-// CHECK: define void @_Z4gorfv()
+// CHECK-LABEL: define void @_Z4gorfv()
 // CHECK:   call void @llvm.memcpy.{{.*}}(i8* getelementptr inbounds (%struct.d* @gd, i32 0, i32 0, i32 0, i32 0, i32 0), i8* getelementptr inbounds (%struct.d* @gd, i32 0, i32 0, i32 0, i32 0, i32 0), i64 132, i32 4, i1 true)

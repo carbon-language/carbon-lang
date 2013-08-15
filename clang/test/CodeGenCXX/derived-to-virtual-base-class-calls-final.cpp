@@ -9,7 +9,7 @@ struct D final : virtual C {
   virtual void f();
 };
 
-// CHECK: define %struct.B* @_Z1fR1D
+// CHECK-LABEL: define %struct.B* @_Z1fR1D
 B &f(D &d) {
   // CHECK-NOT: load i8**
   return d;

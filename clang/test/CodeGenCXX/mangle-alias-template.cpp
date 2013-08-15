@@ -15,7 +15,7 @@ template<typename,typename,typename> struct S {};
 template<typename T, typename U> using U = S<T, int, U>;
 template<typename...Ts> void h(U<Ts...>, Ts...);
 
-// CHECK: define void @_Z1zv(
+// CHECK-LABEL: define void @_Z1zv(
 void z() {
   vector<int> VI;
   f(VI);

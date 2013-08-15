@@ -8,7 +8,7 @@
 int f();
 
 void foo() {
-  // CHECK: define internal i32 @___Z3foov_block_invoke
+  // CHECK-LABEL: define internal i32 @___Z3foov_block_invoke
   // CHECK: call i32 @__cxa_guard_acquire(i64* @_ZGVZZ3foovEUb_E5value
   (void)^(int x) { 
     static int value = f();
@@ -16,7 +16,7 @@ void foo() {
   };
 }
 
-// CHECK: define internal i32 @i_block_invoke
+// CHECK-LABEL: define internal i32 @i_block_invoke
 int i = ^(int x) { return x;}(i);
 
 @interface A
@@ -42,7 +42,7 @@ void foo(int) {
 }
 
 namespace N {
-  // CHECK: define internal signext i8 @___Z3fooi_block_invoke
+  // CHECK-LABEL: define internal signext i8 @___Z3fooi_block_invoke
   void bar() {
     (void)^(int x) { 
       // CHECK: @_ZZZN1N3barEvEUb2_E4name

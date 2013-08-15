@@ -40,11 +40,11 @@ namespace PR7526 {
 
   struct allocator_derived : allocator { };
 
-  // CHECK: define void @_ZN6PR75269allocatorD2Ev(%"struct.PR7526::allocator"* %this) unnamed_addr
+  // CHECK-LABEL: define void @_ZN6PR75269allocatorD2Ev(%"struct.PR7526::allocator"* %this) unnamed_addr
   // CHECK: call void @__cxa_call_unexpected
   allocator::~allocator() throw() { foo(); }
 
-  // CHECK: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev(%"struct.PR7526::allocator_derived"* %this) unnamed_addr
+  // CHECK-LABEL: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev(%"struct.PR7526::allocator_derived"* %this) unnamed_addr
   // CHECK-NOT: call void @__cxa_call_unexpected
   // CHECK:     }
   void foo() {
@@ -93,7 +93,7 @@ namespace test0 {
 
 // complete destructor alias tested above
 
-// CHECK: define void @_ZN5test01AD2Ev(%"struct.test0::A"* %this) unnamed_addr
+// CHECK-LABEL: define void @_ZN5test01AD2Ev(%"struct.test0::A"* %this) unnamed_addr
 // CHECK: invoke void @_ZN5test06MemberD1Ev
 // CHECK:   unwind label [[MEM_UNWIND:%[a-zA-Z0-9.]+]]
 // CHECK: invoke void @_ZN5test04BaseD2Ev
@@ -106,7 +106,7 @@ namespace test0 {
   B::~B() try { } catch (int i) {}
   // It will suppress the delegation optimization here, though.
 
-// CHECK: define void @_ZN5test01BD1Ev(%"struct.test0::B"* %this) unnamed_addr
+// CHECK-LABEL: define void @_ZN5test01BD1Ev(%"struct.test0::B"* %this) unnamed_addr
 // CHECK: invoke void @_ZN5test06MemberD1Ev
 // CHECK:   unwind label [[MEM_UNWIND:%[a-zA-Z0-9.]+]]
 // CHECK: invoke void @_ZN5test04BaseD2Ev
@@ -114,7 +114,7 @@ namespace test0 {
 // CHECK: invoke void @_ZN5test05VBaseD2Ev
 // CHECK:   unwind label [[VBASE_UNWIND:%[a-zA-Z0-9.]+]]
 
-// CHECK: define void @_ZN5test01BD2Ev(%"struct.test0::B"* %this, i8** %vtt) unnamed_addr
+// CHECK-LABEL: define void @_ZN5test01BD2Ev(%"struct.test0::B"* %this, i8** %vtt) unnamed_addr
 // CHECK: invoke void @_ZN5test06MemberD1Ev
 // CHECK:   unwind label [[MEM_UNWIND:%[a-zA-Z0-9.]+]]
 // CHECK: invoke void @_ZN5test04BaseD2Ev
@@ -142,24 +142,24 @@ namespace test1 {
   O::~O() {} // alias tested above
 
   struct P : NonEmpty, A { ~P(); };
-  P::~P() {} // CHECK: define void @_ZN5test11PD2Ev(%"struct.test1::P"* %this) unnamed_addr
+  P::~P() {} // CHECK-LABEL: define void @_ZN5test11PD2Ev(%"struct.test1::P"* %this) unnamed_addr
 
   struct Q : A, B { ~Q(); };
-  Q::~Q() {} // CHECK: define void @_ZN5test11QD2Ev(%"struct.test1::Q"* %this) unnamed_addr
+  Q::~Q() {} // CHECK-LABEL: define void @_ZN5test11QD2Ev(%"struct.test1::Q"* %this) unnamed_addr
 
   struct R : A { ~R(); };
-  R::~R() { A a; } // CHECK: define void @_ZN5test11RD2Ev(%"struct.test1::R"* %this) unnamed_addr
+  R::~R() { A a; } // CHECK-LABEL: define void @_ZN5test11RD2Ev(%"struct.test1::R"* %this) unnamed_addr
 
   struct S : A { ~S(); int x; };
   S::~S() {} // alias tested above
 
   struct T : A { ~T(); B x; };
-  T::~T() {} // CHECK: define void @_ZN5test11TD2Ev(%"struct.test1::T"* %this) unnamed_addr
+  T::~T() {} // CHECK-LABEL: define void @_ZN5test11TD2Ev(%"struct.test1::T"* %this) unnamed_addr
 
   // The VTT parameter prevents this.  We could still make this work
   // for calling conventions that are safe against extra parameters.
   struct U : A, virtual B { ~U(); };
-  U::~U() {} // CHECK: define void @_ZN5test11UD2Ev(%"struct.test1::U"* %this, i8** %vtt) unnamed_addr
+  U::~U() {} // CHECK-LABEL: define void @_ZN5test11UD2Ev(%"struct.test1::U"* %this, i8** %vtt) unnamed_addr
 }
 
 // PR6471
@@ -168,7 +168,7 @@ namespace test2 {
   struct B : A { ~B(); };
 
   B::~B() {}
-  // CHECK: define void @_ZN5test21BD2Ev(%"struct.test2::B"* %this) unnamed_addr
+  // CHECK-LABEL: define void @_ZN5test21BD2Ev(%"struct.test2::B"* %this) unnamed_addr
   // CHECK: call void @_ZN5test21AD2Ev
 }
 
@@ -195,7 +195,7 @@ namespace test3 {
 namespace test4 {
   struct A { ~A(); };
 
-  // CHECK: define void @_ZN5test43fooEv()
+  // CHECK-LABEL: define void @_ZN5test43fooEv()
   // CHECK: call void @_ZN5test41AD1Ev
   // CHECK: ret void
   void foo() {
@@ -208,7 +208,7 @@ namespace test4 {
     return;
   }
 
-  // CHECK: define void @_ZN5test43barEi(
+  // CHECK-LABEL: define void @_ZN5test43barEi(
   // CHECK:      [[X:%.*]] = alloca i32
   // CHECK-NEXT: [[A:%.*]] = alloca
   // CHECK:      br label
@@ -233,7 +233,7 @@ namespace test4 {
 namespace test5 {
   struct A { ~A(); };
 
-  // CHECK: define void @_ZN5test53fooEv()
+  // CHECK-LABEL: define void @_ZN5test53fooEv()
   // CHECK:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
   // CHECK-NEXT: [[EXN:%.*]] = alloca i8*
   // CHECK-NEXT: [[SEL:%.*]] = alloca i32
@@ -272,7 +272,7 @@ namespace test6 {
   };
 
   C::C() { opaque(); }
-  // CHECK: define void @_ZN5test61CC1Ev(%"struct.test6::C"* %this) unnamed_addr
+  // CHECK-LABEL: define void @_ZN5test61CC1Ev(%"struct.test6::C"* %this) unnamed_addr
   // CHECK:   call void @_ZN5test61BILj2EEC2Ev
   // CHECK:   invoke void @_ZN5test61BILj3EEC2Ev
   // CHECK:   invoke void @_ZN5test61BILj0EEC2Ev
@@ -282,7 +282,7 @@ namespace test6 {
   // FIXME: way too much EH cleanup code follows
 
   C::~C() { opaque(); }
-  // CHECK: define void @_ZN5test61CD1Ev(%"struct.test6::C"* %this) unnamed_addr
+  // CHECK-LABEL: define void @_ZN5test61CD1Ev(%"struct.test6::C"* %this) unnamed_addr
   // CHECK:   invoke void @_ZN5test61CD2Ev
   // CHECK:   invoke void @_ZN5test61BILj3EED2Ev
   // CHECK:   call void @_ZN5test61BILj2EED2Ev
@@ -290,7 +290,7 @@ namespace test6 {
   // CHECK:   invoke void @_ZN5test61BILj3EED2Ev
   // CHECK:   invoke void @_ZN5test61BILj2EED2Ev
 
-  // CHECK: define void @_ZN5test61CD2Ev(%"struct.test6::C"* %this, i8** %vtt) unnamed_addr
+  // CHECK-LABEL: define void @_ZN5test61CD2Ev(%"struct.test6::C"* %this, i8** %vtt) unnamed_addr
   // CHECK:   invoke void @_ZN5test66opaqueEv
   // CHECK:   invoke void @_ZN5test61AD1Ev
   // CHECK:   invoke void @_ZN5test61AD1Ev
@@ -318,7 +318,7 @@ namespace test7 {
   };
 
   // Verify that this doesn't get emitted as an alias
-  // CHECK: define void @_ZN5test71BD2Ev(
+  // CHECK-LABEL: define void @_ZN5test71BD2Ev(
   // CHECK:   invoke void @_ZN5test71DD1Ev(
   // CHECK:   call void @_ZN5test71AD2Ev(
   B::~B() {}
@@ -338,7 +338,7 @@ namespace test8 {
   l: die();
   }
 
-  // CHECK:    define void @_ZN5test84testEv()
+  // CHECK-LABEL:    define void @_ZN5test84testEv()
   // CHECK:      [[X:%.*]] = alloca [[A:%.*]], align 1
   // CHECK-NEXT: [[Y:%.*]] = alloca [[A:%.*]], align 1
   // CHECK:      call void @_ZN5test81AC1Ev([[A]]* [[X]])
@@ -368,7 +368,7 @@ namespace test9 {
 
 // Checks from test3:
 
-  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11DD1Ev(
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
   // CHECK: ret void
@@ -381,17 +381,17 @@ namespace test9 {
   // @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
   // @_ZN5test312_GLOBAL__N_11DD2Ev = alias internal bitcast {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
 
-  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
+  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK: call void @_ZN5test312_GLOBAL__N_11DD1Ev(
   // CHECK: ret void
 
-  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
+  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK: ret void
 
-  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test31BD2Ev(
   // CHECK: call void @_ZN5test31AD2Ev(
   // CHECK: ret void
@@ -399,7 +399,7 @@ namespace test9 {
   // CHECK: declare void @_ZN5test31BD2Ev(
   // CHECK: declare void @_ZN5test31AD2Ev(
 
-  // CHECK: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD1Ev(
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: ret void
@@ -408,12 +408,12 @@ namespace test9 {
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: resume { i8*, i32 }
 
-  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
+  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK: call void @_ZN5test312_GLOBAL__N_11CD1Ev(
   // CHECK: ret void
 
-  // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
+  // CHECK-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
   // CHECK: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK: ret void

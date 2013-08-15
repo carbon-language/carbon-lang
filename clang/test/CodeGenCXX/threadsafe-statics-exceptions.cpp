@@ -7,7 +7,7 @@ struct X {
 
 struct Y { };
 
-// CHECK: define void @_Z1fv
+// CHECK-LABEL: define void @_Z1fv
 void f() {
   // CHECK: call i32 @__cxa_guard_acquire(i64* @_ZGVZ1fvE1x)
   // CHECK: invoke void @_ZN1XC1Ev

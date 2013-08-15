@@ -6,7 +6,7 @@ struct A { int a[1]; };
 typedef A x[];
 int f() {
   x{{{1}}};
-  // CHECK: define i32 @_Z1fv
+  // CHECK-LABEL: define i32 @_Z1fv
   // CHECK: store i32 1
   // (It's okay if the output changes here, as long as we don't crash.)
   return 0;
@@ -33,7 +33,7 @@ namespace ValueInitArrayOfMemPtr {
     S1();
   };
 
-  // CHECK: define void @_ZN22ValueInitArrayOfMemPtr1fEi
+  // CHECK-LABEL: define void @_ZN22ValueInitArrayOfMemPtr1fEi
   void f(int n) {
     Agg1 a = { n };
     // CHECK: store i32 -1,
@@ -42,7 +42,7 @@ namespace ValueInitArrayOfMemPtr {
     // CHECK: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %{{.*}}, i8* bitcast ([3 x i32]* @[[THREE_NULL_MEMPTRS]] to i8*), i32 12, i32 4, i1 false)
   }
 
-  // CHECK: define void @_ZN22ValueInitArrayOfMemPtr1gEv
+  // CHECK-LABEL: define void @_ZN22ValueInitArrayOfMemPtr1gEv
   void g() {
     // CHECK: store i32 -1,
     f(a{});
@@ -54,7 +54,7 @@ namespace array_dtor {
   using T = S[3];
   void f(const T &);
   void f(T *);
-  // CHECK: define void @_ZN10array_dtor1gEv(
+  // CHECK-LABEL: define void @_ZN10array_dtor1gEv(
   void g() {
     // CHECK: %[[ARRAY:.*]] = alloca [3 x
     // CHECK: br
@@ -73,7 +73,7 @@ namespace array_dtor {
 
     // CHECK: ret void
   }
-  // CHECK: define void @_ZN10array_dtor1hEv(
+  // CHECK-LABEL: define void @_ZN10array_dtor1hEv(
   void h() {
     // CHECK: %[[ARRAY:.*]] = alloca [3 x
     // CHECK: br
@@ -91,7 +91,7 @@ namespace array_dtor {
 
     // CHECK: ret void
   }
-  // CHECK: define void @_ZN10array_dtor1iEv(
+  // CHECK-LABEL: define void @_ZN10array_dtor1iEv(
   void i() {
     // CHECK: %[[ARRAY:.*]] = alloca [3 x
     // CHECK: br

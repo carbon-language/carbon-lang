@@ -5,7 +5,7 @@ void opaque();
 
 namespace test0 {
 
-  // CHECK: define void @_ZN5test03fooEv
+  // CHECK-LABEL: define void @_ZN5test03fooEv
   void foo() {
     try {
       // CHECK: invoke void @_Z6opaquev

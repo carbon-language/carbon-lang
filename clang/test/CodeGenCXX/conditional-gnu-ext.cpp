@@ -77,7 +77,7 @@ namespace test3 {
   };
 
   B test0(B &x) {
-    // CHECK:    define void @_ZN5test35test0ERNS_1BE(
+    // CHECK-LABEL:    define void @_ZN5test35test0ERNS_1BE(
     // CHECK:      [[X:%.*]] = alloca [[B:%.*]]*,
     // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]]
     // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]]
@@ -92,7 +92,7 @@ namespace test3 {
   }
 
   B test1() {
-    // CHECK:    define void @_ZN5test35test1Ev(
+    // CHECK-LABEL:    define void @_ZN5test35test1Ev(
     // CHECK:      [[TEMP:%.*]] = alloca [[B]],
     // CHECK-NEXT: call  void @_ZN5test312test1_helperEv([[B]]* sret [[TEMP]])
     // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[TEMP]])
@@ -109,7 +109,7 @@ namespace test3 {
 
 
   A test2(B &x) {
-    // CHECK:    define void @_ZN5test35test2ERNS_1BE(
+    // CHECK-LABEL:    define void @_ZN5test35test2ERNS_1BE(
     // CHECK:      [[X:%.*]] = alloca [[B]]*,
     // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]]
     // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]]
@@ -124,7 +124,7 @@ namespace test3 {
   }
 
   A test3() {
-    // CHECK:    define void @_ZN5test35test3Ev(
+    // CHECK-LABEL:    define void @_ZN5test35test3Ev(
     // CHECK:      [[TEMP:%.*]] = alloca [[B]],
     // CHECK-NEXT: call  void @_ZN5test312test3_helperEv([[B]]* sret [[TEMP]])
     // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[TEMP]])

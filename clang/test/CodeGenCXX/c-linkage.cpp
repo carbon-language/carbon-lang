@@ -10,15 +10,15 @@ extern "C" {
   }
 }
 
-// CHECK: define void @_ZN1N1X1fEv
+// CHECK-LABEL: define void @_ZN1N1X1fEv
 
 extern "C" {
   static void test2_f() {
   }
-  // CHECK: define internal void @_Z7test2_fv
+  // CHECK-LABEL: define internal void @_Z7test2_fv
   static void test2_f(int x) {
   }
-  // CHECK: define internal void @_Z7test2_fi
+  // CHECK-LABEL: define internal void @_Z7test2_fi
   void test2_use() {
     test2_f();
     test2_f(42);

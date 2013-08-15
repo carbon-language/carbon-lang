@@ -9,7 +9,7 @@ void test0(void) {
   void *ptr __attribute__((cleanup(destroy)));
   test0_helper();
 
-  // CHECK-WITH:       define void @test0()
+  // CHECK-WITH-LABEL:       define void @test0()
   // CHECK-WITH:         [[PTR:%.*]] = alloca i8*,
   // CHECK-WITH:         call void @destroy(i8** [[PTR]])
   // CHECK-WITH-NEXT:    ret void
@@ -18,7 +18,7 @@ void test0(void) {
   // CHECK-WITH-NEXT:      catch i8* null
   // CHECK-WITH-NEXT:    call void @objc_terminate()
 
-  // CHECK-WITHOUT:    define void @test0()
+  // CHECK-WITHOUT-LABEL:    define void @test0()
   // CHECK-WITHOUT:      [[PTR:%.*]] = alloca i8*,
   // CHECK-WITHOUT:      call void @destroy(i8** [[PTR]])
   // CHECK-WITHOUT-NEXT: ret void

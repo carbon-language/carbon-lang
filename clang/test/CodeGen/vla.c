@@ -37,7 +37,7 @@ void g(int count) {
 }
 
 // rdar://8403108
-// CHECK: define void @f_8403108
+// CHECK-LABEL: define void @f_8403108
 void f_8403108(unsigned x) {
   // CHECK: call i8* @llvm.stacksave()
   char s1[x];
@@ -86,7 +86,7 @@ int test2(int n)
 }
 
 // http://llvm.org/PR8567
-// CHECK: define double @test_PR8567
+// CHECK-LABEL: define double @test_PR8567
 double test_PR8567(int n, double (*p)[n][5]) {
   // CHECK:      [[NV:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[PV:%.*]] = alloca [5 x double]*, align 4
@@ -104,7 +104,7 @@ double test_PR8567(int n, double (*p)[n][5]) {
 }
 
 int test4(unsigned n, char (*p)[n][n+1][6]) {
-  // CHECK:    define i32 @test4(
+  // CHECK-LABEL:    define i32 @test4(
   // CHECK:      [[N:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[P:%.*]] = alloca [6 x i8]*, align 4
   // CHECK-NEXT: [[P2:%.*]] = alloca [6 x i8]*, align 4
@@ -146,7 +146,7 @@ int test4(unsigned n, char (*p)[n][n+1][6]) {
 // rdar://11485774
 void test5(void)
 {
-  // CHECK: define void @test5(
+  // CHECK-LABEL: define void @test5(
   int a[5], i = 0;
   // CHECK: [[A:%.*]] = alloca [5 x i32], align 4
   // CHECK-NEXT: [[I:%.*]] = alloca i32, align 4
@@ -169,7 +169,7 @@ void test5(void)
 
 void test6(void)
 {
-  // CHECK: define void @test6(
+  // CHECK-LABEL: define void @test6(
   int n = 20, **a, i=0;
   // CHECK: [[N:%.*]] = alloca i32, align 4
   // CHECK-NEXT: [[A:%.*]] = alloca i32**, align 4
@@ -192,6 +192,6 @@ void test6(void)
 
 // Follow gcc's behavior for VLAs in parameter lists.  PR9559.
 void test7(int a[b(0)]) {
-  // CHECK: define void @test7(
+  // CHECK-LABEL: define void @test7(
   // CHECK: call i32 @b(i8* null)
 }

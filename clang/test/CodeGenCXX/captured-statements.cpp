@@ -55,7 +55,7 @@ void test2(int x) {
     return x;
   }();
 
-  // CHECK-2: define void @_Z5test2i
+  // CHECK-2-LABEL: define void @_Z5test2i
   // CHECK-2:   call {{.*}} @[[Lambda:["$\w]+]]
   //
   // CHECK-2: define internal {{.*}} @[[Lambda]]
@@ -75,7 +75,7 @@ void test3(int x) {
 
   // CHECK-3: %[[Capture:struct\.anon[\.0-9]*]] = type { i32* }
 
-  // CHECK-3: define void @_Z5test3i
+  // CHECK-3-LABEL: define void @_Z5test3i
   // CHECK-3:   store i32*
   // CHECK-3:   call void @{{.*}}__captured_stmt
   // CHECK-3:   ret void
@@ -87,7 +87,7 @@ void test4() {
     Foo f;
     f.x = 5;
   }
-  // CHECK-4: define void @_Z5test4v
+  // CHECK-4-LABEL: define void @_Z5test4v
   // CHECK-4:   call void @[[HelperName:["$_A-Za-z0-9]+]](%[[Capture:.*]]*
   // CHECK-4:   ret void
   //

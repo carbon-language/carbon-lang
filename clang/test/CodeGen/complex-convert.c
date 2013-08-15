@@ -21,7 +21,7 @@ void foo(signed char sc, unsigned char uc, signed long long sll,
   _Complex unsigned char cuc1;
   _Complex signed long long csll1;
   _Complex unsigned long long cull1;
-  // CHECK: define void @foo(
+  // CHECK-LABEL: define void @foo(
   // CHECK: alloca i[[CHSIZE:[0-9]+]], align [[CHALIGN:[0-9]+]]
   // CHECK-NEXT: alloca i[[CHSIZE]], align [[CHALIGN]]
   // CHECK-NEXT: alloca i[[LLSIZE:[0-9]+]], align [[LLALIGN:[0-9]+]]

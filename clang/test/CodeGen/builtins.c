@@ -131,7 +131,7 @@ void foo() {
  __builtin_strcat(0, 0);
 }
 
-// CHECK: define void @bar(
+// CHECK-LABEL: define void @bar(
 void bar() {
   float f;
   double d;
@@ -167,7 +167,7 @@ void bar() {
 // CHECK: }
 
 
-// CHECK: define void @test_float_builtins
+// CHECK-LABEL: define void @test_float_builtins
 void test_float_builtins(float F, double D, long double LD) {
   volatile int res;
   res = __builtin_isinf(F);
@@ -197,7 +197,7 @@ void test_float_builtins(float F, double D, long double LD) {
   // CHECK: and i1
 }
 
-// CHECK: define void @test_builtin_longjmp
+// CHECK-LABEL: define void @test_builtin_longjmp
 void test_builtin_longjmp(void **buffer) {
   // CHECK: [[BITCAST:%.*]] = bitcast
   // CHECK-NEXT: call void @llvm.eh.sjlj.longjmp(i8* [[BITCAST]])
@@ -205,7 +205,7 @@ void test_builtin_longjmp(void **buffer) {
   // CHECK-NEXT: unreachable
 }
 
-// CHECK: define i64 @test_builtin_readcyclecounter
+// CHECK-LABEL: define i64 @test_builtin_readcyclecounter
 long long test_builtin_readcyclecounter() {
   // CHECK: call i64 @llvm.readcyclecounter()
   return __builtin_readcyclecounter();

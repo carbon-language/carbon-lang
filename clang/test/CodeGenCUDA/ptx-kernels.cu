@@ -2,11 +2,11 @@
 
 #include "../SemaCUDA/cuda.h"
 
-// CHECK: define void @device_function
+// CHECK-LABEL: define void @device_function
 extern "C"
 __device__ void device_function() {}
 
-// CHECK: define void @global_function
+// CHECK-LABEL: define void @global_function
 extern "C"
 __global__ void global_function() {
   // CHECK: call void @device_function

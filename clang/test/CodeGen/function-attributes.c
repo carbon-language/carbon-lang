@@ -24,7 +24,7 @@ void f6(signed short x) { }
 
 void f7(unsigned short x) { }
 
-// CHECK: define void @f8()
+// CHECK-LABEL: define void @f8()
 // CHECK: [[AI:#[0-9]+]]
 // CHECK: {
 void __attribute__((always_inline)) f8(void) { }
@@ -61,7 +61,7 @@ void f13(void){}
 
 
 // Ensure that these get inlined: rdar://6853279
-// CHECK: define void @f14
+// CHECK-LABEL: define void @f14
 // CHECK-NOT: @ai_
 // CHECK: call void @f14_end
 static __inline__ __attribute__((always_inline))
@@ -81,21 +81,21 @@ void f14(int a) {
 }
 
 // <rdar://problem/7102668> [irgen] clang isn't setting the optsize bit on functions
-// CHECK: define void @f15
+// CHECK-LABEL: define void @f15
 // CHECK: [[NUW]]
 // CHECK: {
 void f15(void) {
 }
 
 // PR5254
-// CHECK: define void @f16
+// CHECK-LABEL: define void @f16
 // CHECK: [[ALIGN:#[0-9]+]]
 // CHECK: {
 void __attribute__((force_align_arg_pointer)) f16(void) {
 }
 
 // PR11038
-// CHECK: define void @f18()
+// CHECK-LABEL: define void @f18()
 // CHECK: [[RT:#[0-9]+]]
 // CHECK: {
 // CHECK: call void @f17()
@@ -106,7 +106,7 @@ __attribute__ ((returns_twice)) void f18(void) {
         f17();
 }
 
-// CHECK: define void @f19()
+// CHECK-LABEL: define void @f19()
 // CHECK: {
 // CHECK: call i32 @setjmp(i32* null)
 // CHECK: [[RT_CALL]]

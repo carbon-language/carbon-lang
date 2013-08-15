@@ -5,8 +5,8 @@
 void test1() {
   extern void test1_helper(void (^)(int));
 
-  // CHECK:     define void @test1()
-  // CHECK-ARM: define arm_aapcscc void @test1()
+  // CHECK-LABEL:     define void @test1()
+  // CHECK-ARM-LABEL: define arm_aapcscc void @test1()
 
   __block int x = 10;
 

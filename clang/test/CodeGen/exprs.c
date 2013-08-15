@@ -121,7 +121,7 @@ void f10() {
 }
 
 // rdar://7530813
-// CHECK: define i32 @f11
+// CHECK-LABEL: define i32 @f11
 int f11(long X) {
   int A[100];
   return A[X];
@@ -134,14 +134,14 @@ int f11(long X) {
 
 int f12() {
   // PR3150
-  // CHECK: define i32 @f12
+  // CHECK-LABEL: define i32 @f12
   // CHECK: ret i32 1
   return 1||1;
 }
 
 // Make sure negate of fp uses -0.0 for proper -0 handling.
 double f13(double X) {
-  // CHECK: define double @f13
+  // CHECK-LABEL: define double @f13
   // CHECK: fsub double -0.0
   return -X;
 }
@@ -151,7 +151,7 @@ void f14(struct s14 *a) {
   (void) &*a;
 }
 
-// CHECK: define void @f15
+// CHECK-LABEL: define void @f15
 void f15() {
   extern void f15_start(void);
   f15_start();
@@ -168,7 +168,7 @@ void f15() {
 }
 
 // PR8967: this was crashing
-// CHECK: define void @f16()
+// CHECK-LABEL: define void @f16()
 void f16() {
   __extension__({ goto lbl; });
  lbl:
@@ -176,7 +176,7 @@ void f16() {
 }
 
 // PR13704: negative increment in i128 is not preserved.
-// CHECK: define void @f17()
+// CHECK-LABEL: define void @f17()
 void f17() {
   extern void extfunc(__int128);
   __int128 x = 2;

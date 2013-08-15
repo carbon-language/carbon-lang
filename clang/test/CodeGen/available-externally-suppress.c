@@ -5,7 +5,7 @@ int x;
 
 inline void f0(int y) { x = y; }
 
-// CHECK: define void @test()
+// CHECK-LABEL: define void @test()
 // CHECK: declare void @f0(i32)
 void test() {
   f0(17);

@@ -11,7 +11,7 @@ void test0(void) {
   } @catch (Ety *e) {
   }
 }
-// CHECK: define void @_Z5test0v()
+// CHECK-LABEL: define void @_Z5test0v()
 // CHECK:      [[E:%.*]] = alloca [[ETY:%.*]]*, align 8
 // CHECK-NEXT: invoke void @_Z12test0_helperv()
 // CHECK:      [[T0:%.*]] = call i8* @objc_begin_catch(
@@ -31,7 +31,7 @@ void test1(void) {
   } @catch (__weak Ety *e) {
   }
 }
-// CHECK: define void @_Z5test1v()
+// CHECK-LABEL: define void @_Z5test1v()
 // CHECK:      [[E:%.*]] = alloca [[ETY:%.*]]*, align 8
 // CHECK-NEXT: invoke void @_Z12test1_helperv()
 // CHECK:      [[T0:%.*]] = call i8* @objc_begin_catch(
@@ -50,7 +50,7 @@ void test2(void) {
   } catch (Ety *e) {
   }
 }
-// CHECK: define void @_Z5test2v()
+// CHECK-LABEL: define void @_Z5test2v()
 // CHECK:      [[E:%.*]] = alloca [[ETY:%.*]]*, align 8
 // CHECK-NEXT: invoke void @_Z12test2_helperv()
 // CHECK:      [[T0:%.*]] = call i8* @__cxa_begin_catch(
@@ -70,7 +70,7 @@ void test3(void) {
   } catch (Ety * __weak e) {
   }
 }
-// CHECK: define void @_Z5test3v()
+// CHECK-LABEL: define void @_Z5test3v()
 // CHECK:      [[E:%.*]] = alloca [[ETY:%.*]]*, align 8
 // CHECK-NEXT: invoke void @_Z12test3_helperv()
 // CHECK:      [[T0:%.*]] = call i8* @__cxa_begin_catch(
@@ -93,7 +93,7 @@ namespace test4 {
   A::A() {
     throw 0;
   }
-  // CHECK:    define void @_ZN5test41AC2Ev(
+  // CHECK-LABEL:    define void @_ZN5test41AC2Ev(
   // CHECK:      [[THIS:%.*]] = load [[A:%.*]]** {{%.*}}
   //   Construct single.
   // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 0

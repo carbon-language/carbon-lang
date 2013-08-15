@@ -22,7 +22,7 @@ void fnc3(image3d_t img) {}
 // CHECK: @fnc3(%opencl.image3d_t*
 
 void fnc4smp(sampler_t s) {}
-// CHECK: define void @fnc4smp(i32
+// CHECK-LABEL: define void @fnc4smp(i32
 
 kernel void foo(image1d_t img) {
 	sampler_t smp = 5;

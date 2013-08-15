@@ -7,7 +7,7 @@ volatile __fp16 h0 = 0.0, h1 = 1.0, h2;
 volatile float f0, f1, f2;
 
 void foo(void) {
-  // CHECK: define void @foo()
+  // CHECK-LABEL: define void @foo()
 
   // Check unary ops
 

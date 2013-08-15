@@ -64,7 +64,7 @@ template <class T> void test2(Test2 *a) {
   a.prop += x;
 }
 template void test2<int>(Test2*);
-// CHECK: define weak_odr void @_Z5test2IiEvP5Test2(
+// CHECK-LABEL: define weak_odr void @_Z5test2IiEvP5Test2(
 // CHECK: [[X:%.*]] = alloca i32,
 // CHECK:      @objc_msgSend
 // CHECK:      store i32 {{%.*}}, i32* [[X]],
@@ -83,7 +83,7 @@ template <class T> void test3(Test2 *a) {
   a.prop += (sizeof(T), x);
 }
 template void test3<int>(Test2*);
-// CHECK: define weak_odr void @_Z5test3IiEvP5Test2(
+// CHECK-LABEL: define weak_odr void @_Z5test3IiEvP5Test2(
 // CHECK: [[X:%.*]] = alloca i32,
 // CHECK:      @objc_msgSend
 // CHECK:      store i32 {{%.*}}, i32* [[X]],

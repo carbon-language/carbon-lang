@@ -22,7 +22,7 @@ void test0(NSArray *array) {
   }
 }
 
-// CHECK-LP64:    define void @test0(
+// CHECK-LP64-LABEL:    define void @test0(
 // CHECK-LP64:      [[ARRAY:%.*]] = alloca [[ARRAY_T:%.*]]*,
 // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*,
 // CHECK-LP64-NEXT: [[STATE:%.*]] = alloca [[STATE_T:%.*]],
@@ -82,7 +82,7 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: call void @objc_storeStrong(i8** [[T0]], i8* null)
 // CHECK-LP64-NEXT: ret void
 
-// CHECK-LP64:    define internal void @__test0_block_invoke
+// CHECK-LP64-LABEL:    define internal void @__test0_block_invoke
 // CHECK-LP64:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
 // CHECK-LP64-NOT:  ret
 // CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
@@ -95,7 +95,7 @@ void test1(NSArray *array) {
   }
 }
 
-// CHECK-LP64:    define void @test1(
+// CHECK-LP64-LABEL:    define void @test1(
 // CHECK-LP64:      alloca [[ARRAY_T:%.*]]*,
 // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*,
 // CHECK-LP64-NEXT: [[STATE:%.*]] = alloca [[STATE_T:%.*]],
@@ -128,7 +128,7 @@ void test2(Test2 *a) {
   }
 }
 
-// CHECK-LP64:    define void @test2(
+// CHECK-LP64-LABEL:    define void @test2(
 // CHECK-LP64:      [[T0:%.*]] = call [[ARRAY_T]]* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to [[ARRAY_T]]* (i8*, i8*)*)(
 // CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[ARRAY_T]]* [[T0]] to i8*
 // CHECK-LP64-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
@@ -160,7 +160,7 @@ void test3(NSArray *array) {
     use(x);
   }
 
-  // CHECK-LP64:    define void @test3(
+  // CHECK-LP64-LABEL:    define void @test3(
   // CHECK-LP64:      [[ARRAY:%.*]] = alloca [[ARRAY_T]]*, align 8
   // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*, align 8
   // CHECK-LP64:      [[T0:%.*]] = load i8** [[X]], align 8

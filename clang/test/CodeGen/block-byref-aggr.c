@@ -12,7 +12,7 @@ void test0() {
 
  a = makeAgg();
 }
-// CHECK:    define void @test0()
+// CHECK-LABEL:    define void @test0()
 // CHECK:      [[A:%.*]] = alloca [[BYREF:%.*]], align 8
 // CHECK-NEXT: [[TEMP:%.*]] = alloca [[AGG]], align 4
 // CHECK:      [[RESULT:%.*]] = call i32 @makeAgg()
@@ -37,7 +37,7 @@ void test1() {
   __block Agg a, b;
   a = b = makeAgg();
 }
-// CHECK:    define void @test1()
+// CHECK-LABEL:    define void @test1()
 // CHECK:      [[A:%.*]] = alloca [[A_BYREF:%.*]], align 8
 // CHECK-NEXT: [[B:%.*]] = alloca [[B_BYREF:%.*]], align 8
 // CHECK-NEXT: [[TEMP:%.*]] = alloca [[AGG]], align 4

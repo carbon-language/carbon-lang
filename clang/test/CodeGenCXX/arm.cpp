@@ -28,7 +28,7 @@ bar baz;
 // CHECK:      call [[BAR:%.*]]* @_ZN3barC1Ev(
 // CHECK-NEXT: call i32 @atexit(void ()* @__dtor_baz)
 
-// CHECK: define internal void @__dtor_baz()
+// CHECK-LABEL: define internal void @__dtor_baz()
 // CHECK: call [[BAR]]* @_ZN3barD1Ev([[BAR]]* @baz)
 
 // Destructors and constructors must return this.
@@ -41,7 +41,7 @@ namespace test1 {
     void bar() { foo(); }
   };
 
-  // CHECK: define void @_ZN5test14testEv()
+  // CHECK-LABEL: define void @_ZN5test14testEv()
   void test() {
     // CHECK: [[AV:%.*]] = alloca [[A:%.*]], align 1
     // CHECK: call [[A]]* @_ZN5test11AC1Ei([[A]]* [[AV]], i32 10)
@@ -107,7 +107,7 @@ namespace test3 {
   };
 
   void a() {
-    // CHECK: define void @_ZN5test31aEv()
+    // CHECK-LABEL: define void @_ZN5test31aEv()
     // CHECK: call noalias i8* @_Znam(i32 48)
     // CHECK: store i32 4
     // CHECK: store i32 10
@@ -115,7 +115,7 @@ namespace test3 {
   }
 
   void b(int n) {
-    // CHECK: define void @_ZN5test31bEi(
+    // CHECK-LABEL: define void @_ZN5test31bEi(
     // CHECK: [[N:%.*]] = load i32*
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 4)
     // CHECK: @llvm.uadd.with.overflow.i32(i32 {{.*}}, i32 8)
@@ -128,7 +128,7 @@ namespace test3 {
   }
 
   void c() {
-    // CHECK: define void @_ZN5test31cEv()
+    // CHECK-LABEL: define void @_ZN5test31cEv()
     // CHECK: call  noalias i8* @_Znam(i32 808)
     // CHECK: store i32 4
     // CHECK: store i32 200
@@ -136,7 +136,7 @@ namespace test3 {
   }
 
   void d(int n) {
-    // CHECK: define void @_ZN5test31dEi(
+    // CHECK-LABEL: define void @_ZN5test31dEi(
     // CHECK: [[N:%.*]] = load i32*
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 80)
     // CHECK: [[NE:%.*]] = mul i32 [[N]], 20
@@ -149,7 +149,7 @@ namespace test3 {
   }
 
   void e(A *x) {
-    // CHECK: define void @_ZN5test31eEPNS_1AE(
+    // CHECK-LABEL: define void @_ZN5test31eEPNS_1AE(
     // CHECK: icmp eq {{.*}}, null
     // CHECK: getelementptr {{.*}}, i64 -8
     // CHECK: getelementptr {{.*}}, i64 4
@@ -161,7 +161,7 @@ namespace test3 {
   }
 
   void f(A (*x)[20]) {
-    // CHECK: define void @_ZN5test31fEPA20_NS_1AE(
+    // CHECK-LABEL: define void @_ZN5test31fEPA20_NS_1AE(
     // CHECK: icmp eq {{.*}}, null
     // CHECK: getelementptr {{.*}}, i64 -8
     // CHECK: getelementptr {{.*}}, i64 4
@@ -180,7 +180,7 @@ namespace test4 {
   };
 
   void a() {
-    // CHECK: define void @_ZN5test41aEv()
+    // CHECK-LABEL: define void @_ZN5test41aEv()
     // CHECK: call noalias i8* @_Znam(i32 48)
     // CHECK: store i32 4
     // CHECK: store i32 10
@@ -188,7 +188,7 @@ namespace test4 {
   }
 
   void b(int n) {
-    // CHECK: define void @_ZN5test41bEi(
+    // CHECK-LABEL: define void @_ZN5test41bEi(
     // CHECK: [[N:%.*]] = load i32*
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 4)
     // CHECK: @llvm.uadd.with.overflow.i32(i32 {{.*}}, i32 8)
@@ -200,7 +200,7 @@ namespace test4 {
   }
 
   void c() {
-    // CHECK: define void @_ZN5test41cEv()
+    // CHECK-LABEL: define void @_ZN5test41cEv()
     // CHECK: call  noalias i8* @_Znam(i32 808)
     // CHECK: store i32 4
     // CHECK: store i32 200
@@ -208,7 +208,7 @@ namespace test4 {
   }
 
   void d(int n) {
-    // CHECK: define void @_ZN5test41dEi(
+    // CHECK-LABEL: define void @_ZN5test41dEi(
     // CHECK: [[N:%.*]] = load i32*
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 80)
     // CHECK: [[NE:%.*]] = mul i32 [[N]], 20
@@ -221,7 +221,7 @@ namespace test4 {
   }
 
   void e(A *x) {
-    // CHECK: define void @_ZN5test41eEPNS_1AE(
+    // CHECK-LABEL: define void @_ZN5test41eEPNS_1AE(
     // CHECK: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i64 -8
     // CHECK: getelementptr inbounds {{.*}}, i64 4
     // CHECK: bitcast
@@ -233,7 +233,7 @@ namespace test4 {
   }
 
   void f(A (*x)[20]) {
-    // CHECK: define void @_ZN5test41fEPA20_NS_1AE(
+    // CHECK-LABEL: define void @_ZN5test41fEPA20_NS_1AE(
     // CHECK: [[ALLOC:%.*]] = getelementptr inbounds {{.*}}, i64 -8
     // CHECK: getelementptr inbounds {{.*}}, i64 4
     // CHECK: bitcast
@@ -251,7 +251,7 @@ namespace test5 {
     ~A();
   };
 
-  // CHECK: define void @_ZN5test54testEPNS_1AE
+  // CHECK-LABEL: define void @_ZN5test54testEPNS_1AE
   void test(A *a) {
     // CHECK:      [[PTR:%.*]] = alloca [[A:%.*]]*, align 4
     // CHECK-NEXT: store [[A]]* {{.*}}, [[A]]** [[PTR]], align 4
@@ -267,7 +267,7 @@ namespace test6 {
     virtual ~A();
   };
 
-  // CHECK: define void @_ZN5test64testEPNS_1AE
+  // CHECK-LABEL: define void @_ZN5test64testEPNS_1AE
   void test(A *a) {
     // CHECK:      [[AVAR:%.*]] = alloca [[A:%.*]]*, align 4
     // CHECK-NEXT: store [[A]]* {{.*}}, [[A]]** [[AVAR]], align 4
@@ -290,7 +290,7 @@ namespace test7 {
 
   // Static and guard tested at top of file
 
-  // CHECK: define void @_ZN5test74testEv()
+  // CHECK-LABEL: define void @_ZN5test74testEv()
   void test() {
     // CHECK:      [[T0:%.*]] = load i32* @_ZGVZN5test74testEvE1x
     // CHECK-NEXT: [[T1:%.*]] = and i32 [[T0]], 1
@@ -325,7 +325,7 @@ namespace test8 {
 
   // Static and guard tested at top of file
 
-  // CHECK: define void @_ZN5test84testEv()
+  // CHECK-LABEL: define void @_ZN5test84testEv()
   void test() {
     // CHECK:      [[T0:%.*]] = load i32* @_ZGVZN5test84testEvE1x
     // CHECK-NEXT: [[T1:%.*]] = and i32 [[T0]], 1
@@ -394,7 +394,7 @@ namespace test9 {
   void testDelete(A *array) {
     delete[] array;
   }
-// CHECK:    define void @_ZN5test910testDeleteEPNS_1AE(
+// CHECK-LABEL:    define void @_ZN5test910testDeleteEPNS_1AE(
 // CHECK:      [[BEGIN:%.*]] = load [[TEST9]]**
 // CHECK-NEXT: [[T0:%.*]] = icmp eq [[TEST9]]* [[BEGIN]], null
 // CHECK-NEXT: br i1 [[T0]],
@@ -413,7 +413,7 @@ namespace test9 {
   // CHECK:   call [[C]]* @_ZN5test21CD1Ev(
   // CHECK:   ret [[C]]* undef
 
-  // CHECK: define linkonce_odr void @_ZTv0_n12_N5test21CD0Ev(
+  // CHECK-LABEL: define linkonce_odr void @_ZTv0_n12_N5test21CD0Ev(
   // CHECK:   call void @_ZN5test21CD0Ev(
   // CHECK:   ret void
 

@@ -16,7 +16,7 @@ namespace test0 {
   void foo() {
     __block A v;
   }
-  // CHECK:    define void @_ZN5test03fooEv() 
+  // CHECK-LABEL:    define void @_ZN5test03fooEv() 
   // CHECK:      [[V:%.*]] = alloca [[BYREF_A:%.*]], align 8
   // CHECK:      [[T0:%.*]] = getelementptr inbounds [[BYREF_A]]* [[V]], i32 0, i32 4
   // CHECK-NEXT: store i8* bitcast (void (i8*, i8*)* [[COPY_HELPER:@.*]] to i8*), i8** [[T0]]

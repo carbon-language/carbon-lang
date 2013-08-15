@@ -7,7 +7,7 @@ id getObject();
 void callee();
 
 // Lifetime extension for binding a reference to an rvalue
-// CHECK: define void @_Z5test0v()
+// CHECK-LABEL: define void @_Z5test0v()
 void test0() {
   // CHECK: call i8* @_Z9getObjectv
   // CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue
@@ -25,7 +25,7 @@ void test0() {
 }
 
 // No lifetime extension when we're binding a reference to an lvalue.
-// CHECK: define void @_Z5test1RU8__strongP11objc_objectRU6__weakS0_
+// CHECK-LABEL: define void @_Z5test1RU8__strongP11objc_objectRU6__weakS0_
 void test1(__strong id &x, __weak id &y) {
   // CHECK-NOT: release
   const __strong id &ref1 = x;
@@ -47,7 +47,7 @@ void test3() {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define void @_Z5test4RU8__strongP11objc_object
+// CHECK-LABEL: define void @_Z5test4RU8__strongP11objc_object
 void test4(__strong id &x) {
   // CHECK: call i8* @objc_retain
   __strong A* const &ar = x;
@@ -59,7 +59,7 @@ void test4(__strong id &x) {
 
 void sink(__strong A* &&);
 
-// CHECK: define void @_Z5test5RU8__strongP11objc_object
+// CHECK-LABEL: define void @_Z5test5RU8__strongP11objc_object
 void test5(__strong id &x) {
   // CHECK:      [[REFTMP:%.*]] = alloca {{%.*}}*, align 8
   // CHECK:      [[OBJ_ID:%.*]] = call i8* @objc_retain(
@@ -75,7 +75,7 @@ void test5(__strong id &x) {
   // CHECK-NEXT: ret void
 }
 
-// CHECK: define internal void @__cxx_global_var_init(
+// CHECK-LABEL: define internal void @__cxx_global_var_init(
 // CHECK: call i8* @_Z9getObjectv
 // CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue
 const __strong id &global_ref = getObject();

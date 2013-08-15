@@ -45,7 +45,7 @@ void f3() {
 // The bool can fill in between the header and the long long.
 // Add the appropriate amount of padding between them.
 void f4_helper(long long (^)(void));
-// CHECK: define void @f4()
+// CHECK-LABEL: define void @f4()
 void f4(void) {
   _Bool b = 0;
   long long ll = 0;
@@ -60,7 +60,7 @@ struct F5 {
   char buffer[32] __attribute((aligned));
 };
 void f5_helper(void (^)(struct F5 *));
-// CHECK: define void @f5()
+// CHECK-LABEL: define void @f5()
 void f5(void) {
   struct F5 value;
   // CHECK: alloca <{ i8*, i32, i32, i8*, {{%.*}}*, [12 x i8], [[F5:%.*]] }>, align 16
