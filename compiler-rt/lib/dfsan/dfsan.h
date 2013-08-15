@@ -19,6 +19,8 @@
 
 namespace __dfsan {
 
+void InitializeInterceptors();
+
 inline dfsan_label *shadow_for(void *ptr) {
   return (dfsan_label *) ((((uintptr_t) ptr) & ~0x700000000000) << 1);
 }

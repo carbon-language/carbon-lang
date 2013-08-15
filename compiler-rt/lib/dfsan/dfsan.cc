@@ -237,6 +237,8 @@ static void dfsan_init(int argc, char **argv, char **envp) {
   uptr init_addr = (uptr)&dfsan_init;
   if (!(init_addr >= kUnusedAddr && init_addr < kAppAddr))
     Mprotect(kUnusedAddr, kAppAddr - kUnusedAddr);
+
+  InitializeInterceptors();
 }
 
 #ifndef DFSAN_NOLIBC
