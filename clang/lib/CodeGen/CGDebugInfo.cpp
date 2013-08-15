@@ -2998,19 +2998,25 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   DbgDecl->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
 }
 
-/// getStaticDataMemberDeclaration - If D is an out-of-class definition of
-/// a static data member of a class, find its corresponding in-class
-/// declaration.
-llvm::DIDerivedType CGDebugInfo::getStaticDataMemberDeclaration(const VarDecl *D) {
-  if (D->isStaticDataMember()) {
-    llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
-      MI = StaticDataMemberCache.find(D->getCanonicalDecl());
-    if (MI != StaticDataMemberCache.end())
-      // Verify the info still exists.
-      if (llvm::Value *V = MI->second)
-        return llvm::DIDerivedType(cast<llvm::MDNode>(V));
-  }
-  return llvm::DIDerivedType();
+/// If D is an out-of-class definition of a static data member of a class, find
+/// its corresponding in-class declaration.
+llvm::DIDerivedType
+CGDebugInfo::getStaticDataMemberDeclarationOrNull(const VarDecl *D) {
+  if (!D->isStaticDataMember())
+    return llvm::DIDerivedType();
+  return getStaticDataMemberDeclaration(D);
+}
+
+llvm::DIDerivedType
+CGDebugInfo::getStaticDataMemberDeclaration(const VarDecl *D) {
+  llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
+    MI = StaticDataMemberCache.find(D->getCanonicalDecl());
+  if (MI != StaticDataMemberCache.end())
+    // Verify the info still exists.
+    if (llvm::Value *V = MI->second)
+      return llvm::DIDerivedType(cast<llvm::MDNode>(V));
+  llvm_unreachable(
+      "A static data member declaration should be available at this point");
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.
@@ -3042,11 +3048,9 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     LinkageName = StringRef();
   llvm::DIDescriptor DContext =
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()));
-  llvm::DIGlobalVariable GV =
-      DBuilder.createStaticVariable(DContext, DeclName, LinkageName, Unit,
-                                    LineNo, getOrCreateType(T, Unit),
-                                    Var->hasInternalLinkage(), Var,
-                                    getStaticDataMemberDeclaration(D));
+  llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
+      DContext, DeclName, LinkageName, Unit, LineNo, getOrCreateType(T, Unit),
+      Var->hasInternalLinkage(), Var, getStaticDataMemberDeclarationOrNull(D));
   DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
 
@@ -3094,7 +3098,7 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
     return;
   llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
       Unit, Name, Name, Unit, getLineNumber(VD->getLocation()), Ty, true, Init,
-      getStaticDataMemberDeclaration(cast<VarDecl>(VD)));
+      getStaticDataMemberDeclarationOrNull(cast<VarDecl>(VD)));
   DeclCache.insert(std::make_pair(VD->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
 

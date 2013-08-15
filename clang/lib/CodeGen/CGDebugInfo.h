@@ -357,6 +357,7 @@ private:
   /// getStaticDataMemberDeclaration - Return debug info descriptor to
   /// describe in-class static data member declaration for the given
   /// out-of-class definition.
+  llvm::DIDerivedType getStaticDataMemberDeclarationOrNull(const VarDecl *D);
   llvm::DIDerivedType getStaticDataMemberDeclaration(const VarDecl *D);
 
   /// getFunctionName - Get function name for the given FunctionDecl. If the
