@@ -234,7 +234,7 @@ public:
   /// \brief Returns a reference to a list of cfi instructions in the current
   /// function's prologue.  Used to construct frame maps for debug and exception
   /// handling comsumers.
-  const std::vector<MCCFIInstruction> &getFrameInstructions() {
+  const std::vector<MCCFIInstruction> &getFrameInstructions() const {
     return FrameInstructions;
   }
 
