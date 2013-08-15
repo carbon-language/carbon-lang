@@ -95,6 +95,12 @@ static cl::opt<bool> ClArgsABI(
     cl::desc("Use the argument ABI rather than the TLS ABI"),
     cl::Hidden);
 
+static cl::opt<bool> ClDebugNonzeroLabels(
+    "dfsan-debug-nonzero-labels",
+    cl::desc("Insert calls to __dfsan_nonzero_label on observing a parameter, "
+             "load or return with a nonzero label"),
+    cl::Hidden);
+
 namespace {
 
 class DataFlowSanitizer : public ModulePass {
@@ -160,10 +166,12 @@ class DataFlowSanitizer : public ModulePass {
   FunctionType *DFSanUnionLoadFnTy;
   FunctionType *DFSanUnimplementedFnTy;
   FunctionType *DFSanSetLabelFnTy;
+  FunctionType *DFSanNonzeroLabelFnTy;
   Constant *DFSanUnionFn;
   Constant *DFSanUnionLoadFn;
   Constant *DFSanUnimplementedFn;
   Constant *DFSanSetLabelFn;
+  Constant *DFSanNonzeroLabelFn;
   MDNode *ColdCallWeights;
   OwningPtr<SpecialCaseList> ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
@@ -197,6 +205,7 @@ struct DFSanFunction {
   DenseMap<AllocaInst *, AllocaInst *> AllocaShadowMap;
   std::vector<std::pair<PHINode *, PHINode *> > PHIFixups;
   DenseSet<Instruction *> SkipInsts;
+  DenseSet<Value *> NonZeroChecks;
 
   DFSanFunction(DataFlowSanitizer &DFS, Function *F, bool IsNativeABI)
       : DFS(DFS), F(F), IA(DFS.getInstrumentedABI()),
@@ -311,6 +320,8 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   Type *DFSanSetLabelArgs[3] = { ShadowTy, Type::getInt8PtrTy(*Ctx), IntptrTy };
   DFSanSetLabelFnTy = FunctionType::get(Type::getVoidTy(*Ctx),
                                         DFSanSetLabelArgs, /*isVarArg=*/false);
+  DFSanNonzeroLabelFnTy = FunctionType::get(
+      Type::getVoidTy(*Ctx), ArrayRef<Type *>(), /*isVarArg=*/false);
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);
@@ -389,6 +400,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   if (Function *F = dyn_cast<Function>(DFSanSetLabelFn)) {
     F->addAttribute(1, Attribute::ZExt);
   }
+  DFSanNonzeroLabelFn =
+      Mod->getOrInsertFunction("__dfsan_nonzero_label", DFSanNonzeroLabelFnTy);
 
   std::vector<Function *> FnsToInstrument;
   llvm::SmallPtrSet<Function *, 2> FnsWithNativeABI;
@@ -397,7 +410,8 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         i != DFSanUnionFn &&
         i != DFSanUnionLoadFn &&
         i != DFSanUnimplementedFn &&
-        i != DFSanSetLabelFn)
+        i != DFSanSetLabelFn &&
+        i != DFSanNonzeroLabelFn)
       FnsToInstrument.push_back(&*i);
   }
 
@@ -560,6 +574,31 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
             val, DFSF.getShadow(i->first->getIncomingValue(val)));
       }
     }
+
+    // -dfsan-debug-nonzero-labels will split the CFG in all kinds of crazy
+    // places (i.e. instructions in basic blocks we haven't even begun visiting
+    // yet).  To make our life easier, do this work in a pass after the main
+    // instrumentation.
+    if (ClDebugNonzeroLabels) {
+      for (DenseSet<Value *>::iterator i = DFSF.NonZeroChecks.begin(),
+                                       e = DFSF.NonZeroChecks.end();
+           i != e; ++i) {
+        Instruction *Pos;
+        if (Instruction *I = dyn_cast<Instruction>(*i))
+          Pos = I->getNextNode();
+        else
+          Pos = DFSF.F->getEntryBlock().begin();
+        while (isa<PHINode>(Pos) || isa<AllocaInst>(Pos))
+          Pos = Pos->getNextNode();
+        IRBuilder<> IRB(Pos);
+        Instruction *NeInst = cast<Instruction>(
+            IRB.CreateICmpNE(*i, DFSF.DFS.ZeroShadow));
+        BranchInst *BI = cast<BranchInst>(SplitBlockAndInsertIfThen(
+            NeInst, /*Unreachable=*/ false, ColdCallWeights));
+        IRBuilder<> ThenIRB(BI);
+        ThenIRB.CreateCall(DFSF.DFS.DFSanNonzeroLabelFn);
+      }
+    }
   }
 
   return false;
@@ -618,6 +657,7 @@ Value *DFSanFunction::getShadow(Value *V) {
         break;
       }
       }
+      NonZeroChecks.insert(Shadow);
     } else {
       Shadow = DFS.ZeroShadow;
     }
@@ -814,7 +854,11 @@ void DFSanVisitor::visitLoadInst(LoadInst &LI) {
   Value *LoadedShadow =
       DFSF.loadShadow(LI.getPointerOperand(), Size, Align, &LI);
   Value *PtrShadow = DFSF.getShadow(LI.getPointerOperand());
-  DFSF.setShadow(&LI, DFSF.DFS.combineShadows(LoadedShadow, PtrShadow, &LI));
+  Value *CombinedShadow = DFSF.DFS.combineShadows(LoadedShadow, PtrShadow, &LI);
+  if (CombinedShadow != DFSF.DFS.ZeroShadow)
+    DFSF.NonZeroChecks.insert(CombinedShadow);
+
+  DFSF.setShadow(&LI, CombinedShadow);
 }
 
 void DFSanFunction::storeShadow(Value *Addr, uint64_t Size, uint64_t Align,
@@ -1131,6 +1175,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
       LoadInst *LI = NextIRB.CreateLoad(DFSF.getRetvalTLS());
       DFSF.SkipInsts.insert(LI);
       DFSF.setShadow(CS.getInstruction(), LI);
+      DFSF.NonZeroChecks.insert(LI);
     }
   }
 
@@ -1184,6 +1229,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
           ExtractValueInst::Create(NewCS.getInstruction(), 1, "", Next);
       DFSF.SkipInsts.insert(ExShadow);
       DFSF.setShadow(ExVal, ExShadow);
+      DFSF.NonZeroChecks.insert(ExShadow);
 
       CS.getInstruction()->replaceAllUsesWith(ExVal);
     }
