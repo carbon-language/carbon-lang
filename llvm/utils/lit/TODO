@@ -8,10 +8,6 @@
 
  - Support a timeout / ulimit.
 
- - Rename 'lit' injected variable for config to be lit_config.
-
- - Allow import of 'lit' in test suite definitions.
-
  - Create an explicit test suite object (instead of using the top-level
    TestingConfig object).
 
