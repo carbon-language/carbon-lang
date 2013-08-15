@@ -236,6 +236,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(constructorDecl);
   REGISTER_MATCHER(containsDeclaration);
   REGISTER_MATCHER(continueStmt);
+  REGISTER_MATCHER(ctorInitializer);
   REGISTER_MATCHER(decl);
   REGISTER_MATCHER(declCountIs);
   REGISTER_MATCHER(declRefExpr);
