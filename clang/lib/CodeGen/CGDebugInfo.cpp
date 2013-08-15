@@ -602,11 +602,9 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
 }
 
 // Creates a forward declaration for a RecordDecl in the given context.
-llvm::DICompositeType
-CGDebugInfo::getOrCreateRecordFwdDecl(const RecordDecl *RD,
-                                      llvm::DIDescriptor Ctx) {
-  llvm::DICompositeType T(getTypeOrNull(CGM.getContext().getRecordType(RD)));
-  if (T)
+llvm::DIType CGDebugInfo::getOrCreateRecordFwdDecl(const RecordDecl *RD,
+                                                   llvm::DIDescriptor Ctx) {
+  if (llvm::DIType T = getTypeOrNull(CGM.getContext().getRecordType(RD)))
     return T;
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
