@@ -1418,7 +1418,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     llvm::DIType RetTy = getOrCreateRecordFwdDecl(RD, FDContext);
-    TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RetTy;
     return RetTy;
   }
 
