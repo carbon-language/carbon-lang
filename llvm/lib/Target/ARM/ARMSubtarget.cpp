@@ -169,9 +169,10 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (isAAPCS_ABI())
     stackAlignment = 8;
 
-  if (!isTargetIOS())
+  if (!isTargetIOS()) {
     UseMovt = hasV6T2Ops();
-  else {
+    IsR9Reserved = ReserveR9;
+  } else {
     IsR9Reserved = ReserveR9 | !HasV6Ops;
     UseMovt = DarwinUseMOVT && hasV6T2Ops();
     SupportsTailCall = !getTargetTriple().isOSVersionLT(5, 0);
