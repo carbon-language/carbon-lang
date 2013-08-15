@@ -660,14 +660,14 @@ CXXConstCastExpr *CXXConstCastExpr::CreateEmpty(ASTContext &C) {
 
 CXXFunctionalCastExpr *
 CXXFunctionalCastExpr::Create(ASTContext &C, QualType T, ExprValueKind VK,
-                              TypeSourceInfo *Written, SourceLocation L,
-                              CastKind K, Expr *Op, const CXXCastPath *BasePath,
-                               SourceLocation R) {
+                              TypeSourceInfo *Written, CastKind K, Expr *Op,
+                              const CXXCastPath *BasePath,
+                              SourceLocation L, SourceLocation R) {
   unsigned PathSize = (BasePath ? BasePath->size() : 0);
   void *Buffer = C.Allocate(sizeof(CXXFunctionalCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   CXXFunctionalCastExpr *E =
-    new (Buffer) CXXFunctionalCastExpr(T, VK, Written, L, K, Op, PathSize, R);
+    new (Buffer) CXXFunctionalCastExpr(T, VK, Written, K, Op, PathSize, L, R);
   if (PathSize) E->setCastPath(*BasePath);
   return E;
 }
@@ -677,6 +677,14 @@ CXXFunctionalCastExpr::CreateEmpty(ASTContext &C, unsigned PathSize) {
   void *Buffer = C.Allocate(sizeof(CXXFunctionalCastExpr)
                             + PathSize * sizeof(CXXBaseSpecifier*));
   return new (Buffer) CXXFunctionalCastExpr(EmptyShell(), PathSize);
+}
+
+SourceLocation CXXFunctionalCastExpr::getLocStart() const {
+  return getTypeInfoAsWritten()->getTypeLoc().getLocStart();
+}
+
+SourceLocation CXXFunctionalCastExpr::getLocEnd() const {
+  return RParenLoc.isValid() ? RParenLoc : getSubExpr()->getLocEnd();
 }
 
 UserDefinedLiteral::LiteralOperatorKind

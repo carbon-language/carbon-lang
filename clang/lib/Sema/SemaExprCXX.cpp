@@ -902,8 +902,9 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
     InitListExpr *List = cast<InitListExpr>(Result.take());
     Result = Owned(CXXFunctionalCastExpr::Create(Context, List->getType(),
                                     Expr::getValueKindForType(TInfo->getType()),
-                                                 TInfo, TyBeginLoc, CK_NoOp,
-                                                 List, /*Path=*/0, RParenLoc));
+                                                 TInfo, CK_NoOp, List,
+                                                 /*Path=*/0,
+                                                 LParenLoc, RParenLoc));
   }
 
   // FIXME: Improve AST representation?

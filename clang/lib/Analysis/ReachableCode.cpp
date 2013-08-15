@@ -227,7 +227,7 @@ static SourceLocation GetUnreachableLoc(const Stmt *S,
     case Expr::CXXFunctionalCastExprClass: {
       const CXXFunctionalCastExpr *CE = cast <CXXFunctionalCastExpr>(S);
       R1 = CE->getSubExpr()->getSourceRange();
-      return CE->getTypeBeginLoc();
+      return CE->getLocStart();
     }
     case Stmt::CXXTryStmtClass: {
       return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();

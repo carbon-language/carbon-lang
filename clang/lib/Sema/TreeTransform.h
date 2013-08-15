@@ -7317,7 +7317,7 @@ TreeTransform<Derived>::TransformCXXFunctionalCastExpr(
     return SemaRef.Owned(E);
 
   return getDerived().RebuildCXXFunctionalCastExpr(Type,
-                                      /*FIXME:*/E->getSubExpr()->getLocStart(),
+                                                   E->getLParenLoc(),
                                                    SubExpr.get(),
                                                    E->getRParenLoc());
 }

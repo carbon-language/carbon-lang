@@ -2364,6 +2364,6 @@ ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
     ConstructExpr->setParenRange(SourceRange(LPLoc, RPLoc));
 
   return Op.complete(CXXFunctionalCastExpr::Create(Context, Op.ResultType,
-                         Op.ValueKind, CastTypeInfo, Op.DestRange.getBegin(),
-                         Op.Kind, Op.SrcExpr.take(), &Op.BasePath, RPLoc));
+                         Op.ValueKind, CastTypeInfo, Op.Kind,
+                         Op.SrcExpr.take(), &Op.BasePath, LPLoc, RPLoc));
 }

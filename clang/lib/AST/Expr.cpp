@@ -2177,7 +2177,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     WarnE = this;
     if (const CXXFunctionalCastExpr *CXXCE =
             dyn_cast<CXXFunctionalCastExpr>(this)) {
-      Loc = CXXCE->getTypeBeginLoc();
+      Loc = CXXCE->getLocStart();
       R1 = CXXCE->getSubExpr()->getSourceRange();
     } else {
       const CStyleCastExpr *CStyleCE = cast<CStyleCastExpr>(this);

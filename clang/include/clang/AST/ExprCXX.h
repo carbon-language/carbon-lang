@@ -1206,17 +1206,16 @@ public:
 ///   x = int(0.5);
 /// \endcode
 class CXXFunctionalCastExpr : public ExplicitCastExpr {
-  SourceLocation TyBeginLoc;
+  SourceLocation LParenLoc;
   SourceLocation RParenLoc;
 
   CXXFunctionalCastExpr(QualType ty, ExprValueKind VK,
                         TypeSourceInfo *writtenTy,
-                        SourceLocation tyBeginLoc, CastKind kind,
-                        Expr *castExpr, unsigned pathSize,
-                        SourceLocation rParenLoc)
+                        CastKind kind, Expr *castExpr, unsigned pathSize,
+                        SourceLocation lParenLoc, SourceLocation rParenLoc)
     : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, VK, kind,
                        castExpr, pathSize, writtenTy),
-      TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
+      LParenLoc(lParenLoc), RParenLoc(rParenLoc) {}
 
   explicit CXXFunctionalCastExpr(EmptyShell Shell, unsigned PathSize)
     : ExplicitCastExpr(CXXFunctionalCastExprClass, Shell, PathSize) { }
@@ -1225,22 +1224,20 @@ public:
   static CXXFunctionalCastExpr *Create(ASTContext &Context, QualType T,
                                        ExprValueKind VK,
                                        TypeSourceInfo *Written,
-                                       SourceLocation TyBeginLoc,
                                        CastKind Kind, Expr *Op,
                                        const CXXCastPath *Path,
+                                       SourceLocation LPLoc,
                                        SourceLocation RPLoc);
   static CXXFunctionalCastExpr *CreateEmpty(ASTContext &Context,
                                             unsigned PathSize);
 
-  SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
-  void setTypeBeginLoc(SourceLocation L) { TyBeginLoc = L; }
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  void setLParenLoc(SourceLocation L) { LParenLoc = L; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
 
-  SourceLocation getLocStart() const LLVM_READONLY { return TyBeginLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY {
-    return RParenLoc.isValid() ? RParenLoc : getSubExpr()->getLocEnd();
-  }
+  SourceLocation getLocStart() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXFunctionalCastExprClass;

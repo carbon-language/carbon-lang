@@ -118,3 +118,18 @@ namespace PR13064 {
   template<typename T> struct C { T a = { 0 }; }; // expected-error{{explicit}}
   C<A> c; // expected-note{{here}}
 }
+
+namespace PR16903 {
+  // Make sure we properly instantiate list-initialization.
+  template<typename T>
+  void fun (T it) {
+  	int m = 0;
+  	for (int i = 0; i < 4; ++i, ++it){
+  		m |= long{char{*it}};
+  	}
+  }
+  int test() {
+  	char in[4] = {0,0,0,0};
+  	fun(in);
+  }
+}
