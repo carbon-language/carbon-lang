@@ -1057,22 +1057,9 @@ llvm::Constant *CodeGenModule::GetAddrOfUuidDescriptor(
   llvm::Constant *Init = EmitUuidofInitializer(Uuid, E->getType());
   assert(Init && "failed to initialize as constant");
 
-  // GUIDs are assumed to be 16 bytes, spread over 4-2-2-8 bytes. However, the
-  // first field is declared as "long", which for many targets is 8 bytes.
-  // Those architectures are not supported. (With the MS abi, long is always 4
-  // bytes.)
-  llvm::Type *GuidType = getTypes().ConvertType(E->getType());
-  if (Init->getType() != GuidType) {
-    DiagnosticsEngine &Diags = getDiags();
-    unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-        "__uuidof codegen is not supported on this architecture");
-    Diags.Report(E->getExprLoc(), DiagID) << E->getSourceRange();
-    Init = llvm::UndefValue::get(GuidType);
-  }
-
-  llvm::GlobalVariable *GV = new llvm::GlobalVariable(getModule(), GuidType,
+  llvm::GlobalVariable *GV = new llvm::GlobalVariable(
+      getModule(), Init->getType(),
       /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage, Init, Name);
-  GV->setUnnamedAddr(true);
   return GV;
 }
 
@@ -3077,26 +3064,24 @@ llvm::Constant *CodeGenModule::EmitUuidofInitializer(StringRef Uuid,
   // Sema has checked that all uuid strings are of the form
   // "12345678-1234-1234-1234-1234567890ab".
   assert(Uuid.size() == 36);
-  const char *Uuidstr = Uuid.data();
-  for (int i = 0; i < 36; ++i) {
-    if (i == 8 || i == 13 || i == 18 || i == 23) assert(Uuidstr[i] == '-');
-    else                                         assert(isHexDigit(Uuidstr[i]));
+  for (unsigned i = 0; i < 36; ++i) {
+    if (i == 8 || i == 13 || i == 18 || i == 23) assert(Uuid[i] == '-');
+    else                                         assert(isHexDigit(Uuid[i]));
   }
-  
-  llvm::APInt Field0(32, StringRef(Uuidstr     , 8), 16);
-  llvm::APInt Field1(16, StringRef(Uuidstr +  9, 4), 16);
-  llvm::APInt Field2(16, StringRef(Uuidstr + 14, 4), 16);
-  static const int Field3ValueOffsets[] = { 19, 21, 24, 26, 28, 30, 32, 34 };
 
-  APValue InitStruct(APValue::UninitStruct(), /*NumBases=*/0, /*NumFields=*/4);
-  InitStruct.getStructField(0) = APValue(llvm::APSInt(Field0));
-  InitStruct.getStructField(1) = APValue(llvm::APSInt(Field1));
-  InitStruct.getStructField(2) = APValue(llvm::APSInt(Field2));
-  APValue& Arr = InitStruct.getStructField(3);
-  Arr = APValue(APValue::UninitArray(), 8, 8);
-  for (int t = 0; t < 8; ++t)
-    Arr.getArrayInitializedElt(t) = APValue(llvm::APSInt(
-          llvm::APInt(8, StringRef(Uuidstr + Field3ValueOffsets[t], 2), 16)));
+  const unsigned Field3ValueOffsets[8] = { 19, 21, 24, 26, 28, 30, 32, 34 };
 
-  return EmitConstantValue(InitStruct, GuidType);
+  llvm::Constant *Field3[8];
+  for (unsigned Idx = 0; Idx < 8; ++Idx)
+    Field3[Idx] = llvm::ConstantInt::get(
+        Int8Ty, Uuid.substr(Field3ValueOffsets[Idx], 2), 16);
+
+  llvm::Constant *Fields[4] = {
+    llvm::ConstantInt::get(Int32Ty, Uuid.substr(0,  8), 16),
+    llvm::ConstantInt::get(Int16Ty, Uuid.substr(9,  4), 16),
+    llvm::ConstantInt::get(Int16Ty, Uuid.substr(14, 4), 16),
+    llvm::ConstantArray::get(llvm::ArrayType::get(Int8Ty, 8), Field3)
+  };
+
+  return llvm::ConstantStruct::getAnon(Fields);
 }
