@@ -189,3 +189,15 @@ namespace PR16646 {
     }
   }
 }
+
+namespace PR16904 {
+  template <typename,typename>
+  struct base {
+    template <typename> struct derived;
+  };
+  // FIXME: The diagnostics here are terrible.
+  template <typename T, typename U, typename V>
+  using derived = base<T, U>::template derived<V>; // expected-error {{expected a type}} expected-error {{expected ';'}}
+  template <typename T, typename U, typename V>
+  using derived2 = ::PR16904::base<T, U>::template derived<V>; // expected-error {{expected a type}} expected-error {{expected ';'}}
+}

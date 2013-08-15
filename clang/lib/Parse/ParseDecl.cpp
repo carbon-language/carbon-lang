@@ -2436,7 +2436,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     case tok::coloncolon: // ::foo::bar
       // C++ scope specifier.  Annotate and loop, or bail out on error.
-      if (TryAnnotateCXXScopeToken(true)) {
+      if (TryAnnotateCXXScopeToken(EnteringContext)) {
         if (!DS.hasTypeSpecifier())
           DS.SetTypeSpecError();
         goto DoneWithDeclSpec;
@@ -2632,7 +2632,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // In C++, check to see if this is a scope specifier like foo::bar::, if
       // so handle it as such.  This is important for ctor parsing.
       if (getLangOpts().CPlusPlus) {
-        if (TryAnnotateCXXScopeToken(true)) {
+        if (TryAnnotateCXXScopeToken(EnteringContext)) {
           if (!DS.hasTypeSpecifier())
             DS.SetTypeSpecError();
           goto DoneWithDeclSpec;
