@@ -4102,26 +4102,41 @@ static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
   return (FstHalf | (SndHalf << 4));
 }
 
-// Symmetric in-lane mask. Each lane has 4 elements (for imm8)
+// Symetric in-lane mask. Each lane has 4 elements (for imm8)
 static bool isPermImmMask(ArrayRef<int> Mask, MVT VT, unsigned& Imm8) {
-  unsigned NumElts = VT.getVectorNumElements();
-  if (!(VT.is256BitVector() && NumElts == 4) &&
-      !(VT.is512BitVector() && NumElts == 8))
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  if (EltSize < 32)
     return false;
 
+  unsigned NumElts = VT.getVectorNumElements();
   Imm8 = 0;
+  if (VT.is128BitVector() || (VT.is256BitVector() && EltSize == 64)) {
+    for (unsigned i = 0; i != NumElts; ++i) {
+      if (Mask[i] < 0)
+        continue;
+      Imm8 |= Mask[i] << (i*2);
+    }
+    return true;
+  }
+
   unsigned LaneSize = 4;
+  SmallVector<int, 4> MaskVal(LaneSize, -1);
+
   for (unsigned l = 0; l != NumElts; l += LaneSize) {
     for (unsigned i = 0; i != LaneSize; ++i) {
       if (!isUndefOrInRange(Mask[i+l], l, l+LaneSize))
         return false;
-      if (Mask[i] >= 0 && !isUndefOrEqual(Mask[i+l], Mask[i]+l))
+      if (Mask[i+l] < 0)
+        continue;
+      if (MaskVal[i] < 0) {
+        MaskVal[i] = Mask[i+l] - l;
+        Imm8 |= MaskVal[i] << (i*2);
+        continue;
+      }
+      if (Mask[i+l] != (signed)(MaskVal[i]+l))
         return false;
-      if (Mask[i+l] >= 0)
-        Imm8 |= (Mask[i+l] - l) << (i*2);
     }
   }
-
   return true;
 }
 
@@ -4150,7 +4165,9 @@ static bool isVPERMILPMask(ArrayRef<int> Mask, MVT VT, bool HasFp256) {
       if (NumElts != 8 || l == 0)
         continue;
       // VPERMILPS handling
-      if (Mask[i] >= 0 && !isUndefOrEqual(Mask[i+l], Mask[i]+l))
+      if (Mask[i] < 0)
+        continue;
+      if (!isUndefOrEqual(Mask[i+l], Mask[i]+l))
         return false;
     }
   }
