@@ -42,6 +42,17 @@ define void @test_simplify3() {
   ret void
 }
 
+define void @test_simplify4() {
+; CHECK: store i8* getelementptr inbounds ([14 x i8]* @hello, i32 0, i32 13)
+; CHECK-NOT: call i8* @strrchr
+; CHECK: ret void
+
+  %src = getelementptr [14 x i8]* @hello, i32 0, i32 0
+  %dst = call i8* @strrchr(i8* %src, i32 65280)
+  store i8* %dst, i8** @chp
+  ret void
+}
+
 define void @test_nosimplify1(i32 %chr) {
 ; CHECK-LABEL: @test_nosimplify1(
 ; CHECK: call i8* @strrchr
