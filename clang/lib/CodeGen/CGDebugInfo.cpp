@@ -1430,9 +1430,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty, bool Declaration) {
   // safely be replaced by a forward declaration in the source code.
   if (DebugKind <= CodeGenOptions::LimitedDebugInfo && Declaration &&
       !RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) {
-    // FIXME: This implementation is problematic; there are some test
-    // cases where we violate the above principle, such as
-    // test/CodeGen/debug-info-records.c .
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
     llvm::DIType RetTy = getOrCreateRecordFwdDecl(RD, FDContext);
@@ -1999,6 +1996,10 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit,
   // And update the type cache.
   TypeCache[TyPtr] = Res;
 
+  // FIXME: this getTypeOrNull call seems silly when we just inserted the type
+  // into the cache - but getTypeOrNull has a special case for cached interface
+  // types. We should probably just pull that out as a special case for the
+  // "else" block below & skip the otherwise needless lookup.
   llvm::DIType TC = getTypeOrNull(Ty);
   if (TC && TC.isForwardDecl())
     ReplaceMap.push_back(std::make_pair(TyPtr, static_cast<llvm::Value*>(TC)));
