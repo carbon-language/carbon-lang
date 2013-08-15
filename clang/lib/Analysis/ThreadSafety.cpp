@@ -2352,8 +2352,6 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
                    = dyn_cast<SharedLocksRequiredAttr>(Attr)) {
         getMutexIDs(SharedLocksToAdd, A, (Expr*) 0, D);
       } else if (UnlockFunctionAttr *A = dyn_cast<UnlockFunctionAttr>(Attr)) {
-        if (!Handler.issueBetaWarnings())
-          return;
         // UNLOCK_FUNCTION() is used to hide the underlying lock implementation.
         // We must ignore such methods.
         if (A->args_size() == 0)
@@ -2363,15 +2361,11 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         getMutexIDs(LocksReleased, A, (Expr*) 0, D);
       } else if (ExclusiveLockFunctionAttr *A
                    = dyn_cast<ExclusiveLockFunctionAttr>(Attr)) {
-        if (!Handler.issueBetaWarnings())
-          return;
         if (A->args_size() == 0)
           return;
         getMutexIDs(ExclusiveLocksAcquired, A, (Expr*) 0, D);
       } else if (SharedLockFunctionAttr *A
                    = dyn_cast<SharedLockFunctionAttr>(Attr)) {
-        if (!Handler.issueBetaWarnings())
-          return;
         if (A->args_size() == 0)
           return;
         getMutexIDs(SharedLocksAcquired, A, (Expr*) 0, D);
