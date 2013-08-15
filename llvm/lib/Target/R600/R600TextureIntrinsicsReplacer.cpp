@@ -35,9 +35,9 @@ class R600TextureIntrinsicsReplacer :
   FunctionType *TexSign;
   FunctionType *TexQSign;
 
-  void getAdjustementFromTextureTarget(unsigned TextureType, bool hasLOD,
-                                       unsigned SrcSelect[4], unsigned CT[4],
-                                       bool &useShadowVariant) {
+  void getAdjustmentFromTextureTarget(unsigned TextureType, bool hasLOD,
+                                      unsigned SrcSelect[4], unsigned CT[4],
+                                      bool &useShadowVariant) {
     enum TextureTypes {
       TEXTURE_1D = 1,
       TEXTURE_2D,
@@ -174,8 +174,8 @@ class R600TextureIntrinsicsReplacer :
     };
     bool useShadowVariant;
 
-    getAdjustementFromTextureTarget(TextureType, hasLOD, SrcSelect, CT,
-                                    useShadowVariant);
+    getAdjustmentFromTextureTarget(TextureType, hasLOD, SrcSelect, CT,
+                                   useShadowVariant);
 
     ReplaceCallInst(I, FT, useShadowVariant?ShadowInt:VanillaInt, SrcSelect,
                     Offset, ResourceId, SamplerId, CT, Coord);
@@ -198,8 +198,8 @@ class R600TextureIntrinsicsReplacer :
     };
     bool useShadowVariant;
 
-    getAdjustementFromTextureTarget(TextureType, false, SrcSelect, CT,
-                                    useShadowVariant);
+    getAdjustmentFromTextureTarget(TextureType, false, SrcSelect, CT,
+                                   useShadowVariant);
 
     ReplaceCallInst(I, TexQSign, "llvm.R600.txf", SrcSelect,
                     Offset, ResourceId, SamplerId, CT, Coord);

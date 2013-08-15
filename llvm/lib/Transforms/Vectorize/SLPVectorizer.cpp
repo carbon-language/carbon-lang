@@ -75,8 +75,8 @@ private:
   DebugLoc DbgLoc;
 };
 
-/// A helper class for numbering instructions in multible blocks.
-/// Numbers starts at zero for each basic block.
+/// A helper class for numbering instructions in multiple blocks.
+/// Numbers start at zero for each basic block.
 struct BlockNumbering {
 
   BlockNumbering(BasicBlock *Bb) : BB(Bb), Valid(false) {}
