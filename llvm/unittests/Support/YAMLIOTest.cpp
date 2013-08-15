@@ -1297,3 +1297,66 @@ TEST(YAMLIO, TestReadBuiltInTypesHex64Error) {
   EXPECT_TRUE(yin.error());
 }
 
+struct OptionalTest {
+  std::vector<int> Numbers;
+};
+
+struct OptionalTestSeq {
+  std::vector<OptionalTest> Tests;
+};
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(OptionalTest);
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<OptionalTest> {
+    static void mapping(IO& IO, OptionalTest &OT) {
+      IO.mapOptional("Numbers", OT.Numbers);
+    }
+  };
+
+  template <>
+  struct MappingTraits<OptionalTestSeq> {
+    static void mapping(IO &IO, OptionalTestSeq &OTS) {
+      IO.mapOptional("Tests", OTS.Tests);
+    }
+  };
+}
+}
+
+TEST(YAMLIO, SequenceElideTest) {
+  // Test that writing out a purely optional structure with its fields set to
+  // default followed by other data is properly read back in.
+  OptionalTestSeq Seq;
+  OptionalTest One, Two, Three, Four;
+  int N[] = {1, 2, 3};
+  Three.Numbers.assign(N, N + 3);
+  Seq.Tests.push_back(One);
+  Seq.Tests.push_back(Two);
+  Seq.Tests.push_back(Three);
+  Seq.Tests.push_back(Four);
+
+  std::string intermediate;
+  {
+    llvm::raw_string_ostream ostr(intermediate);
+    Output yout(ostr);
+    yout << Seq;
+  }
+
+  Input yin(intermediate);
+  OptionalTestSeq Seq2;
+  yin >> Seq2;
+  
+  EXPECT_FALSE(yin.error());
+
+  EXPECT_EQ(4UL, Seq2.Tests.size());
+
+  EXPECT_TRUE(Seq2.Tests[0].Numbers.empty());
+  EXPECT_TRUE(Seq2.Tests[1].Numbers.empty());
+
+  EXPECT_EQ(1, Seq2.Tests[2].Numbers[0]);
+  EXPECT_EQ(2, Seq2.Tests[2].Numbers[1]);
+  EXPECT_EQ(3, Seq2.Tests[2].Numbers[2]);
+
+  EXPECT_TRUE(Seq2.Tests[3].Numbers.empty());
+}
