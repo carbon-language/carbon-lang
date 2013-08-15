@@ -627,8 +627,8 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
 /// to use the stack, and if we don't adjust the stack we clobber the first
 /// frame index.
 /// See X86InstrInfo::copyPhysReg.
-static bool usesTheStack(MachineFunction &MF) {
-  MachineRegisterInfo &MRI = MF.getRegInfo();
+static bool usesTheStack(const MachineFunction &MF) {
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
 
   for (MachineRegisterInfo::reg_iterator ri = MRI.reg_begin(X86::EFLAGS),
        re = MRI.reg_end(); ri != re; ++ri)
