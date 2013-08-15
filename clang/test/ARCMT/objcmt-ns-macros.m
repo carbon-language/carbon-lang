@@ -70,3 +70,10 @@ enum {
   UIKTwo = 0x2,
 };
 typedef NSInteger UIK;
+
+typedef enum  {
+    NSTickMarkBelow = 0,
+    NSTickMarkAbove = 1,
+    NSTickMarkLeft = NSTickMarkAbove,
+    NSTickMarkRight = NSTickMarkBelow
+} NSTickMarkPosition;

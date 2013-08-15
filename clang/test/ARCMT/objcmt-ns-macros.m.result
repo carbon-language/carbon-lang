@@ -70,3 +70,10 @@ typedef NS_ENUM(NSInteger, UIK) {
   UIKTwo = 0x2,
 };
 
+
+typedef NS_ENUM(NSInteger, NSTickMarkPosition)  {
+    NSTickMarkBelow = 0,
+    NSTickMarkAbove = 1,
+    NSTickMarkLeft = NSTickMarkAbove,
+    NSTickMarkRight = NSTickMarkBelow
+} ;
