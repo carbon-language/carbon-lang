@@ -264,6 +264,10 @@ def simm16_64   : Operand<i64>;
 def shamt       : Operand<i32>;
 
 // Unsigned Operand
+def uimm5       : Operand<i32> {
+  let PrintMethod = "printUnsignedImm";
+}
+
 def uimm16      : Operand<i32> {
   let PrintMethod = "printUnsignedImm";
 }

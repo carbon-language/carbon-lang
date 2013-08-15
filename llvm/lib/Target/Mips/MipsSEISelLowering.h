@@ -22,6 +22,8 @@ namespace llvm {
   public:
     explicit MipsSETargetLowering(MipsTargetMachine &TM);
 
+    void addMSAType(MVT::SimpleValueType Ty);
+
     virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
 
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
