@@ -211,6 +211,7 @@ public:
     friend class ImmutableMap;
 
   public:
+    typedef ptrdiff_t difference_type;
     typedef typename ImmutableMap<KeyT,ValT,ValInfo>::value_type value_type;
     typedef typename ImmutableMap<KeyT,ValT,ValInfo>::value_type_ref reference;
     typedef typename iterator::value_type *pointer;

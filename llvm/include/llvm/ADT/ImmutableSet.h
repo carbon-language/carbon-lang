@@ -1060,6 +1060,7 @@ public:
     friend class ImmutableSet<ValT,ValInfo>;
 
   public:
+    typedef ptrdiff_t difference_type;
     typedef typename ImmutableSet<ValT,ValInfo>::value_type value_type;
     typedef typename ImmutableSet<ValT,ValInfo>::value_type_ref reference;
     typedef typename iterator::value_type *pointer;
