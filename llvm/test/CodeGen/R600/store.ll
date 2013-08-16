@@ -2,6 +2,67 @@
 ; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck --check-prefix=CM-CHECK %s
 ; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck --check-prefix=SI-CHECK %s
 
+;===------------------------------------------------------------------------===;
+; Global Address Space
+;===------------------------------------------------------------------------===;
+
+; i8 store
+; EG-CHECK: @store_i8
+; EG-CHECK: MEM_RAT MSKOR T[[RW_GPR:[0-9]]].XW, T{{[0-9]}}.X
+; EG-CHECK: VTX_READ_8 [[VAL:T[0-9]\.X]], [[VAL]]
+; IG 0: Get the byte index
+; EG-CHECK: AND_INT * T{{[0-9]}}.[[BI_CHAN:[XYZW]]], KC0[2].Y, literal.x
+; EG-CHECK-NEXT: 3
+; IG 1: Truncate the value and calculated the shift amount for the mask
+; EG-CHECK: AND_INT T{{[0-9]}}.[[TRUNC_CHAN:[XYZW]]], [[VAL]], literal.x
+; EG-CHECK: LSHL * T{{[0-9]}}.[[SHIFT_CHAN:[XYZW]]], PV.[[BI_CHAN]], literal.y
+; EG-CHECK: 255(3.573311e-43), 3
+; IG 2: Shift the value and the mask
+; EG-CHECK: LSHL T[[RW_GPR]].X, PV.[[TRUNC_CHAN]], PV.[[SHIFT_CHAN]]
+; EG-CHECK: LSHL * T[[RW_GPR]].W, literal.x, PV.[[SHIFT_CHAN]]
+; EG-CHECK-NEXT: 255
+; IG 3: Initialize the Y and Z channels to zero
+;       XXX: An optimal scheduler should merge this into one of the prevous IGs.
+; EG-CHECK: MOV T[[RW_GPR]].Y, 0.0
+; EG-CHECK: MOV * T[[RW_GPR]].Z, 0.0
+
+; SI-CHECK: @store_i8
+; SI-CHECK: BUFFER_STORE_BYTE
+
+define void @store_i8(i8 addrspace(1)* %out, i8 %in) {
+entry:
+  store i8 %in, i8 addrspace(1)* %out
+  ret void
+}
+
+; i16 store
+; EG-CHECK: @store_i16
+; EG-CHECK: MEM_RAT MSKOR T[[RW_GPR:[0-9]]].XW, T{{[0-9]}}.X
+; EG-CHECK: VTX_READ_16 [[VAL:T[0-9]\.X]], [[VAL]]
+; IG 0: Get the byte index
+; EG-CHECK: AND_INT * T{{[0-9]}}.[[BI_CHAN:[XYZW]]], KC0[2].Y, literal.x
+; EG-CHECK-NEXT: 3
+; IG 1: Truncate the value and calculated the shift amount for the mask
+; EG-CHECK: AND_INT T{{[0-9]}}.[[TRUNC_CHAN:[XYZW]]], [[VAL]], literal.x
+; EG-CHECK: LSHL * T{{[0-9]}}.[[SHIFT_CHAN:[XYZW]]], PV.[[BI_CHAN]], literal.y
+; EG-CHECK: 65535(9.183409e-41), 3
+; IG 2: Shift the value and the mask
+; EG-CHECK: LSHL T[[RW_GPR]].X, PV.[[TRUNC_CHAN]], PV.[[SHIFT_CHAN]]
+; EG-CHECK: LSHL * T[[RW_GPR]].W, literal.x, PV.[[SHIFT_CHAN]]
+; EG-CHECK-NEXT: 65535
+; IG 3: Initialize the Y and Z channels to zero
+;       XXX: An optimal scheduler should merge this into one of the prevous IGs.
+; EG-CHECK: MOV T[[RW_GPR]].Y, 0.0
+; EG-CHECK: MOV * T[[RW_GPR]].Z, 0.0
+
+; SI-CHECK: @store_i16
+; SI-CHECK: BUFFER_STORE_SHORT
+define void @store_i16(i16 addrspace(1)* %out, i16 %in) {
+entry:
+  store i16 %in, i16 addrspace(1)* %out
+  ret void
+}
+
 ; floating-point store
 ; EG-CHECK: @store_f32
 ; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+\.X, T[0-9]+\.X}}, 1

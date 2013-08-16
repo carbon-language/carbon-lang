@@ -146,6 +146,16 @@ def az_extloadi32_constant : PatFrag<(ops node:$ptr),
   return isConstantLoad(dyn_cast<LoadSDNode>(N), -1);
 }]>;
 
+def truncstorei8_global : PatFrag<(ops node:$val, node:$ptr),
+                                  (truncstorei8 node:$val, node:$ptr), [{
+  return isGlobalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def truncstorei16_global : PatFrag<(ops node:$val, node:$ptr),
+                                  (truncstorei16 node:$val, node:$ptr), [{
+  return isGlobalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
 def local_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
     return isLocalLoad(dyn_cast<LoadSDNode>(N));
 }]>;
@@ -153,6 +163,11 @@ def local_load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
 def local_store : PatFrag<(ops node:$val, node:$ptr),
                              (store node:$val, node:$ptr), [{
     return isLocalStore(dyn_cast<StoreSDNode>(N));
+}]>;
+
+def mskor_global : PatFrag<(ops node:$val, node:$ptr),
+                            (AMDGPUstore_mskor node:$val, node:$ptr), [{
+  return dyn_cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
 }]>;
 
 class Constants {

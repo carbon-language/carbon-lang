@@ -1274,6 +1274,19 @@ class CF_MEM_RAT_CACHELESS <bits<6> rat_inst, bits<4> rat_id, bits<4> mask, dag 
     : EG_CF_RAT <0x57, rat_inst, rat_id, mask, (outs), ins,
                  "MEM_RAT_CACHELESS "#name, pattern>;
 
+class CF_MEM_RAT <bits<6> rat_inst, bits<4> rat_id, dag ins, string name,
+                  list<dag> pattern>
+    : EG_CF_RAT <0x56, rat_inst, rat_id, 0xf /* mask */, (outs), ins,
+                 "MEM_RAT "#name, pattern>;
+
+def RAT_MSKOR : CF_MEM_RAT <0x11, 0,
+  (ins R600_Reg128:$rw_gpr, R600_TReg32_X:$index_gpr),
+  "MSKOR $rw_gpr.XW, $index_gpr",
+  [(mskor_global v4i32:$rw_gpr, i32:$index_gpr)]
+> {
+  let eop = 0;
+}
+
 } // End Predicates = [isEGorCayman]
 
 

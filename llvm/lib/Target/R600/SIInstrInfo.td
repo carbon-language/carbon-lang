@@ -400,9 +400,9 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass> {
   }
 }
 
-class MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass,
-                         ValueType VT> :
-    MUBUF <op, (outs), (ins vdataClass:$vdata, SReg_128:$srsrc, VReg_64:$vaddr, i16imm:$offset),
+class MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass> :
+    MUBUF <op, (outs), (ins vdataClass:$vdata, SReg_128:$srsrc, VReg_64:$vaddr,
+                            i16imm:$offset),
           name#" $vdata, $srsrc + $vaddr + $offset",
          []> {
 

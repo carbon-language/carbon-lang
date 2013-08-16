@@ -84,6 +84,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::STORE, MVT::i32, Custom);
   setOperationAction(ISD::STORE, MVT::v2i32, Custom);
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
+  setTruncStoreAction(MVT::i32, MVT::i8, Custom);
+  setTruncStoreAction(MVT::i32, MVT::i16, Custom);
 
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
@@ -1009,19 +1011,54 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Value = Op.getOperand(1);
   SDValue Ptr = Op.getOperand(2);
 
-  if (StoreNode->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS &&
-      Ptr->getOpcode() != AMDGPUISD::DWORDADDR) {
-    // Convert pointer from byte address to dword address.
-    Ptr = DAG.getNode(AMDGPUISD::DWORDADDR, DL, Ptr.getValueType(),
-                      DAG.getNode(ISD::SRL, DL, Ptr.getValueType(),
-                                  Ptr, DAG.getConstant(2, MVT::i32)));
+  if (StoreNode->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS) {
+    if (StoreNode->isTruncatingStore()) {
+      EVT VT = Value.getValueType();
+      assert(VT == MVT::i32);
+      EVT MemVT = StoreNode->getMemoryVT();
+      SDValue MaskConstant;
+      if (MemVT == MVT::i8) {
+        MaskConstant = DAG.getConstant(0xFF, MVT::i32);
+      } else {
+        assert(MemVT == MVT::i16);
+        MaskConstant = DAG.getConstant(0xFFFF, MVT::i32);
+      }
+      SDValue DWordAddr = DAG.getNode(ISD::SRL, DL, VT, Ptr,
+                                      DAG.getConstant(2, MVT::i32));
+      SDValue ByteIndex = DAG.getNode(ISD::AND, DL, Ptr.getValueType(), Ptr,
+                                      DAG.getConstant(0x00000003, VT));
+      SDValue TruncValue = DAG.getNode(ISD::AND, DL, VT, Value, MaskConstant);
+      SDValue Shift = DAG.getNode(ISD::SHL, DL, VT, ByteIndex,
+                                   DAG.getConstant(3, VT));
+      SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, VT, TruncValue, Shift);
+      SDValue Mask = DAG.getNode(ISD::SHL, DL, VT, MaskConstant, Shift);
+      // XXX: If we add a 64-bit ZW register class, then we could use a 2 x i32
+      // vector instead.
+      SDValue Src[4] = {
+        ShiftedValue,
+        DAG.getConstant(0, MVT::i32),
+        DAG.getConstant(0, MVT::i32),
+        Mask
+      };
+      SDValue Input = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v4i32, Src, 4);
+      SDValue Args[3] = { Chain, Input, DWordAddr };
+      return DAG.getMemIntrinsicNode(AMDGPUISD::STORE_MSKOR, DL,
+                                     Op->getVTList(), Args, 3, MemVT,
+                                     StoreNode->getMemOperand());
+    } else if (Ptr->getOpcode() != AMDGPUISD::DWORDADDR &&
+               Value.getValueType().bitsGE(MVT::i32)) {
+      // Convert pointer from byte address to dword address.
+      Ptr = DAG.getNode(AMDGPUISD::DWORDADDR, DL, Ptr.getValueType(),
+                        DAG.getNode(ISD::SRL, DL, Ptr.getValueType(),
+                                    Ptr, DAG.getConstant(2, MVT::i32)));
 
-    if (StoreNode->isTruncatingStore() || StoreNode->isIndexed()) {
-      assert(!"Truncated and indexed stores not supported yet");
-    } else {
-      Chain = DAG.getStore(Chain, DL, Value, Ptr, StoreNode->getMemOperand());
+      if (StoreNode->isTruncatingStore() || StoreNode->isIndexed()) {
+        assert(!"Truncated and indexed stores not supported yet");
+      } else {
+        Chain = DAG.getStore(Chain, DL, Value, Ptr, StoreNode->getMemOperand());
+      }
+      return Chain;
     }
-    return Chain;
   }
 
   EVT ValueVT = Value.getValueType();

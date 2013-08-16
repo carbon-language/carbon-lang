@@ -72,3 +72,7 @@ def AMDGPUregister_load : SDNode<"AMDGPUISD::REGISTER_LOAD",
 def AMDGPUregister_store : SDNode<"AMDGPUISD::REGISTER_STORE",
                            SDTypeProfile<0, 3, [SDTCisPtrTy<1>, SDTCisInt<2>]>,
                            [SDNPHasChain, SDNPMayStore]>;
+
+def AMDGPUstore_mskor : SDNode<"AMDGPUISD::STORE_MSKOR",
+                        SDTypeProfile<0, 2, []>,
+                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;

@@ -558,5 +558,6 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(SAMPLEB)
   NODE_NAME_CASE(SAMPLED)
   NODE_NAME_CASE(SAMPLEL)
+  NODE_NAME_CASE(STORE_MSKOR)
   }
 }

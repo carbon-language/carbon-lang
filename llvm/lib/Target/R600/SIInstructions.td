@@ -409,19 +409,25 @@ defm BUFFER_LOAD_SSHORT : MUBUF_Load_Helper <0x0000000b, "BUFFER_LOAD_SSHORT", V
 defm BUFFER_LOAD_DWORD : MUBUF_Load_Helper <0x0000000c, "BUFFER_LOAD_DWORD", VReg_32>;
 defm BUFFER_LOAD_DWORDX2 : MUBUF_Load_Helper <0x0000000d, "BUFFER_LOAD_DWORDX2", VReg_64>;
 defm BUFFER_LOAD_DWORDX4 : MUBUF_Load_Helper <0x0000000e, "BUFFER_LOAD_DWORDX4", VReg_128>;
-//def BUFFER_STORE_BYTE : MUBUF_ <0x00000018, "BUFFER_STORE_BYTE", []>;
-//def BUFFER_STORE_SHORT : MUBUF_ <0x0000001a, "BUFFER_STORE_SHORT", []>;
+
+def BUFFER_STORE_BYTE : MUBUF_Store_Helper <
+  0x00000018, "BUFFER_STORE_BYTE", VReg_32
+>;
+
+def BUFFER_STORE_SHORT : MUBUF_Store_Helper <
+  0x0000001a, "BUFFER_STORE_SHORT", VReg_32
+>;
 
 def BUFFER_STORE_DWORD : MUBUF_Store_Helper <
-  0x0000001c, "BUFFER_STORE_DWORD", VReg_32, i32
+  0x0000001c, "BUFFER_STORE_DWORD", VReg_32
 >;
 
 def BUFFER_STORE_DWORDX2 : MUBUF_Store_Helper <
-  0x0000001d, "BUFFER_STORE_DWORDX2", VReg_64, i64
+  0x0000001d, "BUFFER_STORE_DWORDX2", VReg_64
 >;
 
 def BUFFER_STORE_DWORDX4 : MUBUF_Store_Helper <
-  0x0000001e, "BUFFER_STORE_DWORDX4", VReg_128, v4i32
+  0x0000001e, "BUFFER_STORE_DWORDX4", VReg_128
 >;
 //def BUFFER_ATOMIC_SWAP : MUBUF_ <0x00000030, "BUFFER_ATOMIC_SWAP", []>;
 //def BUFFER_ATOMIC_CMPSWAP : MUBUF_ <0x00000031, "BUFFER_ATOMIC_CMPSWAP", []>;
@@ -1826,23 +1832,25 @@ defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, v2i32,
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,
                           global_load, constant_load>;
 
-multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt> {
+multiclass MUBUFStore_Pattern <MUBUF Instr, ValueType vt, PatFrag st> {
 
   def : Pat <
-    (global_store vt:$value, i64:$ptr),
+    (st vt:$value, i64:$ptr),
     (Instr $value, (SI_ADDR64_RSRC (i64 0)), $ptr, 0)
   >;
 
   def : Pat <
-    (global_store vt:$value, (add i64:$ptr, i64:$offset)),
+    (st vt:$value, (add i64:$ptr, i64:$offset)),
     (Instr $value, (SI_ADDR64_RSRC $ptr), $offset, 0)
    >;
 }
 
-defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32>;
-defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64>;
-defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, v2i32>;
-defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_BYTE, i32, truncstorei8_global>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_SHORT, i32, truncstorei16_global>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORD, i32, global_store>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, i64, global_store>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2, v2i32, global_store>;
+defm : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4, v4i32, global_store>;
 
 /********** ====================== **********/
 /**********   Indirect adressing   **********/

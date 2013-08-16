@@ -1,7 +1,5 @@
 ; RUN: llc < %s -march=r600 -mcpu=verde | FileCheck %s
 
-; XXX: Mark this test as XFAIL until buffer stores are implemented
-; XFAIL: *
 ; CHECK: @test_8_min_char
 ; CHECK: BUFFER_STORE_BYTE
 ; CHECK: BUFFER_STORE_BYTE
