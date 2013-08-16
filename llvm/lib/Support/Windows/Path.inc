@@ -310,30 +310,7 @@ retry_cur_dir:
   }
 
   cur_path.set_size(len);
-  // cur_path now holds the current directory in utf-16. Convert to utf-8.
-
-  // Find out how much space we need. Sadly, this function doesn't return the
-  // size needed unless you tell it the result size is 0, which means you
-  // _always_ have to call it twice.
-  len = ::WideCharToMultiByte(CP_UTF8, 0,
-                              cur_path.data(), cur_path.size(),
-                              result.data(), 0,
-                              NULL, NULL);
-
-  if (len == 0)
-    return make_error_code(windows_error(::GetLastError()));
-
-  result.reserve(len);
-  result.set_size(len);
-  // Now do the actual conversion.
-  len = ::WideCharToMultiByte(CP_UTF8, 0,
-                              cur_path.data(), cur_path.size(),
-                              result.data(), result.size(),
-                              NULL, NULL);
-  if (len == 0)
-    return windows_error(::GetLastError());
-
-  return error_code::success();
+  return UTF16ToUTF8(cur_path.begin(), cur_path.size(), result);
 }
 
 error_code create_directory(const Twine &path, bool &existed) {
