@@ -3049,7 +3049,7 @@ bool ARMFastISel::FastLowerArguments() {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
   };
 
-  const TargetRegisterClass *RC = TLI.getRegClassFor(MVT::i32);
+  const TargetRegisterClass *RC = &ARM::rGPRRegClass;
   Idx = 0;
   for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
        I != E; ++I, ++Idx) {
