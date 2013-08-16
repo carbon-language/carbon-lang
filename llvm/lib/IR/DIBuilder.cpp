@@ -844,7 +844,7 @@ DIDescriptor DIBuilder::createUnspecifiedParameter() {
 
 /// createForwardDecl - Create a temporary forward-declared type that
 /// can be RAUW'd if the full type is seen.
-DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
+DICompositeType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
                                     DIDescriptor Scope, DIFile F,
                                     unsigned Line, unsigned RuntimeLang,
                                     uint64_t SizeInBits,
@@ -863,11 +863,12 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name,
                      DIDescriptor::FlagFwdDecl),
     NULL,
     DIArray(),
-    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
+    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang),
+    NULL
   };
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
-  DIType RetTy(Node);
-  assert(RetTy.isType() &&
+  DICompositeType RetTy(Node);
+  assert(RetTy.isCompositeType() &&
          "createForwardDecl result should be a DIType");
   return RetTy;
 }

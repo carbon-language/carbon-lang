@@ -647,7 +647,7 @@ void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
   DbgNode = N;
 }
 
-void DICompositeType::addMember(DISubprogram S) {
+void DICompositeType::addMember(DIDescriptor D) {
   SmallVector<llvm::Value *, 16> M;
   DIArray OrigM = getTypeArray();
   unsigned Elements = OrigM.getNumElements();
@@ -656,7 +656,7 @@ void DICompositeType::addMember(DISubprogram S) {
   M.reserve(Elements + 1);
   for (unsigned i = 0; i != Elements; ++i)
     M.push_back(OrigM.getElement(i));
-  M.push_back(S);
+  M.push_back(D);
   setTypeArray(DIArray(MDNode::get(DbgNode->getContext(), M)));
 }
 
