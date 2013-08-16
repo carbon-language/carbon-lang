@@ -2505,3 +2505,4 @@ def ST_FW : MSAPat<(store (v4f32 MSA128:$ws), addr:$addr),
                    (ST_W MSA128:$ws, addr:$addr)>;
 def ST_FD : MSAPat<(store (v2f64 MSA128:$ws), addr:$addr),
                    (ST_D MSA128:$ws, addr:$addr)>;
+
