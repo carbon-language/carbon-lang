@@ -318,12 +318,6 @@ public:
     return DefaultArgEffect;
   }
 
-  /// Return the number of argument effects.  This is O(n) in the number
-  /// of arguments.
-  unsigned getNumArgs() const {
-    return std::distance(Args.begin(), Args.end());
-  }
-  
   void addArg(ArgEffects::Factory &af, unsigned idx, ArgEffect e) {
     Args = af.add(Args, idx, e);
   }
@@ -3689,7 +3683,7 @@ namespace clang { namespace ento { namespace objc_retain {
   const RetainSummary *S = M.get ## KIND ## Summary(D);\
   CallEffects CE(S->getRetEffect());\
   CE.Receiver = S->getReceiverEffect();\
-  unsigned N = S->getNumArgs();\
+  unsigned N = D->param_size();\
   for (unsigned i = 0; i < N; ++i) {\
     CE.Args.push_back(S->getArg(i));\
   }
