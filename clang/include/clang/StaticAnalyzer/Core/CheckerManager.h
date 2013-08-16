@@ -590,7 +590,7 @@ private:
       : StmtKind(stmtKind), IsPreVisit(isPreVisit) { }
 
     static CachedStmtCheckersKey getSentinel() {
-      return CachedStmtCheckersKey(~0U, 0);
+      return CachedStmtCheckersKey(~0U, false);
     }
     unsigned getHashValue() const {
       llvm::FoldingSetNodeID ID;
