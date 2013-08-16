@@ -29,24 +29,28 @@ General Command Line Options
 
   Displays the version information of this tool.
 
-.. option:: -p[=<build-path>]
+.. option:: -p=<build-path>
 
-  ``<build-path>`` is the directory containing a file named
-  ``compile_commands.json`` which provides compiler arguments for building each
-  source file. CMake can generate this file by specifying
-  ``-DCMAKE_EXPORT_COMPILE_COMMANDS`` when running CMake. Ninja_, since v1.2
-  can also generate this file with ``ninja -t compdb``. If ``<build-path>`` is
-  not provided the ``compile_commands.json`` file is searched for through all
-  parent directories.
+  ``<build-path>`` is the directory containing a *compilation databasefile*, a
+  file named ``compile_commands.json``, which provides compiler arguments for
+  building each source file. CMake can generate this file by specifying
+  ``-DCMAKE_EXPORT_COMPILE_COMMANDS`` when running CMake. Ninja_, since v1.2 can
+  also generate this file with ``ninja -t compdb``. If the compilation database
+  cannot be used for any reason, an error is reported.
+
+  This option is ignored if ``--`` is present.
 
 .. option:: -- [args]
 
   Another way to provide compiler arguments is to specify all arguments on the
   command line following ``--``. Arguments provided this way are used for
   *every* source file.
-  
-  If ``-p`` is not specified, ``--`` is necessary, even if no compiler
-  arguments are required.
+
+  If neither ``--`` nor ``-p`` are specified a compilation database is
+  searched for starting with the path of the first-provided source file and
+  proceeding through parent directories. If no compilation database is found or
+  one is found and cannot be used for any reason then ``-std=c++11`` is used as
+  the only compiler argument.
 
 .. _Ninja: http://martine.github.io/ninja/
 

@@ -41,8 +41,9 @@ Migrator.
 Before running the Migrator on code you'll need the arguments you'd normally
 pass to the compiler. If you're migrating a single file with few compiler
 arguments, it might be easier to pass the compiler args on the command line
-after ``--``. If you're working with multiple files or even a single file
-with many compiler args, it's probably best to use a *compilation database*.
+after ``--``. If you don't have any compiler arguments then ``--`` is not needed.
+If you're working with multiple files or even a single file with many compiler
+args, it's probably best to use a *compilation database*.
 
 A `compilation database`_ contains the command-line arguments for multiple
 files. If the code you want to transform can be built with CMake, you can

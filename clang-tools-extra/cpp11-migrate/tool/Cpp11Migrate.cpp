@@ -36,6 +36,10 @@ using namespace clang::tooling;
 TransformOptions GlobalOptions;
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static cl::opt<std::string> BuildPath(
+    "p", cl::desc("Build Path"), cl::Optional);
+static cl::list<std::string> SourcePaths(
+    cl::Positional, cl::desc("<source0> [... <sourceN>]"), cl::OneOrMore);
 static cl::extrahelp MoreHelp(
     "EXAMPLES:\n\n"
     "Apply all transforms on a given file, no compilation database:\n\n"
@@ -227,8 +231,29 @@ int main(int argc, const char **argv) {
 
   TransformManager.registerTransforms();
 
-  // This causes options to be parsed.
-  CommonOptionsParser OptionsParser(argc, argv);
+  // Parse options and generate compilations.
+  OwningPtr<CompilationDatabase> Compilations(
+      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  cl::ParseCommandLineOptions(argc, argv);
+
+  if (!Compilations) {
+    std::string ErrorMessage;
+    if (BuildPath.getNumOccurrences() > 0) {
+      Compilations.reset(CompilationDatabase::autoDetectFromDirectory(
+          BuildPath, ErrorMessage));
+    } else {
+      Compilations.reset(CompilationDatabase::autoDetectFromSource(
+          SourcePaths[0], ErrorMessage));
+      // If no compilation database can be detected from source then we create
+      // a new FixedCompilationDatabase with c++11 support.
+      if (!Compilations) {
+        std::string CommandLine[] = {"-std=c++11"};
+        Compilations.reset(new FixedCompilationDatabase(".", CommandLine));
+      }
+    }
+    if (!Compilations)
+      llvm::report_fatal_error(ErrorMessage);
+  }
 
   // Since ExecutionTimeDirectoryName could be an empty string we compare
   // against the default value when the command line option is not specified.
@@ -284,9 +309,7 @@ int main(int argc, const char **argv) {
        I != E; ++I) {
     Transform *T = *I;
 
-    if (T->apply(FileStates, OptionsParser.getCompilations(),
-                 OptionsParser.getSourcePathList()) !=
-        0) {
+    if (T->apply(FileStates, *Compilations, SourcePaths) != 0) {
       // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
@@ -315,8 +338,7 @@ int main(int argc, const char **argv) {
     }
 
   if (FinalSyntaxCheck)
-    if (!doSyntaxCheck(OptionsParser.getCompilations(),
-                       OptionsParser.getSourcePathList(), FileStates))
+    if (!doSyntaxCheck(*Compilations, SourcePaths, FileStates))
       return 1;
 
   // Write results to file.
