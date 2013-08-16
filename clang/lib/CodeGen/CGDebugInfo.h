@@ -192,7 +192,7 @@ class CGDebugInfo {
                                 llvm::DIType RecordTy);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            SmallVectorImpl<llvm::Value *> &E,
-                           llvm::DIType RecordTy);
+                           llvm::DICompositeType RecordTy);
 
   void CollectVTableInfo(const CXXRecordDecl *Decl,
                          llvm::DIFile F,

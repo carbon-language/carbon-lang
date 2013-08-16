@@ -932,10 +932,10 @@ CollectRecordNormalField(const FieldDecl *field, uint64_t OffsetInBits,
 
 /// CollectRecordFields - A helper function to collect debug info for
 /// record fields. This is used while creating debug info entry for a Record.
-void CGDebugInfo::
-CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
-                    SmallVectorImpl<llvm::Value *> &elements,
-                    llvm::DIType RecordTy) {
+void CGDebugInfo::CollectRecordFields(const RecordDecl *record,
+                                      llvm::DIFile tunit,
+                                      SmallVectorImpl<llvm::Value *> &elements,
+                                      llvm::DICompositeType RecordTy) {
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(record);
 
   if (CXXDecl && CXXDecl->isLambda())
