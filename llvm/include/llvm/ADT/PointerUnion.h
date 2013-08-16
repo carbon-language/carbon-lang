@@ -177,10 +177,17 @@ namespace llvm {
   };
 
   template<typename PT1, typename PT2>
-  bool operator==(PointerUnion<PT1, PT2> lhs, PointerUnion<PT1, PT2> rhs) {
+  static bool operator==(PointerUnion<PT1, PT2> lhs,
+                         PointerUnion<PT1, PT2> rhs) {
     return lhs.getOpaqueValue() == rhs.getOpaqueValue();
   }
-  
+
+  template<typename PT1, typename PT2>
+  static bool operator!=(PointerUnion<PT1, PT2> lhs,
+                         PointerUnion<PT1, PT2> rhs) {
+    return lhs.getOpaqueValue() == rhs.getOpaqueValue();
+  }
+
   // Teach SmallPtrSet that PointerUnion is "basically a pointer", that has
   // # low bits available = min(PT1bits,PT2bits)-1.
   template<typename PT1, typename PT2>
