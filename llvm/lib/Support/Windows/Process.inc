@@ -130,12 +130,19 @@ int Process::GetCurrentGroupId()
 }
 
 // Some LLVM programs such as bugpoint produce core files as a normal part of
-// their operation. To prevent the disk from filling up, this configuration item
-// does what's necessary to prevent their generation.
+// their operation. To prevent the disk from filling up, this configuration
+// item does what's necessary to prevent their generation.
 void Process::PreventCoreFiles() {
-  // Windows doesn't do core files, but it does do modal pop-up message
-  // boxes.  As this method is used by bugpoint, preventing these pop-ups
-  // is the moral equivalent of suppressing core files.
+  // Windows does have the concept of core files, called minidumps.  However,
+  // disabling minidumps for a particular application extends past the lifetime
+  // of that application, which is the incorrect behavior for this API.
+  // Additionally, the APIs require elevated privileges to disable and re-
+  // enable minidumps, which makes this untenable. For more information, see
+  // WerAddExcludedApplication and WerRemoveExcludedApplication (Vista and
+  // later).
+  //
+  // Windows also has modal pop-up message boxes.  As this method is used by
+  // bugpoint, preventing these pop-ups is additionally important.
   SetErrorMode(SEM_FAILCRITICALERRORS |
                SEM_NOGPFAULTERRORBOX |
                SEM_NOOPENFILEERRORBOX);
