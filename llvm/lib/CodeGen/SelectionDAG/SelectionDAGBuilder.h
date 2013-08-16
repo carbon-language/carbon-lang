@@ -543,6 +543,9 @@ private:
     llvm_unreachable("UserOp2 should not exist at instruction selection time!");
   }
 
+  void processIntegerCallValue(const Instruction &I,
+                               SDValue Value, bool IsSigned);
+
   void HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
 
   /// EmitFuncArgumentDbgValue - If V is an function argument then create

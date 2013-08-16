@@ -339,7 +339,12 @@ static void eraseIfDead(MachineInstr *MI, const MachineRegisterInfo *MRI) {
 static bool removeIPMBasedCompare(MachineInstr *Compare, unsigned SrcReg,
                                   const MachineRegisterInfo *MRI,
                                   const TargetRegisterInfo *TRI) {
+  MachineInstr *LGFR = 0;
   MachineInstr *RLL = getDef(SrcReg, MRI);
+  if (RLL && RLL->getOpcode() == SystemZ::LGFR) {
+    LGFR = RLL;
+    RLL = getDef(LGFR->getOperand(1).getReg(), MRI);
+  }
   if (!RLL || !isShift(RLL, SystemZ::RLL, 31))
     return false;
 
@@ -362,6 +367,8 @@ static bool removeIPMBasedCompare(MachineInstr *Compare, unsigned SrcReg,
   }
 
   Compare->eraseFromParent();
+  if (LGFR)
+    eraseIfDead(LGFR, MRI);
   eraseIfDead(RLL, MRI);
   eraseIfDead(SRL, MRI);
   eraseIfDead(IPM, MRI);
