@@ -35,6 +35,94 @@ entry:
   ret void
 }
 
+; R600-CHECK: @load_v2i8
+; R600-CHECK: VTX_READ_8
+; R600-CHECK: VTX_READ_8
+; SI-CHECK: @load_v2i8
+; SI-CHECK: BUFFER_LOAD_UBYTE
+; SI-CHECK: BUFFER_LOAD_UBYTE
+define void @load_v2i8(<2 x i32> addrspace(1)* %out, <2 x i8> addrspace(1)* %in) {
+entry:
+  %0 = load <2 x i8> addrspace(1)* %in
+  %1 = zext <2 x i8> %0 to <2 x i32>
+  store <2 x i32> %1, <2 x i32> addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v2i8_sext
+; R600-CHECK-DAG: VTX_READ_8 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: VTX_READ_8 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
+; R600-CHECK-DAG: 24
+; SI-CHECK: @load_v2i8_sext
+; SI-CHECK: BUFFER_LOAD_SBYTE
+; SI-CHECK: BUFFER_LOAD_SBYTE
+define void @load_v2i8_sext(<2 x i32> addrspace(1)* %out, <2 x i8> addrspace(1)* %in) {
+entry:
+  %0 = load <2 x i8> addrspace(1)* %in
+  %1 = sext <2 x i8> %0 to <2 x i32>
+  store <2 x i32> %1, <2 x i32> addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v4i8
+; R600-CHECK: VTX_READ_8
+; R600-CHECK: VTX_READ_8
+; R600-CHECK: VTX_READ_8
+; R600-CHECK: VTX_READ_8
+; SI-CHECK: @load_v4i8
+; SI-CHECK: BUFFER_LOAD_UBYTE
+; SI-CHECK: BUFFER_LOAD_UBYTE
+; SI-CHECK: BUFFER_LOAD_UBYTE
+; SI-CHECK: BUFFER_LOAD_UBYTE
+define void @load_v4i8(<4 x i32> addrspace(1)* %out, <4 x i8> addrspace(1)* %in) {
+entry:
+  %0 = load <4 x i8> addrspace(1)* %in
+  %1 = zext <4 x i8> %0 to <4 x i32>
+  store <4 x i32> %1, <4 x i32> addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v4i8_sext
+; R600-CHECK-DAG: VTX_READ_8 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: VTX_READ_8 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: VTX_READ_8 [[DST_Z:T[0-9]\.[XYZW]]], [[DST_Z]]
+; R600-CHECK-DAG: VTX_READ_8 [[DST_W:T[0-9]\.[XYZW]]], [[DST_W]]
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Z_CHAN:[XYZW]]], [[DST_Z]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Z_CHAN]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_W_CHAN:[XYZW]]], [[DST_W]]
+; R600-CHECK-DAG: 24
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_W_CHAN]]
+; R600-CHECK-DAG: 24
+; SI-CHECK: @load_v4i8_sext
+; SI-CHECK: BUFFER_LOAD_SBYTE
+; SI-CHECK: BUFFER_LOAD_SBYTE
+; SI-CHECK: BUFFER_LOAD_SBYTE
+; SI-CHECK: BUFFER_LOAD_SBYTE
+define void @load_v4i8_sext(<4 x i32> addrspace(1)* %out, <4 x i8> addrspace(1)* %in) {
+entry:
+  %0 = load <4 x i8> addrspace(1)* %in
+  %1 = sext <4 x i8> %0 to <4 x i32>
+  store <4 x i32> %1, <4 x i32> addrspace(1)* %out
+  ret void
+}
+
 ; Load an i16 value from the global address space.
 ; R600-CHECK: @load_i16
 ; R600-CHECK: VTX_READ_16 T{{[0-9]+\.X, T[0-9]+\.X}}
@@ -61,6 +149,94 @@ entry:
   %0 = load i16 addrspace(1)* %in
   %1 = sext i16 %0 to i32
   store i32 %1, i32 addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v2i16
+; R600-CHECK: VTX_READ_16
+; R600-CHECK: VTX_READ_16
+; SI-CHECK: @load_v2i16
+; SI-CHECK: BUFFER_LOAD_USHORT
+; SI-CHECK: BUFFER_LOAD_USHORT
+define void @load_v2i16(<2 x i32> addrspace(1)* %out, <2 x i16> addrspace(1)* %in) {
+entry:
+  %0 = load <2 x i16> addrspace(1)* %in
+  %1 = zext <2 x i16> %0 to <2 x i32>
+  store <2 x i32> %1, <2 x i32> addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v2i16_sext
+; R600-CHECK-DAG: VTX_READ_16 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: VTX_READ_16 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
+; R600-CHECK-DAG: 16
+; SI-CHECK: @load_v2i16_sext
+; SI-CHECK: BUFFER_LOAD_SSHORT
+; SI-CHECK: BUFFER_LOAD_SSHORT
+define void @load_v2i16_sext(<2 x i32> addrspace(1)* %out, <2 x i16> addrspace(1)* %in) {
+entry:
+  %0 = load <2 x i16> addrspace(1)* %in
+  %1 = sext <2 x i16> %0 to <2 x i32>
+  store <2 x i32> %1, <2 x i32> addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v4i16
+; R600-CHECK: VTX_READ_16
+; R600-CHECK: VTX_READ_16
+; R600-CHECK: VTX_READ_16
+; R600-CHECK: VTX_READ_16
+; SI-CHECK: @load_v4i16
+; SI-CHECK: BUFFER_LOAD_USHORT
+; SI-CHECK: BUFFER_LOAD_USHORT
+; SI-CHECK: BUFFER_LOAD_USHORT
+; SI-CHECK: BUFFER_LOAD_USHORT
+define void @load_v4i16(<4 x i32> addrspace(1)* %out, <4 x i16> addrspace(1)* %in) {
+entry:
+  %0 = load <4 x i16> addrspace(1)* %in
+  %1 = zext <4 x i16> %0 to <4 x i32>
+  store <4 x i32> %1, <4 x i32> addrspace(1)* %out
+  ret void
+}
+
+; R600-CHECK: @load_v4i16_sext
+; R600-CHECK-DAG: VTX_READ_16 [[DST_X:T[0-9]\.[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: VTX_READ_16 [[DST_Y:T[0-9]\.[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: VTX_READ_16 [[DST_Z:T[0-9]\.[XYZW]]], [[DST_Z]]
+; R600-CHECK-DAG: VTX_READ_16 [[DST_W:T[0-9]\.[XYZW]]], [[DST_W]]
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_X_CHAN:[XYZW]]], [[DST_X]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_X_CHAN]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Y_CHAN:[XYZW]]], [[DST_Y]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Y_CHAN]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_Z_CHAN:[XYZW]]], [[DST_Z]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_Z_CHAN]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_W_CHAN:[XYZW]]], [[DST_W]]
+; R600-CHECK-DAG: 16
+; R600-CHECK-DAG: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_W_CHAN]]
+; R600-CHECK-DAG: 16
+; SI-CHECK: @load_v4i16_sext
+; SI-CHECK: BUFFER_LOAD_SSHORT
+; SI-CHECK: BUFFER_LOAD_SSHORT
+; SI-CHECK: BUFFER_LOAD_SSHORT
+; SI-CHECK: BUFFER_LOAD_SSHORT
+define void @load_v4i16_sext(<4 x i32> addrspace(1)* %out, <4 x i16> addrspace(1)* %in) {
+entry:
+  %0 = load <4 x i16> addrspace(1)* %in
+  %1 = sext <4 x i16> %0 to <4 x i32>
+  store <4 x i32> %1, <4 x i32> addrspace(1)* %out
   ret void
 }
 

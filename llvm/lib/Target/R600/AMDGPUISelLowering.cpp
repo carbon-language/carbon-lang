@@ -91,6 +91,19 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2i32, Custom);
   setOperationAction(ISD::EXTRACT_SUBVECTOR, MVT::v2f32, Custom);
 
+  setLoadExtAction(ISD::EXTLOAD, MVT::v2i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::v2i8, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::v2i8, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::v4i8, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::v4i8, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i8, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::v2i16, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::v2i16, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::v2i16, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::v4i16, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::v4i16, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::v4i16, Expand);
+
   setOperationAction(ISD::FNEG, MVT::v2f32, Expand);
   setOperationAction(ISD::FNEG, MVT::v4f32, Expand);
 
