@@ -3200,6 +3200,7 @@ CGDebugInfo::EmitNamespaceAlias(const NamespaceAliasDecl &NA) {
 /// namespace decl.
 llvm::DINameSpace
 CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
+  NSDecl = NSDecl->getCanonicalDecl();
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH>::iterator I =
     NameSpaceCache.find(NSDecl);
   if (I != NameSpaceCache.end())
