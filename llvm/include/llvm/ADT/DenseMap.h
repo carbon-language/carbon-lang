@@ -713,13 +713,13 @@ public:
     init(NumInitBuckets);
   }
 
-  SmallDenseMap(const SmallDenseMap &other) {
+  SmallDenseMap(const SmallDenseMap &other) : BaseT() {
     init(0);
     copyFrom(other);
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-  SmallDenseMap(SmallDenseMap &&other) {
+  SmallDenseMap(SmallDenseMap &&other) : BaseT() {
     init(0);
     swap(other);
   }
