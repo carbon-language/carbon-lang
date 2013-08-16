@@ -336,6 +336,10 @@ def MVGHI : StoreSIL<"mvghi", 0xE548, store,         imm64sx16>;
 let mayLoad = 1, mayStore = 1 in
   defm MVC : MemorySS<"mvc", 0xD2, z_mvc>;
 
+// String moves.
+let mayLoad = 1, mayStore = 1, Defs = [CC], Uses = [R0W] in
+  defm MVST : StringRRE<"mvst", 0xB255, z_stpcpy>;
+
 defm LoadStore8_32  : MVCLoadStore<anyextloadi8, truncstorei8, i32,
                                    MVCWrapper, 1>;
 defm LoadStore16_32 : MVCLoadStore<anyextloadi16, truncstorei16, i32,

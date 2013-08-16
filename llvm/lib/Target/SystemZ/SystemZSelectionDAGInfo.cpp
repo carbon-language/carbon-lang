@@ -159,6 +159,17 @@ EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
 }
 
 std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
+EmitTargetCodeForStrcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                        SDValue Dest, SDValue Src,
+                        MachinePointerInfo DestPtrInfo,
+                        MachinePointerInfo SrcPtrInfo, bool isStpcpy) const {
+  SDVTList VTs = DAG.getVTList(Dest.getValueType(), MVT::Other);
+  SDValue EndDest = DAG.getNode(SystemZISD::STPCPY, DL, VTs, Chain, Dest, Src,
+                                DAG.getConstant(0, MVT::i32));
+  return std::make_pair(isStpcpy ? EndDest : Dest, EndDest.getValue(1));
+}
+
+std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
 EmitTargetCodeForStrcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                         SDValue Src1, SDValue Src2,
                         MachinePointerInfo Op1PtrInfo,

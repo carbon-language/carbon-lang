@@ -5558,6 +5558,35 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
   return false;
 }
 
+/// visitStrCpyCall -- See if we can lower a strcpy or stpcpy call into an
+/// optimized form.  If so, return true and lower it, otherwise return false
+/// and it will be lowered like a normal call.
+bool SelectionDAGBuilder::visitStrCpyCall(const CallInst &I, bool isStpcpy) {
+  // Verify that the prototype makes sense.  char *strcpy(char *, char *)
+  if (I.getNumArgOperands() != 2)
+    return false;
+
+  const Value *Arg0 = I.getArgOperand(0), *Arg1 = I.getArgOperand(1);
+  if (!Arg0->getType()->isPointerTy() ||
+      !Arg1->getType()->isPointerTy() ||
+      !I.getType()->isPointerTy())
+    return false;
+
+  const TargetSelectionDAGInfo &TSI = DAG.getSelectionDAGInfo();
+  std::pair<SDValue, SDValue> Res =
+    TSI.EmitTargetCodeForStrcpy(DAG, getCurSDLoc(), getRoot(),
+                                getValue(Arg0), getValue(Arg1),
+                                MachinePointerInfo(Arg0),
+                                MachinePointerInfo(Arg1), isStpcpy);
+  if (Res.first.getNode()) {
+    setValue(&I, Res.first);
+    DAG.setRoot(Res.second);
+    return true;
+  }
+
+  return false;
+}
+
 /// visitStrCmpCall - See if we can lower a call to strcmp in an optimized form.
 /// If so, return true and lower it, otherwise return false and it will be
 /// lowered like a normal call.
@@ -5731,6 +5760,14 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
         break;
       case LibFunc::memcmp:
         if (visitMemCmpCall(I))
+          return;
+        break;
+      case LibFunc::strcpy:
+        if (visitStrCpyCall(I, false))
+          return;
+        break;
+      case LibFunc::stpcpy:
+        if (visitStrCpyCall(I, true))
           return;
         break;
       case LibFunc::strcmp:

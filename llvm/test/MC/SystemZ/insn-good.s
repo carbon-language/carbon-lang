@@ -5652,6 +5652,16 @@
 	mviy	524287(%r1), 42
 	mviy	524287(%r15), 42
 
+#CHECK: mvst	%r0, %r0                # encoding: [0xb2,0x55,0x00,0x00]
+#CHECK: mvst	%r0, %r15               # encoding: [0xb2,0x55,0x00,0x0f]
+#CHECK: mvst	%r15, %r0               # encoding: [0xb2,0x55,0x00,0xf0]
+#CHECK: mvst	%r7, %r8                # encoding: [0xb2,0x55,0x00,0x78]
+
+	mvst	%r0,%r0
+	mvst	%r0,%r15
+	mvst	%r15,%r0
+	mvst	%r7,%r8
+
 #CHECK: mxbr	%f0, %f0                # encoding: [0xb3,0x4c,0x00,0x00]
 #CHECK: mxbr	%f0, %f13               # encoding: [0xb3,0x4c,0x00,0x0d]
 #CHECK: mxbr	%f8, %f5                # encoding: [0xb3,0x4c,0x00,0x85]

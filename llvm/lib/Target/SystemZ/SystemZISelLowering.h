@@ -84,6 +84,9 @@ namespace SystemZISD {
     // as for MVC.
     CLC,
 
+    // Use an MVST-based sequence to implement stpcpy().
+    STPCPY,
+
     // Use a CLST-based sequence to implement strcmp().  The two input operands
     // are the addresses of the strings to compare.
     STRCMP,

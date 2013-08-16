@@ -109,6 +109,21 @@ public:
     return std::make_pair(SDValue(), SDValue());
   }
 
+  /// EmitTargetCodeForStrcpy - Emit target-specific code that performs a
+  /// strcpy or stpcpy, in cases where that is faster than a libcall.
+  /// The first returned SDValue is the result of the copy (the start
+  /// of the destination string for strcpy, a pointer to the null terminator
+  /// for stpcpy) and the second is the chain.  Both SDValues can be null
+  /// if a normal libcall should be used.
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                          SDValue Dest, SDValue Src,
+                          MachinePointerInfo DestPtrInfo,
+                          MachinePointerInfo SrcPtrInfo,
+                          bool isStpcpy) const {
+    return std::make_pair(SDValue(), SDValue());
+  }
+
   /// EmitTargetCodeForStrcmp - Emit target-specific code that performs a
   /// strcmp, in cases where that is faster than a libcall.  The first
   /// returned SDValue is the result of the strcmp and the second is

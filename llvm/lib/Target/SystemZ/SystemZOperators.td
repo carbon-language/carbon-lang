@@ -121,6 +121,8 @@ def z_clc               : SDNode<"SystemZISD::CLC", SDT_ZMemMemLength,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_strcmp            : SDNode<"SystemZISD::STRCMP", SDT_ZString,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
+def z_stpcpy            : SDNode<"SystemZISD::STPCPY", SDT_ZString,
+                                 [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def z_ipm               : SDNode<"SystemZISD::IPM", SDT_ZI32Intrinsic,
                                  [SDNPInGlue]>;
 

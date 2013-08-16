@@ -699,7 +699,8 @@ public:
     case LibFunc::trunc:     case LibFunc::truncf:     case LibFunc::truncl:
     case LibFunc::log2:      case LibFunc::log2f:      case LibFunc::log2l:
     case LibFunc::exp2:      case LibFunc::exp2f:      case LibFunc::exp2l:
-    case LibFunc::memcmp:    case LibFunc::strcmp:
+    case LibFunc::memcmp:    case LibFunc::strcmp:     case LibFunc::strcpy:
+    case LibFunc::stpcpy:
       return true;
     }
     return false;

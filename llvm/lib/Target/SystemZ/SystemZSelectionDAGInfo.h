@@ -47,6 +47,13 @@ public:
                           MachinePointerInfo Op2PtrInfo) const LLVM_OVERRIDE;
 
   virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                          SDValue Dest, SDValue Src,
+                          MachinePointerInfo DestPtrInfo,
+                          MachinePointerInfo SrcPtrInfo,
+                          bool isStpcpy) const LLVM_OVERRIDE;
+
+  virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForStrcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           SDValue Src1, SDValue Src2,
                           MachinePointerInfo Op1PtrInfo,
