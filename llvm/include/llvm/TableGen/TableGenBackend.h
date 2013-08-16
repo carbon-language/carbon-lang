@@ -20,7 +20,7 @@ namespace llvm {
 
 class raw_ostream;
 
-/// emitSourceFileHeader - Output a LLVM style file header to the specified
+/// emitSourceFileHeader - Output an LLVM style file header to the specified
 /// raw_ostream.
 void emitSourceFileHeader(StringRef Desc, raw_ostream &OS);
 

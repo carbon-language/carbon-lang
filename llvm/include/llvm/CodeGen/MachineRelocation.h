@@ -57,7 +57,7 @@ class MachineRelocation {
   union {
     void *Result;           // If this has been resolved to a resolved pointer
     GlobalValue *GV;        // If this is a pointer to a GV or an indirect ref.
-    MachineBasicBlock *MBB; // If this is a pointer to a LLVM BB
+    MachineBasicBlock *MBB; // If this is a pointer to an LLVM BB
     const char *ExtSym;     // If this is a pointer to a named symbol
     unsigned Index;         // Constant pool / jump table index
     unsigned GOTIndex;      // Index in the GOT of this symbol/global

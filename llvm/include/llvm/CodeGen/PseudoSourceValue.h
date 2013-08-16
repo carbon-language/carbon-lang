@@ -44,7 +44,7 @@ namespace llvm {
     virtual bool isAliased(const MachineFrameInfo *) const;
 
     /// mayAlias - Return true if the memory pointed to by this
-    /// PseudoSourceValue can ever alias a LLVM IR Value.
+    /// PseudoSourceValue can ever alias an LLVM IR Value.
     virtual bool mayAlias(const MachineFrameInfo *) const;
 
     /// classof - Methods for support type inquiry through isa, cast, and

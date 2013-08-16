@@ -132,6 +132,6 @@ is supposed to be cache-line-aligned, but it is not page-aligned.
 We generate instrumentation traces and optimized traces into separate
 trace caches. We keep the instrumented code around because you don't
 want to delete a trace when you still might have to return to it
-(i.e., return from a llvm_first_trigger() or countPath() call.)
+(i.e., return from an llvm_first_trigger() or countPath() call.)
 
 

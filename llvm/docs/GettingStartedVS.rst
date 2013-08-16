@@ -164,7 +164,7 @@ An Example Using the LLVM Tool Chain
         return 0;
       }
 
-2. Next, compile the C file into a LLVM bitcode file:
+2. Next, compile the C file into an LLVM bitcode file:
 
    .. code-block:: bat
 

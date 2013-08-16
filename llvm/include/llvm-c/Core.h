@@ -460,7 +460,7 @@ unsigned LLVMGetMDKindID(const char* Name, unsigned SLen);
 /**
  * @defgroup LLVMCCoreModule Modules
  *
- * Modules represent the top-level structure in a LLVM program. An LLVM
+ * Modules represent the top-level structure in an LLVM program. An LLVM
  * module is effectively a translation unit or a collection of
  * translation units merged together.
  *
@@ -1041,7 +1041,7 @@ LLVMTypeRef LLVMX86MMXType(void);
  * hierarchy of classes within this type. Depending on the instance
  * obtained, not all APIs are available.
  *
- * Callers can determine the type of a LLVMValueRef by calling the
+ * Callers can determine the type of an LLVMValueRef by calling the
  * LLVMIsA* family of functions (e.g. LLVMIsAArgument()). These
  * functions are defined by a macro, so it isn't obvious which are
  * available by looking at the Doxygen source code. Instead, look at the
@@ -1181,7 +1181,7 @@ LLVMBool LLVMIsUndef(LLVMValueRef Val);
 /**
  * Convert value instances between types.
  *
- * Internally, a LLVMValueRef is "pinned" to a specific type. This
+ * Internally, an LLVMValueRef is "pinned" to a specific type. This
  * series of functions allows you to cast an instance to a specific
  * type.
  *
@@ -1203,7 +1203,7 @@ LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DECLARE_VALUE_CAST)
  * This module defines functions that allow you to inspect the uses of a
  * LLVMValueRef.
  *
- * It is possible to obtain a LLVMUseRef for any LLVMValueRef instance.
+ * It is possible to obtain an LLVMUseRef for any LLVMValueRef instance.
  * Each LLVMUseRef (which corresponds to a llvm::Use instance) holds a
  * llvm::User and llvm::Value.
  *
@@ -1806,7 +1806,7 @@ LLVMValueRef LLVMGetParam(LLVMValueRef Fn, unsigned Index);
 /**
  * Obtain the function to which this argument belongs.
  *
- * Unlike other functions in this group, this one takes a LLVMValueRef
+ * Unlike other functions in this group, this one takes an LLVMValueRef
  * that corresponds to a llvm::Attribute.
  *
  * The returned LLVMValueRef is the llvm::Function to which this
@@ -1831,7 +1831,7 @@ LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
 /**
  * Obtain the next parameter to a function.
  *
- * This takes a LLVMValueRef obtained from LLVMGetFirstParam() (which is
+ * This takes an LLVMValueRef obtained from LLVMGetFirstParam() (which is
  * actually a wrapped iterator) and obtains the next parameter from the
  * underlying iterator.
  */
@@ -1980,12 +1980,12 @@ void LLVMGetMDNodeOperands(LLVMValueRef V, LLVMValueRef *Dest);
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB);
 
 /**
- * Determine whether a LLVMValueRef is itself a basic block.
+ * Determine whether an LLVMValueRef is itself a basic block.
  */
 LLVMBool LLVMValueIsBasicBlock(LLVMValueRef Val);
 
 /**
- * Convert a LLVMValueRef to a LLVMBasicBlockRef instance.
+ * Convert an LLVMValueRef to an LLVMBasicBlockRef instance.
  */
 LLVMBasicBlockRef LLVMValueAsBasicBlock(LLVMValueRef Val);
 
@@ -2142,7 +2142,7 @@ LLVMValueRef LLVMGetFirstInstruction(LLVMBasicBlockRef BB);
 /**
  * Obtain the last instruction in a basic block.
  *
- * The returned LLVMValueRef corresponds to a LLVM:Instruction.
+ * The returned LLVMValueRef corresponds to an LLVM:Instruction.
  */
 LLVMValueRef LLVMGetLastInstruction(LLVMBasicBlockRef BB);
 
@@ -2324,12 +2324,12 @@ void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,
 unsigned LLVMCountIncoming(LLVMValueRef PhiNode);
 
 /**
- * Obtain an incoming value to a PHI node as a LLVMValueRef.
+ * Obtain an incoming value to a PHI node as an LLVMValueRef.
  */
 LLVMValueRef LLVMGetIncomingValue(LLVMValueRef PhiNode, unsigned Index);
 
 /**
- * Obtain an incoming value to a PHI node as a LLVMBasicBlockRef.
+ * Obtain an incoming value to a PHI node as an LLVMBasicBlockRef.
  */
 LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
 

@@ -1312,7 +1312,7 @@ Example with clang
      Clang works just like GCC by default.  The standard -S and -c arguments
      work as usual (producing a native .s or .o file, respectively).
 
-#. Next, compile the C file into a LLVM bitcode file:
+#. Next, compile the C file into an LLVM bitcode file:
 
    .. code-block:: console
 

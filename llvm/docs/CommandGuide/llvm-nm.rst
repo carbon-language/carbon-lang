@@ -79,7 +79,7 @@ D
 Because LLVM bitcode files typically contain objects that are not considered to
 have addresses until they are linked into an executable image or dynamically
 compiled "just-in-time", :program:`llvm-nm` does not print an address for any
-symbol in a LLVM bitcode file, even symbols which are defined in the bitcode
+symbol in an LLVM bitcode file, even symbols which are defined in the bitcode
 file.
 
 

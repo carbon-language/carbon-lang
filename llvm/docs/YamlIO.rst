@@ -408,7 +408,7 @@ some time format (e.g. 4-May-2012 10:30pm).  YAML I/O has a way to support
 custom formatting and parsing of scalar types by specializing ScalarTraits<> on
 your data type.  When writing, YAML I/O will provide the native type and
 your specialization must create a temporary llvm::StringRef.  When reading,
-YAML I/O will provide a llvm::StringRef of scalar and your specialization
+YAML I/O will provide an llvm::StringRef of scalar and your specialization
 must convert that to your native data type.  An outline of a custom scalar type
 looks like:
 
