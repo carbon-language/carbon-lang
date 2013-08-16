@@ -311,18 +311,11 @@ bool SystemZInstrInfo::analyzeCompare(const MachineInstr *MI,
   return false;
 }
 
-// If Reg is a virtual register that is used by only a single non-debug
-// instruction, return the defining instruction, otherwise return null.
-static MachineInstr *getDefSingleUse(const MachineRegisterInfo *MRI,
-                                     unsigned Reg) {
+// If Reg is a virtual register, return its definition, otherwise return null.
+static MachineInstr *getDef(unsigned Reg,
+                            const MachineRegisterInfo *MRI) {
   if (TargetRegisterInfo::isPhysicalRegister(Reg))
     return 0;
-
-  MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg);
-  MachineRegisterInfo::use_nodbg_iterator E = MRI->use_nodbg_end();
-  if (I == E || llvm::next(I) != E)
-    return 0;
-
   return MRI->getUniqueVRegDef(Reg);
 }
 
@@ -333,42 +326,46 @@ static bool isShift(MachineInstr *MI, int Opcode, int64_t Imm) {
           MI->getOperand(3).getImm() == Imm);
 }
 
+// If the destination of MI has no uses, delete it as dead.
+static void eraseIfDead(MachineInstr *MI, const MachineRegisterInfo *MRI) {
+  if (MRI->use_nodbg_empty(MI->getOperand(0).getReg()))
+    MI->eraseFromParent();
+}
+
 // Compare compares SrcReg against zero.  Check whether SrcReg contains
-// the result of an IPM sequence that is only used by Compare.  Try to
-// delete both of them if so and return true if a change was made.
-static bool removeIPM(MachineInstr *Compare, unsigned SrcReg,
-                      const MachineRegisterInfo *MRI,
-                      const TargetRegisterInfo *TRI) {
-  MachineInstr *SRA = getDefSingleUse(MRI, SrcReg);
-  if (!SRA || !isShift(SRA, SystemZ::SRA, 30))
+// the result of an IPM sequence whose input CC survives until Compare,
+// and whether Compare is therefore redundant.  Delete it and return
+// true if so.
+static bool removeIPMBasedCompare(MachineInstr *Compare, unsigned SrcReg,
+                                  const MachineRegisterInfo *MRI,
+                                  const TargetRegisterInfo *TRI) {
+  MachineInstr *RLL = getDef(SrcReg, MRI);
+  if (!RLL || !isShift(RLL, SystemZ::RLL, 31))
     return false;
 
-  MachineInstr *SLL = getDefSingleUse(MRI, SRA->getOperand(1).getReg());
-  if (!SLL || !isShift(SLL, SystemZ::SLL, 2))
+  MachineInstr *SRL = getDef(RLL->getOperand(1).getReg(), MRI);
+  if (!SRL || !isShift(SRL, SystemZ::SRL, 28))
     return false;
 
-  MachineInstr *IPM = getDefSingleUse(MRI, SLL->getOperand(1).getReg());
+  MachineInstr *IPM = getDef(SRL->getOperand(1).getReg(), MRI);
   if (!IPM || IPM->getOpcode() != SystemZ::IPM)
     return false;
 
   // Check that there are no assignments to CC between the IPM and Compare,
-  // except for the SRA that we'd like to delete.  We can ignore SLL because
-  // it does not assign to CC.  We can also ignore uses of the SRA CC result,
-  // since it is effectively restoring CC to the value it had before IPM
-  // (for all current use cases).
   if (IPM->getParent() != Compare->getParent())
     return false;
   MachineBasicBlock::iterator MBBI = IPM, MBBE = Compare;
   for (++MBBI; MBBI != MBBE; ++MBBI) {
     MachineInstr *MI = MBBI;
-    if (MI != SRA && MI->modifiesRegister(SystemZ::CC, TRI))
+    if (MI->modifiesRegister(SystemZ::CC, TRI))
       return false;
   }
 
-  IPM->eraseFromParent();
-  SLL->eraseFromParent();
-  SRA->eraseFromParent();
   Compare->eraseFromParent();
+  eraseIfDead(RLL, MRI);
+  eraseIfDead(SRL, MRI);
+  eraseIfDead(IPM, MRI);
+
   return true;
 }
 
@@ -381,7 +378,7 @@ SystemZInstrInfo::optimizeCompareInstr(MachineInstr *Compare,
   bool IsLogical = (Compare->getDesc().TSFlags & SystemZII::IsLogical) != 0;
   if (Value == 0 &&
       !IsLogical &&
-      removeIPM(Compare, SrcReg, MRI, TM.getRegisterInfo()))
+      removeIPMBasedCompare(Compare, SrcReg, MRI, TM.getRegisterInfo()))
     return true;
   return false;
 }

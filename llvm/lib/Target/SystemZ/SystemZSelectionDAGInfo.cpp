@@ -140,14 +140,15 @@ EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           Src1, Src2, Size);
       SDValue Glue = Chain.getValue(1);
       // IPM inserts the CC value into bits 29 and 28, with 0 meaning "equal",
-      // 1 meaning "greater" and 2 meaning "less".  Convert them into an
-      // integer that is respectively equal, greater or less than 0.
+      // 1 meaning "less" and 2 meaning "greater".  Bits 30 and 31 are zero.
+      // Convert this into an integer that is respectively equal, less
+      // or greater than 0.
       SDValue IPM = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
-      SDValue SHL = DAG.getNode(ISD::SHL, DL, MVT::i32, IPM,
-                                DAG.getConstant(2, MVT::i32));
-      SDValue SRA = DAG.getNode(ISD::SRA, DL, MVT::i32, SHL,
-                                DAG.getConstant(30, MVT::i32));
-      return std::make_pair(SRA, Chain);
+      SDValue SRL = DAG.getNode(ISD::SRL, DL, MVT::i32, IPM,
+                                DAG.getConstant(28, MVT::i32));
+      SDValue ROTL = DAG.getNode(ISD::ROTL, DL, MVT::i32, SRL,
+                                 DAG.getConstant(31, MVT::i32));
+      return std::make_pair(ROTL, Chain);
     }
   }
   return std::make_pair(SDValue(), SDValue());

@@ -17,9 +17,9 @@ define i32 @f1(i8 *%src1, i8 *%src2) {
 define i32 @f2(i8 *%src1, i8 *%src2) {
 ; CHECK-LABEL: f2:
 ; CHECK: clc 0(2,%r2), 0(%r3)
-; CHECK: ipm %r2
-; CHECK: sll %r2, 2
-; CHECK: sra %r2, 30
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: srl [[REG]], 28
+; CHECK: rll %r2, [[REG]], 31
 ; CHECK: br %r14
   %res = call i32 @memcmp(i8 *%src1, i8 *%src2, i64 2)
   ret i32 %res
@@ -101,14 +101,13 @@ exit:
 }
 
 ; Check the upper end of the CLC range.  Here the result is used both as
-; an integer and for branching, but it's better to branch on the result
-; of the SRA.
+; an integer and for branching.
 define i32 @f7(i8 *%src1, i8 *%src2, i32 *%dest) {
 ; CHECK-LABEL: f7:
 ; CHECK: clc 0(256,%r2), 0(%r3)
-; CHECK: ipm %r2
-; CHECK: sll %r2, 2
-; CHECK: sra %r2, 30
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: srl [[REG]], 28
+; CHECK: rll %r2, [[REG]], 31
 ; CHECK: jl {{.L*}}
 ; CHECK: br %r14
 entry:
