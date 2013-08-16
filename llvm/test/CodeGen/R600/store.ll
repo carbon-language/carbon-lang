@@ -31,6 +31,20 @@ entry:
   ret void
 }
 
+; EG-CHECK: @store_v4i32
+; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW
+; EG-CHECK-NOT: MEM_RAT_CACHELESS STORE_RAW
+; CM-CHECK: @store_v4i32
+; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
+; CM-CHECK-NOT: MEM_RAT_CACHELESS STORE_DWORD
+; SI-CHECK: @store_v4i32
+; SI-CHECK: BUFFER_STORE_DWORDX4
+define void @store_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %in) {
+entry:
+  store <4 x i32> %in, <4 x i32> addrspace(1)* %out
+  ret void
+}
+
 ; The stores in this function are combined by the optimizer to create a
 ; 64-bit store with 32-bit alignment.  This is legal for SI and the legalizer
 ; should not try to split the 64-bit store back into 2 32-bit stores.
