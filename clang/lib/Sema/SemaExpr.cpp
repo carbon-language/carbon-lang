@@ -9419,9 +9419,6 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
     if (resultType->isArithmeticType() || // C99 6.5.3.3p1
         resultType->isVectorType()) 
       break;
-    else if (getLangOpts().CPlusPlus && // C++ [expr.unary.op]p6-7
-             resultType->isEnumeralType())
-      break;
     else if (getLangOpts().CPlusPlus && // C++ [expr.unary.op]p6
              Opc == UO_Plus &&
              resultType->isPointerType())

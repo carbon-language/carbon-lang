@@ -266,3 +266,8 @@ namespace PR15633 {
   struct B { enum class E; };
   template<typename T> enum class B::E { e }; // expected-error {{enumeration cannot be a template}}
 }
+
+namespace PR16900 {
+  enum class A;
+  A f(A a) { return -a; } // expected-error {{invalid argument type 'PR16900::A' to unary expression}}
+}
