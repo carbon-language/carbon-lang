@@ -204,10 +204,9 @@ unsigned PPCFrameLowering::determineFrameLayout(MachineFunction &MF,
   unsigned FrameSize =
     UseEstimate ? MFI->estimateStackSize(MF) : MFI->getStackSize();
 
-  // Get the alignments provided by the target, and the maximum alignment
-  // (if any) of the fixed frame objects.
-  unsigned TargetAlign = getStackAlignment();
-  unsigned MaxAlign = MFI->getMaxAlignment();
+  // Get stack alignments. The frame must be aligned to the greatest of these:
+  unsigned TargetAlign = getStackAlignment(); // alignment required per the ABI
+  unsigned MaxAlign = MFI->getMaxAlignment(); // algmt required by data in frame
   unsigned AlignMask = std::max(MaxAlign, TargetAlign) - 1;
 
   const PPCRegisterInfo *RegInfo =
@@ -346,12 +345,20 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   bool needsFrameMoves = MMI.hasDebugInfo() ||
     MF.getFunction()->needsUnwindTableEntry();
 
+  // Get processor type.
+  bool isPPC64 = Subtarget.isPPC64();
+  // Get the ABI.
+  bool isDarwinABI = Subtarget.isDarwinABI();
+  bool isSVR4ABI = Subtarget.isSVR4ABI();
+  assert((isDarwinABI || isSVR4ABI) &&
+         "Currently only Darwin and SVR4 ABIs are supported for PowerPC.");
+
   // Prepare for frame info.
   MCSymbol *FrameLabel = 0;
 
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
-  if (!Subtarget.isSVR4ABI())
+  if (!isSVR4ABI)
     for (unsigned i = 0; MBBI != MBB.end(); ++i, ++MBBI) {
       if (MBBI->getOpcode() == PPC::UPDATE_VRSAVE) {
         HandleVRSaveUpdate(MBBI, TII);
@@ -371,10 +378,6 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (MFI->isFrameAddressTaken())
     replaceFPWithRealFP(MF);
 
-  // Get processor type.
-  bool isPPC64 = Subtarget.isPPC64();
-  // Get operating system
-  bool isDarwinABI = Subtarget.isDarwinABI();
   // Check if the link register (LR) must be saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
@@ -383,11 +386,18 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   bool HasFP = hasFP(MF);
   bool HasBP = RegInfo->hasBasePointer(MF);
 
+  // Regarding this assert: Even though LR is saved in the caller's frame (i.e.,
+  // LROffset is positive), that slot is callee-owned. Because PPC32 SVR4 has no
+  // Red Zone, an asynchronous event (a form of "callee") could claim a frame &
+  // overwrite it, so PPC32 SVR4 must claim at least a minimal frame to save LR.
+  assert((isPPC64 || !isSVR4ABI || !(!FrameSize && (MustSaveLR || HasFP))) &&
+         "FrameSize must be >0 to save/restore the FP or LR for 32-bit SVR4.");
+
   int LROffset = PPCFrameLowering::getReturnSaveOffset(isPPC64, isDarwinABI);
 
   int FPOffset = 0;
   if (HasFP) {
-    if (Subtarget.isSVR4ABI()) {
+    if (isSVR4ABI) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
       int FPIndex = FI->getFramePointerSaveIndex();
       assert(FPIndex && "No Frame Pointer Save Slot!");
@@ -399,7 +409,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   int BPOffset = 0;
   if (HasBP) {
-    if (Subtarget.isSVR4ABI()) {
+    if (isSVR4ABI) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
       int BPIndex = FI->getBasePointerSaveIndex();
       assert(BPIndex && "No Base Pointer Save Slot!");
@@ -409,6 +419,16 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
         PPCFrameLowering::getBasePointerSaveOffset(isPPC64, isDarwinABI);
     }
   }
+
+  // Get stack alignments.
+  unsigned MaxAlign = MFI->getMaxAlignment();
+  if (HasBP && MaxAlign > 1)
+    assert(isPowerOf2_32(MaxAlign) && isInt<16>(MaxAlign) &&
+           "Invalid alignment!");
+
+  // Frames of 32KB & larger require special handling because they cannot be
+  // indexed into with a simple STDU/STWU/STD/STW immediate offset operand.
+  bool isLargeFrame = !isInt<16>(NegFrameSize);
 
   if (isPPC64) {
     if (MustSaveLR)
@@ -444,21 +464,19 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::X12, getKillRegState(true))
         .addImm(8)
         .addReg(PPC::X1);
-  } else {
+  } else { // PPC32...
     if (MustSaveLR)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::MFLR), PPC::R0);
 
     if (HasFP)
-      // FIXME: On PPC32 SVR4, FPOffset is negative and access to negative
-      // offsets of R1 is not allowed.
+      // FIXME: On PPC32 SVR4, we must not spill before claiming the stackframe.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
         .addReg(PPC::R31)
         .addImm(FPOffset)
         .addReg(PPC::R1);
 
     if (HasBP)
-      // FIXME: On PPC32 SVR4, FPOffset is negative and access to negative
-      // offsets of R1 is not allowed.
+      // FIXME: On PPC32 SVR4, we must not spill before claiming the stackframe.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
         .addReg(PPC::R30)
         .addImm(BPOffset)
@@ -468,23 +486,19 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
            "Prologue CR saving supported only in 64-bit mode");
 
     if (MustSaveLR)
+      // FIXME: On PPC32 SVR4, we must not spill before claiming the stackframe.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STW))
         .addReg(PPC::R0)
         .addImm(LROffset)
         .addReg(PPC::R1);
   }
 
-  // Skip if a leaf routine.
+  // Skip the rest if this is a leaf function & all spills fit in the Red Zone.
   if (!FrameSize) return;
-
-  // Get stack alignments.
-  unsigned MaxAlign = MFI->getMaxAlignment();
 
   // Adjust stack pointer: r1 += NegFrameSize.
   // If there is a preferred stack alignment, align R1 now
-  if (!isPPC64) {
-    // PPC32.
-
+  if (!isPPC64) { // PPC32...
     if (HasBP) {
       // Save a copy of r1 as the base pointer.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::OR), PPC::R30)
@@ -493,15 +507,12 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     }
 
     if (HasBP && MaxAlign > 1) {
-      assert(isPowerOf2_32(MaxAlign) && isInt<16>(MaxAlign) &&
-             "Invalid alignment!");
-
       BuildMI(MBB, MBBI, dl, TII.get(PPC::RLWINM), PPC::R0)
         .addReg(PPC::R1)
         .addImm(0)
         .addImm(32 - Log2_32(MaxAlign))
         .addImm(31);
-      if (isInt<16>(NegFrameSize)) {
+      if (!isLargeFrame) {
         BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC), PPC::R0)
           .addReg(PPC::R0, RegState::Kill)
           .addImm(NegFrameSize);
@@ -519,11 +530,13 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::R1, RegState::Kill)
         .addReg(PPC::R1)
         .addReg(PPC::R0);
-    } else if (isInt<16>(NegFrameSize)) {
+
+    } else if (!isLargeFrame) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STWU), PPC::R1)
         .addReg(PPC::R1)
         .addImm(NegFrameSize)
         .addReg(PPC::R1);
+
     } else {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
         .addImm(NegFrameSize >> 16);
@@ -535,7 +548,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::R1)
         .addReg(PPC::R0);
     }
-  } else {    // PPC64.
+  } else { // PPC64...
     if (HasBP) {
       // Save a copy of r1 as the base pointer.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::OR8), PPC::X30)
@@ -544,14 +557,11 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     }
 
     if (HasBP && MaxAlign > 1) {
-      assert(isPowerOf2_32(MaxAlign) && isInt<16>(MaxAlign) &&
-             "Invalid alignment!");
-
       BuildMI(MBB, MBBI, dl, TII.get(PPC::RLDICL), PPC::X0)
         .addReg(PPC::X1)
         .addImm(0)
         .addImm(64 - Log2_32(MaxAlign));
-      if (isInt<16>(NegFrameSize)) {
+      if (!isLargeFrame) {
         BuildMI(MBB, MBBI, dl, TII.get(PPC::SUBFIC8), PPC::X0)
           .addReg(PPC::X0, RegState::Kill)
           .addImm(NegFrameSize);
@@ -569,11 +579,13 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(PPC::X1, RegState::Kill)
         .addReg(PPC::X1)
         .addReg(PPC::X0);
-    } else if (isInt<16>(NegFrameSize)) {
+
+    } else if (!isLargeFrame) {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::STDU), PPC::X1)
         .addReg(PPC::X1)
         .addImm(NegFrameSize)
         .addReg(PPC::X1);
+
     } else {
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
         .addImm(NegFrameSize >> 16);
@@ -625,11 +637,11 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // If there is a frame pointer, copy R1 into R31
   if (HasFP) {
-    if (!isPPC64) {
+    if (!isPPC64) { // PPC32...
       BuildMI(MBB, MBBI, dl, TII.get(PPC::OR), PPC::R31)
         .addReg(PPC::R1)
         .addReg(PPC::R1);
-    } else {
+    } else { // PPC64...
       BuildMI(MBB, MBBI, dl, TII.get(PPC::OR8), PPC::X31)
         .addReg(PPC::X1)
         .addReg(PPC::X1);
@@ -641,8 +653,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       // Mark effective beginning of when frame pointer is ready.
       BuildMI(MBB, MBBI, dl, TII.get(PPC::PROLOG_LABEL)).addSym(ReadyLabel);
 
-      unsigned Reg = HasFP ? (isPPC64 ? PPC::X31 : PPC::R31)
-                           : (isPPC64 ? PPC::X1 : PPC::R1);
+      unsigned Reg = isPPC64 ? PPC::X31 : PPC::R31;
       Reg = MRI->getDwarfRegNum(Reg, true);
       MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(ReadyLabel, Reg));
     }
@@ -664,19 +675,16 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
 
       // For SVR4, don't emit a move for the CR spill slot if we haven't
       // spilled CRs.
-      if (Subtarget.isSVR4ABI()
-	  && (PPC::CR2 <= Reg && Reg <= PPC::CR4)
-	  && MustSaveCRs.empty())
-	continue;
+      if (isSVR4ABI && (PPC::CR2 <= Reg && Reg <= PPC::CR4)
+          && MustSaveCRs.empty())
+        continue;
 
       // For 64-bit SVR4 when we have spilled CRs, the spill location
       // is SP+8, not a frame-relative slot.
-      if (Subtarget.isSVR4ABI()
-	  && Subtarget.isPPC64()
-	  && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
+      if (isSVR4ABI && isPPC64 && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
         MMI.addFrameInst(MCCFIInstruction::createOffset(
             Label, MRI->getDwarfRegNum(PPC::CR2, true), 8));
-	continue;
+        continue;
       }
 
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
@@ -707,7 +715,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
           RetOpcode == PPC::TCRETURNai8) &&
          "Can only insert epilog into returning blocks");
 
-  // Get alignment info so we know how to restore r1
+  // Get alignment info so we know how to restore the SP.
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Get the number of bytes allocated from the FrameInfo.
@@ -715,8 +723,10 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Get processor type.
   bool isPPC64 = Subtarget.isPPC64();
-  // Get operating system
+  // Get the ABI.
   bool isDarwinABI = Subtarget.isDarwinABI();
+  bool isSVR4ABI = Subtarget.isSVR4ABI();
+
   // Check if the link register (LR) has been saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
@@ -729,7 +739,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   int FPOffset = 0;
   if (HasFP) {
-    if (Subtarget.isSVR4ABI()) {
+    if (isSVR4ABI) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
       int FPIndex = FI->getFramePointerSaveIndex();
       assert(FPIndex && "No Frame Pointer Save Slot!");
@@ -741,7 +751,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   int BPOffset = 0;
   if (HasBP) {
-    if (Subtarget.isSVR4ABI()) {
+    if (isSVR4ABI) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
       int BPIndex = FI->getBasePointerSaveIndex();
       assert(BPIndex && "No Base Pointer Save Slot!");
@@ -773,30 +783,35 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
       FrameSize += StackAdj;
   }
 
+  // Frames of 32KB & larger require special handling because they cannot be
+  // indexed into with a simple LD/LWZ immediate offset operand.
+  bool isLargeFrame = !isInt<16>(FrameSize);
+
   if (FrameSize) {
-    // The loaded (or persistent) stack pointer value is offset by the 'stwu'
-    // on entry to the function.  Add this offset back now.
+    // In the prologue, the loaded (or persistent) stack pointer value is offset
+    // by the STDU/STDUX/STWU/STWUX instruction.  Add this offset back now.
     if (!isPPC64) {
       // If this function contained a fastcc call and GuaranteedTailCallOpt is
       // enabled (=> hasFastCall()==true) the fastcc call might contain a tail
       // call which invalidates the stack pointer value in SP(0). So we use the
       // value of R31 in this case.
-      if (FI->hasFastCall() && isInt<16>(FrameSize)) {
-        assert(hasFP(MF) && "Expecting a valid the frame pointer.");
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
-          .addReg(PPC::R31).addImm(FrameSize);
-      } else if(FI->hasFastCall()) {
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
-          .addImm(FrameSize >> 16);
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
-          .addReg(PPC::R0, RegState::Kill)
-          .addImm(FrameSize & 0xFFFF);
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD4))
-          .addReg(PPC::R1)
-          .addReg(PPC::R31)
-          .addReg(PPC::R0);
-      } else if (isInt<16>(FrameSize) &&
-                 !HasBP &&
+      if (FI->hasFastCall()) {
+        assert(HasFP && "Expecting a valid frame pointer.");
+        if (!isLargeFrame) {
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
+            .addReg(PPC::R31).addImm(FrameSize);
+        } else {
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS), PPC::R0)
+            .addImm(FrameSize >> 16);
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI), PPC::R0)
+            .addReg(PPC::R0, RegState::Kill)
+            .addImm(FrameSize & 0xFFFF);
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD4))
+            .addReg(PPC::R1)
+            .addReg(PPC::R31)
+            .addReg(PPC::R0);
+        }
+      } else if (!isLargeFrame && !HasBP &&
                  !MFI->hasVarSizedObjects()) {
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI), PPC::R1)
           .addReg(PPC::R1).addImm(FrameSize);
@@ -804,22 +819,24 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
         BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ),PPC::R1)
           .addImm(0).addReg(PPC::R1);
       }
-    } else {
-      if (FI->hasFastCall() && isInt<16>(FrameSize)) {
-        assert(hasFP(MF) && "Expecting a valid the frame pointer.");
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
-          .addReg(PPC::X31).addImm(FrameSize);
-      } else if(FI->hasFastCall()) {
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
-          .addImm(FrameSize >> 16);
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
-          .addReg(PPC::X0, RegState::Kill)
-          .addImm(FrameSize & 0xFFFF);
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD8))
-          .addReg(PPC::X1)
-          .addReg(PPC::X31)
-          .addReg(PPC::X0);
-      } else if (isInt<16>(FrameSize) && !HasBP &&
+    } else { // PPC64...
+      if (FI->hasFastCall()) {
+        if (!isLargeFrame) {
+          assert(HasFP && "Expecting a valid frame pointer.");
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
+            .addReg(PPC::X31).addImm(FrameSize);
+        } else {
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::LIS8), PPC::X0)
+            .addImm(FrameSize >> 16);
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::ORI8), PPC::X0)
+            .addReg(PPC::X0, RegState::Kill)
+            .addImm(FrameSize & 0xFFFF);
+          BuildMI(MBB, MBBI, dl, TII.get(PPC::ADD8))
+            .addReg(PPC::X1)
+            .addReg(PPC::X31)
+            .addReg(PPC::X0);
+        }
+      } else if (!isLargeFrame && !HasBP &&
             !MFI->hasVarSizedObjects()) {
         BuildMI(MBB, MBBI, dl, TII.get(PPC::ADDI8), PPC::X1)
            .addReg(PPC::X1).addImm(FrameSize);
@@ -854,7 +871,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
     if (MustSaveLR)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::MTLR8)).addReg(PPC::X0);
-  } else {
+  } else { // PPC32...
     if (MustSaveLR)
       BuildMI(MBB, MBBI, dl, TII.get(PPC::LWZ), PPC::R0)
           .addImm(LROffset).addReg(PPC::R1);
