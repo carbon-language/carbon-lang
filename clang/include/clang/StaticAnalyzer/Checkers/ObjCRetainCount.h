@@ -71,7 +71,7 @@ enum ArgEffect {
   StopTracking,
 
   /// All typestate tracking of the object ceases.  Unlike StopTracking,
-  /// this is also enforced when the method body cannot be inlined.
+  /// this is also enforced when the method body is inlined.
   ///
   /// In some cases, we obtain a better summary for this checker
   /// by looking at the call site than by inlining the function.
