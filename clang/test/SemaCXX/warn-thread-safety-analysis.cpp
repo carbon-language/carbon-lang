@@ -4131,6 +4131,13 @@ public:
     a = 0;
     mu.Unlock();
   }
+
+  void test10() {
+    if (!(c || !mu.TryLock())) {
+      a = 0;
+      mu.Unlock();
+    }
+  }
 };
 
 }  // end namespace LogicalConditionalTryLock
