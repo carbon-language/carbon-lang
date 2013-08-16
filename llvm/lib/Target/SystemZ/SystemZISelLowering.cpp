@@ -1704,6 +1704,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(CLC);
     OPCODE(STRCMP);
     OPCODE(STPCPY);
+    OPCODE(SEARCH_STRING);
     OPCODE(IPM);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
@@ -2554,6 +2555,8 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitStringWrapper(MI, MBB, SystemZ::CLST);
   case SystemZ::MVSTLoop:
     return emitStringWrapper(MI, MBB, SystemZ::MVST);
+  case SystemZ::SRSTLoop:
+    return emitStringWrapper(MI, MBB, SystemZ::SRST);
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }

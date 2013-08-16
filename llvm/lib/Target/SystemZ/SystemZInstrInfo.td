@@ -1163,6 +1163,10 @@ let usesCustomInserter = 1 in {
   def ZEXT128_64 : Pseudo<(outs GR128:$dst), (ins GR64:$src), []>;
 }
 
+// Search a block of memory for a character.
+let mayLoad = 1, Defs = [CC], Uses = [R0W] in
+  defm SRST : StringRRE<"srst", 0xb25e, z_search_string>;
+
 //===----------------------------------------------------------------------===//
 // Peepholes.
 //===----------------------------------------------------------------------===//

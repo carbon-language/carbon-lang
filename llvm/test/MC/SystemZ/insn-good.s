@@ -6728,6 +6728,16 @@
 	srlg	%r0,%r0,524287(%r1)
 	srlg	%r0,%r0,524287(%r15)
 
+#CHECK: srst	%r0, %r0                # encoding: [0xb2,0x5e,0x00,0x00]
+#CHECK: srst	%r0, %r15               # encoding: [0xb2,0x5e,0x00,0x0f]
+#CHECK: srst	%r15, %r0               # encoding: [0xb2,0x5e,0x00,0xf0]
+#CHECK: srst	%r7, %r8                # encoding: [0xb2,0x5e,0x00,0x78]
+
+	srst	%r0,%r0
+	srst	%r0,%r15
+	srst	%r15,%r0
+	srst	%r7,%r8
+
 #CHECK: st	%r0, 0                  # encoding: [0x50,0x00,0x00,0x00]
 #CHECK: st	%r0, 4095               # encoding: [0x50,0x00,0x0f,0xff]
 #CHECK: st	%r0, 0(%r1)             # encoding: [0x50,0x00,0x10,0x00]

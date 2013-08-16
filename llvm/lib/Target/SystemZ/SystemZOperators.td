@@ -123,6 +123,8 @@ def z_strcmp            : SDNode<"SystemZISD::STRCMP", SDT_ZString,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_stpcpy            : SDNode<"SystemZISD::STPCPY", SDT_ZString,
                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def z_search_string     : SDNode<"SystemZISD::SEARCH_STRING", SDT_ZString,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_ipm               : SDNode<"SystemZISD::IPM", SDT_ZI32Intrinsic,
                                  [SDNPInGlue]>;
 

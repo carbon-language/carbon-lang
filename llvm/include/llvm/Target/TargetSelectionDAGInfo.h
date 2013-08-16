@@ -137,6 +137,19 @@ public:
                           MachinePointerInfo Op2PtrInfo) const {
     return std::make_pair(SDValue(), SDValue());
   }
+
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                          SDValue Src, MachinePointerInfo SrcPtrInfo) const {
+    return std::make_pair(SDValue(), SDValue());
+  }
+
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrnlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                           SDValue Src, SDValue MaxLength,
+                           MachinePointerInfo SrcPtrInfo) const {
+    return std::make_pair(SDValue(), SDValue());
+  }
 };
 
 } // end llvm namespace

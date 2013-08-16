@@ -181,3 +181,37 @@ EmitTargetCodeForStrcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
   SDValue Glue = Chain.getValue(2);
   return std::make_pair(addIPMSequence(DL, Glue, DAG), Chain);
 }
+
+// Search from Src for a null character, stopping once Src reaches Limit.
+// Return a pair of values, the first being the number of nonnull characters
+// and the second being the out chain.
+//
+// This can be used for strlen by setting Limit to 0.
+static std::pair<SDValue, SDValue> getBoundedStrlen(SelectionDAG &DAG, SDLoc DL,
+                                                    SDValue Chain, SDValue Src,
+                                                    SDValue Limit) {
+  EVT PtrVT = Src.getValueType();
+  SDVTList VTs = DAG.getVTList(PtrVT, MVT::Other, MVT::Glue);
+  SDValue End = DAG.getNode(SystemZISD::SEARCH_STRING, DL, VTs, Chain,
+                            Limit, Src, DAG.getConstant(0, MVT::i32));
+  Chain = End.getValue(1);
+  SDValue Len = DAG.getNode(ISD::SUB, DL, PtrVT, End, Src);
+  return std::make_pair(Len, Chain);
+}    
+
+std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
+EmitTargetCodeForStrlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                        SDValue Src, MachinePointerInfo SrcPtrInfo) const {
+  EVT PtrVT = Src.getValueType();
+  return getBoundedStrlen(DAG, DL, Chain, Src, DAG.getConstant(0, PtrVT));
+}
+
+std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
+EmitTargetCodeForStrnlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                         SDValue Src, SDValue MaxLength,
+                         MachinePointerInfo SrcPtrInfo) const {
+  EVT PtrVT = Src.getValueType();
+  MaxLength = DAG.getZExtOrTrunc(MaxLength, DL, PtrVT);
+  SDValue Limit = DAG.getNode(ISD::ADD, DL, PtrVT, Src, MaxLength);
+  return getBoundedStrlen(DAG, DL, Chain, Src, Limit);
+}

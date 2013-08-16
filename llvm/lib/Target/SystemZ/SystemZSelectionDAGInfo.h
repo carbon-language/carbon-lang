@@ -58,6 +58,16 @@ public:
                           SDValue Src1, SDValue Src2,
                           MachinePointerInfo Op1PtrInfo,
                           MachinePointerInfo Op2PtrInfo) const LLVM_OVERRIDE;
+
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                          SDValue Src, MachinePointerInfo SrcPtrInfo) const
+    LLVM_OVERRIDE;
+
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrnlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                           SDValue Src, SDValue MaxLength,
+                           MachinePointerInfo SrcPtrInfo) const LLVM_OVERRIDE;
 };
 
 }

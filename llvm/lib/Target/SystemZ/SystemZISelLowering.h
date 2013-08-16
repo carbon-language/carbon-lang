@@ -91,6 +91,12 @@ namespace SystemZISD {
     // are the addresses of the strings to compare.
     STRCMP,
 
+    // Use an SRST-based sequence to search a block of memory.  The first
+    // operand is the end address, the second is the start, and the third
+    // is the character to search for.  CC is set to 1 on success and 2
+    // on failure.
+    SEARCH_STRING,
+
     // Store the CC value in bits 29 and 28 of an integer.
     IPM,
 
