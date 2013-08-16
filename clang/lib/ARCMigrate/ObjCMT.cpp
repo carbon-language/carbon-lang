@@ -48,8 +48,11 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
                             ObjCMethodDecl *OM,
                             ObjCInstanceTypeFamily OIT_Family = OIT_None);
   
-  void migrateFunctionDeclAnnotation(ASTContext &Ctx,
-                                     const FunctionDecl *FuncDecl);
+  void migrateCFFunctions(ASTContext &Ctx,
+                          const FunctionDecl *FuncDecl);
+  
+  bool migrateAddFunctionAnnotation(ASTContext &Ctx,
+                                    const FunctionDecl *FuncDecl);
   
   void migrateObjCMethodDeclAnnotation(ASTContext &Ctx,
                                        const ObjCMethodDecl *MethodDecl);
@@ -66,6 +69,7 @@ public:
   Preprocessor &PP;
   bool IsOutputFile;
   llvm::SmallPtrSet<ObjCProtocolDecl *, 32> ObjCProtocolDecls;
+  llvm::SmallVector<const FunctionDecl *, 8> CFFunctionIBCandidates;
   
   ObjCMigrateASTConsumer(StringRef migrateDir,
                          bool migrateLiterals,
@@ -756,35 +760,82 @@ void ObjCMigrateASTConsumer::migrateFactoryMethod(ASTContext &Ctx,
   ReplaceWithInstancetype(*this, OM);
 }
 
-void ObjCMigrateASTConsumer::migrateFunctionDeclAnnotation(
+static bool IsVoidStarType(QualType Ty) {
+  if (!Ty->isPointerType())
+    return false;
+  
+  while (const TypedefType *TD = dyn_cast<TypedefType>(Ty.getTypePtr()))
+    Ty = TD->getDecl()->getUnderlyingType();
+  
+  // Is the type void*?
+  const PointerType* PT = Ty->getAs<PointerType>();
+  if (PT->getPointeeType().getUnqualifiedType()->isVoidType())
+    return true;
+  return IsVoidStarType(PT->getPointeeType());
+}
+
+
+static bool
+IsCFFunctionImplicitBridingingCandidate(ASTContext &Ctx,
+                                        const FunctionDecl *FuncDecl) {
+  CallEffects CE  = CallEffects::getEffect(FuncDecl);
+  
+  RetEffect Ret = CE.getReturnValue();
+  if (Ret.getObjKind() == RetEffect::CF)
+    // Still a candidate;
+    ;
+  else if (Ret.getObjKind() == RetEffect::AnyObj &&
+      (Ret.getKind() == RetEffect::NoRet || Ret.getKind() == RetEffect::NoRetHard)) {
+    // This is a candidate as long as it is not of "void *" variety
+    if (IsVoidStarType(FuncDecl->getResultType()))
+      return false;
+  }
+  
+  // FIXME. Check on the arguments too.
+  
+  // FIXME. Always false for now.
+  return false;
+}
+
+void ObjCMigrateASTConsumer::migrateCFFunctions(
+                               ASTContext &Ctx,
+                               const FunctionDecl *FuncDecl) {
+  // Finction must be annotated first.
+  bool Annotated = migrateAddFunctionAnnotation(Ctx, FuncDecl);
+  if (Annotated && IsCFFunctionImplicitBridingingCandidate(Ctx, FuncDecl))
+    CFFunctionIBCandidates.push_back(FuncDecl);
+}
+
+bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
                                                 ASTContext &Ctx,
                                                 const FunctionDecl *FuncDecl) {
   if (FuncDecl->hasAttr<CFAuditedTransferAttr>() ||
       FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
-      FuncDecl->getAttr<CFReturnsNotRetainedAttr>() ||
-      FuncDecl->hasBody())
-    return;
-  
+      FuncDecl->getAttr<CFReturnsNotRetainedAttr>())
+    return true;
+  if (FuncDecl->hasBody())
+    return false;
   
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
   RetEffect Ret = CE.getReturnValue();
   const char *AnnotationString = 0;
   if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
     if (!Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
-      return;
+      return false;
     AnnotationString = " CF_RETURNS_RETAINED";
   }
   else if (Ret.getObjKind() == RetEffect::CF && !Ret.isOwned()) {
     if (!Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
-      return;
+      return false;
     AnnotationString = " CF_RETURNS_NOT_RETAINED";
   }
   else
-    return;
+    return false;
 
   edit::Commit commit(*Editor);
   commit.insertAfterToken(FuncDecl->getLocEnd(), AnnotationString);
   Editor->commit(commit);
+  return true;
 }
 
 void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(
@@ -836,7 +887,7 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
             migrateNSEnumDecl(Ctx, ED, TD);
       }
       else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*D))
-        migrateFunctionDeclAnnotation(Ctx, FD);
+        migrateCFFunctions(Ctx, FD);
       else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*D))
         migrateObjCMethodDeclAnnotation(Ctx, MD);
       
