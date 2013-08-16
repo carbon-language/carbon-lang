@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft  -fms-extensions -triple=i386-pc-win32 | FileCheck %s
-// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft  -fms-extensions -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -fms-extensions -fdelayed-template-parsing -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -cxx-abi microsoft -fms-extensions -fdelayed-template-parsing -triple=x86_64-pc-win32 | FileCheck -check-prefix X64 %s
 
 template<typename T>
 class Class {
@@ -215,3 +215,12 @@ void fun(UUIDType1<uuid> a) {}
 // CHECK: "\01?fun@@YAXU?$UUIDType1@Uuuid@@$1?_GUID_12345678_1234_1234_1234_1234567890ab@@3U__s_GUID@@B@@@Z"
 void fun(UUIDType2<uuid> b) {}
 // CHECK: "\01?fun@@YAXU?$UUIDType2@Uuuid@@$E?_GUID_12345678_1234_1234_1234_1234567890ab@@3U__s_GUID@@B@@@Z"
+
+template <typename T> struct TypeWithFriendDefinition {
+  friend void FunctionDefinedWithInjectedName(TypeWithFriendDefinition<T>) {}
+};
+// CHECK: call {{.*}} @"\01?FunctionDefinedWithInjectedName@@YAXU?$TypeWithFriendDefinition@H@@@Z"
+void CallFunctionDefinedWithInjectedName() {
+  FunctionDefinedWithInjectedName(TypeWithFriendDefinition<int>());
+}
+// CHECK: @"\01?FunctionDefinedWithInjectedName@@YAXU?$TypeWithFriendDefinition@H@@@Z"

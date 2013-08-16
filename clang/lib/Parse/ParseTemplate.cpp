@@ -1249,7 +1249,7 @@ void Parser::LateTemplateParserCallback(void *P, LateParsedTemplate &LPT) {
 
 /// \brief Late parse a C++ function template in Microsoft mode.
 void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
-  if(!LPT.D)
+  if (!LPT.D)
      return;
 
   // Get the FunctionDecl.
@@ -1352,10 +1352,6 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
    TemplateParamScopeStack.rbegin();
   for (; I != TemplateParamScopeStack.rend(); ++I)
     delete *I;
-
-  DeclGroupPtrTy grp = Actions.ConvertDeclToDeclGroup(LPT.D);
-  if (grp)
-    Actions.getASTConsumer().HandleTopLevelDecl(grp.get());
 }
 
 /// \brief Lex a delayed template function for late parsing.

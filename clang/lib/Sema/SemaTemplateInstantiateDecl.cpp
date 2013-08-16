@@ -3115,7 +3115,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     return;
   }
 
-  // Call the LateTemplateParser callback if there a need to late parse
+  // Call the LateTemplateParser callback if there is a need to late parse
   // a templated function definition.
   if (!Pattern && PatternDecl->isLateTemplateParsed() &&
       LateTemplateParser) {

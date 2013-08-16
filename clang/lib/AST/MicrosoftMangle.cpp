@@ -1721,13 +1721,9 @@ void MicrosoftCXXNameMangler::mangleType(const BlockPointerType *T,
   mangleFunctionType(pointee->castAs<FunctionProtoType>(), NULL, false, false);
 }
 
-void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *T,
-                                         SourceRange Range) {
-  DiagnosticsEngine &Diags = Context.getDiags();
-  unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-    "cannot mangle this injected class name type yet");
-  Diags.Report(Range.getBegin(), DiagID)
-    << Range;
+void MicrosoftCXXNameMangler::mangleType(const InjectedClassNameType *,
+                                         SourceRange) {
+  llvm_unreachable("Cannot mangle injected class name type.");
 }
 
 void MicrosoftCXXNameMangler::mangleType(const TemplateSpecializationType *T,
