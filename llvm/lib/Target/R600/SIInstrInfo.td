@@ -342,8 +342,8 @@ class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
 class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   op,
   (outs regClass:$vdst),
-  (ins VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
-       i8imm:$offset0, i8imm:$offset1, i1imm:$gds),
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
+       i8imm:$offset0, i8imm:$offset1),
   asm#" $vdst, $gds, $addr, $data0, $data1, $offset0, $offset1, [M0]",
   []> {
   let mayLoad = 1;
@@ -353,8 +353,8 @@ class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
 class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   op,
   (outs),
-  (ins VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
-       i8imm:$offset0, i8imm:$offset1, i1imm:$gds),
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
+       i8imm:$offset0, i8imm:$offset1),
   asm#" $gds, $addr, $data0, $data1, $offset0, $offset1, [M0]",
   []> {
   let mayStore = 1;

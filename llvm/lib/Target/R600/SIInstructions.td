@@ -1745,13 +1745,13 @@ def : Pat <
 
 def : Pat <
     (local_load i64:$src0),
-    (i32 (DS_READ_B32 (EXTRACT_SUBREG $src0, sub0),
-                      (EXTRACT_SUBREG $src0, sub0), (EXTRACT_SUBREG $src0, sub0), 0, 0, 0))
+    (i32 (DS_READ_B32 0, (EXTRACT_SUBREG $src0, sub0),
+                      (EXTRACT_SUBREG $src0, sub0), (EXTRACT_SUBREG $src0, sub0), 0, 0))
 >;
 
 def : Pat <
     (local_store i32:$src1, i64:$src0),
-    (DS_WRITE_B32 (EXTRACT_SUBREG $src0, sub0), $src1, $src1, 0, 0, 0)
+    (DS_WRITE_B32 0, (EXTRACT_SUBREG $src0, sub0), $src1, $src1, 0, 0)
 >;
 
 /********** ================== **********/

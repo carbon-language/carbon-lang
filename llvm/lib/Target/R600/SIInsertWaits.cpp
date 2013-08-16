@@ -134,7 +134,9 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
   // LGKM may uses larger values
   if (TSFlags & SIInstrFlags::LGKM_CNT) {
 
-    const MachineOperand &Op = MI.getOperand(0);
+    MachineOperand &Op = MI.getOperand(0);
+    if (!Op.isReg())
+      Op = MI.getOperand(1);
     assert(Op.isReg() && "First LGKM operand must be a register!");
 
     unsigned Reg = Op.getReg();
