@@ -768,7 +768,7 @@ static bool ReadCheckFile(SourceMgr &SM,
       SM.PrintMessage(SMLoc::getFromPointer(CheckPrefixStart),
                       SourceMgr::DK_Error,
                       "found '"+CheckPrefix+"-LABEL:' with variable definition"
-                      " or use'");
+                      " or use");
       return true;
     }
 
