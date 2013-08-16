@@ -95,6 +95,9 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 
   // Set UseSmallSection.
   UseSmallSection = !IsLinux && (RM == Reloc::Static);
+  // set some subtarget specific features
+  if (inMips16Mode())
+    HasBitCount=false;
 }
 
 bool
