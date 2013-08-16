@@ -1305,7 +1305,7 @@ struct OptionalTestSeq {
   std::vector<OptionalTest> Tests;
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(OptionalTest);
+LLVM_YAML_IS_SEQUENCE_VECTOR(OptionalTest)
 namespace llvm {
 namespace yaml {
   template <>
