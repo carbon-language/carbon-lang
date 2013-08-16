@@ -946,7 +946,8 @@ public:
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
-    return ARM_AM::getT2SOImmVal(~Value) != -1;
+    return ARM_AM::getT2SOImmVal(Value) == -1 &&
+      ARM_AM::getT2SOImmVal(~Value) != -1;
   }
   bool isT2SOImmNeg() const {
     if (!isImm()) return false;

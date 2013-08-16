@@ -4353,16 +4353,16 @@ def : t2InstAlias<"mvn${p} $Rd, $imm",
                   (t2MOVi rGPR:$Rd, t2_so_imm_not:$imm, pred:$p, zero_reg)>;
 // Same for AND <--> BIC
 def : t2InstAlias<"bic${s}${p} $Rd, $Rn, $imm",
-                  (t2ANDri rGPR:$Rd, rGPR:$Rn, so_imm_not:$imm,
+                  (t2ANDri rGPR:$Rd, rGPR:$Rn, t2_so_imm_not:$imm,
                            pred:$p, cc_out:$s)>;
 def : t2InstAlias<"bic${s}${p} $Rdn, $imm",
-                  (t2ANDri rGPR:$Rdn, rGPR:$Rdn, so_imm_not:$imm,
+                  (t2ANDri rGPR:$Rdn, rGPR:$Rdn, t2_so_imm_not:$imm,
                            pred:$p, cc_out:$s)>;
 def : t2InstAlias<"and${s}${p} $Rd, $Rn, $imm",
-                  (t2BICri rGPR:$Rd, rGPR:$Rn, so_imm_not:$imm,
+                  (t2BICri rGPR:$Rd, rGPR:$Rn, t2_so_imm_not:$imm,
                            pred:$p, cc_out:$s)>;
 def : t2InstAlias<"and${s}${p} $Rdn, $imm",
-                  (t2BICri rGPR:$Rdn, rGPR:$Rdn, so_imm_not:$imm,
+                  (t2BICri rGPR:$Rdn, rGPR:$Rdn, t2_so_imm_not:$imm,
                            pred:$p, cc_out:$s)>;
 // Likewise, "add Rd, t2_so_imm_neg" -> sub
 def : t2InstAlias<"add${s}${p} $Rd, $Rn, $imm",
