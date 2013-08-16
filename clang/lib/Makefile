@@ -11,7 +11,7 @@ CLANG_LEVEL := ..
 # ARCMigrate and Rewrite are always needed because of libclang.
 PARALLEL_DIRS = Headers Basic Lex Parse AST Sema CodeGen Analysis Frontend \
                 FrontendTool Tooling Driver Format Edit ARCMigrate Rewrite \
-                Serialization
+                Serialization IDE
 
 include $(CLANG_LEVEL)/../../Makefile.config
 

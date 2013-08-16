@@ -17,7 +17,7 @@ SHARED_LIBRARY = 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
-USEDLIBS = clangFrontend.a clangDriver.a \
+USEDLIBS = clangIDE.a clangFrontend.a clangDriver.a \
 	   clangTooling.a \
 	   clangSerialization.a \
 	   clangParse.a clangSema.a \
