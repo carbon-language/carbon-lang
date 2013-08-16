@@ -555,7 +555,7 @@ let Constraints = "$src1 = $dst" in {
                       (bitconvert (mem_frag addr:$src3)))))]>, EVEX_4V;
   }
 }
-defm VPERMI2D  : avx512_perm_3src<0x76, "vpermi2d",  VR512, memopv16i32, i512mem, 
+defm VPERMI2D  : avx512_perm_3src<0x76, "vpermi2d",  VR512, memopv8i64, i512mem,
                                v16i32>, EVEX_V512, EVEX_CD8<32, CD8VF>;
 defm VPERMI2Q  : avx512_perm_3src<0x76, "vpermi2q",  VR512, memopv8i64, i512mem, 
                                v8i64>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
@@ -1107,7 +1107,7 @@ def VMOVDQA64rm  : AVX512BI<0x6F, MRMSrcMem, (outs VR512:$dst),
 }
 
 multiclass avx512_mov_int<bits<8> opc, string asm, RegisterClass RC,
-                          RegisterClass KRC,
+                          RegisterClass KRC, PatFrag bc_frag,
                           PatFrag ld_frag, X86MemOperand x86memop> {
 let neverHasSideEffects = 1 in
   def rr : AVX512XSI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src),
@@ -1116,7 +1116,7 @@ let neverHasSideEffects = 1 in
 let canFoldAsLoad = 1 in
   def rm : AVX512XSI<opc, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
               !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
-               [(set RC:$dst, (ld_frag addr:$src))]>,
+               [(set RC:$dst, (bc_frag (ld_frag addr:$src)))]>,
                EVEX;
 let Constraints = "$src1 = $dst" in {
   def rrk : AVX512XSI<opc, MRMSrcReg, (outs RC:$dst),
@@ -1132,10 +1132,10 @@ let Constraints = "$src1 = $dst" in {
 }
 }
 
-defm VMOVDQU32 : avx512_mov_int<0x6F, "vmovdqu32", VR512, VK16WM, memopv16i32, i512mem>,
-                                EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VMOVDQU64 : avx512_mov_int<0x6F, "vmovdqu64", VR512, VK8WM, memopv8i64, i512mem>,
-                                EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+defm VMOVDQU32 : avx512_mov_int<0x6F, "vmovdqu32", VR512, VK16WM, bc_v16i32,
+                           memopv8i64, i512mem>, EVEX_V512, EVEX_CD8<32, CD8VF>;
+defm VMOVDQU64 : avx512_mov_int<0x6F, "vmovdqu64", VR512, VK8WM, bc_v8i64,
+                    memopv8i64, i512mem>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
 
 let AddedComplexity = 20 in {
 def : Pat<(v16f32 (vselect VK16WM:$mask, (v16f32 VR512:$src1), 
