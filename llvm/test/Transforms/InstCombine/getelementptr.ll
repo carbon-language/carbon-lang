@@ -573,4 +573,28 @@ define i1 @pr16483([1 x i8]* %a, [1 x i8]* %b) {
 ; CHECK-NEXT: icmp ult  [1 x i8]* %a, %b
 }
 
+; The element size of the array matches the element size of the pointer
+define i64 @test_gep_bitcast_array_same_size_element([100 x double]* %arr, i64 %N) {
+; CHECK-LABEL: @test_gep_bitcast_array_same_size_element(
+; CHECK: getelementptr [100 x double]* %arr, i64 0, i64 %V
+; CHECK: bitcast
+  %cast = bitcast [100 x double]* %arr to i64*
+  %V = mul i64 %N, 8
+  %t = getelementptr i64* %cast, i64 %V
+  %x = load i64* %t
+  ret i64 %x
+}
+
+; The element size of the array is different the element size of the pointer
+define i8 @test_gep_bitcast_array_different_size_element([100 x double]* %arr, i64 %N) {
+; CHECK-LABEL: @test_gep_bitcast_array_different_size_element(
+; CHECK: getelementptr [100 x double]* %arr, i64 0, i64 %N
+; CHECK: bitcast
+  %cast = bitcast [100 x double]* %arr to i8*
+  %V = mul i64 %N, 8
+  %t = getelementptr i8* %cast, i64 %V
+  %x = load i8* %t
+  ret i8 %x
+}
+
 ; CHECK: attributes [[NUW]] = { nounwind }
