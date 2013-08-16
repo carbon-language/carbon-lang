@@ -31,3 +31,16 @@ entry:
   store float %0, float addrspace(1)* %out
   ret void
 }
+
+; Make sure inline literals are folded into REG_SEQUENCE instructions.
+; CHECK: @inline_literal_reg_sequence
+; CHECK: MOV T[[GPR:[0-9]]].X, 0.0
+; CHECK-NEXT: MOV T[[GPR]].Y, 0.0
+; CHECK-NEXT: MOV T[[GPR]].Z, 0.0
+; CHECK-NEXT: MOV * T[[GPR]].W, 0.0
+
+define void @inline_literal_reg_sequence(<4 x i32> addrspace(1)* %out) {
+entry:
+  store <4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32> addrspace(1)* %out
+  ret void
+}

@@ -453,29 +453,32 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
             continue;
           }
       } else {
-        if (!TII->isALUInstr(Use->getMachineOpcode()) ||
-            (TII->get(Use->getMachineOpcode()).TSFlags &
-            R600_InstFlag::VECTOR)) {
-          continue;
-        }
-
-        int ImmIdx = TII->getOperandIdx(Use->getMachineOpcode(),
-                                        AMDGPU::OpName::literal);
-        if (ImmIdx == -1) {
-          continue;
-        }
-
-        if (TII->getOperandIdx(Use->getMachineOpcode(),
-                               AMDGPU::OpName::dst) != -1) {
-          // subtract one from ImmIdx, because the DST operand is usually index
-          // 0 for MachineInstrs, but we have no DST in the Ops vector.
-          ImmIdx--;
+        switch(Use->getMachineOpcode()) {
+        case AMDGPU::REG_SEQUENCE: break;
+        default:
+          if (!TII->isALUInstr(Use->getMachineOpcode()) ||
+              (TII->get(Use->getMachineOpcode()).TSFlags &
+               R600_InstFlag::VECTOR)) {
+            continue;
+          }
         }
 
         // Check that we aren't already using an immediate.
         // XXX: It's possible for an instruction to have more than one
         // immediate operand, but this is not supported yet.
         if (ImmReg == AMDGPU::ALU_LITERAL_X) {
+          int ImmIdx = TII->getOperandIdx(Use->getMachineOpcode(),
+                                          AMDGPU::OpName::literal);
+          if (ImmIdx == -1) {
+            continue;
+          }
+
+          if (TII->getOperandIdx(Use->getMachineOpcode(),
+                                 AMDGPU::OpName::dst) != -1) {
+            // subtract one from ImmIdx, because the DST operand is usually index
+            // 0 for MachineInstrs, but we have no DST in the Ops vector.
+            ImmIdx--;
+          }
           ConstantSDNode *C = dyn_cast<ConstantSDNode>(Use->getOperand(ImmIdx));
           assert(C);
 

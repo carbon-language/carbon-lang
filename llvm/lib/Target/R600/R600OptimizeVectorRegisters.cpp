@@ -50,6 +50,9 @@ isImplicitlyDef(MachineRegisterInfo &MRI, unsigned Reg) {
       E = MRI.def_end(); It != E; ++It) {
     return (*It).isImplicitDef();
   }
+  if (MRI.isReserved(Reg)) {
+    return false;
+  }
   llvm_unreachable("Reg without a def");
   return false;
 }
