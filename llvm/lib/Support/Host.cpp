@@ -54,16 +54,7 @@ using namespace llvm;
 /// specified arguments.  If we can't run cpuid on the host, return true.
 static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
                                unsigned *rECX, unsigned *rEDX) {
-#if defined(_MSC_VER)
-  // The MSVC intrinsic is portable across x86 and x64.
-  int registers[4];
-  __cpuid(registers, value);
-  *rEAX = registers[0];
-  *rEBX = registers[1];
-  *rECX = registers[2];
-  *rEDX = registers[3];
-  return false;
-#elif defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
   #if defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
     // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
     asm ("movq\t%%rbx, %%rsi\n\t"
@@ -90,6 +81,15 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
   #else
     return true;
   #endif
+#elif defined(_MSC_VER)
+  // The MSVC intrinsic is portable across x86 and x64.
+  int registers[4];
+  __cpuid(registers, value);
+  *rEAX = registers[0];
+  *rEBX = registers[1];
+  *rECX = registers[2];
+  *rEDX = registers[3];
+  return false;
 #else
   return true;
 #endif
