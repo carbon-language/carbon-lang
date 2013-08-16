@@ -673,6 +673,15 @@ class DEI_FT<string opstr, RegisterOperand RO> :
   InstSE<(outs RO:$rt), (ins),
          !strconcat(opstr, "\t$rt"), [], NoItinerary, FrmOther>;
 
+// Wait
+class WAIT_FT<string opstr> :
+  InstSE<(outs), (ins), opstr, [], NoItinerary, FrmOther> {
+  let Inst{31-26} = 0x10;
+  let Inst{25}    = 1;
+  let Inst{24-6}  = 0;
+  let Inst{5-0}   = 0x20;
+}
+
 // Sync
 let hasSideEffects = 1 in
 class SYNC_FT :
@@ -989,6 +998,8 @@ def DERET : ER_FT<"deret">, ER_FM<0x1f>;
 
 def EI : DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
 def DI : DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
+
+def WAIT : WAIT_FT<"wait">;
 
 /// Load-linked, Store-conditional
 let Predicates = [NotN64, HasStdEnc] in {

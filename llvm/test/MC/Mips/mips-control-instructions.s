@@ -16,6 +16,7 @@
 # CHECK32:    ei                         # encoding: [0x41,0x60,0x60,0x20]
 # CHECK32:    ei                         # encoding: [0x41,0x60,0x60,0x20]
 # CHECK32:    ei      $10                # encoding: [0x41,0x6a,0x60,0x20]
+# CHECK32:    wait                       # encoding: [0x42,0x00,0x00,0x20]
 
 # CHECK64:    break                      # encoding: [0x00,0x00,0x00,0x0d]
 # CHECK64:    break   7, 0               # encoding: [0x00,0x07,0x00,0x0d]
@@ -30,6 +31,7 @@
 # CHECK64:    ei                         # encoding: [0x41,0x60,0x60,0x20]
 # CHECK64:    ei                         # encoding: [0x41,0x60,0x60,0x20]
 # CHECK64:    ei      $10                # encoding: [0x41,0x6a,0x60,0x20]
+# CHECK64:    wait                       # encoding: [0x42,0x00,0x00,0x20]
     break
     break 7
     break 7,5
@@ -44,3 +46,5 @@
     ei
     ei  $0
     ei  $10
+
+    wait
