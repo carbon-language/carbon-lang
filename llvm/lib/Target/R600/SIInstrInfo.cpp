@@ -229,6 +229,10 @@ int SIInstrInfo::isMIMG(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::MIMG;
 }
 
+int SIInstrInfo::isSMRD(uint16_t Opcode) const {
+  return get(Opcode).TSFlags & SIInstrFlags::SMRD;
+}
+
 //===----------------------------------------------------------------------===//
 // Indirect addressing callbacks
 //===----------------------------------------------------------------------===//

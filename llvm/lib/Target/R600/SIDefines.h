@@ -13,7 +13,8 @@
 
 namespace SIInstrFlags {
 enum {
-  MIMG = 1 << 3
+  MIMG = 1 << 3,
+  SMRD = 1 << 4
 };
 }
 

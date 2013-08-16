@@ -18,11 +18,13 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   field bits<1> EXP_CNT = 0;
   field bits<1> LGKM_CNT = 0;
   field bits<1> MIMG = 0;
+  field bits<1> SMRD = 0;
 
   let TSFlags{0} = VM_CNT;
   let TSFlags{1} = EXP_CNT;
   let TSFlags{2} = LGKM_CNT;
   let TSFlags{3} = MIMG;
+  let TSFlags{4} = SMRD;
 }
 
 class Enc32 <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -142,6 +144,7 @@ class SMRD <bits<5> op, bits<1> imm, dag outs, dag ins, string asm,
   let Inst{31-27} = 0x18; //encoding
 
   let LGKM_CNT = 1;
+  let SMRD = 1;
 }
 
 //===----------------------------------------------------------------------===//

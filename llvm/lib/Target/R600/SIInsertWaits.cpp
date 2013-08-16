@@ -134,14 +134,19 @@ Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
   // LGKM may uses larger values
   if (TSFlags & SIInstrFlags::LGKM_CNT) {
 
-    MachineOperand &Op = MI.getOperand(0);
-    if (!Op.isReg())
-      Op = MI.getOperand(1);
-    assert(Op.isReg() && "First LGKM operand must be a register!");
+    if (TII->isSMRD(MI.getOpcode())) {
 
-    unsigned Reg = Op.getReg();
-    unsigned Size = TRI->getMinimalPhysRegClass(Reg)->getSize();
-    Result.Named.LGKM = Size > 4 ? 2 : 1;
+      MachineOperand &Op = MI.getOperand(0);
+      assert(Op.isReg() && "First LGKM operand must be a register!");
+
+      unsigned Reg = Op.getReg();
+      unsigned Size = TRI->getMinimalPhysRegClass(Reg)->getSize();
+      Result.Named.LGKM = Size > 4 ? 2 : 1;
+
+    } else {
+      // DS
+      Result.Named.LGKM = 1;
+    }
 
   } else {
     Result.Named.LGKM = 0;

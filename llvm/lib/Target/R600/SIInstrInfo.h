@@ -48,6 +48,7 @@ public:
 
   virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
   int isMIMG(uint16_t Opcode) const;
+  int isSMRD(uint16_t Opcode) const;
 
   virtual int getIndirectIndexBegin(const MachineFunction &MF) const;
 
