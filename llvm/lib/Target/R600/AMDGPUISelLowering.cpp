@@ -152,6 +152,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     MVT::SimpleValueType VT = (MVT::SimpleValueType)FloatTypes[x];
     setOperationAction(ISD::FADD, VT, Expand);
     setOperationAction(ISD::FDIV, VT, Expand);
+    setOperationAction(ISD::FFLOOR, VT, Expand);
     setOperationAction(ISD::FMUL, VT, Expand);
     setOperationAction(ISD::FSUB, VT, Expand);
   }
