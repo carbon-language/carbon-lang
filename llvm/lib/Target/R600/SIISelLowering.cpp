@@ -423,9 +423,10 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
         Op.getOperand(2)
       };
 
-      MachineMemOperand *MMO = new MachineMemOperand(MachinePointerInfo(),
-                    MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant,
-                    VT.getSizeInBits() / 8, 4);
+      MachineMemOperand *MMO = MF.getMachineMemOperand(
+          MachinePointerInfo(),
+          MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant,
+          VT.getSizeInBits() / 8, 4);
       return DAG.getMemIntrinsicNode(AMDGPUISD::LOAD_CONSTANT, DL,
                                      Op->getVTList(), Ops, 2, VT, MMO);
     }
