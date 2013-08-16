@@ -4,9 +4,9 @@
 
 ; floating-point store
 ; EG-CHECK: @store_f32
-; EG-CHECK: RAT_WRITE_CACHELESS_32_eg T{{[0-9]+\.X, T[0-9]+\.X}}, 1
+; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+\.X, T[0-9]+\.X}}, 1
 ; CM-CHECK: @store_f32
-; CM-CHECK: EXPORT_RAT_INST_STORE_DWORD T{{[0-9]+\.X, T[0-9]+\.X}}
+; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD T{{[0-9]+\.X, T[0-9]+\.X}}
 ; SI-CHECK: @store_f32
 ; SI-CHECK: BUFFER_STORE_DWORD
 
@@ -17,9 +17,9 @@ define void @store_f32(float addrspace(1)* %out, float %in) {
 
 ; vec2 floating-point stores
 ; EG-CHECK: @store_v2f32
-; EG-CHECK: RAT_WRITE_CACHELESS_64_eg
+; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW
 ; CM-CHECK: @store_v2f32
-; CM-CHECK: EXPORT_RAT_INST_STORE_DWORD
+; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK: @store_v2f32
 ; SI-CHECK: BUFFER_STORE_DWORDX2
 
@@ -39,9 +39,9 @@ entry:
 ; be two 32-bit stores.
 
 ; EG-CHECK: @vecload2
-; EG-CHECK: RAT_WRITE_CACHELESS_64_eg
+; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW
 ; CM-CHECK: @vecload2
-; CM-CHECK: EXPORT_RAT_INST_STORE_DWORD
+; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
 ; SI-CHECK: @vecload2
 ; SI-CHECK: BUFFER_STORE_DWORDX2
 define void @vecload2(i32 addrspace(1)* nocapture %out, i32 addrspace(2)* nocapture %mem) #0 {

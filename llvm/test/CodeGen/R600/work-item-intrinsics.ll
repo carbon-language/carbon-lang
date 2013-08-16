@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI-CHECK %s
 
 ; R600-CHECK: @ngroups_x
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[0].X
 ; SI-CHECK: @ngroups_x
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 0
@@ -16,7 +16,7 @@ entry:
 }
 
 ; R600-CHECK: @ngroups_y
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[0].Y
 ; SI-CHECK: @ngroups_y
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 1
@@ -30,7 +30,7 @@ entry:
 }
 
 ; R600-CHECK: @ngroups_z
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[0].Z
 ; SI-CHECK: @ngroups_z
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 2
@@ -44,7 +44,7 @@ entry:
 }
 
 ; R600-CHECK: @global_size_x
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[0].W
 ; SI-CHECK: @global_size_x
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 3
@@ -58,7 +58,7 @@ entry:
 }
 
 ; R600-CHECK: @global_size_y
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[1].X
 ; SI-CHECK: @global_size_y
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 4
@@ -72,7 +72,7 @@ entry:
 }
 
 ; R600-CHECK: @global_size_z
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[1].Y
 ; SI-CHECK: @global_size_z
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 5
@@ -86,7 +86,7 @@ entry:
 }
 
 ; R600-CHECK: @local_size_x
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[1].Z
 ; SI-CHECK: @local_size_x
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 6
@@ -100,7 +100,7 @@ entry:
 }
 
 ; R600-CHECK: @local_size_y
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[1].W
 ; SI-CHECK: @local_size_y
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 7
@@ -114,7 +114,7 @@ entry:
 }
 
 ; R600-CHECK: @local_size_z
-; R600-CHECK: RAT_WRITE_CACHELESS_32_eg [[VAL:T[0-9]+\.X]]
+; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV * [[VAL]], KC0[2].X
 ; SI-CHECK: @local_size_z
 ; SI-CHECK: S_LOAD_DWORD [[VAL:SGPR[0-9]+]], SGPR0_SGPR1, 8
