@@ -830,6 +830,18 @@ _func:
 @ CHECK: ldr.w	pc, [pc, #256]          @ encoding: [0xdf,0xf8,0x00,0xf1]
 @ CHECK: ldr.w	pc, [pc, #-400]         @ encoding: [0x5f,0xf8,0x90,0xf1]
 
+        ldrb  r9, [pc, #-0]
+        ldrsb r11, [pc, #-0]
+        ldrh  r10, [pc, #-0]
+        ldrsh r1, [pc, #-0]
+        ldr   r5, [pc, #-0]
+
+@ CHECK: ldrb.w	r9, [pc, #-0]           @ encoding: [0x1f,0xf8,0x00,0x90]
+@ CHECK: ldrsb.w	r11, [pc, #-0]        @ encoding: [0x1f,0xf9,0x00,0xb0]
+@ CHECK: ldrh.w	r10, [pc, #-0]          @ encoding: [0x3f,0xf8,0x00,0xa0]
+@ CHECK: ldrsh.w	r1, [pc, #-0]         @ encoding: [0x3f,0xf9,0x00,0x10]
+@ CHECK: ldr.w	r5, [pc, #-0]           @ encoding: [0x5f,0xf8,0x00,0x50]
+
 @------------------------------------------------------------------------------
 @ LDR(register)
 @------------------------------------------------------------------------------

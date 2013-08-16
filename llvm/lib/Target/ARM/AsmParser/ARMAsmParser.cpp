@@ -1793,8 +1793,6 @@ public:
   void addMemPCRelImm12Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     int32_t Imm = Memory.OffsetImm->getValue();
-    // FIXME: Handle #-0
-    if (Imm == INT32_MIN) Imm = 0;
     Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
