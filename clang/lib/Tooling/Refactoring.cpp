@@ -80,20 +80,21 @@ std::string Replacement::toString() const {
   return result;
 }
 
-bool Replacement::Less::operator()(const Replacement &R1,
-                                   const Replacement &R2) const {
-  if (R1.FilePath != R2.FilePath) return R1.FilePath < R2.FilePath;
-  if (R1.ReplacementRange.getOffset() != R2.ReplacementRange.getOffset())
-    return R1.ReplacementRange.getOffset() < R2.ReplacementRange.getOffset();
-  if (R1.ReplacementRange.getLength() != R2.ReplacementRange.getLength())
-    return R1.ReplacementRange.getLength() < R2.ReplacementRange.getLength();
-  return R1.ReplacementText < R2.ReplacementText;
+bool operator<(const Replacement &LHS, const Replacement &RHS) {
+  if (LHS.getOffset() != RHS.getOffset())
+    return LHS.getOffset() < RHS.getOffset();
+  if (LHS.getLength() != RHS.getLength())
+    return LHS.getLength() < RHS.getLength();
+  if (LHS.getFilePath() != RHS.getFilePath())
+    return LHS.getFilePath() < RHS.getFilePath();
+  return LHS.getReplacementText() < RHS.getReplacementText();
 }
 
-bool Replacement::operator==(const Replacement &Other) const {
-  return ReplacementRange.getOffset() == Other.ReplacementRange.getOffset() &&
-         ReplacementRange.getLength() == Other.ReplacementRange.getLength() &&
-         FilePath == Other.FilePath && ReplacementText == Other.ReplacementText;
+bool operator==(const Replacement &LHS, const Replacement &RHS) {
+  return LHS.getOffset() == RHS.getOffset() &&
+         LHS.getLength() == RHS.getLength() &&
+         LHS.getFilePath() == RHS.getFilePath() &&
+         LHS.getReplacementText() == RHS.getReplacementText();
 }
 
 void Replacement::setFromSourceLocation(SourceManager &Sources,
@@ -208,7 +209,7 @@ void deduplicate(std::vector<Replacement> &Replaces,
     return;
 
   // Deduplicate
-  std::sort(Replaces.begin(), Replaces.end(), Replacement::Less());
+  std::sort(Replaces.begin(), Replaces.end());
   std::vector<Replacement>::iterator End =
       std::unique(Replaces.begin(), Replaces.end());
   Replaces.erase(End, Replaces.end());
