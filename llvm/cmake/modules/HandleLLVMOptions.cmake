@@ -182,6 +182,7 @@ if( MSVC )
     -wd4503 # Suppress ''identifier' : decorated name length exceeded, name was truncated'
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
+    -wd4291 # Suppress ''declaration' : no matching operator delete found; memory will not be freed if initialization throws an exception'
     
     # Promoted warnings.
     -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.
