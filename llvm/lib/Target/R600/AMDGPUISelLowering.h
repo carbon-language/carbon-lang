@@ -51,6 +51,10 @@ protected:
   void AnalyzeFormalArguments(CCState &State,
                               const SmallVectorImpl<ISD::InputArg> &Ins) const;
 
+  /// \brief Lower vector stores by merging the vector elements into an integer
+  /// of the same bitwidth.
+  SDValue LowerVectorStore(const SDValue &Op, SelectionDAG &DAG) const;
+
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
 

@@ -63,6 +63,49 @@ entry:
   ret void
 }
 
+; EG-CHECK: @store_v2i8
+; EG-CHECK: MEM_RAT MSKOR
+; EG-CHECK-NOT: MEM_RAT MSKOR
+; SI-CHECK: @store_v2i8
+; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: BUFFER_STORE_BYTE
+define void @store_v2i8(<2 x i8> addrspace(1)* %out, <2 x i32> %in) {
+entry:
+  %0 = trunc <2 x i32> %in to <2 x i8>
+  store <2 x i8> %0, <2 x i8> addrspace(1)* %out
+  ret void
+}
+
+
+; EG-CHECK: @store_v2i16
+; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW
+; CM-CHECK: @store_v2i16
+; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
+; SI-CHECK: @store_v2i16
+; SI-CHECK: BUFFER_STORE_DWORD
+define void @store_v2i16(<2 x i16> addrspace(1)* %out, <2 x i32> %in) {
+entry:
+  %0 = trunc <2 x i32> %in to <2 x i16>
+  store <2 x i16> %0, <2 x i16> addrspace(1)* %out
+  ret void
+}
+
+; EG-CHECK: @store_v4i8
+; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW
+; CM-CHECK: @store_v4i8
+; CM-CHECK: MEM_RAT_CACHELESS STORE_DWORD
+; SI-CHECK: @store_v4i8
+; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: BUFFER_STORE_BYTE
+; SI-CHECK: BUFFER_STORE_BYTE
+define void @store_v4i8(<4 x i8> addrspace(1)* %out, <4 x i32> %in) {
+entry:
+  %0 = trunc <4 x i32> %in to <4 x i8>
+  store <4 x i8> %0, <4 x i8> addrspace(1)* %out
+  ret void
+}
+
 ; floating-point store
 ; EG-CHECK: @store_f32
 ; EG-CHECK: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+\.X, T[0-9]+\.X}}, 1
@@ -73,6 +116,25 @@ entry:
 
 define void @store_f32(float addrspace(1)* %out, float %in) {
   store float %in, float addrspace(1)* %out
+  ret void
+}
+
+; EG-CHECK: @store_v4i16
+; EG-CHECK: MEM_RAT MSKOR
+; EG-CHECK: MEM_RAT MSKOR
+; EG-CHECK: MEM_RAT MSKOR
+; EG-CHECK: MEM_RAT MSKOR
+; EG-CHECK-NOT: MEM_RAT MSKOR
+; SI-CHECK: @store_v4i16
+; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK: BUFFER_STORE_SHORT
+; SI-CHECK-NOT: BUFFER_STORE_BYTE
+define void @store_v4i16(<4 x i16> addrspace(1)* %out, <4 x i32> %in) {
+entry:
+  %0 = trunc <4 x i32> %in to <4 x i16>
+  store <4 x i16> %0, <4 x i16> addrspace(1)* %out
   ret void
 }
 

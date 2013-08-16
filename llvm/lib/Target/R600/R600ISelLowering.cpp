@@ -1011,10 +1011,15 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   SDValue Value = Op.getOperand(1);
   SDValue Ptr = Op.getOperand(2);
 
+  SDValue Result = AMDGPUTargetLowering::LowerVectorStore(Op, DAG);
+  if (Result.getNode()) {
+    return Result;
+  }
+
   if (StoreNode->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS) {
     if (StoreNode->isTruncatingStore()) {
       EVT VT = Value.getValueType();
-      assert(VT == MVT::i32);
+      assert(VT.bitsLE(MVT::i32));
       EVT MemVT = StoreNode->getMemoryVT();
       SDValue MaskConstant;
       if (MemVT == MVT::i8) {
@@ -1571,6 +1576,7 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
     }
     }
   }
+
   case AMDGPUISD::EXPORT: {
     SDValue Arg = N->getOperand(1);
     if (Arg.getOpcode() != ISD::BUILD_VECTOR)
