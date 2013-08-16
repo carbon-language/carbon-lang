@@ -38,15 +38,6 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
 
   computeRegisterProperties();
 
-  setOperationAction(ISD::FADD, MVT::v4f32, Expand);
-  setOperationAction(ISD::FADD, MVT::v2f32, Expand);
-  setOperationAction(ISD::FMUL, MVT::v4f32, Expand);
-  setOperationAction(ISD::FMUL, MVT::v2f32, Expand);
-  setOperationAction(ISD::FDIV, MVT::v4f32, Expand);
-  setOperationAction(ISD::FDIV, MVT::v2f32, Expand);
-  setOperationAction(ISD::FSUB, MVT::v4f32, Expand);
-  setOperationAction(ISD::FSUB, MVT::v2f32, Expand);
-
   setOperationAction(ISD::FCOS, MVT::f32, Custom);
   setOperationAction(ISD::FSIN, MVT::f32, Custom);
 
