@@ -843,6 +843,13 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
         case SymbolRef::ST_Unknown: {
           Value.SymbolName = TargetName.data();
           Value.Addend = Addend;
+
+          // Absolute relocations will have a zero symbol ID (STN_UNDEF), which
+          // will manifest here as a NULL symbol name.
+          // We can set this as a valid (but empty) symbol name, and rely
+          // on addRelocationForSymbol to handle this.
+          if (!Value.SymbolName)
+              Value.SymbolName = "";
           break;
         }
         default:
@@ -1068,7 +1075,10 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
       RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
       // Extra check to avoid relocation againt empty symbols (usually
       // the R_PPC64_TOC).
-      if (Value.SymbolName && !TargetName.empty())
+      if (SymType != SymbolRef::ST_Unknown && TargetName.empty())
+        Value.SymbolName = NULL;
+
+      if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
       else
         addRelocationForSection(RE, Value.SectionID);
