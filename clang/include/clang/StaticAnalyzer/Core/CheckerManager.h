@@ -585,7 +585,7 @@ private:
     unsigned StmtKind;
     bool IsPreVisit;
 
-    CachedStmtCheckersKey() : StmtKind(0), IsPreVisit(0) { }
+    CachedStmtCheckersKey() : StmtKind(0), IsPreVisit(false) { }
     CachedStmtCheckersKey(unsigned stmtKind, bool isPreVisit)
       : StmtKind(stmtKind), IsPreVisit(isPreVisit) { }
 
