@@ -193,6 +193,9 @@ public:
     lldb::addr_t
     GetFileAddress () const;
 
+    bool
+    SetFileAddress (lldb::addr_t file_addr);
+
     lldb::addr_t
     GetOffset () const;
 

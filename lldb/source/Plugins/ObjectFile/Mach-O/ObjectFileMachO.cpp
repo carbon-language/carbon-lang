@@ -1035,11 +1035,11 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                             // is null out the SectionList vector and if a process has been set up, dump a message
                             // to stdout.  The most common case here is core file debugging with a truncated file.
                             const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
-                            GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
-                                                     i,
-                                                     lc_segment_name,
-                                                     load_cmd.fileoff,
-                                                     m_length);
+                            module_sp->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 ")",
+                                                   i,
+                                                   lc_segment_name,
+                                                   load_cmd.fileoff,
+                                                   m_length);
                             
                             load_cmd.fileoff = 0;
                             load_cmd.filesize = 0;
@@ -1053,11 +1053,11 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                             // is null out the SectionList vector and if a process has been set up, dump a message
                             // to stdout.  The most common case here is core file debugging with a truncated file.
                             const char *lc_segment_name = load_cmd.cmd == LoadCommandSegment64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
-                            GetModule()->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), the segment will be truncated",
-                                                     i,
-                                                     lc_segment_name,
-                                                     load_cmd.fileoff + load_cmd.filesize,
-                                                     m_length);
+                            module_sp->ReportError("is a corrupt mach-o file: load command %u %s has a fileoff + filesize (0x%" PRIx64 ") that extends beyond the end of the file (0x%" PRIx64 "), the segment will be truncated",
+                                                   i,
+                                                   lc_segment_name,
+                                                   load_cmd.fileoff + load_cmd.filesize,
+                                                   m_length);
                             
                             // Tuncase the length
                             load_cmd.filesize = m_length - load_cmd.fileoff;
@@ -1095,6 +1095,20 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                         }
                         else if (unified_section_sp)
                         {
+                            if (is_dsym && unified_section_sp->GetFileAddress() != load_cmd.vmaddr)
+                            {
+                                // Check to see if the module was read from memory?
+                                if (module_sp->GetObjectFile()->GetHeaderAddress().IsValid())
+                                {
+                                    // We have a module that is in memory and needs to have its
+                                    // file address adjusted. We need to do this because when we
+                                    // load a file from memory, its addresses will be slid already,
+                                    // yet the addresses in the new symbol file will still be unslid.
+                                    // Since everything is stored as section offset, this shouldn't
+                                    // cause any problems.
+                                    unified_section_sp->SetFileAddress(load_cmd.vmaddr);
+                                }
+                            }
                             m_sections_ap->AddSection(unified_section_sp);
                         }
 
