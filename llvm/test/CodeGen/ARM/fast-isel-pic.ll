@@ -25,6 +25,8 @@ entry:
 ; ARMv7: add  [[reg2]], pc, [[reg2]]
 ; ARMv7-ELF: LoadGV
 ; ARMv7-ELF: ldr r[[reg2:[0-9]+]],
+; ARMv7-ELF: .LPC
+; ARMv7-ELF-NEXT: add r[[reg2]], pc
 ; ARMv7-ELF: ldr r[[reg3:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg2]], [r[[reg3]], r[[reg2]]]
   %tmp = load i32* @g
@@ -54,6 +56,8 @@ entry:
 ; ARMv7: ldr  r[[reg5]], [r[[reg5]]]
 ; ARMv7-ELF: LoadIndirectSymbol
 ; ARMv7-ELF: ldr r[[reg5:[0-9]+]],
+; ARMv7-ELF: .LPC
+; ARMv7-ELF-NEXT: add r[[reg5]], pc
 ; ARMv7-ELF: ldr r[[reg6:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg5]], [r[[reg6]], r[[reg5]]]
   %tmp = load i32* @i

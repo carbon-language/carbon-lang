@@ -130,6 +130,10 @@ namespace {
         MIB.addImm(0);
       AddDefaultPred(MIB);
 
+      // Fix the GOT address by adding pc.
+      BuildMI(FirstMBB, MBBI, DL, TII.get(ARM::tPICADD), GlobalBaseReg)
+          .addReg(GlobalBaseReg).addImm(ARMPCLabelIndex);
+
       return true;
     }
 
