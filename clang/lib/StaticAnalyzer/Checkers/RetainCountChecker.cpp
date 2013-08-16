@@ -3701,7 +3701,6 @@ namespace clang { namespace ento { namespace objc_retain {
   const RetainSummary *S = M.get ## KIND ## Summary(D);\
   CallEffects CE(S->getRetEffect());\
   CE.Receiver = S->getReceiverEffect();\
-  M.updateSummaryFromAnnotations(S, D);\
   unsigned N = S->getNumArgs();\
   for (unsigned i = 0; i < N; ++i) {\
     CE.Args.push_back(S->getArg(i));\
