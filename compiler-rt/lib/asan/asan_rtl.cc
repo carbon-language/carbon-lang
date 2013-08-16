@@ -168,9 +168,9 @@ void InitializeFlags(Flags *f, const char *env) {
   f->allow_reexec = true;
   f->print_full_thread_history = true;
   f->poison_heap = true;
-  // Turn off alloc/dealloc mismatch checker on Mac for now.
-  // TODO(glider): Fix known issues and enable this back.
-  f->alloc_dealloc_mismatch = (SANITIZER_MAC == 0);;
+  // Turn off alloc/dealloc mismatch checker on Mac and Windows for now.
+  // TODO(glider,timurrrr): Fix known issues and enable this back.
+  f->alloc_dealloc_mismatch = (SANITIZER_MAC == 0) && (SANITIZER_WINDOWS == 0);
   f->use_stack_depot = true;
   f->strict_memcmp = true;
   f->strict_init_order = false;
