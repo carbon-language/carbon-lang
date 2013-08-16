@@ -1,4 +1,5 @@
 ;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s
+;XFAIL: *
 
 ; CHECK: S_ENDPGM
 
