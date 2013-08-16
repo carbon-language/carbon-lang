@@ -33,42 +33,6 @@ using namespace clang::driver::toolchains;
 using namespace clang;
 using namespace llvm::opt;
 
-Windows::Windows(const Driver &D, const llvm::Triple& Triple,
-                 const ArgList &Args)
-  : ToolChain(D, Triple, Args) {
-}
-
-Tool *Windows::buildLinker() const {
-  return new tools::visualstudio::Link(*this);
-}
-
-Tool *Windows::buildAssembler() const {
-  if (getTriple().getEnvironment() == llvm::Triple::MachO)
-    return new tools::darwin::Assemble(*this);
-  getDriver().Diag(clang::diag::err_no_external_windows_assembler);
-  return NULL;
-}
-
-bool Windows::IsIntegratedAssemblerDefault() const {
-  return true;
-}
-
-bool Windows::IsUnwindTablesDefault() const {
-  return getArch() == llvm::Triple::x86_64;
-}
-
-bool Windows::isPICDefault() const {
-  return getArch() == llvm::Triple::x86_64;
-}
-
-bool Windows::isPIEDefault() const {
-  return false;
-}
-
-bool Windows::isPICDefaultForced() const {
-  return getArch() == llvm::Triple::x86_64;
-}
-
 // FIXME: This probably should goto to some platform utils place.
 #ifdef _MSC_VER
 
@@ -200,7 +164,7 @@ static bool getWindowsSDKDir(std::string &path) {
   return false;
 }
 
-  // Get Visual Studio installation directory.
+// Get Visual Studio installation directory.
 static bool getVisualStudioDir(std::string &path) {
   // First check the environment variables that vsvars32.bat sets.
   const char* vcinstalldir = getenv("VCINSTALLDIR");
@@ -276,6 +240,47 @@ static bool getVisualStudioDir(std::string &path) {
 }
 
 #endif // _MSC_VER
+
+Windows::Windows(const Driver &D, const llvm::Triple& Triple,
+                 const ArgList &Args)
+  : ToolChain(D, Triple, Args) {
+#ifdef _MSC_VER
+  std::string VSDir;
+  if (getVisualStudioDir(VSDir))
+    getProgramPaths().push_back(VSDir + "\\VC\\bin");
+#endif
+}
+
+Tool *Windows::buildLinker() const {
+  return new tools::visualstudio::Link(*this);
+}
+
+Tool *Windows::buildAssembler() const {
+  if (getTriple().getEnvironment() == llvm::Triple::MachO)
+    return new tools::darwin::Assemble(*this);
+  getDriver().Diag(clang::diag::err_no_external_windows_assembler);
+  return NULL;
+}
+
+bool Windows::IsIntegratedAssemblerDefault() const {
+  return true;
+}
+
+bool Windows::IsUnwindTablesDefault() const {
+  return getArch() == llvm::Triple::x86_64;
+}
+
+bool Windows::isPICDefault() const {
+  return getArch() == llvm::Triple::x86_64;
+}
+
+bool Windows::isPIEDefault() const {
+  return false;
+}
+
+bool Windows::isPICDefaultForced() const {
+  return getArch() == llvm::Triple::x86_64;
+}
 
 void Windows::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                         ArgStringList &CC1Args) const {
