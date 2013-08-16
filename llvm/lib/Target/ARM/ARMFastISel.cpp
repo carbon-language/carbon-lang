@@ -1537,13 +1537,15 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
     }
   }
 
+  const MCInstrDesc &II = TII.get(CmpOpc);
+  SrcReg1 = constrainOperandRegClass(II, SrcReg1, 0);
   if (!UseImm) {
-    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                            TII.get(CmpOpc))
+    SrcReg2 = constrainOperandRegClass(II, SrcReg2, 1);
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                     .addReg(SrcReg1).addReg(SrcReg2));
   } else {
     MachineInstrBuilder MIB;
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
       .addReg(SrcReg1);
 
     // Only add immediate for icmp as the immediate for fcmp is an implicit 0.0.
@@ -1742,6 +1744,7 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
   }
 
   unsigned CmpOpc = isThumb2 ? ARM::t2CMPri : ARM::CMPri;
+  CondReg = constrainOperandRegClass(TII.get(CmpOpc), CondReg, 0);
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CmpOpc))
                   .addReg(CondReg).addImm(0));
 
@@ -1758,12 +1761,16 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
       MovCCOpc = isThumb2 ? ARM::t2MVNCCi : ARM::MVNCCi;
   }
   unsigned ResultReg = createResultReg(RC);
-  if (!UseImm)
+  if (!UseImm) {
+    Op2Reg = constrainOperandRegClass(TII.get(MovCCOpc), Op1Reg, 1);
+    Op1Reg = constrainOperandRegClass(TII.get(MovCCOpc), Op1Reg, 2);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
     .addReg(Op2Reg).addReg(Op1Reg).addImm(ARMCC::NE).addReg(ARM::CPSR);
-  else
+  } else {
+    Op1Reg = constrainOperandRegClass(TII.get(MovCCOpc), Op1Reg, 1);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
     .addReg(Op1Reg).addImm(Imm).addImm(ARMCC::EQ).addReg(ARM::CPSR);
+  }
   UpdateValueMap(I, ResultReg);
   return true;
 }
