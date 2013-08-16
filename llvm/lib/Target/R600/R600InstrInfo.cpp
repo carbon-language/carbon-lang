@@ -160,6 +160,10 @@ bool R600InstrInfo::isTransOnly(const MachineInstr *MI) const {
   return isTransOnly(MI->getOpcode());
 }
 
+bool R600InstrInfo::isExport(unsigned Opcode) const {
+  return (get(Opcode).TSFlags & R600_InstFlag::IS_EXPORT);
+}
+
 bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
   return ST.hasVertexCache() && IS_VTX(get(Opcode));
 }

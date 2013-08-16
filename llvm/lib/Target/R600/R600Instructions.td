@@ -278,6 +278,7 @@ class EG_CF_RAT <bits <8> cfinst, bits <6> ratinst, bits<4> ratid, bits<4> mask,
 
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
+  let IsExport = 1;
 
 }
 
@@ -551,6 +552,7 @@ class ExportSwzInst : InstR600ISA<(
   let elem_size = 3;
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
+  let IsExport = 1;
 }
 
 } // End usesCustomInserter = 1
@@ -564,6 +566,7 @@ class ExportBufInst : InstR600ISA<(
   let elem_size = 0;
   let Inst{31-0} = Word0;
   let Inst{63-32} = Word1;
+  let IsExport = 1;
 }
 
 //===----------------------------------------------------------------------===//

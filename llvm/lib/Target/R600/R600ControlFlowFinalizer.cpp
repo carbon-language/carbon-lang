@@ -373,15 +373,6 @@ public:
         case AMDGPU::CF_ALU:
           I = MI;
           AluClauses.push_back(MakeALUClause(MBB, I));
-        case AMDGPU::EG_ExportBuf:
-        case AMDGPU::EG_ExportSwz:
-        case AMDGPU::R600_ExportBuf:
-        case AMDGPU::R600_ExportSwz:
-        case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
-        case AMDGPU::RAT_WRITE_CACHELESS_64_eg:
-        case AMDGPU::RAT_WRITE_CACHELESS_128_eg:
-        case AMDGPU::RAT_STORE_DWORD32:
-        case AMDGPU::RAT_STORE_DWORD64:
           DEBUG(dbgs() << CfCount << ":"; MI->dump(););
           CfCount++;
           break;
@@ -491,6 +482,10 @@ public:
             EmitALUClause(I, AluClauses[i], CfCount);
         }
         default:
+          if (TII->isExport(MI->getOpcode())) {
+            DEBUG(dbgs() << CfCount << ":"; MI->dump(););
+            CfCount++;
+          }
           break;
         }
       }

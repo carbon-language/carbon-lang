@@ -29,6 +29,7 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   bit VTXInst = 0;
   bit TEXInst = 0;
   bit ALUInst = 0;
+  bit IsExport = 0;
 
   let Namespace = "AMDGPU";
   let OutOperandList = outs;
@@ -53,6 +54,7 @@ class InstR600 <dag outs, dag ins, string asm, list<dag> pattern,
   let TSFlags{14} = ALUInst;
   let TSFlags{15} = LDS_1A;
   let TSFlags{16} = LDS_1A1D;
+  let TSFlags{17} = IsExport;
 }
 
 //===----------------------------------------------------------------------===//
