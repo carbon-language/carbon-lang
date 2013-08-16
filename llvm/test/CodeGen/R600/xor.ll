@@ -37,3 +37,20 @@ define void @xor_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in
   store <4 x i32> %result, <4 x i32> addrspace(1)* %out
   ret void
 }
+
+;EG-CHECK: @xor_i1
+;EG-CHECK: XOR_INT {{\*? *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PV\.[XYZW]}}
+
+;SI-CHECK: @xor_i1
+;SI-CHECK: S_XOR_B64 {{SGPR[0-9]+_SGPR[0-9]+, SGPR[0-9]+_SGPR[0-9]+, SGPR[0-9]+_SGPR[0-9]+}}
+
+define void @xor_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
+  %a = load float addrspace(1) * %in0
+  %b = load float addrspace(1) * %in1
+  %acmp = fcmp oge float %a, 0.000000e+00
+  %bcmp = fcmp oge float %b, 0.000000e+00
+  %xor = xor i1 %acmp, %bcmp
+  %result = select i1 %xor, float %a, float %b
+  store float %result, float addrspace(1)* %out
+  ret void
+}

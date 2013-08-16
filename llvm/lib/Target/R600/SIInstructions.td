@@ -1144,7 +1144,9 @@ def : Pat <
   (S_OR_B64 $src0, $src1)
 >;
 def S_XOR_B32 : SOP2_32 <0x00000012, "S_XOR_B32", []>;
-def S_XOR_B64 : SOP2_64 <0x00000013, "S_XOR_B64", []>;
+def S_XOR_B64 : SOP2_64 <0x00000013, "S_XOR_B64",
+  [(set i1:$dst, (xor i1:$src0, i1:$src1))]
+>;
 def S_ANDN2_B32 : SOP2_32 <0x00000014, "S_ANDN2_B32", []>;
 def S_ANDN2_B64 : SOP2_64 <0x00000015, "S_ANDN2_B64", []>;
 def S_ORN2_B32 : SOP2_32 <0x00000016, "S_ORN2_B32", []>;
