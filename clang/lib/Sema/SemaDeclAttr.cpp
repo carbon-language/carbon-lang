@@ -1944,7 +1944,7 @@ static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    if (VD->hasLocalStorage() || VD->hasExternalStorage()) {
+    if (VD->hasLocalStorage()) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "used";
       return;
     }

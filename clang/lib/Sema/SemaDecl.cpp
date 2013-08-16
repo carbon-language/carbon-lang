@@ -8795,6 +8795,13 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   if (!VD)
     return;
 
+  if (UsedAttr *Attr = VD->getAttr<UsedAttr>()) {
+    if (!Attr->isInherited() && !VD->isThisDeclarationADefinition()) {
+      Diag(Attr->getLocation(), diag::warn_attribute_ignored) << "used";
+      VD->dropAttr<UsedAttr>();
+    }
+  }
+
   const DeclContext *DC = VD->getDeclContext();
   // If there's a #pragma GCC visibility in scope, and this isn't a class
   // member, set the visibility of this variable.
