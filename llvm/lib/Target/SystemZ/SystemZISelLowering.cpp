@@ -1702,6 +1702,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(UDIVREM64);
     OPCODE(MVC);
     OPCODE(CLC);
+    OPCODE(STRCMP);
     OPCODE(IPM);
     OPCODE(ATOMIC_SWAPW);
     OPCODE(ATOMIC_LOADW_ADD);
@@ -2261,6 +2262,66 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
   return MBB;
 }
 
+// Decompose string pseudo-instruction MI into a loop that continually performs
+// Opcode until CC != 3.
+MachineBasicBlock *
+SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
+                                         MachineBasicBlock *MBB,
+                                         unsigned Opcode) const {
+  const SystemZInstrInfo *TII = TM.getInstrInfo();
+  MachineFunction &MF = *MBB->getParent();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  DebugLoc DL = MI->getDebugLoc();
+
+  uint64_t End1Reg   = MI->getOperand(0).getReg();
+  uint64_t Start1Reg = MI->getOperand(1).getReg();
+  uint64_t Start2Reg = MI->getOperand(2).getReg();
+  uint64_t CharReg   = MI->getOperand(3).getReg();
+
+  const TargetRegisterClass *RC = &SystemZ::GR64BitRegClass;
+  uint64_t This1Reg = MRI.createVirtualRegister(RC);
+  uint64_t This2Reg = MRI.createVirtualRegister(RC);
+  uint64_t End2Reg  = MRI.createVirtualRegister(RC);
+
+  MachineBasicBlock *StartMBB = MBB;
+  MachineBasicBlock *DoneMBB = splitBlockAfter(MI, MBB);
+  MachineBasicBlock *LoopMBB = emitBlockAfter(StartMBB);
+
+  //  StartMBB:
+  //   R0W = %CharReg
+  //   # fall through to LoopMMB
+  BuildMI(MBB, DL, TII->get(TargetOpcode::COPY), SystemZ::R0W).addReg(CharReg);
+  MBB->addSuccessor(LoopMBB);
+
+  //  LoopMBB:
+  //   %This1Reg = phi [ %Start1Reg, StartMBB ], [ %End1Reg, LoopMBB ]
+  //   %This2Reg = phi [ %Start2Reg, StartMBB ], [ %End2Reg, LoopMBB ]
+  //   %End1Reg, %End2Reg = CLST %This1Reg, %This2Reg -- uses R0W
+  //   JO LoopMBB
+  //   # fall through to DoneMMB
+  MBB = LoopMBB;
+  MBB->addLiveIn(SystemZ::R0W);
+
+  BuildMI(MBB, DL, TII->get(SystemZ::PHI), This1Reg)
+    .addReg(Start1Reg).addMBB(StartMBB)
+    .addReg(End1Reg).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(SystemZ::PHI), This2Reg)
+    .addReg(Start2Reg).addMBB(StartMBB)
+    .addReg(End2Reg).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(Opcode))
+    .addReg(End1Reg, RegState::Define).addReg(End2Reg, RegState::Define)
+    .addReg(This1Reg).addReg(This2Reg);
+  BuildMI(MBB, DL, TII->get(SystemZ::BRC))
+    .addImm(SystemZ::CCMASK_ANY).addImm(SystemZ::CCMASK_3).addMBB(LoopMBB);
+  MBB->addSuccessor(LoopMBB);
+  MBB->addSuccessor(DoneMBB);
+
+  DoneMBB->addLiveIn(SystemZ::CC);
+
+  MI->eraseFromParent();
+  return DoneMBB;
+}
+
 MachineBasicBlock *SystemZTargetLowering::
 EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
   switch (MI->getOpcode()) {
@@ -2488,6 +2549,8 @@ EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const {
     return emitMemMemWrapper(MI, MBB, SystemZ::MVC);
   case SystemZ::CLCWrapper:
     return emitMemMemWrapper(MI, MBB, SystemZ::CLC);
+  case SystemZ::CLSTLoop:
+    return emitStringWrapper(MI, MBB, SystemZ::CLST);
   default:
     llvm_unreachable("Unexpected instr type to insert");
   }

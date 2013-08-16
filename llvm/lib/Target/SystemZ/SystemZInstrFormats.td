@@ -1405,3 +1405,23 @@ multiclass MemorySS<string mnemonic, bits<8> opcode,
                          [(operator bdaddr12only:$dest, bdaddr12only:$src,
                                     imm32len8:$length)]>;
 }
+
+// Define an instruction that operates on two strings, both terminated
+// by the character in R0.  The instruction processes a CPU-determinated
+// number of bytes at a time and sets CC to 3 if the instruction needs
+// to be repeated.  Also define a pseudo instruction that represents
+// the full loop (the main instruction plus the branch on CC==3).
+multiclass StringRRE<string mnemonic, bits<16> opcode,
+                     SDPatternOperator operator> {
+  def "" : InstRRE<opcode, (outs GR64:$R1, GR64:$R2),
+                   (ins GR64:$R1src, GR64:$R2src),
+                   mnemonic#"\t$R1, $R2", []> {
+    let Constraints = "$R1 = $R1src, $R2 = $R2src";
+    let DisableEncoding = "$R1src, $R2src";
+  }
+  let usesCustomInserter = 1 in
+    def Loop : Pseudo<(outs GR64:$end),
+                      (ins GR64:$start1, GR64:$start2, GR32:$char),
+                      [(set GR64:$end, (operator GR64:$start1, GR64:$start2,
+                                                 GR32:$char))]>;
+}

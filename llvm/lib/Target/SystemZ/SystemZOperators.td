@@ -58,6 +58,11 @@ def SDT_ZMemMemLength       : SDTypeProfile<0, 3,
                                             [SDTCisPtrTy<0>,
                                              SDTCisPtrTy<1>,
                                              SDTCisVT<2, i32>]>;
+def SDT_ZString             : SDTypeProfile<1, 3,
+                                            [SDTCisPtrTy<0>,
+                                             SDTCisPtrTy<1>,
+                                             SDTCisPtrTy<2>,
+                                             SDTCisVT<3, i32>]>;
 def SDT_ZI32Intrinsic       : SDTypeProfile<1, 0, [SDTCisVT<0, i32>]>;
 
 //===----------------------------------------------------------------------===//
@@ -113,6 +118,8 @@ def z_atomic_cmp_swapw  : AtomicWOp<"ATOMIC_CMP_SWAPW", SDT_ZAtomicCmpSwapW>;
 def z_mvc               : SDNode<"SystemZISD::MVC", SDT_ZMemMemLength,
                                  [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def z_clc               : SDNode<"SystemZISD::CLC", SDT_ZMemMemLength,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
+def z_strcmp            : SDNode<"SystemZISD::STRCMP", SDT_ZString,
                                  [SDNPHasChain, SDNPOutGlue, SDNPMayLoad]>;
 def z_ipm               : SDNode<"SystemZISD::IPM", SDT_ZI32Intrinsic,
                                  [SDNPInGlue]>;

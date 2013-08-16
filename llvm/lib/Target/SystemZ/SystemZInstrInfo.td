@@ -996,6 +996,10 @@ defm : ZXB<z_ucmp, GR64, CLGFR>;
 let mayLoad = 1, Defs = [CC] in
   defm CLC : MemorySS<"clc", 0xD5, z_clc>;
 
+// String comparison.
+let mayLoad = 1, Defs = [CC], Uses = [R0W] in
+  defm CLST : StringRRE<"clst", 0xB25D, z_strcmp>;
+
 //===----------------------------------------------------------------------===//
 // Atomic operations
 //===----------------------------------------------------------------------===//

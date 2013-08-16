@@ -126,6 +126,19 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
   return SDValue();
 }
 
+// Convert the current CC value into an integer that is 0 if CC == 0,
+// less than zero if CC == 1 and greater than zero if CC >= 2.
+// The sequence starts with IPM, which puts CC into bits 29 and 28
+// of an integer and clears bits 30 and 31.
+static SDValue addIPMSequence(SDLoc DL, SDValue Glue, SelectionDAG &DAG) {
+  SDValue IPM = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
+  SDValue SRL = DAG.getNode(ISD::SRL, DL, MVT::i32, IPM,
+                            DAG.getConstant(28, MVT::i32));
+  SDValue ROTL = DAG.getNode(ISD::ROTL, DL, MVT::i32, SRL,
+                             DAG.getConstant(31, MVT::i32));
+  return ROTL;
+}
+
 std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
 EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                         SDValue Src1, SDValue Src2, SDValue Size,
@@ -139,17 +152,21 @@ EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
       Chain = DAG.getNode(SystemZISD::CLC, DL, VTs, Chain,
                           Src1, Src2, Size);
       SDValue Glue = Chain.getValue(1);
-      // IPM inserts the CC value into bits 29 and 28, with 0 meaning "equal",
-      // 1 meaning "less" and 2 meaning "greater".  Bits 30 and 31 are zero.
-      // Convert this into an integer that is respectively equal, less
-      // or greater than 0.
-      SDValue IPM = DAG.getNode(SystemZISD::IPM, DL, MVT::i32, Glue);
-      SDValue SRL = DAG.getNode(ISD::SRL, DL, MVT::i32, IPM,
-                                DAG.getConstant(28, MVT::i32));
-      SDValue ROTL = DAG.getNode(ISD::ROTL, DL, MVT::i32, SRL,
-                                 DAG.getConstant(31, MVT::i32));
-      return std::make_pair(ROTL, Chain);
+      return std::make_pair(addIPMSequence(DL, Glue, DAG), Chain);
     }
   }
   return std::make_pair(SDValue(), SDValue());
+}
+
+std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
+EmitTargetCodeForStrcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                        SDValue Src1, SDValue Src2,
+                        MachinePointerInfo Op1PtrInfo,
+                        MachinePointerInfo Op2PtrInfo) const {
+  SDVTList VTs = DAG.getVTList(Src1.getValueType(), MVT::Other, MVT::Glue);
+  SDValue Unused = DAG.getNode(SystemZISD::STRCMP, DL, VTs, Chain, Src1, Src2,
+                               DAG.getConstant(0, MVT::i32));
+  Chain = Unused.getValue(1);
+  SDValue Glue = Chain.getValue(2);
+  return std::make_pair(addIPMSequence(DL, Glue, DAG), Chain);
 }

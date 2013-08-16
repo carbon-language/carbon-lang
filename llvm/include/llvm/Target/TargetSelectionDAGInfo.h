@@ -108,6 +108,20 @@ public:
                           MachinePointerInfo Op2PtrInfo) const {
     return std::make_pair(SDValue(), SDValue());
   }
+
+  /// EmitTargetCodeForStrcmp - Emit target-specific code that performs a
+  /// strcmp, in cases where that is faster than a libcall.  The first
+  /// returned SDValue is the result of the strcmp and the second is
+  /// the chain.  Both SDValues can be null if a normal libcall should
+  /// be used.
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForStrcmp(SelectionDAG &DAG, SDLoc dl,
+                          SDValue Chain,
+                          SDValue Op1, SDValue Op2,
+                          MachinePointerInfo Op1PtrInfo,
+                          MachinePointerInfo Op2PtrInfo) const {
+    return std::make_pair(SDValue(), SDValue());
+  }
 };
 
 } // end llvm namespace

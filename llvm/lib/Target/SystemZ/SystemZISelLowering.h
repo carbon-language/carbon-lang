@@ -84,6 +84,10 @@ namespace SystemZISD {
     // as for MVC.
     CLC,
 
+    // Use a CLST-based sequence to implement strcmp().  The two input operands
+    // are the addresses of the strings to compare.
+    STRCMP,
+
     // Store the CC value in bits 29 and 28 of an integer.
     IPM,
 
@@ -238,6 +242,9 @@ private:
   MachineBasicBlock *emitAtomicCmpSwapW(MachineInstr *MI,
                                         MachineBasicBlock *BB) const;
   MachineBasicBlock *emitMemMemWrapper(MachineInstr *MI,
+                                       MachineBasicBlock *BB,
+                                       unsigned Opcode) const;
+  MachineBasicBlock *emitStringWrapper(MachineInstr *MI,
                                        MachineBasicBlock *BB,
                                        unsigned Opcode) const;
 };
