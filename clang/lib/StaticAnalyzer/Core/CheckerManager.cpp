@@ -169,7 +169,7 @@ void CheckerManager::runCheckersForStmt(bool isPreVisit,
                                         const Stmt *S,
                                         ExprEngine &Eng,
                                         bool WasInlined) {
-  CheckStmtContext C(isPreVisit, *getCachedStmtCheckersFor(S, isPreVisit),
+  CheckStmtContext C(isPreVisit, getCachedStmtCheckersFor(S, isPreVisit),
                      S, Eng, WasInlined);
   expandGraphWithCheckers(C, Dst, Src);
 }
@@ -688,27 +688,23 @@ void CheckerManager::_registerForEndOfTranslationUnit(
 // Implementation details.
 //===----------------------------------------------------------------------===//
 
-CheckerManager::CachedStmtCheckers *
+const CheckerManager::CachedStmtCheckers &
 CheckerManager::getCachedStmtCheckersFor(const Stmt *S, bool isPreVisit) {
   assert(S);
 
-  CachedStmtCheckersKey key(S->getStmtClass(), isPreVisit);
-  CachedStmtCheckers *checkers = 0;
-  CachedStmtCheckersMapTy::iterator CCI = CachedStmtCheckersMap.find(key);
-  if (CCI != CachedStmtCheckersMap.end()) {
-    checkers = &(CCI->second);
-  } else {
-    // Find the checkers that should run for this Stmt and cache them.
-    checkers = &CachedStmtCheckersMap[key];
-    for (unsigned i = 0, e = StmtCheckers.size(); i != e; ++i) {
-      StmtCheckerInfo &info = StmtCheckers[i];
-      if (info.IsPreVisit == isPreVisit && info.IsForStmtFn(S))
-        checkers->push_back(info.CheckFn);
-    }
-  }
+  unsigned Key = (S->getStmtClass() << 1) | unsigned(isPreVisit);
+  CachedStmtCheckersMapTy::iterator CCI = CachedStmtCheckersMap.find(Key);
+  if (CCI != CachedStmtCheckersMap.end())
+    return CCI->second;
 
-  assert(checkers);
-  return checkers;
+  // Find the checkers that should run for this Stmt and cache them.
+  CachedStmtCheckers &Checkers = CachedStmtCheckersMap[Key];
+  for (unsigned i = 0, e = StmtCheckers.size(); i != e; ++i) {
+    StmtCheckerInfo &Info = StmtCheckers[i];
+    if (Info.IsPreVisit == isPreVisit && Info.IsForStmtFn(S))
+      Checkers.push_back(Info.CheckFn);
+  }
+  return Checkers;
 }
 
 CheckerManager::~CheckerManager() {

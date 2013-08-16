@@ -19,7 +19,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include <vector>
 
@@ -581,35 +580,12 @@ private:
   };
   std::vector<StmtCheckerInfo> StmtCheckers;
 
-  struct CachedStmtCheckersKey {
-    unsigned StmtKind;
-    bool IsPreVisit;
-
-    CachedStmtCheckersKey() : StmtKind(0), IsPreVisit(false) { }
-    CachedStmtCheckersKey(unsigned stmtKind, bool isPreVisit)
-      : StmtKind(stmtKind), IsPreVisit(isPreVisit) { }
-
-    static CachedStmtCheckersKey getSentinel() {
-      return CachedStmtCheckersKey(~0U, false);
-    }
-    unsigned getHashValue() const {
-      llvm::FoldingSetNodeID ID;
-      ID.AddInteger(StmtKind);
-      ID.AddBoolean(IsPreVisit);
-      return ID.ComputeHash();
-    }
-    bool operator==(const CachedStmtCheckersKey &RHS) const {
-      return StmtKind == RHS.StmtKind && IsPreVisit == RHS.IsPreVisit;
-    }
-  };
-  friend struct llvm::DenseMapInfo<CachedStmtCheckersKey>;
-
   typedef SmallVector<CheckStmtFunc, 4> CachedStmtCheckers;
-  typedef llvm::DenseMap<CachedStmtCheckersKey, CachedStmtCheckers>
-      CachedStmtCheckersMapTy;
+  typedef llvm::DenseMap<unsigned, CachedStmtCheckers> CachedStmtCheckersMapTy;
   CachedStmtCheckersMapTy CachedStmtCheckersMap;
 
-  CachedStmtCheckers *getCachedStmtCheckersFor(const Stmt *S, bool isPreVisit);
+  const CachedStmtCheckers &getCachedStmtCheckersFor(const Stmt *S,
+                                                     bool isPreVisit);
 
   std::vector<CheckObjCMessageFunc> PreObjCMessageCheckers;
   std::vector<CheckObjCMessageFunc> PostObjCMessageCheckers;
@@ -658,31 +634,5 @@ private:
 } // end ento namespace
 
 } // end clang namespace
-
-namespace llvm {
-  /// Define DenseMapInfo so that CachedStmtCheckersKey can be used as key
-  /// in DenseMap and DenseSets.
-  template <>
-  struct DenseMapInfo<clang::ento::CheckerManager::CachedStmtCheckersKey> {
-    static inline clang::ento::CheckerManager::CachedStmtCheckersKey
-        getEmptyKey() {
-      return clang::ento::CheckerManager::CachedStmtCheckersKey();
-    }
-    static inline clang::ento::CheckerManager::CachedStmtCheckersKey
-        getTombstoneKey() {
-      return clang::ento::CheckerManager::CachedStmtCheckersKey::getSentinel();
-    }
-
-    static unsigned
-        getHashValue(clang::ento::CheckerManager::CachedStmtCheckersKey S) {
-      return S.getHashValue();
-    }
-
-    static bool isEqual(clang::ento::CheckerManager::CachedStmtCheckersKey LHS,
-                       clang::ento::CheckerManager::CachedStmtCheckersKey RHS) {
-      return LHS == RHS;
-    }
-  };
-} // end namespace llvm
 
 #endif
