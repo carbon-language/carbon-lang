@@ -2,6 +2,7 @@ set(LLVM_LINK_COMPONENTS support)
 
 add_clang_library(clangFormat
   BreakableToken.cpp
+  ContinuationIndenter.cpp
   Format.cpp
   TokenAnnotator.cpp
   UnwrappedLineParser.cpp
