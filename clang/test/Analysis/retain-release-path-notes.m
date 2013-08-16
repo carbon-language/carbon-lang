@@ -43,33 +43,33 @@ CFTypeRef CFGetSomething();
 
 
 void creationViaAlloc () {
-  id leaked = [[NSObject alloc] init]; // expected-warning{{leak}} expected-note{{Method returns an Objective-C object with a +1 retain count}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  id leaked = [[NSObject alloc] init]; // expected-note{{Method returns an Objective-C object with a +1 retain count}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void creationViaCFCreate () {
-  CFTypeRef leaked = CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  CFTypeRef leaked = CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void acquisitionViaMethod (Foo *foo) {
-  id leaked = [foo methodWithValue]; // expected-warning{{leak}} expected-note{{Method returns an Objective-C object with a +0 retain count}}
+  id leaked = [foo methodWithValue]; // expected-note{{Method returns an Objective-C object with a +0 retain count}}
   [leaked retain]; // expected-note{{Reference count incremented. The object now has a +1 retain count}}
   [leaked retain]; // expected-note{{Reference count incremented. The object now has a +2 retain count}}
   [leaked release]; // expected-note{{Reference count decremented. The object now has a +1 retain count}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void acquisitionViaProperty (Foo *foo) {
-  id leaked = foo.propertyValue; // expected-warning{{leak}} expected-note{{Property returns an Objective-C object with a +0 retain count}}
+  id leaked = foo.propertyValue; // expected-note{{Property returns an Objective-C object with a +0 retain count}}
   [leaked retain]; // expected-note{{Reference count incremented. The object now has a +1 retain count}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void acquisitionViaCFFunction () {
-  CFTypeRef leaked = CFGetSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFGetSomething' returns a Core Foundation object with a +0 retain count}}
+  CFTypeRef leaked = CFGetSomething(); // expected-note{{Call to function 'CFGetSomething' returns a Core Foundation object with a +0 retain count}}
   CFRetain(leaked); // expected-note{{Reference count incremented. The object now has a +1 retain count}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void explicitDealloc () {
@@ -98,10 +98,10 @@ void autoreleaseUnowned (Foo *foo) {
 }
 
 void makeCollectableIgnored () {
-  CFTypeRef leaked = CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count}}
+  CFTypeRef leaked = CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count}}
   CFMakeCollectable(leaked); // expected-note{{When GC is not enabled a call to 'CFMakeCollectable' has no effect on its argument}}
   NSMakeCollectable(leaked); // expected-note{{When GC is not enabled a call to 'NSMakeCollectable' has no effect on its argument}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 CFTypeRef CFCopyRuleViolation () {
@@ -110,8 +110,8 @@ CFTypeRef CFCopyRuleViolation () {
 }
 
 CFTypeRef CFGetRuleViolation () {
-  CFTypeRef object = CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count}}
-  return object; // expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'object' is returned from a function whose name ('CFGetRuleViolation') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation}}
+  CFTypeRef object = CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count}}
+  return object; // expected-warning{{leak}} expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'object' is returned from a function whose name ('CFGetRuleViolation') does not contain 'Copy' or 'Create'.  This violates the naming convention rules given in the Memory Management Guide for Core Foundation}}
 }
 
 @implementation Foo (FundamentalMemoryManagementRules)
@@ -131,8 +131,8 @@ CFTypeRef CFGetRuleViolation () {
 }
 
 - (id)getViolation {
-  id result = [[Foo alloc] init]; // expected-warning{{leak}} expected-note{{Method returns an Objective-C object with a +1 retain count}}
-  return result; // expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'result' is returned from a method whose name ('getViolation') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa}}
+  id result = [[Foo alloc] init]; // expected-note{{Method returns an Objective-C object with a +1 retain count}}
+  return result; // expected-warning{{leak}} expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'result' is returned from a method whose name ('getViolation') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'.  This violates the naming convention rules given in the Memory Management Guide for Cocoa}}
 }
 
 - (id)copyAutorelease {
@@ -228,12 +228,12 @@ static int Cond;
                                 // expected-note@-3 {{Returning from 'initX'}}
                                 // expected-note@-4 {{Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1}}
   // initI is inlined because the allocation happens within initY
-  id y = [[MyObj alloc] initY]; // expected-warning {{Potential leak of an object}}
+  id y = [[MyObj alloc] initY];
                                 // expected-note@-1 {{Calling 'initY'}}
                                 // expected-note@-2 {{Returning from 'initY'}}
 
   // initZ is not inlined
-  id z = [[MyObj alloc] initZ];
+  id z = [[MyObj alloc] initZ]; // expected-warning {{Potential leak of an object}}
                                 // expected-note@-1 {{Object leaked: allocated object is not referenced later in this execution path and has a retain count of +1}}
 
   [x release];

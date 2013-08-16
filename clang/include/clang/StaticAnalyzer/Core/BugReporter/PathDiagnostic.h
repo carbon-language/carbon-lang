@@ -97,7 +97,6 @@ public:
   enum PathGenerationScheme { None, Minimal, Extensive, AlternateExtensive };
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }
   virtual bool supportsLogicalOpControlFlow() const { return false; }
-  virtual bool supportsAllBlockEdges() const { return false; }
   
   /// Return true if the PathDiagnosticConsumer supports individual
   /// PathDiagnostics that span multiple files.

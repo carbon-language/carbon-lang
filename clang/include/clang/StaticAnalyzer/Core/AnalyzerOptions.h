@@ -52,7 +52,7 @@ NumConstraints
 /// AnalysisDiagClients - Set of available diagnostic clients for rendering
 ///  analysis results.
 enum AnalysisDiagClients {
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREAT) PD_##NAME,
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN) PD_##NAME,
 #include "clang/StaticAnalyzer/Core/Analyses.def"
 NUM_ANALYSIS_DIAG_CLIENTS
 };

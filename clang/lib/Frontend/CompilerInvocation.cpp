@@ -167,7 +167,7 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   if (Arg *A = Args.getLastArg(OPT_analyzer_output)) {
     StringRef Name = A->getValue();
     AnalysisDiagClients Value = llvm::StringSwitch<AnalysisDiagClients>(Name)
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN, AUTOCREAT) \
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATFN) \
       .Case(CMDFLAG, PD_##NAME)
 #include "clang/StaticAnalyzer/Core/Analyses.def"
       .Default(NUM_ANALYSIS_DIAG_CLIENTS);

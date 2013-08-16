@@ -24,14 +24,14 @@ ANALYSIS_STORE(RegionStore, "region", "Use region-based analyzer store", CreateR
 ANALYSIS_CONSTRAINTS(RangeConstraints, "range", "Use constraint tracking of concrete value ranges", CreateRangeConstraintManager)
 
 #ifndef ANALYSIS_DIAGNOSTICS
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)
 #endif
 
-ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   createHTMLDiagnosticConsumer, false)
-ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", createPlistDiagnosticConsumer, true)
-ANALYSIS_DIAGNOSTICS(PLIST_MULTI_FILE, "plist-multi-file", "Output analysis results using Plists (allowing for mult-file bugs)", createPlistMultiFileDiagnosticConsumer, true)
-ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", createPlistHTMLDiagnosticConsumer, true)
-ANALYSIS_DIAGNOSTICS(TEXT, "text", "Text output of analysis results", createTextPathDiagnosticConsumer, true)
+ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   createHTMLDiagnosticConsumer)
+ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", createPlistDiagnosticConsumer)
+ANALYSIS_DIAGNOSTICS(PLIST_MULTI_FILE, "plist-multi-file", "Output analysis results using Plists (allowing for mult-file bugs)", createPlistMultiFileDiagnosticConsumer)
+ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", createPlistHTMLDiagnosticConsumer)
+ANALYSIS_DIAGNOSTICS(TEXT, "text", "Text output of analysis results", createTextPathDiagnosticConsumer)
 
 #ifndef ANALYSIS_PURGE
 #define ANALYSIS_PURGE(NAME, CMDFLAG, DESC)

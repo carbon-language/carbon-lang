@@ -40,17 +40,17 @@ CFTypeRef CFGetSomething();
 
 
 void creationViaCFCreate () {
-  CFTypeRef leaked = CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  CFTypeRef leaked = CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void makeCollectable () {
-  CFTypeRef leaked = CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
+  CFTypeRef leaked = CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
   CFRetain(leaked); // expected-note{{Reference count incremented. The object now has a +2 retain count}}
   CFMakeCollectable(leaked); // expected-note{{In GC mode a call to 'CFMakeCollectable' decrements an object's retain count and registers the object with the garbage collector. An object must have a 0 retain count to be garbage collected. After this call its retain count is +1}}
   NSMakeCollectable(leaked); // expected-note{{In GC mode a call to 'NSMakeCollectable' decrements an object's retain count and registers the object with the garbage collector. Since it now has a 0 retain count the object can be automatically collected by the garbage collector}}
   CFRetain(leaked); // expected-note{{Reference count incremented. The object now has a +1 retain count. The object is not eligible for garbage collection until the retain count reaches 0 again}}
-  return; // expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
+  return; // expected-warning{{leak}} expected-note{{Object leaked: object allocated and stored into 'leaked' is not referenced later in this execution path and has a retain count of +1}}
 }
 
 void retainReleaseIgnored () {
@@ -63,13 +63,13 @@ void retainReleaseIgnored () {
 
 @implementation Foo (FundamentalRuleUnderGC)
 - (id)getViolation {
-  id object = (id) CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
-  return object; // expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'object' and returned from method 'getViolation' is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector}}
+  id object = (id) CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
+  return object; // expected-warning{{leak}} expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'object' and returned from method 'getViolation' is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector}}
 }
 
 - (id)copyViolation {
-  id object = (id) CFCreateSomething(); // expected-warning{{leak}} expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
-  return object; // expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'object' and returned from method 'copyViolation' is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector}}
+  id object = (id) CFCreateSomething(); // expected-note{{Call to function 'CFCreateSomething' returns a Core Foundation object with a +1 retain count.  Core Foundation objects are not automatically garbage collected}}
+  return object; // expected-warning{{leak}} expected-note{{Object returned to caller as an owning reference (single retain count transferred to caller)}} expected-note{{Object leaked: object allocated and stored into 'object' and returned from method 'copyViolation' is potentially leaked when using garbage collection.  Callers of this method do not expect a returned object with a +1 retain count since they expect the object to be managed by the garbage collector}}
 }
 @end
 

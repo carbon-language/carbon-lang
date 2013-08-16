@@ -38,7 +38,6 @@ add_clang_library(clangStaticAnalyzerCore
   Store.cpp
   SubEngine.cpp
   SymbolManager.cpp
-  TextPathDiagnostics.cpp
   )
 
 add_dependencies(clangStaticAnalyzerCore

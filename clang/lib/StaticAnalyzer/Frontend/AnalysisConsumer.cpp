@@ -66,23 +66,52 @@ STATISTIC(MaxCFGSize, "The maximum number of basic blocks in a function.");
 // Special PathDiagnosticConsumers.
 //===----------------------------------------------------------------------===//
 
-static void createPlistHTMLDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
-                                              PathDiagnosticConsumers &C,
-                                              const std::string &prefix,
-                                              const Preprocessor &PP) {
+void ento::createPlistHTMLDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
+                                             PathDiagnosticConsumers &C,
+                                             const std::string &prefix,
+                                             const Preprocessor &PP) {
   createHTMLDiagnosticConsumer(AnalyzerOpts, C,
                                llvm::sys::path::parent_path(prefix), PP);
   createPlistDiagnosticConsumer(AnalyzerOpts, C, prefix, PP);
 }
 
+void ento::createTextPathDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
+                                            PathDiagnosticConsumers &C,
+                                            const std::string &Prefix,
+                                            const clang::Preprocessor &PP) {
+  llvm_unreachable("'text' consumer should be enabled on ClangDiags");
+}
+
 namespace {
 class ClangDiagPathDiagConsumer : public PathDiagnosticConsumer {
   DiagnosticsEngine &Diag;
+  bool IncludePath;
 public:
-  ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag) : Diag(Diag) {}
+  ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag)
+    : Diag(Diag), IncludePath(false) {}
   virtual ~ClangDiagPathDiagConsumer() {}
   virtual StringRef getName() const { return "ClangDiags"; }
-  virtual PathGenerationScheme getGenerationScheme() const { return None; }
+
+  virtual bool supportsLogicalOpControlFlow() const { return true; }
+  virtual bool supportsCrossFileDiagnostics() const { return true; }
+
+  virtual PathGenerationScheme getGenerationScheme() const {
+    return IncludePath ? Minimal : None;
+  }
+
+  void enablePaths() {
+    IncludePath = true;
+  }
+
+  void emitDiag(SourceLocation L, unsigned DiagID,
+                ArrayRef<SourceRange> Ranges) {
+    DiagnosticBuilder DiagBuilder = Diag.Report(L, DiagID);
+
+    for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
+         I != E; ++I) {
+      DiagBuilder << *I;
+    }
+  }
 
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
                             FilesMade *filesMade) {
@@ -102,14 +131,20 @@ public:
       unsigned ErrorDiag = Diag.getCustomDiagID(DiagnosticsEngine::Warning,
                                                 TmpStr);
       SourceLocation L = PD->getLocation().asLocation();
-      DiagnosticBuilder diagBuilder = Diag.Report(L, ErrorDiag);
+      emitDiag(L, ErrorDiag, PD->path.back()->getRanges());
 
-      // Get the ranges from the last point in the path.
-      ArrayRef<SourceRange> Ranges = PD->path.back()->getRanges();
+      if (!IncludePath)
+        continue;
 
-      for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),
-                                           E = Ranges.end(); I != E; ++I) {
-        diagBuilder << *I;
+      PathPieces FlatPath = PD->path.flatten(/*ShouldFlattenMacros=*/true);
+      for (PathPieces::const_iterator PI = FlatPath.begin(),
+                                      PE = FlatPath.end();
+           PI != PE; ++PI) {
+        unsigned NoteID = Diag.getCustomDiagID(DiagnosticsEngine::Note,
+                                               (*PI)->getString());
+
+        SourceLocation NoteLoc = (*PI)->getLocation().asLocation();
+        emitDiag(NoteLoc, NoteID, (*PI)->getRanges());
       }
     }
   }
@@ -186,20 +221,21 @@ public:
 
   void DigestAnalyzerOptions() {
     // Create the PathDiagnosticConsumer.
-    PathConsumers.push_back(new ClangDiagPathDiagConsumer(PP.getDiagnostics()));
+    ClangDiagPathDiagConsumer *clangDiags =
+      new ClangDiagPathDiagConsumer(PP.getDiagnostics());
+    PathConsumers.push_back(clangDiags);
 
-    if (!OutDir.empty()) {
+    if (Opts->AnalysisDiagOpt == PD_TEXT) {
+      clangDiags->enablePaths();
+
+    } else if (!OutDir.empty()) {
       switch (Opts->AnalysisDiagOpt) {
       default:
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN) \
         case PD_##NAME: CREATEFN(*Opts.getPtr(), PathConsumers, OutDir, PP);\
         break;
 #include "clang/StaticAnalyzer/Core/Analyses.def"
       }
-    } else if (Opts->AnalysisDiagOpt == PD_TEXT) {
-      // Create the text client even without a specified output file since
-      // it just uses diagnostic notes.
-      createTextPathDiagnosticConsumer(*Opts.getPtr(), PathConsumers, "", PP);
     }
 
     // Create the analyzer component creators.
