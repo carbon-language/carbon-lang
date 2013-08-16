@@ -192,6 +192,7 @@ CGIOperandList::ParseOperandName(const std::string &Op, bool AllowWholeOp) {
 
   // Otherwise, didn't find it!
   PrintFatalError(TheDef->getName() + ": unknown suboperand name in '" + Op + "'");
+  return std::make_pair(0U, 0U);
 }
 
 static void ParseConstraint(const std::string &CStr, CGIOperandList &Ops) {
