@@ -1597,12 +1597,7 @@ AST_MATCHER_P(CXXRecordDecl, hasMethod, internal::Matcher<CXXMethodDecl>,
 /// ChildT must be an AST base type.
 ///
 /// Usable as: Any Matcher
-template <typename ChildT>
-internal::ArgumentAdaptingMatcher<internal::HasMatcher, ChildT> has(
-    const internal::Matcher<ChildT> &ChildMatcher) {
-  return internal::ArgumentAdaptingMatcher<internal::HasMatcher,
-                                           ChildT>(ChildMatcher);
-}
+const internal::ArgumentAdaptingMatcherFunc<internal::HasMatcher> has = {};
 
 /// \brief Matches AST nodes that have descendant AST nodes that match the
 /// provided matcher.
@@ -1618,13 +1613,8 @@ internal::ArgumentAdaptingMatcher<internal::HasMatcher, ChildT> has(
 /// DescendantT must be an AST base type.
 ///
 /// Usable as: Any Matcher
-template <typename DescendantT>
-internal::ArgumentAdaptingMatcher<internal::HasDescendantMatcher, DescendantT>
-hasDescendant(const internal::Matcher<DescendantT> &DescendantMatcher) {
-  return internal::ArgumentAdaptingMatcher<
-    internal::HasDescendantMatcher,
-    DescendantT>(DescendantMatcher);
-}
+const internal::ArgumentAdaptingMatcherFunc<internal::HasDescendantMatcher>
+hasDescendant = {};
 
 /// \brief Matches AST nodes that have child AST nodes that match the
 /// provided matcher.
@@ -1642,13 +1632,8 @@ hasDescendant(const internal::Matcher<DescendantT> &DescendantMatcher) {
 /// matches instead of only on the first one.
 ///
 /// Usable as: Any Matcher
-template <typename ChildT>
-internal::ArgumentAdaptingMatcher<internal::ForEachMatcher, ChildT> forEach(
-    const internal::Matcher<ChildT> &ChildMatcher) {
-  return internal::ArgumentAdaptingMatcher<
-    internal::ForEachMatcher,
-    ChildT>(ChildMatcher);
-}
+const internal::ArgumentAdaptingMatcherFunc<internal::ForEachMatcher> forEach =
+    {};
 
 /// \brief Matches AST nodes that have descendant AST nodes that match the
 /// provided matcher.
@@ -1674,15 +1659,8 @@ internal::ArgumentAdaptingMatcher<internal::ForEachMatcher, ChildT> forEach(
 /// \endcode
 ///
 /// Usable as: Any Matcher
-template <typename DescendantT>
-internal::ArgumentAdaptingMatcher<internal::ForEachDescendantMatcher,
-                                  DescendantT>
-forEachDescendant(
-    const internal::Matcher<DescendantT> &DescendantMatcher) {
-  return internal::ArgumentAdaptingMatcher<
-    internal::ForEachDescendantMatcher,
-    DescendantT>(DescendantMatcher);
-}
+const internal::ArgumentAdaptingMatcherFunc<internal::ForEachDescendantMatcher>
+forEachDescendant = {};
 
 /// \brief Matches if the node or any descendant matches.
 ///
@@ -1702,7 +1680,8 @@ forEachDescendant(
 template <typename T>
 internal::PolymorphicMatcherWithParam2<
     internal::EachOfMatcher, internal::Matcher<T>,
-    internal::ArgumentAdaptingMatcher<internal::ForEachDescendantMatcher, T> >
+    internal::ArgumentAdaptingMatcherFunc<
+        internal::ForEachDescendantMatcher>::Adaptor<T> >
 findAll(const internal::Matcher<T> &Matcher) {
   return eachOf(Matcher, forEachDescendant(Matcher));
 }
@@ -1717,15 +1696,9 @@ findAll(const internal::Matcher<T> &Matcher) {
 /// \c compoundStmt(hasParent(ifStmt())) matches "{ int x = 43; }".
 ///
 /// Usable as: Any Matcher
-template <typename ParentT>
-internal::ArgumentAdaptingMatcher<internal::HasParentMatcher, ParentT,
-                                  internal::TypeList<Decl, Stmt>,
-                                  internal::TypeList<Decl, Stmt> >
-hasParent(const internal::Matcher<ParentT> &ParentMatcher) {
-  return internal::ArgumentAdaptingMatcher<
-      internal::HasParentMatcher, ParentT, internal::TypeList<Decl, Stmt>,
-      internal::TypeList<Decl, Stmt> >(ParentMatcher);
-}
+const internal::ArgumentAdaptingMatcherFunc<
+    internal::HasParentMatcher, internal::TypeList<Decl, Stmt>,
+    internal::TypeList<Decl, Stmt> > hasParent = {};
 
 /// \brief Matches AST nodes that have an ancestor that matches the provided
 /// matcher.
@@ -1738,15 +1711,9 @@ hasParent(const internal::Matcher<ParentT> &ParentMatcher) {
 /// \c expr(integerLiteral(hasAncestor(ifStmt()))) matches \c 42, but not 43.
 ///
 /// Usable as: Any Matcher
-template <typename AncestorT>
-internal::ArgumentAdaptingMatcher<internal::HasAncestorMatcher, AncestorT,
-                                  internal::TypeList<Decl, Stmt>,
-                                  internal::TypeList<Decl, Stmt> >
-hasAncestor(const internal::Matcher<AncestorT> &AncestorMatcher) {
-  return internal::ArgumentAdaptingMatcher<
-      internal::HasAncestorMatcher, AncestorT, internal::TypeList<Decl, Stmt>,
-      internal::TypeList<Decl, Stmt> >(AncestorMatcher);
-}
+const internal::ArgumentAdaptingMatcherFunc<
+    internal::HasAncestorMatcher, internal::TypeList<Decl, Stmt>,
+    internal::TypeList<Decl, Stmt> > hasAncestor = {};
 
 /// \brief Matches if the provided matcher does not match.
 ///

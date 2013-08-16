@@ -803,22 +803,33 @@ typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
 /// If a matcher does not need knowledge about the inner type, prefer to use
 /// PolymorphicMatcherWithParam1.
 template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
-          typename T, typename FromTypes = AdaptativeDefaultFromTypes,
+          typename FromTypes = AdaptativeDefaultFromTypes,
           typename ToTypes = AdaptativeDefaultToTypes>
-class ArgumentAdaptingMatcher {
-public:
-  explicit ArgumentAdaptingMatcher(const Matcher<T> &InnerMatcher)
-      : InnerMatcher(InnerMatcher) {}
+struct ArgumentAdaptingMatcherFunc {
+  template <typename T> class Adaptor {
+  public:
+    explicit Adaptor(const Matcher<T> &InnerMatcher)
+        : InnerMatcher(InnerMatcher) {}
 
-  typedef ToTypes ReturnTypes;
+    typedef ToTypes ReturnTypes;
 
-  template <typename To>
-  operator Matcher<To>() const {
-    return Matcher<To>(new ArgumentAdapterT<To, T>(InnerMatcher));
+    template <typename To> operator Matcher<To>() const {
+      return Matcher<To>(new ArgumentAdapterT<To, T>(InnerMatcher));
+    }
+
+  private:
+    const Matcher<T> InnerMatcher;
+  };
+
+  template <typename T>
+  static Adaptor<T> create(const Matcher<T> &InnerMatcher) {
+    return Adaptor<T>(InnerMatcher);
   }
 
-private:
-  const Matcher<T> InnerMatcher;
+  template <typename T>
+  Adaptor<T> operator()(const Matcher<T> &InnerMatcher) const {
+    return create(InnerMatcher);
+  }
 };
 
 /// \brief A PolymorphicMatcherWithParamN<MatcherT, P1, ..., PN> object can be

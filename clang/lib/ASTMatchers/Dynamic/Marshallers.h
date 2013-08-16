@@ -280,6 +280,74 @@ variadicMatcherCreateCallback(StringRef MatcherName,
   return Out;
 }
 
+/// \brief Helper class used to collect all the possible overloads of an
+///   argument adaptative matcher function.
+template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
+          typename FromTypes, typename ToTypes>
+class AdaptativeOverloadCollector {
+public:
+  AdaptativeOverloadCollector(StringRef Name,
+                              std::vector<MatcherCreateCallback *> &Out)
+      : Name(Name), Out(Out) {
+    collect(FromTypes());
+  }
+
+private:
+  typedef ast_matchers::internal::ArgumentAdaptingMatcherFunc<
+      ArgumentAdapterT, FromTypes, ToTypes> AdaptativeFunc;
+
+  /// \brief End case for the recursion
+  static void collect(ast_matchers::internal::EmptyTypeList) {}
+
+  /// \brief Recursive case. Get the overload for the head of the list, and
+  ///   recurse to the tail.
+  template <typename FromTypeList> inline void collect(FromTypeList);
+
+  const StringRef Name;
+  std::vector<MatcherCreateCallback *> &Out;
+};
+
+/// \brief MatcherCreateCallback that wraps multiple "overloads" of the same
+///   matcher.
+///
+/// It will try every overload and generate appropriate errors for when none or
+/// more than one overloads match the arguments.
+class OverloadedMatcherCreateCallback : public MatcherCreateCallback {
+public:
+  OverloadedMatcherCreateCallback(ArrayRef<MatcherCreateCallback *> Callbacks)
+      : Overloads(Callbacks) {}
+
+  virtual ~OverloadedMatcherCreateCallback() {
+    llvm::DeleteContainerPointers(Overloads);
+  }
+
+  virtual VariantMatcher run(const SourceRange &NameRange,
+                             ArrayRef<ParserValue> Args,
+                             Diagnostics *Error) const {
+    std::vector<VariantMatcher> Constructed;
+    Diagnostics::OverloadContext Ctx(Error);
+    for (size_t i = 0, e = Overloads.size(); i != e; ++i) {
+      VariantMatcher SubMatcher = Overloads[i]->run(NameRange, Args, Error);
+      if (!SubMatcher.isNull()) {
+        Constructed.push_back(SubMatcher);
+      }
+    }
+
+    if (Constructed.empty()) return VariantMatcher(); // No overload matched.
+    // We ignore the errors if any matcher succeeded.
+    Ctx.revertErrors();
+    if (Constructed.size() > 1) {
+      // More than one constructed. It is ambiguous.
+      Error->addError(NameRange, Error->ET_RegistryAmbiguousOverload);
+      return VariantMatcher();
+    }
+    return Constructed[0];
+  }
+
+private:
+  std::vector<MatcherCreateCallback *> Overloads;
+};
+
 /// Helper functions to select the appropriate marshaller functions.
 /// They detect the number of arguments, arguments types and return type.
 
@@ -316,6 +384,30 @@ makeMatcherAutoMarshall(llvm::VariadicFunction<ResultT, ArgT, Func> VarFunc,
                         StringRef MatcherName) {
   return new FreeFuncMatcherCreateCallback(
       &variadicMatcherCreateCallback<ResultT, ArgT, Func>, MatcherName);
+}
+
+/// \brief Argument adaptative overload.
+template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
+          typename FromTypes, typename ToTypes>
+MatcherCreateCallback *
+makeMatcherAutoMarshall(ast_matchers::internal::ArgumentAdaptingMatcherFunc<
+                            ArgumentAdapterT, FromTypes, ToTypes>,
+                        StringRef MatcherName) {
+  std::vector<MatcherCreateCallback *> Overloads;
+  AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>(MatcherName,
+                                                                    Overloads);
+  return new OverloadedMatcherCreateCallback(Overloads);
+}
+
+template <template <typename ToArg, typename FromArg> class ArgumentAdapterT,
+          typename FromTypes, typename ToTypes>
+template <typename FromTypeList>
+inline void
+AdaptativeOverloadCollector<ArgumentAdapterT, FromTypes, ToTypes>::collect(
+    FromTypeList) {
+  Out.push_back(makeMatcherAutoMarshall(
+      &AdaptativeFunc::template create<typename FromTypeList::head>, Name));
+  collect(typename FromTypeList::tail());
 }
 
 }  // namespace internal
