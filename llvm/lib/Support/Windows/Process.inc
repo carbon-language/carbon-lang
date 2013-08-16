@@ -119,16 +119,6 @@ void Process::GetTimeUsage(TimeValue &elapsed, TimeValue &user_time,
   sys_time = getTimeValueFromFILETIME(KernelTime);
 }
 
-int Process::GetCurrentUserId()
-{
-  return 65536;
-}
-
-int Process::GetCurrentGroupId()
-{
-  return 65536;
-}
-
 // Some LLVM programs such as bugpoint produce core files as a normal part of
 // their operation. To prevent the disk from filling up, this configuration
 // item does what's necessary to prevent their generation.

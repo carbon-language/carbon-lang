@@ -140,14 +140,6 @@ void Process::GetTimeUsage(TimeValue &elapsed, TimeValue &user_time,
   llvm::tie(user_time, sys_time) = getRUsageTimes();
 }
 
-int Process::GetCurrentUserId() {
-  return getuid();
-}
-
-int Process::GetCurrentGroupId() {
-  return getgid();
-}
-
 #if defined(HAVE_MACH_MACH_H) && !defined(__GNU__)
 #include <mach/mach.h>
 #endif
