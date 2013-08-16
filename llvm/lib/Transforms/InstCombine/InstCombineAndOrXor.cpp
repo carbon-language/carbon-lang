@@ -851,7 +851,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     case ICmpInst::ICMP_NE:
       // Special case to get the ordering right when the values wrap around
       // zero.
-      if (LHSCst->getValue() == 0 && RHSCst->getValue() == -1)
+      if (LHSCst->getValue() == 0 && RHSCst->getValue().isAllOnesValue())
         std::swap(LHSCst, RHSCst);
       if (LHSCst == SubOne(RHSCst)){// (X != 13 & X != 14) -> X-13 >u 1
         Constant *AddCST = ConstantExpr::getNeg(LHSCst);
