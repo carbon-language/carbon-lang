@@ -212,31 +212,37 @@ void PrintReport(const ReportDesc *rep) {
   Printf("==================\n");
 }
 
-#else
+#else  // #ifndef TSAN_GO
+
+const int kMainThreadId = 1;
 
 void PrintStack(const ReportStack *ent) {
   if (ent == 0) {
-    Printf("  [failed to restore the stack]\n\n");
+    Printf("  [failed to restore the stack]\n");
     return;
   }
   for (int i = 0; ent; ent = ent->next, i++) {
     Printf("  %s()\n      %s:%d +0x%zx\n",
         ent->func, ent->file, ent->line, (void*)ent->offset);
   }
-  Printf("\n");
 }
 
 static void PrintMop(const ReportMop *mop, bool first) {
-  Printf("%s by goroutine %d:\n",
+  Printf("\n");
+  Printf("%s by ",
       (first ? (mop->write ? "Write" : "Read")
-             : (mop->write ? "Previous write" : "Previous read")),
-      mop->tid);
+             : (mop->write ? "Previous write" : "Previous read")));
+  if (mop->tid == kMainThreadId)
+    Printf("main goroutine:\n");
+  else
+    Printf("goroutine %d:\n", mop->tid);
   PrintStack(mop->stack);
 }
 
 static void PrintThread(const ReportThread *rt) {
-  if (rt->id == 0)  // Little sense in describing the main thread.
+  if (rt->id == kMainThreadId)
     return;
+  Printf("\n");
   Printf("Goroutine %d (%s) created at:\n",
     rt->id, rt->running ? "running" : "finished");
   PrintStack(rt->stack);
@@ -244,7 +250,7 @@ static void PrintThread(const ReportThread *rt) {
 
 void PrintReport(const ReportDesc *rep) {
   Printf("==================\n");
-  Printf("WARNING: DATA RACE\n");
+  Printf("WARNING: DATA RACE");
   for (uptr i = 0; i < rep->mops.Size(); i++)
     PrintMop(rep->mops[i], i == 0);
   for (uptr i = 0; i < rep->threads.Size(); i++)
