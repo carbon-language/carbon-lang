@@ -828,9 +828,6 @@ CodeGenVTables::GenerateClassData(const CXXRecordDecl *RD) {
     VFTContext->getVFPtrOffsets(RD);
   }
 
-  if (CGDebugInfo *DI = CGM.getModuleDebugInfo())
-    DI->completeClassData(RD);
-
   // First off, check whether we've already emitted the v-table and
   // associated stuff.
   llvm::GlobalVariable *VTable = GetAddrOfVTable(RD);
