@@ -1106,6 +1106,15 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                     // yet the addresses in the new symbol file will still be unslid.
                                     // Since everything is stored as section offset, this shouldn't
                                     // cause any problems.
+
+                                    // Make sure we've parsed the symbol table from the 
+                                    // ObjectFile before we go around changing its Sections.
+                                    module_sp->GetObjectFile()->GetSymtab();
+                                    // eh_frame would present the same problems but we parse that on
+                                    // a per-function basis as-needed so it's more difficult to
+                                    // remove its use of the Sections.  Realistically, the environments
+                                    // where this code path will be taken will not have eh_frame sections.
+
                                     unified_section_sp->SetFileAddress(load_cmd.vmaddr);
                                 }
                             }
