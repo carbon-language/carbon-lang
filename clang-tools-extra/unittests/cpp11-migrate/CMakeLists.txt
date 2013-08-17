@@ -14,6 +14,7 @@ add_extra_unittest(Cpp11MigrateTests
   ReplacementsYamlTest.cpp
   TransformTest.cpp
   UniqueHeaderNameTest.cpp
+  IncludeDirectivesTest.cpp
   )
 
 target_link_libraries(Cpp11MigrateTests
