@@ -753,9 +753,9 @@ _mm256_broadcastsd_pd(__m128d __X)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
-_mm_broadcastsi128_si256(__m128i const *__a)
+_mm256_broadcastsi128_si256(__m128i __X)
 {
-  return (__m256i)__builtin_ia32_vbroadcastsi256(__a);
+  return (__m256i)__builtin_ia32_vbroadcastsi256(__X);
 }
 
 #define _mm_blend_epi32(V1, V2, M) __extension__ ({ \

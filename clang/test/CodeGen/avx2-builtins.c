@@ -606,9 +606,9 @@ __m256d test_mm256_broadcastsd_pd(__m128d a) {
   return _mm256_broadcastsd_pd(a);
 }
 
-__m256i test_mm_broadcastsi128_si256(__m128i *a) {
+__m256i test_mm256_broadcastsi128_si256(__m128i a) {
   // CHECK: @llvm.x86.avx2.vbroadcasti128
-  return _mm_broadcastsi128_si256(a);
+  return _mm256_broadcastsi128_si256(a);
 }
 
 __m128i test_mm_blend_epi32(__m128i a, __m128i b) {

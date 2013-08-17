@@ -3129,6 +3129,16 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Builder.CreateStore(Builder.CreateExtractValue(Call, 0), Ops[0]);
     return Builder.CreateExtractValue(Call, 1);
   }
+  // AVX2 broadcast
+  case X86::BI__builtin_ia32_vbroadcastsi256: {
+    llvm::Type *VecTy = llvm::VectorType::get(Int64Ty, 2);
+    llvm::Type *PtrTy = Int8PtrTy;
+    Value *One = llvm::ConstantInt::get(Int32Ty, 1);
+    Value *Tmp = Builder.CreateAlloca(VecTy, One);
+    Builder.CreateStore(Ops[0], Tmp);
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_avx2_vbroadcasti128),
+                              Builder.CreateBitCast(Tmp, PtrTy));
+  }
   }
 }
 
