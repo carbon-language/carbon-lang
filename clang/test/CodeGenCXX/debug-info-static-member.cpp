@@ -1,7 +1,9 @@
 // RUN: %clangxx -target x86_64-unknown-unknown -g -O0 %s -emit-llvm -S -o - | FileCheck %s
 // PR14471
 
-
+enum X {
+  Y
+};
 class C
 {
   static int a;
@@ -13,6 +15,7 @@ public:
   static int c;
   const static int const_c = 18;
   int d;
+  static X x_a;
 };
 
 int C::a = 4;
@@ -37,5 +40,6 @@ int main()
 // CHECK: metadata !"const_b", {{.*}}, float 0x{{.*}}} ; [ DW_TAG_member ] [const_b] [line {{.*}}, size 0, align 0, offset 0] [protected] [static]
 // CHECK: ![[DECL_C:[0-9]+]] {{.*}} metadata !"c", {{.*}} [ DW_TAG_member ] [c] [line {{.*}}, size 0, align 0, offset 0] [static]
 // CHECK: metadata !"const_c", {{.*}} [ DW_TAG_member ] [const_c] [line {{.*}}, size 0, align 0, offset 0] [static]
+// CHECK: metadata !"x_a", {{.*}} [ DW_TAG_member ] [x_a] {{.*}} [static]
 // CHECK: metadata !"b", {{.*}} @_ZN1C1bE, metadata ![[DECL_B]]} ; [ DW_TAG_variable ] [b] {{.*}} [def]
 // CHECK: metadata !"c", {{.*}} @_ZN1C1cE, metadata ![[DECL_C]]} ; [ DW_TAG_variable ] [c] {{.*}} [def]
