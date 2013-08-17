@@ -12,7 +12,7 @@ inline namespace Std { // expected-error {{cannot be reopened as inline}}
 int x;
 Std::Important y;
 
-extenr "C" { // expected-error {{did you mean the keyword 'extern'}}
+extenr "C" { // expected-error {{did you mean 'extern'}}
   void f();
 }
 void g() {
@@ -39,7 +39,7 @@ namespace N {
   int
 } // expected-error {{unqualified-id}}
 
-strcut Uuuu { // expected-error {{did you mean the keyword 'struct'}} \
+strcut Uuuu { // expected-error {{did you mean 'struct'}} \
               // expected-note {{'Uuuu' declared here}}
 } *u[3];
 uuuu v; // expected-error {{did you mean 'Uuuu'}}

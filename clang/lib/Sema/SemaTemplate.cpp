@@ -331,24 +331,16 @@ void Sema::LookupTemplateName(LookupResult &Found,
         Found.addDecl(Corrected.getCorrectionDecl());
       FilterAcceptableTemplateNames(Found);
       if (!Found.empty()) {
-        std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
-        std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
         if (LookupCtx) {
-          bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
+          std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
+          bool DroppedSpecifier = Corrected.WillReplaceSpecifier() &&
                                   Name.getAsString() == CorrectedStr;
-          Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
-            << Name << LookupCtx << droppedSpecifier << CorrectedQuotedStr
-            << SS.getRange()
-            << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
-                                            CorrectedStr);
+          diagnoseTypo(Corrected, PDiag(diag::err_no_member_template_suggest)
+                                    << Name << LookupCtx << DroppedSpecifier
+                                    << SS.getRange());
         } else {
-          Diag(Found.getNameLoc(), diag::err_no_template_suggest)
-            << Name << CorrectedQuotedStr
-            << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
+          diagnoseTypo(Corrected, PDiag(diag::err_no_template_suggest) << Name);
         }
-        if (TemplateDecl *Template = Found.getAsSingle<TemplateDecl>())
-          Diag(Template->getLocation(), diag::note_previous_decl)
-            << CorrectedQuotedStr;
       }
     } else {
       Found.setLookupName(Name);

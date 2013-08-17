@@ -489,31 +489,23 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     // different kind of error, so look for typos.
     DeclarationName Name = Found.getLookupName();
     NestedNameSpecifierValidatorCCC Validator(*this);
-    TypoCorrection Corrected;
     Found.clear();
-    if ((Corrected = CorrectTypo(Found.getLookupNameInfo(),
-                                 Found.getLookupKind(), S, &SS, Validator,
-                                 LookupCtx, EnteringContext))) {
-      std::string CorrectedStr(Corrected.getAsString(getLangOpts()));
-      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
-      bool droppedSpecifier = Corrected.WillReplaceSpecifier() &&
-                              Name.getAsString() == CorrectedStr;
-      if (LookupCtx)
-        Diag(Found.getNameLoc(), diag::err_no_member_suggest)
-          << Name << LookupCtx << droppedSpecifier << CorrectedQuotedStr
-          << SS.getRange()
-          << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
-                                          CorrectedStr);
-      else
-        Diag(Found.getNameLoc(), diag::err_undeclared_var_use_suggest)
-          << Name << CorrectedQuotedStr
-          << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
-                                          CorrectedStr);
+    if (TypoCorrection Corrected =
+            CorrectTypo(Found.getLookupNameInfo(), Found.getLookupKind(), S,
+                        &SS, Validator, LookupCtx, EnteringContext)) {
+      if (LookupCtx) {
+        bool DroppedSpecifier =
+            Corrected.WillReplaceSpecifier() &&
+            Name.getAsString() == Corrected.getAsString(getLangOpts());
+        diagnoseTypo(Corrected, PDiag(diag::err_no_member_suggest)
+                                  << Name << LookupCtx << DroppedSpecifier
+                                  << SS.getRange());
+      } else
+        diagnoseTypo(Corrected, PDiag(diag::err_undeclared_var_use_suggest)
+                                  << Name);
 
-      if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
-        Diag(ND->getLocation(), diag::note_previous_decl) << CorrectedQuotedStr;
+      if (NamedDecl *ND = Corrected.getCorrectionDecl())
         Found.addDecl(ND);
-      }
       Found.setLookupName(Corrected.getCorrection());
     } else {
       Found.setLookupName(&Identifier);

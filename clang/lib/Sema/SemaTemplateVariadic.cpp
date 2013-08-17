@@ -819,16 +819,12 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), S, 0,
                                                Validator)) {
-      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOpts()));
+      diagnoseTypo(Corrected,
+                   PDiag(diag::err_sizeof_pack_no_pack_name_suggest) << &Name,
+                   PDiag(diag::note_parameter_pack_here));
       ParameterPack = Corrected.getCorrectionDecl();
-      Diag(NameLoc, diag::err_sizeof_pack_no_pack_name_suggest)
-        << &Name << CorrectedQuotedStr
-        << FixItHint::CreateReplacement(
-            NameLoc, Corrected.getAsString(getLangOpts()));
-      Diag(ParameterPack->getLocation(), diag::note_parameter_pack_here)
-        << CorrectedQuotedStr;
     }
-      
+
   case LookupResult::FoundOverloaded:
   case LookupResult::FoundUnresolvedValue:
     break;

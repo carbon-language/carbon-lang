@@ -513,11 +513,9 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       if (TypoCorrection Corrected = CorrectTypo(
           DeclarationNameInfo(SuperName, SuperLoc), LookupOrdinaryName, TUScope,
           NULL, Validator)) {
+        diagnoseTypo(Corrected, PDiag(diag::err_undef_superclass_suggest)
+                                    << SuperName << ClassName);
         PrevDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>();
-        Diag(SuperLoc, diag::err_undef_superclass_suggest)
-          << SuperName << ClassName << PrevDecl->getDeclName();
-        Diag(PrevDecl->getLocation(), diag::note_previous_decl)
-          << PrevDecl->getDeclName();
       }
     }
 
@@ -748,12 +746,9 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
       TypoCorrection Corrected = CorrectTypo(
           DeclarationNameInfo(ProtocolId[i].first, ProtocolId[i].second),
           LookupObjCProtocolName, TUScope, NULL, Validator);
-      if ((PDecl = Corrected.getCorrectionDeclAs<ObjCProtocolDecl>())) {
-        Diag(ProtocolId[i].second, diag::err_undeclared_protocol_suggest)
-          << ProtocolId[i].first << Corrected.getCorrection();
-        Diag(PDecl->getLocation(), diag::note_previous_decl)
-          << PDecl->getDeclName();
-      }
+      if ((PDecl = Corrected.getCorrectionDeclAs<ObjCProtocolDecl>()))
+        diagnoseTypo(Corrected, PDiag(diag::err_undeclared_protocol_suggest)
+                                    << ProtocolId[i].first);
     }
 
     if (!PDecl) {
@@ -971,7 +966,7 @@ Decl *Sema::ActOnStartClassImplementation(
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *SuperClassname,
                       SourceLocation SuperClassLoc) {
-  ObjCInterfaceDecl* IDecl = 0;
+  ObjCInterfaceDecl *IDecl = 0;
   // Check for another declaration kind with the same name.
   NamedDecl *PrevDecl
     = LookupSingleName(TUScope, ClassName, ClassLoc, LookupOrdinaryName,
@@ -983,24 +978,19 @@ Decl *Sema::ActOnStartClassImplementation(
     RequireCompleteType(ClassLoc, Context.getObjCInterfaceType(IDecl),
                         diag::warn_undef_interface);
   } else {
-    // We did not find anything with the name ClassName; try to correct for 
+    // We did not find anything with the name ClassName; try to correct for
     // typos in the class name.
     ObjCInterfaceValidatorCCC Validator;
-    if (TypoCorrection Corrected = CorrectTypo(
-        DeclarationNameInfo(ClassName, ClassLoc), LookupOrdinaryName, TUScope,
-        NULL, Validator)) {
-      // Suggest the (potentially) correct interface name. However, put the
-      // fix-it hint itself in a separate note, since changing the name in 
-      // the warning would make the fix-it change semantics.However, don't
-      // provide a code-modification hint or use the typo name for recovery,
-      // because this is just a warning. The program may actually be correct.
-      IDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>();
-      DeclarationName CorrectedName = Corrected.getCorrection();
-      Diag(ClassLoc, diag::warn_undef_interface_suggest)
-        << ClassName << CorrectedName;
-      Diag(IDecl->getLocation(), diag::note_previous_decl) << CorrectedName
-        << FixItHint::CreateReplacement(ClassLoc, CorrectedName.getAsString());
-      IDecl = 0;
+    TypoCorrection Corrected =
+            CorrectTypo(DeclarationNameInfo(ClassName, ClassLoc),
+                        LookupOrdinaryName, TUScope, NULL, Validator);
+    if (Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>()) {
+      // Suggest the (potentially) correct interface name. Don't provide a
+      // code-modification hint or use the typo name for recovery, because
+      // this is just a warning. The program may actually be correct.
+      diagnoseTypo(Corrected,
+                   PDiag(diag::warn_undef_interface_suggest) << ClassName,
+                   /*ErrorRecovery*/false);
     } else {
       Diag(ClassLoc, diag::warn_undef_interface) << ClassName;
     }

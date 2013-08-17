@@ -16,11 +16,11 @@ void zif::nab(int) {
 }
 
 namespace TemplateFunction {
-template <class T>  // expected-note {{'::TemplateFunction::A' declared here}}
-void A(T) { }
+template <class T>
+void A(T) { }  // expected-note {{'::TemplateFunction::A' declared here}}
 
-template <class T>  // expected-note {{'::TemplateFunction::B' declared here}}
-void B(T) { }
+template <class T>
+void B(T) { }  // expected-note {{'::TemplateFunction::B' declared here}}
 
 class Foo {
  public:

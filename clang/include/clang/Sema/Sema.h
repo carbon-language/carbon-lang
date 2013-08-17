@@ -2487,6 +2487,15 @@ public:
                              bool EnteringContext = false,
                              const ObjCObjectPointerType *OPT = 0);
 
+  void diagnoseTypo(const TypoCorrection &Correction,
+                    const PartialDiagnostic &TypoDiag,
+                    bool ErrorRecovery = true);
+
+  void diagnoseTypo(const TypoCorrection &Correction,
+                    const PartialDiagnostic &TypoDiag,
+                    const PartialDiagnostic &PrevNote,
+                    bool ErrorRecovery = true);
+
   void FindAssociatedClassesAndNamespaces(SourceLocation InstantiationLoc,
                                           ArrayRef<Expr *> Args,
                                    AssociatedNamespaceSet &AssociatedNamespaces,

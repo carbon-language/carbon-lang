@@ -1608,16 +1608,11 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   // Attempt to correct for typos in property names.
   DeclFilterCCC<ObjCPropertyDecl> Validator;
   if (TypoCorrection Corrected = CorrectTypo(
-      DeclarationNameInfo(MemberName, MemberLoc), LookupOrdinaryName, NULL,
-      NULL, Validator, IFace, false, OPT)) {
-    ObjCPropertyDecl *Property =
-        Corrected.getCorrectionDeclAs<ObjCPropertyDecl>();
+          DeclarationNameInfo(MemberName, MemberLoc), LookupOrdinaryName, NULL,
+          NULL, Validator, IFace, false, OPT)) {
+    diagnoseTypo(Corrected, PDiag(diag::err_property_not_found_suggest)
+                              << MemberName << QualType(OPT, 0));
     DeclarationName TypoResult = Corrected.getCorrection();
-    Diag(MemberLoc, diag::err_property_not_found_suggest)
-      << MemberName << QualType(OPT, 0) << TypoResult
-      << FixItHint::CreateReplacement(MemberLoc, TypoResult.getAsString());
-    Diag(Property->getLocation(), diag::note_previous_decl)
-      << Property->getDeclName();
     return HandleExprPropertyRefExpr(OPT, BaseExpr, OpLoc,
                                      TypoResult, MemberLoc,
                                      SuperLoc, SuperType, Super);
@@ -1855,28 +1850,22 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
     if (Corrected.isKeyword()) {
       // If we've found the keyword "super" (the only keyword that would be
       // returned by CorrectTypo), this is a send to super.
-      Diag(NameLoc, diag::err_unknown_receiver_suggest)
-        << Name << Corrected.getCorrection()
-        << FixItHint::CreateReplacement(SourceRange(NameLoc), "super");
+      diagnoseTypo(Corrected,
+                   PDiag(diag::err_unknown_receiver_suggest) << Name);
       return ObjCSuperMessage;
     } else if (ObjCInterfaceDecl *Class =
-               Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>()) {
+                   Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>()) {
       // If we found a declaration, correct when it refers to an Objective-C
       // class.
-      Diag(NameLoc, diag::err_unknown_receiver_suggest)
-        << Name << Corrected.getCorrection()
-        << FixItHint::CreateReplacement(SourceRange(NameLoc),
-                                        Class->getNameAsString());
-      Diag(Class->getLocation(), diag::note_previous_decl)
-        << Corrected.getCorrection();
-
+      diagnoseTypo(Corrected,
+                   PDiag(diag::err_unknown_receiver_suggest) << Name);
       QualType T = Context.getObjCInterfaceType(Class);
       TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
       ReceiverType = CreateParsedType(T, TSInfo);
       return ObjCClassMessage;
     }
   }
-  
+
   // Fall back: let the parser try to parse it as an instance message.
   return ObjCInstanceMessage;
 }

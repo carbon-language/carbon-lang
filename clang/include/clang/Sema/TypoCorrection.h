@@ -183,9 +183,9 @@ public:
     return CorrectionDecls.size() > 1;
   }
 
-  void setCorrectionRange(CXXScopeSpec* SS,
+  void setCorrectionRange(CXXScopeSpec *SS,
                           const DeclarationNameInfo &TypoName) {
-    CorrectionRange.setBegin(ForceSpecifierReplacement && SS
+    CorrectionRange.setBegin(ForceSpecifierReplacement && SS && !SS->isEmpty()
                                  ? SS->getBeginLoc()
                                  : TypoName.getLoc());
     CorrectionRange.setEnd(TypoName.getLoc());

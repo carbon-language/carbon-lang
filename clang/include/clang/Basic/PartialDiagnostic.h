@@ -368,6 +368,27 @@ public:
   }
 
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                                    const IdentifierInfo *II) {
+    PD.AddTaggedVal(reinterpret_cast<intptr_t>(II),
+                    DiagnosticsEngine::ak_identifierinfo);
+    return PD;
+  }
+
+  // Adds a DeclContext to the diagnostic. The enable_if template magic is here
+  // so that we only match those arguments that are (statically) DeclContexts;
+  // other arguments that derive from DeclContext (e.g., RecordDecls) will not
+  // match.
+  template<typename T>
+  friend inline
+  typename llvm::enable_if<llvm::is_same<T, DeclContext>,
+                           const PartialDiagnostic &>::type
+  operator<<(const PartialDiagnostic &PD, T *DC) {
+    PD.AddTaggedVal(reinterpret_cast<intptr_t>(DC),
+                    DiagnosticsEngine::ak_declcontext);
+    return PD;
+  }
+
+  friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     const SourceRange &R) {
     PD.AddSourceRange(CharSourceRange::getTokenRange(R));
     return PD;

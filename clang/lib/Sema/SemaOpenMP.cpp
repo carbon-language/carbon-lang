@@ -58,30 +58,23 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
   VarDecl *VD;
   if (!Lookup.isSingleResult()) {
     VarDeclFilterCCC Validator(*this);
-    TypoCorrection Corrected = CorrectTypo(Id, LookupOrdinaryName, CurScope,
-                                           0, Validator);
-    std::string CorrectedStr = Corrected.getAsString(getLangOpts());
-    std::string CorrectedQuotedStr = Corrected.getQuoted(getLangOpts());
-    if (Lookup.empty()) {
-      if (Corrected.isResolved()) {
-        Diag(Id.getLoc(), diag::err_undeclared_var_use_suggest)
-          << Id.getName() << CorrectedQuotedStr
-          << FixItHint::CreateReplacement(Id.getLoc(), CorrectedStr);
-      } else {
-        Diag(Id.getLoc(), diag::err_undeclared_var_use)
-          << Id.getName();
-      }
+    if (TypoCorrection Corrected = CorrectTypo(Id, LookupOrdinaryName, CurScope,
+                                               0, Validator)) {
+      diagnoseTypo(Corrected,
+                   PDiag(Lookup.empty()? diag::err_undeclared_var_use_suggest
+                                       : diag::err_omp_expected_var_arg_suggest)
+                     << Id.getName());
+      VD = Corrected.getCorrectionDeclAs<VarDecl>();
     } else {
-      Diag(Id.getLoc(), diag::err_omp_expected_var_arg_suggest)
-        << Id.getName() << Corrected.isResolved() << CorrectedQuotedStr
-        << FixItHint::CreateReplacement(Id.getLoc(), CorrectedStr);
+      Diag(Id.getLoc(), Lookup.empty() ? diag::err_undeclared_var_use
+                                       : diag::err_omp_expected_var_arg)
+          << Id.getName();
+      return ExprError();
     }
-    if (!Corrected.isResolved()) return ExprError();
-    VD = Corrected.getCorrectionDeclAs<VarDecl>();
   } else {
     if (!(VD = Lookup.getAsSingle<VarDecl>())) {
-      Diag(Id.getLoc(), diag::err_omp_expected_var_arg_suggest)
-        << Id.getName() << 0;
+      Diag(Id.getLoc(), diag::err_omp_expected_var_arg)
+        << Id.getName();
       Diag(Lookup.getFoundDecl()->getLocation(), diag::note_declared_at);
       return ExprError();
     }

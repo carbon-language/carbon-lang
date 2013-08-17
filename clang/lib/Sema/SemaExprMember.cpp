@@ -606,13 +606,6 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                                                  &SS, Validator, DC);
   R.clear();
   if (Corrected.isResolved() && !Corrected.isKeyword()) {
-    std::string CorrectedStr(
-        Corrected.getAsString(SemaRef.getLangOpts()));
-    std::string CorrectedQuotedStr(
-        Corrected.getQuoted(SemaRef.getLangOpts()));
-    bool droppedSpecifier =
-        Corrected.WillReplaceSpecifier() && Name.getAsString() == CorrectedStr;
-
     R.setLookupName(Corrected.getCorrection());
     for (TypoCorrection::decl_iterator DI = Corrected.begin(),
                                        DIEnd = Corrected.end();
@@ -621,19 +614,17 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
     }
     R.resolveKind();
 
-    SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
-      << Name << DC << droppedSpecifier << CorrectedQuotedStr << SS.getRange()
-      << FixItHint::CreateReplacement(Corrected.getCorrectionRange(),
-                                      CorrectedStr);
-
     // If we're typo-correcting to an overloaded name, we don't yet have enough
     // information to do overload resolution, so we don't know which previous
     // declaration to point to.
-    if (!Corrected.isOverloaded()) {
-      NamedDecl *ND = Corrected.getCorrectionDecl();
-      SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
-        << ND->getDeclName();
-    }
+    if (Corrected.isOverloaded())
+      Corrected.setCorrectionDecl(0);
+    bool DroppedSpecifier =
+        Corrected.WillReplaceSpecifier() &&
+        Name.getAsString() == Corrected.getAsString(SemaRef.getLangOpts());
+    SemaRef.diagnoseTypo(Corrected,
+                         SemaRef.PDiag(diag::err_no_member_suggest)
+                           << Name << DC << DroppedSpecifier << SS.getRange());
   }
 
   return false;
@@ -1207,14 +1198,10 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
                                                  LookupMemberName, NULL, NULL,
                                                  Validator, IDecl)) {
         IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>();
-        Diag(R.getNameLoc(),
-             diag::err_typecheck_member_reference_ivar_suggest)
-          << IDecl->getDeclName() << MemberName << IV->getDeclName()
-          << FixItHint::CreateReplacement(R.getNameLoc(),
-                                          IV->getNameAsString());
-        Diag(IV->getLocation(), diag::note_previous_decl)
-          << IV->getDeclName();
-        
+        diagnoseTypo(Corrected,
+                     PDiag(diag::err_typecheck_member_reference_ivar_suggest)
+                          << IDecl->getDeclName() << MemberName);
+
         // Figure out the class that declares the ivar.
         assert(!ClassDeclared);
         Decl *D = cast<Decl>(IV->getDeclContext());

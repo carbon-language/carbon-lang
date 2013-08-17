@@ -4377,3 +4377,41 @@ bool FunctionCallFilterCCC::ValidateCandidate(const TypoCorrection &candidate) {
   }
   return false;
 }
+
+void Sema::diagnoseTypo(const TypoCorrection &Correction,
+                        const PartialDiagnostic &TypoDiag,
+                        bool ErrorRecovery) {
+  diagnoseTypo(Correction, TypoDiag, PDiag(diag::note_previous_decl),
+               ErrorRecovery);
+}
+
+/// \brief Diagnose a successfully-corrected typo. Separated from the correction
+/// itself to allow external validation of the result, etc.
+///
+/// \param Correction The result of performing typo correction.
+/// \param TypoDiag The diagnostic to produce. This will have the corrected
+///        string added to it (and usually also a fixit).
+/// \param PrevNote A note to use when indicating the location of the entity to
+///        which we are correcting. Will have the correction string added to it.
+/// \param ErrorRecovery If \c true (the default), the caller is going to
+///        recover from the typo as if the corrected string had been typed.
+///        In this case, \c PDiag must be an error, and we will attach a fixit
+///        to it.
+void Sema::diagnoseTypo(const TypoCorrection &Correction,
+                        const PartialDiagnostic &TypoDiag,
+                        const PartialDiagnostic &PrevNote,
+                        bool ErrorRecovery) {
+  std::string CorrectedStr = Correction.getAsString(getLangOpts());
+  std::string CorrectedQuotedStr = Correction.getQuoted(getLangOpts());
+  FixItHint FixTypo = FixItHint::CreateReplacement(
+      Correction.getCorrectionRange(), CorrectedStr);
+
+  Diag(Correction.getCorrectionRange().getBegin(), TypoDiag)
+    << CorrectedQuotedStr << (ErrorRecovery ? FixTypo : FixItHint());
+
+  NamedDecl *ChosenDecl =
+      Correction.isKeyword() ? 0 : Correction.getCorrectionDecl();
+  if (PrevNote.getDiagID() && ChosenDecl)
+    Diag(ChosenDecl->getLocation(), PrevNote)
+      << CorrectedQuotedStr << (ErrorRecovery ? FixItHint() : FixTypo);
+}
