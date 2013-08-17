@@ -679,32 +679,32 @@ private:
   bool Shadowed;
 };
 
-  /// \brief Consumes visible declarations found when searching for
-  /// all visible names within a given scope or context.
-  ///
-  /// This abstract class is meant to be subclassed by clients of \c
-  /// Sema::LookupVisibleDecls(), each of which should override the \c
-  /// FoundDecl() function to process declarations as they are found.
-  class VisibleDeclConsumer {
-  public:
-    /// \brief Destroys the visible declaration consumer.
-    virtual ~VisibleDeclConsumer();
+/// \brief Consumes visible declarations found when searching for
+/// all visible names within a given scope or context.
+///
+/// This abstract class is meant to be subclassed by clients of \c
+/// Sema::LookupVisibleDecls(), each of which should override the \c
+/// FoundDecl() function to process declarations as they are found.
+class VisibleDeclConsumer {
+public:
+  /// \brief Destroys the visible declaration consumer.
+  virtual ~VisibleDeclConsumer();
 
-    /// \brief Invoked each time \p Sema::LookupVisibleDecls() finds a
-    /// declaration visible from the current scope or context.
-    ///
-    /// \param ND the declaration found.
-    ///
-    /// \param Hiding a declaration that hides the declaration \p ND,
-    /// or NULL if no such declaration exists.
-    ///
-    /// \param Ctx the original context from which the lookup started.
-    ///
-    /// \param InBaseClass whether this declaration was found in base
-    /// class of the context we searched.
-    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
-                           bool InBaseClass) = 0;
-  };
+  /// \brief Invoked each time \p Sema::LookupVisibleDecls() finds a
+  /// declaration visible from the current scope or context.
+  ///
+  /// \param ND the declaration found.
+  ///
+  /// \param Hiding a declaration that hides the declaration \p ND,
+  /// or NULL if no such declaration exists.
+  ///
+  /// \param Ctx the original context from which the lookup started.
+  ///
+  /// \param InBaseClass whether this declaration was found in base
+  /// class of the context we searched.
+  virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
+                         bool InBaseClass) = 0;
+};
 
 /// \brief A class for storing results from argument-dependent lookup.
 class ADLResult {
