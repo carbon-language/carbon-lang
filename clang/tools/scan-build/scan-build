@@ -32,7 +32,9 @@ my $TERM = $ENV{'TERM'};
 my $UseColor = (defined $TERM and $TERM =~ 'xterm-.*color' and -t STDOUT
                 and defined $ENV{'SCAN_BUILD_COLOR'});
 
-my $UserName = HtmlEscape(getpwuid($<) || 'unknown');
+# Portability: getpwuid is not implemented for Win32 (see Perl language 
+# reference, perlport), use getlogin instead.
+my $UserName = HtmlEscape(getlogin() || getpwuid($<) || 'unknown');
 my $HostName = HtmlEscape(hostname() || 'unknown');
 my $CurrentDir = HtmlEscape(getcwd());
 my $CurrentDirSuffix = basename($CurrentDir);
@@ -121,8 +123,7 @@ sub GetHTMLRunDir {
   my $Dir = shift @_;    
   my $TmpMode = 0;
   if (!defined $Dir) {
-    $Dir = $ENV{'TMPDIR'};
-    if (!defined $Dir) { $Dir = "/tmp"; }
+    $Dir = $ENV{'TMPDIR'} || $ENV{'TEMP'} || $ENV{'TMP'} || "/tmp";
     $TmpMode = 1;
   }
   
@@ -1603,13 +1604,17 @@ my $AbsRealBin = Cwd::realpath($RealBin);
 my $Cmd = "$AbsRealBin/libexec/ccc-analyzer";
 my $CmdCXX = "$AbsRealBin/libexec/c++-analyzer";
 
-if (!defined $Cmd || ! -x $Cmd) {
+# Portability: use less strict but portable check -e (file exists) instead of 
+# non-portable -x (file is executable). On some windows ports -x just checks
+# file extension to determine if a file is executable (see Perl language 
+# reference, perlport)
+if (!defined $Cmd || ! -e $Cmd) {
   $Cmd = "$AbsRealBin/ccc-analyzer";
-  DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n") if(! -x $Cmd);
+  DieDiag("'ccc-analyzer' does not exist at '$Cmd'\n") if(! -e $Cmd);
 }
-if (!defined $CmdCXX || ! -x $CmdCXX) {
+if (!defined $CmdCXX || ! -e $CmdCXX) {
   $CmdCXX = "$AbsRealBin/c++-analyzer";
-  DieDiag("Executable 'c++-analyzer' does not exist at '$CmdCXX'\n") if(! -x $CmdCXX);
+  DieDiag("'c++-analyzer' does not exist at '$CmdCXX'\n") if(! -e $CmdCXX);
 }
 
 Diag("Using '$Clang' for static analysis\n");
