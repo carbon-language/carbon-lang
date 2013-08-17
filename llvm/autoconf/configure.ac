@@ -1392,7 +1392,7 @@ AC_SEARCH_LIBS(clock_gettime,rt)
 dnl The curses library is optional; used for querying terminal info
 if test "$llvm_cv_enable_terminfo" = "yes" ; then
   dnl We need the has_color functionality in curses for it to be useful.
-  AC_SEARCH_LIBS(setupterm,tinfo curses ncurses ncursesw,
+  AC_SEARCH_LIBS(setupterm,tinfo terminfo curses ncurses ncursesw,
                  AC_DEFINE([HAVE_TERMINFO],[1],
                            [Define if the setupterm() function is supported this platform.]))
 fi

@@ -12297,7 +12297,7 @@ return setupterm ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' tinfo curses ncurses ncursesw; do
+for ac_lib in '' tinfo terminfo curses ncurses ncursesw; do
   if test -z "$ac_lib"; then
     ac_res="none required"
   else
