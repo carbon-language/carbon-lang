@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/IDE/USRGeneration.h"
+#include "clang/Index/USRGeneration.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
@@ -40,7 +40,7 @@ public:
     generatedLoc(false)
   {
     // Add the USR space prefix.
-    Out << ide::getUSRSpacePrefix();
+    Out << index::getUSRSpacePrefix();
   }
 
   bool ignoreResults() const { return IgnoreResults; }
@@ -92,29 +92,29 @@ public:
 
   /// Generate a USR for an Objective-C class.
   void GenObjCClass(StringRef cls) {
-    ide::generateUSRForObjCClass(cls, Out);
+    index::generateUSRForObjCClass(cls, Out);
   }
   /// Generate a USR for an Objective-C class category.
   void GenObjCCategory(StringRef cls, StringRef cat) {
-    ide::generateUSRForObjCCategory(cls, cat, Out);
+    index::generateUSRForObjCCategory(cls, cat, Out);
   }
   /// Generate a USR fragment for an Objective-C instance variable.  The
   /// complete USR can be created by concatenating the USR for the
   /// encompassing class with this USR fragment.
   void GenObjCIvar(StringRef ivar) {
-    ide::generateUSRForObjCIvar(ivar, Out);
+    index::generateUSRForObjCIvar(ivar, Out);
   }
   /// Generate a USR fragment for an Objective-C method.
   void GenObjCMethod(StringRef sel, bool isInstanceMethod) {
-    ide::generateUSRForObjCMethod(sel, isInstanceMethod, Out);
+    index::generateUSRForObjCMethod(sel, isInstanceMethod, Out);
   }
   /// Generate a USR fragment for an Objective-C property.
   void GenObjCProperty(StringRef prop) {
-    ide::generateUSRForObjCProperty(prop, Out);
+    index::generateUSRForObjCProperty(prop, Out);
   }
   /// Generate a USR for an Objective-C protocol.
   void GenObjCProtocol(StringRef prot) {
-    ide::generateUSRForObjCProtocol(prot, Out);
+    index::generateUSRForObjCProtocol(prot, Out);
   }
 
   void VisitType(QualType T);
@@ -763,33 +763,33 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
 // USR generation functions.
 //===----------------------------------------------------------------------===//
 
-void ide::generateUSRForObjCClass(StringRef Cls, raw_ostream &OS) {
+void index::generateUSRForObjCClass(StringRef Cls, raw_ostream &OS) {
   OS << "objc(cs)" << Cls;
 }
 
-void ide::generateUSRForObjCCategory(StringRef Cls, StringRef Cat,
+void index::generateUSRForObjCCategory(StringRef Cls, StringRef Cat,
                                      raw_ostream &OS) {
   OS << "objc(cy)" << Cls << '@' << Cat;
 }
 
-void ide::generateUSRForObjCIvar(StringRef Ivar, raw_ostream &OS) {
+void index::generateUSRForObjCIvar(StringRef Ivar, raw_ostream &OS) {
   OS << '@' << Ivar;
 }
 
-void ide::generateUSRForObjCMethod(StringRef Sel, bool IsInstanceMethod,
+void index::generateUSRForObjCMethod(StringRef Sel, bool IsInstanceMethod,
                                    raw_ostream &OS) {
   OS << (IsInstanceMethod ? "(im)" : "(cm)") << Sel;
 }
 
-void ide::generateUSRForObjCProperty(StringRef Prop, raw_ostream &OS) {
+void index::generateUSRForObjCProperty(StringRef Prop, raw_ostream &OS) {
   OS << "(py)" << Prop;
 }
 
-void ide::generateUSRForObjCProtocol(StringRef Prot, raw_ostream &OS) {
+void index::generateUSRForObjCProtocol(StringRef Prot, raw_ostream &OS) {
   OS << "objc(pl)" << Prot;
 }
 
-bool ide::generateUSRForDecl(const Decl *D, SmallVectorImpl<char> &Buf) {
+bool index::generateUSRForDecl(const Decl *D, SmallVectorImpl<char> &Buf) {
   // Don't generate USRs for things with invalid locations.
   if (!D || D->getLocStart().isInvalid())
     return true;

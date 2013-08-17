@@ -1,4 +1,4 @@
-##===- clang/lib/IDE/Makefile ------------------------------*- Makefile -*-===##
+##===- clang/lib/Index/Makefile ----------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
-LIBRARYNAME := clangIDE
+LIBRARYNAME := clangIndex
 
 include $(CLANG_LEVEL)/Makefile

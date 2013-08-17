@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_IDE_USRGENERATION_H
-#define LLVM_CLANG_IDE_USRGENERATION_H
+#ifndef LLVM_CLANG_INDEX_USRGENERATION_H
+#define LLVM_CLANG_INDEX_USRGENERATION_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
@@ -16,7 +16,7 @@
 namespace clang {
   class Decl;
 
-namespace ide {
+namespace index {
 
 static inline StringRef getUSRSpacePrefix() {
   return "c:";

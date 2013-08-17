@@ -44,7 +44,7 @@ set(SOURCES
   )
 
 set(LIBRARIES
-  clangIDE
+  clangIndex
   clangARCMigrate
   clangRewriteCore
   clangRewriteFrontend

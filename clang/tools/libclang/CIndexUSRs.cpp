@@ -14,7 +14,7 @@
 #include "CIndexer.h"
 #include "CXCursor.h"
 #include "CXString.h"
-#include "clang/IDE/USRGeneration.h"
+#include "clang/Index/USRGeneration.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
@@ -30,7 +30,7 @@ static inline StringRef extractUSRSuffix(StringRef s) {
 }
 
 bool cxcursor::getDeclCursorUSR(const Decl *D, SmallVectorImpl<char> &Buf) {
-  return ide::generateUSRForDecl(D, Buf);
+  return index::generateUSRForDecl(D, Buf);
 }
 
 extern "C" {
@@ -72,7 +72,7 @@ CXString clang_getCursorUSR(CXCursor C) {
     if (!buf)
       return cxstring::createEmpty();
 
-    buf->Data += ide::getUSRSpacePrefix();
+    buf->Data += index::getUSRSpacePrefix();
     buf->Data += "macro@";
     buf->Data +=
         cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
@@ -84,51 +84,51 @@ CXString clang_getCursorUSR(CXCursor C) {
 }
 
 CXString clang_constructUSR_ObjCIvar(const char *name, CXString classUSR) {
-  SmallString<128> Buf(ide::getUSRSpacePrefix());
+  SmallString<128> Buf(index::getUSRSpacePrefix());
   llvm::raw_svector_ostream OS(Buf);
   OS << extractUSRSuffix(clang_getCString(classUSR));
-  ide::generateUSRForObjCIvar(name, OS);
+  index::generateUSRForObjCIvar(name, OS);
   return cxstring::createDup(OS.str());
 }
 
 CXString clang_constructUSR_ObjCMethod(const char *name,
                                        unsigned isInstanceMethod,
                                        CXString classUSR) {
-  SmallString<128> Buf(ide::getUSRSpacePrefix());
+  SmallString<128> Buf(index::getUSRSpacePrefix());
   llvm::raw_svector_ostream OS(Buf);
   OS << extractUSRSuffix(clang_getCString(classUSR));
-  ide::generateUSRForObjCMethod(name, isInstanceMethod, OS);
+  index::generateUSRForObjCMethod(name, isInstanceMethod, OS);
   return cxstring::createDup(OS.str());
 }
 
 CXString clang_constructUSR_ObjCClass(const char *name) {
-  SmallString<128> Buf(ide::getUSRSpacePrefix());
+  SmallString<128> Buf(index::getUSRSpacePrefix());
   llvm::raw_svector_ostream OS(Buf);
-  ide::generateUSRForObjCClass(name, OS);
+  index::generateUSRForObjCClass(name, OS);
   return cxstring::createDup(OS.str());
 }
 
 CXString clang_constructUSR_ObjCProtocol(const char *name) {
-  SmallString<128> Buf(ide::getUSRSpacePrefix());
+  SmallString<128> Buf(index::getUSRSpacePrefix());
   llvm::raw_svector_ostream OS(Buf);
-  ide::generateUSRForObjCProtocol(name, OS);
+  index::generateUSRForObjCProtocol(name, OS);
   return cxstring::createDup(OS.str());
 }
 
 CXString clang_constructUSR_ObjCCategory(const char *class_name,
                                          const char *category_name) {
-  SmallString<128> Buf(ide::getUSRSpacePrefix());
+  SmallString<128> Buf(index::getUSRSpacePrefix());
   llvm::raw_svector_ostream OS(Buf);
-  ide::generateUSRForObjCCategory(class_name, category_name, OS);
+  index::generateUSRForObjCCategory(class_name, category_name, OS);
   return cxstring::createDup(OS.str());
 }
 
 CXString clang_constructUSR_ObjCProperty(const char *property,
                                          CXString classUSR) {
-  SmallString<128> Buf(ide::getUSRSpacePrefix());
+  SmallString<128> Buf(index::getUSRSpacePrefix());
   llvm::raw_svector_ostream OS(Buf);
   OS << extractUSRSuffix(clang_getCString(classUSR));
-  ide::generateUSRForObjCProperty(property, OS);
+  index::generateUSRForObjCProperty(property, OS);
   return cxstring::createDup(OS.str());
 }
 
