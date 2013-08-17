@@ -60,6 +60,7 @@ class R600TextureIntrinsicsReplacer :
 
     switch (TextureType) {
     case 0:
+      useShadowVariant = false;
       return;
     case TEXTURE_RECT:
     case TEXTURE_1D:
