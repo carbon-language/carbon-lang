@@ -24,7 +24,6 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
-#include <stdio.h>
 
 using namespace llvm;
 

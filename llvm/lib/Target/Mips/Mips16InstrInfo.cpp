@@ -10,7 +10,7 @@
 // This file contains the Mips16 implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
-#include <stdio.h>
+
 #include "Mips16InstrInfo.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MipsMachineFunction.h"
@@ -473,7 +473,6 @@ const MipsInstrInfo *llvm::createMips16InstrInfo(MipsTargetMachine &TM) {
   return new Mips16InstrInfo(TM);
 }
 
-#include <stdio.h>
 bool Mips16InstrInfo::validImmediate(unsigned Opcode, unsigned Reg,
                                      int64_t Amount) {
   switch (Opcode) {
@@ -493,6 +492,5 @@ bool Mips16InstrInfo::validImmediate(unsigned Opcode, unsigned Reg,
       return isInt<16>(Amount);
     return isInt<15>(Amount);
   }
-  printf("Unexpected opcode %i \n", Opcode);
   llvm_unreachable("unexpected Opcode in validImmediate");
 }

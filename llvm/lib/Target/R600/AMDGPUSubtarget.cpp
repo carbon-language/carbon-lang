@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUSubtarget.h"
-#include <stdio.h>
 
 using namespace llvm;
 
