@@ -1079,6 +1079,11 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                [Define if dlopen() is available on this platform.]),
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
+dnl Search for the clock_gettime() function. Note that we rely on the POSIX
+dnl macros to detect whether clock_gettime is available, this just finds the
+dnl right libraries to link with.
+AC_SEARCH_LIBS(clock_gettime,rt)
+
 dnl The curses library is optional; used for querying terminal info
 if test "$llvm_cv_enable_terminfo" = "yes" ; then
   dnl We need the has_color functionality in curses for it to be useful.
