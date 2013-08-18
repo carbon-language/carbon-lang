@@ -820,6 +820,17 @@ AC_ARG_WITH(bug-report-url,
 AC_DEFINE_UNQUOTED(BUG_REPORT_URL,"$withval",
                    [Bug report URL.])
 
+dnl --enable-terminfo: check whether the user wants to control use of terminfo:
+AC_ARG_ENABLE(terminfo,AS_HELP_STRING(
+  [--enable-terminfo],
+  [Query the terminfo database if available (default is YES)]),
+  [case "$enableval" in
+    yes) llvm_cv_enable_terminfo="yes" ;;
+    no)  llvm_cv_enable_terminfo="no"  ;;
+    *) AC_MSG_ERROR([Invalid setting for --enable-terminfo. Use "yes" or "no"]) ;;
+  esac],
+  llvm_cv_enable_terminfo="yes")
+
 dnl --enable-libffi : check whether the user wants to turn off libffi:
 AC_ARG_ENABLE(libffi,AS_HELP_STRING(
   --enable-libffi,[Check for the presence of libffi (default is NO)]),
@@ -1067,6 +1078,14 @@ dnl dlopen() is required for plugin support.
 AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                [Define if dlopen() is available on this platform.]),
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
+
+dnl The curses library is optional; used for querying terminal info
+if test "$llvm_cv_enable_terminfo" = "yes" ; then
+  dnl We need the has_color functionality in curses for it to be useful.
+  AC_SEARCH_LIBS(setupterm,tinfo curses ncurses ncursesw,
+                 AC_DEFINE([HAVE_TERMINFO],[1],
+                           [Define if the setupterm() function is supported this platform.]))
+fi
 
 dnl libffi is optional; used to call external functions from the interpreter
 if test "$llvm_cv_enable_libffi" = "yes" ; then
