@@ -49,12 +49,12 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
   return StmtClassInfo[E];
 }
 
-void *Stmt::operator new(size_t bytes, ASTContext& C,
+void *Stmt::operator new(size_t bytes, const ASTContext& C,
                          unsigned alignment) throw() {
   return ::operator new(bytes, C, alignment);
 }
 
-void *Stmt::operator new(size_t bytes, ASTContext* C,
+void *Stmt::operator new(size_t bytes, const ASTContext* C,
                          unsigned alignment) throw() {
   return ::operator new(bytes, *C, alignment);
 }

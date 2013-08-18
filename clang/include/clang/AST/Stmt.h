@@ -312,19 +312,19 @@ protected:
 public:
   // Only allow allocation of Stmts using the allocator in ASTContext
   // or by doing a placement new.
-  void* operator new(size_t bytes, ASTContext& C,
+  void* operator new(size_t bytes, const ASTContext& C,
                      unsigned alignment = 8) throw();
 
-  void* operator new(size_t bytes, ASTContext* C,
+  void* operator new(size_t bytes, const ASTContext* C,
                      unsigned alignment = 8) throw();
 
   void* operator new(size_t bytes, void* mem) throw() {
     return mem;
   }
 
-  void operator delete(void*, ASTContext&, unsigned) throw() { }
-  void operator delete(void*, ASTContext*, unsigned) throw() { }
-  void operator delete(void*, std::size_t) throw() { }
+  void operator delete(void*, const ASTContext&, unsigned) throw() { }
+  void operator delete(void*, const ASTContext*, unsigned) throw() { }
+  void operator delete(void*, size_t) throw() { }
   void operator delete(void*, void*) throw() { }
 
 public:
