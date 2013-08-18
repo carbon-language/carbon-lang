@@ -274,7 +274,7 @@ CPP.Defines :=
 ifeq ($(ENABLE_OPTIMIZED),1)
   BuildMode := Release
   # Don't use -fomit-frame-pointer on Darwin or FreeBSD.
-  ifneq ($(HOST_OS), $(filter $(HOST_OS), Darwin FreeBSD GNU/kFreeBSD))
+  ifneq ($(HOST_OS), $(filter $(HOST_OS), Cygwin Darwin FreeBSD GNU/kFreeBSD))
     OmitFramePointer := -fomit-frame-pointer
   endif
 
