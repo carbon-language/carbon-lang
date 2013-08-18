@@ -2183,6 +2183,19 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   else
     RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
 
+  // If we ended up creating the type during the context chain construction,
+  // just return that.
+  // FIXME: this could be dealt with better if the type was recorded as
+  // completed before we started this (see the CompletedTypeCache usage in
+  // CGDebugInfo::CreateTypeDefinition(const RecordType*) - that would need to
+  // be pushed to before context creation, but after it was known to be
+  // destined for completion (might still have an issue if this caller only
+  // required a declaration but the context construction ended up creating a
+  // definition)
+  if (llvm::DIType T = getTypeOrNull(CGM.getContext().getRecordType(RD)))
+    if (!T.isForwardDecl() || !RD->getDefinition())
+      return T;
+
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
   if (!RD->getDefinition())
