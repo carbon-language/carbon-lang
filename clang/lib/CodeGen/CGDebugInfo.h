@@ -291,7 +291,7 @@ public:
 
   void completeType(const RecordDecl *RD);
   void completeRequiredType(const RecordDecl *RD);
-
+  void completeClassData(const RecordDecl *RD);
 
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
@@ -354,10 +354,13 @@ private:
   /// declaration for the given method definition.
   llvm::DISubprogram getFunctionDeclaration(const Decl *D);
 
-  /// getStaticDataMemberDeclaration - Return debug info descriptor to
-  /// describe in-class static data member declaration for the given
-  /// out-of-class definition.
-  llvm::DIDerivedType getStaticDataMemberDeclaration(const VarDecl *D);
+  /// Return debug info descriptor to describe in-class static data member
+  /// declaration for the given out-of-class definition.
+  llvm::DIDerivedType
+  getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
+  llvm::DIDerivedType
+  getOrCreateStaticDataMemberDeclaration(const VarDecl *D,
+                                         llvm::DICompositeType Ctxt);
 
   /// getFunctionName - Get function name for the given FunctionDecl. If the
   /// name is constructred on demand (e.g. C++ destructor) then the name
