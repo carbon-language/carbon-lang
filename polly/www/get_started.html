@@ -111,7 +111,7 @@ cd ${BASE}
 
 To build Polly you can either use the autoconf or the cmake build system. At the
 moment only the autoconf build system allows to run the llvm test-suite and only
-the cmake build system allows to run 'make polly-test'.
+the cmake build system allows to run 'make check-polly'.
 
 <h4>Set the directory layout:</h4>
 <pre>
@@ -136,8 +136,8 @@ make
 
 <h3> Test Polly</h3>
 
-<p>To check if Polly works correctly you can run <em>make polly-test</em> for the
-cmake build or <em>make polly-test -C tools/polly/test/</em> for the autoconf
+<p>To check if Polly works correctly you can run <em>make check-polly</em> for the
+cmake build or <em>make check-polly -C tools/polly/test/</em> for the autoconf
 build.
 
 <p>If you get something like <em>"... libisl.so.9: cannot open shared object file .."</em>,

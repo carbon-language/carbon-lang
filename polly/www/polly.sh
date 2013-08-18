@@ -42,9 +42,9 @@ cd ${LLVM_BUILD}
 if which cmake ; then
     cmake -DCMAKE_PREFIX_PATH=${CLOOG_INSTALL} ${LLVM_SRC}
     make -j$procs -l$procs
-    make polly-test
+    make check-polly
 else
     ${LLVM_SRC}/configure --with-cloog=${CLOOG_INSTALL} --with-isl=${CLOOG_INSTALL}
     make -j$procs -l$procs
-    make polly-test -C tools/polly/test/
+    make check-polly -C tools/polly/test/
 fi
