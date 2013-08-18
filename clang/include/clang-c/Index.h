@@ -16,9 +16,7 @@
 #ifndef CLANG_C_INDEX_H
 #define CLANG_C_INDEX_H
 
-#include <sys/stat.h>
 #include <time.h>
-#include <stdio.h>
 
 #include "clang-c/Platform.h"
 #include "clang-c/CXString.h"
