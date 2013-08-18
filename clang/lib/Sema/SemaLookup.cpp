@@ -2505,11 +2505,17 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
   // will always be a (possibly implicit) declaration to shadow any others.
   OverloadCandidateSet OCS((SourceLocation()));
   DeclContext::lookup_result R = RD->lookup(Name);
-
   assert(!R.empty() &&
          "lookup for a constructor or assignment operator was empty");
-  for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
-    Decl *Cand = *I;
+
+  // Copy the candidates as our processing of them may load new declarations
+  // from an external source and invalidate lookup_result.
+  SmallVector<NamedDecl *, 8> Candidates(R.begin(), R.end());
+
+  for (SmallVectorImpl<NamedDecl *>::iterator I = Candidates.begin(),
+                                         E = Candidates.end();
+       I != E; ++I) {
+    NamedDecl *Cand = *I;
 
     if (Cand->isInvalidDecl())
       continue;
