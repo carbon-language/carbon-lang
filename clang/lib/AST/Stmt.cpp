@@ -54,11 +54,6 @@ void *Stmt::operator new(size_t bytes, const ASTContext& C,
   return ::operator new(bytes, C, alignment);
 }
 
-void *Stmt::operator new(size_t bytes, const ASTContext* C,
-                         unsigned alignment) {
-  return ::operator new(bytes, *C, alignment);
-}
-
 const char *Stmt::getStmtClassName() const {
   return getStmtInfoTableEntry((StmtClass) StmtBits.sClass).Name;
 }
