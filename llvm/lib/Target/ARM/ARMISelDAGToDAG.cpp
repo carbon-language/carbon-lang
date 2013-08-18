@@ -3614,7 +3614,10 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     if(PairedReg.getNode()) {
       OpChanged[OpChanged.size() -1 ] = true;
       Flag = InlineAsm::getFlagWord(Kind, 1 /* RegNum*/);
-      Flag = InlineAsm::getFlagWordForRegClass(Flag, ARM::GPRPairRegClassID);
+      if (IsTiedToChangedOp)
+        Flag = InlineAsm::getFlagWordForMatchingOp(Flag, DefIdx);
+      else
+        Flag = InlineAsm::getFlagWordForRegClass(Flag, ARM::GPRPairRegClassID);
       // Replace the current flag.
       AsmNodeOperands[AsmNodeOperands.size() -1] = CurDAG->getTargetConstant(
           Flag, MVT::i32);
