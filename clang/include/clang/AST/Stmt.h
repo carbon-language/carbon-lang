@@ -315,6 +315,9 @@ public:
   void* operator new(size_t bytes, const ASTContext& C,
                      unsigned alignment = 8);
 
+  void* operator new(size_t bytes, const ASTContext* C,
+                     unsigned alignment = 8);
+
   void* operator new(size_t bytes, void* mem) throw() {
     return mem;
   }
