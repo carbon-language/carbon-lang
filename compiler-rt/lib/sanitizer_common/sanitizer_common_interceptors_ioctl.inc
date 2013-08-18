@@ -421,6 +421,8 @@ static void ioctl_table_fill() {
   _(LPSETIRQ, NONE, 0);
   _(LPTIME, NONE, 0);
   _(LPWAIT, NONE, 0);
+  _(MTIOCGETCONFIG, WRITE, struct_mtconfiginfo_sz);
+  _(MTIOCSETCONFIG, READ, struct_mtconfiginfo_sz);
   _(PIO_CMAP, NONE, 0);
   _(PIO_FONT, READ, 8192);
   _(PIO_SCRNMAP, READ, e_tabsz);
