@@ -339,10 +339,11 @@ def __xd : XD;
 class SI<bits<8> o, Format F, dag outs, dag ins, string asm,
          list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin> {
-  let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
+  let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
+                   !if(hasVEXPrefix /* VEX */, [UseAVX],
                    !if(!eq(Prefix, __xs.Prefix), [UseSSE1],
                    !if(!eq(Prefix, __xd.Prefix), [UseSSE2],
-                   !if(hasOpSizePrefix, [UseSSE2], [UseSSE1]))));
+                   !if(hasOpSizePrefix, [UseSSE2], [UseSSE1])))));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
@@ -352,8 +353,9 @@ class SI<bits<8> o, Format F, dag outs, dag ins, string asm,
 class SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin> {
-  let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
-            !if(!eq(Prefix, __xs.Prefix), [UseSSE1], [UseSSE2]));
+  let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
+                   !if(hasVEXPrefix /* VEX */, [UseAVX],
+                   !if(!eq(Prefix, __xs.Prefix), [UseSSE1], [UseSSE2])));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
@@ -363,8 +365,9 @@ class SIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class PI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
          InstrItinClass itin, Domain d>
       : I<o, F, outs, ins, asm, pattern, itin, d> {
-  let Predicates = !if(hasVEXPrefix /* VEX */, [HasAVX],
-        !if(hasOpSizePrefix /* OpSize */, [UseSSE2], [UseSSE1]));
+  let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
+                   !if(hasVEXPrefix /* VEX */, [HasAVX],
+                   !if(hasOpSizePrefix /* OpSize */, [UseSSE2], [UseSSE1])));
 
   // AVX instructions have a 'v' prefix in the mnemonic
   let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
@@ -381,11 +384,12 @@ class MMXPI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> patter
 class PIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin, Domain d>
       : Ii8<o, F, outs, ins, asm, pattern, itin, d> {
-  let Predicates = !if(hasVEX_4VPrefix /* VEX */, [HasAVX],
-        !if(hasOpSizePrefix /* OpSize */, [UseSSE2], [UseSSE1]));
+  let Predicates = !if(hasEVEXPrefix /* EVEX */, [HasAVX512],
+                   !if(hasVEXPrefix /* VEX */, [HasAVX],
+                   !if(hasOpSizePrefix /* OpSize */, [UseSSE2], [UseSSE1])));
 
   // AVX instructions have a 'v' prefix in the mnemonic
-  let AsmString = !if(hasVEX_4VPrefix, !strconcat("v", asm), asm);
+  let AsmString = !if(hasVEXPrefix, !strconcat("v", asm), asm);
 }
 
 // SSE1 Instruction Templates:
@@ -460,7 +464,7 @@ class PDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class VSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin>, XD,
-        Requires<[HasAVX]>;
+        Requires<[UseAVX]>;
 class VS2SI<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin>, XS,
@@ -472,7 +476,7 @@ class VPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 class VS2I<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, itin>, TB,
-        OpSize, Requires<[HasAVX]>;
+        OpSize, Requires<[UseAVX]>;
 class S2I<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, TB,
