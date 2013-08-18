@@ -50,12 +50,12 @@ static StmtClassNameTable &getStmtInfoTableEntry(Stmt::StmtClass E) {
 }
 
 void *Stmt::operator new(size_t bytes, const ASTContext& C,
-                         unsigned alignment) throw() {
+                         unsigned alignment) {
   return ::operator new(bytes, C, alignment);
 }
 
 void *Stmt::operator new(size_t bytes, const ASTContext* C,
-                         unsigned alignment) throw() {
+                         unsigned alignment) {
   return ::operator new(bytes, *C, alignment);
 }
 
