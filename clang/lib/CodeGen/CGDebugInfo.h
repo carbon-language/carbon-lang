@@ -117,6 +117,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const RecordType *Ty, bool Declaration);
   llvm::DIType CreateTypeDefinition(const RecordType *Ty);
   llvm::DIType CreateLimitedType(const RecordType *Ty);
+  void CollectContainingType(const CXXRecordDecl *RD, llvm::DICompositeType CT);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const VectorType *Ty, llvm::DIFile F);

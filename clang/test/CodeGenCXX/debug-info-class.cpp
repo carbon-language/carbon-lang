@@ -12,6 +12,14 @@ class B {
 public:
   virtual ~B();
 };
+
+struct C {
+  virtual void func();
+  struct inner {
+    int j;
+  };
+};
+
 struct A {
   int one;
   static const int HdrSize = 52;
@@ -24,6 +32,7 @@ struct A {
 
 int main(int argc, char **argv) {
   B b;
+  C::inner c_i;
   if (argc) {
     A a;
   }
@@ -44,5 +53,11 @@ int main(int argc, char **argv) {
 // CHECK: HdrSize
 // CHECK: DW_TAG_class_type ] [B]
 // CHECK: metadata !"_vptr$B", {{.*}}, i32 64, metadata !{{.*}}} ; [ DW_TAG_member ]
-// CHECK: ![[EXCEPTLOC]] = metadata !{i32 31,
-// CHECK: ![[RETLOC]] = metadata !{i32 30,
+// CHECK: metadata [[C_INNER_MEM:![0-9]*]], i32 0, null, null} ; [ DW_TAG_structure_type ] [inner] {{.*}} [def]
+// Context chains (in Clang -flimit-debug-info and in GCC generally) contain
+// definitions without members (& without a vbase 'containing type'):
+// CHECK: null, i32 0, null, null} ; [ DW_TAG_structure_type ] [C] {{.*}} [def]
+// CHECK: [[C_INNER_MEM]] = metadata !{metadata [[C_INNER_I:![0-9]*]]}
+// CHECK: [[C_INNER_I]] = {{.*}} ; [ DW_TAG_member ] [j] {{.*}} [from int]
+// CHECK: ![[EXCEPTLOC]] = metadata !{i32 40,
+// CHECK: ![[RETLOC]] = metadata !{i32 39,

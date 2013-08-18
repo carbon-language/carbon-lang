@@ -1453,6 +1453,9 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
   if (FwdDecl.isForwardDecl())
     return FwdDecl;
 
+  if (const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD))
+    CollectContainingType(CXXDecl, FwdDecl);
+
   // Push the struct on region stack.
   LexicalBlockStack.push_back(&*FwdDecl);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
@@ -2207,32 +2210,35 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
 
-  if (const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD)) {
-    // A class's primary base or the class itself contains the vtable.
-    llvm::DICompositeType ContainingType;
-    const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
-    if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
-      // Seek non virtual primary base root.
-      while (1) {
-        const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
-        const CXXRecordDecl *PBT = BRL.getPrimaryBase();
-        if (PBT && !BRL.isPrimaryBaseVirtual())
-          PBase = PBT;
-        else
-          break;
-      }
-      ContainingType = llvm::DICompositeType(
-          getOrCreateType(QualType(PBase->getTypeForDecl(), 0), DefUnit));
-    } else if (CXXDecl->isDynamicClass())
-      ContainingType = RealDecl;
-
-    RealDecl.setContainingType(ContainingType);
-    if (const ClassTemplateSpecializationDecl *TSpecial =
-            dyn_cast<ClassTemplateSpecializationDecl>(CXXDecl))
-      RealDecl.setTypeArray(llvm::DIArray(),
-                            CollectCXXTemplateParams(TSpecial, DefUnit));
-  }
+  if (const ClassTemplateSpecializationDecl *TSpecial =
+          dyn_cast<ClassTemplateSpecializationDecl>(RD))
+    RealDecl.setTypeArray(llvm::DIArray(),
+                          CollectCXXTemplateParams(TSpecial, DefUnit));
   return RealDecl;
+}
+
+void CGDebugInfo::CollectContainingType(const CXXRecordDecl *RD,
+                                        llvm::DICompositeType RealDecl) {
+  // A class's primary base or the class itself contains the vtable.
+  llvm::DICompositeType ContainingType;
+  const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
+  if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
+    // Seek non virtual primary base root.
+    while (1) {
+      const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
+      const CXXRecordDecl *PBT = BRL.getPrimaryBase();
+      if (PBT && !BRL.isPrimaryBaseVirtual())
+        PBase = PBT;
+      else
+        break;
+    }
+    ContainingType = llvm::DICompositeType(
+        getOrCreateType(QualType(PBase->getTypeForDecl(), 0),
+                        getOrCreateFile(RD->getLocation())));
+  } else if (RD->isDynamicClass())
+    ContainingType = RealDecl;
+
+  RealDecl.setContainingType(ContainingType);
 }
 
 /// CreateMemberType - Create new member and increase Offset by FType's size.
