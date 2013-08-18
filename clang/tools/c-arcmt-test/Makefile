@@ -29,7 +29,7 @@ USEDLIBS = clang.a \
 	   clangARCMigrate.a \
 	   clangRewriteFrontend.a \
 	   clangRewriteCore.a \
-	   clangFrontend.a clangDriver.a \
+	   clangIndex.a clangFrontend.a clangDriver.a \
 	   clangSerialization.a clangParse.a clangSema.a \
 	   clangAnalysis.a clangEdit.a clangAST.a clangLex.a clangBasic.a
 
