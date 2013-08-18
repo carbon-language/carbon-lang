@@ -1136,9 +1136,8 @@ CollectCXXFriends(const CXXRecordDecl *RD, llvm::DIFile Unit,
     if ((*BI)->isUnsupportedFriend())
       continue;
     if (TypeSourceInfo *TInfo = (*BI)->getFriendType())
-      EltTys.push_back(DBuilder.createFriend(RecordTy,
-                                             getOrCreateType(TInfo->getType(),
-                                                             Unit)));
+      EltTys.push_back(DBuilder.createFriend(
+          RecordTy, getOrCreateType(TInfo->getType(), Unit, true)));
   }
 }
 
