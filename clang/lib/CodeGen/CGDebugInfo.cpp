@@ -1063,8 +1063,12 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
     MethodLinkageName = CGM.getMangledName(Method);
 
   // Get the location for the method.
-  llvm::DIFile MethodDefUnit = getOrCreateFile(Method->getLocation());
-  unsigned MethodLine = getLineNumber(Method->getLocation());
+  llvm::DIFile MethodDefUnit;
+  unsigned MethodLine = 0;
+  if (!Method->isImplicit()) {
+    MethodDefUnit = getOrCreateFile(Method->getLocation());
+    MethodLine = getLineNumber(Method->getLocation());
+  }
 
   // Collect virtual method info.
   llvm::DIType ContainingType;
@@ -2685,7 +2689,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);
   assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
 
-  llvm::DIFile Unit = getOrCreateFile(VD->getLocation());
+  bool Unwritten =
+      VD->isImplicit() || (isa<Decl>(VD->getDeclContext()) &&
+                           cast<Decl>(VD->getDeclContext())->isImplicit());
+  llvm::DIFile Unit;
+  if (!Unwritten)
+    Unit = getOrCreateFile(VD->getLocation());
   llvm::DIType Ty;
   uint64_t XOffset = 0;
   if (VD->hasAttr<BlocksAttr>())
@@ -2699,8 +2708,12 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     return;
 
   // Get location information.
-  unsigned Line = getLineNumber(VD->getLocation());
-  unsigned Column = getColumnNumber(VD->getLocation());
+  unsigned Line = 0;
+  unsigned Column = 0;
+  if (!Unwritten) {
+    Line = getLineNumber(VD->getLocation());
+    Column = getColumnNumber(VD->getLocation());
+  }
   unsigned Flags = 0;
   if (VD->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
