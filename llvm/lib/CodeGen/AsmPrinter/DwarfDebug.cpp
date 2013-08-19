@@ -58,11 +58,6 @@ static cl::opt<bool> UnknownLocations(
     cl::init(false));
 
 static cl::opt<bool>
-GenerateDwarfPubNamesSection("generate-dwarf-pubnames", cl::Hidden,
-                             cl::init(false),
-                             cl::desc("Generate DWARF pubnames section"));
-
-static cl::opt<bool>
 GenerateODRHash("generate-odr-hash", cl::Hidden,
                 cl::desc("Add an ODR hash to external type DIEs."),
                 cl::init(false));
@@ -103,6 +98,14 @@ SplitDwarf("split-dwarf", cl::Hidden,
                       clEnumVal(Enable, "Enabled"),
                       clEnumVal(Disable, "Disabled"), clEnumValEnd),
            cl::init(Default));
+
+static cl::opt<DefaultOnOff>
+DwarfPubNames("generate-dwarf-pubnames", cl::Hidden,
+              cl::desc("Generate DWARF pubnames section"),
+              cl::values(clEnumVal(Default, "Default for platform"),
+                         clEnumVal(Enable, "Enabled"),
+                         clEnumVal(Disable, "Disabled"), clEnumValEnd),
+              cl::init(Default));
 
 namespace {
   const char *const DWARFGroupName = "DWARF Emission";
@@ -224,6 +227,14 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     HasSplitDwarf = false;
   else
     HasSplitDwarf = SplitDwarf == Enable ? true : false;
+
+  if (DwarfPubNames == Default) {
+    if (IsDarwin)
+      HasDwarfPubNames = false;
+    else
+      HasDwarfPubNames = true;
+  } else
+    HasDwarfPubNames = DwarfPubNames == Enable ? true : false;
 
   DwarfVersion = getDwarfVersionFromModule(MMI->getModule());
 
@@ -797,7 +808,7 @@ void DwarfDebug::constructSubprogramDIE(CompileUnit *TheCU,
   TheCU->addToContextOwner(SubprogramDie, SP.getContext());
 
   // Expose as global, if requested.
-  if (GenerateDwarfPubNamesSection)
+  if (HasDwarfPubNames)
     TheCU->addGlobalName(SP.getName(), SubprogramDie);
 }
 
@@ -1146,7 +1157,7 @@ void DwarfDebug::endModule() {
   }
 
   // Emit info into a debug pubnames section, if requested.
-  if (GenerateDwarfPubNamesSection)
+  if (HasDwarfPubNames)
     emitDebugPubnames();
 
   // Emit info into a debug pubtypes section.
@@ -1932,7 +1943,7 @@ void DwarfDebug::emitSectionLabels() {
   DwarfLineSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
-  if (GenerateDwarfPubNamesSection)
+  if (HasDwarfPubNames)
     emitSectionSym(Asm, TLOF.getDwarfPubNamesSection());
   emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
@@ -2307,8 +2318,8 @@ void DwarfDebug::emitDebugPubnames() {
       continue;
 
     // Start the dwarf pubnames section.
-    Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfPubNamesSection());
+    Asm->OutStreamer
+        .SwitchSection(Asm->getObjFileLowering().getDwarfPubNamesSection());
 
     Asm->OutStreamer.AddComment("Length of Public Names Info");
     Asm->EmitLabelDifference(Asm->GetTempSymbol("pubnames_end", ID),

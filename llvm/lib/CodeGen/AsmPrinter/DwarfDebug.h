@@ -434,6 +434,7 @@ class DwarfDebug {
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
+  bool HasDwarfPubNames;
 
   unsigned DwarfVersion;
 

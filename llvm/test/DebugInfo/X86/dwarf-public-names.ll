@@ -1,7 +1,7 @@
-; REQUIRES: object-emission
-
-; RUN: llc -generate-dwarf-pubnames=Enable -filetype=obj -o %t.o < %s
-; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu -filetype=obj -o %t.o < %s
+; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck --check-prefix=LINUX %s
+; RUN: llc -mtriple=x86_64-apple-darwin12 -filetype=obj -o %t.o < %s
+; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck --check-prefix=DARWIN %s
 ; ModuleID = 'dwarf-public-names.cpp'
 ;
 ; Generated from:
@@ -35,16 +35,20 @@
 ;   int global_namespace_variable = 1;
 ; }
 
+; Darwin shouldn't be generating the section by default
+; DARWIN: debug_pubnames
+; DARWIN: Size:                  0
+
 ; Skip the output to the header of the pubnames section.
-; CHECK: debug_pubnames
+; LINUX: debug_pubnames
 
 ; Check for each name in the output.
-; CHECK: global_namespace_variable
-; CHECK: global_namespace_function
-; CHECK: static_member_function
-; CHECK: global_variable
-; CHECK: global_function
-; CHECK: member_function
+; LINUX: global_namespace_variable
+; LINUX: global_namespace_function
+; LINUX: static_member_function
+; LINUX: global_variable
+; LINUX: global_function
+; LINUX: member_function
 
 %struct.C = type { i8 }
 
