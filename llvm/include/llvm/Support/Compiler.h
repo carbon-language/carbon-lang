@@ -179,6 +179,12 @@
 #define LLVM_ATTRIBUTE_USED
 #endif
 
+#if __has_attribute(warn_unused_result) || __GNUC_PREREQ(3, 4)
+#define LLVM_ATTRIBUTE_UNUSED_RESULT __attribute__((__warn_unused_result__))
+#else
+#define LLVM_ATTRIBUTE_UNUSED_RESULT
+#endif
+
 // Some compilers warn about unused functions. When a function is sometimes
 // used or not depending on build settings (e.g. a function only called from
 // within "assert"), this attribute can be used to suppress such warnings.
