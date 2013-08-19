@@ -777,24 +777,12 @@ DataExtractor::GetDouble (offset_t *offset_ptr) const
 long double
 DataExtractor::GetLongDouble (offset_t *offset_ptr) const
 {
-    typedef long double float_type;
-    float_type val = 0.0;
-    const size_t src_size = sizeof(float_type);
-    const float_type *src = (const float_type *)GetData (offset_ptr, src_size);
-    if (src)
-    {
-        if (m_byte_order != lldb::endian::InlHostByteOrder())
-        {
-            const uint8_t *src_data = (const uint8_t *)src;
-            uint8_t *dst_data = (uint8_t *)&val;
-            for (size_t i=0; i<sizeof(float_type); ++i)
-                dst_data[sizeof(float_type) - 1 - i] = src_data[i];
-        }
-        else
-        {
-            val = *src;
-        }
-    }
+    long double val = 0.0;
+#if defined (__i386__) || defined (__amd64__) || defined (__x86_64__) || defined(_M_IX86) || defined(_M_IA64) || defined(_M_X64)
+    *offset_ptr += CopyByteOrderedData (*offset_ptr, 10, &val, sizeof(val), lldb::endian::InlHostByteOrder());
+#else
+    *offset_ptr += CopyByteOrderedData (*offset_ptr, sizeof(val), &val, sizeof(val), lldb::endian::InlHostByteOrder());
+#endif
     return val;
 }
 
@@ -1842,7 +1830,7 @@ DataExtractor::Dump (Stream *s,
                         ss.precision(std::numeric_limits<double>::digits10);
                         ss << GetDouble(&offset);
                     }
-                    else if (item_byte_size == sizeof(long double))
+                    else if (item_byte_size == sizeof(long double) || item_byte_size == 10)
                     {
                         ss.precision(std::numeric_limits<long double>::digits10);
                         ss << GetLongDouble(&offset);
