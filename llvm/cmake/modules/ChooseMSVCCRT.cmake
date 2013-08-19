@@ -71,7 +71,7 @@ variables (LLVM_USE_CRT_DEBUG, etc) instead.")
 	CACHE STRING "Specify VC++ CRT to use for ${build_type} configurations."
 	FORCE)
       set_property(CACHE LLVM_USE_CRT_${build}
-	PROPERTY STRINGS "";${${MSVC_CRT}})
+	PROPERTY STRINGS ;${${MSVC_CRT}})
     endif(NOT LLVM_USE_CRT_${build})
   endforeach(build_type)
 
