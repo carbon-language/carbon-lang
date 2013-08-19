@@ -953,9 +953,8 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
 
 /// ErrorUnsupported - Print out an error that codegen doesn't support the
 /// specified stmt yet.
-void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
-                                       bool OmitOnError) {
-  CGM.ErrorUnsupported(S, Type, OmitOnError);
+void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type) {
+  CGM.ErrorUnsupported(S, Type);
 }
 
 /// emitNonZeroVLAInit - Emit the "zero" initialization of a

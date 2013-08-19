@@ -852,17 +852,11 @@ public:
 
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified stmt yet.
-  /// \param OmitOnError - If true, then this error should only be emitted if no
-  /// other errors have been reported.
-  void ErrorUnsupported(const Stmt *S, const char *Type,
-                        bool OmitOnError=false);
+  void ErrorUnsupported(const Stmt *S, const char *Type);
 
   /// ErrorUnsupported - Print out an error that codegen doesn't support the
   /// specified decl yet.
-  /// \param OmitOnError - If true, then this error should only be emitted if no
-  /// other errors have been reported.
-  void ErrorUnsupported(const Decl *D, const char *Type,
-                        bool OmitOnError=false);
+  void ErrorUnsupported(const Decl *D, const char *Type);
 
   /// SetInternalFunctionAttributes - Set the attributes on the LLVM
   /// function for the given decl and function info. This applies
