@@ -837,9 +837,13 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     // C++ initialization is handled later.
   }
 
-  if (ElemType->isScalarType())
+  // FIXME: Need to handle atomic aggregate types with implicit init lists.
+  if (ElemType->isScalarType() || ElemType->isAtomicType())
     return CheckScalarType(Entity, IList, ElemType, Index,
                            StructuredList, StructuredIndex);
+
+  assert((ElemType->isRecordType() || ElemType->isVectorType() ||
+          ElemType->isArrayType()) && "Unexpected type");
 
   if (const ArrayType *arrayType = SemaRef.Context.getAsArrayType(ElemType)) {
     // arrayType can be incomplete if we're initializing a flexible

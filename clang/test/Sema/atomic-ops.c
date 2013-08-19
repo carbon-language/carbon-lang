@@ -176,3 +176,9 @@ void f(_Atomic(int) *i, _Atomic(int*) *p, _Atomic(float) *d,
 
 _Atomic(int*) PR12527_a;
 void PR12527() { int *b = PR12527_a; }
+
+void PR16931(int* x) { // expected-note {{passing argument to parameter 'x' here}}
+  typedef struct { _Atomic(_Bool) flag; } flag;
+  flag flagvar = { 0 };
+  PR16931(&flagvar); // expected-warning {{incompatible pointer types}}
+}
