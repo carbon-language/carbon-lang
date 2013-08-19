@@ -288,6 +288,30 @@ void test() {
 
 </table>
 
+<!-- ============================== dead code ============================== -->
+<h3>dead code</h3>
+<table class="checkers">
+<col class="namedescr"><col class="example"><col class="progress">
+<thead><tr><td>Name, Description</td><td>Example</td><td>Progress</td></tr></thead>
+
+<tr><td><span class="name">deadcode.UnmodifiedVariable
+<br>(C, C++)</span><br><br>
+A variable is never modified but was not declared const and is not a reference.
+</td><td><pre>
+extern int computeDelta();
+
+int foo(bool cond) {
+  int i = 0;
+  if (cond) {
+    const int delta = computeDelta();
+    // Forgot to modify 'i'.
+  }
+  return i;
+}
+</pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=16890">PR16890</a></td></tr>
+
+</table>
+
 <!-- ========================= undefined behavior ========================== -->
 <h3>undefined behavior</h3>
 <table class="checkers">
