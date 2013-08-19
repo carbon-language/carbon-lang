@@ -67,9 +67,12 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
       I != E; ++I) {
     const ProgramPoint &P = I->getLocation();
     LC = P.getLocationContext();
+    if (!LC->inTopFrame())
+      continue;
 
     if (!D)
       D = LC->getAnalysisDeclContext()->getDecl();
+
     // Save the CFG if we don't have it already
     if (!C)
       C = LC->getAnalysisDeclContext()->getUnoptimizedCFG();

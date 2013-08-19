@@ -139,3 +139,22 @@ void test11(enum foobar fb) {
       error(); // expected-warning {{never executed}}
   }
 }
+
+void inlined(int condition) {
+  if (condition) {
+    foo(5); // no-warning
+  } else {
+    foo(6);
+  }
+}
+
+void testInlined() {
+  extern int coin();
+  int cond = coin();
+  if (!cond) {
+    inlined(0);
+    if (cond) {
+      foo(5); // expected-warning {{never executed}}
+    }
+  }
+}
