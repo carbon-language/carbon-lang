@@ -534,8 +534,18 @@ let neverHasSideEffects = 1, isAsCheapAsAMove = 1, isMoveImm = 1,
 }
 
 //===----------------------------------------------------------------------===//
-// Negation
+// Absolute and Negation
 //===----------------------------------------------------------------------===//
+
+let Defs = [CC] in {
+  let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
+    def LPR  : UnaryRR <"lp",  0x10,   z_iabs32, GR32, GR32>;
+    def LPGR : UnaryRRE<"lpg", 0xB900, z_iabs64, GR64, GR64>;
+  }
+  let CCValues = 0xE, CompareZeroCCMask = 0xE in
+    def LPGFR : UnaryRRE<"lpgf", 0xB910, null_frag, GR64, GR32>;
+}
+defm : SXU<z_iabs64, LPGFR>;
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {

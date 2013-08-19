@@ -4757,6 +4757,36 @@
 	lpebr	%f15,%f0
 	lpebr	%f15,%f9
 
+#CHECK: lpgfr	%r0, %r0                # encoding: [0xb9,0x10,0x00,0x00]
+#CHECK: lpgfr	%r0, %r15               # encoding: [0xb9,0x10,0x00,0x0f]
+#CHECK: lpgfr	%r15, %r0               # encoding: [0xb9,0x10,0x00,0xf0]
+#CHECK: lpgfr	%r7, %r8                # encoding: [0xb9,0x10,0x00,0x78]
+
+	lpgfr	%r0,%r0
+	lpgfr	%r0,%r15
+	lpgfr	%r15,%r0
+	lpgfr	%r7,%r8
+
+#CHECK: lpgr	%r0, %r0                # encoding: [0xb9,0x00,0x00,0x00]
+#CHECK: lpgr	%r0, %r15               # encoding: [0xb9,0x00,0x00,0x0f]
+#CHECK: lpgr	%r15, %r0               # encoding: [0xb9,0x00,0x00,0xf0]
+#CHECK: lpgr	%r7, %r8                # encoding: [0xb9,0x00,0x00,0x78]
+
+	lpgr	%r0,%r0
+	lpgr	%r0,%r15
+	lpgr	%r15,%r0
+	lpgr	%r7,%r8
+
+#CHECK: lpr	%r0, %r0                # encoding: [0x10,0x00]
+#CHECK: lpr	%r0, %r15               # encoding: [0x10,0x0f]
+#CHECK: lpr	%r15, %r0               # encoding: [0x10,0xf0]
+#CHECK: lpr	%r7, %r8                # encoding: [0x10,0x78]
+
+	lpr	%r0,%r0
+	lpr	%r0,%r15
+	lpr	%r15,%r0
+	lpr	%r7,%r8
+
 #CHECK: lpxbr	%f0, %f8                # encoding: [0xb3,0x40,0x00,0x08]
 #CHECK: lpxbr	%f0, %f13               # encoding: [0xb3,0x40,0x00,0x0d]
 #CHECK: lpxbr	%f13, %f0               # encoding: [0xb3,0x40,0x00,0xd0]
