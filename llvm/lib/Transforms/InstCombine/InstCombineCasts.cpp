@@ -1370,15 +1370,21 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
       return &CI;
     }
 
+    if (!TD)
+      return commonCastTransforms(CI);
+
     // If the GEP has a single use, and the base pointer is a bitcast, and the
     // GEP computes a constant offset, see if we can convert these three
     // instructions into fewer.  This typically happens with unions and other
     // non-type-safe code.
-    APInt Offset(TD ? TD->getPointerSizeInBits() : 1, 0);
-    if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0)) &&
+    unsigned OffsetBits = TD->getPointerSizeInBits();
+    APInt Offset(OffsetBits, 0);
+    BitCastInst *BCI = dyn_cast<BitCastInst>(GEP->getOperand(0));
+    if (GEP->hasOneUse() &&
+        BCI &&
         GEP->accumulateConstantOffset(*TD, Offset)) {
       // Get the base pointer input of the bitcast, and the type it points to.
-      Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
+      Value *OrigBase = BCI->getOperand(0);
       Type *GEPIdxTy = OrigBase->getType()->getPointerElementType();
       SmallVector<Value*, 8> NewIndices;
       if (FindElementAtOffset(GEPIdxTy, Offset.getSExtValue(), NewIndices)) {
@@ -1386,8 +1392,8 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.
         Value *NGEP = cast<GEPOperator>(GEP)->isInBounds() ?
-        Builder->CreateInBoundsGEP(OrigBase, NewIndices) :
-        Builder->CreateGEP(OrigBase, NewIndices);
+          Builder->CreateInBoundsGEP(OrigBase, NewIndices) :
+          Builder->CreateGEP(OrigBase, NewIndices);
         NGEP->takeName(GEP);
 
         if (isa<BitCastInst>(CI))
