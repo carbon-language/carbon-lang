@@ -94,8 +94,6 @@ TEST_F(SpecialCaseListTest, FunctionIsIn) {
   SCL.reset(makeSpecialCaseList("fun:foo=functional\n"));
   EXPECT_TRUE(SCL->isIn(*Foo, "functional"));
   StringRef Category;
-  EXPECT_TRUE(SCL->findCategory(*Foo, Category));
-  EXPECT_EQ("functional", Category);
   EXPECT_FALSE(SCL->isIn(*Bar, "functional"));
 }
 

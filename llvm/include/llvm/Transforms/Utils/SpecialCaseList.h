@@ -83,20 +83,6 @@ class SpecialCaseList {
   /// omitted to search the empty category.
   bool isIn(const Module &M, const StringRef Category = StringRef()) const;
 
-  /// Returns whether either this function or its source file are listed in any
-  /// category.  Category will contain the name of an arbitrary category in
-  /// which this function is listed.
-  bool findCategory(const Function &F, StringRef &Category) const;
-
-  /// Returns whether this global, its type or its source file are listed in any
-  /// category.  Category will contain the name of an arbitrary category in
-  /// which this global is listed.
-  bool findCategory(const GlobalVariable &G, StringRef &Category) const;
-
-  /// Returns whether this module is listed in any category.  Category will
-  /// contain the name of an arbitrary category in which this module is listed.
-  bool findCategory(const Module &M, StringRef &Category) const;
-
  private:
   SpecialCaseList(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
   SpecialCaseList &operator=(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
@@ -108,8 +94,6 @@ class SpecialCaseList {
   /// Parses just-constructed SpecialCaseList entries from a memory buffer.
   bool parse(const MemoryBuffer *MB, std::string &Error);
 
-  bool findCategory(const StringRef Section, const StringRef Query,
-                    StringRef &Category) const;
   bool inSectionCategory(const StringRef Section, const StringRef Query,
                          const StringRef Category) const;
 };
