@@ -4169,14 +4169,6 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     return true;
   }
 
-  if (!isa<ValueDecl>(DRE->getDecl())) {
-    S.Diag(Arg->getLocStart(),
-           diag::err_template_arg_not_object_or_func_form)
-      << Arg->getSourceRange();
-    S.Diag(Param->getLocation(), diag::note_template_param_here);
-    return true;
-  }
-
   ValueDecl *Entity = DRE->getDecl();
 
   // Cannot refer to non-static data members

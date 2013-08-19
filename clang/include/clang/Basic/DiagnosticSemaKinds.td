@@ -2952,9 +2952,6 @@ def err_template_arg_ref_bind_ignores_quals : Error<
   "ignores qualifiers">;
 def err_template_arg_not_decl_ref : Error<
   "non-type template argument does not refer to any declaration">;
-def err_template_arg_not_object_or_func_form : Error<
-  "non-type template argument does not directly refer to an object or "
-  "function">;
 def err_template_arg_not_address_of : Error<
   "non-type template argument for template parameter of pointer type %0 must "
   "have its address taken">;
