@@ -148,15 +148,17 @@ let Predicates = [NotFP64bit, HasStdEnc] in {
                    CMov_I_F_FM<19, 17>;
 }
 
-let Predicates = [IsFP64bit, HasStdEnc], isCodeGenOnly = 1 in {
+let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", GPR32Opnd, FGR64Opnd, IIFmove>,
                    CMov_I_F_FM<18, 17>;
-  def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", GPR64Opnd, FGR64Opnd,
-                                  IIFmove>, CMov_I_F_FM<18, 17>;
   def MOVN_I_D64 : CMov_I_F_FT<"movn.d", GPR32Opnd, FGR64Opnd, IIFmove>,
                    CMov_I_F_FM<19, 17>;
-  def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", GPR64Opnd, FGR64Opnd,
-                                  IIFmove>, CMov_I_F_FM<19, 17>;
+  let isCodeGenOnly = 1 in {
+    def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", GPR64Opnd, FGR64Opnd,
+                                   IIFmove>, CMov_I_F_FM<18, 17>;
+    def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", GPR64Opnd, FGR64Opnd,
+                                   IIFmove>, CMov_I_F_FM<19, 17>;
+  }
 }
 
 def MOVT_I : CMov_F_I_FT<"movt", GPR32Opnd, IIArith, MipsCMovFP_T>,
@@ -184,7 +186,8 @@ let Predicates = [NotFP64bit, HasStdEnc] in {
   def MOVF_D32 : CMov_F_F_FT<"movf.d", AFGR64Opnd, IIFmove, MipsCMovFP_F>,
                  CMov_F_F_FM<17, 0>;
 }
-let Predicates = [IsFP64bit, HasStdEnc], isCodeGenOnly = 1 in {
+
+let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64Opnd, IIFmove, MipsCMovFP_T>,
                  CMov_F_F_FM<17, 1>;
   def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64Opnd, IIFmove, MipsCMovFP_F>,

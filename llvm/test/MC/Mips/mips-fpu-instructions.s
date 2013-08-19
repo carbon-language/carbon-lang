@@ -1,4 +1,5 @@
 # RUN: llvm-mc  %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips32r2 | FileCheck %s
+# RUN: llvm-mc  %s -triple=mips64el-unknown-linux -show-encoding -mcpu=mips64r2 | FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for FPU instructions.
 #------------------------------------------------------------------------------
