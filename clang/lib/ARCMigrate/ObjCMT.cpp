@@ -24,6 +24,7 @@
 #include "clang/Lex/PPConditionalDirectiveRecord.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Analysis/DomainSpecific/CocoaConventions.h"
 #include "clang/StaticAnalyzer/Checkers/ObjCRetainCount.h"
 #include "clang/AST/Attr.h"
 #include "llvm/ADT/SmallString.h"
@@ -774,68 +775,79 @@ static bool IsVoidStarType(QualType Ty) {
   return IsVoidStarType(PT->getPointeeType());
 }
 
-
 static bool
-IsCFFunctionImplicitBridingingCandidate(ASTContext &Ctx,
-                                        const FunctionDecl *FuncDecl) {
-  CallEffects CE  = CallEffects::getEffect(FuncDecl);
+AuditedType (QualType AT) {
+  if (!AT->isPointerType())
+    return true;
+  if (IsVoidStarType(AT))
+    return false;
   
-  RetEffect Ret = CE.getReturnValue();
-  if (Ret.getObjKind() == RetEffect::CF)
-    // Still a candidate;
-    ;
-  else if (Ret.getObjKind() == RetEffect::AnyObj &&
-      (Ret.getKind() == RetEffect::NoRet || Ret.getKind() == RetEffect::NoRetHard)) {
-    // This is a candidate as long as it is not of "void *" variety
-    if (IsVoidStarType(FuncDecl->getResultType()))
-      return false;
-  }
-  
-  // FIXME. Check on the arguments too.
-  
-  // FIXME. Always false for now.
-  return false;
+  // FIXME. There isn't much we can say about CF pointer type; or is there?
+  if (ento::coreFoundation::isCFObjectRef(AT))
+    return false;
+  return true;
 }
 
 void ObjCMigrateASTConsumer::migrateCFFunctions(
                                ASTContext &Ctx,
                                const FunctionDecl *FuncDecl) {
   // Finction must be annotated first.
-  bool Annotated = migrateAddFunctionAnnotation(Ctx, FuncDecl);
-  if (Annotated && IsCFFunctionImplicitBridingingCandidate(Ctx, FuncDecl))
+  bool Audited = migrateAddFunctionAnnotation(Ctx, FuncDecl);
+  if (Audited)
     CFFunctionIBCandidates.push_back(FuncDecl);
 }
 
 bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
                                                 ASTContext &Ctx,
                                                 const FunctionDecl *FuncDecl) {
-  if (FuncDecl->hasAttr<CFAuditedTransferAttr>() ||
-      FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
-      FuncDecl->getAttr<CFReturnsNotRetainedAttr>())
-    return true;
+  // Check that if it is already under CF_IMPLICIT_BRIDGING_ENABLE
+  // and do nothing. FIXME. This may have to go to the caller.
+  if (FuncDecl->hasAttr<CFAuditedTransferAttr>())
+    return false;
   if (FuncDecl->hasBody())
     return false;
-  
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
-  RetEffect Ret = CE.getReturnValue();
-  const char *AnnotationString = 0;
-  if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
-    if (!Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
+  
+  if (!FuncDecl->getAttr<CFReturnsRetainedAttr>() &&
+      !FuncDecl->getAttr<CFReturnsNotRetainedAttr>()) {
+    RetEffect Ret = CE.getReturnValue();
+    const char *AnnotationString = 0;
+    if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
+      if (Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
+        AnnotationString = " CF_RETURNS_RETAINED";
+    }
+    else if (Ret.getObjKind() == RetEffect::CF && !Ret.isOwned()) {
+      if (Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
+        AnnotationString = " CF_RETURNS_NOT_RETAINED";
+    }
+    if (AnnotationString) {
+      edit::Commit commit(*Editor);
+      commit.insertAfterToken(FuncDecl->getLocEnd(), AnnotationString);
+      Editor->commit(commit);
+    }
+    else if (!AuditedType(FuncDecl->getResultType()))
       return false;
-    AnnotationString = " CF_RETURNS_RETAINED";
   }
-  else if (Ret.getObjKind() == RetEffect::CF && !Ret.isOwned()) {
-    if (!Ctx.Idents.get("CF_RETURNS_NOT_RETAINED").hasMacroDefinition())
+  // At this point result type is either annotated or audited.
+  // Now, how about argument types.
+  llvm::ArrayRef<ArgEffect> AEArgs = CE.getArgs();
+  unsigned i = 0;
+  for (FunctionDecl::param_const_iterator pi = FuncDecl->param_begin(),
+       pe = FuncDecl->param_end(); pi != pe; ++pi, ++i) {
+    ArgEffect AE = AEArgs[i];
+    if (AE == DecRefMsg /*NSConsumed annotated*/ ||
+        AE == DecRef /*CFConsumed annotated*/)
+      continue;
+    if (AE != DoNothing)
       return false;
-    AnnotationString = " CF_RETURNS_NOT_RETAINED";
+    const ParmVarDecl *pd = *pi;
+    QualType AT = pd->getType();
+    if (!AuditedType(AT))
+      return false;
   }
-  else
-    return false;
-
-  edit::Commit commit(*Editor);
-  commit.insertAfterToken(FuncDecl->getLocEnd(), AnnotationString);
-  Editor->commit(commit);
-  return true;
+  // At this point, function is audited.
+  // FIXME. for now return false.
+  return false;
 }
 
 void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(
