@@ -80,6 +80,7 @@ _func:
         adds r2, r2, #56
         adds r2, #56
         add r1, r7, #0xcbcbcbcb
+        add sp, sp, #0x1fe0000
 
         adds.w r2, #-16
         adds.w r2, r2, #-16
@@ -103,6 +104,7 @@ _func:
 @ CHECK: adds	r2, #56                 @ encoding: [0x38,0x32]
 @ CHECK: adds	r2, #56                 @ encoding: [0x38,0x32]
 @ CHECK: add.w  r1, r7, #3419130827     @ encoding: [0x07,0xf1,0xcb,0x31]
+@ CHECK: add.w	sp, sp, #33423360       @ encoding: [0x0d,0xf1,0xff,0x7d]
 
 @ CHECK: subs.w	r2, r2, #16             @ encoding: [0xb2,0xf1,0x10,0x02]
 @ CHECK: subs.w	r2, r2, #16             @ encoding: [0xb2,0xf1,0x10,0x02]
