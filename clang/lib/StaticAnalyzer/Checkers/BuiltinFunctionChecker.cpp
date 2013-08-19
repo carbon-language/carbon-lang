@@ -37,12 +37,10 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
   if (!FD)
     return false;
 
-  unsigned id = FD->getBuiltinID();
-
-  if (!id)
+  switch (FD->getBuiltinID()) {
+  default:
     return false;
 
-  switch (id) {
   case Builtin::BI__builtin_expect:
   case Builtin::BI__builtin_addressof: {
     // For __builtin_expect, just return the value of the subexpression.
@@ -76,9 +74,24 @@ bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
     C.addTransition(state->BindExpr(CE, LCtx, loc::MemRegionVal(R)));
     return true;
   }
-  }
 
-  return false;
+  case Builtin::BI__builtin_object_size: {
+    // This must be resolvable at compile time, so we defer to the constant
+    // evaluator for a value.
+    SVal V = UnknownVal();
+    llvm::APSInt Result;
+    if (CE->EvaluateAsInt(Result, C.getASTContext(), Expr::SE_NoSideEffects)) {
+      // Make sure the result has the correct type.
+      SValBuilder &SVB = C.getSValBuilder();
+      BasicValueFactory &BVF = SVB.getBasicValueFactory();
+      BVF.getAPSIntType(CE->getType()).apply(Result);
+      V = SVB.makeIntVal(Result);
+    }
+
+    C.addTransition(state->BindExpr(CE, LCtx, V));
+    return true;
+  }
+  }
 }
 
 void ento::registerBuiltinFunctionChecker(CheckerManager &mgr) {

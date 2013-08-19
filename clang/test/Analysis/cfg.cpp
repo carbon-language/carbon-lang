@@ -82,3 +82,19 @@ enum EmptyE {};
 void F(EmptyE e) {
   switch (e) {}
 }
+
+// CHECK: ENTRY
+// CHECK-NEXT: Succs (1): B1
+// CHECK: [B1]
+// CHECK-NEXT:   1: __builtin_object_size
+// CHECK-NEXT:   2: [B1.1] (ImplicitCastExpr, BuiltinFnToFnPtr, unsigned long (*)(const void *, int))
+// CHECK-NEXT:   3: [B1.2](dummy(), 0)
+// CHECK-NEXT:   4: (void)[B1.3] (CStyleCastExpr, ToVoid, void)
+// CHECK-NEXT:   Preds (1): B2
+// CHECK-NEXT:   Succs (1): B0
+// CHECK: [B0 (EXIT)]
+// CHECK-NEXT:   Preds (1): B1
+void testBuiltinSize() {
+  extern int *dummy();
+  (void)__builtin_object_size(dummy(), 0);
+}

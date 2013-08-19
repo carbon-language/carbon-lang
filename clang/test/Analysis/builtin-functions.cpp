@@ -2,6 +2,23 @@
 
 void clang_analyzer_eval(bool);
 
-void test(int x) {
+void testAddressof(int x) {
   clang_analyzer_eval(&x == __builtin_addressof(x)); // expected-warning{{TRUE}}
+}
+
+void testSize() {
+  struct {
+    int x;
+    int y;
+    char z;
+  } object;
+  clang_analyzer_eval(__builtin_object_size(&object.y, 0) == sizeof(object) - sizeof(int)); // expected-warning{{TRUE}}
+
+  // Clang can't actually evaluate these builtin "calls", but importantly they don't actually evaluate the argument expression either.
+  int i = 0;
+  char buf[10];
+  clang_analyzer_eval(__builtin_object_size(&buf[i++], 0) == sizeof(buf)); // expected-warning{{FALSE}}
+  clang_analyzer_eval(__builtin_object_size(&buf[++i], 0) == sizeof(buf) - 1); // expected-warning{{FALSE}}
+
+  clang_analyzer_eval(i == 0); // expected-warning{{TRUE}}
 }

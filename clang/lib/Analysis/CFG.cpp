@@ -19,6 +19,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/Builtins.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1462,18 +1463,33 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
       AddEHEdge = true;
   }
 
+  // If this is a call to a builtin function, it might not actually evaluate
+  // its arguments. Don't add them to the CFG if this is the case.
+  bool OmitArguments = false;
+
   if (FunctionDecl *FD = C->getDirectCallee()) {
     if (FD->isNoReturn())
       NoReturn = true;
     if (FD->hasAttr<NoThrowAttr>())
       AddEHEdge = false;
+    if (FD->getBuiltinID() == Builtin::BI__builtin_object_size)
+      OmitArguments = true;
   }
 
   if (!CanThrow(C->getCallee(), *Context))
     AddEHEdge = false;
 
-  if (!NoReturn && !AddEHEdge)
+  if (OmitArguments) {
+    assert(!NoReturn && "noreturn calls with unevaluated args not implemented");
+    assert(!AddEHEdge && "EH calls with unevaluated args not implemented");
+    autoCreateBlock();
+    appendStmt(Block, C);
+    return Visit(C->getCallee());
+  }
+
+  if (!NoReturn && !AddEHEdge) {
     return VisitStmt(C, asc.withAlwaysAdd(true));
+  }
 
   if (Block) {
     Succ = Block;
