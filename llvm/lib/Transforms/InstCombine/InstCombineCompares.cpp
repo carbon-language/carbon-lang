@@ -226,7 +226,8 @@ static void ComputeUnsignedMinMaxValuesFromKnownBits(const APInt &KnownZero,
 Instruction *InstCombiner::
 FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
                              CmpInst &ICI, ConstantInt *AndCst) {
-  if (!GEP->isInBounds())
+  // We need TD information to know the pointer size unless this is inbounds.
+  if (!GEP->isInBounds() && TD == 0)
     return 0;
 
   Constant *Init = GV->getInitializer();
@@ -389,6 +390,13 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // Now that we've scanned the entire array, emit our new comparison(s).  We
   // order the state machines in complexity of the generated code.
   Value *Idx = GEP->getOperand(2);
+
+  // If the index is larger than the pointer size of the target, truncate the
+  // index down like the GEP would do implicitly.  We don't have to do this for
+  // an inbounds GEP because the index can't be out of range.
+  if (!GEP->isInBounds() &&
+      Idx->getType()->getPrimitiveSizeInBits() > TD->getPointerSizeInBits())
+    Idx = Builder->CreateTrunc(Idx, TD->getIntPtrType(Idx->getContext()));
 
   // If the comparison is only true for one or two elements, emit direct
   // comparisons.
