@@ -2,8 +2,8 @@
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: 0x00000027:   DW_TAG_structure_type
-; CHECK: 0x0000002c:     DW_AT_declaration
-; CHECK: 0x0000002d:     DW_AT_APPLE_runtime_class
+; CHECK:                 DW_AT_declaration
+; CHECK:                 DW_AT_APPLE_runtime_class
 
 %0 = type opaque
 

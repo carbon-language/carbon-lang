@@ -71,7 +71,7 @@ void DWARFDebugInfoEntryMinimal::dumpAttribute(raw_ostream &OS,
                                                uint16_t attr,
                                                uint16_t form,
                                                unsigned indent) const {
-  OS << format("0x%8.8x: ", *offset_ptr);
+  OS << "            ";
   OS.indent(indent+2);
   const char *attrString = AttributeString(attr);
   if (attrString)

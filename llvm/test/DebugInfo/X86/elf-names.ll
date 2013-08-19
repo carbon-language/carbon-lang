@@ -3,12 +3,12 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck --check-prefix=CHECK-DIS %s
 
 ; CHECK: 0x0000000b: DW_TAG_compile_unit
-; CHECK: 0x00000012:   DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000035] = "foo.cpp")
+; CHECK:               DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000035] = "foo.cpp")
 ; CHECK: 0x0000003c:   DW_TAG_class_type
-; CHECK: 0x0000003d:     DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000006d] = "D")
+; CHECK:                 DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000006d] = "D")
 ; CHECK: 0x00000044:     DW_TAG_member
-; CHECK: 0x00000045:       DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005d] = "c1")
-; CHECK: 0x0000008d:       DW_AT_artificial [DW_FORM_flag_present]       (true)
+; CHECK:                   DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005d] = "c1")
+; CHECK:                   DW_AT_artificial [DW_FORM_flag_present]       (true)
 
 ; CHECK-DIS: [artificial]
 

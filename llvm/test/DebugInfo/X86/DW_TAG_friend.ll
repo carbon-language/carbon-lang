@@ -6,7 +6,7 @@
 ; CHECK: 0x00000032:   DW_TAG_class_type [4]
 ; CHECK: 0x00000077:   DW_TAG_class_type [4]
 ; CHECK: 0x000000a0:     DW_TAG_friend [9]  
-; CHECK: 0x000000a1:       DW_AT_friend [DW_FORM_ref4]   (cu + 0x0032 => {0x00000032})
+; CHECK:                   DW_AT_friend [DW_FORM_ref4]   (cu + 0x0032 => {0x00000032})
 
 
 %class.A = type { i32 }

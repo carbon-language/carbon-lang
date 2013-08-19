@@ -9,21 +9,21 @@
 ; goes from [-3, 38].
 
 ; CHECK:      0x0000002d:   DW_TAG_base_type [3]
-; CHECK-NEXT: 0x0000002e:     DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000041] = "int")
-; CHECK-NEXT: 0x00000032:     DW_AT_byte_size [DW_FORM_data1] (0x04)
-; CHECK-NEXT: 0x00000033:     DW_AT_encoding [DW_FORM_data1]  (0x05)
+; CHECK-NEXT:                 DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000041] = "int")
+; CHECK-NEXT:                 DW_AT_byte_size [DW_FORM_data1] (0x04)
+; CHECK-NEXT:                 DW_AT_encoding [DW_FORM_data1]  (0x05)
 
 ; CHECK:      0x00000034:   DW_TAG_array_type [4] *
-; CHECK-NEXT: 0x00000035:     DW_AT_type [DW_FORM_ref4]    (cu + 0x0026 => {0x00000026})
+; CHECK-NEXT:                 DW_AT_type [DW_FORM_ref4]    (cu + 0x0026 => {0x00000026})
 
 ; CHECK:      0x00000039:     DW_TAG_subrange_type [5]
-; CHECK-NEXT: 0x0000003a:       DW_AT_type [DW_FORM_ref4]  (cu + 0x002d => {0x0000002d})
-; CHECK-NEXT: 0x0000003e:       DW_AT_lower_bound [DW_FORM_data8]       (0xfffffffffffffffd)
-; CHECK-NEXT: 0x00000046:       DW_AT_upper_bound [DW_FORM_data1]       (0x26)
+; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]  (cu + 0x002d => {0x0000002d})
+; CHECK-NEXT:                   DW_AT_lower_bound [DW_FORM_data8]       (0xfffffffffffffffd)
+; CHECK-NEXT:                   DW_AT_upper_bound [DW_FORM_data1]       (0x26)
 
 ; CHECK:      0x00000055:     DW_TAG_member [8]
-; CHECK-NEXT: 0x00000056:       DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000003f] = "x")
-; CHECK-NEXT: 0x0000005a:       DW_AT_type [DW_FORM_ref4]       (cu + 0x0034 => {0x00000034})
+; CHECK-NEXT:                   DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000003f] = "x")
+; CHECK-NEXT:                   DW_AT_type [DW_FORM_ref4]       (cu + 0x0034 => {0x00000034})
 
 !llvm.dbg.cu = !{!0}
 
