@@ -734,8 +734,28 @@ void RuntimeDyldELF::resolveSystemZRelocation(const SectionEntry &Section,
   }
 }
 
+// The target location for the relocation is described by RE.SectionID and
+// RE.Offset.  RE.SectionID can be used to find the SectionEntry.  Each
+// SectionEntry has three members describing its location.
+// SectionEntry::Address is the address at which the section has been loaded
+// into memory in the current (host) process.  SectionEntry::LoadAddress is the
+// address that the section will have in the target process.
+// SectionEntry::ObjAddress is the address of the bits for this section in the
+// original emitted object image (also in the current address space).
+//
+// Relocations will be applied as if the section were loaded at
+// SectionEntry::LoadAddress, but they will be applied at an address based
+// on SectionEntry::Address.  SectionEntry::ObjAddress will be used to refer to
+// Target memory contents if they are required for value calculations.
+//
+// The Value parameter here is the load address of the symbol for the
+// relocation to be applied.  For relocations which refer to symbols in the
+// current object Value will be the LoadAddress of the section in which
+// the symbol resides (RE.Addend provides additional information about the
+// symbol location).  For external symbols, Value will be the address of the
+// symbol in the target address space.
 void RuntimeDyldELF::resolveRelocation(const RelocationEntry &RE,
-				       uint64_t Value) {
+                                       uint64_t Value) {
   const SectionEntry &Section = Sections[RE.SectionID];
   return resolveRelocation(Section, RE.Offset, Value, RE.RelType, RE.Addend);
 }

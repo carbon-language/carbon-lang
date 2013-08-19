@@ -41,6 +41,9 @@ void RuntimeDyldImpl::resolveRelocations() {
   // Just iterate over the sections we have and resolve all the relocations
   // in them. Gross overkill, but it gets the job done.
   for (int i = 0, e = Sections.size(); i != e; ++i) {
+    // The Section here (Sections[i]) refers to the section in which the
+    // symbol for the relocation is located.  The SectionID in the relocation
+    // entry provides the section to which the relocation will be applied.
     uint64_t Addr = Sections[i].LoadAddress;
     DEBUG(dbgs() << "Resolving relocations Section #" << i
             << "\t" << format("%p", (uint8_t *)Addr)
