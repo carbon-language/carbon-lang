@@ -32,6 +32,7 @@ namespace SystemZISD {
     // is the target address.  The arguments start at operand 2.
     // There is an optional glue operand at the end.
     CALL,
+    SIBCALL,
 
     // Wraps a TargetGlobalAddress that should be loaded using PC-relative
     // accesses (LARL).  Operand 0 is the address.
@@ -155,6 +156,8 @@ public:
      LLVM_OVERRIDE;
   virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const
     LLVM_OVERRIDE;
+  virtual bool isTruncateFree(Type *, Type *) const LLVM_OVERRIDE;
+  virtual bool isTruncateFree(EVT, EVT) const LLVM_OVERRIDE;
   virtual const char *getTargetNodeName(unsigned Opcode) const LLVM_OVERRIDE;
   virtual std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const std::string &Constraint,
@@ -174,6 +177,8 @@ public:
                                 MachineBasicBlock *BB) const LLVM_OVERRIDE;
   virtual SDValue LowerOperation(SDValue Op,
                                  SelectionDAG &DAG) const LLVM_OVERRIDE;
+  virtual bool allowTruncateForTailCall(Type *, Type *) const LLVM_OVERRIDE;
+  virtual bool mayBeEmittedAsTailCall(CallInst *CI) const LLVM_OVERRIDE;
   virtual SDValue
     LowerFormalArguments(SDValue Chain,
                          CallingConv::ID CallConv, bool isVarArg,

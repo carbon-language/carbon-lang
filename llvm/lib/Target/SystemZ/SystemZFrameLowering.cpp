@@ -420,8 +420,7 @@ void SystemZFrameLowering::emitEpilogue(MachineFunction &MF,
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
 
   // Skip the return instruction.
-  assert(MBBI->getOpcode() == SystemZ::RET &&
-         "Can only insert epilogue into returning blocks");
+  assert(MBBI->isReturn() && "Can only insert epilogue into returning blocks");
 
   uint64_t StackSize = getAllocatedStackSize(MF);
   if (ZFI->getLowSavedGPR()) {

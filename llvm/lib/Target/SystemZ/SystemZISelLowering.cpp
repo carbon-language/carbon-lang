@@ -305,6 +305,22 @@ bool SystemZTargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return AM.Scale == 0 || AM.Scale == 1;
 }
 
+bool SystemZTargetLowering::isTruncateFree(Type *FromType, Type *ToType) const {
+  if (!FromType->isIntegerTy() || !ToType->isIntegerTy())
+    return false;
+  unsigned FromBits = FromType->getPrimitiveSizeInBits();
+  unsigned ToBits = ToType->getPrimitiveSizeInBits();
+  return FromBits > ToBits;
+}
+
+bool SystemZTargetLowering::isTruncateFree(EVT FromVT, EVT ToVT) const {
+  if (!FromVT.isInteger() || !ToVT.isInteger())
+    return false;
+  unsigned FromBits = FromVT.getSizeInBits();
+  unsigned ToBits = ToVT.getSizeInBits();
+  return FromBits > ToBits;
+}
+
 //===----------------------------------------------------------------------===//
 // Inline asm support
 //===----------------------------------------------------------------------===//
@@ -527,6 +543,17 @@ LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
 
 #include "SystemZGenCallingConv.inc"
 
+bool SystemZTargetLowering::allowTruncateForTailCall(Type *FromType,
+                                                     Type *ToType) const {
+  return isTruncateFree(FromType, ToType);
+}
+
+bool SystemZTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
+  if (!CI->isTailCall())
+    return false;
+  return true;
+}
+
 // Value is a value that has been passed to us in the location described by VA
 // (and so has type VA.getLocVT()).  Convert Value to VA.getValVT(), chaining
 // any loads onto Chain.
@@ -689,6 +716,23 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
   return Chain;
 }
 
+static bool canUseSiblingCall(CCState ArgCCInfo,
+                              SmallVectorImpl<CCValAssign> &ArgLocs) {
+  // Punt if there are any indirect or stack arguments, or if the call
+  // needs the call-saved argument register R6.
+  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+    CCValAssign &VA = ArgLocs[I];
+    if (VA.getLocInfo() == CCValAssign::Indirect)
+      return false;
+    if (!VA.isRegLoc())
+      return false;
+    unsigned Reg = VA.getLocReg();
+    if (Reg == SystemZ::R6W || Reg == SystemZ::R6D)
+      return false;
+  }
+  return true;
+}
+
 SDValue
 SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
                                  SmallVectorImpl<SDValue> &InVals) const {
@@ -699,26 +743,29 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVectorImpl<ISD::InputArg> &Ins = CLI.Ins;
   SDValue Chain = CLI.Chain;
   SDValue Callee = CLI.Callee;
-  bool &isTailCall = CLI.IsTailCall;
+  bool &IsTailCall = CLI.IsTailCall;
   CallingConv::ID CallConv = CLI.CallConv;
   bool IsVarArg = CLI.IsVarArg;
   MachineFunction &MF = DAG.getMachineFunction();
   EVT PtrVT = getPointerTy();
-
-  // SystemZ target does not yet support tail call optimization.
-  isTailCall = false;
 
   // Analyze the operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState ArgCCInfo(CallConv, IsVarArg, MF, TM, ArgLocs, *DAG.getContext());
   ArgCCInfo.AnalyzeCallOperands(Outs, CC_SystemZ);
 
+  // We don't support GuaranteedTailCallOpt, only automatically-detected
+  // sibling calls.
+  if (IsTailCall && !canUseSiblingCall(ArgCCInfo, ArgLocs))
+    IsTailCall = false;
+
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = ArgCCInfo.getNextStackOffset();
 
   // Mark the start of the call.
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes, PtrVT, true),
-                               DL);
+  if (!IsTailCall)
+    Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes, PtrVT, true),
+                                 DL);
 
   // Copy argument values to their designated locations.
   SmallVector<std::pair<unsigned, SDValue>, 9> RegsToPass;
@@ -767,22 +814,27 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
-  // Build a sequence of copy-to-reg nodes, chained and glued together.
-  SDValue Glue;
-  for (unsigned I = 0, E = RegsToPass.size(); I != E; ++I) {
-    Chain = DAG.getCopyToReg(Chain, DL, RegsToPass[I].first,
-                             RegsToPass[I].second, Glue);
-    Glue = Chain.getValue(1);
-  }
-
   // Accept direct calls by converting symbolic call addresses to the
-  // associated Target* opcodes.
+  // associated Target* opcodes.  Force %r1 to be used for indirect
+  // tail calls.
+  SDValue Glue;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, PtrVT);
     Callee = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Callee);
   } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), PtrVT);
     Callee = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Callee);
+  } else if (IsTailCall) {
+    Chain = DAG.getCopyToReg(Chain, DL, SystemZ::R1D, Callee, Glue);
+    Glue = Chain.getValue(1);
+    Callee = DAG.getRegister(SystemZ::R1D, Callee.getValueType());
+  }
+
+  // Build a sequence of copy-to-reg nodes, chained and glued together.
+  for (unsigned I = 0, E = RegsToPass.size(); I != E; ++I) {
+    Chain = DAG.getCopyToReg(Chain, DL, RegsToPass[I].first,
+                             RegsToPass[I].second, Glue);
+    Glue = Chain.getValue(1);
   }
 
   // The first call operand is the chain and the second is the target address.
@@ -802,6 +854,8 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Emit the call.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  if (IsTailCall)
+    return DAG.getNode(SystemZISD::SIBCALL, DL, NodeTys, &Ops[0], Ops.size());
   Chain = DAG.getNode(SystemZISD::CALL, DL, NodeTys, &Ops[0], Ops.size());
   Glue = Chain.getValue(1);
 
@@ -1689,6 +1743,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
     OPCODE(RET_FLAG);
     OPCODE(CALL);
+    OPCODE(SIBCALL);
     OPCODE(PCREL_WRAPPER);
     OPCODE(CMP);
     OPCODE(UCMP);

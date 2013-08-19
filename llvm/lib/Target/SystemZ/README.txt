@@ -35,10 +35,6 @@ performance measurements.
 
 --
 
-We don't support tail calls at present.
-
---
-
 We don't support prefetching yet.
 
 --

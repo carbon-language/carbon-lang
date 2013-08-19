@@ -82,6 +82,9 @@ def z_retflag           : SDNode<"SystemZISD::RET_FLAG", SDTNone,
 def z_call              : SDNode<"SystemZISD::CALL", SDT_ZCall,
                                  [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
                                   SDNPVariadic]>;
+def z_sibcall           : SDNode<"SystemZISD::SIBCALL", SDT_ZCall,
+                                 [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
+                                  SDNPVariadic]>;
 def z_pcrel_wrapper     : SDNode<"SystemZISD::PCREL_WRAPPER", SDT_ZWrapPtr, []>;
 def z_cmp               : SDNode<"SystemZISD::CMP", SDT_ZCmp, [SDNPOutGlue]>;
 def z_ucmp              : SDNode<"SystemZISD::UCMP", SDT_ZCmp, [SDNPOutGlue]>;
