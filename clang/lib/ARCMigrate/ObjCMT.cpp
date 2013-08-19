@@ -791,23 +791,45 @@ AuditedType (QualType AT) {
 void ObjCMigrateASTConsumer::migrateCFFunctions(
                                ASTContext &Ctx,
                                const FunctionDecl *FuncDecl) {
+  if (FuncDecl->hasAttr<CFAuditedTransferAttr>()) {
+    assert(CFFunctionIBCandidates.empty() &&
+           "Cannot have audited functions inside user "
+           "provided CF_IMPLICIT_BRIDGING_ENABLE");
+    return;
+  }
+  
   // Finction must be annotated first.
   bool Audited = migrateAddFunctionAnnotation(Ctx, FuncDecl);
   if (Audited)
     CFFunctionIBCandidates.push_back(FuncDecl);
+  else if (!CFFunctionIBCandidates.empty()) {
+    if (!Ctx.Idents.get("CF_IMPLICIT_BRIDGING_ENABLED").hasMacroDefinition()) {
+      CFFunctionIBCandidates.clear();
+      return;
+    }
+    // Insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
+    const FunctionDecl *FirstFD = CFFunctionIBCandidates[0];
+    const FunctionDecl *LastFD  =
+      CFFunctionIBCandidates[CFFunctionIBCandidates.size()-1];
+    const char *PragmaString = "\nCF_IMPLICIT_BRIDGING_ENABLED\n";
+    edit::Commit commit(*Editor);
+    commit.insertBefore(FirstFD->getLocStart(), PragmaString);
+    PragmaString = "\nCF_IMPLICIT_BRIDGING_DISABLED\n";
+    commit.insertAfterToken(LastFD->getLocEnd(), PragmaString);
+    Editor->commit(commit);
+    
+    CFFunctionIBCandidates.clear();
+  }
+  // FIXME. Also must insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
+  // when leaving current file.
 }
 
 bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
                                                 ASTContext &Ctx,
                                                 const FunctionDecl *FuncDecl) {
-  // Check that if it is already under CF_IMPLICIT_BRIDGING_ENABLE
-  // and do nothing. FIXME. This may have to go to the caller.
-  if (FuncDecl->hasAttr<CFAuditedTransferAttr>())
-    return false;
   if (FuncDecl->hasBody())
     return false;
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
-  
   if (!FuncDecl->getAttr<CFReturnsRetainedAttr>() &&
       !FuncDecl->getAttr<CFReturnsNotRetainedAttr>()) {
     RetEffect Ret = CE.getReturnValue();
@@ -838,16 +860,15 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
     if (AE == DecRefMsg /*NSConsumed annotated*/ ||
         AE == DecRef /*CFConsumed annotated*/)
       continue;
-    if (AE != DoNothing)
+
+    if (AE != DoNothing && AE != MayEscape)
       return false;
     const ParmVarDecl *pd = *pi;
     QualType AT = pd->getType();
     if (!AuditedType(AT))
       return false;
   }
-  // At this point, function is audited.
-  // FIXME. for now return false.
-  return false;
+  return true;
 }
 
 void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(
