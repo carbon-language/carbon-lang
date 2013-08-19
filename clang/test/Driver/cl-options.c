@@ -94,7 +94,7 @@
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // (/Zs is for syntax-only, /WX is for -Werror)
 // RUN: %clang_cl /Zs /WX /analyze- /errorReport:foo /nologo /Ob1 /Ob2 -- %s
-// RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t -- %s
+// RUN: %clang_cl /Zs /WX /Zc:forScope /Zc:wchar_t /wd1234 -- %s
 
 
 // Unsupported but parsed options. Check that we don't error on them.
