@@ -1385,9 +1385,10 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
         GEP->accumulateConstantOffset(*TD, Offset)) {
       // Get the base pointer input of the bitcast, and the type it points to.
       Value *OrigBase = BCI->getOperand(0);
-      Type *GEPIdxTy = OrigBase->getType()->getPointerElementType();
       SmallVector<Value*, 8> NewIndices;
-      if (FindElementAtOffset(GEPIdxTy, Offset.getSExtValue(), NewIndices)) {
+      if (FindElementAtOffset(OrigBase->getType(),
+                              Offset.getSExtValue(),
+                              NewIndices)) {
         // If we were able to index down into an element, create the GEP
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.

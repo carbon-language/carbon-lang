@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 ; RUN: opt < %s -instcombine -S | FileCheck %s
-target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128-n8:16:32:64"
+target datalayout = "E-p:64:64:64-p1:32:32:32-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128-n8:16:32:64"
 
 @inbuf = external global [32832 x i8]           ; <[32832 x i8]*> [#uses=1]
 
@@ -708,6 +708,19 @@ define %s @test68(%s *%p, i64 %i) {
 ; CHECK-NEXT: ret %s
 }
 
+define %s @test68_as1(%s addrspace(1)* %p, i32 %i) {
+; CHECK-LABEL: @test68_as1(
+  %o = mul i32 %i, 12
+  %q = bitcast %s addrspace(1)* %p to i8 addrspace(1)*
+  %pp = getelementptr inbounds i8 addrspace(1)* %q, i32 %o
+; CHECK-NEXT: getelementptr %s addrspace(1)*
+  %r = bitcast i8 addrspace(1)* %pp to %s addrspace(1)*
+  %l = load %s addrspace(1)* %r
+; CHECK-NEXT: load %s addrspace(1)*
+  ret %s %l
+; CHECK-NEXT: ret %s
+}
+
 define double @test69(double *%p, i64 %i) {
 ; CHECK-LABEL: @test69(
   %o = shl nsw i64 %i, 3
@@ -886,6 +899,20 @@ define double @test80([100 x double]* %p, i32 %i) {
   %r = bitcast i8* %pp to double*
   %l = load double* %r
 ; CHECK-NEXT: load double*
+  ret double %l
+; CHECK-NEXT: ret double
+}
+
+define double @test80_as1([100 x double] addrspace(1)* %p, i16 %i) {
+; CHECK-LABEL: @test80_as1(
+  %tmp = mul nsw i16 %i, 8
+; CHECK-NEXT: sext i16 %i to i32
+  %q = bitcast [100 x double] addrspace(1)* %p to i8 addrspace(1)*
+  %pp = getelementptr i8 addrspace(1)* %q, i16 %tmp
+; CHECK-NEXT: getelementptr [100 x double] addrspace(1)*
+  %r = bitcast i8 addrspace(1)* %pp to double addrspace(1)*
+  %l = load double addrspace(1)* %r
+; CHECK-NEXT: load double addrspace(1)*
   ret double %l
 ; CHECK-NEXT: ret double
 }

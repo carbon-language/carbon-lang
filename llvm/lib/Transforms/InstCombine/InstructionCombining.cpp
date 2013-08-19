@@ -755,19 +755,25 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   return ReplaceInstUsesWith(I, NewPN);
 }
 
-/// FindElementAtOffset - Given a type and a constant offset, determine whether
-/// or not there is a sequence of GEP indices into the type that will land us at
-/// the specified offset.  If so, fill them into NewIndices and return the
-/// resultant element type, otherwise return null.
-Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
-                                          SmallVectorImpl<Value*> &NewIndices) {
-  if (!TD) return 0;
-  if (!Ty->isSized()) return 0;
+/// FindElementAtOffset - Given a pointer type and a constant offset, determine
+/// whether or not there is a sequence of GEP indices into the pointed type that
+/// will land us at the specified offset.  If so, fill them into NewIndices and
+/// return the resultant element type, otherwise return null.
+Type *InstCombiner::FindElementAtOffset(Type *PtrTy, int64_t Offset,
+                                        SmallVectorImpl<Value*> &NewIndices) {
+  assert(PtrTy->isPtrOrPtrVectorTy());
+
+  if (!TD)
+    return 0;
+
+  Type *Ty = PtrTy->getPointerElementType();
+  if (!Ty->isSized())
+    return 0;
 
   // Start with the index over the outer type.  Note that the type size
   // might be zero (even if the offset isn't zero) if the indexed type
   // is something like [0 x {int, int}]
-  Type *IntPtrTy = TD->getIntPtrType(Ty->getContext());
+  Type *IntPtrTy = TD->getIntPtrType(PtrTy);
   int64_t FirstIdx = 0;
   if (int64_t TySize = TD->getTypeAllocSize(Ty)) {
     FirstIdx = Offset/TySize;
@@ -1235,7 +1241,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (TD && SrcElTy->isArrayTy() &&
           TD->getTypeAllocSize(SrcElTy->getArrayElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
-        Type *IdxType = TD->getIntPtrType(GEP.getContext());
+        Type *IdxType = TD->getIntPtrType(GEP.getType());
         Value *Idx[2] = { Constant::getNullValue(IdxType), GEP.getOperand(1) };
         Value *NewGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()) :
@@ -1260,7 +1266,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
           // Earlier transforms ensure that the index has type IntPtrType, which
           // considerably simplifies the logic by eliminating implicit casts.
-          assert(Idx->getType() == TD->getIntPtrType(GEP.getContext()) &&
+          assert(Idx->getType() == TD->getIntPtrType(GEP.getType()) &&
                  "Index not cast to pointer width?");
 
           bool NSW;
@@ -1295,7 +1301,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
           // Earlier transforms ensure that the index has type IntPtrType, which
           // considerably simplifies the logic by eliminating implicit casts.
-          assert(Idx->getType() == TD->getIntPtrType(GEP.getContext()) &&
+          assert(Idx->getType() == TD->getIntPtrType(GEP.getType()) &&
                  "Index not cast to pointer width?");
 
           bool NSW;
@@ -1304,7 +1310,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // If the multiplication NewIdx * Scale may overflow then the new
             // GEP may not be "inbounds".
             Value *Off[2] = {
-              Constant::getNullValue(TD->getIntPtrType(GEP.getContext())),
+              Constant::getNullValue(TD->getIntPtrType(GEP.getType())),
               NewIdx
             };
 
@@ -1330,7 +1336,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
     Value *Operand = BCI->getOperand(0);
     PointerType *OpType = cast<PointerType>(Operand->getType());
-    unsigned OffsetBits = TD->getPointerSizeInBits();
+    unsigned OffsetBits = TD->getPointerTypeSizeInBits(OpType);
     APInt Offset(OffsetBits, 0);
     if (!isa<BitCastInst>(Operand) &&
         GEP.accumulateConstantOffset(*TD, Offset) &&
@@ -1359,8 +1365,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // field at Offset in 'A's type.  If so, we can pull the cast through the
       // GEP.
       SmallVector<Value*, 8> NewIndices;
-      Type *InTy = OpType->getElementType();
-      if (FindElementAtOffset(InTy, Offset.getSExtValue(), NewIndices)) {
+      if (FindElementAtOffset(OpType, Offset.getSExtValue(), NewIndices)) {
         Value *NGEP = GEP.isInBounds() ?
           Builder->CreateInBoundsGEP(Operand, NewIndices) :
           Builder->CreateGEP(Operand, NewIndices);
