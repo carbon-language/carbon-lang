@@ -9798,13 +9798,11 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
     CopyConstructor->setInvalidDecl();
   }  else {
     Sema::CompoundScopeRAII CompoundScope(*this);
-    CopyConstructor->setBody(ActOnCompoundStmt(CopyConstructor->getLocation(),
-                                               CopyConstructor->getLocation(),
-                                               MultiStmtArg(),
-                                               /*isStmtExpr=*/false)
-                                                              .takeAs<Stmt>());
+    CopyConstructor->setBody(ActOnCompoundStmt(
+        CopyConstructor->getLocation(), CopyConstructor->getLocation(), None,
+        /*isStmtExpr=*/ false).takeAs<Stmt>());
   }
-  
+
   CopyConstructor->setUsed();
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyConstructor);
@@ -9987,11 +9985,9 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
     MoveConstructor->setInvalidDecl();
   }  else {
     Sema::CompoundScopeRAII CompoundScope(*this);
-    MoveConstructor->setBody(ActOnCompoundStmt(MoveConstructor->getLocation(),
-                                               MoveConstructor->getLocation(),
-                                               MultiStmtArg(),
-                                               /*isStmtExpr=*/false)
-                                                              .takeAs<Stmt>());
+    MoveConstructor->setBody(ActOnCompoundStmt(
+        MoveConstructor->getLocation(), MoveConstructor->getLocation(), None,
+        /*isStmtExpr=*/ false).takeAs<Stmt>());
   }
 
   MoveConstructor->setUsed();

@@ -2799,8 +2799,7 @@ public:
   void ActOnStartOfCompoundStmt();
   void ActOnFinishOfCompoundStmt();
   StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
-                                       MultiStmtArg Elts,
-                                       bool isStmtExpr);
+                               ArrayRef<Stmt *> Elts, bool isStmtExpr);
 
   /// \brief A RAII object to enter scope of a compound statement.
   class CompoundScopeRAII {
