@@ -661,7 +661,7 @@ SVal CStringChecker::getCStringLengthForRegion(CheckerContext &C,
     if (Recorded)
       return *Recorded;
   }
-  
+
   // Otherwise, get a new symbol and update the state.
   SValBuilder &svalBuilder = C.getSValBuilder();
   QualType sizeTy = svalBuilder.getContext().getSizeType();
@@ -669,8 +669,21 @@ SVal CStringChecker::getCStringLengthForRegion(CheckerContext &C,
                                                     MR, Ex, sizeTy,
                                                     C.blockCount());
 
-  if (!hypothetical)
+  if (!hypothetical) {
+    if (Optional<NonLoc> strLn = strLength.getAs<NonLoc>()) {
+      // In case of unbounded calls strlen etc bound the range to SIZE_MAX/4
+      BasicValueFactory &BVF = svalBuilder.getBasicValueFactory();
+      const llvm::APSInt &maxValInt = BVF.getMaxValue(sizeTy);
+      llvm::APSInt fourInt = APSIntType(maxValInt).getValue(4);
+      const llvm::APSInt *maxLengthInt = BVF.evalAPSInt(BO_Div, maxValInt,
+                                                        fourInt);
+      NonLoc maxLength = svalBuilder.makeIntVal(*maxLengthInt);
+      SVal evalLength = svalBuilder.evalBinOpNN(state, BO_LE, *strLn,
+                                                maxLength, sizeTy);
+      state = state->assume(evalLength.castAs<DefinedOrUnknownSVal>(), true);
+    }
     state = state->set<CStringLength>(MR, strLength);
+  }
 
   return strLength;
 }

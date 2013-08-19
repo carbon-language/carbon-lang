@@ -430,11 +430,12 @@ void strcat_unknown_src_length(char *src, int offset) {
 // length for the "before" strlen, we won't be able to set one for "after".
 
 void strcat_too_big(char *dst, char *src) {
+  // We assume this can never actually happen, so we don't get a warning.
 	if (strlen(dst) != (((size_t)0) - 2))
 		return;
 	if (strlen(src) != 2)
 		return;
-	strcat(dst, src); // expected-warning{{This expression will create a string whose length is too big to be represented as a size_t}}
+	strcat(dst, src);
 }
 
 
@@ -653,11 +654,12 @@ void strncat_unknown_limit(float limit) {
 }
 
 void strncat_too_big(char *dst, char *src) {
+  // We assume this will never actually happen, so we don't get a warning.
   if (strlen(dst) != (((size_t)0) - 2))
     return;
   if (strlen(src) != 2)
     return;
-  strncat(dst, src, 2); // expected-warning{{This expression will create a string whose length is too big to be represented as a size_t}}
+  strncat(dst, src, 2);
 }
 
 void strncat_zero(char *src) {

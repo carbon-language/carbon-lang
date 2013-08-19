@@ -1216,6 +1216,38 @@ void testReallocEscaped(void **memory) {
   }
 }
 
+// PR16558
+void *smallocNoWarn(size_t size) {
+  if (size == 0) {
+    return malloc(1); // this branch is never called
+  } 
+  else {
+    return malloc(size);
+  }
+}
+
+char *dupstrNoWarn(const char *s) {
+  const int len = strlen(s);
+  char *p = (char*) smallocNoWarn(len + 1);
+  strcpy(p, s); // no-warning
+  return p;
+}
+
+void *smallocWarn(size_t size) {
+  if (size == 2) {
+    return malloc(1);
+  }
+  else {
+    return malloc(size);
+  }
+}
+
+char *dupstrWarn(const char *s) {
+  const int len = strlen(s);
+  char *p = (char*) smallocWarn(len + 1);
+  strcpy(p, s); // expected-warning{{String copy function overflows destination buffer}}
+  return p;
+}
 
 // ----------------------------------------------------------------------------
 // False negatives.

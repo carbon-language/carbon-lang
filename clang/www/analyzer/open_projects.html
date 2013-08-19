@@ -174,11 +174,6 @@ mailing list</a> to notify other members of the community.</p>
     <i>(Difficulty: Easy)</i></p>
     </li>
 
-    <li>Teach CStringChecker that strings are never longer than, say, <code>SIZE_MAX/4</code> characters.</li>
-    <p>Though most of CStringChecker's functionality is disabled (due to poor diagnostics for error edge cases), it's still used to model certain operations like <code>strlen</code>, which should give the same result each time it's called on a string. However, assuming that the string length is an arbitrary symbolic value can give strange results -- for example, <code>strlen(str)+1</code> could wrap around to 0. (This is the root cause of <a href="http://llvm.org/bugs/show_bug.cgi?id=16558">PR16558</a>.) In practice, strings are never that long, so picking some large upper bound and recording that in the state would make plenty of sense, and would fix these false positives.
-    <i>(Difficulty: Easy)</i></p>
-    </li>
-
     <li>Implement iterators invalidation checker.
     <p><i>(Difficulty: Easy)</i></p>
     </li>
