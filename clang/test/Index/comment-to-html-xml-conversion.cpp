@@ -785,6 +785,57 @@ enum class comment_to_xml_conversion_17 {
 // CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:3: EnumConstantDecl=comment_to_xml_conversion_18:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="3"><Name>comment_to_xml_conversion_18</Name><USR>c:@E@comment_to_xml_conversion_17@comment_to_xml_conversion_18</USR><Declaration>comment_to_xml_conversion_18</Declaration><Abstract><Para> Aaa.</Para></Abstract></Variable>]
 };
 
+//===---
+// Check that we attach comments from the base class to derived classes if they don't have a comment.
+// rdar://13647476
+//===---
+
+/// BaseToSuper1_Base
+class BaseToSuper1_Base {};
+
+class BaseToSuper1_Derived : public BaseToSuper1_Base {};
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:7: ClassDecl=BaseToSuper1_Derived:{{.*}} FullCommentAsXML=[<Class file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="7"><Name>BaseToSuper1_Base</Name><USR>c:@C@BaseToSuper1_Base</USR><Declaration>class BaseToSuper1_Derived : public BaseToSuper1_Base {}</Declaration><Abstract><Para> BaseToSuper1_Base</Para></Abstract></Class>]
+
+
+/// BaseToSuper2_Base
+class BaseToSuper2_Base {};
+
+/// BaseToSuper2_Derived
+class BaseToSuper2_Derived : public BaseToSuper2_Base {};
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:7: ClassDecl=BaseToSuper2_Derived:{{.*}} FullCommentAsXML=[<Class file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="7"><Name>BaseToSuper2_Derived</Name><USR>c:@C@BaseToSuper2_Derived</USR><Declaration>class BaseToSuper2_Derived : public BaseToSuper2_Base {}</Declaration><Abstract><Para> BaseToSuper2_Derived</Para></Abstract></Class>]
+
+class BaseToSuper2_MoreDerived : public BaseToSuper2_Derived {};
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:7: ClassDecl=BaseToSuper2_MoreDerived:{{.*}} FullCommentAsXML=[<Class file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="7"><Name>BaseToSuper2_Derived</Name><USR>c:@C@BaseToSuper2_Derived</USR><Declaration>class BaseToSuper2_MoreDerived : public BaseToSuper2_Derived {}</Declaration><Abstract><Para> BaseToSuper2_Derived</Para></Abstract></Class>]
+
+
+/// BaseToSuper3_Base
+class BaseToSuper3_Base {};
+
+class BaseToSuper3_DerivedA : public virtual BaseToSuper3_Base {};
+
+class BaseToSuper3_DerivedB : public virtual BaseToSuper3_Base {};
+
+class BaseToSuper3_MoreDerived : public BaseToSuper3_DerivedA, public BaseToSuper3_DerivedB {};
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:7: ClassDecl=BaseToSuper3_MoreDerived:{{.*}} FullCommentAsXML=[<Class file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="7"><Name>BaseToSuper3_Base</Name><USR>c:@C@BaseToSuper3_Base</USR><Declaration>class BaseToSuper3_MoreDerived : public BaseToSuper3_DerivedA,\n                                 public BaseToSuper3_DerivedB {}</Declaration><Abstract><Para> BaseToSuper3_Base</Para></Abstract></Class>]
+
+
+// Check that we propagate comments only through public inheritance.
+
+/// BaseToSuper4_Base
+class BaseToSuper4_Base {};
+
+/// BaseToSuper4_DerivedA
+class BaseToSuper4_DerivedA : virtual BaseToSuper4_Base {};
+
+class BaseToSuper4_DerivedB : public virtual BaseToSuper4_Base {};
+
+class BaseToSuper4_MoreDerived : BaseToSuper4_DerivedA, public BaseToSuper4_DerivedB {};
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:7: ClassDecl=BaseToSuper4_MoreDerived:{{.*}} FullCommentAsXML=[<Class file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="7"><Name>BaseToSuper4_Base</Name><USR>c:@C@BaseToSuper4_Base</USR><Declaration>class BaseToSuper4_MoreDerived : BaseToSuper4_DerivedA,\n                                 public BaseToSuper4_DerivedB {}</Declaration><Abstract><Para> BaseToSuper4_Base</Para></Abstract></Class>]
+
+//===---
+// Check the representation of \todo in XML.
+//===---
+
 /// Aaa.
 /// \todo Bbb.
 void comment_to_xml_conversion_todo_1();
