@@ -21,12 +21,13 @@ define <8 x double> @test2(<8 x double> %x, <8 x double> %y) nounwind {
 }
 
 ; CHECK-LABEL: test3
-; CHECK: vpcmpeqd
+; CHECK: vpcmpeqd  (%rdi)
 ; CHECK: vmovdqu32
 ; CHECK: ret
-define <16 x i32> @test3(<16 x i32> %x, <16 x i32> %y) nounwind {
+define <16 x i32> @test3(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %yp) nounwind {
+  %y = load <16 x i32>* %yp, align 4
 	%mask = icmp eq <16 x i32> %x, %y
-	%max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %y
+	%max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %x1
 	ret <16 x i32> %max
 }
 
