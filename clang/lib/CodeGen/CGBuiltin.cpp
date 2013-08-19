@@ -2932,7 +2932,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                               Builder.CreateBitCast(Tmp, Int8PtrTy));
   }
   case X86::BI__builtin_ia32_stmxcsr: {
-    Value *Tmp = CreateMemTemp(E->getArg(0)->getType());
+    Value *Tmp = CreateMemTemp(E->getType());
     Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
                        Builder.CreateBitCast(Tmp, Int8PtrTy));
     return Builder.CreateLoad(Tmp, "stmxcsr");
