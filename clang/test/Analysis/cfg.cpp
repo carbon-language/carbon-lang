@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -std=c++11 %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -triple x86_64-apple-darwin12 -std=c++11 %s 2>&1 | FileCheck %s
 
 // CHECK: ENTRY
 // CHECK-NEXT: Succs (1): B1
