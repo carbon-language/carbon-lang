@@ -4727,6 +4727,36 @@
 	lnebr	%f15,%f0
 	lnebr	%f15,%f9
 
+#CHECK: lngfr	%r0, %r0                # encoding: [0xb9,0x11,0x00,0x00]
+#CHECK: lngfr	%r0, %r15               # encoding: [0xb9,0x11,0x00,0x0f]
+#CHECK: lngfr	%r15, %r0               # encoding: [0xb9,0x11,0x00,0xf0]
+#CHECK: lngfr	%r7, %r8                # encoding: [0xb9,0x11,0x00,0x78]
+
+	lngfr	%r0,%r0
+	lngfr	%r0,%r15
+	lngfr	%r15,%r0
+	lngfr	%r7,%r8
+
+#CHECK: lngr	%r0, %r0                # encoding: [0xb9,0x01,0x00,0x00]
+#CHECK: lngr	%r0, %r15               # encoding: [0xb9,0x01,0x00,0x0f]
+#CHECK: lngr	%r15, %r0               # encoding: [0xb9,0x01,0x00,0xf0]
+#CHECK: lngr	%r7, %r8                # encoding: [0xb9,0x01,0x00,0x78]
+
+	lngr	%r0,%r0
+	lngr	%r0,%r15
+	lngr	%r15,%r0
+	lngr	%r7,%r8
+
+#CHECK: lnr	%r0, %r0                # encoding: [0x11,0x00]
+#CHECK: lnr	%r0, %r15               # encoding: [0x11,0x0f]
+#CHECK: lnr	%r15, %r0               # encoding: [0x11,0xf0]
+#CHECK: lnr	%r7, %r8                # encoding: [0x11,0x78]
+
+	lnr	%r0,%r0
+	lnr	%r0,%r15
+	lnr	%r15,%r0
+	lnr	%r7,%r8
+
 #CHECK: lnxbr	%f0, %f8                # encoding: [0xb3,0x41,0x00,0x08]
 #CHECK: lnxbr	%f0, %f13               # encoding: [0xb3,0x41,0x00,0x0d]
 #CHECK: lnxbr	%f13, %f0               # encoding: [0xb3,0x41,0x00,0xd0]

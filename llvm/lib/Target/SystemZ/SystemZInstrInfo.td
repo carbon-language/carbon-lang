@@ -549,6 +549,16 @@ defm : SXU<z_iabs64, LPGFR>;
 
 let Defs = [CC] in {
   let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
+    def LNR  : UnaryRR <"ln",  0x11,   z_inegabs32, GR32, GR32>;
+    def LNGR : UnaryRRE<"lng", 0xB901, z_inegabs64, GR64, GR64>;
+  }
+  let CCValues = 0xE, CompareZeroCCMask = 0xE in
+    def LNGFR : UnaryRRE<"lngf", 0xB911, null_frag, GR64, GR32>;
+}
+defm : SXU<z_inegabs64, LNGFR>;
+
+let Defs = [CC] in {
+  let CCValues = 0xF, CompareZeroCCMask = 0x8 in {
     def LCR  : UnaryRR <"lc",  0x13,   ineg, GR32, GR32>;
     def LCGR : UnaryRRE<"lcg", 0xB903, ineg, GR64, GR64>;
   }

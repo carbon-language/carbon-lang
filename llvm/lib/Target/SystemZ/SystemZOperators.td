@@ -247,6 +247,8 @@ def z_iabs32 : PatFrag<(ops node:$src),
 def z_iabs64 : PatFrag<(ops node:$src),
                        (xor (add node:$src, (sra node:$src, (i32 63))),
                             (sra node:$src, (i32 63)))>;
+def z_inegabs32 : PatFrag<(ops node:$src), (ineg (z_iabs32 node:$src))>;
+def z_inegabs64 : PatFrag<(ops node:$src), (ineg (z_iabs64 node:$src))>;
 
 // Fused multiply-add and multiply-subtract, but with the order of the
 // operands matching SystemZ's MA and MS instructions.

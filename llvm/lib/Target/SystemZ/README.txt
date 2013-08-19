@@ -104,12 +104,6 @@ such as ICM and STCM.
 
 --
 
-DAGCombiner can detect integer absolute, but there's not yet an associated
-ISD opcode.  We could add one and implement it using LOAD POSITIVE.
-Negated absolutes could use LOAD NEGATIVE.
-
---
-
 DAGCombiner doesn't yet fold truncations of extended loads.  Functions like:
 
     unsigned long f (unsigned long x, unsigned short *y)
