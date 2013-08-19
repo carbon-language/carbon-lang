@@ -170,7 +170,7 @@ public:
     vector_.pop_back();
   }
   
-  T pop_back_val() {
+  T LLVM_ATTRIBUTE_UNUSED_RESULT pop_back_val() {
     T Ret = back();
     pop_back();
     return Ret;
