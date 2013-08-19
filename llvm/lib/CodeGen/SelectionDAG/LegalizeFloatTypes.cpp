@@ -1277,6 +1277,7 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
   case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
 
   case ISD::BR_CC:      Res = ExpandFloatOp_BR_CC(N); break;
+  case ISD::FCOPYSIGN:  Res = ExpandFloatOp_FCOPYSIGN(N); break;
   case ISD::FP_ROUND:   Res = ExpandFloatOp_FP_ROUND(N); break;
   case ISD::FP_TO_SINT: Res = ExpandFloatOp_FP_TO_SINT(N); break;
   case ISD::FP_TO_UINT: Res = ExpandFloatOp_FP_TO_UINT(N); break;
@@ -1349,6 +1350,17 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
   return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0),
                                 DAG.getCondCode(CCCode), NewLHS, NewRHS,
                                 N->getOperand(4)), 0);
+}
+
+SDValue DAGTypeLegalizer::ExpandFloatOp_FCOPYSIGN(SDNode *N) {
+  assert(N->getOperand(1).getValueType() == MVT::ppcf128 &&
+         "Logic only correct for ppcf128!");
+  SDValue Lo, Hi;
+  GetExpandedFloat(N->getOperand(1), Lo, Hi);
+  // The ppcf128 value is providing only the sign; take it from the
+  // higher-order double (which must have the larger magnitude).
+  return DAG.getNode(ISD::FCOPYSIGN, SDLoc(N),
+                     N->getValueType(0), N->getOperand(0), Hi);
 }
 
 SDValue DAGTypeLegalizer::ExpandFloatOp_FP_ROUND(SDNode *N) {
