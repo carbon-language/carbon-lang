@@ -2523,6 +2523,10 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
   // 1) break amongst arguments.
   verifyFormat("Aaaaaaaaaaaaaa bbbbbbbbbbbbbb(Cccccccccccccc cccccccccccccc,\n"
                "                              Cccccccccccccc cccccccccccccc);");
+  verifyFormat(
+      "template <class TemplateIt>\n"
+      "SomeReturnType SomeFunction(TemplateIt begin, TemplateIt end,\n"
+      "                            TemplateIt *stop) {}");
 
   // 2) break after return type.
   verifyFormat(
@@ -3859,11 +3863,10 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "SomeLoooooooooooooooooooooongType<\n"
                "    typename some_namespace::SomeOtherType<A>::Type>\n"
                "Function() {}");
-  verifyFormat(
-      "aaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaa<aaaaaaaaaaaaa, aaaaaaaaaaaa>\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaa;",
-      getGoogleStyle());
 
+  verifyGoogleFormat(
+      "aaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaa<aaaaaaaaaaaaa, aaaaaaaaaaaa>\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaa;");
   verifyGoogleFormat(
       "TypeSpecDecl* TypeSpecDecl::Create(ASTContext& C, DeclContext* DC,\n"
       "                                   SourceLocation L) {}");

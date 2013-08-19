@@ -717,9 +717,13 @@ private:
                        PreviousNotConst->Previous &&
                        PreviousNotConst->Previous->is(tok::hash);
 
+    if (PreviousNotConst->Type == TT_TemplateCloser)
+      return PreviousNotConst && PreviousNotConst->MatchingParen &&
+             PreviousNotConst->MatchingParen->Previous &&
+             PreviousNotConst->MatchingParen->Previous->isNot(tok::kw_template);
+
     return (!IsPPKeyword && PreviousNotConst->is(tok::identifier)) ||
            PreviousNotConst->Type == TT_PointerOrReference ||
-           PreviousNotConst->Type == TT_TemplateCloser ||
            isSimpleTypeSpecifier(*PreviousNotConst);
   }
 
@@ -1041,11 +1045,10 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return 3;
     if (Left.Type == TT_StartOfName)
       return 20;
-    else if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
+    if (Line.MightBeFunctionDecl && Right.BindingStrength == 1)
       // FIXME: Clean up hack of using BindingStrength to find top-level names.
       return Style.PenaltyReturnTypeOnItsOwnLine;
-    else
-      return 200;
+    return 200;
   }
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
     return 150;
