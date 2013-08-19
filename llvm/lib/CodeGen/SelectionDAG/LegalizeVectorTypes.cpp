@@ -1448,27 +1448,31 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::VECTOR_SHUFFLE:
     Res = WidenVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N));
     break;
+
   case ISD::ADD:
   case ISD::AND:
   case ISD::BSWAP:
-  case ISD::FADD:
-  case ISD::FCOPYSIGN:
-  case ISD::FDIV:
-  case ISD::FMUL:
-  case ISD::FPOW:
-  case ISD::FREM:
-  case ISD::FSUB:
   case ISD::MUL:
   case ISD::MULHS:
   case ISD::MULHU:
   case ISD::OR:
-  case ISD::SDIV:
-  case ISD::SREM:
-  case ISD::UDIV:
-  case ISD::UREM:
   case ISD::SUB:
   case ISD::XOR:
     Res = WidenVecRes_Binary(N);
+    break;
+
+  case ISD::FADD:
+  case ISD::FCOPYSIGN:
+  case ISD::FMUL:
+  case ISD::FPOW:
+  case ISD::FSUB:
+  case ISD::FDIV:
+  case ISD::FREM:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM:
+    Res = WidenVecRes_BinaryCanTrap(N);
     break;
 
   case ISD::FPOWI:
@@ -1537,6 +1541,15 @@ SDValue DAGTypeLegalizer::WidenVecRes_Ternary(SDNode *N) {
 
 SDValue DAGTypeLegalizer::WidenVecRes_Binary(SDNode *N) {
   // Binary op widening.
+  SDLoc dl(N);
+  EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDValue InOp1 = GetWidenedVector(N->getOperand(0));
+  SDValue InOp2 = GetWidenedVector(N->getOperand(1));
+  return DAG.getNode(N->getOpcode(), dl, WidenVT, InOp1, InOp2);
+}
+
+SDValue DAGTypeLegalizer::WidenVecRes_BinaryCanTrap(SDNode *N) {
+  // Binary op widening for operations that can trap.
   unsigned Opcode = N->getOpcode();
   SDLoc dl(N);
   EVT WidenVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));

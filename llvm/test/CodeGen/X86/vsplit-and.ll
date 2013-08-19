@@ -14,7 +14,7 @@ define void @t0(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind read
 
 define void @t2(<3 x i64>* %dst, <3 x i64> %src1, <3 x i64> %src2) nounwind readonly {
 ; CHECK: t2
-; CHECK-NOT: pand
+; CHECK: pand
 ; CHECK: ret
   %cmp1 = icmp ne <3 x i64> %src1, zeroinitializer
   %cmp2 = icmp ne <3 x i64> %src2, zeroinitializer
