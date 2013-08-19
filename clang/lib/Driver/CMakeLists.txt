@@ -26,4 +26,5 @@ add_dependencies(clangDriver
 target_link_libraries(clangDriver
   clangBasic
   LLVMOption
+  LLVMTransformUtils
   )
