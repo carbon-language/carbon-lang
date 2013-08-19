@@ -569,7 +569,6 @@ public:
 
   std::string Linker;
   std::vector<std::string> ExtraOpts;
-  bool IsPIEDefault;
 
 protected:
   virtual Tool *buildAssembler() const;

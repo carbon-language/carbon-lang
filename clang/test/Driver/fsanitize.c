@@ -145,3 +145,7 @@
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=memory %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-MSAN
 // CHECK-MSAN: "-fno-assume-sane-operator-new"
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=zzz %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-DIAG1
+// CHECK-DIAG1: unsupported argument 'zzz' to option 'fsanitize='
+// CHECK-DIAG1-NOT: unsupported argument 'zzz' to option 'fsanitize='

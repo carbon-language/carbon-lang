@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#include "SanitizerArgs.h"
+#include "clang/Driver/SanitizerArgs.h"
 
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
@@ -31,14 +31,8 @@ SanitizerArgs::SanitizerArgs() {
   clear();
 }
 
-SanitizerArgs::SanitizerArgs(const Driver &D,
-                             const llvm::opt::ArgList &Args) {
+SanitizerArgs::SanitizerArgs(const Driver &D, const llvm::opt::ArgList &Args) {
   clear();
-  parse(D, Args);
-}
-
-void SanitizerArgs::parse(const Driver &D,
-                          const llvm::opt::ArgList &Args) {
   unsigned AllKinds = 0;  // All kinds of sanitizers that were turned on
                           // at least once (possibly, disabled further).
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {

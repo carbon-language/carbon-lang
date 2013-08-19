@@ -16,6 +16,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/SanitizerArgs.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -2050,4 +2051,11 @@ std::pair<unsigned, unsigned> Driver::getIncludeExcludeOptionFlagMasks() const {
   }
 
   return std::make_pair(IncludedFlagsBitmask, ExcludedFlagsBitmask);
+}
+
+const SanitizerArgs &
+Driver::getOrParseSanitizerArgs(const ArgList &Args) const {
+  if (!SanitizerArguments.get())
+    SanitizerArguments.reset(new SanitizerArgs(*this, Args));
+  return *SanitizerArguments.get();
 }

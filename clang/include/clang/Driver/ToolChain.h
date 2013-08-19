@@ -34,6 +34,7 @@ namespace driver {
   class Compilation;
   class Driver;
   class JobAction;
+  class SanitizerArgs;
   class Tool;
 
 /// ToolChain - Access to tools for a single platform.
@@ -123,6 +124,8 @@ public:
 
   path_list &getProgramPaths() { return ProgramPaths; }
   const path_list &getProgramPaths() const { return ProgramPaths; }
+
+  const SanitizerArgs& getSanitizerArgs() const;
 
   // Tool access.
 

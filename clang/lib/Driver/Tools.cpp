@@ -9,7 +9,6 @@
 
 #include "Tools.h"
 #include "InputInfo.h"
-#include "SanitizerArgs.h"
 #include "ToolChains.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
@@ -19,6 +18,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/SanitizerArgs.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallString.h"
@@ -2822,7 +2822,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_fdiagnostics_show_template_tree);
   Args.AddLastArg(CmdArgs, options::OPT_fno_elide_type);
 
-  SanitizerArgs Sanitize(D, Args);
+  const SanitizerArgs &Sanitize = D.getOrParseSanitizerArgs(Args);
   Sanitize.addArgs(getToolChain(), Args, CmdArgs);
 
   if (!Args.hasFlag(options::OPT_fsanitize_recover,
@@ -4795,7 +4795,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 
-  SanitizerArgs Sanitize(getToolChain().getDriver(), Args);
+  const SanitizerArgs &Sanitize =
+      getToolChain().getDriver().getOrParseSanitizerArgs(Args);
   // If we're building a dynamic lib with -fsanitize=address,
   // unresolved symbols may appear. Mark all
   // of them as dynamic_lookup. Linking executables is handled in
@@ -6059,7 +6060,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = ToolChain.getDriver();
   const bool isAndroid =
     ToolChain.getTriple().getEnvironment() == llvm::Triple::Android;
-  SanitizerArgs Sanitize(D, Args);
+  const SanitizerArgs &Sanitize = D.getOrParseSanitizerArgs(Args);
   const bool IsPIE =
     !Args.hasArg(options::OPT_shared) &&
     (Args.hasArg(options::OPT_pie) || Sanitize.hasZeroBaseShadow(ToolChain));

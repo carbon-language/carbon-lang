@@ -59,8 +59,6 @@ class SanitizerArgs {
   /// Parses the sanitizer arguments from an argument list.
   SanitizerArgs(const Driver &D, const llvm::opt::ArgList &Args);
 
-  void parse(const Driver &D, const llvm::opt::ArgList &Args);
-
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
   bool needsMsanRt() const { return Kind & NeedsMsanRt; }

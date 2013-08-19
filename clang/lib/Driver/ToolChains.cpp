@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "ToolChains.h"
-#include "SanitizerArgs.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
+#include "clang/Driver/SanitizerArgs.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -290,7 +290,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     }
   }
 
-  SanitizerArgs Sanitize(getDriver(), Args);
+  const SanitizerArgs &Sanitize = getDriver().getOrParseSanitizerArgs(Args);
 
   // Add Ubsan runtime library, if required.
   if (Sanitize.needsUbsanRt()) {
@@ -2356,8 +2356,6 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   }
   addPathIfExists(SysRoot + "/lib", Paths);
   addPathIfExists(SysRoot + "/usr/lib", Paths);
-
-  IsPIEDefault = SanitizerArgs(getDriver(), Args).hasZeroBaseShadow(*this);
 }
 
 bool Linux::HasNativeLLVMSupport() const {
@@ -2609,7 +2607,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 }
 
 bool Linux::isPIEDefault() const {
-  return IsPIEDefault;
+  return getSanitizerArgs().hasZeroBaseShadow(*this);
 }
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.

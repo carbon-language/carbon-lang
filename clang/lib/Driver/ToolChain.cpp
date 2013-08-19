@@ -42,6 +42,10 @@ bool ToolChain::useIntegratedAs() const {
                       IsIntegratedAssemblerDefault());
 }
 
+const SanitizerArgs& ToolChain::getSanitizerArgs() const {
+  return D.getOrParseSanitizerArgs(Args);
+}
+
 std::string ToolChain::getDefaultUniversalArchName() const {
   // In universal driver terms, the arch name accepted by -arch isn't exactly
   // the same as the ones that appear in the triple. Roughly speaking, this is
