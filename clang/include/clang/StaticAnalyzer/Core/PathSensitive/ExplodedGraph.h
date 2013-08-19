@@ -184,7 +184,7 @@ public:
 
   bool isSink() const { return Succs.getFlag(); }
 
-   bool hasSinglePred() const {
+  bool hasSinglePred() const {
     return (pred_size() == 1);
   }
 
