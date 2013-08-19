@@ -1319,15 +1319,20 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     }
   }
 
+  if (!TD)
+    return 0;
+
   /// See if we can simplify:
   ///   X = bitcast A* to B*
   ///   Y = gep X, <...constant indices...>
   /// into a gep of the original struct.  This is important for SROA and alias
   /// analysis of unions.  If "A" is also a bitcast, wait for A/X to be merged.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
-    APInt Offset(TD ? TD->getPointerSizeInBits() : 1, 0);
-    if (TD &&
-        !isa<BitCastInst>(BCI->getOperand(0)) &&
+    Value *Operand = BCI->getOperand(0);
+    PointerType *OpType = cast<PointerType>(Operand->getType());
+    unsigned OffsetBits = TD->getPointerSizeInBits();
+    APInt Offset(OffsetBits, 0);
+    if (!isa<BitCastInst>(Operand) &&
         GEP.accumulateConstantOffset(*TD, Offset) &&
         StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
 
@@ -1336,8 +1341,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (!Offset) {
         // If the bitcast is of an allocation, and the allocation will be
         // converted to match the type of the cast, don't touch this.
-        if (isa<AllocaInst>(BCI->getOperand(0)) ||
-            isAllocationFn(BCI->getOperand(0), TLI)) {
+        if (isa<AllocaInst>(Operand) || isAllocationFn(Operand, TLI)) {
           // See if the bitcast simplifies, if so, don't nuke this GEP yet.
           if (Instruction *I = visitBitCast(*BCI)) {
             if (I != BCI) {
@@ -1348,18 +1352,18 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             return &GEP;
           }
         }
-        return new BitCastInst(BCI->getOperand(0), GEP.getType());
+        return new BitCastInst(Operand, GEP.getType());
       }
 
       // Otherwise, if the offset is non-zero, we need to find out if there is a
       // field at Offset in 'A's type.  If so, we can pull the cast through the
       // GEP.
       SmallVector<Value*, 8> NewIndices;
-      Type *InTy = BCI->getOperand(0)->getType()->getPointerElementType();
+      Type *InTy = OpType->getElementType();
       if (FindElementAtOffset(InTy, Offset.getSExtValue(), NewIndices)) {
         Value *NGEP = GEP.isInBounds() ?
-          Builder->CreateInBoundsGEP(BCI->getOperand(0), NewIndices) :
-          Builder->CreateGEP(BCI->getOperand(0), NewIndices);
+          Builder->CreateInBoundsGEP(Operand, NewIndices) :
+          Builder->CreateGEP(Operand, NewIndices);
 
         if (NGEP->getType() == GEP.getType())
           return ReplaceInstUsesWith(GEP, NGEP);
@@ -1371,8 +1375,6 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   return 0;
 }
-
-
 
 static bool
 isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
