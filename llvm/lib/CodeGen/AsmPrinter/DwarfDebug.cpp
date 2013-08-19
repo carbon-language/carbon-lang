@@ -205,36 +205,29 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   FunctionBeginSym = FunctionEndSym = 0;
 
   // Turn on accelerator tables and older gdb compatibility
-  // for Darwin.
+  // for Darwin by default, pubnames by default for non-Darwin,
+  // and handle split dwarf.
   bool IsDarwin = Triple(A->getTargetTriple()).isOSDarwin();
-  if (DarwinGDBCompat == Default) {
-    if (IsDarwin)
-      IsDarwinGDBCompat = true;
-    else
-      IsDarwinGDBCompat = false;
-  } else
-    IsDarwinGDBCompat = DarwinGDBCompat == Enable ? true : false;
 
-  if (DwarfAccelTables == Default) {
-    if (IsDarwin)
-      HasDwarfAccelTables = true;
-    else
-      HasDwarfAccelTables = false;
-  } else
-    HasDwarfAccelTables = DwarfAccelTables == Enable ? true : false;
+  if (DarwinGDBCompat == Default)
+    IsDarwinGDBCompat = IsDarwin;
+  else
+    IsDarwinGDBCompat = DarwinGDBCompat == Enable;
+
+  if (DwarfAccelTables == Default)
+    HasDwarfAccelTables = IsDarwin;
+  else
+    HasDwarfAccelTables = DwarfAccelTables = Enable;
 
   if (SplitDwarf == Default)
     HasSplitDwarf = false;
   else
-    HasSplitDwarf = SplitDwarf == Enable ? true : false;
+    HasSplitDwarf = SplitDwarf == Enable;
 
-  if (DwarfPubNames == Default) {
-    if (IsDarwin)
-      HasDwarfPubNames = false;
-    else
-      HasDwarfPubNames = true;
-  } else
-    HasDwarfPubNames = DwarfPubNames == Enable ? true : false;
+  if (DwarfPubNames == Default)
+    HasDwarfPubNames = !IsDarwin;
+  else
+    HasDwarfPubNames = DwarfPubNames == Enable;
 
   DwarfVersion = getDwarfVersionFromModule(MMI->getModule());
 
