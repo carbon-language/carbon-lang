@@ -3906,6 +3906,11 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
           A->getOption().matches(options::OPT_g_Group))
         continue;
 
+      // Don't forward any -W arguments to assembly and link steps.
+      if ((isa<AssembleJobAction>(JA) || isa<LinkJobAction>(JA)) &&
+          A->getOption().matches(options::OPT_W_Group))
+        continue;
+
       // It is unfortunate that we have to claim here, as this means
       // we will basically never report anything interesting for
       // platforms using a generic gcc, even if we are just using gcc
