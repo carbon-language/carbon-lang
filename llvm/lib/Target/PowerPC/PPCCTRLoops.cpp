@@ -284,8 +284,9 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
           default: return true;
           case LibFunc::copysign:
           case LibFunc::copysignf:
-          case LibFunc::copysignl:
             continue; // ISD::FCOPYSIGN is never a library call.
+          case LibFunc::copysignl:
+            return true;
           case LibFunc::fabs:
           case LibFunc::fabsf:
           case LibFunc::fabsl:
