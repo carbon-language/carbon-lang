@@ -79,8 +79,6 @@ def err_drv_invalid_libcxx_deployment : Error<
   "invalid deployment target for -stdlib=libc++ (requires %0 or later)">;
 def err_drv_invalid_feature : Error<
   "invalid feature '%0' for CPU '%1'">;
-def err_drv_malformed_sanitizer_blacklist : Error<
-  "malformed sanitizer blacklist: '%0'">;
 
 def err_drv_I_dash_not_supported : Error<
   "'%0' not supported, please use -iquote instead">;

@@ -12,11 +12,9 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 using namespace clang::driver;
 using namespace llvm::opt;
@@ -117,18 +115,10 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const llvm::opt::ArgList &Args) {
                                    options::OPT_fno_sanitize_blacklist)) {
     if (BLArg->getOption().matches(options::OPT_fsanitize_blacklist)) {
       std::string BLPath = BLArg->getValue();
-      if (llvm::sys::fs::exists(BLPath)) {
-        // Validate the blacklist format.
-        std::string BLError;
-        llvm::OwningPtr<llvm::SpecialCaseList> SCL(
-            llvm::SpecialCaseList::create(BLPath, BLError));
-        if (!SCL.get())
-          D.Diag(diag::err_drv_malformed_sanitizer_blacklist) << BLError;
-        else
-          BlacklistFile = BLPath;
-      } else {
+      if (llvm::sys::fs::exists(BLPath))
+        BlacklistFile = BLPath;
+      else
         D.Diag(diag::err_drv_no_such_file) << BLPath;
-      }
     }
   } else {
     // If no -fsanitize-blacklist option is specified, try to look up for
