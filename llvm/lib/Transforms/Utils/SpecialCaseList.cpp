@@ -174,7 +174,7 @@ bool SpecialCaseList::isIn(const Function& F, const StringRef Category) const {
          inSectionCategory("fun", F.getName(), Category);
 }
 
-static StringRef GetGVTypeString(const GlobalVariable &G) {
+static StringRef GetGlobalTypeString(const GlobalValue &G) {
   // Types of GlobalVariables are always pointer types.
   Type *GType = G.getType()->getElementType();
   // For now we support blacklisting struct types only.
@@ -189,7 +189,19 @@ bool SpecialCaseList::isIn(const GlobalVariable &G,
                            const StringRef Category) const {
   return isIn(*G.getParent(), Category) ||
          inSectionCategory("global", G.getName(), Category) ||
-         inSectionCategory("type", GetGVTypeString(G), Category);
+         inSectionCategory("type", GetGlobalTypeString(G), Category);
+}
+
+bool SpecialCaseList::isIn(const GlobalAlias &GA,
+                           const StringRef Category) const {
+  if (isIn(*GA.getParent(), Category))
+    return true;
+
+  if (isa<FunctionType>(GA.getType()->getElementType()))
+    return inSectionCategory("fun", GA.getName(), Category);
+
+  return inSectionCategory("global", GA.getName(), Category) ||
+         inSectionCategory("type", GetGlobalTypeString(GA), Category);
 }
 
 bool SpecialCaseList::isIn(const Module &M, const StringRef Category) const {

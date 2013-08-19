@@ -49,6 +49,7 @@
 
 namespace llvm {
 class Function;
+class GlobalAlias;
 class GlobalVariable;
 class MemoryBuffer;
 class Module;
@@ -77,6 +78,14 @@ class SpecialCaseList {
   /// Returns whether this global, its type or its source file are listed in the
   /// given category, which may be omitted to search the empty category.
   bool isIn(const GlobalVariable &G,
+            const StringRef Category = StringRef()) const;
+
+  /// Returns whether this global alias is listed in the given category, which
+  /// may be omitted to search the empty category.
+  ///
+  /// If GA aliases a function, the alias's name is matched as a function name
+  /// would be.  Similarly, aliases of globals are matched like globals.
+  bool isIn(const GlobalAlias &GA,
             const StringRef Category = StringRef()) const;
 
   /// Returns whether this module is listed in the given category, which may be
