@@ -1133,9 +1133,11 @@ struct PowOpt : public UnsafeFPLibCallOptimization {
 
     Value *Op1 = CI->getArgOperand(0), *Op2 = CI->getArgOperand(1);
     if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
-      if (Op1C->isExactlyValue(1.0))  // pow(1.0, x) -> 1.0
+      // pow(1.0, x) -> 1.0
+      if (Op1C->isExactlyValue(1.0))
         return Op1C;
-      if (Op1C->isExactlyValue(2.0))  // pow(2.0, x) -> exp2(x)
+      // pow(2.0, x) -> exp2(x)
+      if (Op1C->isExactlyValue(2.0) && TLI->has(LibFunc::exp2))
         return EmitUnaryFloatFnCall(Op2, "exp2", B, Callee->getAttributes());
     }
 
@@ -1145,7 +1147,8 @@ struct PowOpt : public UnsafeFPLibCallOptimization {
     if (Op2C->getValueAPF().isZero())  // pow(x, 0.0) -> 1.0
       return ConstantFP::get(CI->getType(), 1.0);
 
-    if (Op2C->isExactlyValue(0.5)) {
+    if (Op2C->isExactlyValue(0.5) &&
+        TLI->has(LibFunc::sqrt) && TLI->has(LibFunc::fabs)) {
       // Expand pow(x, 0.5) to (x == -infinity ? +infinity : fabs(sqrt(x))).
       // This is faster than calling pow, and still handles negative zero
       // and negative infinity correctly.
