@@ -798,7 +798,7 @@ CB ProgramState::scanReachableSymbols(const MemRegion * const *beg,
 /// A Utility class that allows to visit the reachable symbols using a custom
 /// SymbolVisitor.
 class ScanReachableSymbols {
-  typedef llvm::DenseMap<const void*, unsigned> VisitedItems;
+  typedef llvm::DenseSet<const void*> VisitedItems;
 
   VisitedItems visited;
   ProgramStateRef state;
@@ -808,6 +808,7 @@ public:
   ScanReachableSymbols(ProgramStateRef st, SymbolVisitor& v)
     : state(st), visitor(v) {}
 
+  bool scan(nonloc::LazyCompoundVal val);
   bool scan(nonloc::CompoundVal val);
   bool scan(SVal val);
   bool scan(const MemRegion *R);

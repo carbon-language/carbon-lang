@@ -526,6 +526,19 @@ ProgramStateRef ProgramStateManager::removeGDM(ProgramStateRef state, void *Key)
   return getPersistentState(NewState);
 }
 
+bool ScanReachableSymbols::scan(nonloc::LazyCompoundVal val) {
+  bool wasVisited = !visited.insert(val.getCVData()).second;
+  if (wasVisited)
+    return true;
+
+  StoreManager &StoreMgr = state->getStateManager().getStoreManager();
+  // FIXME: We don't really want to use getBaseRegion() here because pointer
+  // arithmetic doesn't apply, but scanReachableSymbols only accepts base
+  // regions right now.
+  const MemRegion *R = val.getRegion()->getBaseRegion();
+  return StoreMgr.scanReachableSymbols(val.getStore(), R, *this);
+}
+
 bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
   for (nonloc::CompoundVal::iterator I=val.begin(), E=val.end(); I!=E; ++I)
     if (!scan(*I))
@@ -535,10 +548,9 @@ bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
 }
 
 bool ScanReachableSymbols::scan(const SymExpr *sym) {
-  unsigned &isVisited = visited[sym];
-  if (isVisited)
+  bool wasVisited = !visited.insert(sym).second;
+  if (wasVisited)
     return true;
-  isVisited = 1;
   
   if (!visitor.VisitSymbol(sym))
     return false;
@@ -570,16 +582,8 @@ bool ScanReachableSymbols::scan(SVal val) {
     return scan(X->getRegion());
 
   if (Optional<nonloc::LazyCompoundVal> X =
-          val.getAs<nonloc::LazyCompoundVal>()) {
-    StoreManager &StoreMgr = state->getStateManager().getStoreManager();
-    // FIXME: We don't really want to use getBaseRegion() here because pointer
-    // arithmetic doesn't apply, but scanReachableSymbols only accepts base
-    // regions right now.
-    if (!StoreMgr.scanReachableSymbols(X->getStore(),
-                                       X->getRegion()->getBaseRegion(),
-                                       *this))
-      return false;
-  }
+          val.getAs<nonloc::LazyCompoundVal>())
+    return scan(*X);
 
   if (Optional<nonloc::LocAsInteger> X = val.getAs<nonloc::LocAsInteger>())
     return scan(X->getLoc());
@@ -600,11 +604,9 @@ bool ScanReachableSymbols::scan(const MemRegion *R) {
   if (isa<MemSpaceRegion>(R))
     return true;
   
-  unsigned &isVisited = visited[R];
-  if (isVisited)
+  bool wasVisited = !visited.insert(R).second;
+  if (wasVisited)
     return true;
-  isVisited = 1;
-  
   
   if (!visitor.VisitMemRegion(R))
     return false;
