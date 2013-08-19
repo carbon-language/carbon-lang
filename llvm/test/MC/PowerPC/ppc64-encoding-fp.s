@@ -65,8 +65,10 @@
          fnabs 2, 3
 # CHECK: fnabs. 2, 3                     # encoding: [0xfc,0x40,0x19,0x11]
          fnabs. 2, 3
-# FIXME: fcpsgn 2, 3
-# FIXME: fcpsgn. 2, 3
+# CHECK: fcpsgn 2, 3, 4                  # encoding: [0xfc,0x43,0x20,0x10]
+         fcpsgn 2, 3, 4
+# CHECK: fcpsgn. 2, 3, 4                 # encoding: [0xfc,0x43,0x20,0x11]
+         fcpsgn. 2, 3, 4
 
 # Floating-point arithmetic instructions
 

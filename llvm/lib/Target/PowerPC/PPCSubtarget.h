@@ -76,6 +76,7 @@ protected:
   bool IsPPC64;
   bool HasAltivec;
   bool HasQPX;
+  bool HasFCPSGN;
   bool HasFSQRT;
   bool HasFRE, HasFRES, HasFRSQRTE, HasFRSQRTES;
   bool HasRecipPrec;
@@ -171,6 +172,7 @@ public:
   bool isLittleEndian() const { return IsLittleEndian; }
 
   // Specific obvious features.
+  bool hasFCPSGN() const { return HasFCPSGN; }
   bool hasFSQRT() const { return HasFSQRT; }
   bool hasFRE() const { return HasFRE; }
   bool hasFRES() const { return HasFRES; }

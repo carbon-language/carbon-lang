@@ -149,8 +149,13 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
         Subtarget->hasFRSQRTES() && Subtarget->hasFRES()))
     setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
-  setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
-  setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+  if (Subtarget->hasFCPSGN()) {
+    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Legal);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Legal);
+  } else {
+    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+  }
 
   if (Subtarget->hasFPRND()) {
     setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
