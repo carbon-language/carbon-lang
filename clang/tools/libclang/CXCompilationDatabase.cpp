@@ -1,7 +1,7 @@
 #include "clang-c/CXCompilationDatabase.h"
 #include "CXString.h"
 #include "clang/Tooling/CompilationDatabase.h"
-#include <stdio.h>
+#include <cstdio>
 
 using namespace clang;
 using namespace clang::tooling;

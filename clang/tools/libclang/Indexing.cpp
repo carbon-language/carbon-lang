@@ -31,7 +31,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
-#include <stdio.h>
+#include <cstdio>
 
 using namespace clang;
 using namespace cxtu;
