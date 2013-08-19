@@ -169,6 +169,9 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
     }
   }
 
+  // Give the subclasses a chance to tie-up any loose ends.
+  finalizeLoad();
+
   return obj.take();
 }
 
@@ -424,6 +427,10 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     writeInt16BE(Addr+6,  0x07F1);     // brc 15,%r1
     // 8-byte address stored at Addr + 8
     return Addr;
+  } else if (Arch == Triple::x86_64) {
+    *Addr      = 0xFF; // jmp
+    *(Addr+1)  = 0x25; // rip
+    // 32-bit PC-relative address of the GOT entry will be stored at Addr+2
   }
   return Addr;
 }
@@ -473,6 +480,7 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
         // MemoryManager.
         uint8_t *Addr = (uint8_t*) MemMgr->getPointerToNamedFunction(Name.data(),
                                                                    true);
+        updateGOTEntries(Name, (uint64_t)Addr);
         DEBUG(dbgs() << "Resolving relocations Name: " << Name
                 << "\t" << format("%p", Addr)
                 << "\n");

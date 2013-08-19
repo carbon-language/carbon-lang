@@ -80,14 +80,18 @@ public:
   unsigned SectionID;
 
   /// Offset - offset into the section.
-  uintptr_t Offset;
+  uint64_t Offset;
 
   /// RelType - relocation type.
   uint32_t RelType;
 
   /// Addend - the relocation addend encoded in the instruction itself.  Also
   /// used to make a relocation section relative instead of symbol relative.
-  intptr_t Addend;
+  int64_t Addend;
+
+  /// SymOffset - Section offset of the relocation entry's symbol (used for GOT
+  /// lookup).
+  uint64_t SymOffset;
 
   /// True if this is a PCRel relocation (MachO specific).
   bool IsPCRel;
@@ -97,20 +101,26 @@ public:
 
   RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend)
     : SectionID(id), Offset(offset), RelType(type), Addend(addend),
-      IsPCRel(false), Size(0) {}
+      SymOffset(0), IsPCRel(false), Size(0) {}
+
+  RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend,
+                  uint64_t symoffset)
+    : SectionID(id), Offset(offset), RelType(type), Addend(addend),
+      SymOffset(symoffset), IsPCRel(false), Size(0) {}
 
   RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend,
                   bool IsPCRel, unsigned Size)
     : SectionID(id), Offset(offset), RelType(type), Addend(addend),
-      IsPCRel(IsPCRel), Size(Size) {}
+      SymOffset(0), IsPCRel(IsPCRel), Size(Size) {}
 };
 
 class RelocationValueRef {
 public:
   unsigned  SectionID;
-  intptr_t  Addend;
+  uint64_t  Offset;
+  int64_t   Addend;
   const char *SymbolName;
-  RelocationValueRef(): SectionID(0), Addend(0), SymbolName(0) {}
+  RelocationValueRef(): SectionID(0), Offset(0), Addend(0), SymbolName(0) {}
 
   inline bool operator==(const RelocationValueRef &Other) const {
     return std::memcmp(this, &Other, sizeof(RelocationValueRef)) == 0;
@@ -175,7 +185,7 @@ protected:
     else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le)
       return 44;
     else if (Arch == Triple::x86_64)
-      return 8; // GOT
+      return 6; // 2-byte jmp instruction + 32-bit relative address
     else if (Arch == Triple::systemz)
       return 16;
     else
@@ -292,6 +302,11 @@ protected:
 
   /// \brief Resolve relocations to external symbols.
   void resolveExternalSymbols();
+
+  /// \brief Update GOT entries for external symbols.
+  // The base class does nothing.  ELF overrides this.
+  virtual void updateGOTEntries(StringRef Name, uint64_t Addr) {}
+
   virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
@@ -336,6 +351,8 @@ public:
   virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const = 0;
 
   virtual StringRef getEHFrameSection();
+
+  virtual void finalizeLoad() {}
 };
 
 } // end namespace llvm
