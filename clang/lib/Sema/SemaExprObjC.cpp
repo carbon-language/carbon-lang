@@ -909,14 +909,10 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
   
   QualType Ty
     = Context.getObjCObjectPointerType(
-                                Context.getObjCInterfaceType(NSDictionaryDecl));  
-  return MaybeBindToTemporary(
-           ObjCDictionaryLiteral::Create(Context, 
-                                         llvm::makeArrayRef(Elements, 
-                                                            NumElements),
-                                         HasPackExpansions,
-                                         Ty, 
-                                         DictionaryWithObjectsMethod, SR));
+                                Context.getObjCInterfaceType(NSDictionaryDecl));
+  return MaybeBindToTemporary(ObjCDictionaryLiteral::Create(
+      Context, makeArrayRef(Elements, NumElements), HasPackExpansions, Ty,
+      DictionaryWithObjectsMethod, SR));
 }
 
 ExprResult Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
@@ -1365,8 +1361,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
 
   // Do additional checkings on method.
   IsError |= CheckObjCMethodCall(
-                  Method, SelLoc,
-                  llvm::makeArrayRef<const Expr *>(Args.data(), Args.size()));
+      Method, SelLoc, makeArrayRef<const Expr *>(Args.data(), Args.size()));
 
   return IsError;
 }
