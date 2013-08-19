@@ -1574,7 +1574,8 @@ DIE *CompileUnit::constructVariableDIE(DbgVariable *DV,
     addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin,
                             dwarf::DW_FORM_ref4, AbsDIE);
   else {
-    addString(VariableDie, dwarf::DW_AT_name, Name);
+    if (!Name.empty())
+      addString(VariableDie, dwarf::DW_AT_name, Name);
     addSourceLine(VariableDie, DV->getVariable());
     addType(VariableDie, DV->getType());
   }

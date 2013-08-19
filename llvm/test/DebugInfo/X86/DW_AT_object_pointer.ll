@@ -2,10 +2,12 @@
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: DW_TAG_formal_parameter [
+; CHECK-NOT: ""
+; CHECK: DW_TAG
 ; CHECK: DW_TAG_class_type
-; CHECK: DW_AT_object_pointer [DW_FORM_ref4]     (cu + 0x00fd => {0x000000fd})
-; CHECK: 0x000000fd:     DW_TAG_formal_parameter [13]
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000086] = "this")
+; CHECK: DW_AT_object_pointer [DW_FORM_ref4]     (cu + 0x{{[0-9a-f]*}} => {[[PARAM:0x[0-9a-f]*]]})
+; CHECK: [[PARAM]]:     DW_TAG_formal_parameter [13]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x{{[0-9a-f]*}}] = "this")
 
 %class.A = type { i32 }
 
