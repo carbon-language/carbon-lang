@@ -203,12 +203,17 @@ Value *EmitGEPOffset(IRBuilderTy *Builder, const DataLayout &TD, User *GEP,
        ++i, ++GTI) {
     Value *Op = *i;
     uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType()) & PtrSizeMask;
-    if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
-      if (OpC->isZero()) continue;
+    if (Constant *OpC = dyn_cast<Constant>(Op)) {
+      if (OpC->isZeroValue())
+        continue;
 
       // Handle a struct index, which adds its field offset to the pointer.
       if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-        Size = TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+        if (OpC->getType()->isVectorTy())
+          OpC = OpC->getSplatValue();
+
+        uint64_t OpValue = cast<ConstantInt>(OpC)->getZExtValue();
+        Size = TD.getStructLayout(STy)->getElementOffset(OpValue);
 
         if (Size)
           Result = Builder->CreateAdd(Result, ConstantInt::get(IntPtrTy, Size),

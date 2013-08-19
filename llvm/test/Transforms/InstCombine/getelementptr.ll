@@ -129,6 +129,17 @@ define i1 @test13(i64 %X, %S* %P) {
 ; CHECK:    %C = icmp eq i64 %X, -1
 }
 
+define <2 x i1> @test13_vector(<2 x i64> %X, <2 x %S*> %P) nounwind {
+; CHECK-LABEL: @test13_vector(
+; CHECK-NEXT: shl nuw <2 x i64> %X, <i64 2, i64 2>
+; CHECK-NEXT: add <2 x i64> %A.idx, <i64 4, i64 4>
+; CHECK-NEXT: icmp eq <2 x i64> %A.offs, zeroinitializer
+  %A = getelementptr inbounds <2 x %S*> %P, <2 x i64> zeroinitializer, <2 x i32> <i32 1, i32 1>, <2 x i64> %X
+  %B = getelementptr inbounds <2 x %S*> %P, <2 x i64> <i64 0, i64 0>, <2 x i32> <i32 0, i32 0>
+  %C = icmp eq <2 x i32*> %A, %B
+  ret <2 x i1> %C
+}
+
 define i1 @test13_i32(i32 %X, %S* %P) {
 ; CHECK-LABEL: @test13_i32(
 ; CHECK: %C = icmp eq i32 %X, -1

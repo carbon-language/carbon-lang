@@ -629,9 +629,19 @@ void llvm::ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
       Value *Index = I->getOperand(i);
       if (StructType *STy = dyn_cast<StructType>(*GTI)) {
         // Handle struct member offset arithmetic.
-        if (!TD) return;
-        const StructLayout *SL = TD->getStructLayout(STy);
+        if (!TD)
+          return;
+
+        // Handle case when index is vector zeroinitializer
+        Constant *CIndex = cast<Constant>(Index);
+        if (CIndex->isZeroValue())
+          continue;
+
+        if (CIndex->getType()->isVectorTy())
+          Index = CIndex->getSplatValue();
+
         unsigned Idx = cast<ConstantInt>(Index)->getZExtValue();
+        const StructLayout *SL = TD->getStructLayout(STy);
         uint64_t Offset = SL->getElementOffset(Idx);
         TrailZ = std::min<unsigned>(TrailZ,
                                     countTrailingZeros(Offset));
