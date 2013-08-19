@@ -296,6 +296,8 @@ let Properties = [IntrReadMem] in {
   def int_exp  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_exp2 : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_fabs : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
+  def int_copysign : Intrinsic<[llvm_anyfloat_ty],
+                               [LLVMMatchType<0>, LLVMMatchType<0>]>;
   def int_floor : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_ceil  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_trunc : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;

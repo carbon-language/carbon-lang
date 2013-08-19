@@ -1767,6 +1767,7 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
     case Intrinsic::log10:
     case Intrinsic::log2:
     case Intrinsic::fabs:
+    case Intrinsic::copysign:
     case Intrinsic::floor:
     case Intrinsic::ceil:
     case Intrinsic::trunc:
@@ -1831,6 +1832,10 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   case LibFunc::fabsf:
   case LibFunc::fabsl:
     return Intrinsic::fabs;
+  case LibFunc::copysign:
+  case LibFunc::copysignf:
+  case LibFunc::copysignl:
+    return Intrinsic::copysign;
   case LibFunc::floor:
   case LibFunc::floorf:
   case LibFunc::floorl:

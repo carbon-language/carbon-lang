@@ -697,6 +697,11 @@ void TargetLoweringBase::initActions() {
 
     // These library functions default to expand.
     setOperationAction(ISD::FROUND, (MVT::SimpleValueType)VT, Expand);
+
+    // These operations default to expand for vector types.
+    if (VT >= MVT::FIRST_VECTOR_VALUETYPE &&
+        VT <= MVT::LAST_VECTOR_VALUETYPE)
+      setOperationAction(ISD::FCOPYSIGN, (MVT::SimpleValueType)VT, Expand);
   }
 
   // Most targets ignore the @llvm.prefetch intrinsic.

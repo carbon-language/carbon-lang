@@ -98,6 +98,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::ADD:
   case ISD::AND:
   case ISD::FADD:
+  case ISD::FCOPYSIGN:
   case ISD::FDIV:
   case ISD::FMUL:
   case ISD::FPOW:
@@ -557,6 +558,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SUB:
   case ISD::MUL:
   case ISD::FADD:
+  case ISD::FCOPYSIGN:
   case ISD::FSUB:
   case ISD::FMUL:
   case ISD::SDIV:

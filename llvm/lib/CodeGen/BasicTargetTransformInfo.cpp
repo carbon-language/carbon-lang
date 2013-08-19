@@ -443,6 +443,7 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   case Intrinsic::log10:   ISD = ISD::FLOG10; break;
   case Intrinsic::log2:    ISD = ISD::FLOG2;  break;
   case Intrinsic::fabs:    ISD = ISD::FABS;   break;
+  case Intrinsic::copysign: ISD = ISD::FCOPYSIGN; break;
   case Intrinsic::floor:   ISD = ISD::FFLOOR; break;
   case Intrinsic::ceil:    ISD = ISD::FCEIL;  break;
   case Intrinsic::trunc:   ISD = ISD::FTRUNC; break;

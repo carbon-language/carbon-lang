@@ -4925,6 +4925,12 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                              getValue(I.getArgOperand(0))));
     return 0;
   }
+  case Intrinsic::copysign:
+    setValue(&I, DAG.getNode(ISD::FCOPYSIGN, sdl,
+                             getValue(I.getArgOperand(0)).getValueType(),
+                             getValue(I.getArgOperand(0)),
+                             getValue(I.getArgOperand(1))));
+    return 0;
   case Intrinsic::fma:
     setValue(&I, DAG.getNode(ISD::FMA, sdl,
                              getValue(I.getArgOperand(0)).getValueType(),

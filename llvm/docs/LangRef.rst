@@ -7353,6 +7353,42 @@ Semantics:
 This function returns the same values as the libm ``fabs`` functions
 would, and handles error conditions in the same way.
 
+'``llvm.copysign.*``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+This is an overloaded intrinsic. You can use ``llvm.copysign`` on any
+floating point or vector of floating point type. Not all targets support
+all types however.
+
+::
+
+      declare float     @llvm.copysign.f32(float  %Mag, float  %Sgn)
+      declare double    @llvm.copysign.f64(double %Mag, double %Sgn)
+      declare x86_fp80  @llvm.copysign.f80(x86_fp80  %Mag, x86_fp80  %Sgn)
+      declare fp128     @llvm.copysign.f128(fp128 %Mag, fp128 %Sgn)
+      declare ppc_fp128 @llvm.copysign.ppcf128(ppc_fp128  %Mag, ppc_fp128  %Sgn)
+
+Overview:
+"""""""""
+
+The '``llvm.copysign.*``' intrinsics return a value with the magnitude of the
+first operand and the sign of the second operand.
+
+Arguments:
+""""""""""
+
+The arguments and return value are floating point numbers of the same
+type.
+
+Semantics:
+""""""""""
+
+This function returns the same values as the libm ``copysign``
+functions would, and handles error conditions in the same way.
+
 '``llvm.floor.*``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

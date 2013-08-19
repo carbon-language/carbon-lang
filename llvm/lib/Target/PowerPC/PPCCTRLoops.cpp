@@ -253,6 +253,12 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
           case Intrinsic::sin:
           case Intrinsic::cos:
             return true;
+          case Intrinsic::copysign:
+            if (CI->getArgOperand(0)->getType()->getScalarType()->
+                isPPC_FP128Ty())
+              return true;
+            else
+              continue; // ISD::FCOPYSIGN is never a library call.
           case Intrinsic::sqrt:      Opcode = ISD::FSQRT;      break;
           case Intrinsic::floor:     Opcode = ISD::FFLOOR;     break;
           case Intrinsic::ceil:      Opcode = ISD::FCEIL;      break;
