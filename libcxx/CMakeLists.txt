@@ -45,7 +45,7 @@ if (NOT DEFINED LIBCXX_CXX_ABI)
 endif()
 set(LIBCXX_CXX_ABI "${LIBCXX_CXX_ABI}" CACHE STRING
     "Specify C++ ABI library to use." FORCE)
-set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS "";${CXXABIS})
+set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 
 #===============================================================================
 # Configure System
