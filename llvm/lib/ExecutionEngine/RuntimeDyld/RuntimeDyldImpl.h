@@ -123,10 +123,17 @@ public:
   RelocationValueRef(): SectionID(0), Offset(0), Addend(0), SymbolName(0) {}
 
   inline bool operator==(const RelocationValueRef &Other) const {
-    return std::memcmp(this, &Other, sizeof(RelocationValueRef)) == 0;
+    return SectionID == Other.SectionID && Offset == Other.Offset &&
+           Addend == Other.Addend && SymbolName == Other.SymbolName;
   }
   inline bool operator <(const RelocationValueRef &Other) const {
-    return std::memcmp(this, &Other, sizeof(RelocationValueRef)) < 0;
+    if (SectionID != Other.SectionID)
+      return SectionID < Other.SectionID;
+    if (Offset != Other.Offset)
+      return Offset < Other.Offset;
+    if (Addend != Other.Addend)
+      return Addend < Other.Addend;
+    return SymbolName < Other.SymbolName;
   }
 };
 
