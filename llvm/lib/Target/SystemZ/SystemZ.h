@@ -52,6 +52,11 @@ namespace llvm {
     const unsigned CCMASK_CS_NE = CCMASK_1;
     const unsigned CCMASK_CS    = CCMASK_0 | CCMASK_1;
 
+    // Condition-code mask assignments for a completed SRST loop.
+    const unsigned CCMASK_SRST_FOUND    = CCMASK_1;
+    const unsigned CCMASK_SRST_NOTFOUND = CCMASK_2;
+    const unsigned CCMASK_SRST          = CCMASK_1 | CCMASK_2;
+
     // Return true if Val fits an LLILL operand.
     static inline bool isImmLL(uint64_t Val) {
       return (Val & ~0x000000000000ffffULL) == 0;

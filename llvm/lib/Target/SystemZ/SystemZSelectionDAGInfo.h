@@ -47,6 +47,11 @@ public:
                           MachinePointerInfo Op2PtrInfo) const LLVM_OVERRIDE;
 
   virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForMemchr(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                          SDValue Src, SDValue Char, SDValue Length,
+                          MachinePointerInfo SrcPtrInfo) const LLVM_OVERRIDE;
+
+  virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForStrcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           SDValue Dest, SDValue Src,
                           MachinePointerInfo DestPtrInfo,

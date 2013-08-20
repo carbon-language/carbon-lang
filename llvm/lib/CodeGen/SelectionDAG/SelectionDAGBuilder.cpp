@@ -5647,6 +5647,37 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
   return false;
 }
 
+/// visitMemChrCall -- See if we can lower a memchr call into an optimized
+/// form.  If so, return true and lower it, otherwise return false and it
+/// will be lowered like a normal call.
+bool SelectionDAGBuilder::visitMemChrCall(const CallInst &I) {
+  // Verify that the prototype makes sense.  void *memchr(void *, int, size_t)
+  if (I.getNumArgOperands() != 3)
+    return false;
+
+  const Value *Src = I.getArgOperand(0);
+  const Value *Char = I.getArgOperand(1);
+  const Value *Length = I.getArgOperand(2);
+  if (!Src->getType()->isPointerTy() ||
+      !Char->getType()->isIntegerTy() ||
+      !Length->getType()->isIntegerTy() ||
+      !I.getType()->isPointerTy())
+    return false;
+
+  const TargetSelectionDAGInfo &TSI = DAG.getSelectionDAGInfo();
+  std::pair<SDValue, SDValue> Res =
+    TSI.EmitTargetCodeForMemchr(DAG, getCurSDLoc(), DAG.getRoot(),
+                                getValue(Src), getValue(Char), getValue(Length),
+                                MachinePointerInfo(Src));
+  if (Res.first.getNode()) {
+    setValue(&I, Res.first);
+    PendingLoads.push_back(Res.second);
+    return true;
+  }
+
+  return false;
+}
+
 /// visitStrCpyCall -- See if we can lower a strcpy or stpcpy call into an
 /// optimized form.  If so, return true and lower it, otherwise return false
 /// and it will be lowered like a normal call.
@@ -5902,6 +5933,10 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
         break;
       case LibFunc::memcmp:
         if (visitMemCmpCall(I))
+          return;
+        break;
+      case LibFunc::memchr:
+        if (visitMemChrCall(I))
           return;
         break;
       case LibFunc::strcpy:

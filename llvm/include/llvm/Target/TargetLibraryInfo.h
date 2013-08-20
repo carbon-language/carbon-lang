@@ -701,6 +701,7 @@ public:
     case LibFunc::exp2:      case LibFunc::exp2f:      case LibFunc::exp2l:
     case LibFunc::memcmp:    case LibFunc::strcmp:     case LibFunc::strcpy:
     case LibFunc::stpcpy:    case LibFunc::strlen:     case LibFunc::strnlen:
+    case LibFunc::memchr:
       return true;
     }
     return false;

@@ -109,6 +109,18 @@ public:
     return std::make_pair(SDValue(), SDValue());
   }
 
+  /// EmitTargetCodeForMemchr - Emit target-specific code that performs a
+  /// memchr, in cases where that is faster than a libcall.  The first
+  /// returned SDValue is the result of the memchr and the second is
+  /// the chain.  Both SDValues can be null if a normal libcall should
+  /// be used.
+  virtual std::pair<SDValue, SDValue>
+  EmitTargetCodeForMemchr(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
+                          SDValue Src, SDValue Char, SDValue Length,
+                          MachinePointerInfo SrcPtrInfo) const {
+    return std::make_pair(SDValue(), SDValue());
+  }
+
   /// EmitTargetCodeForStrcpy - Emit target-specific code that performs a
   /// strcpy or stpcpy, in cases where that is faster than a libcall.
   /// The first returned SDValue is the result of the copy (the start

@@ -159,6 +159,36 @@ EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
 }
 
 std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
+EmitTargetCodeForMemchr(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
+                        SDValue Src, SDValue Char, SDValue Length,
+                        MachinePointerInfo SrcPtrInfo) const {
+  // Use SRST to find the character.  End is its address on success.
+  EVT PtrVT = Src.getValueType();
+  SDVTList VTs = DAG.getVTList(PtrVT, MVT::Other, MVT::Glue);
+  Length = DAG.getZExtOrTrunc(Length, DL, PtrVT);
+  Char = DAG.getZExtOrTrunc(Char, DL, MVT::i32);
+  Char = DAG.getNode(ISD::AND, DL, MVT::i32, Char,
+                     DAG.getConstant(255, MVT::i32));
+  SDValue Limit = DAG.getNode(ISD::ADD, DL, PtrVT, Src, Length);
+  SDValue End = DAG.getNode(SystemZISD::SEARCH_STRING, DL, VTs, Chain,
+                            Limit, Src, Char);
+  Chain = End.getValue(1);
+  SDValue Glue = End.getValue(2);
+
+  // Now select between End and null, depending on whether the character
+  // was found.
+  SmallVector<SDValue, 5> Ops;
+  Ops.push_back(End);
+  Ops.push_back(DAG.getConstant(0, PtrVT));
+  Ops.push_back(DAG.getConstant(SystemZ::CCMASK_SRST, MVT::i32));
+  Ops.push_back(DAG.getConstant(SystemZ::CCMASK_SRST_FOUND, MVT::i32));
+  Ops.push_back(Glue);
+  VTs = DAG.getVTList(PtrVT, MVT::Glue);
+  End = DAG.getNode(SystemZISD::SELECT_CCMASK, DL, VTs, &Ops[0], Ops.size());
+  return std::make_pair(End, Chain);
+}
+
+std::pair<SDValue, SDValue> SystemZSelectionDAGInfo::
 EmitTargetCodeForStrcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                         SDValue Dest, SDValue Src,
                         MachinePointerInfo DestPtrInfo,

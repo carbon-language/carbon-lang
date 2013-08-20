@@ -2345,19 +2345,19 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
   MachineBasicBlock *LoopMBB = emitBlockAfter(StartMBB);
 
   //  StartMBB:
-  //   R0W = %CharReg
   //   # fall through to LoopMMB
-  BuildMI(MBB, DL, TII->get(TargetOpcode::COPY), SystemZ::R0W).addReg(CharReg);
   MBB->addSuccessor(LoopMBB);
 
   //  LoopMBB:
   //   %This1Reg = phi [ %Start1Reg, StartMBB ], [ %End1Reg, LoopMBB ]
   //   %This2Reg = phi [ %Start2Reg, StartMBB ], [ %End2Reg, LoopMBB ]
+  //   R0W = %CharReg
   //   %End1Reg, %End2Reg = CLST %This1Reg, %This2Reg -- uses R0W
   //   JO LoopMBB
   //   # fall through to DoneMMB
+  //
+  // The load of R0W can be hoisted by post-RA LICM.
   MBB = LoopMBB;
-  MBB->addLiveIn(SystemZ::R0W);
 
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), This1Reg)
     .addReg(Start1Reg).addMBB(StartMBB)
@@ -2365,6 +2365,7 @@ SystemZTargetLowering::emitStringWrapper(MachineInstr *MI,
   BuildMI(MBB, DL, TII->get(SystemZ::PHI), This2Reg)
     .addReg(Start2Reg).addMBB(StartMBB)
     .addReg(End2Reg).addMBB(LoopMBB);
+  BuildMI(MBB, DL, TII->get(TargetOpcode::COPY), SystemZ::R0W).addReg(CharReg);
   BuildMI(MBB, DL, TII->get(Opcode))
     .addReg(End1Reg, RegState::Define).addReg(End2Reg, RegState::Define)
     .addReg(This1Reg).addReg(This2Reg);
