@@ -1151,12 +1151,6 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 /// protector check machine basic block.
 static MachineBasicBlock::iterator
 FindSplitPointForStackProtector(MachineBasicBlock *BB, DebugLoc DL) {
-  MachineFunction *MF = BB->getParent();
-  MachineRegisterInfo &MRI = MF->getRegInfo();
-  const TargetMachine &TM = MF->getTarget();
-  const TargetInstrInfo *TII = TM.getInstrInfo();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
-
   MachineBasicBlock::iterator SplitPoint = BB->getFirstTerminator();
   if (SplitPoint == BB->begin())
     return SplitPoint;
