@@ -359,9 +359,6 @@ private:
   /// declaration for the given out-of-class definition.
   llvm::DIDerivedType
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
-  llvm::DIDerivedType
-  getOrCreateStaticDataMemberDeclaration(const VarDecl *D,
-                                         llvm::DICompositeType Ctxt);
 
   /// getFunctionName - Get function name for the given FunctionDecl. If the
   /// name is constructred on demand (e.g. C++ destructor) then the name

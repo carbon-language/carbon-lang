@@ -946,9 +946,18 @@ void CGDebugInfo::CollectRecordFields(const RecordDecl *record,
     // the corresponding declarations in the source program.
     for (RecordDecl::decl_iterator I = record->decls_begin(),
            E = record->decls_end(); I != E; ++I)
-      if (const VarDecl *V = dyn_cast<VarDecl>(*I))
-        elements.push_back(getOrCreateStaticDataMemberDeclaration(V, RecordTy));
-      else if (FieldDecl *field = dyn_cast<FieldDecl>(*I)) {
+      if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
+        // Reuse the existing static member declaration if one exists
+        llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator MI =
+            StaticDataMemberCache.find(V->getCanonicalDecl());
+        if (MI != StaticDataMemberCache.end()) {
+          assert(MI->second &&
+                 "Static data member declaration should still exist");
+          elements.push_back(
+              llvm::DIDerivedType(cast<llvm::MDNode>(MI->second)));
+        } else
+          elements.push_back(CreateRecordStaticField(V, RecordTy));
+      } else if (FieldDecl *field = dyn_cast<FieldDecl>(*I)) {
         CollectRecordNormalField(field, layout.getFieldOffset(fieldNo),
                                  tunit, elements, RecordTy);
 
@@ -1123,6 +1132,7 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
       continue;
 
     if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+      // Reuse the existing member function declaration if it exists
       llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
           SPCache.find(Method->getCanonicalDecl());
       if (MI == SPCache.end())
@@ -3067,23 +3077,14 @@ CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
     assert(MI->second && "Static data member declaration should still exist");
     return llvm::DIDerivedType(cast<llvm::MDNode>(MI->second));
   }
+
+  // If the member wasn't found in the cache, lazily construct and add it to the
+  // type (used when a limited form of the type is emitted).
   llvm::DICompositeType Ctxt(
       getContextDescriptor(cast<Decl>(D->getDeclContext())));
   llvm::DIDerivedType T = CreateRecordStaticField(D, Ctxt);
   Ctxt.addMember(T);
   return T;
-}
-
-llvm::DIDerivedType
-CGDebugInfo::getOrCreateStaticDataMemberDeclaration(const VarDecl *D,
-                                            llvm::DICompositeType Ctxt) {
-  llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator MI =
-      StaticDataMemberCache.find(D->getCanonicalDecl());
-  if (MI != StaticDataMemberCache.end()) {
-    assert(MI->second && "Static data member declaration should still exist");
-    return llvm::DIDerivedType(cast<llvm::MDNode>(MI->second));
-  }
-  return CreateRecordStaticField(D, Ctxt);
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.
