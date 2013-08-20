@@ -34,36 +34,21 @@ def immZExt6 : ImmLeaf<i32, [{return Imm == (Imm & 0x3f);}]>;
 //===----------------------------------------------------------------------===//
 // Instructions specific format
 //===----------------------------------------------------------------------===//
-let DecoderNamespace = "Mips64" in {
-
-multiclass Atomic2Ops64<PatFrag Op> {
-  def NAME : Atomic2Ops<Op, GPR64, GPR32>, Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Atomic2Ops<Op, GPR64, GPR64>, Requires<[IsN64, HasStdEnc]>;
-}
-
-multiclass AtomicCmpSwap64<PatFrag Op>  {
-  def NAME : AtomicCmpSwap<Op, GPR64, GPR32>,
-             Requires<[NotN64, HasStdEnc]>;
-  def _P8  : AtomicCmpSwap<Op, GPR64, GPR64>,
-             Requires<[IsN64, HasStdEnc]>;
-}
-}
-let usesCustomInserter = 1, Predicates = [HasStdEnc],
-  DecoderNamespace = "Mips64" in {
-  defm ATOMIC_LOAD_ADD_I64  : Atomic2Ops64<atomic_load_add_64>;
-  defm ATOMIC_LOAD_SUB_I64  : Atomic2Ops64<atomic_load_sub_64>;
-  defm ATOMIC_LOAD_AND_I64  : Atomic2Ops64<atomic_load_and_64>;
-  defm ATOMIC_LOAD_OR_I64   : Atomic2Ops64<atomic_load_or_64>;
-  defm ATOMIC_LOAD_XOR_I64  : Atomic2Ops64<atomic_load_xor_64>;
-  defm ATOMIC_LOAD_NAND_I64 : Atomic2Ops64<atomic_load_nand_64>;
-  defm ATOMIC_SWAP_I64      : Atomic2Ops64<atomic_swap_64>;
-  defm ATOMIC_CMP_SWAP_I64  : AtomicCmpSwap64<atomic_cmp_swap_64>;
+let usesCustomInserter = 1 in {
+  def ATOMIC_LOAD_ADD_I64  : Atomic2Ops<atomic_load_add_64, GPR64>;
+  def ATOMIC_LOAD_SUB_I64  : Atomic2Ops<atomic_load_sub_64, GPR64>;
+  def ATOMIC_LOAD_AND_I64  : Atomic2Ops<atomic_load_and_64, GPR64>;
+  def ATOMIC_LOAD_OR_I64   : Atomic2Ops<atomic_load_or_64, GPR64>;
+  def ATOMIC_LOAD_XOR_I64  : Atomic2Ops<atomic_load_xor_64, GPR64>;
+  def ATOMIC_LOAD_NAND_I64 : Atomic2Ops<atomic_load_nand_64, GPR64>;
+  def ATOMIC_SWAP_I64      : Atomic2Ops<atomic_swap_64, GPR64>;
+  def ATOMIC_CMP_SWAP_I64  : AtomicCmpSwap<atomic_cmp_swap_64, GPR64>;
 }
 
 /// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1, isCodeGenOnly = 1 in {
-  defm LOAD_ACC128  : LoadM<"", ACC128>;
-  defm STORE_ACC128 : StoreM<"", ACC128>;
+  def LOAD_ACC128  : Load<"", ACC128>;
+  def STORE_ACC128 : Store<"", ACC128>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -134,43 +119,36 @@ let Predicates = [HasMips64r2, HasStdEnc] in {
 /// Load and Store Instructions
 ///  aligned
 let isCodeGenOnly = 1 in {
-defm LB64  : LoadM<"lb", GPR64Opnd, sextloadi8, IILoad>, LW_FM<0x20>;
-defm LBu64 : LoadM<"lbu", GPR64Opnd, zextloadi8, IILoad>, LW_FM<0x24>;
-defm LH64  : LoadM<"lh", GPR64Opnd, sextloadi16, IILoad>, LW_FM<0x21>;
-defm LHu64 : LoadM<"lhu", GPR64Opnd, zextloadi16, IILoad>, LW_FM<0x25>;
-defm LW64  : LoadM<"lw", GPR64Opnd, sextloadi32, IILoad>, LW_FM<0x23>;
-defm SB64  : StoreM<"sb", GPR64Opnd, truncstorei8, IIStore>, LW_FM<0x28>;
-defm SH64  : StoreM<"sh", GPR64Opnd, truncstorei16, IIStore>, LW_FM<0x29>;
-defm SW64  : StoreM<"sw", GPR64Opnd, truncstorei32, IIStore>, LW_FM<0x2b>;
+def LB64  : Load<"lb", GPR64Opnd, sextloadi8, IILoad>, LW_FM<0x20>;
+def LBu64 : Load<"lbu", GPR64Opnd, zextloadi8, IILoad>, LW_FM<0x24>;
+def LH64  : Load<"lh", GPR64Opnd, sextloadi16, IILoad>, LW_FM<0x21>;
+def LHu64 : Load<"lhu", GPR64Opnd, zextloadi16, IILoad>, LW_FM<0x25>;
+def LW64  : Load<"lw", GPR64Opnd, sextloadi32, IILoad>, LW_FM<0x23>;
+def SB64  : Store<"sb", GPR64Opnd, truncstorei8, IIStore>, LW_FM<0x28>;
+def SH64  : Store<"sh", GPR64Opnd, truncstorei16, IIStore>, LW_FM<0x29>;
+def SW64  : Store<"sw", GPR64Opnd, truncstorei32, IIStore>, LW_FM<0x2b>;
 }
 
-defm LWu   : LoadM<"lwu", GPR64Opnd, zextloadi32, IILoad>, LW_FM<0x27>;
-defm LD    : LoadM<"ld", GPR64Opnd, load, IILoad>, LW_FM<0x37>;
-defm SD    : StoreM<"sd", GPR64Opnd, store, IIStore>, LW_FM<0x3f>;
+def LWu   : Load<"lwu", GPR64Opnd, zextloadi32, IILoad>, LW_FM<0x27>;
+def LD    : Load<"ld", GPR64Opnd, load, IILoad>, LW_FM<0x37>;
+def SD    : Store<"sd", GPR64Opnd, store, IIStore>, LW_FM<0x3f>;
 
 /// load/store left/right
 let isCodeGenOnly = 1 in {
-defm LWL64 : LoadLeftRightM<"lwl", MipsLWL, GPR64Opnd>, LW_FM<0x22>;
-defm LWR64 : LoadLeftRightM<"lwr", MipsLWR, GPR64Opnd>, LW_FM<0x26>;
-defm SWL64 : StoreLeftRightM<"swl", MipsSWL, GPR64Opnd>, LW_FM<0x2a>;
-defm SWR64 : StoreLeftRightM<"swr", MipsSWR, GPR64Opnd>, LW_FM<0x2e>;
+def LWL64 : LoadLeftRight<"lwl", MipsLWL, GPR64Opnd>, LW_FM<0x22>;
+def LWR64 : LoadLeftRight<"lwr", MipsLWR, GPR64Opnd>, LW_FM<0x26>;
+def SWL64 : StoreLeftRight<"swl", MipsSWL, GPR64Opnd>, LW_FM<0x2a>;
+def SWR64 : StoreLeftRight<"swr", MipsSWR, GPR64Opnd>, LW_FM<0x2e>;
 }
 
-defm LDL   : LoadLeftRightM<"ldl", MipsLDL, GPR64Opnd>, LW_FM<0x1a>;
-defm LDR   : LoadLeftRightM<"ldr", MipsLDR, GPR64Opnd>, LW_FM<0x1b>;
-defm SDL   : StoreLeftRightM<"sdl", MipsSDL, GPR64Opnd>, LW_FM<0x2c>;
-defm SDR   : StoreLeftRightM<"sdr", MipsSDR, GPR64Opnd>, LW_FM<0x2d>;
+def LDL   : LoadLeftRight<"ldl", MipsLDL, GPR64Opnd>, LW_FM<0x1a>;
+def LDR   : LoadLeftRight<"ldr", MipsLDR, GPR64Opnd>, LW_FM<0x1b>;
+def SDL   : StoreLeftRight<"sdl", MipsSDL, GPR64Opnd>, LW_FM<0x2c>;
+def SDR   : StoreLeftRight<"sdr", MipsSDR, GPR64Opnd>, LW_FM<0x2d>;
 
 /// Load-linked, Store-conditional
-let Predicates = [NotN64, HasStdEnc] in {
-  def LLD : LLBase<"lld", GPR64Opnd, mem>, LW_FM<0x34>;
-  def SCD : SCBase<"scd", GPR64Opnd, mem>, LW_FM<0x3c>;
-}
-
-let Predicates = [IsN64, HasStdEnc], isCodeGenOnly = 1 in {
-  def LLD_P8 : LLBase<"lld", GPR64Opnd, mem64>, LW_FM<0x34>;
-  def SCD_P8 : SCBase<"scd", GPR64Opnd, mem64>, LW_FM<0x3c>;
-}
+def LLD : LLBase<"lld", GPR64Opnd>, LW_FM<0x34>;
+def SCD : SCBase<"scd", GPR64Opnd>, LW_FM<0x3c>;
 
 /// Jump and Branch Instructions
 let isCodeGenOnly = 1 in {
@@ -221,7 +199,7 @@ def DCLO : CountLeading1<"dclo", GPR64Opnd>, CLO_FM<0x25>;
 def DSBH : SubwordSwap<"dsbh", GPR64Opnd>, SEB_FM<2, 0x24>;
 def DSHD : SubwordSwap<"dshd", GPR64Opnd>, SEB_FM<5, 0x24>;
 
-def LEA_ADDiu64 : EffectiveAddress<"daddiu", GPR64Opnd, mem_ea_64>, LW_FM<0x19>;
+def LEA_ADDiu64 : EffectiveAddress<"daddiu", GPR64Opnd>, LW_FM<0x19>;
 
 let isCodeGenOnly = 1 in
 def RDHWR64 : ReadHardware<GPR64Opnd, HWRegsOpnd>, RDHWR_FM;
@@ -251,17 +229,11 @@ let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
 //===----------------------------------------------------------------------===//
 
 // extended loads
-let Predicates = [NotN64, HasStdEnc] in {
+let Predicates = [HasStdEnc] in {
   def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
   def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
   def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64 addr:$src)>;
   def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64 addr:$src)>;
-}
-let Predicates = [IsN64, HasStdEnc] in {
-  def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64_P8 addr:$src)>;
-  def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64_P8 addr:$src)>;
 }
 
 // hi/lo relocs

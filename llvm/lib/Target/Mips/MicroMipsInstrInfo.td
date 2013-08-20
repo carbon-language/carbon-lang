@@ -86,14 +86,14 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
                  SRLV_FM_MM<0xd0, 0>;
 
   /// Load and Store Instructions - aligned
-  defm LB_MM  : LoadM<"lb", GPR32Opnd, sextloadi8>, MMRel, LW_FM_MM<0x7>;
-  defm LBu_MM : LoadM<"lbu", GPR32Opnd, zextloadi8>, MMRel, LW_FM_MM<0x5>;
-  defm LH_MM  : LoadM<"lh", GPR32Opnd, sextloadi16>, MMRel, LW_FM_MM<0xf>;
-  defm LHu_MM : LoadM<"lhu", GPR32Opnd, zextloadi16>, MMRel, LW_FM_MM<0xd>;
-  defm LW_MM  : LoadM<"lw", GPR32Opnd>, MMRel, LW_FM_MM<0x3f>;
-  defm SB_MM  : StoreM<"sb", GPR32Opnd, truncstorei8>, MMRel, LW_FM_MM<0x6>;
-  defm SH_MM  : StoreM<"sh", GPR32Opnd, truncstorei16>, MMRel, LW_FM_MM<0xe>;
-  defm SW_MM  : StoreM<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
+  def LB_MM  : Load<"lb", GPR32Opnd, sextloadi8>, MMRel, LW_FM_MM<0x7>;
+  def LBu_MM : Load<"lbu", GPR32Opnd, zextloadi8>, MMRel, LW_FM_MM<0x5>;
+  def LH_MM  : Load<"lh", GPR32Opnd, sextloadi16>, MMRel, LW_FM_MM<0xf>;
+  def LHu_MM : Load<"lhu", GPR32Opnd, zextloadi16>, MMRel, LW_FM_MM<0xd>;
+  def LW_MM  : Load<"lw", GPR32Opnd>, MMRel, LW_FM_MM<0x3f>;
+  def SB_MM  : Store<"sb", GPR32Opnd, truncstorei8>, MMRel, LW_FM_MM<0x6>;
+  def SH_MM  : Store<"sh", GPR32Opnd, truncstorei16>, MMRel, LW_FM_MM<0xe>;
+  def SW_MM  : Store<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
 
   /// Load and Store Instructions - unaligned
   def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,

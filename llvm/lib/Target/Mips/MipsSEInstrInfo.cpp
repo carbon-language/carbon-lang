@@ -49,10 +49,8 @@ isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const
 {
   unsigned Opc = MI->getOpcode();
 
-  if ((Opc == Mips::LW)    || (Opc == Mips::LW_P8)  || (Opc == Mips::LD) ||
-      (Opc == Mips::LD_P8) || (Opc == Mips::LWC1)   || (Opc == Mips::LWC1_P8) ||
-      (Opc == Mips::LDC1)  || (Opc == Mips::LDC164) ||
-      (Opc == Mips::LDC164_P8)) {
+  if ((Opc == Mips::LW)   || (Opc == Mips::LD)   ||
+      (Opc == Mips::LWC1) || (Opc == Mips::LDC1) || (Opc == Mips::LDC164)) {
     if ((MI->getOperand(1).isFI()) && // is a stack slot
         (MI->getOperand(2).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(2)))) {
@@ -74,10 +72,8 @@ isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const
 {
   unsigned Opc = MI->getOpcode();
 
-  if ((Opc == Mips::SW)    || (Opc == Mips::SW_P8)  || (Opc == Mips::SD) ||
-      (Opc == Mips::SD_P8) || (Opc == Mips::SWC1)   || (Opc == Mips::SWC1_P8) ||
-      (Opc == Mips::SDC1)  || (Opc == Mips::SDC164) ||
-      (Opc == Mips::SDC164_P8)) {
+  if ((Opc == Mips::SW)   || (Opc == Mips::SD)   ||
+      (Opc == Mips::SWC1) || (Opc == Mips::SDC1) || (Opc == Mips::SDC164)) {
     if ((MI->getOperand(1).isFI()) && // is a stack slot
         (MI->getOperand(2).isImm()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(2)))) {
@@ -186,23 +182,23 @@ storeRegToStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   unsigned Opc = 0;
 
   if (Mips::GPR32RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::SW_P8 : Mips::SW;
+    Opc = Mips::SW;
   else if (Mips::GPR64RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::SD_P8 : Mips::SD;
+    Opc = Mips::SD;
   else if (Mips::ACC64RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_ACC64_P8 : Mips::STORE_ACC64;
+    Opc = Mips::STORE_ACC64;
   else if (Mips::ACC64DSPRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_ACC64DSP_P8 : Mips::STORE_ACC64DSP;
+    Opc = Mips::STORE_ACC64DSP;
   else if (Mips::ACC128RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_ACC128_P8 : Mips::STORE_ACC128;
+    Opc = Mips::STORE_ACC128;
   else if (Mips::DSPCCRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::STORE_CCOND_DSP_P8 : Mips::STORE_CCOND_DSP;
+    Opc = Mips::STORE_CCOND_DSP;
   else if (Mips::FGR32RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::SWC1_P8 : Mips::SWC1;
+    Opc = Mips::SWC1;
   else if (Mips::AFGR64RegClass.hasSubClassEq(RC))
     Opc = Mips::SDC1;
   else if (Mips::FGR64RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::SDC164_P8 : Mips::SDC164;
+    Opc = Mips::SDC164;
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
@@ -219,23 +215,23 @@ loadRegFromStack(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   unsigned Opc = 0;
 
   if (Mips::GPR32RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LW_P8 : Mips::LW;
+    Opc = Mips::LW;
   else if (Mips::GPR64RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LD_P8 : Mips::LD;
+    Opc = Mips::LD;
   else if (Mips::ACC64RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_ACC64_P8 : Mips::LOAD_ACC64;
+    Opc = Mips::LOAD_ACC64;
   else if (Mips::ACC64DSPRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_ACC64DSP_P8 : Mips::LOAD_ACC64DSP;
+    Opc = Mips::LOAD_ACC64DSP;
   else if (Mips::ACC128RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_ACC128_P8 : Mips::LOAD_ACC128;
+    Opc = Mips::LOAD_ACC128;
   else if (Mips::DSPCCRegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LOAD_CCOND_DSP_P8 : Mips::LOAD_CCOND_DSP;
+    Opc = Mips::LOAD_CCOND_DSP;
   else if (Mips::FGR32RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LWC1_P8 : Mips::LWC1;
+    Opc = Mips::LWC1;
   else if (Mips::AFGR64RegClass.hasSubClassEq(RC))
     Opc = Mips::LDC1;
   else if (Mips::FGR64RegClass.hasSubClassEq(RC))
-    Opc = IsN64 ? Mips::LDC164_P8 : Mips::LDC164;
+    Opc = Mips::LDC164;
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(Offset)

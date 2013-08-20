@@ -1242,12 +1242,12 @@ def PREPEND : PREPEND_ENC, PREPEND_DESC;
 // Pseudos.
 let isPseudo = 1, isCodeGenOnly = 1 in {
   // Pseudo instructions for loading and storing accumulator registers.
-  defm LOAD_ACC64DSP  : LoadM<"", ACC64DSPOpnd>;
-  defm STORE_ACC64DSP : StoreM<"", ACC64DSPOpnd>;
+  def LOAD_ACC64DSP  : Load<"", ACC64DSPOpnd>;
+  def STORE_ACC64DSP : Store<"", ACC64DSPOpnd>;
 
   // Pseudos for loading and storing ccond field of DSP control register.
-  defm LOAD_CCOND_DSP  : LoadM<"load_ccond_dsp", DSPCC>;
-  defm STORE_CCOND_DSP : StoreM<"store_ccond_dsp", DSPCC>;
+  def LOAD_CCOND_DSP  : Load<"load_ccond_dsp", DSPCC>;
+  def STORE_CCOND_DSP : Store<"store_ccond_dsp", DSPCC>;
 }
 
 // Pseudo CMP and PICK instructions.

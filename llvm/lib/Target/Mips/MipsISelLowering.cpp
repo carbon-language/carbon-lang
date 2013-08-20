@@ -797,107 +797,75 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   default:
     llvm_unreachable("Unexpected instr type to insert");
   case Mips::ATOMIC_LOAD_ADD_I8:
-  case Mips::ATOMIC_LOAD_ADD_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, Mips::ADDu);
   case Mips::ATOMIC_LOAD_ADD_I16:
-  case Mips::ATOMIC_LOAD_ADD_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, Mips::ADDu);
   case Mips::ATOMIC_LOAD_ADD_I32:
-  case Mips::ATOMIC_LOAD_ADD_I32_P8:
     return emitAtomicBinary(MI, BB, 4, Mips::ADDu);
   case Mips::ATOMIC_LOAD_ADD_I64:
-  case Mips::ATOMIC_LOAD_ADD_I64_P8:
     return emitAtomicBinary(MI, BB, 8, Mips::DADDu);
 
   case Mips::ATOMIC_LOAD_AND_I8:
-  case Mips::ATOMIC_LOAD_AND_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, Mips::AND);
   case Mips::ATOMIC_LOAD_AND_I16:
-  case Mips::ATOMIC_LOAD_AND_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, Mips::AND);
   case Mips::ATOMIC_LOAD_AND_I32:
-  case Mips::ATOMIC_LOAD_AND_I32_P8:
     return emitAtomicBinary(MI, BB, 4, Mips::AND);
   case Mips::ATOMIC_LOAD_AND_I64:
-  case Mips::ATOMIC_LOAD_AND_I64_P8:
     return emitAtomicBinary(MI, BB, 8, Mips::AND64);
 
   case Mips::ATOMIC_LOAD_OR_I8:
-  case Mips::ATOMIC_LOAD_OR_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, Mips::OR);
   case Mips::ATOMIC_LOAD_OR_I16:
-  case Mips::ATOMIC_LOAD_OR_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, Mips::OR);
   case Mips::ATOMIC_LOAD_OR_I32:
-  case Mips::ATOMIC_LOAD_OR_I32_P8:
     return emitAtomicBinary(MI, BB, 4, Mips::OR);
   case Mips::ATOMIC_LOAD_OR_I64:
-  case Mips::ATOMIC_LOAD_OR_I64_P8:
     return emitAtomicBinary(MI, BB, 8, Mips::OR64);
 
   case Mips::ATOMIC_LOAD_XOR_I8:
-  case Mips::ATOMIC_LOAD_XOR_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, Mips::XOR);
   case Mips::ATOMIC_LOAD_XOR_I16:
-  case Mips::ATOMIC_LOAD_XOR_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, Mips::XOR);
   case Mips::ATOMIC_LOAD_XOR_I32:
-  case Mips::ATOMIC_LOAD_XOR_I32_P8:
     return emitAtomicBinary(MI, BB, 4, Mips::XOR);
   case Mips::ATOMIC_LOAD_XOR_I64:
-  case Mips::ATOMIC_LOAD_XOR_I64_P8:
     return emitAtomicBinary(MI, BB, 8, Mips::XOR64);
 
   case Mips::ATOMIC_LOAD_NAND_I8:
-  case Mips::ATOMIC_LOAD_NAND_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, 0, true);
   case Mips::ATOMIC_LOAD_NAND_I16:
-  case Mips::ATOMIC_LOAD_NAND_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, 0, true);
   case Mips::ATOMIC_LOAD_NAND_I32:
-  case Mips::ATOMIC_LOAD_NAND_I32_P8:
     return emitAtomicBinary(MI, BB, 4, 0, true);
   case Mips::ATOMIC_LOAD_NAND_I64:
-  case Mips::ATOMIC_LOAD_NAND_I64_P8:
     return emitAtomicBinary(MI, BB, 8, 0, true);
 
   case Mips::ATOMIC_LOAD_SUB_I8:
-  case Mips::ATOMIC_LOAD_SUB_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, Mips::SUBu);
   case Mips::ATOMIC_LOAD_SUB_I16:
-  case Mips::ATOMIC_LOAD_SUB_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, Mips::SUBu);
   case Mips::ATOMIC_LOAD_SUB_I32:
-  case Mips::ATOMIC_LOAD_SUB_I32_P8:
     return emitAtomicBinary(MI, BB, 4, Mips::SUBu);
   case Mips::ATOMIC_LOAD_SUB_I64:
-  case Mips::ATOMIC_LOAD_SUB_I64_P8:
     return emitAtomicBinary(MI, BB, 8, Mips::DSUBu);
 
   case Mips::ATOMIC_SWAP_I8:
-  case Mips::ATOMIC_SWAP_I8_P8:
     return emitAtomicBinaryPartword(MI, BB, 1, 0);
   case Mips::ATOMIC_SWAP_I16:
-  case Mips::ATOMIC_SWAP_I16_P8:
     return emitAtomicBinaryPartword(MI, BB, 2, 0);
   case Mips::ATOMIC_SWAP_I32:
-  case Mips::ATOMIC_SWAP_I32_P8:
     return emitAtomicBinary(MI, BB, 4, 0);
   case Mips::ATOMIC_SWAP_I64:
-  case Mips::ATOMIC_SWAP_I64_P8:
     return emitAtomicBinary(MI, BB, 8, 0);
 
   case Mips::ATOMIC_CMP_SWAP_I8:
-  case Mips::ATOMIC_CMP_SWAP_I8_P8:
     return emitAtomicCmpSwapPartword(MI, BB, 1);
   case Mips::ATOMIC_CMP_SWAP_I16:
-  case Mips::ATOMIC_CMP_SWAP_I16_P8:
     return emitAtomicCmpSwapPartword(MI, BB, 2);
   case Mips::ATOMIC_CMP_SWAP_I32:
-  case Mips::ATOMIC_CMP_SWAP_I32_P8:
     return emitAtomicCmpSwap(MI, BB, 4);
   case Mips::ATOMIC_CMP_SWAP_I64:
-  case Mips::ATOMIC_CMP_SWAP_I64_P8:
     return emitAtomicCmpSwap(MI, BB, 8);
   case Mips::PseudoSDIV:
   case Mips::PseudoUDIV:
@@ -924,16 +892,16 @@ MipsTargetLowering::emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   unsigned LL, SC, AND, NOR, ZERO, BEQ;
 
   if (Size == 4) {
-    LL = IsN64 ? Mips::LL_P8 : Mips::LL;
-    SC = IsN64 ? Mips::SC_P8 : Mips::SC;
+    LL = Mips::LL;
+    SC = Mips::SC;
     AND = Mips::AND;
     NOR = Mips::NOR;
     ZERO = Mips::ZERO;
     BEQ = Mips::BEQ;
   }
   else {
-    LL = IsN64 ? Mips::LLD_P8 : Mips::LLD;
-    SC = IsN64 ? Mips::SCD_P8 : Mips::SCD;
+    LL = Mips::LLD;
+    SC = Mips::SCD;
     AND = Mips::AND64;
     NOR = Mips::NOR64;
     ZERO = Mips::ZERO_64;
@@ -1009,8 +977,6 @@ MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
   const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
-  unsigned LL = IsN64 ? Mips::LL_P8 : Mips::LL;
-  unsigned SC = IsN64 ? Mips::SC_P8 : Mips::SC;
 
   unsigned Dest = MI->getOperand(0).getReg();
   unsigned Ptr = MI->getOperand(1).getReg();
@@ -1107,7 +1073,7 @@ MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
   //   beq     success,$0,loopMBB
 
   BB = loopMBB;
-  BuildMI(BB, DL, TII->get(LL), OldVal).addReg(AlignedAddr).addImm(0);
+  BuildMI(BB, DL, TII->get(Mips::LL), OldVal).addReg(AlignedAddr).addImm(0);
   if (Nand) {
     //  and andres, oldval, incr2
     //  nor binopres, $0, andres
@@ -1130,7 +1096,7 @@ MipsTargetLowering::emitAtomicBinaryPartword(MachineInstr *MI,
     .addReg(OldVal).addReg(Mask2);
   BuildMI(BB, DL, TII->get(Mips::OR), StoreVal)
     .addReg(MaskedOldVal0).addReg(NewVal);
-  BuildMI(BB, DL, TII->get(SC), Success)
+  BuildMI(BB, DL, TII->get(Mips::SC), Success)
     .addReg(StoreVal).addReg(AlignedAddr).addImm(0);
   BuildMI(BB, DL, TII->get(Mips::BEQ))
     .addReg(Success).addReg(Mips::ZERO).addMBB(loopMBB);
@@ -1171,15 +1137,15 @@ MipsTargetLowering::emitAtomicCmpSwap(MachineInstr *MI,
   unsigned LL, SC, ZERO, BNE, BEQ;
 
   if (Size == 4) {
-    LL = IsN64 ? Mips::LL_P8 : Mips::LL;
-    SC = IsN64 ? Mips::SC_P8 : Mips::SC;
+    LL = Mips::LL;
+    SC = Mips::SC;
     ZERO = Mips::ZERO;
     BNE = Mips::BNE;
     BEQ = Mips::BEQ;
   }
   else {
-    LL = IsN64 ? Mips::LLD_P8 : Mips::LLD;
-    SC = IsN64 ? Mips::SCD_P8 : Mips::SCD;
+    LL = Mips::LLD;
+    SC = Mips::SCD;
     ZERO = Mips::ZERO_64;
     BNE = Mips::BNE64;
     BEQ = Mips::BEQ64;
@@ -1251,8 +1217,6 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
   const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
-  unsigned LL = IsN64 ? Mips::LL_P8 : Mips::LL;
-  unsigned SC = IsN64 ? Mips::SC_P8 : Mips::SC;
 
   unsigned Dest    = MI->getOperand(0).getReg();
   unsigned Ptr     = MI->getOperand(1).getReg();
@@ -1349,7 +1313,7 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
   //    and     maskedoldval0,oldval,mask
   //    bne     maskedoldval0,shiftedcmpval,sinkMBB
   BB = loop1MBB;
-  BuildMI(BB, DL, TII->get(LL), OldVal).addReg(AlignedAddr).addImm(0);
+  BuildMI(BB, DL, TII->get(Mips::LL), OldVal).addReg(AlignedAddr).addImm(0);
   BuildMI(BB, DL, TII->get(Mips::AND), MaskedOldVal0)
     .addReg(OldVal).addReg(Mask);
   BuildMI(BB, DL, TII->get(Mips::BNE))
@@ -1365,7 +1329,7 @@ MipsTargetLowering::emitAtomicCmpSwapPartword(MachineInstr *MI,
     .addReg(OldVal).addReg(Mask2);
   BuildMI(BB, DL, TII->get(Mips::OR), StoreVal)
     .addReg(MaskedOldVal1).addReg(ShiftedNewVal);
-  BuildMI(BB, DL, TII->get(SC), Success)
+  BuildMI(BB, DL, TII->get(Mips::SC), Success)
       .addReg(StoreVal).addReg(AlignedAddr).addImm(0);
   BuildMI(BB, DL, TII->get(Mips::BEQ))
       .addReg(Success).addReg(Mips::ZERO).addMBB(loop1MBB);

@@ -70,31 +70,23 @@ bool ExpandPseudo::expand() {
 bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   switch(I->getOpcode()) {
   case Mips::LOAD_CCOND_DSP:
-  case Mips::LOAD_CCOND_DSP_P8:
     expandLoadCCond(MBB, I);
     break;
   case Mips::STORE_CCOND_DSP:
-  case Mips::STORE_CCOND_DSP_P8:
     expandStoreCCond(MBB, I);
     break;
   case Mips::LOAD_ACC64:
-  case Mips::LOAD_ACC64_P8:
   case Mips::LOAD_ACC64DSP:
-  case Mips::LOAD_ACC64DSP_P8:
     expandLoadACC(MBB, I, 4);
     break;
   case Mips::LOAD_ACC128:
-  case Mips::LOAD_ACC128_P8:
     expandLoadACC(MBB, I, 8);
     break;
   case Mips::STORE_ACC64:
-  case Mips::STORE_ACC64_P8:
   case Mips::STORE_ACC64DSP:
-  case Mips::STORE_ACC64DSP_P8:
     expandStoreACC(MBB, I, 4);
     break;
   case Mips::STORE_ACC128:
-  case Mips::STORE_ACC128_P8:
     expandStoreACC(MBB, I, 8);
     break;
   case TargetOpcode::COPY:

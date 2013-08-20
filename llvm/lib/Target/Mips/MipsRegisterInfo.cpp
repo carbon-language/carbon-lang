@@ -47,6 +47,11 @@ MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST)
 
 unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
+const TargetRegisterClass *
+MipsRegisterInfo::getPointerRegClass(const MachineFunction &MF,
+                                     unsigned Kind) const {
+  return Subtarget.isABI_N64() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
+}
 
 unsigned
 MipsRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,

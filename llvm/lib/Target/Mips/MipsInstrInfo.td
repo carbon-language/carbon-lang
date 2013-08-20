@@ -278,34 +278,23 @@ def MipsMemAsmOperand : AsmOperandClass {
 }
 
 // Address operand
-def mem : Operand<i32> {
+def mem : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR32, simm16);
+  let MIOperandInfo = (ops ptr_rc, simm16);
   let EncoderMethod = "getMemEncoding";
   let ParserMatchClass = MipsMemAsmOperand;
   let OperandType = "OPERAND_MEMORY";
 }
 
-def mem64 : Operand<i64> {
-  let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops GPR64, simm16_64);
-  let EncoderMethod = "getMemEncoding";
-  let ParserMatchClass = MipsMemAsmOperand;
-  let OperandType = "OPERAND_MEMORY";
-}
-
-def mem_ea : Operand<i32> {
+def mem_ea : Operand<iPTR> {
   let PrintMethod = "printMemOperandEA";
-  let MIOperandInfo = (ops GPR32, simm16);
+  let MIOperandInfo = (ops ptr_rc, simm16);
   let EncoderMethod = "getMemEncoding";
   let OperandType = "OPERAND_MEMORY";
 }
 
-def mem_ea_64 : Operand<i64> {
-  let PrintMethod = "printMemOperandEA";
-  let MIOperandInfo = (ops GPR64, simm16_64);
-  let EncoderMethod = "getMemEncoding";
-  let OperandType = "OPERAND_MEMORY";
+def PtrRC : Operand<iPTR> {
+  let MIOperandInfo = (ops ptr_rc);
 }
 
 // size operand of ext instruction
@@ -457,89 +446,37 @@ class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 // Memory Load/Store
-class Load<string opstr, SDPatternOperator OpNode, DAGOperand RO,
-           InstrItinClass Itin, Operand MemOpnd, ComplexPattern Addr,
-           string ofsuffix> :
-  InstSE<(outs RO:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(set RO:$rt, (OpNode Addr:$addr))], NoItinerary, FrmI,
-         !strconcat(opstr, ofsuffix)> {
+class Load<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
+           InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
+  InstSE<(outs RO:$rt), (ins mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(set RO:$rt, (OpNode Addr:$addr))], NoItinerary, FrmI, opstr> {
   let DecoderMethod = "DecodeMem";
   let canFoldAsLoad = 1;
   let mayLoad = 1;
 }
 
-class Store<string opstr, SDPatternOperator OpNode, DAGOperand RO,
-            InstrItinClass Itin, Operand MemOpnd, ComplexPattern Addr,
-            string ofsuffix> :
-  InstSE<(outs), (ins RO:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
-         [(OpNode RO:$rt, Addr:$addr)], NoItinerary, FrmI,
-         !strconcat(opstr, ofsuffix)> {
+class Store<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
+            InstrItinClass Itin = NoItinerary, ComplexPattern Addr = addr> :
+  InstSE<(outs), (ins RO:$rt, mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(OpNode RO:$rt, Addr:$addr)], NoItinerary, FrmI, opstr> {
   let DecoderMethod = "DecodeMem";
   let mayStore = 1;
 }
 
-multiclass LoadM<string opstr, DAGOperand RO,
-                 SDPatternOperator OpNode = null_frag,
-                 InstrItinClass Itin = NoItinerary,
-                 ComplexPattern Addr = addr> {
-  def NAME : Load<opstr, OpNode, RO, Itin, mem, Addr, "">,
-             Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Load<opstr, OpNode, RO, Itin, mem64, Addr, "_p8">,
-             Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
-multiclass StoreM<string opstr, DAGOperand RO,
-                  SDPatternOperator OpNode = null_frag,
-                  InstrItinClass Itin = NoItinerary,
-                  ComplexPattern Addr = addr> {
-  def NAME : Store<opstr, OpNode, RO, Itin, mem, Addr, "">,
-             Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Store<opstr, OpNode, RO, Itin, mem64, Addr, "_p8">,
-             Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
 // Load/Store Left/Right
 let canFoldAsLoad = 1 in
-class LoadLeftRight<string opstr, SDNode OpNode, RegisterOperand RO,
-                    Operand MemOpnd> :
-  InstSE<(outs RO:$rt), (ins MemOpnd:$addr, RO:$src),
+class LoadLeftRight<string opstr, SDNode OpNode, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins mem:$addr, RO:$src),
          !strconcat(opstr, "\t$rt, $addr"),
          [(set RO:$rt, (OpNode addr:$addr, RO:$src))], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
   string Constraints = "$src = $rt";
 }
 
-class StoreLeftRight<string opstr, SDNode OpNode, RegisterOperand RO,
-                     Operand MemOpnd>:
-  InstSE<(outs), (ins RO:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
+class StoreLeftRight<string opstr, SDNode OpNode, RegisterOperand RO> :
+  InstSE<(outs), (ins RO:$rt, mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
          [(OpNode RO:$rt, addr:$addr)], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
-}
-
-multiclass LoadLeftRightM<string opstr, SDNode OpNode, RegisterOperand RO> {
-  def NAME : LoadLeftRight<opstr, OpNode, RO, mem>,
-             Requires<[NotN64, HasStdEnc, NotInMicroMips]>;
-  def _P8  : LoadLeftRight<opstr, OpNode, RO, mem64>,
-             Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
-multiclass StoreLeftRightM<string opstr, SDNode OpNode, RegisterOperand RO> {
-  def NAME : StoreLeftRight<opstr, OpNode, RO, mem>,
-             Requires<[NotN64, HasStdEnc, NotInMicroMips]>;
-  def _P8  : StoreLeftRight<opstr, OpNode, RO, mem64>,
-             Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
 }
 
 // Conditional Branch
@@ -749,8 +686,8 @@ class MoveToLOHI<string opstr, RegisterOperand RO, list<Register> DefRegs>:
   let neverHasSideEffects = 1;
 }
 
-class EffectiveAddress<string opstr, RegisterOperand RO, Operand Mem> :
-  InstSE<(outs RO:$rt), (ins Mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+class EffectiveAddress<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins mem_ea:$addr), !strconcat(opstr, "\t$rt, $addr"),
          [(set RO:$rt, addr:$addr)], NoItinerary, FrmI> {
   let isCodeGenOnly = 1;
   let DecoderMethod = "DecodeMem";
@@ -807,36 +744,24 @@ class InsBase<string opstr, RegisterOperand RO>:
 }
 
 // Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
-class Atomic2Ops<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
-  PseudoSE<(outs DRC:$dst), (ins PRC:$ptr, DRC:$incr),
-           [(set DRC:$dst, (Op PRC:$ptr, DRC:$incr))]>;
-
-multiclass Atomic2Ops32<PatFrag Op> {
-  def NAME : Atomic2Ops<Op, GPR32, GPR32>, Requires<[NotN64, HasStdEnc]>;
-  def _P8  : Atomic2Ops<Op, GPR32, GPR64>, Requires<[IsN64, HasStdEnc]>;
-}
+class Atomic2Ops<PatFrag Op, RegisterClass DRC> :
+  PseudoSE<(outs DRC:$dst), (ins PtrRC:$ptr, DRC:$incr),
+           [(set DRC:$dst, (Op iPTR:$ptr, DRC:$incr))]>;
 
 // Atomic Compare & Swap.
-class AtomicCmpSwap<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
-  PseudoSE<(outs DRC:$dst), (ins PRC:$ptr, DRC:$cmp, DRC:$swap),
-           [(set DRC:$dst, (Op PRC:$ptr, DRC:$cmp, DRC:$swap))]>;
+class AtomicCmpSwap<PatFrag Op, RegisterClass DRC> :
+  PseudoSE<(outs DRC:$dst), (ins PtrRC:$ptr, DRC:$cmp, DRC:$swap),
+           [(set DRC:$dst, (Op iPTR:$ptr, DRC:$cmp, DRC:$swap))]>;
 
-multiclass AtomicCmpSwap32<PatFrag Op>  {
-  def NAME : AtomicCmpSwap<Op, GPR32, GPR32>,
-             Requires<[NotN64, HasStdEnc]>;
-  def _P8  : AtomicCmpSwap<Op, GPR32, GPR64>,
-             Requires<[IsN64, HasStdEnc]>;
-}
-
-class LLBase<string opstr, RegisterOperand RO, Operand Mem> :
-  InstSE<(outs RO:$rt), (ins Mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+class LLBase<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$rt), (ins mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
          [], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
   let mayLoad = 1;
 }
 
-class SCBase<string opstr, RegisterOperand RO, Operand Mem> :
-  InstSE<(outs RO:$dst), (ins RO:$rt, Mem:$addr),
+class SCBase<string opstr, RegisterOperand RO> :
+  InstSE<(outs RO:$dst), (ins RO:$rt, mem:$addr),
          !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
   let DecoderMethod = "DecodeMem";
   let mayStore = 1;
@@ -867,38 +792,38 @@ def ADJCALLSTACKUP   : MipsPseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
 }
 
 let usesCustomInserter = 1 in {
-  defm ATOMIC_LOAD_ADD_I8   : Atomic2Ops32<atomic_load_add_8>;
-  defm ATOMIC_LOAD_ADD_I16  : Atomic2Ops32<atomic_load_add_16>;
-  defm ATOMIC_LOAD_ADD_I32  : Atomic2Ops32<atomic_load_add_32>;
-  defm ATOMIC_LOAD_SUB_I8   : Atomic2Ops32<atomic_load_sub_8>;
-  defm ATOMIC_LOAD_SUB_I16  : Atomic2Ops32<atomic_load_sub_16>;
-  defm ATOMIC_LOAD_SUB_I32  : Atomic2Ops32<atomic_load_sub_32>;
-  defm ATOMIC_LOAD_AND_I8   : Atomic2Ops32<atomic_load_and_8>;
-  defm ATOMIC_LOAD_AND_I16  : Atomic2Ops32<atomic_load_and_16>;
-  defm ATOMIC_LOAD_AND_I32  : Atomic2Ops32<atomic_load_and_32>;
-  defm ATOMIC_LOAD_OR_I8    : Atomic2Ops32<atomic_load_or_8>;
-  defm ATOMIC_LOAD_OR_I16   : Atomic2Ops32<atomic_load_or_16>;
-  defm ATOMIC_LOAD_OR_I32   : Atomic2Ops32<atomic_load_or_32>;
-  defm ATOMIC_LOAD_XOR_I8   : Atomic2Ops32<atomic_load_xor_8>;
-  defm ATOMIC_LOAD_XOR_I16  : Atomic2Ops32<atomic_load_xor_16>;
-  defm ATOMIC_LOAD_XOR_I32  : Atomic2Ops32<atomic_load_xor_32>;
-  defm ATOMIC_LOAD_NAND_I8  : Atomic2Ops32<atomic_load_nand_8>;
-  defm ATOMIC_LOAD_NAND_I16 : Atomic2Ops32<atomic_load_nand_16>;
-  defm ATOMIC_LOAD_NAND_I32 : Atomic2Ops32<atomic_load_nand_32>;
+  def ATOMIC_LOAD_ADD_I8   : Atomic2Ops<atomic_load_add_8, GPR32>;
+  def ATOMIC_LOAD_ADD_I16  : Atomic2Ops<atomic_load_add_16, GPR32>;
+  def ATOMIC_LOAD_ADD_I32  : Atomic2Ops<atomic_load_add_32, GPR32>;
+  def ATOMIC_LOAD_SUB_I8   : Atomic2Ops<atomic_load_sub_8, GPR32>;
+  def ATOMIC_LOAD_SUB_I16  : Atomic2Ops<atomic_load_sub_16, GPR32>;
+  def ATOMIC_LOAD_SUB_I32  : Atomic2Ops<atomic_load_sub_32, GPR32>;
+  def ATOMIC_LOAD_AND_I8   : Atomic2Ops<atomic_load_and_8, GPR32>;
+  def ATOMIC_LOAD_AND_I16  : Atomic2Ops<atomic_load_and_16, GPR32>;
+  def ATOMIC_LOAD_AND_I32  : Atomic2Ops<atomic_load_and_32, GPR32>;
+  def ATOMIC_LOAD_OR_I8    : Atomic2Ops<atomic_load_or_8, GPR32>;
+  def ATOMIC_LOAD_OR_I16   : Atomic2Ops<atomic_load_or_16, GPR32>;
+  def ATOMIC_LOAD_OR_I32   : Atomic2Ops<atomic_load_or_32, GPR32>;
+  def ATOMIC_LOAD_XOR_I8   : Atomic2Ops<atomic_load_xor_8, GPR32>;
+  def ATOMIC_LOAD_XOR_I16  : Atomic2Ops<atomic_load_xor_16, GPR32>;
+  def ATOMIC_LOAD_XOR_I32  : Atomic2Ops<atomic_load_xor_32, GPR32>;
+  def ATOMIC_LOAD_NAND_I8  : Atomic2Ops<atomic_load_nand_8, GPR32>;
+  def ATOMIC_LOAD_NAND_I16 : Atomic2Ops<atomic_load_nand_16, GPR32>;
+  def ATOMIC_LOAD_NAND_I32 : Atomic2Ops<atomic_load_nand_32, GPR32>;
 
-  defm ATOMIC_SWAP_I8       : Atomic2Ops32<atomic_swap_8>;
-  defm ATOMIC_SWAP_I16      : Atomic2Ops32<atomic_swap_16>;
-  defm ATOMIC_SWAP_I32      : Atomic2Ops32<atomic_swap_32>;
+  def ATOMIC_SWAP_I8       : Atomic2Ops<atomic_swap_8, GPR32>;
+  def ATOMIC_SWAP_I16      : Atomic2Ops<atomic_swap_16, GPR32>;
+  def ATOMIC_SWAP_I32      : Atomic2Ops<atomic_swap_32, GPR32>;
 
-  defm ATOMIC_CMP_SWAP_I8   : AtomicCmpSwap32<atomic_cmp_swap_8>;
-  defm ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap32<atomic_cmp_swap_16>;
-  defm ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap32<atomic_cmp_swap_32>;
+  def ATOMIC_CMP_SWAP_I8   : AtomicCmpSwap<atomic_cmp_swap_8, GPR32>;
+  def ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap<atomic_cmp_swap_16, GPR32>;
+  def ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap<atomic_cmp_swap_32, GPR32>;
 }
 
 /// Pseudo instructions for loading and storing accumulator registers.
 let isPseudo = 1, isCodeGenOnly = 1 in {
-  defm LOAD_ACC64  : LoadM<"", ACC64>;
-  defm STORE_ACC64 : StoreM<"", ACC64>;
+  def LOAD_ACC64  : Load<"", ACC64>;
+  def STORE_ACC64 : Store<"", ACC64>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -969,23 +894,23 @@ let Predicates = [HasMips32r2, HasStdEnc] in {
 
 /// Load and Store Instructions
 ///  aligned
-defm LB  : LoadM<"lb", GPR32Opnd, sextloadi8, IILoad>, MMRel, LW_FM<0x20>;
-defm LBu : LoadM<"lbu", GPR32Opnd, zextloadi8, IILoad, addrDefault>, MMRel,
-           LW_FM<0x24>;
-defm LH  : LoadM<"lh", GPR32Opnd, sextloadi16, IILoad, addrDefault>, MMRel,
-           LW_FM<0x21>;
-defm LHu : LoadM<"lhu", GPR32Opnd, zextloadi16, IILoad>, MMRel, LW_FM<0x25>;
-defm LW  : LoadM<"lw", GPR32Opnd, load, IILoad, addrDefault>, MMRel,
-           LW_FM<0x23>;
-defm SB  : StoreM<"sb", GPR32Opnd, truncstorei8, IIStore>, MMRel, LW_FM<0x28>;
-defm SH  : StoreM<"sh", GPR32Opnd, truncstorei16, IIStore>, MMRel, LW_FM<0x29>;
-defm SW  : StoreM<"sw", GPR32Opnd, store, IIStore>, MMRel, LW_FM<0x2b>;
+def LB  : Load<"lb", GPR32Opnd, sextloadi8, IILoad>, MMRel, LW_FM<0x20>;
+def LBu : Load<"lbu", GPR32Opnd, zextloadi8, IILoad, addrDefault>, MMRel,
+          LW_FM<0x24>;
+def LH  : Load<"lh", GPR32Opnd, sextloadi16, IILoad, addrDefault>, MMRel,
+          LW_FM<0x21>;
+def LHu : Load<"lhu", GPR32Opnd, zextloadi16, IILoad>, MMRel, LW_FM<0x25>;
+def LW  : Load<"lw", GPR32Opnd, load, IILoad, addrDefault>, MMRel,
+          LW_FM<0x23>;
+def SB  : Store<"sb", GPR32Opnd, truncstorei8, IIStore>, MMRel, LW_FM<0x28>;
+def SH  : Store<"sh", GPR32Opnd, truncstorei16, IIStore>, MMRel, LW_FM<0x29>;
+def SW  : Store<"sw", GPR32Opnd, store, IIStore>, MMRel, LW_FM<0x2b>;
 
 /// load/store left/right
-defm LWL : LoadLeftRightM<"lwl", MipsLWL, GPR32Opnd>, LW_FM<0x22>;
-defm LWR : LoadLeftRightM<"lwr", MipsLWR, GPR32Opnd>, LW_FM<0x26>;
-defm SWL : StoreLeftRightM<"swl", MipsSWL, GPR32Opnd>, LW_FM<0x2a>;
-defm SWR : StoreLeftRightM<"swr", MipsSWR, GPR32Opnd>, LW_FM<0x2e>;
+def LWL : LoadLeftRight<"lwl", MipsLWL, GPR32Opnd>, LW_FM<0x22>;
+def LWR : LoadLeftRight<"lwr", MipsLWR, GPR32Opnd>, LW_FM<0x26>;
+def SWL : StoreLeftRight<"swl", MipsSWL, GPR32Opnd>, LW_FM<0x2a>;
+def SWR : StoreLeftRight<"swr", MipsSWR, GPR32Opnd>, LW_FM<0x2e>;
 
 def SYNC : SYNC_FT, SYNC_FM;
 def TEQ : TEQ_FT<"teq", GPR32Opnd>, TEQ_FM<0x34>;
@@ -1002,15 +927,8 @@ def DI : DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
 def WAIT : WAIT_FT<"wait">;
 
 /// Load-linked, Store-conditional
-let Predicates = [NotN64, HasStdEnc] in {
-  def LL : LLBase<"ll", GPR32Opnd, mem>, LW_FM<0x30>;
-  def SC : SCBase<"sc", GPR32Opnd, mem>, LW_FM<0x38>;
-}
-
-let Predicates = [IsN64, HasStdEnc], DecoderNamespace = "Mips64" in {
-  def LL_P8 : LLBase<"ll", GPR32Opnd, mem64>, LW_FM<0x30>;
-  def SC_P8 : SCBase<"sc", GPR32Opnd, mem64>, LW_FM<0x38>;
-}
+def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>;
+def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
 
 /// Jump and Branch Instructions
 def J       : JumpFJ<jmptarget, "j", br, bb>, FJ<2>,
@@ -1093,7 +1011,7 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu", GPR32Opnd, mem_ea>, LW_FM<9>;
+def LEA_ADDiu : EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
 
 // MADD*/MSUB*
 def MADD  : MArithR<"madd", 1>, MULT_FM<0x1c, 0>;
@@ -1291,24 +1209,15 @@ def : MipsPat<(not GPR32:$in),
               (NOR GPR32Opnd:$in, ZERO)>;
 
 // extended loads
-let Predicates = [NotN64, HasStdEnc] in {
+let Predicates = [HasStdEnc] in {
   def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
   def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
   def : MipsPat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 }
-let Predicates = [IsN64, HasStdEnc] in {
-  def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu_P8 addr:$src)>;
-  def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu_P8 addr:$src)>;
-  def : MipsPat<(i32 (extloadi16 addr:$src)), (LHu_P8 addr:$src)>;
-}
 
 // peepholes
-let Predicates = [NotN64, HasStdEnc] in {
-  def : MipsPat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
-}
-let Predicates = [IsN64, HasStdEnc] in {
-  def : MipsPat<(store (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
-}
+let Predicates = [HasStdEnc] in
+def : MipsPat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
 // brcond patterns
 multiclass BrcondPats<RegisterClass RC, Instruction BEQOp, Instruction BNEOp,
@@ -1405,15 +1314,10 @@ def : MipsPat<(i32 (ExtractLOHI ACC64:$ac, imm:$lohi_idx)),
 
 // Load halfword/word patterns.
 let AddedComplexity = 40 in {
-  let Predicates = [NotN64, HasStdEnc] in {
+  let Predicates = [HasStdEnc] in {
     def : LoadRegImmPat<LBu, i32, zextloadi8>;
     def : LoadRegImmPat<LH, i32, sextloadi16>;
     def : LoadRegImmPat<LW, i32, load>;
-  }
-  let Predicates = [IsN64, HasStdEnc] in {
-    def : LoadRegImmPat<LBu_P8, i32, zextloadi8>;
-    def : LoadRegImmPat<LH_P8, i32, sextloadi16>;
-    def : LoadRegImmPat<LW_P8, i32, load>;
   }
 }
 

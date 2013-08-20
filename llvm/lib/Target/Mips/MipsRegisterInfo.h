@@ -42,6 +42,9 @@ public:
   void adjustMipsStackFrame(MachineFunction &MF) const;
 
   /// Code Generation virtual methods...
+  const TargetRegisterClass *getPointerRegClass(const MachineFunction &MF,
+                                                unsigned Kind) const;
+
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const;
   const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
