@@ -815,7 +815,15 @@ void ObjCMigrateASTConsumer::migrateCFFunctions(
     edit::Commit commit(*Editor);
     commit.insertBefore(FirstFD->getLocStart(), PragmaString);
     PragmaString = "\nCF_IMPLICIT_BRIDGING_DISABLED\n";
-    commit.insertAfterToken(LastFD->getLocEnd(), PragmaString);
+    SourceLocation EndLoc = LastFD->getLocEnd();
+    // get location just past end of function location.
+    EndLoc = PP.getLocForEndOfToken(EndLoc);
+    Token Tok;
+    // get locaiton of token that comes after end of function.
+    bool Failed = PP.getRawToken(EndLoc, Tok, /*IgnoreWhiteSpace=*/true);
+    if (!Failed)
+      EndLoc = Tok.getLocation();
+    commit.insertAfterToken(EndLoc, PragmaString);
     Editor->commit(commit);
     
     CFFunctionIBCandidates.clear();

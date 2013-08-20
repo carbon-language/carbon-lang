@@ -430,7 +430,8 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
 /// \returns true if there was a failure, false on success.
 bool Lexer::getRawToken(SourceLocation Loc, Token &Result,
                         const SourceManager &SM,
-                        const LangOptions &LangOpts) {
+                        const LangOptions &LangOpts,
+                        bool IgnoreWhiteSpace) {
   // TODO: this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.  Just look at StrData[0] to handle
   // all obviously single-char tokens.  This could use
@@ -448,7 +449,7 @@ bool Lexer::getRawToken(SourceLocation Loc, Token &Result,
 
   const char *StrData = Buffer.data()+LocInfo.second;
 
-  if (isWhitespace(StrData[0]))
+  if (!IgnoreWhiteSpace && isWhitespace(StrData[0]))
     return true;
 
   // Create a lexer starting at the beginning of this token.
