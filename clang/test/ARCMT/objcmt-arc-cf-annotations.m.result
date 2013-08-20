@@ -2100,10 +2100,7 @@ void rdar13783514(xpc_connection_t connection) {
 
 CF_IMPLICIT_BRIDGING_ENABLED
 
-CFAttributedStringRef CFAttributedCreate(long attributes) CF_RETURNS_RETAINED;
+CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RETAINED;
 
 CF_IMPLICIT_BRIDGING_DISABLED
 
-CFTypeID CFGetTypeID(void) {
-  return 0;
-}

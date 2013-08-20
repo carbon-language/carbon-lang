@@ -52,6 +52,8 @@ class ObjCMigrateASTConsumer : public ASTConsumer {
   void migrateCFFunctions(ASTContext &Ctx,
                           const FunctionDecl *FuncDecl);
   
+  void AnnotateImplicitBridging(ASTContext &Ctx);
+  
   bool migrateAddFunctionAnnotation(ASTContext &Ctx,
                                     const FunctionDecl *FuncDecl);
   
@@ -794,9 +796,39 @@ AuditedType (QualType AT, bool &IsPoniter) {
   return true;
 }
 
+void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
+  if (!Ctx.Idents.get("CF_IMPLICIT_BRIDGING_ENABLED").hasMacroDefinition()) {
+    CFFunctionIBCandidates.clear();
+    return;
+  }
+  // Insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
+  const FunctionDecl *FirstFD = CFFunctionIBCandidates[0];
+  const FunctionDecl *LastFD  =
+  CFFunctionIBCandidates[CFFunctionIBCandidates.size()-1];
+  const char *PragmaString = "\nCF_IMPLICIT_BRIDGING_ENABLED\n\n";
+  edit::Commit commit(*Editor);
+  commit.insertBefore(FirstFD->getLocStart(), PragmaString);
+  PragmaString = "\n\nCF_IMPLICIT_BRIDGING_DISABLED\n";
+  SourceLocation EndLoc = LastFD->getLocEnd();
+  // get location just past end of function location.
+  EndLoc = PP.getLocForEndOfToken(EndLoc);
+  Token Tok;
+  // get locaiton of token that comes after end of function.
+  bool Failed = PP.getRawToken(EndLoc, Tok, /*IgnoreWhiteSpace=*/true);
+  if (!Failed)
+    EndLoc = Tok.getLocation();
+  commit.insertAfterToken(EndLoc, PragmaString);
+  Editor->commit(commit);
+  
+  CFFunctionIBCandidates.clear();
+}
+
 void ObjCMigrateASTConsumer::migrateCFFunctions(
                                ASTContext &Ctx,
                                const FunctionDecl *FuncDecl) {
+  
+  // FileID FID = PP.getSourceManager().getFileID(FuncDecl->getLocation());
+  
   if (FuncDecl->hasAttr<CFAuditedTransferAttr>()) {
     assert(CFFunctionIBCandidates.empty() &&
            "Cannot have audited functions inside user "
@@ -808,34 +840,8 @@ void ObjCMigrateASTConsumer::migrateCFFunctions(
   bool Audited = migrateAddFunctionAnnotation(Ctx, FuncDecl);
   if (Audited)
     CFFunctionIBCandidates.push_back(FuncDecl);
-  else if (!CFFunctionIBCandidates.empty()) {
-    if (!Ctx.Idents.get("CF_IMPLICIT_BRIDGING_ENABLED").hasMacroDefinition()) {
-      CFFunctionIBCandidates.clear();
-      return;
-    }
-    // Insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
-    const FunctionDecl *FirstFD = CFFunctionIBCandidates[0];
-    const FunctionDecl *LastFD  =
-      CFFunctionIBCandidates[CFFunctionIBCandidates.size()-1];
-    const char *PragmaString = "\nCF_IMPLICIT_BRIDGING_ENABLED\n\n";
-    edit::Commit commit(*Editor);
-    commit.insertBefore(FirstFD->getLocStart(), PragmaString);
-    PragmaString = "\n\nCF_IMPLICIT_BRIDGING_DISABLED\n";
-    SourceLocation EndLoc = LastFD->getLocEnd();
-    // get location just past end of function location.
-    EndLoc = PP.getLocForEndOfToken(EndLoc);
-    Token Tok;
-    // get locaiton of token that comes after end of function.
-    bool Failed = PP.getRawToken(EndLoc, Tok, /*IgnoreWhiteSpace=*/true);
-    if (!Failed)
-      EndLoc = Tok.getLocation();
-    commit.insertAfterToken(EndLoc, PragmaString);
-    Editor->commit(commit);
-    
-    CFFunctionIBCandidates.clear();
-  }
-  // FIXME. Also must insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
-  // when leaving current file.
+  else if (!CFFunctionIBCandidates.empty())
+    AnnotateImplicitBridging(Ctx);
 }
 
 bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
@@ -929,7 +935,7 @@ public:
 void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   
   TranslationUnitDecl *TU = Ctx.getTranslationUnitDecl();
-  if (MigrateProperty)
+  if (MigrateProperty) {
     for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
          D != DEnd; ++D) {
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
@@ -955,6 +961,9 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
       if (ObjCContainerDecl *CDecl = dyn_cast<ObjCContainerDecl>(*D))
         migrateInstanceType(Ctx, CDecl);
     }
+    if (!CFFunctionIBCandidates.empty())
+      AnnotateImplicitBridging(Ctx);
+  }
   
   Rewriter rewriter(Ctx.getSourceManager(), Ctx.getLangOpts());
   RewritesReceiver Rec(rewriter);

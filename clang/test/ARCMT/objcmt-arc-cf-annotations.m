@@ -2037,7 +2037,4 @@ void rdar13783514(xpc_connection_t connection) {
   xpc_connection_set_finalizer_f(connection, releaseAfterXPC);
 } // no-warning
 
-CFAttributedStringRef CFAttributedCreate(long attributes) CF_RETURNS_RETAINED;
-CFTypeID CFGetTypeID(void) {
-  return 0;
-}
+CFAttributedStringRef CFAttributedCreate(void *CFObj CF_CONSUMED) CF_RETURNS_RETAINED;
