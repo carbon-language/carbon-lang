@@ -1,5 +1,5 @@
-; RUN: opt < %s -default-data-layout="e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64" -instcombine -S | FileCheck %s --check-prefix=LE
-; RUN: opt < %s -default-data-layout="E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64" -instcombine -S | FileCheck %s --check-prefix=BE
+; RUN: opt < %s -default-data-layout="e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64" -instcombine -S | FileCheck %s --check-prefix=LE
+; RUN: opt < %s -default-data-layout="E-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64" -instcombine -S | FileCheck %s --check-prefix=BE
 
 ; {{ 0xDEADBEEF, 0xBA }, 0xCAFEBABE}
 @g1 = constant {{i32,i8},i32} {{i32,i8} { i32 -559038737, i8 186 }, i32 -889275714 }
@@ -155,7 +155,7 @@ entry:
 @test12g = private constant [6 x i8] c"a\00b\00\00\00"
 
 define i16 @test12() {
-  %a = load i16* getelementptr inbounds ([3 x i16]* bitcast ([6 x i8]* @test12g to [3 x i16]*), i32 0, i64 1) 
+  %a = load i16* getelementptr inbounds ([3 x i16]* bitcast ([6 x i8]* @test12g to [3 x i16]*), i32 0, i64 1)
   ret i16 %a
 
 ; 0x0062
@@ -192,6 +192,20 @@ entry:
 
 ; BE-LABEL: @test14(
 ; BE: ret i64 1
+}
+
+; Check with address space pointers
+@g6_as1 = constant [2 x i8 addrspace(1)*] [i8 addrspace(1)* inttoptr (i16 1 to i8 addrspace(1)*), i8 addrspace(1)* inttoptr (i16 2 to i8 addrspace(1)*)]
+define i16 @test14_as1() nounwind {
+entry:
+  %tmp = load i16* bitcast ([2 x i8 addrspace(1)*]* @g6_as1 to i16*)
+  ret i16 %tmp
+
+; LE: @test14_as1
+; LE: ret i16 1
+
+; BE: @test14_as1
+; BE: ret i16 1
 }
 
 define i64 @test15() nounwind {

@@ -1,6 +1,7 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-target datalayout = "e-p:64:64"
+target datalayout = "e-p:64:64-p1:16:16-p2:32:32:32"
+
 %intstruct = type { i32 }
 %pair = type { i32, i32 }
 %struct.B = type { double }
@@ -8,6 +9,7 @@ target datalayout = "e-p:64:64"
 
 
 @Global = constant [10 x i8] c"helloworld"
+@Global_as1 = addrspace(1) constant [10 x i8] c"helloworld"
 
 ; Test noop elimination
 define i32* @test1(i32* %I) {
@@ -15,6 +17,13 @@ define i32* @test1(i32* %I) {
         ret i32* %A
 ; CHECK-LABEL: @test1(
 ; CHECK: ret i32* %I
+}
+
+define i32 addrspace(1)* @test1_as1(i32 addrspace(1)* %I) {
+  %A = getelementptr i32 addrspace(1)* %I, i64 0
+  ret i32 addrspace(1)* %A
+; CHECK-LABEL: @test1_as1(
+; CHECK: ret i32 addrspace(1)* %I
 }
 
 ; Test noop elimination
@@ -52,6 +61,42 @@ define void @test5(i8 %B) {
 ; CHECK: store i8 %B, i8* getelementptr inbounds ([10 x i8]* @Global, i64 0, i64 4)
 }
 
+define void @test5_as1(i8 %B) {
+        ; This should be turned into a constexpr instead of being an instruction
+        %A = getelementptr [10 x i8] addrspace(1)* @Global_as1, i16 0, i16 4
+        store i8 %B, i8 addrspace(1)* %A
+        ret void
+; CHECK-LABEL: @test5_as1(
+; CHECK: store i8 %B, i8 addrspace(1)* getelementptr inbounds ([10 x i8] addrspace(1)* @Global_as1, i16 0, i16 4)
+}
+
+%as1_ptr_struct = type { i32 addrspace(1)* }
+%as2_ptr_struct = type { i32 addrspace(2)* }
+
+@global_as2 = addrspace(2) global i32 zeroinitializer
+@global_as1_as2_ptr = addrspace(1) global %as2_ptr_struct { i32 addrspace(2)* @global_as2 }
+
+; This should be turned into a constexpr instead of being an instruction
+define void @test_evaluate_gep_nested_as_ptrs(i32 addrspace(2)* %B) {
+; CHECK-LABEL: @test_evaluate_gep_nested_as_ptrs(
+; CHECK-NEXT: store i32 addrspace(2)* %B, i32 addrspace(2)* addrspace(1)* getelementptr inbounds (%as2_ptr_struct addrspace(1)* @global_as1_as2_ptr, i16 0, i32 0), align 8
+; CHECK-NEXT: ret void
+  %A = getelementptr %as2_ptr_struct addrspace(1)* @global_as1_as2_ptr, i16 0, i32 0
+  store i32 addrspace(2)* %B, i32 addrspace(2)* addrspace(1)* %A
+  ret void
+}
+
+@arst = addrspace(1) global [4 x i8 addrspace(2)*] zeroinitializer
+
+define void @test_evaluate_gep_as_ptrs_array(i8 addrspace(2)* %B) {
+; CHECK-LABEL: @test_evaluate_gep_as_ptrs_array(
+; CHECK-NEXT: store i8 addrspace(2)* %B, i8 addrspace(2)* addrspace(1)* getelementptr inbounds ([4 x i8 addrspace(2)*] addrspace(1)* @arst, i16 0, i16 2), align 4
+
+; CHECK-NEXT: ret void
+  %A = getelementptr [4 x i8 addrspace(2)*] addrspace(1)* @arst, i16 0, i16 2
+  store i8 addrspace(2)* %B, i8 addrspace(2)* addrspace(1)* %A
+  ret void
+}
 
 define i32* @test7(i32* %I, i64 %C, i64 %D) {
         %A = getelementptr i32* %I, i64 %C
@@ -257,6 +302,15 @@ define i32 @test20(i32* %P, i32 %A, i32 %B) {
         ret i32 %tmp.7
 ; CHECK-LABEL: @test20(
 ; CHECK: icmp eq i32 %A, 0
+}
+
+define i32 @test20_as1(i32 addrspace(1)* %P, i32 %A, i32 %B) {
+  %tmp.4 = getelementptr inbounds i32 addrspace(1)* %P, i32 %A
+  %tmp.6 = icmp eq i32 addrspace(1)* %tmp.4, %P
+  %tmp.7 = zext i1 %tmp.6 to i32
+  ret i32 %tmp.7
+; CHECK-LABEL: @test20_as1(
+; CHECK: icmp eq i16 %1, 0
 }
 
 
