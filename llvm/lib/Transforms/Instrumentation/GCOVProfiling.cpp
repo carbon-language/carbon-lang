@@ -519,15 +519,15 @@ bool GCOVProfiler::emitProfileArcs() {
         TerminatorInst *TI = BB->getTerminator();
         int Successors = isa<ReturnInst>(TI) ? 1 : TI->getNumSuccessors();
         if (Successors) {
-          IRBuilder<> Builder(TI);
-          
           if (Successors == 1) {
+            IRBuilder<> Builder(BB->getFirstInsertionPt());
             Value *Counter = Builder.CreateConstInBoundsGEP2_64(Counters, 0,
                                                                 Edge);
             Value *Count = Builder.CreateLoad(Counter);
             Count = Builder.CreateAdd(Count, Builder.getInt64(1));
             Builder.CreateStore(Count, Counter);
           } else if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+            IRBuilder<> Builder(BI);
             Value *Sel = Builder.CreateSelect(BI->getCondition(),
                                               Builder.getInt64(Edge),
                                               Builder.getInt64(Edge + 1));
@@ -543,6 +543,7 @@ bool GCOVProfiler::emitProfileArcs() {
             for (int i = 0; i != Successors; ++i)
               ComplexEdgeSuccs.insert(TI->getSuccessor(i));
           }
+
           Edge += Successors;
         }
       }
@@ -554,14 +555,13 @@ bool GCOVProfiler::emitProfileArcs() {
         GlobalVariable *EdgeState = getEdgeStateValue();
         
         for (int i = 0, e = ComplexEdgePreds.size(); i != e; ++i) {
-          IRBuilder<> Builder(ComplexEdgePreds[i+1]->getTerminator());
+          IRBuilder<> Builder(ComplexEdgePreds[i + 1]->getFirstInsertionPt());
           Builder.CreateStore(Builder.getInt32(i), EdgeState);
         }
+
         for (int i = 0, e = ComplexEdgeSuccs.size(); i != e; ++i) {
-          // call runtime to perform increment
-          BasicBlock::iterator InsertPt =
-            ComplexEdgeSuccs[i+1]->getFirstInsertionPt();
-          IRBuilder<> Builder(InsertPt);
+          // Call runtime to perform increment.
+          IRBuilder<> Builder(ComplexEdgeSuccs[i+1]->getFirstInsertionPt());
           Value *CounterPtrArray =
             Builder.CreateConstInBoundsGEP2_64(EdgeTable, 0,
                                                i * ComplexEdgePreds.size());
