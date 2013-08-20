@@ -1253,7 +1253,6 @@ namespace {
   class NVPTXTargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
     static const Builtin::Info BuiltinInfo[];
-    std::vector<StringRef> AvailableFeatures;
   public:
     NVPTXTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
       BigEndian = false;
@@ -1318,9 +1317,6 @@ namespace {
 
       return Valid;
     }
-    virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                   StringRef Name,
-                                   bool Enabled) const;
   };
 
   const Builtin::Info NVPTXTargetInfo::BuiltinInfo[] = {
@@ -1338,18 +1334,6 @@ namespace {
                                      unsigned &NumNames) const {
     Names = GCCRegNames;
     NumNames = llvm::array_lengthof(GCCRegNames);
-  }
-
-  bool NVPTXTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                          StringRef Name,
-                                          bool Enabled) const {
-    if(std::binary_search(AvailableFeatures.begin(), AvailableFeatures.end(),
-                          Name)) {
-      Features[Name] = Enabled;
-      return true;
-    } else {
-      return false;
-    }
   }
 
   class NVPTX32TargetInfo : public NVPTXTargetInfo {
@@ -5102,7 +5086,6 @@ namespace {
   class SPIRTargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
     static const Builtin::Info BuiltinInfo[];
-    std::vector<StringRef> AvailableFeatures;
   public:
     SPIRTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
       assert(getTriple().getOS() == llvm::Triple::UnknownOS &&
