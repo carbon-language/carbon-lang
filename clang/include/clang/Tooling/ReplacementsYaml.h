@@ -1,0 +1,91 @@
+//===-- ReplacementsYaml.h -- Serialiazation for Replacements ---*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// \brief This file defines the structure of a YAML document for serializing
+/// replacements.
+///
+//===----------------------------------------------------------------------===//
+
+#ifndef LLVM_CLANG_TOOLING_REPLACEMENTS_YAML_H
+#define LLVM_CLANG_TOOLING_REPLACEMENTS_YAML_H
+
+#include "clang/Tooling/Refactoring.h"
+#include "llvm/Support/YAMLTraits.h"
+#include <vector>
+#include <string>
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(clang::tooling::Replacement)
+
+namespace llvm {
+namespace yaml {
+
+/// \brief ScalarTraits to read/write std::string objects.
+template <> struct ScalarTraits<std::string> {
+  static void output(const std::string &Val, void *, llvm::raw_ostream &Out) {
+    // We need to put quotes around the string to make sure special characters
+    // in the string is not treated as YAML tokens.
+    std::string NormalizedVal = std::string("\"") + Val + std::string("\"");
+    Out << NormalizedVal;
+  }
+
+  static StringRef input(StringRef Scalar, void *, std::string &Val) {
+    Val = Scalar;
+    return StringRef();
+  }
+};
+
+/// \brief Specialized MappingTraits to describe how a Replacement is
+/// (de)serialized.
+template <> struct MappingTraits<clang::tooling::Replacement> {
+  /// \brief Helper to (de)serialize a Replacement since we don't have direct
+  /// access to its data members.
+  struct NormalizedReplacement {
+    NormalizedReplacement(const IO &)
+        : FilePath(""), Offset(0), Length(0), ReplacementText("") {}
+
+    NormalizedReplacement(const IO &, const clang::tooling::Replacement &R)
+        : FilePath(R.getFilePath()), Offset(R.getOffset()),
+          Length(R.getLength()), ReplacementText(R.getReplacementText()) {}
+
+    clang::tooling::Replacement denormalize(const IO &) {
+      return clang::tooling::Replacement(FilePath, Offset, Length,
+                                         ReplacementText);
+    }
+
+    std::string FilePath;
+    unsigned int Offset;
+    unsigned int Length;
+    std::string ReplacementText;
+  };
+
+  static void mapping(IO &Io, clang::tooling::Replacement &R) {
+    MappingNormalization<NormalizedReplacement, clang::tooling::Replacement>
+    Keys(Io, R);
+    Io.mapRequired("FilePath", Keys->FilePath);
+    Io.mapRequired("Offset", Keys->Offset);
+    Io.mapRequired("Length", Keys->Length);
+    Io.mapRequired("ReplacementText", Keys->ReplacementText);
+  }
+};
+
+/// \brief Specialized MappingTraits to describe how a
+/// TranslationUnitReplacements is (de)serialized.
+template <> struct MappingTraits<clang::tooling::TranslationUnitReplacements> {
+  static void mapping(IO &Io,
+                      clang::tooling::TranslationUnitReplacements &Doc) {
+    Io.mapRequired("MainSourceFile", Doc.MainSourceFile);
+    Io.mapOptional("Context", Doc.Context, std::string());
+    Io.mapRequired("Replacements", Doc.Replacements);
+  }
+};
+} // end namespace yaml
+} // end namespace llvm
+
+#endif // LLVM_CLANG_TOOLING_REPLACEMENTS_YAML_H

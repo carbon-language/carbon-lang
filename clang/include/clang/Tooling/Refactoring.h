@@ -170,6 +170,19 @@ unsigned shiftedCodePosition(const Replacements& Replaces, unsigned Position);
 void deduplicate(std::vector<Replacement> &Replaces,
                  std::vector<Range> &Conflicts);
 
+/// \brief Collection of Replacements generated from a single translation unit.
+struct TranslationUnitReplacements {
+  /// Name of the main source for the translation unit.
+  std::string MainSourceFile;
+
+  /// A freeform chunk of text to describe the context of the replacements.
+  /// Will be printed, for example, when detecting conflicts during replacement
+  /// deduplication.
+  std::string Context;
+
+  std::vector<Replacement> Replacements;
+};
+
 /// \brief A tool to run refactorings.
 ///
 /// This is a refactoring specific version of \see ClangTool. FrontendActions

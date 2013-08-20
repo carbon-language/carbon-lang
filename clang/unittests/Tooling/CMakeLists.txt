@@ -14,6 +14,7 @@ add_clang_unittest(ToolingTests
   RefactoringTest.cpp
   RewriterTest.cpp
   RefactoringCallbacksTest.cpp
+  ReplacementsYamlTest.cpp
   )
 
 target_link_libraries(ToolingTests
