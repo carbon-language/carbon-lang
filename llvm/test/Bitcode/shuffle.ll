@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llvm-dis
+; RUN: llvm-as < %s | llvm-dis -disable-output
 
 ; <rdar://problem/8622574>
 ; tests the bitcodereader can handle the case where the reader will initially
