@@ -2921,20 +2921,8 @@ let isCommutable = 0 in
 
 /// FIXME: once all 256-bit intrinsics are matched, cleanup and refactor those
 /// classes below
-multiclass basic_sse12_fp_binop_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                                  SizeItins itins,
-                                  bit Is2Addr = 1> {
-  defm SS : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "ss"),
-                            OpNode, FR32, f32mem,
-                            itins.s, Is2Addr>, XS;
-  defm SD : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "sd"),
-                            OpNode, FR64, f64mem,
-                            itins.d, Is2Addr>, XD;
-}
-
 multiclass basic_sse12_fp_binop_p<bits<8> opc, string OpcodeStr,
                                   SDNode OpNode, SizeItins itins> {
-let Predicates = [HasAVX] in {
   defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
                                VR128, v4f32, f128mem, memopv4f32,
                                SSEPackedSingle, itins.s, 0>, TB, VEX_4V;
@@ -2948,93 +2936,78 @@ let Predicates = [HasAVX] in {
   defm V#NAME#PDY : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"),
                         OpNode, VR256, v4f64, f256mem, memopv4f64,
                         SSEPackedDouble, itins.d, 0>, TB, OpSize, VEX_4V, VEX_L;
+
+  let Constraints = "$src1 = $dst" in {
+    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR128,
+                              v4f32, f128mem, memopv4f32, SSEPackedSingle,
+                              itins.s>, TB;
+    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR128,
+                              v2f64, f128mem, memopv2f64, SSEPackedDouble,
+                              itins.d>, TB, OpSize;
+  }
 }
 
-let Constraints = "$src1 = $dst" in {
-  defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, VR128,
-                            v4f32, f128mem, memopv4f32, SSEPackedSingle,
-                            itins.s, 1>, TB;
-  defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, VR128,
-                            v2f64, f128mem, memopv2f64, SSEPackedDouble,
-                            itins.d, 1>, TB, OpSize;
-}
+multiclass basic_sse12_fp_binop_s<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                  SizeItins itins> {
+  defm V#NAME#SS : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "ss"),
+                         OpNode, FR32, f32mem, itins.s, 0>, XS, VEX_4V, VEX_LIG;
+  defm V#NAME#SD : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "sd"),
+                         OpNode, FR64, f64mem, itins.d, 0>, XD, VEX_4V, VEX_LIG;
+
+  let Constraints = "$src1 = $dst" in {
+    defm SS : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "ss"),
+                              OpNode, FR32, f32mem, itins.s>, XS;
+    defm SD : sse12_fp_scalar<opc, !strconcat(OpcodeStr, "sd"),
+                              OpNode, FR64, f64mem, itins.d>, XD;
+  }
 }
 
 multiclass basic_sse12_fp_binop_s_int<bits<8> opc, string OpcodeStr,
-                                      SizeItins itins,
-                                      bit Is2Addr = 1> {
-  defm SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-     !strconcat(OpcodeStr, "ss"), "", "_ss", ssmem, sse_load_f32,
-     itins.s, Is2Addr>, XS;
-  defm SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
-     !strconcat(OpcodeStr, "sd"), "2", "_sd", sdmem, sse_load_f64,
-     itins.d, Is2Addr>, XD;
+                                      SizeItins itins> {
+  defm V#NAME#SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
+                   !strconcat(OpcodeStr, "ss"), "", "_ss", ssmem, sse_load_f32,
+                   itins.s, 0>, XS, VEX_4V, VEX_LIG;
+  defm V#NAME#SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
+                   !strconcat(OpcodeStr, "sd"), "2", "_sd", sdmem, sse_load_f64,
+                   itins.d, 0>, XD, VEX_4V, VEX_LIG;
+
+  let Constraints = "$src1 = $dst" in {
+    defm SS : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
+                   !strconcat(OpcodeStr, "ss"), "", "_ss", ssmem, sse_load_f32,
+                   itins.s>, XS;
+    defm SD : sse12_fp_scalar_int<opc, OpcodeStr, VR128,
+                   !strconcat(OpcodeStr, "sd"), "2", "_sd", sdmem, sse_load_f64,
+                   itins.d>, XD;
+  }
 }
 
 // Binary Arithmetic instructions
-defm ADD : basic_sse12_fp_binop_p<0x58, "add", fadd, SSE_ALU_ITINS_P>;
-defm MUL : basic_sse12_fp_binop_p<0x59, "mul", fmul, SSE_MUL_ITINS_P>;
+defm ADD : basic_sse12_fp_binop_p<0x58, "add", fadd, SSE_ALU_ITINS_P>,
+           basic_sse12_fp_binop_s<0x58, "add", fadd, SSE_ALU_ITINS_S>,
+           basic_sse12_fp_binop_s_int<0x58, "add", SSE_ALU_ITINS_S>;
+defm MUL : basic_sse12_fp_binop_p<0x59, "mul", fmul, SSE_MUL_ITINS_P>,
+           basic_sse12_fp_binop_s<0x59, "mul", fmul, SSE_MUL_ITINS_S>,
+           basic_sse12_fp_binop_s_int<0x59, "mul", SSE_MUL_ITINS_S>;
 let isCommutable = 0 in {
-  defm SUB : basic_sse12_fp_binop_p<0x5C, "sub", fsub, SSE_ALU_ITINS_P>;
-  defm DIV : basic_sse12_fp_binop_p<0x5E, "div", fdiv, SSE_DIV_ITINS_P>;
-  defm MAX : basic_sse12_fp_binop_p<0x5F, "max", X86fmax, SSE_ALU_ITINS_P>;
-  defm MIN : basic_sse12_fp_binop_p<0x5D, "min", X86fmin, SSE_ALU_ITINS_P>;
+  defm SUB : basic_sse12_fp_binop_p<0x5C, "sub", fsub, SSE_ALU_ITINS_P>,
+             basic_sse12_fp_binop_s<0x5C, "sub", fsub, SSE_ALU_ITINS_S>,
+             basic_sse12_fp_binop_s_int<0x5C, "sub", SSE_ALU_ITINS_S>;
+  defm DIV : basic_sse12_fp_binop_p<0x5E, "div", fdiv, SSE_DIV_ITINS_P>,
+             basic_sse12_fp_binop_s<0x5E, "div", fdiv, SSE_DIV_ITINS_S>,
+             basic_sse12_fp_binop_s_int<0x5E, "div", SSE_DIV_ITINS_S>;
+  defm MAX : basic_sse12_fp_binop_p<0x5F, "max", X86fmax, SSE_ALU_ITINS_P>,
+             basic_sse12_fp_binop_s<0x5F, "max", X86fmax, SSE_ALU_ITINS_S>,
+             basic_sse12_fp_binop_s_int<0x5F, "max", SSE_ALU_ITINS_S>;
+  defm MIN : basic_sse12_fp_binop_p<0x5D, "min", X86fmin, SSE_ALU_ITINS_P>,
+             basic_sse12_fp_binop_s<0x5D, "min", X86fmin, SSE_ALU_ITINS_S>,
+             basic_sse12_fp_binop_s_int<0x5D, "min", SSE_ALU_ITINS_S>;
 }
 
 let isCodeGenOnly = 1 in {
-  defm MAXC: basic_sse12_fp_binop_p<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_P>;
-  defm MINC: basic_sse12_fp_binop_p<0x5D, "min", X86fminc, SSE_ALU_ITINS_P>;
-}
-
-defm VADD : basic_sse12_fp_binop_s<0x58, "add", fadd, SSE_ALU_ITINS_S, 0>,
-            basic_sse12_fp_binop_s_int<0x58, "add", SSE_ALU_ITINS_S, 0>,
-              VEX_4V, VEX_LIG;
-defm VMUL : basic_sse12_fp_binop_s<0x59, "mul", fmul, SSE_MUL_ITINS_S, 0>,
-            basic_sse12_fp_binop_s_int<0x59, "mul", SSE_MUL_ITINS_S, 0>,
-              VEX_4V, VEX_LIG;
-
-let isCommutable = 0 in {
-  defm VSUB : basic_sse12_fp_binop_s<0x5C, "sub", fsub, SSE_ALU_ITINS_S, 0>,
-              basic_sse12_fp_binop_s_int<0x5C, "sub", SSE_ALU_ITINS_S, 0>,
-                VEX_4V, VEX_LIG;
-  defm VDIV : basic_sse12_fp_binop_s<0x5E, "div", fdiv, SSE_DIV_ITINS_S, 0>,
-              basic_sse12_fp_binop_s_int<0x5E, "div", SSE_DIV_ITINS_S, 0>,
-                VEX_4V, VEX_LIG;
-  defm VMAX : basic_sse12_fp_binop_s<0x5F, "max", X86fmax, SSE_ALU_ITINS_S, 0>,
-              basic_sse12_fp_binop_s_int<0x5F, "max", SSE_ALU_ITINS_S, 0>,
-                VEX_4V, VEX_LIG;
-  defm VMIN : basic_sse12_fp_binop_s<0x5D, "min", X86fmin, SSE_ALU_ITINS_S, 0>,
-              basic_sse12_fp_binop_s_int<0x5D, "min", SSE_ALU_ITINS_S, 0>,
-                VEX_4V, VEX_LIG;
-}
-
-let Constraints = "$src1 = $dst" in {
-  defm ADD : basic_sse12_fp_binop_s<0x58, "add", fadd, SSE_ALU_ITINS_S>,
-             basic_sse12_fp_binop_s_int<0x58, "add", SSE_ALU_ITINS_S>;
-  defm MUL : basic_sse12_fp_binop_s<0x59, "mul", fmul, SSE_MUL_ITINS_S>,
-             basic_sse12_fp_binop_s_int<0x59, "mul", SSE_MUL_ITINS_S>;
-
-  let isCommutable = 0 in {
-    defm SUB : basic_sse12_fp_binop_s<0x5C, "sub", fsub, SSE_ALU_ITINS_S>,
-               basic_sse12_fp_binop_s_int<0x5C, "sub", SSE_ALU_ITINS_S>;
-    defm DIV : basic_sse12_fp_binop_s<0x5E, "div", fdiv, SSE_DIV_ITINS_S>,
-               basic_sse12_fp_binop_s_int<0x5E, "div", SSE_DIV_ITINS_S>;
-    defm MAX : basic_sse12_fp_binop_s<0x5F, "max", X86fmax, SSE_ALU_ITINS_S>,
-               basic_sse12_fp_binop_s_int<0x5F, "max", SSE_ALU_ITINS_S>;
-    defm MIN : basic_sse12_fp_binop_s<0x5D, "min", X86fmin, SSE_ALU_ITINS_S>,
-               basic_sse12_fp_binop_s_int<0x5D, "min", SSE_ALU_ITINS_S>;
-  }
-}
-
-let isCodeGenOnly = 1 in {
-  defm VMAXC: basic_sse12_fp_binop_s<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_S, 0>,
-       VEX_4V, VEX_LIG;
-  defm VMINC: basic_sse12_fp_binop_s<0x5D, "min", X86fminc, SSE_ALU_ITINS_S, 0>,
-       VEX_4V, VEX_LIG;
-  let Constraints = "$src1 = $dst" in {
-    defm MAXC: basic_sse12_fp_binop_s<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_S>;
-    defm MINC: basic_sse12_fp_binop_s<0x5D, "min", X86fminc, SSE_ALU_ITINS_S>;
-  }
+  defm MAXC: basic_sse12_fp_binop_p<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_P>,
+             basic_sse12_fp_binop_s<0x5F, "max", X86fmaxc, SSE_ALU_ITINS_S>;
+  defm MINC: basic_sse12_fp_binop_p<0x5D, "min", X86fminc, SSE_ALU_ITINS_P>,
+             basic_sse12_fp_binop_s<0x5D, "min", X86fminc, SSE_ALU_ITINS_S>;
 }
 
 /// Unop Arithmetic
