@@ -843,10 +843,17 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
                                                 const FunctionDecl *FuncDecl) {
   if (FuncDecl->hasBody())
     return false;
-  bool HasAtLeastOnePointer = false;
+
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
-  if (!FuncDecl->getAttr<CFReturnsRetainedAttr>() &&
-      !FuncDecl->getAttr<CFReturnsNotRetainedAttr>()) {
+  bool FuncIsReturnAnnotated = (FuncDecl->getAttr<CFReturnsRetainedAttr>() ||
+                                FuncDecl->getAttr<CFReturnsNotRetainedAttr>());
+  
+  // Trivial case of when funciton is annotated and has no argument.
+  if (FuncIsReturnAnnotated && FuncDecl->getNumParams() == 0)
+    return false;
+  
+  bool HasAtLeastOnePointer = FuncIsReturnAnnotated;
+  if (!FuncIsReturnAnnotated) {
     RetEffect Ret = CE.getReturnValue();
     const char *AnnotationString = 0;
     if (Ret.getObjKind() == RetEffect::CF && Ret.isOwned()) {
@@ -866,8 +873,6 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
     else if (!AuditedType(FuncDecl->getResultType(), HasAtLeastOnePointer))
       return false;
   }
-  else
-    HasAtLeastOnePointer = true;
   
   // At this point result type is either annotated or audited.
   // Now, how about argument types.

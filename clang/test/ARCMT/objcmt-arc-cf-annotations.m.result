@@ -1002,13 +1002,7 @@ void IOServiceNameMatching_wrapper(const char * name) {
   IOServiceNameMatching(name); // expected-warning{{leak}}
 }
 
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 CF_RETURNS_RETAINED CFDictionaryRef CreateDict();
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 
 void IOServiceAddNotification_wrapper(mach_port_t masterPort, const io_name_t notificationType,
   mach_port_t wakePort, uintptr_t reference, io_iterator_t * notification ) {
@@ -2053,14 +2047,8 @@ void test_drain() {
 // value as tracked, even if the object isn't a known CF type.
 //===----------------------------------------------------------------------===//
 
-
-CF_IMPLICIT_BRIDGING_ENABLED
-
 MyCFType getCustom() __attribute__((cf_returns_not_retained));
 MyCFType makeCustom() __attribute__((cf_returns_retained));
-
-CF_IMPLICIT_BRIDGING_DISABLED
-
 
 void testCustomReturnsRetained() {
   MyCFType obj = makeCustom(); // expected-warning {{leak of an object stored into 'obj'}}
