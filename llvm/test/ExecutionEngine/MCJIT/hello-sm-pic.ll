@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -relocation-model=pic -code-model=small %s > /dev/null
-; XFAIL: mips, i686, i386, darwin
+; XFAIL: mips, i686, i386, darwin, aarch64
 
 @.LC0 = internal global [12 x i8] c"Hello World\00"		; <[12 x i8]*> [#uses=1]
 
