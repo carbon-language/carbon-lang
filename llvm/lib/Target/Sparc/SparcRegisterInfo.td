@@ -11,8 +11,8 @@
 //  Declarations that describe the Sparc register file
 //===----------------------------------------------------------------------===//
 
-class SparcReg<string n> : Register<n> {
-  field bits<5> Num;
+class SparcReg<bits<16> Enc, string n> : Register<n> {
+  let HWEncoding = Enc;
   let Namespace = "SP";
 }
 
@@ -27,16 +27,13 @@ def sub_odd  : SubRegIndex<32, 32>;
 
 // Registers are identified with 5-bit ID numbers.
 // Ri - 32-bit integer registers
-class Ri<bits<5> num, string n> : SparcReg<n> {
-  let Num = num;
-}
+class Ri<bits<16> Enc, string n> : SparcReg<Enc, n>;
+
 // Rf - 32-bit floating-point registers
-class Rf<bits<5> num, string n> : SparcReg<n> {
-  let Num = num;
-}
+class Rf<bits<16> Enc, string n> : SparcReg<Enc, n>;
+
 // Rd - Slots in the FP register file for 64-bit floating-point values.
-class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
-  let Num = num;
+class Rd<bits<16> Enc, string n, list<Register> subregs> : SparcReg<Enc, n> {
   let SubRegs = subregs;
   let SubRegIndices = [sub_even, sub_odd];
   let CoveredBySubRegs = 1;
