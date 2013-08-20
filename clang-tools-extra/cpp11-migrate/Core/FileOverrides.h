@@ -16,8 +16,8 @@
 #ifndef CPP11_MIGRATE_FILE_OVERRIDES_H
 #define CPP11_MIGRATE_FILE_OVERRIDES_H
 
-#include "Core/ReplacementsYaml.h"
 #include "clang/Tooling/Refactoring.h"
+#include "clang/Tooling/ReplacementsYaml.h"
 #include "llvm/ADT/StringMap.h"
 
 // Forward Declarations
@@ -64,16 +64,15 @@ public:
   /// \brief Constructors.
   /// @{
   HeaderOverride() {}
-  HeaderOverride(llvm::StringRef TargetFile,
-                 llvm::StringRef MainSourceFile) {
-    MigratorDoc.TargetFile = TargetFile;
-    MigratorDoc.MainSourceFile= MainSourceFile;
+  HeaderOverride(llvm::StringRef HeaderPath,
+                 llvm::StringRef MainSourceFile) : HeaderPath(HeaderPath) {
+    Replacements.MainSourceFile = MainSourceFile;
   }
   /// @}
 
-  /// \brief Getter for FileName.
-  llvm::StringRef getFileName() const {
-    return MigratorDoc.TargetFile;
+  /// \brief Getter for HeaderPath.
+  llvm::StringRef getHeaderPath() const {
+    return HeaderPath;
   }
 
   /// \brief Accessor for ContentOverride.
@@ -88,9 +87,9 @@ public:
   /// \brief Swaps the content of ContentOverride with \p S.
   void swapContentOverride(std::string &S) { ContentOverride.swap(S); }
 
-  /// \brief Getter for MigratorDoc.
-  const MigratorDocument &getMigratorDoc() const {
-    return MigratorDoc;
+  /// \brief Getter for Replacements.
+  const clang::tooling::TranslationUnitReplacements &getReplacements() const {
+    return Replacements;
   }
 
   /// \brief Stores the replacements made by a transform to the header this
@@ -105,7 +104,8 @@ public:
 private:
   std::string ContentOverride;
   ChangedRanges Changes;
-  MigratorDocument MigratorDoc;
+  std::string HeaderPath;
+  clang::tooling::TranslationUnitReplacements Replacements;
 };
 
 /// \brief Container mapping header file names to override information.

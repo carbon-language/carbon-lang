@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Tooling.h"
+#include "clang/Tooling/ReplacementsYaml.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -30,9 +31,9 @@ using namespace clang::tooling;
 
 void HeaderOverride::recordReplacements(
     const clang::tooling::Replacements &Replaces) {
-  MigratorDoc.Replacements.resize(Replaces.size());
+  Replacements.Replacements.resize(Replaces.size());
   std::copy(Replaces.begin(), Replaces.end(),
-            MigratorDoc.Replacements.begin());
+            Replacements.Replacements.begin());
 }
 
 SourceOverrides::SourceOverrides(llvm::StringRef MainFileName,
@@ -93,7 +94,7 @@ void SourceOverrides::applyReplacements(clang::tooling::Replacements &Replaces,
     // pipeline.
     HeaderOverride &HeaderOv = Headers[FileName];
     // "Create" HeaderOverride if not already existing
-    if (HeaderOv.getFileName().empty())
+    if (HeaderOv.getHeaderPath().empty())
       HeaderOv = HeaderOverride(FileName, MainFileName);
 
     HeaderOv.swapContentOverride(ResultBuf);
@@ -150,7 +151,7 @@ void SourceOverrides::applyOverrides(SourceManager &SM) const {
     assert(!I->second.getContentOverride().empty() &&
            "Header override should not be empty!");
     SM.overrideFileContents(
-        FM.getFile(I->second.getFileName()),
+        FM.getFile(I->second.getHeaderPath()),
         llvm::MemoryBuffer::getMemBuffer(I->second.getContentOverride()));
   }
 }

@@ -1,11 +1,12 @@
 ---
+MainSourceFile:      "$(path)/main.cpp"
 Replacements:
-  - Offset:          432
+  - FilePath:        "$(path)/common.h"
+    Offset:          432
     Length:          61
     ReplacementText: "(auto & elem : C)"
-  - Offset:          506
+  - FilePath:       "$(path)/common.h"
+    Offset:          506
     Length:          2
     ReplacementText: "elem"
-TargetFile:      "$(path)/common.h"
-MainSourceFile:  "$(path)/main.cpp"
 ...

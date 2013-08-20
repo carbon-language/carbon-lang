@@ -47,7 +47,7 @@ void Reformatter::reformatChanges(SourceOverrides &Overrides,
        I != E; ++I) {
     const HeaderOverride &Header = I->getValue();
     const tooling::Replacements &HeaderReplaces =
-        reformatSingleFile(Header.getFileName(), Header.getChanges(), SM);
+        reformatSingleFile(Header.getHeaderPath(), Header.getChanges(), SM);
     Replaces.insert(HeaderReplaces.begin(), HeaderReplaces.end());
   }
   Overrides.applyReplacements(Replaces, SM);
