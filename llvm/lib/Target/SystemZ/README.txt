@@ -73,10 +73,8 @@ Likewise memcmp and CLC.  MVCLE and CLCLE could be useful too.
 
 --
 
-We don't optimize string operations.
-
-MVST, CLST, SRST and CUSE could be useful here.  Some of the TRANSLATE
-family might be too, although they are probably more difficult to exploit.
+We don't use CUSE or the TRANSLATE family of instructions for string
+operations.  The TRANSLATE ones are probably more difficult to exploit.
 
 --
 
