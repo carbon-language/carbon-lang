@@ -449,6 +449,9 @@ DynamicLoaderPOSIXDYLD::ComputeLoadOffset()
         return LLDB_INVALID_ADDRESS;
 
     ModuleSP module = m_process->GetTarget().GetExecutableModule();
+    if (!module)
+        return LLDB_INVALID_ADDRESS;
+
     ObjectFile *exe = module->GetObjectFile();
     Address file_entry = exe->GetEntryPointAddress();
 
