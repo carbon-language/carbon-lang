@@ -2089,7 +2089,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     case SSE2:
       Features["sse2"] = true;
     case SSE1:
-      setMMXLevel(Features, MMX, Enabled);
+      if (!Features.count("mmx"))
+        setMMXLevel(Features, MMX, Enabled);
       Features["sse"] = true;
     case NoSSE:
       break;
@@ -5468,34 +5469,29 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   llvm::StringMap<bool> Features;
   Target->getDefaultFeatures(Features);
 
-  // Apply the user specified deltas.
-  // First the enables.
-  for (std::vector<std::string>::const_iterator 
-         it = Opts->FeaturesAsWritten.begin(),
-         ie = Opts->FeaturesAsWritten.end();
-       it != ie; ++it) {
-    const char *Name = it->c_str();
-
-    if (Name[0] != '+')
-      continue;
-
-    // Apply the feature via the target.
-    Target->setFeatureEnabled(Features, Name + 1, true);
+  // Fist the last of each option;
+  llvm::StringMap<unsigned> LastOpt;
+  for (unsigned I = 0, N = Opts->FeaturesAsWritten.size();
+       I < N; ++I) {
+    const char *Name = Opts->FeaturesAsWritten[I].c_str() + 1;
+    LastOpt[Name] = I;
   }
 
-  // Then the disables.
-  for (std::vector<std::string>::const_iterator 
-         it = Opts->FeaturesAsWritten.begin(),
-         ie = Opts->FeaturesAsWritten.end();
-       it != ie; ++it) {
-    const char *Name = it->c_str();
+  // Apply the user specified deltas.
+  for (unsigned I = 0, N = Opts->FeaturesAsWritten.size();
+       I < N; ++I) {
+    const char *Name = Opts->FeaturesAsWritten[I].c_str();
 
-    if (Name[0] == '+')
+    // If this option was overridden, ignore it.
+    llvm::StringMap<unsigned>::iterator LastI = LastOpt.find(Name + 1);
+    assert(LastI != LastOpt.end());
+    unsigned Last = LastI->second;
+    if (Last != I)
       continue;
 
     // Apply the feature via the target.
-    assert(Name[0] == '-');
-    Target->setFeatureEnabled(Features, Name + 1, false);
+    bool Enabled = Name[0] == '+';
+    Target->setFeatureEnabled(Features, Name + 1, Enabled);
   }
 
   // Add the features to the compile options.

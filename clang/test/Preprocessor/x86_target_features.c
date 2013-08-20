@@ -30,3 +30,15 @@
 // SSE2: #define __SSE_MATH__ 1
 // SSE2: #define __SSE__ 1
 // SSE2-NOT: #define __SSSE3__ 1
+
+// RUN: %clang -target i386-unknown-unknown -march=pentium-m -mno-sse -mavx -x c -E -dM -o - %s | FileCheck --check-prefix=AVX %s
+
+// AVX: #define __AVX__ 1
+// AVX: #define __SSE2_MATH__ 1
+// AVX: #define __SSE2__ 1
+// AVX: #define __SSE3__ 1
+// AVX: #define __SSE4_1__ 1
+// AVX: #define __SSE4_2__ 1
+// AVX: #define __SSE_MATH__ 1
+// AVX: #define __SSE__ 1
+// AVX: #define __SSSE3__ 1
