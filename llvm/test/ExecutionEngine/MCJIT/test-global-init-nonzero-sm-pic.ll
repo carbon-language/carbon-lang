@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -relocation-model=pic -code-model=small %s > /dev/null
-; XFAIL: mips, aarch64
+; XFAIL: mips, aarch64, arm
 
 @count = global i32 1, align 4
 
