@@ -64,6 +64,7 @@ public:
   bool MigrateLiterals;
   bool MigrateSubscripting;
   bool MigrateProperty;
+  unsigned  FileId;
   OwningPtr<NSAPI> NSAPIObj;
   OwningPtr<edit::EditedSource> Editor;
   FileRemapper &Remapper;
@@ -86,7 +87,7 @@ public:
   : MigrateDir(migrateDir),
     MigrateLiterals(migrateLiterals),
     MigrateSubscripting(migrateSubscripting),
-    MigrateProperty(migrateProperty),
+    MigrateProperty(migrateProperty), FileId(0),
     Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
     IsOutputFile(isOutputFile) { }
 
@@ -799,6 +800,7 @@ AuditedType (QualType AT, bool &IsPoniter) {
 void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
   if (!Ctx.Idents.get("CF_IMPLICIT_BRIDGING_ENABLED").hasMacroDefinition()) {
     CFFunctionIBCandidates.clear();
+    FileId = 0;
     return;
   }
   // Insert CF_IMPLICIT_BRIDGING_ENABLE/CF_IMPLICIT_BRIDGING_DISABLED
@@ -819,16 +821,13 @@ void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
     EndLoc = Tok.getLocation();
   commit.insertAfterToken(EndLoc, PragmaString);
   Editor->commit(commit);
-  
+  FileId = 0;
   CFFunctionIBCandidates.clear();
 }
 
 void ObjCMigrateASTConsumer::migrateCFFunctions(
                                ASTContext &Ctx,
                                const FunctionDecl *FuncDecl) {
-  
-  // FileID FID = PP.getSourceManager().getFileID(FuncDecl->getLocation());
-  
   if (FuncDecl->hasAttr<CFAuditedTransferAttr>()) {
     assert(CFFunctionIBCandidates.empty() &&
            "Cannot have audited functions inside user "
@@ -838,8 +837,11 @@ void ObjCMigrateASTConsumer::migrateCFFunctions(
   
   // Finction must be annotated first.
   bool Audited = migrateAddFunctionAnnotation(Ctx, FuncDecl);
-  if (Audited)
+  if (Audited) {
     CFFunctionIBCandidates.push_back(FuncDecl);
+    if (!FileId)
+      FileId = PP.getSourceManager().getFileID(FuncDecl->getLocation()).getHashValue();
+  }
   else if (!CFFunctionIBCandidates.empty())
     AnnotateImplicitBridging(Ctx);
 }
@@ -938,6 +940,13 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   if (MigrateProperty) {
     for (DeclContext::decl_iterator D = TU->decls_begin(), DEnd = TU->decls_end();
          D != DEnd; ++D) {
+      if (unsigned FID =
+            PP.getSourceManager().getFileID((*D)->getLocation()).getHashValue())
+        if (FileId && FileId != FID) {
+          assert(!CFFunctionIBCandidates.empty());
+          AnnotateImplicitBridging(Ctx);
+        }
+          
       if (ObjCInterfaceDecl *CDecl = dyn_cast<ObjCInterfaceDecl>(*D))
         migrateObjCInterfaceDecl(Ctx, CDecl);
       else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(*D))
