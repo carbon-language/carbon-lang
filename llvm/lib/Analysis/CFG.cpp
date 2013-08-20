@@ -116,7 +116,7 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 
 // LoopInfo contains a mapping from basic block to the innermost loop. Find
 // the outermost loop in the loop nest that contains BB.
-static const Loop *getOutermostLoop(LoopInfo *LI, const BasicBlock *BB) {
+static const Loop *getOutermostLoop(const LoopInfo *LI, const BasicBlock *BB) {
   const Loop *L = LI->getLoopFor(BB);
   if (L) {
     while (const Loop *Parent = L->getParentLoop())
@@ -126,7 +126,7 @@ static const Loop *getOutermostLoop(LoopInfo *LI, const BasicBlock *BB) {
 }
 
 // True if there is a loop which contains both BB1 and BB2.
-static bool loopContainsBoth(LoopInfo *LI,
+static bool loopContainsBoth(const LoopInfo *LI,
                              const BasicBlock *BB1, const BasicBlock *BB2) {
   const Loop *L1 = getOutermostLoop(LI, BB1);
   const Loop *L2 = getOutermostLoop(LI, BB2);
@@ -135,7 +135,8 @@ static bool loopContainsBoth(LoopInfo *LI,
 
 static bool isPotentiallyReachableInner(SmallVectorImpl<BasicBlock *> &Worklist,
                                         BasicBlock *StopBB,
-                                        DominatorTree *DT, LoopInfo *LI) {
+                                        const DominatorTree *DT,
+                                        const LoopInfo *LI) {
   // When the stop block is unreachable, it's dominated from everywhere,
   // regardless of whether there's a path between the two blocks.
   if (DT && !DT->isReachableFromEntry(StopBB))
@@ -179,7 +180,7 @@ static bool isPotentiallyReachableInner(SmallVectorImpl<BasicBlock *> &Worklist,
 }
 
 bool llvm::isPotentiallyReachable(const BasicBlock *A, const BasicBlock *B,
-                                  DominatorTree *DT, LoopInfo *LI) {
+                                  const DominatorTree *DT, const LoopInfo *LI) {
   assert(A->getParent() == B->getParent() &&
          "This analysis is function-local!");
 
@@ -191,7 +192,7 @@ bool llvm::isPotentiallyReachable(const BasicBlock *A, const BasicBlock *B,
 }
 
 bool llvm::isPotentiallyReachable(const Instruction *A, const Instruction *B,
-                                  DominatorTree *DT, LoopInfo *LI) {
+                                  const DominatorTree *DT, const LoopInfo *LI) {
   assert(A->getParent()->getParent() == B->getParent()->getParent() &&
          "This analysis is function-local!");
 
