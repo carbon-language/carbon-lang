@@ -55,3 +55,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NEON-FP-ARMV8 %s
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+v8fp"
 // CHECK-NEON-FP-ARMV8: "-target-feature" "+neon"
+
+// RUN: %clang -target arm-linux-gnueabihf %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-HF %s
+// CHECK-HF: "-target-cpu" "arm1136jf-s"
