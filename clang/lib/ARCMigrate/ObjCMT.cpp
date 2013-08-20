@@ -775,16 +775,22 @@ static bool IsVoidStarType(QualType Ty) {
   return IsVoidStarType(PT->getPointeeType());
 }
 
+/// AuditedType - This routine audits the type AT and returns false if it is one of known
+/// CF object types or of the "void *" variety. It returns true if we don't care about the type
+/// such as a non-pointer or pointers which have no ownership issues (such as "int *").
 static bool
-AuditedType (QualType AT) {
-  if (!AT->isPointerType())
+AuditedType (QualType AT, bool &IsPoniter) {
+  IsPoniter = (AT->isAnyPointerType() || AT->isBlockPointerType());
+  if (!IsPoniter)
     return true;
-  if (IsVoidStarType(AT))
-    return false;
-  
   // FIXME. There isn't much we can say about CF pointer type; or is there?
-  if (ento::coreFoundation::isCFObjectRef(AT))
+  if (ento::coreFoundation::isCFObjectRef(AT) ||
+      IsVoidStarType(AT) ||
+      // If an ObjC object is type, assuming that it is not a CF function and
+      // that it is an un-audited function.
+      AT->isObjCObjectPointerType())
     return false;
+  // All other pointers are assumed audited as harmless.
   return true;
 }
 
@@ -811,10 +817,10 @@ void ObjCMigrateASTConsumer::migrateCFFunctions(
     const FunctionDecl *FirstFD = CFFunctionIBCandidates[0];
     const FunctionDecl *LastFD  =
       CFFunctionIBCandidates[CFFunctionIBCandidates.size()-1];
-    const char *PragmaString = "\nCF_IMPLICIT_BRIDGING_ENABLED\n";
+    const char *PragmaString = "\nCF_IMPLICIT_BRIDGING_ENABLED\n\n";
     edit::Commit commit(*Editor);
     commit.insertBefore(FirstFD->getLocStart(), PragmaString);
-    PragmaString = "\nCF_IMPLICIT_BRIDGING_DISABLED\n";
+    PragmaString = "\n\nCF_IMPLICIT_BRIDGING_DISABLED\n";
     SourceLocation EndLoc = LastFD->getLocEnd();
     // get location just past end of function location.
     EndLoc = PP.getLocForEndOfToken(EndLoc);
@@ -837,6 +843,7 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
                                                 const FunctionDecl *FuncDecl) {
   if (FuncDecl->hasBody())
     return false;
+  bool HasAtLeastOnePointer = false;
   CallEffects CE  = CallEffects::getEffect(FuncDecl);
   if (!FuncDecl->getAttr<CFReturnsRetainedAttr>() &&
       !FuncDecl->getAttr<CFReturnsNotRetainedAttr>()) {
@@ -854,10 +861,14 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
       edit::Commit commit(*Editor);
       commit.insertAfterToken(FuncDecl->getLocEnd(), AnnotationString);
       Editor->commit(commit);
+      HasAtLeastOnePointer = true;
     }
-    else if (!AuditedType(FuncDecl->getResultType()))
+    else if (!AuditedType(FuncDecl->getResultType(), HasAtLeastOnePointer))
       return false;
   }
+  else
+    HasAtLeastOnePointer = true;
+  
   // At this point result type is either annotated or audited.
   // Now, how about argument types.
   llvm::ArrayRef<ArgEffect> AEArgs = CE.getArgs();
@@ -865,18 +876,21 @@ bool ObjCMigrateASTConsumer::migrateAddFunctionAnnotation(
   for (FunctionDecl::param_const_iterator pi = FuncDecl->param_begin(),
        pe = FuncDecl->param_end(); pi != pe; ++pi, ++i) {
     ArgEffect AE = AEArgs[i];
-    if (AE == DecRefMsg /*NSConsumed annotated*/ ||
-        AE == DecRef /*CFConsumed annotated*/)
+    if (AE == DecRef /*CFConsumed annotated*/ ||
+        AE == IncRef) {
+      HasAtLeastOnePointer = true;
       continue;
+    }
 
-    if (AE != DoNothing && AE != MayEscape)
-      return false;
     const ParmVarDecl *pd = *pi;
     QualType AT = pd->getType();
-    if (!AuditedType(AT))
+    bool IsPointer;
+    if (!AuditedType(AT, IsPointer))
       return false;
+    else if (IsPointer)
+      HasAtLeastOnePointer = true;
   }
-  return true;
+  return HasAtLeastOnePointer;
 }
 
 void ObjCMigrateASTConsumer::migrateObjCMethodDeclAnnotation(

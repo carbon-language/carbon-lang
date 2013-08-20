@@ -3,6 +3,22 @@
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c %s.result
 
+#ifndef CF_IMPLICIT_BRIDGING_ENABLED
+#if __has_feature(arc_cf_code_audited)
+#define CF_IMPLICIT_BRIDGING_ENABLED _Pragma("clang arc_cf_code_audited begin")
+#else
+#define CF_IMPLICIT_BRIDGING_ENABLED
+#endif
+#endif
+
+#ifndef CF_IMPLICIT_BRIDGING_DISABLED
+#if __has_feature(arc_cf_code_audited)
+#define CF_IMPLICIT_BRIDGING_DISABLED _Pragma("clang arc_cf_code_audited end")
+#else
+#define CF_IMPLICIT_BRIDGING_DISABLED
+#endif
+#endif
+
 #if __has_feature(attribute_ns_returns_retained)
 #define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
 #endif
@@ -2020,3 +2036,8 @@ void rdar13783514(xpc_connection_t connection) {
   xpc_connection_set_context(connection, [[NSMutableArray alloc] init]);
   xpc_connection_set_finalizer_f(connection, releaseAfterXPC);
 } // no-warning
+
+CFAttributedStringRef CFAttributedCreate(long attributes) CF_RETURNS_RETAINED;
+CFTypeID CFGetTypeID(void) {
+  return 0;
+}
