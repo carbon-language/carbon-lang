@@ -403,6 +403,11 @@ class INSERT_B_ENC : MSA_ELM_B_FMT<0b0100, 0b011001>;
 class INSERT_H_ENC : MSA_ELM_H_FMT<0b0100, 0b011001>;
 class INSERT_W_ENC : MSA_ELM_W_FMT<0b0100, 0b011001>;
 
+class INSVE_B_ENC : MSA_ELM_B_FMT<0b0101, 0b011001>;
+class INSVE_H_ENC : MSA_ELM_H_FMT<0b0101, 0b011001>;
+class INSVE_W_ENC : MSA_ELM_W_FMT<0b0101, 0b011001>;
+class INSVE_D_ENC : MSA_ELM_D_FMT<0b0101, 0b011001>;
+
 class LD_B_ENC   : MSA_I5_FMT<0b110, 0b00, 0b000111>;
 class LD_H_ENC   : MSA_I5_FMT<0b110, 0b01, 0b000111>;
 class LD_W_ENC   : MSA_I5_FMT<0b110, 0b10, 0b000111>;
@@ -794,6 +799,19 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   list<dag> Pattern = [(set RCD:$wd, (OpNode RCD:$wd_in,
                                              immZExt6:$n,
                                              RCWS:$rs))];
+  InstrItinClass Itinerary = itin;
+  string Constraints = "$wd = $wd_in";
+}
+
+class MSA_INSVE_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                          InstrItinClass itin, RegisterClass RCD,
+                          RegisterClass RCWS> {
+  dag OutOperandList = (outs RCD:$wd);
+  dag InOperandList = (ins RCD:$wd_in, uimm6:$n, RCWS:$ws);
+  string AsmString = !strconcat(instr_asm, "\t$wd[$n], $ws[0]");
+  list<dag> Pattern = [(set RCD:$wd, (OpNode RCD:$wd_in,
+                                             immZExt6:$n,
+                                             RCWS:$ws))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1489,6 +1507,15 @@ class INSERT_H_DESC : MSA_INSERT_DESC_BASE<"insert.h", int_mips_insert_h,
                                            NoItinerary, MSA128, GPR32>;
 class INSERT_W_DESC : MSA_INSERT_DESC_BASE<"insert.w", int_mips_insert_w,
                                            NoItinerary, MSA128, GPR32>;
+
+class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b,
+                                         NoItinerary, MSA128, MSA128>;
+class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h,
+                                         NoItinerary, MSA128, MSA128>;
+class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w,
+                                         NoItinerary, MSA128, MSA128>;
+class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
+                                         NoItinerary, MSA128, MSA128>;
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, InstrItinClass itin, RegisterClass RCWD,
@@ -2303,6 +2330,11 @@ def ILVR_D : ILVR_D_ENC, ILVR_D_DESC, Requires<[HasMSA]>;
 def INSERT_B : INSERT_B_ENC, INSERT_B_DESC, Requires<[HasMSA]>;
 def INSERT_H : INSERT_H_ENC, INSERT_H_DESC, Requires<[HasMSA]>;
 def INSERT_W : INSERT_W_ENC, INSERT_W_DESC, Requires<[HasMSA]>;
+
+def INSVE_B : INSVE_B_ENC, INSVE_B_DESC, Requires<[HasMSA]>;
+def INSVE_H : INSVE_H_ENC, INSVE_H_DESC, Requires<[HasMSA]>;
+def INSVE_W : INSVE_W_ENC, INSVE_W_DESC, Requires<[HasMSA]>;
+def INSVE_D : INSVE_D_ENC, INSVE_D_DESC, Requires<[HasMSA]>;
 
 def LD_B: LD_B_ENC, LD_B_DESC, Requires<[HasMSA]>;
 def LD_H: LD_H_ENC, LD_H_DESC, Requires<[HasMSA]>;
