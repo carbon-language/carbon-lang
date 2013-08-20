@@ -358,12 +358,12 @@ let Predicates = [HasStdEnc] in {
   def SWC1 : SW_FT<"swc1", FGR32Opnd, IIFStore, store>, LW_FM<0x39>;
 }
 
-let Predicates = [HasMips64, HasStdEnc], DecoderNamespace = "Mips64" in {
+let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def LDC164 : LW_FT<"ldc1", FGR64Opnd, IIFLoad, load>, LW_FM<0x35>;
   def SDC164 : SW_FT<"sdc1", FGR64Opnd, IIFStore, store>, LW_FM<0x3d>;
 }
 
-let Predicates = [NotMips64, HasStdEnc] in {
+let Predicates = [NotFP64bit, HasStdEnc] in {
   let isPseudo = 1, isCodeGenOnly = 1 in {
     def PseudoLDC1 : LW_FT<"", AFGR64Opnd, IIFLoad, load>;
     def PseudoSDC1 : SW_FT<"", AFGR64Opnd, IIFStore, store>;
@@ -600,12 +600,12 @@ let AddedComplexity = 40 in {
     def : StoreRegImmPat<SWC1, f32>;
   }
 
-  let Predicates = [HasMips64, HasStdEnc] in {
+  let Predicates = [IsFP64bit, HasStdEnc] in {
     def : LoadRegImmPat<LDC164, f64, load>;
     def : StoreRegImmPat<SDC164, f64>;
   }
 
-  let Predicates = [NotMips64, HasStdEnc] in {
+  let Predicates = [NotFP64bit, HasStdEnc] in {
     def : LoadRegImmPat<PseudoLDC1, f64, load>;
     def : StoreRegImmPat<PseudoSDC1, f64>;
   }

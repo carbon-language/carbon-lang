@@ -288,7 +288,7 @@ defm : SetgeImmPats<GPR64, SLTi64, SLTiu64>;
 // truncate
 def : MipsPat<(i32 (trunc GPR64:$src)),
               (SLL (EXTRACT_SUBREG GPR64:$src, sub_32), 0)>,
-      Requires<[IsN64, HasStdEnc]>;
+      Requires<[HasStdEnc]>;
 
 // 32-to-64-bit extension
 def : MipsPat<(i64 (anyext GPR32:$src)), (SLL64_32 GPR32:$src)>;

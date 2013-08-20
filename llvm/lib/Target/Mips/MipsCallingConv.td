@@ -27,7 +27,7 @@ def RetCC_MipsO32 : CallingConv<[
   CCIfType<[f32], CCAssignToReg<[F0, F2]>>,
 
   // f64 are returned in register D0, D1
-  CCIfType<[f64], CCIfSubtarget<"isNotSingleFloat()", CCAssignToReg<[D0, D1]>>>
+  CCIfType<[f64], CCAssignToReg<[D0, D1]>>
 ]>;
 
 //===----------------------------------------------------------------------===//
