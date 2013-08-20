@@ -1947,7 +1947,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["pclmul"] = false;
   Features["avx"] = false;
   Features["avx2"] = false;
-  Features["avx512"] = false;
+  Features["avx-512"] = false;
   Features["lzcnt"] = false;
   Features["rdrand"] = false;
   Features["bmi"] = false;
@@ -2032,7 +2032,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "fma", true);
     break;
   case CK_KNL:
-    setFeatureEnabled(Features, "avx512", true);
+    setFeatureEnabled(Features, "avx-512", true);
     setFeatureEnabled(Features, "aes", true);
     setFeatureEnabled(Features, "pclmul", true);
     setFeatureEnabled(Features, "lzcnt", true);
@@ -2168,11 +2168,11 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
         Features["popcnt"] = Features["avx"] = Features["avx2"] = true;
-    else if (Name == "avx512")
+    else if (Name == "avx-512")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
         Features["popcnt"] = Features["avx"] = Features["avx2"] =
-        Features["avx512"] = true;
+        Features["avx-512"] = true;
     else if (Name == "fma")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
@@ -2215,29 +2215,29 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
         Features["sse4a"] = Features["avx"] = Features["avx2"] =
-        Features["avx512"] = Features["fma"] = Features["fma4"] =
+        Features["avx-512"] = Features["fma"] = Features["fma4"] =
         Features["aes"] = Features["pclmul"] = Features["xop"] = false;
     else if (Name == "sse2")
       Features["sse2"] = Features["sse3"] = Features["ssse3"] =
         Features["sse41"] = Features["sse42"] = Features["sse4a"] =
-        Features["avx"] = Features["avx2"] = Features["avx512"] =
+        Features["avx"] = Features["avx2"] = Features["avx-512"] =
         Features["fma"] = Features["fma4"] = Features["aes"] =
         Features["pclmul"] = Features["xop"] = false;
     else if (Name == "sse3")
       Features["sse3"] = Features["ssse3"] = Features["sse41"] =
         Features["sse42"] = Features["sse4a"] = Features["avx"] =
-        Features["avx2"] = Features["avx512"] = Features["fma"] =
+        Features["avx2"] = Features["avx-512"] = Features["fma"] =
         Features["fma4"] = Features["xop"] = false;
     else if (Name == "ssse3")
       Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["avx"] = Features["avx2"] = Features["avx512"] =
+        Features["avx"] = Features["avx2"] = Features["avx-512"] =
         Features["fma"] = false;
     else if (Name == "sse4" || Name == "sse4.1")
       Features["sse41"] = Features["sse42"] = Features["avx"] =
-        Features["avx2"] = Features["avx512"] = Features["fma"] = false;
+        Features["avx2"] = Features["avx-512"] = Features["fma"] = false;
     else if (Name == "sse4.2")
       Features["sse42"] = Features["avx"] = Features["avx2"] =
-        Features["avx512"] = Features["fma"] = false;
+        Features["avx-512"] = Features["fma"] = false;
     else if (Name == "3dnow")
       Features["3dnow"] = Features["3dnowa"] = false;
     else if (Name == "3dnowa")
@@ -2247,12 +2247,12 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "pclmul")
       Features["pclmul"] = false;
     else if (Name == "avx")
-      Features["avx"] = Features["avx2"] = Features["avx512"] =
+      Features["avx"] = Features["avx2"] = Features["avx-512"] =
         Features["fma"] = Features["fma4"] = Features["xop"] = false;
     else if (Name == "avx2")
-      Features["avx2"] = Features["avx512"] = false;
-    else if (Name == "avx512")
-      Features["avx512"] = false;
+      Features["avx2"] = Features["avx-512"] = false;
+    else if (Name == "avx-512")
+      Features["avx-512"] = false;
     else if (Name == "fma")
       Features["fma"] = false;
     else if (Name == "sse4a")
@@ -2372,7 +2372,7 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     assert(Features[i][0] == '+' && "Invalid target feature!");
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
-      .Case("avx512", AVX512)
+      .Case("avx-512", AVX512)
       .Case("avx2", AVX2)
       .Case("avx", AVX)
       .Case("sse42", SSE42)
@@ -2600,7 +2600,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   // Each case falls through to the previous one here.
   switch (SSELevel) {
   case AVX512:
-    Builder.defineMacro("__AVX512__");
+    Builder.defineMacro("__AVX512F__");
   case AVX2:
     Builder.defineMacro("__AVX2__");
   case AVX:
