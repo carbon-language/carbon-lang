@@ -261,12 +261,6 @@ class FADD_D_ENC : MSA_3RF_FMT<0b0000, 0b1, 0b011011>;
 class FCEQ_W_ENC : MSA_3RF_FMT<0b0010, 0b0, 0b011010>;
 class FCEQ_D_ENC : MSA_3RF_FMT<0b0010, 0b1, 0b011010>;
 
-class FCGE_W_ENC : MSA_3RF_FMT<0b0101, 0b0, 0b011010>;
-class FCGE_D_ENC : MSA_3RF_FMT<0b0101, 0b1, 0b011010>;
-
-class FCGT_W_ENC : MSA_3RF_FMT<0b0111, 0b0, 0b011010>;
-class FCGT_D_ENC : MSA_3RF_FMT<0b0111, 0b1, 0b011010>;
-
 class FCLASS_W_ENC : MSA_2RF_FMT<0b110010000, 0b0, 0b011110>;
 class FCLASS_D_ENC : MSA_2RF_FMT<0b110010000, 0b1, 0b011110>;
 
@@ -348,12 +342,6 @@ class FRSQRT_D_ENC : MSA_2RF_FMT<0b110010100, 0b1, 0b011110>;
 
 class FSEQ_W_ENC : MSA_3RF_FMT<0b1010, 0b0, 0b011010>;
 class FSEQ_D_ENC : MSA_3RF_FMT<0b1010, 0b1, 0b011010>;
-
-class FSGE_W_ENC : MSA_3RF_FMT<0b1101, 0b0, 0b011010>;
-class FSGE_D_ENC : MSA_3RF_FMT<0b1101, 0b1, 0b011010>;
-
-class FSGT_W_ENC : MSA_3RF_FMT<0b1111, 0b0, 0b011010>;
-class FSGT_D_ENC : MSA_3RF_FMT<0b1111, 0b1, 0b011010>;
 
 class FSLE_W_ENC : MSA_3RF_FMT<0b1110, 0b0, 0b011010>;
 class FSLE_D_ENC : MSA_3RF_FMT<0b1110, 0b1, 0b011010>;
@@ -1264,16 +1252,6 @@ class FCEQ_D_DESC : MSA_3RF_DESC_BASE<"fceq.d", int_mips_fceq_d,
                                       NoItinerary, MSA128, MSA128>,
                                       IsCommutable;
 
-class FCGE_W_DESC : MSA_3RF_DESC_BASE<"fcge.w", int_mips_fcge_w,
-                                      NoItinerary, MSA128, MSA128>;
-class FCGE_D_DESC : MSA_3RF_DESC_BASE<"fcge.d", int_mips_fcge_d,
-                                      NoItinerary, MSA128, MSA128>;
-
-class FCGT_W_DESC : MSA_3RF_DESC_BASE<"fcgt.w", int_mips_fcgt_w,
-                                      NoItinerary, MSA128, MSA128>;
-class FCGT_D_DESC : MSA_3RF_DESC_BASE<"fcgt.d", int_mips_fcgt_d,
-                                      NoItinerary, MSA128, MSA128>;
-
 class FCLASS_W_DESC : MSA_2RF_DESC_BASE<"fclass.w", int_mips_fclass_w,
                                         NoItinerary, MSA128, MSA128>;
 class FCLASS_D_DESC : MSA_2RF_DESC_BASE<"fclass.d", int_mips_fclass_d,
@@ -1413,16 +1391,6 @@ class FRSQRT_D_DESC : MSA_2RF_DESC_BASE<"frsqrt.d", int_mips_frsqrt_d,
 class FSEQ_W_DESC : MSA_3RF_DESC_BASE<"fseq.w", int_mips_fseq_w,
                                       NoItinerary, MSA128, MSA128>;
 class FSEQ_D_DESC : MSA_3RF_DESC_BASE<"fseq.d", int_mips_fseq_d,
-                                      NoItinerary, MSA128, MSA128>;
-
-class FSGE_W_DESC : MSA_3RF_DESC_BASE<"fsge.w", int_mips_fsge_w,
-                                      NoItinerary, MSA128, MSA128>;
-class FSGE_D_DESC : MSA_3RF_DESC_BASE<"fsge.d", int_mips_fsge_d,
-                                      NoItinerary, MSA128, MSA128>;
-
-class FSGT_W_DESC : MSA_3RF_DESC_BASE<"fsgt.w", int_mips_fsgt_w,
-                                      NoItinerary, MSA128, MSA128>;
-class FSGT_D_DESC : MSA_3RF_DESC_BASE<"fsgt.d", int_mips_fsgt_d,
                                       NoItinerary, MSA128, MSA128>;
 
 class FSLE_W_DESC : MSA_3RF_DESC_BASE<"fsle.w", int_mips_fsle_w,
@@ -2198,12 +2166,6 @@ def FCLT_D : FCLT_D_ENC, FCLT_D_DESC, Requires<[HasMSA]>;
 def FCLASS_W : FCLASS_W_ENC, FCLASS_W_DESC, Requires<[HasMSA]>;
 def FCLASS_D : FCLASS_D_ENC, FCLASS_D_DESC, Requires<[HasMSA]>;
 
-def FCGE_W : FCGE_W_ENC, FCGE_W_DESC, Requires<[HasMSA]>;
-def FCGE_D : FCGE_D_ENC, FCGE_D_DESC, Requires<[HasMSA]>;
-
-def FCGT_W : FCGT_W_ENC, FCGT_W_DESC, Requires<[HasMSA]>;
-def FCGT_D : FCGT_D_ENC, FCGT_D_DESC, Requires<[HasMSA]>;
-
 def FCNE_W : FCNE_W_ENC, FCNE_W_DESC, Requires<[HasMSA]>;
 def FCNE_D : FCNE_D_ENC, FCNE_D_DESC, Requires<[HasMSA]>;
 
@@ -2282,12 +2244,6 @@ def FSLE_D : FSLE_D_ENC, FSLE_D_DESC, Requires<[HasMSA]>;
 
 def FSLT_W : FSLT_W_ENC, FSLT_W_DESC, Requires<[HasMSA]>;
 def FSLT_D : FSLT_D_ENC, FSLT_D_DESC, Requires<[HasMSA]>;
-
-def FSGE_W : FSGE_W_ENC, FSGE_W_DESC, Requires<[HasMSA]>;
-def FSGE_D : FSGE_D_ENC, FSGE_D_DESC, Requires<[HasMSA]>;
-
-def FSGT_W : FSGT_W_ENC, FSGT_W_DESC, Requires<[HasMSA]>;
-def FSGT_D : FSGT_D_ENC, FSGT_D_DESC, Requires<[HasMSA]>;
 
 def FSNE_W : FSNE_W_ENC, FSNE_W_DESC, Requires<[HasMSA]>;
 def FSNE_D : FSNE_D_ENC, FSNE_D_DESC, Requires<[HasMSA]>;

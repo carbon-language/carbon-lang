@@ -814,16 +814,6 @@ def int_mips_fclass_w : GCCBuiltin<"__builtin_msa_fclass_w">,
 def int_mips_fclass_d : GCCBuiltin<"__builtin_msa_fclass_d">,
   Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty], []>;
 
-def int_mips_fcge_w : GCCBuiltin<"__builtin_msa_fcge_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4f32_ty, llvm_v4f32_ty], []>;
-def int_mips_fcge_d : GCCBuiltin<"__builtin_msa_fcge_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty, llvm_v2f64_ty], []>;
-
-def int_mips_fcgt_w : GCCBuiltin<"__builtin_msa_fcgt_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4f32_ty, llvm_v4f32_ty], []>;
-def int_mips_fcgt_d : GCCBuiltin<"__builtin_msa_fcgt_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty, llvm_v2f64_ty], []>;
-
 def int_mips_fcne_w : GCCBuiltin<"__builtin_msa_fcne_w">,
   Intrinsic<[llvm_v4i32_ty], [llvm_v4f32_ty, llvm_v4f32_ty], []>;
 def int_mips_fcne_d : GCCBuiltin<"__builtin_msa_fcne_d">,
@@ -954,16 +944,6 @@ def int_mips_fsle_d : GCCBuiltin<"__builtin_msa_fsle_d">,
 def int_mips_fslt_w : GCCBuiltin<"__builtin_msa_fslt_w">,
   Intrinsic<[llvm_v4i32_ty], [llvm_v4f32_ty, llvm_v4f32_ty], []>;
 def int_mips_fslt_d : GCCBuiltin<"__builtin_msa_fslt_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty, llvm_v2f64_ty], []>;
-
-def int_mips_fsge_w : GCCBuiltin<"__builtin_msa_fsge_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4f32_ty, llvm_v4f32_ty], []>;
-def int_mips_fsge_d : GCCBuiltin<"__builtin_msa_fsge_d">,
-  Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty, llvm_v2f64_ty], []>;
-
-def int_mips_fsgt_w : GCCBuiltin<"__builtin_msa_fsgt_w">,
-  Intrinsic<[llvm_v4i32_ty], [llvm_v4f32_ty, llvm_v4f32_ty], []>;
-def int_mips_fsgt_d : GCCBuiltin<"__builtin_msa_fsgt_d">,
   Intrinsic<[llvm_v2i64_ty], [llvm_v2f64_ty, llvm_v2f64_ty], []>;
 
 def int_mips_fsne_w : GCCBuiltin<"__builtin_msa_fsne_w">,
