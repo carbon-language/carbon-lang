@@ -1305,28 +1305,51 @@ let isCodeGenOnly = 1 in {
 }
 
 let Predicates = [HasAVX512] in {
+  let AddedComplexity = 15 in {
+  // Move scalar to XMM zero-extended, zeroing a VR128X then do a
+  // MOVS{S,D} to the lower bits.
+  def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32X:$src)))),
+            (VMOVSSZrr (v4f32 (V_SET0)), FR32X:$src)>;
+  def : Pat<(v4f32 (X86vzmovl (v4f32 VR128X:$src))),
+            (VMOVSSZrr (v4f32 (V_SET0)), (COPY_TO_REGCLASS VR128X:$src, FR32X))>;
+  def : Pat<(v4i32 (X86vzmovl (v4i32 VR128X:$src))),
+            (VMOVSSZrr (v4i32 (V_SET0)), (COPY_TO_REGCLASS VR128X:$src, FR32X))>;
+  def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64X:$src)))),
+            (VMOVSDZrr (v2f64 (V_SET0)), FR64X:$src)>;
+
+  // Move low f32 and clear high bits.
+  def : Pat<(v8f32 (X86vzmovl (v8f32 VR256X:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (VMOVSSZrr (v4f32 (V_SET0)), 
+              (EXTRACT_SUBREG (v8f32 VR256X:$src), sub_xmm)), sub_xmm)>;
+  def : Pat<(v8i32 (X86vzmovl (v8i32 VR256X:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (VMOVSSZrr (v4i32 (V_SET0)),
+                       (EXTRACT_SUBREG (v8i32 VR256X:$src), sub_xmm)), sub_xmm)>;
+  }
+
   let AddedComplexity = 20 in {
   // MOVSSrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector (loadf32 addr:$src))))),
-            (COPY_TO_REGCLASS (VMOVSSrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSSZrm addr:$src), VR128X)>;
   def : Pat<(v4f32 (scalar_to_vector (loadf32 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSSrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSSZrm addr:$src), VR128X)>;
   def : Pat<(v4f32 (X86vzmovl (loadv4f32 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSSrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSSZrm addr:$src), VR128X)>;
 
   // MOVSDrm zeros the high parts of the register; represent this
   // with SUBREG_TO_REG. The AVX versions also write: DST[255:128] <- 0
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector (loadf64 addr:$src))))),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
   def : Pat<(v2f64 (scalar_to_vector (loadf64 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
   def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
   def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
   def : Pat<(v2f64 (X86vzload addr:$src)),
-            (COPY_TO_REGCLASS (VMOVSDrm addr:$src), VR128X)>;
+            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
 
   // Represent the same patterns above but in the form they appear for
   // 256-bit types
@@ -1340,9 +1363,27 @@ let Predicates = [HasAVX512] in {
                    (v2f64 (scalar_to_vector (loadf64 addr:$src))), (iPTR 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVSDZrm addr:$src), sub_xmm)>;
   }
+  def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
+                   (v4f32 (scalar_to_vector FR32X:$src)), (iPTR 0)))),
+            (SUBREG_TO_REG (i32 0), (v4f32 (VMOVSSZrr (v4f32 (V_SET0)),
+                                            FR32X:$src)), sub_xmm)>;
+  def : Pat<(v4f64 (X86vzmovl (insert_subvector undef,
+                   (v2f64 (scalar_to_vector FR64X:$src)), (iPTR 0)))),
+            (SUBREG_TO_REG (i64 0), (v2f64 (VMOVSDZrr (v2f64 (V_SET0)),
+                                     FR64X:$src)), sub_xmm)>;
   def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
                    (v2i64 (scalar_to_vector (loadi64 addr:$src))), (iPTR 0)))),
             (SUBREG_TO_REG (i64 0), (VMOVSDZrm addr:$src), sub_xmm)>;
+
+  // Move low f64 and clear high bits.
+  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256X:$src))),
+            (SUBREG_TO_REG (i32 0),
+             (VMOVSDZrr (v2f64 (V_SET0)),
+                       (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm)), sub_xmm)>;
+
+  def : Pat<(v4i64 (X86vzmovl (v4i64 VR256X:$src))),
+            (SUBREG_TO_REG (i32 0), (VMOVSDZrr (v2i64 (V_SET0)),
+                       (EXTRACT_SUBREG (v4i64 VR256X:$src), sub_xmm)), sub_xmm)>;
 
   // Extract and store.
   def : Pat<(store (f32 (vector_extract (v4f32 VR128X:$src), (iPTR 0))),
@@ -1420,11 +1461,29 @@ def VMOVZPQILo2PQIZrm : AVX512XSI<0x7E, MRMSrcMem, (outs VR128X:$dst),
                                                      (loadv2i64 addr:$src))))],
                                  IIC_SSE_MOVDQ>, EVEX, VEX_W,
                                  EVEX_CD8<8, CD8VT8>;
-let AddedComplexity = 20 in {
-  def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
+
+let Predicates = [HasAVX512] in {
+  // AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
+  let AddedComplexity = 20 in {
+    def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector (loadi32 addr:$src))))),
+              (VMOVDI2PDIZrm addr:$src)>;
+              
+    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
+              (VMOVDI2PDIZrm addr:$src)>;
+    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
+              (VMOVDI2PDIZrm addr:$src)>;
+    def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
             (VMOVZPQILo2PQIZrm addr:$src)>;
-  def : Pat<(v2f64 (X86vzmovl (v2f64 VR128X:$src))),
+    def : Pat<(v2f64 (X86vzmovl (v2f64 VR128X:$src))),
             (VMOVZPQILo2PQIZrr VR128X:$src)>;
+  }
+  // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
+  def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
+                               (v4i32 (scalar_to_vector GR32:$src)),(iPTR 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrr GR32:$src), sub_xmm)>;
+  def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
+                               (v2i64 (scalar_to_vector GR64:$src)),(iPTR 0)))),
+            (SUBREG_TO_REG (i64 0), (VMOV64toPQIZrr GR64:$src), sub_xmm)>;
 }
 
 //===----------------------------------------------------------------------===//

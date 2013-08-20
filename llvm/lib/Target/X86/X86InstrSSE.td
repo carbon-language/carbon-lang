@@ -526,7 +526,7 @@ let canFoldAsLoad = 1, isReMaterializable = 1 in {
 }
 
 // Patterns
-let Predicates = [HasAVX] in {
+let Predicates = [UseAVX] in {
   let AddedComplexity = 15 in {
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVS{S,D} to the lower bits.

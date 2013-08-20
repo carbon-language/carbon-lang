@@ -73,3 +73,30 @@ define i64 @test9(<2 x i64> %x) {
    %res = extractelement <2 x i64> %x, i32 0
    ret i64 %res
 }
+
+; CHECK-LABEL: @test10
+; CHECK: vmovdz  (%rdi)
+; CHECK: ret
+define <4 x i32> @test10(i32* %x) {
+   %y = load i32* %x, align 4
+   %res = insertelement <4 x i32>zeroinitializer, i32 %y, i32 0
+   ret <4 x i32>%res
+}
+
+; CHECK-LABEL: @test11
+; CHECK: vmovssz  (%rdi)
+; CHECK: ret
+define <4 x float> @test11(float* %x) {
+   %y = load float* %x, align 4
+   %res = insertelement <4 x float>zeroinitializer, float %y, i32 0
+   ret <4 x float>%res
+}
+
+; CHECK-LABEL: @test12
+; CHECK: vmovsdz  (%rdi)
+; CHECK: ret
+define <2 x double> @test12(double* %x) {
+   %y = load double* %x, align 8
+   %res = insertelement <2 x double>zeroinitializer, double %y, i32 0
+   ret <2 x double>%res
+}
