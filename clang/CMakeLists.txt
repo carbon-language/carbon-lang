@@ -337,3 +337,6 @@ endif()
 
 set(BUG_REPORT_URL "http://llvm.org/bugs/" CACHE STRING
   "Default URL where bug reports are to be submitted.")
+
+option(CLANG_ORDER_FILE
+  "Order file to use when compiling clang in order to improve startup time." "")
