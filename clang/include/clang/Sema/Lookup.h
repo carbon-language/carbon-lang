@@ -690,6 +690,11 @@ public:
   /// \brief Destroys the visible declaration consumer.
   virtual ~VisibleDeclConsumer();
 
+  /// \brief Determine whether hidden declarations (from unimported
+  /// modules) should be given to this consumer. By default, they
+  /// are not included.
+  virtual bool includeHiddenDecls() const;
+
   /// \brief Invoked each time \p Sema::LookupVisibleDecls() finds a
   /// declaration visible from the current scope or context.
   ///

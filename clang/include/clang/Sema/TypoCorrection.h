@@ -43,7 +43,8 @@ public:
                  unsigned QualifierDistance = 0)
       : CorrectionName(Name), CorrectionNameSpec(NNS),
         CharDistance(CharDistance), QualifierDistance(QualifierDistance),
-        CallbackDistance(0), ForceSpecifierReplacement(false) {
+        CallbackDistance(0), ForceSpecifierReplacement(false),
+        RequiresImport(false) {
     if (NameDecl)
       CorrectionDecls.push_back(NameDecl);
   }
@@ -52,7 +53,7 @@ public:
                  unsigned CharDistance = 0)
       : CorrectionName(Name->getDeclName()), CorrectionNameSpec(NNS),
         CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0),
-        ForceSpecifierReplacement(false) {
+        ForceSpecifierReplacement(false), RequiresImport(false) {
     if (Name)
       CorrectionDecls.push_back(Name);
   }
@@ -61,11 +62,12 @@ public:
                  unsigned CharDistance = 0)
       : CorrectionName(Name), CorrectionNameSpec(NNS),
         CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0),
-        ForceSpecifierReplacement(false) {}
+        ForceSpecifierReplacement(false), RequiresImport(false) {}
 
   TypoCorrection()
       : CorrectionNameSpec(0), CharDistance(0), QualifierDistance(0),
-        CallbackDistance(0), ForceSpecifierReplacement(false) {}
+        CallbackDistance(0), ForceSpecifierReplacement(false),
+        RequiresImport(false) {}
 
   /// \brief Gets the DeclarationName of the typo correction
   DeclarationName getCorrection() const { return CorrectionName; }
@@ -134,11 +136,17 @@ public:
   DeclClass *getCorrectionDeclAs() const {
     return dyn_cast_or_null<DeclClass>(getCorrectionDecl());
   }
-  
+
   /// \brief Clears the list of NamedDecls before adding the new one.
   void setCorrectionDecl(NamedDecl *CDecl) {
     CorrectionDecls.clear();
     addCorrectionDecl(CDecl);
+  }
+
+  /// \brief Clears the list of NamedDecls and adds the given set.
+  void setCorrectionDecls(ArrayRef<NamedDecl*> Decls) {
+    CorrectionDecls.clear();
+    CorrectionDecls.insert(CorrectionDecls.begin(), Decls.begin(), Decls.end());
   }
 
   /// \brief Add the given NamedDecl to the list of NamedDecls that are the
@@ -206,6 +214,11 @@ public:
   }
   const_decl_iterator end() const { return CorrectionDecls.end(); }
 
+  /// \brief Returns whether this typo correction is correcting to a
+  /// declaration that was declared in a module that has not been imported.
+  bool requiresImport() const { return RequiresImport; }
+  void setRequiresImport(bool Req) { RequiresImport = Req; }
+
 private:
   bool hasCorrectionDecl() const {
     return (!isKeyword() && !CorrectionDecls.empty());
@@ -220,6 +233,7 @@ private:
   unsigned CallbackDistance;
   SourceRange CorrectionRange;
   bool ForceSpecifierReplacement;
+  bool RequiresImport;
 };
 
 /// @brief Base class for callback objects used by Sema::CorrectTypo to check

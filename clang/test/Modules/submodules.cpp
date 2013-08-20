@@ -7,8 +7,9 @@
 vector<int> vi;
 
 // Note: remove_reference is not visible yet.
-remove_reference<int&>::type *int_ptr = 0; // expected-error{{unknown type name 'remove_reference'}} \
-// expected-error{{expected unqualified-id}}
+remove_reference<int&>::type *int_ptr = 0; // expected-error{{declaration of 'remove_reference' must be imported from module 'std.type_traits' before it is required}}
+// expected-note@Inputs/submodules/type_traits.h:2{{previous}}
+// expected-note@Inputs/submodules/hash_map.h:1{{previous}}
 
 @import std.typetraits; // expected-error{{no submodule named 'typetraits' in module 'std'; did you mean 'type_traits'?}}
 
@@ -20,8 +21,7 @@ remove_reference<int&>::type *int_ptr2 = 0;
 @import std; // import everything in 'std'
 
 // hash_map still isn't available.
-hash_map<int, float> ints_to_floats; // expected-error{{unknown type name 'hash_map'}} \
-// expected-error{{expected unqualified-id}}
+hash_map<int, float> ints_to_floats; // expected-error{{declaration of 'hash_map' must be imported from module 'std.hash_map' before it is required}}
 
 @import std.hash_map;
 

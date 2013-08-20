@@ -1229,18 +1229,22 @@ bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
 ///
 /// \returns D, or a visible previous declaration of D, whichever is more recent
 /// and visible. If no declaration of D is visible, returns null.
-NamedDecl *LookupResult::getAcceptableDeclSlow(NamedDecl *D) const {
-  assert(!isVisible(SemaRef, D) && "not in slow case");
+static NamedDecl *findAcceptableDecl(Sema &SemaRef, NamedDecl *D) {
+  assert(!LookupResult::isVisible(SemaRef, D) && "not in slow case");
 
   for (Decl::redecl_iterator RD = D->redecls_begin(), RDEnd = D->redecls_end();
        RD != RDEnd; ++RD) {
     if (NamedDecl *ND = dyn_cast<NamedDecl>(*RD)) {
-      if (isVisible(SemaRef, ND))
+      if (LookupResult::isVisible(SemaRef, ND))
         return ND;
     }
   }
 
   return 0;
+}
+
+NamedDecl *LookupResult::getAcceptableDeclSlow(NamedDecl *D) const {
+  return findAcceptableDecl(SemaRef, D);
 }
 
 /// @brief Perform unqualified name lookup starting from a given
@@ -2900,6 +2904,8 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
 //----------------------------------------------------------------------------
 VisibleDeclConsumer::~VisibleDeclConsumer() { }
 
+bool VisibleDeclConsumer::includeHiddenDecls() const { return false; }
+
 namespace {
 
 class ShadowContextRAII;
@@ -3194,7 +3200,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
                                   Result.getNameLoc(), Sema::LookupMemberName);
           if (ObjCInterfaceDecl *IFace = Method->getClassInterface()) {
             LookupVisibleDecls(IFace, IvarResult, /*QualifiedNameLookup=*/false,
-                               /*InBaseClass=*/false, Consumer, Visited);              
+                               /*InBaseClass=*/false, Consumer, Visited);
           }
         }
 
@@ -3259,6 +3265,7 @@ void Sema::LookupVisibleDecls(Scope *S, LookupNameKind Kind,
 
   // Look for visible declarations.
   LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
+  Result.setAllowHidden(Consumer.includeHiddenDecls());
   VisibleDeclsRecord Visited;
   if (!IncludeGlobalScope)
     Visited.visitedContext(Context.getTranslationUnitDecl());
@@ -3270,6 +3277,7 @@ void Sema::LookupVisibleDecls(DeclContext *Ctx, LookupNameKind Kind,
                               VisibleDeclConsumer &Consumer,
                               bool IncludeGlobalScope) {
   LookupResult Result(*this, DeclarationName(), SourceLocation(), Kind);
+  Result.setAllowHidden(Consumer.includeHiddenDecls());
   VisibleDeclsRecord Visited;
   if (!IncludeGlobalScope)
     Visited.visitedContext(Context.getTranslationUnitDecl());
@@ -3339,7 +3347,9 @@ class TypoCorrectionConsumer : public VisibleDeclConsumer {
 public:
   explicit TypoCorrectionConsumer(Sema &SemaRef, IdentifierInfo *Typo)
     : Typo(Typo->getName()),
-      SemaRef(SemaRef) { }
+      SemaRef(SemaRef) {}
+
+  bool includeHiddenDecls() const { return true; }
 
   virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
                          bool InBaseClass);
@@ -3388,6 +3398,12 @@ void TypoCorrectionConsumer::FoundDecl(NamedDecl *ND, NamedDecl *Hiding,
   // etc.).
   IdentifierInfo *Name = ND->getIdentifier();
   if (!Name)
+    return;
+
+  // Only consider visible declarations and declarations from modules with
+  // names that exactly match.
+  if (!LookupResult::isVisible(SemaRef, ND) && Name->getName() != Typo &&
+      !findAcceptableDecl(SemaRef, ND))
     return;
 
   FoundName(Name->getName());
@@ -3664,10 +3680,12 @@ static void LookupPotentialTypoResult(Sema &SemaRef,
                                       Scope *S, CXXScopeSpec *SS,
                                       DeclContext *MemberContext,
                                       bool EnteringContext,
-                                      bool isObjCIvarLookup) {
+                                      bool isObjCIvarLookup,
+                                      bool FindHidden) {
   Res.suppressDiagnostics();
   Res.clear();
   Res.setLookupName(Name);
+  Res.setAllowHidden(FindHidden);
   if (MemberContext) {
     if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(MemberContext)) {
       if (isObjCIvarLookup) {
@@ -3858,6 +3876,50 @@ static bool isCandidateViable(CorrectionCandidateCallback &CCC,
   return Candidate.getEditDistance(false) != TypoCorrection::InvalidDistance;
 }
 
+/// \brief Check whether the declarations found for a typo correction are
+/// visible, and if none of them are, convert the correction to an 'import
+/// a module' correction.
+static void checkCorrectionVisibility(Sema &SemaRef, TypoCorrection &TC,
+                                      DeclarationName TypoName) {
+  if (TC.begin() == TC.end())
+    return;
+
+  TypoCorrection::decl_iterator DI = TC.begin(), DE = TC.end();
+
+  for (/**/; DI != DE; ++DI)
+    if (!LookupResult::isVisible(SemaRef, *DI))
+      break;
+  // Nothing to do if all decls are visible.
+  if (DI == DE)
+    return;
+
+  llvm::SmallVector<NamedDecl*, 4> NewDecls(TC.begin(), DI);
+  bool AnyVisibleDecls = !NewDecls.empty();
+
+  for (/**/; DI != DE; ++DI) {
+    NamedDecl *VisibleDecl = *DI;
+    if (!LookupResult::isVisible(SemaRef, *DI))
+      VisibleDecl = findAcceptableDecl(SemaRef, *DI);
+
+    if (VisibleDecl) {
+      if (!AnyVisibleDecls) {
+        // Found a visible decl, discard all hidden ones.
+        AnyVisibleDecls = true;
+        NewDecls.clear();
+      }
+      NewDecls.push_back(VisibleDecl);
+    } else if (!AnyVisibleDecls && !(*DI)->isModulePrivate())
+      NewDecls.push_back(*DI);
+  }
+
+  if (NewDecls.empty())
+    TC = TypoCorrection();
+  else {
+    TC.setCorrectionDecls(NewDecls);
+    TC.setRequiresImport(!AnyVisibleDecls);
+  }
+}
+
 /// \brief Try to "correct" a typo in the source code by finding
 /// visible declarations whose names are similar to the name that was
 /// present in the source code.
@@ -4000,7 +4062,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   bool SearchNamespaces
     = getLangOpts().CPlusPlus &&
       (IsUnqualifiedLookup || (QualifiedDC && QualifiedDC->isNamespace()));
-  // In a few cases we *only* want to search for corrections bases on just
+  // In a few cases we *only* want to search for corrections based on just
   // adding or changing the nested name specifier.
   bool AllowOnlyNNSChanges = Typo->getName().size() < 3;
   
@@ -4122,7 +4184,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 retry_lookup:
       LookupPotentialTypoResult(*this, TmpRes, Name, S, TempSS,
                                 TempMemberContext, EnteringContext,
-                                CCC.IsObjCIvarLookup);
+                                CCC.IsObjCIvarLookup,
+                                Name == TypoName.getName() &&
+                                  !Candidate.WillReplaceSpecifier());
 
       switch (TmpRes.getResultKind()) {
       case LookupResult::NotFound:
@@ -4271,6 +4335,7 @@ retry_lookup:
 
     TypoCorrection TC = Result;
     TC.setCorrectionRange(SS, TypoName);
+    checkCorrectionVisibility(*this, TC, TypoName.getName());
     return TC;
   }
   else if (BestResults.size() > 1
@@ -4391,6 +4456,24 @@ void Sema::diagnoseTypo(const TypoCorrection &Correction,
                ErrorRecovery);
 }
 
+/// Find which declaration we should import to provide the definition of
+/// the given declaration.
+static const NamedDecl *getDefinitionToImport(const NamedDecl *D) {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+    return VD->getDefinition();
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return FD->isDefined(FD) ? FD : 0;
+  if (const TagDecl *TD = dyn_cast<TagDecl>(D))
+    return TD->getDefinition();
+  if (const ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
+    return ID->getDefinition();
+  if (const ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
+    return PD->getDefinition();
+  if (const TemplateDecl *TD = dyn_cast<TemplateDecl>(D))
+    return getDefinitionToImport(TD->getTemplatedDecl());
+  return 0;
+}
+
 /// \brief Diagnose a successfully-corrected typo. Separated from the correction
 /// itself to allow external validation of the result, etc.
 ///
@@ -4411,6 +4494,31 @@ void Sema::diagnoseTypo(const TypoCorrection &Correction,
   std::string CorrectedQuotedStr = Correction.getQuoted(getLangOpts());
   FixItHint FixTypo = FixItHint::CreateReplacement(
       Correction.getCorrectionRange(), CorrectedStr);
+
+  // Maybe we're just missing a module import.
+  if (Correction.requiresImport()) {
+    NamedDecl *Decl = Correction.getCorrectionDecl();
+    assert(Decl && "import required but no declaration to import");
+
+    // Suggest importing a module providing the definition of this entity, if
+    // possible.
+    const NamedDecl *Def = getDefinitionToImport(Decl);
+    if (!Def)
+      Def = Decl;
+    Module *Owner = Def->getOwningModule();
+    assert(Owner && "definition of hidden declaration is not in a module");
+
+    Diag(Correction.getCorrectionRange().getBegin(),
+         diag::err_module_private_declaration)
+      << Def << Owner->getFullModuleName();
+    Diag(Def->getLocation(), diag::note_previous_declaration);
+
+    // Recover by implicitly importing this module.
+    if (!isSFINAEContext() && ErrorRecovery)
+      createImplicitModuleImport(Correction.getCorrectionRange().getBegin(),
+                                 Owner);
+    return;
+  }
 
   Diag(Correction.getCorrectionRange().getBegin(), TypoDiag)
     << CorrectedQuotedStr << (ErrorRecovery ? FixTypo : FixItHint());

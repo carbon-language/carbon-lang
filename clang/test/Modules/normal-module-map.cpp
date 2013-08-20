@@ -24,8 +24,8 @@ int testNestedUmbrellaA() {
 
 int testNestedUmbrellaBFail() {
   return nested_umbrella_b;
-  // expected-error@-1{{use of undeclared identifier 'nested_umbrella_b'; did you mean 'nested_umbrella_a'?}}
-  // expected-note@Inputs/normal-module-map/nested_umbrella/a.h:1{{'nested_umbrella_a' declared here}}
+  // expected-error@-1{{declaration of 'nested_umbrella_b' must be imported from module 'nested_umbrella.b' before it is required}}
+  // expected-note@Inputs/normal-module-map/nested_umbrella/b.h:1{{previous}}
 }
 
 @import nested_umbrella.b;
