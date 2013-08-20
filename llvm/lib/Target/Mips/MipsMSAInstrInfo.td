@@ -65,6 +65,8 @@ class ADDVI_H_ENC : MSA_I5_FMT<0b000, 0b01, 0b000110>;
 class ADDVI_W_ENC : MSA_I5_FMT<0b000, 0b10, 0b000110>;
 class ADDVI_D_ENC : MSA_I5_FMT<0b000, 0b11, 0b000110>;
 
+class AND_V_ENC : MSA_VEC_FMT<0b00000, 0b011110>;
+
 class ANDI_B_ENC : MSA_I8_FMT<0b00, 0b000000>;
 
 class ASUB_S_B_ENC : MSA_3R_FMT<0b100, 0b00, 0b010001>;
@@ -127,7 +129,11 @@ class BINSRI_H_ENC : MSA_BIT_H_FMT<0b111, 0b001001>;
 class BINSRI_W_ENC : MSA_BIT_W_FMT<0b111, 0b001001>;
 class BINSRI_D_ENC : MSA_BIT_D_FMT<0b111, 0b001001>;
 
+class BMNZ_V_ENC : MSA_VEC_FMT<0b00100, 0b011110>;
+
 class BMNZI_B_ENC : MSA_I8_FMT<0b00, 0b000001>;
+
+class BMZ_V_ENC : MSA_VEC_FMT<0b00101, 0b011110>;
 
 class BMZI_B_ENC : MSA_I8_FMT<0b01, 0b000001>;
 
@@ -140,6 +146,8 @@ class BNEGI_B_ENC : MSA_BIT_B_FMT<0b101, 0b001001>;
 class BNEGI_H_ENC : MSA_BIT_H_FMT<0b101, 0b001001>;
 class BNEGI_W_ENC : MSA_BIT_W_FMT<0b101, 0b001001>;
 class BNEGI_D_ENC : MSA_BIT_D_FMT<0b101, 0b001001>;
+
+class BSEL_V_ENC : MSA_VEC_FMT<0b00110, 0b011110>;
 
 class BSELI_B_ENC : MSA_I8_FMT<0b10, 0b000001>;
 
@@ -508,7 +516,11 @@ class NLZC_H_ENC : MSA_2R_FMT<0b11000011, 0b01, 0b011110>;
 class NLZC_W_ENC : MSA_2R_FMT<0b11000011, 0b10, 0b011110>;
 class NLZC_D_ENC : MSA_2R_FMT<0b11000011, 0b11, 0b011110>;
 
+class NOR_V_ENC : MSA_VEC_FMT<0b00010, 0b011110>;
+
 class NORI_B_ENC : MSA_I8_FMT<0b10, 0b000000>;
+
+class OR_V_ENC : MSA_VEC_FMT<0b00001, 0b011110>;
 
 class ORI_B_ENC  : MSA_I8_FMT<0b01, 0b000000>;
 
@@ -630,6 +642,8 @@ class VSHF_B_ENC : MSA_3R_FMT<0b000, 0b00, 0b010101>;
 class VSHF_H_ENC : MSA_3R_FMT<0b000, 0b01, 0b010101>;
 class VSHF_W_ENC : MSA_3R_FMT<0b000, 0b10, 0b010101>;
 class VSHF_D_ENC : MSA_3R_FMT<0b000, 0b11, 0b010101>;
+
+class XOR_V_ENC : MSA_VEC_FMT<0b00011, 0b011110>;
 
 class XORI_B_ENC : MSA_I8_FMT<0b11, 0b000000>;
 
@@ -784,6 +798,16 @@ class MSA_INSERT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
   string Constraints = "$wd = $wd_in";
 }
 
+class MSA_VEC_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
+                        InstrItinClass itin, RegisterClass RCWD,
+                        RegisterClass RCWS,  RegisterClass RCWT = RCWS> {
+  dag OutOperandList = (outs RCWD:$wd);
+  dag InOperandList = (ins RCWS:$ws, RCWT:$wt);
+  string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $wt");
+  list<dag> Pattern = [(set RCWD:$wd, (OpNode RCWS:$ws, RCWT:$wt))];
+  InstrItinClass Itinerary = itin;
+}
+
 class ADD_A_B_DESC : MSA_3R_DESC_BASE<"add_a.b", int_mips_add_a_b, NoItinerary,
                                       MSA128, MSA128>, IsCommutable;
 class ADD_A_H_DESC : MSA_3R_DESC_BASE<"add_a.h", int_mips_add_a_h, NoItinerary,
@@ -849,6 +873,9 @@ class ADDVI_W_DESC : MSA_I5_DESC_BASE<"addvi.w", int_mips_addvi_w, NoItinerary,
                                       MSA128, MSA128>;
 class ADDVI_D_DESC : MSA_I5_DESC_BASE<"addvi.d", int_mips_addvi_d, NoItinerary,
                                       MSA128, MSA128>;
+
+class AND_V_DESC : MSA_VEC_DESC_BASE<"and.v", int_mips_and_v, NoItinerary,
+                                     MSA128, MSA128>;
 
 class ANDI_B_DESC : MSA_I8_DESC_BASE<"andi.b", int_mips_andi_b, NoItinerary,
                                      MSA128, MSA128>;
@@ -969,8 +996,14 @@ class BINSRI_W_DESC : MSA_BIT_W_DESC_BASE<"binsri.w", int_mips_binsri_w,
 class BINSRI_D_DESC : MSA_BIT_D_DESC_BASE<"binsri.d", int_mips_binsri_d,
                                           NoItinerary, MSA128, MSA128>;
 
+class BMNZ_V_DESC : MSA_VEC_DESC_BASE<"bmnz.v", int_mips_bmnz_v, NoItinerary,
+                                      MSA128, MSA128>;
+
 class BMNZI_B_DESC : MSA_I8_DESC_BASE<"bmnzi.b", int_mips_bmnzi_b, NoItinerary,
                                       MSA128, MSA128>;
+
+class BMZ_V_DESC : MSA_VEC_DESC_BASE<"bmz.v", int_mips_bmz_v, NoItinerary,
+                                     MSA128, MSA128>;
 
 class BMZI_B_DESC : MSA_I8_DESC_BASE<"bmzi.b", int_mips_bmzi_b, NoItinerary,
                                      MSA128, MSA128>;
@@ -992,6 +1025,9 @@ class BNEGI_W_DESC : MSA_BIT_W_DESC_BASE<"bnegi.w", int_mips_bnegi_w,
                                          NoItinerary, MSA128, MSA128>;
 class BNEGI_D_DESC : MSA_BIT_D_DESC_BASE<"bnegi.d", int_mips_bnegi_d,
                                          NoItinerary, MSA128, MSA128>;
+
+class BSEL_V_DESC : MSA_VEC_DESC_BASE<"bsel.v", int_mips_bsel_v, NoItinerary,
+                                      MSA128, MSA128>;
 
 class BSELI_B_DESC : MSA_I8_DESC_BASE<"bseli.b", int_mips_bseli_b, NoItinerary,
                                       MSA128, MSA128>;
@@ -1661,8 +1697,14 @@ class NLZC_W_DESC : MSA_2R_DESC_BASE<"nlzc.w", int_mips_nlzc_w,
 class NLZC_D_DESC : MSA_2R_DESC_BASE<"nlzc.d", int_mips_nlzc_d,
                                      NoItinerary, MSA128, MSA128>;
 
+class NOR_V_DESC : MSA_VEC_DESC_BASE<"nor.v", int_mips_nor_v, NoItinerary,
+                                     MSA128, MSA128>;
+
 class NORI_B_DESC : MSA_I8_DESC_BASE<"nori.b", int_mips_nori_b, NoItinerary,
                                      MSA128, MSA128>;
+
+class OR_V_DESC : MSA_VEC_DESC_BASE<"or.v", int_mips_or_v, NoItinerary,
+                                    MSA128, MSA128>;
 
 class ORI_B_DESC : MSA_I8_DESC_BASE<"ori.b", int_mips_ori_b, NoItinerary,
                                     MSA128, MSA128>;
@@ -1888,6 +1930,9 @@ class VSHF_W_DESC : MSA_3R_DESC_BASE<"vshf.w", int_mips_vshf_w,
 class VSHF_D_DESC : MSA_3R_DESC_BASE<"vshf.d", int_mips_vshf_d,
                                      NoItinerary, MSA128, MSA128>;
 
+class XOR_V_DESC : MSA_VEC_DESC_BASE<"xor.v", int_mips_xor_v, NoItinerary,
+                                     MSA128, MSA128>;
+
 class XORI_B_DESC : MSA_I8_DESC_BASE<"xori.b", int_mips_xori_b, NoItinerary,
                                      MSA128, MSA128>;
 // Instruction defs.
@@ -1920,6 +1965,8 @@ def ADDVI_B : ADDVI_B_ENC, ADDVI_B_DESC, Requires<[HasMSA]>;
 def ADDVI_H : ADDVI_H_ENC, ADDVI_H_DESC, Requires<[HasMSA]>;
 def ADDVI_W : ADDVI_W_ENC, ADDVI_W_DESC, Requires<[HasMSA]>;
 def ADDVI_D : ADDVI_D_ENC, ADDVI_D_DESC, Requires<[HasMSA]>;
+
+def AND_V : AND_V_ENC, AND_V_DESC, Requires<[HasMSA]>;
 
 def ANDI_B : ANDI_B_ENC, ANDI_B_DESC, Requires<[HasMSA]>;
 
@@ -1983,7 +2030,11 @@ def BINSRI_H : BINSRI_H_ENC, BINSRI_H_DESC, Requires<[HasMSA]>;
 def BINSRI_W : BINSRI_W_ENC, BINSRI_W_DESC, Requires<[HasMSA]>;
 def BINSRI_D : BINSRI_D_ENC, BINSRI_D_DESC, Requires<[HasMSA]>;
 
+def BMNZ_V : BMNZ_V_ENC, BMNZ_V_DESC, Requires<[HasMSA]>;
+
 def BMNZI_B : BMNZI_B_ENC, BMNZI_B_DESC, Requires<[HasMSA]>;
+
+def BMZ_V : BMZ_V_ENC, BMZ_V_DESC, Requires<[HasMSA]>;
 
 def BMZI_B : BMZI_B_ENC, BMZI_B_DESC, Requires<[HasMSA]>;
 
@@ -1996,6 +2047,8 @@ def BNEGI_B : BNEGI_B_ENC, BNEGI_B_DESC, Requires<[HasMSA]>;
 def BNEGI_H : BNEGI_H_ENC, BNEGI_H_DESC, Requires<[HasMSA]>;
 def BNEGI_W : BNEGI_W_ENC, BNEGI_W_DESC, Requires<[HasMSA]>;
 def BNEGI_D : BNEGI_D_ENC, BNEGI_D_DESC, Requires<[HasMSA]>;
+
+def BSEL_V : BSEL_V_ENC, BSEL_V_DESC, Requires<[HasMSA]>;
 
 def BSELI_B : BSELI_B_ENC, BSELI_B_DESC, Requires<[HasMSA]>;
 
@@ -2363,7 +2416,11 @@ def NLZC_H : NLZC_H_ENC, NLZC_H_DESC, Requires<[HasMSA]>;
 def NLZC_W : NLZC_W_ENC, NLZC_W_DESC, Requires<[HasMSA]>;
 def NLZC_D : NLZC_D_ENC, NLZC_D_DESC, Requires<[HasMSA]>;
 
+def NOR_V : NOR_V_ENC, NOR_V_DESC, Requires<[HasMSA]>;
+
 def NORI_B : NORI_B_ENC, NORI_B_DESC, Requires<[HasMSA]>;
+
+def OR_V : OR_V_ENC, OR_V_DESC, Requires<[HasMSA]>;
 
 def ORI_B : ORI_B_ENC, ORI_B_DESC, Requires<[HasMSA]>;
 
@@ -2485,6 +2542,8 @@ def VSHF_B : VSHF_B_ENC, VSHF_B_DESC, Requires<[HasMSA]>;
 def VSHF_H : VSHF_H_ENC, VSHF_H_DESC, Requires<[HasMSA]>;
 def VSHF_W : VSHF_W_ENC, VSHF_W_DESC, Requires<[HasMSA]>;
 def VSHF_D : VSHF_D_ENC, VSHF_D_DESC, Requires<[HasMSA]>;
+
+def XOR_V : XOR_V_ENC, XOR_V_DESC, Requires<[HasMSA]>;
 
 def XORI_B : XORI_B_ENC, XORI_B_DESC, Requires<[HasMSA]>;
 

@@ -109,3 +109,8 @@ class MSA_I10_FMT<bits<3> major, bits<2> df, bits<6> minor>: MSAInst {
   let Inst{22-21} = df;
   let Inst{5-0} = minor;
 }
+
+class MSA_VEC_FMT<bits<5> major, bits<6> minor>: MSAInst {
+  let Inst{25-21} = major;
+  let Inst{5-0} = minor;
+}
