@@ -180,7 +180,7 @@ def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
 def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasStdEnc :       Predicate<"Subtarget.hasStandardEncoding()">,
-                      AssemblerPredicate<"!FeatureMips16">;
+                      AssemblerPredicate<"!FeatureMips16,!FeatureMicroMips">;
 def NotDSP :          Predicate<"!Subtarget.hasDSP()">;
 def InMicroMips    :  Predicate<"Subtarget.inMicroMipsMode()">,
                       AssemblerPredicate<"FeatureMicroMips">;

@@ -28,7 +28,7 @@ class StoreLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
          !strconcat(opstr, "\t$rt, $addr"),
          [(OpNode RO:$rt, addrimm12:$addr)], NoItinerary, FrmI>;
 
-let DecoderNamespace = "MicroMips" in {
+let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
                  ADDI_FM_MM<0xc>;
@@ -96,14 +96,12 @@ let DecoderNamespace = "MicroMips" in {
   defm SW_MM  : StoreM<"sw", GPR32Opnd>, MMRel, LW_FM_MM<0x3e>;
 
   /// Load and Store Instructions - unaligned
-  let Predicates = [InMicroMips] in {
-    def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,
-                 LWL_FM_MM<0x0>;
-    def LWR_MM : LoadLeftRightMM<"lwr", MipsLWR, GPR32Opnd, mem_mm_12>,
-                 LWL_FM_MM<0x1>;
-    def SWL_MM : StoreLeftRightMM<"swl", MipsSWL, GPR32Opnd, mem_mm_12>,
-                 LWL_FM_MM<0x8>;
-    def SWR_MM : StoreLeftRightMM<"swr", MipsSWR, GPR32Opnd, mem_mm_12>,
-                 LWL_FM_MM<0x9>;
-  }
+  def LWL_MM : LoadLeftRightMM<"lwl", MipsLWL, GPR32Opnd, mem_mm_12>,
+               LWL_FM_MM<0x0>;
+  def LWR_MM : LoadLeftRightMM<"lwr", MipsLWR, GPR32Opnd, mem_mm_12>,
+               LWL_FM_MM<0x1>;
+  def SWL_MM : StoreLeftRightMM<"swl", MipsSWL, GPR32Opnd, mem_mm_12>,
+               LWL_FM_MM<0x8>;
+  def SWR_MM : StoreLeftRightMM<"swr", MipsSWR, GPR32Opnd, mem_mm_12>,
+               LWL_FM_MM<0x9>;
 }
