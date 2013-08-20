@@ -15,11 +15,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "stack-protector"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -28,6 +30,7 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
@@ -39,6 +42,10 @@ using namespace llvm;
 STATISTIC(NumFunProtected, "Number of functions protected");
 STATISTIC(NumAddrTaken, "Number of local variables that have their address"
                         " taken.");
+
+static cl::opt<bool>
+EnableSelectionDAGSP("enable-selectiondag-sp", cl::init(true),
+                     cl::Hidden);
 
 namespace {
   class StackProtector : public FunctionPass {
@@ -265,6 +272,62 @@ bool StackProtector::RequiresStackProtector() {
   return false;
 }
 
+static bool InstructionWillNotHaveChain(const Instruction *I) {
+  return !I->mayHaveSideEffects() && !I->mayReadFromMemory() &&
+    isSafeToSpeculativelyExecute(I);
+}
+
+/// Identify if RI has a previous instruction in the "Tail Position" and return
+/// it. Otherwise return 0.
+///
+/// This is based off of the code in llvm::isInTailCallPosition
+static CallInst *FindPotentialTailCall(BasicBlock *BB, ReturnInst *RI,
+                                       const TargetLoweringBase *TLI) {
+  // Establish a reasonable upper bound on the maximum amount of instructions we
+  // will look through to find a tail call.
+  unsigned SearchCounter = 0;
+  const unsigned MaxSearch = 4;
+  bool NoInterposingChain = true;
+
+  for (BasicBlock::reverse_iterator I = llvm::next(BB->rbegin()), E = BB->rend();
+       I != E && SearchCounter < MaxSearch; ++I) {
+    Instruction *Inst = &*I;
+
+    // Skip over debug intrinsics and do not allow them to affect our MaxSearch
+    // counter.
+    if (isa<DbgInfoIntrinsic>(Inst))
+      continue;
+
+    // If we find a call and the following conditions are satisifed, then we
+    // have found a tail call that satisfies at least the target independent
+    // requirements of a tail call:
+    //
+    // 1. The call site has the tail marker.
+    //
+    // 2. The call site either will not cause the creation of a chain or if a
+    // chain is necessary there are no instructions in between the callsite and
+    // the call which would create an interposing chain.
+    //
+    // 3. The return type of the function does not impede tail call
+    // optimization.
+    if (CallInst *CI = dyn_cast<CallInst>(Inst)) {
+      if (CI->isTailCall() &&
+          (InstructionWillNotHaveChain(CI) || NoInterposingChain) &&
+          returnTypeIsEligibleForTailCall(BB->getParent(), CI, RI, *TLI))
+        return CI;
+    }
+
+    // If we did not find a call see if we have an instruction that may create
+    // an interposing chain.
+    NoInterposingChain = NoInterposingChain && InstructionWillNotHaveChain(Inst);
+
+    // Increment max search.
+    SearchCounter++;
+  }
+
+  return 0;
+}
+
 /// Insert code into the entry block that stores the __stack_chk_guard
 /// variable onto the stack:
 ///
@@ -273,9 +336,12 @@ bool StackProtector::RequiresStackProtector() {
 ///     StackGuard = load __stack_chk_guard
 ///     call void @llvm.stackprotect.create(StackGuard, StackGuardSlot)
 ///
-static void CreatePrologue(Function *F, Module *M, ReturnInst *RI,
+/// Returns true if the platform/triple supports the stackprotectorcreate pseudo
+/// node.
+static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
                            const TargetLoweringBase *TLI, const Triple &Trip,
                            AllocaInst *&AI, Value *&StackGuardVar) {
+  bool SupportsSelectionDAGSP = false;
   PointerType *PtrTy = Type::getInt8PtrTy(RI->getContext());
   unsigned AddressSpace, Offset;
   if (TLI->getStackCookieLocation(AddressSpace, Offset)) {
@@ -290,7 +356,8 @@ static void CreatePrologue(Function *F, Module *M, ReturnInst *RI,
     cast<GlobalValue>(StackGuardVar)
       ->setVisibility(GlobalValue::HiddenVisibility);
   } else {
-    StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);
+    SupportsSelectionDAGSP = true;
+    StackGuardVar = M->getOrInsertGlobal("__stack_chk_guard", PtrTy);    
   }
   
   BasicBlock &Entry = F->getEntryBlock();
@@ -303,6 +370,8 @@ static void CreatePrologue(Function *F, Module *M, ReturnInst *RI,
   CallInst::
     Create(Intrinsic::getDeclaration(M, Intrinsic::stackprotector),
            Args, "", InsPt);
+
+  return SupportsSelectionDAGSP;
 }
 
 /// InsertStackProtectors - Insert code into the prologue and epilogue of the
@@ -313,6 +382,7 @@ static void CreatePrologue(Function *F, Module *M, ReturnInst *RI,
 ///    value. It calls __stack_chk_fail if they differ.
 bool StackProtector::InsertStackProtectors() {
   bool HasPrologue = false;
+  bool SupportsSelectionDAGSP = false;
   AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
   Value *StackGuardVar = 0;  // The stack guard variable.
 
@@ -323,55 +393,86 @@ bool StackProtector::InsertStackProtectors() {
 
     if (!HasPrologue) {
       HasPrologue = true;
-      CreatePrologue(F, M, RI, TLI, Trip, AI, StackGuardVar);
+      SupportsSelectionDAGSP = CreatePrologue(F, M, RI, TLI, Trip, AI,
+                                          StackGuardVar);
+    }    
+
+    // TODO: Put in check here if platform supports the stack protector check
+    // intrinsic.
+    if (EnableSelectionDAGSP && !TM->Options.EnableFastISel &&
+        SupportsSelectionDAGSP) {
+      // Since we have a potential tail call, insert the special stack check
+      // intrinsic.
+      Instruction *InsertionPt = 0;
+      if (CallInst *CI = FindPotentialTailCall(BB, RI, TLI)) {
+        InsertionPt = CI;
+      } else {        
+        InsertionPt = RI;
+        // At this point we know that BB has a return statement so it *DOES*
+        // have a terminator.
+        assert(InsertionPt != 0 && "BB must have a terminator instruction at "
+               "this point.");
+      }
+
+      Function *Intrinsic =
+        Intrinsic::getDeclaration(M, Intrinsic::stackprotectorcheck);
+      Value *Args[] = { StackGuardVar };
+      CallInst::Create(Intrinsic, Args, "", InsertionPt);
+
+    } else {
+      // If we do not have a potential tail call or our platform does not
+      // support lowering the stack protector check pseudo node, perform the IR
+      // level stack check.
+      
+      // For each block with a return instruction, convert this:
+      //
+      //   return:
+      //     ...
+      //     ret ...
+      //
+      // into this:
+      //
+      //   return:
+      //     ...
+      //     %1 = load __stack_chk_guard
+      //     %2 = load StackGuardSlot
+      //     %3 = cmp i1 %1, %2
+      //     br i1 %3, label %SP_return, label %CallStackCheckFailBlk
+      //
+      //   SP_return:
+      //     ret ...
+      //
+      //   CallStackCheckFailBlk:
+      //     call void @__stack_chk_fail()
+      //     unreachable
+
+      // Create the FailBB. We duplicate the BB every time since the MI tail
+      // merge pass will merge together all of the various BB into one including
+      // fail BB generated by the stack protector pseudo instruction. 
+      BasicBlock *FailBB = CreateFailBB();
+      
+      // Split the basic block before the return instruction.
+      BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
+      
+      // Update the dominator tree if we need to.
+      if (DT && DT->isReachableFromEntry(BB)) {
+        DT->addNewBlock(NewBB, BB);
+        DT->addNewBlock(FailBB, BB);
+      }
+      
+      // Remove default branch instruction to the new BB.
+      BB->getTerminator()->eraseFromParent();
+      
+      // Move the newly created basic block to the point right after the old
+      // basic block so that it's in the "fall through" position.
+      NewBB->moveAfter(BB);
+      
+      // Generate the stack protector instructions in the old basic block.
+      LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
+      LoadInst *LI2 = new LoadInst(AI, "", true, BB);
+      ICmpInst *Cmp = new ICmpInst(*BB, CmpInst::ICMP_EQ, LI1, LI2, "");
+      BranchInst::Create(NewBB, FailBB, Cmp, BB);
     }
-
-    // For each block with a return instruction, convert this:
-    //
-    //   return:
-    //     ...
-    //     ret ...
-    //
-    // into this:
-    //
-    //   return:
-    //     ...
-    //     %1 = load __stack_chk_guard
-    //     %2 = load StackGuardSlot
-    //     %3 = cmp i1 %1, %2
-    //     br i1 %3, label %SP_return, label %CallStackCheckFailBlk
-    //
-    //   SP_return:
-    //     ret ...
-    //
-    //   CallStackCheckFailBlk:
-    //     call void @__stack_chk_fail()
-    //     unreachable
-
-    // Create the fail basic block.
-    BasicBlock *FailBB = CreateFailBB();
-
-    // Split the basic block before the return instruction.
-    BasicBlock *NewBB = BB->splitBasicBlock(RI, "SP_return");
-
-    // Update the dominator tree if we need to.
-    if (DT && DT->isReachableFromEntry(BB)) {
-      DT->addNewBlock(NewBB, BB);
-      DT->addNewBlock(FailBB, BB);
-    }
-
-    // Remove default branch instruction to the new BB.
-    BB->getTerminator()->eraseFromParent();
-
-    // Move the newly created basic block to the point right after the old basic
-    // block so that it's in the "fall through" position.
-    NewBB->moveAfter(BB);
-
-    // Generate the stack protector instructions in the old basic block.
-    LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
-    LoadInst *LI2 = new LoadInst(AI, "", true, BB);
-    ICmpInst *Cmp = new ICmpInst(*BB, CmpInst::ICMP_EQ, LI1, LI2, "");
-    BranchInst::Create(NewBB, FailBB, Cmp, BB);
   }
 
   // Return if we didn't modify any basic blocks. I.e., there are no return
