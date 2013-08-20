@@ -165,7 +165,7 @@ private:
   int CppHashBuf;
   /// When generating dwarf for assembly source files we need to calculate the
   /// logical line number based on the last parsed cpp hash file line comment
-  /// and current line. Since this is slow and messes up the SourceMgr's 
+  /// and current line. Since this is slow and messes up the SourceMgr's
   /// cache we save the last info we queried with SrcMgr.FindLineNumber().
   SMLoc LastQueryIDLoc;
   int LastQueryBuffer;
@@ -276,7 +276,7 @@ private:
   /// \brief Are we inside a macro instantiation?
   bool InsideMacroInstantiation() {return !ActiveMacros.empty();}
 
-  /// \brief Handle entry to macro instantiation. 
+  /// \brief Handle entry to macro instantiation.
   ///
   /// \param M The macro.
   /// \param NameLoc Instantiation location.
@@ -823,7 +823,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
           Variant = MCSymbolRefExpr::VK_None;
           return TokError("invalid variant '" + Split.second + "'");
         }
-	IDVal = Split.first;
+        IDVal = Split.first;
       }
       if (IDVal == "f" || IDVal == "b"){
         MCSymbol *Sym = Ctx.GetDirectionalLocalSymbol(IntVal,
@@ -1270,11 +1270,11 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
     }
 
   // Otherwise, we have a normal instruction or directive.
-  
+
   // Directives start with "."
   if (IDVal[0] == '.' && IDVal != ".") {
     // There are several entities interested in parsing directives:
-    // 
+    //
     // 1. The target-specific assembly parser. Some directives are target
     //    specific or may potentially behave differently on certain targets.
     // 2. Asm parser extensions. For example, platform-specific parsers
@@ -1490,7 +1490,8 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   std::string OpcodeStr = IDVal.lower();
   ParseInstructionInfo IInfo(Info.AsmRewrites);
   bool HadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr,
-                                                     IDLoc, Info.ParsedOperands);
+                                                     IDLoc,
+                                                     Info.ParsedOperands);
   Info.ParseError = HadError;
 
   // Dump the parsed representation, if requested.
@@ -1520,7 +1521,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
     // If we previously parsed a cpp hash file line comment then make sure the
     // current Dwarf File is for the CppHashFilename if not then emit the
     // Dwarf File table for it and adjust the line number for the .loc.
-    const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles = 
+    const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
       getContext().getMCDwarfFiles();
     if (CppHashFilename.size() != 0) {
       if (MCDwarfFiles[getContext().getGenDwarfFileNumber()]->getName() !=
@@ -1528,7 +1529,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
         getStreamer().EmitDwarfFileDirective(
           getContext().nextGenDwarfFileNumber(), StringRef(), CppHashFilename);
 
-       // Since SrcMgr.FindLineNumber() is slow and messes up the SourceMgr's 
+       // Since SrcMgr.FindLineNumber() is slow and messes up the SourceMgr's
        // cache with the different Loc from the call above we save the last
        // info we queried here with SrcMgr.FindLineNumber().
        unsigned CppHashLocLineNo;
@@ -1890,7 +1891,8 @@ bool AsmParser::ParseMacroArgument(MCAsmMacroArgument &MA,
 }
 
 // Parse the macro instantiation arguments.
-bool AsmParser::ParseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A) {
+bool AsmParser::ParseMacroArguments(const MCAsmMacro *M,
+                                    MCAsmMacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
   // Argument delimiter is initially unknown. It will be set by
   // ParseMacroArgument()
