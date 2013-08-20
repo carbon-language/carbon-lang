@@ -226,6 +226,8 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     { "++",        "--driver-mode=g++" },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
+  std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(),
+                 toLowercase);
   StringRef ProgNameRef(ProgName);
   StringRef Prefix;
 
