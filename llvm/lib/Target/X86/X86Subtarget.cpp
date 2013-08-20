@@ -351,13 +351,29 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasRTM = true;
         ToggleFeature(X86::FeatureRTM);
       }
-      if (IsIntel && ((EBX >> 19) & 0x1)) {
-        HasADX = true;
-        ToggleFeature(X86::FeatureADX);
+      if (IsIntel && ((EBX >> 16) & 0x1)) {
+        X86SSELevel = AVX512;
+        ToggleFeature(X86::FeatureAVX512);
       }
       if (IsIntel && ((EBX >> 18) & 0x1)) {
         HasRDSEED = true;
         ToggleFeature(X86::FeatureRDSEED);
+      }
+      if (IsIntel && ((EBX >> 19) & 0x1)) {
+        HasADX = true;
+        ToggleFeature(X86::FeatureADX);
+      }
+      if (IsIntel && ((EBX >> 26) & 0x1)) {
+        HasPFI = true;
+        ToggleFeature(X86::FeaturePFI);
+      }
+      if (IsIntel && ((EBX >> 27) & 0x1)) {
+        HasERI = true;
+        ToggleFeature(X86::FeatureERI);
+      }
+      if (IsIntel && ((EBX >> 28) & 0x1)) {
+        HasCDI = true;
+        ToggleFeature(X86::FeatureCDI);
       }
     }
   }
