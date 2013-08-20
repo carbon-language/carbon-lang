@@ -570,7 +570,7 @@
 // RUN:   | FileCheck %s -check-prefix=CHECK_KNL_M32
 // CHECK_KNL_M32: #define __AES__ 1
 // CHECK_KNL_M32: #define __AVX2__ 1
-// CHECK_KNL_M32: #define __AVX512__ 1
+// CHECK_KNL_M32: #define __AVX512F__ 1
 // CHECK_KNL_M32: #define __AVX__ 1
 // CHECK_KNL_M32: #define __BMI2__ 1
 // CHECK_KNL_M32: #define __BMI__ 1
@@ -599,7 +599,7 @@
 // RUN:   | FileCheck %s -check-prefix=CHECK_KNL_M64
 // CHECK_KNL_M64: #define __AES__ 1
 // CHECK_KNL_M64: #define __AVX2__ 1
-// CHECK_KNL_M64: #define __AVX512__ 1
+// CHECK_KNL_M64: #define __AVX512F__ 1
 // CHECK_KNL_M64: #define __AVX__ 1
 // CHECK_KNL_M64: #define __BMI2__ 1
 // CHECK_KNL_M64: #define __BMI__ 1
