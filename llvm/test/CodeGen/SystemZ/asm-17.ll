@@ -80,3 +80,25 @@ define float @f7(float %in) {
   call void asm sideeffect "blah", "~{f0},~{cc}"()
   ret float %in
 }
+
+; Test that both registers in a GR128 pair get hoisted.
+define void @f8(i32 %count) {
+; CHECK-LABE: f8
+; CHECK-DAG: lhi %r0, 0
+; CHECK-DAG: lhi %r1, 1
+; CHECK: %loop
+; CHECK-NOT: %r
+; CHECK: blah %r0, %r1
+entry:
+  br label %loop
+
+loop:
+  %this = phi i32 [ %count, %entry ], [ %next, %loop ]
+  call void asm sideeffect "blah $0, $1", "{r0},{r1}" (i32 0, i32 1)
+  %next = sub i32 %this, 1
+  %cmp = icmp ne i32 %next, 0
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
