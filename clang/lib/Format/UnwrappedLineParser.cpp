@@ -918,6 +918,10 @@ void UnwrappedLineParser::parseAccessSpecifier() {
 
 void UnwrappedLineParser::parseEnum() {
   nextToken();
+  // Eat up enum class ...
+  if (FormatTok->Tok.is(tok::kw_class) ||
+      FormatTok->Tok.is(tok::kw_struct))
+      nextToken();
   if (FormatTok->Tok.is(tok::identifier) ||
       FormatTok->Tok.is(tok::kw___attribute) ||
       FormatTok->Tok.is(tok::kw___declspec)) {
