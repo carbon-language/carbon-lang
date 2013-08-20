@@ -338,6 +338,10 @@ def MFC1 : MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd, IIFmoveC1, bitconvert>,
            MFC1_FM<0>;
 def MTC1 : MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd, IIFmoveC1, bitconvert>,
            MFC1_FM<4>;
+def MFHC1 : MFC1_FT<"mfhc1", GPR32Opnd, FGRH32Opnd, IIFmoveC1>,
+            MFC1_FM<3>;
+def MTHC1 : MTC1_FT<"mthc1", FGRH32Opnd, GPR32Opnd, IIFmoveC1>,
+            MFC1_FM<7>;
 def DMFC1 : MFC1_FT<"dmfc1", GPR64Opnd, FGR64Opnd, IIFmoveC1,
             bitconvert>, MFC1_FM<1>;
 def DMTC1 : MTC1_FT<"dmtc1", FGR64Opnd, GPR64Opnd, IIFmoveC1,
@@ -526,20 +530,27 @@ def FCMP_D64 : CEQS_FT<"d", FGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
 
 // This pseudo instr gets expanded into 2 mtc1 instrs after register
 // allocation.
-def BuildPairF64 :
-  PseudoSE<(outs AFGR64Opnd:$dst),
-           (ins GPR32Opnd:$lo, GPR32Opnd:$hi),
-           [(set AFGR64Opnd:$dst,
-            (MipsBuildPairF64 GPR32Opnd:$lo, GPR32Opnd:$hi))]>;
+class BuildPairF64Base<RegisterOperand RO> :
+  PseudoSE<(outs RO:$dst), (ins GPR32Opnd:$lo, GPR32Opnd:$hi),
+           [(set RO:$dst, (MipsBuildPairF64 GPR32Opnd:$lo, GPR32Opnd:$hi))]>;
+
+def BuildPairF64 : BuildPairF64Base<AFGR64Opnd>,
+                   Requires<[NotFP64bit, HasStdEnc]>;
+def BuildPairF64_64 : BuildPairF64Base<FGR64Opnd>,
+                      Requires<[IsFP64bit, HasStdEnc]>;
 
 // This pseudo instr gets expanded into 2 mfc1 instrs after register
 // allocation.
 // if n is 0, lower part of src is extracted.
 // if n is 1, higher part of src is extracted.
-def ExtractElementF64 :
-  PseudoSE<(outs GPR32Opnd:$dst), (ins AFGR64Opnd:$src, i32imm:$n),
-           [(set GPR32Opnd:$dst,
-            (MipsExtractElementF64 AFGR64Opnd:$src, imm:$n))]>;
+class ExtractElementF64Base<RegisterOperand RO> :
+  PseudoSE<(outs GPR32Opnd:$dst), (ins RO:$src, i32imm:$n),
+           [(set GPR32Opnd:$dst, (MipsExtractElementF64 RO:$src, imm:$n))]>;
+
+def ExtractElementF64 : ExtractElementF64Base<AFGR64Opnd>,
+                        Requires<[NotFP64bit, HasStdEnc]>;
+def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>,
+                           Requires<[IsFP64bit, HasStdEnc]>;
 
 //===----------------------------------------------------------------------===//
 // InstAliases.

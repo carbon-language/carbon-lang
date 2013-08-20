@@ -101,9 +101,9 @@ private:
                       unsigned CvtOpc, unsigned MovOpc, bool IsI64) const;
 
   void expandExtractElementF64(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator I) const;
+                               MachineBasicBlock::iterator I, bool FP64) const;
   void expandBuildPairF64(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator I) const;
+                          MachineBasicBlock::iterator I, bool FP64) const;
   void expandDPLoadStore(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator I, unsigned OpcD,
                          unsigned OpcS) const;

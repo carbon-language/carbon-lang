@@ -263,10 +263,16 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     expandCvtFPInt(MBB, MI, Mips::CVT_D64_L, Mips::DMTC1, true);
     break;
   case Mips::BuildPairF64:
-    expandBuildPairF64(MBB, MI);
+    expandBuildPairF64(MBB, MI, false);
+    break;
+  case Mips::BuildPairF64_64:
+    expandBuildPairF64(MBB, MI, true);
     break;
   case Mips::ExtractElementF64:
-    expandExtractElementF64(MBB, MI);
+    expandExtractElementF64(MBB, MI, false);
+    break;
+  case Mips::ExtractElementF64_64:
+    expandExtractElementF64(MBB, MI, true);
     break;
   case Mips::PseudoLDC1:
     expandDPLoadStore(MBB, MI, Mips::LDC1, Mips::LWC1);
@@ -419,22 +425,26 @@ void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
 }
 
 void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator I) const {
+                                              MachineBasicBlock::iterator I,
+                                              bool FP64) const {
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned SrcReg = I->getOperand(1).getReg();
   unsigned N = I->getOperand(2).getImm();
-  const MCInstrDesc& Mfc1Tdd = get(Mips::MFC1);
   DebugLoc dl = I->getDebugLoc();
 
   assert(N < 2 && "Invalid immediate");
   unsigned SubIdx = N ? Mips::sub_hi : Mips::sub_lo;
   unsigned SubReg = getRegisterInfo().getSubReg(SrcReg, SubIdx);
 
-  BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(SubReg);
+  if (SubIdx == Mips::sub_hi && FP64)
+    BuildMI(MBB, I, dl, get(Mips::MFHC1), DstReg).addReg(SubReg);
+  else
+    BuildMI(MBB, I, dl, get(Mips::MFC1), DstReg).addReg(SubReg);
 }
 
 void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
-                                       MachineBasicBlock::iterator I) const {
+                                         MachineBasicBlock::iterator I,
+                                         bool FP64) const {
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
   const MCInstrDesc& Mtc1Tdd = get(Mips::MTC1);
@@ -445,8 +455,13 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
   // mtc1 Hi, $fp + 1
   BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_lo))
     .addReg(LoReg);
-  BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_hi))
-    .addReg(HiReg);
+
+  if (FP64)
+    BuildMI(MBB, I, dl, get(Mips::MTHC1), TRI.getSubReg(DstReg, Mips::sub_hi))
+      .addReg(HiReg);
+  else
+    BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_hi))
+      .addReg(HiReg);
 }
 
 /// Add 4 to the displacement of operand MO.
