@@ -602,10 +602,11 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
 }
 
 // Creates a forward declaration for a RecordDecl in the given context.
-llvm::DIType CGDebugInfo::getOrCreateRecordFwdDecl(const RecordDecl *RD,
-                                                   llvm::DIDescriptor Ctx) {
+llvm::DICompositeType
+CGDebugInfo::getOrCreateRecordFwdDecl(const RecordDecl *RD,
+                                      llvm::DIDescriptor Ctx) {
   if (llvm::DIType T = getTypeOrNull(CGM.getContext().getRecordType(RD)))
-    return T;
+    return llvm::DICompositeType(T);
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
@@ -642,29 +643,11 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
   if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
     return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl));
 
-  if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context)) {
-    if (!RD->isDependentType()) {
-      llvm::DICompositeType T(getTypeOrNull(CGM.getContext().getRecordType(RD)));
-      llvm::DICompositeType Ty(getOrCreateLimitedType(
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context))
+    if (!RD->isDependentType())
+      return getOrCreateLimitedType(
           CGM.getContext().getRecordType(RD)->castAs<RecordType>(),
-          getOrCreateMainFile()));
-      if (!Ty.getTypeArray().getNumElements()) {
-        if (T) {
-          llvm::DIArray PrevMem = T.getTypeArray();
-          unsigned NumElements = PrevMem.getNumElements();
-          if (NumElements == 1 && !PrevMem.getElement(0))
-            NumElements = 0;
-          SmallVector<llvm::Value *, 16> EltTys;
-          EltTys.reserve(NumElements);
-          for (unsigned i = 0; i != NumElements; ++i)
-            EltTys.push_back(PrevMem.getElement(i));
-          llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-          Ty.setTypeArray(Elements);
-        }
-      }
-      return llvm::DIDescriptor(Ty);
-    }
-  }
+          getOrCreateMainFile());
   return TheCU;
 }
 
@@ -2195,7 +2178,7 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
                                                  llvm::DIFile Unit) {
   QualType QTy(Ty, 0);
 
-  llvm::DIType T = getTypeOrNull(QTy);
+  llvm::DICompositeType T(getTypeOrNull(QTy));
 
   // We may have cached a forward decl when we could have created
   // a non-forward decl. Go ahead and create a non-forward decl
@@ -2203,7 +2186,12 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
   if (T && !T.isForwardDecl()) return T;
 
   // Otherwise create the type.
-  llvm::DIType Res = CreateLimitedType(Ty);
+  llvm::DICompositeType Res = CreateLimitedType(Ty);
+
+  // Propagate members from the declaration to the definition
+  // CreateType(const RecordType*) will overwrite this with the members in the
+  // correct order if the full type is needed.
+  Res.setTypeArray(T.getTypeArray());
 
   if (T && T.isForwardDecl())
     ReplaceMap.push_back(
@@ -2215,7 +2203,7 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
 }
 
 // TODO: Currently used for context chains when limiting debug info.
-llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
+llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   RecordDecl *RD = Ty->getDecl();
 
   // Get overall information about the record type for the debug info.
@@ -2238,8 +2226,8 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   // destined for completion (might still have an issue if this caller only
   // required a declaration but the context construction ended up creating a
   // definition)
-  if (llvm::DIType T = getTypeOrNull(CGM.getContext().getRecordType(RD)))
-    if (!T.isForwardDecl() || !RD->getDefinition())
+  llvm::DICompositeType T(getTypeOrNull(CGM.getContext().getRecordType(RD)));
+  if (T && (!T.isForwardDecl() || !RD->getDefinition()))
       return T;
 
   // If this is just a forward declaration, construct an appropriately

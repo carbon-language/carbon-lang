@@ -116,7 +116,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const RecordType *Ty, bool Declaration);
   llvm::DIType CreateTypeDefinition(const RecordType *Ty);
-  llvm::DIType CreateLimitedType(const RecordType *Ty);
+  llvm::DICompositeType CreateLimitedType(const RecordType *Ty);
   void CollectContainingType(const CXXRecordDecl *RD, llvm::DICompositeType CT);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
@@ -309,7 +309,8 @@ private:
   llvm::DIScope getCurrentContextDescriptor(const Decl *Decl);
 
   /// \brief Create a forward decl for a RecordType in a given context.
-  llvm::DIType getOrCreateRecordFwdDecl(const RecordDecl *, llvm::DIDescriptor);
+  llvm::DICompositeType getOrCreateRecordFwdDecl(const RecordDecl *,
+                                                 llvm::DIDescriptor);
 
   /// createContextChain - Create a set of decls for the context chain.
   llvm::DIDescriptor createContextChain(const Decl *Decl);
