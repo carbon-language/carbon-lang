@@ -80,3 +80,27 @@ namespace test3 {
     b.f1();
   }
 }
+
+namespace PR16936 {
+  // Make sure both using decls are properly considered for
+  // overload resolution.
+  template<class> struct A {
+    void access(int);
+  };
+  template<class> struct B {
+    void access();
+  };
+  template<class CELL> struct X : public A<CELL>, public B<CELL> {
+    using A<CELL>::access;
+    using B<CELL>::access;
+
+    void f() {
+      access(0);
+    }
+  };
+
+  void f() {
+    X<int> x;
+    x.f();
+  }
+}

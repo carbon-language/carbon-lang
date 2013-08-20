@@ -1353,6 +1353,15 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
                                         cast<UsingDecl>(OldD)->getQualifier());
   }
 
+  if (isa<UnresolvedUsingValueDecl>(this) &&
+      isa<UnresolvedUsingValueDecl>(OldD)) {
+    ASTContext &Context = getASTContext();
+    return Context.getCanonicalNestedNameSpecifier(
+                      cast<UnresolvedUsingValueDecl>(this)->getQualifier()) ==
+           Context.getCanonicalNestedNameSpecifier(
+                        cast<UnresolvedUsingValueDecl>(OldD)->getQualifier());
+  }
+
   // A typedef of an Objective-C class type can replace an Objective-C class
   // declaration or definition, and vice versa.
   if ((isa<TypedefNameDecl>(this) && isa<ObjCInterfaceDecl>(OldD)) ||
