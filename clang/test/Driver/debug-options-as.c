@@ -1,6 +1,3 @@
-// cygming have not supported integrated-as yet.
-// REQUIRES: clang-driver
-//
 // Check to make sure clang is somewhat picky about -g options.
 // (Delived from debug-options.c)
 // rdar://10383444
