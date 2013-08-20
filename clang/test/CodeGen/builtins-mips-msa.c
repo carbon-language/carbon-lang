@@ -303,8 +303,17 @@ void test(void) {
   v4f32_r = __builtin_msa_fdiv_w(v4f32_a, v4f32_b); // CHECK: call <4 x float> @llvm.mips.fdiv.w(
   v2f64_r = __builtin_msa_fdiv_d(v2f64_a, v2f64_b); // CHECK: call <2 x double> @llvm.mips.fdiv.d(
 
+  v8f16_r = __builtin_msa_fexdo_h(v4f32_a, v4f32_b); // CHECK: call <8 x half> @llvm.mips.fexdo.h(
+  v4f32_r = __builtin_msa_fexdo_w(v2f64_a, v2f64_b); // CHECK: call <4 x float> @llvm.mips.fexdo.w(
+
   v4f32_r = __builtin_msa_fexp2_w(v4f32_a, v4i32_b); // CHECK: call <4 x float> @llvm.mips.fexp2.w(
   v2f64_r = __builtin_msa_fexp2_d(v2f64_a, v2i64_b); // CHECK: call <2 x double> @llvm.mips.fexp2.d(
+
+  v4f32_r = __builtin_msa_fexupl_w(v8f16_a); // CHECK: call <4 x float> @llvm.mips.fexupl.w(
+  v2f64_r = __builtin_msa_fexupl_d(v4f32_a); // CHECK: call <2 x double> @llvm.mips.fexupl.d(
+
+  v4f32_r = __builtin_msa_fexupr_w(v8f16_a); // CHECK: call <4 x float> @llvm.mips.fexupr.w(
+  v2f64_r = __builtin_msa_fexupr_d(v4f32_a); // CHECK: call <2 x double> @llvm.mips.fexupr.d(
 
   v4f32_r = __builtin_msa_ffint_s_w(v4i32_a); // CHECK: call <4 x float> @llvm.mips.ffint.s.w(
   v2f64_r = __builtin_msa_ffint_s_d(v2i64_a); // CHECK: call <2 x double> @llvm.mips.ffint.s.d(

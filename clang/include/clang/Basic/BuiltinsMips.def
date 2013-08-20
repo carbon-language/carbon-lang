@@ -418,8 +418,17 @@ BUILTIN(__builtin_msa_fcne_d, "V2LLiV2dV2d", "nc")
 BUILTIN(__builtin_msa_fdiv_w, "V4fV4fV4f", "nc")
 BUILTIN(__builtin_msa_fdiv_d, "V2dV2dV2d", "nc")
 
+BUILTIN(__builtin_msa_fexdo_h, "V8hV4fV4f", "nc")
+BUILTIN(__builtin_msa_fexdo_w, "V4fV2dV2d", "nc")
+
 BUILTIN(__builtin_msa_fexp2_w, "V4fV4fV4i", "nc")
 BUILTIN(__builtin_msa_fexp2_d, "V2dV2dV2LLi", "nc")
+
+BUILTIN(__builtin_msa_fexupl_w, "V4fV8h", "nc")
+BUILTIN(__builtin_msa_fexupl_d, "V2dV4f", "nc")
+
+BUILTIN(__builtin_msa_fexupr_w, "V4fV8h", "nc")
+BUILTIN(__builtin_msa_fexupr_d, "V2dV4f", "nc")
 
 BUILTIN(__builtin_msa_ffint_s_w, "V4fV4Si", "nc")
 BUILTIN(__builtin_msa_ffint_s_d, "V2dV2SLLi", "nc")
