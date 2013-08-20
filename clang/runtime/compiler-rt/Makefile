@@ -110,7 +110,7 @@ ifeq ($(ARCH),x86_64)
 RuntimeLibrary.linux.Configs += \
 	full-x86_64.a profile-x86_64.a san-x86_64.a asan-x86_64.a \
 	tsan-x86_64.a msan-x86_64.a ubsan-x86_64.a ubsan_cxx-x86_64.a \
-	dfsan-x86_64.a
+	dfsan-x86_64.a lsan-x86_64.a
 # We need to build 32-bit ASan/UBsan libraries on 64-bit platform, and add them
 # to the list of runtime libraries to make
 # "clang -fsanitize=(address|undefined) -m32" work.
