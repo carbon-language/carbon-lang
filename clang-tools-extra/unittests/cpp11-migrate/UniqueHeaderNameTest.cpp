@@ -26,11 +26,11 @@ TEST(UniqueHeaderName, testUniqueHeaderName) {
 
   llvm::SmallString<128> SourceFile(TmpDir);
   append(SourceFile, "project/lib/feature.cpp");
-  native(SourceFile.c_str(), SourceFile);
+  native(SourceFile.str().str(), SourceFile);
 
   llvm::SmallString<128> HeaderFile(TmpDir);
   append(HeaderFile, "project/include/feature.h");
-  native(HeaderFile.c_str(), HeaderFile);
+  native(HeaderFile.str().str(), HeaderFile);
 
   llvm::SmallString<128> ExpectedName("^feature.cpp_feature.h_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}_[0-9a-f]{2}.yaml$");
 
