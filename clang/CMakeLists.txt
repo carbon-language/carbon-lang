@@ -320,9 +320,9 @@ option(CLANG_INCLUDE_TESTS
        ${LLVM_INCLUDE_TESTS})
 
 # TODO: docs.
-add_subdirectory(test)
 
 if( CLANG_INCLUDE_TESTS )
+  add_subdirectory(test)
   add_subdirectory(unittests)
 endif()
 
