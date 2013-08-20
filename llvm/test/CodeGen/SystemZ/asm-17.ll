@@ -83,12 +83,13 @@ define float @f7(float %in) {
 
 ; Test that both registers in a GR128 pair get hoisted.
 define void @f8(i32 %count) {
-; CHECK-LABE: f8
+; CHECK-LABEL: f8
 ; CHECK-DAG: lhi %r0, 0
 ; CHECK-DAG: lhi %r1, 1
 ; CHECK: %loop
 ; CHECK-NOT: %r
 ; CHECK: blah %r0, %r1
+; CHECK: br %r14
 entry:
   br label %loop
 
