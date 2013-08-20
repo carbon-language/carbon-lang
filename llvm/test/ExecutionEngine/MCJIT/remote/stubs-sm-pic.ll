@@ -1,5 +1,5 @@
 ; RUN: %lli_mcjit -remote-mcjit -disable-lazy-compilation=false -relocation-model=pic -code-model=small %s
-; XFAIL: mips, i686, i386, aarch64
+; XFAIL: mips, i686, i386, aarch64, arm
 
 define i32 @main() nounwind {
 entry:
