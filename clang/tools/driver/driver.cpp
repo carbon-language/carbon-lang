@@ -269,9 +269,10 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
     if (it != ArgVector.end())
       ++it;
-    ArgVector.insert(it, SaveStringInSet(SavedStrings, Prefix));
-    ArgVector.insert(it,
-      SaveStringInSet(SavedStrings, std::string("-target")));
+    const char* Strings[] =
+      { SaveStringInSet(SavedStrings, std::string("-target")),
+        SaveStringInSet(SavedStrings, Prefix) };
+    ArgVector.insert(it, Strings, Strings + llvm::array_lengthof(Strings));
   }
 }
 
