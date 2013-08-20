@@ -387,7 +387,8 @@ static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
 ///    value. It calls __stack_chk_fail if they differ.
 bool StackProtector::InsertStackProtectors() {
   bool HasPrologue = false;
-  bool SupportsSelectionDAGSP = false;
+  bool SupportsSelectionDAGSP =
+    EnableSelectionDAGSP && !TM->Options.EnableFastISel;
   AllocaInst *AI = 0;           // Place on stack that stores the stack guard.
   Value *StackGuardVar = 0;     // The stack guard variable.
 
@@ -398,12 +399,11 @@ bool StackProtector::InsertStackProtectors() {
 
     if (!HasPrologue) {
       HasPrologue = true;
-      SupportsSelectionDAGSP = CreatePrologue(F, M, RI, TLI, Trip, AI,
-                                              StackGuardVar);
+      SupportsSelectionDAGSP &= CreatePrologue(F, M, RI, TLI, Trip, AI,
+                                               StackGuardVar);
     }
 
-    if (EnableSelectionDAGSP && !TM->Options.EnableFastISel &&
-        SupportsSelectionDAGSP) {
+    if (SupportsSelectionDAGSP) {
       // Since we have a potential tail call, insert the special stack check
       // intrinsic.
       Instruction *InsertionPt = 0;
