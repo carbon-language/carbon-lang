@@ -95,8 +95,6 @@ using llvm::opt::ArgStringList;
   class LLVM_LIBRARY_VISIBILITY ClangAs : public Tool {
     void AddARMTargetArgs(const llvm::opt::ArgList &Args,
                           llvm::opt::ArgStringList &CmdArgs) const;
-    void AddX86TargetArgs(const llvm::opt::ArgList &Args,
-                          llvm::opt::ArgStringList &CmdArgs) const;
 
   public:
     ClangAs(const ToolChain &TC) : Tool("clang::as",
