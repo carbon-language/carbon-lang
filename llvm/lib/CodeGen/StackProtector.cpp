@@ -395,7 +395,8 @@ bool StackProtector::InsertStackProtectors() {
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ) {
     BasicBlock *BB = I++;
     ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator());
-    if (!RI) continue;
+    if (!RI)
+      continue;
 
     if (!HasPrologue) {
       HasPrologue = true;
