@@ -180,7 +180,7 @@ static const char *getARMTargetCPU(const ArgList &Args,
     MArch = Triple.getArchName();
   }
 
-  return llvm::StringSwitch<const char *>(MArch)
+  const char *result = llvm::StringSwitch<const char *>(MArch)
     .Cases("armv2", "armv2a","arm2")
     .Case("armv3", "arm6")
     .Case("armv3m", "arm7m")
@@ -207,7 +207,15 @@ static const char *getARMTargetCPU(const ArgList &Args,
     .Case("xscale", "xscale")
     // If all else failed, return the most base CPU with thumb interworking
     // supported by LLVM.
-    .Default("arm7tdmi");
+    .Default(0);
+
+  if (result)
+    return result;
+
+  return
+    Triple.getEnvironment() == llvm::Triple::GNUEABIHF
+      ? "arm1176jzf-s"
+      : "arm7tdmi";
 }
 
 /// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
