@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_EXECUTIONENGINE_OBJECTCACHE_H
-#define LLVM_LIB_EXECUTIONENGINE_OBJECTCACHE_H
+#ifndef LLVM_EXECUTIONENGINE_OBJECTCACHE_H
+#define LLVM_EXECUTIONENGINE_OBJECTCACHE_H
 
 #include "llvm/Support/MemoryBuffer.h"
 

@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_VALGRIND_H
-#define LLVM_SYSTEM_VALGRIND_H
+#ifndef LLVM_SUPPORT_VALGRIND_H
+#define LLVM_SUPPORT_VALGRIND_H
 
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/Compiler.h"
