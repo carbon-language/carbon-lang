@@ -1762,7 +1762,7 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
   }
   unsigned ResultReg = createResultReg(RC);
   if (!UseImm) {
-    Op2Reg = constrainOperandRegClass(TII.get(MovCCOpc), Op1Reg, 1);
+    Op2Reg = constrainOperandRegClass(TII.get(MovCCOpc), Op2Reg, 1);
     Op1Reg = constrainOperandRegClass(TII.get(MovCCOpc), Op1Reg, 2);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(MovCCOpc), ResultReg)
     .addReg(Op2Reg).addReg(Op1Reg).addImm(ARMCC::NE).addReg(ARM::CPSR);

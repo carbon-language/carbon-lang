@@ -39,15 +39,16 @@ define i32 @t3(i1 %c, i32 %a, i32 %b) nounwind readnone {
 entry:
 ; ARM: t3
 ; ARM: cmp r0, #0
-; ARM: movne r{{[1-9]}}, r{{[1-9]}}
-; ARM: mov r0, r{{[1-9]}}
+; ARM: movne r2, r1
+; ARM: add r0, r2, r1
 ; THUMB: t3
 ; THUMB: cmp r0, #0
 ; THUMB: it ne
-; THUMB: movne r{{[1-9]}}, r{{[1-9]}}
-; THUMB: mov r0, r{{[1-9]}}
+; THUMB: movne r2, r1
+; THUMB: add.w r0, r2, r1
   %0 = select i1 %c, i32 %a, i32 %b
-  ret i32 %0
+  %1 = add i32 %0, %a
+  ret i32 %1
 }
 
 define i32 @t4(i1 %c) nounwind readnone {
