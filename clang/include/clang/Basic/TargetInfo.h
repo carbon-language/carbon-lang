@@ -672,12 +672,10 @@ public:
 
   /// \brief Enable or disable a specific target feature;
   /// the feature name must be valid.
-  ///
-  /// \return False on error (invalid feature name).
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+  virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const {
-    return false;
+    Features[Name] = Enabled;
   }
 
   /// \brief Perform initialization based on the user configured

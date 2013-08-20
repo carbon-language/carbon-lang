@@ -727,10 +727,6 @@ public:
 
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
 
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                 StringRef Name,
-                                 bool Enabled) const;
-
   virtual bool hasFeature(StringRef Feature) const;
   
   virtual void getGCCRegNames(const char * const *&Names,
@@ -1019,18 +1015,6 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Default(false);
 
   Features["qpx"] = (CPU == "a2q");
-}
-
-bool PPCTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                         StringRef Name,
-                                         bool Enabled) const {
-  if (Name == "altivec" || Name == "fprnd" || Name == "mfocrf" ||
-      Name == "popcntd" || Name == "qpx") {
-    Features[Name] = Enabled;
-    return true;
-  }
-
-  return false;
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
@@ -1772,7 +1756,7 @@ public:
                    bool Enabled) const;
   void setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
                    bool Enabled) const;
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+  virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const;
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
@@ -1925,35 +1909,6 @@ public:
 };
 
 void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
-  // FIXME: This should not be here.
-  Features["3dnow"] = false;
-  Features["3dnowa"] = false;
-  Features["mmx"] = false;
-  Features["sse"] = false;
-  Features["sse2"] = false;
-  Features["sse3"] = false;
-  Features["ssse3"] = false;
-  Features["sse41"] = false;
-  Features["sse42"] = false;
-  Features["sse4a"] = false;
-  Features["aes"] = false;
-  Features["pclmul"] = false;
-  Features["avx"] = false;
-  Features["avx2"] = false;
-  Features["avx-512"] = false;
-  Features["lzcnt"] = false;
-  Features["rdrand"] = false;
-  Features["bmi"] = false;
-  Features["bmi2"] = false;
-  Features["popcnt"] = false;
-  Features["rtm"] = false;
-  Features["prfchw"] = false;
-  Features["rdseed"] = false;
-  Features["fma4"] = false;
-  Features["fma"] = false;
-  Features["xop"] = false;
-  Features["f16c"] = false;
-
   // FIXME: This *really* should not be here.
 
   // X86_64 always has SSE2.
@@ -2223,7 +2178,7 @@ void X86TargetInfo::setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
   }
 }
 
-bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
+void X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
                                       StringRef Name,
                                       bool Enabled) const {
   // FIXME: This *really* should not be here.  We need some way of translating
@@ -2234,8 +2189,6 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     Name = "sse41";
   if (Name == "rdrnd")
     Name = "rdrand";
-  if (!Features.count(Name))
-    return false;
 
   Features[Name] = Enabled;
 
@@ -2279,8 +2232,6 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
   } else if (Name == "sse4a") {
     setXOPLevel(Features, SSE4A, Enabled);
   }
-
-  return true;
 }
 
 /// HandleTargetOptions - Perform initialization based on the user
@@ -3294,16 +3245,6 @@ public:
     return Feature == "aarch64" || (Feature == "neon" && FPU == NeonMode);
   }
 
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                 StringRef Name, bool Enabled) const {
-    if (Name == "neon") {
-      Features[Name] = Enabled;
-      return true;
-    }
-
-    return false;
-  }
-
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
     FPU = FPUMode;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
@@ -3593,19 +3534,6 @@ public:
       Features["vfp4"] = true;
       Features["neon"] = true;
     }
-  }
-
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                 StringRef Name,
-                                 bool Enabled) const {
-    if (Name == "soft-float" || Name == "soft-float-abi" ||
-        Name == "vfp2" || Name == "vfp3" || Name == "vfp4" || Name == "neon" ||
-        Name == "d16" || Name == "neonfp" || Name == "v8fp") {
-      Features[Name] = Enabled;
-    } else
-      return false;
-
-    return true;
   }
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
@@ -4107,16 +4035,6 @@ class SparcTargetInfo : public TargetInfo {
 public:
   SparcTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {}
 
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                 StringRef Name,
-                                 bool Enabled) const {
-    if (Name == "soft-float")
-      Features[Name] = Enabled;
-    else
-      return false;
-
-    return true;
-  }
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
     SoftFloat = false;
     for (unsigned i = 0, e = Features.size(); i != e; ++i)
@@ -4689,26 +4607,14 @@ public:
     return "";
   }
 
-  virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
+  virtual void setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  StringRef Name,
                                  bool Enabled) const {
-    if (Name == "soft-float" || Name == "single-float" ||
-        Name == "o32" || Name == "n32" || Name == "n64" || Name == "eabi" ||
-        Name == "mips32" || Name == "mips32r2" ||
-        Name == "mips64" || Name == "mips64r2" ||
-        Name == "mips16" || Name == "micromips" ||
-        Name == "dsp" || Name == "dspr2" ||
-        Name == "msa") {
-      Features[Name] = Enabled;
-      return true;
-    } else if (Name == "32") {
-      Features["o32"] = Enabled;
-      return true;
-    } else if (Name == "64") {
-      Features["n64"] = Enabled;
-      return true;
-    }
-    return false;
+    if (Name == "32")
+      Name = "o32";
+    else if (Name == "64")
+      Name = "n64";
+    Features[Name] = Enabled;
   }
 
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
@@ -5574,10 +5480,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
       continue;
 
     // Apply the feature via the target.
-    if (!Target->setFeatureEnabled(Features, Name + 1, true)) {
-      Diags.Report(diag::err_target_invalid_feature) << Name;
-      return 0;
-    }
+    Target->setFeatureEnabled(Features, Name + 1, true);
   }
 
   // Then the disables.
@@ -5591,11 +5494,8 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
       continue;
 
     // Apply the feature via the target.
-    if (Name[0] != '-' ||
-        !Target->setFeatureEnabled(Features, Name + 1, false)) {
-      Diags.Report(diag::err_target_invalid_feature) << Name;
-      return 0;
-    }
+    assert(Name[0] == '-');
+    Target->setFeatureEnabled(Features, Name + 1, false);
   }
 
   // Add the features to the compile options.
