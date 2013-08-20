@@ -2,10 +2,10 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -DALL -Wgnu 
 // RUN: %clang_cc1 -fsyntax-only -verify %s -DALL \
 // RUN:   -Wgnu-alignof-expression -Wgnu-case-range -Wgnu-complex-integer -Wgnu-conditional-omitted-operand \
-// RUN:   -Wgnu-empty-initializer -Wgnu-label-as-value -Wgnu-local-label -Wgnu-statement-expression
+// RUN:   -Wgnu-empty-initializer -Wgnu-label-as-value -Wgnu-statement-expression
 // RUN: %clang_cc1 -fsyntax-only -verify %s -DNONE -Wgnu \
 // RUN:   -Wno-gnu-alignof-expression -Wno-gnu-case-range -Wno-gnu-complex-integer -Wno-gnu-conditional-omitted-operand \
-// RUN:   -Wno-gnu-empty-initializer -Wno-gnu-label-as-value -Wno-gnu-local-label -Wno-gnu-statement-expression
+// RUN:   -Wno-gnu-empty-initializer -Wno-gnu-label-as-value -Wno-gnu-statement-expression
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -Wgnu-alignof-expression
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DNONE -Wno-gnu-alignof-expression
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -DCASERANGE -Wgnu-case-range
@@ -13,7 +13,6 @@
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -DOMITTEDOPERAND -Wgnu-conditional-omitted-operand
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -DEMPTYINIT -Wgnu-empty-initializer
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -DLABELVALUE -Wgnu-label-as-value
-// RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -DLOCALLABEL -Wgnu-local-label
 // RUNNOT: %clang_cc1 -fsyntax-only -verify %s -DALIGNOF -DSTATEMENTEXP -Wgnu-statement-expression
 
 #if NONE
@@ -72,21 +71,6 @@ void labelvalue() {
 foo:
 	goto *ptr;
 }
-
-
-#if ALL || LOCALLABEL
-// expected-warning@+5 {{use of GNU locally declared label extension}}
-#endif
-
-void locallabel() {
-	{
-		__label__ foo;
-		goto foo;
-foo:
-		;
-	}
-}
-
 
 #if ALL || STATEMENTEXP
 // expected-warning@+5 {{use of GNU statement expression extension}}

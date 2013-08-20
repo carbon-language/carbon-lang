@@ -168,7 +168,6 @@ def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"invalid-pch">;
 def GNULabelsAsValue : DiagGroup<"gnu-label-as-value">;
-def GNULocalLabel : DiagGroup<"gnu-local-label">;
 def LiteralRange : DiagGroup<"literal-range">;
 def LocalTypeTemplateArgs : DiagGroup<"local-type-template-args",
                                       [CXX98CompatLocalTypeTemplateArgs]>;
@@ -540,7 +539,7 @@ def GNU : DiagGroup<"gnu", [GNUAlignofExpression, GNUCaseRange,
                             GNUConditionalOmittedOperand,
                             GNUDesignator, GNUEmptyInitializer,
                             VLAExtension,
-                            GNULabelsAsValue, GNULocalLabel,
+                            GNULabelsAsValue,
                             GNUStatementExpression, GNUStaticFloatInit,
                             ZeroLengthArray]>;
 // A warning group for warnings about code that clang accepts but gcc doesn't.
