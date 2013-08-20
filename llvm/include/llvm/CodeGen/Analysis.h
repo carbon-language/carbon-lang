@@ -26,6 +26,7 @@ namespace llvm {
 
 class GlobalVariable;
 class TargetLowering;
+class TargetLoweringBase;
 class SDNode;
 class SDValue;
 class SelectionDAG;
@@ -87,6 +88,14 @@ ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 ///
 /// This function only tests target-independent requirements.
 bool isInTailCallPosition(ImmutableCallSite CS, const TargetLowering &TLI);
+
+/// Test if given that the input instruction is in the tail call position if the
+/// return type or any attributes of the function will inhibit tail call
+/// optimization.
+bool returnTypeIsEligibleForTailCall(const Function *F,
+                                     const Instruction *I,
+                                     const ReturnInst *Ret,
+                                     const TargetLoweringBase &TLI);
 
 } // End llvm namespace
 

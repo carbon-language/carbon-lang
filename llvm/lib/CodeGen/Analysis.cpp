@@ -510,6 +510,13 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
         return false;
     }
 
+  return returnTypeIsEligibleForTailCall(ExitBB->getParent(), I, Ret, TLI);
+}
+
+bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
+                                           const Instruction *I,
+                                           const ReturnInst *Ret,
+                                           const TargetLoweringBase &TLI) {
   // If the block ends with a void return or unreachable, it doesn't matter
   // what the call's return type is.
   if (!Ret || Ret->getNumOperands() == 0) return true;
@@ -519,7 +526,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
   if (isa<UndefValue>(Ret->getOperand(0))) return true;
 
   // Make sure the attributes attached to each return are compatible.
-  AttrBuilder CallerAttrs(ExitBB->getParent()->getAttributes(),
+  AttrBuilder CallerAttrs(F->getAttributes(),
                           AttributeSet::ReturnIndex);
   AttrBuilder CalleeAttrs(cast<CallInst>(I)->getAttributes(),
                           AttributeSet::ReturnIndex);
