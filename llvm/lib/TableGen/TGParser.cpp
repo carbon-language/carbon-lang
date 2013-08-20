@@ -2496,6 +2496,9 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     if (Lex.getCode() != tgtok::comma) break;
     Lex.Lex(); // eat ','.
 
+    if (Lex.getCode() != tgtok::Id)
+      return TokError("expected identifier");
+
     SubClassLoc = Lex.getLoc();
 
     // A defm can inherit from regular classes (non-multiclass) as
