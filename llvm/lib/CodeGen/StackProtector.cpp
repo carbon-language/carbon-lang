@@ -280,7 +280,12 @@ static bool InstructionWillNotHaveChain(const Instruction *I) {
 /// Identify if RI has a previous instruction in the "Tail Position" and return
 /// it. Otherwise return 0.
 ///
-/// This is based off of the code in llvm::isInTailCallPosition
+/// This is based off of the code in llvm::isInTailCallPosition. The difference
+/// is that it inverts the first part of llvm::isInTailCallPosition since
+/// isInTailCallPosition is checking if a call is in a tail call position, and
+/// we are searching for an unknown tail call that might be in the tail call
+/// position. Once we find the call though, the code uses the same refactored
+/// code, returnTypeIsEligibleForTailCall.
 static CallInst *FindPotentialTailCall(BasicBlock *BB, ReturnInst *RI,
                                        const TargetLoweringBase *TLI) {
   // Establish a reasonable upper bound on the maximum amount of instructions we
