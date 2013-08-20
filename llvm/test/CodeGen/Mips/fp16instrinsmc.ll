@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -soft-float -mips16-hard-float -relocation-model=pic < %s | FileCheck %s -check-prefix=pic
+; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips16 -soft-float -mips16-hard-float -relocation-model=static -mips32-function-mask=1010111 -mips-os16 < %s | FileCheck %s -check-prefix=fmask 
 
 @x = global float 1.500000e+00, align 4
 @xn = global float -1.900000e+01, align 4
@@ -13,6 +14,14 @@
 
 ; Function Attrs: nounwind
 define void @foo1() #0 {
+; fmask: .ent foo1
+; fmask: .set	noreorder
+; fmask: .set	nomacro
+; fmask: .set	noat
+; fmask: .set	at
+; fmask: .set	macro
+; fmask: .set	reorder
+; fmask: .end	foo1
 entry:
   %0 = load float* @x, align 4
   %1 = load float* @one, align 4
@@ -26,6 +35,9 @@ declare float @copysignf(float, float) #1
 
 ; Function Attrs: nounwind
 define void @foo2() #0 {
+; fmask:	.ent	foo2
+; fmask:	save	{{.*}}
+; fmask:	.end	foo2
 entry:
   %0 = load float* @x, align 4
   %1 = load float* @negone, align 4
@@ -37,6 +49,14 @@ entry:
 ; Function Attrs: nounwind
 define void @foo3() #0 {
 entry:
+; fmask: .ent foo3
+; fmask: .set	noreorder
+; fmask: .set	nomacro
+; fmask: .set	noat
+; fmask: .set	at
+; fmask: .set	macro
+; fmask: .set	reorder
+; fmask: .end	foo3
   %0 = load double* @xd, align 8
   %1 = load float* @oned, align 4
   %conv = fpext float %1 to double
@@ -51,6 +71,9 @@ declare double @copysign(double, double) #1
 ; Function Attrs: nounwind
 define void @foo4() #0 {
 entry:
+; fmask:	.ent	foo4
+; fmask:	save	{{.*}}
+; fmask:	.end	foo4
   %0 = load double* @xd, align 8
   %1 = load double* @negoned, align 8
   %call = call double @copysign(double %0, double %1) #2

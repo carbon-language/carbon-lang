@@ -14,8 +14,16 @@
 #define DEBUG_TYPE "mips-os16"
 #include "MipsOs16.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+
+
+static cl::opt<std::string> Mips32FunctionMask(
+  "mips32-function-mask",
+  cl::init(""),
+  cl::desc("Force function to be mips32"),
+  cl::Hidden);
 
 namespace {
 
@@ -85,18 +93,32 @@ namespace llvm {
 
 
 bool MipsOs16::runOnModule(Module &M) {
-  DEBUG(errs() << "Run on Module MipsOs16\n");
+  bool usingMask = Mips32FunctionMask.length() > 0;
+  DEBUG(dbgs() << "Run on Module MipsOs16 \n" << Mips32FunctionMask << "\n");
+  if (usingMask)
+    DEBUG(dbgs() << "using mask \n" << Mips32FunctionMask << "\n");
+  unsigned int functionIndex = 0;
   bool modified = false;
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     if (F->isDeclaration()) continue;
     DEBUG(dbgs() << "Working on " << F->getName() << "\n");
-    if (needsFP(*F)) {
-      DEBUG(dbgs() << " need to compile as nomips16 \n");
-      F->addFnAttr("nomips16");
+    if (usingMask) {
+      if ((functionIndex < Mips32FunctionMask.length()) &&
+          (Mips32FunctionMask[functionIndex] == '1')) {
+        DEBUG(dbgs() << "mask forced mips32: " << F->getName() << "\n");
+        F->addFnAttr("nomips16");
+      }
+      functionIndex++;
     }
     else {
-      F->addFnAttr("mips16");
-      DEBUG(dbgs() << " no need to compile as nomips16 \n");
+      if (needsFP(*F)) {
+        DEBUG(dbgs() << "os16 forced mips32: " << F->getName() << "\n");
+        F->addFnAttr("nomips16");
+      }
+      else {
+        DEBUG(dbgs() << "os16 forced mips16: " << F->getName() << "\n");
+        F->addFnAttr("mips16");
+      }
     }
   }
   return modified;
