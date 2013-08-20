@@ -397,8 +397,6 @@ bool StackProtector::InsertStackProtectors() {
                                           StackGuardVar);
     }    
 
-    // TODO: Put in check here if platform supports the stack protector check
-    // intrinsic.
     if (EnableSelectionDAGSP && !TM->Options.EnableFastISel &&
         SupportsSelectionDAGSP) {
       // Since we have a potential tail call, insert the special stack check
@@ -420,10 +418,9 @@ bool StackProtector::InsertStackProtectors() {
       CallInst::Create(Intrinsic, Args, "", InsertionPt);
 
     } else {
-      // If we do not have a potential tail call or our platform does not
-      // support lowering the stack protector check pseudo node, perform the IR
-      // level stack check.
-      
+      // If we do not support SelectionDAG based tail calls, generate IR level
+      // tail calls.
+      //
       // For each block with a return instruction, convert this:
       //
       //   return:
