@@ -11,8 +11,6 @@
 //  Declarations that describe the MIPS register file
 //===----------------------------------------------------------------------===//
 let Namespace = "Mips" in {
-def sub_fpeven : SubRegIndex<32>;
-def sub_fpodd  : SubRegIndex<32, 32>;
 def sub_32     : SubRegIndex<32>;
 def sub_64     : SubRegIndex<64>;
 def sub_lo     : SubRegIndex<32>;
@@ -55,13 +53,13 @@ class FPR<bits<16> Enc, string n> : MipsReg<Enc, n>;
 // Mips 64-bit (aliased) FPU Registers
 class AFPR<bits<16> Enc, string n, list<Register> subregs>
   : MipsRegWithSubRegs<Enc, n, subregs> {
-  let SubRegIndices = [sub_fpeven, sub_fpodd];
+  let SubRegIndices = [sub_lo, sub_hi];
   let CoveredBySubRegs = 1;
 }
 
 class AFPR64<bits<16> Enc, string n, list<Register> subregs>
   : MipsRegWithSubRegs<Enc, n, subregs> {
-  let SubRegIndices = [sub_32];
+  let SubRegIndices = [sub_lo, sub_hi];
 }
 
 // Mips 128-bit (aliased) MSA Registers
@@ -157,6 +155,10 @@ let Namespace = "Mips" in {
   foreach I = 0-31 in
   def F#I : FPR<I, "f"#I>, DwarfRegNum<[!add(I, 32)]>;
 
+  // Higher half of 64-bit FP registers.
+  foreach I = 0-31 in
+  def F_HI#I : FPR<I, "f"#I>, DwarfRegNum<[!add(I, 32)]>;
+
   /// Mips Double point precision FPU Registers (aliased
   /// with the single precision to hold 64 bit values)
   foreach I = 0-15 in
@@ -166,7 +168,7 @@ let Namespace = "Mips" in {
 
   /// Mips Double point precision FPU Registers in MFP64 mode.
   foreach I = 0-31 in
-  def D#I#_64 : AFPR64<I, "f"#I, [!cast<FPR>("F"#I)]>,
+  def D#I#_64 : AFPR64<I, "f"#I, [!cast<FPR>("F"#I), !cast<FPR>("F_HI"#I)]>,
                 DwarfRegNum<[!add(I, 32)]>;
 
   /// Mips MSA registers
@@ -321,6 +323,8 @@ def CPUSPReg : RegisterClass<"Mips", [i32], 32, (add SP)>, Unallocatable;
 // * FGR32 - 32 32-bit registers (single float only mode)
 def FGR32 : RegisterClass<"Mips", [f32], 32, (sequence "F%u", 0, 31)>;
 
+def FGRH32 : RegisterClass<"Mips", [f32], 32, (sequence "F_HI%u", 0, 31)>;
+
 def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
   // Return Values and Arguments
   D0, D1,
@@ -423,6 +427,11 @@ def FGR32AsmOperand : MipsAsmRegOperand {
   let ParserMethod = "parseFGR32Regs";
 }
 
+def FGRH32AsmOperand : MipsAsmRegOperand {
+  let Name = "FGRH32Asm";
+  let ParserMethod = "parseFGRH32Regs";
+}
+
 def FCCRegsAsmOperand : MipsAsmRegOperand {
   let Name = "FCCRegsAsm";
   let ParserMethod = "parseFCCRegs";
@@ -463,6 +472,10 @@ def FGR64Opnd : RegisterOperand<FGR64> {
 
 def FGR32Opnd : RegisterOperand<FGR32> {
   let ParserMatchClass = FGR32AsmOperand;
+}
+
+def FGRH32Opnd : RegisterOperand<FGRH32> {
+  let ParserMatchClass = FGRH32AsmOperand;
 }
 
 def FCCRegsOpnd : RegisterOperand<FCC> {

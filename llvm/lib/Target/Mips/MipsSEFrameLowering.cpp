@@ -313,9 +313,9 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
       // one for each of the paired single precision registers.
       if (Mips::AFGR64RegClass.contains(Reg)) {
         unsigned Reg0 =
-            MRI->getDwarfRegNum(RegInfo.getSubReg(Reg, Mips::sub_fpeven), true);
+            MRI->getDwarfRegNum(RegInfo.getSubReg(Reg, Mips::sub_lo), true);
         unsigned Reg1 =
-            MRI->getDwarfRegNum(RegInfo.getSubReg(Reg, Mips::sub_fpodd), true);
+            MRI->getDwarfRegNum(RegInfo.getSubReg(Reg, Mips::sub_hi), true);
 
         if (!STI.isLittle())
           std::swap(Reg0, Reg1);

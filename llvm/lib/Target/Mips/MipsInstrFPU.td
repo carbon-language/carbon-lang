@@ -576,7 +576,7 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
   def : MipsPat<(f64 (sint_to_fp GPR32Opnd:$src)),
                 (PseudoCVT_D64_W GPR32Opnd:$src)>;
   def : MipsPat<(f32 (sint_to_fp GPR64Opnd:$src)),
-                (EXTRACT_SUBREG (PseudoCVT_S_L GPR64Opnd:$src), sub_32)>;
+                (EXTRACT_SUBREG (PseudoCVT_S_L GPR64Opnd:$src), sub_lo)>;
   def : MipsPat<(f64 (sint_to_fp GPR64Opnd:$src)),
                 (PseudoCVT_D64_L GPR64Opnd:$src)>;
 

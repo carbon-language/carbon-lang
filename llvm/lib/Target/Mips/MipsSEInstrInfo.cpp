@@ -404,16 +404,15 @@ void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
   unsigned DstReg = Dst.getReg(), SrcReg = Src.getReg(), TmpReg = DstReg;
   unsigned KillSrc =  getKillRegState(Src.isKill());
   DebugLoc DL = I->getDebugLoc();
-  unsigned SubIdx = (IsI64 ? Mips::sub_32 : Mips::sub_fpeven);
   bool DstIsLarger, SrcIsLarger;
 
   tie(DstIsLarger, SrcIsLarger) = compareOpndSize(CvtOpc, *MBB.getParent());
 
   if (DstIsLarger)
-    TmpReg = getRegisterInfo().getSubReg(DstReg, SubIdx);
+    TmpReg = getRegisterInfo().getSubReg(DstReg, Mips::sub_lo);
 
   if (SrcIsLarger)
-    DstReg = getRegisterInfo().getSubReg(DstReg, SubIdx);
+    DstReg = getRegisterInfo().getSubReg(DstReg, Mips::sub_lo);
 
   BuildMI(MBB, I, DL, MovDesc, TmpReg).addReg(SrcReg, KillSrc);
   BuildMI(MBB, I, DL, CvtDesc, DstReg).addReg(TmpReg, RegState::Kill);
@@ -428,7 +427,7 @@ void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
   DebugLoc dl = I->getDebugLoc();
 
   assert(N < 2 && "Invalid immediate");
-  unsigned SubIdx = N ? Mips::sub_fpodd : Mips::sub_fpeven;
+  unsigned SubIdx = N ? Mips::sub_hi : Mips::sub_lo;
   unsigned SubReg = getRegisterInfo().getSubReg(SrcReg, SubIdx);
 
   BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(SubReg);
@@ -444,9 +443,9 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
 
   // mtc1 Lo, $fp
   // mtc1 Hi, $fp + 1
-  BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_fpeven))
+  BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_lo))
     .addReg(LoReg);
-  BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_fpodd))
+  BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_hi))
     .addReg(HiReg);
 }
 
@@ -482,8 +481,8 @@ void MipsSEInstrInfo::expandDPLoadStore(MachineBasicBlock &MBB,
 
   const TargetRegisterInfo &TRI = getRegisterInfo();
   const MachineOperand &ValReg = I->getOperand(0);
-  unsigned LoReg = TRI.getSubReg(ValReg.getReg(), Mips::sub_fpeven);
-  unsigned HiReg = TRI.getSubReg(ValReg.getReg(), Mips::sub_fpodd);
+  unsigned LoReg = TRI.getSubReg(ValReg.getReg(), Mips::sub_lo);
+  unsigned HiReg = TRI.getSubReg(ValReg.getReg(), Mips::sub_hi);
 
   if (!TM.getSubtarget<MipsSubtarget>().isLittle())
     std::swap(LoReg, HiReg);

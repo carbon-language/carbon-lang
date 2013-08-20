@@ -110,6 +110,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
+  parseFGRH32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
+  MipsAsmParser::OperandMatchResultTy
   parseFCCRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   MipsAsmParser::OperandMatchResultTy
@@ -224,6 +227,7 @@ public:
     Kind_GPR64,
     Kind_HWRegs,
     Kind_FGR32Regs,
+    Kind_FGRH32Regs,
     Kind_FGR64Regs,
     Kind_AFGR64Regs,
     Kind_CCRRegs,
@@ -406,6 +410,10 @@ public:
 
   bool isFGR32Asm() const {
     return (Kind == k_Register) && Reg.Kind == Kind_FGR32Regs;
+  }
+
+  bool isFGRH32Asm() const {
+    return (Kind == k_Register) && Reg.Kind == Kind_FGRH32Regs;
   }
 
   bool isFCCRegsAsm() const {
@@ -893,6 +901,7 @@ int MipsAsmParser::regKindToRegClass(int RegKind) {
   case MipsOperand::Kind_GPR64: return Mips::GPR64RegClassID;
   case MipsOperand::Kind_HWRegs: return Mips::HWRegsRegClassID;
   case MipsOperand::Kind_FGR32Regs: return Mips::FGR32RegClassID;
+  case MipsOperand::Kind_FGRH32Regs: return Mips::FGRH32RegClassID;
   case MipsOperand::Kind_FGR64Regs: return Mips::FGR64RegClassID;
   case MipsOperand::Kind_AFGR64Regs: return Mips::AFGR64RegClassID;
   case MipsOperand::Kind_CCRRegs: return Mips::CCRRegClassID;
@@ -1310,6 +1319,7 @@ MipsAsmParser::parseRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     case MipsOperand::Kind_AFGR64Regs:
     case MipsOperand::Kind_FGR64Regs:
     case MipsOperand::Kind_FGR32Regs:
+    case MipsOperand::Kind_FGRH32Regs:
       RegNum = matchFPURegisterName(RegName);
       if (RegKind == MipsOperand::Kind_AFGR64Regs)
         RegNum /= 2;
@@ -1413,6 +1423,11 @@ MipsAsmParser::parseFGR64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseFGR32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   return parseRegs(Operands, (int) MipsOperand::Kind_FGR32Regs);
+}
+
+MipsAsmParser::OperandMatchResultTy
+MipsAsmParser::parseFGRH32Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  return parseRegs(Operands, (int) MipsOperand::Kind_FGRH32Regs);
 }
 
 MipsAsmParser::OperandMatchResultTy
