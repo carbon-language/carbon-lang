@@ -159,12 +159,9 @@ GDBRemoteCommunication::CalculcateChecksum (const char *payload, size_t payload_
 {
     int checksum = 0;
 
-    // We only need to compute the checksum if we are sending acks
-    if (GetSendAcks ())
-    {
-        for (size_t i = 0; i < payload_length; ++i)
-            checksum += payload[i];
-    }
+    for (size_t i = 0; i < payload_length; ++i)
+        checksum += payload[i];
+
     return checksum & 255;
 }
 
