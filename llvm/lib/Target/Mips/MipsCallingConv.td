@@ -26,8 +26,10 @@ def RetCC_MipsO32 : CallingConv<[
   // f32 are returned in registers F0, F2
   CCIfType<[f32], CCAssignToReg<[F0, F2]>>,
 
-  // f64 are returned in register D0, D1
-  CCIfType<[f64], CCAssignToReg<[D0, D1]>>
+  // f64 arguments are returned in D0_64 and D1_64 in FP64bit mode or
+  // in D0 and D1 in FP32bit mode.
+  CCIfType<[f64], CCIfSubtarget<"isFP64bit()", CCAssignToReg<[D0_64, D1_64]>>>,
+  CCIfType<[f64], CCIfSubtarget<"isNotFP64bit()", CCAssignToReg<[D0, D1]>>>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -149,7 +151,16 @@ def RetCC_MipsEABI : CallingConv<[
 //===----------------------------------------------------------------------===//
 def CC_MipsO32_FastCC : CallingConv<[
   // f64 arguments are passed in double-precision floating pointer registers.
-  CCIfType<[f64], CCAssignToReg<[D0, D1, D2, D3, D4, D5, D6, D7, D8, D9]>>,
+  CCIfType<[f64], CCIfSubtarget<"isNotFP64bit()",
+                                CCAssignToReg<[D0, D1, D2, D3, D4, D5, D6, D7,
+                                               D8, D9]>>>,
+  CCIfType<[f64], CCIfSubtarget<"isFP64bit()",
+                                CCAssignToReg<[D0_64, D1_64, D2_64, D3_64,
+                                               D4_64, D5_64, D6_64, D7_64,
+                                               D8_64, D9_64, D10_64, D11_64,
+                                               D12_64, D13_64, D14_64, D15_64,
+                                               D16_64, D17_64, D18_64,
+                                               D19_64]>>>,
 
   // Stack parameter slots for f64 are 64-bit doublewords and 8-byte aligned.
   CCIfType<[f64], CCAssignToStack<8, 8>>
@@ -223,6 +234,9 @@ def CSR_SingleFloatOnly : CalleeSavedRegs<(add (sequence "F%u", 31, 20), RA, FP,
 
 def CSR_O32 : CalleeSavedRegs<(add (sequence "D%u", 15, 10), RA, FP,
                                    (sequence "S%u", 7, 0))>;
+
+def CSR_O32_FP64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 20), RA, FP,
+                                        (sequence "S%u", 7, 0))>;
 
 def CSR_N32 : CalleeSavedRegs<(add D31_64, D29_64, D27_64, D25_64, D24_64,
                                    D23_64, D22_64, D21_64, RA_64, FP_64, GP_64,

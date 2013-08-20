@@ -2119,7 +2119,8 @@ SDValue MipsTargetLowering::lowerFP_TO_SINT(SDValue Op,
 
 static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
                        MVT LocVT, CCValAssign::LocInfo LocInfo,
-                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
+                       ISD::ArgFlagsTy ArgFlags, CCState &State,
+                       const uint16_t *F64Regs) {
 
   static const unsigned IntRegsSize=4, FloatRegsSize=2;
 
@@ -2128,9 +2129,6 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
   };
   static const uint16_t F32Regs[] = {
       Mips::F12, Mips::F14
-  };
-  static const uint16_t F64Regs[] = {
-      Mips::D6, Mips::D7
   };
 
   // Do not process byval args here.
@@ -2198,6 +2196,22 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
     State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
 
   return false;
+}
+
+static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT,
+                            MVT LocVT, CCValAssign::LocInfo LocInfo,
+                            ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  static const uint16_t F64Regs[] = { Mips::D6, Mips::D7 };
+
+  return CC_MipsO32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State, F64Regs);
+}
+
+static bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT,
+                            MVT LocVT, CCValAssign::LocInfo LocInfo,
+                            ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  static const uint16_t F64Regs[] = { Mips::D12_64, Mips::D12_64 };
+
+  return CC_MipsO32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State, F64Regs);
 }
 
 #include "MipsGenCallingConv.inc"
@@ -2312,7 +2326,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                  getTargetMachine(), ArgLocs, *DAG.getContext());
   MipsCC::SpecialCallingConvType SpecialCallingConv =
     getSpecialCallingConv(Callee);
-  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo, SpecialCallingConv);
+  MipsCC MipsCCInfo(CallConv, IsO32, Subtarget->isFP64bit(), CCInfo,
+                    SpecialCallingConv);
 
   MipsCCInfo.analyzeCallOperands(Outs, IsVarArg,
                                  getTargetMachine().Options.UseSoftFloat,
@@ -2499,7 +2514,7 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), RVLocs, *DAG.getContext());
-  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
+  MipsCC MipsCCInfo(CallConv, IsO32, Subtarget->isFP64bit(), CCInfo);
 
   MipsCCInfo.analyzeCallResult(Ins, getTargetMachine().Options.UseSoftFloat,
                                CallNode, RetTy);
@@ -2546,7 +2561,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
-  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
+  MipsCC MipsCCInfo(CallConv, IsO32, Subtarget->isFP64bit(), CCInfo);
   Function::const_arg_iterator FuncArg =
     DAG.getMachineFunction().getFunction()->arg_begin();
   bool UseSoftFloat = getTargetMachine().Options.UseSoftFloat;
@@ -2590,7 +2605,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       else if (RegVT == MVT::f32)
         RC = &Mips::FGR32RegClass;
       else if (RegVT == MVT::f64)
-        RC = HasMips64 ? &Mips::FGR64RegClass : &Mips::AFGR64RegClass;
+        RC = Subtarget->isFP64bit() ? &Mips::FGR64RegClass :
+                                      &Mips::AFGR64RegClass;
       else
         llvm_unreachable("RegVT not supported by FormalArguments Lowering");
 
@@ -2705,7 +2721,7 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, IsVarArg, MF, getTargetMachine(), RVLocs,
                  *DAG.getContext());
-  MipsCC MipsCCInfo(CallConv, IsO32, CCInfo);
+  MipsCC MipsCCInfo(CallConv, IsO32, Subtarget->isFP64bit(), CCInfo);
 
   // Analyze return values.
   MipsCCInfo.analyzeReturn(Outs, getTargetMachine().Options.UseSoftFloat,
@@ -3178,9 +3194,9 @@ MipsTargetLowering::MipsCC::SpecialCallingConvType
 }
 
 MipsTargetLowering::MipsCC::MipsCC(
-  CallingConv::ID CC, bool IsO32_, CCState &Info,
+  CallingConv::ID CC, bool IsO32_, bool IsFP64_, CCState &Info,
     MipsCC::SpecialCallingConvType SpecialCallingConv_)
-  : CCInfo(Info), CallConv(CC), IsO32(IsO32_),
+  : CCInfo(Info), CallConv(CC), IsO32(IsO32_), IsFP64(IsFP64_),
     SpecialCallingConv(SpecialCallingConv_){
   // Pre-allocate reserved argument area.
   CCInfo.AllocateStack(reservedArgArea(), 1);
@@ -3336,11 +3352,11 @@ llvm::CCAssignFn *MipsTargetLowering::MipsCC::fixedArgFn() const {
 
   if (SpecialCallingConv == Mips16RetHelperConv)
     return CC_Mips16RetHelper;
-  return IsO32 ? CC_MipsO32 : CC_MipsN;
+  return IsO32 ? (IsFP64 ? CC_MipsO32_FP64 : CC_MipsO32_FP32) : CC_MipsN;
 }
 
 llvm::CCAssignFn *MipsTargetLowering::MipsCC::varArgFn() const {
-  return IsO32 ? CC_MipsO32 : CC_MipsN_VarArg;
+  return IsO32 ? (IsFP64 ? CC_MipsO32_FP64 : CC_MipsO32_FP32) : CC_MipsN_VarArg;
 }
 
 const uint16_t *MipsTargetLowering::MipsCC::shadowRegs() const {

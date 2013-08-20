@@ -160,6 +160,7 @@ public:
 
   bool isLittle() const { return IsLittle; }
   bool isFP64bit() const { return IsFP64bit; }
+  bool isNotFP64bit() const { return !IsFP64bit; }
   bool isGP64bit() const { return IsGP64bit; }
   bool isGP32bit() const { return !IsGP64bit; }
   bool isSingleFloat() const { return IsSingleFloat; }

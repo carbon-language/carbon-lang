@@ -92,7 +92,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 
     // When dealing with single precision only, use libcalls
     if (!Subtarget->isSingleFloat()) {
-      if (HasMips64)
+      if (Subtarget->isFP64bit())
         addRegisterClass(MVT::f64, &Mips::FGR64RegClass);
       else
         addRegisterClass(MVT::f64, &Mips::AFGR64RegClass);

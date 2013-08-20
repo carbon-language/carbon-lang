@@ -244,9 +244,8 @@ namespace llvm {
         Mips16RetHelperConv, NoSpecialCallingConv
       };
 
-      MipsCC(
-        CallingConv::ID CallConv, bool IsO32, CCState &Info,
-        SpecialCallingConvType SpecialCallingConv = NoSpecialCallingConv);
+      MipsCC(CallingConv::ID CallConv, bool IsO32, bool IsFP64, CCState &Info,
+             SpecialCallingConvType SpecialCallingConv = NoSpecialCallingConv);
 
 
       void analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -319,7 +318,7 @@ namespace llvm {
 
       CCState &CCInfo;
       CallingConv::ID CallConv;
-      bool IsO32;
+      bool IsO32, IsFP64;
       SpecialCallingConvType SpecialCallingConv;
       SmallVector<ByValArgInfo, 2> ByValArgs;
     };

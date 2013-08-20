@@ -83,26 +83,34 @@ const uint16_t* MipsRegisterInfo::
 getCalleeSavedRegs(const MachineFunction *MF) const {
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_SaveList;
-  else if (!Subtarget.hasMips64())
-    return CSR_O32_SaveList;
-  else if (Subtarget.isABI_N32())
+
+  if (Subtarget.isABI_N64())
+    return CSR_N64_SaveList;
+
+  if (Subtarget.isABI_N32())
     return CSR_N32_SaveList;
 
-  assert(Subtarget.isABI_N64());
-  return CSR_N64_SaveList;
+  if (Subtarget.isFP64bit())
+    return CSR_O32_FP64_SaveList;
+
+  return CSR_O32_SaveList;
 }
 
 const uint32_t*
 MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
   if (Subtarget.isSingleFloat())
     return CSR_SingleFloatOnly_RegMask;
-  else if (!Subtarget.hasMips64())
-    return CSR_O32_RegMask;
-  else if (Subtarget.isABI_N32())
+
+  if (Subtarget.isABI_N64())
+    return CSR_N64_RegMask;
+
+  if (Subtarget.isABI_N32())
     return CSR_N32_RegMask;
 
-  assert(Subtarget.isABI_N64());
-  return CSR_N64_RegMask;
+  if (Subtarget.isFP64bit())
+    return CSR_O32_FP64_RegMask;
+
+  return CSR_O32_RegMask;
 }
 
 const uint32_t *MipsRegisterInfo::getMips16RetHelperMask() {
@@ -128,7 +136,7 @@ getReservedRegs(const MachineFunction &MF) const {
   for (unsigned I = 0; I < array_lengthof(ReservedGPR64); ++I)
     Reserved.set(ReservedGPR64[I]);
 
-  if (Subtarget.hasMips64()) {
+  if (Subtarget.isFP64bit()) {
     // Reserve all registers in AFGR64.
     for (RegIter Reg = Mips::AFGR64RegClass.begin(),
          EReg = Mips::AFGR64RegClass.end(); Reg != EReg; ++Reg)
