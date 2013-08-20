@@ -5424,6 +5424,88 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
                    "}"));
 }
 
+TEST_F(FormatTest, ConfigurableSpaceAfterControlStatementKeyword) {
+  FormatStyle NoSpace = getLLVMStyle();
+  NoSpace.SpaceAfterControlStatementKeyword = false;
+
+  verifyFormat("while(true)\n"
+               "  continue;", NoSpace);
+  verifyFormat("for(;;)\n"
+               "  continue;", NoSpace);
+  verifyFormat("if(true)\n"
+               "  f();\n"
+               "else if(true)\n"
+               "  f();", NoSpace);
+  verifyFormat("do {\n"
+               "  do_something();\n"
+               "} while(something());", NoSpace);
+  verifyFormat("switch(x) {\n"
+               "default:\n"
+               "  break;\n"
+               "}", NoSpace);
+}
+
+TEST_F(FormatTest, ConfigurableSpacesInParentheses) {
+  FormatStyle Spaces = getLLVMStyle();
+
+  Spaces.SpacesInParentheses = true;
+  verifyFormat("call( x, y, z );", Spaces);
+  verifyFormat("while ( (bool)1 )\n"
+               "  continue;", Spaces);
+  verifyFormat("for ( ;; )\n"
+               "  continue;", Spaces);
+  verifyFormat("if ( true )\n"
+               "  f();\n"
+               "else if ( true )\n"
+               "  f();", Spaces);
+  verifyFormat("do {\n"
+               "  do_something( (int)i );\n"
+               "} while ( something() );", Spaces);
+  verifyFormat("switch ( x ) {\n"
+               "default:\n"
+               "  break;\n"
+               "}", Spaces);
+
+  Spaces.SpacesInParentheses = false;
+  Spaces.SpacesInCStyleCastParentheses = true;
+  verifyFormat("Type *A = ( Type * )P;", Spaces);
+  verifyFormat("Type *A = ( vector<Type *, int *> )P;", Spaces);
+  verifyFormat("x = ( int32 )y;", Spaces);
+  verifyFormat("int a = ( int )(2.0f);", Spaces);
+  verifyFormat("#define AA(X) sizeof((( X * )NULL)->a)", Spaces);
+  verifyFormat("my_int a = ( my_int )sizeof(int);", Spaces);
+  verifyFormat("#define x (( int )-1)", Spaces);
+
+  Spaces.SpacesInParentheses = false;
+  Spaces.SpaceInEmptyParentheses = true;
+  verifyFormat("call(x, y, z);", Spaces);
+  verifyFormat("call( )", Spaces);
+
+  // Run the first set of tests again with
+  // Spaces.SpacesInParentheses = false,
+  // Spaces.SpaceInEmptyParentheses = true and
+  // Spaces.SpacesInCStyleCastParentheses = true
+  Spaces.SpacesInParentheses = false,
+  Spaces.SpaceInEmptyParentheses = true;
+  Spaces.SpacesInCStyleCastParentheses = true;
+  verifyFormat("call(x, y, z);", Spaces);
+  verifyFormat("while (( bool )1)\n"
+               "  continue;", Spaces);
+  verifyFormat("for (;;)\n"
+               "  continue;", Spaces);
+  verifyFormat("if (true)\n"
+               "  f( );\n"
+               "else if (true)\n"
+               "  f( );", Spaces);
+  verifyFormat("do {\n"
+               "  do_something(( int )i);\n"
+               "} while (something( ));", Spaces);
+  verifyFormat("switch (x) {\n"
+               "default:\n"
+               "  break;\n"
+               "}", Spaces);
+}
+
 TEST_F(FormatTest, LinuxBraceBreaking) {
   FormatStyle BreakBeforeBrace = getLLVMStyle();
   BreakBeforeBrace.BreakBeforeBraces = FormatStyle::BS_Linux;
@@ -5661,6 +5743,10 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(Cpp11BracedListStyle);
   CHECK_PARSE_BOOL(UseTab);
   CHECK_PARSE_BOOL(IndentFunctionDeclarationAfterType);
+  CHECK_PARSE_BOOL(SpacesInParentheses);
+  CHECK_PARSE_BOOL(SpaceInEmptyParentheses);
+  CHECK_PARSE_BOOL(SpacesInCStyleCastParentheses);
+  CHECK_PARSE_BOOL(SpaceAfterControlStatementKeyword);
 
   CHECK_PARSE("AccessModifierOffset: -1234", AccessModifierOffset, -1234);
   CHECK_PARSE("ConstructorInitializerIndentWidth: 1234",

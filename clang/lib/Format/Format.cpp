@@ -137,6 +137,13 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("BreakBeforeBraces", Style.BreakBeforeBraces);
     IO.mapOptional("IndentFunctionDeclarationAfterType",
                    Style.IndentFunctionDeclarationAfterType);
+    IO.mapOptional("SpacesInParentheses", Style.SpacesInParentheses);
+    IO.mapOptional("SpaceInEmptyParentheses",
+                   Style.SpaceInEmptyParentheses);
+    IO.mapOptional("SpacesInCStyleCastParentheses",
+                   Style.SpacesInCStyleCastParentheses);
+    IO.mapOptional("SpaceAfterControlStatementKeyword",
+                   Style.SpaceAfterControlStatementKeyword);
   }
 };
 }
@@ -182,6 +189,10 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.Standard = FormatStyle::LS_Cpp03;
   LLVMStyle.UseTab = false;
+  LLVMStyle.SpacesInParentheses = false;
+  LLVMStyle.SpaceInEmptyParentheses = false;
+  LLVMStyle.SpacesInCStyleCastParentheses = false;
+  LLVMStyle.SpaceAfterControlStatementKeyword = true;
 
   setDefaultPenalties(LLVMStyle);
   LLVMStyle.PenaltyReturnTypeOnItsOwnLine = 60;
@@ -219,6 +230,10 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.Standard = FormatStyle::LS_Auto;
   GoogleStyle.UseTab = false;
+  GoogleStyle.SpacesInParentheses = false;
+  GoogleStyle.SpaceInEmptyParentheses = false;
+  GoogleStyle.SpacesInCStyleCastParentheses = false;
+  GoogleStyle.SpaceAfterControlStatementKeyword = true;
 
   setDefaultPenalties(GoogleStyle);
   GoogleStyle.PenaltyReturnTypeOnItsOwnLine = 200;
