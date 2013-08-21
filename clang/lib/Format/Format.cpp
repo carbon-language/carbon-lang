@@ -138,8 +138,7 @@ template <> struct MappingTraits<clang::format::FormatStyle> {
     IO.mapOptional("IndentFunctionDeclarationAfterType",
                    Style.IndentFunctionDeclarationAfterType);
     IO.mapOptional("SpacesInParentheses", Style.SpacesInParentheses);
-    IO.mapOptional("SpaceInEmptyParentheses",
-                   Style.SpaceInEmptyParentheses);
+    IO.mapOptional("SpaceInEmptyParentheses", Style.SpaceInEmptyParentheses);
     IO.mapOptional("SpacesInCStyleCastParentheses",
                    Style.SpacesInCStyleCastParentheses);
     IO.mapOptional("SpaceAfterControlStatementKeyword",
@@ -318,8 +317,7 @@ namespace {
 
 class NoColumnLimitFormatter {
 public:
-  NoColumnLimitFormatter(ContinuationIndenter *Indenter)
-      : Indenter(Indenter) {}
+  NoColumnLimitFormatter(ContinuationIndenter *Indenter) : Indenter(Indenter) {}
 
   /// \brief Formats the line starting at \p State, simply keeping all of the
   /// input's line breaking decisions.
@@ -332,6 +330,7 @@ public:
       Indenter->addTokenToState(State, Newline, /*DryRun=*/false);
     }
   }
+
 private:
   ContinuationIndenter *Indenter;
 };

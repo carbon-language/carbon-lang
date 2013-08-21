@@ -365,11 +365,13 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
       State.Stack.back().LastSpace = State.Column;
     else if ((Previous.Type == TT_BinaryOperator ||
               Previous.Type == TT_ConditionalExpr ||
+              Previous.Type == TT_UnaryOperator ||
               Previous.Type == TT_CtorInitializerColon) &&
              !(Previous.getPrecedence() == prec::Assignment &&
                Current.FakeLParens.empty()))
       // Always indent relative to the RHS of the expression unless this is a
-      // simple assignment without binary expression on the RHS.
+      // simple assignment without binary expression on the RHS. Also indent
+      // relative to unary operators and the colons of constructor initializers.
       State.Stack.back().LastSpace = State.Column;
     else if (Previous.Type == TT_InheritanceColon)
       State.Stack.back().Indent = State.Column;

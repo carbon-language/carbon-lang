@@ -1123,8 +1123,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_paren) && Right.is(tok::r_paren))
     return Style.SpaceInEmptyParentheses;
   if (Left.is(tok::l_paren) || Right.is(tok::r_paren))
-    return Right.Type == TT_CastRParen ||
-           (Left.MatchingParen && Left.MatchingParen->Type == TT_CastRParen)
+    return (Right.Type == TT_CastRParen ||
+            (Left.MatchingParen && Left.MatchingParen->Type == TT_CastRParen))
                ? Style.SpacesInCStyleCastParentheses
                : Style.SpacesInParentheses;
   if (Right.isOneOf(tok::semi, tok::comma))
@@ -1181,11 +1181,11 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
         Left.MatchingParen->Previous->is(tok::kw___attribute))
       return true;
     return Line.Type == LT_ObjCDecl ||
-        Left.isOneOf(tok::kw_return, tok::kw_new,
-                     tok::kw_delete, tok::semi) ||
-        (Style.SpaceAfterControlStatementKeyword &&
-         Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while, tok::kw_switch,
-                      tok::kw_catch));
+           Left.isOneOf(tok::kw_return, tok::kw_new, tok::kw_delete,
+                        tok::semi) ||
+           (Style.SpaceAfterControlStatementKeyword &&
+            Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while, tok::kw_switch,
+                         tok::kw_catch));
   }
   if (Left.is(tok::at) && Right.Tok.getObjCKeywordID() != tok::objc_not_keyword)
     return false;
