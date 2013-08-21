@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCObjectDisassembler.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
@@ -27,7 +27,7 @@
 #include "llvm/Support/StringRefMemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
-#include <set>
+#include <vector>
 
 using namespace llvm;
 using namespace object;
@@ -149,7 +149,7 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
 
 namespace {
   struct BBInfo;
-  typedef std::set<BBInfo*> BBInfoSetTy;
+  typedef SmallPtrSet<BBInfo*, 2> BBInfoSetTy;
 
   struct BBInfo {
     MCTextAtom *Atom;
@@ -169,7 +169,7 @@ namespace {
 void MCObjectDisassembler::buildCFG(MCModule *Module) {
   typedef std::map<uint64_t, BBInfo> BBInfoByAddrTy;
   BBInfoByAddrTy BBInfos;
-  typedef std::set<uint64_t> AddressSetTy;
+  typedef std::vector<uint64_t> AddressSetTy;
   AddressSetTy Splits;
   AddressSetTy Calls;
 
@@ -184,8 +184,8 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
       uint64_t SymAddr;
       SI->getAddress(SymAddr);
       SymAddr = getEffectiveLoadAddr(SymAddr);
-      Calls.insert(SymAddr);
-      Splits.insert(SymAddr);
+      Calls.push_back(SymAddr);
+      Splits.push_back(SymAddr);
     }
   }
 
@@ -198,20 +198,26 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
        AI != AE; ++AI) {
     MCTextAtom *TA = dyn_cast<MCTextAtom>(*AI);
     if (!TA) continue;
-    Calls.insert(TA->getBeginAddr());
+    Calls.push_back(TA->getBeginAddr());
     BBInfos[TA->getBeginAddr()].Atom = TA;
     for (MCTextAtom::const_iterator II = TA->begin(), IE = TA->end();
          II != IE; ++II) {
       if (MIA.isTerminator(II->Inst))
-        Splits.insert(II->Address + II->Size);
+        Splits.push_back(II->Address + II->Size);
       uint64_t Target;
       if (MIA.evaluateBranch(II->Inst, II->Address, II->Size, Target)) {
         if (MIA.isCall(II->Inst))
-          Calls.insert(Target);
-        Splits.insert(Target);
+          Calls.push_back(Target);
+        Splits.push_back(Target);
       }
     }
   }
+
+  std::sort(Splits.begin(), Splits.end());
+  Splits.erase(std::unique(Splits.begin(), Splits.end()), Splits.end());
+
+  std::sort(Calls.begin(), Calls.end());
+  Calls.erase(std::unique(Calls.begin(), Calls.end()), Calls.end());
 
   // Split text atoms into basic block atoms.
   for (AddressSetTy::const_iterator SI = Splits.begin(), SE = Splits.end();
