@@ -985,8 +985,14 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
       if (X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
         VEX_R = 0x0;
 
-      if (HasVEX_4V)
-        VEX_4V = getVEXRegisterEncoding(MI, 1);
+      if (HasVEX_4V) {
+        if (HasMemOp4)
+          VEX_4V = getVEXRegisterEncoding(MI, 1);
+        else
+          // FMA3 instructions operands are dst, src1, src2, src3
+          // dst and src1 are the same and not encoded separately
+          VEX_4V = getVEXRegisterEncoding(MI, 2);
+      }
 
       if (X86II::isX86_64ExtendedReg(
                           MI.getOperand(MemOperand+X86::AddrBaseReg).getReg()))
