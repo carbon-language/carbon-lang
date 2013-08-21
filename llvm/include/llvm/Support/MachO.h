@@ -621,6 +621,13 @@ namespace llvm {
       uint32_t header_addr;
     };
 
+    struct entry_point_command {
+      uint32_t cmd;
+      uint32_t cmdsize;
+      uint64_t entryoff;
+      uint64_t stacksize;
+    };
+
 
     // Structs from <mach-o/fat.h>
     struct fat_header {
