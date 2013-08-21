@@ -31,6 +31,7 @@
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCModule.h"
+#include "llvm/MC/MCModuleYAML.h"
 #include "llvm/MC/MCObjectDisassembler.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectSymbolizer.h"
@@ -61,6 +62,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+
 using namespace llvm;
 using namespace object;
 
@@ -139,6 +141,12 @@ static cl::opt<bool>
 CFG("cfg", cl::desc("Create a CFG for every function found in the object"
                       " and write it to a graphviz file"));
 
+// FIXME: Does it make sense to have a dedicated tool for yaml cfg output?
+static cl::opt<std::string>
+YAMLCFG("yaml-cfg",
+        cl::desc("Create a CFG and write it as a YAML MCModule."),
+        cl::value_desc("yaml output file"));
+
 static StringRef ToolName;
 
 bool llvm::error(error_code ec) {
@@ -178,6 +186,7 @@ static const Target *getTarget(const ObjectFile *Obj = NULL) {
 }
 
 // Write a graphviz file for the CFG inside an MCFunction.
+// FIXME: Use GraphWriter
 static void emitDOTFile(const char *FileName, const MCFunction &f,
                         MCInstPrinter *IP) {
   // Start a new dot file.
@@ -333,7 +342,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     return;
   }
 
-  if (CFG) {
+  if (CFG || !YAMLCFG.empty()) {
     OwningPtr<MCObjectDisassembler> OD(
       new MCObjectDisassembler(*Obj, *DisAsm, *MIA));
     OwningPtr<MCModule> Mod(OD->buildModule(/* withCFG */ true));
@@ -350,14 +359,25 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         }
       }
     }
-    for (MCModule::const_func_iterator FI = Mod->func_begin(),
-                                       FE = Mod->func_end();
-                                       FI != FE; ++FI) {
-      static int filenum = 0;
-      emitDOTFile((Twine((*FI)->getName()) + "_" +
-                   utostr(filenum) + ".dot").str().c_str(),
-                    **FI, IP.get());
-      ++filenum;
+    if (CFG) {
+      for (MCModule::const_func_iterator FI = Mod->func_begin(),
+                                         FE = Mod->func_end();
+                                         FI != FE; ++FI) {
+        static int filenum = 0;
+        emitDOTFile((Twine((*FI)->getName()) + "_" +
+                     utostr(filenum) + ".dot").str().c_str(),
+                      **FI, IP.get());
+        ++filenum;
+      }
+    }
+    if (!YAMLCFG.empty()) {
+      std::string Error;
+      raw_fd_ostream YAMLOut(YAMLCFG.c_str(), Error);
+      if (!Error.empty()) {
+        errs() << "llvm-objdump: warning: " << Error << '\n';
+        return;
+      }
+      mcmodule2yaml(YAMLOut, *Mod, *MII, *MRI);
     }
   }
 
