@@ -2120,7 +2120,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
     Features["popcnt"] = Features["sse42"] = false;
   case AVX:
     Features["fma"] = Features["avx"] = false;
-    setXOPLevel(Features, SSE4A, false);
+    setXOPLevel(Features, FMA4, false);
   case AVX2:
     Features["avx2"] = false;
   case AVX512F:

@@ -42,3 +42,16 @@
 // AVX: #define __SSE_MATH__ 1
 // AVX: #define __SSE__ 1
 // AVX: #define __SSSE3__ 1
+
+
+// RUN: %clang -target i386-unknown-unknown -march=pentium-m -mxop -mno-avx -x c -E -dM -o - %s | FileCheck --check-prefix=SSE4A %s
+
+// SSE4A: #define __SSE2_MATH__ 1
+// SSE4A: #define __SSE2__ 1
+// SSE4A: #define __SSE3__ 1
+// SSE4A: #define __SSE4A__ 1
+// SSE4A: #define __SSE4_1__ 1
+// SSE4A: #define __SSE4_2__ 1
+// SSE4A: #define __SSE_MATH__ 1
+// SSE4A: #define __SSE__ 1
+// SSE4A: #define __SSSE3__ 1
