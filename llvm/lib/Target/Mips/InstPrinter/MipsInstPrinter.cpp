@@ -257,6 +257,7 @@ bool MipsInstPrinter::printAlias(const MCInst &MI, raw_ostream &OS) {
     // jalr $ra, $r1 => jalr $r1
     return isReg<Mips::RA_64>(MI, 0) && printAlias("jalr", MI, 1, OS);
   case Mips::NOR:
+  case Mips::NOR_MM:
     // nor $r0, $r1, $zero => not $r0, $r1
     return isReg<Mips::ZERO>(MI, 2) && printAlias("not", MI, 0, 1, OS);
   case Mips::NOR64:
