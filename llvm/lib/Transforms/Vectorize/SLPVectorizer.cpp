@@ -308,7 +308,7 @@ private:
   /// \returns the index of the last instrucion in the BB from \p VL.
   int getLastIndex(ArrayRef<Value *> VL);
 
-  /// \returns the Instrucion in the bundle \p VL.
+  /// \returns the Instruction in the bundle \p VL.
   Instruction *getLastInstruction(ArrayRef<Value *> VL);
 
   /// \returns a vector from a collection of scalars in \p VL.
