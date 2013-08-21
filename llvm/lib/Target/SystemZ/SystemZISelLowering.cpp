@@ -209,6 +209,15 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
       // We can use FI for FRINT.
       setOperationAction(ISD::FRINT, VT, Legal);
 
+      // We can use the extended form of FI for other rounding operations.
+      if (Subtarget.hasFPExtension()) {
+        setOperationAction(ISD::FNEARBYINT, VT, Legal);
+        setOperationAction(ISD::FFLOOR, VT, Legal);
+        setOperationAction(ISD::FCEIL, VT, Legal);
+        setOperationAction(ISD::FTRUNC, VT, Legal);
+        setOperationAction(ISD::FROUND, VT, Legal);
+      }
+
       // No special instructions for these.
       setOperationAction(ISD::FSIN, VT, Expand);
       setOperationAction(ISD::FCOS, VT, Expand);
