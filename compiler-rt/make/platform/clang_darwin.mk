@@ -25,9 +25,20 @@ CheckArches = \
     done; \
     echo $$result)
 
+XCRun = \
+  $(shell \
+    result=`xcrun -find $(1) 2> /dev/null`; \
+    if [ "$$?" != "0"; then result=$(1); fi; \
+    echo $$result)
+
 ###
 
-CC := clang
+CC       := $(call XCRun,clang)
+AR       := $(call XCRun,ar)
+RANLIB   := $(call XCRun,ranlib)
+STRIP    := $(call XCRun,strip)
+LIPO     := $(call XCRun,lipo)
+DSYMUTIL := $(call XCRun,dsymutil)
 
 Configs :=
 UniversalArchs :=
