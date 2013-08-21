@@ -44,7 +44,7 @@ uint64_t MCObjectDisassembler::getEntrypoint() {
     if (Name == "main" || Name == "_main") {
       uint64_t Entrypoint;
       SI->getAddress(Entrypoint);
-      return Entrypoint;
+      return getEffectiveLoadAddr(Entrypoint);
     }
   }
   return 0;
@@ -56,6 +56,14 @@ ArrayRef<uint64_t> MCObjectDisassembler::getStaticInitFunctions() {
 
 ArrayRef<uint64_t> MCObjectDisassembler::getStaticExitFunctions() {
   return ArrayRef<uint64_t>();
+}
+
+uint64_t MCObjectDisassembler::getEffectiveLoadAddr(uint64_t Addr) {
+  return Addr;
+}
+
+uint64_t MCObjectDisassembler::getOriginalLoadAddr(uint64_t Addr) {
+  return Addr;
 }
 
 MCModule *MCObjectDisassembler::buildEmptyModule() {
@@ -90,6 +98,7 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
     uint64_t SecSize; SI->getSize(SecSize);
     if (StartAddr == UnknownAddressOrSize || SecSize == UnknownAddressOrSize)
       continue;
+    StartAddr = getEffectiveLoadAddr(StartAddr);
 
     StringRef Contents; SI->getContents(Contents);
     StringRefMemoryObject memoryObject(Contents, StartAddr);
@@ -170,6 +179,7 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
     if (SymType == SymbolRef::ST_Function) {
       uint64_t SymAddr;
       SI->getAddress(SymAddr);
+      SymAddr = getEffectiveLoadAddr(SymAddr);
       Calls.insert(SymAddr);
       Splits.insert(SymAddr);
     }

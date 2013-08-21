@@ -65,6 +65,22 @@ public:
   virtual ArrayRef<uint64_t> getStaticExitFunctions();
   /// @}
 
+  /// \name Translation between effective and objectfile load address.
+  /// @{
+  /// \brief Compute the effective load address, from an objectfile virtual
+  /// address. This is implemented in a format-specific way, to take into
+  /// account things like PIE/ASLR when doing dynamic disassembly.
+  /// For example, on Mach-O this would be done by adding the VM addr slide,
+  /// on glibc ELF by keeping a map between segment load addresses, filled
+  /// using dl_iterate_phdr, etc..
+  /// In most static situations and in the default impl., this returns \p Addr.
+  virtual uint64_t getEffectiveLoadAddr(uint64_t Addr);
+
+  /// \brief Compute the original load address, as specified in the objectfile.
+  /// This is the inverse of getEffectiveLoadAddr.
+  virtual uint64_t getOriginalLoadAddr(uint64_t EffectiveAddr);
+  /// @}
+
 protected:
   const object::ObjectFile &Obj;
   const MCDisassembler &Dis;
