@@ -97,6 +97,12 @@ public:
 
   StringRef getName() const { return Name; }
 
+  /// \name Get the owning MC Module.
+  /// @{
+  const MCModule *getParent() const { return ParentModule; }
+        MCModule *getParent()       { return ParentModule; }
+  /// @}
+
   /// \name Access to the function's basic blocks. No ordering is enforced,
   /// except that the first block is the entry block.
   /// @{

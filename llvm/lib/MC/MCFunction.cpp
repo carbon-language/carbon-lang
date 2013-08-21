@@ -26,8 +26,9 @@ MCFunction::~MCFunction() {
 }
 
 MCBasicBlock &MCFunction::createBlock(const MCTextAtom &TA) {
-  Blocks.push_back(new MCBasicBlock(TA, this));
-  return *Blocks.back();
+  MCBasicBlock *MCBB = new MCBasicBlock(TA, this);
+  Blocks.push_back(MCBB);
+  return *MCBB;
 }
 
 const MCBasicBlock *MCFunction::find(uint64_t StartAddr) const {

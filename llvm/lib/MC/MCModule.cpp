@@ -18,6 +18,10 @@ static bool AtomComp(const MCAtom *L, uint64_t Addr) {
   return L->getEndAddr() < Addr;
 }
 
+static bool AtomCompInv(uint64_t Addr, const MCAtom *R) {
+  return Addr < R->getEndAddr();
+}
+
 void MCModule::map(MCAtom *NewAtom) {
   uint64_t Begin = NewAtom->Begin;
 
@@ -77,11 +81,21 @@ const MCAtom *MCModule::findAtomContaining(uint64_t Addr) const {
 }
 
 MCAtom *MCModule::findAtomContaining(uint64_t Addr) {
-  AtomListTy::iterator I = std::lower_bound(atom_begin(), atom_end(),
-                                            Addr, AtomComp);
-  if (I != atom_end() && (*I)->getBeginAddr() <= Addr)
+  return const_cast<MCAtom*>(
+    const_cast<const MCModule *>(this)->findAtomContaining(Addr));
+}
+
+const MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) const {
+  AtomListTy::const_iterator I = std::upper_bound(atom_begin(), atom_end(),
+                                                  Addr, AtomCompInv);
+  if (I != atom_end())
     return *I;
   return 0;
+}
+
+MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) {
+  return const_cast<MCAtom*>(
+    const_cast<const MCModule *>(this)->findFirstAtomAfter(Addr));
 }
 
 MCFunction *MCModule::createFunction(StringRef Name) {

@@ -43,7 +43,9 @@ class MCModule {
   typedef std::vector<MCAtom*> AtomListTy;
   AtomListTy Atoms;
 
+  // For access to map/remap.
   friend class MCAtom;
+
   /// \brief Remap \p Atom to the given range, and update its Begin/End fields.
   /// \param Atom An atom belonging to this module.
   /// An atom should always use this method to update its bounds, because this
@@ -83,6 +85,8 @@ public:
   /// @{
   const MCAtom *findAtomContaining(uint64_t Addr) const;
         MCAtom *findAtomContaining(uint64_t Addr);
+  const MCAtom *findFirstAtomAfter(uint64_t Addr) const;
+        MCAtom *findFirstAtomAfter(uint64_t Addr);
 
   typedef AtomListTy::const_iterator const_atom_iterator;
   typedef AtomListTy::      iterator       atom_iterator;
