@@ -21,6 +21,7 @@ set(ADTSources
   MapVectorTest.cpp
   OptionalTest.cpp
   PackedVectorTest.cpp
+  PointerUnionTest.cpp
   SCCIteratorTest.cpp
   SmallPtrSetTest.cpp
   SmallStringTest.cpp
