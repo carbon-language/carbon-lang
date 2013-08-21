@@ -1142,6 +1142,11 @@
 	fidbr	%f0, -1, %f0
 	fidbr	%f0, 16, %f0
 
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: fidbra	%f0, 0, %f0, 0
+
+	fidbra	%f0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: fiebr	%f0, -1, %f0
 #CHECK: error: invalid operand
@@ -1149,6 +1154,11 @@
 
 	fiebr	%f0, -1, %f0
 	fiebr	%f0, 16, %f0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: fiebra	%f0, 0, %f0, 0
+
+	fiebra	%f0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: fixbr	%f0, -1, %f0
@@ -1163,6 +1173,11 @@
 	fixbr	%f0, 16, %f0
 	fixbr	%f0, 0, %f2
 	fixbr	%f2, 0, %f0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: fixbra	%f0, 0, %f0, 0
+
+	fixbra	%f0, 0, %f0, 0
 
 #CHECK: error: invalid register pair
 #CHECK: flogr	%r1, %r0

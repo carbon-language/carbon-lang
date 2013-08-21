@@ -121,6 +121,48 @@
 	ark	%r15,%r0,%r0
 	ark	%r7,%r8,%r9
 
+#CHECK: fidbra	%f0, 0, %f0, 0          # encoding: [0xb3,0x5f,0x00,0x00]
+#CHECK: fidbra	%f0, 0, %f0, 15         # encoding: [0xb3,0x5f,0x0f,0x00]
+#CHECK: fidbra	%f0, 0, %f15, 0         # encoding: [0xb3,0x5f,0x00,0x0f]
+#CHECK: fidbra	%f0, 15, %f0, 0         # encoding: [0xb3,0x5f,0xf0,0x00]
+#CHECK: fidbra	%f4, 5, %f6, 7          # encoding: [0xb3,0x5f,0x57,0x46]
+#CHECK: fidbra	%f15, 0, %f0, 0         # encoding: [0xb3,0x5f,0x00,0xf0]
+
+	fidbra	%f0, 0, %f0, 0
+	fidbra	%f0, 0, %f0, 15
+	fidbra	%f0, 0, %f15, 0
+	fidbra	%f0, 15, %f0, 0
+	fidbra	%f4, 5, %f6, 7
+	fidbra	%f15, 0, %f0, 0
+
+#CHECK: fiebra	%f0, 0, %f0, 0          # encoding: [0xb3,0x57,0x00,0x00]
+#CHECK: fiebra	%f0, 0, %f0, 15         # encoding: [0xb3,0x57,0x0f,0x00]
+#CHECK: fiebra	%f0, 0, %f15, 0         # encoding: [0xb3,0x57,0x00,0x0f]
+#CHECK: fiebra	%f0, 15, %f0, 0         # encoding: [0xb3,0x57,0xf0,0x00]
+#CHECK: fiebra	%f4, 5, %f6, 7          # encoding: [0xb3,0x57,0x57,0x46]
+#CHECK: fiebra	%f15, 0, %f0, 0         # encoding: [0xb3,0x57,0x00,0xf0]
+
+	fiebra	%f0, 0, %f0, 0
+	fiebra	%f0, 0, %f0, 15
+	fiebra	%f0, 0, %f15, 0
+	fiebra	%f0, 15, %f0, 0
+	fiebra	%f4, 5, %f6, 7
+	fiebra	%f15, 0, %f0, 0
+
+#CHECK: fixbra	%f0, 0, %f0, 0          # encoding: [0xb3,0x47,0x00,0x00]
+#CHECK: fixbra	%f0, 0, %f0, 15         # encoding: [0xb3,0x47,0x0f,0x00]
+#CHECK: fixbra	%f0, 0, %f13, 0         # encoding: [0xb3,0x47,0x00,0x0d]
+#CHECK: fixbra	%f0, 15, %f0, 0         # encoding: [0xb3,0x47,0xf0,0x00]
+#CHECK: fixbra	%f4, 5, %f8, 9          # encoding: [0xb3,0x47,0x59,0x48]
+#CHECK: fixbra	%f13, 0, %f0, 0         # encoding: [0xb3,0x47,0x00,0xd0]
+
+	fixbra	%f0, 0, %f0, 0
+	fixbra	%f0, 0, %f0, 15
+	fixbra	%f0, 0, %f13, 0
+	fixbra	%f0, 15, %f0, 0
+	fixbra	%f4, 5, %f8, 9
+	fixbra	%f13, 0, %f0, 0
+
 #CHECK: loc	%r0, 0, 0               # encoding: [0xeb,0x00,0x00,0x00,0x00,0xf2]
 #CHECK: loc	%r0, 0, 15              # encoding: [0xeb,0x0f,0x00,0x00,0x00,0xf2]
 #CHECK: loc	%r0, -524288, 0         # encoding: [0xeb,0x00,0x00,0x00,0x80,0xf2]

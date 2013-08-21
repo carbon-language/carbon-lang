@@ -25,6 +25,54 @@
 	ahik	%r0, %r1, foo
 
 #CHECK: error: invalid operand
+#CHECK: fidbra	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: fidbra	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: fidbra	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: fidbra	%f0, 16, %f0, 0
+
+	fidbra	%f0, 0, %f0, -1
+	fidbra	%f0, 0, %f0, 16
+	fidbra	%f0, -1, %f0, 0
+	fidbra	%f0, 16, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: fiebra	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: fiebra	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: fiebra	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: fiebra	%f0, 16, %f0, 0
+
+	fiebra	%f0, 0, %f0, -1
+	fiebra	%f0, 0, %f0, 16
+	fiebra	%f0, -1, %f0, 0
+	fiebra	%f0, 16, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: fixbra	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: fixbra	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: fixbra	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: fixbra	%f0, 16, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: fixbra	%f0, 0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: fixbra	%f2, 0, %f0, 0
+
+	fixbra	%f0, 0, %f0, -1
+	fixbra	%f0, 0, %f0, 16
+	fixbra	%f0, -1, %f0, 0
+	fixbra	%f0, 16, %f0, 0
+	fixbra	%f0, 0, %f2, 0
+	fixbra	%f2, 0, %f0, 0
+
+#CHECK: error: invalid operand
 #CHECK: loc	%r0,0,-1
 #CHECK: error: invalid operand
 #CHECK: loc	%r0,0,16

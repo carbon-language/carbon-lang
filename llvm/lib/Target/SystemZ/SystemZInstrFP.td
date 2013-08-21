@@ -212,14 +212,19 @@ def SQEB : UnaryRXE<"sqeb", 0xED14, loadu<fsqrt>, FP32, 4>;
 def SQDB : UnaryRXE<"sqdb", 0xED15, loadu<fsqrt>, FP64, 8>;
 
 // Round to an integer, with the second operand (modifier M3) specifying
-// the rounding mode.
-//
-// These forms always check for inexact conditions.  z196 added versions
-// that allow this to suppressed (as for fnearbyint), but we don't yet
-// support -march=z196.
+// the rounding mode.  These forms always check for inexact conditions.
 def FIEBR : UnaryRRF<"fieb", 0xB357, FP32,  FP32>;
 def FIDBR : UnaryRRF<"fidb", 0xB35F, FP64,  FP64>;
 def FIXBR : UnaryRRF<"fixb", 0xB347, FP128, FP128>;
+
+// Extended forms of the previous three instructions.  M4 can be set to 4
+// to suppress detection of inexact conditions.
+def FIEBRA : UnaryRRF4<"fiebra", 0xB357, FP32,  FP32>,
+             Requires<[FeatureFPExtension]>;
+def FIDBRA : UnaryRRF4<"fidbra", 0xB35F, FP64,  FP64>,
+             Requires<[FeatureFPExtension]>;
+def FIXBRA : UnaryRRF4<"fixbra", 0xB347, FP128, FP128>,
+             Requires<[FeatureFPExtension]>;
 
 // frint rounds according to the current mode (modifier 0) and detects
 // inexact conditions.
