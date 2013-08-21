@@ -967,8 +967,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   assert(PP.getTargetInfo().getWCharWidth() <= 64 &&
          "Assumes sizeof(wchar) on target is <= 64");
 
-  SmallVector<uint32_t,4> codepoint_buffer;
-  codepoint_buffer.resize(end-begin);
+  SmallVector<uint32_t, 4> codepoint_buffer;
+  codepoint_buffer.resize(end - begin);
   uint32_t *buffer_begin = &codepoint_buffer.front();
   uint32_t *buffer_end = buffer_begin + codepoint_buffer.size();
 
@@ -977,7 +977,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   // by this implementation.
   uint32_t largest_character_for_kind;
   if (tok::wide_char_constant == Kind) {
-    largest_character_for_kind = 0xFFFFFFFFu >> (32-PP.getTargetInfo().getWCharWidth());
+    largest_character_for_kind =
+        0xFFFFFFFFu >> (32-PP.getTargetInfo().getWCharWidth());
   } else if (tok::utf16_char_constant == Kind) {
     largest_character_for_kind = 0xFFFF;
   } else if (tok::utf32_char_constant == Kind) {
@@ -986,7 +987,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     largest_character_for_kind = 0x7Fu;
   }
 
-  while (begin!=end) {
+  while (begin != end) {
     // Is this a span of non-escape characters?
     if (begin[0] != '\\') {
       char const *start = begin;
@@ -997,12 +998,12 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
       char const *tmp_in_start = start;
       uint32_t *tmp_out_start = buffer_begin;
       ConversionResult res =
-      ConvertUTF8toUTF32(reinterpret_cast<UTF8 const **>(&start),
-                         reinterpret_cast<UTF8 const *>(begin),
-                         &buffer_begin,buffer_end,strictConversion);
-      if (res!=conversionOK) {
-        // If we see bad encoding for unprefixed character literals, warn and 
-        // simply copy the byte values, for compatibility with gcc and 
+          ConvertUTF8toUTF32(reinterpret_cast<UTF8 const **>(&start),
+                             reinterpret_cast<UTF8 const *>(begin),
+                             &buffer_begin, buffer_end, strictConversion);
+      if (res != conversionOK) {
+        // If we see bad encoding for unprefixed character literals, warn and
+        // simply copy the byte values, for compatibility with gcc and
         // older versions of clang.
         bool NoErrorOnBadEncoding = isAscii();
         unsigned Msg = diag::err_bad_character_encoding;
@@ -1012,13 +1013,13 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
         if (NoErrorOnBadEncoding) {
           start = tmp_in_start;
           buffer_begin = tmp_out_start;
-          for ( ; start != begin; ++start, ++buffer_begin)
+          for (; start != begin; ++start, ++buffer_begin)
             *buffer_begin = static_cast<uint8_t>(*start);
         } else {
           HadError = true;
         }
       } else {
-        for (; tmp_out_start <buffer_begin; ++tmp_out_start) {
+        for (; tmp_out_start < buffer_begin; ++tmp_out_start) {
           if (*tmp_out_start > largest_character_for_kind) {
             HadError = true;
             PP.Diag(Loc, diag::err_character_too_large);
@@ -1028,14 +1029,12 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
 
       continue;
     }
-    // Is this a Universal Character Name excape?
+    // Is this a Universal Character Name escape?
     if (begin[1] == 'u' || begin[1] == 'U') {
       unsigned short UcnLen = 0;
       if (!ProcessUCNEscape(TokBegin, begin, end, *buffer_begin, UcnLen,
                             FullSourceLoc(Loc, PP.getSourceManager()),
-                            &PP.getDiagnostics(), PP.getLangOpts(),
-                            true))
-      {
+                            &PP.getDiagnostics(), PP.getLangOpts(), true)) {
         HadError = true;
       } else if (*buffer_begin > largest_character_for_kind) {
         HadError = true;
@@ -1053,7 +1052,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     *buffer_begin++ = result;
   }
 
-  unsigned NumCharsSoFar = buffer_begin-&codepoint_buffer.front();
+  unsigned NumCharsSoFar = buffer_begin - &codepoint_buffer.front();
 
   if (NumCharsSoFar > 1) {
     if (isWide())
@@ -1065,8 +1064,9 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     else
       PP.Diag(Loc, diag::err_multichar_utf_character_literal);
     IsMultiChar = true;
-  } else
+  } else {
     IsMultiChar = false;
+  }
 
   llvm::APInt LitVal(PP.getTargetInfo().getIntWidth(), 0);
 
@@ -1075,7 +1075,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   bool multi_char_too_long = false;
   if (isAscii() && isMultiChar()) {
     LitVal = 0;
-    for (size_t i=0;i<NumCharsSoFar;++i) {
+    for (size_t i = 0; i < NumCharsSoFar; ++i) {
       // check for enough leading zeros to shift into
       multi_char_too_long |= (LitVal.countLeadingZeros() < 8);
       LitVal <<= 8;
@@ -1087,7 +1087,7 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   }
 
   if (!HadError && multi_char_too_long) {
-    PP.Diag(Loc,diag::warn_char_constant_too_large);
+    PP.Diag(Loc, diag::warn_char_constant_too_large);
   }
 
   // Transfer the value from APInt to uint64_t
