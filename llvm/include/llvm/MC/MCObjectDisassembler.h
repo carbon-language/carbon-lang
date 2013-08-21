@@ -23,6 +23,7 @@ namespace llvm {
 
 namespace object {
   class ObjectFile;
+  class MachOObjectFile;
 }
 
 class MCBasicBlock;
@@ -98,6 +99,36 @@ private:
   /// When the CFG is built, contiguous instructions that were previously in a
   /// single MCTextAtom will be split in multiple basic block atoms.
   void buildCFG(MCModule *Module);
+};
+
+class MCMachOObjectDisassembler : public MCObjectDisassembler {
+  const object::MachOObjectFile &MOOF;
+
+  uint64_t VMAddrSlide;
+  uint64_t HeaderLoadAddress;
+
+  // __DATA;__mod_init_func support.
+  llvm::StringRef ModInitContents;
+  // __DATA;__mod_exit_func support.
+  llvm::StringRef ModExitContents;
+
+public:
+  /// \brief Construct a Mach-O specific object disassembler.
+  /// \param VMAddrSlide The virtual address slide applied by dyld.
+  /// \param HeaderLoadAddress The load address of the mach_header for this
+  /// object.
+  MCMachOObjectDisassembler(const object::MachOObjectFile &MOOF,
+                            const MCDisassembler &Dis,
+                            const MCInstrAnalysis &MIA, uint64_t VMAddrSlide,
+                            uint64_t HeaderLoadAddress);
+
+protected:
+  uint64_t getEffectiveLoadAddr(uint64_t Addr) LLVM_OVERRIDE;
+  uint64_t getOriginalLoadAddr(uint64_t EffectiveAddr) LLVM_OVERRIDE;
+  uint64_t getEntrypoint() LLVM_OVERRIDE;
+
+  ArrayRef<uint64_t> getStaticInitFunctions() LLVM_OVERRIDE;
+  ArrayRef<uint64_t> getStaticExitFunctions() LLVM_OVERRIDE;
 };
 
 }
