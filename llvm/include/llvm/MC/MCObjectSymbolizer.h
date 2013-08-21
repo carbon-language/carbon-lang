@@ -56,6 +56,11 @@ public:
                                        int64_t Value, uint64_t Address);
   /// @}
 
+  /// \brief Look for an external function symbol at \p Addr.
+  /// (References through the ELF PLT, Mach-O stubs, and similar).
+  /// \returns An MCExpr representing the external symbol, or 0 if not found.
+  virtual StringRef findExternalFunctionAt(uint64_t Addr);
+
   /// \brief Create an object symbolizer for \p Obj.
   static MCObjectSymbolizer *
     createObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,

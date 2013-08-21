@@ -26,9 +26,18 @@ using namespace object;
 
 namespace {
 class MCMachObjectSymbolizer : public MCObjectSymbolizer {
+  const MachOObjectFile *MOOF;
+  // __TEXT;__stubs support.
+  uint64_t StubsStart;
+  uint64_t StubsCount;
+  uint64_t StubSize;
+  uint64_t StubsIndSymIndex;
+
 public:
   MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
-                         const MachOObjectFile *MOOF) {}
+                         const MachOObjectFile *MOOF);
+
+  StringRef findExternalFunctionAt(uint64_t Addr) LLVM_OVERRIDE;
 
   void tryAddingPcLoadReferenceComment(raw_ostream &cStream,
                                        int64_t Value,
@@ -36,6 +45,62 @@ public:
 };
 } // End unnamed namespace
 
+
+MCMachObjectSymbolizer::
+MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
+                       const MachOObjectFile *MOOF)
+    : MCObjectSymbolizer(Ctx, RelInfo, MOOF), MOOF(MOOF),
+      StubsStart(0), StubsCount(0), StubSize(0), StubsIndSymIndex(0) {
+
+  error_code ec;
+  for (section_iterator SI = MOOF->begin_sections(), SE = MOOF->end_sections();
+       SI != SE; SI.increment(ec)) {
+    if (ec) break;
+    StringRef Name; SI->getName(Name);
+    if (Name == "__stubs") {
+      SectionRef StubsSec = *SI;
+      if (MOOF->is64Bit()) {
+        macho::Section64 S = MOOF->getSection64(StubsSec.getRawDataRefImpl());
+        StubsIndSymIndex = S.Reserved1;
+        StubSize = S.Reserved2;
+      } else {
+        macho::Section S = MOOF->getSection(StubsSec.getRawDataRefImpl());
+        StubsIndSymIndex = S.Reserved1;
+        StubSize = S.Reserved2;
+      }
+      assert(StubSize && "Mach-O stub entry size can't be zero!");
+      StubsSec.getAddress(StubsStart);
+      StubsSec.getSize(StubsCount);
+      StubsCount /= StubSize;
+    }
+  }
+}
+
+StringRef MCMachObjectSymbolizer::findExternalFunctionAt(uint64_t Addr) {
+  // FIXME: also, this can all be done at the very beginning, by iterating over
+  // all stubs and creating the calls to outside functions. Is it worth it
+  // though?
+  if (!StubSize)
+    return StringRef();
+  uint64_t StubIdx = (Addr - StubsStart) / StubSize;
+  if (StubIdx >= StubsCount)
+    return StringRef();
+
+  macho::IndirectSymbolTableEntry ISTE =
+    MOOF->getIndirectSymbolTableEntry(MOOF->getDysymtabLoadCommand(), StubIdx);
+  uint32_t SymtabIdx = ISTE.Index;
+
+  StringRef SymName;
+  symbol_iterator SI = MOOF->begin_symbols();
+  error_code ec;
+  for (uint32_t i = 0; i != SymtabIdx; ++i) {
+    SI.increment(ec);
+  }
+  SI->getName(SymName);
+  assert(SI != MOOF->end_symbols() && "Stub wasn't found in the symbol table!");
+  assert(SymName.front() == '_' && "Mach-O symbol doesn't start with '_'!");
+  return SymName.substr(1);
+}
 
 void MCMachObjectSymbolizer::
 tryAddingPcLoadReferenceComment(raw_ostream &cStream, int64_t Value,
@@ -71,6 +136,16 @@ bool MCObjectSymbolizer::
 tryAddingSymbolicOperand(MCInst &MI, raw_ostream &cStream,
                          int64_t Value, uint64_t Address, bool IsBranch,
                          uint64_t Offset, uint64_t InstSize) {
+  if (IsBranch) {
+    StringRef ExtFnName = findExternalFunctionAt((uint64_t)Value);
+    if (!ExtFnName.empty()) {
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(ExtFnName);
+      const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      MI.addOperand(MCOperand::CreateExpr(Expr));
+      return true;
+    }
+  }
+
   if (const RelocationRef *R = findRelocationAt(Address + Offset)) {
     if (const MCExpr *RelExpr = RelInfo->createExprForRelocation(*R)) {
       MI.addOperand(MCOperand::CreateExpr(RelExpr));

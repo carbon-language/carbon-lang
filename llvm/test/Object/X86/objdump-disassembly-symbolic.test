@@ -3,6 +3,11 @@ RUN:              | FileCheck %s -check-prefix ELF-x86-64
 RUN: llvm-objdump -d -symbolize %p/../Inputs/trivial-object-test.macho-x86-64 \
 RUN:              | FileCheck %s -check-prefix MACHO-x86-64
 
+# Generate this using:
+#   ld trivial-object-test.macho-x86-64 -undefined dynamic_lookup
+RUN: llvm-objdump -d -symbolize %p/../Inputs/trivial-executable-test.macho-x86-64 \
+RUN:              | FileCheck %s -check-prefix MACHO-STUBS-x86-64
+
 ELF-x86-64: file format ELF64-x86-64
 ELF-x86-64: Disassembly of section .text:
 ELF-x86-64: main:
@@ -28,3 +33,16 @@ MACHO-x86-64:       1a:	e8 00 00 00 00                               	callq	_Som
 MACHO-x86-64:       1f:	8b 44 24 04                                  	movl	4(%rsp), %eax
 MACHO-x86-64:       23:	48 83 c4 08                                  	addq	$8, %rsp
 MACHO-x86-64:       27:	c3                                           	ret
+
+MACHO-STUBS-x86-64: file format Mach-O 64-bit x86-64
+MACHO-STUBS-x86-64: Disassembly of section __TEXT,__text:
+MACHO-STUBS-x86-64: _main:
+MACHO-STUBS-x86-64:     1f90:       48 83 ec 08                                     subq    $8, %rsp
+MACHO-STUBS-x86-64:     1f94:       c7 44 24 04 00 00 00 00                         movl    $0, 4(%rsp)
+MACHO-STUBS-x86-64:     1f9c:       48 8d 3d 45 00 00 00                            leaq    69(%rip), %rdi ## literal pool for: Hello World!
+MACHO-STUBS-x86-64:     1fa3:       e8 16 00 00 00                                  callq   puts
+MACHO-STUBS-x86-64:     1fa8:       30 c0                                           xorb    %al, %al
+MACHO-STUBS-x86-64:     1faa:       e8 09 00 00 00                                  callq   SomeOtherFunction
+MACHO-STUBS-x86-64:     1faf:       8b 44 24 04                                     movl    4(%rsp), %eax
+MACHO-STUBS-x86-64:     1fb3:       48 83 c4 08                                     addq    $8, %rsp
+MACHO-STUBS-x86-64:     1fb7:       c3                                              ret
