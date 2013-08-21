@@ -20,8 +20,6 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/MachO.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 namespace object {
