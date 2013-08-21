@@ -97,13 +97,15 @@ public:
 
   StringRef getName() const { return Name; }
 
-  /// \name Access to the function's basic blocks. No ordering is enforced.
+  /// \name Access to the function's basic blocks. No ordering is enforced,
+  /// except that the first block is the entry block.
   /// @{
   /// \brief Get the entry point basic block.
   const MCBasicBlock *getEntryBlock() const { return front(); }
         MCBasicBlock *getEntryBlock()       { return front(); }
 
-  // NOTE: Dereferencing iterators gives pointers, so maybe a list is best here.
+  bool empty() const { return Blocks.empty(); }
+
   typedef BasicBlockListTy::const_iterator const_iterator;
   typedef BasicBlockListTy::      iterator       iterator;
   const_iterator begin() const { return Blocks.begin(); }
@@ -115,6 +117,10 @@ public:
         MCBasicBlock* front()       { return Blocks.front(); }
   const MCBasicBlock*  back() const { return Blocks.back(); }
         MCBasicBlock*  back()       { return Blocks.back(); }
+
+  /// \brief Find the basic block, if any, that starts at \p StartAddr.
+  const MCBasicBlock *find(uint64_t StartAddr) const;
+        MCBasicBlock *find(uint64_t StartAddr);
   /// @}
 };
 
