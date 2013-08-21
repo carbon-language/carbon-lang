@@ -982,16 +982,13 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
       //  FMA4:
       //  dst(ModR/M.reg), src1(VEX_4V), src2(ModR/M), src3(VEX_I8IMM)
       //  dst(ModR/M.reg), src1(VEX_4V), src2(VEX_I8IMM), src3(ModR/M),
-      if (X86II::isX86_64ExtendedReg(MI.getOperand(0).getReg()))
+      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
         VEX_R = 0x0;
+      CurOp++;
 
       if (HasVEX_4V) {
-        if (HasMemOp4)
-          VEX_4V = getVEXRegisterEncoding(MI, 1);
-        else
-          // FMA3 instructions operands are dst, src1, src2, src3
-          // dst and src1 are the same and not encoded separately
-          VEX_4V = getVEXRegisterEncoding(MI, 2);
+        VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+        CurOp++;
       }
 
       if (X86II::isX86_64ExtendedReg(
@@ -1002,7 +999,7 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
         VEX_X = 0x0;
 
       if (HasVEX_4VOp3)
-        VEX_4V = getVEXRegisterEncoding(MI, X86::AddrNumOperands+1);
+        VEX_4V = getVEXRegisterEncoding(MI, CurOp+X86::AddrNumOperands);
       break;
     case X86II::MRM0m: case X86II::MRM1m:
     case X86II::MRM2m: case X86II::MRM3m:
@@ -1012,7 +1009,7 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
       //  MemAddr
       //  src1(VEX_4V), MemAddr
       if (HasVEX_4V)
-        VEX_4V = getVEXRegisterEncoding(MI, 0);
+        VEX_4V = getVEXRegisterEncoding(MI, CurOp++);
 
       if (X86II::isX86_64ExtendedReg(
                           MI.getOperand(MemOperand+X86::AddrBaseReg).getReg()))
@@ -1065,8 +1062,10 @@ void Emitter<CodeEmitter>::emitVEXOpcodePrefix(uint64_t TSFlags,
     case X86II::MRM6r: case X86II::MRM7r:
       // MRM0r-MRM7r instructions forms:
       //  dst(VEX_4V), src(ModR/M), imm8
-      VEX_4V = getVEXRegisterEncoding(MI, 0);
-      if (X86II::isX86_64ExtendedReg(MI.getOperand(1).getReg()))
+      VEX_4V = getVEXRegisterEncoding(MI, CurOp);
+      CurOp++;
+
+      if (X86II::isX86_64ExtendedReg(MI.getOperand(CurOp).getReg()))
         VEX_B = 0x0;
       break;
     default: // RawFrm

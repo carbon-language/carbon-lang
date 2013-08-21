@@ -786,8 +786,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
       VEX_4V = getVEXRegisterEncoding(MI, CurOp);
       if (HasEVEX && X86II::is32ExtendedReg(MI.getOperand(CurOp).getReg()))
         EVEX_V2 = 0x0;
+      CurOp++;
     }
-    CurOp++;
 
     if (HasEVEX_K)
       EVEX_aaa = getWriteMaskRegisterEncoding(MI, CurOp++);
