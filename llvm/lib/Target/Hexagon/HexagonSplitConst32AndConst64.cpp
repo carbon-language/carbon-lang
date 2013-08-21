@@ -16,33 +16,31 @@
 // scheduled after register allocation.
 //
 //===----------------------------------------------------------------------===//
+
 #define DEBUG_TYPE "xfer"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/ScheduleDAGInstrs.h"
+
+#include "HexagonTargetMachine.h"
+#include "HexagonSubtarget.h"
+#include "HexagonMachineFunctionInfo.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
-#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "HexagonTargetMachine.h"
-#include "HexagonSubtarget.h"
-#include "HexagonMachineFunctionInfo.h"
-#include <map>
-#include <iostream>
-
 #include "llvm/Support/CommandLine.h"
-#define DEBUG_TYPE "xfer"
-
+#include "llvm/Support/MathExtras.h"
+#include <map>
 
 using namespace llvm;
 
