@@ -544,7 +544,7 @@ class CompoundStmt : public Stmt {
   Stmt** Body;
   SourceLocation LBracLoc, RBracLoc;
 public:
-  CompoundStmt(const ASTContext &C, ArrayRef<Stmt*> Stmts,
+  CompoundStmt(ASTContext &C, ArrayRef<Stmt*> Stmts,
                SourceLocation LB, SourceLocation RB);
 
   // \brief Build an empty compound statment with a location.
@@ -559,7 +559,7 @@ public:
     CompoundStmtBits.NumStmts = 0;
   }
 
-  void setStmts(const ASTContext &C, Stmt **Stmts, unsigned NumStmts);
+  void setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts);
 
   bool body_empty() const { return CompoundStmtBits.NumStmts == 0; }
   unsigned size() const { return CompoundStmtBits.NumStmts; }
@@ -818,10 +818,10 @@ class AttributedStmt : public Stmt {
   }
 
 public:
-  static AttributedStmt *Create(const ASTContext &C, SourceLocation Loc,
+  static AttributedStmt *Create(ASTContext &C, SourceLocation Loc,
                                 ArrayRef<const Attr*> Attrs, Stmt *SubStmt);
   // \brief Build an empty attributed statement.
-  static AttributedStmt *CreateEmpty(const ASTContext &C, unsigned NumAttrs);
+  static AttributedStmt *CreateEmpty(ASTContext &C, unsigned NumAttrs);
 
   SourceLocation getAttrLoc() const { return AttrLoc; }
   ArrayRef<const Attr*> getAttrs() const {
@@ -851,7 +851,7 @@ class IfStmt : public Stmt {
   SourceLocation ElseLoc;
 
 public:
-  IfStmt(const ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
+  IfStmt(ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
          Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0);
 
   /// \brief Build an empty if/then/else statement
@@ -866,7 +866,7 @@ public:
   /// }
   /// \endcode
   VarDecl *getConditionVariable() const;
-  void setConditionVariable(const ASTContext &C, VarDecl *V);
+  void setConditionVariable(ASTContext &C, VarDecl *V);
 
   /// If this IfStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
@@ -924,7 +924,7 @@ class SwitchStmt : public Stmt {
   unsigned AllEnumCasesCovered : 1;
 
 public:
-  SwitchStmt(const ASTContext &C, VarDecl *Var, Expr *cond);
+  SwitchStmt(ASTContext &C, VarDecl *Var, Expr *cond);
 
   /// \brief Build a empty switch statement.
   explicit SwitchStmt(EmptyShell Empty) : Stmt(SwitchStmtClass, Empty) { }
@@ -939,7 +939,7 @@ public:
   /// }
   /// \endcode
   VarDecl *getConditionVariable() const;
-  void setConditionVariable(const ASTContext &C, VarDecl *V);
+  void setConditionVariable(ASTContext &C, VarDecl *V);
 
   /// If this SwitchStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
@@ -1009,7 +1009,7 @@ class WhileStmt : public Stmt {
   Stmt* SubExprs[END_EXPR];
   SourceLocation WhileLoc;
 public:
-  WhileStmt(const ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
+  WhileStmt(ASTContext &C, VarDecl *Var, Expr *cond, Stmt *body,
             SourceLocation WL);
 
   /// \brief Build an empty while statement.
@@ -1024,7 +1024,7 @@ public:
   /// }
   /// \endcode
   VarDecl *getConditionVariable() const;
-  void setConditionVariable(const ASTContext &C, VarDecl *V);
+  void setConditionVariable(ASTContext &C, VarDecl *V);
 
   /// If this WhileStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
@@ -1117,9 +1117,8 @@ class ForStmt : public Stmt {
   SourceLocation LParenLoc, RParenLoc;
 
 public:
-  ForStmt(const ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar,
-          Expr *Inc, Stmt *Body, SourceLocation FL, SourceLocation LP,
-          SourceLocation RP);
+  ForStmt(ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar, Expr *Inc,
+          Stmt *Body, SourceLocation FL, SourceLocation LP, SourceLocation RP);
 
   /// \brief Build an empty for statement.
   explicit ForStmt(EmptyShell Empty) : Stmt(ForStmtClass, Empty) { }
@@ -1135,7 +1134,7 @@ public:
   /// }
   /// \endcode
   VarDecl *getConditionVariable() const;
-  void setConditionVariable(const ASTContext &C, VarDecl *V);
+  void setConditionVariable(ASTContext &C, VarDecl *V);
 
   /// If this ForStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
@@ -1406,7 +1405,7 @@ public:
   //===--- Asm String Analysis ---===//
 
   /// Assemble final IR asm string.
-  std::string generateAsmString(const ASTContext &C) const;
+  std::string generateAsmString(ASTContext &C) const;
 
   //===--- Output operands ---===//
 
@@ -1509,7 +1508,7 @@ class GCCAsmStmt : public AsmStmt {
   friend class ASTStmtReader;
 
 public:
-  GCCAsmStmt(const ASTContext &C, SourceLocation asmloc, bool issimple,
+  GCCAsmStmt(ASTContext &C, SourceLocation asmloc, bool issimple,
              bool isvolatile, unsigned numoutputs, unsigned numinputs,
              IdentifierInfo **names, StringLiteral **constraints, Expr **exprs,
              StringLiteral *asmstr, unsigned numclobbers,
@@ -1575,10 +1574,10 @@ public:
   /// translation of strings from GCC syntax to LLVM IR syntax, and handles
   //// flattening of named references like %[foo] to Operand AsmStringPiece's.
   unsigned AnalyzeAsmString(SmallVectorImpl<AsmStringPiece> &Pieces,
-                            const ASTContext &C, unsigned &DiagOffs) const;
+                            ASTContext &C, unsigned &DiagOffs) const;
 
   /// Assemble final IR asm string.
-  std::string generateAsmString(const ASTContext &C) const;
+  std::string generateAsmString(ASTContext &C) const;
 
   //===--- Output operands ---===//
 
@@ -1638,7 +1637,7 @@ public:
   }
 
 private:
-  void setOutputsAndInputsAndClobbers(const ASTContext &C,
+  void setOutputsAndInputsAndClobbers(ASTContext &C,
                                       IdentifierInfo **Names,
                                       StringLiteral **Constraints,
                                       Stmt **Exprs,
@@ -1684,8 +1683,8 @@ class MSAsmStmt : public AsmStmt {
   friend class ASTStmtReader;
 
 public:
-  MSAsmStmt(const ASTContext &C, SourceLocation asmloc, SourceLocation
-            lbraceloc, bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
+  MSAsmStmt(ASTContext &C, SourceLocation asmloc, SourceLocation lbraceloc,
+            bool issimple, bool isvolatile, ArrayRef<Token> asmtoks,
             unsigned numoutputs, unsigned numinputs,
             ArrayRef<StringRef> constraints,
             ArrayRef<Expr*> exprs, StringRef asmstr,
@@ -1709,7 +1708,7 @@ public:
   StringRef getAsmString() const { return AsmStr; }
 
   /// Assemble final IR asm string.
-  std::string generateAsmString(const ASTContext &C) const;
+  std::string generateAsmString(ASTContext &C) const;
 
   //===--- Output operands ---===//
 
@@ -1754,7 +1753,7 @@ public:
   StringRef getClobber(unsigned i) const { return getClobbers()[i]; }
 
 private:
-  void initialize(const ASTContext &C,
+  void initialize(ASTContext &C,
                   StringRef AsmString,
                   ArrayRef<Token> AsmToks,
                   ArrayRef<StringRef> Constraints,
@@ -1789,7 +1788,7 @@ class SEHExceptStmt : public Stmt {
   explicit SEHExceptStmt(EmptyShell E) : Stmt(SEHExceptStmtClass, E) { }
 
 public:
-  static SEHExceptStmt* Create(const ASTContext &C,
+  static SEHExceptStmt* Create(ASTContext &C,
                                SourceLocation ExceptLoc,
                                Expr *FilterExpr,
                                Stmt *Block);
@@ -1830,7 +1829,7 @@ class SEHFinallyStmt : public Stmt {
   explicit SEHFinallyStmt(EmptyShell E) : Stmt(SEHFinallyStmtClass, E) { }
 
 public:
-  static SEHFinallyStmt* Create(const ASTContext &C,
+  static SEHFinallyStmt* Create(ASTContext &C,
                                 SourceLocation FinallyLoc,
                                 Stmt *Block);
 
@@ -1869,8 +1868,10 @@ class SEHTryStmt : public Stmt {
   explicit SEHTryStmt(EmptyShell E) : Stmt(SEHTryStmtClass, E) { }
 
 public:
-  static SEHTryStmt* Create(const ASTContext &C, bool isCXXTry,
-                            SourceLocation TryLoc, Stmt *TryBlock,
+  static SEHTryStmt* Create(ASTContext &C,
+                            bool isCXXTry,
+                            SourceLocation TryLoc,
+                            Stmt *TryBlock,
                             Stmt *Handler);
 
   SourceLocation getLocStart() const LLVM_READONLY { return getTryLoc(); }
@@ -1993,13 +1994,13 @@ private:
   void setCapturedStmt(Stmt *S) { getStoredStmts()[NumCaptures] = S; }
 
 public:
-  static CapturedStmt *Create(const ASTContext &Context, Stmt *S,
+  static CapturedStmt *Create(ASTContext &Context, Stmt *S,
                               CapturedRegionKind Kind,
                               ArrayRef<Capture> Captures,
                               ArrayRef<Expr *> CaptureInits,
                               CapturedDecl *CD, RecordDecl *RD);
 
-  static CapturedStmt *CreateDeserialized(const ASTContext &Context,
+  static CapturedStmt *CreateDeserialized(ASTContext &Context,
                                           unsigned NumCaptures);
 
   /// \brief Retrieve the statement being captured.

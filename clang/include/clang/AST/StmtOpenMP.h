@@ -228,7 +228,7 @@ public:
   /// \param EndLoc Ending location of the clause.
   /// \param VL List of references to the variables.
   ///
-  static OMPPrivateClause *Create(const ASTContext &C, SourceLocation StartLoc,
+  static OMPPrivateClause *Create(ASTContext &C, SourceLocation StartLoc,
                                   SourceLocation LParenLoc,
                                   SourceLocation EndLoc,
                                   ArrayRef<Expr *> VL);
@@ -237,7 +237,7 @@ public:
   /// \param C AST context.
   /// \param N The number of variables.
   ///
-  static OMPPrivateClause *CreateEmpty(const ASTContext &C, unsigned N);
+  static OMPPrivateClause *CreateEmpty(ASTContext &C, unsigned N);
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
@@ -386,8 +386,7 @@ public:
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement associated with the directive.
   ///
-  static OMPParallelDirective *Create(const ASTContext &C,
-                                      SourceLocation StartLoc,
+  static OMPParallelDirective *Create(ASTContext &C, SourceLocation StartLoc,
                                       SourceLocation EndLoc,
                                       ArrayRef<OMPClause *> Clauses,
                                       Stmt *AssociatedStmt);
@@ -397,7 +396,7 @@ public:
   /// \param C AST context.
   /// \param N The number of clauses.
   ///
-  static OMPParallelDirective *CreateEmpty(const ASTContext &C, unsigned N,
+  static OMPParallelDirective *CreateEmpty(ASTContext &C, unsigned N,
                                            EmptyShell);
 
   static bool classof(const Stmt *T) {
